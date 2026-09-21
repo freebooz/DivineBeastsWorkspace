@@ -27,7 +27,8 @@ try {
         'http://127.0.0.1:8081/health/ready',
         'http://127.0.0.1:8082/health/ready',
         'http://127.0.0.1:8083/health/ready',
-        'http://127.0.0.1:8084/health/ready'
+        'http://127.0.0.1:8084/health/ready',
+        'http://127.0.0.1:28080/swagger/'
     )
     $pendingEndpoints = [System.Collections.Generic.HashSet[string]]::new()
     foreach ($endpoint in $endpoints) {
@@ -57,7 +58,7 @@ try {
         throw "业务后端未在 $StartupTimeoutSeconds 秒内就绪：$($pendingEndpoints -join ', ')"
     }
 
-    Write-Output '业务后端本地开发部署完成，五个 HTTP 健康端点均已就绪。'
+    Write-Output '业务后端本地开发部署完成，五个 HTTP 健康端点与 Swagger 文档入口均已就绪。'
 }
 catch {
     Write-Error $_

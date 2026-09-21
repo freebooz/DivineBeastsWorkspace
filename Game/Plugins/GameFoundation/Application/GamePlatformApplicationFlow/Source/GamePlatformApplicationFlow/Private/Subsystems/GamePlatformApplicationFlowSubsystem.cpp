@@ -4,7 +4,7 @@
 #include "Execution/ApplicationFlowExecutor.h"
 #include "HAL/PlatformTime.h"
 #include "Interfaces/GamePlatformFlowNode.h"
-#include "Misc/GuardValue.h"
+#include "Templates/UnrealTemplate.h"
 #include "UObject/UObjectGlobals.h"
 
 namespace FlowCore = GamePlatform::ApplicationFlow;
@@ -86,6 +86,7 @@ private:
 };
 
 UGamePlatformApplicationFlowSubsystem::UGamePlatformApplicationFlowSubsystem() = default;
+UGamePlatformApplicationFlowSubsystem::UGamePlatformApplicationFlowSubsystem(FVTableHelper& Helper) : Super(Helper) {}
 UGamePlatformApplicationFlowSubsystem::~UGamePlatformApplicationFlowSubsystem() = default;
 
 bool UGamePlatformApplicationFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
@@ -98,6 +99,7 @@ void UGamePlatformApplicationFlowSubsystem::Initialize(FSubsystemCollectionBase&
     Super::Initialize(Collection);
     ScopeId = FGuid::NewGuid();
     bClosing = false;
+    bDeinitialized = false;
     LastPublishedRunId = 0;
     Executor = MakeUnique<FlowCore::FApplicationFlowExecutor>();
 }
@@ -113,14 +115,29 @@ void UGamePlatformApplicationFlowSubsystem::RemoveTicker()
 
 void UGamePlatformApplicationFlowSubsystem::Deinitialize()
 {
+    check(IsInGameThread());
+    if (bClosing) return; // Finish(Shutdown) 或广播中再次退出不得递归销毁。
     bClosing = true;
     RemoveTicker();
+    CompleteDeinitialize();
+}
+
+void UGamePlatformApplicationFlowSubsystem::CompleteDeinitialize()
+{
+    if (!bClosing || bDeinitialized || bDispatching || bPublishing) return;
+    bDeinitialized = true;
     if (Executor)
     {
         const bool bWasActive = Executor->IsActive();
+        // 若 Finish 已经完成成功／取消，先保留该终态；Shutdown 不覆盖尚未发布的业务结果。
+        if (!bWasActive) PublishTerminal();
         {
             TGuardValue<bool> DispatchGuard(bDispatching, true);
-            Executor->Shutdown();
+            if (!ensureMsgf(Executor->Shutdown(), TEXT("退出必须在执行器分发栈展开后执行")))
+            {
+                bDeinitialized = false;
+                return; // 未完成清理时保留对象，不把失败关闭变成释放后访问。
+            }
         }
         if (bWasActive) PublishTerminal();
         Executor.Reset();
@@ -202,6 +219,7 @@ bool UGamePlatformApplicationFlowSubsystem::Cancel(const FGamePlatformFlowHandle
         TGuardValue<bool> DispatchGuard(bDispatching, true);
         bCancelled = Executor->Cancel(Handle.RunId);
     }
+    if (bClosing) { CompleteDeinitialize(); return bCancelled; }
     if (bCancelled) { RemoveTicker(); PublishTerminal(); }
     return bCancelled;
 }
@@ -233,6 +251,7 @@ bool UGamePlatformApplicationFlowSubsystem::TickFlow(float DeltaSeconds)
         TGuardValue<bool> DispatchGuard(bDispatching, true);
         Executor->Tick(FPlatformTime::Seconds());
     }
+    if (bClosing) { CompleteDeinitialize(); return false; }
     if (!Executor->IsActive())
     {
         TickerHandle.Reset(); // 返回 false 后由 Ticker 自己移除当前回调。
@@ -249,6 +268,9 @@ void UGamePlatformApplicationFlowSubsystem::PublishTerminal()
     if (Snapshot.Handle.RunId == 0 || Snapshot.Handle.RunId == LastPublishedRunId) return;
     LastPublishedRunId = Snapshot.Handle.RunId;
     ActivePayload = nullptr;
-    TGuardValue<bool> PublishGuard(bPublishing, true);
-    FinishedEvent.Broadcast(Snapshot);
+    {
+        TGuardValue<bool> PublishGuard(bPublishing, true);
+        FinishedEvent.Broadcast(Snapshot);
+    }
+    if (bClosing) CompleteDeinitialize();
 }

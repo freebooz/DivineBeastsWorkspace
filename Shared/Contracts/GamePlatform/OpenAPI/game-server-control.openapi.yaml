@@ -1,0 +1,622 @@
+openapi: 3.1.0
+info:
+  title: GamePlatform Game Server Control Internal API（游戏平台游戏服务器控制内部接口）
+  version: 1.0.0
+  description: |
+    GameServerControlService 的当前内部 HTTP 控制面契约，覆盖专用服务器注册、心跳、就绪、排空、常驻世界与主竞技场分配、迁移票据和权威比赛结果提交。
+    所有路径仅供受信任的 Backend 服务、编排适配器或 Dedicated Server 使用，不能通过公网 Gateway、浏览器客户端或 UE 游戏客户端直接调用。HTTP 适配器对部分请求按 Go 字段名大小写不敏感解码；本规格统一给出 lowerCamelCase 请求字段。
+    当前世界/竞技分配响应由未标注 JSON Tag 的内部 DTO 直接编码，因此响应字段为 PascalCase；这是已实现的线协议，后续变更必须同时做兼容迁移与契约版本评审。
+servers:
+  - url: http://127.0.0.1:8084
+    description: 本地 Docker 开发部署的 GameServerControlService
+tags:
+  - name: 运维
+  - name: 服务器生命周期
+  - name: 分配与迁移
+  - name: 权威比赛结果
+paths:
+  /health/live:
+    get:
+      tags: [运维]
+      operationId: getGameServerControlLiveness
+      summary: 查询服务器控制服务存活状态
+      responses:
+        '200':
+          description: 服务进程存活。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LivenessResponse' }
+  /health/ready:
+    get:
+      tags: [运维]
+      operationId: getGameServerControlReadiness
+      summary: 查询服务器控制服务就绪状态
+      responses:
+        '200':
+          description: 服务宿主已就绪。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReadinessResponse' }
+  /version:
+    get:
+      tags: [运维]
+      operationId: getGameServerControlVersion
+      summary: 查询服务器控制服务版本
+      responses:
+        '200':
+          description: 服务名称与运行版本。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VersionResponse' }
+  /internal/v1/gameservers/register:
+    post:
+      tags: [服务器生命周期]
+      operationId: registerGameServer
+      summary: 注册 Dedicated Server 实例
+      description: Dedicated Server 启动后提交身份、角色、体验、区域、端点和容量。OpenWorld.Hub 不会创建独立大厅服务器角色，教学和训练属于 Village 体验。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterGameServerRequest' }
+      responses:
+        '200':
+          description: 注册请求被接受。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AcceptedResponse' }
+        '400':
+          description: 注册字段、角色或体验组合无效。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/heartbeat:
+    post:
+      tags: [服务器生命周期]
+      operationId: heartbeatGameServer
+      summary: 更新 Dedicated Server 心跳和容量
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GameServerHeartbeatRequest' }
+      responses:
+        '200':
+          description: 心跳被接受。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AcceptedResponse' }
+        '400':
+          description: 实例不存在、玩家数或状态转换无效。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/ready:
+    post:
+      tags: [服务器生命周期]
+      operationId: markGameServerReady
+      summary: 标记 Dedicated Server 就绪
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GameServerIdentifierRequest' }
+      responses:
+        '200':
+          description: 实例已进入可分配状态。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AcceptedResponse' }
+        '400':
+          description: 实例不存在或状态转换无效。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/drain:
+    post:
+      tags: [服务器生命周期]
+      operationId: drainGameServer
+      summary: 排空 Dedicated Server
+      description: 排空后实例不再接收新玩家或比赛分配；常驻世界的排空不能等同于一局比赛结束即回收。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GameServerIdentifierRequest' }
+      responses:
+        '200':
+          description: 排空请求被接受。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AcceptedResponse' }
+        '400':
+          description: 实例不存在或状态转换无效。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/allocate-world:
+    post:
+      tags: [分配与迁移]
+      operationId: allocateWorldGameServer
+      summary: 分配常驻世界实例
+      description: 只接受 OpenWorld 或 Village 体验；MainArena 体验必须使用 allocate-mainarena。大厅、主城和野外可以由同一 OpenWorld 实例流送，不能重复触发服务器分配。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AllocateWorldRequest' }
+      responses:
+        '200':
+          description: 返回世界权威分配。响应字段按当前 Go DTO 使用 PascalCase。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorldAssignmentResponse' }
+        '409':
+          description: 没有满足区域、体验或容量条件的实例。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/allocate-world-transfer:
+    post:
+      tags: [分配与迁移]
+      operationId: allocateWorldAndIssueTransfer
+      summary: 分配常驻世界并签发迁移票据
+      description: 原子编排世界目标分配与短期一次性迁移票据签发。TTL 以毫秒输入；服务端会写入最终 AssignmentID、目标实例和目标端点。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AllocateWorldTransferRequest' }
+      responses:
+        '200':
+          description: 返回世界分配和迁移票据。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorldTransferResultResponse' }
+        '409':
+          description: 世界分配或票据签发失败。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/allocate-mainarena:
+    post:
+      tags: [分配与迁移]
+      operationId: allocateMainArenaGameServer
+      summary: 分配主竞技场实例
+      description: 仅使用 MainArena 角色，按 1v1 至 5v5 模式定义校验两个队伍的完整 Roster；赛前 Party 不可在此流程拆分。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AllocateMainArenaRequest' }
+      responses:
+        '200':
+          description: 返回专用服务器可查询的统一任务分配，响应字段为 PascalCase。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServerAssignmentResponse' }
+        '409':
+          description: 没有可用竞技场实例或 Roster 不满足模式约束。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/assignment:
+    get:
+      tags: [分配与迁移]
+      operationId: getGameServerAssignment
+      summary: 查询 Dedicated Server 当前任务
+      parameters:
+        - name: gameServerId
+          in: query
+          required: true
+          description: 已注册 Dedicated Server 实例标识。
+          schema: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: 当前世界或竞技任务；响应字段为 PascalCase。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServerAssignmentResponse' }
+        '404':
+          description: 实例没有活动任务。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/issue-transfer:
+    post:
+      tags: [分配与迁移]
+      operationId: issueServerTransferTicket
+      summary: 为既有目标任务签发迁移票据
+      description: 目标 Assignment 和 Dedicated Server 必须已存在。ttl 为 Go time.Duration 的纳秒整数；未提供或不大于零时 HTTP 适配器默认 30 秒。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IssueTransferRequest' }
+      responses:
+        '200':
+          description: 已签发的一次性迁移票据。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TransferTicket' }
+        '400':
+          description: 请求不完整、目标任务不匹配或票据签发失败。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/validate-transfer:
+    post:
+      tags: [分配与迁移]
+      operationId: validateServerTransferTicket
+      summary: 在目标 Dedicated Server 验证迁移票据
+      description: 成功验证会提交常驻世界的容量预留。失败返回 HTTP 401，调用方不得将失败票据视为可重试登录凭据。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValidateTransferRequest' }
+      responses:
+        '200':
+          description: 返回已验证的可信玩家上下文，响应字段为 PascalCase。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TransferValidationResponse' }
+        '400':
+          description: JSON 格式错误或包含未知字段。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+        '401':
+          description: 票据已过期、签名无效、已消费或目标服务器不匹配。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/match-result:
+    post:
+      tags: [权威比赛结果]
+      operationId: submitAuthoritativeMatchResult
+      summary: 提交 MainArena 权威比赛结果
+      description: 仅承载该场比赛的可信 MainArena Dedicated Server 可调用。服务端按 MatchID 幂等保存结果、写入事务发件箱并在成功后释放竞技场实例；客户端不能提交此接口。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MatchResultRequest' }
+      responses:
+        '200':
+          description: 已持久化的比赛结果；响应字段为 PascalCase。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoredMatchResultResponse' }
+        '400':
+          description: 结果字段无效、比赛与服务器任务不匹配或幂等存储失败。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+components:
+  schemas:
+    LivenessResponse:
+      type: object
+      additionalProperties: false
+      required: [status, service]
+      properties:
+        status: { type: string, const: ok, description: 存活状态常量。 }
+        service: { type: string, description: 服务运行名称。 }
+    ReadinessResponse:
+      type: object
+      additionalProperties: false
+      required: [status, service]
+      properties:
+        status: { type: string, const: ready, description: 就绪状态常量。 }
+        service: { type: string, description: 服务运行名称。 }
+    VersionResponse:
+      type: object
+      additionalProperties: false
+      required: [service, version]
+      properties:
+        service: { type: string, description: 服务运行名称。 }
+        version: { type: string, description: 服务构建版本。 }
+    AcceptedResponse:
+      type: object
+      additionalProperties: false
+      required: [accepted]
+      properties:
+        accepted: { type: boolean, const: true, description: 控制请求已被当前服务接受。 }
+    RegisterGameServerRequest:
+      type: object
+      additionalProperties: false
+      required: [gameServerId, serverRoleId, regionId, publicEndpoint, capacity]
+      properties:
+        gameId: { type: string, description: 游戏逻辑标识；当前服务保留该注册上下文。 }
+        gameServerId: { type: string, minLength: 1, description: Dedicated Server 实例唯一标识。 }
+        serverRoleId:
+          type: string
+          enum: [GameServer.Role.OpenWorld, GameServer.Role.Village, GameServer.Role.MainArena]
+          description: 正式服务器角色。
+        experienceId:
+          type: string
+          enum: [Experience.OpenWorld.Hub, Experience.OpenWorld.Main, Experience.Village.Main, Experience.Village.Tutorial, Experience.Village.Training, Experience.MainArena.Main]
+          description: 当前进程承载体验；省略时按角色填充默认体验。
+        regionId: { type: string, minLength: 1, description: 部署区域标识。 }
+        clusterId: { type: string, description: Kubernetes 或 Agones 集群标识。 }
+        nodeId: { type: string, description: 承载节点标识。 }
+        worldId: { type: string, description: 世界、区域或地图逻辑标识。 }
+        publicEndpoint: { type: string, minLength: 3, description: 游戏客户端连接端点，例如 127.0.0.1:7777。 }
+        buildVersion: { type: string, description: Dedicated Server 构建版本。 }
+        protocolVersion: { type: integer, minimum: 0, description: UE 实时网络协议版本。 }
+        capacity: { type: integer, minimum: 1, description: 最大可承载玩家数。 }
+    GameServerHeartbeatRequest:
+      type: object
+      additionalProperties: false
+      required: [gameServerId, currentPlayers, status]
+      properties:
+        gameServerId: { type: string, minLength: 1, description: 已注册 Dedicated Server 实例标识。 }
+        currentPlayers: { type: integer, minimum: 0, description: 当前承载玩家人数。 }
+        status: { type: string, enum: [Starting, Ready, Draining, Unhealthy], description: 实例生命周期状态。 }
+    GameServerIdentifierRequest:
+      type: object
+      additionalProperties: false
+      required: [gameServerId]
+      properties:
+        gameServerId: { type: string, minLength: 1, description: 已注册 Dedicated Server 实例标识。 }
+    AllocateWorldRequest:
+      type: object
+      additionalProperties: false
+      required: [experienceId, worldId, regionId]
+      properties:
+        experienceId:
+          type: string
+          enum: [Experience.OpenWorld.Hub, Experience.OpenWorld.Main, Experience.Village.Main, Experience.Village.Tutorial, Experience.Village.Training]
+          description: 目标常驻世界体验，不能为 MainArena。
+        worldId: { type: string, minLength: 1, description: 目标世界、区域或实例逻辑标识。 }
+        regionId: { type: string, minLength: 1, description: 目标部署区域标识。 }
+        playerSlots: { type: integer, minimum: 1, description: 本次需要预留的玩家容量；省略时服务默认 1。 }
+    AllocateWorldTransferRequest:
+      type: object
+      additionalProperties: false
+      required: [world, ticketId, gameId, playerId, sessionId]
+      properties:
+        world: { $ref: '#/components/schemas/AllocateWorldRequest' }
+        ticketId: { type: string, minLength: 1, description: 迁移票据唯一标识。 }
+        gameId: { type: string, minLength: 1, description: 游戏逻辑标识。 }
+        playerId: { type: string, minLength: 1, description: 已认证玩家标识。 }
+        sessionId: { type: string, minLength: 1, description: 已认证会话标识。 }
+        sourceGameServerId: { type: string, description: 来源实例标识；首次入服可为空字符串。 }
+        ttlMilliseconds: { type: integer, format: int64, minimum: 1, description: 迁移票据有效期毫秒数。 }
+    AllocateMainArenaRequest:
+      type: object
+      additionalProperties: false
+      required: [matchId, arenaModeId, mapId, regionId, roster]
+      properties:
+        matchId: { type: string, minLength: 1, description: 比赛唯一标识。 }
+        arenaModeId:
+          type: string
+          enum: [Arena.Mode.Duel1v1, Arena.Mode.Team2v2, Arena.Mode.Team3v3, Arena.Mode.Team4v4, Arena.Mode.Team5v5]
+          description: 竞技模式标识。
+        mapId: { type: string, minLength: 1, description: 主竞技场地图逻辑标识。 }
+        regionId: { type: string, minLength: 1, description: 目标部署区域标识。 }
+        roster:
+          type: array
+          minItems: 2
+          maxItems: 10
+          description: 已锁定的权威比赛名单；实际人数由 arenaModeId 校验。
+          items: { $ref: '#/components/schemas/RosterPlayerRequest' }
+    RosterPlayerRequest:
+      type: object
+      additionalProperties: false
+      required: [playerId, teamId]
+      properties:
+        playerId: { type: string, minLength: 1, description: 玩家标识。 }
+        teamId: { type: string, minLength: 1, description: 所属竞技队伍标识。 }
+        characterId: { type: string, description: 已锁定角色标识；尚未选择时为空字符串。 }
+    IssueTransferRequest:
+      type: object
+      additionalProperties: false
+      required: [ticketId, assignmentId, gameId, playerId, sessionId, destinationGameServerId, destinationWorldId, destinationExperienceId]
+      properties:
+        ticketId: { type: string, minLength: 1, description: 票据唯一标识。 }
+        assignmentId: { type: string, minLength: 1, description: 已存在的目标任务标识。 }
+        gameId: { type: string, minLength: 1, description: 游戏逻辑标识。 }
+        playerId: { type: string, minLength: 1, description: 已认证玩家标识。 }
+        sessionId: { type: string, minLength: 1, description: 已认证会话标识。 }
+        sourceGameServerId: { type: string, description: 来源实例标识；首次入服可为空字符串。 }
+        destinationGameServerId: { type: string, minLength: 1, description: 目标 Dedicated Server 实例标识。 }
+        destinationWorldId: { type: string, minLength: 1, description: 目标世界或地图逻辑标识。 }
+        destinationExperienceId: { type: string, minLength: 1, description: 目标体验标识。 }
+        matchId: { type: string, description: 目标比赛标识；非竞技世界迁移时为空字符串。 }
+        ttl: { type: integer, format: int64, minimum: 1, description: 票据有效期纳秒数；未提供时服务默认 30 秒。 }
+    ValidateTransferRequest:
+      type: object
+      additionalProperties: false
+      required: [ticket, destinationGameServerId]
+      properties:
+        ticket: { $ref: '#/components/schemas/TransferTicket' }
+        destinationGameServerId: { type: string, minLength: 1, description: 执行验证的目标 Dedicated Server 实例标识。 }
+    WorldAssignmentResponse:
+      type: object
+      additionalProperties: false
+      required: [AssignmentID, GameServerID, ServerRoleID, ExperienceID, WorldID, RegionID, Endpoint]
+      properties:
+        AssignmentID: { type: string, description: 世界任务分配标识。 }
+        GameServerID: { type: string, description: 目标 Dedicated Server 实例标识。 }
+        ServerRoleID: { type: string, description: OpenWorld 或 Village 正式角色标识。 }
+        ExperienceID: { type: string, description: 目标体验标识。 }
+        WorldID: { type: string, description: 世界、区域或实例逻辑标识。 }
+        RegionID: { type: string, description: 部署区域标识。 }
+        Endpoint: { type: string, description: 客户端连接目标端点。 }
+    ArenaAssignmentResponse:
+      type: object
+      additionalProperties: false
+      required: [MatchID, ArenaModeID, MapID, TeamSize, TotalPlayers, GameServerID, Roster]
+      properties:
+        MatchID: { type: string, description: 比赛标识。 }
+        ArenaModeID: { type: string, description: 竞技模式标识。 }
+        MapID: { type: string, description: 竞技场地图标识。 }
+        TeamSize: { type: integer, minimum: 1, description: 每队人数。 }
+        TotalPlayers: { type: integer, minimum: 2, description: 双方总玩家人数。 }
+        GameServerID: { type: string, description: 承载比赛的 MainArena 实例标识。 }
+        Roster:
+          type: array
+          description: 权威玩家名单，字段为当前 Go DTO 的 PascalCase 线协议。
+          items: { $ref: '#/components/schemas/RosterPlayerResponse' }
+    RosterPlayerResponse:
+      type: object
+      additionalProperties: false
+      required: [PlayerID, TeamID, CharacterID]
+      properties:
+        PlayerID: { type: string, description: 玩家标识。 }
+        TeamID: { type: string, description: 队伍标识。 }
+        CharacterID: { type: string, description: 已锁定角色标识。 }
+    ServerAssignmentResponse:
+      type: object
+      additionalProperties: false
+      required: [AssignmentID, ServerRoleID, ExperienceID, WorldID, RegionID, GameServerID]
+      properties:
+        AssignmentID: { type: string, description: 统一服务器任务标识。 }
+        ServerRoleID: { type: string, description: 服务器角色标识。 }
+        ExperienceID: { type: string, description: 承载体验标识。 }
+        WorldID: { type: string, description: 世界或地图逻辑标识。 }
+        RegionID: { type: string, description: 部署区域标识。 }
+        GameServerID: { type: string, description: 承载实例标识。 }
+        World:
+          oneOf:
+            - $ref: '#/components/schemas/WorldAssignmentResponse'
+            - type: 'null'
+          description: OpenWorld 或 Village 任务；MainArena 任务时为 null。
+        Arena:
+          oneOf:
+            - $ref: '#/components/schemas/ArenaAssignmentResponse'
+            - type: 'null'
+          description: MainArena 任务；常驻世界任务时为 null。
+    WorldTransferResultResponse:
+      type: object
+      additionalProperties: false
+      required: [Assignment, Ticket]
+      properties:
+        Assignment: { $ref: '#/components/schemas/WorldAssignmentResponse' }
+        Ticket: { $ref: '#/components/schemas/TransferTicket' }
+    TransferTicket:
+      type: object
+      additionalProperties: false
+      required: [ticketId, assignmentId, gameId, playerId, sessionId, destinationGameServerId, destinationEndpoint, destinationWorldId, destinationExperienceId, issuedAt, expiresAt, nonce, signature]
+      properties:
+        ticketId: { type: string, description: 一次性迁移票据标识。 }
+        assignmentId: { type: string, description: 目标任务标识。 }
+        gameId: { type: string, description: 游戏逻辑标识。 }
+        playerId: { type: string, description: 已认证玩家标识。 }
+        sessionId: { type: string, description: 已认证会话标识。 }
+        sourceGameServerId: { type: string, description: 来源实例标识；首次入服可为空字符串。 }
+        destinationGameServerId: { type: string, description: 目标实例标识。 }
+        destinationEndpoint: { type: string, description: 目标客户端连接端点。 }
+        destinationWorldId: { type: string, description: 目标世界或地图标识。 }
+        destinationExperienceId: { type: string, description: 目标体验标识。 }
+        matchId: { type: string, description: 目标比赛标识；普通世界迁移可为空字符串。 }
+        issuedAt: { type: string, format: date-time, description: 签发 UTC 时间。 }
+        expiresAt: { type: string, format: date-time, description: 到期 UTC 时间。 }
+        nonce: { type: string, description: 防重放随机值。 }
+        signature: { type: string, description: 后端签名；调用方不得生成或修改。 }
+    TransferValidationResponse:
+      type: object
+      additionalProperties: false
+      required: [PlayerID, SessionID, AssignmentID, DestinationWorldID, DestinationExperienceID, MatchID]
+      properties:
+        PlayerID: { type: string, description: 已验证玩家标识。 }
+        SessionID: { type: string, description: 已验证会话标识。 }
+        AssignmentID: { type: string, description: 已验证目标任务标识。 }
+        DestinationWorldID: { type: string, description: 目标世界或地图标识。 }
+        DestinationExperienceID: { type: string, description: 目标体验标识。 }
+        MatchID: { type: string, description: 目标比赛标识；普通世界迁移时为空字符串。 }
+    MatchResultRequest:
+      type: object
+      additionalProperties: false
+      required: [matchId, arenaModeId, gameServerId, startedAt, endedAt, teams, players]
+      properties:
+        matchId: { type: string, minLength: 1, description: 比赛幂等结算标识。 }
+        arenaModeId: { type: string, description: 竞技模式标识。 }
+        gameServerId: { type: string, description: 承载比赛的 MainArena 实例标识。 }
+        startedAt: { type: string, format: date-time, description: 比赛开始 UTC 时间。 }
+        endedAt: { type: string, format: date-time, description: 比赛结束 UTC 时间。 }
+        winningTeamId: { type: string, description: 获胜队伍标识；平局时为空字符串。 }
+        teams:
+          type: array
+          minItems: 2
+          maxItems: 2
+          description: 双方权威队伍结果。
+          items: { $ref: '#/components/schemas/TeamResultRequest' }
+        players:
+          type: array
+          minItems: 1
+          maxItems: 10
+          description: 全部权威玩家统计。
+          items: { $ref: '#/components/schemas/PlayerResultRequest' }
+    TeamResultRequest:
+      type: object
+      additionalProperties: false
+      required: [teamId, won, score]
+      properties:
+        teamId: { type: string, description: 队伍标识。 }
+        won: { type: boolean, description: 是否获胜。 }
+        score: { type: integer, minimum: 0, description: 权威队伍得分。 }
+    PlayerResultRequest:
+      type: object
+      additionalProperties: false
+      required: [playerId, teamId, characterId, kills, deaths, assists, score]
+      properties:
+        playerId: { type: string, description: 玩家标识。 }
+        teamId: { type: string, description: 队伍标识。 }
+        characterId: { type: string, description: 使用角色标识。 }
+        kills: { type: integer, minimum: 0, description: 击杀数。 }
+        deaths: { type: integer, minimum: 0, description: 死亡数。 }
+        assists: { type: integer, minimum: 0, description: 助攻数。 }
+        score: { type: integer, minimum: 0, description: 服务端计算的玩家得分。 }
+    StoredMatchResultResponse:
+      type: object
+      additionalProperties: false
+      required: [ResultID, Result]
+      properties:
+        ResultID: { type: string, description: 后端生成的结果记录标识。 }
+        Result: { $ref: '#/components/schemas/MatchResultResponse' }
+    MatchResultResponse:
+      type: object
+      additionalProperties: false
+      required: [MatchID, ArenaModeID, GameServerID, StartedAt, EndedAt, WinningTeamID, Teams, Players]
+      properties:
+        MatchID: { type: string, description: 比赛标识。 }
+        ArenaModeID: { type: string, description: 竞技模式标识。 }
+        GameServerID: { type: string, description: MainArena 实例标识。 }
+        StartedAt: { type: string, format: date-time, description: 开始 UTC 时间。 }
+        EndedAt: { type: string, format: date-time, description: 结束 UTC 时间。 }
+        WinningTeamID: { type: string, description: 获胜队伍标识；平局时为空字符串。 }
+        Teams:
+          type: array
+          items: { $ref: '#/components/schemas/TeamResultResponse' }
+        Players:
+          type: array
+          items: { $ref: '#/components/schemas/PlayerResultResponse' }
+    TeamResultResponse:
+      type: object
+      additionalProperties: false
+      required: [TeamID, Won, Score]
+      properties:
+        TeamID: { type: string, description: 队伍标识。 }
+        Won: { type: boolean, description: 是否获胜。 }
+        Score: { type: integer, minimum: 0, description: 队伍得分。 }
+    PlayerResultResponse:
+      type: object
+      additionalProperties: false
+      required: [PlayerID, TeamID, CharacterID, Kills, Deaths, Assists, Score]
+      properties:
+        PlayerID: { type: string, description: 玩家标识。 }
+        TeamID: { type: string, description: 队伍标识。 }
+        CharacterID: { type: string, description: 角色标识。 }
+        Kills: { type: integer, minimum: 0, description: 击杀数。 }
+        Deaths: { type: integer, minimum: 0, description: 死亡数。 }
+        Assists: { type: integer, minimum: 0, description: 助攻数。 }
+        Score: { type: integer, minimum: 0, description: 玩家得分。 }
+    InternalApiError:
+      type: object
+      additionalProperties: false
+      required: [errorCode, message]
+      properties:
+        errorCode: { type: string, description: 内部稳定错误码。 }
+        message: { type: string, description: 错误说明；调用方不得据此推断权威状态。 }

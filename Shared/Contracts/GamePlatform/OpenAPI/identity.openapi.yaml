@@ -1,153 +1,170 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Identity API（游戏平台身份接口）
+  title: GamePlatform Identity Internal API（游戏平台身份内部接口）
   version: 1.0.0
-  description: 《游戏平台》跨技术共享HTTP契约。所有字段和操作均为Game Client与Go Backend共同遵循的唯一真源。
+  description: |
+    IdentityService 当前注册的内部 HTTP 路由。它只供 GatewayService 或受信任的后端服务调用，绝不能通过公网 Ingress、游戏客户端或 UE 客户端直接暴露。
+    本地部署使用内存会话；生产令牌、会话持久化和鉴权边界由 productiondeps 装配提供。
 servers:
-- url: https://api.example.com
+  - url: http://127.0.0.1:8081
+    description: 本地 Docker 开发部署的 IdentityService
+tags:
+  - name: 运维
+  - name: 内部身份
 paths:
-  /v1/auth/login:
-    post:
-      operationId: login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: Login succeeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '401':
-          description: Invalid credentials
-      summary: 玩家登录
-      description: 验证玩家登录凭据并创建在线会话，返回访问令牌、刷新令牌、玩家ID和会话ID。
-  /v1/auth/refresh:
-    post:
-      operationId: refreshAccessToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RefreshTokenRequest'
-      responses:
-        '200':
-          description: Token refreshed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-      summary: 刷新访问令牌
-      description: 使用有效刷新令牌签发新的访问令牌，避免玩家重新登录。
-  /v1/auth/logout:
-    post:
-      operationId: logout
-      security:
-      - bearerAuth: []
-      responses:
-        '204':
-          description: Logged out
-      summary: 玩家退出登录
-      description: 注销当前认证会话并使相关访问凭据失效。
-  /v1/auth/session:
+  /health/live:
     get:
-      operationId: getAuthSession
-      security:
-      - bearerAuth: []
+      tags: [运维]
+      operationId: getIdentityLiveness
+      summary: 查询身份服务存活状态
       responses:
         '200':
-          description: Current authenticated session
+          description: 服务进程存活。
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/AuthSession'
-      summary: 查询当前认证会话
-      description: 返回当前Bearer访问令牌对应的玩家会话信息。
+              schema: { $ref: '#/components/schemas/LivenessResponse' }
+  /health/ready:
+    get:
+      tags: [运维]
+      operationId: getIdentityReadiness
+      summary: 查询身份服务就绪状态
+      responses:
+        '200':
+          description: 服务宿主已就绪。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReadinessResponse' }
+  /version:
+    get:
+      tags: [运维]
+      operationId: getIdentityVersion
+      summary: 查询身份服务版本
+      responses:
+        '200':
+          description: 服务名称与运行版本。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VersionResponse' }
+  /internal/v1/identity/login:
+    post:
+      tags: [内部身份]
+      operationId: loginIdentityInternal
+      summary: 为 Gateway 创建玩家会话
+      description: 当前实现仅支持 guest 提供方。credential 会被传输层接受，但本地 Guest 实现不以其替代生产凭据校验。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InternalLoginRequest' }
+      responses:
+        '200':
+          description: 会话创建成功。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalLoginResponse' }
+        '400':
+          description: JSON 格式错误、未知字段或不支持的提供方。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+        '401':
+          description: 身份服务拒绝登录请求。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/identity/authenticate:
+    post:
+      tags: [内部身份]
+      operationId: authenticateIdentityInternal
+      summary: 验证 Access Token
+      description: 无效令牌以 HTTP 200 和 valid=false 返回，便于 Gateway 将身份失败统一映射为对客户端的 401。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthenticateRequest' }
+      responses:
+        '200':
+          description: 返回令牌验证结果。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthenticateResponse' }
+        '400':
+          description: JSON 格式错误或包含未知字段。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
-    LoginRequest:
+    LivenessResponse:
       type: object
       additionalProperties: false
-      required:
-      - gameId
-      - provider
-      - credential
-      - clientVersion
+      required: [status, service]
       properties:
-        gameId:
-          type: string
-          example: example-game
-        provider:
-          type: string
-          enum:
-          - guest
-          - platform
-        credential:
-          type: string
-          minLength: 1
-        clientVersion:
-          type: string
-          minLength: 1
-        deviceId:
-          type:
-          - string
-          - 'null'
-    RefreshTokenRequest:
+        status: { type: string, const: ok, description: 存活状态常量。 }
+        service: { type: string, description: 服务运行名称。 }
+    ReadinessResponse:
       type: object
       additionalProperties: false
-      required:
-      - refreshToken
+      required: [status, service]
       properties:
-        refreshToken:
-          type: string
-          minLength: 1
-    LoginResponse:
+        status: { type: string, const: ready, description: 就绪状态常量。 }
+        service: { type: string, description: 服务运行名称。 }
+    VersionResponse:
       type: object
       additionalProperties: false
-      required:
-      - playerId
-      - accessToken
-      - refreshToken
-      - expiresAt
-      - sessionId
+      required: [service, version]
       properties:
-        playerId:
-          type: string
-        accessToken:
-          type: string
-        refreshToken:
-          type: string
-        expiresAt:
-          type: string
-          format: date-time
-        sessionId:
-          type: string
-    AuthSession:
+        service: { type: string, description: 服务运行名称。 }
+        version: { type: string, description: 服务构建版本。 }
+    InternalLoginRequest:
       type: object
       additionalProperties: false
-      required:
-      - playerId
-      - sessionId
-      - issuedAt
-      - expiresAt
+      required: [gameId, provider, credential]
       properties:
-        playerId:
-          type: string
-        sessionId:
-          type: string
-        issuedAt:
-          type: string
-          format: date-time
-        expiresAt:
-          type: string
-          format: date-time
+        gameId: { type: string, minLength: 1, description: 游戏逻辑标识。 }
+        provider: { type: string, enum: [guest], description: 当前仅支持 guest。 }
+        credential: { type: string, minLength: 1, description: 上游传递的提供方凭据。 }
+        deviceId: { type: string, description: 设备或安装实例标识；可为空字符串。 }
+    InternalLoginResponse:
+      type: object
+      additionalProperties: false
+      required: [playerId, sessionId, accessToken, refreshToken, expiresAtUnixMs]
+      properties:
+        playerId: { type: string, description: 玩家标识。 }
+        sessionId: { type: string, description: 在线会话标识。 }
+        accessToken: { type: string, description: 短期访问令牌。 }
+        refreshToken: { type: string, description: 刷新令牌。 }
+        expiresAtUnixMs: { type: integer, format: int64, description: Access Token UTC 过期时间的 Unix 毫秒值。 }
+    AuthenticateRequest:
+      type: object
+      additionalProperties: false
+      required: [accessToken]
+      properties:
+        accessToken: { type: string, minLength: 1, description: 待验证的访问令牌。 }
+    AuthenticateResponse:
+      oneOf:
+        - $ref: '#/components/schemas/AuthenticatedSession'
+        - $ref: '#/components/schemas/InvalidSession'
+    AuthenticatedSession:
+      type: object
+      additionalProperties: false
+      required: [valid, playerId, sessionId]
+      properties:
+        valid: { type: boolean, const: true, description: 令牌验证成功。 }
+        playerId: { type: string, description: 已认证玩家标识。 }
+        sessionId: { type: string, description: 已认证会话标识。 }
+    InvalidSession:
+      type: object
+      additionalProperties: false
+      required: [valid, errorCode]
+      properties:
+        valid: { type: boolean, const: false, description: 令牌无效或已过期。 }
+        errorCode: { type: string, const: AUTH_SESSION_INVALID, description: 固定的无效会话错误码。 }
+    InternalApiError:
+      type: object
+      additionalProperties: false
+      required: [errorCode, message]
+      properties:
+        errorCode: { type: string, description: 内部稳定错误码。 }
+        message: { type: string, description: 错误说明，不应用于业务状态分支。 }

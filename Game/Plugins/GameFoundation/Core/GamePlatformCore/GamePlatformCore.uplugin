@@ -1,0 +1,19 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "0.1.0",
+    "FriendlyName": "Game Platform Core",
+    "Description": "平台中立身份、结果、版本与日志契约；不拥有世界、服务或资源租约。",
+    "Category": "GameFoundation",
+    "EngineVersion": "5.8.0",
+    "CanContainContent": false,
+    "EnabledByDefault": false,
+    "Modules": [
+        {
+            "Name": "GamePlatformCore",
+            "Type": "Runtime",
+            "LoadingPhase": "Default",
+            "TargetAllowList": ["Game", "Client", "Server", "Editor"]
+        }
+    ]
+}

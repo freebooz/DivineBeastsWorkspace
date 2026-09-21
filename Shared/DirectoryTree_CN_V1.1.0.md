@@ -79,6 +79,10 @@ Shared/                                                             # UE与Go跨
         └── UEConsumerModules.generated.json                        # Codegen生成的UE消费模块映射清单，用于构建和兼容检查
 ```
 
+## 当前 HTTP 契约实现补充（2026-09-21）
+
+`Contracts/GamePlatform/OpenAPI/game-server-control.openapi.yaml` 已新增为 GameServerControlService 的内部 HTTP 契约，覆盖注册、心跳、就绪、排空、世界/竞技场分配、任务查询、迁移票据和权威比赛结果提交。现有 `gateway.openapi.yaml`、`identity.openapi.yaml`、`player-data.openapi.yaml`、`party.openapi.yaml` 与 `matchmaking.openapi.yaml` 已收敛为当前实际注册路由；未实现的预留路径不再以运行接口形式列入 Swagger。
+
 ## 维护规则
 
 1. 新增或删除 Shared 文件、目录时，必须同步更新本文对应树节点及中文职责说明。
@@ -86,4 +90,3 @@ Shared/                                                             # UE与Go跨
 3. Shared 只承载跨语言契约、文档和生成物，不得把 UE Gameplay 或 Go 业务实现写入本目录；职责边界变化时必须同步更新本文。
 4. `Generated/` 下的生成产物不得手工修改；生成规则、工具或输出映射变化时，必须同步维护本文及相关契约文档。
 5. 本文版本发生结构性变化时，更新文件名版本或在变更记录中记录版本变更原因。
-

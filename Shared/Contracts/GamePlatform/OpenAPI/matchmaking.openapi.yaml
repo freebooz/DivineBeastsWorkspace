@@ -1,142 +1,128 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Matchmaking API（游戏平台匹配接口）
+  title: GamePlatform Matchmaking Internal API（游戏平台匹配内部接口）
   version: 1.0.0
-  description: 《游戏平台》跨技术共享HTTP契约。所有字段和操作均为Game Client与Go Backend共同遵循的唯一真源。
+  description: MatchService 当前已注册的匹配内部 HTTP 接口。该规格只描述创建票据；查询、取消和比赛完成通知没有在当前 HTTP 服务中注册。
+servers:
+  - url: http://127.0.0.1:8083
+    description: 本地 Docker 开发部署的 MatchService
+tags:
+  - name: 运维
+  - name: 内部匹配
 paths:
-  /v1/matchmaking/tickets:
+  /health/live:
+    get:
+      tags: [运维]
+      operationId: getMatchmakingLiveness
+      summary: 查询 MatchService 存活状态
+      responses:
+        '200':
+          description: 服务进程存活。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LivenessResponse' }
+  /health/ready:
+    get:
+      tags: [运维]
+      operationId: getMatchmakingReadiness
+      summary: 查询 MatchService 就绪状态
+      responses:
+        '200':
+          description: 服务宿主已就绪。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReadinessResponse' }
+  /version:
+    get:
+      tags: [运维]
+      operationId: getMatchmakingVersion
+      summary: 查询 MatchService 版本
+      responses:
+        '200':
+          description: 服务名称与运行版本。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VersionResponse' }
+  /internal/v1/match/tickets:
     post:
-      operationId: createMatchmakingTicket
-      security:
-      - bearerAuth: []
+      tags: [内部匹配]
+      operationId: createInternalMatchmakingTicket
+      summary: 为玩家或不可拆分队伍创建匹配票据
+      description: |
+        playerId 必须由可信调用方从认证上下文取得。服务端基于 arenaModeId 校验单队人数，支持 1v1、2v2、3v3、4v4、5v5；客户端不得提交权威隐藏分或比赛结果。
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/CreateMatchmakingTicketRequest'
+            schema: { $ref: '#/components/schemas/CreateMatchmakingTicketRequest' }
       responses:
         '200':
-          description: Matchmaking ticket created
+          description: 匹配票据创建成功。
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/MatchmakingTicket'
-      summary: 创建匹配票据
-      description: 为单人或Party创建项目定义的匹配票据；具体ArenaMode（竞技模式）由游戏项目扩展契约约束，服务端权威读取MMR、处罚等数据。
-  /v1/matchmaking/tickets/{ticketId}:
-    get:
-      operationId: getMatchmakingTicket
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: ticketId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Matchmaking ticket details
+              schema: { $ref: '#/components/schemas/MatchmakingTicket' }
+        '400':
+          description: 请求格式或领域规则无效。
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/MatchmakingTicket'
-      summary: 查询匹配票据
-      description: 查询匹配票据当前状态，例如搜索中、已匹配、已取消或失败。
-    delete:
-      operationId: cancelMatchmakingTicket
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: ticketId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '204':
-          description: Matchmaking canceled
-      summary: 取消匹配票据
-      description: 取消当前匹配票据并解除Party名单锁定。
+              schema: { $ref: '#/components/schemas/InternalApiError' }
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
+    LivenessResponse:
+      type: object
+      additionalProperties: false
+      required: [status, service]
+      properties:
+        status: { type: string, const: ok, description: 存活状态常量。 }
+        service: { type: string, description: 服务运行名称。 }
+    ReadinessResponse:
+      type: object
+      additionalProperties: false
+      required: [status, service]
+      properties:
+        status: { type: string, const: ready, description: 就绪状态常量。 }
+        service: { type: string, description: 服务运行名称。 }
+    VersionResponse:
+      type: object
+      additionalProperties: false
+      required: [service, version]
+      properties:
+        service: { type: string, description: 服务运行名称。 }
+        version: { type: string, description: 服务构建版本。 }
     CreateMatchmakingTicketRequest:
       type: object
       additionalProperties: false
-      required:
-      - arenaModeId
-      - clientRequestId
+      required: [playerId, arenaModeId, clientRequestId]
       properties:
+        playerId: { type: string, minLength: 1, description: 已认证玩家标识。 }
         arenaModeId:
           type: string
-          minLength: 1
-        partyId:
-          type:
-          - string
-          - 'null'
-        preferredRegion:
-          type:
-          - string
-          - 'null'
-        clientRequestId:
-          type: string
-          minLength: 1
+          enum: [Arena.Mode.Duel1v1, Arena.Mode.Team2v2, Arena.Mode.Team3v3, Arena.Mode.Team4v4, Arena.Mode.Team5v5]
+          description: 项目定义的竞技模式标识。
+        partyId: { type: string, description: 已锁定的队伍标识；单人匹配时为空字符串。 }
+        preferredRegion: { type: string, description: 首选匹配区域。 }
+        clientRequestId: { type: string, minLength: 1, description: 调用方提供的幂等请求标识。 }
     MatchmakingTicket:
       type: object
       additionalProperties: false
-      required:
-      - ticketId
-      - arenaModeId
-      - partyMemberIds
-      - partySize
-      - teamSize
-      - state
-      - createdAt
+      required: [ticketId, arenaModeId, partyId, partyMemberIds, partySize, teamSize, state]
       properties:
-        ticketId:
-          type: string
-        arenaModeId:
-          type: string
-        partyId:
-          type:
-          - string
-          - 'null'
+        ticketId: { type: string, description: 匹配票据标识。 }
+        arenaModeId: { type: string, description: 已接受的竞技模式标识。 }
+        partyId: { type: string, description: 队伍标识；单人匹配时为空字符串。 }
         partyMemberIds:
           type: array
           minItems: 1
           maxItems: 5
-          items:
-            type: string
-        partySize:
-          type: integer
-          minimum: 1
-          maximum: 5
-        teamSize:
-          type: integer
-          minimum: 1
-          maximum: 5
-        region:
-          type:
-          - string
-          - 'null'
-        state:
-          type: string
-          enum:
-          - searching
-          - matchFound
-          - canceled
-          - failed
-        createdAt:
-          type: string
-          format: date-time
-        expiresAt:
-          type:
-          - string
-          - 'null'
-          format: date-time
+          description: 匹配原子单元中的玩家标识列表。
+          items: { type: string }
+        partySize: { type: integer, minimum: 1, maximum: 5, description: 当前匹配原子单元人数。 }
+        teamSize: { type: integer, minimum: 1, maximum: 5, description: 当前竞技模式的单队人数。 }
+        state: { type: string, enum: [searching, matchFound, canceled, failed], description: 当前匹配状态。 }
+    InternalApiError:
+      type: object
+      additionalProperties: false
+      required: [errorCode, message]
+      properties:
+        errorCode: { type: string, description: 内部稳定错误码。 }
+        message: { type: string, description: 错误说明。 }

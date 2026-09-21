@@ -222,7 +222,8 @@ bool UGamePlatformVFXWorldSubsystem::Stop(const FGamePlatformVFXHandle& Handle, 
     {
         if (UWorld* World = GetWorld())
         {
-            for (const FTimerHandle& Timer : *Timers)
+            // ClearTimer 会使传入句柄失效；修改本实例持有的句柄，避免保留已清理的定时器身份。
+            for (FTimerHandle& Timer : *Timers)
             {
                 World->GetTimerManager().ClearTimer(Timer);
             }

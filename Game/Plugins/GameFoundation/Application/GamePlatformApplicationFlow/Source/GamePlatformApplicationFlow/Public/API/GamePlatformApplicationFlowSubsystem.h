@@ -21,6 +21,8 @@ class GAMEPLATFORMAPPLICATIONFLOW_API UGamePlatformApplicationFlowSubsystem fina
 
 public:
     UGamePlatformApplicationFlowSubsystem();
+    /** 在私有实现中定义，避免 UHT 生成构造函数对不完整执行器类型实例化删除器。 */
+    UGamePlatformApplicationFlowSubsystem(FVTableHelper& Helper);
     virtual ~UGamePlatformApplicationFlowSubsystem() override;
     virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -43,12 +45,15 @@ private:
     void PublishTerminal();
     bool CanControl(FString& OutError) const;
     void RemoveTicker();
+    /** 等待节点／广播栈展开后完成幂等关闭，绝不在核心调用栈内销毁执行器。 */
+    void CompleteDeinitialize();
 
     TUniquePtr<GamePlatform::ApplicationFlow::FApplicationFlowExecutor> Executor;
     FTSTicker::FDelegateHandle TickerHandle;
     FGuid ScopeId;
     uint64 LastPublishedRunId = 0;
     bool bClosing = false;
+    bool bDeinitialized = false;
     bool bPublishing = false; // 广播内允许查询，变更须推迟到下一游戏线程任务。
     bool bDispatching = false; // Execute/Finish 重入控制在适配层同样拒绝。
 

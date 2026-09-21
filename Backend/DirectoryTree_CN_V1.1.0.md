@@ -201,10 +201,19 @@ Backend/                                                            # Go业务�
 └── go.sum                                                          # Go依赖内容完整性校验；生产依赖下载后由Go工具维护
 ```
 
+## 当前接口文档实现补充（2026-09-21）
+
+本次新增的 Gateway Swagger 入口、接口契约校验与本地部署绑定如下；本节以当前真实文件为准，用于补充上方目录树中较早的接口范围描述。
+
+| 路径 | 中文职责 |
+| --- | --- |
+| `internal/app/gateway/swagger.go` | 仅在显式配置共享契约根目录时扫描 OpenAPI 真源、提供本地 Swagger UI 页面和原始规格文件。 |
+| `internal/app/gateway/swagger_test.go` | 验证文档入口在本地配置下可访问，未配置时保持 `404`。 |
+| `generated/gameplatform/contracts_generated.go` | 由 `contractcodegen` 根据全部 GamePlatform OpenAPI 路由重新生成；禁止人工修改。 |
+
 ## 维护规则
 
 1. 新增或删除 Backend 文件、目录时，必须同步更新本文对应树节点及中文职责说明。
 2. 重命名或移动 Backend 文件、目录时，必须在本文中同步调整路径层级和职责说明。
 3. 对 `[预留]` 或生成目录的状态变化，必须同步更新本文中的边界标识；生成目录仍不得手工修改生成产物。
 4. 本文版本发生结构性变化时，更新文件名版本或在变更记录中记录版本变更原因。
-

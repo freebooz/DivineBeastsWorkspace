@@ -72,7 +72,8 @@
 
 ## 6. 当前验证状态
 
-本包在当前环境中完成了：目录生成、JSON解析检查、代码结构静态检查。  
-**没有 UE5.8 引擎源码、UBT 和《神兽联盟》真实工程，因此不能声明已经编译通过、Cook通过或生产验收通过。**
+2026-09-21 已使用本机 UE5.8.0 源码引擎和直接引用正式插件源码的临时宿主验证：UHT 反射处理通过，`GamePlatformVFXClient` 与 `GamePlatformVFXEditor` 的 C++ 编译通过。编译中发现并修正了复合定时器清理时的句柄只读限定错误。
+
+**完整构建仍未通过：两个模块的 DLL 链接分别缺少引擎 `UnrealEditor-Projects.lib` 和 `UnrealEditor-UnrealEd.lib`，没有得到可加载插件 DLL。** 正式游戏工程仍为空占位；UE 自动化、真实资产播放、Cook／Stage 和生产验收尚未执行。不能将目标文件或插件导入库的生成视为 DLL 链接成功。
 
 详细说明见 `Docs/Verification.md`。

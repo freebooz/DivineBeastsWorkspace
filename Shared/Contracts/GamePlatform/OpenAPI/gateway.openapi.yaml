@@ -1,22 +1,395 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Gateway API（游戏平台网关接口）
+  title: GamePlatform Gateway API（游戏平台统一接入接口）
   version: 1.0.0
-  description: GatewayService（统一接入服务）的运维与版本查询接口。
+  description: |
+    GatewayService 面向游戏客户端公开的当前可运行 HTTP 接口。该规格只包含代码已注册的路由；身份、玩家数据、组队和匹配的内部服务接口见各自独立 OpenAPI 文件。
+    每个 Gateway 响应均返回 X-Request-Id、X-Trace-Id；配置了共享契约版本时还会返回 X-Contract-Version。
+servers:
+  - url: http://127.0.0.1:28080
+    description: 本地 Docker 开发部署的 GatewayService
+tags:
+  - name: 运维
+    description: 进程存活、就绪和版本检查。
+  - name: 客户端业务
+    description: 仅供游戏客户端经 GatewayService 调用的业务接口。
 paths:
   /health/live:
     get:
-      operationId: getGatewayHealth
-      summary: 查询网关健康状态
-      description: 返回GatewayService的存活状态，用于负载均衡和运维检查。
+      tags: [运维]
+      operationId: getGatewayLiveness
+      summary: 查询网关存活状态
+      description: 仅表示 HTTP 进程存活，不代表下游依赖或业务请求已经就绪。
       responses:
         '200':
-          description: 服务进程存活
+          description: 服务进程存活。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LivenessResponse'
+  /health/ready:
+    get:
+      tags: [运维]
+      operationId: getGatewayReadiness
+      summary: 查询网关就绪状态
+      description: 本地装配的就绪端点；当前 ServiceHost 只检查服务宿主自身状态。
+      responses:
+        '200':
+          description: 服务宿主已就绪。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
   /version:
     get:
+      tags: [运维]
       operationId: getGatewayVersion
       summary: 查询网关版本
-      description: 返回GatewayService当前应用版本和Shared契约版本。
       responses:
         '200':
-          description: 返回服务版本信息
+          description: 服务名称与运行版本。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+  /v1/auth/login:
+    post:
+      tags: [客户端业务]
+      operationId: gatewayLogin
+      summary: 玩家登录
+      description: |
+        Gateway 将登录请求转交 IdentityService。当前运行实现仅支持 provider 为 guest；成功后返回访问令牌、刷新令牌和会话身份。
+        生产凭据校验、令牌轮换和撤销策略必须由生产 IdentityService 装配实现，不能以本地内存装配替代。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: JSON 格式错误或包含未知字段。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+        '401':
+          description: 登录凭据无效或登录服务拒绝请求。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+  /v1/player/profile:
+    get:
+      tags: [客户端业务]
+      operationId: getGatewayPlayerProfile
+      summary: 获取当前玩家资料
+      description: 从 Bearer Access Token 解析调用者身份后读取长期玩家资料；不接收客户端声明的 playerId。
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 当前已认证玩家的长期资料。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfile'
+        '401':
+          description: 缺少或无效的 Bearer Access Token。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+        '404':
+          description: 玩家资料不存在。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+  /v1/party:
+    post:
+      tags: [客户端业务]
+      operationId: createGatewayParty
+      summary: 为当前玩家创建赛前队伍
+      description: 创建后将已认证玩家设为队长。当前实现不接收请求体，后续成员邀请、准备和名单锁定不是本地运行路由。
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 队伍创建成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartySnapshot'
+        '401':
+          description: 缺少或无效的 Bearer Access Token。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+        '409':
+          description: 队伍创建被领域规则拒绝。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+  /v1/matchmaking/tickets:
+    post:
+      tags: [客户端业务]
+      operationId: createGatewayMatchmakingTicket
+      summary: 创建匹配票据
+      description: |
+        为单人或不可拆分 Party 创建匹配票据。arenaModeId 必须是项目目录定义的 1v1、2v2、3v3、4v4 或 5v5 模式之一；队伍人数由模式定义确定，不从客户端推导。
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMatchmakingTicketRequest'
+      responses:
+        '200':
+          description: 匹配票据创建成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchmakingTicket'
+        '400':
+          description: JSON 格式错误或包含未知字段。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+        '401':
+          description: 缺少或无效的 Bearer Access Token。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+        '409':
+          description: 匹配票据被领域规则拒绝。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayApiError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: AccessToken
+  schemas:
+    LivenessResponse:
+      type: object
+      additionalProperties: false
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          const: ok
+          description: 存活状态常量。
+        service:
+          type: string
+          description: 服务运行名称。
+    ReadinessResponse:
+      type: object
+      additionalProperties: false
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          const: ready
+          description: 就绪状态常量。
+        service:
+          type: string
+          description: 服务运行名称。
+    VersionResponse:
+      type: object
+      additionalProperties: false
+      required: [service, version]
+      properties:
+        service:
+          type: string
+          description: 服务运行名称。
+        version:
+          type: string
+          description: 服务构建版本；本地 Docker 部署使用 local。
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [gameId, provider, credential, clientVersion]
+      properties:
+        gameId:
+          type: string
+          minLength: 1
+          description: 游戏逻辑标识，例如 divine-beasts。
+        provider:
+          type: string
+          enum: [guest]
+          description: 登录提供方；当前运行实现只接受 guest。
+        credential:
+          type: string
+          minLength: 1
+          description: 提供方凭据；生产环境的具体校验由身份服务负责。
+        clientVersion:
+          type: string
+          minLength: 1
+          description: 客户端构建版本，用于兼容性和诊断。
+        deviceId:
+          type: string
+          description: 客户端设备或安装实例标识；未提供时传递为空字符串。
+    LoginResponse:
+      type: object
+      additionalProperties: false
+      required: [playerId, accessToken, refreshToken, expiresAt, sessionId]
+      properties:
+        playerId:
+          type: string
+          description: 已认证玩家标识。
+        accessToken:
+          type: string
+          description: 后续 Bearer 认证使用的短期访问令牌。
+        refreshToken:
+          type: string
+          description: 刷新令牌；本地服务返回值不等同生产令牌安全策略。
+        expiresAt:
+          type: string
+          format: date-time
+          description: Access Token 的 UTC 过期时间。
+        sessionId:
+          type: string
+          description: 在线会话标识。
+    PlayerProfile:
+      type: object
+      additionalProperties: false
+      required: [playerId, gameId, displayName, dataVersion, revision, tutorialCompleted, ownedCharacterIds]
+      properties:
+        playerId:
+          type: string
+          description: 玩家标识。
+        gameId:
+          type: string
+          description: 所属游戏标识。
+        displayName:
+          type: string
+          description: 玩家显示名称。
+        dataVersion:
+          type: integer
+          minimum: 1
+          description: 玩家资料结构版本。
+        revision:
+          type: integer
+          minimum: 0
+          description: 长期资料的乐观并发修订号。
+        tutorialCompleted:
+          type: boolean
+          description: 是否完成新手教学。
+        defaultWorldId:
+          type: string
+          description: 默认进入的世界逻辑标识；当前实现可能为空字符串。
+        ownedCharacterIds:
+          type: array
+          description: 已拥有角色逻辑标识列表。
+          items:
+            type: string
+    PartySnapshot:
+      type: object
+      additionalProperties: false
+      required: [partyId, leaderPlayerId, memberPlayerIds, selectedArenaModeId, rosterLocked, revision]
+      properties:
+        partyId:
+          type: string
+          description: 队伍标识。
+        leaderPlayerId:
+          type: string
+          description: 当前队长玩家标识。
+        memberPlayerIds:
+          type: array
+          description: 不可拆分的队伍成员标识列表。
+          items:
+            type: string
+        selectedArenaModeId:
+          type: string
+          description: 当前选择的竞技模式；尚未选择时为空字符串。
+        rosterLocked:
+          type: boolean
+          description: 名单是否已锁定。
+        revision:
+          type: integer
+          minimum: 0
+          description: 队伍修订号。
+    CreateMatchmakingTicketRequest:
+      type: object
+      additionalProperties: false
+      required: [arenaModeId, clientRequestId]
+      properties:
+        arenaModeId:
+          type: string
+          enum: [Arena.Mode.Duel1v1, Arena.Mode.Team2v2, Arena.Mode.Team3v3, Arena.Mode.Team4v4, Arena.Mode.Team5v5]
+          description: 项目定义的竞技模式标识。
+        partyId:
+          type: string
+          description: 已有队伍标识；单人匹配时为空字符串。
+        preferredRegion:
+          type: string
+          description: 首选匹配区域；服务端可按容量和规则调整。
+        clientRequestId:
+          type: string
+          minLength: 1
+          description: 客户端幂等请求标识。
+    MatchmakingTicket:
+      type: object
+      additionalProperties: false
+      required: [ticketId, arenaModeId, partyId, partyMemberIds, partySize, teamSize, state]
+      properties:
+        ticketId:
+          type: string
+          description: 匹配票据标识。
+        arenaModeId:
+          type: string
+          description: 已接受的竞技模式标识。
+        partyId:
+          type: string
+          description: 队伍标识；单人匹配时为空字符串。
+        partyMemberIds:
+          type: array
+          minItems: 1
+          maxItems: 5
+          description: 匹配原子单元中的玩家标识列表。
+          items:
+            type: string
+        partySize:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 当前匹配原子单元人数。
+        teamSize:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 该竞技模式的单队人数。
+        state:
+          type: string
+          enum: [searching, matchFound, canceled, failed]
+          description: 匹配状态；当前创建成功后通常为 searching。
+    GatewayApiError:
+      type: object
+      additionalProperties: false
+      required: [errorCode, message, retryable]
+      properties:
+        errorCode:
+          type: string
+          description: 稳定的业务或传输错误码。
+        message:
+          type: string
+          description: 面向调用方的错误说明；不得据此解析业务状态。
+        retryable:
+          type: boolean
+          description: 当前 Gateway 实现固定返回 false。

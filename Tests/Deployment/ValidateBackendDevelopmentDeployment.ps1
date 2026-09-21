@@ -63,4 +63,19 @@ foreach ($environmentName in $expectedGatewayEndpoints.Keys) {
     }
 }
 
+$swaggerContractsRootProperty = $gatewayEnvironment.PSObject.Properties['DIVINEBEASTS_SWAGGER_CONTRACTS_ROOT']
+if ($null -eq $swaggerContractsRootProperty -or [string]$swaggerContractsRootProperty.Value -ne '/contracts') {
+    throw 'GatewayService 必须把共享契约挂载根目录配置为 /contracts。'
+}
+
+$swaggerVolume = @($composeConfiguration.services.gatewayservice.volumes | Where-Object { [string]$_.target -eq '/contracts' })
+if ($swaggerVolume.Count -ne 1 -or -not [bool]$swaggerVolume[0].read_only) {
+    throw 'GatewayService 必须以只读方式挂载共享契约目录到 /contracts。'
+}
+$expectedContractsDirectory = Join-Path $workspaceRoot 'Shared\Contracts'
+$actualContractsDirectory = [System.IO.Path]::GetFullPath([string]$swaggerVolume[0].source)
+if ($actualContractsDirectory -ne $expectedContractsDirectory) {
+    throw "GatewayService Swagger 契约挂载源不正确：$actualContractsDirectory"
+}
+
 Write-Output '业务后端本地部署配置校验通过。'

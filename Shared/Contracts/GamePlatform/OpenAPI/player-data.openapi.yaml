@@ -1,136 +1,115 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Player Data API（游戏平台玩家数据接口）
+  title: GamePlatform Player Data Internal API（游戏平台玩家资料内部接口）
   version: 1.0.0
-  description: 《游戏平台》跨技术共享HTTP契约。所有字段和操作均为Game Client与Go Backend共同遵循的唯一真源。
+  description: PlayerDataService 当前运行的内部 HTTP 接口。该服务只保存跨局长期资料，不承载生命值、Buff、技能冷却等实时战斗状态；调用者必须是受信任的后端服务。
+servers:
+  - url: http://127.0.0.1:8082
+    description: 本地 Docker 开发部署的 PlayerDataService
+tags:
+  - name: 运维
+  - name: 内部玩家资料
 paths:
-  /v1/player/profile:
+  /health/live:
     get:
-      operationId: getPlayerProfile
-      security:
-      - bearerAuth: []
+      tags: [运维]
+      operationId: getPlayerDataLiveness
+      summary: 查询玩家资料服务存活状态
       responses:
         '200':
-          description: Player profile
+          description: 服务进程存活。
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerProfile'
-      summary: 获取玩家资料
-      description: 获取当前玩家的跨局长期资料，不包含生命值、Buff、技能冷却等实时战斗状态。
-  /v1/player/settings:
-    patch:
-      operationId: updatePlayerSettings
-      security:
-      - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePlayerSettingsRequest'
-      responses:
-        '200':
-          description: Updated settings
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerSettings'
-      summary: 更新玩家设置
-      description: 更新当前玩家的语言、首选区域等长期设置。
-  /v1/player/characters:
+              schema: { $ref: '#/components/schemas/LivenessResponse' }
+  /health/ready:
     get:
-      operationId: getOwnedCharacters
-      security:
-      - bearerAuth: []
+      tags: [运维]
+      operationId: getPlayerDataReadiness
+      summary: 查询玩家资料服务就绪状态
       responses:
         '200':
-          description: Owned character IDs
+          description: 服务宿主已就绪。
           content:
             application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-      summary: 获取已拥有角色
-      description: 返回当前玩家已经拥有的角色逻辑ID列表。
-  /v1/player/progress:
+              schema: { $ref: '#/components/schemas/ReadinessResponse' }
+  /version:
     get:
-      operationId: getPlayerProgress
-      security:
-      - bearerAuth: []
+      tags: [运维]
+      operationId: getPlayerDataVersion
+      summary: 查询玩家资料服务版本
       responses:
         '200':
-          description: Persistent player progress
+          description: 服务名称与运行版本。
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerProgress'
-      summary: 获取玩家长期进度
-      description: 返回新手教学、长期成长等跨局持久进度。
+              schema: { $ref: '#/components/schemas/VersionResponse' }
+  /internal/v1/playerdata/profile:
+    get:
+      tags: [内部玩家资料]
+      operationId: getInternalPlayerProfile
+      summary: 按玩家标识读取长期资料
+      description: GatewayService 已完成身份认证后调用。playerId 由可信服务传入，不能接受游戏客户端直接调用。
+      parameters:
+        - name: playerId
+          in: query
+          required: true
+          description: 要读取的玩家标识。
+          schema: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: 已找到的玩家长期资料。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalPlayerProfileResponse' }
+        '404':
+          description: 玩家资料不存在。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
-    PlayerSettings:
+    LivenessResponse:
       type: object
       additionalProperties: false
+      required: [status, service]
       properties:
-        language:
-          type: string
-        preferredRegion:
-          type:
-          - string
-          - 'null'
-    UpdatePlayerSettingsRequest:
-      allOf:
-      - $ref: '#/components/schemas/PlayerSettings'
-    PlayerProgress:
+        status: { type: string, const: ok, description: 存活状态常量。 }
+        service: { type: string, description: 服务运行名称。 }
+    ReadinessResponse:
       type: object
       additionalProperties: false
-      required:
-      - tutorialCompleted
+      required: [status, service]
       properties:
-        tutorialCompleted:
-          type: boolean
-        defaultWorldId:
-          type:
-          - string
-          - 'null'
-    PlayerProfile:
+        status: { type: string, const: ready, description: 就绪状态常量。 }
+        service: { type: string, description: 服务运行名称。 }
+    VersionResponse:
       type: object
       additionalProperties: false
-      required:
-      - playerId
-      - gameId
-      - displayName
-      - dataVersion
-      - revision
-      - tutorialCompleted
-      - ownedCharacterIds
+      required: [service, version]
       properties:
-        playerId:
-          type: string
-        gameId:
-          type: string
-        displayName:
-          type: string
-        dataVersion:
-          type: integer
-          minimum: 1
-        revision:
-          type: integer
-          minimum: 0
-        tutorialCompleted:
-          type: boolean
-        defaultWorldId:
-          type:
-          - string
-          - 'null'
+        service: { type: string, description: 服务运行名称。 }
+        version: { type: string, description: 服务构建版本。 }
+    InternalPlayerProfileResponse:
+      type: object
+      additionalProperties: false
+      required: [found, playerId, gameId, displayName, dataVersion, revision, tutorialCompleted, ownedCharacterIds]
+      properties:
+        found: { type: boolean, const: true, description: 当前 HTTP 实现仅在找到资料时返回 true。 }
+        playerId: { type: string, description: 玩家标识。 }
+        gameId: { type: string, description: 所属游戏标识。 }
+        displayName: { type: string, description: 玩家显示名称。 }
+        dataVersion: { type: integer, minimum: 1, description: 资料结构版本。 }
+        revision: { type: integer, minimum: 0, description: 长期资料乐观并发修订号。 }
+        tutorialCompleted: { type: boolean, description: 是否完成新手教学。 }
+        defaultWorldId: { type: string, description: 默认进入世界标识；当前实现可能为空字符串。 }
         ownedCharacterIds:
           type: array
-          items:
-            type: string
+          description: 已拥有角色逻辑标识列表。
+          items: { type: string }
+    InternalApiError:
+      type: object
+      additionalProperties: false
+      required: [errorCode, message]
+      properties:
+        errorCode: { type: string, description: 内部稳定错误码。 }
+        message: { type: string, description: 错误说明。 }

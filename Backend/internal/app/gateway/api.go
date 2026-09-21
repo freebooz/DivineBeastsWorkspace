@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -126,6 +127,7 @@ func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, par
 	handler.mux.HandleFunc("GET /v1/player/profile", handler.requireAuth(handler.getProfile))
 	handler.mux.HandleFunc("POST /v1/party", handler.requireAuth(handler.createParty))
 	handler.mux.HandleFunc("POST /v1/matchmaking/tickets", handler.requireAuth(handler.createMatchmakingTicket))
+	handler.registerSwaggerDocumentation(os.Getenv(swaggerContractsRootEnvironment))
 	return handler.tracing(handler.mux)
 }
 

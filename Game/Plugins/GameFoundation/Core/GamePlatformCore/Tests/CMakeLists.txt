@@ -1,0 +1,17 @@
+# 原生测试直接编译生产算法；不引入UE、不复制解析实现、不构建引擎。
+cmake_minimum_required(VERSION 3.20)
+project(GamePlatformCoreNativeTests LANGUAGES CXX)
+enable_testing()
+add_executable(GamePlatformCoreNativeTests
+    ../Source/GamePlatformCore/Private/Tests/GamePlatformCoreNativeTests.cpp)
+target_include_directories(GamePlatformCoreNativeTests PRIVATE ../Source/GamePlatformCore/Private)
+target_compile_features(GamePlatformCoreNativeTests PRIVATE cxx_std_17)
+target_compile_definitions(GamePlatformCoreNativeTests PRIVATE GAME_PLATFORM_CORE_NATIVE_TESTS=1)
+if(MSVC)
+    target_compile_options(GamePlatformCoreNativeTests PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(GamePlatformCoreNativeTests PRIVATE -Wall -Wextra -Werror -pedantic)
+endif()
+foreach(scenario identity_valid identity_invalid identity_limits identity_equality identity_alias version_valid version_invalid version_order wide_characters result_states result_diagnostics)
+    add_test(NAME ${scenario} COMMAND GamePlatformCoreNativeTests ${scenario})
+endforeach()

@@ -1,0 +1,17 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "Game Platform Data",
+  "Description": "平台定义、引擎主资产加载、跨实例需求租约及编辑器验证。",
+  "Category": "GameFoundation",
+  "CanContainContent": false,
+  "Modules": [
+    { "Name": "GamePlatformData", "Type": "Runtime", "LoadingPhase": "Default" },
+    { "Name": "GamePlatformDataEditor", "Type": "Editor", "LoadingPhase": "Default", "TargetAllowList": ["Editor"] }
+  ],
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "DataValidation", "Enabled": true, "TargetAllowList": ["Editor"] }
+  ]
+}

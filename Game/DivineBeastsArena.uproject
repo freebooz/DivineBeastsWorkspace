@@ -1,1 +1,7 @@
-
+{
+  "FileVersion": 3,
+  "EngineAssociation": "",
+  "Category": "Games",
+  "Description": "神兽联盟唯一正式游戏工程；FoundationStandalone 为显式开发验证入口。",
+  "Modules": [{ "Name": "DivineBeastsArena", "Type": "Runtime", "LoadingPhase": "Default" }]
+}

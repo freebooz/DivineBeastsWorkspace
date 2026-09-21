@@ -20,7 +20,8 @@ foreach ($endpoint in @(
     'http://127.0.0.1:8081/health/ready',
     'http://127.0.0.1:8082/health/ready',
     'http://127.0.0.1:8083/health/ready',
-    'http://127.0.0.1:8084/health/ready'
+    'http://127.0.0.1:8084/health/ready',
+    'http://127.0.0.1:28080/swagger/'
 )) {
     $response = Invoke-WebRequest -UseBasicParsing -Uri $endpoint -TimeoutSec 5
     if ($response.StatusCode -ne 200) {
@@ -28,4 +29,4 @@ foreach ($endpoint in @(
     }
 }
 
-Write-Output '业务后端一键启动集成校验通过。'
+Write-Output '业务后端一键启动与 Swagger 文档入口集成校验通过。'

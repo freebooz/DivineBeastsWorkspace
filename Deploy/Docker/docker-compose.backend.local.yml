@@ -93,8 +93,11 @@ services:
       IDENTITY_SERVICE_URL: http://identityservice:8081
       PLAYER_DATA_SERVICE_URL: http://playerdataservice:8082
       MATCH_SERVICE_URL: http://matchservice:8083
+      DIVINEBEASTS_SWAGGER_CONTRACTS_ROOT: /contracts
     ports:
       - "28080:8080"
+    volumes:
+      - ./Shared/Contracts:/contracts:ro
     networks:
       - backend
 
