@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://divinebeasts/contracts/arena-mode.schema.json",
+  "title": "DivineBeasts ArenaMode（神兽联盟竞技模式）",
+  "type": "string",
+  "enum": [
+    "Arena.Mode.Duel1v1",
+    "Arena.Mode.Team2v2",
+    "Arena.Mode.Team3v3",
+    "Arena.Mode.Team4v4",
+    "Arena.Mode.Team5v5"
+  ]
+}

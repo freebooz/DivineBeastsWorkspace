@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://divinebeasts/contracts/server-catalog.schema.json",
+  "title": "DivineBeasts ServerCatalog（神兽联盟服务器目录）",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "serverRoles",
+    "experiences",
+    "arenaModes"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "serverRoles": {
+      "type": "array",
+      "items": {
+        "$ref": "server-role.schema.json"
+      },
+      "uniqueItems": true
+    },
+    "experiences": {
+      "type": "array",
+      "items": {
+        "$ref": "experience.schema.json"
+      },
+      "uniqueItems": true
+    },
+    "arenaModes": {
+      "type": "array",
+      "items": {
+        "$ref": "arena-mode.schema.json"
+      },
+      "uniqueItems": true
+    }
+  }
+}

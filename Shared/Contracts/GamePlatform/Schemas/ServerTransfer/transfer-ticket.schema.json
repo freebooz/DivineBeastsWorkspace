@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameplatform/contracts/server-transfer/transfer-ticket.schema.json",
+  "title": "TransferTicket",
+  "description": "Game Client跨Dedicated Server迁移使用的一次性短期票据。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ticketId",
+    "assignmentId",
+    "gameId",
+    "playerId",
+    "sessionId",
+    "destinationGameServerId",
+    "destinationEndpoint",
+    "destinationWorldId",
+    "destinationExperienceId",
+    "issuedAt",
+    "expiresAt",
+    "nonce",
+    "signature"
+  ],
+  "properties": {
+    "ticketId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gameId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "playerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceGameServerId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "destinationGameServerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "destinationEndpoint": {
+      "type": "string",
+      "minLength": 3
+    },
+    "destinationWorldId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "matchId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nonce": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signature": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assignmentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "destinationExperienceId": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

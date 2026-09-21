@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package divinebeasts.backend.identity.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/internal/identity/v1;identityv1";
+
+// IdentityService（身份认证内部服务）供Gateway通过gRPC执行登录和Access Token认证。
+service IdentityService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+}
+
+message LoginRequest {
+  string game_id = 1;
+  string provider = 2;
+  string credential = 3;
+  string client_version = 4;
+  string device_id = 5;
+}
+
+message LoginResponse {
+  string player_id = 1;
+  string session_id = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  int64 expires_at_unix_ms = 5;
+  string error_code = 6;
+}
+
+message AuthenticateRequest {
+  string access_token = 1;
+}
+
+message AuthenticateResponse {
+  bool valid = 1;
+  string player_id = 2;
+  string session_id = 3;
+  string error_code = 4;
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "current": {
+    "contractVersion": "1.3.0",
+    "backendVersion": "1.1.0",
+    "clientNetworkProtocol": 1,
+    "serverNetworkProtocol": 1
+  },
+  "supported": [
+    {
+      "contractMajor": 1,
+      "minContractVersion": "1.2.0",
+      "maxContractVersion": "1.3.x",
+      "clientNetworkProtocol": 1,
+      "serverNetworkProtocol": 1,
+      "notes": "1.3仅新增Assignment/Experience/Transfer字段；1.2客户端可继续使用原有竞技字段。"
+    }
+  ]
+}

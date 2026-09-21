@@ -1,0 +1,153 @@
+openapi: 3.1.0
+info:
+  title: GamePlatform Identity API（游戏平台身份接口）
+  version: 1.0.0
+  description: 《游戏平台》跨技术共享HTTP契约。所有字段和操作均为Game Client与Go Backend共同遵循的唯一真源。
+servers:
+- url: https://api.example.com
+paths:
+  /v1/auth/login:
+    post:
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login succeeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+      summary: 玩家登录
+      description: 验证玩家登录凭据并创建在线会话，返回访问令牌、刷新令牌、玩家ID和会话ID。
+  /v1/auth/refresh:
+    post:
+      operationId: refreshAccessToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+      summary: 刷新访问令牌
+      description: 使用有效刷新令牌签发新的访问令牌，避免玩家重新登录。
+  /v1/auth/logout:
+    post:
+      operationId: logout
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Logged out
+      summary: 玩家退出登录
+      description: 注销当前认证会话并使相关访问凭据失效。
+  /v1/auth/session:
+    get:
+      operationId: getAuthSession
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Current authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSession'
+      summary: 查询当前认证会话
+      description: 返回当前Bearer访问令牌对应的玩家会话信息。
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - gameId
+      - provider
+      - credential
+      - clientVersion
+      properties:
+        gameId:
+          type: string
+          example: example-game
+        provider:
+          type: string
+          enum:
+          - guest
+          - platform
+        credential:
+          type: string
+          minLength: 1
+        clientVersion:
+          type: string
+          minLength: 1
+        deviceId:
+          type:
+          - string
+          - 'null'
+    RefreshTokenRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+    LoginResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - playerId
+      - accessToken
+      - refreshToken
+      - expiresAt
+      - sessionId
+      properties:
+        playerId:
+          type: string
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        sessionId:
+          type: string
+    AuthSession:
+      type: object
+      additionalProperties: false
+      required:
+      - playerId
+      - sessionId
+      - issuedAt
+      - expiresAt
+      properties:
+        playerId:
+          type: string
+        sessionId:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time

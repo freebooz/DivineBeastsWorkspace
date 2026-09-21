@@ -1,0 +1,33 @@
+{
+  "gamePlatformProto": {
+    "source": "Shared/Contracts/GamePlatform/Proto",
+    "go": "Backend/generated/proto/shared/gameplatform",
+    "cpp": "Shared/Generated/Cpp/GamePlatform/Proto"
+  },
+  "divineBeastsProto": {
+    "source": "Shared/Contracts/Games/DivineBeasts/Proto",
+    "go": "Backend/generated/proto/shared/divinebeasts",
+    "cpp": "Shared/Generated/Cpp/Games/DivineBeasts/Proto"
+  },
+  "gamePlatformOpenAPI": {
+    "source": "Shared/Contracts/GamePlatform/OpenAPI",
+    "go": "Backend/generated/openapi/gameplatform"
+  },
+  "divineBeastsOpenAPI": {
+    "source": "Shared/Contracts/Games/DivineBeasts/OpenAPI",
+    "go": "Backend/generated/openapi/divinebeasts"
+  },
+  "backendInternalProto": {
+    "source": "Backend/internal/contracts/proto",
+    "go": "Backend/generated/proto/internal"
+  },
+  "ueConsumers": [
+    "GamePlatformOnline",
+    "GamePlatformSession",
+    "GamePlatformServer",
+    "GamePlatformArenaServer",
+    "DivineBeastsRuntime",
+    "DivineBeastsServer",
+    "DivineBeastsArena"
+  ]
+}

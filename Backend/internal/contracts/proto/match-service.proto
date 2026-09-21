@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package divinebeasts.backend.match.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/internal/match/v1;matchv1";
+
+// MatchService（比赛组织内部服务）供Gateway执行Party与Matchmaking业务操作。
+service MatchService {
+  rpc CreateParty(CreatePartyRequest) returns (CreatePartyResponse);
+  rpc CreateMatchmakingTicket(CreateMatchmakingTicketRequest) returns (CreateMatchmakingTicketResponse);
+}
+
+message CreatePartyRequest {
+  string player_id = 1;
+}
+
+message CreatePartyResponse {
+  string party_id = 1;
+  string leader_player_id = 2;
+  repeated string member_player_ids = 3;
+  string selected_arena_mode_id = 4;
+  bool roster_locked = 5;
+  int64 revision = 6;
+  string error_code = 7;
+}
+
+message CreateMatchmakingTicketRequest {
+  string player_id = 1;
+  string arena_mode_id = 2;
+  string party_id = 3;
+  string preferred_region = 4;
+  string client_request_id = 5;
+}
+
+message CreateMatchmakingTicketResponse {
+  string ticket_id = 1;
+  string arena_mode_id = 2;
+  string party_id = 3;
+  repeated string party_member_ids = 4;
+  uint32 party_size = 5;
+  uint32 team_size = 6;
+  string state = 7;
+  string error_code = 8;
+}

@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package divinebeasts.backend.playerdata.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/internal/playerdata/v1;playerdatav1";
+
+// PlayerDataService（玩家数据内部服务）供Gateway读取玩家长期资料。
+service PlayerDataService {
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+}
+
+message GetProfileRequest {
+  string player_id = 1;
+}
+
+message GetProfileResponse {
+  bool found = 1;
+  string player_id = 2;
+  string game_id = 3;
+  string display_name = 4;
+  int32 data_version = 5;
+  int64 revision = 6;
+  bool tutorial_completed = 7;
+  string default_world_id = 8;
+  repeated string owned_character_ids = 9;
+  string error_code = 10;
+}

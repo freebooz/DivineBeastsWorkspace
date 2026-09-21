@@ -1,0 +1,142 @@
+openapi: 3.1.0
+info:
+  title: GamePlatform Matchmaking API（游戏平台匹配接口）
+  version: 1.0.0
+  description: 《游戏平台》跨技术共享HTTP契约。所有字段和操作均为Game Client与Go Backend共同遵循的唯一真源。
+paths:
+  /v1/matchmaking/tickets:
+    post:
+      operationId: createMatchmakingTicket
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMatchmakingTicketRequest'
+      responses:
+        '200':
+          description: Matchmaking ticket created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchmakingTicket'
+      summary: 创建匹配票据
+      description: 为单人或Party创建项目定义的匹配票据；具体ArenaMode（竞技模式）由游戏项目扩展契约约束，服务端权威读取MMR、处罚等数据。
+  /v1/matchmaking/tickets/{ticketId}:
+    get:
+      operationId: getMatchmakingTicket
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: ticketId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Matchmaking ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchmakingTicket'
+      summary: 查询匹配票据
+      description: 查询匹配票据当前状态，例如搜索中、已匹配、已取消或失败。
+    delete:
+      operationId: cancelMatchmakingTicket
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: ticketId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Matchmaking canceled
+      summary: 取消匹配票据
+      description: 取消当前匹配票据并解除Party名单锁定。
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CreateMatchmakingTicketRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - arenaModeId
+      - clientRequestId
+      properties:
+        arenaModeId:
+          type: string
+          minLength: 1
+        partyId:
+          type:
+          - string
+          - 'null'
+        preferredRegion:
+          type:
+          - string
+          - 'null'
+        clientRequestId:
+          type: string
+          minLength: 1
+    MatchmakingTicket:
+      type: object
+      additionalProperties: false
+      required:
+      - ticketId
+      - arenaModeId
+      - partyMemberIds
+      - partySize
+      - teamSize
+      - state
+      - createdAt
+      properties:
+        ticketId:
+          type: string
+        arenaModeId:
+          type: string
+        partyId:
+          type:
+          - string
+          - 'null'
+        partyMemberIds:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items:
+            type: string
+        partySize:
+          type: integer
+          minimum: 1
+          maximum: 5
+        teamSize:
+          type: integer
+          minimum: 1
+          maximum: 5
+        region:
+          type:
+          - string
+          - 'null'
+        state:
+          type: string
+          enum:
+          - searching
+          - matchFound
+          - canceled
+          - failed
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type:
+          - string
+          - 'null'
+          format: date-time

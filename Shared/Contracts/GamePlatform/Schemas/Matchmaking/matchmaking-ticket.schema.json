@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameplatform/contracts/matchmaking/matchmaking-ticket.schema.json",
+  "title": "MatchmakingTicket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ticketId",
+    "gameId",
+    "arenaModeId",
+    "partyMemberIds",
+    "partySize",
+    "teamSize",
+    "state",
+    "createdAt"
+  ],
+  "properties": {
+    "ticketId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gameId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "arenaModeId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "partyId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "partyMemberIds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "partySize": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "teamSize": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "region": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "searching",
+        "matchFound",
+        "canceled",
+        "failed"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "description": "Resolver 外部测试夹具示例；真实标签需在工程 GameplayTags 中注册。",
+  "cases": [
+    {
+      "semantic": "Moba.Combat.Hit",
+      "scope": "Project",
+      "priority": 10,
+      "expected": "DBA.Default.Hit"
+    },
+    {
+      "semantic": "Moba.Combat.Hit",
+      "scope": "ContentPack",
+      "priority": 10,
+      "context": [
+        "DBA.Hero.Rat"
+      ],
+      "expected": "DBA.Rat.Hit"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package gameplatform.contracts.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/shared/gameplatform/contracts/v1;contractsv1";
+
+message Endpoint {
+  string host = 1;
+  uint32 port = 2;
+}
+
+message OperationResult {
+  bool success = 1;
+  string error_code = 2;
+  string message = 3;
+  string trace_id = 4;
+}

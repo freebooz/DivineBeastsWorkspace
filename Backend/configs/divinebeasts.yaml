@@ -1,0 +1,19 @@
+# divinebeasts.yaml（神兽联盟业务配置）：大厅已并入OpenWorld.Hub，不存在独立Lobby Server。
+gameId: divine-beasts
+serverRoles:
+  - GameServer.Role.OpenWorld
+  - GameServer.Role.Village
+  - GameServer.Role.MainArena
+experiences:
+  - Experience.OpenWorld.Hub
+  - Experience.OpenWorld.Main
+  - Experience.Village.Main
+  - Experience.Village.Tutorial
+  - Experience.Village.Training
+  - Experience.MainArena.Main
+arenaModes:
+  - Arena.Mode.Duel1v1
+  - Arena.Mode.Team2v2
+  - Arena.Mode.Team3v3
+  - Arena.Mode.Team4v4
+  - Arena.Mode.Team5v5

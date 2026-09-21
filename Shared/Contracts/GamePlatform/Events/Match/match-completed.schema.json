@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameplatform/contracts/events/match/match-completed.schema.json",
+  "title": "MatchCompletedEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "messageId",
+    "messageType",
+    "messageVersion",
+    "gameId",
+    "environmentId",
+    "correlationId",
+    "traceId",
+    "producer",
+    "occurredAt",
+    "payload"
+  ],
+  "properties": {
+    "messageId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "messageType": {
+      "const": "Match.Completed"
+    },
+    "messageVersion": {
+      "const": 1
+    },
+    "gameId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environmentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "regionId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "causationId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "traceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "matchId",
+        "arenaModeId",
+        "gameServerId"
+      ],
+      "properties": {
+        "matchId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arenaModeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gameServerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "winningTeamId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

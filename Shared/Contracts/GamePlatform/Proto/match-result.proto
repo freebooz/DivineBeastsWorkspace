@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package gameplatform.match.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/shared/gameplatform/match/v1;matchv1";
+
+service MatchResultService {
+  rpc SubmitMatchResult(SubmitMatchResultRequest) returns (SubmitMatchResultResponse);
+}
+
+message SubmitMatchResultRequest {
+  string match_id = 1;
+  string arena_mode_id = 2;
+  string game_server_id = 3;
+  int64 started_at_unix_ms = 4;
+  int64 ended_at_unix_ms = 5;
+  string winning_team_id = 6;
+  repeated MatchTeamResult teams = 7;
+  repeated MatchPlayerResult players = 8;
+}
+
+message MatchTeamResult {
+  string team_id = 1;
+  bool won = 2;
+  uint32 score = 3;
+}
+
+message MatchPlayerResult {
+  string player_id = 1;
+  string team_id = 2;
+  string character_id = 3;
+  uint32 kills = 4;
+  uint32 deaths = 5;
+  uint32 assists = 6;
+  uint32 score = 7;
+}
+
+message SubmitMatchResultResponse {
+  bool accepted = 1;
+  string result_id = 2;
+  string error_code = 3;
+}

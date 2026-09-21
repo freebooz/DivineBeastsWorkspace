@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://divinebeasts/contracts/server-role.schema.json",
+  "title": "DivineBeasts ServerRole（神兽联盟服务器角色）",
+  "type": "string",
+  "enum": [
+    "GameServer.Role.OpenWorld",
+    "GameServer.Role.Village",
+    "GameServer.Role.MainArena"
+  ]
+}

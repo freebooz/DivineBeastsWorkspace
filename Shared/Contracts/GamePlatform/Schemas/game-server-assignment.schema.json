@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameplatform/contracts/game-server-assignment.schema.json",
+  "title": "GameServerAssignment",
+  "description": "Dedicated Server查询的统一运行任务；世界任务和竞技任务共用基础字段。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["assignmentId", "gameServerId", "serverRoleId", "experienceId", "worldId", "regionId", "assignmentType"],
+  "properties": {
+    "assignmentId": {"type": "string", "minLength": 1},
+    "gameServerId": {"type": "string", "minLength": 1},
+    "serverRoleId": {"type": "string", "minLength": 1},
+    "experienceId": {"type": "string", "minLength": 1},
+    "worldId": {"type": "string", "minLength": 1},
+    "regionId": {"type": "string", "minLength": 1},
+    "assignmentType": {"type": "string", "enum": ["world", "arena"]},
+    "matchId": {"type": ["string", "null"]},
+    "arenaModeId": {"type": ["string", "null"]},
+    "mapId": {"type": ["string", "null"]},
+    "teamSize": {"type": "integer", "minimum": 0},
+    "totalPlayers": {"type": "integer", "minimum": 0}
+  }
+}

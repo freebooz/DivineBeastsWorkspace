@@ -1,0 +1,210 @@
+openapi: 3.1.0
+info:
+  title: GamePlatform Party API（游戏平台组队接口）
+  version: 1.0.0
+  description: 《游戏平台》跨技术共享HTTP契约。所有字段和操作均为Game Client与Go Backend共同遵循的唯一真源。
+paths:
+  /v1/party:
+    post:
+      operationId: createParty
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Party created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+      summary: 创建组队
+      description: 创建Party并把当前认证玩家设为队长。
+  /v1/party/{partyId}:
+    get:
+      operationId: getParty
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          description: Party details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+      summary: 查询组队
+      description: 查询指定Party的成员、队长、准备状态和名单锁定状态。
+  /v1/party/{partyId}/invite:
+    post:
+      operationId: invitePartyMember
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitePartyMemberRequest'
+      responses:
+        '204':
+          description: Invitation created
+      summary: 邀请组队成员
+      description: 由有权限的Party成员创建玩家邀请。
+  /v1/party/{partyId}/join:
+    post:
+      operationId: joinParty
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          description: Joined party
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+      summary: 加入组队
+      description: 当前玩家接受邀请并加入指定Party。
+  /v1/party/{partyId}/leave:
+    post:
+      operationId: leaveParty
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PartyId'
+      responses:
+        '204':
+          description: Left party
+      summary: 离开组队
+      description: 当前玩家退出Party，并按业务规则处理队长转移或解散。
+  /v1/party/{partyId}/ready:
+    post:
+      operationId: setPartyReadyState
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - ready
+              properties:
+                ready:
+                  type: boolean
+      responses:
+        '200':
+          description: Ready state updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+      summary: 设置准备状态
+      description: 设置当前玩家在Party中的准备状态。
+  /v1/party/{partyId}/leader:
+    post:
+      operationId: transferPartyLeadership
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - playerId
+              properties:
+                playerId:
+                  type: string
+      responses:
+        '200':
+          description: Leadership transferred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+      summary: transferPartyLeadership接口
+      description: transferPartyLeadership的HTTP接口定义。
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    InvitePartyMemberRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - playerId
+      properties:
+        playerId:
+          type: string
+    PartyMember:
+      type: object
+      additionalProperties: false
+      required:
+      - playerId
+      - ready
+      - online
+      properties:
+        playerId:
+          type: string
+        displayName:
+          type: string
+        ready:
+          type: boolean
+        online:
+          type: boolean
+        joinedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+    Party:
+      type: object
+      additionalProperties: false
+      required:
+      - partyId
+      - leaderPlayerId
+      - members
+      - rosterLocked
+      - revision
+      properties:
+        partyId:
+          type: string
+        leaderPlayerId:
+          type: string
+        selectedArenaModeId:
+          type:
+          - string
+          - 'null'
+        rosterLocked:
+          type: boolean
+        revision:
+          type: integer
+          minimum: 0
+        members:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/PartyMember'

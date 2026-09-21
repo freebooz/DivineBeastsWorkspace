@@ -1,0 +1,17 @@
+{
+  "modules": [
+    "GamePlatformVFXClient",
+    "GamePlatformVFXEditor"
+  ],
+  "asset_prefixes": [
+    "FXS_",
+    "FXE_",
+    "FXM_",
+    "FXT_",
+    "DA_VFX_",
+    "DA_VFXCAT_"
+  ],
+  "maps": [
+    "L_GPVFX_Review"
+  ]
+}

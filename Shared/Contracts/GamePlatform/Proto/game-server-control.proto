@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package gameplatform.gameserver.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/shared/gameplatform/gameserver/v1;gameserverv1";
+
+import "common.proto";
+
+service GameServerControlService {
+  rpc RegisterGameServer(RegisterGameServerRequest) returns (RegisterGameServerResponse);
+  rpc UpdateHeartbeat(GameServerHeartbeatRequest) returns (GameServerHeartbeatResponse);
+  rpc SetGameServerReady(SetGameServerReadyRequest) returns (SetGameServerReadyResponse);
+  rpc SetGameServerDraining(SetGameServerDrainingRequest) returns (SetGameServerDrainingResponse);
+  rpc GetGameServerAssignment(GetGameServerAssignmentRequest) returns (GetGameServerAssignmentResponse);
+}
+
+message RegisterGameServerRequest {
+  string game_id = 1;
+  string game_server_id = 2;
+  string server_role_id = 3;
+  string region_id = 4;
+  string cluster_id = 5;
+  string node_id = 6;
+  string world_id = 7;
+  gameplatform.contracts.v1.Endpoint public_endpoint = 8;
+  gameplatform.contracts.v1.Endpoint internal_endpoint = 9;
+  string build_version = 10;
+  uint32 protocol_version = 11;
+  uint32 capacity = 12;
+  string experience_id = 13;
+}
+
+message RegisterGameServerResponse {
+  bool accepted = 1;
+  string registration_id = 2;
+  uint32 heartbeat_interval_seconds = 3;
+  string error_code = 4;
+}
+
+message GameServerHeartbeatRequest {
+  string game_server_id = 1;
+  string status = 2;
+  uint32 current_players = 3;
+  uint32 capacity = 4;
+  string current_match_id = 5;
+  double cpu_load = 6;
+  uint64 memory_used_bytes = 7;
+  int64 timestamp_unix_ms = 8;
+}
+
+message GameServerHeartbeatResponse {
+  bool accepted = 1;
+  bool should_drain = 2;
+  bool should_shutdown = 3;
+  string error_code = 4;
+}
+
+message SetGameServerReadyRequest {
+  string game_server_id = 1;
+}
+
+message SetGameServerReadyResponse {
+  bool accepted = 1;
+  string error_code = 2;
+}
+
+message SetGameServerDrainingRequest {
+  string game_server_id = 1;
+  string reason = 2;
+}
+
+message SetGameServerDrainingResponse {
+  bool accepted = 1;
+  string error_code = 2;
+}
+
+message GetGameServerAssignmentRequest {
+  string game_server_id = 1;
+}
+
+message AssignedPlayer {
+  string player_id = 1;
+  string team_id = 2;
+  string character_id = 3;
+}
+
+message GetGameServerAssignmentResponse {
+  bool found = 1;
+  string match_id = 2;
+  string arena_mode_id = 3;
+  string map_id = 4;
+  uint32 team_size = 5;
+  uint32 total_players = 6;
+  repeated AssignedPlayer roster = 7;
+  string error_code = 8;
+  string assignment_id = 9;
+  string server_role_id = 10;
+  string experience_id = 11;
+  string world_id = 12;
+  string region_id = 13;
+  string assignment_type = 14;
+}

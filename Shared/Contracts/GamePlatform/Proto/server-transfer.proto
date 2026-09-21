@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package gameplatform.transfer.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/shared/gameplatform/transfer/v1;transferv1";
+
+// ServerTransferService（服务器迁移服务）负责签发和验证跨Dedicated Server的一次性迁移票据。
+service ServerTransferService {
+  rpc IssueTransferTicket(IssueTransferTicketRequest) returns (IssueTransferTicketResponse);
+  rpc ValidateTransferTicket(ValidateTransferTicketRequest) returns (ValidateTransferTicketResponse);
+}
+
+message IssueTransferTicketRequest {
+  string game_id = 1;
+  string player_id = 2;
+  string session_id = 3;
+  string source_game_server_id = 4;
+  string destination_game_server_id = 5;
+  string destination_world_id = 6;
+  string match_id = 7;
+  string assignment_id = 8;
+  string destination_experience_id = 9;
+}
+
+// IssueTransferTicketResponse（迁移票据签发响应）返回完整签名上下文。
+// 目标Dedicated Server验证时必须原样提交这些字段，Backend不依赖额外的票据明文存储。
+message IssueTransferTicketResponse {
+  string ticket_id = 1;
+  string destination_host = 2;
+  uint32 destination_port = 3;
+  int64 expires_at_unix_ms = 4;
+  string nonce = 5;
+  string signature = 6;
+  string error_code = 7;
+  string game_id = 8;
+  string player_id = 9;
+  string session_id = 10;
+  string source_game_server_id = 11;
+  string destination_game_server_id = 12;
+  string destination_world_id = 13;
+  string match_id = 14;
+  int64 issued_at_unix_ms = 15;
+  string assignment_id = 16;
+  string destination_experience_id = 17;
+}
+
+// ValidateTransferTicketRequest（迁移票据验证请求）携带完整签名上下文，支持Backend无状态重建票据并校验HMAC。
+message ValidateTransferTicketRequest {
+  string ticket_id = 1;
+  string player_id = 2;
+  string destination_game_server_id = 3;
+  string nonce = 4;
+  string signature = 5;
+  string game_id = 6;
+  string session_id = 7;
+  string source_game_server_id = 8;
+  string destination_world_id = 9;
+  string match_id = 10;
+  int64 issued_at_unix_ms = 11;
+  int64 expires_at_unix_ms = 12;
+  string destination_endpoint = 13;
+  string assignment_id = 14;
+  string destination_experience_id = 15;
+}
+
+message ValidateTransferTicketResponse {
+  bool valid = 1;
+  string session_id = 2;
+  string match_id = 3;
+  string error_code = 4;
+  string player_id = 5;
+  string assignment_id = 6;
+  string destination_world_id = 7;
+  string destination_experience_id = 8;
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package divinebeasts.context.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/shared/divinebeasts/context/v1;contextv1";
+
+// DivineBeastsRuntimeContext（神兽联盟运行上下文）保存项目专属Experience/ArenaMode语义。
+// 大厅属于Experience.OpenWorld.Hub，并由GameServer.Role.OpenWorld承载。
+message DivineBeastsRuntimeContext {
+  string experience_id = 1;
+  string arena_mode_id = 2;
+  string map_id = 3;
+}

@@ -1,0 +1,16 @@
+
+# Unreal Engine 本地构建、缓存与运行产物
+/Saved/
+/Game/Binaries/
+/Game/DerivedDataCache/
+/Game/Intermediate/
+/Game/Saved/
+
+# 本地 IDE 状态
+/.vs/
+*.suo
+*.user
+
+# Go 测试与覆盖率临时产物
+/Backend/*.test
+/Backend/coverage.out

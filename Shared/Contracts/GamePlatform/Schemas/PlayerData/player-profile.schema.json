@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameplatform/contracts/player-data/player-profile.schema.json",
+  "title": "PlayerProfile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "playerId",
+    "gameId",
+    "displayName",
+    "dataVersion",
+    "revision",
+    "tutorialCompleted",
+    "ownedCharacterIds"
+  ],
+  "properties": {
+    "playerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gameId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dataVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tutorialCompleted": {
+      "type": "boolean"
+    },
+    "defaultWorldId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ownedCharacterIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

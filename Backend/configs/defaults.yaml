@@ -1,0 +1,14 @@
+# defaults.yaml（后端默认配置）：仅保存非敏感默认值，密钥由环境变量或Secret注入。
+service:
+  environment: development
+  shutdownTimeoutSeconds: 15
+http:
+  readTimeoutSeconds: 10
+  writeTimeoutSeconds: 15
+  idleTimeoutSeconds: 60
+gameServer:
+  heartbeatTimeoutSeconds: 30
+  transferTicketTtlSeconds: 30
+observability:
+  logFormat: json
+  metricsEnabled: true

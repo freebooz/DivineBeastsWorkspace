@@ -1,0 +1,16 @@
+{
+  "protoc": "30.2",
+  "protocGenGo": "1.36.8",
+  "protocGenGoGrpc": "1.5.1",
+  "oapiCodegen": "2.4.1",
+  "goRuntimeDependencies": {
+    "github.com/jackc/pgx/v5": "5.7.6",
+    "github.com/redis/go-redis/v9": "9.17.3",
+    "github.com/nats-io/nats.go": "1.45.0",
+    "google.golang.org/grpc": "1.75.1",
+    "google.golang.org/protobuf": "1.36.8",
+    "github.com/oapi-codegen/runtime": "1.1.1"
+  },
+  "goVersion": "1.23.0",
+  "policy": "CI与开发机必须使用锁定版本；更新生成器或运行时依赖版本时必须同时执行Contract Compatibility测试和productiondeps/grpcdeps构建。"
+}

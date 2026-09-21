@@ -1,0 +1,22 @@
+openapi: 3.1.0
+info:
+  title: GamePlatform Gateway API（游戏平台网关接口）
+  version: 1.0.0
+  description: GatewayService（统一接入服务）的运维与版本查询接口。
+paths:
+  /health/live:
+    get:
+      operationId: getGatewayHealth
+      summary: 查询网关健康状态
+      description: 返回GatewayService的存活状态，用于负载均衡和运维检查。
+      responses:
+        '200':
+          description: 服务进程存活
+  /version:
+    get:
+      operationId: getGatewayVersion
+      summary: 查询网关版本
+      description: 返回GatewayService当前应用版本和Shared契约版本。
+      responses:
+        '200':
+          description: 返回服务版本信息

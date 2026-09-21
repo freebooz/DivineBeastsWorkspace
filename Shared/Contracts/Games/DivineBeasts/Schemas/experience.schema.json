@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://divinebeasts/contracts/experience.schema.json",
+  "title": "DivineBeasts Experience（神兽联盟体验）",
+  "type": "string",
+  "enum": [
+    "Experience.OpenWorld.Hub",
+    "Experience.OpenWorld.Main",
+    "Experience.Village.Main",
+    "Experience.Village.Tutorial",
+    "Experience.Village.Training",
+    "Experience.MainArena.Main"
+  ]
+}

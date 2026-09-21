@@ -1,0 +1,136 @@
+openapi: 3.1.0
+info:
+  title: GamePlatform Player Data API（游戏平台玩家数据接口）
+  version: 1.0.0
+  description: 《游戏平台》跨技术共享HTTP契约。所有字段和操作均为Game Client与Go Backend共同遵循的唯一真源。
+paths:
+  /v1/player/profile:
+    get:
+      operationId: getPlayerProfile
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Player profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfile'
+      summary: 获取玩家资料
+      description: 获取当前玩家的跨局长期资料，不包含生命值、Buff、技能冷却等实时战斗状态。
+  /v1/player/settings:
+    patch:
+      operationId: updatePlayerSettings
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlayerSettingsRequest'
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSettings'
+      summary: 更新玩家设置
+      description: 更新当前玩家的语言、首选区域等长期设置。
+  /v1/player/characters:
+    get:
+      operationId: getOwnedCharacters
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Owned character IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      summary: 获取已拥有角色
+      description: 返回当前玩家已经拥有的角色逻辑ID列表。
+  /v1/player/progress:
+    get:
+      operationId: getPlayerProgress
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Persistent player progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProgress'
+      summary: 获取玩家长期进度
+      description: 返回新手教学、长期成长等跨局持久进度。
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PlayerSettings:
+      type: object
+      additionalProperties: false
+      properties:
+        language:
+          type: string
+        preferredRegion:
+          type:
+          - string
+          - 'null'
+    UpdatePlayerSettingsRequest:
+      allOf:
+      - $ref: '#/components/schemas/PlayerSettings'
+    PlayerProgress:
+      type: object
+      additionalProperties: false
+      required:
+      - tutorialCompleted
+      properties:
+        tutorialCompleted:
+          type: boolean
+        defaultWorldId:
+          type:
+          - string
+          - 'null'
+    PlayerProfile:
+      type: object
+      additionalProperties: false
+      required:
+      - playerId
+      - gameId
+      - displayName
+      - dataVersion
+      - revision
+      - tutorialCompleted
+      - ownedCharacterIds
+      properties:
+        playerId:
+          type: string
+        gameId:
+          type: string
+        displayName:
+          type: string
+        dataVersion:
+          type: integer
+          minimum: 1
+        revision:
+          type: integer
+          minimum: 0
+        tutorialCompleted:
+          type: boolean
+        defaultWorldId:
+          type:
+          - string
+          - 'null'
+        ownedCharacterIds:
+          type: array
+          items:
+            type: string

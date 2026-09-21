@@ -1,0 +1,16 @@
+openapi: 3.1.0
+info:
+  title: DivineBeasts Catalog API（神兽联盟目录接口）
+  version: 1.2.0
+paths:
+  /v1/games/divine-beasts/catalog:
+    get:
+      operationId: getDivineBeastsCatalog
+      summary: 获取神兽联盟ServerRole、Experience与ArenaMode只读目录
+      responses:
+        '200':
+          description: 返回神兽联盟当前规则目录
+          content:
+            application/json:
+              schema:
+                $ref: ../Schemas/server-catalog.schema.json

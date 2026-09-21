@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package divinebeasts.backend.gameservercontrol.v1;
+
+option go_package = "divinebeasts/backend/generated/proto/internal/gameservercontrol/v1;gameservercontrolv1";
+
+// GameServerControlInternalService（游戏服务器控制内部服务）供MatchService分配MainArena并签发玩家迁移票据。
+service GameServerControlInternalService {
+  rpc AllocateWorld(AllocateWorldRequest) returns (AllocateWorldResponse);
+  rpc AllocateMainArena(AllocateMainArenaRequest) returns (AllocateMainArenaResponse);
+  rpc IssuePlayerTransfer(IssuePlayerTransferRequest) returns (IssuePlayerTransferResponse);
+}
+
+message AllocateWorldRequest {
+  string experience_id = 1;
+  string world_id = 2;
+  string region_id = 3;
+  uint32 player_slots = 4;
+}
+
+message AllocateWorldResponse {
+  bool allocated = 1;
+  string assignment_id = 2;
+  string game_server_id = 3;
+  string server_role_id = 4;
+  string experience_id = 5;
+  string world_id = 6;
+  string region_id = 7;
+  string destination_endpoint = 8;
+  string error_code = 9;
+}
+
+message RosterPlayer {
+  string player_id = 1;
+  string team_id = 2;
+  string character_id = 3;
+}
+
+message AllocateMainArenaRequest {
+  string match_id = 1;
+  string arena_mode_id = 2;
+  string map_id = 3;
+  string region_id = 4;
+  uint32 team_size = 5;
+  uint32 total_players = 6;
+  repeated RosterPlayer roster = 7;
+}
+
+message AllocateMainArenaResponse {
+  bool allocated = 1;
+  string game_server_id = 2;
+  string match_id = 3;
+  string arena_mode_id = 4;
+  string map_id = 5;
+  uint32 team_size = 6;
+  uint32 total_players = 7;
+  repeated RosterPlayer roster = 8;
+  string error_code = 9;
+}
+
+message IssuePlayerTransferRequest {
+  string ticket_id = 1;
+  string game_id = 2;
+  string player_id = 3;
+  string session_id = 4;
+  string source_game_server_id = 5;
+  string destination_game_server_id = 6;
+  string destination_world_id = 7;
+  string match_id = 8;
+  int64 ttl_milliseconds = 9;
+  string assignment_id = 10;
+  string destination_experience_id = 11;
+}
+
+message IssuePlayerTransferResponse {
+  bool issued = 1;
+  string ticket_id = 2;
+  string player_id = 3;
+  string session_id = 4;
+  string destination_game_server_id = 5;
+  string destination_endpoint = 6;
+  string destination_world_id = 7;
+  string match_id = 8;
+  int64 issued_at_unix_ms = 9;
+  int64 expires_at_unix_ms = 10;
+  string nonce = 11;
+  string signature = 12;
+  string error_code = 13;
+  string assignment_id = 14;
+  string destination_experience_id = 15;
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameplatform/contracts/events/game-server/game-server-unhealthy.schema.json",
+  "title": "GameServerUnhealthyEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "messageId",
+    "messageType",
+    "messageVersion",
+    "gameId",
+    "environmentId",
+    "correlationId",
+    "traceId",
+    "producer",
+    "occurredAt",
+    "payload"
+  ],
+  "properties": {
+    "messageId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "messageType": {
+      "const": "GameServer.Unhealthy"
+    },
+    "messageVersion": {
+      "const": 1
+    },
+    "gameId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environmentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "regionId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "causationId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "traceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gameServerId",
+        "serverRoleId",
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "gameServerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "serverRoleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "const": "Unhealthy"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

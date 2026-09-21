@@ -1,0 +1,10 @@
+{
+  "contractVersion": "1.3.0",
+  "backendModule": "divinebeasts/backend",
+  "serverRoles": [
+    "GameServer.Role.OpenWorld",
+    "GameServer.Role.Village",
+    "GameServer.Role.MainArena"
+  ],
+  "notes": "新增统一World/Arena Assignment、Experience绑定和TransferTicket Assignment字段；字段采用向后兼容新增。"
+}
