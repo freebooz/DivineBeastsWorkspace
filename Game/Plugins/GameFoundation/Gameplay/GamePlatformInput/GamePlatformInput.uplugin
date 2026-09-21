@@ -1,0 +1,16 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "GamePlatformInput",
+  "Description": "本地玩家增强输入、租约和非权威偏好；真实设备及发布验收另行记录。",
+  "Category": "GameFoundation",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Modules": [{ "Name": "GamePlatformInputClient", "Type": "ClientOnly", "LoadingPhase": "Default", "TargetAllowList": ["Game", "Client", "Editor"] }],
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformData", "Enabled": true },
+    { "Name": "EnhancedInput", "Enabled": true }
+  ]
+}
