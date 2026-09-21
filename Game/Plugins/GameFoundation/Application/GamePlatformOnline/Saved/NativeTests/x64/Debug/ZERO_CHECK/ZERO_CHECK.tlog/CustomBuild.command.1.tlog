@@ -1,0 +1,10 @@
+^E:\POJECT\FEEBOOZ\DIVINEBEASTSWORKSPACE\GAME\PLUGINS\GAMEFOUNDATION\APPLICATION\GAMEPLATFORMONLINE\SAVED\NATIVETESTS\CMAKEFILES\D51A82E416273A8D1AB5082230F44880\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GameFoundation/Application/GamePlatformOnline/Tests -BE:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GameFoundation/Application/GamePlatformOnline/Saved/NativeTests --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GameFoundation/Application/GamePlatformOnline/Saved/NativeTests/GamePlatformOnlineLogicTests.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

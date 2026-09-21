@@ -1,0 +1,12 @@
+# Session、Loading与Flow集成
+
+本轮无新增业务后端接口；目标是复用已有Session分配结果。但当前GamePlatformSession没有公开Service/Snapshot，仅有内部状态内核，因此**真实分配消费和SessionWorld集成未执行，前置缺失**。World不包含其Private头，不读取票据，不直接访问HTTP或Go。
+
+InitializeSessionWorld返回Core Unsupported/SessionPrerequisiteMissing。World保留只读字段且不填造ServerInstanceId、ShardId和StartGeneration。纯目标比较测试只证明字段比较规则，绝非Session联调证据。
+
+Loading集成是真实公开工厂：组合根以WorldReadiness键登记GamePlatformWorldServices::CreateReadinessTask，每次操作独占任务。Start捕获当前实例实际世界和ContextGeneration；Poll只在世界全部事实Ready时成功，并向Loading传播世界失败。IsReadyToUse拒绝旧世界/旧代次/后续失效，防止历史成功被复用。Loading不反向依赖World模块。
+
+Flow仍保留唯一GamePlatformApplicationFlow执行器。本轮FoundationWorld项目专用GI装配独立管理世界测试资源，不创建第二流程执行器，不改写既有单机/Online流程图。尚未有基于真实Session的Flow纵向链；相关验收不能列通过。
+
+关闭顺序：释放本装配Loading操作与订阅，撤销工厂，撤销Region/观察订阅并销毁本次Transient Actor；世界生命周期关闭自己的流送源和Data租约。不能因为一个PIE关闭而释放另一个PIE资源。
+

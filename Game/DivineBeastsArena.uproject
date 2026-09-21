@@ -7,6 +7,8 @@
   "Plugins": [
     { "Name": "GamePlatformCore", "Enabled": true },
     { "Name": "GamePlatformData", "Enabled": true },
-    { "Name": "GamePlatformApplicationFlow", "Enabled": true }
+    { "Name": "GamePlatformApplicationFlow", "Enabled": true },
+    { "Name": "GamePlatformLoading", "Enabled": true },
+    { "Name": "GamePlatformWorld", "Enabled": true }
   ]
 }

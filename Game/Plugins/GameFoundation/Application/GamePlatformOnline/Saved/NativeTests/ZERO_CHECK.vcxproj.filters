@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\poject\feebooz\DivineBeastsWorkspace\Game\Plugins\GameFoundation\Application\GamePlatformOnline\Saved\NativeTests\CMakeFiles\d51a82e416273a8d1ab5082230f44880\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{BF419106-86E1-303D-8314-A402A86203E5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

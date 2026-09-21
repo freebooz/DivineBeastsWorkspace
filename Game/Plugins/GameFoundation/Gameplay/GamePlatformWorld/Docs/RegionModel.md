@@ -1,0 +1,12 @@
+# 区域模型与事件
+
+Region是中立逻辑区域，不等于服务器实例、全局分片或World Partition Cell。一Region可跨Cell；同Cell可有多个Region。平台不预置大厅、主城、野外名称。
+
+UGamePlatformRegionDefinition复用LogicalId、DataVersion和RequiredDefinitions，增加可选ParentRegionId、RegionTypeTag、轴对齐盒策略、AlwaysRegistered激活策略及GameplayTags。第一版不承诺尚未实现的其他边界/激活枚举。父链由Editor验证缺失、类型、环和有界深度。
+
+每个RegionId仅一个活Provider；重复直接失败，不随机覆盖。Provider弱引用必须GetWorld等于服务世界；声明的DefinitionId必须在真实加载的WorldDefinition.Regions中，逻辑ID一致。边界由项目Actor/Provider装配提供，单位厘米，闭区间，非有限或退化盒拒绝。
+
+QueryRegion先高Priority，再较小盒体积；仍完全相同则AmbiguousRegion，不用ID字典序或注册顺序裁决。UpdateObserver显式提供主体和位置，位置改变或Provider销毁时产生离开/进入，先离开后进入，同一区域不重复通知。
+
+销毁Provider在采样时自动撤销；失效观察者不再调用其回调。事件包含世界代次、弱观察者、RegionId和进入标志，只是本地通知，不直接产生伤害、采集、准入或任何网络权威结果。
+

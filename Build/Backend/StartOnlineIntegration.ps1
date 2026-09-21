@@ -86,6 +86,7 @@ for service in gatewayservice identityservice playerdataservice; do
   CGO_ENABLED=0 go build -mod=mod -trimpath -tags=productiondeps,grpcdeps -o "/output/$service" "./cmd/$service"
 done
 CGO_ENABLED=0 go build -mod=mod -trimpath -tags=productiondeps -o /output/onlinetestdata ./internal/tools/onlinetestdata
+CGO_ENABLED=0 go test -mod=mod -tags=productiondeps -c -o /output/postgres.test ./internal/platform/database/postgres
 cp go.mod /output/Build.go.mod
 cp go.sum /output/Build.go.sum
 '@
@@ -93,6 +94,8 @@ cp go.sum /output/Build.go.sum
         '--env','GOTOOLCHAIN=local',$GoImage,'sh','-c',$buildCommand) $BuildTimeoutSeconds
     $cases.Add(@{Name='BuildFrozenSource';Status='Passed'})
     $network=Add-OnlineResource $state 'network' 'network' @('--internal')
+    # Docker Desktop内部网络不实现主机发布；只有Gateway再连接独立前端桥接网，域服务/PG仍仅内部网。
+    $gatewayNetwork=Add-OnlineResource $state 'network' 'gatewaynetwork' @()
     $volume=Add-OnlineResource $state 'volume' 'dbdata' @()
     $password=New-OnlineSecret
     Write-OnlinePrivateText (Join-Path $secrets 'postgres-password') $password
@@ -131,7 +134,7 @@ cp go.sum /output/Build.go.sum
         $grpcPort=$httpPort+1000
         $arguments=@('--network',$network.Name,'--mount',"type=bind,source=$binaries,target=/app,readonly",'--env',"SERVICE_NAME=$service",'--env',"SERVICE_PORT=$httpPort",'--env',"GRPC_PORT=$grpcPort",'--env',"SERVICE_VERSION=$RunId",'--env','SERVICE_BIND_ADDRESS=0.0.0.0','--env','SHUTDOWN_TIMEOUT=15s')
         if ($role -eq 'gateway') {
-            $arguments+=@('--publish',"127.0.0.1:$($GatewayPort):8080",'--env','ONLINE_ONLY=true','--env',"IDENTITY_GRPC_TARGET=dba-online-$RunId-identity:9081",'--env',"PLAYER_DATA_GRPC_TARGET=dba-online-$RunId-player:9082")
+            $arguments+=@('--network',$gatewayNetwork.Name,'--publish',"127.0.0.1:$($GatewayPort):8080",'--env','ONLINE_ONLY=true','--env',"IDENTITY_GRPC_TARGET=dba-online-$RunId-identity:9081",'--env',"PLAYER_DATA_GRPC_TARGET=dba-online-$RunId-player:9082")
         } else { $arguments+=@('--env-file',(Join-Path $secrets 'database.env')) }
         $arguments+=@($GoImage,"/app/$service")
         $record=Add-OnlineResource $state 'container' $role $arguments

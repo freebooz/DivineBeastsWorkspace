@@ -7,6 +7,6 @@ public class DivineBeastsArena : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "GamePlatformCore", "GamePlatformData" });
-        PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformApplicationFlow", "AssetRegistry" });
+        PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformApplicationFlow", "GamePlatformLoading", "GamePlatformWorld", "AssetRegistry" });
     }
 }

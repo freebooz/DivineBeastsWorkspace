@@ -10,11 +10,14 @@
 #include "API/GamePlatformApplicationFlowSubsystem.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Bootstrap/Nodes/DBAFoundationNode.h"
+#include "Bootstrap/Nodes/DBALoadingFlowNode.h"
 #include "Definitions/GamePlatformFlowDefinition.h"
 #include "HAL/PlatformTime.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Modules/ModuleManager.h"
 #include "Types/GamePlatformVersion.h"
+#include "Bootstrap/Online/DBAFoundationOnlineContext.h"
+#include "Bootstrap/Online/DBAFoundationOnlineNode.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogDBAFoundation, Log, All);
 
@@ -22,8 +25,15 @@ void UDBAFoundationCoordinator::Initialize(UGameInstance& Owner)
 {
     Shutdown();
 #if !UE_BUILD_SHIPPING
+    bOnlineIntegration = FParse::Param(FCommandLine::Get(), TEXT("FoundationOnlineIntegration"));
+    const bool bStandalone = FParse::Param(FCommandLine::Get(), TEXT("FoundationStandalone"));
+    if (bOnlineIntegration && bStandalone)
+    {
+        Diagnostics = TEXT("基础验证入口冲突：OnlineIntegration与Standalone必须互斥");
+        return;
+    }
     if (DBA::Foundation::ResolveMode(!UE_BUILD_SHIPPING,
-        FParse::Param(FCommandLine::Get(), TEXT("FoundationStandalone")),
+        bStandalone || bOnlineIntegration,
         IsRunningCommandlet(), IsRunningDedicatedServer()) == DBA::Foundation::EMode::Disabled) { return; }
     OwnerInstance = &Owner;
     FGuid ParsedRunId;
@@ -100,6 +110,7 @@ bool UDBAFoundationCoordinator::Tick(float)
         bCoreValid ? *ProbeId.ToString() : TEXT("身份解析失败"), *Version.ToString(),
         bProbeReady ? TEXT("真实资产可读") : TEXT("未就绪"), ProbeValue, *ProbeLease.LeaseId.ToString(),
         *LastResult.Code.ToString(), *LastResult.Message);
+    if (OnlineContext) { Diagnostics += TEXT("\n") + OnlineContext->GetDiagnostics(); }
     if (bHasLocalController && ReportedWorld.Get() != World)
     {
         UE_LOG(LogDBAFoundation, Display, TEXT("FoundationHostReady RunId=%s Map=%s"), *RunId, *Map);
@@ -124,6 +135,7 @@ void UDBAFoundationCoordinator::Shutdown()
     OwnerInstance.Reset();
     ReportedWorld.Reset();
     Diagnostics = TEXT("基础工程开发验证未启用或已关闭");
+    bOnlineIntegration = false;
 }
 
 void UDBAFoundationCoordinator::StartDevelopmentFlow()
@@ -157,6 +169,12 @@ void UDBAFoundationCoordinator::StartDevelopmentFlow()
                 {
                     auto* Root = WeakThis.Get();
                     if (!Root || Root->OwnerInstance.Get() != &Owner || Root->bStopping) { return nullptr; }
+                    if (Operation == EDBAFoundationOperation::Ready)
+                    {
+                        auto* LoadingNode = NewObject<UDBALoadingFlowNode>(&Owner);
+                        LoadingNode->Configure(*Root);
+                        return LoadingNode;
+                    }
                     auto* Node = NewObject<UDBAFoundationNode>(&Owner);
                     Node->Configure(Operation, *Root);
                     return Node;
@@ -169,12 +187,41 @@ void UDBAFoundationCoordinator::StartDevelopmentFlow()
             }
             FactoryHandles.Add(Handle);
         }
+        if (bOnlineIntegration)
+        {
+            const TPair<const TCHAR*, EDBAOnlineOperation> OnlineOperations[] = {
+                {TEXT("OnlineValidateConfiguration"), EDBAOnlineOperation::ValidateConfiguration},
+                {TEXT("OnlineProbeService"), EDBAOnlineOperation::ProbeService},
+                {TEXT("OnlineLogin"), EDBAOnlineOperation::Login},
+                {TEXT("OnlineReadProfile"), EDBAOnlineOperation::ReadProfile},
+                {TEXT("OnlineReady"), EDBAOnlineOperation::Ready}};
+            for (const auto& Pair : OnlineOperations)
+            {
+                const auto Operation = Pair.Value;
+                const auto Handle = Flow->RegisterNodeFactory(FName(Pair.Key),
+                    [WeakThis, Operation](UGameInstance& Owner) -> UGamePlatformFlowNode*
+                    {
+                        auto* Root = WeakThis.Get();
+                        if (!Root || Root->OwnerInstance.Get() != &Owner || Root->bStopping) { return nullptr; }
+                        auto* Node = NewObject<UDBAFoundationOnlineNode>(&Owner);
+                        Node->Configure(Operation, *Root);
+                        return Node;
+                    }, LastResult);
+                if (!LastResult.IsSuccess())
+                {
+                    for (const auto& Added : FactoryHandles) { FGamePlatformResult Ignored; Flow->UnregisterNodeFactory(Added, Ignored); }
+                    FactoryHandles.Reset();
+                    return;
+                }
+                FactoryHandles.Add(Handle);
+            }
+        }
         FinishedHandle = Flow->OnFinished().AddUObject(this, &UDBAFoundationCoordinator::OnFlowFinished);
     }
     const uint64 Generation = ++RequestGeneration;
     TWeakObjectPtr<UDBAFoundationCoordinator> WeakThis(this);
     FGamePlatformId FlowId;
-    if (!FGamePlatformId::TryParse(TEXT("foundation.flow@1"), FlowId))
+    if (!FGamePlatformId::TryParse(bOnlineIntegration ? TEXT("foundation.onlineflow@1") : TEXT("foundation.flow@1"), FlowId))
     {
         LastResult = FGamePlatformResult::Failure(TEXT("FlowIdentityInvalid"), TEXT("基础流程逻辑身份解析失败"));
         return;
@@ -202,12 +249,14 @@ void UDBAFoundationCoordinator::StartDevelopmentFlow()
 void UDBAFoundationCoordinator::OnFlowFinished(const FGamePlatformFlowSnapshot& Snapshot)
 {
     if (Snapshot.Handle.ScopeId != ActiveFlow.ScopeId || Snapshot.Handle.RunId != ActiveFlow.RunId) { return; }
-    if (Snapshot.State == EGamePlatformFlowState::Succeeded && IsFoundationReady())
+    if (Snapshot.State == EGamePlatformFlowState::Succeeded && IsFoundationReady() &&
+        (!bOnlineIntegration || (OnlineContext && OnlineContext->IsAuthenticatedWithProfile())))
     {
         LastResult = FGamePlatformResult::Success();
         int32 Value = 0;
         ReadProbe(Value);
-        UE_LOG(LogDBAFoundation, Display, TEXT("FoundationReady RunId=%s FlowRun=%llu ProbeValue=%d"), *RunId, Snapshot.Handle.RunId, Value);
+        if (bOnlineIntegration) { OnlineContext->OnFoundationReady(); }
+        else { UE_LOG(LogDBAFoundation, Display, TEXT("FoundationReady RunId=%s FlowRun=%llu ProbeValue=%d"), *RunId, Snapshot.Handle.RunId, Value); }
         // 保留ProbeLease供只读HUD使用，直到取消、重试或实例关闭；没有借用流程已释放的定义指针。
     }
     else
@@ -216,6 +265,7 @@ void UDBAFoundationCoordinator::OnFlowFinished(const FGamePlatformFlowSnapshot& 
             FGamePlatformResult::Failure(Snapshot.ErrorCode.IsNone() ? FName(TEXT("ReadinessBarrierFailed")) : Snapshot.ErrorCode,
                 Snapshot.ErrorMessage.IsEmpty() ? TEXT("流程终止时真实世界与数据屏障未通过") : Snapshot.ErrorMessage);
         ReleaseDataLeases();
+        if (OnlineContext) { OnlineContext->Shutdown(); OnlineContext = nullptr; }
         UE_LOG(LogDBAFoundation, Warning, TEXT("FoundationFailed RunId=%s Code=%s Message=%s"), *RunId, *LastResult.Code.ToString(), *LastResult.Message);
     }
 }
@@ -243,6 +293,7 @@ void UDBAFoundationCoordinator::CancelDevelopmentFlow()
     bStartAttempted = true;
     if (auto* Flow = FlowService.Get()) { Flow->Cancel(ActiveFlow); }
     ActiveFlow = {};
+    if (OnlineContext) { OnlineContext->Shutdown(); OnlineContext = nullptr; }
     ReleaseDataLeases();
     LastResult = FGamePlatformResult::Cancelled(TEXT("开发流程已取消；重试须显式创建新运行"));
 }
@@ -253,4 +304,18 @@ void UDBAFoundationCoordinator::RetryDevelopmentFlow()
     CancelDevelopmentFlow();
     DiscoveryDeadlineSeconds = FPlatformTime::Seconds() + 60.0;
     bStartAttempted = false; // 下一次Tick等实际发现与世界就绪，不在取消回调栈内重入Start。
+}
+
+FGamePlatformResult UDBAFoundationCoordinator::InitializeOnlineContext()
+{
+    check(IsInGameThread());
+    auto* Instance = OwnerInstance.Get();
+    if (!bOnlineIntegration || bStopping || !Instance)
+    { return FGamePlatformResult::Failure(TEXT("OnlineEntryDisabled"), TEXT("本实例未明确启用在线开发入口")); }
+    if (OnlineContext)
+    { return FGamePlatformResult::Failure(TEXT("OnlineContextAlreadyExists"), TEXT("重复在线初始化需先显式取消并重试")); }
+    OnlineContext = NewObject<UDBAFoundationOnlineContext>(this);
+    const auto Result = OnlineContext->Initialize(*Instance, RunId);
+    if (!Result.IsSuccess()) { OnlineContext->Shutdown(); OnlineContext = nullptr; }
+    return Result;
 }

@@ -5,9 +5,9 @@ package grpcadapter
 
 import (
 	"context"
-	"errors"
 	"divinebeasts/backend/internal/app/gateway"
 	"divinebeasts/backend/internal/platform/apperror"
+	"errors"
 
 	identityv1 "divinebeasts/backend/internal/generated/identity/v1"
 	"divinebeasts/backend/internal/modules/identity"
@@ -32,14 +32,18 @@ func (s *IdentityServer) Login(ctx context.Context, req *identityv1.LoginRequest
 	}
 	var session identity.Session
 	var err error
-	if req.GetProvider()=="password" {session,err=s.service.LoginPassword(ctx,req.GetGameId(),req.GetAccountName(),req.GetCredential(),req.GetDeviceId())}else{session,err=s.service.LoginGuest(ctx,req.GetGameId(),req.GetDeviceId())}
+	if req.GetProvider() == "password" {
+		session, err = s.service.LoginPassword(ctx, req.GetGameId(), req.GetAccountName(), req.GetCredential(), req.GetDeviceId())
+	} else {
+		session, err = s.service.LoginGuest(ctx, req.GetGameId(), req.GetDeviceId())
+	}
 	if err != nil {
 		return &identityv1.LoginResponse{ErrorCode: onlineDomainCode(err)}, nil
 	}
 	return &identityv1.LoginResponse{
 		PlayerId: session.PlayerID, SessionId: session.SessionID, AccessToken: session.AccessToken,
 		RefreshToken: session.RefreshToken, ExpiresAtUnixMs: session.AccessExpiresAt.UnixMilli(),
-		RefreshExpiresAtUnixMs:session.RefreshExpiresAt.UnixMilli(),
+		RefreshExpiresAtUnixMs: session.RefreshExpiresAt.UnixMilli(),
 	}, nil
 }
 
@@ -53,21 +57,42 @@ func (s *IdentityServer) Authenticate(ctx context.Context, req *identityv1.Authe
 }
 
 // Refresh 保留领域绝对到期与原子轮换语义，不在适配器重试。
-func(s *IdentityServer)Refresh(ctx context.Context,req *identityv1.RefreshRequest)(*identityv1.LoginResponse,error){
- session,err:=s.service.Refresh(ctx,req.GetRefreshToken());if err!=nil{return &identityv1.LoginResponse{ErrorCode:onlineDomainCode(err)},nil}
- return &identityv1.LoginResponse{PlayerId:session.PlayerID,SessionId:session.SessionID,AccessToken:session.AccessToken,RefreshToken:session.RefreshToken,ExpiresAtUnixMs:session.AccessExpiresAt.UnixMilli(),RefreshExpiresAtUnixMs:session.RefreshExpiresAt.UnixMilli()},nil
+func (s *IdentityServer) Refresh(ctx context.Context, req *identityv1.RefreshRequest) (*identityv1.LoginResponse, error) {
+	session, err := s.service.Refresh(ctx, req.GetRefreshToken())
+	if err != nil {
+		return &identityv1.LoginResponse{ErrorCode: onlineDomainCode(err)}, nil
+	}
+	return &identityv1.LoginResponse{PlayerId: session.PlayerID, SessionId: session.SessionID, AccessToken: session.AccessToken, RefreshToken: session.RefreshToken, ExpiresAtUnixMs: session.AccessExpiresAt.UnixMilli(), RefreshExpiresAtUnixMs: session.RefreshExpiresAt.UnixMilli()}, nil
 }
-func(s *IdentityServer)Logout(ctx context.Context,req *identityv1.RefreshRequest)(*identityv1.LogoutResponse,error){return &identityv1.LogoutResponse{ErrorCode:onlineDomainCode(s.service.Logout(ctx,req.GetRefreshToken()))},nil}
-func(s *IdentityServer)Probe(ctx context.Context,_ *identityv1.ProbeRequest)(*identityv1.ProbeResponse,error){err:=s.service.Probe(ctx);return &identityv1.ProbeResponse{Ready:err==nil,ErrorCode:onlineDomainCode(err)},nil}
+func (s *IdentityServer) Logout(ctx context.Context, req *identityv1.RefreshRequest) (*identityv1.LogoutResponse, error) {
+	return &identityv1.LogoutResponse{ErrorCode: onlineDomainCode(s.service.Logout(ctx, req.GetRefreshToken()))}, nil
+}
+func (s *IdentityServer) Probe(ctx context.Context, _ *identityv1.ProbeRequest) (*identityv1.ProbeResponse, error) {
+	err := s.service.Probe(ctx)
+	return &identityv1.ProbeResponse{Ready: err == nil, ErrorCode: onlineDomainCode(err)}, nil
+}
 
 // onlineDomainCode 不向RPC响应复制SQL、连接地址或凭据；未知错误稳定为不可用。
-func onlineDomainCode(err error)string{
- if err==nil{return ""};code:=gateway.ServiceError("SERVICE_UNAVAILABLE");var app *apperror.Error
- if errors.As(err,&app){code=gateway.ServiceError(app.Code)}else{switch{
- case errors.Is(err,identity.ErrInvalidCredentials):code="AUTH_INVALID_CREDENTIALS"
- case errors.Is(err,identity.ErrInvalidToken):code="AUTH_SESSION_INVALID"
- case errors.Is(err,identity.ErrTokenExpired):code="AUTH_TOKEN_EXPIRED"
- case errors.Is(err,identity.ErrInvalidInput):code="INVALID_REQUEST"
- }}
- _,safe:=gateway.OnlineErrorStatus(code);return safe
+func onlineDomainCode(err error) string {
+	if err == nil {
+		return ""
+	}
+	code := gateway.ServiceError("SERVICE_UNAVAILABLE")
+	var app *apperror.Error
+	if errors.As(err, &app) {
+		code = gateway.ServiceError(app.Code)
+	} else {
+		switch {
+		case errors.Is(err, identity.ErrInvalidCredentials):
+			code = "AUTH_INVALID_CREDENTIALS"
+		case errors.Is(err, identity.ErrInvalidToken):
+			code = "AUTH_SESSION_INVALID"
+		case errors.Is(err, identity.ErrTokenExpired):
+			code = "AUTH_TOKEN_EXPIRED"
+		case errors.Is(err, identity.ErrInvalidInput):
+			code = "INVALID_REQUEST"
+		}
+	}
+	_, safe := gateway.OnlineErrorStatus(code)
+	return safe
 }

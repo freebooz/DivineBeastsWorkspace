@@ -10,6 +10,34 @@ tags:
   - name: 运维
   - name: 内部玩家资料
 paths:
+  /internal/v1/playerdata/probe:
+    get:
+      tags: [内部玩家资料]
+      operationId: probePlayerDataInternal
+      summary: 通过资料仓储实际检查数据库可用性
+      responses:
+        '200':
+          description: 真实领域 Probe 成功，不是宿主 health/ready。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProbeResponse' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /internal/v1/playerdata/ensure:
+    post:
+      tags: [内部玩家资料]
+      operationId: ensurePlayerProfileInternal
+      summary: 密码认证成功后幂等初始化所属玩家资料
+      description: 仅由可信网关传入已认证身份；存在不同 gameId 的资料时拒绝，不能覆盖。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EnsureProfileRequest' }
+      responses:
+        '204': { description: 资料已存在或初始化成功，无正文。 }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /health/live:
     get:
       tags: [运维]
@@ -44,6 +72,26 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/VersionResponse' }
   /internal/v1/playerdata/profile:
+    patch:
+      tags: [内部玩家资料]
+      operationId: updateInternalPlayerProfile
+      summary: 幂等修改显示名并检查预期修订号
+      description: playerId 必须取自已认证主体。只允许显示名；重放同键同载荷返回原结果，同键异载荷或修订冲突返回 409。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProfileRequest' }
+      responses:
+        '200':
+          description: 已持久化的完整资料或幂等重放结果。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalPlayerProfileResponse' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
     get:
       tags: [内部玩家资料]
       operationId: getInternalPlayerProfile
@@ -66,8 +114,53 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '503': { $ref: '#/components/responses/Unavailable' }
 components:
+  responses:
+    InvalidRequest:
+      description: 必填字段或白名单校验失败。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
+    NotFound:
+      description: 玩家资料不存在。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
+    Conflict:
+      description: 修订号、幂等键载荷或游戏归属冲突。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
+    Unavailable:
+      description: 数据库或领域不可用，不泄露内部错误。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
   schemas:
+    ProbeResponse:
+      type: object
+      additionalProperties: false
+      required: [ready]
+      properties:
+        ready: { type: boolean, const: true, description: 真实数据库探测通过。 }
+    EnsureProfileRequest:
+      type: object
+      additionalProperties: false
+      required: [playerId, gameId]
+      properties:
+        playerId: { type: string, minLength: 1, description: 认证所得玩家标识。 }
+        gameId: { type: string, minLength: 1, description: 认证账号所属游戏。 }
+    UpdateProfileRequest:
+      type: object
+      additionalProperties: false
+      required: [playerId, displayName, expectedRevision, idempotencyKey]
+      properties:
+        playerId: { type: string, minLength: 1, description: 认证所得玩家标识。 }
+        displayName: { type: string, minLength: 1, maxLength: 24, description: 去除首尾空白后的 Unicode 显示名。 }
+        expectedRevision: { type: integer, format: int64, minimum: 0, description: 非空必填，零不能当成省略。 }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 128, description: 玩家作用域幂等键。 }
     LivenessResponse:
       type: object
       additionalProperties: false
@@ -99,7 +192,7 @@ components:
         gameId: { type: string, description: 所属游戏标识。 }
         displayName: { type: string, description: 玩家显示名称。 }
         dataVersion: { type: integer, minimum: 1, description: 资料结构版本。 }
-        revision: { type: integer, minimum: 0, description: 长期资料乐观并发修订号。 }
+        revision: { type: integer, format: int64, minimum: 0, description: 长期资料乐观并发修订号。 }
         tutorialCompleted: { type: boolean, description: 是否完成新手教学。 }
         defaultWorldId: { type: string, description: 默认进入世界标识；当前实现可能为空字符串。 }
         ownedCharacterIds:

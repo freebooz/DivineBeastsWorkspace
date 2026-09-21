@@ -36,17 +36,30 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	playerDataClient := httpadapter.NewPlayerDataClient(httpadapter.ClientConfig{BaseURL: requiredEnv("PLAYER_DATA_SERVICE_URL")})
 	var party gateway.PartyPort
 	var matchmaking gateway.MatchmakingPort
-	if config.Getenv("ONLINE_ONLY","false")!="true" {client:=httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL:requiredEnv("MATCH_SERVICE_URL")});party=client;matchmaking=client}
+	if config.Getenv("ONLINE_ONLY", "false") != "true" {
+		client := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: requiredEnv("MATCH_SERVICE_URL")})
+		party = client
+		matchmaking = client
+	}
 	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, party, matchmaking)
 	return servicehost.Run(ctx, cfg, handler)
 }
 
 func RunIdentity(ctx context.Context, cfg config.ServiceConfig) error {
-	pool:=mustPostgres(ctx)
+	pool := mustPostgres(ctx)
 	defer pool.Close()
-	accessTTL,err:=config.GetenvDuration("IDENTITY_ACCESS_TTL",15*time.Minute);if err!=nil{return err}
-	refreshTTL,err:=config.GetenvDuration("IDENTITY_REFRESH_TTL",30*24*time.Hour);if err!=nil{return err}
-	service,err:=identity.NewPersistentService(postgres.NewOnlineIdentityRepository(pool),identity.SystemClock{},accessTTL,refreshTTL);if err!=nil{return err}
+	accessTTL, err := config.GetenvDuration("IDENTITY_ACCESS_TTL", 15*time.Minute)
+	if err != nil {
+		return err
+	}
+	refreshTTL, err := config.GetenvDuration("IDENTITY_REFRESH_TTL", 30*24*time.Hour)
+	if err != nil {
+		return err
+	}
+	service, err := identity.NewPersistentService(postgres.NewOnlineIdentityRepository(pool), identity.SystemClock{}, accessTTL, refreshTTL)
+	if err != nil {
+		return err
+	}
 	return servicehost.Run(ctx, cfg, httpadapter.NewIdentityHandler(service))
 }
 

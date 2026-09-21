@@ -20,7 +20,8 @@ FGamePlatformResult UDBAFoundationCoordinator::ValidateConfiguration() const
 {
     check(IsInGameThread());
     if (UE_BUILD_SHIPPING || IsRunningCommandlet() || IsRunningDedicatedServer() ||
-        !FParse::Param(FCommandLine::Get(), TEXT("FoundationStandalone")))
+        (!FParse::Param(FCommandLine::Get(), TEXT("FoundationStandalone")) &&
+         !FParse::Param(FCommandLine::Get(), TEXT("FoundationOnlineIntegration"))))
     {
         return FGamePlatformResult::Failure(TEXT("DevelopmentEntryDisabled"), TEXT("当前上下文禁止启动基础玩家流程"));
     }

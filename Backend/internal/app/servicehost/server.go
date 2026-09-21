@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"strconv"
 	"net/http"
+	"strconv"
 	"time"
 
 	"divinebeasts/backend/internal/platform/config"
@@ -26,7 +26,7 @@ func Run(ctx context.Context, cfg config.ServiceConfig, businessHandler http.Han
 	}
 
 	server := &http.Server{
-		Addr:              net.JoinHostPort(cfg.BindAddress,strconv.Itoa(cfg.Port)),
+		Addr:              net.JoinHostPort(cfg.BindAddress, strconv.Itoa(cfg.Port)),
 		Handler:           requestLoggingMiddleware(cfg.Name, mux),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,

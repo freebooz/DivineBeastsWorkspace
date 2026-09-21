@@ -1,0 +1,26 @@
+Start testing: Sep 21 17:16 中国标准时间
+----------------------------------------------------------
+1/1 Testing: OnlineLogicTests
+1/1 Test: OnlineLogicTests
+Command: "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GameFoundation/Application/GamePlatformOnline/Saved/NativeTests/Debug/OnlineLogicTests.exe"
+Directory: E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GameFoundation/Application/GamePlatformOnline/Saved/NativeTests
+"OnlineLogicTests" start time: Sep 21 17:16 中国标准时间
+Output:
+----------------------------------------------------------
+PASS ConfigurationFailClosed
+PASS DeferredOnceAndFailedStart
+PASS RefreshSingleFlightAndOldToken
+PASS ForbiddenAndLostRefresh
+PASS LogoutRejectsLateAuthentication
+PASS CancelWaiterAndScope
+PASS MonotonicProfileAndAccountIsolation
+PASS BudgetsRetriesAndShutdown
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"OnlineLogicTests" end time: Sep 21 17:16 中国标准时间
+"OnlineLogicTests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 21 17:16 中国标准时间

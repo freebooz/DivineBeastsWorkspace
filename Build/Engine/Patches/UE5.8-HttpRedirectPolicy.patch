@@ -1,0 +1,346 @@
+diff --git a/Engine/Source/Runtime/Online/HTTP/Private/Curl/CurlHttp.cpp b/Engine/Source/Runtime/Online/HTTP/Private/Curl/CurlHttp.cpp
+index 88372c3..8cc7331 100644
+--- a/Engine/Source/Runtime/Online/HTTP/Private/Curl/CurlHttp.cpp
++++ b/Engine/Source/Runtime/Online/HTTP/Private/Curl/CurlHttp.cpp
+@@ -179,8 +179,12 @@ bool FCurlHttpRequest::InitEasyHandle()
+ 		curl_easy_setopt(EasyHandle, CURLOPT_SSL_VERIFYPEER, 0L);
+ 	}
+ 
+-	// allow http redirects to be followed
+-	curl_easy_setopt(EasyHandle, CURLOPT_FOLLOWLOCATION, 1L);
++	// 句柄延迟创建或重建时重应用请求策略；不能默默恢复为Follow。
++	if (!ApplyRedirectPolicy())
++	{
++		DestroyEasyHandle();
++		return false;
++	}
+ 
+ 	// required for all multi-threaded handles
+ 	curl_easy_setopt(EasyHandle, CURLOPT_NOSIGNAL, 1L);
+@@ -244,6 +248,32 @@ bool FCurlHttpRequest::InitEasyHandle()
+ 	return true;
+ }
+ 
++bool FCurlHttpRequest::ApplyRedirectPolicy()
++{
++	const CURLcode Result = curl_easy_setopt(EasyHandle, CURLOPT_FOLLOWLOCATION,
++		RedirectPolicy == EHttpRequestRedirectPolicy::Follow ? 1L : 0L);
++	if (Result != CURLE_OK)
++	{
++		// 不记录URL、header或凭据；任何真实选项失败都必须阻止本次发送。
++		UE_LOGF(LogHttp, Error, "Failed to apply request redirect policy (curl code %d)", static_cast<int32>(Result));
++		return false;
++	}
++	return true;
++}
++
++bool FCurlHttpRequest::SetRedirectPolicy(EHttpRequestRedirectPolicy Policy)
++{
++	if (!IsInGameThread() || CompletionStatus == EHttpRequestStatus::Processing ||
++		(Policy != EHttpRequestRedirectPolicy::Follow && Policy != EHttpRequestRedirectPolicy::Reject))
++	{
++		return false;
++	}
++	RedirectPolicy = Policy;
++	// 无句柄时只记录选择，Setup/Init必须再次以真实curl返回值作为发送门禁。
++	bRedirectPolicySetFailed = EasyHandle && !ApplyRedirectPolicy();
++	return !bRedirectPolicySetFailed;
++}
++
+ void FCurlHttpRequest::DestroyEasyHandle()
+ {
+ 	if (FCurlHttpManager::IsInit())
+@@ -557,7 +587,8 @@ size_t FCurlHttpRequest::ReceiveResponseHeaderCallback(void* Ptr, size_t SizeInB
+ 				long HttpCode = 0;
+ 				if (CURLE_OK == curl_easy_getinfo(EasyHandle, CURLINFO_RESPONSE_CODE, &HttpCode))
+ 				{
+-					bRedirected = (HttpCode >= 300 && HttpCode < 400) && (HttpCode != 304);
++					bRedirected = (HttpCode >= 300 && HttpCode < 400) && (HttpCode != 304)
++						&& RedirectPolicy == EHttpRequestRedirectPolicy::Follow;
+ 
+ 					if (!bRedirected)
+ 					{
+@@ -862,6 +893,11 @@ bool FCurlHttpRequest::SetupRequest()
+ {
+ 	QUICK_SCOPE_CYCLE_COUNTER(STAT_FCurlHttpRequest_SetupRequest);
+ 
++	if (bRedirectPolicySetFailed)
++	{
++		return false;
++	}
++
+ 	if (CVarHttpCurlDeferEasyHandleLifetime.GetValueOnAnyThread())
+ 	{
+ 		checkf(FCurlHttpManager::IsInit(), TEXT("Curl request was created while the library is shutdown"));
+@@ -872,7 +908,12 @@ bool FCurlHttpRequest::SetupRequest()
+ 		}
+ 	}
+ 
+-	check(EasyHandle);
++	// 每次Setup都检查，涵盖非延迟句柄复用以及初始化失败；失败经PreProcess正常结束，不入发送队列。
++	if (!EasyHandle || !ApplyRedirectPolicy())
++	{
++		return false;
++	}
++	bRedirected = false;
+ 
+ 	if (!RequestPayload.IsValid())
+ 	{
+@@ -1424,4 +1465,4 @@ uint64 FCurlHttpResponse::GetContentLength() const
+ 	return ContentLength;
+ }
+ 
+-#endif //WITH_CURL
+\ No newline at end of file
++#endif //WITH_CURL
+diff --git a/Engine/Source/Runtime/Online/HTTP/Private/Curl/CurlHttp.h b/Engine/Source/Runtime/Online/HTTP/Private/Curl/CurlHttp.h
+index c9de2ac..8d6b4e9 100644
+--- a/Engine/Source/Runtime/Online/HTTP/Private/Curl/CurlHttp.h
++++ b/Engine/Source/Runtime/Online/HTTP/Private/Curl/CurlHttp.h
+@@ -56,6 +56,8 @@ public:
+ 	virtual FString GetVerb() const override;
+ 	virtual void SetVerb(const FString& InVerb) override;
+ 	virtual void SetOption(const FName Option, const FString& OptionValue) override;
++	// 游戏线程、非飞行中才接受；策略跨延迟创建、清理与再次Setup保留。
++	virtual bool SetRedirectPolicy(EHttpRequestRedirectPolicy Policy) override;
+ 	virtual void SetContent(const TArray<uint8>& ContentPayload) override;
+ 	virtual void SetContent(TArray<uint8>&& ContentPayload) override;
+ 	virtual void SetContentAsString(const FString& ContentString) override;
+@@ -134,6 +136,9 @@ private:
+ 	 */
+ 	bool InitEasyHandle();
+ 
++	/** 将已选策略应用到真实curl句柄；选项失败向上传播，禁止请求进入发送队列。 */
++	bool ApplyRedirectPolicy();
++
+ 	/**
+ 	 * Destroy the curl easy handle and free the header list.
+ 	 * Called either from the destructor (legacy path) or CleanupRequest (deferred path).
+@@ -277,6 +282,11 @@ private:
+ 
+ private:
+ 
++	/** 默认保持既有跟随行为；只对显式选择Reject的请求关闭重定向。 */
++	EHttpRequestRedirectPolicy RedirectPolicy = EHttpRequestRedirectPolicy::Follow;
++	/** 显式设置曾失败时拒绝发送；只有再次成功设置策略才解除，防止忽略false后静默发送。 */
++	bool bRedirectPolicySetFailed = false;
++
+ 	/** Pointer to an easy handle specific to this request */
+ 	CURL *			EasyHandle;	
+ 	/** List of custom headers to be passed to CURL */
+diff --git a/Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp b/Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp
+new file mode 100644
+index 0000000..ace60d2
+--- /dev/null
++++ b/Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp
+@@ -0,0 +1,169 @@
++// Copyright Epic Games, Inc. All Rights Reserved.
++
++#if WITH_DEV_AUTOMATION_TESTS && WITH_CURL
++
++#include "Async/Async.h"
++#include "Curl/CurlHttp.h"
++#include "HttpModule.h"
++#include "Interfaces/IHttpResponse.h"
++#include "Misc/AutomationTest.h"
++#include "Misc/CommandLine.h"
++#include "Misc/Parse.h"
++
++// 只暴露已有生命周期供测试使用，不给生产请求添加测试后门。
++class FRedirectPolicyLifecycleRequest final : public FCurlHttpRequest
++{
++public:
++	bool SetupForTest() { return SetupRequest(); }
++	void CleanupForTest() { CleanupRequest(); }
++};
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHttpRedirectPolicyContractTest,
++	"System.HTTP.RedirectPolicy.Contract", EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
++
++bool FHttpRedirectPolicyContractTest::RunTest(const FString& Parameters)
++{
++	FHttpModule::Get();
++	FRedirectPolicyLifecycleRequest Request;
++	TestFalse(TEXT("未实现的基类后端不能声称支持策略"), Request.IHttpRequest::SetRedirectPolicy(EHttpRequestRedirectPolicy::Reject));
++	TestTrue(TEXT("游戏线程闲置请求接受Reject"), Request.SetRedirectPolicy(EHttpRequestRedirectPolicy::Reject));
++	TestFalse(TEXT("非法枚举被拒绝"), Request.SetRedirectPolicy(static_cast<EHttpRequestRedirectPolicy>(255)));
++	Request.SetStatus(EHttpRequestStatus::Processing);
++	TestFalse(TEXT("飞行中不能改策略"), Request.SetRedirectPolicy(EHttpRequestRedirectPolicy::Follow));
++	Request.SetStatus(EHttpRequestStatus::NotStarted);
++	TestFalse(TEXT("非游戏线程不能改策略"), Async(EAsyncExecution::Thread, [&Request]() {
++		return Request.SetRedirectPolicy(EHttpRequestRedirectPolicy::Follow);
++	}).Get());
++	Request.SetURL(TEXT("http://127.0.0.1/unused-no-network"));
++	TestTrue(TEXT("延迟创建句柄时Setup成功"), Request.SetupForTest());
++	Request.CleanupForTest();
++	TestTrue(TEXT("清理后重建句柄仍可Setup"), Request.SetupForTest());
++	Request.CleanupForTest();
++	TestTrue(TEXT("闲置时允许恢复显式Follow"), Request.SetRedirectPolicy(EHttpRequestRedirectPolicy::Follow));
++	return true;
++}
++
++namespace
++{
++// 独立于测试对象持有回调结果；超时先解绑再取消，不让迟到回调访问已结束测试。
++struct FRedirectPolicyNetworkState
++{
++	FHttpRequestPtr Request;
++	bool bDone = false;
++	bool bSucceeded = false;
++	bool bSawLocation = false;
++	int32 StatusCallback = 0;
++	int32 Code = 0;
++	FString Body;
++};
++
++class FRedirectPolicyNetworkCommand final : public IAutomationLatentCommand
++{
++public:
++	FRedirectPolicyNetworkCommand(FAutomationTestBase* InTest, FString InOrigin)
++		: Test(InTest), Origin(MoveTemp(InOrigin)), RunId(FGuid::NewGuid().ToString(EGuidFormats::Digits)) {}
++
++	virtual bool Update() override
++	{
++		if (!State)
++		{
++			State = MakeShared<FRedirectPolicyNetworkState>();
++			State->Request = FHttpModule::Get().CreateRequest();
++			State->Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
++			State->Request->SetTimeout(10.0f);
++			const auto Result = State;
++			State->Request->OnStatusCodeReceived().BindLambda([Result](FHttpRequestPtr, int32 Code) { Result->StatusCallback = Code; });
++			State->Request->OnHeaderReceived().BindLambda([Result](FHttpRequestPtr, const FString& Key, const FString&) {
++				Result->bSawLocation |= Key.Equals(TEXT("Location"), ESearchCase::IgnoreCase);
++			});
++			State->Request->OnProcessRequestComplete().BindLambda([Result](FHttpRequestPtr, FHttpResponsePtr Response, bool bSucceeded) {
++				Result->bSucceeded = bSucceeded;
++				Result->Code = Response ? Response->GetResponseCode() : 0;
++				Result->Body = Response ? Response->GetContentAsString() : FString();
++				Result->bDone = true;
++			});
++			if (Step < 10)
++			{
++				const int32 Codes[] = {301, 302, 303, 307, 308};
++				State->Request->SetURL(FString::Printf(TEXT("%s/redirect/%d/%s/%s"), *Origin, Codes[Step % 5], Step < 5 ? TEXT("same") : TEXT("cross"), *RunId));
++				State->Request->SetVerb(TEXT("POST"));
++				State->Request->SetHeader(TEXT("Authorization"), TEXT("Bearer redirect-policy-test-only"));
++				State->Request->SetContentAsString(TEXT("redirect-policy-test-body"));
++				if (!State->Request->SetRedirectPolicy(EHttpRequestRedirectPolicy::Reject))
++				{
++					Test->AddError(TEXT("当前HTTP后端未接受Reject，不能继续发送"));
++					ReleaseRequest();
++					return true;
++				}
++			}
++			else
++			{
++				State->Request->SetURL(Origin + TEXT("/sink-count/") + RunId);
++				State->Request->SetVerb(TEXT("GET"));
++			}
++			StartedAt = FPlatformTime::Seconds();
++			if (!State->Request->ProcessRequest())
++			{
++				Test->AddError(TEXT("真实HTTP请求未启动"));
++				ReleaseRequest();
++				return true;
++			}
++		}
++		if (!State->bDone && FPlatformTime::Seconds() - StartedAt < 15.0) { return false; }
++		if (!State->bDone)
++		{
++			Test->AddError(TEXT("真实HTTP测试超时"));
++			ReleaseRequest();
++			return true;
++		}
++		Test->TestTrue(TEXT("收到真实HTTP响应"), State->bSucceeded);
++		if (Step < 10)
++		{
++			const int32 Codes[] = {301, 302, 303, 307, 308};
++			Test->TestEqual(TEXT("Reject保留原3xx响应"), State->Code, Codes[Step % 5]);
++			Test->TestEqual(TEXT("Reject不吞status回调"), State->StatusCallback, Codes[Step % 5]);
++			Test->TestTrue(TEXT("Reject不吞Location header回调"), State->bSawLocation);
++		}
++		else
++		{
++			Test->TestEqual(TEXT("夹具统计可读"), State->Code, 200);
++			Test->TestEqual(TEXT("同源/跨源目标均不得收到任何请求或凭据"), State->Body, FString(TEXT("0")));
++		}
++		ReleaseRequest();
++		return ++Step > 10;
++	}
++
++private:
++	void ReleaseRequest()
++	{
++		State->Request->OnStatusCodeReceived().Unbind();
++		State->Request->OnHeaderReceived().Unbind();
++		State->Request->OnProcessRequestComplete().Unbind();
++		if (!State->bDone) { State->Request->CancelRequest(); }
++		State.Reset();
++	}
++	FAutomationTestBase* Test;
++	FString Origin;
++	FString RunId;
++	TSharedPtr<FRedirectPolicyNetworkState> State;
++	int32 Step = 0;
++	double StartedAt = 0.0;
++};
++}
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHttpRedirectPolicyNetworkTest,
++	"System.HTTP.RedirectPolicy.LoopbackNetwork", EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
++
++bool FHttpRedirectPolicyNetworkTest::RunTest(const FString& Parameters)
++{
++	FString Origin;
++	if (!FParse::Value(FCommandLine::Get(), TEXT("HttpRedirectPolicyTestOrigin="), Origin) || !Origin.StartsWith(TEXT("http://127.0.0.1:")))
++	{
++		AddError(TEXT("必须显式提供已启动测试夹具的回环Origin；缺失不是网络验收通过"));
++		return false;
++	}
++	ADD_LATENT_AUTOMATION_COMMAND(FRedirectPolicyNetworkCommand(this, MoveTemp(Origin)));
++	return true;
++}
++
++#endif // WITH_DEV_AUTOMATION_TESTS && WITH_CURL
+diff --git a/Engine/Source/Runtime/Online/HTTP/Public/Interfaces/IHttpRequest.h b/Engine/Source/Runtime/Online/HTTP/Public/Interfaces/IHttpRequest.h
+index 146407a..aada8b2 100644
+--- a/Engine/Source/Runtime/Online/HTTP/Public/Interfaces/IHttpRequest.h
++++ b/Engine/Source/Runtime/Online/HTTP/Public/Interfaces/IHttpRequest.h
+@@ -5,6 +5,16 @@
+ #include "CoreMinimal.h"
+ #include "Interfaces/IHttpBase.h"
+ 
++// 请求级重定向策略API的源码能力标记；新增虚函数后必须重编HTTP及全部调用模块，不能只替换头文件。
++#define UE_HTTP_HAS_REQUEST_REDIRECT_POLICY 1
++
++/** 单个请求的重定向策略；不改变TLS校验或其他请求的默认行为。 */
++enum class EHttpRequestRedirectPolicy : uint8
++{
++	Follow, // 保持后端原有跟随行为。
++	Reject  // 不向Location目标发送请求，保留原3xx响应供调用者判定失败。
++};
++
+ class IHttpRequest;
+ class IHttpResponse;
+ 
+@@ -214,6 +224,14 @@ public:
+ 	 */
+ 	virtual void SetOption(const FName Option, const FString& OptionValue) = 0;
+ 
++	/**
++	 * 设置本请求重定向策略，必须在游戏线程且请求不在飞行中时调用。
++	 * 返回true表示后端接受策略；false表示不支持、状态非法或配置失败，安全调用方不得发送。
++	 * 后端默认明确返回false，不能用SetOption回读冒充能力确认。Reject不改变TLS验证。
++	 * 延迟创建句柄的后端须在每次发送前应用并检查真实选项，失败时ProcessRequest不得发送。
++	 */
++	virtual bool SetRedirectPolicy(EHttpRequestRedirectPolicy Policy) { return false; }
++
+ 	/**
+ 	 * Sets the content of the request (optional data).
+ 	 * Usually only set for POST requests.
+@@ -457,4 +475,3 @@ public:
+ 	 */
+ 	virtual ~IHttpRequest() = default;
+ };
+-

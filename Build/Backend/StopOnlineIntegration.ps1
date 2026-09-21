@@ -13,7 +13,7 @@ $state=Read-OnlineState $RunId
 $cases=[Collections.Generic.List[object]]::new()
 $path=Write-OnlineResult $state 'StopResult.json' 'NotExecuted' 0 @() @('PG卷及既有测试数据保留；证据写于停止之前。')
 try {
-    foreach ($role in @('gateway','player','identity','seed','build','postgres')) {
+    foreach ($role in @('gateway','player','identity','seed','pgsuite','build','postgres')) {
         $records=@($state.Resources | Where-Object { $_.Kind -eq 'container' -and $_.Role -eq $role -and -not $_.Removed })
         foreach ($entry in $records) {
             $record=Get-OnlineOwnedRecord $state $role
@@ -26,18 +26,20 @@ try {
             $cases.Add(@{Name="StopOwned_$role";Status='Passed'})
         }
     }
-    if ($RemoveContainers -and @($state.Resources | Where-Object { $_.Kind -eq 'network' -and -not $_.Removed }).Count -gt 0) {
-        $network=Get-OnlineOwnedRecord $state 'network'
-        $null=Invoke-OnlineDocker -Arguments @('network','rm',$network.Id)
-        $network.Removed=$true; Save-OnlineState $state
+    if ($RemoveContainers) {
+        foreach ($entry in @($state.Resources | Where-Object { $_.Kind -eq 'network' -and -not $_.Removed })) {
+            $network=Get-OnlineOwnedRecord $state $entry.Role
+            $null=Invoke-OnlineDocker -Arguments @('network','rm',$network.Id)
+            $network.Removed=$true; Save-OnlineState $state
+        }
     }
     if ($RemoveSecrets) {
         $root=Join-Path (Get-OnlineRunDirectory $RunId) 'Secrets'
-        foreach ($name in @('credentials.json','database.env','postgres-password')) {
+        foreach ($name in @('credentials.json','database.env','postgres-password','pgtests.env')) {
             $secretPath=Assert-OnlineChildPath $root (Join-Path $root $name)
             if (Test-Path -LiteralPath $secretPath) { Assert-OnlinePrivateFile $secretPath; Remove-Item -LiteralPath $secretPath }
         }
-        $cases.Add(@{Name='RemoveOwnedShortLivedSecrets';Status='Passed';Detail='精确删除三个已知文件，未递归删除目录或数据库卷。'})
+        $cases.Add(@{Name='RemoveOwnedShortLivedSecrets';Status='Passed';Detail='精确删除四个已知文件，未递归删除目录或数据库卷。'})
     }
     $state.Status='Stopped'; Save-OnlineState $state
     $path=Write-OnlineResult $state 'StopResult.json' 'Passed' 0 $cases.ToArray() @('数据库卷永不由本脚本删除；未移除容器时可按清单ID重新启动；移除容器后恢复须重新核对卷归属并另行装配。')

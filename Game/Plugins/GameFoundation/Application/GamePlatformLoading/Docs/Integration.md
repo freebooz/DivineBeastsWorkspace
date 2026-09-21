@@ -1,0 +1,21 @@
+# 集成边界与实际接线
+
+## Data
+
+`FLoadingDataTask`通过`IGamePlatformDataService::Get`调用真实`AcquireDefinition`，使用Instance期租约和当前GameInstance作为弱调用者。调用者自身失效由Loading操作检测并清理。异步完成保存本尝试结果；实时成功还要求`GetLeaseState==Succeeded`且`GetLoadedDefinition`非空。失败/取消只调用本租约的ReleaseDefinition，不卸载其他世界资产。
+
+一项Data任务对应一份定义及Bundle需求。多定义用多任务以公开部分失败边界。本轮Foundation请求现有Probe和Flow两份定义，不新造第二个AssetManager，也没有资源路径LoadObject旁路。
+
+## Flow与主工程
+
+主工程`DBAFoundationCoordinator.cpp`的既有`Ready`工厂现返回`UDBALoadingFlowNode`，其他节点保持原职责。节点从Context取得Flow Handle、NodeId和NodeGeneration；Loading完成订阅另核对OwnerScopeId、OperationId、Generation。仅匹配当前节点且仍活跃时调用公开`UGamePlatformApplicationFlowSubsystem::SubmitEvent`，由Flow既有排队机制处理，回调不直接推进流程。
+
+项目仍负责切图和基础观察者。`CheckWorld`只有在原项目`IsFoundationReady`确认当前切图操作、目标世界、本地控制器/Pawn和Probe可读时，才向Loading报告世界可操作。Loading再次核对世界身份和生命周期。节点Finish在成功、取消、失败时均先失活，停世界采样，撤Loading订阅，再释放操作。旧Flow事件仍由Flow的节点代次拒绝。
+
+成功后Loading临时Probe/Flow需求归还，项目组合根原先持有的独立Probe租约、流程持有的定义租约不受影响。开发HUD尚未增加Loading专属进度面板；已有HUD仍展示流程诊断。UI消费方可使用公开值快照，不能读取私有Subsystem。
+
+## Session与Online
+
+Session当前只有私有状态算法，无可消费的公开连接/准入快照或已验证服务器链。本轮不从它的私有状态推导成功、不读取票据、不调用HTTP、不Travel、不重连。`SessionReady`缺工厂直接拒绝。Online并行开发内容不作为本轮已经联调的证据。
+
+后续真实适配应在客户端组合层登记任务，并核对SessionId、目标InstanceId/BootId、World身份、ConnectionGeneration、权威准入与当前操作绑定；断开/失败必须传播。双端Loading不直接依赖客户端Session。该部分及FoundationSessionLoading均未执行，不能以测试Task替代。

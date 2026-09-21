@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -30,6 +31,16 @@ func onlineIdentityIntegration(t *testing.T) (*Pool, *identity.Service, string, 
 		t.Fatal("无法连接指定隔离数据库")
 	}
 	t.Cleanup(p.Close)
+	var schema string
+	if err = p.inner.QueryRow(ctx, `SELECT current_schema()`).Scan(&schema); err != nil || !strings.HasPrefix(schema, "online_identity_test_") {
+		t.Fatal("真实测试仅允许online_identity_test_前缀schema，不允许默认public")
+	}
+	var isolatedTables int
+	if err = p.inner.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+ WHERE c.oid IN (to_regclass('online_identity_accounts'),to_regclass('online_identity_sessions'),to_regclass('online_identity_refresh_credentials'))
+ AND n.nspname=$1 AND c.relkind='r'`, schema).Scan(&isolatedTables); err != nil || isolatedTables != 3 {
+		t.Fatal("三张身份表必须实际位于隔离schema，禁止search_path回退业务表")
+	}
 	var b [16]byte
 	if _, err = rand.Read(b[:]); err != nil {
 		t.Fatal("测试身份生成失败")

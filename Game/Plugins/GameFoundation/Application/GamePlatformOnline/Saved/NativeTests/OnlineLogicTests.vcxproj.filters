@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\poject\feebooz\DivineBeastsWorkspace\Game\Plugins\GameFoundation\Application\GamePlatformOnline\Source\GamePlatformOnline\Private\Tests\OnlineSessionTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\poject\feebooz\DivineBeastsWorkspace\Game\Plugins\GameFoundation\Application\GamePlatformOnline\Source\GamePlatformOnline\Private\Requests\OnlineSession.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\poject\feebooz\DivineBeastsWorkspace\Game\Plugins\GameFoundation\Application\GamePlatformOnline\Tests\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{B5D45700-5A49-32EB-A210-7005CABDA5F8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

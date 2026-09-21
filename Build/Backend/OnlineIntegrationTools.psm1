@@ -178,11 +178,15 @@ function Write-OnlineResult($State, [string]$FileName, [string]$Status, [int]$Ex
         ProcessOrContainerIds=@($State.Resources | Where-Object Kind -eq 'container' | Select-Object Role,Name,Id,Removed)
         Evidence=@($Evidence); SourceFingerprint=$State.SourceFingerprint; RecordedAt=[DateTimeOffset]::UtcNow.ToString('o')
     }
+    if (Test-Path -LiteralPath $path) {
+        $previous=Assert-OnlineChildPath $directory (Join-Path $directory "$FileName.previous.$([DateTimeOffset]::UtcNow.Ticks).json")
+        Copy-Item -LiteralPath $path -Destination $previous -ErrorAction Stop
+    }
     [IO.File]::WriteAllText($path, ($report | ConvertTo-Json -Depth 15), [Text.UTF8Encoding]::new($false))
     return $path
 }
 function Wait-OnlineProbe($State, [int]$TimeoutSeconds=60) {
-    $handler = [Net.Http.HttpClientHandler]::new(); $handler.AllowAutoRedirect=$false
+    $handler = [Net.Http.HttpClientHandler]::new(); $handler.AllowAutoRedirect=$false; $handler.UseProxy=$false
     $client = [Net.Http.HttpClient]::new($handler); $client.Timeout=[TimeSpan]::FromSeconds(6)
     try {
         $deadline=[DateTimeOffset]::UtcNow.AddSeconds($TimeoutSeconds)

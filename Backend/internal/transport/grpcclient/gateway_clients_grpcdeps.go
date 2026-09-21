@@ -8,10 +8,10 @@ import (
 	"errors"
 	"time"
 
+	"divinebeasts/backend/internal/app/gateway"
 	identityv1 "divinebeasts/backend/internal/generated/identity/v1"
 	matchv1 "divinebeasts/backend/internal/generated/match/v1"
 	playerdatav1 "divinebeasts/backend/internal/generated/playerdata/v1"
-	"divinebeasts/backend/internal/app/gateway"
 	"google.golang.org/grpc"
 )
 
@@ -27,8 +27,9 @@ func NewIdentityClient(conn grpc.ClientConnInterface) *IdentityClient {
 
 // Login（登录）调用IdentityService并把Protobuf响应转换为Gateway DTO。
 func (c *IdentityClient) Login(ctx context.Context, req gateway.LoginRequest) (gateway.LoginResponse, error) {
-	ctx,cancel:=context.WithTimeout(ctx,5*time.Second);defer cancel()
-	response, err := c.client.Login(ctx, &identityv1.LoginRequest{GameId: req.GameID, Provider: req.Provider, Credential: req.Credential, ClientVersion: req.ClientVersion, DeviceId: req.DeviceID,AccountName:req.AccountName})
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	response, err := c.client.Login(ctx, &identityv1.LoginRequest{GameId: req.GameID, Provider: req.Provider, Credential: req.Credential, ClientVersion: req.ClientVersion, DeviceId: req.DeviceID, AccountName: req.AccountName})
 	if err != nil {
 		return gateway.LoginResponse{}, err
 	}
@@ -40,7 +41,8 @@ func (c *IdentityClient) Login(ctx context.Context, req gateway.LoginRequest) (g
 
 // Authenticate（认证Access Token）调用IdentityService解析可信玩家上下文。
 func (c *IdentityClient) Authenticate(ctx context.Context, token string) (gateway.AuthenticatedSession, error) {
-	ctx,cancel:=context.WithTimeout(ctx,5*time.Second);defer cancel()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	response, err := c.client.Authenticate(ctx, &identityv1.AuthenticateRequest{AccessToken: token})
 	if err != nil {
 		return gateway.AuthenticatedSession{}, err
@@ -63,13 +65,20 @@ func NewPlayerDataClient(conn grpc.ClientConnInterface) *PlayerDataClient {
 
 // GetProfile（获取玩家资料）调用PlayerDataService并转换为Gateway DTO。
 func (c *PlayerDataClient) GetProfile(ctx context.Context, playerID string) (gateway.PlayerProfile, error) {
-	ctx,cancel:=context.WithTimeout(ctx,5*time.Second);defer cancel()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	response, err := c.client.GetProfile(ctx, &playerdatav1.GetProfileRequest{PlayerId: playerID})
 	if err != nil {
 		return gateway.PlayerProfile{}, err
 	}
-	if !response.GetFound() {
+	if response.GetErrorCode() != "" {
 		return gateway.PlayerProfile{}, gateway.ServiceError(response.GetErrorCode())
+	}
+	if !response.GetFound() {
+		return gateway.PlayerProfile{}, gateway.ServiceError("PLAYER_PROFILE_NOT_FOUND")
+	}
+	if response.GetPlayerId() != playerID || response.GetDataVersion() < 1 || response.GetRevision() < 0 {
+		return gateway.PlayerProfile{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
 	}
 	return gateway.PlayerProfile{PlayerID: response.GetPlayerId(), GameID: response.GetGameId(), DisplayName: response.GetDisplayName(), DataVersion: int(response.GetDataVersion()), Revision: response.GetRevision(), TutorialCompleted: response.GetTutorialCompleted(), DefaultWorldID: response.GetDefaultWorldId(), OwnedCharacterIDs: append([]string(nil), response.GetOwnedCharacterIds()...)}, nil
 }

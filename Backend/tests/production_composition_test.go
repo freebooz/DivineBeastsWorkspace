@@ -11,12 +11,21 @@ func TestProductionCompositionWiresInfrastructure(t *testing.T) {
 	httpComposition := mustRead(t, filepath.Join("..", "internal", "app", "composition", "composition_production_http.go"))
 	grpcComposition := mustRead(t, filepath.Join("..", "internal", "app", "composition", "composition_production_grpc.go"))
 	combined := httpComposition + grpcComposition
+	// 两种生产链必须各自接入持久身份与Online资料仓储，不能由另一种链补齐词串。
+	for name, content := range map[string]string{"http": httpComposition, "grpc": grpcComposition} {
+		for _, expected := range []string{"identity.NewPersistentService(postgres.NewOnlineIdentityRepository(pool)", "playerdata.NewService(postgres.NewOnlinePlayerRepository(pool))"} {
+			if !strings.Contains(content, expected) {
+				t.Errorf("%s生产Composition缺少Online持久化接线: %s", name, expected)
+			}
+		}
+	}
 	for _, expected := range []string{
 		"postgres.Open",
-		"postgres.NewPlayerRepository",
+		"postgres.NewOnlinePlayerRepository",
+		"postgres.NewOnlineIdentityRepository",
+		"identity.NewPersistentService",
 		"postgres.NewMatchOutboxStore",
 		"redisstore.Open",
-		"redisstore.NewSessionRepository",
 		"redisstore.NewPartyRepository",
 		"redisstore.NewTicketRepository",
 		"redisstore.NewTransferReplayStore",

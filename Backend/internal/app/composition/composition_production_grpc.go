@@ -43,17 +43,32 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	playerClient := grpcclient.NewPlayerDataClient(playerConn)
 	var party gateway.PartyPort
 	var matchmaking gateway.MatchmakingPort
-	if config.Getenv("ONLINE_ONLY","false")!="true" {matchConn:=mustGRPCConn(requiredEnvGRPC("MATCH_GRPC_TARGET"));defer matchConn.Close();client:=grpcclient.NewMatchClient(matchConn);party=client;matchmaking=client}
+	if config.Getenv("ONLINE_ONLY", "false") != "true" {
+		matchConn := mustGRPCConn(requiredEnvGRPC("MATCH_GRPC_TARGET"))
+		defer matchConn.Close()
+		client := grpcclient.NewMatchClient(matchConn)
+		party = client
+		matchmaking = client
+	}
 	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerClient, party, matchmaking)
 	return servicehost.Run(ctx, cfg, handler)
 }
 
 func RunIdentity(ctx context.Context, cfg config.ServiceConfig) error {
-	pool:=mustPostgresGRPC(ctx)
+	pool := mustPostgresGRPC(ctx)
 	defer pool.Close()
-	accessTTL,err:=config.GetenvDuration("IDENTITY_ACCESS_TTL",15*time.Minute);if err!=nil{return err}
-	refreshTTL,err:=config.GetenvDuration("IDENTITY_REFRESH_TTL",30*24*time.Hour);if err!=nil{return err}
-	service,err:=identity.NewPersistentService(postgres.NewOnlineIdentityRepository(pool),identity.SystemClock{},accessTTL,refreshTTL);if err!=nil{return err}
+	accessTTL, err := config.GetenvDuration("IDENTITY_ACCESS_TTL", 15*time.Minute)
+	if err != nil {
+		return err
+	}
+	refreshTTL, err := config.GetenvDuration("IDENTITY_REFRESH_TTL", 30*24*time.Hour)
+	if err != nil {
+		return err
+	}
+	service, err := identity.NewPersistentService(postgres.NewOnlineIdentityRepository(pool), identity.SystemClock{}, accessTTL, refreshTTL)
+	if err != nil {
+		return err
+	}
 	return runGRPCHost(ctx, cfg, func(server *grpc.Server) { grpcadapter.RegisterIdentityServer(server, service) })
 }
 
@@ -106,7 +121,7 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 }
 
 func runGRPCHost(ctx context.Context, cfg config.ServiceConfig, register func(*grpc.Server)) error {
-	listener, err := net.Listen("tcp", net.JoinHostPort(cfg.BindAddress,strconv.Itoa(cfg.GRPCPort)))
+	listener, err := net.Listen("tcp", net.JoinHostPort(cfg.BindAddress, strconv.Itoa(cfg.GRPCPort)))
 	if err != nil {
 		return err
 	}

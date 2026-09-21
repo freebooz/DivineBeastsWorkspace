@@ -7,6 +7,10 @@
 
 ## 目录结构与职责
 
+### Session部分内核增量（2026-09-21）
+
+`internal/platform/database/postgresadmission/store.go`为数据库边界适配，`store_integration_test.go`为显式`sessionintegration`标签下的隔离真实PostgreSQL测试。唯一SQL真源为`migrations/000003_session_admission.sql`，包含授权快照、实例、预留、绑定及原子函数。没有新增第六服务或对外路由；尚未接入真实Online/UE服务器链，不构成生产准入完成。验证入口在工作空间`Tests/Integration/Session/TestSessionBackend.ps1`，只创建和清理自己的临时数据库容器。并行Online迁移由其原任务维护，不在本增量重写。
+
 ```text
 Backend/                                                            # Go业务后端根目录；保持单Go Module并承载五个可部署服务
 ├── cmd/                                                            # 五个薄应用入口；仅负责配置、信号和Composition（装配）启动，不写领域规则

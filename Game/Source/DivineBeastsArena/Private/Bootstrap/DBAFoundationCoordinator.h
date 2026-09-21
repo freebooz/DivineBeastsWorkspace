@@ -10,6 +10,7 @@
 class UGameInstance;
 class UWorld;
 class UGamePlatformApplicationFlowSubsystem;
+class UDBAFoundationOnlineContext;
 
 /** 本项目开发入口装配，显式启用且非发行构建才运行；不承担平台状态机职责。 */
 UCLASS(Transient)
@@ -39,6 +40,10 @@ public:
     void CancelDevelopmentFlow();
     /** 仅显式开发入口可用；撤销旧异步代次后允许新运行，执行器自行分配新RunId。 */
     void RetryDevelopmentFlow();
+    /** 游戏线程，仅显式Online配置可创建；读取受控测试身份，不改变单机配置或默认地图。 */
+    FGamePlatformResult InitializeOnlineContext();
+    /** 项目私有节点的类型化装配入口，非拥有引用；关闭/重试后失效，不向平台反向暴露。 */
+    UDBAFoundationOnlineContext* GetOnlineContext() const { return OnlineContext; }
 private:
     bool Tick(float DeltaSeconds);
     void StartDevelopmentFlow();
@@ -63,4 +68,7 @@ private:
     double DiscoveryDeadlineSeconds = 0.0;
     bool bStartAttempted = false;
     bool bStopping = true;
+    bool bOnlineIntegration = false;
+    UPROPERTY(Transient)
+    TObjectPtr<UDBAFoundationOnlineContext> OnlineContext;
 };

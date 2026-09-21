@@ -1,4 +1,4 @@
-#if GAMEPLATFORM_LOADING_NATIVE_TEST
+#if defined(GAMEPLATFORM_LOADING_NATIVE_TEST) && GAMEPLATFORM_LOADING_NATIVE_TEST
 #include "../Operations/LoadingPolicy.h"
 #include <iostream>
 #include <limits>

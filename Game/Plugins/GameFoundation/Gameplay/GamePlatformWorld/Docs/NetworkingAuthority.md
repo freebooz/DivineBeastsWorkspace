@@ -1,0 +1,10 @@
+# 客户端与服务器权威边界
+
+UWorldSubsystem不是自动复制对象。Context值、Region事件、流送完成状态均不自动跨网络。
+
+本地FoundationWorld仅离线开发路径，不生成ServerInstanceId。开发Dedicated允许显式角色与中立定义装配，标DevelopmentServer；不等于服务器控制面注册或生产Assignment绑定。客户端NM_Client与ListenServer拒绝离线例外，防止联网世界静默跳过Session一致性。
+
+未来客户端上下文必须从Session公开、已验证、只读快照获得目标WorldId/实例/分片/版本/epoch，并与实际地图及服务器复制的中立身份一致后再就绪。World不签发准入、不选Shard、不调用Join/Transfer/Reconnect/ClientTravel。
+
+Region位置仅观测事实，不能授权服务器伤害、采集或胜负。流送源就绪表示对应引擎加载状态，不代表网络准入或角色已生成。没有证据时网络身份保持未绑定，禁止以本机随机GUID代替权威实例身份。
+

@@ -1,0 +1,19 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "Game Platform World",
+  "Description": "世界上下文、区域与引擎流送协调；不承担服务器分配。",
+  "Category": "GameFoundation",
+  "CanContainContent": false,
+  "Modules": [
+    { "Name": "GamePlatformWorld", "Type": "Runtime", "LoadingPhase": "Default" },
+    { "Name": "GamePlatformWorldEditor", "Type": "Editor", "LoadingPhase": "PostEngineInit" }
+  ],
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformData", "Enabled": true },
+    { "Name": "GamePlatformLoading", "Enabled": true },
+    { "Name": "DataValidation", "Enabled": true, "TargetAllowList": [ "Editor" ] }
+  ]
+}

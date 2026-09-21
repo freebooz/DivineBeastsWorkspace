@@ -6,5 +6,6 @@
 
 - `000001_core.sql`：玩家长期资料与权威比赛结果；
 - `000002_outbox.sql`：Transactional Outbox（事务发件箱）及多副本 Dispatcher 租约字段。
+- `000003_session_admission.sql`：前一Session任务的原子预留、领取、提交与连接代次栅栏内核；未接公开接口，只在隔离测试库验证，不自动执行生产迁移。
 
 禁止在 `internal/platform/database`、`configs` 或其他目录复制第二套建表脚本；数据库适配器只能消费本目录迁移后的结构。

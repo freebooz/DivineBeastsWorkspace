@@ -1,0 +1,12 @@
+# 世界插件架构与生命周期
+
+GamePlatformWorld是双端Runtime模块；GamePlatformWorldEditor是Editor模块，实际验证地图对象、重复源身份、区域类型与父链。定义类在Public/Definitions，服务契约在Public/Interfaces，私有UWorldSubsystem不作为跨模块头暴露。项目测试地图和Bootstrap均不进入平台内容。
+
+UGamePlatformWorldSubsystem仅支持Game、PIE且非Commandlet。Editor、EditorPreview、GamePreview、Inactive、None不执行运行逻辑。编辑器验证器独立加载地图检查，不依赖运行子系统。
+
+Initialize创建独立ContextGeneration及流送协调器，不启动正式业务。InitializeDevelopment在显式受控开发参数下通过Data申请世界租约，再申请区域租约，全部使用World期限和本子系统弱调用者。定义指针仅即时从仍存活的租约读取，不跨释放借用。
+
+0.1秒游戏线程采样用于底层流送状态、弱对象失效和实际截止时间，不用固定延时制造成功。WorldEndPlay或Deinitialize先标记失效，再停止采样、撤销流送源、清空区域/订阅/贡献者，最后释放本世界租约。关闭幂等，迟到回调检查弱对象、关闭状态和代次。
+
+每个World独立登记表、GUID和资源句柄；没有GWorld、固定零号玩家、进程静态UWorld或第二个资产管理器。客户端离线开发与开发专服分别标识DevelopmentLocal/DevelopmentServer；未实现生产服务器身份绑定。
+

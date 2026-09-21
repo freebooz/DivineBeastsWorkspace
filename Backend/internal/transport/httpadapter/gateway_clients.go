@@ -32,7 +32,7 @@ func newInternalClient(cfg ClientConfig) internalClient {
 	if timeout <= 0 {
 		timeout = 5 * time.Second
 	}
-	return internalClient{baseURL: strings.TrimRight(cfg.BaseURL, "/"), client: &http.Client{Timeout: timeout,CheckRedirect:func(*http.Request,[]*http.Request)error{return http.ErrUseLastResponse}}}
+	return internalClient{baseURL: strings.TrimRight(cfg.BaseURL, "/"), client: &http.Client{Timeout: timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}
 }
 
 func (c internalClient) post(ctx context.Context, path string, request, response any) error {
@@ -66,16 +66,25 @@ func (c internalClient) do(req *http.Request, response any) error {
 	if err != nil {
 		return err
 	}
-	if len(payload)>maxBodyBytes {return gateway.ServiceError("SERVICE_UNAVAILABLE")}
+	if len(payload) > maxBodyBytes {
+		return gateway.ServiceError("SERVICE_UNAVAILABLE")
+	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		var problem struct {
 			ErrorCode string `json:"errorCode"`
 			Message   string `json:"message"`
 		}
 		_ = json.Unmarshal(payload, &problem)
-		status,code:=gateway.OnlineErrorStatus(gateway.ServiceError(problem.ErrorCode));if status!=resp.StatusCode {return gateway.ServiceError("SERVICE_UNAVAILABLE")};return gateway.ServiceError(code)
+		status, code := gateway.OnlineErrorStatus(gateway.ServiceError(problem.ErrorCode))
+		if status != resp.StatusCode {
+			return gateway.ServiceError("SERVICE_UNAVAILABLE")
+		}
+		return gateway.ServiceError(code)
 	}
 	if response == nil {
+		if resp.StatusCode != http.StatusNoContent || len(payload) != 0 {
+			return gateway.ServiceError("SERVICE_UNAVAILABLE")
+		}
 		return nil
 	}
 	return json.Unmarshal(payload, response)
@@ -90,18 +99,21 @@ func NewIdentityClient(cfg ClientConfig) *IdentityClient {
 
 func (c *IdentityClient) Login(ctx context.Context, req gateway.LoginRequest) (gateway.LoginResponse, error) {
 	var response struct {
-		RefreshExpiresAtUnixMs int64 `json:"refreshExpiresAtUnixMs"`
-		PlayerID        string `json:"playerId"`
-		SessionID       string `json:"sessionId"`
-		AccessToken     string `json:"accessToken"`
-		RefreshToken    string `json:"refreshToken"`
-		ExpiresAtUnixMs int64  `json:"expiresAtUnixMs"`
+		RefreshExpiresAtUnixMs int64  `json:"refreshExpiresAtUnixMs"`
+		PlayerID               string `json:"playerId"`
+		SessionID              string `json:"sessionId"`
+		AccessToken            string `json:"accessToken"`
+		RefreshToken           string `json:"refreshToken"`
+		ExpiresAtUnixMs        int64  `json:"expiresAtUnixMs"`
 	}
 	err := c.post(ctx, "/internal/v1/identity/login", req, &response)
 	if err != nil {
 		return gateway.LoginResponse{}, err
 	}
-	return gateway.LoginResponse{PlayerID: response.PlayerID, SessionID: response.SessionID, AccessToken: response.AccessToken, RefreshToken: response.RefreshToken, ExpiresAt: time.UnixMilli(response.ExpiresAtUnixMs).UTC().Format(time.RFC3339Nano),RefreshExpiresAt:time.UnixMilli(response.RefreshExpiresAtUnixMs).UTC().Format(time.RFC3339Nano)}, nil
+	if response.PlayerID == "" || response.SessionID == "" || response.AccessToken == "" || response.RefreshToken == "" || response.ExpiresAtUnixMs <= 0 || response.RefreshExpiresAtUnixMs <= 0 {
+		return gateway.LoginResponse{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
+	}
+	return gateway.LoginResponse{PlayerID: response.PlayerID, SessionID: response.SessionID, AccessToken: response.AccessToken, RefreshToken: response.RefreshToken, ExpiresAt: time.UnixMilli(response.ExpiresAtUnixMs).UTC().Format(time.RFC3339Nano), RefreshExpiresAt: time.UnixMilli(response.RefreshExpiresAtUnixMs).UTC().Format(time.RFC3339Nano)}, nil
 }
 
 func (c *IdentityClient) Authenticate(ctx context.Context, accessToken string) (gateway.AuthenticatedSession, error) {
@@ -144,6 +156,9 @@ func (c *PlayerDataClient) GetProfile(ctx context.Context, playerID string) (gat
 	}
 	if !response.Found {
 		return gateway.PlayerProfile{}, gateway.ServiceError("PLAYER_PROFILE_NOT_FOUND")
+	}
+	if response.PlayerID != playerID || response.DataVersion < 1 || response.Revision < 0 {
+		return gateway.PlayerProfile{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
 	}
 	return gateway.PlayerProfile{PlayerID: response.PlayerID, GameID: response.GameID, DisplayName: response.DisplayName, DataVersion: response.DataVersion, Revision: response.Revision, TutorialCompleted: response.TutorialCompleted, DefaultWorldID: response.DefaultWorldID, OwnedCharacterIDs: response.OwnedCharacterIDs}, nil
 }

@@ -2,9 +2,9 @@
 
 ## 当前交付状态
 
-2026-09-21：公共 C++ 头文件与先行 UE 契约测试已落地，供主工程按准确类型名编写调用方。**这不是完整插件实现，当前没有服务定义、模块构建规则或插件描述，不能链接运行。** 不创建空模块或固定成功服务冒充完成。实现目标仍为唯一 Runtime 模块 `GamePlatformOnline`，复用 `GamePlatformCore` 的 `FGamePlatformResult`，实例服务留在私有 `UGameInstanceSubsystem`。
+2026-09-21 安全断点：用户已要求停止当前 Online 实施，转交主代理处理新范围；现有文件全部保留。公共 C++ 头、先行 UE 契约测试及独立于传输的生产请求／认证执行器已落地，8 组原生逻辑测试通过。**这不是完整插件实现，当前没有公开服务函数定义、私有 UObject 门面、模块构建规则或插件描述，不能链接运行。** 实现目标仍为唯一 Runtime 模块 `GamePlatformOnline`，公共结果复用 `GamePlatformCore` 的 `FGamePlatformResult`。详见 [安全断点记录](Docs/安全断点记录.md)。
 
-生产传输尚待解决一个安全前置：锁定 UE5.8 的 Windows HTTP 使用 Curl，`CurlHttp.cpp:183` 开启自动跳转，公开 `IHttpRequest` 没有禁用选项，且跳转状态与头被过滤。密码／刷新令牌在请求正文，事后 URL 检查不能阻止 307／308 泄露。必须先提供经验证的公开禁用跳转能力，或由用户明确批准其他传输方案；不得引用引擎私有头、猜测 SetOption 名称或降低安全要求。
+原引擎的自动重定向安全阻断已上报，用户批准由另一实施者修改引擎；本轮已读到补丁公开接口 `UE_HTTP_HAS_REQUEST_REDIRECT_POLICY` 和 `IHttpRequest::SetRedirectPolicy(EHttpRequestRedirectPolicy::Reject)`。Online 尚未接入该接口，补丁也没有本轮 HTTP／调用方重编及网络验证证据。后续必须同时检查宏和 setter 返回 true，未知后端明确 UnsupportedTransport；不能用 GetOption 回显或事后 URL 检查代替安全能力。当前纯逻辑 Configure 对不支持安全请求的传输明确拒绝。
 
 ## 主工程按真实名称接入
 
@@ -43,6 +43,8 @@ Core 结果默认 NotExecuted；所有业务载荷只能在检查 `Result.IsSucc
 
 已先添加 `Private/Tests/GamePlatformOnlinePublicContractTests.cpp`，覆盖安全默认值并以编译期断言锁定基础门面签名。测试尚未执行，不是 red/green 通过证据。其名称为 `GamePlatform.Online.Contract.SafeDefaults`，将由正式主工程编译和运行；不能用其他宿主绕过历史空描述文件。
 
-尚未实现／执行：请求队列和传输、认证状态机、资料适配、私有子系统、真实后端 UE 自动化测试、模块装配、UE/UHT 编译、三目标构建、烘焙、真实后端联调。现有三个空描述文件保持原位不动。
+已实现并原生测试：请求身份／代次、一次终态与下一 Tick 交付、传输回调邮箱、总截止时间、并发／等待队列预算、有限读取重试、认证／刷新合并／退出清理、资料缓存修订单调性。生产源码是 `Private/Requests/OnlineSession.h/.cpp`，并非测试中另造算法。
+
+尚未实现／执行：真实 UE HTTP 适配、传输中响应体上限、JSON 解析与序列化、私有子系统和公共门面定义、真实后端 UE 自动化测试、模块装配、UE/UHT 编译、三目标构建、烘焙、真实后端联调。当前状态机仍有未覆盖缺陷，见断点记录；不能凭 8 组测试通过宣称认证实现完成。现有三个空描述文件保持原位不动。
 
 接口对应六项锁定 HTTP 契约，公共结果不携带秘密。全局目录规划及主工程依赖由主代理同步，本任务只写当前插件目录；完整文件清单见 [目录规划说明](Docs/目录规划说明.md)。

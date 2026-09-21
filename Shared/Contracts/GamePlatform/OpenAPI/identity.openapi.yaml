@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: |
     IdentityService 当前注册的内部 HTTP 路由。它只供 GatewayService 或受信任的后端服务调用，绝不能通过公网 Ingress、游戏客户端或 UE 客户端直接暴露。
-    本地部署使用内存会话；生产令牌、会话持久化和鉴权边界由 productiondeps 装配提供。
+    productiondeps 使用 PostgreSQL 密码账号与会话；内存 guest 仅保留旧开发构造器。内部明文传输没有服务间认证，不是公网或生产安全边界。
 servers:
   - url: http://127.0.0.1:8081
     description: 本地 Docker 开发部署的 IdentityService
@@ -12,6 +12,53 @@ tags:
   - name: 运维
   - name: 内部身份
 paths:
+  /internal/v1/identity/probe:
+    get:
+      tags: [内部身份]
+      operationId: probeIdentityInternal
+      summary: 通过身份仓储实际检查数据库可用性
+      responses:
+        '200':
+          description: 领域 Probe 成功，不能用宿主 health/ready 替代。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProbeResponse' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /internal/v1/identity/refresh:
+    post:
+      tags: [内部身份]
+      operationId: refreshIdentityInternal
+      summary: 原子轮换令牌且不延长刷新绝对期限
+      description: 不可自动重试；响应丢失也可能已消费旧令牌。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+      responses:
+        '200':
+          description: 新令牌对与原刷新绝对期限。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalLoginResponse' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /internal/v1/identity/logout:
+    post:
+      tags: [内部身份]
+      operationId: logoutIdentityInternal
+      summary: 使用当前或已消费刷新令牌撤销所属会话
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+      responses:
+        '204': { description: 会话已撤销，无正文。 }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /health/live:
     get:
       tags: [运维]
@@ -50,7 +97,7 @@ paths:
       tags: [内部身份]
       operationId: loginIdentityInternal
       summary: 为 Gateway 创建玩家会话
-      description: 当前实现仅支持 guest 提供方。credential 会被传输层接受，但本地 Guest 实现不以其替代生产凭据校验。
+      description: password 使用 accountName 与原 credential 字段承载密码；生产拒绝 guest，不回退内存身份。大小上限 64KiB，拒绝未知、重复及缺失必填字段。
       requestBody:
         required: true
         content:
@@ -72,12 +119,13 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /internal/v1/identity/authenticate:
     post:
       tags: [内部身份]
       operationId: authenticateIdentityInternal
       summary: 验证 Access Token
-      description: 无效令牌以 HTTP 200 和 valid=false 返回，便于 Gateway 将身份失败统一映射为对客户端的 401。
+      description: 无效令牌保留 HTTP 200 与 valid=false 兼容语义；后端不可用必须返回 503，不能伪装为令牌无效。
       requestBody:
         required: true
         content:
@@ -94,8 +142,37 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
 components:
+  responses:
+    InvalidRequest:
+      description: 必填字段、大小或 JSON 校验失败。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
+    Unauthorized:
+      description: 凭据错误、令牌无效或已过期。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
+    Unavailable:
+      description: 领域或数据库不可用，不泄露连接及凭据信息。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
   schemas:
+    ProbeResponse:
+      type: object
+      additionalProperties: false
+      required: [ready]
+      properties:
+        ready: { type: boolean, const: true, description: 真实数据库探测通过。 }
+    RefreshTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string, minLength: 1, description: 只用于刷新或撤销，不可写日志。 }
     LivenessResponse:
       type: object
       additionalProperties: false
@@ -123,19 +200,22 @@ components:
       required: [gameId, provider, credential]
       properties:
         gameId: { type: string, minLength: 1, description: 游戏逻辑标识。 }
-        provider: { type: string, enum: [guest], description: 当前仅支持 guest。 }
+        provider: { type: string, enum: [guest, password], description: 生产仅 password；guest 只供旧开发构造器。 }
+        accountName: { type: string, minLength: 1, description: password 提供方必填账号，不是玩家标识。 }
+        clientVersion: { type: string, description: 上游客户端版本；兼容旧内部调用可省略。 }
         credential: { type: string, minLength: 1, description: 上游传递的提供方凭据。 }
         deviceId: { type: string, description: 设备或安装实例标识；可为空字符串。 }
     InternalLoginResponse:
       type: object
       additionalProperties: false
-      required: [playerId, sessionId, accessToken, refreshToken, expiresAtUnixMs]
+      required: [playerId, sessionId, accessToken, refreshToken, expiresAtUnixMs, refreshExpiresAtUnixMs]
       properties:
         playerId: { type: string, description: 玩家标识。 }
         sessionId: { type: string, description: 在线会话标识。 }
         accessToken: { type: string, description: 短期访问令牌。 }
         refreshToken: { type: string, description: 刷新令牌。 }
         expiresAtUnixMs: { type: integer, format: int64, description: Access Token UTC 过期时间的 Unix 毫秒值。 }
+        refreshExpiresAtUnixMs: { type: integer, format: int64, description: 刷新绝对期限，轮换不得延期。 }
     AuthenticateRequest:
       type: object
       additionalProperties: false
@@ -160,7 +240,7 @@ components:
       required: [valid, errorCode]
       properties:
         valid: { type: boolean, const: false, description: 令牌无效或已过期。 }
-        errorCode: { type: string, const: AUTH_SESSION_INVALID, description: 固定的无效会话错误码。 }
+        errorCode: { type: string, enum: [AUTH_SESSION_INVALID, AUTH_TOKEN_EXPIRED], description: 无效或过期会话的稳定错误码。 }
     InternalApiError:
       type: object
       additionalProperties: false

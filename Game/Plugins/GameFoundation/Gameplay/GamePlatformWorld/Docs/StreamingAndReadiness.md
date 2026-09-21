@@ -1,0 +1,12 @@
+# 引擎流送薄适配与世界就绪
+
+World只协调引擎已有World Partition Streaming Source与传统LevelStreaming；不自建Cell网格、HLOD、DataLayer状态机或第二资产加载器。精确API与边界见Private/Streaming实现及源码中文说明，UE5.8源核对不等于运行验证。
+
+请求关联ContextGeneration、随机RequestId、弱Owner、目标位置/已有LevelPackage、Loaded/Activated、优先级、截止秒数和RequiredForReadiness。提交不表示Ready，完成仍持有源到Cancel/关闭；取消只撤销本请求。不凭固定Delay、请求句柄非空或地图已存在判定流送成功。
+
+就绪基础事实全部为真才成立：World有效且BeginPlay；真实定义租约可读；MapIdentity匹配；Session目标匹配或显式离线开发例外；必需区域Provider齐备；必需流送底层Ready；未销毁；额外贡献者全部成功。角色/Pawn出生不是平台World必需条件。
+
+成功后GetReadiness重新采样，Loading的IsReadyToPlay通过任务IsReadyToUse再次检查。操作终态日志不重新发布不代表继续有效；消费代码必须查询当前Ready，不缓存历史成功当永久通行证。
+
+限制：没有真实测试地图与可构建目标，WP可见内容、传统流送状态和多实例均未执行。没有生产Session时不能启用网络例外。大世界精确空间覆盖范围以引擎公开源查询为界，不声称任意Region全部Actor或GPU资源已经准备好。
+
