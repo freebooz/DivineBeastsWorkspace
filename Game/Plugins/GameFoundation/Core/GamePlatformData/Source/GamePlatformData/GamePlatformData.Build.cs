@@ -6,7 +6,6 @@ public class GamePlatformData : ModuleRules
     public GamePlatformData(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "GamePlatformCore" });
-        PrivateDependencyModuleNames.AddRange(new[] { "AssetRegistry" });
+        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "GamePlatformCore", "AssetRegistry" });
     }
 }

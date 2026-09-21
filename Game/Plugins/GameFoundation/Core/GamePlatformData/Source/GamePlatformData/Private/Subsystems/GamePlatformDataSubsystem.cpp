@@ -3,6 +3,7 @@
 #include "Loading/DataNextTick.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
@@ -16,7 +17,7 @@ struct FDependencyFrame
 struct FDefinitionRequest
 {
     FGamePlatformDataLease Lease;
-    TSubclassOf<UGamePlatformDefinitionBase> ExpectedClass;
+    TStrongObjectPtr<UClass> ExpectedClass;
     TWeakObjectPtr<UObject> Caller;
     TWeakObjectPtr<UWorld> World;
     EGamePlatformDataLifetime Lifetime = EGamePlatformDataLifetime::Instance;
@@ -127,7 +128,7 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
     for (FName Bundle : Bundles) Request->Lease.Bundles.AddUnique(Bundle);
     Request->Lease.Bundles.Sort(FNameLexicalLess());
     Request->Lease.RequestState = EGamePlatformDataRequestState::Loading;
-    Request->ExpectedClass = ExpectedClass;
+    Request->ExpectedClass.Reset(ExpectedClass.Get());
     Request->Caller = WeakCaller;
     Request->Lifetime = Lifetime;
     if (Lifetime == EGamePlatformDataLifetime::World) Request->World = WeakCaller->GetWorld();
@@ -202,7 +203,7 @@ void UGamePlatformDataSubsystem::AssetReady(FGamePlatformDataLease Lease, FPrima
     auto* Manager = Scope->Manager.Get();
     const auto* Definition = Manager ? Cast<UGamePlatformDefinitionBase>(Manager->GetPrimaryAssetObject(AssetId)) : nullptr;
     if (!Definition || Definition->GetPrimaryAssetId() != AssetId ||
-        (AssetId == Lease.DefinitionId && !Definition->IsA(Request->ExpectedClass)))
+        (AssetId == Lease.DefinitionId && !Definition->IsA(Request->ExpectedClass.Get())))
     { Finish(Lease, FGamePlatformResult::Failure(TEXT("DefinitionTypeMismatch"), TEXT("实际加载对象的定义类型或稳定身份不匹配。"))); return; }
     Result = Definition->ValidateDefinition();
     if (!Result.IsSuccess()) { Finish(Lease, Result); return; }
@@ -281,7 +282,7 @@ const UGamePlatformDefinitionBase* UGamePlatformDataSubsystem::GetLoadedDefiniti
     if (!Found || !SameLease((*Found)->Lease, Lease) || (*Found)->Lease.RequestState != EGamePlatformDataRequestState::Succeeded || !IsContextAlive(**Found)) return nullptr;
     auto* Manager = Scope->Manager.Get();
     const auto* Definition = Manager ? Cast<UGamePlatformDefinitionBase>(Manager->GetPrimaryAssetObject(Lease.DefinitionId)) : nullptr;
-    return Definition && Definition->IsA((*Found)->ExpectedClass) ? Definition : nullptr;
+    return Definition && Definition->IsA((*Found)->ExpectedClass.Get()) ? Definition : nullptr;
 }
 EGamePlatformDataRequestState UGamePlatformDataSubsystem::GetLeaseState(const FGamePlatformDataLease& Lease) const
 {

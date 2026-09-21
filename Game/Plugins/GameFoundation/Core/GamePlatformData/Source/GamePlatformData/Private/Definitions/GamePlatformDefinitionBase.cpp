@@ -1,5 +1,5 @@
 #include "Definitions/GamePlatformDefinitionBase.h"
-#include "AssetRegistry/AssetRegistryTagsContext.h"
+#include "UObject/AssetRegistryTagsContext.h"
 
 FPrimaryAssetType UGamePlatformPrimaryDataAsset::DefinitionAssetType() { return FPrimaryAssetType(TEXT("GamePlatformDefinition")); }
 FName UGamePlatformPrimaryDataAsset::LogicalIdTag() { return TEXT("GamePlatformLogicalId"); }

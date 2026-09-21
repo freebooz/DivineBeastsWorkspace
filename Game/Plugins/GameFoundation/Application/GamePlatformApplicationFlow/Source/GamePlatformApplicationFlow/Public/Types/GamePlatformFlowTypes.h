@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/PrimaryAssetId.h"
 
 class UGameInstance;
 class UGamePlatformFlowNode;
@@ -60,7 +61,32 @@ struct FGamePlatformFlowContext
     int32 Attempt = 0;
     TWeakObjectPtr<UGameInstance> GameInstance;
     TWeakObjectPtr<UObject> Payload; // 组合根自定义的强类型 UObject；平台层不解析业务字段。
+    /** 本次节点进入／重试的唯一代次；循环回到同名节点也不同，0表示尚未开始。 */
+    uint64 NodeGeneration = 0;
+    /** 资产模式的中立输入定义身份；旧C++装配为空。追加字段保留旧聚合初始化顺序。 */
+    FPrimaryAssetId InputDefinitionId;
 };
+
+/** 外部事件与精确取消令牌；四维身份全部匹配当前已开始节点才生效。 */
+struct FGamePlatformFlowNodeToken
+{
+    FGamePlatformFlowHandle Handle;
+    FName NodeId = NAME_None;
+    uint64 NodeGeneration = 0;
+    bool IsValid() const { return Handle.IsValid() && !NodeId.IsNone() && NodeGeneration != 0; }
+};
+
+/** 工厂撤销身份；只有创建它的GameInstance可以撤销同一注册，旧句柄不能撤销重新注册。 */
+struct FGamePlatformFlowFactoryHandle
+{
+    FGuid ScopeId;
+    FGuid RegistrationId;
+    FName ExecutorId = NAME_None;
+    bool IsValid() const { return ScopeId.IsValid() && RegistrationId.IsValid() && !ExecutorId.IsNone(); }
+};
+
+/** 游戏线程创建节点；每次运行必须返回本GameInstance新建的独立实例，不能返回CDO或复用旧对象。 */
+using FGamePlatformFlowNodeFactory = TFunction<UGamePlatformFlowNode*(UGameInstance&)>;
 
 /** 节点完成可从工作线程调用；执行器下一次游戏线程调度处理，只接受首次完成。 */
 using FGamePlatformFlowCompletion = TFunction<void(FGamePlatformFlowNodeResult)>;
@@ -94,6 +120,8 @@ struct FGamePlatformFlowSnapshot
     int32 Attempt = 0;
     FName ErrorCode = NAME_None;
     FString ErrorMessage;
+    /** 当前节点代次；结合Handle和NodeId构造外部事件令牌，0表示尚未开始。 */
+    uint64 NodeGeneration = 0;
 };
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformFlowFinished, const FGamePlatformFlowSnapshot&);

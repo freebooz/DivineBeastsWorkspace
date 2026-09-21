@@ -104,7 +104,10 @@ void UGamePlatformAssetManager::Reconcile(const FPrimaryAssetId& AssetId)
         });
     });
     // LoadPrimaryAsset会以给定集合替换分组；传入所有调用者并集及外部基线，而非最后一次请求。
-    TSharedPtr<FStreamableHandle> Operation = LoadPrimaryAsset(AssetId, Desired, Complete);
+    FAssetManagerLoadParams LoadParams;
+    LoadParams.OnComplete = FStreamableDelegateWithHandle::CreateLambda([Complete](TSharedPtr<FStreamableHandle>) { Complete.ExecuteIfBound(); });
+    LoadParams.OnCancel = LoadParams.OnComplete;
+    TSharedPtr<FStreamableHandle> Operation = LoadPrimaryAsset(AssetId, Desired, MoveTemp(LoadParams));
     // 引擎可同步通知；用户通知已延后，重新查询可防未来重入改动悬空Entry。
     if (FAssetDemand* Current = ProcessDemands->Assets.Find(AssetId); Current && Current->Serial == Serial)
         Current->Operation = Operation;
