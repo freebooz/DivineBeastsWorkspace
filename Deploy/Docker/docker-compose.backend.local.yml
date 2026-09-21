@@ -1,0 +1,103 @@
+name: divinebeasts-backend-local
+
+services:
+  identityservice:
+    build:
+      context: .
+      dockerfile: Deploy/Docker/Backend.Dockerfile
+      args:
+        SERVICE: identityservice
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: IdentityService
+      SERVICE_PORT: "8081"
+      GRPC_PORT: "9081"
+      SERVICE_VERSION: local
+      SHUTDOWN_TIMEOUT: 15s
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
+
+  playerdataservice:
+    build:
+      context: .
+      dockerfile: Deploy/Docker/Backend.Dockerfile
+      args:
+        SERVICE: playerdataservice
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: PlayerDataService
+      SERVICE_PORT: "8082"
+      GRPC_PORT: "9082"
+      SERVICE_VERSION: local
+      SHUTDOWN_TIMEOUT: 15s
+    ports:
+      - "8082:8082"
+    networks:
+      - backend
+
+  matchservice:
+    build:
+      context: .
+      dockerfile: Deploy/Docker/Backend.Dockerfile
+      args:
+        SERVICE: matchservice
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: MatchService
+      SERVICE_PORT: "8083"
+      GRPC_PORT: "9083"
+      SERVICE_VERSION: local
+      SHUTDOWN_TIMEOUT: 15s
+    ports:
+      - "8083:8083"
+    networks:
+      - backend
+
+  gameservercontrolservice:
+    build:
+      context: .
+      dockerfile: Deploy/Docker/Backend.Dockerfile
+      args:
+        SERVICE: gameservercontrolservice
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: GameServerControlService
+      SERVICE_PORT: "8084"
+      GRPC_PORT: "9084"
+      SERVICE_VERSION: local
+      SHUTDOWN_TIMEOUT: 15s
+    ports:
+      - "8084:8084"
+    networks:
+      - backend
+
+  gatewayservice:
+    build:
+      context: .
+      dockerfile: Deploy/Docker/Backend.Dockerfile
+      args:
+        SERVICE: gatewayservice
+    restart: unless-stopped
+    depends_on:
+      - identityservice
+      - playerdataservice
+      - matchservice
+    environment:
+      SERVICE_NAME: GatewayService
+      SERVICE_PORT: "8080"
+      GRPC_PORT: "9080"
+      SERVICE_VERSION: local
+      SHUTDOWN_TIMEOUT: 15s
+      IDENTITY_SERVICE_URL: http://identityservice:8081
+      PLAYER_DATA_SERVICE_URL: http://playerdataservice:8082
+      MATCH_SERVICE_URL: http://matchservice:8083
+    ports:
+      - "28080:8080"
+    networks:
+      - backend
+
+networks:
+  backend:
+    name: divinebeasts-backend-local
