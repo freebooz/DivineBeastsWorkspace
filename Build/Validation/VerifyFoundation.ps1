@@ -52,6 +52,19 @@ try {
         try { Assert-FoundationFile (Join-Path $context.Workspace $file); Add-Check $file Passed 0 '文件非空；不代表编译成功' }
         catch { Add-Check $file NotExecuted 2 $_.Exception.Message }
     }
+    # UBT即使未启用插件也会扫描描述文件；原位报告坏JSON，绝不移动/删除或创建替代宿主。
+    $descriptors = @($context.Project) + @(Get-ChildItem -LiteralPath (Join-Path $context.Workspace 'Game/Plugins') -Filter '*.uplugin' -Recurse -File | ForEach-Object FullName)
+    foreach ($descriptor in $descriptors) {
+        try {
+            if (-not (Test-Path -LiteralPath $descriptor)) { throw [IO.FileNotFoundException]::new("缺失描述文件：$descriptor") }
+            $content = Get-Content -Raw -LiteralPath $descriptor
+            if ([string]::IsNullOrWhiteSpace($content)) { throw "描述文件为空：$descriptor" }
+            $parsed = $content | ConvertFrom-Json
+            if ($null -eq $parsed -or -not $parsed.FileVersion) { throw "描述文件缺少FileVersion：$descriptor" }
+            Add-Check "Descriptor/$([IO.Path]::GetFileName($descriptor))" Passed 0 $descriptor
+        } catch [IO.FileNotFoundException] { Add-Check "Descriptor/$([IO.Path]::GetFileName($descriptor))" NotExecuted 2 $_.Exception.Message }
+        catch { Add-Check "Descriptor/$([IO.Path]::GetFileName($descriptor))" Failed 1 $_.Exception.Message }
+    }
     # 仅检查UE包头，文本占位不得通过；Cook及FullM0运行承担真实加载证据。
     $assets = @('Maps/L_FoundationBootstrap.umap','Maps/L_FoundationSandbox.umap','Definitions/DA_FoundationProbe.uasset','Definitions/DA_FoundationFlow.uasset')
     foreach ($asset in $assets) {

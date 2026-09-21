@@ -28,9 +28,11 @@ Assert-Case '未授权启动必须返回未执行2' {
 Assert-Case '缺失引擎与未执行矩阵不能全通过' {
     $id = [guid]::NewGuid().ToString('D')
     & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $workspace 'Build/Validation/VerifyFoundation.ps1') -EngineRoot (Join-Path $testRoot 'MissingEngine') -RunId $id *> (Join-Path $testRoot 'verify.log')
-    Assert-Equal $LASTEXITCODE 2
+    $verifyCode = $LASTEXITCODE
+    if ($verifyCode -notin @(1,2)) { throw "未执行验证不能返回$verifyCode" }
     $report = Get-Content -Raw (Join-Path $workspace "Saved/Validation/FoundationM0/$id/Verify/result.json") | ConvertFrom-Json
-    Assert-Equal $report.Status 'Incomplete'
+    Assert-Equal $report.ExitCode $verifyCode
+    if ($report.Status -notin @('Incomplete','Failed')) { throw '未执行矩阵不应通过' }
     if (@($report.Matrix | Where-Object Status -eq 'NotExecuted').Count -lt 8) { throw '缺少未执行矩阵项' }
 }
 $module = Join-Path $workspace 'Build/Game/FoundationTools.psm1'
@@ -39,6 +41,7 @@ if (Test-Path $module) {
     $fake = Join-Path $PSScriptRoot 'FakeFoundationProcess.ps1'
     foreach ($scenario in @(
         @{ Name='外部非零码原样传播'; Mode='Exit'; Code=23; Expected=23; Ready=$false },
+        @{ Name='外部退出2也必须保留'; Mode='Exit'; Code=2; Expected=2; Ready=$false },
         @{ Name='正常工具退出'; Mode='Exit'; Code=0; Expected=0; Ready=$false },
         @{ Name='完整就绪并清理所属进程'; Mode='Ready'; Code=0; Expected=0; Ready=$true },
         @{ Name='宿主标记不能代替完整就绪'; Mode='Host'; Code=0; Expected=1; Ready=$true },
@@ -46,11 +49,12 @@ if (Test-Path $module) {
         @{ Name='超时清理'; Mode='Hang'; Code=0; Expected=1; Ready=$true },
         @{ Name='就绪后立即崩溃不能通过'; Mode='ReadyCrash'; Code=0; Expected=17; Ready=$true }
         @{ Name='真实UE时间前缀与Map字段可识别'; Mode='Fields'; Code=0; Expected=0; Ready=$true },
+        @{ Name='日志被引擎持续写入时仍能核验'; Mode='HeldLog'; Code=0; Expected=0; Ready=$true },
         @{ Name='命令行回显不能伪造就绪'; Mode='CommandLine'; Code=0; Expected=1; Ready=$true },
         @{ Name='服务器就绪不能伪造玩家就绪'; Mode='Server'; Code=0; Expected=1; Ready=$true }
     )) {
         Assert-Case $scenario.Name {
-            $dir = Join-Path $testRoot $scenario.Mode
+            $dir = Join-Path $testRoot "$($scenario.Mode)-$($scenario.Code)"
             $null = New-Item -ItemType Directory -Path $dir -Force
             $log = Join-Path $dir 'engine.log'
             $id = [guid]::NewGuid().ToString('D')
@@ -68,6 +72,16 @@ if (Test-Path $module) {
         $result = Invoke-FoundationProcess -FilePath (Join-Path $PSHOME 'pwsh.exe') -Arguments @('-NoProfile','-File',$fake,'-Mode','Echo','-Value',$value) -WorkingDirectory $dir -OutputDirectory $dir -TimeoutSeconds 3
         Assert-Equal $result.ExitCode 0
         Assert-Equal ([IO.File]::ReadAllText((Join-Path $dir 'stdout.log')).TrimEnd()) $value
+    }
+    foreach ($entry in @(@{Mode='Host'; Marker='FoundationHostReady'},@{Mode='Server'; Marker='FoundationServerReady'})) {
+        Assert-Case "显式标记可通过：$($entry.Marker)" {
+            $dir = Join-Path $testRoot $entry.Marker
+            $null = New-Item -ItemType Directory -Path $dir
+            $log = Join-Path $dir 'engine.log'; $id = [guid]::NewGuid().ToString('D')
+            $result = Invoke-FoundationProcess -FilePath (Join-Path $PSHOME 'pwsh.exe') -Arguments @('-NoProfile','-File',$fake,'-Mode',$entry.Mode,'-LogPath',$log,'-RunId',$id) -WorkingDirectory $dir -OutputDirectory $dir -TimeoutSeconds 3 -ReadyLog $log -ReadyMarker "$($entry.Marker) RunId=$id"
+            Assert-Equal $result.ExitCode 0
+            Assert-Equal $result.Ready $true
+        }
     }
     Assert-Case '旧日志拒绝启动且不覆盖' {
         $dir = Join-Path $testRoot 'Stale'
@@ -101,6 +115,22 @@ if (Test-Path $module) {
             $arguments = @('-NoProfile','-File',(Join-Path $workspace $entry.Script),'-EngineRoot',(Join-Path $testRoot 'MissingEngine')) + $entry.Flags
             & (Join-Path $PSHOME 'pwsh.exe') @arguments *> (Join-Path $testRoot ([IO.Path]::GetFileNameWithoutExtension($entry.Script) + '-missing.log'))
             Assert-Equal $LASTEXITCODE 2
+        }
+    }
+    foreach ($layout in @('framework','frameworks')) {
+        Assert-Case "UE工具运行时配置解析：$layout" {
+            # 仅测试工具路径解析；这些Saved标记文件绝不会被启动，也不构成引擎或游戏宿主。
+            $root = Join-Path $testRoot "RuntimeConfig-$layout"
+            $toolDir = Join-Path $root 'Engine/Binaries/DotNET/AutomationTool'
+            $sdkDir = Join-Path $root 'Engine/Binaries/ThirdParty/DotNet/10.0/win-x64'
+            $null = New-Item -ItemType Directory -Path $toolDir,$sdkDir -Force
+            [IO.File]::WriteAllText((Join-Path $toolDir 'AutomationTool.dll'),'test-only-not-executable')
+            [IO.File]::WriteAllText((Join-Path $sdkDir 'dotnet.exe'),'test-only-not-executable')
+            $framework = @{ name='Microsoft.NETCore.App'; version='10.0.0' }
+            $options = @{}; $options[$layout] = if ($layout -eq 'framework') { $framework } else { @($framework,@{name='Microsoft.WindowsDesktop.App';version='10.0.0'}) }
+            @{runtimeOptions=$options} | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $toolDir 'AutomationTool.runtimeconfig.json') -Encoding utf8
+            $tool = Get-FoundationManagedTool ([pscustomobject]@{Root=$root}) AutomationTool
+            Assert-Equal $tool.Executable (Join-Path $sdkDir 'dotnet.exe')
         }
     }
 } else { $failures.Add('公共进程执行模块尚未实现') }

@@ -1,4 +1,5 @@
 #pragma once
+#include <string_view>
 
 namespace DBA::Foundation
 {
@@ -10,5 +11,14 @@ inline EMode ResolveMode(bool bDevelopmentBuild, bool bExplicitlyEnabled, bool b
 {
     if (!bDevelopmentBuild || !bExplicitlyEnabled || bCommandlet) { return EMode::Disabled; }
     return bDedicatedServer ? EMode::ServerDiagnostics : EMode::PlayerDevelopment;
+}
+
+/** 只接纳本实例、本次操作及精确目标包的就绪通知；字符串由调用者在本次调用期间持有。 */
+inline bool AcceptsWorldReady(bool bSameInstance, bool bBegunPlay,
+    std::string_view ActualPackage, std::string_view ExpectedPackage,
+    std::string_view ActualOperation, std::string_view ExpectedOperation)
+{
+    return bSameInstance && bBegunPlay && !ExpectedPackage.empty() &&
+        ActualPackage == ExpectedPackage && !ExpectedOperation.empty() && ActualOperation == ExpectedOperation;
 }
 }

@@ -13,7 +13,7 @@ param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][strin
     [ValidateRange(1,86400)][int]$TimeoutSeconds = 1800, [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps }
+$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps; Configuration='Development'; Platform='Win64'; CustomConfig='FoundationStandalone' }
 try {
     $context = New-FoundationContext "Cook-$Target" $RunId
     if (-not $Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }

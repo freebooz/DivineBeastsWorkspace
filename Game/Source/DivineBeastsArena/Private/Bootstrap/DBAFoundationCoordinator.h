@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Containers/Ticker.h"
 #include "UObject/Object.h"
+#include "Types/GamePlatformDataLease.h"
 #include "DBAFoundationCoordinator.generated.h"
 
 class UGameInstance;
@@ -20,6 +21,16 @@ public:
     void Shutdown();
     /** 返回拥有自身存储的诊断文字，关闭后不引用旧世界。 */
     FString GetDiagnostics() const { return Diagnostics; }
+    /** 游戏线程校验显式开发授权、真实核心算法、资产管理器及已保存地图；失败不启动玩家流程。 */
+    FGamePlatformResult ValidateConfiguration() const;
+    /** 游戏线程转移已就绪探针租约到协调器；失败不消费输入，终态显示不借用释放后的定义。 */
+    FGamePlatformResult AdoptProbe(FGamePlatformDataLease& InOutLease);
+    /** 游戏线程从仍持有的租约读取实际资产数值；无就绪租约返回false并清零输出。 */
+    bool ReadProbe(int32& OutValue) const;
+    /** 真正屏障：当前实例的目标世界开始运行、有本地观察者且探针租约仍可读。 */
+    bool IsFoundationReady() const;
+    /** 仅主工程拥有地图选择；平台流程资产不引用地图。返回静态不可变包名。 */
+    static const TCHAR* SandboxPackage();
 private:
     bool Tick(float DeltaSeconds);
     TWeakObjectPtr<UGameInstance> OwnerInstance;
@@ -27,4 +38,5 @@ private:
     FTSTicker::FDelegateHandle TickerHandle;
     FString RunId;
     FString Diagnostics = TEXT("基础工程开发验证未启用");
+    FGamePlatformDataLease ProbeLease;
 };

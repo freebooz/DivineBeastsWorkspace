@@ -23,6 +23,10 @@ function Stop-FoundationOwnedProcess {
         if ($current.StartTime.ToUniversalTime().Ticks -ne $StartTimeTicks) { return $false }
         $current.Kill()
         return $current.WaitForExit(5000)
+    } catch [InvalidOperationException] {
+        return $Process.HasExited
+    } catch [ComponentModel.Win32Exception] {
+        return $Process.HasExited
     } finally { $current.Dispose() }
 }
 
@@ -66,7 +70,10 @@ function Invoke-FoundationProcess {
                 break
             }
             if ($ReadyMarker -and (Test-Path -LiteralPath $ReadyLog)) {
-                $content = [IO.File]::ReadAllText($ReadyLog)
+                # UE仍持有写句柄；ReadAllText的默认共享模式会拒绝打开活跃日志。
+                $logStream = [IO.File]::Open($ReadyLog,[IO.FileMode]::Open,[IO.FileAccess]::Read,([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+                $reader = [IO.StreamReader]::new($logStream,[Text.Encoding]::UTF8,$true)
+                try { $content = $reader.ReadToEnd() } finally { $reader.Dispose() }
                 $pattern = '(?m)^(?:\[[^\r\n]*?\])*(?:Log[A-Za-z0-9_]+:[ \t]*(?:(?:Display|Warning|Verbose):[ \t]*)?)?' + [regex]::Escape($ReadyMarker) + '(?:[ \t]+[A-Za-z][A-Za-z0-9_]*=[^\r\n]*)?[ \t]*\r?$'
                 if ($content -match $pattern) {
                     if ($null -eq $readyAt) { $readyAt = $watch.Elapsed.TotalSeconds }
@@ -121,7 +128,13 @@ function Get-FoundationManagedTool {
     $configPath = [IO.Path]::ChangeExtension($dll,'runtimeconfig.json')
     Assert-FoundationFile $configPath
     $config = Get-Content -Raw $configPath | ConvertFrom-Json
-    $major = ([version]$config.runtimeOptions.framework.version).Major
+    # UBT使用framework单对象，UAT使用frameworks数组（含WindowsDesktop），两者均取.NETCore版本。
+    $frameworks = if ($config.runtimeOptions.PSObject.Properties['framework']) { @($config.runtimeOptions.framework) }
+        elseif ($config.runtimeOptions.PSObject.Properties['frameworks']) { @($config.runtimeOptions.frameworks) }
+        else { @() }
+    $runtime = @($frameworks | Where-Object name -eq 'Microsoft.NETCore.App')
+    if ($runtime.Count -ne 1) { throw [IO.FileNotFoundException]::new("无法确定工具的.NETCore版本：$configPath") }
+    $major = ([version]$runtime[0].version).Major
     $architecture = if ([Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') { 'win-arm64' } else { 'win-x64' }
     $candidates = @(Get-ChildItem -LiteralPath (Join-Path $Engine.Root 'Engine/Binaries/ThirdParty/DotNet') -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "^$major\." } | Sort-Object { [version]$_.Name } -Descending)
     foreach ($candidate in $candidates) {
@@ -136,7 +149,9 @@ function Get-FoundationManagedTool {
 function Enter-FoundationEngineLock {
     <# 同一引擎的本组脚本串行化；不等待其他长构建，不夺取其进程。调用者finally释放。 #>
     param([string]$EngineRoot)
-    $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($EngineRoot.ToLowerInvariant())))
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try { $hash = [BitConverter]::ToString($hasher.ComputeHash([Text.Encoding]::UTF8.GetBytes($EngineRoot.ToLowerInvariant()))).Replace('-','') }
+    finally { $hasher.Dispose() }
     $mutex = [Threading.Mutex]::new($false,"Local\FoundationM0-$hash")
     try { $acquired = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $acquired = $true }
     if (-not $acquired) { $mutex.Dispose(); throw [IO.FileNotFoundException]::new('另一个Foundation构建或烘焙正在使用此引擎。') }

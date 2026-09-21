@@ -19,6 +19,8 @@ BOOTSTRAP = "/Game/Development/Foundation/Maps/L_FoundationBootstrap"
 SANDBOX = "/Game/Development/Foundation/Maps/L_FoundationSandbox"
 BOOTSTRAP_FILE = "Development/Foundation/Maps/L_FoundationBootstrap.umap"
 SANDBOX_FILE = "Development/Foundation/Maps/L_FoundationSandbox.umap"
+PROBE = "/Game/Development/Foundation/Definitions/DA_FoundationProbe"
+PROBE_FILE = "Development/Foundation/Definitions/DA_FoundationProbe.uasset"
 
 
 class MemoryEditor:
@@ -307,6 +309,176 @@ class EditorBoundaryTests(unittest.TestCase):
         report = json.loads(output.getvalue().removeprefix("FOUNDATION_ASSETS_REPORT "))
         self.assertEqual(report["exit_code"], 1)
         self.assertEqual([item["state"] for item in report["maps"]], ["FAILED", "FAILED"])
+
+
+class ProbeTests(unittest.TestCase):
+    """探针阶段独立于地图；用内存引擎边界核验不覆盖与真实字段检查。"""
+
+    def make_editor(self, existing=False):
+        editor = MemoryEditor()
+        if existing:
+            editor.registry.add(PROBE)
+            editor.files[PROBE_FILE] = {"size_bytes": 50, "sha256": "test-probe", "mtime_ns": 1}
+        def create_probe(package):
+            self.assertEqual(package, PROBE)
+            editor.created.append(package)
+            editor.registry.add(package)
+            editor.files[PROBE_FILE] = {"size_bytes": 50, "sha256": "test-probe", "mtime_ns": 1}
+        editor.create = create_probe
+        return editor
+
+    def test_probe_creates_only_requested_asset_and_then_validates(self):
+        editor = self.make_editor()
+        first = ASSETS.run_probe(editor)
+        self.assertEqual(first["phase"], "Probe")
+        self.assertEqual(first["assets"][0]["state"], "CREATED")
+        self.assertEqual([item["path"] for item in first["native_asset_diff"]], [PROBE_FILE])
+        second = ASSETS.run_probe(editor)
+        self.assertEqual(second["assets"][0]["state"], "VALIDATED")
+        self.assertEqual(second["exit_code"], 0)
+        self.assertEqual(editor.created, [PROBE])
+        self.assertEqual(second["native_asset_diff"], [])
+
+    def test_probe_mismatch_never_repairs_existing_asset(self):
+        editor = self.make_editor(existing=True)
+        before = editor.snapshot()
+        editor.fail_validation.add(PROBE)
+        report = ASSETS.run_probe(editor)
+        self.assertEqual(report["assets"][0]["state"], "FAILED")
+        self.assertEqual(report["exit_code"], 1)
+        self.assertEqual(editor.files, before)
+        self.assertEqual(editor.created, [])
+
+    def test_probe_wrong_package_extension_blocks_creation(self):
+        editor = self.make_editor()
+        editor.files[PROBE_FILE.replace(".uasset", ".umap")] = {
+            "size_bytes": 50, "sha256": "wrong-type", "mtime_ns": 1
+        }
+        report = ASSETS.run_probe(editor)
+        self.assertEqual(report["assets"][0]["state"], "FAILED")
+        self.assertEqual(editor.created, [])
+
+    def test_probe_save_without_file_cannot_report_created(self):
+        editor = self.make_editor()
+        editor.create = lambda package: editor.registry.add(package)
+        report = ASSETS.run_probe(editor)
+        self.assertEqual(report["assets"][0]["state"], "FAILED")
+
+    def test_probe_partial_failure_preserves_evidence(self):
+        editor = self.make_editor()
+        create_probe = editor.create
+        def fail_after_creation(package):
+            create_probe(package)
+            raise RuntimeError("模拟探针保存失败")
+        editor.create = fail_after_creation
+        report = ASSETS.run_probe(editor)
+        self.assertEqual(report["assets"][0]["state"], "FAILED")
+        self.assertIsNotNone(report["assets"][0]["after"])
+        self.assertEqual(report["native_asset_diff"][0]["path"], PROBE_FILE)
+
+    def make_probe_adapter(self):
+        adapter = ASSETS.UnrealProbeEditor.__new__(ASSETS.UnrealProbeEditor)
+        adapter.unreal = Mock()
+        adapter.assets = Mock()
+        adapter.asset_tools = Mock()
+        adapter.probe_class = object()
+        adapter.assets.does_asset_exist.return_value = False
+        adapter.snapshot = Mock(return_value={})
+        return adapter
+
+    def make_probe_asset(self, adapter):
+        # 独立声明预期字段，不调用生产配置器生成验证夹具。
+        logical_id = Mock()
+        logical_id.get_editor_property.side_effect = {
+            "namespace": "foundation", "name": "probe", "logical_version": 1
+        }.__getitem__
+        version = Mock()
+        version.get_editor_property.side_effect = {"schema_version": 1, "content_revision": 1}.__getitem__
+        asset = Mock()
+        asset.get_class.return_value = adapter.probe_class
+        asset.get_path_name.return_value = PROBE + ".DA_FoundationProbe"
+        asset.get_editor_property.side_effect = {
+            "logical_id": logical_id, "data_version": version,
+            "required_definitions": [], "probe_value": 42,
+        }.__getitem__
+        return asset
+
+    def test_probe_validates_every_authored_field(self):
+        for field, bad_value in (("namespace", "other"), ("name", "wrong"), ("logical_version", 2),
+                                 ("schema_version", 2), ("content_revision", 0),
+                                 ("probe_value", 0), ("required_definitions", ["dependency"])):
+            with self.subTest(field=field):
+                adapter = self.make_probe_adapter()
+                asset = self.make_probe_asset(adapter)
+                ASSETS.UnrealProbeEditor._validate_object(adapter, asset)
+                owner = asset
+                if field in ("namespace", "name", "logical_version"):
+                    owner = asset.get_editor_property("logical_id")
+                elif field in ("schema_version", "content_revision"):
+                    owner = asset.get_editor_property("data_version")
+                original_get = owner.get_editor_property.side_effect
+                owner.get_editor_property.side_effect = lambda key: bad_value if key == field else original_get(key)
+                with self.assertRaises(RuntimeError):
+                    adapter._validate_object(asset)
+
+    def test_probe_wrong_reflected_class_or_redirect_is_rejected(self):
+        for wrong_class in (True, False):
+            adapter = self.make_probe_adapter()
+            asset = self.make_probe_asset(adapter)
+            if wrong_class:
+                asset.get_class.return_value = object()
+            else:
+                asset.get_path_name.return_value = "/Game/Other.Other"
+            with self.assertRaises(RuntimeError):
+                adapter._validate_object(asset)
+
+    def test_missing_probe_reflection_fails_before_factory_creation(self):
+        unreal = Mock()
+        unreal.load_class.side_effect = [object(), None]
+        with patch.object(ASSETS.UnrealAssetEditor, "__init__", return_value=None):
+            with self.assertRaisesRegex(RuntimeError, "反射"):
+                ASSETS.UnrealProbeEditor(unreal)
+        unreal.AssetToolsHelpers.get_asset_tools.assert_not_called()
+
+    def test_probe_false_save_is_failure(self):
+        adapter = self.make_probe_adapter()
+        adapter.assets.save_loaded_asset.return_value = False
+        adapter._validate_object = Mock()
+        with self.assertRaisesRegex(RuntimeError, "save_loaded_asset"):
+            adapter.create(PROBE)
+        self.assertFalse(adapter.asset_tools.create_asset.call_args.kwargs["overwrite_existing"])
+
+    def test_probe_failed_reload_and_wrong_primary_id_tags_fail(self):
+        adapter = self.make_probe_adapter()
+        asset = self.make_probe_asset(adapter)
+        adapter.assets.load_asset.return_value = asset
+        adapter.unreal.EditorLoadingAndSavingUtils.reload_packages.return_value = (False, "模拟重载失败")
+        with self.assertRaisesRegex(RuntimeError, "重载"):
+            adapter.validate(PROBE)
+        adapter.unreal.EditorLoadingAndSavingUtils.reload_packages.return_value = (True, "")
+        adapter.assets.get_tag_values.return_value = {
+            "PrimaryAssetType": "GamePlatformDefinition", "PrimaryAssetName": "foundation.probe@1",
+            "GamePlatformLogicalId": "foundation.probe@1",
+        }
+        adapter.validate(PROBE)
+        for key in ("PrimaryAssetType", "PrimaryAssetName", "GamePlatformLogicalId"):
+            original = adapter.assets.get_tag_values.return_value[key]
+            adapter.assets.get_tag_values.return_value[key] = "wrong"
+            with self.assertRaisesRegex(RuntimeError, key):
+                adapter.validate(PROBE)
+            adapter.assets.get_tag_values.return_value[key] = original
+        adapter.assets.save_loaded_asset.assert_not_called()
+
+    def test_main_probe_initialization_failure_reports_probe_not_maps(self):
+        output = io.StringIO()
+        with patch.dict("sys.modules", {"unreal": Mock()}), \
+                patch.object(ASSETS, "UnrealProbeEditor", side_effect=RuntimeError("反射缺失")), \
+                redirect_stdout(output), self.assertRaises(RuntimeError):
+            ASSETS.main(["--phase", "Probe"])
+        report = json.loads(output.getvalue().removeprefix("FOUNDATION_ASSETS_REPORT "))
+        self.assertEqual(report["phase"], "Probe")
+        self.assertEqual(report["assets"][0]["package"], PROBE)
+        self.assertEqual(report["assets"][0]["state"], "FAILED")
 
 
 if __name__ == "__main__":

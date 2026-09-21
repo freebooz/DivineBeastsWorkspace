@@ -17,7 +17,7 @@ param([string]$EngineRoot, [switch]$Start, [switch]$FoundationStandalone,
     [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Phase=$Phase }
+$context = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Phase=$Phase; Configuration='Development'; Platform='Win64'; CustomConfig='FoundationStandalone' }
 try {
     $context = New-FoundationContext "Run-$Target" $RunId
     if (-not $Start -or -not $FoundationStandalone) { throw [IO.FileNotFoundException]::new('需显式指定-Start -FoundationStandalone。') }
@@ -38,7 +38,8 @@ try {
     }
     Assert-FoundationFile $executable
     $log = Join-Path $context.Directory 'Unreal.log'
-    $arguments += @('-FoundationStandalone',"-FoundationRunId=$($context.RunId)",'-unattended','-nosplash','-nosound','-stdout','-FullStdOutLogOutput','-UTF8Output',"-abslog=$log",'-NoLiveCoding','-NoHotReload','-Messaging=0','-UDPMESSAGING_TRANSPORT_ENABLE=0','-TCPMESSAGING_TRANSPORT_ENABLE=0','-MULTIHOME=127.0.0.1')
+    # 不传Messaging：它是存在即启用的开关（Messaging=0也会启用）；TCP游戏传输因此不启动。
+    $arguments += @('-FoundationStandalone',"-FoundationRunId=$($context.RunId)",'-unattended','-nosplash','-nosound','-stdout','-FullStdOutLogOutput','-UTF8Output',"-abslog=$log",'-NoLiveCoding','-NoHotReload','-UDPMESSAGING_TRANSPORT_ENABLE=0','-MULTIHOME=127.0.0.1')
     $arguments += '-CustomConfig=FoundationStandalone'
     if ($NullRHI) { $arguments += '-nullrhi' }
     $marker = if ($Phase -eq 'HostOnly') { 'FoundationHostReady' } else { 'FoundationReady' }

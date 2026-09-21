@@ -1,4 +1,4 @@
-"""Foundation 任务00：由 UE5.8 编辑器创建或只读验证两张中立开发地图。
+"""Foundation：由 UE5.8 编辑器创建或只读验证中立地图与开发探针。
 
 调用形式（使用调用方解析出的绝对路径，不改变项目默认地图配置）：
     UnrealEditor-Cmd.exe <主工程.uproject> -unattended -nop4 -nosplash
@@ -9,8 +9,10 @@ UE5.8 的 EditorPythonExecuter.cpp 明确拒绝 commandlet 使用
 -ExecutePythonScript；LevelEditorSubsystem 依赖完整编辑器初始化。
 -ScriptErrorsAreFatal 将本脚本抛出的失败转成进程非零退出，调用方必须检查退出码。
 
-只生成下列两张非分区地图；Definitions／Flow 尚未实现，等待真实反射类型后扩展。
-新地图使用引擎 Cube、GameModeBase／DefaultPawn，不生成项目定义或蓝图。
+Maps 仅生成下列两张非分区地图，使用引擎 Cube、GameModeBase／DefaultPawn。
+--phase Probe 独立生成唯一 DA_FoundationProbe；要求真实探针及 Data 基类已编译加载。
+Probe 的身份为 foundation.probe@1，结构版本／内容修订为1，ProbeValue=42，无必需依赖。
+Definitions／Flow 尚未实现；不生成蓝图或推测 Flow 的反射签名。
 已有包（含空包、类型冲突、孤立外置数据）不覆盖、不删除、不自动修复。
 NewLevel 会立即保存空地图；后续失败留下的文件在报告中可见，下次仅允许验证。
 报告以 FOUNDATION_ASSETS_REPORT JSON 行写入标准输出，由调用方保存 UE 日志。
@@ -36,6 +38,9 @@ MAP_PACKAGES = (
     "/Game/Development/Foundation/Maps/L_FoundationBootstrap",
     "/Game/Development/Foundation/Maps/L_FoundationSandbox",
 )
+PROBE_PACKAGE = "/Game/Development/Foundation/Definitions/DA_FoundationProbe"
+PROBE_CLASS_PATH = "/Script/DivineBeastsArena.DBAFoundationProbeDefinition"
+DEFINITION_CLASS_PATH = "/Script/GamePlatformData.GamePlatformDefinitionBase"
 NATIVE_SUFFIXES = (".umap", ".uasset", ".uexp", ".ubulk", ".uptnl")
 CUBE_PATH = "/Engine/BasicShapes/Cube.Cube"
 GAME_MODE_PATH = "/Script/Engine.GameModeBase"
@@ -63,9 +68,9 @@ class PhaseArgumentParser(argparse.ArgumentParser):
 
 
 def parse_arguments(arguments=None):
-    """只接受 Maps 阶段；不默默忽略未知参数或承诺未实现的反射资产阶段。"""
+    """Maps／Probe 分开执行；未知参数或未实现的阶段明确失败。"""
     parser = PhaseArgumentParser(description=__doc__)
-    parser.add_argument("--phase", choices=("Maps",), default="Maps", help="当前仅实现地图阶段")
+    parser.add_argument("--phase", choices=("Maps", "Probe"), default="Maps", help="独立执行地图或探针阶段")
     return parser.parse_args(arguments)
 
 
@@ -75,9 +80,16 @@ def map_filename(package):
     return package[len("/Game/"):] + ".umap"
 
 
+def asset_filename(package):
+    """只扩展已授权探针身份，其他包仍由地图白名单严格限制。"""
+    if package == PROBE_PACKAGE:
+        return package[len("/Game/"):] + ".uasset"
+    return map_filename(package)
+
+
 def related_files(snapshot, package):
     """找出同包文件及外置对象；孤立文件也占用身份，不允许生成时越过。"""
-    stem = map_filename(package)[:-len(".umap")].casefold()
+    stem = asset_filename(package).rsplit(".", 1)[0].casefold()
     external_prefixes = tuple(
         directory + "/" + stem + "/"
         for directory in ("__externalactors__", "__externalobjects__")
@@ -135,33 +147,47 @@ def native_asset_diff(before, after):
     ]
 
 
-def failed_report(message):
-    """初始化／参数失败仍明确列出两张未完成地图，不伪造磁盘状态。"""
+def failed_report(message, phase="Maps"):
+    """初始化失败仍列出本阶段未完成资产；未审计时不伪造磁盘状态。"""
+    require(phase in ("Maps", "Probe"), "不支持的资产阶段：" + phase)
+    packages = MAP_PACKAGES if phase == "Maps" else (PROBE_PACKAGE,)
+    item_key = "maps" if phase == "Maps" else "assets"
     return {
-        "phase": "Maps", "policy": "nooverwrite", "exit_code": 1,
-        "maps": [{"package": package, "state": "FAILED", "message": message,
-                  "before": None, "after": None} for package in MAP_PACKAGES],
+        "phase": phase, "policy": "nooverwrite", "exit_code": 1,
+        item_key: [{"package": package, "state": "FAILED", "message": message,
+                    "before": None, "after": None} for package in packages],
         "native_asset_diff": [], "errors": [message], "audit_complete": False,
     }
 
 
 def run_maps(editor):
-    """顺序创建／验证固定地图，汇总部分失败及只读差异，返回可序列化报告。
+    """只处理地图，保持现有 maps 报告字段和默认阶段兼容。"""
+    return run_assets(editor, "Maps")
+
+
+def run_probe(editor):
+    """只处理唯一探针；不会调用地图生成或访问尚未实现的 Flow 类型。"""
+    return run_assets(editor, "Probe")
+
+
+def run_assets(editor, phase):
+    """顺序创建／验证阶段白名单，汇总部分失败及只读差异，返回可序列化报告。
 
     editor 是同步编辑器边界，提供 snapshot、exists、create、validate；真实执行
     必须在 UE 编辑器主线程。任何异常均保留 FAILED，不回滚或清理已产生的原生文件。
     """
-    report = failed_report("尚未执行")
+    report = failed_report("尚未执行", phase)
+    items = report["maps" if phase == "Maps" else "assets"]
     report["errors"] = []
     try:
         before = editor.snapshot()
     except Exception as error:
-        return failed_report("初始原生资产审计失败：" + str(error))
+        return failed_report("初始原生资产审计失败：" + str(error), phase)
     created_packages = set()
     validated_files = {}
-    for item in report["maps"]:
+    for item in items:
         package = item["package"]
-        filename = map_filename(package)
+        filename = asset_filename(package)
         item["before"] = before.get(filename)
         try:
             current = editor.snapshot()
@@ -169,15 +195,16 @@ def run_maps(editor):
             registered = editor.exists(package)
             if occupied or registered:
                 require(filename in occupied and occupied[filename]["size_bytes"] > 0,
-                        "已有身份缺少非空 .umap；nooverwrite 禁止覆盖或补写")
-                require(not any(name.casefold().endswith(".uasset") and
+                        "已有身份缺少非空 " + Path(filename).suffix + "；nooverwrite 禁止覆盖或补写")
+                conflicting_suffix = ".uasset" if phase == "Maps" else ".umap"
+                require(not any(name.casefold().endswith(conflicting_suffix) and
                                 "/__external" not in ("/" + name.casefold())
-                                for name in occupied), "同包存在 .uasset 类型冲突；nooverwrite")
-                require(registered, "磁盘已有地图但资产注册表不可见；nooverwrite")
+                                for name in occupied), "同包存在其他资产类型冲突；nooverwrite")
+                require(registered, "磁盘已有资产但资产注册表不可见；nooverwrite")
                 validated_files[package] = occupied
                 editor.validate(package)
                 item["state"] = "VALIDATED"
-                item["message"] = "已有地图只读验证通过，未调用保存或修复"
+                item["message"] = "已有资产只读验证通过，未调用保存或修复"
             else:
                 # 创建前再次确认磁盘；NewLevel 本身还会拒绝已有包。
                 require(not related_files(editor.snapshot(), package), "创建前目标已被占用；nooverwrite")
@@ -186,12 +213,12 @@ def run_maps(editor):
                 saved_snapshot = editor.snapshot()
                 persisted = saved_snapshot.get(filename)
                 require(persisted is not None and persisted["size_bytes"] > 0,
-                        "编辑器返回成功但非空地图包未落盘")
-                require(editor.exists(package), "地图保存后未进入资产注册表")
+                        "编辑器返回成功但非空资产包未落盘")
+                require(editor.exists(package), "资产保存后未进入资产注册表")
                 validated_files[package] = related_files(saved_snapshot, package)
                 editor.validate(package)
                 item["state"] = "CREATED"
-                item["message"] = "新地图保存、非空包检查及重新加载验证通过"
+                item["message"] = "新资产保存、非空包检查及重新加载验证通过"
         except Exception as error:
             item["state"] = "FAILED"
             item["message"] = str(error) + "；nooverwrite：保留现场，不覆盖、不删除"
@@ -200,14 +227,15 @@ def run_maps(editor):
         report["native_asset_diff"] = native_asset_diff(before, after)
         report["audit_complete"] = True
         allowed_new_files = {
-            map_filename(package)[:-len(".umap")] + suffix
-            for package in created_packages for suffix in (".umap", ".uexp", ".ubulk", ".uptnl")
+            asset_filename(package).rsplit(".", 1)[0] + suffix
+            for package in created_packages
+            for suffix in (Path(asset_filename(package)).suffix, ".uexp", ".ubulk", ".uptnl")
         }
         for difference in report["native_asset_diff"]:
             if difference["change"] != "CREATED" or difference["path"] not in allowed_new_files:
                 report["errors"].append("原生资产出现不允许的差异：" + difference["path"])
-        for item in report["maps"]:
-            filename = map_filename(item["package"])
+        for item in items:
+            filename = asset_filename(item["package"])
             item["after"] = after.get(filename)
             original_files = related_files(before, item["package"])
             if any(after.get(name) != evidence for name, evidence in original_files.items()):
@@ -216,19 +244,19 @@ def run_maps(editor):
             elif item["state"] != "FAILED" and (
                     related_files(after, item["package"]) != validated_files[item["package"]]):
                 item["state"] = "FAILED"
-                item["message"] = "地图验证期间或验证后包内容发生变化，最终状态无效；不自动恢复"
+                item["message"] = "资产验证期间或验证后包内容发生变化，最终状态无效；不自动恢复"
     except Exception as error:
         report["errors"].append("最终原生资产审计失败：" + str(error))
-        for item in report["maps"]:
+        for item in items:
             item["state"] = "FAILED"
             item["message"] = "最终磁盘状态无法确认；保留部分产物，不修复"
     report["exit_code"] = int(bool(report["errors"]) or
-                              any(item["state"] == "FAILED" for item in report["maps"]))
+                              any(item["state"] == "FAILED" for item in items))
     return report
 
 
-class UnrealMapEditor:
-    """UE5.8 编辑器主线程适配；所有原生写入仅通过引擎地图 API 完成。"""
+class UnrealAssetEditor:
+    """共享编辑器环境与只读资产审计；不加载地图、角色或任何项目定义类型。"""
 
     def __init__(self, unreal):
         self.unreal = unreal
@@ -239,11 +267,7 @@ class UnrealMapEditor:
         require("-executepythonscript=" in command_line.lower() and
                 not re.search(r"(?:^|\s)-run=", command_line, re.IGNORECASE),
                 "使用完整编辑器 -ExecutePythonScript，不使用 commandlet -run=PythonScript")
-        self.levels = self._subsystem(unreal.LevelEditorSubsystem)
-        self.actors = self._subsystem(unreal.EditorActorSubsystem)
         self.assets = self._subsystem(unreal.EditorAssetSubsystem)
-        self.worlds = self._subsystem(unreal.UnrealEditorSubsystem)
-        require(not self.levels.is_in_play_in_editor(), "必须退出 PIE 后生成地图")
         require(not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages() and
                 not unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages(),
                 "编辑器存在未保存修改，拒绝切图或生成")
@@ -251,11 +275,6 @@ class UnrealMapEditor:
         self.content_directory = Path(unreal.Paths.convert_relative_path_to_full(
             unreal.Paths.project_content_dir())).resolve()
         require(self.content_directory == expected_content.resolve(), "当前编辑器不是脚本所属正式主工程")
-        self.game_mode = unreal.load_class(None, GAME_MODE_PATH)
-        require(self.game_mode is not None, "无法加载引擎 GameModeBase")
-        self.cube = unreal.load_asset(CUBE_PATH)
-        require(isinstance(self.cube, unreal.StaticMesh), "引擎基础 Cube 资产缺失或类型错误")
-        self._validate_observer()
 
     def _subsystem(self, subsystem_type):
         instance = self.unreal.get_editor_subsystem(subsystem_type)
@@ -270,6 +289,21 @@ class UnrealMapEditor:
         """注册表只作第二项检查；不能用注册表缺失推断磁盘路径可覆盖。"""
         return self.assets.does_asset_exist(package)
 
+
+class UnrealMapEditor(UnrealAssetEditor):
+    """UE5.8 地图适配；所有原生写入仅通过引擎地图 API 完成。"""
+
+    def __init__(self, unreal):
+        super().__init__(unreal)
+        self.levels = self._subsystem(unreal.LevelEditorSubsystem)
+        self.actors = self._subsystem(unreal.EditorActorSubsystem)
+        self.worlds = self._subsystem(unreal.UnrealEditorSubsystem)
+        require(not self.levels.is_in_play_in_editor(), "必须退出 PIE 后生成地图")
+        self.game_mode = unreal.load_class(None, GAME_MODE_PATH)
+        require(self.game_mode is not None, "无法加载引擎 GameModeBase")
+        self.cube = unreal.load_asset(CUBE_PATH)
+        require(isinstance(self.cube, unreal.StaticMesh), "引擎基础 Cube 资产缺失或类型错误")
+        self._validate_observer()
     def _world(self, package):
         world = self.worlds.get_editor_world()
         require(world is not None and isinstance(world, self.unreal.World), "编辑器世界无效")

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/NoExportTypes.h"
+#include "UObject/StructOpsTypeTraits.h"
 #include "GamePlatformId.generated.h"
 
 /**

@@ -12,6 +12,12 @@ int main()
     Check(ResolveMode(true, true, true, false) == EMode::Disabled, "CommandletCannotRunPlayerFlow");
     Check(ResolveMode(true, true, false, true) == EMode::ServerDiagnostics, "DedicatedServerIsDiagnosticsOnly");
     Check(ResolveMode(true, true, false, false) == EMode::PlayerDevelopment, "ExplicitDevelopmentEnabled");
-    std::cout << "Cases=5 Failed=" << Failed << '\n';
+    Check(AcceptsWorldReady(true, true, "sandbox", "sandbox", "op-a", "op-a"), "MatchingWorldReady");
+    Check(!AcceptsWorldReady(false, true, "sandbox", "sandbox", "op-a", "op-a"), "WrongInstanceRejected");
+    Check(!AcceptsWorldReady(true, false, "sandbox", "sandbox", "op-a", "op-a"), "UnbegunWorldRejected");
+    Check(!AcceptsWorldReady(true, true, "bootstrap", "sandbox", "op-a", "op-a"), "WrongMapRejected");
+    Check(!AcceptsWorldReady(true, true, "sandbox", "sandbox", "op-old", "op-a"), "OldOperationRejected");
+    Check(!AcceptsWorldReady(true, true, "sandbox", "sandbox", "", ""), "MissingOperationRejected");
+    std::cout << "Cases=11 Failed=" << Failed << '\n';
     return Failed ? 1 : 0;
 }

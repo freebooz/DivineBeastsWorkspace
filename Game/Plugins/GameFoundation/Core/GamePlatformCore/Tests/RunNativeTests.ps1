@@ -22,18 +22,26 @@ if ([string]::IsNullOrWhiteSpace($BuildDirectory)) {
 $BuildDirectory = [IO.Path]::GetFullPath($BuildDirectory)
 New-Item -ItemType Directory -Path $BuildDirectory -Force | Out-Null
 $logPath = Join-Path $BuildDirectory ("Native-{0}-{1}.log" -f $Configuration, (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
-Start-Transcript -LiteralPath $logPath | Out-Null
-try {
-    Write-Output "原生验证：$Configuration；生成目录：$BuildDirectory"
-    & cmake --version
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & cmake -S $PSScriptRoot -B $BuildDirectory -G 'Visual Studio 17 2022' -A x64
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & cmake --build $BuildDirectory --config $Configuration
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & ctest --test-dir $BuildDirectory -C $Configuration --output-on-failure
-    exit $LASTEXITCODE
+function Invoke-NativeCheck {
+    # 显式收集原生命令标准输出与错误；非交互式PowerShell转录可能遗漏原生输出。
+    param([string]$Command, [string[]]$Arguments)
+    Get-Command -Name $Command -CommandType Application -ErrorAction Stop | Out-Null
+    "命令：$Command $($Arguments -join ' ')" | Tee-Object -FilePath $logPath -Append
+    $savedErrorPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $Command @Arguments 2>&1 | Tee-Object -FilePath $logPath -Append
+        $toolExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $savedErrorPreference
+    }
+    "退出码：$toolExitCode" | Tee-Object -FilePath $logPath -Append
+    if ($toolExitCode -ne 0) { exit $toolExitCode }
 }
-finally {
-    Stop-Transcript | Out-Null
-}
+"原生验证：$Configuration；生成目录：$BuildDirectory" | Tee-Object -FilePath $logPath -Append
+Invoke-NativeCheck 'cmake' @('--version')
+Invoke-NativeCheck 'cmake' @('-S', $PSScriptRoot, '-B', $BuildDirectory, '-G', 'Visual Studio 17 2022', '-A', 'x64')
+Invoke-NativeCheck 'cmake' @('--build', $BuildDirectory, '--config', $Configuration)
+Invoke-NativeCheck 'ctest' @('--test-dir', $BuildDirectory, '-C', $Configuration, '--output-on-failure')
+exit 0

@@ -14,7 +14,7 @@ param([string]$EngineRoot, [switch]$Editor, [switch]$Client, [switch]$Server,
     [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Targets=@() }
+$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Targets=@(); Configuration='Development'; Platform='Win64' }
 try {
     $context = New-FoundationContext Build $RunId
     $targets = @(); if ($Editor) { $targets += 'Editor' }; if ($Client) { $targets += 'Client' }; if ($Server) { $targets += 'Server' }
