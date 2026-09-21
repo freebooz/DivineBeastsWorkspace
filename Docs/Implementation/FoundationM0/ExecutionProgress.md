@@ -19,10 +19,10 @@
 
 | 阶段 | 实施状态 | 验证状态 |
 | --- | --- | --- |
-| 00 薄主工程、开发入口、地图脚本、构建运行脚本 | 实施中 | 基线前置检查失败；完成源码后重新验证 |
-| 01 Core | 未开始 | 未执行 |
-| 02 Data | 未开始 | 未执行 |
-| 03 Flow兼容扩展及主工程纵向集成 | 未开始 | 旧执行器原生回归通过，不等于M0 |
+| 00 薄主工程、开发入口、地图脚本、构建运行脚本 | 源码与脚本已写入，正在集成复核 | 主工程Editor规则扫描失败；Host原生11断言通过，地图未生成 |
+| 01 Core | 源码已写入 | 原生Debug/Release各11场景通过；UE/UHT未执行 |
+| 02 Data | 运行、编辑器源码已写入，补测试及独立复核中 | 需求合并原生12断言通过；真实UE租约未执行 |
+| 03 Flow兼容扩展及主工程纵向集成 | 公开扩展及项目节点已写入，执行器扩展实现中 | 旧执行器原生回归通过，新扩展需另行验证 |
 | 最终验收 | 未开始 | M0未达到可运行 |
 
 ## 决定与接口顺序
@@ -38,3 +38,15 @@
 主工程描述、Client／Server／Editor Target、主模块、GameInstance、私有协调器与HUD已写入。首次Editor构建退出6，日志 `Saved/Validation/FoundationM0/Host-Editor-First.log`：旧 `MobaPresentation.uplugin` 空JSON在规则扫描阶段失败；另两份 GamePlatformArena、DivineBeastsPresentation 描述也为空白。用户明确决定保留三个文件原位，仅记录构建阻断。因此本批不得移动／禁用／改写它们、不得另建宿主绕过。此为既有源码基线问题，不称为只有环境未验证。已批准的无冲突静态实现及原生测试继续；正式UHT／UE目标／资产／Cook／运行均受此阻断，后续不循环重试相同错误。
 
 UE5.8源码证实构建设置为V7、包含顺序Unreal5_8，三个正式目标按此设置。源码基线没有引擎关联，主工程EngineAssociation留空，由脚本通过EngineRoot／UE_ROOT显式选择实际5.8，不猜测注册版本。
+
+## 本轮实际推进（未验收完成）
+
+- 核心源算法与UE公开适配已写入。原生Debug与Release各11场景退出0，证据为`CoreNative/Native-Debug-20260921-161009-215.log`和`CoreNative/Native-Release-20260921-161011-783.log`，均在本目录对应的Saved输出下。
+- Host实际生产入口策略增加地图就绪筛选：实例、精确包名、操作身份、HasBegunPlay同时满足；原生测试11断言通过。新用例首次缺符号编译失败，补实现后Debug编译及CTest退出0；不是UE切图证据。
+- 构建/烘焙/运行/验证脚本已写入。脚本进程行为26项通过；实际UBT配置解析3项通过，确认FoundationStandalone仅撤销开发目录自身的NeverCook条目，不清空其他排除数组。
+- 地图脚本初始Maps离线25项通过，Probe/Flow反射资产阶段正在追加。所有真实`.umap/.uasset`仍未生成；不把脚本替身测试当资产验收。
+- 主工程加入Probe定义、项目节点、协调器真实数据读取与切图屏障；数据租约由协调器继续持有供HUD只读显示。取消、重试使用新申请代次，旧回调不得复活。
+- 新增三插件UE自动化包装脚本`Build/Validation/TestFoundationUnreal.ps1`；正式执行前置检查退出1并准确报告原位空描述，没有启动UE，日志见`039200d0-755c-4daf-ae97-0aa30acef007/UnrealTests/result.json`。无Execute开关的检查返回未执行，未把拒绝启动算作UE测试成功。
+- 并行工作仅按文件分工；没有新建宿主或工作树、没有提交/推送，没有触碰Backend/Shared/Deploy。共享树HEAD存在其他工作变化，以实际文件及本轮证据交付，不虚构本轮提交。
+
+所有相对证据目录均位于`Saved/Validation/FoundationM0/`。下一个断点：收齐Data与Flow实现/复核、接正式依赖、执行新一轮可运行静态及原生验证，再更新交付和验收记录。历史三个空描述继续保留，不能据此宣称M0可运行。

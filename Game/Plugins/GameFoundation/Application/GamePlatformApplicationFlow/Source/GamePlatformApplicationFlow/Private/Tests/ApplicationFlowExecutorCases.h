@@ -235,6 +235,135 @@ inline std::vector<FCase> GetCases()
             E.Start(2, Error); E.Tick(2); E.Tick(1);
             C.Require(E.GetSnapshot().ErrorCode == "InvalidClock" && A->Finishes.size() == 1, "时钟回退终止并清理");
         }},
+        {"ExplicitCycleOptInAndGeneration", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>();
+            std::vector<std::uint64_t> Generations;
+            A->OnStart = [&](const auto& Context, auto) { Generations.push_back(Context.NodeGeneration); };
+            auto S = Step("a", A, "a"); S.Routes["done"] = "";
+            FDefinition D{"a", {S}}; FApplicationFlowExecutor E; std::string Error;
+            C.Require(!E.Configure(D, Error), "旧默认仍拒绝循环");
+            D.bAllowCycles = true;
+            const bool bConfigured = E.Configure(D, Error);
+            C.Require(bConfigured, "显式资产模式应允许循环"); if (!bConfigured) return;
+            E.Start(0, Error); E.Tick(0);
+            C.Require(Generations[0] != 0 && E.GetSnapshot().NodeGeneration == Generations[0], "上下文和快照暴露同一非零节点代次");
+            A->Completions[0](Success()); E.Tick(1); E.Tick(2);
+            C.Require(Generations.size() == 2 && Generations[0] != Generations[1], "重访同名节点必须新代次");
+            A->Completions[0](Success("done")); E.Tick(3);
+            C.Require(E.IsActive(), "旧回调不能结束重访节点");
+            A->Completions[1](Success("done")); E.Tick(4);
+            C.Require(E.GetSnapshot().State == EFlowState::Succeeded && A->Finishes.size() == 2, "异步循环可明确退出且每次清理");
+        }},
+        {"ImmediateCycleBudgetFails", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>(); A->OnStart = [](const auto&, auto Done) { Done(Success()); };
+            FDefinition D{"a", {Step("a", A, "a")}}; D.bAllowCycles = true; D.MaxImmediateCycleTransitions = 3;
+            FApplicationFlowExecutor E; std::string Error;
+            const bool bConfigured = E.Configure(D, Error); C.Require(bConfigured, "循环预算图可安装"); if (!bConfigured) return;
+            E.Start(0, Error); for (int I = 0; I < 20 && E.IsActive(); ++I) E.Tick(I);
+            C.Require(E.GetSnapshot().State == EFlowState::Failed && E.GetSnapshot().ErrorCode == "ImmediateCycleBudgetExceeded", "即时自环预算耗尽真实失败");
+            C.Require(A->Starts == 4 && A->Finishes.size() == 4, "允许三次重访并清理所有已启动节点");
+        }},
+        {"AsynchronousWaitResetsCycleBudget", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>();
+            auto S = Step("a", A, "a"); S.Routes["done"] = "";
+            FDefinition D{"a", {S}}; D.bAllowCycles = true; D.MaxImmediateCycleTransitions = 1;
+            FApplicationFlowExecutor E; std::string Error;
+            const bool bConfigured = E.Configure(D, Error); C.Require(bConfigured, "等待循环图可安装"); if (!bConfigured) return;
+            E.Start(0, Error);
+            for (int I = 0; I < 8; ++I) { E.Tick(I * 2); A->Completions.back()(Success(I == 7 ? "done" : "")); E.Tick(I * 2 + 1); }
+            C.Require(E.GetSnapshot().State == EFlowState::Succeeded && A->Starts == 8, "真实等待后重新计数，不限制用户多次交互");
+        }},
+        {"CycleModeStillValidatesGraph", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>(); auto B = std::make_shared<FTestNode>();
+            FDefinition D{"a", {Step("a", A, "a")}}; D.bAllowCycles = true; D.MaxImmediateCycleTransitions = 0;
+            FApplicationFlowExecutor E; std::string Error;
+            C.Require(!E.Configure(D, Error), "循环模式零预算无效"); D.MaxImmediateCycleTransitions = 1;
+            D.Steps.push_back(Step("b", B)); C.Require(!E.Configure(D, Error), "循环模式仍拒绝不可达节点");
+            D.Steps[0].Next = "missing"; C.Require(!E.Configure(D, Error), "循环模式仍拒绝悬空边");
+        }},
+        {"GenerationChangesAcrossRetry", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>(); auto S = Step("a", A); S.MaxAttempts = 2;
+            std::vector<std::uint64_t> Generations;
+            A->OnStart = [&](const auto& Context, auto) { Generations.push_back(Context.NodeGeneration); };
+            FApplicationFlowExecutor E; std::string Error; E.Configure({"a", {S}}, Error); E.Start(0, Error); E.Tick(0);
+            A->Completions[0](Failure(true)); E.Tick(1); E.Tick(2);
+            C.Require(Generations.size() == 2 && Generations[0] != 0 && Generations[1] > Generations[0], "重试也必须改变公开节点代次");
+        }},
+        {"ExternalEventUsesAttemptMailbox", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>(); auto S = Step("a", A, "a"); S.Routes["done"] = "";
+            FDefinition D{"a", {S}}; D.bAllowCycles = true;
+            FApplicationFlowExecutor E; std::string Error; E.Configure(D, Error); const auto Run = E.Start(0, Error);
+            C.Require(!E.SubmitEvent(Run, "a", 1, Success()), "尚未开始不能投递事件"); E.Tick(0);
+            const auto First = E.GetSnapshot().NodeGeneration;
+            C.Require(!E.SubmitEvent(Run + 1, "a", First, Success()), "错误运行拒绝");
+            C.Require(!E.SubmitEvent(Run, "other", First, Success()), "错误节点拒绝");
+            C.Require(E.SubmitEvent(Run, "a", First, Success()), "精确事件进入邮箱");
+            C.Require(!E.SubmitEvent(Run, "a", First, Success("done")), "同代次只接纳首次完成");
+            A->Completions[0](Success("done")); E.Tick(1); E.Tick(2);
+            const auto Second = E.GetSnapshot().NodeGeneration;
+            C.Require(Second != First && E.IsActive(), "外部事件与回调共享首次完成语义");
+            C.Require(!E.SubmitEvent(Run, "a", First, Success("done")) && !E.CancelNode(Run, "a", First), "循环旧令牌不能投递或取消");
+            A->Completions[1](Success("done"));
+            C.Require(!E.SubmitEvent(Run, "a", Second, Failure()), "回调先到时外部事件拒绝"); E.Tick(3);
+            C.Require(E.GetSnapshot().State == EFlowState::Succeeded, "首次完成结果未被覆盖");
+        }},
+        {"ExactCancellationAndThreadGuards", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>(); FApplicationFlowExecutor E; std::string Error;
+            A->OnStart = [&](const auto& Context, auto)
+            {
+                C.Require(!E.SubmitEvent(Context.RunId, Context.NodeId, Context.NodeGeneration, Success()), "Execute中不允许控制重入");
+            };
+            E.Configure({"a", {Step("a", A)}}, Error); const auto Run = E.Start(0, Error); E.Tick(0);
+            const auto Generation = E.GetSnapshot().NodeGeneration;
+            bool bEvent = true; bool bCancel = true;
+            std::thread Worker([&] { bEvent = E.SubmitEvent(Run, "a", Generation, Success()); bCancel = E.CancelNode(Run, "a", Generation); }); Worker.join();
+            C.Require(!bEvent && !bCancel, "外部事件与精确取消控制限所有者线程");
+            C.Require(E.CancelNode(Run, "a", Generation), "正确令牌可以取消");
+            C.Require(!E.CancelNode(Run, "a", Generation) && !E.SubmitEvent(Run, "a", Generation, Success()), "终态后事件和取消不再接纳");
+            C.Require(A->Finishes.size() == 1, "取消只清理一次");
+        }},
+        {"GraphPreflightAndAtomicStart", [](FChecks& C)
+        {
+            FDefinition Graph; Graph.Entry = "a"; FStep Entry; Entry.Id = "a"; Graph.Steps.push_back(Entry);
+            std::string Error; C.Require(FApplicationFlowExecutor::ValidateGraph(Graph, Error), "结构预检无需伪造节点实例");
+            auto A = std::make_shared<FTestNode>(); FApplicationFlowExecutor E;
+            E.Configure({"old", {Step("old", A)}}, Error);
+            C.Require(E.ConfigureAndStart(Graph, 0, Error) == 0, "真实启动仍拒绝缺少实例");
+            auto B = std::make_shared<FTestNode>(); FDefinition Other{"new", {Step("new", B)}};
+            C.Require(E.ConfigureAndStart(Other, std::numeric_limits<double>::quiet_NaN(), Error) == 0, "非法时钟在替换前拒绝");
+            C.Require(E.Start(0, Error) != 0, "原配置仍可启动"); E.Tick(0);
+            C.Require(A->Starts == 1 && B->Starts == 0, "失败不会部分安装或执行工厂图");
+        }},
+        {"CycleModeLongChainNotBudgeted", [](FChecks& C)
+        {
+            FDefinition D; D.Entry = "0"; D.bAllowCycles = true; D.MaxImmediateCycleTransitions = 1;
+            for (int I = 0; I < 2000; ++I)
+            {
+                auto N = std::make_shared<FTestNode>(); N->OnStart = [](const auto&, auto Done) { Done(Success()); };
+                D.Steps.push_back(Step(std::to_string(I), N, I == 1999 ? "" : std::to_string(I + 1)));
+            }
+            FApplicationFlowExecutor E; std::string Error; E.ConfigureAndStart(std::move(D), 0, Error);
+            for (int I = 0; I < 4000; ++I) E.Tick(I);
+            C.Require(E.GetSnapshot().State == EFlowState::Succeeded, "资产模式也不能把长无环链算成循环预算");
+        }},
+        {"DependencyLossFailsAndCleansUp", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>(); FApplicationFlowExecutor E; std::string Error;
+            E.Configure({"a", {Step("a", A)}}, Error); const auto Run = E.Start(0, Error); E.Tick(0);
+            C.Require(!E.FailRun(Run + 1, "Expired", "旧运行"), "依赖失败也必须匹配当前运行");
+            C.Require(E.FailRun(Run, "FlowLeaseExpired", "定义租约失效"), "宿主依赖失效真实失败");
+            C.Require(E.GetSnapshot().State == EFlowState::Failed && E.GetSnapshot().ErrorCode == "FlowLeaseExpired", "不能把资源失效伪装成功或用户取消");
+            C.Require(A->Finishes.size() == 1 && A->Finishes[0] == EFinishReason::Failed, "失败清理一次");
+            A->Completions[0](Success()); E.Tick(1);
+            C.Require(E.GetSnapshot().State == EFlowState::Failed && !E.FailRun(Run, "Again", "重复"), "迟到完成与重复失败无效");
+        }},
         {"LongGraphDoesNotRecurse", [](FChecks& C)
         {
             FDefinition D; D.Entry = "0";

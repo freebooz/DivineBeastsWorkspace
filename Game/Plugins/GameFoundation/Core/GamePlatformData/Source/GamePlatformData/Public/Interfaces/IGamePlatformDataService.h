@@ -3,7 +3,7 @@
 #include "Types/GamePlatformDataLease.h"
 
 class UGameInstance;
-/** 游戏线程下一调度轮通知；弱调用者失效时抑制外部回调并清理租约。定义指针仅在成功且未释放时有效。 */
+/** 游戏线程下一调度轮或更晚通知；弱调用者失效时抑制外部回调并清理租约。定义指针仅在成功且未释放时有效。 */
 using FGamePlatformDataCompletion = TFunction<void(const FGamePlatformDataLease&, const FGamePlatformResult&)>;
 
 /** 游戏实例作用域的数据只读门面。所有接口仅游戏线程调用，无网络授权含义；不包含私有子系统。 */
@@ -25,7 +25,7 @@ public:
         FGamePlatformDataCompletion Completion, FGamePlatformResult& OutResult) = 0;
     /** 成功租约读取只读定义；跨作用域、过期、已释放、非就绪或调用者失效均返回nullptr。 */
     virtual const UGamePlatformDefinitionBase* GetLoadedDefinition(const FGamePlatformDataLease& Lease) const = 0;
-    /** 仅释放本作用域本代次需求；重复释放有效形状的本作用域句柄成功，伪造／跨作用域失败。 */
+    /** 仅释放本作用域本代次需求；重复释放实际签发过的同一完整句柄成功，伪造／跨作用域失败。 */
     virtual FGamePlatformResult ReleaseDefinition(const FGamePlatformDataLease& Lease) = 0;
     /** 返回即时状态；已移除的合法本作用域句柄返回Released，非法／跨作用域返回Invalid。 */
     virtual EGamePlatformDataRequestState GetLeaseState(const FGamePlatformDataLease& Lease) const = 0;

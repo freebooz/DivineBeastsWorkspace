@@ -34,6 +34,51 @@ Assert-Case '缺失引擎与未执行矩阵不能全通过' {
     Assert-Equal $report.ExitCode $verifyCode
     if ($report.Status -notin @('Incomplete','Failed')) { throw '未执行矩阵不应通过' }
     if (@($report.Matrix | Where-Object Status -eq 'NotExecuted').Count -lt 8) { throw '缺少未执行矩阵项' }
+    $core = @($report.Matrix | Where-Object Name -eq 'NativeCore')
+    Assert-Equal $core.Count 1
+    Assert-Equal $core[0].Status 'NotExecuted'
+    Assert-Equal $core[0].ExitCode 2
+    # 文件包头与本地冒烟均不能替代完整验收；没有证据接入口的必需项必须逐项保留。
+    foreach ($name in @('UEAutomation','AssetGeneration','AssetRegenerationProtection','AssetNegativeValidation','MultiPIE','GraphicalValidation','CancellationRecovery','ReleaseContentStripping')) {
+        $required = @($report.Matrix | Where-Object Name -eq $name)
+        Assert-Equal $required.Count 1
+        Assert-Equal $required[0].Status 'NotExecuted'
+        Assert-Equal $required[0].ExitCode 2
+    }
+}
+Assert-Case 'Core原生配置失败必须计入失败矩阵' {
+    # 故意使用不存在的CMake生成器：真实工具拒绝配置，不改源码、不构建UE或其他套件。
+    $id = [guid]::NewGuid().ToString('D')
+    & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $workspace 'Build/Validation/VerifyFoundation.ps1') -NativeTests -NativeGenerator FoundationIntentionalInvalidGenerator -RunId $id *> (Join-Path $testRoot 'verify-native-failure.log')
+    Assert-Equal $LASTEXITCODE 1
+    $report = Get-Content -Raw (Join-Path $workspace "Saved/Validation/FoundationM0/$id/Verify/result.json") | ConvertFrom-Json
+    Assert-Equal $report.Status 'Failed'
+    $core = @($report.Matrix | Where-Object Name -eq 'NativeCore')
+    Assert-Equal $core.Count 1
+    Assert-Equal $core[0].Status 'Failed'
+    if ($core[0].ExitCode -eq 0) { throw 'Core真实工具失败码丢失' }
+    if (Test-Path (Join-Path $core[0].Evidence 'Build/process.json')) { throw '配置失败后不应继续构建' }
+}
+Assert-Case '没有真实失败但验收未执行必须汇总Incomplete2' {
+    # 仅复制待测脚本到Saved隔离夹具；不创建uproject、插件实现或假资产，不构成新游戏宿主。
+    # 隔离现有坏描述文件，验证Incomplete分支不会被工作区已有Failed项掩盖。
+    $fixture = Join-Path $testRoot 'IncompleteFixture'
+    $validationDir = Join-Path $fixture 'Build/Validation'
+    $gameBuildDir = Join-Path $fixture 'Build/Game'
+    $null = New-Item -ItemType Directory -Path $validationDir,$gameBuildDir,(Join-Path $fixture 'Game/Plugins') -Force
+    Copy-Item -LiteralPath (Join-Path $workspace 'Build/Validation/VerifyFoundation.ps1') -Destination $validationDir
+    Copy-Item -LiteralPath (Join-Path $workspace 'Build/Game/FoundationTools.psm1') -Destination $gameBuildDir
+    $id = [guid]::NewGuid().ToString('D')
+    & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $validationDir 'VerifyFoundation.ps1') -EngineRoot (Join-Path $fixture 'MissingEngine') -RunId $id *> (Join-Path $testRoot 'verify-incomplete.log')
+    Assert-Equal $LASTEXITCODE 2
+    $report = Get-Content -Raw (Join-Path $fixture "Saved/Validation/FoundationM0/$id/Verify/result.json") | ConvertFrom-Json
+    Assert-Equal $report.Status 'Incomplete'
+    Assert-Equal $report.ExitCode 2
+    foreach ($name in @('UEAutomation','AssetGeneration','AssetRegenerationProtection','AssetNegativeValidation','MultiPIE','GraphicalValidation','CancellationRecovery','ReleaseContentStripping')) {
+        $row = @($report.Matrix | Where-Object Name -eq $name)
+        Assert-Equal $row.Count 1
+        Assert-Equal $row[0].Status 'NotExecuted'
+    }
 }
 $module = Join-Path $workspace 'Build/Game/FoundationTools.psm1'
 if (Test-Path $module) {

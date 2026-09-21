@@ -16,6 +16,12 @@
 
 ## 当前实现与验证
 
+- [Foundation M0执行进度](Implementation/FoundationM0/ExecutionProgress.md)：00→03实际断点、兼容决定与原位历史构建阻断。
+- [Foundation M0实际接口](Implementation/FoundationM0/InterfaceContract.md)：Core、Data、Flow及主工程调用的已写入签名。
+- [Foundation M0分项验证](Production/FoundationM0Verification.md)：目标、退出码、证据与未执行项，当前不是全部通过。
+- [Foundation M0源码交付](Production/FoundationM0Delivery.md)：现有命令、资产生成顺序与剩余风险，UE目标/资产未验证。
+- [GamePlatformCore](../Game/Plugins/GameFoundation/Core/GamePlatformCore/README.md)：身份、结果、版本与生产算法回归。
+- [GamePlatformData](../Game/Plugins/GameFoundation/Core/GamePlatformData/README.md)：定义、实例租约、进程需求与编辑器验证。
 - [GamePlatformApplicationFlow](../Game/Plugins/GameFoundation/Application/GamePlatformApplicationFlow/README.md)：流程执行机制、节点注入、接口示例及原生／UE 验证状态。
 - [GamePlatformVFX](../Game/Plugins/GameFoundation/Presentation/GamePlatformVFX/README.md)：已有特效源码交付与待真实工程接入事项。
 - [业务后端与共享代码工程化审查报告](Production/业务后端与共享代码工程化审查报告_V1.3.0.md)：后端及协议的审查证据与阻断项。

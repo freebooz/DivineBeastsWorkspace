@@ -35,14 +35,33 @@ bool FApplicationFlowExecutor::CheckControl(std::string& Error) const
 
 bool FApplicationFlowExecutor::Validate(const FDefinition& InDefinition, std::string& Error)
 {
-    std::map<std::string, const FStep*> Steps;
+    if (!ValidateGraph(InDefinition, Error)) return false;
     std::set<const IFlowNode*> Nodes;
     for (const auto& Step : InDefinition.Steps)
     {
-        if (Step.Id.empty() || !Step.Node || !Steps.emplace(Step.Id, &Step).second ||
-            !Nodes.insert(Step.Node.get()).second)
+        if (!Step.Node || !Nodes.insert(Step.Node.get()).second)
         {
-            Error = "节点ID为空、重复，或节点实例缺失／复用";
+            Error = "节点实例缺失或复用";
+            return false;
+        }
+    }
+    return true;
+}
+
+bool FApplicationFlowExecutor::ValidateGraph(const FDefinition& InDefinition, std::string& Error)
+{
+    Error.clear();
+    if (InDefinition.bAllowCycles && InDefinition.MaxImmediateCycleTransitions == 0)
+    {
+        Error = "允许循环时即时循环预算必须大于零";
+        return false;
+    }
+    std::map<std::string, const FStep*> Steps;
+    for (const auto& Step : InDefinition.Steps)
+    {
+        if (Step.Id.empty() || !Steps.emplace(Step.Id, &Step).second)
+        {
+            Error = "节点ID为空或重复";
             return false;
         }
         if (!std::isfinite(Step.TimeoutSeconds) || Step.TimeoutSeconds <= 0 ||
@@ -75,12 +94,12 @@ bool FApplicationFlowExecutor::Validate(const FDefinition& InDefinition, std::st
             ++InDegree[Target];
         }
     }
-    // 迭代拓扑检查避免深图递归耗尽栈；禁止用图循环实现无界重试。
+    // 迭代拓扑检查避免深图递归耗尽栈；只有显式资产模式允许环，执行期另管即时循环预算。
     std::vector<std::string> Ready;
     for (const auto& Pair : InDegree) if (Pair.second == 0) Ready.push_back(Pair.first);
     for (std::size_t Cursor = 0; Cursor < Ready.size(); ++Cursor)
         for (const auto& Target : Edges[Ready[Cursor]]) if (--InDegree[Target] == 0) Ready.push_back(Target);
-    if (Ready.size() != Steps.size()) { Error = "流程图存在循环"; return false; }
+    if (!InDefinition.bAllowCycles && Ready.size() != Steps.size()) { Error = "流程图存在循环"; return false; }
     std::set<std::string> Reachable{InDefinition.Entry};
     std::vector<std::string> Pending{InDefinition.Entry};
     for (std::size_t Cursor = 0; Cursor < Pending.size(); ++Cursor)
@@ -119,6 +138,8 @@ std::uint64_t FApplicationFlowExecutor::Start(double NowSeconds, std::string& Er
     Snapshot.NodeId = Definition.Entry;
     LastNowSeconds = NowSeconds;
     bNeedsBegin = true;
+    ImmediateVisitedNodes.clear();
+    ImmediateCycleTransitions = 0;
     return Snapshot.RunId;
 }
 
@@ -127,6 +148,19 @@ void FApplicationFlowExecutor::InvalidateCompletion()
     std::lock_guard<std::mutex> Lock(Mailbox->Mutex);
     Mailbox->bAccepting = false;
     Mailbox->Result.reset();
+}
+
+std::uint64_t FApplicationFlowExecutor::ConfigureAndStart(FDefinition InDefinition, double NowSeconds, std::string& Error)
+{
+    if (!CheckControl(Error)) return 0;
+    if (IsActive() || !std::isfinite(NowSeconds) || NowSeconds < 0 || LastRunId == std::numeric_limits<std::uint64_t>::max())
+    {
+        Error = "流程正在运行、启动时间非法或运行代次耗尽";
+        return 0;
+    }
+    if (!Configure(std::move(InDefinition), Error)) return 0;
+    // Configure与Start之间没有外部回调；所有可能失败的启动前置已在安装前验证。
+    return Start(NowSeconds, Error);
 }
 
 void FApplicationFlowExecutor::BeginAttempt(double NowSeconds)
@@ -140,6 +174,7 @@ void FApplicationFlowExecutor::BeginAttempt(double NowSeconds)
     DeadlineSeconds = NowSeconds + Step.TimeoutSeconds;
     if (!std::isfinite(DeadlineSeconds)) { Fail("InvalidDeadline", "节点截止时间溢出"); return; }
     const auto Token = ++LastToken;
+    Snapshot.NodeGeneration = Token;
     {
         std::lock_guard<std::mutex> Lock(Mailbox->Mutex);
         Mailbox->Token = Token;
@@ -152,7 +187,7 @@ void FApplicationFlowExecutor::BeginAttempt(double NowSeconds)
     bAttemptActive = true;
     const std::weak_ptr<FMailbox> WeakMailbox = Mailbox;
     bInNodeCallback = true;
-    Step.Node->Start({Snapshot.RunId, Step.Id, Snapshot.Attempt}, [WeakMailbox, Token](FNodeResult Result)
+    Step.Node->Start({Snapshot.RunId, Step.Id, Snapshot.Attempt, Token}, [WeakMailbox, Token](FNodeResult Result)
     {
         if (auto Inbox = WeakMailbox.lock())
         {
@@ -165,6 +200,11 @@ void FApplicationFlowExecutor::BeginAttempt(double NowSeconds)
         }
     });
     bInNodeCallback = false;
+    {
+        std::lock_guard<std::mutex> Lock(Mailbox->Mutex);
+        // Execute返回时已投递即视为即时完成；真正异步等待会打断连续即时循环片段。
+        bCompletedSynchronously = Mailbox->Result.has_value();
+    }
 }
 
 void FApplicationFlowExecutor::EndAttempt(EFinishReason Reason)
@@ -225,6 +265,11 @@ void FApplicationFlowExecutor::Tick(double NowSeconds)
         Mailbox->Result.reset();
     }
     if (!Result) return;
+    if (!bCompletedSynchronously)
+    {
+        ImmediateVisitedNodes.clear();
+        ImmediateCycleTransitions = 0;
+    }
     if (!Result->bSucceeded) { HandleFailure(*Result, false, NowSeconds); return; }
     const auto& Step = Definition.Steps[CurrentIndex];
     std::string Next = Step.Next;
@@ -236,10 +281,56 @@ void FApplicationFlowExecutor::Tick(double NowSeconds)
     }
     EndAttempt(EFinishReason::Succeeded);
     if (Next.empty()) { Snapshot.State = EFlowState::Succeeded; return; }
+    if (Definition.bAllowCycles && bCompletedSynchronously)
+    {
+        ImmediateVisitedNodes.insert(Step.Id);
+        if (ImmediateVisitedNodes.count(Next) != 0)
+        {
+            if (ImmediateCycleTransitions >= Definition.MaxImmediateCycleTransitions)
+            {
+                Fail("ImmediateCycleBudgetExceeded", "连续即时循环超过显式预算，请等待真实事件或修正路由");
+                return;
+            }
+            ++ImmediateCycleTransitions;
+        }
+    }
     CurrentIndex = Index.at(Next);
     Snapshot.NodeId = Next;
     Snapshot.Attempt = 0;
+    Snapshot.NodeGeneration = 0;
     bNeedsBegin = true;
+}
+
+bool FApplicationFlowExecutor::MatchesNode(std::uint64_t RunId, const std::string& NodeId, std::uint64_t NodeGeneration) const
+{
+    return IsActive() && bAttemptActive && NodeGeneration != 0 && Snapshot.RunId == RunId &&
+        Snapshot.NodeId == NodeId && Snapshot.NodeGeneration == NodeGeneration;
+}
+
+bool FApplicationFlowExecutor::SubmitEvent(std::uint64_t RunId, const std::string& NodeId, std::uint64_t NodeGeneration, FNodeResult Result)
+{
+    std::string Error;
+    if (!CheckControl(Error) || !MatchesNode(RunId, NodeId, NodeGeneration)) return false;
+    std::lock_guard<std::mutex> Lock(Mailbox->Mutex);
+    if (!Mailbox->bAccepting || Mailbox->Token != NodeGeneration) return false;
+    Mailbox->Result = std::move(Result);
+    Mailbox->bAccepting = false;
+    return true;
+}
+
+bool FApplicationFlowExecutor::CancelNode(std::uint64_t RunId, const std::string& NodeId, std::uint64_t NodeGeneration)
+{
+    std::string Error;
+    if (!CheckControl(Error) || !MatchesNode(RunId, NodeId, NodeGeneration)) return false;
+    return Cancel(RunId);
+}
+
+bool FApplicationFlowExecutor::FailRun(std::uint64_t RunId, std::string Code, std::string Message)
+{
+    std::string Error;
+    if (!CheckControl(Error) || !IsActive() || Snapshot.RunId != RunId) return false;
+    Fail(Code.empty() ? "MissingFailureCode" : std::move(Code), std::move(Message));
+    return true;
 }
 
 bool FApplicationFlowExecutor::Cancel(std::uint64_t RunId)

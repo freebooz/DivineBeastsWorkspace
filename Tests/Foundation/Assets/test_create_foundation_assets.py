@@ -214,7 +214,7 @@ class GenerationTests(unittest.TestCase):
         self.assertEqual(editor.created, [])
 
     def test_rejects_future_phases_and_unknown_arguments(self):
-        for arguments in (["--phase", "Definitions"], ["--phase", "Flow"], ["--overwrite"]):
+        for arguments in (["--phase", "Definitions"], ["--overwrite"]):
             with self.subTest(arguments=arguments):
                 with self.assertRaises(ValueError):
                     ASSETS.parse_arguments(arguments)
@@ -381,7 +381,7 @@ class ProbeTests(unittest.TestCase):
         adapter.unreal = Mock()
         adapter.assets = Mock()
         adapter.asset_tools = Mock()
-        adapter.probe_class = object()
+        adapter.asset_class = object()
         adapter.assets.does_asset_exist.return_value = False
         adapter.snapshot = Mock(return_value={})
         return adapter
@@ -395,7 +395,7 @@ class ProbeTests(unittest.TestCase):
         version = Mock()
         version.get_editor_property.side_effect = {"schema_version": 1, "content_revision": 1}.__getitem__
         asset = Mock()
-        asset.get_class.return_value = adapter.probe_class
+        asset.get_class.return_value = adapter.asset_class
         asset.get_path_name.return_value = PROBE + ".DA_FoundationProbe"
         asset.get_editor_property.side_effect = {
             "logical_id": logical_id, "data_version": version,
@@ -406,7 +406,7 @@ class ProbeTests(unittest.TestCase):
     def test_probe_validates_every_authored_field(self):
         for field, bad_value in (("namespace", "other"), ("name", "wrong"), ("logical_version", 2),
                                  ("schema_version", 2), ("content_revision", 0),
-                                 ("probe_value", 0), ("required_definitions", ["dependency"])):
+                                 ("required_definitions", ["dependency"])):
             with self.subTest(field=field):
                 adapter = self.make_probe_adapter()
                 asset = self.make_probe_asset(adapter)
@@ -442,11 +442,21 @@ class ProbeTests(unittest.TestCase):
 
     def test_probe_false_save_is_failure(self):
         adapter = self.make_probe_adapter()
+        adapter.asset_tools.create_asset.return_value = self.make_probe_asset(adapter)
         adapter.assets.save_loaded_asset.return_value = False
-        adapter._validate_object = Mock()
+        adapter._validate_object = Mock(return_value=[])
         with self.assertRaisesRegex(RuntimeError, "save_loaded_asset"):
             adapter.create(PROBE)
         self.assertFalse(adapter.asset_tools.create_asset.call_args.kwargs["overwrite_existing"])
+
+    def test_custom_probe_value_is_valid_and_never_reset(self):
+        adapter = self.make_probe_adapter()
+        asset = self.make_probe_asset(adapter)
+        original_get = asset.get_editor_property.side_effect
+        asset.get_editor_property.side_effect = lambda key: 99 if key == "probe_value" else original_get(key)
+        differences = adapter._validate_object(asset)
+        self.assertIn({"field": "probe_value", "default": 42, "actual": 99}, differences)
+        asset.set_editor_property.assert_not_called()
 
     def test_probe_failed_reload_and_wrong_primary_id_tags_fail(self):
         adapter = self.make_probe_adapter()
@@ -479,6 +489,146 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(report["phase"], "Probe")
         self.assertEqual(report["assets"][0]["package"], PROBE)
         self.assertEqual(report["assets"][0]["state"], "FAILED")
+
+
+class FlowTests(unittest.TestCase):
+    """生成默认路径与合法用户编辑分离；错误图拒绝，既有值不回写。"""
+
+    def test_flow_defaults_have_explicit_probe_request_and_timeouts(self):
+        values = ASSETS.default_flow_values()
+        self.assertEqual(values["entry_node_id"], "Boot")
+        self.assertEqual([node["node_id"] for node in values["nodes"]],
+                         ["Boot", "ValidateConfiguration", "LoadProbeDefinition", "EnterSandbox", "Ready"])
+        self.assertEqual([node["timeout_seconds"] for node in values["nodes"]], [30, 30, 30, 120, 30])
+        self.assertEqual([node["input_definition_id"] for node in values["nodes"]],
+                         ["", "", "GamePlatformDefinition:foundation.probe@1", "", ""])
+        self.assertEqual(values["nodes"][-1]["next_node_id"], "None")
+        self.assertEqual(ASSETS.validate_flow_values(values), [])
+
+    def test_legal_custom_routes_and_timeout_are_reported_without_reset(self):
+        values = ASSETS.default_flow_values()
+        values["nodes"][0]["next_node_id"] = "None"
+        values["nodes"][0]["routes"] = {"Continue": "ValidateConfiguration"}
+        values["nodes"][1]["timeout_seconds"] = 45
+        before = copy.deepcopy(values)
+        differences = ASSETS.validate_flow_values(values)
+        self.assertTrue(differences)
+        self.assertEqual(values, before)
+
+    def test_invalid_graph_is_rejected(self):
+        for failure in ("duplicate", "dangling", "unreachable", "entry", "timeout", "nan",
+                        "executor", "route", "cycle", "budget", "input"):
+            with self.subTest(failure=failure):
+                values = ASSETS.default_flow_values()
+                node = values["nodes"][0]
+                if failure == "duplicate": values["nodes"][1]["node_id"] = "boot"
+                elif failure == "dangling": node["next_node_id"] = "Missing"
+                elif failure == "unreachable": node["next_node_id"] = "Ready"
+                elif failure == "entry": values["entry_node_id"] = "Missing"
+                elif failure == "timeout": node["timeout_seconds"] = 0
+                elif failure == "nan": node["timeout_seconds"] = float("nan")
+                elif failure == "executor": node["executor_id"] = "None"
+                elif failure == "route": node["routes"] = {"None": "Ready"}
+                elif failure == "cycle": values["nodes"][-1]["next_node_id"] = "Boot"
+                elif failure == "budget": values["max_immediate_cycle_transitions"] = 0
+                elif failure == "input": node["input_definition_id"] = "Other:foundation.probe@1"
+                with self.assertRaises(RuntimeError):
+                    ASSETS.validate_flow_values(values)
+
+    def test_explicit_bounded_cycle_is_valid_customization(self):
+        values = ASSETS.default_flow_values()
+        values["allow_cycles"] = True
+        values["nodes"][-1]["next_node_id"] = "Boot"
+        self.assertTrue(ASSETS.validate_flow_values(values))
+
+    def test_flow_stage_only_creates_flow_and_propagates_custom_differences(self):
+        package = "/Game/Development/Foundation/Definitions/DA_FoundationFlow"
+        filename = "Development/Foundation/Definitions/DA_FoundationFlow.uasset"
+        editor = MemoryEditor()
+        def create_flow(requested):
+            self.assertEqual(requested, package)
+            editor.created.append(requested)
+            editor.registry.add(requested)
+            editor.files[filename] = {"size_bytes": 100, "sha256": "test-flow", "mtime_ns": 1}
+        editor.create = create_flow
+        editor.validate = lambda requested: [{"field": "nodes", "default": "default-path", "actual": "custom-path"}]
+        first = ASSETS.run_flow(editor)
+        self.assertEqual(first["assets"][0]["state"], "CREATED")
+        self.assertEqual(editor.created, [package])
+        second = ASSETS.run_flow(editor)
+        self.assertEqual(second["assets"][0]["state"], "VALIDATED")
+        self.assertTrue(second["assets"][0]["custom_differences"])
+        self.assertEqual(second["native_asset_diff"], [])
+
+    def test_flow_factory_writes_real_fields_and_no_required_dependencies(self):
+        class ReflectedFields:
+            """仅测试使用的反射属性存储，所有状态在内存，不生成资产字节。"""
+            def __init__(self, **fields):
+                self.fields = fields
+            def get_editor_property(self, name):
+                return self.fields[name]
+            def set_editor_property(self, name, value):
+                self.fields[name] = value
+
+        adapter = ASSETS.UnrealFlowEditor.__new__(ASSETS.UnrealFlowEditor)
+        adapter.unreal = Mock()
+        adapter.unreal.GamePlatformFlowNodeDefinition.side_effect = ReflectedFields
+        adapter.unreal.PrimaryAssetType.side_effect = lambda: ReflectedFields(name="None")
+        adapter.unreal.PrimaryAssetId.side_effect = lambda: ReflectedFields(
+            primary_asset_type=ReflectedFields(name="None"), primary_asset_name="None")
+        adapter.assets = Mock()
+        adapter.assets.does_asset_exist.return_value = False
+        adapter.asset_tools = Mock()
+        adapter.asset_class = object()
+        adapter.snapshot = Mock(return_value={})
+        asset = ReflectedFields(
+            logical_id=ReflectedFields(namespace="", name="", logical_version=1),
+            data_version=ReflectedFields(schema_version=1, content_revision=1))
+        asset.get_class = lambda: adapter.asset_class
+        asset.get_path_name = lambda: "/Game/Development/Foundation/Definitions/DA_FoundationFlow.DA_FoundationFlow"
+        adapter.asset_tools.create_asset.return_value = asset
+        adapter.create("/Game/Development/Foundation/Definitions/DA_FoundationFlow")
+        self.assertEqual(asset.fields["required_definitions"], [])
+        self.assertEqual(asset.fields["logical_id"].fields, {"namespace": "foundation", "name": "flow", "logical_version": 1})
+        self.assertEqual(asset.fields["entry_node_id"], "Boot")
+        nodes = asset.fields["nodes"]
+        self.assertEqual([node.fields["executor_id"] for node in nodes],
+                         ["Boot", "ValidateConfiguration", "LoadProbeDefinition", "EnterSandbox", "Ready"])
+        probe_id = nodes[2].fields["input_definition_id"]
+        self.assertEqual(probe_id.fields["primary_asset_type"].fields["name"], "GamePlatformDefinition")
+        self.assertEqual(probe_id.fields["primary_asset_name"], "foundation.probe@1")
+        for index in (0, 1, 3, 4):
+            self.assertEqual(nodes[index].fields["input_definition_id"].fields["primary_asset_name"], "None")
+        self.assertEqual(adapter._validate_object(asset), [])
+        nodes[0].fields["routes"] = {"Optional": "Ready"}
+        self.assertTrue(adapter._validate_object(asset))
+        asset.fields["required_definitions"] = [probe_id]
+        with self.assertRaisesRegex(RuntimeError, "RequiredDefinitions"):
+            adapter._validate_object(asset)
+        adapter.assets.load_asset.assert_not_called()
+
+    def test_missing_flow_reflection_does_not_load_probe_or_create_factory(self):
+        unreal = Mock()
+        unreal.load_class.side_effect = [object(), None]
+        with patch.object(ASSETS.UnrealAssetEditor, "__init__", return_value=None):
+            with self.assertRaisesRegex(RuntimeError, "反射"):
+                ASSETS.UnrealFlowEditor(unreal)
+        self.assertEqual(unreal.load_class.call_args.args[1], "/Script/GamePlatformApplicationFlow.GamePlatformFlowDefinition")
+        unreal.AssetToolsHelpers.get_asset_tools.assert_not_called()
+
+    def test_new_definition_must_match_defaults_even_though_existing_customization_is_valid(self):
+        adapter = ASSETS.UnrealProbeEditor.__new__(ASSETS.UnrealProbeEditor)
+        adapter.unreal = Mock()
+        adapter.assets = Mock()
+        adapter.assets.does_asset_exist.return_value = False
+        adapter.asset_tools = Mock()
+        adapter.asset_class = object()
+        adapter.snapshot = Mock(return_value={})
+        adapter._validate_identity = Mock()
+        adapter._validate_object = Mock(return_value=[{"field": "probe_value", "default": 42, "actual": 99}])
+        with self.assertRaisesRegex(RuntimeError, "默认"):
+            adapter.create(PROBE)
+        adapter.assets.save_loaded_asset.assert_not_called()
 
 
 if __name__ == "__main__":

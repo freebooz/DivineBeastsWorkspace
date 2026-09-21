@@ -18,6 +18,12 @@ public:
     virtual void Shutdown() override;
     /** HUD 的只读值快照；不返回协调器或资产的裸指针。 */
     FString GetFoundationDiagnostics() const;
+    /** 仅显式FoundationStandalone开发实例有效；取消不会写入正式业务数据。 */
+    UFUNCTION(Exec)
+    void FoundationCancel();
+    /** 下一游戏线程轮重试并生成新流程身份；发行版及未启用入口不执行。 */
+    UFUNCTION(Exec)
+    void FoundationRetry();
 private:
     UPROPERTY(Transient)
     TObjectPtr<UDBAFoundationCoordinator> FoundationCoordinator;

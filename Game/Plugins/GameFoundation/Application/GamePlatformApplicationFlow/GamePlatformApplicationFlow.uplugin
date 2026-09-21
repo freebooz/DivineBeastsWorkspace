@@ -8,6 +8,10 @@
   "CreatedBy": "DivineBeasts Team",
   "CanContainContent": false,
   "IsBetaVersion": true,
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformData", "Enabled": true }
+  ],
   "Modules": [
     {
       "Name": "GamePlatformApplicationFlow",

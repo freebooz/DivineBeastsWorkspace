@@ -7,7 +7,7 @@
 #include "Types/GamePlatformDataLease.h"
 #include "GamePlatformApplicationFlowSubsystem.generated.h"
 
-namespace GamePlatform::ApplicationFlow { class FApplicationFlowExecutor; }
+namespace GamePlatform::ApplicationFlow { class FApplicationFlowExecutor; struct FDefinition; }
 class FGamePlatformFlowNodeAdapter;
 
 /**
@@ -65,8 +65,11 @@ private:
     void RemoveTicker();
     /** 等待节点／广播栈展开后完成幂等关闭，绝不在核心调用栈内销毁执行器。 */
     void CompleteDeinitialize();
+    /** 终态先清理节点再撤销本流程持有的定义租约；重复进入不重复释放。 */
+    void ReleaseAssetRun();
 
     TUniquePtr<GamePlatform::ApplicationFlow::FApplicationFlowExecutor> Executor;
+    TUniquePtr<GamePlatform::ApplicationFlow::FDefinition> LegacyCoreDefinition;
     FTSTicker::FDelegateHandle TickerHandle;
     FGuid ScopeId;
     uint64 LastPublishedRunId = 0;
@@ -74,6 +77,16 @@ private:
     bool bDeinitialized = false;
     bool bPublishing = false; // 广播内允许查询，变更须推迟到下一游戏线程任务。
     bool bDispatching = false; // Execute/Finish 重入控制在适配层同样拒绝。
+    bool bAssetConfiguration = false;
+    FGamePlatformDataLease ActiveDefinitionLease;
+
+    struct FFactoryRegistration
+    {
+        FGuid RegistrationId;
+        FGamePlatformFlowNodeFactory Factory;
+    };
+    TMap<FName, FFactoryRegistration> NodeFactories;
+    TSet<TWeakObjectPtr<UGamePlatformFlowNode>> PreviouslyCreatedNodes;
 
     UPROPERTY(Transient)
     TObjectPtr<UObject> ActivePayload;
@@ -81,6 +94,14 @@ private:
     // GC 可追踪强引用，避免 shared_ptr 持有隐式 UObject 根造成 GameInstance 引用环。
     UPROPERTY(Transient)
     TArray<TObjectPtr<UGamePlatformFlowNode>> OwnedNodes;
+
+    /** 保留旧Configure节点，使资产运行不会替换旧API下次Start的配置。 */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UGamePlatformFlowNode>> LegacyNodes;
+
+    /** 工厂阶段也可发生GC；新节点在全部验证并接纳前由此临时保活。 */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UGamePlatformFlowNode>> PendingAssetNodes;
 
     FGamePlatformFlowFinished FinishedEvent;
 };

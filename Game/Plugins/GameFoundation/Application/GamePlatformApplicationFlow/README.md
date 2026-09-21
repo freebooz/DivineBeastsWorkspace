@@ -2,7 +2,7 @@
 
 版本：0.1.0｜状态：一期必建，流程执行代码已实现，UE 工程验收待完整环境验证。
 
-当前证据：原生 Debug／Release 各 21 场景通过；UE5.8 UHT 和全部插件 C++ 编译通过。Editor 模块链接因引擎缺少 UnrealEditor-Core.lib 失败，28 项 UE 自动化尚未运行，不能标记为可发布成品。详见下方验证文档。
+当前源码已增加M0资产流程兼容扩展，仍只使用同一个执行器。旧版21场景与历史UE编译记录不能证明本次扩展已通过UE验证；本次命令、场景与边界见 [M0兼容扩展与验证](Docs/M0兼容扩展与验证.md)。本轮未运行UBT、UHT或UE自动化，未绕过现存空描述文件阻断。
 
 本插件提供一个 GameInstance 作用域的主流程执行器。项目组合根注入节点对象及转换图，平台层不包含登录、选角、地图路径、项目身份、HTTP 地址或竞技依赖。
 
@@ -10,19 +10,19 @@
 
 ## 能力与边界
 
-- 事务式配置校验：空入口、重复节点／实例、悬空边、不可达节点、循环、非法超时与重试配置均拒绝，保留旧配置。
+- 旧Configure保持DAG和事务式校验；新增流程资产只在显式允许时接纳循环，使用即时循环预算约束同步重访。
 - 默认成功边和具名成功分支；终点使用 NAME_None，未知分支明确失败。
 - 节点异步完成、有限次数重试、固定退避、单调时钟超时、取消及作用域关闭。
-- 作用域＋运行代次句柄；尝试代次邮箱拒绝迟到或重复回调。只保存一个完成结果，避免重复回调堆积。
+- 作用域＋运行＋节点＋NodeGeneration令牌；外部事件与回调共用原邮箱，首次有效完成生效。
 - 每次开始的尝试恰好清理一次；终态事件每次运行只广播一次。
 - GameInstance 级跨地图生命周期及 GC 可追踪节点／载荷保活；空闲时没有 Ticker。
 - UGamePlatformCallbackFlowNode 支持组合根直接注入执行与清理函数，也可实现 UGamePlatformFlowNode 派生类型。
 
-当前 C++ 流程图是有限无环图；节点级有限重试不依赖图循环。没有蓝图流程编辑器、并行节点调度、自动事务回滚、磁盘恢复或网络复制。玩家在世界中匹配等并行业务由各领域服务执行，主流程按需等待其结果。
+旧C++流程图仍为DAG；资产模式通过Data就绪租约读取UGamePlatformFlowDefinition，工厂为每run创建独立节点，输入定义身份传入上下文，终态释放所接管租约。没有蓝图流程编辑器、并行节点调度、自动事务回滚、磁盘恢复或网络复制。玩家在世界中匹配等并行业务由各领域服务执行。
 
 ## 模块、端侧与启用
 
-唯一模块名 `GamePlatformApplicationFlow`，Runtime，Default 加载。支持 Editor／Client／Server；普通 Game 目标也允许，因为代码只依赖 Core、CoreUObject、Engine，且不含任何客户端／服务器专属业务。该允许范围是本插件边界设计，尚无四目标构建通过证据。
+唯一模块名 `GamePlatformApplicationFlow`，Runtime，Default 加载。支持Editor／Client／Server／Game；依赖Core、CoreUObject、Engine及平台GamePlatformCore、GamePlatformData，模块规则与插件描述同时声明真实依赖。没有客户端／服务器专属业务，也尚无本次四目标构建通过证据。
 
 消费方 `.Build.cs` 声明 `GamePlatformApplicationFlow` 模块依赖；若消费方也是插件，其 `.uplugin` 同时声明本插件依赖。真实 `.uproject` 的 Plugins 列表显式启用：
 
@@ -30,7 +30,7 @@
 {"Name": "GamePlatformApplicationFlow", "Enabled": true}
 ```
 
-本次未重写工作空间中为空的主工程与 Target 文件。该问题需要主工程任务独立处理。本插件无 Content、无配置扫描、无资产包或 GameplayTag 注册要求，不创建伪造 .uasset。
+主工程与Target由父任务处理。本插件提供流程资产类型但不内置Content或扫描目录；具体资产由宿主通过引擎生成，并由Data统一发现和加载，不创建伪造 .uasset。
 
 ## 最小接入
 
@@ -57,7 +57,7 @@ UGamePlatformApplicationFlowSubsystem* Flow =
 & 'Game/Plugins/GameFoundation/Application/GamePlatformApplicationFlow/Tests/Scripts/TestApplicationFlow.ps1' -Configuration Release
 ```
 
-上述测试编译的是插件真实生产调度核心，不包含 UHT／UE 子系统。UE 自动化入口 `GamePlatform.ApplicationFlow` 包含 21 项核心场景及 7 项适配层场景（含 5 项回调内关闭回归）。UE 构建脚本及验证边界见 [测试与验证说明](Docs/测试与验证说明.md)。
+上述测试编译的是插件真实生产调度核心，不包含UHT／UE子系统。UE入口GamePlatform.ApplicationFlow加入资产校验、工厂、事件与真实租约场景；真实租约用例必须提供 `-GamePlatformFlowTestDefinition=GamePlatformDefinition:foundation.flow@1` 并实际生成资产，缺失明确失败。本轮数量与结果以 [M0兼容扩展与验证](Docs/M0兼容扩展与验证.md) 为准。
 
 ## 文档
 

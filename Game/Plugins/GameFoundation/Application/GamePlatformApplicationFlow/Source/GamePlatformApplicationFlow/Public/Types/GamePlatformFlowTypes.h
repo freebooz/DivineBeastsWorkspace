@@ -104,7 +104,7 @@ struct FGamePlatformFlowStep
     bool bRetryOnTimeout = false;
 };
 
-/** 当前阶段使用 C++ 显式装配；入口和所有边一次性校验，不依赖插件扫描顺序。 */
+/** 兼容旧C++显式装配的DAG；入口和所有边一次性校验，资产模式使用单独的UGamePlatformFlowDefinition。 */
 struct FGamePlatformFlowDefinition
 {
     FName EntryNodeId = NAME_None;

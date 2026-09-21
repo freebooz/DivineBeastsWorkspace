@@ -4,10 +4,12 @@
 #include "Containers/Ticker.h"
 #include "UObject/Object.h"
 #include "Types/GamePlatformDataLease.h"
+#include "Types/GamePlatformFlowTypes.h"
 #include "DBAFoundationCoordinator.generated.h"
 
 class UGameInstance;
 class UWorld;
+class UGamePlatformApplicationFlowSubsystem;
 
 /** 本项目开发入口装配，显式启用且非发行构建才运行；不承担平台状态机职责。 */
 UCLASS(Transient)
@@ -31,12 +33,29 @@ public:
     bool IsFoundationReady() const;
     /** 仅主工程拥有地图选择；平台流程资产不引用地图。返回静态不可变包名。 */
     static const TCHAR* SandboxPackage();
+    /** 显式开发命令；取消当前申请或运行，并释放探针。重复调用保持清理幂等。 */
+    void CancelDevelopmentFlow();
+    /** 仅显式开发入口可用；撤销旧异步代次后允许新运行，执行器自行分配新RunId。 */
+    void RetryDevelopmentFlow();
 private:
     bool Tick(float DeltaSeconds);
+    void StartDevelopmentFlow();
+    void OnFlowFinished(const FGamePlatformFlowSnapshot& Snapshot);
+    void ReleaseDataLeases();
     TWeakObjectPtr<UGameInstance> OwnerInstance;
     TWeakObjectPtr<UWorld> ReportedWorld;
     FTSTicker::FDelegateHandle TickerHandle;
     FString RunId;
     FString Diagnostics = TEXT("基础工程开发验证未启用");
     FGamePlatformDataLease ProbeLease;
+    FGamePlatformDataLease FlowLease;
+    TWeakObjectPtr<UGamePlatformApplicationFlowSubsystem> FlowService;
+    TArray<FGamePlatformFlowFactoryHandle> FactoryHandles;
+    FGamePlatformFlowHandle ActiveFlow;
+    FDelegateHandle FinishedHandle;
+    FGamePlatformResult LastResult;
+    uint64 RequestGeneration = 0;
+    double DiscoveryDeadlineSeconds = 0.0;
+    bool bStartAttempted = false;
+    bool bStopping = true;
 };

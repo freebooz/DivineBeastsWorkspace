@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -31,6 +32,7 @@ struct FExecutionContext
     std::uint64_t RunId = 0;   // 当前执行器内的流程代次。
     std::string NodeId;
     int Attempt = 0;           // 从 1 开始，包括首次执行。
+    std::uint64_t NodeGeneration = 0; // 每次进入／重试的邮箱代次；循环不得复用。
 };
 
 using FCompletion = std::function<void(FNodeResult)>;
@@ -60,6 +62,8 @@ struct FDefinition
 {
     std::string Entry;
     std::vector<FStep> Steps;
+    bool bAllowCycles = false; // 仅资产调用显式开启；旧C++装配保持DAG。
+    std::uint32_t MaxImmediateCycleTransitions = 64; // 连续即时片段中的重复节点转换上限。
 };
 
 struct FSnapshot
@@ -70,6 +74,7 @@ struct FSnapshot
     int Attempt = 0;
     std::string ErrorCode;
     std::string ErrorMessage;
+    std::uint64_t NodeGeneration = 0;
 };
 
 /**
@@ -85,14 +90,23 @@ public:
     FApplicationFlowExecutor(const FApplicationFlowExecutor&) = delete;
     FApplicationFlowExecutor& operator=(const FApplicationFlowExecutor&) = delete;
 
-    // 原子安装无环、全部可达的流程图。失败保留原配置；运行中或节点回调内拒绝变更。
+    // 结构预检不创建节点；允许空Node用于资产工厂调用前验证，Configure仍检查实例。
+    static bool ValidateGraph(const FDefinition& Definition, std::string& Error);
+    // 原子安装全部可达的流程图；默认DAG，显式资产模式才允许循环。
     bool Configure(FDefinition Definition, std::string& Error);
+    // 资产模式事务式安装并启动；任何预检失败保留原配置与快照，不调用节点。
+    std::uint64_t ConfigureAndStart(FDefinition Definition, double NowSeconds, std::string& Error);
     // 创建新代次；Start 不同步调用节点，节点在下次 Tick 执行。
     std::uint64_t Start(double NowSeconds, std::string& Error);
     // 使用单调时间处理一次完成、超时或退避；非法时间终止运行并记录错误。
     void Tick(double NowSeconds);
     // 仅匹配正在执行的 RunId 时生效；重复取消或旧句柄返回 false。
     bool Cancel(std::uint64_t RunId);
+    // 外部事件与精确取消仅所有者线程；运行/节点/代次匹配且已开始，事件使用同一邮箱。
+    bool SubmitEvent(std::uint64_t RunId, const std::string& NodeId, std::uint64_t NodeGeneration, FNodeResult Result);
+    bool CancelNode(std::uint64_t RunId, const std::string& NodeId, std::uint64_t NodeGeneration);
+    // 宿主依赖失效时以真实失败终止，先清理活跃节点，不伪装为用户取消。
+    bool FailRun(std::uint64_t RunId, std::string Code, std::string Message);
     // 关闭后不可再安装或启动；当前尝试先失效回调，再同步 Finish(Shutdown)。
     bool Shutdown();
     const FSnapshot& GetSnapshot() const { return Snapshot; }
@@ -107,6 +121,7 @@ private:
         std::optional<FNodeResult> Result;
     };
     bool CheckControl(std::string& Error) const;
+    bool MatchesNode(std::uint64_t RunId, const std::string& NodeId, std::uint64_t NodeGeneration) const;
     static bool Validate(const FDefinition& Definition, std::string& Error);
     void BeginAttempt(double NowSeconds);
     void EndAttempt(EFinishReason Reason);
@@ -128,5 +143,8 @@ private:
     double DeadlineSeconds = 0;
     double RetryAtSeconds = 0;
     double LastNowSeconds = 0;
+    bool bCompletedSynchronously = false;
+    std::set<std::string> ImmediateVisitedNodes;
+    std::uint32_t ImmediateCycleTransitions = 0;
 };
 }

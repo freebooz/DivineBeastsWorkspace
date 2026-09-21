@@ -6,6 +6,8 @@
 #include "Misc/DataValidation.h"
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Editor.h"
+#include "EditorValidatorSubsystem.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -102,6 +104,32 @@ bool FGamePlatformSourceDepthTest::RunTest(const FString& Parameters)
         Previous = Next;
     }
     TestTrue(TEXT("129层依赖返回Invalid而不无限递归"), Validate(Root) == EDataValidationResult::Invalid);
+    return true;
+}
+
+// 不手动注册验证器；若模块类型未由编辑器发现，必须失败，不能用直接NewObject验证器掩盖集成缺口。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformValidatorDispatchTest, "GamePlatform.Data.Editor.RegisteredValidatorDispatch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformValidatorDispatchTest::RunTest(const FString& Parameters)
+{
+    auto* Validation = GEditor ? GEditor->GetEditorSubsystem<UEditorValidatorSubsystem>() : nullptr;
+    if (!Validation) { AddError(TEXT("编辑器验证子系统未初始化。")); return false; }
+    bool bIsRegistered = false;
+    Validation->ForEachEnabledValidator([&](UEditorValidatorBase* Validator)
+    {
+        if (Validator->IsA<UGamePlatformDefinitionValidator>()) bIsRegistered = true;
+        return true;
+    });
+    if (!TestTrue(TEXT("平台验证器已被编辑器自动登记"), bIsRegistered)) return false;
+    FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get().SearchAllAssets(true);
+    FDefinitionFixture Fixture;
+    auto* First = Fixture.Add(TEXT("dispatchduplicate"));
+    Fixture.Add(TEXT("dispatchduplicate"));
+    TArray<FText> Errors, Warnings;
+    const auto Result = Validation->IsObjectValid(First, Errors, Warnings, EDataValidationUsecase::Commandlet);
+    TestTrue(TEXT("实际编辑器调度因重复身份失败"), Result == EDataValidationResult::Invalid);
+    TestTrue(TEXT("失败诊断来自平台源身份检查"), Errors.ContainsByPredicate([](const FText& Text)
+    { return Text.ToString().Contains(TEXT("DuplicateLogicalId")); }));
     return true;
 }
 #endif

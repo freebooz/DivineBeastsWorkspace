@@ -7,6 +7,14 @@
 #include "GameFramework/PlayerController.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "API/GamePlatformApplicationFlowSubsystem.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Bootstrap/Nodes/DBAFoundationNode.h"
+#include "Definitions/GamePlatformFlowDefinition.h"
+#include "HAL/PlatformTime.h"
+#include "Interfaces/IGamePlatformDataService.h"
+#include "Modules/ModuleManager.h"
+#include "Types/GamePlatformVersion.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogDBAFoundation, Log, All);
 
@@ -25,6 +33,10 @@ void UDBAFoundationCoordinator::Initialize(UGameInstance& Owner)
         UE_LOG(LogDBAFoundation, Error, TEXT("%s"), *Diagnostics);
         return;
     }
+    bStopping = false;
+    bStartAttempted = false;
+    LastResult = {};
+    DiscoveryDeadlineSeconds = FPlatformTime::Seconds() + 60.0;
     Diagnostics = TEXT("基础工程开发验证：等待本实例世界就绪");
     // 低频实例级轮询等待可操作世界；切图不借用旧世界计时器，不假造固定延时成功。
     TickerHandle = FTSTicker::GetCoreTicker().AddTicker(
@@ -57,8 +69,28 @@ bool UDBAFoundationCoordinator::Tick(float)
         bHasLocalController = true;
         if (!Cast<ADBAFoundationHUD>(Controller->GetHUD())) { Controller->ClientSetHUD(ADBAFoundationHUD::StaticClass()); }
     }
-    Diagnostics = FString::Printf(TEXT("基础工程开发验证\n地图：%s\n运行：%s\n薄宿主：%s\nM0完整流程：尚未接入"),
-        *Map, *RunId, bHasLocalController ? TEXT("世界与本地观察者就绪") : TEXT("等待本地观察者"));
+    if (!bStartAttempted && !bStopping)
+    {
+        auto& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
+        if (bHasLocalController && !Registry.IsLoadingAssets()) { StartDevelopmentFlow(); }
+        else if (FPlatformTime::Seconds() >= DiscoveryDeadlineSeconds)
+        {
+            bStartAttempted = true;
+            LastResult = FGamePlatformResult::Failure(TEXT("DiscoveryTimeout"), TEXT("等待真实资产发现或本地观察者超时；不会回退到虚假测试结果"));
+        }
+    }
+    const auto Snapshot = FlowService.IsValid() ? FlowService->GetSnapshot() : FGamePlatformFlowSnapshot{};
+    int32 ProbeValue = 0;
+    const bool bProbeReady = ReadProbe(ProbeValue);
+    FGamePlatformId ProbeId;
+    FGamePlatformVersion Version;
+    const bool bCoreValid = FGamePlatformId::TryParse(TEXT("Foundation.Probe@1"), ProbeId) &&
+        FGamePlatformVersion::TryParse(TEXT("0.1.0"), Version);
+    Diagnostics = FString::Printf(TEXT("基础工程开发验证\n地图：%s\n进程验证：%s\n流程：%llu / 节点：%s / 代次：%llu / 状态：%d\n核心：%s / %s\n探针：%s / 值：%d / 租约：%s\n错误：%s %s"),
+        *Map, *RunId, Snapshot.Handle.RunId, *Snapshot.NodeId.ToString(), Snapshot.NodeGeneration, static_cast<int32>(Snapshot.State),
+        bCoreValid ? *ProbeId.ToString() : TEXT("身份解析失败"), *Version.ToString(),
+        bProbeReady ? TEXT("真实资产可读") : TEXT("未就绪"), ProbeValue, *ProbeLease.LeaseId.ToString(),
+        *LastResult.Code.ToString(), *LastResult.Message);
     if (bHasLocalController && ReportedWorld.Get() != World)
     {
         UE_LOG(LogDBAFoundation, Display, TEXT("FoundationHostReady RunId=%s Map=%s"), *RunId, *Map);
@@ -69,8 +101,144 @@ bool UDBAFoundationCoordinator::Tick(float)
 
 void UDBAFoundationCoordinator::Shutdown()
 {
+    bStopping = true;
+    CancelDevelopmentFlow();
+    if (auto* Flow = FlowService.Get())
+    {
+        Flow->OnFinished().Remove(FinishedHandle);
+        for (const auto& Handle : FactoryHandles) { FGamePlatformResult Result; Flow->UnregisterNodeFactory(Handle, Result); }
+    }
+    FactoryHandles.Reset();
+    FinishedHandle.Reset();
+    FlowService.Reset();
     if (TickerHandle.IsValid()) { FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle); TickerHandle.Reset(); }
     OwnerInstance.Reset();
     ReportedWorld.Reset();
     Diagnostics = TEXT("基础工程开发验证未启用或已关闭");
+}
+
+void UDBAFoundationCoordinator::StartDevelopmentFlow()
+{
+    bStartAttempted = true;
+    UGameInstance* Instance = OwnerInstance.Get();
+    LastResult = ValidateConfiguration();
+    if (!Instance || !LastResult.IsSuccess()) { return; }
+    auto* Flow = Instance->GetSubsystem<UGamePlatformApplicationFlowSubsystem>();
+    auto* Data = IGamePlatformDataService::Get(*Instance);
+    if (!Flow || !Data)
+    {
+        LastResult = FGamePlatformResult::Failure(TEXT("FoundationServicesMissing"), TEXT("真实流程或数据服务未初始化"));
+        return;
+    }
+    FlowService = Flow;
+    if (FactoryHandles.IsEmpty())
+    {
+        const TPair<const TCHAR*, EDBAFoundationOperation> Operations[] = {
+            {TEXT("Boot"), EDBAFoundationOperation::Boot},
+            {TEXT("ValidateConfiguration"), EDBAFoundationOperation::ValidateConfiguration},
+            {TEXT("LoadProbeDefinition"), EDBAFoundationOperation::LoadProbeDefinition},
+            {TEXT("EnterSandbox"), EDBAFoundationOperation::EnterSandbox},
+            {TEXT("Ready"), EDBAFoundationOperation::Ready}};
+        TWeakObjectPtr<UDBAFoundationCoordinator> WeakThis(this);
+        for (const auto& Pair : Operations)
+        {
+            const auto Operation = Pair.Value;
+            const auto Handle = Flow->RegisterNodeFactory(FName(Pair.Key),
+                [WeakThis, Operation](UGameInstance& Owner) -> UGamePlatformFlowNode*
+                {
+                    auto* Root = WeakThis.Get();
+                    if (!Root || Root->OwnerInstance.Get() != &Owner || Root->bStopping) { return nullptr; }
+                    auto* Node = NewObject<UDBAFoundationNode>(&Owner);
+                    Node->Configure(Operation, *Root);
+                    return Node;
+                }, LastResult);
+            if (!LastResult.IsSuccess())
+            {
+                for (const auto& Added : FactoryHandles) { FGamePlatformResult Ignored; Flow->UnregisterNodeFactory(Added, Ignored); }
+                FactoryHandles.Reset();
+                return;
+            }
+            FactoryHandles.Add(Handle);
+        }
+        FinishedHandle = Flow->OnFinished().AddUObject(this, &UDBAFoundationCoordinator::OnFlowFinished);
+    }
+    const uint64 Generation = ++RequestGeneration;
+    TWeakObjectPtr<UDBAFoundationCoordinator> WeakThis(this);
+    FGamePlatformId FlowId;
+    if (!FGamePlatformId::TryParse(TEXT("foundation.flow@1"), FlowId))
+    {
+        LastResult = FGamePlatformResult::Failure(TEXT("FlowIdentityInvalid"), TEXT("基础流程逻辑身份解析失败"));
+        return;
+    }
+    FlowLease = Data->AcquireDefinition(FPrimaryAssetId(UGamePlatformPrimaryDataAsset::DefinitionAssetType(), FName(*FlowId.ToString())),
+        UGamePlatformFlowDefinition::StaticClass(), {}, EGamePlatformDataLifetime::Instance, this,
+        [WeakThis, Generation](const FGamePlatformDataLease&, const FGamePlatformResult& Result)
+        {
+            auto* Self = WeakThis.Get();
+            if (!Self || Self->bStopping || Self->RequestGeneration != Generation) { return; }
+            Self->LastResult = Result;
+            if (!Result.IsSuccess()) { Self->ReleaseDataLeases(); return; }
+            auto* Service = Self->FlowService.Get();
+            if (!Service)
+            {
+                Self->LastResult = FGamePlatformResult::Failure(TEXT("FlowServiceExpired"), TEXT("定义加载期间流程服务已关闭"));
+                Self->ReleaseDataLeases();
+                return;
+            }
+            Self->ActiveFlow = Service->StartFlow(Self->FlowLease, Self, Self->LastResult);
+            if (!Self->ActiveFlow.IsValid()) { Self->ReleaseDataLeases(); }
+        }, LastResult);
+}
+
+void UDBAFoundationCoordinator::OnFlowFinished(const FGamePlatformFlowSnapshot& Snapshot)
+{
+    if (Snapshot.Handle.ScopeId != ActiveFlow.ScopeId || Snapshot.Handle.RunId != ActiveFlow.RunId) { return; }
+    if (Snapshot.State == EGamePlatformFlowState::Succeeded && IsFoundationReady())
+    {
+        LastResult = FGamePlatformResult::Success();
+        int32 Value = 0;
+        ReadProbe(Value);
+        UE_LOG(LogDBAFoundation, Display, TEXT("FoundationReady RunId=%s FlowRun=%llu ProbeValue=%d"), *RunId, Snapshot.Handle.RunId, Value);
+        // 保留ProbeLease供只读HUD使用，直到取消、重试或实例关闭；没有借用流程已释放的定义指针。
+    }
+    else
+    {
+        LastResult = Snapshot.State == EGamePlatformFlowState::Cancelled ? FGamePlatformResult::Cancelled(TEXT("开发流程已取消")) :
+            FGamePlatformResult::Failure(Snapshot.ErrorCode.IsNone() ? FName(TEXT("ReadinessBarrierFailed")) : Snapshot.ErrorCode,
+                Snapshot.ErrorMessage.IsEmpty() ? TEXT("流程终止时真实世界与数据屏障未通过") : Snapshot.ErrorMessage);
+        ReleaseDataLeases();
+        UE_LOG(LogDBAFoundation, Warning, TEXT("FoundationFailed RunId=%s Code=%s Message=%s"), *RunId, *LastResult.Code.ToString(), *LastResult.Message);
+    }
+}
+
+void UDBAFoundationCoordinator::ReleaseDataLeases()
+{
+    if (auto* Instance = OwnerInstance.Get())
+    {
+        if (auto* Data = IGamePlatformDataService::Get(*Instance))
+        {
+            if (FlowLease.IsValid()) { Data->ReleaseDefinition(FlowLease); }
+            if (ProbeLease.IsValid()) { Data->ReleaseDefinition(ProbeLease); }
+        }
+    }
+    FlowLease = {};
+    ProbeLease = {};
+}
+
+void UDBAFoundationCoordinator::CancelDevelopmentFlow()
+{
+    ++RequestGeneration;
+    bStartAttempted = true;
+    if (auto* Flow = FlowService.Get()) { Flow->Cancel(ActiveFlow); }
+    ActiveFlow = {};
+    ReleaseDataLeases();
+    LastResult = FGamePlatformResult::Cancelled(TEXT("开发流程已取消；重试须显式创建新运行"));
+}
+
+void UDBAFoundationCoordinator::RetryDevelopmentFlow()
+{
+    if (bStopping || !OwnerInstance.IsValid()) { return; }
+    CancelDevelopmentFlow();
+    DiscoveryDeadlineSeconds = FPlatformTime::Seconds() + 60.0;
+    bStartAttempted = false; // 下一次Tick等实际发现与世界就绪，不在取消回调栈内重入Start。
 }

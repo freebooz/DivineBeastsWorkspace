@@ -42,7 +42,8 @@ bool CallerBelongsTo(UObject* Caller, UGameInstance* Instance)
 }
 bool IsContextAlive(const FDefinitionRequest& Request)
 {
-    return Request.Caller.IsValid() && (Request.Lifetime == EGamePlatformDataLifetime::Instance || Request.World.IsValid());
+    return Request.Caller.IsValid() && (Request.Lifetime == EGamePlatformDataLifetime::Instance ||
+        (Request.World.IsValid() && !Request.World->bIsTearingDown));
 }
 }
 struct FGamePlatformDataScope
@@ -94,6 +95,10 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
 {
     check(IsInGameThread());
     FGamePlatformId LogicalId;
+    // 正常UE启动在实例初始化前创建管理器；测试/特殊宿主若早建实例，允许重试取得同一个引擎对象。
+    // 这里只查GetIfInitialized，绝不创建替代管理器或替换已配置的进程实例。
+    if (!Scope->bIsClosing && !Scope->Manager.IsValid())
+        Scope->Manager = Cast<UGamePlatformAssetManager>(UAssetManager::GetIfInitialized());
     OutResult = FGamePlatformResult::Success();
     if (Scope->bIsClosing || !Scope->Id.IsValid())
         OutResult = FGamePlatformResult::Failure(TEXT("ScopeClosed"), TEXT("数据作用域未初始化或正在关闭。"));
@@ -124,7 +129,7 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
     Request->Lease.ScopeId = Scope->Id;
     Request->Lease.LeaseId = FGuid::NewGuid();
     Request->Lease.Generation = ++Scope->NextGeneration;
-    Request->Lease.DefinitionId = DefinitionId;
+    Request->Lease.DefinitionId = FPrimaryAssetId(UGamePlatformPrimaryDataAsset::DefinitionAssetType(), FName(*LogicalId.ToString()));
     for (FName Bundle : Bundles) Request->Lease.Bundles.AddUnique(Bundle);
     Request->Lease.Bundles.Sort(FNameLexicalLess());
     Request->Lease.RequestState = EGamePlatformDataRequestState::Loading;
@@ -134,9 +139,9 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
     if (Lifetime == EGamePlatformDataLifetime::World) Request->World = WeakCaller->GetWorld();
     Request->Completion = MoveTemp(Completion);
     FDependencyFrame Root;
-    Root.Id = DefinitionId;
+    Root.Id = Request->Lease.DefinitionId;
     Request->Stack.Add(MoveTemp(Root));
-    Request->Visiting.Add(DefinitionId);
+    Request->Visiting.Add(Request->Lease.DefinitionId);
     // 租约必须在引擎可能同步完成前发布到作用域。
     Scope->Requests.Add(Request->Lease.LeaseId, Request);
     const FGamePlatformDataLease Lease = Request->Lease;
@@ -166,7 +171,16 @@ void UGamePlatformDataSubsystem::Advance(FGamePlatformDataLease Lease)
             const FGamePlatformResult Result = Manager->AddDemand(AssetId, Request->Key(), Lease.Bundles,
                 [WeakThis, Lease, AssetId](FGamePlatformResult LoadedResult)
                 { if (auto* Self = WeakThis.Get()) Self->AssetReady(Lease, AssetId, MoveTemp(LoadedResult)); });
-            if (!Result.IsSuccess()) { Request->bIsWaiting = false; Finish(Lease, Result); }
+            if (!Result.IsSuccess())
+            {
+                Request->bIsWaiting = false;
+                if (Result.Code == TEXT("AssetRegistryNotReady"))
+                {
+                    // 实例依赖初始化不等于磁盘扫描结束；等下一调度轮再验，不同步阻塞资产发现。
+                    GamePlatform::Data::NextTick([WeakThis, Lease]() { if (auto* Self = WeakThis.Get()) Self->Advance(Lease); });
+                }
+                else Finish(Lease, Result);
+            }
             else Request->DemandedAssets.Add(AssetId);
             return;
         }

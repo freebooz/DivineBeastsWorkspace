@@ -1,9 +1,12 @@
 #include "API/GamePlatformApplicationFlowSubsystem.h"
 
 #include "Engine/GameInstance.h"
+#include "Definitions/GamePlatformFlowDefinitionConversion.h"
 #include "Execution/ApplicationFlowExecutor.h"
+#include "GamePlatformCore.h"
 #include "HAL/PlatformTime.h"
 #include "Interfaces/GamePlatformFlowNode.h"
+#include "Interfaces/IGamePlatformDataService.h"
 #include "Templates/UnrealTemplate.h"
 #include "UObject/UObjectGlobals.h"
 
@@ -48,8 +51,9 @@ EGamePlatformFlowFinishReason ToPublicReason(FlowCore::EFinishReason Reason)
 class FGamePlatformFlowNodeAdapter final : public FlowCore::IFlowNode
 {
 public:
-    FGamePlatformFlowNodeAdapter(UGamePlatformApplicationFlowSubsystem* InOwner, UGamePlatformFlowNode* InNode)
-        : Owner(InOwner), Node(InNode) {}
+    FGamePlatformFlowNodeAdapter(UGamePlatformApplicationFlowSubsystem* InOwner, UGamePlatformFlowNode* InNode,
+        FPrimaryAssetId InInputDefinitionId = {})
+        : Owner(InOwner), Node(InNode), InputDefinitionId(InInputDefinitionId) {}
 
     virtual void Start(const FlowCore::FExecutionContext& Context, FlowCore::FCompletion Complete) override
     {
@@ -66,6 +70,8 @@ public:
         PublicContext.Attempt = Context.Attempt;
         PublicContext.GameInstance = Service->GetGameInstance();
         PublicContext.Payload = Service->ActivePayload;
+        PublicContext.NodeGeneration = Context.NodeGeneration;
+        PublicContext.InputDefinitionId = InputDefinitionId;
         NodeObject->Execute(PublicContext, [Complete = std::move(Complete)](FGamePlatformFlowNodeResult Result)
         {
             // 完成仅转换值并投递邮箱，绝不从工作线程解引用 Owner 或 Node。
@@ -83,6 +89,7 @@ public:
 private:
     TWeakObjectPtr<UGamePlatformApplicationFlowSubsystem> Owner;
     TWeakObjectPtr<UGamePlatformFlowNode> Node;
+    FPrimaryAssetId InputDefinitionId;
 };
 
 UGamePlatformApplicationFlowSubsystem::UGamePlatformApplicationFlowSubsystem() = default;
@@ -143,7 +150,13 @@ void UGamePlatformApplicationFlowSubsystem::CompleteDeinitialize()
         Executor.Reset();
     }
     ActivePayload = nullptr;
+    ReleaseAssetRun();
     OwnedNodes.Reset();
+    LegacyNodes.Reset();
+    PendingAssetNodes.Reset();
+    LegacyCoreDefinition.Reset();
+    NodeFactories.Reset();
+    PreviouslyCreatedNodes.Reset();
     FinishedEvent.Clear();
     Super::Deinitialize();
 }
@@ -183,12 +196,16 @@ bool UGamePlatformApplicationFlowSubsystem::Configure(const FGamePlatformFlowDef
         CoreDefinition.Steps.push_back(std::move(CoreStep));
     }
     std::string Error;
+    const auto SavedLegacyDefinition = CoreDefinition;
     if (!Executor->Configure(std::move(CoreDefinition), Error))
     {
         OutError = UTF8_TO_TCHAR(Error.c_str());
         return false;
     }
     OwnedNodes = MoveTemp(NewNodes);
+    LegacyNodes = OwnedNodes;
+    LegacyCoreDefinition = MakeUnique<FlowCore::FDefinition>(SavedLegacyDefinition);
+    bAssetConfiguration = false;
     return true;
 }
 
@@ -201,6 +218,17 @@ FGamePlatformFlowHandle UGamePlatformApplicationFlowSubsystem::Start(UObject* Pa
         return {};
     }
     std::string Error;
+    if (bAssetConfiguration)
+    {
+        if (!LegacyCoreDefinition)
+        {
+            OutError = TEXT("资产运行必须使用StartFlow和新的就绪租约；旧Start须先Configure");
+            return {};
+        }
+        if (!Executor->Configure(*LegacyCoreDefinition, Error)) { OutError = UTF8_TO_TCHAR(Error.c_str()); return {}; }
+        OwnedNodes = LegacyNodes;
+        bAssetConfiguration = false;
+    }
     const auto RunId = Executor->Start(FPlatformTime::Seconds(), Error);
     if (!RunId) { OutError = UTF8_TO_TCHAR(Error.c_str()); return {}; }
     ActivePayload = Payload;
@@ -239,6 +267,7 @@ FGamePlatformFlowSnapshot UGamePlatformApplicationFlowSubsystem::GetSnapshot() c
     Result.Handle.RunId = CoreSnapshot.RunId;
     Result.NodeId = FName(UTF8_TO_TCHAR(CoreSnapshot.NodeId.c_str()));
     Result.Attempt = CoreSnapshot.Attempt;
+    Result.NodeGeneration = CoreSnapshot.NodeGeneration;
     Result.ErrorCode = FName(UTF8_TO_TCHAR(CoreSnapshot.ErrorCode.c_str()));
     Result.ErrorMessage = UTF8_TO_TCHAR(CoreSnapshot.ErrorMessage.c_str());
     return Result;
@@ -249,7 +278,11 @@ bool UGamePlatformApplicationFlowSubsystem::TickFlow(float DeltaSeconds)
     if (bClosing || !Executor) return false;
     {
         TGuardValue<bool> DispatchGuard(bDispatching, true);
-        Executor->Tick(FPlatformTime::Seconds());
+        auto* DataService = ActiveDefinitionLease.IsValid() ? IGamePlatformDataService::Get(*GetGameInstance()) : nullptr;
+        if (ActiveDefinitionLease.IsValid() && (!DataService || !DataService->GetLoadedDefinition(ActiveDefinitionLease)))
+            Executor->FailRun(Executor->GetSnapshot().RunId, "FlowLeaseExpired", "活动流程的定义租约已失效");
+        else
+            Executor->Tick(FPlatformTime::Seconds());
     }
     if (bClosing) { CompleteDeinitialize(); return false; }
     if (!Executor->IsActive())
@@ -270,7 +303,197 @@ void UGamePlatformApplicationFlowSubsystem::PublishTerminal()
     ActivePayload = nullptr;
     {
         TGuardValue<bool> PublishGuard(bPublishing, true);
+        ReleaseAssetRun();
         FinishedEvent.Broadcast(Snapshot);
     }
     if (bClosing) CompleteDeinitialize();
+}
+
+FGamePlatformFlowFactoryHandle UGamePlatformApplicationFlowSubsystem::RegisterNodeFactory(
+    FName ExecutorId, FGamePlatformFlowNodeFactory Factory, FGamePlatformResult& OutResult)
+{
+    FString Error;
+    if (!CanControl(Error)) { OutResult = FGamePlatformResult::Failure(TEXT("FlowUnavailable"), Error); return {}; }
+    if (Executor->IsActive() || ExecutorId.IsNone() || !Factory || NodeFactories.Contains(ExecutorId))
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidFactoryRegistration"), TEXT("运行中、空键、空工厂或重复执行器键不能注册。"));
+        return {};
+    }
+    const FGuid RegistrationId = FGuid::NewGuid();
+    NodeFactories.Add(ExecutorId, FFactoryRegistration{RegistrationId, MoveTemp(Factory)});
+    OutResult = FGamePlatformResult::Success();
+    return {ScopeId, RegistrationId, ExecutorId};
+}
+
+bool UGamePlatformApplicationFlowSubsystem::UnregisterNodeFactory(
+    const FGamePlatformFlowFactoryHandle& Handle, FGamePlatformResult& OutResult)
+{
+    FString Error;
+    if (!CanControl(Error)) { OutResult = FGamePlatformResult::Failure(TEXT("FlowUnavailable"), Error); return false; }
+    const auto* Registration = NodeFactories.Find(Handle.ExecutorId);
+    if (Executor->IsActive() || !Handle.IsValid() || Handle.ScopeId != ScopeId || !Registration || Registration->RegistrationId != Handle.RegistrationId)
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidFactoryHandle"), TEXT("工厂撤销必须空闲且匹配当前作用域和注册代次。"));
+        return false;
+    }
+    NodeFactories.Remove(Handle.ExecutorId);
+    OutResult = FGamePlatformResult::Success();
+    return true;
+}
+
+FGamePlatformFlowHandle UGamePlatformApplicationFlowSubsystem::StartFlow(
+    FGamePlatformDataLease& InOutReadyLease, UObject* Payload, FGamePlatformResult& OutResult)
+{
+    FString Error;
+    if (!CanControl(Error)) { OutResult = FGamePlatformResult::Failure(TEXT("FlowUnavailable"), Error); return {}; }
+    if (Executor->IsActive()) { OutResult = FGamePlatformResult::Failure(TEXT("FlowBusy"), TEXT("已有活动主流程。")); return {}; }
+    if (Payload && (!IsValid(Payload) || Payload->GetTypedOuter<UGameInstance>() != GetGameInstance()))
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidFlowPayload"), TEXT("载荷必须属于本GameInstance。"));
+        return {};
+    }
+    auto* DataService = IGamePlatformDataService::Get(*GetGameInstance());
+    if (!DataService || !InOutReadyLease.IsValid() || DataService->GetLeaseState(InOutReadyLease) != EGamePlatformDataRequestState::Succeeded)
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("FlowLeaseNotReady"), TEXT("流程需要本实例数据服务成功且尚未释放的定义租约。"));
+        return {};
+    }
+    const auto* Definition = Cast<UGamePlatformFlowDefinition>(DataService->GetLoadedDefinition(InOutReadyLease));
+    if (!Definition) { OutResult = FGamePlatformResult::Failure(TEXT("InvalidFlowDefinitionType"), TEXT("租约未持有流程定义资产。")); return {}; }
+    {
+        TGuardValue<bool> DispatchGuard(bDispatching, true);
+        OutResult = Definition->ValidateDefinition();
+    }
+    if (bClosing) { CompleteDeinitialize(); OutResult = FGamePlatformResult::Failure(TEXT("FlowClosing"), TEXT("定义校验期间作用域关闭。")); return {}; }
+    if (!OutResult.IsSuccess()) return {};
+    if (DataService->GetLoadedDefinition(InOutReadyLease) != Definition)
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("FlowLeaseExpired"), TEXT("定义校验期间租约失效。")); return {};
+    }
+    auto CoreDefinition = FlowCore::ConvertAssetGraph(*Definition);
+    std::string GraphError;
+    if (Definition->MaxImmediateCycleTransitions < 1 || !FlowCore::FApplicationFlowExecutor::ValidateGraph(CoreDefinition, GraphError))
+    {
+        // 即使派生资产遗漏Super校验，任何工厂执行前仍须由真正的执行器独立检查完整图。
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidFlowGraph"), GraphError.empty()
+            ? FString(TEXT("即时循环预算必须为正数。")) : FString(UTF8_TO_TCHAR(GraphError.c_str())));
+        return {};
+    }
+    const TArray<FGamePlatformFlowNodeDefinition> AssetNodes = Definition->Nodes;
+    TArray<FGamePlatformFlowNodeFactory> Factories;
+    // 全图与全部执行器均验证后才调用任何工厂；不允许先启动部分节点再发现缺失能力。
+    for (const auto& AssetNode : AssetNodes)
+    {
+        const auto* Registration = NodeFactories.Find(AssetNode.ExecutorId);
+        if (!Registration)
+        {
+            OutResult = FGamePlatformResult::Failure(TEXT("MissingNodeFactory"), FString::Printf(TEXT("未注册节点执行器：%s"), *AssetNode.ExecutorId.ToString()));
+            return {};
+        }
+        Factories.Add(Registration->Factory);
+    }
+    for (auto It = PreviouslyCreatedNodes.CreateIterator(); It; ++It) if (!It->IsValid()) It.RemoveCurrent();
+    PendingAssetNodes.Reset();
+    for (int32 Index = 0; Index < AssetNodes.Num(); ++Index)
+    {
+        UGamePlatformFlowNode* Node = nullptr;
+        {
+            TGuardValue<bool> DispatchGuard(bDispatching, true);
+            Node = Factories[Index](*GetGameInstance());
+        }
+        if (bClosing)
+        {
+            CompleteDeinitialize();
+            OutResult = FGamePlatformResult::Failure(TEXT("FlowClosing"), TEXT("节点工厂执行期间作用域关闭。")); return {};
+        }
+        if (!IsValid(Node) || Node->HasAnyFlags(RF_ClassDefaultObject | RF_ArchetypeObject) ||
+            Node->GetTypedOuter<UGameInstance>() != GetGameInstance() || LegacyNodes.Contains(Node) ||
+            PreviouslyCreatedNodes.Contains(TWeakObjectPtr<UGamePlatformFlowNode>(Node)))
+        {
+            PendingAssetNodes.Reset();
+            OutResult = FGamePlatformResult::Failure(TEXT("InvalidFactoryNode"), TEXT("工厂必须为每次运行返回本GameInstance新建的独立节点，不能复用或返回类默认对象。")); return {};
+        }
+        PendingAssetNodes.Add(Node);
+        PreviouslyCreatedNodes.Add(Node);
+        CoreDefinition.Steps[Index].Node = std::make_shared<FGamePlatformFlowNodeAdapter>(this, Node, AssetNodes[Index].InputDefinitionId);
+    }
+    if (DataService->GetLoadedDefinition(InOutReadyLease) != Definition)
+    {
+        PendingAssetNodes.Reset();
+        OutResult = FGamePlatformResult::Failure(TEXT("FlowLeaseExpired"), TEXT("创建节点期间租约失效，启动未接纳。")); return {};
+    }
+    std::string CoreError;
+    const uint64 RunId = Executor->ConfigureAndStart(std::move(CoreDefinition), FPlatformTime::Seconds(), CoreError);
+    if (RunId == 0)
+    {
+        PendingAssetNodes.Reset();
+        OutResult = FGamePlatformResult::Failure(TEXT("FlowStartRejected"), UTF8_TO_TCHAR(CoreError.c_str())); return {};
+    }
+    // 此后才转移所有权；Start只登记，节点Execute要等下一次调度，不存在半接纳执行。
+    OwnedNodes = MoveTemp(PendingAssetNodes);
+    ActiveDefinitionLease = MoveTemp(InOutReadyLease);
+    InOutReadyLease = {};
+    ActivePayload = Payload;
+    bAssetConfiguration = true;
+    TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this,
+        &UGamePlatformApplicationFlowSubsystem::TickFlow));
+    OutResult = FGamePlatformResult::Success();
+    return {ScopeId, RunId};
+}
+
+bool UGamePlatformApplicationFlowSubsystem::CancelFlow(const FGamePlatformFlowNodeToken& Token, FGamePlatformResult& OutResult)
+{
+    FString Error;
+    if (!CanControl(Error)) { OutResult = FGamePlatformResult::Failure(TEXT("FlowUnavailable"), Error); return false; }
+    if (!Token.IsValid() || Token.Handle.ScopeId != ScopeId)
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidNodeToken"), TEXT("节点令牌无效或属于其他实例。")); return false;
+    }
+    bool bCancelled;
+    {
+        TGuardValue<bool> DispatchGuard(bDispatching, true);
+        bCancelled = Executor->CancelNode(Token.Handle.RunId, ToCoreName(Token.NodeId), Token.NodeGeneration);
+    }
+    OutResult = bCancelled ? FGamePlatformResult::Success() :
+        FGamePlatformResult::Failure(TEXT("StaleNodeToken"), TEXT("当前节点未开始、已结束或令牌代次过期。"));
+    if (bClosing) CompleteDeinitialize();
+    else if (bCancelled) { RemoveTicker(); PublishTerminal(); }
+    return bCancelled;
+}
+
+bool UGamePlatformApplicationFlowSubsystem::SubmitEvent(const FGamePlatformFlowNodeToken& Token,
+    FGamePlatformFlowNodeResult Event, FGamePlatformResult& OutResult)
+{
+    FString Error;
+    if (!CanControl(Error)) { OutResult = FGamePlatformResult::Failure(TEXT("FlowUnavailable"), Error); return false; }
+    if (!Token.IsValid() || Token.Handle.ScopeId != ScopeId)
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidNodeToken"), TEXT("节点事件令牌无效或属于其他实例。")); return false;
+    }
+    const bool bAccepted = Executor->SubmitEvent(Token.Handle.RunId, ToCoreName(Token.NodeId), Token.NodeGeneration,
+        {Event.bSucceeded, Event.bRetryable, ToCoreName(Event.Outcome),
+            Event.ErrorCode.IsNone() ? std::string{} : std::string(TCHAR_TO_UTF8(*Event.ErrorCode.ToString())),
+            std::string(TCHAR_TO_UTF8(*Event.ErrorMessage))});
+    OutResult = bAccepted ? FGamePlatformResult::Success() :
+        FGamePlatformResult::Failure(TEXT("StaleOrCompletedNode"), TEXT("节点代次过期、尚未开始，或该节点已接纳首次完成。"));
+    return bAccepted;
+}
+
+void UGamePlatformApplicationFlowSubsystem::ReleaseAssetRun()
+{
+    if (!ActiveDefinitionLease.IsValid()) return;
+    const FGamePlatformDataLease Lease = MoveTemp(ActiveDefinitionLease);
+    ActiveDefinitionLease = {};
+    if (auto* DataService = IGamePlatformDataService::Get(*GetGameInstance()))
+    {
+        const auto ReleaseResult = DataService->ReleaseDefinition(Lease);
+        if (!ReleaseResult.IsSuccess())
+            UE_LOG(LogGamePlatformCore, Error, TEXT("流程定义租约释放失败：%s %s"), *ReleaseResult.Code.ToString(), *ReleaseResult.Message);
+    }
+    else
+    {
+        // Data先关闭时由Data自己的作用域清理撤销全部租约，不尝试访问销毁后的服务。
+        UE_LOG(LogGamePlatformCore, Warning, TEXT("流程退出时数据服务不可用；租约由数据作用域关闭路径清理。"));
+    }
+    OwnedNodes.Reset();
 }

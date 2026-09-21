@@ -5,10 +5,11 @@
 .DESCRIPTION
 显式-BuildEditor/-BuildClient/-BuildServer、-CookClient/-CookServer、-RunEditor/-RunClient/-RunServer授权昂贵操作。
 运行还必须-FoundationStandalone。默认FullM0；HostOnly总结果最多Incomplete。
-NativeTests显式配置/编译/运行现有三个CMake套件；仅验证原生逻辑，不替代UE反射和适配层。
+NativeTests显式配置/编译/运行Host/Core/Data/Flow四个CMake套件；仅验证原生逻辑，不替代UE反射和适配层。
 客户端/服务端优先使用本轮Cook的Stage，或显式ClientStageDirectory/ServerStageDirectory。
-0=本脚本列出的所有检查通过，1=任一真实失败，2=缺少前置/未执行/仅HostOnly。
-外部工具退出码保存在每项结果，不冒充其他模块、图形、联机或全部M0验收通过。
+0=全部必需验收项通过，1=任一真实失败，2=缺少前置/验收未执行/仅HostOnly。
+尚无真实证据接入口的完整验收项固定NotExecuted，因此当前即使构建/Cook/运行全通过也返回2。
+外部工具退出码保存在每项结果；不使用旧日志或包头检查替代完整验收。
 #>
 param([string]$EngineRoot,
     [switch]$BuildEditor, [switch]$BuildClient, [switch]$BuildServer,
@@ -80,6 +81,7 @@ try {
     }
     foreach ($suite in @(
         @{ Name='Host'; Source='Tests/Foundation/Host' },
+        @{ Name='Core'; Source='Game/Plugins/GameFoundation/Core/GamePlatformCore/Tests' },
         @{ Name='Data'; Source='Game/Plugins/GameFoundation/Core/GamePlatformData/Tests' },
         @{ Name='Flow'; Source='Game/Plugins/GameFoundation/Application/GamePlatformApplicationFlow/Tests' }
     )) {
@@ -149,11 +151,23 @@ try {
             Invoke-Check "Run$target" (Join-Path $PSScriptRoot '../Game/RunFoundation.ps1') $arguments "Run-$target"
         } else { Add-Check "Run$target" NotExecuted 2 '未指定显式Run开关' }
     }
+    # 完整验收必须逐项有本次运行的执行器及结构化证据校验，不能仅凭旧日志字符串或文件存在通过。
+    # 当前未实现这些接入口，保持明确未执行；后续需实现并验证对应接入口才能替换各项状态。
+    foreach ($acceptance in @(
+        @{ Name='UEAutomation'; Reason='未接入本次UE自动化执行、测试计数及失败结果校验' },
+        @{ Name='AssetGeneration'; Reason='未接入真实引擎资产创建与加载核验；Asset包头项仅为前置检查' },
+        @{ Name='AssetRegenerationProtection'; Reason='未接入资产创建重跑及已有资产保护行为验证' },
+        @{ Name='AssetNegativeValidation'; Reason='未接入缺失、冲突等资产负例的真实引擎验证' },
+        @{ Name='MultiPIE'; Reason='未接入多PIE实例隔离与生命周期验证' },
+        @{ Name='GraphicalValidation'; Reason='未接入真实图形与交互验证；Ready日志和NullRHI不构成此证据' },
+        @{ Name='CancellationRecovery'; Reason='未接入流程取消、恢复及清理的UE集成验证' },
+        @{ Name='ReleaseContentStripping'; Reason='未接入正式发行Cook/Stage及产物剥离审计；开发Cook不能替代' }
+    )) { Add-Check $acceptance.Name NotExecuted 2 $acceptance.Reason }
     if ($Phase -eq 'HostOnly') { Add-Check FullM0 NotExecuted 2 'HostOnly不能证明完整M0就绪' }
     $code = if (@($matrix | Where-Object Status -eq 'Failed').Count) { 1 } elseif (@($matrix | Where-Object Status -ne 'Passed').Count) { 2 } else { 0 }
     $status = if ($code -eq 0) { 'Passed' } elseif ($code -eq 1) { 'Failed' } else { 'Incomplete' }
     $matrix | Format-Table -AutoSize | Out-Host
-    Write-FoundationResult $context $code '矩阵仅覆盖列出的构建/Cook/本地运行；不代替完整产品验收。' @{ Matrix=@($matrix); Phase=$Phase } $status
+    Write-FoundationResult $context $code '包含完整必需验收项；无本次真实证据接入口的项目保持未执行，不能汇总全部通过。' @{ Matrix=@($matrix); Phase=$Phase } $status
     exit $code
 } catch {
     if ($context) { Write-FoundationResult $context 1 $_.Exception.Message @{ Matrix=@($matrix) } Failed } else { Write-Host $_ }
