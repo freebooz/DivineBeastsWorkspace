@@ -21,4 +21,18 @@ inline bool AcceptsWorldReady(bool bSameInstance, bool bBegunPlay,
     return bSameInstance && bBegunPlay && !ExpectedPackage.empty() &&
         ActualPackage == ExpectedPackage && !ExpectedOperation.empty() && ActualOperation == ExpectedOperation;
 }
+
+/** 单调秒截止；即使世界尚未创建也检查，已启动的流程由自身节点截止时间管理。 */
+inline bool StartupDeadlineExceeded(bool bStartAttempted, bool bStopping, double NowSeconds, double DeadlineSeconds)
+{
+    return !bStartAttempted && !bStopping && NowSeconds >= DeadlineSeconds;
+}
+
+/** 只有失败/取消时、目标及不可复用操作身份完全匹配，才可撤销尚未消费的项目切图请求。 */
+inline bool OwnsPendingTravel(bool bAborting, std::string_view ActualPackage, std::string_view ExpectedPackage,
+    std::string_view ActualOperation, std::string_view ExpectedOperation)
+{
+    return bAborting && !ExpectedPackage.empty() && ActualPackage == ExpectedPackage &&
+        !ExpectedOperation.empty() && ActualOperation == ExpectedOperation;
+}
 }

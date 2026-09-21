@@ -2,12 +2,27 @@ syntax = "proto3";
 
 package divinebeasts.backend.playerdata.v1;
 
-option go_package = "divinebeasts/backend/generated/proto/internal/playerdata/v1;playerdatav1";
+option go_package = "divinebeasts/backend/internal/generated/playerdata/v1;playerdatav1";
 
 // PlayerDataService（玩家数据内部服务）供Gateway读取玩家长期资料。
 service PlayerDataService {
   rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+  // 已认证主体由可信网关提供；原子幂等写，不新增任意字段更新接口。
+  rpc UpdateProfile(UpdateProfileRequest) returns (GetProfileResponse);
+  rpc EnsureProfile(EnsureProfileRequest) returns (EnsureProfileResponse);
+  rpc Probe(ProbeRequest) returns (ProbeResponse);
 }
+
+message UpdateProfileRequest {
+  string player_id = 1;
+  string display_name = 2;
+  optional int64 expected_revision = 3; // 缺省不可冒充修订0。
+  string idempotency_key = 4;
+}
+message EnsureProfileRequest { string player_id = 1; string game_id = 2; }
+message EnsureProfileResponse { string error_code = 1; }
+message ProbeRequest {}
+message ProbeResponse { bool ready = 1; string error_code = 2; }
 
 message GetProfileRequest {
   string player_id = 1;

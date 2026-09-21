@@ -1,0 +1,19 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0-incomplete",
+  "FriendlyName": "Game Platform Session",
+  "Description": "客户端会话状态内核；Online前置缺失，真实连接服务尚未接入。",
+  "Category": "GameFoundation",
+  "EngineVersion": "5.8.0",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Modules": [
+    {
+      "Name": "GamePlatformSession",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": ["Client", "Editor"]
+    }
+  ]
+}

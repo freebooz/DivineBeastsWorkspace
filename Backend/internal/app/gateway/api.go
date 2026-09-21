@@ -19,10 +19,12 @@ var ErrUnauthorized = errors.New("AUTH_SESSION_INVALID: 玩家会话无效")
 // Config（Gateway接口配置）保存跨请求共享的协议版本信息。
 type Config struct {
 	ContractVersion string // ContractVersion（Shared Contract共享契约版本）。
+	AuthRequestsPerMinute int // 登录/刷新每源IP每分钟上限；零使用30，不信任客户端转发头。
 }
 
 // LoginRequest（登录请求）与Shared OpenAPI中的客户端登录字段保持一致。
 type LoginRequest struct {
+	AccountName string `json:"accountName,omitempty"` // 密码提供方账号名；原credential字段继续承载密码。
 	GameID        string `json:"gameId"`        // GameID（游戏ID）。
 	Provider      string `json:"provider"`      // Provider（登录提供方，如guest/platform）。
 	Credential    string `json:"credential"`    // Credential（登录凭据）。
@@ -32,6 +34,7 @@ type LoginRequest struct {
 
 // LoginResponse（登录响应）返回后续业务请求所需的玩家与Token上下文。
 type LoginResponse struct {
+	RefreshExpiresAt string `json:"refreshExpiresAt"` // 刷新凭据绝对到期，UTC RFC3339。
 	PlayerID     string `json:"playerId"`     // PlayerID（玩家ID）。
 	AccessToken  string `json:"accessToken"`  // AccessToken（短期访问令牌）。
 	RefreshToken string `json:"refreshToken"` // RefreshToken（刷新令牌）。
@@ -115,14 +118,20 @@ type api struct {
 	party       PartyPort
 	matchmaking MatchmakingPort
 	mux         *http.ServeMux
+	authLimiter *authRateLimiter
 }
 
 // NewAPI（创建Gateway HTTP API）构建REST路由和统一请求追踪中间件。
 func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, party PartyPort, matchmaking MatchmakingPort) http.Handler {
-	if identity == nil || playerData == nil || party == nil || matchmaking == nil {
+	if identity == nil || playerData == nil {
 		panic("Gateway下游端口不能为空")
 	}
 	handler := &api{config: config, identity: identity, playerData: playerData, party: party, matchmaking: matchmaking, mux: http.NewServeMux()}
+	handler.authLimiter = newAuthRateLimiter(config.AuthRequestsPerMinute)
+	handler.mux.HandleFunc("GET /v1/online/probe", handler.probeOnline)
+	handler.mux.HandleFunc("POST /v1/auth/refresh", handler.refreshOnline)
+	handler.mux.HandleFunc("POST /v1/auth/logout", handler.logoutOnline)
+	handler.mux.HandleFunc("PATCH /v1/player/profile", handler.requireAuth(handler.updateProfile))
 	handler.mux.HandleFunc("POST /v1/auth/login", handler.login)
 	handler.mux.HandleFunc("GET /v1/player/profile", handler.requireAuth(handler.getProfile))
 	handler.mux.HandleFunc("POST /v1/party", handler.requireAuth(handler.createParty))
@@ -162,37 +171,52 @@ func (a *api) requireAuth(next func(http.ResponseWriter, *http.Request, Authenti
 		}
 		session, err := a.identity.Authenticate(r.Context(), strings.TrimSpace(strings.TrimPrefix(header, prefix)))
 		if err != nil {
-			writeAPIError(w, http.StatusUnauthorized, "AUTH_SESSION_INVALID", "玩家会话无效")
+			writeOnlineError(w, err)
 			return
 		}
+		if session.PlayerID == "" || session.SessionID == "" { writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE")); return }
 		next(w, r, session)
 	}
 }
 
 func (a *api) login(w http.ResponseWriter, r *http.Request) {
+	if !a.allowAuthentication(w,r) { return }
 	var req LoginRequest
-	if err := decodeJSON(r, &req); err != nil {
-		writeAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "登录请求JSON无效")
+	if err := DecodeOnlineJSON(r, &req, []string{"gameId","provider","credential","clientVersion","accountName","deviceId"}, []string{"gameId","provider","credential","clientVersion"}); err != nil {
+		writeOnlineError(w, err)
 		return
 	}
+	if strings.TrimSpace(req.GameID)=="" || strings.TrimSpace(req.ClientVersion)=="" || req.Credential=="" || (req.Provider!="password" && req.Provider!="guest") || (req.Provider=="password" && strings.TrimSpace(req.AccountName)=="") { writeOnlineError(w,ServiceError("INVALID_REQUEST"));return }
 	response, err := a.identity.Login(r.Context(), req)
 	if err != nil {
-		writeAPIError(w, http.StatusUnauthorized, "AUTH_INVALID_CREDENTIALS", err.Error())
+		writeOnlineError(w, err)
 		return
 	}
+	if req.Provider=="password" {
+		initializer,ok:=a.playerData.(ProfileInitializer)
+		if !ok { writeOnlineError(w,ServiceError("SERVICE_UNAVAILABLE"));return }
+		if err:=initializer.EnsureProfile(r.Context(),response.PlayerID,req.GameID);err!=nil {
+			// 建档属于PlayerData用例；失败不返回令牌，并尽力撤销刚创建的身份会话。
+			if lifecycle,ok:=a.identity.(AuthenticationLifecycle);ok { _=lifecycle.Logout(r.Context(),response.RefreshToken) }
+			writeOnlineError(w,ServiceError("SERVICE_UNAVAILABLE"));return
+		}
+	}
+	w.Header().Set("Cache-Control","no-store")
 	writeJSON(w, http.StatusOK, response)
 }
 
 func (a *api) getProfile(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
+	if r.URL.RawQuery!="" {writeOnlineError(w,ServiceError("INVALID_REQUEST"));return}
 	profile, err := a.playerData.GetProfile(r.Context(), session.PlayerID)
 	if err != nil {
-		writeAPIError(w, http.StatusNotFound, "PLAYER_PROFILE_NOT_FOUND", err.Error())
+		writeOnlineError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, profile)
+	writeProfile(w,profile)
 }
 
 func (a *api) createParty(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
+	if a.party==nil {writeOnlineError(w,ServiceError("SERVICE_UNAVAILABLE"));return}
 	snapshot, err := a.party.CreateParty(r.Context(), session.PlayerID)
 	if err != nil {
 		writeAPIError(w, http.StatusConflict, "PARTY_CREATE_FAILED", err.Error())
@@ -202,6 +226,7 @@ func (a *api) createParty(w http.ResponseWriter, r *http.Request, session Authen
 }
 
 func (a *api) createMatchmakingTicket(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
+	if a.matchmaking==nil {writeOnlineError(w,ServiceError("SERVICE_UNAVAILABLE"));return}
 	var req CreateMatchmakingTicketRequest
 	if err := decodeJSON(r, &req); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "匹配请求JSON无效")

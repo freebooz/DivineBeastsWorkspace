@@ -11,6 +11,7 @@ param([string]$EngineRoot, [switch]$Execute,
     [ValidateRange(1,86400)][int]$TimeoutSeconds = 600, [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot '../Game/FoundationTools.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'FoundationAutomationReport.psm1') -Force
 $context = $null; $code = 2; $message = ''; $details = @{ Suites=@() }; $failedExternal = $false
 try {
     $context = New-FoundationContext UnrealTests $RunId
@@ -27,7 +28,22 @@ try {
         }
     }
     $code = 0
-    foreach ($suite in @(@{Name='Core';Minimum=3},@{Name='Data';Minimum=1},@{Name='ApplicationFlow';Minimum=28})) {
+    $required = @{
+        Core = @('Identity','Version','Result')
+        Data = @('Definition.IdentityAndVersion','Runtime.RealAssetLeases','Runtime.RecursiveFailureRollback','Runtime.DeferredRequeueZeroDelta',
+            'Runtime.NestedTickerNotification','Editor.SourceDuplicate','Editor.DependencyGraph',
+            'Editor.DependencyDepthLimit','Editor.RegisteredValidatorDispatch')
+        ApplicationFlow = @('Asset.Validation','Asset.FactoryScope','Asset.EventToken','Asset.RealLeaseLifecycle',
+            'Adapter.ScopeAndCancellation','Adapter.Shutdown','Adapter.ReentrantShutdown.Execute',
+            'Adapter.ReentrantShutdown.FinishSuccess','Adapter.ReentrantShutdown.FinishCancel',
+            'Adapter.ReentrantShutdown.FinishShutdown','Adapter.ReentrantShutdown.TerminalEvent')
+    }
+    # 复杂算法测试名称直接绑定当前生产测试清单，不能旧二进制只跑旧21项也算新扩展已验收。
+    $caseSource = Join-Path $context.Workspace 'Game/Plugins/GameFoundation/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Tests/ApplicationFlowExecutorCases.h'
+    $matches = [regex]::Matches((Get-Content -LiteralPath $caseSource -Raw),'(?m)^\s*\{"([A-Za-z0-9_]+)",\s*\[\]\(FChecks& C\)')
+    if ($matches.Count -lt 21) { throw '无法完整读取当前流程生产用例清单，拒绝降级为数量下限门禁' }
+    $required.ApplicationFlow += @($matches | ForEach-Object { 'Core.' + $_.Groups[1].Value })
+    foreach ($suite in @(@{Name='Core'},@{Name='Data'},@{Name='ApplicationFlow'})) {
         $directory = Join-Path $context.Directory $suite.Name
         $null = New-Item -ItemType Directory -Path $directory
         $report = Join-Path $directory 'Automation'
@@ -43,10 +59,10 @@ try {
         $index = Join-Path $report 'index.json'
         if (-not (Test-Path -LiteralPath $index -PathType Leaf)) { throw "缺少本次Automation导出：$index" }
         $parsed = Get-Content -LiteralPath $index -Raw | ConvertFrom-Json
-        $cases = @($parsed.tests | Where-Object { $_.fullTestPath -like "GamePlatform.$($suite.Name).*" })
-        if ($cases.Count -lt $suite.Minimum -or @($cases | Where-Object state -ne 'Success').Count) {
-            throw "测试组$($suite.Name)缺项或失败；实际$($cases.Count)项，不能以进程退出0替代测试结果。"
-        }
+        $prefix = "GamePlatform.$($suite.Name)."
+        $requiredPaths = @($required[$suite.Name] | ForEach-Object { $prefix + $_ })
+        $count = Assert-FoundationAutomationReport -Cases @($parsed.tests) -RequiredPaths $requiredPaths -Prefix $prefix
+        $details.Suites[-1].ValidatedTests = $count
     }
     $message = '只接受当前独占证据目录内的实际测试报告；NullRHI不证明三维可见性。'
 } catch [IO.FileNotFoundException] { $code=2; $message=$_.Exception.Message }

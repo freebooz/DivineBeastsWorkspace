@@ -8,9 +8,9 @@ import (
 	"errors"
 	"time"
 
-	identityv1 "divinebeasts/backend/generated/proto/internal/identity/v1"
-	matchv1 "divinebeasts/backend/generated/proto/internal/match/v1"
-	playerdatav1 "divinebeasts/backend/generated/proto/internal/playerdata/v1"
+	identityv1 "divinebeasts/backend/internal/generated/identity/v1"
+	matchv1 "divinebeasts/backend/internal/generated/match/v1"
+	playerdatav1 "divinebeasts/backend/internal/generated/playerdata/v1"
 	"divinebeasts/backend/internal/app/gateway"
 	"google.golang.org/grpc"
 )
@@ -27,24 +27,26 @@ func NewIdentityClient(conn grpc.ClientConnInterface) *IdentityClient {
 
 // Login（登录）调用IdentityService并把Protobuf响应转换为Gateway DTO。
 func (c *IdentityClient) Login(ctx context.Context, req gateway.LoginRequest) (gateway.LoginResponse, error) {
-	response, err := c.client.Login(ctx, &identityv1.LoginRequest{GameId: req.GameID, Provider: req.Provider, Credential: req.Credential, ClientVersion: req.ClientVersion, DeviceId: req.DeviceID})
+	ctx,cancel:=context.WithTimeout(ctx,5*time.Second);defer cancel()
+	response, err := c.client.Login(ctx, &identityv1.LoginRequest{GameId: req.GameID, Provider: req.Provider, Credential: req.Credential, ClientVersion: req.ClientVersion, DeviceId: req.DeviceID,AccountName:req.AccountName})
 	if err != nil {
 		return gateway.LoginResponse{}, err
 	}
 	if response.GetErrorCode() != "" {
-		return gateway.LoginResponse{}, errors.New(response.GetErrorCode())
+		return gateway.LoginResponse{}, gateway.ServiceError(response.GetErrorCode())
 	}
-	return gateway.LoginResponse{PlayerID: response.GetPlayerId(), SessionID: response.GetSessionId(), AccessToken: response.GetAccessToken(), RefreshToken: response.GetRefreshToken(), ExpiresAt: time.UnixMilli(response.GetExpiresAtUnixMs()).UTC().Format(time.RFC3339Nano)}, nil
+	return loginResponse(response)
 }
 
 // Authenticate（认证Access Token）调用IdentityService解析可信玩家上下文。
 func (c *IdentityClient) Authenticate(ctx context.Context, token string) (gateway.AuthenticatedSession, error) {
+	ctx,cancel:=context.WithTimeout(ctx,5*time.Second);defer cancel()
 	response, err := c.client.Authenticate(ctx, &identityv1.AuthenticateRequest{AccessToken: token})
 	if err != nil {
 		return gateway.AuthenticatedSession{}, err
 	}
 	if !response.GetValid() {
-		return gateway.AuthenticatedSession{}, gateway.ErrUnauthorized
+		return gateway.AuthenticatedSession{}, gateway.ServiceError(response.GetErrorCode())
 	}
 	return gateway.AuthenticatedSession{PlayerID: response.GetPlayerId(), SessionID: response.GetSessionId()}, nil
 }
@@ -61,12 +63,13 @@ func NewPlayerDataClient(conn grpc.ClientConnInterface) *PlayerDataClient {
 
 // GetProfile（获取玩家资料）调用PlayerDataService并转换为Gateway DTO。
 func (c *PlayerDataClient) GetProfile(ctx context.Context, playerID string) (gateway.PlayerProfile, error) {
+	ctx,cancel:=context.WithTimeout(ctx,5*time.Second);defer cancel()
 	response, err := c.client.GetProfile(ctx, &playerdatav1.GetProfileRequest{PlayerId: playerID})
 	if err != nil {
 		return gateway.PlayerProfile{}, err
 	}
 	if !response.GetFound() {
-		return gateway.PlayerProfile{}, errors.New(response.GetErrorCode())
+		return gateway.PlayerProfile{}, gateway.ServiceError(response.GetErrorCode())
 	}
 	return gateway.PlayerProfile{PlayerID: response.GetPlayerId(), GameID: response.GetGameId(), DisplayName: response.GetDisplayName(), DataVersion: int(response.GetDataVersion()), Revision: response.GetRevision(), TutorialCompleted: response.GetTutorialCompleted(), DefaultWorldID: response.GetDefaultWorldId(), OwnedCharacterIDs: append([]string(nil), response.GetOwnedCharacterIds()...)}, nil
 }

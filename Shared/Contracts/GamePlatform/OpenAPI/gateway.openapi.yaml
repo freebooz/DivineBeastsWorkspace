@@ -14,6 +14,58 @@ tags:
   - name: 客户端业务
     description: 仅供游戏客户端经 GatewayService 调用的业务接口。
 paths:
+  /v1/online/probe:
+    get:
+      operationId: probeGatewayOnline
+      summary: 探测身份和资料真实持久依赖，不依赖Match或宿主health
+      responses:
+        '200':
+          description: 两个领域仓储均就绪。
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ready, contractVersion, service]
+                properties:
+                  ready: {type: boolean, const: true}
+                  contractVersion: {type: string, const: 1.0.0}
+                  service: {type: string, const: gatewayservice}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/auth/refresh:
+    post:
+      operationId: refreshGatewayAuthentication
+      summary: 原子刷新认证，不盲重试，绝对会话期限不延期
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RefreshRequest'}
+      responses:
+        '200':
+          description: 轮换成功；旧刷新凭据不可重用，响应禁止缓存。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LoginResponse'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '413': {$ref: '#/components/responses/TooLarge'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/auth/logout:
+    post:
+      operationId: logoutGatewayAuthentication
+      summary: 当前或已消费刷新凭据授权同会话幂等撤销
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RefreshRequest'}
+      responses:
+        '204': {description: 服务端已撤销，无正文。}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '413': {$ref: '#/components/responses/TooLarge'}
+        '503': {$ref: '#/components/responses/Unavailable'}
   /health/live:
     get:
       tags: [运维]
@@ -58,7 +110,7 @@ paths:
       operationId: gatewayLogin
       summary: 玩家登录
       description: |
-        Gateway 将登录请求转交 IdentityService。当前运行实现仅支持 provider 为 guest；成功后返回访问令牌、刷新令牌和会话身份。
+        Gateway 将登录请求转交 IdentityService。生产采用 password，accountName为账号名，原credential为密码；guest仅用于旧开发装配，生产拒绝且不降级。
         生产凭据校验、令牌轮换和撤销策略必须由生产 IdentityService 装配实现，不能以本地内存装配替代。
       requestBody:
         required: true
@@ -73,6 +125,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
+        '413': {$ref: '#/components/responses/TooLarge'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '503': {$ref: '#/components/responses/Unavailable'}
         '400':
           description: JSON 格式错误或包含未知字段。
           content:
@@ -86,6 +141,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/GatewayApiError'
   /v1/player/profile:
+    patch:
+      operationId: updateGatewayPlayerProfile
+      summary: 修改本人显示名；主体仅从Bearer获取，拒绝查询参数及非白名单字段
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 主体+操作+规范内容绑定；同键同体重放先于修订检查。
+          schema: {type: string, minLength: 1, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [displayName, expectedRevision]
+              properties:
+                displayName: {type: string, minLength: 1, maxLength: 24, description: trim后1至24个Unicode字符。}
+                expectedRevision: {type: integer, format: int64, minimum: 0}
+      responses:
+        '200':
+          description: 完整资料；同键同内容返回首次持久提交的结果。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlayerProfile'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {description: 资料不存在。}
+        '409': {description: 修订或幂等内容冲突。}
+        '413': {$ref: '#/components/responses/TooLarge'}
+        '503': {$ref: '#/components/responses/Unavailable'}
     get:
       tags: [客户端业务]
       operationId: getGatewayPlayerProfile
@@ -94,6 +183,9 @@ paths:
       security:
         - bearerAuth: []
       responses:
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '503': {$ref: '#/components/responses/Unavailable'}
         '200':
           description: 当前已认证玩家的长期资料。
           content:
@@ -180,12 +272,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/GatewayApiError'
 components:
+  responses:
+    InvalidRequest:
+      description: 非法JSON、重复/未知字段、缺必填或越权输入。
+      content: {application/json: {schema: {$ref: '#/components/schemas/GatewayApiError'}}}
+    Unauthorized:
+      description: 凭据无效、过期、撤销或刷新重放。
+      content: {application/json: {schema: {$ref: '#/components/schemas/GatewayApiError'}}}
+    Forbidden:
+      description: 无权限；不应刷新重试。
+      content: {application/json: {schema: {$ref: '#/components/schemas/GatewayApiError'}}}
+    TooLarge:
+      description: 请求正文超过65536字节。
+      content: {application/json: {schema: {$ref: '#/components/schemas/GatewayApiError'}}}
+    RateLimited:
+      description: 登录与刷新共享每源IP限额，默认每分钟30次；不信任转发头。
+      headers:
+        Retry-After: {schema: {type: integer}, description: 等待秒数。}
+      content: {application/json: {schema: {$ref: '#/components/schemas/GatewayApiError'}}}
+    Unavailable:
+      description: 下游或持久存储不可用；不泄漏地址、SQL和凭据，不冒充401。
+      content: {application/json: {schema: {$ref: '#/components/schemas/GatewayApiError'}}}
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: AccessToken
   schemas:
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties:
+        refreshToken: {type: string, minLength: 1, description: 仅通过正文传输，不放URL或日志。}
     LivenessResponse:
       type: object
       additionalProperties: false
@@ -232,8 +351,12 @@ components:
           description: 游戏逻辑标识，例如 divine-beasts。
         provider:
           type: string
-          enum: [guest]
-          description: 登录提供方；当前运行实现只接受 guest。
+          enum: [guest, password]
+          description: 生产仅password；guest仅旧开发装配兼容。
+        accountName:
+          type: string
+          minLength: 1
+          description: password提供方必填；新增字段不替换原credential。
         credential:
           type: string
           minLength: 1
@@ -248,8 +371,12 @@ components:
     LoginResponse:
       type: object
       additionalProperties: false
-      required: [playerId, accessToken, refreshToken, expiresAt, sessionId]
+      required: [playerId, accessToken, refreshToken, expiresAt, sessionId, refreshExpiresAt]
       properties:
+        refreshExpiresAt:
+          type: string
+          format: date-time
+          description: 刷新凭据绝对到期UTC时间，轮换不延长会话期限。
         playerId:
           type: string
           description: 已认证玩家标识。
@@ -286,6 +413,7 @@ components:
           description: 玩家资料结构版本。
         revision:
           type: integer
+          format: int64
           minimum: 0
           description: 长期资料的乐观并发修订号。
         tutorialCompleted:

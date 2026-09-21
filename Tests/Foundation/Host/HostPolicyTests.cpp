@@ -18,6 +18,15 @@ int main()
     Check(!AcceptsWorldReady(true, true, "bootstrap", "sandbox", "op-a", "op-a"), "WrongMapRejected");
     Check(!AcceptsWorldReady(true, true, "sandbox", "sandbox", "op-old", "op-a"), "OldOperationRejected");
     Check(!AcceptsWorldReady(true, true, "sandbox", "sandbox", "", ""), "MissingOperationRejected");
-    std::cout << "Cases=11 Failed=" << Failed << '\n';
+    // 世界尚不存在也必须到期；修复若把截止检查放回世界就绪后，本策略不得放行。
+    Check(StartupDeadlineExceeded(false, false, 61.0, 60.0), "MissingWorldStillTimesOut");
+    Check(!StartupDeadlineExceeded(true, false, 61.0, 60.0), "StartedFlowUsesOwnDeadline");
+    Check(!StartupDeadlineExceeded(false, true, 61.0, 60.0), "StoppedFlowDoesNotRestart");
+    Check(!StartupDeadlineExceeded(false, false, 59.0, 60.0), "NotDueYet");
+    Check(OwnsPendingTravel(true, "sandbox", "sandbox", "op-a", "op-a"), "OwnPendingTravelCanCancel");
+    Check(!OwnsPendingTravel(true, "sandbox", "sandbox", "op-b", "op-a"), "OtherPendingTravelUntouched");
+    Check(!OwnsPendingTravel(false, "sandbox", "sandbox", "op-a", "op-a"), "SuccessfulTravelNotCancelled");
+    Check(!OwnsPendingTravel(true, "elsewhere", "sandbox", "op-a", "op-a"), "OtherDestinationUntouched");
+    std::cout << "Cases=19 Failed=" << Failed << '\n';
     return Failed ? 1 : 0;
 }

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -34,7 +32,7 @@ func newInternalClient(cfg ClientConfig) internalClient {
 	if timeout <= 0 {
 		timeout = 5 * time.Second
 	}
-	return internalClient{baseURL: strings.TrimRight(cfg.BaseURL, "/"), client: &http.Client{Timeout: timeout}}
+	return internalClient{baseURL: strings.TrimRight(cfg.BaseURL, "/"), client: &http.Client{Timeout: timeout,CheckRedirect:func(*http.Request,[]*http.Request)error{return http.ErrUseLastResponse}}}
 }
 
 func (c internalClient) post(ctx context.Context, path string, request, response any) error {
@@ -64,20 +62,18 @@ func (c internalClient) do(req *http.Request, response any) error {
 		return err
 	}
 	defer resp.Body.Close()
-	payload, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
+	payload, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes+1))
 	if err != nil {
 		return err
 	}
+	if len(payload)>maxBodyBytes {return gateway.ServiceError("SERVICE_UNAVAILABLE")}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		var problem struct {
 			ErrorCode string `json:"errorCode"`
 			Message   string `json:"message"`
 		}
 		_ = json.Unmarshal(payload, &problem)
-		if problem.ErrorCode == "" {
-			problem.ErrorCode = fmt.Sprintf("HTTP_%d", resp.StatusCode)
-		}
-		return fmt.Errorf("%s: %s", problem.ErrorCode, problem.Message)
+		status,code:=gateway.OnlineErrorStatus(gateway.ServiceError(problem.ErrorCode));if status!=resp.StatusCode {return gateway.ServiceError("SERVICE_UNAVAILABLE")};return gateway.ServiceError(code)
 	}
 	if response == nil {
 		return nil
@@ -94,17 +90,18 @@ func NewIdentityClient(cfg ClientConfig) *IdentityClient {
 
 func (c *IdentityClient) Login(ctx context.Context, req gateway.LoginRequest) (gateway.LoginResponse, error) {
 	var response struct {
+		RefreshExpiresAtUnixMs int64 `json:"refreshExpiresAtUnixMs"`
 		PlayerID        string `json:"playerId"`
 		SessionID       string `json:"sessionId"`
 		AccessToken     string `json:"accessToken"`
 		RefreshToken    string `json:"refreshToken"`
 		ExpiresAtUnixMs int64  `json:"expiresAtUnixMs"`
 	}
-	err := c.post(ctx, "/internal/v1/identity/login", map[string]any{"gameId": req.GameID, "provider": req.Provider, "credential": req.Credential, "deviceId": req.DeviceID}, &response)
+	err := c.post(ctx, "/internal/v1/identity/login", req, &response)
 	if err != nil {
 		return gateway.LoginResponse{}, err
 	}
-	return gateway.LoginResponse{PlayerID: response.PlayerID, SessionID: response.SessionID, AccessToken: response.AccessToken, RefreshToken: response.RefreshToken, ExpiresAt: time.UnixMilli(response.ExpiresAtUnixMs).UTC().Format(time.RFC3339Nano)}, nil
+	return gateway.LoginResponse{PlayerID: response.PlayerID, SessionID: response.SessionID, AccessToken: response.AccessToken, RefreshToken: response.RefreshToken, ExpiresAt: time.UnixMilli(response.ExpiresAtUnixMs).UTC().Format(time.RFC3339Nano),RefreshExpiresAt:time.UnixMilli(response.RefreshExpiresAtUnixMs).UTC().Format(time.RFC3339Nano)}, nil
 }
 
 func (c *IdentityClient) Authenticate(ctx context.Context, accessToken string) (gateway.AuthenticatedSession, error) {
@@ -118,7 +115,7 @@ func (c *IdentityClient) Authenticate(ctx context.Context, accessToken string) (
 		return gateway.AuthenticatedSession{}, err
 	}
 	if !response.Valid {
-		return gateway.AuthenticatedSession{}, gateway.ErrUnauthorized
+		return gateway.AuthenticatedSession{}, gateway.ServiceError(response.ErrorCode)
 	}
 	return gateway.AuthenticatedSession{PlayerID: response.PlayerID, SessionID: response.SessionID}, nil
 }
@@ -146,7 +143,7 @@ func (c *PlayerDataClient) GetProfile(ctx context.Context, playerID string) (gat
 		return gateway.PlayerProfile{}, err
 	}
 	if !response.Found {
-		return gateway.PlayerProfile{}, errors.New("PLAYER_PROFILE_NOT_FOUND")
+		return gateway.PlayerProfile{}, gateway.ServiceError("PLAYER_PROFILE_NOT_FOUND")
 	}
 	return gateway.PlayerProfile{PlayerID: response.PlayerID, GameID: response.GameID, DisplayName: response.DisplayName, DataVersion: response.DataVersion, Revision: response.Revision, TutorialCompleted: response.TutorialCompleted, DefaultWorldID: response.DefaultWorldID, OwnedCharacterIDs: response.OwnedCharacterIDs}, nil
 }

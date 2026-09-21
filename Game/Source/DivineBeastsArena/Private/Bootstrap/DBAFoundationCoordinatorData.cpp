@@ -80,7 +80,10 @@ bool UDBAFoundationCoordinator::IsFoundationReady() const
     UGameInstance* Instance = OwnerInstance.Get();
     UWorld* World = Instance ? Instance->GetWorld() : nullptr;
     int32 ProbeValue = 0;
-    if (!World || World->GetGameInstance() != Instance || !World->HasBegunPlay() ||
+    if (!World || AcceptedSandboxWorld.Get() != World || AcceptedTravelOperation.IsEmpty() ||
+        AcceptedTravelFlow.ScopeId != ActiveFlow.ScopeId || AcceptedTravelFlow.RunId != ActiveFlow.RunId ||
+        FString(World->URL.GetOption(TEXT("FoundationTravel="), TEXT(""))) != AcceptedTravelOperation ||
+        World->GetGameInstance() != Instance || !World->HasBegunPlay() ||
         UWorld::RemovePIEPrefix(World->GetOutermost()->GetName()) != SandboxPackage() || !ReadProbe(ProbeValue)) { return false; }
     for (ULocalPlayer* Player : Instance->GetLocalPlayers())
     {
@@ -88,4 +91,20 @@ bool UDBAFoundationCoordinator::IsFoundationReady() const
         if (Controller && Controller->IsLocalController() && Controller->GetPawn()) { return true; }
     }
     return false;
+}
+
+bool UDBAFoundationCoordinator::AcceptSandboxWorld(UWorld& World, const FString& OperationId,
+    const FGamePlatformFlowHandle& FlowHandle)
+{
+    check(IsInGameThread());
+    auto* Instance = OwnerInstance.Get();
+    if (bStopping || !Instance || !FlowHandle.IsValid() || FlowHandle.ScopeId != ActiveFlow.ScopeId ||
+        FlowHandle.RunId != ActiveFlow.RunId || Instance->GetWorld() != &World ||
+        World.GetGameInstance() != Instance || !World.HasBegunPlay() || OperationId.IsEmpty() ||
+        UWorld::RemovePIEPrefix(World.GetOutermost()->GetName()) != SandboxPackage() ||
+        FString(World.URL.GetOption(TEXT("FoundationTravel="), TEXT(""))) != OperationId) { return false; }
+    AcceptedSandboxWorld = &World;
+    AcceptedTravelOperation = OperationId;
+    AcceptedTravelFlow = FlowHandle;
+    return true;
 }

@@ -57,3 +57,11 @@
 ## 后续补充
 
 等待最终可执行检查与复核后追加真实结果；原始失败项不删除。
+
+### 2026-09-21 最终原生/离线补充及任务切换
+
+最新统一执行 `VerifyFoundation.ps1 -NativeTests -RunId 58000000-0000-4000-8000-000000000004` 返回1；证据为同RunId目录 `Verify/result.json`。Core/Data/Flow/Host编译及CTest分别退出0；场景为11/20/31/11（CTest集合不等于每场景独立目标）。描述检查仍3项失败，真实资产、UE目标及运行未执行。Core最终单独日志后缀为`161241-925`与`161244-535`；Flow最终为`Debug-31Cases-20260921.log`、`Release-31Cases-20260921.log`；Data为`DataNative/DebugCTest.log`、`ReleaseCTest.log`。
+
+离线资产45项和报告门禁7项退出0（`Offline-Final-20260921.log`）；最终进程脚本28项、配置3项退出0（`Scripts-Final-20260921.log`）。报告门禁已要求逐个测试身份存在并Success，而非“最低1项成功”。这些均不是UE自动化通过。
+
+独立复核发现的剩余主工程Ready操作身份/取消切图/启动超时、Flow载荷GC保活及Data外部DownloadParams保留问题见执行进度。新请求转入Online；M0不再扩展，现有失败和未执行项继续保留。**M0不能标全部通过或基础工程可运行。**

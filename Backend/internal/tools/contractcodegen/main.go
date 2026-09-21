@@ -312,6 +312,8 @@ func runOfficial(root string) {
 	removeGeneratedDir(filepath.Join(shared, "Generated", "Cpp", "Games", "DivineBeasts", "Proto"))
 	removeGeneratedDir(filepath.Join(backend, "generated", "proto", "shared"))
 	removeGeneratedDir(filepath.Join(backend, "generated", "proto", "internal"))
+	// 内部Go绑定须放Backend/internal下；旧generated/proto/internal违反Go导入边界。
+	removeGeneratedDir(filepath.Join(backend, "internal", "generated"))
 	removeGeneratedDir(filepath.Join(backend, "generated", "openapi"))
 
 	// GamePlatform Proto（公共跨语言协议）：
@@ -349,7 +351,7 @@ func runOfficial(root string) {
 		run("protoc", args...)
 	}
 
-	// Backend内部Proto只生成Go，不进入Shared；输出同样由go_package决定。
+	// Backend内部Proto只生成Go，不进入Shared；go_package映射Backend/internal/generated/<domain>/v1。
 	internalProtoRoot := filepath.Join(backend, "internal", "contracts", "proto")
 	internalFiles, _ := filepath.Glob(filepath.Join(internalProtoRoot, "*.proto"))
 	args = []string{

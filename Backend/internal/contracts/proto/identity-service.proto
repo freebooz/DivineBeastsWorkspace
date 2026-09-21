@@ -2,12 +2,18 @@ syntax = "proto3";
 
 package divinebeasts.backend.identity.v1;
 
-option go_package = "divinebeasts/backend/generated/proto/internal/identity/v1;identityv1";
+option go_package = "divinebeasts/backend/internal/generated/identity/v1;identityv1";
 
 // IdentityService（身份认证内部服务）供Gateway通过gRPC执行登录和Access Token认证。
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+  // 原子轮换刷新凭据，绝对会话到期不延期；未知/消费过凭据拒绝。
+  rpc Refresh(RefreshRequest) returns (LoginResponse);
+  // 当前或本会话已消费凭据授权幂等撤销，不接受客户端session_id替代认证。
+  rpc Logout(RefreshRequest) returns (LogoutResponse);
+  // 真实仓储只读探测；不执行迁移或建档。
+  rpc Probe(ProbeRequest) returns (ProbeResponse);
 }
 
 message LoginRequest {
@@ -16,6 +22,7 @@ message LoginRequest {
   string credential = 3;
   string client_version = 4;
   string device_id = 5;
+  string account_name = 6; // password提供方账号名，credential仍为原密码字段。
 }
 
 message LoginResponse {
@@ -25,7 +32,13 @@ message LoginResponse {
   string refresh_token = 4;
   int64 expires_at_unix_ms = 5;
   string error_code = 6;
+  int64 refresh_expires_at_unix_ms = 7; // 刷新凭据绝对到期UTC毫秒。
 }
+
+message RefreshRequest { string refresh_token = 1; }
+message LogoutResponse { string error_code = 1; }
+message ProbeRequest {}
+message ProbeResponse { bool ready = 1; string error_code = 2; }
 
 message AuthenticateRequest {
   string access_token = 1;

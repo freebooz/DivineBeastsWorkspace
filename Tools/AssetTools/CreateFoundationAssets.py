@@ -13,6 +13,8 @@ Maps 仅生成下列两张非分区地图，使用引擎 Cube、GameModeBase／D
 --phase Probe 独立生成唯一 DA_FoundationProbe；要求真实探针及 Data 基类已编译加载。
 Probe 初始身份为 foundation.probe@1，结构版本／内容修订为1，ProbeValue=42，无必需依赖。
 --phase Flow 独立生成 Definitions/DA_FoundationFlow，身份 foundation.flow@1；
+--phase OnlineFlow 独立生成 DA_FoundationOnlineFlow，身份 foundation.onlineflow@1；
+在线图仅含中立执行器键，凭据、URL、项目节点类和地图均不进入定义资产。
 RequiredDefinitions 为空，探针身份仅写入 LoadProbeDefinition 节点输入，不在生成时预载。
 已有 ProbeValue 整数和合法流程图编辑只报告 custom_differences，不重置为生成默认值。
 Definitions 不是阶段名；不生成蓝图、不修改项目配置或资产管理器扫描设置。
@@ -44,6 +46,7 @@ MAP_PACKAGES = (
 PROBE_PACKAGE = "/Game/Development/Foundation/Definitions/DA_FoundationProbe"
 PROBE_CLASS_PATH = "/Script/DivineBeastsArena.DBAFoundationProbeDefinition"
 FLOW_PACKAGE = "/Game/Development/Foundation/Definitions/DA_FoundationFlow"
+ONLINE_FLOW_PACKAGE = "/Game/Development/Foundation/Definitions/DA_FoundationOnlineFlow"
 FLOW_CLASS_PATH = "/Script/GamePlatformApplicationFlow.GamePlatformFlowDefinition"
 DEFINITION_CLASS_PATH = "/Script/GamePlatformData.GamePlatformDefinitionBase"
 NATIVE_SUFFIXES = (".umap", ".uasset", ".uexp", ".ubulk", ".uptnl")
@@ -73,9 +76,9 @@ class PhaseArgumentParser(argparse.ArgumentParser):
 
 
 def parse_arguments(arguments=None):
-    """三个阶段分开执行；未知参数明确失败，不默认执行全部阶段。"""
+    """各阶段分开执行；OnlineFlow必须显式选择，不改变原单机三阶段。"""
     parser = PhaseArgumentParser(description=__doc__)
-    parser.add_argument("--phase", choices=("Maps", "Probe", "Flow"), default="Maps", help="独立执行地图、探针或流程阶段")
+    parser.add_argument("--phase", choices=("Maps", "Probe", "Flow", "OnlineFlow"), default="Maps", help="独立执行地图、探针、单机流程或在线流程阶段")
     return parser.parse_args(arguments)
 
 
@@ -87,7 +90,7 @@ def map_filename(package):
 
 def asset_filename(package):
     """只扩展已授权探针身份，其他包仍由地图白名单严格限制。"""
-    if package in (PROBE_PACKAGE, FLOW_PACKAGE):
+    if package in (PROBE_PACKAGE, FLOW_PACKAGE, ONLINE_FLOW_PACKAGE):
         return package[len("/Game/"):] + ".uasset"
     return map_filename(package)
 
@@ -154,8 +157,9 @@ def native_asset_diff(before, after):
 
 def failed_report(message, phase="Maps"):
     """初始化失败仍列出本阶段未完成资产；未审计时不伪造磁盘状态。"""
-    require(phase in ("Maps", "Probe", "Flow"), "不支持的资产阶段：" + phase)
-    packages = {"Maps": MAP_PACKAGES, "Probe": (PROBE_PACKAGE,), "Flow": (FLOW_PACKAGE,)}[phase]
+    require(phase in ("Maps", "Probe", "Flow", "OnlineFlow"), "不支持的资产阶段：" + phase)
+    packages = {"Maps": MAP_PACKAGES, "Probe": (PROBE_PACKAGE,), "Flow": (FLOW_PACKAGE,),
+                "OnlineFlow": (ONLINE_FLOW_PACKAGE,)}[phase]
     item_key = "maps" if phase == "Maps" else "assets"
     return {
         "phase": phase, "policy": "nooverwrite", "exit_code": 1,
@@ -552,7 +556,22 @@ def default_flow_values():
     }
 
 
-def validate_flow_values(values):
+def default_online_flow_values():
+    """真实认证/本人资料在数据加载和切图之前；非秘密配置由项目组合根注入，资产不持有凭据。"""
+    names = ("OnlineValidateConfiguration", "OnlineProbeService", "OnlineLogin", "OnlineReadProfile",
+             "LoadProbeDefinition", "EnterSandbox", "OnlineReady")
+    return {
+        "entry_node_id": names[0], "allow_cycles": False, "max_immediate_cycle_transitions": 64,
+        "nodes": [{
+            "node_id": name, "executor_id": name,
+            "input_definition_id": "GamePlatformDefinition:foundation.probe@1" if name == "LoadProbeDefinition" else "",
+            "timeout_seconds": 120.0 if name == "EnterSandbox" else 45.0,
+            "next_node_id": names[index + 1] if index + 1 < len(names) else "None", "routes": {},
+        } for index, name in enumerate(names)],
+    }
+
+
+def validate_flow_values(values, defaults=None):
     """只读校验公开头声明的图约束，返回与生成默认值的差异；不替代运行时工厂校验。
 
     FName 按大小写等价处理；迭代遍历避免长链递归溢出。循环必须显式允许并有正预算。
@@ -617,7 +636,7 @@ def validate_flow_values(values):
                 if indegrees[target] == 0:
                     pending.append(target)
         require(removed == len(graph), "Flow 未允许循环但存在环")
-    defaults = default_flow_values()
+    defaults = default_flow_values() if defaults is None else defaults
     return [{"field": field, "default": expected, "actual": values[field]}
             for field, expected in defaults.items() if values[field] != expected]
 
@@ -629,17 +648,22 @@ class UnrealFlowEditor(UnrealDefinitionEditor):
     class_path = FLOW_CLASS_PATH
     logical_name = "flow"
 
+    @staticmethod
+    def default_values():
+        """由具体阶段选取默认图；验证已有图时仅报告差异而不覆盖。"""
+        return default_flow_values()
+
     def _preflight_payload(self, defaults):
         for field in ("entry_node_id", "nodes", "allow_cycles", "max_immediate_cycle_transitions"):
             defaults.get_editor_property(field)
         node_type = getattr(self.unreal, "GamePlatformFlowNodeDefinition", None)
         require(node_type is not None, "Flow 节点结构反射缺失")
         sample = node_type()
-        for field in default_flow_values()["nodes"][0]:
+        for field in self.default_values()["nodes"][0]:
             sample.get_editor_property(field)
 
     def _write_payload(self, asset):
-        values = default_flow_values()
+        values = self.default_values()
         nodes = []
         for node_values in values["nodes"]:
             node = self.unreal.GamePlatformFlowNodeDefinition()
@@ -677,7 +701,18 @@ class UnrealFlowEditor(UnrealDefinitionEditor):
                 "next_node_id": str(node.get_editor_property("next_node_id")),
                 "routes": {str(event): str(target) for event, target in node.get_editor_property("routes").items()},
             })
-        return validate_flow_values(values)
+        return validate_flow_values(values, self.default_values())
+
+
+class UnrealOnlineFlowEditor(UnrealFlowEditor):
+    """第四插件的显式开发流程；复用同一个真实Flow反射类型和无覆盖保存策略。"""
+
+    package = ONLINE_FLOW_PACKAGE
+    logical_name = "onlineflow"
+
+    @staticmethod
+    def default_values():
+        return default_online_flow_values()
 
 
 def main(arguments=None):
@@ -686,7 +721,8 @@ def main(arguments=None):
     try:
         phase = parse_arguments(arguments).phase
         import unreal
-        adapter_type = {"Maps": UnrealMapEditor, "Probe": UnrealProbeEditor, "Flow": UnrealFlowEditor}[phase]
+        adapter_type = {"Maps": UnrealMapEditor, "Probe": UnrealProbeEditor, "Flow": UnrealFlowEditor,
+                        "OnlineFlow": UnrealOnlineFlowEditor}[phase]
         report = run_assets(adapter_type(unreal), phase)
     except Exception as error:
         report = failed_report(str(error), phase)

@@ -3,6 +3,7 @@
 #include "Bootstrap/DBAFoundationPolicy.h"
 #include "DBAFoundationProbeDefinition.h"
 #include "Engine/GameInstance.h"
+#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Kismet/GameplayStatics.h"
@@ -24,6 +25,7 @@ void UDBAFoundationNode::Execute(const FGamePlatformFlowContext& Context, FGameP
     bActive = true;
     Completion = MoveTemp(Complete);
     Instance = Context.GameInstance;
+    RunningFlow = Context.Handle;
     auto* Owner = Coordinator.Get();
     if (!Owner || !Instance.IsValid() || Context.Payload.Get() != Owner ||
         Owner->GetTypedOuter<UGameInstance>() != Instance.Get())
@@ -111,6 +113,8 @@ bool UDBAFoundationNode::PollWorld(float)
             Instance.IsValid() && Instance->GetWorld() == World, World->HasBegunPlay(),
             TCHAR_TO_UTF8(*Package), TCHAR_TO_UTF8(UDBAFoundationCoordinator::SandboxPackage()),
             TCHAR_TO_UTF8(*WorldOperation), TCHAR_TO_UTF8(*TravelOperation));
+        auto* Owner = Coordinator.Get();
+        bReady = bReady && Owner && Owner->AcceptSandboxWorld(*World, TravelOperation, RunningFlow);
     }
     if (!bReady) { return true; }
     PollHandle.Reset();
@@ -125,11 +129,28 @@ void UDBAFoundationNode::CompleteOnce(FGamePlatformFlowNodeResult Result)
     Notify(MoveTemp(Result));
 }
 
-void UDBAFoundationNode::Finish(EGamePlatformFlowFinishReason)
+void UDBAFoundationNode::Finish(EGamePlatformFlowFinishReason Reason)
 {
     bActive = false;
     ++Activation; // 必须先失效；Release可能排队取消通知。
     Completion = {};
+    // OpenLevel在本地UE5.8先写WorldContext.TravelURL，下次Tick才消费。
+    // 只清理仍未消费且严格属于本节点的请求；已消费的切图无法撤销，后续Ready仍由操作身份拒绝旧结果。
+    if (auto* GameInstance = Instance.Get())
+    {
+        if (auto* WorldContext = GameInstance->GetWorldContext(); WorldContext && !WorldContext->TravelURL.IsEmpty())
+        {
+            const FURL PendingURL(&WorldContext->LastURL, *WorldContext->TravelURL,
+                static_cast<ETravelType>(WorldContext->TravelType));
+            const FString PendingOperation = PendingURL.GetOption(TEXT("FoundationTravel="), TEXT(""));
+            if (DBA::Foundation::OwnsPendingTravel(Reason != EGamePlatformFlowFinishReason::Succeeded,
+                TCHAR_TO_UTF8(*PendingURL.Map), TCHAR_TO_UTF8(UDBAFoundationCoordinator::SandboxPackage()),
+                TCHAR_TO_UTF8(*PendingOperation), TCHAR_TO_UTF8(*TravelOperation)))
+            {
+                WorldContext->TravelURL.Reset();
+            }
+        }
+    }
     if (MapLoadedHandle.IsValid()) { FCoreUObjectDelegates::PostLoadMapWithWorld.Remove(MapLoadedHandle); MapLoadedHandle.Reset(); }
     if (PollHandle.IsValid()) { FTSTicker::GetCoreTicker().RemoveTicker(PollHandle); PollHandle.Reset(); }
     if (PendingLease.IsValid())
@@ -142,5 +163,6 @@ void UDBAFoundationNode::Finish(EGamePlatformFlowFinishReason)
     }
     LoadedWorld.Reset();
     TravelOperation.Reset();
+    RunningFlow = {};
     Instance.Reset();
 }

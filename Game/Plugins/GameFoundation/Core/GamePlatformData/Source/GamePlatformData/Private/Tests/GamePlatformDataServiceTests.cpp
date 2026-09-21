@@ -1,4 +1,4 @@
-#include "Subsystems/GamePlatformDataSubsystem.h"
+#include "Interfaces/IGamePlatformDataService.h"
 #include "Loading/GamePlatformAssetManager.h"
 #include "Loading/DataNextTick.h"
 #include "Engine/GameInstance.h"
@@ -12,7 +12,19 @@
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
 {
-/** 使用真实私有门面、真实引擎管理器和指定的已保存定义；只创建隔离实例，不改写资产或全局管理器。 */
+void ShutdownTestInstance(UGameInstance* Instance)
+{
+    if (!Instance) return;
+    UWorld* InstanceWorld = Instance->GetWorld();
+    if (InstanceWorld)
+    {
+        InstanceWorld->DestroyWorld(false);
+    }
+    // Shutdown会通知全部真实子系统；其间保留WorldContext，避免其他子系统访问悬空上下文。
+    Instance->Shutdown();
+    if (InstanceWorld) GEngine->DestroyWorldContext(InstanceWorld);
+}
+/** 实际InitializeStandalone创建实例子系统后走公开门面，不手动创建数据子系统，不改写源资产。 */
 class FDataLeaseIntegrationCommand final : public IAutomationLatentCommand
 {
 public:
@@ -36,10 +48,12 @@ public:
             for (FName Bundle : CurrentBundles) BaselineBundles.AddUnique(Bundle);
             InstanceA.Reset(NewObject<UGameInstance>(GEngine));
             InstanceB.Reset(NewObject<UGameInstance>(GEngine));
-            ServiceA.Reset(NewObject<UGamePlatformDataSubsystem>(InstanceA.Get()));
-            ServiceB.Reset(NewObject<UGamePlatformDataSubsystem>(InstanceB.Get()));
-            ServiceA->Initialize(CollectionA); ServiceB->Initialize(CollectionB);
+            InstanceA->InitializeStandalone(FName(*(TEXT("DataTestA_") + FGuid::NewGuid().ToString(EGuidFormats::Digits))));
+            InstanceB->InitializeStandalone(FName(*(TEXT("DataTestB_") + FGuid::NewGuid().ToString(EGuidFormats::Digits))));
             bIsInitialized = true;
+            ServiceA = IGamePlatformDataService::Get(*InstanceA);
+            ServiceB = IGamePlatformDataService::Get(*InstanceB);
+            if (!ServiceA || !ServiceB) { Test->AddError(TEXT("实际实例子系统集合未提供数据公开门面。")); Cleanup(); return true; }
             FGamePlatformResult Accepted;
             LeaseA = ServiceA->AcquireDefinition(Id, UGamePlatformDefinitionBase::StaticClass(), {TEXT("Core"), TEXT("UI"), TEXT("Core")},
                 EGamePlatformDataLifetime::Instance, InstanceA.Get(), [this, Alive = TWeakPtr<int32>(CallbackAlive)](const auto&, const auto& Result)
@@ -85,7 +99,7 @@ public:
             Manager->GetPrimaryAssetHandle(Id, true, &Union);
             Test->TestTrue(TEXT("共同需求包含Core/UI/Server"), Union.Contains(TEXT("Core")) && Union.Contains(TEXT("UI")) && Union.Contains(TEXT("Server")));
             Test->TestTrue(TEXT("成功租约可释放"), ServiceA->ReleaseDefinition(LeaseA).IsSuccess());
-            ServiceA->Deinitialize(); bIsAClosed = true;
+            ShutdownTestInstance(InstanceA.Get()); bIsAClosed = true; ServiceA = nullptr;
             Phase = 2;
             return false;
         }
@@ -166,8 +180,9 @@ private:
         if (World.IsValid()) { World->DestroyWorld(false); World.Reset(); }
         if (bIsInitialized)
         {
-            if (!bIsAClosed) ServiceA->Deinitialize();
-            ServiceB->Deinitialize(); bIsInitialized = false;
+            if (!bIsAClosed) ShutdownTestInstance(InstanceA.Get());
+            ShutdownTestInstance(InstanceB.Get()); bIsInitialized = false;
+            ServiceA = nullptr; ServiceB = nullptr;
         }
         if (ExternalLoad.IsValid() || bMayInspectExternal)
         {
@@ -193,9 +208,9 @@ private:
     TSharedPtr<FStreamableHandle> ExternalLoad;
     TArray<FName> BaselineBundles;
     TStrongObjectPtr<UGameInstance> InstanceA, InstanceB;
-    TStrongObjectPtr<UGamePlatformDataSubsystem> ServiceA, ServiceB;
+    IGamePlatformDataService* ServiceA = nullptr;
+    IGamePlatformDataService* ServiceB = nullptr;
     TStrongObjectPtr<UWorld> World;
-    FSubsystemCollection<UGameInstanceSubsystem> CollectionA, CollectionB;
 };
 }
 

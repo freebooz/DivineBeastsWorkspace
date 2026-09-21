@@ -1,0 +1,17 @@
+# D06｜安全边界与未解决威胁
+
+当前禁止公开网络部署。存在独立状态内核与数据库约束不等于认证系统、受保护握手或游戏服务器安全验收已经完成。
+
+控制面边界是Online/服务器到业务后端的HTTPS。Online应独占访问与刷新令牌；当前Session代码没有HTTP客户端、读取令牌接口或密钥配置。Go Store只是可信内部端口；AuthorizationID必须由真实身份与玩家所有权核验产生，InstanceID/BootID必须从服务器服务身份提取。现有旧控制接口的认证缺陷没有在本轮自动消失。
+
+游戏网络边界是UE客户端到Dedicated Server。已现场读取UE5.8.0声明：ClientTravel可使用绝对非无缝旅行；PreLoginAsync只含Options、Address、UniqueId、完成委托；GameInstance存在ReceivedNetworkEncryptionToken/Ack/Failure，NetConnection存在EnableEncryption。**这些声明存在不证明安全握手已接入或能唯一关联真实连接。** 没有实现凭据传输，没有把任何材料放入URL。不得在后续用客户端自报AttemptId或UniqueId替代服务器网络连接身份。
+
+数据库只保存CredentialDigest，Claim只在进程内计算原文摘要，没有日志输出。测试中的固定证明材料标明仅测试使用，不能进入生产签发。生产材料必须使用安全随机源、通过保护通道交付，并绑定授权主体、实例启动代次、分配、Attempt与协议。当前没有签名算法、issuer/audience或keyId实现，不虚构密码能力。
+
+防重放实际保证：事务领取只从Reserved进入Claimed，同一服务器ConnectionID控制面重试幂等；不同连接不能重放。这个保证依赖调用者已经认证且ConnectionID确实绑定同一网络握手。没有UE适配时只能验证数据库拒绝行为，不能声称“两条真实UE连接最多一条成功”已通过。
+
+双活防护分两层：数据库Commit要求来源authority_until到期或确切Release，Epoch递增拒绝旧来源写入；游戏服务器必须在自身权威租约到期前冻结玩家，且正确处理时钟/传输余量。后者和续租尚未实现，因此当前不能保证游戏操作层没有双活。授权撤销阻止新的领取/提交，但已接入UE的有界撤销也尚未验证。
+
+测试库采用独占容器、network=none；Go测试进程加入该容器网络命名空间，通过127.0.0.1访问PostgreSQL，没有发布宿主端口。此测试显式使用trust及sslmode=disable，仅适用于该封闭测试拓扑，不是控制面TLS验收，更不允许据此扩展私网/公网豁免。
+
+现有快照只含非敏感身份。尚无实际ClientTravel/FURL、引擎Browse日志或崩溃上下文产生，故“引擎全链路无泄漏”未执行。后续必须扫描完整本次引擎/业务日志、URL、命令行、快照和产物，而不只检查本插件日志。新迁移撤销PUBLIC函数/表权限，正式服务角色最小授权、证书与密钥注入仍需部署审查。

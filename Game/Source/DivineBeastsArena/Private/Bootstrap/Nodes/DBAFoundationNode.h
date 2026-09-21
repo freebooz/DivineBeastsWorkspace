@@ -36,6 +36,7 @@ private:
     FDelegateHandle MapLoadedHandle;
     FTSTicker::FDelegateHandle PollHandle;
     FString TravelOperation;
+    FGamePlatformFlowHandle RunningFlow;
     uint64 Activation = 0;
     bool bActive = false;
 };

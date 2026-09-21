@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"strconv"
 	"net/http"
 	"time"
 
@@ -24,7 +26,7 @@ func Run(ctx context.Context, cfg config.ServiceConfig, businessHandler http.Han
 	}
 
 	server := &http.Server{
-		Addr:              fmt.Sprintf(":%d", cfg.Port),
+		Addr:              net.JoinHostPort(cfg.BindAddress,strconv.Itoa(cfg.Port)),
 		Handler:           requestLoggingMiddleware(cfg.Name, mux),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,

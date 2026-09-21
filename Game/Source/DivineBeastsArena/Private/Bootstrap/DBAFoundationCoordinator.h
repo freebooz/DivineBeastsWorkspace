@@ -31,6 +31,8 @@ public:
     bool ReadProbe(int32& OutValue) const;
     /** 真正屏障：当前实例的目标世界开始运行、有本地观察者且探针租约仍可读。 */
     bool IsFoundationReady() const;
+    /** 游戏线程接纳本次切图的真实世界与操作身份；后续Ready仍检查同一世界、同一运行，拒绝同名地图串台。 */
+    bool AcceptSandboxWorld(UWorld& World, const FString& OperationId, const FGamePlatformFlowHandle& FlowHandle);
     /** 仅主工程拥有地图选择；平台流程资产不引用地图。返回静态不可变包名。 */
     static const TCHAR* SandboxPackage();
     /** 显式开发命令；取消当前申请或运行，并释放探针。重复调用保持清理幂等。 */
@@ -44,6 +46,9 @@ private:
     void ReleaseDataLeases();
     TWeakObjectPtr<UGameInstance> OwnerInstance;
     TWeakObjectPtr<UWorld> ReportedWorld;
+    TWeakObjectPtr<UWorld> AcceptedSandboxWorld;
+    FString AcceptedTravelOperation;
+    FGamePlatformFlowHandle AcceptedTravelFlow;
     FTSTicker::FDelegateHandle TickerHandle;
     FString RunId;
     FString Diagnostics = TEXT("基础工程开发验证未启用");

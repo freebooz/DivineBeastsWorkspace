@@ -631,5 +631,35 @@ class FlowTests(unittest.TestCase):
         adapter.assets.save_loaded_asset.assert_not_called()
 
 
+class OnlineFlowTests(unittest.TestCase):
+    """在线开发流程必须在真实认证和资料读取后才接入既有数据/地图链，不能更改单机默认图。"""
+
+    def test_online_flow_is_explicit_and_preserves_standalone(self):
+        standalone = ASSETS.default_flow_values()
+        values = ASSETS.default_online_flow_values()
+        self.assertEqual([node["executor_id"] for node in values["nodes"]],
+                         ["OnlineValidateConfiguration", "OnlineProbeService", "OnlineLogin", "OnlineReadProfile",
+                          "LoadProbeDefinition", "EnterSandbox", "OnlineReady"])
+        self.assertEqual(ASSETS.default_flow_values(), standalone)
+        self.assertEqual(ASSETS.validate_flow_values(values, values), [])
+
+    def test_online_phase_has_single_separate_asset_and_no_overwrite(self):
+        self.assertEqual(ASSETS.parse_arguments(["--phase", "OnlineFlow"]).phase, "OnlineFlow")
+        report = ASSETS.failed_report("UE未执行", "OnlineFlow")
+        self.assertEqual([item["package"] for item in report["assets"]],
+                         ["/Game/Development/Foundation/Definitions/DA_FoundationOnlineFlow"])
+        self.assertEqual(ASSETS.asset_filename(ASSETS.ONLINE_FLOW_PACKAGE),
+                         "Development/Foundation/Definitions/DA_FoundationOnlineFlow.uasset")
+
+    def test_online_definition_never_contains_project_classes_maps_or_credentials(self):
+        values = ASSETS.default_online_flow_values()
+        serialized = str(values)
+        self.assertNotIn("/Script/DivineBeastsArena", serialized)
+        self.assertNotIn("/Game/", serialized)
+        self.assertNotIn("password", serialized.lower())
+        inputs = [node["input_definition_id"] for node in values["nodes"] if node["input_definition_id"]]
+        self.assertEqual(inputs, ["GamePlatformDefinition:foundation.probe@1"])
+
+
 if __name__ == "__main__":
     unittest.main()

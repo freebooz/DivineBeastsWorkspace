@@ -3,6 +3,7 @@ package config
 
 import (
 	"errors"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 // ServiceConfig（服务配置）描述所有Go业务服务共享的启动参数。
 type ServiceConfig struct {
+	BindAddress string // SERVICE_BIND_ADDRESS只包含IP；空值保持旧监听语义，联调显式127.0.0.1。
 	Name            string        // Name（服务名称）。
 	Port            int           // Port（HTTP监听端口）。
 	GRPCPort        int           // GRPCPort（gRPC监听端口；grpcdeps构建使用）。
@@ -20,6 +22,8 @@ type ServiceConfig struct {
 
 // LoadServiceConfig（加载服务配置）从环境变量读取统一启动参数。
 func LoadServiceConfig() (ServiceConfig, error) {
+	bindAddress:=os.Getenv("SERVICE_BIND_ADDRESS")
+	if bindAddress!="" && net.ParseIP(bindAddress)==nil {return ServiceConfig{},errors.New("SERVICE_BIND_ADDRESS必须是IP地址且不能包含端口")}
 	name := getenv("SERVICE_NAME", "UnknownService")
 	version := getenv("SERVICE_VERSION", "1.1.0")
 	port, err := envPort("SERVICE_PORT", 8080)
@@ -35,7 +39,7 @@ func LoadServiceConfig() (ServiceConfig, error) {
 	if err != nil || shutdownTimeout <= 0 {
 		return ServiceConfig{}, errors.New("SHUTDOWN_TIMEOUT必须是有效的正Duration")
 	}
-	return ServiceConfig{Name: name, Port: port, GRPCPort: grpcPort, Version: version, ShutdownTimeout: shutdownTimeout}, nil
+	return ServiceConfig{Name: name, Port: port, GRPCPort: grpcPort, Version: version, ShutdownTimeout: shutdownTimeout,BindAddress:bindAddress}, nil
 }
 
 func envPort(key string, fallback int) (int, error) {

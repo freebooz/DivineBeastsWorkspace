@@ -6,7 +6,7 @@ import (
 	"context"
 	"time"
 
-	gameservercontrolv1 "divinebeasts/backend/generated/proto/internal/gameservercontrol/v1"
+	gameservercontrolv1 "divinebeasts/backend/internal/generated/gameservercontrol/v1"
 	"divinebeasts/backend/internal/app/gameservercontrol"
 	gameservercontract "divinebeasts/backend/internal/contracts/gameserver"
 	"google.golang.org/grpc"

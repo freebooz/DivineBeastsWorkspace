@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"divinebeasts/backend/internal/app/gateway"
+	"divinebeasts/backend/internal/modules/identity"
+	"divinebeasts/backend/internal/platform/apperror"
 )
 
 const maxBodyBytes = 1 << 20
@@ -46,3 +49,18 @@ func statusForError(err error) int {
 }
 
 var contextCanceled = errors.New("context canceled")
+
+// onlineDomainError 只映射可证明的领域错误；未知故障503，不泄漏底层描述。
+func onlineDomainError(err error) error {
+ if err==nil {return nil}
+ var app *apperror.Error
+ if errors.As(err,&app) {return gateway.ServiceError(app.Code)}
+ switch {
+ case errors.Is(err,identity.ErrInvalidCredentials):return gateway.ServiceError("AUTH_INVALID_CREDENTIALS")
+ case errors.Is(err,identity.ErrInvalidToken):return gateway.ServiceError("AUTH_SESSION_INVALID")
+ case errors.Is(err,identity.ErrTokenExpired):return gateway.ServiceError("AUTH_TOKEN_EXPIRED")
+ case errors.Is(err,identity.ErrInvalidInput):return gateway.ServiceError("INVALID_REQUEST")
+ default:return gateway.ServiceError("SERVICE_UNAVAILABLE")
+ }
+}
+func writeOnlineDomainError(w http.ResponseWriter,err error) {status,code:=gateway.OnlineErrorStatus(onlineDomainError(err));writeError(w,status,code,nil)}

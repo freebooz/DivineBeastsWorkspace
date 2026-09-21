@@ -48,6 +48,15 @@ bool UDBAFoundationCoordinator::Tick(float)
 {
     UGameInstance* Instance = OwnerInstance.Get();
     if (!Instance) { return false; }
+    // 世界尚未创建或尚未BeginPlay同样受实例启动截止约束；禁止无限等待绕过超时。
+    if (DBA::Foundation::StartupDeadlineExceeded(bStartAttempted, bStopping,
+        FPlatformTime::Seconds(), DiscoveryDeadlineSeconds))
+    {
+        bStartAttempted = true;
+        LastResult = FGamePlatformResult::Failure(TEXT("DiscoveryTimeout"), TEXT("等待本实例世界、资产发现或本地观察者超时"));
+        Diagnostics = LastResult.Message;
+        UE_LOG(LogDBAFoundation, Warning, TEXT("FoundationFailed RunId=%s Code=DiscoveryTimeout"), *RunId);
+    }
     UWorld* World = Instance->GetWorld();
     if (!World || !World->IsGameWorld() || !World->HasBegunPlay() || World->GetGameInstance() != Instance) { return true; }
     const FString Map = World->GetOutermost()->GetName();
@@ -228,6 +237,9 @@ void UDBAFoundationCoordinator::ReleaseDataLeases()
 void UDBAFoundationCoordinator::CancelDevelopmentFlow()
 {
     ++RequestGeneration;
+    AcceptedSandboxWorld.Reset();
+    AcceptedTravelOperation.Reset();
+    AcceptedTravelFlow = {};
     bStartAttempted = true;
     if (auto* Flow = FlowService.Get()) { Flow->Cancel(ActiveFlow); }
     ActiveFlow = {};

@@ -34,22 +34,26 @@ import (
 func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	identityClient := httpadapter.NewIdentityClient(httpadapter.ClientConfig{BaseURL: requiredEnv("IDENTITY_SERVICE_URL")})
 	playerDataClient := httpadapter.NewPlayerDataClient(httpadapter.ClientConfig{BaseURL: requiredEnv("PLAYER_DATA_SERVICE_URL")})
-	matchClient := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: requiredEnv("MATCH_SERVICE_URL")})
-	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, matchClient, matchClient)
+	var party gateway.PartyPort
+	var matchmaking gateway.MatchmakingPort
+	if config.Getenv("ONLINE_ONLY","false")!="true" {client:=httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL:requiredEnv("MATCH_SERVICE_URL")});party=client;matchmaking=client}
+	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, party, matchmaking)
 	return servicehost.Run(ctx, cfg, handler)
 }
 
 func RunIdentity(ctx context.Context, cfg config.ServiceConfig) error {
-	redisClient := mustRedis(ctx)
-	defer redisClient.Close()
-	service := identity.NewService(redisstore.NewSessionRepository(redisClient), identity.SystemClock{}, identity.CryptoTokenGenerator{}, 15*time.Minute, 30*24*time.Hour)
+	pool:=mustPostgres(ctx)
+	defer pool.Close()
+	accessTTL,err:=config.GetenvDuration("IDENTITY_ACCESS_TTL",15*time.Minute);if err!=nil{return err}
+	refreshTTL,err:=config.GetenvDuration("IDENTITY_REFRESH_TTL",30*24*time.Hour);if err!=nil{return err}
+	service,err:=identity.NewPersistentService(postgres.NewOnlineIdentityRepository(pool),identity.SystemClock{},accessTTL,refreshTTL);if err!=nil{return err}
 	return servicehost.Run(ctx, cfg, httpadapter.NewIdentityHandler(service))
 }
 
 func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	pool := mustPostgres(ctx)
 	defer pool.Close()
-	service := playerdata.NewService(postgres.NewPlayerRepository(pool))
+	service := playerdata.NewService(postgres.NewOnlinePlayerRepository(pool))
 	return servicehost.Run(ctx, cfg, httpadapter.NewPlayerDataHandler(service))
 }
 

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package divinebeasts.backend.gameservercontrol.v1;
 
-option go_package = "divinebeasts/backend/generated/proto/internal/gameservercontrol/v1;gameservercontrolv1";
+option go_package = "divinebeasts/backend/internal/generated/gameservercontrol/v1;gameservercontrolv1";
 
 // GameServerControlInternalService（游戏服务器控制内部服务）供MatchService分配MainArena并签发玩家迁移票据。
 service GameServerControlInternalService {

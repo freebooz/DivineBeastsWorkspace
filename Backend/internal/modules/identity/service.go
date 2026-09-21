@@ -43,6 +43,8 @@ type SessionRepository interface {
 
 // Service（身份领域服务）实现登录和Token轮换规则。
 type Service struct {
+	persistent PersistentRepository // 生产密码路径仅使用摘要仓储，不允许回落旧游客仓储。
+	dummyHash  []byte               // 不存在账户仍执行慢哈希比较，减少账户枚举时间差。
 	repo       SessionRepository
 	clock      Clock
 	tokens     TokenGenerator
@@ -50,14 +52,17 @@ type Service struct {
 	refreshTTL time.Duration
 }
 
-// NewService（创建身份服务）创建身份领域服务。
+// NewService 保留旧开发/测试装配；生产密码认证必须使用 NewPersistentService。
 func NewService(repo SessionRepository, clock Clock, tokens TokenGenerator, accessTTL, refreshTTL time.Duration) *Service {
 	return &Service{repo: repo, clock: clock, tokens: tokens, accessTTL: accessTTL, refreshTTL: refreshTTL}
 }
 
 // LoginGuest（游客登录）创建游客玩家会话。
-// 正式项目可把PlayerID映射逻辑替换为Account/Player持久化模块，但Token生命周期规则保持不变。
+// 仅供旧开发/测试装配，持久密码服务明确拒绝；不执行资料初始化。
 func (s *Service) LoginGuest(ctx context.Context, gameID, deviceID string) (Session, error) {
+	if s.persistent != nil {
+		return Session{}, ErrInvalidCredentials
+	}
 	if gameID == "" || deviceID == "" {
 		return Session{}, errors.New("gameID和deviceID不能为空")
 	}
@@ -81,6 +86,9 @@ func (s *Service) LoginGuest(ctx context.Context, gameID, deviceID string) (Sess
 // Refresh（刷新令牌）执行Refresh Token Rotation（刷新令牌轮换）。
 // 每次刷新都会立即使旧Refresh Token失效，降低Token泄露后的重放风险。
 func (s *Service) Refresh(ctx context.Context, refreshToken string) (Session, error) {
+	if s.persistent != nil {
+		return s.refreshPersistent(ctx, refreshToken)
+	}
 	old, err := s.repo.GetByRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return Session{}, err
@@ -102,6 +110,9 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (Session, er
 
 // Authenticate（验证Access Token）解析可信玩家会话并拒绝不存在或已过期的访问令牌。
 func (s *Service) Authenticate(ctx context.Context, accessToken string) (Session, error) {
+	if s.persistent != nil {
+		return s.authenticatePersistent(ctx, accessToken)
+	}
 	if accessToken == "" {
 		return Session{}, errors.New("AUTH_SESSION_INVALID: Access Token不能为空")
 	}
@@ -134,7 +145,7 @@ func (CryptoTokenGenerator) NewToken(prefix string) string {
 }
 
 // MemorySessionRepository（内存会话仓储）仅用于单元测试和本地开发。
-// 生产环境应实现Redis SessionRepository，但业务服务无需改动。
+// 不可用于生产密码登录；生产使用 PersistentRepository 的原子事务。
 type MemorySessionRepository struct {
 	mu             sync.RWMutex
 	bySessionID    map[string]Session

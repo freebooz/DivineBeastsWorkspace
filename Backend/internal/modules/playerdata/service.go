@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"unicode/utf8"
+
+	"divinebeasts/backend/internal/platform/apperror"
 )
 
 // Profile（玩家资料）只保存跨局长期业务数据，不保存当前生命值、Buff、技能冷却等实时Gameplay状态。
@@ -35,10 +37,20 @@ func NewService(repo Repository) *Service { return &Service{repo: repo} }
 
 // GetProfile（获取玩家资料）按PlayerID返回长期资料只读快照。
 func (s *Service) GetProfile(ctx context.Context, playerID string) (Profile, error) {
-	if playerID == "" {
-		return Profile{}, errors.New("PlayerID不能为空")
+	if err := ctx.Err(); err != nil {
+		return Profile{}, err
 	}
-	return s.repo.Get(ctx, playerID)
+	if !validIdentity(playerID) {
+		return Profile{}, invalidRequest()
+	}
+	if s.repo == nil {
+		return Profile{}, unavailable()
+	}
+	profile, err := s.repo.Get(ctx, playerID)
+	if err != nil {
+		return Profile{}, classifyOnlineError(err)
+	}
+	return profile, nil
 }
 
 // UpdateDisplayName（更新显示名称）使用Revision实现Optimistic Concurrency（乐观并发控制）。
@@ -77,7 +89,7 @@ func (r *MemoryRepository) Get(_ context.Context, playerID string) (Profile, err
 	defer r.mu.RUnlock()
 	profile, ok := r.items[playerID]
 	if !ok {
-		return Profile{}, errors.New("玩家资料不存在")
+		return Profile{}, apperror.New("PLAYER_PROFILE_NOT_FOUND", "玩家资料不存在", false)
 	}
 	return cloneProfile(profile), nil
 }

@@ -5,7 +5,7 @@ package grpcadapter
 import (
 	"context"
 
-	matchv1 "divinebeasts/backend/generated/proto/internal/match/v1"
+	matchv1 "divinebeasts/backend/internal/generated/match/v1"
 	"divinebeasts/backend/internal/app/matchapi"
 	"google.golang.org/grpc"
 )

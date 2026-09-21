@@ -60,17 +60,19 @@ Instance租约允许切图，但调用者本身仍须存活；建议跨图调用
 
 原生 `UEditorValidatorBase` 派生类由编辑器验证子系统发现，使用UE5.8的 `CanValidateAsset_Implementation(const FAssetData&, UObject*, FDataValidationContext&) const` 与对应 `ValidateLoadedAsset_Implementation` 签名。真实验证入口返回Valid/Invalid，并加入错误诊断。编辑器只为验证同步取得依赖源对象，不登记运行期长期租约。
 
-已写入的UE自动化测试均 **未执行**：
+已写入以下9个完整身份的UE自动化测试，均 **未执行**；集成门禁须逐项存在且Success，不能仅按最低通过数量替代。门禁脚本由父任务维护，本插件未修改其文件：
 
 - `GamePlatform.Data.Definition.IdentityAndVersion`：稳定身份、结构范围、修订与非法依赖ID。
 - `GamePlatform.Data.Editor.SourceDuplicate`：隔离内存包中的不同真实资产对象登记到真实注册表，验证重复身份双方失败。
 - `GamePlatform.Data.Editor.DependencyGraph`：真实依赖成功、缺失、子定义版本/修订非法、自环、间接环及必填身份。
 - `GamePlatform.Data.Editor.DependencyDepthLimit`：129层实际定义图失败，不无限递归。
 - `GamePlatform.Data.Editor.RegisteredValidatorDispatch`：先确认编辑器自动登记平台验证器，再通过真实EditorValidatorSubsystem调度重复身份负例；不手动注册掩盖发现问题。
-- `GamePlatform.Data.Runtime.DeferredRequeueZeroDelta` / `NestedTickerNotification`：直接使用真实FTSTicker与生产调度函数，Tick(0)验证持续重排和嵌套提交不能同轮执行工作。持续未发现采用调度层未就绪条件，不是实际AssetRegistry发现过程测试。
-- `GamePlatform.Data.Runtime.RealAssetLeases`：真实配置管理器与显式提供的已保存独占开发夹具、两个隔离实例。覆盖申请即取消、引擎已接纳请求分组后/终态前取消、重复释放、错作用域/代次、待加载与成功世界租约销毁、A/B分组并集、A退出保留B、缓存/无新工作、单次终态，以及后来的外部分组/外部卸载保护。必须传 `-GamePlatformDataTestDefinition=GamePlatformDefinition:foundation.probe@1`（本轮父任务探针身份）或其他已存在的独占开发夹具；缺少资产或参数明确失败，不跳过并报告通过。测试使用真实加载服务，不伪造磁盘资产、不替换管理器；结束显式撤销测试自己的外部加载，恢复测试前基线。
+- `GamePlatform.Data.Runtime.DeferredRequeueZeroDelta`：直接使用真实FTSTicker与生产调度函数，Tick(0)验证持续重排不能同轮执行工作。持续未发现采用调度层未就绪条件，不是实际AssetRegistry发现过程测试。
+- `GamePlatform.Data.Runtime.NestedTickerNotification`：在真实Ticker回调中提交生产延后通知，Tick(0)验证本轮不执行、下一外层调度轮执行。
+- `GamePlatform.Data.Runtime.RealAssetLeases`：真实配置管理器与显式提供的已保存独占开发夹具、两个隔离实例。通过 `NewObject<UGameInstance>` → `InitializeStandalone` → 自动子系统集合 → `IGamePlatformDataService::Get` 实际取得门面，不手动创建数据子系统。覆盖申请即取消、引擎已接纳请求分组后/终态前取消、重复释放、错作用域/代次、待加载与成功世界租约销毁、A/B分组并集、A退出保留B、缓存/无新工作、单次终态，以及后来的外部分组/外部卸载保护。必须传 `-GamePlatformDataTestDefinition=GamePlatformDefinition:foundation.probe@1`（本轮父任务探针身份）或其他已存在的独占开发夹具；缺少资产或参数明确失败，不跳过并报告通过。测试使用真实加载服务，不伪造磁盘资产、不替换管理器；结束清理世界、引擎世界上下文和Shutdown实例，并显式撤销测试自己的外部加载、恢复测试前基线。
+- `GamePlatform.Data.Runtime.RecursiveFailureRollback`（编辑器模块承载，测试运行期服务）：四个唯一GUID路径下的真实内存定义通过AssetCreated加入注册表，再使用实际 `ScanPathsForPrimaryAssets`，逐一核对主资产映射；经真实GI门面申请共享依赖和两种错误根，断言 `MissingDefinition` / `DependencyCycle`、仅一次终态、无等待遗留、失败根不可读取、其他成功租约仍可读，以及失败图的UI需求撤销后Core/Server仍保留。只创建内存包，不调用SavePackage；结束使用精确GUID路径撤销主资产/扫描路径、注册表源对象和实例。静态依据为UE5.8 `SearchAssetRegistryPaths` 编辑器非Cook分支 `bIncludeOnlyOnDiskAssets=false`，不使用动态资产或模拟加载器替代实际扫描。
 
-尚未补全的测试覆盖：通过真实UGameInstance内部子系统集合初始化并调用公开 `IGamePlatformDataService::Get` 的实例集成；运行期服务递归缺失/环的加载失败回滚（目前是编辑器真实对象图负例和原生账本回滚）；包含真实Core/UI/Server软引用对象的分组保持/GC验证（现有集成断言是引擎分组状态和根定义可读性）；实际磁盘异步发现长期未就绪过程；完整多PIE与真实切图。引擎请求已开始后取消用例不保证实际磁盘IO仍在进行。以上不因已有测试名称而视为完成。
+尚未补全的测试覆盖：包含真实Core/UI/Server软引用对象的分组保持/GC验证（现有集成断言是引擎分组状态和根定义可读性）；实际磁盘异步发现长期未就绪过程；完整多PIE与真实切图。引擎请求已开始后取消用例不保证实际磁盘IO仍在进行。没有为此扩大本轮四个正式资产范围。以上不因已有测试名称而视为完成；新GI门面与运行期错误图测试也只代表已有源码，不代表已经执行。
 
 ## 本次已执行验证与边界
 
@@ -119,6 +121,7 @@ UE反射生成、编辑器/客户端/服务器构建、上述UE自动化、DataV
 - `Source/GamePlatformDataEditor/Private/GamePlatformDataEditorModule.cpp`：编辑器模块入口。
 - `Source/GamePlatformDataEditor/Private/Validation/GamePlatformDefinitionValidator.h` / `.cpp`：真实源对象递归验证。
 - `Source/GamePlatformDataEditor/Private/Tests/GamePlatformDefinitionValidationTests.cpp`：隔离注册表负例。
+- `Source/GamePlatformDataEditor/Private/Tests/GamePlatformRuntimeDependencyTests.cpp`：内存源经真实扫描后的运行期租约递归失败与共享需求回滚。
 - `Tests/CMakeLists.txt`：父任务已有独立原生测试入口，保留。
 - `Tests/DataDemandTests.cpp`：原生账本20断言。
 - `README.md`：本阶段能力、精确接口、限制与证据。

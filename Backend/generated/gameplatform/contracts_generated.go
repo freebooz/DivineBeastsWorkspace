@@ -40,9 +40,13 @@ var OpenAPIOperations = []string{
 	"heartbeatGameServer",
 	"issueServerTransferTicket",
 	"loginIdentityInternal",
+	"logoutGatewayAuthentication",
 	"markGameServerReady",
+	"probeGatewayOnline",
+	"refreshGatewayAuthentication",
 	"registerGameServer",
 	"submitAuthoritativeMatchResult",
+	"updateGatewayPlayerProfile",
 	"validateServerTransferTicket",
 }
 
@@ -85,9 +89,13 @@ var OpenAPIRoutes = []OpenAPIRoute{
 	{OperationID: "heartbeatGameServer", Method: "POST", Path: "/internal/v1/gameservers/heartbeat"},
 	{OperationID: "issueServerTransferTicket", Method: "POST", Path: "/internal/v1/gameservers/issue-transfer"},
 	{OperationID: "loginIdentityInternal", Method: "POST", Path: "/internal/v1/identity/login"},
+	{OperationID: "logoutGatewayAuthentication", Method: "POST", Path: "/v1/auth/logout"},
 	{OperationID: "markGameServerReady", Method: "POST", Path: "/internal/v1/gameservers/ready"},
+	{OperationID: "probeGatewayOnline", Method: "GET", Path: "/v1/online/probe"},
+	{OperationID: "refreshGatewayAuthentication", Method: "POST", Path: "/v1/auth/refresh"},
 	{OperationID: "registerGameServer", Method: "POST", Path: "/internal/v1/gameservers/register"},
 	{OperationID: "submitAuthoritativeMatchResult", Method: "POST", Path: "/internal/v1/gameservers/match-result"},
+	{OperationID: "updateGatewayPlayerProfile", Method: "PATCH", Path: "/v1/player/profile"},
 	{OperationID: "validateServerTransferTicket", Method: "POST", Path: "/internal/v1/gameservers/validate-transfer"},
 }
 

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package divinebeasts.backend.match.v1;
 
-option go_package = "divinebeasts/backend/generated/proto/internal/match/v1;matchv1";
+option go_package = "divinebeasts/backend/internal/generated/match/v1;matchv1";
 
 // MatchService（比赛组织内部服务）供Gateway执行Party与Matchmaking业务操作。
 service MatchService {
