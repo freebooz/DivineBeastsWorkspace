@@ -2,6 +2,7 @@
 #include "Definitions/GamePlatformPCGProfileDefinition.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Interfaces/IPluginManager.h"
+#include "Modules/ModuleManager.h"
 #include "HAL/FileManager.h"
 #include "Misc/EngineVersion.h"
 #include "Misc/PackageName.h"

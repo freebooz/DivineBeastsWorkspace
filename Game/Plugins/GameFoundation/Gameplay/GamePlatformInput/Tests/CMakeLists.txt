@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.20)
+project(GamePlatformInputPolicyTests LANGUAGES CXX)
+
+# 仅构建真实生产策略的原生回归，不代表 UE、物理设备或磁盘设置验收。
+enable_testing()
+add_executable(InputPolicyTests ../Source/GamePlatformInputClient/Private/Tests/InputPolicyTests.cpp)
+set_target_properties(InputPolicyTests PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
+target_compile_definitions(InputPolicyTests PRIVATE GAMEPLATFORM_INPUT_NATIVE_TESTS=1)
+target_include_directories(InputPolicyTests PRIVATE ../Source/GamePlatformInputClient/Private)
+if(MSVC)
+    target_compile_options(InputPolicyTests PRIVATE /W4 /WX /utf-8 /permissive- /fp:precise)
+else()
+    target_compile_options(InputPolicyTests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math)
+endif()
+add_test(NAME Input.Policy COMMAND InputPolicyTests)
+set_tests_properties(Input.Policy PROPERTIES TIMEOUT 10)
