@@ -1,0 +1,19 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "Game Platform Application Flow",
+  "Description": "游戏实例作用域的应用流程执行机制；组合根注入节点，支持分支、异步完成、有限重试、超时和取消。",
+  "Category": "GameFoundation.Application",
+  "CreatedBy": "DivineBeasts Team",
+  "CanContainContent": false,
+  "IsBetaVersion": true,
+  "Modules": [
+    {
+      "Name": "GamePlatformApplicationFlow",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "TargetAllowList": ["Editor", "Client", "Server", "Game"]
+    }
+  ]
+}
