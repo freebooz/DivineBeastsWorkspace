@@ -30,9 +30,16 @@ void UGamePlatformWorldSubsystem::Initialize(FSubsystemCollectionBase& Collectio
 bool UGamePlatformWorldSubsystem::Owns(TWeakObjectPtr<UObject> Object) const
 { return Object.IsValid() && Object->GetWorld()==GetWorld(); }
 bool UGamePlatformWorldSubsystem::CanMutate() const
-{ return !bClosing&&!bDispatching&&GetWorld()&&!GetWorld()->bIsTearingDown; }
+{ return Policy::AllowsUpdates(bClosing,bDispatching,Snapshot.Context.ReadinessState==EGamePlatformWorldReadiness::Failed,
+    GetWorld()&&!GetWorld()->bIsTearingDown); }
 void UGamePlatformWorldSubsystem::Fail(FName Code,const FString& Message)
-{Snapshot.Context.ReadinessState=EGamePlatformWorldReadiness::Failed;Snapshot.Context.Result=FGamePlatformResult::Failure(Code,Message);}
+{
+    if(bClosing||Snapshot.Context.ReadinessState==EGamePlatformWorldReadiness::Failed)return;
+    Snapshot.Context.ReadinessState=EGamePlatformWorldReadiness::Failed;
+    Snapshot.Context.Result=FGamePlatformResult::Failure(Code,Message);
+    // 先拒绝后续回调，再在安全采样点统一清理；不在贡献者迭代或Data完成栈重入释放。
+    bFailureCleanupPending=true;
+}
 FGamePlatformResult UGamePlatformWorldSubsystem::InitializeSessionWorld()
 {
     check(IsInGameThread());
@@ -103,6 +110,8 @@ void UGamePlatformWorldSubsystem::Refresh()
 {
     check(IsInGameThread());
     if(bClosing||bDispatching)return;
+    if(Snapshot.Context.ReadinessState==EGamePlatformWorldReadiness::Failed)
+    {if(bFailureCleanupPending)ReleaseOwnedResources();return;}
     UWorld* World=GetWorld();
     Snapshot.bWorldObjectValid=IsValid(World)&&World->HasBegunPlay()&&DoesSupportWorldType(World->WorldType);
     Snapshot.bWorldNotTearingDown=IsValid(World)&&!World->bIsTearingDown;
@@ -135,11 +144,15 @@ void UGamePlatformWorldSubsystem::Refresh()
             if(Result.Status!=EGamePlatformResultStatus::NotExecuted&&!Result.IsSuccess())Fail(Result.Code,Result.Message);
         }
     }
-    if(!bStarted||Snapshot.Context.ReadinessState==EGamePlatformWorldReadiness::Failed)return;
+    if(!bStarted||Snapshot.Context.ReadinessState==EGamePlatformWorldReadiness::Failed)
+    {if(bFailureCleanupPending)ReleaseOwnedResources();return;}
     const bool Ready=Policy::IsReady({Snapshot.bWorldObjectValid,Snapshot.bDefinitionLoaded,Snapshot.bMapIdentityMatched,
         Snapshot.bSessionContextMatched,Snapshot.bRequiredRegionsRegistered,Snapshot.bRequiredStreamingReady,
         Snapshot.bWorldNotTearingDown,Snapshot.bContributorsReady});
-    if(!Ready&&FPlatformTime::Seconds()>=DeadlineSeconds){Fail(TEXT("WorldReadinessTimeout"),TEXT("世界必需事实未在截止时间内就绪"));return;}
+    const double Now=FPlatformTime::Seconds();
+    DeadlineSeconds=Policy::NextDeadline(Snapshot.Context.ReadinessState==EGamePlatformWorldReadiness::Ready,Ready,Now,
+        Definition?Definition->ReadinessTimeoutSeconds:60,DeadlineSeconds);
+    if(!Ready&&Now>=DeadlineSeconds){Fail(TEXT("WorldReadinessTimeout"),TEXT("世界必需事实未在截止时间内就绪"));ReleaseOwnedResources();return;}
     Snapshot.Context.ReadinessState=Ready?EGamePlatformWorldReadiness::Ready:EGamePlatformWorldReadiness::Waiting;
     Snapshot.Context.Result=Ready?FGamePlatformResult::Success():FGamePlatformResult{};
 }
@@ -165,11 +178,17 @@ void UGamePlatformWorldSubsystem::Stop()
     Snapshot.Context.Result=FGamePlatformResult::Cancelled(TEXT("世界生命周期结束"));
     Snapshot.bWorldNotTearingDown=false;Snapshot.bWorldObjectValid=false;
     if(TickerHandle.IsValid()){FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle);TickerHandle.Reset();}
+    ReleaseOwnedResources();
+}
+void UGamePlatformWorldSubsystem::ReleaseOwnedResources()
+{
+    bFailureCleanupPending=false;
     if(Streaming){Streaming->Shutdown();Streaming.Reset();}
     Subscriptions.Reset();Contributors.Reset();PendingEvents.Reset();Regions.Reset();Observers.Reset();
     auto* World=GetWorld();auto* GI=World?World->GetGameInstance():nullptr;auto* Data=GI?IGamePlatformDataService::Get(*GI):nullptr;
     if(Data){for(const auto& Pair:RegionLeases)Data->ReleaseDefinition(Pair.Value);if(DefinitionLease.IsValid())Data->ReleaseDefinition(DefinitionLease);}
     RegionLeases.Reset();RegionIdentities.Reset();DefinitionLease={};
+    Snapshot.bDefinitionLoaded=false;Snapshot.bRequiredRegionsRegistered=false;Snapshot.bRequiredStreamingReady=false;
 }
 void UGamePlatformWorldSubsystem::OnWorldEndPlay(UWorld& World){Stop();Super::OnWorldEndPlay(World);}
 void UGamePlatformWorldSubsystem::Deinitialize(){Stop();Super::Deinitialize();}

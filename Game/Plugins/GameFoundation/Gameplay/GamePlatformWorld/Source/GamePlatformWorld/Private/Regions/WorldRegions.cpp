@@ -96,3 +96,9 @@ FGamePlatformWorldStreamingHandle UGamePlatformWorldSubsystem::RequestStreaming(
 }
 FGamePlatformResult UGamePlatformWorldSubsystem::CancelStreaming(const FGamePlatformWorldStreamingHandle& Handle)
 {check(IsInGameThread());return CanMutate()&&Streaming?Streaming->Cancel(Handle):RegionError(TEXT("WorldClosing"));}
+FGamePlatformWorldStreamingResult UGamePlatformWorldSubsystem::GetStreamingState(const FGamePlatformWorldStreamingHandle& Handle)
+{
+    check(IsInGameThread());
+    if(bClosing||bDispatching||!Streaming)return {EGamePlatformWorldStreamingState::Failed,TEXT("WorldUnavailable")};
+    Streaming->Tick();return Streaming->GetState(Handle);
+}

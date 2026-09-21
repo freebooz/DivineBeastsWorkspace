@@ -12,6 +12,11 @@ inline bool AcceptsGeneration(std::string_view Expected, std::string_view Actual
 { return !Expected.empty() && Expected == Actual && WorldAlive && !TearingDown; }
 inline bool AllowLocalDevelopment(bool Explicit, bool Shipping, bool NetworkClient, bool ListenServer)
 { return Explicit && !Shipping && !NetworkClient && !ListenServer; }
+inline bool AllowsUpdates(bool Closing,bool Dispatching,bool Failed,bool WorldValid)
+{return !Closing&&!Dispatching&&!Failed&&WorldValid;}
+/** 已Ready新增义务获得一次新的预算；连续Pending不滑动续期。单位单调秒。 */
+inline double NextDeadline(bool WasReady,bool Ready,double Now,double Budget,double Deadline)
+{return WasReady&&!Ready?Now+Budget:Deadline;}
 /** 顺序：世界、定义、地图、Session、区域、流送、未销毁、扩展贡献者。 */
 struct FReadinessFacts
 {

@@ -21,6 +21,7 @@ FGamePlatformWorldRegistration RegisterReadinessContributor(TWeakObjectPtr<UObje
     TSharedRef<IGamePlatformWorldReadinessContributor>, FGamePlatformResult& OutResult);
 FGamePlatformWorldStreamingHandle RequestStreaming(
     const FGamePlatformWorldStreamingRequest&, FGamePlatformResult& OutResult);
+FGamePlatformWorldStreamingResult GetStreamingState(const FGamePlatformWorldStreamingHandle&);
 FGamePlatformResult CancelStreaming(const FGamePlatformWorldStreamingHandle&);
 ```
 
@@ -31,4 +32,3 @@ InitializeDevelopment只接纳一次；失败或已开始不覆盖现有上下�
 订阅回调在后续世界采样发布；失效拥有者自动撤销。回调/贡献者Evaluate期间拒绝修改World登记表，调用方应在后续游戏线程调度操作。贡献者Evaluate返回NotExecuted等待、Success完成，其余错误使就绪失败。
 
 Loading工厂：`TUniquePtr<IGamePlatformLoadingTask> GamePlatformWorldServices::CreateReadinessTask()`。Start绑定真实当前世界和代次；Poll传播失败；IsReadyToUse在成功后仍复核；Release只放弃任务绑定，不释放世界自己拥有的租约。
-

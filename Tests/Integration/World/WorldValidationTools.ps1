@@ -73,7 +73,8 @@ function Test-WorldRuntimeMarkers {
        这仅是日志判定算法，不证明宿主已实现这些事件。不得将FoundationReady替代World完成。
        同轮初始化至清理代次不变；Foundation重入必须新代次；事件缺失、拼接、回显均失败。 #>
     param([string]$Content,[string]$RunId,[int]$ProcessId,[ValidateSet('Foundation','Partition')][string]$Scenario,[ValidateSet('Readiness','FullLifecycle')][string]$Phase='FullLifecycle')
-    $required=if($Scenario -eq 'Foundation'){@('Initialized','DefinitionLoaded','MapMatched','RegionsReady','WorldReady','ReturnedToBootstrap','CleanupComplete','Reentered','Completed')}else{@('Initialized','DefinitionLoaded','MapMatched','PartitionConfirmed','SourceRegistered','StreamingReady','SourceRevoked','CleanupComplete','Completed')}
+    # 与DBAFoundationWorldBootstrap实际源码对应：重入也输出四个初始化事实；第二次Ready条件内才发Reentered/Completed。
+    $required=if($Scenario -eq 'Foundation'){@('Initialized','DefinitionLoaded','MapMatched','RegionsReady','WorldReady','ReturnedToBootstrap','CleanupComplete','Initialized','DefinitionLoaded','MapMatched','RegionsReady','Reentered','Completed')}else{@('Initialized','DefinitionLoaded','MapMatched','PartitionConfirmed','SourceRegistered','StreamingReady','SourceRevoked','CleanupComplete','Completed')}
     if($Scenario -eq 'Foundation' -and $Phase -eq 'Readiness'){$required=@('Initialized','DefinitionLoaded','MapMatched','RegionsReady','WorldReady')}
     $pattern='^(?:\[[^\r\n]*\])*(?:Log[A-Za-z0-9_]+:[ \t]*(?:(?:Display|Verbose):[ \t]*)?)?WorldValidation RunId=([0-9a-f-]{36}) ProcessId=([1-9][0-9]*) Scenario=(Foundation|Partition) Event=([A-Za-z]+) Generation=([0-9a-f-]{36})[ \t]*$'
     $records=[Collections.Generic.List[object]]::new()
@@ -142,6 +143,77 @@ function Invoke-WorldObservedProcess {
         return $step
     } finally {Stop-Job -Job $observer -ErrorAction SilentlyContinue; Remove-Job -Job $observer -Force -ErrorAction SilentlyContinue}
 }
+function Get-WorldModuleRoots {
+    <# 明确的构建证据范围，不遍历Backend、Secrets、Saved或任意插件。 #>
+    return [ordered]@{World='Game/Plugins/GameFoundation/Gameplay/GamePlatformWorld';Loading='Game/Plugins/GameFoundation/Application/GamePlatformLoading';Core='Game/Plugins/GameFoundation/Core/GamePlatformCore';Data='Game/Plugins/GameFoundation/Core/GamePlatformData'}
+}
+function Get-WorldSourceSnapshot {
+    <# 稳定指纹：ordinal排序的工作区相对路径、零分隔符、文件SHA256、换行，再整体SHA256。
+       覆盖主工程Source（含Target/Build.cs）、项目Config/uproj，以及四插件Source/Config/uplugin。
+       文件新增/删除也改变清单；不写源码，不收集环境、日志或凭据。 #>
+    param([string]$Workspace)
+    $root=[IO.Path]::GetFullPath($Workspace)
+    $directories=@('Game/Source','Game/Config')
+    $explicit=@('Game/DivineBeastsArena.uproject')
+    foreach($plugin in (Get-WorldModuleRoots).Values){$directories+="$plugin/Source";$directories+="$plugin/Config";$explicit+="$plugin/$([IO.Path]::GetFileName($plugin)).uplugin"}
+    $inventory=[Collections.Generic.Dictionary[string,string]]::new([StringComparer]::Ordinal)
+    foreach($directory in $directories){
+        $path=Join-Path $root $directory
+        if(Test-Path -LiteralPath $path -PathType Container){
+            foreach($file in Get-ChildItem -LiteralPath $path -Recurse -File){
+                $relative=[IO.Path]::GetRelativePath($root,$file.FullName).Replace('\','/')
+                $inventory[$relative]=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+            }
+        }
+    }
+    foreach($relative in $explicit){$path=Join-Path $root $relative;$inventory[$relative]=if(Test-Path -LiteralPath $path -PathType Leaf){(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash}else{'MISSING'}}
+    [string[]]$paths=@($inventory.Keys);[Array]::Sort($paths,[StringComparer]::Ordinal)
+    $canonical=[Text.StringBuilder]::new();$files=[Collections.Generic.List[object]]::new()
+    foreach($relative in $paths){$null=$canonical.Append($relative).Append([char]0).Append($inventory[$relative]).Append("`n");$files.Add(@{Path=$relative;SHA256=$inventory[$relative]})}
+    $fingerprint=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($canonical.ToString())))
+    return [pscustomobject]@{Fingerprint=$fingerprint;Files=@($files.ToArray());Algorithm='SHA256(sorted ordinal relative path + NUL + file SHA256 + LF)'}
+}
+function Get-WorldEditorBinaryPaths {
+    <# 成功Editor证据必须包含主模块与四个真实插件模块；运行入口不接受少项退化。 #>
+    param([string]$Workspace)
+    $paths=[ordered]@{Main=(Join-Path $Workspace 'Game/Binaries/Win64/UnrealEditor-DivineBeastsArena.dll')}
+    foreach($entry in (Get-WorldModuleRoots).GetEnumerator()){$module=[IO.Path]::GetFileName($entry.Value);$paths[$entry.Key]=Join-Path $Workspace "$($entry.Value)/Binaries/Win64/UnrealEditor-$module.dll"}
+    return $paths
+}
+function Get-WorldEditorBinaryHashes {
+    <# 只读实际存在且非空DLL；不生成标记文件，不把缺失模块记为成功。 #>
+    param([string]$Workspace)
+    $hashes=@{}
+    foreach($entry in (Get-WorldEditorBinaryPaths $Workspace).GetEnumerator()){
+        if(-not (Test-Path -LiteralPath $entry.Value -PathType Leaf) -or (Get-Item -LiteralPath $entry.Value).Length -eq 0){throw [IO.FileNotFoundException]::new("BinaryMissing:$($entry.Key)")}
+        $hashes[$entry.Key]=(Get-FileHash -LiteralPath $entry.Value -Algorithm SHA256).Hash
+    }
+    return $hashes
+}
+function Assert-WorldBuildEvidence {
+    <# 运行前拒绝旧格式、跨工作区、失败构建、源码变化、任何缺项/缺失/变化DLL。
+       报告不是签名证明；仅消费本机明确指定的构建证据，不自动信任外来报告。 #>
+    param($Report,[string]$Workspace)
+    $record=$Report | ConvertTo-Json -Depth 24 | ConvertFrom-Json -AsHashtable
+    if(-not $record.ContainsKey('Details') -or -not $record.Details.ContainsKey('BuildEvidenceVersion') -or $record.Details.BuildEvidenceVersion -ne 2){throw [IO.FileNotFoundException]::new('UnsupportedBuildEvidenceVersion：需要新VerifyWorld构建证据。')}
+    $details=$record.Details
+    if(-not $details.ContainsKey('Workspace') -or [IO.Path]::GetFullPath($details.Workspace).TrimEnd('/','\') -ine [IO.Path]::GetFullPath($Workspace).TrimEnd('/','\')){throw [IO.FileNotFoundException]::new('WorkspaceMismatch')}
+    if($record.Operation -cne 'VerifyWorld' -or @($record.Cases | Where-Object {$_.Name -ceq 'BuildEditor' -and $_.Status -ceq 'Passed' -and $_.ExitCode -eq 0}).Count -ne 1){throw [IO.FileNotFoundException]::new('EditorBuildNotPassed')}
+    if(-not $details.ContainsKey('SourceFingerprint') -or $details.SourceFingerprint -cne (Get-WorldSourceSnapshot $Workspace).Fingerprint){throw [IO.FileNotFoundException]::new('SourceFingerprintMismatch')}
+    if(-not $details.ContainsKey('EditorBinaryHashes')){throw [IO.FileNotFoundException]::new('EditorBinaryHashesMissing')}
+    $current=Get-WorldEditorBinaryHashes $Workspace
+    foreach($name in @('Main','World','Loading','Core','Data')){
+        if(-not $details.EditorBinaryHashes.ContainsKey($name)){throw [IO.FileNotFoundException]::new("BinaryEvidenceMissing:$name")}
+        if($current[$name] -cne $details.EditorBinaryHashes[$name]){throw [IO.FileNotFoundException]::new("BinaryFingerprintMismatch:$name")}
+    }
+}
+function Get-WorldRuntimeArguments {
+    <# 集中构造实际传给UE的参数，便于行为回归验证开发配置与启用旧流程的CLI标志不会混淆。 #>
+    param($Context,[string]$Map,[string]$Log,[ValidateSet('Foundation','Partition')][string]$Scenario,[ValidateSet('Readiness','FullLifecycle')][string]$Phase)
+    $arguments=@($Context.Project,$Map,'-game','-FoundationWorld',"-FoundationWorldRunId=$($Context.RunId)","-FoundationRunId=$($Context.RunId)","-FoundationWorldScenario=$Scenario",'-FoundationWorldDefinition=GamePlatformDefinition:foundation.world@1','-CustomConfig=FoundationStandalone','-unattended','-nosplash','-nosound','-stdout','-FullStdOutLogOutput','-UTF8Output',"-abslog=$Log",'-NoLiveCoding','-NoHotReload','-UDPMESSAGING_TRANSPORT_ENABLE=0','-MULTIHOME=127.0.0.1')
+    if($Scenario -eq 'Foundation' -and $Phase -eq 'FullLifecycle'){$arguments+='-FoundationWorldExercise'}
+    return $arguments
+}
 function Invoke-WorldRuntimeGate {
     <# 三入口共用fail-closed门禁。Session尚无公共快照及双进程适配，绝不伪造联网成功。
        Foundation/Partition需要显式Start、真实资产、UE5.8以及成功Editor构建的二进制哈希证据。
@@ -149,7 +221,8 @@ function Invoke-WorldRuntimeGate {
        当前尚无真实地图，预计前置阶段NotExecuted 2；不自动生成资产或构建引擎。 #>
     param([ValidateSet('Foundation','Session','Partition')][string]$Scenario,[guid]$RunId,[switch]$Start,[string]$EngineRoot,[string]$Map,[string]$DefinitionPackage,[string]$BuildResult,[int]$TimeoutSeconds=120,[ValidateSet('Readiness','FullLifecycle')][string]$Phase='FullLifecycle')
     $context=New-WorldValidationContext $RunId $Scenario
-    $steps=@(); $case=New-WorldCase "Runtime$Scenario"; $extraCases=@(); $details=@{Scope='本入口不证明Cook、Stage、MultiPIE或完整World验收。';Phase=$Phase;HostProtocol='Foundation：-FoundationWorld -FoundationWorldRunId=<D GUID>。只消费WorldValidation具名事件，不要求额外完成标记。Partition宿主适配尚待接入。'}
+    $steps=@(); $case=New-WorldCase "Runtime$Scenario"; $extraCases=@(); $details=@{Scope='本入口不证明Cook、Stage、MultiPIE或完整World验收。';Phase=$Phase;HostProtocol='Foundation：-FoundationWorld，FoundationWorldRunId与FoundationRunId同GUID；FullLifecycle加FoundationWorldExercise。只消费WorldValidation事件，不要求额外完成标记。Partition宿主适配尚待接入。'}
+    $details.BuildEvidenceScope='运行前核验v2成功Editor证据：同工作区、限定模块/配置源码指纹、Main/World/Loading/Core/Data五DLL哈希。不是数字签名或整个依赖闭包证明。'
     try {
         if($Scenario -eq 'Session'){
             throw [IO.FileNotFoundException]::new('Session公开服务/真实快照及客户端+专用服务器验证适配尚未接入；匹配与错误WorldId均未执行。不能用私有State、同名地图或开发上下文代替。')
@@ -164,16 +237,12 @@ function Invoke-WorldRuntimeGate {
         if(-not $BuildResult){throw [IO.FileNotFoundException]::new('缺少-BuildResult：需要VerifyWorld实际Editor构建成功结果，不以现存exe代替构建证据。')}
         Assert-FoundationFile $BuildResult
         $build=Get-Content -Raw -LiteralPath $BuildResult | ConvertFrom-Json
-        $rows=@($build.Cases | Where-Object {$_.Name -eq 'BuildEditor' -and $_.Status -eq 'Passed' -and $_.ExitCode -eq 0})
-        if($build.Operation -cne 'VerifyWorld' -or $rows.Count -ne 1 -or -not $build.Details.BinaryHashes.Editor){throw [IO.FileNotFoundException]::new('构建报告未证明World正式Editor目标成功。')}
-        $binary=Join-Path $context.Workspace 'Game/Binaries/Win64/UnrealEditor-DivineBeastsArena.dll'
-        Assert-FoundationFile $binary
-        if((Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash -cne $build.Details.BinaryHashes.Editor){throw [IO.FileNotFoundException]::new('当前Editor模块与构建证据不一致，需要重新构建。')}
+        Assert-WorldBuildEvidence $build $context.Workspace
+        $details.BuildSourceFingerprint=$build.Details.SourceFingerprint
         $editor=Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe'; Assert-FoundationFile $editor
         $directory=Join-Path $context.Directory 'UE'; $null=New-Item -ItemType Directory -Path $directory
         $log=Join-Path $directory 'engine.log'
-        $arguments=@($context.Project,$Map,'-game','-FoundationStandalone','-FoundationWorld',"-FoundationWorldRunId=$($context.RunId)",'-CustomConfig=FoundationStandalone','-unattended','-nosplash','-nosound','-stdout','-FullStdOutLogOutput','-UTF8Output',"-abslog=$log",'-NoLiveCoding','-NoHotReload','-UDPMESSAGING_TRANSPORT_ENABLE=0','-MULTIHOME=127.0.0.1')
-        if($Scenario -eq 'Partition'){$arguments+='-FoundationWorldScenario=Partition'}
+        $arguments=Get-WorldRuntimeArguments $context $Map $log $Scenario $Phase
         $step=Invoke-WorldObservedProcess -Context $context -Executable $editor -Arguments $arguments -Directory $directory -Log $log -Scenario $Scenario -Phase $Phase -TimeoutSeconds $TimeoutSeconds
         $steps=@($step)
         $case=New-WorldCase "Runtime$Scenario" $step.Status $step.ExitCode $step.Message @($directory)

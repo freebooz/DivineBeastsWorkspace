@@ -222,4 +222,54 @@ bool FWorldStreamingTearDownTest::RunTest(const FString& Parameters)
     return true;
 }
 
-IMPLEM
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWorldStreamingLoadedDemandTest,
+    "GamePlatform.World.Streaming.LoadedPreservesVisibilityAndHigherPriority",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FWorldStreamingLoadedDemandTest::RunTest(const FString& Parameters)
+{
+    FStreamingTestWorld Fixture;
+    if (!TestNotNull(TEXT("临时世界创建"), Fixture.World)) { return false; }
+    const FGuid Generation = FGuid::NewGuid();
+    FGamePlatformWorldStreaming Streaming(*Fixture.World, Generation);
+    auto* Level = Fixture.AddLevel(TEXT("/Game/WorldStreamingTests/UEDPIE_7_ExistingLevel"));
+    Level->SetShouldBeVisible(true);
+    Level->SetPriority(800);
+    auto Request = Fixture.Request(Generation);
+    Request.RequestedState = EGamePlatformWorldStreamingRequestedState::Loaded;
+    FGamePlatformResult Result;
+    const auto Handle = Streaming.Request(Request, Result);
+    TestTrue(TEXT("完整包名使用引擎PIE归一化"), Handle.IsValid());
+    TestTrue(TEXT("Loaded不撤销外部激活需求"), Level->ShouldBeVisible());
+    TestEqual(TEXT("不降低外部更高优先级"), Level->GetPriority(), 800);
+    FGamePlatformWorldStreaming Other(*Fixture.World, Generation);
+    TestFalse(TEXT("即使代次相同，另一个协调器不能撤销请求"), Other.Cancel(Handle).IsSuccess());
+    TestEqual(TEXT("另一个协调器不能读取请求"), Other.GetState(Handle).Error, FName(TEXT("WorldStreamingInvalidHandle")));
+    Streaming.Cancel(Handle);
+    TestTrue(TEXT("最后一个自己的需求撤销也不隐藏外部需求"), Level->ShouldBeVisible());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWorldStreamingOptionalFailureTest,
+    "GamePlatform.World.Streaming.OptionalFailureDoesNotBlockRequiredReadiness",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FWorldStreamingOptionalFailureTest::RunTest(const FString& Parameters)
+{
+    FStreamingTestWorld Fixture;
+    if (!TestNotNull(TEXT("临时世界创建"), Fixture.World)) { return false; }
+    const FGuid Generation = FGuid::NewGuid();
+    FGamePlatformWorldStreaming Streaming(*Fixture.World, Generation);
+    auto* Level = Fixture.AddLevel(TEXT("/Game/WorldStreamingTests/ExistingLevel"));
+    auto Request = Fixture.Request(Generation);
+    Request.bRequiredForReadiness = false;
+    FGamePlatformResult Result;
+    const auto Handle = Streaming.Request(Request, Result);
+    Level->SetWorldAssetByPackageName(TEXT("/Game/WorldStreamingTests/ExternallyRetargeted"));
+    Streaming.Tick();
+    TestEqual(TEXT("包被替换明确失败"), Streaming.GetState(Handle).Error, FName(TEXT("WorldStreamingExternalChange")));
+    TestTrue(TEXT("可选失败不阻塞必需屏障"), Streaming.IsRequiredReady());
+    TestFalse(TEXT("可选失败不升级为必需失败"), Streaming.HasRequiredFailure());
+    Streaming.Tick();
+    TestTrue(TEXT("失败不会迟到Ready"), Streaming.GetState(Handle).State == EGamePlatformWorldStreamingState::Failed);
+    return true;
+}
+#endif

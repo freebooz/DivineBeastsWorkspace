@@ -34,12 +34,14 @@ public:
     virtual bool Unregister(const FGamePlatformWorldRegistration&) override;
     virtual FGamePlatformWorldRegistration RegisterReadinessContributor(TWeakObjectPtr<UObject>,TSharedRef<IGamePlatformWorldReadinessContributor>,FGamePlatformResult&) override;
     virtual FGamePlatformWorldStreamingHandle RequestStreaming(const FGamePlatformWorldStreamingRequest&,FGamePlatformResult&) override;
+    virtual FGamePlatformWorldStreamingResult GetStreamingState(const FGamePlatformWorldStreamingHandle&) override;
     virtual FGamePlatformResult CancelStreaming(const FGamePlatformWorldStreamingHandle&) override;
 private:
     bool Tick(float DeltaSeconds);
     bool Owns(TWeakObjectPtr<UObject> Object) const;
     bool CanMutate() const;
     void Stop();
+    void ReleaseOwnedResources();
     void Fail(FName Code, const FString& Message);
     void Refresh();
     void LoadRegions(const TArray<FPrimaryAssetId>& Ids);
@@ -60,4 +62,5 @@ private:
     bool bStarted = false;
     bool bClosing = false;
     bool bDispatching = false;
+    bool bFailureCleanupPending = false;
 };

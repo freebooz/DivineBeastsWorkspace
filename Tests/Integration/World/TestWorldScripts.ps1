@@ -14,6 +14,33 @@ function Check([string]$Name,[scriptblock]$Body) {
 }
 function Equal($Actual,$Expected) { if ($Actual -cne $Expected) { throw "期望[$Expected]，实际[$Actual]" } }
 function Reject([scriptblock]$Body) { $rejected=$false; try { & $Body | Out-Null } catch { $rejected=$true }; Equal $rejected $true }
+function Reject-Code([scriptblock]$Body,[string]$Code) {
+    $message=''; try { & $Body | Out-Null } catch {$message=$_.Exception.Message}
+    if($message -notlike "$Code*"){throw "期望拒绝原因$Code，实际$message"}
+}
+function New-BuildEvidenceFixture {
+    # 仅Saved中的源文本与报告算法夹具，不制造DLL/UE资产，不可作为真实运行凭据。
+    $root=Join-Path $context.Directory ('SourceFixture-'+[guid]::NewGuid().ToString('N'))
+    $null=New-Item -ItemType Directory -Path (Join-Path $root 'Game/Source/Main')
+    [IO.File]::WriteAllText((Join-Path $root 'Game/Source/Main/Example.cpp'),'source-before')
+    $snapshot=Get-WorldSourceSnapshot $root
+    $report=[pscustomobject]@{Operation='VerifyWorld';Cases=@(@{Name='BuildEditor';Status='Passed';ExitCode=0});Details=@{BuildEvidenceVersion=2;Workspace=$root;SourceFingerprint=$snapshot.Fingerprint;EditorBinaryHashes=@{Main='00';World='00';Loading='00';Core='00';Data='00'}}}
+    return @{Workspace=$root;Report=$report;Snapshot=$snapshot}
+}
+Check '构建后源码变化拒绝旧构建证据' {
+    $fixture=New-BuildEvidenceFixture
+    Equal (Get-WorldSourceSnapshot $fixture.Workspace).Fingerprint $fixture.Snapshot.Fingerprint
+    [IO.File]::WriteAllText((Join-Path $fixture.Workspace 'Game/Source/Main/Example.cpp'),'source-after')
+    Reject-Code {Assert-WorldBuildEvidence $fixture.Report $fixture.Workspace} 'SourceFingerprintMismatch'
+}
+Check '缺少主或插件DLL拒绝运行' {
+    $fixture=New-BuildEvidenceFixture
+    Reject-Code {Assert-WorldBuildEvidence $fixture.Report $fixture.Workspace} 'BinaryMissing:Main'
+}
+Check '只有主DLL哈希的旧报告拒绝运行' {
+    $old=[pscustomobject]@{Operation='VerifyWorld';Cases=@(@{Name='BuildEditor';Status='Passed';ExitCode=0});Details=@{BinaryHashes=@{Editor='00'}}}
+    Reject-Code {Assert-WorldBuildEvidence $old $context.Workspace} 'UnsupportedBuildEvidenceVersion'
+}
 Check '空矩阵不能通过' { Reject { Get-WorldVerdict @() } }
 Check '只有原生通过仍未执行2' {
     $v=Get-WorldVerdict @(@{Name='Native';Status='Passed';ExitCode=0},@{Name='Runtime';Status='NotExecuted';ExitCode=2})
@@ -29,16 +56,31 @@ Check '重复测试身份被拒绝' { Reject { Get-WorldVerdict @(@{Name='X';Sta
 Check '零RunId被拒绝' { Reject { New-WorldValidationContext -RunId ([guid]::Empty) -Operation Foundation } }
 Check '已有RunId不能被第二入口覆盖' { Reject { New-WorldValidationContext -RunId ([guid]$context.RunId) -Operation Session } }
 Check '路径逃逸地图被拒绝' { Reject { Resolve-WorldAssetPath $context '/Game/Development/World/../Secret' '.umap' } }
+Check 'World启动参数绝不启用旧Coordinator' {
+    $arguments=Get-WorldRuntimeArguments $context '/Game/Development/Foundation/Maps/L_FoundationSandbox' (Join-Path $context.Directory 'not-started.log') Foundation FullLifecycle
+    Equal ($arguments -contains '-FoundationStandalone') $false
+    Equal ($arguments -contains '-FoundationWorld') $true
+    Equal ($arguments -contains '-CustomConfig=FoundationStandalone') $true
+    Equal ($arguments -contains '-FoundationWorldExercise') $true
+    Equal ($arguments -contains '-FoundationWorldDefinition=GamePlatformDefinition:foundation.world@1') $true
+    Equal ($arguments -contains "-FoundationRunId=$($context.RunId)") $true
+}
+Check '仅Readiness不擅自启用跨图Exercise' {
+    $arguments=Get-WorldRuntimeArguments $context '/Game/Development/Foundation/Maps/L_FoundationSandbox' (Join-Path $context.Directory 'not-started.log') Foundation Readiness
+    Equal ($arguments -contains '-FoundationWorldExercise') $false
+}
 # 手工列出期望事件，不从生产算法生成期望值；漏掉清理或允许旧代次时必须失败。
 $id=$context.RunId; $generation=[guid]::NewGuid().ToString('D'); $next=[guid]::NewGuid().ToString('D')
-$events=@('Initialized','DefinitionLoaded','MapMatched','RegionsReady','WorldReady','ReturnedToBootstrap','CleanupComplete','Reentered','Completed')
-$good=@($events | ForEach-Object { $g=if($_ -in @('Reentered','Completed')){$next}else{$generation}; "LogDBAWorld: WorldValidation RunId=$id ProcessId=123 Scenario=Foundation Event=$_ Generation=$g" }) -join "`n"
+$events=@('Initialized','DefinitionLoaded','MapMatched','RegionsReady','WorldReady','ReturnedToBootstrap','CleanupComplete','Initialized','DefinitionLoaded','MapMatched','RegionsReady','Reentered','Completed')
+$good=@(for($i=0;$i -lt $events.Count;$i++){ $g=if($i -ge 7){$next}else{$generation}; "LogDBAWorld: WorldValidation RunId=$id ProcessId=123 Scenario=Foundation Event=$($events[$i]) Generation=$g" }) -join "`n"
 Check '完整同PID当前代次事件通过算法' { Equal (Test-WorldRuntimeMarkers $good $id 123 Foundation).Passed $true }
 Check '错误RunId不被旧日志满足' { Equal (Test-WorldRuntimeMarkers ($good.Replace($id,[guid]::NewGuid().ToString('D'))) $id 123 Foundation).Passed $false }
 Check '不同PID不能拼接证据' { Equal (Test-WorldRuntimeMarkers ($good.Replace('Event=WorldReady','Event=WorldReady').Replace('ProcessId=123 Scenario=Foundation Event=WorldReady','ProcessId=999 Scenario=Foundation Event=WorldReady')) $id 123 Foundation).Passed $false }
 Check '命令行回显不算事件' { Equal (Test-WorldRuntimeMarkers ($good.Replace('LogDBAWorld:','LogInit: Command Line:')) $id 123 Foundation).Passed $false }
 Check '缺少清理不通过' { Equal (Test-WorldRuntimeMarkers (($good -split "`n" | Where-Object {$_ -notmatch 'CleanupComplete'}) -join "`n") $id 123 Foundation).Passed $false }
 Check '重入不能复用旧Generation' { Equal (Test-WorldRuntimeMarkers ($good.Replace($next,$generation)) $id 123 Foundation).Passed $false }
+Check '新世界也必须实际初始化与区域就绪' { Equal (Test-WorldRuntimeMarkers (($good -split "`n" | Where-Object {$_ -notmatch "Event=RegionsReady Generation=$next"}) -join "`n") $id 123 Foundation).Passed $false }
+Check '新世界定义回调不能携带旧Generation' { Equal (Test-WorldRuntimeMarkers ($good.Replace("Event=DefinitionLoaded Generation=$next","Event=DefinitionLoaded Generation=$generation")) $id 123 Foundation).Passed $false }
 Check '同轮事件不能乱序' { $lines=$good -split "`n"; ($lines[1],$lines[2])=($lines[2],$lines[1]); Equal (Test-WorldRuntimeMarkers ($lines -join "`n") $id 123 Foundation).Passed $false }
 Check '未终止半行不作为完整证据' { Equal (Test-WorldRuntimeMarkers ($good.Substring(0,$good.Length-8)) $id 123 Foundation).Passed $false }
 Check '只Ready不要求宿主虚报跨图完成' {

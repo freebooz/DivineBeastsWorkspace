@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.20)
+# 只验证项目Travel决策算法，不链接UE、不生成宿主或资产；产物由调用者指定到workspace/Saved。
+project(DBAWorldExercisePolicyTests LANGUAGES CXX)
+enable_testing()
+add_executable(DBAWorldExercisePolicyTests WorldExercisePolicyTests.cpp)
+target_compile_features(DBAWorldExercisePolicyTests PRIVATE cxx_std_17)
+target_compile_definitions(DBAWorldExercisePolicyTests PRIVATE DBA_WORLD_BOOTSTRAP_NATIVE_TEST=1)
+if(MSVC)
+    target_compile_options(DBAWorldExercisePolicyTests PRIVATE /utf-8 /W4)
+endif()
+add_test(NAME DBA.World.ExercisePolicy COMMAND DBAWorldExercisePolicyTests)

@@ -18,6 +18,13 @@ int main()
     Check(!AcceptsGeneration("","",true,false),"empty generation");
     Check(!AcceptsGeneration("A","A",false,false),"dead world");
     Check(!AcceptsGeneration("A","A",true,true),"teardown callback");
+    Check(!AllowsUpdates(false,false,true,true),"failed context rejects late data callback");
+    Check(AllowsUpdates(false,false,false,true),"live context accepts updates");
+    Check(!AllowsUpdates(true,false,false,true),"closing rejects updates");
+    Check(!AllowsUpdates(false,true,false,true),"reentrant mutation rejected");
+    Check(NextDeadline(true,false,100,60,60)==160,"ready degradation gets new deadline");
+    Check(NextDeadline(false,false,110,60,160)==160,"pending does not extend deadline");
+    Check(NextDeadline(false,true,120,60,160)==160,"success does not mutate deadline");
     Check(AllowLocalDevelopment(true,false,false,false),"explicit offline development");
     Check(!AllowLocalDevelopment(false,false,false,false),"no implicit development");
     Check(!AllowLocalDevelopment(true,true,false,false),"shipping denied");

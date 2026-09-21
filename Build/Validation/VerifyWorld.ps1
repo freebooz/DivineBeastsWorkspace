@@ -19,6 +19,11 @@ foreach($name in @('NativeDebug','NativeRelease','BuildEditor','BuildClient','Bu
 $cases.RuntimeSession.Message='Session公开快照和真实客户端/专用服务器适配缺失；匹配及错误WorldId未执行。'
 foreach($name in @('RuntimeFoundation','RuntimePartition','Cook','Stage','MultiPIE','ManualReview')){$cases[$name].Message='本门禁不执行此验收；必须另行获得本轮真实证据，不能由原生或编译结果代替。'}
 $steps=[Collections.Generic.List[object]]::new(); $details=@{BinaryHashes=@{};Scope='原生算法/可选正式目标构建，不是UE运行、资产、联网或烘焙验收。'}
+$sourceSnapshot=Get-WorldSourceSnapshot $context.Workspace
+$details.BuildEvidenceVersion=2; $details.Workspace=$context.Workspace
+$details.SourceFingerprint=$sourceSnapshot.Fingerprint; $details.SourceInventory=$sourceSnapshot.Files; $details.SourceFingerprintAlgorithm=$sourceSnapshot.Algorithm
+$details.EditorBinaryHashes=@{}
+$details.BuildEvidenceScope='限定主工程及World/Loading/Core/Data源码与配置；成功Editor记录五DLL，不证明其余依赖闭包或引擎版本二进制完全一致。'
 if($NativeTests){
     try {
         $source=Join-Path $context.Workspace 'Game/Plugins/GameFoundation/Gameplay/GamePlatformWorld/Tests'
@@ -64,10 +69,22 @@ foreach($target in ($Targets | Select-Object -Unique)){
             $binary=Join-Path $context.Workspace "Game/Binaries/Win64/$binaryName"
             if(-not (Test-Path -LiteralPath $binary -PathType Leaf)){throw 'UBT返回0但没有目标二进制，不能提供可运行构建证据。'}
             $details.BinaryHashes[$target]=(Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash
+            if($target -eq 'Editor'){
+                # UBT返回成功后缺DLL属于已执行验证失败，不是未执行；不得留部分模块哈希。
+                try {$details.EditorBinaryHashes=Get-WorldEditorBinaryHashes $context.Workspace}
+                catch {throw [InvalidOperationException]::new($_.Exception.Message)}
+            }
+            if((Get-WorldSourceSnapshot $context.Workspace).Fingerprint -cne $details.SourceFingerprint){throw '构建期间源码指纹变化，不能将此构建作为当前源码证据。'}
         }
     } catch [IO.FileNotFoundException] {$cases["Build$target"]=New-WorldCase "Build$target" NotExecuted 2 $_.Exception.Message}
       catch {$cases["Build$target"]=New-WorldCase "Build$target" Failed 1 $_.Exception.Message}
       finally {if($lock){$lock.ReleaseMutex();$lock.Dispose()}}
+}
+$details.SourceFingerprintAfter=(Get-WorldSourceSnapshot $context.Workspace).Fingerprint
+if($details.SourceFingerprintAfter -cne $details.SourceFingerprint){
+    $details.SourceChangedDuringRun=$true
+    foreach($target in @('Editor','Client','Server')){if($cases["Build$target"].Status -eq 'Passed'){$cases["Build$target"]=New-WorldCase "Build$target" Failed 1 '本轮源码变更，需稳定快照后重新构建。'}}
+    $details.EditorBinaryHashes=@{}
 }
 $verdict=Write-WorldReport $context @($cases.Values) @($steps.ToArray()) $details
 exit $verdict.ExitCode

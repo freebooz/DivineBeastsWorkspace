@@ -34,6 +34,8 @@ public:
     virtual FGamePlatformWorldRegistration RegisterReadinessContributor(TWeakObjectPtr<UObject> Owner, TSharedRef<IGamePlatformWorldReadinessContributor> Contributor, FGamePlatformResult& OutResult) = 0;
     /** 资源使用权到取消/世界关闭为止，Ready不自动撤销流送源。 */
     virtual FGamePlatformWorldStreamingHandle RequestStreaming(const FGamePlatformWorldStreamingRequest& Request, FGamePlatformResult& OutResult) = 0;
+    /** 游戏线程重新采样底层状态；未签发、跨世界或已经关闭的句柄返回Failed，不冒充完成。 */
+    virtual FGamePlatformWorldStreamingResult GetStreamingState(const FGamePlatformWorldStreamingHandle& Handle) = 0;
     /** 撤销本次请求，不主动卸载其他用户所需资源。 */
     virtual FGamePlatformResult CancelStreaming(const FGamePlatformWorldStreamingHandle& Handle) = 0;
 };

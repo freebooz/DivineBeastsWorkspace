@@ -1,5 +1,6 @@
 #pragma once
 #include "Types/GamePlatformWorldContext.h"
+#include "UObject/PrimaryAssetId.h"
 
 /** 区域/订阅/贡献者均使用世界代次加随机登记ID，撤销不接受跨世界句柄。 */
 struct FGamePlatformWorldRegistration
