@@ -1,0 +1,16 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "Game Platform Ability System",
+  "Description": "基于原生GAS的能力集授权、化身生命周期与输入标签桥接。",
+  "Category": "GameFoundation",
+  "EnabledByDefault": false,
+  "CanContainContent": true,
+  "Modules": [{ "Name": "GamePlatformAbilitySystem", "Type": "Runtime", "LoadingPhase": "Default" }],
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformData", "Enabled": true },
+    { "Name": "GameplayAbilities", "Enabled": true }
+  ]
+}

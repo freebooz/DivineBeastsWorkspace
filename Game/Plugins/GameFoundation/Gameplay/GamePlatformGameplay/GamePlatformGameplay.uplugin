@@ -1,0 +1,23 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "Game Platform Gameplay",
+  "Description": "平台中立的体验、可信加入、权威出生、玩家生命周期与复制快照。",
+  "Category": "GameFoundation",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Modules": [
+    {
+      "Name": "GamePlatformGameplay",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ],
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformData", "Enabled": true },
+    { "Name": "GamePlatformWorld", "Enabled": true }
+  ]
+}
