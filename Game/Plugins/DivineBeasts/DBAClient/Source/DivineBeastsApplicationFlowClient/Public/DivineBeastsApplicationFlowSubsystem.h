@@ -5,12 +5,12 @@
 #include "Flow/DivineBeastsFlowTypes.h"
 #include "Extensions/DivineBeastsApplicationFlowExtension.h"
 #include "Creation/GamePlatformCharacterCreationProvider.h"
+#include "Interfaces/IGamePlatformLoadingService.h"
 #include "DivineBeastsApplicationFlowSubsystem.generated.h"
 
 class UGamePlatformApplicationFlowSubsystem;
 class UGamePlatformOnlineClientSubsystem;
 class UGamePlatformSessionClientSubsystem;
-class UGamePlatformLoadingClientSubsystem;
 class IDivineBeastsApplicationBackend;
 struct FGamePlatformFlowSnapshot;
 struct FGamePlatformAuthSnapshot;
@@ -55,19 +55,28 @@ public:
         FName DesiredExperienceId,
         const FString& PreferredRegion = FString());
 
-    UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
-    void NotifyWorldObserved(
+    /**
+     * 提交当前地图观察事实。必须传入本次异步工作的观察身份、后端分配的世界/体验身份和实际世界上下文；
+     * 只有当前实例中已开始运行且地图包匹配的世界会被接受。旧回调返回false且不改变新操作。
+     */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow", meta=(WorldContext="WorldContextObject"))
+    bool NotifyWorldObserved(
+        FGuid ObservationId,
         FName ExperienceId,
-        FName WorldId);
+        FName WorldId,
+        UObject* WorldContextObject);
 
+    /** 提交当前操作中角色与控制器绑定完成的事实；身份必须在异步操作启动时捕获。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
-    void NotifyCharacterBindingReady();
+    bool NotifyCharacterBindingReady(FGuid ObservationId);
 
+    /** 提交玩法定义及必要数据已可用的事实；可选表现资源不属于此屏障。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
-    void NotifyGameplayDataReady();
+    bool NotifyGameplayDataReady(FGuid ObservationId);
 
+    /** 提交项目级进入世界检查完成的事实；实际世界仍会由屏障持续核验。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
-    void NotifyProjectReadiness();
+    bool NotifyProjectReadiness(FGuid ObservationId);
 
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
     bool RequestPostMatchReturnToWorld();
@@ -104,7 +113,8 @@ private:
     void BeginLoadingForAssignment(
         const FString& Endpoint,
         const FString& TransferTicket);
-    void MarkLoadingTaskReady(FName TaskId);
+    bool MarkLoadingFactReady(FGuid ObservationId, FName TaskId);
+    bool ReleaseLoadingOperation();
     void TryCompleteWorldReady();
     void BeginRecovery(EDivineBeastsFlowError Error);
 
@@ -124,17 +134,19 @@ private:
     UGamePlatformApplicationFlowSubsystem* PlatformFlow = nullptr;
     UGamePlatformOnlineClientSubsystem* Online = nullptr;
     UGamePlatformSessionClientSubsystem* Session = nullptr;
-    UGamePlatformLoadingClientSubsystem* Loading = nullptr;
+    IGamePlatformLoadingService* Loading = nullptr;
 
     TSharedPtr<IDivineBeastsApplicationBackend> Backend;
 
     FDelegateHandle FlowHandle;
     FDelegateHandle AuthHandle;
     FDelegateHandle SessionHandle;
-    FDelegateHandle LoadingHandle;
+    FGamePlatformLoadingHandle ActiveLoadingOperation;
+    FGamePlatformLoadingRegistration LoadingSubscription;
+    TArray<FGamePlatformLoadingRegistration> LoadingTaskFactories;
+    TSharedPtr<class FDivineBeastsProjectLoadingContext> LoadingContext;
 
     FDivineBeastsFlowViewState ViewState;
-    FGuid ActiveLoadingOperationId;
     FGuid ActiveTransferOperationId;
     FString PendingEndpoint;
     FString PendingTransferTicket;

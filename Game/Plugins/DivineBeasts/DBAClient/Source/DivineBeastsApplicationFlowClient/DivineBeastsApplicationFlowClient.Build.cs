@@ -16,6 +16,8 @@ public class DivineBeastsApplicationFlowClient : ModuleRules
             "GamePlatformOnlineClient",
             "GamePlatformSession",
             "GamePlatformLoading",
+            "GamePlatformData",
+            "DBAWorldsRuntime",
             "GamePlatformCharacter"
         });
 

@@ -490,6 +490,8 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
                 !Result.Summary.GameServerId.IsEmpty() &&
                 !Result.Summary.ServerRoleId.IsNone() &&
                 !Result.Summary.ExperienceId.IsNone() &&
+                !Result.Summary.WorldId.IsNone() &&
+                !Result.Summary.MapId.IsNone() &&
                 !Result.Endpoint.IsEmpty() &&
                 !Result.TransferTicket.IsEmpty();
             Completion(

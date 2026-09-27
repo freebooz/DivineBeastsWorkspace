@@ -7,10 +7,21 @@
 #include "Flow/DivineBeastsFlowNodes.h"
 #include "GamePlatformApplicationFlowSubsystem.h"
 #include "GamePlatformApplicationFlowTypes.h"
-#include "GamePlatformLoadingClientSubsystem.h"
+#include "Interfaces/IGamePlatformLoadingService.h"
+#include "Interfaces/IGamePlatformLoadingTask.h"
 #include "GamePlatformOnlineClientSubsystem.h"
 #include "GamePlatformSessionClientSubsystem.h"
 #include "Identity/DivineBeastsProjectCatalog.h"
+#include "Definitions/DivineBeastsWorldDefinition.h"
+#include "Definitions/GamePlatformPrimaryDataAsset.h"
+#include "Interfaces/IGamePlatformDataService.h"
+#include "Engine/GameInstance.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
+#include "Misc/PackageName.h"
+#include "Loading/DivineBeastsReadinessFacts.h"
+#include "UObject/Package.h"
+#include <string>
 
 namespace
 {
@@ -20,6 +31,272 @@ namespace
     const FName TaskCharacterBinding(TEXT("CharacterBinding"));
     const FName TaskGameplayData(TEXT("GameplayData"));
     const FName TaskProjectReadiness(TEXT("ProjectReadiness"));
+    const FName ReadinessTaskType(TEXT("DivineBeastsReadinessFact"));
+    const FName WorldDefinitionTaskType(TEXT("DivineBeastsWorldDefinition"));
+
+    bool TryGetReadinessFact(FName TaskId, DivineBeastsLoading::Fact& OutFact)
+    {
+        if (TaskId == TaskSessionAdmission) { OutFact = DivineBeastsLoading::Fact::SessionAdmission; return true; }
+        if (TaskId == TaskExpectedWorld) { OutFact = DivineBeastsLoading::Fact::ExpectedWorld; return true; }
+        if (TaskId == TaskExpectedExperience) { OutFact = DivineBeastsLoading::Fact::ExpectedExperience; return true; }
+        if (TaskId == TaskCharacterBinding) { OutFact = DivineBeastsLoading::Fact::CharacterBinding; return true; }
+        if (TaskId == TaskGameplayData) { OutFact = DivineBeastsLoading::Fact::GameplayData; return true; }
+        if (TaskId == TaskProjectReadiness) { OutFact = DivineBeastsLoading::Fact::ProjectReadiness; return true; }
+        return false;
+    }
+
+    std::string ToUtf8(const FString& Value)
+    {
+        FTCHARToUTF8 Converted(*Value);
+        return std::string(Converted.Get(), static_cast<size_t>(Converted.Length()));
+    }
+
+    FGamePlatformLoadingTaskUpdate FailedLoadingUpdate(FName Error)
+    {
+        return {EGamePlatformLoadingTaskUpdate::Failed, 0.0, Error};
+    }
+
+    FGamePlatformResult LoadingFailure(FName Code, const TCHAR* Message)
+    {
+        return FGamePlatformResult::Failure(Code, Message);
+    }
+}
+
+/** 本次世界切换的事实和弱对象；不持有地图或会话对象，也不充当流程执行器。 */
+class FDivineBeastsProjectLoadingContext final
+{
+    public:
+        FDivineBeastsProjectLoadingContext(UGameInstance& InInstance, const FGuid& InObservationId,
+            FName InExpectedWorldId, FName InExpectedExperienceId)
+            : Instance(&InInstance), ObservationId(InObservationId), ExpectedWorldId(InExpectedWorldId),
+              ExpectedExperienceId(InExpectedExperienceId),
+              Facts(MakeShared<DivineBeastsLoading::ReadinessFacts>(
+                  ToUtf8(InObservationId.ToString()), ToUtf8(InExpectedWorldId.ToString()), ToUtf8(InExpectedExperienceId.ToString()))) {}
+
+        bool IsActiveFor(const FGuid& Id) const { return Facts->Accepts(ToUtf8(Id.ToString())); }
+        bool Observe(FGuid Id, DivineBeastsLoading::Fact Fact) { return Facts->Observe(ToUtf8(Id.ToString()), Fact); }
+        bool Has(DivineBeastsLoading::Fact Fact) const { return Facts->Has(Fact); }
+        bool AllReady() const { return Facts->AllReady(); }
+        bool HasObservedWorld() const { return Has(DivineBeastsLoading::Fact::ExpectedWorld); }
+        bool HasWorldDefinition() const { return !TargetWorldPackage.IsEmpty(); }
+        void Invalidate() { Facts->Invalidate(); ObservedWorld.Reset(); }
+
+        bool SetWorldDefinition(const UDivineBeastsWorldDefinition& Definition)
+        {
+            FGamePlatformId ExpectedWorld;
+            if (!FGamePlatformId::TryParse(ExpectedWorldId.ToString(), ExpectedWorld) ||
+                Definition.LogicalId != ExpectedWorld || !Definition.ValidateDefinition().IsSuccess() ||
+                Definition.DefaultExperienceId.LogicalVersion != 1 ||
+                FName(*(Definition.DefaultExperienceId.Namespace + TEXT(".") + Definition.DefaultExperienceId.Name)) != ExpectedExperienceId)
+            {
+                return false;
+            }
+            const FString Package = Definition.MapIdentity.ToSoftObjectPath().GetLongPackageName();
+            if (Package.IsEmpty() || !FPackageName::IsValidLongPackageName(Package)) { return false; }
+            if (ObservedWorld.IsValid() &&
+                UWorld::RemovePIEPrefix(ObservedWorld->GetOutermost()->GetName()) != Package) { return false; }
+            TargetWorldPackage = Package;
+            return true;
+        }
+
+        bool IsExpectedWorld(FGuid Id, FName ExperienceId, FName WorldId, UWorld* World) const
+        {
+            UGameInstance* Owner = Instance.Get();
+            if (!IsActiveFor(Id) || !Owner || !World || ExperienceId != ExpectedExperienceId ||
+                WorldId != ExpectedWorldId || World->GetGameInstance() != Owner || Owner->GetWorld() != World ||
+                !World->HasBegunPlay() || World->bIsTearingDown || !World->GetPackage())
+            {
+                return false;
+            }
+            if (HasWorldDefinition() && UWorld::RemovePIEPrefix(World->GetOutermost()->GetName()) != TargetWorldPackage) { return false; }
+            if (ObservedWorld.IsValid() && ObservedWorld.Get() != World) { return false; }
+            return true;
+        }
+
+        bool ObserveWorld(FGuid Id, FName ExperienceId, FName WorldId, UWorld* World)
+        {
+            if (!IsExpectedWorld(Id, ExperienceId, WorldId, World) ||
+                !Facts->ObserveWorld(ToUtf8(Id.ToString()), ToUtf8(WorldId.ToString()), ToUtf8(ExperienceId.ToString()))) { return false; }
+            ObservedWorld = World;
+            return true;
+        }
+
+        bool IsWorldOperable() const
+        {
+            UGameInstance* Owner = Instance.Get();
+            UWorld* World = ObservedWorld.Get();
+            return Facts->Has(DivineBeastsLoading::Fact::ExpectedWorld) && Facts->Has(DivineBeastsLoading::Fact::ExpectedExperience) &&
+                Owner && World && World->GetGameInstance() == Owner && Owner->GetWorld() == World &&
+                World->HasBegunPlay() && !World->bIsTearingDown && World->GetPackage() &&
+                UWorld::RemovePIEPrefix(World->GetOutermost()->GetName()) == TargetWorldPackage;
+        }
+
+        TWeakObjectPtr<UGameInstance> Instance;
+        const FGuid ObservationId;
+        const FName ExpectedWorldId;
+        const FName ExpectedExperienceId;
+        FString TargetWorldPackage;
+    private:
+        TSharedRef<DivineBeastsLoading::ReadinessFacts> Facts;
+        TWeakObjectPtr<UWorld> ObservedWorld;
+};
+
+namespace
+{
+    /** Loading任务只采样已发生的项目事实；不等待、不创建网络连接，也不伪造成功。 */
+    class FDivineBeastsProjectReadinessTask final : public IGamePlatformLoadingTask
+    {
+    public:
+        explicit FDivineBeastsProjectReadinessTask(TWeakPtr<FDivineBeastsProjectLoadingContext> InContext)
+            : Context(MoveTemp(InContext)) {}
+
+        FGamePlatformResult Start(UGameInstance& Instance, const FGamePlatformLoadingTaskSpec& Spec) override
+        {
+            const auto Shared = Context.Pin();
+            DivineBeastsLoading::Fact SpecFact;
+            if (!Shared || Shared->Instance.Get() != &Instance || !TryGetReadinessFact(Spec.TaskId, SpecFact))
+            {
+                return LoadingFailure(TEXT("ProjectReadinessContextMismatch"), TEXT("项目加载事实与任务上下文不匹配"));
+            }
+            Fact = SpecFact;
+            bStarted = true;
+            return FGamePlatformResult::Success();
+        }
+
+        FGamePlatformLoadingTaskUpdate Poll() override
+        {
+            const auto Shared = Context.Pin();
+            if (!bStarted || bReleased || !Shared || !Shared->IsActiveFor(Shared->ObservationId))
+            {
+                return FailedLoadingUpdate(TEXT("ProjectReadinessCancelled"));
+            }
+            if (Shared->HasObservedWorld() && Shared->HasWorldDefinition() && !Shared->IsWorldOperable())
+            {
+                return FailedLoadingUpdate(TEXT("ProjectWorldNoLongerOperable"));
+            }
+            return Shared->Has(Fact) && Shared->HasWorldDefinition() && Shared->IsWorldOperable()
+                ? FGamePlatformLoadingTaskUpdate{EGamePlatformLoadingTaskUpdate::Succeeded, 1.0, NAME_None}
+                : FGamePlatformLoadingTaskUpdate{EGamePlatformLoadingTaskUpdate::Pending, 0.0, NAME_None};
+        }
+
+        bool IsReadyToUse() const override
+        {
+            const auto Shared = Context.Pin();
+            return bStarted && !bReleased && Shared && Shared->Has(Fact) && Shared->HasWorldDefinition() && Shared->IsWorldOperable();
+        }
+
+        void Release() override { bReleased = true; }
+    private:
+        TWeakPtr<FDivineBeastsProjectLoadingContext> Context;
+        DivineBeastsLoading::Fact Fact = DivineBeastsLoading::Fact::Count;
+        bool bStarted = false;
+        bool bReleased = false;
+    };
+
+    /** 通过世界逻辑身份取得真实世界定义租约，再核对体验与MapIdentity；不把MapId当作磁盘包路径。 */
+    class FDivineBeastsWorldDefinitionLoadingTask final : public IGamePlatformLoadingTask
+    {
+    public:
+        explicit FDivineBeastsWorldDefinitionLoadingTask(TWeakPtr<FDivineBeastsProjectLoadingContext> InContext)
+            : Context(MoveTemp(InContext)) {}
+
+        FGamePlatformResult Start(UGameInstance& InInstance, const FGamePlatformLoadingTaskSpec& Spec) override
+        {
+            const auto Shared = Context.Pin();
+            if (!Shared || Shared->Instance.Get() != &InInstance ||
+                Spec.Data.DefinitionId.PrimaryAssetType != UGamePlatformPrimaryDataAsset::DefinitionAssetType() ||
+                Spec.Data.DefinitionId.PrimaryAssetName != FName(*Shared->ExpectedWorldId.ToString()) ||
+                Spec.Data.ExpectedClass != UDivineBeastsWorldDefinition::StaticClass())
+            {
+                return LoadingFailure(TEXT("WorldDefinitionRequestInvalid"), TEXT("世界定义数据请求与分配身份不匹配"));
+            }
+            IGamePlatformDataService* Data = IGamePlatformDataService::Get(InInstance);
+            if (!Data) { return LoadingFailure(TEXT("WorldDataServiceUnavailable"), TEXT("世界定义所需的数据服务不可用")); }
+            Instance = &InInstance;
+            Completion = MakeShared<FGamePlatformResult>();
+            FGamePlatformResult Accepted;
+            Lease = Data->AcquireDefinition(Spec.Data.DefinitionId, UDivineBeastsWorldDefinition::StaticClass(), Spec.Data.Bundles,
+                EGamePlatformDataLifetime::Instance, &InInstance,
+                [Result = Completion](const FGamePlatformDataLease&, const FGamePlatformResult& Value) { *Result = Value; }, Accepted);
+            if (!Accepted.IsSuccess() || !Lease.IsValid())
+            {
+                return Accepted.IsSuccess()
+                    ? LoadingFailure(TEXT("WorldDefinitionLeaseMissing"), TEXT("数据服务未签发有效世界定义租约"))
+                    : Accepted;
+            }
+            bStarted = true;
+            return FGamePlatformResult::Success();
+        }
+
+        FGamePlatformLoadingTaskUpdate Poll() override
+        {
+            const auto Shared = Context.Pin();
+            UGameInstance* Owner = Instance.Get();
+            IGamePlatformDataService* Data = Owner ? IGamePlatformDataService::Get(*Owner) : nullptr;
+            if (!bStarted || bReleased || !Shared || !Shared->IsActiveFor(Shared->ObservationId) || !Data)
+            {
+                return FailedLoadingUpdate(TEXT("WorldDefinitionTaskExpired"));
+            }
+            const EGamePlatformDataRequestState State = Data->GetLeaseState(Lease);
+            if (State == EGamePlatformDataRequestState::Loading) { return {}; }
+            if (State != EGamePlatformDataRequestState::Succeeded)
+            {
+                const FName Error = Completion.IsValid() && !Completion->Code.IsNone()
+                    ? Completion->Code : FName(TEXT("WorldDefinitionLoadFailed"));
+                return FailedLoadingUpdate(Error);
+            }
+            const UGamePlatformDefinitionBase* Base = Data->GetLoadedDefinition(Lease);
+            if (!Base || !Base->IsA<UDivineBeastsWorldDefinition>()) { return FailedLoadingUpdate(TEXT("WorldDefinitionClassMismatch")); }
+            const auto* Definition = static_cast<const UDivineBeastsWorldDefinition*>(Base);
+            const FGamePlatformResult Validation = Definition->ValidateDefinition();
+            if (!Validation.IsSuccess()) { return FailedLoadingUpdate(Validation.Code); }
+            if (!Shared->SetWorldDefinition(*Definition)) { return FailedLoadingUpdate(TEXT("AssignedWorldDefinitionMismatch")); }
+            DefinitionObject = const_cast<UDivineBeastsWorldDefinition*>(Definition);
+            bValidated = true;
+            return {EGamePlatformLoadingTaskUpdate::Succeeded, 1.0, NAME_None};
+        }
+
+        bool IsReadyToUse() const override
+        {
+            const auto Shared = Context.Pin();
+            UGameInstance* Owner = Instance.Get();
+            IGamePlatformDataService* Data = Owner ? IGamePlatformDataService::Get(*Owner) : nullptr;
+            const UDivineBeastsWorldDefinition* Definition = DefinitionObject.Get();
+            return bValidated && !bReleased && Shared && Shared->IsWorldOperable() && Data &&
+                Data->GetLeaseState(Lease) == EGamePlatformDataRequestState::Succeeded && Definition &&
+                Definition->ValidateDefinition().IsSuccess();
+        }
+
+        void Release() override
+        {
+            if (bReleased) { return; }
+            bReleased = true;
+            if (Lease.IsValid())
+            {
+                UGameInstance* Owner = Instance.Get();
+                IGamePlatformDataService* Data = Owner ? IGamePlatformDataService::Get(*Owner) : nullptr;
+                if (Data)
+                {
+                    const FGamePlatformResult Released = Data->ReleaseDefinition(Lease);
+                    if (!Released.IsSuccess()) { UE_LOG(LogTemp, Error, TEXT("Could not release assigned world definition lease: %s"), *Released.Code.ToString()); }
+                }
+                else { UE_LOG(LogTemp, Error, TEXT("World definition lease owner ended before explicit release; instance teardown must reclaim it")); }
+            }
+            Lease = {};
+            DefinitionObject.Reset();
+            Completion.Reset();
+            Instance.Reset();
+        }
+    private:
+        TWeakPtr<FDivineBeastsProjectLoadingContext> Context;
+        TWeakObjectPtr<UGameInstance> Instance;
+        TWeakObjectPtr<UDivineBeastsWorldDefinition> DefinitionObject;
+        FGamePlatformDataLease Lease;
+        TSharedPtr<FGamePlatformResult> Completion;
+        bool bStarted = false;
+        bool bValidated = false;
+        bool bReleased = false;
+    };
 
     IGamePlatformCharacterCreationProvider* GetCharacterCreationProvider()
     {
@@ -56,8 +333,7 @@ void UDivineBeastsApplicationFlowSubsystem::Initialize(
         GetGameInstance()->GetSubsystem<UGamePlatformOnlineClientSubsystem>();
     Session =
         GetGameInstance()->GetSubsystem<UGamePlatformSessionClientSubsystem>();
-    Loading =
-        GetGameInstance()->GetSubsystem<UGamePlatformLoadingClientSubsystem>();
+    Loading = IGamePlatformLoadingService::Get(*GetGameInstance());
 
     if (PlatformFlow)
     {
@@ -78,13 +354,6 @@ void UDivineBeastsApplicationFlowSubsystem::Initialize(
             this,
             &UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot);
     }
-    if (Loading)
-    {
-        LoadingHandle = Loading->OnLoadingChanged().AddUObject(
-            this,
-            &UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot);
-    }
-
     Backend = MakeShared<FDivineBeastsHttpApplicationBackend>(Online);
     ResetProjection();
 }
@@ -96,9 +365,9 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
         Backend->CancelAll();
         Backend.Reset();
     }
-    if (Loading && ActiveLoadingOperationId.IsValid())
+    if (!ReleaseLoadingOperation())
     {
-        Loading->CancelOperation(ActiveLoadingOperationId);
+        UE_LOG(LogTemp, Error, TEXT("DivineBeasts flow could not release its owned Loading operation during shutdown"));
     }
     if (Session)
     {
@@ -138,11 +407,6 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
     {
         Session->OnSessionChanged().Remove(SessionHandle);
     }
-    if (Loading && LoadingHandle.IsValid())
-    {
-        Loading->OnLoadingChanged().Remove(LoadingHandle);
-    }
-
     Extensions.Reset();
     Super::Deinitialize();
 }
@@ -220,9 +484,10 @@ bool UDivineBeastsApplicationFlowSubsystem::StartFlow(bool bTryAutoLogin)
     }
 
     Backend->CancelAll();
-    if (ActiveLoadingOperationId.IsValid())
+    if (!ReleaseLoadingOperation())
     {
-        Loading->CancelOperation(ActiveLoadingOperationId);
+        SetError(EDivineBeastsFlowError::StaleOperation);
+        return false;
     }
     Session->CancelTransfer();
     PlatformFlow->InvalidateRun();
@@ -621,6 +886,14 @@ bool UDivineBeastsApplicationFlowSubsystem::RequestWorldAssignment(
         return false;
     }
 
+    // 新的Assignment不能覆盖上一操作的任务、订阅或数据租约。
+    if ((ActiveLoadingOperation.IsValid() || LoadingContext.IsValid() || !LoadingTaskFactories.IsEmpty()) &&
+        !ReleaseLoadingOperation())
+    {
+        SetError(EDivineBeastsFlowError::StaleOperation);
+        return false;
+    }
+
     const FName Current =
         PlatformFlow ? PlatformFlow->GetSnapshot().CurrentNodeId : NAME_None;
     if (Current != FDivineBeastsFlowNodes::ValidateSelection() &&
@@ -674,6 +947,7 @@ bool UDivineBeastsApplicationFlowSubsystem::RequestWorldAssignment(
                     Assignment.Summary.ExperienceId,
                     ExpectedRole) &&
                 ExpectedRole == Assignment.Summary.ServerRoleId &&
+                !Assignment.Summary.WorldId.IsNone() && !Assignment.Summary.MapId.IsNone() &&
                 Assignment.Summary.CharacterId ==
                     WeakThis->ViewState.SelectedCharacter.CharacterId;
             if (!bMappingValid)
@@ -701,19 +975,103 @@ void UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment(
     const FString& Endpoint,
     const FString& TransferTicket)
 {
-    const TArray<FName> RequiredTasks =
+    if (!Loading || ViewState.Assignment.MapId.IsNone() || ViewState.Assignment.WorldId.IsNone() ||
+        ViewState.Assignment.ExperienceId.IsNone())
     {
-        TaskSessionAdmission,
-        TaskExpectedWorld,
-        TaskExpectedExperience,
-        TaskCharacterBinding,
-        TaskGameplayData,
-        TaskProjectReadiness
-    };
-    ActiveLoadingOperationId =
-        Loading->BeginOperation(RequiredTasks);
+        BeginRecovery(EDivineBeastsFlowError::WorldAssignmentUnavailable);
+        return;
+    }
 
     ActiveTransferOperationId = FGuid::NewGuid();
+    ViewState.LoadingObservationId = ActiveTransferOperationId;
+    LoadingContext = MakeShared<FDivineBeastsProjectLoadingContext>(
+        *GetGameInstance(), ActiveTransferOperationId, ViewState.Assignment.WorldId,
+        ViewState.Assignment.ExperienceId);
+
+    FGamePlatformResult Result;
+    const TWeakPtr<FDivineBeastsProjectLoadingContext> WeakContext = LoadingContext;
+    const FGamePlatformLoadingRegistration Factory = Loading->RegisterTaskFactory(ReadinessTaskType,
+        [WeakContext]() -> TUniquePtr<IGamePlatformLoadingTask>
+        {
+            if (!WeakContext.Pin()) { return nullptr; }
+            return MakeUnique<FDivineBeastsProjectReadinessTask>(WeakContext);
+        }, Result);
+    if (!Result.IsSuccess() || !Factory.IsValid())
+    {
+        ReleaseLoadingOperation();
+        BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
+        return;
+    }
+    LoadingTaskFactories.Add(Factory);
+
+    const FGamePlatformLoadingRegistration WorldDefinitionFactory = Loading->RegisterTaskFactory(WorldDefinitionTaskType,
+        [WeakContext]() -> TUniquePtr<IGamePlatformLoadingTask>
+        {
+            if (!WeakContext.Pin()) { return nullptr; }
+            return MakeUnique<FDivineBeastsWorldDefinitionLoadingTask>(WeakContext);
+        }, Result);
+    if (!Result.IsSuccess() || !WorldDefinitionFactory.IsValid())
+    {
+        ReleaseLoadingOperation();
+        BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
+        return;
+    }
+    LoadingTaskFactories.Add(WorldDefinitionFactory);
+
+    FGamePlatformLoadingOperationSpec Spec;
+    Spec.Purpose = TEXT("DivineBeastsWorldEntry");
+    // 全屏障任务使用同一操作期限，避免单个事实在World/Session仍加载时先行超时。
+    for (const FName TaskId : {TaskSessionAdmission, TaskExpectedWorld, TaskExpectedExperience,
+                                TaskCharacterBinding, TaskGameplayData, TaskProjectReadiness})
+    {
+        FGamePlatformLoadingTaskSpec Task;
+        Task.TaskId = TaskId;
+        Task.TaskType = ReadinessTaskType;
+        Task.Requiredness = EGamePlatformLoadingRequirement::Required;
+        Task.TimeoutSeconds = Spec.TimeoutSeconds;
+        Spec.Tasks.Add(MoveTemp(Task));
+    }
+    FGamePlatformId ParsedWorldId;
+    if (!FGamePlatformId::TryParse(ViewState.Assignment.WorldId.ToString(), ParsedWorldId))
+    {
+        ReleaseLoadingOperation();
+        BeginRecovery(EDivineBeastsFlowError::WorldAssignmentUnavailable);
+        return;
+    }
+    FGamePlatformLoadingTaskSpec WorldDefinitionTask;
+    WorldDefinitionTask.TaskId = TEXT("AssignedWorldDefinition");
+    WorldDefinitionTask.TaskType = WorldDefinitionTaskType;
+    WorldDefinitionTask.Requiredness = EGamePlatformLoadingRequirement::Required;
+    WorldDefinitionTask.TimeoutSeconds = Spec.TimeoutSeconds;
+    WorldDefinitionTask.Data.DefinitionId = FPrimaryAssetId(
+        UGamePlatformPrimaryDataAsset::DefinitionAssetType(), FName(*ParsedWorldId.ToString()));
+    WorldDefinitionTask.Data.ExpectedClass = UDivineBeastsWorldDefinition::StaticClass();
+    Spec.Tasks.Add(MoveTemp(WorldDefinitionTask));
+
+    ActiveLoadingOperation = Loading->StartLoadingOperation(Spec, this, Result);
+    if (!Result.IsSuccess() || !ActiveLoadingOperation.IsValid())
+    {
+        ReleaseLoadingOperation();
+        BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
+        return;
+    }
+    LoadingSubscription = Loading->SubscribeLoadingState(ActiveLoadingOperation, this,
+        [WeakThis = TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem>(this), Expected = ActiveLoadingOperation]
+        (const FGamePlatformLoadingSnapshot& Snapshot)
+        {
+            if (WeakThis.IsValid() && Snapshot.Handle == Expected && WeakThis->ActiveLoadingOperation == Expected)
+            {
+                WeakThis->HandleLoadingSnapshot(Snapshot);
+            }
+        });
+    if (!LoadingSubscription.IsValid())
+    {
+        ReleaseLoadingOperation();
+        BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
+        return;
+    }
+    BroadcastView();
+
     FGamePlatformSessionTransferRequest Request;
     Request.TransferOperationId = ActiveTransferOperationId;
     Request.AssignmentId = ViewState.Assignment.AssignmentId;
@@ -737,46 +1095,92 @@ void UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment(
     }
 }
 
-void UDivineBeastsApplicationFlowSubsystem::NotifyWorldObserved(
+bool UDivineBeastsApplicationFlowSubsystem::NotifyWorldObserved(
+    FGuid ObservationId,
     FName ExperienceId,
-    FName WorldId)
+    FName WorldId,
+    UObject* WorldContextObject)
 {
-    if (WorldId.IsNone() ||
-        ExperienceId != ViewState.Assignment.ExperienceId)
+    UWorld* ObservedWorld = WorldContextObject && GEngine
+        ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull)
+        : nullptr;
+    if (!Loading || !ActiveLoadingOperation.IsValid() || !LoadingContext.IsValid() ||
+        !LoadingContext->IsExpectedWorld(ObservationId, ExperienceId, WorldId, ObservedWorld))
+    {
+        if (ObservationId == ViewState.LoadingObservationId) { SetError(EDivineBeastsFlowError::WorldMismatch); }
+        return false;
+    }
+    if (!LoadingContext->ObserveWorld(ObservationId, ExperienceId, WorldId, ObservedWorld))
     {
         SetError(EDivineBeastsFlowError::WorldMismatch);
-        return;
+        return false;
     }
-
-    MarkLoadingTaskReady(TaskExpectedWorld);
-    MarkLoadingTaskReady(TaskExpectedExperience);
-    ViewState.Assignment.WorldId = WorldId;
+    TryCompleteWorldReady();
+    return true;
 }
 
-void UDivineBeastsApplicationFlowSubsystem::NotifyCharacterBindingReady()
+bool UDivineBeastsApplicationFlowSubsystem::NotifyCharacterBindingReady(FGuid ObservationId)
 {
-    MarkLoadingTaskReady(TaskCharacterBinding);
+    return MarkLoadingFactReady(ObservationId, TaskCharacterBinding);
 }
 
-void UDivineBeastsApplicationFlowSubsystem::NotifyGameplayDataReady()
+bool UDivineBeastsApplicationFlowSubsystem::NotifyGameplayDataReady(FGuid ObservationId)
 {
-    MarkLoadingTaskReady(TaskGameplayData);
+    return MarkLoadingFactReady(ObservationId, TaskGameplayData);
 }
 
-void UDivineBeastsApplicationFlowSubsystem::NotifyProjectReadiness()
+bool UDivineBeastsApplicationFlowSubsystem::NotifyProjectReadiness(FGuid ObservationId)
 {
-    MarkLoadingTaskReady(TaskProjectReadiness);
+    return MarkLoadingFactReady(ObservationId, TaskProjectReadiness);
 }
 
-void UDivineBeastsApplicationFlowSubsystem::MarkLoadingTaskReady(FName TaskId)
+bool UDivineBeastsApplicationFlowSubsystem::MarkLoadingFactReady(FGuid ObservationId, FName TaskId)
 {
-    if (Loading && ActiveLoadingOperationId.IsValid())
+    DivineBeastsLoading::Fact Fact;
+    if (!Loading || !ActiveLoadingOperation.IsValid() || !LoadingContext.IsValid() ||
+        ObservationId != ActiveTransferOperationId || !TryGetReadinessFact(TaskId, Fact) ||
+        Fact == DivineBeastsLoading::Fact::SessionAdmission || Fact == DivineBeastsLoading::Fact::ExpectedWorld ||
+        Fact == DivineBeastsLoading::Fact::ExpectedExperience || !LoadingContext->Observe(ObservationId, Fact))
     {
-        Loading->SetTaskState(
-            ActiveLoadingOperationId,
-            TaskId,
-            EGamePlatformLoadingTaskState::Ready);
+        return false;
     }
+    TryCompleteWorldReady();
+    return true;
+}
+
+bool UDivineBeastsApplicationFlowSubsystem::ReleaseLoadingOperation()
+{
+    if (LoadingContext.IsValid()) { LoadingContext->Invalidate(); }
+    ViewState.LoadingObservationId.Invalidate();
+    ActiveTransferOperationId.Invalidate();
+    PendingEndpoint.Reset();
+    PendingTransferTicket.Reset();
+    BroadcastView();
+    if (LoadingSubscription.IsValid())
+    {
+        if (!Loading) { return false; }
+        Loading->UnsubscribeLoadingState(LoadingSubscription);
+        LoadingSubscription = {};
+    }
+    if (ActiveLoadingOperation.IsValid())
+    {
+        if (!Loading) { return false; }
+        const FGamePlatformResult Released = Loading->ReleaseLoadingOperation(ActiveLoadingOperation);
+        if (!Released.IsSuccess()) { return false; }
+        ActiveLoadingOperation = {};
+    }
+    if (!LoadingTaskFactories.IsEmpty())
+    {
+        if (!Loading) { return false; }
+        for (int32 Index = LoadingTaskFactories.Num() - 1; Index >= 0; --Index)
+        {
+            const FGamePlatformResult Unregistered = Loading->UnregisterTaskFactory(LoadingTaskFactories[Index]);
+            if (Unregistered.IsSuccess()) { LoadingTaskFactories.RemoveAt(Index); }
+        }
+        if (!LoadingTaskFactories.IsEmpty()) { return false; }
+    }
+    LoadingContext.Reset();
+    return true;
 }
 
 void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
@@ -795,7 +1199,13 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
 
     if (Snapshot.State == EGamePlatformSessionTransferState::Admitted)
     {
-        MarkLoadingTaskReady(TaskSessionAdmission);
+        DivineBeastsLoading::Fact AdmissionFact;
+        if (LoadingContext.IsValid() && Snapshot.TransferOperationId == ActiveTransferOperationId &&
+            TryGetReadinessFact(TaskSessionAdmission, AdmissionFact) &&
+            LoadingContext->Observe(ActiveTransferOperationId, AdmissionFact))
+        {
+            TryCompleteWorldReady();
+        }
     }
     else if (Snapshot.State == EGamePlatformSessionTransferState::Failed)
     {
@@ -807,22 +1217,37 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
 void UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot(
     const FGamePlatformLoadingSnapshot& Snapshot)
 {
-    if (Snapshot.OperationId != ActiveLoadingOperationId)
+    if (!(Snapshot.Handle == ActiveLoadingOperation))
     {
         return;
     }
 
     ViewState.LoadingSummary =
-        StaticEnum<EGamePlatformLoadingOperationState>()
-            ? StaticEnum<EGamePlatformLoadingOperationState>()
+        StaticEnum<EGamePlatformLoadingState>()
+            ? StaticEnum<EGamePlatformLoadingState>()
                 ->GetNameStringByValue(static_cast<int64>(Snapshot.State))
             : FString();
 
-    if (Snapshot.State == EGamePlatformLoadingOperationState::Ready)
+    if (Snapshot.State == EGamePlatformLoadingState::Ready || Snapshot.State == EGamePlatformLoadingState::DegradedReady)
     {
-        TryCompleteWorldReady();
+        if (!Loading || !LoadingContext.IsValid() || !LoadingContext->AllReady() || !LoadingContext->IsWorldOperable() ||
+            !Loading->IsReadyToPlay(ActiveLoadingOperation) || !Session)
+        {
+            BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
+        }
+        else
+        {
+            const FGamePlatformSessionSnapshot SessionSnapshot = Session->GetSnapshot();
+            if (SessionSnapshot.TransferOperationId != ActiveTransferOperationId ||
+                SessionSnapshot.State != EGamePlatformSessionTransferState::Admitted)
+            {
+                BeginRecovery(EDivineBeastsFlowError::AdmissionFailed);
+            }
+            else { TryCompleteWorldReady(); }
+        }
     }
-    else if (Snapshot.State == EGamePlatformLoadingOperationState::Failed)
+    else if (Snapshot.State == EGamePlatformLoadingState::Failed || Snapshot.State == EGamePlatformLoadingState::TimedOut ||
+             Snapshot.State == EGamePlatformLoadingState::Cancelled)
     {
         BeginRecovery(
             EDivineBeastsFlowError::WorldReadinessTimedOut);
@@ -834,13 +1259,16 @@ void UDivineBeastsApplicationFlowSubsystem::TryCompleteWorldReady()
 {
     if (!Loading ||
         !Session ||
-        !Loading->IsReady(ActiveLoadingOperationId) ||
-        Session->GetSnapshot().State !=
-            EGamePlatformSessionTransferState::Admitted ||
+        !ActiveLoadingOperation.IsValid() || !LoadingContext.IsValid() ||
+        !LoadingContext->AllReady() || !LoadingContext->IsWorldOperable() ||
+        !Loading->IsReadyToPlay(ActiveLoadingOperation) ||
         !IsCurrentNode(FDivineBeastsFlowNodes::TransferWorld()))
     {
         return;
     }
+    const FGamePlatformSessionSnapshot SessionSnapshot = Session->GetSnapshot();
+    if (SessionSnapshot.TransferOperationId != ActiveTransferOperationId ||
+        SessionSnapshot.State != EGamePlatformSessionTransferState::Admitted) { return; }
 
     if (!TransitionTo(FDivineBeastsFlowNodes::WorldReady()) ||
         !TransitionTo(FDivineBeastsFlowNodes::InWorld()))
@@ -858,7 +1286,13 @@ void UDivineBeastsApplicationFlowSubsystem::TryCompleteWorldReady()
 void UDivineBeastsApplicationFlowSubsystem::BeginRecovery(
     EDivineBeastsFlowError Error)
 {
-    if (!PlatformFlow || !ViewState.bHasSelectedCharacter)
+    if (!ReleaseLoadingOperation())
+    {
+        SetBusy(false);
+        SetError(EDivineBeastsFlowError::StaleOperation);
+        return;
+    }
+    if (!PlatformFlow || !Session || !ViewState.bHasSelectedCharacter)
     {
         SetError(Error);
         return;
@@ -876,10 +1310,6 @@ void UDivineBeastsApplicationFlowSubsystem::BeginRecovery(
         return;
     }
 
-    if (ActiveLoadingOperationId.IsValid())
-    {
-        Loading->CancelOperation(ActiveLoadingOperationId);
-    }
     Session->BeginReconnect(MaxRecoveryAttempts);
 
     if (!IsCurrentNode(FDivineBeastsFlowNodes::Recovering()))
@@ -915,9 +1345,9 @@ void UDivineBeastsApplicationFlowSubsystem::LogoutAndRestart()
     {
         Backend->CancelAll();
     }
-    if (Loading && ActiveLoadingOperationId.IsValid())
+    if (!ReleaseLoadingOperation())
     {
-        Loading->CancelOperation(ActiveLoadingOperationId);
+        UE_LOG(LogTemp, Error, TEXT("DivineBeasts flow logout could not release its owned Loading operation"));
     }
     if (Session)
     {
@@ -1020,8 +1450,6 @@ void UDivineBeastsApplicationFlowSubsystem::HandleFlowSnapshot(
 void UDivineBeastsApplicationFlowSubsystem::ResetProjection()
 {
     ViewState = FDivineBeastsFlowViewState();
-    ActiveLoadingOperationId.Invalidate();
-    ActiveTransferOperationId.Invalidate();
     PendingEndpoint.Reset();
     PendingTransferTicket.Reset();
     RecoveryAttempts = 0;

@@ -15,8 +15,10 @@
 
 ### 当前接入阻断（2026-09-27复核）
 
-`DivineBeastsApplicationFlowClient`仍消费旧版Flow、Loading、Session接口；这不是仅修正模块名即可解决的问题。Flow已改为节点执行器／令牌合同，Loading提供`IGamePlatformLoadingService`，Session当前只有私有状态内核，尚无真实公开连接／准入服务。原生内核测试通过不代表本插件可编译、可登录或可进入世界。
+`DivineBeastsApplicationFlowClient`的Loading消费者已开始迁移到`IGamePlatformLoadingService`：使用完整Loading句柄、精确订阅、逐操作任务工厂和显式资源释放；六项就绪事实绑定观察GUID，世界逻辑身份通过Data租约加载`UDivineBeastsWorldDefinition`，再以其`MapIdentity`核验当前实例世界。`MapId`是诸如`Map.MainArena.Default`的逻辑标识，不可直接当作地图包路径；当前共享模型没有声明MapId到世界定义的本地映射，客户端依世界定义与WorldId核验地图包，分配中的MapId仍由后端／会话使用。
 
-在工作空间根运行`Tests/Architecture/ValidateProjectHeaders.ps1`会报告3个不存在头文件的4处引用并返回失败；它不能检查全部类型／方法兼容性。后续接线顺序、安全边界和证据见[工程缺项修复执行记录](../../../../Docs/Architecture/工程缺项修复执行记录.md)。禁止用旧名空壳、私有头导出或固定Admitted状态规避真实集成。
+Flow消费者仍调用已移除的旧执行器API；Flow现行服务要求定义资产、节点工厂和令牌事件，尚未完成迁移。Session当前只有私有状态内核，尚无真实公开连接／准入服务。以上改动尚未运行UE UHT、编译或加载自动化，不能据此声称项目模块可编译、可登录或可进入世界。
+
+前次运行`Tests/Architecture/ValidateProjectHeaders.ps1`曾报告3个不存在头文件的4处引用。此后Loading旧头引用已改为真实公开接口；按当前源码检视，Flow旧头仍有2处、Session旧头1处，共2个头名3处引用待修。预检尚未重跑，且该工具不能检查方法签名兼容性。禁止用旧名空壳、私有头导出或固定Admitted状态规避真实集成。
 
 迁移前文档与旧描述快照见`Docs/Legacy/`；查看本README和正式工程规则判断现行职责。

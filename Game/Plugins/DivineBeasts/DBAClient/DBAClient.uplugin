@@ -10,10 +10,12 @@
   "EnabledByDefault": false,
   "Plugins": [
     { "Name": "DBAGameplay", "Enabled": true },
+    { "Name": "DBAWorlds", "Enabled": true },
     { "Name": "GamePlatformApplicationFlow", "Enabled": true },
     { "Name": "GamePlatformOnline", "Enabled": true },
     { "Name": "GamePlatformSession", "Enabled": true },
     { "Name": "GamePlatformLoading", "Enabled": true },
+    { "Name": "GamePlatformData", "Enabled": true },
     { "Name": "GamePlatformCharacter", "Enabled": true },
     { "Name": "GamePlatformPresentation", "Enabled": true },
     { "Name": "GamePlatformUI", "Enabled": true }
