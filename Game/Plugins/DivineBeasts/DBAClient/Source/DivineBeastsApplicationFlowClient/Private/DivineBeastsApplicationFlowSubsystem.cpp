@@ -6,7 +6,7 @@
 #include "Features/IModularFeatures.h"
 #include "Flow/DivineBeastsFlowNodes.h"
 #include "GamePlatformApplicationFlowSubsystem.h"
-#include "GamePlatformApplicationFlowTypes.h"
+#include "Types/GamePlatformFlowTypes.h"
 #include "Interfaces/IGamePlatformLoadingService.h"
 #include "Interfaces/IGamePlatformLoadingTask.h"
 #include "GamePlatformOnlineClientSubsystem.h"

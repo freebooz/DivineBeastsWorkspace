@@ -2,7 +2,7 @@
 
 #include "Misc/AutomationTest.h"
 #include "GamePlatformApplicationFlowSubsystem.h"
-#include "GamePlatformApplicationFlowTypes.h"
+#include "Types/GamePlatformFlowTypes.h"
 #include "Flow/DivineBeastsFlowNodes.h"
 #include "Flow/DivineBeastsFlowTypes.h"
 #include "Extensions/DivineBeastsApplicationFlowExtension.h"

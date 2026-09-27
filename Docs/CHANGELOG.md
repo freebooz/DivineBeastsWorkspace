@@ -2,6 +2,12 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-27｜三层类继承与扩展规范
+
+- 新增 `Docs/Architecture/三层类继承与扩展规范.md`，明确 `GamePlatform（平台基类） → MobaCommon（MOBA可选扩展） → DivineBeasts（项目派生）` 的单向继承与依赖边界。
+- 规定公共/通用领域优先建立稳定基类、接口或Definition；纯内容差异使用DataAsset实例，运行时协作优先接口、组件、Provider和组合，避免机械深继承。
+- 明确VFX、角色、世界、竞技、UI/ViewModel等推荐继承链，并要求后续在GamePlatformDeveloperTools增加Inheritance Boundary Validation（三层继承边界校验）。
+
 ## 2026-09-27｜应用流程与会话准入纵向修复设计（待审核）
 
 - 新增 `Docs/Architecture/游戏流程与会话准入后端纵向修复设计规格.md`，依据当前代码记录 Flow API 断层、GameServerControl 内部路由鉴权缺口、Gateway 玩家分配入口缺失、进程内 Assignment 状态及未接入的 PostgreSQL 准入内核。

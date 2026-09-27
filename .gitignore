@@ -5,6 +5,7 @@
 /Game/DerivedDataCache/
 /Game/Intermediate/
 /Game/Saved/
+/Game/Plugins/**/Intermediate/
 
 # 本地 IDE 状态
 /.vs/

@@ -25,7 +25,7 @@ Docs/References（参考资料）中的原文、历史压缩包、搜索结果�
 禁止恢复已取消的 FiveCamp（旧五大阵营）、Faction（旧派系）、Element（旧五行玩法）、KingSeal（旧王印）及其身份、克制、共鸣等玩法。不要将该禁令误用于第三方引擎的普通同名技术词。
 依赖方向为 DivineBeasts（项目层） → MobaCommon（MOBA层） → GamePlatform（平台层）；项目层可以直接依赖平台层。平台不认识生肖或MOBA规则，MOBA不认识具体项目资源。
 正式代码／机制基线为46个插件：40个GamePlatform稳定身份（平台层39个、MOBA层GamePlatformArena一个）、独立MobaPresentation及5个DBA代码插件。项目代码只维护DBAGameplay、DBAWorlds、DBAClient、DBAServer、DBAArena；不恢复旧项目插件树。真实内容插件按Game/Plugins/DivineBeasts/ContentPacks/ContentPackRegistry.json登记另计N，不创建空插件。DBAArena仅客户端／编辑器目标依赖DBAClient，服务器装配不得带入公共客户端。
-非MOBA登录、通用角色、世界与交互不得被迫依赖竞技。三层是复用边界，不强制三层类继承。内容包属于第三层内部，不是第四层。
+非MOBA登录、通用角色、世界与交互不得被迫依赖竞技。三层既是复用边界，也是类型扩展边界：对存在稳定同领域抽象的类型，必须优先采用GamePlatform平台基类／接口 → MobaCommon可选中间扩展 → DivineBeasts项目派生的单向继承；没有新增结构的纯内容差异使用Definition／DataAsset实例，不为形式机械建立三层Actor、Subsystem或Service继承树。内容包属于第三层内部，不是第四层。
 同层模块也必须无环。依赖检查覆盖构建规则、公开头、蓝图父类、资产引用、配置路径与注册关系，不能只看文件夹名称。插件描述与模块构建规则都必须声明真实需要的依赖；不得访问其他模块私有头文件。
 MobaCommon/GamePlatformArena（通用竞技插件）保留五模块：GamePlatformMobaCore（MOBA契约）、GamePlatformMobaData（MOBA数据）、GamePlatformArena（双端竞技）、GamePlatformArenaClient（竞技客户端）、GamePlatformArenaServer（竞技服务器）。
 允许按本次整合新增 MobaPresentation（MOBA表现语义插件），只含 MobaPresentationRuntime（共享语义模块）、MobaPresentationClient（客户端适配模块）；不改造为第二套竞技或特效框架，不复制五模块职责。
