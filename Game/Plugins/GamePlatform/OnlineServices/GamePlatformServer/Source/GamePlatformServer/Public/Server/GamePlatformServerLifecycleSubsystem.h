@@ -146,8 +146,10 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerLifecycleSnapshot
     UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Server")
     FName ErrorCode = NAME_None;
 
-    /** 仅用于诊断状态推进；不构成可调用的操作句柄。 */
-    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Server")
+    /**
+     * 仅供C++诊断状态推进，不构成可调用的操作句柄。
+     * UE反射不支持uint64蓝图属性，因此该内部代次保持非UPROPERTY，避免改变原生比较与过期回调判定语义。
+     */
     uint64 OperationGeneration = 0;
 };
 

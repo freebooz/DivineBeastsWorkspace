@@ -19,7 +19,7 @@ struct FDefinitionFixture
     UGamePlatformDefinitionBase* Add(const FString& LogicalName)
     {
         UPackage* Package = CreatePackage(*(TEXT("/Game/__GamePlatformDataTests/") + FGuid::NewGuid().ToString(EGuidFormats::Digits)));
-        Package->SetPackageFlags(PKG_Transient);
+        Package->SetPackageFlags(PKG_NewlyCreated);
         auto* Definition = NewObject<UGamePlatformDefinitionBase>(Package, TEXT("Definition"), RF_Public | RF_Standalone);
         FGamePlatformId::TryParse(TEXT("test.") + LogicalName + TEXT("@1"), Definition->LogicalId);
         Definitions.Emplace(Definition);

@@ -46,25 +46,22 @@ void UDivineBeastsServerBootstrapSubsystem::Initialize(
     }
 
     State = EDivineBeastsServerBootstrapState::WaitingForWorld;
-    WorldBeginPlayHandle = FWorldDelegates::OnWorldBeginPlay.AddUObject(
+    WorldInitializedHandle = FWorldDelegates::OnPostWorldInitialization.AddUObject(
         this,
-        &UDivineBeastsServerBootstrapSubsystem::HandleWorldBeginPlay);
+        &UDivineBeastsServerBootstrapSubsystem::HandleWorldInitialized);
 
     // GameInstance可能在首个World BeginPlay之后才创建子系统；只复核当前实例，不强制载图。
-    if (UWorld* World = GetGameInstance()->GetWorld();
-        World != nullptr && World->HasBegunPlay())
-    {
-        HandleWorldBeginPlay(World);
-    }
+    ObserveWorld(GetGameInstance()->GetWorld());
 }
 
 void UDivineBeastsServerBootstrapSubsystem::Deinitialize()
 {
-    if (WorldBeginPlayHandle.IsValid())
+    if (WorldInitializedHandle.IsValid())
     {
-        FWorldDelegates::OnWorldBeginPlay.Remove(WorldBeginPlayHandle);
-        WorldBeginPlayHandle.Reset();
+        FWorldDelegates::OnPostWorldInitialization.Remove(WorldInitializedHandle);
+        WorldInitializedHandle.Reset();
     }
+    StopObservingWorld();
     if (UGamePlatformServerLifecycleSubsystem* Lifecycle =
             GetGameInstance()
                 ? GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>()
@@ -78,6 +75,62 @@ void UDivineBeastsServerBootstrapSubsystem::Deinitialize()
     LifecycleChangedHandle.Reset();
     ValidatedWorld.Reset();
     Super::Deinitialize();
+}
+
+void UDivineBeastsServerBootstrapSubsystem::HandleWorldInitialized(
+    UWorld* World,
+    const UWorld::InitializationValues)
+{
+    ObserveWorld(World);
+}
+
+void UDivineBeastsServerBootstrapSubsystem::ObserveWorld(UWorld* World)
+{
+    if (World == nullptr || World->GetGameInstance() != GetGameInstance())
+    {
+        return;
+    }
+
+    if (ObservedWorld.Get() != World)
+    {
+        StopObservingWorld();
+        ObservedWorld = World;
+    }
+
+    if (World->HasBegunPlay())
+    {
+        HandleWorldBeginPlay(World);
+        return;
+    }
+
+    if (!WorldBeginPlayHandle.IsValid())
+    {
+        WorldBeginPlayHandle = World->OnWorldBeginPlay.AddUObject(
+            this,
+            &UDivineBeastsServerBootstrapSubsystem::HandleObservedWorldBeginPlay);
+    }
+}
+
+void UDivineBeastsServerBootstrapSubsystem::HandleObservedWorldBeginPlay()
+{
+    UWorld* World = ObservedWorld.Get();
+    if (World != nullptr && WorldBeginPlayHandle.IsValid())
+    {
+        World->OnWorldBeginPlay.Remove(WorldBeginPlayHandle);
+    }
+    WorldBeginPlayHandle.Reset();
+    HandleWorldBeginPlay(World);
+}
+
+void UDivineBeastsServerBootstrapSubsystem::StopObservingWorld()
+{
+    if (UWorld* World = ObservedWorld.Get();
+        World != nullptr && WorldBeginPlayHandle.IsValid())
+    {
+        World->OnWorldBeginPlay.Remove(WorldBeginPlayHandle);
+    }
+    WorldBeginPlayHandle.Reset();
+    ObservedWorld.Reset();
 }
 
 bool UDivineBeastsServerBootstrapSubsystem::ReportHeartbeat(int32 CurrentPlayers)

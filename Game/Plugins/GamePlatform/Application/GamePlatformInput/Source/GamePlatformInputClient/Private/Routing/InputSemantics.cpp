@@ -43,7 +43,19 @@ EGamePlatformInputUnit GamePlatformInputServices::GetUnit(EGamePlatformInputSema
 }
 uint8 GamePlatformInputServices::GetChannel(EGamePlatformInputSemantic Semantic)
 {
-    if (Semantic == EGamePlatformInputSemantic::Move) { return 1; }
-    if (Semantic == EGamePlatformInputSemantic::LookDelta || Semantic == EGamePlatformInputSemantic::LookRate) { return 2; }
-    return Semantic >= EGamePlatformInputSemantic::Menu ? 8 : 4;
+    // 显式映射避免依赖枚举排列顺序；未来追加PC/移动端语义时不会因为插入位置改变通道含义。
+    switch (Semantic)
+    {
+    case EGamePlatformInputSemantic::Move:
+        return static_cast<uint8>(EGamePlatformInputChannel::Move);
+    case EGamePlatformInputSemantic::LookDelta:
+    case EGamePlatformInputSemantic::LookRate:
+        return static_cast<uint8>(EGamePlatformInputChannel::Look);
+    case EGamePlatformInputSemantic::Menu:
+    case EGamePlatformInputSemantic::Confirm:
+    case EGamePlatformInputSemantic::Cancel:
+        return static_cast<uint8>(EGamePlatformInputChannel::UICommands);
+    default:
+        return static_cast<uint8>(EGamePlatformInputChannel::Actions);
+    }
 }

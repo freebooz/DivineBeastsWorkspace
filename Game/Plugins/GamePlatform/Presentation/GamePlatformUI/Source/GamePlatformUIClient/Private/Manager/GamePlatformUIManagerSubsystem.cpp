@@ -10,9 +10,16 @@
 #include "Routing/GamePlatformUIRouteDefinition.h"
 #include "Screens/GamePlatformHUDWidget.h"
 #include "Screens/GamePlatformUIScreen.h"
+#include "Feedback/GamePlatformFeedbackWidget.h"
+#include "Notifications/GamePlatformNotificationWidget.h"
+#include "Services/GamePlatformFeedbackService.h"
+#include "Services/GamePlatformNotificationService.h"
+#include "Services/GamePlatformWorldUIService.h"
+#include "WorldUI/GamePlatformWorldWidgetBase.h"
 #include "ViewModels/GamePlatformViewModelBase.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
 #include "Engine/StreamableManager.h"
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
@@ -26,7 +33,6 @@ namespace
 constexpr int32 MaxScreenDefinitions = 256;
 constexpr int32 MaxRouteDefinitions = 512;
 constexpr int32 MaxPendingOpenRequests = 32;
-constexpr int32 MaxActiveToasts = 32;
 constexpr int32 MaxPreloadAssetsPerScreen = 32;
 }
 
@@ -34,13 +40,28 @@ void UGamePlatformUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Colle
 {
     Super::Initialize(Collection);
     LoadingScreenService = NewObject<UGamePlatformLoadingScreenService>(this);
+    NotificationService = NewObject<UGamePlatformNotificationService>(this);
+    FeedbackService = NewObject<UGamePlatformFeedbackService>(this);
+    WorldUIService = NewObject<UGamePlatformWorldUIService>(this);
+
+    if (IsValid(NotificationService))
+    {
+        NotificationService->Initialize(GetLocalPlayer());
+    }
+    if (IsValid(FeedbackService))
+    {
+        FeedbackService->Initialize(GetLocalPlayer());
+    }
+    if (IsValid(WorldUIService))
+    {
+        WorldUIService->Initialize(GetLocalPlayer());
+    }
+
     ScreenDefinitions.Reserve(64);
     RouteDefinitions.Reserve(64);
     PendingRequests.Reserve(8);
     PendingViewModels.Reserve(8);
     PendingLoads.Reserve(8);
-    ActiveToasts.Reserve(8);
-    ToastTimers.Reserve(8);
     PreLoadMapHandle = FCoreUObjectDelegates::PreLoadMapWithContext.AddUObject(
         this,
         &UGamePlatformUIManagerSubsystem::HandlePreLoadMap);
@@ -54,15 +75,21 @@ void UGamePlatformUIManagerSubsystem::Deinitialize()
         PreLoadMapHandle.Reset();
     }
 
-    if (UWorld* World = GetWorld())
+    if (IsValid(NotificationService))
     {
-        for (TPair<FName, FTimerHandle>& Pair : ToastTimers)
-        {
-            World->GetTimerManager().ClearTimer(Pair.Value);
-        }
+        NotificationService->Clear();
+        NotificationService->SetRootLayout(nullptr);
     }
-    ToastTimers.Reset();
-    ActiveToasts.Reset();
+    if (IsValid(FeedbackService))
+    {
+        FeedbackService->Clear();
+        FeedbackService->SetRootLayout(nullptr);
+    }
+    if (IsValid(WorldUIService))
+    {
+        WorldUIService->Deinitialize();
+    }
+
     TArray<FGuid> RequestIds;
     PendingRequests.GetKeys(RequestIds);
     for (const FGuid& RequestId : RequestIds)
@@ -74,6 +101,11 @@ void UGamePlatformUIManagerSubsystem::Deinitialize()
     {
         LoadingScreenService->ReleaseAll();
     }
+
+    LoadingScreenService = nullptr;
+    NotificationService = nullptr;
+    FeedbackService = nullptr;
+    WorldUIService = nullptr;
 
     TArray<TWeakObjectPtr<UGamePlatformUIScreen>> ActiveScreens;
     ActiveScreenLeases.GetKeys(ActiveScreens);
@@ -139,11 +171,42 @@ bool UGamePlatformUIManagerSubsystem::InstallRootLayoutClass(
 
     if (IsValid(RootLayout))
     {
+        // 根布局替换前先清理所有依赖旧层容器的短生命周期服务实例。
+        if (IsValid(NotificationService))
+        {
+            NotificationService->Clear();
+        }
+        if (IsValid(FeedbackService))
+        {
+            FeedbackService->Clear();
+        }
+        if (IsValid(WorldUIService))
+        {
+            WorldUIService->Clear();
+        }
         RootLayout->RemoveFromParent();
     }
 
     RootLayout = NewRoot;
-    return RootLayout->AddToPlayerScreen(0);
+    if (!RootLayout->AddToPlayerScreen(0))
+    {
+        RootLayout = nullptr;
+        return false;
+    }
+
+    if (IsValid(NotificationService))
+    {
+        NotificationService->SetRootLayout(RootLayout);
+    }
+    if (IsValid(FeedbackService))
+    {
+        FeedbackService->SetRootLayout(RootLayout);
+    }
+    if (IsValid(WorldUIService))
+    {
+        WorldUIService->SetRootLayout(RootLayout);
+    }
+    return true;
 }
 
 bool UGamePlatformUIManagerSubsystem::RegisterScreenDefinition(
@@ -441,89 +504,60 @@ bool UGamePlatformUIManagerSubsystem::AttachHUDWidget(UGamePlatformHUDWidget* Wi
     return IsValid(RootLayout) && RootLayout->AddHUDWidget(Widget);
 }
 
-bool UGamePlatformUIManagerSubsystem::AttachToastWidget(UGamePlatformToastWidget* Widget)
+bool UGamePlatformUIManagerSubsystem::AttachToastWidget(
+    UGamePlatformToastWidget* Widget)
 {
-    if (!IsValid(RootLayout) || !IsValid(Widget))
-    {
-        return false;
-    }
+    return IsValid(NotificationService) &&
+        NotificationService->AttachToastWidget(Widget);
+}
 
-    if (UWorld* World = GetWorld())
-    {
-        for (auto It = ActiveToasts.CreateIterator(); It; ++It)
-        {
-            if (!It.Value().IsValid())
-            {
-                if (FTimerHandle* Timer = ToastTimers.Find(It.Key()))
-                {
-                    World->GetTimerManager().ClearTimer(*Timer);
-                }
-                ToastTimers.Remove(It.Key());
-                It.RemoveCurrent();
-            }
-        }
-    }
+FGuid UGamePlatformUIManagerSubsystem::SubmitNotification(
+    FGamePlatformUINotificationRequest Request,
+    TSubclassOf<UGamePlatformNotificationWidget> WidgetClass)
+{
+    return IsValid(NotificationService)
+        ? NotificationService->SubmitNotification(
+            MoveTemp(Request),
+            WidgetClass)
+        : FGuid();
+}
 
-    const bool bReplacingKnownKey =
-        !Widget->ToastKey.IsNone() && ActiveToasts.Contains(Widget->ToastKey);
-    if (!bReplacingKnownKey && ActiveToasts.Num() >= MaxActiveToasts)
-    {
-        return false;
-    }
+FGuid UGamePlatformUIManagerSubsystem::SubmitFeedback(
+    FGamePlatformUIFeedbackRequest Request,
+    TSubclassOf<UGamePlatformFeedbackWidget> WidgetClass)
+{
+    return IsValid(FeedbackService)
+        ? FeedbackService->SubmitFeedback(
+            MoveTemp(Request),
+            WidgetClass)
+        : FGuid();
+}
 
-    FName EffectiveKey = Widget->ToastKey;
-    if (EffectiveKey.IsNone())
-    {
-        EffectiveKey = FName(*FString::Printf(TEXT("Toast_%s"), *FGuid::NewGuid().ToString(EGuidFormats::Digits)));
-    }
-    else if (const TWeakObjectPtr<UGamePlatformToastWidget>* Existing = ActiveToasts.Find(EffectiveKey))
-    {
-        if (UGamePlatformToastWidget* ExistingWidget = Existing->Get())
-        {
-            if (Widget->ToastPriority <= ExistingWidget->ToastPriority)
-            {
-                return false;
-            }
-            ExpireToast(EffectiveKey, *Existing);
-        }
-        else
-        {
-            ActiveToasts.Remove(EffectiveKey);
-        }
-    }
+FGuid UGamePlatformUIManagerSubsystem::RegisterWorldUI(
+    FGamePlatformWorldUIRequest Request,
+    TSubclassOf<UGamePlatformWorldWidgetBase> WidgetClass)
+{
+    return IsValid(WorldUIService)
+        ? WorldUIService->RegisterWorldUI(
+            MoveTemp(Request),
+            WidgetClass)
+        : FGuid();
+}
 
-    if (!RootLayout->AddNotificationWidget(Widget))
-    {
-        return false;
-    }
+bool UGamePlatformUIManagerSubsystem::UpdateWorldUI(
+    FGuid RequestId,
+    FGamePlatformWorldUIRequest Request)
+{
+    return IsValid(WorldUIService) &&
+        WorldUIService->UpdateWorldUI(
+            RequestId,
+            MoveTemp(Request));
+}
 
-    const TWeakObjectPtr<UGamePlatformToastWidget> WeakWidget(Widget);
-    ActiveToasts.Add(EffectiveKey, WeakWidget);
-
-    if (Widget->DurationSeconds > KINDA_SMALL_NUMBER)
-    {
-        FTimerHandle TimerHandle;
-        const TWeakObjectPtr<UGamePlatformUIManagerSubsystem> WeakThis(this);
-        UWorld* World = GetWorld();
-        if (!World)
-        {
-            return true;
-        }
-        World->GetTimerManager().SetTimer(
-            TimerHandle,
-            FTimerDelegate::CreateLambda([WeakThis, EffectiveKey, WeakWidget]()
-            {
-                if (UGamePlatformUIManagerSubsystem* Self = WeakThis.Get())
-                {
-                    Self->ExpireToast(EffectiveKey, WeakWidget);
-                }
-            }),
-            Widget->DurationSeconds,
-            false);
-        ToastTimers.Add(EffectiveKey, TimerHandle);
-    }
-
-    return true;
+bool UGamePlatformUIManagerSubsystem::UnregisterWorldUI(FGuid RequestId)
+{
+    return IsValid(WorldUIService) &&
+        WorldUIService->UnregisterWorldUI(RequestId);
 }
 
 void UGamePlatformUIManagerSubsystem::PrepareForTravel()
@@ -550,19 +584,24 @@ void UGamePlatformUIManagerSubsystem::PrepareForTravel()
         }
     }
 
-    TArray<FName> ToastKeys;
-    ActiveToasts.GetKeys(ToastKeys);
-    for (const FName& ToastKey : ToastKeys)
+    if (IsValid(NotificationService))
     {
-        if (const TWeakObjectPtr<UGamePlatformToastWidget>* Toast = ActiveToasts.Find(ToastKey))
-        {
-            ExpireToast(ToastKey, *Toast);
-        }
+        NotificationService->Clear();
+    }
+    if (IsValid(FeedbackService))
+    {
+        FeedbackService->Clear();
+    }
+    if (IsValid(WorldUIService))
+    {
+        WorldUIService->Clear();
     }
 
     if (IsValid(RootLayout))
     {
         RootLayout->ClearHUD();
+        RootLayout->ClearWorldProjection();
+        RootLayout->ClearFeedback();
         RootLayout->ClearNotifications();
     }
 
@@ -806,33 +845,6 @@ void UGamePlatformUIManagerSubsystem::CleanupPendingRequest(
     PendingLoads.Remove(RequestId);
     PendingRequests.Remove(RequestId);
     PendingViewModels.Remove(RequestId);
-}
-
-void UGamePlatformUIManagerSubsystem::ExpireToast(
-    FName ToastKey,
-    TWeakObjectPtr<UGamePlatformToastWidget> ExpectedWidget)
-{
-    const TWeakObjectPtr<UGamePlatformToastWidget>* Current = ActiveToasts.Find(ToastKey);
-    if (!Current || *Current != ExpectedWidget)
-    {
-        return;
-    }
-
-    if (UGamePlatformToastWidget* Widget = ExpectedWidget.Get())
-    {
-        Widget->RemoveFromParent();
-    }
-
-    if (UWorld* World = GetWorld())
-    {
-        if (FTimerHandle* Handle = ToastTimers.Find(ToastKey))
-        {
-            World->GetTimerManager().ClearTimer(*Handle);
-        }
-    }
-
-    ToastTimers.Remove(ToastKey);
-    ActiveToasts.Remove(ToastKey);
 }
 
 void UGamePlatformUIManagerSubsystem::RefreshStandalonePause()

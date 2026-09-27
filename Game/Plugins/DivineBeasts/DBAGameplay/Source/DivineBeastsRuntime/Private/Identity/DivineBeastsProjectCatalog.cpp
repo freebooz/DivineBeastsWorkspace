@@ -95,6 +95,25 @@ FName FDivineBeastsProjectCatalog::GetMainArenaServerRole()
     return Cached;
 }
 
+FName FDivineBeastsProjectCatalog::GetOpenWorldHubExperience()
+{
+    // 缓存稳定目录身份，避免每次角色选择/赛后返回时重复遍历和FString构造。
+    static const FName Cached = FindBySuffix(GetExperienceIds(), TEXT(".OpenWorld.Hub"));
+    return Cached;
+}
+
+FName FDivineBeastsProjectCatalog::GetVillageTutorialExperience()
+{
+    static const FName Cached = FindBySuffix(GetExperienceIds(), TEXT(".Village.Tutorial"));
+    return Cached;
+}
+
+FName FDivineBeastsProjectCatalog::GetVillageTrainingExperience()
+{
+    static const FName Cached = FindBySuffix(GetExperienceIds(), TEXT(".Village.Training"));
+    return Cached;
+}
+
 FName FDivineBeastsProjectCatalog::GetMainArenaExperience()
 {
     static const FName Cached = FindBySuffix(GetExperienceIds(), TEXT(".MainArena.Main"));

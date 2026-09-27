@@ -11,6 +11,8 @@
 #include "Screens/GamePlatformUIScreen.h"
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
 #include "ViewModels/DivineBeastsUIViewModel.h"
+#include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
+#include "ViewModels/Login/DivineBeastsLoginViewModel.h"
 
 void UDivineBeastsUIClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
@@ -158,12 +160,38 @@ bool UDivineBeastsUIClientSubsystem::AttachToastWidget(
 UDivineBeastsUIViewModel*
 UDivineBeastsUIClientSubsystem::CreateViewModel(FName ScreenId)
 {
-    UDivineBeastsUIViewModel* ViewModel =
-        NewObject<UDivineBeastsUIViewModel>(this);
+    UDivineBeastsUIViewModel* ViewModel = nullptr;
+
+    // P0 页面使用类型明确的 ViewModel；其他现有页面继续复用兼容 ViewModel，
+    // 保持增量迁移，不在本阶段一次性重写全部业务页面。
+    if (ScreenId == TEXT("UI.Screen.Login"))
+    {
+        ViewModel = NewObject<UDivineBeastsLoginViewModel>(this);
+    }
+    else if (ScreenId == TEXT("UI.Screen.Boot") ||
+             ScreenId == TEXT("UI.Screen.LoadingTravel"))
+    {
+        UDivineBeastsLoadingViewModel* LoadingViewModel =
+            NewObject<UDivineBeastsLoadingViewModel>(this);
+        if (LoadingViewModel)
+        {
+            // Loading Service 属于当前 LocalPlayer 的平台 UI Manager，
+            // ViewModel 只持有瞬态引用并在页面激活期间订阅事件。
+            LoadingViewModel->InitializeLoadingService(
+                GetLoadingScreenService());
+        }
+        ViewModel = LoadingViewModel;
+    }
+    else
+    {
+        ViewModel = NewObject<UDivineBeastsUIViewModel>(this);
+    }
+
     if (ViewModel)
     {
         ViewModel->InitializeForScreen(this, ScreenId);
     }
+
     return ViewModel;
 }
 

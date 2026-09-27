@@ -18,11 +18,25 @@ struct Identity
     std::int32_t LogicalVersion = 1;
 };
 
+template<typename Character>
+struct ErrorCode
+{
+    std::basic_string<Character> Domain;
+    std::basic_string<Character> Code;
+};
+
 struct Version
 {
     std::int32_t Major = 0;
     std::int32_t Minor = 0;
     std::int32_t Patch = 0;
+};
+
+struct VersionRange
+{
+    bool bConfigured = false;
+    Version MinimumInclusive;
+    Version MaximumInclusive;
 };
 
 template<typename Character>
@@ -172,6 +186,77 @@ std::uint32_t HashIdentity(const Identity<Character>& Value)
     return Hash;
 }
 
+template<typename Character>
+bool IsValidErrorCode(const ErrorCode<Character>& Value)
+{
+    if (Value.Domain.size() > 192 || Value.Code.size() > 64) { return false; }
+    if (!IsNamespace<Character>(Value.Domain) || !IsIdentifier<Character>(Value.Code)) { return false; }
+    return Value.Domain.size() + Value.Code.size() + 1 <= 192;
+}
+
+template<typename Character>
+std::basic_string<Character> FormatErrorCode(const ErrorCode<Character>& Value)
+{
+    if (!IsValidErrorCode(Value)) { return {}; }
+    return CanonicalText<Character>(Value.Domain) + static_cast<Character>('.') +
+        CanonicalText<Character>(Value.Code);
+}
+
+template<typename Character>
+bool ParseErrorCode(std::basic_string_view<Character> Text, ErrorCode<Character>& OutCode)
+{
+    ErrorCode<Character> Parsed;
+    bool bValid = false;
+    if (Text.size() <= 192)
+    {
+        const std::size_t Dot = Text.rfind(static_cast<Character>('.'));
+        if (Dot != Text.npos && Dot > 0 && Dot + 1 < Text.size())
+        {
+            Parsed.Domain = CanonicalText<Character>(Text.substr(0, Dot));
+            Parsed.Code = CanonicalText<Character>(Text.substr(Dot + 1));
+            bValid = IsValidErrorCode(Parsed);
+        }
+    }
+    OutCode = bValid ? std::move(Parsed) : ErrorCode<Character>{};
+    return bValid;
+}
+
+template<typename Character>
+bool EqualErrorCode(const ErrorCode<Character>& Left, const ErrorCode<Character>& Right)
+{
+    const bool bLeftValid = IsValidErrorCode(Left);
+    const bool bRightValid = IsValidErrorCode(Right);
+    if (bLeftValid != bRightValid) { return false; }
+    if (!bLeftValid) { return Left.Domain == Right.Domain && Left.Code == Right.Code; }
+    return CanonicalText<Character>(Left.Domain) == CanonicalText<Character>(Right.Domain) &&
+        CanonicalText<Character>(Left.Code) == CanonicalText<Character>(Right.Code);
+}
+
+template<typename Character>
+std::uint32_t HashErrorCode(const ErrorCode<Character>& Value)
+{
+    const bool bValid = IsValidErrorCode(Value);
+    std::uint32_t Hash = 2166136261u;
+    const auto Append = [&Hash](std::uint32_t Unit)
+    {
+        for (unsigned Shift = 0; Shift < 32; Shift += 8)
+        {
+            Hash = (Hash ^ ((Unit >> Shift) & 0xffu)) * 16777619u;
+        }
+    };
+    Append(bValid ? 1u : 0u);
+    for (const Character Unit : Value.Domain)
+    {
+        Append(static_cast<std::uint32_t>(static_cast<std::make_unsigned_t<Character>>(bValid ? LowerAscii(Unit) : Unit)));
+    }
+    Append(0xffffffffu);
+    for (const Character Unit : Value.Code)
+    {
+        Append(static_cast<std::uint32_t>(static_cast<std::make_unsigned_t<Character>>(bValid ? LowerAscii(Unit) : Unit)));
+    }
+    return Hash;
+}
+
 inline bool IsValidVersion(const Version& Value)
 {
     return Value.Major >= 0 && Value.Minor >= 0 && Value.Patch >= 0;
@@ -213,5 +298,19 @@ inline std::int32_t CompareVersion(const Version& Left, const Version& Right)
     if (Left.Minor != Right.Minor) { return Left.Minor < Right.Minor ? -1 : 1; }
     if (Left.Patch != Right.Patch) { return Left.Patch < Right.Patch ? -1 : 1; }
     return 0;
+}
+
+inline bool IsValidVersionRange(const VersionRange& Range)
+{
+    return Range.bConfigured && IsValidVersion(Range.MinimumInclusive) &&
+        IsValidVersion(Range.MaximumInclusive) &&
+        CompareVersion(Range.MinimumInclusive, Range.MaximumInclusive) <= 0;
+}
+
+inline bool ContainsVersion(const VersionRange& Range, const Version& Candidate)
+{
+    return IsValidVersionRange(Range) && IsValidVersion(Candidate) &&
+        CompareVersion(Candidate, Range.MinimumInclusive) >= 0 &&
+        CompareVersion(Candidate, Range.MaximumInclusive) <= 0;
 }
 }

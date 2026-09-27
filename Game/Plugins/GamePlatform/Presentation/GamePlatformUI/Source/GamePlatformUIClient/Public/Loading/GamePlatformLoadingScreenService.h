@@ -38,7 +38,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
     FGamePlatformUILoadingSnapshotChanged,
     const FGamePlatformUILoadingSnapshot&, Snapshot);
 
-/** 多事务 Loading Token 聚合服务。 */
+/**
+ * UGamePlatformLoadingScreenService（游戏平台加载界面令牌聚合服务）。
+ *
+ * 通过 Token（令牌）聚合多个并发加载事务，向界面广播真实加载快照。
+ * 性能上使用缓存快照：状态变化时重建一次，GetSnapshot 为 O(1) 读取。
+ */
 UCLASS(BlueprintType)
 class GAMEPLATFORMUICLIENT_API UGamePlatformLoadingScreenService : public UObject
 {
@@ -73,6 +78,13 @@ private:
 
     TMap<FGuid, FTokenState> Tokens;
     uint64 NextSequence = 1;
+
+    /** 最近一次重建的快照；避免每个 UI 读取者重复遍历 Token。 */
+    UPROPERTY(Transient)
+    FGamePlatformUILoadingSnapshot CachedSnapshot;
+
+    /** 在 Token 集合变化后重建一次缓存快照。 */
+    void RebuildSnapshot();
 
     void BroadcastSnapshot();
 };

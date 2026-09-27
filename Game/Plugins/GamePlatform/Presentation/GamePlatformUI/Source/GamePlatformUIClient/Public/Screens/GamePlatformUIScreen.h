@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CommonActivatableWidget.h"
+#include "Core/GamePlatformActivatableWidgetBase.h"
 #include "GamePlatformUITypes.h"
 #include "GamePlatformUIScreen.generated.h"
 
@@ -12,9 +12,17 @@ DECLARE_MULTICAST_DELEGATE_OneParam(
     FGamePlatformUIScreenDeactivatedNative,
     UGamePlatformUIScreen*);
 
-/** CommonUI 页面基类；负责激活、关闭、Back、焦点和 ViewModel 生命周期。 */
+/**
+ * UGamePlatformUIScreen（游戏平台页面基类）。
+ *
+ * 职责：
+ * - 在 UGamePlatformActivatableWidgetBase 的事件驱动生命周期上增加页面身份、Back、焦点和输入策略。
+ * - 供 Menu、Modal、Loading、System 以及项目业务 Screen 单向继承。
+ * - 页面不得直接 AddToViewport，由 UGamePlatformUIManagerSubsystem 统一放入 CommonUI 层栈。
+ */
 UCLASS(Abstract, Blueprintable)
-class GAMEPLATFORMUICLIENT_API UGamePlatformUIScreen : public UCommonActivatableWidget
+class GAMEPLATFORMUICLIENT_API UGamePlatformUIScreen
+    : public UGamePlatformActivatableWidgetBase
 {
     GENERATED_BODY()
 
@@ -33,8 +41,12 @@ public:
     UFUNCTION(BlueprintPure, Category="UI|Screen")
     FName GetScreenId() const { return ScreenId; }
 
+    /** 返回当前页面 ViewModel；保留原接口名称以兼容既有项目层代码。 */
     UFUNCTION(BlueprintPure, Category="UI|Screen")
-    UGamePlatformViewModelBase* GetViewModel() const { return ViewModel; }
+    UGamePlatformViewModelBase* GetViewModel() const
+    {
+        return GetPlatformViewModel();
+    }
 
     EGamePlatformUIInputMode GetInputMode() const { return InputMode; }
     EGamePlatformUIPausePolicy GetPausePolicy() const { return PausePolicy; }
@@ -55,9 +67,6 @@ protected:
 private:
     UPROPERTY(Transient)
     FName ScreenId = NAME_None;
-
-    UPROPERTY(Transient)
-    TObjectPtr<UGamePlatformViewModelBase> ViewModel = nullptr;
 
     UPROPERTY(Transient)
     FName DesiredFocusWidgetName = NAME_None;

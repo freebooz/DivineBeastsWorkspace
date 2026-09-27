@@ -29,9 +29,12 @@ struct FGamePlatformInputContextDefinition
     /** 非共享上下文第二个拥有者会被拒绝，不由最后一次Add抢占。 */
     UPROPERTY(EditDefaultsOnly, Category="Input") bool bAllowSharing = true;
 };
-/** 本地输入定义，身份/版本继承Data；不包含任何认证、世界或玩法权威状态。 */
+/**
+ * 本地输入Definition（定义）基类，身份/版本继承GamePlatformData；不包含认证、世界或玩法权威状态。
+ * 项目层仅在确有新增结构/校验时允许单向派生；纯PC/移动设备差异优先使用同一Profile的数据实例，避免机械增加C++子类。
+ */
 UCLASS(BlueprintType)
-class GAMEPLATFORMINPUTCLIENT_API UGamePlatformInputProfileDefinition final : public UGamePlatformDefinitionBase
+class GAMEPLATFORMINPUTCLIENT_API UGamePlatformInputProfileDefinition : public UGamePlatformDefinitionBase
 {
     GENERATED_BODY()
 public:
@@ -45,6 +48,16 @@ public:
     UPROPERTY(EditDefaultsOnly, Category="Input") double LookDegreesPerSecond = 90;
     /** 模拟移动/观察径向死区0..0.5，只在本服务应用，不应再在IMC重复设置死区。 */
     UPROPERTY(EditDefaultsOnly, Category="Input") double AnalogDeadZone = 0.2;
+    /** PC键鼠是否允许使用该Profile；关闭只影响平台层接入策略，不卸载原生设备。 */
+    UPROPERTY(EditDefaultsOnly, Category="Input|Devices") bool bEnableKeyboardMouse = true;
+    /** PC/主机手柄是否允许使用该Profile。 */
+    UPROPERTY(EditDefaultsOnly, Category="Input|Devices") bool bEnableGamepad = true;
+    /** Android/iOS等移动端Touch（触控）是否允许通过统一语义注入。 */
+    UPROPERTY(EditDefaultsOnly, Category="Input|Devices") bool bEnableTouch = true;
+    /** 移动端虚拟摇杆径向死区0..0.5；仅Touch Move使用。 */
+    UPROPERTY(EditDefaultsOnly, Category="Input|Devices") double TouchAnalogDeadZone = 0.12;
+    /** 默认视角无障碍/舒适度偏好；玩家本地偏好可以在运行时覆盖。 */
+    UPROPERTY(EditDefaultsOnly, Category="Input|Accessibility") FGamePlatformInputAccessibilitySettings DefaultAccessibility;
     /** 配置基础字段校验不加载UObject；已加载原生类型另在准备阶段校验。 */
     virtual FGamePlatformResult ValidateDefinition() const override;
 };

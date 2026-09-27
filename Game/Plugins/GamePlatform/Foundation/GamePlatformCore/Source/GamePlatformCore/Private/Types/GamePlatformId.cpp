@@ -33,6 +33,30 @@ bool FGamePlatformId::TryParse(const FString& Text, FGamePlatformId& OutId)
     return bIsValid;
 }
 
+bool FGamePlatformId::TryCreate(
+    const FString& InNamespace,
+    const FString& InName,
+    int32 InLogicalVersion,
+    FGamePlatformId& OutId)
+{
+    GamePlatformCore::Private::Identity<TCHAR> Candidate{
+        std::basic_string<TCHAR>(*InNamespace, InNamespace.Len()),
+        std::basic_string<TCHAR>(*InName, InName.Len()),
+        InLogicalVersion};
+    if (!GamePlatformCore::Private::IsValidIdentity(Candidate))
+    {
+        OutId = {};
+        return false;
+    }
+
+    Candidate.Namespace = GamePlatformCore::Private::CanonicalText<TCHAR>(Candidate.Namespace);
+    Candidate.Name = GamePlatformCore::Private::CanonicalText<TCHAR>(Candidate.Name);
+    OutId.Namespace = FString(static_cast<int32>(Candidate.Namespace.size()), Candidate.Namespace.data());
+    OutId.Name = FString(static_cast<int32>(Candidate.Name.size()), Candidate.Name.data());
+    OutId.LogicalVersion = Candidate.LogicalVersion;
+    return true;
+}
+
 bool FGamePlatformId::operator==(const FGamePlatformId& Other) const
 {
     return GamePlatformCore::Private::EqualIdentity(CopyIdentity(*this), CopyIdentity(Other));

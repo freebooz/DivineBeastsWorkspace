@@ -6,7 +6,7 @@ public class GamePlatformInputClient : ModuleRules
     public GamePlatformInputClient(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        // 只保留当前真实源码所需依赖；Input不引入UMG/Slate/JSON，降低客户端模块编译与链接传播。
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "InputCore", "GameplayTags", "GamePlatformCore", "GamePlatformData" });
-        PrivateDependencyModuleNames.AddRange(new[] { "Json", "JsonUtilities" });
     }
 }

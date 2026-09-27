@@ -99,7 +99,7 @@ private:
     UGamePlatformDefinitionBase* AddDefinition(const FString& Name)
     {
         UPackage* Package = CreatePackage(*(RootPath + TEXT("/") + Name));
-        Package->SetPackageFlags(PKG_Transient);
+        Package->SetPackageFlags(PKG_NewlyCreated);
         auto* Definition = NewObject<UGamePlatformDefinitionBase>(Package, *Name, RF_Public | RF_Standalone);
         const FString LogicalText = TEXT("test.run") + RunText + TEXT(".") + Name.ToLower() + TEXT("@1");
         if (!FGamePlatformId::TryParse(LogicalText, Definition->LogicalId)) Test->AddError(TEXT("隔离夹具身份生成失败。"));

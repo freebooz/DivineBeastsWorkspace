@@ -1,0 +1,100 @@
+#pragma once
+
+#include "CommonActivatableWidget.h"
+#include "GamePlatformUITypes.h"
+#include "GamePlatformActivatableWidgetBase.generated.h"
+
+class UGamePlatformUIAdaptiveSubsystem;
+class UGamePlatformViewModelBase;
+
+/**
+ * UGamePlatformActivatableWidgetBase（游戏平台可激活用户界面基类）。
+ *
+ * 职责：
+ * 1. 为 Screen、Menu、Modal、Loading 等 CommonUI 可激活界面提供统一生命周期。
+ * 2. 在页面激活时启动 ViewModel 页面代次，并绑定事件；失活时立即解绑并结束代次。
+ * 3. 接收 PC / 移动端自适应变化事件，避免子页面自行轮询分辨率或输入设备。
+ *
+ * 性能约束：
+ * - 不启用 Tick。
+ * - 仅在激活期间持有动态委托。
+ * - 页面失活后所有平台事件必须解绑，防止迟到回调刷新不可见页面。
+ */
+UCLASS(Abstract, Blueprintable)
+class GAMEPLATFORMUICLIENT_API UGamePlatformActivatableWidgetBase
+    : public UCommonActivatableWidget
+{
+    GENERATED_BODY()
+
+public:
+    /**
+     * 设置当前可激活界面的 ViewModel。
+     * 激活状态下替换 ViewModel 时，会结束旧页面代次并启动新页面代次。
+     */
+    UFUNCTION(BlueprintCallable, Category="UI|ViewModel")
+    void InitializeActivatableViewModel(UGamePlatformViewModelBase* InViewModel);
+
+    /** 返回当前页面绑定的 ViewModel。 */
+    UFUNCTION(BlueprintPure, Category="UI|ViewModel")
+    UGamePlatformViewModelBase* GetPlatformViewModel() const { return ViewModel; }
+
+    /** 返回当前 LocalPlayer 的自适应上下文。 */
+    UFUNCTION(BlueprintPure, Category="UI|Adaptive")
+    FGamePlatformUIAdaptiveContext GetAdaptiveContext() const;
+
+protected:
+    /** 页面激活时启动 ViewModel 生命周期并绑定事件。 */
+    virtual void NativeOnActivated() override;
+
+    /** 页面失活时先解绑事件，再结束 ViewModel 页面生命周期。 */
+    virtual void NativeOnDeactivated() override;
+
+    /** 子类业务事件绑定扩展点。 */
+    virtual void BindUIEvents() {}
+
+    /** 子类业务事件解绑扩展点。 */
+    virtual void UnbindUIEvents() {}
+
+    /** 子类初始状态刷新扩展点。 */
+    virtual void RefreshInitialState() {}
+
+    /** ViewModel 状态变化的 C++ 扩展点。 */
+    virtual void OnViewModelStateChanged(int32 Revision, int32 PageGeneration) {}
+
+    /** 自适应上下文变化的 C++ 扩展点。 */
+    virtual void OnAdaptiveContextChanged(const FGamePlatformUIAdaptiveContext& Context) {}
+
+    /** 蓝图扩展点：ViewModel 状态变化。 */
+    UFUNCTION(BlueprintImplementableEvent, Category="UI|ViewModel", meta=(DisplayName="视图状态已变化"))
+    void BP_OnViewModelStateChanged(int32 Revision, int32 PageGeneration);
+
+    /** 蓝图扩展点：PC / 移动端自适应上下文变化。 */
+    UFUNCTION(BlueprintImplementableEvent, Category="UI|Adaptive", meta=(DisplayName="界面自适应上下文已变化"))
+    void BP_OnAdaptiveContextChanged(FGamePlatformUIAdaptiveContext Context);
+
+private:
+    /** 接收 ViewModel 状态变化，并转发到 C++ / Blueprint 扩展点。 */
+    UFUNCTION()
+    void HandleViewModelStateChanged(int32 Revision, int32 PageGeneration);
+
+    /** 接收 Adaptive Context 变化，并转发到 C++ / Blueprint 扩展点。 */
+    UFUNCTION()
+    void HandleAdaptiveContextChanged(FGamePlatformUIAdaptiveContext Context);
+
+    /** 绑定激活期间的平台事件。 */
+    void BindPlatformEvents();
+
+    /** 解绑激活期间的平台事件。 */
+    void UnbindPlatformEvents();
+
+    /** 当前页面 ViewModel。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformViewModelBase> ViewModel = nullptr;
+
+    /** 当前 LocalPlayer 的 UI 自适应子系统。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformUIAdaptiveSubsystem> AdaptiveSubsystem = nullptr;
+
+    /** 防止同一激活周期重复绑定委托。 */
+    bool bPlatformEventsBound = false;
+};

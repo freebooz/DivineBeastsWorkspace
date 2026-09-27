@@ -4,6 +4,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Types/GamePlatformDataLimits.h"
 
 namespace
 {
@@ -56,6 +57,11 @@ struct FGamePlatformDataScope
     // 幂等释放仍核对真实签发记录，不能把伪造的未知LeaseId判为已经释放。
     TMap<FGuid, FGamePlatformDataLease> ReleasedLeases;
     FGamePlatformResult LastResult;
+    int64 TotalAcceptedRequests = 0;
+    int64 TotalRejectedRequests = 0;
+    int64 TotalSucceededRequests = 0;
+    int64 TotalFailedRequests = 0;
+    int64 TotalCancelledRequests = 0;
 };
 
 IGamePlatformDataService* IGamePlatformDataService::Get(UGameInstance& GameInstance)
@@ -118,8 +124,16 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
         OutResult = FGamePlatformResult::Failure(TEXT("InvalidBundle"), TEXT("分组集合允许为空，但不能包含None名称。"));
     else if (Scope->NextGeneration == MAX_int64)
         OutResult = FGamePlatformResult::Failure(TEXT("GenerationExhausted"), TEXT("作用域申请代次耗尽，拒绝复用旧代次。"));
+    else
+    {
+        TSet<FName> UniqueBundles;
+        for (const FName Bundle : Bundles) UniqueBundles.Add(Bundle);
+        if (UniqueBundles.Num() > GamePlatform::Data::Limits::MaxBundlesPerLease)
+            OutResult = FGamePlatformResult::Failure(TEXT("TooManyBundles"), TEXT("单租约请求的唯一Asset Bundle数量超过平台安全上限。"));
+    }
     if (!OutResult.IsSuccess())
     {
+        ++Scope->TotalRejectedRequests;
         Scope->LastResult = OutResult;
         GamePlatform::Data::NextTick([WeakCaller, Callback = MoveTemp(Completion), Result = OutResult]() mutable
         { if (WeakCaller.IsValid() && Callback) Callback(FGamePlatformDataLease(), Result); });
@@ -144,6 +158,7 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
     Request->Visiting.Add(Request->Lease.DefinitionId);
     // 租约必须在引擎可能同步完成前发布到作用域。
     Scope->Requests.Add(Request->Lease.LeaseId, Request);
+    ++Scope->TotalAcceptedRequests;
     const FGamePlatformDataLease Lease = Request->Lease;
     TWeakObjectPtr<UGamePlatformDataSubsystem> WeakThis(this);
     GamePlatform::Data::NextTick([WeakThis, Lease]() { if (auto* Self = WeakThis.Get()) Self->Advance(Lease); });
@@ -195,8 +210,9 @@ void UGamePlatformDataSubsystem::Advance(FGamePlatformDataLease Lease)
         if (Request->Visiting.Contains(Child))
         { Finish(Lease, FGamePlatformResult::Failure(TEXT("DependencyCycle"), FString::Printf(TEXT("必需定义形成循环：%s。"), *Child.ToString()))); return; }
         if (Request->Visited.Contains(Child)) continue;
-        if (Request->Stack.Num() >= 128 || Request->DemandedAssets.Num() >= 4096)
-        { Finish(Lease, FGamePlatformResult::Failure(TEXT("DependencyGraphLimit"), TEXT("定义依赖超过128层或4096个唯一节点的安全上限。"))); return; }
+        if (Request->Stack.Num() >= GamePlatform::Data::Limits::MaxDependencyDepth ||
+            Request->DemandedAssets.Num() >= GamePlatform::Data::Limits::MaxDefinitionsPerRequest)
+        { Finish(Lease, FGamePlatformResult::Failure(TEXT("DependencyGraphLimit"), TEXT("定义依赖超过平台统一的深度或唯一节点安全上限。"))); return; }
         FDependencyFrame ChildFrame;
         ChildFrame.Id = Child;
         Request->Stack.Add(MoveTemp(ChildFrame));
@@ -241,6 +257,8 @@ void UGamePlatformDataSubsystem::Finish(FGamePlatformDataLease Lease, FGamePlatf
         if (!IsContextAlive(*Request) || Self->Scope->bIsClosing) { Self->ReleaseRequest(Lease, TEXT("终态发布前上下文失效。")); return; }
         Request->bHasPublishedTerminal = true;
         Request->Lease.RequestState = Result.IsSuccess() ? EGamePlatformDataRequestState::Succeeded : EGamePlatformDataRequestState::Failed;
+        if (Result.IsSuccess()) ++Self->Scope->TotalSucceededRequests;
+        else ++Self->Scope->TotalFailedRequests;
         Request->Stack.Empty(); Request->Visiting.Empty(); Request->Visited.Empty();
         if (!Result.IsSuccess())
         {
@@ -268,6 +286,7 @@ void UGamePlatformDataSubsystem::ReleaseRequest(FGamePlatformDataLease Lease, co
         Request->bHasPublishedTerminal = true;
         Request->Lease.RequestState = EGamePlatformDataRequestState::Cancelled;
         const FGamePlatformResult Result = FGamePlatformResult::Cancelled(Reason);
+        ++Scope->TotalCancelledRequests;
         Scope->LastResult = Result;
         GamePlatform::Data::NextTick([Request, Result]() mutable
         {
@@ -309,13 +328,28 @@ FGamePlatformDataDiagnostics UGamePlatformDataSubsystem::GetDiagnostics() const
 {
     check(IsInGameThread());
     FGamePlatformDataDiagnostics Result;
-    Result.ScopeId = Scope->Id; Result.LastResult = Scope->LastResult;
+    Result.ScopeId = Scope->Id;
+    Result.LastResult = Scope->LastResult;
+    Result.ReleasedLeaseRecords = Scope->ReleasedLeases.Num();
+    Result.TotalAcceptedRequests = Scope->TotalAcceptedRequests;
+    Result.TotalRejectedRequests = Scope->TotalRejectedRequests;
+    Result.TotalSucceededRequests = Scope->TotalSucceededRequests;
+    Result.TotalFailedRequests = Scope->TotalFailedRequests;
+    Result.TotalCancelledRequests = Scope->TotalCancelledRequests;
+    TSet<FPrimaryAssetId> Definitions;
+    TSet<FName> Bundles;
     for (const auto& Pair : Scope->Requests)
     {
-        if (Pair.Value->Lease.RequestState == EGamePlatformDataRequestState::Loading) ++Result.PendingRequests;
-        else if (Pair.Value->Lease.RequestState == EGamePlatformDataRequestState::Succeeded) ++Result.ActiveLeases;
+        const auto& Request = *Pair.Value;
+        Definitions.Add(Request.Lease.DefinitionId);
+        for (const FPrimaryAssetId& Id : Request.DemandedAssets) Definitions.Add(Id);
+        for (const FName Bundle : Request.Lease.Bundles) Bundles.Add(Bundle);
+        if (Request.Lease.RequestState == EGamePlatformDataRequestState::Loading) ++Result.PendingRequests;
+        else if (Request.Lease.RequestState == EGamePlatformDataRequestState::Succeeded) ++Result.ActiveLeases;
         else ++Result.TerminalRequests;
     }
+    Result.UniqueTrackedDefinitions = Definitions.Num();
+    Result.UniqueRequestedBundles = Bundles.Num();
     return Result;
 }
 void UGamePlatformDataSubsystem::CleanupWorld(UWorld* World, bool bSessionEnded, bool bCleanupResources)

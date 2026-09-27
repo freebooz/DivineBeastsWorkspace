@@ -4,10 +4,17 @@
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "GameplayTagContainer.h"
 #include "GamePlatformUITypes.h"
+#include "Requests/GamePlatformUIFeedbackRequest.h"
+#include "Requests/GamePlatformUINotificationRequest.h"
+#include "Requests/GamePlatformWorldUIRequest.h"
 #include "GamePlatformUIManagerSubsystem.generated.h"
 
 struct FStreamableHandle;
 class UGamePlatformHUDWidget;
+class UGamePlatformFeedbackService;
+class UGamePlatformFeedbackWidget;
+class UGamePlatformNotificationService;
+class UGamePlatformNotificationWidget;
 class UGamePlatformLoadingScreenService;
 class UGamePlatformToastWidget;
 class UGamePlatformUILayerStack;
@@ -15,6 +22,8 @@ class UGamePlatformUIRouteDefinition;
 class UGamePlatformUIScreen;
 class UGamePlatformUIScreenDefinition;
 class UGamePlatformViewModelBase;
+class UGamePlatformWorldUIService;
+class UGamePlatformWorldWidgetBase;
 struct FWorldContext;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(
@@ -105,6 +114,34 @@ public:
     UFUNCTION(BlueprintCallable, Category="UI|Manager")
     bool AttachToastWidget(UGamePlatformToastWidget* Widget);
 
+    /** 通过平台通知服务提交请求；业务模块不直接操作NotificationLayer。 */
+    UFUNCTION(BlueprintCallable, Category="UI|Notification")
+    FGuid SubmitNotification(
+        FGamePlatformUINotificationRequest Request,
+        TSubclassOf<UGamePlatformNotificationWidget> WidgetClass);
+
+    /** 提交短生命周期高频视觉反馈；服务负责合并、限流和对象池复用。 */
+    UFUNCTION(BlueprintCallable, Category="UI|Feedback")
+    FGuid SubmitFeedback(
+        FGamePlatformUIFeedbackRequest Request,
+        TSubclassOf<UGamePlatformFeedbackWidget> WidgetClass);
+
+    /** 注册需要持续世界坐标投影的名称板/Marker等UI。 */
+    UFUNCTION(BlueprintCallable, Category="UI|WorldUI")
+    FGuid RegisterWorldUI(
+        FGamePlatformWorldUIRequest Request,
+        TSubclassOf<UGamePlatformWorldWidgetBase> WidgetClass);
+
+    /** 更新已注册世界UI的轻量只读数据与世界位置。 */
+    UFUNCTION(BlueprintCallable, Category="UI|WorldUI")
+    bool UpdateWorldUI(
+        FGuid RequestId,
+        FGamePlatformWorldUIRequest Request);
+
+    /** 注销世界UI并回收对应Widget。 */
+    UFUNCTION(BlueprintCallable, Category="UI|WorldUI")
+    bool UnregisterWorldUI(FGuid RequestId);
+
     /** 在ClientTravel/LoadMap前清理World-scoped页面与过期异步请求。 */
     UFUNCTION(BlueprintCallable, Category="UI|Manager")
     void PrepareForTravel();
@@ -114,6 +151,24 @@ public:
 
     UFUNCTION(BlueprintPure, Category="UI|Manager")
     UGamePlatformLoadingScreenService* GetLoadingScreenService() const { return LoadingScreenService; }
+
+    UFUNCTION(BlueprintPure, Category="UI|Manager")
+    UGamePlatformNotificationService* GetNotificationService() const
+    {
+        return NotificationService;
+    }
+
+    UFUNCTION(BlueprintPure, Category="UI|Manager")
+    UGamePlatformFeedbackService* GetFeedbackService() const
+    {
+        return FeedbackService;
+    }
+
+    UFUNCTION(BlueprintPure, Category="UI|Manager")
+    UGamePlatformWorldUIService* GetWorldUIService() const
+    {
+        return WorldUIService;
+    }
 
     UFUNCTION(BlueprintPure, Category="UI|Manager")
     bool HasScreenDefinition(FName ScreenId) const;
@@ -144,6 +199,18 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformLoadingScreenService> LoadingScreenService = nullptr;
 
+    /** 低频屏幕通知服务；由UIManager统一持有，不增加额外Subsystem。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformNotificationService> NotificationService = nullptr;
+
+    /** 高频反馈对象池服务。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformFeedbackService> FeedbackService = nullptr;
+
+    /** 世界空间UI集中投影服务。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformWorldUIService> WorldUIService = nullptr;
+
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UGamePlatformUIScreenDefinition>> ScreenDefinitions;
 
@@ -166,8 +233,6 @@ private:
     TMap<TWeakObjectPtr<UGamePlatformUIScreen>, TSharedPtr<FStreamableHandle>> ActiveScreenLeases;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> PauseScreens;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> TravelPersistentScreens;
-    TMap<FName, TWeakObjectPtr<UGamePlatformToastWidget>> ActiveToasts;
-    TMap<FName, FTimerHandle> ToastTimers;
     FDelegateHandle PreLoadMapHandle;
 
     int32 NextGeneration = 1;
@@ -184,6 +249,5 @@ private:
     void HandleScreenDeactivated(UGamePlatformUIScreen* Screen);
     void FailRequest(FGuid RequestId, FName ScreenId, const FText& Reason);
     void CleanupPendingRequest(FGuid RequestId, bool bCancelLoad);
-    void ExpireToast(FName ToastKey, TWeakObjectPtr<UGamePlatformToastWidget> ExpectedWidget);
     void RefreshStandalonePause();
 };

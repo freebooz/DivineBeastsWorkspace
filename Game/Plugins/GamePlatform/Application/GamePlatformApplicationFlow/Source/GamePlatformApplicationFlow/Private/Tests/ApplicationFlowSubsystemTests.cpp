@@ -159,4 +159,82 @@ bool FGamePlatformFlowReentrantShutdownTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("重复关闭幂等"), FinishCount, 1);
     return true;
 }
+
+/**
+ * 回归：快照事件必须只在公开状态真实变化时广播，不能退化为逐帧心跳。
+ * 同时验证广播栈内的流程控制重入被拒绝，避免 UI 监听器通过事件回调破坏唯一状态机。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformFlowSnapshotChangedTest,
+    "GamePlatform.ApplicationFlow.Adapter.SnapshotChanged",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformFlowSnapshotChangedTest::RunTest(const FString& Parameters)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>());
+    TStrongObjectPtr<UGamePlatformApplicationFlowSubsystem> Service(
+        NewObject<UGamePlatformApplicationFlowSubsystem>(Instance.Get()));
+    FSubsystemCollection<UGameInstanceSubsystem> Collection;
+    Service->Initialize(Collection);
+
+    int32 SnapshotCount = 0;
+    bool bReentrantStartRejected = false;
+    TArray<EGamePlatformFlowState> States;
+    TArray<uint64> Generations;
+    FString ReentrantError;
+
+    Service->OnSnapshotChanged().AddLambda([&](const FGamePlatformFlowSnapshot& Snapshot)
+    {
+        ++SnapshotCount;
+        States.Add(Snapshot.State);
+        Generations.Add(Snapshot.NodeGeneration);
+        if (SnapshotCount == 1)
+        {
+            bReentrantStartRejected = !Service->Start(nullptr, ReentrantError).IsValid();
+        }
+    });
+
+    FGamePlatformFlowCompletion Completion;
+    auto* Node = NewObject<UGamePlatformCallbackFlowNode>(Instance.Get());
+    TestTrue(TEXT("绑定快照测试节点"), Node->Bind(
+        [&](const auto&, auto Complete) { Completion = MoveTemp(Complete); },
+        [](auto) {}));
+
+    FGamePlatformFlowDefinition Definition;
+    Definition.EntryNodeId = TEXT("Entry");
+    FGamePlatformFlowStep Step;
+    Step.NodeId = TEXT("Entry");
+    Step.Node = Node;
+    Definition.Steps.Add(Step);
+
+    FString Error;
+    TestTrue(TEXT("配置成功并产生Idle快照"), Service->Configure(Definition, Error));
+    TestTrue(TEXT("快照广播栈内拒绝重入启动"), bReentrantStartRejected);
+    TestEqual(TEXT("配置只广播一次"), SnapshotCount, 1);
+
+    const FGamePlatformFlowHandle Handle = Service->Start(nullptr, Error);
+    TestTrue(TEXT("启动成功"), Handle.IsValid());
+    TestEqual(TEXT("启动状态变化广播一次"), SnapshotCount, 2);
+
+    FTSTicker::GetCoreTicker().Tick(0.01f);
+    TestEqual(TEXT("节点真正开始时广播NodeGeneration变化"), SnapshotCount, 3);
+    TestTrue(TEXT("节点代次非零"), Generations.Last() != 0);
+
+    // 没有完成、超时或重试变化时，再次Tick不得制造重复事件。
+    FTSTicker::GetCoreTicker().Tick(0.01f);
+    TestEqual(TEXT("相同快照不逐帧重复广播"), SnapshotCount, 3);
+
+    TestTrue(TEXT("捕获异步完成回调"), static_cast<bool>(Completion));
+    if (Completion)
+    {
+        Completion(FGamePlatformFlowNodeResult::Success());
+    }
+    FTSTicker::GetCoreTicker().Tick(0.01f);
+    TestEqual(TEXT("成功终态只增加一次快照事件"), SnapshotCount, 4);
+    TestTrue(TEXT("最后观察状态为Succeeded"), States.Last() == EGamePlatformFlowState::Succeeded);
+
+    Service->Deinitialize();
+    TestEqual(TEXT("关闭作用域广播Shutdown变化"), SnapshotCount, 5);
+    TestTrue(TEXT("最后观察状态为Shutdown"), States.Last() == EGamePlatformFlowState::Shutdown);
+    return true;
+}
 #endif

@@ -20,6 +20,7 @@ public:
     virtual FGamePlatformResult CancelLoadingOperation(const FGamePlatformLoadingHandle& Handle) override;
     virtual FGamePlatformResult ReleaseLoadingOperation(const FGamePlatformLoadingHandle& Handle) override;
     virtual FGamePlatformLoadingSnapshot GetLoadingSnapshot() const override;
+    virtual FGamePlatformLoadingDiagnostics GetLoadingDiagnostics() const override;
     virtual FGamePlatformLoadingRegistration SubscribeLoadingState(const FGamePlatformLoadingHandle& Handle, TWeakObjectPtr<UObject> Owner, TFunction<void(const FGamePlatformLoadingSnapshot&)> Callback) override;
     virtual bool UnsubscribeLoadingState(const FGamePlatformLoadingRegistration& Registration) override;
     virtual FGamePlatformLoadingRegistration RegisterTaskFactory(FName Type, FGamePlatformLoadingTaskFactory Factory, FGamePlatformResult& OutResult) override;
@@ -27,6 +28,12 @@ public:
     virtual bool IsReadyToPlay(const FGamePlatformLoadingHandle& Handle) const override;
     virtual FGamePlatformResult ReportWorldOperable(const FGamePlatformLoadingHandle& Handle, UWorld& World) override;
 private:
+    /**
+     * 安排一次后续采样。加载运行期使用50ms间隔；Ready后只为弱所有者回收做低频监视；完全释放后不再安排Ticker。
+     * 每次重新安排都会撤销旧句柄，确保外部状态变化可以把低频监视立即提升为一次即时采样。
+     */
+    void ScheduleTicker(float DelaySeconds);
+    /** 单次Ticker回调；回调末尾根据当前状态决定是否再次安排，不保持永久空闲Ticker。 */
     bool Tick(float DeltaSeconds);
     void ReleaseTasks();
     TUniquePtr<FGamePlatformLoadingScope> Scope;

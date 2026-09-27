@@ -2,6 +2,13 @@
 
 2026-09-21；本轮按用户最新附件实施第六插件，不继续扩大 Session 后端范围。
 
+## 2026-09-27 当前复核与完善
+
+- 保留2026-09-21的历史实施记录；当前工作空间已不再被当时的空白插件描述阻断，`GamePlatformLoading` 的 Editor／Client／Server 模块均通过 UE5.8 `Build.bat` 实际构建。
+- 生产策略层新增任务图容量门禁、哈希化ID/依赖校验和冻结TaskId索引；Native Debug／Release 各1/1通过，当前为46条断言。
+- 实例执行器改为按需Ticker：Idle零轮询、Running 20Hz、Ready资源保留态2Hz弱Owner监视；新增轻量Diagnostics统计，并限制单实例订阅/工厂容器上限。
+- 仍未完成 UE Automation、真实Definition/地图、双PIE、Client/Server Cook/Stage、Session真实准入和人工签审；Session前置继续显式失败，不以模拟任务补洞。
+
 ## 现场与设计约束
 
 - main 分支；开始复核时 HEAD 为 695d7cf。工作树存在 Foundation、Online、Session 等并行未提交修改，禁止覆盖。

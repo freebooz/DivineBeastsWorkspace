@@ -45,6 +45,23 @@ EGamePlatformFlowFinishReason ToPublicReason(FlowCore::EFinishReason Reason)
     default: return EGamePlatformFlowFinishReason::Failed;
     }
 }
+
+/**
+ * 比较两个公开快照是否完全一致。
+ * 这里刻意只比较公开值字段，不做字符串格式化、不访问 UObject，也不分配临时容器，
+ * 使每次平台 Ticker 检查保持为常量级低成本操作；只有变化时才会触发上层事件广播。
+ */
+bool IsSamePublicSnapshot(const FGamePlatformFlowSnapshot& Left, const FGamePlatformFlowSnapshot& Right)
+{
+    return Left.State == Right.State &&
+        Left.Handle.ScopeId == Right.Handle.ScopeId &&
+        Left.Handle.RunId == Right.Handle.RunId &&
+        Left.NodeId == Right.NodeId &&
+        Left.Attempt == Right.Attempt &&
+        Left.ErrorCode == Right.ErrorCode &&
+        Left.ErrorMessage == Right.ErrorMessage &&
+        Left.NodeGeneration == Right.NodeGeneration;
+}
 }
 
 /** UObject 与纯调度核心的私有适配器；只有游戏线程操作弱对象。 */
@@ -108,6 +125,8 @@ void UGamePlatformApplicationFlowSubsystem::Initialize(FSubsystemCollectionBase&
     bClosing = false;
     bDeinitialized = false;
     LastPublishedRunId = 0;
+    bHasObservedSnapshot = false;
+    LastObservedSnapshot = {};
     Executor = MakeUnique<FlowCore::FApplicationFlowExecutor>();
 }
 
@@ -146,7 +165,13 @@ void UGamePlatformApplicationFlowSubsystem::CompleteDeinitialize()
                 return; // 未完成清理时保留对象，不把失败关闭变成释放后访问。
             }
         }
-        if (bWasActive) PublishTerminal();
+        // Shutdown 本身也是公开状态变化。已终结的旧运行不重复广播 Finished，
+        // 但观察者仍应看到作用域进入 Shutdown；活动运行则随后发布本轮唯一终态。
+        PublishSnapshotChanged();
+        if (bWasActive)
+        {
+            PublishTerminal();
+        }
         Executor.Reset();
     }
     ActivePayload = nullptr;
@@ -157,6 +182,7 @@ void UGamePlatformApplicationFlowSubsystem::CompleteDeinitialize()
     LegacyCoreDefinition.Reset();
     NodeFactories.Reset();
     PreviouslyCreatedNodes.Reset();
+    SnapshotChangedEvent.Clear();
     FinishedEvent.Clear();
     Super::Deinitialize();
 }
@@ -206,7 +232,10 @@ bool UGamePlatformApplicationFlowSubsystem::Configure(const FGamePlatformFlowDef
     LegacyNodes = OwnedNodes;
     LegacyCoreDefinition = MakeUnique<FlowCore::FDefinition>(SavedLegacyDefinition);
     bAssetConfiguration = false;
-    return true;
+    // Configure 会把执行器快照重置为 Idle；若观察方此前看到终态，需要同步一次真实变化。
+    PublishSnapshotChanged();
+    if (bClosing) CompleteDeinitialize();
+    return !bClosing;
 }
 
 FGamePlatformFlowHandle UGamePlatformApplicationFlowSubsystem::Start(UObject* Payload, FString& OutError)
@@ -235,6 +264,12 @@ FGamePlatformFlowHandle UGamePlatformApplicationFlowSubsystem::Start(UObject* Pa
     // 只在活动流程期间注册。Ticker 用于回到游戏线程、超时和退避，不做业务逐帧计算。
     TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this,
         &UGamePlatformApplicationFlowSubsystem::TickFlow));
+    PublishSnapshotChanged();
+    if (bClosing)
+    {
+        CompleteDeinitialize();
+        return {};
+    }
     return {ScopeId, RunId};
 }
 
@@ -247,8 +282,16 @@ bool UGamePlatformApplicationFlowSubsystem::Cancel(const FGamePlatformFlowHandle
         TGuardValue<bool> DispatchGuard(bDispatching, true);
         bCancelled = Executor->Cancel(Handle.RunId);
     }
-    if (bClosing) { CompleteDeinitialize(); return bCancelled; }
-    if (bCancelled) { RemoveTicker(); PublishTerminal(); }
+    if (bCancelled)
+    {
+        PublishSnapshotChanged();
+        if (!bClosing)
+        {
+            RemoveTicker();
+            PublishTerminal();
+        }
+    }
+    if (bClosing) CompleteDeinitialize();
     return bCancelled;
 }
 
@@ -284,14 +327,38 @@ bool UGamePlatformApplicationFlowSubsystem::TickFlow(float DeltaSeconds)
         else
             Executor->Tick(FPlatformTime::Seconds());
     }
-    if (bClosing) { CompleteDeinitialize(); return false; }
-    if (!Executor->IsActive())
+    PublishSnapshotChanged();
+    if (bClosing)
+    {
+        CompleteDeinitialize();
+        return false;
+    }
+    if (!Executor || !Executor->IsActive())
     {
         TickerHandle.Reset(); // 返回 false 后由 Ticker 自己移除当前回调。
         PublishTerminal();
         return false;
     }
     return true;
+}
+
+void UGamePlatformApplicationFlowSubsystem::PublishSnapshotChanged(bool bForce)
+{
+    check(IsInGameThread());
+    if (!Executor || bPublishing) return;
+
+    const FGamePlatformFlowSnapshot Snapshot = GetSnapshot();
+    if (!bForce && bHasObservedSnapshot && IsSamePublicSnapshot(LastObservedSnapshot, Snapshot))
+    {
+        return;
+    }
+
+    LastObservedSnapshot = Snapshot;
+    bHasObservedSnapshot = true;
+
+    // 广播栈内禁止任何流程控制重入；监听器只能做轻量只读投影或排队后续游戏线程任务。
+    TGuardValue<bool> PublishGuard(bPublishing, true);
+    SnapshotChangedEvent.Broadcast(Snapshot);
 }
 
 void UGamePlatformApplicationFlowSubsystem::PublishTerminal()
@@ -438,6 +505,13 @@ FGamePlatformFlowHandle UGamePlatformApplicationFlowSubsystem::StartFlow(
     TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this,
         &UGamePlatformApplicationFlowSubsystem::TickFlow));
     OutResult = FGamePlatformResult::Success();
+    PublishSnapshotChanged();
+    if (bClosing)
+    {
+        CompleteDeinitialize();
+        OutResult = FGamePlatformResult::Failure(TEXT("FlowClosing"), TEXT("流程启动通知期间作用域关闭。"));
+        return {};
+    }
     return {ScopeId, RunId};
 }
 
@@ -456,8 +530,16 @@ bool UGamePlatformApplicationFlowSubsystem::CancelFlow(const FGamePlatformFlowNo
     }
     OutResult = bCancelled ? FGamePlatformResult::Success() :
         FGamePlatformResult::Failure(TEXT("StaleNodeToken"), TEXT("当前节点未开始、已结束或令牌代次过期。"));
+    if (bCancelled)
+    {
+        PublishSnapshotChanged();
+        if (!bClosing)
+        {
+            RemoveTicker();
+            PublishTerminal();
+        }
+    }
     if (bClosing) CompleteDeinitialize();
-    else if (bCancelled) { RemoveTicker(); PublishTerminal(); }
     return bCancelled;
 }
 

@@ -56,11 +56,18 @@ public:
     FGamePlatformFlowSnapshot GetSnapshot() const;
     /** 每次运行仅广播一个终态；成功、失败、取消与 Deinitialize 中断都通知。 */
     FGamePlatformFlowFinished& OnFinished() { return FinishedEvent; }
+    /**
+     * 流程公开快照真实变化时广播；不会逐 Tick 重复通知相同状态。
+     * 用于项目层 ViewState（界面状态投影）与诊断观察，监听器在回调中只能读取，不能同步重入流程控制。
+     */
+    FGamePlatformFlowSnapshotChanged& OnSnapshotChanged() { return SnapshotChangedEvent; }
 
 private:
     friend class FGamePlatformFlowNodeAdapter;
     bool TickFlow(float DeltaSeconds);
     void PublishTerminal();
+    /** 比较当前公开快照与最近一次已广播快照，仅在真实变化时发布，避免业务层逐帧轮询和无效 UI 刷新。 */
+    void PublishSnapshotChanged(bool bForce = false);
     bool CanControl(FString& OutError) const;
     void RemoveTicker();
     /** 等待节点／广播栈展开后完成幂等关闭，绝不在核心调用栈内销毁执行器。 */
@@ -73,6 +80,9 @@ private:
     FTSTicker::FDelegateHandle TickerHandle;
     FGuid ScopeId;
     uint64 LastPublishedRunId = 0;
+    /** 最近一次已广播快照；只保存轻量值，不持有 UObject，也不增加 GC 压力。 */
+    FGamePlatformFlowSnapshot LastObservedSnapshot;
+    bool bHasObservedSnapshot = false;
     bool bClosing = false;
     bool bDeinitialized = false;
     bool bPublishing = false; // 广播内允许查询，变更须推迟到下一游戏线程任务。
@@ -103,5 +113,7 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UGamePlatformFlowNode>> PendingAssetNodes;
 
+    /** 事件只在快照变化时触发，不作为逐帧心跳使用。 */
+    FGamePlatformFlowSnapshotChanged SnapshotChangedEvent;
     FGamePlatformFlowFinished FinishedEvent;
 };

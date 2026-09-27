@@ -20,8 +20,16 @@ bool FGamePlatformDefinitionIdentityTest::RunTest(const FString& Parameters)
     First->DataVersion.ContentRevision = 0;
     TestFalse(TEXT("非法内容修订被拒绝"), First->ValidateDefinition().IsSuccess());
     First->DataVersion.ContentRevision = 1;
+    First->RequiredDefinitions = {First->GetPrimaryAssetId()};
+    const FGamePlatformResult SelfDependency = First->ValidateDefinition();
+    TestFalse(TEXT("自依赖在Definition基础校验阶段被拒绝"), SelfDependency.IsSuccess());
+    TestEqual(TEXT("自依赖错误码稳定"), SelfDependency.Code, FName(TEXT("SelfDependency")));
+    First->RequiredDefinitions.Empty();
     First->RequiredDefinitions.Add(FPrimaryAssetId());
     TestFalse(TEXT("非法依赖身份被拒绝"), First->ValidateDefinition().IsSuccess());
+    TestEqual(TEXT("结构版本标签名稳定"), UGamePlatformDefinitionBase::SchemaVersionTag(), FName(TEXT("GamePlatformSchemaVersion")));
+    TestEqual(TEXT("内容修订标签名稳定"), UGamePlatformDefinitionBase::ContentRevisionTag(), FName(TEXT("GamePlatformContentRevision")));
+    TestEqual(TEXT("依赖数量标签名稳定"), UGamePlatformDefinitionBase::RequiredDefinitionCountTag(), FName(TEXT("GamePlatformRequiredDefinitionCount")));
     return true;
 }
 #endif

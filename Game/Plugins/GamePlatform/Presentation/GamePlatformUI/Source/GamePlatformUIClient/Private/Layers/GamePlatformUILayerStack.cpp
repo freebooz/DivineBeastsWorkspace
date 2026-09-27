@@ -28,6 +28,20 @@ bool UGamePlatformUILayerStack::AddHUDWidget(UWidget* Widget)
     return IsValid(HUDLayer) && IsValid(Widget) && HUDLayer->AddChild(Widget) != nullptr;
 }
 
+bool UGamePlatformUILayerStack::AddWorldProjectionWidget(UWidget* Widget)
+{
+    return IsValid(WorldProjectionLayer) &&
+        IsValid(Widget) &&
+        WorldProjectionLayer->AddChild(Widget) != nullptr;
+}
+
+bool UGamePlatformUILayerStack::AddFeedbackWidget(UWidget* Widget)
+{
+    return IsValid(FeedbackLayer) &&
+        IsValid(Widget) &&
+        FeedbackLayer->AddChild(Widget) != nullptr;
+}
+
 bool UGamePlatformUILayerStack::AddNotificationWidget(UWidget* Widget)
 {
     return IsValid(NotificationLayer) &&
@@ -40,6 +54,22 @@ void UGamePlatformUILayerStack::ClearHUD()
     if (IsValid(HUDLayer))
     {
         HUDLayer->ClearChildren();
+    }
+}
+
+void UGamePlatformUILayerStack::ClearWorldProjection()
+{
+    if (IsValid(WorldProjectionLayer))
+    {
+        WorldProjectionLayer->ClearChildren();
+    }
+}
+
+void UGamePlatformUILayerStack::ClearFeedback()
+{
+    if (IsValid(FeedbackLayer))
+    {
+        FeedbackLayer->ClearChildren();
     }
 }
 

@@ -19,3 +19,25 @@
 Session当前只有私有状态算法，无可消费的公开连接/准入快照或已验证服务器链。本轮不从它的私有状态推导成功、不读取票据、不调用HTTP、不Travel、不重连。`SessionReady`缺工厂直接拒绝。Online并行开发内容不作为本轮已经联调的证据。
 
 后续真实适配应在客户端组合层登记任务，并核对SessionId、目标InstanceId/BootId、World身份、ConnectionGeneration、权威准入与当前操作绑定；断开/失败必须传播。双端Loading不直接依赖客户端Session。该部分及FoundationSessionLoading均未执行，不能以测试Task替代。
+
+## 《神兽联盟》推荐Loading事实图
+
+平台层不新增神兽联盟专属任务类型；由 `DBAClient（神兽联盟客户端组合插件）` 在真实公共服务就绪后注册项目适配任务。推荐把一次 `EnterWorld（进入世界）` 的 Loading Operation（加载操作）拆成：
+
+```text
+SessionAdmission        # Required：真实Session/服务器准入，当前前置未完成
+        ↓
+WorldDefinition         # Required：GamePlatformData定义与必要Bundle
+        ↓
+WorldPresence           # Required：当前目标世界已BeginPlay且项目声明基础可操作
+        ↓
+CharacterReady          # Required：Pawn/角色初始化、必要GAS能力与权威身份就绪
+        ↓
+GameplayReady           # Required：当前Experience/Gameplay规则和基础交互可用
+        ↓
+EssentialUIReady        # 客户端通常Required：根HUD/输入相关基础界面可用
+
+NonCriticalPresentation # Optional/Degradable：非关键VFX/SFX/装饰性表现
+```
+
+OpenWorld（常驻世界）、Village（新手村）和 MainArena（主竞技场）可以复用同一机制，但由项目层提供不同 OperationSpec（操作规格）和事实适配器。Loading 不负责 Travel（切图）、服务器分配、角色生成、GAS授权或 UI 创建，只验证这些所属系统报告的当前事实。MainArena 的 1v1～5v5 模式也不进入 Loading 平台规则。

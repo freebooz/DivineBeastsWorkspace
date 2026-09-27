@@ -31,9 +31,11 @@
 - [Foundation M0实际接口](Implementation/FoundationM0/InterfaceContract.md)：Core、Data、Flow及主工程调用的已写入签名。
 - [Foundation M0分项验证](Production/FoundationM0Verification.md)：目标、退出码、证据与未执行项，当前不是全部通过。
 - [Foundation M0源码交付](Production/FoundationM0Delivery.md)：现有命令、资产生成顺序与剩余风险，UE目标/资产未验证。
-- [GamePlatformCore](../Game/Plugins/GamePlatform/Foundation/GamePlatformCore/README.md)：身份、结果、版本与生产算法回归。
-- [GamePlatformData](../Game/Plugins/GamePlatform/Foundation/GamePlatformData/README.md)：定义、实例租约、进程需求与编辑器验证。
+- [GamePlatformCore](../Game/Plugins/GamePlatform/Foundation/GamePlatformCore/README.md)：平台身份、结构化错误码、结果、版本兼容区间及 Editor／Client／Server 三端模块验证；详细设计见其 `Docs/Architecture.md`。
+- [GamePlatformData](../Game/Plugins/GamePlatform/Foundation/GamePlatformData/README.md)：Definition根体系、统一主资产加载、作用域租约、AssetRegistry元数据、依赖安全上限及 Editor／Client／Server 模块验证；详细设计见其 `Docs/Architecture.md`。
 - [GamePlatformApplicationFlow](../Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/README.md)：流程执行机制、节点注入、接口示例及原生／UE 验证状态。
+- [GamePlatformInput](../Game/Plugins/GamePlatform/Application/GamePlatformInput/README.md)：PC键鼠/手柄与移动Touch统一语义输入、LocalPlayer租约、重绑定、移动端独立手感偏好、输入诊断和UI/Gameplay仲裁；Windows Editor/Client模块已验证，Android/iOS状态见插件测试证据。
+- [GamePlatformLoading](../Game/Plugins/GamePlatform/Application/GamePlatformLoading/README.md)：DAG加载任务、Data租约、世界Ready屏障、按需低开销调度、运行诊断及 Editor／Client／Server 模块验证；详细设计见插件 `Docs/Architecture.md`。
 - [GamePlatformVFX](../Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/README.md)：已有特效源码交付与待真实工程接入事项。
 - [业务后端与共享代码工程化审查报告](Production/业务后端与共享代码工程化审查报告_V1.3.0.md)：后端及协议的审查证据与阻断项。
 - [业务后端本地部署说明](Production/业务后端本地部署说明.md)：本地部署与验证说明。

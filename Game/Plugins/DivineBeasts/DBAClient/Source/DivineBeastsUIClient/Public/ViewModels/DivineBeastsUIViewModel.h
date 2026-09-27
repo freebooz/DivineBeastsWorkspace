@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ViewModels/GamePlatformViewModelBase.h"
+#include "ViewModels/DivineBeastsViewModelBase.h"
 #include "Contracts/DivineBeastsUIContracts.h"
 #include "DivineBeastsUIViewModel.generated.h"
 
@@ -18,7 +18,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
  */
 UCLASS(BlueprintType, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsUIViewModel
-    : public UGamePlatformViewModelBase
+    : public UDivineBeastsViewModelBase
 {
     GENERATED_BODY()
 
@@ -35,6 +35,13 @@ public:
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI")
     FDivineBeastsUIViewState GetState() const { return State; }
+
+    /**
+     * C++ 热路径只读访问当前 ViewState。
+     * 返回 const 引用避免复制 Characters、Arena Scoreboard 等容器；
+     * Blueprint 继续使用 GetState() 的值返回接口，保持反射兼容。
+     */
+    const FDivineBeastsUIViewState& GetStateRef() const { return State; }
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI")
     FName GetLastCommandErrorCode() const { return LastCommandErrorCode; }

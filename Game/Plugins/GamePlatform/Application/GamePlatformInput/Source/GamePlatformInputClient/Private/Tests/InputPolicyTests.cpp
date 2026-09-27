@@ -93,16 +93,20 @@ void TestBlocks()
     Check(!Ledger.Acquire(1, 0), "empty block rejected");
     Check(!Ledger.IsBlocked(0), "empty query never blocked");
     Check(Ledger.Acquire(1, 3), "loading blocks two channels");
+    Check(Ledger.CombinedMask() == 3, "cached combined mask reflects first blocker");
     Check(Ledger.Acquire(2, 2), "menu overlaps look channel");
+    Check(Ledger.CombinedMask() == 3, "overlapping blocker keeps cached mask stable");
     Check(!Ledger.Acquire(1, 4), "duplicate cannot replace mask");
     Check(!Ledger.IsBlocked(4), "UI channel remains usable");
     Check(Ledger.IsBlocked(5), "any overlapping bit blocks composite query");
     Check(!Ledger.Release(55), "unknown block release is harmless");
     Check(Ledger.Release(1), "release loading before menu");
+    Check(Ledger.CombinedMask() == 2, "cached mask preserves overlapping surviving blocker");
     Check(!Ledger.Release(1), "repeat release does not decrement menu");
     Check(!Ledger.IsBlocked(1), "move restored independently");
     Check(Ledger.IsBlocked(2), "menu still blocks look");
     Check(Ledger.Release(2), "menu release");
+    Check(Ledger.CombinedMask() == 0, "cached mask clears after last blocker");
     Check(!Ledger.IsBlocked(3), "all blocks removed");
     for (std::uint64_t Token = 1; Token <= 64; ++Token)
     {
@@ -200,6 +204,31 @@ void TestAxisAndSettings()
         Axis = ClampAxis(0.5, Invalid);
         Check(Axis.first == 0 && Axis.second == 0, "invalid second axis safely neutralized");
     }
+    // PC手柄与移动端虚拟摇杆共用径向死区；死区内归零，死区外保持方向并重新映射幅度。
+    Axis = ApplyRadialDeadZone(0.1, 0.0, 0.2);
+    Check(Axis.first == 0 && Axis.second == 0, "radial dead zone neutralizes small stick/touch motion");
+    Axis = ApplyRadialDeadZone(0.6, 0.8, 0.2);
+    Check(IsFiniteAxis(Axis.first, Axis.second), "radial dead zone output remains finite");
+    Check(std::hypot(Axis.first, Axis.second) <= 1.0, "radial dead zone output bounded to unit circle");
+    Axis = ApplyAxisScale(0.4, 0.0, 1.5);
+    Check(std::abs(Axis.first - 0.6) < 1e-12 && Axis.second == 0.0, "touch move scale increases finite axis");
+    Axis = ApplyAxisScale(0.8, 0.8, 1.5);
+    Check(std::hypot(Axis.first, Axis.second) <= 1.0, "touch move scale remains unit bounded");
+    Axis = ApplyAxisScale(0.5, 0.0, std::numeric_limits<double>::quiet_NaN());
+    Check(Axis.first == 0.0 && Axis.second == 0.0, "invalid touch move scale fails closed");
+    Axis = ApplyRadialDeadZone(1.0, 0.0, 0.2);
+    Check(std::abs(Axis.first - 1.0) < 1e-12 && Axis.second == 0, "full stick magnitude remains full after dead zone");
+
+    // 无障碍视角偏好不乘DeltaTime，只做反转和灵敏度倍率，防止消费层重复积分。
+    auto Look = ApplyLookPreference(2.0, -3.0, 1.5, true, false);
+    Check(Look.first == -3.0 && Look.second == -4.5, "look preference applies sensitivity and horizontal inversion");
+    Look = ApplyLookPreference(2.0, -3.0, 2.0, false, true);
+    Check(Look.first == 4.0 && Look.second == 6.0, "look preference applies vertical inversion");
+    Look = ApplyLookPreference(1.0, 1.0, std::numeric_limits<double>::quiet_NaN(), false, false);
+    Check(Look.first == 0 && Look.second == 0, "invalid accessibility sensitivity fails closed");
+    Check(std::abs(CombineSensitivity(1.5, 0.8) - 1.2) < 1e-12, "touch look sensitivity combines with base sensitivity");
+    Check(CombineSensitivity(1.0, std::numeric_limits<double>::infinity()) == 0.0, "invalid device sensitivity fails closed");
+
     const auto Key = StableSettingsKey("Game", "opaque-user", 0, "Default");
     Check(!Key.empty(), "settings key available without IO");
     Check(Key == StableSettingsKey("Game", "opaque-user", 0, "Default"), "settings key repeatable");

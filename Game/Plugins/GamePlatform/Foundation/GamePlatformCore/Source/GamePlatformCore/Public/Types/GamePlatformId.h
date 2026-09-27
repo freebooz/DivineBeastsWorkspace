@@ -42,6 +42,9 @@ struct GAMEPLATFORMCORE_API FGamePlatformId
      */
     static bool TryParse(const FString& Text, FGamePlatformId& OutId);
 
+    /** 从分离字段安全创建；成功输出规范小写字段，失败时将OutId恢复默认无效值。 */
+    static bool TryCreate(const FString& Namespace, const FString& Name, int32 LogicalVersion, FGamePlatformId& OutId);
+
     /** 有效身份按ASCII小写字段和逻辑版本比较；非法值按原始字段精确比较，不合并非法身份。 */
     bool operator==(const FGamePlatformId& Other) const;
 

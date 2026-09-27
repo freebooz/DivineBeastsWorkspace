@@ -22,3 +22,9 @@ Flow消费者仍调用已移除的旧执行器API；Flow现行服务要求定义
 前次运行`Tests/Architecture/ValidateProjectHeaders.ps1`曾报告3个不存在头文件的4处引用。此后Loading旧头引用已改为真实公开接口；按当前源码检视，Flow旧头仍有2处、Session旧头1处，共2个头名3处引用待修。预检尚未重跑，且该工具不能检查方法签名兼容性。禁止用旧名空壳、私有头导出或固定Admitted状态规避真实集成。
 
 迁移前文档与旧描述快照见`Docs/Legacy/`；查看本README和正式工程规则判断现行职责。
+
+### 当前用户界面设计
+
+项目层用户界面当前设计基线见 `Docs/用户界面设计.md`。该文档定义了分类基础类继承、事件驱动更新、PC/移动端适配、目录规划、界面清单、命名规范和分阶段实施顺序。
+
+P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基类、LocalPlayer 自适应子系统和 SafeZone 支持；DivineBeastsUIClient 已新增项目分类基类，并建立登录、真实加载、RootLayout 和五类 HUD 的 C++ / Blueprint 父类。平台层关键源文件已用 UE5.8 客户端目标逐文件编译通过；项目层验证目前被 DBAClient 内既有 ApplicationFlow 的 Blueprint `uint64` UHT 错误提前阻断，详见设计文档“P0 实施状态”。

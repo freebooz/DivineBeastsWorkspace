@@ -3,6 +3,9 @@
 
 FPrimaryAssetType UGamePlatformPrimaryDataAsset::DefinitionAssetType() { return FPrimaryAssetType(TEXT("GamePlatformDefinition")); }
 FName UGamePlatformPrimaryDataAsset::LogicalIdTag() { return TEXT("GamePlatformLogicalId"); }
+FName UGamePlatformDefinitionBase::SchemaVersionTag() { return TEXT("GamePlatformSchemaVersion"); }
+FName UGamePlatformDefinitionBase::ContentRevisionTag() { return TEXT("GamePlatformContentRevision"); }
+FName UGamePlatformDefinitionBase::RequiredDefinitionCountTag() { return TEXT("GamePlatformRequiredDefinitionCount"); }
 FPrimaryAssetId UGamePlatformPrimaryDataAsset::GetPrimaryAssetId() const
 {
     return LogicalId.IsValid() ? FPrimaryAssetId(DefinitionAssetType(), FName(*LogicalId.ToString())) : FPrimaryAssetId();
@@ -11,6 +14,13 @@ void UGamePlatformPrimaryDataAsset::GetAssetRegistryTags(FAssetRegistryTagsConte
 {
     Super::GetAssetRegistryTags(Context);
     Context.AddTag(FAssetRegistryTag(LogicalIdTag(), LogicalId.ToString(), FAssetRegistryTag::TT_Alphabetical));
+}
+void UGamePlatformDefinitionBase::GetAssetRegistryTags(FAssetRegistryTagsContext Context) const
+{
+    Super::GetAssetRegistryTags(Context);
+    Context.AddTag(FAssetRegistryTag(SchemaVersionTag(), FString::FromInt(DataVersion.SchemaVersion), FAssetRegistryTag::TT_Numerical));
+    Context.AddTag(FAssetRegistryTag(ContentRevisionTag(), FString::FromInt(DataVersion.ContentRevision), FAssetRegistryTag::TT_Numerical));
+    Context.AddTag(FAssetRegistryTag(RequiredDefinitionCountTag(), FString::FromInt(RequiredDefinitions.Num()), FAssetRegistryTag::TT_Numerical));
 }
 int32 UGamePlatformDefinitionBase::GetMinimumReadableSchemaVersion() const { return 1; }
 int32 UGamePlatformDefinitionBase::GetMaximumReadableSchemaVersion() const { return 1; }
@@ -29,6 +39,8 @@ FGamePlatformResult UGamePlatformDefinitionBase::ValidateDefinition() const
         FGamePlatformId Parsed;
         if (Dependency.PrimaryAssetType != DefinitionAssetType() || !FGamePlatformId::TryParse(Dependency.PrimaryAssetName.ToString(), Parsed))
             return FGamePlatformResult::Failure(TEXT("InvalidDependencyId"), TEXT("必需定义必须使用GamePlatformDefinition类型及合法逻辑身份。"));
+        if (Dependency == GetPrimaryAssetId())
+            return FGamePlatformResult::Failure(TEXT("SelfDependency"), TEXT("定义不能把自身声明为必需定义。"));
         if (UniqueDependencies.Contains(Dependency))
             return FGamePlatformResult::Failure(TEXT("DuplicateDependency"), TEXT("同一定义不得重复声明同一依赖。"));
         UniqueDependencies.Add(Dependency);

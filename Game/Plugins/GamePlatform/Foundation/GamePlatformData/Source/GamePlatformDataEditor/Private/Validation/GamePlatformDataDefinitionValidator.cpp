@@ -4,6 +4,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Misc/DataValidation.h"
+#include "Types/GamePlatformDataLimits.h"
 
 bool UGamePlatformDataDefinitionValidator::CanValidateAsset_Implementation(const FAssetData& InAssetData, UObject* InObject, FDataValidationContext& InContext) const
 {
@@ -56,8 +57,9 @@ EDataValidationResult UGamePlatformDataDefinitionValidator::ValidateLoadedAsset_
         const FPrimaryAssetId Child = Frame.Definition->RequiredDefinitions[Frame.NextChild++];
         if (Visiting.Contains(Child)) return Fail(FGamePlatformResult::Failure(TEXT("DependencyCycle"), FString::Printf(TEXT("必需定义存在循环：%s。"), *Child.ToString())));
         if (Visited.Contains(Child)) continue;
-        if (Stack.Num() >= 128 || Pins.Num() >= 4096)
-            return Fail(FGamePlatformResult::Failure(TEXT("DependencyGraphLimit"), TEXT("依赖图超过128层或4096个唯一节点。")));
+        if (Stack.Num() >= GamePlatform::Data::Limits::MaxDependencyDepth ||
+            Pins.Num() >= GamePlatform::Data::Limits::MaxDefinitionsPerRequest)
+            return Fail(FGamePlatformResult::Failure(TEXT("DependencyGraphLimit"), TEXT("依赖图超过平台统一的深度或唯一节点安全上限。")));
         FSoftObjectPath Source;
         FGamePlatformResult Result = ResolveUniqueGamePlatformDefinitionSource(Child, Source, Root);
         if (!Result.IsSuccess()) return Fail(Result);

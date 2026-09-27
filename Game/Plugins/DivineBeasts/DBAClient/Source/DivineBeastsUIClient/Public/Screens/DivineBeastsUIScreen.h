@@ -6,7 +6,15 @@
 
 /**
  * UDivineBeastsUIScreen（神兽联盟项目页面基类）。
- * 视觉页面Blueprint应继承它，实际页面栈仍由GamePlatformUI管理。
+ *
+ * 职责：
+ * - 作为神兽联盟所有普通业务 Screen（页面）的统一项目层父类。
+ * - 视觉 Blueprint 必须继承本类或更具体的 Menu / Modal / Loading 项目基类。
+ * - 实际页面栈、输入焦点和自适应事件仍由 GamePlatformUI 统一管理。
+ *
+ * 性能约束：
+ * - 不启用业务 Tick。
+ * - 页面激活/失活时才绑定/解绑 ViewModel 与项目事件。
  */
 UCLASS(Abstract, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsUIScreen

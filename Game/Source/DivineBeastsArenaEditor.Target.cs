@@ -9,5 +9,7 @@ public class DivineBeastsArenaEditorTarget : TargetRules
         DefaultBuildSettings = BuildSettingsVersion.V7;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
         ExtraModuleNames.Add("DivineBeastsArena");
+        // 编辑器需要加载DBAClient反射类型与Content，才能生成/验证真实Application Flow DataAsset。
+        EnablePlugins.Add("DBAClient");
     }
 }

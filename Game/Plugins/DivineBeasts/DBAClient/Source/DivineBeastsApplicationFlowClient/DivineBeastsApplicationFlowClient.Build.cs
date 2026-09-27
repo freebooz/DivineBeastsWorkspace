@@ -11,6 +11,9 @@ public class DivineBeastsApplicationFlowClient : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            // 项目流程直接使用 FGamePlatformId / FGamePlatformResult 等平台核心契约，
+            // 必须声明真实直接依赖，禁止依赖 GamePlatformData 等模块的传递链接关系。
+            "GamePlatformCore",
             "DivineBeastsRuntime",
             "GamePlatformApplicationFlow",
             "GamePlatformOnlineClient",

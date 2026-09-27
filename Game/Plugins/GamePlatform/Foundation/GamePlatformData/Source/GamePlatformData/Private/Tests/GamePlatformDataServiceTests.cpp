@@ -1,6 +1,7 @@
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Loading/GamePlatformAssetManager.h"
 #include "Loading/DataNextTick.h"
+#include "Types/GamePlatformDataLimits.h"
 #include "Engine/GameInstance.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -54,6 +55,14 @@ public:
             ServiceA = IGamePlatformDataService::Get(*InstanceA);
             ServiceB = IGamePlatformDataService::Get(*InstanceB);
             if (!ServiceA || !ServiceB) { Test->AddError(TEXT("实际实例子系统集合未提供数据公开门面。")); Cleanup(); return true; }
+            TArray<FName> TooManyBundles;
+            for (int32 Index = 0; Index <= GamePlatform::Data::Limits::MaxBundlesPerLease; ++Index)
+                TooManyBundles.Add(FName(*FString::Printf(TEXT("Bundle%d"), Index)));
+            FGamePlatformResult LimitResult;
+            const auto RejectedLease = ServiceA->AcquireDefinition(Id, UGamePlatformDefinitionBase::StaticClass(), TooManyBundles,
+                EGamePlatformDataLifetime::Instance, InstanceA.Get(), [](const auto&, const auto&) {}, LimitResult);
+            Test->TestFalse(TEXT("超过唯一Bundle上限同步拒绝"), LimitResult.IsSuccess());
+            Test->TestFalse(TEXT("Bundle超限不签发租约"), RejectedLease.IsValid());
             FGamePlatformResult Accepted;
             LeaseA = ServiceA->AcquireDefinition(Id, UGamePlatformDefinitionBase::StaticClass(), {TEXT("Core"), TEXT("UI"), TEXT("Core")},
                 EGamePlatformDataLifetime::Instance, InstanceA.Get(), [this, Alive = TWeakPtr<int32>(CallbackAlive)](const auto&, const auto& Result)
@@ -171,6 +180,13 @@ public:
         Test->TestEqual(TEXT("成功世界清理不重复终态"), CountReadyWorld, 1);
         Test->TestNull(TEXT("释放后不能继续读取"), ServiceB->GetLoadedDefinition(LeaseB));
         Test->TestEqual(TEXT("B无遗留有效租约"), ServiceB->GetDiagnostics().ActiveLeases, 0);
+        const FGamePlatformDataDiagnostics DiagnosticsB = ServiceB->GetDiagnostics();
+        Test->TestTrue(TEXT("诊断累计记录已接纳请求"), DiagnosticsB.TotalAcceptedRequests >= 4);
+        Test->TestTrue(TEXT("诊断累计记录成功终态"), DiagnosticsB.TotalSucceededRequests >= 3);
+        Test->TestTrue(TEXT("诊断累计记录取消终态"), DiagnosticsB.TotalCancelledRequests >= 1);
+        Test->TestTrue(TEXT("严格幂等释放记录可观测"), DiagnosticsB.ReleasedLeaseRecords >= 4);
+        Test->TestEqual(TEXT("释放全部测试租约后无追踪Definition"), DiagnosticsB.UniqueTrackedDefinitions, 0);
+        Test->TestEqual(TEXT("释放全部测试租约后无请求Bundle"), DiagnosticsB.UniqueRequestedBundles, 0);
         Cleanup();
         return true;
     }

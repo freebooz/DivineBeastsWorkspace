@@ -125,3 +125,12 @@ struct FGamePlatformFlowSnapshot
 };
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformFlowFinished, const FGamePlatformFlowSnapshot&);
+
+/**
+ * FGamePlatformFlowSnapshotChanged（游戏平台流程快照变化事件）。
+ *
+ * 仅当公开快照的可观察字段真实发生变化时广播，主要用于 UI（用户界面）、诊断和项目组合根的事件驱动投影。
+ * 该事件是只读观察通道，不授予监听方流程控制权；监听器不得在广播调用栈内重入 Start/StartFlow/Configure/Cancel 等控制接口。
+ * 性能约束：平台层通过轻量字段比较抑制重复广播，不允许把该事件退化为逐帧心跳。
+ */
+DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformFlowSnapshotChanged, const FGamePlatformFlowSnapshot&);

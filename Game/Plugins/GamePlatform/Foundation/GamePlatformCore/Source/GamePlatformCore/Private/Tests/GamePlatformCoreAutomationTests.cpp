@@ -1,8 +1,10 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Types/GamePlatformId.h"
+#include "Types/GamePlatformErrorCode.h"
 #include "Types/GamePlatformResult.h"
 #include "Types/GamePlatformVersion.h"
+#include "Types/GamePlatformVersionRange.h"
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
@@ -38,6 +40,33 @@ bool FGamePlatformIdContractTest::RunTest(const FString& Parameters)
     Id.Name = TEXT("b.c");
     TestFalse(TEXT("可编辑字段不绕过名称校验"), Id.IsValid());
     TestTrue(TEXT("无效身份不生成字符串"), Id.ToString().IsEmpty());
+    TestTrue(TEXT("分离字段安全创建"), FGamePlatformId::TryCreate(TEXT("Platform.Safe"), TEXT("Hero_1"), 2, Id));
+    TestEqual(TEXT("安全创建规范化"), Id.ToString(), FString(TEXT("platform.safe.hero_1@2")));
+    TestFalse(TEXT("非法分离字段创建失败"), FGamePlatformId::TryCreate(TEXT("Platform"), TEXT("Bad.Name"), 1, Id));
+    TestFalse(TEXT("非法创建清空输出"), Id.IsValid());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformErrorCodeContractTest, "GamePlatform.Core.ErrorCode",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformErrorCodeContractTest::RunTest(const FString& Parameters)
+{
+    FGamePlatformErrorCode ErrorCode;
+    TestFalse(TEXT("默认错误码无效"), ErrorCode.IsValid());
+    TestTrue(TEXT("解析分层错误域"), FGamePlatformErrorCode::TryParse(TEXT("Data.Asset.Missing_Definition"), ErrorCode));
+    TestEqual(TEXT("错误码规范文本"), ErrorCode.ToString(), FString(TEXT("data.asset.missing_definition")));
+    TestEqual(TEXT("错误码FName"), ErrorCode.ToName(), FName(TEXT("data.asset.missing_definition")));
+    FGamePlatformErrorCode Upper;
+    Upper.Domain = TEXT("DATA.ASSET");
+    Upper.Code = TEXT("MISSING_DEFINITION");
+    TestTrue(TEXT("错误码规范相等"), Upper == ErrorCode);
+    TestEqual(TEXT("错误码相等哈希一致"), GetTypeHash(Upper), GetTypeHash(ErrorCode));
+    TestTrue(TEXT("错误码反射比较一致"), FGamePlatformErrorCode::StaticStruct()->CompareScriptStruct(&Upper, &ErrorCode, 0));
+    TestTrue(TEXT("分离字段安全创建"), FGamePlatformErrorCode::TryCreate(TEXT("Online.Auth"), TEXT("Token_Expired"), ErrorCode));
+    TestEqual(TEXT("安全创建错误码规范化"), ErrorCode.ToString(), FString(TEXT("online.auth.token_expired")));
+    TestFalse(TEXT("无域错误码拒绝"), FGamePlatformErrorCode::TryParse(TEXT("MissingDefinition"), ErrorCode));
+    TestFalse(TEXT("错误码失败后清空"), ErrorCode.IsValid());
     return true;
 }
 
@@ -63,6 +92,35 @@ bool FGamePlatformVersionContractTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformVersionRangeContractTest, "GamePlatform.Core.VersionRange",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformVersionRangeContractTest::RunTest(const FString& Parameters)
+{
+    FGamePlatformVersionRange Range;
+    TestFalse(TEXT("默认兼容区间未配置"), Range.IsValid());
+    TestFalse(TEXT("默认区间拒绝版本"), Range.Contains(FGamePlatformVersion{}));
+
+    FGamePlatformVersion Minimum;
+    FGamePlatformVersion Maximum;
+    FGamePlatformVersion Inside;
+    TestTrue(TEXT("最低版本解析"), FGamePlatformVersion::TryParse(TEXT("1.2.0"), Minimum));
+    TestTrue(TEXT("最高版本解析"), FGamePlatformVersion::TryParse(TEXT("2.0.0"), Maximum));
+    TestTrue(TEXT("区间内版本解析"), FGamePlatformVersion::TryParse(TEXT("1.5.3"), Inside));
+    Range = FGamePlatformVersionRange::Inclusive(Minimum, Maximum);
+    TestTrue(TEXT("闭区间有效"), Range.IsValid());
+    TestTrue(TEXT("包含最低边界"), Range.Contains(Minimum));
+    TestTrue(TEXT("包含内部版本"), Range.Contains(Inside));
+    TestTrue(TEXT("包含最高边界"), Range.Contains(Maximum));
+    TestEqual(TEXT("兼容区间文本"), Range.ToString(), FString(TEXT("1.2.0..2.0.0")));
+
+    FGamePlatformVersion Outside;
+    TestTrue(TEXT("区间外版本解析"), FGamePlatformVersion::TryParse(TEXT("2.0.1"), Outside));
+    TestFalse(TEXT("拒绝区间外版本"), Range.Contains(Outside));
+    TestFalse(TEXT("逆序区间Fail Closed"), FGamePlatformVersionRange::Inclusive(Maximum, Minimum).IsValid());
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformResultContractTest, "GamePlatform.Core.Result",
     EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 
@@ -77,6 +135,14 @@ bool FGamePlatformResultContractTest::RunTest(const FString& Parameters)
     const FGamePlatformResult Provided = FGamePlatformResult::Failure(FName(TEXT("LoadFailed")), TEXT("加载失败"));
     TestEqual(TEXT("提供的诊断码保留"), Provided.Code, FName(TEXT("LoadFailed")));
     TestEqual(TEXT("提供的中文诊断保留"), Provided.Message, FString(TEXT("加载失败")));
+    FGamePlatformErrorCode StructuredCode;
+    TestTrue(TEXT("结构化错误码可创建"), FGamePlatformErrorCode::TryCreate(TEXT("Data.Asset"), TEXT("Load_Failed"), StructuredCode));
+    const FGamePlatformResult StructuredFailure = FGamePlatformResult::Failure(StructuredCode, TEXT("结构化失败"));
+    TestEqual(TEXT("结构化错误码存入既有Code字段"), StructuredFailure.Code, FName(TEXT("data.asset.load_failed")));
+    FGamePlatformErrorCode ParsedStructuredCode;
+    TestTrue(TEXT("结果可读取结构化错误码"), StructuredFailure.TryGetStructuredCode(ParsedStructuredCode));
+    TestTrue(TEXT("结构化错误码往返一致"), ParsedStructuredCode == StructuredCode);
+    TestFalse(TEXT("遗留裸错误码不伪装结构化"), Provided.TryGetStructuredCode(ParsedStructuredCode));
     const FGamePlatformResult Cancelled = FGamePlatformResult::Cancelled(FString{});
     TestTrue(TEXT("取消有独立终态"), Cancelled.Status == EGamePlatformResultStatus::Cancelled);
     TestFalse(TEXT("取消不是成功"), Cancelled.IsSuccess());

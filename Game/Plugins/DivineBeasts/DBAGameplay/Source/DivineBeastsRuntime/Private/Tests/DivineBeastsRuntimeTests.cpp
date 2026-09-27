@@ -32,6 +32,9 @@ bool FDivineBeastsProjectCatalogTest::RunTest(const FString&)
     TestEqual(TEXT("Legacy Lobby experience -> OpenWorld"), Role, FName(TEXT("GameServer.Role.OpenWorld")));
     TestTrue(TEXT("Tutorial maps"), FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(TEXT("Experience.Village.Tutorial"), Role));
     TestEqual(TEXT("Tutorial -> Village"), Role, FName(TEXT("GameServer.Role.Village")));
+    TestEqual(TEXT("Hub getter"), FDivineBeastsProjectCatalog::GetOpenWorldHubExperience(), FName(TEXT("Experience.OpenWorld.Hub")));
+    TestEqual(TEXT("Tutorial getter"), FDivineBeastsProjectCatalog::GetVillageTutorialExperience(), FName(TEXT("Experience.Village.Tutorial")));
+    TestEqual(TEXT("Training getter"), FDivineBeastsProjectCatalog::GetVillageTrainingExperience(), FName(TEXT("Experience.Village.Training")));
     TestTrue(TEXT("Training maps"), FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(TEXT("Experience.Village.Training"), Role));
     TestEqual(TEXT("Training -> Village"), Role, FName(TEXT("GameServer.Role.Village")));
 

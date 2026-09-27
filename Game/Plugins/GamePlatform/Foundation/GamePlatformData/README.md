@@ -1,6 +1,8 @@
 # GamePlatformData（平台数据插件）
 
-日期：2026-09-21。阶段：Foundation M0 Task02 源码已写入，独立审查发现的调度Critical及外部加载保护已修改，待UE验证；存在下文列出的集成测试覆盖缺口，不声明整体源码验收完成。
+更新日期：2026-09-27。GamePlatformData 已完成本轮 Definition 元数据、依赖安全上限、租约诊断与 UE5.8 兼容性补强；原生需求账本 Debug/Release 通过，Runtime／Editor／Client／Server 模块编译通过。UE Automation、真实资产、Cook／Chunk／Server-safe 仍按下文边界单独验收，不宣称生产就绪。
+
+设计文档入口：[插件设计](Docs/Architecture.md)｜[Public API说明](Docs/API.md)｜[测试与验证证据](Docs/TestingAndEvidence.md)。
 
 ## 职责与接入
 
@@ -10,7 +12,7 @@
 
 `UGamePlatformPrimaryDataAsset` 继承 `UPrimaryDataAsset`。其 `LogicalId` 的规范字符串决定 `GamePlatformDefinition:<逻辑身份>`，与资产文件名、路径和具体C++类名无关。非法身份返回无效主资产ID。源标签固定为 `GamePlatformLogicalId`。
 
-`UGamePlatformDefinitionBase` 的 `DataVersion.SchemaVersion` 与 `DataVersion.ContentRevision` 均默认1，可编辑默认值、蓝图只读。可读结构范围由具体类 CDO 的 `GetMinimumReadableSchemaVersion()` / `GetMaximumReadableSchemaVersion()` 代码决定，默认1..1。派生类扩展 `ValidateDefinition()` 时必须调用 Super，不能用资产字段自行扩大可读范围。
+`UGamePlatformDefinitionBase` 的 `DataVersion.SchemaVersion` 与 `DataVersion.ContentRevision` 均默认1，可编辑默认值、蓝图只读。可读结构范围由具体类 CDO 的 `GetMinimumReadableSchemaVersion()` / `GetMaximumReadableSchemaVersion()` 代码决定，默认1..1。派生类扩展 `ValidateDefinition()` 时必须调用 Super，不能用资产字段自行扩大可读范围。Definition 现在还会向 AssetRegistry 输出 `GamePlatformSchemaVersion`、`GamePlatformContentRevision`、`GamePlatformRequiredDefinitionCount` 三个标签，并在基础校验阶段直接拒绝自依赖。
 
 ## 已写入的公开服务
 
@@ -30,6 +32,8 @@ const UGamePlatformDefinitionBase* GetLoadedDefinition(const FGamePlatformDataLe
 FGamePlatformResult ReleaseDefinition(const FGamePlatformDataLease& Lease);
 EGamePlatformDataRequestState GetLeaseState(const FGamePlatformDataLease& Lease) const;
 FGamePlatformDataDiagnostics GetDiagnostics() const;
+// Diagnostics现在同时包含当前唯一Definition/Bundle数量、严格幂等释放记录数，
+// 以及Accepted/Rejected/Succeeded/Failed/Cancelled累计计数。
 ```
 
 完成类型为 `TFunction<void(const FGamePlatformDataLease&, const FGamePlatformResult&)>`。全部接口和UObject访问在游戏线程。OutResult只说明是否接纳；成功接纳返回Loading租约，实际终态始终在核心Ticker下一外层调度轮或更晚发布，包括缓存、空分组和无新工作。两阶段回调首次只返回true进入引擎TickedElements，第二次才执行Work；从Ticker外提交可能等待两轮。不能使用零延迟一次性AddTicker假装下一轮，因为UE5.8会在同轮继续消费新添加的回调。实现不依赖时间epsilon、帧号或旧世界计时器，零Delta也能推进。弱调用者销毁后抑制其外部回调并释放资源，不调用悬空所有者。同步参数拒绝返回无效租约，并在回调和调用者有效时延后通知失败。
@@ -50,7 +54,7 @@ Instance租约允许切图，但调用者本身仍须存活；建议跨图调用
 
 `UnloadPrimaryAssets` 覆盖过滤仍有账本需求的资产，不允许外部卸载抢走存活租约。最后租约释放后，新的明确外部加载/卸载可接管引擎状态，并撤销本插件尚未执行的基线恢复回调。不能推断未登记外部消费者的精确释放时点；存活租约期间外部基线采用保守并集，可能保留多余资源。因此业务仍应统一使用数据租约。直接使用另一套StreamableManager、显式限定调用父类实现或直接操纵引擎内部不在此保护范围，不宣称覆盖任意第三方加载方式。
 
-每个根租约逐项真实加载 `RequiredDefinitions`，依赖复用同一主租约需求键与分组。显式DFS栈检测环和缺失；每条路径最多128层、每次请求最多4096个唯一节点，超出返回 `DependencyGraphLimit`，不靠C++无限递归。每个实际对象检查主资产身份、根预期类型、类CDO结构范围、内容修订和定义扩展校验。任一节点失败释放本根租约的所有已登记需求，其他租约不受影响。
+每个根租约逐项真实加载 `RequiredDefinitions`，依赖复用同一主租约需求键与分组。显式DFS栈检测环和缺失；Runtime 与 Editor 统一使用 `GamePlatformDataLimits.h`：最大依赖深度128、单请求最多4096个唯一Definition、单租约最多64个去重Bundle。超限显式失败，不靠C++无限递归。每个实际对象检查主资产身份、根预期类型、类CDO结构范围、内容修订和定义扩展校验。任一节点失败释放本根租约的所有已登记需求，其他租约不受影响。
 
 注册表发现未完成时请求保持Loading并延后重试，可以取消；实例创建早于管理器的特殊宿主允许后续申请重新读取同一个引擎管理器，不永久缓存空值。正常启动顺序已只读核对UE5.8源码：`UEngine::InitializeObjectReferences` 创建资产管理器，`UGameEngine::Init` 先调用 `UEngine::Init` 再 `InitializeStandalone` 创建游戏实例，`GetIfInitialized` 实际返回 `GEngine->AssetManager`。
 
@@ -76,25 +80,22 @@ Instance租约允许切图，但调用者本身仍须存活；建议跨图调用
 
 ## 本次已执行验证与边界
 
-工作区为 `E:/poject/feebooz/DivineBeastsWorkspace`。源码仅修改本插件目录；按父任务后续明确要求，生成证据放工作区 `Saved/Validation/FoundationM0`。最终使用该目录已有CMake缓存确认的 CMake 4.3.2、Visual Studio 17 2022、MSVC 19.38.33145.0 运行Debug和Release原生账本；这不是UE编译或调度修复运行验收。以下命令从工作区根执行，本次退出码均为0：
+2026-09-27 使用当前工作空间 `E:/work/2026/DivineBeastsWorkspace` 重新验证。原生需求账本使用 CMake 3.31.6-msvc6、VS2022 BuildTools、MSVC 19.44.35228、Windows SDK 10.0.26100.0；Debug／Release 均 1/1 CTest 通过，账本测试内部仍为20个断言。
 
-```powershell
-cmake -S Game/Plugins/GamePlatform/Foundation/GamePlatformData/Tests -B Saved/Validation/FoundationM0/DataNative
-cmake --build Saved/Validation/FoundationM0/DataNative --config Debug
-ctest --test-dir Saved/Validation/FoundationM0/DataNative -C Debug -V --output-log E:/poject/feebooz/DivineBeastsWorkspace/Saved/Validation/FoundationM0/DataNative/DebugCTest.log
-cmake --build Saved/Validation/FoundationM0/DataNative --config Release
-ctest --test-dir Saved/Validation/FoundationM0/DataNative -C Release -V --output-log E:/poject/feebooz/DivineBeastsWorkspace/Saved/Validation/FoundationM0/DataNative/ReleaseCTest.log
-```
+UE5.8 锁定路径为 `D:/UnrealEngine-5.8.0-release`。通过引擎 `Build.bat` 实际完成：
 
-结果：Debug、Release各CTest 1/1通过，各报告 `Cases=20 Failed=0`。保留原12个断言，新增多资产依赖需求、失败回滚不影响其他实例、未知调用者、空分组释放与过期租约隔离。生产账本原实现与原CMake入口保留。两份独立证据为工作区 `Saved/Validation/FoundationM0/DataNative/DebugCTest.log` 与 `ReleaseCTest.log`。这些20断言仅验证生产需求账本，不覆盖UE Ticker、UObject或加载适配。
+- `DivineBeastsArenaEditor -Module=GamePlatformData`：Succeeded。
+- `DivineBeastsArenaEditor -Module=GamePlatformDataEditor`：首次发现历史测试使用 UE5.8 已不存在的 `PKG_Transient`；改为符合新建未保存内存包语义的 `PKG_NewlyCreated` 后 Succeeded。
+- `DivineBeastsArenaClient -Module=GamePlatformData`：Succeeded。
+- `DivineBeastsArenaServer -Module=GamePlatformData`：Succeeded。
 
-初次误放插件 `Tests/Saved/Native` 的本轮产物，已核对创建时间及CMake源路径、Resolve后源和目标都在授权工作区、目标不存在，再精确Move至工作区 `Saved/Validation/FoundationM0/DataNativeSecondAttempt`，无覆盖或删除其他内容。归档保留原VS2026/MSVC19.51尝试的日志，不作为最终Debug/Release证据。Tests目前只保留测试源码与CMake入口文件，没有编译产物。迁移后的缓存仅作归档，不从旧绝对路径继续构建。
+当前锁定源码引擎仍没有可启动的 `UnrealEditor.exe` / `UnrealEditor-Cmd.exe`，所以本轮没有实际运行 UE Automation。 `GamePlatform.Data.Runtime.RealAssetLeases` 还要求真实已保存 Definition 测试资产，而当前工程真实 `.uasset/.umap` 为0，因此不能伪造通过。
 
-插件JSON解析通过。已按本机 `F:/UnrealEngine-5.8.0-release` 的引擎头/实现人工核对加载签名、空句柄语义、源标签Context路径、验证器签名、初始化顺序及公开UObject pimpl的析构/FVTableHelper构造离线定义。**这些静态核对不证明UHT或编译通过。**
+主工程当前 `GamePlatformDefinition` 仍扫描 `/Game/Development/Foundation/Definitions`，`CookRule=Unknown`、`ChunkId=-1`；这只是开发验证配置，不代表正式生产 Cook／Chunk 已完成。Server-safe 也必须由真实 AssetRegistry 依赖审计、Server Cook/Stage 证明，而不能由 Data 插件自报。
 
-UE反射生成、编辑器/客户端/服务器构建、上述UE自动化、DataValidation命令行、真实资产生成、烘焙、启动和多PIE均未执行。正式UBT仍受父任务确认的三个旧空插件描述文件阻塞；按明确要求保留原位，不绕过。主工程配置、项目探针、根目录规划与总体交付记录由父任务负责集成。
+当前限制：已释放租约的完整签发记录仍保留至游戏实例销毁，以保证严格幂等释放；长寿命实例的记录会线性增长，本轮新增 `ReleasedLeaseRecords` 诊断字段显式观测该风险，但未擅自改变既有幂等合同。源查重仍可能扫描 AssetRegistry 类型，尚未做带失效通知的索引缓存和性能量化。Owner弱引用存活检查仍使用 CoreTicker，待真实规模性能数据决定是否调整检查频率。
 
-当前限制：已释放租约的完整签发记录保留至游戏实例销毁，保证严格幂等且拒绝伪造，会随长寿命实例的历史申请数线性增长；本次未擅自裁剪而破坏重复释放合同。后续若需要容量上限，应设计可审计的代次/退休记录契约与压力验证。源查重每次申请扫描源类型，尚未做性能测量和带失效通知的索引优化。所有UObject运行分支仍待引擎实测。
+详细证据见 [Docs/TestingAndEvidence.md](Docs/TestingAndEvidence.md)。
 
 ## 源码文件清单
 
@@ -104,6 +105,7 @@ UE反射生成、编辑器/客户端/服务器构建、上述UE自动化、DataV
 - `Source/GamePlatformData/Public/Definitions/GamePlatformDefinitionBase.h`：只读版本、依赖和校验接口。
 - `Source/GamePlatformData/Public/Types/GamePlatformDataVersion.h`：数据版本值。
 - `Source/GamePlatformData/Public/Types/GamePlatformDataLease.h`：租约、期限、请求状态和诊断值。
+- `Source/GamePlatformData/Public/Types/GamePlatformDataLimits.h`：Runtime／Editor统一依赖图与Bundle安全上限。
 - `Source/GamePlatformData/Public/Interfaces/IGamePlatformDataService.h`：游戏实例公开服务。
 - `Source/GamePlatformData/Public/Loading/GamePlatformAssetManager.h`：工程配置所需反射类，登记实现保持私有。
 - `Source/GamePlatformData/Public/Validation/GamePlatformDefinitionValidation.h`：唯一源验证契约。
@@ -124,4 +126,7 @@ UE反射生成、编辑器/客户端/服务器构建、上述UE自动化、DataV
 - `Source/GamePlatformDataEditor/Private/Tests/GamePlatformRuntimeDependencyTests.cpp`：内存源经真实扫描后的运行期租约递归失败与共享需求回滚。
 - `Tests/CMakeLists.txt`：父任务已有独立原生测试入口，保留。
 - `Tests/DataDemandTests.cpp`：原生账本20断言。
+- `Docs/Architecture.md`：插件正式设计、Cook/Chunk/Server-safe与生命周期边界。
+- `Docs/API.md`：Public API说明。
+- `Docs/TestingAndEvidence.md`：本轮真实验证证据与未执行项。
 - `README.md`：本阶段能力、精确接口、限制与证据。

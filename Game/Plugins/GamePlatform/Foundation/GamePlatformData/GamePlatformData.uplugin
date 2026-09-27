@@ -3,7 +3,7 @@
   "Version": 1,
   "VersionName": "0.1.0",
   "FriendlyName": "Game Platform Data",
-  "Description": "平台定义、引擎主资产加载、跨实例需求租约及编辑器验证。",
+  "Description": "平台Definition、统一主资产加载、作用域租约、AssetRegistry元数据、依赖图安全与编辑器验证。",
   "Category": "GamePlatform",
   "CanContainContent": false,
   "Modules": [

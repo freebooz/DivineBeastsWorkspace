@@ -16,6 +16,43 @@ enum class EGamePlatformInputChannel : uint8 { Move = 1, Look = 2, Actions = 4, 
 /** Delta不再乘帧间隔；Rate必须由最终视角消费者乘且只乘一次帧间隔。 */
 UENUM(BlueprintType)
 enum class EGamePlatformInputUnit : uint8 { Boolean, NormalizedAxis, DegreesDelta, DegreesPerSecond };
+/** 当前本地玩家最近一次由平台确认的输入设备族；只用于本地表现/提示，不参与服务器权威。 */
+UENUM(BlueprintType)
+enum class EGamePlatformInputDeviceFamily : uint8 { Unknown, KeyboardMouse, Gamepad, Touch };
+
+/**
+ * 本地无障碍/舒适度偏好。
+ * 这些值只影响客户端输入解释，不修改服务器权威规则，也不在高频输入路径做磁盘IO。
+ */
+USTRUCT(BlueprintType)
+struct FGamePlatformInputAccessibilitySettings
+{
+    GENERATED_BODY()
+
+    /** 统一视角灵敏度倍率；0.1..5.0。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    double LookSensitivityMultiplier = 1.0;
+
+    /** 是否反转水平视角。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    bool bInvertLookX = false;
+
+    /** 是否反转垂直视角。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    bool bInvertLookY = false;
+
+    /** 移动轴附加死区倍率；1.0表示使用Profile默认值，范围0.5..2.0。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    double MoveDeadZoneMultiplier = 1.0;
+
+    /** 移动端Touch视角额外灵敏度倍率；与通用LookSensitivity相乘，范围0.25..3.0。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    double TouchLookSensitivityMultiplier = 1.0;
+
+    /** 移动端虚拟移动摇杆幅度倍率；用于小屏/大屏手感补偿，范围0.5..1.5。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    double TouchMoveScale = 1.0;
+};
 /** 中断不是释放施法；原生Completed也不代表服务器授权或技能成功。 */
 enum class EGamePlatformInputEndReason : uint8 { None, NativeCompleted, NativeCanceled, Blocked, ReceiverChanged, ContextRemoved, ProfileReleased, FocusLost };
 
@@ -43,6 +80,8 @@ struct FGamePlatformInputEvent
     FInputActionValue Value;
     EGamePlatformInputUnit Unit = EGamePlatformInputUnit::NormalizedAxis;
     EGamePlatformInputEndReason EndReason = EGamePlatformInputEndReason::None;
+    /** 事件产生时的最近设备族；硬件动作未知时使用服务当前设备族。 */
+    EGamePlatformInputDeviceFamily DeviceFamily = EGamePlatformInputDeviceFamily::Unknown;
     uint64 BindingGeneration = 0;
     uint64 Sequence = 0;
 };
@@ -54,15 +93,48 @@ struct FGamePlatformInputSnapshot
     bool bMappingsApplied = false;
     bool bGameplayInputEnabled = false;
     bool bPreferencesSaved = false;
+    /** 最近一次由平台/触控桥确认的设备族，用于提示图标和设备特定UI。 */
+    EGamePlatformInputDeviceFamily ActiveDeviceFamily = EGamePlatformInputDeviceFamily::Unknown;
+    /** 当前无障碍/舒适度偏好快照。 */
+    FGamePlatformInputAccessibilitySettings Accessibility;
     uint64 ProfileGeneration = 0;
     uint64 BindingGeneration = 0;
     uint64 SettingsRevision = 0;
+    /** 当前设备族状态修订号；仅在设备族真实变化时递增，供UI避免重复刷新提示。 */
+    uint64 DeviceRevision = 0;
     uint8 BlockedChannels = 0;
     int32 ContextLeaseCount = 0;
     int32 OwnedBindingCount = 0;
     int32 TouchSourceCount = 0;
     FGamePlatformResult Result;
 };
+/**
+ * LocalPlayer（本地玩家）作用域轻量诊断。
+ * 只包含计数与耗时，不记录原始按键、文本、触摸坐标或玩家隐私数据；供Debug/Telemetry上层按需读取。
+ */
+struct FGamePlatformInputDiagnostics
+{
+    FGuid ScopeId;
+    bool bMaintenanceTickerScheduled = false;
+    EGamePlatformInputDeviceFamily ActiveDeviceFamily = EGamePlatformInputDeviceFamily::Unknown;
+    /** 当前设备族修订号，与Snapshot保持同一语义。 */
+    uint64 DeviceRevision = 0;
+    int32 ContextLeaseCount = 0;
+    int32 BlockLeaseCount = 0;
+    int32 BindingCount = 0;
+    int32 SubscriptionCount = 0;
+    int32 TouchSourceCount = 0;
+    int64 TotalInputEventsPublished = 0;
+    /** 本实例累计执行的订阅者回调次数；与事件数分开，避免多订阅者把单事件重复计数。 */
+    int64 TotalSubscriberCallbacks = 0;
+    int64 TotalDeviceFamilyChanges = 0;
+    int64 TotalMappingRebuildRequests = 0;
+    int64 TotalMaintenanceTicks = 0;
+    int64 TotalExpiredOwnersCollected = 0;
+    double LastMaintenanceMilliseconds = 0.0;
+    double MaxMaintenanceMilliseconds = 0.0;
+};
+
 /** 稳定行+槽+设备约束，非数组下标；第一版仅键盘/鼠标数字键与手柄数字键重绑。 */
 struct FGamePlatformInputMapping
 {
