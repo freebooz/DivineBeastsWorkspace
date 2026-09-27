@@ -7,6 +7,18 @@
 - 修复契约生成器在Windows工作树与Linux容器之间因CRLF/LF差异误报生成物过期的问题；生成修订摘要和`-check`统一文本换行后比较，真实内容变化仍会失败。
 - 增加摘要换行稳定性和生成物内容比较回归测试，重新生成Go/C++项目目录摘要；`go test -count=1 ./...`与`go vet ./...`通过。
 
+## 2026-09-27｜旧插件目录与生成物清理
+
+- 删除旧 `Game/Plugins/GameFoundation/` 下误提交的74个 `Saved/NativeTests` 生成文件，并清理本机残留的 DivineBeasts 旧空分类目录。
+- 增加 `/Game/Plugins/**/Saved/` 忽略规则；正式插件目录保留 `GamePlatform`、`MobaCommon`、`DivineBeasts` 三层，40个GamePlatform身份和5个DBA代码插件不变。
+- 清理后架构回归65/65及设计基线通过；本次中止并清除了未完成的UE Client/Server构建产物，未宣称编译、Cook或运行通过。
+
+## 2026-09-27｜游戏端插件清单设计
+
+- 新增 `Docs/Architecture/游戏端插件清单设计.md`，按当前真实 `.uplugin`、模块和源码整理46个代码／机制插件的名称、层级、模块端侧、已实现功能、成熟状态、验证资料和后续重点。
+- 同步 `Docs/README.md`、`Game/Plugins/README.md` 与总体目录规划说明，使插件清单成为后续插件新增、删除、重命名和职责调整时必须维护的主台账。
+- 本次仅更新文档，不修改运行时代码，不把测试／文档存在误报为UE构建、资产审核、Cook或生产验收通过。
+
 ## 2026-09-27｜游戏端插件系统P0收敛审计
 
 - 新增P0-1～P0-9审计与实施规格，补充Animation、Camera、SFX和统一Review Harness文档；明确当前真实资产为零且Session公开服务仍缺失，不宣称功能或人工审核完成。
