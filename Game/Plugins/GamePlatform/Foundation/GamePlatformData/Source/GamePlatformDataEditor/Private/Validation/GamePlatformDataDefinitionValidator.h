@@ -1,10 +1,10 @@
 #pragma once
 #include "EditorValidatorBase.h"
-#include "GamePlatformDefinitionValidator.generated.h"
+#include "GamePlatformDataDefinitionValidator.generated.h"
 
 /** 源资产验证器：编辑器及DataValidation命令行入口调用，错误返回Invalid并进入验证诊断。 */
 UCLASS()
-class UGamePlatformDefinitionValidator : public UEditorValidatorBase
+class UGamePlatformDataDefinitionValidator : public UEditorValidatorBase
 {
     GENERATED_BODY()
 protected:

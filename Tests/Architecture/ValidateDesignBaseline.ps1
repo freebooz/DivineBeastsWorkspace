@@ -1,13 +1,16 @@
-[CmdletBinding()]
-param(
-    [string]$WorkspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-)
+﻿[CmdletBinding()]
+param([string]$WorkspaceRoot)
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($WorkspaceRoot)) {
+    $WorkspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+}
 $auditModule = Join-Path $PSScriptRoot 'DesignBaselineAudit.psm1'
 Import-Module $auditModule -Force
 $report = Test-DesignBaselineWorkspace -WorkspaceRoot $WorkspaceRoot
 Import-Module (Join-Path $PSScriptRoot 'PluginCompositionAudit.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'InheritanceBoundaryAudit.psm1') -Force
+$inheritanceReport = Test-InheritanceBoundaries -WorkspaceRoot $WorkspaceRoot
 $compositionErrors = New-Object 'System.Collections.Generic.List[string]'
 
 # 分别验证公共与竞技装配，不靠当前Foundation最小.uproject隐藏未启用的依赖。
@@ -20,6 +23,7 @@ foreach ($target in @('Client','Server','Editor')) {
     foreach ($message in $arenaReport.Errors) { $compositionErrors.Add("竞技$target 装配：$message") }
     Write-Output ("声明装配{0}：公共={1}；竞技={2}" -f $target,$publicReport.Passed,$arenaReport.Passed)
 }
+Write-Output ("继承边界：PublicHeaders={0}；Types={1}；Edges={2}；Passed={3}" -f $inheritanceReport.PublicHeaderCount,$inheritanceReport.TypeCount,$inheritanceReport.InheritanceEdgeCount,$inheritanceReport.Passed)
 
 Write-Output "工作空间：$($report.WorkspaceRoot)"
 Write-Output ("插件描述：{0}/{1}；GamePlatform：{2}/{3}；DBA：{4}/{5}" -f `
@@ -33,7 +37,8 @@ foreach ($category in $report.CategoryCounts.Keys) {
     Write-Output ("  {0}: {1}" -f $category, $report.CategoryCounts[$category])
 }
 
-$allErrors = @($report.Errors) + @($compositionErrors.ToArray())
+$inheritanceErrors = @($inheritanceReport.Findings | ForEach-Object { "继承边界：$_" })
+$allErrors = @($report.Errors) + @($compositionErrors.ToArray()) + $inheritanceErrors
 if ($allErrors.Count -gt 0) {
     Write-Output ("审计失败：{0} 项" -f $allErrors.Count)
     foreach ($errorMessage in $allErrors) {

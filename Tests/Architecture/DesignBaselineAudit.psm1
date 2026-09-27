@@ -1,4 +1,4 @@
-Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version Latest
 
 # 结构基线是实施门槛而非源码能力推断；这里只检查路径、描述、模块规则和配置，不声称完成编译或运行验收。
 $script:ExpectedGamePlatformPlugins = [ordered]@{
@@ -143,7 +143,7 @@ function Test-DesignBaselineWorkspace {
         }
 
         try {
-            $descriptor = Get-Content -LiteralPath $descriptorFile.FullName -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+            $descriptor = Get-Content -LiteralPath $descriptorFile.FullName -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
         }
         catch {
             $errors.Add("插件描述无法解析：$($descriptorFile.FullName)；$($_.Exception.Message)")
@@ -220,7 +220,7 @@ function Test-DesignBaselineWorkspace {
         $hasSection = $false
         $hasSetting = $false
         $insideSection = $false
-        foreach ($line in (Get-Content -LiteralPath $configFile.FullName -ErrorAction SilentlyContinue)) {
+        foreach ($line in (Get-Content -LiteralPath $configFile.FullName -Encoding UTF8 -ErrorAction SilentlyContinue)) {
             $trimmedLine = $line.Trim()
             if ([string]::IsNullOrWhiteSpace($trimmedLine) -or
                 $trimmedLine.StartsWith(';') -or
@@ -244,7 +244,7 @@ function Test-DesignBaselineWorkspace {
     $defaultEnginePath = Join-Path $configRoot 'DefaultEngine.ini'
     if (Test-Path -LiteralPath $defaultEnginePath -PathType Leaf) {
         $insideGameMapsSettings = $false
-        foreach ($line in (Get-Content -LiteralPath $defaultEnginePath -ErrorAction SilentlyContinue)) {
+        foreach ($line in (Get-Content -LiteralPath $defaultEnginePath -Encoding UTF8 -ErrorAction SilentlyContinue)) {
             $trimmedLine = $line.Trim()
             if ([string]::IsNullOrWhiteSpace($trimmedLine) -or
                 $trimmedLine.StartsWith(';') -or

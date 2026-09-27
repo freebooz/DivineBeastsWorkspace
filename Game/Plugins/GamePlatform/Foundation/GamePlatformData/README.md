@@ -119,7 +119,7 @@ UE反射生成、编辑器/客户端/服务器构建、上述UE自动化、DataV
 - `Source/GamePlatformData/Private/Tests/GamePlatformDataSchedulingTests.cpp`：真实FTSTicker零Delta与嵌套调度回归。
 - `Source/GamePlatformDataEditor/GamePlatformDataEditor.Build.cs`：编辑器构建规则。
 - `Source/GamePlatformDataEditor/Private/GamePlatformDataEditorModule.cpp`：编辑器模块入口。
-- `Source/GamePlatformDataEditor/Private/Validation/GamePlatformDefinitionValidator.h` / `.cpp`：真实源对象递归验证。
+- `Source/GamePlatformDataEditor/Private/Validation/GamePlatformDataDefinitionValidator.h` / `.cpp`：GamePlatformData内部真实源对象递归验证；名称与DeveloperTools公开通用Definition验证器区分。
 - `Source/GamePlatformDataEditor/Private/Tests/GamePlatformDefinitionValidationTests.cpp`：隔离注册表负例。
 - `Source/GamePlatformDataEditor/Private/Tests/GamePlatformRuntimeDependencyTests.cpp`：内存源经真实扫描后的运行期租约递归失败与共享需求回滚。
 - `Tests/CMakeLists.txt`：父任务已有独立原生测试入口，保留。

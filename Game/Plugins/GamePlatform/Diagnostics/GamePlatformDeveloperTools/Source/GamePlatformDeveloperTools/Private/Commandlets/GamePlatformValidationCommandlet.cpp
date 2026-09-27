@@ -63,6 +63,9 @@ int32 UGamePlatformValidationCommandlet::Main(const FString& Params)
         UGamePlatformDependencyValidator* DependencyValidator = NewObject<UGamePlatformDependencyValidator>();
         DependencyValidator->ValidateWorkspace(Summary.Results);
 
+        UGamePlatformInheritanceBoundaryValidator* InheritanceValidator = NewObject<UGamePlatformInheritanceBoundaryValidator>();
+        InheritanceValidator->ValidateWorkspace(Summary.Results);
+
         UGamePlatformRPCAndAuthorityValidator* RpcValidator = NewObject<UGamePlatformRPCAndAuthorityValidator>();
         RpcValidator->ValidateWorkspace(Summary.Results);
     }

@@ -195,6 +195,10 @@ private:
             NewObject<UGamePlatformDependencyValidator>(GetTransientPackage());
         DependencyValidator->ValidateWorkspace(Summary.Results);
 
+        UGamePlatformInheritanceBoundaryValidator* InheritanceValidator =
+            NewObject<UGamePlatformInheritanceBoundaryValidator>(GetTransientPackage());
+        InheritanceValidator->ValidateWorkspace(Summary.Results);
+
         UGamePlatformRPCAndAuthorityValidator* RpcValidator =
             NewObject<UGamePlatformRPCAndAuthorityValidator>(GetTransientPackage());
         RpcValidator->ValidateWorkspace(Summary.Results);
