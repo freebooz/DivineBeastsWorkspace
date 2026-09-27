@@ -4,14 +4,21 @@
 #include "Components/GamePlatformComponentWidget.h"
 #include "Core/GamePlatformActivatableWidgetBase.h"
 #include "Core/GamePlatformWidgetBase.h"
+#include "Dialogs/GamePlatformDialogWidget.h"
+#include "Feedback/GamePlatformFeedbackWidget.h"
+#include "Feedback/GamePlatformFloatingTextWidget.h"
 #include "Layers/GamePlatformRootLayout.h"
 #include "Misc/AutomationTest.h"
 #include "Notifications/GamePlatformNotificationWidget.h"
+#include "Notifications/GamePlatformScreenNotificationWidget.h"
 #include "Overlays/GamePlatformOverlayWidget.h"
 #include "Panels/GamePlatformPanelWidget.h"
 #include "Screens/GamePlatformLoadingScreen.h"
 #include "Screens/GamePlatformModalScreen.h"
 #include "Screens/GamePlatformUIScreen.h"
+#include "WorldUI/GamePlatformWorldMarkerWidget.h"
+#include "WorldUI/GamePlatformWorldNameplateWidget.h"
+#include "WorldUI/GamePlatformWorldWidgetBase.h"
 
 /**
  * 验证平台 UI 分类基础类保持既定单向继承关系。
@@ -46,6 +53,30 @@ bool FGamePlatformUIBaseClassHierarchyTest::RunTest(const FString& Parameters)
             UGamePlatformWidgetBase::StaticClass()));
 
     TestTrue(
+        TEXT("高频Feedback必须继承普通UI基类"),
+        UGamePlatformFeedbackWidget::StaticClass()->IsChildOf(
+            UGamePlatformWidgetBase::StaticClass()));
+
+    TestTrue(
+        TEXT("FloatingText必须继承Feedback基类"),
+        UGamePlatformFloatingTextWidget::StaticClass()->IsChildOf(
+            UGamePlatformFeedbackWidget::StaticClass()));
+
+    TestTrue(
+        TEXT("屏幕通知必须继承Notification基类"),
+        UGamePlatformScreenNotificationWidget::StaticClass()->IsChildOf(
+            UGamePlatformNotificationWidget::StaticClass()));
+
+    TestTrue(
+        TEXT("WorldUI必须继承普通UI基类"),
+        UGamePlatformWorldWidgetBase::StaticClass()->IsChildOf(
+            UGamePlatformWidgetBase::StaticClass()) &&
+        UGamePlatformWorldMarkerWidget::StaticClass()->IsChildOf(
+            UGamePlatformWorldWidgetBase::StaticClass()) &&
+        UGamePlatformWorldNameplateWidget::StaticClass()->IsChildOf(
+            UGamePlatformWorldWidgetBase::StaticClass()));
+
+    TestTrue(
         TEXT("Component 必须继承普通 UI 基类"),
         UGamePlatformComponentWidget::StaticClass()->IsChildOf(
             UGamePlatformWidgetBase::StaticClass()));
@@ -59,6 +90,11 @@ bool FGamePlatformUIBaseClassHierarchyTest::RunTest(const FString& Parameters)
         TEXT("Modal 页面必须继承 Screen"),
         UGamePlatformModalScreen::StaticClass()->IsChildOf(
             UGamePlatformUIScreen::StaticClass()));
+
+    TestTrue(
+        TEXT("Dialog必须是Modal的结构化子类"),
+        UGamePlatformDialogWidget::StaticClass()->IsChildOf(
+            UGamePlatformModalScreen::StaticClass()));
 
     TestTrue(
         TEXT("RootLayout 必须继承统一层栈"),

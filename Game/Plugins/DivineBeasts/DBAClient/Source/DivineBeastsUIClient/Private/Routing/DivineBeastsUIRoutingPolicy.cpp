@@ -12,21 +12,6 @@ FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
         return TEXT("UI.Screen.ErrorReconnect");
     }
 
-    if (State.Arena.ResultCommitState ==
-        EDivineBeastsUIResultCommitState::Committed)
-    {
-        return TEXT("UI.Screen.PostMatchResult");
-    }
-    if (State.Arena.MatchPhaseId == TEXT("HeroSelection"))
-    {
-        return TEXT("UI.Screen.ArenaHeroSelection");
-    }
-    if (State.Arena.MatchPhaseId == TEXT("ReadyCheck") ||
-        State.Arena.MatchPhaseId == TEXT("Countdown"))
-    {
-        return TEXT("UI.Screen.MatchFoundReady");
-    }
-
     const FString Step = State.CurrentStep.ToString();
     if (Step.IsEmpty() ||
         Step.Contains(TEXT("Boot")) ||

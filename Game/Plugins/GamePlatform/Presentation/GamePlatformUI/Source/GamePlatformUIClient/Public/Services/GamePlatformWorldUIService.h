@@ -55,6 +55,9 @@ private:
     TObjectPtr<UGamePlatformUILayerStack> RootLayout = nullptr;
 
     TMap<FGuid, TWeakObjectPtr<UGamePlatformWorldWidgetBase>> ActiveWidgets;
-    TArray<TWeakObjectPtr<UGamePlatformWorldWidgetBase>> PooledWidgets;
+
+    /** 池内Widget由服务强引用保活；活动Widget仍由WorldProjectionLayer持有。 */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UGamePlatformWorldWidgetBase>> PooledWidgets;
     FTSTicker::FDelegateHandle ProjectionTickerHandle;
 };

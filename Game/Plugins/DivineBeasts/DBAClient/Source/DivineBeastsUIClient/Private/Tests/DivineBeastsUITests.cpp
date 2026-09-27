@@ -17,7 +17,7 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     const TArray<FDivineBeastsUISurfaceDescriptor>& Surfaces =
         FDivineBeastsUIScreenCatalog::GetSurfaces();
 
-    TestEqual(TEXT("一期UI表面数量"), Surfaces.Num(), 19);
+    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 13);
 
     TSet<FName> Unique;
     for (const FDivineBeastsUISurfaceDescriptor& Surface : Surfaces)
@@ -33,16 +33,10 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
         FName(TEXT("UI.Screen.CharacterCreate")),
         FName(TEXT("UI.Screen.CharacterSelect")),
         FName(TEXT("UI.Screen.LoadingTravel")),
-        FName(TEXT("UI.Screen.Matchmaking")),
-        FName(TEXT("UI.Screen.MatchFoundReady")),
-        FName(TEXT("UI.Screen.ArenaHeroSelection")),
-        FName(TEXT("UI.Screen.Scoreboard")),
-        FName(TEXT("UI.Screen.PostMatchResult")),
         FName(TEXT("UI.HUD.OpenWorld")),
         FName(TEXT("UI.HUD.VillageMain")),
         FName(TEXT("UI.HUD.TutorialGuidance")),
         FName(TEXT("UI.HUD.TrainingControls")),
-        FName(TEXT("UI.HUD.Arena")),
         FName(TEXT("UI.Notification.Toast"))
     })
     {
@@ -54,6 +48,13 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     TestNull(
         TEXT("一期未批准Settings页面不应被擅自创建"),
         FDivineBeastsUIScreenCatalog::Find(TEXT("UI.Screen.Settings")));
+
+    TestNull(
+        TEXT("公共DBAClient不得注册竞技匹配页面"),
+        FDivineBeastsUIScreenCatalog::Find(TEXT("UI.Screen.Matchmaking")));
+    TestNull(
+        TEXT("公共DBAClient不得注册竞技HUD"),
+        FDivineBeastsUIScreenCatalog::Find(TEXT("UI.HUD.Arena")));
     return true;
 }
 
@@ -122,13 +123,6 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
         FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
         FName(TEXT("UI.Screen.LoadingTravel")));
 
-    State.Loading.bIsLoading = false;
-    State.Arena.ResultCommitState =
-        EDivineBeastsUIResultCommitState::Committed;
-    TestEqual(
-        TEXT("Committed赛后结果进入PostMatch"),
-        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
-        FName(TEXT("UI.Screen.PostMatchResult")));
     return true;
 }
 

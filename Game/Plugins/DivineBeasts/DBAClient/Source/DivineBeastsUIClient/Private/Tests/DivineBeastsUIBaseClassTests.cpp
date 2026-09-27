@@ -1,6 +1,5 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "HUD/DivineBeastsArenaHUD.h"
 #include "HUD/DivineBeastsHUDWidget.h"
 #include "HUD/DivineBeastsOpenWorldHUD.h"
 #include "HUD/DivineBeastsTrainingHUD.h"
@@ -48,12 +47,11 @@ bool FDivineBeastsUIBaseClassHierarchyTest::RunTest(const FString& Parameters)
             UGamePlatformHUDWidget::StaticClass()));
 
     TestTrue(
-        TEXT("五类 HUD 均必须继承项目 HUD"),
+        TEXT("公共非竞技四类HUD均必须继承项目HUD"),
         UDivineBeastsOpenWorldHUD::StaticClass()->IsChildOf(UDivineBeastsHUDWidget::StaticClass()) &&
         UDivineBeastsVillageHUD::StaticClass()->IsChildOf(UDivineBeastsHUDWidget::StaticClass()) &&
         UDivineBeastsTutorialHUD::StaticClass()->IsChildOf(UDivineBeastsHUDWidget::StaticClass()) &&
-        UDivineBeastsTrainingHUD::StaticClass()->IsChildOf(UDivineBeastsHUDWidget::StaticClass()) &&
-        UDivineBeastsArenaHUD::StaticClass()->IsChildOf(UDivineBeastsHUDWidget::StaticClass()));
+        UDivineBeastsTrainingHUD::StaticClass()->IsChildOf(UDivineBeastsHUDWidget::StaticClass()));
 
     TestTrue(
         TEXT("项目 RootLayout 必须继承平台 RootLayout"),

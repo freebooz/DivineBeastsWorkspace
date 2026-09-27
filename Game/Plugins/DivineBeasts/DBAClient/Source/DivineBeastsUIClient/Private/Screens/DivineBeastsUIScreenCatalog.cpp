@@ -81,17 +81,11 @@ namespace
             MakeScreen(TEXT("UI.Screen.CharacterSelect"), TEXT("CharacterSelect"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::UIOnly, TEXT("CharacterList")),
             MakeScreen(TEXT("UI.Screen.LoadingTravel"), TEXT("LoadingTravel"), EGamePlatformUILayer::Loading, EGamePlatformUIInputMode::UIOnly),
             MakeScreen(TEXT("UI.Screen.ErrorReconnect"), TEXT("ErrorReconnect"), EGamePlatformUILayer::Modal, EGamePlatformUIInputMode::UIOnly, TEXT("RetryButton")),
-            MakeScreen(TEXT("UI.Screen.Matchmaking"), TEXT("Matchmaking"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::UIOnly, TEXT("ModeList")),
-            MakeScreen(TEXT("UI.Screen.MatchFoundReady"), TEXT("MatchFoundReady"), EGamePlatformUILayer::Modal, EGamePlatformUIInputMode::UIOnly, TEXT("ReadyButton")),
-            MakeScreen(TEXT("UI.Screen.ArenaHeroSelection"), TEXT("ArenaHeroSelection"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::UIOnly, TEXT("HeroList")),
-            MakeScreen(TEXT("UI.Screen.Scoreboard"), TEXT("Scoreboard"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::GameAndUI, TEXT("ScoreboardList")),
-            MakeScreen(TEXT("UI.Screen.PostMatchResult"), TEXT("PostMatchResult"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::UIOnly, TEXT("ReturnWorldButton")),
             MakeScreen(TEXT("UI.Screen.SystemMenu"), TEXT("SystemMenu"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::GameAndUI, TEXT("ResumeButton")),
             MakeHUD(TEXT("UI.HUD.OpenWorld"), TEXT("OpenWorldHUD")),
             MakeHUD(TEXT("UI.HUD.VillageMain"), TEXT("VillageMainHUD")),
             MakeHUD(TEXT("UI.HUD.TutorialGuidance"), TEXT("TutorialGuidance")),
             MakeHUD(TEXT("UI.HUD.TrainingControls"), TEXT("TrainingControls")),
-            MakeHUD(TEXT("UI.HUD.Arena"), TEXT("ArenaHUD")),
             MakeNotification(TEXT("UI.Notification.Toast"), TEXT("Toast"))
         };
         return Value;

@@ -138,7 +138,7 @@ UGamePlatformFeedbackWidget* UGamePlatformFeedbackService::AcquireWidget(
     for (int32 Index = PooledWidgets.Num() - 1; Index >= 0; --Index)
     {
         UGamePlatformFeedbackWidget* Candidate =
-            PooledWidgets[Index].Get();
+            PooledWidgets[Index];
 
         if (!IsValid(Candidate))
         {
@@ -238,10 +238,9 @@ void UGamePlatformFeedbackService::Clear()
     ActiveFeedback.Reset();
     ActiveByMergeKey.Reset();
 
-    for (const TWeakObjectPtr<UGamePlatformFeedbackWidget>& WidgetPtr :
-         PooledWidgets)
+    for (UGamePlatformFeedbackWidget* Widget : PooledWidgets)
     {
-        if (UGamePlatformFeedbackWidget* Widget = WidgetPtr.Get())
+        if (IsValid(Widget))
         {
             Widget->RemoveFromParent();
             Widget->ResetFeedbackState();

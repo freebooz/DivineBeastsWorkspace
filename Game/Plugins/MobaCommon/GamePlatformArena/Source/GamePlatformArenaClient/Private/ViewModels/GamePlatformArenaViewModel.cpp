@@ -91,3 +91,16 @@ void UGamePlatformArenaViewModel::RefreshFromReplicatedState(
     MarkStateChanged();
     OnArenaViewStateChanged.Broadcast();
 }
+
+void UGamePlatformArenaViewModel::SetObservedClientFlowState(
+    EGamePlatformArenaClientFlowState InFlowState)
+{
+    if (FlowState == InFlowState)
+    {
+        return;
+    }
+
+    FlowState = InFlowState;
+    MarkStateChanged();
+    OnArenaViewStateChanged.Broadcast();
+}

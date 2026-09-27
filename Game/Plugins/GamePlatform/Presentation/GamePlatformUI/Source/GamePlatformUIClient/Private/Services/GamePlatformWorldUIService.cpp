@@ -127,7 +127,7 @@ UGamePlatformWorldWidgetBase* UGamePlatformWorldUIService::AcquireWidget(
     for (int32 Index = PooledWidgets.Num() - 1; Index >= 0; --Index)
     {
         UGamePlatformWorldWidgetBase* Candidate =
-            PooledWidgets[Index].Get();
+            PooledWidgets[Index];
 
         if (!IsValid(Candidate))
         {
@@ -262,10 +262,9 @@ void UGamePlatformWorldUIService::Clear()
     }
     ActiveWidgets.Reset();
 
-    for (const TWeakObjectPtr<UGamePlatformWorldWidgetBase>& WidgetPtr :
-         PooledWidgets)
+    for (UGamePlatformWorldWidgetBase* Widget : PooledWidgets)
     {
-        if (UGamePlatformWorldWidgetBase* Widget = WidgetPtr.Get())
+        if (IsValid(Widget))
         {
             Widget->RemoveFromParent();
             Widget->ResetWorldUIState();

@@ -69,6 +69,10 @@ private:
     TMap<FGuid, FActiveFeedback> ActiveFeedback;
     TMap<FName, FGuid> ActiveByMergeKey;
 
-    /** 对象池仅保存弱引用；超过池上限后不再保留，交给GC回收。 */
-    TArray<TWeakObjectPtr<UGamePlatformFeedbackWidget>> PooledWidgets;
+    /**
+     * 对象池使用UPROPERTY强引用保活已回收Widget，确保对象池产生真实复用收益。
+     * 超过池上限的Widget不进入数组，RemoveFromParent后交给GC正常回收。
+     */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UGamePlatformFeedbackWidget>> PooledWidgets;
 };

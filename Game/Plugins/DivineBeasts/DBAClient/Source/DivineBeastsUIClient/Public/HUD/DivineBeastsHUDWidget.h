@@ -17,10 +17,7 @@ enum class EDivineBeastsHUDKind : uint8
     Tutorial,
 
     /** 训练控制 HUD。 */
-    Training,
-
-    /** 主竞技场 HUD。 */
-    Arena
+    Training
 };
 
 /**
@@ -28,7 +25,7 @@ enum class EDivineBeastsHUDKind : uint8
  *
  * 职责：
  * - 统一承接平台 HUD 的事件驱动 ViewModel 与 PC / Mobile 自适应能力。
- * - 为五类项目 HUD 提供稳定 HUDKind 和 SurfaceId 身份。
+ * - 为公共非竞技四类项目 HUD 提供稳定 HUDKind 和 SurfaceId 身份；竞技HUD归DBAArena所有。
  * - HUD 本身只显示已授权的只读投影，不直接扫描 ASC、Actor 或后端对象。
  */
 UCLASS(Abstract, Blueprintable)
@@ -56,7 +53,6 @@ protected:
     /** HUD 销毁前解绑项目 ViewModel，避免不可见 HUD 持续接收状态事件。 */
     virtual void UnbindUIEvents() override;
 
-    /** 由具体 HUD 子类在构造函数中设置，不在运行时频繁修改。 */protected:
     /** 由具体 HUD 子类在构造函数中设置，不在运行时频繁修改。 */
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|UI|HUD")
     EDivineBeastsHUDKind HUDKind = EDivineBeastsHUDKind::OpenWorld;

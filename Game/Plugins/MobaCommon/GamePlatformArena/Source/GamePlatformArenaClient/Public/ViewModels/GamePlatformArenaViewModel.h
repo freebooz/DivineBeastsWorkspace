@@ -53,6 +53,14 @@ public:
         const AGamePlatformArenaGameState* GameState,
         const TArray<AGamePlatformArenaPlayerState*>& PlayerStates);
 
+    /**
+     * 写入匹配/传输适配器观测到的客户端流程状态。
+     * 该值不是比赛权威，只用于匹配、传输、连接等客户端页面路由。
+     */
+    UFUNCTION(BlueprintCallable, Category="Arena|UI")
+    void SetObservedClientFlowState(
+        EGamePlatformArenaClientFlowState InFlowState);
+
     /** 竞技只读投影更新事件；通常由复制状态变化驱动，不应按Widget Tick轮询。 */
     UPROPERTY(BlueprintAssignable, Category="Arena|UI")
     FGamePlatformArenaViewStateChanged OnArenaViewStateChanged;

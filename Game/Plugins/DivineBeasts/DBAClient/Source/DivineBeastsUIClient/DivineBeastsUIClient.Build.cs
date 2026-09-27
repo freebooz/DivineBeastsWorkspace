@@ -23,7 +23,11 @@ public class DivineBeastsUIClient : ModuleRules
             "CommonUI",
             "CommonInput",
             "DivineBeastsRuntime",
-            "GamePlatformUIClient"
+            "GamePlatformUIClient",
+            // 项目UI只消费这些平台领域的客户端只读状态/事件，不复制第二套业务模型。
+            "GamePlatformCombat",
+            "GamePlatformInventoryClient",
+            "GamePlatformQuestClient"
         });
     }
 }
