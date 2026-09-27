@@ -22,6 +22,7 @@
 ## 当前实现与验证
 
 - [工程缺项修复执行记录](Architecture/工程缺项修复执行记录.md)：补齐六项默认配置、源码头文件预检、原生内核测试、真实UE构建失败证据与尚未接通的项目API。
+- [游戏流程与会话准入后端纵向修复设计规格](Architecture/游戏流程与会话准入后端纵向修复设计规格.md)：项目Flow、Gateway/GameServerControl、PostgreSQL准入与真实UE连接绑定的待审设计，不代表已实施。
 - [Foundation M0执行进度](Implementation/FoundationM0/ExecutionProgress.md)：00→03实际断点、兼容决定与原位历史构建阻断。
 - [Foundation M0实际接口](Implementation/FoundationM0/InterfaceContract.md)：Core、Data、Flow及主工程调用的已写入签名。
 - [Foundation M0分项验证](Production/FoundationM0Verification.md)：目标、退出码、证据与未执行项，当前不是全部通过。

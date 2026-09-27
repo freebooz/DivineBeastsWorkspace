@@ -2,6 +2,12 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-27｜应用流程与会话准入纵向修复设计（待审核）
+
+- 新增 `Docs/Architecture/游戏流程与会话准入后端纵向修复设计规格.md`，依据当前代码记录 Flow API 断层、GameServerControl 内部路由鉴权缺口、Gateway 玩家分配入口缺失、进程内 Assignment 状态及未接入的 PostgreSQL 准入内核。
+- 设计提出 Shared 真源、Gateway 认证主体、受保护控制面、PostgreSQL 准入与 UE 真实连接绑定的一条纵向路径，并将锁定 UE5.8 握手验证设为 Ready/端到端实现门禁。
+- 仅新增待审核设计文档并更新索引；没有修改业务源码、契约、数据库迁移或部署，没有运行测试/构建。
+
 ## 2026-09-27｜工程缺项修复与真实验证
 
 - 补齐六项真实UE默认配置，并将自动备份归入新增的EditorPerProjectUserSettings默认层；保留原有Engine／Game设置及用户Saved配置。必选配置8/8、总配置9份和实际结构审计通过，三角色、40个GamePlatform身份和46+N边界不变。
