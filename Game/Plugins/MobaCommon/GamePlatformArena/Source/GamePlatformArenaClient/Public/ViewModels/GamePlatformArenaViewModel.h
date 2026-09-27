@@ -4,10 +4,14 @@
 #include "UObject/Object.h"
 #include "Arena/GamePlatformArenaTypes.h"
 #include "Client/GamePlatformArenaClientTypes.h"
+#include "ViewModels/GamePlatformViewModelBase.h"
 #include "GamePlatformArenaViewModel.generated.h"
 
 class AGamePlatformArenaGameState;
 class AGamePlatformArenaPlayerState;
+
+/** MOBA竞技只读视图发生变化；具体项目UI只消费事件，不修改竞技权威状态。 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGamePlatformArenaViewStateChanged);
 
 /** FGamePlatformArenaScoreboardRow（客户端记分板只读行）。 */
 USTRUCT(BlueprintType)
@@ -29,7 +33,8 @@ struct GAMEPLATFORMARENACLIENT_API FGamePlatformArenaScoreboardRow
  *  不决定比赛规则、不直接修改GameState/PlayerState。
  */
 UCLASS(BlueprintType)
-class GAMEPLATFORMARENACLIENT_API UGamePlatformArenaViewModel : public UObject
+class GAMEPLATFORMARENACLIENT_API UGamePlatformArenaViewModel
+    : public UGamePlatformViewModelBase
 {
     GENERATED_BODY()
 
@@ -47,4 +52,8 @@ public:
     void RefreshFromReplicatedState(
         const AGamePlatformArenaGameState* GameState,
         const TArray<AGamePlatformArenaPlayerState*>& PlayerStates);
+
+    /** 竞技只读投影更新事件；通常由复制状态变化驱动，不应按Widget Tick轮询。 */
+    UPROPERTY(BlueprintAssignable, Category="Arena|UI")
+    FGamePlatformArenaViewStateChanged OnArenaViewStateChanged;
 };

@@ -2,7 +2,7 @@
 
 版本：0.1.0｜状态：一期必建，流程执行代码已实现，UE 工程验收待完整环境验证。
 
-当前源码已增加M0资产流程兼容扩展，仍只使用同一个执行器。旧版21场景与历史UE编译记录不能证明本次扩展已通过UE验证；本次命令、场景与边界见 [M0兼容扩展与验证](Docs/M0兼容扩展与验证.md)。本轮未运行UBT、UHT或UE自动化，未绕过现存空描述文件阻断。
+当前源码已完成 M0 资产流程兼容扩展，并增加 `OnSnapshotChanged（流程快照变化事件）`，仍只使用同一个执行器。快照事件只在公开状态真实变化时广播，不作为逐帧心跳；广播栈内拒绝流程控制重入。2026-09-27 已在当前 Runner 使用真实生产 `ApplicationFlowExecutor.cpp` 重跑原生 Debug/Release 回归，两配置均为 `Cases=31 Failed=0`。UE 完整目标仍需结合正式工程其他模块的构建状态独立判断，不能用原生测试替代 UHT/UBT/运行验收。
 
 本插件提供一个 GameInstance 作用域的主流程执行器。项目组合根注入节点对象及转换图，平台层不包含登录、选角、地图路径、项目身份、HTTP 地址或竞技依赖。
 
@@ -15,6 +15,7 @@
 - 节点异步完成、有限次数重试、固定退避、单调时钟超时、取消及作用域关闭。
 - 作用域＋运行＋节点＋NodeGeneration令牌；外部事件与回调共用原邮箱，首次有效完成生效。
 - 每次开始的尝试恰好清理一次；终态事件每次运行只广播一次。
+- `OnSnapshotChanged` 只在 State、RunId、NodeId、Attempt、NodeGeneration 或错误值真实变化时广播；相同 Tick 不重复通知，供项目 ViewState/UI 事件驱动消费。
 - GameInstance 级跨地图生命周期及 GC 可追踪节点／载荷保活；空闲时没有 Ticker。
 - UGamePlatformCallbackFlowNode 支持组合根直接注入执行与清理函数，也可实现 UGamePlatformFlowNode 派生类型。
 

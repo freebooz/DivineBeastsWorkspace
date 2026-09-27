@@ -10,7 +10,8 @@
     "EnabledByDefault":  false,
     "Plugins": [
         { "Name": "GamePlatformCore", "Enabled": true },
-        { "Name": "GamePlatformData", "Enabled": true }
+        { "Name": "GamePlatformData", "Enabled": true },
+        { "Name": "GamePlatformUI", "Enabled": true, "TargetAllowList": ["Client", "Editor"] }
     ],
     "Modules":  [
                     { "Name": "GamePlatformMobaCore", "Type": "Runtime", "LoadingPhase": "Default" },

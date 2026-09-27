@@ -2,6 +2,13 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-27｜应用流程架构说明与静态门禁补齐
+
+- 新增 `DBAClient/Docs/ApplicationFlowArchitecture.md`，明确项目层只组合唯一平台流程执行器，并记录上下文、会话准入、世界就绪、恢复与性能边界。
+- 新增 `DBAClient/Tests/Scripts/TestApplicationFlowArchitecture.ps1`，验证旧流程 API 为零、现行流程能力存在、业务 Tick/Ticker 为零且模块保持 `ClientOnly`；本轮脚本实际通过。
+- 同步 DBAClient 与 GamePlatformApplicationFlow README，并以当前 UE5.8 全量 Client 构建结果纠正验证边界：Flow/UI 定向模块已通过，完整 Client 仍由主工程 Online/PCG 公开头依赖和 GamePlatformWorld 测试标志问题阻断。
+- MOBA 竞技客户端新增通用 HUD／Screen 基类，竞技 ViewModel 接入平台 ViewModel 事件链；补齐 GamePlatformUI、UMG 与 CommonUI 直接依赖后，GamePlatformArenaClient 的 UE5.8 Editor／Win64 Client 定向模块编译通过。
+
 ## 2026-09-27｜主分支合并与UE5.8集成修复
 
 - 将 `codex/plugin-merge-20260926` 合并回 `main`；变更日志冲突完整保留主分支跨平台契约门禁记录及开发分支Core、Data、Loading、Input实现记录，未用单侧版本覆盖另一侧证据。

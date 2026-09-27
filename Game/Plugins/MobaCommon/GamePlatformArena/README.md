@@ -8,4 +8,6 @@
 
 当前源码已实现模式定义、Assignment（比赛分配）、Roster（名单）、TransferTicket（转服票据）准入接口、选人/Ready、比赛阶段、服务器时间、比分/KDA、断线重连、弃权、结果构建、后端幂等提交、PostgreSQL（关系数据库）、Transactional Outbox（事务外发）与 `Match.Completed（比赛完成事件）` JetStream（流式消息）适配。
 
+竞技客户端的只读 `UGamePlatformArenaViewModel（游戏平台竞技视图模型）` 继承平台 UI ViewModel，并在复制事实刷新后广播变化事件；`UGamePlatformMobaArenaHUDBase（MOBA竞技HUD基类）` 与 `UGamePlatformMobaArenaScreenBase（MOBA竞技页面基类）` 只提供平台 UI 生命周期和类型安全绑定，不包含具体游戏资源、英雄或胜负规则。`GamePlatformArenaClient` 直接声明 GamePlatformUIClient、UMG 与 CommonUI 依赖，Editor/Win64 Client 定向模块编译已通过；该结果不替代完整客户端、Cook 或联机验收。
+
 真实 UE5.8 编译、Dedicated Server（专用服务器）1v1～5v5联调、Client/Server Cook（客户端/服务器烘焙）与性能基线必须以实际环境执行结果为准；源码存在不等于这些项目已经通过。
