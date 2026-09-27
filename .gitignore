@@ -6,6 +6,7 @@
 /Game/Intermediate/
 /Game/Saved/
 /Game/Plugins/**/Intermediate/
+/Game/Plugins/**/Saved/
 
 # 本地 IDE 状态
 /.vs/
