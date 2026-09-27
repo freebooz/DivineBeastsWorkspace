@@ -206,6 +206,12 @@ void TestAxisAndSettings()
     Axis = ApplyRadialDeadZone(0.6, 0.8, 0.2);
     Check(IsFiniteAxis(Axis.first, Axis.second), "radial dead zone output remains finite");
     Check(std::hypot(Axis.first, Axis.second) <= 1.0, "radial dead zone output bounded to unit circle");
+    Axis = ApplyAxisScale(0.4, 0.0, 1.5);
+    Check(std::abs(Axis.first - 0.6) < 1e-12 && Axis.second == 0.0, "touch move scale increases finite axis");
+    Axis = ApplyAxisScale(0.8, 0.8, 1.5);
+    Check(std::hypot(Axis.first, Axis.second) <= 1.0, "touch move scale remains unit bounded");
+    Axis = ApplyAxisScale(0.5, 0.0, std::numeric_limits<double>::quiet_NaN());
+    Check(Axis.first == 0.0 && Axis.second == 0.0, "invalid touch move scale fails closed");
     Axis = ApplyRadialDeadZone(1.0, 0.0, 0.2);
     Check(std::abs(Axis.first - 1.0) < 1e-12 && Axis.second == 0, "full stick magnitude remains full after dead zone");
 
@@ -216,6 +222,8 @@ void TestAxisAndSettings()
     Check(Look.first == 4.0 && Look.second == 6.0, "look preference applies vertical inversion");
     Look = ApplyLookPreference(1.0, 1.0, std::numeric_limits<double>::quiet_NaN(), false, false);
     Check(Look.first == 0 && Look.second == 0, "invalid accessibility sensitivity fails closed");
+    Check(std::abs(CombineSensitivity(1.5, 0.8) - 1.2) < 1e-12, "touch look sensitivity combines with base sensitivity");
+    Check(CombineSensitivity(1.0, std::numeric_limits<double>::infinity()) == 0.0, "invalid device sensitivity fails closed");
 
     const auto Key = StableSettingsKey("Game", "opaque-user", 0, "Default");
     Check(!Key.empty(), "settings key available without IO");

@@ -6,9 +6,9 @@
 
 - 审查确认原HEAD只有Input Public契约/Profile/语义与测试源，缺少实际 `InputPolicy.h` 和 `GamePlatformInputLocalPlayerSubsystem.cpp`；本轮补齐生产策略内核和LocalPlayer执行层，不创建第二套输入系统。
 - PC统一支持键盘/鼠标与手柄；移动端通过 `Begin/Update/EndTouchInput` 将虚拟摇杆、视角和技能按钮注入同一Enhanced Input语义链，具体UMG/手势布局继续归UI/项目层，避免GamePlatformInput反向依赖表现或神兽联盟项目代码。
-- 增加设备族、Touch独立死区、视角灵敏度/XY反转、移动死区倍率、本地偏好持久化和玩家重绑定；Profile Definition开放为可单向派生的平台基类，LocalPlayer运行子系统继续final，符合三层继承/组合规则。
-- 性能采用事件驱动：不使用固定每帧输入Tick；只在存在弱Owner租约时用4Hz维护Ticker清理失效记录；Context/Block/Binding/Subscription/Touch均有容量上限，高频回调不加载资产、不写磁盘、不复制订阅数组。
-- Native C++17 Debug／Release 各1/1通过，共401条断言、0失败；UE5.8 Editor/Client和Android模块编译受当前并行Editor全量构建锁影响，待锁释放后按真实结果补证，不提前宣称通过。
+- 增加设备族、Touch独立死区、通用视角灵敏度/XY反转、移动死区倍率，并进一步增加 `TouchLookSensitivityMultiplier` 与 `TouchMoveScale`，让移动端视角/虚拟摇杆手感可独立于PC调整；全部本地偏好仅显式保存时写磁盘。
+- 性能采用事件驱动：不使用固定每帧输入Tick；只在存在弱Owner租约时用4Hz维护Ticker清理失效记录；Context/Block/Binding/Subscription/Touch均有容量上限，高频回调不加载资产、不写磁盘、不复制订阅数组。新增 `FGamePlatformInputDiagnostics` 统计事件/回调、设备切换、Mapping重建、维护Tick、Owner回收和维护耗时，不反向依赖Telemetry。
+- Native C++17 Debug／Release 各1/1通过，共406条断言、0失败；UE5.8 Editor与Win64 Client的 `GamePlatformInputClient` 模块构建均成功。Android Client构建已实际尝试但当前Runner缺少UE5.8要求的NDK r27c，停在SDK校验阶段；iOS需macOS/Xcode或远程工具链，未执行。
 - 新增插件 `README.md`、`Docs/Architecture.md`、`API.md`、`TestingAndEvidence.md`、`ManualReview.md`，并同步插件清单、实施进度和总体目录说明。
 
 ## 2026-09-27｜GamePlatformLoading加载屏障完善

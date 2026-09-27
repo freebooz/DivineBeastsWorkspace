@@ -204,6 +204,14 @@ struct FGamePlatformInputScope
     bool bHasFocus = true;
     bool bDispatching = false;
     bool bAdjustingContexts = false;
+    int64 TotalInputEventsPublished = 0;
+    int64 TotalSubscriberCallbacks = 0;
+    int64 TotalDeviceFamilyChanges = 0;
+    int64 TotalMappingRebuildRequests = 0;
+    int64 TotalMaintenanceTicks = 0;
+    int64 TotalExpiredOwnersCollected = 0;
+    double LastMaintenanceMilliseconds = 0.0;
+    double MaxMaintenanceMilliseconds = 0.0;
 };
 
 UGamePlatformInputLocalPlayerSubsystem::UGamePlatformInputLocalPlayerSubsystem() = default;
@@ -356,6 +364,9 @@ bool UGamePlatformInputLocalPlayerSubsystem::Tick(float)
     TickerHandle.Reset();
     if (!Scope) { return false; }
 
+    const double TickStartSeconds = FPlatformTime::Seconds();
+    ++Scope->TotalMaintenanceTicks;
+
     TArray<FGamePlatformInputContextHandle> ExpiredContexts;
     TArray<FGamePlatformInputBlockHandle> ExpiredBlocks;
     TArray<FGamePlatformInputBindingHandle> ExpiredBindings;
@@ -382,11 +393,21 @@ bool UGamePlatformInputLocalPlayerSubsystem::Tick(float)
     for (const auto& Handle : ExpiredBindings) { UnbindInputReceiver(Handle); }
     for (const auto& Handle : ExpiredBlocks) { ReleaseInputBlock(Handle); }
     for (const auto& Handle : ExpiredContexts) { ReleaseInputContext(Handle); }
+    Scope->TotalExpiredOwnersCollected +=
+        ExpiredTouches.Num() + ExpiredBindings.Num() + ExpiredBlocks.Num() + ExpiredContexts.Num();
 
     for (auto It = Scope->Subscriptions.CreateIterator(); It; ++It)
     {
-        if (!It.Value().Owner.IsValid()) { It.RemoveCurrent(); }
+        if (!It.Value().Owner.IsValid())
+        {
+            ++Scope->TotalExpiredOwnersCollected;
+            It.RemoveCurrent();
+        }
     }
+
+    const double TickElapsedMilliseconds = (FPlatformTime::Seconds() - TickStartSeconds) * 1000.0;
+    Scope->LastMaintenanceMilliseconds = TickElapsedMilliseconds;
+    Scope->MaxMaintenanceMilliseconds = FMath::Max(Scope->MaxMaintenanceMilliseconds, TickElapsedMilliseconds);
 
     ScheduleMaintenance();
     return false;
@@ -634,6 +655,16 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::PreparePreferences()
             FMath::IsFinite(Value) && Value >= 0.5 && Value <= 2.0)
         {
             Scope->Accessibility.MoveDeadZoneMultiplier = Value;
+        }
+        if (GConfig->GetDouble(*Scope->SettingsSection, TEXT("TouchLookSensitivityMultiplier"), Value, GGameUserSettingsIni) &&
+            FMath::IsFinite(Value) && Value >= 0.25 && Value <= 3.0)
+        {
+            Scope->Accessibility.TouchLookSensitivityMultiplier = Value;
+        }
+        if (GConfig->GetDouble(*Scope->SettingsSection, TEXT("TouchMoveScale"), Value, GGameUserSettingsIni) &&
+            FMath::IsFinite(Value) && Value >= 0.5 && Value <= 1.5)
+        {
+            Scope->Accessibility.TouchMoveScale = Value;
         }
         if (GConfig->GetBool(*Scope->SettingsSection, TEXT("InvertLookX"), Flag, GGameUserSettingsIni))
         {
@@ -1107,6 +1138,30 @@ FGamePlatformInputSnapshot UGamePlatformInputLocalPlayerSubsystem::GetInputSnaps
     Snapshot.Result = Scope->LastResult;
     return Snapshot;
 }
+FGamePlatformInputDiagnostics UGamePlatformInputLocalPlayerSubsystem::GetInputDiagnostics() const
+{
+    check(IsInGameThread());
+    FGamePlatformInputDiagnostics Diagnostics;
+    if (!Scope) { return Diagnostics; }
+
+    Diagnostics.ScopeId = Scope->ScopeId;
+    Diagnostics.bMaintenanceTickerScheduled = TickerHandle.IsValid();
+    Diagnostics.ActiveDeviceFamily = Scope->ActiveDeviceFamily;
+    Diagnostics.ContextLeaseCount = Scope->ContextLeases.Num();
+    Diagnostics.BlockLeaseCount = Scope->Blocks.Num();
+    Diagnostics.BindingCount = Scope->Bindings.Num();
+    Diagnostics.SubscriptionCount = Scope->Subscriptions.Num();
+    Diagnostics.TouchSourceCount = Scope->Touches.Num();
+    Diagnostics.TotalInputEventsPublished = Scope->TotalInputEventsPublished;
+    Diagnostics.TotalSubscriberCallbacks = Scope->TotalSubscriberCallbacks;
+    Diagnostics.TotalDeviceFamilyChanges = Scope->TotalDeviceFamilyChanges;
+    Diagnostics.TotalMappingRebuildRequests = Scope->TotalMappingRebuildRequests;
+    Diagnostics.TotalMaintenanceTicks = Scope->TotalMaintenanceTicks;
+    Diagnostics.TotalExpiredOwnersCollected = Scope->TotalExpiredOwnersCollected;
+    Diagnostics.LastMaintenanceMilliseconds = Scope->LastMaintenanceMilliseconds;
+    Diagnostics.MaxMaintenanceMilliseconds = Scope->MaxMaintenanceMilliseconds;
+    return Diagnostics;
+}
 
 FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::NotifyInputDeviceActivity(EGamePlatformInputDeviceFamily DeviceFamily)
 {
@@ -1124,7 +1179,12 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::NotifyInputDeviceAct
         }
     }
 
-    Scope->ActiveDeviceFamily = DeviceFamily;
+    if (Scope->ActiveDeviceFamily != DeviceFamily)
+    {
+        // 设备切换只更新本地提示状态，不重建Mapping、不中断当前动作，避免热切换造成额外抖动。
+        Scope->ActiveDeviceFamily = DeviceFamily;
+        ++Scope->TotalDeviceFamilyChanges;
+    }
     return FGamePlatformResult::Success();
 }
 
@@ -1135,7 +1195,11 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::SetAccessibilitySett
     if (!CanMutate() || !FMath::IsFinite(Settings.LookSensitivityMultiplier) ||
         Settings.LookSensitivityMultiplier < 0.1 || Settings.LookSensitivityMultiplier > 5.0 ||
         !FMath::IsFinite(Settings.MoveDeadZoneMultiplier) ||
-        Settings.MoveDeadZoneMultiplier < 0.5 || Settings.MoveDeadZoneMultiplier > 2.0)
+        Settings.MoveDeadZoneMultiplier < 0.5 || Settings.MoveDeadZoneMultiplier > 2.0 ||
+        !FMath::IsFinite(Settings.TouchLookSensitivityMultiplier) ||
+        Settings.TouchLookSensitivityMultiplier < 0.25 || Settings.TouchLookSensitivityMultiplier > 3.0 ||
+        !FMath::IsFinite(Settings.TouchMoveScale) ||
+        Settings.TouchMoveScale < 0.5 || Settings.TouchMoveScale > 1.5)
     {
         return FGamePlatformResult::Failure(TEXT("InvalidInputAccessibility"), TEXT("输入无障碍/舒适度参数超出安全范围。"));
     }
@@ -1331,6 +1395,8 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::SaveInputPreferences
     Settings->SaveSettings();
     GConfig->SetDouble(*Scope->SettingsSection, TEXT("LookSensitivityMultiplier"), Scope->Accessibility.LookSensitivityMultiplier, GGameUserSettingsIni);
     GConfig->SetDouble(*Scope->SettingsSection, TEXT("MoveDeadZoneMultiplier"), Scope->Accessibility.MoveDeadZoneMultiplier, GGameUserSettingsIni);
+    GConfig->SetDouble(*Scope->SettingsSection, TEXT("TouchLookSensitivityMultiplier"), Scope->Accessibility.TouchLookSensitivityMultiplier, GGameUserSettingsIni);
+    GConfig->SetDouble(*Scope->SettingsSection, TEXT("TouchMoveScale"), Scope->Accessibility.TouchMoveScale, GGameUserSettingsIni);
     GConfig->SetBool(*Scope->SettingsSection, TEXT("InvertLookX"), Scope->Accessibility.bInvertLookX, GGameUserSettingsIni);
     GConfig->SetBool(*Scope->SettingsSection, TEXT("InvertLookY"), Scope->Accessibility.bInvertLookY, GGameUserSettingsIni);
     GConfig->Flush(false, GGameUserSettingsIni);
@@ -1484,7 +1550,10 @@ void UGamePlatformInputLocalPlayerSubsystem::Route(
             0.0,
             0.95);
         const auto Axis = Policy::ApplyRadialDeadZone(Raw.X, Raw.Y, DeadZone);
-        Routed = FInputActionValue(FVector2D(Axis.first, Axis.second));
+        const double MoveScale = Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
+            ? Scope->Accessibility.TouchMoveScale : 1.0;
+        const auto Scaled = Policy::ApplyAxisScale(Axis.first, Axis.second, MoveScale);
+        Routed = FInputActionValue(FVector2D(Scaled.first, Scaled.second));
     }
     else if (Semantic == EGamePlatformInputSemantic::LookDelta)
     {
@@ -1492,7 +1561,10 @@ void UGamePlatformInputLocalPlayerSubsystem::Route(
         const auto Axis = Policy::ApplyLookPreference(
             Raw.X * Profile->LookDegreesPerCount,
             Raw.Y * Profile->LookDegreesPerCount,
-            Scope->Accessibility.LookSensitivityMultiplier,
+            Policy::CombineSensitivity(
+                Scope->Accessibility.LookSensitivityMultiplier,
+                Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
+                    ? Scope->Accessibility.TouchLookSensitivityMultiplier : 1.0),
             Scope->Accessibility.bInvertLookX,
             Scope->Accessibility.bInvertLookY);
         Routed = FInputActionValue(FVector2D(Axis.first, Axis.second));
@@ -1509,7 +1581,10 @@ void UGamePlatformInputLocalPlayerSubsystem::Route(
         const auto Axis = Policy::ApplyLookPreference(
             DeadZoneAxis.first * Profile->LookDegreesPerSecond,
             DeadZoneAxis.second * Profile->LookDegreesPerSecond,
-            Scope->Accessibility.LookSensitivityMultiplier,
+            Policy::CombineSensitivity(
+                Scope->Accessibility.LookSensitivityMultiplier,
+                Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
+                    ? Scope->Accessibility.TouchLookSensitivityMultiplier : 1.0),
             Scope->Accessibility.bInvertLookX,
             Scope->Accessibility.bInvertLookY);
         Routed = FInputActionValue(FVector2D(Axis.first, Axis.second));
@@ -1567,6 +1642,7 @@ void UGamePlatformInputLocalPlayerSubsystem::Publish(FGamePlatformInputEvent Eve
     if (!Scope) { return; }
 
     TGuardValue<bool> Guard(Scope->bDispatching, true);
+    ++Scope->TotalInputEventsPublished;
     for (auto It = Scope->Subscriptions.CreateIterator(); It; ++It)
     {
         if (!It.Value().Owner.IsValid())
@@ -1575,6 +1651,7 @@ void UGamePlatformInputLocalPlayerSubsystem::Publish(FGamePlatformInputEvent Eve
             continue;
         }
         It.Value().Callback(Event);
+        ++Scope->TotalSubscriberCallbacks;
     }
 }
 
@@ -1586,6 +1663,7 @@ void UGamePlatformInputLocalPlayerSubsystem::RebuildMappings()
     {
         Scope->bMappingsApplied = false;
         Enhanced->RequestRebuildControlMappings();
+        ++Scope->TotalMappingRebuildRequests;
     }
 }
 

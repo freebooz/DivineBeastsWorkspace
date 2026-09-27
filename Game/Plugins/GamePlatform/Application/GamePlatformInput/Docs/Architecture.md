@@ -92,9 +92,11 @@ EndTouchInput
 - 同一触点只能有一个来源。
 - 同一语义同时只接受一个 Touch 来源，避免两个虚拟控件争抢同一动作。
 - Touch Move 使用独立 `TouchAnalogDeadZone（触控模拟死区）`。
+- Touch Move 额外使用 `TouchMoveScale（触控移动幅度倍率）`，放大后再次限制到单位圆，避免虚拟摇杆越界。
+- Touch Look 使用 `TouchLookSensitivityMultiplier（触控视角灵敏度倍率）` 与通用视角灵敏度相乘，使移动端手感可以独立于鼠标/手柄调整。
 - Touch 结束注入中性值，并中断对应语义，防止虚拟摇杆/按钮卡住。
 - Touch 会自动把当前设备族更新为 `Touch（触控）`。
-- 手势识别（单击/长按/滑动/双击）属于上层交互/UI；Input 只接收最终语义，不复制第二套手势状态机。
+- 手势识别（单击/长按/滑动/双击）属于上层交互/UI或 Enhanced Input Trigger（增强输入触发器）；Input 只接收最终语义，不复制第二套手势状态机。长按辅助、连点辅助如果需要，应通过可验证 Trigger／UI 适配实现，禁止添加没有执行路径的“假开关”。
 
 ## 5. Input Profile（输入配置）
 
@@ -165,6 +167,8 @@ Cancel
 - LookSensitivityMultiplier（视角灵敏度倍率）。
 - InvertLookX / InvertLookY（水平/垂直反转）。
 - MoveDeadZoneMultiplier（移动死区倍率）。
+- TouchLookSensitivityMultiplier（触控视角灵敏度倍率）。
+- TouchMoveScale（触控移动幅度倍率）。
 
 这些都是本地非权威偏好。
 
@@ -207,6 +211,7 @@ ReleaseInputProfile
 - 仅存在 Context/Block/Binding/Touch/Subscription 弱 Owner 时注册 0.25s / 4Hz 维护 Ticker。
 - 空闲 LocalPlayer 无维护 Ticker。
 - 维护 Ticker 只回收失效弱引用，不采样真实硬件输入。
+- `FGamePlatformInputDiagnostics（输入诊断）` 记录事件发布数、订阅回调数、设备族切换次数、Mapping 重建请求数、维护 Tick 次数、失效 Owner 回收数以及最近/最大维护耗时；Input 不反向依赖 Telemetry（遥测）。
 
 容量安全上限：
 
@@ -253,7 +258,7 @@ Begin/Update/EndTouchInput
 - 插件仍 `EnabledByDefault=false`，由 `GamePlatformUI` 等上层插件依赖时启用；主工程不需要为了平台模块化强制全局启用。
 - 自动 PC 键鼠/手柄“最后使用设备”识别没有在平台 Input 内监听 Slate/UI；真实设备检测桥应调用 `NotifyInputDeviceActivity`。
 - 当前工程尚无正式 Input Profile、InputAction、InputMappingContext `.uasset` 内容资产。
-- 物理 Android/iOS 设备、屏幕安全区、虚拟摇杆手感、震动/陀螺仪尚未进行真机验收。
+- Android Client 模块构建已经实际尝试，但当前 Runner 缺少 UE5.8 要求的 NDK r27c，未进入 C++ 编译；iOS 需要 macOS/Xcode 或远程工具链。物理 Android/iOS 设备、屏幕安全区、虚拟摇杆手感、震动/陀螺仪尚未真机验收。
 - Server（专用服务器）不包含该 ClientOnly 模块。
 
 ## 13. 验收原则

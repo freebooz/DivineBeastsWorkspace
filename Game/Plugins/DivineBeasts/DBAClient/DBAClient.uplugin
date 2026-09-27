@@ -11,6 +11,7 @@
   "Plugins": [
     { "Name": "DBAGameplay", "Enabled": true },
     { "Name": "DBAWorlds", "Enabled": true },
+    { "Name": "GamePlatformCore", "Enabled": true },
     { "Name": "GamePlatformApplicationFlow", "Enabled": true },
     { "Name": "GamePlatformOnline", "Enabled": true },
     { "Name": "GamePlatformSession", "Enabled": true },

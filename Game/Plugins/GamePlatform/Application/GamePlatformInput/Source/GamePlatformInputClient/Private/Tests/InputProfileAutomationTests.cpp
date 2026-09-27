@@ -101,6 +101,14 @@ bool FGamePlatformInputProfileContractTest::RunTest(const FString&)
     TestFalse(TEXT("无障碍视角灵敏度越界被拒绝"), Profile->ValidateDefinition().IsSuccess());
 
     Profile->DefaultAccessibility.LookSensitivityMultiplier = 1.0;
+    Profile->DefaultAccessibility.TouchLookSensitivityMultiplier = 5.0;
+    TestFalse(TEXT("Touch视角灵敏度越界被拒绝"), Profile->ValidateDefinition().IsSuccess());
+
+    Profile->DefaultAccessibility.TouchLookSensitivityMultiplier = 1.0;
+    Profile->DefaultAccessibility.TouchMoveScale = 2.0;
+    TestFalse(TEXT("Touch移动倍率越界被拒绝"), Profile->ValidateDefinition().IsSuccess());
+
+    Profile->DefaultAccessibility.TouchMoveScale = 1.0;
     Profile->Actions[0].Unit = EGamePlatformInputUnit::Boolean;
     TestFalse(TEXT("Move语义与单位不匹配被拒绝"), Profile->ValidateDefinition().IsSuccess());
 

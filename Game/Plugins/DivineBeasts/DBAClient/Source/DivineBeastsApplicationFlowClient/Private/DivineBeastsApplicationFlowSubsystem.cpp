@@ -2129,12 +2129,36 @@ void UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot(
         return;
     }
 
-    ViewState.LoadingSummary =
-        StaticEnum<EGamePlatformLoadingState>()
-            ? StaticEnum<EGamePlatformLoadingState>()
-                ->GetNameStringByValue(
-                    static_cast<int64>(Snapshot.State))
-            : FString();
+    // EGamePlatformLoadingState（游戏平台加载状态）是轻量普通枚举而非UENUM（反射枚举），
+    // 因此不能使用StaticEnum。这里使用无反射、无查表的switch，仅在加载状态事件到达时构造一次短字符串，
+    // 避免为了UI投影把平台热路径枚举改造成反射类型，也不会产生逐帧字符串分配。
+    switch (Snapshot.State)
+    {
+    case EGamePlatformLoadingState::Idle:
+        ViewState.LoadingSummary = TEXT("Idle");
+        break;
+    case EGamePlatformLoadingState::Running:
+        ViewState.LoadingSummary = TEXT("Running");
+        break;
+    case EGamePlatformLoadingState::Ready:
+        ViewState.LoadingSummary = TEXT("Ready");
+        break;
+    case EGamePlatformLoadingState::DegradedReady:
+        ViewState.LoadingSummary = TEXT("DegradedReady");
+        break;
+    case EGamePlatformLoadingState::Failed:
+        ViewState.LoadingSummary = TEXT("Failed");
+        break;
+    case EGamePlatformLoadingState::Cancelled:
+        ViewState.LoadingSummary = TEXT("Cancelled");
+        break;
+    case EGamePlatformLoadingState::TimedOut:
+        ViewState.LoadingSummary = TEXT("TimedOut");
+        break;
+    default:
+        ViewState.LoadingSummary.Reset();
+        break;
+    }
 
     if (Snapshot.State == EGamePlatformLoadingState::Ready ||
         Snapshot.State == EGamePlatformLoadingState::DegradedReady)

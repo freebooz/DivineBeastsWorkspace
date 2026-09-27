@@ -58,7 +58,7 @@ SetAccessibilitySettings(Settings);
 GetAccessibilitySettings();
 ```
 
-当前支持视角灵敏度倍率、水平/垂直反转、移动死区倍率。修改只写内存，调用 `SaveInputPreferences` 时才持久化。
+当前支持通用视角灵敏度倍率、水平/垂直反转、移动死区倍率，以及移动端独立 `TouchLookSensitivityMultiplier（触控视角灵敏度倍率）` 和 `TouchMoveScale（触控移动幅度倍率）`。修改只写内存，调用 `SaveInputPreferences` 时才持久化。
 
 ## 8. 重绑定
 
@@ -93,5 +93,7 @@ Input->EndTouchInput(Handle);
 ## 10. Snapshot（快照）
 
 `GetInputSnapshot()` 返回：Profile/Binding/Mapping 状态、Gameplay 是否开放、设备族、无障碍偏好、代次、阻断掩码、Context/Binding/Touch 数量和最近 Result（结果）。
+
+`GetInputDiagnostics()` 返回当前 LocalPlayer 的轻量运行诊断：维护 Ticker 是否已安排、Context/Block/Binding/Subscription/Touch 数量、事件发布/订阅回调/设备切换/Mapping重建/维护Tick/失效Owner回收计数，以及最近/最大维护耗时。诊断不包含原始按键、文字或Touch坐标。
 
 Snapshot 仅是本地值，不构成服务器权威。

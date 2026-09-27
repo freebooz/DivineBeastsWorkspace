@@ -29,6 +29,8 @@ public:
     virtual FGamePlatformInputSubscription SubscribeInputEvents(TWeakObjectPtr<UObject> Owner,TFunction<void(const FGamePlatformInputEvent&)> Callback) = 0;
     virtual bool UnsubscribeInputEvents(const FGamePlatformInputSubscription& Handle) = 0;
     virtual FGamePlatformInputSnapshot GetInputSnapshot() const = 0;
+    /** 返回当前LocalPlayer的轻量容量/性能诊断；不包含原始按键或触摸坐标。 */
+    virtual FGamePlatformInputDiagnostics GetInputDiagnostics() const = 0;
     /** 更新最近输入设备族；Touch入口会自动报告Touch，PC端可由平台/视口设备检测桥报告键鼠或手柄。 */
     virtual FGamePlatformResult NotifyInputDeviceActivity(EGamePlatformInputDeviceFamily DeviceFamily) = 0;
     /** 设置本地无障碍/舒适度偏好；只更新内存，不做高频磁盘IO。 */

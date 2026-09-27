@@ -34,7 +34,7 @@
 - [GamePlatformCore](../Game/Plugins/GamePlatform/Foundation/GamePlatformCore/README.md)：平台身份、结构化错误码、结果、版本兼容区间及 Editor／Client／Server 三端模块验证；详细设计见其 `Docs/Architecture.md`。
 - [GamePlatformData](../Game/Plugins/GamePlatform/Foundation/GamePlatformData/README.md)：Definition根体系、统一主资产加载、作用域租约、AssetRegistry元数据、依赖安全上限及 Editor／Client／Server 模块验证；详细设计见其 `Docs/Architecture.md`。
 - [GamePlatformApplicationFlow](../Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/README.md)：流程执行机制、节点注入、接口示例及原生／UE 验证状态。
-- [GamePlatformInput](../Game/Plugins/GamePlatform/Application/GamePlatformInput/README.md)：PC键鼠/手柄与移动Touch统一语义输入、LocalPlayer租约、重绑定、无障碍偏好和UI/Gameplay输入仲裁；详细设计见插件 `Docs/Architecture.md`。
+- [GamePlatformInput](../Game/Plugins/GamePlatform/Application/GamePlatformInput/README.md)：PC键鼠/手柄与移动Touch统一语义输入、LocalPlayer租约、重绑定、移动端独立手感偏好、输入诊断和UI/Gameplay仲裁；Windows Editor/Client模块已验证，Android/iOS状态见插件测试证据。
 - [GamePlatformLoading](../Game/Plugins/GamePlatform/Application/GamePlatformLoading/README.md)：DAG加载任务、Data租约、世界Ready屏障、按需低开销调度、运行诊断及 Editor／Client／Server 模块验证；详细设计见插件 `Docs/Architecture.md`。
 - [GamePlatformVFX](../Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/README.md)：已有特效源码交付与待真实工程接入事项。
 - [业务后端与共享代码工程化审查报告](Production/业务后端与共享代码工程化审查报告_V1.3.0.md)：后端及协议的审查证据与阻断项。

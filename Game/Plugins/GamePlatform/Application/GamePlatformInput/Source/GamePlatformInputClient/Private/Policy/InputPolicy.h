@@ -223,6 +223,25 @@ inline std::pair<double, double> ApplyRadialDeadZone(double X, double Y, double 
     return {Axis.first / Length * Remapped, Axis.second / Length * Remapped};
 }
 
+/** 对二维轴应用有限倍率后重新限制到单位圆；用于移动端虚拟摇杆手感缩放，避免放大后越界。 */
+inline std::pair<double, double> ApplyAxisScale(double X, double Y, double Scale)
+{
+    if (!IsFiniteAxis(X, Y) || !std::isfinite(Scale) || Scale <= 0.0) { return {0.0, 0.0}; }
+    return ClampAxis(X * Scale, Y * Scale);
+}
+
+/** 合并通用与设备特定灵敏度；任一值非法时失败关闭为0。 */
+inline double CombineSensitivity(double BaseSensitivity, double DeviceSensitivity)
+{
+    if (!std::isfinite(BaseSensitivity) || BaseSensitivity <= 0.0 ||
+        !std::isfinite(DeviceSensitivity) || DeviceSensitivity <= 0.0)
+    {
+        return 0.0;
+    }
+    const double Combined = BaseSensitivity * DeviceSensitivity;
+    return std::isfinite(Combined) ? Combined : 0.0;
+}
+
 /** 应用视角反转和灵敏度倍率；不乘 DeltaTime，避免与消费层重复缩放。 */
 inline std::pair<double, double> ApplyLookPreference(
     double X,

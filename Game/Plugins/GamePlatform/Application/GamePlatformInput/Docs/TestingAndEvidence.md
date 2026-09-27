@@ -33,7 +33,7 @@ C++17
 ```text
 Debug   1/1 Passed
 Release 1/1 Passed
-401 assertions, 0 failures
+406 assertions, 0 failures
 ```
 
 覆盖：
@@ -44,11 +44,13 @@ Release 1/1 Passed
 - 安全二维轴归一化和超大/非有限数。
 - PC手柄/移动虚拟摇杆径向死区。
 - 视角灵敏度与水平/垂直反转。
+- Touch移动幅度倍率放大后的单位圆约束。
+- Touch独立视角灵敏度与通用灵敏度组合。
 - 本地设置稳定键隔离。
 
 ## 3. UE5.8 模块构建
 
-本轮将在共享 UE 构建锁释放后使用：
+本轮已使用：
 
 ```text
 D:/UnrealEngine-5.8.0-release/Engine/Build/BatchFiles/Build.bat
@@ -56,9 +58,23 @@ D:/UnrealEngine-5.8.0-release/Engine/Build/BatchFiles/Build.bat
 -Module=GamePlatformInputClient
 ```
 
-分别验证 Editor（编辑器）和 Client（客户端）。
+实际结果：
 
-当前状态：**待本轮最终编译结果回写**。
+```text
+DivineBeastsArenaEditor Win64 Development -Module=GamePlatformInputClient  → Succeeded
+DivineBeastsArenaClient Win64 Development -Module=GamePlatformInputClient  → Succeeded
+```
+
+Android 也已实际尝试：
+
+```text
+DivineBeastsArenaClient Android Development -Module=GamePlatformInputClient
+→ Failed before C++ compile
+→ SDK validation failed: Android SDK/NDK not found, required NDK r27c
+→ Exit 6
+```
+
+因此 Windows PC 代码端 G1 编译已取得证据；Android 只能证明构建入口已检查到移动目标，不能证明移动 C++ 编译通过。iOS 在本 Windows Runner 上未执行，需要 macOS/Xcode/远程构建链。
 
 ## 4. UE Automation（虚幻自动化）
 
@@ -93,8 +109,8 @@ D:/UnrealEngine-5.8.0-release/Engine/Build/BatchFiles/Build.bat
 
 ```text
 G0 Architecture      本轮设计已补齐，待最终全局回归
-G1 Compile           待UE5.8最终构建结果
-G2 Functional        Partial：Native 401断言通过
+G1 Compile           PC Passed：Editor/Win64 Client；Android被缺失NDK r27c阻断；iOS未执行
+G2 Functional        Partial：Native 406断言通过
 G3 Integration       Not Passed：无真实Profile/项目消费链运行
 G4 Manual Review     Not Passed
 G5 Production        Not Passed：无PC/移动真机、Cook/Stage和性能数据

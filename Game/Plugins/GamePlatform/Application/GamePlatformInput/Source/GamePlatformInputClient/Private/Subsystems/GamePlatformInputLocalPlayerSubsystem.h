@@ -31,6 +31,7 @@ public:
     virtual FGamePlatformInputSubscription SubscribeInputEvents(TWeakObjectPtr<UObject>,TFunction<void(const FGamePlatformInputEvent&)>) override;
     virtual bool UnsubscribeInputEvents(const FGamePlatformInputSubscription&) override;
     virtual FGamePlatformInputSnapshot GetInputSnapshot() const override;
+    virtual FGamePlatformInputDiagnostics GetInputDiagnostics() const override;
     virtual FGamePlatformResult NotifyInputDeviceActivity(EGamePlatformInputDeviceFamily) override;
     virtual FGamePlatformResult SetAccessibilitySettings(const FGamePlatformInputAccessibilitySettings&) override;
     virtual FGamePlatformInputAccessibilitySettings GetAccessibilitySettings() const override;
