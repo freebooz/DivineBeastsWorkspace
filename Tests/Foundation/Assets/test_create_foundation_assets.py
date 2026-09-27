@@ -302,6 +302,40 @@ class EditorBoundaryTests(unittest.TestCase):
                     ASSETS.UnrealMapEditor(unreal)
                 unreal.get_editor_subsystem.assert_not_called()
 
+    def test_mcp_mode_requires_dedicated_full_editor_flags(self):
+        """MCP写入必须来自显式专用编辑器进程，不能复用普通编辑器或Commandlet。"""
+        incomplete_commands = (
+            '-unattended -ScriptErrorsAreFatal -ModelContextProtocolStartServer',
+            '-unattended -ScriptErrorsAreFatal -FoundationAssetGenerationViaMcp',
+            '-run=PythonScript -unattended -ScriptErrorsAreFatal '
+            '-FoundationAssetGenerationViaMcp -ModelContextProtocolStartServer',
+        )
+        for command_line in incomplete_commands:
+            with self.subTest(command_line=command_line):
+                unreal = Mock()
+                unreal.SystemLibrary.get_command_line.return_value = command_line
+                with self.assertRaises(RuntimeError):
+                    ASSETS.UnrealMapEditor(unreal, execution_mode="mcp")
+                unreal.get_editor_subsystem.assert_not_called()
+
+        unreal = Mock()
+        unreal.SystemLibrary.get_command_line.return_value = (
+            '-unattended -ScriptErrorsAreFatal -FoundationAssetGenerationViaMcp '
+            '-ModelContextProtocolStartServer'
+        )
+        unreal.get_editor_subsystem.return_value = None
+        with self.assertRaisesRegex(RuntimeError, "子系统"):
+            ASSETS.UnrealMapEditor(unreal, execution_mode="mcp")
+        unreal.get_editor_subsystem.assert_called()
+
+    def test_unknown_execution_mode_fails_before_subsystem_use(self):
+        """未知执行模式必须在访问UE子系统前失败，避免产生任何编辑器副作用。"""
+        unreal = Mock()
+        unreal.SystemLibrary.get_command_line.return_value = '-unattended -ScriptErrorsAreFatal'
+        with self.assertRaisesRegex(ValueError, "执行模式"):
+            ASSETS.UnrealMapEditor(unreal, execution_mode="unknown")
+        unreal.get_editor_subsystem.assert_not_called()
+
     def test_main_emits_failed_report_then_raises_on_unsupported_phase(self):
         output = io.StringIO()
         with redirect_stdout(output), self.assertRaises(RuntimeError):

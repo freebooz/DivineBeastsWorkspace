@@ -272,15 +272,24 @@ def run_assets(editor, phase):
 class UnrealAssetEditor:
     """共享编辑器环境与只读资产审计；不加载地图、角色或任何项目定义类型。"""
 
-    def __init__(self, unreal):
+    def __init__(self, unreal, execution_mode="script"):
         self.unreal = unreal
         command_line = unreal.SystemLibrary.get_command_line()
         for flag in ("unattended", "ScriptErrorsAreFatal"):
             require(re.search(r"(?:^|\s)-" + flag + r"(?:\s|$)", command_line, re.IGNORECASE),
                     "必须提供 -" + flag + "，保障无人值守和失败退出")
-        require("-executepythonscript=" in command_line.lower() and
-                not re.search(r"(?:^|\s)-run=", command_line, re.IGNORECASE),
-                "使用完整编辑器 -ExecutePythonScript，不使用 commandlet -run=PythonScript")
+        require(not re.search(r"(?:^|\s)-run=", command_line, re.IGNORECASE),
+                "资产生成必须使用完整编辑器，不能使用 commandlet -run=PythonScript")
+        if execution_mode == "script":
+            require("-executepythonscript=" in command_line.lower(),
+                    "脚本模式必须由完整编辑器 -ExecutePythonScript 启动")
+        elif execution_mode == "mcp":
+            # MCP 写入只允许显式专用进程；不能把普通人工编辑器误当无人值守生成宿主。
+            for flag in ("FoundationAssetGenerationViaMcp", "ModelContextProtocolStartServer"):
+                require(re.search(r"(?:^|\s)-" + flag + r"(?:\s|$)", command_line, re.IGNORECASE),
+                        "MCP模式必须提供 -" + flag)
+        else:
+            raise ValueError("不支持的编辑器执行模式：" + str(execution_mode))
         self.assets = self._subsystem(unreal.EditorAssetSubsystem)
         require(not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages() and
                 not unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages(),
@@ -307,8 +316,8 @@ class UnrealAssetEditor:
 class UnrealMapEditor(UnrealAssetEditor):
     """UE5.8 地图适配；所有原生写入仅通过引擎地图 API 完成。"""
 
-    def __init__(self, unreal):
-        super().__init__(unreal)
+    def __init__(self, unreal, execution_mode="script"):
+        super().__init__(unreal, execution_mode=execution_mode)
         self.levels = self._subsystem(unreal.LevelEditorSubsystem)
         self.actors = self._subsystem(unreal.EditorActorSubsystem)
         self.worlds = self._subsystem(unreal.UnrealEditorSubsystem)
@@ -715,7 +724,7 @@ class UnrealOnlineFlowEditor(UnrealFlowEditor):
         return default_online_flow_values()
 
 
-def main(arguments=None):
+def main(arguments=None, execution_mode="script"):
     """输出真实执行报告；失败抛异常供 -ScriptErrorsAreFatal 转成非零进程退出。"""
     phase = "Maps"
     try:
@@ -723,13 +732,23 @@ def main(arguments=None):
         import unreal
         adapter_type = {"Maps": UnrealMapEditor, "Probe": UnrealProbeEditor, "Flow": UnrealFlowEditor,
                         "OnlineFlow": UnrealOnlineFlowEditor}[phase]
-        report = run_assets(adapter_type(unreal), phase)
+        report = run_assets(adapter_type(unreal, execution_mode=execution_mode), phase)
     except Exception as error:
         report = failed_report(str(error), phase)
     print("FOUNDATION_ASSETS_REPORT " + json.dumps(report, ensure_ascii=False, sort_keys=True), flush=True)
     if report["exit_code"]:
         raise RuntimeError("Foundation " + phase + " FAILED；请检查 FOUNDATION_ASSETS_REPORT，禁止自动覆盖重试")
     return report
+
+
+def main_from_mcp(arguments=None):
+    """供 VibeUE ``execute_python_code`` 调用的受控入口。
+
+    调用方仍须以无人值守、脚本错误致命和专用 MCP 标志启动完整编辑器；该入口不降低
+    nooverwrite、磁盘快照、当前工程身份或重新加载校验。返回报告同时写入标准输出，便于
+    MCP 响应与编辑器日志形成两份可核对证据。
+    """
+    return main(arguments, execution_mode="mcp")
 
 
 if __name__ == "__main__":

@@ -9,6 +9,8 @@
     { "Name": "GamePlatformData", "Enabled": true },
     { "Name": "GamePlatformApplicationFlow", "Enabled": true },
     { "Name": "GamePlatformLoading", "Enabled": true },
-    { "Name": "GamePlatformWorld", "Enabled": true }
+    { "Name": "GamePlatformWorld", "Enabled": true },
+    { "Name": "Monolith", "Enabled": true, "TargetAllowList": ["Editor"] },
+    { "Name": "VibeUE", "Enabled": true, "TargetAllowList": ["Editor"] }
   ]
 }
