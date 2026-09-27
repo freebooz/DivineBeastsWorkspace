@@ -17,6 +17,8 @@ public:
     virtual FGamePlatformResult ReleaseLoadingOperation(const FGamePlatformLoadingHandle& Handle) = 0;
     /** 本实例最近操作的值快照，不跨实例读取。 */
     virtual FGamePlatformLoadingSnapshot GetLoadingSnapshot() const = 0;
+    /** 返回本GameInstance的轻量性能/容量诊断；不暴露任务对象、世界对象或资源指针。 */
+    virtual FGamePlatformLoadingDiagnostics GetLoadingDiagnostics() const = 0;
     /** 带弱所有者、精确操作过滤的延后状态订阅；初始通知也延后。失效不再通知。 */
     virtual FGamePlatformLoadingRegistration SubscribeLoadingState(const FGamePlatformLoadingHandle& Handle,
         TWeakObjectPtr<UObject> Owner, TFunction<void(const FGamePlatformLoadingSnapshot&)> Callback) = 0;

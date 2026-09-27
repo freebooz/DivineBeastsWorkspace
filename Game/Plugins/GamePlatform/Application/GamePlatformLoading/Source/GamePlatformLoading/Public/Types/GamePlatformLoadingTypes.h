@@ -88,3 +88,35 @@ struct FGamePlatformLoadingRegistration
     FGuid RegistrationId;
     bool IsValid() const { return OwnerScopeId.IsValid() && RegistrationId.IsValid(); }
 };
+
+/**
+ * GameInstance（游戏实例）作用域的轻量运行诊断。
+ * 仅保存数值，不持有任务、世界或资源对象；供Debug/Telemetry上层按需采样，Loading本身不反向依赖遥测插件。
+ */
+struct FGamePlatformLoadingDiagnostics
+{
+    /** 当前Loading服务作用域。 */
+    FGuid OwnerScopeId;
+    /** 当前是否已经安排下一次Ticker采样。 */
+    bool bTickerScheduled = false;
+    /** 当前活跃任务实例数。 */
+    int32 ActiveTaskExecutions = 0;
+    /** 当前注册的自定义任务工厂数。 */
+    int32 RegisteredTaskFactories = 0;
+    /** 当前状态订阅数。 */
+    int32 SubscriberCount = 0;
+    /** 本实例累计接纳的Loading操作数。 */
+    int64 TotalOperationsStarted = 0;
+    /** 本实例累计执行的Ticker采样次数。 */
+    int64 TotalTickerExecutions = 0;
+    /** 本实例累计调用任务Poll的次数。 */
+    int64 TotalTaskPolls = 0;
+    /** 本实例累计构造并尝试发布的状态快照数量。 */
+    int64 TotalSnapshotsPublished = 0;
+    /** 本实例累计执行的订阅回调数量。 */
+    int64 TotalSubscriberCallbacks = 0;
+    /** 最近一次Loading Ticker主体耗时，单位毫秒。 */
+    double LastTickMilliseconds = 0.0;
+    /** 本实例观察到的Loading Ticker最大主体耗时，单位毫秒。 */
+    double MaxTickMilliseconds = 0.0;
+};

@@ -2,6 +2,16 @@
 
 ## 首个检查点：2026-09-21
 
+## 2026-09-27 当前审查与完善
+
+- 重新扫描真实插件后确认：原 HEAD 已有 Public 契约、Profile、语义和测试源，但从未存在 `Private/Policy/InputPolicy.h` 与 `Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp`，因此旧“核心基础已实装”实际只覆盖接口基础，不能代表运行实现完成。
+- 本轮已补齐无引擎对象的输入策略内核和 LocalPlayer 执行层：Profile/Data租约、Enhanced Input Context租约、动作绑定、阻断租约、重绑定、Touch注入、焦点/Receiver生命周期、本地偏好和设备族状态。
+- PC 支持键盘/鼠标与手柄；移动端统一通过 Touch 语义注入支持虚拟摇杆/视角/技能按钮。虚拟控件和手势UI仍归 GamePlatformUI/DivineBeastsUI，不让 Input 反向依赖 UMG/项目层。
+- 性能上采用事件驱动，无固定每帧输入 Tick；只有弱Owner租约存在时才使用4Hz维护Ticker回收失效记录。Context/Block/Binding/Subscription/Touch均有明确容量上限，高频事件不加载资产、不写磁盘。
+- Native C++17 Debug／Release 各1/1通过，当前401条断言、0失败；增加PC手柄/移动虚拟摇杆径向死区和视角灵敏度/反转验证。
+- 当前共享 UE Editor 全量构建仍占用 UBT 锁，本轮 `-EnablePlugin=GamePlatformInput -Module=GamePlatformInputClient` 的实际 UE 编译必须在锁释放后继续；不把等待构建或旧 Intermediate 产物写成通过。
+- Android SDK/NDK 27.2 和 Android Studio JBR 已在 Runner 配置，PC Client 编译完成后将继续尝试 Android Client；iOS 仍需要 macOS/远程 iOS 工具链，不能在本 Windows Runner 上冒充验证。
+
 当前路径为唯一工作空间，分支main；本次首查HEAD=f5c9d4a，存在并行PCG/World等修改与外部提交，实施不重置、不批量提交。根规则生效，受影响树内未发现局部AGENTS或覆盖文件。
 
 已读现行中文总体规划和插件规范；附件所述OverallPlan.md不存在，正式对应文件为Docs/Architecture/解决方案总体规划.md。附件已内含36组验收与15类文档细则，无需臆造独立附件已读取。

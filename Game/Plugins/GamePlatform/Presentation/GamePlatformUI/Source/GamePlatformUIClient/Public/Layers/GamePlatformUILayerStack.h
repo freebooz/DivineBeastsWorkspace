@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CommonUserWidget.h"
+#include "Core/GamePlatformWidgetBase.h"
 #include "GamePlatformUITypes.h"
 #include "GamePlatformUILayerStack.generated.h"
 
@@ -13,7 +13,8 @@ class UWidget;
  * 页面栈使用 CommonUI；HUD/Notification 为非激活普通层。
  */
 UCLASS(Abstract, Blueprintable)
-class GAMEPLATFORMUICLIENT_API UGamePlatformUILayerStack : public UCommonUserWidget
+class GAMEPLATFORMUICLIENT_API UGamePlatformUILayerStack
+    : public UGamePlatformWidgetBase
 {
     GENERATED_BODY()
 

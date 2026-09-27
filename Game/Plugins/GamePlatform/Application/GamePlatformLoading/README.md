@@ -1,10 +1,12 @@
 # GamePlatformLoading：加载与可玩就绪屏障
 
-本插件已写入任务图、实例服务、Data租约适配、基础世界屏障以及主工程Flow接线。**尚未完成UE编译与真实运行验收，不可作为生产准入或完整游戏就绪证明。** 会话适配因Session公开服务和真实准入链缺失而未实施；请求`SessionReady`明确失败，不发HTTP也不模拟成功。
+本插件已实现任务图、实例服务、Data租约适配、基础世界屏障、按需低开销调度、运行诊断以及主工程 Flow 接线。2026-09-27 原生策略 Debug/Release 各46条断言通过，UE5.8 Editor／Client／Server 的 `GamePlatformLoading` 模块构建均成功；**UE Automation、真实资产/世界运行、Session准入、Cook/Stage和人工签审仍未完成，因此不可作为生产准入或完整游戏就绪证明。** 请求 `SessionReady` 在真实 Session 公开服务接通前继续明确失败，不发HTTP也不模拟成功。
 
 单一`GamePlatformLoading` Runtime模块同时支持Editor、Client、Server。只依赖Core、CoreUObject、Engine、GamePlatformCore、GamePlatformData，不依赖UMG、Niagara、项目美术、Flow或客户端Session模块。插件默认关闭；正式主工程已显式启用。无需添加空Client/Server/Editor模块。
 
 Loading拥有操作、任务尝试与屏障，不拥有主资产、旅行、认证、网络连接或正式世界流送。Data负责真实定义加载；Flow决定进入加载阶段；项目bootstrap声明基础世界可操作；将来Session只提供可校验的会话事实。
+
+性能策略：空闲 GameInstance 不注册 Loading Ticker；运行中最多20Hz采样任务和截止时间；Ready后若资源仍被持有，仅2Hz监视弱Owner失效；释放后完全停表。单操作最多256任务、单任务最多64直接依赖，TaskId运行期使用冻结索引；状态订阅与自定义任务工厂各最多128项。`GetLoadingDiagnostics()` 提供Ticker/Poll/快照/回调计数和最近/最大Tick耗时，便于后续性能回归。
 
 ## 最小使用
 
@@ -27,4 +29,4 @@ Loading拥有操作、任务尝试与屏障，不拥有主资产、旅行、认�
 11. [迁移交接](Docs/MigrationAndHandover.md)：后续能力接入边界。
 12. [人工审查](Docs/ManualReview.md)：待人工签审表。
 
-原生任务算法Debug/Release通过；三个正式UE目标均在历史空白插件描述扫描阶段失败。真实租约UE测试、Foundation场景、多PIE、Cook及人工签审均未执行。详见仓库`Docs/Production/GamePlatformLoadingVerification.md`，不得将39条原生断言换算成39项UE验收。
+当前原生任务算法 Debug/Release 各1/1通过并输出46条断言；Editor／Client／Server 三个 `GamePlatformLoading` 模块构建均成功。真实租约 UE Automation、Foundation真实场景、多PIE、Session准入、Cook/Stage及人工签审仍未执行。2026-09-21 曾因历史空白插件描述在扫描阶段阻断三目标，该证据作为历史保留；最新状态见仓库 `Docs/Production/GamePlatformLoadingVerification.md`，不得把46条原生断言或模块编译换算成46项UE运行验收。

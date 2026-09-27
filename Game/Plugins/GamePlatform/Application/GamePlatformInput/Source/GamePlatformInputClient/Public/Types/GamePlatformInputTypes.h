@@ -16,6 +16,35 @@ enum class EGamePlatformInputChannel : uint8 { Move = 1, Look = 2, Actions = 4, 
 /** Delta不再乘帧间隔；Rate必须由最终视角消费者乘且只乘一次帧间隔。 */
 UENUM(BlueprintType)
 enum class EGamePlatformInputUnit : uint8 { Boolean, NormalizedAxis, DegreesDelta, DegreesPerSecond };
+/** 当前本地玩家最近一次由平台确认的输入设备族；只用于本地表现/提示，不参与服务器权威。 */
+UENUM(BlueprintType)
+enum class EGamePlatformInputDeviceFamily : uint8 { Unknown, KeyboardMouse, Gamepad, Touch };
+
+/**
+ * 本地无障碍/舒适度偏好。
+ * 这些值只影响客户端输入解释，不修改服务器权威规则，也不在高频输入路径做磁盘IO。
+ */
+USTRUCT(BlueprintType)
+struct FGamePlatformInputAccessibilitySettings
+{
+    GENERATED_BODY()
+
+    /** 统一视角灵敏度倍率；0.1..5.0。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    double LookSensitivityMultiplier = 1.0;
+
+    /** 是否反转水平视角。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    bool bInvertLookX = false;
+
+    /** 是否反转垂直视角。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    bool bInvertLookY = false;
+
+    /** 移动轴附加死区倍率；1.0表示使用Profile默认值，范围0.5..2.0。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Accessibility")
+    double MoveDeadZoneMultiplier = 1.0;
+};
 /** 中断不是释放施法；原生Completed也不代表服务器授权或技能成功。 */
 enum class EGamePlatformInputEndReason : uint8 { None, NativeCompleted, NativeCanceled, Blocked, ReceiverChanged, ContextRemoved, ProfileReleased, FocusLost };
 
@@ -43,6 +72,8 @@ struct FGamePlatformInputEvent
     FInputActionValue Value;
     EGamePlatformInputUnit Unit = EGamePlatformInputUnit::NormalizedAxis;
     EGamePlatformInputEndReason EndReason = EGamePlatformInputEndReason::None;
+    /** 事件产生时的最近设备族；硬件动作未知时使用服务当前设备族。 */
+    EGamePlatformInputDeviceFamily DeviceFamily = EGamePlatformInputDeviceFamily::Unknown;
     uint64 BindingGeneration = 0;
     uint64 Sequence = 0;
 };
@@ -54,6 +85,10 @@ struct FGamePlatformInputSnapshot
     bool bMappingsApplied = false;
     bool bGameplayInputEnabled = false;
     bool bPreferencesSaved = false;
+    /** 最近一次由平台/触控桥确认的设备族，用于提示图标和设备特定UI。 */
+    EGamePlatformInputDeviceFamily ActiveDeviceFamily = EGamePlatformInputDeviceFamily::Unknown;
+    /** 当前无障碍/舒适度偏好快照。 */
+    FGamePlatformInputAccessibilitySettings Accessibility;
     uint64 ProfileGeneration = 0;
     uint64 BindingGeneration = 0;
     uint64 SettingsRevision = 0;

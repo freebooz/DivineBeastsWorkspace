@@ -12,7 +12,10 @@ void UGamePlatformUIScreen::InitializeScreen(
     EGamePlatformUIPausePolicy InPausePolicy)
 {
     ScreenId = InScreenId;
-    ViewModel = InViewModel;
+
+    // ViewModel 生命周期统一交给可激活基类管理，避免 Screen 与子类重复绑定事件。
+    InitializeActivatableViewModel(InViewModel);
+
     DesiredFocusWidgetName = InDesiredFocusWidgetName;
     InputMode = InInputMode;
     PausePolicy = InPausePolicy;
@@ -30,19 +33,13 @@ TOptional<FUIInputConfig> UGamePlatformUIScreen::GetDesiredInputConfig() const
 
 void UGamePlatformUIScreen::NativeOnActivated()
 {
+    // ViewModel BeginPage、事件绑定和初始刷新由平台可激活基类统一完成。
     Super::NativeOnActivated();
-    if (IsValid(ViewModel))
-    {
-        ViewModel->BeginPage();
-    }
 }
 
 void UGamePlatformUIScreen::NativeOnDeactivated()
 {
-    if (IsValid(ViewModel))
-    {
-        ViewModel->EndPage();
-    }
+    // 先通知 Manager 页面准备关闭，再由父类解绑事件并结束 ViewModel 页面代次。
     PlatformDeactivated.Broadcast(this);
     Super::NativeOnDeactivated();
 }

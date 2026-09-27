@@ -87,6 +87,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI")
     bool AttachToastWidget(UGamePlatformToastWidget* Widget);
 
+    /**
+     * 按界面身份创建项目 ViewModel。
+     * P0 登录/加载页面返回专用 ViewModel，其余页面保持兼容通用 ViewModel。
+     * 对象 Outer 为当前 LocalPlayer 子系统，生命周期随本地玩家结束而清理。
+     */
     UDivineBeastsUIViewModel* CreateViewModel(FName ScreenId);
 
     void SubmitCommand(

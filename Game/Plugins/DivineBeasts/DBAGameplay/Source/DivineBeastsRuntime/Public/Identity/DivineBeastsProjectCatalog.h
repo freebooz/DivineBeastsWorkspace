@@ -32,5 +32,11 @@ public:
     static FName GetOpenWorldServerRole();
     static FName GetVillageServerRole();
     static FName GetMainArenaServerRole();
+    /** 返回登录大厅/主城所在的OpenWorld默认体验；稳定身份集中于项目目录，避免业务模块散落字符串常量。 */
+    static FName GetOpenWorldHubExperience();
+    /** 返回首次新手引导体验；它属于Village服务器角色，不代表独立Tutorial服务器。 */
+    static FName GetVillageTutorialExperience();
+    /** 返回训练体验；它属于Village服务器角色，不代表独立Training服务器。 */
+    static FName GetVillageTrainingExperience();
     static FName GetMainArenaExperience();
 };

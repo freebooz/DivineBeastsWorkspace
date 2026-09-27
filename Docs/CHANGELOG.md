@@ -2,6 +2,38 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-27｜GamePlatformInput跨端输入底座完善
+
+- 审查确认原HEAD只有Input Public契约/Profile/语义与测试源，缺少实际 `InputPolicy.h` 和 `GamePlatformInputLocalPlayerSubsystem.cpp`；本轮补齐生产策略内核和LocalPlayer执行层，不创建第二套输入系统。
+- PC统一支持键盘/鼠标与手柄；移动端通过 `Begin/Update/EndTouchInput` 将虚拟摇杆、视角和技能按钮注入同一Enhanced Input语义链，具体UMG/手势布局继续归UI/项目层，避免GamePlatformInput反向依赖表现或神兽联盟项目代码。
+- 增加设备族、Touch独立死区、视角灵敏度/XY反转、移动死区倍率、本地偏好持久化和玩家重绑定；Profile Definition开放为可单向派生的平台基类，LocalPlayer运行子系统继续final，符合三层继承/组合规则。
+- 性能采用事件驱动：不使用固定每帧输入Tick；只在存在弱Owner租约时用4Hz维护Ticker清理失效记录；Context/Block/Binding/Subscription/Touch均有容量上限，高频回调不加载资产、不写磁盘、不复制订阅数组。
+- Native C++17 Debug／Release 各1/1通过，共401条断言、0失败；UE5.8 Editor/Client和Android模块编译受当前并行Editor全量构建锁影响，待锁释放后按真实结果补证，不提前宣称通过。
+- 新增插件 `README.md`、`Docs/Architecture.md`、`API.md`、`TestingAndEvidence.md`、`ManualReview.md`，并同步插件清单、实施进度和总体目录说明。
+
+## 2026-09-27｜GamePlatformLoading加载屏障完善
+
+- `LoadingPolicy` 增加任务/依赖容量门禁、哈希化ID/依赖校验和冻结 `TaskId → 索引`，减少运行期依赖查询的线性扫描；原生 Debug／Release 各1/1通过并输出46条断言，CMake启用警告即错误。
+- `GamePlatformLoadingSubsystem` 从 GameInstance 全生命周期固定20Hz Ticker 改为按需调度：Idle零轮询、Running 20Hz、Ready且资源保留时2Hz弱Owner监视、释放后停表；新增 `FGamePlatformLoadingDiagnostics` 统计Ticker/Poll/快照/回调和Tick耗时，并为订阅/自定义工厂增加实例级容量上限。
+- 保持 Loading 只依赖 Core/Data，不反向依赖 Session/Flow/项目层；《神兽联盟》推荐将 SessionAdmission、WorldDefinition/WorldPresence、CharacterReady、GameplayReady、EssentialUIReady 等事实由上层任务适配后交给同一Ready屏障，非关键表现可Optional/Degradable。
+- UE5.8 `GamePlatformLoading` Editor／Client／Server 三目标模块构建均成功；UE Automation、真实Definition/地图、多PIE、Session准入、Cook/Stage和人工签审仍未执行，不宣称生产就绪。
+- 同步插件 Architecture/API/TaskModel/ProgressModel/ReadinessBarrier/Integration/ConfigurationAndRun/TestingAndEvidence/ManualReview、README，以及项目插件清单、实施进度与生产验证记录。
+
+## 2026-09-27｜GamePlatformData数据底座完善
+
+- `UGamePlatformDefinitionBase` 增加 AssetRegistry 结构版本、内容修订和直接依赖数量标签，并在基础校验阶段拒绝 Definition 自依赖；Runtime 与 Editor 统一使用 `GamePlatformDataLimits` 管理依赖深度、唯一节点和单租约 Bundle 安全上限。
+- `FGamePlatformDataDiagnostics` 增加当前唯一 Definition／Bundle 数、幂等释放记录数和 Accepted／Rejected／Succeeded／Failed／Cancelled 累计计数；不引入 Telemetry 反向依赖，也不改变现有租约与主资产公开 API。
+- 修复 UE5.8 编辑器测试中已不存在的 `PKG_Transient`，改用符合新建未保存内存包语义的 `PKG_NewlyCreated`；原生需求账本 Debug／Release 各1/1通过，GamePlatformData Runtime／Editor／Client／Server 模块构建均成功。
+- 新增 `GamePlatformData/Docs/Architecture.md`、`API.md`、`TestingAndEvidence.md`，明确 RequiredDefinitions 不是 Cook 软引用替代品、Chunk/Cook 归内容包与构建配置、Server-safe 必须由真实依赖图和 Server Cook/Stage 证明。
+
+## 2026-09-27｜GamePlatformCore核心契约完善
+
+- GamePlatformCore 新增 `FGamePlatformErrorCode（结构化错误码）` 与 `FGamePlatformVersionRange（版本兼容区间）`，并为 `FGamePlatformId` 增加安全 `TryCreate`；保留既有 `FGamePlatformResult.Code:FName` 和原有调用方式，不批量破坏领域错误码。
+- `FGamePlatformResult` 新增结构化错误码 Failure／Unsupported 重载与 `TryGetStructuredCode`；默认未配置版本区间按 Fail Closed 拒绝候选，兼容政策仍归具体领域。
+- 原生生产算法 Debug／Release 各 13/13 场景通过；UE5.8 `GamePlatformCore` 模块的 Editor／Client／Server 三目标构建均成功并经过 UHT。UE Automation、全工程构建、Cook／Stage 未冒充已通过。
+- 新增 `GamePlatformCore/Docs/Architecture.md`、`API.md`、`TestingAndEvidence.md` 并更新插件 README、游戏端插件清单与文档索引。
+- UE模块构建生成的 `GamePlatformCore/Binaries/Win64/*.dll/*.pdb` 不作为源码交付，已从工作树清理，并新增 `/Game/Plugins/**/Binaries/` 忽略规则防止后续误提交。
+
 ## 2026-09-27｜旧插件目录与生成物清理
 
 - 删除旧 `Game/Plugins/GameFoundation/` 下误提交的74个 `Saved/NativeTests` 生成文件，并清理本机残留的 DivineBeasts 旧空分类目录。

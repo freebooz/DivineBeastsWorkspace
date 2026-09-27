@@ -45,6 +45,16 @@ int main()
     auto BadWeight = Task("one"); BadWeight.Weight = 0; Require(!Invalid.Start({BadWeight},1,0,30).empty());
     BadWeight.Weight = std::numeric_limits<double>::infinity(); Require(!Invalid.Start({BadWeight},1,0,30).empty());
     Require(!Invalid.Start({Task("one",Requirement::Degradable)},1,0,30).empty());
+    // 容量门禁必须在启动阶段失败，避免运行中才因超大图造成主线程尖峰。
+    std::vector<TaskSpec> TooManyTasks;
+    for (std::size_t Index = 0; Index <= MaxTasksPerOperation; ++Index) { TooManyTasks.push_back(Task("task" + std::to_string(Index))); }
+    Require(!Invalid.Start(TooManyTasks,1,0,30).empty());
+    auto TooManyDependencies = Task("target");
+    for (std::size_t Index = 0; Index <= MaxDependenciesPerTask; ++Index) { TooManyDependencies.Dependencies.push_back("dependency" + std::to_string(Index)); }
+    std::vector<TaskSpec> DependencyGraph;
+    for (std::size_t Index = 0; Index <= MaxDependenciesPerTask; ++Index) { DependencyGraph.push_back(Task("dependency" + std::to_string(Index))); }
+    DependencyGraph.push_back(TooManyDependencies);
+    Require(!Invalid.Start(DependencyGraph,1,0,30).empty());
     Operation Cancelled; Cancelled.Start({Task("one")},1,0,30); auto Late = Cancelled.Startable(0)[0];
     Cancelled.Cancel(); Require(Cancelled.State == OperationState::Cancelled); Require(!Cancelled.Complete(Late,true,""));
     Cancelled.Start({Task("one")},2,0,30); Require(!Cancelled.Complete(Late,true,""));
@@ -63,6 +73,12 @@ int main()
     Operation Blocked; Blocked.Start({Task("one",Requirement::Optional),SecondSpec},1,0,30);
     Blocked.Complete(Blocked.Startable(0)[0],false,"missing"); Blocked.Startable(1);
     Require(Blocked.State == OperationState::Failed);
+    // Ticker决策必须证明空闲零轮询；Ready仅在资源仍被持有时进入低频监视。
+    Require(SelectSamplingMode(OperationState::Idle,false,false,false) == SamplingMode::Idle);
+    Require(SelectSamplingMode(OperationState::Running,true,false,false) == SamplingMode::Active);
+    Require(SelectSamplingMode(OperationState::Ready,true,false,false) == SamplingMode::Retained);
+    Require(SelectSamplingMode(OperationState::Ready,false,true,false) == SamplingMode::Active);
+    Require(SelectSamplingMode(OperationState::Ready,false,false,false) == SamplingMode::Idle);
     std::cout << Checks << " assertions passed\n";
 }
 #endif

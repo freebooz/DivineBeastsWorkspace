@@ -3,7 +3,7 @@
   "Version": 1,
   "VersionName": "0.1.0",
   "FriendlyName": "Game Platform Loading",
-  "Description": "实例级任务图、数据租约与基础世界就绪屏障；会话适配前置未完成。",
+  "Description": "实例级Loading任务图、Data租约、按需低开销调度、运行诊断与基础世界就绪屏障；会话准入由上层真实适配。",
   "Category": "GamePlatform",
   "CanContainContent": false,
   "EnabledByDefault": false,

@@ -3,11 +3,14 @@
   "Version": 1,
   "VersionName": "0.1.0-incomplete",
   "FriendlyName": "Game Platform Session",
-  "Description": "客户端会话状态内核；Online前置缺失，真实连接服务尚未接入。",
+  "Description": "客户端会话状态与公开适配服务；真实网络旅行和服务器准入由注入式Transport提供，不伪造连接成功。",
   "Category": "GamePlatform",
   "EngineVersion": "5.8.0",
   "CanContainContent": false,
   "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true }
+  ],
   "Modules": [
     {
       "Name": "GamePlatformSession",

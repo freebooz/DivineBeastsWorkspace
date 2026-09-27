@@ -200,6 +200,23 @@ void TestAxisAndSettings()
         Axis = ClampAxis(0.5, Invalid);
         Check(Axis.first == 0 && Axis.second == 0, "invalid second axis safely neutralized");
     }
+    // PC手柄与移动端虚拟摇杆共用径向死区；死区内归零，死区外保持方向并重新映射幅度。
+    Axis = ApplyRadialDeadZone(0.1, 0.0, 0.2);
+    Check(Axis.first == 0 && Axis.second == 0, "radial dead zone neutralizes small stick/touch motion");
+    Axis = ApplyRadialDeadZone(0.6, 0.8, 0.2);
+    Check(IsFiniteAxis(Axis.first, Axis.second), "radial dead zone output remains finite");
+    Check(std::hypot(Axis.first, Axis.second) <= 1.0, "radial dead zone output bounded to unit circle");
+    Axis = ApplyRadialDeadZone(1.0, 0.0, 0.2);
+    Check(std::abs(Axis.first - 1.0) < 1e-12 && Axis.second == 0, "full stick magnitude remains full after dead zone");
+
+    // 无障碍视角偏好不乘DeltaTime，只做反转和灵敏度倍率，防止消费层重复积分。
+    auto Look = ApplyLookPreference(2.0, -3.0, 1.5, true, false);
+    Check(Look.first == -3.0 && Look.second == -4.5, "look preference applies sensitivity and horizontal inversion");
+    Look = ApplyLookPreference(2.0, -3.0, 2.0, false, true);
+    Check(Look.first == 4.0 && Look.second == 6.0, "look preference applies vertical inversion");
+    Look = ApplyLookPreference(1.0, 1.0, std::numeric_limits<double>::quiet_NaN(), false, false);
+    Check(Look.first == 0 && Look.second == 0, "invalid accessibility sensitivity fails closed");
+
     const auto Key = StableSettingsKey("Game", "opaque-user", 0, "Default");
     Check(!Key.empty(), "settings key available without IO");
     Check(Key == StableSettingsKey("Game", "opaque-user", 0, "Default"), "settings key repeatable");

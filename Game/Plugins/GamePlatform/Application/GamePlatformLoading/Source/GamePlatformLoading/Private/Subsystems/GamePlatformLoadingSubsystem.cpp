@@ -6,6 +6,16 @@
 #include "UObject/StrongObjectPtr.h"
 
 namespace Policy = GamePlatformLoadingPolicy;
+namespace
+{
+/** 加载中的主动采样频率：20Hz足以处理异步任务、截止时间和进度，不做每帧插值。 */
+constexpr float ActiveLoadingTickIntervalSeconds = 0.05f;
+/** Ready后仅用于发现弱Owner销毁并自动释放资源；2Hz避免长驻世界持续20Hz空轮询。 */
+constexpr float RetainedResourceWatchIntervalSeconds = 0.5f;
+/** 防止错误UI或热重载代码无限注册订阅/工厂导致实例级容器无界增长。 */
+constexpr int32 MaxLoadingSubscriptions = 128;
+constexpr int32 MaxCustomTaskFactories = 128;
+}
 struct FLoadingFactoryRecord
 {
     FGamePlatformLoadingRegistration Handle;
@@ -44,12 +54,25 @@ struct FGamePlatformLoadingScope
     bool bDispatchingTask = false;
     bool bDirty = false;
     bool bHasWorldTask = false;
+    int64 TotalOperationsStarted = 0;
+    int64 TotalTickerExecutions = 0;
+    int64 TotalTaskPolls = 0;
+    int64 TotalSnapshotsPublished = 0;
+    int64 TotalSubscriberCallbacks = 0;
+    double LastTickMilliseconds = 0.0;
+    double MaxTickMilliseconds = 0.0;
 };
 
 static FGamePlatformResult LoadingError(FName Code)
 { return FGamePlatformResult::Failure(Code,TEXT("加载请求被拒绝或失败；请按错误码与任务快照排查")); }
 static bool BelongsToInstance(TWeakObjectPtr<UObject> Owner, UGameInstance* Instance)
-{ return Owner.IsValid() && (Owner.Get() == Instance || Owner->GetTypedOuter<UGameInstance>() == Instance); }
+{
+    if (!Owner.IsValid() || !Instance) { return false; }
+    if (Owner.Get() == Instance || Owner->GetTypedOuter<UGameInstance>() == Instance) { return true; }
+    // PlayerController、Pawn等世界对象通常不以GameInstance为Outer；通过真实World→GameInstance关系接受同实例所有者。
+    const UWorld* OwnerWorld = Owner->GetWorld();
+    return OwnerWorld && OwnerWorld->GetGameInstance() == Instance;
+}
 
 UGamePlatformLoadingSubsystem::UGamePlatformLoadingSubsystem() = default;
 UGamePlatformLoadingSubsystem::UGamePlatformLoadingSubsystem(FVTableHelper& Helper) : Super(Helper) {}
@@ -60,9 +83,7 @@ void UGamePlatformLoadingSubsystem::Initialize(FSubsystemCollectionBase& Collect
 {
     Super::Initialize(Collection);
     Scope = MakeUnique<FGamePlatformLoadingScope>();
-    // 不在模块启动或Commandlet中启动操作；实例定时采样只负责截止时间和真实世界状态。
-    if (!IsRunningCommandlet())
-    { TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this,&ThisClass::Tick),0.05f); }
+    // 空闲实例不注册Ticker。只有真实操作、状态发布或Ready资源回收监视需要时才按需安排。
 }
 void UGamePlatformLoadingSubsystem::Deinitialize()
 {
@@ -74,6 +95,20 @@ void UGamePlatformLoadingSubsystem::Deinitialize()
     }
     Super::Deinitialize();
 }
+void UGamePlatformLoadingSubsystem::ScheduleTicker(float DelaySeconds)
+{
+    check(IsInGameThread());
+    if (IsRunningCommandlet() || !Scope) { return; }
+    if (TickerHandle.IsValid())
+    {
+        FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle);
+        TickerHandle.Reset();
+    }
+    const float SafeDelay = FMath::Max(0.0f, DelaySeconds);
+    TickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateUObject(this, &ThisClass::Tick), SafeDelay);
+}
+
 FGamePlatformLoadingHandle UGamePlatformLoadingSubsystem::StartLoadingOperation(
     const FGamePlatformLoadingOperationSpec& Spec,TWeakObjectPtr<UObject> Owner,FGamePlatformResult& OutResult)
 {
@@ -122,6 +157,8 @@ FGamePlatformLoadingHandle UGamePlatformLoadingSubsystem::StartLoadingOperation(
     }
     Scope->bResourcesHeld = true; Scope->bDirty = true; Scope->bHasWorldTask = HasWorld;
     Scope->World = MakeShared<FLoadingWorldEvidence>(); Scope->World->Instance = GetGameInstance(); Scope->World->Package = Spec.TargetWorldPackage;
+    ++Scope->TotalOperationsStarted;
+    ScheduleTicker(0.0f);
     OutResult = FGamePlatformResult::Success(); return Scope->Handle;
 }
 FGamePlatformResult UGamePlatformLoadingSubsystem::CancelLoadingOperation(const FGamePlatformLoadingHandle& Handle)
@@ -130,13 +167,24 @@ FGamePlatformResult UGamePlatformLoadingSubsystem::CancelLoadingOperation(const 
     if (!Scope || !Handle.IsValid() || !(Scope->Handle == Handle)) { return LoadingError(TEXT("StaleOperation")); }
     if (Scope->bDispatchingTask) { return LoadingError(TEXT("ReentrantMutation")); }
     if (Scope->Operation.State == Policy::OperationState::Running)
-    { Scope->Operation.Cancel(); ReleaseTasks(); Scope->PendingSnapshots.Add(GetLoadingSnapshot()); Scope->bDirty = true; }
+    {
+        Scope->Operation.Cancel();
+        ReleaseTasks();
+        Scope->PendingSnapshots.Add(GetLoadingSnapshot());
+        Scope->bDirty = true;
+        ScheduleTicker(0.0f);
+    }
     return FGamePlatformResult::Success();
 }
 FGamePlatformResult UGamePlatformLoadingSubsystem::ReleaseLoadingOperation(const FGamePlatformLoadingHandle& Handle)
 {
     const auto Result = CancelLoadingOperation(Handle);
-    if (Result.IsSuccess()) { ReleaseTasks(); Scope->bDirty = true; }
+    if (Result.IsSuccess())
+    {
+        ReleaseTasks();
+        Scope->bDirty = true;
+        ScheduleTicker(0.0f);
+    }
     return Result;
 }
 void UGamePlatformLoadingSubsystem::ReleaseTasks()
@@ -168,14 +216,37 @@ FGamePlatformLoadingSnapshot UGamePlatformLoadingSubsystem::GetLoadingSnapshot()
     }
     return Snapshot;
 }
+FGamePlatformLoadingDiagnostics UGamePlatformLoadingSubsystem::GetLoadingDiagnostics() const
+{
+    check(IsInGameThread());
+    FGamePlatformLoadingDiagnostics Diagnostics;
+    if (!Scope) { return Diagnostics; }
+    Diagnostics.OwnerScopeId = Scope->Id;
+    Diagnostics.bTickerScheduled = TickerHandle.IsValid();
+    Diagnostics.ActiveTaskExecutions = Scope->Executions.Num();
+    Diagnostics.RegisteredTaskFactories = Scope->Factories.Num();
+    Diagnostics.SubscriberCount = Scope->Subscriptions.Num();
+    Diagnostics.TotalOperationsStarted = Scope->TotalOperationsStarted;
+    Diagnostics.TotalTickerExecutions = Scope->TotalTickerExecutions;
+    Diagnostics.TotalTaskPolls = Scope->TotalTaskPolls;
+    Diagnostics.TotalSnapshotsPublished = Scope->TotalSnapshotsPublished;
+    Diagnostics.TotalSubscriberCallbacks = Scope->TotalSubscriberCallbacks;
+    Diagnostics.LastTickMilliseconds = Scope->LastTickMilliseconds;
+    Diagnostics.MaxTickMilliseconds = Scope->MaxTickMilliseconds;
+    return Diagnostics;
+}
 FGamePlatformLoadingRegistration UGamePlatformLoadingSubsystem::SubscribeLoadingState(const FGamePlatformLoadingHandle& Handle,
     TWeakObjectPtr<UObject> Owner,TFunction<void(const FGamePlatformLoadingSnapshot&)> Callback)
 {
     check(IsInGameThread());
-    if (!Scope || !(Scope->Handle == Handle) || !Handle.IsValid() || !Callback || !BelongsToInstance(Owner,GetGameInstance())) { return {}; }
+    if (!Scope || !(Scope->Handle == Handle) || !Handle.IsValid() || !Callback || !BelongsToInstance(Owner,GetGameInstance()) ||
+        Scope->Subscriptions.Num() >= MaxLoadingSubscriptions) { return {}; }
     auto Entry = MakeShared<FLoadingSubscription>(); Entry->Handle = {Scope->Id,FGuid::NewGuid()};
     Entry->Owner = Owner; Entry->Callback = MoveTemp(Callback); Entry->Operation = Handle;
-    Scope->Subscriptions.Add(Entry->Handle.RegistrationId,Entry); Scope->bDirty = true; return Entry->Handle;
+    Scope->Subscriptions.Add(Entry->Handle.RegistrationId,Entry);
+    Scope->bDirty = true;
+    ScheduleTicker(0.0f);
+    return Entry->Handle;
 }
 bool UGamePlatformLoadingSubsystem::UnsubscribeLoadingState(const FGamePlatformLoadingRegistration& Registration)
 {
@@ -187,6 +258,8 @@ FGamePlatformLoadingRegistration UGamePlatformLoadingSubsystem::RegisterTaskFact
 {
     check(IsInGameThread());
     if (!Scope || Scope->bResourcesHeld || Scope->bDispatchingTask) { OutResult = LoadingError(TEXT("Busy")); return {}; }
+    if (Scope->Factories.Num() >= MaxCustomTaskFactories)
+    { OutResult = LoadingError(TEXT("FactoryLimitReached")); return {}; }
     if (!Factory || Type.IsNone() || Type == TEXT("Data") || Type == TEXT("WorldPresence") || Scope->Factories.Contains(Type))
     { OutResult = LoadingError(TEXT("InvalidOrDuplicateFactory")); return {}; }
     auto Entry = MakeShared<FLoadingFactoryRecord>(); Entry->Handle = {Scope->Id,FGuid::NewGuid()}; Entry->Factory = MoveTemp(Factory);
@@ -224,11 +297,18 @@ FGamePlatformResult UGamePlatformLoadingSubsystem::ReportWorldOperable(const FGa
     { return LoadingError(TEXT("WorldScopeMismatch")); }
     Scope->World->OperableWorld = &World;
     if (!Scope->World->IsValid()) { Scope->World->OperableWorld.Reset(); return LoadingError(TEXT("WorldNotOperable")); }
-    Scope->bDirty = true; return FGamePlatformResult::Success();
+    Scope->bDirty = true;
+    ScheduleTicker(0.0f);
+    return FGamePlatformResult::Success();
 }
 bool UGamePlatformLoadingSubsystem::Tick(float)
 {
-    check(IsInGameThread()); if (!Scope) { return false; }
+    check(IsInGameThread());
+    // 本回调采用一次性调度语义：进入后立即清除旧句柄，末尾再根据真实状态决定是否继续安排。
+    TickerHandle.Reset();
+    if (!Scope) { return false; }
+    const double TickStartSeconds = FPlatformTime::Seconds();
+    ++Scope->TotalTickerExecutions;
     if (Scope->bResourcesHeld && !Scope->Owner.IsValid())
     { Scope->Operation.Cancel(); ReleaseTasks(); Scope->bDirty = true; }
     if (Scope->Operation.State == Policy::OperationState::Running)
@@ -266,6 +346,7 @@ bool UGamePlatformLoadingSubsystem::Tick(float)
             if (Scope->Operation.State != Policy::OperationState::Running || Record->State != Policy::TaskState::Running || Record->Generation != Execution.Token.Generation)
             { Execution.Task->Release(); Iterator.RemoveCurrent(); continue; }
             const auto Update = Execution.Task->Poll();
+            ++Scope->TotalTaskPolls;
             Scope->Operation.Report(Execution.Token,Update.Progress01);
             if (Update.State != EGamePlatformLoadingTaskUpdate::Pending)
             {
@@ -282,6 +363,7 @@ bool UGamePlatformLoadingSubsystem::Tick(float)
         Scope->bDirty = false;
         auto Snapshots = MoveTemp(Scope->PendingSnapshots); Scope->PendingSnapshots.Reset();
         Snapshots.Add(GetLoadingSnapshot());
+        Scope->TotalSnapshotsPublished += Snapshots.Num();
         TArray<TSharedPtr<FLoadingSubscription>> Subscribers; Scope->Subscriptions.GenerateValueArray(Subscribers);
         for (const auto& Snapshot : Snapshots)
         {
@@ -293,9 +375,26 @@ bool UGamePlatformLoadingSubsystem::Tick(float)
             {
                 Entry->bTerminalDelivered = Snapshot.State != EGamePlatformLoadingState::Running && Snapshot.State != EGamePlatformLoadingState::Idle;
                 Entry->Callback(Snapshot);
+                ++Scope->TotalSubscriberCallbacks;
             }
         }
         }
     }
-    return true;
+
+    const double TickElapsedMilliseconds = (FPlatformTime::Seconds() - TickStartSeconds) * 1000.0;
+    Scope->LastTickMilliseconds = TickElapsedMilliseconds;
+    Scope->MaxTickMilliseconds = FMath::Max(Scope->MaxTickMilliseconds, TickElapsedMilliseconds);
+
+    // 运行态保持20Hz；Ready资源保留态只做2Hz弱Owner回收检查；完全释放后停止Ticker，避免空闲实例持续唤醒主线程。
+    const Policy::SamplingMode SamplingMode = Policy::SelectSamplingMode(
+        Scope->Operation.State, Scope->bResourcesHeld, Scope->bDirty, !Scope->PendingSnapshots.IsEmpty());
+    if (SamplingMode == Policy::SamplingMode::Active)
+    {
+        ScheduleTicker(ActiveLoadingTickIntervalSeconds);
+    }
+    else if (SamplingMode == Policy::SamplingMode::Retained)
+    {
+        ScheduleTicker(RetainedResourceWatchIntervalSeconds);
+    }
+    return false;
 }

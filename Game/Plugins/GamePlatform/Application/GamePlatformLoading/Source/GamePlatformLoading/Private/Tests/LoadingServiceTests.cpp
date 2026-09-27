@@ -38,6 +38,9 @@ public:
             Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString())); Other->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
             auto* Loading = IGamePlatformLoadingService::Get(*Instance);
             if (!Loading || !IGamePlatformLoadingService::Get(*Other)) { Test->AddError(TEXT("真实Loading实例子系统缺失")); return true; }
+            const FGamePlatformLoadingDiagnostics IdleDiagnostics = Loading->GetLoadingDiagnostics();
+            Test->TestFalse(TEXT("空闲Loading实例不持续注册Ticker"), IdleDiagnostics.bTickerScheduled);
+            Test->TestEqual(TEXT("空闲实例无任务轮询"), IdleDiagnostics.TotalTaskPolls, static_cast<int64>(0));
             FGamePlatformLoadingOperationSpec Spec; Spec.Purpose = TEXT("Automation"); FGamePlatformResult Result;
             if (bUseRealData)
             {
@@ -53,6 +56,7 @@ public:
                 Test->TestTrue(TEXT("工厂注册"),Result.IsSuccess());
                 Loading->RegisterTaskFactory(TEXT("TestLatch"),[Shared = Signals]() { return MakeUnique<FLoadingTestTask>(Shared); },Result);
                 Test->TestFalse(TEXT("重复工厂拒绝"),Result.IsSuccess());
+                Test->TestEqual(TEXT("自定义工厂数量可诊断"), Loading->GetLoadingDiagnostics().RegisteredTaskFactories, 1);
                 FGamePlatformLoadingTaskSpec Task; Task.TaskId = TEXT("Latch"); Task.TaskType = TEXT("TestLatch"); Spec.Tasks.Add(Task);
                 // 仅测试配置GC所有权，不实例化这个临时类，也不将其冒充已加载定义。
                 auto* ConfigurationClass = NewObject<UClass>(GetTransientPackage());
@@ -63,12 +67,20 @@ public:
             }
             Handle = Loading->StartLoadingOperation(Spec,Instance.Get(),Result);
             Test->TestTrue(TEXT("真实服务接纳"),Result.IsSuccess());
+            const FGamePlatformLoadingDiagnostics StartedDiagnostics = Loading->GetLoadingDiagnostics();
+            Test->TestTrue(TEXT("接纳操作后已安排主动采样"), StartedDiagnostics.bTickerScheduled);
+            Test->TestEqual(TEXT("接纳操作累计计数"), StartedDiagnostics.TotalOperationsStarted, static_cast<int64>(1));
             Loading->StartLoadingOperation(Spec,Instance.Get(),Result); Test->TestFalse(TEXT("不覆盖旧操作"),Result.IsSuccess());
             Test->TestFalse(TEXT("跨实例取消拒绝"),IGamePlatformLoadingService::Get(*Other)->CancelLoadingOperation(Handle).IsSuccess());
             Phase = 1; return false;
         }
         auto* Loading = IGamePlatformLoadingService::Get(*Instance);
         const auto Snapshot = Loading->GetLoadingSnapshot();
+        if (Phase > 0)
+        {
+            const FGamePlatformLoadingDiagnostics RuntimeDiagnostics = Loading->GetLoadingDiagnostics();
+            Test->TestTrue(TEXT("活动操作产生Ticker采样"), RuntimeDiagnostics.TotalTickerExecutions > 0);
+        }
         if (Snapshot.State == EGamePlatformLoadingState::Failed || Snapshot.State == EGamePlatformLoadingState::TimedOut)
         { Test->AddError(TEXT("真实Loading任务失败；Data测试要求实际已生成两份定义，不能跳过")); return true; }
         if (!bUseRealData && Phase == 1)

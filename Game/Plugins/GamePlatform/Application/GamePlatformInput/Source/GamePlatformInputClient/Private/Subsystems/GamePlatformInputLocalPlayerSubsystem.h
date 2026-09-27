@@ -31,6 +31,9 @@ public:
     virtual FGamePlatformInputSubscription SubscribeInputEvents(TWeakObjectPtr<UObject>,TFunction<void(const FGamePlatformInputEvent&)>) override;
     virtual bool UnsubscribeInputEvents(const FGamePlatformInputSubscription&) override;
     virtual FGamePlatformInputSnapshot GetInputSnapshot() const override;
+    virtual FGamePlatformResult NotifyInputDeviceActivity(EGamePlatformInputDeviceFamily) override;
+    virtual FGamePlatformResult SetAccessibilitySettings(const FGamePlatformInputAccessibilitySettings&) override;
+    virtual FGamePlatformInputAccessibilitySettings GetAccessibilitySettings() const override;
     virtual TArray<FGamePlatformInputMapping> ListPlayerMappings() const override;
     virtual FGamePlatformInputRebindPreview PreviewRebind(FName,int32,FKey) const override;
     virtual FGamePlatformResult ApplyRebind(FName,int32,FKey) override;
@@ -41,12 +44,16 @@ public:
     virtual FGamePlatformResult EndTouchInput(const FGamePlatformInputTouchHandle&) override;
 private:
     bool Tick(float DeltaSeconds);
+    /** 仅在存在弱Owner租约时安排低频维护Ticker；空闲LocalPlayer不产生固定轮询。 */
+    void ScheduleMaintenance();
     void CompleteProfile(uint64 Generation,const FGamePlatformResult& Result);
     bool CanMutate() const;
     bool IsCurrentOwner(TWeakObjectPtr<UObject> Owner) const;
     void Interrupt(uint8 Channels,EGamePlatformInputEndReason Reason);
     void Publish(FGamePlatformInputEvent Event);
     void Route(const FInputActionValue& Value,EGamePlatformInputSemantic Semantic,ETriggerEvent Phase,uint64 BindingGeneration);
+    /** Enhanced Input绑定回调；只做值标准化、动作门禁和事件发布，不分配资源或写磁盘。 */
+    void HandleBoundInput(const FInputActionValue& Value,EGamePlatformInputSemantic Semantic,ETriggerEvent Phase,uint64 BindingGeneration);
     void RebuildMappings();
     FGamePlatformResult PreparePreferences();
     void ReleasePreferences();

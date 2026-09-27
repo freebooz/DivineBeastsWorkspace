@@ -63,6 +63,22 @@ struct GAMEPLATFORMDATA_API FGamePlatformDataDiagnostics
     int32 ActiveLeases = 0;
     /** 当前保留的终态诊断记录数；显式释放移除记录。 */
     int32 TerminalRequests = 0;
+    /** 当前请求记录涉及的唯一Definition身份数量，包含根定义和已登记依赖。 */
+    int32 UniqueTrackedDefinitions = 0;
+    /** 当前请求记录涉及的唯一Asset Bundle名称数量。 */
+    int32 UniqueRequestedBundles = 0;
+    /** 为严格幂等释放保留的已释放租约记录数量；长寿命实例应监控其增长。 */
+    int32 ReleasedLeaseRecords = 0;
+    /** 本实例生命周期内成功接纳的AcquireDefinition请求总数。 */
+    int64 TotalAcceptedRequests = 0;
+    /** 同步参数/作用域校验拒绝的AcquireDefinition请求总数。 */
+    int64 TotalRejectedRequests = 0;
+    /** 已发布成功终态的请求总数。 */
+    int64 TotalSucceededRequests = 0;
+    /** 已发布失败终态的请求总数。 */
+    int64 TotalFailedRequests = 0;
+    /** 在成功/失败终态前被取消的请求总数。 */
+    int64 TotalCancelledRequests = 0;
     /** 最近一次拒绝、失败或取消的值结果。 */
     FGamePlatformResult LastResult;
 };

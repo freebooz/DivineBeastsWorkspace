@@ -2,7 +2,27 @@
 
 日期：2026-09-21。任务为第六插件及必要项目接线，未进入下一插件。正式工程仍是`Game/DivineBeastsArena.uproject`。**未达到完整交付验收；不能发布生产。**
 
-## 真实范围与前置
+## 2026-09-27 最新复核增量
+
+当前正式工程仍为 `Game/DivineBeastsArena.uproject`。本节是最新状态；下方2026-09-21失败表保留为历史证据，不再代表当前模块编译状态。
+
+| 项目 | 2026-09-27状态 | 最新证据与边界 |
+| --- | --- | --- |
+| Loading生产算法Debug | 通过 | `Saved/Validation/GamePlatformLoading/NativeCurrent`；1/1 CTest，46条断言 |
+| Loading生产算法Release | 通过 | 同目录；1/1 CTest，46条断言 |
+| Editor模块构建 | 通过 | UE5.8 `DivineBeastsArenaEditor -Module=GamePlatformLoading`，退出0 |
+| Client模块构建 | 通过 | UE5.8 `DivineBeastsArenaClient -Module=GamePlatformLoading`，退出0 |
+| Server模块构建 | 通过 | UE5.8 `DivineBeastsArenaServer -Module=GamePlatformLoading`，退出0 |
+| 按需Ticker/性能诊断 | 代码与原生策略通过 | Idle/Active/Retained调度决策有原生断言；UE实际20Hz/2Hz和诊断数值仍待Automation/运行压测 |
+| UE服务自动化 | 未执行 | 测试源码已编译；锁定源码引擎当前没有可启动 `UnrealEditor.exe` / `UnrealEditor-Cmd.exe` |
+| 真实Data租约/世界 | 未执行 | 当前工程真实 `.uasset/.umap` 为0，不伪造Foundation资产 |
+| Session真实准入 | 未执行 | GamePlatformSession公开准入服务仍是前置；Loading不模拟成功 |
+| Client/Server Cook/Stage | 未执行 | 模块编译不等于资源剥离和产物审计 |
+| 人工审查 | 未执行 | ManualReview继续保留人工签名栏 |
+
+性能方面已改为：Idle不注册Ticker；Running以50ms/20Hz采样；Ready且仍持有资源时以500ms/2Hz检查弱Owner；释放后停表。任务图最多256任务、单任务64直接依赖；订阅/自定义工厂各128上限。上述数值是安全和调度边界，不是最终3A性能预算。
+
+## 2026-09-21 历史范围与前置
 
 新增唯一插件`Game/Plugins/GamePlatform/Application/GamePlatformLoading`，单Runtime模块；实现任务DAG、正权重单调进度、必需/可选/实际回退屏障、操作/尝试代次、取消和超时、私有实例服务、Data独占租约、目标世界声明。主工程Ready工厂接入新的`DBALoadingFlowNode`，使用公开Flow事件和Loading句柄。
 
@@ -10,7 +30,7 @@
 
 UE实际版本5.8.0、CL0、CompatibleCL0、Branch UE5。原生测试本轮实际使用CMake4.3.2、Visual Studio18 2026生成器、MSVC19.51.36248.0；这不是UE构建工具链验收。工作树起始复核HEAD为695d7cf、main分支；本轮没有自行提交、推送、部署或变更引擎版本。
 
-## 分项结果
+## 2026-09-21 历史分项结果
 
 证据路径均相对仓库根，保存在忽略的`Saved/Validation/`，不伪造下载包或截图。
 

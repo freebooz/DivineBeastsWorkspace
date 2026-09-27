@@ -1,11 +1,15 @@
 #include "DivineBeastsApplicationFlowSubsystem.h"
 
 #include "Backend/DivineBeastsApplicationBackend.h"
-#include "Context/DivineBeastsProjectContext.h"
+#include "Async/Async.h"
+#include "Context/DivineBeastsApplicationFlowContext.h"
 #include "Creation/GamePlatformCharacterCreationProvider.h"
 #include "Features/IModularFeatures.h"
 #include "Flow/DivineBeastsFlowNodes.h"
-#include "GamePlatformApplicationFlowSubsystem.h"
+#include "Nodes/DivineBeastsApplicationFlowNodeBase.h"
+#include "API/GamePlatformApplicationFlowSubsystem.h"
+#include "Definitions/GamePlatformFlowDefinition.h"
+#include "Interfaces/GamePlatformCallbackFlowNode.h"
 #include "Types/GamePlatformFlowTypes.h"
 #include "Interfaces/IGamePlatformLoadingService.h"
 #include "Interfaces/IGamePlatformLoadingTask.h"
@@ -308,17 +312,77 @@ namespace
         return Providers.Num() == 1 ? Providers[0] : nullptr;
     }
 
-    FGamePlatformFlowNodeDefinition Node(
-        FName NodeId,
-        std::initializer_list<FName> Next)
+    /** 把项目错误枚举转换为稳定可检索错误码；仅错误路径构造字符串，不进入正常热路径。 */
+    FName ProjectErrorCode(EDivineBeastsFlowError Error)
     {
-        FGamePlatformFlowNodeDefinition Result;
-        Result.NodeId = NodeId;
-        for (const FName Value : Next)
+        const UEnum* Enum = StaticEnum<EDivineBeastsFlowError>();
+        return Enum
+            ? FName(*Enum->GetNameStringByValue(static_cast<int64>(Error)))
+            : FName(TEXT("DivineBeastsFlowError"));
+    }
+
+    FGamePlatformFlowNodeResult ProjectFailure(
+        EDivineBeastsFlowError Error,
+        const TCHAR* Message)
+    {
+        return FGamePlatformFlowNodeResult::Failure(
+            ProjectErrorCode(Error),
+            Message ? FString(Message) : FString(TEXT("神兽联盟应用流程步骤失败。")));
+    }
+
+    FGamePlatformFlowNodeToken MakeNodeToken(const FGamePlatformFlowContext& Context)
+    {
+        return {Context.Handle, Context.NodeId, Context.NodeGeneration};
+    }
+
+    EDivineBeastsFlowError MapAuthError(EGamePlatformAuthError Error)
+    {
+        switch (Error)
         {
-            Result.AllowedNextNodes.Add(Value);
+        case EGamePlatformAuthError::InvalidCredentials:
+            return EDivineBeastsFlowError::InvalidCredentials;
+        case EGamePlatformAuthError::AccountLocked:
+            return EDivineBeastsFlowError::AccountLocked;
+        case EGamePlatformAuthError::Maintenance:
+            return EDivineBeastsFlowError::Maintenance;
+        case EGamePlatformAuthError::NetworkUnavailable:
+        case EGamePlatformAuthError::ProviderUnavailable:
+            return EDivineBeastsFlowError::NetworkUnavailable;
+        case EGamePlatformAuthError::AuthExpired:
+            return EDivineBeastsFlowError::AuthExpired;
+        case EGamePlatformAuthError::ContractIncompatible:
+            return EDivineBeastsFlowError::ContractIncompatible;
+        case EGamePlatformAuthError::Cancelled:
+            return EDivineBeastsFlowError::Cancelled;
+        case EGamePlatformAuthError::TimedOut:
+            return EDivineBeastsFlowError::TimedOut;
+        default:
+            return EDivineBeastsFlowError::AuthenticationFailed;
         }
-        return Result;
+    }
+
+    bool IsSessionFailureState(EGamePlatformSessionTransferState State)
+    {
+        return State == EGamePlatformSessionTransferState::Failed ||
+            State == EGamePlatformSessionTransferState::TimedOut ||
+            State == EGamePlatformSessionTransferState::Uncertain;
+    }
+
+    bool IsBackendExecutor(FName ExecutorId)
+    {
+        return ExecutorId == FDivineBeastsFlowExecutors::LoadProfile() ||
+            ExecutorId == FDivineBeastsFlowExecutors::LoadRoster() ||
+            ExecutorId == FDivineBeastsFlowExecutors::CreateCharacter() ||
+            ExecutorId == FDivineBeastsFlowExecutors::ValidateSelection() ||
+            ExecutorId == FDivineBeastsFlowExecutors::RequestWorld();
+    }
+
+    /** Blueprint只支持有符号64位整数；执行器内部仍保留完整uint64身份，UI投影仅做饱和显示。 */
+    int64 ToBlueprintCounter(uint64 Value)
+    {
+        return Value > static_cast<uint64>(MAX_int64)
+            ? MAX_int64
+            : static_cast<int64>(Value);
     }
 }
 
@@ -327,78 +391,109 @@ void UDivineBeastsApplicationFlowSubsystem::Initialize(
 {
     Super::Initialize(Collection);
 
-    PlatformFlow =
-        GetGameInstance()->GetSubsystem<UGamePlatformApplicationFlowSubsystem>();
-    Online =
-        GetGameInstance()->GetSubsystem<UGamePlatformOnlineClientSubsystem>();
-    Session =
-        GetGameInstance()->GetSubsystem<UGamePlatformSessionClientSubsystem>();
-    Loading = IGamePlatformLoadingService::Get(*GetGameInstance());
+    // 显式初始化顺序避免首帧依赖时序竞争；这些依赖均为同一GameInstance作用域。
+    Collection.InitializeDependency<UGamePlatformApplicationFlowSubsystem>();
+    Collection.InitializeDependency<UGamePlatformOnlineClientSubsystem>();
+    Collection.InitializeDependency<UGamePlatformSessionClientSubsystem>();
+
+    UGameInstance* Instance = GetGameInstance();
+    PlatformFlow = Instance
+        ? Instance->GetSubsystem<UGamePlatformApplicationFlowSubsystem>()
+        : nullptr;
+    Online = Instance
+        ? Instance->GetSubsystem<UGamePlatformOnlineClientSubsystem>()
+        : nullptr;
+    Session = Instance
+        ? Instance->GetSubsystem<UGamePlatformSessionClientSubsystem>()
+        : nullptr;
+    Loading = Instance ? IGamePlatformLoadingService::Get(*Instance) : nullptr;
+    Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+
+    Backend = MakeShared<FDivineBeastsHttpApplicationBackend>(Online);
 
     if (PlatformFlow)
     {
-        RegisterProjectNodes();
-        FlowHandle = PlatformFlow->OnSnapshotChanged().AddUObject(
+        if (!RegisterNodeFactories())
+        {
+            SetError(EDivineBeastsFlowError::FlowNotInitialized);
+        }
+        FlowSnapshotHandle = PlatformFlow->OnSnapshotChanged().AddUObject(
             this,
             &UDivineBeastsApplicationFlowSubsystem::HandleFlowSnapshot);
+        FlowFinishedHandle = PlatformFlow->OnFinished().AddUObject(
+            this,
+            &UDivineBeastsApplicationFlowSubsystem::HandleFlowFinished);
     }
+
     if (Online)
     {
         AuthHandle = Online->OnAuthStateChanged().AddUObject(
             this,
             &UDivineBeastsApplicationFlowSubsystem::HandleAuthSnapshot);
     }
+
     if (Session)
     {
         SessionHandle = Session->OnSessionChanged().AddUObject(
             this,
             &UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot);
+        if (Online)
+        {
+            const FGamePlatformAuthSnapshot Auth = Online->GetSnapshot();
+            Session->SetAuthenticationContext(
+                Auth.State == EGamePlatformAuthState::Authenticated
+                    ? Auth.AccountId
+                    : FString(),
+                Auth.AuthGeneration);
+        }
     }
-    Backend = MakeShared<FDivineBeastsHttpApplicationBackend>(Online);
+
     ResetProjection();
+    if (!PlatformFlow || !Online || !Session || !Loading || !Data)
+    {
+        SetError(EDivineBeastsFlowError::FlowNotInitialized);
+    }
 }
 
 void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
 {
+    ++StartRequestGeneration;
+    bRestartAfterLogout = false;
+
     if (Backend.IsValid())
     {
         Backend->CancelAll();
-        Backend.Reset();
     }
-    if (!ReleaseLoadingOperation())
-    {
-        UE_LOG(LogTemp, Error, TEXT("DivineBeasts flow could not release its owned Loading operation during shutdown"));
-    }
+
+    ReleaseLoadingOperation();
+
     if (Session)
     {
-        Session->CancelTransfer();
+        FGamePlatformResult Ignored;
+        Session->CancelTransfer(Ignored);
     }
+
     if (PlatformFlow)
     {
-        PlatformFlow->InvalidateRun();
-        if (FlowHandle.IsValid())
+        if (ActiveFlow.IsValid())
         {
-            PlatformFlow->OnSnapshotChanged().Remove(FlowHandle);
+            PlatformFlow->Cancel(ActiveFlow);
+            ActiveFlow = {};
         }
 
-        for (const FName NodeId : {
-            FDivineBeastsFlowNodes::Boot(),
-            FDivineBeastsFlowNodes::Initialize(),
-            FDivineBeastsFlowNodes::Authentication(),
-            FDivineBeastsFlowNodes::LoadProfile(),
-            FDivineBeastsFlowNodes::LoadRoster(),
-            FDivineBeastsFlowNodes::CharacterEntry(),
-            FDivineBeastsFlowNodes::CreateCharacter(),
-            FDivineBeastsFlowNodes::ValidateSelection(),
-            FDivineBeastsFlowNodes::RequestWorld(),
-            FDivineBeastsFlowNodes::TransferWorld(),
-            FDivineBeastsFlowNodes::WorldReady(),
-            FDivineBeastsFlowNodes::InWorld(),
-            FDivineBeastsFlowNodes::Recovering()})
+        if (FlowSnapshotHandle.IsValid())
         {
-            PlatformFlow->UnregisterNode(NodeId);
+            PlatformFlow->OnSnapshotChanged().Remove(FlowSnapshotHandle);
+        }
+        if (FlowFinishedHandle.IsValid())
+        {
+            PlatformFlow->OnFinished().Remove(FlowFinishedHandle);
         }
     }
+
+    ReleasePendingFlowDefinitionLease();
+    UnregisterNodeFactories();
+
     if (Online && AuthHandle.IsValid())
     {
         Online->OnAuthStateChanged().Remove(AuthHandle);
@@ -407,110 +502,685 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
     {
         Session->OnSessionChanged().Remove(SessionHandle);
     }
+
     Extensions.Reset();
+    ExtensionOrder.Reset();
+    FlowContext = nullptr;
+    Backend.Reset();
+
+    PlatformFlow = nullptr;
+    Online = nullptr;
+    Session = nullptr;
+    Loading = nullptr;
+    Data = nullptr;
+
+    ViewStateChanged.Clear();
     Super::Deinitialize();
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::RegisterProjectNodes()
+bool UDivineBeastsApplicationFlowSubsystem::RegisterNodeFactories()
+{
+    if (!PlatformFlow || !FactoryHandles.IsEmpty())
+    {
+        return PlatformFlow && !FactoryHandles.IsEmpty();
+    }
+
+    const FName ExecutorIds[] =
+    {
+        FDivineBeastsFlowExecutors::Boot(),
+        FDivineBeastsFlowExecutors::Initialize(),
+        FDivineBeastsFlowExecutors::Authentication(),
+        FDivineBeastsFlowExecutors::LoadProfile(),
+        FDivineBeastsFlowExecutors::LoadRoster(),
+        FDivineBeastsFlowExecutors::CharacterEntry(),
+        FDivineBeastsFlowExecutors::CreateCharacter(),
+        FDivineBeastsFlowExecutors::ValidateSelection(),
+        FDivineBeastsFlowExecutors::ResolveExperience(),
+        FDivineBeastsFlowExecutors::RequestWorld(),
+        FDivineBeastsFlowExecutors::TransferWorld(),
+        FDivineBeastsFlowExecutors::WorldReady(),
+        FDivineBeastsFlowExecutors::InWorld(),
+        FDivineBeastsFlowExecutors::Recovering()
+    };
+
+    TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+    for (const FName ExecutorId : ExecutorIds)
+    {
+        FGamePlatformResult Result;
+        const FGamePlatformFlowFactoryHandle Handle =
+            PlatformFlow->RegisterNodeFactory(
+                ExecutorId,
+                [WeakThis, ExecutorId](UGameInstance& Owner) -> UGamePlatformFlowNode*
+                {
+                    UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
+                    return Self ? Self->CreateProjectNode(ExecutorId, Owner) : nullptr;
+                },
+                Result);
+        if (!Handle.IsValid() || !Result.IsSuccess())
+        {
+            UnregisterNodeFactories();
+            return false;
+        }
+        FactoryHandles.Add(Handle);
+    }
+    return true;
+}
+
+void UDivineBeastsApplicationFlowSubsystem::UnregisterNodeFactories()
 {
     if (!PlatformFlow)
     {
-        return false;
+        FactoryHandles.Reset();
+        return;
     }
 
-    const TArray<FGamePlatformFlowNodeDefinition> Definitions =
+    // 逆序撤销便于未来出现依赖型工厂时仍保持与注册相反的生命周期顺序。
+    for (int32 Index = FactoryHandles.Num() - 1; Index >= 0; --Index)
     {
-        Node(FDivineBeastsFlowNodes::Boot(),
-             {FDivineBeastsFlowNodes::Initialize()}),
-        Node(FDivineBeastsFlowNodes::Initialize(),
-             {FDivineBeastsFlowNodes::Authentication()}),
-        Node(FDivineBeastsFlowNodes::Authentication(),
-             {FDivineBeastsFlowNodes::LoadProfile()}),
-        Node(FDivineBeastsFlowNodes::LoadProfile(),
-             {FDivineBeastsFlowNodes::LoadRoster(),
-              FDivineBeastsFlowNodes::Authentication()}),
-        Node(FDivineBeastsFlowNodes::LoadRoster(),
-             {FDivineBeastsFlowNodes::CharacterEntry(),
-              FDivineBeastsFlowNodes::Authentication()}),
-        Node(FDivineBeastsFlowNodes::CharacterEntry(),
-             {FDivineBeastsFlowNodes::CreateCharacter(),
-              FDivineBeastsFlowNodes::ValidateSelection(),
-              FDivineBeastsFlowNodes::Authentication()}),
-        Node(FDivineBeastsFlowNodes::CreateCharacter(),
-             {FDivineBeastsFlowNodes::ValidateSelection(),
-              FDivineBeastsFlowNodes::CharacterEntry()}),
-        Node(FDivineBeastsFlowNodes::ValidateSelection(),
-             {FDivineBeastsFlowNodes::RequestWorld(),
-              FDivineBeastsFlowNodes::CharacterEntry()}),
-        Node(FDivineBeastsFlowNodes::RequestWorld(),
-             {FDivineBeastsFlowNodes::TransferWorld(),
-              FDivineBeastsFlowNodes::Recovering(),
-              FDivineBeastsFlowNodes::CharacterEntry()}),
-        Node(FDivineBeastsFlowNodes::TransferWorld(),
-             {FDivineBeastsFlowNodes::WorldReady(),
-              FDivineBeastsFlowNodes::Recovering(),
-              FDivineBeastsFlowNodes::CharacterEntry()}),
-        Node(FDivineBeastsFlowNodes::WorldReady(),
-             {FDivineBeastsFlowNodes::InWorld(),
-              FDivineBeastsFlowNodes::Recovering()}),
-        Node(FDivineBeastsFlowNodes::InWorld(),
-             {FDivineBeastsFlowNodes::RequestWorld(),
-              FDivineBeastsFlowNodes::Recovering(),
-              FDivineBeastsFlowNodes::Authentication()}),
-        Node(FDivineBeastsFlowNodes::Recovering(),
-             {FDivineBeastsFlowNodes::RequestWorld(),
-              FDivineBeastsFlowNodes::CharacterEntry(),
-              FDivineBeastsFlowNodes::Authentication()})
-    };
+        FGamePlatformResult Ignored;
+        PlatformFlow->UnregisterNodeFactory(FactoryHandles[Index], Ignored);
+    }
+    FactoryHandles.Reset();
+}
 
-    bool bAllRegistered = true;
-    for (const FGamePlatformFlowNodeDefinition& Definition : Definitions)
+UGamePlatformFlowNode* UDivineBeastsApplicationFlowSubsystem::CreateProjectNode(
+    FName ExecutorId,
+    UGameInstance& Owner)
+{
+    check(IsInGameThread());
+    if (&Owner != GetGameInstance())
     {
-        if (!PlatformFlow->HasNode(Definition.NodeId))
+        return nullptr;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::Authentication() ||
+        ExecutorId == FDivineBeastsFlowExecutors::CharacterEntry() ||
+        ExecutorId == FDivineBeastsFlowExecutors::WorldReady() ||
+        ExecutorId == FDivineBeastsFlowExecutors::InWorld())
+    {
+        return NewObject<UDivineBeastsPassiveFlowNode>(&Owner);
+    }
+
+    auto* Node = NewObject<UGamePlatformCallbackFlowNode>(&Owner);
+    TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+    const bool bBound = Node->Bind(
+        [WeakThis, ExecutorId](
+            const FGamePlatformFlowContext& Context,
+            FGamePlatformFlowCompletion Complete)
         {
-            bAllRegistered &=
-                PlatformFlow->RegisterNode(Definition);
-        }
+            if (UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get())
+            {
+                Self->ExecuteProjectNode(
+                    ExecutorId,
+                    Context,
+                    MoveTemp(Complete));
+                return;
+            }
+            Complete(FGamePlatformFlowNodeResult::Failure(
+                TEXT("DivineBeastsFlowOwnerExpired"),
+                TEXT("神兽联盟应用流程协调子系统已经失效。")));
+        },
+        [WeakThis, ExecutorId](EGamePlatformFlowFinishReason Reason)
+        {
+            if (UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get())
+            {
+                Self->FinishProjectNode(ExecutorId, Reason);
+            }
+        });
+    return bBound ? Node : nullptr;
+}
+
+void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
+    FName ExecutorId,
+    const FGamePlatformFlowContext& Context,
+    FGamePlatformFlowCompletion Complete)
+{
+    check(IsInGameThread());
+
+    UDivineBeastsApplicationFlowContext* ProjectContext =
+        Cast<UDivineBeastsApplicationFlowContext>(Context.Payload.Get());
+    if (!ProjectContext ||
+        ProjectContext != FlowContext ||
+        ProjectContext->GetTypedOuter<UGameInstance>() != GetGameInstance())
+    {
+        Complete(FGamePlatformFlowNodeResult::Failure(
+            TEXT("DivineBeastsFlowContextInvalid"),
+            TEXT("项目流程节点缺少当前GameInstance所属的流程上下文。")));
+        return;
     }
-    return bAllRegistered;
+
+    const FGamePlatformFlowNodeToken Token = MakeNodeToken(Context);
+    if (!Token.IsValid())
+    {
+        Complete(FGamePlatformFlowNodeResult::Failure(
+            TEXT("DivineBeastsFlowTokenInvalid"),
+            TEXT("项目流程节点没有有效的平台节点代次。")));
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::Boot() ||
+        ExecutorId == FDivineBeastsFlowExecutors::Initialize())
+    {
+        Complete(FGamePlatformFlowNodeResult::Success());
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::LoadProfile())
+    {
+        if (!Backend.IsValid())
+        {
+            Complete(ProjectFailure(
+                EDivineBeastsFlowError::ProfileUnavailable,
+                TEXT("玩家资料后端适配器不可用。")));
+            return;
+        }
+
+        const TSharedRef<FGamePlatformFlowCompletion> SharedComplete =
+            MakeShared<FGamePlatformFlowCompletion>(MoveTemp(Complete));
+        TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+        Backend->LoadProfile(
+            [WeakThis, Token, SharedComplete](
+                bool bSuccess,
+                FDivineBeastsPlayerProfile Profile,
+                EDivineBeastsFlowError Error) mutable
+            {
+                AsyncTask(
+                    ENamedThreads::GameThread,
+                    [WeakThis, Token, SharedComplete, bSuccess,
+                     Profile = MoveTemp(Profile), Error]() mutable
+                    {
+                        UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
+                        if (!Self || !Self->IsCurrentToken(Token))
+                        {
+                            return;
+                        }
+                        if (!bSuccess || !Self->FlowContext)
+                        {
+                            Self->SetError(Error);
+                            (*SharedComplete)(ProjectFailure(
+                                Error,
+                                TEXT("加载玩家资料失败。")));
+                            return;
+                        }
+                        Self->FlowContext->GetProfile() = MoveTemp(Profile);
+                        Self->RefreshProjectionFromContext();
+                        Self->SetError(EDivineBeastsFlowError::None);
+                        (*SharedComplete)(FGamePlatformFlowNodeResult::Success());
+                    });
+            });
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::LoadRoster())
+    {
+        if (!Backend.IsValid())
+        {
+            Complete(ProjectFailure(
+                EDivineBeastsFlowError::CharacterRosterUnavailable,
+                TEXT("角色列表后端适配器不可用。")));
+            return;
+        }
+
+        const TSharedRef<FGamePlatformFlowCompletion> SharedComplete =
+            MakeShared<FGamePlatformFlowCompletion>(MoveTemp(Complete));
+        TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+        Backend->LoadRoster(
+            [WeakThis, Token, SharedComplete](
+                bool bSuccess,
+                TArray<FDivineBeastsCharacterSummary> Roster,
+                EDivineBeastsFlowError Error) mutable
+            {
+                AsyncTask(
+                    ENamedThreads::GameThread,
+                    [WeakThis, Token, SharedComplete, bSuccess,
+                     Roster = MoveTemp(Roster), Error]() mutable
+                    {
+                        UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
+                        if (!Self || !Self->IsCurrentToken(Token))
+                        {
+                            return;
+                        }
+                        if (!bSuccess || !Self->FlowContext)
+                        {
+                            Self->SetError(Error);
+                            (*SharedComplete)(ProjectFailure(
+                                Error,
+                                TEXT("加载持久角色列表失败。")));
+                            return;
+                        }
+                        Self->FlowContext->GetCharacterRoster() = MoveTemp(Roster);
+                        Self->RefreshProjectionFromContext();
+                        Self->SetBusy(false);
+                        Self->SetError(EDivineBeastsFlowError::None);
+                        (*SharedComplete)(FGamePlatformFlowNodeResult::Success());
+                    });
+            });
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::CreateCharacter())
+    {
+        FDivineBeastsCharacterCreateDraft Draft;
+        if (!Backend.IsValid() ||
+            !ProjectContext->ConsumePendingCreateDraft(Draft))
+        {
+            Complete(ProjectFailure(
+                EDivineBeastsFlowError::CharacterCreateRejected,
+                TEXT("没有可执行的角色创建草稿。")));
+            return;
+        }
+
+        const FGuid OperationId = FGuid::NewGuid();
+        const TSharedRef<FGamePlatformFlowCompletion> SharedComplete =
+            MakeShared<FGamePlatformFlowCompletion>(MoveTemp(Complete));
+        TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+        Backend->CreateCharacter(
+            Draft,
+            OperationId,
+            [WeakThis, Token, SharedComplete](
+                bool bSuccess,
+                FDivineBeastsCharacterSummary Character,
+                EDivineBeastsFlowError Error) mutable
+            {
+                AsyncTask(
+                    ENamedThreads::GameThread,
+                    [WeakThis, Token, SharedComplete, bSuccess,
+                     Character = MoveTemp(Character), Error]() mutable
+                    {
+                        UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
+                        if (!Self || !Self->IsCurrentToken(Token))
+                        {
+                            return;
+                        }
+                        if (!bSuccess || !Self->FlowContext)
+                        {
+                            Self->SetBusy(false);
+                            Self->SetError(Error);
+                            (*SharedComplete)(ProjectFailure(
+                                Error,
+                                TEXT("创建持久角色失败。")));
+                            return;
+                        }
+                        Self->FlowContext->GetCharacterRoster().Add(Character);
+                        Self->FlowContext->SetPendingSelection(Character);
+                        Self->RefreshProjectionFromContext();
+                        (*SharedComplete)(FGamePlatformFlowNodeResult::Success());
+                    });
+            });
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::ValidateSelection())
+    {
+        FDivineBeastsCharacterSummary Character;
+        if (!Backend.IsValid() ||
+            !ProjectContext->ConsumePendingSelection(Character))
+        {
+            Complete(ProjectFailure(
+                EDivineBeastsFlowError::CharacterSelectionRejected,
+                TEXT("没有待后端验证的角色选择。")));
+            return;
+        }
+
+        const FGuid RequestId = FGuid::NewGuid();
+        const TSharedRef<FGamePlatformFlowCompletion> SharedComplete =
+            MakeShared<FGamePlatformFlowCompletion>(MoveTemp(Complete));
+        TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+        Backend->SelectPersistentCharacter(
+            Character.CharacterId,
+            Character.CharacterRevision,
+            RequestId,
+            [WeakThis, Token, SharedComplete](
+                bool bSuccess,
+                FDivineBeastsValidatedSelection Selection,
+                EDivineBeastsFlowError Error) mutable
+            {
+                AsyncTask(
+                    ENamedThreads::GameThread,
+                    [WeakThis, Token, SharedComplete, bSuccess,
+                     Selection = MoveTemp(Selection), Error]() mutable
+                    {
+                        UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
+                        if (!Self || !Self->IsCurrentToken(Token))
+                        {
+                            return;
+                        }
+                        if (!bSuccess || !Self->FlowContext)
+                        {
+                            Self->SetBusy(false);
+                            Self->SetError(Error);
+                            (*SharedComplete)(ProjectFailure(
+                                Error,
+                                TEXT("持久角色选择没有通过后端权威验证。")));
+                            return;
+                        }
+                        Self->FlowContext->SetSelectedCharacter(Selection.Character);
+                        Self->FlowContext->GetProfile().ProfileRevision =
+                            Selection.ProfileRevision;
+                        Self->RefreshProjectionFromContext();
+                        Self->SetError(EDivineBeastsFlowError::None);
+                        (*SharedComplete)(FGamePlatformFlowNodeResult::Success());
+                    });
+            });
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::ResolveExperience())
+    {
+        const FName ExperienceId = DefaultExperienceForOnboarding();
+        if (ExperienceId.IsNone() ||
+            !IsExperienceAllowedForCurrentProfile(ExperienceId))
+        {
+            SetError(EDivineBeastsFlowError::ExperienceNotAllowed);
+            Complete(ProjectFailure(
+                EDivineBeastsFlowError::ExperienceNotAllowed,
+                TEXT("当前玩家状态无法解析到合法的项目体验。")));
+            return;
+        }
+        ProjectContext->SetTargetExperience(ExperienceId, FString());
+        Complete(FGamePlatformFlowNodeResult::Success());
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::RequestWorld())
+    {
+        if (!Backend.IsValid() ||
+            !ProjectContext->HasSelectedCharacter() ||
+            ProjectContext->GetTargetExperience().IsNone() ||
+            !IsExperienceAllowedForCurrentProfile(
+                ProjectContext->GetTargetExperience()))
+        {
+            SetError(EDivineBeastsFlowError::ExperienceNotAllowed);
+            Complete(ProjectFailure(
+                EDivineBeastsFlowError::ExperienceNotAllowed,
+                TEXT("请求世界分配前缺少有效角色或目标体验。")));
+            return;
+        }
+
+        const FName ExpectedExperience = ProjectContext->GetTargetExperience();
+        const FString PreferredRegion = ProjectContext->GetPreferredRegion();
+        const FDivineBeastsCharacterSummary Character =
+            ProjectContext->GetSelectedCharacter();
+        const FGuid RequestId = FGuid::NewGuid();
+
+        const TSharedRef<FGamePlatformFlowCompletion> SharedComplete =
+            MakeShared<FGamePlatformFlowCompletion>(MoveTemp(Complete));
+        TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+        Backend->RequestWorldAssignment(
+            Character.CharacterId,
+            Character.CharacterRevision,
+            ExpectedExperience,
+            PreferredRegion,
+            RequestId,
+            [WeakThis, Token, SharedComplete, ExpectedExperience,
+             ExpectedCharacterId = Character.CharacterId](
+                bool bSuccess,
+                FDivineBeastsWorldAssignmentPayload Assignment,
+                EDivineBeastsFlowError Error) mutable
+            {
+                AsyncTask(
+                    ENamedThreads::GameThread,
+                    [WeakThis, Token, SharedComplete, ExpectedExperience,
+                     ExpectedCharacterId = MoveTemp(ExpectedCharacterId),
+                     bSuccess, Assignment = MoveTemp(Assignment), Error]() mutable
+                    {
+                        UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
+                        if (!Self || !Self->IsCurrentToken(Token))
+                        {
+                            return;
+                        }
+                        if (!bSuccess || !Self->FlowContext)
+                        {
+                            Self->SetBusy(false);
+                            Self->SetError(Error);
+                            (*SharedComplete)(ProjectFailure(
+                                Error,
+                                TEXT("后端世界分配失败。")));
+                            return;
+                        }
+
+                        FName ExpectedRole = NAME_None;
+                        const bool bMappingValid =
+                            Assignment.Summary.ExperienceId == ExpectedExperience &&
+                            FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(
+                                Assignment.Summary.ExperienceId,
+                                ExpectedRole) &&
+                            ExpectedRole == Assignment.Summary.ServerRoleId &&
+                            !Assignment.Summary.WorldId.IsNone() &&
+                            !Assignment.Summary.MapId.IsNone() &&
+                            Assignment.Summary.CharacterId == ExpectedCharacterId;
+                        if (!bMappingValid)
+                        {
+                            Self->SetBusy(false);
+                            Self->SetError(EDivineBeastsFlowError::WorldMismatch);
+                            (*SharedComplete)(ProjectFailure(
+                                EDivineBeastsFlowError::WorldMismatch,
+                                TEXT("后端世界分配与请求角色、体验或服务器角色不一致。")));
+                            return;
+                        }
+
+                        Self->FlowContext->SetAssignment(
+                            Assignment.Summary,
+                            MoveTemp(Assignment.Endpoint),
+                            MoveTemp(Assignment.TransferTicket));
+                        Self->RefreshProjectionFromContext();
+                        (*SharedComplete)(FGamePlatformFlowNodeResult::Success());
+                    });
+            });
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::TransferWorld())
+    {
+        const FGamePlatformResult Result = BeginLoadingForAssignment();
+        if (!Result.IsSuccess())
+        {
+            SetBusy(false);
+            SetError(EDivineBeastsFlowError::TravelFailed);
+            Complete(FGamePlatformFlowNodeResult::Failure(
+                Result.Code.IsNone()
+                    ? FName(TEXT("TravelFailed"))
+                    : Result.Code,
+                Result.Message.IsEmpty()
+                    ? FString(TEXT("世界切换操作没有被真实Loading/Session服务接纳。"))
+                    : Result.Message));
+            return;
+        }
+        Complete(FGamePlatformFlowNodeResult::Success());
+        return;
+    }
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::Recovering())
+    {
+        ReleaseLoadingOperation();
+        if (Session)
+        {
+            FGamePlatformResult Ignored;
+            Session->CancelTransfer(Ignored);
+        }
+
+        const int32 Attempt = ProjectContext->IncrementRecoveryAttempts();
+        if (Attempt > MaxRecoveryAttempts)
+        {
+            SetBusy(false);
+            SetError(EDivineBeastsFlowError::ReconnectExhausted);
+            Complete(ProjectFailure(
+                EDivineBeastsFlowError::ReconnectExhausted,
+                TEXT("世界连接恢复已经超过最大尝试次数。")));
+            return;
+        }
+
+        FName ExperienceId = ProjectContext->GetAssignment().ExperienceId;
+        if (ExperienceId.IsNone() ||
+            !IsExperienceAllowedForCurrentProfile(ExperienceId))
+        {
+            ExperienceId = DefaultExperienceForOnboarding();
+        }
+        if (ExperienceId.IsNone())
+        {
+            Complete(ProjectFailure(
+                EDivineBeastsFlowError::ExperienceNotAllowed,
+                TEXT("恢复连接时无法解析安全目标体验。")));
+            return;
+        }
+
+        ProjectContext->SetTargetExperience(ExperienceId, FString());
+        Complete(FGamePlatformFlowNodeResult::Success());
+        return;
+    }
+
+    Complete(FGamePlatformFlowNodeResult::Failure(
+        TEXT("UnknownDivineBeastsFlowExecutor"),
+        TEXT("流程定义引用了未实现的神兽联盟执行器。")));
+}
+
+void UDivineBeastsApplicationFlowSubsystem::FinishProjectNode(
+    FName ExecutorId,
+    EGamePlatformFlowFinishReason Reason)
+{
+    check(IsInGameThread());
+
+    // 同一时间平台只运行一个主节点；HTTP节点退出时取消尚未结束的本节点请求，
+    // 已完成请求已从ActiveRequests移除，因此成功路径不会产生额外网络取消开销。
+    if (IsBackendExecutor(ExecutorId) && Backend.IsValid())
+    {
+        Backend->CancelAll();
+    }
+}
+
+void UDivineBeastsApplicationFlowSubsystem::ReleasePendingFlowDefinitionLease()
+{
+    if (Data && PendingFlowDefinitionLease.IsValid())
+    {
+        Data->ReleaseDefinition(PendingFlowDefinitionLease);
+    }
+    PendingFlowDefinitionLease = {};
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::StartFlow(bool bTryAutoLogin)
 {
-    if (!PlatformFlow || !Online || !Session || !Loading || !Backend.IsValid())
+    if (!PlatformFlow || !Online || !Session || !Loading || !Data ||
+        FactoryHandles.IsEmpty())
     {
         SetError(EDivineBeastsFlowError::FlowNotInitialized);
         return false;
     }
 
-    Backend->CancelAll();
-    if (!ReleaseLoadingOperation())
+    ++StartRequestGeneration;
+    const uint64 RequestGeneration = StartRequestGeneration;
+
+    if (Backend.IsValid())
     {
-        SetError(EDivineBeastsFlowError::StaleOperation);
+        Backend->CancelAll();
+    }
+    ReleaseLoadingOperation();
+
+    if (Session)
+    {
+        FGamePlatformResult Ignored;
+        Session->CancelTransfer(Ignored);
+    }
+
+    if (ActiveFlow.IsValid())
+    {
+        PlatformFlow->Cancel(ActiveFlow);
+        ActiveFlow = {};
+    }
+
+    ReleasePendingFlowDefinitionLease();
+
+    FlowContext = NewObject<UDivineBeastsApplicationFlowContext>(
+        GetGameInstance());
+    if (!FlowContext)
+    {
+        SetError(EDivineBeastsFlowError::FlowNotInitialized);
         return false;
     }
-    Session->CancelTransfer();
-    PlatformFlow->InvalidateRun();
+    FlowContext->ResetForNewRun(bTryAutoLogin);
+
     ResetProjection();
-    RecoveryAttempts = 0;
+    SetBusy(true);
+    SetError(EDivineBeastsFlowError::None);
+    LastAutoLoginNodeGeneration = 0;
+    LastEnteredInWorldNodeGeneration = 0;
 
-    FGuid RunId;
-    if (!PlatformFlow->StartRun(FDivineBeastsFlowNodes::Boot(), RunId) ||
-        !TransitionTo(FDivineBeastsFlowNodes::Initialize()) ||
-        !TransitionTo(FDivineBeastsFlowNodes::Authentication()))
-    {
-        SetError(EDivineBeastsFlowError::FlowNotInitialized);
-        return false;
-    }
-
-    if (bTryAutoLogin)
-    {
-        SetBusy(true);
-        Online->TryAutoLogin();
-    }
-    else
+    FGamePlatformId FlowLogicalId;
+    if (!FGamePlatformId::TryParse(
+            TEXT("divinebeasts.application.main@1"),
+            FlowLogicalId))
     {
         SetBusy(false);
+        SetError(EDivineBeastsFlowError::FlowNotInitialized);
+        return false;
+    }
+
+    const FPrimaryAssetId DefinitionId(
+        UGamePlatformPrimaryDataAsset::DefinitionAssetType(),
+        FName(*FlowLogicalId.ToString()));
+
+    TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+    FGamePlatformResult Accepted;
+    PendingFlowDefinitionLease = Data->AcquireDefinition(
+        DefinitionId,
+        UGamePlatformFlowDefinition::StaticClass(),
+        {},
+        EGamePlatformDataLifetime::Instance,
+        this,
+        [WeakThis, RequestGeneration](
+            const FGamePlatformDataLease& Lease,
+            const FGamePlatformResult& Result)
+        {
+            UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
+            if (!Self)
+            {
+                return;
+            }
+
+            if (Self->StartRequestGeneration != RequestGeneration)
+            {
+                if (Self->Data && Lease.IsValid())
+                {
+                    Self->Data->ReleaseDefinition(Lease);
+                }
+                return;
+            }
+
+            Self->PendingFlowDefinitionLease = Lease;
+            if (!Result.IsSuccess() ||
+                !Lease.IsValid() ||
+                !Self->PlatformFlow ||
+                !Self->FlowContext)
+            {
+                Self->ReleasePendingFlowDefinitionLease();
+                Self->SetBusy(false);
+                Self->SetError(EDivineBeastsFlowError::FlowNotInitialized);
+                return;
+            }
+
+            FGamePlatformResult StartResult;
+            Self->ActiveFlow = Self->PlatformFlow->StartFlow(
+                Self->PendingFlowDefinitionLease,
+                Self->FlowContext,
+                StartResult);
+            if (!Self->ActiveFlow.IsValid() || !StartResult.IsSuccess())
+            {
+                Self->ReleasePendingFlowDefinitionLease();
+                Self->SetBusy(false);
+                Self->SetError(EDivineBeastsFlowError::FlowExecutionFailed);
+                return;
+            }
+
+            // StartFlow在成功接纳后已经转移并清空输入租约；同步补投影以覆盖启动事件早于ActiveFlow赋值的情况。
+            Self->HandleFlowSnapshot(Self->PlatformFlow->GetSnapshot());
+        },
+        Accepted);
+
+    if (!Accepted.IsSuccess() || !PendingFlowDefinitionLease.IsValid())
+    {
+        ReleasePendingFlowDefinitionLease();
+        SetBusy(false);
+        SetError(EDivineBeastsFlowError::FlowNotInitialized);
+        return false;
     }
     return true;
 }
@@ -519,156 +1189,15 @@ void UDivineBeastsApplicationFlowSubsystem::LoginWithCredentials(
     const FString& LoginName,
     const FString& Password)
 {
-    if (!Online || !IsCurrentNode(FDivineBeastsFlowNodes::Authentication()))
+    if (!Online ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::Authentication()))
     {
         SetError(EDivineBeastsFlowError::FlowNotInitialized);
         return;
     }
+
     SetBusy(true);
     Online->LoginWithCredentials(LoginName, Password);
-}
-
-void UDivineBeastsApplicationFlowSubsystem::HandleAuthSnapshot(
-    const FGamePlatformAuthSnapshot& Snapshot)
-{
-    ViewState.ConnectionSummary =
-        StaticEnum<EGamePlatformAuthState>()
-            ? StaticEnum<EGamePlatformAuthState>()->GetNameStringByValue(
-                static_cast<int64>(Snapshot.State))
-            : FString();
-
-    if (Snapshot.State == EGamePlatformAuthState::Authenticated &&
-        IsCurrentNode(FDivineBeastsFlowNodes::Authentication()))
-    {
-        SetError(EDivineBeastsFlowError::None);
-        if (TransitionTo(FDivineBeastsFlowNodes::LoadProfile()))
-        {
-            BeginLoadProfile();
-        }
-        return;
-    }
-
-    if (Snapshot.State == EGamePlatformAuthState::Failed)
-    {
-        SetBusy(false);
-        EDivineBeastsFlowError FlowError =
-            EDivineBeastsFlowError::AuthenticationFailed;
-        switch (Snapshot.Error)
-        {
-        case EGamePlatformAuthError::InvalidCredentials:
-            FlowError = EDivineBeastsFlowError::InvalidCredentials;
-            break;
-        case EGamePlatformAuthError::AccountLocked:
-            FlowError = EDivineBeastsFlowError::AccountLocked;
-            break;
-        case EGamePlatformAuthError::Maintenance:
-            FlowError = EDivineBeastsFlowError::Maintenance;
-            break;
-        case EGamePlatformAuthError::NetworkUnavailable:
-        case EGamePlatformAuthError::ProviderUnavailable:
-            FlowError = EDivineBeastsFlowError::NetworkUnavailable;
-            break;
-        case EGamePlatformAuthError::AuthExpired:
-            FlowError = EDivineBeastsFlowError::AuthExpired;
-            break;
-        case EGamePlatformAuthError::ContractIncompatible:
-            FlowError = EDivineBeastsFlowError::ContractIncompatible;
-            break;
-        case EGamePlatformAuthError::Cancelled:
-            FlowError = EDivineBeastsFlowError::Cancelled;
-            break;
-        case EGamePlatformAuthError::TimedOut:
-            FlowError = EDivineBeastsFlowError::TimedOut;
-            break;
-        default:
-            break;
-        }
-        SetError(FlowError);
-        return;
-    }
-
-    if (Snapshot.State == EGamePlatformAuthState::LoggedOut &&
-        bRestartAfterLogout)
-    {
-        bRestartAfterLogout = false;
-        StartFlow(true);
-        return;
-    }
-
-    BroadcastView();
-}
-
-void UDivineBeastsApplicationFlowSubsystem::BeginLoadProfile()
-{
-    if (!Backend.IsValid() || !PlatformFlow)
-    {
-        SetError(EDivineBeastsFlowError::ProfileUnavailable);
-        return;
-    }
-
-    const FGamePlatformFlowOperationToken Token =
-        PlatformFlow->BeginOperation();
-    SetBusy(true);
-
-    Backend->LoadProfile(
-        [WeakThis = TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem>(this),
-         Token](
-            bool bSuccess,
-            FDivineBeastsPlayerProfile Profile,
-            EDivineBeastsFlowError Error)
-        {
-            if (!WeakThis.IsValid() ||
-                !WeakThis->PlatformFlow ||
-                !WeakThis->PlatformFlow->IsOperationCurrent(Token))
-            {
-                return;
-            }
-            if (!bSuccess)
-            {
-                WeakThis->SetBusy(false);
-                WeakThis->SetError(Error);
-                return;
-            }
-
-            WeakThis->ViewState.Profile = MoveTemp(Profile);
-            if (WeakThis->TransitionTo(
-                    FDivineBeastsFlowNodes::LoadRoster()))
-            {
-                WeakThis->BeginLoadRoster();
-            }
-        });
-}
-
-void UDivineBeastsApplicationFlowSubsystem::BeginLoadRoster()
-{
-    const FGamePlatformFlowOperationToken Token =
-        PlatformFlow->BeginOperation();
-
-    Backend->LoadRoster(
-        [WeakThis = TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem>(this),
-         Token](
-            bool bSuccess,
-            TArray<FDivineBeastsCharacterSummary> Roster,
-            EDivineBeastsFlowError Error)
-        {
-            if (!WeakThis.IsValid() ||
-                !WeakThis->PlatformFlow ||
-                !WeakThis->PlatformFlow->IsOperationCurrent(Token))
-            {
-                return;
-            }
-            if (!bSuccess)
-            {
-                WeakThis->SetBusy(false);
-                WeakThis->SetError(Error);
-                return;
-            }
-
-            WeakThis->ViewState.CharacterRoster = MoveTemp(Roster);
-            WeakThis->SetBusy(false);
-            WeakThis->TransitionTo(
-                FDivineBeastsFlowNodes::CharacterEntry());
-        });
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::GetCharacterCreationHeroes(
@@ -688,7 +1217,8 @@ bool UDivineBeastsApplicationFlowSubsystem::GetCharacterCreationHeroes(
 bool UDivineBeastsApplicationFlowSubsystem::SubmitCharacterCreateDraft(
     const FDivineBeastsCharacterCreateDraft& Draft)
 {
-    if (!Draft.IsLocallyValid() ||
+    if (!FlowContext ||
+        !Draft.IsLocallyValid() ||
         !IsCurrentNode(FDivineBeastsFlowNodes::CharacterEntry()))
     {
         return false;
@@ -725,59 +1255,29 @@ bool UDivineBeastsApplicationFlowSubsystem::SubmitCharacterCreateDraft(
         return false;
     }
 
-    if (!TransitionTo(FDivineBeastsFlowNodes::CreateCharacter()))
+    FlowContext->SetPendingCreateDraft(Draft);
+    const bool bAccepted = SubmitCurrentNodeEvent(
+        FDivineBeastsFlowNodes::CharacterEntry(),
+        FGamePlatformFlowNodeResult::Success(
+            FDivineBeastsFlowOutcomes::CreateCharacter()));
+    if (bAccepted)
     {
-        return false;
+        SetBusy(true);
     }
-
-    const FGamePlatformFlowOperationToken Token =
-        PlatformFlow->BeginOperation();
-    if (!Token.IsValid())
-    {
-        SetError(EDivineBeastsFlowError::FlowNotInitialized);
-        return false;
-    }
-
-    SetBusy(true);
-    Backend->CreateCharacter(
-        Draft,
-        Token.OperationId,
-        [WeakThis = TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem>(this),
-         Token](
-            bool bSuccess,
-            FDivineBeastsCharacterSummary Character,
-            EDivineBeastsFlowError Error)
-        {
-            if (!WeakThis.IsValid() ||
-                !WeakThis->PlatformFlow ||
-                !WeakThis->PlatformFlow->IsOperationCurrent(Token))
-            {
-                return;
-            }
-            if (!bSuccess)
-            {
-                WeakThis->SetBusy(false);
-                WeakThis->SetError(Error);
-                WeakThis->TransitionTo(
-                    FDivineBeastsFlowNodes::CharacterEntry());
-                return;
-            }
-
-            WeakThis->ViewState.CharacterRoster.Add(Character);
-            WeakThis->BeginSelection(Character);
-        });
-    return true;
+    return bAccepted;
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::SelectPersistentCharacter(
     const FString& CharacterId)
 {
-    if (!IsCurrentNode(FDivineBeastsFlowNodes::CharacterEntry()))
+    if (!FlowContext ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::CharacterEntry()))
     {
         return false;
     }
+
     const FDivineBeastsCharacterSummary* Character =
-        ViewState.CharacterRoster.FindByPredicate(
+        FlowContext->GetCharacterRoster().FindByPredicate(
             [&CharacterId](const FDivineBeastsCharacterSummary& Candidate)
             {
                 return Candidate.CharacterId == CharacterId;
@@ -787,73 +1287,69 @@ bool UDivineBeastsApplicationFlowSubsystem::SelectPersistentCharacter(
         SetError(EDivineBeastsFlowError::CharacterNotFound);
         return false;
     }
-    BeginSelection(*Character);
-    return true;
+
+    FlowContext->SetPendingSelection(*Character);
+    const bool bAccepted = SubmitCurrentNodeEvent(
+        FDivineBeastsFlowNodes::CharacterEntry(),
+        FGamePlatformFlowNodeResult::Success(
+            FDivineBeastsFlowOutcomes::SelectCharacter()));
+    if (bAccepted)
+    {
+        SetBusy(true);
+    }
+    return bAccepted;
 }
 
-void UDivineBeastsApplicationFlowSubsystem::BeginSelection(
-    const FDivineBeastsCharacterSummary& Character)
+bool UDivineBeastsApplicationFlowSubsystem::RequestWorldAssignment(
+    FName DesiredExperienceId,
+    const FString& PreferredRegion)
 {
-    if (!TransitionTo(FDivineBeastsFlowNodes::ValidateSelection()))
+    if (!FlowContext ||
+        !FlowContext->HasSelectedCharacter() ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()) ||
+        !IsExperienceAllowedForCurrentProfile(DesiredExperienceId))
     {
-        SetBusy(false);
-        SetError(EDivineBeastsFlowError::CharacterSelectionRejected);
-        return;
+        SetError(EDivineBeastsFlowError::ExperienceNotAllowed);
+        return false;
     }
 
-    const FGamePlatformFlowOperationToken Token =
-        PlatformFlow->BeginOperation();
-    SetBusy(true);
-    Backend->SelectPersistentCharacter(
-        Character.CharacterId,
-        Character.CharacterRevision,
-        Token.OperationId,
-        [WeakThis = TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem>(this),
-         Token](
-            bool bSuccess,
-            FDivineBeastsValidatedSelection Selection,
-            EDivineBeastsFlowError Error)
-        {
-            if (!WeakThis.IsValid() ||
-                !WeakThis->PlatformFlow ||
-                !WeakThis->PlatformFlow->IsOperationCurrent(Token))
-            {
-                return;
-            }
-            if (!bSuccess)
-            {
-                WeakThis->SetBusy(false);
-                WeakThis->SetError(Error);
-                WeakThis->TransitionTo(
-                    FDivineBeastsFlowNodes::CharacterEntry());
-                return;
-            }
-            WeakThis->HandleValidatedSelection(Selection);
-        });
+    NotifyExtensionsLeavingWorld();
+    FlowContext->SetTargetExperience(
+        DesiredExperienceId,
+        PreferredRegion);
+
+    const bool bAccepted = SubmitCurrentNodeEvent(
+        FDivineBeastsFlowNodes::InWorld(),
+        FGamePlatformFlowNodeResult::Success(
+            FDivineBeastsFlowOutcomes::RequestWorld()));
+    if (bAccepted)
+    {
+        SetBusy(true);
+    }
+    return bAccepted;
 }
 
-void UDivineBeastsApplicationFlowSubsystem::HandleValidatedSelection(
-    const FDivineBeastsValidatedSelection& Selection)
+FName UDivineBeastsApplicationFlowSubsystem::DefaultExperienceForOnboarding() const
 {
-    ViewState.SelectedCharacter = Selection.Character;
-    ViewState.bHasSelectedCharacter = true;
-    ViewState.Profile.ProfileRevision = Selection.ProfileRevision;
-    SetError(EDivineBeastsFlowError::None);
-    RequestWorldAssignment(DefaultExperienceForOnboarding());
-}
+    if (!FlowContext)
+    {
+        return NAME_None;
+    }
 
-FName UDivineBeastsApplicationFlowSubsystem::DefaultExperienceForOnboarding()
-    const
-{
-    return ViewState.Profile.OnboardingState ==
+    return FlowContext->GetProfile().OnboardingState ==
         EDivineBeastsOnboardingState::OnboardingComplete
-        ? FName(TEXT("Experience.OpenWorld.Hub"))
-        : FName(TEXT("Experience.Village.Tutorial"));
+        ? FDivineBeastsProjectCatalog::GetOpenWorldHubExperience()
+        : FDivineBeastsProjectCatalog::GetVillageTutorialExperience();
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::IsExperienceAllowedForCurrentProfile(
     FName ExperienceId) const
 {
+    if (!FlowContext || ExperienceId.IsNone())
+    {
+        return false;
+    }
+
     FName ServerRole = NAME_None;
     if (!FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(
             ExperienceId,
@@ -863,166 +1359,211 @@ bool UDivineBeastsApplicationFlowSubsystem::IsExperienceAllowedForCurrentProfile
     }
 
     const bool bComplete =
-        ViewState.Profile.OnboardingState ==
+        FlowContext->GetProfile().OnboardingState ==
         EDivineBeastsOnboardingState::OnboardingComplete;
     if (bComplete)
     {
+        // 完成新手后公共应用流程只进入OpenWorld；MainArena由DBAArena先完成匹配后通过授权分配接入。
         return ServerRole ==
             FDivineBeastsProjectCatalog::GetOpenWorldServerRole();
     }
+
     return ServerRole ==
         FDivineBeastsProjectCatalog::GetVillageServerRole();
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::RequestWorldAssignment(
-    FName DesiredExperienceId,
-    const FString& PreferredRegion)
+bool UDivineBeastsApplicationFlowSubsystem::IsCurrentToken(
+    const FGamePlatformFlowNodeToken& Token) const
 {
-    if (!ViewState.bHasSelectedCharacter ||
-        !Backend.IsValid() ||
-        !IsExperienceAllowedForCurrentProfile(DesiredExperienceId))
-    {
-        SetError(EDivineBeastsFlowError::ExperienceNotAllowed);
-        return false;
-    }
-
-    // 新的Assignment不能覆盖上一操作的任务、订阅或数据租约。
-    if ((ActiveLoadingOperation.IsValid() || LoadingContext.IsValid() || !LoadingTaskFactories.IsEmpty()) &&
-        !ReleaseLoadingOperation())
-    {
-        SetError(EDivineBeastsFlowError::StaleOperation);
-        return false;
-    }
-
-    const FName Current =
-        PlatformFlow ? PlatformFlow->GetSnapshot().CurrentNodeId : NAME_None;
-    if (Current != FDivineBeastsFlowNodes::ValidateSelection() &&
-        Current != FDivineBeastsFlowNodes::InWorld() &&
-        Current != FDivineBeastsFlowNodes::Recovering())
+    if (!PlatformFlow || !Token.IsValid())
     {
         return false;
     }
 
-    if (Current == FDivineBeastsFlowNodes::InWorld())
-    {
-        NotifyExtensionsLeavingWorld();
-    }
-
-    if (!TransitionTo(FDivineBeastsFlowNodes::RequestWorld()))
-    {
-        return false;
-    }
-
-    const FGamePlatformFlowOperationToken Token =
-        PlatformFlow->BeginOperation();
-    SetBusy(true);
-    Backend->RequestWorldAssignment(
-        ViewState.SelectedCharacter.CharacterId,
-        ViewState.SelectedCharacter.CharacterRevision,
-        DesiredExperienceId,
-        PreferredRegion,
-        Token.OperationId,
-        [WeakThis = TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem>(this),
-         Token](
-            bool bSuccess,
-            FDivineBeastsWorldAssignmentPayload Assignment,
-            EDivineBeastsFlowError Error)
-        {
-            if (!WeakThis.IsValid() ||
-                !WeakThis->PlatformFlow ||
-                !WeakThis->PlatformFlow->IsOperationCurrent(Token))
-            {
-                return;
-            }
-            if (!bSuccess)
-            {
-                WeakThis->SetBusy(false);
-                WeakThis->BeginRecovery(Error);
-                return;
-            }
-
-            FName ExpectedRole = NAME_None;
-            const bool bMappingValid =
-                FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(
-                    Assignment.Summary.ExperienceId,
-                    ExpectedRole) &&
-                ExpectedRole == Assignment.Summary.ServerRoleId &&
-                !Assignment.Summary.WorldId.IsNone() && !Assignment.Summary.MapId.IsNone() &&
-                Assignment.Summary.CharacterId ==
-                    WeakThis->ViewState.SelectedCharacter.CharacterId;
-            if (!bMappingValid)
-            {
-                WeakThis->SetBusy(false);
-                WeakThis->BeginRecovery(
-                    EDivineBeastsFlowError::WorldMismatch);
-                return;
-            }
-
-            WeakThis->ViewState.Assignment = Assignment.Summary;
-            WeakThis->PendingEndpoint = MoveTemp(Assignment.Endpoint);
-            WeakThis->PendingTransferTicket =
-                MoveTemp(Assignment.TransferTicket);
-            WeakThis->TransitionTo(
-                FDivineBeastsFlowNodes::TransferWorld());
-            WeakThis->BeginLoadingForAssignment(
-                WeakThis->PendingEndpoint,
-                WeakThis->PendingTransferTicket);
-        });
-    return true;
+    const FGamePlatformFlowSnapshot Snapshot = PlatformFlow->GetSnapshot();
+    return Snapshot.Handle.ScopeId == Token.Handle.ScopeId &&
+        Snapshot.Handle.RunId == Token.Handle.RunId &&
+        Snapshot.NodeId == Token.NodeId &&
+        Snapshot.NodeGeneration == Token.NodeGeneration &&
+        (Snapshot.State == EGamePlatformFlowState::Running ||
+         Snapshot.State == EGamePlatformFlowState::RetryWaiting);
 }
 
-void UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment(
-    const FString& Endpoint,
-    const FString& TransferTicket)
+bool UDivineBeastsApplicationFlowSubsystem::IsCurrentNode(
+    FName NodeId) const
 {
-    if (!Loading || ViewState.Assignment.MapId.IsNone() || ViewState.Assignment.WorldId.IsNone() ||
-        ViewState.Assignment.ExperienceId.IsNone())
+    if (!PlatformFlow || !ActiveFlow.IsValid())
     {
-        BeginRecovery(EDivineBeastsFlowError::WorldAssignmentUnavailable);
-        return;
+        return false;
+    }
+    const FGamePlatformFlowSnapshot Snapshot = PlatformFlow->GetSnapshot();
+    return Snapshot.Handle.ScopeId == ActiveFlow.ScopeId &&
+        Snapshot.Handle.RunId == ActiveFlow.RunId &&
+        Snapshot.NodeId == NodeId &&
+        Snapshot.NodeGeneration != 0 &&
+        Snapshot.State == EGamePlatformFlowState::Running;
+}
+
+FGamePlatformFlowNodeToken
+UDivineBeastsApplicationFlowSubsystem::GetCurrentNodeToken() const
+{
+    if (!PlatformFlow || !ActiveFlow.IsValid())
+    {
+        return {};
+    }
+
+    const FGamePlatformFlowSnapshot Snapshot = PlatformFlow->GetSnapshot();
+    if (Snapshot.Handle.ScopeId != ActiveFlow.ScopeId ||
+        Snapshot.Handle.RunId != ActiveFlow.RunId ||
+        Snapshot.NodeGeneration == 0)
+    {
+        return {};
+    }
+    return {
+        Snapshot.Handle,
+        Snapshot.NodeId,
+        Snapshot.NodeGeneration
+    };
+}
+
+bool UDivineBeastsApplicationFlowSubsystem::SubmitCurrentNodeEvent(
+    FName ExpectedNodeId,
+    FGamePlatformFlowNodeResult Event,
+    FGamePlatformResult* OutResult)
+{
+    if (!PlatformFlow)
+    {
+        if (OutResult)
+        {
+            *OutResult = FGamePlatformResult::Failure(
+                TEXT("FlowUnavailable"),
+                TEXT("游戏平台应用流程服务不可用。"));
+        }
+        return false;
+    }
+
+    const FGamePlatformFlowNodeToken Token = GetCurrentNodeToken();
+    if (!Token.IsValid() || Token.NodeId != ExpectedNodeId)
+    {
+        if (OutResult)
+        {
+            *OutResult = FGamePlatformResult::Failure(
+                TEXT("FlowNodeMismatch"),
+                TEXT("事件不属于当前已开始的应用流程节点。"));
+        }
+        return false;
+    }
+
+    FGamePlatformResult Result;
+    const bool bAccepted = PlatformFlow->SubmitEvent(
+        Token,
+        MoveTemp(Event),
+        Result);
+    if (OutResult)
+    {
+        *OutResult = Result;
+    }
+    return bAccepted && Result.IsSuccess();
+}
+
+FGamePlatformResult
+UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment()
+{
+    if (!FlowContext || !Loading || !Session)
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("WorldEntryServicesUnavailable"),
+            TEXT("世界进入所需的Loading、Session或项目流程上下文不可用。"));
+    }
+
+    const FDivineBeastsWorldAssignmentSummary& Assignment =
+        FlowContext->GetAssignment();
+    if (Assignment.AssignmentId.IsEmpty() ||
+        Assignment.GameServerId.IsEmpty() ||
+        Assignment.ServerRoleId.IsNone() ||
+        Assignment.ExperienceId.IsNone() ||
+        Assignment.WorldId.IsNone() ||
+        Assignment.MapId.IsNone())
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("WorldAssignmentIncomplete"),
+            TEXT("世界分配结果缺少必要身份。"));
+    }
+
+    FString Endpoint;
+    FString TransferTicket;
+    if (!FlowContext->ConsumeConnectionMaterial(
+            Endpoint,
+            TransferTicket))
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("WorldTransferMaterialMissing"),
+            TEXT("世界分配缺少一次性连接地址或转移票据。"));
     }
 
     ActiveTransferOperationId = FGuid::NewGuid();
+    FlowContext->SetLoadingObservationId(ActiveTransferOperationId);
     ViewState.LoadingObservationId = ActiveTransferOperationId;
+
     LoadingContext = MakeShared<FDivineBeastsProjectLoadingContext>(
-        *GetGameInstance(), ActiveTransferOperationId, ViewState.Assignment.WorldId,
-        ViewState.Assignment.ExperienceId);
+        *GetGameInstance(),
+        ActiveTransferOperationId,
+        Assignment.WorldId,
+        Assignment.ExperienceId);
 
     FGamePlatformResult Result;
-    const TWeakPtr<FDivineBeastsProjectLoadingContext> WeakContext = LoadingContext;
-    const FGamePlatformLoadingRegistration Factory = Loading->RegisterTaskFactory(ReadinessTaskType,
-        [WeakContext]() -> TUniquePtr<IGamePlatformLoadingTask>
-        {
-            if (!WeakContext.Pin()) { return nullptr; }
-            return MakeUnique<FDivineBeastsProjectReadinessTask>(WeakContext);
-        }, Result);
+    const TWeakPtr<FDivineBeastsProjectLoadingContext> WeakContext =
+        LoadingContext;
+
+    const FGamePlatformLoadingRegistration Factory =
+        Loading->RegisterTaskFactory(
+            ReadinessTaskType,
+            [WeakContext]() -> TUniquePtr<IGamePlatformLoadingTask>
+            {
+                return WeakContext.Pin()
+                    ? MakeUnique<FDivineBeastsProjectReadinessTask>(WeakContext)
+                    : nullptr;
+            },
+            Result);
     if (!Result.IsSuccess() || !Factory.IsValid())
     {
         ReleaseLoadingOperation();
-        BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
-        return;
+        return Result.IsSuccess()
+            ? FGamePlatformResult::Failure(
+                TEXT("ReadinessFactoryRegistrationFailed"),
+                TEXT("项目就绪任务工厂注册失败。"))
+            : Result;
     }
     LoadingTaskFactories.Add(Factory);
 
-    const FGamePlatformLoadingRegistration WorldDefinitionFactory = Loading->RegisterTaskFactory(WorldDefinitionTaskType,
-        [WeakContext]() -> TUniquePtr<IGamePlatformLoadingTask>
-        {
-            if (!WeakContext.Pin()) { return nullptr; }
-            return MakeUnique<FDivineBeastsWorldDefinitionLoadingTask>(WeakContext);
-        }, Result);
+    const FGamePlatformLoadingRegistration WorldDefinitionFactory =
+        Loading->RegisterTaskFactory(
+            WorldDefinitionTaskType,
+            [WeakContext]() -> TUniquePtr<IGamePlatformLoadingTask>
+            {
+                return WeakContext.Pin()
+                    ? MakeUnique<FDivineBeastsWorldDefinitionLoadingTask>(
+                        WeakContext)
+                    : nullptr;
+            },
+            Result);
     if (!Result.IsSuccess() || !WorldDefinitionFactory.IsValid())
     {
         ReleaseLoadingOperation();
-        BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
-        return;
+        return Result.IsSuccess()
+            ? FGamePlatformResult::Failure(
+                TEXT("WorldDefinitionFactoryRegistrationFailed"),
+                TEXT("世界定义加载任务工厂注册失败。"))
+            : Result;
     }
     LoadingTaskFactories.Add(WorldDefinitionFactory);
 
     FGamePlatformLoadingOperationSpec Spec;
     Spec.Purpose = TEXT("DivineBeastsWorldEntry");
-    // 全屏障任务使用同一操作期限，避免单个事实在World/Session仍加载时先行超时。
-    for (const FName TaskId : {TaskSessionAdmission, TaskExpectedWorld, TaskExpectedExperience,
-                                TaskCharacterBinding, TaskGameplayData, TaskProjectReadiness})
+
+    for (const FName TaskId :
+        {TaskSessionAdmission, TaskExpectedWorld, TaskExpectedExperience,
+         TaskCharacterBinding, TaskGameplayData, TaskProjectReadiness})
     {
         FGamePlatformLoadingTaskSpec Task;
         Task.TaskId = TaskId;
@@ -1031,35 +1572,55 @@ void UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment(
         Task.TimeoutSeconds = Spec.TimeoutSeconds;
         Spec.Tasks.Add(MoveTemp(Task));
     }
+
     FGamePlatformId ParsedWorldId;
-    if (!FGamePlatformId::TryParse(ViewState.Assignment.WorldId.ToString(), ParsedWorldId))
+    if (!FGamePlatformId::TryParse(
+            Assignment.WorldId.ToString(),
+            ParsedWorldId))
     {
         ReleaseLoadingOperation();
-        BeginRecovery(EDivineBeastsFlowError::WorldAssignmentUnavailable);
-        return;
+        return FGamePlatformResult::Failure(
+            TEXT("AssignedWorldIdInvalid"),
+            TEXT("后端世界分配返回的WorldId不是合法项目逻辑身份。"));
     }
+
     FGamePlatformLoadingTaskSpec WorldDefinitionTask;
     WorldDefinitionTask.TaskId = TEXT("AssignedWorldDefinition");
     WorldDefinitionTask.TaskType = WorldDefinitionTaskType;
-    WorldDefinitionTask.Requiredness = EGamePlatformLoadingRequirement::Required;
+    WorldDefinitionTask.Requiredness =
+        EGamePlatformLoadingRequirement::Required;
     WorldDefinitionTask.TimeoutSeconds = Spec.TimeoutSeconds;
     WorldDefinitionTask.Data.DefinitionId = FPrimaryAssetId(
-        UGamePlatformPrimaryDataAsset::DefinitionAssetType(), FName(*ParsedWorldId.ToString()));
-    WorldDefinitionTask.Data.ExpectedClass = UDivineBeastsWorldDefinition::StaticClass();
+        UGamePlatformPrimaryDataAsset::DefinitionAssetType(),
+        FName(*ParsedWorldId.ToString()));
+    WorldDefinitionTask.Data.ExpectedClass =
+        UDivineBeastsWorldDefinition::StaticClass();
     Spec.Tasks.Add(MoveTemp(WorldDefinitionTask));
 
-    ActiveLoadingOperation = Loading->StartLoadingOperation(Spec, this, Result);
+    ActiveLoadingOperation = Loading->StartLoadingOperation(
+        Spec,
+        this,
+        Result);
     if (!Result.IsSuccess() || !ActiveLoadingOperation.IsValid())
     {
         ReleaseLoadingOperation();
-        BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
-        return;
+        return Result.IsSuccess()
+            ? FGamePlatformResult::Failure(
+                TEXT("WorldLoadingOperationRejected"),
+                TEXT("Loading服务未接纳世界进入操作。"))
+            : Result;
     }
-    LoadingSubscription = Loading->SubscribeLoadingState(ActiveLoadingOperation, this,
-        [WeakThis = TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem>(this), Expected = ActiveLoadingOperation]
-        (const FGamePlatformLoadingSnapshot& Snapshot)
+
+    LoadingSubscription = Loading->SubscribeLoadingState(
+        ActiveLoadingOperation,
+        this,
+        [WeakThis = TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem>(this),
+         Expected = ActiveLoadingOperation](
+            const FGamePlatformLoadingSnapshot& Snapshot)
         {
-            if (WeakThis.IsValid() && Snapshot.Handle == Expected && WeakThis->ActiveLoadingOperation == Expected)
+            if (WeakThis.IsValid() &&
+                WeakThis->ActiveLoadingOperation == Expected &&
+                Snapshot.Handle == Expected)
             {
                 WeakThis->HandleLoadingSnapshot(Snapshot);
             }
@@ -1067,32 +1628,34 @@ void UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment(
     if (!LoadingSubscription.IsValid())
     {
         ReleaseLoadingOperation();
-        BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
-        return;
+        return FGamePlatformResult::Failure(
+            TEXT("WorldLoadingSubscriptionFailed"),
+            TEXT("无法订阅当前世界进入Loading操作。"));
     }
-    BroadcastView();
 
     FGamePlatformSessionTransferRequest Request;
     Request.TransferOperationId = ActiveTransferOperationId;
-    Request.AssignmentId = ViewState.Assignment.AssignmentId;
-    Request.GameServerId = ViewState.Assignment.GameServerId;
-    Request.ServerRoleId = ViewState.Assignment.ServerRoleId;
-    Request.ExperienceId = ViewState.Assignment.ExperienceId;
-    Request.Endpoint = Endpoint;
-    Request.TransferTicket = TransferTicket;
-    Request.TicketId = ViewState.Assignment.TicketId;
-    Request.CharacterId = ViewState.Assignment.CharacterId;
-    Request.SessionId = ViewState.Assignment.SessionId;
+    Request.AssignmentId = Assignment.AssignmentId;
+    Request.GameServerId = Assignment.GameServerId;
+    Request.ServerRoleId = Assignment.ServerRoleId;
+    Request.ExperienceId = Assignment.ExperienceId;
+    Request.WorldId = Assignment.WorldId;
+    Request.Endpoint = MoveTemp(Endpoint);
+    Request.TransferTicket = MoveTemp(TransferTicket);
+    Request.TicketId = Assignment.TicketId;
+    Request.CharacterId = Assignment.CharacterId;
+    Request.SessionId = Assignment.SessionId;
+    Request.TimeoutSeconds = Spec.TimeoutSeconds;
 
-    // 敏感票据只在这里交给Session；完成调用后立即清除项目层副本。
-    const bool bTransferStarted = Session->BeginTransfer(Request);
-    PendingTransferTicket.Reset();
-    PendingEndpoint.Reset();
-
-    if (!bTransferStarted)
+    if (!Session->BeginTransfer(Request, Result))
     {
-        BeginRecovery(EDivineBeastsFlowError::TravelFailed);
+        // 一次性Ticket已经从项目上下文取走；失败也绝不重新塞回上下文复用。
+        ReleaseLoadingOperation();
+        return Result;
     }
+
+    BroadcastView();
+    return FGamePlatformResult::Success();
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::NotifyWorldObserved(
@@ -1102,85 +1665,405 @@ bool UDivineBeastsApplicationFlowSubsystem::NotifyWorldObserved(
     UObject* WorldContextObject)
 {
     UWorld* ObservedWorld = WorldContextObject && GEngine
-        ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull)
+        ? GEngine->GetWorldFromContextObject(
+            WorldContextObject,
+            EGetWorldErrorMode::ReturnNull)
         : nullptr;
-    if (!Loading || !ActiveLoadingOperation.IsValid() || !LoadingContext.IsValid() ||
-        !LoadingContext->IsExpectedWorld(ObservationId, ExperienceId, WorldId, ObservedWorld))
+
+    if (!Loading ||
+        !ActiveLoadingOperation.IsValid() ||
+        !LoadingContext.IsValid() ||
+        !LoadingContext->IsExpectedWorld(
+            ObservationId,
+            ExperienceId,
+            WorldId,
+            ObservedWorld))
     {
-        if (ObservationId == ViewState.LoadingObservationId) { SetError(EDivineBeastsFlowError::WorldMismatch); }
+        if (FlowContext &&
+            ObservationId == FlowContext->GetLoadingObservationId())
+        {
+            SetError(EDivineBeastsFlowError::WorldMismatch);
+        }
         return false;
     }
-    if (!LoadingContext->ObserveWorld(ObservationId, ExperienceId, WorldId, ObservedWorld))
+
+    if (!LoadingContext->ObserveWorld(
+            ObservationId,
+            ExperienceId,
+            WorldId,
+            ObservedWorld))
     {
         SetError(EDivineBeastsFlowError::WorldMismatch);
         return false;
     }
+
+    if (!ObservedWorld ||
+        !Loading->ReportWorldOperable(
+            ActiveLoadingOperation,
+            *ObservedWorld).IsSuccess())
+    {
+        SetError(EDivineBeastsFlowError::WorldMismatch);
+        return false;
+    }
+
+    TryReportLocalFactsToSession();
     TryCompleteWorldReady();
     return true;
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::NotifyCharacterBindingReady(FGuid ObservationId)
+bool UDivineBeastsApplicationFlowSubsystem::NotifyCharacterBindingReady(
+    FGuid ObservationId)
 {
-    return MarkLoadingFactReady(ObservationId, TaskCharacterBinding);
+    const bool bAccepted =
+        MarkLoadingFactReady(ObservationId, TaskCharacterBinding);
+    if (bAccepted)
+    {
+        TryReportLocalFactsToSession();
+    }
+    return bAccepted;
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::NotifyGameplayDataReady(FGuid ObservationId)
+bool UDivineBeastsApplicationFlowSubsystem::NotifyGameplayDataReady(
+    FGuid ObservationId)
 {
     return MarkLoadingFactReady(ObservationId, TaskGameplayData);
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::NotifyProjectReadiness(FGuid ObservationId)
+bool UDivineBeastsApplicationFlowSubsystem::NotifyProjectReadiness(
+    FGuid ObservationId)
 {
     return MarkLoadingFactReady(ObservationId, TaskProjectReadiness);
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::MarkLoadingFactReady(FGuid ObservationId, FName TaskId)
+bool UDivineBeastsApplicationFlowSubsystem::MarkLoadingFactReady(
+    FGuid ObservationId,
+    FName TaskId)
 {
     DivineBeastsLoading::Fact Fact;
-    if (!Loading || !ActiveLoadingOperation.IsValid() || !LoadingContext.IsValid() ||
-        ObservationId != ActiveTransferOperationId || !TryGetReadinessFact(TaskId, Fact) ||
-        Fact == DivineBeastsLoading::Fact::SessionAdmission || Fact == DivineBeastsLoading::Fact::ExpectedWorld ||
-        Fact == DivineBeastsLoading::Fact::ExpectedExperience || !LoadingContext->Observe(ObservationId, Fact))
+    if (!Loading ||
+        !ActiveLoadingOperation.IsValid() ||
+        !LoadingContext.IsValid() ||
+        ObservationId != ActiveTransferOperationId ||
+        !TryGetReadinessFact(TaskId, Fact) ||
+        Fact == DivineBeastsLoading::Fact::SessionAdmission ||
+        Fact == DivineBeastsLoading::Fact::ExpectedWorld ||
+        Fact == DivineBeastsLoading::Fact::ExpectedExperience ||
+        !LoadingContext->Observe(ObservationId, Fact))
     {
         return false;
     }
+
     TryCompleteWorldReady();
     return true;
 }
 
+void UDivineBeastsApplicationFlowSubsystem::TryReportLocalFactsToSession()
+{
+    if (bSynchronizingSessionFacts ||
+        !Session ||
+        !LoadingContext.IsValid() ||
+        !ActiveTransferOperationId.IsValid())
+    {
+        return;
+    }
+
+    const FGamePlatformSessionSnapshot SessionSnapshot =
+        Session->GetSnapshot();
+    if (SessionSnapshot.TransferOperationId != ActiveTransferOperationId ||
+        !SessionSnapshot.Binding.IsValid())
+    {
+        return;
+    }
+
+    TGuardValue<bool> Guard(bSynchronizingSessionFacts, true);
+    FGamePlatformResult Ignored;
+
+    if (LoadingContext->Has(DivineBeastsLoading::Fact::ExpectedWorld))
+    {
+        Session->ReportLocalFact(
+            ActiveTransferOperationId,
+            EGamePlatformSessionTransferFact::TargetWorldLoaded,
+            SessionSnapshot.Binding,
+            Ignored);
+    }
+
+    if (LoadingContext->Has(DivineBeastsLoading::Fact::CharacterBinding))
+    {
+        Session->ReportLocalFact(
+            ActiveTransferOperationId,
+            EGamePlatformSessionTransferFact::ControllerReady,
+            SessionSnapshot.Binding,
+            Ignored);
+    }
+}
+
+void UDivineBeastsApplicationFlowSubsystem::TryCompleteWorldReady()
+{
+    if (!Loading ||
+        !Session ||
+        !ActiveLoadingOperation.IsValid() ||
+        !LoadingContext.IsValid() ||
+        !LoadingContext->AllReady() ||
+        !LoadingContext->IsWorldOperable() ||
+        !Loading->IsReadyToPlay(ActiveLoadingOperation) ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::WorldReady()))
+    {
+        return;
+    }
+
+    const FGamePlatformSessionSnapshot SessionSnapshot =
+        Session->GetSnapshot();
+    if (SessionSnapshot.TransferOperationId != ActiveTransferOperationId ||
+        SessionSnapshot.State != EGamePlatformSessionTransferState::Ready ||
+        !SessionSnapshot.bAdmissionConfirmed)
+    {
+        return;
+    }
+
+    SubmitCurrentNodeEvent(
+        FDivineBeastsFlowNodes::WorldReady(),
+        FGamePlatformFlowNodeResult::Success());
+}
+
+void UDivineBeastsApplicationFlowSubsystem::FailWorldReady(
+    EDivineBeastsFlowError Error)
+{
+    SetBusy(false);
+    SetError(Error);
+    SubmitCurrentNodeEvent(
+        FDivineBeastsFlowNodes::WorldReady(),
+        ProjectFailure(
+            Error,
+            TEXT("世界进入就绪屏障失败。")));
+}
+
 bool UDivineBeastsApplicationFlowSubsystem::ReleaseLoadingOperation()
 {
-    if (LoadingContext.IsValid()) { LoadingContext->Invalidate(); }
+    if (LoadingContext.IsValid())
+    {
+        LoadingContext->Invalidate();
+    }
+    if (FlowContext)
+    {
+        FlowContext->SetLoadingObservationId(FGuid());
+        FlowContext->ClearConnectionMaterial();
+    }
+
     ViewState.LoadingObservationId.Invalidate();
     ActiveTransferOperationId.Invalidate();
-    PendingEndpoint.Reset();
-    PendingTransferTicket.Reset();
-    BroadcastView();
+
+    bool bSuccess = true;
+
     if (LoadingSubscription.IsValid())
     {
-        if (!Loading) { return false; }
-        Loading->UnsubscribeLoadingState(LoadingSubscription);
+        if (Loading)
+        {
+            bSuccess &= Loading->UnsubscribeLoadingState(
+                LoadingSubscription);
+        }
+        else
+        {
+            bSuccess = false;
+        }
         LoadingSubscription = {};
     }
+
     if (ActiveLoadingOperation.IsValid())
     {
-        if (!Loading) { return false; }
-        const FGamePlatformResult Released = Loading->ReleaseLoadingOperation(ActiveLoadingOperation);
-        if (!Released.IsSuccess()) { return false; }
+        if (Loading)
+        {
+            const FGamePlatformResult Released =
+                Loading->ReleaseLoadingOperation(
+                    ActiveLoadingOperation);
+            bSuccess &= Released.IsSuccess();
+        }
+        else
+        {
+            bSuccess = false;
+        }
         ActiveLoadingOperation = {};
     }
+
     if (!LoadingTaskFactories.IsEmpty())
     {
-        if (!Loading) { return false; }
-        for (int32 Index = LoadingTaskFactories.Num() - 1; Index >= 0; --Index)
+        if (!Loading)
         {
-            const FGamePlatformResult Unregistered = Loading->UnregisterTaskFactory(LoadingTaskFactories[Index]);
-            if (Unregistered.IsSuccess()) { LoadingTaskFactories.RemoveAt(Index); }
+            bSuccess = false;
         }
-        if (!LoadingTaskFactories.IsEmpty()) { return false; }
+        else
+        {
+            for (int32 Index = LoadingTaskFactories.Num() - 1;
+                 Index >= 0;
+                 --Index)
+            {
+                const FGamePlatformResult Unregistered =
+                    Loading->UnregisterTaskFactory(
+                        LoadingTaskFactories[Index]);
+                if (Unregistered.IsSuccess())
+                {
+                    LoadingTaskFactories.RemoveAt(Index);
+                }
+                else
+                {
+                    bSuccess = false;
+                }
+            }
+        }
     }
-    LoadingContext.Reset();
-    return true;
+
+    if (LoadingTaskFactories.IsEmpty())
+    {
+        LoadingContext.Reset();
+    }
+
+    return bSuccess;
+}
+
+void UDivineBeastsApplicationFlowSubsystem::HandleFlowSnapshot(
+    const FGamePlatformFlowSnapshot& Snapshot)
+{
+    if (!ActiveFlow.IsValid() ||
+        Snapshot.Handle.ScopeId != ActiveFlow.ScopeId ||
+        Snapshot.Handle.RunId != ActiveFlow.RunId)
+    {
+        return;
+    }
+
+    ViewState.FlowRunId = ToBlueprintCounter(Snapshot.Handle.RunId);
+    ViewState.CurrentStep = Snapshot.NodeId;
+    ViewState.NodeGeneration = ToBlueprintCounter(Snapshot.NodeGeneration);
+
+    if (Snapshot.NodeId == FDivineBeastsFlowNodes::Authentication() &&
+        Snapshot.NodeGeneration != 0 &&
+        Snapshot.NodeGeneration != LastAutoLoginNodeGeneration)
+    {
+        LastAutoLoginNodeGeneration = Snapshot.NodeGeneration;
+        if (FlowContext &&
+            FlowContext->ShouldTryAutoLogin() &&
+            Online &&
+            Online->GetSnapshot().State !=
+                EGamePlatformAuthState::Authenticated)
+        {
+            SetBusy(true);
+            Online->TryAutoLogin();
+        }
+        else
+        {
+            SetBusy(false);
+        }
+    }
+    else if (Snapshot.NodeId ==
+                 FDivineBeastsFlowNodes::CharacterEntry() &&
+             Snapshot.NodeGeneration != 0)
+    {
+        SetBusy(false);
+    }
+    else if (Snapshot.NodeId ==
+                 FDivineBeastsFlowNodes::WorldReady() &&
+             Snapshot.NodeGeneration != 0)
+    {
+        SetBusy(true);
+        TryCompleteWorldReady();
+    }
+    else if (Snapshot.NodeId ==
+                 FDivineBeastsFlowNodes::InWorld() &&
+             Snapshot.NodeGeneration != 0 &&
+             Snapshot.NodeGeneration != LastEnteredInWorldNodeGeneration)
+    {
+        LastEnteredInWorldNodeGeneration = Snapshot.NodeGeneration;
+        if (FlowContext)
+        {
+            FlowContext->ResetRecoveryAttempts();
+        }
+        ReleaseLoadingOperation();
+        SetBusy(false);
+        SetError(EDivineBeastsFlowError::None);
+        RefreshProjectionFromContext();
+        NotifyExtensionsEnteredWorld();
+    }
+    else if (Snapshot.NodeId ==
+                 FDivineBeastsFlowNodes::Recovering() &&
+             Snapshot.NodeGeneration != 0)
+    {
+        SetBusy(true);
+    }
+
+    RefreshAllowedActions();
+    BroadcastView();
+}
+
+void UDivineBeastsApplicationFlowSubsystem::HandleFlowFinished(
+    const FGamePlatformFlowSnapshot& Snapshot)
+{
+    if (!ActiveFlow.IsValid() ||
+        Snapshot.Handle.ScopeId != ActiveFlow.ScopeId ||
+        Snapshot.Handle.RunId != ActiveFlow.RunId)
+    {
+        return;
+    }
+
+    ActiveFlow = {};
+    SetBusy(false);
+    ReleaseLoadingOperation();
+
+    if (Snapshot.State == EGamePlatformFlowState::Failed &&
+        ViewState.Error == EDivineBeastsFlowError::None)
+    {
+        SetError(EDivineBeastsFlowError::FlowExecutionFailed);
+    }
+
+    RefreshAllowedActions();
+    BroadcastView();
+}
+
+void UDivineBeastsApplicationFlowSubsystem::HandleAuthSnapshot(
+    const FGamePlatformAuthSnapshot& Snapshot)
+{
+    ViewState.ConnectionSummary =
+        StaticEnum<EGamePlatformAuthState>()
+            ? StaticEnum<EGamePlatformAuthState>()
+                ->GetNameStringByValue(
+                    static_cast<int64>(Snapshot.State))
+            : FString();
+
+    if (Session)
+    {
+        Session->SetAuthenticationContext(
+            Snapshot.State == EGamePlatformAuthState::Authenticated
+                ? Snapshot.AccountId
+                : FString(),
+            Snapshot.AuthGeneration);
+    }
+
+    if (Snapshot.State == EGamePlatformAuthState::Authenticated &&
+        IsCurrentNode(FDivineBeastsFlowNodes::Authentication()))
+    {
+        SetBusy(false);
+        SetError(EDivineBeastsFlowError::None);
+        SubmitCurrentNodeEvent(
+            FDivineBeastsFlowNodes::Authentication(),
+            FGamePlatformFlowNodeResult::Success());
+        return;
+    }
+
+    if (Snapshot.State == EGamePlatformAuthState::Failed &&
+        IsCurrentNode(FDivineBeastsFlowNodes::Authentication()))
+    {
+        SetBusy(false);
+        SetError(MapAuthError(Snapshot.Error));
+        // 认证节点继续等待人工重试，不把一次错误密码升级成整个ApplicationFlow终态。
+        return;
+    }
+
+    if (Snapshot.State == EGamePlatformAuthState::LoggedOut &&
+        bRestartAfterLogout)
+    {
+        bRestartAfterLogout = false;
+        StartFlow(true);
+        return;
+    }
+
+    BroadcastView();
 }
 
 void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
@@ -1194,23 +2077,47 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
     ViewState.ConnectionSummary =
         StaticEnum<EGamePlatformSessionTransferState>()
             ? StaticEnum<EGamePlatformSessionTransferState>()
-                ->GetNameStringByValue(static_cast<int64>(Snapshot.State))
+                ->GetNameStringByValue(
+                    static_cast<int64>(Snapshot.State))
             : FString();
 
-    if (Snapshot.State == EGamePlatformSessionTransferState::Admitted)
+    if (Snapshot.bAdmissionConfirmed &&
+        LoadingContext.IsValid())
     {
         DivineBeastsLoading::Fact AdmissionFact;
-        if (LoadingContext.IsValid() && Snapshot.TransferOperationId == ActiveTransferOperationId &&
-            TryGetReadinessFact(TaskSessionAdmission, AdmissionFact) &&
-            LoadingContext->Observe(ActiveTransferOperationId, AdmissionFact))
+        if (TryGetReadinessFact(
+                TaskSessionAdmission,
+                AdmissionFact))
         {
-            TryCompleteWorldReady();
+            LoadingContext->Observe(
+                ActiveTransferOperationId,
+                AdmissionFact);
         }
     }
-    else if (Snapshot.State == EGamePlatformSessionTransferState::Failed)
+
+    TryReportLocalFactsToSession();
+
+    if (IsSessionFailureState(Snapshot.State))
     {
-        BeginRecovery(EDivineBeastsFlowError::AdmissionFailed);
+        if (IsCurrentNode(FDivineBeastsFlowNodes::WorldReady()))
+        {
+            FailWorldReady(EDivineBeastsFlowError::AdmissionFailed);
+            return;
+        }
+
+        if (IsCurrentNode(FDivineBeastsFlowNodes::InWorld()))
+        {
+            NotifyExtensionsLeavingWorld();
+            SetError(EDivineBeastsFlowError::SessionDisconnected);
+            SubmitCurrentNodeEvent(
+                FDivineBeastsFlowNodes::InWorld(),
+                FGamePlatformFlowNodeResult::Success(
+                    FDivineBeastsFlowOutcomes::Recover()));
+            return;
+        }
     }
+
+    TryCompleteWorldReady();
     BroadcastView();
 }
 
@@ -1225,149 +2132,118 @@ void UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot(
     ViewState.LoadingSummary =
         StaticEnum<EGamePlatformLoadingState>()
             ? StaticEnum<EGamePlatformLoadingState>()
-                ->GetNameStringByValue(static_cast<int64>(Snapshot.State))
+                ->GetNameStringByValue(
+                    static_cast<int64>(Snapshot.State))
             : FString();
 
-    if (Snapshot.State == EGamePlatformLoadingState::Ready || Snapshot.State == EGamePlatformLoadingState::DegradedReady)
+    if (Snapshot.State == EGamePlatformLoadingState::Ready ||
+        Snapshot.State == EGamePlatformLoadingState::DegradedReady)
     {
-        if (!Loading || !LoadingContext.IsValid() || !LoadingContext->AllReady() || !LoadingContext->IsWorldOperable() ||
-            !Loading->IsReadyToPlay(ActiveLoadingOperation) || !Session)
-        {
-            BeginRecovery(EDivineBeastsFlowError::WorldReadinessTimedOut);
-        }
-        else
-        {
-            const FGamePlatformSessionSnapshot SessionSnapshot = Session->GetSnapshot();
-            if (SessionSnapshot.TransferOperationId != ActiveTransferOperationId ||
-                SessionSnapshot.State != EGamePlatformSessionTransferState::Admitted)
-            {
-                BeginRecovery(EDivineBeastsFlowError::AdmissionFailed);
-            }
-            else { TryCompleteWorldReady(); }
-        }
+        TryCompleteWorldReady();
     }
-    else if (Snapshot.State == EGamePlatformLoadingState::Failed || Snapshot.State == EGamePlatformLoadingState::TimedOut ||
+    else if (Snapshot.State == EGamePlatformLoadingState::Failed ||
+             Snapshot.State == EGamePlatformLoadingState::TimedOut ||
              Snapshot.State == EGamePlatformLoadingState::Cancelled)
     {
-        BeginRecovery(
+        FailWorldReady(
             EDivineBeastsFlowError::WorldReadinessTimedOut);
+        return;
     }
+
     BroadcastView();
 }
 
-void UDivineBeastsApplicationFlowSubsystem::TryCompleteWorldReady()
+void UDivineBeastsApplicationFlowSubsystem::RefreshProjectionFromContext()
 {
-    if (!Loading ||
-        !Session ||
-        !ActiveLoadingOperation.IsValid() || !LoadingContext.IsValid() ||
-        !LoadingContext->AllReady() || !LoadingContext->IsWorldOperable() ||
-        !Loading->IsReadyToPlay(ActiveLoadingOperation) ||
-        !IsCurrentNode(FDivineBeastsFlowNodes::TransferWorld()))
+    if (!FlowContext)
     {
         return;
     }
-    const FGamePlatformSessionSnapshot SessionSnapshot = Session->GetSnapshot();
-    if (SessionSnapshot.TransferOperationId != ActiveTransferOperationId ||
-        SessionSnapshot.State != EGamePlatformSessionTransferState::Admitted) { return; }
 
-    if (!TransitionTo(FDivineBeastsFlowNodes::WorldReady()) ||
-        !TransitionTo(FDivineBeastsFlowNodes::InWorld()))
-    {
-        BeginRecovery(EDivineBeastsFlowError::WorldMismatch);
-        return;
-    }
-
-    RecoveryAttempts = 0;
-    SetBusy(false);
-    SetError(EDivineBeastsFlowError::None);
-    NotifyExtensionsEnteredWorld();
+    // 这些复制只发生在领域事件/节点终态，不发生在Tick热路径。
+    ViewState.Profile = FlowContext->GetProfile();
+    ViewState.CharacterRoster = FlowContext->GetCharacterRoster();
+    ViewState.SelectedCharacter = FlowContext->GetSelectedCharacter();
+    ViewState.bHasSelectedCharacter =
+        FlowContext->HasSelectedCharacter();
+    ViewState.Assignment = FlowContext->GetAssignment();
+    ViewState.LoadingObservationId =
+        FlowContext->GetLoadingObservationId();
+    RefreshAllowedActions();
+    BroadcastView();
 }
 
-void UDivineBeastsApplicationFlowSubsystem::BeginRecovery(
+void UDivineBeastsApplicationFlowSubsystem::ResetProjection()
+{
+    ViewState = FDivineBeastsFlowViewState();
+    RefreshAllowedActions();
+    BroadcastView();
+}
+
+void UDivineBeastsApplicationFlowSubsystem::SetError(
     EDivineBeastsFlowError Error)
 {
-    if (!ReleaseLoadingOperation())
+    if (ViewState.Error == Error)
     {
-        SetBusy(false);
-        SetError(EDivineBeastsFlowError::StaleOperation);
         return;
     }
-    if (!PlatformFlow || !Session || !ViewState.bHasSelectedCharacter)
-    {
-        SetError(Error);
-        return;
-    }
-
-    SetError(Error);
-    SetBusy(true);
-    ++RecoveryAttempts;
-
-    if (RecoveryAttempts > MaxRecoveryAttempts)
-    {
-        SetBusy(false);
-        SetError(EDivineBeastsFlowError::ReconnectExhausted);
-        TransitionTo(FDivineBeastsFlowNodes::CharacterEntry());
-        return;
-    }
-
-    Session->BeginReconnect(MaxRecoveryAttempts);
-
-    if (!IsCurrentNode(FDivineBeastsFlowNodes::Recovering()))
-    {
-        TransitionTo(FDivineBeastsFlowNodes::Recovering());
-    }
-
-    // Ticket不能重用；恢复永远重新请求Assignment和新票据。
-    RequestWorldAssignment(
-        ViewState.Assignment.ExperienceId.IsNone()
-            ? DefaultExperienceForOnboarding()
-            : ViewState.Assignment.ExperienceId);
+    ViewState.Error = Error;
+    RefreshAllowedActions();
+    BroadcastView();
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::RequestPostMatchReturnToWorld()
+void UDivineBeastsApplicationFlowSubsystem::SetBusy(bool bBusy)
 {
-    if (!IsCurrentNode(FDivineBeastsFlowNodes::InWorld()) ||
-        !ViewState.bHasSelectedCharacter)
+    if (ViewState.bBusy == bBusy)
     {
-        return false;
+        return;
     }
-
-    // 不缓存旧OpenWorld Endpoint；重新向后端请求安全Assignment。
-    return RequestWorldAssignment(
-        FName(TEXT("Experience.OpenWorld.Hub")));
+    ViewState.bBusy = bBusy;
+    RefreshAllowedActions();
+    BroadcastView();
 }
 
-void UDivineBeastsApplicationFlowSubsystem::LogoutAndRestart()
+void UDivineBeastsApplicationFlowSubsystem::RefreshAllowedActions()
 {
-    bRestartAfterLogout = true;
+    TArray<EDivineBeastsFlowAction> Next;
 
-    if (Backend.IsValid())
+    if (IsCurrentNode(FDivineBeastsFlowNodes::Authentication()))
     {
-        Backend->CancelAll();
+        Next = {
+            EDivineBeastsFlowAction::TryAutoLogin,
+            EDivineBeastsFlowAction::Login
+        };
     }
-    if (!ReleaseLoadingOperation())
+    else if (IsCurrentNode(FDivineBeastsFlowNodes::CharacterEntry()))
     {
-        UE_LOG(LogTemp, Error, TEXT("DivineBeasts flow logout could not release its owned Loading operation"));
+        Next = {
+            EDivineBeastsFlowAction::CreateCharacter,
+            EDivineBeastsFlowAction::SelectPersistentCharacter,
+            EDivineBeastsFlowAction::Logout
+        };
     }
-    if (Session)
+    else if (IsCurrentNode(FDivineBeastsFlowNodes::InWorld()))
     {
-        Session->CancelTransfer();
+        Next = {
+            EDivineBeastsFlowAction::RequestExperience,
+            EDivineBeastsFlowAction::Logout
+        };
     }
-    if (PlatformFlow)
+    else if (!ActiveFlow.IsValid() &&
+             ViewState.Error != EDivineBeastsFlowError::None)
     {
-        PlatformFlow->InvalidateRun();
+        Next = {
+            EDivineBeastsFlowAction::Retry,
+            EDivineBeastsFlowAction::Logout
+        };
     }
 
-    ResetProjection();
+    ViewState.AllowedActions = MoveTemp(Next);
+}
 
-    if (Online)
-    {
-        Online->Logout();
-    }
-    else
-    {
-        bRestartAfterLogout = false;
-    }
+void UDivineBeastsApplicationFlowSubsystem::BroadcastView()
+{
+    ViewStateChanged.Broadcast(ViewState);
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::RegisterExtension(
@@ -1378,24 +2254,32 @@ bool UDivineBeastsApplicationFlowSubsystem::RegisterExtension(
     {
         return false;
     }
+
     Extensions.Add(ExtensionId, Extension);
+    ExtensionOrder.Add(ExtensionId);
+    ExtensionOrder.Sort(
+        [](const FName& Left, const FName& Right)
+        {
+            return Left.LexicalLess(Right);
+        });
     return true;
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::UnregisterExtension(FName ExtensionId)
+bool UDivineBeastsApplicationFlowSubsystem::UnregisterExtension(
+    FName ExtensionId)
 {
-    return Extensions.Remove(ExtensionId) > 0;
+    if (Extensions.Remove(ExtensionId) == 0)
+    {
+        return false;
+    }
+    ExtensionOrder.RemoveSingle(ExtensionId);
+    return true;
 }
 
 void UDivineBeastsApplicationFlowSubsystem::NotifyExtensionsEnteredWorld()
 {
-    TArray<FName> Ids;
-    Extensions.GetKeys(Ids);
-    Ids.Sort([](const FName& A, const FName& B)
-    {
-        return A.LexicalLess(B);
-    });
-    for (const FName Id : Ids)
+    // 注册时已经排序，世界切换热路径不再分配临时Key数组或重复排序。
+    for (const FName Id : ExtensionOrder)
     {
         const TSharedPtr<IDivineBeastsApplicationFlowExtension>* Extension =
             Extensions.Find(Id);
@@ -1408,13 +2292,7 @@ void UDivineBeastsApplicationFlowSubsystem::NotifyExtensionsEnteredWorld()
 
 void UDivineBeastsApplicationFlowSubsystem::NotifyExtensionsLeavingWorld()
 {
-    TArray<FName> Ids;
-    Extensions.GetKeys(Ids);
-    Ids.Sort([](const FName& A, const FName& B)
-    {
-        return A.LexicalLess(B);
-    });
-    for (const FName Id : Ids)
+    for (const FName Id : ExtensionOrder)
     {
         const TSharedPtr<IDivineBeastsApplicationFlowExtension>* Extension =
             Extensions.Find(Id);
@@ -1425,86 +2303,47 @@ void UDivineBeastsApplicationFlowSubsystem::NotifyExtensionsLeavingWorld()
     }
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::TransitionTo(FName NodeId)
+bool UDivineBeastsApplicationFlowSubsystem::RequestPostMatchReturnToWorld()
 {
-    return PlatformFlow && PlatformFlow->TransitionTo(NodeId);
+    return RequestWorldAssignment(
+        FDivineBeastsProjectCatalog::GetOpenWorldHubExperience());
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::IsCurrentNode(FName NodeId) const
+void UDivineBeastsApplicationFlowSubsystem::LogoutAndRestart()
 {
-    return PlatformFlow &&
-        PlatformFlow->GetSnapshot().bActive &&
-        PlatformFlow->GetSnapshot().CurrentNodeId == NodeId;
-}
+    bRestartAfterLogout = true;
+    ++StartRequestGeneration;
 
-void UDivineBeastsApplicationFlowSubsystem::HandleFlowSnapshot(
-    const FGamePlatformFlowSnapshot& Snapshot)
-{
-    ViewState.FlowRunId = Snapshot.FlowRunId;
-    ViewState.CurrentStep = Snapshot.CurrentNodeId;
-    ViewState.NodeGeneration = Snapshot.NodeGeneration;
-    RefreshAllowedActions();
-    BroadcastView();
-}
-
-void UDivineBeastsApplicationFlowSubsystem::ResetProjection()
-{
-    ViewState = FDivineBeastsFlowViewState();
-    PendingEndpoint.Reset();
-    PendingTransferTicket.Reset();
-    RecoveryAttempts = 0;
-    RefreshAllowedActions();
-    BroadcastView();
-}
-
-void UDivineBeastsApplicationFlowSubsystem::SetError(
-    EDivineBeastsFlowError Error)
-{
-    ViewState.Error = Error;
-    RefreshAllowedActions();
-    BroadcastView();
-}
-
-void UDivineBeastsApplicationFlowSubsystem::SetBusy(bool bBusy)
-{
-    ViewState.bBusy = bBusy;
-    RefreshAllowedActions();
-    BroadcastView();
-}
-
-void UDivineBeastsApplicationFlowSubsystem::RefreshAllowedActions()
-{
-    ViewState.AllowedActions.Reset();
-    if (ViewState.bBusy)
+    if (Backend.IsValid())
     {
-        ViewState.AllowedActions.Add(EDivineBeastsFlowAction::Logout);
-        return;
+        Backend->CancelAll();
+    }
+    ReleaseLoadingOperation();
+
+    if (Session)
+    {
+        FGamePlatformResult Ignored;
+        Session->CancelTransfer(Ignored);
     }
 
-    if (ViewState.CurrentStep == FDivineBeastsFlowNodes::Authentication())
+    if (PlatformFlow && ActiveFlow.IsValid())
     {
-        ViewState.AllowedActions.Add(EDivineBeastsFlowAction::TryAutoLogin);
-        ViewState.AllowedActions.Add(EDivineBeastsFlowAction::Login);
-    }
-    else if (ViewState.CurrentStep == FDivineBeastsFlowNodes::CharacterEntry())
-    {
-        ViewState.AllowedActions.Add(
-            EDivineBeastsFlowAction::CreateCharacter);
-        if (!ViewState.CharacterRoster.IsEmpty())
-        {
-            ViewState.AllowedActions.Add(
-                EDivineBeastsFlowAction::SelectPersistentCharacter);
-        }
+        PlatformFlow->Cancel(ActiveFlow);
+        ActiveFlow = {};
     }
 
-    if (ViewState.Error != EDivineBeastsFlowError::None)
+    ReleasePendingFlowDefinitionLease();
+    FlowContext = nullptr;
+    ResetProjection();
+
+    if (Online)
     {
-        ViewState.AllowedActions.Add(EDivineBeastsFlowAction::Retry);
+        Online->Logout();
     }
-    ViewState.AllowedActions.Add(EDivineBeastsFlowAction::Logout);
+    else
+    {
+        bRestartAfterLogout = false;
+        SetError(EDivineBeastsFlowError::FlowNotInitialized);
+    }
 }
 
-void UDivineBeastsApplicationFlowSubsystem::BroadcastView()
-{
-    ViewStateChanged.Broadcast(ViewState);
-}

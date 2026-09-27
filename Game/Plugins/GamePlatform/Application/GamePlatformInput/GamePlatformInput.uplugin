@@ -3,7 +3,7 @@
   "Version": 1,
   "VersionName": "0.1.0",
   "FriendlyName": "GamePlatformInput",
-  "Description": "本地玩家增强输入、租约和非权威偏好；真实设备及发布验收另行记录。",
+  "Description": "PC键鼠/手柄与移动Touch统一语义输入、LocalPlayer租约、重绑定、无障碍偏好和客户端输入仲裁。",
   "Category": "GamePlatform",
   "CanContainContent": false,
   "EnabledByDefault": false,

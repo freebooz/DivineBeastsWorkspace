@@ -19,6 +19,7 @@ enum class EDivineBeastsFlowError : uint8
 {
     None,
     FlowNotInitialized,
+    FlowExecutionFailed,
     AuthenticationRequired,
     AuthenticationFailed,
     InvalidCredentials,
@@ -66,6 +67,7 @@ enum class EDivineBeastsFlowAction : uint8
     CreateCharacter,
     SelectPersistentCharacter,
     Retry,
+    RequestExperience,
     Logout
 };
 
@@ -152,9 +154,11 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsFlowViewState
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadOnly) FGuid FlowRunId;
+    /** 平台流程运行代次；同一GameInstance严格递增，0表示尚未运行。 */
+    UPROPERTY(BlueprintReadOnly) int64 FlowRunId = 0;
     UPROPERTY(BlueprintReadOnly) FName CurrentStep = NAME_None;
-    UPROPERTY(BlueprintReadOnly) int32 NodeGeneration = 0;
+    /** 当前节点执行代次；循环再次进入同名节点也会获得新的非零值。 */
+    UPROPERTY(BlueprintReadOnly) int64 NodeGeneration = 0;
     UPROPERTY(BlueprintReadOnly) bool bBusy = false;
     UPROPERTY(BlueprintReadOnly) EDivineBeastsFlowError Error =
         EDivineBeastsFlowError::None;

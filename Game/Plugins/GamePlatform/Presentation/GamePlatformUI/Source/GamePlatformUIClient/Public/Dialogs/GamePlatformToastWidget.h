@@ -1,11 +1,17 @@
 #pragma once
 
-#include "CommonUserWidget.h"
+#include "Notifications/GamePlatformNotificationWidget.h"
 #include "GamePlatformToastWidget.generated.h"
 
-/** 通用短提示；不抢输入焦点。 */
+/**
+ * UGamePlatformToastWidget（游戏平台短提示基类）。
+ *
+ * Toast 属于 Notification（通知）分类，不抢输入焦点、不进入页面栈。
+ * 显示时长、优先级和去重键由 Manager 统一处理，业务模块只提交展示数据。
+ */
 UCLASS(Abstract, Blueprintable)
-class GAMEPLATFORMUICLIENT_API UGamePlatformToastWidget : public UCommonUserWidget
+class GAMEPLATFORMUICLIENT_API UGamePlatformToastWidget
+    : public UGamePlatformNotificationWidget
 {
     GENERATED_BODY()
 

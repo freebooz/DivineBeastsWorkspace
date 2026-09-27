@@ -5,6 +5,9 @@ add_executable(LoadingPolicyTests ../Source/GamePlatformLoading/Private/Tests/Lo
 target_compile_features(LoadingPolicyTests PRIVATE cxx_std_17)
 target_compile_definitions(LoadingPolicyTests PRIVATE GAMEPLATFORM_LOADING_NATIVE_TEST=1)
 if(MSVC)
-  target_compile_options(LoadingPolicyTests PRIVATE /utf-8 /W4)
+  # 原生策略层作为平台底座，警告按错误处理，防止性能/边界重构引入隐式转换等问题。
+  target_compile_options(LoadingPolicyTests PRIVATE /utf-8 /W4 /WX)
+else()
+  target_compile_options(LoadingPolicyTests PRIVATE -Wall -Wextra -Werror -pedantic)
 endif()
 add_test(NAME LoadingPolicy COMMAND LoadingPolicyTests)
