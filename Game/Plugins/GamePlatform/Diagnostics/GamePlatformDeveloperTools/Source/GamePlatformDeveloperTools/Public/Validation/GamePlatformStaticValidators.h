@@ -15,6 +15,15 @@ public:
     bool WriteDependencyGraphJson(const FString& OutputPath, FString& OutError) const;
 };
 
+/** UGamePlatformInheritanceBoundaryValidator（三层类型继承与Public API边界验证器）。 */
+UCLASS()
+class GAMEPLATFORMDEVELOPERTOOLS_API UGamePlatformInheritanceBoundaryValidator : public UObject
+{
+    GENERATED_BODY()
+public:
+    void ValidateWorkspace(TArray<FGamePlatformValidationResult>& OutResults) const;
+};
+
 /** UGamePlatformClientLeakValidator（客户端泄漏验证器）；只对真实构建/Cook工件给结论。 */
 UCLASS()
 class GAMEPLATFORMDEVELOPERTOOLS_API UGamePlatformClientLeakValidator : public UObject

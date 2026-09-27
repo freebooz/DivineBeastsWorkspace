@@ -16,6 +16,7 @@ bool FGamePlatformDeveloperToolsRulesTest::RunTest(const FString& Parameters)
     const TArray<FGamePlatformValidationRule>& Rules = FGamePlatformValidationService::GetRules();
     TestTrue(TEXT("Built-in rules are registered"), Rules.Num() >= 10);
     TestNotNull(TEXT("Dependency rule exists"), FGamePlatformValidationService::FindRule(TEXT("GP.Dependency")));
+    TestNotNull(TEXT("Inheritance boundary rule exists"), FGamePlatformValidationService::FindRule(TEXT("GP.InheritanceBoundary")));
     TestTrue(
         TEXT("Removed Element tag is rejected"),
         FGamePlatformValidationService::IsRemovedLegacyGameplayTag(TEXT("Element.Fire")));

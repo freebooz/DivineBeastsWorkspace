@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 项目自有头文件存在性预检：0为未发现缺失，1为缺失，2为检查未完成。
 .DESCRIPTION
@@ -6,8 +6,11 @@
 此预检也不能替代UE实际构建、类型／方法兼容性检查或服务联调。
 #>
 [CmdletBinding()]
-param([string]$WorkspaceRoot = (Join-Path $PSScriptRoot '../..'))
+param([string]$WorkspaceRoot)
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($WorkspaceRoot)) {
+    $WorkspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+}
 try {
     Import-Module (Join-Path $PSScriptRoot 'ProjectHeaderAudit.psm1') -Force
     $report = Test-ProjectOwnedHeaders -WorkspaceRoot $WorkspaceRoot

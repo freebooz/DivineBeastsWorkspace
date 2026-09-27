@@ -12,6 +12,7 @@
 - [设计基线整合实施规格草案](Architecture/设计基线整合实施规格草案.md)：已批准并修订为46+N的插件、三角色服务器及旧实现迁移目标；尚非实施结果。
 - [设计基线整合实施计划](Architecture/设计基线整合实施计划.md)：历史执行记录；旧四DBA及45上限已被新方案替代，历史证据不回写。
 - [游戏端插件三层架构实施规划](Architecture/游戏端插件三层架构实施规划.md)：本次授权方案、迁移清单、依赖边界、内容登记、回退与实际验证限制。
+- [三层类继承与扩展规范](Architecture/三层类继承与扩展规范.md)：GamePlatform、MobaCommon与DivineBeasts之间的继承、接口、组件和数据扩展边界。
 - [插件开发规范](../Game/Plugins/插件开发规范.md)：UE 插件依赖、生命周期和交付门禁。
 
 ## 历史决策与后续插件实施
@@ -22,6 +23,7 @@
 ## 当前实现与验证
 
 - [工程缺项修复执行记录](Architecture/工程缺项修复执行记录.md)：补齐六项默认配置、源码头文件预检、原生内核测试、真实UE构建失败证据与尚未接通的项目API。
+- [游戏端插件系统P0收敛审计](Architecture/游戏端插件系统P0收敛审计.md)：P0-1～P0-9的插件、Definition、继承门禁、表现规格、Review Harness和Phase 1实施顺序。
 - [游戏流程与会话准入后端纵向修复设计规格](Architecture/游戏流程与会话准入后端纵向修复设计规格.md)：项目Flow、Gateway/GameServerControl、PostgreSQL准入与真实UE连接绑定的待审设计，不代表已实施。
 - [Foundation M0执行进度](Implementation/FoundationM0/ExecutionProgress.md)：00→03实际断点、兼容决定与原位历史构建阻断。
 - [Foundation M0实际接口](Implementation/FoundationM0/InterfaceContract.md)：Core、Data、Flow及主工程调用的已写入签名。

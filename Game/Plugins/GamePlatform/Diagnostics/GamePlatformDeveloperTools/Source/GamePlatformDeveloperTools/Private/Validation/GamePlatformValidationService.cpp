@@ -61,6 +61,7 @@ void FGamePlatformValidationService::RegisterBuiltInRules()
     {
         MakeRule(TEXT("GP.Naming"), TEXT("Naming"), EGamePlatformValidationSeverity::Error, TEXT("平台/项目资产与代码命名必须符合约定。"), TEXT("稳定命名降低跨插件复用和资产定位成本。"), TEXT("Editor assets + source metadata")),
         MakeRule(TEXT("GP.Dependency"), TEXT("Architecture"), EGamePlatformValidationSeverity::Error, TEXT("三层依赖只允许向基础层方向且禁止循环。"), TEXT("防止GamePlatform反向依赖MobaCommon/DivineBeasts。"), TEXT("Build.cs + .uplugin + module graph")),
+        MakeRule(TEXT("GP.InheritanceBoundary"), TEXT("Architecture"), EGamePlatformValidationSeverity::Error, TEXT("三层类型继承与Public API必须只向基础层扩展。"), TEXT("防止GamePlatform/MobaCommon公开类型被项目层反向污染。"), TEXT("C++ Public headers + type graph; assets via DataValidation")),
         MakeRule(TEXT("GP.ClientLeak"), TEXT("Cook"), EGamePlatformValidationSeverity::Error, TEXT("Client构建/Cook不得包含ServerOnly内容。"), TEXT("端侧隔离与秘密最小暴露。"), TEXT("real client receipt/cook manifest")),
         MakeRule(TEXT("GP.ServerLeak"), TEXT("Cook"), EGamePlatformValidationSeverity::Error, TEXT("Server构建/Cook不得包含无必要客户端表现内容。"), TEXT("降低Dedicated Server包体与加载开销。"), TEXT("real server receipt/cook manifest")),
         MakeRule(TEXT("GP.Content"), TEXT("Content"), EGamePlatformValidationSeverity::Error, TEXT("资产引用、路径、Primary Asset、Chunk与开发内容必须有效。"), TEXT("保证Cook可重复且资源边界清晰。"), TEXT("Asset Registry/Asset Manager")),

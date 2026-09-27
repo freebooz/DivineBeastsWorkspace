@@ -2,6 +2,12 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-27｜游戏端插件系统P0收敛审计
+
+- 新增P0-1～P0-9审计与实施规格，补充Animation、Camera、SFX和统一Review Harness文档；明确当前真实资产为零且Session公开服务仍缺失，不宣称功能或人工审核完成。
+- 新增PowerShell三层继承边界审计并接入设计基线；GamePlatformDeveloperTools增加对应编辑器验证器，GamePlatformData编辑器验证器按真实职责更名。
+- 本轮架构回归65/65、实际继承扫描299个Public头／629个类型／42条边通过；头文件预检仍因`GamePlatformSessionClientSubsystem.h`缺失失败，未执行UE编译、Cook、联机或人工验收。
+
 ## 2026-09-27｜三层类继承与扩展规范
 
 - 新增 `Docs/Architecture/三层类继承与扩展规范.md`，明确 `GamePlatform（平台基类） → MobaCommon（MOBA可选扩展） → DivineBeasts（项目派生）` 的单向继承与依赖边界。

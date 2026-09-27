@@ -1,4 +1,4 @@
-Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version Latest
 
 function Get-CppLiteralIncludes {
     # 按C++预处理顺序先拼接反斜线续行，再按最先出现的词法单元屏蔽注释／字面量。

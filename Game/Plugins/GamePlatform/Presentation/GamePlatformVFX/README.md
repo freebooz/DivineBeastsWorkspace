@@ -27,4 +27,4 @@
 
 当前真实UE5.8 Editor/Client/Server编译、UE Automation、Client/Server Cook、Multi-PIE、L_VFXReview、5v5/Android性能均因Runner未配置UE_ROOT或缺少合法二进制测试资产而保持“未执行”，未以静态门禁冒充运行通过。
 
-完整架构见本插件 Docs/ 和工作区 Docs/DivineBeastsWorkspace_Architecture_40Plugins_FourServers.md。
+完整架构见本插件 `Docs/`、工作区 `Docs/Architecture/游戏端核心要求.md`、`Docs/Architecture/三层类继承与扩展规范.md` 与 `Docs/Architecture/游戏端插件系统P0收敛审计.md`；旧四服务器文档不再作为执行基线。

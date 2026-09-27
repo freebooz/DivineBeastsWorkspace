@@ -1,16 +1,16 @@
-#include "Validation/GamePlatformDefinitionValidator.h"
+#include "Validation/GamePlatformDataDefinitionValidator.h"
 #include "Definitions/GamePlatformDefinitionBase.h"
 #include "Validation/GamePlatformDefinitionValidation.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Misc/DataValidation.h"
 
-bool UGamePlatformDefinitionValidator::CanValidateAsset_Implementation(const FAssetData& InAssetData, UObject* InObject, FDataValidationContext& InContext) const
+bool UGamePlatformDataDefinitionValidator::CanValidateAsset_Implementation(const FAssetData& InAssetData, UObject* InObject, FDataValidationContext& InContext) const
 {
     return InObject && InObject->IsA<UGamePlatformPrimaryDataAsset>();
 }
 
-EDataValidationResult UGamePlatformDefinitionValidator::ValidateLoadedAsset_Implementation(const FAssetData& InAssetData, UObject* InAsset, FDataValidationContext& Context)
+EDataValidationResult UGamePlatformDataDefinitionValidator::ValidateLoadedAsset_Implementation(const FAssetData& InAssetData, UObject* InAsset, FDataValidationContext& Context)
 {
     auto Fail = [this, InAsset](const FGamePlatformResult& Result)
     {

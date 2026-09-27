@@ -1,4 +1,4 @@
-#include "Validation/GamePlatformDefinitionValidator.h"
+#include "Validation/GamePlatformDataDefinitionValidator.h"
 #include "Definitions/GamePlatformDefinitionBase.h"
 #include "Validation/GamePlatformDefinitionValidation.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -38,7 +38,7 @@ struct FDefinitionFixture
 };
 EDataValidationResult Validate(UGamePlatformDefinitionBase* Definition)
 {
-    TStrongObjectPtr<UGamePlatformDefinitionValidator> Validator(NewObject<UGamePlatformDefinitionValidator>());
+    TStrongObjectPtr<UGamePlatformDataDefinitionValidator> Validator(NewObject<UGamePlatformDataDefinitionValidator>());
     FDataValidationContext Context(false, EDataValidationUsecase::Commandlet, {});
     // 调用编辑器实际入口，验证器若未执行应返回NotValidated而使这些断言失败。
     return Validator->ValidateLoadedAsset(FAssetData(Definition), Definition, Context);
@@ -117,7 +117,7 @@ bool FGamePlatformValidatorDispatchTest::RunTest(const FString& Parameters)
     bool bIsRegistered = false;
     Validation->ForEachEnabledValidator([&](UEditorValidatorBase* Validator)
     {
-        if (Validator->IsA<UGamePlatformDefinitionValidator>()) bIsRegistered = true;
+        if (Validator->IsA<UGamePlatformDataDefinitionValidator>()) bIsRegistered = true;
         return true;
     });
     if (!TestTrue(TEXT("平台验证器已被编辑器自动登记"), bIsRegistered)) return false;
