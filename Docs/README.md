@@ -13,6 +13,7 @@
 - [设计基线整合实施计划](Architecture/设计基线整合实施计划.md)：历史执行记录；旧四DBA及45上限已被新方案替代，历史证据不回写。
 - [游戏端插件三层架构实施规划](Architecture/游戏端插件三层架构实施规划.md)：本次授权方案、迁移清单、依赖边界、内容登记、回退与实际验证限制。
 - [三层类继承与扩展规范](Architecture/三层类继承与扩展规范.md)：GamePlatform、MobaCommon与DivineBeasts之间的继承、接口、组件和数据扩展边界。
+- [游戏端插件系统P0收敛审计](Architecture/游戏端插件系统P0收敛审计.md)：P0-1～P0-9真实审计、Definition迁移矩阵、三层继承门禁、VFX扩展点、Online/Session阻断、3A表现规格、Review Harness与Phase 1执行顺序。
 - [插件开发规范](../Game/Plugins/插件开发规范.md)：UE 插件依赖、生命周期和交付门禁。
 
 ## 历史决策与后续插件实施

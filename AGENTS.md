@@ -27,6 +27,7 @@ Docs/References（参考资料）中的原文、历史压缩包、搜索结果�
 正式代码／机制基线为46个插件：40个GamePlatform稳定身份（平台层39个、MOBA层GamePlatformArena一个）、独立MobaPresentation及5个DBA代码插件。项目代码只维护DBAGameplay、DBAWorlds、DBAClient、DBAServer、DBAArena；不恢复旧项目插件树。真实内容插件按Game/Plugins/DivineBeasts/ContentPacks/ContentPackRegistry.json登记另计N，不创建空插件。DBAArena仅客户端／编辑器目标依赖DBAClient，服务器装配不得带入公共客户端。
 非MOBA登录、通用角色、世界与交互不得被迫依赖竞技。三层既是复用边界，也是类型扩展边界：对存在稳定同领域抽象的类型，必须优先采用GamePlatform平台基类／接口 → MobaCommon可选中间扩展 → DivineBeasts项目派生的单向继承；没有新增结构的纯内容差异使用Definition／DataAsset实例，不为形式机械建立三层Actor、Subsystem或Service继承树。内容包属于第三层内部，不是第四层。
 同层模块也必须无环。依赖检查覆盖构建规则、公开头、蓝图父类、资产引用、配置路径与注册关系，不能只看文件夹名称。插件描述与模块构建规则都必须声明真实需要的依赖；不得访问其他模块私有头文件。
+三层C++公开类型边界由`GamePlatformDeveloperTools`的`GP.InheritanceBoundary`及`Tests/Architecture/InheritanceBoundaryAudit.psm1`双重门禁检查；GamePlatform不得继承/公开引用MobaCommon或DivineBeasts，MobaCommon不得继承/公开引用DivineBeasts，跨层只能继承低层Public类型。真实Blueprint/DataAsset父类与硬引用仍须在存在真实UE资产后通过AssetRegistry/DataValidation补证，静态源码门禁不得冒充资产验收。
 MobaCommon/GamePlatformArena（通用竞技插件）保留五模块：GamePlatformMobaCore（MOBA契约）、GamePlatformMobaData（MOBA数据）、GamePlatformArena（双端竞技）、GamePlatformArenaClient（竞技客户端）、GamePlatformArenaServer（竞技服务器）。
 允许按本次整合新增 MobaPresentation（MOBA表现语义插件），只含 MobaPresentationRuntime（共享语义模块）、MobaPresentationClient（客户端适配模块）；不改造为第二套竞技或特效框架，不复制五模块职责。
 不得按附件示意再创建独立的旧MOBA英雄、技能、战斗、比赛、竞技插件。通用角色、技能和战斗机制仍在平台层。竞技客户端、服务器不互相依赖，数据不反向依赖运行。
