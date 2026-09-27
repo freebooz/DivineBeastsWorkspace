@@ -106,6 +106,23 @@ func TestGeneratedRevisionIsPathStableAndInputSensitive(t *testing.T) {
 	if generateRevision(first) == generateRevision(second) {
 		t.Fatal("源契约内容变化必须改变GeneratedRevision")
 	}
+	lfInputs := map[string][]byte{"catalog.json": []byte("{\n  \"version\": 1\n}\n")}
+	crlfInputs := map[string][]byte{"catalog.json": []byte("{\r\n  \"version\": 1\r\n}\r\n")}
+	if generateRevision(lfInputs) != generateRevision(crlfInputs) {
+		t.Fatal("相同文本契约的Revision不能因Windows CRLF与Unix LF换行差异而变化")
+	}
+}
+
+// TestGeneratedContentComparisonIgnoresPlatformLineEndings（生成物换行比较测试）避免Windows检出把最新生成物误报为过期。
+func TestGeneratedContentComparisonIgnoresPlatformLineEndings(t *testing.T) {
+	lf := []byte("first\nsecond\n")
+	crlf := []byte("first\r\nsecond\r\n")
+	if !generatedContentMatches(crlf, lf) {
+		t.Fatal("生成物校验应将CRLF与LF视为相同文本内容")
+	}
+	if generatedContentMatches([]byte("first\nchanged\n"), lf) {
+		t.Fatal("生成物校验不能忽略真实内容变化")
+	}
 }
 
 // TestArenaModeMappingsRequireCompleteAndConsistentCoverage（竞技模式映射完整性测试）拒绝遗漏、重复及角色体验错配。

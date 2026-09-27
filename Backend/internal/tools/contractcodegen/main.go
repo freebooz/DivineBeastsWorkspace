@@ -178,7 +178,7 @@ func main() {
 	for path, content := range outputs {
 		if *check {
 			current, err := os.ReadFile(path)
-			if err != nil || !bytes.Equal(current, content) {
+			if err != nil || !generatedContentMatches(current, content) {
 				fmt.Fprintf(os.Stderr, "生成物过期: %s\n", path)
 				stale = true
 			}
@@ -194,6 +194,11 @@ func main() {
 	if *official {
 		runOfficial(root)
 	}
+}
+
+// generatedContentMatches（比较生成文本）忽略平台检出导致的CRLF/LF差异，但保留真实内容差异检测。
+func generatedContentMatches(current, expected []byte) bool {
+	return bytes.Equal(normalizeTextLineEndings(current), normalizeTextLineEndings(expected))
 }
 
 func scanContracts(root string) contractMetadata {
@@ -458,10 +463,15 @@ func generateRevision(inputs map[string][]byte) string {
 	for _, path := range paths {
 		_, _ = hash.Write([]byte(path))
 		_, _ = hash.Write([]byte{0})
-		_, _ = hash.Write(inputs[path])
+		_, _ = hash.Write(normalizeTextLineEndings(inputs[path]))
 		_, _ = hash.Write([]byte{0})
 	}
 	return hex.EncodeToString(hash.Sum(nil))
+}
+
+// normalizeTextLineEndings（统一文本换行）保证同一契约在Windows和Unix检出环境中生成相同摘要。
+func normalizeTextLineEndings(content []byte) []byte {
+	return bytes.ReplaceAll(content, []byte("\r\n"), []byte("\n"))
 }
 
 func compatibilityRangeFromMatrix(matrix compatibilityMatrix, currentVersion string) contractCompatibility {

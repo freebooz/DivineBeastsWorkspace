@@ -6,7 +6,7 @@ const (
 	GameID                                       = "divinebeasts"
 	ProjectID                                    = "DivineBeastsArena"
 	ContractVersion                              = "2.0.0"
-	GeneratedRevision                            = "99d0928cff73710c1e71cbf4c74817c8e73d26ecf0a0dc2514a7e9b307edd3b7"
+	GeneratedRevision                            = "6b179283edcddbb6d5bbaa7c3a11d6622654e12d90875011ee3432600c4b5f55"
 	CatalogVersion                               = 1
 	ClientServerMinimumContractVersion           = "2.0.0"
 	ClientServerMaximumExclusiveContractVersion  = "3.0.0"

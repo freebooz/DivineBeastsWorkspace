@@ -32,6 +32,8 @@ go run ./internal/tools/contractcodegen -workspace-root=.. -check
 
 神兽联盟项目身份与竞技上下文映射位于`Shared/Contracts/Games/DivineBeasts/Schemas/server-catalog.schema.json`的`x-project-identity`、`x-catalog-version`、`x-role-experience-map`和`x-arena-mode-context-map`扩展；生成修订号对四份项目Schema、`Shared/Docs/contract-version.json`及兼容矩阵六个输入按规范相对路径排序后计算SHA-256。Go与C++消费同一批输出，禁止另维护手写身份表或项目专用生成脚本。
 
+生成器在计算`GeneratedRevision`和执行`-check`时统一将文本的Windows CRLF换行视为Unix LF，保证同一提交在Windows、Linux及容器挂载环境中得到相同结果；该兼容仅忽略换行编码差异，字段、空白和其他真实内容变化仍会使校验失败。
+
 ## 3. 正式 Proto/OpenAPI 生成
 
 安装 `codegen-tools.lock.json` 中锁定的工具版本后，从 `Backend/` 执行。生成器会先逐一校验 `protoc / protoc-gen-go / protoc-gen-go-grpc / oapi-codegen` 的实际版本，不匹配立即失败：
