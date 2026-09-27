@@ -1,0 +1,9 @@
+# MigrationAndHandover（迁移与交接）
+
+执行前工作树不存在DivineBeastsCharacters或旧DBACharacterCore/Gameplay/Content/Editor/Review实现，因此本轮为新增插件，不做机械旧模块保留。
+
+GamePlatformCharacter原本只有模块骨架，本轮只补跨游戏可复用的Hero Definition、Initialization Context/Initializer和Character Creation Provider契约；项目生肖字段留在DivineBeastsCharacters。
+
+DBAGameplay/DBAClient/DBAServer旧HeroDefinitions目录目前只有.gitkeep，不迁移伪资产。真实12个DA_Hero_Zodiac_*必须在有UE5.8 Editor后合法生成并经人工审查。
+
+下一插件DivineBeastsAbilities（神兽联盟项目技能插件）只保留Creation Gate续作断点，本轮不实现。

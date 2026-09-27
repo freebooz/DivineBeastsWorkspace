@@ -15,7 +15,7 @@ services:
       SERVICE_VERSION: local
       SHUTDOWN_TIMEOUT: 15s
     ports:
-      - "8081:8081"
+      - "127.0.0.1:${IDENTITY_HOST_PORT:-8081}:8081"
     networks:
       - backend
 
@@ -33,7 +33,7 @@ services:
       SERVICE_VERSION: local
       SHUTDOWN_TIMEOUT: 15s
     ports:
-      - "8082:8082"
+      - "127.0.0.1:${PLAYER_DATA_HOST_PORT:-8082}:8082"
     networks:
       - backend
 
@@ -51,7 +51,7 @@ services:
       SERVICE_VERSION: local
       SHUTDOWN_TIMEOUT: 15s
     ports:
-      - "8083:8083"
+      - "127.0.0.1:${MATCH_HOST_PORT:-8083}:8083"
     networks:
       - backend
 
@@ -68,8 +68,9 @@ services:
       GRPC_PORT: "9084"
       SERVICE_VERSION: local
       SHUTDOWN_TIMEOUT: 15s
+      GAMESERVERCONTROL_INTERNAL_TOKEN: ${GAMESERVERCONTROL_INTERNAL_TOKEN:?required}
     ports:
-      - "8084:8084"
+      - "127.0.0.1:${GAMESERVER_CONTROL_HOST_PORT:-8084}:8084"
     networks:
       - backend
 
@@ -95,7 +96,7 @@ services:
       MATCH_SERVICE_URL: http://matchservice:8083
       DIVINEBEASTS_SWAGGER_CONTRACTS_ROOT: /contracts
     ports:
-      - "28080:8080"
+      - "127.0.0.1:${GATEWAY_HOST_PORT:-28080}:8080"
     volumes:
       - ./Shared/Contracts:/contracts:ro
     networks:

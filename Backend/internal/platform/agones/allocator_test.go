@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	gameservercontract "divinebeasts/backend/internal/contracts/gameserver"
+	"divinebeasts/backend/internal/modules/gameserver"
 )
 
 // TestBuildRequestForMainArena（主竞技场Agones请求构造测试）验证Role、Region、BuildVersion和Match上下文被准确映射。
@@ -54,13 +57,28 @@ func TestClientAllocateCallsKubernetesAllocationAPI(t *testing.T) {
 	}
 }
 
-// TestBuildRequestForOpenWorldHub（开放世界大厅/主城分配测试）验证大厅体验使用OpenWorld服务器池。
-func TestBuildRequestForOpenWorldHub(t *testing.T) {
+// TestBuildRequestForOpenWorldDefault（开放世界默认体验测试）验证OpenWorld角色默认选择Main体验池。
+func TestBuildRequestForOpenWorldDefault(t *testing.T) {
 	request, err := BuildAllocationRequest(AllocationInput{Namespace: "games", RoleID: "GameServer.Role.OpenWorld", RegionID: "us-west", BuildVersion: "0.8.0"})
 	if err != nil {
 		t.Fatalf("构造OpenWorld分配请求失败: %v", err)
 	}
 	if got := request.Spec.Selectors[0].MatchLabels["server-role"]; got != "open-world" {
 		t.Fatalf("OpenWorld server-role=%s，期望=open-world", got)
+	}
+	if got := request.Spec.Selectors[0].MatchLabels["experience"]; got != "Experience.OpenWorld.Main" {
+		t.Fatalf("OpenWorld默认Experience=%s，期望=Experience.OpenWorld.Main", got)
+	}
+}
+
+// TestBuildRequestForOpenWorldHub（大厅体验Agones请求测试）验证大厅体验使用OpenWorld角色标签和正式体验ID。
+func TestBuildRequestForOpenWorldHub(t *testing.T) {
+	request, err := BuildAllocationRequest(AllocationInput{Namespace: "games", RoleID: gameserver.RoleOpenWorld, ExperienceID: gameservercontract.ExperienceOpenWorldHub, RegionID: "us-west", BuildVersion: "2.0.0"})
+	if err != nil {
+		t.Fatalf("构造OpenWorld大厅体验分配请求失败：%v", err)
+	}
+	selector := request.Spec.Selectors[0].MatchLabels
+	if selector["server-role"] != "open-world" || selector["experience"] != "Experience.OpenWorld.Hub" {
+		t.Fatalf("OpenWorld大厅体验分配标签错误：%+v", selector)
 	}
 }

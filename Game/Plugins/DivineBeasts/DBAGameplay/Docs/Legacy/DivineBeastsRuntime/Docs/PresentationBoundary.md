@@ -1,0 +1,7 @@
+# PresentationBoundary（表现边界）
+
+未来DivineBeastsPresentation（神兽联盟项目表现插件）依赖DivineBeastsRuntime，而不是由Runtime反向依赖表现层。
+
+Runtime不引用Niagara、Sound、Widget、Material、Hero Mesh，也不拥有Skin/主题/Catalog表现映射。
+
+MobaPresentation继续负责MOBA中立表现语义；项目层表现插件以后可以使用Runtime提供的GameId/ProjectContext扩展表现上下文。

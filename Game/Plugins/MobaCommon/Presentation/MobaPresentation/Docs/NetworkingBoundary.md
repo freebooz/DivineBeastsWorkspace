@@ -1,0 +1,7 @@
+# NetworkingBoundary（网络边界）
+
+MobaPresentation不创建第二套网络事件协议。Arena、Combat、GAS/Character继续通过自身权威复制与公共事实通知同步Gameplay。
+
+Client Adapter只消费客户端已经拥有的可信/复制事实。Presentation Request本身是本地表现调度，不反向影响服务器Gameplay。
+
+Dedicated Server可编译MobaPresentationRuntime以共享Tag/类型，但不加载MobaPresentationClient，不提交客户端表现请求。

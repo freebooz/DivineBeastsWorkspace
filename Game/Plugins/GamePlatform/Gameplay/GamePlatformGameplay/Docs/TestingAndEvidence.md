@@ -1,0 +1,5 @@
+# TestingAndEvidence（测试与证据）
+
+GamePlatform.Gameplay.EligibilitySnapshot验证默认Inactive、AvatarGeneration=1，以及没有Authority Owner时不能伪造Active。
+
+真实Server→Client复制、OnRep事件、AvatarGeneration随重生推进和Interaction组合需要多进程UE5.8验证，当前为未执行。

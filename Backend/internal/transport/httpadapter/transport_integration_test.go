@@ -20,6 +20,8 @@ import (
 	"divinebeasts/backend/internal/modules/servertransfer"
 )
 
+const gameServerControlTestToken = "test-internal-token"
+
 // TestInternalHTTPTransportRoundTrip（内部HTTP传输联调测试）验证Gateway侧HTTP Client确实通过网络调用三个下游服务。
 func TestInternalHTTPTransportRoundTrip(t *testing.T) {
 	ctx := context.Background()
@@ -61,21 +63,24 @@ func TestInternalHTTPTransportRoundTrip(t *testing.T) {
 	}
 }
 
-// TestGameServerControlHTTPWorldTransferRoundTrip（世界跨服HTTP联调测试）验证OpenWorld.Hub分配、Assignment绑定、票据消费和重放拒绝均经过真实HTTP Handler。
+// TestGameServerControlHTTPWorldTransferRoundTrip（大厅跨服HTTP联调测试）验证OpenWorld.Hub分配、Assignment绑定、票据消费和重放拒绝均经过真实HTTP Handler。
 func TestGameServerControlHTTPWorldTransferRoundTrip(t *testing.T) {
 	now := time.Date(2026, 9, 21, 7, 0, 0, 0, time.UTC)
 	registry := gameserver.NewRegistry()
 	transferService := servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now })
 	service := gameservercontrol.NewService(registry, transferService, match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
-	server := httptest.NewServer(NewGameServerControlHandler(service))
+	server := httptest.NewServer(NewGameServerControlHandler(service, gameServerControlTestToken))
 	defer server.Close()
 
-	postJSON(t, server.URL+"/internal/v1/gameservers/register", gameservercontrol.RegisterInput{
-		GameID: "divine-beasts", GameServerID: "ow-hub-http-1", ServerRoleID: gameservercontract.RoleOpenWorld,
+	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/register", gameservercontrol.RegisterInput{
+		GameID: "divine-beasts", GameServerID: "openworld-hub-http-1", ServerRoleID: gameservercontract.RoleOpenWorld,
 		ExperienceID: gameservercontract.ExperienceOpenWorldHub, RegionID: "us-west", WorldID: "World.OpenWorld.Hub",
 		PublicEndpoint: "127.0.0.1:7777", BuildVersion: "1.1.0", ProtocolVersion: 1, Capacity: 100,
-	}, http.StatusOK, nil)
-	postJSON(t, server.URL+"/internal/v1/gameservers/ready", map[string]any{"gameServerId": "ow-hub-http-1"}, http.StatusOK, nil)
+	}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken, "X-Game-Server-Id": "openworld-hub-http-1"}, http.StatusOK, nil)
+	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/heartbeat", map[string]any{
+		"gameServerId": "openworld-hub-http-1", "currentPlayers": 0, "status": gameserver.StatusStarting,
+	}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken, "X-Game-Server-Id": "openworld-hub-http-1"}, http.StatusOK, nil)
+	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/ready", map[string]any{"gameServerId": "openworld-hub-http-1"}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken, "X-Game-Server-Id": "openworld-hub-http-1"}, http.StatusOK, nil)
 
 	var worldTransfer gameservercontrol.WorldTransferResult
 	postJSON(t, server.URL+"/internal/v1/gameservers/allocate-world-transfer", map[string]any{
@@ -91,22 +96,173 @@ func TestGameServerControlHTTPWorldTransferRoundTrip(t *testing.T) {
 		t.Fatalf("HTTP世界跨服结果错误: %+v", worldTransfer)
 	}
 
-	validateRequest := map[string]any{"ticket": worldTransfer.Ticket, "destinationGameServerId": "ow-hub-http-1"}
+	validateRequest := map[string]any{"ticket": worldTransfer.Ticket, "destinationGameServerId": "openworld-hub-http-1"}
 	var validation servertransfer.ValidationResult
 	postJSON(t, server.URL+"/internal/v1/gameservers/validate-transfer", validateRequest, http.StatusOK, &validation)
 	if validation.AssignmentID != worldTransfer.Assignment.AssignmentID {
 		t.Fatalf("HTTP迁移验证Assignment不一致: %+v", validation)
 	}
 	postJSON(t, server.URL+"/internal/v1/gameservers/validate-transfer", validateRequest, http.StatusUnauthorized, nil)
+	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/drain", map[string]any{"gameServerId": "openworld-hub-http-1"}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken, "X-Game-Server-Id": "openworld-hub-http-1"}, http.StatusOK, nil)
+}
+
+// TestGameServerControlLifecycleRequiresAuthentication（服务器生命周期接口拒绝未认证请求）防止未认证调用注册、更新或排空服务器实例。
+func TestGameServerControlLifecycleRequiresAuthentication(t *testing.T) {
+	now := time.Date(2026, 9, 21, 7, 0, 0, 0, time.UTC)
+	newService := func() *gameservercontrol.Service {
+		registry := gameserver.NewRegistry()
+		transfer := servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now })
+		return gameservercontrol.NewService(registry, transfer, match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
+	}
+	registration := gameservercontrol.RegisterInput{
+		GameID: "divine-beasts", GameServerID: "lifecycle-http-1", ServerRoleID: gameservercontract.RoleOpenWorld,
+		ExperienceID: gameservercontract.ExperienceOpenWorldHub, RegionID: "us-west", WorldID: "World.OpenWorld.Hub",
+		PublicEndpoint: "127.0.0.1:7777", BuildVersion: "1.1.0", ProtocolVersion: 1, Capacity: 100,
+	}
+	tests := []struct {
+		name    string
+		path    string
+		body    any
+		prepare func(*gameservercontrol.Service) error
+	}{
+		{name: "register", path: "/internal/v1/gameservers/register", body: registration},
+		{
+			name: "heartbeat", path: "/internal/v1/gameservers/heartbeat",
+			body:    map[string]any{"gameServerId": registration.GameServerID, "currentPlayers": 1, "status": gameserver.StatusStarting},
+			prepare: func(service *gameservercontrol.Service) error { return service.Register(registration) },
+		},
+		{
+			name: "ready", path: "/internal/v1/gameservers/ready",
+			body:    map[string]any{"gameServerId": registration.GameServerID},
+			prepare: func(service *gameservercontrol.Service) error { return service.Register(registration) },
+		},
+		{
+			name: "drain", path: "/internal/v1/gameservers/drain",
+			body: map[string]any{"gameServerId": registration.GameServerID},
+			prepare: func(service *gameservercontrol.Service) error {
+				if err := service.Register(registration); err != nil {
+					return err
+				}
+				return service.SetReady(registration.GameServerID)
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			service := newService()
+			if test.prepare != nil {
+				if err := test.prepare(service); err != nil {
+					t.Fatalf("准备真实服务器实例失败: %v", err)
+				}
+			}
+			handler := NewGameServerControlHandler(service, gameServerControlTestToken)
+			for _, credentials := range []struct {
+				name  string
+				token string
+			}{{name: "missing"}, {name: "wrong", token: "Bearer wrong-token"}} {
+				t.Run(credentials.name, func(t *testing.T) {
+					body, err := json.Marshal(test.body)
+					if err != nil {
+						t.Fatalf("序列化请求失败: %v", err)
+					}
+					request := httptest.NewRequest(http.MethodPost, test.path, bytes.NewReader(body))
+					request.Header.Set("Content-Type", "application/json")
+					if credentials.token != "" {
+						request.Header.Set("Authorization", credentials.token)
+					}
+					response := httptest.NewRecorder()
+					handler.ServeHTTP(response, request)
+					if response.Code != http.StatusUnauthorized {
+						t.Fatalf("未认证的 %s 请求状态码=%d，期望=%d，响应=%s", test.path, response.Code, http.StatusUnauthorized, response.Body.String())
+					}
+				})
+			}
+		})
+	}
+}
+
+// TestGameServerControlLifecycleBindsHeaderToRequestBody（服务器生命周期接口校验实例身份一致性）防止授权请求用请求头和请求体操作不同服务器。
+func TestGameServerControlLifecycleBindsHeaderToRequestBody(t *testing.T) {
+	now := time.Date(2026, 9, 21, 7, 0, 0, 0, time.UTC)
+	registration := gameservercontrol.RegisterInput{
+		GameID: "divine-beasts", GameServerID: "lifecycle-http-1", ServerRoleID: gameservercontract.RoleOpenWorld,
+		ExperienceID: gameservercontract.ExperienceOpenWorldHub, RegionID: "us-west", WorldID: "World.OpenWorld.Hub",
+		PublicEndpoint: "127.0.0.1:7777", BuildVersion: "1.1.0", ProtocolVersion: 1, Capacity: 100,
+	}
+	tests := []struct {
+		name    string
+		path    string
+		body    any
+		prepare func(*gameservercontrol.Service) error
+	}{
+		{name: "register", path: "/internal/v1/gameservers/register", body: registration},
+		{
+			name: "heartbeat", path: "/internal/v1/gameservers/heartbeat",
+			body:    map[string]any{"gameServerId": registration.GameServerID, "currentPlayers": 1, "status": gameserver.StatusStarting},
+			prepare: func(service *gameservercontrol.Service) error { return service.Register(registration) },
+		},
+		{
+			name: "ready", path: "/internal/v1/gameservers/ready",
+			body:    map[string]any{"gameServerId": registration.GameServerID},
+			prepare: func(service *gameservercontrol.Service) error { return service.Register(registration) },
+		},
+		{
+			name: "drain", path: "/internal/v1/gameservers/drain",
+			body: map[string]any{"gameServerId": registration.GameServerID},
+			prepare: func(service *gameservercontrol.Service) error {
+				if err := service.Register(registration); err != nil {
+					return err
+				}
+				return service.SetReady(registration.GameServerID)
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			registry := gameserver.NewRegistry()
+			transfer := servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now })
+			service := gameservercontrol.NewService(registry, transfer, match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
+			if test.prepare != nil {
+				if err := test.prepare(service); err != nil {
+					t.Fatalf("准备真实服务器实例失败: %v", err)
+				}
+			}
+			body, err := json.Marshal(test.body)
+			if err != nil {
+				t.Fatalf("序列化请求失败: %v", err)
+			}
+			request := httptest.NewRequest(http.MethodPost, test.path, bytes.NewReader(body))
+			request.Header.Set("Authorization", "Bearer "+gameServerControlTestToken)
+			request.Header.Set("X-Game-Server-Id", "different-server")
+			request.Header.Set("Content-Type", "application/json")
+			response := httptest.NewRecorder()
+			NewGameServerControlHandler(service, gameServerControlTestToken).ServeHTTP(response, request)
+			if response.Code != http.StatusForbidden {
+				t.Fatalf("身份头与请求体不一致的 %s 请求状态码=%d，期望=%d，响应=%s", test.path, response.Code, http.StatusForbidden, response.Body.String())
+			}
+		})
+	}
 }
 
 func postJSON(t *testing.T, url string, input any, expectedStatus int, output any) {
+	postJSONWithHeaders(t, url, input, nil, expectedStatus, output)
+}
+
+func postJSONWithHeaders(t *testing.T, url string, input any, headers map[string]string, expectedStatus int, output any) {
 	t.Helper()
 	body, err := json.Marshal(input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	response, err := http.Post(url, "application/json", bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	for name, value := range headers {
+		request.Header.Set(name, value)
+	}
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		t.Fatal(err)
 	}

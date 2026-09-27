@@ -1,0 +1,11 @@
+# MigrationAndHandover（迁移与交接）
+
+开始本轮前真实工作树中不存在DivineBeastsRuntime或DivineBeastsContracts实现，因此本轮为新增项目核心插件，不是旧Runtime机械搬迁。
+
+现有DBAGameplay/DBAClient/DBAServer中已有较重业务能力，本轮没有把这些依赖搬入Runtime。后续Characters/Abilities/Arena/World/Presentation等应按专属插件继续拆分。
+
+历史DBAServer/RoleBindings/Lobby与部分Content/Lobby空目录保留为迁移残留，不再是正式ServerRole；DBAServer描述已修订为OpenWorld/Village/MainArena三类正式角色。
+
+Shared/Codegen旧DivineBeasts UE输出从DBAGameplay/Public/Generated调整到Shared/Generated/Cpp/Games/DivineBeasts，消除项目协议生成结果被某个玩法插件私有占有的问题。
+
+下一插件续作断点为DivineBeastsData（神兽联盟项目数据插件）。本轮没有实现它。

@@ -1,0 +1,7 @@
+# ArenaBoundary（竞技边界）
+
+DivineBeastsCharacters不依赖GamePlatformArena、GamePlatformArenaClient、MobaPresentation或未来DivineBeastsArena。
+
+未来Arena只引用HeroDefinitionId、eligibility和选人结果，并通过可信Spawn上下文初始化相同项目角色组件。ArenaRosterSlot仍属于单场比赛，不等于CharacterId或HeroDefinitionId。
+
+关闭Arena插件后，Characters仍必须能在OpenWorld和Village工作。

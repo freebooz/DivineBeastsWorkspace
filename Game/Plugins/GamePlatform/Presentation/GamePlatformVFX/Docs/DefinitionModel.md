@@ -1,0 +1,7 @@
+# DefinitionModel（VFX定义模型）
+
+UGamePlatformVFXDefinition是数据驱动Primary Data Asset。字段包括DefinitionId、PrimaryAssetId、Behavior、17类ContentCategory、NiagaraSystem、EffectType、ParameterSchema/Defaults、Platform/Quality Variants、Fallback、PreloadAssets、Pooling/Scalability、LWC/FixedBounds/Lifetime、Version/Revision。
+
+ResolveNiagaraSystem按Platform → Quality → Default选择表现资产，不改变Gameplay尺寸或时序。ValidateDefinition拒绝缺ID、非Composite缺Niagara、非法版本/生命周期和错误Schema；Editor Validator进一步检查EffectType、LWC和Fixed Bounds。
+
+Definition禁止保存Damage/Heal/Shield等Gameplay权威结算。

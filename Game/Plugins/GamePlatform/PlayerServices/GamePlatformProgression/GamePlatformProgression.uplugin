@@ -1,0 +1,23 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformProgression",
+    "Description":  "GamePlatformProgression（游戏平台插件）",
+    "Category":  "GamePlatform/PlayerServices",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformProgression",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformProgressionClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

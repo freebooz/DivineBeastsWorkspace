@@ -1,0 +1,5 @@
+# TeamRoster（队伍名单）
+
+Roster槽位包含PlayerId、TeamId、PartyId和SlotIndex。Assignment验证拒绝重复PlayerId、重复SlotIndex、错误队伍数量以及任一队人数与TeamSize不一致。
+
+Team由后端Assignment决定，客户端不存在SetTeam接口；Arena只消费最终Roster并在准入后把Team写入服务器权威PlayerState。

@@ -22,11 +22,15 @@ go run ./internal/tools/contractcodegen -workspace-root=.. -check
 
 该步骤不依赖外部网络，生成并校验：
 
-- ContractVersion（契约版本）；
-- ServerRole / Experience / ArenaMode（服务器角色/体验/竞技模式）；
+- `ContractVersion`（契约版本）；
+- 项目`GameId / ProjectId`（游戏/项目身份）、`CatalogVersion`（目录版本）和由固定Shared输入计算的`GeneratedRevision`（生成修订号）；
+- `ServerRole / Experience / ArenaMode`（服务器角色/体验/竞技模式）、由ServerCatalog单一映射生成的角色—体验关系，以及每种竞技模式对应的权威角色与体验；
+- `compatibility-matrix.json`（兼容矩阵）中的闭区间上界转成运行时半开区间；当前`1.4.x`生成`1.5.0`上界，超出或不连续区间不能静默放宽；
 - OpenAPI OperationId（操作编号）及 HTTP Method/Path（方法/路径）路由表；
 - Proto Service/RPC（服务/RPC）注册表；
 - `Shared/Generated/Cpp/UEConsumerModules.generated.json` UE消费者模块映射。
+
+神兽联盟项目身份与竞技上下文映射位于`Shared/Contracts/Games/DivineBeasts/Schemas/server-catalog.schema.json`的`x-project-identity`、`x-catalog-version`、`x-role-experience-map`和`x-arena-mode-context-map`扩展；生成修订号对四份项目Schema、`Shared/Docs/contract-version.json`及兼容矩阵六个输入按规范相对路径排序后计算SHA-256。Go与C++消费同一批输出，禁止另维护手写身份表或项目专用生成脚本。
 
 ## 3. 正式 Proto/OpenAPI 生成
 

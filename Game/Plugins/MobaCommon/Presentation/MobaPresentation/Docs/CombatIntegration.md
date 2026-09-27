@@ -1,0 +1,7 @@
+# CombatIntegration（战斗集成）
+
+FMobaPresentationFactAdapters（表现事实适配器）消费 FGamePlatformCombatEvent（平台战斗事件）。
+
+Damage映射Hit；AppliedToShield>0附加Shield.Hit；Healing映射Heal；ControlApplied映射Control.Apply；Death映射Character.Death；RespawnReset映射Character.Respawn。
+
+MobaPresentation不重新计算Damage/Healing，不根据客户端血条差推断Hit/Critical，也不修改Health。Combat保持对Presentation无反向依赖。

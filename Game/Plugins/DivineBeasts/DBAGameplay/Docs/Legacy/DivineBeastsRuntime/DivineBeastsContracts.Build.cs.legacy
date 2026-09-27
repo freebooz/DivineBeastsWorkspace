@@ -1,0 +1,74 @@
+using System.IO;
+using UnrealBuildTool;
+
+public class DivineBeastsContracts : ModuleRules
+{
+    public DivineBeastsContracts(ReadOnlyTargetRules Target) : base(Target)
+    {
+        Type = ModuleType.External;
+
+        string WorkspaceRoot = Path.GetFullPath(
+            Path.Combine(ModuleDirectory, "../../../../../../../"));
+        string GeneratedRoot = Path.Combine(
+            WorkspaceRoot,
+            "Shared/Generated/Cpp/Games/DivineBeasts");
+        string ArtifactRoot = Path.Combine(
+            WorkspaceRoot,
+            "Artifacts/Contracts/DivineBeasts");
+
+        if (!Directory.Exists(GeneratedRoot))
+        {
+            throw new BuildException(
+                "DivineBeastsContracts generated include directory is missing. " +
+                "Run Build/Contracts/Generate-DivineBeastsContracts.ps1.");
+        }
+
+        PublicSystemIncludePaths.Add(GeneratedRoot);
+        PublicDefinitions.Add("DIVINE_BEASTS_CONTRACTS_EXTERNAL=1");
+
+        string PlatformName = Target.Platform.ToString();
+        string ArchitectureName = Target.Architecture.ToString();
+        string ConfigurationName = Target.Configuration.ToString();
+        string CompilerName;
+        string LibraryName;
+
+        if (Target.Platform == UnrealTargetPlatform.Win64)
+        {
+            CompilerName = Target.WindowsPlatform.Compiler.ToString();
+            LibraryName = "DivineBeastsContracts.lib";
+        }
+        else if (Target.Platform == UnrealTargetPlatform.Linux)
+        {
+            CompilerName = "Clang";
+            LibraryName = "libDivineBeastsContracts.a";
+        }
+        else
+        {
+            throw new BuildException(
+                "DivineBeastsContracts has no external-library mapping for platform " +
+                PlatformName + ".");
+        }
+
+        string LibraryPath = Path.Combine(
+            ArtifactRoot,
+            PlatformName,
+            ArchitectureName,
+            ConfigurationName,
+            CompilerName,
+            "UE5.8",
+            LibraryName);
+
+        if (!File.Exists(LibraryPath))
+        {
+            throw new BuildException(
+                "DivineBeastsContracts static library is missing for " +
+                PlatformName + "/" + ArchitectureName + "/" +
+                ConfigurationName + "/" + CompilerName +
+                "/UE5.8. Expected: " + LibraryPath +
+                ". Run Build/Contracts/Build-DivineBeastsStaticLibrary.ps1 " +
+                "for the target toolchain before linking this External module.");
+        }
+
+        PublicAdditionalLibraries.Add(LibraryPath);
+    }
+}

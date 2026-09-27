@@ -1,0 +1,32 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformEquipment",
+    "Description":  "GamePlatformEquipment（游戏平台插件）",
+    "Category":  "GamePlatform/PlayerServices",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Plugins":  [
+                    { "Name": "GamePlatformAbilitySystem", "Enabled": true },
+                    { "Name": "GamePlatformData", "Enabled": true }
+                ],
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformEquipment",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformEquipmentClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformEquipmentServer",
+                        "Type":  "ServerOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

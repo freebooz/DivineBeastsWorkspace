@@ -1,0 +1,25 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformUI",
+    "Description":  "GamePlatformUI（游戏平台插件）",
+    "Category":  "GamePlatform/Presentation",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Plugins":  [
+                    { "Name": "CommonUI", "Enabled": true },
+                    { "Name": "GamePlatformCore", "Enabled": true },
+                    { "Name": "GamePlatformData", "Enabled": true },
+                    { "Name": "GamePlatformInput", "Enabled": true },
+                    { "Name": "GamePlatformPresentation", "Enabled": true }
+                ],
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformUIClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

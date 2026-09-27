@@ -1,0 +1,23 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformEntitlement",
+    "Description":  "GamePlatformEntitlement（游戏平台插件）",
+    "Category":  "GamePlatform/PlayerServices",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformEntitlement",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformEntitlementClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

@@ -1,0 +1,7 @@
+# AbilityStatusIntegration（技能与状态集成）
+
+FMobaPresentationAbilityFact（技能表现事实）支持CastStart、CastRelease、ProjectileSpawn、AreaWarning，携带AbilityId和必要位置/目标信息。
+
+FMobaPresentationStatusFact（状态表现事实）支持Apply/Remove。Status Apply被分类为Persistent（持续状态），可用于Late Join恢复；Remove为瞬时终止语义。
+
+当前GamePlatformAbilitySystem尚未提供稳定的统一Ability表现事件出口，因此本轮提供中立适配入口，不修改AbilitySystem以伪造不存在的通知链。真实源接线保持后续UE联调断点。

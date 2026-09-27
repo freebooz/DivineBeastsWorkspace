@@ -24,7 +24,7 @@ type IssueRequest struct {
 	DestinationGameServerID string        // DestinationGameServerID（目标服务器实例ID）。
 	DestinationEndpoint     string        // DestinationEndpoint（ClientTravel目标地址）。
 	DestinationWorldID      string        // DestinationWorldID（目标世界ID）。
-	DestinationExperienceID string        // DestinationExperienceID（目标Experience，例如OpenWorld.Hub）。
+	DestinationExperienceID string        // DestinationExperienceID（目标体验，例如Lobby.Main）。
 	MatchID                 string        // MatchID（进入MainArena时的比赛ID；普通世界迁移为空）。
 	TTL                     time.Duration // TTL（票据有效时长）。
 }

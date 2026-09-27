@@ -1,0 +1,5 @@
+# TestingAndEvidence（测试与证据）
+
+现有GamePlatformPresentationRegistryTests覆盖Provider、Context、Catalog、歧义、生命周期等注册表行为；GamePlatformVFX已通过LocalPlayer桥正式注册ProviderChannel=VFX，形成真实跨插件集成证据。
+
+UE5.8编译、Multi-PIE、ClientTravel后的WorldGeneration隔离以及UI/SFX Provider组合仍需运行验证，当前为未执行。

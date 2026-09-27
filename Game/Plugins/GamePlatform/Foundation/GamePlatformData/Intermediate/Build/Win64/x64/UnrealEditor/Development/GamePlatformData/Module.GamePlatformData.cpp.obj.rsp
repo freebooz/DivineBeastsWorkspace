@@ -1,0 +1,11 @@
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformData/Module.GamePlatformData.cpp"
+@"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformData/GamePlatformData.Shared.rsp"
+/FI"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformData/Definitions.h"
+/Fo"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformData/Module.GamePlatformData.cpp.obj"
+/experimental:log "E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformData/Module.GamePlatformData.cpp.sarif"
+/sourceDependencies "E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformData/Module.GamePlatformData.cpp.dep.json"
+/nologo
+/TP
+/GR-
+/std:c++20
+/wd5054

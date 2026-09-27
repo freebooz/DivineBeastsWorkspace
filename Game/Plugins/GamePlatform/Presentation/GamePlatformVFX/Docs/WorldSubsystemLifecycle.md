@@ -1,0 +1,5 @@
+# WorldSubsystemLifecycle（世界子系统生命周期）
+
+UGamePlatformVFXWorldSubsystem是运行Owner，仅非Dedicated Server创建。Catalog、实例、Preload、Dedupe、StartupCatalog Lease均为World-scoped。
+
+Initialize异步加载Startup Catalog，不同步Load。Deinitialize取消Catalog/实例Lease并Reset。Handle带弱World身份，阻止Multi-PIE/Travel跨World误操作。真实Multi-PIE、ClientTravel、World teardown运行验证当前未执行。

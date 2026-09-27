@@ -1,0 +1,17 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/experimental:deterministic
+/DEF
+/NAME:"UnrealEditor-GamePlatformCore.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformCore/Module.GamePlatformCore.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformCore/GamePlatformCoreModule.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformCore/GamePlatformCoreAutomationTests.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformCore/GamePlatformCoreNativeTests.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformCore/GamePlatformId.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformCore/GamePlatformResult.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformCore/GamePlatformVersion.cpp.obj"
+/OUT:"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformCore/UnrealEditor-GamePlatformCore.lib"

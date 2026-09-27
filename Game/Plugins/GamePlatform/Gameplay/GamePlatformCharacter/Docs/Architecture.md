@@ -1,0 +1,7 @@
+# Architecture（架构）
+
+UGamePlatformHeroDefinition是Server-safe Primary Data Asset，只保存稳定逻辑ID、版本、ContentRevision、SpawnEnvelope、基础Movement及表现Profile ID。具体Mesh/VFX/SFX/UI/Ability资产由表现或项目Content Pack解析。
+
+FGamePlatformHeroDefinitionLoader通过GamePlatformData统一软加载；IGamePlatformCharacterInitializer只在Actor已创建后初始化，不自行Spawn/Possess；IGamePlatformCharacterCreationProvider只提供本地Catalog与草稿校验，不执行后端创建。
+
+RequiredDefinitions拒绝空值、自引用和重复依赖。

@@ -1,7 +1,18 @@
 ﻿[CmdletBinding()]
 param(
     [ValidateRange(10, 600)]
-    [int]$StartupTimeoutSeconds = 120
+    [int]$StartupTimeoutSeconds = 120,
+    # 下列端口只改变主机映射；容器内端口与服务间调用地址保持稳定。
+    [ValidateRange(1024, 65535)]
+    [int]$GatewayHostPort = 28080,
+    [ValidateRange(1024, 65535)]
+    [int]$IdentityHostPort = 8081,
+    [ValidateRange(1024, 65535)]
+    [int]$PlayerDataHostPort = 8082,
+    [ValidateRange(1024, 65535)]
+    [int]$MatchHostPort = 8083,
+    [ValidateRange(1024, 65535)]
+    [int]$GameServerControlHostPort = 8084
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,18 +28,38 @@ try {
         throw 'Docker Engine 不可用。请先启动 Docker Desktop。'
     }
 
-    & docker @composeArguments
-    if ($LASTEXITCODE -ne 0) {
-        throw '业务后端 Docker Compose 启动失败。'
+    $hostPortEnvironment = @{
+        GATEWAY_HOST_PORT = [string]$GatewayHostPort
+        IDENTITY_HOST_PORT = [string]$IdentityHostPort
+        PLAYER_DATA_HOST_PORT = [string]$PlayerDataHostPort
+        MATCH_HOST_PORT = [string]$MatchHostPort
+        GAMESERVER_CONTROL_HOST_PORT = [string]$GameServerControlHostPort
+    }
+    $originalHostPortEnvironment = @{}
+    try {
+        foreach ($environmentName in $hostPortEnvironment.Keys) {
+            $originalHostPortEnvironment[$environmentName] = [Environment]::GetEnvironmentVariable($environmentName, 'Process')
+            [Environment]::SetEnvironmentVariable($environmentName, $hostPortEnvironment[$environmentName], 'Process')
+        }
+
+        & docker @composeArguments
+        if ($LASTEXITCODE -ne 0) {
+            throw '业务后端 Docker Compose 启动失败。'
+        }
+    }
+    finally {
+        foreach ($environmentName in $hostPortEnvironment.Keys) {
+            [Environment]::SetEnvironmentVariable($environmentName, $originalHostPortEnvironment[$environmentName], 'Process')
+        }
     }
 
     $endpoints = @(
-        'http://127.0.0.1:28080/health/ready',
-        'http://127.0.0.1:8081/health/ready',
-        'http://127.0.0.1:8082/health/ready',
-        'http://127.0.0.1:8083/health/ready',
-        'http://127.0.0.1:8084/health/ready',
-        'http://127.0.0.1:28080/swagger/'
+        "http://127.0.0.1:$GatewayHostPort/health/ready",
+        "http://127.0.0.1:$IdentityHostPort/health/ready",
+        "http://127.0.0.1:$PlayerDataHostPort/health/ready",
+        "http://127.0.0.1:$MatchHostPort/health/ready",
+        "http://127.0.0.1:$GameServerControlHostPort/health/ready",
+        "http://127.0.0.1:$GatewayHostPort/swagger/"
     )
     $pendingEndpoints = [System.Collections.Generic.HashSet[string]]::new()
     foreach ($endpoint in $endpoints) {

@@ -4,7 +4,7 @@
 
 ## 现有 ApplicationFlow 兼容基线
 
-公开头：`Game/Plugins/GameFoundation/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Public/API/GamePlatformApplicationFlowSubsystem.h`。
+公开头：`Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Public/API/GamePlatformApplicationFlowSubsystem.h`。
 
 ```cpp
 bool Configure(const FGamePlatformFlowDefinition& Definition, FString& OutError);

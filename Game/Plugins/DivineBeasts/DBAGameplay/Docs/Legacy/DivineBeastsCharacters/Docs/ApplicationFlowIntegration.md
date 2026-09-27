@@ -1,0 +1,7 @@
+# ApplicationFlowIntegration（应用流程集成）
+
+Characters通过基础层 IGamePlatformCharacterCreationProvider（角色创建提供者）注册Modular Feature。ApplicationFlow只依赖GamePlatformCharacter接口，不硬依赖DivineBeastsCharacters。
+
+Provider返回12个核心HeroDefinitionId、DisplayNameKey、CatalogRevision以及本地Appearance校验结果；不执行后端Create、不校验最终Entitlement、不检查名字唯一性、不持久化。
+
+如果Characters插件未加载或Provider数量异常，ApplicationFlow明确返回HeroCatalogUnavailable；Appearance不合法返回InvalidAppearance。

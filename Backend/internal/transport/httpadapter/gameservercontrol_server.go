@@ -2,7 +2,9 @@ package httpadapter
 
 import (
 	"context"
+	"crypto/subtle"
 	"net/http"
+	"strings"
 	"time"
 
 	"divinebeasts/backend/internal/app/gameservercontrol"
@@ -12,17 +14,24 @@ import (
 	"divinebeasts/backend/internal/modules/servertransfer"
 )
 
-// NewGameServerControlHandler（创建游戏服务器控制HTTP处理器）提供本地联调及gRPC不可用环境下的真实业务传输入口。
-func NewGameServerControlHandler(service *gameservercontrol.Service) http.Handler {
+// NewGameServerControlHandler（创建游戏服务器控制HTTP处理器）提供内部业务入口；服务器生命周期路由必须持有非空内部Bearer令牌。
+func NewGameServerControlHandler(service *gameservercontrol.Service, internalBearerToken string) http.Handler {
 	if service == nil {
 		panic("GameServerControl Service不能为空")
 	}
+	internalBearerToken = strings.TrimSpace(internalBearerToken)
+	if internalBearerToken == "" {
+		panic("GAMESERVERCONTROL_INTERNAL_TOKEN不能为空")
+	}
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /internal/v1/gameservers/register", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("POST /internal/v1/gameservers/register", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		var req gameservercontrol.RegisterInput
 		if err := decodeJSON(r, &req); err != nil {
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
+			return
+		}
+		if !requireGameServerIdentity(w, r, req.GameServerID) {
 			return
 		}
 		if err := service.Register(req); err != nil {
@@ -30,9 +39,9 @@ func NewGameServerControlHandler(service *gameservercontrol.Service) http.Handle
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"accepted": true})
-	})
+	}))
 
-	mux.HandleFunc("POST /internal/v1/gameservers/heartbeat", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("POST /internal/v1/gameservers/heartbeat", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			GameServerID   string            `json:"gameServerId"`
 			CurrentPlayers int               `json:"currentPlayers"`
@@ -42,19 +51,25 @@ func NewGameServerControlHandler(service *gameservercontrol.Service) http.Handle
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
 			return
 		}
+		if !requireGameServerIdentity(w, r, req.GameServerID) {
+			return
+		}
 		if err := service.Heartbeat(req.GameServerID, req.CurrentPlayers, req.Status); err != nil {
 			writeError(w, http.StatusBadRequest, "GAME_SERVER_HEARTBEAT_FAILED", err)
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"accepted": true})
-	})
+	}))
 
-	mux.HandleFunc("POST /internal/v1/gameservers/ready", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("POST /internal/v1/gameservers/ready", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			GameServerID string `json:"gameServerId"`
 		}
 		if err := decodeJSON(r, &req); err != nil {
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
+			return
+		}
+		if !requireGameServerIdentity(w, r, req.GameServerID) {
 			return
 		}
 		if err := service.SetReady(req.GameServerID); err != nil {
@@ -62,9 +77,9 @@ func NewGameServerControlHandler(service *gameservercontrol.Service) http.Handle
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"accepted": true})
-	})
+	}))
 
-	mux.HandleFunc("POST /internal/v1/gameservers/drain", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("POST /internal/v1/gameservers/drain", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			GameServerID string `json:"gameServerId"`
 		}
@@ -72,12 +87,15 @@ func NewGameServerControlHandler(service *gameservercontrol.Service) http.Handle
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
 			return
 		}
+		if !requireGameServerIdentity(w, r, req.GameServerID) {
+			return
+		}
 		if err := service.Drain(req.GameServerID); err != nil {
 			writeError(w, http.StatusBadRequest, "GAME_SERVER_DRAIN_FAILED", err)
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"accepted": true})
-	})
+	}))
 
 	mux.HandleFunc("POST /internal/v1/gameservers/allocate-world", func(w http.ResponseWriter, r *http.Request) {
 		var req gameservercontrol.AllocateWorldInput
@@ -191,6 +209,29 @@ func NewGameServerControlHandler(service *gameservercontrol.Service) http.Handle
 	})
 
 	return mux
+}
+
+// requireGameServerControlBearer（校验服务器控制Bearer令牌）在解析或执行生命周期请求前拒绝未认证调用，且不回显凭据。
+func requireGameServerControlBearer(expectedToken string, next http.HandlerFunc) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorization := strings.Fields(r.Header.Get("Authorization"))
+		if len(authorization) != 2 || !strings.EqualFold(authorization[0], "Bearer") || subtle.ConstantTimeCompare([]byte(authorization[1]), []byte(expectedToken)) != 1 {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			writeError(w, http.StatusUnauthorized, "INTERNAL_AUTHENTICATION_REQUIRED", nil)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// requireGameServerIdentity（校验生命周期实例身份头）要求受控请求头与请求体作用对象一致，防止请求混淆。
+func requireGameServerIdentity(w http.ResponseWriter, r *http.Request, requestGameServerID string) bool {
+	headerGameServerID := strings.TrimSpace(r.Header.Get("X-Game-Server-Id"))
+	if headerGameServerID == "" || headerGameServerID != requestGameServerID {
+		writeError(w, http.StatusForbidden, "GAME_SERVER_IDENTITY_MISMATCH", nil)
+		return false
+	}
+	return true
 }
 
 // WorldTransferRequest（世界分配并签发迁移票据的组合请求）供上层业务一次完成目标服务器分配和跨服票据签发。

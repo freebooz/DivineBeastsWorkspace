@@ -1,0 +1,13 @@
+# Troubleshooting（故障排查）
+
+请求返回ProviderMissing：检查对应VFX/SFX/UI/Animation/Camera Provider是否已向UGamePlatformPresentationClientSubsystem注册；当前VFX Provider正式注册仍是已知缺口。
+
+请求返回InvalidRequest：检查RequestId/Semantic、Context RejectConflict或Catalog Ambiguous。
+
+请求返回StaleWorld：检查WorldGeneration与Travel后的旧异步事实。
+
+ContentPack激活失败：检查ContentPackId重复、Catalog Scope是否ContentPack、Revision/OwnerScope/LifecycleScope是否一致。
+
+OpenWorld交互无表现：检查UGamePlatformInteractorComponent的LastResult复制、Result.OptionId、DBAPresentationIntegrationSubsystem绑定和Provider状态。
+
+没有真实UE编译证据时，不把静态脚本通过解释为Runtime通过。

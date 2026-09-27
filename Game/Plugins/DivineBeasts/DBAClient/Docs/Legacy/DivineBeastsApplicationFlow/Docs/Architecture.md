@@ -1,0 +1,7 @@
+# Architecture（架构）
+
+DivineBeastsApplicationFlowClient（神兽联盟应用流程客户端模块）依赖 DivineBeastsRuntime、GamePlatformApplicationFlowClient、GamePlatformOnlineClient、GamePlatformSessionClient、GamePlatformLoadingClient；DivineBeastsContracts（项目外部协议模块）仅作为 Private Adapter（私有适配器）依赖。
+
+Arena/UI/Characters/Presentation 不被核心模块硬依赖。Arena 通过 IDivineBeastsApplicationFlowExtension（应用流程扩展接口）由组合根注册。
+
+后端增量仍落在现有 GatewayService、PlayerDataService、GameServerControlService/worldcontrol 中，不新增 CharacterService、WorldAssignmentService、LobbyService 或 FrontendService。

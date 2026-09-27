@@ -1,0 +1,7 @@
+# Pooling（池化）
+
+GamePlatformVFX不建设FGamePlatformVFXPool第二套池。FGamePlatformVFXPoolingPolicy只决定是否允许池化，实际组件池使用Niagara原生ENCPoolMethod::AutoRelease。
+
+Definition可关闭Pooling；全局Settings也可关闭。特殊多Component Host Actor若未来出现真实需求，应单独ADR审查，不能把Niagara原生组件池替换掉。
+
+最终优化必须记录pool hit/miss、reactivation cost和活动实例数量；当前真实性能数据未执行。

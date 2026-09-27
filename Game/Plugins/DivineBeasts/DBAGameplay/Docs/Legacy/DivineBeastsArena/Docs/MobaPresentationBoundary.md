@@ -1,0 +1,7 @@
+# MobaPresentationBoundary（MOBA表现边界）
+
+Arena产生中立事实：Phase、Hero Selection、Score、Objective、Result。
+
+MobaPresentation消费GamePlatformArena这些中立事实，并映射到平台Presentation Request；DivineBeastsArena不依赖MobaPresentation，也不播放Niagara/SFX/UI/Camera资源。
+
+未来DivineBeastsPresentation可以通过项目Context补充生肖/皮肤/内容包语义，但仍不改变Arena权威结果。

@@ -2,13 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://divinebeasts/contracts/experience.schema.json",
   "title": "DivineBeasts Experience（神兽联盟体验）",
+  "description": "现行体验包含OpenWorld/Hub、OpenWorld/Main、Village/Main/Tutorial/Training和MainArena/Main。Experience.Lobby.Main作为已发布历史标识兼容映射到OpenWorld，不代表独立大厅服务器角色。",
   "type": "string",
   "enum": [
-    "Experience.OpenWorld.Hub",
+    "Experience.Lobby.Main",
     "Experience.OpenWorld.Main",
     "Experience.Village.Main",
     "Experience.Village.Tutorial",
     "Experience.Village.Training",
-    "Experience.MainArena.Main"
+    "Experience.MainArena.Main",
+    "Experience.OpenWorld.Hub"
   ]
 }

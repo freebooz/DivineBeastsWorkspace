@@ -1,0 +1,29 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformCharacter",
+    "Description":  "GamePlatformCharacter（游戏平台插件）",
+    "Category":  "GamePlatform/Gameplay",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Plugins":  [
+                    {
+                        "Name":  "GamePlatformData",
+                        "Enabled":  true
+                    }
+                ],
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformCharacter",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformCharacterClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

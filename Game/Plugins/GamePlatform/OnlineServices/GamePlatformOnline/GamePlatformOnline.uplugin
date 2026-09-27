@@ -1,0 +1,34 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformOnline",
+    "Description":  "GamePlatformOnline（游戏平台插件）",
+    "Category":  "GamePlatform/OnlineServices",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Plugins":  [
+                    {
+                        "Name":  "GamePlatformCore",
+                        "Enabled":  true
+                    }
+                ],
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformOnline",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformOnlineClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformOnlineServer",
+                        "Type":  "ServerOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

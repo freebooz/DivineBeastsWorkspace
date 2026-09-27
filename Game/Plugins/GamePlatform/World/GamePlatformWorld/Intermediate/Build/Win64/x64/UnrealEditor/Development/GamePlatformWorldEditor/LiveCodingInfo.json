@@ -1,0 +1,16 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.GamePlatformWorldEditor.cpp.obj": [
+			"GamePlatformWorldDefinitionValidator.gen.cpp.obj",
+			"GamePlatformWorldEditor.init.gen.cpp.obj",
+			"GamePlatformWorldValidationCommandlet.gen.cpp.obj",
+			"PerModuleInline.gen.cpp.obj",
+			"GamePlatformWorldValidationCommandlet.cpp.obj",
+			"GamePlatformWorldEditorModule.cpp.obj",
+			"WorldDefinitionEditorTests.cpp.obj",
+			"WorldValidationCommandletTests.cpp.obj",
+			"GamePlatformWorldDefinitionValidator.cpp.obj"
+		]
+	}
+}

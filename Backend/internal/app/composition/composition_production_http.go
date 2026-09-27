@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	generatedgp "divinebeasts/backend/generated/gameplatform"
@@ -80,6 +81,10 @@ func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {
 }
 
 func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
+	internalBearerToken := strings.TrimSpace(requiredEnv("GAMESERVERCONTROL_INTERNAL_TOKEN"))
+	if internalBearerToken == "" {
+		return errors.New("GAMESERVERCONTROL_INTERNAL_TOKEN不能为空")
+	}
 	pool := mustPostgres(ctx)
 	defer pool.Close()
 	redisClient := mustRedis(ctx)
@@ -105,7 +110,7 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	go func() {
 		_ = dispatcher.Run(ctx, 500*time.Millisecond, func(err error) { slog.Error("Outbox Dispatcher发布失败", "error", err) })
 	}()
-	return servicehost.Run(ctx, cfg, httpadapter.NewGameServerControlHandler(service))
+	return servicehost.Run(ctx, cfg, httpadapter.NewGameServerControlHandler(service, internalBearerToken))
 }
 
 func mustPostgres(ctx context.Context) *postgres.Pool {

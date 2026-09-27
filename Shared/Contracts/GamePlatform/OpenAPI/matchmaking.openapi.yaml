@@ -1,20 +1,22 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Matchmaking Internal API（游戏平台匹配内部接口）
+  title: 游戏平台匹配服务内部接口（Matchmaking API）
   version: 1.0.0
-  description: MatchService 当前已注册的匹配内部 HTTP 接口。该规格只描述创建票据；查询、取消和比赛完成通知没有在当前 HTTP 服务中注册。
+  description: MatchService（组队与匹配服务）当前已注册的匹配内部 HTTP 接口。本规格目前只包含创建匹配票据；查询、取消和比赛完成通知尚未注册，不能视为可调用能力。
 servers:
   - url: http://127.0.0.1:8083
     description: 本地 Docker 开发部署的 MatchService
 tags:
   - name: 运维
+    description: 检查 MatchService 进程存活、服务宿主就绪和版本信息。
   - name: 内部匹配
+    description: 仅供可信后端服务调用的匹配操作；单人和不可拆分队伍均可创建票据。
 paths:
   /health/live:
     get:
       tags: [运维]
       operationId: getMatchmakingLiveness
-      summary: 查询 MatchService 存活状态
+      summary: 查询组队与匹配服务进程存活状态
       responses:
         '200':
           description: 服务进程存活。
@@ -25,7 +27,7 @@ paths:
     get:
       tags: [运维]
       operationId: getMatchmakingReadiness
-      summary: 查询 MatchService 就绪状态
+      summary: 查询组队与匹配服务宿主就绪状态
       responses:
         '200':
           description: 服务宿主已就绪。
@@ -36,7 +38,7 @@ paths:
     get:
       tags: [运维]
       operationId: getMatchmakingVersion
-      summary: 查询 MatchService 版本
+      summary: 查询组队与匹配服务名称与版本
       responses:
         '200':
           description: 服务名称与运行版本。
@@ -47,7 +49,7 @@ paths:
     post:
       tags: [内部匹配]
       operationId: createInternalMatchmakingTicket
-      summary: 为玩家或不可拆分队伍创建匹配票据
+      summary: 为单人玩家或不可拆分队伍创建匹配票据
       description: |
         playerId 必须由可信调用方从认证上下文取得。服务端基于 arenaModeId 校验单队人数，支持 1v1、2v2、3v3、4v4、5v5；客户端不得提交权威隐藏分或比赛结果。
       requestBody:

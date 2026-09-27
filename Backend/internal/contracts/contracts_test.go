@@ -54,7 +54,7 @@ func TestAssignmentValidatesRoster(t *testing.T) {
 	}
 }
 
-// TestGameServerRoles（正式服务器角色测试）防止重新引入独立Lobby Server角色。
+// TestGameServerRoles（正式服务器角色测试）确保大厅归入OpenWorld后，正式角色清单保持三类。
 func TestGameServerRoles(t *testing.T) {
 	roles := []string{
 		gameservercontract.RoleOpenWorld,
@@ -73,9 +73,10 @@ func TestGameServerRoles(t *testing.T) {
 	}
 }
 
-// TestExperienceRoleMapping（体验到服务器角色映射测试）确保大厅并入OpenWorld而教学/训练并入Village。
+// TestExperienceRoleMapping（体验到服务器角色映射测试）确保大厅新旧体验标识均由OpenWorld承载。
 func TestExperienceRoleMapping(t *testing.T) {
 	cases := map[string]string{
+		gameservercontract.ExperienceLobbyMain:       gameservercontract.RoleOpenWorld,
 		gameservercontract.ExperienceOpenWorldHub:    gameservercontract.RoleOpenWorld,
 		gameservercontract.ExperienceOpenWorldMain:   gameservercontract.RoleOpenWorld,
 		gameservercontract.ExperienceVillageMain:     gameservercontract.RoleVillage,
@@ -89,7 +90,7 @@ func TestExperienceRoleMapping(t *testing.T) {
 			t.Fatalf("体验%s映射角色=%s, ok=%v，期望=%s", experienceID, got, ok, wantRole)
 		}
 	}
-	if _, ok := gameservercontract.RoleForExperience("Experience.Lobby.Main"); ok {
-		t.Fatal("不得重新引入独立Lobby体验/服务器角色模型")
+	if _, ok := gameservercontract.RoleForExperience("Experience.Unknown.Main"); ok {
+		t.Fatal("未知体验不得被映射到服务器角色")
 	}
 }

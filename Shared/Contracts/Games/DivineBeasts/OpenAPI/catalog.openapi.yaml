@@ -1,15 +1,20 @@
 openapi: 3.1.0
 info:
-  title: DivineBeasts Catalog API（神兽联盟目录接口）
-  version: 1.2.0
+  title: 神兽联盟只读目录接口（DivineBeasts Catalog API）
+  version: 1.3.0
+  description: 返回由神兽联盟项目定义的服务器角色、承载体验与竞技模式目录。该目录用于客户端或后端读取规则，不提供修改操作。
+tags:
+  - name: 神兽联盟目录
+    description: 查询项目定义的服务器角色、承载体验和竞技模式等只读配置。
 paths:
   /v1/games/divine-beasts/catalog:
     get:
+      tags: [神兽联盟目录]
       operationId: getDivineBeastsCatalog
-      summary: 获取神兽联盟ServerRole、Experience与ArenaMode只读目录
+      summary: 读取服务器角色、承载体验与竞技模式目录
       responses:
         '200':
-          description: 返回神兽联盟当前规则目录
+          description: 返回当前项目版本对应的只读规则目录。
           content:
             application/json:
               schema:

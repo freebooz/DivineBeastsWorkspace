@@ -1,0 +1,19 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DBAGameplay",
+  "Description": "神兽联盟双端公共玩法插件：持有项目身份、上下文和生肖角色规则；项目竞技适配归可选DBAArena，不强制依赖MOBA。",
+  "Category": "DivineBeasts",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformCharacter", "Enabled": true }
+  ],
+  "Modules": [
+    { "Name": "DivineBeastsRuntime", "Type": "Runtime", "LoadingPhase": "Default" },
+    { "Name": "DivineBeastsCharactersRuntime", "Type": "Runtime", "LoadingPhase": "Default" }
+  ]
+}

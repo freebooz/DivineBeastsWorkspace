@@ -1,0 +1,7 @@
+# PerformanceAndMemory（性能与内存）
+
+UDivineBeastsCharacterComponent不Tick；Definition只在身份/Generation变化时异步请求。加载完成后持有当前Definition UObject，旧Request通过Generation丢弃。
+
+角色Definition不硬引用大型视觉资产，Dedicated Server不应因Characters Runtime加载高精Mesh/VFX/SFX/UI。
+
+性能应实测2、10、50角色场景的Definition加载、Spawn/Respawn、Replication、CharacterMovement和Server内存。当前Runner无UE运行环境，因此性能基线为“未执行”，不承诺未经测试容量。

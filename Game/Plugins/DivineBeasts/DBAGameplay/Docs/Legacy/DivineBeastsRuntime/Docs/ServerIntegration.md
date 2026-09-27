@@ -1,0 +1,7 @@
+# ServerIntegration（服务器集成）
+
+未来DivineBeastsServer（神兽联盟项目服务器插件）可依赖DivineBeastsRuntime、DivineBeastsContracts和平台Server Authority（服务器权威接口），负责将项目上下文适配到服务器注册、Assignment、Transfer和MatchResult扩展。
+
+DivineBeastsRuntime本身不调用GameServerControlService，不注册Heartbeat、不验证TransferTicket、不提交MatchResult。
+
+当前DBAServer旧插件仍存在，Lobby目录只保留为历史迁移残留；正式Project Catalog只有OpenWorld、Village、MainArena三种ServerRole。

@@ -28,12 +28,15 @@ func TestDrainingServerCannotBeAllocated(t *testing.T) {
 	}
 }
 
-// TestKnownServerRoles（正式服务器角色校验测试）确保三类角色可注册，历史/非法角色被拒绝。
+// TestKnownServerRoles（正式服务器角色校验测试）确保三类正式角色可注册，大厅与教学体验不被误作角色。
 func TestKnownServerRoles(t *testing.T) {
 	for _, role := range []string{RoleOpenWorld, RoleVillage, RoleMainArena} {
 		if !IsKnownRole(role) {
 			t.Fatalf("正式服务器角色应被识别: %s", role)
 		}
+	}
+	if IsKnownRole("GameServer.Role.Lobby") {
+		t.Fatal("大厅是OpenWorld体验，GameServer.Role.Lobby不得注册")
 	}
 	if IsKnownRole("GameServer.Role.Training") {
 		t.Fatal("Training是Village Experience，不得成为独立Server Role")

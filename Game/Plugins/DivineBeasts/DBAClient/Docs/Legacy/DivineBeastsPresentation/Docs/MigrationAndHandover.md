@@ -1,0 +1,9 @@
+# MigrationAndHandover（迁移与交接）
+
+执行前没有DivineBeastsPresentation正式插件；DBAClient只包含空VFX/SFX/UI/Animation/Camera内容目录和Telemetry装配。
+
+本轮新增项目两模块，同时给GamePlatformPresentation补跨游戏Context/Catalog/Registration Handle能力。DBAClient成为业务事实到项目表现事实的组合层，避免DivineBeastsPresentation硬依赖ApplicationFlow/Interaction。
+
+当前没有DBAPresentationPack_Core、DBASFXPack_Core、DBAAnimationPack_Core、DBAHeroPack_*、DBAWorldPack_*、DBASkinPack_*或DBAVFXPack_Core真实资产，因此没有执行资源目录迁移/Redirect。
+
+后续断点是Provider正式注册、真实Content Pack/资源制作、UE Build/Cook与人工审查；本轮不进入DivineBeastsUI。

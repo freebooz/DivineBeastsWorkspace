@@ -1,12 +1,17 @@
 # 工作空间文档
 
-更新日期：2026-09-21。以下分别列出现行规范、实现文档与历史来源；不能用目录规划或聊天中的完成描述替代真实验证结果。
+更新日期：2026-09-27。以下分别列出现行规范、实施文档与历史来源；不能用目录规划或聊天中的完成描述替代真实验证结果。
 
 ## 现行规则与规划
 
 - [全局工程规则](../AGENTS.md)：命名、中文注释、分层、权限及验证规则。
-- [解决方案总体规划](Architecture/解决方案总体规划.md)：产品基线、三角色服务器、三层插件和分期交付。
+- [游戏端核心要求](Architecture/游戏端核心要求.md)：UE5.8客户端与Dedicated Server的插件化、复用、解耦、端侧权威、独立演示和人工审核核心基线。
+- [业务后端核心要求](Backend/业务后端核心要求.md)：Go业务控制面的领域模块化、五薄入口、跨游戏复用、UE权威边界、契约治理、一致性、安全和真实验收核心基线。
+- [解决方案总体规划](Architecture/解决方案总体规划.md)：既有产品基线与分期交付；46+N插件、三角色及可选竞技按已批准三层方案实施。
 - [解决方案总体目录规划说明](Architecture/解决方案总体目录规划说明_V1.3.0.md)：正式路径、中文职责和目录维护要求。
+- [设计基线整合实施规格草案](Architecture/设计基线整合实施规格草案.md)：已批准并修订为46+N的插件、三角色服务器及旧实现迁移目标；尚非实施结果。
+- [设计基线整合实施计划](Architecture/设计基线整合实施计划.md)：历史执行记录；旧四DBA及45上限已被新方案替代，历史证据不回写。
+- [游戏端插件三层架构实施规划](Architecture/游戏端插件三层架构实施规划.md)：本次授权方案、迁移清单、依赖边界、内容登记、回退与实际验证限制。
 - [插件开发规范](../Game/Plugins/插件开发规范.md)：UE 插件依赖、生命周期和交付门禁。
 
 ## 历史决策与后续插件实施
@@ -16,14 +21,15 @@
 
 ## 当前实现与验证
 
+- [工程缺项修复执行记录](Architecture/工程缺项修复执行记录.md)：补齐六项默认配置、源码头文件预检、原生内核测试、真实UE构建失败证据与尚未接通的项目API。
 - [Foundation M0执行进度](Implementation/FoundationM0/ExecutionProgress.md)：00→03实际断点、兼容决定与原位历史构建阻断。
 - [Foundation M0实际接口](Implementation/FoundationM0/InterfaceContract.md)：Core、Data、Flow及主工程调用的已写入签名。
 - [Foundation M0分项验证](Production/FoundationM0Verification.md)：目标、退出码、证据与未执行项，当前不是全部通过。
 - [Foundation M0源码交付](Production/FoundationM0Delivery.md)：现有命令、资产生成顺序与剩余风险，UE目标/资产未验证。
-- [GamePlatformCore](../Game/Plugins/GameFoundation/Core/GamePlatformCore/README.md)：身份、结果、版本与生产算法回归。
-- [GamePlatformData](../Game/Plugins/GameFoundation/Core/GamePlatformData/README.md)：定义、实例租约、进程需求与编辑器验证。
-- [GamePlatformApplicationFlow](../Game/Plugins/GameFoundation/Application/GamePlatformApplicationFlow/README.md)：流程执行机制、节点注入、接口示例及原生／UE 验证状态。
-- [GamePlatformVFX](../Game/Plugins/GameFoundation/Presentation/GamePlatformVFX/README.md)：已有特效源码交付与待真实工程接入事项。
+- [GamePlatformCore](../Game/Plugins/GamePlatform/Foundation/GamePlatformCore/README.md)：身份、结果、版本与生产算法回归。
+- [GamePlatformData](../Game/Plugins/GamePlatform/Foundation/GamePlatformData/README.md)：定义、实例租约、进程需求与编辑器验证。
+- [GamePlatformApplicationFlow](../Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/README.md)：流程执行机制、节点注入、接口示例及原生／UE 验证状态。
+- [GamePlatformVFX](../Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/README.md)：已有特效源码交付与待真实工程接入事项。
 - [业务后端与共享代码工程化审查报告](Production/业务后端与共享代码工程化审查报告_V1.3.0.md)：后端及协议的审查证据与阻断项。
 - [业务后端本地部署说明](Production/业务后端本地部署说明.md)：本地部署与验证说明。
 - [文档变更记录](CHANGELOG.md)：本入口启用后的变更记录。

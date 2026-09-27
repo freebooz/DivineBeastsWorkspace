@@ -1,0 +1,5 @@
+# ContentCategories（17类VFX内容分类）
+
+固定17类：Core、EnergyShield、CastMagic、ProjectileBeam、HitDamageExplosion、AreaWarning、StatusControl、CharacterWeapon、Movement、SummonTransform、PortalSpacetime、Environment、InteractionFeedback、UIScreen、UltimateComposite、Experimental、Recovery。
+
+ContentCategory仅用于制作、检索、Review和预算统计，不决定Behavior或Gameplay。项目专属生肖/英雄/皮肤/世界观VFX应进入DivineBeasts Content Pack。

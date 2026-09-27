@@ -39,7 +39,7 @@ try {
             'Adapter.ReentrantShutdown.FinishShutdown','Adapter.ReentrantShutdown.TerminalEvent')
     }
     # 复杂算法测试名称直接绑定当前生产测试清单，不能旧二进制只跑旧21项也算新扩展已验收。
-    $caseSource = Join-Path $context.Workspace 'Game/Plugins/GameFoundation/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Tests/ApplicationFlowExecutorCases.h'
+    $caseSource = Join-Path $context.Workspace 'Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Tests/ApplicationFlowExecutorCases.h'
     $matches = [regex]::Matches((Get-Content -LiteralPath $caseSource -Raw),'(?m)^\s*\{"([A-Za-z0-9_]+)",\s*\[\]\(FChecks& C\)')
     if ($matches.Count -lt 21) { throw '无法完整读取当前流程生产用例清单，拒绝降级为数量下限门禁' }
     $required.ApplicationFlow += @($matches | ForEach-Object { 'Core.' + $_.Groups[1].Value })

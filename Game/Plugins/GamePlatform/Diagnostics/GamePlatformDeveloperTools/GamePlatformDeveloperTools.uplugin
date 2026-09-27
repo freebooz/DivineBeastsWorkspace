@@ -1,0 +1,23 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0.0",
+    "FriendlyName": "GamePlatformDeveloperTools",
+    "Description": "GamePlatformDeveloperTools（游戏平台开发者工具插件）：UE5.8 Editor Data Validation、资产审计、命令行验证与CI质量门禁；不进入Runtime/Shipping。",
+    "Category": "GamePlatform/Diagnostics",
+    "CreatedBy": "DivineBeastsWorkspace",
+    "CanContainContent": false,
+    "EnabledByDefault": false,
+    "Plugins": [
+        { "Name": "DataValidation", "Enabled": true }
+    ],
+    "Modules": [
+        {
+            "Name": "GamePlatformDeveloperTools",
+            "Type": "Editor",
+            "LoadingPhase": "Default",
+            "TargetAllowList": [ "Editor" ],
+            "TargetConfigurationAllowList": [ "Debug", "DebugGame", "Development", "Test" ]
+        }
+    ]
+}

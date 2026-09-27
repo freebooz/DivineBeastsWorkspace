@@ -1,0 +1,7 @@
+# CombatBoundary（战斗边界）
+
+Characters只维护角色身份、Definition、Generation和Readiness，不拥有Health结算、伤害公式、控制效果或死亡判定。
+
+Combat death/respawn事实可触发外部生命周期协调，但Respawn由Gameplay/Arena/World合法流程决定。Characters不会死亡后自行Spawn新Pawn。
+
+AvatarGeneration用于让Combat/Presentation等外部系统拒绝旧Avatar延迟结果。

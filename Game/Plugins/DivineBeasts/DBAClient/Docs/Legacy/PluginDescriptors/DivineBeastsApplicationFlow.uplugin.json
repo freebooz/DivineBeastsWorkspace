@@ -1,0 +1,26 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DivineBeastsApplicationFlow",
+  "Description": "DivineBeastsApplicationFlow（神兽联盟应用流程插件）：项目客户端流程节点、持久角色业务适配、世界准入与公开ViewState装配。",
+  "Category": "DivineBeasts/Application",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "DivineBeastsRuntime", "Enabled": true },
+    { "Name": "GamePlatformApplicationFlow", "Enabled": true },
+    { "Name": "GamePlatformOnline", "Enabled": true },
+    { "Name": "GamePlatformSession", "Enabled": true },
+    { "Name": "GamePlatformLoading", "Enabled": true },
+    { "Name": "GamePlatformCharacter", "Enabled": true }
+  ],
+  "Modules": [
+    {
+      "Name": "DivineBeastsApplicationFlowClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

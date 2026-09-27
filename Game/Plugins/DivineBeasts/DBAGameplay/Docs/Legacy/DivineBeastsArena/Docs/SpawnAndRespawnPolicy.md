@@ -1,0 +1,9 @@
+# SpawnAndRespawnPolicy（出生与重生策略）
+
+SpawnPolicyId和RespawnPolicyId属于项目Production配置，目前均NotConfigured。
+
+实际Pawn Spawn/Possess仍归GamePlatformArena/GamePlatformGameplay/Character统一生命周期。DivineBeastsArenaServer不调用SpawnActor/Possess。
+
+平台IGamePlatformArenaGameplayLifecycleAdapter是正式边界；当前工作树没有可复用真实实现，因此项目Server在Assignment应用前检测缺失并Fail Closed。
+
+RespawnDelay没有产品批准值。平台5秒Standard默认不能作为项目Production规则。

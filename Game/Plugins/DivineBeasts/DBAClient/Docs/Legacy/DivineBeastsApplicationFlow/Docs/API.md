@@ -1,0 +1,7 @@
+# API（接口）
+
+公开入口包括 StartFlow、LoginWithCredentials、SubmitCharacterCreateDraft、SelectPersistentCharacter、RequestWorldAssignment、NotifyWorldObserved、NotifyCharacterBindingReady、NotifyGameplayDataReady、NotifyProjectReadiness、RequestPostMatchReturnToWorld、LogoutAndRestart。
+
+公开只读投影为 FDivineBeastsFlowViewState（项目流程视图状态），包括 FlowRunId、CurrentStep、NodeGeneration、Busy、AllowedActions、Error、Profile、CharacterRoster、SelectedCharacter、Loading/Connection summary 和 Assignment 摘要。
+
+TransferTicket、Endpoint 等敏感/短生命周期字段不进入公开 ViewState。

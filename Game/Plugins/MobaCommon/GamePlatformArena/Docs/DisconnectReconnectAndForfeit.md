@@ -1,0 +1,5 @@
+# DisconnectReconnectAndForfeit（断线、重连与弃权）
+
+玩家掉线后PlayerState不会立即删除竞技事实，服务器进入Disconnected并启动ReconnectGracePeriod（重连宽限期）。合法重连必须仍在原Roster并在宽限期内，旧连接失效后重新绑定。
+
+宽限超时可触发ReconnectTimeout结束原因。客户端只能RequestForfeit（请求弃权），最终是否结束以及Winner由服务器决定。

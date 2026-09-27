@@ -1,0 +1,5 @@
+# AssignmentAndAdmission（比赛分配与准入）
+
+MainArena启动后由 `GamePlatformArenaServer（竞技服务器模块）` 从既有GameServerControlService读取Assignment。服务器会将ArenaModeId、TeamSize、TotalPlayers、Roster与本地ModeDefinition交叉验证，不匹配则快速失败。
+
+TransferTicket（转服票据）由后端HMAC校验并通过PostgreSQL唯一键一次性消费；同时校验Player、Match和Destination Server。未在Roster中的玩家拒绝入场。UE只接收净化后的Claims（声明），不保存签名密钥。

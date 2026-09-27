@@ -1,23 +1,27 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Gateway API（游戏平台统一接入接口）
+  title: 游戏平台统一接入接口（Gateway API）
   version: 1.0.0
   description: |
-    GatewayService 面向游戏客户端公开的当前可运行 HTTP 接口。该规格只包含代码已注册的路由；身份、玩家数据、组队和匹配的内部服务接口见各自独立 OpenAPI 文件。
-    每个 Gateway 响应均返回 X-Request-Id、X-Trace-Id；配置了共享契约版本时还会返回 X-Contract-Version。
+    GatewayService（统一接入服务）面向游戏客户端提供当前已注册并可运行的 HTTP 接口。本规格仅描述真实路由；身份、玩家资料、组队和匹配的内部接口分别见对应 OpenAPI 文件。
+    响应会返回 X-Request-Id（请求追踪编号）和 X-Trace-Id（调用链追踪编号）；配置共享契约版本后还会返回 X-Contract-Version（契约版本）。这些请求标识用于诊断，不是认证凭据。
 servers:
   - url: http://127.0.0.1:28080
     description: 本地 Docker 开发部署的 GatewayService
 tags:
+  - name: 依赖诊断
+    description: 检查统一接入服务到身份与玩家资料服务的真实业务依赖；不能用进程存活或就绪检查替代。
   - name: 运维
-    description: 进程存活、就绪和版本检查。
+    description: 检查 HTTP 进程存活、服务宿主就绪和版本信息；通过检查不代表所有业务依赖均可用。
   - name: 客户端业务
-    description: 仅供游戏客户端经 GatewayService 调用的业务接口。
+    description: 游戏客户端经 GatewayService（统一接入服务）调用的业务接口；需要身份验证的操作必须使用服务端签发的访问令牌。
 paths:
   /v1/online/probe:
     get:
+      tags: [依赖诊断]
       operationId: probeGatewayOnline
-      summary: 探测身份和资料真实持久依赖，不依赖Match或宿主health
+      summary: 检查身份与玩家资料的真实业务依赖
+      description: 查询身份与玩家资料领域仓储的实际可用性；不检查 MatchService，也不以 HTTP 存活或就绪端点代替。依赖不可用时返回 503。
       responses:
         '200':
           description: 两个领域仓储均就绪。
@@ -33,8 +37,10 @@ paths:
         '503': {$ref: '#/components/responses/Unavailable'}
   /v1/auth/refresh:
     post:
+      tags: [客户端业务]
       operationId: refreshGatewayAuthentication
-      summary: 原子刷新认证，不盲重试，绝对会话期限不延期
+      summary: 轮换刷新令牌并签发新访问令牌
+      description: 服务端原子消费旧刷新令牌并签发新令牌，不延长会话绝对期限。请求超时或响应丢失时不得盲目重试，因为旧令牌可能已经被消费。
       requestBody:
         required: true
         content:
@@ -53,8 +59,10 @@ paths:
         '503': {$ref: '#/components/responses/Unavailable'}
   /v1/auth/logout:
     post:
+      tags: [客户端业务]
       operationId: logoutGatewayAuthentication
-      summary: 当前或已消费刷新凭据授权同会话幂等撤销
+      summary: 撤销刷新令牌所属会话
+      description: 使用当前或已消费的刷新令牌授权撤销同一会话；重复请求保持幂等。服务端不会依据客户端声明的玩家标识授权。
       requestBody:
         required: true
         content:
@@ -110,8 +118,8 @@ paths:
       operationId: gatewayLogin
       summary: 玩家登录
       description: |
-        Gateway 将登录请求转交 IdentityService。生产采用 password，accountName为账号名，原credential为密码；guest仅用于旧开发装配，生产拒绝且不降级。
-        生产凭据校验、令牌轮换和撤销策略必须由生产 IdentityService 装配实现，不能以本地内存装配替代。
+        Gateway 将登录请求转交 IdentityService（身份服务）。生产环境使用 password 提供方：accountName 表示账号名，credential 表示密码；guest 提供方仅为旧版开发装配保留，生产环境会拒绝该方式且不会降级。
+        生产凭据校验、令牌轮换和撤销策略必须由生产身份服务实现；本地内存装配只用于开发联调，不能替代生产认证。
       requestBody:
         required: true
         content:
@@ -142,8 +150,10 @@ paths:
                 $ref: '#/components/schemas/GatewayApiError'
   /v1/player/profile:
     patch:
+      tags: [客户端业务]
       operationId: updateGatewayPlayerProfile
-      summary: 修改本人显示名；主体仅从Bearer获取，拒绝查询参数及非白名单字段
+      summary: 修改本人显示名（身份从访问令牌解析）
+      description: 仅允许修改显示名。服务端从 Bearer Access Token（访问令牌）解析玩家身份，不接受客户端提供的 playerId 或白名单之外的字段。调用方必须提供幂等键和预期修订号；修订冲突返回 409。
       security: [{bearerAuth: []}]
       parameters:
         - name: Idempotency-Key
@@ -160,8 +170,8 @@ paths:
               additionalProperties: false
               required: [displayName, expectedRevision]
               properties:
-                displayName: {type: string, minLength: 1, maxLength: 24, description: trim后1至24个Unicode字符。}
-                expectedRevision: {type: integer, format: int64, minimum: 0}
+                displayName: {type: string, minLength: 1, maxLength: 24, description: 去除首尾空白后为 1 至 24 个 Unicode 字符。}
+                expectedRevision: {type: integer, format: int64, minimum: 0, description: 客户端读取资料时获得的修订号；服务端用它检测并发修改。}
       responses:
         '200':
           description: 完整资料；同键同内容返回首次持久提交的结果。
@@ -179,7 +189,7 @@ paths:
       tags: [客户端业务]
       operationId: getGatewayPlayerProfile
       summary: 获取当前玩家资料
-      description: 从 Bearer Access Token 解析调用者身份后读取长期玩家资料；不接收客户端声明的 playerId。
+      description: 服务端从 Bearer Access Token（访问令牌）解析调用者身份后读取长期玩家资料；不接收客户端声明的 playerId。
       security:
         - bearerAuth: []
       responses:

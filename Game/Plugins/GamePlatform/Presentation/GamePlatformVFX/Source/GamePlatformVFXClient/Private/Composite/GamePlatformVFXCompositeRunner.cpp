@@ -1,0 +1,57 @@
+#include "Composite/GamePlatformVFXCompositeRunner.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
+
+void FGamePlatformVFXCompositeRunner::Run(
+    UWorld& World,
+    const UGamePlatformVFXCompositeDefinition& Definition,
+    const FGamePlatformVFXRequest& Request,
+    const FGamePlatformVFXHandle& ParentHandle,
+    FPlayChild PlayChild)
+{
+    if (!PlayChild)
+    {
+        return;
+    }
+
+    if (Request.CompositeDepth >= Definition.MaxDepth ||
+        Definition.Steps.Num() > Definition.MaxChildren)
+    {
+        return;
+    }
+
+    for (const FGamePlatformVFXCompositeStep& Step : Definition.Steps)
+    {
+        if (Step.Definition.IsNull())
+        {
+            continue;
+        }
+
+        FGamePlatformVFXRequest ChildRequest = Request;
+        ChildRequest.Parameters.Append(Step.ParameterOverrides);
+        ChildRequest.CompositeDepth = Request.CompositeDepth + 1;
+
+        if (Step.DelaySeconds > Definition.MaxStepDelaySeconds ||
+            Step.DelaySeconds > Definition.MaxTotalLifetimeSeconds)
+        {
+            continue;
+        }
+
+        if (Step.DelaySeconds <= KINDA_SMALL_NUMBER)
+        {
+            PlayChild(Step.Definition, ChildRequest, ParentHandle);
+            continue;
+        }
+
+        FTimerHandle TimerHandle;
+        World.GetTimerManager().SetTimer(
+            TimerHandle,
+            FTimerDelegate::CreateLambda(
+                [DefinitionRef = Step.Definition, ChildRequest, ParentHandle, PlayChild]() mutable
+                {
+                    PlayChild(DefinitionRef, ChildRequest, ParentHandle);
+                }),
+            Step.DelaySeconds,
+            false);
+    }
+}

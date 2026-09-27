@@ -1,0 +1,9 @@
+# SecurityAndRobustness（安全与健壮性）
+
+CharacterId/HeroDefinitionId只能由服务器可信Spawn/Admission上下文绑定；没有客户端RPC允许自报身份。CharacterId按隐私最小化仅OwnerOnly复制。
+
+组件拒绝旧SpawnGeneration/AvatarGeneration，并用DefinitionRequestGeneration防异步资源回调污染新Pawn。
+
+Definition数据不含Token/Secret/Backend Profile，不允许视觉大资源硬引用。Creation Provider只做本地Catalog和Appearance基础验证，最终Hero资格和持久化继续由后端权威处理。
+
+旧Element/FiveCamp/Faction/Pantheon/KingSeal语义禁止进入角色定义、外观Schema和GameplayTag。

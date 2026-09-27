@@ -1,0 +1,7 @@
+# AIControlBoundary（AI控制边界）
+
+AIController可以Possess与玩家相同的ACharacter和UDivineBeastsCharacterComponent。
+
+Characters不依赖GamePlatformAI、不包含BehaviorTree/StateTree/Navigation或Bot策略。AI测试初始化上下文可将bPersistentCharacterIdRequired=false，但仍必须提供合法HeroDefinitionId、SpawnGeneration和AvatarGeneration。
+
+项目AI模块以后依赖Characters公开身份/Definition能力，而不是Characters依赖AI。

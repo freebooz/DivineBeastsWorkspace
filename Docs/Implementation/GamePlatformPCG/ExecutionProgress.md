@@ -2,7 +2,7 @@
 
 ## 首个检查点：2026-09-21
 
-任务：第八插件，唯一位置`Game/Plugins/GameFoundation/Gameplay/GamePlatformPCG`；只配套最小前置接入，不实现下一插件。
+任务：第八插件，唯一位置`Game/Plugins/GamePlatform/World/GamePlatformPCG`；只配套最小前置接入，不实现下一插件。
 
 已存在：Core/Data/Flow源码及原生回归；Loading生产任务图、Data/基础世界适配及项目接线；World公开世界/区域/流送快照与基础事实字段；本机UE5.8.0及原生PCG源码。引擎PCG描述Version=8、VersionName=1.0，模块PCG/PCGEditor/PCGCompute，并不代表本项目支持GPU。
 

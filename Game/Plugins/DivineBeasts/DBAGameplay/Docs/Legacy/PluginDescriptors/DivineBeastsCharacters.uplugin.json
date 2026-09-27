@@ -1,0 +1,23 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DivineBeastsCharacters",
+  "Description": "DivineBeastsCharacters（神兽联盟角色插件）：十二生肖Hero定义、项目角色身份组件、出生初始化和角色创建Catalog。",
+  "Category": "DivineBeasts/Gameplay",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "DivineBeastsRuntime", "Enabled": true },
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformCharacter", "Enabled": true }
+  ],
+  "Modules": [
+    {
+      "Name": "DivineBeastsCharactersRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

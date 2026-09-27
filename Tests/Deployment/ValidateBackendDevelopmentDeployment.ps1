@@ -16,7 +16,30 @@ foreach ($requiredPath in @($composeFile, $dockerfile, $startScript, $stopScript
     }
 }
 
-$composeJson = & docker compose --project-directory $workspaceRoot -f $composeFile config --format json
+$originalControlToken = [Environment]::GetEnvironmentVariable('GAMESERVERCONTROL_INTERNAL_TOKEN', 'Process')
+$testHostPorts = @{
+    GATEWAY_HOST_PORT = '38280'
+    IDENTITY_HOST_PORT = '38081'
+    PLAYER_DATA_HOST_PORT = '38082'
+    MATCH_HOST_PORT = '38083'
+    GAMESERVER_CONTROL_HOST_PORT = '38084'
+}
+$originalHostPorts = @{}
+try {
+    # 只为静态解析Compose注入测试占位值，不启动容器、不作为可用凭据或部署样例。
+    [Environment]::SetEnvironmentVariable('GAMESERVERCONTROL_INTERNAL_TOKEN', 'architecture-test-only', 'Process')
+    foreach ($environmentName in $testHostPorts.Keys) {
+        $originalHostPorts[$environmentName] = [Environment]::GetEnvironmentVariable($environmentName, 'Process')
+        [Environment]::SetEnvironmentVariable($environmentName, $testHostPorts[$environmentName], 'Process')
+    }
+    $composeJson = & docker compose --project-directory $workspaceRoot -f $composeFile config --format json
+}
+finally {
+    [Environment]::SetEnvironmentVariable('GAMESERVERCONTROL_INTERNAL_TOKEN', $originalControlToken, 'Process')
+    foreach ($environmentName in $testHostPorts.Keys) {
+        [Environment]::SetEnvironmentVariable($environmentName, $originalHostPorts[$environmentName], 'Process')
+    }
+}
 if ($LASTEXITCODE -ne 0) {
     throw '业务后端 Docker Compose 配置无法解析。'
 }
@@ -45,9 +68,26 @@ foreach ($expectedService in $expectedServices) {
     }
 }
 
-$gatewayHttpPort = @($composeConfiguration.services.gatewayservice.ports | Where-Object { [string]$_.target -eq '8080' })
-if ($gatewayHttpPort.Count -ne 1 -or [string]$gatewayHttpPort[0].published -ne '28080') {
-    throw 'GatewayService 必须将主机端口 28080 映射到容器端口 8080。'
+$expectedHostPorts = @{
+    gatewayservice = @{ Target = '8080'; Published = $testHostPorts.GATEWAY_HOST_PORT }
+    identityservice = @{ Target = '8081'; Published = $testHostPorts.IDENTITY_HOST_PORT }
+    playerdataservice = @{ Target = '8082'; Published = $testHostPorts.PLAYER_DATA_HOST_PORT }
+    matchservice = @{ Target = '8083'; Published = $testHostPorts.MATCH_HOST_PORT }
+    gameservercontrolservice = @{ Target = '8084'; Published = $testHostPorts.GAMESERVER_CONTROL_HOST_PORT }
+}
+foreach ($serviceName in $expectedHostPorts.Keys) {
+    $expectedPort = $expectedHostPorts[$serviceName]
+    $httpPorts = @($composeConfiguration.services.$serviceName.ports | Where-Object { [string]$_.target -eq $expectedPort.Target })
+    $actualHostIp = ''
+    if ($httpPorts.Count -eq 1) {
+        $hostIpProperty = $httpPorts[0].PSObject.Properties['host_ip']
+        if ($null -ne $hostIpProperty) {
+            $actualHostIp = [string]$hostIpProperty.Value
+        }
+    }
+    if ($httpPorts.Count -ne 1 -or [string]$httpPorts[0].published -ne $expectedPort.Published -or $actualHostIp -ne '127.0.0.1') {
+        throw "$serviceName 必须仅在 127.0.0.1 上把主机端口 $($expectedPort.Published) 映射到容器端口 $($expectedPort.Target)。"
+    }
 }
 
 $gatewayEnvironment = $composeConfiguration.services.gatewayservice.environment
@@ -61,6 +101,12 @@ foreach ($environmentName in $expectedGatewayEndpoints.Keys) {
     if ([string]$actualValue -ne $expectedGatewayEndpoints[$environmentName]) {
         throw "GatewayService 缺少内部服务地址：$environmentName"
     }
+}
+
+$controlEnvironment = $composeConfiguration.services.gameservercontrolservice.environment
+$controlTokenProperty = $controlEnvironment.PSObject.Properties['GAMESERVERCONTROL_INTERNAL_TOKEN']
+if ($null -eq $controlTokenProperty -or [string]$controlTokenProperty.Value -ne 'architecture-test-only') {
+    throw 'GameServerControlService 必须接收受控环境注入的内部令牌。'
 }
 
 $swaggerContractsRootProperty = $gatewayEnvironment.PSObject.Properties['DIVINEBEASTS_SWAGGER_CONTRACTS_ROOT']

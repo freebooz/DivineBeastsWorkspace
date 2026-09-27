@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,6 +59,10 @@ func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {
 
 // RunGameServerControl（运行游戏服务器控制服务）启用世界/竞技分配、迁移和本地Outbox Worker。
 func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
+	internalBearerToken := strings.TrimSpace(config.Getenv("GAMESERVERCONTROL_INTERNAL_TOKEN", ""))
+	if internalBearerToken == "" {
+		return errors.New("GAMESERVERCONTROL_INTERNAL_TOKEN不能为空")
+	}
 	registry := gameserver.NewRegistry()
 	secret := []byte(config.Getenv("TRANSFER_TICKET_SECRET", "dev-only-transfer-ticket-secret-32bytes-minimum"))
 	transfer := servertransfer.NewServiceWithReplayStore(secret, func() time.Time { return time.Now().UTC() }, servertransfer.NewMemoryReplayStore())
@@ -71,7 +76,7 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	go func() {
 		_ = dispatcher.Run(ctx, 500*time.Millisecond, func(err error) { slog.Warn("本地Outbox发布失败", "error", err) })
 	}()
-	return servicehost.Run(ctx, cfg, httpadapter.NewGameServerControlHandler(service))
+	return servicehost.Run(ctx, cfg, httpadapter.NewGameServerControlHandler(service, internalBearerToken))
 }
 
 type loggingPublisher struct{}

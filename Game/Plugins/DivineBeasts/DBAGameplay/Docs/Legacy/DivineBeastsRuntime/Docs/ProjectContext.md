@@ -1,0 +1,7 @@
+# ProjectContext（项目上下文）
+
+FDivineBeastsProjectContext（神兽联盟项目上下文）包含GameId、ProjectId、ServerRoleId、ExperienceId、可选ArenaModeId、WorldId、MapId、RegionId、MatchId，以及EnvironmentId、BuildVersion和ContractVersion。
+
+校验规则：Game/Project必须为当前Shared真源值；Role和Experience必须存在且匹配；ArenaMode存在时必须是五种正式模式、ServerRole必须MainArena且Experience必须MainArena.Main；OpenWorld/Village不能携带ArenaMode；未知Role/Experience/Mode拒绝；EnvironmentId和BuildVersion不能为空；ContractVersion必须处于当前Client↔Server兼容区间。
+
+Context只描述身份和运行上下文，不承担登录认证、票据验证或网络授权。

@@ -1,0 +1,7 @@
+# ApplicationIntegration（应用流程集成）
+
+未来DivineBeastsApplicationFlow（神兽联盟应用流程插件）可以依赖DivineBeastsRuntime获取GameId、ServerRole、Experience、ArenaMode和ProjectContext校验。
+
+ApplicationFlow负责Login orchestration（登录编排）、Profile加载、Character创建/选择、World admission（世界准入）及可选Arena流程节点。
+
+DivineBeastsRuntime不反向依赖ApplicationFlow，不执行登录、不ClientTravel、不调用Gateway、不管理Session。

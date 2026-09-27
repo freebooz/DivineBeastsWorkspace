@@ -11,7 +11,7 @@ param([switch]$NativeTests, [ValidateSet('Editor','Client','Server')][string[]]$
     [ValidateRange(1,7200)][int]$TimeoutSeconds = 180, [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$plugin = Join-Path $root 'Game/Plugins/GameFoundation/Gameplay/GamePlatformPCG'
+$plugin = Join-Path $root 'Game/Plugins/GamePlatform/World/GamePlatformPCG'
 $evidence = Join-Path $root "Saved/Validation/GamePlatformPCG/$RunId"
 if (Test-Path -LiteralPath $evidence) { throw '拒绝覆盖已有证据' }
 $null = New-Item -ItemType Directory -Path $evidence

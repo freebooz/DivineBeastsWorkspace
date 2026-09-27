@@ -1,0 +1,9 @@
+# LifecycleAndGeneration（生命周期与世代）
+
+平台Flow和项目Flow都基于 UGameInstanceSubsystem（游戏实例子系统），生命周期跨地图但按GameInstance隔离。
+
+每次StartRun生成新的FlowRunId；每次Transition提升NodeGeneration；每个异步操作生成OperationId。任何回调必须同时属于当前Run和当前NodeGeneration。
+
+LogoutAndRestart先使旧Run失效，再取消Loading/Session/Backend操作并清除SelectedCharacter投影，然后执行Online Logout并启动新Run，防止旧账号异步结果污染新账号。
+
+Multi-PIE（多编辑器实例）预期由独立GameInstance隔离，但当前Runner没有UE5.8运行环境，因此真实Multi-PIE验证状态为“未执行”。

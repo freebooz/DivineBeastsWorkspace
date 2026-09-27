@@ -1,0 +1,9 @@
+# DependencyRules（依赖规则）
+
+DivineBeastsRuntime.Build.cs公共依赖固定为Core、CoreUObject、GamePlatformCore。
+
+禁止依赖GamePlatformCharacter、GamePlatformAbilitySystem、GamePlatformCombat、GamePlatformArena、MobaPresentation、GamePlatformPresentation、GamePlatformVFX、GamePlatformUI，以及未来DivineBeastsData/Characters/Abilities/Arena等下游项目插件。
+
+DivineBeastsContracts不被Runtime默认链接。需要跨技术协议的项目私有Application/Online/Server适配器以后可以依赖External模块。
+
+GameFoundation/MobaCommon禁止依赖DivineBeastsRuntime，三层静态门禁会阻止反向引用。

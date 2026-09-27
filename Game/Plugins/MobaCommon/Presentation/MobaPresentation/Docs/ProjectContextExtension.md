@@ -1,0 +1,7 @@
+# ProjectContextExtension（项目上下文扩展）
+
+IMobaPresentationContextContributor（MOBA表现上下文贡献接口）允许未来DivineBeasts项目层单向补充HeroId、SkinId、WorldId、ContentPack Scope及项目语义Tag。
+
+贡献者通过稳定FName编号注册，并按Lexical（词法）顺序确定性执行。
+
+MobaPresentationRuntime和MobaPresentationClient都不依赖任何DBA/DivineBeasts类型；项目层扩展只能向下依赖该接口，不能形成反向依赖。

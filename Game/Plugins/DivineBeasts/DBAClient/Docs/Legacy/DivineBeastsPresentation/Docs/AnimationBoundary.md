@@ -1,0 +1,7 @@
+# AnimationBoundary（动画边界）
+
+动画执行归GamePlatformAnimation（游戏平台动画）及项目动画内容包。
+
+DivineBeastsPresentation不创建AnimInstance业务、不播放Montage、不持有Animation Sequence路径。Catalog可输出Animation Provider Channel（动画提供者通道）与逻辑DefinitionId，实际动画选择/预加载/播放由Animation Provider负责。
+
+DBAAnimationPack_Core当前不存在，真实动画覆盖与Cook均未执行。

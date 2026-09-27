@@ -1,0 +1,22 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DivineBeastsUI",
+  "Description": "DivineBeastsUI（神兽联盟项目UI插件）：项目UI契约、页面清单、ViewModel与平台UI组合。",
+  "Category": "DivineBeasts/Presentation",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "DivineBeastsRuntime", "Enabled": true },
+    { "Name": "GamePlatformUI", "Enabled": true }
+  ],
+  "Modules": [
+    {
+      "Name": "DivineBeastsUIClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

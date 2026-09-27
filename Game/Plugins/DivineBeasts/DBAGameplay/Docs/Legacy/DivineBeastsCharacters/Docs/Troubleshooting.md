@@ -1,0 +1,11 @@
+# Troubleshooting（故障排查）
+
+角色一直Not Ready：检查HeroDefinitionId是否在核心Catalog、Definition是否已由AssetManager注册、Generation是否大于0、Server是否提供持久CharacterId、Definition移动/碰撞数据是否有效。
+
+Creation Provider不可用：确认DivineBeastsCharacters插件已加载且Modular Feature只有一个实现。ApplicationFlow会返回HeroCatalogUnavailable，不应崩溃。
+
+Appearance被拒绝：Definition必须已加载，且字段只能是BodyVariant/HeadPreset/SkinMarkingPreset并命中允许值。
+
+远端看不到CharacterId是设计行为；HeroDefinitionId/Zodiac/Generation才是观察者需要的公开身份。
+
+UE编译/Cook失败不能用静态脚本结果替代。

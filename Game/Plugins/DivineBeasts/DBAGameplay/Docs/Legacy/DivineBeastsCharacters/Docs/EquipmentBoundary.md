@@ -1,0 +1,7 @@
+# EquipmentBoundary（装备边界）
+
+DivineBeastsCharacters不依赖GamePlatformEquipment，也不维护装备槽、库存或装备持久化。
+
+装备系统可以依赖公开的Avatar/Generation/Character接口完成重生后的重新绑定，但Characters不会反向调用装备服务。
+
+Hero Definition不硬绑定装备资产；若未来存在默认装束，只能通过领域稳定ID或Presentation Profile组合。

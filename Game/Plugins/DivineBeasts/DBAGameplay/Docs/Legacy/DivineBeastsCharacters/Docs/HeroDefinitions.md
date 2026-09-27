@@ -1,0 +1,9 @@
+# HeroDefinitions（英雄定义）
+
+平台 UGamePlatformHeroDefinition（通用英雄定义）提供 DefinitionId、Version、ContentRevision、SpawnEnvelope、Movement、AppearanceProfileId、PresentationProfileId、SkeletonCompatibilityId 和 RequiredDefinitions。
+
+项目 UDivineBeastsHeroDefinition（生肖英雄定义）增加 ZodiacIdentity、ZodiacTag、DisplayNameKey、ContentPackId 和 AppearanceSchema。该子类存在的理由是这些字段被Hero Catalog、Character Component与Character Creation Provider共同消费，并非为了项目类名。
+
+Definition禁止强引用GameplayAbility、SkeletalMesh、Niagara、Sound、Widget、Material、Texture或Cinematic资源。
+
+实际12个DA_Hero_Zodiac_* .uasset当前未执行，因为Runner没有Unreal Editor。

@@ -9,6 +9,27 @@ import (
 	"testing"
 )
 
+// TestSwaggerIndexDefaultsToGatewayAndGroupsOperations（Swagger 首页默认文档测试）验证多规格下拉列表默认打开公网 Gateway 规格，并以分组展开、操作折叠的列表模式显示接口。
+func TestSwaggerIndexDefaultsToGatewayAndGroupsOperations(t *testing.T) {
+	indexPage := string(buildSwaggerIndexPage([]string{
+		"GamePlatform/OpenAPI/game-server-control.openapi.yaml",
+		"GamePlatform/OpenAPI/gateway.openapi.yaml",
+	}))
+
+	for _, expected := range []string{
+		"'urls.primaryName': \"GamePlatform/OpenAPI/gateway.openapi.yaml\"",
+		"docExpansion: 'list'",
+		"presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset]",
+		"layout: 'StandaloneLayout'",
+		"const specificationCacheKey = Date.now().toString()",
+		"url: '/swagger/specs/' + path + '?_=' + specificationCacheKey",
+	} {
+		if !strings.Contains(indexPage, expected) {
+			t.Errorf("Swagger 首页缺少预期配置 %q", expected)
+		}
+	}
+}
+
 // TestSwaggerDocumentationUsesConfiguredContractsRoot（Swagger 文档根目录测试）验证仅在本地显式配置共享契约目录时，Gateway 才公开 Swagger UI 入口和原始 OpenAPI 文件。
 func TestSwaggerDocumentationUsesConfiguredContractsRoot(t *testing.T) {
 	contractsRoot := t.TempDir()
@@ -27,6 +48,9 @@ func TestSwaggerDocumentationUsesConfiguredContractsRoot(t *testing.T) {
 	if indexRecorder.Code != http.StatusOK {
 		t.Fatalf("Swagger 文档首页状态码=%d body=%s", indexRecorder.Code, indexRecorder.Body.String())
 	}
+	if cacheControl := indexRecorder.Header().Get("Cache-Control"); cacheControl != "no-store" {
+		t.Errorf("Swagger 文档首页 Cache-Control=%q，期望 no-store", cacheControl)
+	}
 	if !strings.Contains(indexRecorder.Body.String(), "Swagger UI") || !strings.Contains(indexRecorder.Body.String(), "GamePlatform/OpenAPI/gateway.openapi.yaml") {
 		t.Fatalf("Swagger 文档首页缺少契约链接: %s", indexRecorder.Body.String())
 	}
@@ -36,6 +60,9 @@ func TestSwaggerDocumentationUsesConfiguredContractsRoot(t *testing.T) {
 	newTestAPI().ServeHTTP(specificationRecorder, specificationRequest)
 	if specificationRecorder.Code != http.StatusOK || !strings.Contains(specificationRecorder.Body.String(), "openapi: 3.1.0") {
 		t.Fatalf("Swagger 原始契约访问失败: status=%d body=%s", specificationRecorder.Code, specificationRecorder.Body.String())
+	}
+	if cacheControl := specificationRecorder.Header().Get("Cache-Control"); cacheControl != "no-store" {
+		t.Errorf("Swagger OpenAPI 规格 Cache-Control=%q，期望 no-store", cacheControl)
 	}
 }
 

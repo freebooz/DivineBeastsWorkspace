@@ -1,0 +1,7 @@
+# ConfigurationAndRun（配置与运行）
+
+正式UE项目 Game/DivineBeastsArena.uproject 已启用GamePlatformVFX。Client模块依赖GamePlatformData、GamePlatformPresentationCore和私有PresentationClient桥；Editor模块依赖Client、UnrealEd和Niagara/NiagaraEditor。
+
+Build/Validation/VerifyGamePlatformVFX.ps1从UE_ROOT定位Build.bat和UnrealEditor-Cmd.exe。工具链存在时构建Editor/Client/Server，并在Editor构建通过后执行GamePlatform.VFX.* Automation；使用RunId、独立日志、超时和真实ExitCode。
+
+当前Runner未配置UE_ROOT，因此这些运行项保持未执行。

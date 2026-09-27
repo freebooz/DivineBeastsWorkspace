@@ -1,0 +1,7 @@
+# AssetManagerCook（资产管理与Cook）
+
+Definition/Catalog属于Primary Asset语义；Niagara System、EffectType和辅助资源全部使用软引用。运行时异步加载统一通过GamePlatformData的FGamePlatformAssetLoader并保留Lease。
+
+Client Cook应包含正式GamePlatformVFXClient及被Catalog/Definition引用的VFX资产；Review、Examples、TestAssets必须从Shipping剥离。Dedicated Server显式禁用GamePlatformVFX，Server Cook/Stage不得包含Niagara VFX内容。
+
+TestVFXCook.ps1只有在真实非空工件目录存在、客户端能找到GamePlatformVFXClient正向收据/模块证据且服务器无VFX泄漏时才允许标通过。当前真实Cook证据未执行。

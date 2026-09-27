@@ -1,0 +1,21 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformCommerceUI",
+    "Description":  "GamePlatformCommerceUI（游戏平台插件）",
+    "Category":  "GamePlatform/PlayerServices",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Plugins":  [
+                    { "Name": "GamePlatformUI", "Enabled": true }
+                ],
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformCommerceUIClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

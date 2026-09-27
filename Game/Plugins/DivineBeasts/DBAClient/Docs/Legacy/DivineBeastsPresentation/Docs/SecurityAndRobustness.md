@@ -1,0 +1,9 @@
+# SecurityAndRobustness（安全与健壮性）
+
+Presentation Context禁止UObject资源路径、Token、TransferTicket和Backend DTO。Catalog只保存ProviderChannel与逻辑DefinitionId。
+
+ContentPack注册验证ContentPackId、Revision、Scope、Owner和Entry唯一性；重复Pack拒绝。同级Catalog歧义Fail Closed（失败关闭）。
+
+Project事实只影响表现，不可改变Quest、Interaction、Damage、Arena、World Assignment或经济权威状态。
+
+ProviderMissing、可选Content Pack缺失和逻辑预加载失败不得破坏Gameplay。Runtime不包含HTTP或后端凭据。

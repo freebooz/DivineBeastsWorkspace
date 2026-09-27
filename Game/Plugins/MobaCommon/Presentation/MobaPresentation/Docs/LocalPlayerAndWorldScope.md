@@ -1,0 +1,7 @@
+# LocalPlayerAndWorldScope（本地玩家与世界作用域）
+
+每个LocalPlayer（本地玩家）拥有独立UMobaPresentationClientSubsystem，保证Multi-PIE（多编辑器实例）和分屏上下文不共享去重集合、Provider状态或RequestGeneration。
+
+PostLoadMapWithWorld与OnWorldCleanup用于ClientTravel（客户端切图）清理。World变化时WorldGeneration递增，旧World事实被拒绝。
+
+系统不保存进程级CurrentPlayer，也不缓存旧World UObject跨Travel。

@@ -1,0 +1,9 @@
+# AssetManagerAndCook（资产管理与烘焙）
+
+Game/Config/DefaultGame.ini 注册 PrimaryAssetType（主资产类型）DivineBeastsHeroDefinition，扫描 /DivineBeastsCharacters/Definitions，并使用 AlwaysCook 规则保证Server-safe核心Hero Definition进入需要的构建。
+
+FDivineBeastsHeroCatalog通过UAssetManager查询PrimaryAsset路径并异步加载Definition，没有第二套AssetManager或自建全局Registry。
+
+12个真实Definition资产必须由UE Editor生成。Tools/Unreal/GenerateDivineBeastsHeroDefinitions.py是合法Editor生成脚本；Build/Validation/GenerateDivineBeastsHeroDefinitions.ps1在没有UE_ROOT时返回“未执行”。
+
+Client/Server Cook必须用真实工件验证；当前无工件，因此均为“未执行”。

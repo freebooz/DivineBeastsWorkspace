@@ -1,0 +1,9 @@
+# LocalPlayerAndWorldScope（本地玩家与世界作用域）
+
+DivineBeastsPresentationClient是ULocalPlayerSubsystem（本地玩家子系统），每个LocalPlayer独立持有项目Context、Pack Handle、Logical Preload和请求去重状态。
+
+平台Context Contributor同样注册在每个LocalPlayer的UGamePlatformPresentationClientSubsystem中。
+
+World Cleanup会清理World级Contributor/Catalog；项目Client同时停用World级Content Pack、清空World/Experience/Region/ArenaMode/WorldGeneration和请求去重。
+
+Account/Character switch调用ResetForAccountSwitch或UpdateProjectContext清理相应LocalPlayer/World作用域资源。Multi-PIE真实隔离需要UE运行测试，当前未执行。

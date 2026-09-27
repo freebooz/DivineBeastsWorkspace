@@ -6,9 +6,9 @@ import (
 	"context"
 	"time"
 
-	gameservercontrolv1 "divinebeasts/backend/internal/generated/gameservercontrol/v1"
 	"divinebeasts/backend/internal/app/gameservercontrol"
 	gameservercontract "divinebeasts/backend/internal/contracts/gameserver"
+	gameservercontrolv1 "divinebeasts/backend/internal/generated/gameservercontrol/v1"
 	"google.golang.org/grpc"
 )
 
@@ -23,7 +23,7 @@ func RegisterGameServerControlInternalServer(registrar grpc.ServiceRegistrar, se
 	gameservercontrolv1.RegisterGameServerControlInternalServiceServer(registrar, &GameServerControlInternalServer{service: service})
 }
 
-// AllocateWorld（分配常驻世界）支持OpenWorld.Hub/OpenWorld.Main/Village体验。
+// AllocateWorld（分配常驻世界）支持Lobby.Main、OpenWorld.Main和Village体验，并兼容旧OpenWorld.Hub标识。
 func (s *GameServerControlInternalServer) AllocateWorld(ctx context.Context, req *gameservercontrolv1.AllocateWorldRequest) (*gameservercontrolv1.AllocateWorldResponse, error) {
 	assignment, err := s.service.AllocateWorld(ctx, gameservercontrol.AllocateWorldInput{ExperienceID: req.GetExperienceId(), WorldID: req.GetWorldId(), RegionID: req.GetRegionId(), PlayerSlots: int(req.GetPlayerSlots())})
 	if err != nil {

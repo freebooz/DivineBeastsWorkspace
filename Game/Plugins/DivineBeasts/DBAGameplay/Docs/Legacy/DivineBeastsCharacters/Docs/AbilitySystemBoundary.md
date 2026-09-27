@@ -1,0 +1,7 @@
+# AbilitySystemBoundary（能力系统边界）
+
+DivineBeastsCharacters不直接依赖GamePlatformAbilitySystem，不创建第二ASC，不GiveAbility、不清空Ability、不定义技能或最终AttributeSet。
+
+UGamePlatformHeroDefinition和UDivineBeastsHeroDefinition均禁止TSubclassOf<UGameplayAbility>等技能类硬引用。
+
+如果未来角色需要DefaultAbilitySetId，只能在DivineBeastsAbilities/GamePlatformAbilitySystem已有中立接口后通过稳定逻辑ID组合，不提前在Characters制造未来依赖。

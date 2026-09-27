@@ -1,0 +1,7 @@
+# CompositeBehavior（复合编排）
+
+Composite是VFX choreography（视觉编排），不是Ability、Sequencer或Gameplay状态机。父实例持有所有Child Handle，Stop父句柄会递归停止子实例；延迟回调执行前也会检查父实例仍活动。
+
+Definition限制MaxDepth、MaxChildren、MaxStepDelaySeconds和MaxTotalLifetimeSeconds；Runner在运行时再次检查，Editor Validator检查循环引用、空步骤和边界配置。
+
+Child参数通过受Schema约束的ParameterOverrides合并，不允许Composite绕过目标Definition参数白名单。

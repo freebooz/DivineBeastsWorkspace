@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    { "name": "stale generation rejected", "expected": "StaleTargetGeneration" },
+    { "name": "stale revision rejected", "expected": "StaleTargetRevision" },
+    { "name": "out of range rejected", "expected": "OutOfRange" },
+    { "name": "line of sight blocked", "expected": "LineOfSightBlocked" },
+    { "name": "exclusive competition has one winner", "expected": "TargetBusy" },
+    { "name": "duplicate request does not recommit", "expected": "same terminal result" }
+  ]
+}

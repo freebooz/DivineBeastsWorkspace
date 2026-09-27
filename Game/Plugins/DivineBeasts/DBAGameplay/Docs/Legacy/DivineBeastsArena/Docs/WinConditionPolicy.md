@@ -1,0 +1,9 @@
+# WinConditionPolicy（胜负条件）
+
+Winner只能由Server Authority（服务器权威）决定。
+
+WinConditionPolicyId当前NotConfigured；没有项目正式ScoreLimit、Elimination、Objective Complete或其它胜负规则。
+
+平台GamePlatformArena现有Standard Win逻辑只能作为通用开发基线，不代表神兽联盟Production规则。
+
+只有未来出现平台WinCondition接口无法表达的神兽联盟独特规则，才允许DivineBeastsArenaServer新增最小项目实现。当前没有。

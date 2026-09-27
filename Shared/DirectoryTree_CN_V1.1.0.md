@@ -52,8 +52,8 @@ Shared/                                                             # UE与Go跨
 │           │   └── divine-beasts-context.proto                     # 《神兽联盟》ServerRole、Experience、ArenaMode等项目上下文扩展消息
 │           └── Schemas/                                            # 《神兽联盟》ServerRole、Experience、ArenaMode等结构约束
 │               ├── arena-mode.schema.json                          # 《神兽联盟》1v1～5v5 ArenaMode定义约束
-│               ├── experience.schema.json                          # 《神兽联盟》OpenWorld.Hub/OpenWorld.Main/Village.*等Experience定义约束
-│               ├── server-catalog.schema.json                      # 《神兽联盟》服务器角色与体验目录聚合结构
+│               ├── experience.schema.json                          # 《神兽联盟》OpenWorld.Hub/Main、Village.*等六种现行体验及Lobby.Main兼容别名约束
+│               ├── server-catalog.schema.json                      # 《神兽联盟》三角色/六种正式体验/五竞技模式目录及权威角色体验映射
 │               └── server-role.schema.json                         # 《神兽联盟》OpenWorld/Village/MainArena三类ServerRole定义约束
 ├── Docs/                                                           # 契约版本、权限、Codegen、兼容矩阵和仓库边界说明
 │   ├── BackendSharedImplementationV1.1.md                          # Backend + Shared V1.1功能实现和边界说明

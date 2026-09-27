@@ -1,0 +1,5 @@
+# TestingAndEvidence（测试与证据）
+
+Automation源码覆盖SpawnEnvelope、Movement和InitializationContext值域/持久CharacterId规则。Definition运行校验同时检查DefinitionId、版本、ContentRevision、Spawn/Movement及RequiredDefinitions。
+
+真实Primary Asset注册、Spawn/Possess、Dedicated Server复制、重生与项目HeroDefinition派生资产需要UE5.8运行验证，当前为未执行。

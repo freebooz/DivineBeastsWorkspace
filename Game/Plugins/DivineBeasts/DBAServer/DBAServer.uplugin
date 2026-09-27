@@ -1,0 +1,18 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DBAServer",
+  "Description": "神兽联盟服务器组合插件：按非秘密角色Profile校验服务器世界与必需资源，并通过游戏平台服务端生命周期接口执行注册、心跳、Ready和Drain。",
+  "Category": "DivineBeasts",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "DBAGameplay", "Enabled": true },
+    { "Name": "GamePlatformServer", "Enabled": true }
+  ],
+  "Modules": [
+    { "Name": "DBAServer", "Type": "ServerOnly", "LoadingPhase": "Default", "TargetAllowList": ["Server", "Editor"] }
+  ]
+}

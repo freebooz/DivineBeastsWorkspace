@@ -1,43 +1,47 @@
 // Package gameserver（游戏服务器共享契约适配）定义Go业务层稳定使用的GameServer DTO。
-// 这些类型不直接依赖Protobuf生成代码，避免Generated代码变化侵入领域层。
+// 这些类型不依赖Proto消息；稳定目录常量和角色映射直接消费Shared契约生成绑定，避免重复维护字符串ID。
 package gameserver
 
 import (
 	"errors"
 	"fmt"
+
+	divinebeastscatalog "divinebeasts/backend/generated/divinebeasts"
 )
 
 const (
-	// RoleOpenWorld（开放世界服务器角色）承载登录大厅、主城和开放世界区域。
-	RoleOpenWorld = "GameServer.Role.OpenWorld"
+	// RoleOpenWorld（常驻世界服务器角色）承载大厅、主城和开放世界区域。
+	RoleOpenWorld = divinebeastscatalog.GameServerRoleOpenWorld
 	// RoleVillage（新手村服务器角色）承载正常新手村、教学和训练体验。
-	RoleVillage = "GameServer.Role.Village"
+	RoleVillage = divinebeastscatalog.GameServerRoleVillage
 	// RoleMainArena（主竞技场服务器角色）承载1v1至5v5短生命周期竞技比赛。
-	RoleMainArena = "GameServer.Role.MainArena"
+	RoleMainArena = divinebeastscatalog.GameServerRoleMainArena
 
-	// ExperienceOpenWorldHub（开放世界大厅/主城体验）由OpenWorld服务器角色承载。
-	ExperienceOpenWorldHub = "Experience.OpenWorld.Hub"
+	// ExperienceLobbyMain（历史大厅体验标识）仅兼容映射到OpenWorld；新配置使用ExperienceOpenWorldHub。
+	ExperienceLobbyMain = divinebeastscatalog.ExperienceLobbyMain
+	// ExperienceOpenWorldHub（大厅体验）是OpenWorld默认承载体验。
+	ExperienceOpenWorldHub = divinebeastscatalog.ExperienceOpenWorldHub
 	// ExperienceOpenWorldMain（开放世界主体验）由OpenWorld服务器角色承载。
-	ExperienceOpenWorldMain = "Experience.OpenWorld.Main"
+	ExperienceOpenWorldMain = divinebeastscatalog.ExperienceOpenWorldMain
 	// ExperienceVillageMain（新手村主体验）由Village服务器角色承载。
-	ExperienceVillageMain = "Experience.Village.Main"
+	ExperienceVillageMain = divinebeastscatalog.ExperienceVillageMain
 	// ExperienceVillageTutorial（教学体验）属于Village，不是独立ServerRole。
-	ExperienceVillageTutorial = "Experience.Village.Tutorial"
+	ExperienceVillageTutorial = divinebeastscatalog.ExperienceVillageTutorial
 	// ExperienceVillageTraining（训练体验）属于Village，不是独立ServerRole。
-	ExperienceVillageTraining = "Experience.Village.Training"
+	ExperienceVillageTraining = divinebeastscatalog.ExperienceVillageTraining
 	// ExperienceMainArenaMain（主竞技场体验）由MainArena服务器角色承载。
-	ExperienceMainArenaMain = "Experience.MainArena.Main"
+	ExperienceMainArenaMain = divinebeastscatalog.ExperienceMainArenaMain
 
 	// ArenaMode1v1（1v1竞技模式）表示每队1名玩家。
-	ArenaMode1v1 = "Arena.Mode.Duel1v1"
+	ArenaMode1v1 = divinebeastscatalog.ArenaModeDuel1v1
 	// ArenaMode2v2（2v2竞技模式）表示每队2名玩家。
-	ArenaMode2v2 = "Arena.Mode.Team2v2"
+	ArenaMode2v2 = divinebeastscatalog.ArenaModeTeam2v2
 	// ArenaMode3v3（3v3竞技模式）表示每队3名玩家。
-	ArenaMode3v3 = "Arena.Mode.Team3v3"
+	ArenaMode3v3 = divinebeastscatalog.ArenaModeTeam3v3
 	// ArenaMode4v4（4v4竞技模式）表示每队4名玩家。
-	ArenaMode4v4 = "Arena.Mode.Team4v4"
+	ArenaMode4v4 = divinebeastscatalog.ArenaModeTeam4v4
 	// ArenaMode5v5（5v5竞技模式）表示每队5名玩家。
-	ArenaMode5v5 = "Arena.Mode.Team5v5"
+	ArenaMode5v5 = divinebeastscatalog.ArenaModeTeam5v5
 )
 
 var arenaTeamSizes = map[string]int{
@@ -48,19 +52,10 @@ var arenaTeamSizes = map[string]int{
 	ArenaMode5v5: 5,
 }
 
-// RoleForExperience（根据体验解析服务器角色）固化《神兽联盟》三类服务器角色映射。
-// OpenWorld.Hub只是开放世界入口体验，不对应独立Lobby Dedicated Server（大厅专用服务器）。
+// RoleForExperience（根据体验解析服务器角色）读取由Shared ServerCatalog生成的正式角色映射。
 func RoleForExperience(experienceID string) (string, bool) {
-	switch experienceID {
-	case ExperienceOpenWorldHub, ExperienceOpenWorldMain:
-		return RoleOpenWorld, true
-	case ExperienceVillageMain, ExperienceVillageTutorial, ExperienceVillageTraining:
-		return RoleVillage, true
-	case ExperienceMainArenaMain:
-		return RoleMainArena, true
-	default:
-		return "", false
-	}
+	roleID, ok := divinebeastscatalog.ExperienceServerRoles[experienceID]
+	return roleID, ok
 }
 
 // TeamSizeForArenaMode（获取竞技模式单队人数）返回1v1至5v5标准TeamSize。
@@ -104,7 +99,7 @@ type WorldAssignment struct {
 	AssignmentID string // AssignmentID（世界分配唯一ID）。
 	GameServerID string // GameServerID（目标服务器实例ID）。
 	ServerRoleID string // ServerRoleID（OpenWorld或Village）。
-	ExperienceID string // ExperienceID（Hub/Main/Tutorial/Training等体验）。
+	ExperienceID string // ExperienceID（OpenWorld.Hub/Main或Village.Main/Tutorial/Training体验）。
 	WorldID      string // WorldID（目标世界、区域或实例逻辑ID）。
 	RegionID     string // RegionID（目标部署区域）。
 	Endpoint     string // Endpoint（客户端连接地址）。

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    { "name": "exact semantic and context wins", "semantic": "VFX.Test.Impact", "context": "Default", "expected": "Exact" },
+    { "name": "context fallback is allowed", "semantic": "VFX.Test.Impact", "context": "Unknown", "expected": "Fallback" },
+    { "name": "fallback disabled returns miss", "semantic": "VFX.Test.Missing", "context": "Unknown", "allowFallback": false, "expected": "Miss" }
+  ]
+}

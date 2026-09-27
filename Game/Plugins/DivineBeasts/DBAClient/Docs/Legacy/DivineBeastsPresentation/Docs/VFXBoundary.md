@@ -1,0 +1,9 @@
+# VFXBoundary（视觉特效边界）
+
+GamePlatformVFX仍是唯一VFX运行框架。
+
+DivineBeastsPresentation不会#include Niagara类型，不调用SpawnSystemAtLocation/Attached，不持有NiagaraSystem资源。
+
+Project Catalog只输出ProviderChannel=VFX和逻辑DefinitionId。VFX Provider负责Definition解析、资源加载、池化、生命周期、预算和实际播放。
+
+GamePlatformVFXClient（游戏平台VFX客户端模块）现通过LocalPlayer级 UGamePlatformVFXPresentationBridgeSubsystem（VFX表现桥子系统）向 GamePlatformPresentationClient（平台表现客户端）正式注册 ProviderChannel=VFX；项目层仍只输出中立 Semantic/DefinitionId，不直接依赖Niagara或VFX运行模块。

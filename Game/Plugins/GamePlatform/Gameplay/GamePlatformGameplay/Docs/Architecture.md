@@ -1,0 +1,5 @@
+# Architecture（架构）
+
+GamePlatformGameplay当前P0只拥有跨玩法插件需要的最小Gameplay Eligibility事实：bServerPlayerActive与AvatarGeneration。服务器是写入权威，客户端通过ReplicatedUsing同步并收到SnapshotChanged事件。
+
+该插件不拥有登录、Session、角色出生/死亡/重生、Arena阶段或队伍逻辑；这些系统只在状态变化时更新这里的中立事实。Interaction等基础插件通过IGamePlatformGameplayEligibilityProvider只读查询。

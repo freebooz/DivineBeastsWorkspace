@@ -1,0 +1,9 @@
+# ArenaModeDefinitions（竞技模式定义）
+
+项目复用GamePlatformMobaData的UGamePlatformArenaModeDefinition并新增非空项目扩展UDivineBeastsArenaModeDefinition。
+
+新增项目字段：ServerRoleId、ExperienceId、ProjectRuleRevision、ContentRevision、HeroCatalogRevision、ConfigState、PickBanState、DuplicateHeroPolicy、OvertimeState、SuddenDeathState。
+
+源码FDivineBeastsArenaModeCatalog已建立五个固定结构Definition等价项，但Map/Selection/Spawn/Respawn/Score/Win/Time等Production字段保持None/0/NotConfigured。
+
+Content/Definitions当前没有真实.uasset；必须在产品规则批准且有UE Editor后合法创建。禁止文本伪造。

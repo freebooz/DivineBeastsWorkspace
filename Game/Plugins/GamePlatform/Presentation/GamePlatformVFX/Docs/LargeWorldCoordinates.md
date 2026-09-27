@@ -1,0 +1,7 @@
+# LargeWorldCoordinates（Niagara大世界坐标）
+
+OpenWorld使用Niagara LWC时，Position与普通Vector必须区分。公共Schema提供Position类型，Executor使用UNiagaraComponent::SetVariablePosition写入。
+
+Definition可声明bRequireLargeWorldCoordinates，Editor Validator读取UNiagaraSystem::SupportsLargeWorldCoordinates验证。大世界Beam、Projectile、World VFX应优先采用Position参数。
+
+UE5.8 Niagara LWC仍需真实Shipping设备验证；源码/Editor静态检查不能替代运行精度和性能证据，当前状态为未执行。

@@ -2,7 +2,7 @@
 // Package gameplatform（游戏平台共享Go绑定）保存公共契约版本和生成注册表。
 package gameplatform
 
-const ContractVersion = "1.3.0" // ContractVersion（公共跨语言契约版本）。
+const ContractVersion = "2.0.0" // ContractVersion（公共跨语言契约版本）。
 
 // OpenAPIOperations（OpenAPI OperationId（HTTP操作编号））。
 var OpenAPIOperations = []string{

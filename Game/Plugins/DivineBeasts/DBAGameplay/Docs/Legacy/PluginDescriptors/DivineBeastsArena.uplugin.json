@@ -1,0 +1,34 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DivineBeastsArena",
+  "Description": "DivineBeastsArena（神兽联盟项目竞技插件）：五模式项目竞技配置、英雄资格、ApplicationFlow客户端适配与MainArena服务器项目门禁。",
+  "Category": "DivineBeasts/Gameplay",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "DivineBeastsRuntime", "Enabled": true },
+    { "Name": "DivineBeastsCharacters", "Enabled": true },
+    { "Name": "GamePlatformArena", "Enabled": true },
+    { "Name": "DivineBeastsApplicationFlow", "Enabled": true, "Optional": true }
+  ],
+  "Modules": [
+    {
+      "Name": "DivineBeastsArenaRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "DivineBeastsArenaClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "DivineBeastsArenaServer",
+      "Type": "ServerOnly",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

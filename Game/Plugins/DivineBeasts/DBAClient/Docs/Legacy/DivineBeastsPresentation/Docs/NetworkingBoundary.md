@@ -1,0 +1,9 @@
+# NetworkingBoundary（网络边界）
+
+DivineBeastsPresentation不是网络层。
+
+GameplayTag、Delegate、Catalog和ContentPack注册不会自动跨网络。所有Presentation Fact必须来自Arena/Combat/GAS/World/Interaction/ApplicationFlow等已有真实复制/权威事实。
+
+本轮OpenWorld交互事实使用UGamePlatformInteractorComponent复制的FGamePlatformInteractionResult；OptionId已加入结果复制，避免依赖Session RepNotify顺序。Village反馈来自ApplicationFlow已确认InWorld投影。
+
+不新增高频Presentation RPC，也不复制具体资源路径。

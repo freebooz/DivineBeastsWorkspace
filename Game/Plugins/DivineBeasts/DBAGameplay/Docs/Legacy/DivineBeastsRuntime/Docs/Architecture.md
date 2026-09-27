@@ -1,0 +1,9 @@
+# Architecture（架构）
+
+DivineBeastsRuntime属于第三层DivineBeasts（神兽联盟项目层）。依赖方向仍为DivineBeasts → MobaCommon → GameFoundation；GameFoundation和MobaCommon禁止反向依赖DivineBeasts。
+
+DivineBeastsRuntime（运行时模块）仅依赖Core、CoreUObject和GamePlatformCore（平台核心）。它不依赖GamePlatformCharacter、GamePlatformAbilitySystem、GamePlatformCombat、GamePlatformArena、MobaPresentation、GamePlatformPresentation、GamePlatformVFX或GamePlatformUI。
+
+Shared/Contracts/Games/DivineBeasts是跨语言真源。Build/Contracts生成Shared/Generated/Cpp/Games/DivineBeasts与Backend/generated/divinebeasts。Runtime通过Private Adapter（私有适配器）把标准C++生成目录转为UE的FName/FString类型。
+
+DivineBeastsContracts是Source下的External（外部）模块，但不是.uplugin中的可加载模块。其静态库只有真正的项目私有网络/服务器适配器需要时才链接。

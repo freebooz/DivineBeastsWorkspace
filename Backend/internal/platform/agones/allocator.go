@@ -14,14 +14,15 @@ import (
 	"strings"
 	"time"
 
+	gameservercontract "divinebeasts/backend/internal/contracts/gameserver"
 	"divinebeasts/backend/internal/modules/gameserver"
 )
 
 // AllocationInput（Agones分配输入）描述GameServerControlService对专用服务器的选择条件。
 type AllocationInput struct {
 	Namespace    string // Namespace（Agones GameServer所在Kubernetes命名空间）。
-	RoleID       string // RoleID（OpenWorld/Village/MainArena服务器角色）。
-	ExperienceID string // ExperienceID（目标Experience，用于区分OpenWorld.Hub/OpenWorld.Main/Village等服务器池）。
+	RoleID       string // RoleID（OpenWorld/Village/MainArena正式服务器角色）。
+	ExperienceID string // ExperienceID（目标体验，用于选择准确服务器池；空值时由角色默认体验填充）。
 	RegionID     string // RegionID（部署区域ID）。
 	BuildVersion string // BuildVersion（GameServer构建版本）。
 	MatchID      string // MatchID（MainArena比赛ID；非竞技分配可为空）。
@@ -84,11 +85,11 @@ func BuildAllocationRequest(input AllocationInput) (GameServerAllocation, error)
 	if input.ExperienceID == "" {
 		switch input.RoleID {
 		case gameserver.RoleOpenWorld:
-			input.ExperienceID = "Experience.OpenWorld.Main"
+			input.ExperienceID = gameservercontract.ExperienceOpenWorldMain
 		case gameserver.RoleVillage:
-			input.ExperienceID = "Experience.Village.Main"
+			input.ExperienceID = gameservercontract.ExperienceVillageMain
 		case gameserver.RoleMainArena:
-			input.ExperienceID = "Experience.MainArena.Main"
+			input.ExperienceID = gameservercontract.ExperienceMainArenaMain
 		}
 	}
 	roleLabel, err := roleLabelValue(input.RoleID)
@@ -126,11 +127,11 @@ func BuildAllocationRequest(input AllocationInput) (GameServerAllocation, error)
 
 func roleLabelValue(roleID string) (string, error) {
 	switch roleID {
-	case "GameServer.Role.OpenWorld":
+	case gameserver.RoleOpenWorld:
 		return "open-world", nil
-	case "GameServer.Role.Village":
+	case gameserver.RoleVillage:
 		return "village", nil
-	case "GameServer.Role.MainArena":
+	case gameserver.RoleMainArena:
 		return "main-arena", nil
 	default:
 		return "", fmt.Errorf("未知GameServer RoleID: %s", roleID)

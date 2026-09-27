@@ -1,0 +1,5 @@
+# PresentationProviderIntegration（表现提供者集成）
+
+正式链路：Gameplay Fact / GameplayCue / Application Fact → GamePlatformPresentation Semantic Request → ProviderChannel=VFX → UGamePlatformVFXPresentationBridgeSubsystem → FGamePlatformVFXPresentationProvider → IGamePlatformVFXService。
+
+Bridge为ULocalPlayerSubsystem，向UGamePlatformPresentationClientSubsystem注册/注销Provider。Provider只映射中立RequestId、Semantic、DefinitionId、ContextTags、SourceLocation、Priority、PredictionState和平台名，不引用Moba/DivineBeasts类型。

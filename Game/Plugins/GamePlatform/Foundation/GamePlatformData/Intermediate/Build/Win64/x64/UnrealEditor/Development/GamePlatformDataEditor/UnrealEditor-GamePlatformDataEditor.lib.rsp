@@ -1,0 +1,15 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/experimental:deterministic
+/DEF
+/NAME:"UnrealEditor-GamePlatformDataEditor.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformDataEditor/Module.GamePlatformDataEditor.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformDataEditor/GamePlatformDataEditorModule.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformDataEditor/GamePlatformDefinitionValidationTests.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformDataEditor/GamePlatformRuntimeDependencyTests.cpp.obj"
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformDataEditor/GamePlatformDefinitionValidator.cpp.obj"
+/OUT:"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformDataEditor/UnrealEditor-GamePlatformDataEditor.lib"

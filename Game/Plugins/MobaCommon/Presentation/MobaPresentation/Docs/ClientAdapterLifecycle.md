@@ -1,0 +1,7 @@
+# ClientAdapterLifecycle（客户端适配生命周期）
+
+UMobaPresentationClientSubsystem继承 ULocalPlayerSubsystem（本地玩家子系统）。Initialize注册World生命周期回调并绑定当前Arena/Combat事实源，Deinitialize完整解绑。
+
+Arena通过Native Delegate事件驱动，不做每Tick扫描。Combat只绑定当前LocalPlayer Pawn（本地玩家角色）的公开CombatComponent事件。
+
+当前Ability/Status/Character除Combat可提供的事实外，通过显式公共适配入口接入；不会为了“完整”在客户端推断不存在的权威事实。

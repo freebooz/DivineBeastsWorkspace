@@ -1,0 +1,9 @@
+# ScoreAndObjectivePolicy（比分与目标策略）
+
+GamePlatformArena当前提供通用Team Score/Objectives状态和可信事件处理框架。
+
+项目ScorePolicyId目前NotConfigured；没有产品确认“击杀=1分”“10分获胜”等神兽联盟正式规则，因此不会采用平台StandardKillScore/StandardWinScore作为Production。
+
+项目Objective系统同样未有正式设计，不创建额外动态Objective/FastArray体系。
+
+未来若产品批准Elimination/Objective规则，优先通过平台ScorePolicy/Objective事实与项目Definition配置，而不是在客户端计算Score。

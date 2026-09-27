@@ -1,0 +1,7 @@
+# ScalabilityEffectTypes（伸缩与效果类型）
+
+常规VFX伸缩优先使用UNiagaraEffectType（Niagara效果类型），Definition只保存EffectType引用和bEnableScalability桥接配置。Editor Validator在启用伸缩但未关联EffectType时报告错误。
+
+距离Cull、Effect Type最大实例、Per-System最大实例、Visibility、Significance、Budget Scaling、Platform Set、Cull Reaction和Update Frequency由Niagara原生机制负责。
+
+平台FGamePlatformVFXScalabilityPolicy只保留MaxActiveInstances紧急总量上限与Importance桥接，不每Tick复制所有Cull规则。

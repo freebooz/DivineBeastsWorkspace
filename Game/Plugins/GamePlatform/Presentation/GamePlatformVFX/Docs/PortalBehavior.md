@@ -1,0 +1,5 @@
+# PortalBehavior（传送门行为）
+
+Portal只表现Opening、Stable、Closing等视觉阶段。Interaction、Session/Ticket和ClientTravel属于其它系统，VFX不保存Ticket、服务地址或执行Travel。
+
+Portal实例由WorldSubsystem管理，World teardown时释放。平台/质量变体只能改变视觉复杂度，不能用VFX状态判断玩家Travel权限。

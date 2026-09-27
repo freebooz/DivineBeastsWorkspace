@@ -1,0 +1,27 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DivineBeastsPresentation",
+  "Description": "DivineBeastsPresentation（神兽联盟项目表现插件）：项目Context、Catalog、Content Pack注册与非MOBA事实表现适配。",
+  "Category": "DivineBeasts/Presentation",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "DivineBeastsRuntime", "Enabled": true },
+    { "Name": "GamePlatformPresentation", "Enabled": true }
+  ],
+  "Modules": [
+    {
+      "Name": "DivineBeastsPresentationRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "DivineBeastsPresentationClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

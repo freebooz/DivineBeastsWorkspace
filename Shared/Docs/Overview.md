@@ -26,6 +26,6 @@ Shared/
 - `Generated/Cpp`：唯一允许保存在Shared中的生成代码，仅供C++消费者使用，禁止手工修改。
 - Go生成代码输出到 `Backend/generated`，不重复保存在Shared。
 
-《神兽联盟》正式Dedicated Server（专用服务器）角色只有：OpenWorld（开放世界，含大厅/主城/野外）、Village（新手村）、MainArena（主竞技场）。
+《神兽联盟》正式Dedicated Server（专用服务器）角色为OpenWorld（常驻世界）、Village（新手村）和MainArena（短生命周期主竞技场）。大厅是OpenWorld内的体验，不是独立服务器角色；角色与体验关系以 `Games/DivineBeasts/Schemas/server-catalog.schema.json` 的 `x-role-experience-map` 为唯一映射源；教学和训练是Village体验，不是独立服务器角色。
 
-`OpenWorld.Hub（大厅/主城体验）` 是Experience，不是独立Lobby ServerRole（大厅服务器角色）。
+新大厅流量使用 `Experience.OpenWorld.Hub`。已发布的 `Experience.Lobby.Main` 仅作为兼容标识继续映射到OpenWorld；不得配置或注册 `GameServer.Role.Lobby`。

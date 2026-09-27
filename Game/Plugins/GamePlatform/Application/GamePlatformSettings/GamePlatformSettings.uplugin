@@ -1,0 +1,18 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformSettings",
+    "Description":  "GamePlatformSettings（游戏平台插件）",
+    "Category":  "GamePlatform/Application",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformSettingsClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

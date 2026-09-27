@@ -1,0 +1,3 @@
+# GamePlatformSave
+
+具体职责与依赖规范见 Docs/DivineBeastsWorkspace_Architecture_40Plugins_FourServers.md。

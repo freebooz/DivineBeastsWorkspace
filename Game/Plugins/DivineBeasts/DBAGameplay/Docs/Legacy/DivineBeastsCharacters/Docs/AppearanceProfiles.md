@@ -1,0 +1,7 @@
+# AppearanceProfiles（外观Profile）
+
+Hero Definition只保存 AppearanceProfileId、PresentationProfileId、SkeletonCompatibilityId 和 ContentPackId 等逻辑ID。
+
+DivineBeastsCharactersRuntime不加载SkeletalMesh、Material、Texture、Niagara、Sound或Portrait。客户端项目表现层/Content Pack根据逻辑Profile解析视觉资源。
+
+Dedicated Server只需要Hero Definition中的身份、SpawnEnvelope、Movement、Collision和逻辑Profile ID，不应因Characters插件强引用高精视觉资产。

@@ -1,0 +1,7 @@
+# Architecture（架构）
+
+GamePlatformPresentationCore定义FGamePlatformPresentationRequest、Context、Catalog Fragment和确定性解析数据；GamePlatformPresentationClient以ULocalPlayerSubsystem作为组合入口。
+
+Client Subsystem支持Provider注册/注销、Context Contributor、Catalog Fragment、BuildContext、Catalog Resolve和Submit。Provider按Priority→ProviderId确定性排序；World cleanup推进WorldGeneration，使旧世界请求Fail Closed。
+
+具体VFX/SFX/UI模块只能作为Provider消费中立请求，Presentation本身不依赖具体表现资产类型。

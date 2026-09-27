@@ -1,22 +1,24 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Identity Internal API（游戏平台身份内部接口）
+  title: 游戏平台身份服务内部接口（Identity API）
   version: 1.0.0
   description: |
-    IdentityService 当前注册的内部 HTTP 路由。它只供 GatewayService 或受信任的后端服务调用，绝不能通过公网 Ingress、游戏客户端或 UE 客户端直接暴露。
-    productiondeps 使用 PostgreSQL 密码账号与会话；内存 guest 仅保留旧开发构造器。内部明文传输没有服务间认证，不是公网或生产安全边界。
+    IdentityService（身份服务）当前已注册的内部 HTTP 路由，仅供 GatewayService（统一接入服务）或其他可信后端调用；不得通过公网 Ingress、游戏客户端或 UE 客户端直接暴露。
+    生产装配使用 PostgreSQL 保存密码账号与会话；内存 guest 身份仅为旧开发构造器保留。当前内部 HTTP 明文传输没有服务间认证，不构成公网或生产安全边界。
 servers:
   - url: http://127.0.0.1:8081
     description: 本地 Docker 开发部署的 IdentityService
 tags:
   - name: 运维
+    description: 检查服务进程存活、服务宿主就绪和版本信息；不代表身份数据库或业务依赖均可用。
   - name: 内部身份
+    description: 供 GatewayService 或可信后端调用的身份操作，包括会话创建、令牌验证、刷新和撤销。
 paths:
   /internal/v1/identity/probe:
     get:
       tags: [内部身份]
       operationId: probeIdentityInternal
-      summary: 通过身份仓储实际检查数据库可用性
+      summary: 检查身份仓储与数据库的真实可用性
       responses:
         '200':
           description: 领域 Probe 成功，不能用宿主 health/ready 替代。
@@ -28,7 +30,7 @@ paths:
     post:
       tags: [内部身份]
       operationId: refreshIdentityInternal
-      summary: 原子轮换令牌且不延长刷新绝对期限
+      summary: 原子轮换刷新令牌且不延长会话期限
       description: 不可自动重试；响应丢失也可能已消费旧令牌。
       requestBody:
         required: true
@@ -48,7 +50,7 @@ paths:
     post:
       tags: [内部身份]
       operationId: logoutIdentityInternal
-      summary: 使用当前或已消费刷新令牌撤销所属会话
+      summary: 使用刷新令牌幂等撤销所属会话
       requestBody:
         required: true
         content:
@@ -63,7 +65,7 @@ paths:
     get:
       tags: [运维]
       operationId: getIdentityLiveness
-      summary: 查询身份服务存活状态
+      summary: 查询身份服务进程存活状态
       responses:
         '200':
           description: 服务进程存活。
@@ -74,7 +76,7 @@ paths:
     get:
       tags: [运维]
       operationId: getIdentityReadiness
-      summary: 查询身份服务就绪状态
+      summary: 查询身份服务宿主就绪状态
       responses:
         '200':
           description: 服务宿主已就绪。
@@ -85,7 +87,7 @@ paths:
     get:
       tags: [运维]
       operationId: getIdentityVersion
-      summary: 查询身份服务版本
+      summary: 查询身份服务名称与版本
       responses:
         '200':
           description: 服务名称与运行版本。
@@ -96,8 +98,8 @@ paths:
     post:
       tags: [内部身份]
       operationId: loginIdentityInternal
-      summary: 为 Gateway 创建玩家会话
-      description: password 使用 accountName 与原 credential 字段承载密码；生产拒绝 guest，不回退内存身份。大小上限 64KiB，拒绝未知、重复及缺失必填字段。
+      summary: 为统一接入服务创建玩家会话
+      description: password 提供方使用 accountName 传入账号名、credential 传入密码；生产环境拒绝 guest，且不会回退到内存身份。请求正文上限为 64 KiB；未知字段、重复字段或缺少必填字段均会被拒绝。
       requestBody:
         required: true
         content:
@@ -124,7 +126,7 @@ paths:
     post:
       tags: [内部身份]
       operationId: authenticateIdentityInternal
-      summary: 验证 Access Token
+      summary: 验证访问令牌（Access Token）
       description: 无效令牌保留 HTTP 200 与 valid=false 兼容语义；后端不可用必须返回 503，不能伪装为令牌无效。
       requestBody:
         required: true

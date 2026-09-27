@@ -26,7 +26,7 @@ $details.EditorBinaryHashes=@{}
 $details.BuildEvidenceScope='限定主工程及World/Loading/Core/Data源码与配置；成功Editor记录五DLL，不证明其余依赖闭包或引擎版本二进制完全一致。'
 if($NativeTests){
     try {
-        $source=Join-Path $context.Workspace 'Game/Plugins/GameFoundation/Gameplay/GamePlatformWorld/Tests'
+        $source=Join-Path $context.Workspace 'Game/Plugins/GamePlatform/World/GamePlatformWorld/Tests'
         Assert-FoundationFile (Join-Path $source 'CMakeLists.txt')
         $command=Get-Command $CMake -CommandType Application -ErrorAction SilentlyContinue
         if(-not $command){throw [IO.FileNotFoundException]::new('未找到CMake；没有下载或替换工具链。')}

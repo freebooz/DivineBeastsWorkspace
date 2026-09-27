@@ -18,7 +18,7 @@ import (
 type RegisterInput struct {
 	GameID          string // GameID（游戏ID）。
 	GameServerID    string // GameServerID（游戏服务器实例ID）。
-	ServerRoleID    string // ServerRoleID（OpenWorld/Village/MainArena服务器角色）。
+	ServerRoleID    string // ServerRoleID（OpenWorld/Village/MainArena正式服务器角色）。
 	ExperienceID    string // ExperienceID（当前进程承载体验）。
 	RegionID        string // RegionID（部署区域ID）。
 	ClusterID       string // ClusterID（Kubernetes/Agones集群ID）。
@@ -30,7 +30,7 @@ type RegisterInput struct {
 	Capacity        int    // Capacity（最大玩家容量）。
 }
 
-// AllocateWorldInput（常驻世界分配输入）用于OpenWorld.Hub、OpenWorld.Main和Village三类体验。
+// AllocateWorldInput（常驻世界分配输入）用于OpenWorld（含大厅）和Village的持久实例体验。
 type AllocateWorldInput struct {
 	ExperienceID string // ExperienceID（目标体验）。
 	WorldID      string // WorldID（目标世界/区域/实例逻辑ID）。
@@ -143,8 +143,8 @@ func (s *Service) SetReady(gameServerID string) error { return s.registry.SetRea
 // Drain（排空GameServer）禁止实例接受新的玩家或比赛分配。
 func (s *Service) Drain(gameServerID string) error { return s.registry.Drain(gameServerID) }
 
-// AllocateWorld（分配常驻世界）支持OpenWorld.Hub、OpenWorld.Main、Village.Main/Tutorial/Training。
-// Hub与Main都使用OpenWorld ServerRole，不创建独立Lobby Server。
+// AllocateWorld（分配常驻世界）支持OpenWorld.Hub/Main及Village.Main/Tutorial/Training。
+// MainArena不经过此入口，竞技服务器使用独占比赛Assignment。
 func (s *Service) AllocateWorld(ctx context.Context, input AllocateWorldInput) (gameservercontract.WorldAssignment, error) {
 	roleID, ok := gameservercontract.RoleForExperience(input.ExperienceID)
 	if !ok || roleID == gameservercontract.RoleMainArena {

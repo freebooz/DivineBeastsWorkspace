@@ -1,0 +1,23 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformCombat",
+    "Description":  "GamePlatformCombat（游戏平台插件）",
+    "Category":  "GamePlatform/Gameplay",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Plugins":  [
+                    { "Name": "GameplayAbilities", "Enabled": true },
+                    { "Name": "GamePlatformCore", "Enabled": true },
+                    { "Name": "GamePlatformAbilitySystem", "Enabled": true }
+                ],
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformCombat",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

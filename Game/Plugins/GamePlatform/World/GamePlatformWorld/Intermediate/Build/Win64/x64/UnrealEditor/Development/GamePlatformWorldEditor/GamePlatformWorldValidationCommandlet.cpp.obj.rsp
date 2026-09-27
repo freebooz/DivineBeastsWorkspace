@@ -1,0 +1,11 @@
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformWorld/Source/GamePlatformWorldEditor/Private/Commandlets/GamePlatformWorldValidationCommandlet.cpp"
+@"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformWorld/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformWorldEditor/GamePlatformWorldEditor.Shared.rsp"
+/FI"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformWorld/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformWorldEditor/Definitions.h"
+/Fo"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformWorld/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformWorldEditor/GamePlatformWorldValidationCommandlet.cpp.obj"
+/experimental:log "E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformWorld/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformWorldEditor/GamePlatformWorldValidationCommandlet.cpp.sarif"
+/sourceDependencies "E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformWorld/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformWorldEditor/GamePlatformWorldValidationCommandlet.cpp.dep.json"
+/nologo
+/TP
+/GR-
+/std:c++20
+/wd5054

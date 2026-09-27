@@ -57,11 +57,14 @@ func newSwaggerDocumentationHandler(contractsRoot string) (*swaggerDocumentation
 
 func (h *swaggerDocumentationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/swagger/" {
+		// 契约和页面通过只读挂载发布；禁止缓存，确保同一地址更新后能立即读取新版本。
+		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write(h.indexPage)
 		return
 	}
 	if strings.HasPrefix(r.URL.Path, "/swagger/specs/") {
+		w.Header().Set("Cache-Control", "no-store")
 		h.files.ServeHTTP(w, r)
 		return
 	}
@@ -101,6 +104,22 @@ func buildSwaggerIndexPage(specificationPaths []string) []byte {
 		panic(fmt.Errorf("序列化 Swagger 规格列表失败: %w", err))
 	}
 
+	// 首页优先展示客户端实际入口；未提供 Gateway 规格时回退到目录排序后的第一份契约。
+	primarySpecificationPath := ""
+	if len(specificationPaths) > 0 {
+		primarySpecificationPath = specificationPaths[0]
+	}
+	for _, specificationPath := range specificationPaths {
+		if specificationPath == "GamePlatform/OpenAPI/gateway.openapi.yaml" {
+			primarySpecificationPath = specificationPath
+			break
+		}
+	}
+	primarySpecificationJSON, err := json.Marshal(primarySpecificationPath)
+	if err != nil {
+		panic(fmt.Errorf("序列化 Swagger 默认规格失败: %w", err))
+	}
+
 	var specificationLinks strings.Builder
 	for _, specificationPath := range specificationPaths {
 		escapedPath := html.EscapeString(specificationPath)
@@ -131,17 +150,26 @@ func buildSwaggerIndexPage(specificationPaths []string) []byte {
     </section>
   </main>
   <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js"></script>
   <script>
     const specificationPaths = %s;
+    const specificationCacheKey = Date.now().toString();
     if (window.SwaggerUIBundle) {
       window.SwaggerUIBundle({
         dom_id: '#swagger-ui',
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        layout: 'StandaloneLayout',
         deepLinking: true,
         displayRequestDuration: true,
-        urls: specificationPaths.map((path) => ({ name: path, url: '/swagger/specs/' + path })),
+        'urls.primaryName': %s,
+        docExpansion: 'list',
+        urls: specificationPaths.map((path) => ({
+          name: path,
+          url: '/swagger/specs/' + path + '?_=' + specificationCacheKey,
+        })),
       });
     }
   </script>
 </body>
-</html>`, specificationLinks.String(), specificationsJSON))
+</html>`, specificationLinks.String(), specificationsJSON, primarySpecificationJSON))
 }

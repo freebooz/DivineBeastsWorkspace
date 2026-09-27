@@ -1,0 +1,7 @@
+# SecurityAndRobustness（安全与健壮性）
+
+TransferTicket使用后端HMAC-SHA256签名、TTL、目标Player/Match/Server绑定和数据库唯一消费记录，重放返回冲突。内部HTTP接口要求Bearer服务Token和GameServer identity（游戏服务器身份）。
+
+MatchResult只接受与认证GameServerId一致的服务器请求；客户端无提交接口。日志和复制状态不包含TransferTicket原文、内部Token、签名密钥、MMR或隐藏评分。
+
+当前后端工作树尚未提供可复用的玩家Session Authority（会话权威）契约，因此本轮已实现TicketId一次性消费、TTL、Player、Match、Destination Server与Roster绑定，但没有伪造“SessionId已验证”的结论。待Session/Gateway真实契约落地后，应由Gateway/MatchService注入受信任SessionId，并在GameServerControlService验证消费时同时核对。

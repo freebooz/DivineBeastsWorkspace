@@ -1,0 +1,7 @@
+# EditorValidation（编辑器验证）
+
+GamePlatformVFXEditor负责Definition、Catalog、Dependency、Composite等验证，不把Editor逻辑放入Client模块。
+
+Definition Validator检查DefinitionId、Niagara System、Parameter Schema、EffectType、LWC和Fixed Bounds。Catalog Validator检查Definition/DefinitionId、Tag冲突和同rank歧义。Composite Validator检查空步骤、循环、MaxDepth/Children/Delay/Lifetime边界。
+
+Niagara自身能够表达的Validation Rules/Rule Sets应优先使用Niagara原生机制；平台Editor只补跨Definition/Catalog/插件边界规则。真实Editor Data Validation执行当前未执行。

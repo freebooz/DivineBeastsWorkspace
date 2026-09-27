@@ -1,0 +1,7 @@
+# DiagnosticsTelemetry（诊断与遥测）
+
+GamePlatformVFXDiagnostics记录Catalog miss/ambiguity、Definition load failure等中立诊断。WorldSubsystem可汇总活动实例、Pending leases、Dedupe、Catalog revision、drops/culls/peak等只读状态。
+
+GamePlatformDebug/DeveloperTools只能读取摘要，不允许VFX反向依赖调试插件。未来接入GamePlatformTelemetry时只发送中立性能/失败指标，不携带Token、服务地址或Gameplay秘密。
+
+当前没有新增后端监控接口或微服务。

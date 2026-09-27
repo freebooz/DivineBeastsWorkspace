@@ -1,0 +1,7 @@
+# PreloadingAssetLeases（预加载与资产租约）
+
+FGamePlatformVFXPreloadCoordinator统一通过 GamePlatformData 的 FGamePlatformAssetLoader 请求异步加载，不直接创建第二AssetManager，也不调用UAssetManager::GetStreamableManager。
+
+Lease先持有Definition，再切换为同时持有Definition、选择后的Niagara System和PreloadAssets的Streamable Handle。实例记录保存LoadLease，WorldSubsystem在Stop、自动Prune或Deinitialize时取消并释放。
+
+Startup Catalog同样通过GamePlatformData异步加载并保留StartupCatalogLoadLease。未执行真实Cook前，不把软引用存在等同于资产已正确入包。

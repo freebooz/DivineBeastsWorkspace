@@ -1,0 +1,9 @@
+# SecurityAndAuthority（安全与权威）
+
+客户端不能自报PlayerId、Hero entitlement（英雄资格）、OnboardingComplete、GameServerId或TransferTicket声明。
+
+Gateway从认证上下文确定PlayerId和SessionId；PlayerDataService重新验证角色归属、状态、Revision和Hero资格；worldcontrol重新验证Character和DesiredExperience，再由Allocator决定GameServer/Endpoint/Map。
+
+TransferTicket绑定Player、Character、Session、Destination Server、Role、Experience、Assignment和TTL，并由Repository一次性消费，重放拒绝。
+
+日志和ViewState禁止记录Password、Access/Refresh Token、TransferTicket原文、签名密钥和CharacterName（默认遥测不采集）。

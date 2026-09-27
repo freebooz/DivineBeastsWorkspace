@@ -1,0 +1,9 @@
+# SpawnAndInitialization（出生与初始化）
+
+FDivineBeastsCharacterSpawnInitializer实现IGamePlatformCharacterInitializer，只处理平台统一Spawn Operation已经创建的ACharacter，不调用SpawnActor、不调用Possess。
+
+可信初始化上下文包含CharacterId、HeroDefinitionId、SpawnGeneration、AvatarGeneration以及是否要求持久CharacterId。Player角色通常要求CharacterId，AI测试/非持久Avatar可显式关闭。
+
+如果ACharacter尚无项目组件，Initializer动态创建并注册UDivineBeastsCharacterComponent，再绑定可信上下文。
+
+Spawn选点前可用TryGetLoadedSpawnEnvelope读取已加载Definition的Capsule半径/半高/CollisionProfile，避免先用错误小胶囊出生后再切大碰撞。

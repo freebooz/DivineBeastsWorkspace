@@ -1,0 +1,11 @@
+"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Execution/ApplicationFlowExecutor.cpp"
+@"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformApplicationFlow/GamePlatformApplicationFlow.Shared.rsp"
+/FI"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformApplicationFlow/Definitions.h"
+/Fo"E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformApplicationFlow/ApplicationFlowExecutor.cpp.obj"
+/experimental:log "E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformApplicationFlow/ApplicationFlowExecutor.cpp.sarif"
+/sourceDependencies "E:/work/2026/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Intermediate/Build/Win64/x64/UnrealEditor/Development/GamePlatformApplicationFlow/ApplicationFlowExecutor.cpp.dep.json"
+/nologo
+/TP
+/GR-
+/std:c++20
+/wd5054

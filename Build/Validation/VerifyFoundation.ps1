@@ -81,9 +81,9 @@ try {
     }
     foreach ($suite in @(
         @{ Name='Host'; Source='Tests/Foundation/Host' },
-        @{ Name='Core'; Source='Game/Plugins/GameFoundation/Core/GamePlatformCore/Tests' },
-        @{ Name='Data'; Source='Game/Plugins/GameFoundation/Core/GamePlatformData/Tests' },
-        @{ Name='Flow'; Source='Game/Plugins/GameFoundation/Application/GamePlatformApplicationFlow/Tests' }
+        @{ Name='Core'; Source='Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Tests' },
+        @{ Name='Data'; Source='Game/Plugins/GamePlatform/Foundation/GamePlatformData/Tests' },
+        @{ Name='Flow'; Source='Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Tests' }
     )) {
         if (-not $NativeTests) { Add-Check "Native$($suite.Name)" NotExecuted 2 '未指定-NativeTests；不替代UE测试'; continue }
         try {

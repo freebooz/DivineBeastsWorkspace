@@ -12,7 +12,7 @@
 
 ## 全局约束
 
-- 唯一新增插件是 `Game/Plugins/GameFoundation/Gameplay/GamePlatformGameplay`，默认仅一个双端运行模块。
+- 唯一新增插件是 `Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay`，默认仅一个双端运行模块。
 - 运行模块不得依赖 Online、Session、Loading、InputClient、PCG、MOBA、项目层、HTTP、UI、Character、GAS、Combat 或 Niagara。
 - 所有客户端输入只能是非权威准备事实；体验、Pawn、出生点和控制权只能由服务器批准。
 - 不伪造 `.uasset`／`.umap`；反射代码未编译时只交付幂等引擎脚本并标记资产未生成。
@@ -33,9 +33,9 @@
 
 **文件：**
 
-- 创建 `Game/Plugins/GameFoundation/Gameplay/GamePlatformGameplay/Tests/CMakeLists.txt`
-- 创建 `Game/Plugins/GameFoundation/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Tests/GameplayPolicyTests.cpp`
-- 创建 `Game/Plugins/GameFoundation/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Policies/GameplayPolicy.h`
+- 创建 `Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Tests/CMakeLists.txt`
+- 创建 `Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Tests/GameplayPolicyTests.cpp`
+- 创建 `Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Policies/GameplayPolicy.h`
 
 **产出接口：** 体验阶段转换、玩家阶段转换、准入代次匹配、出生幂等键、准备令牌匹配、队列容量／截止、确定出生候选排序的无 UE 纯算法。
 

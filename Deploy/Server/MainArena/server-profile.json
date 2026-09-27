@@ -1,0 +1,25 @@
+{
+  "profileVersion": 1,
+  "serverRoleId": "GameServer.Role.MainArena",
+  "defaultExperienceId": "Experience.MainArena.Main",
+  "allowedExperienceIds": [
+    "Experience.MainArena.Main"
+  ],
+  "worldPackage": "/Game/DivineBeasts/Worlds/L_MainArena",
+  "requiredAssets": [
+    "/Game/DivineBeasts/Worlds/L_MainArena.L_MainArena"
+  ],
+  "arenaModeIds": [
+    "Arena.Mode.Duel1v1",
+    "Arena.Mode.Team2v2",
+    "Arena.Mode.Team3v3",
+    "Arena.Mode.Team4v4",
+    "Arena.Mode.Team5v5"
+  ],
+  "instancePolicy": "PerMatch",
+  "readiness": {
+    "requireRequiredAssets": true,
+    "requireWorldBeginPlay": true,
+    "requireControlPlaneRegistration": true
+  }
+}

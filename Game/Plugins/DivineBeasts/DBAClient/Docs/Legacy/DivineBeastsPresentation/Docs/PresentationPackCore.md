@@ -1,0 +1,9 @@
+# PresentationPackCore（公共表现包）
+
+目标命名DBAPresentationPack_Core只应承载跨多个Hero/World真正公共的VFX Definition/Catalog和公共表现资源。
+
+DBASFXPack_Core、DBAAnimationPack_Core、DBAUIPack_Core必须保持独立；本插件不会把声音、动画、UI资源并入Presentation Pack。
+
+旧DBAVFXPack_Core当前工作树中不存在实际插件/资产，因此没有可执行引用迁移或Redirect操作。本轮状态：DBAPresentationPack_Core未创建，DBAVFXPack_Core迁移未执行。
+
+只有真实资源和引用图出现后，才允许通过UE Editor/Redirector完成迁移，不能只改目录名。

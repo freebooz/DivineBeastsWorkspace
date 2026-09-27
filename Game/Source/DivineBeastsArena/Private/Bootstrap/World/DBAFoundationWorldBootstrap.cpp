@@ -101,8 +101,8 @@ void UDBAFoundationWorldBootstrap::BeginWorld(UWorld& World)
     // Session尚未提供公开可信快照：禁止Client/Listen借开发参数绕过网络准入。
     if(World.GetNetMode()==NM_Client||World.GetNetMode()==NM_ListenServer)
     {Fail(TEXT("SessionPrerequisiteMissing"));return;}
-    if(World.GetNetMode()==NM_DedicatedServer && DevelopmentServerRole!=TEXT("OpenWorld")&&
-       DevelopmentServerRole!=TEXT("Village")&&DevelopmentServerRole!=TEXT("MainArena"))
+    if(World.GetNetMode()==NM_DedicatedServer && DevelopmentServerRole!=TEXT("Village")&&
+       DevelopmentServerRole!=TEXT("OpenWorld")&&DevelopmentServerRole!=TEXT("MainArena"))
     {Fail(TEXT("DevelopmentServerRoleMissing"));return;}
     AcquireDefinition(DefinitionId,UGamePlatformWorldDefinition::StaticClass());
 }

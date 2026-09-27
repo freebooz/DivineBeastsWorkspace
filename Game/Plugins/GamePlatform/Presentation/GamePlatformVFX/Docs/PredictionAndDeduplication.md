@@ -1,0 +1,7 @@
+# PredictionAndDeduplication（预测与去重）
+
+Request支持RequestId、ActivationId、PredictionKey和PredictionState。WorldSubsystem优先使用ActivationId + PredictionKey生成去重键，缺失时回退RequestId。
+
+Predicted先播后，Confirmed若命中同一活动实例则返回原Handle而不双播；Cancelled会Stop已有预测实例。Dedupe状态为World私有并随World销毁。
+
+该去重只解决客户端表现重复，不替代Gameplay预测校正、反作弊或服务器权威。

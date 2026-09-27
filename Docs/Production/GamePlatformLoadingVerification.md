@@ -4,7 +4,7 @@
 
 ## 真实范围与前置
 
-新增唯一插件`Game/Plugins/GameFoundation/Application/GamePlatformLoading`，单Runtime模块；实现任务DAG、正权重单调进度、必需/可选/实际回退屏障、操作/尝试代次、取消和超时、私有实例服务、Data独占租约、目标世界声明。主工程Ready工厂接入新的`DBALoadingFlowNode`，使用公开Flow事件和Loading句柄。
+新增唯一插件`Game/Plugins/GamePlatform/Application/GamePlatformLoading`，单Runtime模块；实现任务DAG、正权重单调进度、必需/可选/实际回退屏障、操作/尝试代次、取消和超时、私有实例服务、Data独占租约、目标世界声明。主工程Ready工厂接入新的`DBALoadingFlowNode`，使用公开Flow事件和Loading句柄。
 
 没有新增业务后端接口，没有复制Data资产管理器，没有HTTP、Travel或会话替身。Session公开服务及真实准入未完成；FoundationSessionLoading前置阻塞。Online和Foundation有并行修改，未覆盖，也没有把它们的实现状态当作本轮运行证据。
 

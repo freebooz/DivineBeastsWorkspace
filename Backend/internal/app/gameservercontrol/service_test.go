@@ -107,7 +107,7 @@ func TestSubmitMatchResultReleasesMainArena(t *testing.T) {
 	}
 }
 
-// TestWorldAllocationAndTransfer（常驻世界分配与跨服测试）验证Hub/Main/Village共用三类ServerRole模型，
+// TestWorldAllocationAndTransfer（常驻世界分配与跨服测试）验证OpenWorld/Village体验按正式角色分池，
 // 并覆盖世界Assignment、TransferTicket一次性消费及容量预留提交。
 func TestWorldAllocationAndTransfer(t *testing.T) {
 	now := time.Date(2026, 9, 21, 4, 30, 0, 0, time.UTC)
@@ -119,6 +119,7 @@ func TestWorldAllocationAndTransfer(t *testing.T) {
 		worldID      string
 	}{
 		{"OpenWorldHub", "ow-hub-1", gameservercontract.RoleOpenWorld, gameservercontract.ExperienceOpenWorldHub, "World.OpenWorld.Hub"},
+		{"LegacyLobbyExperienceAlias", "ow-legacy-hub-1", gameservercontract.RoleOpenWorld, gameservercontract.ExperienceLobbyMain, "World.OpenWorld.Hub"},
 		{"OpenWorldMain", "ow-main-1", gameservercontract.RoleOpenWorld, gameservercontract.ExperienceOpenWorldMain, "World.OpenWorld.Main"},
 		{"VillageMain", "village-main-1", gameservercontract.RoleVillage, gameservercontract.ExperienceVillageMain, "World.Village.Main"},
 		{"VillageTutorial", "village-tutorial-1", gameservercontract.RoleVillage, gameservercontract.ExperienceVillageTutorial, "World.Village.Tutorial"},
@@ -167,13 +168,87 @@ func TestWorldAllocationAndTransfer(t *testing.T) {
 	}
 }
 
-// TestHubIsNotIndependentLobbyRole（大厅不是独立服务器角色测试）防止架构回退。
-func TestHubIsNotIndependentLobbyRole(t *testing.T) {
-	role, ok := gameservercontract.RoleForExperience(gameservercontract.ExperienceOpenWorldHub)
-	if !ok || role != gameservercontract.RoleOpenWorld {
-		t.Fatalf("OpenWorld.Hub必须由OpenWorld承载，role=%s ok=%v", role, ok)
+// TestLobbyExperienceUsesOpenWorldRole（大厅体验角色归属测试）确保新旧大厅体验标识都映射到OpenWorld，旧角色被拒绝。
+func TestLobbyExperienceUsesOpenWorldRole(t *testing.T) {
+	for _, experienceID := range []string{gameservercontract.ExperienceOpenWorldHub, gameservercontract.ExperienceLobbyMain} {
+		role, ok := gameservercontract.RoleForExperience(experienceID)
+		if !ok || role != gameservercontract.RoleOpenWorld {
+			t.Fatalf("大厅体验%s必须映射到OpenWorld，role=%s ok=%v", experienceID, role, ok)
+		}
 	}
 	if gameserver.IsKnownRole("GameServer.Role.Lobby") {
-		t.Fatal("不得重新引入GameServer.Role.Lobby")
+		t.Fatal("大厅属于OpenWorld体验，不得注册独立Lobby角色")
+	}
+}
+
+// TestOpenWorldHubCanRegisterReadyButCannotSubmitMatchResult（大厅体验生命周期和权限测试）确保大厅由OpenWorld承载且不能提交竞技结果。
+func TestOpenWorldHubCanRegisterReadyButCannotSubmitMatchResult(t *testing.T) {
+	now := time.Date(2026, 9, 21, 4, 30, 0, 0, time.UTC)
+	registry := gameserver.NewRegistry()
+	service := NewService(registry, servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now }), match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
+	if err := service.Register(RegisterInput{GameID: "divine-beasts", GameServerID: "openworld-hub-1", ServerRoleID: gameservercontract.RoleOpenWorld, ExperienceID: gameservercontract.ExperienceOpenWorldHub, RegionID: "us-west", WorldID: "World.OpenWorld.Hub", PublicEndpoint: "127.0.0.1:7777", Capacity: 100}); err != nil {
+		t.Fatalf("OpenWorld大厅体验注册失败：%v", err)
+	}
+	if err := service.SetReady("openworld-hub-1"); err != nil {
+		t.Fatalf("OpenWorld大厅体验设置Ready失败：%v", err)
+	}
+	instance, found := registry.Get("openworld-hub-1")
+	if !found || instance.Status != gameserver.StatusReady || instance.RoleID != gameservercontract.RoleOpenWorld {
+		t.Fatalf("大厅体验应以OpenWorld角色Ready，found=%v instance=%+v", found, instance)
+	}
+	_, err := service.SubmitMatchResult(context.Background(), match.Result{MatchID: "forbidden-match", GameServerID: "openworld-hub-1"})
+	if err == nil {
+		t.Fatal("OpenWorld不得提交MainArena权威比赛结果")
+	}
+}
+
+// TestRegisterRejectsUnknownRoleAndMismatchedExperience（注册角色校验测试）拒绝未知角色、废弃角色和角色体验错配。
+func TestRegisterRejectsUnknownRoleAndMismatchedExperience(t *testing.T) {
+	now := time.Date(2026, 9, 21, 4, 30, 0, 0, time.UTC)
+	registry := gameserver.NewRegistry()
+	service := NewService(registry, servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now }), match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
+	base := RegisterInput{GameID: "divine-beasts", RegionID: "us-west", PublicEndpoint: "127.0.0.1:7777", Capacity: 10}
+	unknown := base
+	unknown.GameServerID = "unknown-role"
+	unknown.ServerRoleID = "GameServer.Role.Unknown"
+	unknown.ExperienceID = gameservercontract.ExperienceLobbyMain
+	if err := service.Register(unknown); err == nil {
+		t.Fatal("未知ServerRole必须拒绝注册")
+	}
+	removedRole := base
+	removedRole.GameServerID = "removed-lobby-role"
+	removedRole.ServerRoleID = "GameServer.Role.Lobby"
+	removedRole.ExperienceID = gameservercontract.ExperienceOpenWorldHub
+	if err := service.Register(removedRole); err == nil {
+		t.Fatal("独立Lobby ServerRole必须拒绝注册")
+	}
+	mismatch := base
+	mismatch.GameServerID = "role-experience-mismatch"
+	mismatch.ServerRoleID = gameservercontract.RoleVillage
+	mismatch.ExperienceID = gameservercontract.ExperienceOpenWorldMain
+	if err := service.Register(mismatch); err == nil {
+		t.Fatal("Village角色不得承载OpenWorld体验")
+	}
+}
+
+// TestWorldAllocationRejectsRoleExperienceMismatch（分配角色体验一致性测试）确保注册表中的错配实例不会进入玩家分配结果。
+func TestWorldAllocationRejectsRoleExperienceMismatch(t *testing.T) {
+	now := time.Date(2026, 9, 21, 4, 30, 0, 0, time.UTC)
+	registry := gameserver.NewRegistry()
+	registry.Register(gameserver.Instance{
+		ID: "mismatched-openworld-experience", RoleID: gameservercontract.RoleVillage,
+		ExperienceID: gameservercontract.ExperienceOpenWorldMain,
+		RegionID: "us-west", WorldID: "World.OpenWorld.Hub", PublicEndpoint: "127.0.0.1:7777",
+		Capacity: 10, Status: gameserver.StatusReady,
+	})
+	service := NewService(registry, servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now }), match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
+	_, err := service.AllocateWorld(context.Background(), AllocateWorldInput{
+		ExperienceID: gameservercontract.ExperienceOpenWorldHub,
+		WorldID:      "World.OpenWorld.Hub",
+		RegionID:     "us-west",
+		PlayerSlots:  1,
+	})
+	if err == nil {
+		t.Fatal("角色或体验错配的GameServer不得被分配")
 	}
 }

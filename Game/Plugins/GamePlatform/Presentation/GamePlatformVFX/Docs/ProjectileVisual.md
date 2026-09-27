@@ -1,0 +1,5 @@
+# ProjectileVisual（视觉投射物）
+
+Projectile只表现服务器事实、复制轨迹或客户端预测轨迹，不Trace决定Damage、不创建权威Projectile、不做碰撞结算。
+
+起终点等大世界位置使用受Schema约束的Position参数。Predicted可先播，Confirmed按ActivationId/PredictionKey去重，Cancelled停止预测实例；Impact由权威Hit事实触发。

@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "forbiddenModules": ["GamePlatformVFXClient", "GamePlatformVFXEditor"],
+  "forbiddenAssetPrefixes": ["FXS_GPVFX_", "FXE_GPVFX_", "FXM_GPVFX_", "FXT_GPVFX_", "DA_VFX_", "DA_VFXCAT_"],
+  "forbiddenReviewAssets": ["L_GPVFX_Review"]
+}

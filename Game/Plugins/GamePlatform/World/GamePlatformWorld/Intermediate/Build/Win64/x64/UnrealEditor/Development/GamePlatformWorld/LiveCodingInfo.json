@@ -1,0 +1,23 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.GamePlatformWorld.cpp.obj": [
+			"GamePlatformRegionDefinition.gen.cpp.obj",
+			"GamePlatformWorld.init.gen.cpp.obj",
+			"GamePlatformWorldDefinition.gen.cpp.obj",
+			"GamePlatformWorldSubsystem.gen.cpp.obj",
+			"PerModuleInline.gen.cpp.obj",
+			"GamePlatformRegionDefinition.cpp.obj",
+			"GamePlatformWorldDefinition.cpp.obj",
+			"GamePlatformWorldModule.cpp.obj",
+			"WorldReadinessTask.cpp.obj",
+			"WorldRegions.cpp.obj",
+			"GamePlatformWorldStreaming.cpp.obj",
+			"GamePlatformWorldSubsystem.cpp.obj",
+			"WorldDefinitionTests.cpp.obj",
+			"WorldLifecycleTests.cpp.obj",
+			"WorldPolicyTests.cpp.obj",
+			"WorldStreamingTests.cpp.obj"
+		]
+	}
+}

@@ -1,0 +1,18 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.GamePlatformCore.cpp.obj": [
+			"GamePlatformCore.init.gen.cpp.obj",
+			"GamePlatformId.gen.cpp.obj",
+			"GamePlatformResult.gen.cpp.obj",
+			"GamePlatformVersion.gen.cpp.obj",
+			"PerModuleInline.gen.cpp.obj",
+			"GamePlatformCoreModule.cpp.obj",
+			"GamePlatformCoreAutomationTests.cpp.obj",
+			"GamePlatformCoreNativeTests.cpp.obj",
+			"GamePlatformId.cpp.obj",
+			"GamePlatformResult.cpp.obj",
+			"GamePlatformVersion.cpp.obj"
+		]
+	}
+}

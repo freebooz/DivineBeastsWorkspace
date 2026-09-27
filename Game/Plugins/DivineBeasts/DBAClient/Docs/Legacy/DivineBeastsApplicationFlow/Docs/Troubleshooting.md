@@ -1,0 +1,13 @@
+# Troubleshooting（故障排查）
+
+Flow停在Authentication：检查GamePlatformOnline Provider是否配置及AuthSnapshot错误码。
+
+Profile/Roster失败：检查Gateway Base URL、Authorization临时头、Gateway到PlayerData内部Token和PlayerData扩展是否启用。
+
+Create重复：确认使用同OperationId重试；不同请求内容复用同OperationId应返回冲突。
+
+WorldAssignment失败：检查DesiredExperience是否为五种允许值、角色Revision、PlayerData验证、Allocator配置和容量。
+
+Travel后无法WorldReady：逐项检查SessionAdmission、ExpectedWorld、ExpectedExperience、CharacterBinding、GameplayData、ProjectReadiness六个任务；PostLoadMap本身不等于Ready。
+
+Ticket失败：不要复用旧Ticket，应重新RequestWorldAssignment。

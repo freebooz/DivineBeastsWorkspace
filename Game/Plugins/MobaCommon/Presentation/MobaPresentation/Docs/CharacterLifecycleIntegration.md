@@ -1,0 +1,7 @@
+# CharacterLifecycleIntegration（角色生命周期集成）
+
+Death（死亡）来自Combat/Character权威事实；Respawn（复活）来自RespawnReset或未来可靠的新Avatar Active（新角色实例激活）通知。
+
+FMobaPresentationFactIdentity与Context均保存AvatarGeneration（角色实例世代）。客户端记录每个Target的最新Generation，旧Pawn延迟到达的事实会被安全丢弃，避免死亡特效落到新Pawn。
+
+MobaPresentation不决定复活时间、不调用RestartPlayer，也不改生命值。

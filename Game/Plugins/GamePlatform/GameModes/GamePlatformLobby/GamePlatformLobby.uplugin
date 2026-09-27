@@ -1,0 +1,28 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformLobby",
+    "Description":  "GamePlatformLobby（游戏平台插件）",
+    "Category":  "GamePlatform/GameModes",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformLobby",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformLobbyClient",
+                        "Type":  "ClientOnly",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformLobbyServer",
+                        "Type":  "ServerOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

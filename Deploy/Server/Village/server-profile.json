@@ -1,0 +1,21 @@
+{
+  "profileVersion": 1,
+  "serverRoleId": "GameServer.Role.Village",
+  "defaultExperienceId": "Experience.Village.Tutorial",
+  "allowedExperienceIds": [
+    "Experience.Village.Main",
+    "Experience.Village.Tutorial",
+    "Experience.Village.Training"
+  ],
+  "worldPackage": "/Game/DivineBeasts/Worlds/L_Village",
+  "requiredAssets": [
+    "/Game/DivineBeasts/Worlds/L_Village.L_Village"
+  ],
+  "arenaModeIds": [],
+  "instancePolicy": "ExperienceInstance",
+  "readiness": {
+    "requireRequiredAssets": true,
+    "requireWorldBeginPlay": true,
+    "requireControlPlaneRegistration": true
+  }
+}

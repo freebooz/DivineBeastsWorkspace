@@ -1,20 +1,22 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Player Data Internal API（游戏平台玩家资料内部接口）
+  title: 游戏平台玩家资料服务内部接口（Player Data API）
   version: 1.0.0
-  description: PlayerDataService 当前运行的内部 HTTP 接口。该服务只保存跨局长期资料，不承载生命值、Buff、技能冷却等实时战斗状态；调用者必须是受信任的后端服务。
+  description: PlayerDataService（玩家资料服务）当前已注册的内部 HTTP 接口。该服务保存跨局长期资料，不保存生命值、增益效果（Buff）或技能冷却等实时战斗状态；只允许可信后端服务调用。
 servers:
   - url: http://127.0.0.1:8082
     description: 本地 Docker 开发部署的 PlayerDataService
 tags:
   - name: 运维
+    description: 检查服务进程存活、服务宿主就绪和版本信息；不代表玩家资料数据库已可用。
   - name: 内部玩家资料
+    description: 供可信后端服务调用的长期玩家资料查询、初始化和修改操作。
 paths:
   /internal/v1/playerdata/probe:
     get:
       tags: [内部玩家资料]
       operationId: probePlayerDataInternal
-      summary: 通过资料仓储实际检查数据库可用性
+      summary: 检查玩家资料仓储与数据库可用性
       responses:
         '200':
           description: 真实领域 Probe 成功，不是宿主 health/ready。
@@ -26,7 +28,7 @@ paths:
     post:
       tags: [内部玩家资料]
       operationId: ensurePlayerProfileInternal
-      summary: 密码认证成功后幂等初始化所属玩家资料
+      summary: 身份认证成功后幂等初始化玩家长期资料
       description: 仅由可信网关传入已认证身份；存在不同 gameId 的资料时拒绝，不能覆盖。
       requestBody:
         required: true
@@ -42,7 +44,7 @@ paths:
     get:
       tags: [运维]
       operationId: getPlayerDataLiveness
-      summary: 查询玩家资料服务存活状态
+      summary: 查询玩家资料服务进程存活状态
       responses:
         '200':
           description: 服务进程存活。
@@ -53,7 +55,7 @@ paths:
     get:
       tags: [运维]
       operationId: getPlayerDataReadiness
-      summary: 查询玩家资料服务就绪状态
+      summary: 查询玩家资料服务宿主就绪状态
       responses:
         '200':
           description: 服务宿主已就绪。
@@ -64,7 +66,7 @@ paths:
     get:
       tags: [运维]
       operationId: getPlayerDataVersion
-      summary: 查询玩家资料服务版本
+      summary: 查询玩家资料服务名称与版本
       responses:
         '200':
           description: 服务名称与运行版本。
@@ -75,7 +77,7 @@ paths:
     patch:
       tags: [内部玩家资料]
       operationId: updateInternalPlayerProfile
-      summary: 幂等修改显示名并检查预期修订号
+      summary: 幂等修改玩家显示名并校验预期修订号
       description: playerId 必须取自已认证主体。只允许显示名；重放同键同载荷返回原结果，同键异载荷或修订冲突返回 409。
       requestBody:
         required: true
@@ -95,7 +97,7 @@ paths:
     get:
       tags: [内部玩家资料]
       operationId: getInternalPlayerProfile
-      summary: 按玩家标识读取长期资料
+      summary: 按玩家标识读取长期玩家资料
       description: GatewayService 已完成身份认证后调用。playerId 由可信服务传入，不能接受游戏客户端直接调用。
       parameters:
         - name: playerId

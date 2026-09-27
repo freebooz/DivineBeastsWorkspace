@@ -1,0 +1,7 @@
+# MigrationAndHandover（迁移与交接）
+
+正式Owner固定为 Game/Plugins/GamePlatform/Presentation/GamePlatformVFX。历史Frontend/Plugins/GamePlatformClient当前不存在，无旧插件目录需要删除。
+
+旧GameInstance级Subsystem概念替换为WorldSubsystem；Streaming Manager迁到GamePlatformData Lease；自定义Pool由Niagara原生Pool替换；Budget/Culling大部分迁到Effect Type；Debug Service收敛为Diagnostics。
+
+上层DivineBeastsPresentation继续只生产中立Presentation Request并注册项目Catalog/Content Pack，不复制WorldSubsystem、Resolver、Asset Loader或Pool。

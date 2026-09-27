@@ -3,6 +3,7 @@
 > 适用范围：`DivineBeastsWorkspace/Backend`，Go 业务后端单 Go Module 及其五个可部署服务。
 > 来源：`DivineBeastsWorkspace_Backend_Shared_DirectoryTree_CN_V1.1.0.md`。
 > 本文是对应目录的总体目录规划说明，不替代源代码、协议文件或生成工具的实际行为。
+> 业务后端设计、开发、审查和验收的核心基线统一见 `Docs/Backend/业务后端核心要求.md`；本文只维护 `Backend/` 的目录、职责与实现归属，不重复维护第二套核心规则。
 > 维护要求：后续在本目录下新增、删除、重命名文件或目录时，必须在同一变更中同步更新本文的目录树、中文职责说明和版本记录；不得只改目录而不改本文档。
 
 ## 目录结构与职责
@@ -30,7 +31,7 @@ Backend/                                                            # Go业务�
 │   └── production.env.example                                      # 生产环境变量模板；只保存键名/示例，不保存真实Secret
 ├── generated/                                                      # Go协议与目录生成代码；由Codegen生成，禁止手工修改
 │   ├── divinebeasts/                                               # 《神兽联盟》项目专属Shared契约与目录生成代码
-│   │   ├── catalog_generated.go                                    # Codegen生成的《神兽联盟》ServerRole/Experience/ArenaMode目录代码
+│   │   ├── catalog_generated.go                                    # Codegen生成的《神兽联盟》三角色/体验映射/竞技模式目录绑定
 │   │   └── contracts_generated.go                                  # Codegen生成的协议注册信息与Contract元数据
 │   ├── gameplatform/                                               # GamePlatform（游戏平台）公共Shared契约生成代码
 │   │   └── contracts_generated.go                                  # Codegen生成的协议注册信息与Contract元数据
@@ -65,7 +66,7 @@ Backend/                                                            # Go业务�
 │   │       └── server.go                                           # 通用HTTP服务启动、优雅关闭和生命周期管理
 │   ├── contracts/                                                  # Go后端内部稳定DTO与服务间协议边界
 │   │   ├── gameserver/                                             # 游戏服务器、世界分配和Assignment内部DTO
-│   │   │   └── types.go                                            # GameServer/Assignment/Experience/ServerRole内部稳定DTO及转换边界
+│   │   │   └── types.go                                            # GameServer/Assignment稳定DTO；角色与体验常量消费Shared生成目录
 │   │   ├── matchresult/                                            # 权威MatchResult（比赛结果）内部DTO
 │   │   │   └── types.go                                            # MatchResult内部稳定DTO；隔离Shared生成类型与领域模型
 │   │   ├── proto/                                                  # 仅Go服务内部使用的Proto/gRPC协议真源；UE不得依赖
@@ -87,7 +88,7 @@ Backend/                                                            # Go业务�
 │   │   │   └── doc.go                                              # economy领域包说明与预留边界；当前仅建立模块归属，不表示完整功能已实现
 │   │   ├── entitlement/                                            # Entitlement（永久权益/解锁）预留领域模块
 │   │   │   └── doc.go                                              # entitlement领域包说明与预留边界；当前仅建立模块归属，不表示完整功能已实现
-│   │   ├── gameserver/                                             # GameServer注册、状态、容量、分配和生命周期领域
+│   │   ├── gameserver/                                             # OpenWorld/Village/MainArena注册、状态、容量、分配和生命周期领域；大厅是OpenWorld体验
 │   │   │   ├── allocator.go                                        # 服务器分配端口/实现；按角色、体验、区域及容量选择目标实例
 │   │   │   ├── gameserver.go                                       # GameServer聚合、状态机、心跳、Ready/Drain和Assignment领域逻辑
 │   │   │   └── gameserver_test.go                                  # GameServer领域自动化测试
@@ -168,7 +169,8 @@ Backend/                                                            # Go业务�
 │   │       └── outbox_test.go                                      # Outbox状态机、并发租约和重试测试
 │   ├── tools/                                                      # 后端内部开发与生成工具；仅开发/CI使用
 │   │   └── contractcodegen/                                        # Shared Contract Codegen（共享契约代码生成）命令实现
-│   │       └── main.go                                             # Contract Codegen命令入口；生成Go/C++绑定并执行新鲜度/工具版本检查
+│   │       ├── main.go                                             # Contract Codegen命令入口；生成Go/C++绑定并执行新鲜度/工具版本检查
+│   │       └── main_test.go                                        # 目录映射完整性、重复项及Go/C++双端生成行为测试
 │   └── transport/                                                  # Transport（传输层）适配；负责HTTP/gRPC与应用层映射
 │       ├── grpcadapter/                                            # gRPC服务端适配器；生产grpcdeps构建标签启用
 │       │   ├── gameserver_internal_server_grpcdeps.go              # GameServerControl内部gRPC服务端适配器；grpcdeps标签启用

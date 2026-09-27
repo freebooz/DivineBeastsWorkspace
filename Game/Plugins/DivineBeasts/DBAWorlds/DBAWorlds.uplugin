@@ -1,0 +1,18 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DBAWorlds",
+  "Description": "神兽联盟项目世界插件：把通用世界定义约束到Shared正式角色和体验；本插件当前没有已交付地图资产。",
+  "Category": "DivineBeasts",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "DBAGameplay", "Enabled": true },
+    { "Name": "GamePlatformWorld", "Enabled": true }
+  ],
+  "Modules": [
+    { "Name": "DBAWorldsRuntime", "Type": "Runtime", "LoadingPhase": "Default" }
+  ]
+}

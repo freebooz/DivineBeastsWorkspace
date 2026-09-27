@@ -1,6 +1,6 @@
 using UnrealBuildTool;
 
-// OpenWorld／Village／MainArena 共用服务器目标，本批不实现三角色业务。
+// Lobby／OpenWorld／Village／MainArena共用同一服务器目标；角色由部署配置选择，不为每个角色创建目标。
 public class DivineBeastsArenaServerTarget : TargetRules
 {
     public DivineBeastsArenaServerTarget(TargetInfo Target) : base(Target)

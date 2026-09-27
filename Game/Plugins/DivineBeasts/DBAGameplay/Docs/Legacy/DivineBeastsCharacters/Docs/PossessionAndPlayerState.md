@@ -1,0 +1,7 @@
+# PossessionAndPlayerState（控制器与玩家状态）
+
+项目角色组件不假设Pawn、Controller、PlayerState或ASC的固定到达顺序。BeginPlay只触发一次RefreshInitialization，不代表角色已经Ready。
+
+身份/Generation/Definition变化均可重新调用RefreshInitialization。FDivineBeastsCharacterSpawnInitializer只接受已存在ACharacter，不直接Possess。
+
+Player-controlled hero与AI-controlled hero共用同一Hero Definition和角色组件。AI场景可将bPersistentCharacterIdRequired=false，因此不会因缺少PlayerState/持久CharacterId而崩溃。

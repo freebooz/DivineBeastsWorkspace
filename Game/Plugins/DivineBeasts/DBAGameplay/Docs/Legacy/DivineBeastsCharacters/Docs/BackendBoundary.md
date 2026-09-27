@@ -1,0 +1,7 @@
+# BackendBoundary（后端边界）
+
+新增Go业务后端接口：无。
+
+角色档案、Create/Select Character、Hero资格服务继续由上一插件DivineBeastsApplicationFlow + PlayerDataService负责。Characters Runtime不依赖HTTP、Gateway、PlayerData、DivineBeastsContracts或数据库。
+
+后端当前StaticHeroCatalog可使用环境变量允许表验证HeroDefinitionId，但它不是Characters Runtime的替代实现。后续若需要统一Catalog发布，应通过既有Shared/Content pipeline完成，而不是让Gameplay Runtime调用后端。

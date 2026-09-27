@@ -1,0 +1,7 @@
+# PreloadingAndWarmup（预加载与预热）
+
+DivineBeastsPresentationClient提供RequestLogicalPreload/CancelLogicalPreload，只广播OwnerScopeId、逻辑DefinitionId集合和Required/Optional提示。
+
+它不自行加载Niagara/Sound/UI/Animation/Camera资源。Provider监听逻辑预加载请求后决定实际Asset Manager Bundle、内存预算、失败降级和Warmup策略。
+
+纯表现资源默认不能无限阻塞GameplayReady。当前没有真实Provider预加载接线和表现资产，因此预加载运行状态为“未执行”。

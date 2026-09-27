@@ -1,0 +1,7 @@
+# ClientServerSafety（客户端与服务器安全）
+
+DivineBeastsRuntime是双端轻量Runtime：Client和Server都可依赖，但其中不含UI/VFX、Secret、后端Credential、服务器私钥、客户端专属资产或HTTP客户端。
+
+ProjectContext只是身份数据，不承担鉴权。不能因为客户端提交了ServerRole/Experience/ArenaMode就视为权威。
+
+DivineBeastsContracts外部模块只在真正需要协议链接的项目私有Adapter中使用。静态库路径按Platform、Architecture、Configuration、Compiler、UE5.8 ABI隔离，避免错误二进制混链。

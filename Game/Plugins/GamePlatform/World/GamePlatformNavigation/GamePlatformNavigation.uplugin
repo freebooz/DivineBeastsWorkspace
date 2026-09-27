@@ -1,0 +1,28 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformNavigation",
+    "Description":  "GamePlatformNavigation（游戏平台插件）",
+    "Category":  "GamePlatform/Gameplay",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Plugins":  [
+                    { "Name": "GamePlatformCore", "Enabled": true },
+                    { "Name": "GamePlatformData", "Enabled": true },
+                    { "Name": "GamePlatformWorld", "Enabled": true }
+                ],
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformNavigation",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformNavigationServer",
+                        "Type":  "ServerOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

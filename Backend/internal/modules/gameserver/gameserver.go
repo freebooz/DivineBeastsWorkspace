@@ -6,15 +6,17 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	divinebeastscatalog "divinebeasts/backend/generated/divinebeasts"
 )
 
 const (
-	RoleOpenWorld = "GameServer.Role.OpenWorld" // RoleOpenWorld（开放世界服务器角色，包含大厅/主城/野外）。
-	RoleVillage   = "GameServer.Role.Village"   // RoleVillage（新手村服务器角色）。
-	RoleMainArena = "GameServer.Role.MainArena" // RoleMainArena（主竞技场服务器角色）。
+	RoleOpenWorld = divinebeastscatalog.GameServerRoleOpenWorld // RoleOpenWorld（承载大厅、主城与开放世界的常驻服务器角色）。
+	RoleVillage   = divinebeastscatalog.GameServerRoleVillage   // RoleVillage（新手村服务器角色）。
+	RoleMainArena = divinebeastscatalog.GameServerRoleMainArena // RoleMainArena（主竞技场服务器角色）。
 )
 
-// IsKnownRole（是否已知服务器角色）确保控制面只接受当前正式三类Dedicated Server角色。
+// IsKnownRole（是否已知服务器角色）确保控制面只接受Shared目录生成的三种正式Dedicated Server角色。
 func IsKnownRole(roleID string) bool {
 	switch roleID {
 	case RoleOpenWorld, RoleVillage, RoleMainArena:

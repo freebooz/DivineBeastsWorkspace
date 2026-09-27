@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
   "current": {
-    "contractVersion": "1.3.0",
+    "contractVersion": "2.0.0",
     "backendVersion": "1.1.0",
     "clientNetworkProtocol": 1,
     "serverNetworkProtocol": 1
   },
   "supported": [
     {
-      "contractMajor": 1,
-      "minContractVersion": "1.2.0",
-      "maxContractVersion": "1.3.x",
+      "contractMajor": 2,
+      "minContractVersion": "2.0.0",
+      "maxContractVersion": "2.x",
       "clientNetworkProtocol": 1,
       "serverNetworkProtocol": 1,
-      "notes": "1.3仅新增Assignment/Experience/Transfer字段；1.2客户端可继续使用原有竞技字段。"
+      "notes": "2.0正式角色为OpenWorld、Village、MainArena。大厅由OpenWorld.Hub承载；Experience.Lobby.Main作为兼容标识映射到OpenWorld。1.x含独立Lobby角色，与本版服务端角色契约不兼容。"
     }
   ]
 }

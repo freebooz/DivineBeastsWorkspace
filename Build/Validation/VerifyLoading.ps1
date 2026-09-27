@@ -58,7 +58,7 @@ try {
     if ($NativeTests) {
         $cmakePath = (Get-Command $CMake -ErrorAction Stop).Source
         $native = Join-Path $evidence 'Native'
-        Invoke-LoadingCheck 'Configure' $cmakePath @('-S',(Join-Path $root 'Game/Plugins/GameFoundation/Application/GamePlatformLoading/Tests'),'-B',$native) $root
+        Invoke-LoadingCheck 'Configure' $cmakePath @('-S',(Join-Path $root 'Game/Plugins/GamePlatform/Application/GamePlatformLoading/Tests'),'-B',$native) $root
         foreach ($config in @('Debug','Release')) {
             Invoke-LoadingCheck "Build-$config" $cmakePath @('--build',$native,'--config',$config) $root
             Invoke-LoadingCheck "Test-$config" (Join-Path (Split-Path $cmakePath) 'ctest.exe') @('--test-dir',$native,'-C',$config,'--output-on-failure','-V') $root

@@ -1,0 +1,9 @@
+# MigrationAndHandover（迁移与交接）
+
+执行前真实工作树中未发现MobaPresentation、MobaPresentationRuntime、FMobaPresentationContext或Moba.*表现语义实现，因此本轮为新增实现，不是旧代码搬运。
+
+为保持40个既定GamePlatform插件名称不变，MobaPresentation登记为MobaCommon额外扩展插件；plugin-catalog继续保留40项GamePlatform主清单，并新增mobaPlugins扩展清单。
+
+同时给GamePlatformPresentation补充最小FGamePlatformPresentationRequest和ULocalPlayerSubsystem协调器；给GamePlatformArena补充RepNotify/Native Delegate只读事实出口，没有建立Arena→MobaPresentation依赖。
+
+下一插件续作断点为DivineBeastsRuntime（神兽联盟运行时核心插件）；本轮不进入项目层实现。

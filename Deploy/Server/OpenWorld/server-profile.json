@@ -1,0 +1,20 @@
+{
+  "profileVersion": 1,
+  "serverRoleId": "GameServer.Role.OpenWorld",
+  "defaultExperienceId": "Experience.OpenWorld.Hub",
+  "allowedExperienceIds": [
+    "Experience.OpenWorld.Hub",
+    "Experience.OpenWorld.Main"
+  ],
+  "worldPackage": "/Game/DivineBeasts/Worlds/L_OpenWorld",
+  "requiredAssets": [
+    "/Game/DivineBeasts/Worlds/L_OpenWorld.L_OpenWorld"
+  ],
+  "arenaModeIds": [],
+  "instancePolicy": "PersistentShardedWorld",
+  "readiness": {
+    "requireRequiredAssets": true,
+    "requireWorldBeginPlay": true,
+    "requireControlPlaneRegistration": true
+  }
+}

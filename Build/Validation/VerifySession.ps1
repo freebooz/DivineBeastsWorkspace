@@ -16,7 +16,7 @@ $null = New-Item -ItemType Directory -Path $evidence
 $checks = [Collections.Generic.List[object]]::new()
 $exitCode = 2
 try {
-    $plugin = Join-Path $workspace 'Game/Plugins/GameFoundation/Application/GamePlatformSession'
+    $plugin = Join-Path $workspace 'Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession'
     $descriptor = Get-Content -Raw -Encoding UTF8 (Join-Path $plugin 'GamePlatformSession.uplugin') | ConvertFrom-Json
     if ($descriptor.Modules[0].TargetAllowList -contains 'Server' -or $descriptor.Modules.Count -ne 1) { throw 'Session target boundary invalid' }
     $checks.Add(@{Name='DescriptorBoundary';Status='Passed';Evidence='One module; Client and Editor only; static check'})

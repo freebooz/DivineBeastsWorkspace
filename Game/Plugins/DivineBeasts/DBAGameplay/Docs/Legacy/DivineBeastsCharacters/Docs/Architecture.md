@@ -1,0 +1,9 @@
+# Architecture（架构）
+
+DivineBeastsCharactersRuntime（神兽联盟角色运行模块）是项目层双端Runtime。模块依赖 Core/CoreUObject/Engine/NetCore/GameplayTags/GamePlatformCore/GamePlatformCharacter/DivineBeastsRuntime。
+
+基础平台层 GamePlatformCharacter 本轮补齐最小通用契约：UGamePlatformHeroDefinition（通用英雄定义）、FGamePlatformCharacterInitializationContext（角色初始化上下文）、IGamePlatformCharacterInitializer（角色初始化器）和 IGamePlatformCharacterCreationProvider（角色创建提供者）。
+
+项目层只实现生肖差异：Hero Catalog、Zodiac identity/tag、项目Definition扩展、Character Component、Spawn initializer、Appearance schema和Creation Provider。
+
+ApplicationFlow通过GamePlatformCharacter的Modular Feature接口消费Provider，因此Characters不反向依赖ApplicationFlow。Arena、AI、Abilities、Combat、Equipment也不被Characters硬依赖。

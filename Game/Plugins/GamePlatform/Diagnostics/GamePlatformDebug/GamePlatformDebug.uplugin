@@ -1,0 +1,41 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0.0",
+    "FriendlyName": "GamePlatformDebug",
+    "Description": "GamePlatformDebug（游戏平台调试插件）：Development/Test专用双端诊断、Gameplay Debugger与客户端调试面板；Shipping明确裁剪。",
+    "Category": "GamePlatform/Diagnostics",
+    "CreatedBy": "DivineBeastsWorkspace",
+    "CanContainContent": false,
+    "EnabledByDefault": false,
+    "Plugins": [
+        { "Name": "GameplayAbilities", "Enabled": true },
+        { "Name": "GamePlatformCombat", "Enabled": true },
+        { "Name": "GamePlatformAI", "Enabled": true },
+        { "Name": "GamePlatformTelemetry", "Enabled": true }
+    ],
+    "Modules": [
+        {
+            "Name": "GamePlatformDebug",
+            "Type": "Runtime",
+            "LoadingPhase": "Default",
+            "TargetConfigurationAllowList": [
+                "Debug",
+                "DebugGame",
+                "Development",
+                "Test"
+            ]
+        },
+        {
+            "Name": "GamePlatformDebugClient",
+            "Type": "ClientOnly",
+            "LoadingPhase": "Default",
+            "TargetConfigurationAllowList": [
+                "Debug",
+                "DebugGame",
+                "Development",
+                "Test"
+            ]
+        }
+    ]
+}

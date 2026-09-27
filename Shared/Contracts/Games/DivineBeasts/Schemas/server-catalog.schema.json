@@ -2,6 +2,24 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://divinebeasts/contracts/server-catalog.schema.json",
   "title": "DivineBeasts ServerCatalog（神兽联盟服务器目录）",
+  "$comment": "活动目录必须包含三种正式角色、六种现行体验和1v1至5v5五种竞技模式。大厅由OpenWorld角色承载；Experience.OpenWorld.Hub是大厅默认体验，Experience.Lobby.Main仅作为历史体验标识兼容映射到OpenWorld。",
+  "x-project-identity": {
+    "gameId": "divinebeasts",
+    "projectId": "DivineBeastsArena"
+  },
+  "x-catalog-version": 1,
+  "x-role-experience-map": [
+    { "serverRole": "GameServer.Role.OpenWorld", "experiences": ["Experience.OpenWorld.Hub", "Experience.OpenWorld.Main", "Experience.Lobby.Main"] },
+    { "serverRole": "GameServer.Role.Village", "experiences": ["Experience.Village.Main", "Experience.Village.Tutorial", "Experience.Village.Training"] },
+    { "serverRole": "GameServer.Role.MainArena", "experiences": ["Experience.MainArena.Main"] }
+  ],
+  "x-arena-mode-context-map": [
+    { "arenaMode": "Arena.Mode.Duel1v1", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" },
+    { "arenaMode": "Arena.Mode.Team2v2", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" },
+    { "arenaMode": "Arena.Mode.Team3v3", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" },
+    { "arenaMode": "Arena.Mode.Team4v4", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" },
+    { "arenaMode": "Arena.Mode.Team5v5", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" }
+  ],
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,20 +35,39 @@
     },
     "serverRoles": {
       "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
       "items": {
         "$ref": "server-role.schema.json"
       },
-      "uniqueItems": true
+      "uniqueItems": true,
+      "allOf": [
+        { "contains": { "const": "GameServer.Role.OpenWorld" } },
+        { "contains": { "const": "GameServer.Role.Village" } },
+        { "contains": { "const": "GameServer.Role.MainArena" } }
+      ]
     },
     "experiences": {
       "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
       "items": {
         "$ref": "experience.schema.json"
       },
-      "uniqueItems": true
+      "uniqueItems": true,
+      "allOf": [
+        { "contains": { "const": "Experience.OpenWorld.Hub" } },
+        { "contains": { "const": "Experience.OpenWorld.Main" } },
+        { "contains": { "const": "Experience.Village.Main" } },
+        { "contains": { "const": "Experience.Village.Tutorial" } },
+        { "contains": { "const": "Experience.Village.Training" } },
+        { "contains": { "const": "Experience.MainArena.Main" } }
+      ]
     },
     "arenaModes": {
       "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
       "items": {
         "$ref": "arena-mode.schema.json"
       },

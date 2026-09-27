@@ -1,0 +1,7 @@
+# Architecture（架构）
+
+UGamePlatformAbilitySystemComponent是跨游戏ASC基类，保持GAS原生预测、GameplayEffect和GameplayCue机制，不复制第二套技能框架。平台只增加稳定ActorInfo绑定与AvatarGeneration，用于重生/换Pawn生命周期隔离。
+
+BindAbilityActorInfo要求有效Owner/Avatar，同一绑定重复调用幂等；变化时InitAbilityActorInfo并推进Generation。ClearAbilityAvatar清除ActorInfo并推进Generation。
+
+Ability.Active与Ability.Spell是中立分类Tag；项目技能、伤害公式、输入和具体AbilitySet不放平台基础层。

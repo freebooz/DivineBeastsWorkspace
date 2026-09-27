@@ -1,19 +1,24 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Game Server Control Internal API（游戏平台游戏服务器控制内部接口）
-  version: 1.0.0
+  title: 游戏平台游戏服务器控制内部接口（Game Server Control API）
+  version: 1.1.0
   description: |
     GameServerControlService 的当前内部 HTTP 控制面契约，覆盖专用服务器注册、心跳、就绪、排空、常驻世界与主竞技场分配、迁移票据和权威比赛结果提交。
     所有路径仅供受信任的 Backend 服务、编排适配器或 Dedicated Server 使用，不能通过公网 Gateway、浏览器客户端或 UE 游戏客户端直接调用。HTTP 适配器对部分请求按 Go 字段名大小写不敏感解码；本规格统一给出 lowerCamelCase 请求字段。
+    register/heartbeat/ready/drain 还必须携带 GAMESERVERCONTROL_INTERNAL_TOKEN Bearer 令牌，并提供与请求体 GameServerID 完全一致的 X-Game-Server-Id。Bearer 令牌为部署共享凭据，不代表每实例独立认证；生产部署必须在受限网络上使用经批准的 TLS 终止点。
     当前世界/竞技分配响应由未标注 JSON Tag 的内部 DTO 直接编码，因此响应字段为 PascalCase；这是已实现的线协议，后续变更必须同时做兼容迁移与契约版本评审。
 servers:
   - url: http://127.0.0.1:8084
     description: 本地 Docker 开发部署的 GameServerControlService
 tags:
   - name: 运维
+    description: 检查控制服务进程存活、服务宿主就绪和版本信息。
   - name: 服务器生命周期
+    description: 由受信任控制面调用的服务器注册、心跳、就绪和排空操作。
   - name: 分配与迁移
+    description: 为常驻世界或竞技分配服务器实例，并签发、验证一次性迁移票据。
   - name: 权威比赛结果
+    description: 接收并持久化由可信主竞技场服务器提交的比赛权威结果。
 paths:
   /health/live:
     get:
@@ -52,8 +57,12 @@ paths:
     post:
       tags: [服务器生命周期]
       operationId: registerGameServer
-      summary: 注册 Dedicated Server 实例
-      description: Dedicated Server 启动后提交身份、角色、体验、区域、端点和容量。OpenWorld.Hub 不会创建独立大厅服务器角色，教学和训练属于 Village 体验。
+      summary: 注册专用游戏服务器实例（Dedicated Server）
+      description: Dedicated Server 启动后提交身份、项目定义的角色与体验、区域、端点和容量。游戏平台只传递中立字符串；具体角色、体验和组合由对应游戏目录校验。
+      security:
+        - GameServerControlBearer: []
+      parameters:
+        - $ref: '#/components/parameters/GameServerIdentityHeader'
       requestBody:
         required: true
         content:
@@ -70,11 +79,17 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+        '401': { $ref: '#/components/responses/UnauthorizedInternalRequest' }
+        '403': { $ref: '#/components/responses/GameServerIdentityMismatch' }
   /internal/v1/gameservers/heartbeat:
     post:
       tags: [服务器生命周期]
       operationId: heartbeatGameServer
-      summary: 更新 Dedicated Server 心跳和容量
+      summary: 更新专用游戏服务器心跳与当前容量
+      security:
+        - GameServerControlBearer: []
+      parameters:
+        - $ref: '#/components/parameters/GameServerIdentityHeader'
       requestBody:
         required: true
         content:
@@ -91,11 +106,17 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+        '401': { $ref: '#/components/responses/UnauthorizedInternalRequest' }
+        '403': { $ref: '#/components/responses/GameServerIdentityMismatch' }
   /internal/v1/gameservers/ready:
     post:
       tags: [服务器生命周期]
       operationId: markGameServerReady
-      summary: 标记 Dedicated Server 就绪
+      summary: 将专用游戏服务器标记为可分配
+      security:
+        - GameServerControlBearer: []
+      parameters:
+        - $ref: '#/components/parameters/GameServerIdentityHeader'
       requestBody:
         required: true
         content:
@@ -112,12 +133,18 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+        '401': { $ref: '#/components/responses/UnauthorizedInternalRequest' }
+        '403': { $ref: '#/components/responses/GameServerIdentityMismatch' }
   /internal/v1/gameservers/drain:
     post:
       tags: [服务器生命周期]
       operationId: drainGameServer
-      summary: 排空 Dedicated Server
+      summary: 停止新分配并排空专用游戏服务器
       description: 排空后实例不再接收新玩家或比赛分配；常驻世界的排空不能等同于一局比赛结束即回收。
+      security:
+        - GameServerControlBearer: []
+      parameters:
+        - $ref: '#/components/parameters/GameServerIdentityHeader'
       requestBody:
         required: true
         content:
@@ -134,11 +161,13 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+        '401': { $ref: '#/components/responses/UnauthorizedInternalRequest' }
+        '403': { $ref: '#/components/responses/GameServerIdentityMismatch' }
   /internal/v1/gameservers/allocate-world:
     post:
       tags: [分配与迁移]
       operationId: allocateWorldGameServer
-      summary: 分配常驻世界实例
+      summary: 为常驻世界体验分配服务器实例
       description: 只接受 OpenWorld 或 Village 体验；MainArena 体验必须使用 allocate-mainarena。大厅、主城和野外可以由同一 OpenWorld 实例流送，不能重复触发服务器分配。
       requestBody:
         required: true
@@ -160,7 +189,7 @@ paths:
     post:
       tags: [分配与迁移]
       operationId: allocateWorldAndIssueTransfer
-      summary: 分配常驻世界并签发迁移票据
+      summary: 分配常驻世界目标并签发迁移票据
       description: 原子编排世界目标分配与短期一次性迁移票据签发。TTL 以毫秒输入；服务端会写入最终 AssignmentID、目标实例和目标端点。
       requestBody:
         required: true
@@ -182,7 +211,7 @@ paths:
     post:
       tags: [分配与迁移]
       operationId: allocateMainArenaGameServer
-      summary: 分配主竞技场实例
+      summary: 按竞技模式为比赛分配主竞技场实例
       description: 仅使用 MainArena 角色，按 1v1 至 5v5 模式定义校验两个队伍的完整 Roster；赛前 Party 不可在此流程拆分。
       requestBody:
         required: true
@@ -204,7 +233,7 @@ paths:
     get:
       tags: [分配与迁移]
       operationId: getGameServerAssignment
-      summary: 查询 Dedicated Server 当前任务
+      summary: 查询专用游戏服务器当前任务
       parameters:
         - name: gameServerId
           in: query
@@ -226,7 +255,7 @@ paths:
     post:
       tags: [分配与迁移]
       operationId: issueServerTransferTicket
-      summary: 为既有目标任务签发迁移票据
+      summary: 为既有目标任务签发一次性迁移票据
       description: 目标 Assignment 和 Dedicated Server 必须已存在。ttl 为 Go time.Duration 的纳秒整数；未提供或不大于零时 HTTP 适配器默认 30 秒。
       requestBody:
         required: true
@@ -248,7 +277,7 @@ paths:
     post:
       tags: [分配与迁移]
       operationId: validateServerTransferTicket
-      summary: 在目标 Dedicated Server 验证迁移票据
+      summary: 在目标专用游戏服务器验证迁移票据
       description: 成功验证会提交常驻世界的容量预留。失败返回 HTTP 401，调用方不得将失败票据视为可重试登录凭据。
       requestBody:
         required: true
@@ -275,7 +304,7 @@ paths:
     post:
       tags: [权威比赛结果]
       operationId: submitAuthoritativeMatchResult
-      summary: 提交 MainArena 权威比赛结果
+      summary: 提交主竞技场的权威比赛结果
       description: 仅承载该场比赛的可信 MainArena Dedicated Server 可调用。服务端按 MatchID 幂等保存结果、写入事务发件箱并在成功后释放竞技场实例；客户端不能提交此接口。
       requestBody:
         required: true
@@ -294,6 +323,33 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
 components:
+  securitySchemes:
+    GameServerControlBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: 由受控部署环境注入的共享内部令牌；不得放入客户端配置、Profile或日志。
+  parameters:
+    GameServerIdentityHeader:
+      name: X-Game-Server-Id
+      in: header
+      required: true
+      description: 操作方声明的实例编号；服务端要求其与请求体GameServerID相同。
+      schema: { type: string, minLength: 1 }
+  responses:
+    UnauthorizedInternalRequest:
+      description: 缺失或无效的内部Bearer令牌。
+      headers:
+        WWW-Authenticate:
+          schema: { type: string, const: Bearer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
+    GameServerIdentityMismatch:
+      description: X-Game-Server-Id缺失或与请求体实例编号不一致。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
   schemas:
     LivenessResponse:
       type: object
@@ -331,12 +387,12 @@ components:
         gameServerId: { type: string, minLength: 1, description: Dedicated Server 实例唯一标识。 }
         serverRoleId:
           type: string
-          enum: [GameServer.Role.OpenWorld, GameServer.Role.Village, GameServer.Role.MainArena]
-          description: 正式服务器角色。
+          minLength: 1
+          description: 项目定义的服务器角色标识；具体枚举由游戏专属目录维护。
         experienceId:
           type: string
-          enum: [Experience.OpenWorld.Hub, Experience.OpenWorld.Main, Experience.Village.Main, Experience.Village.Tutorial, Experience.Village.Training, Experience.MainArena.Main]
-          description: 当前进程承载体验；省略时按角色填充默认体验。
+          minLength: 1
+          description: 项目定义的当前承载体验；省略时由项目服务按角色填充默认体验。
         regionId: { type: string, minLength: 1, description: 部署区域标识。 }
         clusterId: { type: string, description: Kubernetes 或 Agones 集群标识。 }
         nodeId: { type: string, description: 承载节点标识。 }
@@ -366,8 +422,8 @@ components:
       properties:
         experienceId:
           type: string
-          enum: [Experience.OpenWorld.Hub, Experience.OpenWorld.Main, Experience.Village.Main, Experience.Village.Tutorial, Experience.Village.Training]
-          description: 目标常驻世界体验，不能为 MainArena。
+          minLength: 1
+          description: 项目定义的目标常驻世界体验；项目服务拒绝不允许世界分配的体验。
         worldId: { type: string, minLength: 1, description: 目标世界、区域或实例逻辑标识。 }
         regionId: { type: string, minLength: 1, description: 目标部署区域标识。 }
         playerSlots: { type: integer, minimum: 1, description: 本次需要预留的玩家容量；省略时服务默认 1。 }
@@ -439,7 +495,7 @@ components:
       properties:
         AssignmentID: { type: string, description: 世界任务分配标识。 }
         GameServerID: { type: string, description: 目标 Dedicated Server 实例标识。 }
-        ServerRoleID: { type: string, description: OpenWorld 或 Village 正式角色标识。 }
+        ServerRoleID: { type: string, description: 由项目契约校验的服务器角色标识；游戏平台传输层不解释具体项目角色。 }
         ExperienceID: { type: string, description: 目标体验标识。 }
         WorldID: { type: string, description: 世界、区域或实例逻辑标识。 }
         RegionID: { type: string, description: 部署区域标识。 }

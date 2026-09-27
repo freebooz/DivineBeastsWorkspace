@@ -1,0 +1,5 @@
+# WorldBehavior（世界环境行为）
+
+World Behavior用于OpenWorld、Village等环境视觉表现，无需依赖MobaPresentation。长生命周期实例仍属于当前UWorld，不跨World共享。
+
+环境VFX使用Effect Type进行距离、可见性、Significance和预算伸缩；Definition可声明LWC和Fixed Bounds要求。世界销毁时实例、Lease和Catalog上下文一并释放。

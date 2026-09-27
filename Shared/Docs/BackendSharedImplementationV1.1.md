@@ -1,5 +1,7 @@
 # 《神兽联盟》Backend + Shared 工程实现说明 V1.1.0
 
+> 状态：历史实现快照。本文记录Shared契约1.4.0曾采用的Lobby、Village、OpenWorld、MainArena四角色中间模型；该模型已于2.0.0按后续用户要求撤销。现行正式角色只有OpenWorld、Village、MainArena，大厅属于OpenWorld体验；本文其余1.4.0角色段落仅作历史证据，当前行为以`Overview.md`、`Permissions.md`和Shared真源为准。
+
 ## 1. 交付范围
 
 本版本仅实现：
@@ -9,13 +11,13 @@
 
 不修改 `Game / Build / Deploy / Tests / Tools / Docs` 等其他工作空间目录。
 
-正式 Dedicated Server（专用服务器）角色仍只有：
+V1.1快照中的旧正式角色为：
 
 - `GameServer.Role.OpenWorld`：开放世界，承载 `OpenWorld.Hub` 与 `OpenWorld.Main`；
 - `GameServer.Role.Village`：新手村，承载 Main / Tutorial / Training；
 - `GameServer.Role.MainArena`：主竞技场，承载 1v1～5v5。
 
-不存在独立 `Lobby Server（大厅服务器）`。
+该三角色模型曾于1.4.0被四角色中间方案替代；2.0.0已恢复三角色，大厅默认使用OpenWorld.Hub，Experience.Lobby.Main仅兼容映射至OpenWorld。
 
 ---
 
@@ -236,7 +238,7 @@ MainArena 使用 Agones `GameServerAllocation` 原子选择 Ready 实例；OpenW
 
 ---
 
-### 2.4 OpenWorld.Hub / OpenWorld.Main / Village 世界分配和 Assignment
+### 2.4 历史大厅体验迁移与1.4.0四角色世界分配（历史）
 
 统一应用服务：
 
@@ -244,7 +246,7 @@ MainArena 使用 Agones `GameServerAllocation` 原子选择 Ready 实例；OpenW
 Backend/internal/app/gameservercontrol/service.go
 ```
 
-当前映射：
+V1.1历史映射：
 
 ```text
 Experience.OpenWorld.Hub
@@ -259,6 +261,8 @@ Experience.Village.Training
 Experience.MainArena.Main
     → GameServer.Role.MainArena
 ```
+
+当时1.4.0活动映射为 `Lobby.Main → Lobby`、`OpenWorld.Main → OpenWorld`、`Village.Main/Tutorial/Training → Village`、`MainArena.Main → MainArena`。该中间方案已被2.0.0替代；当前映射真源为`server-catalog.schema.json`，大厅使用`OpenWorld.Hub → OpenWorld`。
 
 世界迁移新增组合用例：
 
@@ -282,7 +286,7 @@ AllocateWorldTransfer
 实际 HTTP 冒烟测试已经验证：
 
 ```text
-OpenWorld.Hub注册
+OpenWorld.Hub历史注册
 → Ready
 → allocate-world-transfer
 → 返回Assignment + Ticket

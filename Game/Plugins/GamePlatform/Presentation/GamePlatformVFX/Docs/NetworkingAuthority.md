@@ -1,0 +1,7 @@
+# NetworkingAuthority（网络与权威边界）
+
+GamePlatformVFX不为每个视觉特效发送专用RPC。它消费GameplayCue、复制事实或GamePlatformPresentation请求。
+
+Projectile只跟随权威/复制/预测轨迹，Area不做Damage overlap，Shield不维护第二状态，Portal不签Ticket。Dedicated Server只产生中立Gameplay/Presentation事实，不加载VFX客户端模块或Niagara资产。
+
+Late Join只恢复持续状态类表现；瞬时Hit/Explosion不因加入房间而重放历史。

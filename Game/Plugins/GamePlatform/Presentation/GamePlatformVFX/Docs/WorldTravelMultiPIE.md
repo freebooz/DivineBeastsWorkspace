@@ -1,0 +1,7 @@
+# WorldTravelMultiPIE（World切换与多PIE）
+
+World实例、Catalog、Preload Lease、Instance Registry和Dedupe都归属于UGamePlatformVFXWorldSubsystem。Handle带弱World身份，跨PIE/World句柄不能命中另一实例。
+
+Deinitialize取消所有启动Catalog和实例Preload，并Reset实例/目录。Travel后新World获得新Subsystem，不沿用旧World Registry。
+
+真实Multi-PIE、ClientTravel、Late Callback和World teardown测试需要UE5.8合法测试资产；当前运行证据为未执行。

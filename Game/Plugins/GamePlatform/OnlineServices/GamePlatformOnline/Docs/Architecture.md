@@ -1,0 +1,7 @@
+# Architecture（架构）
+
+UGamePlatformOnlineClientSubsystem（在线客户端子系统）只管理认证状态和代次；具体认证协议由 IGamePlatformOnlineAuthProvider 实现。
+
+每次认证操作生成新的AuthGeneration，晚到回调只有Generation仍匹配时才能提交。Provider切换会立即推进Generation并清空公开Account状态。Authorization Header只能通过瞬时接口读取，不进入Snapshot或日志。
+
+插件不定义具体Go接口、OAuth厂商或项目账号规则。

@@ -1,0 +1,21 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DivineBeastsRuntime",
+  "Description": "DivineBeastsRuntime（神兽联盟运行时核心插件）：双端轻量项目身份、稳定ID、ProjectContext与Shared生成契约查询。",
+  "Category": "DivineBeasts/Core",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true }
+  ],
+  "Modules": [
+    {
+      "Name": "DivineBeastsRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

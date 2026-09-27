@@ -1,0 +1,7 @@
+# RequestHandleContext（请求/句柄/上下文）
+
+FGamePlatformVFXRequest包含Semantic/DefinitionId、ContextId/ContextTags、PlatformId、QualityTier、Importance、PredictionState、RequestId/ActivationId/PredictionKey、SpawnContext和受控Parameters。
+
+Request不接受任意Niagara资产路径、UClass、远程脚本或不受信任Data Interface。目标Definition的ParameterSchema负责白名单、类型、范围和必填参数校验。
+
+FGamePlatformVFXHandle包含Instance Id、Generation和弱World身份；跨World或旧Generation句柄不能命中另一实例。SpawnContext只描述表现Transform/Attach，不拥有碰撞、伤害、Ticket或权威玩法状态。

@@ -1,20 +1,22 @@
 openapi: 3.1.0
 info:
-  title: GamePlatform Party Internal API（游戏平台组队内部接口）
+  title: 游戏平台组队服务内部接口（Party API）
   version: 1.0.0
-  description: MatchService 当前已注册的组队内部 HTTP 接口。该规格只描述创建队伍；邀请、加入、准备、转让队长、名单锁定和查询路由尚未在当前运行服务中注册。
+  description: MatchService（组队与匹配服务）当前已注册的组队内部 HTTP 接口。本规格目前只包含创建队伍；邀请、加入、准备、转让队长、锁定名单和查询等操作尚未注册，不能视为可调用能力。
 servers:
   - url: http://127.0.0.1:8083
     description: 本地 Docker 开发部署的 MatchService
 tags:
   - name: 运维
+    description: 检查 MatchService 进程存活、服务宿主就绪和版本信息。
   - name: 内部组队
+    description: 仅供 GatewayService 等可信后端使用的组队操作；玩家身份由已认证会话确定。
 paths:
   /health/live:
     get:
       tags: [运维]
       operationId: getPartyLiveness
-      summary: 查询 MatchService 存活状态
+      summary: 查询组队与匹配服务进程存活状态
       responses:
         '200':
           description: 服务进程存活。
@@ -25,7 +27,7 @@ paths:
     get:
       tags: [运维]
       operationId: getPartyReadiness
-      summary: 查询 MatchService 就绪状态
+      summary: 查询组队与匹配服务宿主就绪状态
       responses:
         '200':
           description: 服务宿主已就绪。
@@ -36,7 +38,7 @@ paths:
     get:
       tags: [运维]
       operationId: getPartyVersion
-      summary: 查询 MatchService 版本
+      summary: 查询组队与匹配服务名称与版本
       responses:
         '200':
           description: 服务名称与运行版本。
@@ -47,7 +49,7 @@ paths:
     post:
       tags: [内部组队]
       operationId: createInternalParty
-      summary: 为指定玩家创建队伍
+      summary: 为已认证玩家创建赛前队伍
       description: 仅 GatewayService 等可信内部调用方可使用。当前 Gateway 会从有效会话提取 playerId 后调用此接口，客户端不可自行指定权威玩家身份。
       requestBody:
         required: true

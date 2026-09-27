@@ -1,0 +1,5 @@
+# GamePlatformPresentation（游戏平台表现协调插件）
+
+跨UI/VFX/SFX等表现系统的中立语义协调层。Core模块定义Presentation Request、Context、Catalog与解析契约；Client模块按LocalPlayer维护Provider、Context Contributor与Catalog Fragment，并通过WorldGeneration/RequestGeneration隔离旧世界和晚到请求。
+
+该插件不包含Niagara、Sound或Widget具体资产类型。GamePlatformVFX已通过ProviderChannel=VFX正式接入，证明该协调层已进入实际组合使用。

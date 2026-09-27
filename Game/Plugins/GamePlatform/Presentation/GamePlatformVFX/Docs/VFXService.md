@@ -1,0 +1,7 @@
+# VFXService（VFX服务）
+
+IGamePlatformVFXService通过 UGamePlatformVFXWorldSubsystem 提供。每个UWorld独立拥有Catalog Registry、Instance Registry、Preload Coordinator和预测去重状态。
+
+Play依次检查World、去重、Request结构、紧急预算、Catalog/Resolver，再异步加载Definition和Niagara依赖；加载完成后再次执行Definition与Parameter Schema校验。
+
+Stop统一释放预加载Lease、去重映射、Niagara组件和Composite子句柄。Gameplay正常路径通过GamePlatformPresentation，不直接链接VFX Client。

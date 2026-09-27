@@ -1,0 +1,7 @@
+# DedicatedServerSafety（专用服务器隔离）
+
+GamePlatformVFX.uplugin只声明GamePlatformVFXClient=ClientOnly和GamePlatformVFXEditor=Editor，不存在Runtime/Server空模块。
+
+统一DivineBeastsArenaServer.Target.cs显式DisablePlugins.Add("GamePlatformVFX")，作为模块类型边界之外的第二层防护。Server不得链接GamePlatformVFXClient，不得加载Niagara VFX资产。
+
+TestVFXCook可扫描真实Server Stage中的GamePlatformVFXClient、Editor模块、/GamePlatformVFX/和Niagara内容泄漏。当前Server Build/Cook真实证据未执行。

@@ -1,0 +1,5 @@
+# NiagaraExecution（Niagara执行）
+
+FGamePlatformVFXNiagaraExecutor是统一Niagara生成入口。按Platform/Quality选择System，设置Transform/Attach，按Policy使用ENCPoolMethod::AutoRelease或None，并合并DefaultParameters与合法Request overrides。
+
+参数区分Float、Vector、Position、Color、Integer、Boolean；Position使用SetVariablePosition支持LWC。Stop和资源清理由World Service/Instance Registry统一管理。

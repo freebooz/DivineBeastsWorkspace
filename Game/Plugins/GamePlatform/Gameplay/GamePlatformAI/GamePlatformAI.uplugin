@@ -1,0 +1,30 @@
+{
+    "FileVersion":  3,
+    "Version":  1,
+    "VersionName":  "0.1.0",
+    "FriendlyName":  "GamePlatformAI",
+    "Description":  "GamePlatformAI（游戏平台插件）",
+    "Category":  "GamePlatform/Gameplay",
+    "CreatedBy":  "DivineBeastsWorkspace",
+    "CanContainContent":  true,
+    "EnabledByDefault":  false,
+    "Plugins":  [
+                    { "Name": "GameplayAbilities", "Enabled": true },
+                    { "Name": "GamePlatformData", "Enabled": true },
+                    { "Name": "GamePlatformAbilitySystem", "Enabled": true },
+                    { "Name": "GamePlatformCombat", "Enabled": true },
+                    { "Name": "GamePlatformNavigation", "Enabled": true }
+                ],
+    "Modules":  [
+                    {
+                        "Name":  "GamePlatformAI",
+                        "Type":  "Runtime",
+                        "LoadingPhase":  "Default"
+                    },
+                    {
+                        "Name":  "GamePlatformAIServer",
+                        "Type":  "ServerOnly",
+                        "LoadingPhase":  "Default"
+                    }
+                ]
+}

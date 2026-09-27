@@ -1,0 +1,7 @@
+# PresentationRequestMapping（平台表现请求映射）
+
+FMobaPresentationRequestBuilder（MOBA平台请求构建器）把Semantic、Context、Source/Target、位置、Magnitude、Priority、Lifetime、PredictionState、RequestId和Generation转换为 FGamePlatformPresentationRequest（平台表现请求）。
+
+UMobaPresentationClientSubsystem随后调用 UGamePlatformPresentationClientSubsystem（平台表现客户端子系统）提交。
+
+平台协调器按Priority（优先级）和ProviderId（提供者编号）确定性排序Provider；MobaPresentation不选择最终VFX/SFX/UI提供者。无Provider时返回ProviderMissing并安全降级。

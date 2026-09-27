@@ -1,0 +1,9 @@
+# DefinitionStableIdAndTagValidation（定义、稳定ID与标签验证）
+
+UGamePlatformDefinitionValidator 要求 Definition 类存在非空 DefinitionId，若存在 Version 字段则必须大于0。
+
+UGamePlatformStableIdValidator 覆盖 DefinitionId、ArenaModeId、ServerRole、ExperienceId、ItemDefinitionId、EntitlementId、ProgressionTrackId、QuestId、EquipmentSlotId 等稳定ID，检查空值和非法字符。
+
+UGamePlatformGameplayTagValidator 遍历 FGameplayTag/FGameplayTagContainer。默认拒绝已取消的 FiveCamp、Faction、Element、KingSeal 前缀；项目可通过 UGamePlatformValidationSettings 覆盖。
+
+跨资产 duplicate ID、RequiredDefinitions cycle 等全局问题由项目级全量验证/资产审计补充。

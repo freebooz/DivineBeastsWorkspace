@@ -1,0 +1,5 @@
+# MigrationAndHandover（迁移与交接）
+
+本轮从原五模块骨架增量实现竞技核心，不恢复Lobby独立ServerRole、Tutorial/Training独立ServerRole，也不恢复FiveCamp、Faction、Element、KingSeal或旧五行克制/共鸣。
+
+后续DivineBeasts（神兽联盟项目层）只需单向提供Hero资格、具体地图/Spawn点、Gameplay生命周期适配和表现层；MobaCommon不能反向依赖项目内容。当前主要续作断点是真实GameServer Allocation、地图资产、完整端到端联调和生产性能基线。

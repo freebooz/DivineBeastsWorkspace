@@ -1,0 +1,10 @@
+# HeroSelectionPolicy（英雄选择策略）
+
+HeroSelection只保存HeroDefinitionId，不创建ArenaHeroId第二身份。
+
+Pick/Ban当前产品未明确：PickBanState=NotConfigured。
+DuplicateHero当前产品未明确：DuplicateHeroPolicy=Unspecified。
+
+因此Production validation必须失败，不能因为MOBA常见做法擅自启用Ban/Pick或禁止重复Hero。
+
+Selection只能修改当前PlayerState自己的HeroDefinitionId；客户端不能为其他Roster Slot选择Hero。

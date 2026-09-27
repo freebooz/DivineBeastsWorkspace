@@ -1,0 +1,9 @@
+# GameplayTags（玩法标签）
+
+第一版DivineBeastsRuntime没有新增项目核心GameplayTag（玩法标签）。
+
+原因：ServerRole、Experience、ArenaMode、GameId和ProjectId是跨语言稳定身份，不应为了使用GameplayTag而重复建立第二套所有权。当前它们由Shared Catalog生成并使用FName表示。
+
+后续只有真正跨Characters、Application、World、Server多个项目功能共同使用、且本质属于GameplayTag语义的项目标签，才允许进入Runtime。Hero、Ability、Arena规则或Presentation标签分别由其所属插件拥有。
+
+FiveCamp、Faction、Element旧玩法、KingSeal、Resonance、BreakElement相关项目Tag不得恢复。

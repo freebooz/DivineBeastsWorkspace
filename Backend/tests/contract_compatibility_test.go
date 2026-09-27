@@ -74,7 +74,7 @@ func TestClientServerBackendContractCompatibility(t *testing.T) {
 	}
 }
 
-// TestProtoEvolutionRules（Proto演进规则测试）验证关键字段号和三服务器模型，防止兼容性破坏。
+// TestProtoEvolutionRules（Proto演进规则测试）验证关键字段号稳定且项目专属角色不下沉到通用平台Proto。
 func TestProtoEvolutionRules(t *testing.T) {
 	sharedRoot := filepath.Join("..", "..", "Shared", "Contracts")
 	gameServer := mustRead(t, filepath.Join(sharedRoot, "GamePlatform", "Proto", "game-server-control.proto"))
@@ -91,7 +91,7 @@ func TestProtoEvolutionRules(t *testing.T) {
 		}
 	}
 	if strings.Contains(gameServer+transfer, "GameServer.Role.Lobby") {
-		t.Fatal("跨语言协议禁止重新引入独立Lobby ServerRole")
+		t.Fatal("通用GamePlatform Proto不得承载DivineBeasts项目专属Lobby角色ID")
 	}
 }
 
@@ -125,6 +125,24 @@ func TestOpenAPIOperationIDsUnique(t *testing.T) {
 	}
 }
 
+// TestVersionInRangeSupportsMajorWildcard（主版本通配范围测试）确保2.x覆盖全部2.*，但不跨入3.0.0。
+func TestVersionInRangeSupportsMajorWildcard(t *testing.T) {
+	cases := []struct {
+		version string
+		want    bool
+	}{
+		{version: "2.0.0", want: true},
+		{version: "2.99.99", want: true},
+		{version: "3.0.0", want: false},
+		{version: "1.99.99", want: false},
+	}
+	for _, testCase := range cases {
+		if got := versionInRange(t, testCase.version, "2.0.0", "2.x"); got != testCase.want {
+			t.Errorf("versionInRange(%s, 2.0.0, 2.x)=%t，期望=%t", testCase.version, got, testCase.want)
+		}
+	}
+}
+
 func semverMajor(t *testing.T, value string) int {
 	t.Helper()
 	parts := strings.Split(value, ".")
@@ -147,6 +165,13 @@ func versionInRange(t *testing.T, current, min, max string) bool {
 	}
 	if strings.HasSuffix(max, ".x") {
 		maxParts := strings.Split(max, ".")
+		if len(maxParts) == 2 {
+			major, err := strconv.Atoi(maxParts[0])
+			if err != nil {
+				t.Fatalf("maxContractVersion Major非法: %s", max)
+			}
+			return cur[0] == major
+		}
 		if len(maxParts) != 3 {
 			t.Fatalf("maxContractVersion非法: %s", max)
 		}

@@ -1,0 +1,10 @@
+# OpenWorldVillageIntegration（开放世界/新手村集成）
+
+DBAClient项目组合层提供两条真实非MOBA源码路径：
+
+1. UGamePlatformInteractorComponent复制LastResult后触发OnResultChanged；成功结果携带OptionId，DBAClient转换成FDivineBeastsWorldInteractionPresentationFact并提交Project Presentation。
+2. DivineBeastsApplicationFlow进入Experience.Village.Tutorial或Training的InWorld状态时，DBAClient提交一次FDivineBeastsVillageFeedbackPresentationFact。
+
+Presentation只读这些已存在事实，不决定Interaction结果、Quest完成、Onboarding状态或World Assignment。
+
+真实地图/交互资产/教学内容仍为0，因此端到端视觉播放为“未执行”。

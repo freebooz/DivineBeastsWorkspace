@@ -1,0 +1,21 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DBAArena",
+  "Description": "神兽联盟可选竞技插件：统一承接项目竞技定义、客户端公开流程扩展及MainArena权威适配；关闭后不影响公共项目插件的依赖闭包。",
+  "Category": "DivineBeasts",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "DBAGameplay", "Enabled": true },
+    { "Name": "GamePlatformArena", "Enabled": true },
+    { "Name": "DBAClient", "Enabled": true, "TargetAllowList": ["Client", "Editor"] }
+  ],
+  "Modules": [
+    { "Name": "DivineBeastsArenaRuntime", "Type": "Runtime", "LoadingPhase": "Default" },
+    { "Name": "DivineBeastsArenaClient", "Type": "ClientOnly", "LoadingPhase": "Default", "TargetAllowList": ["Client", "Editor"] },
+    { "Name": "DivineBeastsArenaServer", "Type": "ServerOnly", "LoadingPhase": "Default", "TargetAllowList": ["Server", "Editor"] }
+  ]
+}

@@ -1,0 +1,9 @@
+# MobaIntegrationBoundary（MOBA集成边界）
+
+DivineBeastsPresentationRuntime和Client均不依赖MobaPresentation。
+
+Arena/Combat/Ability MOBA事实仍由MobaPresentation转换成Moba.* Semantic，再调用同一个UGamePlatformPresentationClientSubsystem::Submit。
+
+项目Presentation同时在这个平台协调器注册Project Context和Project/ContentPack Catalog。因此Moba请求进入平台后可以自动获得项目Hero/World/Skin/ContentPack上下文和项目覆盖目录，无需MobaPresentation认识DivineBeastsPresentation。
+
+静态组合门禁已通过；真实Arena 5v5运行组合状态为“未执行”。

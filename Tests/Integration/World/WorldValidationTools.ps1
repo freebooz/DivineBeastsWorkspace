@@ -145,7 +145,7 @@ function Invoke-WorldObservedProcess {
 }
 function Get-WorldModuleRoots {
     <# 明确的构建证据范围，不遍历Backend、Secrets、Saved或任意插件。 #>
-    return [ordered]@{World='Game/Plugins/GameFoundation/Gameplay/GamePlatformWorld';Loading='Game/Plugins/GameFoundation/Application/GamePlatformLoading';Core='Game/Plugins/GameFoundation/Core/GamePlatformCore';Data='Game/Plugins/GameFoundation/Core/GamePlatformData'}
+    return [ordered]@{World='Game/Plugins/GamePlatform/World/GamePlatformWorld';Loading='Game/Plugins/GamePlatform/Application/GamePlatformLoading';Core='Game/Plugins/GamePlatform/Foundation/GamePlatformCore';Data='Game/Plugins/GamePlatform/Foundation/GamePlatformData'}
 }
 function Get-WorldSourceSnapshot {
     <# 稳定指纹：ordinal排序的工作区相对路径、零分隔符、文件SHA256、换行，再整体SHA256。

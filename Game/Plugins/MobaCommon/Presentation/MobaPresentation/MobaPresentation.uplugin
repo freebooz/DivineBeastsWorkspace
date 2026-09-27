@@ -1,1 +1,29 @@
-
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0.0",
+    "FriendlyName": "MobaPresentation",
+    "Description": "MobaPresentation（MOBA表现语义插件）：将竞技/战斗/技能/状态/角色已确认事实转换为平台中立表现请求，不直接播放具体资源。",
+    "Category": "MobaCommon/Presentation",
+    "CreatedBy": "DivineBeastsWorkspace",
+    "CanContainContent": false,
+    "EnabledByDefault": false,
+    "Plugins": [
+        { "Name": "GamePlatformCore", "Enabled": true },
+        { "Name": "GamePlatformPresentation", "Enabled": true },
+        { "Name": "GamePlatformArena", "Enabled": true },
+        { "Name": "GamePlatformCombat", "Enabled": true }
+    ],
+    "Modules": [
+        {
+            "Name": "MobaPresentationRuntime",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "MobaPresentationClient",
+            "Type": "ClientOnly",
+            "LoadingPhase": "Default"
+        }
+    ]
+}
