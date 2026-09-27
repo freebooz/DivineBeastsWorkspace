@@ -82,6 +82,25 @@ void IdentityAlias()
     Require(Value.Namespace == "a" && Value.Name == "b" && Value.LogicalVersion == 2, "aliased fields preserved until read");
 }
 
+void ErrorCodeContract()
+{
+    ErrorCode<char> Value;
+    Require(ParseErrorCode<char>("Data.Asset.Missing_Definition", Value), "structured error code accepted");
+    Require(Value.Domain == "data.asset" && Value.Code == "missing_definition", "error code normalized");
+    Require(FormatErrorCode(Value) == "data.asset.missing_definition", "error code canonical output");
+    const ErrorCode<char> Upper{"DATA.ASSET", "MISSING_DEFINITION"};
+    Require(EqualErrorCode(Value, Upper), "error code canonical equality");
+    Require(HashErrorCode(Value) == HashErrorCode(Upper), "equal error codes hash equal");
+    for (const std::string Text : {"", "MissingDefinition", ".missing", "data.", "data..missing", "data.1missing", "data.missing-code", " data.missing", "data.missing "})
+    {
+        ErrorCode<char> Parsed{"previous", "value"};
+        Require(!ParseErrorCode<char>(Text, Parsed), Text.c_str());
+        Require(Parsed.Domain.empty() && Parsed.Code.empty(), "error code failure clears output");
+    }
+    ErrorCode<char> Parsed;
+    Require(!ParseErrorCode<char>(std::string("data.missing\0hidden", 19), Parsed), "error code embedded NUL rejected");
+}
+
 void VersionValid()
 {
     Version Value;
@@ -114,6 +133,22 @@ void VersionOrder()
     Require(CompareVersion(Version{1, 2, 3}, Version{1, 2, 4}) == -1, "patch ordering");
     Require(CompareVersion(Version{0, 0, 0}, Version{0, 0, 0}) == 0, "equality");
     Require(CompareVersion(Version{-2147483647 - 1, 0, 0}, Version{2147483647, 0, 0}) == -1, "comparison does not subtract and overflow");
+}
+
+void VersionRangeContract()
+{
+    const VersionRange Unconfigured{};
+    Require(!IsValidVersionRange(Unconfigured), "default range invalid");
+    Require(!ContainsVersion(Unconfigured, Version{1, 0, 0}), "default range fails closed");
+
+    const VersionRange Range{true, Version{1, 2, 0}, Version{2, 0, 0}};
+    Require(IsValidVersionRange(Range), "configured inclusive range valid");
+    Require(ContainsVersion(Range, Version{1, 2, 0}), "minimum included");
+    Require(ContainsVersion(Range, Version{1, 5, 3}), "middle included");
+    Require(ContainsVersion(Range, Version{2, 0, 0}), "maximum included");
+    Require(!ContainsVersion(Range, Version{2, 0, 1}), "outside rejected");
+    Require(!IsValidVersionRange(VersionRange{true, Version{2, 0, 0}, Version{1, 2, 0}}), "reversed range invalid");
+    Require(!ContainsVersion(Range, Version{-1, 0, 0}), "invalid candidate rejected");
 }
 
 void WideCharacters()
@@ -165,9 +200,11 @@ int main(int ArgCount, char** Arguments)
     else if (Scenario == "identity_limits") { IdentityLimits(); }
     else if (Scenario == "identity_equality") { IdentityEquality(); }
     else if (Scenario == "identity_alias") { IdentityAlias(); }
+    else if (Scenario == "error_code_contract") { ErrorCodeContract(); }
     else if (Scenario == "version_valid") { VersionValid(); }
     else if (Scenario == "version_invalid") { VersionInvalid(); }
     else if (Scenario == "version_order") { VersionOrder(); }
+    else if (Scenario == "version_range_contract") { VersionRangeContract(); }
     else if (Scenario == "wide_characters") { WideCharacters(); }
     else if (Scenario == "result_states") { ResultStates(); }
     else if (Scenario == "result_diagnostics") { ResultDiagnostics(); }

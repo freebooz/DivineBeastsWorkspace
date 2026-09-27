@@ -56,6 +56,20 @@ FGamePlatformResult FGamePlatformResult::Failure(FName Code, FString Message)
     return BuildResult(EGamePlatformResultStatus::Failed, Code, Message);
 }
 
+FGamePlatformResult FGamePlatformResult::Failure(
+    const FGamePlatformErrorCode& ErrorCode,
+    FString Message)
+{
+    const FName StructuredCode = ErrorCode.ToName();
+    if (StructuredCode.IsNone())
+    {
+        Message = Message.IsEmpty()
+            ? TEXT("结构化错误码无效。")
+            : FString(TEXT("结构化错误码无效。")) + Message;
+    }
+    return BuildResult(EGamePlatformResultStatus::Failed, StructuredCode, Message);
+}
+
 FGamePlatformResult FGamePlatformResult::Cancelled(FString Message)
 {
     return BuildResult(EGamePlatformResultStatus::Cancelled, NAME_None, Message);
@@ -64,6 +78,30 @@ FGamePlatformResult FGamePlatformResult::Cancelled(FString Message)
 FGamePlatformResult FGamePlatformResult::Unsupported(FName Code, FString Message)
 {
     return BuildResult(EGamePlatformResultStatus::Unsupported, Code, Message);
+}
+
+FGamePlatformResult FGamePlatformResult::Unsupported(
+    const FGamePlatformErrorCode& ErrorCode,
+    FString Message)
+{
+    const FName StructuredCode = ErrorCode.ToName();
+    if (StructuredCode.IsNone())
+    {
+        Message = Message.IsEmpty()
+            ? TEXT("结构化错误码无效。")
+            : FString(TEXT("结构化错误码无效。")) + Message;
+    }
+    return BuildResult(EGamePlatformResultStatus::Unsupported, StructuredCode, Message);
+}
+
+bool FGamePlatformResult::TryGetStructuredCode(FGamePlatformErrorCode& OutErrorCode) const
+{
+    if (Code.IsNone())
+    {
+        OutErrorCode = {};
+        return false;
+    }
+    return FGamePlatformErrorCode::TryParse(Code.ToString(), OutErrorCode);
 }
 
 bool FGamePlatformResult::IsSuccess() const

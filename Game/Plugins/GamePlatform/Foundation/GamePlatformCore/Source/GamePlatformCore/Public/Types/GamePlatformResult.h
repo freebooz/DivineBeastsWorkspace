@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Types/GamePlatformErrorCode.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/NoExportTypes.h"
 #include "GamePlatformResult.generated.h"
@@ -49,11 +50,20 @@ struct GAMEPLATFORMCORE_API FGamePlatformResult
     /** 失败结果；Code为None时使用MissingFailureCode并保留原Message，空说明自动补充诊断。 */
     static FGamePlatformResult Failure(FName Code, FString Message);
 
+    /** 使用结构化错误码构造失败结果；无效结构化码Fail Closed为MissingFailureCode。 */
+    static FGamePlatformResult Failure(const FGamePlatformErrorCode& ErrorCode, FString Message);
+
     /** 取消结果，Code固定Cancelled；空Message自动补充取消说明，不执行实际取消动作。 */
     static FGamePlatformResult Cancelled(FString Message);
 
     /** 不支持结果；Code为None时使用MissingUnsupportedCode，始终保持非成功状态。 */
     static FGamePlatformResult Unsupported(FName Code, FString Message);
+
+    /** 使用结构化错误码构造不支持结果；无效结构化码Fail Closed为MissingUnsupportedCode。 */
+    static FGamePlatformResult Unsupported(const FGamePlatformErrorCode& ErrorCode, FString Message);
+
+    /** 尝试把既有Code解析为结构化domain.code；遗留裸错误码返回false，不做猜测或自动迁移。 */
+    bool TryGetStructuredCode(FGamePlatformErrorCode& OutErrorCode) const;
 
     /** 仅Status为Succeeded且Code为None返回true；默认值、矛盾的成功错误码均非成功。 */
     bool IsSuccess() const;
