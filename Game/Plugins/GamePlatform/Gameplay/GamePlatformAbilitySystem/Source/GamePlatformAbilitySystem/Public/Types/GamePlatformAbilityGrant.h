@@ -2,10 +2,10 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Types/GamePlatformId.h"
+#include "Abilities/GamePlatformGameplayAbility.h"
+#include "Attributes/GamePlatformAttributeSet.h"
 #include "GamePlatformAbilityGrant.generated.h"
-class UGamePlatformGameplayAbility;
 class UGameplayEffect;
-class UGamePlatformAttributeSet;
 
 /** 同一ASC中同逻辑ID、同技能类或同输入标签重复均拒绝，不按加载顺序覆盖。 */
 UENUM(BlueprintType)

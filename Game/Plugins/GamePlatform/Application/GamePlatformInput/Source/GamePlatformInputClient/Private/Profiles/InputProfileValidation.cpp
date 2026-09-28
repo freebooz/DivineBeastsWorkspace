@@ -15,16 +15,31 @@ FGamePlatformResult UGamePlatformInputProfileDefinition::ValidateDefinition() co
         !FMath::IsFinite(DefaultAccessibility.TouchMoveScale) || DefaultAccessibility.TouchMoveScale < 0.5 || DefaultAccessibility.TouchMoveScale > 1.5 ||
         (!bEnableKeyboardMouse && !bEnableGamepad && !bEnableTouch))
     { return FGamePlatformResult::Failure(TEXT("InvalidInputProfile"),TEXT("动作/映射数量、设备开关、灵敏度或死区超出有限支持范围")); }
-    TSet<EGamePlatformInputSemantic> Semantics; TSet<FSoftObjectPath> Assets; TSet<FName> Names;
+    TSet<FGameplayTag> Semantics; TSet<FSoftObjectPath> Assets; TSet<FName> Names;
     for (const auto& Entry : Actions)
     {
-        if (static_cast<uint8>(Entry.Semantic) > static_cast<uint8>(EGamePlatformInputSemantic::Cancel) || Entry.Action.IsNull() ||
-            Semantics.Contains(Entry.Semantic) || Assets.Contains(Entry.Action.ToSoftObjectPath()) || Entry.Unit != GamePlatformInputServices::GetUnit(Entry.Semantic))
-        { return FGamePlatformResult::Failure(TEXT("InvalidInputAction"),TEXT("重复语义/动作、缺少资产或单位不匹配")); }
-        Semantics.Add(Entry.Semantic); Assets.Add(Entry.Action.ToSoftObjectPath());
+        FGamePlatformInputSemanticDescriptor Descriptor;
+        bool bHasLegacy = false;
+        EGamePlatformInputSemantic LegacySemantic = EGamePlatformInputSemantic::Move;
+        if (Entry.Action.IsNull() ||
+            !GamePlatformInputServices::ResolveActionDescriptor(Entry, Descriptor, bHasLegacy, LegacySemantic) ||
+            Semantics.Contains(Descriptor.SemanticId.Tag) || Assets.Contains(Entry.Action.ToSoftObjectPath()))
+        {
+            return FGamePlatformResult::Failure(
+                TEXT("InvalidInputAction"),
+                TEXT("输入动作必须具有唯一有效语义描述、唯一资产和匹配的单位/通道/值类型。"));
+        }
+        Semantics.Add(Descriptor.SemanticId.Tag);
+        Assets.Add(Entry.Action.ToSoftObjectPath());
     }
-    if (!Semantics.Contains(EGamePlatformInputSemantic::Move) || !Semantics.Contains(EGamePlatformInputSemantic::Menu) || !Semantics.Contains(EGamePlatformInputSemantic::Cancel))
-    { return FGamePlatformResult::Failure(TEXT("RequiredInputMissing"),TEXT("至少需要移动、菜单和取消语义")); }
+
+    // 只要求真正跨游戏稳定的基础语义；攻击/技能/锁定由上层项目Profile自行声明。
+    if (!Semantics.Contains(GamePlatformInputServices::GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic::Move)) ||
+        !Semantics.Contains(GamePlatformInputServices::GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic::Menu)) ||
+        !Semantics.Contains(GamePlatformInputServices::GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic::Cancel)))
+    {
+        return FGamePlatformResult::Failure(TEXT("RequiredInputMissing"),TEXT("至少需要移动、菜单和取消三个平台基础语义。"));
+    }
     Assets.Reset();
     for (const auto& Entry : Contexts)
     {

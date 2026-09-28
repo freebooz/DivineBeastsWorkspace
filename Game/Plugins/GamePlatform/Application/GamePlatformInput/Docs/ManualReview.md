@@ -8,6 +8,8 @@
 | 手柄 Move/Look/按键 | 待审核 | 可选外接 | Native死区 | 待填写 | 待填写 |
 | 键鼠↔手柄提示切换 | 待审核 | 不适用 | API已实现 | 待填写 | 待填写 |
 | DeviceRevision驱动提示刷新 | 待审核 | 待审核 | 重复设备上报不递增，真实切换递增 | 待填写 | 待填写 |
+| 项目SemanticId/CompactSlot路由 | 待审核 | 待审核 | 最小宿主Editor/Client模块级编译通过 | 待填写 | 待填写 |
+| DivineBeasts.Input技能语义 | 待审核 | 待审核 | 项目Tag/Descriptor自动化源码已编译 | 待填写 | 待填写 |
 | 触屏PC默认设备族 | 待审核 | 不适用 | 桌面目标默认KeyboardMouse | 待填写 | 待填写 |
 | 虚拟摇杆 Move | 不适用 | 待审核 | Touch API已实现 | 待填写 | 待填写 |
 | Touch Look | 不适用 | 待审核 | Touch API已实现 | 待填写 | 待填写 |

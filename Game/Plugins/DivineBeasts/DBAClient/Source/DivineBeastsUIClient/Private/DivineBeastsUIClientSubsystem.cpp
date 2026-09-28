@@ -358,12 +358,18 @@ void UDivineBeastsUIClientSubsystem::RegisterDefaultScreenDefinitions()
         Definition->DefaultFocusWidgetName = Surface.DefaultFocusWidgetName;
         Definition->bSurvivesTravel = Surface.bSurvivesTravel;
 
-        if (!Surface.AndroidWidgetClassPath.IsEmpty())
+        if (!Surface.MobileWidgetClassPath.IsEmpty())
         {
+            const TSoftClassPtr<UGamePlatformUIScreen> MobileClass(
+                FSoftObjectPath(Surface.MobileWidgetClassPath));
+
+            // Android/iOS只改变布局和触控结构；共用同一ScreenId、ViewModel和业务状态。
             Definition->PlatformWidgetVariants.Add(
                 TEXT("Android"),
-                TSoftClassPtr<UGamePlatformUIScreen>(
-                    FSoftObjectPath(Surface.AndroidWidgetClassPath)));
+                MobileClass);
+            Definition->PlatformWidgetVariants.Add(
+                TEXT("IOS"),
+                MobileClass);
         }
 
         if (PlatformUI->RegisterScreenDefinition(Definition))

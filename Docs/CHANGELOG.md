@@ -24,6 +24,14 @@
 
 ## 2026-09-27｜GamePlatformInput跨端输入底座完善
 
+- 第三轮语义分层：新增 `FGamePlatformInputSemanticId / FGamePlatformInputSemanticDescriptor` 和 `InputProfileCompiler`，Profile准备阶段一次编译为 `CompiledActions[CompactSlot]`；Enhanced Input高频回调、Interrupt和Touch更新均按Slot数组访问，不在高频路径查GameplayTag/TMap。
+- 旧 `EGamePlatformInputSemantic` 继续保持原Tag字符串和API兼容，但AttackPrimary、AbilitySlot1～4、TargetLock降为Legacy兼容入口；平台长期语义只保留跨游戏通用导航/视角/UI/交互合同。
+- `DBAClient` 新增 `DivineBeastsInputClient` ClientOnly模块，定义 `DivineBeasts.Input.*` 主攻击/四技能槽/目标锁定语义、项目Profile校验、项目输入事件桥和Touch项目入口；攻击/技能槽映射到 `Platform.Ability.Input.DivineBeasts.*`，TargetLock不伪装成GAS技能。
+- 当前正式工程已通过 `GamePlatformInputClient` 与 `DivineBeastsInputClient` 的 UE5.8 Editor／Win64 Client 定向模块构建，UHT、编译与链接成功；Native Debug／Release 各410断言通过，输入专项架构脚本与三层继承边界门禁通过。全局设计基线另有 DBAArena→GamePlatformUIClient 插件依赖声明问题，与本次输入实现无关。
+- 平台新增 `EGamePlatformBuiltInInputSemantic` 与 `GetBuiltInSemanticTag/GetBuiltInSemanticDescriptor`，只公开 Move/Look/Interact/Menu/Confirm/Cancel 七类跨游戏公共语义；新项目代码不再通过旧固定枚举消费平台公共语义。
+- 将目标平台默认设备/禁用设备回退逻辑拆到 Private `Devices/InputDevicePolicy.h`，作为 LocalPlayerSubsystem 私有职责拆分第一步；对外仍保持唯一平台输入服务。
+- 输入→GAS联调发现 `UGamePlatformAbilitySetDefinition::ValidateDefinition()` 只有声明未实现，补齐纯字段校验后 `GamePlatformAbilitySystem` Editor／Win64 Client定向构建通过；最终 `GamePlatformInputClient`、`DivineBeastsInputClient`、`GamePlatformAbilitySystem` 正式工程模块均通过。
+
 - 第二轮性能收敛：BlockLedger改为低频32位引用计数+缓存组合掩码，高频 `IsBlocked/CombinedMask` 为 O(1)；13个稳定输入语义的 ActionGate 改为固定数组槽，避免高频哈希查找/首次节点分配。
 - 设备默认策略改为按目标平台决定：Android/iOS默认Touch，桌面默认KeyboardMouse，修复触屏PC启动即显示移动提示的问题；新增 `DeviceRevision`，只有真实设备族变化才递增。
 - Native Debug/Release 各410断言通过，UE5.8 Editor/Win64 Client模块在第二轮优化后再次构建成功。UE Automation已实际尝试，但在测试队列前被引擎 `ValidatePlatforms -AllPlatforms` 的Android r27c缺失和VisionOS SDK `MainVersion`缺失阻断，不误报用例失败或通过。
@@ -32,7 +40,7 @@
 - PC统一支持键盘/鼠标与手柄；移动端通过 `Begin/Update/EndTouchInput` 将虚拟摇杆、视角和技能按钮注入同一Enhanced Input语义链，具体UMG/手势布局继续归UI/项目层，避免GamePlatformInput反向依赖表现或神兽联盟项目代码。
 - 增加设备族、Touch独立死区、通用视角灵敏度/XY反转、移动死区倍率，并进一步增加 `TouchLookSensitivityMultiplier` 与 `TouchMoveScale`，让移动端视角/虚拟摇杆手感可独立于PC调整；全部本地偏好仅显式保存时写磁盘。
 - 性能采用事件驱动：不使用固定每帧输入Tick；只在存在弱Owner租约时用4Hz维护Ticker清理失效记录；Context/Block/Binding/Subscription/Touch均有容量上限，高频回调不加载资产、不写磁盘、不复制订阅数组。新增 `FGamePlatformInputDiagnostics` 统计事件/回调、设备切换、Mapping重建、维护Tick、Owner回收和维护耗时，不反向依赖Telemetry。
-- Native C++17 Debug／Release 各1/1通过，共406条断言、0失败；UE5.8 Editor与Win64 Client的 `GamePlatformInputClient` 模块构建均成功。Android Client构建已实际尝试但当前Runner缺少UE5.8要求的NDK r27c，停在SDK校验阶段；iOS需macOS/Xcode或远程工具链，未执行。
+- Native C++17 Debug／Release 各1/1通过，共410条断言、0失败；UE5.8 Editor与Win64 Client的 `GamePlatformInputClient` 模块构建均成功。Android Client构建已实际尝试但当前Runner缺少UE5.8要求的NDK r27c，停在SDK校验阶段；iOS需macOS/Xcode或远程工具链，未执行。
 - 新增插件 `README.md`、`Docs/Architecture.md`、`API.md`、`TestingAndEvidence.md`、`ManualReview.md`，并同步插件清单、实施进度和总体目录说明。
 
 ## 2026-09-27｜GamePlatformLoading加载屏障完善

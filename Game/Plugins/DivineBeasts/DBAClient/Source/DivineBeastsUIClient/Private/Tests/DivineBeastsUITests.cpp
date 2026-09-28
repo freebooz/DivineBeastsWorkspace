@@ -17,7 +17,7 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     const TArray<FDivineBeastsUISurfaceDescriptor>& Surfaces =
         FDivineBeastsUIScreenCatalog::GetSurfaces();
 
-    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 13);
+    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 15);
 
     TSet<FName> Unique;
     for (const FDivineBeastsUISurfaceDescriptor& Surface : Surfaces)
@@ -25,6 +25,10 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
         TestTrue(TEXT("SurfaceId有效"), !Surface.SurfaceId.IsNone());
         TestFalse(TEXT("SurfaceId唯一"), Unique.Contains(Surface.SurfaceId));
         Unique.Add(Surface.SurfaceId);
+
+        TestTrue(
+            TEXT("公共DBAClient软资源路径必须使用真实DBAClient挂载点"),
+            Surface.WidgetClassPath.StartsWith(TEXT("/DBAClient/")));
     }
 
     for (const FName Required : {
@@ -34,6 +38,8 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
         FName(TEXT("UI.Screen.CharacterCreate")),
         FName(TEXT("UI.Screen.CharacterSelect")),
         FName(TEXT("UI.Screen.LoadingTravel")),
+        FName(TEXT("UI.Screen.Inventory")),
+        FName(TEXT("UI.Screen.Quest")),
         FName(TEXT("UI.HUD.OpenWorld")),
         FName(TEXT("UI.HUD.VillageMain")),
         FName(TEXT("UI.HUD.TutorialGuidance")),

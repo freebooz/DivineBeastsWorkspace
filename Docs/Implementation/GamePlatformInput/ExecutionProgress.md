@@ -6,6 +6,20 @@
 
 ### 第二轮性能收敛执行计划与完成情况
 
+### 第三轮语义分层与神兽联盟项目输入执行计划/完成情况
+
+1. 平台语义解耦：新增 `FGamePlatformInputSemanticId / Descriptor`，旧固定枚举保留兼容，不继续增加项目技能。
+2. Profile编译：新增 `InputProfileCompiler`，Profile准备时一次生成 `CompiledActions[CompactSlot]`、Tag→Slot低频索引和LegacyEnum→Slot兼容索引。
+3. 高频运行时：Enhanced Input绑定直接捕获Slot；Route/Interrupt/Touch Update/End均按Slot数组访问，不在高频路径查GameplayTag/TMap。
+4. 项目语义上移：新增 `DBAClient/DivineBeastsInputClient` 模块，定义 `DivineBeasts.Input.*` 主攻击、四技能槽和TargetLock语义；项目Profile禁止继续使用平台旧攻击/技能/锁定枚举。
+5. 能力输入边界：项目攻击/技能语义映射到 `Platform.Ability.Input.DivineBeasts.*`；TargetLock不映射为GAS技能。`UGamePlatformAbilitySystemComponent` 已实现公开 AbilityInputReceiver 合同，项目层通过 Token + InputTag 驱动按下/持续/释放，不遍历或修改 GAS 私有 Spec。
+6. 移动端：项目Touch入口改用 `BeginTouchInputBySemantic`，PC和移动端进入同一CompactSlot和项目事件链。
+7. 验证：Native Debug/Release各410断言通过；当前正式工程已通过 `GamePlatformInputClient` 与 `DivineBeastsInputClient` 的 UE5.8 Editor/Win64 Client 定向模块构建，UHT/编译/链接均成功；输入专项架构脚本与三层继承边界门禁通过。
+8. Built-in公共合同：新增 `EGamePlatformBuiltInInputSemantic` 与 `GetBuiltInSemanticTag/GetBuiltInSemanticDescriptor`，平台新代码只使用7个跨游戏公共语义；旧固定枚举完整保留为兼容层。
+9. 私有职责拆分：设备默认/回退逻辑迁入 `Private/Devices/InputDevicePolicy.h`，继续保持单一平台LocalPlayerSubsystem，不机械拆多个Subsystem。
+10. 联调缺口修复：验证输入→AbilitySystem链时发现 `UGamePlatformAbilitySetDefinition::ValidateDefinition()` 只有声明没有实现，补充纯字段校验后通过 UE5.8 Editor/Win64 Client AbilitySystem 定向构建；没有借此扩展GAS业务职责。
+11. 最终边界：`GamePlatformInputClient`、`GamePlatformAbilitySystem`、`DivineBeastsInputClient` 的 Win64 Client 定向构建均成功；项目输入架构门禁通过。全局 `ValidateDesignBaseline` 仍有 DBAArena→GamePlatformUIClient 依赖声明问题，属于竞技插件外部阻断，不作为输入任务失败或通过证据。
+
 1. 高频阻断判断：已将 BlockLedger 从每事件扫描最多64租约改为低频引用计数 + 缓存位掩码，高频 `IsBlocked` 为 O(1)。
 2. 动作门禁：已将13个稳定语义的 ActionGate 从哈希节点改为固定数组槽，避免高频哈希和首次分配。
 3. 跨端设备默认：Android/iOS 默认 Touch，桌面默认 KeyboardMouse；触屏PC不再因 `SupportsTouchInput` 被误判为移动端。

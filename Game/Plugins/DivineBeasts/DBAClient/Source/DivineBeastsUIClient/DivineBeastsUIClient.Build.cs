@@ -24,8 +24,11 @@ public class DivineBeastsUIClient : ModuleRules
             "CommonInput",
             "GamePlatformUIClient",
             // 当前公开战斗反馈映射直接暴露 FGamePlatformCombatEvent，
-            // 因此保留真实 Public 依赖；背包/任务目前没有源码消费者，不提前挂依赖。
-            "GamePlatformCombat"
+            // 背包和任务页面的公开头同样直接暴露平台客户端快照类型，
+            // 因此这些模块都是调用方编译公开接口所需的真实 Public 依赖。
+            "GamePlatformCombat",
+            "GamePlatformInventoryClient",
+            "GamePlatformQuestClient"
         });
 
         // ApplicationFlow 只在本模块 Private Adapter（私有适配器）中消费；

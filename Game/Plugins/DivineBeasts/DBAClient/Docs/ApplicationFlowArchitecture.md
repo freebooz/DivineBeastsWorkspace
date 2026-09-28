@@ -55,7 +55,7 @@ InWorld
 Recovering
 ```
 
-简单、一次性异步步骤复用 `UGamePlatformCallbackFlowNode（平台回调流程节点）`，避免为每个 HTTP 请求制造反射类型。需要等待真实外部事件的 `Authentication / CharacterEntry / WorldReady / InWorld` 使用 `UDivineBeastsPassiveFlowNode（神兽联盟被动等待节点）`，节点本身不创建 Tick；项目协调器通过当前 `FGamePlatformFlowNodeToken（流程节点令牌）` 调用 `SubmitEvent（提交事件）` 精确推进。
+简单、一次性异步步骤复用 `UGamePlatformCallbackFlowNode（平台回调流程节点）`，避免为每个 HTTP 请求制造反射类型。需要等待真实外部事件的 `Authentication / CharacterEntry / WorldReady / InWorld` 通过平台层 `GamePlatformApplicationFlowNodes::CreateAwaitEventFlowNode（创建外部事件等待流程节点）` 直接复用现有 Callback Flow Node（回调流程节点）；该工厂不新增反射类型，创建的节点不保存项目 Payload、不创建 Tick，也不持有业务资源。项目协调器通过当前 `FGamePlatformFlowNodeToken（流程节点令牌）` 调用 `SubmitEvent（提交事件）` 精确推进。原项目层 `UDivineBeastsApplicationFlowNodeBase / UDivineBeastsPassiveFlowNode` 已删除，避免为纯机制重复建立项目继承层。
 
 所有异步回调都必须先核对 ScopeId、RunId、NodeId 和 NodeGeneration。旧回调只进行常量级身份检查后直接返回，不能修改新流程数据。
 
@@ -112,7 +112,7 @@ Party（组队）、Matchmaking（匹配）、HeroSelection（竞技选人）、
 
 本模块明确禁止业务级 `Tick / FTSTicker`。稳定 GameInstance 服务只在 Initialize（初始化）阶段取得并缓存；流程运行期间不逐帧 `GetSubsystem`、不重复加载 FlowDefinition、不重复注册 NodeFactory、不逐帧刷新 ViewState。
 
-平台唯一低成本 Ticker 只处理 Timeout（超时）、Retry Delay（重试退避）和 Mailbox Completion（完成邮箱）。`OnSnapshotChanged（快照变化事件）` 只在公开快照真实变化时广播；UI 通过 `Snapshot → ViewState → ViewModel → Widget` 事件链更新，不轮询。
+平台调度已经改为一次性按需 Ticker：Start/节点切换只安排必要的即时 Pump，Completion/SubmitEvent 到达立即唤醒，Timeout（超时）与 Retry Delay（重试退避）按单调时钟精确唤醒；资产流程长期等待时仅以最多 2Hz 低频复核根 Data Lease。`OnSnapshotChanged（快照变化事件）` 只在公开快照真实变化时广播；UI 通过 `Snapshot → ViewState → ViewModel → Widget` 事件链更新，不轮询。
 
 热路径避免无意义 UObject、临时 TArray/TMap、FString 格式化和高频日志。异步线程只准备值结果，UObject/World/UI 操作统一回到游戏线程。互斥锁只保护单槽完成邮箱，不在锁内执行 HTTP、JSON、UObject 或广播操作。
 
@@ -122,7 +122,8 @@ Party（组队）、Matchmaking（匹配）、HeroSelection（竞技选人）、
 
 - `Tests/Architecture/ValidateProjectHeaders.ps1`：293 处自有头文件引用，0 缺失。
 - `DivineBeastsApplicationFlowClient`：使用 UE5.8 `DivineBeastsArenaClient` 正式响应文件单模块编译成功。
-- `GamePlatformApplicationFlow` 原生生产调度核心：Debug `Cases=31 Failed=0`；Release `Cases=31 Failed=0`。
-- 全量 `DivineBeastsArenaClient`：尚未通过；本轮已确认 `GamePlatformUIClient` 与 `DivineBeastsUIClient` 定向编译成功，当前失败来自本模块之外的主工程 Online/PCG 公开头依赖缺失，以及 `GamePlatformWorld` 自动化测试标志与 UE5.8 不兼容。因此不能把定向模块通过描述为完整 Client、Cook 或端到端联调通过。
+- 本轮通用等待节点工厂与按需调度修改后，`GamePlatformApplicationFlowSubsystem.cpp`、`ApplicationFlowSubsystemTests.cpp`、`DivineBeastsApplicationFlowSubsystem.cpp` 使用 UE5.8 当前客户端目标响应文件定向编译成功。
+- `GamePlatformApplicationFlow` 原生生产调度核心：加入 `NextWakeTimeContract（下一唤醒时间契约）` 后，Debug `Cases=32 Failed=0`；Release `Cases=32 Failed=0`。
+- 全量 `DivineBeastsArenaClient`：尚未通过；本轮在 `-NoUBA -MaxParallelActions=1` 下重新执行 UBT/UHT，最新阻断发生在本任务范围外的 `GamePlatformAbilitySystem/Types/GamePlatformAbilityGrant.h`，UHT 无法找到 `UGamePlatformGameplayAbility` 与 `UGamePlatformAttributeSet`。由于 UHT 在此提前终止，不能据此判断后续模块状态，也不能把定向模块通过描述为完整 Client、Cook 或端到端联调通过。
 
 后续完整验收仍包括 Editor/Client/Server 正式目标、UE Automation、PIE 多 GameInstance、OpenWorld/Village/MainArena 实例切换、真实 Session Transport 和 Cook/Stage。

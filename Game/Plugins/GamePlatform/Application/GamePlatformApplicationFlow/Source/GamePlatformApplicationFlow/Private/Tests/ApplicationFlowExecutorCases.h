@@ -155,6 +155,26 @@ inline std::vector<FCase> GetCases()
             E.Cancel(Id); E.Tick(2);
             C.Require(A->Starts == 1 && A->Finishes.size() == 1 && !E.IsActive(), "退避期间取消不重复清理或启动节点");
         }},
+        {"NextWakeTimeContract", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>();
+            auto S = Step("a", A); S.TimeoutSeconds = 5; S.MaxAttempts = 2; S.RetryDelaySeconds = 3;
+            FApplicationFlowExecutor E; std::string Error;
+            E.Configure({"a", {S}}, Error);
+            const auto Run = E.Start(10, Error);
+            C.Require(Run != 0 && E.GetNextWakeTimeSeconds().value_or(-1) == 10, "Start后下一次唤醒应立即开始入口节点");
+            E.Tick(10);
+            C.Require(E.GetNextWakeTimeSeconds().value_or(-1) == 15, "活动节点下一次无事件唤醒应是Deadline");
+            A->Completions[0](Failure(true));
+            E.Tick(11);
+            C.Require(E.GetSnapshot().State == EFlowState::RetryWaiting && E.GetNextWakeTimeSeconds().value_or(-1) == 14,
+                "重试等待下一次唤醒应精确指向RetryAt");
+            E.Tick(14);
+            C.Require(E.GetSnapshot().Attempt == 2 && E.GetNextWakeTimeSeconds().value_or(-1) == 19,
+                "重试开始后下一次唤醒重新指向本次Deadline");
+            E.Cancel(Run);
+            C.Require(!E.GetNextWakeTimeSeconds().has_value(), "终态不再要求调度唤醒");
+        }},
         {"InvalidGraphsAreAtomic", [](FChecks& C)
         {
             auto A = std::make_shared<FTestNode>(); auto B = std::make_shared<FTestNode>();

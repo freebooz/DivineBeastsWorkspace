@@ -23,6 +23,8 @@ namespace
         D.PausePolicy = EGamePlatformUIPausePolicy::Never;
         D.Transition = EGamePlatformUITransition::Default;
         D.DefaultFocusWidgetName = Focus;
+        // UI机制源码由DBAClient承载，后续真实UMG资源由独立DBAUIPack_Core内容包拥有；
+        // 此处仅登记稳定软路径，不把尚未创建的内容包误报为已交付资产。
         D.DefinitionAssetPath = FString::Printf(
             TEXT("%s/Screens/DA_DBA_UI_%s.DA_DBA_UI_%s"),
             ProjectUIContentRoot,
@@ -33,8 +35,8 @@ namespace
             ProjectUIContentRoot,
             AssetName,
             AssetName);
-        D.AndroidWidgetClassPath = FString::Printf(
-            TEXT("%s/Screens/WBP_DBA_UI_%s_Android.WBP_DBA_UI_%s_Android_C"),
+        D.MobileWidgetClassPath = FString::Printf(
+            TEXT("%s/Screens/WBP_DBA_UI_%s_Mobile.WBP_DBA_UI_%s_Mobile_C"),
             ProjectUIContentRoot,
             AssetName,
             AssetName);
@@ -56,8 +58,8 @@ namespace
             ProjectUIContentRoot,
             AssetName,
             AssetName);
-        D.AndroidWidgetClassPath = FString::Printf(
-            TEXT("%s/HUD/WBP_DBA_UI_%s_Android.WBP_DBA_UI_%s_Android_C"),
+        D.MobileWidgetClassPath = FString::Printf(
+            TEXT("%s/HUD/WBP_DBA_UI_%s_Mobile.WBP_DBA_UI_%s_Mobile_C"),
             ProjectUIContentRoot,
             AssetName,
             AssetName);
@@ -74,7 +76,7 @@ namespace
         D.Layer = EGamePlatformUILayer::Notification;
         D.InputMode = EGamePlatformUIInputMode::GameOnly;
         D.WidgetClassPath = FString::Printf(
-            TEXT("%s/Dialogs/WBP_DBA_UI_%s.WBP_DBA_UI_%s_C"),
+            TEXT("%s/Notifications/WBP_DBA_UI_%s.WBP_DBA_UI_%s_C"),
             ProjectUIContentRoot,
             AssetName,
             AssetName);
@@ -93,6 +95,8 @@ namespace
             MakeScreen(TEXT("UI.Screen.LoadingTravel"), TEXT("LoadingTravel"), EGamePlatformUILayer::Loading, EGamePlatformUIInputMode::UIOnly),
             MakeScreen(TEXT("UI.Screen.ErrorReconnect"), TEXT("ErrorReconnect"), EGamePlatformUILayer::Modal, EGamePlatformUIInputMode::UIOnly, TEXT("RetryButton")),
             MakeScreen(TEXT("UI.Screen.SystemMenu"), TEXT("SystemMenu"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::GameAndUI, TEXT("ResumeButton")),
+            MakeScreen(TEXT("UI.Screen.Inventory"), TEXT("Inventory"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("InventoryGrid")),
+            MakeScreen(TEXT("UI.Screen.Quest"), TEXT("Quest"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("QuestList")),
             MakeHUD(TEXT("UI.HUD.OpenWorld"), TEXT("OpenWorldHUD")),
             MakeHUD(TEXT("UI.HUD.VillageMain"), TEXT("VillageMainHUD")),
             MakeHUD(TEXT("UI.HUD.TutorialGuidance"), TEXT("TutorialGuidance")),

@@ -10,6 +10,7 @@ namespace
 {
 constexpr int32 MaxActiveFeedback = 48;
 constexpr int32 MaxPooledFeedback = 64;
+constexpr int32 MaxRememberedOccurrenceIds = 256;
 }
 
 void UGamePlatformFeedbackService::Initialize(ULocalPlayer* InLocalPlayer)
@@ -17,6 +18,8 @@ void UGamePlatformFeedbackService::Initialize(ULocalPlayer* InLocalPlayer)
     LocalPlayer = InLocalPlayer;
     ActiveFeedback.Reserve(16);
     ActiveByMergeKey.Reserve(16);
+    RecentOccurrenceIds.Reserve(64);
+    RecentOccurrenceOrder.Reserve(64);
     PooledWidgets.Reserve(24);
 }
 
@@ -44,6 +47,12 @@ FGuid UGamePlatformFeedbackService::SubmitFeedback(
         Request.OccurrenceId = FGuid::NewGuid();
     }
 
+    // 同一战斗/表现事实只播放一次；已有有效ID优先承担预测确认和重复网络传输去重。
+    if (RecentOccurrenceIds.Contains(Request.OccurrenceId))
+    {
+        return FGuid();
+    }
+
     if (Request.bAllowMerge && !Request.MergeKey.IsNone())
     {
         if (const FGuid* ExistingId = ActiveByMergeKey.Find(Request.MergeKey))
@@ -58,6 +67,7 @@ FGuid UGamePlatformFeedbackService::SubmitFeedback(
                         RestartLifetime(
                             *ExistingId,
                             Request.LifetimeSeconds);
+                        RememberOccurrenceId(Request.OccurrenceId);
                         return *ExistingId;
                     }
                 }
@@ -99,6 +109,7 @@ FGuid UGamePlatformFeedbackService::SubmitFeedback(
     RestartLifetime(
         Request.OccurrenceId,
         Request.LifetimeSeconds);
+    RememberOccurrenceId(Request.OccurrenceId);
     return Request.OccurrenceId;
 }
 
@@ -207,6 +218,29 @@ void UGamePlatformFeedbackService::RestartLifetime(
         false);
 }
 
+void UGamePlatformFeedbackService::RememberOccurrenceId(
+    const FGuid& OccurrenceId)
+{
+    if (!OccurrenceId.IsValid() ||
+        RecentOccurrenceIds.Contains(OccurrenceId))
+    {
+        return;
+    }
+
+    RecentOccurrenceIds.Add(OccurrenceId);
+    RecentOccurrenceOrder.Add(OccurrenceId);
+
+    if (RecentOccurrenceOrder.Num() > MaxRememberedOccurrenceIds)
+    {
+        const FGuid OldestId = RecentOccurrenceOrder[0];
+        RecentOccurrenceOrder.RemoveAt(
+            0,
+            1,
+            EAllowShrinking::No);
+        RecentOccurrenceIds.Remove(OldestId);
+    }
+}
+
 bool UGamePlatformFeedbackService::ResolveInitialScreenPosition(
     FGamePlatformUIFeedbackRequest& Request) const
 {
@@ -237,6 +271,8 @@ void UGamePlatformFeedbackService::Clear()
 
     ActiveFeedback.Reset();
     ActiveByMergeKey.Reset();
+    RecentOccurrenceIds.Reset();
+    RecentOccurrenceOrder.Reset();
 
     for (UGamePlatformFeedbackWidget* Widget : PooledWidgets)
     {

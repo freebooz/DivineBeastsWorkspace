@@ -6,8 +6,8 @@
 #include "Creation/GamePlatformCharacterCreationProvider.h"
 #include "Features/IModularFeatures.h"
 #include "Flow/DivineBeastsFlowNodes.h"
-#include "Nodes/DivineBeastsApplicationFlowNodeBase.h"
 #include "Online/DivineBeastsGatewayAuthProvider.h"
+#include "Interfaces/GamePlatformFlowNodeFactory.h"
 #include "API/GamePlatformApplicationFlowSubsystem.h"
 #include "Definitions/GamePlatformFlowDefinition.h"
 #include "Interfaces/GamePlatformCallbackFlowNode.h"
@@ -610,7 +610,8 @@ UGamePlatformFlowNode* UDivineBeastsApplicationFlowSubsystem::CreateProjectNode(
         ExecutorId == FDivineBeastsFlowExecutors::WorldReady() ||
         ExecutorId == FDivineBeastsFlowExecutors::InWorld())
     {
-        return NewObject<UDivineBeastsPassiveFlowNode>(&Owner);
+        // 这些步骤只等待外部真实事件，不包含神兽联盟专属节点机制；直接复用平台通用等待节点。
+        return GamePlatformApplicationFlowNodes::CreateAwaitEventFlowNode(Owner);
     }
 
     auto* Node = NewObject<UGamePlatformCallbackFlowNode>(&Owner);

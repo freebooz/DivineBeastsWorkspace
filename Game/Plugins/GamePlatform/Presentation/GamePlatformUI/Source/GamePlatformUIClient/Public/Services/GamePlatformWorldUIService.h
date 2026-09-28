@@ -45,6 +45,11 @@ private:
     UGamePlatformWorldWidgetBase* AcquireWidget(
         TSubclassOf<UGamePlatformWorldWidgetBase> WidgetClass);
     void RecycleWidget(UGamePlatformWorldWidgetBase* Widget);
+    /** 仅在存在活动世界UI时启动30Hz集中投影Ticker，空闲时完全停止。 */
+    void EnsureProjectionTicker();
+
+    /** 主动停止集中投影Ticker；Deinitialize/清空最后一个实例时调用。 */
+    void StopProjectionTicker();
     bool TickProjection(float DeltaSeconds);
     UWorld* GetServiceWorld() const;
 

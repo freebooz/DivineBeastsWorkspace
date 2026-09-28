@@ -24,7 +24,9 @@ $ForbiddenLegacy = @(
     'RegisterNode(',
     'UnregisterNode(',
     'AllowedNextNodes',
-    'FGamePlatformFlowOperationToken'
+    'FGamePlatformFlowOperationToken',
+    'UDivineBeastsPassiveFlowNode',
+    'DivineBeastsApplicationFlowNodeBase'
 )
 foreach ($Token in $ForbiddenLegacy) {
     if ($SourceText.Contains($Token)) { throw "Legacy ApplicationFlow API detected: $Token" }
@@ -36,7 +38,8 @@ $RequiredCurrent = @(
     'StartFlow(',
     'SubmitEvent(',
     'FGamePlatformFlowNodeToken',
-    'UGamePlatformFlowDefinition'
+    'UGamePlatformFlowDefinition',
+    'CreateAwaitEventFlowNode('
 )
 foreach ($Token in $RequiredCurrent) {
     if (-not $SourceText.Contains($Token)) { throw "Required ApplicationFlow API missing: $Token" }
