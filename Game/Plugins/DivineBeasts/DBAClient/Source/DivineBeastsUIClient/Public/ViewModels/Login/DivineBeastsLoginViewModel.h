@@ -24,7 +24,12 @@ public:
     bool CanSubmitCredentials() const
     {
         // 使用 const 引用读取统一视图状态，避免为一次按钮可用性判断复制角色/竞技容器。
+        // 仅当 ApplicationFlow 明确允许 Login 命令时启用按钮，防止页面迟到关闭期间重复提交。
         const FDivineBeastsUIViewState& CurrentViewState = GetStateRef();
-        return IsPageActive() && !CurrentViewState.bBusy && !CurrentViewState.bMaintenance;
+        return IsPageActive() &&
+            !CurrentViewState.bBusy &&
+            !CurrentViewState.bMaintenance &&
+            !CurrentViewState.bAuthenticated &&
+            CurrentViewState.AllowedCommands.Contains(TEXT("Login"));
     }
 };

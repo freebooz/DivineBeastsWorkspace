@@ -1,5 +1,6 @@
 #include "DivineBeastsUIClientSubsystem.h"
 
+#include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
 #include "Definitions/GamePlatformUIScreenDefinition.h"
 #include "Dialogs/GamePlatformToastWidget.h"
 #include "Engine/LocalPlayer.h"
@@ -10,6 +11,7 @@
 #include "Screens/GamePlatformHUDWidget.h"
 #include "Screens/GamePlatformUIScreen.h"
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
+#include "ViewModels/Boot/DivineBeastsBootViewModel.h"
 #include "ViewModels/DivineBeastsUIViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
@@ -25,7 +27,41 @@ void UDivineBeastsUIClientSubsystem::Initialize(
         PlatformUI = LocalPlayer->GetSubsystem<UGamePlatformUIManagerSubsystem>();
     }
 
+    if (PlatformUI)
+    {
+        PlatformUI->OnScreenOpened.AddDynamic(
+            this,
+            &UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpened);
+        PlatformUI->OnScreenOpenFailed.AddDynamic(
+            this,
+            &UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed);
+        PlatformUI->OnScreenClosed.AddDynamic(
+            this,
+            &UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed);
+    }
+
     RegisterDefaultScreenDefinitions();
+
+    // DBAClient 内部由项目 UI 层单向依赖项目 ApplicationFlow，
+    // 不要求流程模块反向认识任何 Widget/ViewModel 类型。
+    if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+    {
+        ApplicationAdapter =
+            NewObject<UDivineBeastsApplicationUIAdapter>(this);
+        if (!ApplicationAdapter ||
+            !ApplicationAdapter->Initialize(*LocalPlayer) ||
+            !RegisterApplicationContract(
+                TEXT("DivineBeasts.ApplicationFlow"),
+                ApplicationAdapter,
+                ApplicationAdapter).IsValid())
+        {
+            if (ApplicationAdapter)
+            {
+                ApplicationAdapter->Shutdown();
+            }
+            ApplicationAdapter = nullptr;
+        }
+    }
 }
 
 void UDivineBeastsUIClientSubsystem::Deinitialize()
@@ -40,6 +76,37 @@ void UDivineBeastsUIClientSubsystem::Deinitialize()
         LoadingToken = {};
     }
     DetachContract();
+    if (ApplicationAdapter)
+    {
+        ApplicationAdapter->Shutdown();
+        ApplicationAdapter = nullptr;
+    }
+    if (PlatformUI)
+    {
+        PlatformUI->OnScreenOpened.RemoveDynamic(
+            this,
+            &UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpened);
+        PlatformUI->OnScreenOpenFailed.RemoveDynamic(
+            this,
+            &UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed);
+        PlatformUI->OnScreenClosed.RemoveDynamic(
+            this,
+            &UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed);
+
+        if (OpeningPrimaryRequestId.IsValid())
+        {
+            PlatformUI->CancelOpen(OpeningPrimaryRequestId);
+        }
+        if (UGamePlatformUIScreen* Active = ActivePrimaryScreen.Get())
+        {
+            PlatformUI->CloseScreen(Active);
+        }
+    }
+    OpeningPrimaryRequestId.Invalidate();
+    OpeningPrimaryScreenId = NAME_None;
+    ActivePrimaryScreen.Reset();
+    ActivePrimaryScreenId = NAME_None;
+
     UnregisterDefaultScreenDefinitions();
     PlatformUI = nullptr;
     StateChanged.Clear();
@@ -135,8 +202,16 @@ bool UDivineBeastsUIClientSubsystem::CloseScreen(
 bool UDivineBeastsUIClientSubsystem::InstallRootLayoutClass(
     TSubclassOf<UGamePlatformUILayerStack> RootLayoutClass)
 {
-    return PlatformUI &&
+    const bool bInstalled =
+        PlatformUI &&
         PlatformUI->InstallRootLayoutClass(RootLayoutClass);
+    if (bInstalled)
+    {
+        // RootLayout 是页面真正可打开的前置条件。安装成功后立即消费此前已到达的流程状态，
+        // 不要求业务层再发送一次伪状态事件。
+        SyncPrimaryScreen();
+    }
+    return bInstalled;
 }
 
 UGamePlatformLoadingScreenService*
@@ -168,8 +243,21 @@ UDivineBeastsUIClientSubsystem::CreateViewModel(FName ScreenId)
     {
         ViewModel = NewObject<UDivineBeastsLoginViewModel>(this);
     }
-    else if (ScreenId == TEXT("UI.Screen.Boot") ||
-             ScreenId == TEXT("UI.Screen.LoadingTravel"))
+    else if (ScreenId == TEXT("UI.Screen.Boot"))
+    {
+        UDivineBeastsBootViewModel* BootViewModel =
+            NewObject<UDivineBeastsBootViewModel>(this);
+        if (BootViewModel)
+        {
+            // Boot 与世界切换都复用同一个平台 Loading Service。
+            // 若当前阶段没有可量化进度，快照会保持 Progress < 0，
+            // 蓝图只能显示不确定进度表现，禁止伪造百分比。
+            BootViewModel->InitializeLoadingService(
+                GetLoadingScreenService());
+        }
+        ViewModel = BootViewModel;
+    }
+    else if (ScreenId == TEXT("UI.Screen.LoadingTravel"))
     {
         UDivineBeastsLoadingViewModel* LoadingViewModel =
             NewObject<UDivineBeastsLoadingViewModel>(this);
@@ -319,6 +407,7 @@ void UDivineBeastsUIClientSubsystem::HandleViewStateChanged(
     ViewState = NewState;
     StateChanged.Broadcast(ViewState);
     SyncLoadingService();
+    SyncPrimaryScreen();
 }
 
 void UDivineBeastsUIClientSubsystem::PullInitialState()
@@ -370,6 +459,138 @@ void UDivineBeastsUIClientSubsystem::SyncLoadingService()
         LoadingService->ReleaseToken(LoadingToken);
         LoadingToken = {};
     }
+}
+
+void UDivineBeastsUIClientSubsystem::SyncPrimaryScreen()
+{
+    if (bSynchronizingPrimaryScreen ||
+        !PlatformUI ||
+        !PlatformUI->GetRootLayout())
+    {
+        return;
+    }
+
+    TGuardValue<bool> Guard(bSynchronizingPrimaryScreen, true);
+
+    const FName DesiredScreenId =
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(ViewState);
+
+    if (DesiredScreenId.IsNone())
+    {
+        if (OpeningPrimaryRequestId.IsValid())
+        {
+            PlatformUI->CancelOpen(OpeningPrimaryRequestId);
+        }
+        OpeningPrimaryRequestId.Invalidate();
+        OpeningPrimaryScreenId = NAME_None;
+
+        if (UGamePlatformUIScreen* Active = ActivePrimaryScreen.Get())
+        {
+            ActivePrimaryScreen.Reset();
+            ActivePrimaryScreenId = NAME_None;
+            PlatformUI->CloseScreen(Active);
+        }
+        return;
+    }
+
+    if (ActivePrimaryScreen.IsValid() &&
+        ActivePrimaryScreenId == DesiredScreenId)
+    {
+        return;
+    }
+
+    if (OpeningPrimaryScreenId == DesiredScreenId)
+    {
+        return;
+    }
+
+    if (OpeningPrimaryRequestId.IsValid())
+    {
+        PlatformUI->CancelOpen(OpeningPrimaryRequestId);
+        OpeningPrimaryRequestId.Invalidate();
+        OpeningPrimaryScreenId = NAME_None;
+    }
+
+    if (UGamePlatformUIScreen* Active = ActivePrimaryScreen.Get())
+    {
+        ActivePrimaryScreen.Reset();
+        ActivePrimaryScreenId = NAME_None;
+        PlatformUI->CloseScreen(Active);
+    }
+
+    if (!PlatformUI->HasScreenDefinition(DesiredScreenId))
+    {
+        return;
+    }
+
+    UDivineBeastsUIViewModel* ViewModel =
+        CreateViewModel(DesiredScreenId);
+    if (!ViewModel)
+    {
+        return;
+    }
+
+    // 先记录 ScreenId，再调用平台异步打开。平台可能在参数/Root/Layer无效时同步广播失败；
+    // 失败处理会立即清空 OpeningPrimaryScreenId，因此调用返回后不能盲目记录一个已终结请求。
+    OpeningPrimaryScreenId = DesiredScreenId;
+    const FGamePlatformUIAsyncRequest Request =
+        PlatformUI->OpenScreenAsync(
+            DesiredScreenId,
+            ViewModel);
+
+    if (OpeningPrimaryScreenId == DesiredScreenId)
+    {
+        OpeningPrimaryRequestId = Request.RequestId;
+    }
+}
+
+void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpened(
+    FGuid RequestId,
+    FName ScreenId,
+    UGamePlatformUIScreen* Screen)
+{
+    if (ScreenId != OpeningPrimaryScreenId ||
+        (OpeningPrimaryRequestId.IsValid() &&
+         RequestId != OpeningPrimaryRequestId))
+    {
+        return;
+    }
+
+    OpeningPrimaryRequestId.Invalidate();
+    OpeningPrimaryScreenId = NAME_None;
+    ActivePrimaryScreen = Screen;
+    ActivePrimaryScreenId = IsValid(Screen)
+        ? ScreenId
+        : NAME_None;
+}
+
+void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed(
+    FGuid RequestId,
+    FName ScreenId,
+    FText Reason)
+{
+    // Reason 只由平台用于界面/诊断展示。本层不把资源路径或加载内部错误写入业务状态。
+    if (ScreenId != OpeningPrimaryScreenId ||
+        (OpeningPrimaryRequestId.IsValid() &&
+         RequestId != OpeningPrimaryRequestId))
+    {
+        return;
+    }
+
+    OpeningPrimaryRequestId.Invalidate();
+    OpeningPrimaryScreenId = NAME_None;
+}
+
+void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
+    FName ScreenId)
+{
+    if (ScreenId != ActivePrimaryScreenId)
+    {
+        return;
+    }
+
+    ActivePrimaryScreen.Reset();
+    ActivePrimaryScreenId = NAME_None;
 }
 
 void UDivineBeastsUIClientSubsystem::DetachContract()

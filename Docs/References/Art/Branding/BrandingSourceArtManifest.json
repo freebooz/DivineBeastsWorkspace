@@ -1,0 +1,35 @@
+{
+  "SchemaVersion": 1,
+  "Status": "SourceArtDesignedBinaryImportPending",
+  "RuntimeContentOwner": "DBAUIPack_Core",
+  "Assets": [
+    {
+      "Id": "Brand.FreeboozStudio.Logo",
+      "SourceFile": "FreeboozStudio_Logo_Concept.png",
+      "Width": 1254,
+      "Height": 1254,
+      "Sha256": "d99826d6e675da88414b0f3681fbd6d422d3c60ab91874591ff33e9afa399255",
+      "PlannedUEAsset": "T_DBA_Brand_FreeboozStudio_Logo",
+      "Uses": [
+        "NativeSplash",
+        "Boot",
+        "Credits",
+        "Website"
+      ]
+    },
+    {
+      "Id": "Brand.DivineBeastsArena.Logo",
+      "SourceFile": "DivineBeastsArena_Logo_Concept.png",
+      "Width": 1448,
+      "Height": 1086,
+      "Sha256": "bd2db2d016297c749c925bfa382a1254ffe1f59bbc61f4b118e4116599b51285",
+      "PlannedUEAsset": "T_DBA_Brand_GameLogo",
+      "Uses": [
+        "Boot",
+        "Login",
+        "Loading",
+        "Website"
+      ]
+    }
+  ]
+}

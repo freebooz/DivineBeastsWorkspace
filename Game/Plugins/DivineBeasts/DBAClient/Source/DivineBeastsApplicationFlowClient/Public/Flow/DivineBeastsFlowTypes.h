@@ -160,6 +160,8 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsFlowViewState
     /** 当前节点执行代次；循环再次进入同名节点也会获得新的非零值。 */
     UPROPERTY(BlueprintReadOnly) int64 NodeGeneration = 0;
     UPROPERTY(BlueprintReadOnly) bool bBusy = false;
+    /** 当前平台 Online（在线）认证是否已确认成功；只读投影，不包含任何令牌。 */
+    UPROPERTY(BlueprintReadOnly) bool bAuthenticated = false;
     UPROPERTY(BlueprintReadOnly) EDivineBeastsFlowError Error =
         EDivineBeastsFlowError::None;
     UPROPERTY(BlueprintReadOnly) TArray<EDivineBeastsFlowAction> AllowedActions;

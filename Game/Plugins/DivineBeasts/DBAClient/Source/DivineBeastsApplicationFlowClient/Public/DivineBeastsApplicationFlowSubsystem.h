@@ -11,6 +11,7 @@
 #include "DivineBeastsApplicationFlowSubsystem.generated.h"
 
 class IGamePlatformDataService;
+class IGamePlatformOnlineAuthProvider;
 class IDivineBeastsApplicationBackend;
 class UDivineBeastsApplicationFlowContext;
 class UGamePlatformApplicationFlowSubsystem;
@@ -51,6 +52,10 @@ public:
     /** 创建项目流程上下文并异步加载正式FlowDefinition；只有真实Data Lease成功后才启动平台流程。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
     bool StartFlow(bool bTryAutoLogin = true);
+
+    /** 自动登录命令；当前只允许在 Authentication（认证）节点触发。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
+    void TryAutoLogin();
 
     /** 人工认证命令；只调用Online领域服务，不直接推进流程。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
@@ -188,6 +193,8 @@ private:
     IGamePlatformDataService* Data = nullptr;
 
     TSharedPtr<IDivineBeastsApplicationBackend> Backend;
+    /** 项目层真实 Gateway 认证适配；令牌仅保存在 Provider 私有内存，不进入 UObject/ViewState。 */
+    TSharedPtr<IGamePlatformOnlineAuthProvider> AuthProvider;
 
     /** GameInstance作用域的项目流程载荷；不保存World/Actor/Widget强引用。 */
     UPROPERTY(Transient)

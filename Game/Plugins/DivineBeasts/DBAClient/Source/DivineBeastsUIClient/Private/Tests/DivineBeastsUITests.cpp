@@ -28,6 +28,7 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     }
 
     for (const FName Required : {
+        FName(TEXT("UI.Screen.Boot")),
         FName(TEXT("UI.Screen.Login")),
         FName(TEXT("UI.Screen.CharacterRoster")),
         FName(TEXT("UI.Screen.CharacterCreate")),
@@ -43,6 +44,19 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
         TestNotNull(
             *FString::Printf(TEXT("Required surface %s"), *Required.ToString()),
             FDivineBeastsUIScreenCatalog::Find(Required));
+    }
+
+    const FDivineBeastsUISurfaceDescriptor* Boot =
+        FDivineBeastsUIScreenCatalog::Find(TEXT("UI.Screen.Boot"));
+    TestNotNull(TEXT("启动封面目录项必须存在"), Boot);
+    if (Boot)
+    {
+        TestTrue(
+            TEXT("项目UI软路径必须归DBAUIPack_Core规划挂载点"),
+            Boot->WidgetClassPath.StartsWith(TEXT("/DBAUIPack_Core/")));
+        TestFalse(
+            TEXT("不得继续使用不存在的旧DivineBeastsUI挂载点"),
+            Boot->WidgetClassPath.StartsWith(TEXT("/DivineBeastsUI/")));
     }
 
     TestNull(
@@ -104,6 +118,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
 {
     FDivineBeastsUIViewState State;
+    TestEqual(
+        TEXT("流程尚未产生步骤时必须路由到Boot"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
+        FName(TEXT("UI.Screen.Boot")));
+
     State.CurrentStep = TEXT("DBA.Flow.Authentication");
     TestEqual(
         TEXT("认证页面路由到Login"),

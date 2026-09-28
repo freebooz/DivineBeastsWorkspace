@@ -7,6 +7,7 @@
 #include "Features/IModularFeatures.h"
 #include "Flow/DivineBeastsFlowNodes.h"
 #include "Nodes/DivineBeastsApplicationFlowNodeBase.h"
+#include "Online/DivineBeastsGatewayAuthProvider.h"
 #include "API/GamePlatformApplicationFlowSubsystem.h"
 #include "Definitions/GamePlatformFlowDefinition.h"
 #include "Interfaces/GamePlatformCallbackFlowNode.h"
@@ -407,6 +408,13 @@ void UDivineBeastsApplicationFlowSubsystem::Initialize(
     Loading = Instance ? IGamePlatformLoadingService::Get(*Instance) : nullptr;
     Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
 
+    if (Online)
+    {
+        // 项目组合根只注入一个真实 Provider；UI/Flow 仍只依赖平台 Online 公共状态机。
+        AuthProvider = MakeShared<FDivineBeastsGatewayAuthProvider>();
+        Online->SetProvider(AuthProvider);
+    }
+
     Backend = MakeShared<FDivineBeastsHttpApplicationBackend>(Online);
 
     if (PlatformFlow)
@@ -496,6 +504,12 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
     {
         Online->OnAuthStateChanged().Remove(AuthHandle);
     }
+    if (Online)
+    {
+        // 先让平台子系统推进认证代次并丢弃旧 Provider，再释放项目 Provider。
+        Online->SetProvider(nullptr);
+    }
+    AuthProvider.Reset();
     if (Session && SessionHandle.IsValid())
     {
         Session->OnSessionChanged().Remove(SessionHandle);
@@ -1181,6 +1195,21 @@ bool UDivineBeastsApplicationFlowSubsystem::StartFlow(bool bTryAutoLogin)
         return false;
     }
     return true;
+}
+
+void UDivineBeastsApplicationFlowSubsystem::TryAutoLogin()
+{
+    if (!Online ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::Authentication()))
+    {
+        SetError(EDivineBeastsFlowError::FlowNotInitialized);
+        return;
+    }
+
+    // 自动登录只是向 Online 领域提交认证意图；流程仍等待真实认证事件，
+    // 不把“请求已发出”当作认证成功。
+    SetBusy(true);
+    Online->TryAutoLogin();
 }
 
 void UDivineBeastsApplicationFlowSubsystem::LoginWithCredentials(
@@ -2023,6 +2052,10 @@ void UDivineBeastsApplicationFlowSubsystem::HandleAuthSnapshot(
                 ->GetNameStringByValue(
                     static_cast<int64>(Snapshot.State))
             : FString();
+
+    // 只投影无秘密认证事实，Password/AccessToken/RefreshToken 永不进入流程 ViewState。
+    ViewState.bAuthenticated =
+        Snapshot.State == EGamePlatformAuthState::Authenticated;
 
     if (Session)
     {

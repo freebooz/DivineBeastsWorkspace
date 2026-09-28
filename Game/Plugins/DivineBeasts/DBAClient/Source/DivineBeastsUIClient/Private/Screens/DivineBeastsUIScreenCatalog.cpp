@@ -2,6 +2,11 @@
 
 namespace
 {
+    // DBAUIPack_Core（神兽联盟核心UI内容包）是项目公共前台美术的规划唯一所有者。
+    // 当前仓库尚未生成该内容插件及二进制 .uasset；这里仅声明未来稳定挂载点，
+    // 不把不存在的旧 /DivineBeastsUI 路径继续当成已交付资产。
+    constexpr const TCHAR* ProjectUIContentRoot = TEXT("/DBAUIPack_Core/UI");
+
     FDivineBeastsUISurfaceDescriptor MakeScreen(
         const TCHAR* Id,
         const TCHAR* AssetName,
@@ -19,15 +24,18 @@ namespace
         D.Transition = EGamePlatformUITransition::Default;
         D.DefaultFocusWidgetName = Focus;
         D.DefinitionAssetPath = FString::Printf(
-            TEXT("/DivineBeastsUI/Screens/DA_UI_%s.DA_UI_%s"),
+            TEXT("%s/Screens/DA_DBA_UI_%s.DA_DBA_UI_%s"),
+            ProjectUIContentRoot,
             AssetName,
             AssetName);
         D.WidgetClassPath = FString::Printf(
-            TEXT("/DivineBeastsUI/Screens/WBP_UI_%s.WBP_UI_%s_C"),
+            TEXT("%s/Screens/WBP_DBA_UI_%s.WBP_DBA_UI_%s_C"),
+            ProjectUIContentRoot,
             AssetName,
             AssetName);
         D.AndroidWidgetClassPath = FString::Printf(
-            TEXT("/DivineBeastsUI/Screens/WBP_UI_%s_Android.WBP_UI_%s_Android_C"),
+            TEXT("%s/Screens/WBP_DBA_UI_%s_Android.WBP_DBA_UI_%s_Android_C"),
+            ProjectUIContentRoot,
             AssetName,
             AssetName);
         D.bSurvivesTravel = bSurvivesTravel;
@@ -44,11 +52,13 @@ namespace
         D.Layer = EGamePlatformUILayer::HUD;
         D.InputMode = EGamePlatformUIInputMode::GameOnly;
         D.WidgetClassPath = FString::Printf(
-            TEXT("/DivineBeastsUI/HUD/WBP_UI_%s.WBP_UI_%s_C"),
+            TEXT("%s/HUD/WBP_DBA_UI_%s.WBP_DBA_UI_%s_C"),
+            ProjectUIContentRoot,
             AssetName,
             AssetName);
         D.AndroidWidgetClassPath = FString::Printf(
-            TEXT("/DivineBeastsUI/HUD/WBP_UI_%s_Android.WBP_UI_%s_Android_C"),
+            TEXT("%s/HUD/WBP_DBA_UI_%s_Android.WBP_DBA_UI_%s_Android_C"),
+            ProjectUIContentRoot,
             AssetName,
             AssetName);
         return D;
@@ -64,7 +74,8 @@ namespace
         D.Layer = EGamePlatformUILayer::Notification;
         D.InputMode = EGamePlatformUIInputMode::GameOnly;
         D.WidgetClassPath = FString::Printf(
-            TEXT("/DivineBeastsUI/Dialogs/WBP_UI_%s.WBP_UI_%s_C"),
+            TEXT("%s/Dialogs/WBP_DBA_UI_%s.WBP_DBA_UI_%s_C"),
+            ProjectUIContentRoot,
             AssetName,
             AssetName);
         return D;

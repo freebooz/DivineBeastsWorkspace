@@ -29,5 +29,12 @@ public class DivineBeastsUIClient : ModuleRules
             "GamePlatformInventoryClient",
             "GamePlatformQuestClient"
         });
+
+        // ApplicationFlow 只在本模块 Private Adapter（私有适配器）中消费；
+        // 公开 UI 类型不暴露流程头文件，避免把项目流程依赖扩散给所有 UI 消费者。
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "DivineBeastsApplicationFlowClient"
+        });
     }
 }

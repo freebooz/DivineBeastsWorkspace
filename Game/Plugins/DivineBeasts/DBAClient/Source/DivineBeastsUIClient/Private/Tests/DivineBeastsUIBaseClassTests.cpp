@@ -8,9 +8,11 @@
 #include "Layers/DivineBeastsRootLayout.h"
 #include "Misc/AutomationTest.h"
 #include "Screens/DivineBeastsUIScreen.h"
+#include "Screens/Boot/DivineBeastsBootScreen.h"
 #include "Screens/Login/DivineBeastsLoginScreen.h"
 #include "Screens/Loading/DivineBeastsLoadingTravelScreen.h"
 #include "ViewModels/DivineBeastsViewModelBase.h"
+#include "ViewModels/Boot/DivineBeastsBootViewModel.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 
@@ -30,6 +32,11 @@ bool FDivineBeastsUIBaseClassHierarchyTest::RunTest(const FString& Parameters)
         TEXT("项目 Screen 必须继承 GamePlatform Screen"),
         UDivineBeastsUIScreen::StaticClass()->IsChildOf(
             UGamePlatformUIScreen::StaticClass()));
+
+    TestTrue(
+        TEXT("启动封面必须继承项目 Loading Screen"),
+        UDivineBeastsBootScreen::StaticClass()->IsChildOf(
+            UDivineBeastsLoadingScreen::StaticClass()));
 
     TestTrue(
         TEXT("登录页必须继承项目 Screen"),
@@ -64,7 +71,9 @@ bool FDivineBeastsUIBaseClassHierarchyTest::RunTest(const FString& Parameters)
             UGamePlatformViewModelBase::StaticClass()));
 
     TestTrue(
-        TEXT("登录和加载 ViewModel 必须继承项目通用 ViewModel"),
+        TEXT("启动、登录和加载 ViewModel 必须沿项目 ViewModel 继承链复用"),
+        UDivineBeastsBootViewModel::StaticClass()->IsChildOf(
+            UDivineBeastsLoadingViewModel::StaticClass()) &&
         UDivineBeastsLoginViewModel::StaticClass()->IsChildOf(
             UDivineBeastsUIViewModel::StaticClass()) &&
         UDivineBeastsLoadingViewModel::StaticClass()->IsChildOf(

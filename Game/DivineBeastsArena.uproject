@@ -11,6 +11,6 @@
     { "Name": "GamePlatformLoading", "Enabled": true },
     { "Name": "GamePlatformWorld", "Enabled": true },
     { "Name": "Monolith", "Enabled": true, "TargetAllowList": ["Editor"] },
-    { "Name": "VibeUE", "Enabled": true, "TargetAllowList": ["Editor"] }
+    { "Name": "VibeUE", "Enabled": false, "TargetAllowList": ["Editor"] }
   ]
 }

@@ -7,6 +7,7 @@
 #include "Loading/GamePlatformLoadingScreenService.h"
 #include "DivineBeastsUIClientSubsystem.generated.h"
 
+class UDivineBeastsApplicationUIAdapter;
 class UDivineBeastsUIViewModel;
 class UGamePlatformHUDWidget;
 class UGamePlatformLoadingScreenService;
@@ -111,7 +112,32 @@ private:
     void HandleViewStateChanged(const FDivineBeastsUIViewState& NewState);
     void PullInitialState();
     void SyncLoadingService();
+    /** 根据只读项目状态同步唯一主页面；只在状态/RootLayout变化时执行，不使用 Tick。 */
+    void SyncPrimaryScreen();
+
+    /** 平台页面成功打开事件；只接管由本协调器发起的当前主页面请求。 */
+    UFUNCTION()
+    void HandlePrimaryScreenOpened(
+        FGuid RequestId,
+        FName ScreenId,
+        UGamePlatformUIScreen* Screen);
+
+    /** 平台页面打开失败事件；清理对应请求，等待资源/RootLayout后续重新触发。 */
+    UFUNCTION()
+    void HandlePrimaryScreenOpenFailed(
+        FGuid RequestId,
+        FName ScreenId,
+        FText Reason);
+
+    /** 当前主页面被关闭时清理弱引用；后续状态事件可重新选择页面。 */
+    UFUNCTION()
+    void HandlePrimaryScreenClosed(FName ScreenId);
+
     void DetachContract();
+
+    /** 项目UI到ApplicationFlow的内部单向适配器；不暴露给蓝图。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UDivineBeastsApplicationUIAdapter> ApplicationAdapter = nullptr;
 
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformUIManagerSubsystem> PlatformUI = nullptr;
@@ -128,6 +154,17 @@ private:
     FName ContractAdapterId = NAME_None;
     FDivineBeastsUIContractHandle ContractHandle;
     FDelegateHandle QueryStateHandle;
+
+    /** 当前由项目主路由持有的页面；弱引用不延长 Widget 生命周期。 */
+    TWeakObjectPtr<UGamePlatformUIScreen> ActivePrimaryScreen;
+    FName ActivePrimaryScreenId = NAME_None;
+
+    /** 正在异步打开的主页面身份与请求。 */
+    FName OpeningPrimaryScreenId = NAME_None;
+    FGuid OpeningPrimaryRequestId;
+
+    /** 防止关闭旧页时的同步回调重入主路由。 */
+    bool bSynchronizingPrimaryScreen = false;
 
     FDivineBeastsUIViewState ViewState;
     FGamePlatformLoadingToken LoadingToken;

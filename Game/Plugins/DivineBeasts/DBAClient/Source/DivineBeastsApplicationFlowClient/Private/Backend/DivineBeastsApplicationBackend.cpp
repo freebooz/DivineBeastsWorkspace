@@ -197,7 +197,10 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
 {
     Send(
         TEXT("GET"),
-        TEXT("/v1/divinebeasts/profile"),
+        // 玩家资料已经由共享 Gateway 契约正式定义。
+        // 必须使用 Shared/Contracts/GamePlatform/OpenAPI/gateway.openapi.yaml 中的
+        // GET /v1/player/profile，禁止继续调用历史项目私有路径。
+        TEXT("/v1/player/profile"),
         nullptr,
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
@@ -219,28 +222,42 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
                     EDivineBeastsFlowError::ProfileUnavailable);
                 return;
             }
-            Result.PlayerId = Json->GetStringField(TEXT("player_id"));
+            // Shared Gateway PlayerProfile 使用 camelCase 字段：
+            // playerId / revision / tutorialCompleted / defaultWorldId。
+            // 当前正式契约尚未提供“最近角色/最近体验”字段，因此保持默认空值，
+            // 不从不存在的 JSON 字段推断项目状态。
+            double RevisionNumber = -1.0;
+            bool bTutorialCompleted = false;
+            if (!Json->TryGetStringField(TEXT("playerId"), Result.PlayerId) ||
+                !Json->TryGetNumberField(TEXT("revision"), RevisionNumber) ||
+                !Json->TryGetBoolField(
+                    TEXT("tutorialCompleted"),
+                    bTutorialCompleted) ||
+                Result.PlayerId.IsEmpty() ||
+                RevisionNumber < 0.0)
+            {
+                Completion(
+                    false,
+                    FDivineBeastsPlayerProfile(),
+                    EDivineBeastsFlowError::ProfileUnavailable);
+                return;
+            }
+
             Result.ProfileRevision =
-                static_cast<int64>(
-                    Json->GetNumberField(TEXT("profile_revision")));
-            Result.OnboardingState =
-                ParseOnboarding(
-                    Json->GetStringField(TEXT("onboarding_state")));
-            Json->TryGetStringField(
-                TEXT("last_selected_character_id"),
-                Result.LastSelectedCharacterId);
-            FString Experience;
+                static_cast<int64>(RevisionNumber);
+            Result.OnboardingState = bTutorialCompleted
+                ? EDivineBeastsOnboardingState::OnboardingComplete
+                : EDivineBeastsOnboardingState::TutorialRequired;
+
+            FString DefaultWorldId;
             if (Json->TryGetStringField(
-                    TEXT("last_experience_id"),
-                    Experience))
+                    TEXT("defaultWorldId"),
+                    DefaultWorldId) &&
+                !DefaultWorldId.IsEmpty())
             {
-                Result.LastExperienceId = FName(*Experience);
+                Result.LastWorldId = FName(*DefaultWorldId);
             }
-            FString World;
-            if (Json->TryGetStringField(TEXT("last_world_id"), World))
-            {
-                Result.LastWorldId = FName(*World);
-            }
+
             Completion(true, Result, EDivineBeastsFlowError::None);
         });
 }
