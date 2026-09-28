@@ -28,6 +28,7 @@ public class DivineBeastsUIClient : ModuleRules
             // 因此这些模块都是调用方编译公开接口所需的真实 Public 依赖。
             "GamePlatformCombat",
             "GamePlatformInventoryClient",
+            "GamePlatformQuest",
             "GamePlatformQuestClient"
         });
 

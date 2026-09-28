@@ -1,5 +1,6 @@
 #include "Components/GamePlatformQuestStateComponent.h"
 
+#include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 
 UGamePlatformQuestStateComponent::UGamePlatformQuestStateComponent()

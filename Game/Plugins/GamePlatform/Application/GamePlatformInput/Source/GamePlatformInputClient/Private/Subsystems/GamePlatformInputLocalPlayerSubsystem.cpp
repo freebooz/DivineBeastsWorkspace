@@ -15,6 +15,7 @@
 #include "UserSettings/EnhancedInputUserSettings.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/PlatformMisc.h"

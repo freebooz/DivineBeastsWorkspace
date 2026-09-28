@@ -1,6 +1,6 @@
 # 神兽联盟内容插件规划与登记
 
-`ContentPacks`只是第三层内部的分类目录，不是第四层，也不是插件。本轮没有已交付UE资产，因此不创建任何空内容插件或占位`.uasset`／`.umap`。
+`ContentPacks`只是第三层内部的分类目录，不是第四层。当前已登记一个真实纯内容插件 `DBAUIPack_Core`，用于承载由 Monolith MCP 生成并经 Unreal Editor 保存的公共用户界面资产；其他规划包仍不得创建空插件或占位`.uasset`／`.umap`。
 
 ## 内容所有权规划
 
@@ -30,14 +30,14 @@ ContentPacks/                              # 内容插件分类根目录
 │   ├── DBAPresentationPack_Core/          # 公共VFX定义、目录、Niagara资源
 │   ├── DBASFXPack_Core/                   # 公共音效
 │   ├── DBAAnimationPack_Core/             # 公共动画，区分必要权威与纯表现
-│   └── DBAUIPack_Core/                    # 公共界面资产
+│   └── DBAUIPack_Core/                    # 已登记公共界面内容插件；资产由Monolith MCP生产
 └── Optional/                             # 按真实需求评审，禁止空包占位
     ├── Skins/                            # 皮肤包，不能修改权威玩法
     ├── Seasons/                          # 赛季内容
     └── Events/                           # 活动内容
 ```
 
-以上是目标归属，不是已存在文件。DBAWorlds持有定义类型与项目校验，世界包持有地图；DBAClient持有上下文与注册协调，英雄、世界和公共包各自持有美术，任何资产只有一个源所有者。旧包如存在真实身份或引用，必须由引擎完成有回退的迁移，不直接重命名二进制资产。
+除 `DBAUIPack_Core` 外，以上是目标归属，不是已存在文件。DBAWorlds持有定义类型与项目校验，世界包持有地图；DBAClient持有上下文与注册协调，英雄、世界和公共包各自持有美术，任何资产只有一个源所有者。旧包如存在真实身份或引用，必须由引擎完成有回退的迁移，不直接重命名二进制资产。
 
 ## 登记格式与交付门槛
 

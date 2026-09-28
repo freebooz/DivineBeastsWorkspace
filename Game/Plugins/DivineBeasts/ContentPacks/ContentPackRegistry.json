@@ -1,4 +1,9 @@
 {
   "SchemaVersion": 1,
-  "ContentPacks": []
+  "ContentPacks": [
+    {
+      "Name": "DBAUIPack_Core",
+      "RelativePath": "Presentation/DBAUIPack_Core"
+    }
+  ]
 }

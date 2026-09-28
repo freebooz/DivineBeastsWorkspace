@@ -76,6 +76,7 @@ FGamePlatformResult ValidateSavedWorldMap(const UGamePlatformWorldDefinition& De
     { return FGamePlatformResult::Failure(TEXT("WorldMapLoadFailed"), TEXT("地图对象无法真实加载或身份发生偏移；先修复引用与重定向再验证。")); }
     return FGamePlatformResult::Success();
 }
+} // namespace
 
 bool UGamePlatformWorldDefinitionValidator::CanValidateAsset_Implementation(const FAssetData&, UObject* InObject,
     FDataValidationContext&) const

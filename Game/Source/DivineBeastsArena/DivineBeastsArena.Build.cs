@@ -13,6 +13,7 @@ public class DivineBeastsArena : ModuleRules
             "GamePlatformApplicationFlow",
             "GamePlatformLoading",
             "GamePlatformWorld",
+            "GamePlatformPCG",
             "GamePlatformOnline",
             "AssetRegistry",
             "Json"

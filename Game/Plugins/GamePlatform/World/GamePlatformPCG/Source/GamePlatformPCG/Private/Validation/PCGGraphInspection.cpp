@@ -65,7 +65,7 @@ FGamePlatformResult GamePlatformPCGInspection::ValidateApprovedGraph(const UGame
     auto* Selector = Cast<UPCGMeshSelectorWeighted>(Settings->MeshSelectorParameters);
     if (!Selector || Selector->GetClass() != UPCGMeshSelectorWeighted::StaticClass() || Selector->MeshEntries.Num() != 1 ||
         Selector->bUseAttributeMaterialOverrides || !Settings->PostProcessFunctionNames.IsEmpty() || !Settings->TargetActor.IsNull() ||
-        !Settings->StaticMeshComponentPropertyOverrides.IsEmpty() || Settings->InstancePackerParameters || Settings->InstancePackerType ||
+        !Settings->StaticMeshComponentPropertyOverrides.IsEmpty() || Settings->InstanceDataPackerParameters || Settings->InstanceDataPackerType ||
         Settings->MeshSelectorType != UPCGMeshSelectorWeighted::StaticClass() || !Selector->MaterialOverrideAttributes.IsEmpty())
     { return Rejected(TEXT("SpawnerSideEffectsForbidden")); }
     const auto& Descriptor = Selector->MeshEntries[0].Descriptor;

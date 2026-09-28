@@ -27,8 +27,8 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
         Unique.Add(Surface.SurfaceId);
 
         TestTrue(
-            TEXT("公共DBAClient软资源路径必须使用真实DBAClient挂载点"),
-            Surface.WidgetClassPath.StartsWith(TEXT("/DBAClient/")));
+            TEXT("公共项目UI软资源路径必须归第三层DBAUIPack_Core内容包"),
+            Surface.WidgetClassPath.StartsWith(TEXT("/DBAUIPack_Core/")));
     }
 
     for (const FName Required : {
