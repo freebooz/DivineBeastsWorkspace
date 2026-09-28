@@ -20,18 +20,24 @@ public:
         for (const FDivineBeastsCoreHeroCatalogEntry& Entry :
              FDivineBeastsHeroCatalog::GetCoreEntries())
         {
-            // Core Catalog可以声明12个稳定身份，但只有已注册真实Definition资产的Hero才是当前客户端可创建项。
-            if (!FDivineBeastsHeroCatalog::GetDefinitionAssetPath(
-                    Entry.HeroDefinitionId).IsValid())
+            const bool bHasRegisteredDefinition =
+                FDivineBeastsHeroCatalog::GetDefinitionAssetPath(
+                    Entry.HeroDefinitionId).IsValid();
+#if UE_BUILD_SHIPPING
+            // Shipping必须存在真实、已注册并可Cook的Definition资产；不允许使用开发占位回退。
+            if (!bHasRegisteredDefinition)
             {
                 continue;
             }
+#endif
             FGamePlatformCharacterCreationHeroDescriptor Descriptor;
             Descriptor.HeroDefinitionId = Entry.HeroDefinitionId;
             Descriptor.DisplayNameKey = Entry.DisplayNameKey;
-            Descriptor.ContentRevision = FString::Printf(
-                TEXT("Catalog.%d"),
-                FDivineBeastsHeroCatalog::CatalogRevision);
+            Descriptor.ContentRevision = bHasRegisteredDefinition
+                ? FString::Printf(
+                    TEXT("Catalog.%d"),
+                    FDivineBeastsHeroCatalog::CatalogRevision)
+                : FDivineBeastsHeroCatalog::GetDevelopmentFallbackContentRevision();
             OutHeroes.Add(MoveTemp(Descriptor));
         }
     }
@@ -51,8 +57,18 @@ public:
             FDivineBeastsHeroCatalog::GetDefinitionAssetPath(HeroDefinitionId);
         if (!DefinitionPath.IsValid())
         {
-            OutError = TEXT("Hero Definition资产尚未注册到AssetManager。");
+#if UE_BUILD_SHIPPING
+            OutError = TEXT("Hero Definition资产尚未注册到AssetManager，Shipping禁止使用占位回退。");
             return false;
+#else
+            // 开发阶段真实Definition尚未生成时，只允许默认空外观草稿；颜色和Mannequin外观由内容包生成器决定。
+            if (!AppearanceSelection.IsEmpty())
+            {
+                OutError = TEXT("开发占位Definition只允许默认外观；请先生成真实Hero Definition资产再提交自定义外观。");
+                return false;
+            }
+            return true;
+#endif
         }
 
         if (const UDivineBeastsHeroDefinition* Definition =

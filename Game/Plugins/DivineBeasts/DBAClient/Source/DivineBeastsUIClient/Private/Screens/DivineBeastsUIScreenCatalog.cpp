@@ -2,9 +2,9 @@
 
 namespace
 {
-    // DBAUIPack_Core（神兽联盟核心UI内容包）是项目公共前台美术的规划唯一所有者。
-    // 当前仓库尚未生成该内容插件及二进制 .uasset；这里仅声明未来稳定挂载点，
-    // 不把不存在的旧 /DivineBeastsUI 路径继续当成已交付资产。
+    // DBAUIPack_Core（神兽联盟核心UI内容包）是项目公共前台美术的唯一所有者。
+    // 根布局和登录页已经交付真实资产；其余目录项仍是分期稳定软路径，
+    // 调用方必须保留软加载失败路径，不能把规划项误认为均已交付。
     constexpr const TCHAR* ProjectUIContentRoot = TEXT("/DBAUIPack_Core/UI");
 
     FDivineBeastsUISurfaceDescriptor MakeScreen(
@@ -23,8 +23,8 @@ namespace
         D.PausePolicy = EGamePlatformUIPausePolicy::Never;
         D.Transition = EGamePlatformUITransition::Default;
         D.DefaultFocusWidgetName = Focus;
-        // UI机制源码由DBAClient承载，后续真实UMG资源由独立DBAUIPack_Core内容包拥有；
-        // 此处仅登记稳定软路径，不把尚未创建的内容包误报为已交付资产。
+        // UI机制源码由DBAClient承载，真实UMG资源由独立DBAUIPack_Core内容包拥有；
+        // 目录同时包含已交付与分期规划路径，软加载失败必须保留可见错误或降级结果。
         D.DefinitionAssetPath = FString::Printf(
             TEXT("%s/Screens/DA_DBA_UI_%s.DA_DBA_UI_%s"),
             ProjectUIContentRoot,

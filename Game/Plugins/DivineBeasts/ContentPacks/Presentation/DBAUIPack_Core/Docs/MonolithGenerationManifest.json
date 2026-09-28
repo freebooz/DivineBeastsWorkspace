@@ -1,0 +1,51 @@
+{
+  "SchemaVersion": 1,
+  "CreationTool": "Monolith MCP",
+  "MonolithVersion": "0.20.3",
+  "ProjectName": "DivineBeastsArena",
+  "GeneratedAt": "2026-09-28T22:56:05+08:00",
+  "字段说明": {
+    "SchemaVersion": "清单结构版本；升级字段结构时递增。",
+    "CreationTool": "创建或修改界面二进制资产的唯一工具。",
+    "MonolithVersion": "本次真实连接的Monolith服务版本。",
+    "ProjectName": "本次资产所在的Unreal工程名称。",
+    "GeneratedAt": "本次清单更新时间，采用带时区的ISO 8601格式。",
+    "Assets": "本次由编辑器保存并通过Monolith回读的资产证据。",
+    "Preview": "人工复核用预览图；不替代PIE或设备验收。",
+    "Limitations": "本次验证未覆盖或仍需后续联调的边界。"
+  },
+  "Assets": [
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+      "用途": "每个本地玩家的公共界面根布局与分层容器。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsRootLayout",
+      "WidgetCount": 10,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "Saved": true
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+      "用途": "账号密码登录页面；只消费ViewModel状态并提交登录命令。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsLoginScreen",
+      "WidgetCount": 17,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "AccessibilityErrors": 0,
+      "AccessibilityWarnings": 0,
+      "CommonUIErrors": 0,
+      "CommonUIWarnings": 1,
+      "CommonUIWarningDisposition": "工具要求DesiredFocusTargetName属性；项目使用平台页面基类的原生焦点契约，并在页面目录中把AccountInput设为默认焦点。必须在PIE继续验证。",
+      "PasswordDefault": "",
+      "PasswordMaskEnabled": true,
+      "Saved": true
+    }
+  ],
+  "Preview": "Game/Saved/Monolith/Previews/WBP_DBA_UI_Login_Final_Stable.png",
+  "Limitations": [
+    "未执行PIE登录交互与焦点切换验收。",
+    "未完成真实后端认证服务联调。",
+    "未执行客户端Cook、移动设备适配和人工视觉签审。",
+    "清单只记录资产级证据，不替代引擎构建和运行验收。"
+  ]
+}

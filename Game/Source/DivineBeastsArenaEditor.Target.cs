@@ -13,5 +13,19 @@ public class DivineBeastsArenaEditorTarget : TargetRules
         EnablePlugins.Add("DBAClient");
         // Monolith在编辑器中创建和复核公共UI资产时必须加载真实内容插件挂载点。
         EnablePlugins.Add("DBAUIPack_Core");
+        // 编辑器加载公共占位角色源和全部生肖英雄内容包，供资产生成、预览与验证。
+        EnablePlugins.Add("DBAContentPack_Common");
+        EnablePlugins.Add("DBAHeroPack_Rat");
+        EnablePlugins.Add("DBAHeroPack_Ox");
+        EnablePlugins.Add("DBAHeroPack_Tiger");
+        EnablePlugins.Add("DBAHeroPack_Rabbit");
+        EnablePlugins.Add("DBAHeroPack_Dragon");
+        EnablePlugins.Add("DBAHeroPack_Snake");
+        EnablePlugins.Add("DBAHeroPack_Horse");
+        EnablePlugins.Add("DBAHeroPack_Goat");
+        EnablePlugins.Add("DBAHeroPack_Monkey");
+        EnablePlugins.Add("DBAHeroPack_Rooster");
+        EnablePlugins.Add("DBAHeroPack_Dog");
+        EnablePlugins.Add("DBAHeroPack_Boar");
     }
 }

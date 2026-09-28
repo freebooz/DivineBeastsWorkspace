@@ -27,6 +27,11 @@ const TArray<FName>& FDivineBeastsProjectCatalog::GetArenaModeIds()
     return FDivineBeastsGeneratedCatalogAdapter::GetArenaModeIds();
 }
 
+const TArray<FName>& FDivineBeastsProjectCatalog::GetHeroDefinitionIds()
+{
+    return FDivineBeastsGeneratedCatalogAdapter::GetHeroDefinitionIds();
+}
+
 bool FDivineBeastsProjectCatalog::IsServerRoleId(FName ServerRoleId)
 {
     return GetServerRoleIds().Contains(ServerRoleId);
@@ -40,6 +45,11 @@ bool FDivineBeastsProjectCatalog::IsExperienceId(FName ExperienceId)
 bool FDivineBeastsProjectCatalog::IsArenaModeId(FName ArenaModeId)
 {
     return GetArenaModeIds().Contains(ArenaModeId);
+}
+
+bool FDivineBeastsProjectCatalog::IsHeroDefinitionId(FName HeroDefinitionId)
+{
+    return GetHeroDefinitionIds().Contains(HeroDefinitionId);
 }
 
 bool FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(

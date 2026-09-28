@@ -1,0 +1,24 @@
+{
+  "_description": "十二生肖原型角色视觉清单。HeroDefinitionId唯一真源仍为Shared/Contracts；本清单只描述占位Mesh选择、颜色和内容包，不作为协议真源。",
+  "schemaVersion": 1,
+  "source": {
+    "engineTemplate": "TemplateResources/High/Characters/Content/Mannequins",
+    "mannyAsset": "/DBAContentPack_Common/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple",
+    "quinnAsset": "/DBAContentPack_Common/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple",
+    "baseMaterial": "/DBAContentPack_Common/Materials/M_DBA_PrototypeCharacterColor.M_DBA_PrototypeCharacterColor"
+  },
+  "heroes": [
+    { "heroId": "Hero.Zodiac.Rat", "zodiacCn": "子鼠", "displayNameCn": "影牙", "pack": "DBAHeroPack_Rat", "mesh": "Manny", "colorHex": "#607D8B" },
+    { "heroId": "Hero.Zodiac.Ox", "zodiacCn": "丑牛", "displayNameCn": "玄角", "pack": "DBAHeroPack_Ox", "mesh": "Quinn", "colorHex": "#795548" },
+    { "heroId": "Hero.Zodiac.Tiger", "zodiacCn": "寅虎", "displayNameCn": "白君", "pack": "DBAHeroPack_Tiger", "mesh": "Manny", "colorHex": "#FF8C00" },
+    { "heroId": "Hero.Zodiac.Rabbit", "zodiacCn": "卯兔", "displayNameCn": "玉灵", "pack": "DBAHeroPack_Rabbit", "mesh": "Quinn", "colorHex": "#F48FB1" },
+    { "heroId": "Hero.Zodiac.Dragon", "zodiacCn": "辰龙", "displayNameCn": "苍龙", "pack": "DBAHeroPack_Dragon", "mesh": "Manny", "colorHex": "#00ACC1" },
+    { "heroId": "Hero.Zodiac.Snake", "zodiacCn": "巳蛇", "displayNameCn": "幽鳞", "pack": "DBAHeroPack_Snake", "mesh": "Quinn", "colorHex": "#2E7D32" },
+    { "heroId": "Hero.Zodiac.Horse", "zodiacCn": "午马", "displayNameCn": "雷蹄", "pack": "DBAHeroPack_Horse", "mesh": "Manny", "colorHex": "#D32F2F" },
+    { "heroId": "Hero.Zodiac.Goat", "zodiacCn": "未羊", "displayNameCn": "玉角", "pack": "DBAHeroPack_Goat", "mesh": "Quinn", "colorHex": "#D4AF37" },
+    { "heroId": "Hero.Zodiac.Monkey", "zodiacCn": "申猴", "displayNameCn": "灵猴", "pack": "DBAHeroPack_Monkey", "mesh": "Manny", "colorHex": "#7E57C2" },
+    { "heroId": "Hero.Zodiac.Rooster", "zodiacCn": "酉鸡", "displayNameCn": "金鸣", "pack": "DBAHeroPack_Rooster", "mesh": "Quinn", "colorHex": "#FDD835" },
+    { "heroId": "Hero.Zodiac.Dog", "zodiacCn": "戌狗", "displayNameCn": "天犬", "pack": "DBAHeroPack_Dog", "mesh": "Manny", "colorHex": "#3949AB" },
+    { "heroId": "Hero.Zodiac.Boar", "zodiacCn": "亥猪", "displayNameCn": "玄鬃", "pack": "DBAHeroPack_Boar", "mesh": "Quinn", "colorHex": "#AD1457" }
+  ]
+}

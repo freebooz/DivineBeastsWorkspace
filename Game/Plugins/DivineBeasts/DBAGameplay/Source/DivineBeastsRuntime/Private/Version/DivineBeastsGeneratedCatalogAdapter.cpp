@@ -70,6 +70,12 @@ const TArray<FName>& FDivineBeastsGeneratedCatalogAdapter::GetArenaModeIds()
     return Values;
 }
 
+const TArray<FName>& FDivineBeastsGeneratedCatalogAdapter::GetHeroDefinitionIds()
+{
+    static const TArray<FName> Values = MakeNames(DivineBeasts::Contracts::HeroDefinitionIds);
+    return Values;
+}
+
 bool FDivineBeastsGeneratedCatalogAdapter::TryGetServerRoleForExperience(
     FName ExperienceId,
     FName& OutServerRoleId)

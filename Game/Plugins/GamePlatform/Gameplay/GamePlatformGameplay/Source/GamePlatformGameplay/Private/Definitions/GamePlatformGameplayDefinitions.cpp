@@ -123,8 +123,9 @@ FGamePlatformResult UGamePlatformPawnDefinition::ValidateDefinition() const
 
 bool FGamePlatformVerifiedPlayerContext::IsStructurallyValid() const
 {
+    // UE5.8 的 FPrimaryAssetType 通过 IsValid 判断空身份，不再公开 IsNone。
     const bool bNoPawnOverride = !PawnDefinitionId.IsValid() && PawnDefinitionId.PrimaryAssetName.IsNone()
-        && PawnDefinitionId.PrimaryAssetType.IsNone();
+        && !PawnDefinitionId.PrimaryAssetType.IsValid();
     return AdmissionId.IsValid() && ParticipantId.IsValid() && ExperienceId.IsValid()
         && !AssignmentId.IsEmpty() && AssignmentId.Len() <= 128
         && !ServerInstanceId.IsEmpty() && ServerInstanceId.Len() <= 128

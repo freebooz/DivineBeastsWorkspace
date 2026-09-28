@@ -41,16 +41,7 @@ void UDivineBeastsCharacterComponent::GetLifetimeReplicatedProps(
         COND_OwnerOnly);
     DOREPLIFETIME(
         UDivineBeastsCharacterComponent,
-        HeroDefinitionId);
-    DOREPLIFETIME(
-        UDivineBeastsCharacterComponent,
-        ZodiacIdentity);
-    DOREPLIFETIME(
-        UDivineBeastsCharacterComponent,
-        SpawnGeneration);
-    DOREPLIFETIME(
-        UDivineBeastsCharacterComponent,
-        AvatarGeneration);
+        RuntimeState);
     DOREPLIFETIME_CONDITION(
         UDivineBeastsCharacterComponent,
         bPersistentCharacterIdRequired,
@@ -85,14 +76,14 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
         return false;
     }
 
-    if (SpawnGeneration > 0 &&
-        Context.SpawnGeneration < SpawnGeneration)
+    if (RuntimeState.SpawnGeneration > 0 &&
+        Context.SpawnGeneration < RuntimeState.SpawnGeneration)
     {
         OutError = TEXT("拒绝旧SpawnGeneration覆盖当前角色。");
         return false;
     }
-    if (AvatarGeneration > 0 &&
-        Context.AvatarGeneration < AvatarGeneration)
+    if (RuntimeState.AvatarGeneration > 0 &&
+        Context.AvatarGeneration < RuntimeState.AvatarGeneration)
     {
         OutError = TEXT("拒绝旧AvatarGeneration覆盖当前角色。");
         return false;
@@ -105,10 +96,13 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     bServerReady = false;
 
     CharacterId = Context.CharacterId;
-    HeroDefinitionId = Context.HeroDefinitionId;
-    ZodiacIdentity = NewZodiac;
-    SpawnGeneration = Context.SpawnGeneration;
-    AvatarGeneration = Context.AvatarGeneration;
+    RuntimeState.HeroDefinitionId = Context.HeroDefinitionId;
+    RuntimeState.ZodiacIdentity = NewZodiac;
+    RuntimeState.SpawnGeneration = Context.SpawnGeneration;
+    RuntimeState.AvatarGeneration = Context.AvatarGeneration;
+    // Definition版本只能由服务器实际加载的资产确定，绑定新身份时先清空，禁止沿用旧Hero版本。
+    RuntimeState.DefinitionVersion = 0;
+    RuntimeState.ContentRevision.Reset();
     bPersistentCharacterIdRequired =
         Context.bPersistentCharacterIdRequired;
 
@@ -133,7 +127,7 @@ void UDivineBeastsCharacterComponent::RefreshInitialization()
     }
 
     if (!LoadedDefinition ||
-        LoadedDefinition->DefinitionId != HeroDefinitionId)
+        LoadedDefinition->DefinitionId != RuntimeState.HeroDefinitionId)
     {
         bLocalReady = false;
         bConfigurationApplied = false;
@@ -154,13 +148,9 @@ void UDivineBeastsCharacterComponent::RefreshInitialization()
     BroadcastReadinessIfChanged(bPreviousReady);
 }
 
-void UDivineBeastsCharacterComponent::OnRep_Identity()
+void UDivineBeastsCharacterComponent::OnRep_RuntimeState()
 {
-    RefreshInitialization();
-}
-
-void UDivineBeastsCharacterComponent::OnRep_Generation()
-{
+    // RuntimeState是一个原子复制事实。任何变化都作废旧租约，避免旧Hero异步加载完成后阻塞或污染新Hero。
     CancelDefinitionLease();
     LoadedDefinition = nullptr;
     bConfigurationApplied = false;
@@ -176,18 +166,18 @@ void UDivineBeastsCharacterComponent::OnRep_ServerReady()
 
 void UDivineBeastsCharacterComponent::BeginDefinitionLoad()
 {
-    if (DefinitionLease.IsValid() || HeroDefinitionId.IsNone())
+    if (DefinitionLease.IsValid() || RuntimeState.HeroDefinitionId.IsNone())
     {
         return;
     }
 
     const int32 RequestGeneration = ++DefinitionRequestGeneration;
-    const int32 ExpectedSpawnGeneration = SpawnGeneration;
-    const int32 ExpectedAvatarGeneration = AvatarGeneration;
+    const int32 ExpectedSpawnGeneration = RuntimeState.SpawnGeneration;
+    const int32 ExpectedAvatarGeneration = RuntimeState.AvatarGeneration;
     const TWeakObjectPtr<UDivineBeastsCharacterComponent> WeakThis(this);
 
     DefinitionLease = FDivineBeastsHeroCatalog::RequestDefinition(
-        HeroDefinitionId,
+        RuntimeState.HeroDefinitionId,
         [WeakThis,
          RequestGeneration,
          ExpectedSpawnGeneration,
@@ -222,20 +212,28 @@ void UDivineBeastsCharacterComponent::HandleDefinitionLoaded(
     int32 ExpectedAvatarGeneration)
 {
     if (ExpectedRequestGeneration != DefinitionRequestGeneration ||
-        ExpectedSpawnGeneration != SpawnGeneration ||
-        ExpectedAvatarGeneration != AvatarGeneration)
+        ExpectedSpawnGeneration != RuntimeState.SpawnGeneration ||
+        ExpectedAvatarGeneration != RuntimeState.AvatarGeneration)
     {
         return;
     }
 
     DefinitionLease.Reset();
-    if (!Definition || Definition->DefinitionId != HeroDefinitionId)
+    if (!Definition || Definition->DefinitionId != RuntimeState.HeroDefinitionId)
     {
         LoadedDefinition = nullptr;
         bLocalReady = false;
         bConfigurationApplied = false;
         UpdateReadiness();
         return;
+    }
+
+    // 服务器以实际加载资产为唯一版本事实，再复制给客户端做内容一致性门禁。
+    if (GetOwner() && GetOwner()->HasAuthority())
+    {
+        RuntimeState.DefinitionVersion = Definition->Version;
+        RuntimeState.ContentRevision = Definition->ContentRevision;
+        GetOwner()->ForceNetUpdate();
     }
 
     LoadedDefinition = Definition;
@@ -248,6 +246,20 @@ bool UDivineBeastsCharacterComponent::ApplyDefinition(
 {
     if (!Definition.IsProjectDefinitionValid(OutError))
     {
+        return false;
+    }
+
+    // 两端都必须以服务器认可的版本事实作为Ready门禁。这样客户端内容包落后或服务器资产未完成确认时不会静默进入玩法。
+    if (RuntimeState.DefinitionVersion <= 0 ||
+        RuntimeState.ContentRevision.TrimStartAndEnd().IsEmpty())
+    {
+        OutError = TEXT("服务器尚未发布Hero Definition版本事实。");
+        return false;
+    }
+    if (Definition.Version != RuntimeState.DefinitionVersion ||
+        Definition.ContentRevision != RuntimeState.ContentRevision)
+    {
+        OutError = TEXT("本地Hero Definition版本与服务器认可版本不一致。");
         return false;
     }
 
@@ -292,9 +304,9 @@ bool UDivineBeastsCharacterComponent::ApplyDefinition(
 
 bool UDivineBeastsCharacterComponent::IsIdentityStructurallyValid() const
 {
-    if (!FDivineBeastsHeroCatalog::IsCoreHeroId(HeroDefinitionId) ||
-        SpawnGeneration <= 0 ||
-        AvatarGeneration <= 0)
+    if (!FDivineBeastsHeroCatalog::IsCoreHeroId(RuntimeState.HeroDefinitionId) ||
+        RuntimeState.SpawnGeneration <= 0 ||
+        RuntimeState.AvatarGeneration <= 0)
     {
         return false;
     }
@@ -309,9 +321,9 @@ bool UDivineBeastsCharacterComponent::IsIdentityStructurallyValid() const
     EDivineBeastsZodiacIdentity Expected =
         EDivineBeastsZodiacIdentity::Rat;
     return FDivineBeastsHeroCatalog::TryGetZodiacIdentity(
-            HeroDefinitionId,
+            RuntimeState.HeroDefinitionId,
             Expected)
-        && Expected == ZodiacIdentity;
+        && Expected == RuntimeState.ZodiacIdentity;
 }
 
 void UDivineBeastsCharacterComponent::UpdateReadiness()

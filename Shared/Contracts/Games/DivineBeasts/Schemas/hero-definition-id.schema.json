@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://divinebeasts/contracts/hero-definition-id.schema.json",
+  "title": "DivineBeasts HeroDefinitionId（神兽联盟英雄定义编号）",
+  "description": "十二生肖英雄的跨UE客户端、Dedicated Server与Go后端稳定逻辑身份。美术资源、占位模型、颜色材质和皮肤均不得改变这些ID。",
+  "type": "string",
+  "enum": [
+    "Hero.Zodiac.Rat",
+    "Hero.Zodiac.Ox",
+    "Hero.Zodiac.Tiger",
+    "Hero.Zodiac.Rabbit",
+    "Hero.Zodiac.Dragon",
+    "Hero.Zodiac.Snake",
+    "Hero.Zodiac.Horse",
+    "Hero.Zodiac.Goat",
+    "Hero.Zodiac.Monkey",
+    "Hero.Zodiac.Rooster",
+    "Hero.Zodiac.Dog",
+    "Hero.Zodiac.Boar"
+  ]
+}

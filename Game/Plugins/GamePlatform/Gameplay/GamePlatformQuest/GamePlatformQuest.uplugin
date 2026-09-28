@@ -10,8 +10,7 @@
     "EnabledByDefault":  false,
     "Plugins":  [
                     { "Name": "GamePlatformCore", "Enabled": true },
-                    { "Name": "GamePlatformData", "Enabled": true },
-                    { "Name": "GamePlatformGameplay", "Enabled": true }
+                    { "Name": "GamePlatformData", "Enabled": true }
                 ],
     "Modules":  [
                     {

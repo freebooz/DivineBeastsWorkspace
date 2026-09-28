@@ -16,5 +16,9 @@ public class DivineBeastsPresentationClient : ModuleRules
             "GamePlatformPresentationCore",
             "GamePlatformPresentationClient"
         });
+
+        // 角色外观Profile只在客户端软加载普通表现资源；GamePlatformData提供统一加载入口。
+        PrivateDependencyModuleNames.Add("GamePlatformData");
+
     }
 }

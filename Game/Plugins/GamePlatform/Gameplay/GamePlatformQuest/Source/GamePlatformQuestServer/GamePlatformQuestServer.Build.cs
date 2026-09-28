@@ -11,8 +11,8 @@ public class GamePlatformQuestServer : ModuleRules
             "CoreUObject",
             "Engine",
             "GameplayTags",
-            "GamePlatformQuest",
-            "GamePlatformGameplay"
+            // 服务端任务状态机只消费任务共享契约，不依赖体验/出生等通用玩法运行模块。
+            "GamePlatformQuest"
         });
     }
 }

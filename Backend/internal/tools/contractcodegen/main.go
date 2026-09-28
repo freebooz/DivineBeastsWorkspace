@@ -75,14 +75,16 @@ type contractCompatibility struct {
 }
 
 type divineBeastsCatalog struct {
-	gameID                     string
-	projectID                  string
-	contractVersion            string
-	catalogVersion             int
-	generatedRevision          string
-	serverRoles                []string
-	experiences                []string
-	arenaModes                 []string
+	gameID            string
+	projectID         string
+	contractVersion   string
+	catalogVersion    int
+	generatedRevision string
+	serverRoles       []string
+	experiences       []string
+	arenaModes        []string
+	// heroDefinitionIDs（英雄定义编号）来自Shared契约真源；客户端、服务器与后端不得各自维护第二份十二生肖ID表。
+	heroDefinitionIDs          []string
 	experienceMappings         []roleExperienceMapping
 	arenaModeMappings          []arenaModeMapping
 	clientServerCompatibility  contractCompatibility
@@ -130,12 +132,13 @@ func main() {
 	if version.ContractVersion == "" {
 		panic("Shared/Docs/contract-version.json缺少contractVersion")
 	}
-	var roles, experiences, arenaModes stringSchema
+	var roles, experiences, arenaModes, heroDefinitionIDs stringSchema
 	var serverCatalog serverCatalogSchema
 	var compatibility compatibilityMatrix
 	readJSON(filepath.Join(shared, "Contracts", "Games", "DivineBeasts", "Schemas", "server-role.schema.json"), &roles)
 	readJSON(filepath.Join(shared, "Contracts", "Games", "DivineBeasts", "Schemas", "experience.schema.json"), &experiences)
 	readJSON(filepath.Join(shared, "Contracts", "Games", "DivineBeasts", "Schemas", "arena-mode.schema.json"), &arenaModes)
+	readJSON(filepath.Join(shared, "Contracts", "Games", "DivineBeasts", "Schemas", "hero-definition-id.schema.json"), &heroDefinitionIDs)
 	readJSON(filepath.Join(shared, "Contracts", "Games", "DivineBeasts", "Schemas", "server-catalog.schema.json"), &serverCatalog)
 	readJSON(filepath.Join(shared, "Docs", "compatibility-matrix.json"), &compatibility)
 	if compatibility.Current.ContractVersion != version.ContractVersion {
@@ -143,6 +146,20 @@ func main() {
 	}
 	validateRoleExperienceMappings(roles.Enum, experiences.Enum, serverCatalog.RoleExperienceMap)
 	validateArenaModeMappings(arenaModes.Enum, experiences.Enum, roles.Enum, serverCatalog.RoleExperienceMap, serverCatalog.ArenaModeContextMap)
+	// 十二生肖是已发布稳定身份集合。Codegen在生成前做最小完整性门禁，避免某端拿到缺项、重复或非项目Hero ID。
+	if len(heroDefinitionIDs.Enum) != 12 {
+		panic("hero-definition-id.schema.json必须且只能声明12个生肖HeroDefinitionId")
+	}
+	heroSeen := make(map[string]struct{}, len(heroDefinitionIDs.Enum))
+	for _, heroID := range heroDefinitionIDs.Enum {
+		if !strings.HasPrefix(heroID, "Hero.Zodiac.") {
+			panic("HeroDefinitionId必须使用Hero.Zodiac.*稳定命名空间")
+		}
+		if _, exists := heroSeen[heroID]; exists {
+			panic("hero-definition-id.schema.json不能包含重复HeroDefinitionId")
+		}
+		heroSeen[heroID] = struct{}{}
+	}
 	if serverCatalog.ProjectIdentity.GameID == "" || serverCatalog.ProjectIdentity.ProjectID == "" {
 		panic("server-catalog.schema.json缺少x-project-identity中的gameId或projectId")
 	}
@@ -155,7 +172,7 @@ func main() {
 		gameID: serverCatalog.ProjectIdentity.GameID, projectID: serverCatalog.ProjectIdentity.ProjectID,
 		contractVersion: version.ContractVersion, catalogVersion: serverCatalog.CatalogVersion,
 		generatedRevision: generateRevision(contractInputs), serverRoles: roles.Enum, experiences: experiences.Enum,
-		arenaModes: arenaModes.Enum, experienceMappings: serverCatalog.RoleExperienceMap,
+		arenaModes: arenaModes.Enum, heroDefinitionIDs: heroDefinitionIDs.Enum, experienceMappings: serverCatalog.RoleExperienceMap,
 		arenaModeMappings:         serverCatalog.ArenaModeContextMap,
 		clientServerCompatibility: compatibilityRange, serverBackendCompatibility: compatibilityRange,
 	}
@@ -322,10 +339,14 @@ func generateDivineBeastsGo(catalog divineBeastsCatalog) []byte {
 	fmt.Fprintf(&b, "\tGameID = %q\n\tProjectID = %q\n\tContractVersion = %q\n\tGeneratedRevision = %q\n\tCatalogVersion = %d\n", catalog.gameID, catalog.projectID, catalog.contractVersion, catalog.generatedRevision, catalog.catalogVersion)
 	fmt.Fprintf(&b, "\tClientServerMinimumContractVersion = %q\n\tClientServerMaximumExclusiveContractVersion = %q\n", catalog.clientServerCompatibility.MinimumInclusive, catalog.clientServerCompatibility.MaximumExclusive)
 	fmt.Fprintf(&b, "\tServerBackendMinimumContractVersion = %q\n\tServerBackendMaximumExclusiveContractVersion = %q\n", catalog.serverBackendCompatibility.MinimumInclusive, catalog.serverBackendCompatibility.MaximumExclusive)
-	for _, value := range append(append(append([]string{}, catalog.serverRoles...), catalog.experiences...), catalog.arenaModes...) {
+	for _, value := range append(append(append(append([]string{}, catalog.serverRoles...), catalog.experiences...), catalog.arenaModes...), catalog.heroDefinitionIDs...) {
 		fmt.Fprintf(&b, "\t%s = %q\n", goConstName(value), value)
 	}
-	b.WriteString(")\n\n// ExperienceServerRoles（体验对应的服务器角色）由Shared ServerCatalog生成，包含保留的兼容体验映射。\nvar ExperienceServerRoles = map[string]string{\n")
+	b.WriteString(")\n\n// HeroDefinitionIDs（十二生肖英雄稳定定义编号）由Shared契约生成；美术替换不得改变这些值。\nvar HeroDefinitionIDs = []string{\n")
+	for _, heroID := range catalog.heroDefinitionIDs {
+		fmt.Fprintf(&b, "\t%q,\n", heroID)
+	}
+	b.WriteString("}\n\n// ExperienceServerRoles（体验对应的服务器角色）由Shared ServerCatalog生成，包含保留的兼容体验映射。\nvar ExperienceServerRoles = map[string]string{\n")
 	for _, mapping := range catalog.experienceMappings {
 		for _, experienceID := range mapping.Experiences {
 			fmt.Fprintf(&b, "\t%q: %q,\n", experienceID, mapping.ServerRole)
@@ -384,12 +405,13 @@ func generateDivineBeastsCpp(catalog divineBeastsCatalog) []byte {
 	fmt.Fprintf(&b, "inline constexpr const char* GameId = %q;\ninline constexpr const char* ProjectId = %q;\ninline constexpr const char* ContractVersion = %q;\ninline constexpr int CatalogVersion = %d;\ninline constexpr const char* GeneratedRevision = %q;\n", catalog.gameID, catalog.projectID, catalog.contractVersion, catalog.catalogVersion, catalog.generatedRevision)
 	fmt.Fprintf(&b, "inline constexpr const char* ClientServerMinimumContractVersion = %q;\ninline constexpr const char* ClientServerMaximumExclusiveContractVersion = %q;\n", catalog.clientServerCompatibility.MinimumInclusive, catalog.clientServerCompatibility.MaximumExclusive)
 	fmt.Fprintf(&b, "inline constexpr const char* ServerBackendMinimumContractVersion = %q;\ninline constexpr const char* ServerBackendMaximumExclusiveContractVersion = %q;\n", catalog.serverBackendCompatibility.MinimumInclusive, catalog.serverBackendCompatibility.MaximumExclusive)
-	for _, value := range append(append(append([]string{}, catalog.serverRoles...), catalog.experiences...), catalog.arenaModes...) {
+	for _, value := range append(append(append(append([]string{}, catalog.serverRoles...), catalog.experiences...), catalog.arenaModes...), catalog.heroDefinitionIDs...) {
 		fmt.Fprintf(&b, "inline constexpr std::string_view %s = %q;\n", cppConstName(value), value)
 	}
 	writeCppCStringArray(&b, "ServerRoles", catalog.serverRoles)
 	writeCppCStringArray(&b, "ExperienceIds", catalog.experiences)
 	writeCppCStringArray(&b, "ArenaModeIds", catalog.arenaModes)
+	writeCppCStringArray(&b, "HeroDefinitionIds", catalog.heroDefinitionIDs)
 	count := 0
 	for _, mapping := range catalog.experienceMappings {
 		count += len(mapping.Experiences)
@@ -434,6 +456,7 @@ func readDivineBeastsCatalogInputs(sharedRoot string) map[string][]byte {
 		"Contracts/Games/DivineBeasts/Schemas/server-role.schema.json",
 		"Contracts/Games/DivineBeasts/Schemas/experience.schema.json",
 		"Contracts/Games/DivineBeasts/Schemas/arena-mode.schema.json",
+		"Contracts/Games/DivineBeasts/Schemas/hero-definition-id.schema.json",
 		"Contracts/Games/DivineBeasts/Schemas/server-catalog.schema.json",
 		"Docs/contract-version.json",
 		"Docs/compatibility-matrix.json",
