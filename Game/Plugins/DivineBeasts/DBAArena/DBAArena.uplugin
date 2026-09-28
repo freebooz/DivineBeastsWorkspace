@@ -11,6 +11,7 @@
   "Plugins": [
     { "Name": "DBAGameplay", "Enabled": true },
     { "Name": "GamePlatformArena", "Enabled": true },
+    { "Name": "GamePlatformUI", "Enabled": true, "TargetAllowList": ["Client", "Editor"] },
     { "Name": "DBAClient", "Enabled": true, "TargetAllowList": ["Client", "Editor"] }
   ],
   "Modules": [

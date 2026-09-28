@@ -7,6 +7,15 @@ public class DivineBeastsArena : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "GamePlatformCore", "GamePlatformData" });
-        PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformApplicationFlow", "GamePlatformLoading", "GamePlatformWorld", "AssetRegistry" });
+        // 主模块私有 Bootstrap 直接使用 Online 门面与 JSON 解析，必须声明真实直接依赖，禁止依赖 Engine/其他模块的传递关系。
+        PrivateDependencyModuleNames.AddRange(new[]
+        {
+            "GamePlatformApplicationFlow",
+            "GamePlatformLoading",
+            "GamePlatformWorld",
+            "GamePlatformOnline",
+            "AssetRegistry",
+            "Json"
+        });
     }
 }

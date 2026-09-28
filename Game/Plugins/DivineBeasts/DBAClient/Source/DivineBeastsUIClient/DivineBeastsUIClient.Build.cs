@@ -22,12 +22,10 @@ public class DivineBeastsUIClient : ModuleRules
             "SlateCore",
             "CommonUI",
             "CommonInput",
-            "DivineBeastsRuntime",
             "GamePlatformUIClient",
-            // 项目UI只消费这些平台领域的客户端只读状态/事件，不复制第二套业务模型。
-            "GamePlatformCombat",
-            "GamePlatformInventoryClient",
-            "GamePlatformQuestClient"
+            // 当前公开战斗反馈映射直接暴露 FGamePlatformCombatEvent，
+            // 因此保留真实 Public 依赖；背包/任务目前没有源码消费者，不提前挂依赖。
+            "GamePlatformCombat"
         });
 
         // ApplicationFlow 只在本模块 Private Adapter（私有适配器）中消费；
