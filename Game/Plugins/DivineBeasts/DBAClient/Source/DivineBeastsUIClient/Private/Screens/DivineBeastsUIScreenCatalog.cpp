@@ -35,11 +35,9 @@ namespace
             ProjectUIContentRoot,
             AssetName,
             AssetName);
-        D.MobileWidgetClassPath = FString::Printf(
-            TEXT("%s/Screens/WBP_DBA_UI_%s_Mobile.WBP_DBA_UI_%s_Mobile_C"),
-            ProjectUIContentRoot,
-            AssetName,
-            AssetName);
+        // 移动端专用资产尚未由Monolith交付时保持空路径，让平台解析器回退公共Widget。
+        // 只有真实变体完成编译、保存与Cook验证后，才允许在具体目录项显式登记。
+        D.MobileWidgetClassPath.Reset();
         D.bSurvivesTravel = bSurvivesTravel;
         return D;
     }
@@ -58,11 +56,8 @@ namespace
             ProjectUIContentRoot,
             AssetName,
             AssetName);
-        D.MobileWidgetClassPath = FString::Printf(
-            TEXT("%s/HUD/WBP_DBA_UI_%s_Mobile.WBP_DBA_UI_%s_Mobile_C"),
-            ProjectUIContentRoot,
-            AssetName,
-            AssetName);
+        // HUD同样不能为尚不存在的移动端资产制造非空软路径。
+        D.MobileWidgetClassPath.Reset();
         return D;
     }
 

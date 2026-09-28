@@ -13,7 +13,9 @@ FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
     }
 
     const FString Step = State.CurrentStep.ToString();
-    if (Step.IsEmpty() ||
+    // NAME_None 转为字符串后得到 "None"，并不是空字符串；必须先按 FName
+    // 语义判断“尚无流程步骤”，否则首次事件快照会错误地落到无页面状态。
+    if (State.CurrentStep.IsNone() ||
         Step.Contains(TEXT("Boot")) ||
         Step.Contains(TEXT("Initialize")))
     {

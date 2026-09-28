@@ -200,20 +200,18 @@ FGuid UDivineBeastsUIViewModel::Submit(FDivineBeastsUICommand Command)
     }
 
     const FGuid RequestId = Command.RequestId;
-    const int32 ExpectedVMRevision = GetRevision();
     const int32 ExpectedPageGeneration = GetPageGeneration();
     PendingCommands.Add(RequestId);
 
     const TWeakObjectPtr<UDivineBeastsUIViewModel> WeakThis(this);
     Owner->SubmitCommand(
         MoveTemp(Command),
-        [WeakThis, ExpectedVMRevision, ExpectedPageGeneration](
+        [WeakThis, ExpectedPageGeneration](
             const FDivineBeastsUICommandResult& Result)
         {
             if (WeakThis.IsValid())
             {
                 WeakThis->HandleCommandResult(
-                    ExpectedVMRevision,
                     ExpectedPageGeneration,
                     Result);
             }
@@ -231,14 +229,15 @@ void UDivineBeastsUIViewModel::HandleStateChanged(
 }
 
 void UDivineBeastsUIViewModel::HandleCommandResult(
-    int32 ExpectedVMRevision,
     int32 ExpectedPageGeneration,
     const FDivineBeastsUICommandResult& Result)
 {
-    PendingCommands.Remove(Result.RequestId);
-    if (!IsCallbackCurrent(
-            ExpectedVMRevision,
-            ExpectedPageGeneration))
+    const bool bWasPending = PendingCommands.Remove(Result.RequestId) > 0;
+    // 命令终态以“请求身份＋页面代次”为所有权边界。业务状态可以先于命令终态到达并
+    // 增加ViewModel Revision；若继续要求Revision不变，会吞掉合法终态并让页面永久忙碌。
+    if (!bWasPending ||
+        !IsPageActive() ||
+        GetPageGeneration() != ExpectedPageGeneration)
     {
         return;
     }

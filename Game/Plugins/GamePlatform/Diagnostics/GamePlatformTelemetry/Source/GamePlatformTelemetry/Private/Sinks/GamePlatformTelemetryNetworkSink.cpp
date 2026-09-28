@@ -31,6 +31,7 @@ FGamePlatformTelemetryNetworkSink(
 
 bool FGamePlatformTelemetryNetworkSink::Start()
 {
+    check(IsInGameThread());
     FScopeLock Lock(&Mutex);
 
     if (!Transport.IsValid())
@@ -131,21 +132,16 @@ void FGamePlatformTelemetryNetworkSink::SubmitAttempt(
         FGamePlatformTelemetryNetworkSink,
         ESPMode::ThreadSafe> WeakThis = AsShared();
 
-    // BeginSubmitBatch返回false时，Transport契约保证不会调用Completion。
-    // 使用共享Holder避免把原Completion提前move进lambda后丢失启动失败回调。
-    TSharedRef<
-        FGamePlatformTelemetrySubmitCompletion,
-        ESPMode::ThreadSafe> CompletionHolder =
-        MakeShared<
-            FGamePlatformTelemetrySubmitCompletion,
-            ESPMode::ThreadSafe>(
-                MoveTemp(Completion));
+    // Retry副本与提交参数分离，避免同一Batch同时作为函数实参又被Lambda Move捕获的求值顺序隐患。
+    FGamePlatformTelemetryBatch RetryBatch = Batch;
+    TSharedRef<FGamePlatformTelemetrySubmitCompletion, ESPMode::ThreadSafe> CompletionHolder =
+        MakeShared<FGamePlatformTelemetrySubmitCompletion, ESPMode::ThreadSafe>(MoveTemp(Completion));
 
     const bool bStartedRequest =
         LocalTransport->BeginSubmitBatch(
             Batch,
             [WeakThis,
-             Batch = MoveTemp(Batch),
+             RetryBatch = MoveTemp(RetryBatch),
              Attempt,
              FirstAttemptSeconds,
              CompletionHolder](
@@ -187,47 +183,102 @@ void FGamePlatformTelemetryNetworkSink::SubmitAttempt(
                     return;
                 }
 
-                const float Delay =
-                    Self->ComputeRetryDelay(
-                        Batch.BatchId,
-                        Attempt + 1,
-                        Result.RetryAfterSeconds);
-
-                TWeakPtr<
-                    FGamePlatformTelemetryNetworkSink,
-                    ESPMode::ThreadSafe> RetryWeak = Self;
-
-                FTSTicker::GetCoreTicker().AddTicker(
-                    FTickerDelegate::CreateLambda(
-                        [RetryWeak,
-                         Batch = MoveTemp(Batch),
-                         Attempt,
-                         FirstAttemptSeconds,
-                         CompletionHolder](
-                            float) mutable
-                        {
-                            if (TSharedPtr<
-                                    FGamePlatformTelemetryNetworkSink,
-                                    ESPMode::ThreadSafe> RetrySelf =
-                                    RetryWeak.Pin())
-                            {
-                                RetrySelf->SubmitAttempt(
-                                    MoveTemp(Batch),
-                                    Attempt + 1,
-                                    FirstAttemptSeconds,
-                                    MoveTemp(*CompletionHolder));
-                            }
-                            return false;
-                        }),
-                    Delay);
+                Self->ScheduleRetry(
+                    MoveTemp(RetryBatch),
+                    Attempt + 1,
+                    FirstAttemptSeconds,
+                    Result.RetryAfterSeconds,
+                    MoveTemp(*CompletionHolder));
             });
 
     if (!bStartedRequest)
     {
-        FinishPending(
-            false,
-            TEXT("transport_start_failed"),
-            MoveTemp(*CompletionHolder));
+        const double Age = FPlatformTime::Seconds() - FirstAttemptSeconds;
+        if (Attempt < RetrySettings.MaxRetries && Age < RetrySettings.MaxRetryAgeSeconds)
+        {
+            // ProcessRequest启动失败通常是瞬时网络/HTTP层不可用，按同一有限退避策略重试而不是立即永久丢批。
+            ScheduleRetry(
+                MoveTemp(Batch),
+                Attempt + 1,
+                FirstAttemptSeconds,
+                0.0f,
+                MoveTemp(*CompletionHolder));
+        }
+        else
+        {
+            FinishPending(false, TEXT("transport_start_failed"), MoveTemp(*CompletionHolder));
+        }
+    }
+}
+
+void FGamePlatformTelemetryNetworkSink::ScheduleRetry(
+    FGamePlatformTelemetryBatch Batch,
+    int32 NextAttempt,
+    double FirstAttemptSeconds,
+    float RetryAfterSeconds,
+    FGamePlatformTelemetrySubmitCompletion Completion)
+{
+    check(IsInGameThread());
+    bool bIsShuttingDown = false;
+    {
+        FScopeLock Lock(&Mutex);
+        bIsShuttingDown = bShuttingDown;
+    }
+    if (bIsShuttingDown)
+    {
+        FinishPending(false, TEXT("sink_shutdown"), MoveTemp(Completion));
+        return;
+    }
+
+    const float Delay = ComputeRetryDelay(Batch.BatchId, NextAttempt, RetryAfterSeconds);
+    TWeakPtr<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> WeakThis = AsShared();
+    const FTSTicker::FDelegateHandle Handle = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateLambda(
+            [WeakThis,
+             Batch = MoveTemp(Batch),
+             NextAttempt,
+             FirstAttemptSeconds,
+             Completion = MoveTemp(Completion)](float) mutable
+            {
+                if (TSharedPtr<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> Self = WeakThis.Pin())
+                {
+                    Self->SubmitAttempt(
+                        MoveTemp(Batch),
+                        NextAttempt,
+                        FirstAttemptSeconds,
+                        MoveTemp(Completion));
+                }
+                return false;
+            }),
+        Delay);
+
+    FScopeLock Lock(&Mutex);
+    if (!bShuttingDown)
+    {
+        RetryTickerHandles.Add(Handle);
+    }
+    else
+    {
+        FTSTicker::GetCoreTicker().RemoveTicker(Handle);
+    }
+}
+
+void FGamePlatformTelemetryNetworkSink::CancelRetryTickers()
+{
+    check(IsInGameThread());
+    TArray<FTSTicker::FDelegateHandle> Handles;
+    {
+        FScopeLock Lock(&Mutex);
+        Handles = MoveTemp(RetryTickerHandles);
+        RetryTickerHandles.Reset();
+    }
+
+    for (const FTSTicker::FDelegateHandle& Handle : Handles)
+    {
+        if (Handle.IsValid())
+        {
+            FTSTicker::GetCoreTicker().RemoveTicker(Handle);
+        }
     }
 }
 
@@ -239,6 +290,11 @@ void FGamePlatformTelemetryNetworkSink::FinishPending(
     {
         FScopeLock Lock(&Mutex);
         PendingBatches = FMath::Max(0, PendingBatches - 1);
+        if (PendingBatches == 0)
+        {
+            // 所有重试链都已终止；已触发的一次性句柄无需继续保留。
+            RetryTickerHandles.Reset();
+        }
 
         if (!bShuttingDown)
         {
@@ -297,20 +353,53 @@ float FGamePlatformTelemetryNetworkSink::ComputeRetryDelay(
 }
 
 void FGamePlatformTelemetryNetworkSink::Shutdown(
-    float)
+    float BudgetSeconds)
 {
-    TSharedPtr<IGamePlatformTelemetryTransport, ESPMode::ThreadSafe>
-        LocalTransport;
+    check(IsInGameThread());
+    CancelRetryTickers();
 
+    bool bNeedsBudget = false;
     {
         FScopeLock Lock(&Mutex);
         bShuttingDown = true;
         bStarted = false;
+        bNeedsBudget = PendingBatches > 0 && BudgetSeconds > 0.0f;
+        Status.Health = bNeedsBudget
+            ? EGamePlatformTelemetrySinkHealth::Degraded
+            : EGamePlatformTelemetrySinkHealth::Stopped;
+    }
+
+    if (!bNeedsBudget)
+    {
+        FinalizeShutdownAfterBudget();
+        return;
+    }
+
+    // 不阻塞游戏线程等待HTTP回调：保留Self到预算到期，期间已在飞请求仍可自然完成。
+    TSharedRef<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> KeepAlive = AsShared();
+    ShutdownTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateLambda([KeepAlive](float)
+        {
+            KeepAlive->FinalizeShutdownAfterBudget();
+            return false;
+        }),
+        FMath::Max(0.01f, BudgetSeconds));
+}
+
+void FGamePlatformTelemetryNetworkSink::FinalizeShutdownAfterBudget()
+{
+    check(IsInGameThread());
+    TSharedPtr<IGamePlatformTelemetryTransport, ESPMode::ThreadSafe> LocalTransport;
+    {
+        FScopeLock Lock(&Mutex);
         LocalTransport = Transport;
-        Status.DroppedBatches += PendingBatches;
-        PendingBatches = 0;
-        Status.Health =
-            EGamePlatformTelemetrySinkHealth::Stopped;
+        if (PendingBatches > 0)
+        {
+            Status.DroppedBatches += PendingBatches;
+            PendingBatches = 0;
+        }
+        Status.Health = EGamePlatformTelemetrySinkHealth::Stopped;
+        ShutdownTickerHandle.Reset();
     }
 
     if (LocalTransport.IsValid())

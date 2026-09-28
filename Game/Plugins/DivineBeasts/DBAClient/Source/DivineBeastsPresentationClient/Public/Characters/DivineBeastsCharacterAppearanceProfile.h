@@ -49,6 +49,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance")
     TSoftClassPtr<UAnimInstance> AnimInstanceClass;
 
+    /** Mesh挂到标准ACharacter Mesh组件后的相对位置；Manny/Quinn默认使用Z=-90cm。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance")
+    FVector MeshRelativeLocation = FVector(0.0, 0.0, -90.0);
+
+    /** Mesh相对旋转；UE5 Mannequin默认面向角色前方需要Yaw=-90度。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance")
+    FRotator MeshRelativeRotation = FRotator(0.0, -90.0, 0.0);
+
+    /** Mesh相对缩放；正式生肖模型可在Profile内单独调整，不污染角色权威碰撞。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance")
+    FVector MeshRelativeScale = FVector::OneVector;
+
     /** 资产结构版本；只用于客户端外观兼容，不替代Server-safe Hero Definition版本。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance", meta=(ClampMin="1"))
     int32 Version = 1;

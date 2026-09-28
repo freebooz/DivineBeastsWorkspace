@@ -5,6 +5,7 @@
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
 #include "Screens/DivineBeastsUIScreenCatalog.h"
 #include "Localization/DivineBeastsUILocalization.h"
+#include "ViewModels/DivineBeastsUIViewModel.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsUIScreenInventoryTest,
@@ -29,6 +30,9 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
         TestTrue(
             TEXT("公共项目UI软资源路径必须归第三层DBAUIPack_Core内容包"),
             Surface.WidgetClassPath.StartsWith(TEXT("/DBAUIPack_Core/")));
+        TestTrue(
+            TEXT("移动端变体尚未交付时必须保持空路径并回退公共资产"),
+            Surface.MobileWidgetClassPath.IsEmpty());
     }
 
     for (const FName Required : {
@@ -112,6 +116,50 @@ bool FDivineBeastsUICommandContractTest::RunTest(const FString&)
         EDivineBeastsUICommandType::SelectPersistentCharacter;
     Error.Reset();
     TestFalse(TEXT("持久角色选择必须携带CharacterId"), Select.IsValid(Error));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsUICommandCompletionLifetimeTest,
+    "DivineBeasts.UI.CommandCompletionLifetime",
+    EAutomationTestFlags_ApplicationContextMask |
+    EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsUICommandCompletionLifetimeTest::RunTest(const FString&)
+{
+    UDivineBeastsUIViewModel* ViewModel =
+        NewObject<UDivineBeastsUIViewModel>();
+    TestNotNull(TEXT("命令终态测试必须创建ViewModel"), ViewModel);
+    if (!ViewModel)
+    {
+        return false;
+    }
+
+    ViewModel->BeginPage();
+    const int32 SubmittedRevision = ViewModel->GetRevision();
+    const int32 SubmittedPageGeneration = ViewModel->GetPageGeneration();
+    const FGuid RequestId = FGuid::NewGuid();
+    ViewModel->PendingCommands.Add(RequestId);
+
+    // 模拟提交后业务忙碌状态先到达；这会增加Revision，但页面代次和请求身份未变。
+    ViewModel->MarkStateChanged();
+
+    FDivineBeastsUICommandResult Result;
+    Result.RequestId = RequestId;
+    Result.bAccepted = false;
+    Result.ErrorCode = TEXT("InvalidCredentials");
+    ViewModel->HandleCommandResult(
+        SubmittedPageGeneration,
+        Result);
+
+    TestEqual(
+        TEXT("同页面内状态先变化也必须交付命令终态"),
+        ViewModel->GetLastCommandErrorCode(),
+        FName(TEXT("InvalidCredentials")));
+    TestFalse(
+        TEXT("命令终态到达后必须清理待处理请求"),
+        ViewModel->PendingCommands.Contains(RequestId));
+    ViewModel->EndPage();
     return true;
 }
 

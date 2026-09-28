@@ -189,16 +189,18 @@ T_DBA_Brand_GameLogo
 
 ## 8. 当前未完成边界
 
-### 8.1 真实 Widget Blueprint / RootLayout
+### 8.1 已交付的 Widget Blueprint / RootLayout 与剩余边界
 
-本轮 Monolith 实施范围：
+2026-09-28 已通过 Monolith MCP 0.20.3 在正式工程中创建、编译、保存并在编辑器重启后回读：
 
 ~~~text
 WBP_DBA_UI_RootLayout
 WBP_DBA_UI_Login
 ~~~
 
-RootLayout 与 Login 必须由 Monolith MCP 创建并通过编译、保存、回读；Boot 与 LoadingTravel 仍是后续页面。只有真实流程 Definition、RootLayout 安装、相关页面资产和后端服务共同可用后，才能宣称完整登录运行闭环。
+RootLayout 与 Login 均为真实 `.uasset`，其父类、Widget Tree、命名控件、密码掩码和磁盘状态已经回读；两个蓝图编译均为0错误／0警告，登录页可访问性审计为0问题。Boot 与 LoadingTravel 仍是后续页面。只有真实流程 Definition、RootLayout 运行安装、相关页面资产和后端服务共同可用后，才能宣称完整登录运行闭环。
+
+登录页当前采用临时极简视觉：页面和用户名／密码输入框均为黑色背景，输入框使用灰色边框并在聚焦时显示蓝色描边，蓝色“登录”按钮作为唯一主要操作；不使用卡片或面板。忙碌、维护和错误控件默认隐藏，仅由现有事件状态显示，不增加业务轮询。
 
 ### 8.2 登录后的项目业务 API
 

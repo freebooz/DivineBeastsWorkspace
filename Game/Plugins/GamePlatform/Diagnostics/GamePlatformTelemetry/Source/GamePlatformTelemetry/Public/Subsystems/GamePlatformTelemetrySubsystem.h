@@ -121,9 +121,18 @@ private:
 
     bool bEnabled = true;
     bool bTraceBridgeEnabled = false;
+    bool bFlushInProgress = false;
     uint64 SessionGeneration = 0;
 
     bool TickFlush(float DeltaSeconds);
+    /** 按需安排一次刷新；Buffer为空时不保留常驻Ticker。 */
+    void ScheduleFlush(float DelaySeconds);
+    /** 撤销尚未触发的一次性刷新。 */
+    void CancelScheduledFlush();
+    /** 新记录入队后根据批次阈值决定立即刷新还是安排延迟刷新。 */
+    void RequestFlushAfterRecord();
+    /** 上下文字段统一去除换行并限制长度，防止异常ID放大每条遥测记录。 */
+    FString SanitizeContextValue(FString Value) const;
 
     EGamePlatformTelemetryRecordResult RecordMetricInternal(
         FName MetricName,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h"
 #include "Sinks/GamePlatformTelemetrySink.h"
 #include "Transport/GamePlatformTelemetryTransport.h"
 
@@ -50,6 +51,11 @@ private:
     bool bStarted = false;
     bool bShuttingDown = false;
 
+    /** 已安排的一次性重试任务；数量受 MaxPendingBatches * MaxRetries 的硬上限约束。 */
+    TArray<FTSTicker::FDelegateHandle> RetryTickerHandles;
+    /** 非阻塞关停预算到期任务；在预算内允许已发HTTP自然完成。 */
+    FTSTicker::FDelegateHandle ShutdownTickerHandle;
+
     void SubmitAttempt(
         FGamePlatformTelemetryBatch Batch,
         int32 Attempt,
@@ -60,6 +66,19 @@ private:
         bool bAccepted,
         const FString& Error,
         FGamePlatformTelemetrySubmitCompletion Completion);
+
+    /** 在游戏线程安排有界指数退避；断网恢复后由同一Batch继续提交。 */
+    void ScheduleRetry(
+        FGamePlatformTelemetryBatch Batch,
+        int32 NextAttempt,
+        double FirstAttemptSeconds,
+        float RetryAfterSeconds,
+        FGamePlatformTelemetrySubmitCompletion Completion);
+
+    /** 关停时撤销尚未触发的Retry Ticker，避免延迟闭包继续持有Batch。 */
+    void CancelRetryTickers();
+    /** 关停预算到期后取消仍在飞行的HTTP，并把剩余批次计入Dropped。 */
+    void FinalizeShutdownAfterBudget();
 
     float ComputeRetryDelay(
         const FGuid& BatchId,

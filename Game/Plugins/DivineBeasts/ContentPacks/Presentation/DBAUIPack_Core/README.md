@@ -4,7 +4,7 @@
 
 ## 当前资产范围
 
-- `/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout`：每个本地玩家的根布局，承载平台定义的HUD、Screen、Modal、System、Notification、Loading和Debug层。
+- `/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout`：每个本地玩家的根布局，承载平台定义的HUD、WorldProjection、Feedback、Screen、Modal、Notification、Loading、System和Debug九层。
 - `/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login`：账号密码登录页面，仅消费 `UDivineBeastsLoginViewModel` 的只读状态和命令。
 
 ## 生成和修改规则
@@ -17,9 +17,10 @@
 
 - Monolith 版本：`0.20.3`，工程：`DivineBeastsArena`。
 - 根布局父类为 `DivineBeastsRootLayout`，共10个控件节点；9个命名层按全屏锚点和固定层级顺序配置。
-- 登录页父类为 `DivineBeastsLoginScreen`，共17个控件节点；账号、密码、提交、忙碌、维护和错误反馈均使用C++约定的命名控件。
+- 登录页父类为 `DivineBeastsLoginScreen`，共13个控件节点；可见界面只保留标题、用户名、密码和登录按钮，不使用卡片或面板。页面、两个输入框均为黑色背景，输入框保留灰色边框和蓝色聚焦描边，登录按钮使用蓝色强调；忙碌、维护和错误反馈控件按事件需要显示。
 - `PasswordInput.IsPassword=True`；账号、密码与登录按钮已配置显式键盘／手柄导航，密码默认值为空。
 - 两个控件蓝图的 Monolith 编译均为0错误、0警告；登录页可访问性审计为0问题。
 - CommonUI审计保留1条通用焦点属性警告：项目没有工具所寻找的`DesiredFocusTargetName`属性，而是由平台页面基类的原生焦点契约和页面目录中的`AccountInput`完成初始焦点。该警告不等同于运行验证通过，仍须在PIE中复核真实焦点。
+- `DivineBeastsUIClient` Editor定向构建成功；重启编辑器后7项`DivineBeasts.UI`原生自动化测试全部通过。测试曾真实发现并促使修复初始`NAME_None`路由错误、命令完成事件被修订号变化吞掉以及未交付移动端资产路径被错误生成的问题。
 
 本记录只证明资产创建、编辑器编译、保存和结构回读。当前尚未完成PIE登录交互、真实后端认证、客户端Cook、移动设备适配或人工视觉签审。

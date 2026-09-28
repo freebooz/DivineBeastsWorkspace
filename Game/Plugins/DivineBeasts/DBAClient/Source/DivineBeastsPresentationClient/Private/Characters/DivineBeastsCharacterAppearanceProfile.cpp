@@ -30,6 +30,20 @@ bool UDivineBeastsCharacterAppearanceProfile::IsProfileValid(
         OutError = TEXT("Character Appearance版本和ContentRevision必须有效。");
         return false;
     }
+    if (MeshRelativeLocation.ContainsNaN() ||
+        MeshRelativeRotation.ContainsNaN() ||
+        MeshRelativeScale.ContainsNaN())
+    {
+        OutError = TEXT("Character Appearance的Mesh相对变换必须为有限数值。");
+        return false;
+    }
+    if (MeshRelativeScale.X <= 0.0 ||
+        MeshRelativeScale.Y <= 0.0 ||
+        MeshRelativeScale.Z <= 0.0)
+    {
+        OutError = TEXT("Character Appearance的Mesh旋转必须有效且缩放必须为正数。");
+        return false;
+    }
     for (const TSoftObjectPtr<UMaterialInterface>& Material : MaterialOverrides)
     {
         if (Material.IsNull())

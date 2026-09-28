@@ -252,6 +252,10 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryLimits
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Telemetry", meta=(ClampMin="16"))
     int32 MaxStringLength = 512;
 
+    /** 单个稳定上下文字段最大字符数；上下文由平台截断为安全上限，避免异常ID放大每条记录与批次。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Telemetry", meta=(ClampMin="32"))
+    int32 MaxContextStringLength = 160;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Telemetry", meta=(ClampMin="128"))
     int32 MaxEventBytes = 8192;
 
@@ -266,6 +270,10 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryLimits
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Telemetry", meta=(ClampMin="1024"))
     int32 MaxBatchBytes = 256 * 1024;
+
+    /** 单次主动刷新最多提交的批次数；必须小于NetworkSink待发送容量，避免一次主线程刷新制造突发请求。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Telemetry", meta=(ClampMin="1", ClampMax="16"))
+    int32 MaxFlushBatchesPerPass = 4;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Telemetry", meta=(ClampMin="0.1"))
     float FlushIntervalSeconds = 5.0f;

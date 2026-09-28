@@ -1,5 +1,40 @@
 #include "Buffer/GamePlatformTelemetryBoundedBuffer.h"
 
+namespace
+{
+int32 EstimateContextBytes(const FGamePlatformTelemetryContext& Context)
+{
+    const FString* Values[] = {
+        &Context.BuildVersion, &Context.ContentRevision, &Context.Platform,
+        &Context.Environment, &Context.SourceRole, &Context.ServerRole,
+        &Context.Region, &Context.MapId, &Context.WorldId, &Context.ExperienceId,
+        &Context.ServerInstanceId, &Context.MatchId, &Context.ArenaModeId,
+        &Context.SessionId, &Context.PseudonymousPlayerId, &Context.CorrelationId,
+        &Context.TransactionId
+    };
+
+    int32 Bytes = 256;
+    for (const FString* Value : Values)
+    {
+        Bytes += Value ? Value->Len() * static_cast<int32>(sizeof(TCHAR)) : 0;
+    }
+    return Bytes;
+}
+
+bool SameContext(const FGamePlatformTelemetryContext& A, const FGamePlatformTelemetryContext& B)
+{
+    return A.BuildVersion == B.BuildVersion && A.ContentRevision == B.ContentRevision &&
+        A.Platform == B.Platform && A.Environment == B.Environment &&
+        A.SourceRole == B.SourceRole && A.ServerRole == B.ServerRole &&
+        A.Region == B.Region && A.MapId == B.MapId && A.WorldId == B.WorldId &&
+        A.ExperienceId == B.ExperienceId && A.ServerInstanceId == B.ServerInstanceId &&
+        A.MatchId == B.MatchId && A.ArenaModeId == B.ArenaModeId &&
+        A.SessionId == B.SessionId && A.PseudonymousPlayerId == B.PseudonymousPlayerId &&
+        A.CorrelationId == B.CorrelationId && A.TransactionId == B.TransactionId;
+}
+}
+
+
 FGamePlatformTelemetryBoundedBuffer::
 FGamePlatformTelemetryBoundedBuffer(
     FGamePlatformTelemetryLimits InLimits)
@@ -89,7 +124,7 @@ bool FGamePlatformTelemetryBoundedBuffer::EnqueueMetric(
 }
 
 bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
-    const FGamePlatformTelemetryContext& SourceContext,
+    const FGamePlatformTelemetryContext&,
     FGamePlatformTelemetryBatch& OutBatch)
 {
     FScopeLock Lock(&Mutex);
@@ -99,22 +134,34 @@ bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
         return false;
     }
 
+    const FQueuedRecord& First = Records[0];
+    const FGamePlatformTelemetryContext& BatchContext =
+        First.Kind == ERecordKind::Event ? First.Event.Context : First.Metric.Context;
+
     OutBatch = {};
     OutBatch.BatchId = FGuid::NewGuid();
     OutBatch.SchemaVersion = 1;
-    OutBatch.SourceContext = SourceContext;
+    OutBatch.SourceContext = BatchContext;
     OutBatch.CreatedAtUtc = FDateTime::UtcNow();
     OutBatch.DroppedSinceLastBatch = DroppedSinceLastBatch;
 
     int32 Count = 0;
-    int32 Bytes = 0;
+    // Batch只发送一次公共Context，因此这里把Context成本计入真实批次预算，而不是对每条记录重复估算。
+    int32 Bytes = EstimateContextBytes(BatchContext) + 256;
     int32 ConsumeCount = 0;
 
     for (const FQueuedRecord& Record : Records)
     {
+        const FGamePlatformTelemetryContext& RecordContext =
+            Record.Kind == ERecordKind::Event ? Record.Event.Context : Record.Metric.Context;
+        if (!SameContext(BatchContext, RecordContext))
+        {
+            // Context切换必须自然切批，避免世界/会话切换前后的记录被错误归到同一SourceContext。
+            break;
+        }
+
         if (Count >= Limits.MaxBatchEvents ||
-            Bytes + Record.EstimatedBytes >
-                Limits.MaxBatchBytes)
+            Bytes + Record.EstimatedBytes > Limits.MaxBatchBytes)
         {
             break;
         }

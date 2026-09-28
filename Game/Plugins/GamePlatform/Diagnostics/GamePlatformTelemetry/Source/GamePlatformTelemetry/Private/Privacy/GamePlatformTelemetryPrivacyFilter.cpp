@@ -111,19 +111,29 @@ FGamePlatformTelemetryPrivacyFilter::ValidateEvent(
             return EGamePlatformTelemetryRecordResult::ForbiddenAttribute;
         }
 
-        const EGamePlatformTelemetryPrivacyClass* Allowed =
-            Definition.AllowedAttributes.Find(Attribute.Key);
+        const FGamePlatformTelemetryAttributeDefinition* AttributeDefinition =
+            Definition.Attributes.Find(Attribute.Key);
 
-        if (!Allowed ||
-            static_cast<uint8>(Attribute.PrivacyClass) >
-                static_cast<uint8>(*Allowed))
+        if (!AttributeDefinition || Attribute.Type != AttributeDefinition->Type ||
+            AttributeDefinition->PrivacyClass == EGamePlatformTelemetryPrivacyClass::Forbidden)
         {
             return EGamePlatformTelemetryRecordResult::InvalidAttribute;
         }
 
-        if (Attribute.Type ==
-                EGamePlatformTelemetryAttributeType::String &&
-            Attribute.StringValue.Len() > Limits.MaxStringLength)
+        if (Attribute.Type == EGamePlatformTelemetryAttributeType::String &&
+            Attribute.StringValue.Len() > FMath::Min(Limits.MaxStringLength, AttributeDefinition->MaxStringLength))
+        {
+            return EGamePlatformTelemetryRecordResult::InvalidAttribute;
+        }
+    }
+
+    for (const TPair<FName, FGamePlatformTelemetryAttributeDefinition>& Pair : Definition.Attributes)
+    {
+        if (Pair.Value.bRequired && !Event.Attributes.ContainsByPredicate(
+                [&Pair](const FGamePlatformTelemetryAttribute& Attribute)
+                {
+                    return Attribute.Key == Pair.Key;
+                }))
         {
             return EGamePlatformTelemetryRecordResult::InvalidAttribute;
         }

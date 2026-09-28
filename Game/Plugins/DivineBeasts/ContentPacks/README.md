@@ -1,6 +1,6 @@
 # 神兽联盟内容插件规划与登记
 
-`ContentPacks`只是第三层内部的分类目录，不是第四层。当前已登记一个真实纯内容插件 `DBAUIPack_Core`，用于承载由 Monolith MCP 生成并经 Unreal Editor 保存的公共用户界面资产；其他规划包仍不得创建空插件或占位`.uasset`／`.umap`。
+`ContentPacks`只是第三层内部的分类目录，不是第四层。当前已登记公共角色内容包 `DBAContentPack_Common`、十二个生肖英雄内容包及 `DBAUIPack_Core`。角色内容包在原型阶段承载 Manny/Quinn 与十二套颜色外观，正式美术到位后在相同插件身份和稳定 Profile 路径内替换，不改变 HeroDefinitionId、协议或存档。
 
 ## 内容所有权规划
 
@@ -21,7 +21,7 @@ ContentPacks/                              # 内容插件分类根目录
 │   ├── DBAHeroPack_Monkey/                # 申猴内容
 │   ├── DBAHeroPack_Rooster/               # 酉鸡内容
 │   ├── DBAHeroPack_Dog/                   # 戌狗内容
-│   └── DBAHeroPack_Pig/                   # 亥猪内容
+│   └── DBAHeroPack_Boar/                  # 亥猪内容
 ├── Worlds/                               # 世界地图与专属资源
 │   ├── DBAWorldPack_OpenWorld/            # 大厅、主城、野外；无独立大厅包
 │   ├── DBAWorldPack_Village/              # 新手村、教学、训练
@@ -37,7 +37,7 @@ ContentPacks/                              # 内容插件分类根目录
     └── Events/                           # 活动内容
 ```
 
-除 `DBAUIPack_Core` 外，以上是目标归属，不是已存在文件。DBAWorlds持有定义类型与项目校验，世界包持有地图；DBAClient持有上下文与注册协调，英雄、世界和公共包各自持有美术，任何资产只有一个源所有者。旧包如存在真实身份或引用，必须由引擎完成有回退的迁移，不直接重命名二进制资产。
+`DBAContentPack_Common` 与十二个 `DBAHeroPack_*` 已进入实际交付清单；World/Presentation 中未登记的条目仍只是目标归属。DBAWorlds持有定义类型与项目校验，世界包持有地图；DBAClient持有上下文与注册协调，英雄、世界和公共包各自持有美术，任何资产只有一个源所有者。二进制资产跨挂载点迁移必须通过 Unreal Editor 更新引用，禁止简单文件改名。
 
 ## 登记格式与交付门槛
 
@@ -49,7 +49,7 @@ ContentPacks/                              # 内容插件分类根目录
 
 ## 端侧与验收
 
-- 英雄包包含玩法定义、服务器必要数据及客户端专属表现；以真实引用与Cook策略剥离，不能以文件夹名称当作隔离证明。
+- `DBAGameplay` 持有 Server-safe Hero Definition；`DBAHeroPack_*` 只持有客户端外观 Profile、材质和真实/占位美术。Server Target不启用英雄美术包，避免 Manny/Quinn、纹理和材质进入 Dedicated Server Cook。
 - 世界包保留引擎外置Actor／对象文件、碰撞、导航和权威PCG结果；装饰与纯VFX不进入Server产物。
 - 可选皮肤／活动包不被核心硬引用。公共VFX回退保持可读性，目录冲突、异步取消、世界退出及多实例租约必须验证。
 - 未来按模块拆出的代码能力必须先修改正式代码插件清单，不能伪装为内容插件绕过46个基线。
