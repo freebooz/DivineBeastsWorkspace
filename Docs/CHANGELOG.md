@@ -2,6 +2,14 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-29｜GamePlatformOpenWorld 空壳专项退休
+
+- 专项审查确认 `GamePlatformOpenWorld` 只有 Runtime／ServerOnly 模块注册入口，没有公开契约、测试、资产或运行时消费者；全工作空间未发现项目 Dynamic World Event／Zone Activity／Population Scheduler 等真实跨项目需求。
+- 采用退休而非补造“万能 OpenWorld Manager”：OpenWorld 服务器角色继续保留，世界生命周期／流送由 GamePlatformWorld 承担，PCG／Navigation／Interaction／AI 各自保持独立边界，项目大厅／主城／野外规则继续归 DivineBeasts 层。
+- 正式基线调整为39个GamePlatform稳定身份（平台层38＋MOBA层GamePlatformArena 1）、1个MobaPresentation、5个DBA代码插件，共45个代码／机制插件＋登记内容N；DesignBaselineAudit同步拒绝重新引入已退休空壳。
+- 本变更不修改Shared协议、服务器角色、地图／资产身份或现有运行时代码；UE完整构建、Cook／Stage、联机与人工验收仍按独立证据记录。
+- 专项 DesignBaselineAudit 回归13/13通过；实际工作区基线正确识别 `GamePlatform 39/39`、代码／机制45、World分类4，Game／Shared运行引用为0且 `git diff --check` 通过。全量基线仍有22项既有失败（12个英雄空内容包＋10条DBAWorlds跨插件声明缺失），不归因于本次退休；本轮未停止或借用并行中的UE构建，因此不宣称完整UE构建、Cook／Stage或联机通过。
+
 ## 2026-09-28｜Monolith登录界面与事件驱动边界
 
 - 将“神兽联盟项目自有用户界面视觉资产必须通过 Monolith MCP 创建、修改、编译、保存和回读”写入全局工程规则、总体规划和插件规范；明确 GamePlatformUI、DBAClient 与第三层内容包的职责边界。

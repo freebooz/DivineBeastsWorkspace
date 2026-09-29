@@ -489,4 +489,68 @@ bool FGamePlatformInventoryDeterministicErrorTest::RunTest(
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformInventorySnapshotSingleFlightTest,
+    "GamePlatform.Inventory.Client.SnapshotSingleFlightAndPendingIsolation",
+    EAutomationTestFlags::EditorContext |
+    EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformInventorySnapshotSingleFlightTest::RunTest(
+    const FString&)
+{
+    UGamePlatformInventoryClientSubsystem* Client =
+        NewObject<UGamePlatformInventoryClientSubsystem>();
+    TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
+        MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+
+    TestTrue(
+        TEXT("配置账号后启动首个快照请求"),
+        Client->ConfigureAuthenticatedAccount(
+            TEXT("Account-SingleFlight"),
+            Transport));
+    TestFalse(
+        TEXT("已有快照请求在途时拒绝第二个刷新"),
+        Client->RefreshSnapshot());
+
+    Transport->CompleteSnapshot(5);
+    TestEqual(
+        TEXT("首个快照完成后进入Ready"),
+        Client->GetState(),
+        EGamePlatformInventoryClientState::Ready);
+
+    TestTrue(
+        TEXT("Ready状态允许显式刷新"),
+        Client->RefreshSnapshot());
+    TestFalse(
+        TEXT("显式刷新仍保持单飞"),
+        Client->RefreshSnapshot());
+    Transport->CompleteSnapshot(6);
+
+    const FGuid OperationId = Client->RequestMove(
+        TEXT("Item-Pending"),
+        TEXT("main"),
+        1);
+    TestTrue(TEXT("写操作生成OperationId"), OperationId.IsValid());
+    TestFalse(
+        TEXT("Mutation在途期间禁止普通快照刷新"),
+        Client->RefreshSnapshot());
+
+    Transport->CompleteMutation(
+        OperationId,
+        0,
+        EGamePlatformInventoryError::BackendUnavailable);
+    TestEqual(
+        TEXT("结果未知后进入Error"),
+        Client->GetState(),
+        EGamePlatformInventoryClientState::Error);
+    TestTrue(
+        TEXT("结果未知必须保留原Pending Operation"),
+        Client->HasPendingOperation());
+    TestFalse(
+        TEXT("结果未知Pending存在时普通刷新不得清理操作"),
+        Client->RefreshSnapshot());
+
+    return true;
+}
+
 #endif

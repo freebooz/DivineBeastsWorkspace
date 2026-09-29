@@ -31,7 +31,7 @@ Write-Output ("插件描述：{0}/{1}；GamePlatform：{2}/{3}；DBA：{4}/{5}" 
     $report.PluginCounts.GamePlatform, $report.PluginCounts.ExpectedGamePlatform,
     $report.PluginCounts.Project, $report.PluginCounts.ExpectedProject)
 Write-Output ("工程：{0}；Target：{1}/3；必选默认配置：{2}/{3}；配置文件总数：{4}" -f $report.ProjectCount, $report.TargetCount, $report.RequiredConfigCount, $report.ExpectedConfigCount, $report.ConfigCount)
-Write-Output ("代码／机制基线：{0}；内容插件：{1}/{2}（单独登记，不计入40个GamePlatform身份）" -f $report.PluginCounts.Baseline,$report.PluginCounts.ContentPacks,$report.PluginCounts.ExpectedContentPacks)
+Write-Output ("代码／机制基线：{0}；内容插件：{1}/{2}（单独登记，不计入{3}个GamePlatform身份）" -f $report.PluginCounts.Baseline,$report.PluginCounts.ContentPacks,$report.PluginCounts.ExpectedContentPacks,$report.PluginCounts.ExpectedGamePlatform)
 Write-Output 'GamePlatform 分类数量：'
 foreach ($category in $report.CategoryCounts.Keys) {
     Write-Output ("  {0}: {1}" -f $category, $report.CategoryCounts[$category])

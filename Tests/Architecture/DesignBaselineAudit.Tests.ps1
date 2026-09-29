@@ -9,7 +9,7 @@ Describe '设计基线只读结构审计' {
         Foundation = @('GamePlatformCore', 'GamePlatformData')
         Application = @('GamePlatformApplicationFlow', 'GamePlatformInput', 'GamePlatformLoading', 'GamePlatformSettings', 'GamePlatformSave', 'GamePlatformLocalization')
         OnlineServices = @('GamePlatformOnline', 'GamePlatformSession', 'GamePlatformServer')
-        World = @('GamePlatformWorld', 'GamePlatformOpenWorld', 'GamePlatformPCG', 'GamePlatformInteraction', 'GamePlatformNavigation')
+        World = @('GamePlatformWorld', 'GamePlatformPCG', 'GamePlatformInteraction', 'GamePlatformNavigation')
         Gameplay = @('GamePlatformGameplay', 'GamePlatformCharacter', 'GamePlatformAbilitySystem', 'GamePlatformCombat', 'GamePlatformAI', 'GamePlatformQuest', 'GamePlatformAnimation')
         Presentation = @('GamePlatformUI', 'GamePlatformPresentation', 'GamePlatformVFX', 'GamePlatformSFX', 'GamePlatformCamera')
         GameModes = @('GamePlatformLobby', 'GamePlatformVillage')
@@ -72,14 +72,14 @@ Describe '设计基线只读结构审计' {
         return $workspaceRoot
     }
 
-    It '接受跨三层的40个GamePlatform身份、5个项目插件及独立MOBA表现插件、一个工程、三个Target和八项默认配置' {
+    It '接受跨三层的39个GamePlatform身份、5个项目插件及独立MOBA表现插件、一个工程、三个Target和八项默认配置' {
         $workspaceRoot = New-DesignBaselineFixtureRoot
 
         $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
 
         $result.Passed | Should Be $true
-        $result.PluginCounts.Actual | Should Be 46
-        $result.PluginCounts.GamePlatform | Should Be 40
+        $result.PluginCounts.Actual | Should Be 45
+        $result.PluginCounts.GamePlatform | Should Be 39
         $result.PluginCounts.Project | Should Be 5
         $result.PluginCounts.MobaPresentation | Should Be 1
         $result.ProjectCount | Should Be 1
@@ -117,9 +117,9 @@ Describe '设计基线只读结构审计' {
             Set-Content -LiteralPath (Join-Path $registryRoot 'ContentPackRegistry.json')
         '{"FileVersion":3,"CanContainContent":true}' | Set-Content -LiteralPath (Join-Path $packRoot 'DBAHeroPack_Rat.uplugin')
         $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
-        $result.PluginCounts.Baseline | Should Be 46
+        $result.PluginCounts.Baseline | Should Be 45
         $result.PluginCounts.ContentPacks | Should Be 1
-        $result.PluginCounts.GamePlatform | Should Be 40
+        $result.PluginCounts.GamePlatform | Should Be 39
         $result.PluginCounts.Project | Should Be 5
         $result.Passed | Should Be $false
         ($result.Errors -join "`n") | Should Match '内容包.*缺少真实UE资产'
@@ -146,6 +146,18 @@ Describe '设计基线只读结构审计' {
 
         $result.Passed | Should Be $false
         ($result.Errors -join "`n") | Should Match 'UnapprovedPlugin'
+    }
+
+    It '已退休的GamePlatformOpenWorld重新出现时按非基线插件拒绝' {
+        $workspaceRoot = New-DesignBaselineFixtureRoot
+        $retiredDirectory = Join-Path $workspaceRoot 'Game/Plugins/GamePlatform/World/GamePlatformOpenWorld'
+        $null = New-Item -ItemType Directory -Path $retiredDirectory -Force
+        Set-Content -LiteralPath (Join-Path $retiredDirectory 'GamePlatformOpenWorld.uplugin') -Value '{"FileVersion":3,"Modules":[]}'
+
+        $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
+
+        $result.Passed | Should Be $false
+        ($result.Errors -join "`n") | Should Match 'GamePlatformOpenWorld'
     }
 
     It '重复插件描述即使总数相近也必须失败' {
