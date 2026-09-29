@@ -10,6 +10,14 @@
 - 正式基线更新为平台层39个＋MOBA层GamePlatformArena 1个，共40个GamePlatform稳定身份；加MobaPresentation和5个DBA代码插件后为46个代码／机制插件＋内容N。GamePlatformOpenWorld继续退休；当前46与2026-09-27历史46成员不同。
 - 同步AGENTS、插件规范、插件主清单、总体规划／目录、核心要求、三层规划、P0历史补充、内容包／DBAWorlds边界和DesignBaselineAudit；实际编译、Automation、MPC生成、Cook／Stage与材质人工视觉验收结果按本轮后续真实执行证据记录。
 
+## 2026-09-29｜十二生肖角色占位资源与角色插件闭环
+
+- 十二生肖采用“稳定 HeroDefinitionId + Server-safe Hero Definition + 客户端 Appearance Profile + 独立 HeroPack”的可替换架构；开发期统一复用 UE5.8 Manny/Quinn，每个生肖使用独立识别色，正式模型替换时不修改后端协议、CharacterId、HeroDefinitionId、GAS 身份或存档键。
+- 公共 `DBAContentPack_Common` 只保留一套 Manny/Quinn、Skeleton、PhysicsAsset 和基础材质/纹理；未导入旧工程 Control Rig、Mover 示例和动画蓝图，`Game/Content` 无版本控制重复 Mannequin 副本。12 个 Hero Definition、12 个 Appearance Profile、12 个原型颜色材质已落盘并纳入版本库。
+- 角色运行状态改为原子复制 Hero/生肖/SpawnGeneration/AvatarGeneration/DefinitionVersion/ContentRevision，CharacterId 保持 OwnerOnly；新增平台角色状态只读接口，修复异步 Definition 旧请求覆盖新角色的竞态，并以 ContentRevision 做客户端/服务器就绪一致性门禁。
+- `DivineBeastsCharactersRuntime` 注册统一 Character Initializer，只初始化平台 Spawn Operation 已创建的 ACharacter，不在项目层旁路 SpawnActor/Possess；Server Target 显式启用 DBAServer/DBAArena，OpenWorld/Village/MainArena 继续共用 Dedicated Server Target。
+- AssetManager 已扫描 `/DBAGameplay/Definitions`；Client/Editor Target 显式启用公共角色包和 12 个 HeroPack，Dedicated Server 不携带这些客户端表现资源。原型生成脚本支持自动工作区/引擎探测、旧项目仅首次导入时使用，并提供 `-ValidateOnly`；当前验证结果为公共 Manny/Quinn 依赖完整、Definition/Profile/Material = `12/12/12`。
+
 ## 2026-09-29｜GamePlatformSettings 四模块专项审查与实装
 
 - 专项审查确认原 `GamePlatformSettings` 只有 ClientOnly 模块入口、没有公开契约、设置模型、校验、生命周期、持久化、测试或消费者；设置域本身具有跨项目价值，因此保留插件身份并形成 Runtime／Client／Server／Editor 四模块，而不是继续保留空壳。

@@ -41,52 +41,20 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Initialize(FSubsystemCollec
             &UDivineBeastsClientTelemetryBootstrapSubsystem::HandleFlowViewStateChanged);
     }
 
-    // 处理组合子系统创建前已经完成认证/世界分配的情况；事件驱动之外只做这一次初始快照同步。
-    HandleAuthStateChanged(Online->GetSnapshot());
-    if (ApplicationFlow)
-    {
-        HandleFlowViewStateChanged(ApplicationFlow->GetViewState());
-    }
-
-    FString BaseUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("DIVINEBEASTS_GATEWAY_BASE_URL"));
-    BaseUrl.RemoveFromEnd(TEXT("/"));
-    if (BaseUrl.IsEmpty())
-    {
-        // 本地无后端时保持NullSink；遥测缺失绝不能阻断客户端启动。
-        return;
-    }
-
-    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakOnline = Online;
-    FGamePlatformTelemetryRequestAuthorizer RequestAuthorizer =
-        [WeakOnline](IHttpRequest& Request)
-        {
-            const UGamePlatformOnlineClientSubsystem* CurrentOnline =
-                WeakOnline.Get();
-            return CurrentOnline &&
-                CurrentOnline->ApplyAuthorization(Request);
-        };
-
-    const TSharedRef<FGamePlatformTelemetryHttpTransport, ESPMode::ThreadSafe> Transport =
-        MakeShared<FGamePlatformTelemetryHttpTransport, ESPMode::ThreadSafe>(
-            BaseUrl,
-            TEXT("/telemetry/v1/batches"),
-            TMap<FString, FString>{},
-            5.0f,
-            256 * 1024,
-            FGamePlatformTelemetryHeaderProvider(),
-            MoveTemp(RequestAuthorizer));
-
-    FGamePlatformTelemetryRetrySettings Retry;
-    Retry.MaxRetries = 4;
-    Retry.MaxPendingBatches = 8;
-    Retry.MaxRetryAgeSeconds = 30.0f;
-    bConfiguredNetworkSink = Telemetry->ConfigureSink(
-        MakeShared<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe>(Transport, Retry));
+    GatewayBaseUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("DIVINEBEASTS_GATEWAY_BASE_URL"));
+    GatewayBaseUrl.RemoveFromEnd(TEXT("/"));
 
     const FString ContentRevision = FPlatformMisc::GetEnvironmentVariable(TEXT("DIVINEBEASTS_CONTENT_REVISION"));
     if (!ContentRevision.IsEmpty())
     {
         Telemetry->SetContentRevision(ContentRevision);
+    }
+
+    // 处理组合子系统创建前已经完成认证/世界分配的情况；先准备非秘密URL，再同步认证，确保已登录用户直接绑定当前认证代次的Sink。
+    HandleAuthStateChanged(Online->GetSnapshot());
+    if (ApplicationFlow)
+    {
+        HandleFlowViewStateChanged(ApplicationFlow->GetViewState());
     }
 }
 
@@ -103,11 +71,27 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleAuthStateChanged(
 
     if (Snapshot.State == EGamePlatformAuthState::Authenticated)
     {
-        // 不把AccountId写入遥测。后端Gateway依据真实认证上下文生成伪匿名玩家ID并覆盖客户端身份。
+        const FGuid NewGeneration = Snapshot.AuthGeneration;
+        const bool bAuthGenerationChanged =
+            TelemetryAuthGeneration.IsValid() && NewGeneration.IsValid() &&
+            TelemetryAuthGeneration != NewGeneration;
+
+        if (bAuthGenerationChanged && !TelemetrySessionId.IsEmpty())
+        {
+            // 账号切换时先终止旧会话并立即Shutdown旧Sink；否则旧Batch可能在断线恢复后使用新账号Token发送，造成归属串号。
+            Telemetry->EndSession();
+            SwitchToNullSink();
+            Telemetry->DiscardBufferedRecordsForPrivacyBoundary();
+            TelemetrySessionId.Reset();
+            TelemetryAuthGeneration.Invalidate();
+        }
+
         if (TelemetrySessionId.IsEmpty())
         {
-            TelemetrySessionId = Snapshot.AuthGeneration.IsValid()
-                ? Snapshot.AuthGeneration.ToString(EGuidFormats::Digits)
+            bConfiguredNetworkSink = ConfigureNetworkSinkForAuthenticatedSession();
+            TelemetryAuthGeneration = NewGeneration;
+            TelemetrySessionId = NewGeneration.IsValid()
+                ? NewGeneration.ToString(EGuidFormats::Digits)
                 : FGuid::NewGuid().ToString(EGuidFormats::Digits);
             Telemetry->BeginSession(TelemetrySessionId, FString());
 
@@ -119,11 +103,67 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleAuthStateChanged(
     }
 
     if (!TelemetrySessionId.IsEmpty() &&
-        Snapshot.State == EGamePlatformAuthState::LoggedOut)
+        (Snapshot.State == EGamePlatformAuthState::LoggedOut ||
+         Snapshot.State == EGamePlatformAuthState::Failed))
     {
         Telemetry->EndSession();
+        SwitchToNullSink();
+        Telemetry->DiscardBufferedRecordsForPrivacyBoundary();
         TelemetrySessionId.Reset();
+        TelemetryAuthGeneration.Invalidate();
     }
+}
+
+bool UDivineBeastsClientTelemetryBootstrapSubsystem::ConfigureNetworkSinkForAuthenticatedSession()
+{
+    check(IsInGameThread());
+    UGameInstance* GameInstance = GetGameInstance();
+    UGamePlatformTelemetrySubsystem* Telemetry =
+        GameInstance ? GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>() : nullptr;
+    UGamePlatformOnlineClientSubsystem* Online = OnlineSubsystem.Get();
+    if (!Telemetry || !Online || GatewayBaseUrl.IsEmpty())
+    {
+        // 本地无后端或认证子系统不可用时保留NullSink；遥测失败不能影响登录/玩法。
+        return false;
+    }
+
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakOnline = Online;
+    FGamePlatformTelemetryRequestAuthorizer RequestAuthorizer =
+        [WeakOnline](IHttpRequest& Request)
+        {
+            const UGamePlatformOnlineClientSubsystem* CurrentOnline = WeakOnline.Get();
+            return CurrentOnline && CurrentOnline->ApplyAuthorization(Request);
+        };
+
+    const TSharedRef<FGamePlatformTelemetryHttpTransport, ESPMode::ThreadSafe> Transport =
+        MakeShared<FGamePlatformTelemetryHttpTransport, ESPMode::ThreadSafe>(
+            GatewayBaseUrl,
+            TEXT("/telemetry/v1/batches"),
+            TMap<FString, FString>{},
+            5.0f,
+            256 * 1024,
+            FGamePlatformTelemetryHeaderProvider(),
+            MoveTemp(RequestAuthorizer));
+
+    FGamePlatformTelemetryRetrySettings Retry;
+    Retry.MaxRetries = 4;
+    Retry.MaxPendingBatches = 8;
+    Retry.MaxRetryAgeSeconds = 30.0f;
+    return Telemetry->ConfigureSink(
+        MakeShared<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe>(Transport, Retry));
+}
+
+void UDivineBeastsClientTelemetryBootstrapSubsystem::SwitchToNullSink()
+{
+    check(IsInGameThread());
+    UGameInstance* GameInstance = GetGameInstance();
+    if (UGamePlatformTelemetrySubsystem* Telemetry =
+            GameInstance ? GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>() : nullptr)
+    {
+        Telemetry->ConfigureSink(
+            MakeShared<FGamePlatformTelemetryNullSink, ESPMode::ThreadSafe>());
+    }
+    bConfiguredNetworkSink = false;
 }
 
 void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleFlowViewStateChanged(
@@ -184,17 +224,6 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Deinitialize()
     OnlineSubsystem.Reset();
     ApplicationFlowSubsystem.Reset();
 
-    if (bConfiguredNetworkSink)
-    {
-        if (UGameInstance* GameInstance = GetGameInstance())
-        {
-            if (UGamePlatformTelemetrySubsystem* Telemetry =
-                    GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>())
-            {
-                Telemetry->FlushBestEffort();
-            }
-        }
-    }
     if (!TelemetrySessionId.IsEmpty())
     {
         if (UGameInstance* GameInstance = GetGameInstance())
@@ -207,6 +236,13 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Deinitialize()
         }
         TelemetrySessionId.Reset();
     }
+    if (bConfiguredNetworkSink)
+    {
+        // Deinitialize同样切断旧认证代次的Retry链；Telemetry子系统随后仍会执行自身有界关停。
+        SwitchToNullSink();
+    }
+    TelemetryAuthGeneration.Invalidate();
+    GatewayBaseUrl.Reset();
     LastObservedFlowStep = NAME_None;
     bConfiguredNetworkSink = false;
     Super::Deinitialize();

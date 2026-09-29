@@ -311,6 +311,10 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryDiagnostics
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     int64 RateLimitedTotal = 0;
 
+    /** Counter/Gauge在Buffer内成功合并的调用次数；用于验证高频低基数指标是否减少真实入队。 */
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    int64 CoalescedMetricTotal = 0;
+
     /** 当前遥测开关和一次性刷新调度状态；用于Debug/UI只读诊断。 */
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     bool bEnabled = false;

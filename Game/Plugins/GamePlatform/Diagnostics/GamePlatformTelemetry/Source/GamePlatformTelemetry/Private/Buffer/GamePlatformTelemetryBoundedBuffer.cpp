@@ -32,6 +32,25 @@ bool SameContext(const FGamePlatformTelemetryContext& A, const FGamePlatformTele
         A.SessionId == B.SessionId && A.PseudonymousPlayerId == B.PseudonymousPlayerId &&
         A.CorrelationId == B.CorrelationId && A.TransactionId == B.TransactionId;
 }
+
+bool SameLabels(const TMap<FName, FString>& A, const TMap<FName, FString>& B)
+{
+    if (A.Num() != B.Num())
+    {
+        return false;
+    }
+    for (const TPair<FName, FString>& Pair : A)
+    {
+        const FString* Other = B.Find(Pair.Key);
+        if (!Other || *Other != Pair.Value)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+constexpr int32 MaxMetricCoalesceScan = 64;
 }
 
 
@@ -60,17 +79,24 @@ bool FGamePlatformTelemetryBoundedBuffer::EnqueueEvent(
     FGamePlatformTelemetryEvent Event,
     int32 EstimatedBytes)
 {
-    if (EstimatedBytes <= 0 ||
-        EstimatedBytes > Limits.MaxEventBytes)
+    const FGamePlatformTelemetryContext Context = Event.Context;
+    return EnqueueEvent(MoveTemp(Event), EstimatedBytes, Context);
+}
+
+bool FGamePlatformTelemetryBoundedBuffer::EnqueueEvent(
+    FGamePlatformTelemetryEvent Event,
+    int32 EstimatedBytes,
+    const FGamePlatformTelemetryContext& Context)
+{
+    if (EstimatedBytes <= 0 || EstimatedBytes > Limits.MaxEventBytes)
     {
         return false;
     }
 
     FScopeLock Lock(&Mutex);
-
-    if (!EnsureCapacityFor(
-            Event.Priority,
-            EstimatedBytes))
+    const int32 ContextBytes = EstimateContextBytes(Context);
+    const int32 BufferBytes = EstimatedBytes + ContextBytes;
+    if (!EnsureCapacityFor(Event.Priority, BufferBytes))
     {
         CountDrop(Event.Priority);
         return false;
@@ -80,9 +106,12 @@ bool FGamePlatformTelemetryBoundedBuffer::EnqueueEvent(
     Record.Kind = ERecordKind::Event;
     Record.Priority = Event.Priority;
     Record.EstimatedBytes = EstimatedBytes;
+    Record.ContextEstimatedBytes = ContextBytes;
+    Record.Context = ResolveSharedContext(Context);
+    Event.Context = {};
     Record.Event = MoveTemp(Event);
 
-    CurrentBytes += EstimatedBytes;
+    CurrentBytes += BufferBytes;
     Records.Add(MoveTemp(Record));
     ++Diagnostics.RecordedTotal;
     Diagnostics.BufferDepth = ActiveRecordCount();
@@ -94,16 +123,33 @@ bool FGamePlatformTelemetryBoundedBuffer::EnqueueMetric(
     FGamePlatformTelemetryMetric Metric,
     int32 EstimatedBytes)
 {
+    const FGamePlatformTelemetryContext Context = Metric.Context;
+    return EnqueueMetric(MoveTemp(Metric), EstimatedBytes, Context);
+}
+
+bool FGamePlatformTelemetryBoundedBuffer::EnqueueMetric(
+    FGamePlatformTelemetryMetric Metric,
+    int32 EstimatedBytes,
+    const FGamePlatformTelemetryContext& Context)
+{
     if (EstimatedBytes <= 0)
     {
         return false;
     }
 
     FScopeLock Lock(&Mutex);
+    if (TryCoalesceMetric(Metric, Context))
+    {
+        ++Diagnostics.RecordedTotal;
+        ++Diagnostics.CoalescedMetricTotal;
+        Diagnostics.BufferDepth = ActiveRecordCount();
+        Diagnostics.BufferBytes = CurrentBytes;
+        return true;
+    }
 
-    if (!EnsureCapacityFor(
-            EGamePlatformTelemetryPriority::Normal,
-            EstimatedBytes))
+    const int32 ContextBytes = EstimateContextBytes(Context);
+    const int32 BufferBytes = EstimatedBytes + ContextBytes;
+    if (!EnsureCapacityFor(EGamePlatformTelemetryPriority::Normal, BufferBytes))
     {
         CountDrop(EGamePlatformTelemetryPriority::Normal);
         return false;
@@ -113,9 +159,12 @@ bool FGamePlatformTelemetryBoundedBuffer::EnqueueMetric(
     Record.Kind = ERecordKind::Metric;
     Record.Priority = EGamePlatformTelemetryPriority::Normal;
     Record.EstimatedBytes = EstimatedBytes;
+    Record.ContextEstimatedBytes = ContextBytes;
+    Record.Context = ResolveSharedContext(Context);
+    Metric.Context = {};
     Record.Metric = MoveTemp(Metric);
 
-    CurrentBytes += EstimatedBytes;
+    CurrentBytes += BufferBytes;
     Records.Add(MoveTemp(Record));
     ++Diagnostics.RecordedTotal;
     Diagnostics.BufferDepth = ActiveRecordCount();
@@ -135,8 +184,11 @@ bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
     }
 
     const FQueuedRecord& First = Records[HeadIndex];
-    const FGamePlatformTelemetryContext& BatchContext =
-        First.Kind == ERecordKind::Event ? First.Event.Context : First.Metric.Context;
+    if (!First.Context.IsValid())
+    {
+        return false;
+    }
+    const FGamePlatformTelemetryContext& BatchContext = *First.Context;
 
     OutBatch = {};
     OutBatch.BatchId = FGuid::NewGuid();
@@ -153,9 +205,7 @@ bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
     for (int32 Index = HeadIndex; Index < Records.Num(); ++Index)
     {
         const FQueuedRecord& Record = Records[Index];
-        const FGamePlatformTelemetryContext& RecordContext =
-            Record.Kind == ERecordKind::Event ? Record.Event.Context : Record.Metric.Context;
-        if (!SameContext(BatchContext, RecordContext))
+        if (!Record.Context.IsValid() || !SameContext(BatchContext, *Record.Context))
         {
             // Context切换必须自然切批，避免世界/会话切换前后的记录被错误归到同一SourceContext。
             break;
@@ -189,7 +239,7 @@ bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
     for (int32 Offset = 0; Offset < ConsumeCount; ++Offset)
     {
         FQueuedRecord& Consumed = Records[HeadIndex + Offset];
-        CurrentBytes -= Consumed.EstimatedBytes;
+        CurrentBytes -= Consumed.EstimatedBytes + Consumed.ContextEstimatedBytes;
         // 只保留空槽位供摊销压缩，不保留已消费Event/Metric里的FString/TArray堆内存，确保真实内存仍受有界策略约束。
         Consumed = FQueuedRecord{};
     }
@@ -233,6 +283,39 @@ void FGamePlatformTelemetryBoundedBuffer::Reset()
     CurrentBytes = 0;
     DroppedSinceLastBatch = 0;
     Diagnostics = {};
+    LastSharedContext.Reset();
+}
+
+int32 FGamePlatformTelemetryBoundedBuffer::DiscardQueuedRecords()
+{
+    FScopeLock Lock(&Mutex);
+    const int32 Discarded = ActiveRecordCount();
+    for (int32 Index = HeadIndex; Index < Records.Num(); ++Index)
+    {
+        ++DroppedSinceLastBatch;
+        switch (Records[Index].Priority)
+        {
+        case EGamePlatformTelemetryPriority::Verbose:
+            ++Diagnostics.DroppedVerbose;
+            break;
+        case EGamePlatformTelemetryPriority::Normal:
+            ++Diagnostics.DroppedNormal;
+            break;
+        case EGamePlatformTelemetryPriority::CriticalTelemetry:
+            ++Diagnostics.DroppedCritical;
+            break;
+        default:
+            break;
+        }
+    }
+
+    Records.Reset();
+    HeadIndex = 0;
+    CurrentBytes = 0;
+    LastSharedContext.Reset();
+    Diagnostics.BufferDepth = 0;
+    Diagnostics.BufferBytes = 0;
+    return Discarded;
 }
 
 void FGamePlatformTelemetryBoundedBuffer::CompactConsumedPrefixIfNeeded(bool bForce)
@@ -250,6 +333,56 @@ void FGamePlatformTelemetryBoundedBuffer::CompactConsumedPrefixIfNeeded(bool bFo
 
     Records.RemoveAt(0, HeadIndex, EAllowShrinking::No);
     HeadIndex = 0;
+}
+
+bool FGamePlatformTelemetryBoundedBuffer::TryCoalesceMetric(
+    const FGamePlatformTelemetryMetric& Metric,
+    const FGamePlatformTelemetryContext& Context)
+{
+    if (Metric.Type != EGamePlatformTelemetryMetricType::Counter &&
+        Metric.Type != EGamePlatformTelemetryMetricType::Gauge)
+    {
+        return false;
+    }
+
+    const int32 BeginIndex = FMath::Max(HeadIndex, Records.Num() - MaxMetricCoalesceScan);
+    for (int32 Index = Records.Num() - 1; Index >= BeginIndex; --Index)
+    {
+        FQueuedRecord& Record = Records[Index];
+        if (Record.Kind != ERecordKind::Metric ||
+            Record.Metric.Name != Metric.Name ||
+            Record.Metric.Type != Metric.Type ||
+            !Record.Context.IsValid() || !SameContext(*Record.Context, Context) ||
+            !SameLabels(Record.Metric.Labels, Metric.Labels))
+        {
+            continue;
+        }
+
+        if (Metric.Type == EGamePlatformTelemetryMetricType::Counter)
+        {
+            Record.Metric.Value += Metric.Value;
+        }
+        else
+        {
+            Record.Metric.Value = Metric.Value;
+        }
+        Record.Metric.TimestampUtc = Metric.TimestampUtc;
+        return true;
+    }
+    return false;
+}
+
+TSharedPtr<const FGamePlatformTelemetryContext, ESPMode::ThreadSafe>
+FGamePlatformTelemetryBoundedBuffer::ResolveSharedContext(
+    const FGamePlatformTelemetryContext& Context)
+{
+    if (LastSharedContext.IsValid() && SameContext(*LastSharedContext, Context))
+    {
+        return LastSharedContext;
+    }
+
+    LastSharedContext = MakeShared<FGamePlatformTelemetryContext, ESPMode::ThreadSafe>(Context);
+    return LastSharedContext;
 }
 
 bool FGamePlatformTelemetryBoundedBuffer::EnsureCapacityFor(
@@ -276,7 +409,7 @@ bool FGamePlatformTelemetryBoundedBuffer::EnsureCapacityFor(
         }
 
         CountDrop(Records[Candidate].Priority);
-        CurrentBytes -= Records[Candidate].EstimatedBytes;
+        CurrentBytes -= Records[Candidate].EstimatedBytes + Records[Candidate].ContextEstimatedBytes;
         if (Candidate == HeadIndex)
         {
             // 头部被驱逐时同样立即释放记录内部堆内存，再推进逻辑头。

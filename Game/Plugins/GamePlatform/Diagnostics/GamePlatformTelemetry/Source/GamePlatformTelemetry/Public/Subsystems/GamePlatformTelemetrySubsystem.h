@@ -96,6 +96,12 @@ public:
 
     bool FlushBestEffort();
 
+    /**
+     * 账号切换/隐私边界专用：撤销待刷新任务并丢弃尚未进入Sink的旧上下文记录。
+     * 已进入旧NetworkSink的批次必须通过切换/Shutdown旧Sink终止其Retry链。
+     */
+    int32 DiscardBufferedRecordsForPrivacyBoundary();
+
     UFUNCTION(BlueprintPure, Category="Telemetry")
     FGamePlatformTelemetryDiagnostics GetDiagnostics() const;
 
