@@ -199,6 +199,7 @@ type api struct {
 	config      Config
 	identity    IdentityPort
 	playerData  PlayerDataPort
+	inventory   InventoryPort
 	party       PartyPort
 	matchmaking MatchmakingPort
 	worldEntry  WorldEntryPort
@@ -216,6 +217,10 @@ func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, par
 		worldEntryPort = worldEntry[0]
 	}
 	handler := &api{config: config, identity: identity, playerData: playerData, party: party, matchmaking: matchmaking, worldEntry: worldEntryPort, mux: http.NewServeMux()}
+	// InventoryPort（背包端口）由同一PlayerData客户端可选实现；未装配时对应路由稳定返回503，不接受客户端自报playerId降级。
+	if inventoryPort, ok := playerData.(InventoryPort); ok {
+		handler.inventory = inventoryPort
+	}
 	handler.authLimiter = newAuthRateLimiter(config.AuthRequestsPerMinute)
 	handler.mux.HandleFunc("GET /v1/online/probe", handler.probeOnline)
 	handler.mux.HandleFunc("POST /v1/auth/refresh", handler.refreshOnline)
@@ -229,6 +234,7 @@ func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, par
 	handler.mux.HandleFunc("POST /v1/party", handler.requireAuth(handler.createParty))
 	handler.mux.HandleFunc("POST /v1/matchmaking/tickets", handler.requireAuth(handler.createMatchmakingTicket))
 	handler.mux.HandleFunc("POST /v1/divinebeasts/world-entry", handler.requireAuth(handler.enterDivineBeastsWorld))
+	handler.registerInventoryRoutes()
 	handler.registerSwaggerDocumentation(os.Getenv(swaggerContractsRootEnvironment))
 	return handler.tracing(handler.mux)
 }

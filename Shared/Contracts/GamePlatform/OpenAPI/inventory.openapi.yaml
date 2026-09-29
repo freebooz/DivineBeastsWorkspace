@@ -1,0 +1,290 @@
+openapi: 3.1.0
+info:
+  title: GamePlatform Inventory Gateway API
+  version: 1.0.0
+  description: |
+    GamePlatformInventory（游戏平台背包）公网契约。玩家身份只从 Bearer Access Token（访问令牌）解析；
+    客户端不得声明 playerId。所有 Revision（修订号）以十进制字符串传输，避免 JSON Number 超过 2^53 后丢失精度。
+servers:
+  - url: /
+paths:
+  /v1/inventory:
+    get:
+      operationId: getGatewayInventory
+      summary: 获取当前认证玩家背包快照
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: 权威长期背包快照。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InventorySnapshot'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
+  /v1/inventory/operations/{operationId}:
+    get:
+      operationId: getGatewayInventoryOperation
+      summary: 查询原 OperationId（操作编号）的持久提交结果
+      description: 网络结果未知时必须查询原 OperationId；不得生成新编号盲重试。
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: operationId
+          in: path
+          required: true
+          schema: {type: string, minLength: 1, maxLength: 128}
+      responses:
+        '200':
+          description: 已持久提交的原操作结果。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InventoryMutationResult'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404':
+          description: OperationId 尚无持久结果。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ApiError'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
+  /v1/inventory/move:
+    post:
+      operationId: moveGatewayInventoryItem
+      summary: 移动或交换背包物品
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/InventoryMoveRequest'}
+      responses: {$ref: '#/components/x-responses/MutationResponses'}
+
+  /v1/inventory/split:
+    post:
+      operationId: splitGatewayInventoryItem
+      summary: 拆分物品堆叠
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/InventorySplitRequest'}
+      responses: {$ref: '#/components/x-responses/MutationResponses'}
+
+  /v1/inventory/merge:
+    post:
+      operationId: mergeGatewayInventoryItem
+      summary: 合并物品堆叠
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/InventoryMergeRequest'}
+      responses: {$ref: '#/components/x-responses/MutationResponses'}
+
+  /v1/inventory/quickbar/set:
+    post:
+      operationId: setGatewayInventoryQuickbar
+      summary: 设置快捷栏物品引用
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/InventoryQuickbarSetRequest'}
+      responses: {$ref: '#/components/x-responses/MutationResponses'}
+
+  /v1/inventory/quickbar/clear:
+    post:
+      operationId: clearGatewayInventoryQuickbar
+      summary: 清空快捷栏槽位
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/InventoryQuickbarClearRequest'}
+      responses: {$ref: '#/components/x-responses/MutationResponses'}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: AccessToken
+
+  responses:
+    InvalidRequest:
+      description: 输入非法、字段未知或 Revision 格式错误。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    Unauthorized:
+      description: Access Token 无效、过期或已撤销。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    Unavailable:
+      description: PlayerData 或持久层不可用；不泄漏内部地址、SQL 或凭据。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+
+  x-responses:
+    MutationResponses:
+      '200':
+        description: 修改已提交或同 OperationId 同内容幂等重放。
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/InventoryMutationResult'}
+      '400': {$ref: '#/components/responses/InvalidRequest'}
+      '401': {$ref: '#/components/responses/Unauthorized'}
+      '404':
+        description: 物品或容器不存在。
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ApiError'}
+      '409':
+        description: Revision 冲突、槽位冲突、数量不足、堆叠上限或 OperationId 同键异内容。
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ApiError'}
+      '503': {$ref: '#/components/responses/Unavailable'}
+
+  schemas:
+    Revision:
+      type: string
+      pattern: '^[1-9][0-9]{0,18}$'
+      description: int64 正修订号的十进制字符串；不得作为 JSON Number 传输。
+
+    OperationId:
+      type: string
+      minLength: 1
+      maxLength: 128
+
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [errorCode, message]
+      properties:
+        errorCode:
+          type: string
+          description: 稳定机器错误码；客户端逻辑不得解析 message。
+        message:
+          type: string
+          description: 面向诊断的非敏感说明。
+
+    InventoryContainer:
+      type: object
+      additionalProperties: false
+      required: [containerId, capacity]
+      properties:
+        containerId: {type: string, minLength: 1, maxLength: 256}
+        capacity: {type: integer, format: int32, minimum: 1, maximum: 10000}
+
+    InventoryItem:
+      type: object
+      additionalProperties: false
+      required: [itemInstanceId, itemDefinitionId, quantity, containerId, slotIndex, revision, instanceState, maxStackSize]
+      properties:
+        itemInstanceId: {type: string, minLength: 1, maxLength: 256}
+        itemDefinitionId: {type: string, minLength: 1, maxLength: 256}
+        quantity: {type: integer, format: int32, minimum: 1}
+        containerId: {type: string, minLength: 1, maxLength: 256}
+        slotIndex: {type: integer, format: int32, minimum: 0}
+        revision: {$ref: '#/components/schemas/Revision'}
+        instanceState: {type: string, minLength: 1, maxLength: 64}
+        maxStackSize: {type: integer, format: int32, minimum: 1}
+
+    InventoryQuickbarSlot:
+      type: object
+      additionalProperties: false
+      required: [slotIndex, itemInstanceId, revision]
+      properties:
+        slotIndex: {type: integer, format: int32, minimum: 0, maximum: 11}
+        itemInstanceId: {type: string, minLength: 1, maxLength: 256}
+        revision: {$ref: '#/components/schemas/Revision'}
+
+    InventorySnapshot:
+      type: object
+      additionalProperties: false
+      required: [inventoryRevision, containers, items, quickbar]
+      properties:
+        inventoryRevision: {$ref: '#/components/schemas/Revision'}
+        containers:
+          type: array
+          maxItems: 64
+          items: {$ref: '#/components/schemas/InventoryContainer'}
+        items:
+          type: array
+          maxItems: 10000
+          items: {$ref: '#/components/schemas/InventoryItem'}
+        quickbar:
+          type: array
+          maxItems: 12
+          items: {$ref: '#/components/schemas/InventoryQuickbarSlot'}
+
+    InventoryMutationResult:
+      type: object
+      additionalProperties: false
+      required: [operationId, snapshot, movedQuantity, remainingQuantity, duplicate]
+      properties:
+        operationId: {$ref: '#/components/schemas/OperationId'}
+        snapshot: {$ref: '#/components/schemas/InventorySnapshot'}
+        movedQuantity: {type: integer, format: int32, minimum: 0}
+        remainingQuantity: {type: integer, format: int32, minimum: 0}
+        duplicate: {type: boolean}
+
+    InventoryMoveRequest:
+      type: object
+      additionalProperties: false
+      required: [operationId, expectedRevision, itemInstanceId, targetContainerId, targetSlotIndex]
+      properties:
+        operationId: {$ref: '#/components/schemas/OperationId'}
+        expectedRevision: {$ref: '#/components/schemas/Revision'}
+        itemInstanceId: {type: string, minLength: 1, maxLength: 256}
+        targetContainerId: {type: string, minLength: 1, maxLength: 256}
+        targetSlotIndex: {type: integer, format: int32, minimum: 0}
+
+    InventorySplitRequest:
+      type: object
+      additionalProperties: false
+      required: [operationId, expectedRevision, sourceItemInstanceId, splitQuantity, targetContainerId, targetSlotIndex]
+      properties:
+        operationId: {$ref: '#/components/schemas/OperationId'}
+        expectedRevision: {$ref: '#/components/schemas/Revision'}
+        sourceItemInstanceId: {type: string, minLength: 1, maxLength: 256}
+        splitQuantity: {type: integer, format: int32, minimum: 1}
+        targetContainerId: {type: string, minLength: 1, maxLength: 256}
+        targetSlotIndex: {type: integer, format: int32, minimum: 0}
+
+    InventoryMergeRequest:
+      type: object
+      additionalProperties: false
+      required: [operationId, expectedRevision, sourceItemInstanceId, targetItemInstanceId]
+      properties:
+        operationId: {$ref: '#/components/schemas/OperationId'}
+        expectedRevision: {$ref: '#/components/schemas/Revision'}
+        sourceItemInstanceId: {type: string, minLength: 1, maxLength: 256}
+        targetItemInstanceId: {type: string, minLength: 1, maxLength: 256}
+
+    InventoryQuickbarSetRequest:
+      type: object
+      additionalProperties: false
+      required: [operationId, expectedRevision, slotIndex, itemInstanceId]
+      properties:
+        operationId: {$ref: '#/components/schemas/OperationId'}
+        expectedRevision: {$ref: '#/components/schemas/Revision'}
+        slotIndex: {type: integer, format: int32, minimum: 0, maximum: 11}
+        itemInstanceId: {type: string, minLength: 1, maxLength: 256}
+
+    InventoryQuickbarClearRequest:
+      type: object
+      additionalProperties: false
+      required: [operationId, expectedRevision, slotIndex]
+      properties:
+        operationId: {$ref: '#/components/schemas/OperationId'}
+        expectedRevision: {$ref: '#/components/schemas/Revision'}
+        slotIndex: {type: integer, format: int32, minimum: 0, maximum: 11}

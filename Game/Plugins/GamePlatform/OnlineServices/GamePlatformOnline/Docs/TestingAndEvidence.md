@@ -10,6 +10,8 @@
 
 当前规范路径下已重新执行原生 CMake 配置、MSVC 编译和 CTest，`OnlineLogicTests` 通过。该结果只证明纯逻辑回归，不代表 UE/UHT/HTTP 或真实后端已经通过。
 
+本轮还使用 `F:\\UnrealEngine-5.8.0-release` 的 UE5.8 工具链启动 `DivineBeastsArenaEditor Win64 Development（神兽联盟编辑器 Win64 开发目标）` 完整构建。该构建触发 3929 个动作，在 1200 秒工具运行上限内执行到至少第 59 个动作后超时；已返回日志中未出现 GamePlatformOnline 编译错误，但没有成功退出码，因此只能记录为“构建未完成”，不能视为通过。后续应继续采用增量或目标化构建取得明确终态。
+
 UE5.8 的 Editor/Client/Server 目标必须使用工作空间锁定引擎重新构建，并执行 `GamePlatform.Online.*` 自动化测试。构建或测试未取得终态成功证据时，不得写成“已通过”。
 
 ## 正式交付仍需验证

@@ -20,6 +20,7 @@ import (
 	"divinebeasts/backend/internal/app/servicehost"
 	"divinebeasts/backend/internal/modules/gameserver"
 	"divinebeasts/backend/internal/modules/identity"
+	"divinebeasts/backend/internal/modules/inventory"
 	"divinebeasts/backend/internal/modules/match"
 	"divinebeasts/backend/internal/modules/playerdata"
 	"divinebeasts/backend/internal/modules/servertransfer"
@@ -80,6 +81,7 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	pool := mustPostgresGRPC(ctx)
 	defer pool.Close()
 	service := playerdata.NewService(postgres.NewOnlinePlayerRepository(pool))
+	service.AttachInventory(inventory.NewService(postgres.NewInventoryRepository(pool)))
 	return runGRPCHost(ctx, cfg, func(server *grpc.Server) { grpcadapter.RegisterPlayerDataServer(server, service) })
 }
 

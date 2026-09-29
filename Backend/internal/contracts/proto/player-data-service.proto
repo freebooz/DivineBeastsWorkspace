@@ -13,6 +13,13 @@ service PlayerDataService {
   rpc ListCharacters(ListCharactersRequest) returns (ListCharactersResponse);
   rpc CreateCharacter(CreateCharacterRequest) returns (CreateCharacterResponse);
   rpc SelectCharacter(SelectCharacterRequest) returns (SelectCharacterResponse);
+  rpc GetInventory(InventoryPlayerRequest) returns (InventorySnapshotResponse);
+  rpc GetInventoryOperation(InventoryOperationQueryRequest) returns (InventoryMutationResponse);
+  rpc MoveInventory(InventoryMoveRequest) returns (InventoryMutationResponse);
+  rpc SplitInventory(InventorySplitRequest) returns (InventoryMutationResponse);
+  rpc MergeInventory(InventoryMergeRequest) returns (InventoryMutationResponse);
+  rpc SetInventoryQuickbar(InventoryQuickbarSetRequest) returns (InventoryMutationResponse);
+  rpc ClearInventoryQuickbar(InventoryQuickbarClearRequest) returns (InventoryMutationResponse);
   rpc Probe(ProbeRequest) returns (ProbeResponse);
 }
 
@@ -84,4 +91,79 @@ message SelectCharacterResponse {
   int64 profile_revision = 2;
   CharacterSummary character = 3;
   string error_code = 4;
+}
+
+// Inventory（背包）RPC只供可信Gateway到PlayerDataService内部调用；公网身份仍由Gateway从AccessToken解析。
+message InventoryPlayerRequest { string player_id = 1; }
+message InventoryOperationQueryRequest { string player_id = 1; string operation_id = 2; }
+message InventoryContainer {
+  string container_id = 1;
+  int32 capacity = 2;
+}
+message InventoryItem {
+  string item_instance_id = 1;
+  string item_definition_id = 2;
+  int32 quantity = 3;
+  string container_id = 4;
+  int32 slot_index = 5;
+  int64 revision = 6;
+  string instance_state = 7;
+  int32 max_stack_size = 8;
+}
+message InventoryQuickbarSlot {
+  int32 slot_index = 1;
+  string item_instance_id = 2;
+  int64 revision = 3;
+}
+message InventorySnapshotResponse {
+  int64 inventory_revision = 1;
+  repeated InventoryContainer containers = 2;
+  repeated InventoryItem items = 3;
+  repeated InventoryQuickbarSlot quickbar = 4;
+  string error_code = 5;
+}
+message InventoryMutationResponse {
+  string operation_id = 1;
+  InventorySnapshotResponse snapshot = 2;
+  int32 moved_quantity = 3;
+  int32 remaining_quantity = 4;
+  bool duplicate = 5;
+  string error_code = 6;
+}
+message InventoryMoveRequest {
+  string player_id = 1;
+  string operation_id = 2;
+  int64 expected_revision = 3;
+  string item_instance_id = 4;
+  string target_container_id = 5;
+  int32 target_slot_index = 6;
+}
+message InventorySplitRequest {
+  string player_id = 1;
+  string operation_id = 2;
+  int64 expected_revision = 3;
+  string source_item_instance_id = 4;
+  int32 split_quantity = 5;
+  string target_container_id = 6;
+  int32 target_slot_index = 7;
+}
+message InventoryMergeRequest {
+  string player_id = 1;
+  string operation_id = 2;
+  int64 expected_revision = 3;
+  string source_item_instance_id = 4;
+  string target_item_instance_id = 5;
+}
+message InventoryQuickbarSetRequest {
+  string player_id = 1;
+  string operation_id = 2;
+  int64 expected_revision = 3;
+  int32 slot_index = 4;
+  string item_instance_id = 5;
+}
+message InventoryQuickbarClearRequest {
+  string player_id = 1;
+  string operation_id = 2;
+  int64 expected_revision = 3;
+  int32 slot_index = 4;
 }

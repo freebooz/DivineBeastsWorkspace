@@ -99,6 +99,38 @@ func TestGameServerControlHTTPWorldTransferRoundTrip(t *testing.T) {
 	}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken, "X-Game-Server-Id": "openworld-hub-http-1"}, http.StatusOK, nil)
 	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/ready", map[string]any{"gameServerId": "openworld-hub-http-1"}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken, "X-Game-Server-Id": "openworld-hub-http-1"}, http.StatusOK, nil)
 
+	// Gateway内部客户端必须通过受保护的同一GameServerControl链路完成世界分配与签票，
+	// 验证其JSON适配与公共WorldEntry响应字段真实可用，而不是只测Handler直调。
+	worldEntryClient := NewGameServerControlClient(GameServerControlClientConfig{
+		ClientConfig:  ClientConfig{BaseURL: server.URL},
+		BearerToken:   gameServerControlTestToken,
+		DefaultRegion: "us-west",
+	})
+	worldEntry, err := worldEntryClient.AllocateWorldEntry(context.Background(), gateway.WorldEntryAllocationRequest{
+		RequestID:           "ticket-client-http-1",
+		GameID:              "divine-beasts",
+		PlayerID:            "player-http-client-1",
+		SessionID:           "session-http-client-1",
+		CharacterID:         "character-http-client-1",
+		DesiredExperienceID: gameservercontract.ExperienceOpenWorldHub,
+	})
+	if err != nil {
+		t.Fatalf("GameServerControl内部客户端世界进入失败: %v", err)
+	}
+	if worldEntry.GameServerID != "openworld-hub-http-1" ||
+		worldEntry.CharacterID != "character-http-client-1" ||
+		worldEntry.SessionID != "session-http-client-1" ||
+		worldEntry.Endpoint != "127.0.0.1:7777" ||
+		worldEntry.TransferTicket == "" {
+		t.Fatalf("Gateway世界进入适配结果错误: %+v", worldEntry)
+	}
+	var adaptedTicket servertransfer.Ticket
+	if err := json.Unmarshal([]byte(worldEntry.TransferTicket), &adaptedTicket); err != nil ||
+		adaptedTicket.TicketID != worldEntry.TicketID ||
+		adaptedTicket.AssignmentID != worldEntry.AssignmentID {
+		t.Fatalf("世界进入TransferTicket序列化错误: ticket=%+v err=%v", adaptedTicket, err)
+	}
+
 	var worldTransfer gameservercontrol.WorldTransferResult
 	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/allocate-world-transfer", map[string]any{
 		"world": map[string]any{

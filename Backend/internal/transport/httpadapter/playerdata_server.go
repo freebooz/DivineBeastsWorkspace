@@ -13,6 +13,7 @@ func NewPlayerDataHandler(service *playerdata.Service) http.Handler {
 	}
 	mux := http.NewServeMux()
 	registerPlayerDataOnline(mux, service)
+	registerPlayerDataInventory(mux, service)
 	mux.HandleFunc("GET /internal/v1/playerdata/profile", func(w http.ResponseWriter, r *http.Request) {
 		playerID := r.URL.Query().Get("playerId")
 		profile, err := service.GetProfile(r.Context(), playerID)

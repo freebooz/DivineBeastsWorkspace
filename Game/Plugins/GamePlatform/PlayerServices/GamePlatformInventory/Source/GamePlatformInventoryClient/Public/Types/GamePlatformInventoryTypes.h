@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GamePlatformInventoryTypes.generated.h"
 
+/** EGamePlatformInventoryClientState（背包客户端状态）描述本地只读缓存与单个写事务的生命周期。 */
 UENUM(BlueprintType)
 enum class EGamePlatformInventoryClientState : uint8
 {
@@ -14,6 +15,7 @@ enum class EGamePlatformInventoryClientState : uint8
     Error
 };
 
+/** EGamePlatformInventoryError（背包稳定错误）只由机器错误码映射；禁止解析服务端自然语言消息。 */
 UENUM(BlueprintType)
 enum class EGamePlatformInventoryError : uint8
 {
@@ -53,6 +55,27 @@ enum class EGamePlatformInventoryOperationType : uint8
     ClearQuickbar
 };
 
+/** FGamePlatformInventoryContainerSnapshot（容器快照）描述服务端权威容量边界。 */
+USTRUCT(BlueprintType)
+struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryContainerSnapshot
+{
+    GENERATED_BODY()
+
+    /** ContainerId（容器编号）是平台中立稳定标识，例如 main；不是项目资产路径。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    FName ContainerId = NAME_None;
+
+    /** Capacity（容量）表示当前已解锁槽位数，合法槽位范围为 [0, Capacity)。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    int32 Capacity = 0;
+
+    bool IsValid() const
+    {
+        return !ContainerId.IsNone() && Capacity > 0;
+    }
+};
+
+/** FGamePlatformInventoryItemInstance（物品实例）是服务端权威长期持有记录的客户端投影。 */
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemInstance
 {
@@ -90,6 +113,7 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemInstance
     }
 };
 
+/** FGamePlatformInventoryQuickbarSlot（快捷栏槽位）只引用已有物品实例，不拥有物品。 */
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryQuickbarSlot
 {
@@ -105,6 +129,7 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryQuickbarSlot
     int64 Revision = 0;
 };
 
+/** FGamePlatformInventorySnapshot（背包快照）是客户端唯一长期背包缓存真源。 */
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventorySnapshot
 {
@@ -112,6 +137,10 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventorySnapshot
 
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int64 InventoryRevision = 0;
+
+    /** Containers（容器）用于校验槽位容量；项目层不得自行复制第二套容量真源。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    TArray<FGamePlatformInventoryContainerSnapshot> Containers;
 
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     TArray<FGamePlatformInventoryItemInstance> Items;

@@ -30,10 +30,14 @@ type Repository interface {
 	Save(ctx context.Context, profile Profile, expectedRevision int64) (Profile, error)
 }
 
-// Service（玩家资料领域服务）封装Profile修改规则。
-type Service struct{ repo Repository }
+// Service（玩家资料领域服务）封装Profile修改规则，并作为PlayerDataService装配长期背包能力的宿主。
+// inventory通过独立InventoryService端口注入，避免把背包领域规则复制到玩家资料代码。
+type Service struct {
+	repo      Repository
+	inventory InventoryService
+}
 
-// NewService（创建玩家资料服务）创建领域服务。
+// NewService（创建玩家资料服务）创建领域服务；背包能力由Composition Root按部署需要显式AttachInventory。
 func NewService(repo Repository) *Service { return &Service{repo: repo} }
 
 // GetProfile（获取玩家资料）按PlayerID返回长期资料只读快照。

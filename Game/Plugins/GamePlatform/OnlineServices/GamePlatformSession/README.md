@@ -8,7 +8,7 @@
 
 当前Backend已经补齐受认证的 `POST /v1/divinebeasts/world-entry` 公共入口，并将GameServerControl内部HTTP控制面统一置于内部Bearer保护下；HTTP/gRPC Gateway装配均复用现有GameServerControl能力，没有新增第六个Session微服务。仍未完成的关键前置是：控制面/服务器握手尚未向客户端Session提供可信 `GameSessionId / ServerBootId / ProtocolVersion / SessionEpoch` 绑定，因此禁止用客户端自造值实现ClientTravel成功。
 
-建议人工先读交付状态和安全边界，再查API/状态机及测试证据。12类说明对应如下：
+建议人工先读交付状态、安全边界和最佳执行计划，再查API/状态机及测试证据。13类说明对应如下：
 
 - D01：[本README](README.md)，总体入口。
 - D02：[Architecture.md](Docs/Architecture.md)，实际目录、职责和依赖。
@@ -22,5 +22,6 @@
 - D10：[MigrationAndHandover.md](Docs/MigrationAndHandover.md)，迁移/回退前提和后续接入。
 - D11：[ManualReview.md](Docs/ManualReview.md)，待人工填写的审查清单。
 - D12：[DeliveryStatus.md](Docs/DeliveryStatus.md)，完成、未完成与续作断点。
+- D13：[最佳修改方案与执行计划.md](Docs/最佳修改方案与执行计划.md)，本轮审查后的目标架构、P0/P1/P2实施顺序、已完成项、阻塞项与验收清单。
 
 源码存在、文档齐全、状态测试或Gateway/Backend测试通过，均不构成完整Session网络链交付完成。只有在可信Binding、真实ClientTravel、Server Admission、NetworkFailure/TravelFailure、重连及OpenWorld/Village/MainArena端到端验证全部通过后，才能提升为生产完成状态。

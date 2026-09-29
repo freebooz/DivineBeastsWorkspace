@@ -3,10 +3,14 @@
 #include "CoreMinimal.h"
 #include "Interfaces/GamePlatformInventoryClientTransport.h"
 
+class UGamePlatformOnlineClientSubsystem;
+
 /**
- * Gateway（网关）Inventory异步HTTP传输。
- * AccessToken（访问令牌）必须由已完成认证的Online/Identity（在线/身份）层注入；
- * 本类不接收PlayerId，也不接触PlayerData内部Token。
+ * FGamePlatformInventoryGatewayHttpTransport（背包网关传输）。
+ *
+ * 本类不拥有 AccessToken（访问令牌），所有受保护请求统一委托给
+ * GamePlatformOnlineClient（平台在线客户端）发送，从而复用认证刷新、超时、
+ * 同源校验、请求取消和安全重放策略。客户端永远不传 PlayerId（玩家编号）。
  */
 class GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryGatewayHttpTransport final
     : public IGamePlatformInventoryClientTransport
@@ -15,12 +19,14 @@ class GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryGatewayHttpTransport
         ESPMode::ThreadSafe>
 {
 public:
-    FGamePlatformInventoryGatewayHttpTransport(
-        FString InGatewayBaseUrl,
-        FString InAccessToken);
+    explicit FGamePlatformInventoryGatewayHttpTransport(
+        UGamePlatformOnlineClientSubsystem* InOnlineSubsystem);
+    virtual ~FGamePlatformInventoryGatewayHttpTransport() override;
 
+    /** 当前 Online（在线）子系统是否仍有有效认证上下文。 */
     bool IsConfigured() const;
 
+    /** 只取消本 Transport 发起的背包请求，不取消同一 GameInstance 的其他在线请求。 */
     virtual void CancelAllRequests() override;
 
     virtual bool BeginGetSnapshot(
@@ -51,27 +57,29 @@ public:
         FGamePlatformInventoryMutationCompletion Completion) override;
 
 private:
-    FString GatewayBaseUrl;
-    FString AccessToken;
+    struct FRuntime;
+    TUniquePtr<FRuntime> Runtime;
 
     bool StartJsonRequest(
         const FString& Verb,
         const FString& Path,
         const TSharedPtr<class FJsonObject>& Body,
-        TFunction<void(int32, const FString&)> Completion);
+        const FString& IdempotencyKey,
+        TFunction<void(
+            int32,
+            const FString&,
+            EGamePlatformInventoryError)> Completion);
 
     bool BeginMutation(
         const FString& Path,
+        const FGuid& OperationId,
         const TSharedPtr<class FJsonObject>& Body,
         FGamePlatformInventoryMutationCompletion Completion);
 
-    FCriticalSection ActiveRequestsMutex;
-    TArray<TSharedPtr<class IHttpRequest, ESPMode::ThreadSafe>> ActiveRequests;
-
-    void UnregisterRequest(
-        const TSharedPtr<class IHttpRequest, ESPMode::ThreadSafe>& Request);
+    void UnregisterRequest(const FGuid& RequestId);
 
     static FString GuidString(const FGuid& Guid);
+    static FString RevisionString(int64 Revision);
 
     static bool JsonToSnapshot(
         const TSharedPtr<class FJsonObject>& Json,
@@ -85,3 +93,4 @@ private:
         int32 StatusCode,
         const FString& Body);
 };
+

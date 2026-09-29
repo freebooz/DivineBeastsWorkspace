@@ -20,6 +20,7 @@ import (
 	"divinebeasts/backend/internal/app/servicehost"
 	"divinebeasts/backend/internal/modules/gameserver"
 	"divinebeasts/backend/internal/modules/identity"
+	"divinebeasts/backend/internal/modules/inventory"
 	"divinebeasts/backend/internal/modules/match"
 	"divinebeasts/backend/internal/modules/playerdata"
 	"divinebeasts/backend/internal/modules/servertransfer"
@@ -58,6 +59,7 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	// 与生产PlayerDataService保持同一Service入口，不维护第二套旁路仓储。
 	repo := playerdata.NewMemoryRepository()
 	service := playerdata.NewService(repo)
+	service.AttachInventory(inventory.NewService(inventory.NewMemoryRepository()))
 	return servicehost.Run(ctx, cfg, httpadapter.NewPlayerDataHandler(service))
 }
 
