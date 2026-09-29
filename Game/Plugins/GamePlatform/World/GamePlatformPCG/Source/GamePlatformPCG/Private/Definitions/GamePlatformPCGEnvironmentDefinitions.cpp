@@ -324,11 +324,11 @@ FGamePlatformResult UGamePlatformPCGConnectorCatalogDefinition::ValidateDefiniti
     for (const FGamePlatformPCGConnectorCatalogEntry& Entry : Entries)
     {
         const FGamePlatformResult Ref = ValidateDeclaredDependency(*this, Entry.ContentDefinitionId);
-        if (Entry.ItemId.IsNone() || Items.Contains(Entry.ItemId) || !Ref.IsSuccess() ||
+        if (Entry.ItemId.IsNone() || Items.Contains(Entry.ItemId) || !Entry.ContentDefinitionId.IsValid() || !Ref.IsSuccess() ||
             !FMath::IsFinite(Entry.MinSpanCm) || !FMath::IsFinite(Entry.MaxSpanCm) ||
             Entry.MinSpanCm < 0.0f || Entry.MaxSpanCm < Entry.MinSpanCm)
         {
-            return FGamePlatformResult::Failure(TEXT("PCGInvalidConnectorCatalog"), TEXT("ConnectorCatalog存在重复ID、非法定义引用或非法跨度范围。"));
+            return FGamePlatformResult::Failure(TEXT("PCGInvalidConnectorCatalog"), TEXT("ConnectorCatalog存在空/重复ID、缺少内容Definition、未声明依赖或非法跨度范围。"));
         }
         Items.Add(Entry.ItemId);
     }

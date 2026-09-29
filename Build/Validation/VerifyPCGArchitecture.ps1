@@ -17,17 +17,22 @@ if ([string]::IsNullOrWhiteSpace($WorkspaceRoot)) {
 $pluginRoot = Join-Path $WorkspaceRoot 'Game/Plugins/GamePlatform/World/GamePlatformPCG'
 $descriptorPath = Join-Path $pluginRoot 'GamePlatformPCG.uplugin'
 $runtimeBuild = Join-Path $pluginRoot 'Source/GamePlatformPCG/GamePlatformPCG.Build.cs'
+$editorBuild = Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/GamePlatformPCGEditor.Build.cs'
 $schemaHeader = Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Schema/GamePlatformPCGSchema.h'
 $primitiveHeader = Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Types/GamePlatformPCGEnvironmentTypes.h'
 $templateHeader = Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Services/GamePlatformPCGTemplateContract.h'
 $componentDoc = Join-Path $pluginRoot 'Docs/组件清单与使用说明.md'
+$editorLibraryHeader = Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/Private/Authoring/GamePlatformPCGEditorLibrary.h'
+$foundationGraphCpp = Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/Private/Authoring/PCGDevelopmentGraph.cpp'
+$foundationCommandlet = Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/Private/Commands/GamePlatformPCGFoundationTemplatesCommandlet.cpp'
+$worldValidator = Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/Private/Validators/GamePlatformPCGWorldValidator.cpp'
 $findings = [Collections.Generic.List[string]]::new()
 
 function Assert-True([bool]$Condition,[string]$Message) {
     if (-not $Condition) { $script:findings.Add($Message) }
 }
 
-foreach ($path in @($descriptorPath,$runtimeBuild,$schemaHeader,$primitiveHeader,$templateHeader,$componentDoc)) {
+foreach ($path in @($descriptorPath,$runtimeBuild,$editorBuild,$schemaHeader,$primitiveHeader,$templateHeader,$componentDoc,$editorLibraryHeader,$foundationGraphCpp,$foundationCommandlet,$worldValidator)) {
     Assert-True (Test-Path -LiteralPath $path -PathType Leaf) ("缺少必要文件：{0}" -f $path)
 }
 
@@ -35,6 +40,8 @@ if ($findings.Count -eq 0) {
     $descriptor = Get-Content -LiteralPath $descriptorPath -Raw -Encoding UTF8 | ConvertFrom-Json
     Assert-True (@($descriptor.Modules).Count -eq 2) '插件必须保持GamePlatformPCG Runtime + GamePlatformPCGEditor Editor双模块。'
     Assert-True (-not [bool]$descriptor.CanContainContent) '生产模板资产尚未验收前CanContainContent必须保持false。'
+    $editorBuildSource = Get-Content -LiteralPath $editorBuild -Raw -Encoding UTF8
+    Assert-True ($editorBuildSource.Contains('DataValidation')) 'GamePlatformPCGEditor必须显式依赖DataValidation以承载原生Editor Validator。'
 
     $runtimeFiles = Get-ChildItem (Join-Path $pluginRoot 'Source/GamePlatformPCG') -Recurse -File -Include *.h,*.cpp,*.cs
     $runtimeSource = ($runtimeFiles | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 }) -join "`n"
@@ -68,6 +75,17 @@ if ($findings.Count -eq 0) {
     foreach ($name in @('ScatterSurface','LinearDresser','EnclosureClosed','CropField','RailingAttached')) {
         Assert-True ($template.Contains($name)) ("Template Contract缺少模板ID：{0}" -f $name)
     }
+
+    $editorLibrary = Get-Content -LiteralPath $editorLibraryHeader -Raw -Encoding UTF8
+    $foundationGraph = Get-Content -LiteralPath $foundationGraphCpp -Raw -Encoding UTF8
+    $commandlet = Get-Content -LiteralPath $foundationCommandlet -Raw -Encoding UTF8
+    Assert-True ($editorLibrary.Contains('CreateFoundationTemplateAssets')) 'Editor Library缺少Foundation模板资产创建入口。'
+    Assert-True ($foundationGraph.Contains('CreateFoundationTemplateGraph')) '缺少Foundation模板真实UPCGGraph生成器。'
+    Assert-True ($foundationGraph.Contains('bIsTemplate = true')) 'Foundation模板生成器必须设置官方PCG模板标记。'
+    Assert-True ($commandlet.Contains('GamePlatformPCGFoundationTemplatesCommandlet')) '缺少Foundation模板命令行生成入口。'
+    $validator = Get-Content -LiteralPath $worldValidator -Raw -Encoding UTF8
+    Assert-True ($validator.Contains('Directors.Num() != 1')) '世界校验器必须要求PCG地图恰好一个WorldDirector。'
+    Assert-True ($validator.Contains('Registered.Contains(Participant)')) '世界校验器必须拒绝未注册到WorldDirector的PCG放置器。'
 
     $docs = Get-Content -LiteralPath $componentDoc -Raw -Encoding UTF8
     foreach ($token in @('怎么使用','当前实现状态','M2','不允许的用法')) {

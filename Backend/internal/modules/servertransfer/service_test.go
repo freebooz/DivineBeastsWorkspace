@@ -90,19 +90,95 @@ func TestAuthoritativeBindingEpochAndFences(t *testing.T) {
 	if replay.calls != 0 {
 		t.Fatal("协议错配必须在ReplayStore消费前拒绝")
 	}
+	// 更高Epoch先成功准入后，旧Epoch必须在ReplayStore消费之前被服务端拒绝。
 	validated, err := service.Validate(ValidateRequest{
-		Ticket: first, DestinationGameServerID: "ow-1",
+		Ticket: second, DestinationGameServerID: "ow-1",
 		DestinationServerBootID: "boot-current", DestinationProtocolVersion: 7,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if validated.GameSessionID != first.GameSessionID ||
-		validated.SessionEpoch != first.SessionEpoch ||
+	if validated.GameSessionID != second.GameSessionID ||
+		validated.SessionEpoch != second.SessionEpoch ||
 		validated.DestinationServerBootID != "boot-current" ||
 		validated.DestinationProtocolVersion != 7 {
 		t.Fatalf("验证结果未保留完整Binding: %+v", validated)
 	}
+	if replay.calls != 1 {
+		t.Fatalf("更高Epoch首次准入应只消费一次ReplayStore，实际=%d", replay.calls)
+	}
+	if _, err := service.Validate(ValidateRequest{
+		Ticket: first, DestinationGameServerID: "ow-1",
+		DestinationServerBootID: "boot-current", DestinationProtocolVersion: 7,
+	}); err == nil {
+		t.Fatal("更高Epoch已经准入后，旧Epoch票据必须被服务端拒绝")
+	}
+	if replay.calls != 1 {
+		t.Fatalf("旧Epoch必须在ReplayStore消费前拒绝，实际调用=%d", replay.calls)
+	}
+}
+
+// TestEpochFenceAllowsRetryAfterReplayStoreFailure（Epoch栅栏与Replay失败重试测试）
+// 验证Epoch确认先执行但同Ticket同Epoch可幂等重试，避免ReplayStore瞬时故障永久烧掉本次准入。
+func TestEpochFenceAllowsRetryAfterReplayStoreFailure(t *testing.T) {
+	now := time.Date(2026, 9, 29, 9, 0, 0, 0, time.UTC)
+	replay := &flakyReplayStore{}
+	service := NewServiceWithStores(
+		[]byte("01234567890123456789012345678901"),
+		func() time.Time { return now },
+		replay,
+		NewMemorySessionEpochStore(),
+	)
+	ticket, err := service.Issue(IssueRequest{
+		TicketID:                   "retry-after-replay-error",
+		AssignmentID:               "world:ow-1:main",
+		GameID:                     "divine-beasts",
+		PlayerID:                   "p1",
+		SessionID:                  "session-retry",
+		DestinationGameServerID:    "ow-1",
+		DestinationEndpoint:        "127.0.0.1:7777",
+		DestinationWorldID:         "World.OpenWorld.Main",
+		DestinationExperienceID:    "Experience.OpenWorld.Main",
+		TTL:                        30 * time.Second,
+		DestinationServerBootID:    "boot-current",
+		DestinationProtocolVersion: 7,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	request := ValidateRequest{
+		Ticket:                     ticket,
+		DestinationGameServerID:    "ow-1",
+		DestinationServerBootID:    "boot-current",
+		DestinationProtocolVersion: 7,
+	}
+	if _, err := service.Validate(request); err == nil {
+		t.Fatal("第一次ReplayStore瞬时失败必须向上传递错误")
+	}
+	validated, err := service.Validate(request)
+	if err != nil {
+		t.Fatalf("同Ticket同Epoch重试应成功: %v", err)
+	}
+	if validated.SessionEpoch != ticket.SessionEpoch ||
+		validated.GameSessionID != ticket.GameSessionID {
+		t.Fatalf("重试返回Binding错误: %+v", validated)
+	}
+	if replay.calls != 2 {
+		t.Fatalf("ReplayStore应调用两次，实际=%d", replay.calls)
+	}
+}
+
+type flakyReplayStore struct {
+	calls int
+}
+
+func (s *flakyReplayStore) Consume(_ context.Context, _ string, _ time.Duration) (bool, error) {
+	s.calls++
+	if s.calls == 1 {
+		return false, errors.New("temporary replay store failure")
+	}
+	return true, nil
 }
 
 type recordingReplayStore struct {

@@ -88,10 +88,12 @@ type ReplayStore interface {
 	Consume(ctx context.Context, ticketID string, ttl time.Duration) (consumed bool, err error)
 }
 
-// SessionEpochStore（会话代次仓储）为每个在线Session分配严格递增的权威Epoch。
-// 生产环境必须使用跨副本共享的原子INCR实现；本地测试可使用内存实现。
+// SessionEpochStore（会话代次仓储）同时负责签票递增和目标准入防旧。
+// 生产环境必须使用跨副本共享的原子实现；Accept要求同Epoch同Ticket可幂等重试，
+// 低Epoch或同Epoch不同Ticket必须拒绝，避免旧票在新连接已经准入后重新进入。
 type SessionEpochStore interface {
 	Next(ctx context.Context, sessionID string) (uint64, error)
+	Accept(ctx context.Context, sessionID string, epoch uint64, ticketID string, ttl time.Duration) (accepted bool, err error)
 }
 
 // Service（迁移票据服务）使用HMAC-SHA256签名，并通过ReplayStore原子消费TicketID。
@@ -234,6 +236,21 @@ func (s *Service) ValidateContext(ctx context.Context, req ValidateRequest) (Val
 	if ttl <= 0 {
 		return ValidationResult{}, errors.New("TRANSFER_TICKET_EXPIRED: 迁移票据已过期")
 	}
+	// 先建立服务端共享Epoch栅栏，再消费一次性Ticket。
+	// Accept对“同Epoch+同Ticket”幂等，因此若ReplayStore发生瞬时错误，本票据仍可安全重试；
+	// 但更高Epoch一旦被任何目标连接接纳，旧Epoch会在烧掉Replay票据之前被拒绝。
+	acceptedEpoch, err := s.epochs.Accept(
+		ctx,
+		ticket.SessionID,
+		ticket.SessionEpoch,
+		ticket.TicketID,
+		ttl)
+	if err != nil {
+		return ValidationResult{}, fmt.Errorf("确认SessionEpoch失败: %w", err)
+	}
+	if !acceptedEpoch {
+		return ValidationResult{}, errors.New("TRANSFER_SESSION_EPOCH_STALE: 迁移票据SessionEpoch已经过期")
+	}
 	consumed, err := s.replay.Consume(ctx, ticket.TicketID, ttl)
 	if err != nil {
 		return ValidationResult{}, err
@@ -273,13 +290,23 @@ func randomHex(bytes int) (string, error) {
 }
 
 // MemorySessionEpochStore（内存会话代次仓储）用于单进程开发与测试。
+type memoryAcceptedEpoch struct {
+	epoch     uint64
+	ticketID  string
+	expiresAt time.Time
+}
+
 type MemorySessionEpochStore struct {
-	mu     sync.Mutex
-	epochs map[string]uint64
+	mu       sync.Mutex
+	epochs   map[string]uint64
+	accepted map[string]memoryAcceptedEpoch
 }
 
 func NewMemorySessionEpochStore() *MemorySessionEpochStore {
-	return &MemorySessionEpochStore{epochs: map[string]uint64{}}
+	return &MemorySessionEpochStore{
+		epochs:   map[string]uint64{},
+		accepted: map[string]memoryAcceptedEpoch{},
+	}
 }
 
 func (s *MemorySessionEpochStore) Next(_ context.Context, sessionID string) (uint64, error) {
@@ -295,6 +322,49 @@ func (s *MemorySessionEpochStore) Next(_ context.Context, sessionID string) (uin
 	current++
 	s.epochs[sessionID] = current
 	return current, nil
+}
+
+// Accept（确认准入代次）模拟生产共享仓储的原子“仅前进”栅栏。
+// 同Epoch只有原TicketID可以幂等重试；不同Ticket不能复用相同Epoch。
+func (s *MemorySessionEpochStore) Accept(
+	_ context.Context,
+	sessionID string,
+	epoch uint64,
+	ticketID string,
+	ttl time.Duration,
+) (bool, error) {
+	if sessionID == "" || epoch == 0 || ticketID == "" || ttl <= 0 {
+		return false, errors.New("SessionEpoch准入参数无效")
+	}
+
+	now := time.Now().UTC()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if current, exists := s.accepted[sessionID]; exists {
+		if !now.Before(current.expiresAt) {
+			delete(s.accepted, sessionID)
+		} else {
+			if epoch < current.epoch {
+				return false, nil
+			}
+			if epoch == current.epoch {
+				if ticketID != current.ticketID {
+					return false, nil
+				}
+				current.expiresAt = now.Add(ttl)
+				s.accepted[sessionID] = current
+				return true, nil
+			}
+		}
+	}
+
+	s.accepted[sessionID] = memoryAcceptedEpoch{
+		epoch:     epoch,
+		ticketID:  ticketID,
+		expiresAt: now.Add(ttl),
+	}
+	return true, nil
 }
 
 // MemoryReplayStore（内存防重放仓储）用于本地开发与单元测试。

@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 
 #include "Definitions/GamePlatformPCGEnvironmentDefinitions.h"
+#include "Definitions/GamePlatformPrimaryDataAsset.h"
 #include "Schema/GamePlatformPCGSchema.h"
 #include "Services/GamePlatformPCGLinearRules.h"
 #include "Services/GamePlatformPCGPriorityRules.h"
@@ -78,6 +79,60 @@ bool FGamePlatformPCGLinearRulesTest::RunTest(const FString&)
     TestEqual(TEXT("优先选择最窄覆盖区间"), Selected, FName(TEXT("Span.100")));
     TestTrue(TEXT("达到柱距时保留柱"), FGamePlatformPCGLinearRules::ShouldKeepPost(200.0f, 200.0f));
     TestFalse(TEXT("未达到柱距时过滤柱"), FGamePlatformPCGLinearRules::ShouldKeepPost(120.0f, 200.0f));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformPCGDefinitionDependencyTest,
+    "GamePlatform.PCG.Definition.RequiredDependencies",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformPCGDefinitionDependencyTest::RunTest(const FString&)
+{
+    auto MakeCatalog = []()
+    {
+        UGamePlatformPCGConnectorCatalogDefinition* Catalog = NewObject<UGamePlatformPCGConnectorCatalogDefinition>();
+        FGamePlatformId::TryParse(TEXT("test.pcg.connector_catalog@1"), Catalog->LogicalId);
+        return Catalog;
+    };
+
+    {
+        UGamePlatformPCGConnectorCatalogDefinition* Catalog = MakeCatalog();
+        FGamePlatformPCGConnectorCatalogEntry Entry;
+        Entry.ItemId = TEXT("Gate.Empty");
+        Entry.MinSpanCm = 50.0f;
+        Entry.MaxSpanCm = 300.0f;
+        Catalog->Entries.Add(Entry);
+        TestFalse(TEXT("连接件目录实际条目缺少ContentDefinitionId必须失败"), Catalog->ValidateDefinition().IsSuccess());
+    }
+
+    const FPrimaryAssetId ContentId(
+        UGamePlatformPrimaryDataAsset::DefinitionAssetType(),
+        FName(TEXT("test.pcg.connector_content@1")));
+
+    {
+        UGamePlatformPCGConnectorCatalogDefinition* Catalog = MakeCatalog();
+        FGamePlatformPCGConnectorCatalogEntry Entry;
+        Entry.ItemId = TEXT("Gate.Undeclared");
+        Entry.ContentDefinitionId = ContentId;
+        Entry.MinSpanCm = 50.0f;
+        Entry.MaxSpanCm = 300.0f;
+        Catalog->Entries.Add(Entry);
+        TestFalse(TEXT("字段引用未登记RequiredDefinitions必须失败"), Catalog->ValidateDefinition().IsSuccess());
+    }
+
+    {
+        UGamePlatformPCGConnectorCatalogDefinition* Catalog = MakeCatalog();
+        FGamePlatformPCGConnectorCatalogEntry Entry;
+        Entry.ItemId = TEXT("Gate.Valid");
+        Entry.ContentDefinitionId = ContentId;
+        Entry.MinSpanCm = 50.0f;
+        Entry.MaxSpanCm = 300.0f;
+        Catalog->Entries.Add(Entry);
+        Catalog->RequiredDefinitions.Add(ContentId);
+        TestTrue(TEXT("有效引用登记RequiredDefinitions后通过字段级校验"), Catalog->ValidateDefinition().IsSuccess());
+    }
+
     return true;
 }
 

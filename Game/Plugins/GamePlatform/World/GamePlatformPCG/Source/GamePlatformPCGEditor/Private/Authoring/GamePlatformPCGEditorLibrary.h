@@ -15,6 +15,13 @@ public:
     /** 游戏线程，仅首次创建固定开发图/配置；任一目标已占用则整批拒绝，不覆盖用户资产。不执行图或地图操作。 */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool CreateDevelopmentAssets(FString& Error);
+
+    /**
+     * 首次创建M0/M1 Foundation Template（基础模板）开发资产；全部位于/Game/Development，不覆盖已有包。
+     * 只创建真实UPCGGraph模板并先通过Template Contract校验，不创建发布内容、不执行生成。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool CreateFoundationTemplateAssets(FString& Error);
     /** 游戏线程；Profile及其图/网格必须已加载且保存。返回真实依赖字节指纹，不批准生成结果或重开状态。 */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool InspectProfileSource(UGamePlatformPCGProfileDefinition* Profile, FString& Fingerprint,

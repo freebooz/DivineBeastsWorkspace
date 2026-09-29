@@ -102,7 +102,6 @@ private:
         Component->RegisterComponent();
     }
 
-    TUniquePtr<FGamePlatformHttpControlProvider> ControlProvider;private:
     TUniquePtr<FGamePlatformHttpControlProvider> ControlProvider;
     TUniquePtr<FGamePlatformHttpAdmissionProvider> AdmissionProvider;
     TUniquePtr<FGamePlatformServerGameplayAdmissionHandler>

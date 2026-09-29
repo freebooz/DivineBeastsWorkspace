@@ -4,7 +4,7 @@
 
 当前公共真源仍为Shared/Contracts/GamePlatform/OpenAPI。Gateway已经新增受Bearer认证的 `POST /v1/divinebeasts/world-entry`，用于当前已认证玩家的常驻世界进入；服务端从认证上下文取得PlayerID/SessionID，并核对selectedCharacterId与expectedCharacterRevision，客户端不能直接声明目标GameServer、Endpoint或玩家主体。
 
-Gateway通过现有GameServerControl能力完成 `allocate-world-transfer`，HTTP与gRPC生产装配均已接入。GameServerControl内部HTTP接口已经统一增加内部Bearer保护；`assignment`、`validate-transfer`、`match-result` 等服务器作用域操作还要求 `X-Game-Server-Id` 与实际作用实例一致。该改造解决“客户端直连内部控制面”的P0问题，但还没有完成UE真实网络Admission和SessionEpoch绑定。Shared OpenAPI已经更新并通过仓库唯一contractcodegen重新生成。
+Gateway通过现有GameServerControl能力完成 `allocate-world-transfer`，HTTP与gRPC生产装配均已接入。GameServerControl内部HTTP接口统一增加内部Bearer保护；服务器作用域操作同时核对 `X-Game-Server-Id` 与 `X-Game-Server-Boot-Id`，旧进程不能只凭共享Bearer操作新Boot。TransferTicket已绑定GameSessionId、目标Boot、ProtocolVersion与SessionEpoch，目标Admission Provider通过 `validate-transfer` 再验签并形成可信Binding。Shared OpenAPI已经通过仓库唯一contractcodegen保持同步。
 
 ## 实际BackendContractMap
 
@@ -18,7 +18,7 @@ Gateway通过现有GameServerControl能力完成 `allocate-world-transfer`，HTT
 - `Cancel(ctx, reservationID, authorizationID string) (string,error)` → `session_cancel`：撤销Reserved/Claimed；提交已经获胜则返回Admitted，调用者必须改走查询/Leave。
 - `Lookup(ctx, reservationID, authorizationID string) (Snapshot,error)`：只允许同一有效授权决策查询结果。返回State、目标身份、Epoch、到期及权威租约，不返回凭据、摘要或ConnectionID。不确定结果应先查询，不直接重签无限票据。
 
-以上数据库方法仍是内部可信端口，不能从请求体复制Connection.InstanceID当作已认证主体。当前玩家身份/角色所有权已经在Gateway世界进入入口核验，实例注册/就绪/心跳也由GamePlatformServer控制面实现；但数据库Admission事务与当前GameServerControl运行链仍未统一成唯一生产Admission Provider，真实连接身份、Boot代次、SessionEpoch和UE网络握手仍是下一阶段必须收口的边界。
+以上PostgreSQL Admission内核仍作为历史/独立事务能力保留，不能从请求体复制Connection.InstanceID当作已认证主体。当前实际运行链已经由GameServerControl + ServerTransfer + GamePlatformServer HTTP Admission Provider形成唯一UE准入路径；玩家主体来自Gateway认证，服务器主体来自注册实例ID+BootID，SessionEpoch由共享仓储生成并在验票时通过服务端已接受Epoch栅栏防旧。后续若重新启用PostgreSQL Admission事务，必须作为同一权威链的持久化实现替换，而不能与当前Redis/ServerTransfer路径并行产生第二套准入真源。
 
 ## 数据所有权与原子边界
 
@@ -32,4 +32,4 @@ Gateway通过现有GameServerControl能力完成 `allocate-world-transfer`，HTT
 
 ## 本次真实证据范围
 
-历史隔离测试调用实际Go Store、pgx驱动和PostgreSQL，包含并发事务及真实数据库容器重启。2026-09-29新增验证还覆盖Gateway、GameServerControl HTTP、内部Bearer、世界进入HTTP适配、gRPC客户端和productiondeps+grpcdeps组合编译。它们仍不是UE真实ClientTravel/Admission双服务器成功链；完整E2E目前未执行。
+历史隔离测试调用实际Go Store、pgx驱动和PostgreSQL，包含并发事务及真实数据库容器重启。2026-09-29新增验证覆盖Gateway、GameServerControl、ServerTransfer、内部Bearer/Boot身份、世界进入HTTP适配、服务端SessionEpoch防旧、生产Redis Epoch实现编译、gRPC客户端和生产组合编译。它们仍不是UE真实ClientTravel/Admission双进程成功链；完整E2E仍需执行。

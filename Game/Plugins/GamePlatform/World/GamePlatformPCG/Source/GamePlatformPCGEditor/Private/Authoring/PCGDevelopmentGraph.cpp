@@ -9,6 +9,65 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/CollisionProfile.h"
+#include "Nodes/GamePlatformPCGNodes.h"
+#include "Services/GamePlatformPCGTemplateContract.h"
+
+namespace
+{
+template <typename TSettings>
+UPCGNode* AddTemplateNode(UPCGGraph& Graph, FString& Error)
+{
+    TSettings* Settings = nullptr;
+    UPCGNode* Node = Graph.AddNodeOfType(Settings);
+    if (!Node || !Settings)
+    {
+        Error = FString::Printf(TEXT("Foundation模板节点创建失败：%s"), *TSettings::StaticClass()->GetName());
+        return nullptr;
+    }
+
+    Settings->bDebug = false;
+    Settings->bEnabled = true;
+    Settings->SetExecuteOnGPU(false);
+    return Node;
+}
+
+template <typename TSettings>
+bool AppendTemplateNode(UPCGGraph& Graph, UPCGNode*& Tail, FName& TailPin, FString& Error)
+{
+    UPCGNode* Node = AddTemplateNode<TSettings>(Graph, Error);
+    if (!Node)
+    {
+        return false;
+    }
+
+    if (!Graph.AddEdge(Tail, TailPin, Node, PCGPinConstants::DefaultInputLabel))
+    {
+        Error = FString::Printf(TEXT("Foundation模板节点接线失败：%s"), *TSettings::StaticClass()->GetName());
+        return false;
+    }
+
+    Tail = Node;
+    TailPin = PCGPinConstants::DefaultOutputLabel;
+    return true;
+}
+
+bool IsM0M1Template(FName TemplateId)
+{
+    using namespace GamePlatformPCGEditor;
+    return TemplateId == FGamePlatformPCGTemplateIds::Base ||
+           TemplateId == FGamePlatformPCGTemplateIds::ScatterSurface ||
+           TemplateId == FGamePlatformPCGTemplateIds::BiomeGenerator ||
+           TemplateId == FGamePlatformPCGTemplateIds::LinearDresser ||
+           TemplateId == FGamePlatformPCGTemplateIds::Enclosure ||
+           TemplateId == FGamePlatformPCGTemplateIds::EnclosureClosed ||
+           TemplateId == FGamePlatformPCGTemplateIds::Connector ||
+           TemplateId == FGamePlatformPCGTemplateIds::GateInsert ||
+           TemplateId == FGamePlatformPCGTemplateIds::ParcelFill ||
+           TemplateId == FGamePlatformPCGTemplateIds::CropField ||
+           TemplateId == FGamePlatformPCGTemplateIds::AssemblySpawn ||
+           TemplateId == FGamePlatformPCGTemplateIds::InterfaceBand;
+}
+}
 
 UPCGGraph* GamePlatformPCGEditor::CreateDevelopmentGraph(UObject* Outer, FName Name,
     UStaticMesh* Mesh, bool bStaticCollision, FString& Error)
@@ -92,5 +151,105 @@ UPCGGraph* GamePlatformPCGEditor::CreateDevelopmentGraph(UObject* Outer, FName N
         Error = TEXT("原生PCG四节点接线失败；未保存或执行图");
         return nullptr;
     }
+    return Graph;
+}
+
+UPCGGraph* GamePlatformPCGEditor::CreateFoundationTemplateGraph(
+    UObject* Outer,
+    FName Name,
+    FName TemplateId,
+    FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+
+    if (!Outer || Name.IsNone() || !IsM0M1Template(TemplateId))
+    {
+        Error = TEXT("只允许为有效Outer创建已批准的M0/M1 Foundation模板；M2+模板继续后置。");
+        return nullptr;
+    }
+
+    UPCGGraph* Graph = NewObject<UPCGGraph>(Outer, Name, RF_Public | RF_Standalone | RF_Transactional);
+    if (!Graph || !Graph->GetInputNode() || !Graph->GetOutputNode())
+    {
+        Error = TEXT("Foundation模板UPCGGraph或默认输入/输出节点创建失败。");
+        return nullptr;
+    }
+
+    Graph->bIsTemplate = true;
+    Graph->bExposeToLibrary = true;
+
+    const TArray<FPCGPinProperties> GraphInputs = Graph->DefaultInputPinProperties();
+    const TArray<FPCGPinProperties> GraphOutputs = Graph->DefaultOutputPinProperties();
+    if (GraphInputs.IsEmpty() || GraphOutputs.IsEmpty())
+    {
+        Error = TEXT("Foundation模板缺少官方PCG默认输入或输出引脚。");
+        return nullptr;
+    }
+
+    UPCGNode* Tail = Graph->GetInputNode();
+    FName TailPin = GraphInputs[0].Label;
+    if (!AppendTemplateNode<UGamePlatformPCGWriteSchemaDefaultsSettings>(*Graph, Tail, TailPin, Error))
+    {
+        return nullptr;
+    }
+
+    if (TemplateId == FGamePlatformPCGTemplateIds::ScatterSurface ||
+        TemplateId == FGamePlatformPCGTemplateIds::BiomeGenerator ||
+        TemplateId == FGamePlatformPCGTemplateIds::InterfaceBand)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGProjectAlignSettings>(*Graph, Tail, TailPin, Error) ||
+            !AppendTemplateNode<UGamePlatformPCGApplySpawnPolicySettings>(*Graph, Tail, TailPin, Error) ||
+            !AppendTemplateNode<UGamePlatformPCGAssignMeshSetSettings>(*Graph, Tail, TailPin, Error))
+        {
+            return nullptr;
+        }
+    }
+    else if (TemplateId == FGamePlatformPCGTemplateIds::LinearDresser ||
+             TemplateId == FGamePlatformPCGTemplateIds::Enclosure ||
+             TemplateId == FGamePlatformPCGTemplateIds::EnclosureClosed)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGFitPostsToSplineSettings>(*Graph, Tail, TailPin, Error) ||
+            !AppendTemplateNode<UGamePlatformPCGSelectSpanMeshByLengthSettings>(*Graph, Tail, TailPin, Error))
+        {
+            return nullptr;
+        }
+    }
+    else if (TemplateId == FGamePlatformPCGTemplateIds::Connector ||
+             TemplateId == FGamePlatformPCGTemplateIds::GateInsert)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGBreakSpansByTagsSettings>(*Graph, Tail, TailPin, Error))
+        {
+            return nullptr;
+        }
+    }
+    else if (TemplateId == FGamePlatformPCGTemplateIds::ParcelFill ||
+             TemplateId == FGamePlatformPCGTemplateIds::CropField)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGBuildRowsSettings>(*Graph, Tail, TailPin, Error) ||
+            !AppendTemplateNode<UGamePlatformPCGAssignMeshSetSettings>(*Graph, Tail, TailPin, Error))
+        {
+            return nullptr;
+        }
+    }
+    else if (TemplateId == FGamePlatformPCGTemplateIds::AssemblySpawn)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGAssignMeshSetSettings>(*Graph, Tail, TailPin, Error))
+        {
+            return nullptr;
+        }
+    }
+
+    if (!AppendTemplateNode<UGamePlatformPCGValidateSchemaSettings>(*Graph, Tail, TailPin, Error))
+    {
+        return nullptr;
+    }
+
+    if (!Graph->AddEdge(Tail, TailPin, Graph->GetOutputNode(), GraphOutputs[0].Label))
+    {
+        Error = TEXT("Foundation模板ValidateSchema到Graph Output接线失败。");
+        return nullptr;
+    }
+
     return Graph;
 }

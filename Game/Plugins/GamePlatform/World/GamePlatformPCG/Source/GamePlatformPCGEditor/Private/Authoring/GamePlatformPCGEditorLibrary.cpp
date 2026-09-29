@@ -14,6 +14,25 @@ namespace
 {
 const FString AssetRoot = TEXT("/Game/Development/Foundation/PCG/");
 
+TArray<FName> GetM0M1FoundationTemplateIds()
+{
+    return
+    {
+        FGamePlatformPCGTemplateIds::Base,
+        FGamePlatformPCGTemplateIds::ScatterSurface,
+        FGamePlatformPCGTemplateIds::BiomeGenerator,
+        FGamePlatformPCGTemplateIds::LinearDresser,
+        FGamePlatformPCGTemplateIds::Enclosure,
+        FGamePlatformPCGTemplateIds::EnclosureClosed,
+        FGamePlatformPCGTemplateIds::Connector,
+        FGamePlatformPCGTemplateIds::GateInsert,
+        FGamePlatformPCGTemplateIds::ParcelFill,
+        FGamePlatformPCGTemplateIds::CropField,
+        FGamePlatformPCGTemplateIds::AssemblySpawn,
+        FGamePlatformPCGTemplateIds::InterfaceBand
+    };
+}
+
 bool IsOccupied(const FString& PackageName)
 {
     if (FindPackage(nullptr, *PackageName) || FPackageName::DoesPackageExist(PackageName))
@@ -98,6 +117,78 @@ bool UGamePlatformPCGEditorLibrary::CreateDevelopmentAssets(FString& Error)
         }
         if (!SaveNewAsset(*Graph, Error) || !SaveNewAsset(*Profile, Error)) { return false; }
     }
+    return true;
+}
+
+bool UGamePlatformPCGEditorLibrary::CreateFoundationTemplateAssets(FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+
+    const TArray<FName> TemplateIds = GetM0M1FoundationTemplateIds();
+    TArray<FString> Packages;
+    Packages.Reserve(TemplateIds.Num());
+    for (const FName TemplateId : TemplateIds)
+    {
+        Packages.Add(AssetRoot + TEXT("Templates/") + TemplateId.ToString());
+    }
+
+    for (const FString& PackageName : Packages)
+    {
+        if (IsOccupied(PackageName))
+        {
+            Error = TEXT("Foundation模板资产已存在或内存中已占用；拒绝覆盖：") + PackageName;
+            return false;
+        }
+    }
+
+    TArray<TObjectPtr<UPCGGraph>> Graphs;
+    Graphs.Reserve(TemplateIds.Num());
+    for (int32 Index = 0; Index < TemplateIds.Num(); ++Index)
+    {
+        UPackage* Package = CreatePackage(*Packages[Index]);
+        UPCGGraph* Graph = GamePlatformPCGEditor::CreateFoundationTemplateGraph(
+            Package,
+            TemplateIds[Index],
+            TemplateIds[Index],
+            Error);
+        if (!Graph)
+        {
+            return false;
+        }
+
+        UGamePlatformPCGProfileDefinition* Probe = NewObject<UGamePlatformPCGProfileDefinition>(GetTransientPackage());
+        if (!FGamePlatformId::TryParse(TEXT("foundation.pcg_template_probe@1"), Probe->LogicalId) ||
+            !FGamePlatformId::TryParse(TEXT("foundation.region_a@1"), Probe->RegionId))
+        {
+            Error = TEXT("Foundation模板探针逻辑身份初始化失败。");
+            return false;
+        }
+        Probe->GraphReference = Graph;
+        Probe->TemplateId = TemplateIds[Index];
+        Probe->TemplateVersion = 1;
+        Probe->ExecutionPolicy = EGamePlatformPCGExecutionPolicy::EditorGeneratedStatic;
+        Probe->OutputUsage = EGamePlatformPCGOutputUsage::Cosmetic;
+        Probe->MinimumOutputs = 0;
+
+        const FGamePlatformResult Validation = GamePlatformPCGInspection::ValidateApprovedGraph(*Probe);
+        if (!Validation.IsSuccess())
+        {
+            Error = Validation.Code.ToString() + TEXT(": ") + Validation.Message;
+            return false;
+        }
+        Graphs.Add(Graph);
+    }
+
+    // 全部合同验证成功后再落盘，尽量避免因逻辑错误产生半套资产；保存失败仍保留现场供人工审查，不自动删包。
+    for (UPCGGraph* Graph : Graphs)
+    {
+        if (!Graph || !SaveNewAsset(*Graph, Error))
+        {
+            return false;
+        }
+    }
+
     return true;
 }
 

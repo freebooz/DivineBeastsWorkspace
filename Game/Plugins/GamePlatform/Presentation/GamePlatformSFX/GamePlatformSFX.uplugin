@@ -1,18 +1,24 @@
 {
-    "FileVersion":  3,
-    "Version":  1,
-    "VersionName":  "0.1.0",
-    "FriendlyName":  "GamePlatformSFX",
-    "Description":  "GamePlatformSFX（游戏平台插件）",
-    "Category":  "GamePlatform/Presentation",
-    "CreatedBy":  "DivineBeastsWorkspace",
-    "CanContainContent":  true,
-    "EnabledByDefault":  false,
-    "Modules":  [
-                    {
-                        "Name":  "GamePlatformSFXClient",
-                        "Type":  "ClientOnly",
-                        "LoadingPhase":  "Default"
-                    }
-                ]
+    "FileVersion": 3,
+    "Version": 2,
+    "VersionName": "0.2.0",
+    "FriendlyName": "GamePlatformSFX",
+    "Description": "跨游戏客户端音效执行基础设施：统一SFX Definition、异步Definition租约加载、2D/世界/附着播放、实例句柄、并发/衰减原生策略、生命周期清理与Presentation接入。",
+    "Category": "GamePlatform/Presentation",
+    "CreatedBy": "DivineBeastsWorkspace",
+    "CanContainContent": false,
+    "EnabledByDefault": false,
+    "Modules": [
+        {
+            "Name": "GamePlatformSFXClient",
+            "Type": "ClientOnly",
+            "LoadingPhase": "Default",
+            "TargetAllowList": [ "Client", "Editor" ]
+        }
+    ],
+    "Plugins": [
+        { "Name": "GamePlatformCore", "Enabled": true },
+        { "Name": "GamePlatformData", "Enabled": true },
+        { "Name": "GamePlatformPresentation", "Enabled": true }
+    ]
 }

@@ -88,4 +88,4 @@ Game/Plugins/GamePlatform/World/GamePlatformPCG
 
 ## 7. 当前状态
 
-本轮已经完成第一批 M0/M1 源码落地，包括 Schema v1、P0～P9 原语与世界阶段、Domain ID、环境 Definition、PriorityCarve（优先级挖洞）规则、基础放置器/WorldDirector（世界编排器）、Template Contract（模板合同）、首批节点和 SelectSpanMeshByLength（按跨度选择栏片），并保留旧四节点兼容路径。架构静态门禁已通过；真实 PCG 模板/子图资产、Gold Level、UE Automation、Client/Server Cook、HiGen/World Partition 与性能验收仍未完成，未执行项目不得写成“已通过”。
+本轮已经完成第一批 M0/M1 源码落地，包括 Schema v1、P0～P9 原语与世界阶段、Domain ID、环境 Definition、PriorityCarve（优先级挖洞）规则、基础放置器/WorldDirector（世界编排器）、Template Contract（模板合同）、首批节点、SelectSpanMeshByLength（按跨度选择栏片），以及使用真实 UE5.8 `UPCGGraph` API 的 M0/M1 Foundation Template Generator（基础模板生成器）和 Commandlet（命令行工具），并保留旧四节点兼容路径。架构静态门禁与原生策略测试已通过；Foundation模板尚未实际执行落盘，Gold Level、UE Automation、Client/Server Cook、HiGen/World Partition 与性能验收仍未完成，未执行项目不得写成“已通过”。

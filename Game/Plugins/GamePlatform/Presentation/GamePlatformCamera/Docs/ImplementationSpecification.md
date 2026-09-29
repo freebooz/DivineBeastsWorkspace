@@ -172,7 +172,7 @@ UGamePlatformCameraLocalPlayerSubsystem 实现该接口，但内部栈、加载�
 
 FGamePlatformCameraModeRequest 固定包含：
 
-- FPrimaryAssetId DefinitionId：GamePlatformCameraMode 主资产身份；
+- FPrimaryAssetId DefinitionId：统一 GamePlatformDefinition 主资产身份；逻辑身份使用 platform.camera.mode 命名空间，并以 UGamePlatformCameraModeDefinition 作为 ExpectedClass 区分类型；
 - FName SourceId：调用来源的稳定诊断身份，不参与排序；
 - TWeakObjectPtr<UObject> Owner：拥有模式寿命的弱对象，不能为空；
 - TWeakObjectPtr<UObject> TargetProviderObject：可空；非空时必须实现 IGamePlatformCameraTargetProvider。
@@ -236,7 +236,7 @@ Camera 在当前输入策略允许时调用当前 PlayerController 的 AddYawInp
 
 FGamePlatformCameraEffectRequest 固定包含：
 
-- FPrimaryAssetId DefinitionId：GamePlatformCameraEffect 主资产身份；
+- FPrimaryAssetId DefinitionId：统一 GamePlatformDefinition 主资产身份；逻辑身份使用 platform.camera.effect 命名空间，并以 UGamePlatformCameraEffectDefinition 作为 ExpectedClass 区分类型；
 - FGuid RequestId：预测、确认、纠正和取消使用的稳定去重身份；
 - FName SourceId：调用来源诊断身份；
 - TWeakObjectPtr<UObject> Owner：效果寿命所有者；
@@ -307,7 +307,7 @@ Failed、Cancelled 和 Released 都是终态，不允许重新回到 Active。
 
 ### 8.1 相机模式定义
 
-UGamePlatformCameraModeDefinition 继承 UGamePlatformDefinitionBase，Primary Asset Type 固定为 GamePlatformCameraMode。
+UGamePlatformCameraModeDefinition 继承 UGamePlatformDefinitionBase。它必须遵守 GamePlatformData 的单一主资产身份合同：Primary Asset Type 固定使用 GamePlatformDefinition，模式通过 platform.camera.mode 逻辑命名空间及 AcquireDefinition 的 UGamePlatformCameraModeDefinition ExpectedClass 区分，禁止另建 GamePlatformCameraMode 主资产类型。
 
 字段分组：
 
@@ -363,7 +363,7 @@ ValidateDefinition 必须先调用 Super，再检查：
 
 ### 8.2 瞬时效果定义
 
-UGamePlatformCameraEffectDefinition 继承 UGamePlatformDefinitionBase，Primary Asset Type 固定为 GamePlatformCameraEffect。
+UGamePlatformCameraEffectDefinition 继承 UGamePlatformDefinitionBase。它同样使用 GamePlatformDefinition 主资产类型，效果通过 platform.camera.effect 逻辑命名空间及 UGamePlatformCameraEffectDefinition ExpectedClass 区分，禁止另建 GamePlatformCameraEffect 主资产类型。
 
 一期只封装经过验证的 UCameraShakeBase 软类引用及以下策略：
 
@@ -552,7 +552,7 @@ Presentation Provider 只接受可选的瞬时／定时相机表现，例如：
 规则：
 
 1. ProviderChannel 不是 Camera 时立即返回 false，让其他领域 Provider 继续处理。
-2. Catalog 的 DefinitionId 必须是可严格解析的 GamePlatformCameraEffect Primary Asset Id 字符串，不是文件路径。
+2. Catalog 的 DefinitionId 必须是可严格解析的 GamePlatformDefinition Primary Asset Id 字符串，逻辑身份属于 platform.camera.effect 命名空间；它不是文件路径，加载时必须以 UGamePlatformCameraEffectDefinition 作为 ExpectedClass。
 3. Instant 和 Timed 请求转换为 RequestEffect。
 4. Persistent 请求返回未处理；持续状态必须由拥有明确 Owner 的 AcquireMode 建立。
 5. WorldGeneration 不匹配返回 StaleWorld。

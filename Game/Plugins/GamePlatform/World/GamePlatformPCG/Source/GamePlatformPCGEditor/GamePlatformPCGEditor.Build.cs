@@ -8,7 +8,7 @@ public class GamePlatformPCGEditor : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PrivateDependencyModuleNames.AddRange(new[]
         {
-            "Core", "CoreUObject", "Engine", "UnrealEd", "AssetRegistry", "Projects",
+            "Core", "CoreUObject", "Engine", "UnrealEd", "AssetRegistry", "DataValidation", "Projects",
             "PCG", "GamePlatformPCG", "GamePlatformCore", "GamePlatformData"
         });
     }

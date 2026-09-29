@@ -1,12 +1,12 @@
 # GamePlatformSession（平台会话与跨服插件）
 
-当前交付状态：**客户端会话公共子系统、状态/恢复内核、Gateway世界进入入口和服务器准入边界已具备；真实UE网络Transport仍保持Fail Closed（失败关闭），完整跨服E2E尚未完成。** 现有实现不再是“只有私有状态内核”，但也不能据此宣称真实ClientTravel和Dedicated Server准入已经闭环。
+当前交付状态：**客户端会话公共子系统、状态/恢复内核、Gateway世界进入、可信Binding、默认UE Transport（传输适配器）、服务器Admission Provider（准入提供者）与可靠RPC握手均已实现；完整跨服E2E仍待最终构建和多进程验证。** 当前不能仅凭源码存在宣称OpenWorld/Village/MainArena真实跨服已经完成验收。
 
 面向玩家的目标是：Online认证后由Gateway校验当前选中角色并请求GameServerControl分配世界与一次性TransferTicket，再由Session执行加入、迁移、重连、离开和恢复。当前 `UGamePlatformSessionClientSubsystem` 已经公开Intent、Recovery、Cancel/Leave/Disconnect/Reconcile等通用能力，并保持TransferTicket不进入公开Snapshot；GamePlatformServer侧已经建立只接受可信C++握手层提交证明的Admission边界。
 
 模块仍只有GamePlatformSession，允许Client/Editor、禁止Server。Session平台层不依赖DivineBeasts、MobaCommon、ApplicationFlow、UI或Telemetry；项目层DBAClient单向依赖Session。服务器准入由独立的GamePlatformServer负责，Session不会把服务器职责重新拉回客户端插件。
 
-当前Backend已经补齐受认证的 `POST /v1/divinebeasts/world-entry` 公共入口，并将GameServerControl内部HTTP控制面统一置于内部Bearer保护下；HTTP/gRPC Gateway装配均复用现有GameServerControl能力，没有新增第六个Session微服务。仍未完成的关键前置是：控制面/服务器握手尚未向客户端Session提供可信 `GameSessionId / ServerBootId / ProtocolVersion / SessionEpoch` 绑定，因此禁止用客户端自造值实现ClientTravel成功。
+当前Backend已经补齐受认证的 `POST /v1/divinebeasts/world-entry` 公共入口，并将GameServerControl内部HTTP控制面统一置于内部Bearer保护下；HTTP/gRPC Gateway装配均复用现有GameServerControl能力，没有新增第六个Session微服务。TransferTicket由控制面绑定 `GameSessionId / ServerBootId / ProtocolVersion / SessionEpoch`，客户端只消费公开ExpectedBinding；目标Dedicated Server通过Admission Provider再次验票并逐字段确认Binding。服务端还维护“已接受SessionEpoch”原子栅栏，更高Epoch准入后旧票不能重新进入。
 
 建议人工先读交付状态、安全边界和最佳执行计划，再查API/状态机及测试证据。13类说明对应如下：
 
