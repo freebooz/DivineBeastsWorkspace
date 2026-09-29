@@ -12,7 +12,7 @@ namespace
 {
 constexpr float HandshakeProbeIntervalSeconds = 0.05f;
 
-bool IsSameBinding(
+bool IsSameTransportBinding(
     const FGamePlatformSessionConnectionBinding& Left,
     const FGamePlatformSessionConnectionBinding& Right)
 {
@@ -177,7 +177,7 @@ public:
 
         if (!ActiveOperationId.IsValid() ||
             ActiveOperationId != TransferOperationId ||
-            !IsSameBinding(ExpectedBinding, Binding))
+            !IsSameTransportBinding(ExpectedBinding, Binding))
         {
             return;
         }
@@ -206,7 +206,7 @@ public:
         }
 
         if (CurrentBinding.IsValid() &&
-            IsSameBinding(CurrentBinding, Binding))
+            IsSameTransportBinding(CurrentBinding, Binding))
         {
             CurrentBinding = {};
             UnbindNetworkFailure();

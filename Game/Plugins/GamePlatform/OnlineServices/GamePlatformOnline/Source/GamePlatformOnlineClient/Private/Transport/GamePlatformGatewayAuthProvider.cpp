@@ -14,7 +14,7 @@
 
 namespace
 {
-constexpr int32 MaxLoginNameChars = 256;
+constexpr int32 MaxGatewayLoginNameChars = 256;
 constexpr int32 MaxCredentialChars = 4096;
 constexpr int32 MaxIdentityChars = 512;
 constexpr int32 MaxTokenChars = 8192;
@@ -143,7 +143,7 @@ void FGamePlatformGatewayAuthProvider::LoginWithCredentials(
     if (!bConfigured ||
         NormalizedLogin.IsEmpty() ||
         Password.IsEmpty() ||
-        NormalizedLogin.Len() > MaxLoginNameChars ||
+        NormalizedLogin.Len() > MaxGatewayLoginNameChars ||
         Password.Len() > MaxCredentialChars)
     {
         FGamePlatformAuthProviderResult Result;

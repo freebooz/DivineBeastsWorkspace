@@ -28,9 +28,10 @@ struct FInventorySlotKey
 
 uint32 GetTypeHash(const FInventorySlotKey& Key)
 {
+    // 显式调用全局基础类型哈希，避免当前自定义GetTypeHash重载在Unity Build中遮蔽基础重载。
     return HashCombine(
-        GetTypeHash(Key.ContainerId),
-        GetTypeHash(Key.SlotIndex));
+        ::GetTypeHash(Key.ContainerId),
+        ::GetTypeHash(Key.SlotIndex));
 }
 }
 

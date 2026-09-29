@@ -5,6 +5,8 @@
 #include "Components/TextBlock.h"
 #include "Components/Widget.h"
 #include "Localization/DivineBeastsUILocalization.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
 
 UDivineBeastsLoginViewModel*
@@ -18,7 +20,42 @@ void UDivineBeastsLoginScreen::NativeOnActivated()
 {
     Super::NativeOnActivated();
     BindLoginEvents();
+    ApplyDevelopmentCredentialDefaults();
     RefreshLoginPresentation();
+}
+
+void UDivineBeastsLoginScreen::ApplyDevelopmentCredentialDefaults()
+{
+#if !UE_BUILD_SHIPPING
+    if (!AccountInput || !PasswordInput)
+    {
+        return;
+    }
+
+    // 只接受显式开发运行参数；不会把测试密码写进Widget资产、Config、日志或ViewState。
+    FString DevelopmentUser;
+    FString DevelopmentSecret;
+    const bool bHasUser = FParse::Value(
+        FCommandLine::Get(),
+        TEXT("DBADevLoginUser="),
+        DevelopmentUser);
+    const bool bHasSecret = FParse::Value(
+        FCommandLine::Get(),
+        TEXT("DBADevLoginSecret="),
+        DevelopmentSecret);
+
+    if (bHasUser && AccountInput->GetText().IsEmpty())
+    {
+        AccountInput->SetText(FText::FromString(DevelopmentUser));
+    }
+    if (bHasSecret && PasswordInput->GetText().IsEmpty())
+    {
+        PasswordInput->SetText(FText::FromString(DevelopmentSecret));
+    }
+
+    // 尽快释放本地临时字符串；Widget中密码仍按现有提交/离页逻辑立即清空。
+    DevelopmentSecret.Reset();
+#endif
 }
 
 void UDivineBeastsLoginScreen::NativeOnDeactivated()

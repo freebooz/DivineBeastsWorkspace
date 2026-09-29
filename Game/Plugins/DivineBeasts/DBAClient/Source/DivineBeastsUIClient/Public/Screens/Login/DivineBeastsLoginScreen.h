@@ -39,6 +39,12 @@ protected:
     /** 页面激活时绑定一次控件与ViewModel事件，并立即刷新当前只读快照。 */
     virtual void NativeOnActivated() override;
 
+    /**
+     * Development（开发）运行时从命令行注入测试账号默认值。
+     * Shipping 编译中为空操作；不写资产、不写配置、不进入日志/遥测。
+     */
+    void ApplyDevelopmentCredentialDefaults();
+
     /** 页面失活时解绑全部事件、淘汰当前请求身份并清空密码。 */
     virtual void NativeOnDeactivated() override;
 
