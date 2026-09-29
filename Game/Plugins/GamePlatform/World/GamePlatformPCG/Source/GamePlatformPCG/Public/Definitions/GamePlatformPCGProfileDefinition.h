@@ -20,7 +20,7 @@ public:
     /** 仅认可经本插件白名单审查的原生图；Graph分组由Data保留到清理完成。 */
     UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG",meta=(AssetBundles="PCGGeneration"))
     TSoftObjectPtr<UPCGGraph> GraphReference;
-    /** 白名单唯一网格；不从图内任意路径偷偷加载新资源。 */
+    /** 0.1.0 Legacy（旧四节点）唯一网格；1.0模板Profile可为空，真实网格由受控MeshSet/Spawner合同提供。 */
     UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG",meta=(AssetBundles="PCGGeneration"))
     TSoftObjectPtr<UStaticMesh> OutputMesh;
     /** 为空表示0.1.0 Legacy Development Fixture（旧开发夹具）；非空时进入1.0 Template Contract校验。 */

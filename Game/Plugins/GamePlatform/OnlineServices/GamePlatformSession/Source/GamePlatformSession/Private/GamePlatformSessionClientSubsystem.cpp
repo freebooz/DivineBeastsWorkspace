@@ -5,6 +5,7 @@
 #include "HAL/PlatformTime.h"
 #include "State/SessionConnectionState.h"
 #include "Types/GamePlatformSessionErrors.h"
+#include "Transport/GamePlatformUESessionTransport.h"
 
 #include <limits>
 #include <memory>
@@ -277,7 +278,8 @@ FGamePlatformResult FGamePlatformSessionTransferRequest::Validate() const
     }
     if (AssignmentId.IsEmpty() || GameServerId.IsEmpty() || ServerRoleId.IsNone() ||
         ExperienceId.IsNone() || WorldId.IsNone() || Endpoint.IsEmpty() ||
-        TransferTicket.IsEmpty() || SessionId.IsEmpty() || !ExpectedBinding.IsValid())
+        TransferTicket.IsEmpty() || TicketId.IsEmpty() ||
+        SessionId.IsEmpty() || !ExpectedBinding.IsValid())
     {
         return FGamePlatformResult::Failure(
             GamePlatformSessionErrors::TransferRequestIncomplete,
@@ -350,11 +352,16 @@ void UGamePlatformSessionClientSubsystem::Initialize(FSubsystemCollectionBase& C
     Runtime->State = std::make_unique<GamePlatformSession::FSessionConnectionState>(
         ToUtf8(FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphensLower)));
     Snapshot = {};
+    SetTransport(CreateGamePlatformUESessionTransport(*GetGameInstance()));
 }
 
 void UGamePlatformSessionClientSubsystem::Deinitialize()
 {
     StopTicker();
+    if (Transport.IsValid())
+    {
+        Transport->SetDisconnectedCallback({});
+    }
     if (Transport.IsValid() && Runtime)
     {
         if (Runtime->ActiveOperationId.IsValid())
@@ -382,6 +389,12 @@ void UGamePlatformSessionClientSubsystem::SetTransport(
         return;
     }
 
+    if (Transport.IsValid())
+    {
+        // 先取消旧适配器的持久断线回调，避免主动Leave被误报成外部断线。
+        Transport->SetDisconnectedCallback({});
+    }
+
     FGamePlatformResult Ignored;
     if (Runtime && Runtime->PublicBinding.IsValid())
     {
@@ -392,6 +405,27 @@ void UGamePlatformSessionClientSubsystem::SetTransport(
         CancelTransfer(Ignored);
     }
     Transport = MoveTemp(InTransport);
+    if (Transport.IsValid())
+    {
+        Transport->SetDisconnectedCallback(
+            [WeakThis = TWeakObjectPtr<UGamePlatformSessionClientSubsystem>(this)](
+                FGamePlatformSessionConnectionBinding Binding)
+            {
+                AsyncTask(
+                    ENamedThreads::GameThread,
+                    [WeakThis, Binding = MoveTemp(Binding)]() mutable
+                    {
+                        if (!WeakThis.IsValid())
+                        {
+                            return;
+                        }
+                        FGamePlatformResult Ignored;
+                        WeakThis->NotifyDisconnected(
+                            Binding,
+                            Ignored);
+                    });
+            });
+    }
 }
 
 void UGamePlatformSessionClientSubsystem::SetAuthenticationContext(
@@ -593,12 +627,26 @@ bool UGamePlatformSessionClientSubsystem::BeginOperation(
         [WeakThis = TWeakObjectPtr<UGamePlatformSessionClientSubsystem>(this), ExpectedOperation](
             FGamePlatformSessionConnectionBinding Binding)
         {
-            AsyncTask(ENamedThreads::GameThread,
+            if (IsInGameThread())
+            {
+                if (WeakThis.IsValid())
+                {
+                    WeakThis->HandleBindingPrepared(
+                        ExpectedOperation,
+                        MoveTemp(Binding));
+                }
+                return;
+            }
+
+            AsyncTask(
+                ENamedThreads::GameThread,
                 [WeakThis, ExpectedOperation, Binding = MoveTemp(Binding)]() mutable
                 {
                     if (WeakThis.IsValid())
                     {
-                        WeakThis->HandleBindingPrepared(ExpectedOperation, MoveTemp(Binding));
+                        WeakThis->HandleBindingPrepared(
+                            ExpectedOperation,
+                            MoveTemp(Binding));
                     }
                 });
         };
@@ -606,12 +654,26 @@ bool UGamePlatformSessionClientSubsystem::BeginOperation(
         [WeakThis = TWeakObjectPtr<UGamePlatformSessionClientSubsystem>(this), ExpectedOperation](
             FGamePlatformSessionConnectionBinding Binding)
         {
-            AsyncTask(ENamedThreads::GameThread,
+            if (IsInGameThread())
+            {
+                if (WeakThis.IsValid())
+                {
+                    WeakThis->HandleTravelCommitted(
+                        ExpectedOperation,
+                        MoveTemp(Binding));
+                }
+                return;
+            }
+
+            AsyncTask(
+                ENamedThreads::GameThread,
                 [WeakThis, ExpectedOperation, Binding = MoveTemp(Binding)]() mutable
                 {
                     if (WeakThis.IsValid())
                     {
-                        WeakThis->HandleTravelCommitted(ExpectedOperation, MoveTemp(Binding));
+                        WeakThis->HandleTravelCommitted(
+                            ExpectedOperation,
+                            MoveTemp(Binding));
                     }
                 });
         };
@@ -620,7 +682,20 @@ bool UGamePlatformSessionClientSubsystem::BeginOperation(
             EGamePlatformSessionTransferFact Fact,
             FGamePlatformSessionConnectionBinding Binding)
         {
-            AsyncTask(ENamedThreads::GameThread,
+            if (IsInGameThread())
+            {
+                if (WeakThis.IsValid())
+                {
+                    WeakThis->HandleTransportFact(
+                        ExpectedOperation,
+                        Fact,
+                        MoveTemp(Binding));
+                }
+                return;
+            }
+
+            AsyncTask(
+                ENamedThreads::GameThread,
                 [WeakThis, ExpectedOperation, Fact, Binding = MoveTemp(Binding)]() mutable
                 {
                     if (WeakThis.IsValid())
@@ -637,7 +712,20 @@ bool UGamePlatformSessionClientSubsystem::BeginOperation(
             FName ErrorCode,
             FString ErrorMessage)
         {
-            AsyncTask(ENamedThreads::GameThread,
+            if (IsInGameThread())
+            {
+                if (WeakThis.IsValid())
+                {
+                    WeakThis->HandleTransportFailure(
+                        ExpectedOperation,
+                        ErrorCode,
+                        MoveTemp(ErrorMessage));
+                }
+                return;
+            }
+
+            AsyncTask(
+                ENamedThreads::GameThread,
                 [WeakThis, ExpectedOperation, ErrorCode, ErrorMessage = MoveTemp(ErrorMessage)]() mutable
                 {
                     if (WeakThis.IsValid())
@@ -971,6 +1059,13 @@ void UGamePlatformSessionClientSubsystem::HandleTransportFact(
     const auto Core = Runtime->State->Snapshot();
     if (!Core.bOperationActive)
     {
+        if (Transport.IsValid() &&
+            Core.LastOutcome == GamePlatformSession::EOutcome::Succeeded)
+        {
+            Transport->CompleteTransfer(
+                TransferOperationId,
+                Runtime->PublicBinding);
+        }
         StopTicker();
         Runtime->LastOperationId = TransferOperationId;
         Runtime->ActiveOperationId.Invalidate();

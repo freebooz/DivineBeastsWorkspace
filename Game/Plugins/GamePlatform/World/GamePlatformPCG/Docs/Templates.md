@@ -23,6 +23,8 @@
 `ValidateApprovedGraph（批准图检查）`现在支持两条路径：
 
 1. TemplateId为空：继续执行0.1.0固定四节点Legacy Development Fixture（旧开发夹具）检查。
-2. TemplateId非空：要求已登记模板、正数TemplateVersion、Schema主版本一致、节点属于M0/M1批准类、CPU执行、无未知节点，并同时包含WriteSchemaDefaults与ValidateSchema。
+2. TemplateId非空：要求已登记模板、正数TemplateVersion、Schema主版本一致、节点属于M0/M1批准类、CPU执行、无未知节点；`WriteSchemaDefaults（写协议默认值）`与`ValidateSchema（验证协议）`必须各唯一，并且实际满足 `SchemaWriter → SchemaValidator → Output` 可达关系，不能把合规节点放在断开的旁路中骗过合同检查。
 
 HiGen/GPU仍在M2前失败关闭。
+
+当前模板合同仍不等于“模板可以运行”：真实 Template `.uasset`、Definition 参数绑定、MeshSetId→真实 Spawner 资源解析、Bake 输出审查尚未形成闭环，因此 Runtime Service 对 `TemplateId` 非空的请求继续 Fail-Closed（失败关闭）并返回 Unsupported。

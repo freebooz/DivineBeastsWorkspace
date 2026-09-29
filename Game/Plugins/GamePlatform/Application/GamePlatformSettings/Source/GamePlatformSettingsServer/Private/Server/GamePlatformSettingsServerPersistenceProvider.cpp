@@ -25,6 +25,14 @@ bool FGamePlatformSettingsServerPersistenceProvider::SupportsRuntime(
     return RuntimeScope == EGamePlatformSettingRuntimeScope::Server;
 }
 
+FGamePlatformResult FGamePlatformSettingsServerPersistenceProvider::SetUserContext(
+    const FString& UserContextKey)
+{
+    return FGamePlatformResult::Unsupported(
+        TEXT("SettingsUserContextServerUnsupported"),
+        TEXT("Dedicated Server不使用客户端User Profile上下文。"));
+}
+
 FString FGamePlatformSettingsServerPersistenceProvider::MakeEnvironmentKey(
     const FName SettingId)
 {
@@ -84,6 +92,9 @@ FGamePlatformResult FGamePlatformSettingsServerPersistenceProvider::Load(
         return FGamePlatformResult::Success();
     }
 
+    // 环境变量会把SettingId中的非字母数字字符统一转换为下划线；先检测规范化碰撞，禁止两个设置争用同一部署键。
+    TMap<FString, FName> EnvironmentOwnerByKey;
+
     for (const TPair<FName, FGamePlatformSettingDescriptor>& Pair :
         Descriptors)
     {
@@ -94,25 +105,71 @@ FGamePlatformResult FGamePlatformSettingsServerPersistenceProvider::Load(
             continue;
         }
 
-        if (Descriptor.bSensitive)
+        const FString EnvironmentKey =
+            MakeEnvironmentKey(Descriptor.SettingId);
+        if (const FName* ExistingOwner =
+                EnvironmentOwnerByKey.Find(EnvironmentKey);
+            ExistingOwner && *ExistingOwner != Descriptor.SettingId)
         {
             return FGamePlatformResult::Failure(
-                TEXT("SettingsSensitiveServerOverrideUnsupported"),
-                TEXT("敏感设置禁止通过INI、环境变量或命令行注入；凭据和密钥必须使用部署秘密机制。"));
+                TEXT("SettingsEnvironmentKeyCollision"),
+                TEXT("多个Server SettingId规范化后映射到同一环境变量键，拒绝按遍历顺序决定归属。"));
         }
+        EnvironmentOwnerByKey.Add(EnvironmentKey, Descriptor.SettingId);
 
-        FString Raw;
-        if (GConfig &&
+        FString ServerDefaultRaw;
+        const bool bHasServerDefault =
+            GConfig &&
             GConfig->GetString(
                 ServerDefaultSection,
                 *Descriptor.SettingId.ToString(),
-                Raw,
-                GGameIni))
+                ServerDefaultRaw,
+                GGameIni);
+
+        FString DeploymentRaw;
+        const bool bHasDeployment =
+            GConfig &&
+            GConfig->GetString(
+                DeploymentSection,
+                *Descriptor.SettingId.ToString(),
+                DeploymentRaw,
+                GGameIni);
+
+        const FString EnvironmentRaw =
+            FPlatformMisc::GetEnvironmentVariable(*EnvironmentKey);
+        const bool bHasEnvironment = !EnvironmentRaw.IsEmpty();
+
+        FString CommandLineRaw;
+        const FString CommandPrefix =
+            FString::Printf(
+                TEXT("GPSetting.%s="),
+                *Descriptor.SettingId.ToString());
+        const bool bHasCommandLine =
+            FParse::Value(
+                FCommandLine::Get(),
+                *CommandPrefix,
+                CommandLineRaw);
+
+        // 敏感Descriptor可以作为Session临时设置存在；只有真实外部覆盖尝试才拒绝，不能仅因Descriptor存在就阻断服务器启动。
+        if (Descriptor.bSensitive)
+        {
+            if (bHasServerDefault || bHasDeployment ||
+                bHasEnvironment || bHasCommandLine)
+            {
+                return FGamePlatformResult::Failure(
+                    TEXT("SettingsSensitiveServerOverrideUnsupported"),
+                    TEXT("敏感设置禁止通过INI、环境变量或命令行注入；凭据和密钥必须使用部署秘密机制。"));
+            }
+            continue;
+        }
+
+        // 按固定优先级顺序逐层解析，避免临时容器分配，也让服务器配置来源更易审计。
+        if (bHasServerDefault)
         {
             const FGamePlatformResult Result =
                 ParseAndAdd(
                     Descriptor,
-                    Raw,
+                    ServerDefaultRaw,
                     EGamePlatformSettingLayer::ServerDefault,
                     OutPayload);
             if (!Result.IsSuccess())
@@ -121,18 +178,12 @@ FGamePlatformResult FGamePlatformSettingsServerPersistenceProvider::Load(
             }
         }
 
-        Raw.Reset();
-        if (GConfig &&
-            GConfig->GetString(
-                DeploymentSection,
-                *Descriptor.SettingId.ToString(),
-                Raw,
-                GGameIni))
+        if (bHasDeployment)
         {
             const FGamePlatformResult Result =
                 ParseAndAdd(
                     Descriptor,
-                    Raw,
+                    DeploymentRaw,
                     EGamePlatformSettingLayer::Deployment,
                     OutPayload);
             if (!Result.IsSuccess())
@@ -141,14 +192,12 @@ FGamePlatformResult FGamePlatformSettingsServerPersistenceProvider::Load(
             }
         }
 
-        Raw = FPlatformMisc::GetEnvironmentVariable(
-            *MakeEnvironmentKey(Descriptor.SettingId));
-        if (!Raw.IsEmpty())
+        if (bHasEnvironment)
         {
             const FGamePlatformResult Result =
                 ParseAndAdd(
                     Descriptor,
-                    Raw,
+                    EnvironmentRaw,
                     EGamePlatformSettingLayer::Environment,
                     OutPayload);
             if (!Result.IsSuccess())
@@ -157,20 +206,12 @@ FGamePlatformResult FGamePlatformSettingsServerPersistenceProvider::Load(
             }
         }
 
-        Raw.Reset();
-        const FString CommandPrefix =
-            FString::Printf(
-                TEXT("GPSetting.%s="),
-                *Descriptor.SettingId.ToString());
-        if (FParse::Value(
-                FCommandLine::Get(),
-                *CommandPrefix,
-                Raw))
+        if (bHasCommandLine)
         {
             const FGamePlatformResult Result =
                 ParseAndAdd(
                     Descriptor,
-                    Raw,
+                    CommandLineRaw,
                     EGamePlatformSettingLayer::CommandLine,
                     OutPayload);
             if (!Result.IsSuccess())

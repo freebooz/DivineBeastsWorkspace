@@ -16,7 +16,8 @@ public class GamePlatformServer : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "HTTP",
-            "Json"
+            "Json",
+            "GamePlatformGameplay"
         });
     }
 }

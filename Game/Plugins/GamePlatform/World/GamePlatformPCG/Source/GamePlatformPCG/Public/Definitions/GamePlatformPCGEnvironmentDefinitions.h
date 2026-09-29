@@ -12,7 +12,7 @@ struct GAMEPLATFORMPCG_API FGamePlatformPCGMeshSetEntry
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GamePlatform|PCG")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GamePlatform|PCG", meta=(AssetBundles="PCGGeneration"))
     TSoftObjectPtr<UStaticMesh> Mesh;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GamePlatform|PCG", meta=(ClampMin="0.0"))
@@ -50,7 +50,7 @@ struct GAMEPLATFORMPCG_API FGamePlatformPCGSpanMeshRule
     GENERATED_BODY()
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GamePlatform|PCG")
-    FName MeshId = NAME_None;
+    FName MeshSetId = NAME_None;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GamePlatform|PCG", meta=(ClampMin="0.0"))
     float MinLengthCm = 0.0f;

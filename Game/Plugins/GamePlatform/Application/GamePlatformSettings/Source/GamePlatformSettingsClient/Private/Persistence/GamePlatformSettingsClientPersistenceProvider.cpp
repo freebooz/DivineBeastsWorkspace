@@ -2,18 +2,27 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "Misc/App.h"
+#include "Misc/SecureHash.h"
 #include "Profiles/GamePlatformUserSettingsProfile.h"
 #include "Settings/GamePlatformSettingsProjectSettings.h"
 
 namespace
 {
-    FString GetProfileSlotName()
+    FString GetProfileSlotBaseName()
     {
         const UGamePlatformSettingsProjectSettings* Settings =
             GetDefault<UGamePlatformSettingsProjectSettings>();
         return Settings && !Settings->LocalProfileSlotName.IsEmpty()
             ? Settings->LocalProfileSlotName
             : TEXT("GamePlatformSettings");
+    }
+
+    FString HashUserContextKey(const FString& UserContextKey)
+    {
+        const FTCHARToUTF8 Utf8(*UserContextKey);
+        uint8 Digest[FSHA1::DigestSize] = {};
+        FSHA1::HashBuffer(Utf8.Get(), Utf8.Length(), Digest);
+        return BytesToHex(Digest, UE_ARRAY_COUNT(Digest));
     }
 
     bool IsPersistentClientEnvironment()
@@ -44,6 +53,32 @@ bool FGamePlatformSettingsClientPersistenceProvider::SupportsRuntime(
     return RuntimeScope == EGamePlatformSettingRuntimeScope::Client;
 }
 
+FGamePlatformResult FGamePlatformSettingsClientPersistenceProvider::SetUserContext(
+    const FString& UserContextKey)
+{
+    check(IsInGameThread());
+
+    if (UserContextKey.Len() > 128 ||
+        UserContextKey.Contains(TEXT("\r")) ||
+        UserContextKey.Contains(TEXT("\n")))
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("SettingsUserContextInvalid"),
+            TEXT("用户上下文键必须是不超过128字符且不含换行的稳定不透明值。"));
+    }
+
+    CurrentUserContextKey = UserContextKey;
+    return FGamePlatformResult::Success();
+}
+
+FString FGamePlatformSettingsClientPersistenceProvider::GetScopedProfileSlotName() const
+{
+    const FString BaseName = GetProfileSlotBaseName();
+    return CurrentUserContextKey.IsEmpty()
+        ? FString()
+        : BaseName + TEXT("_") + HashUserContextKey(CurrentUserContextKey);
+}
+
 FGamePlatformResult FGamePlatformSettingsClientPersistenceProvider::Load(
     const TMap<FName, FGamePlatformSettingDescriptor>& Descriptors,
     FGamePlatformSettingsPersistencePayload& OutPayload)
@@ -61,7 +96,12 @@ FGamePlatformResult FGamePlatformSettingsClientPersistenceProvider::Load(
         return FGamePlatformResult::Success();
     }
 
-    const FString SlotName = GetProfileSlotName();
+    const FString SlotName = GetScopedProfileSlotName();
+    if (SlotName.IsEmpty())
+    {
+        // Logout/未登录时不读取任何用户档案，只保留默认与Session层。
+        return FGamePlatformResult::Success();
+    }
     constexpr int32 UserIndex = 0;
     if (!UGameplayStatics::DoesSaveGameExist(SlotName, UserIndex))
     {
@@ -121,7 +161,13 @@ FGamePlatformSettingsClientPersistenceProvider::BeginSave(
     Profile->SchemaVersion = SchemaVersion;
     Profile->UserValues = UserValues;
 
-    const FString SlotName = GetProfileSlotName();
+    const FString SlotName = GetScopedProfileSlotName();
+    if (SlotName.IsEmpty())
+    {
+        return FGamePlatformResult::Unsupported(
+            TEXT("SettingsUserContextMissing"),
+            TEXT("未设置用户上下文时不保存User Profile。"));
+    }
     constexpr int32 UserIndex = 0;
     UGameplayStatics::AsyncSaveGameToSlot(
         Profile,

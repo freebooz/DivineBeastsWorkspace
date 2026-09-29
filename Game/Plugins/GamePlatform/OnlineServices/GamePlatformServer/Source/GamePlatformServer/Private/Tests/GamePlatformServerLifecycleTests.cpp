@@ -13,6 +13,7 @@ bool FGamePlatformServerInstanceInfoValidationTest::RunTest(const FString&)
     FGamePlatformServerInstanceInfo Instance;
     Instance.GameId = TEXT("divine-beasts");
     Instance.GameServerId = TEXT("server-001");
+    Instance.ServerBootId = TEXT("boot-server-001");
     Instance.ServerRoleId = TEXT("GameServer.Role.MainArena");
     Instance.ExperienceId = TEXT("Experience.MainArena.Main");
     Instance.WorldId = TEXT("World.MainArena.Main");
@@ -35,6 +36,10 @@ bool FGamePlatformServerInstanceInfoValidationTest::RunTest(const FString&)
     Instance.ProtocolVersion = 2;
 
     Instance.ClusterId = TEXT("cluster-a\nX-Injected: true");
+
+    Instance.ProtocolVersion = 0;
+    TestFalse(TEXT("零网络协议版本必须拒绝"), Instance.IsValid());
+    Instance.ProtocolVersion = 2;
     TestFalse(TEXT("可选集群字段同样拒绝换行注入"), Instance.IsValid());
     Instance.ClusterId = TEXT("cluster-a");
 

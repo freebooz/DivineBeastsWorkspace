@@ -15,6 +15,10 @@ public class GamePlatformSession : ModuleRules
             "Engine",
             "GamePlatformCore"
         });
+
+        // 只在私有UE Transport中消费平台共享AdmissionHandshake RPC载体；
+        // 公开Session契约不暴露Gameplay类型，也不依赖GamePlatformServer或项目层。
+        PrivateDependencyModuleNames.Add("GamePlatformGameplay");
         if (Target.Type != TargetType.Client && Target.Type != TargetType.Editor)
         {
             throw new BuildException("GamePlatformSession仅允许Client或Editor目标；不得链接专用服务器。");

@@ -13,6 +13,8 @@ public:
     virtual FName GetPersistenceId() const override;
     virtual bool SupportsRuntime(
         EGamePlatformSettingRuntimeScope RuntimeScope) const override;
+    virtual FGamePlatformResult SetUserContext(
+        const FString& UserContextKey) override;
     virtual FGamePlatformResult Load(
         const TMap<FName, FGamePlatformSettingDescriptor>& Descriptors,
         FGamePlatformSettingsPersistencePayload& OutPayload) override;
@@ -20,4 +22,9 @@ public:
         const TMap<FName, FGamePlatformSettingValue>& UserValues,
         int32 SchemaVersion,
         FGamePlatformSettingsSaveCompletion Completion) override;
-};
+
+private:
+    /** 根据基础槽名和不透明用户键生成不泄露原始账号标识的本地槽名。 */
+    FString GetScopedProfileSlotName() const;
+
+    FString CurrentUserContextKey;};

@@ -33,7 +33,7 @@ Stage → Preview → Confirm → 重启 → 新设置保持。
 
 ## 4. Server
 
-对 OpenWorld／Village／MainArena 分别验证：
+对启用 Settings 的 Dedicated Server 测试配置分别验证：
 
 - ServerDefault INI。
 - Deployment INI。
@@ -41,15 +41,18 @@ Stage → Preview → Confirm → 重启 → 新设置保持。
 - -GPSetting.<SettingId>=... 命令行。
 - 优先级符合设计。
 - 类型／范围非法时启动配置解析失败。
+- bSensitive 设置禁止从 INI／Environment／CommandLine 注入。
+- 超长 String 输入明确失败，不进入 Snapshot。
 - Server 产物不包含 GamePlatformSettingsClient／Editor、UMG、Slate、音频或输入依赖。
 
 ## 5. 生命周期与性能
 
-1. 登录→角色选择→Village→OpenWorld→MainArena→OpenWorld，Snapshot 不因地图切换丢失。
+1. 登录、角色切换以及不同地图／体验切换过程中，Snapshot 不因 World 变化丢失。
 2. 快速拖动设置 UI 只修改内存草稿，不连续写盘。
 3. 运行分析确认 Settings 没有 Tick/Ticker。
 4. Provider 拓扑变更、Reload、Apply、Save 不产生无限递归或重复广播。
-5. 多 PIE 不污染真实用户 Profile 或设备设置。
+5. 异步 Save 进行中注销／注册 Provider 时不得立即重载并吞掉未保存修改；保存成功同代次后再处理拓扑重载。
+6. 多 PIE 不污染真实用户 Profile 或设备设置。
 
 人工审核必须记录引擎版本、平台、目标、步骤、预期、实际结果和异常。
 

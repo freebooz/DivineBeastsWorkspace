@@ -290,7 +290,7 @@ void UGamePlatformDeviceSettingsSubsystem::PublishSnapshot()
     bPublishing = true;
     for (const FGuid& Id : SubscriptionIds)
     {
-        FSubscriptionEntry* Entry = Subscriptions.Find(Id);
+        FDeviceSettingsSubscriptionEntry* Entry = Subscriptions.Find(Id);
         if (!Entry)
         {
             continue;
@@ -617,7 +617,7 @@ UGamePlatformDeviceSettingsSubsystem::Subscribe(
     Handle.Id = FGuid::NewGuid();
     Handle.Generation = Generation;
 
-    FSubscriptionEntry Entry;
+    FDeviceSettingsSubscriptionEntry Entry;
     Entry.Owner = Owner;
     Entry.Callback = MoveTemp(Callback);
     Subscriptions.Add(Handle.Id, MoveTemp(Entry));

@@ -176,25 +176,33 @@ FGamePlatformResult UGamePlatformPCGExclusionPresetDefinition::ValidateDefinitio
 
 UGamePlatformPCGPriorityTableDefinition::UGamePlatformPCGPriorityTableDefinition()
 {
+    const auto MakeEntry = [](FName LayerId, int32 Priority)
+    {
+        FGamePlatformPCGPriorityEntry Entry;
+        Entry.LayerId = LayerId;
+        Entry.Priority = Priority;
+        return Entry;
+    };
+
     Entries =
     {
-        {TEXT("ManualLock"), 100},
-        {TEXT("GameplayExclusion"), 90},
-        {TEXT("MajorGate"), 82},
-        {TEXT("Connector"), 80},
-        {TEXT("MajorRoad"), 70},
-        {TEXT("RoadGuard"), 68},
-        {TEXT("WaterBody"), 60},
-        {TEXT("YardWall"), 55},
-        {TEXT("Parcel"), 50},
-        {TEXT("FieldFence"), 48},
-        {TEXT("MinorRoad"), 40},
-        {TEXT("Canopy"), 30},
-        {TEXT("Crop"), 20},
-        {TEXT("DecorFence"), 18},
-        {TEXT("RockProp"), 15},
-        {TEXT("InterfaceBand"), 10},
-        {TEXT("GroundCover"), 5}
+        MakeEntry(TEXT("ManualLock"), 100),
+        MakeEntry(TEXT("GameplayExclusion"), 90),
+        MakeEntry(TEXT("MajorGate"), 82),
+        MakeEntry(TEXT("Connector"), 80),
+        MakeEntry(TEXT("MajorRoad"), 70),
+        MakeEntry(TEXT("RoadGuard"), 68),
+        MakeEntry(TEXT("WaterBody"), 60),
+        MakeEntry(TEXT("YardWall"), 55),
+        MakeEntry(TEXT("Parcel"), 50),
+        MakeEntry(TEXT("FieldFence"), 48),
+        MakeEntry(TEXT("MinorRoad"), 40),
+        MakeEntry(TEXT("Canopy"), 30),
+        MakeEntry(TEXT("Crop"), 20),
+        MakeEntry(TEXT("DecorFence"), 18),
+        MakeEntry(TEXT("RockProp"), 15),
+        MakeEntry(TEXT("InterfaceBand"), 10),
+        MakeEntry(TEXT("GroundCover"), 5)
     };
 }
 
@@ -258,7 +266,7 @@ FGamePlatformResult UGamePlatformPCGEnclosureProfileDefinition::ValidateDefiniti
 
     for (const FGamePlatformPCGSpanMeshRule& Rule : SpanMeshRules)
     {
-        if (Rule.MeshId.IsNone() || !FMath::IsFinite(Rule.MinLengthCm) || !FMath::IsFinite(Rule.MaxLengthCm) ||
+        if (Rule.MeshSetId.IsNone() || !FMath::IsFinite(Rule.MinLengthCm) || !FMath::IsFinite(Rule.MaxLengthCm) ||
             Rule.MinLengthCm < 0.0f || Rule.MaxLengthCm < Rule.MinLengthCm)
         {
             return FGamePlatformResult::Failure(TEXT("PCGInvalidSpanMeshRule"), TEXT("围合跨度网格规则存在空ID或非法长度范围。"));

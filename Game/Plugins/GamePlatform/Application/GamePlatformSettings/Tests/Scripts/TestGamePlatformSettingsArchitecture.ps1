@@ -108,7 +108,7 @@ $runtimeText = Get-ModuleSourceText 'GamePlatformSettingsRuntime'
 $runtimeBuildPath = Join-Path $pluginRoot 'Source/GamePlatformSettingsRuntime/GamePlatformSettingsRuntime.Build.cs'
 if (Test-Path -LiteralPath $runtimeBuildPath) {
     $runtimeBuild = Get-Content -LiteralPath $runtimeBuildPath -Raw -Encoding UTF8
-    foreach ($forbiddenDependency in @('MobaCommon','DivineBeasts','GamePlatformInput','GamePlatformUI','GamePlatformCamera','GamePlatformSFX','GamePlatformSave','GamePlatformData')) {
+    foreach ($forbiddenDependency in @('MobaCommon','DivineBeasts','GamePlatformInput','GamePlatformUI','GamePlatformCamera','GamePlatformSFX','GamePlatformSave','GamePlatformData','GamePlatformOnline','GamePlatformSession','GamePlatformServer','GamePlatformTelemetry','GamePlatformPresentation')) {
         if ($runtimeBuild -match [regex]::Escape($forbiddenDependency)) {
             Add-Error ("Runtime Build.cs contains forbidden layer/domain dependency: {0}" -f $forbiddenDependency)
         }
@@ -137,6 +137,11 @@ foreach ($forbidden in @(
     'GamePlatformUIClient',
     'GamePlatformSaveClient',
     'GamePlatformData',
+    'GamePlatformOnline',
+    'GamePlatformSession',
+    'GamePlatformServer',
+    'GamePlatformTelemetry',
+    'GamePlatformPresentation',
     'Niagara',
     'HttpModule'
 )) {
@@ -154,6 +159,11 @@ foreach ($forbidden in @(
     'GamePlatformSaveClient',
     'GamePlatformSettingsServer',
     'GamePlatformSettingsEditor',
+    'GamePlatformOnline',
+    'GamePlatformSession',
+    'GamePlatformServer',
+    'GamePlatformTelemetry',
+    'GamePlatformPresentation',
     'Niagara',
     'HttpModule'
 )) {
@@ -200,6 +210,24 @@ if ($allSourceText -match 'FTSTicker' -or
 }
 
 $clientBuildPath = Join-Path $pluginRoot 'Source/GamePlatformSettingsClient/GamePlatformSettingsClient.Build.cs'
+$clientPersistencePath = Join-Path $pluginRoot 'Source/GamePlatformSettingsClient/Private/Persistence/GamePlatformSettingsClientPersistenceProvider.cpp'
+if (Test-Path -LiteralPath $clientPersistencePath) {
+    $clientPersistence = Get-Content -LiteralPath $clientPersistencePath -Raw -Encoding UTF8
+    if ($clientPersistence -notmatch 'FSHA1' -or
+        $clientPersistence -notmatch 'GetScopedProfileSlotName' -or
+        $clientPersistence -notmatch 'SettingsUserContextMissing') {
+        Add-Error 'Client User Profile must isolate slots by opaque hashed user context and reject save without a context.'
+    }
+}
+
+$runtimeServicePath = Join-Path $pluginRoot 'Source/GamePlatformSettingsRuntime/Public/Interfaces/IGamePlatformSettingsService.h'
+if (Test-Path -LiteralPath $runtimeServicePath) {
+    $runtimeService = Get-Content -LiteralPath $runtimeServicePath -Raw -Encoding UTF8
+    if ($runtimeService -notmatch 'SwitchUserContext') {
+        Add-Error 'Runtime service must expose a neutral user-context switch without depending on Online.'
+    }
+}
+
 if (Test-Path -LiteralPath $clientBuildPath) {
     $build = Get-Content -LiteralPath $clientBuildPath -Raw -Encoding UTF8
     foreach ($requiredDependency in @('"Core"','"CoreUObject"','"Engine"','"GamePlatformCore"','"GamePlatformSettingsRuntime"')) {
@@ -244,12 +272,28 @@ if (Test-Path -LiteralPath $validationPath) {
         $validationText -notmatch 'SettingsStringTooLong') {
         Add-Error 'Runtime validation must enforce sensitive-persistence and string-capacity boundaries.'
     }
+    if ($validationText -notmatch 'SettingsServerDefaultScopeInvalid' -or
+        $validationText -notmatch 'SettingsServerScopeRuntimeInvalid') {
+        Add-Error 'Runtime validation must prevent ServerDefault/server persistence from leaking into non-server runtime scopes.'
+    }
 }
 $serverPersistencePath = Join-Path $pluginRoot 'Source/GamePlatformSettingsServer/Private/Server/GamePlatformSettingsServerPersistenceProvider.cpp'
 if (Test-Path -LiteralPath $serverPersistencePath) {
     $serverPersistence = Get-Content -LiteralPath $serverPersistencePath -Raw -Encoding UTF8
     if ($serverPersistence -notmatch 'SettingsSensitiveServerOverrideUnsupported') {
         Add-Error 'Server persistence must reject sensitive INI/environment/command-line overrides.'
+    }
+    if ($serverPersistence -notmatch 'SettingsEnvironmentKeyCollision') {
+        Add-Error 'Server persistence must reject normalized environment-key collisions.'
+    }
+    if ($serverPersistence -notmatch 'bHasServerDefault' -or
+        $serverPersistence -notmatch 'bHasEnvironment' -or
+        $serverPersistence -notmatch 'bHasCommandLine') {
+        Add-Error 'Sensitive server settings must fail only on actual external override attempts, not merely on descriptor presence.'
+    }
+    if ($serverPersistence -notmatch 'SetUserContext' -or
+        $serverPersistence -notmatch 'SettingsUserContextServerUnsupported') {
+        Add-Error 'Server persistence must explicitly reject client User Profile contexts.'
     }
 }
 

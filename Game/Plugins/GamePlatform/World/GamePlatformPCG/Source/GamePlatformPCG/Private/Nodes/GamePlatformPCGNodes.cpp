@@ -103,20 +103,20 @@ bool FGamePlatformPCGWriteSchemaDefaultsElement::ExecuteInternal(FPCGContext* Co
             continue;
         }
 
-        EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::BiomeId, NAME_None);
+        EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::BiomeId, FName());
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::BiomeWeight, 0.0f);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::BiomePriority, 0);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::LayerName, Settings->DefaultLayerName);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::LayerIndex, 0);
-        EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::SpawnMeshSetId, NAME_None);
-        EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::SpawnClassId, NAME_None);
+        EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::SpawnMeshSetId, FName());
+        EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::SpawnClassId, FName());
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::SpawnFlags, 0);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::RuleSlope, 0.0f);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::RuleHeight, 0.0f);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::RuleWetness, 0.0f);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::RuleSpanLength, 0.0f);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::ExcludeMask, 0.0f);
-        EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::ExcludeSource, NAME_None);
+        EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::ExcludeSource, FName());
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::ExecGridBand, 0);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::ExecLodBand, 0);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::ExecSeed, Settings->DefaultSeed);
@@ -405,9 +405,9 @@ bool FGamePlatformPCGSelectSpanMeshByLengthElement::ExecuteInternal(FPCGContext*
             continue;
         }
 
-        FPCGMetadataAttribute<FName>* MeshId = OutputData->Metadata->FindOrCreateAttribute<FName>(
-            FGamePlatformPCGAttr::SpawnMeshSetId, Settings->FallbackMeshId, false, true, true);
-        if (!MeshId)
+        FPCGMetadataAttribute<FName>* MeshSetId = OutputData->Metadata->FindOrCreateAttribute<FName>(
+            FGamePlatformPCGAttr::SpawnMeshSetId, Settings->FallbackMeshSetId, false, true, true);
+        if (!MeshSetId)
         {
             continue;
         }
@@ -420,12 +420,12 @@ bool FGamePlatformPCGSelectSpanMeshByLengthElement::ExecuteInternal(FPCGContext*
             FName Selected;
             if (!FGamePlatformPCGLinearRules::SelectSpanMeshByLength(Length, Settings->Rules, Selected))
             {
-                Selected = Settings->FallbackMeshId;
+                Selected = Settings->FallbackMeshSetId;
             }
 
             if (!Selected.IsNone())
             {
-                MeshId->SetValue(Entries[Index], Selected);
+                MeshSetId->SetValue(Entries[Index], Selected);
             }
         }
 

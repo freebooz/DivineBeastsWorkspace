@@ -1,6 +1,6 @@
 # GamePlatformSettings（游戏平台设置插件）
 
-状态：**核心基础设施已实装，真实 Editor／Client／Server 编译与运行验收正在补证**。
+状态：**Client设备设置核心已实装；Runtime／Server／Editor通用框架已实装但当前无非测试生产Provider；真实 Editor／Client／Server 编译与运行验收待补证**。
 
 > 当前工程物理层名称仍为 `GamePlatform（游戏平台基础层）`，对应方案中的 `GameFoundation（游戏基础层）` 概念。不得另建平行 `GameFoundation` 插件目录。
 
@@ -32,6 +32,8 @@ GamePlatformSettings 是跨游戏、跨项目复用的统一设置基础设施�
 - `GamePlatformSettingsEditor（设置编辑器校验）`：Editor；只进入 Editor。
 
 所有模块保持单向依赖：Client／Server／Editor → Runtime → GamePlatformCore。
+
+当前源码中没有非测试 `IGamePlatformSettingsProvider`。因此四模块结构可以验证框架边界，但 Runtime／Server 尚未承载真实产品 SettingId；在逐领域完成单一真源迁移前，不得把现有 Input／UI／Camera／SFX 偏好重复注册到 Settings User 层。
 
 ## 3. 明确不负责
 
@@ -73,7 +75,7 @@ Preview 不写盘；Confirm／Commit 才进行一次原生保存。
 
 ### User Profile
 
-非图形稳定用户偏好由 `UGamePlatformUserSettingsProfile` 承载 Runtime 的 User 层纯值；使用 `AsyncSaveGameToSlot` 异步保存。Profile 不保存认证、角色、背包、装备、任务或服务器业务状态。
+非图形稳定用户偏好可以由 `UGamePlatformUserSettingsProfile` 承载 Runtime 的 User 层纯值并使用 `AsyncSaveGameToSlot` 异步保存，但只有在原领域旧持久化完成迁移后才允许注册，避免双重真源。Profile 不保存认证、角色、背包、装备、任务、凭据、令牌、密钥或服务器业务状态。
 
 ### Server
 
@@ -81,7 +83,7 @@ Preview 不写盘；Confirm／Commit 才进行一次原生保存。
 
 `INI → Environment → CommandLine`
 
-非法值、类型错误、端侧错误必须 Fail Closed（失败关闭）。
+非法值、类型错误、端侧错误必须 Fail Closed（失败关闭）；敏感 Descriptor 禁止通过 Server INI／Environment／CommandLine 注入，必须使用部署秘密机制。
 
 ## 5. 性能与健壮性原则
 
@@ -92,7 +94,7 @@ Preview 不写盘；Confirm／Commit 才进行一次原生保存。
 - User Profile 使用异步保存，Slider／ValueChanged 不直接写盘。
 - ChangeSet 按批次广播，避免单字段事件风暴。
 - UObject 只在游戏线程操作；异步保存完成后通过弱引用回到游戏线程。
-- 敏感 Descriptor 的值不进入普通日志或诊断 Dump。
+- `bSensitive` 只代表诊断脱敏，不等于安全存储；敏感 Descriptor 只允许 Session 临时作用域，凭据／令牌／密钥禁止进入 Settings 持久层。
 - Migration 在副本上执行，失败不覆盖原 Profile。
 
 ## 6. 组件清单

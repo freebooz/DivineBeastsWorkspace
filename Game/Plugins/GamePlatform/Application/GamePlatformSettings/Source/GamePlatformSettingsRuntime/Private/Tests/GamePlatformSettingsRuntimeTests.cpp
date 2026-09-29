@@ -431,4 +431,55 @@ bool FGamePlatformSettingsStringCapacityTest::RunTest(
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformSettingsServerPersistenceScopeTest,
+    "GamePlatform.Settings.Runtime.RejectsServerPersistenceOnClient",
+    EAutomationTestFlags::EditorContext |
+        EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformSettingsServerPersistenceScopeTest::RunTest(
+    const FString& Parameters)
+{
+    FGamePlatformSettingDescriptor Descriptor =
+        MakeNumberDescriptor(
+            FName(TEXT("Test.ServerPersistenceLeak")),
+            EGamePlatformSettingRuntimeScope::Client);
+    Descriptor.PersistenceScope = EGamePlatformSettingScope::Server;
+
+    const FGamePlatformResult Result =
+        FGamePlatformSettingsValidation::ValidateDescriptor(Descriptor);
+    TestFalse(TEXT("Server持久化不得声明为Client运行设置"), Result.IsSuccess());
+    TestEqual(
+        TEXT("Server持久化端侧隔离错误码应稳定"),
+        Result.Code,
+        FName(TEXT("SettingsServerScopeRuntimeInvalid")));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformSettingsServerDefaultScopeTest,
+    "GamePlatform.Settings.Runtime.RejectsServerDefaultWithoutServerScope",
+    EAutomationTestFlags::EditorContext |
+        EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformSettingsServerDefaultScopeTest::RunTest(
+    const FString& Parameters)
+{
+    FGamePlatformSettingDescriptor Descriptor =
+        MakeNumberDescriptor(
+            FName(TEXT("Test.ServerDefaultLeak")),
+            EGamePlatformSettingRuntimeScope::Server);
+    Descriptor.PersistenceScope = EGamePlatformSettingScope::Project;
+    Descriptor.DefaultLayer = EGamePlatformSettingLayer::ServerDefault;
+
+    const FGamePlatformResult Result =
+        FGamePlatformSettingsValidation::ValidateDescriptor(Descriptor);
+    TestFalse(TEXT("ServerDefault必须同时使用Server持久化作用域"), Result.IsSuccess());
+    TestEqual(
+        TEXT("ServerDefault作用域错误码应稳定"),
+        Result.Code,
+        FName(TEXT("SettingsServerDefaultScopeInvalid")));
+    return true;
+}
+
 #endif

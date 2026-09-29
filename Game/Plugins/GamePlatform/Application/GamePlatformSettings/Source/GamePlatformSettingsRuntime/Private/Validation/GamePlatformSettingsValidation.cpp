@@ -50,6 +50,42 @@ FGamePlatformResult FGamePlatformSettingsValidation::ValidateDescriptor(
             TEXT("敏感设置只能使用Session作用域；Settings不是凭据、令牌或密钥存储。"));
     }
 
+    // User/Server 持久化作用域必须与端侧唯一对应，避免“Any + ServerDefault”在客户端被当默认值消费。
+    if (Descriptor.PersistenceScope == EGamePlatformSettingScope::User &&
+        Descriptor.RuntimeScope != EGamePlatformSettingRuntimeScope::Client)
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("SettingsUserScopeRuntimeInvalid"),
+            TEXT("User持久化设置必须显式声明Client运行端侧。"));
+    }
+
+    if (Descriptor.PersistenceScope == EGamePlatformSettingScope::Server &&
+        Descriptor.RuntimeScope != EGamePlatformSettingRuntimeScope::Server)
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("SettingsServerScopeRuntimeInvalid"),
+            TEXT("Server持久化设置必须显式声明Server运行端侧。"));
+    }
+
+    if (Descriptor.DefaultLayer == EGamePlatformSettingLayer::ServerDefault &&
+        (Descriptor.RuntimeScope != EGamePlatformSettingRuntimeScope::Server ||
+         Descriptor.PersistenceScope != EGamePlatformSettingScope::Server))
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("SettingsServerDefaultScopeInvalid"),
+            TEXT("ServerDefault默认层只能用于Server运行端侧且Server持久化作用域的设置。"));
+    }
+
+    for (const FName PlatformName : Descriptor.PlatformAllowList)
+    {
+        if (PlatformName.IsNone())
+        {
+            return FGamePlatformResult::Failure(
+                TEXT("SettingsPlatformRestrictionInvalid"),
+                TEXT("PlatformAllowList不能包含None平台标识。"));
+        }
+    }
+
     if (!Descriptor.DefaultValue.IsValidForType(Descriptor.ValueType))
     {
         return FGamePlatformResult::Failure(

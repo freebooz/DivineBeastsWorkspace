@@ -61,9 +61,17 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformPCGLinearRulesTest::RunTest(const FString&)
 {
     TArray<FGamePlatformPCGSpanMeshRule> Rules;
-    Rules.Add({TEXT("Span.200"), 150.0f, 250.0f});
-    Rules.Add({TEXT("Span.100"), 90.0f, 110.0f});
-    Rules.Add({TEXT("Span.Flexible"), 50.0f, 300.0f});
+    const auto AddRule = [&Rules](FName MeshSetId, float MinLengthCm, float MaxLengthCm)
+    {
+        FGamePlatformPCGSpanMeshRule Rule;
+        Rule.MeshSetId = MeshSetId;
+        Rule.MinLengthCm = MinLengthCm;
+        Rule.MaxLengthCm = MaxLengthCm;
+        Rules.Add(Rule);
+    };
+    AddRule(TEXT("Span.200"), 150.0f, 250.0f);
+    AddRule(TEXT("Span.100"), 90.0f, 110.0f);
+    AddRule(TEXT("Span.Flexible"), 50.0f, 300.0f);
 
     FName Selected;
     TestTrue(TEXT("100cm跨度存在匹配"), FGamePlatformPCGLinearRules::SelectSpanMeshByLength(100.0f, Rules, Selected));

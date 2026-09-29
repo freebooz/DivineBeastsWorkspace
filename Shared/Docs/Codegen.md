@@ -94,3 +94,9 @@ go test -tags=productiondeps,grpcdeps ./...
 ```
 
 任何手工修改 `generated` 目录、生成物过期、Proto字段号破坏或Client/Server/Backend版本不兼容都应阻止合并。
+
+## 6. Commerce 契约精确整数与身份边界
+
+`Contracts/GamePlatform/OpenAPI/commerce.openapi.yaml` 是交易目录、购买意图、订单、支付回执和恢复查询的唯一跨语言线格式。金额最小单位与修订号必须使用十进制字符串，避免 JSON Number 经 IEEE-754 `double` 解析后丢失精度；各语言适配层解析后仍须检查真实 `int64` 范围、正负约束和业务上限。
+
+玩家身份只由 Gateway 验证 Bearer Token 后注入，Commerce 请求体不得出现 `playerId`。客户端提交的 `requestId`、`purchaseIntentId` 和 `receiptSubmissionId` 是幂等及结果未知恢复身份，不是付款或发奖凭证。正式代码只按稳定 `errorCode` 分支，不解析 `message`。

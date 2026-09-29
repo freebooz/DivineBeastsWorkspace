@@ -190,6 +190,9 @@ struct GAMEPLATFORMSESSION_API FGamePlatformSessionTransportCallbacks
     TFunction<void(FName, FString)> OnFailed;
 };
 
+using FGamePlatformSessionDisconnectedCallback =
+    TFunction<void(FGamePlatformSessionConnectionBinding)>;
+
 /**
  * IGamePlatformSessionTransport（平台会话真实传输适配接口）。
  *
@@ -206,6 +209,22 @@ public:
         FGamePlatformSessionTransportCallbacks Callbacks) = 0;
 
     virtual void CancelTransfer(const FGuid& TransferOperationId) = 0;
+
+    /**
+     * Session四事实全部完成后通知Transport收敛本次操作监听，但保留当前连接的断线监控。
+     * 默认空实现保持第三方Transport兼容。
+     */
+    virtual void CompleteTransfer(
+        const FGuid& TransferOperationId,
+        const FGamePlatformSessionConnectionBinding& Binding)
+    {
+    }
+
+    /** 安装当前真实连接断线回调；实现不得在断线后重复回调旧Binding。 */
+    virtual void SetDisconnectedCallback(
+        FGamePlatformSessionDisconnectedCallback Callback)
+    {
+    }
 
     /** 离开当前已建立会话并清理本地网络；不得把凭据写入URL或日志。 */
     virtual void LeaveSession(const FGamePlatformSessionConnectionBinding& Binding) = 0;

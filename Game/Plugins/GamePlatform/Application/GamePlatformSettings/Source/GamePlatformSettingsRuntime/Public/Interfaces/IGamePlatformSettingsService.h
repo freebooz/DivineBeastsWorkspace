@@ -60,6 +60,13 @@ public:
     /** 重新发现 Provider、读取持久层、执行逐版本迁移并生成 Snapshot。 */
     virtual FGamePlatformResult Reload() = 0;
 
+    /**
+     * 切换客户端User Profile上下文并Reload。
+     * UserContextKey是不透明稳定键；空键表示Logout。脏数据、待Apply或异步Save存在时拒绝切换。
+     * 服务器端不支持本接口，且基础层不依赖Online/账号系统。
+     */
+    virtual FGamePlatformResult SwitchUserContext(const FString& UserContextKey) = 0;
+
     virtual FGamePlatformSettingsSnapshot GetSnapshot() const = 0;
     virtual FGamePlatformSettingsRuntimeDiagnostics GetDiagnostics() const = 0;
 

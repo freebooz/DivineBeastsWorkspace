@@ -3,9 +3,9 @@
 bool FGamePlatformPCGLinearRules::SelectSpanMeshByLength(
     float SpanLengthCm,
     TConstArrayView<FGamePlatformPCGSpanMeshRule> Rules,
-    FName& OutMeshId)
+    FName& OutMeshSetId)
 {
-    OutMeshId = NAME_None;
+    OutMeshSetId = NAME_None;
     if (!FMath::IsFinite(SpanLengthCm) || SpanLengthCm < 0.0f)
     {
         return false;
@@ -14,7 +14,7 @@ bool FGamePlatformPCGLinearRules::SelectSpanMeshByLength(
     const FGamePlatformPCGSpanMeshRule* Best = nullptr;
     for (const FGamePlatformPCGSpanMeshRule& Rule : Rules)
     {
-        if (Rule.MeshId.IsNone() || !FMath::IsFinite(Rule.MinLengthCm) || !FMath::IsFinite(Rule.MaxLengthCm) ||
+        if (Rule.MeshSetId.IsNone() || !FMath::IsFinite(Rule.MinLengthCm) || !FMath::IsFinite(Rule.MaxLengthCm) ||
             Rule.MinLengthCm < 0.0f || Rule.MaxLengthCm < Rule.MinLengthCm ||
             SpanLengthCm < Rule.MinLengthCm || SpanLengthCm > Rule.MaxLengthCm)
         {
@@ -29,7 +29,7 @@ bool FGamePlatformPCGLinearRules::SelectSpanMeshByLength(
 
         const float RuleWidth = Rule.MaxLengthCm - Rule.MinLengthCm;
         const float BestWidth = Best->MaxLengthCm - Best->MinLengthCm;
-        if (RuleWidth < BestWidth || (FMath::IsNearlyEqual(RuleWidth, BestWidth) && Rule.MeshId.LexicalLess(Best->MeshId)))
+        if (RuleWidth < BestWidth || (FMath::IsNearlyEqual(RuleWidth, BestWidth) && Rule.MeshSetId.LexicalLess(Best->MeshSetId)))
         {
             Best = &Rule;
         }
@@ -40,7 +40,7 @@ bool FGamePlatformPCGLinearRules::SelectSpanMeshByLength(
         return false;
     }
 
-    OutMeshId = Best->MeshId;
+    OutMeshSetId = Best->MeshSetId;
     return true;
 }
 

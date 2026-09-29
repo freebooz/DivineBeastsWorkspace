@@ -13,6 +13,8 @@
 | FitPostsToSpline | 样条布柱 | M1点级基础已实现 | 先由模板采样样条，再按PostSpacing过滤候选点 | 不负责原始Spline采样与转角加柱 |
 | BreakSpansByTags | 按标签打断跨度 | M1基础已实现 | 对带BlockingTag的数据阻断输出；空间交叉标签由模板产生 | 不自动做道路/河流几何求交 |
 | BuildRows | 生成垄线 | M1点级基础已实现 | 地块模板先产生内部候选点，节点按RowSpacing/Yaw吸附成垄 | Polygon裁剪仍归TPL_CropField |
-| SelectSpanMeshByLength | 按跨度选择栏片 | M1已实现 | 上游写 `Pcg.Rule.SpanLength`，按SpanMeshRule选择最窄覆盖MeshId | MeshId仍由后续目录解析 |
+| SelectSpanMeshByLength | 按跨度选择栏片集合 | M1已实现 | 上游写 `Pcg.Rule.SpanLength`，按SpanMeshRule选择最窄覆盖MeshSetId | 输出的是 `Pcg.Spawn.MeshSetId`，不是单个StaticMesh |
+
+> `AssignMeshSet（分配网格集合）`和`SelectSpanMeshByLength（按跨度选择栏片）`当前输出的是稳定目录 ID，不代表已经完成真实 StaticMesh Spawner（静态网格生成器）资源解析。真实 `MeshSetId → Definition Lease（定义租约）→ Mesh Selector/Spawner（网格选择/生成）`闭环是生产模板启用前的 P0 阻断项；在此之前 Template Runtime 保持 Unsupported。
 
 M2的 `SideBySlope（按坡向选择侧）`、M3的 `ApplyMutableState（应用可变态）`、M4的 `DetectConnectorCandidates（自动连接件候选）`只保留规划，不创建空实现。

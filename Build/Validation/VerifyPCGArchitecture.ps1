@@ -58,6 +58,11 @@ if ($findings.Count -eq 0) {
     Assert-True ($profileDefinitions.Contains('RequiredDefinitions.Contains(Id)')) 'Profile的ExecPreset/PriorityTable引用必须纳入RequiredDefinitions统一租约。'
     $graphInspection = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Private/Validation/PCGGraphInspection.cpp') -Raw -Encoding UTF8
     Assert-True ($graphInspection.Contains('PCGTemplateRuntimeExecutionDeferred')) 'Template Contract运行时执行在真实资产闭环前必须失败关闭。'
+    Assert-True ($graphInspection.Contains('TemplateSchemaBoundaryDisconnected')) 'Template Contract必须验证SchemaWriter→SchemaValidator→Output真实可达关系。'
+    Assert-True ($graphInspection.Contains('DuplicateTemplateSchemaWriter')) 'Template Contract必须拒绝重复Schema Writer。'
+    Assert-True ($graphInspection.Contains('DuplicateTemplateSchemaValidator')) 'Template Contract必须拒绝重复Schema Validator。'
+    $environmentHeader = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Definitions/GamePlatformPCGEnvironmentDefinitions.h') -Raw -Encoding UTF8
+    Assert-True ($environmentHeader.Contains('AssetBundles="PCGGeneration"')) 'MeshSet真实网格软引用必须进入PCGGeneration Asset Bundle。'
 
     $template = Get-Content -LiteralPath $templateHeader -Raw -Encoding UTF8
     foreach ($name in @('ScatterSurface','LinearDresser','EnclosureClosed','CropField','RailingAttached')) {

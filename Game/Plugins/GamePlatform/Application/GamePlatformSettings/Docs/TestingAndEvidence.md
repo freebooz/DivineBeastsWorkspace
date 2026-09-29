@@ -10,6 +10,10 @@
 - 类型安全解析和 NaN 拒绝。
 - V1→V2→V3 连续 Migration。
 - Migration 中途失败整体回滚。
+- 敏感 Descriptor 进入 User 持久化作用域时拒绝。
+- 超过4096字符的 String 文本解析拒绝。
+- Server持久化作用域错误声明为Client时拒绝。
+- ServerDefault未同时绑定Server运行端侧与Server持久化作用域时拒绝。
 
 测试前缀：`GamePlatform.Settings.Runtime.*`
 
@@ -40,8 +44,18 @@
 - Client Async SaveGame 与 UGameUserSettings 边界。
 - Server INI／Environment／CommandLine 边界。
 - 必需文档和测试文件存在。
+- 异步 Save 期间 Provider 拓扑变化存在延迟重载保护。
+- 敏感持久化／Server敏感覆盖／String容量安全边界存在。
+- User/Server持久化端侧唯一性和ServerDefault端侧隔离存在。
+- Server环境变量规范化键冲突检测存在。
+- Client User Profile 必须使用不透明用户上下文的哈希槽隔离；无用户上下文时拒绝保存。
+- Runtime 通过中立 `SwitchUserContext` 接口切换账号上下文，源码不得依赖 Online/Session/Server/Telemetry/Presentation。
+- Server敏感Descriptor仅在真实外部覆盖尝试时拒绝，不因定义本身误阻断。
+- 没有生产 `IGamePlatformSettingsProvider` 时输出成熟度 WARNING，但不把纯框架判为结构失败。
 
 ## 4. 构建验证
+
+当前本轮定向 UBT 编译尝试返回 `ConflictingInstance`：另一个构建进程仍持有 UE5.8 全局 UBT Mutex，因此 Settings 编译没有启动。这不是模块编译错误，也不能记为编译通过。
 
 必须分别记录真实结果：
 
@@ -60,9 +74,10 @@
 - Profile 损坏后默认回退且原文件不覆盖。
 - Migration 真实旧 Profile。
 - Standalone/Packaged 显示模式 Preview/Cancel/Confirm。
-- 登录→角色选择→Village→OpenWorld→MainArena→OpenWorld 跨图保持。
+- 登录／角色切换／跨地图／跨体验切换时 GameInstance Snapshot 保持。
 - Logout／切账号的 User 层刷新。
-- Dedicated Server 三角色的 INI／Environment／CommandLine 覆盖与非法值拒绝。
+- 两个不同 UserContextKey 在同一设备生成不同本地档案槽；Logout 空键不加载旧账号档案；脏数据或 SaveInFlight 时切换被拒绝。
+- 启用 Settings 的 Dedicated Server 测试配置中验证 INI／Environment／CommandLine 覆盖、优先级、非法值与敏感值拒绝。
 - 多显示器／高 DPI／Android/iOS 平台差异。
 - Client／Server Cook/Stage。
 - 长稳和反复 Apply/Reload/Save。

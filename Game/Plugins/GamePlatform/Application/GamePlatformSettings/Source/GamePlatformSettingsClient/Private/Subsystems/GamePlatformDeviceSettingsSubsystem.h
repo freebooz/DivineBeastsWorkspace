@@ -35,7 +35,7 @@ public:
         const FGamePlatformDeviceSettingsSubscription& Subscription) override;
 
 private:
-    struct FSubscriptionEntry
+    struct FDeviceSettingsSubscriptionEntry
     {
         TWeakObjectPtr<UObject> Owner;
         FGamePlatformDeviceSettingsChangedCallback Callback;
@@ -58,6 +58,6 @@ private:
     FGamePlatformDeviceSettingsSnapshot Snapshot;
     FGamePlatformDeviceSettingsDiagnostics Diagnostics;
     FGamePlatformDeviceSettings PreviewBaseline;
-    TMap<FGuid, FSubscriptionEntry> Subscriptions;
+    TMap<FGuid, FDeviceSettingsSubscriptionEntry> Subscriptions;
     bool bPublishing = false;
 };

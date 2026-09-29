@@ -2,13 +2,13 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
-## 2026-09-29｜GamePlatformSettings 客户端设备设置专项审查与实装
+## 2026-09-29｜GamePlatformSettings 四模块专项审查与实装
 
-- 专项审查确认原 `GamePlatformSettings` 只有 ClientOnly 模块入口、没有公开契约、状态模型、校验、生命周期、持久化、测试或消费者；但设备／应用级设置具有独立跨游戏职责，因此保留插件身份并实现核心能力，而非继续保留空壳或合并到其他领域。
-- 新增 `IGamePlatformSettingsService`、设备设置／快照／诊断类型、私有 GameInstance 子系统和纯值 Policy；直接复用 UE5.8 `UGameUserSettings`，支持分辨率、窗口模式、VSync、帧率上限和10项原生0..4画质等级，并提供 Stage→Preview→Confirm/Cancel 与直接 Commit 两种事务路径。
-- 明确低耦合边界：Settings不依赖或复制 Input重绑／灵敏度、UI可访问性、Camera行为、SFX播放／混音或Save通用存档；插件只依赖 Core、CoreUObject、Engine 与 GamePlatformCore，`ClientOnly` 且 TargetAllowList 仅 Client／Editor，`CanContainContent=false`。
-- 性能与稳定性采用无Tick/Ticker、Stage仅内存、Preview不写盘、Confirm/Commit单次保存、最多64个弱Owner订阅、回调重入拒绝、非法分辨率／NaN／越界画质Fail Closed；Dedicated Server、Commandlet和普通PIE设备修改均有运行门禁。
-- 已核对锁定UE5.8 `UGameUserSettings` 真实API；专项架构门禁通过，项目头文件审计409处/0缺失，插件 `git diff --check` 通过。UE Automation、Standalone/Packaged显示模式、多显示器/高DPI、移动端、Client Cook/Stage和人工长稳验收仍待执行，不把静态验证冒充运行通过。
+- 专项审查确认原 `GamePlatformSettings` 只有 ClientOnly 模块入口、没有公开契约、设置模型、校验、生命周期、持久化、测试或消费者；设置域本身具有跨项目价值，因此保留插件身份并形成 Runtime／Client／Server／Editor 四模块，而不是继续保留空壳。
+- Runtime 新增类型安全 Descriptor／Provider／Registry／分层解析／Snapshot／ChangeSet／Migration／异步保存编排；Client 直接适配 UE5.8 `UGameUserSettings` 提供设备设置 Stage→Preview→Confirm/Cancel，并增加本地 User Profile；Server 提供 INI／Environment／CommandLine 只读覆盖；Editor 提供 Provider/Descriptor 校验。四模块保持 Client／Server／Editor → Runtime → GamePlatformCore 单向依赖，`CanContainContent=false`。
+- 重新锁定职责边界：Input重绑／灵敏度、UI可访问性、Camera行为、SFX播放／混音和Save通用业务存档仍由各自插件拥有；当前没有非测试 `IGamePlatformSettingsProvider`，因此 Runtime/Server 只能标记为框架已实现，未经逐领域“旧真源迁移→消费者切换→旧持久化删除”不得成为第二套设置真源。
+- 稳定性与安全整改包括：0 Tick/Ticker、显式Apply/Save、设备预览不写盘、异步保存弱引用回主线程；Provider拓扑变化在Save进行中延迟到同一MutationGeneration保存成功后处理；敏感Descriptor只允许Session临时作用域且Server只在检测到真实INI/环境变量/命令行覆盖尝试时拒绝；User持久化必须Client、Server持久化与ServerDefault必须Server；环境变量规范化键冲突Fail Closed；字符串设置统一限制4096字符，凭据/令牌/密钥继续使用部署秘密机制。
+- 已核对锁定UE5.8 `UGameUserSettings`真实API；四模块专项架构门禁通过并输出“无生产Provider”成熟度告警，项目头文件审计410处/0缺失。UE定向编译尝试因另一个仍持有全局UBT互斥锁的构建进程返回 `ConflictingInstance`，未进入Settings编译；UE Automation、Client/Server Cook/Stage、Standalone/Packaged、多显示器/高DPI和人工长稳验收仍待执行，不把静态验证冒充运行通过。
 
 ## 2026-09-29｜GamePlatformOpenWorld 空壳专项退休
 

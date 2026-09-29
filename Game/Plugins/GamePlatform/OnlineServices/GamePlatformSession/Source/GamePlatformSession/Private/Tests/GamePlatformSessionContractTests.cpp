@@ -19,6 +19,13 @@ FGamePlatformSessionTransferRequest MakeValidRequest()
     Request.TransferTicket = TEXT("test-only-sensitive-ticket");
     Request.TicketId = TEXT("ticket-test");
     Request.SessionId = TEXT("session-test");
+    Request.ExpectedBinding.AssignmentId = Request.AssignmentId;
+    Request.ExpectedBinding.GameSessionId = TEXT("game-session-test");
+    Request.ExpectedBinding.ServerInstanceId = Request.GameServerId;
+    Request.ExpectedBinding.ServerBootId = TEXT("boot-test");
+    Request.ExpectedBinding.WorldId = Request.WorldId;
+    Request.ExpectedBinding.ProtocolVersion = TEXT("1");
+    Request.ExpectedBinding.SessionEpoch = 1;
     Request.TimeoutSeconds = 30.0;
     return Request;
 }

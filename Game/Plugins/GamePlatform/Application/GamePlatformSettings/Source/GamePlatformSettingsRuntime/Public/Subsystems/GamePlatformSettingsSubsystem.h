@@ -50,6 +50,8 @@ public:
         EGamePlatformSettingsChangeReason Reason) override;
     virtual FGamePlatformResult Save() override;
     virtual FGamePlatformResult Reload() override;
+    virtual FGamePlatformResult SwitchUserContext(
+        const FString& UserContextKey) override;
     virtual FGamePlatformSettingsSnapshot GetSnapshot() const override;
     virtual FGamePlatformSettingsRuntimeDiagnostics GetDiagnostics() const override;
     virtual FGamePlatformSettingsRuntimeSubscription Subscribe(
@@ -60,7 +62,7 @@ public:
         const FGamePlatformSettingsRuntimeSubscription& Subscription) override;
 
 private:
-    struct FSubscriptionEntry
+    struct FSettingsRuntimeSubscriptionEntry
     {
         TWeakObjectPtr<UObject> Owner;
         FGamePlatformSettingsRuntimeChangedCallback Callback;
@@ -104,6 +106,8 @@ private:
     FGuid ScopeId;
     uint64 Generation = 0;
     uint64 MutationGeneration = 0;
+    /** 当前不透明用户上下文键；只用于协调持久化Provider，不进入日志/Snapshot。 */
+    FString CurrentUserContextKey;
 
     TUniquePtr<FGamePlatformSettingsRegistry> Registry;
     TMap<EGamePlatformSettingLayer,
@@ -111,7 +115,7 @@ private:
 
     FGamePlatformSettingsSnapshot Snapshot;
     FGamePlatformSettingsRuntimeDiagnostics Diagnostics;
-    TMap<FGuid, FSubscriptionEntry> Subscriptions;
+    TMap<FGuid, FSettingsRuntimeSubscriptionEntry> Subscriptions;
 
     FDelegateHandle FeatureRegisteredHandle;
     FDelegateHandle FeatureUnregisteredHandle;

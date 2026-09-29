@@ -38,6 +38,49 @@ bool SoleEdge(const UPCGNode& From,const UPCGNode& To,FName TargetPin = PCGPinCo
         Pin->Edges[0]->InputPin == Pin && Pin->Edges[0]->OutputPin == Input && Input->Edges[0] == Pin->Edges[0];
 }
 
+/** 沿PCG边的上游→下游方向检查节点可达性，避免模板仅“摆着”Schema节点却不在真实执行链上。 */
+bool IsNodeReachable(const UPCGNode& Start,const UPCGNode& Target)
+{
+    TArray<const UPCGNode*> Pending;
+    TSet<const UPCGNode*> Visited;
+    Pending.Add(&Start);
+
+    while (!Pending.IsEmpty())
+    {
+        const UPCGNode* Current = Pending.Pop(EAllowShrinking::No);
+        if (!Current || Visited.Contains(Current))
+        {
+            continue;
+        }
+        if (Current == &Target)
+        {
+            return true;
+        }
+        Visited.Add(Current);
+
+        for (const UPCGPin* Pin : Current->GetOutputPins())
+        {
+            if (!Pin) { continue; }
+            for (const UPCGEdge* Edge : Pin->Edges)
+            {
+                if (!Edge || Edge->InputPin != Pin || !Edge->OutputPin || !Edge->OutputPin->Node)
+                {
+                    continue;
+                }
+                Pending.Add(Edge->OutputPin->Node);
+            }
+        }
+
+        // 模板最大节点数已限制为64；额外保护异常循环/损坏图，避免校验无界扩张。
+        if (Visited.Num() > 128)
+        {
+            return false;
+        }
+    }
+
+    return false;
+}
+
 bool ValidateSpawnerDescriptor(const UPCGStaticMeshSpawnerSettings& Spawner, const UGamePlatformPCGProfileDefinition& Profile)
 {
     const UPCGMeshSelectorWeighted* Selector = Cast<UPCGMeshSelectorWeighted>(Spawner.MeshSelectorParameters);
@@ -85,8 +128,8 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
         return Rejected(TEXT("UnsupportedTemplateShape"));
     }
 
-    bool bHasSchemaWriter = false;
-    bool bHasSchemaValidator = false;
+    UPCGNode* SchemaWriterNode = nullptr;
+    UPCGNode* SchemaValidatorNode = nullptr;
 
     for (UPCGNode* Node : Graph.GetNodes())
     {
@@ -98,8 +141,16 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
             return Rejected(TEXT("UnapprovedTemplateNode"));
         }
 
-        bHasSchemaWriter |= Settings->IsA<UGamePlatformPCGWriteSchemaDefaultsSettings>();
-        bHasSchemaValidator |= Settings->IsA<UGamePlatformPCGValidateSchemaSettings>();
+        if (Settings->IsA<UGamePlatformPCGWriteSchemaDefaultsSettings>())
+        {
+            if (SchemaWriterNode) { return Rejected(TEXT("DuplicateTemplateSchemaWriter")); }
+            SchemaWriterNode = Node;
+        }
+        if (Settings->IsA<UGamePlatformPCGValidateSchemaSettings>())
+        {
+            if (SchemaValidatorNode) { return Rejected(TEXT("DuplicateTemplateSchemaValidator")); }
+            SchemaValidatorNode = Node;
+        }
 
         if (const UPCGStaticMeshSpawnerSettings* Spawner = Cast<UPCGStaticMeshSpawnerSettings>(Settings))
         {
@@ -110,9 +161,14 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
         }
     }
 
-    if (!bHasSchemaWriter || !bHasSchemaValidator || !Graph.GetOutputNode())
+    UPCGNode* OutputNode = Graph.GetOutputNode();
+    if (!SchemaWriterNode || !SchemaValidatorNode || !OutputNode)
     {
         return Rejected(TEXT("TemplateSchemaBoundaryMissing"));
+    }
+    if (!IsNodeReachable(*SchemaWriterNode,*SchemaValidatorNode) || !IsNodeReachable(*SchemaValidatorNode,*OutputNode))
+    {
+        return Rejected(TEXT("TemplateSchemaBoundaryDisconnected"));
     }
 
     return FGamePlatformResult::Success();
@@ -123,7 +179,7 @@ FGamePlatformResult GamePlatformPCGInspection::ValidateApprovedGraph(const UGame
 {
     check(IsInGameThread()); const auto Valid = Profile.ValidateDefinition(); if (!Valid.IsSuccess()) { return Valid; }
     auto* Graph = Profile.GraphReference.Get(); auto* Mesh = Profile.OutputMesh.Get();
-    if (!Graph || !Mesh) { return Rejected(TEXT("ProfileAssetsNotLeased")); }
+    if (!Graph || (Profile.TemplateId.IsNone() && !Mesh)) { return Rejected(TEXT("ProfileAssetsNotLeased")); }
     // 1.0模板走合同式白名单；TemplateId为空时继续使用0.1.0固定四节点夹具，保证渐进迁移与可回退。
     if (!Profile.TemplateId.IsNone())
     {

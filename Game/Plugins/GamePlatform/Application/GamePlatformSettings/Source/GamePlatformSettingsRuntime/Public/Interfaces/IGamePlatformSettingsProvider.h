@@ -48,6 +48,12 @@ public:
     virtual bool SupportsRuntime(EGamePlatformSettingRuntimeScope RuntimeScope) const = 0;
 
     /**
+     * 切换当前本地用户上下文。基础层只接收不透明稳定键，不依赖Online/账号类型。
+     * 空键表示无登录用户；Server实现应返回Unsupported。
+     */
+    virtual FGamePlatformResult SetUserContext(const FString& UserContextKey) = 0;
+
+    /**
      * 读取配置层。实现必须只填充自己拥有的持久化/部署层；
      * Runtime 会再次执行 Descriptor/类型/端侧校验。
      */

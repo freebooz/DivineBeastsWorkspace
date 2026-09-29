@@ -841,6 +841,73 @@ void UGamePlatformSettingsSubsystem::HandleSaveCompleted(
     }
 }
 
+FGamePlatformResult UGamePlatformSettingsSubsystem::SwitchUserContext(
+    const FString& UserContextKey)
+{
+    FGamePlatformResult Guard;
+    if (!CanMutate(Guard))
+    {
+        return Guard;
+    }
+
+    if (GetCurrentRuntimeScope() != EGamePlatformSettingRuntimeScope::Client)
+    {
+        ++Diagnostics.RejectedMutationCount;
+        return FGamePlatformResult::Unsupported(
+            TEXT("SettingsUserContextServerUnsupported"),
+            TEXT("User Profile上下文只适用于客户端。"));
+    }
+
+    if (UserContextKey.Len() > 128 ||
+        UserContextKey.Contains(TEXT("\r")) ||
+        UserContextKey.Contains(TEXT("\n")))
+    {
+        ++Diagnostics.RejectedMutationCount;
+        return FGamePlatformResult::Failure(
+            TEXT("SettingsUserContextInvalid"),
+            TEXT("用户上下文键必须是不超过128字符且不含换行的稳定不透明值。"));
+    }
+
+    if (bSaveInFlight || bUserDirty || bPendingResolve)
+    {
+        ++Diagnostics.RejectedMutationCount;
+        return FGamePlatformResult::Failure(
+            TEXT("SettingsUserContextSwitchBlocked"),
+            TEXT("切换用户上下文前必须完成Apply与Save，并等待异步保存结束。"));
+    }
+
+    if (CurrentUserContextKey == UserContextKey)
+    {
+        return FGamePlatformResult::Success();
+    }
+
+    IGamePlatformSettingsPersistenceProvider* Persistence = nullptr;
+    const FGamePlatformResult ProviderResult =
+        ResolvePersistenceProvider(Persistence);
+    if (!ProviderResult.IsSuccess())
+    {
+        return ProviderResult;
+    }
+    if (!Persistence)
+    {
+        return FGamePlatformResult::Unsupported(
+            TEXT("SettingsPersistenceUnavailable"),
+            TEXT("当前客户端没有用户设置持久化Provider。"));
+    }
+
+    const FGamePlatformResult ContextResult =
+        Persistence->SetUserContext(UserContextKey);
+    if (!ContextResult.IsSuccess())
+    {
+        ++Diagnostics.RejectedMutationCount;
+        return ContextResult;
+    }
+
+    CurrentUserContextKey = UserContextKey;
+    ++MutationGeneration;
+    return ReloadInternal(EGamePlatformSettingsChangeReason::Reload);
+}
+
 FGamePlatformSettingsSnapshot
 UGamePlatformSettingsSubsystem::GetSnapshot() const
 {
@@ -889,7 +956,7 @@ UGamePlatformSettingsSubsystem::Subscribe(
     Handle.Id = FGuid::NewGuid();
     Handle.Generation = Generation;
 
-    FSubscriptionEntry Entry;
+    FSettingsRuntimeSubscriptionEntry Entry;
     Entry.Owner = Owner;
     Entry.Callback = MoveTemp(Callback);
     Subscriptions.Add(Handle.Id, MoveTemp(Entry));
@@ -934,7 +1001,7 @@ void UGamePlatformSettingsSubsystem::PublishChanges(
     bPublishing = true;
     for (const FGuid Id : SubscriptionIds)
     {
-        FSubscriptionEntry* Entry = Subscriptions.Find(Id);
+        FSettingsRuntimeSubscriptionEntry* Entry = Subscriptions.Find(Id);
         if (!Entry)
         {
             continue;

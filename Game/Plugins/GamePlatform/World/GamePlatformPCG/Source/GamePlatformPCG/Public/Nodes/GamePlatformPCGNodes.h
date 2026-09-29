@@ -286,7 +286,7 @@ public:
     TArray<FGamePlatformPCGSpanMeshRule> Rules;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Linear")
-    FName FallbackMeshId = NAME_None;
+    FName FallbackMeshSetId = NAME_None;
 
 protected:
     virtual FPCGElementPtr CreateElement() const override;

@@ -24,6 +24,7 @@ bool FGamePlatformServerAdmissionContractTest::RunTest(const FString&)
     Admission.ConnectionId = FGuid::NewGuid();
     Admission.PlayerId = TEXT("player-001");
     Admission.SessionId = TEXT("session-001");
+    Admission.GameSessionId = TEXT("game-session-001");
     Admission.AssignmentId = TEXT("assignment-001");
     Admission.ReservationId = TEXT("reservation-001");
     Admission.ServerInstanceId = Target.GameServerId;

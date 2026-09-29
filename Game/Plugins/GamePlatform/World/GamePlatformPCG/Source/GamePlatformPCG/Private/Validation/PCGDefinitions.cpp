@@ -40,8 +40,9 @@ FGamePlatformResult UGamePlatformPCGProfileDefinition::ValidateDefinition() cons
     { return FGamePlatformResult::Failure(TEXT("InvalidPolicy"),TEXT("未声明的生成策略或输出用途")); }
     if (ExecutionPolicy == EGamePlatformPCGExecutionPolicy::RuntimeCosmetic && OutputUsage != EGamePlatformPCGOutputUsage::Cosmetic)
     { return FGamePlatformResult::Failure(TEXT("RuntimeCollisionForbidden"),TEXT("运行时只允许无玩法影响的装饰")); }
-    if (GraphReference.IsNull() || OutputMesh.IsNull() || !RegionId.IsValid() || MinimumOutputs < 0 || MaximumOutputs <= 0)
-    { return FGamePlatformResult::Failure(TEXT("MissingProfileInput"),TEXT("图、网格、区域或输出数量不合法")); }
+    const bool bLegacyProfile = TemplateId.IsNone();
+    if (GraphReference.IsNull() || (bLegacyProfile && OutputMesh.IsNull()) || !RegionId.IsValid() || MinimumOutputs < 0 || MaximumOutputs <= 0)
+    { return FGamePlatformResult::Failure(TEXT("MissingProfileInput"),TEXT("图、Legacy网格、区域或输出数量不合法")); }
     if (RequiredPCGSchemaMajor != FGamePlatformPCGSchema::CurrentVersion().Major)
     { return FGamePlatformResult::Failure(TEXT("PCGSchemaVersionMismatch"),TEXT("Profile要求的PCG Schema主版本与当前平台不一致")); }
     if (!TemplateId.IsNone() && TemplateVersion <= 0)

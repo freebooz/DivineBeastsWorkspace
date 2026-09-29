@@ -13,6 +13,8 @@ public:
     virtual FName GetPersistenceId() const override;
     virtual bool SupportsRuntime(
         EGamePlatformSettingRuntimeScope RuntimeScope) const override;
+    virtual FGamePlatformResult SetUserContext(
+        const FString& UserContextKey) override;
     virtual FGamePlatformResult Load(
         const TMap<FName, FGamePlatformSettingDescriptor>& Descriptors,
         FGamePlatformSettingsPersistencePayload& OutPayload) override;

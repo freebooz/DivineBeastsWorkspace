@@ -23,6 +23,8 @@ GamePlatformSettings 只依赖 Unreal Engine 基础模块与 `GamePlatformCore�
 
 因此保留插件身份并拆分四个职责真实的模块。
 
+成熟度边界：当前没有非测试生产 `IGamePlatformSettingsProvider`。Runtime／Server／Editor 的机制代码存在且有测试基础，但在真实 Provider、消费者和单一真源迁移完成前，只能判定为“通用框架实装”，不能判定为“项目统一设置已经接入”。
+
 ## 3. 模块依赖
 
 ```text
@@ -72,6 +74,8 @@ Registry 重建时：
 
 设置值使用 `FGamePlatformSettingValue` 类型化字段，不把全部值退化为 FString。
 
+字符串值统一限制为4096字符。`bSensitive` 只承担诊断脱敏，敏感 Descriptor 只能使用 Session 作用域；Settings 不提供加密凭据存储。
+
 ## 6. 分层解析
 
 客户端：
@@ -94,7 +98,7 @@ Registry 重建时：
 
 Runtime 只依赖抽象 Persistence Provider：
 
-- Client：`UGamePlatformUserSettingsProfile` + `AsyncSaveGameToSlot`。
+- Client：`UGamePlatformUserSettingsProfile` + `AsyncSaveGameToSlot`；只有完成原领域旧持久化迁移的 SettingId 才允许进入 User 层。
 - Server：INI／Environment／CommandLine，只读不回写。
 
 `IGamePlatformSettingsMigration` 只允许单步 `Vn → Vn+1`。Migration Runner 在工作副本上执行，完整成功后才提交；失败保留原内存值和原文件。
@@ -112,6 +116,8 @@ Runtime 只依赖抽象 Persistence Provider：
 Runtime 使用 GameInstance 生命周期，跨地图保持，不依赖单一 World。没有 Tick/Ticker。
 
 所有 UObject 操作在游戏线程。异步保存只在 IO 阶段离开当前同步流程；完成回调使用弱子系统并回到游戏线程后更新 Snapshot。
+
+Provider 注册／注销如果发生在异步 Save 期间，不立即替换 Registry/Layers；Runtime 记录待处理拓扑变化，只在该保存成功且保存代次仍等于当前 MutationGeneration 时重载。保存失败或保存期间又有新修改时继续保留待重载状态，避免吞掉未持久化用户值。
 
 ## 11. 网络与权威
 

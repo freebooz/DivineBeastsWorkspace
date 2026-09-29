@@ -155,7 +155,7 @@ struct GAMEPLATFORMSETTINGSRUNTIME_API FGamePlatformSettingDescriptor
     EGamePlatformSettingLayer DefaultLayer = EGamePlatformSettingLayer::ProviderDefault;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settings")
-    EGamePlatformSettingScope PersistenceScope = EGamePlatformSettingScope::User;
+    EGamePlatformSettingScope PersistenceScope = EGamePlatformSettingScope::Project;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settings")
     EGamePlatformSettingRuntimeScope RuntimeScope = EGamePlatformSettingRuntimeScope::Any;

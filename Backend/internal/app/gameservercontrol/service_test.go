@@ -207,6 +207,69 @@ func TestOpenWorldHubCanRegisterReadyButCannotSubmitMatchResult(t *testing.T) {
 	}
 }
 
+// TestServerBootRestartInvalidatesOldAssignmentAndTicket（服务器重启防旧测试）验证同一GameServerID的新Boot不会继承旧Assignment，旧票据也不能进入新进程。
+func TestServerBootRestartInvalidatesOldAssignmentAndTicket(t *testing.T) {
+	now := time.Date(2026, 9, 29, 9, 0, 0, 0, time.UTC)
+	registry := gameserver.NewRegistry()
+	service := NewService(
+		registry,
+		servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now }),
+		match.NewResultService(match.NewMemoryResultStore()),
+		func() time.Time { return now },
+	)
+
+	register := func(boot string) {
+		if err := service.Register(RegisterInput{
+			GameID: "divine-beasts", GameServerID: "ow-restart-1", ServerBootID: boot,
+			ServerRoleID: gameservercontract.RoleOpenWorld,
+			ExperienceID: gameservercontract.ExperienceOpenWorldMain,
+			RegionID:     "us-west", WorldID: "World.OpenWorld.Main",
+			PublicEndpoint: "127.0.0.1:7777", BuildVersion: "test",
+			ProtocolVersion: 3, Capacity: 100,
+		}); err != nil {
+			t.Fatal(err)
+		}
+		if err := service.SetReady("ow-restart-1"); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	register("boot-old")
+	assignment, err := service.AllocateWorld(context.Background(), AllocateWorldInput{
+		ExperienceID: gameservercontract.ExperienceOpenWorldMain,
+		WorldID:      "World.OpenWorld.Main", RegionID: "us-west", PlayerSlots: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ticket, err := service.IssueTransfer(IssueTransferInput{
+		TicketID: "restart-ticket-old", GameID: "divine-beasts",
+		PlayerID: "player-1", SessionID: "session-restart",
+		DestinationGameServerID: "ow-restart-1", TTL: 30 * time.Second,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ticket.DestinationServerBootID != "boot-old" {
+		t.Fatalf("旧票据必须绑定旧Boot: %+v", ticket)
+	}
+	if assignment.AssignmentID == "" {
+		t.Fatal("旧Boot应获得有效Assignment")
+	}
+
+	register("boot-new")
+	if _, found := service.GetServerAssignment("ow-restart-1"); found {
+		t.Fatal("新Boot注册后必须清除旧Assignment")
+	}
+	if err := service.ValidateServerBoot("ow-restart-1", "boot-old"); err == nil {
+		t.Fatal("旧Boot控制请求必须被拒绝")
+	}
+	if _, err := service.ValidateTransferContext(
+		context.Background(), ticket, "ow-restart-1"); err == nil {
+		t.Fatal("旧Boot签发的TransferTicket必须被新进程拒绝")
+	}
+}
+
 // TestRegisterRejectsUnknownRoleAndMismatchedExperience（注册角色校验测试）拒绝未知角色、废弃角色和角色体验错配。
 func TestRegisterRejectsUnknownRoleAndMismatchedExperience(t *testing.T) {
 	now := time.Date(2026, 9, 21, 4, 30, 0, 0, time.UTC)
