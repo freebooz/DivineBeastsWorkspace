@@ -128,6 +128,10 @@ bool FGamePlatformInventoryClientMutationTest::RunTest(
         Client->GetState(),
         EGamePlatformInventoryClientState::Loading);
 
+    TestFalse(
+        TEXT("同账号Snapshot在途时拒绝重复Refresh"),
+        Client->RefreshSnapshot());
+
     Transport->CompleteSnapshot(5);
 
     TestEqual(
@@ -286,6 +290,10 @@ bool FGamePlatformInventoryClientOperationRecoveryTest::RunTest(
         TEXT("显式重试先查询OperationId"),
         Client->RetryPendingOperation());
 
+    TestFalse(
+        TEXT("Operation查询期间普通Refresh不能清理未决操作"),
+        Client->RefreshSnapshot());
+
     Transport->CompleteMutation(
         OperationId,
         0,
@@ -344,6 +352,7 @@ bool FGamePlatformInventoryDerivedCacheTest::RunTest(const FString&)
     Earlier.ItemInstanceId = TEXT("Item-A");
     Earlier.ItemDefinitionId = TEXT("Item.Definition.A");
     Earlier.Quantity = 2;
+    Earlier.MaxStackSize = 20;
     Earlier.ContainerId = TEXT("main");
     Earlier.SlotIndex = 1;
     Earlier.Revision = 1;
@@ -374,6 +383,108 @@ bool FGamePlatformInventoryDerivedCacheTest::RunTest(const FString&)
     {
         TestTrue(TEXT("Pending操作进入派生缓存"), PendingView->bPending);
     }
+
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformInventorySnapshotIntegrityTest,
+    "GamePlatform.Inventory.Client.SnapshotIntegrity",
+    EAutomationTestFlags::EditorContext |
+    EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformInventorySnapshotIntegrityTest::RunTest(
+    const FString&)
+{
+    UGamePlatformInventoryClientSubsystem* Client =
+        NewObject<UGamePlatformInventoryClientSubsystem>();
+    TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
+        MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+
+    TestTrue(
+        TEXT("配置完整性测试账号"),
+        Client->ConfigureAuthenticatedAccount(
+            TEXT("Account-Integrity"),
+            Transport));
+
+    FGamePlatformInventorySnapshot Snapshot;
+    Snapshot.InventoryRevision = 1;
+
+    FGamePlatformInventoryItemInstance First;
+    First.ItemInstanceId = TEXT("Duplicate-Item");
+    First.ItemDefinitionId = TEXT("Item.Definition.A");
+    First.Quantity = 1;
+    First.ContainerId = TEXT("main");
+    First.SlotIndex = 0;
+    First.Revision = 1;
+
+    FGamePlatformInventoryItemInstance Duplicate = First;
+    Duplicate.SlotIndex = 1;
+    Snapshot.Items = {First, Duplicate};
+
+    FGamePlatformInventorySnapshotCompletion Completion =
+        MoveTemp(Transport->SnapshotCompletion);
+    Completion(
+        MoveTemp(Snapshot),
+        EGamePlatformInventoryError::None);
+
+    TestEqual(
+        TEXT("重复ItemInstanceId必须拒绝"),
+        Client->GetState(),
+        EGamePlatformInventoryClientState::Error);
+    TestEqual(
+        TEXT("重复实例返回InvalidResponse"),
+        Client->GetLastError(),
+        EGamePlatformInventoryError::InvalidResponse);
+
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformInventoryDeterministicErrorTest,
+    "GamePlatform.Inventory.Client.DeterministicError",
+    EAutomationTestFlags::EditorContext |
+    EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformInventoryDeterministicErrorTest::RunTest(
+    const FString&)
+{
+    UGamePlatformInventoryClientSubsystem* Client =
+        NewObject<UGamePlatformInventoryClientSubsystem>();
+    TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
+        MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+
+    TestTrue(
+        TEXT("配置业务错误测试账号"),
+        Client->ConfigureAuthenticatedAccount(
+            TEXT("Account-Error"),
+            Transport));
+    Transport->CompleteSnapshot(3);
+
+    const FGuid OperationId =
+        Client->RequestMove(
+            TEXT("Item-A"),
+            TEXT("main"),
+            1);
+    TestTrue(TEXT("生成操作编号"), OperationId.IsValid());
+
+    Transport->CompleteMutation(
+        OperationId,
+        0,
+        EGamePlatformInventoryError::SlotOccupied);
+
+    TestEqual(
+        TEXT("确定性业务错误后恢复Ready允许重新操作"),
+        Client->GetState(),
+        EGamePlatformInventoryClientState::Ready);
+    TestEqual(
+        TEXT("保留稳定业务错误供UI展示"),
+        Client->GetLastError(),
+        EGamePlatformInventoryError::SlotOccupied);
+    TestFalse(
+        TEXT("确定性错误不会保留结果未知Pending"),
+        Client->HasPendingOperation());
 
     return true;
 }

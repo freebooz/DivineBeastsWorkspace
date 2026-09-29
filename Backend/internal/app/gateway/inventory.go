@@ -68,8 +68,12 @@ func (a *api) registerInventoryRoutes() {
 }
 
 func (a *api) getInventory(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
-	if a.inventory == nil || r.URL.RawQuery != "" {
+	if a.inventory == nil {
 		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	if r.URL.RawQuery != "" {
+		writeOnlineError(w, ServiceError("INVALID_REQUEST"))
 		return
 	}
 	snapshot, err := a.inventory.GetInventorySnapshot(r.Context(), session.PlayerID)
@@ -81,8 +85,12 @@ func (a *api) getInventory(w http.ResponseWriter, r *http.Request, session Authe
 }
 
 func (a *api) getInventoryOperation(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
-	if a.inventory == nil || r.URL.RawQuery != "" {
+	if a.inventory == nil {
 		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	if r.URL.RawQuery != "" {
+		writeOnlineError(w, ServiceError("INVALID_REQUEST"))
 		return
 	}
 	operationID := strings.TrimSpace(r.PathValue("operationId"))

@@ -194,6 +194,8 @@ private:
     UGamePlatformSessionClientSubsystem* Session = nullptr;
     IGamePlatformLoadingService* Loading = nullptr;
     IGamePlatformDataService* Data = nullptr;
+    /** 项目层Gateway业务适配器；不持有Token，认证统一由GamePlatformOnlineClient处理。 */
+    TSharedPtr<IDivineBeastsApplicationBackend> Backend;
 
 
     /** GameInstance作用域的项目流程载荷；不保存World/Actor/Widget强引用。 */

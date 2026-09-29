@@ -135,12 +135,16 @@ private:
     int32 OccupancyCount = 0;
 
     TMap<FGuid, TWeakObjectPtr<UGamePlatformInteractorComponent>> ActiveSessions;
-    TSet<FGuid> CommittedSessions;
+    /** 已成功提交的 Session（会话）结果缓存，用于真正的重复提交幂等返回。 */
+    TMap<FGuid, FGamePlatformInteractionResult> CommittedResults;
     TArray<FGuid> CommittedSessionOrder;
     FGuid ExternalOutcomeReservationId;
 
     UFUNCTION()
     void OnRep_State();
+
+    /** 清理已经失效的弱引用，避免异常销毁后的会话永久占用并发名额。 */
+    void PruneInvalidActiveSessions();
 
     void CancelActiveSessions(
         EGamePlatformInteractionCancelReason Reason);

@@ -1,8 +1,8 @@
 # D06｜安全边界与未解决威胁
 
-当前禁止公开网络部署。存在独立状态内核与数据库约束不等于认证系统、受保护握手或游戏服务器安全验收已经完成。
+Gateway公共HTTP能力已经具备认证边界，但完整Session网络链仍不应按生产完成状态发布。存在状态内核、受保护控制面和数据库约束，不等于UE握手、Admission Provider或游戏服务器安全验收已经完成。
 
-控制面边界是Online/服务器到业务后端的受保护连接。Online应独占访问与刷新令牌；当前Session代码没有HTTP客户端、读取令牌接口或密钥配置。GameServerControl 的 register/heartbeat/ready/drain HTTP 生命周期接口已校验共享内部Bearer令牌，并要求 `X-Game-Server-Id` 与请求体实例编号一致；这只建立共享令牌门禁和请求一致性检查，不证明每个实例凭据唯一，也不替代HTTPS/私网部署。Go Store仍是可信内部端口；AuthorizationID必须由真实身份与玩家所有权核验产生，InstanceID/BootID必须从服务器服务身份提取。客户端接入握手和实例到玩家绑定仍是独立未完成边界。
+控制面边界是Online/服务器到业务后端的受保护连接。Online独占访问与刷新令牌；Session不读取Token。Gateway `world-entry` 使用Bearer认证当前玩家并核对已选角色；GameServerControl 的生命周期、分配、签票和验证HTTP接口统一使用内部Bearer，服务器作用域操作进一步核对 `X-Game-Server-Id`。这些门禁不证明每个实例拥有独立证书，也不替代HTTPS/私网部署。InstanceID/BootID必须来自服务器服务身份，客户端接入握手和实例到玩家绑定仍是独立未完成边界。
 
 游戏网络边界是UE客户端到Dedicated Server。已现场读取UE5.8.0声明：ClientTravel可使用绝对非无缝旅行；PreLoginAsync只含Options、Address、UniqueId、完成委托；GameInstance存在ReceivedNetworkEncryptionToken/Ack/Failure，NetConnection存在EnableEncryption。**这些声明存在不证明安全握手已接入或能唯一关联真实连接。** 没有实现凭据传输，没有把任何材料放入URL。不得在后续用客户端自报AttemptId或UniqueId替代服务器网络连接身份。
 
@@ -14,4 +14,4 @@
 
 测试库采用独占容器、network=none；Go测试进程加入该容器网络命名空间，通过127.0.0.1访问PostgreSQL，没有发布宿主端口。此测试显式使用trust及sslmode=disable，仅适用于该封闭测试拓扑，不是控制面TLS验收，更不允许据此扩展私网/公网豁免。
 
-现有快照只含非敏感身份。尚无实际ClientTravel/FURL、引擎Browse日志或崩溃上下文产生，故“引擎全链路无泄漏”未执行。后续必须扫描完整本次引擎/业务日志、URL、命令行、快照和产物，而不只检查本插件日志。新迁移撤销PUBLIC函数/表权限，正式服务角色最小授权、证书与密钥注入仍需部署审查。
+现有Session快照只含非敏感Binding身份，TransferTicket只在请求/Transport边界短期传递；Endpoint校验明确拒绝查询参数、换行和URL式凭据拼接。尚无实际ClientTravel/FURL、引擎Browse日志或崩溃上下文产生，故“引擎全链路无泄漏”仍未执行。后续必须扫描完整引擎/业务日志、URL、命令行、快照和产物，而不只检查本插件日志。正式服务角色最小授权、证书与密钥注入仍需部署审查。

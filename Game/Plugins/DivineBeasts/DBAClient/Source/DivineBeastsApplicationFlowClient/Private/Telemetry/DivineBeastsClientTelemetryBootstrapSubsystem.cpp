@@ -72,7 +72,7 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Initialize(FSubsystemCollec
             TMap<FString, FString>{},
             5.0f,
             256 * 1024,
-            {},
+            FGamePlatformTelemetryHeaderProvider(),
             MoveTemp(RequestAuthorizer));
 
     FGamePlatformTelemetryRetrySettings Retry;

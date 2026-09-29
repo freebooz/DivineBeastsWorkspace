@@ -50,6 +50,7 @@ Backend/                                                            # Go业务�
 │   │   │   └── service_test.go                                     # gameservercontrol模块核心服务单元测试与边界验证
 │   │   ├── gateway/                                                # Gateway统一接入API应用层
 │   │   │   ├── api.go                                              # Gateway公共HTTP API实现；负责路由、身份上下文和应用端口调用
+│   │   │   ├── inventory.go                                        # Gateway公网背包API：本人快照、Operation查询、移动/拆分/合并/快捷栏；公网Revision字符串化
 │   │   │   └── api_test.go                                         # Gateway HTTP API自动化测试
 │   │   ├── integrationadapter/                                     # 跨应用集成适配器；连接MatchService与GameServerControl等边界
 │   │   │   ├── arena_control.go                                    # MatchService到GameServerControl的竞技服务器控制适配器
@@ -97,8 +98,10 @@ Backend/                                                            # Go业务�
 │   │   ├── identity/                                               # Identity（身份与会话）领域实现
 │   │   │   ├── service.go                                          # Identity领域服务：登录、Token、Session及认证状态
 │   │   │   └── service_test.go                                     # identity模块核心服务单元测试与边界验证
-│   │   ├── inventory/                                              # Inventory（长期背包）预留领域模块
-│   │   │   └── doc.go                                              # inventory领域包说明与预留边界；当前仅建立模块归属，不表示完整功能已实现
+│   │   ├── inventory/                                              # Inventory（长期背包）领域；平台通用，不包含货币、装备槽位或项目玩法规则
+│   │   │   ├── doc.go                                              # 背包领域包边界说明
+│   │   │   ├── inventory.go                                        # 背包聚合、容器/物品/快捷栏、Revision、OperationId幂等及内存仓储
+│   │   │   └── inventory_test.go                                   # 背包幂等、拆分/合并和快捷栏引用自动化测试
 │   │   ├── liveops/                                                # LiveOps（赛季/活动/运营）预留领域模块
 │   │   │   └── doc.go                                              # liveops领域包说明与预留边界；当前仅建立模块归属，不表示完整功能已实现
 │   │   ├── mail/                                                   # Mail（游戏邮件）预留领域模块
@@ -115,8 +118,9 @@ Backend/                                                            # Go业务�
 │   │   ├── party/                                                  # Party（组队）聚合、成员、Ready和Roster Lock领域
 │   │   │   ├── party.go                                            # Party聚合、Leader、Member、Ready与Roster Lock领域实现
 │   │   │   └── party_test.go                                       # 组队领域自动化测试
-│   │   ├── playerdata/                                             # PlayerData（玩家长期数据）领域实现
+│   │   ├── playerdata/                                             # PlayerData（玩家长期数据）领域实现及长期背包装配宿主
 │   │   │   ├── service.go                                          # PlayerData领域服务：玩家长期Profile读取和更新
+│   │   │   ├── inventory_bridge.go                                 # Inventory领域装配端口；不复制背包规则
 │   │   │   └── service_test.go                                     # playerdata模块核心服务单元测试与边界验证
 │   │   ├── progression/                                            # Progression（长期成长）预留领域模块
 │   │   │   └── doc.go                                              # progression领域包说明与预留边界；当前仅建立模块归属，不表示完整功能已实现
@@ -153,6 +157,7 @@ Backend/                                                            # Go业务�
 │   │   │       │   ├── outbox.sql                                  # Outbox入队、领取、租约、成功确认及失败重试SQL
 │   │   │       │   └── player_profiles.sql                         # 玩家长期Profile查询、创建与更新SQL
 │   │   │       ├── adapter_production.go                           # PostgreSQL生产连接池适配器，实现连接、Ping、事务和生命周期管理
+│   │   │       ├── inventory_repository.go                         # Inventory PostgreSQL事务仓储；原子提交背包状态/Revision/Operation幂等结果
 │   │   │       └── repositories_production.go                      # PostgreSQL生产Repository实现：PlayerProfile、MatchResult及Outbox事务写入
 │   │   ├── health/                                                 # 健康检查与依赖探测公共能力
 │   │   │   ├── health.go                                           # 健康状态模型与依赖探测接口
@@ -187,13 +192,20 @@ Backend/                                                            # Go业务�
 │           ├── common.go                                           # HTTP Transport公共JSON编解码、错误映射和请求辅助
 │           ├── gameservercontrol_server.go                         # GameServerControlService HTTP服务端；提供注册、心跳、分配、Assignment、Transfer和MatchResult接口
 │           ├── gateway_clients.go                                  # Gateway调用Identity/PlayerData/Match内部HTTP服务的真实客户端
+│           ├── gateway_clients_inventory.go                        # Gateway→PlayerData Inventory内部HTTP客户端
 │           ├── identity_server.go                                  # IdentityService HTTP服务端适配器
 │           ├── match_server.go                                     # MatchService HTTP服务端适配器
 │           ├── playerdata_server.go                                # PlayerDataService HTTP服务端适配器
+│           ├── playerdata_server_inventory.go                      # PlayerDataService内部Inventory HTTP路由；只接受可信服务传入的playerId
 │           └── transport_integration_test.go                       # HTTP Transport真实编解码和跨服务调用集成测试
 ├── migrations/                                                     # PostgreSQL数据库Migration（迁移）唯一来源
-│   ├── 000001_core.sql                                             # 核心业务数据库初始Migration
-│   ├── 000002_outbox.sql                                           # Transactional Outbox表、索引及租约字段Migration
+│   ├── 000001_core.sql                                             # 核心玩家Profile等基础表
+│   ├── 000002_outbox.sql                                           # Transactional Outbox表、索引及租约字段
+│   ├── 000003_session_admission.sql                                # Session准入、实例/预留/绑定及原子函数
+│   ├── 000005_online_identity.sql                                  # Online身份与Session持久化
+│   ├── 000006_online_profile_idempotency.sql                       # 在线Profile更新幂等记录
+│   ├── 000007_player_characters.sql                                # 玩家角色与角色选择幂等记录
+│   ├── 000008_player_inventory.sql                                 # 长期背包、容器、物品、快捷栏与OperationId幂等结果
 │   └── README.md                                                   # 当前目录职责、使用方法和工程约束说明
 ├── pkg/                                                            # 真正跨模块复用且API稳定的公共Go包；当前保持极小
 │   └── README.md                                                   # 当前目录职责、使用方法和工程约束说明
@@ -216,6 +228,10 @@ Backend/                                                            # Go业务�
 | `internal/app/gateway/swagger.go` | 仅在显式配置共享契约根目录时扫描 OpenAPI 真源、提供本地 Swagger UI 页面和原始规格文件。 |
 | `internal/app/gateway/swagger_test.go` | 验证文档入口在本地配置下可访问，未配置时保持 `404`。 |
 | `generated/gameplatform/contracts_generated.go` | 由 `contractcodegen` 根据全部 GamePlatform OpenAPI 路由重新生成；禁止人工修改。 |
+
+## Inventory增量实现补充（2026-09-29）
+
+`internal/modules/inventory/inventory.go` 已从占位包升级为真实背包领域与内存仓储；生产 PostgreSQL 适配位于 `internal/platform/database/postgres/inventory_repository.go`，SQL 真源为 `migrations/000008_player_inventory.sql`。Gateway 公网路由位于 `internal/app/gateway/inventory.go`，HTTP 内部链路由 `gateway_clients_inventory.go` 与 `playerdata_server_inventory.go` 连接。`internal/contracts/proto/player-data-service.proto` 已补 Inventory RPC 协议源，但当前 Runner 缺少 `go/protoc/protoc-gen-go/protoc-gen-go-grpc`，对应生成代码与生产 gRPC Inventory 适配尚未生成/接通，禁止把协议源更新写成“gRPC 已验证”。
 
 ## 维护规则
 

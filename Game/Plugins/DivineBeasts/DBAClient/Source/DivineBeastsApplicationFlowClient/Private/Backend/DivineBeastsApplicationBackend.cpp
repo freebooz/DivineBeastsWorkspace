@@ -6,7 +6,6 @@
 #include "Serialization/JsonWriter.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
-#include "Misc/LexToString.h"
 
 namespace
 {
@@ -495,7 +494,7 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
         DesiredExperienceId.ToString());
     Body->SetField(
         TEXT("expectedCharacterRevision"),
-        MakeShared<FJsonValueNumberString>(LexToString(ExpectedRevision)));
+        MakeShared<FJsonValueNumberString>(FString::Printf(TEXT("%lld"), ExpectedRevision)));
     if (!PreferredRegion.IsEmpty())
     {
         Body->SetStringField(TEXT("preferredRegion"), PreferredRegion);

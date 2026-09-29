@@ -8,7 +8,6 @@
 #include "Interfaces/IGamePlatformOnlineService.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Dom/JsonObject.h"
-#include "Misc/LexFromString.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -295,6 +294,10 @@ struct UGamePlatformOnlineClientSubsystem::FRuntime
 };
 
 UGamePlatformOnlineClientSubsystem::UGamePlatformOnlineClientSubsystem() = default;
+UGamePlatformOnlineClientSubsystem::UGamePlatformOnlineClientSubsystem(FVTableHelper& Helper)
+    : Super(Helper)
+{
+}
 UGamePlatformOnlineClientSubsystem::~UGamePlatformOnlineClientSubsystem() = default;
 
 void UGamePlatformOnlineClientSubsystem::Initialize(

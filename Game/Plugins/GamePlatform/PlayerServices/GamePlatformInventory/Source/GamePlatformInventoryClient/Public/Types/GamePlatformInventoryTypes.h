@@ -102,6 +102,10 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemInstance
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName InstanceState = TEXT("active");
 
+    /** MaxStackSize（权威堆叠上限）来自服务端快照；客户端 Definition 中的同名字段仅用于显示，不可作为规则真源。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    int32 MaxStackSize = 1;
+
     bool IsValid() const
     {
         return !ItemInstanceId.IsEmpty() &&
@@ -109,7 +113,9 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemInstance
                Quantity > 0 &&
                !ContainerId.IsNone() &&
                SlotIndex >= 0 &&
-               Revision > 0;
+               Revision > 0 &&
+               MaxStackSize > 0 &&
+               Quantity <= MaxStackSize;
     }
 };
 
@@ -213,6 +219,10 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemViewModel
 
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName ContainerId = NAME_None;
+
+    /** MaxStackSize（权威堆叠上限）用于 UI 判断可合并数量；实际写操作仍由服务端再次验证。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    int32 MaxStackSize = 1;
 
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int32 SlotIndex = INDEX_NONE;

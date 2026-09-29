@@ -58,7 +58,13 @@ paths:
         content:
           application/json:
             schema: {$ref: '#/components/schemas/InventoryMoveRequest'}
-      responses: {$ref: '#/components/x-responses/MutationResponses'}
+      responses:
+        '200': {$ref: '#/components/responses/MutationSuccess'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/InventoryNotFound'}
+        '409': {$ref: '#/components/responses/InventoryConflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
 
   /v1/inventory/split:
     post:
@@ -70,7 +76,13 @@ paths:
         content:
           application/json:
             schema: {$ref: '#/components/schemas/InventorySplitRequest'}
-      responses: {$ref: '#/components/x-responses/MutationResponses'}
+      responses:
+        '200': {$ref: '#/components/responses/MutationSuccess'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/InventoryNotFound'}
+        '409': {$ref: '#/components/responses/InventoryConflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
 
   /v1/inventory/merge:
     post:
@@ -82,7 +94,13 @@ paths:
         content:
           application/json:
             schema: {$ref: '#/components/schemas/InventoryMergeRequest'}
-      responses: {$ref: '#/components/x-responses/MutationResponses'}
+      responses:
+        '200': {$ref: '#/components/responses/MutationSuccess'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/InventoryNotFound'}
+        '409': {$ref: '#/components/responses/InventoryConflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
 
   /v1/inventory/quickbar/set:
     post:
@@ -94,7 +112,13 @@ paths:
         content:
           application/json:
             schema: {$ref: '#/components/schemas/InventoryQuickbarSetRequest'}
-      responses: {$ref: '#/components/x-responses/MutationResponses'}
+      responses:
+        '200': {$ref: '#/components/responses/MutationSuccess'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/InventoryNotFound'}
+        '409': {$ref: '#/components/responses/InventoryConflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
 
   /v1/inventory/quickbar/clear:
     post:
@@ -106,7 +130,13 @@ paths:
         content:
           application/json:
             schema: {$ref: '#/components/schemas/InventoryQuickbarClearRequest'}
-      responses: {$ref: '#/components/x-responses/MutationResponses'}
+      responses:
+        '200': {$ref: '#/components/responses/MutationSuccess'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/InventoryNotFound'}
+        '409': {$ref: '#/components/responses/InventoryConflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
 
 components:
   securitySchemes:
@@ -131,27 +161,22 @@ components:
       content:
         application/json:
           schema: {$ref: '#/components/schemas/ApiError'}
+    MutationSuccess:
+      description: 修改已提交或同 OperationId 同内容幂等重放。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/InventoryMutationResult'}
+    InventoryNotFound:
+      description: 物品、容器或查询目标不存在。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    InventoryConflict:
+      description: Revision 冲突、槽位冲突、数量不足、堆叠上限或 OperationId 同键异内容。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
 
-  x-responses:
-    MutationResponses:
-      '200':
-        description: 修改已提交或同 OperationId 同内容幂等重放。
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/InventoryMutationResult'}
-      '400': {$ref: '#/components/responses/InvalidRequest'}
-      '401': {$ref: '#/components/responses/Unauthorized'}
-      '404':
-        description: 物品或容器不存在。
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/ApiError'}
-      '409':
-        description: Revision 冲突、槽位冲突、数量不足、堆叠上限或 OperationId 同键异内容。
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/ApiError'}
-      '503': {$ref: '#/components/responses/Unavailable'}
 
   schemas:
     Revision:

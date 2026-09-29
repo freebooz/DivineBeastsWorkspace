@@ -6,13 +6,17 @@
 class UGamePlatformOnlineClientSubsystem;
 
 /**
- * FGamePlatformInventoryGatewayHttpTransport（背包网关传输）。
+ * FGamePlatformInventoryGatewayHttpTransport（背包网关在线适配器）。
  *
- * 本类不拥有 AccessToken（访问令牌），所有受保护请求统一委托给
- * GamePlatformOnlineClient（平台在线客户端）发送，从而复用认证刷新、超时、
- * 同源校验、请求取消和安全重放策略。客户端永远不传 PlayerId（玩家编号）。
+ * 这是 GamePlatformInventoryClient（背包客户端模块）的私有默认实现：
+ * - 复用 GamePlatformOnlineClient（平台在线客户端）的认证请求通道；
+ * - 不保存 AccessToken（访问令牌），不接受 PlayerId（玩家编号）；
+ * - 统一继承 Online 的刷新、超时、取消、同源与幂等重放策略。
+ *
+ * 对外稳定边界只有 IGamePlatformInventoryClientTransport（背包客户端传输接口），
+ * 业务模块不得直接依赖本类，避免把具体 Online 实现扩散为公共 API。
  */
-class GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryGatewayHttpTransport final
+class FGamePlatformInventoryGatewayHttpTransport final
     : public IGamePlatformInventoryClientTransport
     , public TSharedFromThis<
         FGamePlatformInventoryGatewayHttpTransport,
@@ -23,7 +27,7 @@ public:
         UGamePlatformOnlineClientSubsystem* InOnlineSubsystem);
     virtual ~FGamePlatformInventoryGatewayHttpTransport() override;
 
-    /** 当前 Online（在线）子系统是否仍有有效认证上下文。 */
+    /** 当前 Online（在线）子系统是否仍有可发送受保护请求的认证上下文。 */
     bool IsConfigured() const;
 
     /** 只取消本 Transport 发起的背包请求，不取消同一 GameInstance 的其他在线请求。 */
@@ -93,4 +97,3 @@ private:
         int32 StatusCode,
         const FString& Body);
 };
-

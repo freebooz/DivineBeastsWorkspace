@@ -191,6 +191,8 @@ class GAMEPLATFORMONLINECLIENT_API UGamePlatformOnlineClientSubsystem final
 
 public:
     UGamePlatformOnlineClientSubsystem();
+    /** UHT热重载辅助构造也必须在FRuntime完整类型所在的.cpp中定义，避免TUniquePtr删除不完整类型。 */
+    UGamePlatformOnlineClientSubsystem(FVTableHelper& Helper);
     virtual ~UGamePlatformOnlineClientSubsystem() override;
 
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;

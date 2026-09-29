@@ -21,6 +21,16 @@ UDivineBeastsInventoryScreen::GetInventoryState() const
         : EGamePlatformInventoryClientState::Uninitialized;
 }
 
+EGamePlatformInventoryError
+UDivineBeastsInventoryScreen::GetInventoryLastError() const
+{
+    const UGamePlatformInventoryClientSubsystem* Subsystem =
+        ResolveInventorySubsystem();
+    return IsValid(Subsystem)
+        ? Subsystem->GetLastError()
+        : EGamePlatformInventoryError::None;
+}
+
 int64 UDivineBeastsInventoryScreen::GetInventoryRevision() const
 {
     const UGamePlatformInventoryClientSubsystem* Subsystem =
