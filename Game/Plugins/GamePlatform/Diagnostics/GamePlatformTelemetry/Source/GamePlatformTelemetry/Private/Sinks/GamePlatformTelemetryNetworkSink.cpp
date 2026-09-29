@@ -27,6 +27,7 @@ FGamePlatformTelemetryNetworkSink(
         FMath::Max(0, RetrySettings.MaxRetries);
     RetrySettings.MaxPendingBatches =
         FMath::Max(1, RetrySettings.MaxPendingBatches);
+    Status.PendingCapacity = RetrySettings.MaxPendingBatches;
 }
 
 bool FGamePlatformTelemetryNetworkSink::Start()
@@ -306,6 +307,7 @@ void FGamePlatformTelemetryNetworkSink::FinishPending(
                 Status.Health =
                     EGamePlatformTelemetrySinkHealth::Healthy;
                 Status.LastError.Reset();
+                Status.LastSuccessUtc = FDateTime::UtcNow();
             }
             else
             {
@@ -313,6 +315,7 @@ void FGamePlatformTelemetryNetworkSink::FinishPending(
                 Status.Health =
                     EGamePlatformTelemetrySinkHealth::Degraded;
                 Status.LastError = Error;
+                Status.LastFailureUtc = FDateTime::UtcNow();
             }
         }
     }

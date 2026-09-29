@@ -1,6 +1,7 @@
 #include "Telemetry/DivineBeastsClientTelemetryBootstrapSubsystem.h"
 
 #include "GamePlatformOnlineClientSubsystem.h"
+#include "GamePlatformSessionClientSubsystem.h"
 #include "HAL/PlatformMisc.h"
 #include "Sinks/GamePlatformTelemetryNetworkSink.h"
 #include "Subsystems/GamePlatformTelemetrySubsystem.h"
@@ -20,9 +21,30 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Initialize(FSubsystemCollec
         GameInstance ? GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>() : nullptr;
     UGamePlatformOnlineClientSubsystem* Online =
         GameInstance ? GameInstance->GetSubsystem<UGamePlatformOnlineClientSubsystem>() : nullptr;
+    UGamePlatformSessionClientSubsystem* Session =
+        GameInstance ? GameInstance->GetSubsystem<UGamePlatformSessionClientSubsystem>() : nullptr;
     if (!Telemetry || !Online)
     {
         return;
+    }
+
+    OnlineSubsystem = Online;
+    SessionSubsystem = Session;
+    AuthStateChangedHandle = Online->OnAuthStateChanged().AddUObject(
+        this,
+        &UDivineBeastsClientTelemetryBootstrapSubsystem::HandleAuthStateChanged);
+    if (Session)
+    {
+        SessionChangedHandle = Session->OnSessionChanged().AddUObject(
+            this,
+            &UDivineBeastsClientTelemetryBootstrapSubsystem::HandleSessionChanged);
+    }
+
+    // 处理子系统创建前已经完成认证/会话绑定的情况；事件驱动之外只做这一次初始快照同步。
+    HandleAuthStateChanged(Online->GetSnapshot());
+    if (Session)
+    {
+        HandleSessionChanged(Session->GetSnapshot());
     }
 
     FString BaseUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("DIVINEBEASTS_GATEWAY_BASE_URL"));
@@ -71,8 +93,82 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Initialize(FSubsystemCollec
     }
 }
 
+void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleAuthStateChanged(
+    const FGamePlatformAuthSnapshot& Snapshot)
+{
+    UGameInstance* GameInstance = GetGameInstance();
+    UGamePlatformTelemetrySubsystem* Telemetry =
+        GameInstance ? GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>() : nullptr;
+    if (!Telemetry)
+    {
+        return;
+    }
+
+    if (Snapshot.State == EGamePlatformAuthState::Authenticated)
+    {
+        // 不把AccountId写入遥测。后端Gateway依据真实认证上下文生成伪匿名玩家ID并覆盖客户端身份。
+        if (TelemetrySessionId.IsEmpty())
+        {
+            TelemetrySessionId = Snapshot.AuthGeneration.IsValid()
+                ? Snapshot.AuthGeneration.ToString(EGuidFormats::Digits)
+                : FGuid::NewGuid().ToString(EGuidFormats::Digits);
+            Telemetry->BeginSession(TelemetrySessionId, FString());
+
+            FGamePlatformTelemetryEvent Started;
+            Started.EventName = TEXT("Telemetry.Foundation.ClientStarted");
+            Telemetry->RecordEvent(MoveTemp(Started));
+        }
+        return;
+    }
+
+    if (!TelemetrySessionId.IsEmpty() &&
+        Snapshot.State == EGamePlatformAuthState::LoggedOut)
+    {
+        Telemetry->EndSession();
+        TelemetrySessionId.Reset();
+    }
+}
+
+void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleSessionChanged(
+    const FGamePlatformSessionSnapshot& Snapshot)
+{
+    UGameInstance* GameInstance = GetGameInstance();
+    UGamePlatformTelemetrySubsystem* Telemetry =
+        GameInstance ? GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>() : nullptr;
+    if (!Telemetry)
+    {
+        return;
+    }
+
+    if (Snapshot.Binding.IsValid())
+    {
+        // Session公开快照不包含敏感Endpoint/Ticket。这里只同步稳定WorldId；Map/Experience由应用流程在真实世界就绪后补充。
+        Telemetry->UpdateWorldContext(
+            FString(),
+            Snapshot.Binding.WorldId.ToString(),
+            FString(),
+            FString(),
+            FString());
+    }
+}
+
 void UDivineBeastsClientTelemetryBootstrapSubsystem::Deinitialize()
 {
+    if (UGamePlatformOnlineClientSubsystem* Online = OnlineSubsystem.Get();
+        Online && AuthStateChangedHandle.IsValid())
+    {
+        Online->OnAuthStateChanged().Remove(AuthStateChangedHandle);
+    }
+    if (UGamePlatformSessionClientSubsystem* Session = SessionSubsystem.Get();
+        Session && SessionChangedHandle.IsValid())
+    {
+        Session->OnSessionChanged().Remove(SessionChangedHandle);
+    }
+    AuthStateChangedHandle.Reset();
+    SessionChangedHandle.Reset();
+    OnlineSubsystem.Reset();
+    SessionSubsystem.Reset();
+
     if (bConfiguredNetworkSink)
     {
         if (UGameInstance* GameInstance = GetGameInstance())
@@ -83,6 +179,18 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Deinitialize()
                 Telemetry->FlushBestEffort();
             }
         }
+    }
+    if (!TelemetrySessionId.IsEmpty())
+    {
+        if (UGameInstance* GameInstance = GetGameInstance())
+        {
+            if (UGamePlatformTelemetrySubsystem* Telemetry =
+                    GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>())
+            {
+                Telemetry->EndSession();
+            }
+        }
+        TelemetrySessionId.Reset();
     }
     bConfiguredNetworkSink = false;
     Super::Deinitialize();

@@ -2,7 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Delegates/Delegate.h"
 #include "DivineBeastsClientTelemetryBootstrapSubsystem.generated.h"
+
+struct FGamePlatformAuthSnapshot;
+struct FGamePlatformSessionSnapshot;
+class UGamePlatformOnlineClientSubsystem;
+class UGamePlatformSessionClientSubsystem;
 
 /**
  * UDivineBeastsClientTelemetryBootstrapSubsystem（神兽联盟客户端遥测装配子系统）。
@@ -21,5 +27,14 @@ public:
     virtual void Deinitialize() override;
 
 private:
+    void HandleAuthStateChanged(const FGamePlatformAuthSnapshot& Snapshot);
+    void HandleSessionChanged(const FGamePlatformSessionSnapshot& Snapshot);
+
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> OnlineSubsystem;
+    TWeakObjectPtr<UGamePlatformSessionClientSubsystem> SessionSubsystem;
+    FDelegateHandle AuthStateChangedHandle;
+    FDelegateHandle SessionChangedHandle;
+    /** 当前客户端遥测会话只用于采样/关联，不是账号ID，也不携带认证权限。 */
+    FString TelemetrySessionId;
     bool bConfiguredNetworkSink = false;
 };

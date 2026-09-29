@@ -1,14 +1,56 @@
-param(
-    [string]$EngineRoot = "D:\\UnrealEngine-5.8.0-release",
-    [string]$SourceProjectRoot = "E:\\work\\Game\\DivineBeastsArena\\DBA_GameClient",
+﻿param(
+    [string]$EngineRoot = "",
+    [string]$SourceSearchRoot = "E:\\work\\Game\\DivineBeastsArena",
+    [string]$SourceProjectRoot = "",
     [string]$WorkspaceRoot = "E:\\work\\2026\\DivineBeastsWorkspace"
 )
 
 $ErrorActionPreference = "Stop"
 
-# DBA zodiac prototype character asset generation wrapper.
-# Only the prototype meshes/skeleton and their minimum original material dependencies are copied.
-# Unreal Editor performs all cross-mount moves so binary references are repaired by the engine.
+# 神兽联盟十二生肖原型角色资产生成包装脚本。
+# 只导入 Manny/Quinn 共用网格、骨架及其必要原始材质依赖，不为十二生肖复制十二套基础资源。
+# 所有跨挂载点移动都交给 Unreal Editor 执行，让引擎负责重写二进制资产引用。
+
+if ([string]::IsNullOrWhiteSpace($EngineRoot)) {
+    $EngineCandidates = @(
+        "F:\\UnrealEngine-5.8.0-release",
+        "D:\\UnrealEngine-5.8.0-release"
+    )
+    $EngineRoot = $EngineCandidates |
+        Where-Object { Test-Path (Join-Path $_ "Engine\Binaries\Win64\UnrealEditor-Cmd.exe") } |
+        Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace($EngineRoot)) {
+        throw "未找到 Unreal Engine 5.8。请通过 -EngineRoot 指定实际安装目录。"
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($SourceProjectRoot)) {
+    if (-not (Test-Path $SourceSearchRoot)) {
+        throw "Manny/Quinn 搜索根目录不存在: $SourceSearchRoot"
+    }
+
+    $CandidateRoots = @($SourceSearchRoot)
+    $CandidateRoots += Get-ChildItem $SourceSearchRoot -Directory -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty FullName
+
+    $SourceProjectRoot = $CandidateRoots |
+        Where-Object {
+            (Test-Path (Join-Path $_ "Content\DBA\Characters\Mannequins")) -and
+            (Test-Path (Join-Path $_ "Content\Characters\Mannequins"))
+        } |
+        Sort-Object {
+            if ((Split-Path $_ -Leaf) -eq "DBA_GameClient") { 0 } else { 1 }
+        }, { $_ } |
+        Select-Object -First 1
+
+    if ([string]::IsNullOrWhiteSpace($SourceProjectRoot)) {
+        throw "在 $SourceSearchRoot 下未找到同时包含 DBA/Characters/Mannequins 与 Characters/Mannequins 的源项目。"
+    }
+}
+
+Write-Host "[DBA] EngineRoot=$EngineRoot"
+Write-Host "[DBA] SourceProjectRoot=$SourceProjectRoot"
+Write-Host "[DBA] WorkspaceRoot=$WorkspaceRoot"
 
 $SourceDbaRoot = Join-Path $SourceProjectRoot "Content\DBA\Characters\Mannequins"
 $SourceStandardRoot = Join-Path $SourceProjectRoot "Content\Characters\Mannequins"
@@ -17,20 +59,17 @@ $TargetProject = Join-Path $WorkspaceRoot "Game\DivineBeastsArena.uproject"
 $TargetDbaRoot = Join-Path $WorkspaceRoot "Game\Content\DBA\Characters\Mannequins"
 $TargetStandardRoot = Join-Path $WorkspaceRoot "Game\Content\Characters\Mannequins"
 $PythonScript = Join-Path $WorkspaceRoot "Tools\Unreal\Characters\GenerateZodiacPrototypeCharacters.py"
-$EditorCmd = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
+$EditorExe = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor.exe"
 $CommonMesh = Join-Path $WorkspaceRoot "Game\Plugins\DivineBeasts\ContentPacks\Common\DBAContentPack_Common\Content\Mannequins\DBA\Meshes\SKM_Manny_Simple.uasset"
 $CommonBodyRig = Join-Path $WorkspaceRoot "Game\Plugins\DivineBeasts\ContentPacks\Common\DBAContentPack_Common\Content\Mannequins\Standard\Rigs\CR_Mannequin_Body.uasset"
 
 if (-not (Test-Path $SourceDbaRoot)) { throw "DBA Manny/Quinn source directory not found: $SourceDbaRoot" }
 if (-not (Test-Path $SourceStandardRoot)) { throw "Standard Mannequin dependency directory not found: $SourceStandardRoot" }
 if (-not (Test-Path $TargetProject)) { throw "Target project not found: $TargetProject" }
-if (-not (Test-Path $EditorCmd)) { throw "UnrealEditor-Cmd not found: $EditorCmd" }
+if (-not (Test-Path $EditorExe)) { throw "UnrealEditor not found: $EditorExe" }
 if (-not (Test-Path $PythonScript)) { throw "Generator script not found: $PythonScript" }
 
 $OriginalProjectJson = [System.IO.File]::ReadAllText($TargetProject)
-$DevelopersDir = Join-Path $WorkspaceRoot "Game\Content\Developers"
-$DevelopersBackup = Join-Path $WorkspaceRoot "Game\Saved\ZodiacPrototypeBackup\Developers"
-$DevelopersMoved = $false
 
 try {
     if ((-not (Test-Path $CommonMesh)) -or (-not (Test-Path $CommonBodyRig))) {
@@ -51,9 +90,8 @@ try {
         Copy-Item (Join-Path $SourceDbaRoot "Rigs") $TargetStandardRoot -Recurse -Force
     }
 
-    # Content-only hero plugins are target-specific in normal builds. The Python commandlet does not
-    # consume the Editor Target receipt consistently, so enable them only for this generation run
-    # and restore the original .uproject byte-for-byte in finally.
+    # 纯内容生肖插件在正常构建中按 Target 选择启用。Python Commandlet 对 Editor Target 收据的消费不稳定，
+    # 因此仅在本次生成期间临时启用这些插件，并在 finally 中逐字节恢复原 .uproject。
     $ProjectObject = $OriginalProjectJson | ConvertFrom-Json
     $RequiredPlugins = @(
         "DBAContentPack_Common",
@@ -75,30 +113,23 @@ try {
         (New-Object System.Text.UTF8Encoding($false))
     )
 
-    # UE5.8 source build currently asserts in PythonScript commandlet initialization if the physical
-    # Developers content directory is present. Move this editor-only directory aside only for the
-    # generation process and restore it immediately afterwards.
-    if (Test-Path $DevelopersDir) {
-        if (Test-Path $DevelopersBackup) { Remove-Item $DevelopersBackup -Recurse -Force }
-        New-Item -ItemType Directory -Path (Split-Path $DevelopersBackup -Parent) -Force | Out-Null
-        Move-Item $DevelopersDir $DevelopersBackup
-        $DevelopersMoved = $true
-    }
-
-    Write-Host "[DBA] Running Unreal Python commandlet..."
+    # UE5.8 的 PythonScript Commandlet 在当前源码版会错误处理 Developers 绝对路径；
+    # 改用编辑器启动参数 ExecutePythonScript，仍保持无界面、无渲染执行，并在脚本完成后自动退出。
+    Write-Host "[DBA] Running Unreal Python asset generator..."
     $EditorArgs = @(
         $TargetProject,
-        "-run=pythonscript",
-        "-script=$PythonScript",
+        "-ExecutePythonScript=$PythonScript",
         "-unattended",
         "-nop4",
         "-nosplash",
-        "-NoSound"
+        "-NoSound",
+        "-nullrhi",
+        "-NoCompile",
+        "-NoCompileEditor"
     )
-    & $EditorCmd @EditorArgs
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Unreal asset generation failed. ExitCode=$LASTEXITCODE"
+    $EditorProcess = Start-Process -FilePath $EditorExe -ArgumentList $EditorArgs -Wait -PassThru
+    if ($EditorProcess.ExitCode -ne 0) {
+        throw "Unreal asset generation failed. ExitCode=$($EditorProcess.ExitCode)"
     }
 }
 finally {
@@ -107,11 +138,6 @@ finally {
         $OriginalProjectJson,
         (New-Object System.Text.UTF8Encoding($false))
     )
-
-    if ($DevelopersMoved -and (Test-Path $DevelopersBackup)) {
-        if (Test-Path $DevelopersDir) { Remove-Item $DevelopersDir -Recurse -Force }
-        Move-Item $DevelopersBackup $DevelopersDir
-    }
 }
 
 if ((Test-Path $TargetDbaRoot) -or (Test-Path $TargetStandardRoot)) {

@@ -129,6 +129,8 @@ private:
     bool bTraceBridgeEnabled = false;
     bool bFlushInProgress = false;
     uint64 SessionGeneration = 0;
+    FDateTime LastFlushUtc;
+    int32 LastFlushRecords = 0;
 
     bool TickFlush(float DeltaSeconds);
     /** 按需安排一次刷新；Buffer为空时不保留常驻Ticker。 */

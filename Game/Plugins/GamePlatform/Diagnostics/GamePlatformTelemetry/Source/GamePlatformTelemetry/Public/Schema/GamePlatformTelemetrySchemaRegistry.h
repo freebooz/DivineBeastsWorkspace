@@ -54,6 +54,13 @@ public:
     void RegisterMetric(
         FGamePlatformTelemetryMetricDefinition Definition);
 
+    /**
+     * 冻结Schema注册表。冻结后运行期只读，后续注册请求会被拒绝，
+     * 防止热路径Find与运行时结构修改并发，也防止同一进程中途改变隐私/优先级规则。
+     */
+    void Freeze();
+    bool IsFrozen() const { return bFrozen; }
+
     const FGamePlatformTelemetryEventDefinition* FindEvent(
         FName EventName) const;
 
@@ -64,6 +71,7 @@ public:
         CreateFoundationDefaults();
 
 private:
+    bool bFrozen = false;
     TMap<FName, FGamePlatformTelemetryEventDefinition> Events;
     TMap<FName, FGamePlatformTelemetryMetricDefinition> Metrics;
 };

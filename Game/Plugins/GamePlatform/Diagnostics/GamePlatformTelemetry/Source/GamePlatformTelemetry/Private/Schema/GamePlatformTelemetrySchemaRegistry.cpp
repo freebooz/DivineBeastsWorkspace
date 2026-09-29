@@ -85,6 +85,10 @@ FGamePlatformTelemetryMetricDefinition Metric(
 void FGamePlatformTelemetrySchemaRegistry::RegisterEvent(
     FGamePlatformTelemetryEventDefinition Definition)
 {
+    if (bFrozen)
+    {
+        return;
+    }
     if (!Definition.EventName.IsNone() &&
         Definition.SchemaVersion > 0)
     {
@@ -95,10 +99,19 @@ void FGamePlatformTelemetrySchemaRegistry::RegisterEvent(
 void FGamePlatformTelemetrySchemaRegistry::RegisterMetric(
     FGamePlatformTelemetryMetricDefinition Definition)
 {
+    if (bFrozen)
+    {
+        return;
+    }
     if (!Definition.Name.IsNone())
     {
         Metrics.Add(Definition.Name, MoveTemp(Definition));
     }
+}
+
+void FGamePlatformTelemetrySchemaRegistry::Freeze()
+{
+    bFrozen = true;
 }
 
 const FGamePlatformTelemetryEventDefinition*

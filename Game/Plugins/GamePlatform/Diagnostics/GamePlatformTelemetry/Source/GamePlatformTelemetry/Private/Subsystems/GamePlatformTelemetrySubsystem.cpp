@@ -76,8 +76,14 @@ void UGamePlatformTelemetrySubsystem::Deinitialize()
 {
     CancelScheduledFlush();
 
-    // 关停前只做有界批次Drain；真正HTTP等待由Sink自己的Shutdown Budget非阻塞处理。
-    FlushBestEffort();
+    // 关停前只做有界、非等待式Drain：尽量把Buffer填入Sink尚有的Pending容量；真正HTTP等待由Sink的Shutdown Budget处理。
+    for (int32 Pass = 0; Pass < 8 && Buffer && Buffer->GetDiagnostics().BufferDepth > 0; ++Pass)
+    {
+        if (!FlushBestEffort())
+        {
+            break;
+        }
+    }
 
     TSharedPtr<IGamePlatformTelemetrySink, ESPMode::ThreadSafe>
         LocalSink;
@@ -302,6 +308,12 @@ UGamePlatformTelemetrySubsystem::RecordEvent(
         return EGamePlatformTelemetryRecordResult::Disabled;
     }
 
+    // 首条运行时记录出现时冻结Schema；项目/领域组合根必须在真正开始记录前完成贡献注册。
+    if (!SchemaRegistry->IsFrozen())
+    {
+        SchemaRegistry->Freeze();
+    }
+
     const FGamePlatformTelemetryEventDefinition* Definition =
         SchemaRegistry->FindEvent(Event.EventName);
 
@@ -391,6 +403,11 @@ UGamePlatformTelemetrySubsystem::RecordMetric(
     if (!bEnabled || !SchemaRegistry.IsValid() || !Buffer)
     {
         return EGamePlatformTelemetryRecordResult::Disabled;
+    }
+
+    if (!SchemaRegistry->IsFrozen())
+    {
+        SchemaRegistry->Freeze();
     }
 
     const FGamePlatformTelemetryMetricDefinition* Definition =
@@ -531,8 +548,25 @@ bool UGamePlatformTelemetrySubsystem::FlushBestEffort()
     CancelScheduledFlush();
     TGuardValue<bool> FlushGuard(bFlushInProgress, true);
     bool bSubmittedAny = false;
+    int32 SubmittedRecords = 0;
 
-    const int32 MaxBatches = FMath::Clamp(Limits.MaxFlushBatchesPerPass, 1, 16);
+    const FGamePlatformTelemetrySinkStatus InitialSinkStatus = LocalSink->GetHealth();
+    int32 MaxBatches = FMath::Clamp(Limits.MaxFlushBatchesPerPass, 1, 16);
+    if (InitialSinkStatus.PendingCapacity > 0)
+    {
+        const int32 AvailableSlots = FMath::Max(
+            0,
+            InitialSinkStatus.PendingCapacity - InitialSinkStatus.PendingBatches);
+        if (AvailableSlots <= 0)
+        {
+            // 断网/重试期间保留Buffer数据，不先BuildBatch再让Sink因容量不足丢弃。
+            ScheduleFlush(Limits.FlushIntervalSeconds);
+            return false;
+        }
+        MaxBatches = FMath::Min(MaxBatches, AvailableSlots);
+    }
+
+    TWeakObjectPtr<UGamePlatformTelemetrySubsystem> WeakThis(this);
     for (int32 BatchIndex = 0; BatchIndex < MaxBatches; ++BatchIndex)
     {
         FGamePlatformTelemetryBatch Batch;
@@ -542,17 +576,36 @@ bool UGamePlatformTelemetrySubsystem::FlushBestEffort()
         }
 
         bSubmittedAny = true;
+        SubmittedRecords += Batch.Events.Num() + Batch.Metrics.Num();
         LocalSink->SubmitBatch(
             MoveTemp(Batch),
-            [](bool, bool)
+            [WeakThis](bool, bool)
             {
-                // 遥测失败只进入Sink Health；绝不反向影响Gameplay或持久业务状态。
+                // NetworkSink终态完成意味着释放一个Pending槽位；下一游戏线程尽快继续Drain剩余Buffer。
+                if (UGamePlatformTelemetrySubsystem* Self = WeakThis.Get())
+                {
+                    if (Self->Buffer && Self->Buffer->GetDiagnostics().BufferDepth > 0)
+                    {
+                        Self->ScheduleFlush(0.01f);
+                    }
+                }
             });
+    }
+
+    if (bSubmittedAny)
+    {
+        LastFlushUtc = FDateTime::UtcNow();
+        LastFlushRecords = SubmittedRecords;
     }
 
     if (Buffer->GetDiagnostics().BufferDepth > 0)
     {
+        // 这是兜底Deadline；异步Sink一旦完成会通过Completion更快唤醒下一轮。
         ScheduleFlush(Limits.FlushIntervalSeconds);
+    }
+    else
+    {
+        CancelScheduledFlush();
     }
     return bSubmittedAny;
 }
@@ -581,7 +634,11 @@ UGamePlatformTelemetrySubsystem::GetDiagnostics() const
         Diagnostics.SubmittedBatches = Status.SubmittedBatches;
         Diagnostics.FailedBatches = Status.FailedBatches;
         Diagnostics.DroppedBatches = Status.DroppedBatches;
+        Diagnostics.SinkLastSuccessUtc = Status.LastSuccessUtc;
+        Diagnostics.SinkLastFailureUtc = Status.LastFailureUtc;
     }
+    Diagnostics.LastFlushUtc = LastFlushUtc;
+    Diagnostics.LastFlushRecords = LastFlushRecords;
     return Diagnostics;
 }
 

@@ -336,4 +336,16 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryDiagnostics
 
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     int64 DroppedBatches = 0;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    FDateTime LastFlushUtc;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    int32 LastFlushRecords = 0;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    FDateTime SinkLastSuccessUtc;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    FDateTime SinkLastFailureUtc;
 };

@@ -85,7 +85,7 @@ bool FGamePlatformTelemetryBoundedBuffer::EnqueueEvent(
     CurrentBytes += EstimatedBytes;
     Records.Add(MoveTemp(Record));
     ++Diagnostics.RecordedTotal;
-    Diagnostics.BufferDepth = Records.Num();
+    Diagnostics.BufferDepth = ActiveRecordCount();
     Diagnostics.BufferBytes = CurrentBytes;
     return true;
 }
@@ -118,7 +118,7 @@ bool FGamePlatformTelemetryBoundedBuffer::EnqueueMetric(
     CurrentBytes += EstimatedBytes;
     Records.Add(MoveTemp(Record));
     ++Diagnostics.RecordedTotal;
-    Diagnostics.BufferDepth = Records.Num();
+    Diagnostics.BufferDepth = ActiveRecordCount();
     Diagnostics.BufferBytes = CurrentBytes;
     return true;
 }
@@ -129,12 +129,12 @@ bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
 {
     FScopeLock Lock(&Mutex);
 
-    if (Records.IsEmpty())
+    if (ActiveRecordCount() <= 0)
     {
         return false;
     }
 
-    const FQueuedRecord& First = Records[0];
+    const FQueuedRecord& First = Records[HeadIndex];
     const FGamePlatformTelemetryContext& BatchContext =
         First.Kind == ERecordKind::Event ? First.Event.Context : First.Metric.Context;
 
@@ -150,8 +150,9 @@ bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
     int32 Bytes = EstimateContextBytes(BatchContext) + 256;
     int32 ConsumeCount = 0;
 
-    for (const FQueuedRecord& Record : Records)
+    for (int32 Index = HeadIndex; Index < Records.Num(); ++Index)
     {
+        const FQueuedRecord& Record = Records[Index];
         const FGamePlatformTelemetryContext& RecordContext =
             Record.Kind == ERecordKind::Event ? Record.Event.Context : Record.Metric.Context;
         if (!SameContext(BatchContext, RecordContext))
@@ -185,18 +186,16 @@ bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
         return false;
     }
 
-    for (int32 Index = 0; Index < ConsumeCount; ++Index)
+    for (int32 Offset = 0; Offset < ConsumeCount; ++Offset)
     {
-        CurrentBytes -= Records[Index].EstimatedBytes;
+        CurrentBytes -= Records[HeadIndex + Offset].EstimatedBytes;
     }
 
-    Records.RemoveAt(
-        0,
-        ConsumeCount,
-        EAllowShrinking::No);
+    HeadIndex += ConsumeCount;
+    CompactConsumedPrefixIfNeeded();
 
     DroppedSinceLastBatch = 0;
-    Diagnostics.BufferDepth = Records.Num();
+    Diagnostics.BufferDepth = ActiveRecordCount();
     Diagnostics.BufferBytes = CurrentBytes;
     return true;
 }
@@ -206,7 +205,7 @@ FGamePlatformTelemetryBoundedBuffer::GetDiagnostics() const
 {
     FScopeLock Lock(&Mutex);
     FGamePlatformTelemetryDiagnostics Result = Diagnostics;
-    Result.BufferDepth = Records.Num();
+    Result.BufferDepth = ActiveRecordCount();
     Result.BufferBytes = CurrentBytes;
     return Result;
 }
@@ -227,9 +226,27 @@ void FGamePlatformTelemetryBoundedBuffer::Reset()
 {
     FScopeLock Lock(&Mutex);
     Records.Reset();
+    HeadIndex = 0;
     CurrentBytes = 0;
     DroppedSinceLastBatch = 0;
     Diagnostics = {};
+}
+
+void FGamePlatformTelemetryBoundedBuffer::CompactConsumedPrefixIfNeeded(bool bForce)
+{
+    if (HeadIndex <= 0)
+    {
+        return;
+    }
+
+    const bool bShouldCompact = bForce || HeadIndex >= 256 || HeadIndex * 2 >= Records.Num();
+    if (!bShouldCompact)
+    {
+        return;
+    }
+
+    Records.RemoveAt(0, HeadIndex, EAllowShrinking::No);
+    HeadIndex = 0;
 }
 
 bool FGamePlatformTelemetryBoundedBuffer::EnsureCapacityFor(
@@ -241,7 +258,9 @@ bool FGamePlatformTelemetryBoundedBuffer::EnsureCapacityFor(
         return false;
     }
 
-    while (Records.Num() >= Limits.MaxBufferEvents ||
+    CompactConsumedPrefixIfNeeded();
+
+    while (ActiveRecordCount() >= Limits.MaxBufferEvents ||
            CurrentBytes + IncomingBytes >
                Limits.MaxBufferBytes)
     {
@@ -255,10 +274,15 @@ bool FGamePlatformTelemetryBoundedBuffer::EnsureCapacityFor(
 
         CountDrop(Records[Candidate].Priority);
         CurrentBytes -= Records[Candidate].EstimatedBytes;
-        Records.RemoveAt(
-            Candidate,
-            1,
-            EAllowShrinking::No);
+        if (Candidate == HeadIndex)
+        {
+            ++HeadIndex;
+            CompactConsumedPrefixIfNeeded();
+        }
+        else
+        {
+            Records.RemoveAt(Candidate, 1, EAllowShrinking::No);
+        }
     }
 
     return true;
@@ -278,7 +302,7 @@ int32 FGamePlatformTelemetryBoundedBuffer::FindDropCandidate(
             continue;
         }
 
-        for (int32 Index = 0; Index < Records.Num(); ++Index)
+        for (int32 Index = HeadIndex; Index < Records.Num(); ++Index)
         {
             if (Records[Index].Priority == Priority)
             {

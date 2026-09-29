@@ -20,6 +20,7 @@ void FGamePlatformTelemetryNullSink::SubmitBatch(
     {
         FScopeLock Lock(&Mutex);
         ++Status.SubmittedBatches;
+        Status.LastSuccessUtc = FDateTime::UtcNow();
     }
 
     if (Completion)
@@ -65,6 +66,7 @@ void FGamePlatformTelemetryLogSink::SubmitBatch(
     {
         FScopeLock Lock(&Mutex);
         ++Status.SubmittedBatches;
+        Status.LastSuccessUtc = FDateTime::UtcNow();
     }
 
     if (Completion)
