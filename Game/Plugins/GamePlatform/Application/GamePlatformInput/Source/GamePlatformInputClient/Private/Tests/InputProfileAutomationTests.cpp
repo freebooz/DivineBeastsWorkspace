@@ -2,14 +2,14 @@
 
 #include "InputAction.h"
 #include "InputMappingContext.h"
-#include "NativeGameplayTags.h"
+#include "GameplayTagsManager.h"
 #include "Services/GamePlatformInputServices.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/Package.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputAutomationCustom, "Platform.Test.Input.Custom");
+static const FGameplayTag InputAutomationCustom = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Test.Input.Custom"), true);
 
 namespace
 {

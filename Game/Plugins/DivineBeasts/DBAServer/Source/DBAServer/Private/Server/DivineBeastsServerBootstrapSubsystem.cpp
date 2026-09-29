@@ -2,6 +2,9 @@
 
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
+#include "Sinks/GamePlatformTelemetryNetworkSink.h"
+#include "Subsystems/GamePlatformTelemetrySubsystem.h"
+#include "Transport/GamePlatformTelemetryTransport.h"
 #include "Async/Async.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -30,6 +33,58 @@ void UDivineBeastsServerBootstrapSubsystem::Initialize(
     if (!bHasProfile)
     {
         return;
+    }
+
+    // 遥测装配是Best Effort：缺URL/Token时保持NullSink，不能影响服务器注册与Ready门禁。
+    if (UGamePlatformTelemetrySubsystem* Telemetry =
+            GetGameInstance()->GetSubsystem<UGamePlatformTelemetrySubsystem>())
+    {
+        FString BaseUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("GAMESERVERCONTROL_BASE_URL"));
+        BaseUrl.RemoveFromEnd(TEXT("/"));
+        const FString ServerId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_ID"));
+        const FString ServerRole = ActiveProfile.ServerRoleId.ToString();
+        const FString Region = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_REGION_ID"));
+        Telemetry->SetServerContext(ServerRole, Region, ServerId);
+
+        if (!BaseUrl.IsEmpty())
+        {
+            TMap<FString, FString> StaticHeaders;
+            if (!ServerId.IsEmpty())
+            {
+                StaticHeaders.Add(TEXT("X-Game-Server-Id"), ServerId);
+            }
+            if (!ServerRole.IsEmpty())
+            {
+                StaticHeaders.Add(TEXT("X-Server-Role"), ServerRole);
+            }
+
+            FGamePlatformTelemetryHeaderProvider HeaderProvider = []()
+            {
+                TMap<FString, FString> Headers;
+                const FString Token = FPlatformMisc::GetEnvironmentVariable(TEXT("TELEMETRY_SERVER_INTERNAL_TOKEN"));
+                if (!Token.IsEmpty() && !Token.Contains(TEXT("\r")) && !Token.Contains(TEXT("\n")))
+                {
+                    Headers.Add(TEXT("Authorization"), TEXT("Bearer ") + Token);
+                }
+                return Headers;
+            };
+
+            const TSharedRef<FGamePlatformTelemetryHttpTransport, ESPMode::ThreadSafe> Transport =
+                MakeShared<FGamePlatformTelemetryHttpTransport, ESPMode::ThreadSafe>(
+                    BaseUrl,
+                    TEXT("/internal/telemetry/v1/batches"),
+                    MoveTemp(StaticHeaders),
+                    5.0f,
+                    256 * 1024,
+                    MoveTemp(HeaderProvider));
+
+            FGamePlatformTelemetryRetrySettings Retry;
+            Retry.MaxRetries = 4;
+            Retry.MaxPendingBatches = 8;
+            Retry.MaxRetryAgeSeconds = 30.0f;
+            Telemetry->ConfigureSink(
+                MakeShared<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe>(Transport, Retry));
+        }
     }
 
     if (UGamePlatformServerLifecycleSubsystem* Lifecycle =
@@ -74,6 +129,14 @@ void UDivineBeastsServerBootstrapSubsystem::Deinitialize()
     }
     LifecycleChangedHandle.Reset();
     ValidatedWorld.Reset();
+    if (UGameInstance* GameInstance = GetGameInstance())
+    {
+        if (UGamePlatformTelemetrySubsystem* Telemetry =
+                GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>())
+        {
+            Telemetry->FlushBestEffort();
+        }
+    }
     Super::Deinitialize();
 }
 
@@ -250,6 +313,22 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
     {
         SetFailed(TEXT("ServerInstanceEnvironmentInvalid"));
         return;
+    }
+
+    if (UGamePlatformTelemetrySubsystem* Telemetry =
+            GetGameInstance()->GetSubsystem<UGamePlatformTelemetrySubsystem>())
+    {
+        Telemetry->SetServerContext(Instance.ServerRoleId, Instance.RegionId, Instance.GameServerId);
+        Telemetry->UpdateWorldContext(
+            World.GetMapName(),
+            Instance.WorldId,
+            Instance.ExperienceId,
+            FString(),
+            FString());
+
+        FGamePlatformTelemetryEvent Started;
+        Started.EventName = TEXT("Telemetry.Foundation.ServerStarted");
+        Telemetry->RecordEvent(MoveTemp(Started));
     }
 
     ValidatedWorld = &World;

@@ -23,6 +23,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Engine/StreamableManager.h"
 #include "Misc/PackageName.h"
 #include "Loading/DivineBeastsReadinessFacts.h"
 #include "UObject/Package.h"
@@ -465,6 +466,12 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
 {
     ++StartRequestGeneration;
     bRestartAfterLogout = false;
+
+    if (CharacterCreationValidationLease.IsValid())
+    {
+        CharacterCreationValidationLease->CancelHandle();
+        CharacterCreationValidationLease.Reset();
+    }
 
     if (Backend.IsValid())
     {
@@ -1273,26 +1280,59 @@ bool UDivineBeastsApplicationFlowSubsystem::SubmitCharacterCreateDraft(
         return false;
     }
 
-    FString AppearanceError;
-    if (!CreationProvider->ValidateCreationDraft(
-            Draft.HeroDefinitionId,
-            Draft.AppearanceSelection,
-            AppearanceError))
+    // 完整外观Schema校验必须基于真实Definition；不能把“尚未加载”误判为用户草稿非法。
+    if (CharacterCreationValidationLease.IsValid())
     {
-        SetError(EDivineBeastsFlowError::InvalidAppearance);
+        CharacterCreationValidationLease->CancelHandle();
+        CharacterCreationValidationLease.Reset();
+    }
+
+    const FGamePlatformFlowNodeToken Token = GetCurrentNodeToken();
+    if (!Token.IsValid())
+    {
         return false;
     }
 
-    FlowContext->SetPendingCreateDraft(Draft);
-    const bool bAccepted = SubmitCurrentNodeEvent(
-        FDivineBeastsFlowNodes::CharacterEntry(),
-        FGamePlatformFlowNodeResult::Success(
-            FDivineBeastsFlowOutcomes::CreateCharacter()));
-    if (bAccepted)
-    {
-        SetBusy(true);
-    }
-    return bAccepted;
+    SetBusy(true);
+    TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
+    CharacterCreationValidationLease = CreationProvider->ValidateCreationDraftAsync(
+        Draft.HeroDefinitionId,
+        Draft.AppearanceSelection,
+        [WeakThis, Token, Draft](bool bValid, FString) mutable
+        {
+            UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
+            if (!Self)
+            {
+                return;
+            }
+
+            Self->CharacterCreationValidationLease.Reset();
+            if (!Self->IsCurrentToken(Token) ||
+                !Self->IsCurrentNode(FDivineBeastsFlowNodes::CharacterEntry()) ||
+                !Self->FlowContext)
+            {
+                return;
+            }
+
+            if (!bValid)
+            {
+                Self->SetError(EDivineBeastsFlowError::InvalidAppearance);
+                Self->SetBusy(false);
+                return;
+            }
+
+            Self->FlowContext->SetPendingCreateDraft(Draft);
+            const bool bAccepted = Self->SubmitCurrentNodeEvent(
+                FDivineBeastsFlowNodes::CharacterEntry(),
+                FGamePlatformFlowNodeResult::Success(
+                    FDivineBeastsFlowOutcomes::CreateCharacter()));
+            if (!bAccepted)
+            {
+                Self->SetBusy(false);
+            }
+        });
+
+    return true;
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::SelectPersistentCharacter(

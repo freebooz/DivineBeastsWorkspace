@@ -310,4 +310,30 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryDiagnostics
 
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     int64 RateLimitedTotal = 0;
+
+    /** 当前遥测开关和一次性刷新调度状态；用于Debug/UI只读诊断。 */
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    bool bEnabled = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    bool bFlushScheduled = false;
+
+    /** Sink健康只以稳定文本摘要暴露，不向上层泄漏具体NetworkSink实现类型。 */
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    FName SinkHealth = NAME_None;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    FString SinkLastError;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    int32 PendingNetworkBatches = 0;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    int64 SubmittedBatches = 0;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    int64 FailedBatches = 0;
+
+    UPROPERTY(BlueprintReadOnly, Category="Telemetry")
+    int64 DroppedBatches = 0;
 };

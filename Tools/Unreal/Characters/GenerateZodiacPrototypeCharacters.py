@@ -49,8 +49,15 @@ def get_or_create_asset(asset_name, package_path, asset_class, factory):
 def ensure_mannequin_mount():
     common_manny = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SKM_Manny_Simple"
     common_quinn = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SKM_Quinn_Simple"
-    if unreal.EditorAssetLibrary.does_asset_exist(common_manny) and unreal.EditorAssetLibrary.does_asset_exist(common_quinn):
-        log("公共Manny/Quinn已经存在，跳过迁移。")
+    common_body_rig = COMMON_STANDARD_MANNEQUIN_ROOT + "/Rigs/CR_Mannequin_Body"
+    common_physics_rig = COMMON_STANDARD_MANNEQUIN_ROOT + "/Rigs/PA_Mannequin"
+    if (
+        unreal.EditorAssetLibrary.does_asset_exist(common_manny)
+        and unreal.EditorAssetLibrary.does_asset_exist(common_quinn)
+        and unreal.EditorAssetLibrary.does_asset_exist(common_body_rig)
+        and unreal.EditorAssetLibrary.does_asset_exist(common_physics_rig)
+    ):
+        log("公共Manny/Quinn及Rig依赖已经存在，跳过迁移。")
         return
 
     # 旧项目的Manny/Quinn网格位于/DBA/...，但默认材质继续引用标准
@@ -83,6 +90,10 @@ def ensure_mannequin_mount():
         fail("迁移后缺少SKM_Manny_Simple。")
     if not unreal.EditorAssetLibrary.does_asset_exist(common_quinn):
         fail("迁移后缺少SKM_Quinn_Simple。")
+    if not unreal.EditorAssetLibrary.does_asset_exist(common_body_rig):
+        fail("迁移后缺少CR_Mannequin_Body，Manny/Quinn依赖闭包不完整。")
+    if not unreal.EditorAssetLibrary.does_asset_exist(common_physics_rig):
+        fail("迁移后缺少PA_Mannequin，Manny/Quinn依赖闭包不完整。")
 
 
 def ensure_master_material():

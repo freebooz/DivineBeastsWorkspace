@@ -20,6 +20,8 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetrySinkStatus
     int64 SubmittedBatches = 0;
     int64 FailedBatches = 0;
     int64 DroppedBatches = 0;
+    /** 当前网络输出器已接纳但尚未终态完成的批次数；Null/Log Sink始终为0。 */
+    int32 PendingBatches = 0;
 };
 
 using FGamePlatformTelemetrySubmitCompletion =

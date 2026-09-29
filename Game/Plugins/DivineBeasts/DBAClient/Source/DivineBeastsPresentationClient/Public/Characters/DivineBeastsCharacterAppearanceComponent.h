@@ -8,6 +8,7 @@
 struct FStreamableHandle;
 class UDivineBeastsCharacterComponent;
 class UDivineBeastsCharacterAppearanceProfile;
+class UMaterialInstanceDynamic;
 
 /**
  * UDivineBeastsCharacterAppearanceComponent（神兽联盟客户端角色外观装配组件）。
@@ -60,6 +61,10 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsCharacterAppearanceProfile> PendingProfile = nullptr;
+
+    /** 当前占位角色运行时动态材质；由Mesh组件和本数组共同持有，身份切换时整体替换。 */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UMaterialInstanceDynamic>> DevelopmentDynamicMaterials;
 
     FDelegateHandle ReadinessDelegateHandle;
     FTimerHandle StateRetryTimer;

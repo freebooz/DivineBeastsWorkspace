@@ -1,28 +1,28 @@
 #include "Services/GamePlatformInputServices.h"
 
 #include "Definitions/GamePlatformInputProfileDefinition.h"
-#include "NativeGameplayTags.h"
+#include "GameplayTagsManager.h"
 
 /*
  * 平台内建语义只把通用导航/视角/UI/交互作为长期合同。
  * Attack/AbilitySlot/TargetLock标签仅为旧EGamePlatformInputSemantic兼容层保留；
  * 新项目不得继续把这些Legacy标签作为平台公共语义扩展入口。
  */
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputMove,"Platform.Input.Move");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputLookDelta,"Platform.Input.LookDelta");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputLookRate,"Platform.Input.LookRate");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputInteract,"Platform.Input.Interact");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputMenu,"Platform.Input.Menu");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputConfirm,"Platform.Input.Confirm");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputCancel,"Platform.Input.Cancel");
+static const FGameplayTag InputMove = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Move"), true);
+static const FGameplayTag InputLookDelta = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.LookDelta"), true);
+static const FGameplayTag InputLookRate = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.LookRate"), true);
+static const FGameplayTag InputInteract = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Interact"), true);
+static const FGameplayTag InputMenu = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Menu"), true);
+static const FGameplayTag InputConfirm = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Confirm"), true);
+static const FGameplayTag InputCancel = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Cancel"), true);
 
 // 旧标签字符串必须保持不变，避免已有Profile/调用方因架构迁移发生静默兼容破坏；仅“归属职责”降级为Legacy。
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputLegacyAttack,"Platform.Input.Attack.Primary");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputLegacyAbility1,"Platform.Input.Ability.Slot1");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputLegacyAbility2,"Platform.Input.Ability.Slot2");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputLegacyAbility3,"Platform.Input.Ability.Slot3");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputLegacyAbility4,"Platform.Input.Ability.Slot4");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(InputLegacyTarget,"Platform.Input.Target.Lock");
+static const FGameplayTag InputLegacyAttack = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Attack.Primary"), true);
+static const FGameplayTag InputLegacyAbility1 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot1"), true);
+static const FGameplayTag InputLegacyAbility2 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot2"), true);
+static const FGameplayTag InputLegacyAbility3 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot3"), true);
+static const FGameplayTag InputLegacyAbility4 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot4"), true);
+static const FGameplayTag InputLegacyTarget = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Target.Lock"), true);
 
 namespace
 {

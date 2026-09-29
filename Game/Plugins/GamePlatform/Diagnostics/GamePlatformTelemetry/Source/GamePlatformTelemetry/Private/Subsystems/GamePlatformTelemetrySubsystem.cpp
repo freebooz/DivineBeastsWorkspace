@@ -11,6 +11,22 @@
 #include "Sinks/GamePlatformTelemetrySink.h"
 #include "Trace/GamePlatformTelemetryTrace.h"
 
+namespace
+{
+FName SinkHealthName(EGamePlatformTelemetrySinkHealth Health)
+{
+    switch (Health)
+    {
+    case EGamePlatformTelemetrySinkHealth::Stopped: return TEXT("Stopped");
+    case EGamePlatformTelemetrySinkHealth::Healthy: return TEXT("Healthy");
+    case EGamePlatformTelemetrySinkHealth::Degraded: return TEXT("Degraded");
+    case EGamePlatformTelemetrySinkHealth::Unavailable: return TEXT("Unavailable");
+    default: return TEXT("Unknown");
+    }
+}
+}
+
+
 void UGamePlatformTelemetrySubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
@@ -98,6 +114,7 @@ bool UGamePlatformTelemetrySubsystem::ConfigureSink(
     TSharedPtr<IGamePlatformTelemetrySink, ESPMode::ThreadSafe>
         InSink)
 {
+    check(IsInGameThread());
     if (!InSink.IsValid() || !InSink->Start())
     {
         return false;
@@ -142,18 +159,21 @@ void UGamePlatformTelemetrySubsystem::SetEnabled(
 void UGamePlatformTelemetrySubsystem::SetSamplingSeed(
     FString InSamplingSeed)
 {
+    check(IsInGameThread());
     SamplingSeed = MoveTemp(InSamplingSeed);
 }
 
 void UGamePlatformTelemetrySubsystem::SetTraceBridgeEnabled(
     bool bInEnabled)
 {
+    check(IsInGameThread());
     bTraceBridgeEnabled = bInEnabled;
 }
 
 void UGamePlatformTelemetrySubsystem::SetContentRevision(
     FString InContentRevision)
 {
+    check(IsInGameThread());
     FScopeLock Lock(&ContextMutex);
     Context.ContentRevision = SanitizeContextValue(MoveTemp(InContentRevision));
 }
@@ -161,6 +181,7 @@ void UGamePlatformTelemetrySubsystem::SetContentRevision(
 void UGamePlatformTelemetrySubsystem::SetEnvironment(
     FString InEnvironment)
 {
+    check(IsInGameThread());
     FScopeLock Lock(&ContextMutex);
     Context.Environment = SanitizeContextValue(MoveTemp(InEnvironment));
 }
@@ -170,6 +191,7 @@ void UGamePlatformTelemetrySubsystem::SetServerContext(
     FString InRegion,
     FString InServerInstanceId)
 {
+    check(IsInGameThread());
     FScopeLock Lock(&ContextMutex);
     Context.ServerRole = SanitizeContextValue(MoveTemp(InServerRole));
     Context.Region = SanitizeContextValue(MoveTemp(InRegion));
@@ -180,6 +202,7 @@ void UGamePlatformTelemetrySubsystem::BeginSession(
     FString InSessionId,
     FString InPseudonymousPlayerId)
 {
+    check(IsInGameThread());
     EndSession();
 
     FScopeLock Lock(&ContextMutex);
@@ -190,6 +213,7 @@ void UGamePlatformTelemetrySubsystem::BeginSession(
 
 void UGamePlatformTelemetrySubsystem::EndSession()
 {
+    check(IsInGameThread());
     bool bHadSession = false;
     {
         FScopeLock Lock(&ContextMutex);
@@ -225,6 +249,7 @@ void UGamePlatformTelemetrySubsystem::UpdateWorldContext(
     FString InMatchId,
     FString InArenaModeId)
 {
+    check(IsInGameThread());
     FScopeLock Lock(&ContextMutex);
     Context.MapId = SanitizeContextValue(MoveTemp(InMapId));
     Context.WorldId = SanitizeContextValue(MoveTemp(InWorldId));
@@ -238,6 +263,7 @@ void UGamePlatformTelemetrySubsystem::UpdateCorrelationContext(
     FString InCorrelationId,
     FString InTransactionId)
 {
+    check(IsInGameThread());
     FScopeLock Lock(&ContextMutex);
     Context.CorrelationId = SanitizeContextValue(MoveTemp(InCorrelationId));
     Context.TransactionId = SanitizeContextValue(MoveTemp(InTransactionId));
@@ -245,6 +271,7 @@ void UGamePlatformTelemetrySubsystem::UpdateCorrelationContext(
 
 void UGamePlatformTelemetrySubsystem::BeforeWorldTravel()
 {
+    check(IsInGameThread());
     if (bTraceBridgeEnabled)
     {
         const FGamePlatformTelemetryContext Snapshot =
@@ -269,6 +296,7 @@ EGamePlatformTelemetryRecordResult
 UGamePlatformTelemetrySubsystem::RecordEvent(
     FGamePlatformTelemetryEvent Event)
 {
+    check(IsInGameThread());
     if (!bEnabled || !SchemaRegistry.IsValid() || !Buffer)
     {
         return EGamePlatformTelemetryRecordResult::Disabled;
@@ -359,6 +387,7 @@ EGamePlatformTelemetryRecordResult
 UGamePlatformTelemetrySubsystem::RecordMetric(
     FGamePlatformTelemetryMetric Metric)
 {
+    check(IsInGameThread());
     if (!bEnabled || !SchemaRegistry.IsValid() || !Buffer)
     {
         return EGamePlatformTelemetryRecordResult::Disabled;
@@ -531,9 +560,29 @@ bool UGamePlatformTelemetrySubsystem::FlushBestEffort()
 FGamePlatformTelemetryDiagnostics
 UGamePlatformTelemetrySubsystem::GetDiagnostics() const
 {
-    return Buffer
+    check(IsInGameThread());
+    FGamePlatformTelemetryDiagnostics Diagnostics = Buffer
         ? Buffer->GetDiagnostics()
         : FGamePlatformTelemetryDiagnostics{};
+    Diagnostics.bEnabled = bEnabled;
+    Diagnostics.bFlushScheduled = FlushTickerHandle.IsValid();
+
+    TSharedPtr<IGamePlatformTelemetrySink, ESPMode::ThreadSafe> LocalSink;
+    {
+        FScopeLock Lock(&SinkMutex);
+        LocalSink = Sink;
+    }
+    if (LocalSink.IsValid())
+    {
+        const FGamePlatformTelemetrySinkStatus Status = LocalSink->GetHealth();
+        Diagnostics.SinkHealth = SinkHealthName(Status.Health);
+        Diagnostics.SinkLastError = Status.LastError;
+        Diagnostics.PendingNetworkBatches = Status.PendingBatches;
+        Diagnostics.SubmittedBatches = Status.SubmittedBatches;
+        Diagnostics.FailedBatches = Status.FailedBatches;
+        Diagnostics.DroppedBatches = Status.DroppedBatches;
+    }
+    return Diagnostics;
 }
 
 FGamePlatformTelemetryContext

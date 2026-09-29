@@ -18,6 +18,12 @@ class GAMEPLATFORMTELEMETRY_API UGamePlatformTelemetrySubsystem final
 {
     GENERATED_BODY()
 
+    /**
+     * 线程契约：本子系统公开控制、上下文、记录与刷新接口均为 Game Thread Only（仅游戏线程）。
+     * HTTP 完成回调会显式投递回游戏线程；需要后台线程生产遥测时，应先进入独立Recorder入口，
+     * 不得直接从工作线程访问 UObject 子系统。
+     */
+
 public:
     virtual void Initialize(
         FSubsystemCollectionBase& Collection) override;

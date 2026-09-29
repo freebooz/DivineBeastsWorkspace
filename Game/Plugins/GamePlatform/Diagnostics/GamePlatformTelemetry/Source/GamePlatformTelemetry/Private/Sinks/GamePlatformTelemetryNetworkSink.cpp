@@ -76,6 +76,7 @@ void FGamePlatformTelemetryNetworkSink::SubmitBatch(
         {
             ++PendingBatches;
             bAcceptedForSubmission = true;
+            Status.PendingBatches = PendingBatches;
         }
     }
 
@@ -290,6 +291,7 @@ void FGamePlatformTelemetryNetworkSink::FinishPending(
     {
         FScopeLock Lock(&Mutex);
         PendingBatches = FMath::Max(0, PendingBatches - 1);
+        Status.PendingBatches = PendingBatches;
         if (PendingBatches == 0)
         {
             // 所有重试链都已终止；已触发的一次性句柄无需继续保留。
@@ -397,6 +399,7 @@ void FGamePlatformTelemetryNetworkSink::FinalizeShutdownAfterBudget()
         {
             Status.DroppedBatches += PendingBatches;
             PendingBatches = 0;
+            Status.PendingBatches = 0;
         }
         Status.Health = EGamePlatformTelemetrySinkHealth::Stopped;
         ShutdownTickerHandle.Reset();

@@ -1,20 +1,20 @@
 #include "Input/DivineBeastsInputSemantics.h"
 
-#include "NativeGameplayTags.h"
+#include "GameplayTagsManager.h"
 
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBInputAttackPrimary, "DivineBeasts.Input.Combat.Primary");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBInputAbility1, "DivineBeasts.Input.Ability.Slot1");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBInputAbility2, "DivineBeasts.Input.Ability.Slot2");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBInputAbility3, "DivineBeasts.Input.Ability.Slot3");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBInputAbility4, "DivineBeasts.Input.Ability.Slot4");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBInputTargetLock, "DivineBeasts.Input.Target.Lock");
+static const FGameplayTag DBInputAttackPrimary = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Combat.Primary"), true);
+static const FGameplayTag DBInputAbility1 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot1"), true);
+static const FGameplayTag DBInputAbility2 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot2"), true);
+static const FGameplayTag DBInputAbility3 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot3"), true);
+static const FGameplayTag DBInputAbility4 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot4"), true);
+static const FGameplayTag DBInputTargetLock = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Target.Lock"), true);
 
 // AbilitySystem要求InputTag位于Platform.Ability.Input根下；项目只拥有自己的DivineBeasts子命名空间。
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBAbilityInputPrimary, "Platform.Ability.Input.DivineBeasts.Primary");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBAbilityInput1, "Platform.Ability.Input.DivineBeasts.Slot1");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBAbilityInput2, "Platform.Ability.Input.DivineBeasts.Slot2");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBAbilityInput3, "Platform.Ability.Input.DivineBeasts.Slot3");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(DBAbilityInput4, "Platform.Ability.Input.DivineBeasts.Slot4");
+static const FGameplayTag DBAbilityInputPrimary = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Primary"), true);
+static const FGameplayTag DBAbilityInput1 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot1"), true);
+static const FGameplayTag DBAbilityInput2 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot2"), true);
+static const FGameplayTag DBAbilityInput3 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot3"), true);
+static const FGameplayTag DBAbilityInput4 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot4"), true);
 
 FGameplayTag DivineBeastsInputSemantics::AttackPrimary() { return DBInputAttackPrimary; }
 FGameplayTag DivineBeastsInputSemantics::AbilitySlot1() { return DBInputAbility1; }

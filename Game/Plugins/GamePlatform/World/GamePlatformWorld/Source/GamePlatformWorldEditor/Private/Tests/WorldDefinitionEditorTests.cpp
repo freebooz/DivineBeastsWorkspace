@@ -20,12 +20,21 @@ struct FWorldDefinitionEditorFixture
     template<typename T> T* Add(const TCHAR* Name)
     {
         UPackage* Package = CreatePackage(*(TEXT("/Game/__WorldDefinitionTests/") + FGuid::NewGuid().ToString(EGuidFormats::Digits)));
-        Package->SetPackageFlags(PKG_Transient);
+        // UE5.8 已移除旧 PKG_Transient；新建且不保存的测试包使用现行 NewlyCreated 标志，
+        // 与 GamePlatformData 编辑器测试保持一致，避免把隔离夹具误标为编译期脚本包。
+        Package->SetPackageFlags(PKG_NewlyCreated);
         T* Object = NewObject<T>(Package, TEXT("Definition"), RF_Public | RF_Standalone);
         FGamePlatformId::TryParse(Prefix + TEXT(".") + Name + TEXT("@1"), Object->LogicalId);
-        if (auto* Region = Cast<UGamePlatformRegionDefinition>(Object)) { Region->RegionTypeTag = TEXT("NeutralArea"); }
-        if (auto* World = Cast<UGamePlatformWorldDefinition>(Object))
-        { World->MapIdentity = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Engine/Maps/Entry.Entry"))); }
+        // 模板参数在编译期已经确定；用类型分支避免对无继承关系类型调用 Cast，
+        // 同时保留每类测试定义所需的最小默认值。
+        if constexpr (TIsDerivedFrom<T, UGamePlatformRegionDefinition>::Value)
+        {
+            Object->RegionTypeTag = TEXT("NeutralArea");
+        }
+        if constexpr (TIsDerivedFrom<T, UGamePlatformWorldDefinition>::Value)
+        {
+            Object->MapIdentity = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Engine/Maps/Entry.Entry")));
+        }
         Objects.Emplace(Object);
         FAssetRegistryModule::AssetCreated(Object);
         return Object;

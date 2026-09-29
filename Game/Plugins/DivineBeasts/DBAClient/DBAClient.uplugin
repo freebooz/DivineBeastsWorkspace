@@ -20,6 +20,7 @@
     { "Name": "GamePlatformInput", "Enabled": true },
     { "Name": "GamePlatformCharacter", "Enabled": true },
     { "Name": "GamePlatformAbilitySystem", "Enabled": true },
+    { "Name": "GamePlatformTelemetry", "Enabled": true },
     { "Name": "GamePlatformCombat", "Enabled": true },
     { "Name": "GamePlatformQuest", "Enabled": true },
     { "Name": "GamePlatformInventory", "Enabled": true },

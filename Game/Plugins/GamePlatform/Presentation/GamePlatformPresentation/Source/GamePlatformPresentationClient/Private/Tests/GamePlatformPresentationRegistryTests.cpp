@@ -1,18 +1,26 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "NativeGameplayTags.h"
+#include "GameplayTagsManager.h"
 #include "GamePlatformPresentationClientSubsystem.h"
 
-UE_DEFINE_GAMEPLAY_TAG_STATIC(
-    TAG_PresentationCatalogTest,
-    "Presentation.Test");
-UE_DEFINE_GAMEPLAY_TAG_STATIC(
-    TAG_PresentationCatalogTestChild,
-    "Presentation.Test.Child");
 
 namespace
 {
+    FGameplayTag PresentationCatalogTestTag()
+    {
+        return UGameplayTagsManager::Get().RequestGameplayTag(
+            TEXT("Presentation.Test"),
+            true);
+    }
+
+    FGameplayTag PresentationCatalogTestChildTag()
+    {
+        return UGameplayTagsManager::Get().RequestGameplayTag(
+            TEXT("Presentation.Test.Child"),
+            true);
+    }
+
     class FTestPresentationContributor final
         : public IGamePlatformPresentationContextContributor
     {
@@ -45,7 +53,7 @@ namespace
         EGamePlatformPresentationCatalogScope Scope,
         FName DefinitionId,
         int32 Priority = 0,
-        const FGameplayTag& Semantic = TAG_PresentationCatalogTest)
+        const FGameplayTag& Semantic = PresentationCatalogTestTag())
     {
         FGamePlatformPresentationCatalogFragment Fragment;
         Fragment.FragmentId = FragmentId;
@@ -175,7 +183,7 @@ bool FGamePlatformPresentationCatalogResolutionTest::RunTest(const FString&)
     TestEqual(
         TEXT("ContentPack precedence resolves"),
         Subsystem->ResolveCatalog(
-            TAG_PresentationCatalogTest,
+            PresentationCatalogTestTag(),
             Context,
             Resolved),
         EGamePlatformPresentationCatalogResolveResult::Resolved);
@@ -196,7 +204,7 @@ bool FGamePlatformPresentationCatalogResolutionTest::RunTest(const FString&)
     TestEqual(
         TEXT("Equivalent top candidates fail ambiguity"),
         Subsystem->ResolveCatalog(
-            TAG_PresentationCatalogTest,
+            PresentationCatalogTestTag(),
             Context,
             Resolved),
         EGamePlatformPresentationCatalogResolveResult::Ambiguous);
@@ -212,12 +220,12 @@ bool FGamePlatformPresentationCatalogResolutionTest::RunTest(const FString&)
                 EGamePlatformPresentationCatalogScope::Platform,
                 TEXT("Definition.Parent"),
                 0,
-                TAG_PresentationCatalogTest)).IsValid());
+                PresentationCatalogTestTag())).IsValid());
 
     TestEqual(
         TEXT("Parent fallback resolves"),
         ParentSubsystem->ResolveCatalog(
-            TAG_PresentationCatalogTestChild,
+            PresentationCatalogTestChildTag(),
             Context,
             Resolved),
         EGamePlatformPresentationCatalogResolveResult::Resolved);

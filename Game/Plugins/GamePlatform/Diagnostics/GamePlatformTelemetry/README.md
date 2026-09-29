@@ -4,10 +4,10 @@
 
 UE（虚幻引擎）只有一个 `GamePlatformTelemetry（遥测双端运行模块）`，类型为 Runtime（双端运行时）。`UGamePlatformTelemetrySubsystem（平台遥测子系统）`使用 `UGameInstanceSubsystem（游戏实例子系统）`作用域，每个 Client/Dedicated Server/GameInstance（客户端/专用服务器/游戏实例）拥有独立 Context、Sequence、Buffer 与 Sink。
 
-第一版已经建立结构化 Event/Metric/Batch/Context（事件/指标/批次/上下文）、Schema Registry（结构注册表）、Privacy Filter（隐私过滤）、Deterministic Sampling（确定性采样）、Rate Limit（限流）、有界 Buffer、优先级 Drop（丢弃）、Null/Log/Network Sink（空/日志/网络输出器）、HTTP Transport（HTTP传输）、Unreal Trace Channel（虚幻追踪通道）和项目层 Client/Server Bootstrap（客户端/服务端启动适配器）。
+当前 UE 运行层已经建立结构化 Event/Metric/Batch/Context（事件/指标/批次/上下文）、Schema Registry（结构注册表）、Schema 驱动 Privacy/Type/Priority（隐私/类型/优先级）、Deterministic Sampling（确定性采样）、Event/Metric Rate Limit（事件/指标限流）、有界 Buffer、优先级 Drop（丢弃）、Null/Log/Network Sink（空/日志/网络输出器）、HTTP Transport（HTTP传输）、动态凭据请求头、有限断网重试/退避、按需 Flush（刷新）、关停预算和 Unreal Trace Channel（虚幻追踪通道）。DBAClient/DBAServer 已增加薄装配代码，但遥测失败始终 Fail-Open（失败开放），不会改变登录、世界、服务器 Ready 或业务状态。
 
-Go（Go语言）领域位于 `Backend/gameplatform/telemetry`。客户端通过 Gateway `POST /telemetry/v1/batches`认证接入；Dedicated Server 通过现有 GameServerControlService `POST /internal/telemetry/v1/batches`接入。后端再次执行 Schema/Privacy/Size/Timestamp/Metric Label（结构/隐私/尺寸/时间/指标标签）校验，并覆盖不可信身份字段。
+当前仓库的 Go（Go语言）后端只存在 `Backend/internal/modules/telemetry/doc.go` 领域占位，尚未实现 Gateway `POST /telemetry/v1/batches`、GameServerControl `POST /internal/telemetry/v1/batches`、身份覆盖、后端 Schema/Privacy/Size 校验或真实持久/消息接入。因此 UE NetworkSink 已具备协议装配与重试能力，不等于端到端后端已经可用。
 
-普通 Telemetry（遥测）不写 PostgreSQL、不走业务 Transactional Outbox（事务外发），而由 `telemetrynats（遥测NATS适配器）`直发固定 JetStream subject（消息流主题）`telemetry.events.v1`和`telemetry.metrics.v1`。NATS/Telemetry 故障只能导致遥测拒绝/重试/丢弃，不能改变 Gameplay 或 Inventory/Quest/Commerce 等业务状态。
+普通 Telemetry（遥测）仍明确不属于 PostgreSQL 业务权威，也不走 Transactional Outbox（事务外发）。文档中规划的 `telemetrynats（遥测NATS适配器）`、JetStream subject（消息流主题）`telemetry.events.v1` / `telemetry.metrics.v1` 当前尚未在真实 Backend 源码落地；后续实现时必须继续保证 NATS/Telemetry 故障只导致遥测拒绝/重试/丢弃，绝不能改变 Gameplay 或 Inventory/Quest/Commerce 等业务状态。
 
-当前 Runner（运行器）没有 Go、NATS、UE5.8 运行工具链，真实 Go test、NATS publish、Multi-PIE、Trace、Client/Server Build/Cook 和性能基准均保持“未执行”。
+当前 Runner 已确认存在 `D:\\UnrealEngine-5.8.0-release`。本轮已真实完成 GamePlatformTelemetry 独立插件 UnrealEditor Win64 Development、UnrealGame Win64 Development/Shipping 构建；后续最终复验遇到另一 UBT 进程持有全局互斥锁，不能将该并发冲突描述成源码失败。Go/NATS 后端仍未实现，Multi-PIE、真实断网恢复、端到端 Ingest、Trace 运行和 Cook/Stage 仍需继续验收。

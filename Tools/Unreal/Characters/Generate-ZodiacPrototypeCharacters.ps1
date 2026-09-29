@@ -19,6 +19,7 @@ $TargetStandardRoot = Join-Path $WorkspaceRoot "Game\Content\Characters\Mannequi
 $PythonScript = Join-Path $WorkspaceRoot "Tools\Unreal\Characters\GenerateZodiacPrototypeCharacters.py"
 $EditorCmd = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 $CommonMesh = Join-Path $WorkspaceRoot "Game\Plugins\DivineBeasts\ContentPacks\Common\DBAContentPack_Common\Content\Mannequins\DBA\Meshes\SKM_Manny_Simple.uasset"
+$CommonBodyRig = Join-Path $WorkspaceRoot "Game\Plugins\DivineBeasts\ContentPacks\Common\DBAContentPack_Common\Content\Mannequins\Standard\Rigs\CR_Mannequin_Body.uasset"
 
 if (-not (Test-Path $SourceDbaRoot)) { throw "DBA Manny/Quinn source directory not found: $SourceDbaRoot" }
 if (-not (Test-Path $SourceStandardRoot)) { throw "Standard Mannequin dependency directory not found: $SourceStandardRoot" }
@@ -32,7 +33,7 @@ $DevelopersBackup = Join-Path $WorkspaceRoot "Game\Saved\ZodiacPrototypeBackup\D
 $DevelopersMoved = $false
 
 try {
-    if (-not (Test-Path $CommonMesh)) {
+    if ((-not (Test-Path $CommonMesh)) -or (-not (Test-Path $CommonBodyRig))) {
         if (Test-Path $TargetDbaRoot) { Remove-Item $TargetDbaRoot -Recurse -Force }
         if (Test-Path $TargetStandardRoot) { Remove-Item $TargetStandardRoot -Recurse -Force }
 
@@ -42,10 +43,12 @@ try {
         Write-Host "[DBA] Copying Manny/Quinn meshes, skeleton and source materials..."
         Copy-Item (Join-Path $SourceDbaRoot "Meshes") $TargetDbaRoot -Recurse -Force
         Copy-Item (Join-Path $SourceDbaRoot "Materials") $TargetDbaRoot -Recurse -Force
-
-        Write-Host "[DBA] Copying standard Mannequin material/texture dependencies..."
+        Write-Host "[DBA] Copying standard Mannequin material/texture/rig dependencies..."
         Copy-Item (Join-Path $SourceStandardRoot "Materials") $TargetStandardRoot -Recurse -Force
         Copy-Item (Join-Path $SourceStandardRoot "Textures") $TargetStandardRoot -Recurse -Force
+        # 旧工程Rigs文件物理上位于DBA目录，但uasset内部包名仍是/Game/Characters/Mannequins/Rigs；
+        # 必须先还原到标准Mannequin临时根，再由AssetTools跨挂载点迁移并重写网格引用。
+        Copy-Item (Join-Path $SourceDbaRoot "Rigs") $TargetStandardRoot -Recurse -Force
     }
 
     # Content-only hero plugins are target-specific in normal builds. The Python commandlet does not

@@ -88,6 +88,50 @@ public:
         return true;
     }
 
+    virtual TSharedPtr<FStreamableHandle> ValidateCreationDraftAsync(
+        FName HeroDefinitionId,
+        TMap<FString, FString> AppearanceSelection,
+        TFunction<void(bool, FString)> Completion) const override
+    {
+        if (!FDivineBeastsHeroCatalog::IsCoreHeroId(HeroDefinitionId))
+        {
+            if (Completion)
+            {
+                Completion(false, TEXT("HeroDefinitionId不在十二生肖核心Catalog中。"));
+            }
+            return nullptr;
+        }
+
+        return FDivineBeastsHeroCatalog::RequestDefinition(
+            HeroDefinitionId,
+            [HeroDefinitionId,
+             AppearanceSelection = MoveTemp(AppearanceSelection),
+             Completion = MoveTemp(Completion)](
+                UDivineBeastsHeroDefinition* Definition) mutable
+            {
+                if (!Completion)
+                {
+                    return;
+                }
+                if (!Definition || Definition->DefinitionId != HeroDefinitionId)
+                {
+                    Completion(false, TEXT("Hero Definition加载失败或身份不匹配。"));
+                    return;
+                }
+
+                FString Error;
+                if (!Definition->IsProjectDefinitionValid(Error))
+                {
+                    Completion(false, MoveTemp(Error));
+                    return;
+                }
+                const bool bValid = Definition->AppearanceSchema.ValidateSelection(
+                    AppearanceSelection,
+                    Error);
+                Completion(bValid, MoveTemp(Error));
+            });
+    }
+
     virtual bool TryGetZodiacIdentity(
         FName HeroDefinitionId,
         EDivineBeastsZodiacIdentity& OutZodiacIdentity) const override

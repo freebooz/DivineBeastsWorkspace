@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "Loading/GamePlatformAssetLoader.h"
 #include "Materials/MaterialInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "TimerManager.h"
 
 UDivineBeastsCharacterAppearanceComponent::UDivineBeastsCharacterAppearanceComponent()
@@ -39,6 +40,7 @@ void UDivineBeastsCharacterAppearanceComponent::EndPlay(
     CancelPendingLoads();
     CharacterState = nullptr;
     PendingProfile = nullptr;
+    DevelopmentDynamicMaterials.Reset();
     Super::EndPlay(EndPlayReason);
 }
 
@@ -211,6 +213,9 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
         return;
     }
 
+    // 身份切换时先释放旧占位MID引用；随后SetMaterial会用新Profile重新覆盖所有需要的槽位。
+    DevelopmentDynamicMaterials.Reset();
+
     MeshComponent->SetSkeletalMesh(SkeletalMesh, true);
     MeshComponent->SetRelativeLocation(Profile->MeshRelativeLocation);
     MeshComponent->SetRelativeRotation(Profile->MeshRelativeRotation);
@@ -240,6 +245,39 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
             {
                 MeshComponent->SetMaterial(MaterialIndex, Override);
             }
+        }
+    }
+
+    // 正式生成的生肖原型Profile带独立PrototypeTint材质覆盖；
+    // 运行时瞬态回退不带材质覆盖，继续使用UE5 Mannequin原材质的Paint Tint参数。
+    if (Profile->bDevelopmentPlaceholder)
+    {
+        const FName TintParameterName = Profile->MaterialOverrides.IsEmpty()
+            ? FName(TEXT("Paint Tint"))
+            : FName(TEXT("PrototypeTint"));
+        DevelopmentDynamicMaterials.Reserve(MeshComponent->GetNumMaterials());
+        for (int32 MaterialIndex = 0;
+             MaterialIndex < MeshComponent->GetNumMaterials();
+             ++MaterialIndex)
+        {
+            UMaterialInterface* BaseMaterial = MeshComponent->GetMaterial(MaterialIndex);
+            if (!BaseMaterial)
+            {
+                continue;
+            }
+
+            UMaterialInstanceDynamic* DynamicMaterial =
+                UMaterialInstanceDynamic::Create(BaseMaterial, this);
+            if (!DynamicMaterial)
+            {
+                continue;
+            }
+
+            DynamicMaterial->SetVectorParameterValue(
+                TintParameterName,
+                Profile->DevelopmentTint);
+            MeshComponent->SetMaterial(MaterialIndex, DynamicMaterial);
+            DevelopmentDynamicMaterials.Add(DynamicMaterial);
         }
     }
 

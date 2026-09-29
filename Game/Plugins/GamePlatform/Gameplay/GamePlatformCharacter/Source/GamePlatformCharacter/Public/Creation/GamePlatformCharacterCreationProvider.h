@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Features/IModularFeature.h"
 
+struct FStreamableHandle;
+
 /** FGamePlatformCharacterCreationHeroDescriptor（平台角色创建英雄描述）。 */
 struct FGamePlatformCharacterCreationHeroDescriptor
 {
@@ -36,4 +38,14 @@ public:
         FName HeroDefinitionId,
         const TMap<FString, FString>& AppearanceSelection,
         FString& OutError) const = 0;
+
+    /**
+     * 异步加载目标Hero Definition后执行完整草稿校验。
+     * 用于真实Definition尚未驻留时避免UI把“资源未加载”误判成“用户输入非法”。
+     * Completion只返回本地结构校验结果；最终资格、持久化与服务端业务规则仍由后端负责。
+     */
+    virtual TSharedPtr<FStreamableHandle> ValidateCreationDraftAsync(
+        FName HeroDefinitionId,
+        TMap<FString, FString> AppearanceSelection,
+        TFunction<void(bool, FString)> Completion) const = 0;
 };

@@ -52,5 +52,16 @@ bool UDivineBeastsCharacterAppearanceProfile::IsProfileValid(
             return false;
         }
     }
+    if (bDevelopmentPlaceholder)
+    {
+        if (!FMath::IsFinite(DevelopmentTint.R) ||
+            !FMath::IsFinite(DevelopmentTint.G) ||
+            !FMath::IsFinite(DevelopmentTint.B) ||
+            !FMath::IsFinite(DevelopmentTint.A))
+        {
+            OutError = TEXT("开发占位Character Appearance颜色必须为有限数值。");
+            return false;
+        }
+    }
     return true;
 }
