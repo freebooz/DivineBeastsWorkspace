@@ -54,6 +54,7 @@ void FGamePlatformTelemetryNetworkSink::SubmitBatch(
     FGamePlatformTelemetryBatch Batch,
     FGamePlatformTelemetrySubmitCompletion Completion)
 {
+    check(IsInGameThread());
     bool bAcceptedForSubmission = false;
 
     {
@@ -104,6 +105,7 @@ void FGamePlatformTelemetryNetworkSink::SubmitAttempt(
     double FirstAttemptSeconds,
     FGamePlatformTelemetrySubmitCompletion Completion)
 {
+    check(IsInGameThread());
     TSharedPtr<IGamePlatformTelemetryTransport, ESPMode::ThreadSafe>
         LocalTransport;
 
@@ -289,6 +291,7 @@ void FGamePlatformTelemetryNetworkSink::FinishPending(
     const FString& Error,
     FGamePlatformTelemetrySubmitCompletion Completion)
 {
+    check(IsInGameThread());
     {
         FScopeLock Lock(&Mutex);
         PendingBatches = FMath::Max(0, PendingBatches - 1);

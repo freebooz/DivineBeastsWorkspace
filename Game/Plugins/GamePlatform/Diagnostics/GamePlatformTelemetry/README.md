@@ -10,4 +10,4 @@ UE（虚幻引擎）只有一个 `GamePlatformTelemetry（遥测双端运行模�
 
 普通 Telemetry（遥测）仍明确不属于 PostgreSQL 业务权威，也不走 Transactional Outbox（事务外发）。文档中规划的 `telemetrynats（遥测NATS适配器）`、JetStream subject（消息流主题）`telemetry.events.v1` / `telemetry.metrics.v1` 当前尚未在真实 Backend 源码落地；后续实现时必须继续保证 NATS/Telemetry 故障只导致遥测拒绝/重试/丢弃，绝不能改变 Gameplay 或 Inventory/Quest/Commerce 等业务状态。
 
-当前 Runner 已确认存在 `D:\\UnrealEngine-5.8.0-release`。本轮已真实完成 GamePlatformTelemetry 独立插件 UnrealEditor Win64 Development、UnrealGame Win64 Development/Shipping 构建；后续最终复验遇到另一 UBT 进程持有全局互斥锁，不能将该并发冲突描述成源码失败。Go/NATS 后端仍未实现，Multi-PIE、真实断网恢复、端到端 Ingest、Trace 运行和 Cook/Stage 仍需继续验收。
+当前 Runner 已确认使用 `D:\\UnrealEngine-5.8.0-release`。本轮已真实完成 GamePlatformTelemetry 独立插件 UnrealEditor Win64 Development、UnrealGame Win64 Development/Shipping 构建；独立 AutomationHost 实际执行 7 个 `GamePlatform.Telemetry.*` 测试并全部成功，覆盖断线有限重试恢复、Shutdown 取消重试、Buffer/Context/Schema/采样限流和1000条开发负载。有界故障注入测试不等于真实互联网断线；Go/NATS 后端仍未实现，Multi-PIE、真实网络故障、端到端 Ingest、Trace 运行和 Cook/Stage 仍需继续验收。

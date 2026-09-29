@@ -1,7 +1,7 @@
 #include "Telemetry/DivineBeastsClientTelemetryBootstrapSubsystem.h"
 
 #include "GamePlatformOnlineClientSubsystem.h"
-#include "GamePlatformSessionClientSubsystem.h"
+#include "DivineBeastsApplicationFlowSubsystem.h"
 #include "HAL/PlatformMisc.h"
 #include "Sinks/GamePlatformTelemetryNetworkSink.h"
 #include "Subsystems/GamePlatformTelemetrySubsystem.h"
@@ -21,30 +21,30 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Initialize(FSubsystemCollec
         GameInstance ? GameInstance->GetSubsystem<UGamePlatformTelemetrySubsystem>() : nullptr;
     UGamePlatformOnlineClientSubsystem* Online =
         GameInstance ? GameInstance->GetSubsystem<UGamePlatformOnlineClientSubsystem>() : nullptr;
-    UGamePlatformSessionClientSubsystem* Session =
-        GameInstance ? GameInstance->GetSubsystem<UGamePlatformSessionClientSubsystem>() : nullptr;
+    UDivineBeastsApplicationFlowSubsystem* ApplicationFlow =
+        GameInstance ? GameInstance->GetSubsystem<UDivineBeastsApplicationFlowSubsystem>() : nullptr;
     if (!Telemetry || !Online)
     {
         return;
     }
 
     OnlineSubsystem = Online;
-    SessionSubsystem = Session;
+    ApplicationFlowSubsystem = ApplicationFlow;
     AuthStateChangedHandle = Online->OnAuthStateChanged().AddUObject(
         this,
         &UDivineBeastsClientTelemetryBootstrapSubsystem::HandleAuthStateChanged);
-    if (Session)
+    if (ApplicationFlow)
     {
-        SessionChangedHandle = Session->OnSessionChanged().AddUObject(
+        FlowViewStateChangedHandle = ApplicationFlow->OnViewStateChanged().AddUObject(
             this,
-            &UDivineBeastsClientTelemetryBootstrapSubsystem::HandleSessionChanged);
+            &UDivineBeastsClientTelemetryBootstrapSubsystem::HandleFlowViewStateChanged);
     }
 
-    // 处理子系统创建前已经完成认证/会话绑定的情况；事件驱动之外只做这一次初始快照同步。
+    // 处理组合子系统创建前已经完成认证/世界分配的情况；事件驱动之外只做这一次初始快照同步。
     HandleAuthStateChanged(Online->GetSnapshot());
-    if (Session)
+    if (ApplicationFlow)
     {
-        HandleSessionChanged(Session->GetSnapshot());
+        HandleFlowViewStateChanged(ApplicationFlow->GetViewState());
     }
 
     FString BaseUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("DIVINEBEASTS_GATEWAY_BASE_URL"));
@@ -129,8 +129,8 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleAuthStateChanged(
     }
 }
 
-void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleSessionChanged(
-    const FGamePlatformSessionSnapshot& Snapshot)
+void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleFlowViewStateChanged(
+    const FDivineBeastsFlowViewState& ViewState)
 {
     UGameInstance* GameInstance = GetGameInstance();
     UGamePlatformTelemetrySubsystem* Telemetry =
@@ -140,16 +140,23 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleSessionChanged(
         return;
     }
 
-    if (Snapshot.Binding.IsValid())
+    const FDivineBeastsWorldAssignmentSummary& Assignment = ViewState.Assignment;
+    if (Assignment.WorldId.IsNone() || Assignment.ExperienceId.IsNone() || Assignment.MapId.IsNone())
     {
-        // Session公开快照不包含敏感Endpoint/Ticket。这里只同步稳定WorldId；Map/Experience由应用流程在真实世界就绪后补充。
-        Telemetry->UpdateWorldContext(
-            FString(),
-            Snapshot.Binding.WorldId.ToString(),
-            FString(),
-            FString(),
-            FString());
+        return;
     }
+
+    // ApplicationFlow公开摘要同时提供Map/World/Experience/Region且不含Endpoint/Ticket，是项目世界遥测的正确组合边界。
+    Telemetry->SetServerContext(
+        Assignment.ServerRoleId.ToString(),
+        Assignment.RegionId.ToString(),
+        Assignment.GameServerId);
+    Telemetry->UpdateWorldContext(
+        Assignment.MapId.ToString(),
+        Assignment.WorldId.ToString(),
+        Assignment.ExperienceId.ToString(),
+        FString(),
+        FString());
 }
 
 void UDivineBeastsClientTelemetryBootstrapSubsystem::Deinitialize()
@@ -159,15 +166,15 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Deinitialize()
     {
         Online->OnAuthStateChanged().Remove(AuthStateChangedHandle);
     }
-    if (UGamePlatformSessionClientSubsystem* Session = SessionSubsystem.Get();
-        Session && SessionChangedHandle.IsValid())
+    if (UDivineBeastsApplicationFlowSubsystem* ApplicationFlow = ApplicationFlowSubsystem.Get();
+        ApplicationFlow && FlowViewStateChangedHandle.IsValid())
     {
-        Session->OnSessionChanged().Remove(SessionChangedHandle);
+        ApplicationFlow->OnViewStateChanged().Remove(FlowViewStateChangedHandle);
     }
     AuthStateChangedHandle.Reset();
-    SessionChangedHandle.Reset();
+    FlowViewStateChangedHandle.Reset();
     OnlineSubsystem.Reset();
-    SessionSubsystem.Reset();
+    ApplicationFlowSubsystem.Reset();
 
     if (bConfiguredNetworkSink)
     {

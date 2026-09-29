@@ -70,6 +70,9 @@ if (-not (Test-Path $EditorExe)) { throw "UnrealEditor not found: $EditorExe" }
 if (-not (Test-Path $PythonScript)) { throw "Generator script not found: $PythonScript" }
 
 $OriginalProjectJson = [System.IO.File]::ReadAllText($TargetProject)
+$DevelopersDir = Join-Path $WorkspaceRoot "Game\Content\Developers"
+$DevelopersBackup = Join-Path $WorkspaceRoot "Game\Saved\ZodiacPrototypeBackup\Developers"
+$DevelopersMoved = $false
 
 try {
     if ((-not (Test-Path $CommonMesh)) -or (-not (Test-Path $CommonBodyRig))) {
@@ -113,6 +116,15 @@ try {
         (New-Object System.Text.UTF8Encoding($false))
     )
 
+    # UE5.8 当前源码版的 ContentBrowser 数据源会错误地把物理 Developers 绝对路径当成长包名解析。
+    # 资产生成不依赖个人 Developers 内容，因此仅在本次无人值守生成期间临时移出，结束后原样恢复。
+    if (Test-Path $DevelopersDir) {
+        if (Test-Path $DevelopersBackup) { Remove-Item $DevelopersBackup -Recurse -Force }
+        New-Item -ItemType Directory -Path (Split-Path $DevelopersBackup -Parent) -Force | Out-Null
+        Move-Item $DevelopersDir $DevelopersBackup
+        $DevelopersMoved = $true
+    }
+
     # UE5.8 的 PythonScript Commandlet 在当前源码版会错误处理 Developers 绝对路径；
     # 改用编辑器启动参数 ExecutePythonScript，仍保持无界面、无渲染执行，并在脚本完成后自动退出。
     Write-Host "[DBA] Running Unreal Python asset generator..."
@@ -138,6 +150,11 @@ finally {
         $OriginalProjectJson,
         (New-Object System.Text.UTF8Encoding($false))
     )
+
+    if ($DevelopersMoved -and (Test-Path $DevelopersBackup)) {
+        if (Test-Path $DevelopersDir) { Remove-Item $DevelopersDir -Recurse -Force }
+        Move-Item $DevelopersBackup $DevelopersDir
+    }
 }
 
 if ((Test-Path $TargetDbaRoot) -or (Test-Path $TargetStandardRoot)) {

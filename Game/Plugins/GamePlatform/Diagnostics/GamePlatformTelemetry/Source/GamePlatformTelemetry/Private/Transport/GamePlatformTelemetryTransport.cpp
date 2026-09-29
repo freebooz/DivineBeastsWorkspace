@@ -158,6 +158,7 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
     const FGamePlatformTelemetryBatch& Batch,
     FGamePlatformTelemetryTransportCompletion Completion)
 {
+    check(IsInGameThread());
     if (!IsConfigured() ||
         !Batch.BatchId.IsValid() ||
         !Completion)
@@ -312,6 +313,7 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
 
 void FGamePlatformTelemetryHttpTransport::CancelAll()
 {
+    check(IsInGameThread());
     TArray<TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>> Requests;
     {
         FScopeLock Lock(&RequestsMutex);

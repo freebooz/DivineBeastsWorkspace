@@ -6,9 +6,9 @@
 #include "DivineBeastsClientTelemetryBootstrapSubsystem.generated.h"
 
 struct FGamePlatformAuthSnapshot;
-struct FGamePlatformSessionSnapshot;
+struct FDivineBeastsFlowViewState;
 class UGamePlatformOnlineClientSubsystem;
-class UGamePlatformSessionClientSubsystem;
+class UDivineBeastsApplicationFlowSubsystem;
 
 /**
  * UDivineBeastsClientTelemetryBootstrapSubsystem（神兽联盟客户端遥测装配子系统）。
@@ -28,12 +28,12 @@ public:
 
 private:
     void HandleAuthStateChanged(const FGamePlatformAuthSnapshot& Snapshot);
-    void HandleSessionChanged(const FGamePlatformSessionSnapshot& Snapshot);
+    void HandleFlowViewStateChanged(const FDivineBeastsFlowViewState& ViewState);
 
     TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> OnlineSubsystem;
-    TWeakObjectPtr<UGamePlatformSessionClientSubsystem> SessionSubsystem;
+    TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> ApplicationFlowSubsystem;
     FDelegateHandle AuthStateChangedHandle;
-    FDelegateHandle SessionChangedHandle;
+    FDelegateHandle FlowViewStateChangedHandle;
     /** 当前客户端遥测会话只用于采样/关联，不是账号ID，也不携带认证权限。 */
     FString TelemetrySessionId;
     bool bConfiguredNetworkSink = false;

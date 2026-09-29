@@ -131,6 +131,15 @@ bool FGamePlatformTelemetryPrivacyAndSchemaTest::RunTest(
             *MetricDefinition),
         EGamePlatformTelemetryRecordResult::MetricLabelNotAllowed);
 
+    FGamePlatformTelemetryEventDefinition LateDefinition;
+    LateDefinition.EventName = TEXT("Telemetry.Test.LateRegistration");
+    Registry->Freeze();
+    TestTrue(TEXT("Schema冻结状态可查询"), Registry->IsFrozen());
+    Registry->RegisterEvent(MoveTemp(LateDefinition));
+    TestNull(
+        TEXT("冻结后不得再注册运行期Schema"),
+        Registry->FindEvent(TEXT("Telemetry.Test.LateRegistration")));
+
     return true;
 }
 

@@ -28,6 +28,14 @@ if($Subsystem.Contains('return true;') -and $Subsystem.Contains('TickFlush(float
 }
 if(-not $Subsystem.Contains('RequestFlushAfterRecord()')){ throw 'Event/Metric threshold flush hook is missing.' }
 if(-not $Subsystem.Contains('Definition->SustainedRatePerSecond')){ throw 'Metric/event schema rate limiting is missing.' }
+if(-not $Subsystem.Contains('SchemaRegistry->Freeze()')){ throw 'Runtime schema freeze is missing.' }
+
+$BufferPath = Join-Path $PluginRoot 'Source\GamePlatformTelemetry\Private\Buffer\GamePlatformTelemetryBoundedBuffer.cpp'
+$Buffer = [System.IO.File]::ReadAllText($BufferPath, $Utf8)
+if(-not $Buffer.Contains('HeadIndex')){ throw 'Amortized head-index buffer consumption is missing.' }
+if($Buffer.Contains('Records.RemoveAt(' + [Environment]::NewLine + '        0,' + [Environment]::NewLine + '        ConsumeCount')){
+    throw 'Per-batch front-array shifting returned.'
+}
 
 $Sink = [System.IO.File]::ReadAllText($SinkPath, $Utf8)
 foreach($Required in @('ScheduleRetry(','CancelRetryTickers(','FinalizeShutdownAfterBudget(','RetryAfterSeconds')){
@@ -55,4 +63,4 @@ foreach($ForbiddenLayer in @('DivineBeasts','MobaCommon','GamePlatformOnlineClie
     }
 }
 
-Write-Host 'Telemetry architecture gate passed: one-shot-flush=yes retry=yes context-dedup=yes dynamic-auth=yes public-deps=clean.'
+Write-Host 'Telemetry architecture gate passed: one-shot-flush=yes retry=yes backpressure=yes context-dedup=yes schema-freeze=yes head-index=yes dynamic-auth=yes public-deps=clean.'
