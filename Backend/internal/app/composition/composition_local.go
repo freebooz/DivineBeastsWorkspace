@@ -47,9 +47,28 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	return servicehost.Run(ctx, cfg, handler)
 }
 
-// RunIdentity（运行身份服务）使用内存SessionRepository并暴露真实内部HTTP接口。
+// RunIdentity（运行身份服务）默认保留旧游客开发模式；仅当本地开发账号环境变量成对提供时，
+// 使用正式密码领域服务 + 本地内存PersistentRepository，复用bcrypt、Token摘要和刷新/退出语义。
+// productiondeps构建不包含本地内存仓储，也不读取这组开发账号变量。
 func RunIdentity(ctx context.Context, cfg config.ServiceConfig) error {
-	service := identity.NewService(identity.NewMemorySessionRepository(), identity.SystemClock{}, identity.CryptoTokenGenerator{}, 15*time.Minute, 30*24*time.Hour)
+	devAccount := strings.TrimSpace(config.Getenv("DIVINEBEASTS_DEV_LOGIN_USER", ""))
+	devPassword := config.Getenv("DIVINEBEASTS_DEV_LOGIN_PASSWORD", "")
+	if devAccount == "" && devPassword == "" {
+		service := identity.NewService(identity.NewMemorySessionRepository(), identity.SystemClock{}, identity.CryptoTokenGenerator{}, 15*time.Minute, 30*24*time.Hour)
+		return servicehost.Run(ctx, cfg, httpadapter.NewIdentityHandler(service))
+	}
+	if devAccount == "" || devPassword == "" {
+		return errors.New("DIVINEBEASTS_DEV_LOGIN_USER与DIVINEBEASTS_DEV_LOGIN_PASSWORD必须成对设置")
+	}
+
+	repo := newLocalIdentityPersistentRepository()
+	service, err := identity.NewPersistentService(repo, identity.SystemClock{}, 15*time.Minute, 30*24*time.Hour)
+	if err != nil {
+		return err
+	}
+	if _, err := service.EnsureAccount(ctx, "divine-beasts", devAccount, devPassword); err != nil {
+		return err
+	}
 	return servicehost.Run(ctx, cfg, httpadapter.NewIdentityHandler(service))
 }
 
