@@ -24,7 +24,17 @@ func (fakeIdentity) Authenticate(_ context.Context, token string) (Authenticated
 type fakePlayerData struct{}
 
 func (fakePlayerData) GetProfile(_ context.Context, playerID string) (PlayerProfile, error) {
-	return PlayerProfile{PlayerID: playerID, GameID: "divine-beasts", DisplayName: "测试玩家", DataVersion: 1, Revision: 3}, nil
+	return PlayerProfile{PlayerID: playerID, GameID: "divine-beasts", DisplayName: "测试玩家", DataVersion: 1, Revision: 3, SelectedCharacterID: "character-1", OwnedCharacterIDs: []string{"character-1"}}, nil
+}
+func (fakePlayerData) EnsureProfile(_ context.Context, _, _ string) error { return nil }
+func (fakePlayerData) ListCharacters(_ context.Context, playerID string) ([]CharacterSummary, error) {
+	return []CharacterSummary{{CharacterID: "character-1", HeroDefinitionID: "Hero.Zodiac.Tiger", CharacterName: "白君", CharacterRevision: 1, OnboardingState: "TutorialRequired", Status: "Active"}}, nil
+}
+func (fakePlayerData) CreateCharacter(_ context.Context, playerID string, req CreateCharacterRequest) (CharacterSummary, error) {
+	return CharacterSummary{CharacterID: "character-created", HeroDefinitionID: req.HeroDefinitionID, CharacterName: req.CharacterName, CharacterRevision: 1, OnboardingState: "TutorialRequired", Status: "Active"}, nil
+}
+func (fakePlayerData) SelectCharacter(_ context.Context, playerID string, req CharacterSelectionRequest) (CharacterSelectionResponse, error) {
+	return CharacterSelectionResponse{SelectionRequestID: req.SelectionRequestID, ProfileRevision: 4, Character: CharacterSummary{CharacterID: req.CharacterID, HeroDefinitionID: "Hero.Zodiac.Tiger", CharacterName: "白君", CharacterRevision: req.ExpectedCharacterRevision, OnboardingState: "TutorialRequired", Status: "Active"}}, nil
 }
 
 type fakeParty struct{}
@@ -84,6 +94,49 @@ func TestGetProfileRequiresBearerToken(t *testing.T) {
 	newTestAPI().ServeHTTP(recorder2, req2)
 	if recorder2.Code != http.StatusUnauthorized {
 		t.Fatalf("无效Token应返回401，实际=%d", recorder2.Code)
+	}
+}
+
+// TestCharacterRoutesUseAuthenticatedSubject（角色接口认证主体测试）验证客户端无法通过请求体越权声明其他玩家。
+func TestCharacterRoutesUseAuthenticatedSubject(t *testing.T) {
+	listReq := httptest.NewRequest(http.MethodGet, "/v1/player/characters", nil)
+	listReq.Header.Set("Authorization", "Bearer access-1")
+	listRecorder := httptest.NewRecorder()
+	newTestAPI().ServeHTTP(listRecorder, listReq)
+	if listRecorder.Code != http.StatusOK {
+		t.Fatalf("角色列表失败: %d %s", listRecorder.Code, listRecorder.Body.String())
+	}
+	var list []CharacterSummary
+	if err := json.NewDecoder(listRecorder.Body).Decode(&list); err != nil || len(list) != 1 || list[0].CharacterID != "character-1" {
+		t.Fatalf("角色列表响应错误: %+v %v", list, err)
+	}
+
+	createReq := httptest.NewRequest(http.MethodPost, "/v1/player/characters", strings.NewReader(`{"creationRequestId":"create-1","heroDefinitionId":"Hero.Zodiac.Dragon","characterName":"苍龙"}`))
+	createReq.Header.Set("Authorization", "Bearer access-1")
+	createReq.Header.Set("Content-Type", "application/json")
+	createRecorder := httptest.NewRecorder()
+	newTestAPI().ServeHTTP(createRecorder, createReq)
+	if createRecorder.Code != http.StatusOK {
+		t.Fatalf("创建角色失败: %d %s", createRecorder.Code, createRecorder.Body.String())
+	}
+
+	// 公网契约没有playerId字段；试图注入其他玩家身份必须按未知字段拒绝。
+	forged := httptest.NewRequest(http.MethodPost, "/v1/player/character-selection", strings.NewReader(`{"playerId":"other-player","selectionRequestId":"select-1","characterId":"character-1","expectedCharacterRevision":1}`))
+	forged.Header.Set("Authorization", "Bearer access-1")
+	forged.Header.Set("Content-Type", "application/json")
+	forgedRecorder := httptest.NewRecorder()
+	newTestAPI().ServeHTTP(forgedRecorder, forged)
+	if forgedRecorder.Code != http.StatusBadRequest {
+		t.Fatalf("越权playerId字段必须被拒绝，实际=%d body=%s", forgedRecorder.Code, forgedRecorder.Body.String())
+	}
+
+	selectReq := httptest.NewRequest(http.MethodPost, "/v1/player/character-selection", strings.NewReader(`{"selectionRequestId":"select-1","characterId":"character-1","expectedCharacterRevision":1}`))
+	selectReq.Header.Set("Authorization", "Bearer access-1")
+	selectReq.Header.Set("Content-Type", "application/json")
+	selectRecorder := httptest.NewRecorder()
+	newTestAPI().ServeHTTP(selectRecorder, selectReq)
+	if selectRecorder.Code != http.StatusOK {
+		t.Fatalf("角色选择失败: %d %s", selectRecorder.Code, selectRecorder.Body.String())
 	}
 }
 

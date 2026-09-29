@@ -16,6 +16,20 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for InternalCharacterSummaryOnboardingState.
+const (
+	New                InternalCharacterSummaryOnboardingState = "New"
+	OnboardingComplete InternalCharacterSummaryOnboardingState = "OnboardingComplete"
+	TutorialInProgress InternalCharacterSummaryOnboardingState = "TutorialInProgress"
+	TutorialRequired   InternalCharacterSummaryOnboardingState = "TutorialRequired"
+)
+
+// Defines values for InternalCharacterSummaryStatus.
+const (
+	Active   InternalCharacterSummaryStatus = "Active"
+	Disabled InternalCharacterSummaryStatus = "Disabled"
+)
+
 // EnsureProfileRequest defines model for EnsureProfileRequest.
 type EnsureProfileRequest struct {
 	// GameId 认证账号所属游戏。
@@ -32,6 +46,52 @@ type InternalApiError struct {
 
 	// Message 错误说明。
 	Message string `json:"message"`
+}
+
+// InternalCharacterListResponse defines model for InternalCharacterListResponse.
+type InternalCharacterListResponse struct {
+	Characters []InternalCharacterSummary `json:"characters"`
+}
+
+// InternalCharacterSelectionRequest defines model for InternalCharacterSelectionRequest.
+type InternalCharacterSelectionRequest struct {
+	CharacterId               string `json:"characterId"`
+	ExpectedCharacterRevision int64  `json:"expectedCharacterRevision"`
+	PlayerId                  string `json:"playerId"`
+	SelectionRequestId        string `json:"selectionRequestId"`
+}
+
+// InternalCharacterSelectionResponse defines model for InternalCharacterSelectionResponse.
+type InternalCharacterSelectionResponse struct {
+	Character          InternalCharacterSummary `json:"character"`
+	ProfileRevision    int64                    `json:"profileRevision"`
+	SelectionRequestId string                   `json:"selectionRequestId"`
+}
+
+// InternalCharacterSummary defines model for InternalCharacterSummary.
+type InternalCharacterSummary struct {
+	AppearanceProfileId *string                                 `json:"appearanceProfileId,omitempty"`
+	CharacterId         string                                  `json:"characterId"`
+	CharacterName       string                                  `json:"characterName"`
+	CharacterRevision   int64                                   `json:"characterRevision"`
+	HeroDefinitionId    string                                  `json:"heroDefinitionId"`
+	OnboardingState     InternalCharacterSummaryOnboardingState `json:"onboardingState"`
+	Status              InternalCharacterSummaryStatus          `json:"status"`
+}
+
+// InternalCharacterSummaryOnboardingState defines model for InternalCharacterSummary.OnboardingState.
+type InternalCharacterSummaryOnboardingState string
+
+// InternalCharacterSummaryStatus defines model for InternalCharacterSummary.Status.
+type InternalCharacterSummaryStatus string
+
+// InternalCreateCharacterRequest defines model for InternalCreateCharacterRequest.
+type InternalCreateCharacterRequest struct {
+	AppearanceSelection *map[string]string `json:"appearanceSelection,omitempty"`
+	CharacterName       string             `json:"characterName"`
+	CreationRequestId   string             `json:"creationRequestId"`
+	HeroDefinitionId    string             `json:"heroDefinitionId"`
+	PlayerId            string             `json:"playerId"`
 }
 
 // InternalPlayerProfileResponse defines model for InternalPlayerProfileResponse.
@@ -59,6 +119,9 @@ type InternalPlayerProfileResponse struct {
 
 	// Revision 长期资料乐观并发修订号。
 	Revision int64 `json:"revision"`
+
+	// SelectedCharacterId 最近一次权威选择角色；尚未选择时为空字符串。
+	SelectedCharacterId string `json:"selectedCharacterId"`
 
 	// TutorialCompleted 是否完成新手教学。
 	TutorialCompleted bool `json:"tutorialCompleted"`
@@ -124,11 +187,22 @@ type NotFound = InternalApiError
 // Unavailable defines model for Unavailable.
 type Unavailable = InternalApiError
 
+// ListInternalPlayerCharactersParams defines parameters for ListInternalPlayerCharacters.
+type ListInternalPlayerCharactersParams struct {
+	PlayerId string `form:"playerId" json:"playerId"`
+}
+
 // GetInternalPlayerProfileParams defines parameters for GetInternalPlayerProfile.
 type GetInternalPlayerProfileParams struct {
 	// PlayerId 要读取的玩家标识。
 	PlayerId string `form:"playerId" json:"playerId"`
 }
+
+// SelectInternalPlayerCharacterJSONRequestBody defines body for SelectInternalPlayerCharacter for application/json ContentType.
+type SelectInternalPlayerCharacterJSONRequestBody = InternalCharacterSelectionRequest
+
+// CreateInternalPlayerCharacterJSONRequestBody defines body for CreateInternalPlayerCharacter for application/json ContentType.
+type CreateInternalPlayerCharacterJSONRequestBody = InternalCreateCharacterRequest
 
 // EnsurePlayerProfileInternalJSONRequestBody defines body for EnsurePlayerProfileInternal for application/json ContentType.
 type EnsurePlayerProfileInternalJSONRequestBody = EnsureProfileRequest
@@ -215,6 +289,19 @@ type ClientInterface interface {
 	// GetPlayerDataReadiness request
 	GetPlayerDataReadiness(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// SelectInternalPlayerCharacterWithBody request with any body
+	SelectInternalPlayerCharacterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SelectInternalPlayerCharacter(ctx context.Context, body SelectInternalPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListInternalPlayerCharacters request
+	ListInternalPlayerCharacters(ctx context.Context, params *ListInternalPlayerCharactersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateInternalPlayerCharacterWithBody request with any body
+	CreateInternalPlayerCharacterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateInternalPlayerCharacter(ctx context.Context, body CreateInternalPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// EnsurePlayerProfileInternalWithBody request with any body
 	EnsurePlayerProfileInternalWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -249,6 +336,66 @@ func (c *Client) GetPlayerDataLiveness(ctx context.Context, reqEditors ...Reques
 
 func (c *Client) GetPlayerDataReadiness(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPlayerDataReadinessRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SelectInternalPlayerCharacterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSelectInternalPlayerCharacterRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SelectInternalPlayerCharacter(ctx context.Context, body SelectInternalPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSelectInternalPlayerCharacterRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListInternalPlayerCharacters(ctx context.Context, params *ListInternalPlayerCharactersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListInternalPlayerCharactersRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateInternalPlayerCharacterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateInternalPlayerCharacterRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateInternalPlayerCharacter(ctx context.Context, body CreateInternalPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateInternalPlayerCharacterRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -393,6 +540,131 @@ func NewGetPlayerDataReadinessRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewSelectInternalPlayerCharacterRequest calls the generic SelectInternalPlayerCharacter builder with application/json body
+func NewSelectInternalPlayerCharacterRequest(server string, body SelectInternalPlayerCharacterJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSelectInternalPlayerCharacterRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSelectInternalPlayerCharacterRequestWithBody generates requests for SelectInternalPlayerCharacter with any type of body
+func NewSelectInternalPlayerCharacterRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/v1/playerdata/character-selection")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListInternalPlayerCharactersRequest generates requests for ListInternalPlayerCharacters
+func NewListInternalPlayerCharactersRequest(server string, params *ListInternalPlayerCharactersParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/v1/playerdata/characters")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "playerId", runtime.ParamLocationQuery, params.PlayerId); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateInternalPlayerCharacterRequest calls the generic CreateInternalPlayerCharacter builder with application/json body
+func NewCreateInternalPlayerCharacterRequest(server string, body CreateInternalPlayerCharacterJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateInternalPlayerCharacterRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateInternalPlayerCharacterRequestWithBody generates requests for CreateInternalPlayerCharacter with any type of body
+func NewCreateInternalPlayerCharacterRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/v1/playerdata/characters")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -625,6 +897,19 @@ type ClientWithResponsesInterface interface {
 	// GetPlayerDataReadinessWithResponse request
 	GetPlayerDataReadinessWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetPlayerDataReadinessResponse, error)
 
+	// SelectInternalPlayerCharacterWithBodyWithResponse request with any body
+	SelectInternalPlayerCharacterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SelectInternalPlayerCharacterResponse, error)
+
+	SelectInternalPlayerCharacterWithResponse(ctx context.Context, body SelectInternalPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*SelectInternalPlayerCharacterResponse, error)
+
+	// ListInternalPlayerCharactersWithResponse request
+	ListInternalPlayerCharactersWithResponse(ctx context.Context, params *ListInternalPlayerCharactersParams, reqEditors ...RequestEditorFn) (*ListInternalPlayerCharactersResponse, error)
+
+	// CreateInternalPlayerCharacterWithBodyWithResponse request with any body
+	CreateInternalPlayerCharacterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateInternalPlayerCharacterResponse, error)
+
+	CreateInternalPlayerCharacterWithResponse(ctx context.Context, body CreateInternalPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateInternalPlayerCharacterResponse, error)
+
 	// EnsurePlayerProfileInternalWithBodyWithResponse request with any body
 	EnsurePlayerProfileInternalWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsurePlayerProfileInternalResponse, error)
 
@@ -683,6 +968,82 @@ func (r GetPlayerDataReadinessResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetPlayerDataReadinessResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SelectInternalPlayerCharacterResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InternalCharacterSelectionResponse
+	JSON400      *InvalidRequest
+	JSON404      *NotFound
+	JSON409      *Conflict
+	JSON503      *Unavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r SelectInternalPlayerCharacterResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SelectInternalPlayerCharacterResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListInternalPlayerCharactersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InternalCharacterListResponse
+	JSON400      *InvalidRequest
+	JSON503      *Unavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r ListInternalPlayerCharactersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListInternalPlayerCharactersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateInternalPlayerCharacterResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InternalCharacterSummary
+	JSON400      *InvalidRequest
+	JSON404      *NotFound
+	JSON409      *Conflict
+	JSON503      *Unavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateInternalPlayerCharacterResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateInternalPlayerCharacterResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -827,6 +1188,49 @@ func (c *ClientWithResponses) GetPlayerDataReadinessWithResponse(ctx context.Con
 	return ParseGetPlayerDataReadinessResponse(rsp)
 }
 
+// SelectInternalPlayerCharacterWithBodyWithResponse request with arbitrary body returning *SelectInternalPlayerCharacterResponse
+func (c *ClientWithResponses) SelectInternalPlayerCharacterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SelectInternalPlayerCharacterResponse, error) {
+	rsp, err := c.SelectInternalPlayerCharacterWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSelectInternalPlayerCharacterResponse(rsp)
+}
+
+func (c *ClientWithResponses) SelectInternalPlayerCharacterWithResponse(ctx context.Context, body SelectInternalPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*SelectInternalPlayerCharacterResponse, error) {
+	rsp, err := c.SelectInternalPlayerCharacter(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSelectInternalPlayerCharacterResponse(rsp)
+}
+
+// ListInternalPlayerCharactersWithResponse request returning *ListInternalPlayerCharactersResponse
+func (c *ClientWithResponses) ListInternalPlayerCharactersWithResponse(ctx context.Context, params *ListInternalPlayerCharactersParams, reqEditors ...RequestEditorFn) (*ListInternalPlayerCharactersResponse, error) {
+	rsp, err := c.ListInternalPlayerCharacters(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListInternalPlayerCharactersResponse(rsp)
+}
+
+// CreateInternalPlayerCharacterWithBodyWithResponse request with arbitrary body returning *CreateInternalPlayerCharacterResponse
+func (c *ClientWithResponses) CreateInternalPlayerCharacterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateInternalPlayerCharacterResponse, error) {
+	rsp, err := c.CreateInternalPlayerCharacterWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateInternalPlayerCharacterResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateInternalPlayerCharacterWithResponse(ctx context.Context, body CreateInternalPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateInternalPlayerCharacterResponse, error) {
+	rsp, err := c.CreateInternalPlayerCharacter(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateInternalPlayerCharacterResponse(rsp)
+}
+
 // EnsurePlayerProfileInternalWithBodyWithResponse request with arbitrary body returning *EnsurePlayerProfileInternalResponse
 func (c *ClientWithResponses) EnsurePlayerProfileInternalWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsurePlayerProfileInternalResponse, error) {
 	rsp, err := c.EnsurePlayerProfileInternalWithBody(ctx, contentType, body, reqEditors...)
@@ -934,6 +1338,154 @@ func ParseGetPlayerDataReadinessResponse(rsp *http.Response) (*GetPlayerDataRead
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSelectInternalPlayerCharacterResponse parses an HTTP response from a SelectInternalPlayerCharacterWithResponse call
+func ParseSelectInternalPlayerCharacterResponse(rsp *http.Response) (*SelectInternalPlayerCharacterResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SelectInternalPlayerCharacterResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InternalCharacterSelectionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Unavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListInternalPlayerCharactersResponse parses an HTTP response from a ListInternalPlayerCharactersWithResponse call
+func ParseListInternalPlayerCharactersResponse(rsp *http.Response) (*ListInternalPlayerCharactersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListInternalPlayerCharactersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InternalCharacterListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Unavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateInternalPlayerCharacterResponse parses an HTTP response from a CreateInternalPlayerCharacterWithResponse call
+func ParseCreateInternalPlayerCharacterResponse(rsp *http.Response) (*CreateInternalPlayerCharacterResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateInternalPlayerCharacterResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InternalCharacterSummary
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Unavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 

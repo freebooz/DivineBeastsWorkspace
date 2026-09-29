@@ -35,7 +35,7 @@ var _ playerdata.ProfileInitializer = (*OnlinePlayerRepository)(nil)
 var _ playerdata.RepositoryProbe = (*OnlinePlayerRepository)(nil)
 
 const onlinePlayerOperation = "UpdateCurrentPlayerProfile"
-const onlinePlayerColumns = `player_id, game_id, display_name, data_version, revision, tutorial_completed, default_world_id, owned_character_ids`
+const onlinePlayerColumns = `player_id, game_id, display_name, data_version, revision, tutorial_completed, default_world_id, selected_character_id, owned_character_ids`
 
 // Get仅查询已存在的资料，不建档；无资料与依赖不可用分别返回404/503对应错误。
 func (r *OnlinePlayerRepository) Get(ctx context.Context, playerID string) (playerdata.Profile, error) {
@@ -96,9 +96,14 @@ func (r *PlayerRepository) Probe(ctx context.Context) error {
 		return onlinePlayerUnavailable()
 	}
 	rows, err := r.pool.inner.Query(ctx, `SELECT
-		p.player_id,p.game_id,p.display_name,p.data_version,p.revision,p.tutorial_completed,p.default_world_id,p.owned_character_ids,p.updated_at,
-		i.player_id,i.operation,i.idempotency_key,i.canonical_request,i.response_snapshot,i.created_at
-		FROM player_profiles p CROSS JOIN online_profile_idempotency i LIMIT 0`)
+		p.player_id,p.game_id,p.display_name,p.data_version,p.revision,p.tutorial_completed,p.default_world_id,p.selected_character_id,p.owned_character_ids,p.updated_at,
+		i.player_id,i.operation,i.idempotency_key,i.canonical_request,i.response_snapshot,i.created_at,
+		c.character_id,c.creation_request_id,c.character_revision,c.status,c.appearance_selection,
+		s.player_id,s.selection_request_id,s.canonical_request,s.response_snapshot
+		FROM player_profiles p
+		CROSS JOIN online_profile_idempotency i
+		CROSS JOIN player_characters c
+		CROSS JOIN player_character_selection_idempotency s LIMIT 0`)
 	if err != nil {
 		return onlinePlayerError(err)
 	}
@@ -219,7 +224,7 @@ func scanOnlinePlayer(row pgx.Row) (playerdata.Profile, error) {
 	var profile playerdata.Profile
 	var ownedJSON []byte
 	err := row.Scan(&profile.PlayerID, &profile.GameID, &profile.DisplayName, &profile.DataVersion, &profile.Revision,
-		&profile.TutorialCompleted, &profile.DefaultWorldID, &ownedJSON)
+		&profile.TutorialCompleted, &profile.DefaultWorldID, &profile.SelectedCharacterID, &ownedJSON)
 	if err != nil {
 		return playerdata.Profile{}, err
 	}

@@ -1227,18 +1227,32 @@ void UDivineBeastsApplicationFlowSubsystem::LoginWithCredentials(
     Online->LoginWithCredentials(LoginName, Password);
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::GetCharacterCreationHeroes(
-    TArray<FGamePlatformCharacterCreationHeroDescriptor>& OutHeroes) const
+bool UDivineBeastsApplicationFlowSubsystem::GetCharacterCreationOptions(
+    TArray<FDivineBeastsCharacterCreationOption>& OutOptions) const
 {
-    OutHeroes.Reset();
+    OutOptions.Reset();
     IGamePlatformCharacterCreationProvider* Provider =
         GetCharacterCreationProvider();
     if (!Provider)
     {
         return false;
     }
-    Provider->GetCreateableHeroes(OutHeroes);
-    return !OutHeroes.IsEmpty();
+
+    TArray<FGamePlatformCharacterCreationHeroDescriptor> Heroes;
+    Provider->GetCreateableHeroes(Heroes);
+    OutOptions.Reserve(Heroes.Num());
+    for (const FGamePlatformCharacterCreationHeroDescriptor& Hero : Heroes)
+    {
+        if (Hero.HeroDefinitionId.IsNone())
+        {
+            continue;
+        }
+        FDivineBeastsCharacterCreationOption Option;
+        Option.HeroDefinitionId = Hero.HeroDefinitionId;
+        Option.DisplayNameKey = Hero.DisplayNameKey;
+        OutOptions.Add(MoveTemp(Option));
+    }
+    return !OutOptions.IsEmpty();
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::SubmitCharacterCreateDraft(

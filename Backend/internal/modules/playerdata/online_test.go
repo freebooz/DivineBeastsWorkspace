@@ -61,8 +61,13 @@ func TestOnlineUpdateNormalizesAndRequiresAtomicCapability(t *testing.T) {
 	if err != nil || profile.DisplayName != "新名称" || repo.name != "新名称" || repo.playerID != "player-a" || repo.revision != 7 || repo.key != "key-a" || repo.updates != 1 {
 		t.Fatalf("规范化或原子端口参数不正确: %+v %+v %v", profile, repo, err)
 	}
-	_, err = requireOnline(t, NewService(NewMemoryRepository())).UpdateDisplayNameIdempotent(context.Background(), "a", "名称", 0, "k")
-	requireCode(t, err, "SERVICE_UNAVAILABLE")
+	// MemoryRepository现在完整实现原子Online端口，供本地多进程登录/角色流程复用。
+	memory := NewMemoryRepository()
+	memory.Seed(Profile{PlayerID: "a", GameID: "game", DisplayName: "旧名称", DataVersion: 1, Revision: 1})
+	updated, err := requireOnline(t, NewService(memory)).UpdateDisplayNameIdempotent(context.Background(), "a", "名称", 1, "k")
+	if err != nil || updated.DisplayName != "名称" || updated.Revision != 2 {
+		t.Fatalf("内存原子Online端口未生效: %+v %v", updated, err)
+	}
 }
 
 // 非法输入不能触达持久端口；Unicode按字符数约束，不按UTF-8字节数限制姓名。

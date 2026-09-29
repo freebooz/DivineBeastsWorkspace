@@ -21,6 +21,20 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
+// Defines values for CharacterSummaryOnboardingState.
+const (
+	New                CharacterSummaryOnboardingState = "New"
+	OnboardingComplete CharacterSummaryOnboardingState = "OnboardingComplete"
+	TutorialInProgress CharacterSummaryOnboardingState = "TutorialInProgress"
+	TutorialRequired   CharacterSummaryOnboardingState = "TutorialRequired"
+)
+
+// Defines values for CharacterSummaryStatus.
+const (
+	Active   CharacterSummaryStatus = "Active"
+	Disabled CharacterSummaryStatus = "Disabled"
+)
+
 // Defines values for CreateMatchmakingTicketRequestArenaModeId.
 const (
 	ArenaModeDuel1v1 CreateMatchmakingTicketRequestArenaModeId = "Arena.Mode.Duel1v1"
@@ -43,6 +57,74 @@ const (
 	MatchFound MatchmakingTicketState = "matchFound"
 	Searching  MatchmakingTicketState = "searching"
 )
+
+// CharacterSelectionRequest defines model for CharacterSelectionRequest.
+type CharacterSelectionRequest struct {
+	// CharacterId 目标持久角色标识。
+	CharacterId string `json:"characterId"`
+
+	// ExpectedCharacterRevision 客户端列表快照中的角色修订号。
+	ExpectedCharacterRevision int64 `json:"expectedCharacterRevision"`
+
+	// SelectionRequestId 玩家作用域选择幂等键。
+	SelectionRequestId string `json:"selectionRequestId"`
+}
+
+// CharacterSelectionResponse defines model for CharacterSelectionResponse.
+type CharacterSelectionResponse struct {
+	Character CharacterSummary `json:"character"`
+
+	// ProfileRevision 更新 selectedCharacterId 后的玩家资料修订号。
+	ProfileRevision int64 `json:"profileRevision"`
+
+	// SelectionRequestId 已提交的选择请求标识。
+	SelectionRequestId string `json:"selectionRequestId"`
+}
+
+// CharacterSummary defines model for CharacterSummary.
+type CharacterSummary struct {
+	// AppearanceProfileId 可选外观方案标识；为空表示使用默认外观。
+	AppearanceProfileId *string `json:"appearanceProfileId,omitempty"`
+
+	// CharacterId 持久角色唯一标识。
+	CharacterId string `json:"characterId"`
+
+	// CharacterName 玩家可见角色名称。
+	CharacterName string `json:"characterName"`
+
+	// CharacterRevision 角色乐观并发修订号。
+	CharacterRevision int64 `json:"characterRevision"`
+
+	// HeroDefinitionId 项目Hero Definition稳定标识。
+	HeroDefinitionId string `json:"heroDefinitionId"`
+
+	// OnboardingState 该角色的新手流程状态。
+	OnboardingState CharacterSummaryOnboardingState `json:"onboardingState"`
+
+	// Status 角色是否允许继续选择进入游戏。
+	Status CharacterSummaryStatus `json:"status"`
+}
+
+// CharacterSummaryOnboardingState 该角色的新手流程状态。
+type CharacterSummaryOnboardingState string
+
+// CharacterSummaryStatus 角色是否允许继续选择进入游戏。
+type CharacterSummaryStatus string
+
+// CreateCharacterRequest defines model for CreateCharacterRequest.
+type CreateCharacterRequest struct {
+	// AppearanceSelection 项目定义的外观选项键值；服务端只保存经过项目规则校验后的白名单值。
+	AppearanceSelection *map[string]string `json:"appearanceSelection,omitempty"`
+
+	// CharacterName 去除首尾空白后的角色名称。
+	CharacterName string `json:"characterName"`
+
+	// CreationRequestId 玩家作用域创建幂等键。
+	CreationRequestId string `json:"creationRequestId"`
+
+	// HeroDefinitionId 要创建的项目Hero Definition。
+	HeroDefinitionId string `json:"heroDefinitionId"`
+}
 
 // CreateMatchmakingTicketRequest defines model for CreateMatchmakingTicketRequest.
 type CreateMatchmakingTicketRequest struct {
@@ -199,6 +281,9 @@ type PlayerProfile struct {
 	// Revision 长期资料的乐观并发修订号。
 	Revision int64 `json:"revision"`
 
+	// SelectedCharacterId 最近一次经服务端权威验证的持久角色；尚未选择时为空字符串。
+	SelectedCharacterId string `json:"selectedCharacterId"`
+
 	// TutorialCompleted 是否完成新手教学。
 	TutorialCompleted bool `json:"tutorialCompleted"`
 }
@@ -247,9 +332,11 @@ type Unavailable = GatewayApiError
 
 // UpdateGatewayPlayerProfileJSONBody defines parameters for UpdateGatewayPlayerProfile.
 type UpdateGatewayPlayerProfileJSONBody struct {
-	// DisplayName trim后1至24个Unicode字符。
-	DisplayName      string `json:"displayName"`
-	ExpectedRevision int64  `json:"expectedRevision"`
+	// DisplayName 去除首尾空白后为 1 至 24 个 Unicode 字符。
+	DisplayName string `json:"displayName"`
+
+	// ExpectedRevision 客户端读取资料时获得的修订号；服务端用它检测并发修改。
+	ExpectedRevision int64 `json:"expectedRevision"`
 }
 
 // UpdateGatewayPlayerProfileParams defines parameters for UpdateGatewayPlayerProfile.
@@ -269,6 +356,12 @@ type RefreshGatewayAuthenticationJSONRequestBody = RefreshRequest
 
 // CreateGatewayMatchmakingTicketJSONRequestBody defines body for CreateGatewayMatchmakingTicket for application/json ContentType.
 type CreateGatewayMatchmakingTicketJSONRequestBody = CreateMatchmakingTicketRequest
+
+// SelectGatewayPlayerCharacterJSONRequestBody defines body for SelectGatewayPlayerCharacter for application/json ContentType.
+type SelectGatewayPlayerCharacterJSONRequestBody = CharacterSelectionRequest
+
+// CreateGatewayPlayerCharacterJSONRequestBody defines body for CreateGatewayPlayerCharacter for application/json ContentType.
+type CreateGatewayPlayerCharacterJSONRequestBody = CreateCharacterRequest
 
 // UpdateGatewayPlayerProfileJSONRequestBody defines body for UpdateGatewayPlayerProfile for application/json ContentType.
 type UpdateGatewayPlayerProfileJSONRequestBody UpdateGatewayPlayerProfileJSONBody
@@ -377,6 +470,19 @@ type ClientInterface interface {
 
 	// CreateGatewayParty request
 	CreateGatewayParty(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SelectGatewayPlayerCharacterWithBody request with any body
+	SelectGatewayPlayerCharacterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SelectGatewayPlayerCharacter(ctx context.Context, body SelectGatewayPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGatewayPlayerCharacters request
+	ListGatewayPlayerCharacters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateGatewayPlayerCharacterWithBody request with any body
+	CreateGatewayPlayerCharacterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateGatewayPlayerCharacter(ctx context.Context, body CreateGatewayPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetGatewayPlayerProfile request
 	GetGatewayPlayerProfile(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -524,6 +630,66 @@ func (c *Client) ProbeGatewayOnline(ctx context.Context, reqEditors ...RequestEd
 
 func (c *Client) CreateGatewayParty(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateGatewayPartyRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SelectGatewayPlayerCharacterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSelectGatewayPlayerCharacterRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SelectGatewayPlayerCharacter(ctx context.Context, body SelectGatewayPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSelectGatewayPlayerCharacterRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListGatewayPlayerCharacters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGatewayPlayerCharactersRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateGatewayPlayerCharacterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGatewayPlayerCharacterRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateGatewayPlayerCharacter(ctx context.Context, body CreateGatewayPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGatewayPlayerCharacterRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -850,6 +1016,113 @@ func NewCreateGatewayPartyRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewSelectGatewayPlayerCharacterRequest calls the generic SelectGatewayPlayerCharacter builder with application/json body
+func NewSelectGatewayPlayerCharacterRequest(server string, body SelectGatewayPlayerCharacterJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSelectGatewayPlayerCharacterRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSelectGatewayPlayerCharacterRequestWithBody generates requests for SelectGatewayPlayerCharacter with any type of body
+func NewSelectGatewayPlayerCharacterRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/player/character-selection")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListGatewayPlayerCharactersRequest generates requests for ListGatewayPlayerCharacters
+func NewListGatewayPlayerCharactersRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/player/characters")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateGatewayPlayerCharacterRequest calls the generic CreateGatewayPlayerCharacter builder with application/json body
+func NewCreateGatewayPlayerCharacterRequest(server string, body CreateGatewayPlayerCharacterJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateGatewayPlayerCharacterRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateGatewayPlayerCharacterRequestWithBody generates requests for CreateGatewayPlayerCharacter with any type of body
+func NewCreateGatewayPlayerCharacterRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/player/characters")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetGatewayPlayerProfileRequest generates requests for GetGatewayPlayerProfile
 func NewGetGatewayPlayerProfileRequest(server string) (*http.Request, error) {
 	var err error
@@ -1031,6 +1304,19 @@ type ClientWithResponsesInterface interface {
 
 	// CreateGatewayPartyWithResponse request
 	CreateGatewayPartyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CreateGatewayPartyResponse, error)
+
+	// SelectGatewayPlayerCharacterWithBodyWithResponse request with any body
+	SelectGatewayPlayerCharacterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SelectGatewayPlayerCharacterResponse, error)
+
+	SelectGatewayPlayerCharacterWithResponse(ctx context.Context, body SelectGatewayPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*SelectGatewayPlayerCharacterResponse, error)
+
+	// ListGatewayPlayerCharactersWithResponse request
+	ListGatewayPlayerCharactersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListGatewayPlayerCharactersResponse, error)
+
+	// CreateGatewayPlayerCharacterWithBodyWithResponse request with any body
+	CreateGatewayPlayerCharacterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGatewayPlayerCharacterResponse, error)
+
+	CreateGatewayPlayerCharacterWithResponse(ctx context.Context, body CreateGatewayPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGatewayPlayerCharacterResponse, error)
 
 	// GetGatewayPlayerProfileWithResponse request
 	GetGatewayPlayerProfileWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetGatewayPlayerProfileResponse, error)
@@ -1243,6 +1529,81 @@ func (r CreateGatewayPartyResponse) StatusCode() int {
 	return 0
 }
 
+type SelectGatewayPlayerCharacterResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CharacterSelectionResponse
+	JSON400      *InvalidRequest
+	JSON401      *Unauthorized
+	JSON503      *Unavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r SelectGatewayPlayerCharacterResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SelectGatewayPlayerCharacterResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListGatewayPlayerCharactersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]CharacterSummary
+	JSON401      *Unauthorized
+	JSON403      *Forbidden
+	JSON503      *Unavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGatewayPlayerCharactersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGatewayPlayerCharactersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateGatewayPlayerCharacterResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CharacterSummary
+	JSON400      *InvalidRequest
+	JSON401      *Unauthorized
+	JSON503      *Unavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateGatewayPlayerCharacterResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateGatewayPlayerCharacterResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetGatewayPlayerProfileResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1421,6 +1782,49 @@ func (c *ClientWithResponses) CreateGatewayPartyWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseCreateGatewayPartyResponse(rsp)
+}
+
+// SelectGatewayPlayerCharacterWithBodyWithResponse request with arbitrary body returning *SelectGatewayPlayerCharacterResponse
+func (c *ClientWithResponses) SelectGatewayPlayerCharacterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SelectGatewayPlayerCharacterResponse, error) {
+	rsp, err := c.SelectGatewayPlayerCharacterWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSelectGatewayPlayerCharacterResponse(rsp)
+}
+
+func (c *ClientWithResponses) SelectGatewayPlayerCharacterWithResponse(ctx context.Context, body SelectGatewayPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*SelectGatewayPlayerCharacterResponse, error) {
+	rsp, err := c.SelectGatewayPlayerCharacter(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSelectGatewayPlayerCharacterResponse(rsp)
+}
+
+// ListGatewayPlayerCharactersWithResponse request returning *ListGatewayPlayerCharactersResponse
+func (c *ClientWithResponses) ListGatewayPlayerCharactersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListGatewayPlayerCharactersResponse, error) {
+	rsp, err := c.ListGatewayPlayerCharacters(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGatewayPlayerCharactersResponse(rsp)
+}
+
+// CreateGatewayPlayerCharacterWithBodyWithResponse request with arbitrary body returning *CreateGatewayPlayerCharacterResponse
+func (c *ClientWithResponses) CreateGatewayPlayerCharacterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGatewayPlayerCharacterResponse, error) {
+	rsp, err := c.CreateGatewayPlayerCharacterWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGatewayPlayerCharacterResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateGatewayPlayerCharacterWithResponse(ctx context.Context, body CreateGatewayPlayerCharacterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGatewayPlayerCharacterResponse, error) {
+	rsp, err := c.CreateGatewayPlayerCharacter(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGatewayPlayerCharacterResponse(rsp)
 }
 
 // GetGatewayPlayerProfileWithResponse request returning *GetGatewayPlayerProfileResponse
@@ -1797,6 +2201,147 @@ func ParseCreateGatewayPartyResponse(rsp *http.Response) (*CreateGatewayPartyRes
 			return nil, err
 		}
 		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSelectGatewayPlayerCharacterResponse parses an HTTP response from a SelectGatewayPlayerCharacterWithResponse call
+func ParseSelectGatewayPlayerCharacterResponse(rsp *http.Response) (*SelectGatewayPlayerCharacterResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SelectGatewayPlayerCharacterResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CharacterSelectionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Unavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListGatewayPlayerCharactersResponse parses an HTTP response from a ListGatewayPlayerCharactersWithResponse call
+func ParseListGatewayPlayerCharactersResponse(rsp *http.Response) (*ListGatewayPlayerCharactersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGatewayPlayerCharactersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CharacterSummary
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Unavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateGatewayPlayerCharacterResponse parses an HTTP response from a CreateGatewayPlayerCharacterWithResponse call
+func ParseCreateGatewayPlayerCharacterResponse(rsp *http.Response) (*CreateGatewayPlayerCharacterResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateGatewayPlayerCharacterResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CharacterSummary
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Unavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 

@@ -8,7 +8,6 @@
 #include "Serialization/JsonSerializer.h"
 #include "Dom/JsonObject.h"
 #include "HAL/PlatformMisc.h"
-#include "Version/DivineBeastsContractVersion.h"
 
 namespace
 {
@@ -37,15 +36,33 @@ namespace
         {
             return false;
         }
-        Out.CharacterId = Json->GetStringField(TEXT("character_id"));
-        Out.HeroDefinitionId =
-            FName(*Json->GetStringField(TEXT("hero_definition_id")));
-        Out.CharacterName = Json->GetStringField(TEXT("character_name"));
-        Out.CharacterRevision =
-            static_cast<int64>(Json->GetNumberField(TEXT("character_revision")));
-        Out.OnboardingState =
-            ParseOnboarding(Json->GetStringField(TEXT("onboarding_state")));
-        Out.Status = FName(*Json->GetStringField(TEXT("status")));
+
+        // Shared Gateway CharacterSummary 使用 camelCase 字段。
+        // 这里使用 TryGet 系列进行完整结构校验，避免缺字段时触发断言或半提交对象。
+        FString HeroDefinitionId;
+        FString OnboardingState;
+        FString Status;
+        double CharacterRevision = 0.0;
+        if (!Json->TryGetStringField(TEXT("characterId"), Out.CharacterId) ||
+            !Json->TryGetStringField(TEXT("heroDefinitionId"), HeroDefinitionId) ||
+            !Json->TryGetStringField(TEXT("characterName"), Out.CharacterName) ||
+            !Json->TryGetNumberField(TEXT("characterRevision"), CharacterRevision) ||
+            !Json->TryGetStringField(TEXT("onboardingState"), OnboardingState) ||
+            !Json->TryGetStringField(TEXT("status"), Status))
+        {
+            return false;
+        }
+
+        Out.HeroDefinitionId = FName(*HeroDefinitionId);
+        Out.CharacterRevision = static_cast<int64>(CharacterRevision);
+        Out.OnboardingState = ParseOnboarding(OnboardingState);
+        Out.Status = FName(*Status);
+        FString AppearanceProfileId;
+        if (Json->TryGetStringField(TEXT("appearanceProfileId"), AppearanceProfileId) &&
+            !AppearanceProfileId.IsEmpty())
+        {
+            Out.AppearanceProfileId = FName(*AppearanceProfileId);
+        }
         return !Out.CharacterId.IsEmpty() &&
             !Out.HeroDefinitionId.IsNone() &&
             Out.CharacterRevision > 0;
@@ -267,7 +284,7 @@ void FDivineBeastsHttpApplicationBackend::LoadRoster(
 {
     Send(
         TEXT("GET"),
-        TEXT("/v1/divinebeasts/characters"),
+        TEXT("/v1/player/characters"),
         nullptr,
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
@@ -318,28 +335,22 @@ void FDivineBeastsHttpApplicationBackend::CreateCharacter(
     FDivineBeastsCharacterCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("operation_id"), GuidText(OperationId));
+    Body->SetStringField(TEXT("creationRequestId"), GuidText(OperationId));
     Body->SetStringField(
-        TEXT("hero_definition_id"),
+        TEXT("heroDefinitionId"),
         Draft.HeroDefinitionId.ToString());
-    Body->SetStringField(TEXT("character_name"), Draft.CharacterName);
-    Body->SetStringField(
-        TEXT("expected_catalog_revision"),
-        FDivineBeastsContractVersion::GetGeneratedRevision());
-    Body->SetStringField(
-        TEXT("expected_contract_version"),
-        FDivineBeastsContractVersion::GetCurrentVersion());
+    Body->SetStringField(TEXT("characterName"), Draft.CharacterName);
 
     TSharedPtr<FJsonObject> Appearance = MakeShared<FJsonObject>();
     for (const TPair<FString, FString>& Pair : Draft.AppearanceSelection)
     {
         Appearance->SetStringField(Pair.Key, Pair.Value);
     }
-    Body->SetObjectField(TEXT("appearance_selection"), Appearance);
+    Body->SetObjectField(TEXT("appearanceSelection"), Appearance);
 
     Send(
         TEXT("POST"),
-        TEXT("/v1/divinebeasts/characters"),
+        TEXT("/v1/player/characters"),
         Body,
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
@@ -349,6 +360,10 @@ void FDivineBeastsHttpApplicationBackend::CreateCharacter(
             FDivineBeastsCharacterSummary Character;
             if (!bSuccess)
             {
+                if (Error == EDivineBeastsFlowError::CharacterCreateOutcomeUnknown)
+                {
+                    Error = EDivineBeastsFlowError::CharacterCreateRejected;
+                }
                 Completion(false, Character, Error);
                 return;
             }
@@ -377,16 +392,16 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
     Body->SetStringField(
-        TEXT("selection_request_id"),
+        TEXT("selectionRequestId"),
         GuidText(SelectionRequestId));
-    Body->SetStringField(TEXT("character_id"), CharacterId);
+    Body->SetStringField(TEXT("characterId"), CharacterId);
     Body->SetNumberField(
-        TEXT("expected_character_revision"),
+        TEXT("expectedCharacterRevision"),
         static_cast<double>(ExpectedRevision));
 
     Send(
         TEXT("POST"),
-        TEXT("/v1/divinebeasts/characters/select"),
+        TEXT("/v1/player/character-selection"),
         Body,
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
@@ -396,6 +411,10 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
             FDivineBeastsValidatedSelection Result;
             if (!bSuccess)
             {
+                if (Error == EDivineBeastsFlowError::CharacterCreateOutcomeUnknown)
+                {
+                    Error = EDivineBeastsFlowError::CharacterSelectionRejected;
+                }
                 Completion(false, Result, Error);
                 return;
             }
@@ -409,10 +428,10 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
                 return;
             }
             Result.SelectionRequestId =
-                Json->GetStringField(TEXT("selection_request_id"));
+                Json->GetStringField(TEXT("selectionRequestId"));
             Result.ProfileRevision =
                 static_cast<int64>(
-                    Json->GetNumberField(TEXT("profile_revision")));
+                    Json->GetNumberField(TEXT("profileRevision")));
             const TSharedPtr<FJsonObject>* CharacterJson = nullptr;
             if (!Json->TryGetObjectField(
                     TEXT("character"),

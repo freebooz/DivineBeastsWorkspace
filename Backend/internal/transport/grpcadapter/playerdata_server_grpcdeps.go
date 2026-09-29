@@ -34,7 +34,58 @@ func profileResponse(profile playerdata.Profile) *playerdatav1.GetProfileRespons
 	return &playerdatav1.GetProfileResponse{
 		Found: true, PlayerId: profile.PlayerID, GameId: profile.GameID, DisplayName: profile.DisplayName,
 		DataVersion: int32(profile.DataVersion), Revision: profile.Revision, TutorialCompleted: profile.TutorialCompleted,
-		DefaultWorldId: profile.DefaultWorldID, OwnedCharacterIds: append([]string(nil), profile.OwnedCharacterIDs...),
+		DefaultWorldId: profile.DefaultWorldID, SelectedCharacterId: profile.SelectedCharacterID,
+		OwnedCharacterIds: append([]string(nil), profile.OwnedCharacterIDs...),
+	}
+}
+
+// ListCharacters（读取持久角色）只返回当前可信playerID的角色列表。
+func (s *PlayerDataServer) ListCharacters(ctx context.Context, req *playerdatav1.ListCharactersRequest) (*playerdatav1.ListCharactersResponse, error) {
+	characters, err := s.service.ListCharacters(ctx, req.GetPlayerId())
+	if err != nil {
+		return &playerdatav1.ListCharactersResponse{ErrorCode: onlineDomainCode(err)}, nil
+	}
+	items := make([]*playerdatav1.CharacterSummary, 0, len(characters))
+	for _, character := range characters {
+		items = append(items, characterSummaryResponse(character))
+	}
+	return &playerdatav1.ListCharactersResponse{Characters: items}, nil
+}
+
+// CreateCharacter（创建持久角色）把生成Proto请求转换到PlayerData领域服务。
+func (s *PlayerDataServer) CreateCharacter(ctx context.Context, req *playerdatav1.CreateCharacterRequest) (*playerdatav1.CreateCharacterResponse, error) {
+	character, err := s.service.CreateCharacter(
+		ctx, req.GetPlayerId(), req.GetCreationRequestId(), req.GetHeroDefinitionId(),
+		req.GetCharacterName(), req.GetAppearanceSelection())
+	if err != nil {
+		return &playerdatav1.CreateCharacterResponse{ErrorCode: onlineDomainCode(err)}, nil
+	}
+	return &playerdatav1.CreateCharacterResponse{Character: characterSummaryResponse(character)}, nil
+}
+
+// SelectCharacter（选择持久角色）只有领域/仓储权威验证成功后返回角色和新的Profile Revision。
+func (s *PlayerDataServer) SelectCharacter(ctx context.Context, req *playerdatav1.SelectCharacterRequest) (*playerdatav1.SelectCharacterResponse, error) {
+	selection, err := s.service.SelectCharacter(
+		ctx, req.GetPlayerId(), req.GetSelectionRequestId(), req.GetCharacterId(), req.GetExpectedCharacterRevision())
+	if err != nil {
+		return &playerdatav1.SelectCharacterResponse{ErrorCode: onlineDomainCode(err)}, nil
+	}
+	return &playerdatav1.SelectCharacterResponse{
+		SelectionRequestId: selection.SelectionRequestID,
+		ProfileRevision:    selection.ProfileRevision,
+		Character:          characterSummaryResponse(selection.Character),
+	}, nil
+}
+
+func characterSummaryResponse(character playerdata.Character) *playerdatav1.CharacterSummary {
+	return &playerdatav1.CharacterSummary{
+		CharacterId:         character.CharacterID,
+		HeroDefinitionId:    character.HeroDefinitionID,
+		CharacterName:       character.CharacterName,
+		CharacterRevision:   character.CharacterRevision,
+		OnboardingState:     character.OnboardingState,
+		Status:              character.Status,
+		AppearanceProfileId: character.AppearanceProfileID,
 	}
 }
 

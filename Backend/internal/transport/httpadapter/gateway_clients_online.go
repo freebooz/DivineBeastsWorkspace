@@ -6,6 +6,7 @@ import (
 	"divinebeasts/backend/internal/app/gateway"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -78,4 +79,55 @@ func (c *PlayerDataClient) UpdateDisplayNameIdempotent(ctx context.Context, id, 
 		return gateway.PlayerProfile{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
 	}
 	return out.PlayerProfile, nil
+}
+
+// ListCharacters（读取持久角色列表）只向PlayerDataService传递Gateway已认证的玩家身份。
+func (c *PlayerDataClient) ListCharacters(ctx context.Context, playerID string) ([]gateway.CharacterSummary, error) {
+	var out struct {
+		Characters []gateway.CharacterSummary `json:"characters"`
+	}
+	if err := c.get(ctx, "/internal/v1/playerdata/characters?playerId="+url.QueryEscape(playerID), &out); err != nil {
+		return nil, err
+	}
+	if out.Characters == nil {
+		out.Characters = []gateway.CharacterSummary{}
+	}
+	return out.Characters, nil
+}
+
+// CreateCharacter（创建持久角色）由PlayerDataService负责领域校验和幂等提交。
+func (c *PlayerDataClient) CreateCharacter(ctx context.Context, playerID string, req gateway.CreateCharacterRequest) (gateway.CharacterSummary, error) {
+	payload := map[string]any{
+		"playerId":            playerID,
+		"creationRequestId":   req.CreationRequestID,
+		"heroDefinitionId":    req.HeroDefinitionID,
+		"characterName":       req.CharacterName,
+		"appearanceSelection": req.AppearanceSelection,
+	}
+	var out gateway.CharacterSummary
+	if err := c.post(ctx, "/internal/v1/playerdata/characters", payload, &out); err != nil {
+		return gateway.CharacterSummary{}, err
+	}
+	if out.CharacterID == "" || out.CharacterRevision < 1 {
+		return gateway.CharacterSummary{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
+	}
+	return out, nil
+}
+
+// SelectCharacter（选择持久角色）把列表快照Revision原样交给PlayerDataService做权威校验。
+func (c *PlayerDataClient) SelectCharacter(ctx context.Context, playerID string, req gateway.CharacterSelectionRequest) (gateway.CharacterSelectionResponse, error) {
+	payload := map[string]any{
+		"playerId":                  playerID,
+		"selectionRequestId":        req.SelectionRequestID,
+		"characterId":               req.CharacterID,
+		"expectedCharacterRevision": req.ExpectedCharacterRevision,
+	}
+	var out gateway.CharacterSelectionResponse
+	if err := c.post(ctx, "/internal/v1/playerdata/character-selection", payload, &out); err != nil {
+		return gateway.CharacterSelectionResponse{}, err
+	}
+	if out.SelectionRequestID != req.SelectionRequestID || out.ProfileRevision < 1 || out.Character.CharacterID != req.CharacterID {
+		return gateway.CharacterSelectionResponse{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
+	}
+	return out, nil
 }

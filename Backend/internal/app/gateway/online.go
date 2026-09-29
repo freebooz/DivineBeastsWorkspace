@@ -61,7 +61,9 @@ func OnlineErrorStatus(err error) (int, string) {
 		return 429, string(code)
 	case "PLAYER_PROFILE_NOT_FOUND":
 		return 404, string(code)
-	case "PLAYER_DATA_CONFLICT", "IDEMPOTENCY_CONFLICT":
+	case "CHARACTER_NOT_FOUND":
+		return 404, string(code)
+	case "PLAYER_DATA_CONFLICT", "IDEMPOTENCY_CONFLICT", "CHARACTER_CONFLICT", "CHARACTER_DISABLED":
 		return 409, string(code)
 	default:
 		return 503, "SERVICE_UNAVAILABLE"

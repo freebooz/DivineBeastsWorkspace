@@ -318,19 +318,20 @@ func (x *GetProfileRequest) GetPlayerId() string {
 }
 
 type GetProfileResponse struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Found             bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
-	PlayerId          string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	GameId            string                 `protobuf:"bytes,3,opt,name=game_id,json=gameId,proto3" json:"game_id,omitempty"`
-	DisplayName       string                 `protobuf:"bytes,4,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	DataVersion       int32                  `protobuf:"varint,5,opt,name=data_version,json=dataVersion,proto3" json:"data_version,omitempty"`
-	Revision          int64                  `protobuf:"varint,6,opt,name=revision,proto3" json:"revision,omitempty"`
-	TutorialCompleted bool                   `protobuf:"varint,7,opt,name=tutorial_completed,json=tutorialCompleted,proto3" json:"tutorial_completed,omitempty"`
-	DefaultWorldId    string                 `protobuf:"bytes,8,opt,name=default_world_id,json=defaultWorldId,proto3" json:"default_world_id,omitempty"`
-	OwnedCharacterIds []string               `protobuf:"bytes,9,rep,name=owned_character_ids,json=ownedCharacterIds,proto3" json:"owned_character_ids,omitempty"`
-	ErrorCode         string                 `protobuf:"bytes,10,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Found               bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
+	PlayerId            string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	GameId              string                 `protobuf:"bytes,3,opt,name=game_id,json=gameId,proto3" json:"game_id,omitempty"`
+	DisplayName         string                 `protobuf:"bytes,4,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	DataVersion         int32                  `protobuf:"varint,5,opt,name=data_version,json=dataVersion,proto3" json:"data_version,omitempty"`
+	Revision            int64                  `protobuf:"varint,6,opt,name=revision,proto3" json:"revision,omitempty"`
+	TutorialCompleted   bool                   `protobuf:"varint,7,opt,name=tutorial_completed,json=tutorialCompleted,proto3" json:"tutorial_completed,omitempty"`
+	DefaultWorldId      string                 `protobuf:"bytes,8,opt,name=default_world_id,json=defaultWorldId,proto3" json:"default_world_id,omitempty"`
+	OwnedCharacterIds   []string               `protobuf:"bytes,9,rep,name=owned_character_ids,json=ownedCharacterIds,proto3" json:"owned_character_ids,omitempty"`
+	ErrorCode           string                 `protobuf:"bytes,10,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	SelectedCharacterId string                 `protobuf:"bytes,11,opt,name=selected_character_id,json=selectedCharacterId,proto3" json:"selected_character_id,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *GetProfileResponse) Reset() {
@@ -433,6 +434,465 @@ func (x *GetProfileResponse) GetErrorCode() string {
 	return ""
 }
 
+func (x *GetProfileResponse) GetSelectedCharacterId() string {
+	if x != nil {
+		return x.SelectedCharacterId
+	}
+	return ""
+}
+
+type CharacterSummary struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	CharacterId         string                 `protobuf:"bytes,1,opt,name=character_id,json=characterId,proto3" json:"character_id,omitempty"`
+	HeroDefinitionId    string                 `protobuf:"bytes,2,opt,name=hero_definition_id,json=heroDefinitionId,proto3" json:"hero_definition_id,omitempty"`
+	CharacterName       string                 `protobuf:"bytes,3,opt,name=character_name,json=characterName,proto3" json:"character_name,omitempty"`
+	CharacterRevision   int64                  `protobuf:"varint,4,opt,name=character_revision,json=characterRevision,proto3" json:"character_revision,omitempty"`
+	OnboardingState     string                 `protobuf:"bytes,5,opt,name=onboarding_state,json=onboardingState,proto3" json:"onboarding_state,omitempty"`
+	Status              string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	AppearanceProfileId string                 `protobuf:"bytes,7,opt,name=appearance_profile_id,json=appearanceProfileId,proto3" json:"appearance_profile_id,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *CharacterSummary) Reset() {
+	*x = CharacterSummary{}
+	mi := &file_player_data_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CharacterSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CharacterSummary) ProtoMessage() {}
+
+func (x *CharacterSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CharacterSummary.ProtoReflect.Descriptor instead.
+func (*CharacterSummary) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CharacterSummary) GetCharacterId() string {
+	if x != nil {
+		return x.CharacterId
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetHeroDefinitionId() string {
+	if x != nil {
+		return x.HeroDefinitionId
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetCharacterName() string {
+	if x != nil {
+		return x.CharacterName
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetCharacterRevision() int64 {
+	if x != nil {
+		return x.CharacterRevision
+	}
+	return 0
+}
+
+func (x *CharacterSummary) GetOnboardingState() string {
+	if x != nil {
+		return x.OnboardingState
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetAppearanceProfileId() string {
+	if x != nil {
+		return x.AppearanceProfileId
+	}
+	return ""
+}
+
+type ListCharactersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCharactersRequest) Reset() {
+	*x = ListCharactersRequest{}
+	mi := &file_player_data_service_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCharactersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCharactersRequest) ProtoMessage() {}
+
+func (x *ListCharactersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCharactersRequest.ProtoReflect.Descriptor instead.
+func (*ListCharactersRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListCharactersRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+type ListCharactersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Characters    []*CharacterSummary    `protobuf:"bytes,1,rep,name=characters,proto3" json:"characters,omitempty"`
+	ErrorCode     string                 `protobuf:"bytes,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCharactersResponse) Reset() {
+	*x = ListCharactersResponse{}
+	mi := &file_player_data_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCharactersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCharactersResponse) ProtoMessage() {}
+
+func (x *ListCharactersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCharactersResponse.ProtoReflect.Descriptor instead.
+func (*ListCharactersResponse) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListCharactersResponse) GetCharacters() []*CharacterSummary {
+	if x != nil {
+		return x.Characters
+	}
+	return nil
+}
+
+func (x *ListCharactersResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
+type CreateCharacterRequest struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId            string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	CreationRequestId   string                 `protobuf:"bytes,2,opt,name=creation_request_id,json=creationRequestId,proto3" json:"creation_request_id,omitempty"`
+	HeroDefinitionId    string                 `protobuf:"bytes,3,opt,name=hero_definition_id,json=heroDefinitionId,proto3" json:"hero_definition_id,omitempty"`
+	CharacterName       string                 `protobuf:"bytes,4,opt,name=character_name,json=characterName,proto3" json:"character_name,omitempty"`
+	AppearanceSelection map[string]string      `protobuf:"bytes,5,rep,name=appearance_selection,json=appearanceSelection,proto3" json:"appearance_selection,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *CreateCharacterRequest) Reset() {
+	*x = CreateCharacterRequest{}
+	mi := &file_player_data_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCharacterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCharacterRequest) ProtoMessage() {}
+
+func (x *CreateCharacterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCharacterRequest.ProtoReflect.Descriptor instead.
+func (*CreateCharacterRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CreateCharacterRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *CreateCharacterRequest) GetCreationRequestId() string {
+	if x != nil {
+		return x.CreationRequestId
+	}
+	return ""
+}
+
+func (x *CreateCharacterRequest) GetHeroDefinitionId() string {
+	if x != nil {
+		return x.HeroDefinitionId
+	}
+	return ""
+}
+
+func (x *CreateCharacterRequest) GetCharacterName() string {
+	if x != nil {
+		return x.CharacterName
+	}
+	return ""
+}
+
+func (x *CreateCharacterRequest) GetAppearanceSelection() map[string]string {
+	if x != nil {
+		return x.AppearanceSelection
+	}
+	return nil
+}
+
+type CreateCharacterResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Character     *CharacterSummary      `protobuf:"bytes,1,opt,name=character,proto3" json:"character,omitempty"`
+	ErrorCode     string                 `protobuf:"bytes,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCharacterResponse) Reset() {
+	*x = CreateCharacterResponse{}
+	mi := &file_player_data_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCharacterResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCharacterResponse) ProtoMessage() {}
+
+func (x *CreateCharacterResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCharacterResponse.ProtoReflect.Descriptor instead.
+func (*CreateCharacterResponse) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CreateCharacterResponse) GetCharacter() *CharacterSummary {
+	if x != nil {
+		return x.Character
+	}
+	return nil
+}
+
+func (x *CreateCharacterResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
+type SelectCharacterRequest struct {
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId                  string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	SelectionRequestId        string                 `protobuf:"bytes,2,opt,name=selection_request_id,json=selectionRequestId,proto3" json:"selection_request_id,omitempty"`
+	CharacterId               string                 `protobuf:"bytes,3,opt,name=character_id,json=characterId,proto3" json:"character_id,omitempty"`
+	ExpectedCharacterRevision int64                  `protobuf:"varint,4,opt,name=expected_character_revision,json=expectedCharacterRevision,proto3" json:"expected_character_revision,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *SelectCharacterRequest) Reset() {
+	*x = SelectCharacterRequest{}
+	mi := &file_player_data_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SelectCharacterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectCharacterRequest) ProtoMessage() {}
+
+func (x *SelectCharacterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SelectCharacterRequest.ProtoReflect.Descriptor instead.
+func (*SelectCharacterRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SelectCharacterRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *SelectCharacterRequest) GetSelectionRequestId() string {
+	if x != nil {
+		return x.SelectionRequestId
+	}
+	return ""
+}
+
+func (x *SelectCharacterRequest) GetCharacterId() string {
+	if x != nil {
+		return x.CharacterId
+	}
+	return ""
+}
+
+func (x *SelectCharacterRequest) GetExpectedCharacterRevision() int64 {
+	if x != nil {
+		return x.ExpectedCharacterRevision
+	}
+	return 0
+}
+
+type SelectCharacterResponse struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	SelectionRequestId string                 `protobuf:"bytes,1,opt,name=selection_request_id,json=selectionRequestId,proto3" json:"selection_request_id,omitempty"`
+	ProfileRevision    int64                  `protobuf:"varint,2,opt,name=profile_revision,json=profileRevision,proto3" json:"profile_revision,omitempty"`
+	Character          *CharacterSummary      `protobuf:"bytes,3,opt,name=character,proto3" json:"character,omitempty"`
+	ErrorCode          string                 `protobuf:"bytes,4,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SelectCharacterResponse) Reset() {
+	*x = SelectCharacterResponse{}
+	mi := &file_player_data_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SelectCharacterResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectCharacterResponse) ProtoMessage() {}
+
+func (x *SelectCharacterResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SelectCharacterResponse.ProtoReflect.Descriptor instead.
+func (*SelectCharacterResponse) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SelectCharacterResponse) GetSelectionRequestId() string {
+	if x != nil {
+		return x.SelectionRequestId
+	}
+	return ""
+}
+
+func (x *SelectCharacterResponse) GetProfileRevision() int64 {
+	if x != nil {
+		return x.ProfileRevision
+	}
+	return 0
+}
+
+func (x *SelectCharacterResponse) GetCharacter() *CharacterSummary {
+	if x != nil {
+		return x.Character
+	}
+	return nil
+}
+
+func (x *SelectCharacterResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
 var File_player_data_service_proto protoreflect.FileDescriptor
 
 const file_player_data_service_proto_rawDesc = "" +
@@ -456,7 +916,7 @@ const file_player_data_service_proto_rawDesc = "" +
 	"\n" +
 	"error_code\x18\x02 \x01(\tR\terrorCode\"0\n" +
 	"\x11GetProfileRequest\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"\xea\x02\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"\x9e\x03\n" +
 	"\x12GetProfileResponse\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12\x17\n" +
@@ -469,12 +929,56 @@ const file_player_data_service_proto_rawDesc = "" +
 	"\x13owned_character_ids\x18\t \x03(\tR\x11ownedCharacterIds\x12\x1d\n" +
 	"\n" +
 	"error_code\x18\n" +
-	" \x01(\tR\terrorCode2\x89\x04\n" +
+	" \x01(\tR\terrorCode\x122\n" +
+	"\x15selected_character_id\x18\v \x01(\tR\x13selectedCharacterId\"\xb0\x02\n" +
+	"\x10CharacterSummary\x12!\n" +
+	"\fcharacter_id\x18\x01 \x01(\tR\vcharacterId\x12,\n" +
+	"\x12hero_definition_id\x18\x02 \x01(\tR\x10heroDefinitionId\x12%\n" +
+	"\x0echaracter_name\x18\x03 \x01(\tR\rcharacterName\x12-\n" +
+	"\x12character_revision\x18\x04 \x01(\x03R\x11characterRevision\x12)\n" +
+	"\x10onboarding_state\x18\x05 \x01(\tR\x0fonboardingState\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\tR\x06status\x122\n" +
+	"\x15appearance_profile_id\x18\a \x01(\tR\x13appearanceProfileId\"4\n" +
+	"\x15ListCharactersRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"\x8d\x01\n" +
+	"\x16ListCharactersResponse\x12T\n" +
+	"\n" +
+	"characters\x18\x01 \x03(\v24.divinebeasts.backend.playerdata.v1.CharacterSummaryR\n" +
+	"characters\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x02 \x01(\tR\terrorCode\"\x8b\x03\n" +
+	"\x16CreateCharacterRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12.\n" +
+	"\x13creation_request_id\x18\x02 \x01(\tR\x11creationRequestId\x12,\n" +
+	"\x12hero_definition_id\x18\x03 \x01(\tR\x10heroDefinitionId\x12%\n" +
+	"\x0echaracter_name\x18\x04 \x01(\tR\rcharacterName\x12\x86\x01\n" +
+	"\x14appearance_selection\x18\x05 \x03(\v2S.divinebeasts.backend.playerdata.v1.CreateCharacterRequest.AppearanceSelectionEntryR\x13appearanceSelection\x1aF\n" +
+	"\x18AppearanceSelectionEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8c\x01\n" +
+	"\x17CreateCharacterResponse\x12R\n" +
+	"\tcharacter\x18\x01 \x01(\v24.divinebeasts.backend.playerdata.v1.CharacterSummaryR\tcharacter\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x02 \x01(\tR\terrorCode\"\xca\x01\n" +
+	"\x16SelectCharacterRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x120\n" +
+	"\x14selection_request_id\x18\x02 \x01(\tR\x12selectionRequestId\x12!\n" +
+	"\fcharacter_id\x18\x03 \x01(\tR\vcharacterId\x12>\n" +
+	"\x1bexpected_character_revision\x18\x04 \x01(\x03R\x19expectedCharacterRevision\"\xe9\x01\n" +
+	"\x17SelectCharacterResponse\x120\n" +
+	"\x14selection_request_id\x18\x01 \x01(\tR\x12selectionRequestId\x12)\n" +
+	"\x10profile_revision\x18\x02 \x01(\x03R\x0fprofileRevision\x12R\n" +
+	"\tcharacter\x18\x03 \x01(\v24.divinebeasts.backend.playerdata.v1.CharacterSummaryR\tcharacter\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x04 \x01(\tR\terrorCode2\xad\a\n" +
 	"\x11PlayerDataService\x12{\n" +
 	"\n" +
 	"GetProfile\x125.divinebeasts.backend.playerdata.v1.GetProfileRequest\x1a6.divinebeasts.backend.playerdata.v1.GetProfileResponse\x12\x81\x01\n" +
 	"\rUpdateProfile\x128.divinebeasts.backend.playerdata.v1.UpdateProfileRequest\x1a6.divinebeasts.backend.playerdata.v1.GetProfileResponse\x12\x84\x01\n" +
-	"\rEnsureProfile\x128.divinebeasts.backend.playerdata.v1.EnsureProfileRequest\x1a9.divinebeasts.backend.playerdata.v1.EnsureProfileResponse\x12l\n" +
+	"\rEnsureProfile\x128.divinebeasts.backend.playerdata.v1.EnsureProfileRequest\x1a9.divinebeasts.backend.playerdata.v1.EnsureProfileResponse\x12\x87\x01\n" +
+	"\x0eListCharacters\x129.divinebeasts.backend.playerdata.v1.ListCharactersRequest\x1a:.divinebeasts.backend.playerdata.v1.ListCharactersResponse\x12\x8a\x01\n" +
+	"\x0fCreateCharacter\x12:.divinebeasts.backend.playerdata.v1.CreateCharacterRequest\x1a;.divinebeasts.backend.playerdata.v1.CreateCharacterResponse\x12\x8a\x01\n" +
+	"\x0fSelectCharacter\x12:.divinebeasts.backend.playerdata.v1.SelectCharacterRequest\x1a;.divinebeasts.backend.playerdata.v1.SelectCharacterResponse\x12l\n" +
 	"\x05Probe\x120.divinebeasts.backend.playerdata.v1.ProbeRequest\x1a1.divinebeasts.backend.playerdata.v1.ProbeResponseBDZBdivinebeasts/backend/internal/generated/playerdata/v1;playerdatav1b\x06proto3"
 
 var (
@@ -489,30 +993,48 @@ func file_player_data_service_proto_rawDescGZIP() []byte {
 	return file_player_data_service_proto_rawDescData
 }
 
-var file_player_data_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_player_data_service_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_player_data_service_proto_goTypes = []any{
-	(*UpdateProfileRequest)(nil),  // 0: divinebeasts.backend.playerdata.v1.UpdateProfileRequest
-	(*EnsureProfileRequest)(nil),  // 1: divinebeasts.backend.playerdata.v1.EnsureProfileRequest
-	(*EnsureProfileResponse)(nil), // 2: divinebeasts.backend.playerdata.v1.EnsureProfileResponse
-	(*ProbeRequest)(nil),          // 3: divinebeasts.backend.playerdata.v1.ProbeRequest
-	(*ProbeResponse)(nil),         // 4: divinebeasts.backend.playerdata.v1.ProbeResponse
-	(*GetProfileRequest)(nil),     // 5: divinebeasts.backend.playerdata.v1.GetProfileRequest
-	(*GetProfileResponse)(nil),    // 6: divinebeasts.backend.playerdata.v1.GetProfileResponse
+	(*UpdateProfileRequest)(nil),    // 0: divinebeasts.backend.playerdata.v1.UpdateProfileRequest
+	(*EnsureProfileRequest)(nil),    // 1: divinebeasts.backend.playerdata.v1.EnsureProfileRequest
+	(*EnsureProfileResponse)(nil),   // 2: divinebeasts.backend.playerdata.v1.EnsureProfileResponse
+	(*ProbeRequest)(nil),            // 3: divinebeasts.backend.playerdata.v1.ProbeRequest
+	(*ProbeResponse)(nil),           // 4: divinebeasts.backend.playerdata.v1.ProbeResponse
+	(*GetProfileRequest)(nil),       // 5: divinebeasts.backend.playerdata.v1.GetProfileRequest
+	(*GetProfileResponse)(nil),      // 6: divinebeasts.backend.playerdata.v1.GetProfileResponse
+	(*CharacterSummary)(nil),        // 7: divinebeasts.backend.playerdata.v1.CharacterSummary
+	(*ListCharactersRequest)(nil),   // 8: divinebeasts.backend.playerdata.v1.ListCharactersRequest
+	(*ListCharactersResponse)(nil),  // 9: divinebeasts.backend.playerdata.v1.ListCharactersResponse
+	(*CreateCharacterRequest)(nil),  // 10: divinebeasts.backend.playerdata.v1.CreateCharacterRequest
+	(*CreateCharacterResponse)(nil), // 11: divinebeasts.backend.playerdata.v1.CreateCharacterResponse
+	(*SelectCharacterRequest)(nil),  // 12: divinebeasts.backend.playerdata.v1.SelectCharacterRequest
+	(*SelectCharacterResponse)(nil), // 13: divinebeasts.backend.playerdata.v1.SelectCharacterResponse
+	nil,                             // 14: divinebeasts.backend.playerdata.v1.CreateCharacterRequest.AppearanceSelectionEntry
 }
 var file_player_data_service_proto_depIdxs = []int32{
-	5, // 0: divinebeasts.backend.playerdata.v1.PlayerDataService.GetProfile:input_type -> divinebeasts.backend.playerdata.v1.GetProfileRequest
-	0, // 1: divinebeasts.backend.playerdata.v1.PlayerDataService.UpdateProfile:input_type -> divinebeasts.backend.playerdata.v1.UpdateProfileRequest
-	1, // 2: divinebeasts.backend.playerdata.v1.PlayerDataService.EnsureProfile:input_type -> divinebeasts.backend.playerdata.v1.EnsureProfileRequest
-	3, // 3: divinebeasts.backend.playerdata.v1.PlayerDataService.Probe:input_type -> divinebeasts.backend.playerdata.v1.ProbeRequest
-	6, // 4: divinebeasts.backend.playerdata.v1.PlayerDataService.GetProfile:output_type -> divinebeasts.backend.playerdata.v1.GetProfileResponse
-	6, // 5: divinebeasts.backend.playerdata.v1.PlayerDataService.UpdateProfile:output_type -> divinebeasts.backend.playerdata.v1.GetProfileResponse
-	2, // 6: divinebeasts.backend.playerdata.v1.PlayerDataService.EnsureProfile:output_type -> divinebeasts.backend.playerdata.v1.EnsureProfileResponse
-	4, // 7: divinebeasts.backend.playerdata.v1.PlayerDataService.Probe:output_type -> divinebeasts.backend.playerdata.v1.ProbeResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	7,  // 0: divinebeasts.backend.playerdata.v1.ListCharactersResponse.characters:type_name -> divinebeasts.backend.playerdata.v1.CharacterSummary
+	14, // 1: divinebeasts.backend.playerdata.v1.CreateCharacterRequest.appearance_selection:type_name -> divinebeasts.backend.playerdata.v1.CreateCharacterRequest.AppearanceSelectionEntry
+	7,  // 2: divinebeasts.backend.playerdata.v1.CreateCharacterResponse.character:type_name -> divinebeasts.backend.playerdata.v1.CharacterSummary
+	7,  // 3: divinebeasts.backend.playerdata.v1.SelectCharacterResponse.character:type_name -> divinebeasts.backend.playerdata.v1.CharacterSummary
+	5,  // 4: divinebeasts.backend.playerdata.v1.PlayerDataService.GetProfile:input_type -> divinebeasts.backend.playerdata.v1.GetProfileRequest
+	0,  // 5: divinebeasts.backend.playerdata.v1.PlayerDataService.UpdateProfile:input_type -> divinebeasts.backend.playerdata.v1.UpdateProfileRequest
+	1,  // 6: divinebeasts.backend.playerdata.v1.PlayerDataService.EnsureProfile:input_type -> divinebeasts.backend.playerdata.v1.EnsureProfileRequest
+	8,  // 7: divinebeasts.backend.playerdata.v1.PlayerDataService.ListCharacters:input_type -> divinebeasts.backend.playerdata.v1.ListCharactersRequest
+	10, // 8: divinebeasts.backend.playerdata.v1.PlayerDataService.CreateCharacter:input_type -> divinebeasts.backend.playerdata.v1.CreateCharacterRequest
+	12, // 9: divinebeasts.backend.playerdata.v1.PlayerDataService.SelectCharacter:input_type -> divinebeasts.backend.playerdata.v1.SelectCharacterRequest
+	3,  // 10: divinebeasts.backend.playerdata.v1.PlayerDataService.Probe:input_type -> divinebeasts.backend.playerdata.v1.ProbeRequest
+	6,  // 11: divinebeasts.backend.playerdata.v1.PlayerDataService.GetProfile:output_type -> divinebeasts.backend.playerdata.v1.GetProfileResponse
+	6,  // 12: divinebeasts.backend.playerdata.v1.PlayerDataService.UpdateProfile:output_type -> divinebeasts.backend.playerdata.v1.GetProfileResponse
+	2,  // 13: divinebeasts.backend.playerdata.v1.PlayerDataService.EnsureProfile:output_type -> divinebeasts.backend.playerdata.v1.EnsureProfileResponse
+	9,  // 14: divinebeasts.backend.playerdata.v1.PlayerDataService.ListCharacters:output_type -> divinebeasts.backend.playerdata.v1.ListCharactersResponse
+	11, // 15: divinebeasts.backend.playerdata.v1.PlayerDataService.CreateCharacter:output_type -> divinebeasts.backend.playerdata.v1.CreateCharacterResponse
+	13, // 16: divinebeasts.backend.playerdata.v1.PlayerDataService.SelectCharacter:output_type -> divinebeasts.backend.playerdata.v1.SelectCharacterResponse
+	4,  // 17: divinebeasts.backend.playerdata.v1.PlayerDataService.Probe:output_type -> divinebeasts.backend.playerdata.v1.ProbeResponse
+	11, // [11:18] is the sub-list for method output_type
+	4,  // [4:11] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_player_data_service_proto_init() }
@@ -527,7 +1049,7 @@ func file_player_data_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_player_data_service_proto_rawDesc), len(file_player_data_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

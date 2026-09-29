@@ -65,9 +65,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
     bool SubmitCharacterCreateDraft(const FDivineBeastsCharacterCreateDraft& Draft);
 
-    /** 获取当前唯一的项目Character Creation Catalog（角色创建目录）。 */
-    bool GetCharacterCreationHeroes(
-        TArray<FGamePlatformCharacterCreationHeroDescriptor>& OutHeroes) const;
+    /**
+     * 获取当前项目可创建英雄列表。
+     * 对外只暴露项目轻量 DTO，避免 UI 等上层消费者被迫依赖平台 Character 模块实现类型。
+     */
+    bool GetCharacterCreationOptions(
+        TArray<FDivineBeastsCharacterCreationOption>& OutOptions) const;
 
     /** 提交已有持久角色选择；真正所有权和版本仍以后端验证为准。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")

@@ -10,6 +10,9 @@ service PlayerDataService {
   // 已认证主体由可信网关提供；原子幂等写，不新增任意字段更新接口。
   rpc UpdateProfile(UpdateProfileRequest) returns (GetProfileResponse);
   rpc EnsureProfile(EnsureProfileRequest) returns (EnsureProfileResponse);
+  rpc ListCharacters(ListCharactersRequest) returns (ListCharactersResponse);
+  rpc CreateCharacter(CreateCharacterRequest) returns (CreateCharacterResponse);
+  rpc SelectCharacter(SelectCharacterRequest) returns (SelectCharacterResponse);
   rpc Probe(ProbeRequest) returns (ProbeResponse);
 }
 
@@ -39,4 +42,46 @@ message GetProfileResponse {
   string default_world_id = 8;
   repeated string owned_character_ids = 9;
   string error_code = 10;
+  string selected_character_id = 11;
+}
+
+message CharacterSummary {
+  string character_id = 1;
+  string hero_definition_id = 2;
+  string character_name = 3;
+  int64 character_revision = 4;
+  string onboarding_state = 5;
+  string status = 6;
+  string appearance_profile_id = 7;
+}
+
+message ListCharactersRequest { string player_id = 1; }
+message ListCharactersResponse {
+  repeated CharacterSummary characters = 1;
+  string error_code = 2;
+}
+
+message CreateCharacterRequest {
+  string player_id = 1;
+  string creation_request_id = 2;
+  string hero_definition_id = 3;
+  string character_name = 4;
+  map<string,string> appearance_selection = 5;
+}
+message CreateCharacterResponse {
+  CharacterSummary character = 1;
+  string error_code = 2;
+}
+
+message SelectCharacterRequest {
+  string player_id = 1;
+  string selection_request_id = 2;
+  string character_id = 3;
+  int64 expected_character_revision = 4;
+}
+message SelectCharacterResponse {
+  string selection_request_id = 1;
+  int64 profile_revision = 2;
+  CharacterSummary character = 3;
+  string error_code = 4;
 }

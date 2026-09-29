@@ -8,6 +8,7 @@
     { "Name": "GamePlatformCore", "Enabled": true },
     { "Name": "GamePlatformData", "Enabled": true },
     { "Name": "GamePlatformApplicationFlow", "Enabled": true },
+    { "Name": "GamePlatformOnline", "Enabled": true },
     { "Name": "GamePlatformLoading", "Enabled": true },
     { "Name": "GamePlatformWorld", "Enabled": true },
     { "Name": "Monolith", "Enabled": true, "TargetAllowList": ["Editor"] },

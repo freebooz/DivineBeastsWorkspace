@@ -50,14 +50,48 @@ type AuthenticatedSession struct {
 
 // PlayerProfile（玩家资料响应）只包含跨局长期数据，不包含实时Gameplay状态。
 type PlayerProfile struct {
-	PlayerID          string   `json:"playerId"`          // PlayerID（玩家ID）。
-	GameID            string   `json:"gameId"`            // GameID（游戏ID）。
-	DisplayName       string   `json:"displayName"`       // DisplayName（玩家显示名称）。
-	DataVersion       int      `json:"dataVersion"`       // DataVersion（资料结构版本）。
-	Revision          int64    `json:"revision"`          // Revision（乐观并发版本）。
-	TutorialCompleted bool     `json:"tutorialCompleted"` // TutorialCompleted（是否完成新手教学）。
-	DefaultWorldID    string   `json:"defaultWorldId"`    // DefaultWorldID（默认进入世界ID）。
-	OwnedCharacterIDs []string `json:"ownedCharacterIds"` // OwnedCharacterIDs（已拥有角色ID列表）。
+	PlayerID            string   `json:"playerId"`            // PlayerID（玩家ID）。
+	GameID              string   `json:"gameId"`              // GameID（游戏ID）。
+	DisplayName         string   `json:"displayName"`         // DisplayName（玩家显示名称）。
+	DataVersion         int      `json:"dataVersion"`         // DataVersion（资料结构版本）。
+	Revision            int64    `json:"revision"`            // Revision（乐观并发版本）。
+	TutorialCompleted   bool     `json:"tutorialCompleted"`   // TutorialCompleted（是否完成新手教学）。
+	DefaultWorldID      string   `json:"defaultWorldId"`      // DefaultWorldID（默认进入世界ID）。
+	SelectedCharacterID string   `json:"selectedCharacterId"` // SelectedCharacterID（最近一次权威选择角色ID）。
+	OwnedCharacterIDs   []string `json:"ownedCharacterIds"`   // OwnedCharacterIDs（已拥有角色ID列表）。
+}
+
+// CharacterSummary（持久角色摘要）用于登录后的角色选择，不等于MainArena竞技选人。
+type CharacterSummary struct {
+	CharacterID         string `json:"characterId"`
+	HeroDefinitionID    string `json:"heroDefinitionId"`
+	CharacterName       string `json:"characterName"`
+	CharacterRevision   int64  `json:"characterRevision"`
+	OnboardingState     string `json:"onboardingState"`
+	Status              string `json:"status"`
+	AppearanceProfileID string `json:"appearanceProfileId,omitempty"`
+}
+
+// CreateCharacterRequest（创建持久角色请求）不包含PlayerID，身份必须来自Bearer会话。
+type CreateCharacterRequest struct {
+	CreationRequestID   string            `json:"creationRequestId"`
+	HeroDefinitionID    string            `json:"heroDefinitionId"`
+	CharacterName       string            `json:"characterName"`
+	AppearanceSelection map[string]string `json:"appearanceSelection,omitempty"`
+}
+
+// CharacterSelectionRequest（角色选择请求）携带客户端列表快照中的Revision用于并发校验。
+type CharacterSelectionRequest struct {
+	SelectionRequestID        string `json:"selectionRequestId"`
+	CharacterID               string `json:"characterId"`
+	ExpectedCharacterRevision int64  `json:"expectedCharacterRevision"`
+}
+
+// CharacterSelectionResponse（权威角色选择响应）返回资料新Revision和服务端确认角色。
+type CharacterSelectionResponse struct {
+	SelectionRequestID string           `json:"selectionRequestId"`
+	ProfileRevision    int64            `json:"profileRevision"`
+	Character          CharacterSummary `json:"character"`
 }
 
 // PartySnapshot（Party快照）是Gateway返回给Game Client的只读组队状态。
@@ -100,6 +134,13 @@ type PlayerDataPort interface {
 	GetProfile(ctx context.Context, playerID string) (PlayerProfile, error)
 }
 
+// CharacterPort（持久角色端口）是PlayerDataService对Gateway暴露的角色长期数据能力。
+type CharacterPort interface {
+	ListCharacters(ctx context.Context, playerID string) ([]CharacterSummary, error)
+	CreateCharacter(ctx context.Context, playerID string, req CreateCharacterRequest) (CharacterSummary, error)
+	SelectCharacter(ctx context.Context, playerID string, req CharacterSelectionRequest) (CharacterSelectionResponse, error)
+}
+
 // PartyPort（Party服务端口）定义Gateway创建Party所需能力。
 type PartyPort interface {
 	CreateParty(ctx context.Context, playerID string) (PartySnapshot, error)
@@ -134,6 +175,9 @@ func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, par
 	handler.mux.HandleFunc("PATCH /v1/player/profile", handler.requireAuth(handler.updateProfile))
 	handler.mux.HandleFunc("POST /v1/auth/login", handler.login)
 	handler.mux.HandleFunc("GET /v1/player/profile", handler.requireAuth(handler.getProfile))
+	handler.mux.HandleFunc("GET /v1/player/characters", handler.requireAuth(handler.listCharacters))
+	handler.mux.HandleFunc("POST /v1/player/characters", handler.requireAuth(handler.createCharacter))
+	handler.mux.HandleFunc("POST /v1/player/character-selection", handler.requireAuth(handler.selectCharacter))
 	handler.mux.HandleFunc("POST /v1/party", handler.requireAuth(handler.createParty))
 	handler.mux.HandleFunc("POST /v1/matchmaking/tickets", handler.requireAuth(handler.createMatchmakingTicket))
 	handler.registerSwaggerDocumentation(os.Getenv(swaggerContractsRootEnvironment))
@@ -200,20 +244,20 @@ func (a *api) login(w http.ResponseWriter, r *http.Request) {
 		writeOnlineError(w, err)
 		return
 	}
-	if req.Provider == "password" {
-		initializer, ok := a.playerData.(ProfileInitializer)
-		if !ok {
-			writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
-			return
+	// Identity成功返回的PlayerID才允许进入PlayerData建档。生产环境password是正式提供方；
+	// 本地legacy guest如果被Identity显式接受，也使用同一正式建档用例，不再依赖读取时隐式创建。
+	initializer, ok := a.playerData.(ProfileInitializer)
+	if !ok {
+		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	if err := initializer.EnsureProfile(r.Context(), response.PlayerID, req.GameID); err != nil {
+		// 建档属于PlayerData用例；失败不返回令牌，并尽力撤销刚创建的身份会话。
+		if lifecycle, ok := a.identity.(AuthenticationLifecycle); ok {
+			_ = lifecycle.Logout(r.Context(), response.RefreshToken)
 		}
-		if err := initializer.EnsureProfile(r.Context(), response.PlayerID, req.GameID); err != nil {
-			// 建档属于PlayerData用例；失败不返回令牌，并尽力撤销刚创建的身份会话。
-			if lifecycle, ok := a.identity.(AuthenticationLifecycle); ok {
-				_ = lifecycle.Logout(r.Context(), response.RefreshToken)
-			}
-			writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
-			return
-		}
+		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, response)
@@ -230,6 +274,80 @@ func (a *api) getProfile(w http.ResponseWriter, r *http.Request, session Authent
 		return
 	}
 	writeProfile(w, profile)
+}
+
+func (a *api) listCharacters(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
+	if r.URL.RawQuery != "" {
+		writeOnlineError(w, ServiceError("INVALID_REQUEST"))
+		return
+	}
+	port, ok := a.playerData.(CharacterPort)
+	if !ok {
+		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	characters, err := port.ListCharacters(r.Context(), session.PlayerID)
+	if err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	if characters == nil {
+		characters = []CharacterSummary{}
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, characters)
+}
+
+func (a *api) createCharacter(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
+	if r.URL.RawQuery != "" {
+		writeOnlineError(w, ServiceError("INVALID_REQUEST"))
+		return
+	}
+	var req CreateCharacterRequest
+	if err := DecodeOnlineJSON(r, &req,
+		[]string{"creationRequestId", "heroDefinitionId", "characterName", "appearanceSelection"},
+		[]string{"creationRequestId", "heroDefinitionId", "characterName"}); err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	port, ok := a.playerData.(CharacterPort)
+	if !ok {
+		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	character, err := port.CreateCharacter(r.Context(), session.PlayerID, req)
+	if err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, character)
+}
+
+func (a *api) selectCharacter(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
+	if r.URL.RawQuery != "" {
+		writeOnlineError(w, ServiceError("INVALID_REQUEST"))
+		return
+	}
+	var req CharacterSelectionRequest
+	if err := DecodeOnlineJSON(r, &req,
+		[]string{"selectionRequestId", "characterId", "expectedCharacterRevision"},
+		[]string{"selectionRequestId", "characterId", "expectedCharacterRevision"}); err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	port, ok := a.playerData.(CharacterPort)
+	if !ok {
+		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	selection, err := port.SelectCharacter(r.Context(), session.PlayerID, req)
+	if err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, selection)
 }
 
 func (a *api) createParty(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {

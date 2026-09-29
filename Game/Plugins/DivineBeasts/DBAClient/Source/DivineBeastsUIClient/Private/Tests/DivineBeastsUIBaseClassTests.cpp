@@ -9,10 +9,14 @@
 #include "Misc/AutomationTest.h"
 #include "Screens/DivineBeastsUIScreen.h"
 #include "Screens/Boot/DivineBeastsBootScreen.h"
+#include "Screens/Characters/DivineBeastsCharacterCreateScreen.h"
+#include "Screens/Characters/DivineBeastsCharacterSelectScreen.h"
 #include "Screens/Login/DivineBeastsLoginScreen.h"
 #include "Screens/Loading/DivineBeastsLoadingTravelScreen.h"
 #include "ViewModels/DivineBeastsViewModelBase.h"
 #include "ViewModels/Boot/DivineBeastsBootViewModel.h"
+#include "ViewModels/Characters/DivineBeastsCharacterCreateViewModel.h"
+#include "ViewModels/Characters/DivineBeastsCharacterSelectViewModel.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 
@@ -44,6 +48,13 @@ bool FDivineBeastsUIBaseClassHierarchyTest::RunTest(const FString& Parameters)
             UDivineBeastsUIScreen::StaticClass()));
 
     TestTrue(
+        TEXT("持久角色选择/创建页必须继承项目 Screen"),
+        UDivineBeastsCharacterSelectScreen::StaticClass()->IsChildOf(
+            UDivineBeastsUIScreen::StaticClass()) &&
+        UDivineBeastsCharacterCreateScreen::StaticClass()->IsChildOf(
+            UDivineBeastsUIScreen::StaticClass()));
+
+    TestTrue(
         TEXT("加载页必须继承项目 Loading Screen"),
         UDivineBeastsLoadingTravelScreen::StaticClass()->IsChildOf(
             UDivineBeastsLoadingScreen::StaticClass()));
@@ -71,10 +82,14 @@ bool FDivineBeastsUIBaseClassHierarchyTest::RunTest(const FString& Parameters)
             UGamePlatformViewModelBase::StaticClass()));
 
     TestTrue(
-        TEXT("启动、登录和加载 ViewModel 必须沿项目 ViewModel 继承链复用"),
+        TEXT("启动、登录、角色和加载 ViewModel 必须沿项目 ViewModel 继承链复用"),
         UDivineBeastsBootViewModel::StaticClass()->IsChildOf(
             UDivineBeastsLoadingViewModel::StaticClass()) &&
         UDivineBeastsLoginViewModel::StaticClass()->IsChildOf(
+            UDivineBeastsUIViewModel::StaticClass()) &&
+        UDivineBeastsCharacterSelectViewModel::StaticClass()->IsChildOf(
+            UDivineBeastsUIViewModel::StaticClass()) &&
+        UDivineBeastsCharacterCreateViewModel::StaticClass()->IsChildOf(
             UDivineBeastsUIViewModel::StaticClass()) &&
         UDivineBeastsLoadingViewModel::StaticClass()->IsChildOf(
             UDivineBeastsUIViewModel::StaticClass()));

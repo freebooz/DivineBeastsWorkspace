@@ -12,6 +12,8 @@
 #include "Screens/GamePlatformUIScreen.h"
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
 #include "ViewModels/Boot/DivineBeastsBootViewModel.h"
+#include "ViewModels/Characters/DivineBeastsCharacterCreateViewModel.h"
+#include "ViewModels/Characters/DivineBeastsCharacterSelectViewModel.h"
 #include "ViewModels/DivineBeastsUIViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
@@ -242,6 +244,14 @@ UDivineBeastsUIClientSubsystem::CreateViewModel(FName ScreenId)
     if (ScreenId == TEXT("UI.Screen.Login"))
     {
         ViewModel = NewObject<UDivineBeastsLoginViewModel>(this);
+    }
+    else if (ScreenId == TEXT("UI.Screen.CharacterSelect"))
+    {
+        ViewModel = NewObject<UDivineBeastsCharacterSelectViewModel>(this);
+    }
+    else if (ScreenId == TEXT("UI.Screen.CharacterCreate"))
+    {
+        ViewModel = NewObject<UDivineBeastsCharacterCreateViewModel>(this);
     }
     else if (ScreenId == TEXT("UI.Screen.Boot"))
     {

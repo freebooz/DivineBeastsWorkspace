@@ -214,6 +214,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GatewayApiError'
+  /v1/player/characters:
+    get:
+      tags: [客户端业务]
+      operationId: listGatewayPlayerCharacters
+      summary: 获取当前玩家的持久角色列表
+      description: 服务端从 Bearer Access Token 解析玩家身份；客户端不得声明其他 playerId。
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: 当前玩家拥有的持久角色列表；无角色时返回空数组。
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CharacterSummary'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+    post:
+      tags: [客户端业务]
+      operationId: createGatewayPlayerCharacter
+      summary: 为当前玩家创建持久角色
+      description: creationRequestId 是玩家作用域幂等键；同键同内容重放原结果，同键异内容返回409。
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCharacterRequest'}
+      responses:
+        '200':
+          description: 创建成功或幂等重放，返回权威角色摘要。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CharacterSummary'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: 幂等内容、角色名称或领域规则冲突。}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/player/character-selection:
+    post:
+      tags: [客户端业务]
+      operationId: selectGatewayPlayerCharacter
+      summary: 权威确认当前玩家选择的持久角色
+      description: selectionRequestId 是玩家作用域幂等键；服务端校验角色归属、状态和 expectedCharacterRevision 后更新 selectedCharacterId。
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CharacterSelectionRequest'}
+      responses:
+        '200':
+          description: 选择已提交或幂等重放。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CharacterSelectionResponse'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {description: 角色不存在或不属于当前玩家。}
+        '409': {description: 角色修订、状态或幂等内容冲突。}
+        '503': {$ref: '#/components/responses/Unavailable'}
   /v1/party:
     post:
       tags: [客户端业务]
@@ -406,7 +468,7 @@ components:
     PlayerProfile:
       type: object
       additionalProperties: false
-      required: [playerId, gameId, displayName, dataVersion, revision, tutorialCompleted, ownedCharacterIds]
+      required: [playerId, gameId, displayName, dataVersion, revision, tutorialCompleted, selectedCharacterId, ownedCharacterIds]
       properties:
         playerId:
           type: string
@@ -432,11 +494,62 @@ components:
         defaultWorldId:
           type: string
           description: 默认进入的世界逻辑标识；当前实现可能为空字符串。
+        selectedCharacterId:
+          type: string
+          description: 最近一次经服务端权威验证的持久角色；尚未选择时为空字符串。
         ownedCharacterIds:
           type: array
           description: 已拥有角色逻辑标识列表。
           items:
             type: string
+    CharacterSummary:
+      type: object
+      additionalProperties: false
+      required: [characterId, heroDefinitionId, characterName, characterRevision, onboardingState, status]
+      properties:
+        characterId: {type: string, minLength: 1, description: 持久角色唯一标识。}
+        heroDefinitionId: {type: string, minLength: 1, description: 项目Hero Definition稳定标识。}
+        characterName: {type: string, minLength: 1, maxLength: 24, description: 玩家可见角色名称。}
+        characterRevision: {type: integer, format: int64, minimum: 1, description: 角色乐观并发修订号。}
+        onboardingState:
+          type: string
+          enum: [New, TutorialRequired, TutorialInProgress, OnboardingComplete]
+          description: 该角色的新手流程状态。
+        status:
+          type: string
+          enum: [Active, Disabled]
+          description: 角色是否允许继续选择进入游戏。
+        appearanceProfileId:
+          type: string
+          description: 可选外观方案标识；为空表示使用默认外观。
+    CreateCharacterRequest:
+      type: object
+      additionalProperties: false
+      required: [creationRequestId, heroDefinitionId, characterName]
+      properties:
+        creationRequestId: {type: string, minLength: 1, maxLength: 128, description: 玩家作用域创建幂等键。}
+        heroDefinitionId: {type: string, minLength: 1, description: 要创建的项目Hero Definition。}
+        characterName: {type: string, minLength: 1, maxLength: 24, description: 去除首尾空白后的角色名称。}
+        appearanceSelection:
+          type: object
+          additionalProperties: {type: string}
+          description: 项目定义的外观选项键值；服务端只保存经过项目规则校验后的白名单值。
+    CharacterSelectionRequest:
+      type: object
+      additionalProperties: false
+      required: [selectionRequestId, characterId, expectedCharacterRevision]
+      properties:
+        selectionRequestId: {type: string, minLength: 1, maxLength: 128, description: 玩家作用域选择幂等键。}
+        characterId: {type: string, minLength: 1, description: 目标持久角色标识。}
+        expectedCharacterRevision: {type: integer, format: int64, minimum: 1, description: 客户端列表快照中的角色修订号。}
+    CharacterSelectionResponse:
+      type: object
+      additionalProperties: false
+      required: [selectionRequestId, profileRevision, character]
+      properties:
+        selectionRequestId: {type: string, description: 已提交的选择请求标识。}
+        profileRevision: {type: integer, format: int64, minimum: 1, description: 更新 selectedCharacterId 后的玩家资料修订号。}
+        character: {$ref: '#/components/schemas/CharacterSummary'}
     PartySnapshot:
       type: object
       additionalProperties: false

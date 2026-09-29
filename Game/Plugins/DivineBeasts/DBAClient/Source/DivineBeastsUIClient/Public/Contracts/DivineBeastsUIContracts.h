@@ -64,6 +64,16 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsUICharacterItem
     UPROPERTY(BlueprintReadOnly) FText DisabledReason;
 };
 
+/** FDivineBeastsUICreateHeroItem（角色创建页可选英雄只读项）。 */
+USTRUCT(BlueprintType)
+struct DIVINEBEASTSUICLIENT_API FDivineBeastsUICreateHeroItem
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly) FName HeroDefinitionId = NAME_None;
+    UPROPERTY(BlueprintReadOnly) FName DisplayNameKey = NAME_None;
+};
+
 /** FDivineBeastsUILoadingProjection（加载UI只读投影）。 */
 USTRUCT(BlueprintType)
 struct DIVINEBEASTSUICLIENT_API FDivineBeastsUILoadingProjection
@@ -170,6 +180,7 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsUIViewState
     UPROPERTY(BlueprintReadOnly) bool bMaintenance = false;
 
     UPROPERTY(BlueprintReadOnly) TArray<FDivineBeastsUICharacterItem> Characters;
+    UPROPERTY(BlueprintReadOnly) TArray<FDivineBeastsUICreateHeroItem> CreateHeroOptions;
     UPROPERTY(BlueprintReadOnly) FString SelectedCharacterId;
     UPROPERTY(BlueprintReadOnly) FName SelectedHeroDefinitionId = NAME_None;
 

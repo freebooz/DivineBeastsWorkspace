@@ -36,7 +36,7 @@ FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
     {
         return State.Characters.IsEmpty()
             ? FName(TEXT("UI.Screen.CharacterCreate"))
-            : FName(TEXT("UI.Screen.CharacterRoster"));
+            : FName(TEXT("UI.Screen.CharacterSelect"));
     }
 
     return NAME_None;
