@@ -30,6 +30,8 @@ public:
     virtual void SetApplicationFocus(bool) override;
     virtual FGamePlatformInputSubscription SubscribeInputEvents(TWeakObjectPtr<UObject>,TFunction<void(const FGamePlatformInputEvent&)>) override;
     virtual bool UnsubscribeInputEvents(const FGamePlatformInputSubscription&) override;
+    virtual FGamePlatformInputStateSubscription SubscribeInputState(TWeakObjectPtr<UObject>,TFunction<void(const FGamePlatformInputSnapshot&)>) override;
+    virtual bool UnsubscribeInputState(const FGamePlatformInputStateSubscription&) override;
     virtual FGamePlatformInputSnapshot GetInputSnapshot() const override;
     virtual FGamePlatformInputDiagnostics GetInputDiagnostics() const override;
     virtual FGamePlatformResult NotifyInputDeviceActivity(EGamePlatformInputDeviceFamily) override;
@@ -41,6 +43,7 @@ public:
     virtual FGamePlatformResult ResetMappings(FName) override;
     virtual FGamePlatformResult SaveInputPreferences() override;
     virtual FGamePlatformInputTouchHandle BeginTouchInput(int32,EGamePlatformInputSemantic,TWeakObjectPtr<UObject>,FGamePlatformResult&) override;
+    virtual FGamePlatformInputTouchHandle BeginTouchInputBySemantic(int32,FGamePlatformInputSemanticId,TWeakObjectPtr<UObject>,FGamePlatformResult&) override;
     virtual FGamePlatformResult UpdateTouchInput(const FGamePlatformInputTouchHandle&,const FInputActionValue&) override;
     virtual FGamePlatformResult EndTouchInput(const FGamePlatformInputTouchHandle&) override;
 private:
@@ -49,6 +52,8 @@ private:
      * bCountAsActivity=false仅用于初始化，避免把初始平台默认值计入“用户设备切换”。
      */
     void SetActiveDeviceFamily(EGamePlatformInputDeviceFamily DeviceFamily,bool bCountAsActivity);
+    /** 统一Touch签发入口；Slot仅来自已编译Profile，运行时保持数组O(1)访问。 */
+    FGamePlatformInputTouchHandle BeginTouchInputBySlot(int32 PointerId,int32 Slot,TWeakObjectPtr<UObject> Owner,FGamePlatformResult& OutResult);
     bool Tick(float DeltaSeconds);
     /** 仅在存在弱Owner租约时安排低频维护Ticker；空闲LocalPlayer不产生固定轮询。 */
     void ScheduleMaintenance();
@@ -57,9 +62,11 @@ private:
     bool IsCurrentOwner(TWeakObjectPtr<UObject> Owner) const;
     void Interrupt(uint8 Channels,EGamePlatformInputEndReason Reason);
     void Publish(FGamePlatformInputEvent Event);
-    void Route(const FInputActionValue& Value,EGamePlatformInputSemantic Semantic,ETriggerEvent Phase,uint64 BindingGeneration);
-    /** Enhanced Input绑定回调；只做值标准化、动作门禁和事件发布，不分配资源或写磁盘。 */
-    void HandleBoundInput(const FInputActionValue& Value,EGamePlatformInputSemantic Semantic,ETriggerEvent Phase,uint64 BindingGeneration);
+    /** 只在公开快照真实变化时广播低频状态；广播期间禁止结构性修改。 */
+    void PublishState(bool bForce = false);
+    void Route(const FInputActionValue& Value,int32 Slot,ETriggerEvent Phase,uint64 BindingGeneration);
+    /** Enhanced Input绑定回调；高频路径直接携带编译期Slot，不做GameplayTag/TMap查找。 */
+    void HandleBoundInput(const FInputActionValue& Value,int32 Slot,ETriggerEvent Phase,uint64 BindingGeneration);
     void RebuildMappings();
     FGamePlatformResult PreparePreferences();
     void ReleasePreferences();

@@ -14,6 +14,10 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryTransportResult
 using FGamePlatformTelemetryTransportCompletion =
     TFunction<void(FGamePlatformTelemetryTransportResult)>;
 
+/** 每次发送前动态生成非持久请求头；用于令牌轮换，Transport不长期保存AccessToken。 */
+using FGamePlatformTelemetryHeaderProvider =
+    TFunction<TMap<FString, FString>()>;
+
 class GAMEPLATFORMTELEMETRY_API IGamePlatformTelemetryTransport
 {
 public:
@@ -37,7 +41,9 @@ public:
         FString InBaseUrl,
         FString InPath,
         TMap<FString, FString> InStaticHeaders,
-        float InTimeoutSeconds = 5.0f);
+        float InTimeoutSeconds = 5.0f,
+        int32 InMaxPayloadBytes = 256 * 1024,
+        FGamePlatformTelemetryHeaderProvider InDynamicHeaderProvider = {});
 
     bool IsConfigured() const;
 
@@ -51,6 +57,8 @@ private:
     FString BaseUrl;
     FString Path;
     TMap<FString, FString> StaticHeaders;
+    FGamePlatformTelemetryHeaderProvider DynamicHeaderProvider;
+    int32 MaxPayloadBytes = 256 * 1024;
     float TimeoutSeconds = 5.0f;
 
     FCriticalSection RequestsMutex;

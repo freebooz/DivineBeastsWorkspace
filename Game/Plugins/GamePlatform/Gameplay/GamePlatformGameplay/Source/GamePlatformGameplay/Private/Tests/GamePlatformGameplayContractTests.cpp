@@ -10,7 +10,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformGameplaySafeDefaultsTest,
     "GamePlatform.Gameplay.Contracts.SafeDefaults",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 
 bool FGamePlatformGameplaySafeDefaultsTest::RunTest(const FString& Parameters)
 {
@@ -39,7 +39,7 @@ bool FGamePlatformGameplaySafeDefaultsTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformGameplayDefinitionValidationTest,
     "GamePlatform.Gameplay.Definitions.Validation",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 
 bool FGamePlatformGameplayDefinitionValidationTest::RunTest(const FString& Parameters)
 {

@@ -1,7 +1,7 @@
 # PerformanceAndOverhead（性能与开销）
 
-RecordEvent fast path（事件记录快速路径）只做结构校验、采样、令牌桶限流、轻量尺寸估算和短锁有界入队；不做网络、资产加载或大 JSON 序列化。
+RecordEvent/RecordMetric fast path（事件/指标记录快速路径）只做 Schema 类型/隐私校验、采样、令牌桶限流、轻量尺寸估算和短锁有界入队；不做资产加载。Event 和 Metric 都有 Schema 级速率上限，`client.frame_ms/server.frame_ms` 默认最多稳定采样 10 条/秒、Burst 20，避免按帧率无限挤占 Buffer。
 
-序列化在 Batch→HTTP Transport（批次→HTTP传输）阶段发生。Buffer、Batch、Pending Network Batch、NATS reconnect buffer 都有显式上限。
+Flush（刷新）不再常驻每5秒唤醒：Buffer 首次有数据才安排一次性 Deadline，到达 Batch 条数/字节阈值会立即刷新；单次最多提交 `MaxFlushBatchesPerPass` 个 Batch，剩余数据再安排下一次 Deadline。Batch 以第一条记录 Context 为公共 SourceContext，Context 变化自然切批，HTTP JSON 不再为每条 Event/Metric 重复序列化完整 Context，并在最终 UTF-8 Payload 上再次执行硬字节上限。
 
-已创建 Development-only 1000 Records（开发1000条记录）UE 测试框架，但当前没有实际 UE Runner，所以 1/10/100/1000 events/sec（每秒事件）CPU、allocation、bytes 和 overflow 性能数据均未执行，不能承诺指标。
+BoundedBuffer 仍使用 TArray，但正常批次消费已改为 `HeadIndex（头索引）` 前移，不再每次 `RemoveAt(0,N)` 搬移全部剩余记录；仅在累计消费达到 256 条或已消费前缀超过数组一半时做一次摊销压缩。优先级驱逐仍保持稳定顺序，非头部候选在极端 Buffer Full 场景仍可能产生线性移动；若后续压力基准证明这部分成为瓶颈，再升级为 Ring Buffer（环形缓冲）/分优先级队列。Development-only 1000 Records 测试已经由 UE Automation 实际执行通过，但它只证明有界性；1/10/100/1000 events/sec 的 CPU、allocation、真实 HTTP 字节和 overflow 基准仍未形成完整数据，不能承诺具体性能指标。

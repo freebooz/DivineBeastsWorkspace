@@ -10,7 +10,8 @@
   "EnabledByDefault": false,
   "Plugins": [
     { "Name": "DBAGameplay", "Enabled": true },
-    { "Name": "GamePlatformServer", "Enabled": true }
+    { "Name": "GamePlatformServer", "Enabled": true },
+    { "Name": "GamePlatformTelemetry", "Enabled": true }
   ],
   "Modules": [
     { "Name": "DBAServer", "Type": "ServerOnly", "LoadingPhase": "Default", "TargetAllowList": ["Server", "Editor"] }

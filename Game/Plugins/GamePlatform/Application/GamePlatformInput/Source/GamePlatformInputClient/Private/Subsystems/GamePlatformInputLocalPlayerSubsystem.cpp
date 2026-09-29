@@ -1,8 +1,10 @@
 #include "Subsystems/GamePlatformInputLocalPlayerSubsystem.h"
 
 #include "Definitions/GamePlatformInputProfileDefinition.h"
+#include "Devices/InputDevicePolicy.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Policy/InputPolicy.h"
+#include "Profiles/InputProfileCompiler.h"
 #include "Services/GamePlatformInputServices.h"
 
 #include "EnhancedInputComponent.h"
@@ -13,6 +15,7 @@
 #include "UserSettings/EnhancedInputUserSettings.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/PlatformMisc.h"
@@ -20,7 +23,6 @@
 #include "Misc/ConfigCacheIni.h"
 #include "Misc/SecureHash.h"
 #include "UObject/StrongObjectPtr.h"
-#include <array>
 
 namespace Policy = GamePlatformInputPolicy;
 
@@ -30,42 +32,14 @@ namespace
 constexpr float InputMaintenanceIntervalSeconds = 0.25f;
 /** 订阅者采用固定容量，防止错误UI或热重载代码造成无界增长。 */
 constexpr int32 MaxInputSubscriptions = 32;
+/** 状态观察远低于动作事件订阅，单LocalPlayer限制16个，防止UI热重载无界累计。 */
+constexpr int32 MaxInputStateSubscriptions = 16;
 /** 当前控制器/Pawn切换只需极少绑定；硬上限防止重复热重载累计事件绑定。 */
 constexpr int32 MaxInputBindings = 8;
 /** Touch（触控）指针使用UE常见0..9范围，避免任意整数污染本地状态。 */
 constexpr int32 MinTouchPointerId = 0;
 constexpr int32 MaxTouchPointerId = 9;
-/** 平台语义当前从Move连续排列到Cancel；固定槽数组避免高频事件路径使用哈希表。 */
-constexpr int32 InputSemanticCount = static_cast<int32>(EGamePlatformInputSemantic::Cancel) + 1;
-static_assert(static_cast<int32>(EGamePlatformInputSemantic::Move) == 0, "输入语义固定数组要求Move从0开始。");
 
-/**
- * 返回当前目标平台的默认设备族。
- * Android/iOS默认Touch；桌面即使硬件支持触摸也默认键鼠，避免触屏PC启动时错误显示移动端按键提示。
- */
-constexpr EGamePlatformInputDeviceFamily DefaultDeviceFamilyForTarget()
-{
-#if PLATFORM_ANDROID || PLATFORM_IOS
-    return EGamePlatformInputDeviceFamily::Touch;
-#else
-    return EGamePlatformInputDeviceFamily::KeyboardMouse;
-#endif
-}
-
-/** Profile禁用当前设备时选择合理回退；移动端优先Touch，桌面优先键鼠。 */
-EGamePlatformInputDeviceFamily SelectFallbackDeviceFamily(const UGamePlatformInputProfileDefinition& Profile)
-{
-#if PLATFORM_ANDROID || PLATFORM_IOS
-    if (Profile.bEnableTouch) { return EGamePlatformInputDeviceFamily::Touch; }
-    if (Profile.bEnableGamepad) { return EGamePlatformInputDeviceFamily::Gamepad; }
-    if (Profile.bEnableKeyboardMouse) { return EGamePlatformInputDeviceFamily::KeyboardMouse; }
-#else
-    if (Profile.bEnableKeyboardMouse) { return EGamePlatformInputDeviceFamily::KeyboardMouse; }
-    if (Profile.bEnableGamepad) { return EGamePlatformInputDeviceFamily::Gamepad; }
-    if (Profile.bEnableTouch) { return EGamePlatformInputDeviceFamily::Touch; }
-#endif
-    return EGamePlatformInputDeviceFamily::Unknown;
-}
 
 /** 返回平台已知的全部输入阻断位。 */
 constexpr uint8 AllInputChannels =
@@ -74,20 +48,6 @@ constexpr uint8 AllInputChannels =
     static_cast<uint8>(EGamePlatformInputChannel::Actions) |
     static_cast<uint8>(EGamePlatformInputChannel::UICommands) |
     static_cast<uint8>(EGamePlatformInputChannel::TextEntry);
-
-/** 将语义映射到Enhanced Input（增强输入）的期望值类型。 */
-EInputActionValueType ExpectedValueType(EGamePlatformInputSemantic Semantic)
-{
-    switch (Semantic)
-    {
-    case EGamePlatformInputSemantic::Move:
-    case EGamePlatformInputSemantic::LookDelta:
-    case EGamePlatformInputSemantic::LookRate:
-        return EInputActionValueType::Axis2D;
-    default:
-        return EInputActionValueType::Boolean;
-    }
-}
 
 /** 输入重绑定只接受数字键、键盘、鼠标按钮或手柄按钮，不允许Touch/Gesture/连续轴作为离散重绑定键。 */
 bool IsSupportedRebindKey(const FKey& Key)
@@ -158,6 +118,37 @@ FInputActionValue MakeNeutralValue(EInputActionValueType Type)
 {
     return FInputActionValue(Type, FVector::ZeroVector);
 }
+
+/**
+ * 比较两个公开输入快照是否一致。
+ * 这里只比较公开轻量值字段，不读取 UObject、不分配容器；状态事件因此可以保持低频 O(1) 判重。
+ */
+bool IsSameInputSnapshot(const FGamePlatformInputSnapshot& Left, const FGamePlatformInputSnapshot& Right)
+{
+    return Left.bProfilePrepared == Right.bProfilePrepared &&
+        Left.bBindingsReady == Right.bBindingsReady &&
+        Left.bMappingsApplied == Right.bMappingsApplied &&
+        Left.bGameplayInputEnabled == Right.bGameplayInputEnabled &&
+        Left.bPreferencesSaved == Right.bPreferencesSaved &&
+        Left.ActiveDeviceFamily == Right.ActiveDeviceFamily &&
+        Left.ProfileGeneration == Right.ProfileGeneration &&
+        Left.BindingGeneration == Right.BindingGeneration &&
+        Left.SettingsRevision == Right.SettingsRevision &&
+        Left.DeviceRevision == Right.DeviceRevision &&
+        Left.BlockedChannels == Right.BlockedChannels &&
+        Left.ContextLeaseCount == Right.ContextLeaseCount &&
+        Left.OwnedBindingCount == Right.OwnedBindingCount &&
+        Left.TouchSourceCount == Right.TouchSourceCount &&
+        Left.Accessibility.LookSensitivityMultiplier == Right.Accessibility.LookSensitivityMultiplier &&
+        Left.Accessibility.bInvertLookX == Right.Accessibility.bInvertLookX &&
+        Left.Accessibility.bInvertLookY == Right.Accessibility.bInvertLookY &&
+        Left.Accessibility.MoveDeadZoneMultiplier == Right.Accessibility.MoveDeadZoneMultiplier &&
+        Left.Accessibility.TouchLookSensitivityMultiplier == Right.Accessibility.TouchLookSensitivityMultiplier &&
+        Left.Accessibility.TouchMoveScale == Right.Accessibility.TouchMoveScale &&
+        Left.Result.Status == Right.Result.Status &&
+        Left.Result.Code == Right.Result.Code &&
+        Left.Result.Message == Right.Result.Message;
+}
 }
 
 struct FInputContextRecord
@@ -190,11 +181,20 @@ struct FInputSubscriptionRecord
     TFunction<void(const FGamePlatformInputEvent&)> Callback;
 };
 
+/** 低频输入状态订阅；与动作事件订阅分离，避免高频输入路径复制状态快照。 */
+struct FInputStateSubscriptionRecord
+{
+    FGamePlatformInputStateSubscription Handle;
+    TWeakObjectPtr<UObject> Owner;
+    TFunction<void(const FGamePlatformInputSnapshot&)> Callback;
+};
+
 struct FInputTouchRecord
 {
     FGamePlatformInputTouchHandle Handle;
     int32 PointerId = INDEX_NONE;
-    EGamePlatformInputSemantic Semantic = EGamePlatformInputSemantic::Move;
+    /** Profile编译后的紧凑槽位；Touch更新不再按Tag或旧枚举查动作。 */
+    int32 Slot = INDEX_NONE;
     TWeakObjectPtr<UObject> Owner;
 };
 
@@ -213,7 +213,12 @@ struct FGamePlatformInputScope
     TWeakObjectPtr<UGamePlatformInputProfileDefinition> Profile;
     FString SettingsSection;
 
-    TMap<EGamePlatformInputSemantic, TWeakObjectPtr<UInputAction>> Actions;
+    /** Profile准备阶段一次编译；高频事件只使用CompiledActions[Slot]。 */
+    TArray<FGamePlatformCompiledInputAction> CompiledActions;
+    /** 低频项目Touch入口使用Tag查Slot；Enhanced Input事件不会访问本Map。 */
+    TMap<FGameplayTag, int32> SlotByTag;
+    /** 旧枚举API兼容表；仅旧Touch入口使用。 */
+    TMap<uint8, int32> LegacySlotBySemantic;
     TMap<FName, TWeakObjectPtr<UInputMappingContext>> Contexts;
     TSet<TWeakObjectPtr<UInputMappingContext>> PreferenceContextsOwned;
 
@@ -221,16 +226,20 @@ struct FGamePlatformInputScope
     TMap<FGuid, FInputBlockRecord> Blocks;
     TMap<FGuid, FInputBindingRecord> Bindings;
     TMap<FGuid, FInputSubscriptionRecord> Subscriptions;
+    TMap<FGuid, FInputStateSubscriptionRecord> StateSubscriptions;
     TMap<FGuid, FInputTouchRecord> Touches;
 
     Policy::ContextLedger ContextLedger;
     Policy::BlockLedger BlockLedger;
-    /** 固定语义槽避免高频Route/Interrupt路径的哈希查找和隐式节点分配。 */
-    std::array<Policy::ActionGate, InputSemanticCount> ActionGates{};
+    /** 与CompiledActions等长；Profile准备时一次SetNum，高频Route按Slot直接O(1)访问。 */
+    TArray<Policy::ActionGate> ActionGates;
 
     FGamePlatformInputAccessibilitySettings Accessibility;
     EGamePlatformInputDeviceFamily ActiveDeviceFamily = EGamePlatformInputDeviceFamily::Unknown;
     FGamePlatformResult LastResult;
+    /** 最近一次已广播公开快照；只保存轻量值，避免状态订阅退化为轮询。 */
+    FGamePlatformInputSnapshot LastPublishedSnapshot;
+    bool bHasPublishedSnapshot = false;
 
     bool bProfilePrepared = false;
     bool bMappingsApplied = false;
@@ -269,7 +278,7 @@ void UGamePlatformInputLocalPlayerSubsystem::Initialize(FSubsystemCollectionBase
     Scope = MakeUnique<FGamePlatformInputScope>();
 
     // 目标平台决定初始设备族：Android/iOS默认Touch；桌面默认键鼠，触屏PC不会误用移动端提示。
-    SetActiveDeviceFamily(DefaultDeviceFamilyForTarget(), false);
+    SetActiveDeviceFamily(GamePlatformInputDevicePolicy::GetDefaultDeviceFamilyForTarget(), false);
 
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
     {
@@ -380,6 +389,7 @@ void UGamePlatformInputLocalPlayerSubsystem::SetActiveDeviceFamily(
     Scope->ActiveDeviceFamily = DeviceFamily;
     ++Scope->DeviceRevision;
     if (bCountAsActivity) { ++Scope->TotalDeviceFamilyChanges; }
+    PublishState();
 }
 
 void UGamePlatformInputLocalPlayerSubsystem::ScheduleMaintenance()
@@ -441,6 +451,14 @@ bool UGamePlatformInputLocalPlayerSubsystem::Tick(float)
         ExpiredTouches.Num() + ExpiredBindings.Num() + ExpiredBlocks.Num() + ExpiredContexts.Num();
 
     for (auto It = Scope->Subscriptions.CreateIterator(); It; ++It)
+    {
+        if (!It.Value().Owner.IsValid())
+        {
+            ++Scope->TotalExpiredOwnersCollected;
+            It.RemoveCurrent();
+        }
+    }
+    for (auto It = Scope->StateSubscriptions.CreateIterator(); It; ++It)
     {
         if (!It.Value().Owner.IsValid())
         {
@@ -556,6 +574,7 @@ FGamePlatformInputProfileHandle UGamePlatformInputLocalPlayerSubsystem::PrepareI
     Scope->bMappingsApplied = false;
     Scope->bPreferencesSaved = false;
     Scope->LastResult = FGamePlatformResult::Success();
+    PublishState();
 
     OutResult = FGamePlatformResult::Success();
     return Handle;
@@ -574,6 +593,7 @@ void UGamePlatformInputLocalPlayerSubsystem::CompleteProfile(uint64 Generation, 
         Scope->LastResult = Result.IsSuccess()
             ? FGamePlatformResult::Failure(TEXT("InputDataUnavailable"), TEXT("Profile完成时数据服务已失效。"))
             : Result;
+        PublishState();
         return;
     }
 
@@ -582,6 +602,7 @@ void UGamePlatformInputLocalPlayerSubsystem::CompleteProfile(uint64 Generation, 
     if (!Loaded)
     {
         Scope->LastResult = FGamePlatformResult::Failure(TEXT("InputProfileLoadFailed"), TEXT("输入Profile租约完成但定义对象不可读。"));
+        PublishState();
         return;
     }
 
@@ -589,25 +610,29 @@ void UGamePlatformInputLocalPlayerSubsystem::CompleteProfile(uint64 Generation, 
     if (!Validation.IsSuccess())
     {
         Scope->LastResult = Validation;
+        PublishState();
         return;
     }
 
-    Scope->Actions.Reset();
+    Scope->CompiledActions.Reset();
+    Scope->SlotByTag.Reset();
+    Scope->LegacySlotBySemantic.Reset();
+    Scope->ActionGates.Reset();
     Scope->Contexts.Reset();
 
-    for (const FGamePlatformInputActionDefinition& Entry : Loaded->Actions)
+    // Tag/Descriptor只在Profile准备阶段解析一次；高频输入回调之后只携带CompactSlot。
+    const FGamePlatformResult CompileResult = CompileGamePlatformInputProfile(
+        *Loaded,
+        Scope->CompiledActions,
+        Scope->SlotByTag,
+        Scope->LegacySlotBySemantic);
+    if (!CompileResult.IsSuccess())
     {
-        UInputAction* Action = Entry.Action.Get();
-        if (!Action || Action->ValueType != ExpectedValueType(Entry.Semantic))
-        {
-            Scope->LastResult = FGamePlatformResult::Failure(
-                TEXT("InvalidLoadedInputAction"),
-                TEXT("Input Bundle未加载动作或动作值维度与平台语义不匹配。"));
-            Scope->Actions.Reset();
-            return;
-        }
-        Scope->Actions.Add(Entry.Semantic, Action);
+        Scope->LastResult = CompileResult;
+        PublishState();
+        return;
     }
+    Scope->ActionGates.SetNum(Scope->CompiledActions.Num());
 
     for (const FGamePlatformInputContextDefinition& Entry : Loaded->Contexts)
     {
@@ -618,6 +643,7 @@ void UGamePlatformInputLocalPlayerSubsystem::CompleteProfile(uint64 Generation, 
                 TEXT("InvalidLoadedInputContext"),
                 TEXT("Input Bundle未加载映射上下文。"));
             Scope->Contexts.Reset();
+            PublishState();
             return;
         }
         Scope->Contexts.Add(Entry.Name, Context);
@@ -628,18 +654,20 @@ void UGamePlatformInputLocalPlayerSubsystem::CompleteProfile(uint64 Generation, 
     // Profile准备后校正当前设备族：移动Touch-only或PC-only配置不会继承一个被禁用的默认设备状态。
     if (!IsDeviceEnabled(*Loaded, Scope->ActiveDeviceFamily))
     {
-        SetActiveDeviceFamily(SelectFallbackDeviceFamily(*Loaded), true);
+        SetActiveDeviceFamily(GamePlatformInputDevicePolicy::SelectFallbackDeviceFamily(*Loaded), true);
     }
 
     const FGamePlatformResult PreferenceResult = PreparePreferences();
     if (!PreferenceResult.IsSuccess())
     {
         Scope->LastResult = PreferenceResult;
+        PublishState();
         return;
     }
 
     Scope->bProfilePrepared = true;
     Scope->LastResult = FGamePlatformResult::Success();
+    PublishState();
 }
 
 FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::PreparePreferences()
@@ -766,13 +794,17 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::ReleaseInputProfile(
     Scope->ProfileHandle = {};
     Scope->ProfileLease = {};
     Scope->Profile.Reset();
-    Scope->Actions.Reset();
+    Scope->CompiledActions.Reset();
+    Scope->SlotByTag.Reset();
+    Scope->LegacySlotBySemantic.Reset();
+    Scope->ActionGates.Reset();
     Scope->Contexts.Reset();
     Scope->SettingsSection.Reset();
     Scope->bProfilePrepared = false;
     Scope->bMappingsApplied = false;
     Scope->bPreferencesSaved = false;
     Scope->LastResult = FGamePlatformResult::Success();
+    PublishState();
     return FGamePlatformResult::Success();
 }
 
@@ -856,6 +888,7 @@ FGamePlatformInputContextHandle UGamePlatformInputLocalPlayerSubsystem::AcquireI
     Scope->bPreferencesSaved = false;
     ScheduleMaintenance();
     OutResult = FGamePlatformResult::Success();
+    PublishState();
     return Handle;
 }
 
@@ -892,6 +925,7 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::ReleaseInputContext(
     }
 
     Scope->bMappingsApplied = false;
+    PublishState();
     return FGamePlatformResult::Success();
 }
 
@@ -954,22 +988,22 @@ FGamePlatformInputBindingHandle UGamePlatformInputLocalPlayerSubsystem::BindInpu
         ETriggerEvent::Canceled
     };
 
-    for (const auto& Pair : Scope->Actions)
+    for (const FGamePlatformCompiledInputAction& Compiled : Scope->CompiledActions)
     {
-        const EGamePlatformInputSemantic Semantic = Pair.Key;
-        const UInputAction* Action = Pair.Value.Get();
-        if (!Action) { continue; }
+        const int32 Slot = Compiled.Slot;
+        const UInputAction* Action = Compiled.Action.Get();
+        if (!Action || !Scope->CompiledActions.IsValidIndex(Slot)) { continue; }
 
         for (const ETriggerEvent Phase : Phases)
         {
             FEnhancedInputActionEventBinding& Binding = Component.BindActionValueLambda(
                 Action,
                 Phase,
-                [WeakThis, Semantic, Phase, BindingGeneration](const FInputActionValue& Value)
+                [WeakThis, Slot, Phase, BindingGeneration](const FInputActionValue& Value)
                 {
                     if (UGamePlatformInputLocalPlayerSubsystem* Self = WeakThis.Get())
                     {
-                        Self->HandleBoundInput(Value, Semantic, Phase, BindingGeneration);
+                        Self->HandleBoundInput(Value, Slot, Phase, BindingGeneration);
                     }
                 });
             Record.NativeBindingHandles.Add(Binding.GetHandle());
@@ -980,6 +1014,7 @@ FGamePlatformInputBindingHandle UGamePlatformInputLocalPlayerSubsystem::BindInpu
     Scope->Bindings.Add(Handle.Id, MoveTemp(Record));
     ScheduleMaintenance();
     OutResult = FGamePlatformResult::Success();
+    PublishState();
     return Handle;
 }
 
@@ -1011,6 +1046,7 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::UnbindInputReceiver(
         static_cast<uint8>(EGamePlatformInputChannel::Look) |
         static_cast<uint8>(EGamePlatformInputChannel::Actions),
         EGamePlatformInputEndReason::ReceiverChanged);
+    PublishState();
     return FGamePlatformResult::Success();
 }
 
@@ -1054,6 +1090,7 @@ FGamePlatformInputBlockHandle UGamePlatformInputLocalPlayerSubsystem::AcquireInp
     Interrupt(Channels, EGamePlatformInputEndReason::Blocked);
     ScheduleMaintenance();
     OutResult = FGamePlatformResult::Success();
+    PublishState();
     return Handle;
 }
 
@@ -1073,6 +1110,7 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::ReleaseInputBlock(co
 
     Scope->BlockLedger.Release(PolicyToken(Record->Handle));
     Scope->Blocks.Remove(Handle.Id);
+    PublishState();
     return FGamePlatformResult::Success();
 }
 
@@ -1096,6 +1134,7 @@ void UGamePlatformInputLocalPlayerSubsystem::SetApplicationFocus(bool bHasFocus)
             }
         }
     }
+    PublishState();
 }
 
 FGamePlatformInputSubscription UGamePlatformInputLocalPlayerSubsystem::SubscribeInputEvents(
@@ -1136,6 +1175,50 @@ bool UGamePlatformInputLocalPlayerSubsystem::UnsubscribeInputEvents(const FGameP
     return Scope->Subscriptions.Remove(Handle.Id) == 1;
 }
 
+FGamePlatformInputStateSubscription UGamePlatformInputLocalPlayerSubsystem::SubscribeInputState(
+    TWeakObjectPtr<UObject> Owner,
+    TFunction<void(const FGamePlatformInputSnapshot&)> Callback)
+{
+    check(IsInGameThread());
+    if (!CanMutate() || !IsCurrentOwner(Owner) || !Callback ||
+        Scope->StateSubscriptions.Num() >= MaxInputStateSubscriptions || Scope->NextGeneration == MAX_uint64)
+    {
+        return {};
+    }
+
+    FInputStateSubscriptionRecord Record;
+    Record.Handle.ScopeId = Scope->ScopeId;
+    Record.Handle.Id = FGuid::NewGuid();
+    Record.Handle.Generation = ++Scope->NextGeneration;
+    Record.Owner = Owner;
+    Record.Callback = MoveTemp(Callback);
+
+    const FGamePlatformInputStateSubscription Handle = Record.Handle;
+    Scope->StateSubscriptions.Add(Handle.Id, MoveTemp(Record));
+
+    if (FInputStateSubscriptionRecord* Added = Scope->StateSubscriptions.Find(Handle.Id))
+    {
+        const FGamePlatformInputSnapshot Snapshot = GetInputSnapshot();
+        TGuardValue<bool> Guard(Scope->bDispatching, true);
+        Added->Callback(Snapshot);
+    }
+    return Handle;
+}
+
+bool UGamePlatformInputLocalPlayerSubsystem::UnsubscribeInputState(
+    const FGamePlatformInputStateSubscription& Handle)
+{
+    check(IsInGameThread());
+    if (!CanMutate() || !Handle.IsValid() || Handle.ScopeId != Scope->ScopeId) { return false; }
+
+    const FInputStateSubscriptionRecord* Record = Scope->StateSubscriptions.Find(Handle.Id);
+    if (!Record || !(static_cast<const FGamePlatformInputIdentity&>(Record->Handle) == static_cast<const FGamePlatformInputIdentity&>(Handle)))
+    {
+        return false;
+    }
+    return Scope->StateSubscriptions.Remove(Handle.Id) == 1;
+}
+
 FGamePlatformInputSnapshot UGamePlatformInputLocalPlayerSubsystem::GetInputSnapshot() const
 {
     check(IsInGameThread());
@@ -1167,6 +1250,31 @@ FGamePlatformInputSnapshot UGamePlatformInputLocalPlayerSubsystem::GetInputSnaps
     Snapshot.TouchSourceCount = Scope->Touches.Num();
     Snapshot.Result = Scope->LastResult;
     return Snapshot;
+}
+
+void UGamePlatformInputLocalPlayerSubsystem::PublishState(bool bForce)
+{
+    check(IsInGameThread());
+    if (!Scope || Scope->bDispatching || Scope->StateSubscriptions.IsEmpty()) { return; }
+
+    const FGamePlatformInputSnapshot Snapshot = GetInputSnapshot();
+    if (!bForce && Scope->bHasPublishedSnapshot && IsSameInputSnapshot(Scope->LastPublishedSnapshot, Snapshot))
+    {
+        return;
+    }
+
+    Scope->LastPublishedSnapshot = Snapshot;
+    Scope->bHasPublishedSnapshot = true;
+    TGuardValue<bool> Guard(Scope->bDispatching, true);
+    for (auto It = Scope->StateSubscriptions.CreateIterator(); It; ++It)
+    {
+        if (!It.Value().Owner.IsValid())
+        {
+            It.RemoveCurrent();
+            continue;
+        }
+        It.Value().Callback(Snapshot);
+    }
 }
 FGamePlatformInputDiagnostics UGamePlatformInputLocalPlayerSubsystem::GetInputDiagnostics() const
 {
@@ -1233,6 +1341,7 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::SetAccessibilitySett
 
     Scope->Accessibility = Settings;
     Scope->bPreferencesSaved = false;
+    PublishState();
     return FGamePlatformResult::Success();
 }
 
@@ -1430,6 +1539,7 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::SaveInputPreferences
 
     Scope->bPreferencesSaved = true;
     ++Scope->SettingsRevision;
+    PublishState();
     return FGamePlatformResult::Success();
 }
 
@@ -1440,20 +1550,72 @@ FGamePlatformInputTouchHandle UGamePlatformInputLocalPlayerSubsystem::BeginTouch
     FGamePlatformResult& OutResult)
 {
     check(IsInGameThread());
+    if (!Scope)
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("InputServiceUnavailable"), TEXT("输入服务作用域不存在。"));
+        return {};
+    }
+
+    const int32* Slot = Scope->LegacySlotBySemantic.Find(static_cast<uint8>(Semantic));
+    if (!Slot)
+    {
+        OutResult = FGamePlatformResult::Failure(
+            TEXT("LegacyInputSemanticMissing"),
+            TEXT("旧枚举语义未在当前Profile编译表中声明。"));
+        return {};
+    }
+    return BeginTouchInputBySlot(PointerId, *Slot, Owner, OutResult);
+}
+
+FGamePlatformInputTouchHandle UGamePlatformInputLocalPlayerSubsystem::BeginTouchInputBySemantic(
+    int32 PointerId,
+    FGamePlatformInputSemanticId SemanticId,
+    TWeakObjectPtr<UObject> Owner,
+    FGamePlatformResult& OutResult)
+{
+    check(IsInGameThread());
+    if (!Scope || !SemanticId.IsValid())
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidInputSemantic"), TEXT("Touch输入语义标识无效。"));
+        return {};
+    }
+
+    const int32* Slot = Scope->SlotByTag.Find(SemanticId.Tag);
+    if (!Slot)
+    {
+        OutResult = FGamePlatformResult::Failure(
+            TEXT("InputSemanticMissing"),
+            TEXT("稳定输入语义未在当前Profile编译表中声明。"));
+        return {};
+    }
+    return BeginTouchInputBySlot(PointerId, *Slot, Owner, OutResult);
+}
+
+FGamePlatformInputTouchHandle UGamePlatformInputLocalPlayerSubsystem::BeginTouchInputBySlot(
+    int32 PointerId,
+    int32 Slot,
+    TWeakObjectPtr<UObject> Owner,
+    FGamePlatformResult& OutResult)
+{
+    check(IsInGameThread());
     UGamePlatformInputProfileDefinition* Profile = Scope ? Scope->Profile.Get() : nullptr;
     if (!CanMutate() || !Scope->bProfilePrepared || !Profile || !Profile->bEnableTouch ||
         PointerId < MinTouchPointerId || PointerId > MaxTouchPointerId || !IsCurrentOwner(Owner) ||
-        !Scope->Actions.Contains(Semantic))
+        !Scope->CompiledActions.IsValidIndex(Slot))
     {
-        OutResult = FGamePlatformResult::Failure(TEXT("InvalidTouchInput"), TEXT("Touch输入未通过Profile、指针、Owner或语义校验。"));
+        OutResult = FGamePlatformResult::Failure(
+            TEXT("InvalidTouchInput"),
+            TEXT("Touch输入未通过Profile、指针、Owner或编译槽位校验。"));
         return {};
     }
 
     for (const auto& Pair : Scope->Touches)
     {
-        if (Pair.Value.PointerId == PointerId || Pair.Value.Semantic == Semantic)
+        if (Pair.Value.PointerId == PointerId || Pair.Value.Slot == Slot)
         {
-            OutResult = FGamePlatformResult::Failure(TEXT("TouchInputConflict"), TEXT("同一触点或语义已有活动Touch来源。"));
+            OutResult = FGamePlatformResult::Failure(
+                TEXT("TouchInputConflict"),
+                TEXT("同一触点或语义槽位已有活动Touch来源。"));
             return {};
         }
     }
@@ -1469,7 +1631,7 @@ FGamePlatformInputTouchHandle UGamePlatformInputLocalPlayerSubsystem::BeginTouch
     Record.Handle.Id = FGuid::NewGuid();
     Record.Handle.Generation = ++Scope->NextGeneration;
     Record.PointerId = PointerId;
-    Record.Semantic = Semantic;
+    Record.Slot = Slot;
     Record.Owner = Owner;
 
     const FGamePlatformInputTouchHandle Handle = Record.Handle;
@@ -1477,6 +1639,7 @@ FGamePlatformInputTouchHandle UGamePlatformInputLocalPlayerSubsystem::BeginTouch
     SetActiveDeviceFamily(EGamePlatformInputDeviceFamily::Touch, true);
     ScheduleMaintenance();
     OutResult = FGamePlatformResult::Success();
+    PublishState();
     return Handle;
 }
 
@@ -1492,15 +1655,16 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::UpdateTouchInput(
 
     FInputTouchRecord* Record = Scope->Touches.Find(Handle.Id);
     if (!Record || !(static_cast<const FGamePlatformInputIdentity&>(Record->Handle) == static_cast<const FGamePlatformInputIdentity&>(Handle)) ||
-        !Record->Owner.IsValid())
+        !Record->Owner.IsValid() || !Scope->CompiledActions.IsValidIndex(Record->Slot))
     {
-        return FGamePlatformResult::Failure(TEXT("StaleTouchInput"), TEXT("Touch输入来源已失效。"));
+        return FGamePlatformResult::Failure(TEXT("StaleTouchInput"), TEXT("Touch输入来源或编译槽位已失效。"));
     }
 
-    UInputAction* Action = Scope->Actions.FindRef(Record->Semantic).Get();
+    const FGamePlatformCompiledInputAction& Compiled = Scope->CompiledActions[Record->Slot];
+    UInputAction* Action = Compiled.Action.Get();
     UEnhancedInputLocalPlayerSubsystem* Enhanced =
         GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
-    if (!Action || !Enhanced || Value.GetValueType() != Action->ValueType || !FMath::IsFinite(Value.GetMagnitude()))
+    if (!Action || !Enhanced || Value.GetValueType() != Compiled.ValueType || !FMath::IsFinite(Value.GetMagnitude()))
     {
         return FGamePlatformResult::Failure(TEXT("InvalidTouchValue"), TEXT("Touch值维度、数值或Enhanced Input状态非法。"));
     }
@@ -1510,7 +1674,8 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::UpdateTouchInput(
     return FGamePlatformResult::Success();
 }
 
-FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::EndTouchInput(const FGamePlatformInputTouchHandle& Handle)
+FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::EndTouchInput(
+    const FGamePlatformInputTouchHandle& Handle)
 {
     check(IsInGameThread());
     if (!CanMutate() || !Handle.IsValid() || Handle.ScopeId != Scope->ScopeId)
@@ -1519,115 +1684,131 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::EndTouchInput(const 
     }
 
     FInputTouchRecord* Record = Scope->Touches.Find(Handle.Id);
-    if (!Record || !(static_cast<const FGamePlatformInputIdentity&>(Record->Handle) == static_cast<const FGamePlatformInputIdentity&>(Handle)))
+    if (!Record || !(static_cast<const FGamePlatformInputIdentity&>(Record->Handle) == static_cast<const FGamePlatformInputIdentity&>(Handle)) ||
+        !Scope->CompiledActions.IsValidIndex(Record->Slot))
     {
-        return FGamePlatformResult::Failure(TEXT("StaleTouchInput"), TEXT("Touch输入句柄不是当前签发记录。"));
+        return FGamePlatformResult::Failure(TEXT("StaleTouchInput"), TEXT("Touch输入句柄或编译槽位不是当前有效记录。"));
     }
 
-    UInputAction* Action = Scope->Actions.FindRef(Record->Semantic).Get();
-    if (Action)
+    const FGamePlatformCompiledInputAction& Compiled = Scope->CompiledActions[Record->Slot];
+    if (UInputAction* Action = Compiled.Action.Get())
     {
         if (UEnhancedInputLocalPlayerSubsystem* Enhanced =
             GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr)
         {
-            Enhanced->InjectInputForAction(Action, MakeNeutralValue(Action->ValueType), {}, {});
+            Enhanced->InjectInputForAction(Action, MakeNeutralValue(Compiled.ValueType), {}, {});
         }
     }
 
-    const uint8 Channel = GamePlatformInputServices::GetChannel(Record->Semantic);
-    Interrupt(Channel, EGamePlatformInputEndReason::NativeCanceled);
+    Interrupt(Compiled.ChannelMask, EGamePlatformInputEndReason::NativeCanceled);
     Scope->Touches.Remove(Handle.Id);
+    PublishState();
     return FGamePlatformResult::Success();
 }
 
 void UGamePlatformInputLocalPlayerSubsystem::HandleBoundInput(
     const FInputActionValue& Value,
-    EGamePlatformInputSemantic Semantic,
+    int32 Slot,
     ETriggerEvent Phase,
     uint64 BindingGeneration)
 {
-    Route(Value, Semantic, Phase, BindingGeneration);
+    Route(Value, Slot, Phase, BindingGeneration);
 }
 
 void UGamePlatformInputLocalPlayerSubsystem::Route(
     const FInputActionValue& Value,
-    EGamePlatformInputSemantic Semantic,
+    int32 Slot,
     ETriggerEvent Phase,
     uint64 BindingGeneration)
 {
     check(IsInGameThread());
-    if (!Scope || !Scope->bProfilePrepared || BindingGeneration != Scope->BindingGeneration) { return; }
+    if (!Scope || !Scope->bProfilePrepared || BindingGeneration != Scope->BindingGeneration ||
+        !Scope->CompiledActions.IsValidIndex(Slot) || !Scope->ActionGates.IsValidIndex(Slot))
+    {
+        return;
+    }
 
     UGamePlatformInputProfileDefinition* Profile = Scope->Profile.Get();
+    const FGamePlatformCompiledInputAction& Compiled = Scope->CompiledActions[Slot];
     if (!Profile || !IsDeviceEnabled(*Profile, Scope->ActiveDeviceFamily) ||
-        Value.GetValueType() != ExpectedValueType(Semantic) || !FMath::IsFinite(Value.GetMagnitude()))
+        Value.GetValueType() != Compiled.ValueType || !FMath::IsFinite(Value.GetMagnitude()))
     {
-        Interrupt(GamePlatformInputServices::GetChannel(Semantic), EGamePlatformInputEndReason::Blocked);
+        Interrupt(Compiled.ChannelMask, EGamePlatformInputEndReason::Blocked);
         return;
     }
 
     FInputActionValue Routed = Value;
-    if (Semantic == EGamePlatformInputSemantic::Move)
+    switch (Compiled.ValuePolicy)
     {
-        const FVector2D Raw = Value.Get<FVector2D>();
-        const double BaseDeadZone = Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
-            ? Profile->TouchAnalogDeadZone : Profile->AnalogDeadZone;
-        const double DeadZone = FMath::Clamp(
-            BaseDeadZone * Scope->Accessibility.MoveDeadZoneMultiplier,
-            0.0,
-            0.95);
-        const auto Axis = Policy::ApplyRadialDeadZone(Raw.X, Raw.Y, DeadZone);
-        const double MoveScale = Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
-            ? Scope->Accessibility.TouchMoveScale : 1.0;
-        const auto Scaled = Policy::ApplyAxisScale(Axis.first, Axis.second, MoveScale);
-        Routed = FInputActionValue(FVector2D(Scaled.first, Scaled.second));
-    }
-    else if (Semantic == EGamePlatformInputSemantic::LookDelta)
-    {
-        const FVector2D Raw = Value.Get<FVector2D>();
-        const auto Axis = Policy::ApplyLookPreference(
-            Raw.X * Profile->LookDegreesPerCount,
-            Raw.Y * Profile->LookDegreesPerCount,
-            Policy::CombineSensitivity(
-                Scope->Accessibility.LookSensitivityMultiplier,
-                Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
-                    ? Scope->Accessibility.TouchLookSensitivityMultiplier : 1.0),
-            Scope->Accessibility.bInvertLookX,
-            Scope->Accessibility.bInvertLookY);
-        Routed = FInputActionValue(FVector2D(Axis.first, Axis.second));
-    }
-    else if (Semantic == EGamePlatformInputSemantic::LookRate)
-    {
-        const FVector2D Raw = Value.Get<FVector2D>();
-        const double BaseDeadZone = Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
-            ? Profile->TouchAnalogDeadZone : Profile->AnalogDeadZone;
-        const auto DeadZoneAxis = Policy::ApplyRadialDeadZone(
-            Raw.X,
-            Raw.Y,
-            FMath::Clamp(BaseDeadZone * Scope->Accessibility.MoveDeadZoneMultiplier, 0.0, 0.95));
-        const auto Axis = Policy::ApplyLookPreference(
-            DeadZoneAxis.first * Profile->LookDegreesPerSecond,
-            DeadZoneAxis.second * Profile->LookDegreesPerSecond,
-            Policy::CombineSensitivity(
-                Scope->Accessibility.LookSensitivityMultiplier,
-                Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
-                    ? Scope->Accessibility.TouchLookSensitivityMultiplier : 1.0),
-            Scope->Accessibility.bInvertLookX,
-            Scope->Accessibility.bInvertLookY);
-        Routed = FInputActionValue(FVector2D(Axis.first, Axis.second));
+    case EGamePlatformInputValuePolicy::MoveAxis:
+        {
+            const FVector2D Raw = Value.Get<FVector2D>();
+            const double BaseDeadZone = Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
+                ? Profile->TouchAnalogDeadZone : Profile->AnalogDeadZone;
+            const double DeadZone = FMath::Clamp(
+                BaseDeadZone * Scope->Accessibility.MoveDeadZoneMultiplier,
+                0.0,
+                0.95);
+            const auto Axis = Policy::ApplyRadialDeadZone(Raw.X, Raw.Y, DeadZone);
+            const double MoveScale = Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
+                ? Scope->Accessibility.TouchMoveScale : 1.0;
+            const auto Scaled = Policy::ApplyAxisScale(Axis.first, Axis.second, MoveScale);
+            Routed = FInputActionValue(FVector2D(Scaled.first, Scaled.second));
+        }
+        break;
+    case EGamePlatformInputValuePolicy::LookDelta:
+        {
+            const FVector2D Raw = Value.Get<FVector2D>();
+            const auto Axis = Policy::ApplyLookPreference(
+                Raw.X * Profile->LookDegreesPerCount,
+                Raw.Y * Profile->LookDegreesPerCount,
+                Policy::CombineSensitivity(
+                    Scope->Accessibility.LookSensitivityMultiplier,
+                    Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
+                        ? Scope->Accessibility.TouchLookSensitivityMultiplier : 1.0),
+                Scope->Accessibility.bInvertLookX,
+                Scope->Accessibility.bInvertLookY);
+            Routed = FInputActionValue(FVector2D(Axis.first, Axis.second));
+        }
+        break;
+    case EGamePlatformInputValuePolicy::LookRate:
+        {
+            const FVector2D Raw = Value.Get<FVector2D>();
+            const double BaseDeadZone = Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
+                ? Profile->TouchAnalogDeadZone : Profile->AnalogDeadZone;
+            const auto DeadZoneAxis = Policy::ApplyRadialDeadZone(
+                Raw.X,
+                Raw.Y,
+                FMath::Clamp(BaseDeadZone * Scope->Accessibility.MoveDeadZoneMultiplier, 0.0, 0.95));
+            const auto Axis = Policy::ApplyLookPreference(
+                DeadZoneAxis.first * Profile->LookDegreesPerSecond,
+                DeadZoneAxis.second * Profile->LookDegreesPerSecond,
+                Policy::CombineSensitivity(
+                    Scope->Accessibility.LookSensitivityMultiplier,
+                    Scope->ActiveDeviceFamily == EGamePlatformInputDeviceFamily::Touch
+                        ? Scope->Accessibility.TouchLookSensitivityMultiplier : 1.0),
+                Scope->Accessibility.bInvertLookX,
+                Scope->Accessibility.bInvertLookY);
+            Routed = FInputActionValue(FVector2D(Axis.first, Axis.second));
+        }
+        break;
+    case EGamePlatformInputValuePolicy::Passthrough:
+    default:
+        break;
     }
 
-    const uint8 Channel = GamePlatformInputServices::GetChannel(Semantic);
-    const bool bBlocked = !Scope->bHasFocus || Scope->BlockLedger.IsBlocked(Channel);
+    const bool bBlocked = !Scope->bHasFocus || Scope->BlockLedger.IsBlocked(Compiled.ChannelMask);
     const bool bTerminal = Phase == ETriggerEvent::Completed || Phase == ETriggerEvent::Canceled;
-    Policy::ActionGate& Gate = Scope->ActionGates[static_cast<std::size_t>(Semantic)];
+    Policy::ActionGate& Gate = Scope->ActionGates[Slot];
     if (!Gate.Observe(Routed.GetMagnitude(), bTerminal, bBlocked)) { return; }
 
     FGamePlatformInputEvent Event;
-    Event.Semantic = Semantic;
+    Event.SemanticId = Compiled.SemanticId;
+    Event.bHasLegacySemantic = Compiled.bHasLegacySemantic;
+    if (Compiled.bHasLegacySemantic) { Event.Semantic = Compiled.LegacySemantic; }
     Event.Phase = Phase;
     Event.Value = Routed;
-    Event.Unit = GamePlatformInputServices::GetUnit(Semantic);
+    Event.Unit = Compiled.Unit;
     Event.EndReason = Phase == ETriggerEvent::Canceled
         ? EGamePlatformInputEndReason::NativeCanceled
         : (Phase == ETriggerEvent::Completed ? EGamePlatformInputEndReason::NativeCompleted : EGamePlatformInputEndReason::None);
@@ -1637,25 +1818,28 @@ void UGamePlatformInputLocalPlayerSubsystem::Route(
     Publish(MoveTemp(Event));
 }
 
-void UGamePlatformInputLocalPlayerSubsystem::Interrupt(uint8 Channels, EGamePlatformInputEndReason Reason)
+void UGamePlatformInputLocalPlayerSubsystem::Interrupt(
+    uint8 Channels,
+    EGamePlatformInputEndReason Reason)
 {
     if (!Scope || Channels == 0) { return; }
 
-    for (int32 SemanticValue = static_cast<int32>(EGamePlatformInputSemantic::Move);
-         SemanticValue <= static_cast<int32>(EGamePlatformInputSemantic::Cancel);
-         ++SemanticValue)
+    for (int32 Slot = 0; Slot < Scope->CompiledActions.Num(); ++Slot)
     {
-        const EGamePlatformInputSemantic Semantic = static_cast<EGamePlatformInputSemantic>(SemanticValue);
-        if ((GamePlatformInputServices::GetChannel(Semantic) & Channels) == 0) { continue; }
+        if (!Scope->ActionGates.IsValidIndex(Slot)) { continue; }
+        const FGamePlatformCompiledInputAction& Compiled = Scope->CompiledActions[Slot];
+        if ((Compiled.ChannelMask & Channels) == 0) { continue; }
 
-        Policy::ActionGate& Gate = Scope->ActionGates[static_cast<std::size_t>(SemanticValue)];
+        Policy::ActionGate& Gate = Scope->ActionGates[Slot];
         if (!Gate.Interrupt()) { continue; }
 
         FGamePlatformInputEvent Event;
-        Event.Semantic = Semantic;
+        Event.SemanticId = Compiled.SemanticId;
+        Event.bHasLegacySemantic = Compiled.bHasLegacySemantic;
+        if (Compiled.bHasLegacySemantic) { Event.Semantic = Compiled.LegacySemantic; }
         Event.Phase = ETriggerEvent::Canceled;
-        Event.Value = MakeNeutralValue(ExpectedValueType(Semantic));
-        Event.Unit = GamePlatformInputServices::GetUnit(Semantic);
+        Event.Value = MakeNeutralValue(Compiled.ValueType);
+        Event.Unit = Compiled.Unit;
         Event.EndReason = Reason;
         Event.DeviceFamily = Scope->ActiveDeviceFamily;
         Event.BindingGeneration = Scope->BindingGeneration;
@@ -1699,6 +1883,7 @@ void UGamePlatformInputLocalPlayerSubsystem::OnMappingsRebuilt()
     if (!Scope) { return; }
     Scope->bMappingsApplied = true;
     ++Scope->SettingsRevision;
+    PublishState();
 }
 
 void UGamePlatformInputLocalPlayerSubsystem::OnContextAdded(const UInputMappingContext*)

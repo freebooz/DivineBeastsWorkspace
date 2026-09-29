@@ -15,10 +15,14 @@ public:
     static const TArray<FName>& GetServerRoleIds();
     static const TArray<FName>& GetExperienceIds();
     static const TArray<FName>& GetArenaModeIds();
+    /** 十二生肖稳定英雄定义编号；唯一真源来自Shared生成Catalog。 */
+    static const TArray<FName>& GetHeroDefinitionIds();
 
     static bool IsServerRoleId(FName ServerRoleId);
     static bool IsExperienceId(FName ExperienceId);
     static bool IsArenaModeId(FName ArenaModeId);
+    /** 判断HeroDefinitionId是否属于Shared发布的十二生肖集合。 */
+    static bool IsHeroDefinitionId(FName HeroDefinitionId);
 
     static bool TryGetServerRoleForExperience(
         FName ExperienceId,

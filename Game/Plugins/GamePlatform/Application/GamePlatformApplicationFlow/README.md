@@ -2,7 +2,7 @@
 
 版本：0.1.0｜状态：一期必建，流程执行代码已实现，UE 工程验收待完整环境验证。
 
-当前源码已完成 M0 资产流程兼容扩展，并增加 `OnSnapshotChanged（流程快照变化事件）`，仍只使用同一个执行器。快照事件只在公开状态真实变化时广播，不作为逐帧心跳；广播栈内拒绝流程控制重入。2026-09-27 已在当前 Runner 使用真实生产 `ApplicationFlowExecutor.cpp` 重跑原生 Debug/Release 回归，两配置均为 `Cases=31 Failed=0`。UE 完整目标仍需结合正式工程其他模块的构建状态独立判断，不能用原生测试替代 UHT/UBT/运行验收。
+当前源码已完成 M0 资产流程兼容扩展，并增加 `OnSnapshotChanged（流程快照变化事件）` 与按需唤醒调度，仍只使用同一个执行器。快照事件只在公开状态真实变化时广播，不作为逐帧心跳；广播栈内拒绝流程控制重入。2026-09-27 已在当前 Runner 使用真实生产 `ApplicationFlowExecutor.cpp` 重跑原生 Debug/Release 回归，两配置均为 `Cases=32 Failed=0`。UE 完整目标仍需结合正式工程其他模块的构建状态独立判断，不能用原生测试替代 UHT/UBT/运行验收。
 
 本插件提供一个 GameInstance 作用域的主流程执行器。项目组合根注入节点对象及转换图，平台层不包含登录、选角、地图路径、项目身份、HTTP 地址或竞技依赖。
 
@@ -16,8 +16,9 @@
 - 作用域＋运行＋节点＋NodeGeneration令牌；外部事件与回调共用原邮箱，首次有效完成生效。
 - 每次开始的尝试恰好清理一次；终态事件每次运行只广播一次。
 - `OnSnapshotChanged` 只在 State、RunId、NodeId、Attempt、NodeGeneration 或错误值真实变化时广播；相同 Tick 不重复通知，供项目 ViewState/UI 事件驱动消费。
-- GameInstance 级跨地图生命周期及 GC 可追踪节点／载荷保活；空闲时没有 Ticker。
+- GameInstance 级跨地图生命周期及 GC 可追踪节点／载荷保活；调度采用一次性按需 Ticker：Start/节点切换即时推进，Completion/SubmitEvent 立即唤醒，Retry/Deadline 按单调时钟精确唤醒；资产模式等待期间最多 2Hz 复核根 Data Lease，空闲和终态完全无 Ticker。
 - UGamePlatformCallbackFlowNode 支持组合根直接注入执行与清理函数，也可实现 UGamePlatformFlowNode 派生类型。
+- `GamePlatformApplicationFlowNodes::CreateAwaitEventFlowNode（创建外部事件等待流程节点）` 复用现有 `UGamePlatformCallbackFlowNode` 提供跨项目纯事件等待能力，不新增反射类型、不持有 Completion、不创建业务 Tick；认证、选择、确认、就绪等步骤可由上层通过 `SubmitEvent` 精确推进。
 
 旧C++流程图仍为DAG；资产模式通过Data就绪租约读取UGamePlatformFlowDefinition，工厂为每run创建独立节点，输入定义身份传入上下文，终态释放所接管租约。没有蓝图流程编辑器、并行节点调度、自动事务回滚、磁盘恢复或网络复制。玩家在世界中匹配等并行业务由各领域服务执行。
 

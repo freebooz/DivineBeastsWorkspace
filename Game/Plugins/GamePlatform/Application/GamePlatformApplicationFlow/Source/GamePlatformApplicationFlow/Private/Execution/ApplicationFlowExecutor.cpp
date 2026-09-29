@@ -24,6 +24,15 @@ bool FApplicationFlowExecutor::IsActive() const
     return Snapshot.State == EFlowState::Running || Snapshot.State == EFlowState::RetryWaiting;
 }
 
+std::optional<double> FApplicationFlowExecutor::GetNextWakeTimeSeconds() const
+{
+    if (!IsActive()) return std::nullopt;
+    if (bNeedsBegin) return LastNowSeconds;
+    if (Snapshot.State == EFlowState::RetryWaiting) return RetryAtSeconds;
+    if (bAttemptActive) return DeadlineSeconds;
+    return LastNowSeconds;
+}
+
 bool FApplicationFlowExecutor::CheckControl(std::string& Error) const
 {
     Error.clear();

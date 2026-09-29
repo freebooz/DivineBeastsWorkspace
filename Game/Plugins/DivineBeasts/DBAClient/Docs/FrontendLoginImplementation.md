@@ -164,7 +164,7 @@ RootLayout 安装成功
 /DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LoadingTravel
 ~~~
 
-注意：DBAUIPack_Core 目前仍是规划内容包。没有真实 UE 资产时不得创建空插件冒充交付。
+`DBAUIPack_Core` 已作为第三层纯内容插件登记。公共用户界面资产必须由 Monolith MCP 在正式 Unreal Editor 工程中创建、编译、保存和回读，禁止以文本占位或改扩展名冒充资产。
 
 ## 7. 品牌资源
 
@@ -189,18 +189,18 @@ T_DBA_Brand_GameLogo
 
 ## 8. 当前未完成边界
 
-### 8.1 真实 Widget Blueprint / RootLayout
+### 8.1 已交付的 Widget Blueprint / RootLayout 与剩余边界
 
-仍需 UE Editor 创建：
+2026-09-28 已通过 Monolith MCP 0.20.3 在正式工程中创建、编译、保存并在编辑器重启后回读：
 
 ~~~text
 WBP_DBA_UI_RootLayout
-WBP_DBA_UI_Boot
 WBP_DBA_UI_Login
-WBP_DBA_UI_LoadingTravel
 ~~~
 
-只有这些真实资产存在并完成 RootLayout 安装后，才能进行可视化运行验收。
+RootLayout 与 Login 均为真实 `.uasset`，其父类、Widget Tree、命名控件、密码掩码和磁盘状态已经回读；两个蓝图编译均为0错误／0警告，登录页可访问性审计为0问题。Boot 与 LoadingTravel 仍是后续页面。只有真实流程 Definition、RootLayout 运行安装、相关页面资产和后端服务共同可用后，才能宣称完整登录运行闭环。
+
+登录页当前采用临时极简视觉：页面和用户名／密码输入框均为黑色背景，输入框使用灰色边框并在聚焦时显示蓝色描边，蓝色“登录”按钮作为唯一主要操作；不使用卡片或面板。忙碌、维护和错误控件默认隐藏，仅由现有事件状态显示，不增加业务轮询。
 
 ### 8.2 登录后的项目业务 API
 
@@ -241,9 +241,9 @@ LoadRoster → CharacterEntry → OpenWorld 仍必须先在 Shared 契约层正�
 ## 9. 验收顺序
 
 1. C++ / UHT / Client Module 构建；
-2. 创建 DBAUIPack_Core 真实内容插件；
-3. 导入品牌源图；
-4. 创建 RootLayout / Boot / Login / Loading Widget Blueprint；
+2. 核对 DBAUIPack_Core 内容插件登记与挂载；
+3. 通过 Monolith 创建并回读 RootLayout / Login Widget Blueprint；
+4. 按需导入经授权品牌源图，并继续创建 Boot / Loading Widget Blueprint；
 5. 配置 Gateway 环境变量；
 6. 启动 Gateway + Identity；
 7. 验证错误密码、正确密码、网络断开、维护、退出登录；

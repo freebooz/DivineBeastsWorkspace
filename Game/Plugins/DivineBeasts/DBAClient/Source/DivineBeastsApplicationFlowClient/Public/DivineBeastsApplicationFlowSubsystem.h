@@ -21,6 +21,7 @@ class UGamePlatformSessionClientSubsystem;
 struct FGamePlatformAuthSnapshot;
 struct FGamePlatformLoadingSnapshot;
 struct FGamePlatformSessionSnapshot;
+struct FStreamableHandle;
 
 /**
  * UDivineBeastsApplicationFlowSubsystem（神兽联盟应用流程协调子系统）。
@@ -204,6 +205,8 @@ private:
     TObjectPtr<UDivineBeastsApplicationFlowContext> FlowContext;
 
     FGamePlatformDataLease PendingFlowDefinitionLease;
+    /** 角色创建草稿异步Definition校验租约；新提交会取消旧请求，离开GameInstance时显式释放。 */
+    TSharedPtr<FStreamableHandle> CharacterCreationValidationLease;
     FGamePlatformFlowHandle ActiveFlow;
     TArray<FGamePlatformFlowFactoryHandle> FactoryHandles;
 

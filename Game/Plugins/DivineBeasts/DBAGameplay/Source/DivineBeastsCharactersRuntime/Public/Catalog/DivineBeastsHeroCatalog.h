@@ -37,6 +37,14 @@ public:
     static FName GetDisplayNameKey(FName HeroDefinitionId);
     static FName GetExpectedDefinitionAssetName(FName HeroDefinitionId);
     static FName GetCoreContentPackId();
+    /** 返回单个生肖稳定内容包逻辑ID，例如ContentPack.Hero.Zodiac.Rat；后期真实角色继续沿用。 */
+    static FName GetHeroContentPackId(FName HeroDefinitionId);
+
+    /** 返回稳定默认外观Profile ID，例如Appearance.Hero.Zodiac.Rat.Default；占位和正式美术共用同一逻辑身份。 */
+    static FName GetDefaultAppearanceProfileId(FName HeroDefinitionId);
+
+    /** 非Shipping开发回退Definition的显式内容修订号；正式资产不得复用该修订号。 */
+    static FString GetDevelopmentFallbackContentRevision();
 
     static FPrimaryAssetId GetDefinitionPrimaryAssetId(FName HeroDefinitionId);
     static FSoftObjectPath GetDefinitionAssetPath(FName HeroDefinitionId);

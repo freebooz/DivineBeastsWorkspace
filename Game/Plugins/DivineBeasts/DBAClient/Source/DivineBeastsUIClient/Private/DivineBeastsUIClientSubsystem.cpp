@@ -18,6 +18,14 @@
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
 
+namespace
+{
+    /** 第三层公共UI内容包的稳定RootLayout类路径；服务器目标不会启用该内容插件。 */
+    const TSoftClassPtr<UGamePlatformUILayerStack> DefaultRootLayoutClass(
+        FSoftObjectPath(
+            TEXT("/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C")));
+}
+
 void UDivineBeastsUIClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
@@ -43,6 +51,7 @@ void UDivineBeastsUIClientSubsystem::Initialize(
     }
 
     RegisterDefaultScreenDefinitions();
+    EnsureDefaultRootLayout();
 
     // DBAClient 内部由项目 UI 层单向依赖项目 ApplicationFlow，
     // 不要求流程模块反向认识任何 Widget/ViewModel 类型。
@@ -216,6 +225,25 @@ bool UDivineBeastsUIClientSubsystem::InstallRootLayoutClass(
     return bInstalled;
 }
 
+bool UDivineBeastsUIClientSubsystem::EnsureDefaultRootLayout()
+{
+    if (!PlatformUI)
+    {
+        return false;
+    }
+    if (PlatformUI->GetRootLayout())
+    {
+        return true;
+    }
+
+    // 内容插件由Client/Editor Target显式启用；这里仅在初始化或状态事件上同步解析一次小型根布局类，
+    // 不建立第二套资产注册表，也不通过Tick轮询。安装失败会等待下一次真实状态事件重试。
+    UClass* LoadedClass = DefaultRootLayoutClass.LoadSynchronous();
+    return LoadedClass &&
+        InstallRootLayoutClass(
+            TSubclassOf<UGamePlatformUILayerStack>(LoadedClass));
+}
+
 UGamePlatformLoadingScreenService*
 UDivineBeastsUIClientSubsystem::GetLoadingScreenService() const
 {
@@ -368,12 +396,18 @@ void UDivineBeastsUIClientSubsystem::RegisterDefaultScreenDefinitions()
         Definition->DefaultFocusWidgetName = Surface.DefaultFocusWidgetName;
         Definition->bSurvivesTravel = Surface.bSurvivesTravel;
 
-        if (!Surface.AndroidWidgetClassPath.IsEmpty())
+        if (!Surface.MobileWidgetClassPath.IsEmpty())
         {
+            const TSoftClassPtr<UGamePlatformUIScreen> MobileClass(
+                FSoftObjectPath(Surface.MobileWidgetClassPath));
+
+            // Android/iOS只改变布局和触控结构；共用同一ScreenId、ViewModel和业务状态。
             Definition->PlatformWidgetVariants.Add(
                 TEXT("Android"),
-                TSoftClassPtr<UGamePlatformUIScreen>(
-                    FSoftObjectPath(Surface.AndroidWidgetClassPath)));
+                MobileClass);
+            Definition->PlatformWidgetVariants.Add(
+                TEXT("IOS"),
+                MobileClass);
         }
 
         if (PlatformUI->RegisterScreenDefinition(Definition))
@@ -417,6 +451,7 @@ void UDivineBeastsUIClientSubsystem::HandleViewStateChanged(
     ViewState = NewState;
     StateChanged.Broadcast(ViewState);
     SyncLoadingService();
+    EnsureDefaultRootLayout();
     SyncPrimaryScreen();
 }
 

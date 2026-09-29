@@ -22,7 +22,7 @@ void ConfigureWorldDefinition(UGamePlatformWorldDefinition& Definition)
 
 // 若派生验证遗漏Super，非法身份/结构版本将被错误接受；这里只创建真实瞬态定义，不伪造地图存在。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWorldDefinitionBaseValidationTest, "GamePlatform.World.Definitions.BaseValidation",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FWorldDefinitionBaseValidationTest::RunTest(const FString&)
 {
     TStrongObjectPtr<UGamePlatformWorldDefinition> World(NewObject<UGamePlatformWorldDefinition>());
@@ -43,7 +43,7 @@ bool FWorldDefinitionBaseValidationTest::RunTest(const FString&)
 
 // 删除地图路径、有限正数截止或可选ID校验，分别会让以下边界误报成功。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWorldDefinitionMapAndTimeoutTest, "GamePlatform.World.Definitions.MapAndTimeout",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FWorldDefinitionMapAndTimeoutTest::RunTest(const FString&)
 {
     TStrongObjectPtr<UGamePlatformWorldDefinition> World(NewObject<UGamePlatformWorldDefinition>());
@@ -68,7 +68,7 @@ bool FWorldDefinitionMapAndTimeoutTest::RunTest(const FString&)
 
 // Regions必须进入真实Data依赖闭包；只写区域列表但不登记租约需求不能通过。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWorldDefinitionRegionDependenciesTest, "GamePlatform.World.Definitions.RegionDependencies",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FWorldDefinitionRegionDependenciesTest::RunTest(const FString&)
 {
     TStrongObjectPtr<UGamePlatformWorldDefinition> World(NewObject<UGamePlatformWorldDefinition>());
@@ -89,7 +89,7 @@ bool FWorldDefinitionRegionDependenciesTest::RunTest(const FString&)
 
 // 当前只实现明确的一种边界/激活策略；未知序列化枚举不能悄悄退回默认策略。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FRegionDefinitionPolicyTest, "GamePlatform.World.Definitions.RegionPolicies",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FRegionDefinitionPolicyTest::RunTest(const FString&)
 {
     TStrongObjectPtr<UGamePlatformRegionDefinition> Region(NewObject<UGamePlatformRegionDefinition>());

@@ -28,6 +28,15 @@ public:
     /** 弱订阅者只能属于当前本地玩家世界；回调内禁止修改服务，调用者延后到安全点。 */
     virtual FGamePlatformInputSubscription SubscribeInputEvents(TWeakObjectPtr<UObject> Owner,TFunction<void(const FGamePlatformInputEvent&)> Callback) = 0;
     virtual bool UnsubscribeInputEvents(const FGamePlatformInputSubscription& Handle) = 0;
+    /**
+     * 订阅低频输入状态变化。订阅成功后立即回调一次当前快照；之后仅在公开快照真实变化时通知。
+     * 该通道用于 Profile 准备、Receiver 绑定、设备提示和设置页，不用于鼠标/摇杆逐样本输入。
+     */
+    virtual FGamePlatformInputStateSubscription SubscribeInputState(
+        TWeakObjectPtr<UObject> Owner,
+        TFunction<void(const FGamePlatformInputSnapshot&)> Callback) = 0;
+    /** 精确撤销状态订阅；跨 LocalPlayer、旧代次或重复撤销返回 false。 */
+    virtual bool UnsubscribeInputState(const FGamePlatformInputStateSubscription& Handle) = 0;
     virtual FGamePlatformInputSnapshot GetInputSnapshot() const = 0;
     /** 返回当前LocalPlayer的轻量容量/性能诊断；不包含原始按键或触摸坐标。 */
     virtual FGamePlatformInputDiagnostics GetInputDiagnostics() const = 0;
@@ -48,6 +57,8 @@ public:
     virtual FGamePlatformResult SaveInputPreferences() = 0;
     /** 限定本地世界拥有者、触点0..9和白名单语义；同动作首版只允许一个触摸源，拒绝冲突。 */
     virtual FGamePlatformInputTouchHandle BeginTouchInput(int32 PointerId,EGamePlatformInputSemantic Semantic,TWeakObjectPtr<UObject> Owner,FGamePlatformResult& OutResult) = 0;
+    /** 新版可扩展Touch入口；项目层通过稳定SemanticId注入，不需要扩展平台固定枚举。 */
+    virtual FGamePlatformInputTouchHandle BeginTouchInputBySemantic(int32 PointerId,FGamePlatformInputSemanticId SemanticId,TWeakObjectPtr<UObject> Owner,FGamePlatformResult& OutResult) = 0;
     /** 向原生增强输入注入有限类型值，不直接调用语义消费者；非有限、越界或错维度拒绝。 */
     virtual FGamePlatformResult UpdateTouchInput(const FGamePlatformInputTouchHandle& Handle,const FInputActionValue& Value) = 0;
     virtual FGamePlatformResult EndTouchInput(const FGamePlatformInputTouchHandle& Handle) = 0;

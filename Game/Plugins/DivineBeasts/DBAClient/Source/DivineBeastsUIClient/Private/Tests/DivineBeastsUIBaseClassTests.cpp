@@ -19,6 +19,7 @@
 #include "ViewModels/Characters/DivineBeastsCharacterSelectViewModel.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
+#include "UObject/UnrealType.h"
 
 /**
  * 验证神兽联盟项目 UI 基类和首批页面/HUD 均沿平台基础类单向继承。
@@ -94,6 +95,36 @@ bool FDivineBeastsUIBaseClassHierarchyTest::RunTest(const FString& Parameters)
         UDivineBeastsLoadingViewModel::StaticClass()->IsChildOf(
             UDivineBeastsUIViewModel::StaticClass()));
 
+    return true;
+}
+
+/**
+ * 验证登录Widget Blueprint必须提供的命名控件契约。
+ * 这些BindWidget字段让Monolith生成资产在编译时暴露缺失控件，而不是运行时静默失效。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsLoginWidgetContractTest,
+    "DivineBeasts.UI.Login.NamedWidgetContract",
+    EAutomationTestFlags_ApplicationContextMask |
+    EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsLoginWidgetContractTest::RunTest(const FString& Parameters)
+{
+    UClass* LoginClass = UDivineBeastsLoginScreen::StaticClass();
+    for (const FName PropertyName : {
+        FName(TEXT("AccountInput")),
+        FName(TEXT("PasswordInput")),
+        FName(TEXT("LoginButton")),
+        FName(TEXT("ErrorText")),
+        FName(TEXT("BusyIndicator")),
+        FName(TEXT("MaintenanceText"))})
+    {
+        TestNotNull(
+            *FString::Printf(
+                TEXT("登录页面必须公开BindWidget字段：%s"),
+                *PropertyName.ToString()),
+            FindFProperty<FObjectProperty>(LoginClass, PropertyName));
+    }
     return true;
 }
 

@@ -25,11 +25,16 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsUISurfaceDescriptor
     FName DefaultFocusWidgetName = NAME_None;
     FString DefinitionAssetPath;
     FString WidgetClassPath;
-    FString AndroidWidgetClassPath;
+    /** Android/iOS共享的移动端Widget变体软路径；业务状态和ViewModel保持同一套。 */
+    FString MobileWidgetClassPath;
     bool bSurvivesTravel = false;
 };
 
-/** FDivineBeastsUIScreenCatalog（一期项目UI页面清单）。 */
+/**
+ * FDivineBeastsUIScreenCatalog（神兽联盟公共非竞技UI表面目录）。
+ *
+ * 仅登记DBAClient拥有的公共页面/HUD/通知；Arena专属表面由DBAArena独立目录拥有。
+ */
 class DIVINEBEASTSUICLIENT_API FDivineBeastsUIScreenCatalog
 {
 public:

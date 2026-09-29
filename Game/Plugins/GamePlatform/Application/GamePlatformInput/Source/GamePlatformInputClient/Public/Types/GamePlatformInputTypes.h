@@ -3,19 +3,77 @@
 #include "InputActionValue.h"
 #include "InputTriggers.h"
 #include "InputCoreTypes.h"
+#include "GameplayTagContainer.h"
 #include "Types/GamePlatformResult.h"
 #include "UObject/PrimaryAssetId.h"
 #include "GamePlatformInputTypes.generated.h"
 
-/** 仅本地请求语义，不能作为服务器权威动作协议；名称由唯一注册函数映射为平台输入标签。 */
+/**
+ * 旧固定输入语义兼容枚举。
+ * 新项目代码应使用FGamePlatformInputSemanticId/Descriptor；本枚举保留既有资产/API兼容，不能继续追加项目技能语义。
+ */
 UENUM(BlueprintType)
 enum class EGamePlatformInputSemantic : uint8
 { Move, LookDelta, LookRate, AttackPrimary, AbilitySlot1, AbilitySlot2, AbilitySlot3, AbilitySlot4, Interact, TargetLock, Menu, Confirm, Cancel };
+
+/**
+ * 平台长期稳定的内建输入语义。
+ * 只包含跨游戏公共导航/视角/UI/交互语义；攻击、技能槽和目标锁定不得再进入该枚举。
+ */
+UENUM(BlueprintType)
+enum class EGamePlatformBuiltInInputSemantic : uint8
+{
+    Move,
+    LookDelta,
+    LookRate,
+    Interact,
+    Menu,
+    Confirm,
+    Cancel
+};
 /** 位掩码分别抑制；文本场景由组合者同时申请三个Gameplay位，UI关闭命令保留。 */
 enum class EGamePlatformInputChannel : uint8 { Move = 1, Look = 2, Actions = 4, UICommands = 8, TextEntry = 16 };
 /** Delta不再乘帧间隔；Rate必须由最终视角消费者乘且只乘一次帧间隔。 */
 UENUM(BlueprintType)
 enum class EGamePlatformInputUnit : uint8 { Boolean, NormalizedAxis, DegreesDelta, DegreesPerSecond };
+/** 运行前一次编译的值处理策略；项目自定义布尔/轴动作通常使用Passthrough。 */
+UENUM(BlueprintType)
+enum class EGamePlatformInputValuePolicy : uint8 { Passthrough, MoveAxis, LookDelta, LookRate };
+
+/**
+ * 稳定可扩展输入语义标识。
+ * 平台、MOBA或项目层均可声明自己的GameplayTag；高频运行时不会直接以Tag做路由查找。
+ */
+USTRUCT(BlueprintType)
+struct FGamePlatformInputSemanticId
+{
+    GENERATED_BODY()
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input|Semantic")
+    FGameplayTag Tag;
+    bool IsValid() const { return Tag.IsValid(); }
+    bool operator==(const FGamePlatformInputSemanticId& Other) const { return Tag == Other.Tag; }
+};
+
+/**
+ * 输入语义的数据化描述。
+ * Profile准备阶段会把本结构编译成CompactSlot（紧凑槽位），之后鼠标/摇杆高频路径只使用数组索引。
+ */
+USTRUCT(BlueprintType)
+struct FGamePlatformInputSemanticDescriptor
+{
+    GENERATED_BODY()
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input|Semantic")
+    FGamePlatformInputSemanticId SemanticId;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input|Semantic")
+    EGamePlatformInputUnit Unit = EGamePlatformInputUnit::Boolean;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input|Semantic")
+    EInputActionValueType ValueType = EInputActionValueType::Boolean;
+    /** 必须是一个已知单通道位；阻断仍保持uint8位运算O(1)。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input|Semantic")
+    uint8 ChannelMask = static_cast<uint8>(EGamePlatformInputChannel::Actions);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input|Semantic")
+    EGamePlatformInputValuePolicy ValuePolicy = EGamePlatformInputValuePolicy::Passthrough;
+};
 /** 当前本地玩家最近一次由平台确认的输入设备族；只用于本地表现/提示，不参与服务器权威。 */
 UENUM(BlueprintType)
 enum class EGamePlatformInputDeviceFamily : uint8 { Unknown, KeyboardMouse, Gamepad, Touch };
@@ -70,12 +128,18 @@ struct FGamePlatformInputContextHandle : FGamePlatformInputIdentity {};
 struct FGamePlatformInputBlockHandle : FGamePlatformInputIdentity {};
 struct FGamePlatformInputBindingHandle : FGamePlatformInputIdentity {};
 struct FGamePlatformInputSubscription : FGamePlatformInputIdentity {};
+/** 输入状态变化订阅句柄；与高频动作事件订阅分离，避免 UI/组合根把状态观察混入输入热路径。 */
+struct FGamePlatformInputStateSubscription : FGamePlatformInputIdentity {};
 struct FGamePlatformInputTouchHandle : FGamePlatformInputIdentity {};
 
 /** 值对象不含原始按键、文字、票据；仅游戏线程短期消费，不构成可回放个人键盘日志。 */
 struct FGamePlatformInputEvent
 {
     EGamePlatformInputSemantic Semantic = EGamePlatformInputSemantic::Move;
+    /** 新语义体系下的稳定标识；旧枚举事件兼容时也会填充对应Tag。 */
+    FGamePlatformInputSemanticId SemanticId;
+    /** true表示该事件来自旧EGamePlatformInputSemantic兼容入口。 */
+    bool bHasLegacySemantic = false;
     ETriggerEvent Phase = ETriggerEvent::None;
     FInputActionValue Value;
     EGamePlatformInputUnit Unit = EGamePlatformInputUnit::NormalizedAxis;

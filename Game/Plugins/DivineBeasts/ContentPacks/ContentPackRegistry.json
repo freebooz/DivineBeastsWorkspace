@@ -1,4 +1,19 @@
 {
   "SchemaVersion": 1,
-  "ContentPacks": []
+  "ContentPacks": [
+    { "Name": "DBAContentPack_Common", "RelativePath": "Common/DBAContentPack_Common" },
+    { "Name": "DBAHeroPack_Rat", "RelativePath": "Heroes/DBAHeroPack_Rat" },
+    { "Name": "DBAHeroPack_Ox", "RelativePath": "Heroes/DBAHeroPack_Ox" },
+    { "Name": "DBAHeroPack_Tiger", "RelativePath": "Heroes/DBAHeroPack_Tiger" },
+    { "Name": "DBAHeroPack_Rabbit", "RelativePath": "Heroes/DBAHeroPack_Rabbit" },
+    { "Name": "DBAHeroPack_Dragon", "RelativePath": "Heroes/DBAHeroPack_Dragon" },
+    { "Name": "DBAHeroPack_Snake", "RelativePath": "Heroes/DBAHeroPack_Snake" },
+    { "Name": "DBAHeroPack_Horse", "RelativePath": "Heroes/DBAHeroPack_Horse" },
+    { "Name": "DBAHeroPack_Goat", "RelativePath": "Heroes/DBAHeroPack_Goat" },
+    { "Name": "DBAHeroPack_Monkey", "RelativePath": "Heroes/DBAHeroPack_Monkey" },
+    { "Name": "DBAHeroPack_Rooster", "RelativePath": "Heroes/DBAHeroPack_Rooster" },
+    { "Name": "DBAHeroPack_Dog", "RelativePath": "Heroes/DBAHeroPack_Dog" },
+    { "Name": "DBAHeroPack_Boar", "RelativePath": "Heroes/DBAHeroPack_Boar" },
+    { "Name": "DBAUIPack_Core", "RelativePath": "Presentation/DBAUIPack_Core" }
+  ]
 }

@@ -18,7 +18,9 @@ public class DBAServer : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "Json"
+            "Json",
+            // 服务器组合层只负责把环境身份/凭据注入平台Telemetry，不复制遥测实现。
+            "GamePlatformTelemetry"
         });
     }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Features/IModularFeature.h"
 #include "GamePlatformCharacterInitializer.generated.h"
 
 class ACharacter;
@@ -58,9 +59,20 @@ struct GAMEPLATFORMCHARACTER_API FGamePlatformCharacterInitializationContext
  * 实现不得自行SpawnActor或Possess。
  */
 class GAMEPLATFORMCHARACTER_API IGamePlatformCharacterInitializer
+    : public IModularFeature
 {
 public:
     virtual ~IGamePlatformCharacterInitializer() = default;
+
+    /**
+     * 平台统一Spawn Operation通过该固定名查找项目层角色初始化器。
+     * 一个正式组合根只能激活一个适用于当前项目的初始化器；发现多个实现时应拒绝而不是任意选取。
+     */
+    static FName GetModularFeatureName()
+    {
+        static const FName Name(TEXT("GamePlatform.CharacterInitializer"));
+        return Name;
+    }
 
     virtual bool InitializeCharacter(
         ACharacter& Character,

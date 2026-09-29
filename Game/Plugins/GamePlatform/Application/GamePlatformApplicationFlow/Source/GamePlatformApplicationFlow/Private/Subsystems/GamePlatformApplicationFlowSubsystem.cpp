@@ -1,5 +1,7 @@
 #include "API/GamePlatformApplicationFlowSubsystem.h"
 
+#include "Async/Async.h"
+
 #include "Engine/GameInstance.h"
 #include "Definitions/GamePlatformFlowDefinitionConversion.h"
 #include "Execution/ApplicationFlowExecutor.h"
@@ -14,6 +16,8 @@ namespace FlowCore = GamePlatform::ApplicationFlow;
 
 namespace
 {
+/** 资产流程等待期间低频复核根定义租约；正常业务完成仍由事件立即唤醒。 */
+constexpr float FlowLeaseWatchIntervalSeconds = 0.5f;
 std::string ToCoreName(FName Name)
 {
     // FName 的相等规则不区分大小写；核心必须规范化，避免图验证与 UE 查询语义不同。
@@ -89,13 +93,33 @@ public:
         PublicContext.Payload = Service->ActivePayload;
         PublicContext.NodeGeneration = Context.NodeGeneration;
         PublicContext.InputDefinitionId = InputDefinitionId;
-        NodeObject->Execute(PublicContext, [Complete = std::move(Complete)](FGamePlatformFlowNodeResult Result)
-        {
-            // 完成仅转换值并投递邮箱，绝不从工作线程解引用 Owner 或 Node。
-            Complete({Result.bSucceeded, Result.bRetryable, ToCoreName(Result.Outcome),
-                Result.ErrorCode.IsNone() ? std::string() : std::string(TCHAR_TO_UTF8(*Result.ErrorCode.ToString())),
-                std::string(TCHAR_TO_UTF8(*Result.ErrorMessage))});
-        });
+        const TWeakObjectPtr<UGamePlatformApplicationFlowSubsystem> WeakService = Owner;
+        NodeObject->Execute(PublicContext,
+            [Complete = std::move(Complete), WeakService](FGamePlatformFlowNodeResult Result) mutable
+            {
+                // 完成仅转换值并投递核心单槽邮箱；工作线程绝不解引用Owner/Node。
+                Complete({Result.bSucceeded, Result.bRetryable, ToCoreName(Result.Outcome),
+                    Result.ErrorCode.IsNone() ? std::string() : std::string(TCHAR_TO_UTF8(*Result.ErrorCode.ToString())),
+                    std::string(TCHAR_TO_UTF8(*Result.ErrorMessage))});
+
+                // Completion可能来自任意线程。成功/重复投递都只请求一次轻量Pump，
+                // 真正结果竞争仍由核心邮箱决定；GameThread路径直接调度，避免额外跨线程跳转。
+                auto Wake = [WeakService]()
+                {
+                    if (auto* Service = WeakService.Get())
+                    {
+                        Service->RequestFlowTick(0.0f);
+                    }
+                };
+                if (IsInGameThread())
+                {
+                    Wake();
+                }
+                else
+                {
+                    AsyncTask(ENamedThreads::GameThread, MoveTemp(Wake));
+                }
+            });
     }
 
     virtual void Finish(FlowCore::EFinishReason Reason) override
@@ -137,6 +161,19 @@ void UGamePlatformApplicationFlowSubsystem::RemoveTicker()
         FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle);
         TickerHandle.Reset();
     }
+}
+
+void UGamePlatformApplicationFlowSubsystem::RequestFlowTick(float DelaySeconds)
+{
+    check(IsInGameThread());
+    if (bClosing || !Executor || !Executor->IsActive()) return;
+
+    // Completion/SubmitEvent到达时可能已有远期Deadline Ticker；必须替换为更早的即时Pump。
+    RemoveTicker();
+    const float SafeDelay = FMath::Max(0.0f, DelaySeconds);
+    TickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateUObject(this, &ThisClass::TickFlow),
+        SafeDelay);
 }
 
 void UGamePlatformApplicationFlowSubsystem::Deinitialize()
@@ -261,9 +298,8 @@ FGamePlatformFlowHandle UGamePlatformApplicationFlowSubsystem::Start(UObject* Pa
     const auto RunId = Executor->Start(FPlatformTime::Seconds(), Error);
     if (!RunId) { OutError = UTF8_TO_TCHAR(Error.c_str()); return {}; }
     ActivePayload = Payload;
-    // 只在活动流程期间注册。Ticker 用于回到游戏线程、超时和退避，不做业务逐帧计算。
-    TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this,
-        &UGamePlatformApplicationFlowSubsystem::TickFlow));
+    // Start只安排一次即时Pump；后续由Completion/SubmitEvent或精确Deadline继续唤醒，不逐帧轮询。
+    RequestFlowTick(0.0f);
     PublishSnapshotChanged();
     if (bClosing)
     {
@@ -318,15 +354,32 @@ FGamePlatformFlowSnapshot UGamePlatformApplicationFlowSubsystem::GetSnapshot() c
 
 bool UGamePlatformApplicationFlowSubsystem::TickFlow(float DeltaSeconds)
 {
+    (void)DeltaSeconds;
+
+    // 当前回调是一次性Pump；先清空句柄，允许同步Completion在本次Execute期间安排下一次即时Pump。
+    TickerHandle.Reset();
     if (bClosing || !Executor) return false;
+
+    const double NowSeconds = FPlatformTime::Seconds();
     {
         TGuardValue<bool> DispatchGuard(bDispatching, true);
-        auto* DataService = ActiveDefinitionLease.IsValid() ? IGamePlatformDataService::Get(*GetGameInstance()) : nullptr;
-        if (ActiveDefinitionLease.IsValid() && (!DataService || !DataService->GetLoadedDefinition(ActiveDefinitionLease)))
-            Executor->FailRun(Executor->GetSnapshot().RunId, "FlowLeaseExpired", "活动流程的定义租约已失效");
+        auto* DataService = ActiveDefinitionLease.IsValid()
+            ? IGamePlatformDataService::Get(*GetGameInstance())
+            : nullptr;
+        if (ActiveDefinitionLease.IsValid() &&
+            (!DataService || !DataService->GetLoadedDefinition(ActiveDefinitionLease)))
+        {
+            Executor->FailRun(
+                Executor->GetSnapshot().RunId,
+                "FlowLeaseExpired",
+                "活动流程的定义租约已失效");
+        }
         else
-            Executor->Tick(FPlatformTime::Seconds());
+        {
+            Executor->Tick(NowSeconds);
+        }
     }
+
     PublishSnapshotChanged();
     if (bClosing)
     {
@@ -335,11 +388,29 @@ bool UGamePlatformApplicationFlowSubsystem::TickFlow(float DeltaSeconds)
     }
     if (!Executor || !Executor->IsActive())
     {
-        TickerHandle.Reset(); // 返回 false 后由 Ticker 自己移除当前回调。
         PublishTerminal();
         return false;
     }
-    return true;
+
+    // 同步Completion可能已经在Execute栈内安排了0秒Pump；不要用远期Deadline覆盖它。
+    if (!TickerHandle.IsValid())
+    {
+        const std::optional<double> NextWake = Executor->GetNextWakeTimeSeconds();
+        double DelaySeconds = NextWake.has_value()
+            ? FMath::Max(0.0, NextWake.value() - NowSeconds)
+            : 0.0;
+
+        // 资产模式还需要观察根定义租约是否被Data作用域提前撤销；最多2Hz复核即可，
+        // 普通业务完成仍由Completion/SubmitEvent立即唤醒，不因此增加交互延迟。
+        if (ActiveDefinitionLease.IsValid())
+        {
+            DelaySeconds = FMath::Min(
+                DelaySeconds,
+                static_cast<double>(FlowLeaseWatchIntervalSeconds));
+        }
+        RequestFlowTick(static_cast<float>(DelaySeconds));
+    }
+    return false; // 每个Ticker只执行一次，下一次由RequestFlowTick显式安排。
 }
 
 void UGamePlatformApplicationFlowSubsystem::PublishSnapshotChanged(bool bForce)
@@ -502,8 +573,7 @@ FGamePlatformFlowHandle UGamePlatformApplicationFlowSubsystem::StartFlow(
     InOutReadyLease = {};
     ActivePayload = Payload;
     bAssetConfiguration = true;
-    TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this,
-        &UGamePlatformApplicationFlowSubsystem::TickFlow));
+    RequestFlowTick(0.0f);
     OutResult = FGamePlatformResult::Success();
     PublishSnapshotChanged();
     if (bClosing)
@@ -558,6 +628,11 @@ bool UGamePlatformApplicationFlowSubsystem::SubmitEvent(const FGamePlatformFlowN
             std::string(TCHAR_TO_UTF8(*Event.ErrorMessage))});
     OutResult = bAccepted ? FGamePlatformResult::Success() :
         FGamePlatformResult::Failure(TEXT("StaleOrCompletedNode"), TEXT("节点代次过期、尚未开始，或该节点已接纳首次完成。"));
+    if (bAccepted)
+    {
+        // 外部事件已经进入核心邮箱，立即请求游戏线程Pump，不等待原Deadline Ticker。
+        RequestFlowTick(0.0f);
+    }
     return bAccepted;
 }
 

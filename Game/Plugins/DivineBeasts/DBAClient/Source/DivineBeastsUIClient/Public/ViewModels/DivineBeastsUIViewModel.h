@@ -103,10 +103,14 @@ public:
     FDivineBeastsUICommandCompleted OnCommandCompleted;
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    // 自动化测试只读取命令终态门禁与待处理集合，不向正式蓝图API暴露内部生命周期。
+    friend class FDivineBeastsUICommandCompletionLifetimeTest;
+#endif
+
     FGuid Submit(FDivineBeastsUICommand Command);
     void HandleStateChanged(const FDivineBeastsUIViewState& NewState);
     void HandleCommandResult(
-        int32 ExpectedVMRevision,
         int32 ExpectedPageGeneration,
         const FDivineBeastsUICommandResult& Result);
 

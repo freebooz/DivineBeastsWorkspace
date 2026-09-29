@@ -10,12 +10,17 @@ USTRUCT(BlueprintType)
 struct FGamePlatformInputActionDefinition
 {
     GENERATED_BODY()
-    /** 中立语义；不是具体英雄、技能或任意RPC名称。 */
-    UPROPERTY(EditDefaultsOnly, Category="Input") EGamePlatformInputSemantic Semantic = EGamePlatformInputSemantic::Move;
+    /** 旧固定枚举兼容字段；新Profile优先填写Descriptor，禁止继续为项目技能扩展平台枚举。 */
+    UPROPERTY(EditDefaultsOnly, Category="Input|Compatibility") EGamePlatformInputSemantic Semantic = EGamePlatformInputSemantic::Move;
+    /**
+     * 新版可扩展语义描述。SemanticId有效时本字段整体优先于Legacy Semantic/Unit；
+     * 旧资产不填写Descriptor时继续走兼容枚举，不要求一次性迁移。
+     */
+    UPROPERTY(EditDefaultsOnly, Category="Input|Semantic") FGamePlatformInputSemanticDescriptor Descriptor;
     /** Data的Input分组软引用，激活整个配置期间保有租约。 */
     UPROPERTY(EditDefaultsOnly, Category="Input", meta=(AssetBundles="Input")) TSoftObjectPtr<UInputAction> Action;
-    /** 明确单位，校验必须与语义匹配；视角消费者不得二次缩放。 */
-    UPROPERTY(EditDefaultsOnly, Category="Input") EGamePlatformInputUnit Unit = EGamePlatformInputUnit::NormalizedAxis;
+    /** 旧枚举兼容单位；Descriptor.SemanticId有效时忽略本字段。 */
+    UPROPERTY(EditDefaultsOnly, Category="Input|Compatibility") EGamePlatformInputUnit Unit = EGamePlatformInputUnit::NormalizedAxis;
 };
 /** IMC使用权独立于Data租约，优先级固定范围0..100；共享时取活跃调用者最大值。 */
 USTRUCT(BlueprintType)

@@ -105,7 +105,7 @@ EndTouchInput
 
 一个 Profile 包含：
 
-- Actions：Semantic → UInputAction。
+- Actions：SemanticId/Descriptor → UInputAction；旧枚举字段只作为既有资产兼容。
 - Contexts：稳定上下文名 → UInputMappingContext。
 - 鼠标/触控角度增量比例。
 - 手柄角速度。
@@ -116,26 +116,13 @@ EndTouchInput
 
 Profile 基础校验不在输入事件回调中加载 UObject；实际 Action ValueType（动作值维度）在 Profile Data Lease（数据租约）完成后做第二阶段校验。
 
-## 6. 中立语义与单位
+## 6. 可扩展Semantic（输入语义）与单位
 
-现有平台语义：
+正式扩展入口是 `FGamePlatformInputSemanticId + FGamePlatformInputSemanticDescriptor`。平台长期公共语义通过 `EGamePlatformBuiltInInputSemantic（平台内建输入语义）` 暴露，只包含 Move / LookDelta / LookRate / Interact / Menu / Confirm / Cancel；旧 `EGamePlatformInputSemantic` 中的 AttackPrimary / AbilitySlot1～4 / TargetLock 只保留既有资产/API兼容，新项目不得继续扩展旧平台枚举。
 
-```text
-Move
-LookDelta
-LookRate
-AttackPrimary
-AbilitySlot1..4
-Interact
-TargetLock
-Menu
-Confirm
-Cancel
-```
+Profile准备阶段由 `InputProfileCompiler` 将Tag、单位、值类型、通道和值处理策略一次编译成 `CompiledActions[CompactSlot]`。Enhanced Input高频回调直接捕获Slot，不在运行期查GameplayTag或TMap。详细模型见 `Docs/SemanticModel.md`。
 
-这些只是本地请求语义，不是服务器权威协议。《神兽联盟》可以把十二生肖技能槽映射到这些平台语义，但不能把生肖类名写回 GamePlatformInput。
-
-通道显式映射，不依赖枚举排列顺序：
+通道显式映射并保持少量固定bit mask：
 
 - Move → Move Channel（移动通道）。
 - LookDelta / LookRate → Look Channel（视角通道）。
@@ -207,7 +194,7 @@ ReleaseInputProfile
 - Task/Subscriber 回调期间禁止结构性修改，避免重入容器。
 - Event 发布直接遍历固定上限订阅者，不为每个鼠标/摇杆样本复制订阅数组。
 - BlockLedger（输入阻断账本）在低频 Acquire/Release 时维护32位引用计数和缓存组合掩码；高频 `IsBlocked`/`CombinedMask` 只做 O(1) 位运算，不再扫描最多64条租约。
-- ActionGate（动作门禁）按当前13个稳定语义使用固定数组槽位；高频 Route/Interrupt 不做 `unordered_map` 哈希查找，也不会因首次语义出现而分配节点。
+- ActionGate（动作门禁）与当前Profile编译后的CompactSlot数组等长；高频 Route/Interrupt 只按Slot访问，不做 `unordered_map` 或GameplayTag查找，也不会因项目新增语义产生运行时节点分配。
 
 低频维护：
 
@@ -216,6 +203,7 @@ ReleaseInputProfile
 - 维护 Ticker 只回收失效弱引用，不采样真实硬件输入。
 - `FGamePlatformInputDiagnostics（输入诊断）` 记录事件发布数、订阅回调数、设备族切换次数、Mapping 重建请求数、维护 Tick 次数、失效 Owner 回收数以及最近/最大维护耗时；Input 不反向依赖 Telemetry（遥测）。
 - Snapshot/Diagnostics 同时暴露 `DeviceRevision`；初始平台默认值建立首个修订号，之后只有真实设备族变化才递增，重复设备上报为 O(1) 无操作。
+- 默认设备与Profile回退规则已经从大型 `LocalPlayerSubsystem` 实现中拆到 Private `Devices/InputDevicePolicy.h（输入设备策略）`，作为内部职责拆分第一步；对外仍只有一个 LocalPlayerSubsystem，不增加第二套输入服务。
 
 容量安全上限：
 
@@ -238,9 +226,11 @@ Keyboard/Mouse + Gamepad
         ↓
 Enhanced Input Mapping Context
         ↓
-GamePlatformInput Semantic
+GamePlatformInput SemanticId → CompactSlot
         ↓
-DBAClient / Character / Ability 消费
+DivineBeastsInputClient项目语义桥
+        ↓
+Character / Ability / UI公开消费端口
 ```
 
 移动端：
@@ -250,7 +240,9 @@ DivineBeastsUIClient 虚拟摇杆/按钮/手势
         ↓
 Begin/Update/EndTouchInput
         ↓
-同一 GamePlatformInput Semantic
+BeginTouchInputBySemantic
+        ↓
+同一CompactSlot / DivineBeastsInputClient项目事件
         ↓
 与PC共用后续消费链
 ```

@@ -65,6 +65,11 @@ public:
 private:
     friend class FGamePlatformFlowNodeAdapter;
     bool TickFlow(float DeltaSeconds);
+    /**
+     * 按需安排一次流程Pump（推进）：外部事件/Completion使用0秒立即唤醒，超时/重试使用精确延迟。
+     * 同一GameInstance只保留一个待执行Ticker；重新安排时替换旧截止，避免活动流程逐帧轮询。
+     */
+    void RequestFlowTick(float DelaySeconds);
     void PublishTerminal();
     /** 比较当前公开快照与最近一次已广播快照，仅在真实变化时发布，避免业务层逐帧轮询和无效 UI 刷新。 */
     void PublishSnapshotChanged(bool bForce = false);

@@ -27,7 +27,12 @@ class GAMEPLATFORMCOMBAT_API UGamePlatformStunGameplayEffect final
 {
     GENERATED_BODY()
 public:
-    UGamePlatformStunGameplayEffect();
+    /**
+     * 构造眩晕效果的类默认对象，并以稳定名称创建其标签组件。
+     *
+     * @param ObjectInitializer UE 默认子对象构造器；必须由引擎传入，禁止在构造期改用无名称 NewObject。
+     */
+    explicit UGamePlatformStunGameplayEffect(const FObjectInitializer& ObjectInitializer);
 };
 
 UCLASS()
@@ -36,5 +41,10 @@ class GAMEPLATFORMCOMBAT_API UGamePlatformSilenceGameplayEffect final
 {
     GENERATED_BODY()
 public:
-    UGamePlatformSilenceGameplayEffect();
+    /**
+     * 构造沉默效果的类默认对象，并以稳定名称创建其标签组件。
+     *
+     * @param ObjectInitializer UE 默认子对象构造器；必须由引擎传入，禁止在构造期改用无名称 NewObject。
+     */
+    explicit UGamePlatformSilenceGameplayEffect(const FObjectInitializer& ObjectInitializer);
 };

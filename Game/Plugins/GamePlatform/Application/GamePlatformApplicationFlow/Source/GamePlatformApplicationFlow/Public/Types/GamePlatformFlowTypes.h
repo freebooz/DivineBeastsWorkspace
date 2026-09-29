@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/PrimaryAssetId.h"
+#include "UObject/WeakObjectPtr.h"
 
 class UGameInstance;
 class UGamePlatformFlowNode;

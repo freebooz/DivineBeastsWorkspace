@@ -13,6 +13,10 @@ public class DBAWorldsRuntime : ModuleRules
             "CoreUObject",
             "Engine",
             "DivineBeastsRuntime",
+            // 项目世界定义的公开字段直接使用FGamePlatformId/FGamePlatformResult，必须显式链接其真实所有者。
+            "GamePlatformCore",
+            // UDivineBeastsWorldDefinition继承Data层定义基类，链接其虚函数实现不能依赖World的传递依赖。
+            "GamePlatformData",
             "GamePlatformWorld"
         });
     }

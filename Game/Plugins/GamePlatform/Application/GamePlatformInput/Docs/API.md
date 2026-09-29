@@ -15,6 +15,8 @@ IGamePlatformInputService* Input =
 
 `ReleaseInputProfile` 精确释放本配置持有的 Data Lease、上下文、绑定和 Touch 来源。
 
+新版 Action Definition 可直接声明 `FGamePlatformInputSemanticDescriptor`；Profile准备完成后一次编译为CompactSlot。旧 `EGamePlatformInputSemantic` 字段继续作为兼容入口。
+
 ## 3. Mapping Context（映射上下文）
 
 ```cpp
@@ -89,12 +91,38 @@ Input->UpdateTouchInput(
 Input->EndTouchInput(Handle);
 ```
 
+项目自定义语义使用：
+
+```cpp
+FGamePlatformInputSemanticId SemanticId;
+SemanticId.Tag = ProjectInputTag;
+auto Handle = Input->BeginTouchInputBySemantic(PointerId, SemanticId, Owner, Result);
+```
+
+`BeginTouchInputBySemantic` 只在开始Touch时查一次 `SemanticTag → Slot`；Update/End均使用句柄内编译槽位。
+
 虚拟摇杆/按钮 Widget（控件）属于上层 UI，本插件只注入中立 InputActionValue（输入动作值）。
 
 ## 10. Snapshot（快照）
 
 `GetInputSnapshot()` 返回：Profile/Binding/Mapping 状态、Gameplay 是否开放、设备族及 DeviceRevision、无障碍偏好、代次、阻断掩码、Context/Binding/Touch 数量和最近 Result（结果）。
 
-`GetInputDiagnostics()` 返回当前 LocalPlayer 的轻量运行诊断：维护 Ticker 是否已安排、当前设备族及 DeviceRevision、Context/Block/Binding/Subscription/Touch 数量、事件发布/订阅回调/设备切换/Mapping重建/维护Tick/失效Owner回收计数，以及最近/最大维护耗时。诊断不包含原始按键、文字或Touch坐标。
+低频状态观察使用：
+
+```cpp
+auto StateHandle = Input->SubscribeInputState(
+    Owner,
+    [](const FGamePlatformInputSnapshot& Snapshot)
+    {
+        // 只读消费；如需Acquire/Bind等结构性修改，应投递到下一游戏线程任务。
+    });
+Input->UnsubscribeInputState(StateHandle);
+```
+
+订阅成功后立即收到一次当前快照，之后只有公开快照真实变化才通知；状态订阅本身不会启动维护Ticker，不得用它替代高频动作事件。
+
+`FGamePlatformInputEvent` 同时携带 `SemanticId`；只有从旧枚举兼容路径产生的事件才设置 `bHasLegacySemantic=true` 和旧 `Semantic` 值。新项目消费者应优先判断 `SemanticId`。
+
+`GetInputDiagnostics()` 返回当前 LocalPlayer 的轻量运行诊断：维护 Ticker 是否已安排、当前设备族及 DeviceRevision、Context/Block/Binding/动作Subscription/Touch 数量、事件发布/订阅回调/设备切换/Mapping重建/维护Tick/失效Owner回收计数，以及最近/最大维护耗时。状态订阅是低频观察通道，不计入动作Subscription热路径统计；诊断不包含原始按键、文字或Touch坐标。
 
 Snapshot 仅是本地值，不构成服务器权威。

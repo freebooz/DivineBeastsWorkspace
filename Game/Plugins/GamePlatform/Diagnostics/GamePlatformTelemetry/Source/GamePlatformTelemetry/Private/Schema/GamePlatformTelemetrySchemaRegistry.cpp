@@ -2,54 +2,67 @@
 
 namespace
 {
+FGamePlatformTelemetryAttributeDefinition Attribute(
+    EGamePlatformTelemetryAttributeType Type,
+    EGamePlatformTelemetryPrivacyClass Privacy = EGamePlatformTelemetryPrivacyClass::Operational,
+    bool bRequired = false,
+    int32 MaxStringLength = 512)
+{
+    FGamePlatformTelemetryAttributeDefinition Definition;
+    Definition.Type = Type;
+    Definition.PrivacyClass = Privacy;
+    Definition.bRequired = bRequired;
+    Definition.MaxStringLength = MaxStringLength;
+    return Definition;
+}
+
 FGamePlatformTelemetryEventDefinition FoundationEvent(
     const TCHAR* Name,
-    EGamePlatformTelemetrySamplingPolicy Sampling =
-        EGamePlatformTelemetrySamplingPolicy::Always,
+    EGamePlatformTelemetryPriority Priority = EGamePlatformTelemetryPriority::Normal,
+    EGamePlatformTelemetrySamplingPolicy Sampling = EGamePlatformTelemetrySamplingPolicy::Always,
     double Rate = 1.0)
 {
     FGamePlatformTelemetryEventDefinition Definition;
     Definition.EventName = FName(Name);
     Definition.SchemaVersion = 1;
+    Definition.Priority = Priority;
     Definition.SamplingPolicy = Sampling;
     Definition.SamplingRate = Rate;
     Definition.SustainedRatePerSecond = 10;
     Definition.Burst = 20;
 
-    Definition.AllowedAttributes.Add(
-        TEXT("result"),
-        EGamePlatformTelemetryPrivacyClass::Operational);
-    Definition.AllowedAttributes.Add(
-        TEXT("error_code"),
-        EGamePlatformTelemetryPrivacyClass::Operational);
-    Definition.AllowedAttributes.Add(
-        TEXT("duration_ms"),
-        EGamePlatformTelemetryPrivacyClass::Operational);
-    Definition.AllowedAttributes.Add(
-        TEXT("product_id"),
-        EGamePlatformTelemetryPrivacyClass::Operational);
-    Definition.AllowedAttributes.Add(
-        TEXT("offer_id"),
-        EGamePlatformTelemetryPrivacyClass::Operational);
-    Definition.AllowedAttributes.Add(
-        TEXT("provider_type"),
-        EGamePlatformTelemetryPrivacyClass::Operational);
-    Definition.AllowedAttributes.Add(
-        TEXT("correlation_id"),
-        EGamePlatformTelemetryPrivacyClass::Pseudonymous);
+    // 基础事件只允许稳定结果/错误/时延三类通用字段；商业字段不得泄漏到Session/World等无关事件。
+    Definition.Attributes.Add(TEXT("result"), Attribute(EGamePlatformTelemetryAttributeType::String));
+    Definition.Attributes.Add(TEXT("error_code"), Attribute(EGamePlatformTelemetryAttributeType::String));
+    Definition.Attributes.Add(TEXT("duration_ms"), Attribute(EGamePlatformTelemetryAttributeType::Double));
+    return Definition;
+}
+
+FGamePlatformTelemetryEventDefinition CommerceEvent(
+    const TCHAR* Name,
+    EGamePlatformTelemetryPriority Priority = EGamePlatformTelemetryPriority::Normal)
+{
+    FGamePlatformTelemetryEventDefinition Definition = FoundationEvent(Name, Priority);
+    Definition.Attributes.Add(TEXT("product_id"), Attribute(EGamePlatformTelemetryAttributeType::String));
+    Definition.Attributes.Add(TEXT("offer_id"), Attribute(EGamePlatformTelemetryAttributeType::String));
+    Definition.Attributes.Add(TEXT("provider_type"), Attribute(EGamePlatformTelemetryAttributeType::String));
     return Definition;
 }
 
 FGamePlatformTelemetryMetricDefinition Metric(
     const TCHAR* Name,
     EGamePlatformTelemetryMetricType Type,
-    const TCHAR* Unit)
+    const TCHAR* Unit,
+    int32 SustainedRatePerSecond = 10,
+    int32 Burst = 20)
 {
     FGamePlatformTelemetryMetricDefinition Definition;
     Definition.Name = FName(Name);
     Definition.Type = Type;
     Definition.Unit = Unit;
     Definition.Owner = TEXT("GamePlatform");
+    Definition.SustainedRatePerSecond = FMath::Max(1, SustainedRatePerSecond);
+    Definition.Burst = FMath::Max(1, Burst);
 
     for (const FName Label : {
              FName(TEXT("build_version")),
@@ -57,7 +70,6 @@ FGamePlatformTelemetryMetricDefinition Metric(
              FName(TEXT("platform")),
              FName(TEXT("server_role")),
              FName(TEXT("region")),
-             FName(TEXT("arena_mode")),
              FName(TEXT("result")),
              FName(TEXT("error_code")),
              FName(TEXT("service")),
@@ -73,6 +85,10 @@ FGamePlatformTelemetryMetricDefinition Metric(
 void FGamePlatformTelemetrySchemaRegistry::RegisterEvent(
     FGamePlatformTelemetryEventDefinition Definition)
 {
+    if (bFrozen)
+    {
+        return;
+    }
     if (!Definition.EventName.IsNone() &&
         Definition.SchemaVersion > 0)
     {
@@ -83,10 +99,19 @@ void FGamePlatformTelemetrySchemaRegistry::RegisterEvent(
 void FGamePlatformTelemetrySchemaRegistry::RegisterMetric(
     FGamePlatformTelemetryMetricDefinition Definition)
 {
+    if (bFrozen)
+    {
+        return;
+    }
     if (!Definition.Name.IsNone())
     {
         Metrics.Add(Definition.Name, MoveTemp(Definition));
     }
+}
+
+void FGamePlatformTelemetrySchemaRegistry::Freeze()
+{
+    bFrozen = true;
 }
 
 const FGamePlatformTelemetryEventDefinition*
@@ -113,42 +138,47 @@ FGamePlatformTelemetrySchemaRegistry::CreateFoundationDefaults()
             FGamePlatformTelemetrySchemaRegistry,
             ESPMode::ThreadSafe>();
 
-    for (const TCHAR* Name : {
-             TEXT("Telemetry.Foundation.ClientStarted"),
-             TEXT("Telemetry.Foundation.ServerStarted"),
-             TEXT("Telemetry.Foundation.WorldLoaded"),
-             TEXT("Telemetry.Foundation.BackendRoundTrip"),
-             TEXT("Session.Connect.Succeeded"),
-             TEXT("World.Load.Completed"),
-             TEXT("World.Travel.Completed"),
-             TEXT("Combat.Match.Completed"),
-             TEXT("Commerce.Intent.Created"),
-             TEXT("Commerce.Payment.VerificationResult"),
-             TEXT("Commerce.Fulfillment.Result")})
-    {
-        Registry->RegisterEvent(FoundationEvent(Name));
-    }
+    // Telemetry自身只拥有运行时基础事件；其它领域事件当前保留兼容注册，后续由各领域Schema Contributor接管。
+    Registry->RegisterEvent(FoundationEvent(TEXT("Telemetry.Foundation.ClientStarted"), EGamePlatformTelemetryPriority::CriticalTelemetry));
+    Registry->RegisterEvent(FoundationEvent(TEXT("Telemetry.Foundation.ServerStarted"), EGamePlatformTelemetryPriority::CriticalTelemetry));
+    Registry->RegisterEvent(FoundationEvent(TEXT("Telemetry.Foundation.WorldLoaded")));
+    Registry->RegisterEvent(FoundationEvent(TEXT("Telemetry.Foundation.BackendRoundTrip")));
+    Registry->RegisterEvent(FoundationEvent(TEXT("Session.Connect.Succeeded")));
+    Registry->RegisterEvent(FoundationEvent(TEXT("World.Load.Completed")));
+    Registry->RegisterEvent(FoundationEvent(TEXT("World.Travel.Completed")));
+    Registry->RegisterEvent(FoundationEvent(TEXT("Combat.Match.Completed")));
+    Registry->RegisterEvent(CommerceEvent(TEXT("Commerce.Intent.Created")));
+    Registry->RegisterEvent(CommerceEvent(TEXT("Commerce.Payment.VerificationResult"), EGamePlatformTelemetryPriority::CriticalTelemetry));
+    Registry->RegisterEvent(CommerceEvent(TEXT("Commerce.Fulfillment.Result"), EGamePlatformTelemetryPriority::CriticalTelemetry));
 
     Registry->RegisterMetric(
         Metric(
             TEXT("server.frame_ms"),
             EGamePlatformTelemetryMetricType::Histogram,
-            TEXT("ms")));
+            TEXT("ms"),
+            10,
+            20));
     Registry->RegisterMetric(
         Metric(
             TEXT("server.active_players"),
             EGamePlatformTelemetryMetricType::Gauge,
-            TEXT("players")));
+            TEXT("players"),
+            2,
+            4));
     Registry->RegisterMetric(
         Metric(
             TEXT("server.active_ai"),
             EGamePlatformTelemetryMetricType::Gauge,
-            TEXT("actors")));
+            TEXT("actors"),
+            2,
+            4));
     Registry->RegisterMetric(
         Metric(
             TEXT("server.memory_bytes"),
             EGamePlatformTelemetryMetricType::Gauge,
-            TEXT("bytes")));
+            TEXT("bytes"),
+            1,
+            2));
     Registry->RegisterMetric(
         Metric(
             TEXT("server.telemetry.buffer_depth"),
@@ -163,7 +193,9 @@ FGamePlatformTelemetrySchemaRegistry::CreateFoundationDefaults()
         Metric(
             TEXT("client.frame_ms"),
             EGamePlatformTelemetryMetricType::Histogram,
-            TEXT("ms")));
+            TEXT("ms"),
+            10,
+            20));
     Registry->RegisterMetric(
         Metric(
             TEXT("client.loading.duration_ms"),

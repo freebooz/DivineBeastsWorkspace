@@ -58,6 +58,8 @@ private:
         float LifetimeSeconds);
     bool ResolveInitialScreenPosition(
         FGamePlatformUIFeedbackRequest& Request) const;
+    /** 记录近期发生ID，避免预测确认或重复传输导致同一反馈重复播放。 */
+    void RememberOccurrenceId(const FGuid& OccurrenceId);
     UWorld* GetServiceWorld() const;
 
     UPROPERTY(Transient)
@@ -68,6 +70,10 @@ private:
 
     TMap<FGuid, FActiveFeedback> ActiveFeedback;
     TMap<FName, FGuid> ActiveByMergeKey;
+
+    /** 有界近期发生ID集合；只用于视觉去重，不作为Gameplay事实存储。 */
+    TSet<FGuid> RecentOccurrenceIds;
+    TArray<FGuid> RecentOccurrenceOrder;
 
     /**
      * 对象池使用UPROPERTY强引用保活已回收Widget，确保对象池产生真实复用收益。

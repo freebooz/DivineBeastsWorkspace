@@ -18,6 +18,12 @@ class GAMEPLATFORMTELEMETRY_API UGamePlatformTelemetrySubsystem final
 {
     GENERATED_BODY()
 
+    /**
+     * 线程契约：本子系统公开控制、上下文、记录与刷新接口均为 Game Thread Only（仅游戏线程）。
+     * HTTP 完成回调会显式投递回游戏线程；需要后台线程生产遥测时，应先进入独立Recorder入口，
+     * 不得直接从工作线程访问 UObject 子系统。
+     */
+
 public:
     virtual void Initialize(
         FSubsystemCollectionBase& Collection) override;
@@ -121,9 +127,20 @@ private:
 
     bool bEnabled = true;
     bool bTraceBridgeEnabled = false;
+    bool bFlushInProgress = false;
     uint64 SessionGeneration = 0;
+    FDateTime LastFlushUtc;
+    int32 LastFlushRecords = 0;
 
     bool TickFlush(float DeltaSeconds);
+    /** 按需安排一次刷新；Buffer为空时不保留常驻Ticker。 */
+    void ScheduleFlush(float DelaySeconds);
+    /** 撤销尚未触发的一次性刷新。 */
+    void CancelScheduledFlush();
+    /** 新记录入队后根据批次阈值决定立即刷新还是安排延迟刷新。 */
+    void RequestFlushAfterRecord();
+    /** 上下文字段统一去除换行并限制长度，防止异常ID放大每条遥测记录。 */
+    FString SanitizeContextValue(FString Value) const;
 
     EGamePlatformTelemetryRecordResult RecordMetricInternal(
         FName MetricName,

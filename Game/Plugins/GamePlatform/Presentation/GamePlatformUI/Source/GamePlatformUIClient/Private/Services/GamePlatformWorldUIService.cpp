@@ -20,22 +20,12 @@ void UGamePlatformWorldUIService::Initialize(ULocalPlayer* InLocalPlayer)
     ActiveWidgets.Reserve(32);
     PooledWidgets.Reserve(32);
 
-    ProjectionTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
-        FTickerDelegate::CreateUObject(
-            this,
-            &UGamePlatformWorldUIService::TickProjection),
-        ProjectionIntervalSeconds);
+    // 空闲时不注册Ticker；第一个世界UI实例注册成功后再按需启动。
 }
 
 void UGamePlatformWorldUIService::Deinitialize()
 {
-    if (ProjectionTickerHandle.IsValid())
-    {
-        FTSTicker::GetCoreTicker().RemoveTicker(
-            ProjectionTickerHandle);
-        ProjectionTickerHandle.Reset();
-    }
-
+    StopProjectionTicker();
     Clear();
     RootLayout = nullptr;
     LocalPlayer = nullptr;
@@ -85,6 +75,7 @@ FGuid UGamePlatformWorldUIService::RegisterWorldUI(
     }
 
     ActiveWidgets.Add(Request.RequestId, Widget);
+    EnsureProjectionTicker();
     return Request.RequestId;
 }
 
@@ -118,6 +109,10 @@ bool UGamePlatformWorldUIService::UnregisterWorldUI(FGuid RequestId)
     UGamePlatformWorldWidgetBase* Widget = WidgetPtr->Get();
     ActiveWidgets.Remove(RequestId);
     RecycleWidget(Widget);
+    if (ActiveWidgets.IsEmpty())
+    {
+        StopProjectionTicker();
+    }
     return true;
 }
 
@@ -167,6 +162,33 @@ void UGamePlatformWorldUIService::RecycleWidget(
     {
         PooledWidgets.Add(Widget);
     }
+}
+
+void UGamePlatformWorldUIService::EnsureProjectionTicker()
+{
+    if (ProjectionTickerHandle.IsValid() ||
+        ActiveWidgets.IsEmpty())
+    {
+        return;
+    }
+
+    ProjectionTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateUObject(
+            this,
+            &UGamePlatformWorldUIService::TickProjection),
+        ProjectionIntervalSeconds);
+}
+
+void UGamePlatformWorldUIService::StopProjectionTicker()
+{
+    if (!ProjectionTickerHandle.IsValid())
+    {
+        return;
+    }
+
+    FTSTicker::GetCoreTicker().RemoveTicker(
+        ProjectionTickerHandle);
+    ProjectionTickerHandle.Reset();
 }
 
 bool UGamePlatformWorldUIService::TickProjection(float DeltaSeconds)
@@ -249,6 +271,13 @@ bool UGamePlatformWorldUIService::TickProjection(float DeltaSeconds)
         ActiveWidgets.Remove(StaleId);
     }
 
+    // 仅剩失效弱引用时在当前回调结束后自动停止Ticker。
+    if (ActiveWidgets.IsEmpty())
+    {
+        ProjectionTickerHandle.Reset();
+        return false;
+    }
+
     return true;
 }
 
@@ -261,6 +290,7 @@ void UGamePlatformWorldUIService::Clear()
         UnregisterWorldUI(RequestId);
     }
     ActiveWidgets.Reset();
+    StopProjectionTicker();
 
     for (UGamePlatformWorldWidgetBase* Widget : PooledWidgets)
     {

@@ -2,9 +2,9 @@
 
 namespace
 {
-    // DBAUIPack_Core（神兽联盟核心UI内容包）是项目公共前台美术的规划唯一所有者。
-    // 当前仓库尚未生成该内容插件及二进制 .uasset；这里仅声明未来稳定挂载点，
-    // 不把不存在的旧 /DivineBeastsUI 路径继续当成已交付资产。
+    // DBAUIPack_Core（神兽联盟核心UI内容包）是项目公共前台美术的唯一所有者。
+    // 根布局和登录页已经交付真实资产；其余目录项仍是分期稳定软路径，
+    // 调用方必须保留软加载失败路径，不能把规划项误认为均已交付。
     constexpr const TCHAR* ProjectUIContentRoot = TEXT("/DBAUIPack_Core/UI");
 
     FDivineBeastsUISurfaceDescriptor MakeScreen(
@@ -23,6 +23,8 @@ namespace
         D.PausePolicy = EGamePlatformUIPausePolicy::Never;
         D.Transition = EGamePlatformUITransition::Default;
         D.DefaultFocusWidgetName = Focus;
+        // UI机制源码由DBAClient承载，真实UMG资源由独立DBAUIPack_Core内容包拥有；
+        // 目录同时包含已交付与分期规划路径，软加载失败必须保留可见错误或降级结果。
         D.DefinitionAssetPath = FString::Printf(
             TEXT("%s/Screens/DA_DBA_UI_%s.DA_DBA_UI_%s"),
             ProjectUIContentRoot,
@@ -33,11 +35,9 @@ namespace
             ProjectUIContentRoot,
             AssetName,
             AssetName);
-        D.AndroidWidgetClassPath = FString::Printf(
-            TEXT("%s/Screens/WBP_DBA_UI_%s_Android.WBP_DBA_UI_%s_Android_C"),
-            ProjectUIContentRoot,
-            AssetName,
-            AssetName);
+        // 移动端专用资产尚未由Monolith交付时保持空路径，让平台解析器回退公共Widget。
+        // 只有真实变体完成编译、保存与Cook验证后，才允许在具体目录项显式登记。
+        D.MobileWidgetClassPath.Reset();
         D.bSurvivesTravel = bSurvivesTravel;
         return D;
     }
@@ -56,11 +56,8 @@ namespace
             ProjectUIContentRoot,
             AssetName,
             AssetName);
-        D.AndroidWidgetClassPath = FString::Printf(
-            TEXT("%s/HUD/WBP_DBA_UI_%s_Android.WBP_DBA_UI_%s_Android_C"),
-            ProjectUIContentRoot,
-            AssetName,
-            AssetName);
+        // HUD同样不能为尚不存在的移动端资产制造非空软路径。
+        D.MobileWidgetClassPath.Reset();
         return D;
     }
 
@@ -74,7 +71,7 @@ namespace
         D.Layer = EGamePlatformUILayer::Notification;
         D.InputMode = EGamePlatformUIInputMode::GameOnly;
         D.WidgetClassPath = FString::Printf(
-            TEXT("%s/Dialogs/WBP_DBA_UI_%s.WBP_DBA_UI_%s_C"),
+            TEXT("%s/Notifications/WBP_DBA_UI_%s.WBP_DBA_UI_%s_C"),
             ProjectUIContentRoot,
             AssetName,
             AssetName);
@@ -92,6 +89,8 @@ namespace
             MakeScreen(TEXT("UI.Screen.LoadingTravel"), TEXT("LoadingTravel"), EGamePlatformUILayer::Loading, EGamePlatformUIInputMode::UIOnly),
             MakeScreen(TEXT("UI.Screen.ErrorReconnect"), TEXT("ErrorReconnect"), EGamePlatformUILayer::Modal, EGamePlatformUIInputMode::UIOnly, TEXT("RetryButton")),
             MakeScreen(TEXT("UI.Screen.SystemMenu"), TEXT("SystemMenu"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::GameAndUI, TEXT("ResumeButton")),
+            MakeScreen(TEXT("UI.Screen.Inventory"), TEXT("Inventory"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("InventoryGrid")),
+            MakeScreen(TEXT("UI.Screen.Quest"), TEXT("Quest"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("QuestList")),
             MakeHUD(TEXT("UI.HUD.OpenWorld"), TEXT("OpenWorldHUD")),
             MakeHUD(TEXT("UI.HUD.VillageMain"), TEXT("VillageMainHUD")),
             MakeHUD(TEXT("UI.HUD.TutorialGuidance"), TEXT("TutorialGuidance")),

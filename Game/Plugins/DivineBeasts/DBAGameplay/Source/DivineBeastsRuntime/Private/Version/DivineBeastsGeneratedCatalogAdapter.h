@@ -18,6 +18,8 @@ public:
     static const TArray<FName>& GetServerRoleIds();
     static const TArray<FName>& GetExperienceIds();
     static const TArray<FName>& GetArenaModeIds();
+    /** 返回Shared生成的十二生肖稳定HeroDefinitionId集合。 */
+    static const TArray<FName>& GetHeroDefinitionIds();
 
     static bool TryGetServerRoleForExperience(
         FName ExperienceId,

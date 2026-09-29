@@ -3,10 +3,10 @@
     "Version":  1,
     "VersionName":  "0.1.0",
     "FriendlyName":  "GamePlatformTelemetry",
-    "Description":  "GamePlatformTelemetry（游戏平台插件）",
+    "Description":  "GamePlatformTelemetry（跨游戏通用遥测与诊断机制插件）",
     "Category":  "GamePlatform/Diagnostics",
     "CreatedBy":  "DivineBeastsWorkspace",
-    "CanContainContent":  true,
+    "CanContainContent":  false,
     "EnabledByDefault":  false,
     "Modules":  [
                     {

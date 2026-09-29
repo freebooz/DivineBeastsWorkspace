@@ -111,6 +111,12 @@ public:
     bool Shutdown();
     const FSnapshot& GetSnapshot() const { return Snapshot; }
     bool IsActive() const;
+    /**
+     * 返回下一次在没有外部Completion/SubmitEvent时必须唤醒执行器的单调时钟绝对时间。
+     * bNeedsBegin（待开始）返回当前已知时间，RetryWaiting返回RetryAt，活动节点返回Deadline；终态无值。
+     * 仅所有者线程读取；邮箱提前完成由宿主显式事件唤醒，不通过此函数轮询检测。
+     */
+    std::optional<double> GetNextWakeTimeSeconds() const;
 
 private:
     struct FMailbox

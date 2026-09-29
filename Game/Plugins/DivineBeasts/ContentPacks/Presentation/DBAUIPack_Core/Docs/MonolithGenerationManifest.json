@@ -1,0 +1,67 @@
+{
+  "SchemaVersion": 1,
+  "CreationTool": "Monolith MCP",
+  "MonolithVersion": "0.20.3",
+  "ProjectName": "DivineBeastsArena",
+  "GeneratedAt": "2026-09-28T23:50:15+08:00",
+  "字段说明": {
+    "SchemaVersion": "清单结构版本；升级字段结构时递增。",
+    "CreationTool": "创建或修改界面二进制资产的唯一工具。",
+    "MonolithVersion": "本次真实连接的Monolith服务版本。",
+    "ProjectName": "本次资产所在的Unreal工程名称。",
+    "GeneratedAt": "本次清单更新时间，采用带时区的ISO 8601格式。",
+    "Assets": "本次由编辑器保存并通过Monolith回读的资产证据。",
+    "Verification": "源码构建、编辑器重启回读和自动化测试证据。",
+    "Preview": "人工复核用预览图；不替代PIE或设备验收。",
+    "Limitations": "本次验证未覆盖或仍需后续联调的边界。"
+  },
+  "Assets": [
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+      "用途": "每个本地玩家的公共界面根布局与分层容器。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsRootLayout",
+      "WidgetCount": 10,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "Saved": true
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+      "用途": "黑色极简账号密码登录页面；只消费ViewModel状态并通过登录按钮提交登录命令。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsLoginScreen",
+      "WidgetCount": 13,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "AccessibilityErrors": 0,
+      "AccessibilityWarnings": 0,
+      "CommonUIErrors": 0,
+      "CommonUIWarnings": 1,
+      "CommonUIWarningDisposition": "工具要求DesiredFocusTargetName属性；项目使用平台页面基类的原生焦点契约，并在页面目录中把AccountInput设为默认焦点。必须在PIE继续验证。",
+      "VisualDesign": "纯黑页面背景；用户名和密码输入框使用黑色填充、灰色边框及蓝色聚焦描边；保留蓝色登录按钮；不使用卡片或面板容器。",
+      "PasswordDefault": "",
+      "PasswordMaskEnabled": true,
+      "Saved": true
+    }
+  ],
+  "Verification": {
+    "Target": "DivineBeastsArenaEditor Win64 Development",
+    "Module": "DivineBeastsUIClient",
+    "BuildSucceeded": true,
+    "FinalBuildActions": 6,
+    "EditorRestartReloadVerified": true,
+    "AutomationPrefix": "DivineBeasts.UI",
+    "AutomationTotal": 7,
+    "AutomationPassed": 7,
+    "AutomationFailed": 0,
+    "ArchitecturePesterTotal": 5,
+    "ArchitecturePesterPassed": 5,
+    "ArchitecturePesterFailed": 0
+  },
+  "Preview": "Game/Saved/Monolith/Previews/WBP_DBA_UI_Login_Black_Inputs_Reloaded2.png",
+  "Limitations": [
+    "未执行PIE登录交互与焦点切换验收。",
+    "未完成真实后端认证服务联调。",
+    "未执行客户端Cook、移动设备适配和人工视觉签审。",
+    "清单只记录资产级证据，不替代引擎构建和运行验收。"
+  ]
+}

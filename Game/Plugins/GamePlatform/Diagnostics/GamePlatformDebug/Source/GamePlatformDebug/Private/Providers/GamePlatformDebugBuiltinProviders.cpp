@@ -6,6 +6,8 @@
 #include "AbilitySystemGlobals.h"
 #include "Components/GamePlatformAIStateComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Components/ActorComponent.h"
+#include "State/GamePlatformCharacterStateView.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -268,8 +270,49 @@ namespace
             AddNA(Snapshot, TEXT("MovementMode"), TEXT("移动模式"), TEXT("目标不是Character"));
         }
 
-        AddNA(Snapshot, TEXT("CharacterId"), TEXT("角色编号"), TEXT("Character插件尚未公开稳定接口"));
-        AddNA(Snapshot, TEXT("HeroDefinitionId"), TEXT("英雄定义编号"), TEXT("Character插件尚未公开稳定接口"));
+        // 持久CharacterId属于隐私/玩家数据边界，平台只读接口刻意不公开。
+        AddNA(Snapshot, TEXT("CharacterId"), TEXT("角色编号"), TEXT("平台角色状态接口不公开持久档案ID"));
+
+        IGamePlatformCharacterStateView* CharacterStateView = nullptr;
+        TInlineComponentArray<UActorComponent*> ActorComponents(Actor);
+        for (UActorComponent* Component : ActorComponents)
+        {
+            if (IGamePlatformCharacterStateView* Candidate =
+                    Cast<IGamePlatformCharacterStateView>(Component))
+            {
+                CharacterStateView = Candidate;
+                break;
+            }
+        }
+
+        if (CharacterStateView)
+        {
+            Snapshot.AddField(
+                TEXT("HeroDefinitionId"),
+                TEXT("英雄定义编号"),
+                CharacterStateView->GetCharacterStateHeroDefinitionId().ToString());
+            Snapshot.AddField(
+                TEXT("HeroDefinitionVersion"),
+                TEXT("英雄定义版本"),
+                FString::FromInt(CharacterStateView->GetCharacterStateDefinitionVersion()),
+                EGamePlatformDebugValueType::Number);
+            Snapshot.AddField(
+                TEXT("HeroContentRevision"),
+                TEXT("英雄内容修订"),
+                CharacterStateView->GetCharacterStateContentRevision());
+            Snapshot.AddField(
+                TEXT("CharacterReady"),
+                TEXT("角色就绪"),
+                BoolText(CharacterStateView->IsCharacterStateReady()),
+                EGamePlatformDebugValueType::Boolean);
+        }
+        else
+        {
+            AddNA(Snapshot, TEXT("HeroDefinitionId"), TEXT("英雄定义编号"), TEXT("目标未提供平台角色状态接口"));
+            AddNA(Snapshot, TEXT("HeroDefinitionVersion"), TEXT("英雄定义版本"), TEXT("目标未提供平台角色状态接口"));
+            AddNA(Snapshot, TEXT("HeroContentRevision"), TEXT("英雄内容修订"), TEXT("目标未提供平台角色状态接口"));
+            AddNA(Snapshot, TEXT("CharacterReady"), TEXT("角色就绪"), TEXT("目标未提供平台角色状态接口"));
+        }
         AddNA(Snapshot, TEXT("Equipment"), TEXT("装备摘要"), TEXT("不跨越PlayerServices权限边界"));
         AddNA(Snapshot, TEXT("ProgressionLevel"), TEXT("成长等级"), TEXT("不跨越PlayerServices权限边界"));
 

@@ -2,6 +2,7 @@
 #include "API/GamePlatformApplicationFlowSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/GamePlatformCallbackFlowNode.h"
+#include "Interfaces/GamePlatformFlowNodeFactory.h"
 #include "Misc/AutomationTest.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "UObject/StrongObjectPtr.h"
@@ -237,4 +238,80 @@ bool FGamePlatformFlowSnapshotChangedTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("最后观察状态为Shutdown"), States.Last() == EGamePlatformFlowState::Shutdown);
     return true;
 }
+
+/**
+ * 回归：通用 AwaitEvent（外部事件等待）节点进入后不得自行完成，也不得创建业务轮询；
+ * 只有携带当前 RunId / NodeId / NodeGeneration 的 SubmitEvent 才能推进流程。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformAwaitEventFlowNodeTest,
+    "GamePlatform.ApplicationFlow.Adapter.AwaitEvent",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformAwaitEventFlowNodeTest::RunTest(const FString& Parameters)
+{
+    (void)Parameters;
+
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>());
+    TStrongObjectPtr<UGamePlatformApplicationFlowSubsystem> Service(
+        NewObject<UGamePlatformApplicationFlowSubsystem>(Instance.Get()));
+    FSubsystemCollection<UGameInstanceSubsystem> Collection;
+    Service->Initialize(Collection);
+
+    UGamePlatformFlowNode* Node =
+        GamePlatformApplicationFlowNodes::CreateAwaitEventFlowNode(*Instance.Get());
+    TestNotNull(TEXT("通用等待节点工厂返回有效节点"), Node);
+    FGamePlatformFlowDefinition Definition;
+    Definition.EntryNodeId = TEXT("Await");
+    FGamePlatformFlowStep Step;
+    Step.NodeId = TEXT("Await");
+    Step.Node = Node;
+    Definition.Steps.Add(Step);
+
+    FString Error;
+    TestTrue(TEXT("等待节点流程配置成功"), Service->Configure(Definition, Error));
+    const FGamePlatformFlowHandle Handle = Service->Start(nullptr, Error);
+    TestTrue(TEXT("等待节点流程启动成功"), Handle.IsValid());
+
+    FTSTicker::GetCoreTicker().Tick(0.01f);
+    const FGamePlatformFlowSnapshot Waiting = Service->GetSnapshot();
+    TestTrue(TEXT("等待节点保持Running"), Waiting.State == EGamePlatformFlowState::Running);
+    TestTrue(TEXT("等待节点已经取得非零节点代次"), Waiting.NodeGeneration != 0);
+
+    // 再调度一次仍应等待，证明节点没有用轮询或默认成功自行推进。
+    FTSTicker::GetCoreTicker().Tick(0.01f);
+    TestTrue(
+        TEXT("没有外部事件时流程继续等待"),
+        Service->GetSnapshot().State == EGamePlatformFlowState::Running);
+
+    FGamePlatformFlowNodeToken Token;
+    Token.Handle = Waiting.Handle;
+    Token.NodeId = Waiting.NodeId;
+    Token.NodeGeneration = Waiting.NodeGeneration;
+
+    FGamePlatformResult SubmitResult;
+    TestTrue(
+        TEXT("当前节点令牌提交事件成功"),
+        Service->SubmitEvent(
+            Token,
+            FGamePlatformFlowNodeResult::Success(),
+            SubmitResult));
+
+    FTSTicker::GetCoreTicker().Tick(0.01f);
+    TestTrue(
+        TEXT("外部事件推进到成功终态"),
+        Service->GetSnapshot().State == EGamePlatformFlowState::Succeeded);
+
+    FGamePlatformResult StaleResult;
+    TestFalse(
+        TEXT("终态后旧令牌不能重复推进"),
+        Service->SubmitEvent(
+            Token,
+            FGamePlatformFlowNodeResult::Success(),
+            StaleResult));
+
+    Service->Deinitialize();
+    return true;
+}
+
 #endif

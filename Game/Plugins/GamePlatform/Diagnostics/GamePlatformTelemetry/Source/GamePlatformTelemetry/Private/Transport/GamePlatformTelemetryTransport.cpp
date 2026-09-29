@@ -122,10 +122,14 @@ FGamePlatformTelemetryHttpTransport(
     FString InBaseUrl,
     FString InPath,
     TMap<FString, FString> InStaticHeaders,
-    float InTimeoutSeconds)
+    float InTimeoutSeconds,
+    int32 InMaxPayloadBytes,
+    FGamePlatformTelemetryHeaderProvider InDynamicHeaderProvider)
     : BaseUrl(MoveTemp(InBaseUrl))
     , Path(MoveTemp(InPath))
     , StaticHeaders(MoveTemp(InStaticHeaders))
+    , DynamicHeaderProvider(MoveTemp(InDynamicHeaderProvider))
+    , MaxPayloadBytes(FMath::Max(1024, InMaxPayloadBytes))
     , TimeoutSeconds(FMath::Max(1.0f, InTimeoutSeconds))
 {
     BaseUrl.RemoveFromEnd(TEXT("/"));
@@ -137,13 +141,24 @@ FGamePlatformTelemetryHttpTransport(
 
 bool FGamePlatformTelemetryHttpTransport::IsConfigured() const
 {
-    return !BaseUrl.IsEmpty() && !Path.IsEmpty();
+    if (BaseUrl.IsEmpty() || Path.IsEmpty())
+    {
+        return false;
+    }
+#if UE_BUILD_SHIPPING
+    // Shipping携带玩家/服务器凭据时必须使用TLS；开发环境仍可对本地HTTP进行联调。
+    return BaseUrl.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase);
+#else
+    return BaseUrl.StartsWith(TEXT("http://"), ESearchCase::IgnoreCase) ||
+        BaseUrl.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase);
+#endif
 }
 
 bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
     const FGamePlatformTelemetryBatch& Batch,
     FGamePlatformTelemetryTransportCompletion Completion)
 {
+    check(IsInGameThread());
     if (!IsConfigured() ||
         !Batch.BatchId.IsValid() ||
         !Completion)
@@ -155,6 +170,22 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
     if (!SerializeBatch(Batch, Payload))
     {
         return false;
+    }
+
+    FTCHARToUTF8 Utf8Payload(*Payload);
+    if (Utf8Payload.Length() > MaxPayloadBytes)
+    {
+        // 超大批次是不可重试的本地结构问题；通过Completion返回明确失败，避免NetworkSink指数重试同一坏Batch。
+        AsyncTask(ENamedThreads::GameThread,
+            [Completion = MoveTemp(Completion)]() mutable
+            {
+                FGamePlatformTelemetryTransportResult Result;
+                Result.bAccepted = false;
+                Result.bRetryable = false;
+                Result.Error = TEXT("payload_too_large");
+                Completion(Result);
+            });
+        return true;
     }
 
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
@@ -176,6 +207,20 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
         if (!Header.Key.IsEmpty() && !Header.Value.IsEmpty())
         {
             Request->SetHeader(Header.Key, Header.Value);
+        }
+    }
+
+    if (DynamicHeaderProvider)
+    {
+        const TMap<FString, FString> DynamicHeaders = DynamicHeaderProvider();
+        for (const TPair<FString, FString>& Header : DynamicHeaders)
+        {
+            if (!Header.Key.IsEmpty() && !Header.Value.IsEmpty() &&
+                !Header.Key.Contains(TEXT("\r")) && !Header.Key.Contains(TEXT("\n")) &&
+                !Header.Value.Contains(TEXT("\r")) && !Header.Value.Contains(TEXT("\n")))
+            {
+                Request->SetHeader(Header.Key, Header.Value);
+            }
         }
     }
 
@@ -268,6 +313,7 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
 
 void FGamePlatformTelemetryHttpTransport::CancelAll()
 {
+    check(IsInGameThread());
     TArray<TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>> Requests;
     {
         FScopeLock Lock(&RequestsMutex);
@@ -338,9 +384,6 @@ bool FGamePlatformTelemetryHttpTransport::SerializeBatch(
         Json->SetStringField(
             TEXT("priority"),
             PriorityString(Event.Priority));
-        Json->SetObjectField(
-            TEXT("context"),
-            ContextJson(Event.Context));
 
         TArray<TSharedPtr<FJsonValue>> Attributes;
         Attributes.Reserve(Event.Attributes.Num());
@@ -374,9 +417,6 @@ bool FGamePlatformTelemetryHttpTransport::SerializeBatch(
         Json->SetStringField(
             TEXT("timestamp_utc"),
             Metric.TimestampUtc.ToIso8601());
-        Json->SetObjectField(
-            TEXT("context"),
-            ContextJson(Metric.Context));
 
         TSharedPtr<FJsonObject> Labels = MakeShared<FJsonObject>();
         for (const TPair<FName, FString>& Label : Metric.Labels)

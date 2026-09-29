@@ -16,7 +16,12 @@
 
 namespace
 {
-FGamePlatformResult Error(FName Code)
+/**
+ * 构造对外脱敏的体验失败结果。
+ *
+ * 使用具备领域含义的名称，避免与 UE5.8 新增的全局 Error 类型产生名称查找歧义。
+ */
+FGamePlatformResult MakeExperienceFailure(FName Code)
 { return FGamePlatformResult::Failure(Code, TEXT("体验请求未满足当前生命周期或资源条件，请检查脱敏错误码。")); }
 IGamePlatformDataService* DataFor(const UActorComponent& Component)
 {
@@ -74,23 +79,27 @@ UGamePlatformExperienceComponent::UGamePlatformExperienceComponent()
 UGamePlatformExperienceComponent::UGamePlatformExperienceComponent(FVTableHelper& Helper) : Super(Helper) {}
 UGamePlatformExperienceComponent::~UGamePlatformExperienceComponent() = default;
 void UGamePlatformExperienceComponent::BeginPlay() { Super::BeginPlay(); }
-void UGamePlatformExperienceComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const
-{ Super::GetLifetimeReplicatedProps(Out); DOREPLIFETIME(UGamePlatformExperienceComponent, Snapshot); }
+void UGamePlatformExperienceComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    // DOREPLIFETIME 宏按引擎约定读取 OutLifetimeProps，参数名称属于宏调用契约的一部分。
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UGamePlatformExperienceComponent, Snapshot);
+}
 
 FGamePlatformResult UGamePlatformExperienceComponent::BeginExperience(const FPrimaryAssetId& Id, bool bAllowDevelopment)
 {
     check(IsInGameThread());
     if (!GetOwner() || !GetOwner()->HasAuthority() || !GetWorld() || Runtime->bClosing || Runtime->bExternalCall)
-        return Error(TEXT("ExperienceAuthorityOrScopeInvalid"));
+        return MakeExperienceFailure(TEXT("ExperienceAuthorityOrScopeInvalid"));
     if (Snapshot.Stage != EGamePlatformExperienceStage::Unassigned)
         return FGamePlatformResult::Unsupported(TEXT("ExperienceHotSwitchUnsupported"), TEXT("本版每个世界只启动一次体验，另一体验须正常退出后在新世界启动。"));
     FGamePlatformId Parsed;
     if (Id.PrimaryAssetType != UGamePlatformPrimaryDataAsset::DefinitionAssetType()
-        || !FGamePlatformId::TryParse(Id.PrimaryAssetName.ToString(), Parsed)) return Error(TEXT("InvalidExperienceId"));
+        || !FGamePlatformId::TryParse(Id.PrimaryAssetName.ToString(), Parsed)) return MakeExperienceFailure(TEXT("InvalidExperienceId"));
     auto* WorldService = IGamePlatformWorldService::Get(*GetWorld());
-    if (!WorldService || !DataFor(*this)) return Error(TEXT("GameplayPrerequisiteMissing"));
+    if (!WorldService || !DataFor(*this)) return MakeExperienceFailure(TEXT("GameplayPrerequisiteMissing"));
     const auto World = WorldService->GetReadiness();
-    if (!World.Context.ContextGeneration.IsValid()) return Error(TEXT("WorldIdentityUnavailable"));
+    if (!World.Context.ContextGeneration.IsValid()) return MakeExperienceFailure(TEXT("WorldIdentityUnavailable"));
     Snapshot.WorldContextGeneration = World.Context.ContextGeneration;
     Snapshot.ExperienceId = Parsed;
     Snapshot.ExperienceEpoch = 1;
@@ -99,7 +108,7 @@ FGamePlatformResult UGamePlatformExperienceComponent::BeginExperience(const FPri
         && FParse::Param(FCommandLine::Get(), TEXT("FoundationGameplayOffline"));
     SetStage(EGamePlatformExperienceStage::Preparing);
     StartLocalLoad(Id);
-    return Snapshot.Stage == EGamePlatformExperienceStage::Failed ? Error(Snapshot.FailureCode) : FGamePlatformResult::Success();
+    return Snapshot.Stage == EGamePlatformExperienceStage::Failed ? MakeExperienceFailure(Snapshot.FailureCode) : FGamePlatformResult::Success();
 }
 
 void UGamePlatformExperienceComponent::StartLocalLoad(const FPrimaryAssetId& Id)
@@ -210,13 +219,13 @@ void UGamePlatformExperienceComponent::AdvancePreparation()
             if (Item->bActivated || Item->bSkipped) continue;
             auto* Factory = Runtime->Factories.Find(Item->Spec.FactoryId);
             FGamePlatformResult Result;
-            if (!Factory || !Factory->Owner.IsValid()) Result = Error(TEXT("AssemblyFactoryMissing"));
+            if (!Factory || !Factory->Owner.IsValid()) Result = MakeExperienceFailure(TEXT("AssemblyFactoryMissing"));
             else
             {
                 bool bFailedDependency = false;
                 for (const auto& Previous : Runtime->Assemblies)
                     if (Item->Spec.Dependencies.Contains(Previous->Spec.AssemblyId) && Previous->bSkipped) bFailedDependency = true;
-                if (bFailedDependency) Result = Error(TEXT("AssemblyDependencySkipped"));
+                if (bFailedDependency) Result = MakeExperienceFailure(TEXT("AssemblyDependencySkipped"));
                 else
                 {
                     TGuardValue<bool> Guard(Runtime->bExternalCall, true);
@@ -224,9 +233,9 @@ void UGamePlatformExperienceComponent::AdvancePreparation()
                     {
                         Item->bStarted = true;
                         Item->Object = Factory->Create();
-                        Result = Item->Object ? Item->Object->BeginPrepare(*GetWorld(), Snapshot) : Error(TEXT("AssemblyFactoryReturnedNull"));
+                        Result = Item->Object ? Item->Object->BeginPrepare(*GetWorld(), Snapshot) : MakeExperienceFailure(TEXT("AssemblyFactoryReturnedNull"));
                     }
-                    else Result = Item->Object ? Item->Object->PollPreparation() : Error(TEXT("AssemblyObjectMissing"));
+                    else Result = Item->Object ? Item->Object->PollPreparation() : MakeExperienceFailure(TEXT("AssemblyObjectMissing"));
                     if (Result.IsSuccess()) Result = Item->Object->Activate();
                 }
             }
@@ -282,7 +291,7 @@ void UGamePlatformExperienceComponent::ReleaseResources()
 FGamePlatformResult UGamePlatformExperienceComponent::BeginExperienceDrain(FName Reason)
 {
     check(IsInGameThread());
-    if (!GetOwner() || !GetOwner()->HasAuthority() || Runtime->bExternalCall) return Error(TEXT("DrainAuthorityOrReentry"));
+    if (!GetOwner() || !GetOwner()->HasAuthority() || Runtime->bExternalCall) return MakeExperienceFailure(TEXT("DrainAuthorityOrReentry"));
     if (Snapshot.Stage == EGamePlatformExperienceStage::Released) return FGamePlatformResult::Success();
     SetStage(EGamePlatformExperienceStage::Draining, Reason);
     if (auto* Mode = GetWorld()->GetAuthGameMode<AGamePlatformGameModeBase>()) Mode->DrainPlayers(Reason);
@@ -335,7 +344,7 @@ FGamePlatformGameplayRegistration UGamePlatformExperienceComponent::RegisterAsse
     if (!GetOwner() || !GetOwner()->HasAuthority() || Runtime->bClosing || Runtime->bExternalCall || Id.IsNone()
         || Snapshot.Stage != EGamePlatformExperienceStage::Unassigned || !Owner.IsValid() || Owner->GetWorld() != GetWorld()
         || !Factory || Runtime->Factories.Contains(Id) || Runtime->Factories.Num() >= 64)
-    { OutResult = Error(TEXT("AssemblyRegistrationRejected")); return {}; }
+    { OutResult = MakeExperienceFailure(TEXT("AssemblyRegistrationRejected")); return {}; }
     FGamePlatformGameplayRegistration Handle{Runtime->Scope, FGuid::NewGuid()};
     Runtime->Factories.Add(Id, FFactory{Handle, Owner, MoveTemp(Factory)});
     OutResult = FGamePlatformResult::Success(); return Handle;
@@ -365,7 +374,7 @@ FGamePlatformGameplayRegistration UGamePlatformExperienceComponent::SubscribeExp
     check(IsInGameThread());
     if (Runtime->bClosing || Runtime->bExternalCall || !Owner.IsValid() || Owner->GetWorld() != GetWorld()
         || !Callback || Runtime->Observers.Num() >= 128)
-    { OutResult = Error(TEXT("GameplaySubscriptionRejected")); return {}; }
+    { OutResult = MakeExperienceFailure(TEXT("GameplaySubscriptionRejected")); return {}; }
     FGamePlatformGameplayRegistration Handle{Runtime->Scope, FGuid::NewGuid()};
     Runtime->Observers.Add(FObserver{Handle, Owner, MoveTemp(Callback), -1});
     OutResult = FGamePlatformResult::Success(); return Handle;

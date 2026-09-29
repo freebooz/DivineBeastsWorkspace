@@ -47,9 +47,28 @@ Release 1/1 Passed
 - Touch移动幅度倍率放大后的单位圆约束。
 - Touch独立视角灵敏度与通用灵敏度组合。
 - BlockLedger缓存组合掩码：重叠租约、乱序释放和最后引用清零，证明高频阻断查询可以使用 O(1) 缓存结果。
+- SemanticId/Descriptor → InputProfileCompiler → CompactSlot 的可扩展语义编译路径。
+- `EGamePlatformBuiltInInputSemantic` 的7个跨游戏公共语义与项目 `DivineBeasts.Input.*` 分层合同。
 - 本地设置稳定键隔离。
 
 ## 3. UE5.8 模块构建
+
+### 3.1 可扩展语义迁移与项目输入闭包验证
+
+本轮在正式工程中完成 `SemanticId/Descriptor → InputProfileCompiler → CompactSlot → DivineBeastsInputClient → GamePlatformAbilitySystem` 定向构建。平台新增 `EGamePlatformBuiltInInputSemantic` 后，`GamePlatformInputClient` Editor/Win64 Client 均成功；`DivineBeastsInputClient` Editor/Win64 Client 均成功。
+
+联调中发现既有 `UGamePlatformAbilitySetDefinition::ValidateDefinition()` 只有声明、没有实现，导致 `GamePlatformAbilitySystem` 链接失败；补充纯字段校验实现并用 `-NoUBTMakefiles` 强制重采集新源文件后，AbilitySystem Editor/Win64 Client 也成功。该修复不加载软资源、不改变GAS业务行为，只补齐已公开声明的Definition校验合同。
+
+```text
+DivineBeastsArenaEditor -Module=GamePlatformInputClient       → Succeeded
+DivineBeastsArenaEditor -Module=DivineBeastsInputClient      → Succeeded
+DivineBeastsArenaEditor -Module=GamePlatformAbilitySystem     → Succeeded
+DivineBeastsArenaClient -Module=GamePlatformInputClient       → Succeeded
+DivineBeastsArenaClient -Module=DivineBeastsInputClient      → Succeeded
+DivineBeastsArenaClient -Module=GamePlatformAbilitySystem     → Succeeded
+```
+
+项目 `TestInputArchitecture.ps1（输入架构门禁）` 通过，确认项目运行时桥不复制平台Input子系统、不引入业务Tick，并禁止重新使用平台旧 Attack/AbilitySlot/TargetLock 兼容语义。
 
 本轮已使用：
 
@@ -112,10 +131,10 @@ DivineBeastsArenaClient Android Development -Module=GamePlatformInputClient
 ## 6. 当前验收状态
 
 ```text
-G0 Architecture      本轮设计已补齐，待最终全局回归
-G1 Compile           PC Passed：Editor/Win64 Client；Android被缺失NDK r27c阻断；iOS未执行
+G0 Architecture      Input范围Passed：三层继承/Public API边界与项目输入架构门禁通过；全局设计基线另有DBAArena→GamePlatformUIClient依赖声明问题，与Input无关
+G1 Compile           PC Passed：GamePlatformInputClient、DivineBeastsInputClient、GamePlatformAbilitySystem 的Editor/Win64 Client定向构建通过；Android缺NDK r27c；iOS未执行
 G2 Functional        Partial：Native 410断言通过；UE Automation被全平台SDK校验阻断，未进入测试队列
-G3 Integration       Not Passed：无真实Profile/项目消费链运行
+G3 Integration       Partial：项目Semantic/Profile/Move-Look/GAS/TargetLock桥已编码并通过正式模块编译；无真实Input资产及运行场景验收
 G4 Manual Review     Not Passed
 G5 Production        Not Passed：无PC/移动真机、Cook/Stage和性能数据
 ```

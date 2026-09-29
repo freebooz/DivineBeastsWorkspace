@@ -107,6 +107,12 @@ public:
     }
 
 private:
+    /**
+     * 从DBAUIPack_Core稳定软路径安装项目默认RootLayout。
+     * 只在初始化或真实状态事件到达时重试，不使用Tick；成功后由平台层持有实例。
+     */
+    bool EnsureDefaultRootLayout();
+
     void RegisterDefaultScreenDefinitions();
     void UnregisterDefaultScreenDefinitions();
     void HandleViewStateChanged(const FDivineBeastsUIViewState& NewState);

@@ -23,7 +23,8 @@ public class GamePlatformDebug : ModuleRules
             "GameplayTags",
             "GamePlatformCombat",
             "GamePlatformAI",
-            "GamePlatformTelemetry"
+            "GamePlatformTelemetry",
+            "GamePlatformCharacter"
         });
 
         bool bDebugAvailable =

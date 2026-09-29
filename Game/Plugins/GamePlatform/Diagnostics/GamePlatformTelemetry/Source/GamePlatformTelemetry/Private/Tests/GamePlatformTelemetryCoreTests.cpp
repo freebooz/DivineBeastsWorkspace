@@ -5,6 +5,49 @@
 #include "Privacy/GamePlatformTelemetryPrivacyFilter.h"
 #include "Sampling/GamePlatformTelemetrySampling.h"
 #include "Schema/GamePlatformTelemetrySchemaRegistry.h"
+#include "Containers/Ticker.h"
+#include "Sinks/GamePlatformTelemetryNetworkSink.h"
+#include "Transport/GamePlatformTelemetryTransport.h"
+
+namespace
+{
+/** 测试传输器：可模拟首次断线后恢复，或持续断线；不执行真实网络请求。 */
+class FGamePlatformTelemetryRetryTestTransport final
+    : public IGamePlatformTelemetryTransport
+{
+public:
+    explicit FGamePlatformTelemetryRetryTestTransport(bool bInAlwaysRetryableFailure)
+        : bAlwaysRetryableFailure(bInAlwaysRetryableFailure)
+    {
+    }
+
+    virtual bool BeginSubmitBatch(
+        const FGamePlatformTelemetryBatch&,
+        FGamePlatformTelemetryTransportCompletion Completion) override
+    {
+        ++Attempts;
+        FGamePlatformTelemetryTransportResult Result;
+        const bool bRecovered = !bAlwaysRetryableFailure && Attempts >= 2;
+        Result.bAccepted = bRecovered;
+        Result.bRetryable = !bRecovered;
+        Result.Error = bRecovered ? FString() : TEXT("simulated_disconnect");
+        Completion(Result);
+        return true;
+    }
+
+    virtual void CancelAll() override
+    {
+        ++CancelCalls;
+    }
+
+    int32 Attempts = 0;
+    int32 CancelCalls = 0;
+
+private:
+    bool bAlwaysRetryableFailure = false;
+};
+}
+
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGamePlatformTelemetryPrivacyAndSchemaTest,
@@ -49,6 +92,15 @@ bool FGamePlatformTelemetryPrivacyAndSchemaTest::RunTest(
             Limits),
         EGamePlatformTelemetryRecordResult::Recorded);
 
+    Result.Type = EGamePlatformTelemetryAttributeType::Double;
+    Event.Attributes = {Result};
+    TestEqual(
+        TEXT("Schema声明String时错误类型必须拒绝"),
+        FGamePlatformTelemetryPrivacyFilter::ValidateEvent(Event, *Definition, Limits),
+        EGamePlatformTelemetryRecordResult::InvalidAttribute);
+    Result.Type = EGamePlatformTelemetryAttributeType::String;
+    Event.Attributes = {Result};
+
     Result.Key = TEXT("payment_receipt");
     Result.StringValue = TEXT("forbidden");
     Event.Attributes = {Result};
@@ -78,6 +130,15 @@ bool FGamePlatformTelemetryPrivacyAndSchemaTest::RunTest(
             Metric,
             *MetricDefinition),
         EGamePlatformTelemetryRecordResult::MetricLabelNotAllowed);
+
+    FGamePlatformTelemetryEventDefinition LateDefinition;
+    LateDefinition.EventName = TEXT("Telemetry.Test.LateRegistration");
+    Registry->Freeze();
+    TestTrue(TEXT("Schema冻结状态可查询"), Registry->IsFrozen());
+    Registry->RegisterEvent(MoveTemp(LateDefinition));
+    TestNull(
+        TEXT("冻结后不得再注册运行期Schema"),
+        Registry->FindEvent(TEXT("Telemetry.Test.LateRegistration")));
 
     return true;
 }
@@ -145,7 +206,8 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
     const FString&)
 {
     FGamePlatformTelemetryLimits Limits;
-    Limits.MaxBufferEvents = 2;
+    // 生产Buffer明确把最小事件容量夹到16；测试必须使用真实有效下限，不能假定2条容量。
+    Limits.MaxBufferEvents = 16;
     Limits.MaxBufferBytes = 4096;
     Limits.MaxBatchEvents = 1;
     Limits.MaxBatchBytes = 4096;
@@ -168,16 +230,21 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
     Verbose.Priority = EGamePlatformTelemetryPriority::Verbose;
 
     TestTrue(TEXT("Critical入队"), Buffer.EnqueueEvent(Critical, 256));
-    TestTrue(TEXT("Normal入队"), Buffer.EnqueueEvent(Normal, 256));
+    for (int32 Index = 0; Index < 15; ++Index)
+    {
+        FGamePlatformTelemetryEvent Item = Normal;
+        Item.EventId = FGuid::NewGuid();
+        TestTrue(TEXT("Normal填满真实最小容量"), Buffer.EnqueueEvent(MoveTemp(Item), 256));
+    }
+
     TestFalse(
-        TEXT("Verbose不能驱逐更高优先级"),
+        TEXT("Buffer满时Verbose不能驱逐更高优先级"),
         Buffer.EnqueueEvent(Verbose, 256));
 
     FGamePlatformTelemetryEvent NewCritical = Critical;
     NewCritical.EventId = FGuid::NewGuid();
-
     TestTrue(
-        TEXT("Critical可驱逐较低优先级"),
+        TEXT("Critical可驱逐较低优先级Normal"),
         Buffer.EnqueueEvent(NewCritical, 256));
 
     const FGamePlatformTelemetryDiagnostics Diagnostics =
@@ -186,7 +253,7 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
     TestEqual(
         TEXT("Buffer始终有界"),
         Diagnostics.BufferDepth,
-        2);
+        16);
 
     TestTrue(
         TEXT("至少记录一次Drop"),
@@ -204,6 +271,122 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
         Batch.Events.Num(),
         1);
 
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformTelemetryContextBatchBoundaryTest,
+    "GamePlatform.Telemetry.ContextBatchBoundary",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformTelemetryContextBatchBoundaryTest::RunTest(const FString&)
+{
+    FGamePlatformTelemetryLimits Limits;
+    Limits.MaxBufferEvents = 8;
+    Limits.MaxBufferBytes = 64 * 1024;
+    Limits.MaxBatchEvents = 8;
+    Limits.MaxBatchBytes = 64 * 1024;
+
+    FGamePlatformTelemetryBoundedBuffer Buffer(Limits);
+    FGamePlatformTelemetryEvent WorldA;
+    WorldA.EventId = FGuid::NewGuid();
+    WorldA.EventName = TEXT("Telemetry.Foundation.WorldLoaded");
+    WorldA.Context.WorldId = TEXT("world-A");
+
+    FGamePlatformTelemetryEvent WorldB = WorldA;
+    WorldB.EventId = FGuid::NewGuid();
+    WorldB.Context.WorldId = TEXT("world-B");
+
+    TestTrue(TEXT("WorldA入队"), Buffer.EnqueueEvent(WorldA, 256));
+    TestTrue(TEXT("WorldB入队"), Buffer.EnqueueEvent(WorldB, 256));
+
+    FGamePlatformTelemetryBatch First;
+    TestTrue(TEXT("构建第一上下文批次"), Buffer.BuildBatch({}, First));
+    TestEqual(TEXT("上下文变化必须切批"), First.Events.Num(), 1);
+    TestEqual(TEXT("第一批使用第一条记录上下文"), First.SourceContext.WorldId, FString(TEXT("world-A")));
+
+    FGamePlatformTelemetryBatch Second;
+    TestTrue(TEXT("构建第二上下文批次"), Buffer.BuildBatch({}, Second));
+    TestEqual(TEXT("第二批只包含剩余上下文"), Second.Events.Num(), 1);
+    TestEqual(TEXT("第二批上下文正确"), Second.SourceContext.WorldId, FString(TEXT("world-B")));
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformTelemetryReconnectRecoveryTest,
+    "GamePlatform.Telemetry.Network.ReconnectRecovery",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformTelemetryReconnectRecoveryTest::RunTest(const FString&)
+{
+    const TSharedRef<FGamePlatformTelemetryRetryTestTransport, ESPMode::ThreadSafe> Transport =
+        MakeShared<FGamePlatformTelemetryRetryTestTransport, ESPMode::ThreadSafe>(false);
+    FGamePlatformTelemetryRetrySettings Retry;
+    Retry.RetryMinSeconds = 0.1f;
+    Retry.RetryMaxSeconds = 0.1f;
+    Retry.MaxRetryAgeSeconds = 5.0f;
+    Retry.MaxRetries = 2;
+    Retry.MaxPendingBatches = 2;
+
+    const TSharedRef<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> Sink =
+        MakeShared<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe>(Transport, Retry);
+    TestTrue(TEXT("NetworkSink启动"), Sink->Start());
+
+    FGamePlatformTelemetryBatch Batch;
+    Batch.BatchId = FGuid::NewGuid();
+    bool bCompletionAccepted = false;
+    Sink->SubmitBatch(Batch, [&bCompletionAccepted](bool bAccepted, bool)
+    {
+        bCompletionAccepted = bAccepted;
+    });
+
+    TestEqual(TEXT("首次发送模拟断线"), Transport->Attempts, 1);
+    TestEqual(TEXT("断线期间保持一个有界Pending Batch"), Sink->GetHealth().PendingBatches, 1);
+
+    FTSTicker::GetCoreTicker().Tick(0.2f);
+
+    TestEqual(TEXT("退避后执行第二次提交"), Transport->Attempts, 2);
+    TestTrue(TEXT("网络恢复后原Batch成功完成"), bCompletionAccepted);
+    TestEqual(TEXT("恢复后Pending归零"), Sink->GetHealth().PendingBatches, 0);
+    TestEqual(TEXT("成功批次数计数"), Sink->GetHealth().SubmittedBatches, static_cast<int64>(1));
+    Sink->Shutdown(0.0f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformTelemetryShutdownCancelsRetryTest,
+    "GamePlatform.Telemetry.Network.ShutdownCancelsRetry",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformTelemetryShutdownCancelsRetryTest::RunTest(const FString&)
+{
+    const TSharedRef<FGamePlatformTelemetryRetryTestTransport, ESPMode::ThreadSafe> Transport =
+        MakeShared<FGamePlatformTelemetryRetryTestTransport, ESPMode::ThreadSafe>(true);
+    FGamePlatformTelemetryRetrySettings Retry;
+    Retry.RetryMinSeconds = 0.1f;
+    Retry.RetryMaxSeconds = 0.1f;
+    Retry.MaxRetryAgeSeconds = 5.0f;
+    Retry.MaxRetries = 3;
+
+    const TSharedRef<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> Sink =
+        MakeShared<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe>(Transport, Retry);
+    TestTrue(TEXT("持续断线测试Sink启动"), Sink->Start());
+
+    FGamePlatformTelemetryBatch Batch;
+    Batch.BatchId = FGuid::NewGuid();
+    Sink->SubmitBatch(Batch, {});
+    TestEqual(TEXT("已安排断线重试"), Sink->GetHealth().PendingBatches, 1);
+
+    Sink->Shutdown(0.0f);
+    const int32 AttemptsAtShutdown = Transport->Attempts;
+    FTSTicker::GetCoreTicker().Tick(0.2f);
+
+    TestEqual(TEXT("关停后重试Ticker不得再次发请求"), Transport->Attempts, AttemptsAtShutdown);
+    TestEqual(TEXT("关停清空Pending"), Sink->GetHealth().PendingBatches, 0);
+    TestTrue(TEXT("关停取消传输层请求"), Transport->CancelCalls >= 1);
+    TestEqual(TEXT("未发送批次计入Drop"), Sink->GetHealth().DroppedBatches, static_cast<int64>(1));
     return true;
 }
 

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Initialization/GamePlatformCharacterInitializer.h"
+#include "State/GamePlatformCharacterStateView.h"
 #include "Identity/DivineBeastsZodiacIdentity.h"
 #include "DivineBeastsCharacterComponent.generated.h"
 
@@ -15,6 +16,41 @@ DECLARE_MULTICAST_DELEGATE_OneParam(
     bool);
 
 /**
+ * FDivineBeastsCharacterRuntimeState（神兽联盟角色原子运行状态）。
+ * Hero身份、生肖、出生/Avatar代次和服务器认可的Definition版本作为一个复制单元发布，
+ * 防止客户端分别收到多个字段时把不同代次的数据临时拼成错误角色状态。
+ */
+USTRUCT()
+struct DIVINEBEASTSCHARACTERSRUNTIME_API FDivineBeastsCharacterRuntimeState
+{
+    GENERATED_BODY()
+
+    /** Shared契约定义的十二生肖稳定英雄编号。 */
+    UPROPERTY()
+    FName HeroDefinitionId = NAME_None;
+
+    /** 项目本地生肖枚举；必须能由HeroDefinitionId确定性推导。 */
+    UPROPERTY()
+    EDivineBeastsZodiacIdentity ZodiacIdentity = EDivineBeastsZodiacIdentity::Rat;
+
+    /** 当前Pawn出生代次。 */
+    UPROPERTY()
+    int32 SpawnGeneration = 0;
+
+    /** 当前Avatar绑定代次。 */
+    UPROPERTY()
+    int32 AvatarGeneration = 0;
+
+    /** 服务器实际加载并认可的Definition结构版本；0表示尚未确认。 */
+    UPROPERTY()
+    int32 DefinitionVersion = 0;
+
+    /** 服务器实际加载并认可的Definition内容修订号；客户端必须一致后才可Ready。 */
+    UPROPERTY()
+    FString ContentRevision;
+};
+
+/**
  * UDivineBeastsCharacterComponent（神兽联盟项目角色组件）。
  * 负责可信运行身份、Definition lease、移动/碰撞配置、Generation和Readiness；
  * 不拥有ASC、技能、伤害、AI Brain、装备或表现资源。
@@ -22,6 +58,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(
 UCLASS(ClassGroup=(DivineBeasts), meta=(BlueprintSpawnableComponent))
 class DIVINEBEASTSCHARACTERSRUNTIME_API UDivineBeastsCharacterComponent final
     : public UActorComponent
+    , public IGamePlatformCharacterStateView
 {
     GENERATED_BODY()
 
@@ -43,7 +80,7 @@ public:
     void RefreshInitialization();
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
-    FName GetHeroDefinitionId() const { return HeroDefinitionId; }
+    FName GetHeroDefinitionId() const { return RuntimeState.HeroDefinitionId; }
 
     /** 仅Owner得到持久CharacterId；远端观察者默认不复制。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
@@ -52,14 +89,30 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
     EDivineBeastsZodiacIdentity GetZodiacIdentity() const
     {
-        return ZodiacIdentity;
+        return RuntimeState.ZodiacIdentity;
     }
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
-    int32 GetSpawnGeneration() const { return SpawnGeneration; }
+    int32 GetSpawnGeneration() const { return RuntimeState.SpawnGeneration; }
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
-    int32 GetAvatarGeneration() const { return AvatarGeneration; }
+    int32 GetAvatarGeneration() const { return RuntimeState.AvatarGeneration; }
+
+    /** 返回服务器认可的Definition结构版本；0表示尚未完成版本确认。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
+    int32 GetDefinitionVersion() const { return RuntimeState.DefinitionVersion; }
+
+    /** 返回服务器认可的Definition内容修订号；客户端Definition必须与其一致。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
+    FString GetDefinitionContentRevision() const { return RuntimeState.ContentRevision; }
+
+    // IGamePlatformCharacterStateView（平台角色状态只读接口）
+    virtual FName GetCharacterStateHeroDefinitionId() const override { return GetHeroDefinitionId(); }
+    virtual int32 GetCharacterStateSpawnGeneration() const override { return GetSpawnGeneration(); }
+    virtual int32 GetCharacterStateAvatarGeneration() const override { return GetAvatarGeneration(); }
+    virtual int32 GetCharacterStateDefinitionVersion() const override { return GetDefinitionVersion(); }
+    virtual FString GetCharacterStateContentRevision() const override { return GetDefinitionContentRevision(); }
+    virtual bool IsCharacterStateReady() const override { return IsCharacterReady(); }
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
     bool IsCharacterReady() const
@@ -80,11 +133,9 @@ public:
     }
 
 private:
+    /** 任一Hero身份、代次或Definition修订变化都重新建立本地Definition租约，避免旧异步请求污染新角色。 */
     UFUNCTION()
-    void OnRep_Identity();
-
-    UFUNCTION()
-    void OnRep_Generation();
+    void OnRep_RuntimeState();
 
     UFUNCTION()
     void OnRep_ServerReady();
@@ -106,21 +157,12 @@ private:
     void BroadcastReadinessIfChanged(bool bPreviousReady);
 
     /** Owner-only持久身份，避免向所有观察者复制PlayerData档案ID。 */
-    UPROPERTY(ReplicatedUsing=OnRep_Identity, Transient)
+    UPROPERTY(Replicated, Transient)
     FString CharacterId;
 
-    UPROPERTY(ReplicatedUsing=OnRep_Identity, Transient)
-    FName HeroDefinitionId = NAME_None;
-
-    UPROPERTY(ReplicatedUsing=OnRep_Identity, Transient)
-    EDivineBeastsZodiacIdentity ZodiacIdentity =
-        EDivineBeastsZodiacIdentity::Rat;
-
-    UPROPERTY(ReplicatedUsing=OnRep_Generation, Transient)
-    int32 SpawnGeneration = 0;
-
-    UPROPERTY(ReplicatedUsing=OnRep_Generation, Transient)
-    int32 AvatarGeneration = 0;
+    /** 面向所有相关观察者的原子角色运行状态；不包含持久CharacterId等隐私字段。 */
+    UPROPERTY(ReplicatedUsing=OnRep_RuntimeState, Transient)
+    FDivineBeastsCharacterRuntimeState RuntimeState;
 
     UPROPERTY(Replicated, Transient)
     bool bPersistentCharacterIdRequired = true;

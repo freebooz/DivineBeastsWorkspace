@@ -2,10 +2,14 @@
 
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "GameplayTagsManager.h"
+#include "Services/GamePlatformInputServices.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/Package.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
+
+static const FGameplayTag InputAutomationCustom = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Test.Input.Custom"), true);
 
 namespace
 {
@@ -112,6 +116,63 @@ bool FGamePlatformInputProfileContractTest::RunTest(const FString&)
     Profile->Actions[0].Unit = EGamePlatformInputUnit::Boolean;
     TestFalse(TEXT("Move语义与单位不匹配被拒绝"), Profile->ValidateDefinition().IsSuccess());
 
+    // 新语义Descriptor不依赖固定枚举，并可在同一Profile中与Legacy动作共存。
+    FGamePlatformInputActionDefinition CustomEntry;
+    CustomEntry.Descriptor.SemanticId.Tag = InputAutomationCustom;
+    CustomEntry.Descriptor.Unit = EGamePlatformInputUnit::Boolean;
+    CustomEntry.Descriptor.ValueType = EInputActionValueType::Boolean;
+    CustomEntry.Descriptor.ChannelMask = static_cast<uint8>(EGamePlatformInputChannel::Actions);
+    CustomEntry.Descriptor.ValuePolicy = EGamePlatformInputValuePolicy::Passthrough;
+    CustomEntry.Action = NewObject<UInputAction>(GetTransientPackage(), TEXT("IA_AutomationCustom"), RF_Transient);
+    CustomEntry.Action.Get()->ValueType = EInputActionValueType::Boolean;
+    Profile->Actions[0].Unit = EGamePlatformInputUnit::NormalizedAxis;
+    Profile->Actions.Add(CustomEntry);
+    TestTrue(TEXT("自定义Tag语义可与旧枚举Profile兼容共存"), Profile->ValidateDefinition().IsSuccess());
+
+    CustomEntry.Descriptor.ChannelMask = 0;
+    Profile->Actions.Last() = CustomEntry;
+    TestFalse(TEXT("自定义Tag语义的空阻断通道被拒绝"), Profile->ValidateDefinition().IsSuccess());
+
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformBuiltInInputSemanticContractTest,
+    "GamePlatform.Input.Semantic.BuiltInContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformBuiltInInputSemanticContractTest::RunTest(const FString&)
+{
+    const EGamePlatformBuiltInInputSemantic BuiltIns[] =
+    {
+        EGamePlatformBuiltInInputSemantic::Move,
+        EGamePlatformBuiltInInputSemantic::LookDelta,
+        EGamePlatformBuiltInInputSemantic::LookRate,
+        EGamePlatformBuiltInInputSemantic::Interact,
+        EGamePlatformBuiltInInputSemantic::Menu,
+        EGamePlatformBuiltInInputSemantic::Confirm,
+        EGamePlatformBuiltInInputSemantic::Cancel
+    };
+
+    TSet<FGameplayTag> UniqueTags;
+    for (const EGamePlatformBuiltInInputSemantic Semantic : BuiltIns)
+    {
+        const FGameplayTag Tag = GamePlatformInputServices::GetBuiltInSemanticTag(Semantic);
+        const FGamePlatformInputSemanticDescriptor Descriptor =
+            GamePlatformInputServices::GetBuiltInSemanticDescriptor(Semantic);
+        TestTrue(TEXT("平台Built-in语义Tag必须有效"), Tag.IsValid());
+        TestFalse(TEXT("平台Built-in语义Tag必须唯一"), UniqueTags.Contains(Tag));
+        UniqueTags.Add(Tag);
+        TestEqual(TEXT("Built-in Descriptor与Tag必须一致"), Descriptor.SemanticId.Tag, Tag);
+        TestTrue(
+            TEXT("平台Built-in Descriptor必须满足通用运行合同"),
+            GamePlatformInputServices::IsValidSemanticDescriptor(Descriptor));
+    }
+
+    TestEqual(
+        TEXT("平台Built-in集合只能包含真正跨游戏公共语义"),
+        UniqueTags.Num(),
+        7);
     return true;
 }
 

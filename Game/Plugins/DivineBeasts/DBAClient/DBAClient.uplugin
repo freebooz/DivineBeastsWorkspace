@@ -3,7 +3,7 @@
   "Version": 1,
   "VersionName": "1.0.0",
   "FriendlyName": "DBAClient",
-  "Description": "神兽联盟公共客户端组合插件：装配项目流程、项目表现适配和用户界面，不强制启用竞技；DBAArena仅通过公开流程扩展接入。",
+  "Description": "神兽联盟公共客户端组合插件：装配项目流程、项目输入语义/适配、项目表现和用户界面，不强制启用竞技；DBAArena仅通过公开扩展接入。",
   "Category": "DivineBeasts",
   "CreatedBy": "DivineBeastsWorkspace",
   "CanContainContent": true,
@@ -17,7 +17,10 @@
     { "Name": "GamePlatformSession", "Enabled": true },
     { "Name": "GamePlatformLoading", "Enabled": true },
     { "Name": "GamePlatformData", "Enabled": true },
+    { "Name": "GamePlatformInput", "Enabled": true },
     { "Name": "GamePlatformCharacter", "Enabled": true },
+    { "Name": "GamePlatformAbilitySystem", "Enabled": true },
+    { "Name": "GamePlatformTelemetry", "Enabled": true },
     { "Name": "GamePlatformCombat", "Enabled": true },
     { "Name": "GamePlatformQuest", "Enabled": true },
     { "Name": "GamePlatformInventory", "Enabled": true },
@@ -26,6 +29,7 @@
   ],
   "Modules": [
     { "Name": "DivineBeastsApplicationFlowClient", "Type": "ClientOnly", "LoadingPhase": "Default" },
+    { "Name": "DivineBeastsInputClient", "Type": "ClientOnly", "LoadingPhase": "Default" },
     { "Name": "DivineBeastsPresentationRuntime", "Type": "Runtime", "LoadingPhase": "Default" },
     { "Name": "DivineBeastsPresentationClient", "Type": "ClientOnly", "LoadingPhase": "Default" },
     { "Name": "DivineBeastsUIClient", "Type": "ClientOnly", "LoadingPhase": "Default" }

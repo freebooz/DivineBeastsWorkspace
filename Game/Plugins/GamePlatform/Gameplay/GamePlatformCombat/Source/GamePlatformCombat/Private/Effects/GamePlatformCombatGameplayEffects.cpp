@@ -10,24 +10,18 @@
 namespace
 {
 void ConfigureGrantedTag(
-    UGameplayEffect& Effect,
+    UTargetTagsGameplayEffectComponent& Component,
     const FGameplayTag& GrantedTag)
 {
-    UTargetTagsGameplayEffectComponent& Component =
-        Effect.AddComponent<UTargetTagsGameplayEffectComponent>();
-
     FInheritedTagContainer Tags;
     Tags.Added.AddTag(GrantedTag);
     Component.SetAndApplyTargetTagChanges(Tags);
 }
 
 void ConfigureBlockedAbilityTag(
-    UGameplayEffect& Effect,
+    UBlockAbilityTagsGameplayEffectComponent& Component,
     const FGameplayTag& BlockedAbilityTag)
 {
-    UBlockAbilityTagsGameplayEffectComponent& Component =
-        Effect.AddComponent<UBlockAbilityTagsGameplayEffectComponent>();
-
     FInheritedTagContainer Tags;
     Tags.Added.AddTag(BlockedAbilityTag);
     Component.SetAndApplyBlockedAbilityTagChanges(Tags);
@@ -66,16 +60,51 @@ UGamePlatformHealingGameplayEffect::UGamePlatformHealingGameplayEffect()
     Executions.Add(Execution);
 }
 
-UGamePlatformStunGameplayEffect::UGamePlatformStunGameplayEffect()
+UGamePlatformStunGameplayEffect::UGamePlatformStunGameplayEffect(
+    const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
     ConfigureSingleStackDurationEffect(*this);
-    ConfigureGrantedTag(*this, GamePlatformCombatTags::Control_Stun);
-    ConfigureBlockedAbilityTag(*this, GamePlatformAbilitySystemTags::Ability_Active);
+
+    // GameplayEffect::AddComponent 在 UE 5.8 构造期会使用空名称 NewObject，触发类默认对象创建致命错误。
+    // 这里使用具名默认子对象，保证 CDO、派生蓝图和热重载过程中的对象身份均保持稳定。
+    UTargetTagsGameplayEffectComponent* GrantedTagsComponent =
+        ObjectInitializer.CreateDefaultSubobject<UTargetTagsGameplayEffectComponent>(
+            this,
+            TEXT("GrantedControlTags"));
+    UBlockAbilityTagsGameplayEffectComponent* BlockedAbilityTagsComponent =
+        ObjectInitializer.CreateDefaultSubobject<UBlockAbilityTagsGameplayEffectComponent>(
+            this,
+            TEXT("BlockedAbilityTags"));
+    GEComponents.Add(GrantedTagsComponent);
+    GEComponents.Add(BlockedAbilityTagsComponent);
+
+    ConfigureGrantedTag(*GrantedTagsComponent, GamePlatformCombatTags::Control_Stun);
+    ConfigureBlockedAbilityTag(
+        *BlockedAbilityTagsComponent,
+        GamePlatformAbilitySystemTags::Ability_Active);
 }
 
-UGamePlatformSilenceGameplayEffect::UGamePlatformSilenceGameplayEffect()
+UGamePlatformSilenceGameplayEffect::UGamePlatformSilenceGameplayEffect(
+    const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
     ConfigureSingleStackDurationEffect(*this);
-    ConfigureGrantedTag(*this, GamePlatformCombatTags::Control_Silence);
-    ConfigureBlockedAbilityTag(*this, GamePlatformAbilitySystemTags::Ability_Spell);
+
+    // 与眩晕效果保持同一默认子对象契约，避免构造期动态对象名称不确定。
+    UTargetTagsGameplayEffectComponent* GrantedTagsComponent =
+        ObjectInitializer.CreateDefaultSubobject<UTargetTagsGameplayEffectComponent>(
+            this,
+            TEXT("GrantedControlTags"));
+    UBlockAbilityTagsGameplayEffectComponent* BlockedAbilityTagsComponent =
+        ObjectInitializer.CreateDefaultSubobject<UBlockAbilityTagsGameplayEffectComponent>(
+            this,
+            TEXT("BlockedAbilityTags"));
+    GEComponents.Add(GrantedTagsComponent);
+    GEComponents.Add(BlockedAbilityTagsComponent);
+
+    ConfigureGrantedTag(*GrantedTagsComponent, GamePlatformCombatTags::Control_Silence);
+    ConfigureBlockedAbilityTag(
+        *BlockedAbilityTagsComponent,
+        GamePlatformAbilitySystemTags::Ability_Spell);
 }

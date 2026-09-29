@@ -39,10 +39,12 @@ Describe '神兽联盟项目插件按DBA边界收敛' {
         }
     }
 
-    It '原有项目模块按共享、客户端、服务器和世界职责归属且不改模块身份' {
+    It '当前项目模块按共享、客户端、服务器和世界职责归属且身份唯一' {
         $expectedModules = @{
             DBAArena = @('DivineBeastsArenaRuntime', 'DivineBeastsArenaClient', 'DivineBeastsArenaServer')
-            DBAClient = @('DivineBeastsApplicationFlowClient', 'DivineBeastsPresentationClient', 'DivineBeastsPresentationRuntime', 'DivineBeastsUIClient')
+            # DivineBeastsInputClient 是项目输入语义与平台输入/GAS之间的客户端组合边界，
+            # 必须作为 DBAClient 的独立 ClientOnly 模块纳入正式身份清单。
+            DBAClient = @('DivineBeastsApplicationFlowClient', 'DivineBeastsInputClient', 'DivineBeastsPresentationClient', 'DivineBeastsPresentationRuntime', 'DivineBeastsUIClient')
             DBAGameplay = @('DivineBeastsCharactersRuntime', 'DivineBeastsRuntime')
             DBAServer = @('DBAServer')
             DBAWorlds = @('DBAWorldsRuntime')

@@ -19,11 +19,6 @@
                         "Name":  "GamePlatformCharacter",
                         "Type":  "Runtime",
                         "LoadingPhase":  "Default"
-                    },
-                    {
-                        "Name":  "GamePlatformCharacterClient",
-                        "Type":  "ClientOnly",
-                        "LoadingPhase":  "Default"
                     }
                 ]
 }

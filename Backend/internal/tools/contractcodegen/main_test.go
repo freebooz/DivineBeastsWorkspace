@@ -146,9 +146,10 @@ func testDivineBeastsCatalog() divineBeastsCatalog {
 	return divineBeastsCatalog{
 		gameID: "divinebeasts", projectID: "DivineBeastsArena", contractVersion: "2.0.0",
 		catalogVersion: 1, generatedRevision: strings.Repeat("a", 64),
-		serverRoles: []string{"GameServer.Role.OpenWorld", "GameServer.Role.MainArena"},
-		experiences: []string{"Experience.OpenWorld.Hub", "Experience.Lobby.Main", "Experience.MainArena.Main"},
-		arenaModes:  []string{"Arena.Mode.Duel1v1"},
+		serverRoles:       []string{"GameServer.Role.OpenWorld", "GameServer.Role.MainArena"},
+		experiences:       []string{"Experience.OpenWorld.Hub", "Experience.Lobby.Main", "Experience.MainArena.Main"},
+		arenaModes:        []string{"Arena.Mode.Duel1v1"},
+		heroDefinitionIDs: []string{"Hero.Zodiac.Rat", "Hero.Zodiac.Ox", "Hero.Zodiac.Tiger", "Hero.Zodiac.Rabbit", "Hero.Zodiac.Dragon", "Hero.Zodiac.Snake", "Hero.Zodiac.Horse", "Hero.Zodiac.Goat", "Hero.Zodiac.Monkey", "Hero.Zodiac.Rooster", "Hero.Zodiac.Dog", "Hero.Zodiac.Boar"},
 		experienceMappings: []roleExperienceMapping{
 			{ServerRole: "GameServer.Role.OpenWorld", Experiences: []string{"Experience.OpenWorld.Hub", "Experience.Lobby.Main"}},
 			{ServerRole: "GameServer.Role.MainArena", Experiences: []string{"Experience.MainArena.Main"}},
