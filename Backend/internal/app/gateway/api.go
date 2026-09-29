@@ -123,6 +123,49 @@ type MatchmakingTicketResponse struct {
 	State          string   `json:"state"`          // State（匹配状态）。
 }
 
+// WorldEntryRequest（世界进入请求）描述已认证玩家进入常驻世界所需的项目业务上下文。
+// PlayerID、SessionID和GameID均从服务端认证/资料上下文取得，客户端不得自行声明。
+type WorldEntryRequest struct {
+	RequestID                 string `json:"requestId"`
+	CharacterID               string `json:"characterId"`
+	DesiredExperienceID       string `json:"desiredExperienceId"`
+	ExpectedCharacterRevision int64  `json:"expectedCharacterRevision"`
+	PreferredRegion           string `json:"preferredRegion,omitempty"`
+}
+
+// WorldEntryResponse（世界进入响应）只向客户端返回当前一次迁移所需Assignment摘要和一次性TransferTicket。
+// TransferTicket不得写日志、URL或长期持久化；客户端消费后应立即交给Session传输层。
+type WorldEntryResponse struct {
+	AssignmentID   string `json:"assignmentId"`
+	GameServerID   string `json:"gameServerId"`
+	ServerRoleID   string `json:"serverRoleId"`
+	ExperienceID   string `json:"experienceId"`
+	WorldID        string `json:"worldId"`
+	MapID          string `json:"mapId"`
+	RegionID       string `json:"regionId"`
+	TicketID       string `json:"ticketId"`
+	CharacterID    string `json:"characterId"`
+	SessionID      string `json:"sessionId"`
+	Endpoint       string `json:"endpoint"`
+	TransferTicket string `json:"transferTicket"`
+}
+
+// WorldEntryAllocationRequest（世界分配内部请求）仅在Gateway到GameServerControl可信服务间传递。
+type WorldEntryAllocationRequest struct {
+	RequestID           string
+	GameID              string
+	PlayerID            string
+	SessionID           string
+	CharacterID         string
+	DesiredExperienceID string
+	PreferredRegion     string
+}
+
+// WorldEntryPort（世界进入端口）隔离Gateway与具体GameServerControl HTTP/gRPC传输实现。
+type WorldEntryPort interface {
+	AllocateWorldEntry(context.Context, WorldEntryAllocationRequest) (WorldEntryResponse, error)
+}
+
 // IdentityPort（身份服务端口）定义Gateway依赖的最小身份能力。
 type IdentityPort interface {
 	Login(ctx context.Context, req LoginRequest) (LoginResponse, error)
@@ -158,16 +201,21 @@ type api struct {
 	playerData  PlayerDataPort
 	party       PartyPort
 	matchmaking MatchmakingPort
+	worldEntry  WorldEntryPort
 	mux         *http.ServeMux
 	authLimiter *authRateLimiter
 }
 
 // NewAPI（创建Gateway HTTP API）构建REST路由和统一请求追踪中间件。
-func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, party PartyPort, matchmaking MatchmakingPort) http.Handler {
+func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, party PartyPort, matchmaking MatchmakingPort, worldEntry ...WorldEntryPort) http.Handler {
 	if identity == nil || playerData == nil {
 		panic("Gateway下游端口不能为空")
 	}
-	handler := &api{config: config, identity: identity, playerData: playerData, party: party, matchmaking: matchmaking, mux: http.NewServeMux()}
+	var worldEntryPort WorldEntryPort
+	if len(worldEntry) > 0 {
+		worldEntryPort = worldEntry[0]
+	}
+	handler := &api{config: config, identity: identity, playerData: playerData, party: party, matchmaking: matchmaking, worldEntry: worldEntryPort, mux: http.NewServeMux()}
 	handler.authLimiter = newAuthRateLimiter(config.AuthRequestsPerMinute)
 	handler.mux.HandleFunc("GET /v1/online/probe", handler.probeOnline)
 	handler.mux.HandleFunc("POST /v1/auth/refresh", handler.refreshOnline)
@@ -180,6 +228,7 @@ func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, par
 	handler.mux.HandleFunc("POST /v1/player/character-selection", handler.requireAuth(handler.selectCharacter))
 	handler.mux.HandleFunc("POST /v1/party", handler.requireAuth(handler.createParty))
 	handler.mux.HandleFunc("POST /v1/matchmaking/tickets", handler.requireAuth(handler.createMatchmakingTicket))
+	handler.mux.HandleFunc("POST /v1/divinebeasts/world-entry", handler.requireAuth(handler.enterDivineBeastsWorld))
 	handler.registerSwaggerDocumentation(os.Getenv(swaggerContractsRootEnvironment))
 	return handler.tracing(handler.mux)
 }
@@ -379,6 +428,79 @@ func (a *api) createMatchmakingTicket(w http.ResponseWriter, r *http.Request, se
 		return
 	}
 	writeJSON(w, http.StatusOK, ticket)
+}
+
+// enterDivineBeastsWorld（进入神兽联盟常驻世界）只接受认证主体当前已选中的有效角色。
+// 世界实例选择和TransferTicket签发由GameServerControl负责，Gateway不自行选择服务器、不生成票据。
+func (a *api) enterDivineBeastsWorld(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
+	if r.URL.RawQuery != "" || a.worldEntry == nil {
+		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	var req WorldEntryRequest
+	if err := DecodeOnlineJSON(
+		r,
+		&req,
+		[]string{"requestId", "characterId", "desiredExperienceId", "expectedCharacterRevision", "preferredRegion"},
+		[]string{"requestId", "characterId", "desiredExperienceId", "expectedCharacterRevision"}); err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	if strings.TrimSpace(req.RequestID) == "" || strings.TrimSpace(req.CharacterID) == "" ||
+		strings.TrimSpace(req.DesiredExperienceID) == "" || req.ExpectedCharacterRevision < 0 {
+		writeOnlineError(w, ServiceError("INVALID_REQUEST"))
+		return
+	}
+	profile, err := a.playerData.GetProfile(r.Context(), session.PlayerID)
+	if err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	if profile.PlayerID != session.PlayerID || profile.GameID == "" ||
+		profile.SelectedCharacterID != req.CharacterID {
+		writeOnlineError(w, ServiceError("CHARACTER_CONFLICT"))
+		return
+	}
+	characters, ok := a.playerData.(CharacterPort)
+	if !ok {
+		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	roster, err := characters.ListCharacters(r.Context(), session.PlayerID)
+	if err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	characterValid := false
+	for _, character := range roster {
+		if character.CharacterID == req.CharacterID &&
+			character.CharacterRevision == req.ExpectedCharacterRevision &&
+			character.Status == "Active" {
+			characterValid = true
+			break
+		}
+	}
+	if !characterValid {
+		writeOnlineError(w, ServiceError("CHARACTER_CONFLICT"))
+		return
+	}
+	result, err := a.worldEntry.AllocateWorldEntry(r.Context(), WorldEntryAllocationRequest{
+		RequestID: req.RequestID, GameID: profile.GameID, PlayerID: session.PlayerID,
+		SessionID: session.SessionID, CharacterID: req.CharacterID,
+		DesiredExperienceID: req.DesiredExperienceID, PreferredRegion: req.PreferredRegion,
+	})
+	if err != nil {
+		writeOnlineError(w, err)
+		return
+	}
+	if result.CharacterID != req.CharacterID || result.SessionID != session.SessionID ||
+		result.ExperienceID != req.DesiredExperienceID || result.TransferTicket == "" ||
+		result.Endpoint == "" || result.AssignmentID == "" || result.GameServerID == "" {
+		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, result)
 }
 
 func decodeJSON(r *http.Request, target any) error {

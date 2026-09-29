@@ -5,6 +5,8 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "Dom/JsonObject.h"
+#include "Dom/JsonValue.h"
+#include "Misc/LexToString.h"
 
 namespace
 {
@@ -39,7 +41,7 @@ namespace
         FString HeroDefinitionId;
         FString OnboardingState;
         FString Status;
-        double CharacterRevision = 0.0;
+        int64 CharacterRevision = 0;
         if (!Json->TryGetStringField(TEXT("characterId"), Out.CharacterId) ||
             !Json->TryGetStringField(TEXT("heroDefinitionId"), HeroDefinitionId) ||
             !Json->TryGetStringField(TEXT("characterName"), Out.CharacterName) ||
@@ -51,7 +53,7 @@ namespace
         }
 
         Out.HeroDefinitionId = FName(*HeroDefinitionId);
-        Out.CharacterRevision = static_cast<int64>(CharacterRevision);
+        Out.CharacterRevision = CharacterRevision;
         Out.OnboardingState = ParseOnboarding(OnboardingState);
         Out.Status = FName(*Status);
         FString AppearanceProfileId;
@@ -71,7 +73,11 @@ namespace
     {
         const TSharedRef<TJsonReader<>> Reader =
             TJsonReaderFactory<>::Create(Text);
-        return FJsonSerializer::Deserialize(Reader, Out) && Out.IsValid();
+        return FJsonSerializer::Deserialize(
+                   Reader,
+                   Out,
+                   FJsonSerializer::EFlags::StoreNumbersAsStrings) &&
+            Out.IsValid();
     }
 
     FString GuidText(const FGuid& Guid)
@@ -255,7 +261,7 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
             // playerId / revision / tutorialCompleted / defaultWorldId。
             // 当前正式契约尚未提供“最近角色/最近体验”字段，因此保持默认空值，
             // 不从不存在的 JSON 字段推断项目状态。
-            double RevisionNumber = -1.0;
+            int64 RevisionNumber = -1;
             bool bTutorialCompleted = false;
             if (!Json->TryGetStringField(TEXT("playerId"), Result.PlayerId) ||
                 !Json->TryGetNumberField(TEXT("revision"), RevisionNumber) ||
@@ -263,7 +269,7 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
                     TEXT("tutorialCompleted"),
                     bTutorialCompleted) ||
                 Result.PlayerId.IsEmpty() ||
-                RevisionNumber < 0.0)
+                RevisionNumber < 0)
             {
                 Completion(
                     false,
@@ -272,8 +278,7 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
                 return;
             }
 
-            Result.ProfileRevision =
-                static_cast<int64>(RevisionNumber);
+            Result.ProfileRevision = RevisionNumber;
             Result.OnboardingState = bTutorialCompleted
                 ? EDivineBeastsOnboardingState::OnboardingComplete
                 : EDivineBeastsOnboardingState::TutorialRequired;
@@ -411,9 +416,9 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
         TEXT("selectionRequestId"),
         GuidText(SelectionRequestId));
     Body->SetStringField(TEXT("characterId"), CharacterId);
-    Body->SetNumberField(
+    Body->SetField(
         TEXT("expectedCharacterRevision"),
-        static_cast<double>(ExpectedRevision));
+        MakeShared<FJsonValueNumberString>(LexToString(ExpectedRevision)));
 
     Send(
         TEXT("POST"),
@@ -447,9 +452,16 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
             }
             Result.SelectionRequestId =
                 Json->GetStringField(TEXT("selectionRequestId"));
-            Result.ProfileRevision =
-                static_cast<int64>(
-                    Json->GetNumberField(TEXT("profileRevision")));
+            if (!Json->TryGetNumberField(
+                    TEXT("profileRevision"),
+                    Result.ProfileRevision))
+            {
+                Completion(
+                    false,
+                    FDivineBeastsValidatedSelection(),
+                    EDivineBeastsFlowError::CharacterSelectionRejected);
+                return;
+            }
             const TSharedPtr<FJsonObject>* CharacterJson = nullptr;
             if (!Json->TryGetObjectField(
                     TEXT("character"),
@@ -476,17 +488,17 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
     FDivineBeastsWorldAssignmentCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("request_id"), GuidText(RequestId));
-    Body->SetStringField(TEXT("character_id"), CharacterId);
+    Body->SetStringField(TEXT("requestId"), GuidText(RequestId));
+    Body->SetStringField(TEXT("characterId"), CharacterId);
     Body->SetStringField(
-        TEXT("desired_experience_id"),
+        TEXT("desiredExperienceId"),
         DesiredExperienceId.ToString());
-    Body->SetNumberField(
-        TEXT("expected_character_revision"),
-        static_cast<double>(ExpectedRevision));
+    Body->SetField(
+        TEXT("expectedCharacterRevision"),
+        MakeShared<FJsonValueNumberString>(LexToString(ExpectedRevision)));
     if (!PreferredRegion.IsEmpty())
     {
-        Body->SetStringField(TEXT("preferred_region"), PreferredRegion);
+        Body->SetStringField(TEXT("preferredRegion"), PreferredRegion);
     }
 
     Send(
@@ -516,30 +528,30 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
                 return;
             }
             Result.Summary.AssignmentId =
-                Json->GetStringField(TEXT("assignment_id"));
+                Json->GetStringField(TEXT("assignmentId"));
             Result.Summary.GameServerId =
-                Json->GetStringField(TEXT("game_server_id"));
+                Json->GetStringField(TEXT("gameServerId"));
             Result.Summary.ServerRoleId =
-                FName(*Json->GetStringField(TEXT("server_role_id")));
+                FName(*Json->GetStringField(TEXT("serverRoleId")));
             Result.Summary.ExperienceId =
-                FName(*Json->GetStringField(TEXT("experience_id")));
+                FName(*Json->GetStringField(TEXT("experienceId")));
             FString WorldId;
-            Json->TryGetStringField(TEXT("world_id"), WorldId);
+            Json->TryGetStringField(TEXT("worldId"), WorldId);
             Result.Summary.WorldId = FName(*WorldId);
             Result.Summary.MapId =
-                FName(*Json->GetStringField(TEXT("map_id")));
+                FName(*Json->GetStringField(TEXT("mapId")));
             Result.Summary.RegionId =
-                FName(*Json->GetStringField(TEXT("region_id")));
+                FName(*Json->GetStringField(TEXT("regionId")));
             Result.Summary.TicketId =
-                Json->GetStringField(TEXT("ticket_id"));
+                Json->GetStringField(TEXT("ticketId"));
             Result.Summary.CharacterId =
-                Json->GetStringField(TEXT("character_id"));
+                Json->GetStringField(TEXT("characterId"));
             Result.Summary.SessionId =
-                Json->GetStringField(TEXT("session_id"));
+                Json->GetStringField(TEXT("sessionId"));
             Result.Endpoint =
                 Json->GetStringField(TEXT("endpoint"));
             Result.TransferTicket =
-                Json->GetStringField(TEXT("transfer_ticket"));
+                Json->GetStringField(TEXT("transferTicket"));
 
             const bool bValid =
                 !Result.Summary.AssignmentId.IsEmpty() &&

@@ -37,12 +37,18 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	playerDataClient := httpadapter.NewPlayerDataClient(httpadapter.ClientConfig{BaseURL: requiredEnv("PLAYER_DATA_SERVICE_URL")})
 	var party gateway.PartyPort
 	var matchmaking gateway.MatchmakingPort
+	var worldEntry gateway.WorldEntryPort
 	if config.Getenv("ONLINE_ONLY", "false") != "true" {
 		client := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: requiredEnv("MATCH_SERVICE_URL")})
 		party = client
 		matchmaking = client
+		worldEntry = httpadapter.NewGameServerControlClient(httpadapter.GameServerControlClientConfig{
+			ClientConfig:  httpadapter.ClientConfig{BaseURL: requiredEnv("GAMESERVERCONTROL_SERVICE_URL")},
+			BearerToken:   strings.TrimSpace(requiredEnv("GAMESERVERCONTROL_INTERNAL_TOKEN")),
+			DefaultRegion: requiredEnv("GAME_DEFAULT_REGION"),
+		})
 	}
-	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, party, matchmaking)
+	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, party, matchmaking, worldEntry)
 	return servicehost.Run(ctx, cfg, handler)
 }
 

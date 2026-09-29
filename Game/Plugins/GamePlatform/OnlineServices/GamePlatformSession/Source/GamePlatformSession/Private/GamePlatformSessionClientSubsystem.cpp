@@ -10,6 +10,8 @@
 #include <memory>
 #include <string>
 
+DEFINE_LOG_CATEGORY_STATIC(LogGamePlatformSession, Log, All);
+
 namespace
 {
 constexpr int32 MaxSessionTextChars = 1024;
@@ -420,7 +422,7 @@ void UGamePlatformSessionClientSubsystem::SetAuthenticationContext(
     {
         // 极端代次耗尽时 Fail Closed；不回绕后接受可能陈旧的认证上下文。
         Snapshot.State = EGamePlatformSessionTransferState::Failed;
-        Snapshot.ErrorCode = TEXT("SessionAuthGenerationExhausted");
+        Snapshot.ErrorCode = GamePlatformSessionErrors::AuthGenerationExhausted;
         Snapshot.ErrorMessage = TEXT("会话认证代次已经耗尽，必须重建GameInstance。");
         SessionChanged.Broadcast(Snapshot);
         return;
@@ -485,6 +487,13 @@ bool UGamePlatformSessionClientSubsystem::BeginOperation(
     }
 
     GamePlatformSession::EIntent CoreIntent;
+    UE_LOG(
+        LogGamePlatformSession,
+        Verbose,
+        TEXT("Session operation begin. Operation=%s Assignment=%s Intent=%d"),
+        *Request.TransferOperationId.ToString(EGuidFormats::DigitsWithHyphensLower),
+        *Request.AssignmentId,
+        static_cast<int32>(Intent));
     if (!TryToCoreIntent(Intent, CoreIntent))
     {
         OutResult = FGamePlatformResult::Failure(
@@ -547,6 +556,16 @@ bool UGamePlatformSessionClientSubsystem::BeginOperation(
     Snapshot.ErrorCode = NAME_None;
     Snapshot.ErrorMessage.Reset();
     RefreshSnapshot();
+
+    UE_LOG(
+        LogGamePlatformSession,
+        Log,
+        TEXT("Session operation accepted. Operation=%s Assignment=%s Server=%s Intent=%d Timeout=%.2fs"),
+        *Request.TransferOperationId.ToString(EGuidFormats::DigitsWithHyphensLower),
+        *Request.AssignmentId,
+        *Request.GameServerId,
+        static_cast<int32>(Intent),
+        Request.TimeoutSeconds);
 
     if (!Runtime->TickerHandle.IsValid())
     {
@@ -699,6 +718,12 @@ bool UGamePlatformSessionClientSubsystem::LeaveSession(FGamePlatformResult& OutR
     Runtime->PublicBinding = {};
     Runtime->FactMask = 0;
     RefreshSnapshot();
+    UE_LOG(
+        LogGamePlatformSession,
+        Log,
+        TEXT("Session leave requested. Operation=%s HadBinding=%d"),
+        *OperationId.ToString(EGuidFormats::DigitsWithHyphensLower),
+        Binding.IsValid() ? 1 : 0);
     OutResult = FGamePlatformResult::Success();
     return true;
 }
@@ -758,6 +783,12 @@ bool UGamePlatformSessionClientSubsystem::ResolveRemoteState(
         Runtime->PreparedBinding = {};
     }
     RefreshSnapshot();
+    UE_LOG(
+        LogGamePlatformSession,
+        Log,
+        TEXT("Session reconciliation completed. Operation=%s BindingPresent=%d"),
+        *TransferOperationId.ToString(EGuidFormats::DigitsWithHyphensLower),
+        ConfirmedBinding.IsValid() ? 1 : 0);
     OutResult = FGamePlatformResult::Success();
     return true;
 }
@@ -816,6 +847,13 @@ bool UGamePlatformSessionClientSubsystem::TickActiveOperation(float DeltaSeconds
     if (!Core.bOperationActive)
     {
         // Deadline终止本地操作时同步通知Transport停止仍在进行的连接动作；旅行后状态会保持Uncertain等待对账。
+        UE_LOG(
+            LogGamePlatformSession,
+            Warning,
+            TEXT("Session operation deadline reached. Operation=%s Outcome=%d Recovery=%d"),
+            *OperationId.ToString(EGuidFormats::DigitsWithHyphensLower),
+            static_cast<int32>(Core.LastOutcome),
+            static_cast<int32>(Core.Recovery));
         if (Transport.IsValid() && OperationId.IsValid())
         {
             Transport->CancelTransfer(OperationId);
@@ -1005,6 +1043,20 @@ void UGamePlatformSessionClientSubsystem::RefreshSnapshot(
     {
         return;
     }
+
+    UE_LOG(
+        LogGamePlatformSession,
+        Verbose,
+        TEXT("Session snapshot changed. Operation=%s State=%d Intent=%d Recovery=%d Admission=%d Error=%s Assignment=%s Server=%s Epoch=%lld"),
+        *Next.TransferOperationId.ToString(EGuidFormats::DigitsWithHyphensLower),
+        static_cast<int32>(Next.State),
+        static_cast<int32>(Next.Intent),
+        static_cast<int32>(Next.RecoveryState),
+        Next.bAdmissionConfirmed ? 1 : 0,
+        *Next.ErrorCode.ToString(),
+        *Next.Binding.AssignmentId,
+        *Next.Binding.ServerInstanceId,
+        Next.Binding.SessionEpoch);
 
     Snapshot = MoveTemp(Next);
     SessionChanged.Broadcast(Snapshot);

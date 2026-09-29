@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,6 +66,22 @@ func TestInternalHTTPTransportRoundTrip(t *testing.T) {
 
 // TestGameServerControlHTTPWorldTransferRoundTrip（大厅跨服HTTP联调测试）验证OpenWorld.Hub分配、Assignment绑定、票据消费和重放拒绝均经过真实HTTP Handler。
 func TestGameServerControlHTTPWorldTransferRoundTrip(t *testing.T) {
+	// 内部世界分配接口不得匿名调用；Gateway或Backend内部服务必须携带内部Bearer。
+	unauthorizedRequest := httptest.NewRequest(http.MethodPost, "/internal/v1/gameservers/allocate-world-transfer", strings.NewReader(`{}`))
+	unauthorizedRequest.Header.Set("Content-Type", "application/json")
+	unauthorizedRecorder := httptest.NewRecorder()
+	NewGameServerControlHandler(
+		gameservercontrol.NewService(
+			gameserver.NewRegistry(),
+			servertransfer.NewService([]byte("01234567890123456789012345678901"), time.Now),
+			match.NewResultService(match.NewMemoryResultStore()),
+			time.Now,
+		),
+		gameServerControlTestToken,
+	).ServeHTTP(unauthorizedRecorder, unauthorizedRequest)
+	if unauthorizedRecorder.Code != http.StatusUnauthorized {
+		t.Fatalf("匿名世界分配必须返回401，实际=%d", unauthorizedRecorder.Code)
+	}
 	now := time.Date(2026, 9, 21, 7, 0, 0, 0, time.UTC)
 	registry := gameserver.NewRegistry()
 	transferService := servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now })
@@ -83,7 +100,7 @@ func TestGameServerControlHTTPWorldTransferRoundTrip(t *testing.T) {
 	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/ready", map[string]any{"gameServerId": "openworld-hub-http-1"}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken, "X-Game-Server-Id": "openworld-hub-http-1"}, http.StatusOK, nil)
 
 	var worldTransfer gameservercontrol.WorldTransferResult
-	postJSON(t, server.URL+"/internal/v1/gameservers/allocate-world-transfer", map[string]any{
+	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/allocate-world-transfer", map[string]any{
 		"world": map[string]any{
 			"ExperienceID": gameservercontract.ExperienceOpenWorldHub,
 			"WorldID":      "World.OpenWorld.Hub",
@@ -91,18 +108,22 @@ func TestGameServerControlHTTPWorldTransferRoundTrip(t *testing.T) {
 			"PlayerSlots":  1,
 		},
 		"ticketId": "ticket-http-1", "gameId": "divine-beasts", "playerId": "player-http-1", "sessionId": "session-http-1", "ttlMilliseconds": 30000,
-	}, http.StatusOK, &worldTransfer)
+	}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken}, http.StatusOK, &worldTransfer)
 	if worldTransfer.Assignment.ServerRoleID != gameservercontract.RoleOpenWorld || worldTransfer.Ticket.DestinationExperienceID != gameservercontract.ExperienceOpenWorldHub {
 		t.Fatalf("HTTP世界跨服结果错误: %+v", worldTransfer)
 	}
 
 	validateRequest := map[string]any{"ticket": worldTransfer.Ticket, "destinationGameServerId": "openworld-hub-http-1"}
 	var validation servertransfer.ValidationResult
-	postJSON(t, server.URL+"/internal/v1/gameservers/validate-transfer", validateRequest, http.StatusOK, &validation)
+	gameServerHeaders := map[string]string{
+		"Authorization":    "Bearer " + gameServerControlTestToken,
+		"X-Game-Server-Id": "openworld-hub-http-1",
+	}
+	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/validate-transfer", validateRequest, gameServerHeaders, http.StatusOK, &validation)
 	if validation.AssignmentID != worldTransfer.Assignment.AssignmentID {
 		t.Fatalf("HTTP迁移验证Assignment不一致: %+v", validation)
 	}
-	postJSON(t, server.URL+"/internal/v1/gameservers/validate-transfer", validateRequest, http.StatusUnauthorized, nil)
+	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/validate-transfer", validateRequest, gameServerHeaders, http.StatusUnauthorized, nil)
 	postJSONWithHeaders(t, server.URL+"/internal/v1/gameservers/drain", map[string]any{"gameServerId": "openworld-hub-http-1"}, map[string]string{"Authorization": "Bearer " + gameServerControlTestToken, "X-Game-Server-Id": "openworld-hub-http-1"}, http.StatusOK, nil)
 }
 

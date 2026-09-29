@@ -1,11 +1,11 @@
 # Session内核测试证据（任务切换检查点）
 
-日期2026-09-21；后续用户切换到第六Loading插件，本文件只固化此前已实际完成的验证，不扩大新范围。
+更新日期2026-09-29。本文件只记录实际运行过的验证；任何“未执行”项不得由源码存在推断为通过。
 
-原生Session状态测试Debug/Release各1个CTest集合通过，生产实现位于`Private/State/SessionConnectionState.*`。证据`Saved/Validation/GamePlatformSession/Native/Testing/Temporary/LastTest.log`为末次Release结果；不代表UE编译。
+Session纯C++状态测试通过。当前状态内核验证包含Join/Transfer/Reconnect约束、活动操作幂等、Current/Pending隔离、四事实Ready、旧操作拒绝、旅行前取消保留来源、旅行后Uncertain、远端对账、断线后Epoch防旧、旅行前TimedOut与旅行后Uncertain差异、认证代次隔离及跨Scope隔离。`VerifySession.ps1 -NativeTests` 在完整集成未完成时按设计返回2，不能把2改成0。
 
-隔离PostgreSQL17测试最终证据：`Saved/Validation/GamePlatformSession/Backend-42f99d203fda4f74b42b7d4347383f2f/backend.log`和`result.json`。真实Go race测试二进制执行Migrate、AtomicClaimAndCommit、CapacityAndIdentity、MigrationFenceAndExpiry、PersistencePrepare、PersistenceAfterRestart六项通过，实际重启测试数据库后继续验证持久化。仅使用本轮临时容器，清理完成；没有操作既有服务数据库。
+Backend本轮验证：`go test ./internal/app/gateway ./internal/transport/httpadapter ./internal/app/gameservercontrol` 通过；`go test -tags=grpcdeps ./internal/transport/grpcclient` 通过编译；`go test -tags=productiondeps,grpcdeps ./internal/app/composition` 通过编译。Shared OpenAPI修改后已由仓库唯一 `contractcodegen` 重新生成，并通过 `-check` 新鲜度检查。
 
-早期两次SQL迁移因authorization标识语法失败，改成authorization_key后复跑通过；旧失败日志保留。数据库内核没有接入五服务公开路由、真实身份授权、UE连接或服务器注册，测试SQL夹具不是生产认证。
+当前仍未形成真实UE Session Transport，因此真实ClientTravel、TravelFailure、NetworkFailure、Admission Provider、两个真实客户端、Multi-PIE、断线重连、服务器Boot切换、OpenWorld/Village/MainArena跨服往返和Cook隔离均为未执行。服务端Admission子系统测试只证明边界和敏感证明生命周期，不代表Dedicated Server已经消费真实TransferTicket。
 
-UE三目标、真实Online/Session准入、两个客户端、旅行、断线重连、多PIE、Cook与人工审查：未执行。不得把内核/数据库测试升级成完整Session插件验收。
+完整E2E的阻塞证据：现有GameServer注册/Transfer验证协议尚未同时提供Session所要求的 `GameSessionId / ServerBootId / ProtocolVersion / SessionEpoch`。在这些字段由可信服务器/控制面生成并绑定真实连接前，Session保持Fail Closed是验收要求，不是遗漏成功路径。

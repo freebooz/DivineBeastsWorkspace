@@ -37,6 +37,7 @@ public:
         const FGamePlatformAuthenticatedRequest& Request,
         FGamePlatformAuthenticatedCompletion Completion) override;
     virtual void CancelRequest(const FGuid& RequestId) override;
+    virtual void InvalidateAuthenticationOperation() override;
     virtual bool ApplyAuthorization(IHttpRequest& Request) const override;
     virtual void CancelAll() override;
 
@@ -48,6 +49,7 @@ private:
         bool bTransportSuccess = false;
         bool bMayHaveReachedServer = false;
         bool bResponseTooLarge = false;
+        double RetryAfterSeconds = 0.0;
     };
 
     using FRawCompletion = TFunction<void(FRawResponse)>;

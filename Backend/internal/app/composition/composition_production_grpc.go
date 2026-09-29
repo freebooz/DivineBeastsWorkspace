@@ -43,14 +43,18 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	playerClient := grpcclient.NewPlayerDataClient(playerConn)
 	var party gateway.PartyPort
 	var matchmaking gateway.MatchmakingPort
+	var worldEntry gateway.WorldEntryPort
 	if config.Getenv("ONLINE_ONLY", "false") != "true" {
 		matchConn := mustGRPCConn(requiredEnvGRPC("MATCH_GRPC_TARGET"))
 		defer matchConn.Close()
 		client := grpcclient.NewMatchClient(matchConn)
 		party = client
 		matchmaking = client
+		gameServerControlConn := mustGRPCConn(requiredEnvGRPC("GAMESERVERCONTROL_GRPC_TARGET"))
+		defer gameServerControlConn.Close()
+		worldEntry = grpcclient.NewWorldEntryClient(gameServerControlConn, requiredEnvGRPC("GAME_DEFAULT_REGION"))
 	}
-	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerClient, party, matchmaking)
+	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerClient, party, matchmaking, worldEntry)
 	return servicehost.Run(ctx, cfg, handler)
 }
 

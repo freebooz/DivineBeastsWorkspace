@@ -72,8 +72,12 @@ EAcceptance FSessionConnectionState::Begin(EIntent Intent, std::string Operation
         return EAcceptance::Busy;
     }
     if (View.bRemoteResolutionRequired) return EAcceptance::WrongState;
-    if ((Intent == EIntent::Join && View.Current.IsValid()) || (Intent == EIntent::Transfer && !View.Current.IsValid()))
+    if ((Intent == EIntent::Join && View.Current.IsValid()) ||
+        (Intent == EIntent::Transfer && !View.Current.IsValid()) ||
+        (Intent == EIntent::Reconnect && View.Current.IsValid()))
+    {
         return EAcceptance::WrongState;
+    }
     View.Operation = { Scope, std::move(OperationId), std::move(AttemptId), AuthGeneration, ++ConnectionGeneration };
     OutIdentity = View.Operation;
     ActiveIntent = Intent;
@@ -209,7 +213,9 @@ EAcceptance FSessionConnectionState::ResolveRemote(const FOperationIdentity& Ide
     if (!ConfirmedBinding.IsValid()) View.Current = {};
     View.State = View.Current.IsValid() ? EState::Ready : EState::Idle;
     View.bRemoteResolutionRequired = false;
-    View.Recovery = ERecovery::RetryAllowed;
+    View.Recovery = View.Current.IsValid()
+        ? ERecovery::None
+        : ERecovery::RetryAllowed;
     return EAcceptance::Accepted;
 }
 

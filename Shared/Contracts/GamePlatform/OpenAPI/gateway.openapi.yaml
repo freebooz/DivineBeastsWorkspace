@@ -343,6 +343,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GatewayApiError'
+  /v1/divinebeasts/world-entry:
+    post:
+      tags: [客户端业务]
+      operationId: enterDivineBeastsWorld
+      summary: 为已认证玩家当前选中角色分配常驻世界并签发一次性迁移票据
+      description: |
+        服务端从Bearer Access Token解析PlayerID和SessionID，并核对当前玩家资料中的selectedCharacterId及角色修订号。
+        客户端只能声明目标体验和首选区域，不能声明GameServer、PlayerID、SessionID或目标Endpoint。
+        返回的transferTicket仅供GamePlatformSession一次性交给安全传输层，不得写入URL、日志或长期持久化。
+        MainArena由MatchService比赛编排链路分配，不经过本接口。
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DivineBeastsWorldEntryRequest'}
+      responses:
+        '200':
+          description: 世界分配与一次性迁移材料签发成功；响应禁止缓存。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DivineBeastsWorldEntryResponse'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {description: 玩家资料或角色不存在。}
+        '409': {description: 当前角色选择、角色修订或目标世界分配发生冲突。}
+        '413': {$ref: '#/components/responses/TooLarge'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
 components:
   responses:
     InvalidRequest:
@@ -630,6 +659,36 @@ components:
           type: string
           enum: [searching, matchFound, canceled, failed]
           description: 匹配状态；当前创建成功后通常为 searching。
+    DivineBeastsWorldEntryRequest:
+      type: object
+      additionalProperties: false
+      required: [requestId, characterId, desiredExperienceId, expectedCharacterRevision]
+      properties:
+        requestId: {type: string, minLength: 1, maxLength: 128, description: 玩家作用域世界进入幂等请求标识，同时作为内部迁移票据请求关联标识。}
+        characterId: {type: string, minLength: 1, description: 必须与当前玩家资料中服务端已确认的selectedCharacterId一致。}
+        desiredExperienceId:
+          type: string
+          enum: [Experience.OpenWorld.Hub, Experience.OpenWorld.Main, Experience.Lobby.Main, Experience.Village.Main, Experience.Village.Tutorial, Experience.Village.Training]
+          description: 常驻世界目标体验；MainArena不使用本接口。
+        expectedCharacterRevision: {type: integer, format: int64, minimum: 1, description: 客户端角色列表快照中的修订号。}
+        preferredRegion: {type: string, description: 可选首选区域；为空时使用服务端部署默认区域。}
+    DivineBeastsWorldEntryResponse:
+      type: object
+      additionalProperties: false
+      required: [assignmentId, gameServerId, serverRoleId, experienceId, worldId, mapId, regionId, ticketId, characterId, sessionId, endpoint, transferTicket]
+      properties:
+        assignmentId: {type: string, minLength: 1, description: GameServerControl签发的目标Assignment身份。}
+        gameServerId: {type: string, minLength: 1, description: 目标Dedicated Server实例身份。}
+        serverRoleId: {type: string, enum: [GameServer.Role.OpenWorld, GameServer.Role.Village], description: 常驻世界正式服务器角色。}
+        experienceId: {type: string, minLength: 1, description: 已接受的目标体验。}
+        worldId: {type: string, minLength: 1, description: 目标世界逻辑身份。}
+        mapId: {type: string, minLength: 1, description: 当前阶段与worldId相同的逻辑地图标识；真实磁盘地图由WorldDefinition解析。}
+        regionId: {type: string, minLength: 1, description: 实际分配区域。}
+        ticketId: {type: string, minLength: 1, description: 一次性迁移票据标识。}
+        characterId: {type: string, minLength: 1, description: 服务端已核对的当前角色。}
+        sessionId: {type: string, minLength: 1, description: 从Bearer会话解析的在线Session身份。}
+        endpoint: {type: string, minLength: 1, description: 目标GameServer连接端点；不得包含凭据。}
+        transferTicket: {type: string, minLength: 1, description: JSON序列化的一次性签名迁移票据；不得进入URL、日志或持久化。}
     GatewayApiError:
       type: object
       additionalProperties: false

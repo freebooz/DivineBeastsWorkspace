@@ -351,6 +351,8 @@ namespace
             return EDivineBeastsFlowError::NetworkUnavailable;
         case EGamePlatformAuthError::AuthExpired:
             return EDivineBeastsFlowError::AuthExpired;
+        case EGamePlatformAuthError::OutcomeUnknown:
+            return EDivineBeastsFlowError::AuthExpired;
         case EGamePlatformAuthError::ContractIncompatible:
             return EDivineBeastsFlowError::ContractIncompatible;
         case EGamePlatformAuthError::Cancelled:

@@ -1,6 +1,10 @@
 #pragma once
 
-// 生产纯逻辑；不访问 UObject、不执行网络、不读取环境。所有状态方法由门面在 GT 串行调用。
+#if !defined(GAMEPLATFORM_ONLINE_NATIVE_TEST)
+#error "OnlineSession 仅作为历史原生回归模型存在，禁止重新接入 UE 正式运行时。"
+#endif
+
+// 历史纯逻辑回归模型；不属于 UE 正式运行时。仅用于验证认证/请求策略的旧行为基线。
 #include <cstdint>
 #include <deque>
 #include <functional>

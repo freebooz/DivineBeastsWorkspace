@@ -50,6 +50,10 @@ int main()
         Require(State.Begin(EIntent::Join, "other", "other", 0, 30, Duplicate) == EAcceptance::Busy, "busy");
         Require(State.Observe(Identity, Binding(), EFact::NetworkConnected, 1) == EAcceptance::Invalid, "fact before travel");
         Connect(State, Identity, Binding());
+        Require(
+            State.Begin(EIntent::Reconnect, "reconnect-while-ready", "attempt-reconnect-ready", 5, 30, Duplicate) ==
+                EAcceptance::WrongState,
+            "reconnect requires disconnected local state");
         const auto FinishedCount = State.Snapshot().CompletionCount;
         Require(State.Observe(Identity, Binding(), EFact::NetworkConnected, 5) == EAcceptance::Stale, "terminal once");
         Require(State.Snapshot().CompletionCount == FinishedCount, "no second completion");
@@ -63,6 +67,10 @@ int main()
         Require(State.Snapshot().Current == Binding() && State.Snapshot().bRemoteResolutionRequired, "cancel preserves source and requires remote resolution");
         Require(State.Snapshot().Recovery == ERecovery::ReconciliationRequired, "cancel exposes reconciliation requirement");
         Require(State.ResolveRemote(Transfer, Binding()) == EAcceptance::Accepted, "source confirmed");
+        Require(
+            State.Snapshot().State == EState::Ready &&
+                State.Snapshot().Recovery == ERecovery::None,
+            "confirmed retained source returns to ready without retry recovery");
         const auto Next = Begin(State, EIntent::Transfer, "next");
         Require(State.Assign(Next, Binding(2), 1) == EAcceptance::Accepted, "next target");
         Require(State.CommitTravel(Next, 2) == EAcceptance::Accepted, "next travel");

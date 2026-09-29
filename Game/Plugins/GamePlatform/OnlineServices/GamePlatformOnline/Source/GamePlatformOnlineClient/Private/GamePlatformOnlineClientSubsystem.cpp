@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "HAL/PlatformTime.h"
 #include "Interfaces/IGamePlatformOnlineService.h"
+#include "Interfaces/IHttpRequest.h"
 #include "Dom/JsonObject.h"
 #include "Misc/LexFromString.h"
 #include "Serialization/JsonReader.h"
@@ -123,6 +124,50 @@ bool IsPrintableAsciiToken(const FString& Value, int32 MaxChars)
     return true;
 }
 
+bool IsValidDisplayName(const FString& Value)
+{
+    const FString Trimmed = Value.TrimStartAndEnd();
+    if (Trimmed.IsEmpty())
+    {
+        return false;
+    }
+
+    int32 ScalarCount = 0;
+    for (int32 Index = 0; Index < Trimmed.Len(); ++Index)
+    {
+        const uint32 Unit = static_cast<uint32>(Trimmed[Index]);
+        if (Unit < 0x20u || Unit == 0x7fu)
+        {
+            return false;
+        }
+
+        if (Unit >= 0xd800u && Unit <= 0xdbffu)
+        {
+            if (Index + 1 >= Trimmed.Len())
+            {
+                return false;
+            }
+            const uint32 Low =
+                static_cast<uint32>(Trimmed[Index + 1]);
+            if (Low < 0xdc00u || Low > 0xdfffu)
+            {
+                return false;
+            }
+            ++Index;
+        }
+        else if (Unit >= 0xdc00u && Unit <= 0xdfffu)
+        {
+            return false;
+        }
+
+        if (++ScalarCount > 24)
+        {
+            return false;
+        }
+    }
+    return ScalarCount > 0;
+}
+
 bool DeserializeObjectPreservingIntegers(
     const FString& Text,
     TSharedPtr<FJsonObject>& Out)
@@ -149,6 +194,7 @@ bool ParseProfilePayload(
 
     FString DataVersionText;
     FString RevisionText;
+    FString SelectedCharacterId;
     const TArray<TSharedPtr<FJsonValue>>* OwnedValues = nullptr;
     if (!Json->TryGetStringField(TEXT("playerId"), Out.PlayerId) ||
         !Json->TryGetStringField(TEXT("gameId"), Out.GameId) ||
@@ -156,6 +202,7 @@ bool ParseProfilePayload(
         !Json->TryGetStringField(TEXT("dataVersion"), DataVersionText) ||
         !Json->TryGetStringField(TEXT("revision"), RevisionText) ||
         !Json->TryGetBoolField(TEXT("tutorialCompleted"), Out.bTutorialCompleted) ||
+        !Json->TryGetStringField(TEXT("selectedCharacterId"), SelectedCharacterId) ||
         !Json->TryGetArrayField(TEXT("ownedCharacterIds"), OwnedValues) ||
         !OwnedValues ||
         !LexTryParseString(Out.DataVersion, *DataVersionText) ||
@@ -204,6 +251,8 @@ struct UGamePlatformOnlineClientSubsystem::FRuntime
         FGamePlatformOnlineRequestOptions Options;
         FGamePlatformAuthenticatedCompletion Completion;
         double DeadlineSeconds = 0.0;
+        double ReadyAtSeconds = 0.0;
+        int32 RetryCount = 0;
         bool bStarted = false;
         bool bWaitingRefresh = false;
         bool bAuthReplay = false;
@@ -285,7 +334,7 @@ void UGamePlatformOnlineClientSubsystem::Deinitialize()
         }
         Runtime->Requests.Reset();
         Runtime->ReadyQueue.Reset();
-    Runtime->ReadyQueueHead = 0;
+        Runtime->ReadyQueueHead = 0;
         Runtime->RefreshWaiters.Reset();
         Runtime->RefreshOperations.Reset();
         Runtime->LogoutOperations.Reset();
@@ -348,6 +397,838 @@ FGamePlatformResult UGamePlatformOnlineClientSubsystem::Configure(
     return FGamePlatformResult::Success();
 }
 
+
+FGamePlatformOnlineRequestHandle
+UGamePlatformOnlineClientSubsystem::ProbeService(
+    const FGamePlatformOnlineRequestOptions& Options,
+    FGamePlatformOnlineProbeCompletion Completion)
+{
+    check(IsInGameThread());
+
+    const double Started = FPlatformTime::Seconds();
+    const TSharedRef<FGamePlatformOnlineRequestHandle> Handle =
+        MakeShared<FGamePlatformOnlineRequestHandle>();
+
+    FGamePlatformAuthenticatedRequest Request;
+    Request.Verb = TEXT("GET");
+    Request.RelativePath = TEXT("/v1/online/probe");
+    Request.bIdempotent = true;
+
+    const TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakThis(this);
+    *Handle = SendRequestInternal(
+        MoveTemp(Request),
+        Options,
+        [WeakThis, Handle, Started, Completion = MoveTemp(Completion)](
+            FGamePlatformAuthenticatedResponse Response) mutable
+        {
+            UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+            if (!Self)
+            {
+                return;
+            }
+
+            FGamePlatformOnlineProbeResult Result;
+            Result.Request = *Handle;
+            Result.ElapsedSeconds =
+                FMath::Max(0.0, FPlatformTime::Seconds() - Started);
+            Result.Error = ToOnlineError(Response.Error);
+            Result.Result = ToCoreResult(Response.Error);
+
+            if (Response.IsSuccess())
+            {
+                TSharedPtr<FJsonObject> Json;
+                bool bReady = false;
+                FString ContractVersion;
+                FString Service;
+                const TSharedRef<TJsonReader<>> Reader =
+                    TJsonReaderFactory<>::Create(Response.Body);
+                if (!FJsonSerializer::Deserialize(Reader, Json) ||
+                    !Json.IsValid() ||
+                    !Json->TryGetBoolField(TEXT("ready"), bReady) ||
+                    !Json->TryGetStringField(
+                        TEXT("contractVersion"),
+                        ContractVersion) ||
+                    !Json->TryGetStringField(TEXT("service"), Service) ||
+                    !bReady ||
+                    Service != TEXT("gatewayservice"))
+                {
+                    Result.Error = EGamePlatformOnlineError::InvalidResponse;
+                    Result.Result = FGamePlatformResult::Failure(
+                        TEXT("OnlineProbeInvalidResponse"),
+                        TEXT("在线探测响应结构或服务身份无效。"));
+                    Self->ServiceState =
+                        EGamePlatformOnlineServiceState::Unavailable;
+                }
+                else if (
+                    ContractVersion !=
+                    Self->Configuration.RequiredContractVersion)
+                {
+                    Result.Error =
+                        EGamePlatformOnlineError::IncompatibleProtocol;
+                    Result.Result = FGamePlatformResult::Failure(
+                        TEXT("OnlineContractIncompatible"),
+                        TEXT("在线服务契约版本与客户端要求不一致。"));
+                    Result.ContractVersion = MoveTemp(ContractVersion);
+                    Self->ServiceState =
+                        EGamePlatformOnlineServiceState::Incompatible;
+                }
+                else
+                {
+                    Result.bReady = true;
+                    Result.ContractVersion = MoveTemp(ContractVersion);
+                    Result.Error = EGamePlatformOnlineError::None;
+                    Result.Result = FGamePlatformResult::Success();
+                    Self->ServiceState =
+                        EGamePlatformOnlineServiceState::Ready;
+                }
+            }
+            else
+            {
+                Self->ServiceState =
+                    EGamePlatformOnlineServiceState::Unavailable;
+            }
+
+            if (Completion)
+            {
+                Completion(Result);
+            }
+        },
+        false);
+
+    return *Handle;
+}
+
+FGamePlatformOnlineRequestHandle
+UGamePlatformOnlineClientSubsystem::Login(
+    FGamePlatformOnlineLoginRequest Request,
+    const FGamePlatformOnlineRequestOptions& Options,
+    FGamePlatformOnlineAuthenticationCompletion Completion)
+{
+    check(IsInGameThread());
+
+    FGamePlatformOnlineRequestHandle Handle;
+    Handle.InstanceScopeId = InstanceScopeId;
+    Handle.RequestId = FGuid::NewGuid();
+    const double Started = FPlatformTime::Seconds();
+
+    if (!Completion)
+    {
+        return Handle;
+    }
+
+    auto CompleteLater =
+        [this, Handle, Started, &Completion](
+            EGamePlatformAuthError Error) mutable
+        {
+            FGamePlatformOnlineAuthenticationCompletion Deferred =
+                MoveTemp(Completion);
+            AsyncTask(
+                ENamedThreads::GameThread,
+                [WeakThis = TWeakObjectPtr<UGamePlatformOnlineClientSubsystem>(this),
+                 Handle,
+                 Started,
+                 Completion = MoveTemp(Deferred),
+                 Error]() mutable
+                {
+                    UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+                    if (!Self || !Completion)
+                    {
+                        return;
+                    }
+
+                    FGamePlatformOnlineAuthenticationResult Result;
+                    Result.Request = Handle;
+                    Result.ElapsedSeconds =
+                        FMath::Max(
+                            0.0,
+                            FPlatformTime::Seconds() - Started);
+                    Result.Error = ToOnlineError(Error);
+                    Result.Result = ToCoreResult(Error);
+                    Result.Authentication = Self->GetAuthentication();
+                    Completion(Result);
+                });
+        };
+
+    if (!Runtime ||
+        !Runtime->Provider.IsValid() ||
+        !bConfigured)
+    {
+        CompleteLater(EGamePlatformAuthError::ProviderUnavailable);
+        return Handle;
+    }
+
+    if (!IsRequestAlive(Options) ||
+        !FMath::IsFinite(Options.DeadlineSeconds) ||
+        Options.DeadlineSeconds < 0.0 ||
+        Options.DeadlineSeconds > Configuration.RequestDeadlineSeconds)
+    {
+        CompleteLater(EGamePlatformAuthError::InvalidRequest);
+        return Handle;
+    }
+
+    // 先判断认证上下文是否繁忙，再校验第二次调用的凭据内容。
+    // 被拒绝的并发登录（即使参数本身无效）没有资格推进认证代次或清理首个合法登录。
+    if (Runtime->LoginOperationId.IsValid() ||
+        Snapshot.State == EGamePlatformAuthState::LoggingIn ||
+        Snapshot.State == EGamePlatformAuthState::Authenticated ||
+        Snapshot.State == EGamePlatformAuthState::Refreshing ||
+        Snapshot.State == EGamePlatformAuthState::LoggingOut)
+    {
+        Snapshot.Error = EGamePlatformAuthError::AuthenticationBusy;
+        BroadcastSnapshot();
+        CompleteLater(EGamePlatformAuthError::AuthenticationBusy);
+        return Handle;
+    }
+
+    const FString Normalized = Request.AccountName.TrimStartAndEnd();
+    if (Normalized.IsEmpty() ||
+        Request.Credential.IsEmpty() ||
+        Normalized.Len() > MaxLoginNameChars ||
+        Request.Credential.Len() > MaxPasswordChars)
+    {
+        ResetAuthentication(
+            EGamePlatformAuthState::Failed,
+            EGamePlatformAuthError::InvalidCredentials,
+            true);
+        CompleteLater(EGamePlatformAuthError::InvalidCredentials);
+        return Handle;
+    }
+
+    Runtime->LoginOperationId = Handle.RequestId;
+    Runtime->LoginCompletion = MoveTemp(Completion);
+    Runtime->LoginOptions = Options;
+    Runtime->LoginStartedSeconds = Started;
+
+    ResetAuthentication(
+        EGamePlatformAuthState::LoggingIn,
+        EGamePlatformAuthError::None,
+        true);
+    const FGuid Generation = Snapshot.AuthGeneration;
+    const TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakThis(this);
+
+    Runtime->Provider->LoginWithCredentials(
+        Normalized,
+        Request.Credential,
+        [WeakThis, Generation, RequestId = Handle.RequestId](
+            FGamePlatformAuthProviderResult ProviderResult) mutable
+        {
+            AsyncTask(
+                ENamedThreads::GameThread,
+                [WeakThis,
+                 Generation,
+                 RequestId,
+                 ProviderResult = MoveTemp(ProviderResult)]() mutable
+                {
+                    UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+                    if (!Self ||
+                        !Self->Runtime ||
+                        Self->Runtime->LoginOperationId != RequestId ||
+                        Self->Snapshot.AuthGeneration != Generation)
+                    {
+                        return;
+                    }
+
+                    FGamePlatformOnlineAuthenticationCompletion Done =
+                        MoveTemp(Self->Runtime->LoginCompletion);
+                    const FGamePlatformOnlineRequestOptions Options =
+                        Self->Runtime->LoginOptions;
+                    const double Started =
+                        Self->Runtime->LoginStartedSeconds;
+                    Self->Runtime->LoginOperationId.Invalidate();
+                    Self->Runtime->LoginCompletion = {};
+
+                    if (!Self->IsRequestAlive(Options))
+                    {
+                        if (Self->Runtime->Provider.IsValid())
+                        {
+                            Self->Runtime->Provider->CancelAll();
+                        }
+                        Self->ResetAuthentication(
+                            EGamePlatformAuthState::LoggedOut,
+                            EGamePlatformAuthError::Cancelled,
+                            true);
+                    }
+                    else
+                    {
+                        Self->CompleteAuthentication(
+                            Generation,
+                            MoveTemp(ProviderResult),
+                            false);
+                    }
+
+                    if (Done)
+                    {
+                        const EGamePlatformAuthError FinalError =
+                            Self->Snapshot.State ==
+                                    EGamePlatformAuthState::Authenticated
+                                ? EGamePlatformAuthError::None
+                                : (Self->Snapshot.Error ==
+                                           EGamePlatformAuthError::None
+                                       ? EGamePlatformAuthError::Unknown
+                                       : Self->Snapshot.Error);
+
+                        FGamePlatformOnlineAuthenticationResult Result;
+                        Result.Request.InstanceScopeId =
+                            Self->InstanceScopeId;
+                        Result.Request.RequestId = RequestId;
+                        Result.ElapsedSeconds =
+                            FMath::Max(
+                                0.0,
+                                FPlatformTime::Seconds() - Started);
+                        Result.Error = ToOnlineError(FinalError);
+                        Result.Result = ToCoreResult(FinalError);
+                        Result.Authentication = Self->GetAuthentication();
+                        Done(Result);
+                    }
+                });
+        });
+
+    EnsureTicker();
+    return Handle;
+}
+
+FGamePlatformOnlineRequestHandle
+UGamePlatformOnlineClientSubsystem::GetCurrentPlayerProfile(
+    const FGamePlatformOnlineRequestOptions& Options,
+    FGamePlatformOnlineProfileCompletion Completion)
+{
+    check(IsInGameThread());
+
+    const double Started = FPlatformTime::Seconds();
+    const FString ExpectedPlayerId = Snapshot.AccountId;
+    const FString ExpectedGameId = Configuration.GameId;
+    const TSharedRef<FGamePlatformOnlineRequestHandle> Handle =
+        MakeShared<FGamePlatformOnlineRequestHandle>();
+
+    FGamePlatformAuthenticatedRequest Request;
+    Request.Verb = TEXT("GET");
+    Request.RelativePath = TEXT("/v1/player/profile");
+    Request.bIdempotent = true;
+
+    const TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakThis(this);
+    *Handle = SendAuthenticatedRequest(
+        MoveTemp(Request),
+        Options,
+        [WeakThis,
+         Handle,
+         Started,
+         ExpectedPlayerId,
+         ExpectedGameId,
+         Completion = MoveTemp(Completion)](
+            FGamePlatformAuthenticatedResponse Response) mutable
+        {
+            UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+            if (!Self)
+            {
+                return;
+            }
+
+            FGamePlatformOnlineProfileResult Result;
+            Result.Request = *Handle;
+            Result.ElapsedSeconds =
+                FMath::Max(0.0, FPlatformTime::Seconds() - Started);
+            Result.Error = ToOnlineError(Response.Error);
+            Result.Result = ToCoreResult(Response.Error);
+
+            if (Response.IsSuccess())
+            {
+                FGamePlatformOnlineProfile Parsed;
+                if (!ParseProfilePayload(
+                        Response.Body,
+                        ExpectedPlayerId,
+                        ExpectedGameId,
+                        Parsed))
+                {
+                    Result.Error = EGamePlatformOnlineError::InvalidResponse;
+                    Result.Result = FGamePlatformResult::Failure(
+                        TEXT("OnlineProfileInvalidResponse"),
+                        TEXT("玩家资料响应字段、主体、游戏身份或修订号无效。"));
+                }
+                else
+                {
+                    Result.Profile = Parsed;
+                    if (!Self->CachedProfile.IsSet() ||
+                        Parsed.Revision >=
+                            Self->CachedProfile->Revision)
+                    {
+                        Self->CachedProfile = MoveTemp(Parsed);
+                    }
+                }
+            }
+
+            if (Completion)
+            {
+                Completion(Result);
+            }
+        });
+
+    return *Handle;
+}
+
+FGamePlatformOnlineRequestHandle
+UGamePlatformOnlineClientSubsystem::UpdateCurrentPlayerProfile(
+    const FGamePlatformOnlineProfileUpdateRequest& Request,
+    const FGamePlatformOnlineRequestOptions& Options,
+    FGamePlatformOnlineProfileCompletion Completion)
+{
+    check(IsInGameThread());
+
+    const FString DisplayName = Request.DisplayName.TrimStartAndEnd();
+    FString Body;
+    if (!IsValidDisplayName(DisplayName) ||
+        Request.ExpectedRevision < 0 ||
+        !IsPrintableAsciiToken(Request.IdempotencyKey, 128) ||
+        !SerializeProfileUpdatePayload(
+            DisplayName,
+            Request.ExpectedRevision,
+            Body))
+    {
+        FGamePlatformOnlineRequestHandle Handle;
+        Handle.InstanceScopeId = InstanceScopeId;
+        Handle.RequestId = FGuid::NewGuid();
+        AsyncTask(
+            ENamedThreads::GameThread,
+            [Handle, Completion = MoveTemp(Completion)]() mutable
+            {
+                if (!Completion)
+                {
+                    return;
+                }
+                FGamePlatformOnlineProfileResult Result;
+                Result.Request = Handle;
+                Result.Error = EGamePlatformOnlineError::InvalidArgument;
+                Result.Result = FGamePlatformResult::Failure(
+                    TEXT("OnlineProfileUpdateInvalid"),
+                    TEXT("资料更新参数、修订号或幂等键无效。"));
+                Completion(Result);
+            });
+        return Handle;
+    }
+
+    const double Started = FPlatformTime::Seconds();
+    const FString ExpectedPlayerId = Snapshot.AccountId;
+    const FString ExpectedGameId = Configuration.GameId;
+    const TSharedRef<FGamePlatformOnlineRequestHandle> Handle =
+        MakeShared<FGamePlatformOnlineRequestHandle>();
+
+    FGamePlatformAuthenticatedRequest TransportRequest;
+    TransportRequest.Verb = TEXT("PATCH");
+    TransportRequest.RelativePath = TEXT("/v1/player/profile");
+    TransportRequest.Body = MoveTemp(Body);
+    TransportRequest.IdempotencyKey = Request.IdempotencyKey;
+    TransportRequest.bIdempotent = true;
+
+    const TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakThis(this);
+    *Handle = SendAuthenticatedRequest(
+        MoveTemp(TransportRequest),
+        Options,
+        [WeakThis,
+         Handle,
+         Started,
+         ExpectedPlayerId,
+         ExpectedGameId,
+         Completion = MoveTemp(Completion)](
+            FGamePlatformAuthenticatedResponse Response) mutable
+        {
+            UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+            if (!Self)
+            {
+                return;
+            }
+
+            FGamePlatformOnlineProfileResult Result;
+            Result.Request = *Handle;
+            Result.ElapsedSeconds =
+                FMath::Max(0.0, FPlatformTime::Seconds() - Started);
+            Result.Error = ToOnlineError(Response.Error);
+            Result.Result = ToCoreResult(Response.Error);
+
+            if (Response.IsSuccess())
+            {
+                FGamePlatformOnlineProfile Parsed;
+                if (!ParseProfilePayload(
+                        Response.Body,
+                        ExpectedPlayerId,
+                        ExpectedGameId,
+                        Parsed))
+                {
+                    Result.Error = EGamePlatformOnlineError::InvalidResponse;
+                    Result.Result = FGamePlatformResult::Failure(
+                        TEXT("OnlineProfileInvalidResponse"),
+                        TEXT("资料更新成功响应结构或修订号无效。"));
+                }
+                else
+                {
+                    Result.Profile = Parsed;
+                    if (!Self->CachedProfile.IsSet() ||
+                        Parsed.Revision >=
+                            Self->CachedProfile->Revision)
+                    {
+                        Self->CachedProfile = MoveTemp(Parsed);
+                    }
+                }
+            }
+
+            if (Completion)
+            {
+                Completion(Result);
+            }
+        });
+
+    return *Handle;
+}
+
+FGamePlatformOnlineRequestHandle
+UGamePlatformOnlineClientSubsystem::RefreshAuthentication(
+    const FGamePlatformOnlineRequestOptions& Options,
+    FGamePlatformOnlineAuthenticationCompletion Completion)
+{
+    check(IsInGameThread());
+
+    FGamePlatformOnlineRequestHandle Handle;
+    Handle.InstanceScopeId = InstanceScopeId;
+    Handle.RequestId = FGuid::NewGuid();
+
+    if (!Completion)
+    {
+        return Handle;
+    }
+
+    auto CompleteLater =
+        [this, Handle, &Completion](
+            EGamePlatformAuthError Error) mutable
+        {
+            FGamePlatformOnlineAuthenticationCompletion Deferred =
+                MoveTemp(Completion);
+            AsyncTask(
+                ENamedThreads::GameThread,
+                [WeakThis = TWeakObjectPtr<UGamePlatformOnlineClientSubsystem>(this),
+                 Handle,
+                 Completion = MoveTemp(Deferred),
+                 Error]() mutable
+                {
+                    UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+                    if (!Self || !Completion)
+                    {
+                        return;
+                    }
+                    FGamePlatformOnlineAuthenticationResult Result;
+                    Result.Request = Handle;
+                    Result.Error = ToOnlineError(Error);
+                    Result.Result = ToCoreResult(Error);
+                    Result.Authentication = Self->GetAuthentication();
+                    Completion(Result);
+                });
+        };
+
+    if (!Runtime ||
+        !Runtime->Provider.IsValid() ||
+        !bConfigured)
+    {
+        CompleteLater(EGamePlatformAuthError::ProviderUnavailable);
+        return Handle;
+    }
+    if (!IsRequestAlive(Options) ||
+        !FMath::IsFinite(Options.DeadlineSeconds) ||
+        Options.DeadlineSeconds < 0.0 ||
+        Options.DeadlineSeconds > Configuration.RequestDeadlineSeconds)
+    {
+        CompleteLater(EGamePlatformAuthError::InvalidRequest);
+        return Handle;
+    }
+    if (Snapshot.State != EGamePlatformAuthState::Authenticated &&
+        Snapshot.State != EGamePlatformAuthState::Refreshing)
+    {
+        CompleteLater(EGamePlatformAuthError::AuthExpired);
+        return Handle;
+    }
+    if (Runtime->RefreshOperations.Num() +
+            Runtime->RefreshWaiters.Num() >=
+        Configuration.MaxRefreshWaiters)
+    {
+        CompleteLater(EGamePlatformAuthError::QueueFull);
+        return Handle;
+    }
+
+    FRuntime::FPendingRefreshOperation Pending;
+    Pending.Options = Options;
+    Pending.Completion = MoveTemp(Completion);
+    Pending.StartedSeconds = FPlatformTime::Seconds();
+    Runtime->RefreshOperations.Add(Handle.RequestId, MoveTemp(Pending));
+    BeginRefreshSingleFlight();
+    EnsureTicker();
+    return Handle;
+}
+
+FGamePlatformOnlineRequestHandle
+UGamePlatformOnlineClientSubsystem::Logout(
+    FGamePlatformOnlineLogoutCompletion Completion)
+{
+    check(IsInGameThread());
+
+    FGamePlatformOnlineRequestHandle Handle;
+    Handle.InstanceScopeId = InstanceScopeId;
+    Handle.RequestId = FGuid::NewGuid();
+
+    if (!Runtime)
+    {
+        AsyncTask(
+            ENamedThreads::GameThread,
+            [Handle, Completion = MoveTemp(Completion)]() mutable
+            {
+                if (!Completion)
+                {
+                    return;
+                }
+                FGamePlatformOnlineLogoutResult Result;
+                Result.Request = Handle;
+                Result.Error = EGamePlatformOnlineError::InvalidConfiguration;
+                Result.Result = FGamePlatformResult::Failure(
+                    TEXT("OnlineRuntimeUnavailable"),
+                    TEXT("在线运行时不存在。"));
+                Completion(Result);
+            });
+        return Handle;
+    }
+
+    FRuntime::FPendingLogoutOperation PendingLogout;
+    PendingLogout.Completion = MoveTemp(Completion);
+    PendingLogout.StartedSeconds = FPlatformTime::Seconds();
+    PendingLogout.bHadAuthentication =
+        Snapshot.State == EGamePlatformAuthState::Authenticated ||
+        Snapshot.State == EGamePlatformAuthState::Refreshing;
+    Runtime->LogoutOperations.Add(
+        Handle.RequestId,
+        MoveTemp(PendingLogout));
+    EnsureTicker();
+
+    // 本地退出先完成：之后所有旧操作终态都只能观察到新代次未登录状态。
+    ResetAuthentication(
+        EGamePlatformAuthState::LoggedOut,
+        EGamePlatformAuthError::None,
+        true);
+
+    if (Runtime->LoginOperationId.IsValid())
+    {
+        FGamePlatformOnlineAuthenticationCompletion LoginDone =
+            MoveTemp(Runtime->LoginCompletion);
+        const FGuid LoginRequestId = Runtime->LoginOperationId;
+        Runtime->LoginOperationId.Invalidate();
+        Runtime->LoginCompletion = {};
+        if (LoginDone)
+        {
+            FGamePlatformOnlineAuthenticationResult Cancelled;
+            Cancelled.Request.InstanceScopeId = InstanceScopeId;
+            Cancelled.Request.RequestId = LoginRequestId;
+            Cancelled.Error = EGamePlatformOnlineError::Cancelled;
+            Cancelled.Result =
+                FGamePlatformResult::Cancelled(TEXT("退出登录取消了登录等待。"));
+            Cancelled.Authentication = GetAuthentication();
+            AsyncTask(
+                ENamedThreads::GameThread,
+                [LoginDone = MoveTemp(LoginDone),
+                 Cancelled = MoveTemp(Cancelled)]() mutable
+                {
+                    LoginDone(Cancelled);
+                });
+        }
+    }
+
+    TMap<FGuid, FRuntime::FPendingRefreshOperation> RefreshOperations =
+        MoveTemp(Runtime->RefreshOperations);
+    Runtime->RefreshOperations.Reset();
+    for (TPair<FGuid, FRuntime::FPendingRefreshOperation>& Pair :
+         RefreshOperations)
+    {
+        if (!Pair.Value.Completion)
+        {
+            continue;
+        }
+        FGamePlatformOnlineAuthenticationResult Cancelled;
+        Cancelled.Request.InstanceScopeId = InstanceScopeId;
+        Cancelled.Request.RequestId = Pair.Key;
+        Cancelled.Error = EGamePlatformOnlineError::Cancelled;
+        Cancelled.Result =
+            FGamePlatformResult::Cancelled(TEXT("退出登录取消了刷新等待。"));
+        Cancelled.Authentication = GetAuthentication();
+        FGamePlatformOnlineAuthenticationCompletion Done =
+            MoveTemp(Pair.Value.Completion);
+        AsyncTask(
+            ENamedThreads::GameThread,
+            [Done = MoveTemp(Done),
+             Cancelled = MoveTemp(Cancelled)]() mutable
+            {
+                Done(Cancelled);
+            });
+    }
+
+    TArray<FGuid> Existing;
+    Runtime->Requests.GetKeys(Existing);
+    for (const FGuid& RequestId : Existing)
+    {
+        if (TSharedPtr<FRuntime::FPendingRequest>* ExistingRequest =
+                Runtime->Requests.Find(RequestId);
+            ExistingRequest &&
+            (*ExistingRequest)->bStarted &&
+            Runtime->Provider.IsValid())
+        {
+            Runtime->Provider->CancelRequest(RequestId);
+            (*ExistingRequest)->bStarted = false;
+            Runtime->ActiveRequests =
+                FMath::Max(0, Runtime->ActiveRequests - 1);
+        }
+
+        FGamePlatformAuthenticatedResponse Cancelled;
+        Cancelled.Error = EGamePlatformAuthError::Cancelled;
+        CompleteRequest(RequestId, MoveTemp(Cancelled));
+    }
+
+    Runtime->bRefreshInFlight = false;
+    Runtime->RefreshWaiters.Reset();
+    Runtime->ReadyQueue.Reset();
+    Runtime->ReadyQueueHead = 0;
+
+    if (!Runtime->Provider.IsValid())
+    {
+        FRuntime::FPendingLogoutOperation Operation;
+        if (Runtime->LogoutOperations.RemoveAndCopyValue(
+                Handle.RequestId,
+                Operation) &&
+            Operation.Completion)
+        {
+            FGamePlatformOnlineLogoutResult Result;
+            Result.Request = Handle;
+            Result.Error = EGamePlatformOnlineError::ConnectionFailure;
+            Result.Result = FGamePlatformResult::Failure(
+                TEXT("OnlineLogoutProviderUnavailable"),
+                TEXT("本地已退出，但无法确认服务端会话撤销。"));
+            Result.Disposition =
+                EGamePlatformOnlineLogoutDisposition::RevocationUnconfirmed;
+            FGamePlatformOnlineLogoutCompletion Done =
+                MoveTemp(Operation.Completion);
+            AsyncTask(
+                ENamedThreads::GameThread,
+                [Done = MoveTemp(Done),
+                 Result = MoveTemp(Result)]() mutable
+                {
+                    Done(Result);
+                });
+        }
+        return Handle;
+    }
+
+    const TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakThis(this);
+    Runtime->Provider->Logout(
+        [WeakThis, Handle](
+            FGamePlatformAuthProviderLogoutResult ProviderResult) mutable
+        {
+            AsyncTask(
+                ENamedThreads::GameThread,
+                [WeakThis, Handle, ProviderResult]() mutable
+                {
+                    UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+                    if (!Self || !Self->Runtime)
+                    {
+                        return;
+                    }
+
+                    FRuntime::FPendingLogoutOperation Operation;
+                    if (!Self->Runtime->LogoutOperations.RemoveAndCopyValue(
+                            Handle.RequestId,
+                            Operation))
+                    {
+                        return;
+                    }
+
+                    FGamePlatformOnlineLogoutResult Result;
+                    Result.Request = Handle;
+                    Result.ElapsedSeconds =
+                        FMath::Max(
+                            0.0,
+                            FPlatformTime::Seconds() -
+                                Operation.StartedSeconds);
+
+                    if (!Operation.bHadAuthentication)
+                    {
+                        Result.Result = FGamePlatformResult::Success();
+                        Result.Disposition =
+                            EGamePlatformOnlineLogoutDisposition::LocalSignedOut;
+                    }
+                    else if (ProviderResult.bServerRevoked)
+                    {
+                        Result.Result = FGamePlatformResult::Success();
+                        Result.Disposition =
+                            EGamePlatformOnlineLogoutDisposition::ServerRevoked;
+                    }
+                    else
+                    {
+                        const EGamePlatformAuthError Error =
+                            ProviderResult.Error ==
+                                    EGamePlatformAuthError::None
+                                ? EGamePlatformAuthError::NetworkUnavailable
+                                : ProviderResult.Error;
+                        Result.Error = ToOnlineError(Error);
+                        Result.Result = ToCoreResult(Error);
+                        Result.Disposition =
+                            EGamePlatformOnlineLogoutDisposition::RevocationUnconfirmed;
+                    }
+
+                    if (Operation.Completion)
+                    {
+                        Operation.Completion(Result);
+                    }
+                });
+        });
+
+    return Handle;
+}
+
+FGamePlatformOnlineAuthSnapshot
+UGamePlatformOnlineClientSubsystem::GetAuthentication() const
+{
+    FGamePlatformOnlineAuthSnapshot Result;
+    Result.AuthContextId = Snapshot.AuthGeneration;
+    Result.PlayerId = Snapshot.AccountId;
+    Result.AccessExpiresAt = Snapshot.AccessExpiresAt;
+    Result.RefreshExpiresAt = Snapshot.RefreshExpiresAt;
+
+    if (Runtime)
+    {
+        Result.AuthGeneration = Runtime->AuthGenerationCounter;
+        Result.TokenVersion = Runtime->TokenVersion;
+    }
+
+    switch (Snapshot.State)
+    {
+    case EGamePlatformAuthState::LoggingIn:
+        Result.State = EGamePlatformOnlineAuthState::SigningIn;
+        break;
+    case EGamePlatformAuthState::Authenticated:
+        Result.State = EGamePlatformOnlineAuthState::SignedIn;
+        break;
+    case EGamePlatformAuthState::Refreshing:
+        Result.State = EGamePlatformOnlineAuthState::Refreshing;
+        break;
+    case EGamePlatformAuthState::Failed:
+        Result.State =
+            (Snapshot.Error == EGamePlatformAuthError::AuthExpired ||
+             Snapshot.Error == EGamePlatformAuthError::OutcomeUnknown)
+                ? EGamePlatformOnlineAuthState::ReauthenticationRequired
+                : EGamePlatformOnlineAuthState::SignedOut;
+        break;
+    default:
+        Result.State = EGamePlatformOnlineAuthState::SignedOut;
+        break;
+    }
+    return Result;
+}
+
+TOptional<FGamePlatformOnlineProfile>
+UGamePlatformOnlineClientSubsystem::GetCachedProfile() const
+{
+    return CachedProfile;
+}
+
 void UGamePlatformOnlineClientSubsystem::SetProvider(
     TSharedPtr<IGamePlatformOnlineAuthProvider> InProvider)
 {
@@ -355,6 +1236,35 @@ void UGamePlatformOnlineClientSubsystem::SetProvider(
     if (!Runtime || Runtime->Provider == InProvider)
     {
         return;
+    }
+
+
+    if (Runtime->LoginOperationId.IsValid())
+    {
+        FGamePlatformOnlineRequestHandle Handle;
+        Handle.InstanceScopeId = InstanceScopeId;
+        Handle.RequestId = Runtime->LoginOperationId;
+        Cancel(Handle);
+    }
+
+    TArray<FGuid> RefreshOperationIds;
+    Runtime->RefreshOperations.GetKeys(RefreshOperationIds);
+    for (const FGuid& OperationId : RefreshOperationIds)
+    {
+        FGamePlatformOnlineRequestHandle Handle;
+        Handle.InstanceScopeId = InstanceScopeId;
+        Handle.RequestId = OperationId;
+        Cancel(Handle);
+    }
+
+    TArray<FGuid> LogoutOperationIds;
+    Runtime->LogoutOperations.GetKeys(LogoutOperationIds);
+    for (const FGuid& OperationId : LogoutOperationIds)
+    {
+        FGamePlatformOnlineRequestHandle Handle;
+        Handle.InstanceScopeId = InstanceScopeId;
+        Handle.RequestId = OperationId;
+        Cancel(Handle);
     }
 
     TArray<FGuid> Existing;
@@ -448,129 +1358,25 @@ void UGamePlatformOnlineClientSubsystem::LoginWithCredentials(
     const FString& LoginName,
     const FString& Password)
 {
-    check(IsInGameThread());
-
-    if (!Runtime || !Runtime->Provider.IsValid() || !bConfigured)
-    {
-        ResetAuthentication(
-            EGamePlatformAuthState::Failed,
-            EGamePlatformAuthError::ProviderUnavailable,
-            true);
-        return;
-    }
-    if (Snapshot.State == EGamePlatformAuthState::LoggingIn ||
-        Snapshot.State == EGamePlatformAuthState::Authenticated ||
-        Snapshot.State == EGamePlatformAuthState::Refreshing ||
-        Snapshot.State == EGamePlatformAuthState::LoggingOut)
-    {
-        // 不推进代次：被拒绝的并发登录没有资格取消正在进行中的合法认证。
-        Snapshot.Error = EGamePlatformAuthError::AuthenticationBusy;
-        BroadcastSnapshot();
-        return;
-    }
-
-    const FString Normalized = LoginName.TrimStartAndEnd();
-    if (Normalized.IsEmpty() ||
-        Password.IsEmpty() ||
-        Normalized.Len() > MaxLoginNameChars ||
-        Password.Len() > MaxPasswordChars)
-    {
-        ResetAuthentication(
-            EGamePlatformAuthState::Failed,
-            EGamePlatformAuthError::InvalidCredentials,
-            true);
-        return;
-    }
-
-    ResetAuthentication(
-        EGamePlatformAuthState::LoggingIn,
-        EGamePlatformAuthError::None,
-        true);
-    const FGuid Generation = Snapshot.AuthGeneration;
-    const TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakThis(this);
-
-    Runtime->Provider->LoginWithCredentials(
-        Normalized,
-        Password,
-        [WeakThis, Generation](FGamePlatformAuthProviderResult Result) mutable
-        {
-            AsyncTask(
-                ENamedThreads::GameThread,
-                [WeakThis, Generation, Result = MoveTemp(Result)]() mutable
-                {
-                    if (WeakThis.IsValid())
-                    {
-                        WeakThis->CompleteAuthentication(
-                            Generation,
-                            MoveTemp(Result),
-                            false);
-                    }
-                });
-        });
+    FGamePlatformOnlineLoginRequest Request;
+    Request.AccountName = LoginName;
+    Request.Credential = Password;
+    Login(
+        MoveTemp(Request),
+        FGamePlatformOnlineRequestOptions{},
+        [](const FGamePlatformOnlineAuthenticationResult&) {});
 }
 
 void UGamePlatformOnlineClientSubsystem::Refresh()
 {
-    check(IsInGameThread());
-    if (Snapshot.State == EGamePlatformAuthState::Refreshing)
-    {
-        return;
-    }
-    if (Snapshot.State != EGamePlatformAuthState::Authenticated)
-    {
-        ResetAuthentication(
-            EGamePlatformAuthState::Failed,
-            EGamePlatformAuthError::AuthExpired,
-            true);
-        return;
-    }
-    BeginRefreshSingleFlight();
+    RefreshAuthentication(
+        FGamePlatformOnlineRequestOptions{},
+        [](const FGamePlatformOnlineAuthenticationResult&) {});
 }
 
 void UGamePlatformOnlineClientSubsystem::Logout()
 {
-    check(IsInGameThread());
-
-    if (!Runtime)
-    {
-        return;
-    }
-
-    TArray<FGuid> Existing;
-    Runtime->Requests.GetKeys(Existing);
-    for (const FGuid& RequestId : Existing)
-    {
-        if (TSharedPtr<FRuntime::FPendingRequest>* Pending =
-                Runtime->Requests.Find(RequestId);
-            Pending && (*Pending)->bStarted &&
-            Runtime->Provider.IsValid())
-        {
-            Runtime->Provider->CancelRequest(RequestId);
-            (*Pending)->bStarted = false;
-            Runtime->ActiveRequests =
-                FMath::Max(0, Runtime->ActiveRequests - 1);
-        }
-
-        FGamePlatformAuthenticatedResponse Cancelled;
-        Cancelled.Error = EGamePlatformAuthError::Cancelled;
-        CompleteRequest(RequestId, MoveTemp(Cancelled));
-    }
-
-    Runtime->bRefreshInFlight = false;
-    Runtime->RefreshWaiters.Reset();
-    Runtime->ReadyQueue.Reset();
-    Runtime->ReadyQueueHead = 0;
-
-    // 本地退出立即生效；远端撤销是尽力而为，失败不能恢复旧认证。
-    ResetAuthentication(
-        EGamePlatformAuthState::LoggedOut,
-        EGamePlatformAuthError::None,
-        true);
-
-    if (Runtime->Provider.IsValid())
-    {
-        Runtime->Provider->Logout([](FGamePlatformAuthProviderLogoutResult) {});
-    }
+    Logout([](const FGamePlatformOnlineLogoutResult&) {});
 }
 
 FGamePlatformOnlineRequestHandle
@@ -599,13 +1405,19 @@ UGamePlatformOnlineClientSubsystem::SendRequestInternal(
     Handle.InstanceScopeId = InstanceScopeId;
     Handle.RequestId = FGuid::NewGuid();
 
+    if (!Completion)
+    {
+        return Handle;
+    }
+
     auto CompleteLater =
-        [Completion = MoveTemp(Completion)](
-            EGamePlatformAuthError Error) mutable
+        [&Completion](EGamePlatformAuthError Error) mutable
         {
+            FGamePlatformAuthenticatedCompletion Deferred =
+                MoveTemp(Completion);
             AsyncTask(
                 ENamedThreads::GameThread,
-                [Completion = MoveTemp(Completion), Error]() mutable
+                [Completion = MoveTemp(Deferred), Error]() mutable
                 {
                     if (Completion)
                     {
@@ -628,8 +1440,7 @@ UGamePlatformOnlineClientSubsystem::SendRequestInternal(
     const bool bIdempotencyKeyValid =
         Request.IdempotencyKey.IsEmpty() ||
         IsPrintableAsciiToken(Request.IdempotencyKey, 128);
-    if (!Completion ||
-        Request.Verb.IsEmpty() ||
+    if (Request.Verb.IsEmpty() ||
         Request.RelativePath.IsEmpty() ||
         !bIdempotencyKeyValid ||
         (!bSafeRead && Request.bIdempotent && Request.IdempotencyKey.IsEmpty()) ||
@@ -708,6 +1519,109 @@ bool UGamePlatformOnlineClientSubsystem::Cancel(
         return false;
     }
 
+    if (Runtime->LoginOperationId == Request.RequestId)
+    {
+        FGamePlatformOnlineAuthenticationCompletion Done =
+            MoveTemp(Runtime->LoginCompletion);
+        Runtime->LoginOperationId.Invalidate();
+        Runtime->LoginCompletion = {};
+        if (Runtime->Provider.IsValid())
+        {
+            Runtime->Provider->InvalidateAuthenticationOperation();
+        }
+        ResetAuthentication(
+            EGamePlatformAuthState::LoggedOut,
+            EGamePlatformAuthError::Cancelled,
+            true);
+
+        AsyncTask(
+            ENamedThreads::GameThread,
+            [WeakThis = TWeakObjectPtr<UGamePlatformOnlineClientSubsystem>(this),
+             Request,
+             Done = MoveTemp(Done)]() mutable
+            {
+                UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+                if (!Self || !Done)
+                {
+                    return;
+                }
+
+                FGamePlatformOnlineAuthenticationResult Result;
+                Result.Request = Request;
+                Result.Error = EGamePlatformOnlineError::Cancelled;
+                Result.Result =
+                    FGamePlatformResult::Cancelled(TEXT("登录等待已取消。"));
+                Result.Authentication = Self->GetAuthentication();
+                Done(Result);
+            });
+        return true;
+    }
+
+    FRuntime::FPendingRefreshOperation RefreshOperation;
+    if (Runtime->RefreshOperations.RemoveAndCopyValue(
+            Request.RequestId,
+            RefreshOperation))
+    {
+        AsyncTask(
+            ENamedThreads::GameThread,
+            [WeakThis = TWeakObjectPtr<UGamePlatformOnlineClientSubsystem>(this),
+             Request,
+             Operation = MoveTemp(RefreshOperation)]() mutable
+            {
+                UGamePlatformOnlineClientSubsystem* Self = WeakThis.Get();
+                if (!Self || !Operation.Completion)
+                {
+                    return;
+                }
+
+                FGamePlatformOnlineAuthenticationResult Result;
+                Result.Request = Request;
+                Result.ElapsedSeconds =
+                    FMath::Max(
+                        0.0,
+                        FPlatformTime::Seconds() -
+                            Operation.StartedSeconds);
+                Result.Error = EGamePlatformOnlineError::Cancelled;
+                Result.Result =
+                    FGamePlatformResult::Cancelled(TEXT("刷新等待已取消。"));
+                Result.Authentication = Self->GetAuthentication();
+                Operation.Completion(Result);
+            });
+        return true;
+    }
+
+    FRuntime::FPendingLogoutOperation LogoutOperation;
+    if (Runtime->LogoutOperations.RemoveAndCopyValue(
+            Request.RequestId,
+            LogoutOperation))
+    {
+        // 本地退出已经不可回滚；取消仅停止调用方等待远端撤销结果。
+        AsyncTask(
+            ENamedThreads::GameThread,
+            [Request, Operation = MoveTemp(LogoutOperation)]() mutable
+            {
+                if (!Operation.Completion)
+                {
+                    return;
+                }
+
+                FGamePlatformOnlineLogoutResult Result;
+                Result.Request = Request;
+                Result.ElapsedSeconds =
+                    FMath::Max(
+                        0.0,
+                        FPlatformTime::Seconds() -
+                            Operation.StartedSeconds);
+                Result.Error = EGamePlatformOnlineError::Cancelled;
+                Result.Result = FGamePlatformResult::Cancelled(
+                    TEXT("退出等待已取消；本地退出保持有效。"));
+                Result.Disposition =
+                    EGamePlatformOnlineLogoutDisposition::RevocationUnconfirmed;
+                Operation.Completion(Result);
+            });
+        return true;
+    }
+
     TSharedPtr<FRuntime::FPendingRequest>* Pending =
         Runtime->Requests.Find(Request.RequestId);
     if (!Pending)
@@ -733,10 +1647,25 @@ bool UGamePlatformOnlineClientSubsystem::ApplyAuthorization(
     IHttpRequest& Request) const
 {
     check(IsInGameThread());
-    return Runtime &&
-        Runtime->Provider.IsValid() &&
-        Snapshot.State == EGamePlatformAuthState::Authenticated &&
-        Runtime->Provider->ApplyAuthorization(Request);
+
+    if (!Runtime ||
+        !Runtime->Provider.IsValid() ||
+        Snapshot.State != EGamePlatformAuthState::Authenticated ||
+        Configuration.ServiceOrigin.IsEmpty())
+    {
+        return false;
+    }
+
+    // 只允许给当前已配置 Gateway 的同源请求附加认证。
+    // 即使调用方属于可信平台模块，也不能把 Bearer Token 注入任意外部 URL。
+    const FString RequestUrl = Request.GetURL();
+    const FString SameOriginPrefix = Configuration.ServiceOrigin + TEXT("/");
+    if (!RequestUrl.StartsWith(SameOriginPrefix, ESearchCase::CaseSensitive))
+    {
+        return false;
+    }
+
+    return Runtime->Provider->ApplyAuthorization(Request);
 }
 
 FGamePlatformOnlineDiagnostics
@@ -745,6 +1674,7 @@ UGamePlatformOnlineClientSubsystem::GetDiagnostics() const
     FGamePlatformOnlineDiagnostics Result;
     Result.InstanceScopeId = InstanceScopeId;
     Result.bConfigured = bConfigured;
+    Result.ServiceState = ServiceState;
 
     switch (Snapshot.State)
     {
@@ -759,7 +1689,8 @@ UGamePlatformOnlineClientSubsystem::GetDiagnostics() const
         break;
     case EGamePlatformAuthState::Failed:
         Result.AuthState =
-            Snapshot.Error == EGamePlatformAuthError::AuthExpired
+            (Snapshot.Error == EGamePlatformAuthError::AuthExpired ||
+             Snapshot.Error == EGamePlatformAuthError::OutcomeUnknown)
                 ? EGamePlatformOnlineAuthState::ReauthenticationRequired
                 : EGamePlatformOnlineAuthState::SignedOut;
         break;
@@ -777,7 +1708,9 @@ UGamePlatformOnlineClientSubsystem::GetDiagnostics() const
                 Runtime->Requests.Num() -
                     Runtime->ActiveRequests -
                     Runtime->RefreshWaiters.Num());
-        Result.RefreshWaiters = Runtime->RefreshWaiters.Num();
+        Result.RefreshWaiters =
+            Runtime->RefreshWaiters.Num() +
+            Runtime->RefreshOperations.Num();
         Result.RefreshAttempts = Runtime->RefreshAttempts;
         Result.CompletedRequests = Runtime->CompletedRequests;
         Result.LastError = ToOnlineError(Runtime->LastError);
@@ -793,6 +1726,12 @@ void UGamePlatformOnlineClientSubsystem::ResetAuthentication(
     if (bAdvanceGeneration || !Snapshot.AuthGeneration.IsValid())
     {
         Snapshot.AuthGeneration = FGuid::NewGuid();
+        if (Runtime)
+        {
+            ++Runtime->AuthGenerationCounter;
+            Runtime->TokenVersion = 0;
+        }
+        CachedProfile.Reset();
     }
 
     Snapshot.State = NewState;
@@ -846,6 +1785,18 @@ void UGamePlatformOnlineClientSubsystem::CompleteAuthentication(
         Snapshot.SessionId = MoveTemp(Result.SessionId);
         Snapshot.AccessExpiresAt = Result.AccessExpiresAt;
         Snapshot.RefreshExpiresAt = Result.RefreshExpiresAt;
+        if (Runtime)
+        {
+            if (bIsRefresh)
+            {
+                ++Runtime->TokenVersion;
+            }
+            else
+            {
+                Runtime->TokenVersion = 1;
+            }
+            Runtime->LastError = EGamePlatformAuthError::None;
+        }
         BroadcastSnapshot();
 
         if (bIsRefresh)
@@ -862,6 +1813,34 @@ void UGamePlatformOnlineClientSubsystem::CompleteAuthentication(
                     Runtime->ReadyQueue.Add(RequestId);
                 }
             }
+            TMap<FGuid, FRuntime::FPendingRefreshOperation> Operations =
+                MoveTemp(Runtime->RefreshOperations);
+            Runtime->RefreshOperations.Reset();
+            const double Now = FPlatformTime::Seconds();
+            for (TPair<FGuid, FRuntime::FPendingRefreshOperation>& Pair : Operations)
+            {
+                if (!Pair.Value.Completion)
+                {
+                    continue;
+                }
+
+                FGamePlatformOnlineAuthenticationResult PublicResult;
+                PublicResult.Request.InstanceScopeId = InstanceScopeId;
+                PublicResult.Request.RequestId = Pair.Key;
+                PublicResult.ElapsedSeconds =
+                    FMath::Max(0.0, Now - Pair.Value.StartedSeconds);
+                const bool bAlive = IsRequestAlive(Pair.Value.Options);
+                PublicResult.Error = bAlive
+                    ? EGamePlatformOnlineError::None
+                    : EGamePlatformOnlineError::Cancelled;
+                PublicResult.Result = bAlive
+                    ? FGamePlatformResult::Success()
+                    : FGamePlatformResult::Cancelled(
+                        TEXT("刷新等待者生命周期已结束。"));
+                PublicResult.Authentication = GetAuthentication();
+                Pair.Value.Completion(PublicResult);
+            }
+
             PumpRequests();
         }
         return;
@@ -878,10 +1857,42 @@ void UGamePlatformOnlineClientSubsystem::CompleteAuthentication(
     Snapshot.SessionId.Reset();
     Snapshot.AccessExpiresAt = FDateTime();
     Snapshot.RefreshExpiresAt = FDateTime();
+    CachedProfile.Reset();
+    if (Runtime)
+    {
+        Runtime->TokenVersion = 0;
+        Runtime->LastError = Error;
+    }
     BroadcastSnapshot();
 
     if (bIsRefresh)
     {
+        TMap<FGuid, FRuntime::FPendingRefreshOperation> Operations =
+            MoveTemp(Runtime->RefreshOperations);
+        Runtime->RefreshOperations.Reset();
+        const double Now = FPlatformTime::Seconds();
+        for (TPair<FGuid, FRuntime::FPendingRefreshOperation>& Pair : Operations)
+        {
+            if (!Pair.Value.Completion)
+            {
+                continue;
+            }
+
+            FGamePlatformOnlineAuthenticationResult PublicResult;
+            PublicResult.Request.InstanceScopeId = InstanceScopeId;
+            PublicResult.Request.RequestId = Pair.Key;
+            PublicResult.ElapsedSeconds =
+                FMath::Max(0.0, Now - Pair.Value.StartedSeconds);
+            const EGamePlatformAuthError FinalError =
+                IsRequestAlive(Pair.Value.Options)
+                    ? Error
+                    : EGamePlatformAuthError::Cancelled;
+            PublicResult.Error = ToOnlineError(FinalError);
+            PublicResult.Result = ToCoreResult(FinalError);
+            PublicResult.Authentication = GetAuthentication();
+            Pair.Value.Completion(PublicResult);
+        }
+
         const TArray<FGuid> Waiters =
             MoveTemp(Runtime->RefreshWaiters);
         Runtime->RefreshWaiters.Reset();
@@ -956,7 +1967,8 @@ void UGamePlatformOnlineClientSubsystem::QueueForRefresh(
         return;
     }
 
-    if (Runtime->RefreshWaiters.Num() >=
+    if (Runtime->RefreshWaiters.Num() +
+            Runtime->RefreshOperations.Num() >=
         Configuration.MaxRefreshWaiters)
     {
         FGamePlatformAuthenticatedResponse Failed;
@@ -973,19 +1985,17 @@ void UGamePlatformOnlineClientSubsystem::PumpRequests()
 {
     check(IsInGameThread());
 
-    if (!Runtime ||
-        !Runtime->Provider.IsValid() ||
-        Snapshot.State != EGamePlatformAuthState::Authenticated)
+    if (!Runtime || !Runtime->Provider.IsValid())
     {
         return;
     }
 
     while (Runtime->ActiveRequests <
                Configuration.MaxConcurrentRequests &&
-           !Runtime->ReadyQueue.IsEmpty())
+           Runtime->ReadyQueueHead < Runtime->ReadyQueue.Num())
     {
-        const FGuid RequestId = Runtime->ReadyQueue[0];
-        Runtime->ReadyQueue.RemoveAt(0, 1, EAllowShrinking::No);
+        const FGuid RequestId =
+            Runtime->ReadyQueue[Runtime->ReadyQueueHead++];
 
         TSharedPtr<FRuntime::FPendingRequest>* Found =
             Runtime->Requests.Find(RequestId);
@@ -999,6 +2009,23 @@ void UGamePlatformOnlineClientSubsystem::PumpRequests()
         {
             continue;
         }
+
+        if (Pending->bRequiresAuthentication &&
+            Snapshot.State != EGamePlatformAuthState::Authenticated)
+        {
+            if (Snapshot.State == EGamePlatformAuthState::Refreshing)
+            {
+                QueueForRefresh(RequestId);
+            }
+            else
+            {
+                FGamePlatformAuthenticatedResponse Failed;
+                Failed.Error = EGamePlatformAuthError::AuthExpired;
+                CompleteRequest(RequestId, MoveTemp(Failed));
+            }
+            continue;
+        }
+
         if (!IsRequestAlive(Pending->Options))
         {
             FGamePlatformAuthenticatedResponse Cancelled;
@@ -1018,9 +2045,7 @@ void UGamePlatformOnlineClientSubsystem::PumpRequests()
         ++Runtime->ActiveRequests;
 
         const TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakThis(this);
-        Runtime->Provider->SendAuthenticatedRequest(
-            RequestId,
-            Pending->Request,
+        auto Completion =
             [WeakThis, RequestId](
                 FGamePlatformAuthenticatedResponse Response) mutable
             {
@@ -1053,9 +2078,60 @@ void UGamePlatformOnlineClientSubsystem::PumpRequests()
                                     Self->Runtime->ActiveRequests - 1);
                         }
 
-                        if (Response.HttpStatusCode == 401 ||
+                        const bool bSafeRead =
+                            Pending->Request.Verb == TEXT("GET") ||
+                            Pending->Request.Verb == TEXT("HEAD");
+                        const bool bTransientReadFailure =
                             Response.Error ==
-                                EGamePlatformAuthError::AuthExpired)
+                                EGamePlatformAuthError::NetworkUnavailable ||
+                            Response.Error ==
+                                EGamePlatformAuthError::TimedOut ||
+                            Response.Error ==
+                                EGamePlatformAuthError::RateLimited ||
+                            Response.Error ==
+                                EGamePlatformAuthError::ServiceUnavailable;
+                        if (bSafeRead &&
+                            bTransientReadFailure &&
+                            Pending->RetryCount <
+                                Self->Configuration.MaxReadRetries)
+                        {
+                            const double Jitter =
+                                0.8 +
+                                static_cast<double>(
+                                    (GetTypeHash(RequestId) +
+                                     static_cast<uint32>(
+                                         Pending->RetryCount * 131u)) %
+                                    401u) /
+                                    1000.0;
+                            const double PolicyDelay =
+                                Self->Configuration.RetryBaseDelaySeconds *
+                                FMath::Pow(
+                                    2.0,
+                                    Pending->RetryCount) *
+                                Jitter;
+                            const double Delay =
+                                FMath::Max(
+                                    PolicyDelay,
+                                    Response.RetryAfterSeconds);
+                            const double Now = FPlatformTime::Seconds();
+                            if (FMath::IsFinite(Delay) &&
+                                Delay > 0.0 &&
+                                Delay <=
+                                    Self->Configuration.MaxRetryDelaySeconds &&
+                                Now + Delay < Pending->DeadlineSeconds)
+                            {
+                                ++Pending->RetryCount;
+                                Pending->ReadyAtSeconds = Now + Delay;
+                                Self->EnsureTicker();
+                                Self->PumpRequests();
+                                return;
+                            }
+                        }
+
+                        if (Pending->bRequiresAuthentication &&
+                            (Response.HttpStatusCode == 401 ||
+                             Response.Error ==
+                                 EGamePlatformAuthError::AuthExpired))
                         {
                             if (!Pending->bAuthReplay)
                             {
@@ -1063,7 +2139,8 @@ void UGamePlatformOnlineClientSubsystem::PumpRequests()
                                 const bool bReplaySafe =
                                     Pending->Request.Verb == TEXT("GET") ||
                                     Pending->Request.Verb == TEXT("HEAD") ||
-                                    Pending->Request.bIdempotent;
+                                    (Pending->Request.bIdempotent &&
+                                     !Pending->Request.IdempotencyKey.IsEmpty());
 
                                 if (bReplaySafe)
                                 {
@@ -1073,13 +2150,19 @@ void UGamePlatformOnlineClientSubsystem::PumpRequests()
                                     return;
                                 }
 
-                                // 非幂等写请求不自动重放。先刷新后续认证上下文，
-                                // 当前请求以AuthExpired结束，由业务层根据自身事务语义决定是否重提。
+                                // 非幂等写请求不自动重放；只刷新后续认证上下文。
+                                // 当前写请求以 AuthExpired 结束，由业务层决定查询结果或补偿。
                                 Self->BeginRefreshSingleFlight();
                                 Response.Error =
                                     EGamePlatformAuthError::AuthExpired;
+                                Self->CompleteRequest(
+                                    RequestId,
+                                    MoveTemp(Response));
+                                Self->PumpRequests();
+                                return;
                             }
 
+                            // 刷新后同一逻辑请求再次401，认证上下文不可继续使用。
                             if (Self->Runtime->Provider.IsValid())
                             {
                                 Self->Runtime->Provider->CancelAll();
@@ -1097,7 +2180,33 @@ void UGamePlatformOnlineClientSubsystem::PumpRequests()
                             MoveTemp(Response));
                         Self->PumpRequests();
                     });
-            });
+            };
+
+        if (Pending->bRequiresAuthentication)
+        {
+            Runtime->Provider->SendAuthenticatedRequest(
+                RequestId,
+                Pending->Request,
+                MoveTemp(Completion));
+        }
+        else
+        {
+            Runtime->Provider->SendUnauthenticatedRequest(
+                RequestId,
+                Pending->Request,
+                MoveTemp(Completion));
+        }
+    }
+
+    // 采用Head索引避免每次RemoveAt(0)搬移整个队列；批量消费后再有界压缩。
+    if (Runtime->ReadyQueueHead > 64 &&
+        Runtime->ReadyQueueHead * 2 >= Runtime->ReadyQueue.Num())
+    {
+        Runtime->ReadyQueue.RemoveAt(
+            0,
+            Runtime->ReadyQueueHead,
+            EAllowShrinking::No);
+        Runtime->ReadyQueueHead = 0;
     }
 
     EnsureTicker();
@@ -1128,11 +2237,20 @@ void UGamePlatformOnlineClientSubsystem::CompleteRequest(
         MoveTemp(Pending->Completion);
     if (Completion)
     {
-        Completion(MoveTemp(Response));
+        AsyncTask(
+            ENamedThreads::GameThread,
+            [Completion = MoveTemp(Completion),
+             Response = MoveTemp(Response)]() mutable
+            {
+                Completion(MoveTemp(Response));
+            });
     }
 
     if (Runtime->Requests.IsEmpty() &&
-        !Runtime->bRefreshInFlight)
+        !Runtime->bRefreshInFlight &&
+        !Runtime->LoginOperationId.IsValid() &&
+        Runtime->RefreshOperations.IsEmpty() &&
+        Runtime->LogoutOperations.IsEmpty())
     {
         StopTicker();
     }
@@ -1147,6 +2265,133 @@ bool UGamePlatformOnlineClientSubsystem::TickRequests(float)
     }
 
     const double Now = FPlatformTime::Seconds();
+    if (Runtime->LoginOperationId.IsValid())
+    {
+        const double LoginBudget =
+            Runtime->LoginOptions.DeadlineSeconds > 0.0
+                ? Runtime->LoginOptions.DeadlineSeconds
+                : Configuration.RequestDeadlineSeconds;
+        const bool bAlive = IsRequestAlive(Runtime->LoginOptions);
+        if (!bAlive ||
+            Now >= Runtime->LoginStartedSeconds + LoginBudget)
+        {
+            const FGuid LoginRequestId = Runtime->LoginOperationId;
+            const double LoginStartedSeconds =
+                Runtime->LoginStartedSeconds;
+            FGamePlatformOnlineAuthenticationCompletion Done =
+                MoveTemp(Runtime->LoginCompletion);
+            Runtime->LoginOperationId.Invalidate();
+            Runtime->LoginCompletion = {};
+            if (Runtime->Provider.IsValid())
+            {
+                Runtime->Provider->InvalidateAuthenticationOperation();
+            }
+
+            const EGamePlatformAuthError Error = bAlive
+                ? EGamePlatformAuthError::TimedOut
+                : EGamePlatformAuthError::Cancelled;
+            ResetAuthentication(
+                bAlive
+                    ? EGamePlatformAuthState::Failed
+                    : EGamePlatformAuthState::LoggedOut,
+                Error,
+                true);
+
+            if (Done)
+            {
+                FGamePlatformOnlineAuthenticationResult Result;
+                Result.Request.InstanceScopeId = InstanceScopeId;
+                Result.Request.RequestId = LoginRequestId;
+                Result.ElapsedSeconds =
+                    FMath::Max(0.0, Now - LoginStartedSeconds);
+                Result.Error = ToOnlineError(Error);
+                Result.Result = ToCoreResult(Error);
+                Result.Authentication = GetAuthentication();
+                Done(Result);
+            }
+        }
+    }
+
+    TArray<FGuid> RefreshOperationIds;
+    Runtime->RefreshOperations.GetKeys(RefreshOperationIds);
+    for (const FGuid& OperationId : RefreshOperationIds)
+    {
+        FRuntime::FPendingRefreshOperation* Pending =
+            Runtime->RefreshOperations.Find(OperationId);
+        if (!Pending)
+        {
+            continue;
+        }
+
+        const double Budget =
+            Pending->Options.DeadlineSeconds > 0.0
+                ? Pending->Options.DeadlineSeconds
+                : Configuration.RequestDeadlineSeconds;
+        const bool bAlive = IsRequestAlive(Pending->Options);
+        if (bAlive && Now < Pending->StartedSeconds + Budget)
+        {
+            continue;
+        }
+
+        FRuntime::FPendingRefreshOperation Operation;
+        if (!Runtime->RefreshOperations.RemoveAndCopyValue(
+                OperationId,
+                Operation) ||
+            !Operation.Completion)
+        {
+            continue;
+        }
+
+        const EGamePlatformAuthError Error = bAlive
+            ? EGamePlatformAuthError::TimedOut
+            : EGamePlatformAuthError::Cancelled;
+        FGamePlatformOnlineAuthenticationResult Result;
+        Result.Request.InstanceScopeId = InstanceScopeId;
+        Result.Request.RequestId = OperationId;
+        Result.ElapsedSeconds =
+            FMath::Max(0.0, Now - Operation.StartedSeconds);
+        Result.Error = ToOnlineError(Error);
+        Result.Result = ToCoreResult(Error);
+        Result.Authentication = GetAuthentication();
+        Operation.Completion(Result);
+    }
+
+    TArray<FGuid> LogoutOperationIds;
+    Runtime->LogoutOperations.GetKeys(LogoutOperationIds);
+    for (const FGuid& OperationId : LogoutOperationIds)
+    {
+        FRuntime::FPendingLogoutOperation* Pending =
+            Runtime->LogoutOperations.Find(OperationId);
+        if (!Pending ||
+            Now < Pending->StartedSeconds +
+                Configuration.RevocationDeadlineSeconds)
+        {
+            continue;
+        }
+
+        FRuntime::FPendingLogoutOperation Operation;
+        if (!Runtime->LogoutOperations.RemoveAndCopyValue(
+                OperationId,
+                Operation) ||
+            !Operation.Completion)
+        {
+            continue;
+        }
+
+        FGamePlatformOnlineLogoutResult Result;
+        Result.Request.InstanceScopeId = InstanceScopeId;
+        Result.Request.RequestId = OperationId;
+        Result.ElapsedSeconds =
+            FMath::Max(0.0, Now - Operation.StartedSeconds);
+        Result.Error = EGamePlatformOnlineError::Timeout;
+        Result.Result = FGamePlatformResult::Failure(
+            TEXT("OnlineLogoutRevocationTimeout"),
+            TEXT("本地已退出，但远端撤销在截止时间内未确认。"));
+        Result.Disposition =
+            EGamePlatformOnlineLogoutDisposition::RevocationUnconfirmed;
+        Operation.Completion(Result);
+    }
+
     TArray<FGuid> RequestIds;
     Runtime->Requests.GetKeys(RequestIds);
 
@@ -1163,8 +2408,17 @@ bool UGamePlatformOnlineClientSubsystem::TickRequests(float)
         if (IsRequestAlive(Pending->Options) &&
             Now < Pending->DeadlineSeconds)
         {
+            if (!Pending->bStarted &&
+                !Pending->bWaitingRefresh &&
+                Pending->ReadyAtSeconds > 0.0 &&
+                Now >= Pending->ReadyAtSeconds)
+            {
+                Pending->ReadyAtSeconds = 0.0;
+                Runtime->ReadyQueue.Add(RequestId);
+            }
             continue;
         }
+
 
         if (Pending->bStarted && Runtime->Provider.IsValid())
         {
@@ -1184,7 +2438,10 @@ bool UGamePlatformOnlineClientSubsystem::TickRequests(float)
     PumpRequests();
 
     if (Runtime->Requests.IsEmpty() &&
-        !Runtime->bRefreshInFlight)
+        !Runtime->bRefreshInFlight &&
+        !Runtime->LoginOperationId.IsValid() &&
+        Runtime->RefreshOperations.IsEmpty() &&
+        Runtime->LogoutOperations.IsEmpty())
     {
         Runtime->TickerHandle.Reset();
         return false;
@@ -1199,11 +2456,54 @@ void UGamePlatformOnlineClientSubsystem::EnsureTicker()
         return;
     }
     if (Runtime->Requests.IsEmpty() &&
-        !Runtime->bRefreshInFlight)
+        !Runtime->bRefreshInFlight &&
+        !Runtime->LoginOperationId.IsValid() &&
+        Runtime->RefreshOperations.IsEmpty() &&
+        Runtime->LogoutOperations.IsEmpty())
     {
         return;
     }
 
     Runtime->TickerHandle =
         FTSTicker::GetCoreTicker().AddTicker(
-     
+            FTickerDelegate::CreateUObject(
+                this,
+                &UGamePlatformOnlineClientSubsystem::TickRequests),
+            RequestTickerIntervalSeconds);
+}
+
+void UGamePlatformOnlineClientSubsystem::StopTicker()
+{
+    if (Runtime && Runtime->TickerHandle.IsValid())
+    {
+        FTSTicker::GetCoreTicker().RemoveTicker(
+            Runtime->TickerHandle);
+        Runtime->TickerHandle.Reset();
+    }
+}
+
+bool UGamePlatformOnlineClientSubsystem::IsRequestAlive(
+    const FGamePlatformOnlineRequestOptions& Options) const
+{
+    if (!Options.Owner.IsExplicitlyNull() &&
+        !Options.Owner.IsValid())
+    {
+        return false;
+    }
+
+    if (Options.Lifetime ==
+        EGamePlatformOnlineRequestLifetime::World)
+    {
+        UWorld* World = Options.World.Get();
+        return World &&
+            World->GetGameInstance() == GetGameInstance();
+    }
+
+    return true;
+}
+
+void UGamePlatformOnlineClientSubsystem::BroadcastSnapshot()
+{
+    AuthStateChanged.Broadcast(Snapshot);
+}
+

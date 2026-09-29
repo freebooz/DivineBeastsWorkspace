@@ -45,6 +45,25 @@ func (fakeParty) CreateParty(_ context.Context, playerID string) (PartySnapshot,
 
 type fakeMatchmaking struct{}
 
+type fakeWorldEntry struct{}
+
+func (fakeWorldEntry) AllocateWorldEntry(_ context.Context, req WorldEntryAllocationRequest) (WorldEntryResponse, error) {
+	return WorldEntryResponse{
+		AssignmentID:   "world:openworld-1:" + req.DesiredExperienceID,
+		GameServerID:   "openworld-1",
+		ServerRoleID:   "GameServer.Role.OpenWorld",
+		ExperienceID:   req.DesiredExperienceID,
+		WorldID:        "World.OpenWorld.Hub",
+		MapID:          "World.OpenWorld.Hub",
+		RegionID:       "us-west",
+		TicketID:       req.RequestID,
+		CharacterID:    req.CharacterID,
+		SessionID:      req.SessionID,
+		Endpoint:       "127.0.0.1:7777",
+		TransferTicket: `{"ticketId":"entry-1","signature":"redacted-test"}`,
+	}, nil
+}
+
 func (fakeMatchmaking) CreateTicket(_ context.Context, playerID string, req CreateMatchmakingTicketRequest) (MatchmakingTicketResponse, error) {
 	return MatchmakingTicketResponse{TicketID: "mm-1", ArenaModeID: req.ArenaModeID, PartyID: req.PartyID, PartyMemberIDs: []string{playerID}, PartySize: 1, TeamSize: 5, State: "searching"}, nil
 }
@@ -137,6 +156,54 @@ func TestCharacterRoutesUseAuthenticatedSubject(t *testing.T) {
 	newTestAPI().ServeHTTP(selectRecorder, selectReq)
 	if selectRecorder.Code != http.StatusOK {
 		t.Fatalf("角色选择失败: %d %s", selectRecorder.Code, selectRecorder.Body.String())
+	}
+}
+
+// TestWorldEntryUsesAuthenticatedSelection（世界进入认证与角色一致性测试）验证客户端不能伪造Player/Session，且只能使用服务端当前已选角色。
+func TestWorldEntryUsesAuthenticatedSelection(t *testing.T) {
+	handler := NewAPI(
+		Config{ContractVersion: "1.0.0"},
+		fakeIdentity{},
+		fakePlayerData{},
+		fakeParty{},
+		fakeMatchmaking{},
+		fakeWorldEntry{},
+	)
+	valid := httptest.NewRequest(
+		http.MethodPost,
+		"/v1/divinebeasts/world-entry",
+		strings.NewReader(`{"requestId":"entry-1","characterId":"character-1","desiredExperienceId":"Experience.OpenWorld.Hub","expectedCharacterRevision":1,"preferredRegion":"us-west"}`),
+	)
+	valid.Header.Set("Authorization", "Bearer access-1")
+	valid.Header.Set("Content-Type", "application/json")
+	validRecorder := httptest.NewRecorder()
+	handler.ServeHTTP(validRecorder, valid)
+	if validRecorder.Code != http.StatusOK {
+		t.Fatalf("世界进入失败: %d %s", validRecorder.Code, validRecorder.Body.String())
+	}
+	if validRecorder.Header().Get("Cache-Control") != "no-store" {
+		t.Fatal("世界进入响应必须禁止缓存一次性迁移材料")
+	}
+	var response WorldEntryResponse
+	if err := json.NewDecoder(validRecorder.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.CharacterID != "character-1" || response.SessionID != "session-1" ||
+		response.TransferTicket == "" || response.Endpoint == "" {
+		t.Fatalf("世界进入响应错误: %+v", response)
+	}
+
+	forged := httptest.NewRequest(
+		http.MethodPost,
+		"/v1/divinebeasts/world-entry",
+		strings.NewReader(`{"requestId":"entry-2","characterId":"character-other","desiredExperienceId":"Experience.OpenWorld.Hub","expectedCharacterRevision":1}`),
+	)
+	forged.Header.Set("Authorization", "Bearer access-1")
+	forged.Header.Set("Content-Type", "application/json")
+	forgedRecorder := httptest.NewRecorder()
+	handler.ServeHTTP(forgedRecorder, forged)
+	if forgedRecorder.Code != http.StatusConflict {
+		t.Fatalf("非当前已选角色必须拒绝，实际=%d body=%s", forgedRecorder.Code, forgedRecorder.Body.String())
 	}
 }
 

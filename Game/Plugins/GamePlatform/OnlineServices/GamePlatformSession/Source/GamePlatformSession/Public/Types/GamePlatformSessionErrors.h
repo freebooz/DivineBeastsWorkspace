@@ -34,5 +34,6 @@ inline const FName Cancelled(TEXT("SessionCancelled"));
 inline const FName TimedOut(TEXT("SessionTimedOut"));
 inline const FName OutcomeUncertain(TEXT("SessionOutcomeUncertain"));
 inline const FName AuthChanged(TEXT("SessionAuthChanged"));
+inline const FName AuthGenerationExhausted(TEXT("SessionAuthGenerationExhausted"));
 inline const FName Failed(TEXT("SessionFailed"));
 }

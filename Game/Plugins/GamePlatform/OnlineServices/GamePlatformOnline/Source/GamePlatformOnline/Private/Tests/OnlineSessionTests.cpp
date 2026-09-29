@@ -1,4 +1,4 @@
-// 测试替身仅编译进测试：模拟传输边界，断言生产状态机输出，绝不接入正式门面。
+// 历史原生回归：模拟传输边界，验证旧纯逻辑策略基线；正式 UE 生产路径由 GamePlatformOnlineAuthTests 覆盖。
 #if defined(GAMEPLATFORM_ONLINE_NATIVE_TEST)
 #include "Requests/OnlineSession.h"
 #include <cstdio>

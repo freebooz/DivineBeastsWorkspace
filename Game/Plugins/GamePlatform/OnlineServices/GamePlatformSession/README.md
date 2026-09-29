@@ -1,12 +1,12 @@
 # GamePlatformSession（平台会话与跨服插件）
 
-当前交付状态：**独立状态/数据库内核已实施，完整会话插件未完成，真实UE与Go联调被前置阻塞。** 本轮发现Online目录没有任何源码或公开接口，Foundation测试地图也不存在。不能把前四插件提示词当作真实前置实现。
+当前交付状态：**客户端会话公共子系统、状态/恢复内核、Gateway世界进入入口和服务器准入边界已具备；真实UE网络Transport仍保持Fail Closed（失败关闭），完整跨服E2E尚未完成。** 现有实现不再是“只有私有状态内核”，但也不能据此宣称真实ClientTravel和Dedicated Server准入已经闭环。
 
-面向玩家的目标是：登录后进入后端分配的真实游戏服务器，完成服务器准入和绑定确认，再支持迁移、重连与离开。当前已写的是其中的状态安全规则和后端原子准入事务；没有自动连接、公开会话服务、UI或真实游戏握手。离开游戏应保留Online认证，退出账号应使旧操作失效；当前内核只处理非敏感认证身份和代次，不持有令牌。
+面向玩家的目标是：Online认证后由Gateway校验当前选中角色并请求GameServerControl分配世界与一次性TransferTicket，再由Session执行加入、迁移、重连、离开和恢复。当前 `UGamePlatformSessionClientSubsystem` 已经公开Intent、Recovery、Cancel/Leave/Disconnect/Reconcile等通用能力，并保持TransferTicket不进入公开Snapshot；GamePlatformServer侧已经建立只接受可信C++握手层提交证明的Admission边界。
 
-模块只有GamePlatformSession，允许Client/Editor、禁止Server，默认不启用。当前实际依赖只有UE Core用于模块注册；未导入不存在的Online接口，也未复制认证、资源加载或ApplicationFlow。前三插件的原生回归单独记录，尚未用于真实会话装配。
+模块仍只有GamePlatformSession，允许Client/Editor、禁止Server。Session平台层不依赖DivineBeasts、MobaCommon、ApplicationFlow、UI或Telemetry；项目层DBAClient单向依赖Session。服务器准入由独立的GamePlatformServer负责，Session不会把服务器职责重新拉回客户端插件。
 
-完整成功路径仍待接通：Online真实认证 → 可信玩家/角色授权 → 真实服务器注册就绪 → 预留及握手 → 服务器领取/提交 → 客户端四事实Ready。当前可以执行原生状态测试和独占PostgreSQL测试；它们不代表玩家已经进入三维场景。
+当前Backend已经补齐受认证的 `POST /v1/divinebeasts/world-entry` 公共入口，并将GameServerControl内部HTTP控制面统一置于内部Bearer保护下；HTTP/gRPC Gateway装配均复用现有GameServerControl能力，没有新增第六个Session微服务。仍未完成的关键前置是：控制面/服务器握手尚未向客户端Session提供可信 `GameSessionId / ServerBootId / ProtocolVersion / SessionEpoch` 绑定，因此禁止用客户端自造值实现ClientTravel成功。
 
 建议人工先读交付状态和安全边界，再查API/状态机及测试证据。12类说明对应如下：
 
@@ -23,4 +23,4 @@
 - D11：[ManualReview.md](Docs/ManualReview.md)，待人工填写的审查清单。
 - D12：[DeliveryStatus.md](Docs/DeliveryStatus.md)，完成、未完成与续作断点。
 
-源码存在、文档齐全、原生测试或数据库测试通过，均不构成完整Session服务交付完成。当前禁止用于公开网络或生产发布。
+源码存在、文档齐全、状态测试或Gateway/Backend测试通过，均不构成完整Session网络链交付完成。只有在可信Binding、真实ClientTravel、Server Admission、NetworkFailure/TravelFailure、重连及OpenWorld/Village/MainArena端到端验证全部通过后，才能提升为生产完成状态。

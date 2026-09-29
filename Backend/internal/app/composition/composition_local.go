@@ -33,7 +33,16 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	identityClient := httpadapter.NewIdentityClient(httpadapter.ClientConfig{BaseURL: config.Getenv("IDENTITY_SERVICE_URL", "http://127.0.0.1:8081")})
 	playerDataClient := httpadapter.NewPlayerDataClient(httpadapter.ClientConfig{BaseURL: config.Getenv("PLAYER_DATA_SERVICE_URL", "http://127.0.0.1:8082")})
 	matchClient := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: config.Getenv("MATCH_SERVICE_URL", "http://127.0.0.1:8083")})
-	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, matchClient, matchClient)
+	internalToken := strings.TrimSpace(config.Getenv("GAMESERVERCONTROL_INTERNAL_TOKEN", ""))
+	if internalToken == "" {
+		return errors.New("GAMESERVERCONTROL_INTERNAL_TOKEN不能为空")
+	}
+	worldEntryClient := httpadapter.NewGameServerControlClient(httpadapter.GameServerControlClientConfig{
+		ClientConfig:  httpadapter.ClientConfig{BaseURL: config.Getenv("GAMESERVERCONTROL_SERVICE_URL", "http://127.0.0.1:8084")},
+		BearerToken:   internalToken,
+		DefaultRegion: config.Getenv("GAME_DEFAULT_REGION", "us-west"),
+	})
+	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, matchClient, matchClient, worldEntryClient)
 	return servicehost.Run(ctx, cfg, handler)
 }
 

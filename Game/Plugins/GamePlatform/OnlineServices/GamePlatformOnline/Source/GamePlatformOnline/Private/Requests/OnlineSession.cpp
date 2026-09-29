@@ -1,3 +1,4 @@
+#if defined(GAMEPLATFORM_ONLINE_NATIVE_TEST)
 #include "Requests/OnlineSession.h"
 #include <algorithm>
 #include <cmath>
@@ -404,3 +405,4 @@ FDiagnostics FSession::Diagnostics() const
     return D;
 }
 }
+#endif // GAMEPLATFORM_ONLINE_NATIVE_TEST

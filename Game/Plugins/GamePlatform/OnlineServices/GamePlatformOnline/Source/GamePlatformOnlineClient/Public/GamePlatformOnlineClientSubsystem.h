@@ -10,7 +10,7 @@
 
 class IHttpRequest;
 
-/** EGamePlatformAuthState（平台客户端认证状态）。 */
+/** EGamePlatformAuthState（平台客户端认证状态投影）；正式跨模块认证真源为 EGamePlatformOnlineAuthState。 */
 UENUM(BlueprintType)
 enum class EGamePlatformAuthState : uint8
 {
@@ -50,7 +50,8 @@ enum class EGamePlatformAuthError : uint8
 };
 
 /**
- * FGamePlatformAuthSnapshot（平台认证公开快照）。
+ * FGamePlatformAuthSnapshot（客户端/Blueprint认证只读投影）。
+ * 它不是第二套认证权威状态；跨模块正式契约使用 FGamePlatformOnlineAuthSnapshot。
  * 只包含非秘密事实；AccessToken/RefreshToken 永远不进入 UObject、UI、日志或遥测。
  */
 USTRUCT(BlueprintType)
@@ -114,6 +115,8 @@ struct GAMEPLATFORMONLINECLIENT_API FGamePlatformAuthenticatedResponse
     int32 HttpStatusCode = 0;
     FString Body;
     bool bMayHaveReachedServer = false;
+    /** 服务端 Retry-After 秒数；0 表示未提供或无效，平台只在安全读取重试策略中使用。 */
+    double RetryAfterSeconds = 0.0;
 
     bool IsSuccess() const
     {
@@ -157,6 +160,8 @@ public:
         const FGamePlatformAuthenticatedRequest& Request,
         FGamePlatformAuthenticatedCompletion Completion) = 0;
     virtual void CancelRequest(const FGuid& RequestId) = 0;
+    /** 仅失效当前登录/自动登录等认证操作代次；不得取消无关业务请求或共享刷新等待者。 */
+    virtual void InvalidateAuthenticationOperation() = 0;
     /** 仅把当前AccessToken写入已经由可信平台模块创建的HTTP请求；不返回Token字符串。 */
     virtual bool ApplyAuthorization(IHttpRequest& Request) const = 0;
     virtual void CancelAll() = 0;
@@ -239,7 +244,10 @@ public:
     virtual bool Cancel(
         const FGamePlatformOnlineRequestHandle& Request) override;
 
-    /** 供其他平台基础插件（如Telemetry）在不读取Token字符串的情况下给HTTP请求附加认证。 */
+    /**
+     * 供其他平台基础插件（如Telemetry）在不读取Token字符串的情况下给HTTP请求附加认证。
+     * 仅允许目标URL属于当前已配置ServiceOrigin（服务源地址）的同源请求，外域请求失败关闭。
+     */
     bool ApplyAuthorization(IHttpRequest& Request) const;
 
     FGamePlatformAuthSnapshot GetSnapshot() const { return Snapshot; }
@@ -283,6 +291,7 @@ private:
     TUniquePtr<FRuntime> Runtime;
     FGamePlatformOnlineConfiguration Configuration;
     FGamePlatformAuthSnapshot Snapshot;
+    EGamePlatformOnlineServiceState ServiceState = EGamePlatformOnlineServiceState::Unknown;
     TOptional<FGamePlatformOnlineProfile> CachedProfile;
     FGamePlatformAuthSnapshotChangedNative AuthStateChanged;
     FGuid InstanceScopeId;

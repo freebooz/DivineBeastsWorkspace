@@ -1,5 +1,7 @@
 # GamePlatformOnline（游戏平台在线业务插件）
 
+> 历史断点文档：本文记录 2026-09-21 及迁移阶段的实现状态，不代表当前 `0.2.0` 正式源码。当前架构、能力和验证边界以插件根 `README.md`、`Docs/Architecture.md`、`Docs/TestingAndEvidence.md` 及真实源码为准；本文不得作为后续实施指令覆盖当前代码。
+
 ## 当前交付状态
 
 2026-09-21 安全断点：当日用户要求停止 Online 实施并保留文件；本文保留当时的实现状态，不代表当前目录状态。随后，原位于旧 `GameFoundation/Application/GamePlatformOnline` 目录的状态机、公开契约、测试和交接文档已逐文件校验并迁入规范插件；当前插件已有描述、模块构建规则和显式 Core 依赖，但门面函数定义、UObject适配、真实传输仍未完成，不能据此宣称可端到端运行。

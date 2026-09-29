@@ -8,6 +8,7 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Misc/ScopeLock.h"
+#include "Misc/LexFromString.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -85,6 +86,35 @@ FGamePlatformResult FGamePlatformGatewayAuthProvider::Configure(
     if (!Validated.IsSuccess())
     {
         return Validated;
+    }
+
+    // Configure阶段即验证敏感HTTP所需能力，避免第一次登录时才发现后端会自动重定向
+    // 或无法实施流式响应预算。能力不明确时统一Fail Closed。
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> CapabilityRequest =
+        FHttpModule::Get().CreateRequest();
+#if defined(UE_HTTP_HAS_REQUEST_REDIRECT_POLICY) && UE_HTTP_HAS_REQUEST_REDIRECT_POLICY
+    if (!CapabilityRequest->SetRedirectPolicy(
+            EHttpRequestRedirectPolicy::Reject))
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("OnlineUnsupportedTransport"),
+            TEXT("当前HTTP后端不能可靠禁止敏感请求自动重定向。"));
+    }
+#else
+    return FGamePlatformResult::Failure(
+        TEXT("OnlineUnsupportedTransport"),
+        TEXT("当前HTTP后端未公开敏感请求重定向控制能力。"));
+#endif
+
+    FHttpRequestStreamDelegateV2 CapabilityStream =
+        FHttpRequestStreamDelegateV2::CreateLambda(
+            [](void*, int64&) {});
+    if (!CapabilityRequest->SetResponseBodyReceiveStreamDelegateV2(
+            MoveTemp(CapabilityStream)))
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("OnlineUnsupportedTransport"),
+            TEXT("当前HTTP后端不能实施传输中的响应正文大小限制。"));
     }
 
     Configuration = InConfiguration;
@@ -266,6 +296,14 @@ void FGamePlatformGatewayAuthProvider::Refresh(
                     Response.bTransportSuccess,
                     true,
                     Response.bResponseTooLarge);
+                if (Response.bMayHaveReachedServer &&
+                    (!Response.bTransportSuccess ||
+                     Response.bResponseTooLarge ||
+                     Response.HttpCode == 200))
+                {
+                    // 轮换请求可能已提交但结果不可验证时，旧RefreshToken是否仍可用不可证明。
+                    Result.Error = EGamePlatformAuthError::OutcomeUnknown;
+                }
             }
 
             if (Completion)
@@ -382,6 +420,7 @@ void FGamePlatformGatewayAuthProvider::SendUnauthenticatedRequest(
             Result.HttpStatusCode = Response.HttpCode;
             Result.Body = MoveTemp(Response.Body);
             Result.bMayHaveReachedServer = Response.bMayHaveReachedServer;
+            Result.RetryAfterSeconds = Response.RetryAfterSeconds;
             Result.Error = MapRequestError(Response);
             if (Completion)
             {
@@ -443,6 +482,7 @@ void FGamePlatformGatewayAuthProvider::SendAuthenticatedRequest(
             Result.HttpStatusCode = Response.HttpCode;
             Result.Body = MoveTemp(Response.Body);
             Result.bMayHaveReachedServer = Response.bMayHaveReachedServer;
+            Result.RetryAfterSeconds = Response.RetryAfterSeconds;
             Result.Error = MapRequestError(Response);
             // 非幂等写在已交给HTTP栈后若连接失败，不能证明服务端没有提交；
             // 返回 OutcomeUnknown，禁止业务层按普通网络失败盲目重放。
@@ -471,6 +511,14 @@ void FGamePlatformGatewayAuthProvider::CancelRequest(
         }
         ActiveRequests.Remove(RequestId);
     }
+}
+
+void FGamePlatformGatewayAuthProvider::InvalidateAuthenticationOperation()
+{
+    // 只推进认证操作代次，使迟到Login/AutoLogin结果在提交Token前被拒绝；
+    // 不调用CancelAll，避免误伤同一GameInstance中的探测或业务请求。
+    ++OperationGeneration;
+    ClearTokens();
 }
 
 bool FGamePlatformGatewayAuthProvider::ApplyAuthorization(
@@ -685,6 +733,22 @@ void FGamePlatformGatewayAuthProvider::SendRequest(
                     Result.HttpCode = Response.IsValid()
                         ? Response->GetResponseCode()
                         : 0;
+                    if (Response.IsValid())
+                    {
+                        const FString RetryAfter =
+                            Response->GetHeader(TEXT("Retry-After"));
+                        double ParsedRetryAfter = 0.0;
+                        if (!RetryAfter.IsEmpty() &&
+                            LexTryParseString(
+                                ParsedRetryAfter,
+                                *RetryAfter) &&
+                            FMath::IsFinite(ParsedRetryAfter) &&
+                            ParsedRetryAfter >= 0.0)
+                        {
+                            Result.RetryAfterSeconds =
+                                ParsedRetryAfter;
+                        }
+                    }
 
                     TArray<uint8> Bytes;
                     {
