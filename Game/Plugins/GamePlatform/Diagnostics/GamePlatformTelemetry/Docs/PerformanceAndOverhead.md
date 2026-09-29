@@ -4,4 +4,4 @@ RecordEvent/RecordMetric fast path（事件/指标记录快速路径）只做 Sc
 
 Flush（刷新）不再常驻每5秒唤醒：Buffer 首次有数据才安排一次性 Deadline，到达 Batch 条数/字节阈值会立即刷新；单次最多提交 `MaxFlushBatchesPerPass` 个 Batch，剩余数据再安排下一次 Deadline。Batch 以第一条记录 Context 为公共 SourceContext，Context 变化自然切批，HTTP JSON 不再为每条 Event/Metric 重复序列化完整 Context，并在最终 UTF-8 Payload 上再次执行硬字节上限。
 
-BoundedBuffer 仍使用 TArray，但正常批次消费已改为 `HeadIndex（头索引）` 前移，不再每次 `RemoveAt(0,N)` 搬移全部剩余记录；仅在累计消费达到 256 条或已消费前缀超过数组一半时做一次摊销压缩。优先级驱逐仍保持稳定顺序，非头部候选在极端 Buffer Full 场景仍可能产生线性移动；若后续压力基准证明这部分成为瓶颈，再升级为 Ring Buffer（环形缓冲）/分优先级队列。Development-only 1000 Records 测试已经由 UE Automation 实际执行通过，但它只证明有界性；1/10/100/1000 events/sec 的 CPU、allocation、真实 HTTP 字节和 overflow 基准仍未形成完整数据，不能承诺具体性能指标。
+BoundedBuffer 仍使用 TArray，但正常批次消费已改为 `HeadIndex（头索引）` 前移，不再每次 `RemoveAt(0,N)` 搬移全部剩余记录；被消费或从头部驱逐的槽位会立即清空 Event/Metric 内部字符串和数组资源，避免逻辑字节已下降但堆内存仍滞留。仅在累计消费达到 256 条或已消费前缀超过数组一半时做一次摊销压缩。优先级驱逐仍保持稳定顺序，非头部候选在极端 Buffer Full 场景仍可能产生线性移动；若后续压力基准证明这部分成为瓶颈，再升级为 Ring Buffer（环形缓冲）/分优先级队列。Development-only 1000 Records 测试已经由 UE Automation 实际执行通过，但它只证明有界性；1/10/100/1000 events/sec 的 CPU、allocation、真实 HTTP 字节和 overflow 基准仍未形成完整数据，不能承诺具体性能指标。

@@ -337,15 +337,19 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryDiagnostics
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     int64 DroppedBatches = 0;
 
+    /** 最近一次从Buffer成功提交至少一个Batch的UTC时间。 */
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     FDateTime LastFlushUtc;
 
+    /** 最近一次Flush向Sink提交的Event+Metric记录数量。 */
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     int32 LastFlushRecords = 0;
 
+    /** 输出器最近一次终态成功时间，用于断线恢复现场诊断。 */
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     FDateTime SinkLastSuccessUtc;
 
+    /** 输出器最近一次终态失败时间，用于区分持续断线与已恢复状态。 */
     UPROPERTY(BlueprintReadOnly, Category="Telemetry")
     FDateTime SinkLastFailureUtc;
 };

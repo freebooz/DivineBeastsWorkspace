@@ -46,23 +46,52 @@ def get_or_create_asset(asset_name, package_path, asset_class, factory):
     return asset
 
 
+def migrate_assets(source_root, target_root, label):
+    """逐资产迁移并让UE修复引用，避免UE5.8整目录rename_directory在混合依赖目录上失败。"""
+    source_assets = unreal.EditorAssetLibrary.list_assets(
+        source_root, recursive=True, include_folder=False
+    )
+    if not source_assets:
+        fail("未发现待迁移资产: " + source_root)
+
+    moved = 0
+    failed = []
+    for source_asset in source_assets:
+        # list_assets可能返回ObjectPath（包名.对象名）；rename_asset要求资产路径。
+        source_path = source_asset.split(".", 1)[0]
+        relative = source_path[len(source_root):]
+        target_path = target_root + relative
+
+        if unreal.EditorAssetLibrary.does_asset_exist(target_path):
+            unreal.EditorAssetLibrary.delete_asset(target_path)
+
+        if unreal.EditorAssetLibrary.rename_asset(source_path, target_path):
+            moved += 1
+        else:
+            failed.append(source_path + " -> " + target_path)
+
+    if failed:
+        fail(label + "逐资产迁移失败: " + "; ".join(failed))
+    log(label + "迁移完成，共" + str(moved) + "个资产。")
+
+
 def ensure_mannequin_mount():
     common_manny = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SKM_Manny_Simple"
     common_quinn = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SKM_Quinn_Simple"
-    common_body_rig = COMMON_STANDARD_MANNEQUIN_ROOT + "/Rigs/CR_Mannequin_Body"
-    common_physics_rig = COMMON_STANDARD_MANNEQUIN_ROOT + "/Rigs/PA_Mannequin"
+    common_skeleton = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SK_Mannequin_Skeleton"
+    common_physics_asset = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SK_Mannequin_PhysicsAsset"
     if (
         unreal.EditorAssetLibrary.does_asset_exist(common_manny)
         and unreal.EditorAssetLibrary.does_asset_exist(common_quinn)
-        and unreal.EditorAssetLibrary.does_asset_exist(common_body_rig)
-        and unreal.EditorAssetLibrary.does_asset_exist(common_physics_rig)
+        and unreal.EditorAssetLibrary.does_asset_exist(common_skeleton)
+        and unreal.EditorAssetLibrary.does_asset_exist(common_physics_asset)
     ):
-        log("公共Manny/Quinn及Rig依赖已经存在，跳过迁移。")
+        log("公共Manny/Quinn、Skeleton与PhysicsAsset已经存在，跳过迁移。")
         return
 
     # 旧项目的Manny/Quinn网格位于/DBA/...，但默认材质继续引用标准
     # /Game/Characters/Mannequins。两个根必须同时进入编辑器后再迁移，
-    # 这样AssetTools才能修复跨挂载点软/硬引用，禁止直接在文件系统重命名uasset。
+    # 由UE逐资产重命名修复跨挂载点引用，禁止在文件系统直接改名uasset。
     if not unreal.EditorAssetLibrary.does_directory_exist(TEMP_DBA_MANNEQUIN_ROOT):
         fail("缺少临时DBA Mannequin目录，请先运行PowerShell包装脚本。")
     if not unreal.EditorAssetLibrary.does_directory_exist(TEMP_STANDARD_MANNEQUIN_ROOT):
@@ -72,28 +101,28 @@ def ensure_mannequin_mount():
     if unreal.EditorAssetLibrary.does_directory_exist(common_parent):
         unreal.EditorAssetLibrary.delete_directory(common_parent)
 
-    log("迁移标准Mannequin材质/纹理依赖到公共内容包。")
-    if not unreal.EditorAssetLibrary.rename_directory(
+    log("逐资产迁移标准Mannequin材质/纹理依赖到公共内容包。")
+    migrate_assets(
         TEMP_STANDARD_MANNEQUIN_ROOT,
         COMMON_STANDARD_MANNEQUIN_ROOT,
-    ):
-        fail("标准Mannequin依赖目录迁移失败。")
+        "标准Mannequin依赖",
+    )
 
-    log("迁移Manny/Quinn网格与骨架到公共内容包。")
-    if not unreal.EditorAssetLibrary.rename_directory(
+    log("逐资产迁移Manny/Quinn网格与DBA材质到公共内容包。")
+    migrate_assets(
         TEMP_DBA_MANNEQUIN_ROOT,
         COMMON_DBA_MANNEQUIN_ROOT,
-    ):
-        fail("DBA Mannequin网格目录迁移失败。")
+        "DBA Mannequin资源",
+    )
 
     if not unreal.EditorAssetLibrary.does_asset_exist(common_manny):
         fail("迁移后缺少SKM_Manny_Simple。")
     if not unreal.EditorAssetLibrary.does_asset_exist(common_quinn):
         fail("迁移后缺少SKM_Quinn_Simple。")
-    if not unreal.EditorAssetLibrary.does_asset_exist(common_body_rig):
-        fail("迁移后缺少CR_Mannequin_Body，Manny/Quinn依赖闭包不完整。")
-    if not unreal.EditorAssetLibrary.does_asset_exist(common_physics_rig):
-        fail("迁移后缺少PA_Mannequin，Manny/Quinn依赖闭包不完整。")
+    if not unreal.EditorAssetLibrary.does_asset_exist(common_skeleton):
+        fail("迁移后缺少SK_Mannequin_Skeleton，Manny/Quinn依赖闭包不完整。")
+    if not unreal.EditorAssetLibrary.does_asset_exist(common_physics_asset):
+        fail("迁移后缺少SK_Mannequin_PhysicsAsset，Manny/Quinn依赖闭包不完整。")
 
 
 def ensure_master_material():
@@ -150,13 +179,13 @@ def enum_value(enum_type, suffix):
 
 
 def make_gameplay_tag(tag_name):
-    try:
-        return unreal.GameplayTag(tag_name=unreal.Name(tag_name))
-    except Exception:
-        lib = getattr(unreal, "BlueprintGameplayTagLibrary", None)
-        if lib and hasattr(lib, "request_gameplay_tag"):
-            return lib.request_gameplay_tag(unreal.Name(tag_name), True)
-        fail("无法构造GameplayTag: " + tag_name)
+    # UE5.8 Python中的GameplayTag.TagName为只读属性，必须通过UStruct文本导入。
+    tag = unreal.GameplayTag()
+    if not tag.import_text(tag_name):
+        fail("无法导入GameplayTag: " + tag_name)
+    if not unreal.GameplayTagLibrary.is_gameplay_tag_valid(tag):
+        fail("GameplayTag未注册或无效: " + tag_name)
+    return tag
 
 
 def ensure_material_instance(hero, master_material):

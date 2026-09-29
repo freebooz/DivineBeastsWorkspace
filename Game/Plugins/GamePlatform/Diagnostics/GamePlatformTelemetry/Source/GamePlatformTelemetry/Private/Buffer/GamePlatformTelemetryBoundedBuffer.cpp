@@ -188,7 +188,10 @@ bool FGamePlatformTelemetryBoundedBuffer::BuildBatch(
 
     for (int32 Offset = 0; Offset < ConsumeCount; ++Offset)
     {
-        CurrentBytes -= Records[HeadIndex + Offset].EstimatedBytes;
+        FQueuedRecord& Consumed = Records[HeadIndex + Offset];
+        CurrentBytes -= Consumed.EstimatedBytes;
+        // 只保留空槽位供摊销压缩，不保留已消费Event/Metric里的FString/TArray堆内存，确保真实内存仍受有界策略约束。
+        Consumed = FQueuedRecord{};
     }
 
     HeadIndex += ConsumeCount;
@@ -276,6 +279,8 @@ bool FGamePlatformTelemetryBoundedBuffer::EnsureCapacityFor(
         CurrentBytes -= Records[Candidate].EstimatedBytes;
         if (Candidate == HeadIndex)
         {
+            // 头部被驱逐时同样立即释放记录内部堆内存，再推进逻辑头。
+            Records[Candidate] = FQueuedRecord{};
             ++HeadIndex;
             CompactConsumedPrefixIfNeeded();
         }
