@@ -17,6 +17,8 @@
 - 角色运行状态改为原子复制 Hero/生肖/SpawnGeneration/AvatarGeneration/DefinitionVersion/ContentRevision，CharacterId 保持 OwnerOnly；新增平台角色状态只读接口，修复异步 Definition 旧请求覆盖新角色的竞态，并以 ContentRevision 做客户端/服务器就绪一致性门禁。
 - `DivineBeastsCharactersRuntime` 注册统一 Character Initializer，只初始化平台 Spawn Operation 已创建的 ACharacter，不在项目层旁路 SpawnActor/Possess；Server Target 显式启用 DBAServer/DBAArena，OpenWorld/Village/MainArena 继续共用 Dedicated Server Target。
 - AssetManager 已扫描 `/DBAGameplay/Definitions`；Client/Editor Target 显式启用公共角色包和 12 个 HeroPack，Dedicated Server 不携带这些客户端表现资源。原型生成脚本支持自动工作区/引擎探测、旧项目仅首次导入时使用，并提供 `-ValidateOnly`；当前验证结果为公共 Manny/Quinn 依赖完整、Definition/Profile/Material = `12/12/12`。
+- 新增平台 `FGamePlatformCharacterInitializationExecutor`，统一解析且强制唯一 `GamePlatform.CharacterInitializer`；MainArena 新增项目 LifecycleAdapter，只使用标准 `RestartPlayerAtPlayerStart` 创建/控制基础 `ACharacter`，再调用 Executor 完成项目初始化，源码无直接 `SpawnActor/Possess`。12 个 Server-safe Hero Definition 在 Assignment 阶段异步预热，全部参赛者 `CharacterReady` 后比赛才进入 `InProgress`，复活复用同一链路。
+- UE5.8 Server 定向构建实际编译并通过 LifecycleAdapter、Arena GameMode、ProjectExtension、InitializationExecutor；Editor 定向构建通过 `GamePlatformCharacter` 与 `DivineBeastsCharactersRuntime`。角色 Automation 启动被既有 `GamePlatformGameplay` 空实现阻断：该模块单独链接确认存在 `AGamePlatformGameModeBase/GameState/PlayerController/PlayerState` 等 9 个未解析符号；这是独立平台基础设施欠账，MainArena 当前不依赖它，本轮不在角色任务中重写整套通用准入状态机。
 
 ## 2026-09-29｜GamePlatformSettings 四模块专项审查与实装
 

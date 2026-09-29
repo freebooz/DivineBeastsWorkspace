@@ -174,11 +174,13 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Unreal\Characters\Generate-Zodi
 
 ## 6. 当前安全边界
 
-平台统一 Spawn/Respawn 执行器仍必须由 `GamePlatformGameplay（平台玩法插件）` 负责。
+平台角色初始化唯一入口为 `FGamePlatformCharacterInitializationExecutor（平台角色初始化执行器）`。项目层通过 `GamePlatform.CharacterInitializer` 注册 `FDivineBeastsCharacterSpawnInitializer`；Executor 要求当前组合根恰好存在一个初始化器，且自身不执行 `SpawnActor/Possess`。
 
-项目层已经通过 `GamePlatform.CharacterInitializer` 注册 `FDivineBeastsCharacterSpawnInitializer`，但不得在 DBAGameplay/DBAArena 中自行新增 `SpawnActor/Possess` 旁路。
+MainArena 已接入 `FDivineBeastsArenaGameplayLifecycleAdapter（神兽联盟竞技玩法生命周期适配器）`：Assignment 阶段预热 12 个 Server-safe Hero Definition；倒计时结束后通过 UE 标准 `RestartPlayerAtPlayerStart` 创建/控制基础 `ACharacter`，再调用平台 Executor 完成项目角色初始化并确认 `CharacterReady`。所有参赛者初始化成功后，比赛才允许进入 `InProgress`。复活同样复用该链路，并以 SpawnGeneration 防止旧代次覆盖。
 
-MainArena 当前保持 Fail Closed：未配置平台统一 GameplayLifecycleAdapter 时不得进入正式竞技出生流程。这一边界应保留，直到平台 Spawn/Respawn 执行器完整实现并通过多人复制测试。
+项目层没有直接调用 `SpawnActor/Possess`；Manny/Quinn 仍只属于客户端 Appearance，不进入 Dedicated Server。OpenWorld/Village 后续应复用同一 Executor 接入各自平台出生编排。
+
+独立基础设施限制：`GamePlatformGameplay` 中的通用 `AGamePlatformGameModeBase / GameState / PlayerController / PlayerState` 目前仍存在历史声明无实现，单模块链接会报告未解析符号。MainArena 当前使用已实现的 `GamePlatformArena` 生命周期适配边界，不依赖该空实现；但 OpenWorld/Village 若要直接采用这套通用 GameMode，必须另行完成该平台底座。
 
 ## 7. 验收要求
 
@@ -196,3 +198,5 @@ MainArena 当前保持 Fail Closed：未配置平台统一 GameplayLifecycleAdap
 - 角色创建草稿在 Definition 异步加载完成后再校验；
 - Dedicated Server 不需要客户端 Mesh/Material/Animation 执行代码；
 - Shipping 禁止开发占位回退。
+- MainArena 全员必须在 `InProgress` 前完成标准 Pawn 出生、唯一 Character Initializer 初始化和 `CharacterReady`；
+- MainArena Server 定向模块编译必须通过，且项目生命周期适配器源码不得出现直接 `SpawnActor/Possess` 调用。
