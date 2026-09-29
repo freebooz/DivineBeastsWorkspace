@@ -90,6 +90,7 @@ void FGamePlatformHttpControlProvider::RegisterInstance(
     TSharedRef<FJsonObject> Body = MakeShared<FJsonObject>();
     Body->SetStringField(TEXT("gameId"), Instance.GameId);
     Body->SetStringField(TEXT("gameServerId"), Instance.GameServerId);
+    Body->SetStringField(TEXT("serverBootId"), Instance.ServerBootId);
     Body->SetStringField(TEXT("serverRoleId"), Instance.ServerRoleId);
     Body->SetStringField(TEXT("experienceId"), Instance.ExperienceId);
     Body->SetStringField(TEXT("worldId"), Instance.WorldId);
@@ -208,6 +209,7 @@ void FGamePlatformHttpControlProvider::SendAcceptedPost(
     Request->SetURL(BaseUrl + RelativePath);
     Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + InternalToken);
     Request->SetHeader(TEXT("X-Game-Server-Id"), Instance.GameServerId);
+    Request->SetHeader(TEXT("X-Game-Server-Boot-Id"), Instance.ServerBootId);
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
     Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
     Request->SetTimeout(ResolveRequestTimeoutSeconds());

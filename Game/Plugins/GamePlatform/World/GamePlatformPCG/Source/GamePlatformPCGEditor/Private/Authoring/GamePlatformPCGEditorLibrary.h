@@ -19,4 +19,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool InspectProfileSource(UGamePlatformPCGProfileDefinition* Profile, FString& Fingerprint,
         TArray<FString>& Dependencies, FString& Error);
+
+    /** 只读验证Profile（配置）当前图是否满足Legacy Fixture或1.0 Template Contract；不执行生成、不保存资产。 */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool ValidateProfileContract(UGamePlatformPCGProfileDefinition* Profile, FString& Error);
+
+    /** 返回1.0已登记模板ID，供Editor工具/自动化创建入口使用；返回ID不代表对应.uasset已经存在。 */
+    UFUNCTION(BlueprintPure, Category="GamePlatform|PCG|Editor")
+    static TArray<FName> GetKnownTemplateIds();
 };

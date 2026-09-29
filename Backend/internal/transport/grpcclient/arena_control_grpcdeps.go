@@ -63,7 +63,23 @@ func (c *ArenaControlClient) IssuePlayerTransfer(req matchservice.PlayerTransfer
 	if !response.GetIssued() {
 		return servertransfer.Ticket{}, grpcError(response.GetErrorCode())
 	}
-	return servertransfer.Ticket{TicketID: response.GetTicketId(), AssignmentID: response.GetAssignmentId(), GameID: req.GameID, PlayerID: response.GetPlayerId(), SessionID: response.GetSessionId(), SourceGameServerID: req.SourceGameServerID, DestinationGameServerID: response.GetDestinationGameServerId(), DestinationEndpoint: response.GetDestinationEndpoint(), DestinationWorldID: response.GetDestinationWorldId(), DestinationExperienceID: response.GetDestinationExperienceId(), MatchID: response.GetMatchId(), IssuedAt: time.UnixMilli(response.GetIssuedAtUnixMs()).UTC(), ExpiresAt: time.UnixMilli(response.GetExpiresAtUnixMs()).UTC(), Nonce: response.GetNonce(), Signature: response.GetSignature()}, nil
+	return servertransfer.Ticket{
+		TicketID: response.GetTicketId(), AssignmentID: response.GetAssignmentId(),
+		GameID: req.GameID, PlayerID: response.GetPlayerId(), SessionID: response.GetSessionId(),
+		SourceGameServerID:         req.SourceGameServerID,
+		DestinationGameServerID:    response.GetDestinationGameServerId(),
+		DestinationEndpoint:        response.GetDestinationEndpoint(),
+		DestinationWorldID:         response.GetDestinationWorldId(),
+		DestinationExperienceID:    response.GetDestinationExperienceId(),
+		MatchID:                    response.GetMatchId(),
+		GameSessionID:              response.GetGameSessionId(),
+		DestinationServerBootID:    response.GetDestinationServerBootId(),
+		DestinationProtocolVersion: response.GetDestinationProtocolVersion(),
+		SessionEpoch:               response.GetSessionEpoch(),
+		IssuedAt:                   time.UnixMilli(response.GetIssuedAtUnixMs()).UTC(),
+		ExpiresAt:                  time.UnixMilli(response.GetExpiresAtUnixMs()).UTC(),
+		Nonce:                      response.GetNonce(), Signature: response.GetSignature(),
+	}, nil
 }
 
 // AllocateWorldEntry（Gateway世界进入gRPC适配）先分配常驻世界，再为同一Assignment签发玩家迁移票据。
@@ -115,21 +131,27 @@ func (c *ArenaControlClient) AllocateWorldEntry(
 	ticket := servertransfer.Ticket{
 		TicketID: issued.GetTicketId(), AssignmentID: issued.GetAssignmentId(),
 		GameID: req.GameID, PlayerID: issued.GetPlayerId(), SessionID: issued.GetSessionId(),
-		DestinationGameServerID: issued.GetDestinationGameServerId(),
-		DestinationEndpoint:     issued.GetDestinationEndpoint(),
-		DestinationWorldID:      issued.GetDestinationWorldId(),
-		DestinationExperienceID: issued.GetDestinationExperienceId(),
-		MatchID:                 issued.GetMatchId(),
-		IssuedAt:                time.UnixMilli(issued.GetIssuedAtUnixMs()).UTC(),
-		ExpiresAt:               time.UnixMilli(issued.GetExpiresAtUnixMs()).UTC(),
-		Nonce:                   issued.GetNonce(), Signature: issued.GetSignature(),
+		DestinationGameServerID:    issued.GetDestinationGameServerId(),
+		DestinationEndpoint:        issued.GetDestinationEndpoint(),
+		DestinationWorldID:         issued.GetDestinationWorldId(),
+		DestinationExperienceID:    issued.GetDestinationExperienceId(),
+		MatchID:                    issued.GetMatchId(),
+		GameSessionID:              issued.GetGameSessionId(),
+		DestinationServerBootID:    issued.GetDestinationServerBootId(),
+		DestinationProtocolVersion: issued.GetDestinationProtocolVersion(),
+		SessionEpoch:               issued.GetSessionEpoch(),
+		IssuedAt:                   time.UnixMilli(issued.GetIssuedAtUnixMs()).UTC(),
+		ExpiresAt:                  time.UnixMilli(issued.GetExpiresAtUnixMs()).UTC(),
+		Nonce:                      issued.GetNonce(), Signature: issued.GetSignature(),
 	}
 	if ticket.AssignmentID != allocated.GetAssignmentId() ||
 		ticket.PlayerID != req.PlayerID || ticket.SessionID != req.SessionID ||
 		ticket.DestinationGameServerID != allocated.GetGameServerId() ||
 		ticket.DestinationEndpoint != allocated.GetDestinationEndpoint() ||
 		ticket.DestinationWorldID != allocated.GetWorldId() ||
-		ticket.DestinationExperienceID != allocated.GetExperienceId() {
+		ticket.DestinationExperienceID != allocated.GetExperienceId() ||
+		ticket.GameSessionID == "" || ticket.DestinationServerBootID == "" ||
+		ticket.DestinationProtocolVersion == 0 || ticket.SessionEpoch == 0 {
 		return gateway.WorldEntryResponse{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
 	}
 	ticketBytes, err := json.Marshal(ticket)
@@ -141,6 +163,8 @@ func (c *ArenaControlClient) AllocateWorldEntry(
 		ServerRoleID: allocated.GetServerRoleId(), ExperienceID: allocated.GetExperienceId(),
 		WorldID: allocated.GetWorldId(), MapID: allocated.GetWorldId(), RegionID: allocated.GetRegionId(),
 		TicketID: ticket.TicketID, CharacterID: req.CharacterID, SessionID: req.SessionID,
+		GameSessionID: ticket.GameSessionID, ServerBootID: ticket.DestinationServerBootID,
+		ProtocolVersion: ticket.DestinationProtocolVersion, SessionEpoch: ticket.SessionEpoch,
 		Endpoint: allocated.GetDestinationEndpoint(), TransferTicket: string(ticketBytes),
 	}, nil
 }

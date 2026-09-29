@@ -160,6 +160,14 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsWorldAssignmentSummary
     UPROPERTY(BlueprintReadOnly) FString TicketId;
     UPROPERTY(BlueprintReadOnly) FString CharacterId;
     UPROPERTY(BlueprintReadOnly) FString SessionId;
+    /** 后端签发的非敏感游戏会话绑定身份，不是认证凭据。 */
+    UPROPERTY(BlueprintReadOnly) FString GameSessionId;
+    /** 目标Dedicated Server启动代次；服务器重启后旧值失效。 */
+    UPROPERTY(BlueprintReadOnly) FString ServerBootId;
+    /** 目标实时网络协议版本；以字符串投影给平台Session进行严格相等比较。 */
+    UPROPERTY(BlueprintReadOnly) FString ProtocolVersion;
+    /** 当前在线Session单调权威绑定代次。 */
+    UPROPERTY(BlueprintReadOnly) int64 SessionEpoch = 0;
 };
 
 /** FDivineBeastsFlowViewState（UI只读流程投影）。 */

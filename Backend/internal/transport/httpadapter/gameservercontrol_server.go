@@ -31,7 +31,7 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
 			return
 		}
-		if !requireGameServerIdentity(w, r, req.GameServerID) {
+		if !requireGameServerIdentity(w, r, req.GameServerID, req.ServerBootID) {
 			return
 		}
 		if err := service.Register(req); err != nil {
@@ -51,7 +51,12 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
 			return
 		}
-		if !requireGameServerIdentity(w, r, req.GameServerID) {
+		serverBootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
+		if !requireGameServerIdentity(w, r, req.GameServerID, serverBootID) {
+			return
+		}
+		if err := service.ValidateServerBoot(req.GameServerID, serverBootID); err != nil {
+			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
 			return
 		}
 		if err := service.Heartbeat(req.GameServerID, req.CurrentPlayers, req.Status); err != nil {
@@ -69,7 +74,12 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
 			return
 		}
-		if !requireGameServerIdentity(w, r, req.GameServerID) {
+		serverBootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
+		if !requireGameServerIdentity(w, r, req.GameServerID, serverBootID) {
+			return
+		}
+		if err := service.ValidateServerBoot(req.GameServerID, serverBootID); err != nil {
+			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
 			return
 		}
 		if err := service.SetReady(req.GameServerID); err != nil {
@@ -87,7 +97,12 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
 			return
 		}
-		if !requireGameServerIdentity(w, r, req.GameServerID) {
+		serverBootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
+		if !requireGameServerIdentity(w, r, req.GameServerID, serverBootID) {
+			return
+		}
+		if err := service.ValidateServerBoot(req.GameServerID, serverBootID); err != nil {
+			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
 			return
 		}
 		if err := service.Drain(req.GameServerID); err != nil {
@@ -154,7 +169,12 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 
 	mux.Handle("GET /internal/v1/gameservers/assignment", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		gameServerID := strings.TrimSpace(r.URL.Query().Get("gameServerId"))
-		if !requireGameServerIdentity(w, r, gameServerID) {
+		serverBootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
+		if !requireGameServerIdentity(w, r, gameServerID, serverBootID) {
+			return
+		}
+		if err := service.ValidateServerBoot(gameServerID, serverBootID); err != nil {
+			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
 			return
 		}
 		assignment, found := service.GetServerAssignment(gameServerID)
@@ -191,8 +211,13 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
 			return
 		}
-		// Ticket验证是目标Dedicated Server动作；内部Bearer之外还必须绑定当前服务器实例身份。
-		if !requireGameServerIdentity(w, r, req.DestinationGameServerID) {
+		// Ticket验证是目标Dedicated Server动作；内部Bearer之外还必须绑定当前服务器Boot身份。
+		serverBootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
+		if !requireGameServerIdentity(w, r, req.DestinationGameServerID, serverBootID) {
+			return
+		}
+		if err := service.ValidateServerBoot(req.DestinationGameServerID, serverBootID); err != nil {
+			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
 			return
 		}
 		result, err := service.ValidateTransferContext(r.Context(), req.Ticket, req.DestinationGameServerID)
@@ -209,7 +234,12 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
 			return
 		}
-		if !requireGameServerIdentity(w, r, req.GameServerID) {
+		serverBootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
+		if !requireGameServerIdentity(w, r, req.GameServerID, serverBootID) {
+			return
+		}
+		if err := service.ValidateServerBoot(req.GameServerID, serverBootID); err != nil {
+			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
 			return
 		}
 		stored, err := service.SubmitMatchResult(r.Context(), req)
@@ -236,10 +266,18 @@ func requireGameServerControlBearer(expectedToken string, next http.HandlerFunc)
 	})
 }
 
-// requireGameServerIdentity（校验生命周期实例身份头）要求受控请求头与请求体作用对象一致，防止请求混淆。
-func requireGameServerIdentity(w http.ResponseWriter, r *http.Request, requestGameServerID string) bool {
+// requireGameServerIdentity（校验服务器实例身份头）同时核对GameServerID与ServerBootID。
+// BootID不是客户端字段；由Dedicated Server进程启动时生成并随内部控制面请求发送。
+func requireGameServerIdentity(
+	w http.ResponseWriter,
+	r *http.Request,
+	requestGameServerID string,
+	requestServerBootID string,
+) bool {
 	headerGameServerID := strings.TrimSpace(r.Header.Get("X-Game-Server-Id"))
-	if headerGameServerID == "" || headerGameServerID != requestGameServerID {
+	headerServerBootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
+	if headerGameServerID == "" || headerGameServerID != requestGameServerID ||
+		headerServerBootID == "" || headerServerBootID != requestServerBootID {
 		writeError(w, http.StatusForbidden, "GAME_SERVER_IDENTITY_MISMATCH", nil)
 		return false
 	}

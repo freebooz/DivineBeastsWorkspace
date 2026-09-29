@@ -79,6 +79,7 @@ bool FGamePlatformServerVerifiedAdmission::IsStructurallyValid() const
 {
     return AdmissionId.IsValid() && ConnectionId.IsValid() &&
         IsBoundedAdmissionText(PlayerId) && IsBoundedAdmissionText(SessionId) &&
+        IsBoundedAdmissionText(GameSessionId) &&
         IsBoundedAdmissionText(AssignmentId) && IsBoundedAdmissionText(ReservationId) &&
         IsBoundedAdmissionText(ServerInstanceId) && IsBoundedAdmissionText(ServerBootId) &&
         IsBoundedAdmissionText(WorldId) && IsBoundedAdmissionText(ExperienceId) &&

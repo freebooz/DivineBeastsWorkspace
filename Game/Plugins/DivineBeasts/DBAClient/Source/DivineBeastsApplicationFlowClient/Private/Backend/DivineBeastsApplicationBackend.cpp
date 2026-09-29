@@ -547,6 +547,24 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
                 Json->GetStringField(TEXT("characterId"));
             Result.Summary.SessionId =
                 Json->GetStringField(TEXT("sessionId"));
+            Result.Summary.GameSessionId =
+                Json->GetStringField(TEXT("gameSessionId"));
+            Result.Summary.ServerBootId =
+                Json->GetStringField(TEXT("serverBootId"));
+            int64 ProtocolVersion = 0;
+            int64 SessionEpoch = 0;
+            if (!Json->TryGetNumberField(TEXT("protocolVersion"), ProtocolVersion) ||
+                !Json->TryGetNumberField(TEXT("sessionEpoch"), SessionEpoch) ||
+                ProtocolVersion <= 0 || SessionEpoch <= 0)
+            {
+                Completion(
+                    false,
+                    FDivineBeastsWorldAssignmentPayload(),
+                    EDivineBeastsFlowError::WorldAssignmentUnavailable);
+                return;
+            }
+            Result.Summary.ProtocolVersion = LexToString(ProtocolVersion);
+            Result.Summary.SessionEpoch = SessionEpoch;
             Result.Endpoint =
                 Json->GetStringField(TEXT("endpoint"));
             Result.TransferTicket =
@@ -559,6 +577,10 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
                 !Result.Summary.ExperienceId.IsNone() &&
                 !Result.Summary.WorldId.IsNone() &&
                 !Result.Summary.MapId.IsNone() &&
+                !Result.Summary.GameSessionId.IsEmpty() &&
+                !Result.Summary.ServerBootId.IsEmpty() &&
+                !Result.Summary.ProtocolVersion.IsEmpty() &&
+                Result.Summary.SessionEpoch > 0 &&
                 !Result.Endpoint.IsEmpty() &&
                 !Result.TransferTicket.IsEmpty();
             Completion(

@@ -118,6 +118,12 @@ struct GAMEPLATFORMSESSION_API FGamePlatformSessionTransferRequest
     FString CharacterId;
     FString SessionId;
 
+    /**
+     * 后端认证响应同时返回的完整非敏感目标Binding（连接绑定）。
+     * Transport不得从Ticket正文、URL或客户端本地环境重新推导这些权威字段。
+     */
+    FGamePlatformSessionConnectionBinding ExpectedBinding;
+
     /** 整次连接/准入操作的单调时钟超时预算；不是 World 时间。 */
     double TimeoutSeconds = 45.0;
 

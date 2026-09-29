@@ -136,18 +136,22 @@ type WorldEntryRequest struct {
 // WorldEntryResponse（世界进入响应）只向客户端返回当前一次迁移所需Assignment摘要和一次性TransferTicket。
 // TransferTicket不得写日志、URL或长期持久化；客户端消费后应立即交给Session传输层。
 type WorldEntryResponse struct {
-	AssignmentID   string `json:"assignmentId"`
-	GameServerID   string `json:"gameServerId"`
-	ServerRoleID   string `json:"serverRoleId"`
-	ExperienceID   string `json:"experienceId"`
-	WorldID        string `json:"worldId"`
-	MapID          string `json:"mapId"`
-	RegionID       string `json:"regionId"`
-	TicketID       string `json:"ticketId"`
-	CharacterID    string `json:"characterId"`
-	SessionID      string `json:"sessionId"`
-	Endpoint       string `json:"endpoint"`
-	TransferTicket string `json:"transferTicket"`
+	AssignmentID    string `json:"assignmentId"`
+	GameServerID    string `json:"gameServerId"`
+	ServerRoleID    string `json:"serverRoleId"`
+	ExperienceID    string `json:"experienceId"`
+	WorldID         string `json:"worldId"`
+	MapID           string `json:"mapId"`
+	RegionID        string `json:"regionId"`
+	TicketID        string `json:"ticketId"`
+	CharacterID     string `json:"characterId"`
+	SessionID       string `json:"sessionId"`
+	GameSessionID   string `json:"gameSessionId"`
+	ServerBootID    string `json:"serverBootId"`
+	ProtocolVersion uint32 `json:"protocolVersion"`
+	SessionEpoch    uint64 `json:"sessionEpoch"`
+	Endpoint        string `json:"endpoint"`
+	TransferTicket  string `json:"transferTicket"`
 }
 
 // WorldEntryAllocationRequest（世界分配内部请求）仅在Gateway到GameServerControl可信服务间传递。
@@ -501,7 +505,9 @@ func (a *api) enterDivineBeastsWorld(w http.ResponseWriter, r *http.Request, ses
 	}
 	if result.CharacterID != req.CharacterID || result.SessionID != session.SessionID ||
 		result.ExperienceID != req.DesiredExperienceID || result.TransferTicket == "" ||
-		result.Endpoint == "" || result.AssignmentID == "" || result.GameServerID == "" {
+		result.Endpoint == "" || result.AssignmentID == "" || result.GameServerID == "" ||
+		result.GameSessionID == "" || result.ServerBootID == "" ||
+		result.ProtocolVersion == 0 || result.SessionEpoch == 0 {
 		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
 		return
 	}

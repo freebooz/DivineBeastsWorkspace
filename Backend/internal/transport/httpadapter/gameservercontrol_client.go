@@ -115,7 +115,11 @@ func (c *GameServerControlClient) AllocateWorldEntry(
 		response.Ticket.DestinationGameServerID != response.Assignment.GameServerID ||
 		response.Ticket.DestinationEndpoint != response.Assignment.Endpoint ||
 		response.Ticket.DestinationWorldID != response.Assignment.WorldID ||
-		response.Ticket.DestinationExperienceID != response.Assignment.ExperienceID {
+		response.Ticket.DestinationExperienceID != response.Assignment.ExperienceID ||
+		response.Ticket.GameSessionID == "" ||
+		response.Ticket.DestinationServerBootID == "" ||
+		response.Ticket.DestinationProtocolVersion == 0 ||
+		response.Ticket.SessionEpoch == 0 {
 		return gateway.WorldEntryResponse{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
 	}
 	ticketBytes, err := json.Marshal(response.Ticket)
@@ -123,18 +127,22 @@ func (c *GameServerControlClient) AllocateWorldEntry(
 		return gateway.WorldEntryResponse{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
 	}
 	return gateway.WorldEntryResponse{
-		AssignmentID:   response.Assignment.AssignmentID,
-		GameServerID:   response.Assignment.GameServerID,
-		ServerRoleID:   response.Assignment.ServerRoleID,
-		ExperienceID:   response.Assignment.ExperienceID,
-		WorldID:        response.Assignment.WorldID,
-		MapID:          response.Assignment.WorldID,
-		RegionID:       response.Assignment.RegionID,
-		TicketID:       response.Ticket.TicketID,
-		CharacterID:    req.CharacterID,
-		SessionID:      req.SessionID,
-		Endpoint:       response.Assignment.Endpoint,
-		TransferTicket: string(ticketBytes),
+		AssignmentID:    response.Assignment.AssignmentID,
+		GameServerID:    response.Assignment.GameServerID,
+		ServerRoleID:    response.Assignment.ServerRoleID,
+		ExperienceID:    response.Assignment.ExperienceID,
+		WorldID:         response.Assignment.WorldID,
+		MapID:           response.Assignment.WorldID,
+		RegionID:        response.Assignment.RegionID,
+		TicketID:        response.Ticket.TicketID,
+		CharacterID:     req.CharacterID,
+		SessionID:       req.SessionID,
+		GameSessionID:   response.Ticket.GameSessionID,
+		ServerBootID:    response.Ticket.DestinationServerBootID,
+		ProtocolVersion: response.Ticket.DestinationProtocolVersion,
+		SessionEpoch:    response.Ticket.SessionEpoch,
+		Endpoint:        response.Assignment.Endpoint,
+		TransferTicket:  string(ticketBytes),
 	}, nil
 }
 

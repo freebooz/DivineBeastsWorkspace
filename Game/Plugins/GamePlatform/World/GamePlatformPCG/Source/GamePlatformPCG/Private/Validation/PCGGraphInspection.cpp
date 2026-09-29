@@ -13,6 +13,8 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Data/PCGBasePointData.h"
 #include "Misc/SecureHash.h"
+#include "Nodes/GamePlatformPCGNodes.h"
+#include "Services/GamePlatformPCGTemplateContract.h"
 
 namespace
 {
@@ -35,6 +37,86 @@ bool SoleEdge(const UPCGNode& From,const UPCGNode& To,FName TargetPin = PCGPinCo
     return Pin && Input && Pin->Edges.Num() == 1 && Input->Edges.Num() == 1 && Pin->Edges[0] &&
         Pin->Edges[0]->InputPin == Pin && Pin->Edges[0]->OutputPin == Input && Input->Edges[0] == Pin->Edges[0];
 }
+
+bool ValidateSpawnerDescriptor(const UPCGStaticMeshSpawnerSettings& Spawner, const UGamePlatformPCGProfileDefinition& Profile)
+{
+    const UPCGMeshSelectorWeighted* Selector = Cast<UPCGMeshSelectorWeighted>(Spawner.MeshSelectorParameters);
+    if (!Selector || Selector->GetClass() != UPCGMeshSelectorWeighted::StaticClass() || Selector->MeshEntries.Num() != 1 ||
+        Selector->bUseAttributeMaterialOverrides || !Spawner.PostProcessFunctionNames.IsEmpty() || !Spawner.TargetActor.IsNull() ||
+        !Spawner.StaticMeshComponentPropertyOverrides.IsEmpty() || Spawner.InstanceDataPackerParameters || Spawner.InstanceDataPackerType ||
+        Spawner.MeshSelectorType != UPCGMeshSelectorWeighted::StaticClass() || !Selector->MaterialOverrideAttributes.IsEmpty())
+    {
+        return false;
+    }
+
+    const auto& Descriptor = Selector->MeshEntries[0].Descriptor;
+    if (Descriptor.StaticMesh.ToSoftObjectPath() != Profile.OutputMesh.ToSoftObjectPath() || !Descriptor.OverrideMaterials.IsEmpty() ||
+        Descriptor.ComponentClass != UInstancedStaticMeshComponent::StaticClass() || Selector->MeshEntries[0].Weight <= 0)
+    {
+        return false;
+    }
+
+    if (Profile.OutputUsage == EGamePlatformPCGOutputUsage::Cosmetic &&
+        (Descriptor.bUseDefaultCollision || Descriptor.BodyInstance.GetCollisionEnabled() != ECollisionEnabled::NoCollision ||
+         Descriptor.bGenerateOverlapEvents || Descriptor.bCanEverAffectNavigation))
+    {
+        return false;
+    }
+
+    if (Profile.OutputUsage == EGamePlatformPCGOutputUsage::StaticCollision &&
+        Descriptor.BodyInstance.GetCollisionEnabled() != ECollisionEnabled::QueryAndPhysics)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinition& Profile, UPCGGraph& Graph)
+{
+    if (!FGamePlatformPCGTemplateContract::IsTemplateHeaderValid(Profile))
+    {
+        return Rejected(TEXT("InvalidTemplateContract"));
+    }
+
+    // HiGen/GPU继续失败关闭；M2需要同时升级执行、缓存、分区和资产门禁后才能开放。
+    if (Graph.IsHierarchicalGenerationEnabled() || Graph.GetNodes().IsEmpty() || Graph.GetNodes().Num() > 64)
+    {
+        return Rejected(TEXT("UnsupportedTemplateShape"));
+    }
+
+    bool bHasSchemaWriter = false;
+    bool bHasSchemaValidator = false;
+
+    for (UPCGNode* Node : Graph.GetNodes())
+    {
+        const UPCGSettings* Settings = Node ? Node->GetSettings() : nullptr;
+        if (!Settings || !Settings->bEnabled || Settings->ShouldExecuteOnGPU() ||
+            Node->GetSettingsInterface() != Settings ||
+            !FGamePlatformPCGTemplateContract::IsApprovedSettingsClass(Settings->GetClass()))
+        {
+            return Rejected(TEXT("UnapprovedTemplateNode"));
+        }
+
+        bHasSchemaWriter |= Settings->IsA<UGamePlatformPCGWriteSchemaDefaultsSettings>();
+        bHasSchemaValidator |= Settings->IsA<UGamePlatformPCGValidateSchemaSettings>();
+
+        if (const UPCGStaticMeshSpawnerSettings* Spawner = Cast<UPCGStaticMeshSpawnerSettings>(Settings))
+        {
+            if (!ValidateSpawnerDescriptor(*Spawner, Profile))
+            {
+                return Rejected(TEXT("TemplateSpawnerSideEffectsForbidden"));
+            }
+        }
+    }
+
+    if (!bHasSchemaWriter || !bHasSchemaValidator || !Graph.GetOutputNode())
+    {
+        return Rejected(TEXT("TemplateSchemaBoundaryMissing"));
+    }
+
+    return FGamePlatformResult::Success();
+}
 }
 
 FGamePlatformResult GamePlatformPCGInspection::ValidateApprovedGraph(const UGamePlatformPCGProfileDefinition& Profile)
@@ -42,6 +124,11 @@ FGamePlatformResult GamePlatformPCGInspection::ValidateApprovedGraph(const UGame
     check(IsInGameThread()); const auto Valid = Profile.ValidateDefinition(); if (!Valid.IsSuccess()) { return Valid; }
     auto* Graph = Profile.GraphReference.Get(); auto* Mesh = Profile.OutputMesh.Get();
     if (!Graph || !Mesh) { return Rejected(TEXT("ProfileAssetsNotLeased")); }
+    // 1.0模板走合同式白名单；TemplateId为空时继续使用0.1.0固定四节点夹具，保证渐进迁移与可回退。
+    if (!Profile.TemplateId.IsNone())
+    {
+        return ValidateTemplateGraph(Profile, *Graph);
+    }
     if (Graph->IsHierarchicalGenerationEnabled() || Graph->GetNodes().Num() != 4) { return Rejected(TEXT("UnsupportedGraphShape")); }
     auto* Grid = ExactNode(*Graph,UPCGCreatePointsGridSettings::StaticClass());
     auto* Transform = ExactNode(*Graph,UPCGTransformPointsSettings::StaticClass());
@@ -61,22 +148,9 @@ FGamePlatformResult GamePlatformPCGInspection::ValidateApprovedGraph(const UGame
     }
     for (const auto& Pin : Graph->GetOutputNode()->GetInputPins())
     { if (Pin && Pin->Properties.Label != PCGPinConstants::DefaultOutputLabel && !Pin->Edges.IsEmpty()) { return Rejected(TEXT("ExtraGraphOutputForbidden")); } }
-    auto* Settings = CastChecked<UPCGStaticMeshSpawnerSettings>(Spawner->GetSettings());
-    auto* Selector = Cast<UPCGMeshSelectorWeighted>(Settings->MeshSelectorParameters);
-    if (!Selector || Selector->GetClass() != UPCGMeshSelectorWeighted::StaticClass() || Selector->MeshEntries.Num() != 1 ||
-        Selector->bUseAttributeMaterialOverrides || !Settings->PostProcessFunctionNames.IsEmpty() || !Settings->TargetActor.IsNull() ||
-        !Settings->StaticMeshComponentPropertyOverrides.IsEmpty() || Settings->InstanceDataPackerParameters || Settings->InstanceDataPackerType ||
-        Settings->MeshSelectorType != UPCGMeshSelectorWeighted::StaticClass() || !Selector->MaterialOverrideAttributes.IsEmpty())
+    const auto* Settings = CastChecked<UPCGStaticMeshSpawnerSettings>(Spawner->GetSettings());
+    if (!ValidateSpawnerDescriptor(*Settings, Profile))
     { return Rejected(TEXT("SpawnerSideEffectsForbidden")); }
-    const auto& Descriptor = Selector->MeshEntries[0].Descriptor;
-    if (Descriptor.StaticMesh.ToSoftObjectPath() != Profile.OutputMesh.ToSoftObjectPath() || !Descriptor.OverrideMaterials.IsEmpty() ||
-        Descriptor.ComponentClass != UInstancedStaticMeshComponent::StaticClass() || Selector->MeshEntries[0].Weight <= 0)
-    { return Rejected(TEXT("UnapprovedOutputType")); }
-    if (Profile.OutputUsage == EGamePlatformPCGOutputUsage::Cosmetic &&
-        (Descriptor.bUseDefaultCollision || Descriptor.BodyInstance.GetCollisionEnabled() != ECollisionEnabled::NoCollision ||
-         Descriptor.bGenerateOverlapEvents || Descriptor.bCanEverAffectNavigation)) { return Rejected(TEXT("CosmeticGameplayEffect")); }
-    if (Profile.OutputUsage == EGamePlatformPCGOutputUsage::StaticCollision &&
-        Descriptor.BodyInstance.GetCollisionEnabled() != ECollisionEnabled::QueryAndPhysics) { return Rejected(TEXT("StaticCollisionMissing")); }
     return FGamePlatformResult::Success();
 }
 
@@ -85,6 +159,15 @@ FGamePlatformResult GamePlatformPCGInspection::ConfigureOwnedComponent(UPCGCompo
 {
     check(IsInGameThread()); const auto Valid = ValidateApprovedGraph(Profile); if (!Valid.IsSuccess()) { return Valid; }
     if (Component.IsGenerating() || Component.IsCleaningUp() || Component.IsPartitioned()) { return Rejected(TEXT("ComponentBusyOrPartitioned")); }
+    // 1.0 Template Contract（模板合同）当前只完成Editor校验与源码节点基础。
+    // 生产模板参数绑定、MeshSet目录解析和静态Bake工作流尚未闭环，因此运行服务必须失败关闭，
+    // 不能继续按0.1.0固定四节点结构CastChecked，否则合法的新模板图会触发断言。
+    if (!Profile.TemplateId.IsNone())
+    {
+        return FGamePlatformResult::Unsupported(
+            TEXT("PCGTemplateRuntimeExecutionDeferred"),
+            TEXT("1.0模板图当前仅支持合同校验；运行时执行需等待真实模板资产、参数绑定和输出审查闭环。"));
+    }
     auto* Graph = DuplicateObject<UPCGGraph>(Profile.GraphReference.Get(),&Component);
     Graph->SetFlags(RF_Transient);
     auto* Grid = CastChecked<UPCGCreatePointsGridSettings>(ExactNode(*Graph,UPCGCreatePointsGridSettings::StaticClass())->GetSettings());

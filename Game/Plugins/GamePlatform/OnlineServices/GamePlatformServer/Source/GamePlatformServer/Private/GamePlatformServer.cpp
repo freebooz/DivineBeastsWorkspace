@@ -1,6 +1,7 @@
 #include "Modules/ModuleManager.h"
 #include "Features/IModularFeatures.h"
 #include "Server/GamePlatformHttpControlProvider.h"
+#include "Server/GamePlatformHttpAdmissionProvider.h"
 
 class FGamePlatformServerModule final : public IModuleInterface
 {
@@ -12,10 +13,22 @@ public:
         IModularFeatures::Get().RegisterModularFeature(
             IGamePlatformServerControlProvider::GetModularFeatureName(),
             ControlProvider.Get());
+
+        AdmissionProvider = MakeUnique<FGamePlatformHttpAdmissionProvider>();
+        IModularFeatures::Get().RegisterModularFeature(
+            IGamePlatformServerAdmissionProvider::GetModularFeatureName(),
+            AdmissionProvider.Get());
     }
 
     virtual void ShutdownModule() override
     {
+        if (AdmissionProvider)
+        {
+            IModularFeatures::Get().UnregisterModularFeature(
+                IGamePlatformServerAdmissionProvider::GetModularFeatureName(),
+                AdmissionProvider.Get());
+            AdmissionProvider.Reset();
+        }
         if (ControlProvider)
         {
             IModularFeatures::Get().UnregisterModularFeature(
@@ -27,6 +40,7 @@ public:
 
 private:
     TUniquePtr<FGamePlatformHttpControlProvider> ControlProvider;
+    TUniquePtr<FGamePlatformHttpAdmissionProvider> AdmissionProvider;
 };
 
 IMPLEMENT_MODULE(FGamePlatformServerModule, GamePlatformServer)

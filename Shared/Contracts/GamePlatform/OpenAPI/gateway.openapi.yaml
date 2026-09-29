@@ -675,7 +675,7 @@ components:
     DivineBeastsWorldEntryResponse:
       type: object
       additionalProperties: false
-      required: [assignmentId, gameServerId, serverRoleId, experienceId, worldId, mapId, regionId, ticketId, characterId, sessionId, endpoint, transferTicket]
+      required: [assignmentId, gameServerId, serverRoleId, experienceId, worldId, mapId, regionId, ticketId, characterId, sessionId, gameSessionId, serverBootId, protocolVersion, sessionEpoch, endpoint, transferTicket]
       properties:
         assignmentId: {type: string, minLength: 1, description: GameServerControl签发的目标Assignment身份。}
         gameServerId: {type: string, minLength: 1, description: 目标Dedicated Server实例身份。}
@@ -687,6 +687,10 @@ components:
         ticketId: {type: string, minLength: 1, description: 一次性迁移票据标识。}
         characterId: {type: string, minLength: 1, description: 服务端已核对的当前角色。}
         sessionId: {type: string, minLength: 1, description: 从Bearer会话解析的在线Session身份。}
+        gameSessionId: {type: string, minLength: 1, description: 控制面签发的游戏会话绑定身份；非凭据，可用于客户端与服务端绑定核对。}
+        serverBootId: {type: string, minLength: 1, description: 目标Dedicated Server当前启动代次；服务器重启后旧值必须失效。}
+        protocolVersion: {type: integer, format: int32, minimum: 1, description: 目标Dedicated Server实时网络协议版本。}
+        sessionEpoch: {type: integer, format: int64, minimum: 1, description: 当前在线Session的单调权威绑定代次。}
         endpoint: {type: string, minLength: 1, description: 目标GameServer连接端点；不得包含凭据。}
         transferTicket: {type: string, minLength: 1, description: JSON序列化的一次性签名迁移票据；不得进入URL、日志或持久化。}
     GatewayApiError:

@@ -1,18 +1,25 @@
 {
     "FileVersion":  3,
-    "Version":  1,
-    "VersionName":  "0.1.0",
+    "Version":  2,
+    "VersionName":  "0.2.0",
     "FriendlyName":  "GamePlatformSave",
-    "Description":  "GamePlatformSave（游戏平台插件）",
+    "Description":  "跨游戏客户端非权威本地存档服务：提供版本化Envelope、异步磁盘IO、同目录原子替换、备份恢复、CRC完整性校验与命名空间迁移扩展；不保存服务器权威玩家数据。",
     "Category":  "GamePlatform/Application",
     "CreatedBy":  "DivineBeastsWorkspace",
-    "CanContainContent":  true,
+    "CanContainContent":  false,
     "EnabledByDefault":  false,
     "Modules":  [
                     {
                         "Name":  "GamePlatformSaveClient",
                         "Type":  "ClientOnly",
-                        "LoadingPhase":  "Default"
+                        "LoadingPhase":  "Default",
+                        "TargetAllowList":  [ "Client", "Editor" ]
+                    }
+                ],
+    "Plugins":  [
+                    {
+                        "Name":  "GamePlatformCore",
+                        "Enabled":  true
                     }
                 ]
 }

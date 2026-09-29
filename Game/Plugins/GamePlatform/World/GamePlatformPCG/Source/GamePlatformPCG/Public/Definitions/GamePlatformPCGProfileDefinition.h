@@ -23,6 +23,23 @@ public:
     /** 白名单唯一网格；不从图内任意路径偷偷加载新资源。 */
     UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG",meta=(AssetBundles="PCGGeneration"))
     TSoftObjectPtr<UStaticMesh> OutputMesh;
+    /** 为空表示0.1.0 Legacy Development Fixture（旧开发夹具）；非空时进入1.0 Template Contract校验。 */
+    UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG|Template")
+    FName TemplateId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG|Template",meta=(ClampMin="0"))
+    int32 TemplateVersion = 0;
+
+    /** GamePlatformPCG Schema主版本；当前1.0仅接受1。 */
+    UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG|Template",meta=(ClampMin="1"))
+    int32 RequiredPCGSchemaMajor = 1;
+
+    /** 可选执行预设和优先级表引用，继续使用统一GamePlatformDefinition身份。 */
+    UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG|Template")
+    FPrimaryAssetId ExecPresetId;
+
+    UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG|Template")
+    FPrimaryAssetId PriorityTableId;
     /** 编辑器静态与运行时装饰互斥；RuntimeAuthoritative永远Unsupported。 */
     UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG")
     EGamePlatformPCGExecutionPolicy ExecutionPolicy = EGamePlatformPCGExecutionPolicy::RuntimeCosmetic;

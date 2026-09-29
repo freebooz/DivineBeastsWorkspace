@@ -25,6 +25,7 @@ const (
 	partyKeyPrefix          = "party:"
 	matchRequestKeyPrefix   = "matchmaking:request:"
 	transferReplayKeyPrefix = "transfer:consumed:"
+	transferEpochKeyPrefix  = "transfer:session-epoch:"
 )
 
 // SessionRepository（Redis会话仓储）实现identity.SessionRepository。
@@ -213,7 +214,33 @@ func (s *TransferReplayStore) Consume(ctx context.Context, ticketID string, ttl 
 	return ok, nil
 }
 
+// TransferEpochStore（Redis会话代次仓储）使用INCR为每个在线Session分配全局单调Epoch。
+// Key TTL大于身份刷新会话上限，避免长期孤儿键；在会话仍有效期间不会回绕。
+type TransferEpochStore struct{ client *Client }
+
+func NewTransferEpochStore(client *Client) *TransferEpochStore {
+	return &TransferEpochStore{client: client}
+}
+
+func (s *TransferEpochStore) Next(ctx context.Context, sessionID string) (uint64, error) {
+	if sessionID == "" {
+		return 0, errors.New("Transfer Epoch SessionID不能为空")
+	}
+	key := transferEpochKeyPrefix + sessionID
+	value, err := s.client.inner.Incr(ctx, key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("Redis分配SessionEpoch失败: %w", err)
+	}
+	if value <= 0 {
+		return 0, errors.New("Redis返回无效SessionEpoch")
+	}
+	// 身份Refresh Session最长30天；45天过期仅清理已失效会话的孤儿计数器。
+	_ = s.client.inner.Expire(ctx, key, 45*24*time.Hour).Err()
+	return uint64(value), nil
+}
+
 var _ identity.SessionRepository = (*SessionRepository)(nil)
 var _ matchapi.PartyRepository = (*PartyRepository)(nil)
 var _ matchapi.TicketRepository = (*TicketRepository)(nil)
 var _ servertransfer.ReplayStore = (*TransferReplayStore)(nil)
+var _ servertransfer.SessionEpochStore = (*TransferEpochStore)(nil)

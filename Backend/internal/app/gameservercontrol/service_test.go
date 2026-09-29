@@ -20,7 +20,7 @@ func TestMainArenaLifecycle(t *testing.T) {
 	service := NewService(registry, transferService, resultService, func() time.Time { return now })
 
 	if err := service.Register(RegisterInput{
-		GameID: "divine-beasts", GameServerID: "arena-usw-001", ServerRoleID: gameservercontract.RoleMainArena,
+		GameID: "divine-beasts", GameServerID: "arena-usw-001", ServerBootID: "boot-arena-usw-001", ServerRoleID: gameservercontract.RoleMainArena,
 		RegionID: "us-west", ClusterID: "cluster-a", NodeID: "node-a", WorldID: "World.MainArena",
 		PublicEndpoint: "127.0.0.1:7777", BuildVersion: "0.2.0", ProtocolVersion: 2, Capacity: 10,
 	}); err != nil {
@@ -69,6 +69,11 @@ func TestMainArenaLifecycle(t *testing.T) {
 	if validated.PlayerID != "a1" || validated.MatchID != "match-001" {
 		t.Fatalf("验证结果错误: %+v", validated)
 	}
+	if validated.GameSessionID == "" || validated.SessionEpoch == 0 ||
+		validated.DestinationServerBootID != "boot-arena-usw-001" ||
+		validated.DestinationProtocolVersion != 2 {
+		t.Fatalf("验证结果缺少完整权威Binding: %+v", validated)
+	}
 }
 
 // TestSubmitMatchResultReleasesMainArena（比赛结果提交释放服务器测试）验证结算成功后MainArena解除Match绑定。
@@ -79,7 +84,7 @@ func TestSubmitMatchResultReleasesMainArena(t *testing.T) {
 	resultService := match.NewResultService(match.NewMemoryResultStore())
 	service := NewService(registry, transferService, resultService, func() time.Time { return now })
 
-	service.Register(RegisterInput{GameID: "divine-beasts", GameServerID: "arena-1", ServerRoleID: gameservercontract.RoleMainArena, RegionID: "us-west", WorldID: "World.MainArena", PublicEndpoint: "127.0.0.1:7777", Capacity: 2})
+	service.Register(RegisterInput{GameID: "divine-beasts", GameServerID: "arena-1", ServerBootID: "boot-arena-1", ServerRoleID: gameservercontract.RoleMainArena, RegionID: "us-west", WorldID: "World.MainArena", PublicEndpoint: "127.0.0.1:7777", ProtocolVersion: 1, Capacity: 2})
 	service.SetReady("arena-1")
 	_, err := service.AllocateMainArena(AllocateMainArenaInput{
 		MatchID: "match-1", ArenaModeID: gameservercontract.ArenaMode1v1, MapID: "Map.MainArena.Default", RegionID: "us-west",
@@ -130,7 +135,7 @@ func TestWorldAllocationAndTransfer(t *testing.T) {
 			registry := gameserver.NewRegistry()
 			transferService := servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now })
 			service := NewService(registry, transferService, match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
-			if err := service.Register(RegisterInput{GameID: "divine-beasts", GameServerID: tc.serverID, ServerRoleID: tc.roleID, ExperienceID: tc.experienceID, RegionID: "us-west", WorldID: tc.worldID, PublicEndpoint: "127.0.0.1:7777", Capacity: 100}); err != nil {
+			if err := service.Register(RegisterInput{GameID: "divine-beasts", GameServerID: tc.serverID, ServerBootID: "boot-" + tc.serverID, ServerRoleID: tc.roleID, ExperienceID: tc.experienceID, RegionID: "us-west", WorldID: tc.worldID, PublicEndpoint: "127.0.0.1:7777", ProtocolVersion: 1, Capacity: 100}); err != nil {
 				t.Fatal(err)
 			}
 			if err := service.SetReady(tc.serverID); err != nil {
@@ -186,7 +191,7 @@ func TestOpenWorldHubCanRegisterReadyButCannotSubmitMatchResult(t *testing.T) {
 	now := time.Date(2026, 9, 21, 4, 30, 0, 0, time.UTC)
 	registry := gameserver.NewRegistry()
 	service := NewService(registry, servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now }), match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
-	if err := service.Register(RegisterInput{GameID: "divine-beasts", GameServerID: "openworld-hub-1", ServerRoleID: gameservercontract.RoleOpenWorld, ExperienceID: gameservercontract.ExperienceOpenWorldHub, RegionID: "us-west", WorldID: "World.OpenWorld.Hub", PublicEndpoint: "127.0.0.1:7777", Capacity: 100}); err != nil {
+	if err := service.Register(RegisterInput{GameID: "divine-beasts", GameServerID: "openworld-hub-1", ServerBootID: "boot-openworld-hub-1", ServerRoleID: gameservercontract.RoleOpenWorld, ExperienceID: gameservercontract.ExperienceOpenWorldHub, RegionID: "us-west", WorldID: "World.OpenWorld.Hub", PublicEndpoint: "127.0.0.1:7777", ProtocolVersion: 1, Capacity: 100}); err != nil {
 		t.Fatalf("OpenWorld大厅体验注册失败：%v", err)
 	}
 	if err := service.SetReady("openworld-hub-1"); err != nil {
@@ -207,7 +212,7 @@ func TestRegisterRejectsUnknownRoleAndMismatchedExperience(t *testing.T) {
 	now := time.Date(2026, 9, 21, 4, 30, 0, 0, time.UTC)
 	registry := gameserver.NewRegistry()
 	service := NewService(registry, servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now }), match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })
-	base := RegisterInput{GameID: "divine-beasts", RegionID: "us-west", PublicEndpoint: "127.0.0.1:7777", Capacity: 10}
+	base := RegisterInput{GameID: "divine-beasts", ServerBootID: "boot-test", RegionID: "us-west", PublicEndpoint: "127.0.0.1:7777", ProtocolVersion: 1, Capacity: 10}
 	unknown := base
 	unknown.GameServerID = "unknown-role"
 	unknown.ServerRoleID = "GameServer.Role.Unknown"
@@ -233,12 +238,13 @@ func TestRegisterRejectsUnknownRoleAndMismatchedExperience(t *testing.T) {
 
 // TestWorldAllocationRejectsRoleExperienceMismatch（分配角色体验一致性测试）确保注册表中的错配实例不会进入玩家分配结果。
 func TestWorldAllocationRejectsRoleExperienceMismatch(t *testing.T) {
+
 	now := time.Date(2026, 9, 21, 4, 30, 0, 0, time.UTC)
 	registry := gameserver.NewRegistry()
 	registry.Register(gameserver.Instance{
 		ID: "mismatched-openworld-experience", RoleID: gameservercontract.RoleVillage,
 		ExperienceID: gameservercontract.ExperienceOpenWorldMain,
-		RegionID: "us-west", WorldID: "World.OpenWorld.Hub", PublicEndpoint: "127.0.0.1:7777",
+		RegionID:     "us-west", WorldID: "World.OpenWorld.Hub", PublicEndpoint: "127.0.0.1:7777",
 		Capacity: 10, Status: gameserver.StatusReady,
 	})
 	service := NewService(registry, servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return now }), match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return now })

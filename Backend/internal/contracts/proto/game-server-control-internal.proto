@@ -88,4 +88,8 @@ message IssuePlayerTransferResponse {
   string error_code = 13;
   string assignment_id = 14;
   string destination_experience_id = 15;
+  string game_session_id = 16;
+  string destination_server_boot_id = 17;
+  uint32 destination_protocol_version = 18;
+  uint64 session_epoch = 19;
 }

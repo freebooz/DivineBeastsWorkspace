@@ -1592,7 +1592,11 @@ UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment()
         Assignment.ServerRoleId.IsNone() ||
         Assignment.ExperienceId.IsNone() ||
         Assignment.WorldId.IsNone() ||
-        Assignment.MapId.IsNone())
+        Assignment.MapId.IsNone() ||
+        Assignment.GameSessionId.IsEmpty() ||
+        Assignment.ServerBootId.IsEmpty() ||
+        Assignment.ProtocolVersion.IsEmpty() ||
+        Assignment.SessionEpoch <= 0)
     {
         return FGamePlatformResult::Failure(
             TEXT("WorldAssignmentIncomplete"),
@@ -1754,6 +1758,13 @@ UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment()
     Request.TicketId = Assignment.TicketId;
     Request.CharacterId = Assignment.CharacterId;
     Request.SessionId = Assignment.SessionId;
+    Request.ExpectedBinding.AssignmentId = Assignment.AssignmentId;
+    Request.ExpectedBinding.GameSessionId = Assignment.GameSessionId;
+    Request.ExpectedBinding.ServerInstanceId = Assignment.GameServerId;
+    Request.ExpectedBinding.ServerBootId = Assignment.ServerBootId;
+    Request.ExpectedBinding.WorldId = Assignment.WorldId;
+    Request.ExpectedBinding.ProtocolVersion = Assignment.ProtocolVersion;
+    Request.ExpectedBinding.SessionEpoch = Assignment.SessionEpoch;
     Request.TimeoutSeconds = Spec.TimeoutSeconds;
 
     if (!Session->BeginTransfer(Request, Result))

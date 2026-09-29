@@ -74,6 +74,7 @@ type Endpoint struct {
 type RegisterRequest struct {
 	GameID           string   // GameID（游戏ID）。
 	GameServerID     string   // GameServerID（游戏服务器实例ID）。
+	ServerBootID     string   // ServerBootID（服务器进程启动代次，同一实例ID重启后必须变化）。
 	ServerRoleID     string   // ServerRoleID（OpenWorld/Village/MainArena服务器角色）。
 	ExperienceID     string   // ExperienceID（当前进程承载的体验，例如OpenWorld.Hub）。
 	RegionID         string   // RegionID（部署区域ID）。

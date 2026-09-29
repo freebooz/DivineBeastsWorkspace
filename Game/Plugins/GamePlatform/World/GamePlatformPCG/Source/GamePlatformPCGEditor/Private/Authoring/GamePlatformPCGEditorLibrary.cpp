@@ -3,6 +3,7 @@
 #include "Manifests/PCGSourceFingerprint.h"
 #include "Definitions/GamePlatformPCGProfileDefinition.h"
 #include "Services/GamePlatformPCGInspection.h"
+#include "Services/GamePlatformPCGTemplateContract.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/PackageName.h"
 #include "HAL/FileManager.h"
@@ -117,4 +118,32 @@ bool UGamePlatformPCGEditorLibrary::InspectProfileSource(UGamePlatformPCGProfile
         return false;
     }
     return GamePlatformPCGEditor::CalculateSourceFingerprint(*Profile, Fingerprint, Dependencies, Error);
+}
+
+bool UGamePlatformPCGEditorLibrary::ValidateProfileContract(
+    UGamePlatformPCGProfileDefinition* Profile,
+    FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+
+    if (!IsValid(Profile))
+    {
+        Error = TEXT("需要有效且已加载的PCG Profile（配置）。");
+        return false;
+    }
+
+    const FGamePlatformResult Result = GamePlatformPCGInspection::ValidateApprovedGraph(*Profile);
+    if (!Result.IsSuccess())
+    {
+        Error = Result.Code.ToString() + TEXT(": ") + Result.Message;
+        return false;
+    }
+
+    return true;
+}
+
+TArray<FName> UGamePlatformPCGEditorLibrary::GetKnownTemplateIds()
+{
+    return TArray<FName>(FGamePlatformPCGTemplateIds::All());
 }

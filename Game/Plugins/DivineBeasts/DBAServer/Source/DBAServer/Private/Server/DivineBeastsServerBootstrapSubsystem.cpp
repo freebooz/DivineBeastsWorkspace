@@ -2,6 +2,7 @@
 
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
+#include "Server/GamePlatformServerAdmissionSubsystem.h"
 #include "Sinks/GamePlatformTelemetryNetworkSink.h"
 #include "Subsystems/GamePlatformTelemetrySubsystem.h"
 #include "Transport/GamePlatformTelemetryTransport.h"
@@ -29,6 +30,14 @@ void UDivineBeastsServerBootstrapSubsystem::Initialize(
 {
     Super::Initialize(Collection);
     State = EDivineBeastsServerBootstrapState::Unconfigured;
+
+    // Boot身份只在服务器进程/当前GameInstance启动时确定一次。
+    // 生产部署可显式注入；本地/开发环境缺失时生成随机GUID，绝不使用固定默认值。
+    ServerBootId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_BOOT_ID"));
+    if (ServerBootId.IsEmpty())
+    {
+        ServerBootId = FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphensLower);
+    }
 
     LoadLaunchProfile();
     if (!bHasProfile)
@@ -297,6 +306,7 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
     FGamePlatformServerInstanceInfo Instance;
     Instance.GameId = FDivineBeastsProjectCatalog::GetGameId().ToString();
     Instance.GameServerId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_ID"));
+    Instance.ServerBootId = ServerBootId;
     Instance.ServerRoleId = ActiveProfile.ServerRoleId.ToString();
     Instance.ExperienceId = ActiveExperienceId.ToString();
     Instance.WorldId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_WORLD_ID"));
@@ -314,6 +324,29 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
         !Instance.IsValid())
     {
         SetFailed(TEXT("ServerInstanceEnvironmentInvalid"));
+        return;
+    }
+
+    // 只有服务器自身完成环境身份与世界校验后，才允许配置准入Target。
+    UGamePlatformServerAdmissionSubsystem* Admission =
+        GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>();
+    if (Admission == nullptr)
+    {
+        SetFailed(TEXT("ServerAdmissionUnavailable"));
+        return;
+    }
+
+    FGamePlatformServerAdmissionTarget AdmissionTarget;
+    AdmissionTarget.GameServerId = Instance.GameServerId;
+    AdmissionTarget.ServerBootId = Instance.ServerBootId;
+    AdmissionTarget.WorldId = Instance.WorldId;
+    AdmissionTarget.ExperienceId = Instance.ExperienceId;
+    AdmissionTarget.ProtocolVersion = LexToString(Instance.ProtocolVersion);
+    // BootId承担跨进程防旧；该本地代次承担同一进程内Target重配栅栏。
+    AdmissionTarget.ServerStartGeneration = 1;
+    if (!Admission->ConfigureTarget(AdmissionTarget))
+    {
+        SetFailed(TEXT("ServerAdmissionTargetRejected"));
         return;
     }
 

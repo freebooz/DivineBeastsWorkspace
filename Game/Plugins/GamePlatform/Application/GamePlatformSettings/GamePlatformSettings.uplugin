@@ -1,18 +1,40 @@
 {
-    "FileVersion":  3,
-    "Version":  1,
-    "VersionName":  "0.1.0",
-    "FriendlyName":  "GamePlatformSettings",
-    "Description":  "GamePlatformSettings（游戏平台插件）",
-    "Category":  "GamePlatform/Application",
-    "CreatedBy":  "DivineBeastsWorkspace",
-    "CanContainContent":  true,
-    "EnabledByDefault":  false,
-    "Modules":  [
-                    {
-                        "Name":  "GamePlatformSettingsClient",
-                        "Type":  "ClientOnly",
-                        "LoadingPhase":  "Default"
-                    }
-                ]
+  "FileVersion": 3,
+  "Version": 3,
+  "VersionName": "0.3.0",
+  "FriendlyName": "GamePlatformSettings",
+  "Description": "跨游戏统一设置基础设施：Runtime提供Provider/Registry/分层解析/校验/Snapshot/事件/迁移编排，Client负责UGameUserSettings与本地用户档案，Server负责部署配置，Editor负责静态校验。",
+  "Category": "GamePlatform/Application",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Modules": [
+    {
+      "Name": "GamePlatformSettingsRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "TargetAllowList": ["Client", "Server", "Editor"]
+    },
+    {
+      "Name": "GamePlatformSettingsClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": ["Client", "Editor"]
+    },
+    {
+      "Name": "GamePlatformSettingsServer",
+      "Type": "ServerOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": ["Server", "Editor"]
+    },
+    {
+      "Name": "GamePlatformSettingsEditor",
+      "Type": "Editor",
+      "LoadingPhase": "Default",
+      "TargetAllowList": ["Editor"]
+    }
+  ],
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true }
+  ]
 }

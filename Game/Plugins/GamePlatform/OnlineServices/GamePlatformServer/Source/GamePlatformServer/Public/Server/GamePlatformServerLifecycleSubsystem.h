@@ -40,6 +40,10 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerInstanceInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
     FString GameServerId;
 
+    /** 本服务器进程启动代次；同一GameServerId每次进程启动必须变化，由部署或服务器组合根生成。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
+    FString ServerBootId;
+
     /** 中立服务器角色标识；具体允许值由游戏项目契约校验。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
     FString ServerRoleId;
@@ -68,7 +72,7 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerInstanceInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
     FString BuildVersion;
 
-    /** UE实时网络协议版本；零表示部署尚未提供版本标记，后端按其策略处理。 */
+    /** UE实时网络协议版本；生产注册要求大于0，零值Fail Closed。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
     int32 ProtocolVersion = 0;
 

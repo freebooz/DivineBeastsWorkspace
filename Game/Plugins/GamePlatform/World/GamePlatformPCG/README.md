@@ -30,7 +30,7 @@ Game/Plugins/GamePlatform/World/GamePlatformPCG
 - `UGamePlatformPCGEditorLibrary（PCG编辑器工具库）`。
 - 原生 PCG 请求生命周期、清理、输出指纹与有限用途审查。
 
-当前 `Graph Inspection（图检查）`仍只批准固定四节点链路，并拒绝 `Hierarchical Generation（分层生成）`；当前开发资产生成入口也尚未作为正式生产资产执行。此状态是 1.0 改造的迁移起点，不是最终能力。
+当前保留 0.1.0 固定四节点链路作为 Legacy Development Fixture（旧开发夹具）与回退基线，同时已新增 1.0 Template Contract（模板合同）代码路径、Schema v1（属性协议）、P0～P9 Primitive（原语）、Domain ID（领域ID）、Priority（优先级）、通用环境 Definition（定义）、基础放置器 Actor（实体）和首批 M0/M1 自定义节点。真实生产 `.uasset` 模板、Gold Level（金标准关卡）、HiGen（分层生成）和 World Partition（世界分区）仍未完成。
 
 ## 3. 1.0 目标
 
@@ -71,6 +71,7 @@ Game/Plugins/GamePlatform/World/GamePlatformPCG
 正式改造方案与执行计划：
 
 - [Docs/改造方案与执行计划.md](Docs/改造方案与执行计划.md)
+- [Docs/组件清单与使用说明.md](Docs/组件清单与使用说明.md) —— 面向程序、TA（技术美术）、地编、美术和测试的完整组件表、状态和使用方式。
 
 编辑器模块当前真实能力与断点：
 
@@ -87,4 +88,4 @@ Game/Plugins/GamePlatform/World/GamePlatformPCG
 
 ## 7. 当前状态
 
-本轮只完成设计收敛、修改方案、执行计划和文档更新；尚未执行 1.0 C++ 重构、真实 PCG 模板资产创建、Gold Level（金标准关卡）、UE Automation（虚幻自动化测试）、Cook/Stage（烘焙/暂存）或正式联机验收。未执行项目不得写成“已完成”。
+本轮已经完成第一批 M0/M1 源码落地，包括 Schema v1、P0～P9 原语与世界阶段、Domain ID、环境 Definition、PriorityCarve（优先级挖洞）规则、基础放置器/WorldDirector（世界编排器）、Template Contract（模板合同）、首批节点和 SelectSpanMeshByLength（按跨度选择栏片），并保留旧四节点兼容路径。架构静态门禁已通过；真实 PCG 模板/子图资产、Gold Level、UE Automation、Client/Server Cook、HiGen/World Partition 与性能验收仍未完成，未执行项目不得写成“已通过”。

@@ -51,8 +51,7 @@ func (s *GameServerControlInternalServer) AllocateMainArena(ctx context.Context,
 
 // IssuePlayerTransfer（签发玩家迁移票据）返回完整票据，供MatchService下发给Game Client。
 func (s *GameServerControlInternalServer) IssuePlayerTransfer(ctx context.Context, req *gameservercontrolv1.IssuePlayerTransferRequest) (*gameservercontrolv1.IssuePlayerTransferResponse, error) {
-	_ = ctx
-	ticket, err := s.service.IssueTransfer(gameservercontrol.IssueTransferInput{
+	ticket, err := s.service.IssueTransferContext(ctx, gameservercontrol.IssueTransferInput{
 		TicketID: req.GetTicketId(), AssignmentID: req.GetAssignmentId(), GameID: req.GetGameId(), PlayerID: req.GetPlayerId(), SessionID: req.GetSessionId(),
 		SourceGameServerID: req.GetSourceGameServerId(), DestinationGameServerID: req.GetDestinationGameServerId(),
 		DestinationWorldID: req.GetDestinationWorldId(), DestinationExperienceID: req.GetDestinationExperienceId(), MatchID: req.GetMatchId(), TTL: time.Duration(req.GetTtlMilliseconds()) * time.Millisecond,
@@ -64,6 +63,11 @@ func (s *GameServerControlInternalServer) IssuePlayerTransfer(ctx context.Contex
 		Issued: true, TicketId: ticket.TicketID, PlayerId: ticket.PlayerID, SessionId: ticket.SessionID,
 		DestinationGameServerId: ticket.DestinationGameServerID, DestinationEndpoint: ticket.DestinationEndpoint,
 		DestinationWorldId: ticket.DestinationWorldID, MatchId: ticket.MatchID, IssuedAtUnixMs: ticket.IssuedAt.UnixMilli(),
-		ExpiresAtUnixMs: ticket.ExpiresAt.UnixMilli(), Nonce: ticket.Nonce, Signature: ticket.Signature, AssignmentId: ticket.AssignmentID, DestinationExperienceId: ticket.DestinationExperienceID,
+		ExpiresAtUnixMs: ticket.ExpiresAt.UnixMilli(), Nonce: ticket.Nonce, Signature: ticket.Signature,
+		AssignmentId: ticket.AssignmentID, DestinationExperienceId: ticket.DestinationExperienceID,
+		GameSessionId:              ticket.GameSessionID,
+		DestinationServerBootId:    ticket.DestinationServerBootID,
+		DestinationProtocolVersion: ticket.DestinationProtocolVersion,
+		SessionEpoch:               ticket.SessionEpoch,
 	}, nil
 }

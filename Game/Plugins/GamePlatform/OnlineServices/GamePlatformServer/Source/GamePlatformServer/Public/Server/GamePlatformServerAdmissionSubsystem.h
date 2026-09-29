@@ -55,6 +55,8 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerVerifiedAdmission
     FGuid ConnectionId;
     FString PlayerId;
     FString SessionId;
+    /** GameSessionId（游戏会话绑定身份）由控制面签票时生成；非凭据，用于客户端/服务器一致性核对。 */
+    FString GameSessionId;
     FString AssignmentId;
     FString ReservationId;
     FString ServerInstanceId;

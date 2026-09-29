@@ -78,6 +78,8 @@ private:
     FName ActiveExperienceId = NAME_None;
     EDivineBeastsServerBootstrapState State = EDivineBeastsServerBootstrapState::Unconfigured;
     FName LastErrorCode = NAME_None;
+    /** 当前Dedicated Server进程唯一Boot身份；同一GameInstance生命周期固定，进程重启后变化。 */
+    FString ServerBootId;
     FDelegateHandle WorldInitializedHandle;
     FDelegateHandle WorldBeginPlayHandle;
     FDelegateHandle LifecycleChangedHandle;

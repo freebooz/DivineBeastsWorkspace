@@ -49,18 +49,22 @@ type fakeWorldEntry struct{}
 
 func (fakeWorldEntry) AllocateWorldEntry(_ context.Context, req WorldEntryAllocationRequest) (WorldEntryResponse, error) {
 	return WorldEntryResponse{
-		AssignmentID:   "world:openworld-1:" + req.DesiredExperienceID,
-		GameServerID:   "openworld-1",
-		ServerRoleID:   "GameServer.Role.OpenWorld",
-		ExperienceID:   req.DesiredExperienceID,
-		WorldID:        "World.OpenWorld.Hub",
-		MapID:          "World.OpenWorld.Hub",
-		RegionID:       "us-west",
-		TicketID:       req.RequestID,
-		CharacterID:    req.CharacterID,
-		SessionID:      req.SessionID,
-		Endpoint:       "127.0.0.1:7777",
-		TransferTicket: `{"ticketId":"entry-1","signature":"redacted-test"}`,
+		AssignmentID:    "world:openworld-1:" + req.DesiredExperienceID,
+		GameServerID:    "openworld-1",
+		ServerRoleID:    "GameServer.Role.OpenWorld",
+		ExperienceID:    req.DesiredExperienceID,
+		WorldID:         "World.OpenWorld.Hub",
+		MapID:           "World.OpenWorld.Hub",
+		RegionID:        "us-west",
+		TicketID:        req.RequestID,
+		CharacterID:     req.CharacterID,
+		SessionID:       req.SessionID,
+		GameSessionID:   "game-session-test-1",
+		ServerBootID:    "boot-openworld-1",
+		ProtocolVersion: 1,
+		SessionEpoch:    3,
+		Endpoint:        "127.0.0.1:7777",
+		TransferTicket:  `{"ticketId":"entry-1","signature":"redacted-test"}`,
 	}, nil
 }
 
@@ -189,6 +193,8 @@ func TestWorldEntryUsesAuthenticatedSelection(t *testing.T) {
 		t.Fatal(err)
 	}
 	if response.CharacterID != "character-1" || response.SessionID != "session-1" ||
+		response.GameSessionID == "" || response.ServerBootID == "" ||
+		response.ProtocolVersion == 0 || response.SessionEpoch == 0 ||
 		response.TransferTicket == "" || response.Endpoint == "" {
 		t.Fatalf("世界进入响应错误: %+v", response)
 	}

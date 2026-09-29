@@ -109,7 +109,11 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	worldAllocator := gameserver.NewRegistryAllocator(registry)
 	agonesClient := agones.NewClient(agones.ClientConfig{BaseURL: requiredEnvGRPC("AGONES_API_URL"), BearerToken: readBearerTokenGRPC()})
 	arenaAllocator := agones.NewRegistryBackedAllocator(agonesClient, registry, requiredEnvGRPC("AGONES_NAMESPACE"), requiredEnvGRPC("GAME_SERVER_BUILD_VERSION"))
-	transfer := servertransfer.NewServiceWithReplayStore([]byte(requiredEnvGRPC("TRANSFER_TICKET_SECRET")), func() time.Time { return time.Now().UTC() }, redisstore.NewTransferReplayStore(redisClient))
+	transfer := servertransfer.NewServiceWithStores(
+		[]byte(requiredEnvGRPC("TRANSFER_TICKET_SECRET")),
+		func() time.Time { return time.Now().UTC() },
+		redisstore.NewTransferReplayStore(redisClient),
+		redisstore.NewTransferEpochStore(redisClient))
 	matchOutboxStore := postgres.NewMatchOutboxStore(pool)
 	service := gameservercontrol.NewServiceWithAllocators(registry, worldAllocator, arenaAllocator, transfer, match.NewResultService(matchOutboxStore), func() time.Time { return time.Now().UTC() })
 

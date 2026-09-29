@@ -16,11 +16,12 @@ bool FGamePlatformServerInstanceInfo::IsValid() const
         return Value.IsEmpty() || IsBoundedValue(Value);
     };
     return IsBoundedValue(GameId) && IsBoundedValue(GameServerId) &&
+        IsBoundedValue(ServerBootId) &&
         IsBoundedValue(ServerRoleId) && IsBoundedValue(ExperienceId) &&
         IsBoundedValue(WorldId) && IsBoundedValue(RegionId) &&
         IsOptionalBoundedValue(ClusterId) && IsOptionalBoundedValue(NodeId) &&
         IsBoundedValue(BuildVersion) && IsBoundedValue(PublicEndpoint) &&
-        ProtocolVersion >= 0 && Capacity > 0;
+        ProtocolVersion > 0 && Capacity > 0;
 }
 
 FName IGamePlatformServerControlProvider::GetModularFeatureName()

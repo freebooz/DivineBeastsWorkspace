@@ -277,11 +277,19 @@ FGamePlatformResult FGamePlatformSessionTransferRequest::Validate() const
     }
     if (AssignmentId.IsEmpty() || GameServerId.IsEmpty() || ServerRoleId.IsNone() ||
         ExperienceId.IsNone() || WorldId.IsNone() || Endpoint.IsEmpty() ||
-        TransferTicket.IsEmpty() || SessionId.IsEmpty())
+        TransferTicket.IsEmpty() || SessionId.IsEmpty() || !ExpectedBinding.IsValid())
     {
         return FGamePlatformResult::Failure(
             GamePlatformSessionErrors::TransferRequestIncomplete,
             TEXT("会话转移请求缺少分配、服务器、体验、世界、连接或玩家身份。"));
+    }
+    if (ExpectedBinding.AssignmentId != AssignmentId ||
+        ExpectedBinding.ServerInstanceId != GameServerId ||
+        ExpectedBinding.WorldId != WorldId)
+    {
+        return FGamePlatformResult::Failure(
+            GamePlatformSessionErrors::BindingRejected,
+            TEXT("会话转移请求中的权威Binding与Assignment、GameServer或World身份不一致。"));
     }
     if (!IsSafeEndpoint(Endpoint))
     {
@@ -295,7 +303,10 @@ FGamePlatformResult FGamePlatformSessionTransferRequest::Validate() const
         TransferTicket.Len() > MaxTransferTicketChars ||
         TicketId.Len() > MaxSessionTextChars ||
         CharacterId.Len() > MaxSessionTextChars ||
-        SessionId.Len() > MaxSessionTextChars)
+        SessionId.Len() > MaxSessionTextChars ||
+        ExpectedBinding.GameSessionId.Len() > MaxSessionTextChars ||
+        ExpectedBinding.ServerBootId.Len() > MaxSessionTextChars ||
+        ExpectedBinding.ProtocolVersion.Len() > MaxSessionTextChars)
     {
         return FGamePlatformResult::Failure(
             GamePlatformSessionErrors::TransferRequestTooLarge,
