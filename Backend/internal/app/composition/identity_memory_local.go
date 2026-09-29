@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"divinebeasts/backend/internal/modules/identity"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // localIdentityPersistentRepository（本地身份持久仓储）只用于开发/集成联调。
@@ -41,6 +43,34 @@ func localIdentityAccountKey(gameID, accountName string) string {
 func cloneIdentityAccount(account identity.Account) identity.Account {
 	account.PasswordHash = append([]byte(nil), account.PasswordHash...)
 	return account
+}
+
+// seedLocalIdentityAccount（本地身份账号种子）允许开发联调使用短于生产初始化门槛的临时密码，
+// 但仍执行bcrypt慢哈希且只存在于!productiondeps构建；正式LoginPassword校验逻辑不变。
+func seedLocalIdentityAccount(
+	ctx context.Context,
+	repo *localIdentityPersistentRepository,
+	gameID string,
+	accountName string,
+	password string,
+) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if repo == nil || gameID == "" || accountName == "" || password == "" || len(password) > 72 {
+		return identity.ErrInvalidInput
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return identity.ErrUnavailable
+	}
+	_, err = repo.EnsureAccount(ctx, identity.Account{
+		GameID:       gameID,
+		AccountName:  accountName,
+		PlayerID:     newID("player-dev"),
+		PasswordHash: hash,
+	})
+	return err
 }
 
 func (r *localIdentityPersistentRepository) Probe(ctx context.Context) error {

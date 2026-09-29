@@ -11,6 +11,38 @@ import (
 	"divinebeasts/backend/internal/modules/identity"
 )
 
+func TestLocalIdentitySeedAllowsDevelopmentOnlyShortPassword(t *testing.T) {
+	ctx := context.Background()
+	repo := newLocalIdentityPersistentRepository()
+	if err := seedLocalIdentityAccount(
+		ctx,
+		repo,
+		"divine-beasts",
+		"local-short-password-review",
+		"short7",
+	); err != nil {
+		t.Fatal(err)
+	}
+	service, err := identity.NewPersistentService(
+		repo,
+		identity.SystemClock{},
+		time.Minute,
+		time.Hour,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.LoginPassword(
+		ctx,
+		"divine-beasts",
+		"local-short-password-review",
+		"short7",
+		"",
+	); err != nil {
+		t.Fatalf("本地开发短密码种子必须能通过正式LoginPassword验证: %v", err)
+	}
+}
+
 func TestLocalIdentityPersistentRepositoryPasswordLifecycle(t *testing.T) {
 	ctx := context.Background()
 	repo := newLocalIdentityPersistentRepository()

@@ -88,6 +88,7 @@ services:
       - identityservice
       - playerdataservice
       - matchservice
+      - gameservercontrolservice
     environment:
       SERVICE_NAME: GatewayService
       SERVICE_PORT: "8080"
@@ -97,6 +98,8 @@ services:
       IDENTITY_SERVICE_URL: http://identityservice:8081
       PLAYER_DATA_SERVICE_URL: http://playerdataservice:8082
       MATCH_SERVICE_URL: http://matchservice:8083
+      GAMESERVERCONTROL_SERVICE_URL: http://gameservercontrolservice:8084
+      GAMESERVERCONTROL_INTERNAL_TOKEN: ${GAMESERVERCONTROL_INTERNAL_TOKEN:?required}
       DIVINEBEASTS_SWAGGER_CONTRACTS_ROOT: /contracts
     ports:
       - "127.0.0.1:${GATEWAY_HOST_PORT:-28080}:8080"

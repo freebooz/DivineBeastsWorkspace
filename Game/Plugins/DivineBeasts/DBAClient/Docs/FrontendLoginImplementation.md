@@ -1,6 +1,6 @@
 # 神兽联盟前台启动与登录闭环实施说明
 
-> 更新日期：2026-09-28
+> 更新日期：2026-09-29
 > 范围：Boot（启动封面）→ Frontend（前台初始化）→ Authentication（认证）→ Login（登录页面）
 > 原则：复用现有平台插件，不新建重复代码插件，不伪造 UE 二进制资产。
 
@@ -205,39 +205,75 @@ RootLayout 与 Login 均为真实 `.uasset`，其父类、Widget Tree、命名�
 
 ### 8.2 登录后的项目业务 API
 
-认证链已经对齐 Shared Gateway 契约。
-
-本轮进一步确认共享契约已经正式提供：
+认证、玩家资料、持久角色与世界分配已经统一对齐 `Shared Gateway（共享网关）` 正式契约，唯一真源为：
 
 ~~~text
-GET /v1/player/profile
+Shared/Contracts/GamePlatform/OpenAPI/gateway.openapi.yaml
 ~~~
 
-因此 FDivineBeastsHttpApplicationBackend::LoadProfile 已改为直接消费
-Shared/Contracts/GamePlatform/OpenAPI/gateway.openapi.yaml 中的
-PlayerProfile，映射 playerId / revision / tutorialCompleted / defaultWorldId，
-不再访问历史 /v1/divinebeasts/profile。
-
-当前仍没有正式共享契约支撑以下项目私有路径：
+当前正式接口为：
 
 ~~~text
-/v1/divinebeasts/characters
-/v1/divinebeasts/characters/select
-/v1/divinebeasts/world-entry
+GET  /v1/player/profile
+GET  /v1/player/characters
+POST /v1/player/characters
+POST /v1/player/character-selection
+POST /v1/divinebeasts/world-entry
 ~~~
 
-因此当前可真实闭环到：
+`FDivineBeastsHttpApplicationBackend（神兽联盟 HTTP 应用后端适配器）` 已直接消费上述接口：
+
+- `LoadProfile`：读取玩家资料与 `OnboardingState（新手引导状态）`；
+- `LoadRoster`：读取当前账号的持久角色列表；
+- `CreateCharacter`：使用 `creationRequestId（创建请求幂等键）` 创建角色；
+- `SelectPersistentCharacter`：提交角色编号及期望角色修订号，由后端完成所有权、状态与并发版本校验；
+- `RequestWorldAssignment`：只提交已验证角色、目标体验与区域偏好，由后端权威产生 World Assignment（世界分配）、Endpoint（端点）和一次性 TransferTicket（切服票据）。
+
+因此源码层正式闭环已经覆盖：
 
 ~~~text
 Boot
 → Initialize
-→ Authentication
-→ Login
+→ Authentication / Login
 → LoadProfile
+→ LoadRoster
+→ CharacterEntry
+   ├─ 无角色 → CharacterCreate → CreateCharacter
+   └─ 有角色 → CharacterSelect
+→ ValidateSelection
+→ ResolveExperience
+   ├─ 未完成新手引导 → Village.Tutorial
+   └─ 已完成新手引导 → OpenWorld.Hub
+→ RequestWorld
+→ TransferWorld
+→ WorldReady
+→ InWorld / Playing
 ~~~
 
-LoadRoster → CharacterEntry → OpenWorld 仍必须先在 Shared 契约层正式设计并实现
-角色列表、角色选择和世界分配 API，禁止客户端继续依赖未定义的历史路径冒充完成。
+`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。角色创建成功后流程设置待验证选择并进入 `ValidateSelection（角色选择验证）`；客户端不能绕过后端权威选择结果。
+
+### 8.3 前台三维场景与正式世界边界
+
+当前真实前台地图已经存在：
+
+~~~text
+/DBAFrontEndPack/Maps/L_DBA_FrontEnd
+/DBAFrontEndPack/Maps/L_DBA_CharacterStudio
+~~~
+
+其中 `L_DBA_FrontEnd（前台宿主地图）` 用于 Boot / Login 等客户端前台；`L_DBA_CharacterStudio（角色预览工作室）` 用于 CharacterSelect / CharacterCreate 的三维角色预览。两者只由 `DBAFrontEndPack（神兽联盟前端三维场景内容包）` 持有，只进入 Client / Editor，不属于 OpenWorld、Village 或 MainArena Dedicated Server（专用服务器）正式世界。
+
+当前尚未发现正式 `L_Village_Start（新手村起始地图）` 二进制资产；不得以复制、改扩展名或文本占位伪造 `.umap`。在该地图由 Unreal Editor（虚幻编辑器）正式创建并通过 WorldDefinition（世界定义）/Cook（烘焙）验收前，Village 只能标记为“流程与后端分配已接线、正式地图资产待交付”，不能宣称完整可玩闭环已经完成。
+
+### 8.4 Application Flow 正式资产
+
+项目流程运行依赖稳定逻辑身份：
+
+~~~text
+divinebeasts.application.main@1
+~~~
+
+仓库已提供 `Tools/AssetTools/CreateDivineBeastsApplicationFlowAsset.py（神兽联盟应用流程资产生成器）`，它只能通过真实 UE5.8 Editor 反射创建 `/DBAClient/Definitions/DA_DivineBeastsApplicationFlow`，并严格校验 14 个正式节点、具名路由及循环策略；禁止生成伪 `.uasset`。只有该 DataAsset（数据资产）真实落盘并能被 AssetManager（资产管理器）扫描、Data Lease（数据租约）成功取得后，`UDivineBeastsApplicationFlowSubsystem::StartFlow` 才会调用平台唯一状态机。
 
 ## 9. 验收顺序
 

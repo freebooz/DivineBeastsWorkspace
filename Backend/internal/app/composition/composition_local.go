@@ -62,11 +62,11 @@ func RunIdentity(ctx context.Context, cfg config.ServiceConfig) error {
 	}
 
 	repo := newLocalIdentityPersistentRepository()
-	service, err := identity.NewPersistentService(repo, identity.SystemClock{}, 15*time.Minute, 30*24*time.Hour)
-	if err != nil {
+	if err := seedLocalIdentityAccount(ctx, repo, "divine-beasts", devAccount, devPassword); err != nil {
 		return err
 	}
-	if _, err := service.EnsureAccount(ctx, "divine-beasts", devAccount, devPassword); err != nil {
+	service, err := identity.NewPersistentService(repo, identity.SystemClock{}, 15*time.Minute, 30*24*time.Hour)
+	if err != nil {
 		return err
 	}
 	return servicehost.Run(ctx, cfg, httpadapter.NewIdentityHandler(service))
