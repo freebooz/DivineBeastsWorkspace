@@ -246,7 +246,7 @@ Use these exact enum values:
     EGamePlatformCameraLagPolicy:
       RespectViewTarget, Disabled, Exponential
 
-Definition 继承统一 Data 基类，不覆盖主资产类型；ValidateDefinition 先调用 Super，再执行 Camera 规则。Mode Definition 必须实现 ModeTag／Priority／DiagnosticName、FOV 策略与角度、Pivot／Camera／Distance Offset、Rotation Limits、BlendIn／BlendOut、Target／TargetLoss、Input、Collision／Lag 及 Sweep 参数；Effect Definition 必须实现 ShakeClass 软类引用、默认强度、播放空间、舒适度类别、去重和停止策略。Effect 的 ShakeClass 标记到 Camera Asset Bundle。
+Definition 继承统一 Data 基类，不覆盖主资产类型；ValidateDefinition 先调用 Super，再执行 Camera 规则。Mode Definition 必须实现 ModeTag／Priority／DiagnosticName、FOV 策略与角度、Pivot／Camera／Distance Offset、Rotation Limits、BlendIn／BlendOut、Target／TargetLoss、Input、Collision／Lag 及 Sweep 参数；Effect Definition 必须实现 ShakeClass 软类引用、默认强度、播放空间、舒适度类别、去重和停止策略。Effect 的 ShakeClass 标记到 Camera Asset Bundle。所有公开服务入口先检查游戏线程；异步数据完成在回调进入游戏线程后仍须重新校验代次、Owner 与取消状态，不在接口内部静默跨线程调度。
 
 - [ ] **Step 4: Build and run contract Automation**
 
@@ -607,7 +607,7 @@ Expected: nonzero exit because effect controller and provider are missing.
 
 - [ ] **Step 4: Implement effects and register Provider**
 
-Camera subsystem Initialize 取得同 LocalPlayer 的 Presentation 子系统并注册 Provider；Deinitialize 第一阶段注销。Catalog DefinitionId 严格解析为 GamePlatformDefinition:<platform.camera.effect.*@version>，AcquireDefinition 使用 UGamePlatformCameraEffectDefinition ExpectedClass。不得按文件路径加载。Presentation RequestId／SourceId 原样传入效果请求，Owner 绑定当前 Provider 生命周期；Magnitude 必须有限且非负并作为 Scale，零值明确表示关闭该可选效果，不把零偷偷改写为一。
+Camera subsystem Initialize 先通过 FSubsystemCollectionBase::InitializeDependency<UGamePlatformPresentationClientSubsystem>() 固定初始化顺序，再取得同 LocalPlayer 的 Presentation 子系统并注册 Provider；Deinitialize 第一阶段注销。Catalog DefinitionId 严格解析为 GamePlatformDefinition:<platform.camera.effect.*@version>，AcquireDefinition 使用 UGamePlatformCameraEffectDefinition ExpectedClass。不得按文件路径加载。Presentation RequestId／SourceId 原样传入效果请求，Owner 绑定当前 Provider 生命周期；Magnitude 必须有限且非负并作为 Scale，零值明确表示关闭该可选效果，不把零偷偷改写为一。
 
 - [ ] **Step 5: Run effects and Presentation Automation**
 
@@ -897,9 +897,10 @@ Expected: exit 0 for static checks；output explicitly says no UE/Cook/Review in
 
 **Files:**
 
-- Modify only if a fresh failure is reproduced: the owning production/test file from Tasks 1–9
 - Update after commands: Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/Docs/TestingAndEvidence.md
 - Update after commands: Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/Docs/ManualReview.md
+
+只有在新鲜命令稳定复现失败后，才回到 Tasks 1–9 中列出的责任文件做最小修复；Task 10 不预授权修改新的模块或扩大重构范围。
 
 **Interfaces:**
 
