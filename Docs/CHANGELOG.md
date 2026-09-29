@@ -2,6 +2,14 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-29｜新增 GamePlatformSurface 通用环境表面材质插件
+
+- 在`Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/`新增正式平台插件，采用`GamePlatformSurfaceClient（ClientOnly）＋GamePlatformSurfaceEditor（Editor）`双模块，不建立Runtime／Server空模块；Client与Editor Target显式启用，Server Target不启用。
+- Client实现跨游戏环境表面状态、八个稳定MPC参数、每世界事件驱动MPC桥接、C++服务、Blueprint入口、有限值／范围校验和生命周期清理；Editor实现真实核心MPC首次生成／只读校验Commandlet、材质资产合同和自动化测试源码。母材质及雪／苔藓／湿润／积水等Material Function只建立真实制作合同，不用文本或空uasset伪造完成。
+- 锁定边界：GamePlatformSurface不拥有天气权威、PCG生成、Niagara、水体物理或神兽联盟专属内容；项目纹理和`MI_DBA_*`材质实例归`DBAWorldPack_*`。Surface表现失败不得改变服务器玩法，Dedicated Server不得链接或Cook纯表面表现资产。
+- 正式基线更新为平台层39个＋MOBA层GamePlatformArena 1个，共40个GamePlatform稳定身份；加MobaPresentation和5个DBA代码插件后为46个代码／机制插件＋内容N。GamePlatformOpenWorld继续退休；当前46与2026-09-27历史46成员不同。
+- 同步AGENTS、插件规范、插件主清单、总体规划／目录、核心要求、三层规划、P0历史补充、内容包／DBAWorlds边界和DesignBaselineAudit；实际编译、Automation、MPC生成、Cook／Stage与材质人工视觉验收结果按本轮后续真实执行证据记录。
+
 ## 2026-09-29｜GamePlatformSettings 四模块专项审查与实装
 
 - 专项审查确认原 `GamePlatformSettings` 只有 ClientOnly 模块入口、没有公开契约、设置模型、校验、生命周期、持久化、测试或消费者；设置域本身具有跨项目价值，因此保留插件身份并形成 Runtime／Client／Server／Editor 四模块，而不是继续保留空壳。

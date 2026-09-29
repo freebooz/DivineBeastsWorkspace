@@ -75,12 +75,21 @@ if ($findings.Count -eq 0) {
     foreach ($name in @('ScatterSurface','LinearDresser','EnclosureClosed','CropField','RailingAttached')) {
         Assert-True ($template.Contains($name)) ("Template Contract缺少模板ID：{0}" -f $name)
     }
+    foreach ($name in @('ProjectOnLandscape','PriorityCarve','ApplySpawnPolicy','AssignMeshSet','FitPostsToSpline','BreakByIntersection','WriteClosedExclude')) {
+        Assert-True ($template.Contains($name)) ("Template Contract缺少公共子图ID：{0}" -f $name)
+    }
 
     $editorLibrary = Get-Content -LiteralPath $editorLibraryHeader -Raw -Encoding UTF8
     $foundationGraph = Get-Content -LiteralPath $foundationGraphCpp -Raw -Encoding UTF8
     $commandlet = Get-Content -LiteralPath $foundationCommandlet -Raw -Encoding UTF8
     Assert-True ($editorLibrary.Contains('CreateFoundationTemplateAssets')) 'Editor Library缺少Foundation模板资产创建入口。'
+    Assert-True ($editorLibrary.Contains('CreateFoundationSubgraphAssets')) 'Editor Library缺少Foundation公共子图资产创建入口。'
+    Assert-True ($editorLibrary.Contains('CreateFoundationAssets')) 'Editor Library缺少模板+子图统一预检创建入口。'
     Assert-True ($foundationGraph.Contains('CreateFoundationTemplateGraph')) '缺少Foundation模板真实UPCGGraph生成器。'
+    Assert-True ($foundationGraph.Contains('CreateFoundationSubgraphGraph')) '缺少Foundation公共子图真实UPCGGraph生成器。'
+    Assert-True ($foundationGraph.Contains('UPCGProjectionSettings')) 'SG_ProjectOnLandscape必须使用UE5.8官方Projection节点。'
+    Assert-True ($foundationGraph.Contains('DefaultLandscapeLabel')) 'SG_ProjectOnLandscape必须公开Landscape输入Pin。'
+    Assert-True ($foundationGraph.Contains('UGamePlatformPCGWriteExcludeSettings')) 'SG_WriteClosedExclude必须使用统一排除属性节点。'
     Assert-True ($foundationGraph.Contains('bIsTemplate = true')) 'Foundation模板生成器必须设置官方PCG模板标记。'
     Assert-True ($commandlet.Contains('GamePlatformPCGFoundationTemplatesCommandlet')) '缺少Foundation模板命令行生成入口。'
     $validator = Get-Content -LiteralPath $worldValidator -Raw -Encoding UTF8

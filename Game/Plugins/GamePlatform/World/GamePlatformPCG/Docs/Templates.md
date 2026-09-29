@@ -18,7 +18,7 @@
 | TPL_AssemblySpawn | 组合件投放模板 | M0/M1生成器已实现，作为接口骨架；资产尚未执行落盘 |
 | TPL_InterfaceBand | 界面带模板 | M0/M1生成器已实现，资产尚未执行落盘 |
 
-计划公共子图：SG_ProjectOnLandscape、SG_PriorityCarve、SG_ApplySpawnPolicy、SG_AssignMeshSet、SG_FitPostsToSpline、SG_BreakByIntersection、SG_WriteClosedExclude。本轮只形成合同/文档，不冒充对应资产已经存在。
+公共子图生成器源码已经完成：`SG_ProjectOnLandscape（投影到地形）`、`SG_PriorityCarve（优先级挖洞）`、`SG_ApplySpawnPolicy（应用生成策略）`、`SG_AssignMeshSet（分配网格集合）`、`SG_FitPostsToSpline（样条布柱）`、`SG_BreakByIntersection（按交叉标签打断）`、`SG_WriteClosedExclude（写闭合排除）`。其中 ProjectOnLandscape 使用 UE5.8 官方 `UPCGProjectionSettings（PCG投影节点）`并公开 Landscape（地形）输入 Pin；WriteClosedExclude 使用平台统一 `WriteExclude（写排除属性）`节点。当前仍未实际执行 Commandlet 落盘，因此不能把 `.uasset` 写成已交付。
 
 `ValidateApprovedGraph（批准图检查）`现在支持两条路径：
 
@@ -37,7 +37,7 @@ E:\poject\feebooz\DivineBeastsWorkspace\Game\DivineBeastsArena.uproject
 -run=GamePlatformPCGFoundationTemplates -unattended -nop4 -nosplash
 ```
 
-命令行工具只写 `/Game/Development/Foundation/PCG/Templates/`：创建前检查全部目标包，任一包已存在则整批拒绝覆盖；全部图先在内存中通过 Template Contract 后才开始保存。保存失败保留现场供人工审查，不自动删除可能已写入的包。
+命令行工具统一生成 `/Game/Development/Foundation/PCG/Templates/` 与 `/Game/Development/Foundation/PCG/Subgraphs/`：创建前对模板与子图全部目标包做统一占用预检，任一目标已存在则整批拒绝启动；模板先在内存中通过 Template Contract，子图使用已批准的官方/平台节点真实构图，再开始保存。保存阶段若发生磁盘失败，保留现场供人工审查，不自动删除可能已写入的包。
 
 这些资产属于 Development（开发验证）模板，不进入正式世界 ContentPack（内容包）所有权。只有 Gold Level、AssetRegistry/DataValidation、Client/Server Cook 和性能验收完成后，才另行评审正式发布模板的资产归属和 `CanContainContent` 策略。
 

@@ -12,6 +12,8 @@ public class DivineBeastsArenaClientTarget : TargetRules
         // 正式客户端组合根显式启用DBAClient；其插件依赖会继续拉入Online/Session/Loading/UI等客户端能力。
         // 不在.uproject全局启用，避免Server Target被动携带客户端Runtime组合模块。
         EnablePlugins.Add("DBAClient");
+        // 通用环境表面材质属于纯客户端表现能力；显式按Client Target装配，避免Dedicated Server携带材质代码与Content。
+        EnablePlugins.Add("GamePlatformSurface");
         // 公共UI二进制资产由第三层纯内容插件拥有；客户端显式启用，服务器目标不携带。
         EnablePlugins.Add("DBAUIPack_Core");
         // 十二生肖角色视觉内容只进入客户端：公共Mannequin源 + 12个独立英雄包。

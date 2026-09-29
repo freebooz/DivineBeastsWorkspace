@@ -1,4 +1,4 @@
-Describe '设计基线只读结构审计' {
+﻿Describe '设计基线只读结构审计' {
     $auditModulePath = Join-Path $PSScriptRoot 'DesignBaselineAudit.psm1'
     if (Test-Path -LiteralPath $auditModulePath) {
         Import-Module $auditModulePath -Force
@@ -11,7 +11,7 @@ Describe '设计基线只读结构审计' {
         OnlineServices = @('GamePlatformOnline', 'GamePlatformSession', 'GamePlatformServer')
         World = @('GamePlatformWorld', 'GamePlatformPCG', 'GamePlatformInteraction', 'GamePlatformNavigation')
         Gameplay = @('GamePlatformGameplay', 'GamePlatformCharacter', 'GamePlatformAbilitySystem', 'GamePlatformCombat', 'GamePlatformAI', 'GamePlatformQuest', 'GamePlatformAnimation')
-        Presentation = @('GamePlatformUI', 'GamePlatformPresentation', 'GamePlatformVFX', 'GamePlatformSFX', 'GamePlatformCamera')
+        Presentation = @('GamePlatformUI', 'GamePlatformPresentation', 'GamePlatformVFX', 'GamePlatformSFX', 'GamePlatformCamera', 'GamePlatformSurface')
         GameModes = @('GamePlatformLobby', 'GamePlatformVillage')
         PlayerServices = @('GamePlatformInventory', 'GamePlatformEntitlement', 'GamePlatformEquipment', 'GamePlatformProgression', 'GamePlatformLiveOps', 'GamePlatformCommerceUI')
         Diagnostics = @('GamePlatformTelemetry', 'GamePlatformDebug', 'GamePlatformDeveloperTools')
@@ -72,14 +72,14 @@ Describe '设计基线只读结构审计' {
         return $workspaceRoot
     }
 
-    It '接受跨三层的39个GamePlatform身份、5个项目插件及独立MOBA表现插件、一个工程、三个Target和八项默认配置' {
+    It '接受跨三层的40个GamePlatform身份、5个项目插件及独立MOBA表现插件、一个工程、三个Target和八项默认配置' {
         $workspaceRoot = New-DesignBaselineFixtureRoot
 
         $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
 
         $result.Passed | Should Be $true
-        $result.PluginCounts.Actual | Should Be 45
-        $result.PluginCounts.GamePlatform | Should Be 39
+        $result.PluginCounts.Actual | Should Be 46
+        $result.PluginCounts.GamePlatform | Should Be 40
         $result.PluginCounts.Project | Should Be 5
         $result.PluginCounts.MobaPresentation | Should Be 1
         $result.ProjectCount | Should Be 1
@@ -117,9 +117,9 @@ Describe '设计基线只读结构审计' {
             Set-Content -LiteralPath (Join-Path $registryRoot 'ContentPackRegistry.json')
         '{"FileVersion":3,"CanContainContent":true}' | Set-Content -LiteralPath (Join-Path $packRoot 'DBAHeroPack_Rat.uplugin')
         $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
-        $result.PluginCounts.Baseline | Should Be 45
+        $result.PluginCounts.Baseline | Should Be 46
         $result.PluginCounts.ContentPacks | Should Be 1
-        $result.PluginCounts.GamePlatform | Should Be 39
+        $result.PluginCounts.GamePlatform | Should Be 40
         $result.PluginCounts.Project | Should Be 5
         $result.Passed | Should Be $false
         ($result.Errors -join "`n") | Should Match '内容包.*缺少真实UE资产'

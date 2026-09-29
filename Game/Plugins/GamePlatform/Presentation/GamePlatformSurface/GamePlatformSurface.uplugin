@@ -1,0 +1,25 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "GamePlatformSurface",
+  "Description": "跨游戏客户端环境表面材质基础设施：事件驱动的全局表面环境状态、Material Parameter Collection桥接，以及雪、苔藓、湿润、积水等通用材质资产契约与编辑器生成/校验入口。",
+  "Category": "GamePlatform/Presentation",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Modules": [
+    {
+      "Name": "GamePlatformSurfaceClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [ "Client", "Editor" ]
+    },
+    {
+      "Name": "GamePlatformSurfaceEditor",
+      "Type": "Editor",
+      "LoadingPhase": "PostEngineInit",
+      "TargetAllowList": [ "Editor" ]
+    }
+  ]
+}

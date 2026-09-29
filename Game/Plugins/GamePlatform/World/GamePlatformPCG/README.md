@@ -48,6 +48,7 @@ Game/Plugins/GamePlatform/World/GamePlatformPCG
 - Schema v1 使用代码级稳定注册表和 `FGamePlatformPCGAttr（PCG属性访问器）`，禁止业务代码散落手写 `Pcg.*` 字符串。
 - 运行时纯装饰与影响碰撞、导航、采集、出生、胜负的权威结果严格分离。
 - Dedicated Server（专用服务器）不运行 Runtime Cosmetic（运行时纯装饰）PCG。
+- PCG只负责“在哪里生成／选择什么内容”；雪、苔藓、湿润、积水等跨游戏表面材质机制归 `GamePlatformSurface（游戏平台通用环境表面材质插件）`。PCG可以在项目层选择Material Instance（材质实例），但不得复制Surface的坡度／高度／世界噪声和环境状态算法。
 - 影响玩法的结果优先采用 Editor Generation（编辑器生成）→ Bake（烘焙）→ Validation（验证）→ 世界静态交付。
 - HiGen（分层生成）、World Partition（世界分区）和 RuntimeDetail（运行时细节）在 M0/M1 基础闭环后再开放。
 - `.uasset/.umap`必须由 Unreal Editor（虚幻编辑器）真实创建，不使用文本占位。

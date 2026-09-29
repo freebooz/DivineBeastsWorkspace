@@ -22,6 +22,14 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool CreateFoundationTemplateAssets(FString& Error);
+
+    /** 首次创建七个M0/M1 Foundation Subgraph（基础公共子图）开发资产；拒绝覆盖已有包。 */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool CreateFoundationSubgraphAssets(FString& Error);
+
+    /** 模板+子图统一入口；先对全部目标包做占用预检，再执行真实资产创建。Commandlet应优先调用本函数。 */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool CreateFoundationAssets(FString& Error);
     /** 游戏线程；Profile及其图/网格必须已加载且保存。返回真实依赖字节指纹，不批准生成结果或重开状态。 */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool InspectProfileSource(UGamePlatformPCGProfileDefinition* Profile, FString& Fingerprint,
@@ -34,4 +42,8 @@ public:
     /** 返回1.0已登记模板ID，供Editor工具/自动化创建入口使用；返回ID不代表对应.uasset已经存在。 */
     UFUNCTION(BlueprintPure, Category="GamePlatform|PCG|Editor")
     static TArray<FName> GetKnownTemplateIds();
+
+    /** 返回M0/M1已登记公共子图ID；ID存在不代表对应.uasset已经落盘。 */
+    UFUNCTION(BlueprintPure, Category="GamePlatform|PCG|Editor")
+    static TArray<FName> GetKnownSubgraphIds();
 };

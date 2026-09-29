@@ -79,6 +79,7 @@ void InitializeMetadataEntries(UPCGBasePointData& PointData)
 }
 
 FPCGElementPtr UGamePlatformPCGWriteSchemaDefaultsSettings::CreateElement() const { return MakeShared<FGamePlatformPCGWriteSchemaDefaultsElement>(); }
+FPCGElementPtr UGamePlatformPCGWriteExcludeSettings::CreateElement() const { return MakeShared<FGamePlatformPCGWriteExcludeElement>(); }
 FPCGElementPtr UGamePlatformPCGPriorityCarveSettings::CreateElement() const { return MakeShared<FGamePlatformPCGPriorityCarveElement>(); }
 FPCGElementPtr UGamePlatformPCGProjectAlignSettings::CreateElement() const { return MakeShared<FGamePlatformPCGProjectAlignElement>(); }
 FPCGElementPtr UGamePlatformPCGApplySpawnPolicySettings::CreateElement() const { return MakeShared<FGamePlatformPCGApplySpawnPolicyElement>(); }
@@ -122,6 +123,50 @@ bool FGamePlatformPCGWriteSchemaDefaultsElement::ExecuteInternal(FPCGContext* Co
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::ExecSeed, Settings->DefaultSeed);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::EnclosureKind, 0);
         EnsureAttribute(*OutputData->Metadata, FGamePlatformPCGAttr::ConnectorType, 0);
+
+        FPCGTaggedData& Output = Context->OutputData.TaggedData.Add_GetRef(Input);
+        Output.Data = OutputData;
+    }
+    return true;
+}
+
+bool FGamePlatformPCGWriteExcludeElement::ExecuteInternal(FPCGContext* Context) const
+{
+    const UGamePlatformPCGWriteExcludeSettings* Settings = Context->GetInputSettings<UGamePlatformPCGWriteExcludeSettings>();
+    check(Settings);
+
+    if (Settings->ExcludeSource.IsNone() || !FMath::IsFinite(Settings->ExcludeStrength))
+    {
+        UE_LOG(LogGamePlatformPCG, Warning, TEXT("WriteExclude：排除来源为空或强度非法，按Fail-Safe输出空结果。"));
+        return true;
+    }
+
+    const float Strength = FMath::Clamp(Settings->ExcludeStrength, 0.0f, 1.0f);
+    for (const FPCGTaggedData& Input : PointInputs(Context))
+    {
+        UPCGBasePointData* OutputData = DuplicatePointInput(Context, Input);
+        if (!OutputData || !OutputData->Metadata)
+        {
+            WarnInvalidInput(TEXT("WriteExclude"));
+            continue;
+        }
+
+        FPCGMetadataAttribute<float>* Mask = OutputData->Metadata->FindOrCreateAttribute<float>(
+            FGamePlatformPCGAttr::ExcludeMask, Strength, false, true, true);
+        FPCGMetadataAttribute<FName>* Source = OutputData->Metadata->FindOrCreateAttribute<FName>(
+            FGamePlatformPCGAttr::ExcludeSource, Settings->ExcludeSource, false, true, true);
+        if (!Mask || !Source)
+        {
+            continue;
+        }
+
+        InitializeMetadataEntries(*OutputData);
+        TPCGValueRange<PCGMetadataEntryKey> Entries = OutputData->GetMetadataEntryValueRange();
+        for (const PCGMetadataEntryKey Key : Entries)
+        {
+            Mask->SetValue(Key, Strength);
+            Source->SetValue(Key, Settings->ExcludeSource);
+        }
 
         FPCGTaggedData& Output = Context->OutputData.TaggedData.Add_GetRef(Input);
         Output.Data = OutputData;

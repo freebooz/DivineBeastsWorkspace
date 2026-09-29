@@ -14,4 +14,7 @@ namespace GamePlatformPCGEditor
      * 仅支持M0/M1批准模板ID，不创建M2+模板，不执行图，不绑定项目资源。
      */
     UPCGGraph* CreateFoundationTemplateGraph(UObject* Outer, FName Name, FName TemplateId, FString& Error);
+
+    /** 创建M0/M1公共Foundation Subgraph（基础子图）；只使用官方/批准节点，不执行世界生成。 */
+    UPCGGraph* CreateFoundationSubgraphGraph(UObject* Outer, FName Name, FName SubgraphId, FString& Error);
 }

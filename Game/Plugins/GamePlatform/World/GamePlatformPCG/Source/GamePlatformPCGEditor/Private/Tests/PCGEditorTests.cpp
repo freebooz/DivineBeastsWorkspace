@@ -7,6 +7,9 @@
 #include "Services/GamePlatformPCGTemplateContract.h"
 #include "Engine/StaticMesh.h"
 #include "PCGGraph.h"
+#include "PCGInputOutputSettings.h"
+#include "Elements/PCGProjectionElement.h"
+#include "Nodes/GamePlatformPCGNodes.h"
 
 // 顺序不参与来源身份；依赖内容和引擎版本必须参与，不能只哈希路径或随机种子。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPCGSourceFingerprintTest, "GamePlatform.PCG.Editor.SourceFingerprint",
@@ -97,4 +100,44 @@ bool FPCGFoundationTemplateGraphTest::RunTest(const FString& Parameters)
 
     return true;
 }
+
+// 七个M0/M1 Foundation Subgraph（基础公共子图）必须能在内存中真实构造；不保存资产。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPCGFoundationSubgraphTest, "GamePlatform.PCG.Editor.FoundationSubgraphContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FPCGFoundationSubgraphTest::RunTest(const FString& Parameters)
+{
+    (void)Parameters;
+    for (const FName SubgraphId : FGamePlatformPCGSubgraphIds::All())
+    {
+        UObject* Outer = NewObject<UObject>(GetTransientPackage());
+        FString Error;
+        UPCGGraph* Graph = GamePlatformPCGEditor::CreateFoundationSubgraphGraph(Outer, SubgraphId, SubgraphId, Error);
+        if (!TestNotNull(*FString::Printf(TEXT("%s子图创建：%s"), *SubgraphId.ToString(), *Error), Graph))
+        {
+            return false;
+        }
+        TestTrue(*FString::Printf(TEXT("%s公开为可复用PCG模板/子图"), *SubgraphId.ToString()), Graph->bIsTemplate && Graph->bExposeToLibrary);
+
+        if (SubgraphId == FGamePlatformPCGSubgraphIds::ProjectOnLandscape)
+        {
+            const UPCGGraphInputOutputSettings* InputSettings = Cast<UPCGGraphInputOutputSettings>(Graph->GetInputNode()->GetSettings());
+            TestNotNull(TEXT("ProjectOnLandscape存在Graph Input设置"), InputSettings);
+            if (InputSettings)
+            {
+                const TArray<FPCGPinProperties> OutputPins = InputSettings->DefaultOutputPinProperties();
+                TestTrue(TEXT("ProjectOnLandscape公开Landscape输入Pin"), OutputPins.ContainsByPredicate(
+                    [](const FPCGPinProperties& Pin) { return Pin.Label == PCGInputOutputConstants::DefaultLandscapeLabel; }));
+            }
+            TestTrue(TEXT("ProjectOnLandscape使用官方Projection节点"), Graph->GetNodes().ContainsByPredicate(
+                [](const UPCGNode* Node) { return Node && Node->GetSettings() && Node->GetSettings()->IsA<UPCGProjectionSettings>(); }));
+        }
+        else if (SubgraphId == FGamePlatformPCGSubgraphIds::WriteClosedExclude)
+        {
+            TestTrue(TEXT("WriteClosedExclude使用统一WriteExclude节点"), Graph->GetNodes().ContainsByPredicate(
+                [](const UPCGNode* Node) { return Node && Node->GetSettings() && Node->GetSettings()->IsA<UGamePlatformPCGWriteExcludeSettings>(); }));
+        }
+    }
+    return true;
+}
+
 #endif

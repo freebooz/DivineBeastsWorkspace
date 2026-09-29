@@ -43,6 +43,7 @@ GamePlatformSettings 不成为“万能设置管理器”：
 - UI（用户界面）文本缩放、高对比度、减少动画等实际应用：归 `GamePlatformUI`。
 - Camera（相机）算法和镜头行为：归 `GamePlatformCamera`。
 - SFX（音效）播放、Mix、Bus、SoundClass：归 `GamePlatformSFX`。
+- Surface（环境表面材质）的积雪、苔藓、湿润、积水、全局天气材质状态与MPC桥接：归 `GamePlatformSurface`；Settings只能在存在真实用户偏好需求时保存画质／显示类选择，不能直接成为环境状态真源。
 - 通用业务存档：归 `GamePlatformSave`。
 - LiveOps（运营）动态活动、商品、奖励：归 `GamePlatformLiveOps`。
 - Definition（定义资产）描述内容本身，不归 Settings。

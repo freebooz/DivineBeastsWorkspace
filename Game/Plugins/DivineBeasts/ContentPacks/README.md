@@ -41,6 +41,8 @@ ContentPacks/                              # 内容插件分类根目录
 
 PCG（程序化内容生成）归属遵循“机制在平台、内容在世界包”：`GamePlatformPCG（游戏平台程序化内容生成插件）`持有 Schema（属性协议）、Primitive（原语）、通用 Definition（定义）、Template（模板）、节点、WorldDirector（世界编排器）和 Editor Validator（编辑器校验器）；`DBAWorlds（神兽联盟项目世界插件）`只负责项目世界组合与校验；具体 Graph Instance（图实例）、Biome/Crop/Road/Enclosure/MeshSet（群系/作物/道路/围合/网格集合）数据和地图放置器归对应 `DBAWorldPack_*（世界内容包）`。其中湖心三岛桃花新手村 PCG 内容目标归 `DBAWorldPack_Village`，但未实际交付前不得提前登记空内容包或伪造 `.uasset`。
 
+Surface（环境表面材质）同样遵循“机制在平台、项目内容在世界包”：`GamePlatformSurface（游戏平台通用环境表面材质插件）`拥有环境状态、MPC桥接、雪／苔藓／湿润／积水等通用Material Function合同和编辑器生成／校验入口；神兽联盟实际雪、苔藓、岩石、泥土、桃林、建筑纹理及`MI_DBA_*`材质实例归对应`DBAWorldPack_*`。`DBAWorlds`不复制平台材质算法，PCG只选择／放置世界内容，VFX只负责雨雪粒子、水雾和飞溅。
+
 ## 登记格式与交付门槛
 
 `ContentPackRegistry.json`使用`SchemaVersion: 1`及`ContentPacks`数组。每项含`Name`（稳定插件身份）和`RelativePath`（相对此目录的路径，如`Heroes/DBAHeroPack_Rat`）。规划中的包不进入实际清单；不得重复既有插件身份、使用绝对路径或`..`越界。
@@ -52,6 +54,6 @@ PCG（程序化内容生成）归属遵循“机制在平台、内容在世界�
 ## 端侧与验收
 
 - `DBAGameplay` 持有 Server-safe Hero Definition；`DBAHeroPack_*` 只持有客户端外观 Profile、材质和真实/占位美术。Server Target不启用英雄美术包，避免 Manny/Quinn、纹理和材质进入 Dedicated Server Cook。
-- 世界包保留引擎外置Actor／对象文件、碰撞、导航和权威PCG结果；装饰与纯VFX不进入Server产物。
+- 世界包保留引擎外置Actor／对象文件、碰撞、导航和权威PCG结果；纯VFX以及仅用于客户端Surface的Material／Texture／Material Function不得进入Server产物；若雪地、泥地或水体需要影响玩法，服务器必须保留独立的权威Definition／碰撞／导航数据。
 - 可选皮肤／活动包不被核心硬引用。公共VFX回退保持可读性，目录冲突、异步取消、世界退出及多实例租约必须验证。
 - 未来按模块拆出的代码能力必须先修改正式代码插件清单，不能伪装为内容插件绕过46个基线。

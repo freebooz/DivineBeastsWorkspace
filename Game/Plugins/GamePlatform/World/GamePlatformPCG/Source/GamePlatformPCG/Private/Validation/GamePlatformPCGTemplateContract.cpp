@@ -5,6 +5,7 @@
 #include "Elements/PCGDensityFilter.h"
 #include "Elements/PCGStaticMeshSpawner.h"
 #include "Elements/PCGTransformPoints.h"
+#include "Elements/PCGProjectionElement.h"
 #include "Nodes/GamePlatformPCGNodes.h"
 #include "Schema/GamePlatformPCGSchema.h"
 
@@ -22,6 +23,14 @@ const FName FGamePlatformPCGTemplateIds::AssemblySpawn(TEXT("TPL_AssemblySpawn")
 const FName FGamePlatformPCGTemplateIds::InterfaceBand(TEXT("TPL_InterfaceBand"));
 const FName FGamePlatformPCGTemplateIds::RailingAttached(TEXT("TPL_RailingAttached"));
 
+const FName FGamePlatformPCGSubgraphIds::ProjectOnLandscape(TEXT("SG_ProjectOnLandscape"));
+const FName FGamePlatformPCGSubgraphIds::PriorityCarve(TEXT("SG_PriorityCarve"));
+const FName FGamePlatformPCGSubgraphIds::ApplySpawnPolicy(TEXT("SG_ApplySpawnPolicy"));
+const FName FGamePlatformPCGSubgraphIds::AssignMeshSet(TEXT("SG_AssignMeshSet"));
+const FName FGamePlatformPCGSubgraphIds::FitPostsToSpline(TEXT("SG_FitPostsToSpline"));
+const FName FGamePlatformPCGSubgraphIds::BreakByIntersection(TEXT("SG_BreakByIntersection"));
+const FName FGamePlatformPCGSubgraphIds::WriteClosedExclude(TEXT("SG_WriteClosedExclude"));
+
 TConstArrayView<FName> FGamePlatformPCGTemplateIds::All()
 {
     static const TArray<FName> Ids =
@@ -37,6 +46,21 @@ bool FGamePlatformPCGTemplateIds::IsKnown(FName TemplateId)
     return All().Contains(TemplateId);
 }
 
+TConstArrayView<FName> FGamePlatformPCGSubgraphIds::All()
+{
+    static const TArray<FName> Ids =
+    {
+        ProjectOnLandscape, PriorityCarve, ApplySpawnPolicy, AssignMeshSet,
+        FitPostsToSpline, BreakByIntersection, WriteClosedExclude
+    };
+    return Ids;
+}
+
+bool FGamePlatformPCGSubgraphIds::IsKnown(FName SubgraphId)
+{
+    return All().Contains(SubgraphId);
+}
+
 bool FGamePlatformPCGTemplateContract::IsApprovedSettingsClass(const UClass* SettingsClass)
 {
     if (!SettingsClass)
@@ -48,9 +72,11 @@ bool FGamePlatformPCGTemplateContract::IsApprovedSettingsClass(const UClass* Set
     {
         UPCGCreatePointsGridSettings::StaticClass(),
         UPCGTransformPointsSettings::StaticClass(),
+        UPCGProjectionSettings::StaticClass(),
         UPCGDensityFilterSettings::StaticClass(),
         UPCGStaticMeshSpawnerSettings::StaticClass(),
         UGamePlatformPCGWriteSchemaDefaultsSettings::StaticClass(),
+        UGamePlatformPCGWriteExcludeSettings::StaticClass(),
         UGamePlatformPCGPriorityCarveSettings::StaticClass(),
         UGamePlatformPCGProjectAlignSettings::StaticClass(),
         UGamePlatformPCGApplySpawnPolicySettings::StaticClass(),

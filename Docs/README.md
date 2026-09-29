@@ -14,7 +14,7 @@
 - [游戏端插件三层架构实施规划](Architecture/游戏端插件三层架构实施规划.md)：本次授权方案、迁移清单、依赖边界、内容登记、回退与实际验证限制。
 - [三层类继承与扩展规范](Architecture/三层类继承与扩展规范.md)：GamePlatform、MobaCommon与DivineBeasts之间的继承、接口、组件和数据扩展边界。
 - [游戏端插件系统P0收敛审计](Architecture/游戏端插件系统P0收敛审计.md)：P0-1～P0-9真实审计、Definition迁移矩阵、三层继承门禁、VFX扩展点、Online/Session阻断、3A表现规格、Review Harness与Phase 1执行顺序。
-- [游戏端插件清单设计](Architecture/游戏端插件清单设计.md)：当前45个代码／机制插件的层级、分类、模块端侧、已实现功能、成熟状态、验证资料和后续完善重点主台账。
+- [游戏端插件清单设计](Architecture/游戏端插件清单设计.md)：当前46个代码／机制插件的层级、分类、模块端侧、已实现功能、成熟状态、验证资料和后续完善重点主台账；现行40个GamePlatform稳定身份包含新增GamePlatformSurface，GamePlatformOpenWorld继续保持退休。
 - [插件开发规范](../Game/Plugins/插件开发规范.md)：UE 插件依赖、生命周期和交付门禁。
 
 ## 历史决策与后续插件实施

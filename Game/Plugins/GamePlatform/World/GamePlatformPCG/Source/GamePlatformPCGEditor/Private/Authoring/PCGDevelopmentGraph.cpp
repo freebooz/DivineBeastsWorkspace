@@ -5,6 +5,8 @@
 #include "Elements/PCGTransformPoints.h"
 #include "Elements/PCGDensityFilter.h"
 #include "Elements/PCGStaticMeshSpawner.h"
+#include "Elements/PCGProjectionElement.h"
+#include "PCGInputOutputSettings.h"
 #include "MeshSelectors/PCGMeshSelectorWeighted.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -66,6 +68,23 @@ bool IsM0M1Template(FName TemplateId)
            TemplateId == FGamePlatformPCGTemplateIds::CropField ||
            TemplateId == FGamePlatformPCGTemplateIds::AssemblySpawn ||
            TemplateId == FGamePlatformPCGTemplateIds::InterfaceBand;
+}
+
+bool IsM0M1Subgraph(FName SubgraphId)
+{
+    return FGamePlatformPCGSubgraphIds::IsKnown(SubgraphId);
+}
+
+bool ConnectTailToOutput(UPCGGraph& Graph, UPCGNode* Tail, FName TailPin, FString& Error)
+{
+    const TArray<FPCGPinProperties> Outputs = Graph.DefaultOutputPinProperties();
+    if (!Tail || Outputs.IsEmpty() || !Graph.GetOutputNode() ||
+        !Graph.AddEdge(Tail, TailPin, Graph.GetOutputNode(), Outputs[0].Label))
+    {
+        Error = TEXT("Foundation子图连接到Graph Output失败。");
+        return false;
+    }
+    return true;
 }
 }
 
@@ -252,4 +271,108 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationTemplateGraph(
     }
 
     return Graph;
+}
+
+UPCGGraph* GamePlatformPCGEditor::CreateFoundationSubgraphGraph(
+    UObject* Outer,
+    FName Name,
+    FName SubgraphId,
+    FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+
+    if (!Outer || Name.IsNone() || !IsM0M1Subgraph(SubgraphId))
+    {
+        Error = TEXT("只允许创建已登记的M0/M1 Foundation Subgraph（基础子图）。");
+        return nullptr;
+    }
+
+    UPCGGraph* Graph = NewObject<UPCGGraph>(Outer, Name, RF_Public | RF_Standalone | RF_Transactional);
+    if (!Graph || !Graph->GetInputNode() || !Graph->GetOutputNode())
+    {
+        Error = TEXT("Foundation子图UPCGGraph或默认输入/输出节点创建失败。");
+        return nullptr;
+    }
+
+    Graph->bIsTemplate = true;
+    Graph->bExposeToLibrary = true;
+    const TArray<FPCGPinProperties> Inputs = Graph->DefaultInputPinProperties();
+    if (Inputs.IsEmpty())
+    {
+        Error = TEXT("Foundation子图缺少官方默认输入引脚。");
+        return nullptr;
+    }
+
+    UPCGNode* Tail = Graph->GetInputNode();
+    FName TailPin = Inputs[0].Label;
+
+    if (SubgraphId == FGamePlatformPCGSubgraphIds::ProjectOnLandscape)
+    {
+        UPCGGraphInputOutputSettings* InputSettings = Cast<UPCGGraphInputOutputSettings>(Graph->GetInputNode()->GetSettings());
+        if (!InputSettings)
+        {
+            Error = TEXT("SG_ProjectOnLandscape无法取得Graph Input设置。");
+            return nullptr;
+        }
+        const FPCGPinProperties& LandscapePin = InputSettings->AddPin(
+            FPCGPinProperties(PCGInputOutputConstants::DefaultLandscapeLabel, EPCGDataType::Landscape));
+
+        UPCGProjectionSettings* ProjectionSettings = nullptr;
+        UPCGNode* ProjectionNode = Graph->AddNodeOfType(ProjectionSettings);
+        if (!ProjectionNode || !ProjectionSettings)
+        {
+            Error = TEXT("SG_ProjectOnLandscape创建官方Projection节点失败。");
+            return nullptr;
+        }
+        ProjectionSettings->bForceCollapseToPoint = true;
+        ProjectionSettings->SetExecuteOnGPU(false);
+        if (!Graph->AddEdge(Tail, TailPin, ProjectionNode, PCGPinConstants::DefaultInputLabel) ||
+            !Graph->AddEdge(Graph->GetInputNode(), LandscapePin.Label, ProjectionNode, PCGProjectionConstants::ProjectionTargetLabel))
+        {
+            Error = TEXT("SG_ProjectOnLandscape投影输入接线失败。");
+            return nullptr;
+        }
+        Tail = ProjectionNode;
+        TailPin = PCGPinConstants::DefaultOutputLabel;
+        if (!AppendTemplateNode<UGamePlatformPCGProjectAlignSettings>(*Graph, Tail, TailPin, Error))
+        {
+            return nullptr;
+        }
+    }
+    else if (SubgraphId == FGamePlatformPCGSubgraphIds::PriorityCarve)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGPriorityCarveSettings>(*Graph, Tail, TailPin, Error)) { return nullptr; }
+    }
+    else if (SubgraphId == FGamePlatformPCGSubgraphIds::ApplySpawnPolicy)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGApplySpawnPolicySettings>(*Graph, Tail, TailPin, Error)) { return nullptr; }
+    }
+    else if (SubgraphId == FGamePlatformPCGSubgraphIds::AssignMeshSet)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGAssignMeshSetSettings>(*Graph, Tail, TailPin, Error)) { return nullptr; }
+    }
+    else if (SubgraphId == FGamePlatformPCGSubgraphIds::FitPostsToSpline)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGFitPostsToSplineSettings>(*Graph, Tail, TailPin, Error)) { return nullptr; }
+    }
+    else if (SubgraphId == FGamePlatformPCGSubgraphIds::BreakByIntersection)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGBreakSpansByTagsSettings>(*Graph, Tail, TailPin, Error)) { return nullptr; }
+        if (auto* Settings = Cast<UGamePlatformPCGBreakSpansByTagsSettings>(Tail->GetSettings()))
+        {
+            Settings->BlockingTags = {TEXT("Road"), TEXT("Gate"), TEXT("Exclusion")};
+        }
+    }
+    else if (SubgraphId == FGamePlatformPCGSubgraphIds::WriteClosedExclude)
+    {
+        if (!AppendTemplateNode<UGamePlatformPCGWriteExcludeSettings>(*Graph, Tail, TailPin, Error)) { return nullptr; }
+        if (auto* Settings = Cast<UGamePlatformPCGWriteExcludeSettings>(Tail->GetSettings()))
+        {
+            Settings->ExcludeSource = TEXT("ClosedEnclosure");
+            Settings->ExcludeStrength = 1.0f;
+        }
+    }
+
+    return ConnectTailToOutput(*Graph, Tail, TailPin, Error) ? Graph : nullptr;
 }

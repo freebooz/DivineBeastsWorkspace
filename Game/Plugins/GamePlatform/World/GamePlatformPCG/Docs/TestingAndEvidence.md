@@ -16,6 +16,7 @@
 
 - `PCGPolicyTests.cpp`：数值预算、稳定Seed、生命周期。
 - `PCGEditorTests.cpp`：Source Fingerprint（源指纹）与Legacy Development Graph（旧开发图）。
+- `PCGEditorTests.cpp` 同时覆盖 12 个 Foundation Template（基础模板）内存构建/合同验证与 7 个 Foundation Subgraph（公共子图）内存构建；其中专门检查 `SG_ProjectOnLandscape` 的 Landscape 输入 Pin + 官方 Projection 节点，以及 `SG_WriteClosedExclude` 的统一排除写入节点。
 
 ## 本轮已执行验证
 

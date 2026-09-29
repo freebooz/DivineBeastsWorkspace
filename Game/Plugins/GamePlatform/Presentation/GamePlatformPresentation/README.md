@@ -1,5 +1,5 @@
 # GamePlatformPresentation（游戏平台表现协调插件）
 
-跨UI/VFX/SFX等表现系统的中立语义协调层。Core模块定义Presentation Request、Context、Catalog与解析契约；Client模块按LocalPlayer维护Provider、Context Contributor与Catalog Fragment，并通过WorldGeneration/RequestGeneration隔离旧世界和晚到请求。
+跨UI/VFX/SFX等表现系统的中立语义协调层。Core模块定义Presentation Request、Context、Catalog与解析契约；Client模块按LocalPlayer维护Provider、Context Contributor与Catalog Fragment，并通过WorldGeneration/RequestGeneration隔离旧世界和晚到请求。`GamePlatformSurface（游戏平台通用环境表面材质插件）`保持独立：需要跨表现系统语义编排时可以由项目适配层使用Presentation请求，但全局湿润／积雪等连续环境参数不要求逐次绕行Presentation总线。
 
 该插件不包含Niagara、Sound或Widget具体资产类型。GamePlatformVFX已通过ProviderChannel=VFX正式接入，证明该协调层已进入实际组合使用。

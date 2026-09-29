@@ -26,6 +26,21 @@ struct GAMEPLATFORMPCG_API FGamePlatformPCGTemplateIds
     static bool IsKnown(FName TemplateId);
 };
 
+/** 1.0 Foundation Subgraph（基础公共子图）稳定ID；子图属于平台创作合同，不是新的Primitive（原语）。 */
+struct GAMEPLATFORMPCG_API FGamePlatformPCGSubgraphIds
+{
+    static const FName ProjectOnLandscape;
+    static const FName PriorityCarve;
+    static const FName ApplySpawnPolicy;
+    static const FName AssignMeshSet;
+    static const FName FitPostsToSpline;
+    static const FName BreakByIntersection;
+    static const FName WriteClosedExclude;
+
+    static TConstArrayView<FName> All();
+    static bool IsKnown(FName SubgraphId);
+};
+
 /**
  * FGamePlatformPCGTemplateContract（PCG模板合同）。
  * 当前只开放M0/M1批准节点；HiGen/GPU/未知节点继续失败关闭。

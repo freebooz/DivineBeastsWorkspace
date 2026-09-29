@@ -108,7 +108,7 @@ $runtimeText = Get-ModuleSourceText 'GamePlatformSettingsRuntime'
 $runtimeBuildPath = Join-Path $pluginRoot 'Source/GamePlatformSettingsRuntime/GamePlatformSettingsRuntime.Build.cs'
 if (Test-Path -LiteralPath $runtimeBuildPath) {
     $runtimeBuild = Get-Content -LiteralPath $runtimeBuildPath -Raw -Encoding UTF8
-    foreach ($forbiddenDependency in @('MobaCommon','DivineBeasts','GamePlatformInput','GamePlatformUI','GamePlatformCamera','GamePlatformSFX','GamePlatformSave','GamePlatformData','GamePlatformOnline','GamePlatformSession','GamePlatformServer','GamePlatformTelemetry','GamePlatformPresentation')) {
+    foreach ($forbiddenDependency in @('MobaCommon','DivineBeasts','GamePlatformInput','GamePlatformUI','GamePlatformCamera','GamePlatformSFX','GamePlatformSurface','GamePlatformSave','GamePlatformData','GamePlatformOnline','GamePlatformSession','GamePlatformServer','GamePlatformTelemetry','GamePlatformPresentation')) {
         if ($runtimeBuild -match [regex]::Escape($forbiddenDependency)) {
             Add-Error ("Runtime Build.cs contains forbidden layer/domain dependency: {0}" -f $forbiddenDependency)
         }
@@ -119,7 +119,7 @@ $runtimeIncludes = @(
         Select-String -Pattern '^\s*#include\s+"([^"]+)"'
 )
 foreach ($include in $runtimeIncludes) {
-    if ($include.Line -match 'DivineBeasts|MobaCommon|GamePlatform(Input|UI|Camera|SFX|Save|Data)') {
+    if ($include.Line -match 'DivineBeasts|MobaCommon|GamePlatform(Input|UI|Camera|SFX|Surface|Save|Data)') {
         Add-Error ("Runtime include crosses settings boundary: {0}" -f $include.Line.Trim())
     }
 }
@@ -134,6 +134,7 @@ foreach ($forbidden in @(
     'GamePlatformInputClient',
     'GamePlatformCameraClient',
     'GamePlatformSFXClient',
+    'GamePlatformSurfaceClient',
     'GamePlatformUIClient',
     'GamePlatformSaveClient',
     'GamePlatformData',
@@ -155,6 +156,7 @@ foreach ($forbidden in @(
     'GamePlatformInputClient',
     'GamePlatformCameraClient',
     'GamePlatformSFXClient',
+    'GamePlatformSurfaceClient',
     'GamePlatformUIClient',
     'GamePlatformSaveClient',
     'GamePlatformSettingsServer',
@@ -179,6 +181,7 @@ foreach ($forbidden in @(
     'GamePlatformInputClient',
     'GamePlatformCameraClient',
     'GamePlatformSFXClient',
+    'GamePlatformSurfaceClient',
     'GamePlatformUIClient',
     'UGameUserSettings',
     'Niagara',
@@ -196,6 +199,7 @@ foreach ($forbidden in @(
     'GamePlatformInputClient',
     'GamePlatformCameraClient',
     'GamePlatformSFXClient',
+    'GamePlatformSurfaceClient',
     'GamePlatformUIClient'
 )) {
     if ($editorText -match [regex]::Escape($forbidden)) {

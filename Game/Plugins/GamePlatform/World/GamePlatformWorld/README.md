@@ -6,7 +6,7 @@
 
 ## 启用与最小使用
 
-正式主工程启用GamePlatformWorld。双端GamePlatformWorld依赖Core、Data、Loading、Engine、GameplayTags；GamePlatformWorldEditor执行真实定义与地图校验，依赖DataValidation。运行模块不依赖UI、VFX或Session客户端模块。
+正式主工程启用GamePlatformWorld。双端GamePlatformWorld依赖Core、Data、Loading、Engine、GameplayTags；GamePlatformWorldEditor执行真实定义与地图校验，依赖DataValidation。运行模块不依赖UI、VFX、Surface或Session客户端模块；环境表面材质属于独立的`GamePlatformSurface`客户端表现域，World只提供可被上层适配的世界事实。
 
 先完成正式三目标构建，再用CreateFoundationAssets.py生成原有地图，运行CreateWorldAssets.py生成真实世界与区域定义。显式FoundationWorld启动使用项目私有DBAFoundationWorldBootstrap；未启用时不自动加载测试定义。服务器还必须显式选择开发角色。步骤见[配置与运行](Docs/ConfigurationAndRun.md)。
 

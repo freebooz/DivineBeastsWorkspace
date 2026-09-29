@@ -33,6 +33,37 @@ TArray<FName> GetM0M1FoundationTemplateIds()
     };
 }
 
+bool IsOccupied(const FString& PackageName);
+
+TArray<FName> GetM0M1FoundationSubgraphIds()
+{
+    return TArray<FName>(FGamePlatformPCGSubgraphIds::All());
+}
+
+TArray<FString> BuildPackages(const TArray<FName>& Ids, const FString& Folder)
+{
+    TArray<FString> Packages;
+    Packages.Reserve(Ids.Num());
+    for (const FName Id : Ids)
+    {
+        Packages.Add(AssetRoot + Folder + Id.ToString());
+    }
+    return Packages;
+}
+
+bool EnsurePackagesAvailable(const TArray<FString>& Packages, const TCHAR* Kind, FString& Error)
+{
+    for (const FString& PackageName : Packages)
+    {
+        if (IsOccupied(PackageName))
+        {
+            Error = FString::Printf(TEXT("%s资产已存在或内存中已占用；拒绝覆盖：%s"), Kind, *PackageName);
+            return false;
+        }
+    }
+    return true;
+}
+
 bool IsOccupied(const FString& PackageName)
 {
     if (FindPackage(nullptr, *PackageName) || FPackageName::DoesPackageExist(PackageName))
@@ -192,6 +223,57 @@ bool UGamePlatformPCGEditorLibrary::CreateFoundationTemplateAssets(FString& Erro
     return true;
 }
 
+bool UGamePlatformPCGEditorLibrary::CreateFoundationSubgraphAssets(FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+    const TArray<FName> SubgraphIds = GetM0M1FoundationSubgraphIds();
+    const TArray<FString> Packages = BuildPackages(SubgraphIds, TEXT("Subgraphs/"));
+    if (!EnsurePackagesAvailable(Packages, TEXT("Foundation子图"), Error))
+    {
+        return false;
+    }
+
+    TArray<TObjectPtr<UPCGGraph>> Graphs;
+    Graphs.Reserve(SubgraphIds.Num());
+    for (int32 Index = 0; Index < SubgraphIds.Num(); ++Index)
+    {
+        UPackage* Package = CreatePackage(*Packages[Index]);
+        UPCGGraph* Graph = GamePlatformPCGEditor::CreateFoundationSubgraphGraph(
+            Package, SubgraphIds[Index], SubgraphIds[Index], Error);
+        if (!Graph)
+        {
+            return false;
+        }
+        Graphs.Add(Graph);
+    }
+
+    for (UPCGGraph* Graph : Graphs)
+    {
+        if (!Graph || !SaveNewAsset(*Graph, Error))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool UGamePlatformPCGEditorLibrary::CreateFoundationAssets(FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+    const TArray<FString> TemplatePackages = BuildPackages(GetM0M1FoundationTemplateIds(), TEXT("Templates/"));
+    const TArray<FString> SubgraphPackages = BuildPackages(GetM0M1FoundationSubgraphIds(), TEXT("Subgraphs/"));
+    if (!EnsurePackagesAvailable(TemplatePackages, TEXT("Foundation模板"), Error) ||
+        !EnsurePackagesAvailable(SubgraphPackages, TEXT("Foundation子图"), Error))
+    {
+        return false;
+    }
+
+    // 占用情况已统一预检；下面的两个入口仍会各自复核，以应对预检与保存之间的外部竞争。
+    return CreateFoundationTemplateAssets(Error) && CreateFoundationSubgraphAssets(Error);
+}
+
 bool UGamePlatformPCGEditorLibrary::InspectProfileSource(UGamePlatformPCGProfileDefinition* Profile,
     FString& Fingerprint, TArray<FString>& Dependencies, FString& Error)
 {
@@ -237,4 +319,9 @@ bool UGamePlatformPCGEditorLibrary::ValidateProfileContract(
 TArray<FName> UGamePlatformPCGEditorLibrary::GetKnownTemplateIds()
 {
     return TArray<FName>(FGamePlatformPCGTemplateIds::All());
+}
+
+TArray<FName> UGamePlatformPCGEditorLibrary::GetKnownSubgraphIds()
+{
+    return TArray<FName>(FGamePlatformPCGSubgraphIds::All());
 }

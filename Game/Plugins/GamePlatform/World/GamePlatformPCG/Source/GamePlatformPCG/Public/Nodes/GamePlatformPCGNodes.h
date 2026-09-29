@@ -45,6 +45,36 @@ protected:
     virtual bool SupportsBasePointDataInputs(FPCGContext*) const override { return true; }
 };
 
+/** WriteExclude（写排除属性）：把上游已确定的排除区域点写成统一Pcg.Exclude.*协议。 */
+UCLASS(BlueprintType, ClassGroup=(Procedural))
+class GAMEPLATFORMPCG_API UGamePlatformPCGWriteExcludeSettings final : public UGamePlatformPCGPointNodeSettings
+{
+    GENERATED_BODY()
+public:
+#if WITH_EDITOR
+    virtual FName GetDefaultNodeName() const override { return TEXT("GP_WriteExclude"); }
+    virtual FText GetDefaultNodeTitle() const override { return NSLOCTEXT("GamePlatformPCG", "WriteExclude", "GamePlatform | PCG | Write Exclude"); }
+    virtual EPCGSettingsType GetType() const override { return EPCGSettingsType::PointOps; }
+#endif
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Classify", meta=(ClampMin="0.0", ClampMax="1.0", PCG_Overridable))
+    float ExcludeStrength = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Classify", meta=(PCG_Overridable))
+    FName ExcludeSource = TEXT("ManualLock");
+
+protected:
+    virtual FPCGElementPtr CreateElement() const override;
+};
+
+class GAMEPLATFORMPCG_API FGamePlatformPCGWriteExcludeElement final : public IPCGElement
+{
+protected:
+    virtual bool ExecuteInternal(FPCGContext* Context) const override;
+    virtual EPCGElementExecutionLoopMode ExecutionLoopMode(const UPCGSettings*) const override { return EPCGElementExecutionLoopMode::SinglePrimaryPin; }
+    virtual bool SupportsBasePointDataInputs(FPCGContext*) const override { return true; }
+};
+
 UCLASS(BlueprintType, ClassGroup=(Procedural))
 class GAMEPLATFORMPCG_API UGamePlatformPCGPriorityCarveSettings final : public UGamePlatformPCGPointNodeSettings
 {
