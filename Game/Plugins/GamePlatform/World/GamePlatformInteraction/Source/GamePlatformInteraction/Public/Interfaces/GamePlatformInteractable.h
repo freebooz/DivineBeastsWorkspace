@@ -27,10 +27,14 @@ public:
         return true;
     }
 
+    /**
+     * Custom（自定义提交）默认采用 Fail-Closed（失败关闭）策略。
+     * 具体目标必须显式实现提交副作用；禁止未实现处理器时静默返回成功，避免“交互已完成但业务状态未改变”。
+     */
     virtual bool CommitInteraction(
         const FGamePlatformInteractionSession& Session,
         const FGamePlatformInteractionOption& Option)
     {
-        return true;
+        return false;
     }
 };

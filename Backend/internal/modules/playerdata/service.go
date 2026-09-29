@@ -13,14 +13,15 @@ import (
 
 // Profile（玩家资料）只保存跨局长期业务数据，不保存当前生命值、Buff、技能冷却等实时Gameplay状态。
 type Profile struct {
-	PlayerID          string   // PlayerID（玩家ID）。
-	GameID            string   // GameID（游戏ID）。
-	DisplayName       string   // DisplayName（显示名称）。
-	DataVersion       int      // DataVersion（数据结构版本）。
-	Revision          int64    // Revision（乐观并发修订版本）。
-	TutorialCompleted bool     // TutorialCompleted（是否完成新手教学）。
-	DefaultWorldID    string   // DefaultWorldID（默认世界ID）。
-	OwnedCharacterIDs []string // OwnedCharacterIDs（已拥有角色ID列表）。
+	PlayerID            string   // PlayerID（玩家ID）。
+	GameID              string   // GameID（游戏ID）。
+	DisplayName         string   // DisplayName（显示名称）。
+	DataVersion         int      // DataVersion（数据结构版本）。
+	Revision            int64    // Revision（乐观并发修订版本）。
+	TutorialCompleted   bool     // TutorialCompleted（是否完成新手教学）。
+	DefaultWorldID      string   // DefaultWorldID（默认世界ID）。
+	SelectedCharacterID string   // SelectedCharacterID（最近一次经服务端权威验证的持久角色ID）。
+	OwnedCharacterIDs   []string // OwnedCharacterIDs（已拥有角色ID列表）。
 }
 
 // Repository（玩家资料仓储接口）隔离PostgreSQL/sqlc具体实现。
@@ -29,10 +30,14 @@ type Repository interface {
 	Save(ctx context.Context, profile Profile, expectedRevision int64) (Profile, error)
 }
 
-// Service（玩家资料领域服务）封装Profile修改规则。
-type Service struct{ repo Repository }
+// Service（玩家资料领域服务）封装Profile修改规则，并作为PlayerDataService装配长期背包能力的宿主。
+// inventory通过独立InventoryService端口注入，避免把背包领域规则复制到玩家资料代码。
+type Service struct {
+	repo      Repository
+	inventory InventoryService
+}
 
-// NewService（创建玩家资料服务）创建领域服务。
+// NewService（创建玩家资料服务）创建领域服务；背包能力由Composition Root按部署需要显式AttachInventory。
 func NewService(repo Repository) *Service { return &Service{repo: repo} }
 
 // GetProfile（获取玩家资料）按PlayerID返回长期资料只读快照。
@@ -69,12 +74,24 @@ func (s *Service) UpdateDisplayName(ctx context.Context, playerID, displayName s
 
 // MemoryRepository（内存玩家资料仓储）用于单元测试和本地开发。
 type MemoryRepository struct {
-	mu    sync.RWMutex
-	items map[string]Profile
+	mu                 sync.RWMutex
+	items              map[string]Profile
+	characters         map[string]Character
+	createRecords      map[string]memoryCreateRecord
+	selectionRecords   map[string]memorySelectionRecord
+	displayNameRecords map[string]memoryDisplayNameRecord
 }
 
 // NewMemoryRepository（创建内存仓储）创建线程安全玩家资料仓储。
-func NewMemoryRepository() *MemoryRepository { return &MemoryRepository{items: map[string]Profile{}} }
+func NewMemoryRepository() *MemoryRepository {
+	return &MemoryRepository{
+		items:              map[string]Profile{},
+		characters:         map[string]Character{},
+		createRecords:      map[string]memoryCreateRecord{},
+		selectionRecords:   map[string]memorySelectionRecord{},
+		displayNameRecords: map[string]memoryDisplayNameRecord{},
+	}
+}
 
 // Seed（预置资料）仅用于测试或本地开发初始化。
 func (r *MemoryRepository) Seed(profile Profile) {

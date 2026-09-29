@@ -18,7 +18,11 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     const TArray<FDivineBeastsUISurfaceDescriptor>& Surfaces =
         FDivineBeastsUIScreenCatalog::GetSurfaces();
 
+<<<<<<< HEAD
+    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 12);
+=======
     TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 15);
+>>>>>>> 6efa7afa916911ea708df0a4f3035118e226d47a
 
     TSet<FName> Unique;
     for (const FDivineBeastsUISurfaceDescriptor& Surface : Surfaces)
@@ -38,7 +42,6 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     for (const FName Required : {
         FName(TEXT("UI.Screen.Boot")),
         FName(TEXT("UI.Screen.Login")),
-        FName(TEXT("UI.Screen.CharacterRoster")),
         FName(TEXT("UI.Screen.CharacterCreate")),
         FName(TEXT("UI.Screen.CharacterSelect")),
         FName(TEXT("UI.Screen.LoadingTravel")),
@@ -72,6 +75,9 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     TestNull(
         TEXT("一期未批准Settings页面不应被擅自创建"),
         FDivineBeastsUIScreenCatalog::Find(TEXT("UI.Screen.Settings")));
+    TestNull(
+        TEXT("角色列表必须作为CharacterSelect内部区域，不再维护独立页面"),
+        FDivineBeastsUIScreenCatalog::Find(TEXT("UI.Screen.CharacterRoster")));
 
     TestNull(
         TEXT("公共DBAClient不得注册竞技匹配页面"),
@@ -195,6 +201,29 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
         TEXT("Loading优先进入真实加载页"),
         FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
         FName(TEXT("UI.Screen.LoadingTravel")));
+
+    State.Loading.bIsLoading = false;
+    State.CurrentStep = TEXT("DBA.Flow.LoadRoster");
+    State.Characters.Reset();
+    TestEqual(
+        TEXT("无持久角色时进入角色创建页"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
+        FName(TEXT("UI.Screen.CharacterCreate")));
+
+    FDivineBeastsUICharacterItem Character;
+    Character.CharacterId = TEXT("character-test-001");
+    State.Characters.Add(Character);
+    TestEqual(
+        TEXT("存在持久角色时直接进入角色选择页"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
+        FName(TEXT("UI.Screen.CharacterSelect")));
+
+    State.CurrentStep = TEXT("DBA.Flow.ValidateSelection");
+    State.PageState = EDivineBeastsUIPageState::Submitting;
+    TestEqual(
+        TEXT("服务端权威验证期间保持角色选择页并由页面显示提交遮罩"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
+        FName(TEXT("UI.Screen.CharacterSelect")));
 
     return true;
 }

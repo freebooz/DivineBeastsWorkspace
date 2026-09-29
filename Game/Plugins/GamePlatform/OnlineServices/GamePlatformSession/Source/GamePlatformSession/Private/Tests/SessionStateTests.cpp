@@ -43,12 +43,17 @@ int main()
         FOperationIdentity Identity;
         Require(State.Begin(EIntent::Join, "unauth", "attempt", 0, 30, Identity) == EAcceptance::NotAuthenticated, "reject unauthenticated");
         Require(State.SetAuthentication("auth-a", 1) == EAcceptance::Accepted, "auth");
+        Require(State.Snapshot().Recovery == ERecovery::RetryAllowed, "authenticated state can start session operation");
         Identity = Begin(State, EIntent::Join, "join");
         FOperationIdentity Duplicate;
         Require(State.Begin(EIntent::Join, "join", "attempt-join", 0, 50, Duplicate) == EAcceptance::Accepted && Duplicate == Identity, "idempotent active operation");
         Require(State.Begin(EIntent::Join, "other", "other", 0, 30, Duplicate) == EAcceptance::Busy, "busy");
         Require(State.Observe(Identity, Binding(), EFact::NetworkConnected, 1) == EAcceptance::Invalid, "fact before travel");
         Connect(State, Identity, Binding());
+        Require(
+            State.Begin(EIntent::Reconnect, "reconnect-while-ready", "attempt-reconnect-ready", 5, 30, Duplicate) ==
+                EAcceptance::WrongState,
+            "reconnect requires disconnected local state");
         const auto FinishedCount = State.Snapshot().CompletionCount;
         Require(State.Observe(Identity, Binding(), EFact::NetworkConnected, 5) == EAcceptance::Stale, "terminal once");
         Require(State.Snapshot().CompletionCount == FinishedCount, "no second completion");
@@ -60,7 +65,12 @@ int main()
         Require(State.Snapshot().Current == Binding(), "source retained during preparation");
         Require(State.Cancel(Transfer, 2) == EAcceptance::Accepted, "pretravel cancel");
         Require(State.Snapshot().Current == Binding() && State.Snapshot().bRemoteResolutionRequired, "cancel preserves source and requires remote resolution");
+        Require(State.Snapshot().Recovery == ERecovery::ReconciliationRequired, "cancel exposes reconciliation requirement");
         Require(State.ResolveRemote(Transfer, Binding()) == EAcceptance::Accepted, "source confirmed");
+        Require(
+            State.Snapshot().State == EState::Ready &&
+                State.Snapshot().Recovery == ERecovery::None,
+            "confirmed retained source returns to ready without retry recovery");
         const auto Next = Begin(State, EIntent::Transfer, "next");
         Require(State.Assign(Next, Binding(2), 1) == EAcceptance::Accepted, "next target");
         Require(State.CommitTravel(Next, 2) == EAcceptance::Accepted, "next travel");
@@ -71,21 +81,36 @@ int main()
         Require(State.ResolveRemote(Next, {}) == EAcceptance::Accepted, "released confirmed");
         const auto Reconnect = Begin(State, EIntent::Reconnect, "reconnect");
         Connect(State, Reconnect, Binding(2));
+        Require(State.Snapshot().HighestAcceptedSessionEpoch == 2, "successful reconnect advances epoch fence");
         Require(!State.Disconnect(Binding()), "old source logout fenced");
         State.Leave();
         Require(State.Snapshot().State == EState::Idle && State.Snapshot().bRemoteResolutionRequired, "leave local and remote distinct");
         Require(State.ResolveRemote(Reconnect, {}) == EAcceptance::Accepted, "leave confirmed");
+        const auto StaleEpoch = Begin(State, EIntent::Join, "stale-epoch");
+        Require(State.Assign(StaleEpoch, Binding(2), 1) == EAcceptance::Invalid, "disconnected session retains epoch fence");
+        Require(State.Cancel(StaleEpoch, 2) == EAcceptance::Accepted, "cancel stale epoch operation");
+        Require(State.ResolveRemote(StaleEpoch, {}) == EAcceptance::Accepted, "stale epoch operation resolved");
         const auto Timeout = Begin(State, EIntent::Join, "timeout");
         State.AdvanceDeadline(30);
         Require(State.Snapshot().LastOutcome == EOutcome::TimedOut, "monotonic deadline");
         Require(State.Assign(Timeout, Binding(), 31) == EAcceptance::Stale, "late target ignored");
         Require(State.Snapshot().bRemoteResolutionRequired, "lost allocation response remains uncertain");
+        Require(State.Snapshot().Recovery == ERecovery::ReconciliationRequired, "pretravel timeout requires remote reconciliation");
         Require(State.ResolveRemote(Timeout, {}) == EAcceptance::Accepted, "timeout resolved");
         const auto OldAccount = Begin(State, EIntent::Join, "old-auth");
         Require(State.SetAuthentication("auth-b", 2) == EAcceptance::Accepted, "switch account");
         Require(State.Assign(OldAccount, Binding(), 1) == EAcceptance::Stale, "old account callback fenced");
         Require(State.SetAuthentication("auth-c", 2) == EAcceptance::Stale, "same generation different account");
         Require(State.Begin(EIntent::Join, "nan", "nan", std::numeric_limits<double>::quiet_NaN(), 30, Identity) == EAcceptance::Invalid, "invalid clock");
+        FSessionConnectionState PostTravelTimeout("scope-timeout-after-travel");
+        Require(PostTravelTimeout.SetAuthentication("auth-timeout", 1) == EAcceptance::Accepted, "posttravel timeout auth");
+        const auto PostTravelIdentity = Begin(PostTravelTimeout, EIntent::Join, "posttravel-timeout");
+        Require(PostTravelTimeout.Assign(PostTravelIdentity, Binding(3), 1) == EAcceptance::Accepted, "posttravel timeout assign");
+        Require(PostTravelTimeout.CommitTravel(PostTravelIdentity, 2) == EAcceptance::Accepted, "posttravel timeout commit");
+        PostTravelTimeout.AdvanceDeadline(30);
+        Require(PostTravelTimeout.Snapshot().LastOutcome == EOutcome::Uncertain, "posttravel timeout cannot pretend clean timeout");
+        Require(PostTravelTimeout.Snapshot().Recovery == ERecovery::ReconciliationRequired, "posttravel timeout requires reconciliation");
+        Require(PostTravelTimeout.ResolveRemote(PostTravelIdentity, {}) == EAcceptance::Accepted, "posttravel timeout resolution");
         FSessionConnectionState Other("scope-b");
         Other.SetAuthentication("auth-a", 1);
         const auto OtherIdentity = Begin(Other, EIntent::Join, "independent");

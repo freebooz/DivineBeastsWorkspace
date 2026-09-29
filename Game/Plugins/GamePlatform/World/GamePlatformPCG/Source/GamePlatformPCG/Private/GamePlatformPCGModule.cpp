@@ -1,2 +1,5 @@
 #include "Modules/ModuleManager.h"
-IMPLEMENT_MODULE(FDefaultModuleImpl,GamePlatformPCG)
+#include "GamePlatformPCGLog.h"
+
+DEFINE_LOG_CATEGORY(LogGamePlatformPCG);
+IMPLEMENT_MODULE(FDefaultModuleImpl, GamePlatformPCG)

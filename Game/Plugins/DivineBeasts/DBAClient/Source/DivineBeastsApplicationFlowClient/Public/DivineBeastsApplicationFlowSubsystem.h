@@ -11,7 +11,6 @@
 #include "DivineBeastsApplicationFlowSubsystem.generated.h"
 
 class IGamePlatformDataService;
-class IGamePlatformOnlineAuthProvider;
 class IDivineBeastsApplicationBackend;
 class UDivineBeastsApplicationFlowContext;
 class UGamePlatformApplicationFlowSubsystem;
@@ -66,9 +65,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
     bool SubmitCharacterCreateDraft(const FDivineBeastsCharacterCreateDraft& Draft);
 
-    /** 获取当前唯一的项目Character Creation Catalog（角色创建目录）。 */
-    bool GetCharacterCreationHeroes(
-        TArray<FGamePlatformCharacterCreationHeroDescriptor>& OutHeroes) const;
+    /**
+     * 获取当前项目可创建英雄列表。
+     * 对外只暴露项目轻量 DTO，避免 UI 等上层消费者被迫依赖平台 Character 模块实现类型。
+     */
+    bool GetCharacterCreationOptions(
+        TArray<FDivineBeastsCharacterCreationOption>& OutOptions) const;
 
     /** 提交已有持久角色选择；真正所有权和版本仍以后端验证为准。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
@@ -192,10 +194,9 @@ private:
     UGamePlatformSessionClientSubsystem* Session = nullptr;
     IGamePlatformLoadingService* Loading = nullptr;
     IGamePlatformDataService* Data = nullptr;
-
+    /** 项目层Gateway业务适配器；不持有Token，认证统一由GamePlatformOnlineClient处理。 */
     TSharedPtr<IDivineBeastsApplicationBackend> Backend;
-    /** 项目层真实 Gateway 认证适配；令牌仅保存在 Provider 私有内存，不进入 UObject/ViewState。 */
-    TSharedPtr<IGamePlatformOnlineAuthProvider> AuthProvider;
+
 
     /** GameInstance作用域的项目流程载荷；不保存World/Actor/Widget强引用。 */
     UPROPERTY(Transient)

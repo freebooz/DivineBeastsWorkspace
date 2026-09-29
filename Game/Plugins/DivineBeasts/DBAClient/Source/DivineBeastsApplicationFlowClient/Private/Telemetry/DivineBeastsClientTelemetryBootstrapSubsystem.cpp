@@ -57,19 +57,14 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Initialize(FSubsystemCollec
     }
 
     TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> WeakOnline = Online;
-    FGamePlatformTelemetryHeaderProvider HeaderProvider = [WeakOnline]()
-    {
-        TMap<FString, FString> Headers;
-        if (const UGamePlatformOnlineClientSubsystem* CurrentOnline = WeakOnline.Get())
+    FGamePlatformTelemetryRequestAuthorizer RequestAuthorizer =
+        [WeakOnline](IHttpRequest& Request)
         {
-            const FString Authorization = CurrentOnline->GetAuthorizationHeaderValueTransient();
-            if (!Authorization.IsEmpty())
-            {
-                Headers.Add(TEXT("Authorization"), Authorization);
-            }
-        }
-        return Headers;
-    };
+            const UGamePlatformOnlineClientSubsystem* CurrentOnline =
+                WeakOnline.Get();
+            return CurrentOnline &&
+                CurrentOnline->ApplyAuthorization(Request);
+        };
 
     const TSharedRef<FGamePlatformTelemetryHttpTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FGamePlatformTelemetryHttpTransport, ESPMode::ThreadSafe>(
@@ -78,7 +73,8 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Initialize(FSubsystemCollec
             TMap<FString, FString>{},
             5.0f,
             256 * 1024,
-            MoveTemp(HeaderProvider));
+            FGamePlatformTelemetryHeaderProvider(),
+            MoveTemp(RequestAuthorizer));
 
     FGamePlatformTelemetryRetrySettings Retry;
     Retry.MaxRetries = 4;

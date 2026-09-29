@@ -6,6 +6,15 @@
 #include "Settings/GamePlatformInteractionSettings.h"
 #include "Types/GamePlatformInteractionSession.h"
 
+namespace
+{
+/** 正向递增复制计数器；达到 int32 上限后回绕到 1，避免有符号整数溢出。 */
+int32 AdvancePositiveCounter(int32 CurrentValue)
+{
+    return CurrentValue >= MAX_int32 ? 1 : CurrentValue + 1;
+}
+}
+
 UGamePlatformInteractableComponent::UGamePlatformInteractableComponent()
 {
     SetIsReplicatedByDefault(true);
@@ -16,18 +25,31 @@ void UGamePlatformInteractableComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (GetOwner()->HasAuthority() && !TargetInstanceId.IsValid())
+    AActor* OwnerActor = GetOwner();
+    if (!IsValid(OwnerActor) || !OwnerActor->HasAuthority())
+    {
+        return;
+    }
+
+    if (!TargetInstanceId.IsValid())
     {
         TargetInstanceId = FGuid::NewGuid();
         TargetGeneration = FMath::Max(1, TargetGeneration);
         TargetRevision = FMath::Max(1, TargetRevision);
+    }
+
+    // 编辑器初始配置同样必须满足运行期约束；非法配置在服务器侧直接关闭交互，
+    // 防止客户端展示后再被服务器拒绝形成“可见但永远不可用”的假候选。
+    if (!ValidateOptions(Options))
+    {
+        bEnabled = false;
     }
 }
 
 void UGamePlatformInteractableComponent::EndPlay(
     const EEndPlayReason::Type EndPlayReason)
 {
-    if (GetOwner()->HasAuthority())
+    if (IsValid(GetOwner()) && GetOwner()->HasAuthority())
     {
         TArray<TPair<FGuid, TWeakObjectPtr<UGamePlatformInteractorComponent>>> Sessions;
         Sessions.Reserve(ActiveSessions.Num());
@@ -49,7 +71,8 @@ void UGamePlatformInteractableComponent::EndPlay(
             }
         }
 
-        ++TargetGeneration;
+        // EndPlay（结束生命周期）同样必须使用安全正整数计数器，避免极端长生命周期下 int32 溢出。
+        TargetGeneration = AdvancePositiveCounter(TargetGeneration);
     }
 
     Super::EndPlay(EndPlayReason);
@@ -110,7 +133,11 @@ bool UGamePlatformInteractableComponent::CanContinueSession(
     const FGuid& SessionId,
     const FGamePlatformInteractionOption& Option) const
 {
-    if (!ActiveSessions.Contains(SessionId) ||
+    const TWeakObjectPtr<UGamePlatformInteractorComponent>* ActiveInteractor =
+        ActiveSessions.Find(SessionId);
+
+    if (!ActiveInteractor ||
+        !ActiveInteractor->IsValid() ||
         !IsInteractionEnabled() ||
         !Option.bEnabled ||
         !Option.IsStructurallyValid())
@@ -129,7 +156,9 @@ bool UGamePlatformInteractableComponent::CanContinueSession(
 bool UGamePlatformInteractableComponent::SetOptions(
     const TArray<FGamePlatformInteractionOption>& InOptions)
 {
-    if (!GetOwner()->HasAuthority() || !ValidateOptions(InOptions))
+    if (!IsValid(GetOwner()) ||
+        !GetOwner()->HasAuthority() ||
+        !ValidateOptions(InOptions))
     {
         return false;
     }
@@ -143,7 +172,10 @@ bool UGamePlatformInteractableComponent::SetOptions(
 
 bool UGamePlatformInteractableComponent::SetInteractionEnabled(bool bInEnabled)
 {
-    if (!GetOwner()->HasAuthority() || bEnabled == bInEnabled)
+    if (!IsValid(GetOwner()) ||
+        !GetOwner()->HasAuthority() ||
+        bEnabled == bInEnabled ||
+        (bConsumed && bInEnabled))
     {
         return false;
     }
@@ -161,7 +193,7 @@ bool UGamePlatformInteractableComponent::SetInteractionEnabled(bool bInEnabled)
 bool UGamePlatformInteractableComponent::SetRemainingCharges(
     int32 InRemainingCharges)
 {
-    if (!GetOwner()->HasAuthority())
+    if (!IsValid(GetOwner()) || !GetOwner()->HasAuthority())
     {
         return false;
     }
@@ -188,7 +220,7 @@ bool UGamePlatformInteractableComponent::SetRemainingCharges(
 
 void UGamePlatformInteractableComponent::AdvanceTargetGeneration()
 {
-    if (!GetOwner()->HasAuthority())
+    if (!IsValid(GetOwner()) || !GetOwner()->HasAuthority())
     {
         return;
     }
@@ -200,10 +232,10 @@ void UGamePlatformInteractableComponent::AdvanceTargetGeneration()
         Sessions.Add(Pair);
     }
 
-    ++TargetGeneration;
+    TargetGeneration = AdvancePositiveCounter(TargetGeneration);
     ActiveSessions.Reset();
     OccupancyCount = 0;
-    CommittedSessions.Reset();
+    CommittedResults.Reset();
     CommittedSessionOrder.Reset();
     BumpRevision();
 
@@ -226,13 +258,17 @@ bool UGamePlatformInteractableComponent::TryAcquireSession(
 {
     OutError = EGamePlatformInteractionError::None;
 
-    if (!GetOwner()->HasAuthority() ||
+    if (!IsValid(GetOwner()) ||
+        !GetOwner()->HasAuthority() ||
         !SessionId.IsValid() ||
         !IsValid(Interactor))
     {
         OutError = EGamePlatformInteractionError::InvalidInteractor;
         return false;
     }
+
+    // 异常销毁的 Interactor（交互发起器）不能永久占用 Shared/Exclusive（共享/独占）名额。
+    PruneInvalidActiveSessions();
 
     if (!IsOptionAvailable(Option))
     {
@@ -265,7 +301,7 @@ bool UGamePlatformInteractableComponent::TryAcquireSession(
 
 void UGamePlatformInteractableComponent::ReleaseSession(const FGuid& SessionId)
 {
-    if (!GetOwner()->HasAuthority())
+    if (!IsValid(GetOwner()) || !GetOwner()->HasAuthority())
     {
         return;
     }
@@ -281,30 +317,33 @@ bool UGamePlatformInteractableComponent::CommitSession(
 {
     OutResult.RequestId = Session.RequestId;
     OutResult.SessionId = Session.SessionId;
+    OutResult.OptionId = Option.OptionId;
 
-    if (!GetOwner()->HasAuthority())
+    if (!IsValid(GetOwner()) || !GetOwner()->HasAuthority())
     {
         OutResult.Error = EGamePlatformInteractionError::InvalidTarget;
         return false;
     }
 
-    if (CommittedSessions.Contains(Session.SessionId))
+    // 同一 Session（会话）的重复 Commit（提交）直接返回首次成功结果，
+    // 不重复执行 Toggle/Consume/Harvest/Custom（切换/消费/采集/自定义）副作用。
+    if (const FGamePlatformInteractionResult* CachedResult =
+        CommittedResults.Find(Session.SessionId))
     {
-        OutResult.Error = EGamePlatformInteractionError::SessionAlreadyCompleted;
-        return false;
+        OutResult = *CachedResult;
+        return OutResult.IsSuccess();
     }
 
-    if (!ActiveSessions.Contains(Session.SessionId) ||
-        Session.TargetGeneration != TargetGeneration ||
-        Session.TargetRevisionAtStart != TargetRevision ||
+    // TargetRevisionAtStart（目标起始修订号）只用于 Begin（开始）阶段的乐观并发校验。
+    // 会话建立后，配置/可用性变更会通过 CancelActiveSessions（取消活动会话）显式失效；
+    // 因此这里不能因另一个 Shared（共享）会话成功提交并推进 Revision（修订号）而误杀当前会话。
+    if (Session.TargetGeneration != TargetGeneration ||
         !CanContinueSession(Session.SessionId, Option))
     {
         OutResult.Error =
             Session.TargetGeneration != TargetGeneration
                 ? EGamePlatformInteractionError::StaleTargetGeneration
-                : Session.TargetRevisionAtStart != TargetRevision
-                    ? EGamePlatformInteractionError::StaleTargetRevision
-                    : EGamePlatformInteractionError::TargetUnavailable;
+                : EGamePlatformInteractionError::TargetUnavailable;
         return false;
     }
 
@@ -338,8 +377,8 @@ bool UGamePlatformInteractableComponent::CommitSession(
         break;
 
     case EGamePlatformInteractionCommitKind::External:
-        // External提交只确认本次Interaction事实成立。
-        // 目标最终Consumed状态必须由外部权威结果回调后显式Finalize。
+        // External（外部结果）提交只确认本次 Interaction（交互）事实成立。
+        // 目标最终 Consumed（已消费）状态必须由外部权威结果回调后显式 Finalize（最终确认）。
         bCommitted = true;
         break;
 
@@ -365,37 +404,39 @@ bool UGamePlatformInteractableComponent::CommitSession(
         return false;
     }
 
-    CommittedSessions.Add(Session.SessionId);
+    BumpRevision();
+
+    OutResult.Error = EGamePlatformInteractionError::None;
+    OutResult.State = EGamePlatformInteractionSessionState::Completed;
+    OutResult.FinalTargetRevision = TargetRevision;
+
+    CommittedResults.Add(Session.SessionId, OutResult);
     CommittedSessionOrder.Add(Session.SessionId);
+
     const int32 MaxRememberedSessions =
         FMath::Max(
             8,
             GetDefault<UGamePlatformInteractionSettings>()
                 ->MaxRecentRequests);
 
-    while (CommittedSessionOrder.Num() >
-        MaxRememberedSessions)
+    while (CommittedSessionOrder.Num() > MaxRememberedSessions)
     {
-        const FGuid Oldest =
-            CommittedSessionOrder[0];
+        const FGuid Oldest = CommittedSessionOrder[0];
         CommittedSessionOrder.RemoveAt(
             0,
             1,
             EAllowShrinking::No);
-        CommittedSessions.Remove(Oldest);
+        CommittedResults.Remove(Oldest);
     }
-    BumpRevision();
 
-    OutResult.Error = EGamePlatformInteractionError::None;
-    OutResult.State = EGamePlatformInteractionSessionState::Completed;
-    OutResult.FinalTargetRevision = TargetRevision;
     return true;
 }
 
 bool UGamePlatformInteractableComponent::BeginExternalOutcomeReservation(
     const FGuid& ReservationId)
 {
-    if (!GetOwner()->HasAuthority() ||
+    if (!IsValid(GetOwner()) ||
+        !GetOwner()->HasAuthority() ||
         !ReservationId.IsValid() ||
         bConsumed)
     {
@@ -423,7 +464,8 @@ bool UGamePlatformInteractableComponent::BeginExternalOutcomeReservation(
 bool UGamePlatformInteractableComponent::FinalizeExternalConsume(
     const FGuid& ReservationId)
 {
-    if (!GetOwner()->HasAuthority() ||
+    if (!IsValid(GetOwner()) ||
+        !GetOwner()->HasAuthority() ||
         !ReservationId.IsValid() ||
         ExternalOutcomeReservationId != ReservationId ||
         bConsumed)
@@ -441,7 +483,8 @@ bool UGamePlatformInteractableComponent::FinalizeExternalConsume(
 bool UGamePlatformInteractableComponent::CancelExternalOutcomeReservation(
     const FGuid& ReservationId)
 {
-    if (!GetOwner()->HasAuthority() ||
+    if (!IsValid(GetOwner()) ||
+        !GetOwner()->HasAuthority() ||
         !ReservationId.IsValid() ||
         ExternalOutcomeReservationId != ReservationId ||
         bConsumed)
@@ -460,10 +503,35 @@ void UGamePlatformInteractableComponent::OnRep_State()
     OnStateChanged.Broadcast();
 }
 
+void UGamePlatformInteractableComponent::PruneInvalidActiveSessions()
+{
+    if (!IsValid(GetOwner()) || !GetOwner()->HasAuthority())
+    {
+        return;
+    }
+
+    const int32 PreviousOccupancy = ActiveSessions.Num();
+    for (auto It = ActiveSessions.CreateIterator(); It; ++It)
+    {
+        if (!It.Value().IsValid())
+        {
+            It.RemoveCurrent();
+        }
+    }
+
+    OccupancyCount = ActiveSessions.Num();
+    if (OccupancyCount != PreviousOccupancy)
+    {
+        OnStateChanged.Broadcast();
+    }
+}
+
 void UGamePlatformInteractableComponent::CancelActiveSessions(
     EGamePlatformInteractionCancelReason Reason)
 {
-    if (!GetOwner()->HasAuthority() || ActiveSessions.IsEmpty())
+    if (!IsValid(GetOwner()) ||
+        !GetOwner()->HasAuthority() ||
+        ActiveSessions.IsEmpty())
     {
         return;
     }
@@ -490,7 +558,7 @@ void UGamePlatformInteractableComponent::CancelActiveSessions(
 
 void UGamePlatformInteractableComponent::BumpRevision()
 {
-    ++TargetRevision;
+    TargetRevision = AdvancePositiveCounter(TargetRevision);
     OnStateChanged.Broadcast();
 }
 
@@ -505,6 +573,8 @@ bool UGamePlatformInteractableComponent::ValidateOptions(
     {
         if (!Option.IsStructurallyValid() ||
             Option.MaxDistance > Settings->MaxConfiguredInteractionDistance ||
+            (Option.Mode == EGamePlatformInteractionMode::Hold &&
+             Option.HoldDuration > Settings->MaxHoldDuration) ||
             OptionIds.Contains(Option.OptionId))
         {
             return false;

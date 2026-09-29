@@ -14,8 +14,9 @@ DBAClient（神兽联盟客户端组合插件）
 UDivineBeastsApplicationFlowSubsystem（项目应用流程）
         │
         ├── GamePlatformApplicationFlow（唯一流程状态机）
-        ├── GamePlatformOnlineClient（平台认证状态机）
-        └── FDivineBeastsGatewayAuthProvider（项目 Gateway 认证适配）
+        └── GamePlatformOnlineClient（平台认证/受保护请求唯一生产状态机）
+                       ↓
+              FGamePlatformGatewayAuthProvider（平台私有 Gateway 传输）
                        ↓
               GatewayService（统一接入服务）
               POST /v1/auth/login
@@ -83,7 +84,7 @@ ApplicationFlow 不依赖 UI，避免循环依赖。
 
 ## 4. 真实登录认证
 
-项目层新增 FDivineBeastsGatewayAuthProvider，实现平台 IGamePlatformOnlineAuthProvider。
+项目层不再实现认证 Provider，也不持有 AccessToken/RefreshToken。`UDivineBeastsApplicationFlowSubsystem（项目应用流程子系统）` 仅注入 Gateway 地址、GameId 和 ClientVersion；`UGamePlatformOnlineClientSubsystem（平台在线客户端子系统）` 统一实现 `IGamePlatformOnlineService（在线服务门面）`，其私有 `FGamePlatformGatewayAuthProvider（平台 Gateway 认证提供者）` 负责真实 HTTP/JSON、Token 生命周期、401 单次共享刷新、安全重试与同源授权。
 
 正式契约来源：
 

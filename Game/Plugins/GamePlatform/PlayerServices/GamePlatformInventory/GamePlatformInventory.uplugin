@@ -1,13 +1,16 @@
 {
     "FileVersion":  3,
-    "Version":  1,
-    "VersionName":  "0.1.0",
+    "Version":  2,
+    "VersionName":  "0.2.0",
     "FriendlyName":  "GamePlatformInventory",
-    "Description":  "GamePlatformInventory（游戏平台插件）",
+    "Description":  "GamePlatformInventory（游戏平台通用背包客户端）：背包快照、幂等写请求与对账；长期权威由PlayerDataService持有。",
     "Category":  "GamePlatform/PlayerServices",
     "CreatedBy":  "DivineBeastsWorkspace",
     "CanContainContent":  true,
     "EnabledByDefault":  false,
+    "Plugins":  [
+                    { "Name": "GamePlatformOnline", "Enabled": true }
+                ],
     "Modules":  [
                     {
                         "Name":  "GamePlatformInventoryClient",

@@ -6,7 +6,6 @@
 #include "Creation/GamePlatformCharacterCreationProvider.h"
 #include "Features/IModularFeatures.h"
 #include "Flow/DivineBeastsFlowNodes.h"
-#include "Online/DivineBeastsGatewayAuthProvider.h"
 #include "Interfaces/GamePlatformFlowNodeFactory.h"
 #include "API/GamePlatformApplicationFlowSubsystem.h"
 #include "Definitions/GamePlatformFlowDefinition.h"
@@ -24,6 +23,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Engine/StreamableManager.h"
+#include "HAL/PlatformMisc.h"
 #include "Misc/PackageName.h"
 #include "Loading/DivineBeastsReadinessFacts.h"
 #include "UObject/Package.h"
@@ -351,6 +351,8 @@ namespace
             return EDivineBeastsFlowError::NetworkUnavailable;
         case EGamePlatformAuthError::AuthExpired:
             return EDivineBeastsFlowError::AuthExpired;
+        case EGamePlatformAuthError::OutcomeUnknown:
+            return EDivineBeastsFlowError::AuthExpired;
         case EGamePlatformAuthError::ContractIncompatible:
             return EDivineBeastsFlowError::ContractIncompatible;
         case EGamePlatformAuthError::Cancelled:
@@ -411,9 +413,40 @@ void UDivineBeastsApplicationFlowSubsystem::Initialize(
 
     if (Online)
     {
-        // 项目组合根只注入一个真实 Provider；UI/Flow 仍只依赖平台 Online 公共状态机。
-        AuthProvider = MakeShared<FDivineBeastsGatewayAuthProvider>();
-        Online->SetProvider(AuthProvider);
+        // 项目层只提供部署配置；Token、HTTP安全策略、刷新和受保护请求均由平台Online实现。
+        FGamePlatformOnlineConfiguration OnlineConfiguration;
+        OnlineConfiguration.ServiceOrigin =
+            FPlatformMisc::GetEnvironmentVariable(
+                TEXT("DIVINEBEASTS_GATEWAY_BASE_URL"));
+        OnlineConfiguration.ServiceOrigin.TrimStartAndEndInline();
+        while (OnlineConfiguration.ServiceOrigin.RemoveFromEnd(TEXT("/")))
+        {
+        }
+        OnlineConfiguration.GameId = TEXT("divine-beasts");
+
+        FString ClientVersion =
+            FPlatformMisc::GetEnvironmentVariable(
+                TEXT("DIVINEBEASTS_CLIENT_VERSION"));
+        ClientVersion.TrimStartAndEndInline();
+        OnlineConfiguration.ClientVersion =
+            ClientVersion.IsEmpty()
+                ? TEXT("0.1.0")
+                : MoveTemp(ClientVersion);
+
+#if !UE_BUILD_SHIPPING
+        OnlineConfiguration.bAllowLoopbackHttpDevelopment =
+            OnlineConfiguration.ServiceOrigin.StartsWith(
+                TEXT("http://127.0.0.1")) ||
+            OnlineConfiguration.ServiceOrigin.StartsWith(
+                TEXT("http://[::1]"));
+#endif
+
+        const FGamePlatformResult OnlineConfigurationResult =
+            Online->Configure(OnlineConfiguration);
+        if (!OnlineConfigurationResult.IsSuccess())
+        {
+            SetError(EDivineBeastsFlowError::FlowNotInitialized);
+        }
     }
 
     Backend = MakeShared<FDivineBeastsHttpApplicationBackend>(Online);
@@ -511,12 +544,6 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
     {
         Online->OnAuthStateChanged().Remove(AuthHandle);
     }
-    if (Online)
-    {
-        // 先让平台子系统推进认证代次并丢弃旧 Provider，再释放项目 Provider。
-        Online->SetProvider(nullptr);
-    }
-    AuthProvider.Reset();
     if (Session && SessionHandle.IsValid())
     {
         Session->OnSessionChanged().Remove(SessionHandle);
@@ -1235,18 +1262,32 @@ void UDivineBeastsApplicationFlowSubsystem::LoginWithCredentials(
     Online->LoginWithCredentials(LoginName, Password);
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::GetCharacterCreationHeroes(
-    TArray<FGamePlatformCharacterCreationHeroDescriptor>& OutHeroes) const
+bool UDivineBeastsApplicationFlowSubsystem::GetCharacterCreationOptions(
+    TArray<FDivineBeastsCharacterCreationOption>& OutOptions) const
 {
-    OutHeroes.Reset();
+    OutOptions.Reset();
     IGamePlatformCharacterCreationProvider* Provider =
         GetCharacterCreationProvider();
     if (!Provider)
     {
         return false;
     }
-    Provider->GetCreateableHeroes(OutHeroes);
-    return !OutHeroes.IsEmpty();
+
+    TArray<FGamePlatformCharacterCreationHeroDescriptor> Heroes;
+    Provider->GetCreateableHeroes(Heroes);
+    OutOptions.Reserve(Heroes.Num());
+    for (const FGamePlatformCharacterCreationHeroDescriptor& Hero : Heroes)
+    {
+        if (Hero.HeroDefinitionId.IsNone())
+        {
+            continue;
+        }
+        FDivineBeastsCharacterCreationOption Option;
+        Option.HeroDefinitionId = Hero.HeroDefinitionId;
+        Option.DisplayNameKey = Hero.DisplayNameKey;
+        OutOptions.Add(MoveTemp(Option));
+    }
+    return !OutOptions.IsEmpty();
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::SubmitCharacterCreateDraft(
@@ -1551,7 +1592,11 @@ UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment()
         Assignment.ServerRoleId.IsNone() ||
         Assignment.ExperienceId.IsNone() ||
         Assignment.WorldId.IsNone() ||
-        Assignment.MapId.IsNone())
+        Assignment.MapId.IsNone() ||
+        Assignment.GameSessionId.IsEmpty() ||
+        Assignment.ServerBootId.IsEmpty() ||
+        Assignment.ProtocolVersion.IsEmpty() ||
+        Assignment.SessionEpoch <= 0)
     {
         return FGamePlatformResult::Failure(
             TEXT("WorldAssignmentIncomplete"),
@@ -1713,6 +1758,13 @@ UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment()
     Request.TicketId = Assignment.TicketId;
     Request.CharacterId = Assignment.CharacterId;
     Request.SessionId = Assignment.SessionId;
+    Request.ExpectedBinding.AssignmentId = Assignment.AssignmentId;
+    Request.ExpectedBinding.GameSessionId = Assignment.GameSessionId;
+    Request.ExpectedBinding.ServerInstanceId = Assignment.GameServerId;
+    Request.ExpectedBinding.ServerBootId = Assignment.ServerBootId;
+    Request.ExpectedBinding.WorldId = Assignment.WorldId;
+    Request.ExpectedBinding.ProtocolVersion = Assignment.ProtocolVersion;
+    Request.ExpectedBinding.SessionEpoch = Assignment.SessionEpoch;
     Request.TimeoutSeconds = Spec.TimeoutSeconds;
 
     if (!Session->BeginTransfer(Request, Result))

@@ -318,19 +318,20 @@ func (x *GetProfileRequest) GetPlayerId() string {
 }
 
 type GetProfileResponse struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Found             bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
-	PlayerId          string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	GameId            string                 `protobuf:"bytes,3,opt,name=game_id,json=gameId,proto3" json:"game_id,omitempty"`
-	DisplayName       string                 `protobuf:"bytes,4,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	DataVersion       int32                  `protobuf:"varint,5,opt,name=data_version,json=dataVersion,proto3" json:"data_version,omitempty"`
-	Revision          int64                  `protobuf:"varint,6,opt,name=revision,proto3" json:"revision,omitempty"`
-	TutorialCompleted bool                   `protobuf:"varint,7,opt,name=tutorial_completed,json=tutorialCompleted,proto3" json:"tutorial_completed,omitempty"`
-	DefaultWorldId    string                 `protobuf:"bytes,8,opt,name=default_world_id,json=defaultWorldId,proto3" json:"default_world_id,omitempty"`
-	OwnedCharacterIds []string               `protobuf:"bytes,9,rep,name=owned_character_ids,json=ownedCharacterIds,proto3" json:"owned_character_ids,omitempty"`
-	ErrorCode         string                 `protobuf:"bytes,10,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Found               bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
+	PlayerId            string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	GameId              string                 `protobuf:"bytes,3,opt,name=game_id,json=gameId,proto3" json:"game_id,omitempty"`
+	DisplayName         string                 `protobuf:"bytes,4,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	DataVersion         int32                  `protobuf:"varint,5,opt,name=data_version,json=dataVersion,proto3" json:"data_version,omitempty"`
+	Revision            int64                  `protobuf:"varint,6,opt,name=revision,proto3" json:"revision,omitempty"`
+	TutorialCompleted   bool                   `protobuf:"varint,7,opt,name=tutorial_completed,json=tutorialCompleted,proto3" json:"tutorial_completed,omitempty"`
+	DefaultWorldId      string                 `protobuf:"bytes,8,opt,name=default_world_id,json=defaultWorldId,proto3" json:"default_world_id,omitempty"`
+	OwnedCharacterIds   []string               `protobuf:"bytes,9,rep,name=owned_character_ids,json=ownedCharacterIds,proto3" json:"owned_character_ids,omitempty"`
+	ErrorCode           string                 `protobuf:"bytes,10,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	SelectedCharacterId string                 `protobuf:"bytes,11,opt,name=selected_character_id,json=selectedCharacterId,proto3" json:"selected_character_id,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *GetProfileResponse) Reset() {
@@ -433,6 +434,1330 @@ func (x *GetProfileResponse) GetErrorCode() string {
 	return ""
 }
 
+func (x *GetProfileResponse) GetSelectedCharacterId() string {
+	if x != nil {
+		return x.SelectedCharacterId
+	}
+	return ""
+}
+
+type CharacterSummary struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	CharacterId         string                 `protobuf:"bytes,1,opt,name=character_id,json=characterId,proto3" json:"character_id,omitempty"`
+	HeroDefinitionId    string                 `protobuf:"bytes,2,opt,name=hero_definition_id,json=heroDefinitionId,proto3" json:"hero_definition_id,omitempty"`
+	CharacterName       string                 `protobuf:"bytes,3,opt,name=character_name,json=characterName,proto3" json:"character_name,omitempty"`
+	CharacterRevision   int64                  `protobuf:"varint,4,opt,name=character_revision,json=characterRevision,proto3" json:"character_revision,omitempty"`
+	OnboardingState     string                 `protobuf:"bytes,5,opt,name=onboarding_state,json=onboardingState,proto3" json:"onboarding_state,omitempty"`
+	Status              string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	AppearanceProfileId string                 `protobuf:"bytes,7,opt,name=appearance_profile_id,json=appearanceProfileId,proto3" json:"appearance_profile_id,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *CharacterSummary) Reset() {
+	*x = CharacterSummary{}
+	mi := &file_player_data_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CharacterSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CharacterSummary) ProtoMessage() {}
+
+func (x *CharacterSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CharacterSummary.ProtoReflect.Descriptor instead.
+func (*CharacterSummary) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CharacterSummary) GetCharacterId() string {
+	if x != nil {
+		return x.CharacterId
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetHeroDefinitionId() string {
+	if x != nil {
+		return x.HeroDefinitionId
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetCharacterName() string {
+	if x != nil {
+		return x.CharacterName
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetCharacterRevision() int64 {
+	if x != nil {
+		return x.CharacterRevision
+	}
+	return 0
+}
+
+func (x *CharacterSummary) GetOnboardingState() string {
+	if x != nil {
+		return x.OnboardingState
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *CharacterSummary) GetAppearanceProfileId() string {
+	if x != nil {
+		return x.AppearanceProfileId
+	}
+	return ""
+}
+
+type ListCharactersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCharactersRequest) Reset() {
+	*x = ListCharactersRequest{}
+	mi := &file_player_data_service_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCharactersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCharactersRequest) ProtoMessage() {}
+
+func (x *ListCharactersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCharactersRequest.ProtoReflect.Descriptor instead.
+func (*ListCharactersRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListCharactersRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+type ListCharactersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Characters    []*CharacterSummary    `protobuf:"bytes,1,rep,name=characters,proto3" json:"characters,omitempty"`
+	ErrorCode     string                 `protobuf:"bytes,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCharactersResponse) Reset() {
+	*x = ListCharactersResponse{}
+	mi := &file_player_data_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCharactersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCharactersResponse) ProtoMessage() {}
+
+func (x *ListCharactersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCharactersResponse.ProtoReflect.Descriptor instead.
+func (*ListCharactersResponse) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListCharactersResponse) GetCharacters() []*CharacterSummary {
+	if x != nil {
+		return x.Characters
+	}
+	return nil
+}
+
+func (x *ListCharactersResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
+type CreateCharacterRequest struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId            string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	CreationRequestId   string                 `protobuf:"bytes,2,opt,name=creation_request_id,json=creationRequestId,proto3" json:"creation_request_id,omitempty"`
+	HeroDefinitionId    string                 `protobuf:"bytes,3,opt,name=hero_definition_id,json=heroDefinitionId,proto3" json:"hero_definition_id,omitempty"`
+	CharacterName       string                 `protobuf:"bytes,4,opt,name=character_name,json=characterName,proto3" json:"character_name,omitempty"`
+	AppearanceSelection map[string]string      `protobuf:"bytes,5,rep,name=appearance_selection,json=appearanceSelection,proto3" json:"appearance_selection,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *CreateCharacterRequest) Reset() {
+	*x = CreateCharacterRequest{}
+	mi := &file_player_data_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCharacterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCharacterRequest) ProtoMessage() {}
+
+func (x *CreateCharacterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCharacterRequest.ProtoReflect.Descriptor instead.
+func (*CreateCharacterRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CreateCharacterRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *CreateCharacterRequest) GetCreationRequestId() string {
+	if x != nil {
+		return x.CreationRequestId
+	}
+	return ""
+}
+
+func (x *CreateCharacterRequest) GetHeroDefinitionId() string {
+	if x != nil {
+		return x.HeroDefinitionId
+	}
+	return ""
+}
+
+func (x *CreateCharacterRequest) GetCharacterName() string {
+	if x != nil {
+		return x.CharacterName
+	}
+	return ""
+}
+
+func (x *CreateCharacterRequest) GetAppearanceSelection() map[string]string {
+	if x != nil {
+		return x.AppearanceSelection
+	}
+	return nil
+}
+
+type CreateCharacterResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Character     *CharacterSummary      `protobuf:"bytes,1,opt,name=character,proto3" json:"character,omitempty"`
+	ErrorCode     string                 `protobuf:"bytes,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCharacterResponse) Reset() {
+	*x = CreateCharacterResponse{}
+	mi := &file_player_data_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCharacterResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCharacterResponse) ProtoMessage() {}
+
+func (x *CreateCharacterResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCharacterResponse.ProtoReflect.Descriptor instead.
+func (*CreateCharacterResponse) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CreateCharacterResponse) GetCharacter() *CharacterSummary {
+	if x != nil {
+		return x.Character
+	}
+	return nil
+}
+
+func (x *CreateCharacterResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
+type SelectCharacterRequest struct {
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId                  string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	SelectionRequestId        string                 `protobuf:"bytes,2,opt,name=selection_request_id,json=selectionRequestId,proto3" json:"selection_request_id,omitempty"`
+	CharacterId               string                 `protobuf:"bytes,3,opt,name=character_id,json=characterId,proto3" json:"character_id,omitempty"`
+	ExpectedCharacterRevision int64                  `protobuf:"varint,4,opt,name=expected_character_revision,json=expectedCharacterRevision,proto3" json:"expected_character_revision,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *SelectCharacterRequest) Reset() {
+	*x = SelectCharacterRequest{}
+	mi := &file_player_data_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SelectCharacterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectCharacterRequest) ProtoMessage() {}
+
+func (x *SelectCharacterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SelectCharacterRequest.ProtoReflect.Descriptor instead.
+func (*SelectCharacterRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SelectCharacterRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *SelectCharacterRequest) GetSelectionRequestId() string {
+	if x != nil {
+		return x.SelectionRequestId
+	}
+	return ""
+}
+
+func (x *SelectCharacterRequest) GetCharacterId() string {
+	if x != nil {
+		return x.CharacterId
+	}
+	return ""
+}
+
+func (x *SelectCharacterRequest) GetExpectedCharacterRevision() int64 {
+	if x != nil {
+		return x.ExpectedCharacterRevision
+	}
+	return 0
+}
+
+type SelectCharacterResponse struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	SelectionRequestId string                 `protobuf:"bytes,1,opt,name=selection_request_id,json=selectionRequestId,proto3" json:"selection_request_id,omitempty"`
+	ProfileRevision    int64                  `protobuf:"varint,2,opt,name=profile_revision,json=profileRevision,proto3" json:"profile_revision,omitempty"`
+	Character          *CharacterSummary      `protobuf:"bytes,3,opt,name=character,proto3" json:"character,omitempty"`
+	ErrorCode          string                 `protobuf:"bytes,4,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SelectCharacterResponse) Reset() {
+	*x = SelectCharacterResponse{}
+	mi := &file_player_data_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SelectCharacterResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectCharacterResponse) ProtoMessage() {}
+
+func (x *SelectCharacterResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SelectCharacterResponse.ProtoReflect.Descriptor instead.
+func (*SelectCharacterResponse) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SelectCharacterResponse) GetSelectionRequestId() string {
+	if x != nil {
+		return x.SelectionRequestId
+	}
+	return ""
+}
+
+func (x *SelectCharacterResponse) GetProfileRevision() int64 {
+	if x != nil {
+		return x.ProfileRevision
+	}
+	return 0
+}
+
+func (x *SelectCharacterResponse) GetCharacter() *CharacterSummary {
+	if x != nil {
+		return x.Character
+	}
+	return nil
+}
+
+func (x *SelectCharacterResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
+// Inventory（背包）RPC只供可信Gateway到PlayerDataService内部调用；公网身份仍由Gateway从AccessToken解析。
+type InventoryPlayerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InventoryPlayerRequest) Reset() {
+	*x = InventoryPlayerRequest{}
+	mi := &file_player_data_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryPlayerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryPlayerRequest) ProtoMessage() {}
+
+func (x *InventoryPlayerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryPlayerRequest.ProtoReflect.Descriptor instead.
+func (*InventoryPlayerRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *InventoryPlayerRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+type InventoryOperationQueryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	OperationId   string                 `protobuf:"bytes,2,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InventoryOperationQueryRequest) Reset() {
+	*x = InventoryOperationQueryRequest{}
+	mi := &file_player_data_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryOperationQueryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryOperationQueryRequest) ProtoMessage() {}
+
+func (x *InventoryOperationQueryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryOperationQueryRequest.ProtoReflect.Descriptor instead.
+func (*InventoryOperationQueryRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *InventoryOperationQueryRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *InventoryOperationQueryRequest) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+type InventoryContainer struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	Capacity      int32                  `protobuf:"varint,2,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InventoryContainer) Reset() {
+	*x = InventoryContainer{}
+	mi := &file_player_data_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryContainer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryContainer) ProtoMessage() {}
+
+func (x *InventoryContainer) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryContainer.ProtoReflect.Descriptor instead.
+func (*InventoryContainer) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *InventoryContainer) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *InventoryContainer) GetCapacity() int32 {
+	if x != nil {
+		return x.Capacity
+	}
+	return 0
+}
+
+type InventoryItem struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ItemInstanceId   string                 `protobuf:"bytes,1,opt,name=item_instance_id,json=itemInstanceId,proto3" json:"item_instance_id,omitempty"`
+	ItemDefinitionId string                 `protobuf:"bytes,2,opt,name=item_definition_id,json=itemDefinitionId,proto3" json:"item_definition_id,omitempty"`
+	Quantity         int32                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	ContainerId      string                 `protobuf:"bytes,4,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	SlotIndex        int32                  `protobuf:"varint,5,opt,name=slot_index,json=slotIndex,proto3" json:"slot_index,omitempty"`
+	Revision         int64                  `protobuf:"varint,6,opt,name=revision,proto3" json:"revision,omitempty"`
+	InstanceState    string                 `protobuf:"bytes,7,opt,name=instance_state,json=instanceState,proto3" json:"instance_state,omitempty"`
+	MaxStackSize     int32                  `protobuf:"varint,8,opt,name=max_stack_size,json=maxStackSize,proto3" json:"max_stack_size,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *InventoryItem) Reset() {
+	*x = InventoryItem{}
+	mi := &file_player_data_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryItem) ProtoMessage() {}
+
+func (x *InventoryItem) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryItem.ProtoReflect.Descriptor instead.
+func (*InventoryItem) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *InventoryItem) GetItemInstanceId() string {
+	if x != nil {
+		return x.ItemInstanceId
+	}
+	return ""
+}
+
+func (x *InventoryItem) GetItemDefinitionId() string {
+	if x != nil {
+		return x.ItemDefinitionId
+	}
+	return ""
+}
+
+func (x *InventoryItem) GetQuantity() int32 {
+	if x != nil {
+		return x.Quantity
+	}
+	return 0
+}
+
+func (x *InventoryItem) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *InventoryItem) GetSlotIndex() int32 {
+	if x != nil {
+		return x.SlotIndex
+	}
+	return 0
+}
+
+func (x *InventoryItem) GetRevision() int64 {
+	if x != nil {
+		return x.Revision
+	}
+	return 0
+}
+
+func (x *InventoryItem) GetInstanceState() string {
+	if x != nil {
+		return x.InstanceState
+	}
+	return ""
+}
+
+func (x *InventoryItem) GetMaxStackSize() int32 {
+	if x != nil {
+		return x.MaxStackSize
+	}
+	return 0
+}
+
+type InventoryQuickbarSlot struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	SlotIndex      int32                  `protobuf:"varint,1,opt,name=slot_index,json=slotIndex,proto3" json:"slot_index,omitempty"`
+	ItemInstanceId string                 `protobuf:"bytes,2,opt,name=item_instance_id,json=itemInstanceId,proto3" json:"item_instance_id,omitempty"`
+	Revision       int64                  `protobuf:"varint,3,opt,name=revision,proto3" json:"revision,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *InventoryQuickbarSlot) Reset() {
+	*x = InventoryQuickbarSlot{}
+	mi := &file_player_data_service_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryQuickbarSlot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryQuickbarSlot) ProtoMessage() {}
+
+func (x *InventoryQuickbarSlot) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryQuickbarSlot.ProtoReflect.Descriptor instead.
+func (*InventoryQuickbarSlot) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *InventoryQuickbarSlot) GetSlotIndex() int32 {
+	if x != nil {
+		return x.SlotIndex
+	}
+	return 0
+}
+
+func (x *InventoryQuickbarSlot) GetItemInstanceId() string {
+	if x != nil {
+		return x.ItemInstanceId
+	}
+	return ""
+}
+
+func (x *InventoryQuickbarSlot) GetRevision() int64 {
+	if x != nil {
+		return x.Revision
+	}
+	return 0
+}
+
+type InventorySnapshotResponse struct {
+	state             protoimpl.MessageState   `protogen:"open.v1"`
+	InventoryRevision int64                    `protobuf:"varint,1,opt,name=inventory_revision,json=inventoryRevision,proto3" json:"inventory_revision,omitempty"`
+	Containers        []*InventoryContainer    `protobuf:"bytes,2,rep,name=containers,proto3" json:"containers,omitempty"`
+	Items             []*InventoryItem         `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
+	Quickbar          []*InventoryQuickbarSlot `protobuf:"bytes,4,rep,name=quickbar,proto3" json:"quickbar,omitempty"`
+	ErrorCode         string                   `protobuf:"bytes,5,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *InventorySnapshotResponse) Reset() {
+	*x = InventorySnapshotResponse{}
+	mi := &file_player_data_service_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventorySnapshotResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventorySnapshotResponse) ProtoMessage() {}
+
+func (x *InventorySnapshotResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventorySnapshotResponse.ProtoReflect.Descriptor instead.
+func (*InventorySnapshotResponse) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *InventorySnapshotResponse) GetInventoryRevision() int64 {
+	if x != nil {
+		return x.InventoryRevision
+	}
+	return 0
+}
+
+func (x *InventorySnapshotResponse) GetContainers() []*InventoryContainer {
+	if x != nil {
+		return x.Containers
+	}
+	return nil
+}
+
+func (x *InventorySnapshotResponse) GetItems() []*InventoryItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *InventorySnapshotResponse) GetQuickbar() []*InventoryQuickbarSlot {
+	if x != nil {
+		return x.Quickbar
+	}
+	return nil
+}
+
+func (x *InventorySnapshotResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
+type InventoryMutationResponse struct {
+	state             protoimpl.MessageState     `protogen:"open.v1"`
+	OperationId       string                     `protobuf:"bytes,1,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	Snapshot          *InventorySnapshotResponse `protobuf:"bytes,2,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+	MovedQuantity     int32                      `protobuf:"varint,3,opt,name=moved_quantity,json=movedQuantity,proto3" json:"moved_quantity,omitempty"`
+	RemainingQuantity int32                      `protobuf:"varint,4,opt,name=remaining_quantity,json=remainingQuantity,proto3" json:"remaining_quantity,omitempty"`
+	Duplicate         bool                       `protobuf:"varint,5,opt,name=duplicate,proto3" json:"duplicate,omitempty"`
+	ErrorCode         string                     `protobuf:"bytes,6,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *InventoryMutationResponse) Reset() {
+	*x = InventoryMutationResponse{}
+	mi := &file_player_data_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryMutationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryMutationResponse) ProtoMessage() {}
+
+func (x *InventoryMutationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryMutationResponse.ProtoReflect.Descriptor instead.
+func (*InventoryMutationResponse) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *InventoryMutationResponse) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *InventoryMutationResponse) GetSnapshot() *InventorySnapshotResponse {
+	if x != nil {
+		return x.Snapshot
+	}
+	return nil
+}
+
+func (x *InventoryMutationResponse) GetMovedQuantity() int32 {
+	if x != nil {
+		return x.MovedQuantity
+	}
+	return 0
+}
+
+func (x *InventoryMutationResponse) GetRemainingQuantity() int32 {
+	if x != nil {
+		return x.RemainingQuantity
+	}
+	return 0
+}
+
+func (x *InventoryMutationResponse) GetDuplicate() bool {
+	if x != nil {
+		return x.Duplicate
+	}
+	return false
+}
+
+func (x *InventoryMutationResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
+type InventoryMoveRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId          string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	OperationId       string                 `protobuf:"bytes,2,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	ExpectedRevision  int64                  `protobuf:"varint,3,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
+	ItemInstanceId    string                 `protobuf:"bytes,4,opt,name=item_instance_id,json=itemInstanceId,proto3" json:"item_instance_id,omitempty"`
+	TargetContainerId string                 `protobuf:"bytes,5,opt,name=target_container_id,json=targetContainerId,proto3" json:"target_container_id,omitempty"`
+	TargetSlotIndex   int32                  `protobuf:"varint,6,opt,name=target_slot_index,json=targetSlotIndex,proto3" json:"target_slot_index,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *InventoryMoveRequest) Reset() {
+	*x = InventoryMoveRequest{}
+	mi := &file_player_data_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryMoveRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryMoveRequest) ProtoMessage() {}
+
+func (x *InventoryMoveRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryMoveRequest.ProtoReflect.Descriptor instead.
+func (*InventoryMoveRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *InventoryMoveRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *InventoryMoveRequest) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *InventoryMoveRequest) GetExpectedRevision() int64 {
+	if x != nil {
+		return x.ExpectedRevision
+	}
+	return 0
+}
+
+func (x *InventoryMoveRequest) GetItemInstanceId() string {
+	if x != nil {
+		return x.ItemInstanceId
+	}
+	return ""
+}
+
+func (x *InventoryMoveRequest) GetTargetContainerId() string {
+	if x != nil {
+		return x.TargetContainerId
+	}
+	return ""
+}
+
+func (x *InventoryMoveRequest) GetTargetSlotIndex() int32 {
+	if x != nil {
+		return x.TargetSlotIndex
+	}
+	return 0
+}
+
+type InventorySplitRequest struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId             string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	OperationId          string                 `protobuf:"bytes,2,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	ExpectedRevision     int64                  `protobuf:"varint,3,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
+	SourceItemInstanceId string                 `protobuf:"bytes,4,opt,name=source_item_instance_id,json=sourceItemInstanceId,proto3" json:"source_item_instance_id,omitempty"`
+	SplitQuantity        int32                  `protobuf:"varint,5,opt,name=split_quantity,json=splitQuantity,proto3" json:"split_quantity,omitempty"`
+	TargetContainerId    string                 `protobuf:"bytes,6,opt,name=target_container_id,json=targetContainerId,proto3" json:"target_container_id,omitempty"`
+	TargetSlotIndex      int32                  `protobuf:"varint,7,opt,name=target_slot_index,json=targetSlotIndex,proto3" json:"target_slot_index,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *InventorySplitRequest) Reset() {
+	*x = InventorySplitRequest{}
+	mi := &file_player_data_service_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventorySplitRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventorySplitRequest) ProtoMessage() {}
+
+func (x *InventorySplitRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventorySplitRequest.ProtoReflect.Descriptor instead.
+func (*InventorySplitRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *InventorySplitRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *InventorySplitRequest) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *InventorySplitRequest) GetExpectedRevision() int64 {
+	if x != nil {
+		return x.ExpectedRevision
+	}
+	return 0
+}
+
+func (x *InventorySplitRequest) GetSourceItemInstanceId() string {
+	if x != nil {
+		return x.SourceItemInstanceId
+	}
+	return ""
+}
+
+func (x *InventorySplitRequest) GetSplitQuantity() int32 {
+	if x != nil {
+		return x.SplitQuantity
+	}
+	return 0
+}
+
+func (x *InventorySplitRequest) GetTargetContainerId() string {
+	if x != nil {
+		return x.TargetContainerId
+	}
+	return ""
+}
+
+func (x *InventorySplitRequest) GetTargetSlotIndex() int32 {
+	if x != nil {
+		return x.TargetSlotIndex
+	}
+	return 0
+}
+
+type InventoryMergeRequest struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId             string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	OperationId          string                 `protobuf:"bytes,2,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	ExpectedRevision     int64                  `protobuf:"varint,3,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
+	SourceItemInstanceId string                 `protobuf:"bytes,4,opt,name=source_item_instance_id,json=sourceItemInstanceId,proto3" json:"source_item_instance_id,omitempty"`
+	TargetItemInstanceId string                 `protobuf:"bytes,5,opt,name=target_item_instance_id,json=targetItemInstanceId,proto3" json:"target_item_instance_id,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *InventoryMergeRequest) Reset() {
+	*x = InventoryMergeRequest{}
+	mi := &file_player_data_service_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryMergeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryMergeRequest) ProtoMessage() {}
+
+func (x *InventoryMergeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryMergeRequest.ProtoReflect.Descriptor instead.
+func (*InventoryMergeRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *InventoryMergeRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *InventoryMergeRequest) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *InventoryMergeRequest) GetExpectedRevision() int64 {
+	if x != nil {
+		return x.ExpectedRevision
+	}
+	return 0
+}
+
+func (x *InventoryMergeRequest) GetSourceItemInstanceId() string {
+	if x != nil {
+		return x.SourceItemInstanceId
+	}
+	return ""
+}
+
+func (x *InventoryMergeRequest) GetTargetItemInstanceId() string {
+	if x != nil {
+		return x.TargetItemInstanceId
+	}
+	return ""
+}
+
+type InventoryQuickbarSetRequest struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId         string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	OperationId      string                 `protobuf:"bytes,2,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	ExpectedRevision int64                  `protobuf:"varint,3,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
+	SlotIndex        int32                  `protobuf:"varint,4,opt,name=slot_index,json=slotIndex,proto3" json:"slot_index,omitempty"`
+	ItemInstanceId   string                 `protobuf:"bytes,5,opt,name=item_instance_id,json=itemInstanceId,proto3" json:"item_instance_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *InventoryQuickbarSetRequest) Reset() {
+	*x = InventoryQuickbarSetRequest{}
+	mi := &file_player_data_service_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryQuickbarSetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryQuickbarSetRequest) ProtoMessage() {}
+
+func (x *InventoryQuickbarSetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryQuickbarSetRequest.ProtoReflect.Descriptor instead.
+func (*InventoryQuickbarSetRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *InventoryQuickbarSetRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *InventoryQuickbarSetRequest) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *InventoryQuickbarSetRequest) GetExpectedRevision() int64 {
+	if x != nil {
+		return x.ExpectedRevision
+	}
+	return 0
+}
+
+func (x *InventoryQuickbarSetRequest) GetSlotIndex() int32 {
+	if x != nil {
+		return x.SlotIndex
+	}
+	return 0
+}
+
+func (x *InventoryQuickbarSetRequest) GetItemInstanceId() string {
+	if x != nil {
+		return x.ItemInstanceId
+	}
+	return ""
+}
+
+type InventoryQuickbarClearRequest struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId         string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	OperationId      string                 `protobuf:"bytes,2,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	ExpectedRevision int64                  `protobuf:"varint,3,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
+	SlotIndex        int32                  `protobuf:"varint,4,opt,name=slot_index,json=slotIndex,proto3" json:"slot_index,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *InventoryQuickbarClearRequest) Reset() {
+	*x = InventoryQuickbarClearRequest{}
+	mi := &file_player_data_service_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InventoryQuickbarClearRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InventoryQuickbarClearRequest) ProtoMessage() {}
+
+func (x *InventoryQuickbarClearRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_player_data_service_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InventoryQuickbarClearRequest.ProtoReflect.Descriptor instead.
+func (*InventoryQuickbarClearRequest) Descriptor() ([]byte, []int) {
+	return file_player_data_service_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *InventoryQuickbarClearRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *InventoryQuickbarClearRequest) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *InventoryQuickbarClearRequest) GetExpectedRevision() int64 {
+	if x != nil {
+		return x.ExpectedRevision
+	}
+	return 0
+}
+
+func (x *InventoryQuickbarClearRequest) GetSlotIndex() int32 {
+	if x != nil {
+		return x.SlotIndex
+	}
+	return 0
+}
+
 var File_player_data_service_proto protoreflect.FileDescriptor
 
 const file_player_data_service_proto_rawDesc = "" +
@@ -456,7 +1781,7 @@ const file_player_data_service_proto_rawDesc = "" +
 	"\n" +
 	"error_code\x18\x02 \x01(\tR\terrorCode\"0\n" +
 	"\x11GetProfileRequest\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"\xea\x02\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"\x9e\x03\n" +
 	"\x12GetProfileResponse\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12\x17\n" +
@@ -469,12 +1794,137 @@ const file_player_data_service_proto_rawDesc = "" +
 	"\x13owned_character_ids\x18\t \x03(\tR\x11ownedCharacterIds\x12\x1d\n" +
 	"\n" +
 	"error_code\x18\n" +
-	" \x01(\tR\terrorCode2\x89\x04\n" +
+	" \x01(\tR\terrorCode\x122\n" +
+	"\x15selected_character_id\x18\v \x01(\tR\x13selectedCharacterId\"\xb0\x02\n" +
+	"\x10CharacterSummary\x12!\n" +
+	"\fcharacter_id\x18\x01 \x01(\tR\vcharacterId\x12,\n" +
+	"\x12hero_definition_id\x18\x02 \x01(\tR\x10heroDefinitionId\x12%\n" +
+	"\x0echaracter_name\x18\x03 \x01(\tR\rcharacterName\x12-\n" +
+	"\x12character_revision\x18\x04 \x01(\x03R\x11characterRevision\x12)\n" +
+	"\x10onboarding_state\x18\x05 \x01(\tR\x0fonboardingState\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\tR\x06status\x122\n" +
+	"\x15appearance_profile_id\x18\a \x01(\tR\x13appearanceProfileId\"4\n" +
+	"\x15ListCharactersRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"\x8d\x01\n" +
+	"\x16ListCharactersResponse\x12T\n" +
+	"\n" +
+	"characters\x18\x01 \x03(\v24.divinebeasts.backend.playerdata.v1.CharacterSummaryR\n" +
+	"characters\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x02 \x01(\tR\terrorCode\"\x8b\x03\n" +
+	"\x16CreateCharacterRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12.\n" +
+	"\x13creation_request_id\x18\x02 \x01(\tR\x11creationRequestId\x12,\n" +
+	"\x12hero_definition_id\x18\x03 \x01(\tR\x10heroDefinitionId\x12%\n" +
+	"\x0echaracter_name\x18\x04 \x01(\tR\rcharacterName\x12\x86\x01\n" +
+	"\x14appearance_selection\x18\x05 \x03(\v2S.divinebeasts.backend.playerdata.v1.CreateCharacterRequest.AppearanceSelectionEntryR\x13appearanceSelection\x1aF\n" +
+	"\x18AppearanceSelectionEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8c\x01\n" +
+	"\x17CreateCharacterResponse\x12R\n" +
+	"\tcharacter\x18\x01 \x01(\v24.divinebeasts.backend.playerdata.v1.CharacterSummaryR\tcharacter\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x02 \x01(\tR\terrorCode\"\xca\x01\n" +
+	"\x16SelectCharacterRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x120\n" +
+	"\x14selection_request_id\x18\x02 \x01(\tR\x12selectionRequestId\x12!\n" +
+	"\fcharacter_id\x18\x03 \x01(\tR\vcharacterId\x12>\n" +
+	"\x1bexpected_character_revision\x18\x04 \x01(\x03R\x19expectedCharacterRevision\"\xe9\x01\n" +
+	"\x17SelectCharacterResponse\x120\n" +
+	"\x14selection_request_id\x18\x01 \x01(\tR\x12selectionRequestId\x12)\n" +
+	"\x10profile_revision\x18\x02 \x01(\x03R\x0fprofileRevision\x12R\n" +
+	"\tcharacter\x18\x03 \x01(\v24.divinebeasts.backend.playerdata.v1.CharacterSummaryR\tcharacter\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x04 \x01(\tR\terrorCode\"5\n" +
+	"\x16InventoryPlayerRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"`\n" +
+	"\x1eInventoryOperationQueryRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12!\n" +
+	"\foperation_id\x18\x02 \x01(\tR\voperationId\"S\n" +
+	"\x12InventoryContainer\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x1a\n" +
+	"\bcapacity\x18\x02 \x01(\x05R\bcapacity\"\xae\x02\n" +
+	"\rInventoryItem\x12(\n" +
+	"\x10item_instance_id\x18\x01 \x01(\tR\x0eitemInstanceId\x12,\n" +
+	"\x12item_definition_id\x18\x02 \x01(\tR\x10itemDefinitionId\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\x05R\bquantity\x12!\n" +
+	"\fcontainer_id\x18\x04 \x01(\tR\vcontainerId\x12\x1d\n" +
+	"\n" +
+	"slot_index\x18\x05 \x01(\x05R\tslotIndex\x12\x1a\n" +
+	"\brevision\x18\x06 \x01(\x03R\brevision\x12%\n" +
+	"\x0einstance_state\x18\a \x01(\tR\rinstanceState\x12$\n" +
+	"\x0emax_stack_size\x18\b \x01(\x05R\fmaxStackSize\"|\n" +
+	"\x15InventoryQuickbarSlot\x12\x1d\n" +
+	"\n" +
+	"slot_index\x18\x01 \x01(\x05R\tslotIndex\x12(\n" +
+	"\x10item_instance_id\x18\x02 \x01(\tR\x0eitemInstanceId\x12\x1a\n" +
+	"\brevision\x18\x03 \x01(\x03R\brevision\"\xe1\x02\n" +
+	"\x19InventorySnapshotResponse\x12-\n" +
+	"\x12inventory_revision\x18\x01 \x01(\x03R\x11inventoryRevision\x12V\n" +
+	"\n" +
+	"containers\x18\x02 \x03(\v26.divinebeasts.backend.playerdata.v1.InventoryContainerR\n" +
+	"containers\x12G\n" +
+	"\x05items\x18\x03 \x03(\v21.divinebeasts.backend.playerdata.v1.InventoryItemR\x05items\x12U\n" +
+	"\bquickbar\x18\x04 \x03(\v29.divinebeasts.backend.playerdata.v1.InventoryQuickbarSlotR\bquickbar\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x05 \x01(\tR\terrorCode\"\xac\x02\n" +
+	"\x19InventoryMutationResponse\x12!\n" +
+	"\foperation_id\x18\x01 \x01(\tR\voperationId\x12Y\n" +
+	"\bsnapshot\x18\x02 \x01(\v2=.divinebeasts.backend.playerdata.v1.InventorySnapshotResponseR\bsnapshot\x12%\n" +
+	"\x0emoved_quantity\x18\x03 \x01(\x05R\rmovedQuantity\x12-\n" +
+	"\x12remaining_quantity\x18\x04 \x01(\x05R\x11remainingQuantity\x12\x1c\n" +
+	"\tduplicate\x18\x05 \x01(\bR\tduplicate\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x06 \x01(\tR\terrorCode\"\x89\x02\n" +
+	"\x14InventoryMoveRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12!\n" +
+	"\foperation_id\x18\x02 \x01(\tR\voperationId\x12+\n" +
+	"\x11expected_revision\x18\x03 \x01(\x03R\x10expectedRevision\x12(\n" +
+	"\x10item_instance_id\x18\x04 \x01(\tR\x0eitemInstanceId\x12.\n" +
+	"\x13target_container_id\x18\x05 \x01(\tR\x11targetContainerId\x12*\n" +
+	"\x11target_slot_index\x18\x06 \x01(\x05R\x0ftargetSlotIndex\"\xbe\x02\n" +
+	"\x15InventorySplitRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12!\n" +
+	"\foperation_id\x18\x02 \x01(\tR\voperationId\x12+\n" +
+	"\x11expected_revision\x18\x03 \x01(\x03R\x10expectedRevision\x125\n" +
+	"\x17source_item_instance_id\x18\x04 \x01(\tR\x14sourceItemInstanceId\x12%\n" +
+	"\x0esplit_quantity\x18\x05 \x01(\x05R\rsplitQuantity\x12.\n" +
+	"\x13target_container_id\x18\x06 \x01(\tR\x11targetContainerId\x12*\n" +
+	"\x11target_slot_index\x18\a \x01(\x05R\x0ftargetSlotIndex\"\xf2\x01\n" +
+	"\x15InventoryMergeRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12!\n" +
+	"\foperation_id\x18\x02 \x01(\tR\voperationId\x12+\n" +
+	"\x11expected_revision\x18\x03 \x01(\x03R\x10expectedRevision\x125\n" +
+	"\x17source_item_instance_id\x18\x04 \x01(\tR\x14sourceItemInstanceId\x125\n" +
+	"\x17target_item_instance_id\x18\x05 \x01(\tR\x14targetItemInstanceId\"\xd3\x01\n" +
+	"\x1bInventoryQuickbarSetRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12!\n" +
+	"\foperation_id\x18\x02 \x01(\tR\voperationId\x12+\n" +
+	"\x11expected_revision\x18\x03 \x01(\x03R\x10expectedRevision\x12\x1d\n" +
+	"\n" +
+	"slot_index\x18\x04 \x01(\x05R\tslotIndex\x12(\n" +
+	"\x10item_instance_id\x18\x05 \x01(\tR\x0eitemInstanceId\"\xab\x01\n" +
+	"\x1dInventoryQuickbarClearRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12!\n" +
+	"\foperation_id\x18\x02 \x01(\tR\voperationId\x12+\n" +
+	"\x11expected_revision\x18\x03 \x01(\x03R\x10expectedRevision\x12\x1d\n" +
+	"\n" +
+	"slot_index\x18\x04 \x01(\x05R\tslotIndex2\xb1\x0f\n" +
 	"\x11PlayerDataService\x12{\n" +
 	"\n" +
 	"GetProfile\x125.divinebeasts.backend.playerdata.v1.GetProfileRequest\x1a6.divinebeasts.backend.playerdata.v1.GetProfileResponse\x12\x81\x01\n" +
 	"\rUpdateProfile\x128.divinebeasts.backend.playerdata.v1.UpdateProfileRequest\x1a6.divinebeasts.backend.playerdata.v1.GetProfileResponse\x12\x84\x01\n" +
-	"\rEnsureProfile\x128.divinebeasts.backend.playerdata.v1.EnsureProfileRequest\x1a9.divinebeasts.backend.playerdata.v1.EnsureProfileResponse\x12l\n" +
+	"\rEnsureProfile\x128.divinebeasts.backend.playerdata.v1.EnsureProfileRequest\x1a9.divinebeasts.backend.playerdata.v1.EnsureProfileResponse\x12\x87\x01\n" +
+	"\x0eListCharacters\x129.divinebeasts.backend.playerdata.v1.ListCharactersRequest\x1a:.divinebeasts.backend.playerdata.v1.ListCharactersResponse\x12\x8a\x01\n" +
+	"\x0fCreateCharacter\x12:.divinebeasts.backend.playerdata.v1.CreateCharacterRequest\x1a;.divinebeasts.backend.playerdata.v1.CreateCharacterResponse\x12\x8a\x01\n" +
+	"\x0fSelectCharacter\x12:.divinebeasts.backend.playerdata.v1.SelectCharacterRequest\x1a;.divinebeasts.backend.playerdata.v1.SelectCharacterResponse\x12\x89\x01\n" +
+	"\fGetInventory\x12:.divinebeasts.backend.playerdata.v1.InventoryPlayerRequest\x1a=.divinebeasts.backend.playerdata.v1.InventorySnapshotResponse\x12\x9a\x01\n" +
+	"\x15GetInventoryOperation\x12B.divinebeasts.backend.playerdata.v1.InventoryOperationQueryRequest\x1a=.divinebeasts.backend.playerdata.v1.InventoryMutationResponse\x12\x88\x01\n" +
+	"\rMoveInventory\x128.divinebeasts.backend.playerdata.v1.InventoryMoveRequest\x1a=.divinebeasts.backend.playerdata.v1.InventoryMutationResponse\x12\x8a\x01\n" +
+	"\x0eSplitInventory\x129.divinebeasts.backend.playerdata.v1.InventorySplitRequest\x1a=.divinebeasts.backend.playerdata.v1.InventoryMutationResponse\x12\x8a\x01\n" +
+	"\x0eMergeInventory\x129.divinebeasts.backend.playerdata.v1.InventoryMergeRequest\x1a=.divinebeasts.backend.playerdata.v1.InventoryMutationResponse\x12\x96\x01\n" +
+	"\x14SetInventoryQuickbar\x12?.divinebeasts.backend.playerdata.v1.InventoryQuickbarSetRequest\x1a=.divinebeasts.backend.playerdata.v1.InventoryMutationResponse\x12\x9a\x01\n" +
+	"\x16ClearInventoryQuickbar\x12A.divinebeasts.backend.playerdata.v1.InventoryQuickbarClearRequest\x1a=.divinebeasts.backend.playerdata.v1.InventoryMutationResponse\x12l\n" +
 	"\x05Probe\x120.divinebeasts.backend.playerdata.v1.ProbeRequest\x1a1.divinebeasts.backend.playerdata.v1.ProbeResponseBDZBdivinebeasts/backend/internal/generated/playerdata/v1;playerdatav1b\x06proto3"
 
 var (
@@ -489,30 +1939,78 @@ func file_player_data_service_proto_rawDescGZIP() []byte {
 	return file_player_data_service_proto_rawDescData
 }
 
-var file_player_data_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_player_data_service_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_player_data_service_proto_goTypes = []any{
-	(*UpdateProfileRequest)(nil),  // 0: divinebeasts.backend.playerdata.v1.UpdateProfileRequest
-	(*EnsureProfileRequest)(nil),  // 1: divinebeasts.backend.playerdata.v1.EnsureProfileRequest
-	(*EnsureProfileResponse)(nil), // 2: divinebeasts.backend.playerdata.v1.EnsureProfileResponse
-	(*ProbeRequest)(nil),          // 3: divinebeasts.backend.playerdata.v1.ProbeRequest
-	(*ProbeResponse)(nil),         // 4: divinebeasts.backend.playerdata.v1.ProbeResponse
-	(*GetProfileRequest)(nil),     // 5: divinebeasts.backend.playerdata.v1.GetProfileRequest
-	(*GetProfileResponse)(nil),    // 6: divinebeasts.backend.playerdata.v1.GetProfileResponse
+	(*UpdateProfileRequest)(nil),           // 0: divinebeasts.backend.playerdata.v1.UpdateProfileRequest
+	(*EnsureProfileRequest)(nil),           // 1: divinebeasts.backend.playerdata.v1.EnsureProfileRequest
+	(*EnsureProfileResponse)(nil),          // 2: divinebeasts.backend.playerdata.v1.EnsureProfileResponse
+	(*ProbeRequest)(nil),                   // 3: divinebeasts.backend.playerdata.v1.ProbeRequest
+	(*ProbeResponse)(nil),                  // 4: divinebeasts.backend.playerdata.v1.ProbeResponse
+	(*GetProfileRequest)(nil),              // 5: divinebeasts.backend.playerdata.v1.GetProfileRequest
+	(*GetProfileResponse)(nil),             // 6: divinebeasts.backend.playerdata.v1.GetProfileResponse
+	(*CharacterSummary)(nil),               // 7: divinebeasts.backend.playerdata.v1.CharacterSummary
+	(*ListCharactersRequest)(nil),          // 8: divinebeasts.backend.playerdata.v1.ListCharactersRequest
+	(*ListCharactersResponse)(nil),         // 9: divinebeasts.backend.playerdata.v1.ListCharactersResponse
+	(*CreateCharacterRequest)(nil),         // 10: divinebeasts.backend.playerdata.v1.CreateCharacterRequest
+	(*CreateCharacterResponse)(nil),        // 11: divinebeasts.backend.playerdata.v1.CreateCharacterResponse
+	(*SelectCharacterRequest)(nil),         // 12: divinebeasts.backend.playerdata.v1.SelectCharacterRequest
+	(*SelectCharacterResponse)(nil),        // 13: divinebeasts.backend.playerdata.v1.SelectCharacterResponse
+	(*InventoryPlayerRequest)(nil),         // 14: divinebeasts.backend.playerdata.v1.InventoryPlayerRequest
+	(*InventoryOperationQueryRequest)(nil), // 15: divinebeasts.backend.playerdata.v1.InventoryOperationQueryRequest
+	(*InventoryContainer)(nil),             // 16: divinebeasts.backend.playerdata.v1.InventoryContainer
+	(*InventoryItem)(nil),                  // 17: divinebeasts.backend.playerdata.v1.InventoryItem
+	(*InventoryQuickbarSlot)(nil),          // 18: divinebeasts.backend.playerdata.v1.InventoryQuickbarSlot
+	(*InventorySnapshotResponse)(nil),      // 19: divinebeasts.backend.playerdata.v1.InventorySnapshotResponse
+	(*InventoryMutationResponse)(nil),      // 20: divinebeasts.backend.playerdata.v1.InventoryMutationResponse
+	(*InventoryMoveRequest)(nil),           // 21: divinebeasts.backend.playerdata.v1.InventoryMoveRequest
+	(*InventorySplitRequest)(nil),          // 22: divinebeasts.backend.playerdata.v1.InventorySplitRequest
+	(*InventoryMergeRequest)(nil),          // 23: divinebeasts.backend.playerdata.v1.InventoryMergeRequest
+	(*InventoryQuickbarSetRequest)(nil),    // 24: divinebeasts.backend.playerdata.v1.InventoryQuickbarSetRequest
+	(*InventoryQuickbarClearRequest)(nil),  // 25: divinebeasts.backend.playerdata.v1.InventoryQuickbarClearRequest
+	nil,                                    // 26: divinebeasts.backend.playerdata.v1.CreateCharacterRequest.AppearanceSelectionEntry
 }
 var file_player_data_service_proto_depIdxs = []int32{
-	5, // 0: divinebeasts.backend.playerdata.v1.PlayerDataService.GetProfile:input_type -> divinebeasts.backend.playerdata.v1.GetProfileRequest
-	0, // 1: divinebeasts.backend.playerdata.v1.PlayerDataService.UpdateProfile:input_type -> divinebeasts.backend.playerdata.v1.UpdateProfileRequest
-	1, // 2: divinebeasts.backend.playerdata.v1.PlayerDataService.EnsureProfile:input_type -> divinebeasts.backend.playerdata.v1.EnsureProfileRequest
-	3, // 3: divinebeasts.backend.playerdata.v1.PlayerDataService.Probe:input_type -> divinebeasts.backend.playerdata.v1.ProbeRequest
-	6, // 4: divinebeasts.backend.playerdata.v1.PlayerDataService.GetProfile:output_type -> divinebeasts.backend.playerdata.v1.GetProfileResponse
-	6, // 5: divinebeasts.backend.playerdata.v1.PlayerDataService.UpdateProfile:output_type -> divinebeasts.backend.playerdata.v1.GetProfileResponse
-	2, // 6: divinebeasts.backend.playerdata.v1.PlayerDataService.EnsureProfile:output_type -> divinebeasts.backend.playerdata.v1.EnsureProfileResponse
-	4, // 7: divinebeasts.backend.playerdata.v1.PlayerDataService.Probe:output_type -> divinebeasts.backend.playerdata.v1.ProbeResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	7,  // 0: divinebeasts.backend.playerdata.v1.ListCharactersResponse.characters:type_name -> divinebeasts.backend.playerdata.v1.CharacterSummary
+	26, // 1: divinebeasts.backend.playerdata.v1.CreateCharacterRequest.appearance_selection:type_name -> divinebeasts.backend.playerdata.v1.CreateCharacterRequest.AppearanceSelectionEntry
+	7,  // 2: divinebeasts.backend.playerdata.v1.CreateCharacterResponse.character:type_name -> divinebeasts.backend.playerdata.v1.CharacterSummary
+	7,  // 3: divinebeasts.backend.playerdata.v1.SelectCharacterResponse.character:type_name -> divinebeasts.backend.playerdata.v1.CharacterSummary
+	16, // 4: divinebeasts.backend.playerdata.v1.InventorySnapshotResponse.containers:type_name -> divinebeasts.backend.playerdata.v1.InventoryContainer
+	17, // 5: divinebeasts.backend.playerdata.v1.InventorySnapshotResponse.items:type_name -> divinebeasts.backend.playerdata.v1.InventoryItem
+	18, // 6: divinebeasts.backend.playerdata.v1.InventorySnapshotResponse.quickbar:type_name -> divinebeasts.backend.playerdata.v1.InventoryQuickbarSlot
+	19, // 7: divinebeasts.backend.playerdata.v1.InventoryMutationResponse.snapshot:type_name -> divinebeasts.backend.playerdata.v1.InventorySnapshotResponse
+	5,  // 8: divinebeasts.backend.playerdata.v1.PlayerDataService.GetProfile:input_type -> divinebeasts.backend.playerdata.v1.GetProfileRequest
+	0,  // 9: divinebeasts.backend.playerdata.v1.PlayerDataService.UpdateProfile:input_type -> divinebeasts.backend.playerdata.v1.UpdateProfileRequest
+	1,  // 10: divinebeasts.backend.playerdata.v1.PlayerDataService.EnsureProfile:input_type -> divinebeasts.backend.playerdata.v1.EnsureProfileRequest
+	8,  // 11: divinebeasts.backend.playerdata.v1.PlayerDataService.ListCharacters:input_type -> divinebeasts.backend.playerdata.v1.ListCharactersRequest
+	10, // 12: divinebeasts.backend.playerdata.v1.PlayerDataService.CreateCharacter:input_type -> divinebeasts.backend.playerdata.v1.CreateCharacterRequest
+	12, // 13: divinebeasts.backend.playerdata.v1.PlayerDataService.SelectCharacter:input_type -> divinebeasts.backend.playerdata.v1.SelectCharacterRequest
+	14, // 14: divinebeasts.backend.playerdata.v1.PlayerDataService.GetInventory:input_type -> divinebeasts.backend.playerdata.v1.InventoryPlayerRequest
+	15, // 15: divinebeasts.backend.playerdata.v1.PlayerDataService.GetInventoryOperation:input_type -> divinebeasts.backend.playerdata.v1.InventoryOperationQueryRequest
+	21, // 16: divinebeasts.backend.playerdata.v1.PlayerDataService.MoveInventory:input_type -> divinebeasts.backend.playerdata.v1.InventoryMoveRequest
+	22, // 17: divinebeasts.backend.playerdata.v1.PlayerDataService.SplitInventory:input_type -> divinebeasts.backend.playerdata.v1.InventorySplitRequest
+	23, // 18: divinebeasts.backend.playerdata.v1.PlayerDataService.MergeInventory:input_type -> divinebeasts.backend.playerdata.v1.InventoryMergeRequest
+	24, // 19: divinebeasts.backend.playerdata.v1.PlayerDataService.SetInventoryQuickbar:input_type -> divinebeasts.backend.playerdata.v1.InventoryQuickbarSetRequest
+	25, // 20: divinebeasts.backend.playerdata.v1.PlayerDataService.ClearInventoryQuickbar:input_type -> divinebeasts.backend.playerdata.v1.InventoryQuickbarClearRequest
+	3,  // 21: divinebeasts.backend.playerdata.v1.PlayerDataService.Probe:input_type -> divinebeasts.backend.playerdata.v1.ProbeRequest
+	6,  // 22: divinebeasts.backend.playerdata.v1.PlayerDataService.GetProfile:output_type -> divinebeasts.backend.playerdata.v1.GetProfileResponse
+	6,  // 23: divinebeasts.backend.playerdata.v1.PlayerDataService.UpdateProfile:output_type -> divinebeasts.backend.playerdata.v1.GetProfileResponse
+	2,  // 24: divinebeasts.backend.playerdata.v1.PlayerDataService.EnsureProfile:output_type -> divinebeasts.backend.playerdata.v1.EnsureProfileResponse
+	9,  // 25: divinebeasts.backend.playerdata.v1.PlayerDataService.ListCharacters:output_type -> divinebeasts.backend.playerdata.v1.ListCharactersResponse
+	11, // 26: divinebeasts.backend.playerdata.v1.PlayerDataService.CreateCharacter:output_type -> divinebeasts.backend.playerdata.v1.CreateCharacterResponse
+	13, // 27: divinebeasts.backend.playerdata.v1.PlayerDataService.SelectCharacter:output_type -> divinebeasts.backend.playerdata.v1.SelectCharacterResponse
+	19, // 28: divinebeasts.backend.playerdata.v1.PlayerDataService.GetInventory:output_type -> divinebeasts.backend.playerdata.v1.InventorySnapshotResponse
+	20, // 29: divinebeasts.backend.playerdata.v1.PlayerDataService.GetInventoryOperation:output_type -> divinebeasts.backend.playerdata.v1.InventoryMutationResponse
+	20, // 30: divinebeasts.backend.playerdata.v1.PlayerDataService.MoveInventory:output_type -> divinebeasts.backend.playerdata.v1.InventoryMutationResponse
+	20, // 31: divinebeasts.backend.playerdata.v1.PlayerDataService.SplitInventory:output_type -> divinebeasts.backend.playerdata.v1.InventoryMutationResponse
+	20, // 32: divinebeasts.backend.playerdata.v1.PlayerDataService.MergeInventory:output_type -> divinebeasts.backend.playerdata.v1.InventoryMutationResponse
+	20, // 33: divinebeasts.backend.playerdata.v1.PlayerDataService.SetInventoryQuickbar:output_type -> divinebeasts.backend.playerdata.v1.InventoryMutationResponse
+	20, // 34: divinebeasts.backend.playerdata.v1.PlayerDataService.ClearInventoryQuickbar:output_type -> divinebeasts.backend.playerdata.v1.InventoryMutationResponse
+	4,  // 35: divinebeasts.backend.playerdata.v1.PlayerDataService.Probe:output_type -> divinebeasts.backend.playerdata.v1.ProbeResponse
+	22, // [22:36] is the sub-list for method output_type
+	8,  // [8:22] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_player_data_service_proto_init() }
@@ -527,7 +2025,7 @@ func file_player_data_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_player_data_service_proto_rawDesc), len(file_player_data_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

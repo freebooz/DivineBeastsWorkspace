@@ -9,7 +9,8 @@
   "CanContainContent": false,
   "EnabledByDefault": false,
   "Plugins": [
-    { "Name": "GamePlatformCore", "Enabled": true }
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformGameplay", "Enabled": true }
   ],
   "Modules": [
     {

@@ -1,9 +1,19 @@
 #include "SessionConnectionState.h"
+#include <algorithm>
 #include <cmath>
 #include <utility>
 
 namespace GamePlatformSession
 {
+namespace
+{
+constexpr unsigned int RequiredFactsMask =
+    (1u << static_cast<unsigned int>(EFact::NetworkConnected)) |
+    (1u << static_cast<unsigned int>(EFact::AdmissionConfirmed)) |
+    (1u << static_cast<unsigned int>(EFact::TargetWorldLoaded)) |
+    (1u << static_cast<unsigned int>(EFact::ControllerReady));
+}
+
 bool FOperationIdentity::operator==(const FOperationIdentity& Other) const
 {
     return ScopeId == Other.ScopeId && OperationId == Other.OperationId && AttemptId == Other.AttemptId
@@ -37,6 +47,10 @@ EAcceptance FSessionConnectionState::SetAuthentication(std::string AuthSessionId
     AuthSession = std::move(AuthSessionId);
     AuthGeneration = Generation;
     View.bRemoteResolutionRequired = false;
+    View.HighestAcceptedSessionEpoch = 0;
+    View.Recovery = AuthSession.empty()
+        ? ERecovery::ReauthenticationRequired
+        : ERecovery::RetryAllowed;
     return EAcceptance::Accepted;
 }
 
@@ -58,13 +72,19 @@ EAcceptance FSessionConnectionState::Begin(EIntent Intent, std::string Operation
         return EAcceptance::Busy;
     }
     if (View.bRemoteResolutionRequired) return EAcceptance::WrongState;
-    if ((Intent == EIntent::Join && View.Current.IsValid()) || (Intent == EIntent::Transfer && !View.Current.IsValid()))
+    if ((Intent == EIntent::Join && View.Current.IsValid()) ||
+        (Intent == EIntent::Transfer && !View.Current.IsValid()) ||
+        (Intent == EIntent::Reconnect && View.Current.IsValid()))
+    {
         return EAcceptance::WrongState;
+    }
     View.Operation = { Scope, std::move(OperationId), std::move(AttemptId), AuthGeneration, ++ConnectionGeneration };
     OutIdentity = View.Operation;
     ActiveIntent = Intent;
+    View.ActiveIntent = Intent;
     View.bOperationActive = true;
     View.LastOutcome = EOutcome::None;
+    View.Recovery = ERecovery::None;
     View.Pending = {};
     View.State = Intent == EIntent::Transfer ? EState::Transferring : Intent == EIntent::Reconnect ? EState::Reconnecting : EState::RequestingAssignment;
     Deadline = DeadlineSeconds;
@@ -87,6 +107,7 @@ EAcceptance FSessionConnectionState::Assign(const FOperationIdentity& Identity, 
     if (Checked != EAcceptance::Accepted) return Checked;
     if (!Binding.IsValid()) return EAcceptance::Invalid;
     if (View.Pending.IsValid()) return View.Pending == Binding ? EAcceptance::Accepted : EAcceptance::WrongState;
+    if (Binding.SessionEpoch <= View.HighestAcceptedSessionEpoch) return EAcceptance::Invalid;
     if (View.Current.IsValid() && Binding.SessionEpoch <= View.Current.SessionEpoch) return EAcceptance::Invalid;
     View.Pending = Binding;
     View.State = EState::PreparingConnection;
@@ -114,7 +135,7 @@ EAcceptance FSessionConnectionState::Observe(const FOperationIdentity& Identity,
     if (Index > static_cast<unsigned int>(EFact::ControllerReady)) return EAcceptance::Invalid;
     Facts |= 1u << Index;
     View.State = EState::AwaitingAdmission;
-    if (Facts == 15u)
+    if ((Facts & RequiredFactsMask) == RequiredFactsMask)
     {
         View.Current = View.Pending;
         Finish(EOutcome::Succeeded, true, false);
@@ -132,6 +153,24 @@ void FSessionConnectionState::Finish(EOutcome Outcome, bool bKeepSource, bool bN
     View.Pending = {};
     View.State = View.Current.IsValid() ? EState::Ready : EState::Idle;
     View.bRemoteResolutionRequired = bNeedsResolution;
+    if (Outcome == EOutcome::Succeeded && View.Current.IsValid())
+    {
+        View.HighestAcceptedSessionEpoch =
+            std::max(View.HighestAcceptedSessionEpoch, View.Current.SessionEpoch);
+        View.Recovery = ERecovery::None;
+    }
+    else if (Outcome == EOutcome::AuthChanged)
+    {
+        View.Recovery = ERecovery::ReauthenticationRequired;
+    }
+    else if (bNeedsResolution)
+    {
+        View.Recovery = ERecovery::ReconciliationRequired;
+    }
+    else
+    {
+        View.Recovery = ERecovery::RetryAllowed;
+    }
     Facts = 0;
 }
 
@@ -155,7 +194,12 @@ EAcceptance FSessionConnectionState::Fail(const FOperationIdentity& Identity, do
 void FSessionConnectionState::AdvanceDeadline(double NowSeconds)
 {
     if (View.bOperationActive && std::isfinite(NowSeconds) && NowSeconds >= Deadline)
-        Finish(EOutcome::TimedOut, !bTravelCommitted, true);
+    {
+        // 旅行边界后已经无法证明客户端仍停留在来源服，超时必须进入Uncertain并强制远端对账。
+        Finish(bTravelCommitted ? EOutcome::Uncertain : EOutcome::TimedOut,
+            !bTravelCommitted,
+            true);
+    }
 }
 
 EAcceptance FSessionConnectionState::ResolveRemote(const FOperationIdentity& Identity, const FBinding& ConfirmedBinding)
@@ -169,6 +213,9 @@ EAcceptance FSessionConnectionState::ResolveRemote(const FOperationIdentity& Ide
     if (!ConfirmedBinding.IsValid()) View.Current = {};
     View.State = View.Current.IsValid() ? EState::Ready : EState::Idle;
     View.bRemoteResolutionRequired = false;
+    View.Recovery = View.Current.IsValid()
+        ? ERecovery::None
+        : ERecovery::RetryAllowed;
     return EAcceptance::Accepted;
 }
 
@@ -176,7 +223,11 @@ bool FSessionConnectionState::Disconnect(const FBinding& Binding)
 {
     if (!View.Current.IsValid() || !(View.Current == Binding)) return false;
     View.Current = {};
-    if (!View.bOperationActive) View.State = EState::Idle;
+    if (!View.bOperationActive)
+    {
+        View.State = EState::Idle;
+        View.Recovery = ERecovery::RetryAllowed;
+    }
     return true;
 }
 
@@ -188,5 +239,8 @@ void FSessionConnectionState::Leave()
     View.Pending = {};
     View.State = EState::Idle;
     View.bRemoteResolutionRequired = HadRemoteWork;
+    View.Recovery = HadRemoteWork
+        ? ERecovery::ReconciliationRequired
+        : ERecovery::RetryAllowed;
 }
 }

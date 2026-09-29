@@ -5,7 +5,7 @@ $script:ExpectedGamePlatformPlugins = [ordered]@{
     Foundation = @('GamePlatformCore', 'GamePlatformData')
     Application = @('GamePlatformApplicationFlow', 'GamePlatformInput', 'GamePlatformLoading', 'GamePlatformSettings', 'GamePlatformSave', 'GamePlatformLocalization')
     OnlineServices = @('GamePlatformOnline', 'GamePlatformSession', 'GamePlatformServer')
-    World = @('GamePlatformWorld', 'GamePlatformOpenWorld', 'GamePlatformPCG', 'GamePlatformInteraction', 'GamePlatformNavigation')
+    World = @('GamePlatformWorld', 'GamePlatformPCG', 'GamePlatformInteraction', 'GamePlatformNavigation')
     Gameplay = @('GamePlatformGameplay', 'GamePlatformCharacter', 'GamePlatformAbilitySystem', 'GamePlatformCombat', 'GamePlatformAI', 'GamePlatformQuest', 'GamePlatformAnimation')
     Presentation = @('GamePlatformUI', 'GamePlatformPresentation', 'GamePlatformVFX', 'GamePlatformSFX', 'GamePlatformCamera')
     GameModes = @('GamePlatformLobby', 'GamePlatformVillage')
@@ -86,7 +86,7 @@ function Test-DesignBaselineWorkspace {
     }
     $expectedPluginPaths[$script:ExpectedMobaPresentationPlugin] = 'Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin'
 
-    # 内容登记只允许已审核的纯内容插件扩展46个代码／机制插件基线，不能借目录存在绕过清单。
+    # 内容登记只允许已审核的纯内容插件扩展45个代码／机制插件基线，不能借目录存在绕过清单。
     $baselineCount = $expectedPluginPaths.Count
     $contentNames = @()
     $contentRoot = Join-Path $projectPluginRoot 'ContentPacks'

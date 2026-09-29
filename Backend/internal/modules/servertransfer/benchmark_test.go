@@ -15,11 +15,12 @@ func BenchmarkIssueAndValidate(b *testing.B) {
 		ticket, err := service.Issue(IssueRequest{
 			TicketID: fmt.Sprintf("ticket-%d", i), GameID: "divine-beasts", PlayerID: "p1", SessionID: "s1",
 			DestinationGameServerID: "arena-1", DestinationEndpoint: "127.0.0.1:7777", DestinationWorldID: "World.MainArena", TTL: 30 * time.Second,
+			DestinationServerBootID: "boot-arena-1", DestinationProtocolVersion: 1,
 		})
 		if err != nil {
 			b.Fatal(err)
 		}
-		if _, err := service.Validate(ValidateRequest{Ticket: ticket, DestinationGameServerID: "arena-1"}); err != nil {
+		if _, err := service.Validate(ValidateRequest{Ticket: ticket, DestinationGameServerID: "arena-1", DestinationServerBootID: "boot-arena-1", DestinationProtocolVersion: 1}); err != nil {
 			b.Fatal(err)
 		}
 	}

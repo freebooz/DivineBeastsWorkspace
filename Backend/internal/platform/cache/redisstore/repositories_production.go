@@ -19,12 +19,14 @@ import (
 )
 
 const (
-	sessionKeyPrefix        = "identity:session:"
-	accessKeyPrefix         = "identity:access:"
-	refreshKeyPrefix        = "identity:refresh:"
-	partyKeyPrefix          = "party:"
-	matchRequestKeyPrefix   = "matchmaking:request:"
-	transferReplayKeyPrefix = "transfer:consumed:"
+	sessionKeyPrefix               = "identity:session:"
+	accessKeyPrefix                = "identity:access:"
+	refreshKeyPrefix               = "identity:refresh:"
+	partyKeyPrefix                 = "party:"
+	matchRequestKeyPrefix          = "matchmaking:request:"
+	transferReplayKeyPrefix        = "transfer:consumed:"
+	transferEpochKeyPrefix         = "transfer:session-epoch:"
+	transferAcceptedEpochKeyPrefix = "transfer:accepted-epoch:"
 )
 
 // SessionRepository（Redis会话仓储）实现identity.SessionRepository。
@@ -213,7 +215,113 @@ func (s *TransferReplayStore) Consume(ctx context.Context, ticketID string, ttl 
 	return ok, nil
 }
 
+// TransferEpochStore（Redis会话代次仓储）使用INCR为每个在线Session分配全局单调Epoch。
+// Key TTL大于身份刷新会话上限，避免长期孤儿键；在会话仍有效期间不会回绕。
+type TransferEpochStore struct{ client *Client }
+
+func NewTransferEpochStore(client *Client) *TransferEpochStore {
+	return &TransferEpochStore{client: client}
+}
+
+func (s *TransferEpochStore) Next(ctx context.Context, sessionID string) (uint64, error) {
+	if sessionID == "" {
+		return 0, errors.New("Transfer Epoch SessionID不能为空")
+	}
+	key := transferEpochKeyPrefix + sessionID
+	value, err := s.client.inner.Incr(ctx, key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("Redis分配SessionEpoch失败: %w", err)
+	}
+	if value <= 0 {
+		return 0, errors.New("Redis返回无效SessionEpoch")
+	}
+	// 身份Refresh Session最长30天；45天过期仅清理已失效会话的孤儿计数器。
+	_ = s.client.inner.Expire(ctx, key, 45*24*time.Hour).Err()
+	return uint64(value), nil
+}
+
+// Accept（确认服务端准入Epoch）使用Lua在Redis内原子执行仅前进比较。
+// Epoch按十进制字符串长度+字典序比较，避免Lua number在2^53以上丢失uint64精度。
+func (s *TransferEpochStore) Accept(
+	ctx context.Context,
+	sessionID string,
+	epoch uint64,
+	ticketID string,
+	ttl time.Duration,
+) (bool, error) {
+	if sessionID == "" || epoch == 0 || ticketID == "" || ttl <= 0 {
+		return false, errors.New("Transfer accepted Epoch参数无效")
+	}
+
+	const script = `
+local current = redis.call("GET", KEYS[1])
+local latest_issued = redis.call("GET", KEYS[2])
+local proposed_epoch = ARGV[1]
+local proposed_ticket = ARGV[2]
+local ttl_ms = ARGV[3]
+local proposed_value = proposed_epoch .. "|" .. proposed_ticket
+
+-- 十进制无符号整数比较：长度优先，同长度按字典序。
+-- 更高Epoch一旦被签发，低Epoch即失效，不等待新票先完成准入。
+if latest_issued then
+  if string.len(proposed_epoch) < string.len(latest_issued) then
+    return 0
+  end
+  if string.len(proposed_epoch) == string.len(latest_issued) and proposed_epoch < latest_issued then
+    return 0
+  end
+end
+
+if not current then
+  redis.call("PSETEX", KEYS[1], ttl_ms, proposed_value)
+  return 1
+end
+
+local sep = string.find(current, "|", 1, true)
+if not sep then
+  return redis.error_reply("accepted epoch value corrupt")
+end
+
+local current_epoch = string.sub(current, 1, sep - 1)
+local current_ticket = string.sub(current, sep + 1)
+
+if string.len(proposed_epoch) < string.len(current_epoch) then
+  return 0
+end
+if string.len(proposed_epoch) == string.len(current_epoch) and proposed_epoch < current_epoch then
+  return 0
+end
+if proposed_epoch == current_epoch then
+  if proposed_ticket ~= current_ticket then
+    return 0
+  end
+  redis.call("PEXPIRE", KEYS[1], ttl_ms)
+  return 1
+end
+
+redis.call("PSETEX", KEYS[1], ttl_ms, proposed_value)
+return 1
+`
+
+	value, err := s.client.inner.Eval(
+		ctx,
+		script,
+		[]string{
+			transferAcceptedEpochKeyPrefix + sessionID,
+			transferEpochKeyPrefix + sessionID,
+		},
+		fmt.Sprintf("%d", epoch),
+		ticketID,
+		ttl.Milliseconds(),
+	).Int()
+	if err != nil {
+		return false, fmt.Errorf("Redis确认SessionEpoch失败: %w", err)
+	}
+	return value == 1, nil
+}
+
 var _ identity.SessionRepository = (*SessionRepository)(nil)
 var _ matchapi.PartyRepository = (*PartyRepository)(nil)
 var _ matchapi.TicketRepository = (*TicketRepository)(nil)
 var _ servertransfer.ReplayStore = (*TransferReplayStore)(nil)
+var _ servertransfer.SessionEpochStore = (*TransferEpochStore)(nil)

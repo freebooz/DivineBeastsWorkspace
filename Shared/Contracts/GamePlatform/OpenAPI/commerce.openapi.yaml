@@ -1,0 +1,350 @@
+openapi: 3.1.0
+info:
+  title: GamePlatform Commerce Gateway API
+  version: 1.0.0
+  description: >-
+    游戏平台交易客户端契约。玩家身份只由Bearer认证解析；价格、付款、履约和发奖均由后端权威决定。
+servers:
+  - url: /
+security:
+  - bearerAuth: []
+
+paths:
+  /v1/commerce/catalog:
+    get:
+      operationId: getGatewayCommerceCatalog
+      summary: 获取当前认证玩家经过资格过滤的商品目录。
+      responses:
+        '200':
+          description: 商品目录快照。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommerceCatalog'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
+  /v1/commerce/purchase-intents:
+    post:
+      operationId: createGatewayCommercePurchaseIntent
+      summary: 以RequestId幂等创建后端权威价格快照。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreatePurchaseIntentRequest'}
+      responses:
+        '200':
+          description: 已存在的同键同内容购买意图。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PurchaseIntent'}
+        '201':
+          description: 新建购买意图。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PurchaseIntent'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
+  /v1/commerce/orders:
+    get:
+      operationId: listGatewayRecoverableCommerceOrders
+      summary: 列出当前玩家仍需恢复或最近完成的订单。
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: {type: integer, format: int32, minimum: 1, maximum: 50, default: 20}
+      responses:
+        '200':
+          description: 按更新时间倒序的订单集合。
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [orders]
+                properties:
+                  orders:
+                    type: array
+                    maxItems: 50
+                    items: {$ref: '#/components/schemas/CommerceOrder'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+    post:
+      operationId: createGatewayCommerceOrder
+      summary: 以PurchaseIntentId幂等创建订单；客户端不得提交金额或奖励。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateOrderRequest'}
+      responses:
+        '200':
+          description: 已存在的同购买意图订单。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommerceOrder'}
+        '201':
+          description: 新建订单。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommerceOrder'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
+  /v1/commerce/orders/{orderId}:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      operationId: getGatewayCommerceOrder
+      summary: 查询当前认证玩家拥有的订单。
+      responses:
+        '200':
+          description: 订单权威状态。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommerceOrder'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
+  /v1/commerce/orders/{orderId}/receipts:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    post:
+      operationId: submitGatewayCommerceReceipt
+      summary: 提交不透明Provider回执；接收不等于付款或履约成功。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SubmitReceiptRequest'}
+      responses:
+        '200':
+          description: 验证后的最新订单；可能仍在处理中。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommerceOrder'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
+  /v1/commerce/orders/{orderId}/reconcile:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    post:
+      operationId: reconcileGatewayCommerceOrder
+      summary: 幂等查询Provider并推进当前订单，不创建新订单。
+      responses:
+        '200':
+          description: 对账后的权威订单状态。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommerceOrder'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: AccessToken
+
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/CommerceIdentifier'}
+
+  responses:
+    InvalidRequest:
+      description: 请求字段、范围或JSON结构非法。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    Unauthorized:
+      description: Access Token无效、过期或已撤销。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    NotFound:
+      description: 商品、Offer、意图或订单不存在，且不泄漏其他玩家资源。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    Conflict:
+      description: 修订、价格、资格、状态或幂等内容冲突。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    Unavailable:
+      description: Commerce持久层、Provider或履约链暂不可用。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+
+  schemas:
+    CommerceIdentifier:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$'
+
+    CommerceInt64:
+      type: string
+      pattern: '^-?(0|[1-9][0-9]{0,18})$'
+      description: int64十进制字符串；不得作为JSON Number传输，消费者还必须检查真实int64范围。
+
+    CommerceRevision:
+      type: string
+      pattern: '^[1-9][0-9]{0,18}$'
+      description: 正修订号十进制字符串；解析后必须处于1..MaxInt64。
+
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [errorCode, message, retryable]
+      properties:
+        errorCode: {type: string, minLength: 1, maxLength: 96}
+        message: {type: string, maxLength: 512}
+        retryable: {type: boolean}
+
+    CommercePrice:
+      type: object
+      additionalProperties: false
+      required: [priceId, priceType, unitAmountMinor, totalAmountMinor]
+      properties:
+        priceId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        priceType: {type: string, enum: [real_money, soft_currency, free]}
+        currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
+        currencyId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        currencyExponent: {type: integer, format: int32, minimum: 0, maximum: 6}
+        unitAmountMinor: {$ref: '#/components/schemas/CommerceInt64'}
+        totalAmountMinor: {$ref: '#/components/schemas/CommerceInt64'}
+
+    CommerceProduct:
+      type: object
+      additionalProperties: false
+      required: [productId, productType, nameKey, descriptionKey]
+      properties:
+        productId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        productType: {$ref: '#/components/schemas/CommerceIdentifier'}
+        nameKey: {type: string, minLength: 1, maxLength: 256}
+        descriptionKey: {type: string, minLength: 1, maxLength: 256}
+        presentationMetadataId: {$ref: '#/components/schemas/CommerceIdentifier'}
+
+    CommerceOffer:
+      type: object
+      additionalProperties: false
+      required: [offerId, productId, offerRevision, price, startsAtUtc, active]
+      properties:
+        offerId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        productId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        offerRevision: {$ref: '#/components/schemas/CommerceRevision'}
+        price: {$ref: '#/components/schemas/CommercePrice'}
+        startsAtUtc: {type: string, format: date-time}
+        endsAtUtc: {type: string, format: date-time}
+        liveOpsEventId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        active: {type: boolean}
+
+    CommerceCatalog:
+      type: object
+      additionalProperties: false
+      required: [catalogRevision, generatedAtUtc, serverTimeUtc, products, offers]
+      properties:
+        catalogRevision: {$ref: '#/components/schemas/CommerceRevision'}
+        generatedAtUtc: {type: string, format: date-time}
+        serverTimeUtc: {type: string, format: date-time}
+        products:
+          type: array
+          maxItems: 1000
+          items: {$ref: '#/components/schemas/CommerceProduct'}
+        offers:
+          type: array
+          maxItems: 2000
+          items: {$ref: '#/components/schemas/CommerceOffer'}
+
+    CreatePurchaseIntentRequest:
+      type: object
+      additionalProperties: false
+      required: [requestId, offerId, quantity, catalogRevision, offerRevision]
+      properties:
+        requestId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        offerId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        quantity: {type: integer, format: int32, minimum: 1, maximum: 999}
+        catalogRevision: {$ref: '#/components/schemas/CommerceRevision'}
+        offerRevision: {$ref: '#/components/schemas/CommerceRevision'}
+
+    PurchaseIntent:
+      type: object
+      additionalProperties: false
+      required: [purchaseIntentId, requestId, productId, offerId, quantity, catalogRevision, offerRevision, price, expiresAtUtc]
+      properties:
+        purchaseIntentId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        requestId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        productId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        offerId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        quantity: {type: integer, format: int32, minimum: 1, maximum: 999}
+        catalogRevision: {$ref: '#/components/schemas/CommerceRevision'}
+        offerRevision: {$ref: '#/components/schemas/CommerceRevision'}
+        price: {$ref: '#/components/schemas/CommercePrice'}
+        expiresAtUtc: {type: string, format: date-time}
+
+    CreateOrderRequest:
+      type: object
+      additionalProperties: false
+      required: [purchaseIntentId]
+      properties:
+        purchaseIntentId: {$ref: '#/components/schemas/CommerceIdentifier'}
+
+    SubmitReceiptRequest:
+      type: object
+      additionalProperties: false
+      required: [receiptSubmissionId, receipt]
+      properties:
+        receiptSubmissionId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        receipt:
+          type: string
+          minLength: 1
+          maxLength: 16384
+          description: Provider不透明回执；不得写入日志、遥测或错误消息。
+
+    ProviderFlow:
+      type: object
+      additionalProperties: false
+      required: [providerName, sessionId, nonProduction]
+      properties:
+        providerName: {$ref: '#/components/schemas/CommerceIdentifier'}
+        sessionId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        nonProduction: {type: boolean}
+
+    CommerceOrder:
+      type: object
+      additionalProperties: false
+      required: [orderId, purchaseIntentId, productId, offerId, quantity, orderState, paymentState, fulfillmentState, orderRevision, price, updatedAtUtc]
+      properties:
+        orderId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        purchaseIntentId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        productId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        offerId: {$ref: '#/components/schemas/CommerceIdentifier'}
+        quantity: {type: integer, format: int32, minimum: 1, maximum: 999}
+        orderState: {type: string, enum: [awaiting_payment, fulfillment_pending, fulfilled, failed, cancelled]}
+        paymentState: {type: string, enum: [pending, confirmed, failed, refunded]}
+        fulfillmentState: {type: string, enum: [not_started, pending, fulfilled, failed, revoked]}
+        orderRevision: {$ref: '#/components/schemas/CommerceRevision'}
+        price: {$ref: '#/components/schemas/CommercePrice'}
+        providerFlow: {$ref: '#/components/schemas/ProviderFlow'}
+        updatedAtUtc: {type: string, format: date-time}

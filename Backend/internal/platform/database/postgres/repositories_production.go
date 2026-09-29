@@ -32,9 +32,9 @@ func (r *PlayerRepository) Get(ctx context.Context, playerID string) (playerdata
 	var profile playerdata.Profile
 	var ownedJSON []byte
 	err := r.pool.inner.QueryRow(ctx, `
-SELECT player_id, game_id, display_name, data_version, revision, tutorial_completed, default_world_id, owned_character_ids
+SELECT player_id, game_id, display_name, data_version, revision, tutorial_completed, default_world_id, selected_character_id, owned_character_ids
 FROM player_profiles
-WHERE player_id = $1`, playerID).Scan(&profile.PlayerID, &profile.GameID, &profile.DisplayName, &profile.DataVersion, &profile.Revision, &profile.TutorialCompleted, &profile.DefaultWorldID, &ownedJSON)
+WHERE player_id = $1`, playerID).Scan(&profile.PlayerID, &profile.GameID, &profile.DisplayName, &profile.DataVersion, &profile.Revision, &profile.TutorialCompleted, &profile.DefaultWorldID, &profile.SelectedCharacterID, &ownedJSON)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return playerdata.Profile{}, errors.New("玩家资料不存在")
 	}
@@ -61,13 +61,14 @@ SET display_name = $2,
     data_version = $3,
     tutorial_completed = $4,
     default_world_id = $5,
-    owned_character_ids = $6,
+    selected_character_id = $6,
+    owned_character_ids = $7,
     revision = revision + 1,
     updated_at = NOW()
-WHERE player_id = $1 AND revision = $7
-RETURNING player_id, game_id, display_name, data_version, revision, tutorial_completed, default_world_id, owned_character_ids`,
-		profile.PlayerID, profile.DisplayName, profile.DataVersion, profile.TutorialCompleted, profile.DefaultWorldID, ownedJSON, expectedRevision,
-	).Scan(&saved.PlayerID, &saved.GameID, &saved.DisplayName, &saved.DataVersion, &saved.Revision, &saved.TutorialCompleted, &saved.DefaultWorldID, &savedOwned)
+WHERE player_id = $1 AND revision = $8
+RETURNING player_id, game_id, display_name, data_version, revision, tutorial_completed, default_world_id, selected_character_id, owned_character_ids`,
+		profile.PlayerID, profile.DisplayName, profile.DataVersion, profile.TutorialCompleted, profile.DefaultWorldID, profile.SelectedCharacterID, ownedJSON, expectedRevision,
+	).Scan(&saved.PlayerID, &saved.GameID, &saved.DisplayName, &saved.DataVersion, &saved.Revision, &saved.TutorialCompleted, &saved.DefaultWorldID, &saved.SelectedCharacterID, &savedOwned)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return playerdata.Profile{}, errors.New("PLAYER_DATA_CONFLICT: 玩家资料Revision冲突或不存在")
 	}

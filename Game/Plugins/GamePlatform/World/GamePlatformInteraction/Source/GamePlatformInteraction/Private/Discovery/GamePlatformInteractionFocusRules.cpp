@@ -1,5 +1,20 @@
 #include "Services/GamePlatformInteractionFocusRules.h"
 
+bool FGamePlatformInteractionFocusRules::IsPreferredOption(
+    const FGamePlatformInteractionOption& Candidate,
+    const FGamePlatformInteractionOption* CurrentBest)
+{
+    return !CurrentBest ||
+           Candidate.Priority > CurrentBest->Priority ||
+           (Candidate.Priority == CurrentBest->Priority &&
+            Candidate.MaxDistance < CurrentBest->MaxDistance) ||
+           (Candidate.Priority == CurrentBest->Priority &&
+            FMath::IsNearlyEqual(
+                Candidate.MaxDistance,
+                CurrentBest->MaxDistance) &&
+            Candidate.OptionId.LexicalLess(CurrentBest->OptionId));
+}
+
 bool FGamePlatformInteractionFocusRules::SelectBestOption(
     const TArray<FGamePlatformInteractionOption>& Options,
     float Distance,
@@ -17,13 +32,7 @@ bool FGamePlatformInteractionFocusRules::SelectBestOption(
             continue;
         }
 
-        if (!Best ||
-            Option.Priority > Best->Priority ||
-            (Option.Priority == Best->Priority &&
-             Option.MaxDistance < Best->MaxDistance) ||
-            (Option.Priority == Best->Priority &&
-             FMath::IsNearlyEqual(Option.MaxDistance, Best->MaxDistance) &&
-             Option.OptionId.LexicalLess(Best->OptionId)))
+        if (IsPreferredOption(Option, Best))
         {
             Best = &Option;
         }

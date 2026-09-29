@@ -118,6 +118,63 @@ paths:
               schema: { $ref: '#/components/schemas/InternalApiError' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '503': { $ref: '#/components/responses/Unavailable' }
+  /internal/v1/playerdata/characters:
+    get:
+      tags: [内部玩家资料]
+      operationId: listInternalPlayerCharacters
+      summary: 按可信玩家标识读取持久角色列表
+      parameters:
+        - name: playerId
+          in: query
+          required: true
+          schema: {type: string, minLength: 1}
+      responses:
+        '200':
+          description: 角色列表；无角色时返回空数组。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InternalCharacterListResponse'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+    post:
+      tags: [内部玩家资料]
+      operationId: createInternalPlayerCharacter
+      summary: 为可信玩家主体幂等创建持久角色
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/InternalCreateCharacterRequest'}
+      responses:
+        '200':
+          description: 创建成功或幂等重放。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InternalCharacterSummary'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /internal/v1/playerdata/character-selection:
+    post:
+      tags: [内部玩家资料]
+      operationId: selectInternalPlayerCharacter
+      summary: 幂等提交当前玩家的权威角色选择
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/InternalCharacterSelectionRequest'}
+      responses:
+        '200':
+          description: 选择已提交或幂等重放。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InternalCharacterSelectionResponse'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '503': {$ref: '#/components/responses/Unavailable'}
 components:
   responses:
     InvalidRequest:
@@ -187,7 +244,7 @@ components:
     InternalPlayerProfileResponse:
       type: object
       additionalProperties: false
-      required: [found, playerId, gameId, displayName, dataVersion, revision, tutorialCompleted, ownedCharacterIds]
+      required: [found, playerId, gameId, displayName, dataVersion, revision, tutorialCompleted, selectedCharacterId, ownedCharacterIds]
       properties:
         found: { type: boolean, const: true, description: 当前 HTTP 实现仅在找到资料时返回 true。 }
         playerId: { type: string, description: 玩家标识。 }
@@ -197,10 +254,60 @@ components:
         revision: { type: integer, format: int64, minimum: 0, description: 长期资料乐观并发修订号。 }
         tutorialCompleted: { type: boolean, description: 是否完成新手教学。 }
         defaultWorldId: { type: string, description: 默认进入世界标识；当前实现可能为空字符串。 }
+        selectedCharacterId: { type: string, description: 最近一次权威选择角色；尚未选择时为空字符串。 }
         ownedCharacterIds:
           type: array
           description: 已拥有角色逻辑标识列表。
           items: { type: string }
+    InternalCharacterSummary:
+      type: object
+      additionalProperties: false
+      required: [characterId, heroDefinitionId, characterName, characterRevision, onboardingState, status]
+      properties:
+        characterId: {type: string, minLength: 1}
+        heroDefinitionId: {type: string, minLength: 1}
+        characterName: {type: string, minLength: 1, maxLength: 24}
+        characterRevision: {type: integer, format: int64, minimum: 1}
+        onboardingState: {type: string, enum: [New, TutorialRequired, TutorialInProgress, OnboardingComplete]}
+        status: {type: string, enum: [Active, Disabled]}
+        appearanceProfileId: {type: string}
+    InternalCharacterListResponse:
+      type: object
+      additionalProperties: false
+      required: [characters]
+      properties:
+        characters:
+          type: array
+          items: {$ref: '#/components/schemas/InternalCharacterSummary'}
+    InternalCreateCharacterRequest:
+      type: object
+      additionalProperties: false
+      required: [playerId, creationRequestId, heroDefinitionId, characterName]
+      properties:
+        playerId: {type: string, minLength: 1}
+        creationRequestId: {type: string, minLength: 1, maxLength: 128}
+        heroDefinitionId: {type: string, minLength: 1}
+        characterName: {type: string, minLength: 1, maxLength: 24}
+        appearanceSelection:
+          type: object
+          additionalProperties: {type: string}
+    InternalCharacterSelectionRequest:
+      type: object
+      additionalProperties: false
+      required: [playerId, selectionRequestId, characterId, expectedCharacterRevision]
+      properties:
+        playerId: {type: string, minLength: 1}
+        selectionRequestId: {type: string, minLength: 1, maxLength: 128}
+        characterId: {type: string, minLength: 1}
+        expectedCharacterRevision: {type: integer, format: int64, minimum: 1}
+    InternalCharacterSelectionResponse:
+      type: object
+      additionalProperties: false
+      required: [selectionRequestId, profileRevision, character]
+      properties:
+        selectionRequestId: {type: string}
+        profileRevision: {type: integer, format: int64, minimum: 1}
+        character: {$ref: '#/components/schemas/InternalCharacterSummary'}
     InternalApiError:
       type: object
       additionalProperties: false

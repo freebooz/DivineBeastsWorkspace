@@ -13,8 +13,8 @@ class UDivineBeastsApplicationFlowSubsystem;
 /**
  * UDivineBeastsClientTelemetryBootstrapSubsystem（神兽联盟客户端遥测装配子系统）。
  *
- * 职责：只把项目 Gateway 地址和 Online 的瞬时 Authorization Header 注入平台 Telemetry；
- * 不复制 Buffer/Sampling/Retry，不保存 AccessToken，不让遥测失败改变登录或玩法流程。
+ * 职责：只把项目 Gateway 地址与 Online 的请求授权能力注入平台 Telemetry；
+ * 不读取/复制 Authorization 字符串，不保存 AccessToken，不复制 Buffer/Sampling/Retry，也不让遥测失败改变登录或玩法流程。
  */
 UCLASS()
 class UDivineBeastsClientTelemetryBootstrapSubsystem final : public UGameInstanceSubsystem

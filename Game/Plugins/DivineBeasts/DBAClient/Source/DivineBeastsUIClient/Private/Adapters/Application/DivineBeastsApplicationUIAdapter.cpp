@@ -187,12 +187,32 @@ FDivineBeastsUIViewState UDivineBeastsApplicationUIAdapter::BuildViewState(
         Item.CharacterId = Character.CharacterId;
         Item.HeroDefinitionId = Character.HeroDefinitionId;
         Item.DisplayName = FText::FromString(Character.CharacterName);
+        Item.AppearanceProfileId = Character.AppearanceProfileId;
         Item.Status = Character.Status;
+        Item.bEnabled = Character.Status == TEXT("Active");
         Item.bSelected =
             FlowState.bHasSelectedCharacter &&
             FlowState.SelectedCharacter.CharacterId ==
                 Character.CharacterId;
         Result.Characters.Add(MoveTemp(Item));
+    }
+
+    // 角色创建候选通过 ApplicationFlow（应用流程）的项目 DTO 获取；
+    // 本 UI 模块不直接依赖 GamePlatformCharacter（平台角色插件）的 Provider 实现类型。
+    if (Flow)
+    {
+        TArray<FDivineBeastsCharacterCreationOption> CreateOptions;
+        if (Flow->GetCharacterCreationOptions(CreateOptions))
+        {
+            Result.CreateHeroOptions.Reserve(CreateOptions.Num());
+            for (const FDivineBeastsCharacterCreationOption& Option : CreateOptions)
+            {
+                FDivineBeastsUICreateHeroItem Item;
+                Item.HeroDefinitionId = Option.HeroDefinitionId;
+                Item.DisplayNameKey = Option.DisplayNameKey;
+                Result.CreateHeroOptions.Add(MoveTemp(Item));
+            }
+        }
     }
 
     if (FlowState.bHasSelectedCharacter)

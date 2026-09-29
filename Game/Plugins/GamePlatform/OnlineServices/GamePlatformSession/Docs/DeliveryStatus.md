@@ -1,9 +1,9 @@
 # Session交付状态与续作断点
 
-本轮保留的是可验证的部分内核，不是完整会话服务。实际内容：Client/Editor限定模块、私有连接状态内核与原生测试、隔离PostgreSQL准入事务与Go数据库适配器、验证脚本和说明。
+当前已落地：Client/Editor限定的 `UGamePlatformSessionClientSubsystem`、私有连接状态内核、Intent/Recovery公开投影、取消/离开/断线/对账契约、Epoch防旧和原生状态测试；项目层DBAClient已经通过公开API消费Session。Backend已增加受Bearer认证的 `/v1/divinebeasts/world-entry`，HTTP/gRPC均复用GameServerControl分配与TransferTicket签发；内部HTTP控制面不再允许匿名世界分配或票据验证。GamePlatformServer已存在Fail Closed的Admission Subsystem/Provider边界。
 
-缺失：公开IGamePlatformSessionService、真实Online授权适配、UE Travel/连接回调适配、可信服务端连接关联、注册心跳/续租、五服务HTTP/gRPC接线、真实客户端准入和回城/重连集成、测试资产、UE构建/Cook证据。
+已补齐：默认 `IGamePlatformSessionTransport` 会执行真实ClientTravel并监听TravelFailure/NetworkFailure；GamePlatformGameplay提供拥有者RPC握手组件，GamePlatformServer注册唯一HTTP Admission Provider并把验证结果绑定实际PlayerController；TransferTicket和世界进入响应均携带后端签发的 `GameSessionId / ServerBootId / ProtocolVersion / SessionEpoch`，客户端不能自造。服务端ValidateTransfer同时检查目标Boot/协议和已接受Epoch栅栏，拒绝更高Epoch已生效后的旧票。
 
-原生及隔离数据库验证：通过；完整Session真实链路：未执行，前置阻塞。用户随后切换到第六Loading，停止扩展Session后端业务。Loading不得读取本私有状态冒充Session Ready。
+已执行验证包括Session纯C++状态测试、Gateway/GameServerControl/ServerTransfer HTTP与领域测试、生产Redis Epoch栅栏编译测试、gRPC客户端与productiondeps+grpcdeps组合编译测试，以及Shared contractcodegen新鲜度检查。UE Editor/Server最终构建、Multi-PIE、真实双进程ClientTravel、断线重连、OpenWorld/Village/MainArena往返和Cook隔离仍需形成最终证据。
 
-下一步先核对并行Online真实接口及验收，再设计可信连接关联/会话公共快照并补完整身份与故障链。当前不启用Session到正式主工程，不发布生产，不把数据库内核作为匿名客户端放行接口。
+下一阶段不再新增同类机制，重点转为验证和收口：先完成Editor/Server编译并修复编译缺陷，再以真实Client + Dedicated Server执行握手与ClientTravel；随后验证断线重连、Boot变化、旧Epoch拒绝和OpenWorld/Village/MainArena往返。`NetworkConnected + AdmissionConfirmed` 已由真实Transport/服务器握手产生，`TargetWorldLoaded + ControllerReady` 继续由项目世界与控制器事实驱动，禁止Transport伪造。

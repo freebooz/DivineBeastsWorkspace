@@ -11,7 +11,6 @@ import (
 	"errors"
 	"log/slog"
 	"strings"
-	"sync"
 	"time"
 
 	generatedgp "divinebeasts/backend/generated/gameplatform"
@@ -21,6 +20,7 @@ import (
 	"divinebeasts/backend/internal/app/servicehost"
 	"divinebeasts/backend/internal/modules/gameserver"
 	"divinebeasts/backend/internal/modules/identity"
+	"divinebeasts/backend/internal/modules/inventory"
 	"divinebeasts/backend/internal/modules/match"
 	"divinebeasts/backend/internal/modules/playerdata"
 	"divinebeasts/backend/internal/modules/servertransfer"
@@ -34,7 +34,16 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	identityClient := httpadapter.NewIdentityClient(httpadapter.ClientConfig{BaseURL: config.Getenv("IDENTITY_SERVICE_URL", "http://127.0.0.1:8081")})
 	playerDataClient := httpadapter.NewPlayerDataClient(httpadapter.ClientConfig{BaseURL: config.Getenv("PLAYER_DATA_SERVICE_URL", "http://127.0.0.1:8082")})
 	matchClient := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: config.Getenv("MATCH_SERVICE_URL", "http://127.0.0.1:8083")})
-	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, matchClient, matchClient)
+	internalToken := strings.TrimSpace(config.Getenv("GAMESERVERCONTROL_INTERNAL_TOKEN", ""))
+	if internalToken == "" {
+		return errors.New("GAMESERVERCONTROL_INTERNAL_TOKEN不能为空")
+	}
+	worldEntryClient := httpadapter.NewGameServerControlClient(httpadapter.GameServerControlClientConfig{
+		ClientConfig:  httpadapter.ClientConfig{BaseURL: config.Getenv("GAMESERVERCONTROL_SERVICE_URL", "http://127.0.0.1:8084")},
+		BearerToken:   internalToken,
+		DefaultRegion: config.Getenv("GAME_DEFAULT_REGION", "us-west"),
+	})
+	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, matchClient, matchClient, worldEntryClient)
 	return servicehost.Run(ctx, cfg, handler)
 }
 
@@ -46,8 +55,11 @@ func RunIdentity(ctx context.Context, cfg config.ServiceConfig) error {
 
 // RunPlayerData（运行玩家数据服务）使用本地自动创建仓储，便于多进程联调完整登录流程。
 func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
-	repo := newAutoCreatePlayerRepository()
+	// 本地装配直接复用领域层MemoryRepository；建档、角色创建、角色选择和幂等语义
+	// 与生产PlayerDataService保持同一Service入口，不维护第二套旁路仓储。
+	repo := playerdata.NewMemoryRepository()
 	service := playerdata.NewService(repo)
+	service.AttachInventory(inventory.NewService(inventory.NewMemoryRepository()))
 	return servicehost.Run(ctx, cfg, httpadapter.NewPlayerDataHandler(service))
 }
 
@@ -92,41 +104,4 @@ func newID(prefix string) string {
 		panic(err)
 	}
 	return prefix + "-" + hex.EncodeToString(raw[:])
-}
-
-// autoCreatePlayerRepository（本地自动玩家仓储）在首次读取登录产生的PlayerID时创建默认资料。
-type autoCreatePlayerRepository struct {
-	mu    sync.RWMutex
-	items map[string]playerdata.Profile
-}
-
-func newAutoCreatePlayerRepository() *autoCreatePlayerRepository {
-	return &autoCreatePlayerRepository{items: map[string]playerdata.Profile{}}
-}
-
-func (r *autoCreatePlayerRepository) Get(_ context.Context, playerID string) (playerdata.Profile, error) {
-	if playerID == "" {
-		return playerdata.Profile{}, errors.New("PlayerID不能为空")
-	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	value, ok := r.items[playerID]
-	if !ok {
-		value = playerdata.Profile{PlayerID: playerID, GameID: "divine-beasts", DisplayName: "新玩家", DataVersion: 1, Revision: 1, DefaultWorldID: "World.OpenWorld.Hub"}
-		r.items[playerID] = value
-	}
-	value.OwnedCharacterIDs = append([]string(nil), value.OwnedCharacterIDs...)
-	return value, nil
-}
-
-func (r *autoCreatePlayerRepository) Save(_ context.Context, profile playerdata.Profile, expectedRevision int64) (playerdata.Profile, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	current, ok := r.items[profile.PlayerID]
-	if !ok || current.Revision != expectedRevision {
-		return playerdata.Profile{}, errors.New("PLAYER_DATA_CONFLICT: 玩家资料Revision冲突")
-	}
-	profile.Revision = expectedRevision + 1
-	r.items[profile.PlayerID] = profile
-	return profile, nil
 }

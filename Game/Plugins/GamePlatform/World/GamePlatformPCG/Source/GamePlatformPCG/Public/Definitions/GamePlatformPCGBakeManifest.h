@@ -15,6 +15,19 @@ public:
     /** 原配置主资产ID及真实内容修订；清单自身还有独立DataVersion。 */
     UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") FPrimaryAssetId ProfileId;
     UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") int32 ProfileRevision = 0;
+    /** 1.0环境生成合同信息；旧0.1.0夹具可保持TemplateId为空。 */
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") int32 PCGSchemaMajor = 1;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") FName TemplateId = NAME_None;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") int32 TemplateVersion = 0;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") FPrimaryAssetId ExecPresetId;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") FPrimaryAssetId PriorityTableId;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") uint8 WorldStage = 0;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") int32 GridBand = 0;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") int32 Seed = 0;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") FBox OutputBounds = FBox(EForceInit::ForceInit);
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") int32 GeneratedActorCount = 0;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") FName DataLayerId = NAME_None;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") FName HLODLayerId = NAME_None;
     /** 实际源文件指纹，算法/依赖范围另记；不与平台Cook二进制哈希混用。 */
     UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PCG") FString SourceFingerprint;
     /** 排序规范化后的实际ISM变换摘要；毫米平移、万分之一旋转/缩放量化。 */

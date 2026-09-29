@@ -99,6 +99,8 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsCharacterSummary
     UPROPERTY(BlueprintReadOnly) EDivineBeastsOnboardingState OnboardingState =
         EDivineBeastsOnboardingState::New;
     UPROPERTY(BlueprintReadOnly) FName Status = NAME_None;
+    /** 可选外观方案标识；为空表示项目默认外观。 */
+    UPROPERTY(BlueprintReadOnly) FName AppearanceProfileId = NAME_None;
 };
 
 /** FDivineBeastsCharacterCreateDraft（当前客户端会话中的临时角色创建草稿）。 */
@@ -117,6 +119,18 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsCharacterCreateDraft
             !CharacterName.TrimStartAndEnd().IsEmpty() &&
             CharacterName.Len() <= 24;
     }
+};
+
+/** FDivineBeastsCharacterCreationOption（项目流程公开的可创建英雄轻量投影）。 */
+USTRUCT(BlueprintType)
+struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsCharacterCreationOption
+{
+    GENERATED_BODY()
+
+    /** 稳定 Hero Definition（英雄定义）标识。 */
+    UPROPERTY(BlueprintReadOnly) FName HeroDefinitionId = NAME_None;
+    /** 本地化显示名键；具体文案由 UI 本地化层解析。 */
+    UPROPERTY(BlueprintReadOnly) FName DisplayNameKey = NAME_None;
 };
 
 /** FDivineBeastsValidatedSelection（后端校验后的持久角色选择）。 */
@@ -146,6 +160,14 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsWorldAssignmentSummary
     UPROPERTY(BlueprintReadOnly) FString TicketId;
     UPROPERTY(BlueprintReadOnly) FString CharacterId;
     UPROPERTY(BlueprintReadOnly) FString SessionId;
+    /** 后端签发的非敏感游戏会话绑定身份，不是认证凭据。 */
+    UPROPERTY(BlueprintReadOnly) FString GameSessionId;
+    /** 目标Dedicated Server启动代次；服务器重启后旧值失效。 */
+    UPROPERTY(BlueprintReadOnly) FString ServerBootId;
+    /** 目标实时网络协议版本；以字符串投影给平台Session进行严格相等比较。 */
+    UPROPERTY(BlueprintReadOnly) FString ProtocolVersion;
+    /** 当前在线Session单调权威绑定代次。 */
+    UPROPERTY(BlueprintReadOnly) int64 SessionEpoch = 0;
 };
 
 /** FDivineBeastsFlowViewState（UI只读流程投影）。 */

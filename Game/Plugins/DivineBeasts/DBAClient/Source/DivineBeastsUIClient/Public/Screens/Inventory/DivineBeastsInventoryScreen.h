@@ -26,6 +26,10 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Inventory")
     EGamePlatformInventoryClientState GetInventoryState() const;
 
+    /** 返回平台背包最近一次稳定错误，供项目蓝图显示提示；不解析服务端自然语言消息。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Inventory")
+    EGamePlatformInventoryError GetInventoryLastError() const;
+
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Inventory")
     int64 GetInventoryRevision() const;
 

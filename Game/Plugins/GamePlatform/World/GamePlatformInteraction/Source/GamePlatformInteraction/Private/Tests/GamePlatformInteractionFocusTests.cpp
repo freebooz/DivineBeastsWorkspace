@@ -48,6 +48,25 @@ bool FGamePlatformInteractionFocusOrderTest::RunTest(const FString& Parameters)
             500.0f,
             Selected));
 
+    FGamePlatformInteractionOption Wider = HighA;
+    Wider.OptionId = TEXT("High.Near");
+    Wider.MaxDistance = 300.0f;
+
+    FGamePlatformInteractionOption Tighter = Wider;
+    Tighter.OptionId = TEXT("High.Far");
+    Tighter.MaxDistance = 200.0f;
+
+    TestTrue(
+        TEXT("同优先级时更短MaxDistance应优先"),
+        FGamePlatformInteractionFocusRules::IsPreferredOption(
+            Tighter,
+            &Wider));
+    TestFalse(
+        TEXT("更长MaxDistance不能覆盖更严格候选"),
+        FGamePlatformInteractionFocusRules::IsPreferredOption(
+            Wider,
+            &Tighter));
+
     return true;
 }
 

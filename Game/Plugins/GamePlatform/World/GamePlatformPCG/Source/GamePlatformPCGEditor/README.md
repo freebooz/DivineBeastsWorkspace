@@ -1,15 +1,19 @@
 # PCG编辑器模块阶段断点
 
+> 2026-09-29 补充：GamePlatformPCG 1.0 已形成正式改造基线，详见 `../../Docs/改造方案与执行计划.md（改造方案与执行计划）`。本文件继续记录 0.1.0 Editor（编辑器）模块的真实断点，不再作为后续总体设计的唯一依据。
+
 2026-09-21。按用户转入第九插件的指示提前收口；本目录是已写源码，不是UE验收通过。
 
 ## 当前实现与文件
 
-- `GamePlatformPCGEditor.Build.cs`：与现有描述中的编辑器模块同名，声明PCG、runtime公开接口、UnrealEd、AssetRegistry和Projects依赖。
+- `GamePlatformPCGEditor.Build.cs`：Editor（编辑器）模块，显式依赖 PCG、Runtime公开接口、UnrealEd、AssetRegistry、DataValidation 和 Projects；DataValidation 只留在编辑器闭包，不反向污染 Runtime/Client/Server。
 - `Private/GamePlatformPCGEditorModule.cpp`：默认模块注册，不自动创建世界或执行生成。
-- `Private/Authoring/GamePlatformPCGEditorLibrary.h/.cpp`：反射工具入口；首次创建固定开发图和配置，已有任一目标则整批拒绝。不覆盖已有人工资产。部分保存失败保留现场并返回错误，不假装事务回滚。
-- `Private/Authoring/PCGDevelopmentGraph.h/.cpp`：真实原生CreatePointsGrid→TransformPoints→DensityFilter→StaticMeshSpawner→output.Out；CPU、Weighted单网格、无属性旁路，descriptor变更和跨数据合并均关闭。
+- `Private/Authoring/GamePlatformPCGEditorLibrary.h/.cpp`：反射工具入口；保留0.1.0开发夹具创建，同时新增 `CreateFoundationTemplateAssets（创建基础模板资产）`、Template Contract（模板合同）校验和模板ID查询。全部创建入口先检查目标包，拒绝覆盖已有人工资产；保存失败保留现场并返回错误，不假装事务回滚。
+- `Private/Authoring/PCGDevelopmentGraph.h/.cpp`：保留 Legacy（旧版）四节点图生成器；新增使用 UE5.8 原生 `UPCGGraph/AddNodeOfType/AddEdge` 的 M0/M1 Foundation Template Generator（基础模板生成器），设置官方 `bIsTemplate=true`，使用动态默认Graph输入/输出Pin（引脚），不硬编码项目资产。
 - `Private/Manifests/PCGSourceFingerprint.h/.cpp`：递归AssetRegistry包依赖与实际包/伴随文件字节、PCG及本插件源码/描述、Build.version与引擎版本参与摘要。脏包、未知依赖和缺源码拒绝；不是仅路径/Seed哈希，也不是密码学签名。
-- `Private/Tests/PCGEditorTests.cpp`：来源摘要顺序/变化及两用途真实原生图形状的UE自动化测试源码，未执行。
+- `Private/Commands/GamePlatformPCGFoundationTemplatesCommandlet.*`：Foundation模板命令行生成器；编译后由 `UnrealEditor-Cmd -run=GamePlatformPCGFoundationTemplates` 显式执行，只写 `/Game/Development/Foundation/PCG/Templates`。
+- `Private/Validators/GamePlatformPCGWorldValidator.*`：原生 `UEditorValidatorBase（编辑器验证基类）`；PCG地图必须唯一 WorldDirector（世界编排器），且所有平台PCG放置器必须显式注册。
+- `Private/Tests/PCGEditorTests.cpp`：来源摘要、Legacy图及12个M0/M1 Foundation模板内存创建/合同验证的 UE Automation（虚幻自动化测试）源码；尚未实跑。
 
 ## 实际能力边界
 
@@ -26,10 +30,10 @@
 
 ## 明确未交付与验证
 
-没有运行任何资产创建入口，没有新增`.uasset`或`.umap`。没有PCG执行、地图生成/保存、ClearPCGLink转换、精确静态输出清理、独立重开、碰撞探针、Cook或Stage。原先准备的Operation/Poll/Cancel/Verify/Cleanup声明已撤回，不留下未定义方法或固定成功实现。没有资产Python脚本。
+当前没有实际执行 Foundation Template Commandlet（基础模板生成命令行工具），因此仍没有新增本轮 M0/M1 Foundation `.uasset`；也没有创建 Gold Level（金标准关卡）`.umap`。没有把模板合同源码存在等价为真实模板资产已交付。
 
-UHT、C++编译/链接、UE自动化均未执行。既有工程描述扫描阻塞历史不是本模块运行证据，也不能由静态核对宣布已解除。只进行了源文件/声明与引擎公开API核对。运行生成继续由runtime负责人维护，本模块未修改其代码、profile、inspection或manifest。
+UE5.8 定向构建已经多次完成 UHT 并进入实际 PCG 编译动作，但受同工作区并行 UBT（虚幻构建工具）任务的 Mutex（互斥锁）、外部停止或工具超时影响，尚未取得本轮 Runtime+Editor 最终编译通过结论。UE Automation、DataValidation 实际调度、模板资产落盘、Gold Level、Client/Server Cook、碰撞/Nav/重开与性能 Profile 均未完成。
 
-续作顺序：先解除经授权的工程前置并构建Editor；运行上述两项自动化；再增加显式原生异步生成操作及持有期；复用InspectOwnedOutput的pointcount==ISM检查；仅成功后保存/归属转移；实现精确清理、跨进程重开与碰撞核验。任何清理必须先取消并证明可访问/排空，不能复制引擎私有实现或越过Data租约所有权。
+下一步顺序固定为：等待同工作区其他 UBT 任务释放 → 定向编译 `GamePlatformPCG + GamePlatformPCGEditor` → 运行 `GamePlatform.PCG` Automation → 运行 Foundation Template Commandlet → 重新验证保存资产 → 再进入最小森林/排除闭环和 M1 Gold Level。HiGen、World Partition、自动桥和 P9 状态不能提前。
 
-总体目录规划/根文档按本次写入边界未改，需由整合负责人登记这些文件。本目录未获人工审查。
+运行生成继续由 Runtime 的 `UGamePlatformPCGWorldSubsystem（PCG世界子系统）`维护；Editor 模块不复制运行生命周期。任何清理仍必须先取消并证明原生任务排空，不能复制引擎私有实现或越过 GamePlatformData（平台数据）租约所有权。

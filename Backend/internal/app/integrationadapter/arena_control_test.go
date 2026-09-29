@@ -24,7 +24,7 @@ func TestMatchToMainArenaEndToEnd(t *testing.T) {
 		match.NewResultService(match.NewMemoryResultStore()),
 		func() time.Time { return now },
 	)
-	if err := gs.Register(gameservercontrol.RegisterInput{GameID: "divine-beasts", GameServerID: "arena-1", ServerRoleID: gameservercontract.RoleMainArena, RegionID: "us-west", WorldID: "World.MainArena", PublicEndpoint: "127.0.0.1:7777", Capacity: 10}); err != nil {
+	if err := gs.Register(gameservercontrol.RegisterInput{GameID: "divine-beasts", GameServerID: "arena-1", ServerBootID: "boot-arena-1", ServerRoleID: gameservercontract.RoleMainArena, RegionID: "us-west", WorldID: "World.MainArena", PublicEndpoint: "127.0.0.1:7777", ProtocolVersion: 1, Capacity: 10}); err != nil {
 		t.Fatal(err)
 	}
 	if err := gs.SetReady("arena-1"); err != nil {

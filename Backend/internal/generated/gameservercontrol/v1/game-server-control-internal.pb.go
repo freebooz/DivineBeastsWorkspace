@@ -582,24 +582,28 @@ func (x *IssuePlayerTransferRequest) GetDestinationExperienceId() string {
 }
 
 type IssuePlayerTransferResponse struct {
-	state                   protoimpl.MessageState `protogen:"open.v1"`
-	Issued                  bool                   `protobuf:"varint,1,opt,name=issued,proto3" json:"issued,omitempty"`
-	TicketId                string                 `protobuf:"bytes,2,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
-	PlayerId                string                 `protobuf:"bytes,3,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	SessionId               string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	DestinationGameServerId string                 `protobuf:"bytes,5,opt,name=destination_game_server_id,json=destinationGameServerId,proto3" json:"destination_game_server_id,omitempty"`
-	DestinationEndpoint     string                 `protobuf:"bytes,6,opt,name=destination_endpoint,json=destinationEndpoint,proto3" json:"destination_endpoint,omitempty"`
-	DestinationWorldId      string                 `protobuf:"bytes,7,opt,name=destination_world_id,json=destinationWorldId,proto3" json:"destination_world_id,omitempty"`
-	MatchId                 string                 `protobuf:"bytes,8,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
-	IssuedAtUnixMs          int64                  `protobuf:"varint,9,opt,name=issued_at_unix_ms,json=issuedAtUnixMs,proto3" json:"issued_at_unix_ms,omitempty"`
-	ExpiresAtUnixMs         int64                  `protobuf:"varint,10,opt,name=expires_at_unix_ms,json=expiresAtUnixMs,proto3" json:"expires_at_unix_ms,omitempty"`
-	Nonce                   string                 `protobuf:"bytes,11,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Signature               string                 `protobuf:"bytes,12,opt,name=signature,proto3" json:"signature,omitempty"`
-	ErrorCode               string                 `protobuf:"bytes,13,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	AssignmentId            string                 `protobuf:"bytes,14,opt,name=assignment_id,json=assignmentId,proto3" json:"assignment_id,omitempty"`
-	DestinationExperienceId string                 `protobuf:"bytes,15,opt,name=destination_experience_id,json=destinationExperienceId,proto3" json:"destination_experience_id,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	state                      protoimpl.MessageState `protogen:"open.v1"`
+	Issued                     bool                   `protobuf:"varint,1,opt,name=issued,proto3" json:"issued,omitempty"`
+	TicketId                   string                 `protobuf:"bytes,2,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
+	PlayerId                   string                 `protobuf:"bytes,3,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	SessionId                  string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	DestinationGameServerId    string                 `protobuf:"bytes,5,opt,name=destination_game_server_id,json=destinationGameServerId,proto3" json:"destination_game_server_id,omitempty"`
+	DestinationEndpoint        string                 `protobuf:"bytes,6,opt,name=destination_endpoint,json=destinationEndpoint,proto3" json:"destination_endpoint,omitempty"`
+	DestinationWorldId         string                 `protobuf:"bytes,7,opt,name=destination_world_id,json=destinationWorldId,proto3" json:"destination_world_id,omitempty"`
+	MatchId                    string                 `protobuf:"bytes,8,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	IssuedAtUnixMs             int64                  `protobuf:"varint,9,opt,name=issued_at_unix_ms,json=issuedAtUnixMs,proto3" json:"issued_at_unix_ms,omitempty"`
+	ExpiresAtUnixMs            int64                  `protobuf:"varint,10,opt,name=expires_at_unix_ms,json=expiresAtUnixMs,proto3" json:"expires_at_unix_ms,omitempty"`
+	Nonce                      string                 `protobuf:"bytes,11,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Signature                  string                 `protobuf:"bytes,12,opt,name=signature,proto3" json:"signature,omitempty"`
+	ErrorCode                  string                 `protobuf:"bytes,13,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	AssignmentId               string                 `protobuf:"bytes,14,opt,name=assignment_id,json=assignmentId,proto3" json:"assignment_id,omitempty"`
+	DestinationExperienceId    string                 `protobuf:"bytes,15,opt,name=destination_experience_id,json=destinationExperienceId,proto3" json:"destination_experience_id,omitempty"`
+	GameSessionId              string                 `protobuf:"bytes,16,opt,name=game_session_id,json=gameSessionId,proto3" json:"game_session_id,omitempty"`
+	DestinationServerBootId    string                 `protobuf:"bytes,17,opt,name=destination_server_boot_id,json=destinationServerBootId,proto3" json:"destination_server_boot_id,omitempty"`
+	DestinationProtocolVersion uint32                 `protobuf:"varint,18,opt,name=destination_protocol_version,json=destinationProtocolVersion,proto3" json:"destination_protocol_version,omitempty"`
+	SessionEpoch               uint64                 `protobuf:"varint,19,opt,name=session_epoch,json=sessionEpoch,proto3" json:"session_epoch,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *IssuePlayerTransferResponse) Reset() {
@@ -737,6 +741,34 @@ func (x *IssuePlayerTransferResponse) GetDestinationExperienceId() string {
 	return ""
 }
 
+func (x *IssuePlayerTransferResponse) GetGameSessionId() string {
+	if x != nil {
+		return x.GameSessionId
+	}
+	return ""
+}
+
+func (x *IssuePlayerTransferResponse) GetDestinationServerBootId() string {
+	if x != nil {
+		return x.DestinationServerBootId
+	}
+	return ""
+}
+
+func (x *IssuePlayerTransferResponse) GetDestinationProtocolVersion() uint32 {
+	if x != nil {
+		return x.DestinationProtocolVersion
+	}
+	return 0
+}
+
+func (x *IssuePlayerTransferResponse) GetSessionEpoch() uint64 {
+	if x != nil {
+		return x.SessionEpoch
+	}
+	return 0
+}
+
 var File_game_server_control_internal_proto protoreflect.FileDescriptor
 
 const file_game_server_control_internal_proto_rawDesc = "" +
@@ -794,7 +826,7 @@ const file_game_server_control_internal_proto_rawDesc = "" +
 	"\x10ttl_milliseconds\x18\t \x01(\x03R\x0fttlMilliseconds\x12#\n" +
 	"\rassignment_id\x18\n" +
 	" \x01(\tR\fassignmentId\x12:\n" +
-	"\x19destination_experience_id\x18\v \x01(\tR\x17destinationExperienceId\"\xd7\x04\n" +
+	"\x19destination_experience_id\x18\v \x01(\tR\x17destinationExperienceId\"\xa3\x06\n" +
 	"\x1bIssuePlayerTransferResponse\x12\x16\n" +
 	"\x06issued\x18\x01 \x01(\bR\x06issued\x12\x1b\n" +
 	"\tticket_id\x18\x02 \x01(\tR\bticketId\x12\x1b\n" +
@@ -813,7 +845,11 @@ const file_game_server_control_internal_proto_rawDesc = "" +
 	"\n" +
 	"error_code\x18\r \x01(\tR\terrorCode\x12#\n" +
 	"\rassignment_id\x18\x0e \x01(\tR\fassignmentId\x12:\n" +
-	"\x19destination_experience_id\x18\x0f \x01(\tR\x17destinationExperienceId2\xff\x03\n" +
+	"\x19destination_experience_id\x18\x0f \x01(\tR\x17destinationExperienceId\x12&\n" +
+	"\x0fgame_session_id\x18\x10 \x01(\tR\rgameSessionId\x12;\n" +
+	"\x1adestination_server_boot_id\x18\x11 \x01(\tR\x17destinationServerBootId\x12@\n" +
+	"\x1cdestination_protocol_version\x18\x12 \x01(\rR\x1adestinationProtocolVersion\x12#\n" +
+	"\rsession_epoch\x18\x13 \x01(\x04R\fsessionEpoch2\xff\x03\n" +
 	" GameServerControlInternalService\x12\x92\x01\n" +
 	"\rAllocateWorld\x12?.divinebeasts.backend.gameservercontrol.v1.AllocateWorldRequest\x1a@.divinebeasts.backend.gameservercontrol.v1.AllocateWorldResponse\x12\x9e\x01\n" +
 	"\x11AllocateMainArena\x12C.divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaRequest\x1aD.divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaResponse\x12\xa4\x01\n" +

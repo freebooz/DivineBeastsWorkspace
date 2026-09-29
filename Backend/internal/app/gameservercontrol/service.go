@@ -18,6 +18,7 @@ import (
 type RegisterInput struct {
 	GameID          string // GameID（游戏ID）。
 	GameServerID    string // GameServerID（游戏服务器实例ID）。
+	ServerBootID    string // ServerBootID（服务器进程启动代次）。
 	ServerRoleID    string // ServerRoleID（OpenWorld/Village/MainArena正式服务器角色）。
 	ExperienceID    string // ExperienceID（当前进程承载体验）。
 	RegionID        string // RegionID（部署区域ID）。
@@ -108,8 +109,11 @@ func NewServiceWithAllocators(registry *gameserver.Registry, worldAllocator, are
 
 // Register（注册GameServer）把Dedicated Server实例写入快速注册表。
 func (s *Service) Register(input RegisterInput) error {
-	if input.GameServerID == "" || input.ServerRoleID == "" || input.RegionID == "" || input.PublicEndpoint == "" || input.Capacity <= 0 {
-		return errors.New("GameServer注册关键字段不能为空且Capacity必须大于0")
+	if input.GameServerID == "" || input.ServerBootID == "" ||
+		input.ServerRoleID == "" || input.RegionID == "" ||
+		input.PublicEndpoint == "" || input.Capacity <= 0 ||
+		input.ProtocolVersion == 0 {
+		return errors.New("GameServer注册关键字段、ServerBootID、ProtocolVersion不能为空且Capacity必须大于0")
 	}
 	if !gameserver.IsKnownRole(input.ServerRoleID) {
 		return errors.New("GAME_SERVER_ROLE_INVALID: ServerRoleID不是正式服务器角色")
@@ -128,7 +132,30 @@ func (s *Service) Register(input RegisterInput) error {
 	if !ok || roleForExperience != input.ServerRoleID {
 		return errors.New("GAME_SERVER_EXPERIENCE_INVALID: ExperienceID与ServerRoleID不匹配")
 	}
-	s.registry.Register(gameserver.Instance{ID: input.GameServerID, RoleID: input.ServerRoleID, ExperienceID: input.ExperienceID, RegionID: input.RegionID, ClusterID: input.ClusterID, NodeID: input.NodeID, WorldID: input.WorldID, PublicEndpoint: input.PublicEndpoint, BuildVersion: input.BuildVersion, ProtocolVersion: input.ProtocolVersion, Capacity: input.Capacity, Status: gameserver.StatusStarting, LastHeartbeat: s.now().UTC()})
+	previous, hadPrevious := s.registry.Get(input.GameServerID)
+	if hadPrevious && previous.ServerBootID != input.ServerBootID {
+		// 相同GameServerID进入新Boot时，旧Assignment必须立即失效；
+		// 后续使用旧Boot签发的票据会在ValidateTransfer阶段被拒绝。
+		s.mu.Lock()
+		delete(s.assignments, input.GameServerID)
+		s.mu.Unlock()
+	}
+	s.registry.Register(gameserver.Instance{
+		ID:              input.GameServerID,
+		ServerBootID:    input.ServerBootID,
+		RoleID:          input.ServerRoleID,
+		ExperienceID:    input.ExperienceID,
+		RegionID:        input.RegionID,
+		ClusterID:       input.ClusterID,
+		NodeID:          input.NodeID,
+		WorldID:         input.WorldID,
+		PublicEndpoint:  input.PublicEndpoint,
+		BuildVersion:    input.BuildVersion,
+		ProtocolVersion: input.ProtocolVersion,
+		Capacity:        input.Capacity,
+		Status:          gameserver.StatusStarting,
+		LastHeartbeat:   s.now().UTC(),
+	})
 	return nil
 }
 
@@ -142,6 +169,22 @@ func (s *Service) SetReady(gameServerID string) error { return s.registry.SetRea
 
 // Drain（排空GameServer）禁止实例接受新的玩家或比赛分配。
 func (s *Service) Drain(gameServerID string) error { return s.registry.Drain(gameServerID) }
+
+// ValidateServerBoot（校验服务器Boot身份）用于所有由具体Dedicated Server发起的内部控制面请求。
+// 同GameServerID发生重启后，旧进程持有的内部Bearer不能越过Boot栅栏操作新实例。
+func (s *Service) ValidateServerBoot(gameServerID, serverBootID string) error {
+	if gameServerID == "" || serverBootID == "" {
+		return errors.New("GAME_SERVER_IDENTITY_MISSING: GameServerID或ServerBootID为空")
+	}
+	instance, found := s.registry.Get(gameServerID)
+	if !found {
+		return errors.New("GAME_SERVER_NOT_FOUND: GameServer实例不存在")
+	}
+	if instance.ServerBootID != serverBootID {
+		return errors.New("GAME_SERVER_BOOT_MISMATCH: ServerBootID与当前注册实例不一致")
+	}
+	return nil
+}
 
 // AllocateWorld（分配常驻世界）支持OpenWorld.Hub/Main及Village.Main/Tutorial/Training。
 // MainArena不经过此入口，竞技服务器使用独占比赛Assignment。
@@ -202,7 +245,7 @@ func (s *Service) AllocateWorldTransfer(ctx context.Context, input AllocateWorld
 	if input.Transfer.TTL <= 0 {
 		input.Transfer.TTL = 30 * time.Second
 	}
-	ticket, err := s.IssueTransfer(input.Transfer)
+	ticket, err := s.IssueTransferContext(ctx, input.Transfer)
 	if err != nil {
 		_ = s.registry.ReleaseReservation(assignment.GameServerID, input.World.PlayerSlots)
 		return WorldTransferResult{}, err
@@ -272,8 +315,13 @@ func (s *Service) GetAssignment(gameServerID string) (gameservercontract.Assignm
 	return result, true
 }
 
-// IssueTransfer（签发迁移票据）同时支持世界迁移和MainArena迁移，并绑定Assignment/Experience/World。
+// IssueTransfer（签发迁移票据）保留无Context兼容入口。
 func (s *Service) IssueTransfer(input IssueTransferInput) (servertransfer.Ticket, error) {
+	return s.IssueTransferContext(context.Background(), input)
+}
+
+// IssueTransferContext（签发迁移票据）同时绑定Assignment、服务器Boot、协议版本和权威SessionEpoch。
+func (s *Service) IssueTransferContext(ctx context.Context, input IssueTransferInput) (servertransfer.Ticket, error) {
 	s.mu.RLock()
 	record, found := s.assignments[input.DestinationGameServerID]
 	s.mu.RUnlock()
@@ -314,7 +362,26 @@ func (s *Service) IssueTransfer(input IssueTransferInput) (servertransfer.Ticket
 		return servertransfer.Ticket{}, errors.New("TRANSFER_MATCH_MISMATCH: 世界迁移不应携带MatchID")
 	}
 
-	return s.transfer.Issue(servertransfer.IssueRequest{TicketID: input.TicketID, AssignmentID: input.AssignmentID, GameID: input.GameID, PlayerID: input.PlayerID, SessionID: input.SessionID, SourceGameServerID: input.SourceGameServerID, DestinationGameServerID: input.DestinationGameServerID, DestinationEndpoint: record.endpoint, DestinationWorldID: input.DestinationWorldID, DestinationExperienceID: input.DestinationExperienceID, MatchID: input.MatchID, TTL: input.TTL})
+	target, found := s.registry.Get(input.DestinationGameServerID)
+	if !found || target.ServerBootID == "" || target.ProtocolVersion == 0 {
+		return servertransfer.Ticket{}, errors.New("GAME_SERVER_BINDING_UNAVAILABLE: 目标服务器缺少Boot或Protocol权威身份")
+	}
+	return s.transfer.IssueContext(ctx, servertransfer.IssueRequest{
+		TicketID:                   input.TicketID,
+		AssignmentID:               input.AssignmentID,
+		GameID:                     input.GameID,
+		PlayerID:                   input.PlayerID,
+		SessionID:                  input.SessionID,
+		SourceGameServerID:         input.SourceGameServerID,
+		DestinationGameServerID:    input.DestinationGameServerID,
+		DestinationEndpoint:        record.endpoint,
+		DestinationWorldID:         input.DestinationWorldID,
+		DestinationExperienceID:    input.DestinationExperienceID,
+		MatchID:                    input.MatchID,
+		TTL:                        input.TTL,
+		DestinationServerBootID:    target.ServerBootID,
+		DestinationProtocolVersion: target.ProtocolVersion,
+	})
 }
 
 // ValidateTransfer（验证迁移票据）保留旧无Context调用入口。
@@ -324,7 +391,16 @@ func (s *Service) ValidateTransfer(ticket servertransfer.Ticket, destinationGame
 
 // ValidateTransferContext（验证迁移票据）成功消费后提交世界服务器容量预留。
 func (s *Service) ValidateTransferContext(ctx context.Context, ticket servertransfer.Ticket, destinationGameServerID string) (servertransfer.ValidationResult, error) {
-	result, err := s.transfer.ValidateContext(ctx, servertransfer.ValidateRequest{Ticket: ticket, DestinationGameServerID: destinationGameServerID})
+	target, found := s.registry.Get(destinationGameServerID)
+	if !found || target.ServerBootID == "" || target.ProtocolVersion == 0 {
+		return servertransfer.ValidationResult{}, errors.New("GAME_SERVER_BINDING_UNAVAILABLE: 当前目标服务器身份不存在")
+	}
+	result, err := s.transfer.ValidateContext(ctx, servertransfer.ValidateRequest{
+		Ticket:                     ticket,
+		DestinationGameServerID:    destinationGameServerID,
+		DestinationServerBootID:    target.ServerBootID,
+		DestinationProtocolVersion: target.ProtocolVersion,
+	})
 	if err != nil {
 		return servertransfer.ValidationResult{}, err
 	}

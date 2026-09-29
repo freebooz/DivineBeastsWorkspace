@@ -41,6 +41,7 @@ const (
 // Instance（游戏服务器实例）是Backend控制平面的权威快速状态快照。
 type Instance struct {
 	ID              string    // ID（GameServer实例ID）。
+	ServerBootID    string    // ServerBootID（本进程启动代次，同一GameServerID重启后必须变化）。
 	RoleID          string    // RoleID（服务器角色ID：OpenWorld/Village/MainArena）。
 	ExperienceID    string    // ExperienceID（当前实例承载体验）。
 	RegionID        string    // RegionID（部署区域ID）。
@@ -85,13 +86,15 @@ func (r *Registry) Register(instance Instance) {
 	if instance.Status == "" {
 		instance.Status = StatusStarting
 	}
-	if previous, ok := r.instances[instance.ID]; ok {
-		// 注册刷新时保留Backend侧尚未完成的容量预留和比赛绑定，避免Heartbeat/重注册造成超卖。
+	if previous, ok := r.instances[instance.ID]; ok &&
+		previous.ServerBootID == instance.ServerBootID {
+		// 同一Boot内注册刷新保留尚未完成的容量预留和比赛绑定。
 		instance.ReservedPlayers = previous.ReservedPlayers
 		if instance.CurrentMatchID == "" {
 			instance.CurrentMatchID = previous.CurrentMatchID
 		}
 	}
+	// Boot变化表示旧进程已经失效；绝不能把旧实例的预留、比赛绑定或玩家状态继承到新进程。
 	r.instances[instance.ID] = instance
 }
 

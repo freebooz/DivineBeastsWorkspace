@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Types/GamePlatformTelemetryTypes.h"
 
+class IHttpRequest;
+
 struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryTransportResult
 {
     bool bAccepted = false;
@@ -17,6 +19,10 @@ using FGamePlatformTelemetryTransportCompletion =
 /** 每次发送前动态生成非持久请求头；用于令牌轮换，Transport不长期保存AccessToken。 */
 using FGamePlatformTelemetryHeaderProvider =
     TFunction<TMap<FString, FString>()>;
+
+/** 在请求真正发送前应用动态认证，但不要求调用方暴露或复制原始Token字符串。 */
+using FGamePlatformTelemetryRequestAuthorizer =
+    TFunction<bool(IHttpRequest&)>;
 
 class GAMEPLATFORMTELEMETRY_API IGamePlatformTelemetryTransport
 {
@@ -43,7 +49,8 @@ public:
         TMap<FString, FString> InStaticHeaders,
         float InTimeoutSeconds = 5.0f,
         int32 InMaxPayloadBytes = 256 * 1024,
-        FGamePlatformTelemetryHeaderProvider InDynamicHeaderProvider = {});
+        FGamePlatformTelemetryHeaderProvider InDynamicHeaderProvider = {},
+        FGamePlatformTelemetryRequestAuthorizer InRequestAuthorizer = {});
 
     bool IsConfigured() const;
 
@@ -58,6 +65,7 @@ private:
     FString Path;
     TMap<FString, FString> StaticHeaders;
     FGamePlatformTelemetryHeaderProvider DynamicHeaderProvider;
+    FGamePlatformTelemetryRequestAuthorizer RequestAuthorizer;
     int32 MaxPayloadBytes = 256 * 1024;
     float TimeoutSeconds = 5.0f;
 

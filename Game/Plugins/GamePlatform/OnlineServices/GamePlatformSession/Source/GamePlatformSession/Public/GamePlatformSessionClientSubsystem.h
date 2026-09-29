@@ -21,11 +21,31 @@ enum class EGamePlatformSessionTransferState : uint8
     AwaitingAdmission,
     Admitted,
     Ready,
+    Transferring,
     Reconnecting,
     Failed,
     Cancelled,
     TimedOut,
     Uncertain
+};
+
+/** EGamePlatformSessionIntent（平台会话操作意图）；调用方必须显式区分首次加入、跨服与断线重连。 */
+UENUM(BlueprintType)
+enum class EGamePlatformSessionIntent : uint8
+{
+    Join,
+    Transfer,
+    Reconnect
+};
+
+/** EGamePlatformSessionRecoveryState（平台会话恢复状态）；避免项目层通过错误码猜测能否重试。 */
+UENUM(BlueprintType)
+enum class EGamePlatformSessionRecoveryState : uint8
+{
+    None,
+    RetryAllowed,
+    ReconciliationRequired,
+    ReauthenticationRequired
 };
 
 /** EGamePlatformSessionTransferFact（平台会话可信事实）。 */
@@ -94,8 +114,15 @@ struct GAMEPLATFORMSESSION_API FGamePlatformSessionTransferRequest
     FString Endpoint;
     FString TransferTicket;
     FString TicketId;
+    /** 可选项目上下文；平台会话不会解释角色所有权，签票前应已由后端完成业务校验。 */
     FString CharacterId;
     FString SessionId;
+
+    /**
+     * 后端认证响应同时返回的完整非敏感目标Binding（连接绑定）。
+     * Transport不得从Ticket正文、URL或客户端本地环境重新推导这些权威字段。
+     */
+    FGamePlatformSessionConnectionBinding ExpectedBinding;
 
     /** 整次连接/准入操作的单调时钟超时预算；不是 World 时间。 */
     double TimeoutSeconds = 45.0;
@@ -116,6 +143,22 @@ struct GAMEPLATFORMSESSION_API FGamePlatformSessionSnapshot
 
     UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Session")
     EGamePlatformSessionTransferState State = EGamePlatformSessionTransferState::Idle;
+
+    /** 当前操作意图；Ready/Idle时保留最近一次意图供诊断，不作为权限判断。 */
+    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Session")
+    EGamePlatformSessionIntent Intent = EGamePlatformSessionIntent::Join;
+
+    /** 当前恢复动作；ReconciliationRequired时禁止直接发起下一次连接。 */
+    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Session")
+    EGamePlatformSessionRecoveryState RecoveryState = EGamePlatformSessionRecoveryState::None;
+
+    /** 是否必须先完成远端对账/清理。 */
+    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Session")
+    bool bRecoveryRequired = false;
+
+    /** 是否允许直接发起新的会话操作；仅用于UI/流程决策，不替代BeginOperation内部复核。 */
+    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Session")
+    bool bCanRetry = false;
 
     UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Session")
     FGuid TransferOperationId;
@@ -147,6 +190,9 @@ struct GAMEPLATFORMSESSION_API FGamePlatformSessionTransportCallbacks
     TFunction<void(FName, FString)> OnFailed;
 };
 
+using FGamePlatformSessionDisconnectedCallback =
+    TFunction<void(FGamePlatformSessionConnectionBinding)>;
+
 /**
  * IGamePlatformSessionTransport（平台会话真实传输适配接口）。
  *
@@ -163,6 +209,25 @@ public:
         FGamePlatformSessionTransportCallbacks Callbacks) = 0;
 
     virtual void CancelTransfer(const FGuid& TransferOperationId) = 0;
+
+    /**
+     * Session四事实全部完成后通知Transport收敛本次操作监听，但保留当前连接的断线监控。
+     * 默认空实现保持第三方Transport兼容。
+     */
+    virtual void CompleteTransfer(
+        const FGuid& TransferOperationId,
+        const FGamePlatformSessionConnectionBinding& Binding)
+    {
+    }
+
+    /** 安装当前真实连接断线回调；实现不得在断线后重复回调旧Binding。 */
+    virtual void SetDisconnectedCallback(
+        FGamePlatformSessionDisconnectedCallback Callback)
+    {
+    }
+
+    /** 离开当前已建立会话并清理本地网络；不得把凭据写入URL或日志。 */
+    virtual void LeaveSession(const FGamePlatformSessionConnectionBinding& Binding) = 0;
 };
 
 DECLARE_MULTICAST_DELEGATE_OneParam(
@@ -204,10 +269,38 @@ public:
     void SetAuthenticationContext(const FString& AccountId, const FGuid& AuthGeneration);
 
     /**
+     * 显式开始 Join/Transfer/Reconnect 操作。相同OperationId的活动重入必须幂等，不能重复触发ClientTravel。
+     */
+    bool BeginOperation(
+        EGamePlatformSessionIntent Intent,
+        const FGamePlatformSessionTransferRequest& Request,
+        FGamePlatformResult& OutResult);
+
+    /**
      * 开始一次真实连接/跨服操作。成功仅表示操作被 Session 接纳并交给 Transport，
      * 不表示网络已连接、服务器已准入或世界已经可玩。
      */
     bool BeginTransfer(const FGamePlatformSessionTransferRequest& Request, FGamePlatformResult& OutResult);
+
+    /** 显式断线重连入口；不会根据Current是否存在来猜测意图。 */
+    bool Reconnect(const FGamePlatformSessionTransferRequest& Request, FGamePlatformResult& OutResult);
+
+    /** 离开当前会话；只清理Session/网络，不退出Online账号。 */
+    bool LeaveSession(FGamePlatformResult& OutResult);
+
+    /** 报告当前可信Binding对应的真实网络断开；旧Binding不会清理新连接。 */
+    bool NotifyDisconnected(
+        const FGamePlatformSessionConnectionBinding& Binding,
+        FGamePlatformResult& OutResult);
+
+    /**
+     * 远端查询完成后解除恢复屏障。ConfirmedBinding为空表示后端确认不存在远端绑定；
+     * 非空时只能确认本地仍持有的同一来源绑定，不能由后端凭空制造Ready。
+     */
+    bool ResolveRemoteState(
+        const FGuid& TransferOperationId,
+        const FGamePlatformSessionConnectionBinding& ConfirmedBinding,
+        FGamePlatformResult& OutResult);
 
     /** 取消当前活动操作；已越过不可回滚网络边界时可能进入 Uncertain（结果不确定）。 */
     bool CancelTransfer(FGamePlatformResult& OutResult);

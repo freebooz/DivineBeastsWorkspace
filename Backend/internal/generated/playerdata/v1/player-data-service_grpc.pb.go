@@ -19,10 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PlayerDataService_GetProfile_FullMethodName    = "/divinebeasts.backend.playerdata.v1.PlayerDataService/GetProfile"
-	PlayerDataService_UpdateProfile_FullMethodName = "/divinebeasts.backend.playerdata.v1.PlayerDataService/UpdateProfile"
-	PlayerDataService_EnsureProfile_FullMethodName = "/divinebeasts.backend.playerdata.v1.PlayerDataService/EnsureProfile"
-	PlayerDataService_Probe_FullMethodName         = "/divinebeasts.backend.playerdata.v1.PlayerDataService/Probe"
+	PlayerDataService_GetProfile_FullMethodName             = "/divinebeasts.backend.playerdata.v1.PlayerDataService/GetProfile"
+	PlayerDataService_UpdateProfile_FullMethodName          = "/divinebeasts.backend.playerdata.v1.PlayerDataService/UpdateProfile"
+	PlayerDataService_EnsureProfile_FullMethodName          = "/divinebeasts.backend.playerdata.v1.PlayerDataService/EnsureProfile"
+	PlayerDataService_ListCharacters_FullMethodName         = "/divinebeasts.backend.playerdata.v1.PlayerDataService/ListCharacters"
+	PlayerDataService_CreateCharacter_FullMethodName        = "/divinebeasts.backend.playerdata.v1.PlayerDataService/CreateCharacter"
+	PlayerDataService_SelectCharacter_FullMethodName        = "/divinebeasts.backend.playerdata.v1.PlayerDataService/SelectCharacter"
+	PlayerDataService_GetInventory_FullMethodName           = "/divinebeasts.backend.playerdata.v1.PlayerDataService/GetInventory"
+	PlayerDataService_GetInventoryOperation_FullMethodName  = "/divinebeasts.backend.playerdata.v1.PlayerDataService/GetInventoryOperation"
+	PlayerDataService_MoveInventory_FullMethodName          = "/divinebeasts.backend.playerdata.v1.PlayerDataService/MoveInventory"
+	PlayerDataService_SplitInventory_FullMethodName         = "/divinebeasts.backend.playerdata.v1.PlayerDataService/SplitInventory"
+	PlayerDataService_MergeInventory_FullMethodName         = "/divinebeasts.backend.playerdata.v1.PlayerDataService/MergeInventory"
+	PlayerDataService_SetInventoryQuickbar_FullMethodName   = "/divinebeasts.backend.playerdata.v1.PlayerDataService/SetInventoryQuickbar"
+	PlayerDataService_ClearInventoryQuickbar_FullMethodName = "/divinebeasts.backend.playerdata.v1.PlayerDataService/ClearInventoryQuickbar"
+	PlayerDataService_Probe_FullMethodName                  = "/divinebeasts.backend.playerdata.v1.PlayerDataService/Probe"
 )
 
 // PlayerDataServiceClient is the client API for PlayerDataService service.
@@ -35,6 +45,16 @@ type PlayerDataServiceClient interface {
 	// 已认证主体由可信网关提供；原子幂等写，不新增任意字段更新接口。
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*GetProfileResponse, error)
 	EnsureProfile(ctx context.Context, in *EnsureProfileRequest, opts ...grpc.CallOption) (*EnsureProfileResponse, error)
+	ListCharacters(ctx context.Context, in *ListCharactersRequest, opts ...grpc.CallOption) (*ListCharactersResponse, error)
+	CreateCharacter(ctx context.Context, in *CreateCharacterRequest, opts ...grpc.CallOption) (*CreateCharacterResponse, error)
+	SelectCharacter(ctx context.Context, in *SelectCharacterRequest, opts ...grpc.CallOption) (*SelectCharacterResponse, error)
+	GetInventory(ctx context.Context, in *InventoryPlayerRequest, opts ...grpc.CallOption) (*InventorySnapshotResponse, error)
+	GetInventoryOperation(ctx context.Context, in *InventoryOperationQueryRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error)
+	MoveInventory(ctx context.Context, in *InventoryMoveRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error)
+	SplitInventory(ctx context.Context, in *InventorySplitRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error)
+	MergeInventory(ctx context.Context, in *InventoryMergeRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error)
+	SetInventoryQuickbar(ctx context.Context, in *InventoryQuickbarSetRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error)
+	ClearInventoryQuickbar(ctx context.Context, in *InventoryQuickbarClearRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error)
 	Probe(ctx context.Context, in *ProbeRequest, opts ...grpc.CallOption) (*ProbeResponse, error)
 }
 
@@ -76,6 +96,106 @@ func (c *playerDataServiceClient) EnsureProfile(ctx context.Context, in *EnsureP
 	return out, nil
 }
 
+func (c *playerDataServiceClient) ListCharacters(ctx context.Context, in *ListCharactersRequest, opts ...grpc.CallOption) (*ListCharactersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCharactersResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_ListCharacters_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) CreateCharacter(ctx context.Context, in *CreateCharacterRequest, opts ...grpc.CallOption) (*CreateCharacterResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateCharacterResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_CreateCharacter_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) SelectCharacter(ctx context.Context, in *SelectCharacterRequest, opts ...grpc.CallOption) (*SelectCharacterResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SelectCharacterResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_SelectCharacter_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) GetInventory(ctx context.Context, in *InventoryPlayerRequest, opts ...grpc.CallOption) (*InventorySnapshotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InventorySnapshotResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_GetInventory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) GetInventoryOperation(ctx context.Context, in *InventoryOperationQueryRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InventoryMutationResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_GetInventoryOperation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) MoveInventory(ctx context.Context, in *InventoryMoveRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InventoryMutationResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_MoveInventory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) SplitInventory(ctx context.Context, in *InventorySplitRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InventoryMutationResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_SplitInventory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) MergeInventory(ctx context.Context, in *InventoryMergeRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InventoryMutationResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_MergeInventory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) SetInventoryQuickbar(ctx context.Context, in *InventoryQuickbarSetRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InventoryMutationResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_SetInventoryQuickbar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerDataServiceClient) ClearInventoryQuickbar(ctx context.Context, in *InventoryQuickbarClearRequest, opts ...grpc.CallOption) (*InventoryMutationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InventoryMutationResponse)
+	err := c.cc.Invoke(ctx, PlayerDataService_ClearInventoryQuickbar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *playerDataServiceClient) Probe(ctx context.Context, in *ProbeRequest, opts ...grpc.CallOption) (*ProbeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ProbeResponse)
@@ -96,6 +216,16 @@ type PlayerDataServiceServer interface {
 	// 已认证主体由可信网关提供；原子幂等写，不新增任意字段更新接口。
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*GetProfileResponse, error)
 	EnsureProfile(context.Context, *EnsureProfileRequest) (*EnsureProfileResponse, error)
+	ListCharacters(context.Context, *ListCharactersRequest) (*ListCharactersResponse, error)
+	CreateCharacter(context.Context, *CreateCharacterRequest) (*CreateCharacterResponse, error)
+	SelectCharacter(context.Context, *SelectCharacterRequest) (*SelectCharacterResponse, error)
+	GetInventory(context.Context, *InventoryPlayerRequest) (*InventorySnapshotResponse, error)
+	GetInventoryOperation(context.Context, *InventoryOperationQueryRequest) (*InventoryMutationResponse, error)
+	MoveInventory(context.Context, *InventoryMoveRequest) (*InventoryMutationResponse, error)
+	SplitInventory(context.Context, *InventorySplitRequest) (*InventoryMutationResponse, error)
+	MergeInventory(context.Context, *InventoryMergeRequest) (*InventoryMutationResponse, error)
+	SetInventoryQuickbar(context.Context, *InventoryQuickbarSetRequest) (*InventoryMutationResponse, error)
+	ClearInventoryQuickbar(context.Context, *InventoryQuickbarClearRequest) (*InventoryMutationResponse, error)
 	Probe(context.Context, *ProbeRequest) (*ProbeResponse, error)
 	mustEmbedUnimplementedPlayerDataServiceServer()
 }
@@ -115,6 +245,36 @@ func (UnimplementedPlayerDataServiceServer) UpdateProfile(context.Context, *Upda
 }
 func (UnimplementedPlayerDataServiceServer) EnsureProfile(context.Context, *EnsureProfileRequest) (*EnsureProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EnsureProfile not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) ListCharacters(context.Context, *ListCharactersRequest) (*ListCharactersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCharacters not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) CreateCharacter(context.Context, *CreateCharacterRequest) (*CreateCharacterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCharacter not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) SelectCharacter(context.Context, *SelectCharacterRequest) (*SelectCharacterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SelectCharacter not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) GetInventory(context.Context, *InventoryPlayerRequest) (*InventorySnapshotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInventory not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) GetInventoryOperation(context.Context, *InventoryOperationQueryRequest) (*InventoryMutationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInventoryOperation not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) MoveInventory(context.Context, *InventoryMoveRequest) (*InventoryMutationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MoveInventory not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) SplitInventory(context.Context, *InventorySplitRequest) (*InventoryMutationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SplitInventory not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) MergeInventory(context.Context, *InventoryMergeRequest) (*InventoryMutationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MergeInventory not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) SetInventoryQuickbar(context.Context, *InventoryQuickbarSetRequest) (*InventoryMutationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetInventoryQuickbar not implemented")
+}
+func (UnimplementedPlayerDataServiceServer) ClearInventoryQuickbar(context.Context, *InventoryQuickbarClearRequest) (*InventoryMutationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClearInventoryQuickbar not implemented")
 }
 func (UnimplementedPlayerDataServiceServer) Probe(context.Context, *ProbeRequest) (*ProbeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Probe not implemented")
@@ -194,6 +354,186 @@ func _PlayerDataService_EnsureProfile_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlayerDataService_ListCharacters_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCharactersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).ListCharacters(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_ListCharacters_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).ListCharacters(ctx, req.(*ListCharactersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_CreateCharacter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCharacterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).CreateCharacter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_CreateCharacter_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).CreateCharacter(ctx, req.(*CreateCharacterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_SelectCharacter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SelectCharacterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).SelectCharacter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_SelectCharacter_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).SelectCharacter(ctx, req.(*SelectCharacterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_GetInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InventoryPlayerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).GetInventory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_GetInventory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).GetInventory(ctx, req.(*InventoryPlayerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_GetInventoryOperation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InventoryOperationQueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).GetInventoryOperation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_GetInventoryOperation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).GetInventoryOperation(ctx, req.(*InventoryOperationQueryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_MoveInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InventoryMoveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).MoveInventory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_MoveInventory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).MoveInventory(ctx, req.(*InventoryMoveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_SplitInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InventorySplitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).SplitInventory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_SplitInventory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).SplitInventory(ctx, req.(*InventorySplitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_MergeInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InventoryMergeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).MergeInventory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_MergeInventory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).MergeInventory(ctx, req.(*InventoryMergeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_SetInventoryQuickbar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InventoryQuickbarSetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).SetInventoryQuickbar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_SetInventoryQuickbar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).SetInventoryQuickbar(ctx, req.(*InventoryQuickbarSetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlayerDataService_ClearInventoryQuickbar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InventoryQuickbarClearRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerDataServiceServer).ClearInventoryQuickbar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerDataService_ClearInventoryQuickbar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerDataServiceServer).ClearInventoryQuickbar(ctx, req.(*InventoryQuickbarClearRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PlayerDataService_Probe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProbeRequest)
 	if err := dec(in); err != nil {
@@ -230,6 +570,46 @@ var PlayerDataService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EnsureProfile",
 			Handler:    _PlayerDataService_EnsureProfile_Handler,
+		},
+		{
+			MethodName: "ListCharacters",
+			Handler:    _PlayerDataService_ListCharacters_Handler,
+		},
+		{
+			MethodName: "CreateCharacter",
+			Handler:    _PlayerDataService_CreateCharacter_Handler,
+		},
+		{
+			MethodName: "SelectCharacter",
+			Handler:    _PlayerDataService_SelectCharacter_Handler,
+		},
+		{
+			MethodName: "GetInventory",
+			Handler:    _PlayerDataService_GetInventory_Handler,
+		},
+		{
+			MethodName: "GetInventoryOperation",
+			Handler:    _PlayerDataService_GetInventoryOperation_Handler,
+		},
+		{
+			MethodName: "MoveInventory",
+			Handler:    _PlayerDataService_MoveInventory_Handler,
+		},
+		{
+			MethodName: "SplitInventory",
+			Handler:    _PlayerDataService_SplitInventory_Handler,
+		},
+		{
+			MethodName: "MergeInventory",
+			Handler:    _PlayerDataService_MergeInventory_Handler,
+		},
+		{
+			MethodName: "SetInventoryQuickbar",
+			Handler:    _PlayerDataService_SetInventoryQuickbar_Handler,
+		},
+		{
+			MethodName: "ClearInventoryQuickbar",
+			Handler:    _PlayerDataService_ClearInventoryQuickbar_Handler,
 		},
 		{
 			MethodName: "Probe",

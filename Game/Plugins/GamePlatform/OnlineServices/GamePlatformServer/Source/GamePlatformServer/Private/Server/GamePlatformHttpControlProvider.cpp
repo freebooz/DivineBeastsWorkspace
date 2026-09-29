@@ -6,11 +6,67 @@
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
+#include "Misc/DefaultValueHelper.h"
+#include "Misc/ScopeLock.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
 namespace
 {
+    constexpr float DefaultRequestTimeoutSeconds = 5.0f;
+    constexpr int32 MaxAcceptedResponseBytes = 16 * 1024;
+
+    float ResolveRequestTimeoutSeconds()
+    {
+        const FString Configured = FPlatformMisc::GetEnvironmentVariable(
+            TEXT("GAMESERVERCONTROL_REQUEST_TIMEOUT_SECONDS"));
+        if (Configured.IsEmpty())
+        {
+            return DefaultRequestTimeoutSeconds;
+        }
+        float Parsed = 0.0f;
+        if (!FDefaultValueHelper::ParseFloat(Configured, Parsed) || !FMath::IsFinite(Parsed))
+        {
+            return DefaultRequestTimeoutSeconds;
+        }
+        return FMath::Clamp(Parsed, 1.0f, 30.0f);
+    }
+
+    bool IsAllowedBaseUrl(const FString& BaseUrl)
+    {
+#if UE_BUILD_SHIPPING
+        // Shipping携带服务器Bearer凭据，必须直接使用TLS端点；开发环境允许本机HTTP联调。
+        return BaseUrl.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase);
+#else
+        return BaseUrl.StartsWith(TEXT("http://"), ESearchCase::IgnoreCase) ||
+            BaseUrl.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase);
+#endif
+    }
+
+    struct FResponseBodyState
+    {
+        FCriticalSection Mutex;
+        TArray<uint8> Bytes;
+        bool bOverflow = false;
+    };
+
+    FString Utf8BytesToString(TArray<uint8> Bytes)
+    {
+        if (Bytes.IsEmpty())
+        {
+            return FString();
+        }
+        const FUTF8ToTCHAR Converted(
+            reinterpret_cast<const ANSICHAR*>(Bytes.GetData()),
+            Bytes.Num());
+        return FString(Converted.Length(), Converted.Get());
+    }
+
+    bool IsRetryableHttpCode(int32 Code)
+    {
+        return Code == 408 || Code == 425 || Code == 429 || Code >= 500;
+    }
+
     TSharedRef<FJsonObject> IdentifierBody(const FString& GameServerId)
     {
         TSharedRef<FJsonObject> Body = MakeShared<FJsonObject>();
@@ -34,6 +90,7 @@ void FGamePlatformHttpControlProvider::RegisterInstance(
     TSharedRef<FJsonObject> Body = MakeShared<FJsonObject>();
     Body->SetStringField(TEXT("gameId"), Instance.GameId);
     Body->SetStringField(TEXT("gameServerId"), Instance.GameServerId);
+    Body->SetStringField(TEXT("serverBootId"), Instance.ServerBootId);
     Body->SetStringField(TEXT("serverRoleId"), Instance.ServerRoleId);
     Body->SetStringField(TEXT("experienceId"), Instance.ExperienceId);
     Body->SetStringField(TEXT("worldId"), Instance.WorldId);
@@ -92,21 +149,70 @@ void FGamePlatformHttpControlProvider::SendAcceptedPost(
     const FString ConfiguredServerId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_ID"));
     BaseUrl.RemoveFromEnd(TEXT("/"));
     if (BaseUrl.IsEmpty() || InternalToken.IsEmpty() ||
-        ConfiguredServerId != Instance.GameServerId ||
+        ConfiguredServerId != Instance.GameServerId)
+    {
+        Completion(false, FName(TEXT("ControlPlaneConfigurationMissing")));
+        return;
+    }
+    if (BaseUrl.Len() > 2048 || InternalToken.Len() > 4096 ||
+        !IsAllowedBaseUrl(BaseUrl) || BaseUrl.Contains(TEXT("?")) ||
+        BaseUrl.Contains(TEXT("#")) ||
         BaseUrl.Contains(TEXT("\r")) || BaseUrl.Contains(TEXT("\n")) ||
         InternalToken.Contains(TEXT("\r")) || InternalToken.Contains(TEXT("\n")))
     {
-        Completion(false, FName(TEXT("ControlPlaneConfigurationMissing")));
+        Completion(false, FName(TEXT("ControlPlaneConfigurationInvalid")));
         return;
     }
 
     const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
         FHttpModule::Get().CreateRequest();
+#if defined(UE_HTTP_HAS_REQUEST_REDIRECT_POLICY) && UE_HTTP_HAS_REQUEST_REDIRECT_POLICY
+    // 生命周期请求携带Bearer凭据；禁止自动跨主机重定向，防止内部令牌被转发到非预期端点。
+    if (!Request->SetRedirectPolicy(EHttpRequestRedirectPolicy::Reject))
+    {
+        Completion(false, FName(TEXT("ControlPlaneRedirectPolicyUnavailable")));
+        return;
+    }
+#else
+    Completion(false, FName(TEXT("ControlPlaneRedirectPolicyUnavailable")));
+    return;
+#endif
+    const TSharedRef<FResponseBodyState, ESPMode::ThreadSafe> BodyState =
+        MakeShared<FResponseBodyState, ESPMode::ThreadSafe>();
+    FHttpRequestStreamDelegateV2 StreamDelegate =
+        FHttpRequestStreamDelegateV2::CreateLambda(
+            [BodyState](void* Data, int64& InOutLength)
+            {
+                if (!Data || InOutLength <= 0)
+                {
+                    return;
+                }
+                FScopeLock Lock(&BodyState->Mutex);
+                const int64 CurrentBytes = BodyState->Bytes.Num();
+                if (CurrentBytes + InOutLength > MaxAcceptedResponseBytes)
+                {
+                    BodyState->bOverflow = true;
+                    InOutLength = 0; // 终止继续接收，防止异常控制面响应扩大服务器内存占用。
+                    return;
+                }
+                BodyState->Bytes.Append(
+                    static_cast<const uint8*>(Data),
+                    static_cast<int32>(InOutLength));
+            });
+    if (!Request->SetResponseBodyReceiveStreamDelegateV2(MoveTemp(StreamDelegate)))
+    {
+        Completion(false, FName(TEXT("ControlPlaneResponseLimitUnavailable")));
+        return;
+    }
+
     Request->SetVerb(TEXT("POST"));
     Request->SetURL(BaseUrl + RelativePath);
     Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + InternalToken);
     Request->SetHeader(TEXT("X-Game-Server-Id"), Instance.GameServerId);
+    Request->SetHeader(TEXT("X-Game-Server-Boot-Id"), Instance.ServerBootId);
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+    Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
+    Request->SetTimeout(ResolveRequestTimeoutSeconds());
     Request->SetContentAsString(SerializeBody(Body));
     const TSharedRef<FGamePlatformServerControlCompletion, ESPMode::ThreadSafe>
         SharedCompletion = MakeShared<FGamePlatformServerControlCompletion, ESPMode::ThreadSafe>(
@@ -122,26 +228,51 @@ void FGamePlatformHttpControlProvider::SendAcceptedPost(
         (*SharedCompletion)(bSucceeded, ErrorCode);
     };
     Request->OnProcessRequestComplete().BindLambda(
-        [CompleteOnce](
+        [CompleteOnce, BodyState](
             FHttpRequestPtr,
             FHttpResponsePtr Response,
             bool bSucceeded) mutable
         {
+            TArray<uint8> ResponseBytes;
+            bool bResponseOverflow = false;
+            {
+                FScopeLock Lock(&BodyState->Mutex);
+                bResponseOverflow = BodyState->bOverflow;
+                ResponseBytes = MoveTemp(BodyState->Bytes);
+            }
+            if (bResponseOverflow)
+            {
+                CompleteOnce(false, FName(TEXT("ControlPlaneResponseTooLarge")));
+                return;
+            }
             if (!bSucceeded || !Response.IsValid())
             {
                 CompleteOnce(false, FName(TEXT("ControlPlaneTransportFailed")));
                 return;
             }
-            if (Response->GetResponseCode() < 200 || Response->GetResponseCode() >= 300)
+            const int32 ResponseCode = Response->GetResponseCode();
+            if (ResponseCode < 200 || ResponseCode >= 300)
             {
                 // 不读取或记录响应体，避免服务端错误回显凭据或玩家数据。
-                CompleteOnce(false, FName(TEXT("ControlPlaneRejected")));
+                if (IsRetryableHttpCode(ResponseCode))
+                {
+                    CompleteOnce(false, FName(TEXT("ControlPlaneRetryableHttpStatus")));
+                }
+                else if (ResponseCode == 401 || ResponseCode == 403)
+                {
+                    CompleteOnce(false, FName(TEXT("ControlPlaneAuthorizationRejected")));
+                }
+                else
+                {
+                    CompleteOnce(false, FName(TEXT("ControlPlaneRejected")));
+                }
                 return;
             }
 
             TSharedPtr<FJsonObject> ResponseBody;
+            const FString ResponseText = Utf8BytesToString(MoveTemp(ResponseBytes));
             const TSharedRef<TJsonReader<>> Reader =
-                TJsonReaderFactory<>::Create(Response->GetContentAsString());
+                TJsonReaderFactory<>::Create(ResponseText);
             bool bAccepted = false;
             if (!FJsonSerializer::Deserialize(Reader, ResponseBody) ||
                 !ResponseBody.IsValid() ||

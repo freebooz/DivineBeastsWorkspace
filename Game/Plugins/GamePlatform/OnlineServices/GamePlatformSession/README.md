@@ -1,14 +1,14 @@
 # GamePlatformSession（平台会话与跨服插件）
 
-当前交付状态：**独立状态/数据库内核已实施，完整会话插件未完成，真实UE与Go联调被前置阻塞。** 本轮发现Online目录没有任何源码或公开接口，Foundation测试地图也不存在。不能把前四插件提示词当作真实前置实现。
+当前交付状态：**客户端会话公共子系统、状态/恢复内核、Gateway世界进入、可信Binding、默认UE Transport（传输适配器）、服务器Admission Provider（准入提供者）与可靠RPC握手均已实现；完整跨服E2E仍待最终构建和多进程验证。** 当前不能仅凭源码存在宣称OpenWorld/Village/MainArena真实跨服已经完成验收。
 
-面向玩家的目标是：登录后进入后端分配的真实游戏服务器，完成服务器准入和绑定确认，再支持迁移、重连与离开。当前已写的是其中的状态安全规则和后端原子准入事务；没有自动连接、公开会话服务、UI或真实游戏握手。离开游戏应保留Online认证，退出账号应使旧操作失效；当前内核只处理非敏感认证身份和代次，不持有令牌。
+面向玩家的目标是：Online认证后由Gateway校验当前选中角色并请求GameServerControl分配世界与一次性TransferTicket，再由Session执行加入、迁移、重连、离开和恢复。当前 `UGamePlatformSessionClientSubsystem` 已经公开Intent、Recovery、Cancel/Leave/Disconnect/Reconcile等通用能力，并保持TransferTicket不进入公开Snapshot；GamePlatformServer侧已经建立只接受可信C++握手层提交证明的Admission边界。
 
-模块只有GamePlatformSession，允许Client/Editor、禁止Server，默认不启用。当前实际依赖只有UE Core用于模块注册；未导入不存在的Online接口，也未复制认证、资源加载或ApplicationFlow。前三插件的原生回归单独记录，尚未用于真实会话装配。
+模块仍只有GamePlatformSession，允许Client/Editor、禁止Server。Session平台层不依赖DivineBeasts、MobaCommon、ApplicationFlow、UI或Telemetry；项目层DBAClient单向依赖Session。服务器准入由独立的GamePlatformServer负责，Session不会把服务器职责重新拉回客户端插件。
 
-完整成功路径仍待接通：Online真实认证 → 可信玩家/角色授权 → 真实服务器注册就绪 → 预留及握手 → 服务器领取/提交 → 客户端四事实Ready。当前可以执行原生状态测试和独占PostgreSQL测试；它们不代表玩家已经进入三维场景。
+当前Backend已经补齐受认证的 `POST /v1/divinebeasts/world-entry` 公共入口，并将GameServerControl内部HTTP控制面统一置于内部Bearer保护下；HTTP/gRPC Gateway装配均复用现有GameServerControl能力，没有新增第六个Session微服务。TransferTicket由控制面绑定 `GameSessionId / ServerBootId / ProtocolVersion / SessionEpoch`，客户端只消费公开ExpectedBinding；目标Dedicated Server通过Admission Provider再次验票并逐字段确认Binding。服务端还维护“已接受SessionEpoch”原子栅栏，更高Epoch准入后旧票不能重新进入。
 
-建议人工先读交付状态和安全边界，再查API/状态机及测试证据。12类说明对应如下：
+建议人工先读交付状态、安全边界和最佳执行计划，再查API/状态机及测试证据。13类说明对应如下：
 
 - D01：[本README](README.md)，总体入口。
 - D02：[Architecture.md](Docs/Architecture.md)，实际目录、职责和依赖。
@@ -22,5 +22,6 @@
 - D10：[MigrationAndHandover.md](Docs/MigrationAndHandover.md)，迁移/回退前提和后续接入。
 - D11：[ManualReview.md](Docs/ManualReview.md)，待人工填写的审查清单。
 - D12：[DeliveryStatus.md](Docs/DeliveryStatus.md)，完成、未完成与续作断点。
+- D13：[最佳修改方案与执行计划.md](Docs/最佳修改方案与执行计划.md)，本轮审查后的目标架构、P0/P1/P2实施顺序、已完成项、阻塞项与验收清单。
 
-源码存在、文档齐全、原生测试或数据库测试通过，均不构成完整Session服务交付完成。当前禁止用于公开网络或生产发布。
+源码存在、文档齐全、状态测试或Gateway/Backend测试通过，均不构成完整Session网络链交付完成。只有在可信Binding、真实ClientTravel、Server Admission、NetworkFailure/TravelFailure、重连及OpenWorld/Village/MainArena端到端验证全部通过后，才能提升为生产完成状态。

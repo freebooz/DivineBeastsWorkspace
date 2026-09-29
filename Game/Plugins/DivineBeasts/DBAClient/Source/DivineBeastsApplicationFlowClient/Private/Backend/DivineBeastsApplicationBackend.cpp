@@ -1,14 +1,11 @@
 #include "Backend/DivineBeastsApplicationBackend.h"
 
 #include "GamePlatformOnlineClientSubsystem.h"
-#include "HttpModule.h"
-#include "Interfaces/IHttpRequest.h"
-#include "Interfaces/IHttpResponse.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 #include "Dom/JsonObject.h"
-#include "HAL/PlatformMisc.h"
-#include "Version/DivineBeastsContractVersion.h"
+#include "Dom/JsonValue.h"
 
 namespace
 {
@@ -37,15 +34,33 @@ namespace
         {
             return false;
         }
-        Out.CharacterId = Json->GetStringField(TEXT("character_id"));
-        Out.HeroDefinitionId =
-            FName(*Json->GetStringField(TEXT("hero_definition_id")));
-        Out.CharacterName = Json->GetStringField(TEXT("character_name"));
-        Out.CharacterRevision =
-            static_cast<int64>(Json->GetNumberField(TEXT("character_revision")));
-        Out.OnboardingState =
-            ParseOnboarding(Json->GetStringField(TEXT("onboarding_state")));
-        Out.Status = FName(*Json->GetStringField(TEXT("status")));
+
+        // Shared Gateway CharacterSummary 使用 camelCase 字段。
+        // 这里使用 TryGet 系列进行完整结构校验，避免缺字段时触发断言或半提交对象。
+        FString HeroDefinitionId;
+        FString OnboardingState;
+        FString Status;
+        int64 CharacterRevision = 0;
+        if (!Json->TryGetStringField(TEXT("characterId"), Out.CharacterId) ||
+            !Json->TryGetStringField(TEXT("heroDefinitionId"), HeroDefinitionId) ||
+            !Json->TryGetStringField(TEXT("characterName"), Out.CharacterName) ||
+            !Json->TryGetNumberField(TEXT("characterRevision"), CharacterRevision) ||
+            !Json->TryGetStringField(TEXT("onboardingState"), OnboardingState) ||
+            !Json->TryGetStringField(TEXT("status"), Status))
+        {
+            return false;
+        }
+
+        Out.HeroDefinitionId = FName(*HeroDefinitionId);
+        Out.CharacterRevision = CharacterRevision;
+        Out.OnboardingState = ParseOnboarding(OnboardingState);
+        Out.Status = FName(*Status);
+        FString AppearanceProfileId;
+        if (Json->TryGetStringField(TEXT("appearanceProfileId"), AppearanceProfileId) &&
+            !AppearanceProfileId.IsEmpty())
+        {
+            Out.AppearanceProfileId = FName(*AppearanceProfileId);
+        }
         return !Out.CharacterId.IsEmpty() &&
             !Out.HeroDefinitionId.IsNone() &&
             Out.CharacterRevision > 0;
@@ -57,7 +72,11 @@ namespace
     {
         const TSharedRef<TJsonReader<>> Reader =
             TJsonReaderFactory<>::Create(Text);
-        return FJsonSerializer::Deserialize(Reader, Out) && Out.IsValid();
+        return FJsonSerializer::Deserialize(
+                   Reader,
+                   Out,
+                   FJsonSerializer::EFlags::StoreNumbersAsStrings) &&
+            Out.IsValid();
     }
 
     FString GuidText(const FGuid& Guid)
@@ -70,66 +89,63 @@ FDivineBeastsHttpApplicationBackend::FDivineBeastsHttpApplicationBackend(
     UGamePlatformOnlineClientSubsystem* InOnline)
     : Online(InOnline)
 {
-    GatewayBaseUrl =
-        FPlatformMisc::GetEnvironmentVariable(
-            TEXT("DIVINEBEASTS_GATEWAY_BASE_URL"));
-    GatewayBaseUrl.RemoveFromEnd(TEXT("/"));
-}
-
-FString FDivineBeastsHttpApplicationBackend::MakeUrl(
-    const FString& RelativePath) const
-{
-    return GatewayBaseUrl + RelativePath;
-}
-
-FString FDivineBeastsHttpApplicationBackend::GetAuthHeader() const
-{
-    return Online.IsValid()
-        ? Online->GetAuthorizationHeaderValueTransient()
-        : FString();
 }
 
 void FDivineBeastsHttpApplicationBackend::Send(
     const FString& Verb,
     const FString& RelativePath,
     const TSharedPtr<FJsonObject>& Body,
+    bool bIdempotent,
+    FString IdempotencyKey,
     FRawCompletion Completion)
 {
-    const FString Authorization = GetAuthHeader();
-    if (GatewayBaseUrl.IsEmpty() || Authorization.IsEmpty())
+    UGamePlatformOnlineClientSubsystem* OnlineService = Online.Get();
+    if (!OnlineService || !Completion)
     {
-        Completion(
-            false,
-            FString(),
-            EDivineBeastsFlowError::AuthenticationRequired);
+        if (Completion)
+        {
+            Completion(
+                false,
+                FString(),
+                EDivineBeastsFlowError::AuthenticationRequired);
+        }
         return;
     }
 
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
-        FHttpModule::Get().CreateRequest();
-    Request->SetURL(MakeUrl(RelativePath));
-    Request->SetVerb(Verb);
-    Request->SetHeader(TEXT("Authorization"), Authorization);
-    Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
-
+    FString Serialized;
     if (Body.IsValid())
     {
-        FString Serialized;
         const TSharedRef<TJsonWriter<>> Writer =
             TJsonWriterFactory<>::Create(&Serialized);
-        FJsonSerializer::Serialize(Body.ToSharedRef(), Writer);
-        Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
-        Request->SetContentAsString(Serialized);
+        if (!FJsonSerializer::Serialize(Body.ToSharedRef(), Writer))
+        {
+            Completion(
+                false,
+                FString(),
+                EDivineBeastsFlowError::ProfileUnavailable);
+            return;
+        }
     }
 
-    ActiveRequests.Add(Request);
+    FGamePlatformAuthenticatedRequest Request;
+    Request.Verb = Verb;
+    Request.RelativePath = RelativePath;
+    Request.Body = MoveTemp(Serialized);
+    Request.IdempotencyKey = MoveTemp(IdempotencyKey);
+    Request.bIdempotent = bIdempotent;
+
+    // GameInstance级业务操作允许跨地图继续，但会被本Backend的CancelAll显式取消。
+    FGamePlatformOnlineRequestOptions Options;
+    const TSharedRef<FGamePlatformOnlineRequestHandle> Handle =
+        MakeShared<FGamePlatformOnlineRequestHandle>();
     const TWeakPtr<FDivineBeastsHttpApplicationBackend> WeakThis =
         AsShared();
-    Request->OnProcessRequestComplete().BindLambda(
-        [WeakThis, Completion = MoveTemp(Completion)](
-            FHttpRequestPtr CompletedRequest,
-            FHttpResponsePtr Response,
-            bool bTransportSuccess) mutable
+
+    *Handle = OnlineService->SendAuthenticatedRequest(
+        MoveTemp(Request),
+        Options,
+        [WeakThis, Handle, Completion = MoveTemp(Completion)](
+            FGamePlatformAuthenticatedResponse Response) mutable
         {
             const TSharedPtr<FDivineBeastsHttpApplicationBackend> Self =
                 WeakThis.Pin();
@@ -138,58 +154,74 @@ void FDivineBeastsHttpApplicationBackend::Send(
                 return;
             }
 
-            Self->ActiveRequests.Remove(CompletedRequest);
-            if (!bTransportSuccess || !Response.IsValid())
+            Self->ActiveRequests.RemoveAll(
+                [Handle](const FGamePlatformOnlineRequestHandle& Existing)
+                {
+                    return Existing.InstanceScopeId == Handle->InstanceScopeId &&
+                        Existing.RequestId == Handle->RequestId;
+                });
+
+            if (Response.IsSuccess())
             {
                 Completion(
-                    false,
-                    FString(),
-                    EDivineBeastsFlowError::ProfileUnavailable);
+                    true,
+                    Response.Body,
+                    EDivineBeastsFlowError::None);
                 return;
             }
 
-            const int32 Code = Response->GetResponseCode();
-            if (Code < 200 || Code >= 300)
+            EDivineBeastsFlowError Error =
+                EDivineBeastsFlowError::ProfileUnavailable;
+            switch (Response.Error)
             {
-                EDivineBeastsFlowError Error =
-                    EDivineBeastsFlowError::ProfileUnavailable;
-                if (Code == 401)
+            case EGamePlatformAuthError::AuthExpired:
+            case EGamePlatformAuthError::InvalidCredentials:
+                Error = EDivineBeastsFlowError::AuthenticationRequired;
+                break;
+            case EGamePlatformAuthError::Forbidden:
+            case EGamePlatformAuthError::AccountLocked:
+                Error = EDivineBeastsFlowError::CharacterSelectionRejected;
+                break;
+            case EGamePlatformAuthError::Conflict:
+            case EGamePlatformAuthError::OutcomeUnknown:
+                Error = EDivineBeastsFlowError::CharacterCreateOutcomeUnknown;
+                break;
+            case EGamePlatformAuthError::ContractIncompatible:
+            case EGamePlatformAuthError::InvalidResponse:
+                Error = EDivineBeastsFlowError::ContractIncompatible;
+                break;
+            case EGamePlatformAuthError::ServiceUnavailable:
+            case EGamePlatformAuthError::Maintenance:
+                Error = EDivineBeastsFlowError::WorldAssignmentUnavailable;
+                break;
+            default:
+                if (Response.HttpStatusCode == 401)
                 {
                     Error = EDivineBeastsFlowError::AuthenticationRequired;
                 }
-                else if (Code == 403)
+                else if (Response.HttpStatusCode == 403)
                 {
                     Error = EDivineBeastsFlowError::CharacterSelectionRejected;
                 }
-                else if (Code == 409)
+                else if (Response.HttpStatusCode == 409)
                 {
                     Error = EDivineBeastsFlowError::CharacterCreateOutcomeUnknown;
                 }
-                else if (Code == 412)
+                else if (Response.HttpStatusCode == 412)
                 {
                     Error = EDivineBeastsFlowError::ContractIncompatible;
                 }
-                else if (Code == 503)
+                else if (Response.HttpStatusCode == 503)
                 {
                     Error = EDivineBeastsFlowError::WorldAssignmentUnavailable;
                 }
-                Completion(false, FString(), Error);
-                return;
+                break;
             }
-            Completion(
-                true,
-                Response->GetContentAsString(),
-                EDivineBeastsFlowError::None);
+
+            Completion(false, FString(), Error);
         });
 
-    if (!Request->ProcessRequest())
-    {
-        ActiveRequests.Remove(Request);
-        Completion(
-            false,
-            FString(),
-            EDivineBeastsFlowError::ProfileUnavailable);
-    }
+    ActiveRequests.Add(*Handle);
 }
 
 void FDivineBeastsHttpApplicationBackend::LoadProfile(
@@ -202,6 +234,8 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
         // GET /v1/player/profile，禁止继续调用历史项目私有路径。
         TEXT("/v1/player/profile"),
         nullptr,
+        true,
+        FString(),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -226,7 +260,7 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
             // playerId / revision / tutorialCompleted / defaultWorldId。
             // 当前正式契约尚未提供“最近角色/最近体验”字段，因此保持默认空值，
             // 不从不存在的 JSON 字段推断项目状态。
-            double RevisionNumber = -1.0;
+            int64 RevisionNumber = -1;
             bool bTutorialCompleted = false;
             if (!Json->TryGetStringField(TEXT("playerId"), Result.PlayerId) ||
                 !Json->TryGetNumberField(TEXT("revision"), RevisionNumber) ||
@@ -234,7 +268,7 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
                     TEXT("tutorialCompleted"),
                     bTutorialCompleted) ||
                 Result.PlayerId.IsEmpty() ||
-                RevisionNumber < 0.0)
+                RevisionNumber < 0)
             {
                 Completion(
                     false,
@@ -243,8 +277,7 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
                 return;
             }
 
-            Result.ProfileRevision =
-                static_cast<int64>(RevisionNumber);
+            Result.ProfileRevision = RevisionNumber;
             Result.OnboardingState = bTutorialCompleted
                 ? EDivineBeastsOnboardingState::OnboardingComplete
                 : EDivineBeastsOnboardingState::TutorialRequired;
@@ -267,8 +300,10 @@ void FDivineBeastsHttpApplicationBackend::LoadRoster(
 {
     Send(
         TEXT("GET"),
-        TEXT("/v1/divinebeasts/characters"),
+        TEXT("/v1/player/characters"),
         nullptr,
+        true,
+        FString(),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -318,29 +353,25 @@ void FDivineBeastsHttpApplicationBackend::CreateCharacter(
     FDivineBeastsCharacterCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("operation_id"), GuidText(OperationId));
+    Body->SetStringField(TEXT("creationRequestId"), GuidText(OperationId));
     Body->SetStringField(
-        TEXT("hero_definition_id"),
+        TEXT("heroDefinitionId"),
         Draft.HeroDefinitionId.ToString());
-    Body->SetStringField(TEXT("character_name"), Draft.CharacterName);
-    Body->SetStringField(
-        TEXT("expected_catalog_revision"),
-        FDivineBeastsContractVersion::GetGeneratedRevision());
-    Body->SetStringField(
-        TEXT("expected_contract_version"),
-        FDivineBeastsContractVersion::GetCurrentVersion());
+    Body->SetStringField(TEXT("characterName"), Draft.CharacterName);
 
     TSharedPtr<FJsonObject> Appearance = MakeShared<FJsonObject>();
     for (const TPair<FString, FString>& Pair : Draft.AppearanceSelection)
     {
         Appearance->SetStringField(Pair.Key, Pair.Value);
     }
-    Body->SetObjectField(TEXT("appearance_selection"), Appearance);
+    Body->SetObjectField(TEXT("appearanceSelection"), Appearance);
 
     Send(
         TEXT("POST"),
-        TEXT("/v1/divinebeasts/characters"),
+        TEXT("/v1/player/characters"),
         Body,
+        true,
+        GuidText(OperationId),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -349,6 +380,10 @@ void FDivineBeastsHttpApplicationBackend::CreateCharacter(
             FDivineBeastsCharacterSummary Character;
             if (!bSuccess)
             {
+                if (Error == EDivineBeastsFlowError::CharacterCreateOutcomeUnknown)
+                {
+                    Error = EDivineBeastsFlowError::CharacterCreateRejected;
+                }
                 Completion(false, Character, Error);
                 return;
             }
@@ -377,17 +412,19 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
     Body->SetStringField(
-        TEXT("selection_request_id"),
+        TEXT("selectionRequestId"),
         GuidText(SelectionRequestId));
-    Body->SetStringField(TEXT("character_id"), CharacterId);
-    Body->SetNumberField(
-        TEXT("expected_character_revision"),
-        static_cast<double>(ExpectedRevision));
+    Body->SetStringField(TEXT("characterId"), CharacterId);
+    Body->SetField(
+        TEXT("expectedCharacterRevision"),
+        MakeShared<FJsonValueNumberString>(LexToString(ExpectedRevision)));
 
     Send(
         TEXT("POST"),
-        TEXT("/v1/divinebeasts/characters/select"),
+        TEXT("/v1/player/character-selection"),
         Body,
+        true,
+        GuidText(SelectionRequestId),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -396,6 +433,10 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
             FDivineBeastsValidatedSelection Result;
             if (!bSuccess)
             {
+                if (Error == EDivineBeastsFlowError::CharacterCreateOutcomeUnknown)
+                {
+                    Error = EDivineBeastsFlowError::CharacterSelectionRejected;
+                }
                 Completion(false, Result, Error);
                 return;
             }
@@ -409,10 +450,17 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
                 return;
             }
             Result.SelectionRequestId =
-                Json->GetStringField(TEXT("selection_request_id"));
-            Result.ProfileRevision =
-                static_cast<int64>(
-                    Json->GetNumberField(TEXT("profile_revision")));
+                Json->GetStringField(TEXT("selectionRequestId"));
+            if (!Json->TryGetNumberField(
+                    TEXT("profileRevision"),
+                    Result.ProfileRevision))
+            {
+                Completion(
+                    false,
+                    FDivineBeastsValidatedSelection(),
+                    EDivineBeastsFlowError::CharacterSelectionRejected);
+                return;
+            }
             const TSharedPtr<FJsonObject>* CharacterJson = nullptr;
             if (!Json->TryGetObjectField(
                     TEXT("character"),
@@ -439,23 +487,25 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
     FDivineBeastsWorldAssignmentCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("request_id"), GuidText(RequestId));
-    Body->SetStringField(TEXT("character_id"), CharacterId);
+    Body->SetStringField(TEXT("requestId"), GuidText(RequestId));
+    Body->SetStringField(TEXT("characterId"), CharacterId);
     Body->SetStringField(
-        TEXT("desired_experience_id"),
+        TEXT("desiredExperienceId"),
         DesiredExperienceId.ToString());
-    Body->SetNumberField(
-        TEXT("expected_character_revision"),
-        static_cast<double>(ExpectedRevision));
+    Body->SetField(
+        TEXT("expectedCharacterRevision"),
+        MakeShared<FJsonValueNumberString>(FString::Printf(TEXT("%lld"), ExpectedRevision)));
     if (!PreferredRegion.IsEmpty())
     {
-        Body->SetStringField(TEXT("preferred_region"), PreferredRegion);
+        Body->SetStringField(TEXT("preferredRegion"), PreferredRegion);
     }
 
     Send(
         TEXT("POST"),
         TEXT("/v1/divinebeasts/world-entry"),
         Body,
+        true,
+        GuidText(RequestId),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -477,30 +527,48 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
                 return;
             }
             Result.Summary.AssignmentId =
-                Json->GetStringField(TEXT("assignment_id"));
+                Json->GetStringField(TEXT("assignmentId"));
             Result.Summary.GameServerId =
-                Json->GetStringField(TEXT("game_server_id"));
+                Json->GetStringField(TEXT("gameServerId"));
             Result.Summary.ServerRoleId =
-                FName(*Json->GetStringField(TEXT("server_role_id")));
+                FName(*Json->GetStringField(TEXT("serverRoleId")));
             Result.Summary.ExperienceId =
-                FName(*Json->GetStringField(TEXT("experience_id")));
+                FName(*Json->GetStringField(TEXT("experienceId")));
             FString WorldId;
-            Json->TryGetStringField(TEXT("world_id"), WorldId);
+            Json->TryGetStringField(TEXT("worldId"), WorldId);
             Result.Summary.WorldId = FName(*WorldId);
             Result.Summary.MapId =
-                FName(*Json->GetStringField(TEXT("map_id")));
+                FName(*Json->GetStringField(TEXT("mapId")));
             Result.Summary.RegionId =
-                FName(*Json->GetStringField(TEXT("region_id")));
+                FName(*Json->GetStringField(TEXT("regionId")));
             Result.Summary.TicketId =
-                Json->GetStringField(TEXT("ticket_id"));
+                Json->GetStringField(TEXT("ticketId"));
             Result.Summary.CharacterId =
-                Json->GetStringField(TEXT("character_id"));
+                Json->GetStringField(TEXT("characterId"));
             Result.Summary.SessionId =
-                Json->GetStringField(TEXT("session_id"));
+                Json->GetStringField(TEXT("sessionId"));
+            Result.Summary.GameSessionId =
+                Json->GetStringField(TEXT("gameSessionId"));
+            Result.Summary.ServerBootId =
+                Json->GetStringField(TEXT("serverBootId"));
+            int64 ProtocolVersion = 0;
+            int64 SessionEpoch = 0;
+            if (!Json->TryGetNumberField(TEXT("protocolVersion"), ProtocolVersion) ||
+                !Json->TryGetNumberField(TEXT("sessionEpoch"), SessionEpoch) ||
+                ProtocolVersion <= 0 || SessionEpoch <= 0)
+            {
+                Completion(
+                    false,
+                    FDivineBeastsWorldAssignmentPayload(),
+                    EDivineBeastsFlowError::WorldAssignmentUnavailable);
+                return;
+            }
+            Result.Summary.ProtocolVersion = LexToString(ProtocolVersion);
+            Result.Summary.SessionEpoch = SessionEpoch;
             Result.Endpoint =
                 Json->GetStringField(TEXT("endpoint"));
             Result.TransferTicket =
-                Json->GetStringField(TEXT("transfer_ticket"));
+                Json->GetStringField(TEXT("transferTicket"));
 
             const bool bValid =
                 !Result.Summary.AssignmentId.IsEmpty() &&
@@ -509,6 +577,10 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
                 !Result.Summary.ExperienceId.IsNone() &&
                 !Result.Summary.WorldId.IsNone() &&
                 !Result.Summary.MapId.IsNone() &&
+                !Result.Summary.GameSessionId.IsEmpty() &&
+                !Result.Summary.ServerBootId.IsEmpty() &&
+                !Result.Summary.ProtocolVersion.IsEmpty() &&
+                Result.Summary.SessionEpoch > 0 &&
                 !Result.Endpoint.IsEmpty() &&
                 !Result.TransferTicket.IsEmpty();
             Completion(
@@ -522,12 +594,12 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
 
 void FDivineBeastsHttpApplicationBackend::CancelAll()
 {
-    for (const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request :
-         ActiveRequests)
+    if (UGamePlatformOnlineClientSubsystem* OnlineService = Online.Get())
     {
-        if (Request.IsValid())
+        for (const FGamePlatformOnlineRequestHandle& Request :
+             ActiveRequests)
         {
-            Request->CancelRequest();
+            OnlineService->Cancel(Request);
         }
     }
     ActiveRequests.Reset();

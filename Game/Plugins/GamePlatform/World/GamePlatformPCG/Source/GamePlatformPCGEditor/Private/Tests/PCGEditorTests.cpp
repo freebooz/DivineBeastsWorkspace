@@ -4,7 +4,9 @@
 #include "Authoring/PCGDevelopmentGraph.h"
 #include "Definitions/GamePlatformPCGProfileDefinition.h"
 #include "Services/GamePlatformPCGInspection.h"
+#include "Services/GamePlatformPCGTemplateContract.h"
 #include "Engine/StaticMesh.h"
+#include "PCGGraph.h"
 
 // 顺序不参与来源身份；依赖内容和引擎版本必须参与，不能只哈希路径或随机种子。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPCGSourceFingerprintTest, "GamePlatform.PCG.Editor.SourceFingerprint",
@@ -43,6 +45,56 @@ bool FPCGDevelopmentGraphTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("恰好四个原生处理节点"), Graph->GetNodes().Num(), 4);
         TestTrue(TEXT("完整图通过runtime公开检查"), GamePlatformPCGInspection::ValidateApprovedGraph(*Profile).IsSuccess());
     }
+    return true;
+}
+
+// M0/M1 Foundation模板只在内存创建并验证合同，不保存资产；真实落盘由显式Editor工具入口执行。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPCGFoundationTemplateGraphTest, "GamePlatform.PCG.Editor.FoundationTemplateContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FPCGFoundationTemplateGraphTest::RunTest(const FString& Parameters)
+{
+    const TArray<FName> TemplateIds =
+    {
+        FGamePlatformPCGTemplateIds::Base,
+        FGamePlatformPCGTemplateIds::ScatterSurface,
+        FGamePlatformPCGTemplateIds::BiomeGenerator,
+        FGamePlatformPCGTemplateIds::LinearDresser,
+        FGamePlatformPCGTemplateIds::Enclosure,
+        FGamePlatformPCGTemplateIds::EnclosureClosed,
+        FGamePlatformPCGTemplateIds::Connector,
+        FGamePlatformPCGTemplateIds::GateInsert,
+        FGamePlatformPCGTemplateIds::ParcelFill,
+        FGamePlatformPCGTemplateIds::CropField,
+        FGamePlatformPCGTemplateIds::AssemblySpawn,
+        FGamePlatformPCGTemplateIds::InterfaceBand
+    };
+
+    for (const FName TemplateId : TemplateIds)
+    {
+        auto* Profile = NewObject<UGamePlatformPCGProfileDefinition>();
+        FGamePlatformId::TryParse(TEXT("test.pcg_foundation_template@1"), Profile->LogicalId);
+        FGamePlatformId::TryParse(TEXT("test.region@1"), Profile->RegionId);
+        Profile->ExecutionPolicy = EGamePlatformPCGExecutionPolicy::EditorGeneratedStatic;
+        Profile->OutputUsage = EGamePlatformPCGOutputUsage::Cosmetic;
+        Profile->TemplateId = TemplateId;
+        Profile->TemplateVersion = 1;
+        // Foundation Template（基础模板）是平台逻辑模板，不绑定具体项目网格。
+        // 真实网格通过项目 Graph Instance（图实例）+ MeshSet Definition（网格集合定义）在后续阶段注入。
+        TestTrue(*FString::Printf(TEXT("%s模板不要求绑定OutputMesh"), *TemplateId.ToString()), Profile->OutputMesh.IsNull());
+
+        FString Error;
+        UPCGGraph* Graph = GamePlatformPCGEditor::CreateFoundationTemplateGraph(Profile, TemplateId, TemplateId, Error);
+        if (!TestNotNull(*FString::Printf(TEXT("%s模板图创建：%s"), *TemplateId.ToString(), *Error), Graph))
+        {
+            return false;
+        }
+
+        Profile->GraphReference = Graph;
+        TestTrue(*FString::Printf(TEXT("%s标记为PCG模板"), *TemplateId.ToString()), Graph->bIsTemplate);
+        TestTrue(*FString::Printf(TEXT("%s通过Template Contract"), *TemplateId.ToString()),
+            GamePlatformPCGInspection::ValidateApprovedGraph(*Profile).IsSuccess());
+    }
+
     return true;
 }
 #endif

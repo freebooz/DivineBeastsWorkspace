@@ -26,7 +26,6 @@ public class DivineBeastsApplicationFlowClient : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "HTTP",
             "Json",
             "JsonUtilities",
             // Telemetry只用于客户端组合装配，平台遥测本身不反向依赖Online/ApplicationFlow。

@@ -2,12 +2,14 @@
 
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
+#include "Server/GamePlatformServerAdmissionSubsystem.h"
 #include "Sinks/GamePlatformTelemetryNetworkSink.h"
 #include "Subsystems/GamePlatformTelemetrySubsystem.h"
 #include "Transport/GamePlatformTelemetryTransport.h"
 #include "Async/Async.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "GameFramework/GameModeBase.h"
 #include "HAL/PlatformMisc.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -28,6 +30,14 @@ void UDivineBeastsServerBootstrapSubsystem::Initialize(
 {
     Super::Initialize(Collection);
     State = EDivineBeastsServerBootstrapState::Unconfigured;
+
+    // Boot身份只在服务器进程/当前GameInstance启动时确定一次。
+    // 生产部署可显式注入；本地/开发环境缺失时生成随机GUID，绝不使用固定默认值。
+    ServerBootId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_BOOT_ID"));
+    if (ServerBootId.IsEmpty())
+    {
+        ServerBootId = FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphensLower);
+    }
 
     LoadLaunchProfile();
     if (!bHasProfile)
@@ -122,6 +132,7 @@ void UDivineBeastsServerBootstrapSubsystem::Deinitialize()
                 ? GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>()
                 : nullptr)
     {
+        Lifecycle->StopHeartbeatPump();
         if (LifecycleChangedHandle.IsValid())
         {
             Lifecycle->OnLifecycleChanged().Remove(LifecycleChangedHandle);
@@ -295,6 +306,7 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
     FGamePlatformServerInstanceInfo Instance;
     Instance.GameId = FDivineBeastsProjectCatalog::GetGameId().ToString();
     Instance.GameServerId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_ID"));
+    Instance.ServerBootId = ServerBootId;
     Instance.ServerRoleId = ActiveProfile.ServerRoleId.ToString();
     Instance.ExperienceId = ActiveExperienceId.ToString();
     Instance.WorldId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_WORLD_ID"));
@@ -312,6 +324,29 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
         !Instance.IsValid())
     {
         SetFailed(TEXT("ServerInstanceEnvironmentInvalid"));
+        return;
+    }
+
+    // 只有服务器自身完成环境身份与世界校验后，才允许配置准入Target。
+    UGamePlatformServerAdmissionSubsystem* Admission =
+        GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>();
+    if (Admission == nullptr)
+    {
+        SetFailed(TEXT("ServerAdmissionUnavailable"));
+        return;
+    }
+
+    FGamePlatformServerAdmissionTarget AdmissionTarget;
+    AdmissionTarget.GameServerId = Instance.GameServerId;
+    AdmissionTarget.ServerBootId = Instance.ServerBootId;
+    AdmissionTarget.WorldId = Instance.WorldId;
+    AdmissionTarget.ExperienceId = Instance.ExperienceId;
+    AdmissionTarget.ProtocolVersion = LexToString(Instance.ProtocolVersion);
+    // BootId承担跨进程防旧；该本地代次承担同一进程内Target重配栅栏。
+    AdmissionTarget.ServerStartGeneration = 1;
+    if (!Admission->ConfigureTarget(AdmissionTarget))
+    {
+        SetFailed(TEXT("ServerAdmissionTargetRejected"));
         return;
     }
 
@@ -336,8 +371,14 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
     State = EDivineBeastsServerBootstrapState::Registering;
     UGamePlatformServerLifecycleSubsystem* Lifecycle =
         GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>();
-    if (Lifecycle == nullptr || !Lifecycle->RegisterInstance(Instance))
+    if (Lifecycle == nullptr)
     {
+        SetFailed(TEXT("ServerLifecycleUnavailable"));
+    }
+    else if (!Lifecycle->RegisterInstance(Instance) &&
+        Lifecycle->GetSnapshot().State != EGamePlatformServerLifecycleState::Failed)
+    {
+        // 若平台层已同步推进Failed，则保留其更精确的错误码，不用泛化错误覆盖诊断信息。
         SetFailed(TEXT("ServerRegistrationRejected"));
     }
 }
@@ -371,9 +412,11 @@ void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
     {
     case EGamePlatformServerLifecycleState::Registering:
         State = EDivineBeastsServerBootstrapState::Registering;
+        LastErrorCode = Snapshot.ErrorCode;
         break;
     case EGamePlatformServerLifecycleState::Registered:
         State = EDivineBeastsServerBootstrapState::Registered;
+        LastErrorCode = Snapshot.ErrorCode;
         if (bWorldValidated && ValidatedWorld.IsValid())
         {
             const TWeakObjectPtr<UDivineBeastsServerBootstrapSubsystem> WeakThis(this);
@@ -393,8 +436,14 @@ void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
                 }
                 UGamePlatformServerLifecycleSubsystem* Lifecycle =
                     Self->GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>();
-                if (Lifecycle == nullptr || !Lifecycle->MarkReady())
+                if (Lifecycle == nullptr)
                 {
+                    Self->SetFailed(TEXT("ServerLifecycleUnavailable"));
+                }
+                else if (!Lifecycle->MarkReady() &&
+                    Lifecycle->GetSnapshot().State != EGamePlatformServerLifecycleState::Failed)
+                {
+                    // 平台层若已给出永久失败原因，不再用项目层通用错误覆盖。
                     Self->SetFailed(TEXT("ServerReadyRejected"));
                 }
             });
@@ -402,13 +451,33 @@ void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
         break;
     case EGamePlatformServerLifecycleState::PublishingReady:
         State = EDivineBeastsServerBootstrapState::Registered;
+        LastErrorCode = Snapshot.ErrorCode;
         break;
     case EGamePlatformServerLifecycleState::Ready:
         State = EDivineBeastsServerBootstrapState::Ready;
-        LastErrorCode = NAME_None;
+        LastErrorCode = Snapshot.ErrorCode;
+        if (UGamePlatformServerLifecycleSubsystem* Lifecycle =
+                GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>())
+        {
+            const TWeakObjectPtr<UDivineBeastsServerBootstrapSubsystem> WeakThis(this);
+            if (!Lifecycle->StartHeartbeatPump(
+                    [WeakThis]()
+                    {
+                        const UDivineBeastsServerBootstrapSubsystem* Self = WeakThis.Get();
+                        return Self ? Self->GetCurrentPlayerCount() : -1;
+                    }))
+            {
+                SetFailed(TEXT("ServerHeartbeatPumpStartFailed"));
+            }
+        }
+        else
+        {
+            SetFailed(TEXT("ServerLifecycleUnavailable"));
+        }
         break;
     case EGamePlatformServerLifecycleState::Draining:
         State = EDivineBeastsServerBootstrapState::Draining;
+        LastErrorCode = Snapshot.ErrorCode;
         break;
     case EGamePlatformServerLifecycleState::Stopped:
         State = EDivineBeastsServerBootstrapState::Stopped;
@@ -429,4 +498,15 @@ void UDivineBeastsServerBootstrapSubsystem::SetFailed(FName ErrorCode)
     LastErrorCode = ErrorCode.IsNone()
         ? FName(TEXT("ServerBootstrapFailed"))
         : ErrorCode;
+}
+
+int32 UDivineBeastsServerBootstrapSubsystem::GetCurrentPlayerCount() const
+{
+    const UWorld* World = ValidatedWorld.Get();
+    if (World == nullptr || World->GetGameInstance() != GetGameInstance())
+    {
+        return -1;
+    }
+    AGameModeBase* GameMode = World->GetAuthGameMode();
+    return GameMode ? GameMode->GetNumPlayers() : 0;
 }

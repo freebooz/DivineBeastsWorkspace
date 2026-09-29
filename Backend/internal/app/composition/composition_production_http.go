@@ -18,6 +18,7 @@ import (
 	"divinebeasts/backend/internal/app/servicehost"
 	"divinebeasts/backend/internal/modules/gameserver"
 	"divinebeasts/backend/internal/modules/identity"
+	"divinebeasts/backend/internal/modules/inventory"
 	"divinebeasts/backend/internal/modules/match"
 	"divinebeasts/backend/internal/modules/playerdata"
 	"divinebeasts/backend/internal/modules/servertransfer"
@@ -37,12 +38,18 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	playerDataClient := httpadapter.NewPlayerDataClient(httpadapter.ClientConfig{BaseURL: requiredEnv("PLAYER_DATA_SERVICE_URL")})
 	var party gateway.PartyPort
 	var matchmaking gateway.MatchmakingPort
+	var worldEntry gateway.WorldEntryPort
 	if config.Getenv("ONLINE_ONLY", "false") != "true" {
 		client := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: requiredEnv("MATCH_SERVICE_URL")})
 		party = client
 		matchmaking = client
+		worldEntry = httpadapter.NewGameServerControlClient(httpadapter.GameServerControlClientConfig{
+			ClientConfig:  httpadapter.ClientConfig{BaseURL: requiredEnv("GAMESERVERCONTROL_SERVICE_URL")},
+			BearerToken:   strings.TrimSpace(requiredEnv("GAMESERVERCONTROL_INTERNAL_TOKEN")),
+			DefaultRegion: requiredEnv("GAME_DEFAULT_REGION"),
+		})
 	}
-	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, party, matchmaking)
+	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerDataClient, party, matchmaking, worldEntry)
 	return servicehost.Run(ctx, cfg, handler)
 }
 
@@ -68,6 +75,7 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	pool := mustPostgres(ctx)
 	defer pool.Close()
 	service := playerdata.NewService(postgres.NewOnlinePlayerRepository(pool))
+	service.AttachInventory(inventory.NewService(postgres.NewInventoryRepository(pool)))
 	return servicehost.Run(ctx, cfg, httpadapter.NewPlayerDataHandler(service))
 }
 
@@ -101,7 +109,11 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	arenaAllocator := agones.NewRegistryBackedAllocator(agonesClient, registry, requiredEnv("AGONES_NAMESPACE"), requiredEnv("GAME_SERVER_BUILD_VERSION"))
 
 	secret := []byte(requiredEnv("TRANSFER_TICKET_SECRET"))
-	transfer := servertransfer.NewServiceWithReplayStore(secret, func() time.Time { return time.Now().UTC() }, redisstore.NewTransferReplayStore(redisClient))
+	transfer := servertransfer.NewServiceWithStores(
+		secret,
+		func() time.Time { return time.Now().UTC() },
+		redisstore.NewTransferReplayStore(redisClient),
+		redisstore.NewTransferEpochStore(redisClient))
 	matchOutboxStore := postgres.NewMatchOutboxStore(pool)
 	resultService := match.NewResultService(matchOutboxStore)
 	service := gameservercontrol.NewServiceWithAllocators(registry, worldAllocator, arenaAllocator, transfer, resultService, func() time.Time { return time.Now().UTC() })

@@ -39,6 +39,8 @@ ContentPacks/                              # 内容插件分类根目录
 
 `DBAContentPack_Common` 与十二个 `DBAHeroPack_*` 已进入实际交付清单；World/Presentation 中未登记的条目仍只是目标归属。DBAWorlds持有定义类型与项目校验，世界包持有地图；DBAClient持有上下文与注册协调，英雄、世界和公共包各自持有美术，任何资产只有一个源所有者。二进制资产跨挂载点迁移必须通过 Unreal Editor 更新引用，禁止简单文件改名。
 
+PCG（程序化内容生成）归属遵循“机制在平台、内容在世界包”：`GamePlatformPCG（游戏平台程序化内容生成插件）`持有 Schema（属性协议）、Primitive（原语）、通用 Definition（定义）、Template（模板）、节点、WorldDirector（世界编排器）和 Editor Validator（编辑器校验器）；`DBAWorlds（神兽联盟项目世界插件）`只负责项目世界组合与校验；具体 Graph Instance（图实例）、Biome/Crop/Road/Enclosure/MeshSet（群系/作物/道路/围合/网格集合）数据和地图放置器归对应 `DBAWorldPack_*（世界内容包）`。其中湖心三岛桃花新手村 PCG 内容目标归 `DBAWorldPack_Village`，但未实际交付前不得提前登记空内容包或伪造 `.uasset`。
+
 ## 登记格式与交付门槛
 
 `ContentPackRegistry.json`使用`SchemaVersion: 1`及`ContentPacks`数组。每项含`Name`（稳定插件身份）和`RelativePath`（相对此目录的路径，如`Heroes/DBAHeroPack_Rat`）。规划中的包不进入实际清单；不得重复既有插件身份、使用绝对路径或`..`越界。

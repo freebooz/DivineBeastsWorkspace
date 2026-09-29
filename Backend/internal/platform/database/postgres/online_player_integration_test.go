@@ -42,17 +42,18 @@ func onlinePlayerFixture(t *testing.T) (*Pool, *playerdata.Service, string) {
 	if err := pool.inner.QueryRow(ctx, `SELECT current_schema()`).Scan(&schema); err != nil || !strings.HasPrefix(schema, "online_player_test_") {
 		t.Fatal("只允许预先准备的online_player_test_前缀schema；禁止默认public或生产schema")
 	}
-	// current_schema合法仍不足以阻止search_path回退public；两张可见表都必须实际属于该schema。
+	// current_schema合法仍不足以阻止search_path回退public；本切片四张可见表都必须实际属于该schema。
 	var isolatedTables int
 	if err := pool.inner.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_class c
 		JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
-		WHERE c.oid IN (to_regclass('player_profiles'),to_regclass('online_profile_idempotency'))
-		AND n.nspname=$1 AND c.relkind='r'`, schema).Scan(&isolatedTables); err != nil || isolatedTables != 2 {
-		t.Fatal("资料与幂等表必须实际位于隔离schema，禁止search_path回退其他业务表")
+		WHERE c.oid IN (to_regclass('player_profiles'),to_regclass('online_profile_idempotency'),
+			to_regclass('player_characters'),to_regclass('player_character_selection_idempotency'))
+		AND n.nspname=$1 AND c.relkind='r'`, schema).Scan(&isolatedTables); err != nil || isolatedTables != 4 {
+		t.Fatal("资料、角色与幂等表必须实际位于隔离schema，禁止search_path回退其他业务表")
 	}
 	service := playerdata.NewService(NewOnlinePlayerRepository(pool))
 	if err := service.Probe(ctx); err != nil {
-		t.Fatal("隔离schema须事先应用核心表与000006迁移", err)
+		t.Fatal("隔离schema须事先应用核心表、000006与000007迁移", err)
 	}
 	var random [16]byte
 	if _, err := rand.Read(random[:]); err != nil {

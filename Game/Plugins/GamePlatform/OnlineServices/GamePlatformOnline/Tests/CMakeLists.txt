@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-# 只编译生产纯逻辑与测试，不是额外 UE 宿主，不证明 UHT／UE 链接通过。
+# 仅编译历史纯逻辑回归模型与测试，不进入 UE 正式运行时；用于保留策略迁移基线，不证明 UHT／UE 链接通过。
 project(GamePlatformOnlineLogicTests LANGUAGES CXX)
 enable_testing()
 set(PRIVATE_DIR "${CMAKE_CURRENT_LIST_DIR}/../Source/GamePlatformOnline/Private")

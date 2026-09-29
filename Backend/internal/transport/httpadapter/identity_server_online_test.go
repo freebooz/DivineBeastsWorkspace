@@ -12,13 +12,23 @@ import (
 	"time"
 )
 
-// 不带Probe能力的内存开发仓储不能冒充真实业务就绪。
+// legacyPlayerRepository（旧式玩家仓储）故意只实现基础Repository，用于验证缺少Probe能力时必须失败关闭。
+type legacyPlayerRepository struct{}
+
+func (legacyPlayerRepository) Get(context.Context, string) (playerdata.Profile, error) {
+	return playerdata.Profile{}, errors.New("legacy repository")
+}
+func (legacyPlayerRepository) Save(context.Context, playerdata.Profile, int64) (playerdata.Profile, error) {
+	return playerdata.Profile{}, errors.New("legacy repository")
+}
+
+// 不带Probe能力的旧仓储不能冒充真实业务就绪；完整MemoryRepository用于本地流程时必须真实报告可用。
 func TestOnlineHTTPProbeRejectsLegacyMemoryRepositories(t *testing.T) {
 	i := identity.NewService(identity.NewMemorySessionRepository(), identity.SystemClock{}, identity.CryptoTokenGenerator{}, time.Minute, time.Hour)
 	for _, tc := range []struct {
 		handler http.Handler
 		path    string
-	}{{NewIdentityHandler(i), "/internal/v1/identity/probe"}, {NewPlayerDataHandler(playerdata.NewService(playerdata.NewMemoryRepository())), "/internal/v1/playerdata/probe"}} {
+	}{{NewIdentityHandler(i), "/internal/v1/identity/probe"}, {NewPlayerDataHandler(playerdata.NewService(legacyPlayerRepository{})), "/internal/v1/playerdata/probe"}} {
 		s := httptest.NewServer(tc.handler)
 		r, err := http.Get(s.URL + tc.path)
 		if err != nil {
@@ -29,6 +39,17 @@ func TestOnlineHTTPProbeRejectsLegacyMemoryRepositories(t *testing.T) {
 			t.Errorf("%s probe=%d", tc.path, r.StatusCode)
 		}
 		s.Close()
+	}
+
+	memoryServer := httptest.NewServer(NewPlayerDataHandler(playerdata.NewService(playerdata.NewMemoryRepository())))
+	defer memoryServer.Close()
+	response, err := http.Get(memoryServer.URL + "/internal/v1/playerdata/probe")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("完整MemoryRepository应支持本地就绪探测，实际=%d", response.StatusCode)
 	}
 }
 

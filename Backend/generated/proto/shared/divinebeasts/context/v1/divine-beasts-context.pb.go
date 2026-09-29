@@ -22,7 +22,7 @@ const (
 )
 
 // DivineBeastsRuntimeContext（神兽联盟运行上下文）保存项目专属Experience/ArenaMode语义。
-// 大厅属于Experience.OpenWorld.Hub，并由GameServer.Role.OpenWorld承载。
+// 大厅使用Experience.OpenWorld.Hub并由GameServer.Role.OpenWorld承载；历史Experience.Lobby.Main仅兼容映射到OpenWorld。
 type DivineBeastsRuntimeContext struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ExperienceId  string                 `protobuf:"bytes,1,opt,name=experience_id,json=experienceId,proto3" json:"experience_id,omitempty"`

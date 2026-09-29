@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Flow/DivineBeastsFlowTypes.h"
+#include "Types/GamePlatformOnlineRequests.h"
 
 class UGamePlatformOnlineClientSubsystem;
 
@@ -50,7 +51,12 @@ public:
     virtual void CancelAll() = 0;
 };
 
-/** FDivineBeastsHttpApplicationBackend（Gateway HTTP私有适配器）。 */
+/**
+ * FDivineBeastsHttpApplicationBackend（Gateway业务适配器）。
+ *
+ * 项目层只负责业务相对路径和JSON DTO；认证、Token刷新、401单次重放、
+ * 并发/队列/超时预算及HTTP安全策略统一由GamePlatformOnlineClient承担。
+ */
 class FDivineBeastsHttpApplicationBackend final
     : public IDivineBeastsApplicationBackend,
       public TSharedFromThis<FDivineBeastsHttpApplicationBackend>
@@ -87,12 +93,11 @@ private:
         const FString& Verb,
         const FString& RelativePath,
         const TSharedPtr<class FJsonObject>& Body,
+        bool bIdempotent,
+        FString IdempotencyKey,
         FRawCompletion Completion);
 
-    FString MakeUrl(const FString& RelativePath) const;
-    FString GetAuthHeader() const;
-
     TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> Online;
-    FString GatewayBaseUrl;
-    TArray<TSharedPtr<class IHttpRequest, ESPMode::ThreadSafe>> ActiveRequests;
+    TArray<FGamePlatformOnlineRequestHandle> ActiveRequests;
 };
+

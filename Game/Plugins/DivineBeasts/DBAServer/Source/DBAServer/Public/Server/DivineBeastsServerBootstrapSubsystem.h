@@ -71,11 +71,15 @@ private:
     void HandleLifecycleChanged(const struct FGamePlatformServerLifecycleSnapshot& Snapshot);
     void SetFailed(FName ErrorCode);
     bool IsConfiguredWorldValid(UWorld& World, FString& OutReason) const;
+    /** 返回当前权威GameState中的连接玩家数；世界失效时返回-1使平台心跳Fail Closed。 */
+    int32 GetCurrentPlayerCount() const;
 
     FDivineBeastsServerRoleProfile ActiveProfile;
     FName ActiveExperienceId = NAME_None;
     EDivineBeastsServerBootstrapState State = EDivineBeastsServerBootstrapState::Unconfigured;
     FName LastErrorCode = NAME_None;
+    /** 当前Dedicated Server进程唯一Boot身份；同一GameInstance生命周期固定，进程重启后变化。 */
+    FString ServerBootId;
     FDelegateHandle WorldInitializedHandle;
     FDelegateHandle WorldBeginPlayHandle;
     FDelegateHandle LifecycleChangedHandle;

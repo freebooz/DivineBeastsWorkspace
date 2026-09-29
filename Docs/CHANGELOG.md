@@ -2,6 +2,22 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-29｜GamePlatformSettings 四模块专项审查与实装
+
+- 专项审查确认原 `GamePlatformSettings` 只有 ClientOnly 模块入口、没有公开契约、设置模型、校验、生命周期、持久化、测试或消费者；设置域本身具有跨项目价值，因此保留插件身份并形成 Runtime／Client／Server／Editor 四模块，而不是继续保留空壳。
+- Runtime 新增类型安全 Descriptor／Provider／Registry／分层解析／Snapshot／ChangeSet／Migration／异步保存编排；Client 直接适配 UE5.8 `UGameUserSettings` 提供设备设置 Stage→Preview→Confirm/Cancel，并增加本地 User Profile；Server 提供 INI／Environment／CommandLine 只读覆盖；Editor 提供 Provider/Descriptor 校验。四模块保持 Client／Server／Editor → Runtime → GamePlatformCore 单向依赖，`CanContainContent=false`。
+- 重新锁定职责边界：Input重绑／灵敏度、UI可访问性、Camera行为、SFX播放／混音和Save通用业务存档仍由各自插件拥有；当前没有非测试 `IGamePlatformSettingsProvider`，因此 Runtime/Server 只能标记为框架已实现，未经逐领域“旧真源迁移→消费者切换→旧持久化删除”不得成为第二套设置真源。
+- 稳定性与安全整改包括：0 Tick/Ticker、显式Apply/Save、设备预览不写盘、异步保存弱引用回主线程；Provider拓扑变化在Save进行中延迟到同一MutationGeneration保存成功后处理；敏感Descriptor只允许Session临时作用域且Server只在检测到真实INI/环境变量/命令行覆盖尝试时拒绝；User持久化必须Client、Server持久化与ServerDefault必须Server；环境变量规范化键冲突Fail Closed；字符串设置统一限制4096字符，凭据/令牌/密钥继续使用部署秘密机制。
+- 已核对锁定UE5.8 `UGameUserSettings`真实API；四模块专项架构门禁通过并输出“无生产Provider”成熟度告警，项目头文件审计410处/0缺失。UE定向编译尝试因另一个仍持有全局UBT互斥锁的构建进程返回 `ConflictingInstance`，未进入Settings编译；UE Automation、Client/Server Cook/Stage、Standalone/Packaged、多显示器/高DPI和人工长稳验收仍待执行，不把静态验证冒充运行通过。
+
+## 2026-09-29｜GamePlatformOpenWorld 空壳专项退休
+
+- 专项审查确认 `GamePlatformOpenWorld` 只有 Runtime／ServerOnly 模块注册入口，没有公开契约、测试、资产或运行时消费者；全工作空间未发现项目 Dynamic World Event／Zone Activity／Population Scheduler 等真实跨项目需求。
+- 采用退休而非补造“万能 OpenWorld Manager”：OpenWorld 服务器角色继续保留，世界生命周期／流送由 GamePlatformWorld 承担，PCG／Navigation／Interaction／AI 各自保持独立边界，项目大厅／主城／野外规则继续归 DivineBeasts 层。
+- 正式基线调整为39个GamePlatform稳定身份（平台层38＋MOBA层GamePlatformArena 1）、1个MobaPresentation、5个DBA代码插件，共45个代码／机制插件＋登记内容N；DesignBaselineAudit同步拒绝重新引入已退休空壳。
+- 本变更不修改Shared协议、服务器角色、地图／资产身份或现有运行时代码；UE完整构建、Cook／Stage、联机与人工验收仍按独立证据记录。
+- 专项 DesignBaselineAudit 回归13/13通过；实际工作区基线正确识别 `GamePlatform 39/39`、代码／机制45、World分类4，Game／Shared运行引用为0且 `git diff --check` 通过。全量基线仍有22项既有失败（12个英雄空内容包＋10条DBAWorlds跨插件声明缺失），不归因于本次退休；本轮未停止或借用并行中的UE构建，因此不宣称完整UE构建、Cook／Stage或联机通过。
+
 ## 2026-09-28｜Monolith登录界面与事件驱动边界
 
 - 将“神兽联盟项目自有用户界面视觉资产必须通过 Monolith MCP 创建、修改、编译、保存和回读”写入全局工程规则、总体规划和插件规范；明确 GamePlatformUI、DBAClient 与第三层内容包的职责边界。

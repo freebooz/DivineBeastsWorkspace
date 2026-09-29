@@ -20,6 +20,7 @@ import (
 	"divinebeasts/backend/internal/app/servicehost"
 	"divinebeasts/backend/internal/modules/gameserver"
 	"divinebeasts/backend/internal/modules/identity"
+	"divinebeasts/backend/internal/modules/inventory"
 	"divinebeasts/backend/internal/modules/match"
 	"divinebeasts/backend/internal/modules/playerdata"
 	"divinebeasts/backend/internal/modules/servertransfer"
@@ -43,14 +44,18 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	playerClient := grpcclient.NewPlayerDataClient(playerConn)
 	var party gateway.PartyPort
 	var matchmaking gateway.MatchmakingPort
+	var worldEntry gateway.WorldEntryPort
 	if config.Getenv("ONLINE_ONLY", "false") != "true" {
 		matchConn := mustGRPCConn(requiredEnvGRPC("MATCH_GRPC_TARGET"))
 		defer matchConn.Close()
 		client := grpcclient.NewMatchClient(matchConn)
 		party = client
 		matchmaking = client
+		gameServerControlConn := mustGRPCConn(requiredEnvGRPC("GAMESERVERCONTROL_GRPC_TARGET"))
+		defer gameServerControlConn.Close()
+		worldEntry = grpcclient.NewWorldEntryClient(gameServerControlConn, requiredEnvGRPC("GAME_DEFAULT_REGION"))
 	}
-	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerClient, party, matchmaking)
+	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerClient, party, matchmaking, worldEntry)
 	return servicehost.Run(ctx, cfg, handler)
 }
 
@@ -76,6 +81,7 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	pool := mustPostgresGRPC(ctx)
 	defer pool.Close()
 	service := playerdata.NewService(postgres.NewOnlinePlayerRepository(pool))
+	service.AttachInventory(inventory.NewService(postgres.NewInventoryRepository(pool)))
 	return runGRPCHost(ctx, cfg, func(server *grpc.Server) { grpcadapter.RegisterPlayerDataServer(server, service) })
 }
 
@@ -103,7 +109,11 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	worldAllocator := gameserver.NewRegistryAllocator(registry)
 	agonesClient := agones.NewClient(agones.ClientConfig{BaseURL: requiredEnvGRPC("AGONES_API_URL"), BearerToken: readBearerTokenGRPC()})
 	arenaAllocator := agones.NewRegistryBackedAllocator(agonesClient, registry, requiredEnvGRPC("AGONES_NAMESPACE"), requiredEnvGRPC("GAME_SERVER_BUILD_VERSION"))
-	transfer := servertransfer.NewServiceWithReplayStore([]byte(requiredEnvGRPC("TRANSFER_TICKET_SECRET")), func() time.Time { return time.Now().UTC() }, redisstore.NewTransferReplayStore(redisClient))
+	transfer := servertransfer.NewServiceWithStores(
+		[]byte(requiredEnvGRPC("TRANSFER_TICKET_SECRET")),
+		func() time.Time { return time.Now().UTC() },
+		redisstore.NewTransferReplayStore(redisClient),
+		redisstore.NewTransferEpochStore(redisClient))
 	matchOutboxStore := postgres.NewMatchOutboxStore(pool)
 	service := gameservercontrol.NewServiceWithAllocators(registry, worldAllocator, arenaAllocator, transfer, match.NewResultService(matchOutboxStore), func() time.Time { return time.Now().UTC() })
 

@@ -6,8 +6,11 @@
     "Description":  "GamePlatformServer（游戏平台插件）",
     "Category":  "GamePlatform/OnlineServices",
     "CreatedBy":  "DivineBeastsWorkspace",
-    "CanContainContent":  true,
+    "CanContainContent":  false,
     "EnabledByDefault":  false,
+    "Plugins": [
+        { "Name": "GamePlatformGameplay", "Enabled": true }
+    ],
     "Modules":  [
                     {
                         "Name":  "GamePlatformServer",

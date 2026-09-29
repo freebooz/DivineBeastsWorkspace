@@ -124,11 +124,13 @@ FGamePlatformTelemetryHttpTransport(
     TMap<FString, FString> InStaticHeaders,
     float InTimeoutSeconds,
     int32 InMaxPayloadBytes,
-    FGamePlatformTelemetryHeaderProvider InDynamicHeaderProvider)
+    FGamePlatformTelemetryHeaderProvider InDynamicHeaderProvider,
+    FGamePlatformTelemetryRequestAuthorizer InRequestAuthorizer)
     : BaseUrl(MoveTemp(InBaseUrl))
     , Path(MoveTemp(InPath))
     , StaticHeaders(MoveTemp(InStaticHeaders))
     , DynamicHeaderProvider(MoveTemp(InDynamicHeaderProvider))
+    , RequestAuthorizer(MoveTemp(InRequestAuthorizer))
     , MaxPayloadBytes(FMath::Max(1024, InMaxPayloadBytes))
     , TimeoutSeconds(FMath::Max(1.0f, InTimeoutSeconds))
 {
@@ -192,6 +194,16 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
         FHttpModule::Get().CreateRequest();
     TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> RequestPtr = Request;
 
+#if defined(UE_HTTP_HAS_REQUEST_REDIRECT_POLICY) && UE_HTTP_HAS_REQUEST_REDIRECT_POLICY
+    // 遥测可能携带认证上下文；自动重定向必须显式关闭，未知HTTP后端Fail Closed。
+    if (!Request->SetRedirectPolicy(EHttpRequestRedirectPolicy::Reject))
+    {
+        return false;
+    }
+#else
+    return false;
+#endif
+
     Request->SetURL(BaseUrl + Path);
     Request->SetVerb(TEXT("POST"));
     Request->SetHeader(
@@ -222,6 +234,12 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
                 Request->SetHeader(Header.Key, Header.Value);
             }
         }
+    }
+
+    if (RequestAuthorizer && !RequestAuthorizer(*Request))
+    {
+        // 未认证时不发送裸遥测请求；上层NetworkSink可按既有策略重试或丢弃。
+        return false;
     }
 
     Request->SetContentAsString(Payload);

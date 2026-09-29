@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Features/IModularFeature.h"
+#include "Containers/Ticker.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GamePlatformServerLifecycleSubsystem.generated.h"
 
@@ -38,6 +40,10 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerInstanceInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
     FString GameServerId;
 
+    /** 本服务器进程启动代次；同一GameServerId每次进程启动必须变化，由部署或服务器组合根生成。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
+    FString ServerBootId;
+
     /** 中立服务器角色标识；具体允许值由游戏项目契约校验。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
     FString ServerRoleId;
@@ -66,7 +72,7 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerInstanceInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
     FString BuildVersion;
 
-    /** UE实时网络协议版本；零表示部署尚未提供版本标记，后端按其策略处理。 */
+    /** UE实时网络协议版本；生产注册要求大于0，零值Fail Closed。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|Server")
     int32 ProtocolVersion = 0;
 
@@ -84,6 +90,8 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerInstanceInfo
 
 /** FGamePlatformServerControlCompletion（游戏平台服务器控制面操作完成回调）。 */
 using FGamePlatformServerControlCompletion = TFunction<void(bool, FName)>;
+/** FGamePlatformServerPlayerCountProvider（服务器在线人数提供函数）；仅在游戏线程低频调用。 */
+using FGamePlatformServerPlayerCountProvider = TFunction<int32()>;
 
 /**
  * IGamePlatformServerControlProvider（游戏平台服务器控制面提供者）。
@@ -91,6 +99,7 @@ using FGamePlatformServerControlCompletion = TFunction<void(bool, FName)>;
  * 提供者必须保证每次回调至多一次，错误码不得包含凭据、端点或玩家个人信息。
  */
 class GAMEPLATFORMSERVER_API IGamePlatformServerControlProvider
+    : public IModularFeature
 {
 public:
     virtual ~IGamePlatformServerControlProvider() = default;
@@ -146,6 +155,14 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerLifecycleSnapshot
     UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Server")
     FName ErrorCode = NAME_None;
 
+    /** 连续心跳瞬时故障次数；成功心跳归零，用于健康观测，不改变项目玩法状态。 */
+    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Server")
+    int32 ConsecutiveHeartbeatFailures = 0;
+
+    /** 连续控制操作瞬时故障次数；注册/Ready/Drain成功后归零。 */
+    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Server")
+    int32 ConsecutiveControlFailures = 0;
+
     /**
      * 仅供C++诊断状态推进，不构成可调用的操作句柄。
      * UE反射不支持uint64蓝图属性，因此该内部代次保持非UPROPERTY，避免改变原生比较与过期回调判定语义。
@@ -173,8 +190,18 @@ public:
 
     /** 唯一提供者存在且实例信息完整时开始注册；重复注册、缺失或多提供者均失败关闭。 */
     bool RegisterInstance(const FGamePlatformServerInstanceInfo& Instance);
-    /** 仅Registered/Ready/Draining实例可上报心跳；失败转Failed，禁止继续宣称Ready。 */
+    /** 仅Registered/Ready/Draining实例可上报心跳；永久失败转Failed，瞬时传输失败允许后续心跳恢复。 */
     bool SendHeartbeat(int32 CurrentPlayers);
+    /**
+     * 启动低频Heartbeat Pump（心跳泵）。
+     * 平台层只负责定时与控制面协议，真实玩家数由上层组合根注入；同一GameInstance最多一个泵。
+     * IntervalSeconds必须位于[1, 60]秒，默认10秒，以避免逐帧轮询和请求堆积。
+     */
+    bool StartHeartbeatPump(
+        FGamePlatformServerPlayerCountProvider PlayerCountProvider,
+        float IntervalSeconds = 10.0f);
+    /** 停止Heartbeat Pump；可重复调用，Deinitialize与CompleteDrain会自动调用。 */
+    void StopHeartbeatPump();
     /** 只有项目资源与世界门禁完成后才能显式发布Ready。 */
     bool MarkReady();
     /** 在停止接纳新会话前通知控制面开始Drain；不自动销毁World或踢出玩家。 */
@@ -207,10 +234,22 @@ private:
     bool StartProviderOperation(
         EControlOperation Operation,
         int32 CurrentPlayers = 0);
+    bool TickHeartbeat(float DeltaSeconds);
+    bool TickControlRetry(float DeltaSeconds);
+    void ScheduleControlRetry(EControlOperation Operation);
+    void CancelControlRetry();
+    void TryStartDeferredControlOperation();
+    float ComputeControlRetryDelaySeconds() const;
+    static bool IsTransientControlError(FName ErrorCode);
 
     FGamePlatformServerInstanceInfo ActiveInstance;
     FGamePlatformServerLifecycleSnapshot Snapshot;
     FGamePlatformServerLifecycleChangedNative LifecycleChanged;
+    FGamePlatformServerPlayerCountProvider HeartbeatPlayerCountProvider;
+    FTSTicker::FDelegateHandle HeartbeatTickerHandle;
+    FTSTicker::FDelegateHandle ControlRetryTickerHandle;
+    TOptional<EControlOperation> PendingControlRetryOperation;
+    TOptional<EControlOperation> DeferredControlOperation;
     uint64 Generation = 0;
     bool bHeartbeatInFlight = false;
     bool bControlOperationInFlight = false;

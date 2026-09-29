@@ -60,14 +60,31 @@ const TInterface* FindNativeProvider(const AActor* Owner)
 
     if (Pawn)
     {
-        Controller =
-            Cast<APlayerController>(Pawn->GetController());
+        Controller = Cast<APlayerController>(Pawn->GetController());
+    }
+    else if (Controller)
+    {
+        // Interactor（交互发起组件）允许挂在 PlayerController（玩家控制器）；
+        // 此时资格 Provider（提供者）可能实际位于其受控 Pawn（角色）上。
+        Pawn = Controller->GetPawn();
     }
 
-    if (const TInterface* ControllerProvider =
-        FindProviderOnActor<TInterface>(Controller))
+    if (Pawn && Pawn != Owner)
     {
-        return ControllerProvider;
+        if (const TInterface* PawnProvider =
+            FindProviderOnActor<TInterface>(Pawn))
+        {
+            return PawnProvider;
+        }
+    }
+
+    if (Controller && Controller != Owner)
+    {
+        if (const TInterface* ControllerProvider =
+            FindProviderOnActor<TInterface>(Controller))
+        {
+            return ControllerProvider;
+        }
     }
 
     if (Controller)
@@ -112,6 +129,88 @@ APawn* ResolveControlledPawn(const AActor* Owner)
     }
 
     return nullptr;
+}
+
+UGamePlatformInteractableComponent* FindInteractableComponentByInstanceId(
+    AActor* TargetActor,
+    const FGuid& TargetInstanceId)
+{
+    if (!IsValid(TargetActor) || !TargetInstanceId.IsValid())
+    {
+        return nullptr;
+    }
+
+    TInlineComponentArray<UGamePlatformInteractableComponent*> Components;
+    TargetActor->GetComponents(Components);
+
+    for (UGamePlatformInteractableComponent* Component : Components)
+    {
+        if (IsValid(Component) &&
+            Component->GetTargetInstanceId() == TargetInstanceId)
+        {
+            return Component;
+        }
+    }
+
+    return nullptr;
+}
+
+bool IsFocusCandidatePreferred(
+    const FGamePlatformInteractionOption& Candidate,
+    float CandidateDistance,
+    const FGamePlatformInteractionOption* CurrentBest,
+    float CurrentBestDistance)
+{
+    if (!CurrentBest)
+    {
+        return true;
+    }
+
+    if (FGamePlatformInteractionFocusRules::IsPreferredOption(
+            Candidate,
+            CurrentBest))
+    {
+        return true;
+    }
+
+    if (FGamePlatformInteractionFocusRules::IsPreferredOption(
+            *CurrentBest,
+            &Candidate))
+    {
+        return false;
+    }
+
+    // 选项排序完全相同时，优先实际距离更近的交互点，保证同 Actor 多组件选择稳定。
+    return CandidateDistance < CurrentBestDistance;
+}
+
+EGamePlatformInteractionCancelReason MapValidationErrorToCancelReason(
+    EGamePlatformInteractionError Error)
+{
+    switch (Error)
+    {
+    case EGamePlatformInteractionError::OutOfRange:
+        return EGamePlatformInteractionCancelReason::OutOfRange;
+    case EGamePlatformInteractionError::LineOfSightBlocked:
+        return EGamePlatformInteractionCancelReason::LineOfSightLost;
+    case EGamePlatformInteractionError::StaleTargetGeneration:
+    case EGamePlatformInteractionError::StaleTargetRevision:
+        return EGamePlatformInteractionCancelReason::TargetRevisionChanged;
+    case EGamePlatformInteractionError::InteractorNotActive:
+        return EGamePlatformInteractionCancelReason::InteractorNotActive;
+    case EGamePlatformInteractionError::InvalidInteractor:
+        return EGamePlatformInteractionCancelReason::InteractorInvalid;
+    case EGamePlatformInteractionError::TargetDestroyed:
+        return EGamePlatformInteractionCancelReason::TargetDestroyed;
+    case EGamePlatformInteractionError::WorldTearingDown:
+        return EGamePlatformInteractionCancelReason::WorldTearingDown;
+    case EGamePlatformInteractionError::TimedOut:
+        return EGamePlatformInteractionCancelReason::TimedOut;
+    case EGamePlatformInteractionError::UserCancelled:
+        return EGamePlatformInteractionCancelReason::UserCancelled;
+    default:
+        return EGamePlatformInteractionCancelReason::TargetUnavailable;
+    }
 }
 }
 
@@ -233,35 +332,77 @@ void UGamePlatformInteractorComponent::RefreshLocalFocus()
 
     if (bHit && IsValid(Hit.GetActor()))
     {
-        if (UGamePlatformInteractableComponent* Target =
-            Hit.GetActor()->FindComponentByClass<
-                UGamePlatformInteractableComponent>())
+        TInlineComponentArray<UGamePlatformInteractableComponent*> Targets;
+        Hit.GetActor()->GetComponents(Targets);
+
+        bool bHasBestCandidate = false;
+        float BestCandidateDistance = MAX_flt;
+
+        for (UGamePlatformInteractableComponent* Target : Targets)
         {
+            if (!IsValid(Target) ||
+                !Target->IsInteractionEnabled() ||
+                !Target->GetTargetInstanceId().IsValid())
+            {
+                continue;
+            }
+
             const float Distance =
                 FVector::Distance(
                     GetServerInteractorOrigin(),
                     Target->GetInteractionPoint());
 
-            FGamePlatformInteractionOption BestOption;
-            if (Target->IsInteractionEnabled() &&
-                FGamePlatformInteractionFocusRules::SelectBestOption(
-                    Target->GetOptions(),
-                    Distance,
-                    BestOption))
+            if (!FMath::IsFinite(Distance))
             {
-                NewFocus.TargetActor = Hit.GetActor();
-                NewFocus.TargetInstanceId = Target->GetTargetInstanceId();
-                NewFocus.TargetGeneration = Target->GetTargetGeneration();
-                NewFocus.TargetRevision = Target->GetTargetRevision();
-                NewFocus.Option = BestOption;
-                NewFocus.Distance = Distance;
-                NewFocus.bLocallyAvailable = true;
+                continue;
+            }
+
+            for (const FGamePlatformInteractionOption& Option :
+                Target->GetOptions())
+            {
+                // 本地只做体验层候选过滤；服务器仍会完整重验所有权威事实。
+                if (!Option.bEnabled ||
+                    !Option.IsStructurallyValid() ||
+                    (Option.CommitKind ==
+                         EGamePlatformInteractionCommitKind::Harvest &&
+                     Target->GetRemainingCharges() <= 0) ||
+                    Distance > Option.MaxDistance ||
+                    Option.MaxDistance >
+                        Settings->MaxConfiguredInteractionDistance ||
+                    (Option.Mode == EGamePlatformInteractionMode::Hold &&
+                     Option.HoldDuration > Settings->MaxHoldDuration))
+                {
+                    continue;
+                }
+
+                if (!bHasBestCandidate ||
+                    IsFocusCandidatePreferred(
+                        Option,
+                        Distance,
+                        &NewFocus.Option,
+                        BestCandidateDistance))
+                {
+                    bHasBestCandidate = true;
+                    BestCandidateDistance = Distance;
+                    NewFocus.TargetActor = Hit.GetActor();
+                    NewFocus.TargetInstanceId =
+                        Target->GetTargetInstanceId();
+                    NewFocus.TargetGeneration =
+                        Target->GetTargetGeneration();
+                    NewFocus.TargetRevision =
+                        Target->GetTargetRevision();
+                    NewFocus.Option = Option;
+                    NewFocus.Distance = Distance;
+                    NewFocus.bLocallyAvailable = true;
+                }
             }
         }
     }
 
     const bool bChanged =
         CurrentFocus.TargetActor != NewFocus.TargetActor ||
+        CurrentFocus.TargetInstanceId != NewFocus.TargetInstanceId ||
+        CurrentFocus.TargetGeneration != NewFocus.TargetGeneration ||
         CurrentFocus.Option.OptionId != NewFocus.Option.OptionId ||
         CurrentFocus.TargetRevision != NewFocus.TargetRevision ||
         CurrentFocus.bLocallyAvailable != NewFocus.bLocallyAvailable;
@@ -374,17 +515,26 @@ void UGamePlatformInteractorComponent::CancelFromTarget(
     const FGuid& SessionId,
     EGamePlatformInteractionCancelReason Reason)
 {
-    if (!GetOwner()->HasAuthority() ||
+    if (!IsValid(GetOwner()) ||
+        !GetOwner()->HasAuthority() ||
         CurrentSession.SessionId != SessionId ||
         !IsSessionActive())
     {
         return;
     }
 
-    const EGamePlatformInteractionError Error =
-        Reason == EGamePlatformInteractionCancelReason::TargetDestroyed
-            ? EGamePlatformInteractionError::TargetDestroyed
-            : EGamePlatformInteractionError::TargetUnavailable;
+    EGamePlatformInteractionError Error =
+        EGamePlatformInteractionError::TargetUnavailable;
+
+    if (Reason == EGamePlatformInteractionCancelReason::TargetDestroyed)
+    {
+        Error = EGamePlatformInteractionError::TargetDestroyed;
+    }
+    else if (Reason ==
+        EGamePlatformInteractionCancelReason::TargetRevisionChanged)
+    {
+        Error = EGamePlatformInteractionError::StaleTargetRevision;
+    }
 
     CancelSession(Reason, Error);
 }
@@ -393,16 +543,6 @@ void UGamePlatformInteractorComponent::ServerRequestBeginInteraction_Implementat
     FGamePlatformInteractionRequest Request)
 {
     PruneRecentRequests();
-
-    if (!ConsumeRequestRateLimit(true))
-    {
-        FGamePlatformInteractionResult Result;
-        Result.RequestId = Request.RequestId;
-        Result.Error = EGamePlatformInteractionError::RateLimited;
-        Result.State = EGamePlatformInteractionSessionState::Rejected;
-        CacheTerminalResult(Result);
-        return;
-    }
 
     if (!Request.RequestId.IsValid())
     {
@@ -413,6 +553,8 @@ void UGamePlatformInteractorComponent::ServerRequestBeginInteraction_Implementat
         return;
     }
 
+    // 幂等命中必须先于限流：网络重试/重复投递不能消耗新的 Begin（开始）配额，
+    // 更不能把原本已完成的结果改写为 RateLimited（被限流）。
     if (const FCachedRequestResult* Cached =
         RecentRequestResults.Find(Request.RequestId))
     {
@@ -426,9 +568,20 @@ void UGamePlatformInteractorComponent::ServerRequestBeginInteraction_Implementat
     {
         LastResult.RequestId = CurrentSession.RequestId;
         LastResult.SessionId = CurrentSession.SessionId;
+        LastResult.OptionId = CurrentSession.OptionId;
         LastResult.Error = EGamePlatformInteractionError::None;
         LastResult.State = CurrentSession.State;
         OnResultChanged.Broadcast(LastResult);
+        return;
+    }
+
+    if (!ConsumeRequestRateLimit(true))
+    {
+        FGamePlatformInteractionResult Result;
+        Result.RequestId = Request.RequestId;
+        Result.Error = EGamePlatformInteractionError::RateLimited;
+        Result.State = EGamePlatformInteractionSessionState::Rejected;
+        CacheTerminalResult(Result);
         return;
     }
 
@@ -473,6 +626,27 @@ void UGamePlatformInteractorComponent::ServerRequestBeginInteraction_Implementat
 void UGamePlatformInteractorComponent::ServerRequestCancelInteraction_Implementation(
     FGuid RequestId)
 {
+    PruneRecentRequests();
+
+    if (!RequestId.IsValid())
+    {
+        FGamePlatformInteractionResult Result;
+        Result.Error = EGamePlatformInteractionError::SessionNotFound;
+        Result.State = EGamePlatformInteractionSessionState::Rejected;
+        LastResult = Result;
+        OnResultChanged.Broadcast(LastResult);
+        return;
+    }
+
+    // 已经进入终态的 Request（请求）直接回放真实终态，保证 Cancel（取消）重试幂等。
+    if (const FCachedRequestResult* Cached =
+        RecentRequestResults.Find(RequestId))
+    {
+        LastResult = Cached->Result;
+        OnResultChanged.Broadcast(LastResult);
+        return;
+    }
+
     if (!ConsumeRequestRateLimit(false))
     {
         FGamePlatformInteractionResult Result;
@@ -681,17 +855,13 @@ UGamePlatformInteractorComponent::ValidateBeginRequest(
         return EGamePlatformInteractionError::InvalidTarget;
     }
 
-    OutTarget =
-        Request.TargetActor->FindComponentByClass<
-            UGamePlatformInteractableComponent>();
+    // TargetInstanceId（目标实例ID）是组件级身份，不能使用 FindComponentByClass（按类找首个组件）
+    // 否则同一 Actor（实体）上的第二个及后续交互点永远无法通过服务器校验。
+    OutTarget = FindInteractableComponentByInstanceId(
+        Request.TargetActor,
+        Request.TargetInstanceId);
 
     if (!IsValid(OutTarget))
-    {
-        return EGamePlatformInteractionError::InvalidTarget;
-    }
-
-    if (Request.TargetInstanceId !=
-        OutTarget->GetTargetInstanceId())
     {
         return EGamePlatformInteractionError::InvalidTarget;
     }
@@ -717,6 +887,16 @@ UGamePlatformInteractorComponent::ValidateBeginRequest(
     }
 
     OutOption = *Option;
+
+    const UGamePlatformInteractionSettings* Settings =
+        GetDefault<UGamePlatformInteractionSettings>();
+    if (OutOption.MaxDistance >
+            Settings->MaxConfiguredInteractionDistance ||
+        (OutOption.Mode == EGamePlatformInteractionMode::Hold &&
+         OutOption.HoldDuration > Settings->MaxHoldDuration))
+    {
+        return EGamePlatformInteractionError::InvalidOption;
+    }
 
     if (!OutTarget->IsInteractionEnabled() ||
         !OutOption.bEnabled ||
@@ -801,12 +981,6 @@ UGamePlatformInteractorComponent::ValidateActiveSession() const
         CurrentSession.TargetGeneration)
     {
         return EGamePlatformInteractionError::StaleTargetGeneration;
-    }
-
-    if (Target->GetTargetRevision() !=
-        CurrentSession.TargetRevisionAtStart)
-    {
-        return EGamePlatformInteractionError::StaleTargetRevision;
     }
 
     const FGamePlatformInteractionOption* Option =
@@ -937,35 +1111,9 @@ void UGamePlatformInteractorComponent::CommitCurrentSession()
 
     if (Validation != EGamePlatformInteractionError::None)
     {
-        EGamePlatformInteractionCancelReason Reason =
-            EGamePlatformInteractionCancelReason::TargetUnavailable;
-
-        if (Validation ==
-            EGamePlatformInteractionError::OutOfRange)
-        {
-            Reason =
-                EGamePlatformInteractionCancelReason::OutOfRange;
-        }
-        else if (Validation ==
-            EGamePlatformInteractionError::LineOfSightBlocked)
-        {
-            Reason =
-                EGamePlatformInteractionCancelReason::LineOfSightLost;
-        }
-        else if (Validation ==
-            EGamePlatformInteractionError::StaleTargetRevision)
-        {
-            Reason =
-                EGamePlatformInteractionCancelReason::TargetRevisionChanged;
-        }
-        else if (Validation ==
-            EGamePlatformInteractionError::InteractorNotActive)
-        {
-            Reason =
-                EGamePlatformInteractionCancelReason::InteractorNotActive;
-        }
-
-        CancelSession(Reason, Validation);
+        CancelSession(
+            MapValidationErrorToCancelReason(Validation),
+            Validation);
         return;
     }
 
@@ -1046,7 +1194,11 @@ void UGamePlatformInteractorComponent::ValidateHoldSession()
 
     if (Validation != EGamePlatformInteractionError::None)
     {
-        CommitCurrentSession();
+        // 校验失败直接取消，避免再次进入 CommitCurrentSession（提交当前会话）
+        // 重复执行 Provider（提供者）、距离和 LOS（视线）校验。
+        CancelSession(
+            MapValidationErrorToCancelReason(Validation),
+            Validation);
         return;
     }
 
@@ -1154,10 +1306,14 @@ bool UGamePlatformInteractorComponent::ConsumeLocalRequestThrottle(
             Settings->MinClientRequestInterval);
 
     if (LastRequestTime >= 0.0 &&
+        Now >= LastRequestTime &&
         Now - LastRequestTime < MinimumInterval)
     {
         return false;
     }
+
+    // Seamless Travel（无缝切图）等场景可能让 WorldTime（世界时间）回退；
+    // 时间回退必须视为新窗口，不能让旧时间戳长期阻塞本地请求。
 
     LastRequestTime = Now;
     return true;
@@ -1187,9 +1343,17 @@ bool UGamePlatformInteractorComponent::ConsumeRequestRateLimit(
             ? Settings->MaxBeginRequestsPerWindow
             : Settings->MaxCancelRequestsPerWindow;
 
-    if (Now - WindowStart >=
-        Settings->BeginRequestWindowSeconds)
+    const double WindowSeconds =
+        FMath::Max(
+            0.1f,
+            bBeginRequest
+                ? Settings->BeginRequestWindowSeconds
+                : Settings->CancelRequestWindowSeconds);
+
+    if (Now < WindowStart ||
+        Now - WindowStart >= WindowSeconds)
     {
+        // WorldTime（世界时间）回退时立即开启新限流窗口，兼容无缝切图和世界重建。
         WindowStart = Now;
         Count = 0;
     }
@@ -1214,6 +1378,7 @@ void UGamePlatformInteractorComponent::PruneRecentRequests()
 
         const bool bExpired =
             !Cached ||
+            Now < Cached->RecordedAt ||
             Now - Cached->RecordedAt >
                 Settings->RecentRequestLifetimeSeconds;
 
@@ -1272,9 +1437,9 @@ UGamePlatformInteractorComponent::GetCurrentTargetComponent() const
         return nullptr;
     }
 
-    return CurrentSession.TargetActor
-        ->FindComponentByClass<
-            UGamePlatformInteractableComponent>();
+    return FindInteractableComponentByInstanceId(
+        CurrentSession.TargetActor,
+        CurrentSession.TargetInstanceId);
 }
 
 bool UGamePlatformInteractorComponent::IsSessionActive() const

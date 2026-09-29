@@ -1,6 +1,7 @@
 #include "Manifests/PCGSourceFingerprint.h"
 #include "Definitions/GamePlatformPCGProfileDefinition.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Engine/AssetManager.h"
 #include "Interfaces/IPluginManager.h"
 #include "Modules/ModuleManager.h"
 #include "HAL/FileManager.h"
@@ -64,8 +65,29 @@ bool GamePlatformPCGEditor::CalculateSourceFingerprint(const UGamePlatformPCGPro
     TArray<FString> Records{TEXT("engine:") + FEngineVersion::Current().ToString(), TEXT("generator:GamePlatformPCGEditor/0.1.0")};
     auto& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
     TArray<FName> Pending{Profile.GetOutermost()->GetFName(),
-        FName(*Profile.GraphReference.ToSoftObjectPath().GetLongPackageName()),
-        FName(*Profile.OutputMesh.ToSoftObjectPath().GetLongPackageName())};
+        FName(*Profile.GraphReference.ToSoftObjectPath().GetLongPackageName())};
+    if (!Profile.OutputMesh.IsNull())
+    {
+        Pending.Add(FName(*Profile.OutputMesh.ToSoftObjectPath().GetLongPackageName()));
+    }
+
+    UAssetManager* AssetManager = UAssetManager::GetIfInitialized();
+    if (!AssetManager)
+    {
+        Error = TEXT("AssetManager尚未初始化，无法解析PCG RequiredDefinitions来源。");
+        return false;
+    }
+    for (const FPrimaryAssetId& RequiredId : Profile.RequiredDefinitions)
+    {
+        const FSoftObjectPath RequiredPath = AssetManager->GetPrimaryAssetPath(RequiredId);
+        const FString PackageName = RequiredPath.GetLongPackageName();
+        if (RequiredPath.IsNull() || PackageName.IsEmpty())
+        {
+            Error = TEXT("无法解析PCG必需Definition来源：") + RequiredId.ToString();
+            return false;
+        }
+        Pending.Add(FName(*PackageName));
+    }
     TSet<FName> Visited;
     while (!Pending.IsEmpty())
     {

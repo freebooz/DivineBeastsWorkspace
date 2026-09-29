@@ -214,6 +214,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GatewayApiError'
+  /v1/player/characters:
+    get:
+      tags: [客户端业务]
+      operationId: listGatewayPlayerCharacters
+      summary: 获取当前玩家的持久角色列表
+      description: 服务端从 Bearer Access Token 解析玩家身份；客户端不得声明其他 playerId。
+      security: [{bearerAuth: []}]
+      responses:
+        '200':
+          description: 当前玩家拥有的持久角色列表；无角色时返回空数组。
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CharacterSummary'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+    post:
+      tags: [客户端业务]
+      operationId: createGatewayPlayerCharacter
+      summary: 为当前玩家创建持久角色
+      description: creationRequestId 是玩家作用域幂等键；同键同内容重放原结果，同键异内容返回409。
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCharacterRequest'}
+      responses:
+        '200':
+          description: 创建成功或幂等重放，返回权威角色摘要。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CharacterSummary'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: 幂等内容、角色名称或领域规则冲突。}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/player/character-selection:
+    post:
+      tags: [客户端业务]
+      operationId: selectGatewayPlayerCharacter
+      summary: 权威确认当前玩家选择的持久角色
+      description: selectionRequestId 是玩家作用域幂等键；服务端校验角色归属、状态和 expectedCharacterRevision 后更新 selectedCharacterId。
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CharacterSelectionRequest'}
+      responses:
+        '200':
+          description: 选择已提交或幂等重放。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CharacterSelectionResponse'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {description: 角色不存在或不属于当前玩家。}
+        '409': {description: 角色修订、状态或幂等内容冲突。}
+        '503': {$ref: '#/components/responses/Unavailable'}
   /v1/party:
     post:
       tags: [客户端业务]
@@ -281,6 +343,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GatewayApiError'
+  /v1/divinebeasts/world-entry:
+    post:
+      tags: [客户端业务]
+      operationId: enterDivineBeastsWorld
+      summary: 为已认证玩家当前选中角色分配常驻世界并签发一次性迁移票据
+      description: |
+        服务端从Bearer Access Token解析PlayerID和SessionID，并核对当前玩家资料中的selectedCharacterId及角色修订号。
+        客户端只能声明目标体验和首选区域，不能声明GameServer、PlayerID、SessionID或目标Endpoint。
+        返回的transferTicket仅供GamePlatformSession一次性交给安全传输层，不得写入URL、日志或长期持久化。
+        MainArena由MatchService比赛编排链路分配，不经过本接口。
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DivineBeastsWorldEntryRequest'}
+      responses:
+        '200':
+          description: 世界分配与一次性迁移材料签发成功；响应禁止缓存。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DivineBeastsWorldEntryResponse'}
+        '400': {$ref: '#/components/responses/InvalidRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {description: 玩家资料或角色不存在。}
+        '409': {description: 当前角色选择、角色修订或目标世界分配发生冲突。}
+        '413': {$ref: '#/components/responses/TooLarge'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+
 components:
   responses:
     InvalidRequest:
@@ -406,7 +497,7 @@ components:
     PlayerProfile:
       type: object
       additionalProperties: false
-      required: [playerId, gameId, displayName, dataVersion, revision, tutorialCompleted, ownedCharacterIds]
+      required: [playerId, gameId, displayName, dataVersion, revision, tutorialCompleted, selectedCharacterId, ownedCharacterIds]
       properties:
         playerId:
           type: string
@@ -432,11 +523,62 @@ components:
         defaultWorldId:
           type: string
           description: 默认进入的世界逻辑标识；当前实现可能为空字符串。
+        selectedCharacterId:
+          type: string
+          description: 最近一次经服务端权威验证的持久角色；尚未选择时为空字符串。
         ownedCharacterIds:
           type: array
           description: 已拥有角色逻辑标识列表。
           items:
             type: string
+    CharacterSummary:
+      type: object
+      additionalProperties: false
+      required: [characterId, heroDefinitionId, characterName, characterRevision, onboardingState, status]
+      properties:
+        characterId: {type: string, minLength: 1, description: 持久角色唯一标识。}
+        heroDefinitionId: {type: string, minLength: 1, description: 项目Hero Definition稳定标识。}
+        characterName: {type: string, minLength: 1, maxLength: 24, description: 玩家可见角色名称。}
+        characterRevision: {type: integer, format: int64, minimum: 1, description: 角色乐观并发修订号。}
+        onboardingState:
+          type: string
+          enum: [New, TutorialRequired, TutorialInProgress, OnboardingComplete]
+          description: 该角色的新手流程状态。
+        status:
+          type: string
+          enum: [Active, Disabled]
+          description: 角色是否允许继续选择进入游戏。
+        appearanceProfileId:
+          type: string
+          description: 可选外观方案标识；为空表示使用默认外观。
+    CreateCharacterRequest:
+      type: object
+      additionalProperties: false
+      required: [creationRequestId, heroDefinitionId, characterName]
+      properties:
+        creationRequestId: {type: string, minLength: 1, maxLength: 128, description: 玩家作用域创建幂等键。}
+        heroDefinitionId: {type: string, minLength: 1, description: 要创建的项目Hero Definition。}
+        characterName: {type: string, minLength: 1, maxLength: 24, description: 去除首尾空白后的角色名称。}
+        appearanceSelection:
+          type: object
+          additionalProperties: {type: string}
+          description: 项目定义的外观选项键值；服务端只保存经过项目规则校验后的白名单值。
+    CharacterSelectionRequest:
+      type: object
+      additionalProperties: false
+      required: [selectionRequestId, characterId, expectedCharacterRevision]
+      properties:
+        selectionRequestId: {type: string, minLength: 1, maxLength: 128, description: 玩家作用域选择幂等键。}
+        characterId: {type: string, minLength: 1, description: 目标持久角色标识。}
+        expectedCharacterRevision: {type: integer, format: int64, minimum: 1, description: 客户端列表快照中的角色修订号。}
+    CharacterSelectionResponse:
+      type: object
+      additionalProperties: false
+      required: [selectionRequestId, profileRevision, character]
+      properties:
+        selectionRequestId: {type: string, description: 已提交的选择请求标识。}
+        profileRevision: {type: integer, format: int64, minimum: 1, description: 更新 selectedCharacterId 后的玩家资料修订号。}
+        character: {$ref: '#/components/schemas/CharacterSummary'}
     PartySnapshot:
       type: object
       additionalProperties: false
@@ -517,6 +659,40 @@ components:
           type: string
           enum: [searching, matchFound, canceled, failed]
           description: 匹配状态；当前创建成功后通常为 searching。
+    DivineBeastsWorldEntryRequest:
+      type: object
+      additionalProperties: false
+      required: [requestId, characterId, desiredExperienceId, expectedCharacterRevision]
+      properties:
+        requestId: {type: string, minLength: 1, maxLength: 128, description: 玩家作用域世界进入幂等请求标识，同时作为内部迁移票据请求关联标识。}
+        characterId: {type: string, minLength: 1, description: 必须与当前玩家资料中服务端已确认的selectedCharacterId一致。}
+        desiredExperienceId:
+          type: string
+          enum: [Experience.OpenWorld.Hub, Experience.OpenWorld.Main, Experience.Lobby.Main, Experience.Village.Main, Experience.Village.Tutorial, Experience.Village.Training]
+          description: 常驻世界目标体验；MainArena不使用本接口。
+        expectedCharacterRevision: {type: integer, format: int64, minimum: 1, description: 客户端角色列表快照中的修订号。}
+        preferredRegion: {type: string, description: 可选首选区域；为空时使用服务端部署默认区域。}
+    DivineBeastsWorldEntryResponse:
+      type: object
+      additionalProperties: false
+      required: [assignmentId, gameServerId, serverRoleId, experienceId, worldId, mapId, regionId, ticketId, characterId, sessionId, gameSessionId, serverBootId, protocolVersion, sessionEpoch, endpoint, transferTicket]
+      properties:
+        assignmentId: {type: string, minLength: 1, description: GameServerControl签发的目标Assignment身份。}
+        gameServerId: {type: string, minLength: 1, description: 目标Dedicated Server实例身份。}
+        serverRoleId: {type: string, enum: [GameServer.Role.OpenWorld, GameServer.Role.Village], description: 常驻世界正式服务器角色。}
+        experienceId: {type: string, minLength: 1, description: 已接受的目标体验。}
+        worldId: {type: string, minLength: 1, description: 目标世界逻辑身份。}
+        mapId: {type: string, minLength: 1, description: 当前阶段与worldId相同的逻辑地图标识；真实磁盘地图由WorldDefinition解析。}
+        regionId: {type: string, minLength: 1, description: 实际分配区域。}
+        ticketId: {type: string, minLength: 1, description: 一次性迁移票据标识。}
+        characterId: {type: string, minLength: 1, description: 服务端已核对的当前角色。}
+        sessionId: {type: string, minLength: 1, description: 从Bearer会话解析的在线Session身份。}
+        gameSessionId: {type: string, minLength: 1, description: 控制面签发的游戏会话绑定身份；非凭据，可用于客户端与服务端绑定核对。}
+        serverBootId: {type: string, minLength: 1, description: 目标Dedicated Server当前启动代次；服务器重启后旧值必须失效。}
+        protocolVersion: {type: integer, format: int32, minimum: 1, description: 目标Dedicated Server实时网络协议版本。}
+        sessionEpoch: {type: integer, format: int64, minimum: 1, description: 当前在线Session的单调权威绑定代次。}
+        endpoint: {type: string, minLength: 1, description: 目标GameServer连接端点；不得包含凭据。}
+        transferTicket: {type: string, minLength: 1, description: JSON序列化的一次性签名迁移票据；不得进入URL、日志或持久化。}
     GatewayApiError:
       type: object
       additionalProperties: false

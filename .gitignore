@@ -14,6 +14,9 @@
 *.suo
 *.user
 
+# 本地隔离开发工作树；源码通过对应功能分支提交，不重复纳入主工作树。
+/.worktrees/
+
 # Go 测试与覆盖率临时产物
 /Backend/*.test
 /Backend/coverage.out

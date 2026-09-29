@@ -20,6 +20,7 @@ Shared/                                                             # UE与Go跨
 │   │   │       └── match-completed.schema.json                     # 通用Match.Completed比赛完成事件结构
 │   │   ├── OpenAPI/                                                # 客户端与Gateway之间的公共HTTP API契约
 │   │   │   ├── gateway.openapi.yaml                                # Gateway公共HTTP聚合契约及健康/版本接口
+│   │   │   ├── inventory.openapi.yaml                              # Inventory公网背包快照/移动/拆分/合并/快捷栏及Operation查询契约；Revision使用十进制字符串
 │   │   │   ├── identity.openapi.yaml                               # 登录、刷新、退出和Session查询HTTP契约
 │   │   │   ├── matchmaking.openapi.yaml                            # 创建、查询、取消MatchmakingTicket的HTTP契约
 │   │   │   ├── party.openapi.yaml                                  # Party创建、邀请、加入、离开、Ready和Leader变更HTTP契约
@@ -81,7 +82,7 @@ Shared/                                                             # UE与Go跨
 
 ## 当前 HTTP 契约实现补充（2026-09-21）
 
-`Contracts/GamePlatform/OpenAPI/game-server-control.openapi.yaml` 已新增为 GameServerControlService 的内部 HTTP 契约，覆盖注册、心跳、就绪、排空、世界/竞技场分配、任务查询、迁移票据和权威比赛结果提交。现有 `gateway.openapi.yaml`、`identity.openapi.yaml`、`player-data.openapi.yaml`、`party.openapi.yaml` 与 `matchmaking.openapi.yaml` 已收敛为当前实际注册路由；未实现的预留路径不再以运行接口形式列入 Swagger。
+`Contracts/GamePlatform/OpenAPI/game-server-control.openapi.yaml` 已新增为 GameServerControlService 的内部 HTTP 契约，覆盖注册、心跳、就绪、排空、世界/竞技场分配、任务查询、迁移票据和权威比赛结果提交。现有 `gateway.openapi.yaml`、`identity.openapi.yaml`、`player-data.openapi.yaml`、`party.openapi.yaml` 与 `matchmaking.openapi.yaml` 已收敛为当前实际注册路由。2026-09-29 新增 `inventory.openapi.yaml`，作为 `GamePlatformInventory（游戏平台背包）` 客户端→Gateway 公网契约真源；公网 Revision 统一为十进制字符串，玩家身份只来自 Bearer Access Token。当前 Runner 缺少 Go/Protobuf/OpenAPI 生成工具，因此新增 Inventory 契约尚未写入 `Generated/` 生成物，禁止人工伪造生成代码。
 
 ## 维护规则
 

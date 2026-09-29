@@ -141,15 +141,16 @@ func NewPlayerDataClient(cfg ClientConfig) *PlayerDataClient {
 
 func (c *PlayerDataClient) GetProfile(ctx context.Context, playerID string) (gateway.PlayerProfile, error) {
 	var response struct {
-		Found             bool     `json:"found"`
-		PlayerID          string   `json:"playerId"`
-		GameID            string   `json:"gameId"`
-		DisplayName       string   `json:"displayName"`
-		DataVersion       int      `json:"dataVersion"`
-		Revision          int64    `json:"revision"`
-		TutorialCompleted bool     `json:"tutorialCompleted"`
-		DefaultWorldID    string   `json:"defaultWorldId"`
-		OwnedCharacterIDs []string `json:"ownedCharacterIds"`
+		Found               bool     `json:"found"`
+		PlayerID            string   `json:"playerId"`
+		GameID              string   `json:"gameId"`
+		DisplayName         string   `json:"displayName"`
+		DataVersion         int      `json:"dataVersion"`
+		Revision            int64    `json:"revision"`
+		TutorialCompleted   bool     `json:"tutorialCompleted"`
+		DefaultWorldID      string   `json:"defaultWorldId"`
+		SelectedCharacterID string   `json:"selectedCharacterId"`
+		OwnedCharacterIDs   []string `json:"ownedCharacterIds"`
 	}
 	if err := c.get(ctx, "/internal/v1/playerdata/profile?playerId="+url.QueryEscape(playerID), &response); err != nil {
 		return gateway.PlayerProfile{}, err
@@ -160,7 +161,7 @@ func (c *PlayerDataClient) GetProfile(ctx context.Context, playerID string) (gat
 	if response.PlayerID != playerID || response.DataVersion < 1 || response.Revision < 0 {
 		return gateway.PlayerProfile{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
 	}
-	return gateway.PlayerProfile{PlayerID: response.PlayerID, GameID: response.GameID, DisplayName: response.DisplayName, DataVersion: response.DataVersion, Revision: response.Revision, TutorialCompleted: response.TutorialCompleted, DefaultWorldID: response.DefaultWorldID, OwnedCharacterIDs: response.OwnedCharacterIDs}, nil
+	return gateway.PlayerProfile{PlayerID: response.PlayerID, GameID: response.GameID, DisplayName: response.DisplayName, DataVersion: response.DataVersion, Revision: response.Revision, TutorialCompleted: response.TutorialCompleted, DefaultWorldID: response.DefaultWorldID, SelectedCharacterID: response.SelectedCharacterID, OwnedCharacterIDs: response.OwnedCharacterIDs}, nil
 }
 
 // MatchClient（MatchService HTTP客户端）同时实现Gateway PartyPort和MatchmakingPort。

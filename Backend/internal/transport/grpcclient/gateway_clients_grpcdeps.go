@@ -80,7 +80,90 @@ func (c *PlayerDataClient) GetProfile(ctx context.Context, playerID string) (gat
 	if response.GetPlayerId() != playerID || response.GetDataVersion() < 1 || response.GetRevision() < 0 {
 		return gateway.PlayerProfile{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
 	}
-	return gateway.PlayerProfile{PlayerID: response.GetPlayerId(), GameID: response.GetGameId(), DisplayName: response.GetDisplayName(), DataVersion: int(response.GetDataVersion()), Revision: response.GetRevision(), TutorialCompleted: response.GetTutorialCompleted(), DefaultWorldID: response.GetDefaultWorldId(), OwnedCharacterIDs: append([]string(nil), response.GetOwnedCharacterIds()...)}, nil
+	return gateway.PlayerProfile{PlayerID: response.GetPlayerId(), GameID: response.GetGameId(), DisplayName: response.GetDisplayName(), DataVersion: int(response.GetDataVersion()), Revision: response.GetRevision(), TutorialCompleted: response.GetTutorialCompleted(), DefaultWorldID: response.GetDefaultWorldId(), SelectedCharacterID: response.GetSelectedCharacterId(), OwnedCharacterIDs: append([]string(nil), response.GetOwnedCharacterIds()...)}, nil
+}
+
+// ListCharacters（读取持久角色列表）通过PlayerData gRPC端口获取角色摘要。
+func (c *PlayerDataClient) ListCharacters(ctx context.Context, playerID string) ([]gateway.CharacterSummary, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	response, err := c.client.ListCharacters(ctx, &playerdatav1.ListCharactersRequest{PlayerId: playerID})
+	if err != nil {
+		return nil, err
+	}
+	if response.GetErrorCode() != "" {
+		return nil, gateway.ServiceError(response.GetErrorCode())
+	}
+	result := make([]gateway.CharacterSummary, 0, len(response.GetCharacters()))
+	for _, character := range response.GetCharacters() {
+		item, ok := gatewayCharacterSummary(character)
+		if !ok {
+			return nil, gateway.ServiceError("SERVICE_UNAVAILABLE")
+		}
+		result = append(result, item)
+	}
+	return result, nil
+}
+
+// CreateCharacter（创建持久角色）保持creationRequestId不变，支持结果未知后的原键安全重试。
+func (c *PlayerDataClient) CreateCharacter(ctx context.Context, playerID string, req gateway.CreateCharacterRequest) (gateway.CharacterSummary, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	response, err := c.client.CreateCharacter(ctx, &playerdatav1.CreateCharacterRequest{
+		PlayerId: playerID, CreationRequestId: req.CreationRequestID, HeroDefinitionId: req.HeroDefinitionID,
+		CharacterName: req.CharacterName, AppearanceSelection: req.AppearanceSelection,
+	})
+	if err != nil {
+		return gateway.CharacterSummary{}, err
+	}
+	if response.GetErrorCode() != "" {
+		return gateway.CharacterSummary{}, gateway.ServiceError(response.GetErrorCode())
+	}
+	item, ok := gatewayCharacterSummary(response.GetCharacter())
+	if !ok {
+		return gateway.CharacterSummary{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
+	}
+	return item, nil
+}
+
+// SelectCharacter（权威选择持久角色）把角色Revision原样传递给PlayerData服务。
+func (c *PlayerDataClient) SelectCharacter(ctx context.Context, playerID string, req gateway.CharacterSelectionRequest) (gateway.CharacterSelectionResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	response, err := c.client.SelectCharacter(ctx, &playerdatav1.SelectCharacterRequest{
+		PlayerId: playerID, SelectionRequestId: req.SelectionRequestID,
+		CharacterId: req.CharacterID, ExpectedCharacterRevision: req.ExpectedCharacterRevision,
+	})
+	if err != nil {
+		return gateway.CharacterSelectionResponse{}, err
+	}
+	if response.GetErrorCode() != "" {
+		return gateway.CharacterSelectionResponse{}, gateway.ServiceError(response.GetErrorCode())
+	}
+	item, ok := gatewayCharacterSummary(response.GetCharacter())
+	if !ok || response.GetSelectionRequestId() != req.SelectionRequestID || response.GetProfileRevision() < 1 {
+		return gateway.CharacterSelectionResponse{}, gateway.ServiceError("SERVICE_UNAVAILABLE")
+	}
+	return gateway.CharacterSelectionResponse{
+		SelectionRequestID: response.GetSelectionRequestId(),
+		ProfileRevision:    response.GetProfileRevision(),
+		Character:          item,
+	}, nil
+}
+
+func gatewayCharacterSummary(character *playerdatav1.CharacterSummary) (gateway.CharacterSummary, bool) {
+	if character == nil || character.GetCharacterId() == "" || character.GetHeroDefinitionId() == "" || character.GetCharacterRevision() < 1 {
+		return gateway.CharacterSummary{}, false
+	}
+	return gateway.CharacterSummary{
+		CharacterID:         character.GetCharacterId(),
+		HeroDefinitionID:    character.GetHeroDefinitionId(),
+		CharacterName:       character.GetCharacterName(),
+		CharacterRevision:   character.GetCharacterRevision(),
+		OnboardingState:     character.GetOnboardingState(),
+		Status:              character.GetStatus(),
+		AppearanceProfileID: character.GetAppearanceProfileId(),
+	}, true
 }
 
 // MatchClient（比赛业务gRPC客户端适配器）同时实现Gateway PartyPort和MatchmakingPort。

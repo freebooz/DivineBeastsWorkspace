@@ -1,56 +1,189 @@
 #include "Transport/GamePlatformInventoryGatewayHttpTransport.h"
 
-#include "Async/Async.h"
 #include "Dom/JsonObject.h"
-#include "HttpModule.h"
-#include "Interfaces/IHttpRequest.h"
-#include "Interfaces/IHttpResponse.h"
+#include "GamePlatformOnlineClientSubsystem.h"
 #include "Misc/ScopeLock.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 
+namespace
+{
+constexpr int32 MaxConcurrentInventoryRequests = 8;
+constexpr int32 MaxInventoryContainers = 64;
+constexpr int32 MaxInventoryItems = 10000;
+constexpr int32 MaxInventoryQuickbarSlots = 12;
+
+bool TryGetExactInt32(
+    const TSharedPtr<FJsonObject>& Json,
+    const TCHAR* Field,
+    int32& OutValue)
+{
+    double Number = 0.0;
+    if (!Json.IsValid() ||
+        !Json->TryGetNumberField(Field, Number) ||
+        Number < static_cast<double>(MIN_int32) ||
+        Number > static_cast<double>(MAX_int32))
+    {
+        return false;
+    }
+
+    const int64 Integral = static_cast<int64>(Number);
+    if (static_cast<double>(Integral) != Number)
+    {
+        return false;
+    }
+
+    OutValue = static_cast<int32>(Integral);
+    return true;
+}
+
+bool TryGetPositiveRevision(
+    const TSharedPtr<FJsonObject>& Json,
+    const TCHAR* Field,
+    int64& OutValue)
+{
+    FString Text;
+    if (!Json.IsValid() ||
+        !Json->TryGetStringField(Field, Text) ||
+        Text.IsEmpty() ||
+        Text != Text.TrimStartAndEnd())
+    {
+        return false;
+    }
+
+    TCHAR* End = nullptr;
+    const int64 Value = FCString::Strtoi64(*Text, &End, 10);
+    if (Value <= 0 ||
+        End == nullptr ||
+        *End != TEXT('\0') ||
+        FString::Printf(TEXT("%lld"), static_cast<long long>(Value)) != Text)
+    {
+        return false;
+    }
+
+    OutValue = Value;
+    return true;
+}
+
+EGamePlatformInventoryError MapOnlineTransportError(
+    EGamePlatformAuthError Error,
+    bool bMayHaveReachedServer)
+{
+    switch (Error)
+    {
+    case EGamePlatformAuthError::None:
+        return EGamePlatformInventoryError::None;
+    case EGamePlatformAuthError::AuthExpired:
+    case EGamePlatformAuthError::InvalidCredentials:
+    case EGamePlatformAuthError::Forbidden:
+        return EGamePlatformInventoryError::Unauthorized;
+    case EGamePlatformAuthError::Cancelled:
+        return bMayHaveReachedServer
+            ? EGamePlatformInventoryError::OutcomeUnknown
+            : EGamePlatformInventoryError::Cancelled;
+    case EGamePlatformAuthError::TimedOut:
+        return bMayHaveReachedServer
+            ? EGamePlatformInventoryError::OutcomeUnknown
+            : EGamePlatformInventoryError::TimedOut;
+    case EGamePlatformAuthError::OutcomeUnknown:
+        return EGamePlatformInventoryError::OutcomeUnknown;
+    case EGamePlatformAuthError::NetworkUnavailable:
+        return bMayHaveReachedServer
+            ? EGamePlatformInventoryError::OutcomeUnknown
+            : EGamePlatformInventoryError::BackendUnavailable;
+    case EGamePlatformAuthError::ProviderUnavailable:
+    case EGamePlatformAuthError::Maintenance:
+    case EGamePlatformAuthError::QueueFull:
+    case EGamePlatformAuthError::ServiceUnavailable:
+        return EGamePlatformInventoryError::BackendUnavailable;
+    default:
+        return EGamePlatformInventoryError::InvalidResponse;
+    }
+}
+}
+
+struct FGamePlatformInventoryGatewayHttpTransport::FRuntime
+{
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> OnlineSubsystem;
+    FCriticalSection ActiveRequestsMutex;
+    TArray<FGamePlatformOnlineRequestHandle> ActiveRequests;
+};
+
 FGamePlatformInventoryGatewayHttpTransport::
 FGamePlatformInventoryGatewayHttpTransport(
-    FString InGatewayBaseUrl,
-    FString InAccessToken)
-    : GatewayBaseUrl(MoveTemp(InGatewayBaseUrl))
-    , AccessToken(MoveTemp(InAccessToken))
+    UGamePlatformOnlineClientSubsystem* InOnlineSubsystem)
+    : Runtime(MakeUnique<FRuntime>())
 {
-    GatewayBaseUrl.RemoveFromEnd(TEXT("/"));
+    Runtime->OnlineSubsystem = InOnlineSubsystem;
+}
+
+FGamePlatformInventoryGatewayHttpTransport::
+~FGamePlatformInventoryGatewayHttpTransport()
+{
+    CancelAllRequests();
 }
 
 bool FGamePlatformInventoryGatewayHttpTransport::IsConfigured() const
 {
-    return !GatewayBaseUrl.IsEmpty() &&
-           !AccessToken.IsEmpty();
+    if (!Runtime)
+    {
+        return false;
+    }
+
+    const UGamePlatformOnlineClientSubsystem* Online =
+        Runtime->OnlineSubsystem.Get();
+    if (!IsValid(Online))
+    {
+        return false;
+    }
+
+    const EGamePlatformAuthState State = Online->GetSnapshot().State;
+    return State == EGamePlatformAuthState::Authenticated ||
+           State == EGamePlatformAuthState::Refreshing;
 }
 
 void FGamePlatformInventoryGatewayHttpTransport::CancelAllRequests()
 {
-    TArray<TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>> Requests;
-
+    if (!Runtime)
     {
-        FScopeLock Lock(&ActiveRequestsMutex);
-        Requests = ActiveRequests;
-        ActiveRequests.Reset();
+        return;
     }
 
-    for (const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request :
-         Requests)
+    TArray<FGamePlatformOnlineRequestHandle> Requests;
     {
-        if (Request.IsValid())
+        FScopeLock Lock(&Runtime->ActiveRequestsMutex);
+        Requests = MoveTemp(Runtime->ActiveRequests);
+        Runtime->ActiveRequests.Reset();
+    }
+
+    if (UGamePlatformOnlineClientSubsystem* Online =
+            Runtime->OnlineSubsystem.Get())
+    {
+        for (const FGamePlatformOnlineRequestHandle& Request : Requests)
         {
-            Request->CancelRequest();
+            if (Request.RequestId.IsValid())
+            {
+                Online->Cancel(Request);
+            }
         }
     }
 }
 
 void FGamePlatformInventoryGatewayHttpTransport::UnregisterRequest(
-    const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request)
+    const FGuid& RequestId)
 {
-    FScopeLock Lock(&ActiveRequestsMutex);
-    ActiveRequests.Remove(Request);
+    if (!Runtime || !RequestId.IsValid())
+    {
+        return;
+    }
+
+    FScopeLock Lock(&Runtime->ActiveRequestsMutex);
+    Runtime->ActiveRequests.RemoveAll(
+        [&RequestId](const FGamePlatformOnlineRequestHandle& Handle)
+        {
+            return Handle.RequestId == RequestId;
+        });
 }
 
 FString FGamePlatformInventoryGatewayHttpTransport::GuidString(
@@ -61,100 +194,128 @@ FString FGamePlatformInventoryGatewayHttpTransport::GuidString(
         : FString();
 }
 
+FString FGamePlatformInventoryGatewayHttpTransport::RevisionString(
+    int64 Revision)
+{
+    return Revision > 0
+        ? FString::Printf(TEXT("%lld"), static_cast<long long>(Revision))
+        : FString();
+}
+
 bool FGamePlatformInventoryGatewayHttpTransport::StartJsonRequest(
     const FString& Verb,
     const FString& Path,
     const TSharedPtr<FJsonObject>& Body,
-    TFunction<void(int32, const FString&)> Completion)
+    const FString& IdempotencyKey,
+    TFunction<void(
+        int32,
+        const FString&,
+        EGamePlatformInventoryError)> Completion)
 {
-    if (!IsConfigured() || !Completion)
+    if (!Runtime || !Completion || !IsConfigured())
     {
         return false;
     }
 
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
-        FHttpModule::Get().CreateRequest();
-
-    TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> RequestPtr = Request;
+    UGamePlatformOnlineClientSubsystem* Online =
+        Runtime->OnlineSubsystem.Get();
+    if (!IsValid(Online))
+    {
+        return false;
+    }
 
     {
-        FScopeLock Lock(&ActiveRequestsMutex);
-        constexpr int32 MaxConcurrentHttpRequests = 8;
-        if (ActiveRequests.Num() >= MaxConcurrentHttpRequests)
+        FScopeLock Lock(&Runtime->ActiveRequestsMutex);
+        if (Runtime->ActiveRequests.Num() >= MaxConcurrentInventoryRequests)
         {
             return false;
         }
-        ActiveRequests.Add(RequestPtr);
     }
 
-    TSharedRef<FGamePlatformInventoryGatewayHttpTransport, ESPMode::ThreadSafe>
-        Self = AsShared();
-
-    Request->SetURL(GatewayBaseUrl + Path);
-    Request->SetVerb(Verb);
-    Request->SetHeader(
-        TEXT("Authorization"),
-        FString::Printf(TEXT("Bearer %s"), *AccessToken));
-    Request->SetHeader(
-        TEXT("Accept"),
-        TEXT("application/json"));
-
+    FString Payload;
     if (Body.IsValid())
     {
-        FString Payload;
-        TSharedRef<TJsonWriter<>> Writer =
+        const TSharedRef<TJsonWriter<>> Writer =
             TJsonWriterFactory<>::Create(&Payload);
-
-        if (!FJsonSerializer::Serialize(
-                Body.ToSharedRef(),
-                Writer))
+        if (!FJsonSerializer::Serialize(Body.ToSharedRef(), Writer))
         {
-            UnregisterRequest(RequestPtr);
             return false;
         }
-
-        Request->SetHeader(
-            TEXT("Content-Type"),
-            TEXT("application/json"));
-        Request->SetContentAsString(Payload);
     }
 
-    Request->OnProcessRequestComplete().BindLambda(
-        [Self,
-         RequestPtr,
-         Completion = MoveTemp(Completion)](
-            FHttpRequestPtr,
-            FHttpResponsePtr Response,
-            bool bConnectedSuccessfully) mutable
-        {
-            const int32 StatusCode =
-                bConnectedSuccessfully && Response.IsValid()
-                    ? Response->GetResponseCode()
-                    : 0;
+    FGamePlatformAuthenticatedRequest Request;
+    Request.Verb = Verb;
+    Request.RelativePath = Path;
+    Request.Body = MoveTemp(Payload);
+    Request.IdempotencyKey = IdempotencyKey;
+    Request.bIdempotent =
+        Verb == TEXT("GET") ||
+        Verb == TEXT("HEAD") ||
+        !IdempotencyKey.IsEmpty();
 
-            const FString BodyText =
-                Response.IsValid()
-                    ? Response->GetContentAsString()
-                    : FString();
+    // 使用Online实例统一配置的请求总截止时间，不在背包插件复制第二套超时参数。
+    FGamePlatformOnlineRequestOptions Options;
 
-            Self->UnregisterRequest(RequestPtr);
+    TSharedRef<FGamePlatformOnlineRequestHandle, ESPMode::ThreadSafe>
+        RequestHandleBox =
+            MakeShared<
+                FGamePlatformOnlineRequestHandle,
+                ESPMode::ThreadSafe>();
 
-            AsyncTask(
-                ENamedThreads::GameThread,
-                [Completion = MoveTemp(Completion),
-                 StatusCode,
-                 BodyText]() mutable
+    TWeakPtr<
+        FGamePlatformInventoryGatewayHttpTransport,
+        ESPMode::ThreadSafe> WeakSelf = AsShared();
+
+    FGamePlatformOnlineRequestHandle Handle =
+        Online->SendAuthenticatedRequest(
+            MoveTemp(Request),
+            Options,
+            [WeakSelf,
+             RequestHandleBox,
+             Completion = MoveTemp(Completion)](
+                FGamePlatformAuthenticatedResponse Response) mutable
+            {
+                if (const TSharedPtr<
+                        FGamePlatformInventoryGatewayHttpTransport,
+                        ESPMode::ThreadSafe> Self = WeakSelf.Pin())
                 {
-                    Completion(StatusCode, BodyText);
-                });
-        });
+                    Self->UnregisterRequest(
+                        RequestHandleBox->RequestId);
+                }
 
-    const bool bStarted = Request->ProcessRequest();
-    if (!bStarted)
+                EGamePlatformInventoryError InventoryError =
+                    EGamePlatformInventoryError::None;
+
+                if (!Response.IsSuccess())
+                {
+                    InventoryError =
+                        Response.HttpStatusCode > 0
+                            ? FGamePlatformInventoryGatewayHttpTransport::
+                                  MapHttpError(
+                                      Response.HttpStatusCode,
+                                      Response.Body)
+                            : MapOnlineTransportError(
+                                  Response.Error,
+                                  Response.bMayHaveReachedServer);
+                }
+
+                Completion(
+                    Response.HttpStatusCode,
+                    Response.Body,
+                    InventoryError);
+            });
+
+    *RequestHandleBox = Handle;
+    if (!Handle.RequestId.IsValid())
     {
-        UnregisterRequest(RequestPtr);
+        return false;
     }
-    return bStarted;
+
+    {
+        FScopeLock Lock(&Runtime->ActiveRequestsMutex);
+        Runtime->ActiveRequests.Add(Handle);
+    }
+    return true;
 }
 
 bool FGamePlatformInventoryGatewayHttpTransport::BeginGetSnapshot(
@@ -164,20 +325,20 @@ bool FGamePlatformInventoryGatewayHttpTransport::BeginGetSnapshot(
         TEXT("GET"),
         TEXT("/v1/inventory"),
         nullptr,
+        FString(),
         [Completion = MoveTemp(Completion)](
-            int32 StatusCode,
-            const FString& Body) mutable
+            int32,
+            const FString& Body,
+            EGamePlatformInventoryError Error) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (Error != EGamePlatformInventoryError::None)
             {
-                Completion(
-                    {},
-                    MapHttpError(StatusCode, Body));
+                Completion({}, Error);
                 return;
             }
 
             TSharedPtr<FJsonObject> Json;
-            TSharedRef<TJsonReader<>> Reader =
+            const TSharedRef<TJsonReader<>> Reader =
                 TJsonReaderFactory<>::Create(Body);
 
             FGamePlatformInventorySnapshot Snapshot;
@@ -211,28 +372,20 @@ bool FGamePlatformInventoryGatewayHttpTransport::BeginGetOperation(
             TEXT("/v1/inventory/operations/%s"),
             *GuidString(OperationId)),
         nullptr,
+        FString(),
         [Completion = MoveTemp(Completion)](
-            int32 StatusCode,
-            const FString& Body) mutable
+            int32,
+            const FString& Body,
+            EGamePlatformInventoryError Error) mutable
         {
-            if (StatusCode == 404)
+            if (Error != EGamePlatformInventoryError::None)
             {
-                Completion(
-                    {},
-                    EGamePlatformInventoryError::OperationNotFound);
-                return;
-            }
-
-            if (StatusCode < 200 || StatusCode >= 300)
-            {
-                Completion(
-                    {},
-                    MapHttpError(StatusCode, Body));
+                Completion({}, Error);
                 return;
             }
 
             TSharedPtr<FJsonObject> Json;
-            TSharedRef<TJsonReader<>> Reader =
+            const TSharedRef<TJsonReader<>> Reader =
                 TJsonReaderFactory<>::Create(Body);
 
             FGamePlatformInventoryMutationResult Result;
@@ -256,12 +409,27 @@ bool FGamePlatformInventoryGatewayHttpTransport::BeginMove(
     FGamePlatformInventoryMutationCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("operation_id"), GuidString(Request.OperationId));
-    Body->SetNumberField(TEXT("expected_revision"), static_cast<double>(Request.ExpectedRevision));
-    Body->SetStringField(TEXT("item_instance_id"), Request.ItemInstanceId);
-    Body->SetStringField(TEXT("target_container_id"), Request.TargetContainerId.ToString());
-    Body->SetNumberField(TEXT("target_slot_index"), Request.TargetSlotIndex);
-    return BeginMutation(TEXT("/v1/inventory/move"), Body, MoveTemp(Completion));
+    Body->SetStringField(
+        TEXT("operationId"),
+        GuidString(Request.OperationId));
+    Body->SetStringField(
+        TEXT("expectedRevision"),
+        RevisionString(Request.ExpectedRevision));
+    Body->SetStringField(
+        TEXT("itemInstanceId"),
+        Request.ItemInstanceId);
+    Body->SetStringField(
+        TEXT("targetContainerId"),
+        Request.TargetContainerId.ToString());
+    Body->SetNumberField(
+        TEXT("targetSlotIndex"),
+        Request.TargetSlotIndex);
+
+    return BeginMutation(
+        TEXT("/v1/inventory/move"),
+        Request.OperationId,
+        Body,
+        MoveTemp(Completion));
 }
 
 bool FGamePlatformInventoryGatewayHttpTransport::BeginSplit(
@@ -269,13 +437,30 @@ bool FGamePlatformInventoryGatewayHttpTransport::BeginSplit(
     FGamePlatformInventoryMutationCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("operation_id"), GuidString(Request.OperationId));
-    Body->SetNumberField(TEXT("expected_revision"), static_cast<double>(Request.ExpectedRevision));
-    Body->SetStringField(TEXT("source_item_instance_id"), Request.SourceItemInstanceId);
-    Body->SetNumberField(TEXT("split_quantity"), Request.SplitQuantity);
-    Body->SetStringField(TEXT("target_container_id"), Request.TargetContainerId.ToString());
-    Body->SetNumberField(TEXT("target_slot_index"), Request.TargetSlotIndex);
-    return BeginMutation(TEXT("/v1/inventory/split"), Body, MoveTemp(Completion));
+    Body->SetStringField(
+        TEXT("operationId"),
+        GuidString(Request.OperationId));
+    Body->SetStringField(
+        TEXT("expectedRevision"),
+        RevisionString(Request.ExpectedRevision));
+    Body->SetStringField(
+        TEXT("sourceItemInstanceId"),
+        Request.SourceItemInstanceId);
+    Body->SetNumberField(
+        TEXT("splitQuantity"),
+        Request.SplitQuantity);
+    Body->SetStringField(
+        TEXT("targetContainerId"),
+        Request.TargetContainerId.ToString());
+    Body->SetNumberField(
+        TEXT("targetSlotIndex"),
+        Request.TargetSlotIndex);
+
+    return BeginMutation(
+        TEXT("/v1/inventory/split"),
+        Request.OperationId,
+        Body,
+        MoveTemp(Completion));
 }
 
 bool FGamePlatformInventoryGatewayHttpTransport::BeginMerge(
@@ -283,11 +468,24 @@ bool FGamePlatformInventoryGatewayHttpTransport::BeginMerge(
     FGamePlatformInventoryMutationCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("operation_id"), GuidString(Request.OperationId));
-    Body->SetNumberField(TEXT("expected_revision"), static_cast<double>(Request.ExpectedRevision));
-    Body->SetStringField(TEXT("source_item_instance_id"), Request.SourceItemInstanceId);
-    Body->SetStringField(TEXT("target_item_instance_id"), Request.TargetItemInstanceId);
-    return BeginMutation(TEXT("/v1/inventory/merge"), Body, MoveTemp(Completion));
+    Body->SetStringField(
+        TEXT("operationId"),
+        GuidString(Request.OperationId));
+    Body->SetStringField(
+        TEXT("expectedRevision"),
+        RevisionString(Request.ExpectedRevision));
+    Body->SetStringField(
+        TEXT("sourceItemInstanceId"),
+        Request.SourceItemInstanceId);
+    Body->SetStringField(
+        TEXT("targetItemInstanceId"),
+        Request.TargetItemInstanceId);
+
+    return BeginMutation(
+        TEXT("/v1/inventory/merge"),
+        Request.OperationId,
+        Body,
+        MoveTemp(Completion));
 }
 
 bool FGamePlatformInventoryGatewayHttpTransport::BeginSetQuickbar(
@@ -295,11 +493,22 @@ bool FGamePlatformInventoryGatewayHttpTransport::BeginSetQuickbar(
     FGamePlatformInventoryMutationCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("operation_id"), GuidString(Request.OperationId));
-    Body->SetNumberField(TEXT("expected_revision"), static_cast<double>(Request.ExpectedRevision));
-    Body->SetNumberField(TEXT("slot_index"), Request.SlotIndex);
-    Body->SetStringField(TEXT("item_instance_id"), Request.ItemInstanceId);
-    return BeginMutation(TEXT("/v1/inventory/quickbar/set"), Body, MoveTemp(Completion));
+    Body->SetStringField(
+        TEXT("operationId"),
+        GuidString(Request.OperationId));
+    Body->SetStringField(
+        TEXT("expectedRevision"),
+        RevisionString(Request.ExpectedRevision));
+    Body->SetNumberField(TEXT("slotIndex"), Request.SlotIndex);
+    Body->SetStringField(
+        TEXT("itemInstanceId"),
+        Request.ItemInstanceId);
+
+    return BeginMutation(
+        TEXT("/v1/inventory/quickbar/set"),
+        Request.OperationId,
+        Body,
+        MoveTemp(Completion));
 }
 
 bool FGamePlatformInventoryGatewayHttpTransport::BeginClearQuickbar(
@@ -307,35 +516,51 @@ bool FGamePlatformInventoryGatewayHttpTransport::BeginClearQuickbar(
     FGamePlatformInventoryMutationCompletion Completion)
 {
     TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
-    Body->SetStringField(TEXT("operation_id"), GuidString(Request.OperationId));
-    Body->SetNumberField(TEXT("expected_revision"), static_cast<double>(Request.ExpectedRevision));
-    Body->SetNumberField(TEXT("slot_index"), Request.SlotIndex);
-    return BeginMutation(TEXT("/v1/inventory/quickbar/clear"), Body, MoveTemp(Completion));
+    Body->SetStringField(
+        TEXT("operationId"),
+        GuidString(Request.OperationId));
+    Body->SetStringField(
+        TEXT("expectedRevision"),
+        RevisionString(Request.ExpectedRevision));
+    Body->SetNumberField(TEXT("slotIndex"), Request.SlotIndex);
+
+    return BeginMutation(
+        TEXT("/v1/inventory/quickbar/clear"),
+        Request.OperationId,
+        Body,
+        MoveTemp(Completion));
 }
 
 bool FGamePlatformInventoryGatewayHttpTransport::BeginMutation(
     const FString& Path,
+    const FGuid& OperationId,
     const TSharedPtr<FJsonObject>& Body,
     FGamePlatformInventoryMutationCompletion Completion)
 {
+    if (!OperationId.IsValid())
+    {
+        return false;
+    }
+
+    const FString IdempotencyKey = GuidString(OperationId);
     return StartJsonRequest(
         TEXT("POST"),
         Path,
         Body,
+        IdempotencyKey,
         [Completion = MoveTemp(Completion)](
-            int32 StatusCode,
-            const FString& ResponseBody) mutable
+            int32,
+            const FString& ResponseBody,
+            EGamePlatformInventoryError Error) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (Error != EGamePlatformInventoryError::None)
             {
-                Completion(
-                    {},
-                    MapHttpError(StatusCode, ResponseBody));
+                Completion({}, Error);
                 return;
             }
 
             TSharedPtr<FJsonObject> Json;
-            TSharedRef<TJsonReader<>> Reader =
+            const TSharedRef<TJsonReader<>> Reader =
                 TJsonReaderFactory<>::Create(ResponseBody);
 
             FGamePlatformInventoryMutationResult Result;
@@ -363,104 +588,155 @@ bool FGamePlatformInventoryGatewayHttpTransport::JsonToSnapshot(
         return false;
     }
 
-    double Revision = 0.0;
-    if (!Json->TryGetNumberField(
-            TEXT("inventory_revision"),
-            Revision) ||
-        Revision <= 0.0)
+    OutSnapshot = {};
+    if (!TryGetPositiveRevision(
+            Json,
+            TEXT("inventoryRevision"),
+            OutSnapshot.InventoryRevision))
     {
         return false;
     }
 
-    OutSnapshot = {};
-    OutSnapshot.InventoryRevision =
-        static_cast<int64>(Revision);
+    const TArray<TSharedPtr<FJsonValue>>* Containers = nullptr;
+    if (!Json->TryGetArrayField(TEXT("containers"), Containers) ||
+        !Containers ||
+        Containers->Num() > MaxInventoryContainers)
+    {
+        return false;
+    }
+
+    OutSnapshot.Containers.Reserve(Containers->Num());
+    for (const TSharedPtr<FJsonValue>& Value : *Containers)
+    {
+        const TSharedPtr<FJsonObject> ContainerJson =
+            Value.IsValid()
+                ? Value->AsObject()
+                : nullptr;
+
+        FString ContainerId;
+        FGamePlatformInventoryContainerSnapshot Container;
+        if (!ContainerJson.IsValid() ||
+            !ContainerJson->TryGetStringField(
+                TEXT("containerId"),
+                ContainerId) ||
+            !TryGetExactInt32(
+                ContainerJson,
+                TEXT("capacity"),
+                Container.Capacity))
+        {
+            return false;
+        }
+
+        Container.ContainerId = FName(*ContainerId);
+        if (!Container.IsValid())
+        {
+            return false;
+        }
+        OutSnapshot.Containers.Add(MoveTemp(Container));
+    }
 
     const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
-    if (Json->TryGetArrayField(TEXT("items"), Items) && Items)
+    if (!Json->TryGetArrayField(TEXT("items"), Items) ||
+        !Items ||
+        Items->Num() > MaxInventoryItems)
     {
-        for (const TSharedPtr<FJsonValue>& Value : *Items)
+        return false;
+    }
+
+    OutSnapshot.Items.Reserve(Items->Num());
+    for (const TSharedPtr<FJsonValue>& Value : *Items)
+    {
+        const TSharedPtr<FJsonObject> ItemJson =
+            Value.IsValid()
+                ? Value->AsObject()
+                : nullptr;
+
+        FGamePlatformInventoryItemInstance Item;
+        FString ItemDefinitionId;
+        FString ContainerId;
+        FString InstanceState;
+
+        if (!ItemJson.IsValid() ||
+            !ItemJson->TryGetStringField(
+                TEXT("itemInstanceId"),
+                Item.ItemInstanceId) ||
+            !ItemJson->TryGetStringField(
+                TEXT("itemDefinitionId"),
+                ItemDefinitionId) ||
+            !TryGetExactInt32(
+                ItemJson,
+                TEXT("quantity"),
+                Item.Quantity) ||
+            !ItemJson->TryGetStringField(
+                TEXT("containerId"),
+                ContainerId) ||
+            !TryGetExactInt32(
+                ItemJson,
+                TEXT("slotIndex"),
+                Item.SlotIndex) ||
+            !TryGetPositiveRevision(
+                ItemJson,
+                TEXT("revision"),
+                Item.Revision) ||
+            !ItemJson->TryGetStringField(
+                TEXT("instanceState"),
+                InstanceState) ||
+            !TryGetExactInt32(
+                ItemJson,
+                TEXT("maxStackSize"),
+                Item.MaxStackSize))
         {
-            const TSharedPtr<FJsonObject> ItemJson =
-                Value.IsValid()
-                    ? Value->AsObject()
-                    : nullptr;
-
-            if (!ItemJson.IsValid())
-            {
-                return false;
-            }
-
-            FGamePlatformInventoryItemInstance Item;
-            FString ItemDefinitionId;
-            FString ContainerId;
-            FString InstanceState;
-            double Quantity = 0.0;
-            double SlotIndex = 0.0;
-            double ItemRevision = 0.0;
-
-            if (!ItemJson->TryGetStringField(TEXT("item_instance_id"), Item.ItemInstanceId) ||
-                !ItemJson->TryGetStringField(TEXT("item_definition_id"), ItemDefinitionId) ||
-                !ItemJson->TryGetNumberField(TEXT("quantity"), Quantity) ||
-                !ItemJson->TryGetStringField(TEXT("container_id"), ContainerId) ||
-                !ItemJson->TryGetNumberField(TEXT("slot_index"), SlotIndex) ||
-                !ItemJson->TryGetNumberField(TEXT("revision"), ItemRevision) ||
-                !ItemJson->TryGetStringField(TEXT("instance_state"), InstanceState))
-            {
-                return false;
-            }
-
-            Item.ItemDefinitionId = FName(*ItemDefinitionId);
-            Item.Quantity = static_cast<int32>(Quantity);
-            Item.ContainerId = FName(*ContainerId);
-            Item.SlotIndex = static_cast<int32>(SlotIndex);
-            Item.Revision = static_cast<int64>(ItemRevision);
-            Item.InstanceState = FName(*InstanceState);
-
-            if (!Item.IsValid())
-            {
-                return false;
-            }
-
-            OutSnapshot.Items.Add(MoveTemp(Item));
+            return false;
         }
+
+        Item.ItemDefinitionId = FName(*ItemDefinitionId);
+        Item.ContainerId = FName(*ContainerId);
+        Item.InstanceState = FName(*InstanceState);
+
+        if (!Item.IsValid())
+        {
+            return false;
+        }
+
+        OutSnapshot.Items.Add(MoveTemp(Item));
     }
 
     const TArray<TSharedPtr<FJsonValue>>* Quickbar = nullptr;
-    if (Json->TryGetArrayField(TEXT("quickbar"), Quickbar) && Quickbar)
+    if (!Json->TryGetArrayField(TEXT("quickbar"), Quickbar) ||
+        !Quickbar ||
+        Quickbar->Num() > MaxInventoryQuickbarSlots)
     {
-        for (const TSharedPtr<FJsonValue>& Value : *Quickbar)
+        return false;
+    }
+
+    OutSnapshot.Quickbar.Reserve(Quickbar->Num());
+    for (const TSharedPtr<FJsonValue>& Value : *Quickbar)
+    {
+        const TSharedPtr<FJsonObject> SlotJson =
+            Value.IsValid()
+                ? Value->AsObject()
+                : nullptr;
+
+        FGamePlatformInventoryQuickbarSlot Slot;
+        if (!SlotJson.IsValid() ||
+            !TryGetExactInt32(
+                SlotJson,
+                TEXT("slotIndex"),
+                Slot.SlotIndex) ||
+            !SlotJson->TryGetStringField(
+                TEXT("itemInstanceId"),
+                Slot.ItemInstanceId) ||
+            !TryGetPositiveRevision(
+                SlotJson,
+                TEXT("revision"),
+                Slot.Revision) ||
+            Slot.SlotIndex < 0 ||
+            Slot.ItemInstanceId.IsEmpty())
         {
-            const TSharedPtr<FJsonObject> SlotJson =
-                Value.IsValid()
-                    ? Value->AsObject()
-                    : nullptr;
-
-            if (!SlotJson.IsValid())
-            {
-                return false;
-            }
-
-            FGamePlatformInventoryQuickbarSlot Slot;
-            double SlotIndex = 0.0;
-            double SlotRevision = 0.0;
-
-            if (!SlotJson->TryGetNumberField(TEXT("slot_index"), SlotIndex) ||
-                !SlotJson->TryGetStringField(TEXT("item_instance_id"), Slot.ItemInstanceId) ||
-                !SlotJson->TryGetNumberField(TEXT("revision"), SlotRevision))
-            {
-                return false;
-            }
-
-            Slot.SlotIndex = static_cast<int32>(SlotIndex);
-            Slot.Revision = static_cast<int64>(SlotRevision);
-            if (Slot.SlotIndex < 0 || Slot.Revision <= 0)
-            {
-                return false;
-            }
-
-            OutSnapshot.Quickbar.Add(MoveTemp(Slot));
+            return false;
         }
+
+        OutSnapshot.Quickbar.Add(MoveTemp(Slot));
     }
 
     return true;
@@ -478,30 +754,35 @@ bool FGamePlatformInventoryGatewayHttpTransport::JsonToMutationResult(
     FString OperationId;
     const TSharedPtr<FJsonObject>* SnapshotJson = nullptr;
 
-    if (!Json->TryGetStringField(TEXT("operation_id"), OperationId) ||
+    if (!Json->TryGetStringField(
+            TEXT("operationId"),
+            OperationId) ||
         !FGuid::Parse(OperationId, OutResult.OperationId) ||
-        !Json->TryGetObjectField(TEXT("snapshot"), SnapshotJson) ||
+        !Json->TryGetObjectField(
+            TEXT("snapshot"),
+            SnapshotJson) ||
         !SnapshotJson ||
-        !JsonToSnapshot(*SnapshotJson, OutResult.Snapshot))
+        !JsonToSnapshot(*SnapshotJson, OutResult.Snapshot) ||
+        !TryGetExactInt32(
+            Json,
+            TEXT("movedQuantity"),
+            OutResult.MovedQuantity) ||
+        !TryGetExactInt32(
+            Json,
+            TEXT("remainingQuantity"),
+            OutResult.RemainingQuantity) ||
+        OutResult.MovedQuantity < 0 ||
+        OutResult.RemainingQuantity < 0)
     {
         return false;
     }
 
-    double Number = 0.0;
-    if (Json->TryGetNumberField(TEXT("moved_quantity"), Number))
-    {
-        OutResult.MovedQuantity = static_cast<int32>(Number);
-    }
-    if (Json->TryGetNumberField(TEXT("remaining_quantity"), Number))
-    {
-        OutResult.RemainingQuantity = static_cast<int32>(Number);
-    }
-
     bool bDuplicate = false;
-    if (Json->TryGetBoolField(TEXT("duplicate"), bDuplicate))
+    if (!Json->TryGetBoolField(TEXT("duplicate"), bDuplicate))
     {
-        OutResult.bDuplicate = bDuplicate;
+        return false;
     }
+    OutResult.bDuplicate = bDuplicate;
 
     return true;
 }
@@ -511,47 +792,62 @@ FGamePlatformInventoryGatewayHttpTransport::MapHttpError(
     int32 StatusCode,
     const FString& Body)
 {
-    const FString Lower = Body.ToLower();
-
-    if (StatusCode == 0 || StatusCode >= 500)
+    FString ErrorCode;
+    if (!Body.IsEmpty())
     {
-        return EGamePlatformInventoryError::BackendUnavailable;
+        TSharedPtr<FJsonObject> Json;
+        const TSharedRef<TJsonReader<>> Reader =
+            TJsonReaderFactory<>::Create(Body);
+        if (FJsonSerializer::Deserialize(Reader, Json) &&
+            Json.IsValid())
+        {
+            Json->TryGetStringField(
+                TEXT("errorCode"),
+                ErrorCode);
+        }
     }
-    if (StatusCode == 401 || StatusCode == 403)
-    {
+
+    if (ErrorCode == TEXT("INVENTORY_ITEM_NOT_FOUND"))
+        return EGamePlatformInventoryError::ItemNotFound;
+    if (ErrorCode == TEXT("INVENTORY_DEFINITION_NOT_FOUND"))
+        return EGamePlatformInventoryError::DefinitionNotFound;
+    if (ErrorCode == TEXT("INVENTORY_INVALID_QUANTITY"))
+        return EGamePlatformInventoryError::InvalidQuantity;
+    if (ErrorCode == TEXT("INVENTORY_STACK_LIMIT_EXCEEDED"))
+        return EGamePlatformInventoryError::StackLimitExceeded;
+    if (ErrorCode == TEXT("INVENTORY_SLOT_OUT_OF_RANGE"))
+        return EGamePlatformInventoryError::SlotOutOfRange;
+    if (ErrorCode == TEXT("INVENTORY_SLOT_OCCUPIED"))
+        return EGamePlatformInventoryError::SlotOccupied;
+    if (ErrorCode == TEXT("INVENTORY_CONTAINER_NOT_FOUND"))
+        return EGamePlatformInventoryError::ContainerNotFound;
+    if (ErrorCode == TEXT("INVENTORY_REVISION_CONFLICT"))
+        return EGamePlatformInventoryError::RevisionConflict;
+    if (ErrorCode == TEXT("IDEMPOTENCY_CONFLICT"))
+        return EGamePlatformInventoryError::DuplicateOperation;
+    if (ErrorCode == TEXT("INVENTORY_OPERATION_IN_PROGRESS"))
+        return EGamePlatformInventoryError::OperationInProgress;
+    if (ErrorCode == TEXT("INVENTORY_OPERATION_NOT_FOUND"))
+        return EGamePlatformInventoryError::OperationNotFound;
+    if (ErrorCode == TEXT("INVENTORY_FULL"))
+        return EGamePlatformInventoryError::InventoryFull;
+    if (ErrorCode == TEXT("INVENTORY_CONSUME_NOT_ALLOWED"))
+        return EGamePlatformInventoryError::ConsumeNotAllowed;
+    if (ErrorCode == TEXT("INVENTORY_INSUFFICIENT_QUANTITY"))
+        return EGamePlatformInventoryError::InsufficientQuantity;
+    if (ErrorCode == TEXT("AUTH_SESSION_INVALID") ||
+        ErrorCode == TEXT("AUTH_TOKEN_EXPIRED") ||
+        ErrorCode == TEXT("AUTH_FORBIDDEN"))
         return EGamePlatformInventoryError::Unauthorized;
-    }
-    if (StatusCode == 404)
-    {
-        return Lower.Contains(TEXT("definition"))
-            ? EGamePlatformInventoryError::DefinitionNotFound
-            : EGamePlatformInventoryError::ItemNotFound;
-    }
-    if (StatusCode == 409)
-    {
-        if (Lower.Contains(TEXT("revision")))
-            return EGamePlatformInventoryError::RevisionConflict;
-        if (Lower.Contains(TEXT("slot occupied")))
-            return EGamePlatformInventoryError::SlotOccupied;
-        if (Lower.Contains(TEXT("inventory full")))
-            return EGamePlatformInventoryError::InventoryFull;
-        if (Lower.Contains(TEXT("insufficient")))
-            return EGamePlatformInventoryError::InsufficientQuantity;
-        if (Lower.Contains(TEXT("consume")))
-            return EGamePlatformInventoryError::ConsumeNotAllowed;
-        if (Lower.Contains(TEXT("stack")))
-            return EGamePlatformInventoryError::StackLimitExceeded;
-        return EGamePlatformInventoryError::OutcomeUnknown;
-    }
-    if (StatusCode == 400)
-    {
-        if (Lower.Contains(TEXT("quantity")))
-            return EGamePlatformInventoryError::InvalidQuantity;
-        if (Lower.Contains(TEXT("slot")))
-            return EGamePlatformInventoryError::SlotOutOfRange;
-        if (Lower.Contains(TEXT("container")))
-            return EGamePlatformInventoryError::ContainerNotFound;
-    }
+    if (ErrorCode == TEXT("SERVICE_UNAVAILABLE"))
+        return EGamePlatformInventoryError::BackendUnavailable;
 
-    return EGamePlatformInventoryError::OutcomeUnknown;
+    if (StatusCode == 401 || StatusCode == 403)
+        return EGamePlatformInventoryError::Unauthorized;
+    if (StatusCode == 408)
+        return EGamePlatformInventoryError::TimedOut;
+    if (StatusCode == 0 || StatusCode >= 500)
+        return EGamePlatformInventoryError::BackendUnavailable;
+
+    return EGamePlatformInventoryError::InvalidResponse;
 }
