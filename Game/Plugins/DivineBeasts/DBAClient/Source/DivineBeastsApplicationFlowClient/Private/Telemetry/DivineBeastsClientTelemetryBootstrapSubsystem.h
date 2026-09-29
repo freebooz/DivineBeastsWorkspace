@@ -36,5 +36,7 @@ private:
     FDelegateHandle FlowViewStateChangedHandle;
     /** 当前客户端遥测会话只用于采样/关联，不是账号ID，也不携带认证权限。 */
     FString TelemetrySessionId;
+    /** 最近一次观察到的应用流程节点；只用于避免同一TransferWorld节点重复触发Travel边界刷新。 */
+    FName LastObservedFlowStep = NAME_None;
     bool bConfiguredNetworkSink = false;
 };

@@ -24,7 +24,9 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetrySinkStatus
     int32 PendingBatches = 0;
     /** 0表示同步/无异步容量概念；NetworkSink填入真实MaxPendingBatches。 */
     int32 PendingCapacity = 0;
+    /** 最近一次批次被输出器最终接受的UTC时间；不包含事件内容或身份数据。 */
     FDateTime LastSuccessUtc;
+    /** 最近一次批次终态失败的UTC时间；具体错误只保留稳定错误摘要。 */
     FDateTime LastFailureUtc;
 };
 

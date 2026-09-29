@@ -2,6 +2,7 @@
 
 #include "GamePlatformOnlineClientSubsystem.h"
 #include "DivineBeastsApplicationFlowSubsystem.h"
+#include "Flow/DivineBeastsFlowNodes.h"
 #include "HAL/PlatformMisc.h"
 #include "Sinks/GamePlatformTelemetryNetworkSink.h"
 #include "Subsystems/GamePlatformTelemetrySubsystem.h"
@@ -136,23 +137,34 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::HandleFlowViewStateChanged(
         return;
     }
 
-    const FDivineBeastsWorldAssignmentSummary& Assignment = ViewState.Assignment;
-    if (Assignment.WorldId.IsNone() || Assignment.ExperienceId.IsNone() || Assignment.MapId.IsNone())
+    const FName CurrentStep = ViewState.CurrentStep;
+    if (CurrentStep == FDivineBeastsFlowNodes::TransferWorld() &&
+        LastObservedFlowStep != CurrentStep)
     {
-        return;
+        // 进入真实Travel边界时先尽力刷新旧世界记录并清空旧World Context，避免切服期间事件被错误归属。
+        Telemetry->BeforeWorldTravel();
     }
 
-    // ApplicationFlow公开摘要同时提供Map/World/Experience/Region且不含Endpoint/Ticket，是项目世界遥测的正确组合边界。
-    Telemetry->SetServerContext(
-        Assignment.ServerRoleId.ToString(),
-        Assignment.RegionId.ToString(),
-        Assignment.GameServerId);
-    Telemetry->UpdateWorldContext(
-        Assignment.MapId.ToString(),
-        Assignment.WorldId.ToString(),
-        Assignment.ExperienceId.ToString(),
-        FString(),
-        FString());
+    if (CurrentStep == FDivineBeastsFlowNodes::InWorld())
+    {
+        const FDivineBeastsWorldAssignmentSummary& Assignment = ViewState.Assignment;
+        if (!Assignment.WorldId.IsNone() && !Assignment.ExperienceId.IsNone() && !Assignment.MapId.IsNone())
+        {
+            // 只有WorldReady完成、正式进入InWorld后才提交新世界上下文；公开摘要不含Endpoint/Ticket。
+            Telemetry->SetServerContext(
+                Assignment.ServerRoleId.ToString(),
+                Assignment.RegionId.ToString(),
+                Assignment.GameServerId);
+            Telemetry->UpdateWorldContext(
+                Assignment.MapId.ToString(),
+                Assignment.WorldId.ToString(),
+                Assignment.ExperienceId.ToString(),
+                FString(),
+                FString());
+        }
+    }
+
+    LastObservedFlowStep = CurrentStep;
 }
 
 void UDivineBeastsClientTelemetryBootstrapSubsystem::Deinitialize()
@@ -195,6 +207,7 @@ void UDivineBeastsClientTelemetryBootstrapSubsystem::Deinitialize()
         }
         TelemetrySessionId.Reset();
     }
+    LastObservedFlowStep = NAME_None;
     bConfiguredNetworkSink = false;
     Super::Deinitialize();
 }

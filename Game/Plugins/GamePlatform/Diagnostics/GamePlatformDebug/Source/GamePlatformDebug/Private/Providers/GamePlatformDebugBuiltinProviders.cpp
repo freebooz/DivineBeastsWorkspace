@@ -582,11 +582,29 @@ namespace
         Snapshot.AddField(TEXT("SampledOut"), TEXT("采样丢弃"), FString::Printf(TEXT("%lld"), Diagnostics.SampledOutTotal), EGamePlatformDebugValueType::Integer);
         Snapshot.AddField(TEXT("RateLimited"), TEXT("限流总数"), FString::Printf(TEXT("%lld"), Diagnostics.RateLimitedTotal), EGamePlatformDebugValueType::Integer);
 
-        AddNA(Snapshot, TEXT("Enabled"), TEXT("启用状态"), TEXT("Telemetry未公开只读getter"));
-        AddNA(Snapshot, TEXT("Sampling"), TEXT("采样策略"), TEXT("Telemetry未公开聚合getter"));
-        AddNA(Snapshot, TEXT("Sinks"), TEXT("输出器"), TEXT("Telemetry未公开安全枚举接口"));
-        AddNA(Snapshot, TEXT("LastFlush"), TEXT("最近刷新"), TEXT("Telemetry未公开只读getter"));
-        AddNA(Snapshot, TEXT("BackendSinkHealth"), TEXT("后端输出健康"), TEXT("Telemetry未公开安全getter"));
+        Snapshot.AddField(TEXT("Enabled"), TEXT("启用状态"), BoolText(Diagnostics.bEnabled), EGamePlatformDebugValueType::Boolean);
+        Snapshot.AddField(TEXT("SinkHealth"), TEXT("输出器健康"), Diagnostics.SinkHealth.ToString());
+        Snapshot.AddField(TEXT("PendingNetworkBatches"), TEXT("待发送网络批次"), FString::FromInt(Diagnostics.PendingNetworkBatches), EGamePlatformDebugValueType::Integer);
+        Snapshot.AddField(TEXT("SubmittedBatches"), TEXT("已提交批次"), FString::Printf(TEXT("%lld"), Diagnostics.SubmittedBatches), EGamePlatformDebugValueType::Integer);
+        Snapshot.AddField(TEXT("FailedBatches"), TEXT("失败批次"), FString::Printf(TEXT("%lld"), Diagnostics.FailedBatches), EGamePlatformDebugValueType::Integer);
+        Snapshot.AddField(TEXT("LastFlushRecords"), TEXT("最近刷新记录数"), FString::FromInt(Diagnostics.LastFlushRecords), EGamePlatformDebugValueType::Integer);
+        Snapshot.AddField(
+            TEXT("LastFlush"),
+            TEXT("最近刷新"),
+            Diagnostics.LastFlushUtc.GetTicks() > 0 ? Diagnostics.LastFlushUtc.ToIso8601() : TEXT("N/A"));
+        Snapshot.AddField(
+            TEXT("SinkLastSuccess"),
+            TEXT("输出器最近成功"),
+            Diagnostics.SinkLastSuccessUtc.GetTicks() > 0 ? Diagnostics.SinkLastSuccessUtc.ToIso8601() : TEXT("N/A"));
+        Snapshot.AddField(
+            TEXT("SinkLastFailure"),
+            TEXT("输出器最近失败"),
+            Diagnostics.SinkLastFailureUtc.GetTicks() > 0 ? Diagnostics.SinkLastFailureUtc.ToIso8601() : TEXT("N/A"));
+        Snapshot.AddField(
+            TEXT("SinkLastError"),
+            TEXT("输出器最近错误"),
+            Diagnostics.SinkLastError.IsEmpty() ? TEXT("None") : Diagnostics.SinkLastError);
+        AddNA(Snapshot, TEXT("Sampling"), TEXT("采样策略"), TEXT("Telemetry当前按Schema定义，不公开运行期全量策略枚举"));
         return true;
     }
 
