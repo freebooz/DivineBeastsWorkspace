@@ -82,3 +82,7 @@ DefinitionId = presentation.sfx.combat_hit@1
 ```
 
 SFX Bridge自动完成转换。
+
+预测语义：Predicted/Confirmed使用相同RequestId时只播放一次；Corrected先停止旧实例再重放；Cancelled只停止，不重新播放。
+
+当前中立Presentation Request只携带逻辑SourceId/位置，不携带USceneComponent，因此 `Attached（附着播放）` 目前仅属于SFX低层C++服务能力。正常Gameplay若需要“语义附着到角色骨骼”的标准链，应先在平台Presentation层建立中立Attachment（附着）解析契约，而不是让项目Gameplay直接依赖SFX或把项目Actor类型塞进平台请求。

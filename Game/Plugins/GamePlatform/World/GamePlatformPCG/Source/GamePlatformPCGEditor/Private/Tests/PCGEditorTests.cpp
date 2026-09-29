@@ -6,6 +6,7 @@
 #include "Services/GamePlatformPCGInspection.h"
 #include "Services/GamePlatformPCGTemplateContract.h"
 #include "Engine/StaticMesh.h"
+#include "PCGGraph.h"
 
 // 顺序不参与来源身份；依赖内容和引擎版本必须参与，不能只哈希路径或随机种子。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPCGSourceFingerprintTest, "GamePlatform.PCG.Editor.SourceFingerprint",
@@ -77,6 +78,9 @@ bool FPCGFoundationTemplateGraphTest::RunTest(const FString& Parameters)
         Profile->OutputUsage = EGamePlatformPCGOutputUsage::Cosmetic;
         Profile->TemplateId = TemplateId;
         Profile->TemplateVersion = 1;
+        // Foundation Template（基础模板）是平台逻辑模板，不绑定具体项目网格。
+        // 真实网格通过项目 Graph Instance（图实例）+ MeshSet Definition（网格集合定义）在后续阶段注入。
+        TestTrue(*FString::Printf(TEXT("%s模板不要求绑定OutputMesh"), *TemplateId.ToString()), Profile->OutputMesh.IsNull());
 
         FString Error;
         UPCGGraph* Graph = GamePlatformPCGEditor::CreateFoundationTemplateGraph(Profile, TemplateId, TemplateId, Error);

@@ -255,10 +255,22 @@ func (s *TransferEpochStore) Accept(
 
 	const script = `
 local current = redis.call("GET", KEYS[1])
+local latest_issued = redis.call("GET", KEYS[2])
 local proposed_epoch = ARGV[1]
 local proposed_ticket = ARGV[2]
 local ttl_ms = ARGV[3]
 local proposed_value = proposed_epoch .. "|" .. proposed_ticket
+
+-- 十进制无符号整数比较：长度优先，同长度按字典序。
+-- 更高Epoch一旦被签发，低Epoch即失效，不等待新票先完成准入。
+if latest_issued then
+  if string.len(proposed_epoch) < string.len(latest_issued) then
+    return 0
+  end
+  if string.len(proposed_epoch) == string.len(latest_issued) and proposed_epoch < latest_issued then
+    return 0
+  end
+end
 
 if not current then
   redis.call("PSETEX", KEYS[1], ttl_ms, proposed_value)
@@ -294,7 +306,10 @@ return 1
 	value, err := s.client.inner.Eval(
 		ctx,
 		script,
-		[]string{transferAcceptedEpochKeyPrefix + sessionID},
+		[]string{
+			transferAcceptedEpochKeyPrefix + sessionID,
+			transferEpochKeyPrefix + sessionID,
+		},
 		fmt.Sprintf("%d", epoch),
 		ticketID,
 		ttl.Milliseconds(),

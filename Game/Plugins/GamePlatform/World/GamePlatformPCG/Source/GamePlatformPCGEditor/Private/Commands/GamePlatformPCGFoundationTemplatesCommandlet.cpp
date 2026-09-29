@@ -14,6 +14,8 @@ UGamePlatformPCGFoundationTemplatesCommandlet::UGamePlatformPCGFoundationTemplat
 
 int32 UGamePlatformPCGFoundationTemplatesCommandlet::Main(const FString& Params)
 {
+    // 当前命令无外部参数；保留签名以符合UCommandlet接口。
+    (void)Params;
     FString Error;
     if (!UGamePlatformPCGEditorLibrary::CreateFoundationTemplateAssets(Error))
     {

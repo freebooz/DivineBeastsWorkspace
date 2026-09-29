@@ -46,3 +46,37 @@ SFX是纯表现机制。播放成功、失败、静音、资源缺失或用户�
 ## 7. Settings关系
 
 SFX不持有“主音量/音效音量”的第二份用户配置。最终混音通过UE SoundClass/SoundMix/AudioModulation消费 `GamePlatformSettings` 已解析偏好；依赖应由上层组合层连接，而不是形成SFX↔Settings循环。
+
+## 8. 复审发现的性能与生命周期风险
+
+### 8.1 总追踪预算
+
+当前代码分别限制 Pending=128、Active=256，但没有限制两者总和。整改后必须增加统一总预算门禁，避免“Pending未超128且Active未超256”时总量仍持续增长。
+
+### 8.2 AudioFinished绑定时机
+
+当前 `SpawnSound*` 会立即启动播放，而事件绑定发生在Spawn之后。生产版应改成先创建未播放的 `UAudioComponent`、绑定完成事件，再开始播放。该修改优先级高于自研对象池。
+
+### 8.3 参数集合预算
+
+Request和Definition的参数集合必须增加统一条目上限，避免错误内容导致大量TMap/TSet复制、遍历和组件参数写入。
+
+### 8.4 不提前做对象池
+
+即使整改为受控AudioComponent创建，也不等于立即实现自研池。只有Audio Insights证明组件创建/销毁是明确瓶颈时，再引入具备完整Reset合同的池化实现。
+
+## 9. 目标性能验证指标
+
+最终数值不在没有实测时写死，但测试至少记录：
+
+- 同屏 Active/Pending 峰值；
+- 实际 Voices 与 Virtualized Voices；
+- Audio Render Thread CPU；
+- Game Thread SFX创建峰值耗时；
+- SFX Definition/声音资源内存；
+- 预测取消与Corrected重放数量；
+- Concurrency拒绝/抢占数量；
+- 2D/3D/Attached分类数量；
+- World切换后残留组件与租约数量必须归零。
+
+PC与移动端分别形成基线，不直接复用同一预算。

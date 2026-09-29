@@ -341,6 +341,12 @@ func (s *MemorySessionEpochStore) Accept(
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// 更高Epoch一旦已经由权威签票链分配，旧Epoch立即失效；
+	// 不需要等待更高Epoch先完成准入，关闭“两张有效票竞速进入”的窗口。
+	if latestIssued := s.epochs[sessionID]; latestIssued > 0 && epoch < latestIssued {
+		return false, nil
+	}
+
 	if current, exists := s.accepted[sessionID]; exists {
 		if !now.Before(current.expiresAt) {
 			delete(s.accepted, sessionID)

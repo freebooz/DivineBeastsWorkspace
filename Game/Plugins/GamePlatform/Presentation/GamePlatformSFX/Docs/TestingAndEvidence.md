@@ -49,17 +49,41 @@ Tests/Scripts/TestGamePlatformSFXArchitecture.ps1
 
 ## 4. 当前证据状态
 
-以下结果将在本轮真实执行后更新：
+本轮复审实际证据：
 
 ```text
-静态架构门禁：待执行
-GamePlatformSFX范围 git diff --check：待执行
-GamePlatformSFXClient Editor模块编译：待执行
-Client Target编译：待执行
-Server隔离构建：待执行
-UE Automation：待执行
+静态架构门禁：已执行，通过
+  TestGamePlatformSFXArchitecture.ps1，退出码0。
+
+GamePlatformSFX范围 git diff --check：已执行，通过
+  仅出现工作区LF/CRLF转换提示，没有diff格式错误。
+
+GamePlatformSFXClient Editor模块编译：本轮未执行
+Client Target编译：本轮未执行
+Server隔离构建：本轮未执行
+UE Automation：本轮未执行
 真实音频资产播放：未执行
 5v5 Audio Insights性能实测：未执行
 ```
+
+静态门禁通过只证明当前结构基线，不证明P1生命周期问题不存在，也不等于编译、运行或性能验收通过。
+
+## 5. 下一轮必须新增的测试
+
+- 极短SoundWave/MetaSound：验证不会错过AudioFinished导致组件和Lease滞留；
+- StartTime接近声音尾部：验证立即结束仍可清理；
+- Pending + Active总预算：验证总量硬门禁；
+- 128个Pending附近并发完成：验证不会突破总追踪上限；
+- Definition参数数量超限；
+- Request参数数量超限；
+- Attached Owner在租约完成前销毁；
+- World teardown与Data Completion同一调度窗口竞争；
+- Stop重复调用、FadeOut后二次Stop；
+- Predicted → Confirmed同RequestId去重；
+- Predicted → Corrected停止旧实例并重放；
+- Predicted → Cancelled只停止不重播；
+- 两个LocalPlayer同一World下2D SFX行为；
+- Dedicated Server Target确认不链接GamePlatformSFXClient；
+- Client Cook确认纯SFX资源按需要进入包。
 
 未执行项不得写成通过。

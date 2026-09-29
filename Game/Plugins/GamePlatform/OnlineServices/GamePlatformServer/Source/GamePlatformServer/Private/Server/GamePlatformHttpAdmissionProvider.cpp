@@ -115,6 +115,19 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
         return;
     }
 
+    FString TicketId;
+    if (!Ticket->TryGetStringField(TEXT("ticketId"), TicketId) ||
+        TicketId.IsEmpty() ||
+        TicketId != ReservationId)
+    {
+        // RPC外层ReservationId只承担幂等/关联作用，但必须与签名票据自身身份一致；
+        // 不允许两套票据身份进入后续HTTP请求和VerifiedAdmission投影。
+        Proof.ResetSensitive();
+        Completion(MakeAdmissionFailure(
+            TEXT("ServerAdmissionTicketIdentityMismatch")));
+        return;
+    }
+
     // 原始字节在解析完成后立即清零；后续仅由本次HTTP请求正文短暂持有同一票据内容。
     Proof.ResetSensitive();
 

@@ -72,6 +72,17 @@ func TestAuthoritativeBindingEpochAndFences(t *testing.T) {
 		t.Fatalf("SessionEpoch或GameSessionID不符合单调绑定语义: first=%+v second=%+v", first, second)
 	}
 
+	// epoch-2只要已经签发，epoch-1即应失效，即使epoch-2尚未进行首次准入。
+	if _, err := service.Validate(ValidateRequest{
+		Ticket: first, DestinationGameServerID: "ow-1",
+		DestinationServerBootID: "boot-current", DestinationProtocolVersion: 7,
+	}); err == nil {
+		t.Fatal("更高Epoch签发后，旧Epoch票据必须立即失效")
+	}
+	if replay.calls != 0 {
+		t.Fatalf("旧Epoch应在ReplayStore消费前被拒绝，实际调用=%d", replay.calls)
+	}
+
 	if _, err := service.Validate(ValidateRequest{
 		Ticket: first, DestinationGameServerID: "ow-1",
 		DestinationServerBootID: "boot-old", DestinationProtocolVersion: 7,

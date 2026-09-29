@@ -102,7 +102,9 @@ World销毁时停止活动组件、释放待加载和活动租约，不依赖Tic
 
 `UGamePlatformSFXPresentationBridgeSubsystem` 仅注册 `ProviderChannel=SFX`。
 
-- Confirmed/Predicted：转换为SFX Request；
+- Predicted：转换为SFX Request；
+- Confirmed：沿用同 `RequestId` 去重，避免预测与确认重复发声；
+- Corrected：先按 `RequestId` 立即停止旧预测实例，再按纠正后的Definition/位置重新播放；
 - Cancelled：按原 `RequestId` 调用 `StopByRequestId`；
 - 不解析DivineBeasts/MOBA事实；
 - 不把Gameplay Magnitude擅自映射成音量。

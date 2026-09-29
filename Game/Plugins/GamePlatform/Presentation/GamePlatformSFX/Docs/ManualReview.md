@@ -44,3 +44,22 @@
 ## 4. 发布前证据
 
 只有同时取得Editor/Client编译、Server隔离、UE Automation、真实音频资产播放和目标平台性能数据后，才能称为Production Ready（生产就绪）。
+
+## 5. 当前人工审核优先级
+
+1. P1：检查AudioComponent是否“先绑定结束事件、后播放”；发现任何Spawn即播且后绑回调的实现，应阻断生产验收。
+2. P1：检查总追踪预算是否基于 `Pending + Active`，不能只分别限制两个容器。
+3. P1：5v5高频战斗Definition是否配置了合理Concurrency，并通过Audio Insights实测。
+4. P2：检查Request/Definition参数集合是否有统一安全上限。
+5. P2：检查多LocalPlayer时2D音效是否存在重复提交。
+6. P2：检查Build.cs是否把只在Private实现使用的Presentation依赖错误暴露为Public依赖。
+7. P2：检查所有失败、取消、World销毁路径是否最终Release Definition Lease。
+
+## 6. 开发人员使用原则
+
+- 普通Gameplay通过 `GamePlatformPresentation` 提交中立表现请求，不直接播放项目Sound资源；
+- 只有底层工具、测试或明确的本地音频控制代码才直接使用 `IGamePlatformSFXService`；
+- 项目内容通过 `UGamePlatformSFXDefinition` + Presentation Catalog 接入；
+- `DefinitionId` 使用规范逻辑ID，不使用 `/Game/...` 路径；
+- 高频3D战斗音效必须在内容审核阶段明确Concurrency和Attenuation；
+- 不把伤害、命中、冷却等Gameplay结果建立在音效成功播放之上。
