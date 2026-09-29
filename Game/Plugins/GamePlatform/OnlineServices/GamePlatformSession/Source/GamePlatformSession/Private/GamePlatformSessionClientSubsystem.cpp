@@ -4,6 +4,7 @@
 #include "Containers/Ticker.h"
 #include "HAL/PlatformTime.h"
 #include "State/SessionConnectionState.h"
+#include "Types/GamePlatformSessionErrors.h"
 
 #include <limits>
 #include <memory>
@@ -40,19 +41,59 @@ GamePlatformSession::FBinding ToCoreBinding(const FGamePlatformSessionConnection
     return Result;
 }
 
-GamePlatformSession::EFact ToCoreFact(EGamePlatformSessionTransferFact Fact)
+bool TryToCoreFact(
+    EGamePlatformSessionTransferFact Fact,
+    GamePlatformSession::EFact& OutFact)
 {
     switch (Fact)
     {
     case EGamePlatformSessionTransferFact::NetworkConnected:
-        return GamePlatformSession::EFact::NetworkConnected;
+        OutFact = GamePlatformSession::EFact::NetworkConnected;
+        return true;
     case EGamePlatformSessionTransferFact::AdmissionConfirmed:
-        return GamePlatformSession::EFact::AdmissionConfirmed;
+        OutFact = GamePlatformSession::EFact::AdmissionConfirmed;
+        return true;
     case EGamePlatformSessionTransferFact::TargetWorldLoaded:
-        return GamePlatformSession::EFact::TargetWorldLoaded;
+        OutFact = GamePlatformSession::EFact::TargetWorldLoaded;
+        return true;
     case EGamePlatformSessionTransferFact::ControllerReady:
+        OutFact = GamePlatformSession::EFact::ControllerReady;
+        return true;
     default:
-        return GamePlatformSession::EFact::ControllerReady;
+        return false;
+    }
+}
+
+bool IsValidTransferFact(EGamePlatformSessionTransferFact Fact)
+{
+    GamePlatformSession::EFact Ignored;
+    return TryToCoreFact(Fact, Ignored);
+}
+
+uint8 FactBit(EGamePlatformSessionTransferFact Fact)
+{
+    return IsValidTransferFact(Fact)
+        ? static_cast<uint8>(1u << static_cast<uint8>(Fact))
+        : 0u;
+}
+
+bool TryToCoreIntent(
+    EGamePlatformSessionIntent Intent,
+    GamePlatformSession::EIntent& OutIntent)
+{
+    switch (Intent)
+    {
+    case EGamePlatformSessionIntent::Join:
+        OutIntent = GamePlatformSession::EIntent::Join;
+        return true;
+    case EGamePlatformSessionIntent::Transfer:
+        OutIntent = GamePlatformSession::EIntent::Transfer;
+        return true;
+    case EGamePlatformSessionIntent::Reconnect:
+        OutIntent = GamePlatformSession::EIntent::Reconnect;
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -74,6 +115,10 @@ bool IsSameSnapshot(
     const FGamePlatformSessionSnapshot& Right)
 {
     return Left.State == Right.State &&
+        Left.Intent == Right.Intent &&
+        Left.RecoveryState == Right.RecoveryState &&
+        Left.bRecoveryRequired == Right.bRecoveryRequired &&
+        Left.bCanRetry == Right.bCanRetry &&
         Left.TransferOperationId == Right.TransferOperationId &&
         IsSameBinding(Left.Binding, Right.Binding) &&
         Left.bAdmissionConfirmed == Right.bAdmissionConfirmed &&
@@ -104,7 +149,7 @@ EGamePlatformSessionTransferState MapCoreState(
         case GamePlatformSession::EState::Reconnecting:
             return EGamePlatformSessionTransferState::Reconnecting;
         case GamePlatformSession::EState::Transferring:
-            return EGamePlatformSessionTransferState::PreparingConnection;
+            return EGamePlatformSessionTransferState::Transferring;
         default:
             return EGamePlatformSessionTransferState::Connecting;
         }
@@ -132,20 +177,72 @@ EGamePlatformSessionTransferState MapCoreState(
     }
 }
 
+EGamePlatformSessionIntent MapCoreIntent(GamePlatformSession::EIntent Intent)
+{
+    switch (Intent)
+    {
+    case GamePlatformSession::EIntent::Transfer:
+        return EGamePlatformSessionIntent::Transfer;
+    case GamePlatformSession::EIntent::Reconnect:
+        return EGamePlatformSessionIntent::Reconnect;
+    case GamePlatformSession::EIntent::Join:
+    default:
+        return EGamePlatformSessionIntent::Join;
+    }
+}
+
+EGamePlatformSessionRecoveryState MapCoreRecovery(GamePlatformSession::ERecovery Recovery)
+{
+    switch (Recovery)
+    {
+    case GamePlatformSession::ERecovery::RetryAllowed:
+        return EGamePlatformSessionRecoveryState::RetryAllowed;
+    case GamePlatformSession::ERecovery::ReconciliationRequired:
+        return EGamePlatformSessionRecoveryState::ReconciliationRequired;
+    case GamePlatformSession::ERecovery::ReauthenticationRequired:
+        return EGamePlatformSessionRecoveryState::ReauthenticationRequired;
+    case GamePlatformSession::ERecovery::None:
+    default:
+        return EGamePlatformSessionRecoveryState::None;
+    }
+}
+
+bool IsSafeEndpoint(const FString& Endpoint)
+{
+    if (Endpoint.IsEmpty() || Endpoint.Len() > MaxEndpointChars ||
+        Endpoint.Contains(TEXT("\r")) || Endpoint.Contains(TEXT("\n")) ||
+        Endpoint.Contains(TEXT("?")) || Endpoint.Contains(TEXT("#")) ||
+        Endpoint.Contains(TEXT("/")) || Endpoint.Contains(TEXT("\\")) ||
+        Endpoint.Contains(TEXT("@")))
+    {
+        return false;
+    }
+    for (const TCHAR Character : Endpoint)
+    {
+        if (!(FChar::IsAlnum(Character) || Character == TEXT('.') || Character == TEXT('-') ||
+            Character == TEXT('_') || Character == TEXT(':') || Character == TEXT('[') ||
+            Character == TEXT(']')))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 FName DefaultOutcomeError(GamePlatformSession::EOutcome Outcome)
 {
     switch (Outcome)
     {
     case GamePlatformSession::EOutcome::Cancelled:
-        return TEXT("SessionCancelled");
+        return GamePlatformSessionErrors::Cancelled;
     case GamePlatformSession::EOutcome::TimedOut:
-        return TEXT("SessionTimedOut");
+        return GamePlatformSessionErrors::TimedOut;
     case GamePlatformSession::EOutcome::Uncertain:
-        return TEXT("SessionOutcomeUncertain");
+        return GamePlatformSessionErrors::OutcomeUncertain;
     case GamePlatformSession::EOutcome::AuthChanged:
-        return TEXT("SessionAuthChanged");
+        return GamePlatformSessionErrors::AuthChanged;
     case GamePlatformSession::EOutcome::Failed:
-        return TEXT("SessionFailed");
+        return GamePlatformSessionErrors::Failed;
     default:
         return NAME_None;
     }
@@ -173,16 +270,22 @@ FGamePlatformResult FGamePlatformSessionTransferRequest::Validate() const
     if (!TransferOperationId.IsValid())
     {
         return FGamePlatformResult::Failure(
-            TEXT("SessionOperationIdInvalid"),
+            GamePlatformSessionErrors::OperationIdInvalid,
             TEXT("会话转移操作必须具有有效的操作身份。"));
     }
     if (AssignmentId.IsEmpty() || GameServerId.IsEmpty() || ServerRoleId.IsNone() ||
         ExperienceId.IsNone() || WorldId.IsNone() || Endpoint.IsEmpty() ||
-        TransferTicket.IsEmpty() || CharacterId.IsEmpty() || SessionId.IsEmpty())
+        TransferTicket.IsEmpty() || SessionId.IsEmpty())
     {
         return FGamePlatformResult::Failure(
-            TEXT("SessionTransferRequestIncomplete"),
+            GamePlatformSessionErrors::TransferRequestIncomplete,
             TEXT("会话转移请求缺少分配、服务器、体验、世界、连接或玩家身份。"));
+    }
+    if (!IsSafeEndpoint(Endpoint))
+    {
+        return FGamePlatformResult::Failure(
+            GamePlatformSessionErrors::TransferEndpointInvalid,
+            TEXT("会话连接地址格式无效或包含不允许的URL/控制字符。"));
     }
     if (AssignmentId.Len() > MaxSessionTextChars ||
         GameServerId.Len() > MaxSessionTextChars ||
@@ -193,7 +296,7 @@ FGamePlatformResult FGamePlatformSessionTransferRequest::Validate() const
         SessionId.Len() > MaxSessionTextChars)
     {
         return FGamePlatformResult::Failure(
-            TEXT("SessionTransferRequestTooLarge"),
+            GamePlatformSessionErrors::TransferRequestTooLarge,
             TEXT("会话转移请求字段超过安全长度限制。"));
     }
     if (!FMath::IsFinite(TimeoutSeconds) ||
@@ -201,7 +304,7 @@ FGamePlatformResult FGamePlatformSessionTransferRequest::Validate() const
         TimeoutSeconds > MaxTimeoutSeconds)
     {
         return FGamePlatformResult::Failure(
-            TEXT("SessionTransferTimeoutInvalid"),
+            GamePlatformSessionErrors::TransferTimeoutInvalid,
             TEXT("会话转移超时预算必须位于1至120秒之间。"));
     }
     return FGamePlatformResult::Success();
@@ -214,7 +317,9 @@ struct UGamePlatformSessionClientSubsystem::FRuntime
     GamePlatformSession::FBinding PreparedBinding;
     FGamePlatformSessionConnectionBinding PublicBinding;
     FGuid ActiveOperationId;
+    FGuid LastOperationId;
     FGuid AuthGeneration;
+    FString ActiveAttemptId;
     FString AccountId;
     uint64 AuthSerial = 0;
     uint8 FactMask = 0;
@@ -237,9 +342,16 @@ void UGamePlatformSessionClientSubsystem::Initialize(FSubsystemCollectionBase& C
 void UGamePlatformSessionClientSubsystem::Deinitialize()
 {
     StopTicker();
-    if (Transport.IsValid() && Runtime && Runtime->ActiveOperationId.IsValid())
+    if (Transport.IsValid() && Runtime)
     {
-        Transport->CancelTransfer(Runtime->ActiveOperationId);
+        if (Runtime->ActiveOperationId.IsValid())
+        {
+            Transport->CancelTransfer(Runtime->ActiveOperationId);
+        }
+        if (Runtime->PublicBinding.IsValid())
+        {
+            Transport->LeaveSession(Runtime->PublicBinding);
+        }
     }
     Transport.Reset();
     Runtime.Reset();
@@ -258,7 +370,14 @@ void UGamePlatformSessionClientSubsystem::SetTransport(
     }
 
     FGamePlatformResult Ignored;
-    CancelTransfer(Ignored);
+    if (Runtime && Runtime->PublicBinding.IsValid())
+    {
+        LeaveSession(Ignored);
+    }
+    else
+    {
+        CancelTransfer(Ignored);
+    }
     Transport = MoveTemp(InTransport);
 }
 
@@ -276,11 +395,24 @@ void UGamePlatformSessionClientSubsystem::SetAuthenticationContext(
         return;
     }
 
-    if (Transport.IsValid() && Runtime->ActiveOperationId.IsValid())
+    const auto CoreBefore = Runtime->State->Snapshot();
+    if (Transport.IsValid())
     {
-        Transport->CancelTransfer(Runtime->ActiveOperationId);
+        if (Runtime->ActiveOperationId.IsValid())
+        {
+            Transport->CancelTransfer(Runtime->ActiveOperationId);
+        }
+        if (Runtime->PublicBinding.IsValid())
+        {
+            // 认证上下文改变前先断开旧账号的真实网络，避免本地已登出但仍连接旧服务器。
+            Transport->LeaveSession(Runtime->PublicBinding);
+        }
     }
     StopTicker();
+    if (CoreBefore.bOperationActive || CoreBefore.Current.IsValid())
+    {
+        Runtime->State->Leave();
+    }
 
     Runtime->AccountId = AccountId;
     Runtime->AuthGeneration = AuthGeneration;
@@ -300,11 +432,33 @@ void UGamePlatformSessionClientSubsystem::SetAuthenticationContext(
     Runtime->PreparedBinding = {};
     Runtime->PublicBinding = {};
     Runtime->ActiveOperationId.Invalidate();
+    Runtime->LastOperationId.Invalidate();
+    Runtime->ActiveAttemptId.Reset();
     Runtime->FactMask = 0;
     RefreshSnapshot();
 }
 
 bool UGamePlatformSessionClientSubsystem::BeginTransfer(
+    const FGamePlatformSessionTransferRequest& Request,
+    FGamePlatformResult& OutResult)
+{
+    const bool bHasCurrent = Runtime && Runtime->State &&
+        Runtime->State->Snapshot().Current.IsValid();
+    return BeginOperation(
+        bHasCurrent ? EGamePlatformSessionIntent::Transfer : EGamePlatformSessionIntent::Join,
+        Request,
+        OutResult);
+}
+
+bool UGamePlatformSessionClientSubsystem::Reconnect(
+    const FGamePlatformSessionTransferRequest& Request,
+    FGamePlatformResult& OutResult)
+{
+    return BeginOperation(EGamePlatformSessionIntent::Reconnect, Request, OutResult);
+}
+
+bool UGamePlatformSessionClientSubsystem::BeginOperation(
+    EGamePlatformSessionIntent Intent,
     const FGamePlatformSessionTransferRequest& Request,
     FGamePlatformResult& OutResult)
 {
@@ -317,29 +471,57 @@ bool UGamePlatformSessionClientSubsystem::BeginTransfer(
     if (!Runtime || !Runtime->State)
     {
         OutResult = FGamePlatformResult::Failure(
-            TEXT("SessionUnavailable"),
+            GamePlatformSessionErrors::Unavailable,
             TEXT("平台会话子系统尚未初始化。"));
         return false;
     }
     if (!Transport.IsValid())
     {
         OutResult = FGamePlatformResult::Failure(
-            TEXT("SessionTransportUnavailable"),
+            GamePlatformSessionErrors::TransportUnavailable,
             TEXT("没有安装真实会话传输适配器，拒绝伪造服务器连接成功。"));
         RefreshSnapshot(OutResult.Code, OutResult.Message);
         return false;
     }
 
+    GamePlatformSession::EIntent CoreIntent;
+    if (!TryToCoreIntent(Intent, CoreIntent))
+    {
+        OutResult = FGamePlatformResult::Failure(
+            GamePlatformSessionErrors::IntentInvalid,
+            TEXT("会话操作意图无效。"));
+        return false;
+    }
+
     const GamePlatformSession::FSnapshot CoreBefore = Runtime->State->Snapshot();
-    const GamePlatformSession::EIntent Intent = CoreBefore.Current.IsValid()
-        ? GamePlatformSession::EIntent::Transfer
-        : GamePlatformSession::EIntent::Join;
+    if (CoreBefore.bOperationActive &&
+        Runtime->ActiveOperationId == Request.TransferOperationId &&
+        CoreBefore.ActiveIntent == CoreIntent)
+    {
+        // 同一幂等键的活动重入只返回当前接纳结果，绝不再次调用Transport或重复ClientTravel。
+        OutResult = FGamePlatformResult::Success();
+        return true;
+    }
+    if (!CoreBefore.bOperationActive &&
+        Runtime->LastOperationId == Request.TransferOperationId)
+    {
+        if (CoreBefore.LastOutcome == GamePlatformSession::EOutcome::Succeeded)
+        {
+            OutResult = FGamePlatformResult::Success();
+            return true;
+        }
+        const FName PreviousError = DefaultOutcomeError(CoreBefore.LastOutcome);
+        OutResult = FGamePlatformResult::Failure(
+            PreviousError.IsNone() ? GamePlatformSessionErrors::TransferRejected : PreviousError,
+            TEXT("该会话操作身份已经结束；重试必须使用新的TransferOperationId。"));
+        return false;
+    }
 
     GamePlatformSession::FOperationIdentity Identity;
     const double NowSeconds = FPlatformTime::Seconds();
     const FString AttemptId = FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphensLower);
     const auto Acceptance = Runtime->State->Begin(
-        Intent,
+        CoreIntent,
         ToUtf8(Request.TransferOperationId.ToString(EGuidFormats::DigitsWithHyphensLower)),
         ToUtf8(AttemptId),
         NowSeconds,
@@ -348,14 +530,16 @@ bool UGamePlatformSessionClientSubsystem::BeginTransfer(
     if (Acceptance != GamePlatformSession::EAcceptance::Accepted)
     {
         OutResult = FGamePlatformResult::Failure(
-            TEXT("SessionTransferRejected"),
-            TEXT("当前会话状态拒绝新的转移操作；可能存在活动操作、未认证或未解决的远端结果。"));
+            GamePlatformSessionErrors::TransferRejected,
+            TEXT("当前会话状态拒绝新的操作；可能存在活动操作、未认证或必须先完成远端对账。"));
         RefreshSnapshot(OutResult.Code, OutResult.Message);
         return false;
     }
 
     Runtime->ActiveIdentity = Identity;
     Runtime->ActiveOperationId = Request.TransferOperationId;
+    Runtime->LastOperationId = Request.TransferOperationId;
+    Runtime->ActiveAttemptId = AttemptId;
     Runtime->PreparedBinding = {};
     Runtime->PublicBinding = {};
     Runtime->FactMask = 0;
@@ -436,7 +620,7 @@ bool UGamePlatformSessionClientSubsystem::BeginTransfer(
                 });
         };
 
-    // TransferTicket 仅在这一调用边界传给真实传输层；Subsystem 自身不复制或长期保存原文。
+    // TransferTicket 仅在这一调用边界传给真实传输层；Subsystem自身不复制、不持久化、不记录原文。
     Transport->BeginTransfer(Request, MoveTemp(Callbacks));
     OutResult = FGamePlatformResult::Success();
     return true;
@@ -448,7 +632,7 @@ bool UGamePlatformSessionClientSubsystem::CancelTransfer(FGamePlatformResult& Ou
     if (!Runtime || !Runtime->State || !Runtime->ActiveOperationId.IsValid())
     {
         OutResult = FGamePlatformResult::Failure(
-            TEXT("SessionNoActiveTransfer"),
+            GamePlatformSessionErrors::NoActiveTransfer,
             TEXT("当前没有可取消的会话转移操作。"));
         return false;
     }
@@ -460,7 +644,7 @@ bool UGamePlatformSessionClientSubsystem::CancelTransfer(FGamePlatformResult& Ou
     if (Acceptance != GamePlatformSession::EAcceptance::Accepted)
     {
         OutResult = FGamePlatformResult::Failure(
-            TEXT("SessionCancelRejected"),
+            GamePlatformSessionErrors::CancelRejected,
             TEXT("活动会话操作已经结束或身份代次过期。"));
         return false;
     }
@@ -470,8 +654,109 @@ bool UGamePlatformSessionClientSubsystem::CancelTransfer(FGamePlatformResult& Ou
         Transport->CancelTransfer(OperationId);
     }
     StopTicker();
+    Runtime->LastOperationId = OperationId;
     Runtime->ActiveOperationId.Invalidate();
+    Runtime->ActiveAttemptId.Reset();
     Runtime->FactMask = 0;
+    RefreshSnapshot();
+    OutResult = FGamePlatformResult::Success();
+    return true;
+}
+
+bool UGamePlatformSessionClientSubsystem::LeaveSession(FGamePlatformResult& OutResult)
+{
+    check(IsInGameThread());
+    if (!Runtime || !Runtime->State)
+    {
+        OutResult = FGamePlatformResult::Failure(
+            GamePlatformSessionErrors::Unavailable,
+            TEXT("平台会话子系统尚未初始化。"));
+        return false;
+    }
+
+    const FGuid OperationId = Runtime->ActiveOperationId.IsValid()
+        ? Runtime->ActiveOperationId
+        : Runtime->LastOperationId;
+    const FGamePlatformSessionConnectionBinding Binding = Runtime->PublicBinding;
+    if (Transport.IsValid())
+    {
+        if (Runtime->ActiveOperationId.IsValid())
+        {
+            Transport->CancelTransfer(Runtime->ActiveOperationId);
+        }
+        if (Binding.IsValid())
+        {
+            Transport->LeaveSession(Binding);
+        }
+    }
+
+    Runtime->State->Leave();
+    StopTicker();
+    Runtime->LastOperationId = OperationId;
+    Runtime->ActiveOperationId.Invalidate();
+    Runtime->ActiveAttemptId.Reset();
+    Runtime->PreparedBinding = {};
+    Runtime->PublicBinding = {};
+    Runtime->FactMask = 0;
+    RefreshSnapshot();
+    OutResult = FGamePlatformResult::Success();
+    return true;
+}
+
+bool UGamePlatformSessionClientSubsystem::NotifyDisconnected(
+    const FGamePlatformSessionConnectionBinding& Binding,
+    FGamePlatformResult& OutResult)
+{
+    check(IsInGameThread());
+    if (!Runtime || !Runtime->State || !Binding.IsValid() ||
+        !Runtime->State->Disconnect(ToCoreBinding(Binding)))
+    {
+        OutResult = FGamePlatformResult::Failure(
+            GamePlatformSessionErrors::DisconnectRejected,
+            TEXT("断线通知不属于当前已建立会话，旧连接不会清理新绑定。"));
+        return false;
+    }
+
+    Runtime->PublicBinding = {};
+    Runtime->PreparedBinding = {};
+    Runtime->FactMask = 0;
+    RefreshSnapshot();
+    OutResult = FGamePlatformResult::Success();
+    return true;
+}
+
+bool UGamePlatformSessionClientSubsystem::ResolveRemoteState(
+    const FGuid& TransferOperationId,
+    const FGamePlatformSessionConnectionBinding& ConfirmedBinding,
+    FGamePlatformResult& OutResult)
+{
+    check(IsInGameThread());
+    if (!Runtime || !Runtime->State || !TransferOperationId.IsValid() ||
+        Runtime->LastOperationId != TransferOperationId)
+    {
+        OutResult = FGamePlatformResult::Failure(
+            GamePlatformSessionErrors::StaleOperation,
+            TEXT("远端对账结果不属于最近一次会话操作。"));
+        return false;
+    }
+
+    const GamePlatformSession::FBinding CoreBinding = ConfirmedBinding.IsValid()
+        ? ToCoreBinding(ConfirmedBinding)
+        : GamePlatformSession::FBinding();
+    const auto Acceptance = Runtime->State->ResolveRemote(Runtime->ActiveIdentity, CoreBinding);
+    if (Acceptance != GamePlatformSession::EAcceptance::Accepted)
+    {
+        OutResult = FGamePlatformResult::Failure(
+            GamePlatformSessionErrors::ReconciliationRejected,
+            TEXT("远端会话对账结果与当前操作身份或本地连接绑定不一致。"));
+        return false;
+    }
+
+    if (!ConfirmedBinding.IsValid())
+    {
+        Runtime->PublicBinding = {};
+        Runtime->PreparedBinding = {};
+    }
     RefreshSnapshot();
     OutResult = FGamePlatformResult::Success();
     return true;
@@ -484,29 +769,35 @@ bool UGamePlatformSessionClientSubsystem::ReportLocalFact(
     FGamePlatformResult& OutResult)
 {
     check(IsInGameThread());
+    if (!IsValidTransferFact(Fact))
+    {
+        OutResult = FGamePlatformResult::Failure(
+            GamePlatformSessionErrors::FactInvalid,
+            TEXT("会话事实枚举值无效，拒绝推进状态。"));
+        return false;
+    }
     if (Fact == EGamePlatformSessionTransferFact::NetworkConnected ||
         Fact == EGamePlatformSessionTransferFact::AdmissionConfirmed)
     {
         OutResult = FGamePlatformResult::Failure(
-            TEXT("SessionAuthoritativeFactRequired"),
+            GamePlatformSessionErrors::AuthoritativeFactRequired,
             TEXT("网络连接和服务器准入事实只能由真实Session Transport报告。"));
         return false;
     }
     if (!Runtime || Runtime->ActiveOperationId != TransferOperationId)
     {
         OutResult = FGamePlatformResult::Failure(
-            TEXT("SessionStaleOperation"),
+            GamePlatformSessionErrors::StaleOperation,
             TEXT("本地会话事实属于旧操作或当前没有活动转移。"));
         return false;
     }
 
     HandleTransportFact(TransferOperationId, Fact, Binding);
-    const bool bAccepted = Runtime->FactMask &
-        (1u << static_cast<uint8>(Fact));
+    const bool bAccepted = (Runtime->FactMask & FactBit(Fact)) != 0;
     OutResult = bAccepted
         ? FGamePlatformResult::Success()
         : FGamePlatformResult::Failure(
-            TEXT("SessionFactRejected"),
+            GamePlatformSessionErrors::FactRejected,
             TEXT("会话事实未通过当前操作身份或连接绑定校验。"));
     return bAccepted;
 }
@@ -518,13 +809,21 @@ bool UGamePlatformSessionClientSubsystem::TickActiveOperation(float DeltaSeconds
         return false;
     }
 
+    const FGuid OperationId = Runtime->ActiveOperationId;
     Runtime->State->AdvanceDeadline(FPlatformTime::Seconds());
     const auto Core = Runtime->State->Snapshot();
     RefreshSnapshot();
     if (!Core.bOperationActive)
     {
+        // Deadline终止本地操作时同步通知Transport停止仍在进行的连接动作；旅行后状态会保持Uncertain等待对账。
+        if (Transport.IsValid() && OperationId.IsValid())
+        {
+            Transport->CancelTransfer(OperationId);
+        }
         Runtime->TickerHandle.Reset();
+        Runtime->LastOperationId = OperationId;
         Runtime->ActiveOperationId.Invalidate();
+        Runtime->ActiveAttemptId.Reset();
         Runtime->FactMask = 0;
         return false;
     }
@@ -551,7 +850,7 @@ void UGamePlatformSessionClientSubsystem::HandleBindingPrepared(
     {
         HandleTransportFailure(
             TransferOperationId,
-            TEXT("SessionBindingRejected"),
+            GamePlatformSessionErrors::BindingRejected,
             TEXT("服务器连接绑定与当前会话操作不一致。"));
         return;
     }
@@ -580,7 +879,7 @@ void UGamePlatformSessionClientSubsystem::HandleTravelCommitted(
     {
         HandleTransportFailure(
             TransferOperationId,
-            TEXT("SessionTravelCommitRejected"),
+            GamePlatformSessionErrors::TravelCommitRejected,
             TEXT("真实旅行边界与当前会话绑定不一致。"));
         return;
     }
@@ -601,17 +900,22 @@ void UGamePlatformSessionClientSubsystem::HandleTransportFact(
         return;
     }
 
+    GamePlatformSession::EFact CoreFact;
+    if (!TryToCoreFact(Fact, CoreFact))
+    {
+        return;
+    }
     const auto Acceptance = Runtime->State->Observe(
         Runtime->ActiveIdentity,
         Runtime->PreparedBinding,
-        ToCoreFact(Fact),
+        CoreFact,
         FPlatformTime::Seconds());
     if (Acceptance != GamePlatformSession::EAcceptance::Accepted)
     {
         return;
     }
 
-    Runtime->FactMask |= 1u << static_cast<uint8>(Fact);
+    Runtime->FactMask |= FactBit(Fact);
     Runtime->PublicBinding = MoveTemp(Binding);
     RefreshSnapshot();
 
@@ -619,7 +923,9 @@ void UGamePlatformSessionClientSubsystem::HandleTransportFact(
     if (!Core.bOperationActive)
     {
         StopTicker();
+        Runtime->LastOperationId = TransferOperationId;
         Runtime->ActiveOperationId.Invalidate();
+        Runtime->ActiveAttemptId.Reset();
         Runtime->FactMask = 0;
     }
 }
@@ -640,10 +946,12 @@ void UGamePlatformSessionClientSubsystem::HandleTransportFailure(
         Runtime->ActiveIdentity,
         FPlatformTime::Seconds());
     StopTicker();
+    Runtime->LastOperationId = TransferOperationId;
     Runtime->ActiveOperationId.Invalidate();
+    Runtime->ActiveAttemptId.Reset();
     Runtime->FactMask = 0;
     RefreshSnapshot(
-        ErrorCode.IsNone() ? FName(TEXT("SessionTransportFailed")) : ErrorCode,
+        ErrorCode.IsNone() ? GamePlatformSessionErrors::TransportFailed : ErrorCode,
         ErrorMessage.IsEmpty()
             ? FString(TEXT("真实会话传输失败。"))
             : MoveTemp(ErrorMessage));
@@ -661,7 +969,17 @@ void UGamePlatformSessionClientSubsystem::RefreshSnapshot(
     const auto Core = Runtime->State->Snapshot();
     FGamePlatformSessionSnapshot Next;
     Next.State = MapCoreState(Core, Runtime->FactMask);
-    Next.TransferOperationId = Runtime->ActiveOperationId;
+    Next.Intent = MapCoreIntent(Core.ActiveIntent);
+    Next.RecoveryState = MapCoreRecovery(Core.Recovery);
+    Next.bRecoveryRequired = Core.bRemoteResolutionRequired ||
+        Core.Recovery == GamePlatformSession::ERecovery::ReconciliationRequired ||
+        Core.Recovery == GamePlatformSession::ERecovery::ReauthenticationRequired;
+    Next.bCanRetry = !Core.bOperationActive && !Core.bRemoteResolutionRequired &&
+        !Runtime->AccountId.IsEmpty() &&
+        Core.Recovery != GamePlatformSession::ERecovery::ReauthenticationRequired;
+    Next.TransferOperationId = Runtime->ActiveOperationId.IsValid()
+        ? Runtime->ActiveOperationId
+        : Runtime->LastOperationId;
     Next.Binding = Runtime->PublicBinding;
     Next.bAdmissionConfirmed =
         (Runtime->FactMask & AdmissionFactBit) != 0 ||

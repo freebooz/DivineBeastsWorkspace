@@ -29,6 +29,16 @@ public:
     /** 从明确实例取得非拥有指针；不适用环境或子系统不存在时返回 nullptr，不使用 GWorld 或创建替代实例。 */
     static IGamePlatformOnlineService* Get(UGameInstance& GameInstance);
 
+    /** 客户端实现按GameInstance注册自己；仅供平台适配模块使用，不转移所有权。 */
+    static bool RegisterInstanceService(
+        UGameInstance& GameInstance,
+        IGamePlatformOnlineService& Service);
+
+    /** 仅当当前注册对象与Service完全一致时移除，避免旧实例误删新实现。 */
+    static void UnregisterInstanceService(
+        UGameInstance& GameInstance,
+        IGamePlatformOnlineService& Service);
+
     /** 纯配置校验，不发网络、不存凭据；只校验配置值，不能代替 Configure 的实际传输能力检查。 */
     static FGamePlatformResult ValidateConfiguration(const FGamePlatformOnlineConfiguration& Configuration);
 

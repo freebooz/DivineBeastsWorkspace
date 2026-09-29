@@ -71,6 +71,8 @@ private:
     void HandleLifecycleChanged(const struct FGamePlatformServerLifecycleSnapshot& Snapshot);
     void SetFailed(FName ErrorCode);
     bool IsConfiguredWorldValid(UWorld& World, FString& OutReason) const;
+    /** 返回当前权威GameState中的连接玩家数；世界失效时返回-1使平台心跳Fail Closed。 */
+    int32 GetCurrentPlayerCount() const;
 
     FDivineBeastsServerRoleProfile ActiveProfile;
     FName ActiveExperienceId = NAME_None;

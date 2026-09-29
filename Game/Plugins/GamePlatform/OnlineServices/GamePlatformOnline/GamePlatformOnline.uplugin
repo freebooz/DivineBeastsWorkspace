@@ -1,34 +1,27 @@
 {
-    "FileVersion":  3,
-    "Version":  1,
-    "VersionName":  "0.1.0",
-    "FriendlyName":  "GamePlatformOnline",
-    "Description":  "GamePlatformOnline（游戏平台插件）",
-    "Category":  "GamePlatform/OnlineServices",
-    "CreatedBy":  "DivineBeastsWorkspace",
-    "CanContainContent":  true,
-    "EnabledByDefault":  false,
-    "Plugins":  [
-                    {
-                        "Name":  "GamePlatformCore",
-                        "Enabled":  true
-                    }
-                ],
-    "Modules":  [
-                    {
-                        "Name":  "GamePlatformOnline",
-                        "Type":  "Runtime",
-                        "LoadingPhase":  "Default"
-                    },
-                    {
-                        "Name":  "GamePlatformOnlineClient",
-                        "Type":  "ClientOnly",
-                        "LoadingPhase":  "Default"
-                    },
-                    {
-                        "Name":  "GamePlatformOnlineServer",
-                        "Type":  "ServerOnly",
-                        "LoadingPhase":  "Default"
-                    }
-                ]
+  "FileVersion": 3,
+  "Version": 2,
+  "VersionName": "0.2.0",
+  "FriendlyName": "GamePlatformOnline",
+  "Description": "游戏平台通用在线认证与受保护请求能力；客户端传输独立，服务器控制面由 GamePlatformServer 负责。",
+  "Category": "GamePlatform/OnlineServices",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "GamePlatformCore", "Enabled": true }
+  ],
+  "Modules": [
+    {
+      "Name": "GamePlatformOnline",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "GamePlatformOnlineClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": ["Client", "Editor"]
+    }
+  ]
 }

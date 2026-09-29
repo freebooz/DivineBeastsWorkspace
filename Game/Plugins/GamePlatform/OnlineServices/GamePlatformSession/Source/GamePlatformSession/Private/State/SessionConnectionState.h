@@ -12,6 +12,9 @@ enum class EFact { NetworkConnected, AdmissionConfirmed, TargetWorldLoaded, Cont
 enum class EOutcome { None, Succeeded, Cancelled, Failed, TimedOut, Uncertain, AuthChanged };
 enum class EAcceptance { Accepted, Busy, Invalid, Stale, NotAuthenticated, WrongState };
 
+// 公开恢复语义的纯状态来源；调用方据此判断能否直接重试，避免从错误码反推内部状态。
+enum class ERecovery { None, RetryAllowed, ReconciliationRequired, ReauthenticationRequired };
+
 // 非凭据的关联身份。账号刷新不改变AuthGeneration；退出/换账号必须递增。
 struct FOperationIdentity
 {
@@ -44,9 +47,13 @@ struct FSnapshot
     FBinding Current;
     FBinding Pending;
     FOperationIdentity Operation;
+    EIntent ActiveIntent = EIntent::Join;
     EOutcome LastOutcome = EOutcome::None;
+    ERecovery Recovery = ERecovery::None;
     bool bOperationActive = false;
     bool bRemoteResolutionRequired = false;
+    // 已成功提交过的最高SessionEpoch；即使当前网络断开也保留，用于拒绝旧绑定回放。
+    std::uint64_t HighestAcceptedSessionEpoch = 0;
     std::uint64_t CompletionCount = 0;
 };
 

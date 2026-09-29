@@ -157,7 +157,7 @@ private:
         std::uint64_t Generation = 0, SentTokenVersion = 0;
         double Started = 0, Deadline = 0, AttemptDeadline = 0, ReadyAt = 0;
         int Retries = 0;
-        bool bWaitingRefresh = false, bAuthReplay = false;
+        bool bWaitingRefresh = false, bAuthReplay = false, bOwnsLoginTransition = false;
     };
     struct FFlight
     {

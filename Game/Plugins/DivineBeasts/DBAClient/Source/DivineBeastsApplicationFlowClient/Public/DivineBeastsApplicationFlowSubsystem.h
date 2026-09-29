@@ -11,7 +11,6 @@
 #include "DivineBeastsApplicationFlowSubsystem.generated.h"
 
 class IGamePlatformDataService;
-class IGamePlatformOnlineAuthProvider;
 class IDivineBeastsApplicationBackend;
 class UDivineBeastsApplicationFlowContext;
 class UGamePlatformApplicationFlowSubsystem;
@@ -196,9 +195,6 @@ private:
     IGamePlatformLoadingService* Loading = nullptr;
     IGamePlatformDataService* Data = nullptr;
 
-    TSharedPtr<IDivineBeastsApplicationBackend> Backend;
-    /** 项目层真实 Gateway 认证适配；令牌仅保存在 Provider 私有内存，不进入 UObject/ViewState。 */
-    TSharedPtr<IGamePlatformOnlineAuthProvider> AuthProvider;
 
     /** GameInstance作用域的项目流程载荷；不保存World/Actor/Widget强引用。 */
     UPROPERTY(Transient)

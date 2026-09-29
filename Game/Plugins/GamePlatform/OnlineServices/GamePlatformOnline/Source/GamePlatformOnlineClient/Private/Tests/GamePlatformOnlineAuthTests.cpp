@@ -5,51 +5,123 @@
 
 namespace
 {
-class FTestGamePlatformAuthProvider final : public IGamePlatformOnlineAuthProvider
+FGamePlatformAuthProviderResult SuccessfulAuthResult()
+{
+    FGamePlatformAuthProviderResult Result;
+    Result.bSuccess = true;
+    Result.AccountId = TEXT("Account-1");
+    Result.SessionId = TEXT("Session-1");
+    Result.AccessExpiresAt =
+        FDateTime::UtcNow() + FTimespan::FromMinutes(10);
+    Result.RefreshExpiresAt =
+        FDateTime::UtcNow() + FTimespan::FromHours(1);
+    Result.Error = EGamePlatformAuthError::None;
+    return Result;
+}
+
+class FTestGamePlatformAuthProvider final
+    : public IGamePlatformOnlineAuthProvider
 {
 public:
-    virtual void TryAutoLogin(FGamePlatformAuthCompletion Completion) override
+    virtual FGamePlatformResult Configure(
+        const FGamePlatformOnlineConfiguration&) override
     {
-        Completion(true, TEXT("AutoAccount"), EGamePlatformAuthError::None);
+        bConfigured = true;
+        return FGamePlatformResult::Success();
     }
 
-    virtual void LoginWithCredentials(
-        const FString& LoginName,
-        const FString& Password,
+    virtual void TryAutoLogin(
         FGamePlatformAuthCompletion Completion) override
-    {
-        ++LoginCalls;
-        Completion(true, TEXT("Account-1"), EGamePlatformAuthError::None);
-    }
-
-    virtual void Refresh(FGamePlatformAuthCompletion Completion) override
-    {
-        Completion(true, TEXT("Account-1"), EGamePlatformAuthError::None);
-    }
-
-    virtual void Logout(TFunction<void()> Completion) override
     {
         if (Completion)
         {
-            Completion();
+            Completion(SuccessfulAuthResult());
         }
     }
 
-    virtual FString GetAuthorizationHeaderValue() const override
+    virtual void LoginWithCredentials(
+        const FString&,
+        const FString&,
+        FGamePlatformAuthCompletion Completion) override
     {
-        return TEXT("Bearer test-secret");
+        ++LoginCalls;
+        if (Completion)
+        {
+            Completion(SuccessfulAuthResult());
+        }
     }
 
+    virtual void Refresh(
+        FGamePlatformAuthCompletion Completion) override
+    {
+        if (Completion)
+        {
+            Completion(SuccessfulAuthResult());
+        }
+    }
+
+    virtual void Logout(FGamePlatformAuthLogoutCompletion Completion) override
+    {
+        if (Completion)
+        {
+            FGamePlatformAuthProviderLogoutResult Result;
+            Result.bServerRevoked = true;
+            Completion(MoveTemp(Result));
+        }
+    }
+
+    virtual void SendUnauthenticatedRequest(
+        const FGuid&,
+        const FGamePlatformAuthenticatedRequest&,
+        FGamePlatformAuthenticatedCompletion Completion) override
+    {
+        if (Completion)
+        {
+            FGamePlatformAuthenticatedResponse Result;
+            Result.Error = EGamePlatformAuthError::None;
+            Result.HttpStatusCode = 200;
+            Result.Body = TEXT("{\"ready\":true,\"contractVersion\":\"1.0.0\",\"service\":\"gatewayservice\"}");
+            Completion(MoveTemp(Result));
+        }
+    }
+
+    virtual void SendAuthenticatedRequest(
+        const FGuid&,
+        const FGamePlatformAuthenticatedRequest&,
+        FGamePlatformAuthenticatedCompletion Completion) override
+    {
+        if (Completion)
+        {
+            FGamePlatformAuthenticatedResponse Result;
+            Result.Error = EGamePlatformAuthError::None;
+            Result.HttpStatusCode = 200;
+            Result.Body = TEXT("{}");
+            Completion(MoveTemp(Result));
+        }
+    }
+
+    virtual void CancelRequest(const FGuid&) override {}
+
+    virtual bool ApplyAuthorization(IHttpRequest&) const override
+    {
+        return bConfigured;
+    }
+
+    virtual void CancelAll() override {}
+
+    bool bConfigured = false;
     int32 LoginCalls = 0;
 };
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-    FGamePlatformOnlineAuthLifecycleTest,
-    "GamePlatform.Online.AuthLifecycle",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+    FGamePlatformOnlineAuthValidationTest,
+    "GamePlatform.Online.AuthValidation",
+    EAutomationTestFlags::EditorContext |
+        EAutomationTestFlags::EngineFilter)
 
-bool FGamePlatformOnlineAuthLifecycleTest::RunTest(const FString& Parameters)
+bool FGamePlatformOnlineAuthValidationTest::RunTest(
+    const FString& Parameters)
 {
     UGamePlatformOnlineClientSubsystem* Online =
         NewObject<UGamePlatformOnlineClientSubsystem>();
@@ -57,12 +129,25 @@ bool FGamePlatformOnlineAuthLifecycleTest::RunTest(const FString& Parameters)
         MakeShared<FTestGamePlatformAuthProvider>();
 
     Online->SetProvider(Provider);
+
     Online->LoginWithCredentials(TEXT(""), TEXT("password"));
     TestEqual(
         TEXT("空账号被拒绝"),
         Online->GetSnapshot().Error,
-        EGamePlatformAuthError::InvalidCredentials);
-    TestEqual(TEXT("无效凭据不得调用Provider"), Provider->LoginCalls, 0);
+        EGamePlatformAuthError::ProviderUnavailable);
+    TestEqual(
+        TEXT("未配置时不得调用Provider"),
+        Provider->LoginCalls,
+        0);
+
+    // Configure需要真实有效配置；这里使用HTTPS测试地址，不发起网络。
+    FGamePlatformOnlineConfiguration Configuration;
+    Configuration.ServiceOrigin = TEXT("https://gateway.example");
+    Configuration.GameId = TEXT("test-game");
+    Configuration.ClientVersion = TEXT("test-client");
+    TestTrue(
+        TEXT("合法在线配置被接受"),
+        Online->Configure(Configuration).IsSuccess());
 
     FString OversizedLogin;
     OversizedLogin.Reserve(257);
@@ -70,32 +155,22 @@ bool FGamePlatformOnlineAuthLifecycleTest::RunTest(const FString& Parameters)
     {
         OversizedLogin.AppendChar(TEXT('u'));
     }
-    Online->LoginWithCredentials(OversizedLogin, TEXT("password"));
+    Online->LoginWithCredentials(
+        OversizedLogin,
+        TEXT("password"));
     TestEqual(
         TEXT("超长账号被拒绝"),
         Online->GetSnapshot().Error,
         EGamePlatformAuthError::InvalidCredentials);
-    TestEqual(TEXT("超长凭据不得调用Provider"), Provider->LoginCalls, 0);
+    TestEqual(
+        TEXT("超长凭据不得调用Provider"),
+        Provider->LoginCalls,
+        0);
 
-    Online->LoginWithCredentials(TEXT("user"), TEXT("password"));
-    TestEqual(
-        TEXT("有效登录进入Authenticated"),
-        Online->GetSnapshot().State,
-        EGamePlatformAuthState::Authenticated);
-    TestEqual(TEXT("Provider仅被调用一次"), Provider->LoginCalls, 1);
-    TestEqual(TEXT("公开快照保存AccountId"), Online->GetSnapshot().AccountId, FString(TEXT("Account-1")));
-    TestEqual(
-        TEXT("Token只通过瞬时接口读取"),
-        Online->GetAuthorizationHeaderValueTransient(),
-        FString(TEXT("Bearer test-secret")));
-
-    Online->Logout();
-    TestEqual(
-        TEXT("登出回到LoggedOut"),
-        Online->GetSnapshot().State,
-        EGamePlatformAuthState::LoggedOut);
-    TestTrue(TEXT("登出清空AccountId"), Online->GetSnapshot().AccountId.IsEmpty());
+    // 真实成功回调统一投递到后续游戏线程任务，避免同步Provider造成重入；
+    // 此简单测试只验证同步Fail-Closed边界，异步状态由集成/Latent测试覆盖。
     return true;
 }
 
 #endif
+

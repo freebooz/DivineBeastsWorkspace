@@ -38,6 +38,14 @@ bool FGamePlatformServerInstanceInfoValidationTest::RunTest(const FString&)
     TestFalse(TEXT("可选集群字段同样拒绝换行注入"), Instance.IsValid());
     Instance.ClusterId = TEXT("cluster-a");
 
+    Instance.GameId = FString::ChrN(257, TEXT('g'));
+    TestFalse(TEXT("超过字段长度上限必须拒绝"), Instance.IsValid());
+    Instance.GameId = TEXT("divine-beasts");
+
+    Instance.NodeId = TEXT("node-01\rInjected");
+    TestFalse(TEXT("可选节点字段拒绝回车注入"), Instance.IsValid());
+    Instance.NodeId = TEXT("node-01");
+
     Instance.PublicEndpoint += TEXT("\nAuthorization: secret");
     TestFalse(TEXT("端点换行必须拒绝以防止头注入"), Instance.IsValid());
     return true;

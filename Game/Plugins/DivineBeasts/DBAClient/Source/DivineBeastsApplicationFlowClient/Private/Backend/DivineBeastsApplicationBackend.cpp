@@ -1,13 +1,10 @@
 #include "Backend/DivineBeastsApplicationBackend.h"
 
 #include "GamePlatformOnlineClientSubsystem.h"
-#include "HttpModule.h"
-#include "Interfaces/IHttpRequest.h"
-#include "Interfaces/IHttpResponse.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 #include "Dom/JsonObject.h"
-#include "HAL/PlatformMisc.h"
 
 namespace
 {
@@ -87,66 +84,63 @@ FDivineBeastsHttpApplicationBackend::FDivineBeastsHttpApplicationBackend(
     UGamePlatformOnlineClientSubsystem* InOnline)
     : Online(InOnline)
 {
-    GatewayBaseUrl =
-        FPlatformMisc::GetEnvironmentVariable(
-            TEXT("DIVINEBEASTS_GATEWAY_BASE_URL"));
-    GatewayBaseUrl.RemoveFromEnd(TEXT("/"));
-}
-
-FString FDivineBeastsHttpApplicationBackend::MakeUrl(
-    const FString& RelativePath) const
-{
-    return GatewayBaseUrl + RelativePath;
-}
-
-FString FDivineBeastsHttpApplicationBackend::GetAuthHeader() const
-{
-    return Online.IsValid()
-        ? Online->GetAuthorizationHeaderValueTransient()
-        : FString();
 }
 
 void FDivineBeastsHttpApplicationBackend::Send(
     const FString& Verb,
     const FString& RelativePath,
     const TSharedPtr<FJsonObject>& Body,
+    bool bIdempotent,
+    FString IdempotencyKey,
     FRawCompletion Completion)
 {
-    const FString Authorization = GetAuthHeader();
-    if (GatewayBaseUrl.IsEmpty() || Authorization.IsEmpty())
+    UGamePlatformOnlineClientSubsystem* OnlineService = Online.Get();
+    if (!OnlineService || !Completion)
     {
-        Completion(
-            false,
-            FString(),
-            EDivineBeastsFlowError::AuthenticationRequired);
+        if (Completion)
+        {
+            Completion(
+                false,
+                FString(),
+                EDivineBeastsFlowError::AuthenticationRequired);
+        }
         return;
     }
 
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
-        FHttpModule::Get().CreateRequest();
-    Request->SetURL(MakeUrl(RelativePath));
-    Request->SetVerb(Verb);
-    Request->SetHeader(TEXT("Authorization"), Authorization);
-    Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
-
+    FString Serialized;
     if (Body.IsValid())
     {
-        FString Serialized;
         const TSharedRef<TJsonWriter<>> Writer =
             TJsonWriterFactory<>::Create(&Serialized);
-        FJsonSerializer::Serialize(Body.ToSharedRef(), Writer);
-        Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
-        Request->SetContentAsString(Serialized);
+        if (!FJsonSerializer::Serialize(Body.ToSharedRef(), Writer))
+        {
+            Completion(
+                false,
+                FString(),
+                EDivineBeastsFlowError::ProfileUnavailable);
+            return;
+        }
     }
 
-    ActiveRequests.Add(Request);
+    FGamePlatformAuthenticatedRequest Request;
+    Request.Verb = Verb;
+    Request.RelativePath = RelativePath;
+    Request.Body = MoveTemp(Serialized);
+    Request.IdempotencyKey = MoveTemp(IdempotencyKey);
+    Request.bIdempotent = bIdempotent;
+
+    // GameInstance级业务操作允许跨地图继续，但会被本Backend的CancelAll显式取消。
+    FGamePlatformOnlineRequestOptions Options;
+    const TSharedRef<FGamePlatformOnlineRequestHandle> Handle =
+        MakeShared<FGamePlatformOnlineRequestHandle>();
     const TWeakPtr<FDivineBeastsHttpApplicationBackend> WeakThis =
         AsShared();
-    Request->OnProcessRequestComplete().BindLambda(
-        [WeakThis, Completion = MoveTemp(Completion)](
-            FHttpRequestPtr CompletedRequest,
-            FHttpResponsePtr Response,
-            bool bTransportSuccess) mutable
+
+    *Handle = OnlineService->SendAuthenticatedRequest(
+        MoveTemp(Request),
+        Options,
+        [WeakThis, Handle, Completion = MoveTemp(Completion)](
+            FGamePlatformAuthenticatedResponse Response) mutable
         {
             const TSharedPtr<FDivineBeastsHttpApplicationBackend> Self =
                 WeakThis.Pin();
@@ -155,58 +149,74 @@ void FDivineBeastsHttpApplicationBackend::Send(
                 return;
             }
 
-            Self->ActiveRequests.Remove(CompletedRequest);
-            if (!bTransportSuccess || !Response.IsValid())
+            Self->ActiveRequests.RemoveAll(
+                [Handle](const FGamePlatformOnlineRequestHandle& Existing)
+                {
+                    return Existing.InstanceScopeId == Handle->InstanceScopeId &&
+                        Existing.RequestId == Handle->RequestId;
+                });
+
+            if (Response.IsSuccess())
             {
                 Completion(
-                    false,
-                    FString(),
-                    EDivineBeastsFlowError::ProfileUnavailable);
+                    true,
+                    Response.Body,
+                    EDivineBeastsFlowError::None);
                 return;
             }
 
-            const int32 Code = Response->GetResponseCode();
-            if (Code < 200 || Code >= 300)
+            EDivineBeastsFlowError Error =
+                EDivineBeastsFlowError::ProfileUnavailable;
+            switch (Response.Error)
             {
-                EDivineBeastsFlowError Error =
-                    EDivineBeastsFlowError::ProfileUnavailable;
-                if (Code == 401)
+            case EGamePlatformAuthError::AuthExpired:
+            case EGamePlatformAuthError::InvalidCredentials:
+                Error = EDivineBeastsFlowError::AuthenticationRequired;
+                break;
+            case EGamePlatformAuthError::Forbidden:
+            case EGamePlatformAuthError::AccountLocked:
+                Error = EDivineBeastsFlowError::CharacterSelectionRejected;
+                break;
+            case EGamePlatformAuthError::Conflict:
+            case EGamePlatformAuthError::OutcomeUnknown:
+                Error = EDivineBeastsFlowError::CharacterCreateOutcomeUnknown;
+                break;
+            case EGamePlatformAuthError::ContractIncompatible:
+            case EGamePlatformAuthError::InvalidResponse:
+                Error = EDivineBeastsFlowError::ContractIncompatible;
+                break;
+            case EGamePlatformAuthError::ServiceUnavailable:
+            case EGamePlatformAuthError::Maintenance:
+                Error = EDivineBeastsFlowError::WorldAssignmentUnavailable;
+                break;
+            default:
+                if (Response.HttpStatusCode == 401)
                 {
                     Error = EDivineBeastsFlowError::AuthenticationRequired;
                 }
-                else if (Code == 403)
+                else if (Response.HttpStatusCode == 403)
                 {
                     Error = EDivineBeastsFlowError::CharacterSelectionRejected;
                 }
-                else if (Code == 409)
+                else if (Response.HttpStatusCode == 409)
                 {
                     Error = EDivineBeastsFlowError::CharacterCreateOutcomeUnknown;
                 }
-                else if (Code == 412)
+                else if (Response.HttpStatusCode == 412)
                 {
                     Error = EDivineBeastsFlowError::ContractIncompatible;
                 }
-                else if (Code == 503)
+                else if (Response.HttpStatusCode == 503)
                 {
                     Error = EDivineBeastsFlowError::WorldAssignmentUnavailable;
                 }
-                Completion(false, FString(), Error);
-                return;
+                break;
             }
-            Completion(
-                true,
-                Response->GetContentAsString(),
-                EDivineBeastsFlowError::None);
+
+            Completion(false, FString(), Error);
         });
 
-    if (!Request->ProcessRequest())
-    {
-        ActiveRequests.Remove(Request);
-        Completion(
-            false,
-            FString(),
-            EDivineBeastsFlowError::ProfileUnavailable);
-    }
+    ActiveRequests.Add(*Handle);
 }
 
 void FDivineBeastsHttpApplicationBackend::LoadProfile(
@@ -219,6 +229,8 @@ void FDivineBeastsHttpApplicationBackend::LoadProfile(
         // GET /v1/player/profile，禁止继续调用历史项目私有路径。
         TEXT("/v1/player/profile"),
         nullptr,
+        true,
+        FString(),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -286,6 +298,8 @@ void FDivineBeastsHttpApplicationBackend::LoadRoster(
         TEXT("GET"),
         TEXT("/v1/player/characters"),
         nullptr,
+        true,
+        FString(),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -352,6 +366,8 @@ void FDivineBeastsHttpApplicationBackend::CreateCharacter(
         TEXT("POST"),
         TEXT("/v1/player/characters"),
         Body,
+        true,
+        GuidText(OperationId),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -403,6 +419,8 @@ void FDivineBeastsHttpApplicationBackend::SelectPersistentCharacter(
         TEXT("POST"),
         TEXT("/v1/player/character-selection"),
         Body,
+        true,
+        GuidText(SelectionRequestId),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -475,6 +493,8 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
         TEXT("POST"),
         TEXT("/v1/divinebeasts/world-entry"),
         Body,
+        true,
+        GuidText(RequestId),
         [Completion = MoveTemp(Completion)](
             bool bSuccess,
             const FString& Raw,
@@ -541,12 +561,12 @@ void FDivineBeastsHttpApplicationBackend::RequestWorldAssignment(
 
 void FDivineBeastsHttpApplicationBackend::CancelAll()
 {
-    for (const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request :
-         ActiveRequests)
+    if (UGamePlatformOnlineClientSubsystem* OnlineService = Online.Get())
     {
-        if (Request.IsValid())
+        for (const FGamePlatformOnlineRequestHandle& Request :
+             ActiveRequests)
         {
-            Request->CancelRequest();
+            OnlineService->Cancel(Request);
         }
     }
     ActiveRequests.Reset();

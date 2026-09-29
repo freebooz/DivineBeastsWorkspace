@@ -101,6 +101,32 @@ static void DeferredOnceAndFailedStart()
     Require(F.Results.size() == 1 && !F.Session.Cancel(Id), "late callback and cancel once");
 }
 
+static void ConcurrentLoginBusyDoesNotCancelOwner()
+{
+    FFixture F;
+    FInput First; First.AccountName = "a"; First.Credential = "password-a";
+    FInput Second; Second.AccountName = "b"; Second.Credential = "password-b";
+
+    F.Submit(EOperation::Login, std::move(First));
+    F.Tick();
+    Require(F.Transport.Sent.size() == 1, "first login dispatched");
+    const auto Generation = F.Session.Authentication().Generation;
+    Require(F.Session.Authentication().State == EAuthState::SigningIn, "first login owns signing state");
+
+    F.Submit(EOperation::Login, std::move(Second));
+    F.Tick();
+    F.Tick();
+    Require(!F.Results.empty() && F.Results.back().Error == EError::AuthenticationBusy, "second login rejected busy");
+    Require(F.Session.Authentication().State == EAuthState::SigningIn &&
+        F.Session.Authentication().Generation == Generation,
+        "busy login must not cancel active owner");
+
+    F.Transport.Reply(0, FFixture::Auth());
+    F.Tick();
+    F.Tick();
+    Require(F.Session.Authentication().State == EAuthState::SignedIn, "first login remains valid after busy rejection");
+}
+
 static void RefreshSingleFlightAndOldToken()
 {
     FFixture F; F.Login();
@@ -182,6 +208,7 @@ int RunOnlineSessionTests()
     struct FCase { const char* Name; void (*Run)(); };
     const FCase Cases[] = {
         {"ConfigurationFailClosed", ConfigurationFailClosed}, {"DeferredOnceAndFailedStart", DeferredOnceAndFailedStart},
+        {"ConcurrentLoginBusyDoesNotCancelOwner", ConcurrentLoginBusyDoesNotCancelOwner},
         {"RefreshSingleFlightAndOldToken", RefreshSingleFlightAndOldToken}, {"ForbiddenAndLostRefresh", ForbiddenAndLostRefresh},
         {"LogoutRejectsLateAuthentication", LogoutRejectsLateAuthentication}, {"CancelWaiterAndScope", CancelWaiterAndScope},
         {"MonotonicProfileAndAccountIsolation", MonotonicProfileAndAccountIsolation}, {"BudgetsRetriesAndShutdown", BudgetsRetriesAndShutdown}

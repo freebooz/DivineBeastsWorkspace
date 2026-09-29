@@ -141,7 +141,17 @@ std::string FSession::Submit(EOperation Op, FInput Input, FOptions Options, FCom
     {
         if (Auth.State != EAuthState::SignedOut) Error = EError::AuthenticationBusy;
         else if (R->Input.AccountName.empty() || R->Input.AccountName.size() > 256 || R->Input.Credential.empty() || R->Input.Credential.size() > 4096 || R->Input.DeviceId.size() > 256) Error = EError::InvalidArgument;
-        else { ++Auth.Generation; Auth.ContextId = NewId(); Auth.State = EAuthState::SigningIn; R->Generation = Auth.Generation; R->ContextId = Auth.ContextId; }
+        else
+        {
+            ++Auth.Generation;
+            Auth.ContextId = NewId();
+            Auth.State = EAuthState::SigningIn;
+            R->Generation = Auth.Generation;
+            R->ContextId = Auth.ContextId;
+            // 只有真正创建本次 SigningIn 转换的请求才有权在失败时清理认证上下文。
+            // 被 AuthenticationBusy 拒绝的并发 Login 不能误伤已经在飞行中的合法登录。
+            R->bOwnsLoginTransition = true;
+        }
     }
     else if (IsBound(Op) && Auth.State != EAuthState::SignedIn && Auth.State != EAuthState::Refreshing) Error = EError::Unauthenticated;
     if (Error == EError::None && Op == EOperation::UpdateProfile &&
@@ -158,8 +168,13 @@ void FSession::Finish(const std::string& Id, EError Error, const FReply* Reply)
     auto R = It->second; Requests.erase(It); // 先移除再取消；同步晚回调只能进入邮箱，不能第二次完成。
     if (!R->AttemptId.empty()) Transport.Cancel(R->AttemptId);
     FOutcome O; O.Error = Error; O.RequestId = R->Id; O.Elapsed = std::max(0.0, Clock - R->Started);
-    if (R->Operation == EOperation::Login && Error != EError::None && R->Generation == Auth.Generation && Auth.State == EAuthState::SigningIn)
-    { ++Auth.Generation; Auth.ContextId.clear(); Auth.State = EAuthState::SignedOut; }
+    if (R->Operation == EOperation::Login && R->bOwnsLoginTransition && Error != EError::None &&
+        R->Generation == Auth.Generation && Auth.State == EAuthState::SigningIn)
+    {
+        ++Auth.Generation;
+        Auth.ContextId.clear();
+        Auth.State = EAuthState::SignedOut;
+    }
     if (R->Operation == EOperation::Logout)
         O.Logout = R->RevokeToken.empty() ? ELogout::LocalSignedOut : (Error == EError::None ? ELogout::ServerRevoked : ELogout::RevocationUnconfirmed);
     O.Authentication = Auth;

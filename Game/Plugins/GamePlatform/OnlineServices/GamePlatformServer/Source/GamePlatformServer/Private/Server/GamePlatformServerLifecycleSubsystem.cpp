@@ -38,6 +38,9 @@ bool UGamePlatformServerLifecycleSubsystem::ShouldCreateSubsystem(
 void UGamePlatformServerLifecycleSubsystem::Deinitialize()
 {
     // 使所有迟到回调失效；关闭期间不发新网络操作。
+    StopHeartbeatPump();
+    CancelControlRetry();
+    DeferredControlOperation.Reset();
     ++Generation;
     bHeartbeatInFlight = false;
     bControlOperationInFlight = false;
@@ -78,6 +81,53 @@ bool UGamePlatformServerLifecycleSubsystem::SendHeartbeat(int32 CurrentPlayers)
     return StartProviderOperation(EControlOperation::Heartbeat, CurrentPlayers);
 }
 
+bool UGamePlatformServerLifecycleSubsystem::StartHeartbeatPump(
+    FGamePlatformServerPlayerCountProvider PlayerCountProvider,
+    float IntervalSeconds)
+{
+    check(IsInGameThread());
+    const bool bLifecycleAllowsHeartbeat =
+        Snapshot.State == EGamePlatformServerLifecycleState::Registered ||
+        Snapshot.State == EGamePlatformServerLifecycleState::Ready ||
+        Snapshot.State == EGamePlatformServerLifecycleState::Draining;
+    if (!bLifecycleAllowsHeartbeat || !PlayerCountProvider ||
+        !FMath::IsFinite(IntervalSeconds) || IntervalSeconds < 1.0f ||
+        IntervalSeconds > 60.0f)
+    {
+        return false;
+    }
+
+    // Ready状态可能因瞬时心跳恢复再次广播；已有泵直接复用，避免重复Ticker和重复HTTP。
+    if (HeartbeatTickerHandle.IsValid())
+    {
+        return true;
+    }
+
+    HeartbeatPlayerCountProvider = MoveTemp(PlayerCountProvider);
+    HeartbeatTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateUObject(
+            this,
+            &UGamePlatformServerLifecycleSubsystem::TickHeartbeat),
+        IntervalSeconds);
+    if (!HeartbeatTickerHandle.IsValid())
+    {
+        HeartbeatPlayerCountProvider = nullptr;
+        return false;
+    }
+    return true;
+}
+
+void UGamePlatformServerLifecycleSubsystem::StopHeartbeatPump()
+{
+    check(IsInGameThread());
+    if (HeartbeatTickerHandle.IsValid())
+    {
+        FTSTicker::GetCoreTicker().RemoveTicker(HeartbeatTickerHandle);
+        HeartbeatTickerHandle.Reset();
+    }
+    HeartbeatPlayerCountProvider = nullptr;
+}
+
 bool UGamePlatformServerLifecycleSubsystem::MarkReady()
 {
     check(IsInGameThread());
@@ -96,6 +146,15 @@ bool UGamePlatformServerLifecycleSubsystem::BeginDrain()
     {
         return false;
     }
+
+    // Drain优先级高于周期心跳：先停止后续心跳，本地立即进入Draining以停止新准入。
+    StopHeartbeatPump();
+    if (bHeartbeatInFlight)
+    {
+        DeferredControlOperation = EControlOperation::BeginDrain;
+        SetState(EGamePlatformServerLifecycleState::Draining);
+        return true;
+    }
     return StartProviderOperation(EControlOperation::BeginDrain);
 }
 
@@ -106,14 +165,155 @@ bool UGamePlatformServerLifecycleSubsystem::CompleteDrain()
     {
         return false;
     }
-    if (bControlOperationInFlight || bHeartbeatInFlight)
+    if (bControlOperationInFlight || bHeartbeatInFlight ||
+        ControlRetryTickerHandle.IsValid() || PendingControlRetryOperation.IsSet() ||
+        DeferredControlOperation.IsSet())
     {
+        // 只有控制面已确认Drain且没有待重试操作时，才允许结束本地生命周期。
         return false;
     }
+    StopHeartbeatPump();
+    CancelControlRetry();
     ++Generation;
     ActiveInstance = FGamePlatformServerInstanceInfo();
     SetState(EGamePlatformServerLifecycleState::Stopped);
     return true;
+}
+
+bool UGamePlatformServerLifecycleSubsystem::TickHeartbeat(float)
+{
+    check(IsInGameThread());
+    const bool bLifecycleAllowsHeartbeat =
+        Snapshot.State == EGamePlatformServerLifecycleState::Registered ||
+        Snapshot.State == EGamePlatformServerLifecycleState::Ready ||
+        Snapshot.State == EGamePlatformServerLifecycleState::Draining;
+    if (!bLifecycleAllowsHeartbeat || !HeartbeatPlayerCountProvider)
+    {
+        // 返回false会由Ticker自行注销；只清本地句柄，避免回调内二次Remove当前Ticker。
+        HeartbeatTickerHandle.Reset();
+        HeartbeatPlayerCountProvider = nullptr;
+        return false;
+    }
+
+    const int32 CurrentPlayers = HeartbeatPlayerCountProvider();
+    if (CurrentPlayers < 0 || CurrentPlayers > ActiveInstance.Capacity)
+    {
+        HeartbeatTickerHandle.Reset();
+        HeartbeatPlayerCountProvider = nullptr;
+        SetState(
+            EGamePlatformServerLifecycleState::Failed,
+            TEXT("HeartbeatPlayerCountInvalid"));
+        return false;
+    }
+
+    // 上一请求尚在飞行或Ready/Drain正在切换时跳过本周期，不排队，不制造网络积压。
+    SendHeartbeat(CurrentPlayers);
+    return true;
+}
+
+bool UGamePlatformServerLifecycleSubsystem::IsTransientControlError(FName ErrorCode)
+{
+    return ErrorCode == FName(TEXT("ControlPlaneTransportFailed")) ||
+        ErrorCode == FName(TEXT("ControlPlaneRequestStartFailed")) ||
+        ErrorCode == FName(TEXT("ControlPlaneRetryableHttpStatus"));
+}
+
+float UGamePlatformServerLifecycleSubsystem::ComputeControlRetryDelaySeconds() const
+{
+    // 0.5、1、2、4秒后封顶8秒；加入基于实例ID的稳定抖动，避免大量服务器同时恢复造成惊群。
+    const int32 Exponent = FMath::Clamp(Snapshot.ConsecutiveControlFailures - 1, 0, 4);
+    const float BaseDelay = FMath::Min(8.0f, 0.5f * static_cast<float>(1 << Exponent));
+    const uint32 StableHash = GetTypeHash(ActiveInstance.GameServerId);
+    const float JitterUnit = static_cast<float>(StableHash % 2001) / 10000.0f - 0.1f;
+    return FMath::Clamp(BaseDelay * (1.0f + JitterUnit), 0.4f, 8.8f);
+}
+
+void UGamePlatformServerLifecycleSubsystem::ScheduleControlRetry(EControlOperation Operation)
+{
+    check(IsInGameThread());
+    PendingControlRetryOperation = Operation;
+    if (ControlRetryTickerHandle.IsValid())
+    {
+        return;
+    }
+    ControlRetryTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateUObject(
+            this,
+            &UGamePlatformServerLifecycleSubsystem::TickControlRetry),
+        ComputeControlRetryDelaySeconds());
+    if (!ControlRetryTickerHandle.IsValid())
+    {
+        PendingControlRetryOperation.Reset();
+        SetState(
+            EGamePlatformServerLifecycleState::Failed,
+            TEXT("ControlRetryScheduleFailed"));
+    }
+}
+
+void UGamePlatformServerLifecycleSubsystem::CancelControlRetry()
+{
+    check(IsInGameThread());
+    if (ControlRetryTickerHandle.IsValid())
+    {
+        FTSTicker::GetCoreTicker().RemoveTicker(ControlRetryTickerHandle);
+        ControlRetryTickerHandle.Reset();
+    }
+    PendingControlRetryOperation.Reset();
+}
+
+bool UGamePlatformServerLifecycleSubsystem::TickControlRetry(float)
+{
+    check(IsInGameThread());
+    ControlRetryTickerHandle.Reset();
+    if (!PendingControlRetryOperation.IsSet())
+    {
+        return false;
+    }
+
+    const EControlOperation Operation = PendingControlRetryOperation.GetValue();
+    PendingControlRetryOperation.Reset();
+    const bool bStateStillMatches =
+        (Operation == EControlOperation::Register &&
+            Snapshot.State == EGamePlatformServerLifecycleState::Registering) ||
+        (Operation == EControlOperation::Ready &&
+            Snapshot.State == EGamePlatformServerLifecycleState::PublishingReady) ||
+        (Operation == EControlOperation::BeginDrain &&
+            Snapshot.State == EGamePlatformServerLifecycleState::Draining);
+    if (!bStateStillMatches || Snapshot.State == EGamePlatformServerLifecycleState::Stopped ||
+        Snapshot.State == EGamePlatformServerLifecycleState::Failed)
+    {
+        return false;
+    }
+
+    if (!StartProviderOperation(Operation) &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Failed &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Stopped)
+    {
+        // 极短竞态不丢失恢复意图；真正配置错误会由StartProviderOperation推进Failed并停止重试。
+        ScheduleControlRetry(Operation);
+    }
+    return false;
+}
+
+void UGamePlatformServerLifecycleSubsystem::TryStartDeferredControlOperation()
+{
+    check(IsInGameThread());
+    if (!DeferredControlOperation.IsSet() || bHeartbeatInFlight || bControlOperationInFlight ||
+        Snapshot.State == EGamePlatformServerLifecycleState::Failed ||
+        Snapshot.State == EGamePlatformServerLifecycleState::Stopped)
+    {
+        return;
+    }
+
+    const EControlOperation Operation = DeferredControlOperation.GetValue();
+    DeferredControlOperation.Reset();
+    if (!StartProviderOperation(Operation) &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Failed &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Stopped)
+    {
+        ++Snapshot.ConsecutiveControlFailures;
+        ScheduleControlRetry(Operation);
+    }
 }
 
 IGamePlatformServerControlProvider*
@@ -240,18 +440,50 @@ void UGamePlatformServerLifecycleSubsystem::CompleteOperation(
         bHeartbeatInFlight = false;
         if (!bSucceeded)
         {
-            SetState(EGamePlatformServerLifecycleState::Failed,
-                ErrorCode.IsNone() ? FName(TEXT("HeartbeatFailed")) : ErrorCode);
+            const FName EffectiveError =
+                ErrorCode.IsNone() ? FName(TEXT("HeartbeatFailed")) : ErrorCode;
+            ++Snapshot.ConsecutiveHeartbeatFailures;
+            if (IsTransientControlError(EffectiveError))
+            {
+                // 短暂断网、超时、429/5xx不把已运行世界永久打死；下一Heartbeat周期自然重试。
+                SetState(Snapshot.State, EffectiveError);
+                TryStartDeferredControlOperation();
+                return;
+            }
+            DeferredControlOperation.Reset();
+            SetState(EGamePlatformServerLifecycleState::Failed, EffectiveError);
+            return;
         }
+
+        if (Snapshot.ConsecutiveHeartbeatFailures > 0 || !Snapshot.ErrorCode.IsNone())
+        {
+            Snapshot.ConsecutiveHeartbeatFailures = 0;
+            SetState(Snapshot.State, NAME_None);
+        }
+        TryStartDeferredControlOperation();
         return;
     }
     bControlOperationInFlight = false;
     if (!bSucceeded)
     {
-        SetState(EGamePlatformServerLifecycleState::Failed,
-            ErrorCode.IsNone() ? FName(TEXT("ControlOperationFailed")) : ErrorCode);
+        const FName EffectiveError =
+            ErrorCode.IsNone() ? FName(TEXT("ControlOperationFailed")) : ErrorCode;
+        ++Snapshot.ConsecutiveControlFailures;
+        if (IsTransientControlError(EffectiveError))
+        {
+            // 注册、Ready和Drain均保持当前过渡态，以指数退避重试；不会逐帧重试或创建并发请求。
+            SetState(Snapshot.State, EffectiveError);
+            ScheduleControlRetry(Operation);
+            return;
+        }
+        CancelControlRetry();
+        DeferredControlOperation.Reset();
+        SetState(EGamePlatformServerLifecycleState::Failed, EffectiveError);
         return;
     }
+
+    CancelControlRetry();
+    Snapshot.ConsecutiveControlFailures = 0;
 
     switch (Operation)
     {
