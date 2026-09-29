@@ -1,0 +1,18 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "神兽联盟前端三维场景内容包",
+  "Description": "第三层纯内容插件，持有登录后角色选择/创建所需的客户端前端地图、角色预览工作室和前端场景资产；不属于DBAWorlds正式服务器世界，不进入Dedicated Server。",
+  "Category": "DivineBeasts.Content.FrontEnd",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    {
+      "Name": "GamePlatformPresentation",
+      "Enabled": true,
+      "TargetAllowList": ["Client", "Editor"]
+    }
+  ]
+}

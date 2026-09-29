@@ -1,6 +1,8 @@
 #include "ViewModels/DivineBeastsUIViewModel.h"
 
 #include "DivineBeastsUIClientSubsystem.h"
+#include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
+#include "Engine/LocalPlayer.h"
 
 void UDivineBeastsUIViewModel::InitializeForScreen(
     UDivineBeastsUIClientSubsystem* InOwner,
@@ -96,6 +98,53 @@ FGuid UDivineBeastsUIViewModel::SelectPersistentCharacter(
     Command.Type = EDivineBeastsUICommandType::SelectPersistentCharacter;
     Command.CharacterId = CharacterId;
     return Submit(MoveTemp(Command));
+}
+
+bool UDivineBeastsUIViewModel::PreviewCharacterHero(FName HeroDefinitionId)
+{
+    ULocalPlayer* LocalPlayer = Owner ? Owner->GetLocalPlayer() : nullptr;
+    UDivineBeastsCharacterPreviewSubsystem* Preview =
+        LocalPlayer
+            ? LocalPlayer->GetSubsystem<UDivineBeastsCharacterPreviewSubsystem>()
+            : nullptr;
+    return Preview && Preview->PreviewHero(HeroDefinitionId);
+}
+
+void UDivineBeastsUIViewModel::ClearCharacterPreview()
+{
+    ULocalPlayer* LocalPlayer = Owner ? Owner->GetLocalPlayer() : nullptr;
+    if (UDivineBeastsCharacterPreviewSubsystem* Preview =
+            LocalPlayer
+                ? LocalPlayer->GetSubsystem<UDivineBeastsCharacterPreviewSubsystem>()
+                : nullptr)
+    {
+        Preview->ClearPreview();
+    }
+}
+
+void UDivineBeastsUIViewModel::RotateCharacterPreview(float DeltaYawDegrees)
+{
+    ULocalPlayer* LocalPlayer = Owner ? Owner->GetLocalPlayer() : nullptr;
+    if (UDivineBeastsCharacterPreviewSubsystem* Preview =
+            LocalPlayer
+                ? LocalPlayer->GetSubsystem<UDivineBeastsCharacterPreviewSubsystem>()
+                : nullptr)
+    {
+        Preview->RotatePreview(DeltaYawDegrees);
+    }
+}
+
+void UDivineBeastsUIViewModel::SetCharacterPreviewCameraDistance(
+    float DistanceCentimeters)
+{
+    ULocalPlayer* LocalPlayer = Owner ? Owner->GetLocalPlayer() : nullptr;
+    if (UDivineBeastsCharacterPreviewSubsystem* Preview =
+            LocalPlayer
+                ? LocalPlayer->GetSubsystem<UDivineBeastsCharacterPreviewSubsystem>()
+                : nullptr)
+    {
+        Preview->SetPreviewCameraDistance(DistanceCentimeters);
+    }
 }
 
 FGuid UDivineBeastsUIViewModel::RequestWorld(

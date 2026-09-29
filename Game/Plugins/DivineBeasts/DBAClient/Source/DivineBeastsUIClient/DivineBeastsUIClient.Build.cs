@@ -36,7 +36,9 @@ public class DivineBeastsUIClient : ModuleRules
         // 公开 UI 类型不暴露流程头文件，避免把项目流程依赖扩散给所有 UI 消费者。
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "DivineBeastsApplicationFlowClient"
+            "DivineBeastsApplicationFlowClient",
+            // 角色选择/创建页只通过项目表现子系统驱动三维预览，不直接加载Mesh或地图资产。
+            "DivineBeastsPresentationClient"
         });
     }
 }

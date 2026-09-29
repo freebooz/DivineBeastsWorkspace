@@ -65,6 +65,10 @@ Authentication（认证）节点观察 `GamePlatformOnlineClient（游戏平台�
 
 认证成功后由平台流程进入 `LoadProfile → LoadRoster → CharacterEntry`。CharacterEntry 是等待节点：创建新角色或选择已有角色由 UI 提交语义命令，再通过具名 Outcome（结果分支）进入 `CreateCharacter` 或 `ValidateSelection`。角色所有权、版本、资格最终以后端校验为准。
 
+`CharacterEntry / CreateCharacter / ValidateSelection` 期间的三维角色展示属于纯客户端 FrontEnd（前端）表现，不属于 World Assignment。`DivineBeastsUIClient` 根据 ViewState 事件驱动 `UDivineBeastsCharacterPreviewSubsystem`，按需流送 `/DBAFrontEndPack/Maps/L_DBA_CharacterStudio`，并通过现有 `DA_Appearance_Zodiac_*` 显示 Manny/Quinn 或未来正式生肖模型。预览 Actor 无复制、无玩法组件，预览切换不会提交角色选择，也不会推进流程节点。
+
+`L_DBA_FrontEnd / L_DBA_CharacterStudio` 不创建 `UDivineBeastsWorldDefinition`，不要求 Session Admission、ServerRole 或 Dedicated Server。只有进入 `ResolveExperience → RequestWorld` 后，流程才开始正式服务器世界分配。
+
 ## 5. 世界角色和体验
 
 正式服务器角色只有：

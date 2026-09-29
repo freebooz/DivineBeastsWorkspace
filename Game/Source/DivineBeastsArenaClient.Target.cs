@@ -16,6 +16,8 @@ public class DivineBeastsArenaClientTarget : TargetRules
         EnablePlugins.Add("GamePlatformSurface");
         // 公共UI二进制资产由第三层纯内容插件拥有；客户端显式启用，服务器目标不携带。
         EnablePlugins.Add("DBAUIPack_Core");
+        // 登录后角色选择/创建的三维前端地图只进入客户端，不属于DBAWorlds服务器世界。
+        EnablePlugins.Add("DBAFrontEndPack");
         // 十二生肖角色视觉内容只进入客户端：公共Mannequin源 + 12个独立英雄包。
         // 后期真实生肖替换仍沿用这些插件身份和Profile路径，不修改逻辑HeroDefinitionId。
         EnablePlugins.Add("DBAContentPack_Common");

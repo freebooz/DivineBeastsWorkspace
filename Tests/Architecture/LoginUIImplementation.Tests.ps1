@@ -39,7 +39,8 @@
         Test-Path -LiteralPath $loginAsset -PathType Leaf | Should Be $true
         Test-Path -LiteralPath $manifestPath -PathType Leaf | Should Be $true
         if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
-            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            # 明确按UTF-8读取中文Monolith清单，避免Windows PowerShell按本机ANSI代码页解码后破坏JSON。
+            $manifest = [IO.File]::ReadAllText($manifestPath, [Text.Encoding]::UTF8) | ConvertFrom-Json
             $manifest.CreationTool | Should Be 'Monolith MCP'
             @($manifest.Assets | Where-Object { $_.AssetPath -eq '/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout' }).Count | Should Be 1
             @($manifest.Assets | Where-Object { $_.AssetPath -eq '/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login' }).Count | Should Be 1

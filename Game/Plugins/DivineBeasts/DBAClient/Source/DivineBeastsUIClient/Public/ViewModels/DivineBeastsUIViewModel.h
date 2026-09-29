@@ -67,6 +67,19 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Command")
     FGuid SelectPersistentCharacter(const FString& CharacterId);
 
+    /** 仅驱动客户端三维预览，不提交业务选择、不改变ApplicationFlow。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|CharacterPreview")
+    bool PreviewCharacterHero(FName HeroDefinitionId);
+
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|CharacterPreview")
+    void ClearCharacterPreview();
+
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|CharacterPreview")
+    void RotateCharacterPreview(float DeltaYawDegrees);
+
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|CharacterPreview")
+    void SetCharacterPreviewCameraDistance(float DistanceCentimeters);
+
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Command")
     FGuid RequestWorld(
         FName DesiredExperienceId,

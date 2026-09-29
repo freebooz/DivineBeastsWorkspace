@@ -2,6 +2,14 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-29｜登录后角色选择/创建三维前端预览
+
+- 新增第三层纯内容插件 `DBAFrontEndPack（神兽联盟前端三维场景内容包）`，仅 Client/Editor Target 启用，Server Target 不启用；不纳入 `DBAWorlds`、WorldDefinition、ServerRole、Session Admission 或 World Assignment。
+- UE5.8 已真实生成 `/DBAFrontEndPack/Maps/L_DBA_FrontEnd` 与 `/DBAFrontEndPack/Maps/L_DBA_CharacterStudio` 两张 `.umap`；编辑器回读确认 CharacterStudio 包含 `CharacterPreviewStage` 和 Key/Fill/Rim 三盏预览灯，FrontEnd 包含 `FrontEndCamera`。
+- `GamePlatformPresentationClient` 新增跨项目 `AGamePlatformCharacterPreviewStage`，无 Tick、无复制，只接收已加载 Mesh/Material/AnimInstance 并提供角色旋转和镜头距离控制；平台层不出现 DivineBeasts/生肖身份。
+- `DivineBeastsPresentationClient` 新增 `UDivineBeastsCharacterPreviewSubsystem`，按需流送 CharacterStudio，复用 `FDivineBeastsCharacterAppearanceCatalog` 与现有 12 个 `DA_Appearance_Zodiac_*`；异步请求使用 RequestGeneration 防止旧资源覆盖新预览。
+- `DivineBeastsUIClient` 增加角色预览轻量接口并按 `CharacterEntry/CreateCharacter/ValidateSelection` ViewState 自动启停预览；预览动作不提交业务选择、不改变 ApplicationFlow。平台表现与项目表现模块 UE5.8 定向编译/链接成功；UI 两个本轮修改源文件的进一步单文件编译当前被同 Runner 另一 UBT 进程互斥锁暂时阻断，完整 UI 模块另有既有测试冲突标记与 Inventory 编译错误，不归因于本次前端预览实现。
+
 ## 2026-09-29｜新增 GamePlatformSurface 通用环境表面材质插件
 
 - 在`Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/`新增正式平台插件，采用`GamePlatformSurfaceClient（ClientOnly）＋GamePlatformSurfaceEditor（Editor）`双模块，不建立Runtime／Server空模块；Client与Editor Target显式启用，Server Target不启用。
