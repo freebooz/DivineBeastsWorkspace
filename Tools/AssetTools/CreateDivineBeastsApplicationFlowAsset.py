@@ -146,12 +146,16 @@ def write_new_asset(unreal, asset):
 
     reflected_nodes = []
     for item in values["nodes"]:
-        reflected = node_type()
-        reflected.set_editor_property("node_id", item["node_id"])
-        reflected.set_editor_property("executor_id", item["executor_id"])
-        reflected.set_editor_property("timeout_seconds", item["timeout_seconds"])
-        reflected.set_editor_property("next_node_id", item["next_node_id"])
-        reflected.set_editor_property("routes", item["routes"])
+        # 节点字段为EditDefaultsOnly；独立Python结构体实例不能通过编辑接口修改。
+        # UE结构体构造参数直接初始化值，再整体写入DataAsset的默认Nodes数组，
+        # 保留引擎类型转换与资产保存校验，不放宽运行期字段的编辑权限。
+        reflected = node_type(
+            node_id=item["node_id"],
+            executor_id=item["executor_id"],
+            timeout_seconds=item["timeout_seconds"],
+            next_node_id=item["next_node_id"],
+            routes=item["routes"],
+        )
         reflected_nodes.append(reflected)
 
     asset.set_editor_property("entry_node_id", values["entry_node_id"])
@@ -169,8 +173,12 @@ def main():
     require(flow_class is not None,
             "UGamePlatformFlowDefinition反射类未加载，请先完成UE模块编译")
 
-    asset = assets.load_asset(ASSET_PACKAGE)
-    created = asset is None
+    # 首次生成先查询存在性，避免以预期的LoadAsset失败污染Commandlet退出码。
+    # 已登记但无法加载的资产必须报错，不能把损坏资产误判为首次创建后覆盖。
+    created = not assets.does_asset_exist(ASSET_PACKAGE)
+    asset = None if created else assets.load_asset(ASSET_PACKAGE)
+    if not created:
+        require(asset is not None, "已有流程资产无法加载；禁止自动覆盖")
 
     if created:
         tools = unreal.AssetToolsHelpers.get_asset_tools()

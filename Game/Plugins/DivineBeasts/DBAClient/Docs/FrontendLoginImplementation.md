@@ -275,6 +275,8 @@ divinebeasts.application.main@1
 
 仓库已提供 `Tools/AssetTools/CreateDivineBeastsApplicationFlowAsset.py（神兽联盟应用流程资产生成器）`，它只能通过真实 UE5.8 Editor 反射创建 `/DBAClient/Definitions/DA_DivineBeastsApplicationFlow`，并严格校验 14 个正式节点、具名路由及循环策略；禁止生成伪 `.uasset`。只有该 DataAsset（数据资产）真实落盘并能被 AssetManager（资产管理器）扫描、Data Lease（数据租约）成功取得后，`UDivineBeastsApplicationFlowSubsystem::StartFlow` 才会调用平台唯一状态机。
 
+2026-09-30 发布验证已生成上述真实资产，并在独立 UE5.8 进程重新加载后校验14节点与逻辑身份，退出码0。生成器对 EditDefaultsOnly 节点采用结构体构造初始化，已有资产只校验，不能自动覆盖；存在但加载失败时明确拒绝。本次证据为 `Saved/Validation/LoginVillageRelease/20260930/VerifyApplicationFlowReopen.log`。此结果只证明定义资产保存与重载，角色创建／选择等规划页面和世界就绪事实的生产调用方仍须单独实现与验证，不代表登录到新手村已经闭环。
+
 ## 9. 验收顺序
 
 1. C++ / UHT / Client Module 构建；
