@@ -19,6 +19,38 @@ enum class EGamePlatformVFXDefinitionQueueResult : uint8
     Executed
 };
 
+/** 去重键类型；使用结构化值避免高频Play路径构造FString。 */
+enum class EGamePlatformVFXDedupeKind : uint8
+{
+    None,
+    Request,
+    Activation
+};
+
+/** 预测/确认/纠正共享的结构化去重键。 */
+struct FGamePlatformVFXDedupeKey
+{
+    EGamePlatformVFXDedupeKind Kind = EGamePlatformVFXDedupeKind::None;
+    FGuid Id;
+    int64 PredictionKey = 0;
+
+    bool IsValid() const
+    {
+        return Kind != EGamePlatformVFXDedupeKind::None && Id.IsValid();
+    }
+
+    friend bool operator==(const FGamePlatformVFXDedupeKey& A, const FGamePlatformVFXDedupeKey& B)
+    {
+        return A.Kind == B.Kind && A.Id == B.Id && A.PredictionKey == B.PredictionKey;
+    }
+
+    friend uint32 GetTypeHash(const FGamePlatformVFXDedupeKey& Key)
+    {
+        uint32 Hash = HashCombine(GetTypeHash(static_cast<uint8>(Key.Kind)), GetTypeHash(Key.Id));
+        return HashCombine(Hash, GetTypeHash(Key.PredictionKey));
+    }
+};
+
 /** 同一个共享Definition加载完成前等待执行的单个VFX实例。 */
 struct FGamePlatformVFXPendingDefinitionRequest
 {
@@ -68,7 +100,7 @@ public:
 
 private:
     void HandleStartupCatalogsLoaded();
-    FString MakeDedupeKey(const FGamePlatformVFXRequest& Request) const;
+    FGamePlatformVFXDedupeKey MakeDedupeKey(const FGamePlatformVFXRequest& Request) const;
     FName ResolveDefinitionId(const FGamePlatformVFXRequest& Request, bool& bOutAmbiguous) const;
 
     EGamePlatformVFXDefinitionQueueResult QueueDefinitionLoad(
@@ -93,7 +125,7 @@ private:
     void ReleaseLease(const FGamePlatformDataLease& Lease) const;
     void ScheduleLifetime(const FGamePlatformVFXHandle& Handle, float Seconds);
 
-    void AddDedupeHandle(const FString& Key, const FGamePlatformVFXHandle& Handle);
+    void AddDedupeHandle(const FGamePlatformVFXDedupeKey& Key, const FGamePlatformVFXHandle& Handle);
     void RemoveDedupeHandle(const FGamePlatformVFXHandle& Handle);
 
     void RegisterCompositeTimer(
@@ -126,8 +158,8 @@ private:
     TMap<FGuid, FTimerHandle> LifetimeTimers;
     TMap<FGuid, TArray<FTimerHandle>> CompositeStepTimers;
 
-    TMap<FString, FGamePlatformVFXHandle> DedupeHandles;
-    TMap<FGuid, FString> DedupeKeysByHandle;
+    TMap<FGamePlatformVFXDedupeKey, FGamePlatformVFXHandle> DedupeHandles;
+    TMap<FGuid, FGamePlatformVFXDedupeKey> DedupeKeysByHandle;
 
     TArray<FGamePlatformVFXRegistrationHandle> StartupCatalogHandles;
     TSharedPtr<FStreamableHandle> StartupCatalogLoadLease;

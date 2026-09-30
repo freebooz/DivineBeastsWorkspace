@@ -165,24 +165,24 @@ void UGamePlatformVFXWorldSubsystem::HandleStartupCatalogsLoaded()
     }
 }
 
-FString UGamePlatformVFXWorldSubsystem::MakeDedupeKey(
+FGamePlatformVFXDedupeKey UGamePlatformVFXWorldSubsystem::MakeDedupeKey(
     const FGamePlatformVFXRequest& Request) const
 {
     // Presentation RequestId在预测/确认/纠正之间保持同一身份，优先用于幂等与纠正。
+    FGamePlatformVFXDedupeKey Key;
     if (Request.RequestId.IsValid())
     {
-        return FString::Printf(
-            TEXT("Request:%s"),
-            *Request.RequestId.ToString(EGuidFormats::Digits));
+        Key.Kind = EGamePlatformVFXDedupeKind::Request;
+        Key.Id = Request.RequestId;
+        return Key;
     }
     if (Request.ActivationId.IsValid())
     {
-        return FString::Printf(
-            TEXT("Activation:%s:%lld"),
-            *Request.ActivationId.ToString(EGuidFormats::Digits),
-            Request.PredictionKey);
+        Key.Kind = EGamePlatformVFXDedupeKind::Activation;
+        Key.Id = Request.ActivationId;
+        Key.PredictionKey = Request.PredictionKey;
     }
-    return FString();
+    return Key;
 }
 
 FName UGamePlatformVFXWorldSubsystem::ResolveDefinitionId(
@@ -568,9 +568,9 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
     }
 
     const UGamePlatformVFXSettings* Settings = GetDefault<UGamePlatformVFXSettings>();
-    const FString DedupeKey = MakeDedupeKey(Request);
+    const FGamePlatformVFXDedupeKey DedupeKey = MakeDedupeKey(Request);
 
-    if (!DedupeKey.IsEmpty())
+    if (DedupeKey.IsValid())
     {
         if (Request.PredictionState == EGamePlatformVFXPredictionState::Cancelled)
         {
@@ -612,7 +612,7 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
         return Reject(EGamePlatformVFXResultCode::InvalidRequest);
     }
 
-    if (!DedupeKey.IsEmpty() &&
+    if (DedupeKey.IsValid() &&
         !DedupeHandles.Contains(DedupeKey) &&
         DedupeHandles.Num() >= Settings->MaxDedupeEntries)
     {
@@ -654,7 +654,7 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
     PeakTrackedInstances = FMath::Max(PeakTrackedInstances, InstanceRegistry.Num());
     UpdateRuntimeDiagnostics();
 
-    if (!DedupeKey.IsEmpty())
+    if (DedupeKey.IsValid())
     {
         AddDedupeHandle(DedupeKey, Result.Handle);
     }
@@ -812,10 +812,10 @@ void UGamePlatformVFXWorldSubsystem::ScheduleLifetime(
 }
 
 void UGamePlatformVFXWorldSubsystem::AddDedupeHandle(
-    const FString& Key,
+    const FGamePlatformVFXDedupeKey& Key,
     const FGamePlatformVFXHandle& Handle)
 {
-    if (Key.IsEmpty() || !Handle.IsValid())
+    if (!Key.IsValid() || !Handle.IsValid())
     {
         return;
     }
@@ -827,7 +827,7 @@ void UGamePlatformVFXWorldSubsystem::AddDedupeHandle(
 void UGamePlatformVFXWorldSubsystem::RemoveDedupeHandle(
     const FGamePlatformVFXHandle& Handle)
 {
-    FString Key;
+    FGamePlatformVFXDedupeKey Key;
     if (!DedupeKeysByHandle.RemoveAndCopyValue(Handle.Id, Key))
     {
         return;

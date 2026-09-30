@@ -3,6 +3,7 @@
 #include "GameFramework/Actor.h"
 #include "Misc/Crc.h"
 #include "Tags/MobaPresentationTags.h"
+#include "Tags/GamePlatformCombatTags.h"
 #include "Types/GamePlatformCombatEvent.h"
 #include "Types/GamePlatformCombatTypes.h"
 
@@ -78,6 +79,20 @@ void FMobaPresentationFactAdapters::FromCombatEvent(
             MakeBase(Identity, MobaPresentationTags::Combat_Hit);
         FillCombatContext(Hit, Event.AppliedMagnitude);
         OutFacts.Add(MoveTemp(Hit));
+
+        if (Event.ResultTags.HasTag(GamePlatformCombatTags::Result_Critical))
+        {
+            FMobaPresentationAdaptedFact Critical =
+                MakeBase(Identity, MobaPresentationTags::Combat_Critical);
+            Critical.Identity.FactId = MakeRevisionFactId(
+                Event.EventId.ToString(EGuidFormats::DigitsWithHyphens),
+                Event.TargetAvatarGeneration,
+                0x43524954u); // "CRIT"
+            FillCombatContext(Critical, Event.AppliedMagnitude);
+            Critical.Context.bCritical = true;
+            Critical.Priority = EGamePlatformPresentationPriority::High;
+            OutFacts.Add(MoveTemp(Critical));
+        }
 
         if (Event.AppliedToShield > 0.0f)
         {

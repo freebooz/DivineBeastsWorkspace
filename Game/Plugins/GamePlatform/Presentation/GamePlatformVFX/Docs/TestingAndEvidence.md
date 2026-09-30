@@ -67,11 +67,11 @@ VFX Lib 第一批迁移后再次使用 UE5.8 定向编译，UHT 重新运行并�
 
 ## 5. UE Automation
 
-已真实启动 `UnrealEditor-Cmd` 运行 `GamePlatform.VFX.*`，但测试队列尚未开始前，引擎全平台 SDK 校验因本机缺失 VisionOS SDK 退出。日志同时确认 Win64、Android、Linux、LinuxArm64 SDK 有效。
+历史首轮 `UnrealEditor-Cmd` 启动曾在测试队列开始前受 VisionOS SDK 校验阻断。性能整改后重新执行 `Automation RunTests GamePlatform.VFX`，引擎已越过该阶段，但在加载项目插件时因当前工程无关模块 `DivineBeastsApplicationFlowClient（神兽联盟应用流程客户端模块）` 无法加载而退出；日志中没有发现 VFX 测试用例开始执行。
 
-因此当前状态为：**Automation 环境阻塞／未执行测试用例**，不是 VFX Automation 测试失败。
+因此当前状态仍为：**Automation 工程启动环境阻塞／未执行 VFX 测试用例**，不是 GamePlatformVFX 自动化断言失败。
 
-新增 `GamePlatform.VFX.Parameters.CommonNames` 自动化测试源码已随模块编译成功；测试用例本身尚未通过 UE Automation 实际运行。尝试启动 UE5.8 Editor 并通过 Monolith MCP 创建真实 Niagara 资产时，Editor 卡在项目 Target 查询阶段，Monolith 服务未进入可调用状态，因此本轮没有生成 Niagara `.uasset`。
+新增/扩展的 `GamePlatform.VFX.Scalability.*`、`GamePlatform.VFX.Lifecycle.InstanceRegistry` 与 `GamePlatform.VFX.Parameters.CommonNames` 测试源码均已随 UE5.8 定向模块编译成功；测试用例本身尚未取得运行时通过证据。当前仓库也仍没有真实 Niagara `.uasset`。
 
 ## 6. 尚未取得的证据
 

@@ -123,10 +123,13 @@ bool FGamePlatformVFXInstanceRegistry::IsActive(
         return Component->IsActive();
     }
 
-    // Composite父实例自身没有Niagara Component；只要记录仍存在，就由其总生命周期Timer维持活动状态。
+    // 只有Composite父实例允许“Active但无Niagara Component”；普通实例若组件已失效应立即视为不活动。
     if (Record->State == EGamePlatformVFXInstanceState::Active)
     {
-        return true;
+        if (const UGamePlatformVFXDefinition* Definition = Record->Definition.Get())
+        {
+            return Definition->GetBehavior() == EGamePlatformVFXBehavior::Composite;
+        }
     }
 
     return false;
