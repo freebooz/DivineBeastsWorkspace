@@ -16,6 +16,10 @@ public:
     UPROPERTY(Config, EditAnywhere, Category="Runtime", meta=(ClampMin="1"))
     int32 MaxActiveInstances = 256;
 
+    /** 绝对安全上限；Critical请求也不得突破。Pending与Active统一计入。 */
+    UPROPERTY(Config, EditAnywhere, Category="Runtime", meta=(ClampMin="1"))
+    int32 HardMaxTrackedInstances = 512;
+
     UPROPERTY(Config, EditAnywhere, Category="Runtime", meta=(ClampMin="1", ClampMax="1024"))
     int32 MaxPendingInstancePreloads = 64;
 

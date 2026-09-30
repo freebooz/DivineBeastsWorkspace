@@ -9,8 +9,9 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXCompositeStep
 {
     GENERATED_BODY()
 
+    /** 子Definition统一使用GamePlatformData逻辑身份，不直接保存第二套Definition软对象真源。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX")
-    TSoftObjectPtr<UGamePlatformVFXDefinition> Definition;
+    FName DefinitionId = NAME_None;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX", meta=(ClampMin="0.0"))
     float DelaySeconds = 0.0f;

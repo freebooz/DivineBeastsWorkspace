@@ -22,7 +22,7 @@ void FGamePlatformVFXCompositeRunner::Run(
 
     for (const FGamePlatformVFXCompositeStep& Step : Definition.Steps)
     {
-        if (Step.Definition.IsNull())
+        if (Step.DefinitionId.IsNone())
         {
             continue;
         }
@@ -39,7 +39,7 @@ void FGamePlatformVFXCompositeRunner::Run(
 
         if (Step.DelaySeconds <= KINDA_SMALL_NUMBER)
         {
-            PlayChild(Step.Definition, ChildRequest, ParentHandle);
+            PlayChild(Step.DefinitionId, ChildRequest, ParentHandle);
             continue;
         }
 
@@ -47,9 +47,9 @@ void FGamePlatformVFXCompositeRunner::Run(
         World.GetTimerManager().SetTimer(
             TimerHandle,
             FTimerDelegate::CreateLambda(
-                [DefinitionRef = Step.Definition, ChildRequest, ParentHandle, PlayChild]() mutable
+                [DefinitionId = Step.DefinitionId, ChildRequest, ParentHandle, PlayChild]() mutable
                 {
-                    PlayChild(DefinitionRef, ChildRequest, ParentHandle);
+                    PlayChild(DefinitionId, ChildRequest, ParentHandle);
                 }),
             Step.DelaySeconds,
             false);

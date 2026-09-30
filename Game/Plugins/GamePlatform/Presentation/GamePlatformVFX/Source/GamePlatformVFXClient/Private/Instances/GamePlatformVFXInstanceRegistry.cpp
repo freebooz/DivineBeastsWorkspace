@@ -78,7 +78,7 @@ bool FGamePlatformVFXInstanceRegistry::AddChild(const FGamePlatformVFXHandle& Pa
     return true;
 }
 
-bool FGamePlatformVFXInstanceRegistry::Stop(const FGamePlatformVFXHandle& Handle)
+bool FGamePlatformVFXInstanceRegistry::Stop(const FGamePlatformVFXHandle& Handle, const bool bStopComponent)
 {
     const FGamePlatformVFXInstanceRecord* Existing = Records.Find(Handle.Id);
     if (!Existing || Existing->Handle != Handle)
@@ -89,12 +89,15 @@ bool FGamePlatformVFXInstanceRegistry::Stop(const FGamePlatformVFXHandle& Handle
     FGamePlatformVFXInstanceRecord Record = *Existing;
     Records.Remove(Handle.Id);
 
-    if (UNiagaraComponent* Component = Record.Component.Get())
+    if (bStopComponent)
     {
-        Component->DeactivateImmediate();
-        if (!Record.bPooled)
+        if (UNiagaraComponent* Component = Record.Component.Get())
         {
-            Component->DestroyComponent();
+            Component->DeactivateImmediate();
+            if (!Record.bPooled)
+            {
+                Component->DestroyComponent();
+            }
         }
     }
 
@@ -145,6 +148,28 @@ bool FGamePlatformVFXInstanceRegistry::IsActiveId(const FGuid& Id) const
         return IsActive(Record->Handle);
     }
     return false;
+}
+
+UNiagaraComponent* FGamePlatformVFXInstanceRegistry::GetComponent(const FGamePlatformVFXHandle& Handle) const
+{
+    const FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
+    return Record && Record->Handle == Handle ? Record->Component.Get() : nullptr;
+}
+
+FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::FindByComponent(const UNiagaraComponent* Component) const
+{
+    if (!IsValid(Component)) return {};
+    for (const TPair<FGuid, FGamePlatformVFXInstanceRecord>& Pair : Records)
+    {
+        if (Pair.Value.Component.Get() == Component) return Pair.Value.Handle;
+    }
+    return {};
+}
+
+TArray<FGamePlatformVFXHandle> FGamePlatformVFXInstanceRegistry::GetChildren(const FGamePlatformVFXHandle& Handle) const
+{
+    const FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
+    return Record && Record->Handle == Handle ? Record->Children : TArray<FGamePlatformVFXHandle>();
 }
 
 void FGamePlatformVFXInstanceRegistry::Prune()

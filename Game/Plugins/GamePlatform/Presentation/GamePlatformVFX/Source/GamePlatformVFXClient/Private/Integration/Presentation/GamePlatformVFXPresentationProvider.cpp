@@ -28,6 +28,9 @@ bool FGamePlatformVFXPresentationProvider::Handle(
     VFXRequest.DefinitionId = Request.DefinitionId;
     VFXRequest.PlatformId = FName(FPlatformProperties::IniPlatformName());
     VFXRequest.SpawnContext.Location = Request.SourceLocation;
+    VFXRequest.SpawnContext.TargetLocation = Request.TargetLocation;
+    VFXRequest.SpawnContext.ImpactLocation = Request.ImpactLocation;
+    VFXRequest.SpawnContext.ImpactNormal = Request.ImpactNormal;
 
     switch (Request.Priority)
     {
@@ -55,7 +58,11 @@ bool FGamePlatformVFXPresentationProvider::Handle(
         VFXRequest.PredictionState = EGamePlatformVFXPredictionState::Cancelled;
         break;
     case EGamePlatformPresentationPredictionState::Confirmed:
+        VFXRequest.PredictionState = EGamePlatformVFXPredictionState::Confirmed;
+        break;
     case EGamePlatformPresentationPredictionState::Corrected:
+        VFXRequest.PredictionState = EGamePlatformVFXPredictionState::Corrected;
+        break;
     default:
         VFXRequest.PredictionState = EGamePlatformVFXPredictionState::Confirmed;
         break;

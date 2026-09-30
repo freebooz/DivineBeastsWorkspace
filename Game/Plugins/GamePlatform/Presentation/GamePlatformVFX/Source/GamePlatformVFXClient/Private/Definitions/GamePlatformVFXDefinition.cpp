@@ -3,12 +3,6 @@
 
 #define LOCTEXT_NAMESPACE "GamePlatformVFXDefinition"
 
-FPrimaryAssetId UGamePlatformVFXDefinition::GetPrimaryAssetId() const
-{
-    const FName AssetName = DefinitionId.IsNone() ? GetFName() : DefinitionId;
-    return FPrimaryAssetId(FPrimaryAssetType(TEXT("GamePlatformVFXDefinition")), AssetName);
-}
-
 TSoftObjectPtr<UNiagaraSystem> UGamePlatformVFXDefinition::ResolveNiagaraSystem(
     FName PlatformId,
     EGamePlatformVFXQualityTier QualityTier) const
@@ -35,23 +29,33 @@ TSoftObjectPtr<UNiagaraSystem> UGamePlatformVFXDefinition::ResolveNiagaraSystem(
     return NiagaraSystem;
 }
 
-bool UGamePlatformVFXDefinition::ValidateDefinition(FText& OutReason) const
+FGamePlatformResult UGamePlatformVFXDefinition::ValidateDefinition() const
 {
-    if (DefinitionId.IsNone())
+    const FGamePlatformResult BaseResult = Super::ValidateDefinition();
+    if (!BaseResult.IsSuccess())
     {
-        OutReason = LOCTEXT("MissingDefinitionId", "VFX DefinitionId不能为空。");
-        return false;
+        return BaseResult;
     }
 
+    FText Reason;
+    if (!ValidateVFXDefinition(Reason))
+    {
+        return FGamePlatformResult::Failure(TEXT("VFX.DefinitionInvalid"), Reason.ToString());
+    }
+    return FGamePlatformResult::Success();
+}
+
+bool UGamePlatformVFXDefinition::ValidateVFXDefinition(FText& OutReason) const
+{
     if (Behavior != EGamePlatformVFXBehavior::Composite && NiagaraSystem.IsNull())
     {
         OutReason = LOCTEXT("MissingNiagara", "非Composite VFX Definition必须指定Niagara System。");
         return false;
     }
 
-    if (Version < 1 || Revision < 1 || MaxLifetimeSeconds < 0.0f)
+    if (!FMath::IsFinite(MaxLifetimeSeconds) || MaxLifetimeSeconds < 0.0f)
     {
-        OutReason = LOCTEXT("InvalidVersionOrLifetime", "VFX版本、修订号或生命周期配置无效。");
+        OutReason = LOCTEXT("InvalidLifetime", "VFX最大生命周期配置无效。");
         return false;
     }
 

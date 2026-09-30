@@ -15,9 +15,12 @@ public:
     bool SetLoadLease(const FGamePlatformVFXHandle& Handle, const FGamePlatformVFXPreloadHandle& Lease);
     bool AttachComponent(const FGamePlatformVFXHandle& Handle, UNiagaraComponent* Component, bool bPooled);
     bool AddChild(const FGamePlatformVFXHandle& Parent, const FGamePlatformVFXHandle& Child);
-    bool Stop(const FGamePlatformVFXHandle& Handle);
+    bool Stop(const FGamePlatformVFXHandle& Handle, bool bStopComponent = true);
     bool IsActive(const FGamePlatformVFXHandle& Handle) const;
     bool IsActiveId(const FGuid& Id) const;
+    UNiagaraComponent* GetComponent(const FGamePlatformVFXHandle& Handle) const;
+    FGamePlatformVFXHandle FindByComponent(const UNiagaraComponent* Component) const;
+    TArray<FGamePlatformVFXHandle> GetChildren(const FGamePlatformVFXHandle& Handle) const;
     void Prune();
     void Reset();
     int32 Num() const { return Records.Num(); }

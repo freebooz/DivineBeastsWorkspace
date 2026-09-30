@@ -14,13 +14,13 @@ public class GamePlatformVFXClient : ModuleRules
             "Niagara",
             "NiagaraCore",
             "DeveloperSettings",
-            "GamePlatformData",
-            "GamePlatformPresentationCore"
+            "GamePlatformData"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "Projects",
+            "GamePlatformPresentationCore",
             "GamePlatformPresentationClient"
         });
     }

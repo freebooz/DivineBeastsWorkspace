@@ -12,12 +12,14 @@
                     {
                         "Name":  "GamePlatformVFXClient",
                         "Type":  "ClientOnly",
-                        "LoadingPhase":  "Default"
+                        "LoadingPhase":  "Default",
+                        "TargetAllowList": [ "Client", "Editor" ]
                     },
                     {
                         "Name":  "GamePlatformVFXEditor",
                         "Type":  "Editor",
-                        "LoadingPhase":  "Default"
+                        "LoadingPhase":  "Default",
+                        "TargetAllowList": [ "Editor" ]
                     }
                 ],
     "Plugins":  [

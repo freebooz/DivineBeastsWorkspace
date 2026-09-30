@@ -1,5 +1,8 @@
 #include "Execution/GamePlatformVFXNiagaraExecutor.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
+#include "Definitions/GamePlatformVFXAreaDefinition.h"
+#include "Definitions/GamePlatformVFXAttachedDefinition.h"
+#include "Definitions/GamePlatformVFXBeamDefinition.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
@@ -26,15 +29,23 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     UNiagaraComponent* Component = nullptr;
     if (IsValid(Spawn.AttachComponent))
     {
+        FName AttachPointName = Spawn.AttachPointName;
+        if (AttachPointName.IsNone())
+        {
+            if (const UGamePlatformVFXAttachedDefinition* Attached = Cast<UGamePlatformVFXAttachedDefinition>(&Definition))
+            {
+                AttachPointName = Attached->DefaultAttachPoint;
+            }
+        }
         Component = UNiagaraFunctionLibrary::SpawnSystemAttached(
             System,
             Spawn.AttachComponent,
-            Spawn.AttachPointName,
+            AttachPointName,
             Spawn.Location,
             Spawn.Rotation,
             EAttachLocation::KeepWorldPosition,
             Definition.ShouldAutoDestroy(),
-            true,
+            false,
             PoolMethod,
             true);
 
@@ -52,7 +63,7 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
             Spawn.Rotation,
             Spawn.Scale,
             Definition.ShouldAutoDestroy(),
-            true,
+            false,
             PoolMethod,
             true);
     }
@@ -62,6 +73,19 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
         FGamePlatformVFXParameters EffectiveParameters = Definition.GetDefaultParameters();
         EffectiveParameters.Append(Request.Parameters);
         ApplyParameters(*Component, EffectiveParameters);
+
+        // 行为差异尽量通过Niagara参数表达，避免平台层建立十套执行器。
+        if (const UGamePlatformVFXBeamDefinition* Beam = Cast<UGamePlatformVFXBeamDefinition>(&Definition))
+        {
+            Component->SetVariablePosition(Beam->SourceParameterName, Spawn.Location);
+            Component->SetVariablePosition(Beam->TargetParameterName, Spawn.TargetLocation);
+        }
+        if (const UGamePlatformVFXAreaDefinition* Area = Cast<UGamePlatformVFXAreaDefinition>(&Definition))
+        {
+            Component->SetVariableFloat(Area->RadiusParameterName, Area->DefaultRadius);
+        }
+        Component->SetVariablePosition(TEXT("User.ImpactLocation"), Spawn.ImpactLocation);
+        Component->SetVariableVec3(TEXT("User.ImpactNormal"), Spawn.ImpactNormal);
     }
 
     return Component;

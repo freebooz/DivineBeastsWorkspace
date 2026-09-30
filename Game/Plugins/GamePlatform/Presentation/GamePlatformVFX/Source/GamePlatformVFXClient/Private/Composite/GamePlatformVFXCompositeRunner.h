@@ -11,7 +11,7 @@ class FGamePlatformVFXCompositeRunner
 {
 public:
     using FPlayChild = TFunction<void(
-        const TSoftObjectPtr<UGamePlatformVFXDefinition>&,
+        FName,
         const FGamePlatformVFXRequest&,
         const FGamePlatformVFXHandle&)>;
 

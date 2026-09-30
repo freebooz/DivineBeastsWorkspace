@@ -25,6 +25,7 @@
     { "Name": "GamePlatformQuest", "Enabled": true },
     { "Name": "GamePlatformInventory", "Enabled": true },
     { "Name": "GamePlatformPresentation", "Enabled": true },
+    { "Name": "GamePlatformVFX", "Enabled": true },
     { "Name": "GamePlatformUI", "Enabled": true }
   ],
   "Modules": [

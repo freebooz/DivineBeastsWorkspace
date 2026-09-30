@@ -69,6 +69,7 @@ enum class EGamePlatformVFXPredictionState : uint8
     None,
     Predicted,
     Confirmed,
+    Corrected,
     Cancelled
 };
 

@@ -7,13 +7,13 @@ void FGamePlatformVFXDefinitionValidator::Validate(
     const UGamePlatformVFXDefinition& Definition,
     TArray<FGamePlatformVFXValidationIssue>& OutIssues)
 {
-    FText DefinitionReason;
-    if (!Definition.ValidateDefinition(DefinitionReason))
+    const FGamePlatformResult DefinitionResult = Definition.ValidateDefinition();
+    if (!DefinitionResult.IsSuccess())
     {
         FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
         Issue.RuleId = TEXT("GPVFX.Definition.Invalid");
         Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
-        Issue.Message = DefinitionReason;
+        Issue.Message = FText::FromString(DefinitionResult.Message);
     }
 
     if (Definition.GetDefinitionId().IsNone())
