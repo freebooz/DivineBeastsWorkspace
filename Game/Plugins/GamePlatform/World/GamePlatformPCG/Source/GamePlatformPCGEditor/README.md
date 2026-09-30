@@ -7,6 +7,7 @@
 ## 当前实现与文件
 
 - `GamePlatformPCGEditor.Build.cs`：Editor（编辑器）模块，显式依赖 PCG、Runtime公开接口、UnrealEd、AssetRegistry、DataValidation 和 Projects；DataValidation 只留在编辑器闭包，不反向污染 Runtime/Client/Server。
+- `GamePlatformPCG.uplugin（插件描述）`：Editor 模块加载阶段调整为 `Default（默认）`，仍保持 `Type=Editor` 与 `TargetAllowList=[Editor]`。原因是 Commandlet/Validator（命令行工具/校验器）需要在命令类解析与编辑器初始化期间注册反射类型；模块本身仍不自动生成资产，不进入 Client/Server。
 - `Private/GamePlatformPCGEditorModule.cpp`：默认模块注册，不自动创建世界或执行生成。
 - `Private/Authoring/GamePlatformPCGEditorLibrary.h/.cpp`：反射工具入口；保留0.1.0开发夹具创建，同时新增 `CreateFoundationTemplateAssets（创建基础模板资产）`、Template Contract（模板合同）校验和模板ID查询。全部创建入口先检查目标包，拒绝覆盖已有人工资产；保存失败保留现场并返回错误，不假装事务回滚。
 - `Private/Authoring/PCGDevelopmentGraph.h/.cpp`：保留 Legacy（旧版）四节点图生成器；新增使用 UE5.8 原生 `UPCGGraph/AddNodeOfType/AddEdge` 的 M0/M1 Foundation Template Generator（基础模板生成器），设置官方 `bIsTemplate=true`，使用动态默认Graph输入/输出Pin（引脚），不硬编码项目资产。
@@ -30,7 +31,7 @@
 
 ## 明确未交付与验证
 
-当前没有实际执行 Foundation Template Commandlet（基础模板生成命令行工具），因此仍没有新增本轮 M0/M1 Foundation `.uasset`；也没有创建 Gold Level（金标准关卡）`.umap`。没有把模板合同源码存在等价为真实模板资产已交付。
+Foundation Template Commandlet（基础模板生成命令行工具）已经通过 `UnrealEditor-Cmd.exe` 实际启动项目，但旧 Editor 模块使用 `PostEngineInit` 加载阶段，日志没有出现 `GamePlatformPCGEditor` 或 Commandlet 注册记录，命令未进入 `Main()`。现已将 Editor 模块调整到 `Default` 加载阶段；需要重新编译 Editor 模块后再次运行。当前仍没有新增 M0/M1 Foundation `.uasset`，也没有创建 Gold Level `.umap`，不能把源码合同存在等价为真实资产已交付。
 
 UE5.8 定向构建已经多次完成 UHT 并进入实际 PCG 编译动作，但受同工作区并行 UBT（虚幻构建工具）任务的 Mutex（互斥锁）、外部停止或工具超时影响，尚未取得本轮 Runtime+Editor 最终编译通过结论。UE Automation、DataValidation 实际调度、模板资产落盘、Gold Level、Client/Server Cook、碰撞/Nav/重开与性能 Profile 均未完成。
 

@@ -22,6 +22,7 @@ $schemaHeader = Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Schema/Game
 $primitiveHeader = Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Types/GamePlatformPCGEnvironmentTypes.h'
 $templateHeader = Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Services/GamePlatformPCGTemplateContract.h'
 $componentDoc = Join-Path $pluginRoot 'Docs/组件清单与使用说明.md'
+$editorTarget = Join-Path $WorkspaceRoot 'Game/Source/DivineBeastsArenaEditor.Target.cs'
 $editorLibraryHeader = Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/Private/Authoring/GamePlatformPCGEditorLibrary.h'
 $foundationGraphCpp = Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/Private/Authoring/PCGDevelopmentGraph.cpp'
 $foundationCommandlet = Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/Private/Commands/GamePlatformPCGFoundationTemplatesCommandlet.cpp'
@@ -32,13 +33,15 @@ function Assert-True([bool]$Condition,[string]$Message) {
     if (-not $Condition) { $script:findings.Add($Message) }
 }
 
-foreach ($path in @($descriptorPath,$runtimeBuild,$editorBuild,$schemaHeader,$primitiveHeader,$templateHeader,$componentDoc,$editorLibraryHeader,$foundationGraphCpp,$foundationCommandlet,$worldValidator)) {
+foreach ($path in @($descriptorPath,$runtimeBuild,$editorBuild,$schemaHeader,$primitiveHeader,$templateHeader,$componentDoc,$editorTarget,$editorLibraryHeader,$foundationGraphCpp,$foundationCommandlet,$worldValidator)) {
     Assert-True (Test-Path -LiteralPath $path -PathType Leaf) ("缺少必要文件：{0}" -f $path)
 }
 
 if ($findings.Count -eq 0) {
     $descriptor = Get-Content -LiteralPath $descriptorPath -Raw -Encoding UTF8 | ConvertFrom-Json
     Assert-True (@($descriptor.Modules).Count -eq 2) '插件必须保持GamePlatformPCG Runtime + GamePlatformPCGEditor Editor双模块。'
+    $editorTargetSource = Get-Content -LiteralPath $editorTarget -Raw -Encoding UTF8
+    Assert-True ($editorTargetSource.Contains('EnablePlugins.Add("GamePlatformPCG")')) 'DivineBeastsArenaEditor Target必须显式装配GamePlatformPCG编辑器工具能力。'
     Assert-True (-not [bool]$descriptor.CanContainContent) '生产模板资产尚未验收前CanContainContent必须保持false。'
     $editorBuildSource = Get-Content -LiteralPath $editorBuild -Raw -Encoding UTF8
     Assert-True ($editorBuildSource.Contains('DataValidation')) 'GamePlatformPCGEditor必须显式依赖DataValidation以承载原生Editor Validator。'
