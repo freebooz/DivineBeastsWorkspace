@@ -7,6 +7,7 @@
 #include "Facts/DivineBeastsPresentationFacts.h"
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Tags/DivineBeastsPresentationTags.h"
+#include "VFX/DivineBeastsHeroVFXProfile.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsPresentationRuntimeContractTest,
@@ -104,6 +105,59 @@ bool FDivineBeastsPresentationFactValidationTest::RunTest(const FString&)
 
     Tutorial.ExperienceId = TEXT("Experience.OpenWorld.Main");
     TestFalse(TEXT("Non-Village feedback rejected"), Tutorial.IsValid());
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsHeroVFXProfileCatalogTest,
+    "DivineBeasts.Presentation.HeroVFXProfiles",
+    EAutomationTestFlags_ApplicationContextMask |
+    EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsHeroVFXProfileCatalogTest::RunTest(const FString&)
+{
+    const TArray<FName>& HeroIds = FDivineBeastsProjectCatalog::GetHeroDefinitionIds();
+    const TArray<FDivineBeastsHeroVFXProfile>& Profiles =
+        FDivineBeastsHeroVFXProfileCatalog::GetProfiles();
+
+    TestEqual(TEXT("十二生肖Hero定义数量"), HeroIds.Num(), 12);
+    TestEqual(TEXT("VFX Profile覆盖全部核心Hero"), Profiles.Num(), HeroIds.Num());
+
+    TSet<FName> UniqueProfileIds;
+    for (const FName HeroId : HeroIds)
+    {
+        const FDivineBeastsHeroVFXProfile* Profile =
+            FDivineBeastsHeroVFXProfileCatalog::Find(HeroId);
+        TestNotNull(TEXT("每个Hero都有VFX Profile"), Profile);
+        if (!Profile)
+        {
+            continue;
+        }
+
+        TestTrue(TEXT("VFX Profile字段完整"), Profile->IsValid());
+        TestEqual(TEXT("Profile HeroId保持原始身份"), Profile->HeroDefinitionId, HeroId);
+        TestTrue(
+            TEXT("ProfileId使用项目VFX稳定命名空间"),
+            Profile->ProfileId.ToString().StartsWith(
+                TEXT("Presentation.VFX.Hero.Zodiac."),
+                ESearchCase::CaseSensitive));
+        TestFalse(
+            TEXT("ProfileId不得重复"),
+            UniqueProfileIds.Contains(Profile->ProfileId));
+        UniqueProfileIds.Add(Profile->ProfileId);
+        TestEqual(
+            TEXT("默认Profile查询一致"),
+            FDivineBeastsHeroVFXProfileCatalog::GetDefaultProfileId(HeroId),
+            Profile->ProfileId);
+    }
+
+    TestTrue(
+        TEXT("未知Hero不返回VFX Profile"),
+        FDivineBeastsHeroVFXProfileCatalog::Find(TEXT("Hero.Unknown")) == nullptr);
+    TestTrue(
+        TEXT("未知Hero默认Profile为空"),
+        FDivineBeastsHeroVFXProfileCatalog::GetDefaultProfileId(TEXT("Hero.Unknown")).IsNone());
     return true;
 }
 

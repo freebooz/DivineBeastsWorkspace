@@ -20,7 +20,7 @@
 
 namespace
 {
-constexpr FName VFXRuntimeBundle(TEXT("VFXRuntime"));
+const FName VFXRuntimeBundle(TEXT("VFXRuntime"));
 
 bool IsSupportedWorldType(const EWorldType::Type WorldType)
 {

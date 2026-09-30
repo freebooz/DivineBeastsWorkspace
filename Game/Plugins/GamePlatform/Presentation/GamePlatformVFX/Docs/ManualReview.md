@@ -4,6 +4,8 @@
 
 本轮 Runner 已可访问 UE5.8 构建工具链，但仓库仍没有合法 Niagara System、Effect Type、VFX Definition 或 `L_VFXReview.umap`，因此不能伪造美术运行验收。
 
+当前代码层证据：`GamePlatformVFXClient` 与 `GamePlatformVFXEditor` 已完成 UE5.8 Editor 定向模块编译；这只能证明当前 C++/UHT/链接合同成立，不证明真实 Niagara 内容质量或目标设备性能。
+
 人工审核必须覆盖：
 
 - Generic Niagara + Composite 的代表性资源；

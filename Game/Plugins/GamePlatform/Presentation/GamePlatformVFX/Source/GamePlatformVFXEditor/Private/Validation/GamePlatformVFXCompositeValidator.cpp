@@ -9,7 +9,7 @@ void FGamePlatformVFXCompositeValidator::Validate(
     if (Definition.Steps.Num() > Definition.MaxChildren ||
         Definition.MaxDepth < 1 || Definition.MaxDepth > 8 ||
         Definition.MaxStepDelaySeconds < 0.0f ||
-        Definition.MaxTotalLifetimeSeconds < 0.0f)
+        Definition.MaxTotalLifetimeSeconds <= 0.0f)
     {
         FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
         Issue.RuleId = TEXT("GPVFX.Composite.Limits");

@@ -27,6 +27,8 @@ class GAMEPLATFORMVFXCLIENT_API UGamePlatformVFXCompositeDefinition final : publ
 
 public:
     UGamePlatformVFXCompositeDefinition();
+    /** 运行时也执行Composite边界校验，不能只依赖编辑器门禁。 */
+    virtual FGamePlatformResult ValidateDefinition() const override;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX")
     TArray<FGamePlatformVFXCompositeStep> Steps;
@@ -40,6 +42,6 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX|Composite", meta=(ClampMin="0.0", ClampMax="60.0"))
     float MaxStepDelaySeconds = 10.0f;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX|Composite", meta=(ClampMin="0.0", ClampMax="120.0"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX|Composite", meta=(ClampMin="0.1", ClampMax="120.0"))
     float MaxTotalLifetimeSeconds = 30.0f;
 };

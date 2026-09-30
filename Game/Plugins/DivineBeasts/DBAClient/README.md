@@ -32,4 +32,8 @@
 
 项目层用户界面当前设计基线见 `Docs/用户界面设计.md`。该文档定义了分类基础类继承、事件驱动更新、PC/移动端适配、目录规划、界面清单、命名规范和分阶段实施顺序。
 
+### 十二生肖技能 VFX（视觉特效）架构
+
+项目层十二生肖技能 VFX 设计基线见 Docs/ZodiacSkillVFXArchitecture.md。DivineBeastsPresentationRuntime 只保存 HeroDefinitionId（英雄定义编号）、AbilityId（技能编号）、SkinId（皮肤编号）等稳定表现上下文与 Hero VFX Profile（英雄视觉特效配置）；具体 Niagara（粒子特效）、Material（材质）、Texture（纹理）、Mesh（网格）和 Decal（贴花）归各 DBAHeroPack_* 内容包。竞技事实由 MobaPresentation 转为中立表现语义，最终仍由唯一 GamePlatformVFX 执行器播放。当前真实 Ability 资产尚未交付，不得为了填充目录虚构生产技能 ID 或伪 .uasset。
+
 P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基类、LocalPlayer 自适应子系统和 SafeZone 支持；DivineBeastsUIClient 已新增项目分类基类，并建立登录、真实加载、RootLayout 和五类 HUD 的 C++ / Blueprint 父类。ApplicationFlow 的 Blueprint `uint64` 反射阻断和 GamePlatformUIClient 生成代码错误已经消除；当前完整客户端构建的已知阻断位于主工程 Online/PCG 头依赖及 GamePlatformWorld 测试源码。UI 与 Flow 仍须保持事件驱动、禁止逐帧轮询。

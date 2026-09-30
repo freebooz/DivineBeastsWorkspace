@@ -61,4 +61,5 @@ Surface（环境表面材质）同样遵循“机制在平台、项目内容在�
 - `DBAWorldPack_Village` 由 Client / Server / Editor Target 共同启用，当前交付 `/DBAWorldPack_Village/Maps/L_Village_Start` 及 `Village.Main / Tutorial / Training` 三个项目世界定义；Dedicated Server 使用同一地图包身份做 BeginPlay、资源与准入就绪校验。
 - 世界包保留引擎外置Actor／对象文件、碰撞、导航和权威PCG结果；纯VFX以及仅用于客户端Surface的Material／Texture／Material Function不得进入Server产物；若雪地、泥地或水体需要影响玩法，服务器必须保留独立的权威Definition／碰撞／导航数据。
 - 可选皮肤／活动包不被核心硬引用。公共VFX回退保持可读性，目录冲突、异步取消、世界退出及多实例租约必须验证。
+- 十二生肖技能 VFX 统一遵循 DBAClient/Docs/ZodiacSkillVFXArchitecture.md：代码层只维护 Hero VFX Profile（英雄视觉特效配置）与项目 Catalog（表现目录）规则，具体英雄 VFX 美术归对应 DBAHeroPack_*。真实资产交付时，英雄包内部建议按 VFX/Common、VFX/BasicAttack、VFX/Passive、VFX/Abilities、VFX/Ultimate、VFX/Status、VFX/Movement、VFX/Definitions、VFX/Catalogs 以及 Niagara/Materials/Textures/Meshes/Decals 分类；未交付资源不得创建空资产占位。
 - 未来按模块拆出的代码能力必须先修改正式代码插件清单，不能伪装为内容插件绕过46个基线。

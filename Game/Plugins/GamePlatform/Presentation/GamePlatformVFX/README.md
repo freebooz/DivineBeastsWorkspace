@@ -44,4 +44,4 @@ Gameplay / Application Fact
 2. 在 Presentation Catalog 注册项目语义 → VFX DefinitionId 映射；
 3. 提供真实 Niagara/材质/纹理等客户端内容资产。
 
-当前仓库仍没有真实 `.uasset/.umap` VFX 二进制资产，因此静态源码通过不能替代 Editor/Client 编译、Cook、Review Map、Multi-PIE 或 5v5/Android 性能验收。
+当前仓库仍没有真实 `.uasset/.umap` VFX 二进制资产。UE5.8 `GamePlatformVFXClient + GamePlatformVFXEditor` 定向模块编译已真实通过；Client Target 已通过 UHT 但 C++ 终态仍未取得，Automation 又被本机 VisionOS SDK 校验在测试执行前阻断。因此当前仍不能把源码/Editor编译结果替代 Client、Cook、Review Map、Multi-PIE 或 5v5/Android 性能验收。

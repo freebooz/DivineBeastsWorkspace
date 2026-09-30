@@ -21,6 +21,13 @@ if (Test-Path $descriptorPath) {
     Assert-Rule ($moduleNames -contains 'GamePlatformVFXClient') 'Missing GamePlatformVFXClient module'
     Assert-Rule ($moduleNames -contains 'GamePlatformVFXEditor') 'Missing GamePlatformVFXEditor module'
     Assert-Rule (-not ($moduleNames -contains 'GamePlatformVFXServer')) 'Pure VFX plugin must not add a server module'
+
+    $clientModule = @($descriptor.Modules | Where-Object { $_.Name -eq 'GamePlatformVFXClient' }) | Select-Object -First 1
+    $editorModule = @($descriptor.Modules | Where-Object { $_.Name -eq 'GamePlatformVFXEditor' }) | Select-Object -First 1
+    Assert-Rule ($clientModule.Type -eq 'ClientOnly') 'GamePlatformVFXClient must remain ClientOnly'
+    Assert-Rule ((@($clientModule.TargetAllowList) -join ',') -eq 'Client,Editor') 'GamePlatformVFXClient TargetAllowList must be exactly Client,Editor'
+    Assert-Rule ($editorModule.Type -eq 'Editor') 'GamePlatformVFXEditor must remain Editor-only'
+    Assert-Rule ((@($editorModule.TargetAllowList) -join ',') -eq 'Editor') 'GamePlatformVFXEditor TargetAllowList must be exactly Editor'
 }
 
 $requiredFiles = @(
@@ -71,6 +78,14 @@ if (Test-Path $dbaClientDescriptor) {
     $dba = [IO.File]::ReadAllText($dbaClientDescriptor) | ConvertFrom-Json
     $dbaPlugins = @($dba.Plugins | ForEach-Object { $_.Name })
     Assert-Rule ($dbaPlugins -contains 'GamePlatformVFX') 'DBAClient must explicitly enable GamePlatformVFX'
+}
+
+$serverTarget = [IO.Path]::GetFullPath((Join-Path $PluginRoot '../../../../Source/DivineBeastsArenaServer.Target.cs'))
+Assert-Rule (Test-Path $serverTarget -PathType Leaf) 'Missing DivineBeastsArenaServer.Target.cs'
+if (Test-Path $serverTarget) {
+    $serverTargetText = [IO.File]::ReadAllText($serverTarget)
+    Assert-Rule (-not ($serverTargetText -match 'EnablePlugins\.Add\("DBAClient"\)')) 'Dedicated Server target must not enable DBAClient'
+    Assert-Rule (-not ($serverTargetText -match 'EnablePlugins\.Add\("GamePlatformVFX"\)')) 'Dedicated Server target must not enable GamePlatformVFX'
 }
 
 $binaryAssets = @(Get-ChildItem $PluginRoot -Recurse -File -Include *.uasset,*.umap -ErrorAction SilentlyContinue)

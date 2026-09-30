@@ -16,6 +16,7 @@ bool FGamePlatformVFXCompositeDefinitionDefaultsTest::RunTest(const FString& Par
         Definition->GetBehavior(),
         EGamePlatformVFXBehavior::Composite);
     TestFalse(TEXT("Composite 默认不使用 Niagara 池"), Definition->AllowsPooling());
+    TestTrue(TEXT("Composite 默认总生命周期必须大于0，避免无完成事件的父实例永久残留"), Definition->MaxTotalLifetimeSeconds > 0.0f);
     return true;
 }
 
