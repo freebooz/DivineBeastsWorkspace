@@ -17,6 +17,7 @@ public class GamePlatformVFXEditor : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "UnrealEd",
+            "GamePlatformCore",
             "AssetRegistry",
             "AssetTools",
             "PropertyEditor",

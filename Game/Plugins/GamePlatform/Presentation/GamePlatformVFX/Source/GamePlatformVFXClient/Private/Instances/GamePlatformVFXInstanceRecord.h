@@ -2,7 +2,6 @@
 
 #include "Types/GamePlatformVFXHandle.h"
 #include "Types/GamePlatformVFXRequest.h"
-#include "Types/GamePlatformVFXPreloadHandle.h"
 
 class UNiagaraComponent;
 class UGamePlatformVFXDefinition;
@@ -20,9 +19,6 @@ struct FGamePlatformVFXInstanceRecord
     FGamePlatformVFXRequest Request;
     TWeakObjectPtr<UGamePlatformVFXDefinition> Definition;
     FSoftObjectPath DefinitionPath;
-    FGamePlatformVFXPreloadHandle LoadLease;
-    double StartedAtSeconds = 0.0;
-    float MaxLifetimeSeconds = 0.0f;
     TWeakObjectPtr<UNiagaraComponent> Component;
     TArray<FGamePlatformVFXHandle> Children;
     EGamePlatformVFXInstanceState State = EGamePlatformVFXInstanceState::Pending;

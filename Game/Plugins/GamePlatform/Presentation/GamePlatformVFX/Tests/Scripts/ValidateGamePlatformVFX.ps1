@@ -42,6 +42,37 @@ foreach ($file in $sourceFiles) {
     Assert-Rule (-not ($text -match '\b(DBAHero|DivineBeastsHero|MobaCombat|MobaAbility)\b')) ('Upper-layer symbol leaked into platform VFX source: ' + $file.FullName)
 }
 
+$definitionText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Public/Definitions/GamePlatformVFXDefinition.h'))
+Assert-Rule ($definitionText -match 'UGamePlatformDefinitionBase') 'VFX Definition must inherit unified UGamePlatformDefinitionBase'
+Assert-Rule (-not ($definitionText -match 'public\s+UPrimaryDataAsset')) 'VFX Definition must not restore an independent UPrimaryDataAsset identity system'
+Assert-Rule ($definitionText -match 'AssetBundles="VFXRuntime"') 'VFX runtime assets must be declared in the VFXRuntime bundle'
+Assert-Rule ($definitionText -match 'GetPlatformVariants') 'Editor validation must be able to inspect all platform Niagara variants'
+Assert-Rule ($definitionText -match 'GetQualityVariants') 'Editor validation must be able to inspect all quality Niagara variants'
+
+$definitionValidatorPath = Join-Path $PluginRoot 'Source/GamePlatformVFXEditor/Private/Validation/GamePlatformVFXDefinitionValidator.cpp'
+$definitionValidatorText = [IO.File]::ReadAllText($definitionValidatorPath)
+Assert-Rule ($definitionValidatorText -match 'GetPlatformVariants') 'Editor validator must inspect platform variants'
+Assert-Rule ($definitionValidatorText -match 'GetQualityVariants') 'Editor validator must inspect quality variants'
+Assert-Rule ($definitionValidatorText -match 'LoadSynchronous') 'Editor validator must load soft Niagara variants before LWC/Bounds validation'
+
+$worldText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Subsystems/GamePlatformVFXWorldSubsystem.cpp'))
+Assert-Rule ($worldText -match 'AcquireDefinition') 'Standard VFX Definition loading must use IGamePlatformDataService::AcquireDefinition'
+Assert-Rule ($worldText -match 'OnSystemFinished') 'VFX instances must release through Niagara OnSystemFinished lifecycle events'
+Assert-Rule ($worldText -match 'EGamePlatformVFXPredictionState::Corrected') 'VFX must implement Corrected prediction semantics'
+Assert-Rule ($worldText -match 'IsSupportedWorldType') 'VFX WorldSubsystem must restrict creation to supported game world types'
+Assert-Rule (-not ($worldText -match 'FGamePlatformVFXPreloadCoordinator')) 'WorldSubsystem must not restore the retired private Definition preloader'
+
+$legacyPreloader = Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Preloading/GamePlatformVFXPreloadCoordinator.cpp'
+Assert-Rule (-not (Test-Path $legacyPreloader)) 'Retired VFX private Definition preloader must stay removed'
+
+$dbaClientDescriptor = [IO.Path]::GetFullPath((Join-Path $PluginRoot '../../../DivineBeasts/DBAClient/DBAClient.uplugin'))
+Assert-Rule (Test-Path $dbaClientDescriptor -PathType Leaf) 'Missing DBAClient composition descriptor'
+if (Test-Path $dbaClientDescriptor) {
+    $dba = [IO.File]::ReadAllText($dbaClientDescriptor) | ConvertFrom-Json
+    $dbaPlugins = @($dba.Plugins | ForEach-Object { $_.Name })
+    Assert-Rule ($dbaPlugins -contains 'GamePlatformVFX') 'DBAClient must explicitly enable GamePlatformVFX'
+}
+
 $binaryAssets = @(Get-ChildItem $PluginRoot -Recurse -File -Include *.uasset,*.umap -ErrorAction SilentlyContinue)
 $result = [ordered]@{
     plugin = 'GamePlatformVFX'

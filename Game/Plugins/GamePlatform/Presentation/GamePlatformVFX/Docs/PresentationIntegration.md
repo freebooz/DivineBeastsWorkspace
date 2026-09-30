@@ -1,7 +1,16 @@
 # PresentationIntegration（表现层集成）
 
-目标调用方向：Gameplay / GAS（玩法/技能）→ GamePlatformPresentation（平台表现协调）→ FGamePlatformVFXPresentationProvider（VFX表现提供者）→ IGamePlatformVFXService（VFX服务）。
+正式调用方向：
 
-当前 Provider 已将 SemanticTag、Context、SpawnContext 和 Parameters 转换为 VFX Request。
+```text
+Gameplay / GAS / Application Fact
+→ GamePlatformPresentation
+→ Catalog唯一解析 SemanticTag + Context
+→ ProviderChannel=VFX + DefinitionId
+→ VFX Provider
+→ IGamePlatformVFXService
+```
 
-当前限制：GamePlatformPresentation 仍为工程骨架，尚无正式 Provider 注册协议，因此本插件不反向修改或伪造其接口。待其公共表现 Provider 契约实现后，只需在模块启动阶段完成注册，不改变 VFX 内部运行链。
+`GamePlatformPresentation` 已具备正式 Provider 注册和 Catalog 解析契约，VFX 不再重复维护正式语义 Resolver。
+
+Provider 当前传递 RequestId、DefinitionId、ContextTags、Source/Target/Impact 位置、Priority 与 PredictionState。Attached 的具体 `USceneComponent` 仍属于低层 C++ 能力；在平台建立中立 Attachment Anchor 契约之前，不向 Presentation Core 引入项目 Actor/Component 类型。

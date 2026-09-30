@@ -4,6 +4,7 @@
 
 IGamePlatformVFXService* IGamePlatformVFXService::Get(UWorld* World)
 {
+    check(IsInGameThread());
     if (!IsValid(World) || World->GetNetMode() == NM_DedicatedServer)
     {
         return nullptr;

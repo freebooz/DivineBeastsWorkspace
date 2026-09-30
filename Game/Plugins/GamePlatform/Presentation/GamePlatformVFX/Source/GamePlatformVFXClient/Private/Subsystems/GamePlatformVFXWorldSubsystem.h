@@ -50,6 +50,8 @@ private:
         FGamePlatformVFXRequest Request,
         FGamePlatformDataLease Lease,
         const FGamePlatformResult& Result);
+    /** Niagara动态多播完成回调；必须是UFUNCTION以便AddDynamic绑定。 */
+    UFUNCTION()
     void HandleSystemFinished(UNiagaraComponent* Component);
     void CleanupInstance(const FGamePlatformVFXHandle& Handle, bool bStopComponent);
     void ReleaseLease(const FGamePlatformDataLease& Lease) const;

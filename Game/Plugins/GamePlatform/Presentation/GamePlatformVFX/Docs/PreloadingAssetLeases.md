@@ -1,7 +1,20 @@
 # PreloadingAssetLeases（预加载与资产租约）
 
-FGamePlatformVFXPreloadCoordinator统一通过 GamePlatformData 的 FGamePlatformAssetLoader 请求异步加载，不直接创建第二AssetManager，也不调用UAssetManager::GetStreamableManager。
+0.2.0 起，VFX Definition 不再通过私有 `FGamePlatformVFXPreloadCoordinator` 或普通 `FGamePlatformAssetLoader` 加载。
 
-Lease先持有Definition，再切换为同时持有Definition、选择后的Niagara System和PreloadAssets的Streamable Handle。实例记录保存LoadLease，WorldSubsystem在Stop、自动Prune或Deinitialize时取消并释放。
+正式流程：
 
-Startup Catalog同样通过GamePlatformData异步加载并保留StartupCatalogLoadLease。未执行真实Cook前，不把软引用存在等同于资产已正确入包。
+```text
+DefinitionId
+→ GamePlatformDefinition PrimaryAssetId
+→ IGamePlatformDataService::AcquireDefinition
+→ Lifetime = World
+→ Bundle = VFXRuntime
+→ UGamePlatformVFXDefinition
+```
+
+`UGamePlatformVFXDefinition` 的 NiagaraSystem、EffectType、平台/质量变体和 PreloadAssets 均声明 `VFXRuntime` Asset Bundle，由统一 Data Lease 持有。实例自然结束、Stop、取消、MaxLifetime 或 World 销毁时调用 `ReleaseDefinition`。
+
+显式 `Preload` 同样使用 World Lease，不建立第二套 Streamable Definition 租约。
+
+`FGamePlatformAssetLoader` 目前只保留用于旧 Startup Catalog 普通软资产兼容加载；Catalog 不是标准 Gameplay 语义真源。未执行真实 Cook 前，不能把 Asset Bundle 元数据存在等同于资源已正确入包。

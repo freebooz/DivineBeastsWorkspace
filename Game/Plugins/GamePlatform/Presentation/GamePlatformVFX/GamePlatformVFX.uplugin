@@ -1,9 +1,9 @@
 {
     "FileVersion":  3,
-    "Version":  1,
-    "VersionName":  "0.1.0",
+    "Version":  2,
+    "VersionName":  "0.2.0",
     "FriendlyName":  "GamePlatformVFX",
-    "Description":  "GamePlatformVFX（游戏平台插件）",
+    "Description":  "跨游戏客户端VFX执行基础设施：消费GamePlatformPresentation已解析DefinitionId，通过GamePlatformData World Lease异步加载统一Definition，并以Niagara事件驱动生命周期、预算、池化和预测纠正。",
     "Category":  "GamePlatform/Presentation",
     "CreatedBy":  "DivineBeastsWorkspace",
     "CanContainContent":  true,

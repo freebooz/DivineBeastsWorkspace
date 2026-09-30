@@ -1,9 +1,27 @@
 # Lifecycle（生命周期）
 
-请求生命周期：Semantic Request（语义请求）→ Resolve（解析）→ Reserve Handle（预留句柄）→ Definition 已加载则立即执行，否则异步预加载 → Niagara Spawn（生成）→ InstanceRegistry 登记 → Stop 或组件自动结束。
+标准请求生命周期：
+
+```text
+Presentation已解析DefinitionId
+→ Reserve Handle
+→ GamePlatformData AcquireDefinition(World Lease)
+→ Definition/VFXRuntime ready
+→ Create NiagaraComponent（AutoActivate=false）
+→ Register Instance
+→ Bind OnSystemFinished
+→ Schedule MaxLifetime Timer（如配置）
+→ Activate
+→ Finish / Stop / Corrected / Cancelled / Timeout
+→ Remove Dedupe + Clear Timer + ReleaseDefinition + Remove Instance
+```
 
 规则：
-- Queued（已排队）结果立即返回 Handle，允许调用方在加载完成前 Stop。
-- Stop 对 Pending（等待中）、Active（活动中）和 Composite 子实例均安全处理。
-- WorldSubsystem Deinitialize（世界子系统反初始化）时取消所有预加载、停止实例、清空 Catalog。
-- Composite 延迟回调执行前重新检查父 Handle 是否仍活动，避免切图或主动停止后重新生成子效果。
+
+- `Queued` 立即返回 Handle，允许加载完成前 Stop；
+- `OnSystemFinished` 是正常自然结束的正式回收事件，Prune 不再承担主要生命周期；
+- `MaxLifetimeSeconds` 由 Timer 实际执行，不等待下一次 Play；
+- Stop 对 Pending、Active 和 Composite 子实例递归安全处理；
+- WorldSubsystem Deinitialize 释放全部 Pending/Active/ExplicitPreload Definition Lease；
+- Composite 延迟步骤执行前检查父 Handle，且每个 Child 再次通过统一 Budget Gate；
+- Niagara Spawn 不自动激活，先绑定生命周期再运行，避免极短特效错过完成事件。

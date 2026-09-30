@@ -1,6 +1,5 @@
 #include "Instances/GamePlatformVFXInstanceRegistry.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
-#include "HAL/PlatformTime.h"
 #include "NiagaraComponent.h"
 
 FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::Reserve(
@@ -18,7 +17,6 @@ FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::Reserve(
     {
         Record.Request = *Request;
     }
-    Record.StartedAtSeconds = FPlatformTime::Seconds();
     Record.State = EGamePlatformVFXInstanceState::Pending;
     return Handle;
 }
@@ -34,20 +32,6 @@ bool FGamePlatformVFXInstanceRegistry::SetDefinition(
     }
     Record->Definition = Definition;
     Record->DefinitionPath = FSoftObjectPath(Definition->GetPathName());
-    Record->MaxLifetimeSeconds = Definition->GetMaxLifetimeSeconds();
-    return true;
-}
-
-bool FGamePlatformVFXInstanceRegistry::SetLoadLease(
-    const FGamePlatformVFXHandle& Handle,
-    const FGamePlatformVFXPreloadHandle& Lease)
-{
-    FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
-    if (!Record || Record->Handle != Handle || !Lease.IsValid())
-    {
-        return false;
-    }
-    Record->LoadLease = Lease;
     return true;
 }
 
@@ -170,36 +154,6 @@ TArray<FGamePlatformVFXHandle> FGamePlatformVFXInstanceRegistry::GetChildren(con
 {
     const FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
     return Record && Record->Handle == Handle ? Record->Children : TArray<FGamePlatformVFXHandle>();
-}
-
-void FGamePlatformVFXInstanceRegistry::Prune()
-{
-    TArray<FGamePlatformVFXHandle> DeadHandles;
-    for (TPair<FGuid, FGamePlatformVFXInstanceRecord>& Pair : Records)
-    {
-        FGamePlatformVFXInstanceRecord& Record = Pair.Value;
-        Record.Children.RemoveAll([this](const FGamePlatformVFXHandle& Child)
-        {
-            return !IsActive(Child);
-        });
-
-        const UNiagaraComponent* Component = Record.Component.Get();
-        const bool bComponentActive = IsValid(Component) && Component->IsActive();
-        const bool bLifetimeExpired = Record.MaxLifetimeSeconds > 0.0f &&
-            (FPlatformTime::Seconds() - Record.StartedAtSeconds) >= Record.MaxLifetimeSeconds;
-        if (bLifetimeExpired ||
-            (Record.State == EGamePlatformVFXInstanceState::Active &&
-             !bComponentActive &&
-             Record.Children.Num() == 0))
-        {
-            DeadHandles.Add(Record.Handle);
-        }
-    }
-
-    for (const FGamePlatformVFXHandle& Handle : DeadHandles)
-    {
-        Stop(Handle);
-    }
 }
 
 void FGamePlatformVFXInstanceRegistry::Reset()

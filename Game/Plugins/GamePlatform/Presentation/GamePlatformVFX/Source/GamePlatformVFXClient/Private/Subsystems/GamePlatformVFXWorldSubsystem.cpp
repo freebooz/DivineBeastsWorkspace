@@ -394,7 +394,7 @@ void UGamePlatformVFXWorldSubsystem::HandleDefinitionLoaded(
     if (!Result.IsSuccess() || !InstanceRegistry.IsActive(ReservedHandle))
     {
         ReleaseLease(Lease);
-        InstanceRegistry.Stop(ReservedHandle);
+        CleanupInstance(ReservedHandle, true);
         return;
     }
 
@@ -414,7 +414,7 @@ void UGamePlatformVFXWorldSubsystem::HandleDefinitionLoaded(
         FGamePlatformVFXDiagnostics::DefinitionLoadFailed(
             FSoftObjectPath(Lease.DefinitionId.ToString()));
         ReleaseLease(Lease);
-        InstanceRegistry.Stop(ReservedHandle);
+        CleanupInstance(ReservedHandle, true);
         return;
     }
 
@@ -463,6 +463,8 @@ void UGamePlatformVFXWorldSubsystem::HandleSystemFinished(
         InstanceRegistry.FindByComponent(Component);
     if (Handle.IsValid())
     {
+        // 自然结束后只回收平台记录/租约/去重状态，不再次Deactivate已结束组件。
+        // 非池化组件按其AutoDestroy语义由Niagara处理，池化组件由Niagara原生池回收。
         CleanupInstance(Handle, false);
     }
 }
@@ -494,7 +496,9 @@ void UGamePlatformVFXWorldSubsystem::CleanupInstance(
 
     if (UNiagaraComponent* Component = InstanceRegistry.GetComponent(Handle))
     {
-        Component->OnSystemFinished.RemoveAll(this);
+        Component->OnSystemFinished.RemoveDynamic(
+            this,
+            &UGamePlatformVFXWorldSubsystem::HandleSystemFinished);
     }
 
     FGamePlatformDataLease Lease;
@@ -800,7 +804,7 @@ bool UGamePlatformVFXWorldSubsystem::ExecuteLoadedDefinition(
     }
 
     // Spawn阶段禁止自动激活；先建立平台生命周期监听，再允许Niagara开始运行。
-    Component->OnSystemFinished.AddUObject(
+    Component->OnSystemFinished.AddUniqueDynamic(
         this,
         &UGamePlatformVFXWorldSubsystem::HandleSystemFinished);
     ScheduleLifetime(

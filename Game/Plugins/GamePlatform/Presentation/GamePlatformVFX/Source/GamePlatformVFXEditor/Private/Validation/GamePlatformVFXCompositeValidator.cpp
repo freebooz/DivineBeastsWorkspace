@@ -1,43 +1,6 @@
 #include "Validation/GamePlatformVFXCompositeValidator.h"
 #include "Definitions/GamePlatformVFXCompositeDefinition.h"
-#include "Definitions/GamePlatformVFXDefinition.h"
-
-namespace
-{
-bool VisitComposite(
-    const UGamePlatformVFXCompositeDefinition& Definition,
-    TSet<FSoftObjectPath>& Visiting,
-    TSet<FSoftObjectPath>& Visited)
-{
-    const FSoftObjectPath Path(Definition.GetPathName());
-    if (Visiting.Contains(Path))
-    {
-        return true;
-    }
-    if (Visited.Contains(Path))
-    {
-        return false;
-    }
-
-    Visiting.Add(Path);
-    for (const FGamePlatformVFXCompositeStep& Step : Definition.Steps)
-    {
-        UGamePlatformVFXDefinition* Child = Step.Definition.LoadSynchronous();
-        if (const UGamePlatformVFXCompositeDefinition* ChildComposite =
-            Cast<UGamePlatformVFXCompositeDefinition>(Child))
-        {
-            if (VisitComposite(*ChildComposite, Visiting, Visited))
-            {
-                return true;
-            }
-        }
-    }
-
-    Visiting.Remove(Path);
-    Visited.Add(Path);
-    return false;
-}
-}
+#include "Types/GamePlatformId.h"
 
 void FGamePlatformVFXCompositeValidator::Validate(
     const UGamePlatformVFXCompositeDefinition& Definition,
@@ -54,8 +17,28 @@ void FGamePlatformVFXCompositeValidator::Validate(
         Issue.Message = NSLOCTEXT("GamePlatformVFX", "CompositeLimits", "Composite的深度、子节点数量、延迟或总生命周期配置超出平台边界。");
     }
 
+    const FName SelfId = Definition.GetDefinitionId();
     for (const FGamePlatformVFXCompositeStep& Step : Definition.Steps)
     {
+        FGamePlatformId Parsed;
+        if (Step.DefinitionId.IsNone() ||
+            !FGamePlatformId::TryParse(Step.DefinitionId.ToString(), Parsed))
+        {
+            FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
+            Issue.RuleId = TEXT("GPVFX.Composite.InvalidDefinitionId");
+            Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
+            Issue.Message = NSLOCTEXT("GamePlatformVFX", "CompositeInvalidDefinitionId", "Composite步骤必须使用有效的GamePlatform逻辑DefinitionId。");
+            continue;
+        }
+
+        if (!SelfId.IsNone() && FName(*Parsed.ToString()) == SelfId)
+        {
+            FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
+            Issue.RuleId = TEXT("GPVFX.Composite.SelfCycle");
+            Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
+            Issue.Message = NSLOCTEXT("GamePlatformVFX", "CompositeSelfCycle", "Composite不能直接引用自身DefinitionId；间接依赖环由GamePlatformData统一租约校验阻断。");
+        }
+
         if (Step.DelaySeconds > Definition.MaxStepDelaySeconds ||
             Step.DelaySeconds > Definition.MaxTotalLifetimeSeconds)
         {
@@ -63,20 +46,6 @@ void FGamePlatformVFXCompositeValidator::Validate(
             Issue.RuleId = TEXT("GPVFX.Composite.Delay");
             Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
             Issue.Message = NSLOCTEXT("GamePlatformVFX", "CompositeDelay", "Composite步骤延迟超过Definition允许的编排时长。");
-            break;
         }
-    }
-
-    TSet<FSoftObjectPath> Visiting;
-    TSet<FSoftObjectPath> Visited;
-    if (VisitComposite(Definition, Visiting, Visited))
-    {
-        FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
-        Issue.RuleId = TEXT("GPVFX.Composite.Cycle");
-        Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
-        Issue.Message = NSLOCTEXT(
-            "GamePlatformVFX",
-            "CompositeCycle",
-            "Composite Definition 存在直接或间接循环引用。");
     }
 }

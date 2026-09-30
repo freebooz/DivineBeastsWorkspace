@@ -1,30 +1,47 @@
 # GamePlatformVFX（游戏平台视觉特效插件）
 
-跨游戏通用 VFX 运行框架。物理目录属于 GameFoundation（游戏平台基础层），资源挂载点为 /GamePlatformVFX/。
+版本：0.2.0｜2026-09-30
 
-## 当前实现
+`GamePlatformVFX` 是 GamePlatform（游戏平台层）的跨游戏客户端 VFX 执行基础设施。它消费 `GamePlatformPresentation` 已解析的中立表现请求，不拥有 Gameplay 事实，也不维护第二套项目语义真源。
 
-- GamePlatformVFXClient（VFX客户端运行模块）：ClientOnly；Dedicated Server（专用服务器）不加载。
-- GamePlatformVFXEditor（VFX编辑器模块）：仅负责编辑器验证和制作辅助。
-- 正式只保留 GamePlatformVFXClient（VFX客户端模块，ClientOnly）和 GamePlatformVFXEditor（VFX编辑器模块）；不创建Runtime/Server空模块。
-- 10种Behavior完整覆盖：Instant、Attached、Projectile、Beam、Area、Shield、Portal、Trail、World、Composite。
-- 17类ContentCategory用于中立内容制作、检索与审核，不承载Gameplay规则。
-- 正式运行链：GamePlatformPresentation Semantic Request（平台表现语义请求）→ VFX Provider → Catalog/Resolver → Definition → GamePlatformData异步Lease → Niagara Executor → World Instance Registry/Handle。
-- Definition包含DefinitionId、PrimaryAssetId、EffectType、Parameter Schema、平台/质量变体、Fallback、PreloadAssets、Pooling/Scalability、LWC/Bounds/Lifetime、Version/Revision。
-- Resolver确定性排序并拒绝同级歧义；Cache随Catalog Revision失效，不依赖数组/加载/注册/Hash顺序。
-- 公共参数由Parameter Schema白名单约束；Position与Vector分离，LWC位置使用SetVariablePosition。
-- Pooling优先Niagara原生组件池；Scalability/Culling优先Niagara Effect Type，平台只保留紧急实例上限。
-- Handle包含Generation和弱World身份；World实例记录保存Request、Definition、LoadLease、Lifetime和State；预测/确认请求按ActivationId/PredictionKey去重。
-- 已提供6个正式验证入口，并保留旧插件内部脚本作为兼容静态证据。
+## 当前正式架构
+
+```text
+Gameplay / Application Fact
+→ GamePlatformPresentation
+→ ProviderChannel=VFX + DefinitionId
+→ GamePlatformVFX Presentation Provider
+→ IGamePlatformVFXService
+→ UGamePlatformVFXWorldSubsystem
+→ IGamePlatformDataService::AcquireDefinition
+→ UGamePlatformVFXDefinition : UGamePlatformDefinitionBase
+→ VFXRuntime Asset Bundle
+→ Niagara Executor
+→ OnSystemFinished / Lifetime Timer
+→ Release Definition Lease
+```
+
+当前实现要点：
+
+- `GamePlatformVFXClient — ClientOnly（仅客户端）`，`GamePlatformVFXEditor — Editor（仅编辑器）`；
+- `DBAClient（神兽联盟客户端组合插件）` 已显式启用 `GamePlatformVFX`；
+- Definition 统一继承 `UGamePlatformDefinitionBase（平台定义基类）`，身份唯一来源为 `LogicalId`；
+- 正式 Definition 加载使用 `IGamePlatformDataService` 的 World Lease（世界租约），不再使用私有 Definition 流式加载器；
+- `GamePlatformPresentation` 是 SemanticTag/Context → ProviderChannel/DefinitionId 的唯一正式语义解析真源；
+- VFX Catalog/Resolver 仅作为旧低层工具兼容入口，不属于标准 Gameplay 路径；
+- Niagara Component 先完成参数/生命周期绑定，再激活运行；自然结束通过 `OnSystemFinished` 即时释放实例与 Definition Lease；
+- `MaxLifetimeSeconds` 通过 Timer（定时器）真实执行，不依赖下一次 Play 才清理；
+- `MaxActiveInstances` 是软预算，`HardMaxTrackedInstances` 是任何 Critical 请求都不能越过的绝对安全上限；
+- Composite 子节点与普通请求共用预算门禁和 Definition Lease；
+- Predicted / Confirmed / Corrected / Cancelled 与 Presentation 状态对齐；
+- 非 Composite Behavior 统一以 Generic Niagara（通用 Niagara）执行，不建立十套播放器。Beam/Area/Attached 仅有少量通用参数/附着适配；Projectile/Shield/Portal/Trail/World 等名称主要是内容制作语义分类。
 
 ## 边界
 
-本插件不得包含 MOBA 或《神兽联盟》生肖、英雄、世界项目资源。项目表现映射和美术资产应位于 DivineBeasts（神兽联盟项目层）。
+平台层不得认识《神兽联盟》生肖、英雄、技能或 MOBA 规则。项目层只负责：
 
-当前未创建任何伪造的 .uasset/.umap。Niagara、材质、纹理、Review（人工核验）地图等二进制资产必须由 Unreal Editor（虚幻编辑器）正式创建。
+1. 创建 VFX Definition 内容实例；
+2. 在 Presentation Catalog 注册项目语义 → VFX DefinitionId 映射；
+3. 提供真实 Niagara/材质/纹理等客户端内容资产。
 
-当前静态验证结果：生产门禁77/77通过，Catalog/Resolver门禁19/19通过，World生命周期门禁15/15通过，Scalability门禁9/9通过，综合验证55项无失败；附件指定46份专题文档完整。
-
-当前真实UE5.8 Editor/Client/Server编译、UE Automation、Client/Server Cook、Multi-PIE、L_VFXReview、5v5/Android性能均因Runner未配置UE_ROOT或缺少合法二进制测试资产而保持“未执行”，未以静态门禁冒充运行通过。
-
-完整架构见本插件 `Docs/`、工作区 `Docs/Architecture/游戏端核心要求.md`、`Docs/Architecture/三层类继承与扩展规范.md` 与 `Docs/Architecture/游戏端插件系统P0收敛审计.md`；旧四服务器文档不再作为执行基线。
+当前仓库仍没有真实 `.uasset/.umap` VFX 二进制资产，因此静态源码通过不能替代 Editor/Client 编译、Cook、Review Map、Multi-PIE 或 5v5/Android 性能验收。

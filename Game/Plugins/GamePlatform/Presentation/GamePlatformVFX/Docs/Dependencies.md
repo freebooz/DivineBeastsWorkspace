@@ -1,11 +1,26 @@
 # Dependencies（依赖边界）
 
-允许：Core、CoreUObject、Engine、GameplayTags、Niagara、DeveloperSettings，以及编辑器模块所需 UnrealEd/AssetRegistry。
+平台层依赖方向：
 
-禁止：MobaCommon（MOBA通用层）和 DivineBeasts（神兽联盟项目层）的类、模块和资产；禁止 Dedicated Server 依赖 GamePlatformVFXClient 或 GamePlatformVFXEditor。
+```text
+GamePlatformVFXClient
+→ GamePlatformData
+→ GamePlatformCore
 
-当前两个外部集成边界：
-1. GamePlatformData（平台数据插件）仍为骨架，因此 VFX 预加载暂用 UE AssetManager/StreamableManager；待统一数据加载 API 完成后切换到该 API。
-2. GamePlatformPresentation（平台表现插件）仍为骨架，因此 VFX Provider 已实现，但正式 Provider 注册契约尚待该插件提供。
+GamePlatformVFXClient (Private Integration)
+→ GamePlatformPresentationCore / Client
 
-这两个边界均不通过在 VFX 插件中复制第二套平台框架来规避。
+GamePlatformVFXClient
+→ Niagara / Engine
+```
+
+Public Header 未暴露 Presentation 类型，因此 `GamePlatformPresentationCore` 已收敛到 Private Dependency。
+
+禁止：GamePlatformVFX 反向依赖 MobaCommon 或 DivineBeasts 的类、模块和资产；禁止 Dedicated Server 依赖 GamePlatformVFXClient / Editor。
+
+当前外部边界已经落地：
+
+1. `GamePlatformData` 提供统一 Definition/World Lease，VFX 不再复制 Definition Loader；
+2. `GamePlatformPresentation` 提供正式 Provider 注册和 Catalog Resolve，VFX 不再建立第二套标准语义 Catalog。
+
+`DBAClient` 只作为上层客户端组合根启用 GamePlatformVFX，不改变依赖方向。

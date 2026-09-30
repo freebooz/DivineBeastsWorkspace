@@ -32,16 +32,36 @@ void FGamePlatformVFXDefinitionValidator::Validate(
         Issue.Message = NSLOCTEXT("GamePlatformVFX", "MissingEffectType", "启用Scalability的VFX Definition必须关联Niagara Effect Type。");
     }
 
-    const TSoftObjectPtr<UNiagaraSystem> SelectedSystem =
-        Definition.ResolveNiagaraSystem(NAME_None, EGamePlatformVFXQualityTier::High);
-    if (UNiagaraSystem* System = SelectedSystem.Get())
+    // 编辑器验证允许同步装载软引用，确保默认、平台和质量变体全部接受同一LWC/Bounds约束。
+    const auto ValidateSystem = [&Definition, &OutIssues](
+        const TSoftObjectPtr<UNiagaraSystem>& SystemRef,
+        const FString& VariantLabel)
     {
+        if (SystemRef.IsNull())
+        {
+            return;
+        }
+
+        UNiagaraSystem* System = SystemRef.LoadSynchronous();
+        if (!IsValid(System))
+        {
+            FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
+            Issue.RuleId = TEXT("GPVFX.Definition.VariantLoadFailed");
+            Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
+            Issue.Message = FText::Format(
+                NSLOCTEXT("GamePlatformVFX", "VariantLoadFailed", "VFX Niagara变体无法加载：{0}"),
+                FText::FromString(VariantLabel));
+            return;
+        }
+
         if (Definition.RequiresLargeWorldCoordinates() && !System->SupportsLargeWorldCoordinates())
         {
             FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
             Issue.RuleId = TEXT("GPVFX.Definition.LWC");
             Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
-            Issue.Message = NSLOCTEXT("GamePlatformVFX", "MissingLWC", "Definition要求LWC，但Niagara System未启用Large World Coordinates支持。");
+            Issue.Message = FText::Format(
+                NSLOCTEXT("GamePlatformVFX", "MissingLWCVariant", "VFX Niagara变体未启用Large World Coordinates支持：{0}"),
+                FText::FromString(VariantLabel));
         }
 
         if (Definition.RequiresFixedBounds() && !System->bFixedBounds)
@@ -49,8 +69,20 @@ void FGamePlatformVFXDefinitionValidator::Validate(
             FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
             Issue.RuleId = TEXT("GPVFX.Definition.FixedBounds");
             Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
-            Issue.Message = NSLOCTEXT("GamePlatformVFX", "MissingFixedBounds", "Definition要求Fixed Bounds，但Niagara System未启用固定边界。");
+            Issue.Message = FText::Format(
+                NSLOCTEXT("GamePlatformVFX", "MissingFixedBoundsVariant", "VFX Niagara变体未启用Fixed Bounds：{0}"),
+                FText::FromString(VariantLabel));
         }
+    };
+
+    ValidateSystem(Definition.GetNiagaraSystem(), TEXT("Default"));
+    for (const TPair<FName, TSoftObjectPtr<UNiagaraSystem>>& Pair : Definition.GetPlatformVariants())
+    {
+        ValidateSystem(Pair.Value, FString::Printf(TEXT("Platform:%s"), *Pair.Key.ToString()));
+    }
+    for (const TPair<EGamePlatformVFXQualityTier, TSoftObjectPtr<UNiagaraSystem>>& Pair : Definition.GetQualityVariants())
+    {
+        ValidateSystem(Pair.Value, FString::Printf(TEXT("Quality:%d"), static_cast<int32>(Pair.Key)));
     }
 
     if (Definition.GetBehavior() != EGamePlatformVFXBehavior::Composite &&

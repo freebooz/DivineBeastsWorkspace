@@ -26,6 +26,10 @@ public:
     EGamePlatformVFXContentCategory GetContentCategory() const { return ContentCategory; }
     const TSoftObjectPtr<UNiagaraSystem>& GetNiagaraSystem() const { return NiagaraSystem; }
     const TSoftObjectPtr<UNiagaraEffectType>& GetEffectType() const { return EffectType; }
+    /** 编辑器验证使用：读取全部平台变体，运行时不得修改返回容器。 */
+    const TMap<FName, TSoftObjectPtr<UNiagaraSystem>>& GetPlatformVariants() const { return PlatformVariants; }
+    /** 编辑器验证使用：读取全部质量变体，运行时不得修改返回容器。 */
+    const TMap<EGamePlatformVFXQualityTier, TSoftObjectPtr<UNiagaraSystem>>& GetQualityVariants() const { return QualityVariants; }
     const FGamePlatformVFXParameterSchema& GetParameterSchema() const { return ParameterSchema; }
     const FGamePlatformVFXParameters& GetDefaultParameters() const { return DefaultParameters; }
     const TArray<TSoftObjectPtr<UObject>>& GetPreloadAssets() const { return PreloadAssets; }
