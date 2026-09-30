@@ -10,7 +10,8 @@
   "EnabledByDefault": false,
   "Plugins": [
     { "Name": "GamePlatformCore", "Enabled": true },
-    { "Name": "GamePlatformCharacter", "Enabled": true }
+    { "Name": "GamePlatformCharacter", "Enabled": true },
+    { "Name": "GamePlatformAbilitySystem", "Enabled": true }
   ],
   "Modules": [
     { "Name": "DivineBeastsRuntime", "Type": "Runtime", "LoadingPhase": "Default" },

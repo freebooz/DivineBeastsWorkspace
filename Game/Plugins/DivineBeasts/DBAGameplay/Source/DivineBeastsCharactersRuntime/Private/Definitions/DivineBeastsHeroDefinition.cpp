@@ -86,6 +86,11 @@ bool UDivineBeastsHeroDefinition::IsProjectDefinitionValid(FString& OutError) co
         return false;
     }
 
+    if (!Momentum.IsValid(OutError))
+    {
+        return false;
+    }
+
     if (DisplayNameKey.IsNone() || ContentPackId.IsNone())
     {
         OutError = TEXT("DisplayNameKey/ContentPackId不能为空。");

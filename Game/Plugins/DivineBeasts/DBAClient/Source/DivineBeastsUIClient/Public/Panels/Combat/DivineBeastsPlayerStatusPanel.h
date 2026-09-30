@@ -1,41 +1,11 @@
 #pragma once
 
 #include "Components/GamePlatformResourceBarWidget.h"
+#include "Contracts/DivineBeastsPlayerStatusUIContracts.h"
 #include "Panels/DivineBeastsPanelWidget.h"
 #include "DivineBeastsPlayerStatusPanel.generated.h"
 
-/**
- * FDivineBeastsPlayerStatusViewData（神兽联盟玩家状态视图数据）。
- *
- * 这是UI只读投影，不是Gameplay属性真源。
- * Health/Shield来自平台战斗或GAS确认状态；Momentum（气势）来自项目正式玩法状态源。
- */
-USTRUCT(BlueprintType)
-struct DIVINEBEASTSUICLIENT_API FDivineBeastsPlayerStatusViewData
-{
-    GENERATED_BODY()
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    double Health = 0.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    double MaxHealth = 0.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    double Shield = 0.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    double MaxShield = 0.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    double Momentum = 0.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    double MaxMomentum = 100.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    bool bDead = false;
-};
+class UDivineBeastsPlayerStatusViewModel;
 
 /**
  * UDivineBeastsPlayerStatusPanel（神兽联盟玩家状态面板）。
@@ -50,6 +20,13 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsPlayerStatusPanel
     GENERATED_BODY()
 
 public:
+    /** 绑定事件驱动状态 ViewModel；Panel 不直接读取 ASC。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Combat")
+    void BindStatusViewModel(UDivineBeastsPlayerStatusViewModel* InViewModel);
+
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Combat")
+    void ClearStatusViewModel();
+
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Combat")
     void ApplyStatus(const FDivineBeastsPlayerStatusViewData& InStatus);
 
@@ -69,7 +46,16 @@ protected:
     UFUNCTION(BlueprintImplementableEvent, Category="DivineBeasts|UI|Combat", meta=(DisplayName="玩家状态已变化"))
     void BP_OnPlayerStatusChanged(FDivineBeastsPlayerStatusViewData NewStatus);
 
+    virtual void NativeDestruct() override;
+
+    void HandleStatusChanged(const FDivineBeastsPlayerStatusViewData& NewStatus);
+
 private:
     UPROPERTY(Transient)
     FDivineBeastsPlayerStatusViewData Status;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UDivineBeastsPlayerStatusViewModel> StatusViewModel = nullptr;
+
+    FDelegateHandle StatusChangedHandle;
 };

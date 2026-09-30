@@ -1,14 +1,18 @@
 #pragma once
 
 #include "AbilitySystemComponent.h"
-#include "AttributeSet.h"
+#include "Attributes/GamePlatformAttributeSet.h"
 #include "GamePlatformCombatAttributeSet.generated.h"
 
 #define GAMEPLATFORM_ATTRIBUTE_ACCESSORS(ClassName, PropertyName)     GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName)     GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName)     GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName)     GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
-/** 正式战斗生命/护盾属性集；Incoming字段为不复制的结算元属性。 */
+/**
+ * UGamePlatformCombatAttributeSet（游戏平台生命/护盾与Meta结算属性集）。
+ * 保留现有 Damage/Healing Execution（伤害/治疗执行）主链；攻击、防御、控制属性拆入同插件独立 AttributeSet。
+ * Incoming 字段为不复制的瞬时结算元属性，不是长期角色状态。
+ */
 UCLASS()
-class GAMEPLATFORMCOMBAT_API UGamePlatformCombatAttributeSet : public UAttributeSet
+class GAMEPLATFORMCOMBAT_API UGamePlatformCombatAttributeSet : public UGamePlatformAttributeSet
 {
     GENERATED_BODY()
 

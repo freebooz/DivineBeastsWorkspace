@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Definitions/GamePlatformHeroDefinition.h"
+#include "Definitions/DivineBeastsMomentumDefinition.h"
 #include "Identity/DivineBeastsZodiacIdentity.h"
 #include "DivineBeastsHeroDefinition.generated.h"
 
@@ -54,6 +55,10 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Hero")
     FDivineBeastsAppearanceOptionSchema AppearanceSchema;
+
+    /** 项目核心 Momentum（气势）规则；运行时真值由 UDivineBeastsMomentumAttributeSet 持有。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Hero|Momentum")
+    FDivineBeastsMomentumDefinition Momentum;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 

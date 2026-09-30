@@ -1,7 +1,10 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
+#include "Attributes/DivineBeastsMomentumAttributeSet.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
+#include "Definitions/DivineBeastsMomentumDefinition.h"
+#include "Attributes/GamePlatformAttributeSet.h"
 #include "Creation/DivineBeastsCharacterCreationProvider.h"
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Definitions/GamePlatformHeroDefinition.h"
@@ -128,6 +131,46 @@ bool FDivineBeastsInitializationContextTest::RunTest(const FString&)
     Context.bPersistentCharacterIdRequired = false;
     Error.Reset();
     TestTrue(TEXT("AI/nonpersistent context valid"), Context.IsValid(Error));
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsMomentumContractTest,
+    "DivineBeasts.Characters.MomentumContract",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsMomentumContractTest::RunTest(const FString&)
+{
+    TestTrue(TEXT("Momentum属性集必须继承平台AttributeSet"),
+        UDivineBeastsMomentumAttributeSet::StaticClass()->IsChildOf(UGamePlatformAttributeSet::StaticClass()));
+
+    FDivineBeastsMomentumDefinition Definition;
+    FString Error;
+    TestTrue(TEXT("默认Momentum Definition有效"), Definition.IsValid(Error));
+
+    UDivineBeastsMomentumAttributeSet* Attributes = NewObject<UDivineBeastsMomentumAttributeSet>();
+    TestEqual(TEXT("默认Momentum为0"), Attributes->GetMomentum(), 0.0f);
+    TestEqual(TEXT("默认MaxMomentum为100"), Attributes->GetMaxMomentum(), 100.0f);
+    TestEqual(TEXT("默认GainMultiplier为1"), Attributes->GetMomentumGainMultiplier(), 1.0f);
+
+    float OverflowMomentum = 150.0f;
+    Attributes->PreAttributeChange(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), OverflowMomentum);
+    TestEqual(TEXT("Momentum不得超过MaxMomentum"), OverflowMomentum, 100.0f);
+
+    Definition.InitialMomentum = 60.0f;
+    Definition.MaxMomentum = 120.0f;
+    Definition.GainMultiplier = 1.25f;
+    Definition.DecayRate = 2.0f;
+    Error.Reset();
+    TestTrue(TEXT("自定义Momentum Definition有效"), Definition.IsValid(Error));
+    Attributes->InitializeFromDefinition(Definition);
+    TestEqual(TEXT("Definition初始化Momentum"), Attributes->GetMomentum(), 60.0f);
+    TestEqual(TEXT("Definition初始化MaxMomentum"), Attributes->GetMaxMomentum(), 120.0f);
+
+    Definition.InitialMomentum = 130.0f;
+    Error.Reset();
+    TestFalse(TEXT("InitialMomentum超过上限必须拒绝"), Definition.IsValid(Error));
     return true;
 }
 

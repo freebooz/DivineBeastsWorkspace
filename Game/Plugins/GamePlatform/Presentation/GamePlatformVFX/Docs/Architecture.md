@@ -17,6 +17,10 @@ DivineBeasts（项目层） → MobaCommon（MOBA层） → GamePlatform（平�
 
 不创建 Runtime/Server 空模块。Dedicated Server 不加载客户端 VFX 模块。
 
+## 通用技术资产层
+
+`GamePlatformVFXClient` 可以拥有跨游戏中立的 Shader/HLSL（着色器数学函数）、Niagara 参数名契约和未来的技术模板，但这些资产不得编码任何 FrostMage、PetalBloom、生肖、英雄或 Ability（技能）语义。`SourceArt` 仅保存迁移源素材与追溯哈希，不属于运行时 `Content`，不得进入 Shipping Cook。
+
 ## 单一真源
 
 - `GamePlatformPresentation`：唯一负责 SemanticTag + Context → ProviderChannel + DefinitionId；

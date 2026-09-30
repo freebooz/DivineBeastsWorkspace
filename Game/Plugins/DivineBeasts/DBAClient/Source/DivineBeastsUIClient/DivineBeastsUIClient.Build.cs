@@ -37,6 +37,10 @@ public class DivineBeastsUIClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsApplicationFlowClient",
+            // 玩家状态 ViewModel 只在 Private 实现中订阅平台 ASC/项目 Momentum AttributeSet；公开 UI 契约不泄漏 Gameplay 类型。
+            "GameplayAbilities",
+            "GamePlatformAbilitySystem",
+            "DivineBeastsCharactersRuntime",
             // 角色选择/创建页只通过项目表现子系统驱动三维预览，不直接加载Mesh或地图资产。
             "DivineBeastsPresentationClient"
         });

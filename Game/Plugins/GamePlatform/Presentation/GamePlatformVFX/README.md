@@ -35,6 +35,7 @@ Gameplay / Application Fact
 - Composite 子节点与普通请求共用预算门禁和 Definition Lease；
 - Predicted / Confirmed / Corrected / Cancelled 与 Presentation 状态对齐；
 - 非 Composite Behavior 统一以 Generic Niagara（通用 Niagara）执行，不建立十套播放器。Beam/Area/Attached 仅有少量通用参数/附着适配；Projectile/Shield/Portal/Trail/World 等名称主要是内容制作语义分类。
+- 已启动 `F:\\VFX Lib` 第一批平台化迁移：只抽取 Charge/Cast、Projectile+Trail、Impact+ShockRing、Orbit/Petal/Debris 的中立数学与参数契约；通用 Shader 位于 `Shaders/Private/GamePlatformVFXCommonMotion.ush`，源美术只进入 `SourceArt`，不会冒充运行时 `.uasset`。
 
 ## 边界
 
@@ -43,5 +44,7 @@ Gameplay / Application Fact
 1. 创建 VFX Definition 内容实例；
 2. 在 Presentation Catalog 注册项目语义 → VFX DefinitionId 映射；
 3. 提供真实 Niagara/材质/纹理等客户端内容资产。
+
+迁移说明见 `Docs/VFXLibMigration.md（VFX Lib迁移说明）`。
 
 当前仓库仍没有真实 `.uasset/.umap` VFX 二进制资产。UE5.8 `GamePlatformVFXClient + GamePlatformVFXEditor` 定向模块编译已真实通过；Client Target 已通过 UHT 但 C++ 终态仍未取得，Automation 又被本机 VisionOS SDK 校验在测试执行前阻断。因此当前仍不能把源码/Editor编译结果替代 Client、Cook、Review Map、Multi-PIE 或 5v5/Android 性能验收。

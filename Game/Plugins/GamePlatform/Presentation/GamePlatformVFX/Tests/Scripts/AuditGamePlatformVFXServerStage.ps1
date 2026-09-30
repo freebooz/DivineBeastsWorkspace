@@ -7,7 +7,7 @@ if (-not (Test-Path $StageDirectory -PathType Container)) { throw ('Stage direct
 
 $patterns = @(
     'GamePlatformVFXClient', 'GamePlatformVFXEditor', 'L_GPVFX_Review',
-    'FXS_GPVFX_', 'FXE_GPVFX_', 'FXM_GPVFX_', 'FXT_GPVFX_',
+    'FXS_GPVFX_', 'FXE_GPVFX_', 'FXM_GPVFX_', 'FXT_GPVFX_', 'T_GPVFX_',
     'DA_VFX_Platform_', 'DA_VFXCAT_Platform_'
 )
 $hits = [Collections.Generic.List[object]]::new()

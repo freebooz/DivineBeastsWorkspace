@@ -1,0 +1,84 @@
+// GamePlatformVFXCommonMotion.ush
+// 跨游戏 VFX（视觉特效）通用运动函数。
+// 仅提供数学原语，不包含任何项目、英雄、技能或美术主题语义。
+
+#ifndef GAME_PLATFORM_VFX_COMMON_MOTION_USH
+#define GAME_PLATFORM_VFX_COMMON_MOTION_USH
+
+/** 稳定伪随机 0..1；适用于粒子索引/Seed 派生，不作为 Gameplay 随机真源。 */
+float GPVFX_Hash01(float Value)
+{
+    return frac(sin(Value * 127.1f + 8.7f) * 43758.5453f);
+}
+
+/** 二维向量旋转；AngleRadians 使用弧度。 */
+float2 GPVFX_Rotate2D(float2 Value, float AngleRadians)
+{
+    const float S = sin(AngleRadians);
+    const float C = cos(AngleRadians);
+    return float2(Value.x * C - Value.y * S, Value.x * S + Value.y * C);
+}
+
+/** 0..1 平滑窗：先淡入，再在指定区间淡出。 */
+float GPVFX_SmoothWindow(float Time, float FadeInEnd, float FadeOutStart, float FadeOutEnd)
+{
+    const float SafeFadeInEnd = max(FadeInEnd, 0.0001f);
+    const float SafeFadeOutWidth = max(FadeOutEnd - FadeOutStart, 0.0001f);
+    const float FadeIn = smoothstep(0.0f, SafeFadeInEnd, Time);
+    const float FadeOut = 1.0f - smoothstep(FadeOutStart, FadeOutStart + SafeFadeOutWidth, Time);
+    return saturate(FadeIn * FadeOut);
+}
+
+/** 环绕偏移：XY 平面绕轴，Z 由 VerticalOffset 控制。 */
+float3 GPVFX_OrbitOffset(float AngleRadians, float Radius, float VerticalOffset)
+{
+    return float3(cos(AngleRadians) * Radius, sin(AngleRadians) * Radius, VerticalOffset);
+}
+
+/** EaseOut 扩张半径；EasePower 越大，前期扩张越快。 */
+float GPVFX_ExpandingRadius(float StartRadius, float EndRadius, float NormalizedTime, float EasePower)
+{
+    const float T = saturate(NormalizedTime);
+    const float Power = max(EasePower, 0.0001f);
+    const float Eased = 1.0f - pow(1.0f - T, Power);
+    return lerp(StartRadius, EndRadius, Eased);
+}
+
+/** 弹道偏移；Direction 应由调用方归一化，Gravity 为正值时向 -Z 加速。 */
+float3 GPVFX_BallisticOffset(
+    float3 Direction,
+    float HorizontalSpeed,
+    float VerticalSpeed,
+    float Gravity,
+    float Time)
+{
+    return Direction * HorizontalSpeed * Time
+        + float3(0.0f, 0.0f, VerticalSpeed * Time - 0.5f * Gravity * Time * Time);
+}
+
+/** 拖尾宽度曲线；用于 Ribbon（带状轨迹）或条带 Mesh。 */
+float GPVFX_TrailWidth(
+    float NormalizedAge,
+    float StartWidth,
+    float EndWidth,
+    float FalloffPower)
+{
+    const float T = saturate(NormalizedAge);
+    const float P = max(FalloffPower, 0.0001f);
+    return lerp(StartWidth, EndWidth, pow(T, P));
+}
+
+/** 轻盈漂浮偏移；适用于花瓣、羽毛、灰烬、玉屑等非权威装饰。 */
+float GPVFX_SoftFloat(float Phase, float Amplitude, float Frequency, float Time)
+{
+    return sin(Phase + Time * Frequency) * Amplitude;
+}
+
+/** 黄金角径向方向；适用于均匀径向碎片/光点分布。 */
+float2 GPVFX_GoldenAngleDirection(float Index)
+{
+    const float Angle = Index * 2.39996323f;
+    return float2(cos(Angle), sin(Angle));
+}
+
+#endif // GAME_PLATFORM_VFX_COMMON_MOTION_USH

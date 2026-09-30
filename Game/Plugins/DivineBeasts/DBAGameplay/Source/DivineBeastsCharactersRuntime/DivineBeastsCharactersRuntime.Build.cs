@@ -12,12 +12,15 @@ public class DivineBeastsCharactersRuntime : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            "GameplayAbilities",
             "GameplayTags",
+            "GamePlatformAbilitySystem",
             "GamePlatformCharacter",
             "DivineBeastsRuntime"
         });
 
         // UnrealNetwork仅用于本模块复制实现，不能通过Public依赖向上层传播。
+        // GameplayAbilities/GamePlatformAbilitySystem 为 Public：Momentum AttributeSet 的公开头继承平台 AttributeSet 并暴露 GAS 属性类型。
         PrivateDependencyModuleNames.Add("NetCore");
     }
 }

@@ -28,6 +28,8 @@ C++ Automation 源码覆盖 Handle、参数 Schema、Generic Niagara 行为分�
 
 最新结果：`passed=true`，`binaryAssetsObserved=0`。
 
+VFX Lib 第一批迁移后再次执行 `ValidateGamePlatformVFX.ps1`：**通过**。新增门禁覆盖通用 Shader 文件存在、`/Plugin/GamePlatformVFX` Shader 虚拟路径注册、14 个稳定 `User.*` 参数名、6 张 SourceArt 源素材清单、平台 Shader 禁止 Frost/Petal/DBA 等项目语义，以及 SourceArt 不得放入运行时 Content。
+
 `git diff --check` 已真实执行通过；仅曾出现工作区 LF/CRLF 转换提示，不属于差异格式错误。
 
 ## 3. UE5.8 定向模块编译
@@ -48,6 +50,8 @@ DivineBeastsArenaEditor Win64 Development
 
 修复后复跑结果：**Succeeded**。`GamePlatformVFXClient` 与 `GamePlatformVFXEditor` 均完成编译和 DLL 链接。
 
+VFX Lib 第一批迁移后再次使用 UE5.8 定向编译，UHT 重新运行并编译 `GamePlatformVFXCommonParameters.cpp`、`GamePlatformVFXCommonParametersTests.cpp`、`GamePlatformVFXClientModule.cpp`，随后重新链接 `UnrealEditor-GamePlatformVFXClient.dll` 与 `UnrealEditor-GamePlatformVFXEditor.dll`，结果：**Succeeded**。这证明新增 RenderCore/Shader 映射和参数契约的 C++ 编译合同成立；`.ush` 只有在真实 Niagara Module/Custom HLSL 引用后才能形成 Shader 编译证据。
+
 ## 4. Client Target
 
 已启动 `DivineBeastsArenaClient Win64 Development -Module=GamePlatformVFXClient`：
@@ -59,11 +63,15 @@ DivineBeastsArenaEditor Win64 Development
 
 本机该轮编译器／UBA 执行长时间无终态输出，为避免残留构建任务已主动停止。因此当前状态只能记录为：**Client Target UHT 通过，C++ 最终编译终态未验证**，不能记为 Client Build 通过或失败。
 
+本次 VFX Lib 迁移没有重新执行完整 Client Target；上一轮 Client Target 状态保持不变。
+
 ## 5. UE Automation
 
 已真实启动 `UnrealEditor-Cmd` 运行 `GamePlatform.VFX.*`，但测试队列尚未开始前，引擎全平台 SDK 校验因本机缺失 VisionOS SDK 退出。日志同时确认 Win64、Android、Linux、LinuxArm64 SDK 有效。
 
 因此当前状态为：**Automation 环境阻塞／未执行测试用例**，不是 VFX Automation 测试失败。
+
+新增 `GamePlatform.VFX.Parameters.CommonNames` 自动化测试源码已随模块编译成功；测试用例本身尚未通过 UE Automation 实际运行。尝试启动 UE5.8 Editor 并通过 Monolith MCP 创建真实 Niagara 资产时，Editor 卡在项目 Target 查询阶段，Monolith 服务未进入可调用状态，因此本轮没有生成 Niagara `.uasset`。
 
 ## 6. 尚未取得的证据
 
@@ -71,7 +79,7 @@ DivineBeastsArenaEditor Win64 Development
 Server Target真实构建终态：未执行
 Client/Server Cook：未执行
 L_VFXReview真实评审地图：仓库无合法.umap，未执行
-真实Niagara System / EffectType / Definition资产：当前0个
+真实Niagara System / EffectType / Definition资产：当前0个；第一批SourceArt=6个，均位于非Cook目录
 Multi-PIE / Travel：未执行
 1v1 / 5v5 / OpenWorld / Village性能：未执行
 Android设备Niagara Insights：未执行
@@ -81,6 +89,6 @@ Server 隔离当前只有源码和描述文件门禁，不得替代真实 Server
 
 ## 7. 结论
 
-当前可以确认：**核心架构整改已落地，静态门禁通过，UE5.8 Editor 定向模块编译通过。**
+当前可以确认：**核心架构整改已落地，VFX Lib 第一批去主题化迁移已落地，静态门禁通过，UE5.8 Editor 定向模块编译通过。**
 
 在 Client Target 终态、Automation、Cook、真实资产 Review Map 和性能工件完成前，不得描述为 Production Ready（生产就绪）。

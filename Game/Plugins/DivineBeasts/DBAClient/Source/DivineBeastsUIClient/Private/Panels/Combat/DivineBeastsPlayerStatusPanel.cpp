@@ -1,5 +1,7 @@
 #include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
 
+#include "ViewModels/Combat/DivineBeastsPlayerStatusViewModel.h"
+
 namespace
 {
 FGamePlatformUIResourceBarState MakeBarState(
@@ -13,6 +15,42 @@ FGamePlatformUIResourceBarState MakeBarState(
     State.MaximumValue = Maximum;
     return State;
 }
+}
+
+void UDivineBeastsPlayerStatusPanel::BindStatusViewModel(UDivineBeastsPlayerStatusViewModel* InViewModel)
+{
+    ClearStatusViewModel();
+    if (!IsValid(InViewModel))
+    {
+        return;
+    }
+
+    StatusViewModel = InViewModel;
+    StatusChangedHandle = StatusViewModel->OnStatusChanged().AddUObject(
+        this, &UDivineBeastsPlayerStatusPanel::HandleStatusChanged);
+    ApplyStatus(StatusViewModel->GetStatusRef());
+}
+
+void UDivineBeastsPlayerStatusPanel::ClearStatusViewModel()
+{
+    if (IsValid(StatusViewModel) && StatusChangedHandle.IsValid())
+    {
+        StatusViewModel->OnStatusChanged().Remove(StatusChangedHandle);
+    }
+    StatusChangedHandle.Reset();
+    StatusViewModel = nullptr;
+}
+
+void UDivineBeastsPlayerStatusPanel::NativeDestruct()
+{
+    ClearStatusViewModel();
+    Super::NativeDestruct();
+}
+
+void UDivineBeastsPlayerStatusPanel::HandleStatusChanged(
+    const FDivineBeastsPlayerStatusViewData& NewStatus)
+{
+    ApplyStatus(NewStatus);
 }
 
 void UDivineBeastsPlayerStatusPanel::ApplyStatus(

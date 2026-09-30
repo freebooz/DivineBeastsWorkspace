@@ -20,6 +20,7 @@ public class GamePlatformVFXClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "Projects",
+            "RenderCore",
             "GamePlatformCore",
             "GamePlatformPresentationCore",
             "GamePlatformPresentationClient"

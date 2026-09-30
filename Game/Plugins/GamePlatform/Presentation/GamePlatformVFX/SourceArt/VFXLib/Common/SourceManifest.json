@@ -1,0 +1,38 @@
+﻿[
+    {
+        "source":  "Textures/T_FM_Glint.png",
+        "target":  "T_GPVFX_Glint_Source.png",
+        "sha256":  "923d93f6f9359c9a953927ddd5462852973141bf4c20d32072951988cbe05496",
+        "bytes":  21333
+    },
+    {
+        "source":  "Textures/T_FM_ShockRing.png",
+        "target":  "T_GPVFX_ShockRing_Source.png",
+        "sha256":  "3218b87ef3598cb25537b96d53cf9568a04276288dd6e222afdfb0325d3eff0c",
+        "bytes":  95203
+    },
+    {
+        "source":  "Textures/T_FM_SoftCore.png",
+        "target":  "T_GPVFX_SoftCore_Source.png",
+        "sha256":  "e9396add9f8f42b7d29c3267de9cb02eca73f59dd2daf24e714d1be436f889c0",
+        "bytes":  34646
+    },
+    {
+        "source":  "Textures/T_FM_Noise.png",
+        "target":  "T_GPVFX_Noise_Source.png",
+        "sha256":  "e20d1c2e1cddb4672fb9cf4ef4c9c9bb8d54a5c926806346cca60b85565060f6",
+        "bytes":  2096576
+    },
+    {
+        "source":  "PetalBloom/Textures/T_PB_Mist.png",
+        "target":  "T_GPVFX_Mist_Source.png",
+        "sha256":  "fdc72a96ccc64db38183fa0c557365f6c7652b4554d7289b4367ce7711517fd9",
+        "bytes":  123626
+    },
+    {
+        "source":  "PetalBloom/Textures/T_PB_Halo.png",
+        "target":  "T_GPVFX_Halo_Source.png",
+        "sha256":  "4703516177e6f6a2182853f5ae09ffdbf734b12c535e26ce27d26b97187ba4bd",
+        "bytes":  85108
+    }
+]

@@ -1,6 +1,8 @@
 #include "Components/DivineBeastsCharacterComponent.h"
 
 #include "Catalog/DivineBeastsHeroCatalog.h"
+#include "Attributes/DivineBeastsMomentumAttributeSet.h"
+#include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Engine/StreamableManager.h"
@@ -298,6 +300,28 @@ bool UDivineBeastsCharacterComponent::ApplyDefinition(
     Movement->JumpZVelocity = Definition.Movement.JumpZVelocity;
     Movement->RotationRate.Yaw = Definition.Movement.RotationRateYaw;
     Movement->NavAgentProps.bCanCrouch = Definition.Movement.bCanCrouch;
+
+    // Momentum（气势）是神兽联盟项目层核心状态。只在服务器确保 AttributeSet 存在并按 Hero Definition 初始化；
+    // 客户端通过 GAS 复制接收，不在 CharacterComponent/UI 保存第二份权威真值。
+    if (Character->HasAuthority())
+    {
+        if (UGamePlatformAbilitySystemComponent* AbilitySystem =
+                Character->FindComponentByClass<UGamePlatformAbilitySystemComponent>())
+        {
+            UDivineBeastsMomentumAttributeSet* MomentumAttributes =
+                const_cast<UDivineBeastsMomentumAttributeSet*>(
+                    AbilitySystem->GetSet<UDivineBeastsMomentumAttributeSet>());
+            if (!IsValid(MomentumAttributes))
+            {
+                MomentumAttributes = const_cast<UDivineBeastsMomentumAttributeSet*>(
+                    AbilitySystem->AddSet<UDivineBeastsMomentumAttributeSet>());
+            }
+            if (IsValid(MomentumAttributes))
+            {
+                MomentumAttributes->InitializeFromDefinition(Definition.Momentum);
+            }
+        }
+    }
 
     return true;
 }

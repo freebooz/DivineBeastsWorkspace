@@ -37,6 +37,10 @@ $requiredFiles = @(
     'Source/GamePlatformVFXClient/Private/Subsystems/GamePlatformVFXWorldSubsystem.cpp',
     'Source/GamePlatformVFXClient/Private/Resolution/GamePlatformVFXResolver.cpp',
     'Source/GamePlatformVFXClient/Private/Execution/GamePlatformVFXNiagaraExecutor.cpp',
+    'Source/GamePlatformVFXClient/Public/Types/GamePlatformVFXCommonParameters.h',
+    'Shaders/Private/GamePlatformVFXCommonMotion.ush',
+    'SourceArt/VFXLib/Common/SourceManifest.json',
+    'Docs/VFXLibMigration.md',
     'Source/GamePlatformVFXEditor/GamePlatformVFXEditor.Build.cs'
 )
 foreach ($relative in $requiredFiles) {
@@ -48,6 +52,30 @@ foreach ($file in $sourceFiles) {
     $text = [IO.File]::ReadAllText($file.FullName)
     Assert-Rule (-not ($text -match '\b(DBAHero|DivineBeastsHero|MobaCombat|MobaAbility)\b')) ('Upper-layer symbol leaked into platform VFX source: ' + $file.FullName)
 }
+
+$commonParameterPath = Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Public/Types/GamePlatformVFXCommonParameters.h'
+$commonParameterText = [IO.File]::ReadAllText($commonParameterPath)
+foreach ($parameter in @('User.PrimaryColor','User.SecondaryColor','User.CoreColor','User.Intensity','User.Duration','User.Radius','User.Length','User.Width','User.Speed','User.Seed','User.SourcePosition','User.TargetPosition','User.Direction','User.Scale')) {
+    $cppPath = Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Types/GamePlatformVFXCommonParameters.cpp'
+    $cppText = [IO.File]::ReadAllText($cppPath)
+    Assert-Rule ($cppText.Contains($parameter)) ('Missing common Niagara parameter: ' + $parameter)
+}
+
+$shaderPath = Join-Path $PluginRoot 'Shaders/Private/GamePlatformVFXCommonMotion.ush'
+$shaderText = [IO.File]::ReadAllText($shaderPath)
+foreach ($function in @('GPVFX_Hash01','GPVFX_OrbitOffset','GPVFX_ExpandingRadius','GPVFX_BallisticOffset','GPVFX_TrailWidth','GPVFX_SoftFloat','GPVFX_GoldenAngleDirection')) {
+    Assert-Rule ($shaderText.Contains($function)) ('Missing common VFX shader function: ' + $function)
+}
+Assert-Rule (-not ($shaderText -match '(?i)Frost|PetalBloom|Frostbolt|Zodiac|DivineBeasts|DBA\.')) 'Platform common shader leaked project/theme semantics'
+
+$clientModulePath = Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/GamePlatformVFXClientModule.cpp'
+$clientModuleText = [IO.File]::ReadAllText($clientModulePath)
+Assert-Rule ($clientModuleText.Contains('/Plugin/GamePlatformVFX')) 'Client module must register stable GamePlatformVFX shader virtual path'
+Assert-Rule ($clientModuleText.Contains('AddShaderSourceDirectoryMapping')) 'Client module must register plugin shader source directory'
+
+$sourceManifest = [IO.File]::ReadAllText((Join-Path $PluginRoot 'SourceArt/VFXLib/Common/SourceManifest.json')) | ConvertFrom-Json
+Assert-Rule (@($sourceManifest).Count -eq 6) 'VFX Lib first migration batch must contain exactly six neutral SourceArt files'
+Assert-Rule (-not (Test-Path (Join-Path $PluginRoot 'Content/SourceArt'))) 'SourceArt must not be placed under runtime Content'
 
 $definitionText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Public/Definitions/GamePlatformVFXDefinition.h'))
 Assert-Rule ($definitionText -match 'UGamePlatformDefinitionBase') 'VFX Definition must inherit unified UGamePlatformDefinitionBase'
