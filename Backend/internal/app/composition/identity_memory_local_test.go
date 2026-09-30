@@ -1,15 +1,75 @@
 //go:build !productiondeps
 
+// 开发身份装配回归：验证真实bcrypt登录、账号隔离、配置拒绝及刷新/退出生命周期。
+// 所有账号和固定口令只属于测试内存仓储，测试不得输出凭据或依赖生产数据库。
 package composition
 
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"divinebeasts/backend/internal/modules/identity"
 )
+
+// 本地批量账号初始化回归：仅验证!productiondeps装配，测试口令不进入生产配置。
+// 十个独立账号必须通过正式bcrypt密码登录，错误密码拒绝；配置错误须在播种前失败。
+func TestLocalIdentityBatchAccounts(t *testing.T) {
+	entries := make([]string, 0, 10)
+	for number := 1; number <= 10; number++ {
+		entries = append(entries, fmt.Sprintf(`{"accountName":"player%02d","password":"123456"}`, number))
+	}
+	seeds, err := parseLocalIdentityAccountSeeds("", "", "["+strings.Join(entries, ",")+"]")
+	if err != nil || len(seeds) != 10 {
+		t.Fatalf("本地配置应解析十个账号: count=%d err=%v", len(seeds), err)
+	}
+	ctx := context.Background()
+	repo := newLocalIdentityPersistentRepository()
+	for _, seed := range seeds {
+		if err := seedLocalIdentityAccount(ctx, repo, "divine-beasts", seed.AccountName, seed.Password); err != nil {
+			t.Fatal("本地账号播种失败")
+		}
+	}
+	service, err := identity.NewPersistentService(repo, identity.SystemClock{}, time.Minute, time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	players := make(map[string]bool)
+	for _, seed := range seeds {
+		session, err := service.LoginPassword(ctx, "divine-beasts", seed.AccountName, seed.Password, "")
+		if err != nil || session.PlayerID == "" || players[session.PlayerID] {
+			t.Fatal("各账号应获得独立的可信玩家身份")
+		}
+		players[session.PlayerID] = true
+		if _, err := service.LoginPassword(ctx, "divine-beasts", seed.AccountName, "wrong-password", ""); !errors.Is(err, identity.ErrInvalidCredentials) {
+			t.Fatal("错误密码必须拒绝")
+		}
+	}
+}
+
+// 旧单账号环境变量继续有效；批量重复、空密码、未知字段或拼接JSON不得产生部分初始化。
+func TestLocalIdentityAccountSeedConfiguration(t *testing.T) {
+	legacy, err := parseLocalIdentityAccountSeeds("legacy", "legacy-password", "")
+	if err != nil || len(legacy) != 1 || legacy[0].AccountName != "legacy" {
+		t.Fatal("旧单账号配置应保持兼容")
+	}
+	for _, invalid := range []string{
+		`[{"accountName":"duplicate","password":"local-password"},{"accountName":"duplicate","password":"local-password"}]`,
+		`[{"accountName":"empty","password":""}]`,
+		`[{"accountName":"unknown","password":"local-password","extra":true}]`,
+		`[] {}`,
+	} {
+		if _, err := parseLocalIdentityAccountSeeds("", "", invalid); err == nil {
+			t.Fatal("无效批量配置必须拒绝")
+		}
+	}
+	if _, err := parseLocalIdentityAccountSeeds("legacy", "", ""); err == nil {
+		t.Fatal("旧单账号密码缺失必须拒绝")
+	}
+}
 
 func TestLocalIdentitySeedAllowsDevelopmentOnlyShortPassword(t *testing.T) {
 	ctx := context.Background()

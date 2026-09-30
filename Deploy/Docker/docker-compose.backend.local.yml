@@ -17,6 +17,8 @@ services:
       # 本地开发可选密码账号；为空时Identity保持游客开发模式，不影响生产装配。
       DIVINEBEASTS_DEV_LOGIN_USER: ${DIVINEBEASTS_DEV_LOGIN_USER:-}
       DIVINEBEASTS_DEV_LOGIN_PASSWORD: ${DIVINEBEASTS_DEV_LOGIN_PASSWORD:-}
+      # 可选JSON数组：accountName/password；最多32个本地内存测试账号，不输出内容、不用于生产。
+      DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON: ${DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON:-}
     ports:
       - "127.0.0.1:${IDENTITY_HOST_PORT:-8081}:8081"
     networks:

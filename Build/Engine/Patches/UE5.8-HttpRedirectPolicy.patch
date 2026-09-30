@@ -151,11 +151,11 @@ index 0000000..ace60d2
 +{
 +public:
 +	bool SetupForTest() { return SetupRequest(); }
-+	void CleanupForTest() { CleanupRequest(); }
++	void CleanupForTest() { (this->*(&FRedirectPolicyLifecycleRequest::FHttpRequestCommon::CleanupRequest))(); }
 +};
 +
 +IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHttpRedirectPolicyContractTest,
-+	"System.HTTP.RedirectPolicy.Contract", EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
++	"System.HTTP.RedirectPolicy.Contract", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 +
 +bool FHttpRedirectPolicyContractTest::RunTest(const FString& Parameters)
 +{
@@ -288,7 +288,7 @@ index 0000000..ace60d2
 +}
 +
 +IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHttpRedirectPolicyNetworkTest,
-+	"System.HTTP.RedirectPolicy.LoopbackNetwork", EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
++	"System.HTTP.RedirectPolicy.LoopbackNetwork", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 +
 +bool FHttpRedirectPolicyNetworkTest::RunTest(const FString& Parameters)
 +{
