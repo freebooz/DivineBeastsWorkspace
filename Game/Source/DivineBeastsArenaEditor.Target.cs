@@ -17,6 +17,8 @@ public class DivineBeastsArenaEditorTarget : TargetRules
         EnablePlugins.Add("DBAUIPack_Core");
         // 编辑器需要挂载前端内容包，生成/验证角色选择与创建三维预览地图。
         EnablePlugins.Add("DBAFrontEndPack");
+        // 编辑器挂载Village正式世界内容包，用于创建、回读和校验真实地图及WorldDefinition资产。
+        EnablePlugins.Add("DBAWorldPack_Village");
         // 编辑器加载公共占位角色源和全部生肖英雄内容包，供资产生成、预览与验证。
         EnablePlugins.Add("DBAContentPack_Common");
         EnablePlugins.Add("DBAHeroPack_Rat");

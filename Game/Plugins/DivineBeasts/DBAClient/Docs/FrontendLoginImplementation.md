@@ -263,7 +263,7 @@ Boot
 
 其中 `L_DBA_FrontEnd（前台宿主地图）` 用于 Boot / Login 等客户端前台；`L_DBA_CharacterStudio（角色预览工作室）` 用于 CharacterSelect / CharacterCreate 的三维角色预览。两者只由 `DBAFrontEndPack（神兽联盟前端三维场景内容包）` 持有，只进入 Client / Editor，不属于 OpenWorld、Village 或 MainArena Dedicated Server（专用服务器）正式世界。
 
-当前尚未发现正式 `L_Village_Start（新手村起始地图）` 二进制资产；不得以复制、改扩展名或文本占位伪造 `.umap`。在该地图由 Unreal Editor（虚幻编辑器）正式创建并通过 WorldDefinition（世界定义）/Cook（烘焙）验收前，Village 只能标记为“流程与后端分配已接线、正式地图资产待交付”，不能宣称完整可玩闭环已经完成。
+当前已通过 Unreal Editor（虚幻编辑器）真实生成 `/DBAWorldPack_Village/Maps/L_Village_Start`，并同步生成 `Village.Main / Village.Tutorial / Village.Training` 三个 `UDivineBeastsWorldDefinition（神兽联盟世界定义）` 资产。该地图当前定位为“流程闭环验证用最小正式地图”，包含出生点、可碰撞验证地面与基础照明，用于 Login → CharacterCreate/Select → Village → WorldReady/InWorld 的工程验收；它不是最终“湖心三岛桃花新手村”美术地图，后续 PCG、地形、建筑、植被与水体内容应继续在 `DBAWorldPack_Village（新手村世界内容包）` 内增量替换和完善。
 
 ### 8.4 Application Flow 正式资产
 

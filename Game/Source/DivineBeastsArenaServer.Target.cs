@@ -14,5 +14,7 @@ public class DivineBeastsArenaServerTarget : TargetRules
         // MainArena与OpenWorld/Village共用同一Server Target；竞技插件的ServerOnly模块在MainArena配置下提供项目竞技适配，
         // 其DBAClient依赖带Client/Editor目标白名单，不会进入Dedicated Server产物。
         EnablePlugins.Add("DBAArena");
+        // Village权威地图由第三层纯内容包持有；Dedicated Server必须挂载同一地图身份以执行BeginPlay/碰撞/导航与就绪校验。
+        EnablePlugins.Add("DBAWorldPack_Village");
     }
 }

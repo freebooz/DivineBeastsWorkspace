@@ -176,11 +176,11 @@ func grpcWorldIDForExperience(experienceID string) (string, bool) {
 	case gameservercontract.ExperienceOpenWorldMain:
 		return "World.OpenWorld.Main", true
 	case gameservercontract.ExperienceVillageMain:
-		return "World.Village.Main", true
+		return "divinebeasts.world.village_main@1", true
 	case gameservercontract.ExperienceVillageTutorial:
-		return "World.Village.Tutorial", true
+		return "divinebeasts.world.village_tutorial@1", true
 	case gameservercontract.ExperienceVillageTraining:
-		return "World.Village.Training", true
+		return "divinebeasts.world.village_training@1", true
 	default:
 		return "", false
 	}

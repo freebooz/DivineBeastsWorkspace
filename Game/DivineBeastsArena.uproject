@@ -28,7 +28,8 @@
     { "Name": "DBAHeroPack_Monkey", "Enabled": true },
     { "Name": "DBAHeroPack_Rooster", "Enabled": true },
     { "Name": "DBAHeroPack_Dog", "Enabled": true },
-    { "Name": "DBAHeroPack_Boar", "Enabled": true }
+    { "Name": "DBAHeroPack_Boar", "Enabled": true },
+    { "Name": "DBAWorldPack_Village", "Enabled": true }
   ]
 }
 
