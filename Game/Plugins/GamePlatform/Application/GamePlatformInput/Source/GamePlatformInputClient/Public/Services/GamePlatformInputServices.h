@@ -3,14 +3,20 @@
 #include "GameplayTagContainer.h"
 struct FGamePlatformInputActionDefinition;
 
-/** 唯一语义命名与单位转换入口；纯查询不加载配置、不触发输入或网络。 */
+/**
+ * 平台客户端语义命名与单位转换入口，供Profile编译与本地玩家输入路由调用。
+ * 标签字典由宿主GameplayTags配置登记；本接口不拥有玩家、世界或网络状态。
+ * 标签查询及调用它的Descriptor转换须在引擎配置/UObject初始化后由游戏线程调用；
+ * 首次查询建立进程内只读标签值缓存，禁止从文件作用域静态初始化调用。
+ * 数值合同查询/校验不触发输入、网络或资源租约。
+ */
 namespace GamePlatformInputServices
 {
     /** 返回平台长期稳定Built-in语义Tag；新项目通用语义代码优先使用该入口。 */
     GAMEPLATFORMINPUTCLIENT_API FGameplayTag GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic Semantic);
     /** 返回平台Built-in语义的完整Descriptor；Profile/项目桥可直接复用，不经过Legacy枚举。 */
     GAMEPLATFORMINPUTCLIENT_API FGamePlatformInputSemanticDescriptor GetBuiltInSemanticDescriptor(EGamePlatformBuiltInInputSemantic Semantic);
-    /** 标签由本模块原生注册，未知枚举返回空标签；不依赖Config/Tags自动扫描。 */
+    /** 查询配置已登记的旧枚举兼容标签，未知枚举返回空标签；不进行Native标签注册。 */
     GAMEPLATFORMINPUTCLIENT_API FGameplayTag GetSemanticTag(EGamePlatformInputSemantic Semantic);
     /** Move归一轴，LookDelta为度增量，LookRate为度/秒，其余布尔请求。 */
     GAMEPLATFORMINPUTCLIENT_API EGamePlatformInputUnit GetUnit(EGamePlatformInputSemantic Semantic);

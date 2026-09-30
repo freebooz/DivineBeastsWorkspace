@@ -14,6 +14,8 @@
 
 项目用户输入设计见 `Docs/InputArchitecture.md`。`DivineBeastsInputClient` 单向组合 `GamePlatformInputClient`，使用 `DivineBeasts.Input.*` 稳定Tag，不复制Enhanced Input/租约/重绑定实现；旧平台攻击/技能枚举只保留兼容，神兽联盟Profile明确禁止继续使用。
 
+2026-09-30单体客户端启动修复：项目输入标签不再于CRT静态初始化阶段调用`UGameplayTagsManager`，改为引擎初始化后的游戏线程首次调用时缓存。标签仍归`DefaultGameplayTags.ini`，身份与GAS映射不变。平台输入生产标签与Development测试标签遵循同一边界；必须以真实Cook客户端启动回归补证，编辑器模块加载成功不能证明单体客户端可启动。
+
 之前引用的`DivineBeastsApplicationContracts.generated.hpp`在仓库和生成目录均不存在，代码未使用其中声明；已移除该孤立include。后端请求继续走现存 Shared HTTP（共享HTTP）契约与真实HTTP适配代码，不恢复重复协议层。
 
 ### ApplicationFlow 当前正式状态（2026-09-27复核）

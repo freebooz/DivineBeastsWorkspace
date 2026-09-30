@@ -1,3 +1,6 @@
+// 平台客户端输入标签与数值合同：供本地玩家路由、Profile编译及测试调用。
+// 标签由平台配置拥有；本文件不持有玩家/世界状态，不提供游戏项目专属玩法。
+// UObject依赖必须延迟到游戏线程的业务调用，避免单体Client在CRT初始化阶段崩溃。
 #include "Services/GamePlatformInputServices.h"
 
 #include "Definitions/GamePlatformInputProfileDefinition.h"
@@ -8,24 +11,36 @@
  * Attack/AbilitySlot/TargetLock标签仅为旧EGamePlatformInputSemantic兼容层保留；
  * 新项目不得继续把这些Legacy标签作为平台公共语义扩展入口。
  */
-static const FGameplayTag InputMove = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Move"), true);
-static const FGameplayTag InputLookDelta = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.LookDelta"), true);
-static const FGameplayTag InputLookRate = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.LookRate"), true);
-static const FGameplayTag InputInteract = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Interact"), true);
-static const FGameplayTag InputMenu = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Menu"), true);
-static const FGameplayTag InputConfirm = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Confirm"), true);
-static const FGameplayTag InputCancel = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Cancel"), true);
-
-// 旧标签字符串必须保持不变，避免已有Profile/调用方因架构迁移发生静默兼容破坏；仅“归属职责”降级为Legacy。
-static const FGameplayTag InputLegacyAttack = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Attack.Primary"), true);
-static const FGameplayTag InputLegacyAbility1 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot1"), true);
-static const FGameplayTag InputLegacyAbility2 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot2"), true);
-static const FGameplayTag InputLegacyAbility3 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot3"), true);
-static const FGameplayTag InputLegacyAbility4 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot4"), true);
-static const FGameplayTag InputLegacyTarget = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Target.Lock"), true);
-
 namespace
 {
+// 稳定标签的只读值缓存；构造只发生在引擎配置/UObject完成初始化后的首次调用。
+struct FPlatformInputTagCache
+{
+    FGameplayTag InputMove = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Move"), true);
+    FGameplayTag InputLookDelta = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.LookDelta"), true);
+    FGameplayTag InputLookRate = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.LookRate"), true);
+    FGameplayTag InputInteract = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Interact"), true);
+    FGameplayTag InputMenu = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Menu"), true);
+    FGameplayTag InputConfirm = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Confirm"), true);
+    FGameplayTag InputCancel = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Cancel"), true);
+
+    // 兼容旧Profile身份，不增加或改名项目玩法；新版项目使用自己的Descriptor标签。
+    FGameplayTag InputLegacyAttack = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Attack.Primary"), true);
+    FGameplayTag InputLegacyAbility1 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot1"), true);
+    FGameplayTag InputLegacyAbility2 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot2"), true);
+    FGameplayTag InputLegacyAbility3 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot3"), true);
+    FGameplayTag InputLegacyAbility4 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Ability.Slot4"), true);
+    FGameplayTag InputLegacyTarget = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Input.Target.Lock"), true);
+};
+
+// 不在进程加载阶段访问UGameplayTagsManager；所有调用方遵循客户端游戏线程契约。
+const FPlatformInputTagCache& GetInputTags()
+{
+    check(IsInGameThread());
+    static const FPlatformInputTagCache Tags;
+    return Tags;
+}
+
 constexpr uint8 KnownInputChannels =
     static_cast<uint8>(EGamePlatformInputChannel::Move) |
     static_cast<uint8>(EGamePlatformInputChannel::Look) |
@@ -43,15 +58,16 @@ bool HasSingleChannelBit(uint8 ChannelMask)
 
 FGameplayTag GamePlatformInputServices::GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic Semantic)
 {
+    const FPlatformInputTagCache& Tags = GetInputTags();
     switch (Semantic)
     {
-    case EGamePlatformBuiltInInputSemantic::Move: return InputMove;
-    case EGamePlatformBuiltInInputSemantic::LookDelta: return InputLookDelta;
-    case EGamePlatformBuiltInInputSemantic::LookRate: return InputLookRate;
-    case EGamePlatformBuiltInInputSemantic::Interact: return InputInteract;
-    case EGamePlatformBuiltInInputSemantic::Menu: return InputMenu;
-    case EGamePlatformBuiltInInputSemantic::Confirm: return InputConfirm;
-    case EGamePlatformBuiltInInputSemantic::Cancel: return InputCancel;
+    case EGamePlatformBuiltInInputSemantic::Move: return Tags.InputMove;
+    case EGamePlatformBuiltInInputSemantic::LookDelta: return Tags.InputLookDelta;
+    case EGamePlatformBuiltInInputSemantic::LookRate: return Tags.InputLookRate;
+    case EGamePlatformBuiltInInputSemantic::Interact: return Tags.InputInteract;
+    case EGamePlatformBuiltInInputSemantic::Menu: return Tags.InputMenu;
+    case EGamePlatformBuiltInInputSemantic::Confirm: return Tags.InputConfirm;
+    case EGamePlatformBuiltInInputSemantic::Cancel: return Tags.InputCancel;
     default: return {};
     }
 }
@@ -103,21 +119,22 @@ FGamePlatformInputSemanticDescriptor GamePlatformInputServices::GetBuiltInSemant
 
 FGameplayTag GamePlatformInputServices::GetSemanticTag(EGamePlatformInputSemantic Semantic)
 {
+    const FPlatformInputTagCache& Tags = GetInputTags();
     switch (Semantic)
     {
-    case EGamePlatformInputSemantic::Move: return InputMove;
-    case EGamePlatformInputSemantic::LookDelta: return InputLookDelta;
-    case EGamePlatformInputSemantic::LookRate: return InputLookRate;
-    case EGamePlatformInputSemantic::AttackPrimary: return InputLegacyAttack;
-    case EGamePlatformInputSemantic::AbilitySlot1: return InputLegacyAbility1;
-    case EGamePlatformInputSemantic::AbilitySlot2: return InputLegacyAbility2;
-    case EGamePlatformInputSemantic::AbilitySlot3: return InputLegacyAbility3;
-    case EGamePlatformInputSemantic::AbilitySlot4: return InputLegacyAbility4;
-    case EGamePlatformInputSemantic::Interact: return InputInteract;
-    case EGamePlatformInputSemantic::TargetLock: return InputLegacyTarget;
-    case EGamePlatformInputSemantic::Menu: return InputMenu;
-    case EGamePlatformInputSemantic::Confirm: return InputConfirm;
-    case EGamePlatformInputSemantic::Cancel: return InputCancel;
+    case EGamePlatformInputSemantic::Move: return Tags.InputMove;
+    case EGamePlatformInputSemantic::LookDelta: return Tags.InputLookDelta;
+    case EGamePlatformInputSemantic::LookRate: return Tags.InputLookRate;
+    case EGamePlatformInputSemantic::AttackPrimary: return Tags.InputLegacyAttack;
+    case EGamePlatformInputSemantic::AbilitySlot1: return Tags.InputLegacyAbility1;
+    case EGamePlatformInputSemantic::AbilitySlot2: return Tags.InputLegacyAbility2;
+    case EGamePlatformInputSemantic::AbilitySlot3: return Tags.InputLegacyAbility3;
+    case EGamePlatformInputSemantic::AbilitySlot4: return Tags.InputLegacyAbility4;
+    case EGamePlatformInputSemantic::Interact: return Tags.InputInteract;
+    case EGamePlatformInputSemantic::TargetLock: return Tags.InputLegacyTarget;
+    case EGamePlatformInputSemantic::Menu: return Tags.InputMenu;
+    case EGamePlatformInputSemantic::Confirm: return Tags.InputConfirm;
+    case EGamePlatformInputSemantic::Cancel: return Tags.InputCancel;
     default: return {};
     }
 }

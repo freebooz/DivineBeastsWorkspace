@@ -8,6 +8,8 @@
 
 ## 关键原则
 
+- 平台语义标签与Development测试标签均在引擎初始化后的游戏线程首次使用时读取；禁止全局静态初始化调用`UGameplayTagsManager`。单体Client的CRT阶段没有UObject环境，编辑器DLL模块晚加载会掩盖这一类错误。标签配置和Legacy序列化身份保持不变；Cook客户端初始化回归必须与Editor输入合同测试分别验证。
+
 - PC键鼠、PC/外接手柄、Android/iOS Touch 共用同一 Semantic（语义）消费链。
 - 新项目语义使用稳定GameplayTag Descriptor并在Profile准备阶段编译为CompactSlot；旧固定枚举只保留兼容，禁止继续追加项目技能。
 - 虚拟摇杆/技能按钮 UI 不进入平台 Input；UI 只通过 Touch API 注入中立动作值。

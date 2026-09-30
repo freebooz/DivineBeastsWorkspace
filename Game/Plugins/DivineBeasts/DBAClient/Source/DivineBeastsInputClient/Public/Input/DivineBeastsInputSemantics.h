@@ -7,9 +7,12 @@
 /**
  * DivineBeastsInputSemantics（神兽联盟输入语义）。
  * 这些标签属于项目层，禁止回灌GamePlatformInput；平台只识别Descriptor合同。
+ * 标签访问与映射须在引擎UObject/配置初始化完成后的游戏线程调用，禁止用于全局静态初始化。
+ * 值由项目GameplayTags配置定义，首次访问后缓存；缺失标签报告配置错误，不注册临时替代标签。
  */
 namespace DivineBeastsInputSemantics
 {
+    /** 返回主攻击输入标签；下面五个访问器分别返回四个技能槽和目标锁定标签，调用前提同命名空间说明。 */
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag AttackPrimary();
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot1();
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot2();

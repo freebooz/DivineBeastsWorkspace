@@ -1,3 +1,5 @@
+// 平台输入Profile自动化测试：仅创建瞬态夹具，验证身份、动作合同与资源边界。
+// 测试标签也必须延迟到引擎初始化后的游戏线程读取，测试源码会链接进Development单体Client。
 #include "Definitions/GamePlatformInputProfileDefinition.h"
 
 #include "InputAction.h"
@@ -9,7 +11,13 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-static const FGameplayTag InputAutomationCustom = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Test.Input.Custom"), true);
+// 测试配置拥有此标签；只读缓存不在CRT初始化时访问UObject管理器。
+static FGameplayTag GetInputAutomationCustom()
+{
+    check(IsInGameThread());
+    static const FGameplayTag Tag = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Test.Input.Custom"), true);
+    return Tag;
+}
 
 namespace
 {
@@ -118,7 +126,7 @@ bool FGamePlatformInputProfileContractTest::RunTest(const FString&)
 
     // 新语义Descriptor不依赖固定枚举，并可在同一Profile中与Legacy动作共存。
     FGamePlatformInputActionDefinition CustomEntry;
-    CustomEntry.Descriptor.SemanticId.Tag = InputAutomationCustom;
+    CustomEntry.Descriptor.SemanticId.Tag = GetInputAutomationCustom();
     CustomEntry.Descriptor.Unit = EGamePlatformInputUnit::Boolean;
     CustomEntry.Descriptor.ValueType = EInputActionValueType::Boolean;
     CustomEntry.Descriptor.ChannelMask = static_cast<uint8>(EGamePlatformInputChannel::Actions);
