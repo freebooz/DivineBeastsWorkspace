@@ -6,7 +6,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsServerRoleProfileLoadTest,
     "DivineBeasts.Server.Profile.LoadAndValidateRoles",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 
 bool FDivineBeastsServerRoleProfileLoadTest::RunTest(const FString&)
 {
@@ -34,6 +34,28 @@ bool FDivineBeastsServerRoleProfileLoadTest::RunTest(const FString&)
         if (RoleName == TEXT("OpenWorld"))
         {
             TestEqual(TEXT("OpenWorld默认进入大厅体验"), Profile.DefaultExperienceId, FName(TEXT("Experience.OpenWorld.Hub")));
+        }
+        if (RoleName == TEXT("Village"))
+        {
+            TestEqual(
+                TEXT("Village默认进入新手教学体验"),
+                Profile.DefaultExperienceId,
+                FName(TEXT("Experience.Village.Tutorial")));
+            TestEqual(
+                TEXT("Village使用第三层正式世界内容包地图"),
+                Profile.WorldPackage,
+                FString(TEXT("/DBAWorldPack_Village/Maps/L_Village_Start")));
+            TestEqual(
+                TEXT("Village至少声明一个Ready必需资源"),
+                Profile.RequiredAssets.Num(),
+                1);
+            if (Profile.RequiredAssets.Num() == 1)
+            {
+                TestEqual(
+                    TEXT("Village Ready必需资源必须是L_Village_Start"),
+                    Profile.RequiredAssets[0].ToString(),
+                    FString(TEXT("/DBAWorldPack_Village/Maps/L_Village_Start.L_Village_Start")));
+            }
         }
     }
 

@@ -66,15 +66,13 @@ Dedicated Server 不依赖本层表现资源。
 
 ## 3. 当前开发占位方案
 
-当前素材源来自旧工程：
+首次缺少公共占位资源时，生成器会从 `E:\work\Game\DivineBeastsArena` 下自动查找包含 Manny/Quinn 的旧工程，当前可用源为 `DBA_GameClient`。公共资源一旦已经进入版本库，后续生成与验证不再依赖旧工程。
 
-`E:\\work\\Game\\DivineBeastsArena\\DBA_GameClient`
-
-`Generate-ZodiacPrototypeCharacters.ps1（生肖原型角色生成脚本）` 会先把 Manny/Quinn 及其依赖复制到项目临时 `/Game` 路径，再由 Unreal Editor 的 AssetTools 正规迁移到：
+`Generate-ZodiacPrototypeCharacters.ps1（生肖原型角色生成脚本）` 只复制 Manny/Quinn 显示所需的最小依赖到临时 `/Game` 路径，再由 Unreal Editor 逐资产迁移到：
 
 `Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/`
 
-这样二进制资源跨挂载点引用由引擎重写，禁止直接在文件系统中把 `.uasset` 改目录。公共内容包只保存一套共享 Manny/Quinn、骨架及必要依赖；不复制 12 套纹理，也不为每个生肖复制一套网格。
+最小依赖只包含 Manny/Quinn SkeletalMesh、Skeleton、PhysicsAsset、基础材质和纹理；明确不导入旧工程的 Control Rig、Mover 示例和动画蓝图。二进制资源跨挂载点引用由引擎重写，禁止直接在文件系统中给 `.uasset` 改目录。公共内容包只保存一套共享 Manny/Quinn，不复制 12 套纹理，也不为每个生肖复制一套基础网格。
 
 十二生肖采用两套基础轮廓 + 12 个高区分度颜色：
 
@@ -125,18 +123,27 @@ Shipping 构建禁止该回退：正式发布必须交付真实 Hero Definition 
 powershell -ExecutionPolicy Bypass -File .\\Tools\\Unreal\\Characters\\Generate-ZodiacPrototypeCharacters.ps1
 ```
 
-默认参数已对应当前环境：
+脚本默认自动探测当前环境：
 
-- EngineRoot：`D:\\UnrealEngine-5.8.0-release`
-- SourceProjectRoot：`E:\\work\\Game\\DivineBeastsArena\\DBA_GameClient`
-- WorkspaceRoot：`E:\\work\\2026\\DivineBeastsWorkspace`
+- `WorkspaceRoot（工作空间根目录）`：根据脚本所在的 `DivineBeastsWorkspace/Tools/Unreal/Characters` 自动向上解析，不写死盘符；
+- `EngineRoot（引擎根目录）`：优先探测 `F:\UnrealEngine-5.8.0-release`，其次探测 `D:\UnrealEngine-5.8.0-release`，也可显式传入；
+- `SourceProjectRoot（旧资源源项目）`：仅在公共 Manny/Quinn 尚未落盘时需要，可从 `E:\work\Game\DivineBeastsArena` 自动搜索，也可显式传入。
 
 生成器负责创建/更新：
 
-- `DBAContentPack_Common` 中的共享 Manny/Quinn；
+- `DBAContentPack_Common` 中唯一一套共享 Manny/Quinn 最小依赖；
 - 12 个 `DBAHeroPack_*` 中的生肖材质实例与 Appearance Profile；
 - `DBAGameplay/Definitions` 中的 12 个 Hero Definition；
-- 资产存在性和数量校验。
+- 成功后清理 `/Game` 临时 Mannequin 迁移目录；
+- 资产存在性和 12/12/12 数量校验。
+
+只做快速验收、不启动 Unreal Editor 时使用：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Tools\Unreal\Characters\Generate-ZodiacPrototypeCharacters.ps1 -ValidateOnly
+```
+
+当前验收基线要求：公共 Manny、Quinn、Skeleton、PhysicsAsset 均存在，且 Hero Definition / Appearance Profile / 原型颜色材质分别为 `12 / 12 / 12`。
 
 ## 5. 后期真实角色替换
 
@@ -167,11 +174,13 @@ powershell -ExecutionPolicy Bypass -File .\\Tools\\Unreal\\Characters\\Generate-
 
 ## 6. 当前安全边界
 
-平台统一 Spawn/Respawn 执行器仍必须由 `GamePlatformGameplay（平台玩法插件）` 负责。
+平台角色初始化唯一入口为 `FGamePlatformCharacterInitializationExecutor（平台角色初始化执行器）`。项目层通过 `GamePlatform.CharacterInitializer` 注册 `FDivineBeastsCharacterSpawnInitializer`；Executor 要求当前组合根恰好存在一个初始化器，且自身不执行 `SpawnActor/Possess`。
 
-项目层已经通过 `GamePlatform.CharacterInitializer` 注册 `FDivineBeastsCharacterSpawnInitializer`，但不得在 DBAGameplay/DBAArena 中自行新增 `SpawnActor/Possess` 旁路。
+MainArena 已接入 `FDivineBeastsArenaGameplayLifecycleAdapter（神兽联盟竞技玩法生命周期适配器）`：Assignment 阶段预热 12 个 Server-safe Hero Definition；倒计时结束后通过 UE 标准 `RestartPlayerAtPlayerStart` 创建/控制基础 `ACharacter`，再调用平台 Executor 完成项目角色初始化并确认 `CharacterReady`。所有参赛者初始化成功后，比赛才允许进入 `InProgress`。复活同样复用该链路，并以 SpawnGeneration 防止旧代次覆盖。
 
-MainArena 当前保持 Fail Closed：未配置平台统一 GameplayLifecycleAdapter 时不得进入正式竞技出生流程。这一边界应保留，直到平台 Spawn/Respawn 执行器完整实现并通过多人复制测试。
+项目层没有直接调用 `SpawnActor/Possess`；Manny/Quinn 仍只属于客户端 Appearance，不进入 Dedicated Server。OpenWorld/Village 后续应复用同一 Executor 接入各自平台出生编排。
+
+独立基础设施限制：`GamePlatformGameplay` 中的通用 `AGamePlatformGameModeBase / GameState / PlayerController / PlayerState` 目前仍存在历史声明无实现，单模块链接会报告未解析符号。MainArena 当前使用已实现的 `GamePlatformArena` 生命周期适配边界，不依赖该空实现；但 OpenWorld/Village 若要直接采用这套通用 GameMode，必须另行完成该平台底座。
 
 ## 7. 验收要求
 
@@ -189,3 +198,5 @@ MainArena 当前保持 Fail Closed：未配置平台统一 GameplayLifecycleAdap
 - 角色创建草稿在 Definition 异步加载完成后再校验；
 - Dedicated Server 不需要客户端 Mesh/Material/Animation 执行代码；
 - Shipping 禁止开发占位回退。
+- MainArena 全员必须在 `InProgress` 前完成标准 Pawn 出生、唯一 Character Initializer 初始化和 `CharacterReady`；
+- MainArena Server 定向模块编译必须通过，且项目生命周期适配器源码不得出现直接 `SpawnActor/Possess` 调用。

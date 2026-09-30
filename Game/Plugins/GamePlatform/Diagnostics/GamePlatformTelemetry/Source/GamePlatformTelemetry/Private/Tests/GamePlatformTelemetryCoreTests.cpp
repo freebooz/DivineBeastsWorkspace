@@ -305,11 +305,119 @@ bool FGamePlatformTelemetryContextBatchBoundaryTest::RunTest(const FString&)
     TestTrue(TEXT("构建第一上下文批次"), Buffer.BuildBatch({}, First));
     TestEqual(TEXT("上下文变化必须切批"), First.Events.Num(), 1);
     TestEqual(TEXT("第一批使用第一条记录上下文"), First.SourceContext.WorldId, FString(TEXT("world-A")));
+    TestTrue(TEXT("批次内Event不再重复携带完整Context"), First.Events[0].Context.WorldId.IsEmpty());
 
     FGamePlatformTelemetryBatch Second;
     TestTrue(TEXT("构建第二上下文批次"), Buffer.BuildBatch({}, Second));
     TestEqual(TEXT("第二批只包含剩余上下文"), Second.Events.Num(), 1);
     TestEqual(TEXT("第二批上下文正确"), Second.SourceContext.WorldId, FString(TEXT("world-B")));
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformTelemetryMetricCoalescingTest,
+    "GamePlatform.Telemetry.MetricCoalescing",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformTelemetryMetricCoalescingTest::RunTest(const FString&)
+{
+    FGamePlatformTelemetryLimits Limits;
+    Limits.MaxBufferEvents = 32;
+    Limits.MaxBufferBytes = 64 * 1024;
+    Limits.MaxBatchEvents = 32;
+    Limits.MaxBatchBytes = 64 * 1024;
+    FGamePlatformTelemetryBoundedBuffer Buffer(Limits);
+
+    FGamePlatformTelemetryContext Context;
+    Context.WorldId = TEXT("world-coalesce");
+
+    FGamePlatformTelemetryMetric Counter;
+    Counter.Name = TEXT("server.telemetry.dropped_total");
+    Counter.Type = EGamePlatformTelemetryMetricType::Counter;
+    Counter.Value = 1.0;
+    Counter.Context = Context;
+    TestTrue(TEXT("Counter首次入队"), Buffer.EnqueueMetric(Counter, 128));
+    Counter.Value = 2.0;
+    TestTrue(TEXT("Counter第二次合并"), Buffer.EnqueueMetric(Counter, 128));
+    Counter.Value = 3.0;
+    TestTrue(TEXT("Counter第三次合并"), Buffer.EnqueueMetric(Counter, 128));
+
+    FGamePlatformTelemetryMetric Gauge;
+    Gauge.Name = TEXT("server.active_players");
+    Gauge.Type = EGamePlatformTelemetryMetricType::Gauge;
+    Gauge.Value = 10.0;
+    Gauge.Context = Context;
+    TestTrue(TEXT("Gauge首次入队"), Buffer.EnqueueMetric(Gauge, 128));
+    Gauge.Value = 12.0;
+    TestTrue(TEXT("Gauge覆盖最新值"), Buffer.EnqueueMetric(Gauge, 128));
+
+    FGamePlatformTelemetryMetric Histogram;
+    Histogram.Name = TEXT("server.frame_ms");
+    Histogram.Type = EGamePlatformTelemetryMetricType::Histogram;
+    Histogram.Value = 16.0;
+    Histogram.Context = Context;
+    TestTrue(TEXT("Histogram样本1入队"), Buffer.EnqueueMetric(Histogram, 128));
+    Histogram.Value = 18.0;
+    TestTrue(TEXT("Histogram样本2保持独立"), Buffer.EnqueueMetric(Histogram, 128));
+
+    const FGamePlatformTelemetryDiagnostics Diagnostics = Buffer.GetDiagnostics();
+    TestEqual(TEXT("Counter/Gauge共发生3次合并"), Diagnostics.CoalescedMetricTotal, static_cast<int64>(3));
+    TestEqual(TEXT("实际Buffer只保留4条记录"), Diagnostics.BufferDepth, 4);
+
+    FGamePlatformTelemetryBatch Batch;
+    TestTrue(TEXT("构建合并后的批次"), Buffer.BuildBatch({}, Batch));
+    TestEqual(TEXT("批次包含4条Metric"), Batch.Metrics.Num(), 4);
+    TestEqual(TEXT("Counter值正确累加"), Batch.Metrics[0].Value, 6.0);
+    TestEqual(TEXT("Gauge保留最新值"), Batch.Metrics[1].Value, 12.0);
+    TestEqual(TEXT("Histogram样本1保持原值"), Batch.Metrics[2].Value, 16.0);
+    TestEqual(TEXT("Histogram样本2保持原值"), Batch.Metrics[3].Value, 18.0);
+    TestTrue(TEXT("批次Metric不重复携带完整Context"), Batch.Metrics[0].Context.WorldId.IsEmpty());
+    TestEqual(TEXT("公共SourceContext保留世界身份"), Batch.SourceContext.WorldId, Context.WorldId);
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformTelemetryPrivacyBoundaryDiscardTest,
+    "GamePlatform.Telemetry.PrivacyBoundaryDiscard",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformTelemetryPrivacyBoundaryDiscardTest::RunTest(const FString&)
+{
+    FGamePlatformTelemetryLimits Limits;
+    Limits.MaxBufferEvents = 16;
+    Limits.MaxBufferBytes = 64 * 1024;
+    FGamePlatformTelemetryBoundedBuffer Buffer(Limits);
+
+    FGamePlatformTelemetryEvent OldNormal;
+    OldNormal.EventId = FGuid::NewGuid();
+    OldNormal.EventName = TEXT("Telemetry.Foundation.ClientStarted");
+    OldNormal.Priority = EGamePlatformTelemetryPriority::Normal;
+    OldNormal.Context.SessionId = TEXT("old-session");
+    FGamePlatformTelemetryEvent OldCritical = OldNormal;
+    OldCritical.EventId = FGuid::NewGuid();
+    OldCritical.Priority = EGamePlatformTelemetryPriority::CriticalTelemetry;
+
+    TestTrue(TEXT("旧会话Normal入队"), Buffer.EnqueueEvent(OldNormal, 256));
+    TestTrue(TEXT("旧会话Critical入队"), Buffer.EnqueueEvent(OldCritical, 256));
+    TestEqual(TEXT("隐私边界丢弃2条旧记录"), Buffer.DiscardQueuedRecords(), 2);
+
+    const FGamePlatformTelemetryDiagnostics AfterDiscard = Buffer.GetDiagnostics();
+    TestEqual(TEXT("隐私边界后Buffer清空"), AfterDiscard.BufferDepth, 0);
+    TestEqual(TEXT("Normal丢弃计数增加"), AfterDiscard.DroppedNormal, static_cast<int64>(1));
+    TestEqual(TEXT("Critical丢弃计数增加"), AfterDiscard.DroppedCritical, static_cast<int64>(1));
+
+    FGamePlatformTelemetryEvent NewSession;
+    NewSession.EventId = FGuid::NewGuid();
+    NewSession.EventName = TEXT("Telemetry.Foundation.ClientStarted");
+    NewSession.Context.SessionId = TEXT("new-session");
+    TestTrue(TEXT("新会话记录正常入队"), Buffer.EnqueueEvent(NewSession, 256));
+
+    FGamePlatformTelemetryBatch Batch;
+    TestTrue(TEXT("构建新会话批次"), Buffer.BuildBatch({}, Batch));
+    TestEqual(TEXT("新批次只使用新会话Context"), Batch.SourceContext.SessionId, FString(TEXT("new-session")));
+    TestEqual(TEXT("旧会话记录不得残留"), Batch.Events.Num(), 1);
     return true;
 }
 

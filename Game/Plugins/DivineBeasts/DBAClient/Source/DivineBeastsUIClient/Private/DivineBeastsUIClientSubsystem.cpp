@@ -1,6 +1,7 @@
 #include "DivineBeastsUIClientSubsystem.h"
 
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
+#include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
 #include "Definitions/GamePlatformUIScreenDefinition.h"
 #include "Dialogs/GamePlatformToastWidget.h"
 #include "Engine/LocalPlayer.h"
@@ -453,6 +454,7 @@ void UDivineBeastsUIClientSubsystem::HandleViewStateChanged(
     SyncLoadingService();
     EnsureDefaultRootLayout();
     SyncPrimaryScreen();
+    SyncCharacterPreview();
 }
 
 void UDivineBeastsUIClientSubsystem::PullInitialState()
@@ -503,6 +505,59 @@ void UDivineBeastsUIClientSubsystem::SyncLoadingService()
     {
         LoadingService->ReleaseToken(LoadingToken);
         LoadingToken = {};
+    }
+}
+
+void UDivineBeastsUIClientSubsystem::SyncCharacterPreview()
+{
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    UDivineBeastsCharacterPreviewSubsystem* Preview =
+        LocalPlayer
+            ? LocalPlayer->GetSubsystem<UDivineBeastsCharacterPreviewSubsystem>()
+            : nullptr;
+    if (!Preview)
+    {
+        return;
+    }
+
+    const bool bCharacterFrontEnd =
+        ViewState.CurrentStep == TEXT("DBA.Flow.CharacterEntry") ||
+        ViewState.CurrentStep == TEXT("DBA.Flow.CreateCharacter") ||
+        ViewState.CurrentStep == TEXT("DBA.Flow.ValidateSelection");
+    if (!bCharacterFrontEnd)
+    {
+        Preview->DeactivatePreviewScene();
+        return;
+    }
+
+    FName HeroDefinitionId = ViewState.SelectedHeroDefinitionId;
+    if (HeroDefinitionId.IsNone())
+    {
+        for (const FDivineBeastsUICharacterItem& Character : ViewState.Characters)
+        {
+            if (Character.bSelected && !Character.HeroDefinitionId.IsNone())
+            {
+                HeroDefinitionId = Character.HeroDefinitionId;
+                break;
+            }
+        }
+    }
+    if (HeroDefinitionId.IsNone() && !ViewState.Characters.IsEmpty())
+    {
+        HeroDefinitionId = ViewState.Characters[0].HeroDefinitionId;
+    }
+    if (HeroDefinitionId.IsNone() && !ViewState.CreateHeroOptions.IsEmpty())
+    {
+        HeroDefinitionId = ViewState.CreateHeroOptions[0].HeroDefinitionId;
+    }
+
+    if (HeroDefinitionId.IsNone())
+    {
+        Preview->ActivatePreviewScene();
+    }
+    else
+    {
+        Preview->PreviewHero(HeroDefinitionId);
     }
 }
 

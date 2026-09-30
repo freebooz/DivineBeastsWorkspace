@@ -37,6 +37,18 @@ namespace
         return true;
     }
 
+    // 正式世界既可位于主工程/Game挂载点，也可位于第三层DBAWorldPack_*纯内容插件。
+    // 仅放宽到神兽联盟世界包命名空间，拒绝Engine/Script及任意第三方挂载点，避免服务器Profile加载越界资产。
+    bool IsAllowedProjectWorldPackage(const FString& PackageName)
+    {
+        if (!FPackageName::IsValidLongPackageName(PackageName))
+        {
+            return false;
+        }
+        return PackageName.StartsWith(TEXT("/Game/DivineBeasts/Worlds/")) ||
+            PackageName.StartsWith(TEXT("/DBAWorldPack_"));
+    }
+
     bool ReadNameArray(
         const TSharedPtr<FJsonObject>& Object,
         const TCHAR* FieldName,
@@ -225,8 +237,7 @@ bool FDivineBeastsServerRoleProfile::Validate(FString& OutError) const
         AllowedExperienceIds.IsEmpty() ||
         HasDuplicates(AllowedExperienceIds) ||
         HasDuplicates(ArenaModeIds) ||
-        !WorldPackage.StartsWith(TEXT("/Game/")) ||
-        !FPackageName::IsValidLongPackageName(WorldPackage) ||
+        !IsAllowedProjectWorldPackage(WorldPackage) ||
         RequiredAssets.IsEmpty() || InstancePolicy.IsNone() ||
         !RequiredAssets.ContainsByPredicate(
             [this](const FSoftObjectPath& Path)

@@ -181,9 +181,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDivineBeastsFlowExtensionRegistryTest::RunTest(const FString&)
 {
+    // UGameInstanceSubsystem声明Within=GameInstance；测试夹具必须使用合法Outer，
+    // 否则UE5.8会在StaticAllocateObject阶段触发ensure，无法验证真正的扩展注册行为。
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>());
     UDivineBeastsApplicationFlowSubsystem* Flow =
-        NewObject<UDivineBeastsApplicationFlowSubsystem>();
-    TestNotNull(TEXT("项目流程子系统必须可构造"), Flow);
+        NewObject<UDivineBeastsApplicationFlowSubsystem>(Instance.Get());
+    TestNotNull(TEXT("项目流程子系统必须由GameInstance拥有并可构造"), Flow);
     if (!Flow)
     {
         return false;

@@ -327,7 +327,9 @@ UGamePlatformTelemetrySubsystem::RecordEvent(
     Event.MonotonicTimestampSeconds =
         FPlatformTime::Seconds();
     Event.Sequence = Sequence.Increment();
-    Event.Context = GetContextSnapshot();
+    const FGamePlatformTelemetryContext ContextSnapshot = GetContextSnapshot();
+    // 调用方传入的Context一律忽略；Buffer单独共享平台当前快照，避免每条Event复制十余个FString。
+    Event.Context = {};
     // Priority和Privacy均以冻结Schema为准，调用方不能自行提升优先级或降低隐私等级。
     Event.Priority = Definition->Priority;
     for (FGamePlatformTelemetryAttribute& Attribute : Event.Attributes)
@@ -355,7 +357,7 @@ UGamePlatformTelemetrySubsystem::RecordEvent(
             Definition->SamplingPolicy,
             Definition->SamplingRate,
             SamplingSeed,
-            StableSamplingKey(Event.Context),
+            StableSamplingKey(ContextSnapshot),
             Event.EventName,
             Event.EventId))
     {
@@ -377,7 +379,10 @@ UGamePlatformTelemetrySubsystem::RecordEvent(
         FGamePlatformTelemetryPrivacyFilter::
             EstimateEventBytes(Event);
 
-    if (!Buffer->EnqueueEvent(Event, EstimatedBytes))
+    const FName RecordedEventName = Event.EventName;
+    const int64 RecordedSequence = Event.Sequence;
+
+    if (!Buffer->EnqueueEvent(MoveTemp(Event), EstimatedBytes, ContextSnapshot))
     {
         return EGamePlatformTelemetryRecordResult::BufferFull;
     }
@@ -385,9 +390,9 @@ UGamePlatformTelemetrySubsystem::RecordEvent(
     if (bTraceBridgeEnabled)
     {
         FGamePlatformTelemetryTrace::EmitEvent(
-            Event.EventName,
-            static_cast<uint64>(Event.Sequence),
-            Event.Context.CorrelationId);
+            RecordedEventName,
+            static_cast<uint64>(RecordedSequence),
+            ContextSnapshot.CorrelationId);
     }
 
     RequestFlushAfterRecord();
@@ -422,7 +427,9 @@ UGamePlatformTelemetrySubsystem::RecordMetric(
     Metric.Type = Definition->Type;
     Metric.Unit = Definition->Unit;
     Metric.TimestampUtc = FDateTime::UtcNow();
-    Metric.Context = GetContextSnapshot();
+    const FGamePlatformTelemetryContext ContextSnapshot = GetContextSnapshot();
+    // Metric上下文同样由Buffer共享快照持有，调用方不能伪造或覆盖平台Context。
+    Metric.Context = {};
 
     const EGamePlatformTelemetryRecordResult Validation =
         FGamePlatformTelemetryPrivacyFilter::ValidateMetric(
@@ -441,7 +448,7 @@ UGamePlatformTelemetrySubsystem::RecordMetric(
             Definition->SamplingPolicy,
             Definition->SamplingRate,
             SamplingSeed,
-            StableSamplingKey(Metric.Context),
+            StableSamplingKey(ContextSnapshot),
             Metric.Name,
             SamplingId))
     {
@@ -465,7 +472,8 @@ UGamePlatformTelemetrySubsystem::RecordMetric(
 
     if (!Buffer->EnqueueMetric(
             MoveTemp(Metric),
-            EstimatedBytes))
+            EstimatedBytes,
+            ContextSnapshot))
     {
         return EGamePlatformTelemetryRecordResult::BufferFull;
     }
@@ -608,6 +616,13 @@ bool UGamePlatformTelemetrySubsystem::FlushBestEffort()
         CancelScheduledFlush();
     }
     return bSubmittedAny;
+}
+
+int32 UGamePlatformTelemetrySubsystem::DiscardBufferedRecordsForPrivacyBoundary()
+{
+    check(IsInGameThread());
+    CancelScheduledFlush();
+    return Buffer ? Buffer->DiscardQueuedRecords() : 0;
 }
 
 FGamePlatformTelemetryDiagnostics

@@ -6,4 +6,6 @@ UE Buffer 满按优先级丢弃并计数；Network Sink 的 Pending Batch 有硬
 
 Network Sink 会保存并可撤销尚未触发的 Retry Ticker（重试定时任务）；Shutdown（关停）先禁止新重试并撤销待触发任务，对已经发出的 HTTP 给予 `ShutdownFlushBudgetSeconds` 非阻塞预算，预算到期才取消仍在飞请求并计入 Dropped。规划中的 NATS Publisher/503 retryable 行为当前后端尚未实现。
 
+客户端 NetworkSink 与 Online `AuthGeneration（认证代次）` 绑定。Logout、认证失败或账号切换时先尽力刷新旧 Session，再 Shutdown 旧 Sink 取消其 Pending/Retry；随后执行隐私边界 Buffer 丢弃，确保尚未进入旧 Sink 的旧会话记录不会在新账号登录后使用新 AccessToken 发送。重新 Authenticated 后才创建新的 NetworkSink。Token 刷新但 AuthGeneration 不变时不重建 Sink，每次 HTTP 请求继续通过 Online 动态授权，支持同一账号的正常令牌轮换。
+
 DBAClient/DBAServer 的遥测 Bootstrap 都是 Best Effort（尽力而为）：缺 Gateway/GameServerControl URL 或凭据时保留 NullSink/请求失败诊断，不能阻止客户端登录、服务器注册、Ready、Heartbeat 或 Gameplay。后端 Ingest 路由当前尚未落地。

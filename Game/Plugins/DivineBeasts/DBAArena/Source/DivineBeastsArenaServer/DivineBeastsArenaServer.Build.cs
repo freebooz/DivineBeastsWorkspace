@@ -13,6 +13,7 @@ public class DivineBeastsArenaServer : ModuleRules
             "Engine",
             "DivineBeastsArenaRuntime",
             "DivineBeastsCharactersRuntime",
+            "GamePlatformCharacter",
             "GamePlatformArena",
             "GamePlatformArenaServer"
         });

@@ -1,10 +1,15 @@
 #include "Server/DivineBeastsArenaServerProjectExtension.h"
 
+#include "Server/DivineBeastsArenaGameplayLifecycleAdapter.h"
+
 #include "Catalog/DivineBeastsArenaModeCatalog.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
+#include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Eligibility/DivineBeastsArenaEligibility.h"
 #include "Features/IModularFeatures.h"
 #include "Framework/GamePlatformArenaGameMode.h"
+#include "GameFramework/Character.h"
+#include "Engine/StreamableManager.h"
 
 bool FDivineBeastsArenaServerProjectExtension::ResolveModeSpec(
     const FGamePlatformArenaAssignment& Assignment,
@@ -32,12 +37,28 @@ bool FDivineBeastsArenaServerProjectExtension::ValidateAndConfigureGameMode(
     // HeroSelection必须使用项目可信资格Provider。
     GameMode.SetHeroEligibilityProvider(this);
 
-    // 当前工程尚未提供平台统一Spawn/Respawn实现，严禁项目层自行SpawnActor/Possess绕过。
-    if (!GameMode.HasGameplayLifecycleAdapter())
+    // MainArena在真正开赛前统一通过生命周期适配器出生；默认PawnClass保持为空，
+    // 防止玩家连接后被AGameModeBase提前生成一个尚未初始化的Pawn。
+    GameMode.DefaultPawnClass = nullptr;
+
+    // Assignment阶段预热12个很小的Server-safe Hero Definition。
+    // 比赛倒计时结束后的Spawn路径严禁冷加载；若预热尚未完成，适配器会Fail Closed。
+    HeroDefinitionWarmupLeases.Reset();
+    for (const FName HeroId : FDivineBeastsHeroCatalog::GetCoreHeroIds())
     {
-        OutError = TEXT("MainArena GameplayLifecycleAdapter尚未由服务器组合根配置；项目服务器Fail Closed。");
-        return false;
+        TSharedPtr<FStreamableHandle> Lease =
+            FDivineBeastsHeroCatalog::RequestDefinition(
+                HeroId,
+                [](UDivineBeastsHeroDefinition*) {});
+        if (Lease.IsValid())
+        {
+            HeroDefinitionWarmupLeases.Add(MoveTemp(Lease));
+        }
     }
+
+    GameplayLifecycleAdapter =
+        MakeShared<FDivineBeastsArenaGameplayLifecycleAdapter>(GameMode);
+    GameMode.SetGameplayLifecycleAdapter(GameplayLifecycleAdapter.Get());
 
     OutError.Reset();
     return true;

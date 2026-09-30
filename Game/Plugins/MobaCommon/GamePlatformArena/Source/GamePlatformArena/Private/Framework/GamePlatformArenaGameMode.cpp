@@ -339,31 +339,49 @@ void AGamePlatformArenaGameMode::StartMatchFromCountdown()
         UE_LOG(LogTemp, Error, TEXT("Arena start rejected: GameplayLifecycleAdapter is not configured."));
         return;
     }
-    if (Transition(EGamePlatformArenaMatchPhase::InProgress, Error, ActiveModeSpec.TimeLimitSeconds))
+    // 全部参赛者必须先完成权威Pawn出生与Character初始化，再允许比赛进入InProgress。
+    // 这样Character Ready是Gameplay Active的前置事实，而不是开赛后的异步补偿。
+    for (const FGamePlatformArenaRosterSlot& Slot : CurrentAssignment.Roster)
     {
-        MatchStartedAtUtc = FDateTime::UtcNow();
-        for (const FGamePlatformArenaRosterSlot& Slot : CurrentAssignment.Roster)
+        FString SpawnError;
+        if (!GameplayLifecycleAdapter->SpawnPlayer(
+            Slot.PlayerId,
+            Slot.TeamId,
+            ActiveModeSpec.SpawnPolicyId,
+            SpawnError))
         {
-            FString SpawnError;
-            if (!GameplayLifecycleAdapter->SpawnPlayer(
-                Slot.PlayerId,
-                Slot.TeamId,
-                ActiveModeSpec.SpawnPolicyId,
-                SpawnError))
-            {
-                FString FailureError;
-                Transition(EGamePlatformArenaMatchPhase::Failed, FailureError);
-                UE_LOG(LogTemp, Error, TEXT("Arena spawn failed for player %s: %s"), *Slot.PlayerId, *SpawnError);
-                return;
-            }
+            FString FailureError;
+            Transition(EGamePlatformArenaMatchPhase::Failed, FailureError);
+            UE_LOG(
+                LogTemp,
+                Error,
+                TEXT("Arena spawn failed for player %s: %s"),
+                *Slot.PlayerId,
+                *SpawnError);
+            return;
         }
-        GetWorldTimerManager().SetTimer(
-            MatchDeadlineTimer,
-            this,
-            &AGamePlatformArenaGameMode::HandleMatchTimeLimit,
-            static_cast<float>(ActiveModeSpec.TimeLimitSeconds),
-            false);
     }
+
+    if (!Transition(
+            EGamePlatformArenaMatchPhase::InProgress,
+            Error,
+            ActiveModeSpec.TimeLimitSeconds))
+    {
+        UE_LOG(
+            LogTemp,
+            Error,
+            TEXT("Arena could not enter InProgress after successful character initialization: %s"),
+            *Error);
+        return;
+    }
+
+    MatchStartedAtUtc = FDateTime::UtcNow();
+    GetWorldTimerManager().SetTimer(
+        MatchDeadlineTimer,
+        this,
+        &AGamePlatformArenaGameMode::HandleMatchTimeLimit,
+        static_cast<float>(ActiveModeSpec.TimeLimitSeconds),
+        false);
 }
 
 void AGamePlatformArenaGameMode::HandleMatchTimeLimit()

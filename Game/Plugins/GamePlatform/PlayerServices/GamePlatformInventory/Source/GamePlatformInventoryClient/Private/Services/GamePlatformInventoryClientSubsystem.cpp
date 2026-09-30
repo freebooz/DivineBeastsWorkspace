@@ -28,9 +28,10 @@ struct FInventorySlotKey
 
 uint32 GetTypeHash(const FInventorySlotKey& Key)
 {
+    // FName哈希通过ADL解析；SlotIndex直接转uint32，避免当前自定义GetTypeHash重载遮蔽标量重载。
     return HashCombine(
         GetTypeHash(Key.ContainerId),
-        GetTypeHash(Key.SlotIndex));
+        static_cast<uint32>(Key.SlotIndex));
 }
 }
 

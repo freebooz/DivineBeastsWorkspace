@@ -197,7 +197,7 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
 
     const auto CompleteOnce =
         [SharedCompletion, CompletionGate](
-            FGamePlatformServerAdmissionResult Result) mutable
+            FGamePlatformServerAdmissionResult Result)
         {
             if (CompletionGate->Increment() != 1)
             {

@@ -14,7 +14,7 @@
 
 namespace
 {
-constexpr int32 MaxLoginNameChars = 256;
+constexpr int32 MaxGatewayLoginNameChars = 256;
 constexpr int32 MaxCredentialChars = 4096;
 constexpr int32 MaxIdentityChars = 512;
 constexpr int32 MaxTokenChars = 8192;
@@ -99,11 +99,6 @@ FGamePlatformResult FGamePlatformGatewayAuthProvider::Configure(
             TEXT("OnlineUnsupportedTransport"),
             TEXT("当前HTTP后端不能可靠禁止敏感请求自动重定向。"));
     }
-#else
-    return FGamePlatformResult::Failure(
-        TEXT("OnlineUnsupportedTransport"),
-        TEXT("当前HTTP后端未公开敏感请求重定向控制能力。"));
-#endif
 
     FHttpRequestStreamDelegateV2 CapabilityStream =
         FHttpRequestStreamDelegateV2::CreateLambda(
@@ -123,6 +118,11 @@ FGamePlatformResult FGamePlatformGatewayAuthProvider::Configure(
     bConfigured = true;
     ClearTokens();
     return FGamePlatformResult::Success();
+#else
+    return FGamePlatformResult::Failure(
+        TEXT("OnlineUnsupportedTransport"),
+        TEXT("当前HTTP后端未公开敏感请求重定向控制能力。"));
+#endif
 }
 
 void FGamePlatformGatewayAuthProvider::TryAutoLogin(
@@ -143,7 +143,7 @@ void FGamePlatformGatewayAuthProvider::LoginWithCredentials(
     if (!bConfigured ||
         NormalizedLogin.IsEmpty() ||
         Password.IsEmpty() ||
-        NormalizedLogin.Len() > MaxLoginNameChars ||
+        NormalizedLogin.Len() > MaxGatewayLoginNameChars ||
         Password.Len() > MaxCredentialChars)
     {
         FGamePlatformAuthProviderResult Result;

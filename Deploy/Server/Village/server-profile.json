@@ -7,9 +7,9 @@
     "Experience.Village.Tutorial",
     "Experience.Village.Training"
   ],
-  "worldPackage": "/Game/DivineBeasts/Worlds/L_Village",
+  "worldPackage": "/DBAWorldPack_Village/Maps/L_Village_Start",
   "requiredAssets": [
-    "/Game/DivineBeasts/Worlds/L_Village.L_Village"
+    "/DBAWorldPack_Village/Maps/L_Village_Start.L_Village_Start"
   ],
   "arenaModeIds": [],
   "instancePolicy": "ExperienceInstance",

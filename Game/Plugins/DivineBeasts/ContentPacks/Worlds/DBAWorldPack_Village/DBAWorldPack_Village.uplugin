@@ -1,0 +1,18 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "神兽联盟新手村世界内容包",
+  "Description": "第三层纯内容插件，持有Village新手村、教学与训练共用的正式世界地图、项目世界定义及相关世界内容；Client/Server/Editor共同装配，不包含C++模块。",
+  "Category": "DivineBeasts.Content.Worlds",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    {
+      "Name": "DBAWorlds",
+      "Enabled": true,
+      "TargetAllowList": ["Client", "Server", "Editor"]
+    }
+  ]
+}

@@ -18,11 +18,8 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     const TArray<FDivineBeastsUISurfaceDescriptor>& Surfaces =
         FDivineBeastsUIScreenCatalog::GetSurfaces();
 
-<<<<<<< HEAD
-    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 12);
-=======
-    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 15);
->>>>>>> 6efa7afa916911ea708df0a4f3035118e226d47a
+    // 当前公共目录包含9个Screen、4个HUD和1个Notification，共14个非竞技UI表面。
+    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 14);
 
     TSet<FName> Unique;
     for (const FDivineBeastsUISurfaceDescriptor& Surface : Surfaces)

@@ -33,6 +33,9 @@ if(-not $Subsystem.Contains('SchemaRegistry->Freeze()')){ throw 'Runtime schema 
 $BufferPath = Join-Path $PluginRoot 'Source\GamePlatformTelemetry\Private\Buffer\GamePlatformTelemetryBoundedBuffer.cpp'
 $Buffer = [System.IO.File]::ReadAllText($BufferPath, $Utf8)
 if(-not $Buffer.Contains('HeadIndex')){ throw 'Amortized head-index buffer consumption is missing.' }
+if(-not $Buffer.Contains('TryCoalesceMetric(')){ throw 'Counter/Gauge metric coalescing is missing.' }
+if(-not $Buffer.Contains('ResolveSharedContext(')){ throw 'Shared telemetry context buffering is missing.' }
+if(-not $Buffer.Contains('DiscardQueuedRecords(')){ throw 'Privacy-boundary buffer discard is missing.' }
 if($Buffer.Contains('Records.RemoveAt(' + [Environment]::NewLine + '        0,' + [Environment]::NewLine + '        ConsumeCount')){
     throw 'Per-batch front-array shifting returned.'
 }
@@ -63,4 +66,4 @@ foreach($ForbiddenLayer in @('DivineBeasts','MobaCommon','GamePlatformOnlineClie
     }
 }
 
-Write-Host 'Telemetry architecture gate passed: one-shot-flush=yes retry=yes backpressure=yes context-dedup=yes schema-freeze=yes head-index=yes dynamic-auth=yes public-deps=clean.'
+Write-Host 'Telemetry architecture gate passed: one-shot-flush=yes retry=yes backpressure=yes context-dedup=yes metric-coalesce=yes privacy-discard=yes schema-freeze=yes head-index=yes dynamic-auth=yes public-deps=clean.'

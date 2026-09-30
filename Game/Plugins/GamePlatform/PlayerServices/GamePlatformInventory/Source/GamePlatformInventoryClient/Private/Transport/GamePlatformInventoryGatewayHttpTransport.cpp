@@ -10,9 +10,9 @@
 namespace
 {
 constexpr int32 MaxConcurrentInventoryRequests = 8;
-constexpr int32 MaxInventoryContainers = 64;
-constexpr int32 MaxInventoryItems = 10000;
-constexpr int32 MaxInventoryQuickbarSlots = 12;
+constexpr int32 MaxTransportInventoryContainers = 64;
+constexpr int32 MaxTransportInventoryItems = 10000;
+constexpr int32 MaxTransportInventoryQuickbarSlots = 12;
 
 bool TryGetExactInt32(
     const TSharedPtr<FJsonObject>& Json,
@@ -600,7 +600,7 @@ bool FGamePlatformInventoryGatewayHttpTransport::JsonToSnapshot(
     const TArray<TSharedPtr<FJsonValue>>* Containers = nullptr;
     if (!Json->TryGetArrayField(TEXT("containers"), Containers) ||
         !Containers ||
-        Containers->Num() > MaxInventoryContainers)
+        Containers->Num() > MaxTransportInventoryContainers)
     {
         return false;
     }
@@ -638,7 +638,7 @@ bool FGamePlatformInventoryGatewayHttpTransport::JsonToSnapshot(
     const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
     if (!Json->TryGetArrayField(TEXT("items"), Items) ||
         !Items ||
-        Items->Num() > MaxInventoryItems)
+        Items->Num() > MaxTransportInventoryItems)
     {
         return false;
     }
@@ -704,7 +704,7 @@ bool FGamePlatformInventoryGatewayHttpTransport::JsonToSnapshot(
     const TArray<TSharedPtr<FJsonValue>>* Quickbar = nullptr;
     if (!Json->TryGetArrayField(TEXT("quickbar"), Quickbar) ||
         !Quickbar ||
-        Quickbar->Num() > MaxInventoryQuickbarSlots)
+        Quickbar->Num() > MaxTransportInventoryQuickbarSlots)
     {
         return false;
     }

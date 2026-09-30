@@ -120,6 +120,8 @@ private:
     void SyncLoadingService();
     /** 根据只读项目状态同步唯一主页面；只在状态/RootLayout变化时执行，不使用 Tick。 */
     void SyncPrimaryScreen();
+    /** 角色入口页面只驱动客户端三维预览；不改变流程节点或服务器世界。 */
+    void SyncCharacterPreview();
 
     /** 平台页面成功打开事件；只接管由本协调器发起的当前主页面请求。 */
     UFUNCTION()

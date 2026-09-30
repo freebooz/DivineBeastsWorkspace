@@ -2,6 +2,14 @@
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
+## 2026-09-29｜登录后角色选择/创建三维前端预览
+
+- 新增第三层纯内容插件 `DBAFrontEndPack（神兽联盟前端三维场景内容包）`，仅 Client/Editor Target 启用，Server Target 不启用；不纳入 `DBAWorlds`、WorldDefinition、ServerRole、Session Admission 或 World Assignment。
+- UE5.8 已真实生成 `/DBAFrontEndPack/Maps/L_DBA_FrontEnd` 与 `/DBAFrontEndPack/Maps/L_DBA_CharacterStudio` 两张 `.umap`；编辑器回读确认 CharacterStudio 包含 `CharacterPreviewStage` 和 Key/Fill/Rim 三盏预览灯，FrontEnd 包含 `FrontEndCamera`。
+- `GamePlatformPresentationClient` 新增跨项目 `AGamePlatformCharacterPreviewStage`，无 Tick、无复制，只接收已加载 Mesh/Material/AnimInstance 并提供角色旋转和镜头距离控制；平台层不出现 DivineBeasts/生肖身份。
+- `DivineBeastsPresentationClient` 新增 `UDivineBeastsCharacterPreviewSubsystem`，按需流送 CharacterStudio，复用 `FDivineBeastsCharacterAppearanceCatalog` 与现有 12 个 `DA_Appearance_Zodiac_*`；异步请求使用 RequestGeneration 防止旧资源覆盖新预览。
+- `DivineBeastsUIClient` 增加角色预览轻量接口并按 `CharacterEntry/CreateCharacter/ValidateSelection` ViewState 自动启停预览；预览动作不提交业务选择、不改变 ApplicationFlow。平台表现与项目表现模块 UE5.8 定向编译/链接成功；UI 两个本轮修改源文件的进一步单文件编译当前被同 Runner 另一 UBT 进程互斥锁暂时阻断，完整 UI 模块另有既有测试冲突标记与 Inventory 编译错误，不归因于本次前端预览实现。
+
 ## 2026-09-29｜新增 GamePlatformSurface 通用环境表面材质插件
 
 - 在`Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/`新增正式平台插件，采用`GamePlatformSurfaceClient（ClientOnly）＋GamePlatformSurfaceEditor（Editor）`双模块，不建立Runtime／Server空模块；Client与Editor Target显式启用，Server Target不启用。
@@ -9,6 +17,16 @@
 - 锁定边界：GamePlatformSurface不拥有天气权威、PCG生成、Niagara、水体物理或神兽联盟专属内容；项目纹理和`MI_DBA_*`材质实例归`DBAWorldPack_*`。Surface表现失败不得改变服务器玩法，Dedicated Server不得链接或Cook纯表面表现资产。
 - 正式基线更新为平台层39个＋MOBA层GamePlatformArena 1个，共40个GamePlatform稳定身份；加MobaPresentation和5个DBA代码插件后为46个代码／机制插件＋内容N。GamePlatformOpenWorld继续退休；当前46与2026-09-27历史46成员不同。
 - 同步AGENTS、插件规范、插件主清单、总体规划／目录、核心要求、三层规划、P0历史补充、内容包／DBAWorlds边界和DesignBaselineAudit；实际编译、Automation、MPC生成、Cook／Stage与材质人工视觉验收结果按本轮后续真实执行证据记录。
+
+## 2026-09-29｜十二生肖角色占位资源与角色插件闭环
+
+- 十二生肖采用“稳定 HeroDefinitionId + Server-safe Hero Definition + 客户端 Appearance Profile + 独立 HeroPack”的可替换架构；开发期统一复用 UE5.8 Manny/Quinn，每个生肖使用独立识别色，正式模型替换时不修改后端协议、CharacterId、HeroDefinitionId、GAS 身份或存档键。
+- 公共 `DBAContentPack_Common` 只保留一套 Manny/Quinn、Skeleton、PhysicsAsset 和基础材质/纹理；未导入旧工程 Control Rig、Mover 示例和动画蓝图，`Game/Content` 无版本控制重复 Mannequin 副本。12 个 Hero Definition、12 个 Appearance Profile、12 个原型颜色材质已落盘并纳入版本库。
+- 角色运行状态改为原子复制 Hero/生肖/SpawnGeneration/AvatarGeneration/DefinitionVersion/ContentRevision，CharacterId 保持 OwnerOnly；新增平台角色状态只读接口，修复异步 Definition 旧请求覆盖新角色的竞态，并以 ContentRevision 做客户端/服务器就绪一致性门禁。
+- `DivineBeastsCharactersRuntime` 注册统一 Character Initializer，只初始化平台 Spawn Operation 已创建的 ACharacter，不在项目层旁路 SpawnActor/Possess；Server Target 显式启用 DBAServer/DBAArena，OpenWorld/Village/MainArena 继续共用 Dedicated Server Target。
+- AssetManager 已扫描 `/DBAGameplay/Definitions`；Client/Editor Target 显式启用公共角色包和 12 个 HeroPack，Dedicated Server 不携带这些客户端表现资源。原型生成脚本支持自动工作区/引擎探测、旧项目仅首次导入时使用，并提供 `-ValidateOnly`；当前验证结果为公共 Manny/Quinn 依赖完整、Definition/Profile/Material = `12/12/12`。
+- 新增平台 `FGamePlatformCharacterInitializationExecutor`，统一解析且强制唯一 `GamePlatform.CharacterInitializer`；MainArena 新增项目 LifecycleAdapter，只使用标准 `RestartPlayerAtPlayerStart` 创建/控制基础 `ACharacter`，再调用 Executor 完成项目初始化，源码无直接 `SpawnActor/Possess`。12 个 Server-safe Hero Definition 在 Assignment 阶段异步预热，全部参赛者 `CharacterReady` 后比赛才进入 `InProgress`，复活复用同一链路。
+- UE5.8 Server 定向构建实际编译并通过 LifecycleAdapter、Arena GameMode、ProjectExtension、InitializationExecutor；Editor 定向构建通过 `GamePlatformCharacter` 与 `DivineBeastsCharactersRuntime`。角色 Automation 启动被既有 `GamePlatformGameplay` 空实现阻断：该模块单独链接确认存在 `AGamePlatformGameModeBase/GameState/PlayerController/PlayerState` 等 9 个未解析符号；这是独立平台基础设施欠账，MainArena 当前不依赖它，本轮不在角色任务中重写整套通用准入状态机。
 
 ## 2026-09-29｜GamePlatformSettings 四模块专项审查与实装
 

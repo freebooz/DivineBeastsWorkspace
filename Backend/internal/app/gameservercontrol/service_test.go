@@ -126,9 +126,9 @@ func TestWorldAllocationAndTransfer(t *testing.T) {
 		{"OpenWorldHub", "ow-hub-1", gameservercontract.RoleOpenWorld, gameservercontract.ExperienceOpenWorldHub, "World.OpenWorld.Hub"},
 		{"LegacyLobbyExperienceAlias", "ow-legacy-hub-1", gameservercontract.RoleOpenWorld, gameservercontract.ExperienceLobbyMain, "World.OpenWorld.Hub"},
 		{"OpenWorldMain", "ow-main-1", gameservercontract.RoleOpenWorld, gameservercontract.ExperienceOpenWorldMain, "World.OpenWorld.Main"},
-		{"VillageMain", "village-main-1", gameservercontract.RoleVillage, gameservercontract.ExperienceVillageMain, "World.Village.Main"},
-		{"VillageTutorial", "village-tutorial-1", gameservercontract.RoleVillage, gameservercontract.ExperienceVillageTutorial, "World.Village.Tutorial"},
-		{"VillageTraining", "village-training-1", gameservercontract.RoleVillage, gameservercontract.ExperienceVillageTraining, "World.Village.Training"},
+		{"VillageMain", "village-main-1", gameservercontract.RoleVillage, gameservercontract.ExperienceVillageMain, "divinebeasts.world.village_main@1"},
+		{"VillageTutorial", "village-tutorial-1", gameservercontract.RoleVillage, gameservercontract.ExperienceVillageTutorial, "divinebeasts.world.village_tutorial@1"},
+		{"VillageTraining", "village-training-1", gameservercontract.RoleVillage, gameservercontract.ExperienceVillageTraining, "divinebeasts.world.village_training@1"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
