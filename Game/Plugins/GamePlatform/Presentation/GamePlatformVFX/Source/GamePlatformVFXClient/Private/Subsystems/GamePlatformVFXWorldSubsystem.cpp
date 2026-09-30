@@ -445,12 +445,14 @@ bool UGamePlatformVFXWorldSubsystem::EnsureDefinitionCacheCapacity()
 {
     const int32 Limit =
         FMath::Max(1, GetDefault<UGamePlatformVFXSettings>()->MaxCachedDefinitions);
-    if (DefinitionCache.Num() < Limit)
+    while (DefinitionCache.Num() >= Limit)
     {
-        return true;
+        if (!EvictOneCachedDefinition())
+        {
+            return false;
+        }
     }
-
-    return EvictOneCachedDefinition() && DefinitionCache.Num() < Limit;
+    return true;
 }
 
 bool UGamePlatformVFXWorldSubsystem::EvictOneCachedDefinition()

@@ -8,6 +8,7 @@
 - `TRACE_CPUPROFILER_EVENT_SCOPE(GamePlatformVFX_ExecuteDefinition)`；
 - `TRACE_CPUPROFILER_EVENT_SCOPE(GamePlatformVFX_DefinitionLoaded)`；
 - `stat GamePlatformVFX`：Play Requests、Rejected Requests、Dedupe Hits、Definition Cache Hits/Misses、Composite Children、Tracked Instances、Pending Instances、Peak Tracked Instances。
+- Play 去重键使用 `FGuid + PredictionKey` 的结构化 Hash Key（哈希键），不在高频预测/命中路径构造 `FString（字符串）`。
 
 性能审核时至少记录：
 

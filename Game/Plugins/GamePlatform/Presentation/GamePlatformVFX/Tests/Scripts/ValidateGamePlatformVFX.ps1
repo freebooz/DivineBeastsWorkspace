@@ -96,6 +96,8 @@ Assert-Rule ($worldText -match 'DefinitionCache') 'VFX must use a World-scoped s
 Assert-Rule ($worldText -match 'MaxCachedDefinitions') 'VFX Definition cache must have an explicit capacity boundary'
 Assert-Rule (-not ($worldText -match 'PendingDefinitionLeases|ActiveDefinitionLeases|ExplicitPreloadLeases')) 'VFX must not restore per-instance Definition Lease maps'
 Assert-Rule ($worldText -match 'DedupeKeysByHandle') 'VFX dedupe cleanup must keep Handle-to-Key reverse index'
+Assert-Rule ($worldText -match 'FGamePlatformVFXDedupeKey') 'VFX dedupe must use a structured hash key'
+Assert-Rule (-not ($worldText -match 'FString\s+DedupeKey|FString::Printf\s*\(')) 'VFX Play dedupe hot path must not allocate FString keys'
 Assert-Rule (-not ($worldText -match 'PruneDedupeHandles')) 'Play hot path must not restore full dedupe-table pruning'
 Assert-Rule ($worldText -match 'CompositeStepTimers') 'Composite delayed steps must be owned by parent Handle'
 Assert-Rule ($worldText -match 'OnSystemFinished') 'VFX instances must release through Niagara OnSystemFinished lifecycle events'
