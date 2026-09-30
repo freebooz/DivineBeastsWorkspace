@@ -10,6 +10,8 @@
   "EnabledByDefault": false,
   "Plugins": [
     { "Name": "DBAGameplay", "Enabled": true },
+    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformData", "Enabled": true },
     { "Name": "GamePlatformWorld", "Enabled": true }
   ],
   "Modules": [

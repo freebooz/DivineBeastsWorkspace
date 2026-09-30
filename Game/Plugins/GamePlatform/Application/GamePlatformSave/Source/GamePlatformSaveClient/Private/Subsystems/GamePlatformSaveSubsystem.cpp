@@ -1,3 +1,5 @@
+// 平台客户端GI存档执行器：游戏线程接纳/校验，后台仅处理独占纯值和文件IO，游戏线程按作用域代次交付一次终态。
+// 调用方拥有输入记录，异步任务拥有值副本；退出/取消只撤销本地回调，不伪造已提交磁盘IO回滚。
 #include "Subsystems/GamePlatformSaveSubsystem.h"
 
 #include "Async/Async.h"
@@ -310,10 +312,11 @@ FGamePlatformSaveRequestHandle UGamePlatformSaveSubsystem::SaveRecordAsync(
     }
 
     const TWeakObjectPtr<UGamePlatformSaveSubsystem> WeakThis(this);
-    const FGamePlatformSaveRecord RecordCopy = Record;
 
+    // 输入const引用仍归调用方；初始化捕获复制为任务独占的非const值，mutable允许完成时转移载荷。
+    // 捕获const局部再MoveTemp会保留顶层const，既无法真实移动也违反引擎所有权断言。
     Async(EAsyncExecution::ThreadPool,
-        [WeakThis, Handle, RecordCopy]() mutable
+        [WeakThis, Handle, RecordCopy = Record]() mutable
         {
             TArray<uint8> Encoded;
             FGamePlatformResult Result =

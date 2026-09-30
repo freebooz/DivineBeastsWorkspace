@@ -125,3 +125,8 @@ Settings 只配置稳定系统／用户／服务器部署偏好。它不提供 R
 
 服务器 Settings 只作为启动／部署配置真源之一；具体 ServerRole、容量、准入等已经由 GamePlatformServer/DBAServer 拥有的权威职责不能被重复迁入 Settings。
 
+
+
+## 2026-09-30现行合同补充
+
+进程注册的Client持久化对象只作工厂；每个GI通过CreateScopedProvider拥有独立用户上下文。旧Client自定义Provider未提供作用域克隆时返回SettingsScopedPersistenceRequired，不共享可变用户键。设备UGameUserSettings进程语义保留。ClientContext交错A/B真实保存回归源已补，未执行磁盘验收。

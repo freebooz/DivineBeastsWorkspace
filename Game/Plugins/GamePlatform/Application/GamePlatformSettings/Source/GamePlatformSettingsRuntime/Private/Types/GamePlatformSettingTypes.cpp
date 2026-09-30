@@ -1,6 +1,8 @@
+// 平台共享设置纯值转换：提供构造、类型校验、文本解析及脱敏诊断；不访问IO/用户上下文，值由调用方拥有。
+// 解析失败返回false，不宣称持久化完成；UE5.8的TCHAR LexTryParseString模板由UnrealString.h导出的inl声明。
 #include "Types/GamePlatformSettingTypes.h"
 
-#include "Misc/LexFromString.h"
+#include "Containers/UnrealString.h"
 
 FGamePlatformSettingValue FGamePlatformSettingValue::MakeBool(const bool Value)
 {

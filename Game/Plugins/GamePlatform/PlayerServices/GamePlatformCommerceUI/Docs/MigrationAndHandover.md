@@ -1,9 +1,9 @@
-# MigrationAndHandover（迁移与交接）
+# 迁移与交付
 
-本轮新增 `0007_commerce（商城基础迁移）`与`0008_commerce_optional_provider_ids（商城可选支付编号修正迁移）`，不修改 Quest/Inventory/Entitlement/Equipment/Progression/LiveOps（任务/背包/权益/装备/成长/运营）历史 Migration。
+2026-09-30：插件、模块、反射类型、协议与资产身份没有更名，未修改发布字段号，未创建/删除UE二进制资产。旧后端路径/迁移/Outbox完成宣称撤销为尚需立项/联调；这不是后端能力修复。
 
-后续接 Production Provider（生产支付提供器）时必须新增 Provider-specific Adapter（支付提供器专用适配器），完成 Receipt/Signature/Webhook（凭据/签名/回调）验证、沙箱交易和退款证据；不得把 DevelopmentFakePaymentProvider（开发假支付提供器）升级为生产实现。
+客户端默认领域适配新增Online实例构造；旧URL/Token构造保留为显式弃用、未配置入口。工程C++搜索未发现旧构造消费者；外部消费者必须注入同一GameInstance已配置Online。回退需整体恢复源码及相应描述依赖，不可单独恢复分散Token缓存。
 
-若未来正式支持 SoftCurrency（软货币），必须先实现 Economy Wallet/Ledger（经济钱包/账本）与幂等 Debit/Credit（扣款/入账），再把 Commerce Economy Port（商城经济系统端口）接通；不能直接写余额。
+Equipment退出现在撤销自己的GAS句柄；后端在飞事务可能已经提交，组件销毁只失效本地回调，不伪造服务器回滚。Progression/LiveOps新增视图事件，既有读取/API与XP/等级事件身份保持。
 
-本轮停止在 `GamePlatformCommerceUI（游戏平台商城界面插件）`，下一插件 `GamePlatformTelemetry（游戏平台遥测插件）`未进入。
+当前检查、未执行项、新增源码和中文说明检查范围见Game/Saved/Reviews/task2-repair-report.md及正式统一执行账本；静态通过不等于运行验收。

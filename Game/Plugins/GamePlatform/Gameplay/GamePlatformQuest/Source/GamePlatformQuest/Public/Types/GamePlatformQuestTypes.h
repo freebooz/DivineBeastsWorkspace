@@ -129,6 +129,10 @@ struct GAMEPLATFORMQUEST_API FGamePlatformQuestSnapshot
     UPROPERTY(BlueprintReadOnly, Category="Quest")
     int64 Revision = 0;
 
+    /** 只读显示快照序列；服务器发布时递增，与持久化Revision分离。0兼容旧来源，不是落库版本。 */
+    UPROPERTY(BlueprintReadOnly, Category="Quest")
+    int64 SnapshotSequence = 0;
+
     UPROPERTY(BlueprintReadOnly, Category="Quest")
     TArray<FGamePlatformQuestObjectiveProgress> Objectives;
 

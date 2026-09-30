@@ -1,6 +1,9 @@
+// 平台客户端SFX提供者适配：每个LocalPlayer注册/注销中立Presentation回调，转换请求后交给本World音频服务。
+// 本桥不拥有播放实例或资源租约，不承担网络权威；失败的可选音效不改变Gameplay结果。
 #include "Integration/Presentation/GamePlatformSFXPresentationBridgeSubsystem.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h" // GetWorld传入UObject服务入口需完整UWorld继承类型，不能依赖PCH。
 #include "GamePlatformPresentationClientSubsystem.h"
 #include "Interfaces/IGamePlatformSFXService.h"
 
@@ -52,21 +55,16 @@ bool UGamePlatformSFXPresentationBridgeSubsystem::HandlePresentationRequest(
         return true;
     }
 
-    if (Request.PredictionState == EGamePlatformPresentationPredictionState::Cancelled)
-    {
-        Service->StopByRequestId(Request.RequestId);
-        return true;
-    }
-
-    // Corrected（预测纠正）不能沿用普通去重，否则旧预测声音会继续播放。
-    // 先终止同RequestId旧实例，再使用纠正后的空间/Definition重新提交。
-    if (Request.PredictionState == EGamePlatformPresentationPredictionState::Corrected)
-    {
-        Service->StopByRequestId(Request.RequestId, 0.0f);
-    }
-
     FGamePlatformSFXRequest SFXRequest;
     SFXRequest.RequestId = Request.RequestId;
+    switch (Request.PredictionState)
+    {
+    case EGamePlatformPresentationPredictionState::Predicted: SFXRequest.PredictionState=EGamePlatformSFXPredictionState::Predicted; break;
+    case EGamePlatformPresentationPredictionState::Confirmed: SFXRequest.PredictionState=EGamePlatformSFXPredictionState::Confirmed; break;
+    case EGamePlatformPresentationPredictionState::Corrected: SFXRequest.PredictionState=EGamePlatformSFXPredictionState::Corrected; break;
+    case EGamePlatformPresentationPredictionState::Cancelled: SFXRequest.PredictionState=EGamePlatformSFXPredictionState::Cancelled; break;
+    default: break;
+    }
     SFXRequest.DefinitionId = Request.DefinitionId;
     SFXRequest.ContextId = Request.ContextId;
     SFXRequest.ContextTags = Request.ContextTags;

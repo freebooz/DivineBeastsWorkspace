@@ -9,6 +9,8 @@ class FGamePlatformSavePolicy final
 public:
     /** 单条本地记录安全上限；用于抵御损坏长度和误用，不代表网络或服务器数据预算。 */
     static int32 GetMaxPayloadBytes();
+    /** 存储读取预算：最大载荷加固定Envelope头；读取前即拒绝超限。 */
+    static int32 GetMaxEncodedBytes();
 
     /** 严格校验逻辑Key。 */
     static FGamePlatformResult ValidateKey(

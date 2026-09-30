@@ -3,9 +3,12 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Identity/DivineBeastsZodiacIdentity.h"
+#include "Types/GamePlatformDataLease.h"
+#include "Types/GamePlatformResult.h"
 
 struct FStreamableHandle;
 class UDivineBeastsHeroDefinition;
+class UGameInstance;
 
 /** FDivineBeastsCoreHeroCatalogEntry（神兽联盟核心生肖英雄目录项）。 */
 struct DIVINEBEASTSCHARACTERSRUNTIME_API FDivineBeastsCoreHeroCatalogEntry
@@ -49,6 +52,13 @@ public:
     static FPrimaryAssetId GetDefinitionPrimaryAssetId(FName HeroDefinitionId);
     static FSoftObjectPath GetDefinitionAssetPath(FName HeroDefinitionId);
 
+    /** 游戏线程申请真实定义；成功持有至用途结束。入口前置拒绝无回调；Data校验拒绝与接纳均延后通知，调用者核对代次。缺资产明确失败。 */
+    static FGamePlatformDataLease AcquireDefinitionResources(
+        UGameInstance& Instance, FName HeroDefinitionId, EGamePlatformDataLifetime Lifetime,
+        TWeakObjectPtr<UObject> WeakCaller,
+        TFunction<void(UDivineBeastsHeroDefinition*, const FGamePlatformDataLease&, const FGamePlatformResult&)> Completion,
+        FGamePlatformResult& OutResult);
+    /** 历史兼容入口：自行持有加载句柄；非Shipping开发回退不代表正式资源验收。 */
     static TSharedPtr<FStreamableHandle> RequestDefinition(
         FName HeroDefinitionId,
         TFunction<void(UDivineBeastsHeroDefinition*)> Completion);

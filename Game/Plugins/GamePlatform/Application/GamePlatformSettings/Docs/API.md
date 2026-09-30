@@ -107,3 +107,8 @@
 - Logout 传空键，Runtime Reload 到默认／项目／Provider／Session链，不读取任何 User Profile。
 - 切账号前必须先 `Apply()`、`Save()` 并等待 `bSaveInFlight=false`；否则返回 `SettingsUserContextSwitchBlocked`，避免丢失旧账号未保存设置。
 
+
+
+## 2026-09-30现行合同补充
+
+进程注册的Client持久化对象只作工厂；每个GI通过CreateScopedProvider拥有独立用户上下文。旧Client自定义Provider未提供作用域克隆时返回SettingsScopedPersistenceRequired，不共享可变用户键。设备UGameUserSettings进程语义保留。ClientContext交错A/B真实保存回归源已补，未执行磁盘验收。

@@ -30,7 +30,9 @@ V1（第一版）不新增自定义 Remote Debug RPC（远程调试RPC）。服�
 
 ## 当前验证状态
 
-已通过：`Tests/Architecture/Test-PluginLayers.ps1`（插件层级结构测试），859 项检查、0 失败。
+当前正式结构入口为 `Tests/Architecture/ValidateDesignBaseline.ps1` 和 `Tests/Architecture/PluginCompositionAudit.psm1`。旧说明中的Test-PluginLayers脚本在本分支不存在，旧859项计数不能作为当前验收证据。
+
+2026-09-30整改补齐真实插件依赖及NoPCH所需WeakObjectPtr/Pawn头和UE5.8指针转换；实际结果统一见 `Docs/Implementation/GamePlatformDesignRemediation/ExecutionProgress.md`（工作空间根目录）。结构通过不替代下面的运行验收。
 
 未执行：UE5.8 Development/Test/Shipping Build（开发/测试/正式构建）、Cook（烘焙）、PIE（编辑器运行）、Dedicated Server + 2 Clients（专用服务器+双客户端）、Unreal Insights / Networking Insights（虚幻分析器/网络分析器）真实运行验证。
 

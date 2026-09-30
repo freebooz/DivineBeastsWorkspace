@@ -7,3 +7,5 @@
 业务代码不得直接 `CreateWidget + AddToViewport`绕过门面。Manager 内部创建 Root Layout 属于框架装配，不是业务页面捷径。
 
 所有异步打开使用唯一 RequestId（请求编号）；取消后即使底层回调迟到，也因 PendingRequests（待处理请求）已不存在而被忽略。
+
+页面暂时失活只调整显示暂停；真正离开CommonUI WidgetList后才发布OnScreenClosed并ReleaseResources。页面SoftClass与PreloadAssets统一由Data普通资源租约加载。

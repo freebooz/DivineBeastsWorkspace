@@ -1,9 +1,13 @@
+// 神兽联盟项目层客户端外观适配：读取已复制英雄身份，通过既有兼容加载器取得Profile/视觉资源并装配Mesh。
+// 本组件持有加载句柄、就绪委托及有限重试定时器；身份切换/EndPlay取消旧代请求，不参与服务器权威规则。
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 
+#include "Animation/AnimInstance.h" // TSoftClassPtr::Get需完整UAnimInstance类型，NoPCH下不依赖间接包含。
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h" // 软引用Get执行类型检查，需要网格资产完整类型而非组件头的前向声明。
 #include "Engine/StreamableManager.h"
 #include "GameFramework/Character.h"
 #include "Loading/GamePlatformAssetLoader.h"

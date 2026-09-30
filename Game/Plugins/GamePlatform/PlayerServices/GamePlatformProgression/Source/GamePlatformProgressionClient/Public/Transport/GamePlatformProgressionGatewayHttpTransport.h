@@ -1,7 +1,12 @@
 #pragma once
 
+// 平台客户端领域传输：只转换业务JSON；Online实例独占认证、HTTP、刷新和预算。
+// 游戏线程创建/调用/销毁；仅持有Online弱引用及自己签发的请求句柄，退出幂等取消。
+
 #include "CoreMinimal.h"
 #include "Interfaces/GamePlatformProgressionClientTransport.h"
+
+class UGamePlatformOnlineClientSubsystem;
 
 class GAMEPLATFORMPROGRESSIONCLIENT_API FGamePlatformProgressionGatewayHttpTransport final
     : public IGamePlatformProgressionClientTransport
@@ -10,41 +15,50 @@ class GAMEPLATFORMPROGRESSIONCLIENT_API FGamePlatformProgressionGatewayHttpTrans
         ESPMode::ThreadSafe>
 {
 public:
+    /** 同实例Online完成认证后注入；nullptr表示未配置，Begin返回false且不执行回调。 */
+    explicit FGamePlatformProgressionGatewayHttpTransport(UGamePlatformOnlineClientSubsystem* InOnlineSubsystem);
+    /** 销毁时只取消本领域拥有的请求；不退出Online或撤销其他领域请求。 */
+    virtual ~FGamePlatformProgressionGatewayHttpTransport() override;
+    /** 旧签名仅保留源码迁移兼容，不保存URL/Token，始终未配置；请改用Online构造。 */
+    UE_DEPRECATED(5.8, "Inject UGamePlatformOnlineClientSubsystem instead of URL/token")
     FGamePlatformProgressionGatewayHttpTransport(
         FString InGatewayBaseUrl,
         FString InAccessToken);
 
+    /** 仅Online处于Authenticated/Refreshing且实例有效时为true，不读取认证票据。 */
     bool IsConfigured() const;
 
+    /** 幂等失效本领域回调代次并逐个取消自有Online句柄；后端已经提交的写命令不回滚。 */
     virtual void CancelAllRequests() override;
 
+    /** 仅游戏线程；参数沿领域Port校验；false未受理，true异步完成一次，取消/退出后旧回调被抑制。 */
     virtual bool BeginGetSnapshot(
         FGamePlatformProgressionSnapshotCompletion Completion) override;
 
 private:
-    FString GatewayBaseUrl;
-    FString AccessToken;
+    struct FRuntime;
+    TUniquePtr<FRuntime> Runtime;
 
-    FCriticalSection ActiveRequestsMutex;
-    TArray<TSharedPtr<class IHttpRequest, ESPMode::ThreadSafe>>
-        ActiveRequests;
-
+    /** 有界受理最多8个领域请求；JSON序列化失败不发请求，认证/总截止/刷新由Online负责。 */
     bool StartRequest(
         const FString& Path,
-        TFunction<void(int32, const FString&)> Completion);
+        TFunction<void(int32, const FString&, EGamePlatformProgressionError)> Completion);
 
-    void UnregisterRequest(
-        const TSharedPtr<class IHttpRequest, ESPMode::ThreadSafe>& Request);
+    /** 终态先撤销自己的句柄记录；回调不强持有传输对象。 */
+    void UnregisterRequest(const FGuid& RequestId);
 
+    /** 将受限响应解码为领域纯值；缺必填字段/非法类型返回false，不授予业务权威。 */
     static bool JsonToSnapshot(
         const TSharedPtr<class FJsonObject>& Json,
         FGamePlatformProgressionSnapshot& OutSnapshot);
 
+    /** 将受限响应解码为领域纯值；缺必填字段/非法类型返回false，不授予业务权威。 */
     static bool ParseInt64String(
         const TSharedPtr<class FJsonObject>& Json,
         const TCHAR* Field,
         int64& OutValue);
 
+    /** 将后端状态/错误码映射为领域错误；认证/取消/截止错误已在Online响应层优先处理。 */
     static EGamePlatformProgressionError MapHttpError(
         int32 StatusCode);
 };

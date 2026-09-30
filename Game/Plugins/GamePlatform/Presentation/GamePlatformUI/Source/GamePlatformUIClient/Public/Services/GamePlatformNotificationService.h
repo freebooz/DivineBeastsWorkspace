@@ -30,7 +30,7 @@ public:
     /** 根布局创建/替换后更新目标层；传入 nullptr 表示暂时不可显示。 */
     void SetRootLayout(UGamePlatformUILayerStack* InRootLayout);
 
-    /** 创建并提交一条通知；返回无效Guid表示被限流、参数非法或创建失败。 */
+    /** 游戏线程创建通知；重复RequestId拒绝且保留旧Widget/Timer。返回无效Guid表示重复、限流、参数非法或创建失败。 */
     UFUNCTION(BlueprintCallable, Category="UI|Notification")
     FGuid SubmitNotification(
         FGamePlatformUINotificationRequest Request,
@@ -47,6 +47,7 @@ public:
     void Clear();
 
 private:
+    friend class FGamePlatformUINotificationDuplicateTest;
     struct FActiveNotification
     {
         TWeakObjectPtr<UGamePlatformNotificationWidget> Widget;

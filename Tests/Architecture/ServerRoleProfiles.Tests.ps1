@@ -1,3 +1,5 @@
+# 三角色配置静态契约回归：Shared拥有角色/体验，登记内容包或主工程拥有地图挂载点。
+# 只读取正式配置与插件描述，不启动服务器，也不替代引擎资产存在性/Cook验证。
 Describe '三角色服务器启动Profile契约' {
     $workspaceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
     $profileRoot = Join-Path $workspaceRoot 'Deploy/Server'
@@ -42,7 +44,20 @@ Describe '三角色服务器启动Profile契约' {
             @($profile.allowedExperienceIds).Count | Should BeGreaterThan 0
             (@($profile.allowedExperienceIds) -contains $profile.defaultExperienceId) | Should Be $true
             (@($roleExperienceMap[$profile.serverRoleId]) -contains $profile.defaultExperienceId) | Should Be $true
-            $profile.worldPackage | Should Match '^/Game/'
+            # 地图可由正式内容插件拥有；仅/ Game前缀会误拒绝真实Village内容包。
+            $profile.worldPackage | Should Match '^/[A-Za-z][A-Za-z0-9_]*/[A-Za-z0-9_/]+$'
+            $mountOwner = ($profile.worldPackage -split '/')[1]
+            if ($mountOwner -ne 'Game') {
+                $registryPath = Join-Path $workspaceRoot 'Game/Plugins/DivineBeasts/ContentPacks/ContentPackRegistry.json'
+                $registry = Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json
+                $owners = @($registry.ContentPacks | Where-Object { $_.Name -eq $mountOwner })
+                $owners.Count | Should Be 1
+                if ($owners.Count -eq 1) {
+                    $ownerPath = Join-Path (Split-Path $registryPath) ($owners[0].RelativePath + '/' + $mountOwner + '.uplugin')
+                    $descriptor = Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json
+                    $descriptor.CanContainContent | Should Be $true
+                }
+            }
             @($profile.requiredAssets).Count | Should BeGreaterThan 0
             $profile.instancePolicy | Should Not BeNullOrEmpty
             $profile.readiness.requireRequiredAssets | Should Be $true

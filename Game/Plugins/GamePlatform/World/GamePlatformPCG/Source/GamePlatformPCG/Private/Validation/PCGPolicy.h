@@ -6,6 +6,9 @@
 
 namespace GamePlatformPCGPolicy
 {
+// 活动槽与终态诊断容量互相独立；该策略由世界接纳入口使用，不拥有原生输出。
+inline bool CanAcceptRequest(std::uint32_t ActiveCount, std::uint32_t /*HistoryCount*/)
+{ return ActiveCount < 4; }
 // 初始开发预算，不是硬件性能达标值；入口拒绝超过范围的请求，不建立平行调度器。
 struct NumericProfile
 {

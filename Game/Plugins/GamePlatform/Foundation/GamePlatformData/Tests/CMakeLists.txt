@@ -8,3 +8,13 @@ if(MSVC)
   target_compile_options(GamePlatformDataDemandTests PRIVATE /W4 /WX /utf-8)
 endif()
 add_test(NAME GamePlatform.Data.DemandLedger COMMAND GamePlatformDataDemandTests)
+
+# 原生终态用例编译模块Private/Tests中的真实生产策略，避免把根级材料误认为UE自动测试。
+add_executable(GamePlatformDataTerminalTests ../Source/GamePlatformData/Private/Tests/DataLeaseTerminalPolicyTests.cpp)
+target_include_directories(GamePlatformDataTerminalTests PRIVATE ../Source/GamePlatformData/Private)
+target_compile_features(GamePlatformDataTerminalTests PRIVATE cxx_std_17)
+target_compile_definitions(GamePlatformDataTerminalTests PRIVATE GAMEPLATFORM_DATA_NATIVE_TERMINAL_TEST=1)
+if(MSVC)
+  target_compile_options(GamePlatformDataTerminalTests PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME GamePlatform.Data.TerminalPolicy COMMAND GamePlatformDataTerminalTests)

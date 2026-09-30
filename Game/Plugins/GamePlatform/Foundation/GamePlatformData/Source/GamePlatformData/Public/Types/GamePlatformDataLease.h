@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "UObject/PrimaryAssetId.h"
+#include "UObject/SoftObjectPath.h"
 #include "Types/GamePlatformResult.h"
 #include "GamePlatformDataLease.generated.h"
 
@@ -27,11 +28,11 @@ enum class EGamePlatformDataRequestState : uint8
     Failed,
     /** 完成通知中的取消快照；服务记录已撤销，查询返回Released。 */
     Cancelled,
-    /** 已签发的租约已释放，只保留幂等校验记录，不再持有资源。 */
+    /** 已签发的租约已释放，以实例签发证明校验幂等，不保留释放历史。 */
     Released
 };
 
-/** 不可伪造所有权的值句柄；所有操作核对服务内记录，副本RequestState仅为取得时快照。 */
+/** 不可伪造所有权的值句柄；存活操作核对服务记录，重复释放核对实例签发证明，副本RequestState仅为取得时快照。 */
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMDATA_API FGamePlatformDataLease
 {
@@ -46,10 +47,14 @@ struct GAMEPLATFORMDATA_API FGamePlatformDataLease
     UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Data") FPrimaryAssetId DefinitionId;
     /** 本调用者需要的去重分组，空集合仍持有根定义。 */
     UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Data") TArray<FName> Bundles;
+    /** 普通资源租约的规范化路径；与DefinitionId互斥，不伪造Definition主资产身份。 */
+    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Data") TArray<FSoftObjectPath> ResourcePaths;
+    /** 实例私有签发密钥生成的完整身份摘要；不是登录/网络凭据，不允许调用方改写或记录密钥。 */
+    UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Data") FGuid IssuerProof;
     /** 取得此值时的请求状态；实时状态使用GetLeaseState读取。 */
     UPROPERTY(BlueprintReadOnly, Category="GamePlatform|Data") EGamePlatformDataRequestState RequestState = EGamePlatformDataRequestState::Invalid;
     /** 仅检查值形状；是否仍可读由所属服务判定。 */
-    bool IsValid() const { return ScopeId.IsValid() && LeaseId.IsValid() && Generation > 0 && DefinitionId.IsValid(); }
+    bool IsValid() const { return ScopeId.IsValid() && LeaseId.IsValid() && Generation > 0 && IssuerProof.IsValid() && (DefinitionId.IsValid() != !ResourcePaths.IsEmpty()); }
 };
 
 /** 自包含诊断，不持有定义对象或已释放指针。游戏线程取得后可复制。 */
@@ -67,11 +72,11 @@ struct GAMEPLATFORMDATA_API FGamePlatformDataDiagnostics
     int32 UniqueTrackedDefinitions = 0;
     /** 当前请求记录涉及的唯一Asset Bundle名称数量。 */
     int32 UniqueRequestedBundles = 0;
-    /** 为严格幂等释放保留的已释放租约记录数量；长寿命实例应监控其增长。 */
+    /** 保留字段兼容旧诊断；无状态签发证明不保存已释放记录，当前恒为0。 */
     int32 ReleasedLeaseRecords = 0;
-    /** 本实例生命周期内成功接纳的AcquireDefinition请求总数。 */
+    /** 本实例生命周期内成功接纳的定义及普通资源请求总数。 */
     int64 TotalAcceptedRequests = 0;
-    /** 同步参数/作用域校验拒绝的AcquireDefinition请求总数。 */
+    /** 同步参数/作用域校验拒绝的定义及普通资源请求总数。 */
     int64 TotalRejectedRequests = 0;
     /** 已发布成功终态的请求总数。 */
     int64 TotalSucceededRequests = 0;

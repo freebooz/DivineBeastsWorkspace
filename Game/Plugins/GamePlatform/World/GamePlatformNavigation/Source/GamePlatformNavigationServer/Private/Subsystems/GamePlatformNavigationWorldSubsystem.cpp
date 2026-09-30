@@ -9,6 +9,7 @@
 #include "NavFilters/NavigationQueryFilter.h"
 #include "NavigationSystem.h"
 #include "Settings/GamePlatformNavigationSettings.h"
+#include "Queries/NavigationRequestPolicy.h"
 
 namespace
 {
@@ -284,29 +285,24 @@ UGamePlatformNavigationWorldSubsystem::FindPathAsync(
     FGamePlatformNavigationQueryCompleted Completion)
 {
     FGamePlatformNavigationRequestHandle Handle;
+    check(IsInGameThread());
+    const FGuid EffectiveRequestId = Request.RequestId.IsValid() ? Request.RequestId : FGuid::NewGuid();
 
     const UGamePlatformNavigationSettings* Settings =
         GetDefault<UGamePlatformNavigationSettings>();
 
-    if (AsyncRequests.Num() >=
-        FMath::Max(1, Settings->MaxOutstandingAsyncRequests))
+    // 在调用引擎调度器之前拒绝重复在飞ID，保留原查询、完成回调及其超时所有权。
+    if (!GamePlatformNavigationRequestPolicy::CanSchedule(AsyncRequests.Num(),
+        FMath::Max(1, Settings->MaxOutstandingAsyncRequests), AsyncRequests.Contains(EffectiveRequestId)))
     {
         FGamePlatformNavigationPathResult Result;
-        Result.RequestId =
-            Request.RequestId.IsValid()
-                ? Request.RequestId
-                : FGuid::NewGuid();
+        Result.RequestId = EffectiveRequestId;
         Result.WorldGeneration = WorldGeneration;
         Result.Status = EGamePlatformNavigationPathStatus::Failed;
         Result.Error = EGamePlatformNavigationError::Unsupported;
         Completion.ExecuteIfBound(Result);
         return Handle;
     }
-
-    const FGuid EffectiveRequestId =
-        Request.RequestId.IsValid()
-            ? Request.RequestId
-            : FGuid::NewGuid();
 
     FNavAgentProperties Agent;
     FPathFindingQuery Query;
@@ -349,6 +345,7 @@ UGamePlatformNavigationWorldSubsystem::FindPathAsync(
     }
 
     const int32 ExpectedWorldGeneration = WorldGeneration;
+    const uint64 ExpectedOperationGeneration = ++NextOperationGeneration;
 
     const FNavPathQueryDelegate Delegate =
         FNavPathQueryDelegate::CreateUObject(
@@ -357,6 +354,7 @@ UGamePlatformNavigationWorldSubsystem::FindPathAsync(
                 HandleAsyncPathCompleted,
             EffectiveRequestId,
             ExpectedWorldGeneration,
+            ExpectedOperationGeneration,
             ResolvedStart,
             ResolvedGoal);
 
@@ -384,6 +382,7 @@ UGamePlatformNavigationWorldSubsystem::FindPathAsync(
         AsyncRequests.Add(EffectiveRequestId);
 
     Record.EngineQueryId = EngineQueryId;
+    Record.OperationGeneration = ExpectedOperationGeneration;
     Record.WorldGeneration = ExpectedWorldGeneration;
     Record.Owner = Request.OwnerScope;
     Record.bHadOwner = IsValid(Request.OwnerScope);
@@ -406,7 +405,8 @@ UGamePlatformNavigationWorldSubsystem::FindPathAsync(
                 &UGamePlatformNavigationWorldSubsystem::
                     HandleAsyncTimeout,
                 EffectiveRequestId,
-                ExpectedWorldGeneration),
+                ExpectedWorldGeneration,
+                ExpectedOperationGeneration),
             TimeoutSeconds,
             false);
     }
@@ -1067,6 +1067,7 @@ void UGamePlatformNavigationWorldSubsystem::HandleAsyncPathCompleted(
     FNavPathSharedPtr Path,
     FGuid RequestId,
     int32 ExpectedWorldGeneration,
+    uint64 ExpectedOperationGeneration,
     FVector ResolvedStart,
     FVector ResolvedGoal)
 {
@@ -1074,7 +1075,9 @@ void UGamePlatformNavigationWorldSubsystem::HandleAsyncPathCompleted(
         AsyncRequests.Find(RequestId);
 
     if (!Found ||
-        Found->EngineQueryId != QueryId)
+        Found->EngineQueryId != QueryId ||
+        !GamePlatformNavigationRequestPolicy::MatchesTimeout(Found->OperationGeneration, ExpectedOperationGeneration,
+            Found->WorldGeneration, ExpectedWorldGeneration))
     {
         return;
     }
@@ -1109,13 +1112,15 @@ void UGamePlatformNavigationWorldSubsystem::HandleAsyncPathCompleted(
 
 void UGamePlatformNavigationWorldSubsystem::HandleAsyncTimeout(
     FGuid RequestId,
-    int32 ExpectedWorldGeneration)
+    int32 ExpectedWorldGeneration,
+    uint64 ExpectedOperationGeneration)
 {
     FAsyncRequestRecord* Found =
         AsyncRequests.Find(RequestId);
 
     if (!Found ||
-        Found->WorldGeneration != ExpectedWorldGeneration)
+        !GamePlatformNavigationRequestPolicy::MatchesTimeout(Found->OperationGeneration, ExpectedOperationGeneration,
+            Found->WorldGeneration, ExpectedWorldGeneration))
     {
         return;
     }

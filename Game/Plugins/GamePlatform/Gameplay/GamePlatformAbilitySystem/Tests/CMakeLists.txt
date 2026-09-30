@@ -10,3 +10,12 @@ else()
   target_compile_options(AbilityOwnershipTests PRIVATE -Wall -Wextra -Werror)
 endif()
 add_test(NAME AbilityOwnershipTests COMMAND AbilityOwnershipTests)
+
+# 当前Avatar资格Gate的独立行为回归，保留既有Grant所有权测试。
+add_executable(AbilityActivationPolicyTests ../Source/GamePlatformAbilitySystem/Private/Tests/AbilityActivationPolicyTests.cpp)
+target_compile_features(AbilityActivationPolicyTests PRIVATE cxx_std_17)
+target_compile_definitions(AbilityActivationPolicyTests PRIVATE GAMEPLATFORM_ABILITY_NATIVE_TEST=1)
+if(MSVC)
+  target_compile_options(AbilityActivationPolicyTests PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME Ability.ActivationGate COMMAND AbilityActivationPolicyTests)

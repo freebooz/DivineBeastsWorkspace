@@ -8,6 +8,22 @@
 #include "NiagaraSystem.h"
 #include "Components/SceneComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/Actor.h"
+
+bool FGamePlatformVFXNiagaraExecutor::IsAttachmentValid(const UWorld& World,
+    const UGamePlatformVFXDefinition& Definition, const FGamePlatformVFXSpawnContext& Spawn)
+{
+    check(IsInGameThread());
+    USceneComponent* Target = Spawn.AttachComponent.Get();
+    if (!Target)
+    {
+        return Spawn.AttachComponent.IsExplicitlyNull() &&
+            Definition.GetBehavior() != EGamePlatformVFXBehavior::Attached;
+    }
+    AActor* Owner = Target->GetOwner();
+    return IsValid(Target) && Target->IsRegistered() && IsValid(Owner) &&
+        !Owner->IsActorBeingDestroyed() && Target->GetWorld() == &World && !World.bIsTearingDown;
+}
 
 UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     UWorld& World,
@@ -15,6 +31,10 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     const FGamePlatformVFXRequest& Request,
     bool bUsePool)
 {
+    if (!IsAttachmentValid(World, Definition, Request.SpawnContext))
+    {
+        return nullptr;
+    }
     UNiagaraSystem* System = Definition.ResolveNiagaraSystem(
         Request.PlatformId,
         Request.QualityTier).Get();
@@ -27,7 +47,7 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     const FGamePlatformVFXSpawnContext& Spawn = Request.SpawnContext;
 
     UNiagaraComponent* Component = nullptr;
-    if (IsValid(Spawn.AttachComponent))
+    if (USceneComponent* AttachTarget = Spawn.AttachComponent.Get())
     {
         FName AttachPointName = Spawn.AttachPointName;
         if (AttachPointName.IsNone())
@@ -39,7 +59,7 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
         }
         Component = UNiagaraFunctionLibrary::SpawnSystemAttached(
             System,
-            Spawn.AttachComponent,
+            AttachTarget,
             AttachPointName,
             Spawn.Location,
             Spawn.Rotation,

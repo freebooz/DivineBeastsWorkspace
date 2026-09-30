@@ -1,3 +1,4 @@
+// 平台客户端设置IO适配：GI独占用户上下文，槽名由不透明键派生；AsyncSave复制值和槽名后不依赖Provider寿命，完成不持有GI。
 #include "Persistence/GamePlatformSettingsClientPersistenceProvider.h"
 
 #include "Kismet/GameplayStatics.h"
@@ -40,6 +41,12 @@ namespace
 #endif
         return true;
     }
+}
+
+TUniquePtr<IGamePlatformSettingsPersistenceProvider> FGamePlatformSettingsClientPersistenceProvider::CreateScopedProvider() const
+{
+    check(IsInGameThread());
+    return MakeUnique<FGamePlatformSettingsClientPersistenceProvider>();
 }
 
 FName FGamePlatformSettingsClientPersistenceProvider::GetPersistenceId() const

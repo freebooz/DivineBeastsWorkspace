@@ -126,3 +126,7 @@ Input->UnsubscribeInputState(StateHandle);
 `GetInputDiagnostics()` 返回当前 LocalPlayer 的轻量运行诊断：维护 Ticker 是否已安排、当前设备族及 DeviceRevision、Context/Block/Binding/动作Subscription/Touch 数量、事件发布/订阅回调/设备切换/Mapping重建/维护Tick/失效Owner回收计数，以及最近/最大维护耗时。状态订阅是低频观察通道，不计入动作Subscription热路径统计；诊断不包含原始按键、文字或Touch坐标。
 
 Snapshot 仅是本地值，不构成服务器权威。
+
+## 2026-09-30现行合同补充
+
+ResetMappings(None)只重置当前Profile声明且原生已登记的行；显式外部行拒绝。SaveInputPreferences的Success表示提交原生void保存，不证明落盘；bPreferencesSaveSubmitted表明已提交，bPreferencesSaved保留身份但当前保持false。磁盘成功/失败不可观测，前置失败明确返回。

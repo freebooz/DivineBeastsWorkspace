@@ -1,9 +1,7 @@
-# AssetLoadingAndLeases（资产加载与租约）
+# 页面资源加载与租约
 
-页面 WidgetClass（控件类）和 PreloadAssets（预加载资产）都使用 Soft Reference（软引用）。`UGamePlatformUIManagerSubsystem`不直接调用第二套 AssetManager，而是通过 `GamePlatformData`公开的 `FGamePlatformAssetLoader（平台资产加载器）`提交异步加载。
+页面定义继续保存软WidgetClass/PreloadAssets。UIManager向GamePlatformData申请普通资源租约；普通页World期限，bSurvivesTravel页Instance期限。成功后逐路径验证并核对页类，将Pending租约转到CommonUI栈内实例。暂时失活不释放，最终离栈、取消、失败、布局替换和服务退出只释放自有Data租约；底层StreamableManager唯一属于Data。
 
-每个打开请求保存 `FStreamableHandle（流式加载句柄）`。页面成功创建后，该 Handle 转移到 ActiveScreenLeases（活动页面租约）；页面反激活时释放。取消请求会取消对应 Handle。
+取消/世界关闭后迟到回调核对RequestId及LeaseId，不创建页面。CommonUI构造可同步重入：调用前复制请求/租约/布局代次及作用域，返回后再核对同代Pending、Data实时Succeeded、同Root/Stack/World/GI和控件成员关系。构造期间取消立即撤资格，但UI自有租约延迟到新控件撤回后才释放；独立Data撤销仍优先生效，已撤销租约不转Active、不发布Opened。
 
-加载回调首先检查 RequestId 仍存在、Definition 仍注册、Root Layout 仍有效以及标签条件仍满足；任何一项失效都不创建页面。
-
-当前 `GamePlatformData`仅补了中立加载薄封装，尚未建立完整 Primary Asset（主资产）版本、租约统计和统一诊断体系。
+CommonUI成员关系与激活状态分账：B覆盖A时A继续持资源与Travel策略，重新激活恢复PausePolicy。详细迁移、回归与未验证边界见[本次修复合同](DesignRemediation-2026-09-30.md)。

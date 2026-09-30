@@ -1,10 +1,9 @@
 # GamePlatformQuest（游戏平台任务插件）
 
-跨游戏通用任务、教学进度和活动目标框架。包含 `GamePlatformQuest（共享Runtime模块）`、`GamePlatformQuestClient（客户端ClientOnly模块）`和 `GamePlatformQuestServer（服务器ServerOnly模块）`。
+跨游戏通用任务、教学进度和活动目标框架。包含GamePlatformQuest共享运行模块、GamePlatformQuestClient客户端模块与GamePlatformQuestServer服务器模块。
 
-已实现源码：Quest/Objective Definition、状态机、OwnerOnly Snapshot、客户端 Revision/Tracking、服务器 EventType→Objective 索引、QuestId+EventId 去重、Accept/Abandon、Objective评估、CompletionId、RewardClaim边界、普通进度短周期批量持久化、跨服前Flush/Reconcile，以及 DBAServer Combat/Interaction/Region 中立事件适配。
+当前源码实现：定义/状态机、仅拥有者快照、客户端追踪与Revision/SnapshotSequence保护、服务器事件索引、QuestId+EventId去重、接取/放弃、目标评估、Completion/Reward边界、异步持久化端口、单玩家单飞、普通进度聚合、冲突对账及失败保留事件。本轮修复对账先撤销原记录造成的满队列/不兼容快照丢事件，并区分显示序列和落库Revision。
 
-后端已扩展现有 PlayerDataService：Go Quest领域、pgx PostgreSQL Repository、正式 Migration、Revision乐观并发、processed_event幂等、completion ledger、PlayerQuestCompleted Transactional Outbox 和通用Outbox Dispatcher。没有新增QuestService，也没有直接修改长期货币。
+当前DBAServer文件清单未发现旧文档声称的QuestIntegration/UDBAQuestEventAdapterComponent或FDBAQuestPlayerDataPersistence。平台Persistence Port存在不代表具体HTTP适配、数据库迁移、Outbox、奖励链或UE→后端已联调；本轮没有实施或验收这些业务。旧后端方案材料仅供后续项目集成审查。
 
-DBAServer 已实现异步 `FHttpModule（HTTP模块）` → PlayerDataService（玩家数据服务）持久化适配，QuestServer 的 Persistence Port 已改为异步 Completion（完成回调）模型，并以单玩家单飞持久化、Deferred Event（延迟事件）、Revision Reconcile（修订号对账）避免游戏线程阻塞和旧版本覆盖。当前 Runner 无 Go/psql/PostgreSQL/UE5.8 工具链，因此 Go 编译、Migration 实际执行、UE→PlayerData 真实运行联调、Outbox 消息发布、专服/双客户端/重启恢复和 Cook 均未执行。
-
+实际本轮Native C++策略回归已通过，UE专属回归源码放在模块Private/Tests，尚由统一主执行者执行引擎编译/Automation。网络、专服双客户端、重启恢复、数据库/Outbox联调及Cook未由本Task执行。详细行为与中文责任/失败/取消合同见[本轮专属说明](Docs/DesignRemediation-2026-09-30.md)。

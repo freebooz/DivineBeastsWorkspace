@@ -1,12 +1,9 @@
+// 平台客户端业务JSON适配；线程、生命周期与迁移合同见同名公开头。
 #include "Transport/GamePlatformCommerceGatewayHttpTransport.h"
 
-#include "Async/Async.h"
 #include "Dom/JsonObject.h"
+#include "GamePlatformOnlineClientSubsystem.h"
 #include "GenericPlatform/GenericPlatformHttp.h"
-#include "HttpModule.h"
-#include "Interfaces/IHttpRequest.h"
-#include "Interfaces/IHttpResponse.h"
-#include "Misc/ScopeLock.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -40,160 +37,131 @@ bool NumberToInt64(
 }
 }
 
-FGamePlatformCommerceGatewayHttpTransport::
-FGamePlatformCommerceGatewayHttpTransport(
-    FString InGatewayBaseUrl,
-    FString InAccessToken)
-    : GatewayBaseUrl(MoveTemp(InGatewayBaseUrl))
-    , AccessToken(MoveTemp(InAccessToken))
+// 游戏线程中的本领域所有权账本；不保存Token，也不拥有Online/HTTP对象。
+struct FGamePlatformCommerceGatewayHttpTransport::FRuntime
 {
-    GatewayBaseUrl.RemoveFromEnd(TEXT("/"));
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> Online;
+    TArray<FGamePlatformOnlineRequestHandle> ActiveRequests;
+    uint64 CancellationGeneration = 0;
+};
+
+FGamePlatformCommerceGatewayHttpTransport::FGamePlatformCommerceGatewayHttpTransport(UGamePlatformOnlineClientSubsystem* InOnlineSubsystem)
+    : Runtime(MakeUnique<FRuntime>())
+{
+    check(IsInGameThread());
+    Runtime->Online = InOnlineSubsystem;
+}
+
+FGamePlatformCommerceGatewayHttpTransport::FGamePlatformCommerceGatewayHttpTransport(FString InGatewayBaseUrl, FString InAccessToken)
+    : Runtime(MakeUnique<FRuntime>())
+{
+    // 旧消费者须迁入Online组合根；不把传入票据复制到长期对象或日志。
+    (void)InGatewayBaseUrl;
+    InAccessToken.Reset();
+}
+
+FGamePlatformCommerceGatewayHttpTransport::~FGamePlatformCommerceGatewayHttpTransport()
+{
+    CancelAllRequests();
 }
 
 bool FGamePlatformCommerceGatewayHttpTransport::IsConfigured() const
 {
-    return !GatewayBaseUrl.IsEmpty() &&
-           !AccessToken.IsEmpty();
+    check(IsInGameThread());
+    const auto* Online = Runtime ? Runtime->Online.Get() : nullptr;
+    if (!IsValid(Online)) { return false; }
+    const auto State = Online->GetSnapshot().State;
+    return State == EGamePlatformAuthState::Authenticated || State == EGamePlatformAuthState::Refreshing;
 }
 
 void FGamePlatformCommerceGatewayHttpTransport::CancelAllRequests()
 {
-    TArray<TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>> Requests;
+    check(IsInGameThread());
+    if (!Runtime) { return; }
+    ++Runtime->CancellationGeneration;
+    auto Requests = MoveTemp(Runtime->ActiveRequests);
+    Runtime->ActiveRequests.Reset();
+    if (auto* Online = Runtime->Online.Get())
     {
-        FScopeLock Lock(&ActiveRequestsMutex);
-        Requests = ActiveRequests;
-        ActiveRequests.Reset();
+        for (const auto& Request : Requests) { Online->Cancel(Request); }
     }
+}
 
-    for (const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request :
-         Requests)
-    {
-        if (Request.IsValid())
-        {
-            Request->CancelRequest();
-        }
-    }
+void FGamePlatformCommerceGatewayHttpTransport::UnregisterRequest(const FGuid& RequestId)
+{
+    Runtime->ActiveRequests.RemoveAll([&RequestId](const auto& Handle) { return Handle.RequestId == RequestId; });
 }
 
 bool FGamePlatformCommerceGatewayHttpTransport::StartJsonRequest(
     const FString& Verb,
     const FString& Path,
     const TSharedPtr<FJsonObject>& Body,
-    TFunction<void(int32, const FString&)> Completion)
+    TFunction<void(int32, const FString&, EGamePlatformCommerceError)> Completion)
 {
-    if (!IsConfigured() ||
-        Verb.IsEmpty() ||
-        Path.IsEmpty() ||
-        !Completion)
-    {
-        return false;
-    }
-
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
-        FHttpModule::Get().CreateRequest();
-    TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> RequestPtr = Request;
-
-    Request->SetURL(GatewayBaseUrl + Path);
-    Request->SetVerb(Verb);
-    Request->SetHeader(
-        TEXT("Authorization"),
-        FString::Printf(TEXT("Bearer %s"), *AccessToken));
-    Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
-
+    check(IsInGameThread());
+    if (!Completion || !IsConfigured() || Runtime->ActiveRequests.Num() >= 8) { return false; }
+    FGamePlatformAuthenticatedRequest Request;
+    Request.Verb = Verb;
+    Request.RelativePath = Path;
+    // 只读请求允许Online重试；写命令没有端点级幂等合同前禁止自动重放。
+    Request.bIdempotent = Request.Verb == TEXT("GET") || Request.Verb == TEXT("HEAD");
     if (Body.IsValid())
     {
-        FString Payload;
-        TSharedRef<TJsonWriter<>> Writer =
-            TJsonWriterFactory<>::Create(&Payload);
-
-        if (!FJsonSerializer::Serialize(
-                Body.ToSharedRef(),
-                Writer))
-        {
-            return false;
-        }
-
-        Request->SetHeader(
-            TEXT("Content-Type"),
-            TEXT("application/json"));
-        Request->SetContentAsString(Payload);
+        const auto Writer = TJsonWriterFactory<>::Create(&Request.Body);
+        if (!FJsonSerializer::Serialize(Body.ToSharedRef(), Writer)) { return false; }
     }
-
-    {
-        FScopeLock Lock(&ActiveRequestsMutex);
-        constexpr int32 MaxConcurrentHttpRequests = 8;
-        if (ActiveRequests.Num() >= MaxConcurrentHttpRequests)
+    const uint64 ExpectedCancellationGeneration = Runtime->CancellationGeneration;
+    const TWeakPtr<FGamePlatformCommerceGatewayHttpTransport, ESPMode::ThreadSafe> WeakSelf = AsShared();
+    const auto HandleBox = MakeShared<FGamePlatformOnlineRequestHandle, ESPMode::ThreadSafe>();
+    auto Handle = Runtime->Online->SendAuthenticatedRequest(
+        MoveTemp(Request), FGamePlatformOnlineRequestOptions(),
+        [WeakSelf, HandleBox, ExpectedCancellationGeneration, Completion = MoveTemp(Completion)](
+            FGamePlatformAuthenticatedResponse Response) mutable
         {
-            return false;
-        }
-        ActiveRequests.Add(RequestPtr);
-    }
-
-    TSharedRef<
-        FGamePlatformCommerceGatewayHttpTransport,
-        ESPMode::ThreadSafe> Self = AsShared();
-
-    Request->OnProcessRequestComplete().BindLambda(
-        [Self,
-         RequestPtr,
-         Completion = MoveTemp(Completion)](
-            FHttpRequestPtr,
-            FHttpResponsePtr Response,
-            bool bConnectedSuccessfully) mutable
-        {
-            const int32 StatusCode =
-                bConnectedSuccessfully && Response.IsValid()
-                    ? Response->GetResponseCode()
-                    : 0;
-
-            const FString ResponseBody =
-                Response.IsValid()
-                    ? Response->GetContentAsString()
-                    : FString();
-
-            Self->UnregisterRequest(RequestPtr);
-
-            AsyncTask(
-                ENamedThreads::GameThread,
-                [Completion = MoveTemp(Completion),
-                 StatusCode,
-                 ResponseBody]() mutable
-                {
-                    Completion(StatusCode, ResponseBody);
-                });
+            const auto Self = WeakSelf.Pin();
+            if (!Self || !Self->Runtime || Self->Runtime->CancellationGeneration != ExpectedCancellationGeneration) { return; }
+            Self->UnregisterRequest(HandleBox->RequestId);
+            EGamePlatformCommerceError Error = EGamePlatformCommerceError::None;
+            if (!Response.IsSuccess())
+            {
+                if (Response.Error == EGamePlatformAuthError::AuthExpired ||
+                    Response.Error == EGamePlatformAuthError::InvalidCredentials ||
+                    Response.Error == EGamePlatformAuthError::Forbidden)
+                { Error = EGamePlatformCommerceError::Unauthorized; }
+                else if (Response.Error == EGamePlatformAuthError::Cancelled)
+                { Error = Response.bMayHaveReachedServer ? EGamePlatformCommerceError::OutcomeUnknown : EGamePlatformCommerceError::Cancelled; }
+                else if (Response.Error == EGamePlatformAuthError::TimedOut)
+                { Error = Response.bMayHaveReachedServer ? EGamePlatformCommerceError::OutcomeUnknown : EGamePlatformCommerceError::TimedOut; }
+                else if (Response.Error == EGamePlatformAuthError::OutcomeUnknown)
+                { Error = EGamePlatformCommerceError::OutcomeUnknown; }
+                else { Error = MapHttpError(Response.HttpStatusCode, Response.Body); }
+            }
+            Completion(Response.HttpStatusCode, Response.Body, Error);
         });
-
-    const bool bStarted = Request->ProcessRequest();
-    if (!bStarted)
-    {
-        UnregisterRequest(RequestPtr);
-    }
-    return bStarted;
-}
-
-void FGamePlatformCommerceGatewayHttpTransport::UnregisterRequest(
-    const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request)
-{
-    FScopeLock Lock(&ActiveRequestsMutex);
-    ActiveRequests.Remove(Request);
+    *HandleBox = Handle;
+    if (!Handle.RequestId.IsValid()) { return false; }
+    Runtime->ActiveRequests.Add(Handle);
+    return true;
 }
 
 bool FGamePlatformCommerceGatewayHttpTransport::BeginGetCatalog(
     FGamePlatformCommerceCatalogCompletion Completion)
 {
+    if (!Completion) { return false; }
     return StartJsonRequest(
         TEXT("GET"),
         TEXT("/v1/commerce/catalog"),
         nullptr,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& Body) mutable
+            const FString& Body,
+            EGamePlatformCommerceError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformCommerceError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, Body));
+                    TransportError != EGamePlatformCommerceError::None ? TransportError : MapHttpError(StatusCode, Body));
                 return;
             }
 
@@ -223,6 +191,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginCreatePurchaseIntent(
     const FGuid& RequestId,
     FGamePlatformCommerceIntentCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (OfferId.IsNone() ||
         Quantity <= 0 ||
         !RequestId.IsValid())
@@ -241,13 +210,14 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginCreatePurchaseIntent(
         Body,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformCommerceError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformCommerceError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, ResponseBody));
+                    TransportError != EGamePlatformCommerceError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 
@@ -275,6 +245,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginPurchase(
     const FString& PurchaseIntentId,
     FGamePlatformCommerceOrderCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (PurchaseIntentId.IsEmpty())
     {
         return false;
@@ -291,13 +262,14 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginPurchase(
         Body,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformCommerceError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformCommerceError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, ResponseBody));
+                    TransportError != EGamePlatformCommerceError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 
@@ -325,6 +297,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginGetOrder(
     const FString& OrderId,
     FGamePlatformCommerceOrderCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (OrderId.IsEmpty())
     {
         return false;
@@ -337,13 +310,14 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginGetOrder(
         nullptr,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformCommerceError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformCommerceError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, ResponseBody));
+                    TransportError != EGamePlatformCommerceError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 
@@ -372,6 +346,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginSubmitReceipt(
     const FString& Receipt,
     FGamePlatformCommerceOrderCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (OrderId.IsEmpty() || Receipt.IsEmpty())
     {
         return false;
@@ -388,13 +363,14 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginSubmitReceipt(
         Body,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformCommerceError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformCommerceError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, ResponseBody));
+                    TransportError != EGamePlatformCommerceError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 
@@ -422,6 +398,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginReconcileOrder(
     const FString& OrderId,
     FGamePlatformCommerceOrderCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (OrderId.IsEmpty())
     {
         return false;
@@ -435,13 +412,14 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginReconcileOrder(
         MakeShared<FJsonObject>(),
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformCommerceError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformCommerceError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, ResponseBody));
+                    TransportError != EGamePlatformCommerceError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 

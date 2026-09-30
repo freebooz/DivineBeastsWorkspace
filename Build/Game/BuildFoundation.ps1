@@ -9,12 +9,16 @@ NoPCH额外禁用所有PCH。未选目标/缺少前置返回2；脚本失败1；
 #>
 param([string]$EngineRoot, [switch]$Editor, [switch]$Client, [switch]$Server,
     [switch]$NoPCH, [switch]$NoSharedPCH = $true,
+    # 仅本次构建额外装配的已有插件，供插件完整编译验收；不改正式目标默认装配。
+    [ValidatePattern("^[A-Za-z][A-Za-z0-9_]*$")][string[]]$AdditionalPlugins = @(),
+    # 非空时构建所列模块及必要链接依赖；记录为模块构建，不能宣称整目标/Cook完成。
+    [ValidatePattern("^[A-Za-z][A-Za-z0-9_]*$")][string[]]$OnlyModules = @(),
     [ValidateRange(1,128)][int]$MaxParallelActions = 2,
     [ValidateRange(1,86400)][int]$TimeoutSeconds = 3600,
     [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Targets=@(); Configuration='Development'; Platform='Win64' }
+$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Targets=@(); Configuration='Development'; Platform='Win64'; AdditionalPlugins=$AdditionalPlugins; OnlyModules=$OnlyModules }
 try {
     $context = New-FoundationContext Build $RunId
     $targets = @(); if ($Editor) { $targets += 'Editor' }; if ($Client) { $targets += 'Client' }; if ($Server) { $targets += 'Server' }
@@ -31,6 +35,8 @@ try {
         $directory = Join-Path $context.Directory $target
         $null = New-Item -ItemType Directory -Path $directory
         $arguments = @($tool.Dll,"DivineBeastsArena$target",'Win64','Development',"-Project=$($context.Project)","-MaxParallelActions=$MaxParallelActions",'-NoHotReloadFromIDE',"-Log=$(Join-Path $directory 'UBT.log')")
+        if ($AdditionalPlugins.Count) { $arguments += ('-EnablePlugin=' + (($AdditionalPlugins | Sort-Object -Unique) -join '+')) }
+        if ($OnlyModules.Count) { $arguments += ('-Module=' + (($OnlyModules | Sort-Object -Unique) -join '+')) }
         if ($NoPCH) { $arguments += '-NoPCH' }
         if ($NoSharedPCH) { $arguments += '-NoSharedPCH' }
         $result = Invoke-FoundationProcess -FilePath $tool.Executable -Arguments $arguments -WorkingDirectory (Join-Path $engine.Root 'Engine/Source') -OutputDirectory $directory -TimeoutSeconds $TimeoutSeconds -Environment $tool.Environment

@@ -1,0 +1,9 @@
+# 2026-09-30 音频实例所有权与预算修复
+
+WorldSubsystem使用引擎FAudioDevice::CreateComponent，显式bPlay=false、bAutoDestroy=false；空间/附着/参数配置和平台记录、AudioFinished/PlayStateChanged委托全部完成后才Play/FadeIn。UE5.8启动拒绝不保证AudioFinished，但广播Stopped；Stopped统一移出记录、解绑平台委托、销毁本组件、释放本Data租约。显式零时长Stop直接清理，防止已非活动组件再等待永不发生的完成事件。FadeOut保留实例直到Stopped，世界退出幂等清理。Pending转Active保持一个槽的所有权，接纳要求Pending<128且Pending+Active<256。
+
+SFX请求新增独立PredictionState，Presentation桥接传递状态，不再先Stop纠正再按普通请求提交。RequestId终态最多512项、单调时间30秒；满时淘汰最早到期记录，去重承诺限仍保留历史。自然完成后确认返回追加AlreadyCompleted（无活动Handle）；最终取消在保留期内阻断迟到请求，Corrected只替换正常完成或当前活动预测。StopByRequestId对尚无活动实例的合法ID也接纳取消并记录墓碑。历史不保存音频或租约，世界退出清空。
+
+Native总预算用例已RED→GREEN；Private/Tests的Stopped回收、预测终态、容量和到期用例尚未运行UE Automation。真实Concurrency PreventNew、音频设备、多世界及Data租约动态回归仍待统一验证。本修复不代表已有音效资产或真实后端能力。
+
+2026-09-30真实NoPCH构建追加：Presentation桥直接包含Engine/World.h，保证UWorld到UObject服务入口转换的继承信息完整；SFXRuntimeBundle使用const FName，因为UE名称池构造函数不是constexpr。均有原始编译失败日志，补头/常量后UE重编译由主执行串行验证，本任务不启动UBT。

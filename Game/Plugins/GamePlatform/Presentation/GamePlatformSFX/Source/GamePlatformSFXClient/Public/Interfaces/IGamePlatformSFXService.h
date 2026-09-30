@@ -23,6 +23,7 @@ public:
     virtual bool Stop(const FGamePlatformSFXHandle& Handle, float FadeOutSeconds = -1.0f) = 0;
 
     /** 按跨Presentation请求身份取消正在加载或播放的实例。 */
+    // 游戏线程取消命令：合法ID即使尚无实例也记有界取消墓碑；true表示接纳取消，非当前活动数。
     virtual bool StopByRequestId(const FGuid& RequestId, float FadeOutSeconds = -1.0f) = 0;
 
     virtual bool IsActive(const FGamePlatformSFXHandle& Handle) const = 0;

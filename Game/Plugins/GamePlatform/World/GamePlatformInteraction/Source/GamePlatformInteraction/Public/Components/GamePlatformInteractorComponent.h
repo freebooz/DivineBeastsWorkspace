@@ -9,6 +9,8 @@
 #include "GamePlatformInteractorComponent.generated.h"
 
 class UGamePlatformInteractableComponent;
+class APawn;
+class AController;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
     FGamePlatformInteractionFocusChanged,
@@ -46,6 +48,8 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Interaction")
     void RefreshLocalFocus();
+    /** 当前本地集中采样是否运行，仅供只读诊断；所有权事件控制启停，不代表服务器交互资格。 */
+    bool IsLocalFocusSamplingActive() const;
 
     UFUNCTION(BlueprintCallable, Category="Interaction")
     FGuid BeginFocusedInteraction();
@@ -100,6 +104,12 @@ protected:
     void ServerRequestCancelInteraction(FGuid RequestId);
 
 private:
+    /** BeginPlay及真实拥有关系事件重评估焦点定时器；失去本地拥有者时立即清空本地焦点。 */
+    void ReconcileLocalFocusSampling();
+    UFUNCTION()
+    void HandleOwnerControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
+    UFUNCTION()
+    void HandleOwnerPawnChanged(APawn* OldPawn, APawn* NewPawn);
     struct FCachedRequestResult
     {
         FGamePlatformInteractionResult Result;

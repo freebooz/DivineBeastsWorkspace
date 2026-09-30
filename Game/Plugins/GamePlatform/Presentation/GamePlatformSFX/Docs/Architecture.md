@@ -74,9 +74,9 @@ Dedicated Server不得依赖或Cook纯客户端音频模块和音频内容。Ser
 
 `GamePlatformSettings` 是用户设备/偏好设置真源；`GamePlatformSFX` 是播放执行器。音量、静音和设备偏好应由组合层应用到UE SoundClass/SoundMix/AudioModulation，不让SFX反向依赖Settings，从而避免横向循环。
 
-## 8. 深度复审后的目标运行模型
+## 8. 深度复审后的当前源码运行模型
 
-运行时必须从当前“Spawn 后再登记”的流程收敛为：
+2026-09-30已按下面流程接线；真实引擎音频启动/并发拒绝验证尚未执行：
 
 ```text
 Validate Request
@@ -86,7 +86,7 @@ Validate Request
 → Create AudioComponent（不自动播放）
 → 配置Sound/Attenuation/Concurrency/参数/附着
 → 登记Active实例和RequestId
-→ 绑定OnAudioFinishedNative
+→ 绑定OnAudioFinishedNative / OnAudioPlayStateChangedNative（含启动失败Stopped）
 → Play / FadeIn
 → Stop / FadeOut / Natural Finish
 → 解绑事件 + DestroyComponent + ReleaseDefinition

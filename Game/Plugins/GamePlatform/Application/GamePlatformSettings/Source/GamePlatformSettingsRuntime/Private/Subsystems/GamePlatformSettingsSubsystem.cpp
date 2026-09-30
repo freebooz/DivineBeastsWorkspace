@@ -1,3 +1,4 @@
+// 平台GI设置执行：拥有当前层/解析注册表/独立Client持久化克隆；游戏线程事件驱动，异步保存弱回调和代次复核，卸载释放克隆。
 #include "Subsystems/GamePlatformSettingsSubsystem.h"
 
 #include "Async/Async.h"
@@ -84,6 +85,8 @@ void UGamePlatformSettingsSubsystem::Deinitialize()
     bPendingTopologyReload = false;
     Subscriptions.Reset();
     Layers.Reset();
+    ScopedPersistenceProvider.Reset();
+    PersistenceFactory = nullptr;
     Registry.Reset();
     Snapshot = FGamePlatformSettingsSnapshot();
     Diagnostics = FGamePlatformSettingsRuntimeDiagnostics();
@@ -412,6 +415,27 @@ UGamePlatformSettingsSubsystem::ResolvePersistenceProvider(
         OutProvider = Provider;
     }
 
+    if (GetCurrentRuntimeScope() == EGamePlatformSettingRuntimeScope::Client)
+    {
+        if (!OutProvider) { ScopedPersistenceProvider.Reset(); PersistenceFactory = nullptr; }
+        else
+        {
+            if (PersistenceFactory != OutProvider || !ScopedPersistenceProvider)
+            {
+                auto Scoped = OutProvider->CreateScopedProvider();
+                if (!Scoped)
+                {
+                    OutProvider = nullptr;
+                    return FGamePlatformResult::Unsupported(TEXT("SettingsScopedPersistenceRequired"), TEXT("客户端Provider必须提供GI独占实例，拒绝共享可变用户上下文。"));
+                }
+                const auto ContextResult = Scoped->SetUserContext(CurrentUserContextKey);
+                if (!ContextResult.IsSuccess()) { OutProvider = nullptr; return ContextResult; }
+                PersistenceFactory = OutProvider;
+                ScopedPersistenceProvider = MoveTemp(Scoped);
+            }
+            OutProvider = ScopedPersistenceProvider.Get();
+        }
+    }
     return FGamePlatformResult::Success();
 }
 
@@ -1035,6 +1059,9 @@ void UGamePlatformSettingsSubsystem::HandleModularFeatureUnregistered(
     const FName& Type,
     IModularFeature* Feature)
 {
+    // 先释放克隆，避免卸载/重新注册同地址工厂时错误复用旧用户状态。
+    if (Type == IGamePlatformSettingsPersistenceProvider::GetModularFeatureName() && Feature == PersistenceFactory)
+    { ScopedPersistenceProvider.Reset(); PersistenceFactory = nullptr; }
     HandleFeatureTopologyChanged(Type);
 }
 

@@ -1,4 +1,8 @@
-﻿param()
+<#
+只读检查SFX端侧、租约、无业务Tick及原生音频生命周期接线。输出诊断，失败退出1；
+不启动UE/音频、Cook或网络，源码存在性证据不能代替动态回归。创建不播放及Stopped回收为2026-09-30修复合同。
+#>
+param()
 
 $ErrorActionPreference = 'Stop'
 $errors = [System.Collections.Generic.List[string]]::new()
@@ -90,7 +94,10 @@ if (Test-Path $definitionPath) {
 $subsystemPath = Join-Path $pluginRoot 'Source/GamePlatformSFXClient/Private/Subsystems/GamePlatformSFXWorldSubsystem.cpp'
 if (Test-Path $subsystemPath) {
     $subsystem = Get-Content $subsystemPath -Raw -Encoding UTF8
-    foreach ($evidence in @('AcquireDefinition','EGamePlatformDataLifetime::World','OnAudioFinishedNative','SpawnSound2D','SpawnSoundAtLocation','SpawnSoundAttached','IsRunningCommandlet')) {
+    if ($subsystem -match '\bSpawnSound(2D|AtLocation|Attached)\s*\(') {
+        Add-Error 'SFX不得在委托与参数登记前用自动播放的SpawnSound入口启动。'
+    }
+    foreach ($evidence in @('AcquireDefinition','EGamePlatformDataLifetime::World','OnAudioFinishedNative','FAudioDevice::CreateComponent','Params.bPlay = false','OnAudioPlayStateChangedNative','HandleAudioPlayStateChanged','IsRunningCommandlet')) {
         if ($subsystem -notmatch [regex]::Escape($evidence)) { Add-Error ("SFX执行器缺少关键证据：{0}" -f $evidence) }
     }
 }
@@ -99,7 +106,7 @@ $bridgePath = Join-Path $pluginRoot 'Source/GamePlatformSFXClient/Private/Integr
 if (Test-Path $bridgePath) {
     $bridge = Get-Content $bridgePath -Raw -Encoding UTF8
     $hasChannel = $bridge.Contains('TEXT("SFX")')
-    $hasCancellation = $bridge.Contains('StopByRequestId')
+    $hasCancellation = $bridge.Contains('EGamePlatformSFXPredictionState::Cancelled')
     if (($hasChannel -eq $false) -or ($hasCancellation -eq $false)) {
         Add-Error 'SFX Presentation桥缺少ProviderChannel或取消映射。'
     }
@@ -111,5 +118,5 @@ if ($errors.Count -gt 0) {
     exit 1
 }
 
-Write-Output 'GamePlatformSFX架构门禁通过：ClientOnly、三层边界、Definition软引用、异步租约、无Tick、原生音频生命周期与Presentation桥均满足当前基线。'
+Write-Output 'GamePlatformSFX架构门禁通过：ClientOnly、三层边界、Definition软引用、异步租约、无Tick、原生音频生命周期与Presentation桥接线的静态证据满足当前基线（不代表动态音频验收）。'
 exit 0

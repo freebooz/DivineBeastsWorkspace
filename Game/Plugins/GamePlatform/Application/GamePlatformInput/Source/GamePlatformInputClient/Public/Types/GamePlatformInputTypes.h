@@ -1,3 +1,4 @@
+// 平台本地玩家输入纯值/身份契约；所有者与配置代次分离，UI读取快照，客户端输入不形成服务器授权；保存提交与落盘确认分开。
 #pragma once
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
@@ -156,7 +157,10 @@ struct FGamePlatformInputSnapshot
     bool bBindingsReady = false;
     bool bMappingsApplied = false;
     bool bGameplayInputEnabled = false;
+    /** 保留旧读取身份；只有可验证落盘结果才可为true，当前原生void保存路径始终false。 */
     bool bPreferencesSaved = false;
+    /** 最近一次显式Save已提交给Enhanced Input和INI；实际落盘成功/失败未知，修改偏好后清零。 */
+    bool bPreferencesSaveSubmitted = false;
     /** 最近一次由平台/触控桥确认的设备族，用于提示图标和设备特定UI。 */
     EGamePlatformInputDeviceFamily ActiveDeviceFamily = EGamePlatformInputDeviceFamily::Unknown;
     /** 当前无障碍/舒适度偏好快照。 */

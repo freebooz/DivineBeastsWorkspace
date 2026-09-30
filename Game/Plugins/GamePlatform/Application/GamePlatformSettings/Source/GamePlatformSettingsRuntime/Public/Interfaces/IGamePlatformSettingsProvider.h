@@ -1,3 +1,4 @@
+// 平台共享设置Provider契约：上层注入描述/迁移，Runtime不反向依赖领域；Client持久化实例按GI独占，Server只读适配无用户状态。
 #pragma once
 
 #include "Features/IModularFeature.h"
@@ -43,12 +44,16 @@ class GAMEPLATFORMSETTINGSRUNTIME_API IGamePlatformSettingsPersistenceProvider
 public:
     virtual ~IGamePlatformSettingsPersistenceProvider() = default;
 
+    /** 创建供一个GI独占的Provider；进程注册对象只做工厂。Client必须实现；默认空表示不支持并由Runtime明确拒绝。
+     * 克隆应无用户键，GI负责SetUserContext；析构不回写其他GI。Server只读Provider允许共享。 */
+    virtual TUniquePtr<IGamePlatformSettingsPersistenceProvider> CreateScopedProvider() const { return nullptr; }
+
     static FName GetModularFeatureName();
     virtual FName GetPersistenceId() const = 0;
     virtual bool SupportsRuntime(EGamePlatformSettingRuntimeScope RuntimeScope) const = 0;
 
     /**
-     * 切换当前本地用户上下文。基础层只接收不透明稳定键，不依赖Online/账号类型。
+     * 切换本GI独占Provider的本地用户上下文。基础层只接收不透明稳定键，不依赖Online/账号类型。
      * 空键表示无登录用户；Server实现应返回Unsupported。
      */
     virtual FGamePlatformResult SetUserContext(const FString& UserContextKey) = 0;
@@ -63,7 +68,8 @@ public:
 
     /**
      * 异步保存 User 层；Server/不支持持久化的实现返回 Unsupported。
-     * 接纳成功只表示 IO 已启动，最终结果通过 Completion 回调。
+     * 仅游戏线程调用/完成；接纳成功只表示IO已启动，最终结果通过Completion恰一次回调。
+     * 返回失败/Unsupported不调用Completion；启动时复制纯值与用户槽身份。Provider退出后在飞IO不得访问裸this或GI，取消本地消费者不回滚磁盘结果。
      */
     virtual FGamePlatformResult BeginSave(
         const TMap<FName, FGamePlatformSettingValue>& UserValues,

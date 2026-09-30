@@ -1,0 +1,15 @@
+# F16 稳定英雄定义租约兼容迁移（2026-09-30）
+
+平台双端角色定义保持原UGamePlatformHeroDefinition主资产/反射身份；不迁移到另一种发布定义，不构造假资产。FGamePlatformHeroDefinitionLoader::AcquireDefinitionResources(GameInstance,PrimaryAssetId,Lifetime,WeakCaller,Completion,OutResult)仅解析原主资产ID到软路径，交由唯一GamePlatformData普通资源租约加载。完成前检查实时Succeeded租约再解析真实对象；错误类返回HeroDefinitionClassMismatch并释放本请求需求。
+
+API限定游戏线程，Loader发现Data不存在或Completion无效时同步失败、无回调；交给Data的请求即使同步拒绝也可能延后通知，调用方必须核请求代次/取消状态；接纳后由Data延后终态。成功租约所有权交调用者，需保存完整值并保持到使用结束；取消/退出/身份变化通过Data.ReleaseResources撤销自己的需求。OutResult只说明申请接纳，不等于加载成功。GetLeaseState为实时状态，句柄RequestState是取得时快照。
+
+原RequestDefinition返回FStreamableHandle入口保留公开身份兼容，不能作为统一租约已覆盖所有外部调用的证据。DBAGameplay Catalog新增真实scoped入口并迁移CharacterComponent；Creation/ArenaWarmup由统一主执行者迁移。旧Catalog !Shipping开发定义回退仅属于旧兼容入口；正式scoped路径缺真实资产明确拒绝，不复用临时Definition。InitializationExecutor不加载资源，只协调唯一模块化初始化器，没有新增并行初始化树。
+
+涉及 Public/Loading/GamePlatformHeroDefinitionLoader.h、Private/Loading实现与Build.cs公开Data依赖；Private/Tests/HeroDefinitionResourceLeaseTests.cpp验证未初始化GI的同步拒绝和无假租约。成功持有/跨世界取消与多GI共享仍须统一Data及UE集成运行。
+
+## 验证与中文审核边界
+
+本次修改已补上述责任、端侧、游戏线程、所有权、失败和取消合同；新增C++测试放在模块Private/Tests，插件Tests只持原生编译入口。原生结果与UE Automation/Editor/Client/Server编译分别记录于Game/Saved/Reviews/task3-repair-report.md，不能将纯规则通过当引擎时序通过。存量公开类型仍有逐字段中文说明缺口，本页不宣称全插件或全工作空间已经整体合规。
+
+NoPCH实际编译补正：公开/实现直接调用FGamePlatformResult的模块增加直接Public GamePlatformCore依赖；成员调用处直接包含完整Actor头，不依靠PCH或Unity来源掩盖类型/链接所有权。插件描述对应依赖由主执行者同步，统一复编尚待完成。

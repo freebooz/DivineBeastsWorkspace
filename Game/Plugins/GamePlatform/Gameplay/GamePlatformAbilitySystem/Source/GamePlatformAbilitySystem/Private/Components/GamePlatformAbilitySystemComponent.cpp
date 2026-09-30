@@ -4,6 +4,7 @@
 
 #include "GamePlatformAbilityTags.h"
 #include "GameplayAbilitySpec.h"
+#include "Activation/AbilityActivationPolicy.h"
 
 UGamePlatformAbilitySystemComponent::UGamePlatformAbilitySystemComponent()
 {
@@ -24,7 +25,8 @@ bool UGamePlatformAbilitySystemComponent::BindAbilityActorInfo(
         return false;
     }
 
-    if (AbilityActorInfo.IsValid() &&
+    // 旧宿主可先调用原生InitAbilityActorInfo；首个平台注册仍必须签发正代次，不能误判为已完成绑定。
+    if (AvatarGeneration > 0 && AbilityActorInfo.IsValid() &&
         AbilityActorInfo->OwnerActor.Get() == InOwnerActor &&
         AbilityActorInfo->AvatarActor.Get() == InAvatarActor)
     {
@@ -33,6 +35,7 @@ bool UGamePlatformAbilitySystemComponent::BindAbilityActorInfo(
 
     // Avatar或Owner发生变化前先释放旧输入，避免换Pawn后“按住中”的Spec继续残留。
     ClearAbilityInput();
+    ActivationGate.Reset(); ActivationGateOwner.Reset(); ActivationGateGeneration = 0;
     InitAbilityActorInfo(InOwnerActor, InAvatarActor);
     ++AvatarGeneration;
     BroadcastAvatarBinding();
@@ -47,6 +50,7 @@ void UGamePlatformAbilitySystemComponent::ClearAbilityAvatar()
     }
 
     ClearAbilityInput();
+    ActivationGate.Reset(); ActivationGateOwner.Reset(); ActivationGateGeneration = 0;
     ClearActorInfo();
     ++AvatarGeneration;
     BroadcastAvatarBinding();
@@ -126,6 +130,9 @@ FGamePlatformResult UGamePlatformAbilitySystemComponent::AbilityInputPressed(
             TEXT("能力输入令牌不属于当前本地Avatar代次。"));
     }
 
+    const auto Eligibility = EvaluateActivationEligibility();
+    if (!Eligibility.IsSuccess()) { return Eligibility; }
+
     FGamePlatformResult Result;
     FGameplayAbilitySpec* Spec = FindAbilitySpecByInputTag(Tag, Result);
     if (!Spec)
@@ -195,6 +202,8 @@ void UGamePlatformAbilitySystemComponent::ProcessAbilityInput()
     }
 
     CompactInputHandles();
+    // 输入Spec也可能来自旧调用方直接Grant的原生能力；输入真实激活路径同样必须先过项目Gate。
+    if (!EvaluateActivationEligibility().IsSuccess()) { ClearAbilityInput(); return; }
 
     // 新按下的技能每次按压最多尝试一次；是否持续重试由平台能力CDO上的ActivationPolicy显式声明。
     for (const FGameplayAbilitySpecHandle& Handle : PressedInputHandles)
@@ -243,4 +252,43 @@ void UGamePlatformAbilitySystemComponent::ClearAbilityInput()
 void UGamePlatformAbilitySystemComponent::BroadcastAvatarBinding()
 {
     AvatarBindingChanged.Broadcast(GetAvatarBindingSnapshot());
+}
+
+FGamePlatformResult UGamePlatformAbilitySystemComponent::SetActivationGate(TWeakObjectPtr<UObject> Owner,
+    TSharedRef<IGamePlatformAbilityActivationGate> Gate)
+{
+    check(IsInGameThread());
+    const auto Binding = GetAvatarBindingSnapshot();
+    if (bEvaluatingActivationGate || !Binding.bBound || !Owner.IsValid() || !GetWorld() ||
+        Owner->GetWorld() != GetWorld() || (ActivationGateOwner.IsValid() && ActivationGateOwner != Owner))
+    { return FGamePlatformResult::Failure(TEXT("ActivationGateRegistrationRejected"), TEXT("资格读取器必须在当前Avatar就绪后由同世界唯一所有者注入。")); }
+    ActivationGateOwner = Owner; ActivationGate = Gate; ActivationGateGeneration = Binding.AvatarGeneration;
+    return FGamePlatformResult::Success();
+}
+
+bool UGamePlatformAbilitySystemComponent::ClearActivationGate(TWeakObjectPtr<UObject> Owner)
+{
+    check(IsInGameThread());
+    if (bEvaluatingActivationGate || !ActivationGate.IsValid() || ActivationGateOwner != Owner) { return false; }
+    ActivationGate.Reset(); ActivationGateOwner.Reset(); ActivationGateGeneration = 0; return true;
+}
+
+FGamePlatformResult UGamePlatformAbilitySystemComponent::EvaluateActivationEligibility() const
+{
+    check(IsInGameThread());
+    const auto Binding = GetAvatarBindingSnapshot();
+    if (bEvaluatingActivationGate || !GamePlatformAbilityActivationPolicy::CanEvaluate(Binding.bBound,
+        ActivationGate.IsValid() && ActivationGateOwner.IsValid() && ActivationGateOwner->GetWorld() == GetWorld(),
+        Binding.AvatarGeneration, ActivationGateGeneration))
+    { return FGamePlatformResult::Failure(TEXT("ActivationGateUnavailable"), TEXT("当前Avatar未注入有效玩法资格读取器。")); }
+    const auto Gate = ActivationGate;
+    const auto Owner = ActivationGateOwner;
+    const int32 Generation = AvatarGeneration;
+    TGuardValue<bool> QueryGuard(bEvaluatingActivationGate, true);
+    const auto Result = Gate->Evaluate(*this);
+    // 查询不应写ASC；仍核对回调后身份，避免组合根重入切Avatar后把旧成功解释为新授权。
+    if (!Owner.IsValid() || Owner->GetWorld() != GetWorld() || Generation != AvatarGeneration ||
+        ActivationGate != Gate || ActivationGateOwner != Owner || !GetAvatarBindingSnapshot().bBound)
+    { return FGamePlatformResult::Failure(TEXT("ActivationGateStale"), TEXT("资格查询期间Avatar或所有者已失效。")); }
+    return Result;
 }

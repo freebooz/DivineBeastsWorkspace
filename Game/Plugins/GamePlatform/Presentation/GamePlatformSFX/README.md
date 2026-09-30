@@ -49,3 +49,8 @@ Gameplay / Application Fact
 - `Docs/TestingAndEvidence.md`：测试与真实验证证据；
 - `Docs/ManualReview.md`：人工审核和组件清单；
 - `Docs/审查整改方案与执行计划.md`：本轮审查结论、整改方案与执行计划。
+
+
+## 2026-09-30 设计审查修复
+
+本次资源/生命周期与行为合同见 [设计修复说明](Docs/DesignRemediation-2026-09-30.md)。源码及新增回归不等于UE运行、真实资产或Cook验收；准确执行证据由任务修复报告记录。

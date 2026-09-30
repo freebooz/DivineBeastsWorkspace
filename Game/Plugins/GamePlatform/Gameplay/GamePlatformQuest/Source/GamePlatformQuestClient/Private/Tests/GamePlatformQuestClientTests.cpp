@@ -3,6 +3,25 @@
 #include "Misc/AutomationTest.h"
 #include "Services/GamePlatformQuestClientSubsystem.h"
 
+// 同落库版本仍可能有新的权威目标进度；显示序列必须接纳新值并拒绝迟到同版本快照。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FQuestSameRevisionProgressTest,
+    "GamePlatform.Quest.Client.SameRevisionProgressSequence",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FQuestSameRevisionProgressTest::RunTest(const FString& Parameters)
+{
+    (void)Parameters;
+    auto* Client = NewObject<UGamePlatformQuestClientSubsystem>();
+    FGamePlatformQuestSnapshot Snapshot; Snapshot.QuestId = TEXT("Quest.Progress");
+    Snapshot.State = EGamePlatformQuestState::Active; Snapshot.Revision = 5; Snapshot.SnapshotSequence = 1;
+    FGamePlatformQuestObjectiveProgress Progress; Progress.ObjectiveId = TEXT("Count"); Progress.RequiredValue = 10;
+    Snapshot.Objectives.Add(Progress); TestTrue(TEXT("首次快照"), Client->ApplyAuthoritativeSnapshots({Snapshot}));
+    auto Updated = Snapshot; Updated.SnapshotSequence = 2; Updated.Objectives[0].CurrentValue = 1;
+    TestTrue(TEXT("同Revision进度更新可见"), Client->ApplyAuthoritativeSnapshots({Updated}));
+    TestFalse(TEXT("迟到旧序列不能倒退"), Client->ApplyAuthoritativeSnapshots({Snapshot}));
+    TestEqual(TEXT("保留新进度"), Client->FindQuest(Snapshot.QuestId)->Objectives[0].CurrentValue, 1.0);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGamePlatformQuestClientRevisionTest,
     "GamePlatform.Quest.Client.RevisionProtection",

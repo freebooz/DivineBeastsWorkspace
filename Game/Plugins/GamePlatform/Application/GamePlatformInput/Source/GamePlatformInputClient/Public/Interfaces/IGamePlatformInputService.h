@@ -3,7 +3,7 @@
 class ULocalPlayer;
 class UEnhancedInputComponent;
 
-/** 全部接口仅游戏线程。同步Success表示受理/内存操作，准备、重建和磁盘结果分别查询快照。 */
+/** 全部接口仅游戏线程。同步Success表示受理/内存操作；准备和重建查询快照，原生保存没有可观察落盘结果。 */
 class GAMEPLATFORMINPUTCLIENT_API IGamePlatformInputService
 {
 public:
@@ -53,7 +53,7 @@ public:
     virtual FGamePlatformResult ApplyRebind(FName RowName,int32 Slot,FKey Key) = 0;
     /** 仅本配置一行；None为本配置所有已登记行，不能清其他功能。 */
     virtual FGamePlatformResult ResetMappings(FName RowName) = 0;
-    /** 实际写入完成/失败与内存生效分开；失败保留当前已应用键位。 */
+    /** 显式提交原生保存；Success只表示提交完成，bPreferencesSaveSubmitted=true且bPreferencesSaved=false，磁盘结果未知。前置校验失败保留已应用键位，不伪造落盘成功。 */
     virtual FGamePlatformResult SaveInputPreferences() = 0;
     /** 限定本地世界拥有者、触点0..9和白名单语义；同动作首版只允许一个触摸源，拒绝冲突。 */
     virtual FGamePlatformInputTouchHandle BeginTouchInput(int32 PointerId,EGamePlatformInputSemantic Semantic,TWeakObjectPtr<UObject> Owner,FGamePlatformResult& OutResult) = 0;

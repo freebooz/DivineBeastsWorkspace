@@ -13,6 +13,7 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerStart.h"
 #include "HAL/PlatformTime.h"
+#include "Policies/SpawnCandidateOperation.h"
 
 namespace
 {
@@ -805,7 +806,9 @@ void AGamePlatformGameModeBase::TrySpawn(APlayerController& Controller)
 
         {
             TGuardValue<bool> InternalSpawnGuard(Runtime->bInternalSpawn, true);
-            Super::RestartPlayerAtPlayerStart(&Controller, Candidate.Source.Get());
+            // 来源Actor仅提供候选身份；真正生成位置必须与已通过区域验证的Transform相同。
+            GamePlatformGameplay::Policy::RestartAtValidatedTransform(Candidate,
+                [this, &Controller](const FTransform& Transform) { Super::RestartPlayerAtTransform(&Controller, Transform); });
         }
 
         Runtime->CandidateReservations.Remove(Candidate.CandidateId);

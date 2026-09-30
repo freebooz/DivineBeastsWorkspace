@@ -1,8 +1,9 @@
+// 平台客户端本地存储：调用方提供路径与已编码数据，后台线程只操作自有句柄，主档和备份统一限长，失败不伪造成功或业务回滚。
 #include "Storage/GamePlatformSaveStorage.h"
+#include "Policy/GamePlatformSavePolicy.h"
 
 #include "HAL/FileManager.h"
 #include "HAL/PlatformFileManager.h"
-#include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 
 namespace
@@ -91,11 +92,33 @@ FGamePlatformResult FGamePlatformSaveStorage::ReadFile(
             TEXT("本地存档文件不存在。"));
     }
 
-    if (!FFileHelper::LoadFileToArray(OutBytes, *Path))
+    // 主档和备份共用此预算。先检查目录元数据，再检查已打开句柄，避免检查/打开间文件增长。
+    const int64 MaxBytes = FGamePlatformSavePolicy::GetMaxEncodedBytes();
+    const int64 AdvertisedBytes = PlatformFile.FileSize(*Path);
+    if (AdvertisedBytes > MaxBytes)
     {
-        return FGamePlatformResult::Failure(
-            TEXT("SaveFileReadFailed"),
-            TEXT("读取本地存档文件失败。"));
+        return FGamePlatformResult::Failure(TEXT("SaveFileTooLarge"), TEXT("本地存档超出Envelope读取预算，未分配载荷缓冲。"));
+    }
+    TUniquePtr<IFileHandle> Handle(PlatformFile.OpenRead(*Path));
+    if (!Handle)
+    {
+        return FGamePlatformResult::Failure(TEXT("SaveFileReadFailed"), TEXT("无法打开本地存档文件。"));
+    }
+    const int64 ReadBytes = Handle->Size();
+    if (ReadBytes > MaxBytes)
+    {
+        return FGamePlatformResult::Failure(TEXT("SaveFileTooLarge"), TEXT("打开的本地存档超出Envelope读取预算。"));
+    }
+    if (ReadBytes < 0)
+    {
+        return FGamePlatformResult::Failure(TEXT("SaveFileReadFailed"), TEXT("无法确定本地存档长度。"));
+    }
+    // 固定长度读取从不追随文件增长；失败或长度变化时清除部分载荷，交给调用方明确回退备份。
+    OutBytes.SetNumUninitialized(static_cast<int32>(ReadBytes));
+    if ((ReadBytes > 0 && !Handle->Read(OutBytes.GetData(), ReadBytes)) || Handle->Size() != ReadBytes)
+    {
+        OutBytes.Reset();
+        return FGamePlatformResult::Failure(TEXT("SaveFileReadFailed"), TEXT("读取存档失败或读取期间长度改变。"));
     }
 
     return FGamePlatformResult::Success();

@@ -1,9 +1,14 @@
+// 神兽联盟项目层LocalPlayer预览适配：加载预览场景并把已选外观交给平台预览舞台，不参与服务器权威。
+// 本服务持有场景、外观加载句柄和动态材质；失活/世界清理/退出撤销旧代加载并恢复预览相机所有权。
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
 
+#include "Animation/AnimInstance.h" // 本文件也调用动画软类Get，完整类型不能由另一个Unity源文件提供。
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
+#include "Components/SkeletalMeshComponent.h" // 材质读取/设置及组件UObject转换需要完整类型，不能依赖PCH或Unity包含顺序。
 #include "Engine/LevelStreamingDynamic.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/SkeletalMesh.h" // 本文件读取Profile软网格引用，资产类型也必须直接完整包含。
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"

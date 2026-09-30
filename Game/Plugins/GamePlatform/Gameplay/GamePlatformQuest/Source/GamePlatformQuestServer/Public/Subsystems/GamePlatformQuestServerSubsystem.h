@@ -51,6 +51,9 @@ public:
         const FString& PlayerId,
         EGamePlatformQuestError& OutError);
 
+    /** 游戏线程读取最近对账/持久化状态；队列满时为PersistenceOutcomeUnknown，已接纳事件仍由本实例保留。 */
+    EGamePlatformQuestError GetPlayerPersistenceError(const FString& PlayerId) const;
+
     UFUNCTION(BlueprintPure, Category="Quest")
     bool IsPlayerReady(const FString& PlayerId) const;
 
@@ -74,6 +77,9 @@ private:
         TMap<FName, TArray<FGuid>> PendingEventIds;
         TMap<FGuid, FGamePlatformQuestEvent> PendingEventPayloads;
         TArray<FGamePlatformQuestEvent> DeferredEvents;
+        /** 已接纳但须在新权威快照上重放的事件；与新事件限长队列分离，所有权转移后才清旧账本。 */
+        TArray<FGamePlatformQuestEvent> PendingReplayEvents;
+        EGamePlatformQuestError LastPersistenceError = EGamePlatformQuestError::None;
         FTimerHandle ProgressFlushTimer;
         bool bReady = false;
         bool bPersistenceInFlight = false;

@@ -59,3 +59,9 @@ Shared/Contracts/GamePlatform/OpenAPI/game-server-control.openapi.yaml（共享O
 ## 7. 部署注意事项
 
 控制面必须在后端侧真实执行 Heartbeat TTL（心跳过期）或等价健康淘汰，不能只依赖 Dedicated Server 主动上报。GamePlatformServer 可以保证客户端侧持续发送和恢复，但无法替代后端对长期失联实例的过期摘除。若后端未落实该门禁，仍可能出现失联服务器被继续分配的问题，应作为控制面部署验收项单独验证。
+
+## 2026-09-30 准入请求修复
+
+HTTP准入提供者停止接纳后先解绑全部完成委托并取消自有请求，再在游戏线程以ServerAdmissionCancelled完成各操作；取消和关闭共享原一次终态门禁，完成回调不在锁内执行。模块卸载显式Shutdown，析构幂等兜底，启动失败也解绑委托。
+
+响应体在接收阶段累计进独立共享缓冲，沿用原32KiB上限，超限停止接收并明确失败；不等全量GetContent后才做限制。接收回调不捕获Provider，完成回调显式CompleteOnGameThread。Private/Tests/AdmissionShutdownTests.cpp验证未发送HTTP请求的关闭/取消，Native接收预算验证增量边界；这些不替代真实慢响应、重定向、模块卸载与网络端到端测试。最终本轮证据见Docs/Implementation/GamePlatformDesignRemediation/ExecutionProgress.md（工作空间根）。

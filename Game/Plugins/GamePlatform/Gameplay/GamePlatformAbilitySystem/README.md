@@ -7,3 +7,5 @@
 平台层仍不定义具体生命、法力、生肖技能、伤害公式、按键或MOBA规则；具体 Ability Grant、Cooldown、Cost和项目技能由项目Definition/派生类型扩展，不反向依赖Combat或DivineBeasts。
 
 `UGamePlatformAbilitySetDefinition::ValidateDefinition（能力集定义校验）` 现已实现纯字段门禁：校验条目容量、逻辑ID/软类唯一性、等级范围、`Platform.Ability.Input.*` 输入标签唯一性和属性集类唯一性；该阶段不加载软资源、不访问世界、不产生GAS副作用，真实类型/网络策略/效果可回滚性继续由ASC授权阶段验证。
+
+本次设计审查整改的真实行为、线程/所有权/失败合同及验证边界见 [2026-09-30专属说明](Docs/DesignRemediation-2026-09-30.md)。其中原生规则测试与UE实际运行分别记录，不混写交付状态。

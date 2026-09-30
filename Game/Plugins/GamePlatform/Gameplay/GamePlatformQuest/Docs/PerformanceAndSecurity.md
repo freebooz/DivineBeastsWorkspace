@@ -1,5 +1,7 @@
 # PerformanceAndSecurity（性能与安全）
 
+> 2026-09-30状态校正：本页保留旧方案/历史证据，旧DBAServer具体Quest HTTP/事件适配与后端交付宣称未在当前项目文件清单确认，不能作为现行验收。当前行为以[本轮整改说明](DesignRemediation-2026-09-30.md)、README与真实源码为准；本轮未执行数据库/Outbox/网络联调。
+
 Quest Runtime 不启用 Tick；事件驱动按 `Player → EventType → Relevant Objectives`索引处理，不扫描全服任务。普通高频进度在 UE 内存立即推进并按短周期批量持久化，避免每个 Combat Event 单独访问数据库。
 
 Recent Event 去重按 QuestId 有界缓存，最大数量来自 MaxRecentEventIds；PostgreSQL 关键幂等依赖 processed_event 主键、CompletionId 唯一记录、Revision CAS 和 Outbox EventId 唯一约束。

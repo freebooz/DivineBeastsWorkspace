@@ -68,6 +68,8 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationCatalogEntry
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FName EntryId = NAME_None;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FGameplayTag SemanticTag;
+    /** 仅显式允许时供子语义逐级回退；默认false保留精确匹配，不能靠高Scope遮盖精确条目。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bAllowParentFallback = false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FGamePlatformPresentationContextQuery ContextQuery;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FName ProviderChannel = NAME_None;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FName DefinitionId = NAME_None;

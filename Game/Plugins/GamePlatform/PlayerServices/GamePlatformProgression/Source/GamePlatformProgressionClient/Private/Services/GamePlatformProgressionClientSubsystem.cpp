@@ -1,3 +1,4 @@
+// 平台成长投影事件实现；客户端没有XP权威，生命周期与派生缓存合同见同名公开头。
 #include "Services/GamePlatformProgressionClientSubsystem.h"
 
 #include "Definitions/GamePlatformProgressionTrackDefinition.h"
@@ -5,6 +6,7 @@
 
 void UGamePlatformProgressionClientSubsystem::Deinitialize()
 {
+    OnViewChanged.Clear();
     OnLevelChanged.Clear();
     OnXPChanged.Clear();
     ResetAccount();
@@ -48,6 +50,14 @@ void UGamePlatformProgressionClientSubsystem::ResetAccount()
     CachedViewDefinitionGeneration = ~uint64(0);
     State = EGamePlatformProgressionClientState::Uninitialized;
     LastError = EGamePlatformProgressionError::None;
+    PublishViewChanged();
+}
+
+void UGamePlatformProgressionClientSubsystem::PublishViewChanged()
+{
+    check(IsInGameThread());
+    ++ViewGeneration;
+    OnViewChanged.Broadcast();
 }
 
 bool UGamePlatformProgressionClientSubsystem::RefreshSnapshot()
@@ -93,6 +103,8 @@ bool UGamePlatformProgressionClientSubsystem::RefreshSnapshot()
         LastError = EGamePlatformProgressionError::BackendUnavailable;
     }
 
+    // 受理/启动失败也必须通知忙碌与错误；账号若在同步完成中改变，保留新账号状态。
+    if (AccountGeneration == ExpectedGeneration) { PublishViewChanged(); }
     return bStarted;
 }
 
@@ -122,6 +134,7 @@ void UGamePlatformProgressionClientSubsystem::RegisterTrackDefinition(
         Definition->ProgressionTrackId,
         Definition);
     ++DefinitionGeneration;
+    PublishViewChanged();
 }
 
 int32 UGamePlatformProgressionClientSubsystem::GetLevel(
@@ -239,6 +252,7 @@ void UGamePlatformProgressionClientSubsystem::HandleSnapshotCompleted(
     {
         State = EGamePlatformProgressionClientState::Error;
         LastError = Error;
+        PublishViewChanged();
         return;
     }
 
@@ -246,11 +260,14 @@ void UGamePlatformProgressionClientSubsystem::HandleSnapshotCompleted(
     {
         State = EGamePlatformProgressionClientState::Error;
         LastError = EGamePlatformProgressionError::InvalidResponse;
+        PublishViewChanged();
         return;
     }
 
+    if (ExpectedGeneration != AccountGeneration) { return; }
     State = EGamePlatformProgressionClientState::Ready;
     LastError = EGamePlatformProgressionError::None;
+    PublishViewChanged();
 }
 
 bool UGamePlatformProgressionClientSubsystem::ApplySnapshot(
@@ -282,14 +299,12 @@ bool UGamePlatformProgressionClientSubsystem::ApplySnapshot(
     Snapshot = NewSnapshot;
     ++SnapshotGeneration;
 
-    for (const FGamePlatformProgressionTrackState& Track :
-         Snapshot.Tracks)
+    // XP/等级兼容事件可能重入ResetAccount；遍历不可变副本并在每次广播后核对账号代次。
+    const auto AcceptedTracks = Snapshot.Tracks;
+    const uint64 ExpectedAccountGeneration = AccountGeneration;
+    for (const FGamePlatformProgressionTrackState& Track : AcceptedTracks)
     {
-        const FString Key =
-            Track.ProgressionTrackId.ToString() +
-            TEXT("|") +
-            Track.SubjectId;
-
+        const FString Key = Track.ProgressionTrackId.ToString() + TEXT("|") + Track.SubjectId;
         const FGamePlatformProgressionTrackState* Old =
             Previous.Find(Key);
 
@@ -305,6 +320,7 @@ bool UGamePlatformProgressionClientSubsystem::ApplySnapshot(
                 Track.SubjectId,
                 Old->TotalXP,
                 Track.TotalXP);
+            if (ExpectedAccountGeneration != AccountGeneration) { return true; }
         }
 
         if (Track.Level > Old->Level)
@@ -314,6 +330,7 @@ bool UGamePlatformProgressionClientSubsystem::ApplySnapshot(
                 Track.SubjectId,
                 Old->Level,
                 Track.Level);
+            if (ExpectedAccountGeneration != AccountGeneration) { return true; }
         }
     }
 

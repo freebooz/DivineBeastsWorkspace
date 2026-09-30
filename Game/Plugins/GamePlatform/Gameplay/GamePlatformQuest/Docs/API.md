@@ -7,3 +7,5 @@
 服务器核心：`UGamePlatformQuestServerSubsystem（任务服务器子系统）`，提供 Definition 注册/依赖图验证、RegisterPlayer（注册玩家）、AcceptQuest（接取）、AbandonQuest（放弃）、HandleQuestEvent（处理可信事件）、FlushPlayerProgressNow（迁服/登出前强制刷新）。
 
 后端调用通过 `IGamePlatformQuestPersistencePort（任务持久化端口）`隔离。当前 UE 端没有具体 HTTP 绑定实现，因此端口到 PlayerDataService 的真实网络联调仍为未执行，不能把接口存在写成联调通过。
+
+2026-09-30：Snapshot新增显示SnapshotSequence；相同Revision只接纳更高序列，0序列仅保留旧状态变化兼容。服务器GetPlayerPersistenceError暴露失败，重放等待与持久化Revision分离，详见[本轮说明](DesignRemediation-2026-09-30.md)。

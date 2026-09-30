@@ -8,6 +8,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/World.h"
+#include "HAL/PlatformTime.h"
 #include "Execution/GamePlatformVFXNiagaraExecutor.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Loading/GamePlatformAssetLoader.h"
@@ -131,6 +132,7 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
     PreloadDefinitionIds.Reset();
     DedupeHandles.Reset();
     DedupeKeysByHandle.Reset();
+    TerminalOccurrences.Reset();
     PendingInstanceCount = 0;
 
     ReleaseAllCachedDefinitions();
@@ -570,6 +572,7 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
     const UGamePlatformVFXSettings* Settings = GetDefault<UGamePlatformVFXSettings>();
     const FGamePlatformVFXDedupeKey DedupeKey = MakeDedupeKey(Request);
 
+    PruneTerminalOccurrences();
     if (DedupeKey.IsValid())
     {
         if (Request.PredictionState == EGamePlatformVFXPredictionState::Cancelled)
@@ -581,8 +584,20 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
                 Stop(ExistingHandle);
                 FGamePlatformVFXDiagnostics::DedupeHit();
             }
+            RecordTerminalOccurrence(DedupeKey, true);
             Result.Code = EGamePlatformVFXResultCode::Cancelled;
             return Result;
+        }
+
+        if (const FTerminalOccurrence* Terminal = TerminalOccurrences.Find(DedupeKey))
+        {
+            if (Terminal->bCancelled || Request.PredictionState != EGamePlatformVFXPredictionState::Corrected)
+            {
+                Result.Code = Terminal->bCancelled ? EGamePlatformVFXResultCode::Cancelled : EGamePlatformVFXResultCode::AlreadyCompleted;
+                return Result;
+            }
+            // 显式纠正可替换已正常完成的预测，权威取消在保留期内不可复活。
+            TerminalOccurrences.Remove(DedupeKey);
         }
 
         if (const FGamePlatformVFXHandle* Existing = DedupeHandles.Find(DedupeKey))
@@ -591,6 +606,7 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
             if (Request.PredictionState == EGamePlatformVFXPredictionState::Corrected)
             {
                 Stop(ExistingHandle);
+                TerminalOccurrences.Remove(DedupeKey);
                 FGamePlatformVFXDiagnostics::DedupeHit();
             }
             else if (InstanceRegistry.IsActive(ExistingHandle))
@@ -689,6 +705,7 @@ bool UGamePlatformVFXWorldSubsystem::Stop(
         return false;
     }
 
+    if (const auto* Key = DedupeKeysByHandle.Find(Handle.Id)) RecordTerminalOccurrence(*Key, true);
     CleanupInstance(Handle, true);
     return true;
 }
@@ -752,6 +769,7 @@ void UGamePlatformVFXWorldSubsystem::CleanupInstance(
             &UGamePlatformVFXWorldSubsystem::HandleSystemFinished);
     }
 
+    if (const auto* Key = DedupeKeysByHandle.Find(Handle.Id)) RecordTerminalOccurrence(*Key, false);
     RemoveDedupeHandle(Handle);
     RemoveDefinitionUse(Handle);
 
@@ -838,6 +856,34 @@ void UGamePlatformVFXWorldSubsystem::RemoveDedupeHandle(
     {
         DedupeHandles.Remove(Key);
     }
+}
+
+void UGamePlatformVFXWorldSubsystem::PruneTerminalOccurrences()
+{
+    const double Now = FPlatformTime::Seconds();
+    for (auto It=TerminalOccurrences.CreateIterator(); It; ++It)
+        if (It.Value().ExpiresAtSeconds <= Now) It.RemoveCurrent();
+}
+
+void UGamePlatformVFXWorldSubsystem::RecordTerminalOccurrence(const FGamePlatformVFXDedupeKey& Key, const bool bCancelled)
+{
+    if (!Key.IsValid()) return;
+    PruneTerminalOccurrences();
+    if (auto* Existing=TerminalOccurrences.Find(Key))
+    {
+        Existing->bCancelled |= bCancelled;
+        return; // 重复通知不延长终态期限，避免攻击式保持历史。
+    }
+    const int32 Limit=FMath::Max(1, GetDefault<UGamePlatformVFXSettings>()->MaxDedupeEntries);
+    if (TerminalOccurrences.Num() >= Limit)
+    {
+        FGamePlatformVFXDedupeKey Oldest; double Time=TNumericLimits<double>::Max();
+        for (const auto& Pair:TerminalOccurrences)
+            if (Pair.Value.ExpiresAtSeconds < Time) { Time=Pair.Value.ExpiresAtSeconds; Oldest=Pair.Key; }
+        TerminalOccurrences.Remove(Oldest);
+    }
+    FTerminalOccurrence Entry; Entry.ExpiresAtSeconds=FPlatformTime::Seconds()+30.0; Entry.bCancelled=bCancelled;
+    TerminalOccurrences.Add(Key, Entry);
 }
 
 void UGamePlatformVFXWorldSubsystem::RegisterCompositeTimer(
@@ -1075,6 +1121,12 @@ bool UGamePlatformVFXWorldSubsystem::ExecuteLoadedDefinition(
         return false;
     }
 
+    // 取消及作用域在每次执行核对，不能因Definition缓存命中而跳过弱附着目标检查。
+    if (bClosing || World->bIsTearingDown || !InstanceRegistry.IsActive(ReservedHandle) ||
+        !FGamePlatformVFXNiagaraExecutor::IsAttachmentValid(*World, Definition, Request.SpawnContext))
+    {
+        return false;
+    }
     // Definition结构校验已在共享缓存首次加载完成时执行一次；热路径只校验本次动态参数。
     FText ValidationReason;
     if (!Definition.ValidateRequestParameters(

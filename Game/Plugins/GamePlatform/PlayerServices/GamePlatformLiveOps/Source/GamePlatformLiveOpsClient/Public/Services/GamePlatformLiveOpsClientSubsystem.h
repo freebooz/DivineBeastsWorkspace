@@ -1,5 +1,8 @@
 #pragma once
 
+// 平台本地玩家运营投影：服务器UTC派生活动/签到可见性，客户端不授奖。
+// 游戏线程命令与完成；账号代次隔离旧响应，视图代次事件覆盖同Revision时间边界。
+
 #include "CoreMinimal.h"
 #include "Containers/Ticker.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
@@ -26,26 +29,33 @@ public:
 
     virtual void Deinitialize() override;
 
+    /** 已认证组合根设置账号与传输；拒绝空键/空Port，true仅表示目录或玩家读取受理，不授奖。 */
     bool ConfigureAuthenticatedAccount(
         const FString& AccountKey,
         TSharedPtr<IGamePlatformLiveOpsClientTransport, ESPMode::ThreadSafe>
             InTransport);
 
+    /** 取消本账号请求并清空玩家/领奖投影；公开运营目录可保留；事件通知清空且旧完成不能污染。 */
     void ResetAccount();
 
     UFUNCTION(BlueprintCallable, Category="LiveOps")
+    /** 尝试刷新目录及玩家状态；任一读取受理即返回true，分别通过事件报告终态。 */
     bool RefreshAll();
 
     UFUNCTION(BlueprintCallable, Category="LiveOps")
+    /** 目录读取忙或未认证配置返回false；相同服务器Revision的时间采样仍通知派生视图。 */
     bool RefreshCatalog();
 
     UFUNCTION(BlueprintCallable, Category="LiveOps")
+    /** 刷新签到权威周期/领取状态；客户端不自行滚动PeriodKey，完成或错误通过事件报告。 */
     bool RefreshPlayerState();
 
+    /** 提交签到命令；有效CampaignId和全局唯一操作Id必填；true只表示受理，超时按后端操作Id对账。 */
     bool ClaimSignIn(
         FName CampaignId,
         const FGuid& ClaimOperationId);
 
+    /** 按原操作Id查询权威领奖结果；查询不重复发奖，忙或无账号拒绝受理。 */
     bool ReconcileClaim(
         const FGuid& ClaimOperationId);
 
@@ -82,13 +92,25 @@ public:
         return PlayerState.PlayerStateRevision;
     }
 
+    /** 状态/错误/清空/时间派生变化事件；消费方读取只读视图，无需业务Tick。 */
+    FGamePlatformLiveOpsChanged OnViewChanged;
+    /** 本地派生视图代次，时间边界/错误/清空均推进，与服务端目录/玩家Revision分离。 */
+    uint64 GetViewGeneration() const { return ViewGeneration; }
+    /** 最近领域终态错误；网络失败仍保留只读缓存，不能将缓存当授权或奖品到账证明。 */
+    EGamePlatformLiveOpsError GetLastError() const { return LastError; }
+    /** 目录Revision不变的刷新及开始/结束时间边界亦触发。 */
     FGamePlatformLiveOpsChanged OnCatalogChanged;
+    /** 玩家签到投影、清空及活动边界通知；消费者重新读取GetSignInViewModels。 */
     FGamePlatformLiveOpsChanged OnPlayerStateChanged;
+    /** 后端操作完成投影通知；随后重新读取玩家状态，不直接修改本地已领取标志。 */
     FGamePlatformLiveOpsClaimChanged OnClaimChanged;
 
 private:
     FString CurrentAccountKey;
     uint64 AccountGeneration = 0;
+    uint64 ViewGeneration = 0;
+    /** 完整状态提交后通知指定派生视图；监听者重置账号时停止本轮后续派发。 */
+    void PublishDerivedViewChanged(bool bCatalog, bool bPlayer);
 
     EGamePlatformLiveOpsClientState State =
         EGamePlatformLiveOpsClientState::Uninitialized;
@@ -115,6 +137,7 @@ private:
     FGuid ActiveClaimOperationId;
 
     void HandleEnteredForeground();
+    /** 1秒服务Ticker检查公开活动窗口，仅有账号/样本时执行；跨边界先通知，再请求刷新。 */
     bool TickBoundaryRefresh(float DeltaSeconds);
     bool HasCrossedCatalogBoundary(
         const FDateTime& PreviousUtc,
@@ -135,5 +158,6 @@ private:
         FGamePlatformLiveOpsClaimResult Result,
         EGamePlatformLiveOpsError Error);
 
+    /** 根据在飞请求和错误提交当前服务状态，再推进通用视图事件；不凭Revision抑制错误/忙碌通知。 */
     void RefreshAggregateState();
 };
