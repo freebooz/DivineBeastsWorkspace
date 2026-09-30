@@ -9,6 +9,9 @@ public class DivineBeastsArenaServerTarget : TargetRules
         DefaultBuildSettings = BuildSettingsVersion.V7;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
         ExtraModuleNames.Add("DivineBeastsArena");
+        // 将专用服务器打包规则身份写入构建收据，供UAT Stage读取；
+        // 角色地图仍由各自Cook配置选择，三角色继续共用同一程序。
+        CustomConfig = "DedicatedServer";
         // 公共服务器组合负责三类服务器角色的生命周期、Ready与准入，并通过依赖拉入DBAGameplay角色规则。
         EnablePlugins.Add("DBAServer");
         // MainArena与OpenWorld/Village共用同一Server Target；竞技插件的ServerOnly模块在MainArena配置下提供项目竞技适配，

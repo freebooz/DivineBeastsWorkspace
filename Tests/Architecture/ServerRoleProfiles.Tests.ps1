@@ -1,8 +1,13 @@
+# 三角色Profile静态契约回归：读取Shared真源、部署Profile及UE测试夹具。
+# 所属跨系统测试层，无业务状态与网络副作用；验证正式角色、地图命名空间和体验映射，
+# 不替代UE资源加载、Cook、服务器Ready或客户端准入验收。
 Describe '三角色服务器启动Profile契约' {
     $workspaceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
     $profileRoot = Join-Path $workspaceRoot 'Deploy/Server'
     $catalogPath = Join-Path $workspaceRoot 'Shared/Contracts/Games/DivineBeasts/Schemas/server-catalog.schema.json'
     $expectedRoles = @('MainArena', 'OpenWorld', 'Village')
+    # 与服务器Profile源码的项目世界边界一致：仅正式Game世界目录或第三层世界内容包。
+    $allowedWorldPackagePattern = '^/(?:Game/DivineBeasts/Worlds/|DBAWorldPack_[A-Za-z0-9_]+/)'
 
     function Get-WorldContextFixturePairs([string]$Source) {
         $contexts = [regex]::Match($Source, '(?s)ValidContexts\[\]\s*=\s*\{(?<body>.*?)\};')
@@ -42,12 +47,21 @@ Describe '三角色服务器启动Profile契约' {
             @($profile.allowedExperienceIds).Count | Should BeGreaterThan 0
             (@($profile.allowedExperienceIds) -contains $profile.defaultExperienceId) | Should Be $true
             (@($roleExperienceMap[$profile.serverRoleId]) -contains $profile.defaultExperienceId) | Should Be $true
-            $profile.worldPackage | Should Match '^/Game/'
+            $profile.worldPackage | Should Match $allowedWorldPackagePattern
             @($profile.requiredAssets).Count | Should BeGreaterThan 0
             $profile.instancePolicy | Should Not BeNullOrEmpty
             $profile.readiness.requireRequiredAssets | Should Be $true
 
             ($profile | ConvertTo-Json -Depth 20) | Should Not Match '(?i)(password|secret|private.?key|bearer.?token)'
+        }
+    }
+
+    It '世界路径允许项目内容包但拒绝引擎、脚本及无关项目目录' {
+        # 正向输入覆盖正式主工程和内容包挂载点；反向输入防止放宽为任意插件路径。
+        '/Game/DivineBeasts/Worlds/OpenWorld/L_OpenWorld' | Should Match $allowedWorldPackagePattern
+        '/DBAWorldPack_Village/Maps/L_Village_Start' | Should Match $allowedWorldPackagePattern
+        foreach ($invalidPath in @('/Engine/Maps/Test', '/Script/Engine.World', '/OtherPack/Maps/Test', '/Game/Development/Test')) {
+            $invalidPath | Should Not Match $allowedWorldPackagePattern
         }
     }
 
