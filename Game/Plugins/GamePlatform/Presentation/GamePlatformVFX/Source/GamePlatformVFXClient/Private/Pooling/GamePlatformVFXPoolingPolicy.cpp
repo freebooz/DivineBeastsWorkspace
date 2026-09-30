@@ -7,7 +7,7 @@ bool FGamePlatformVFXPoolingPolicy::ShouldUseNiagaraPool(
     const FGamePlatformVFXRequest& Request,
     const UGamePlatformVFXSettings& Settings)
 {
-    return Settings.bEnablePooling &&
-           Definition.AllowsPooling() &&
-           Request.Importance != EGamePlatformVFXImportance::Critical;
+    // Importance决定裁剪优先级，不决定组件能否复用；关键效果同样应避免高峰期频繁创建/销毁组件。
+    static_cast<void>(Request);
+    return Settings.bEnablePooling && Definition.AllowsPooling();
 }

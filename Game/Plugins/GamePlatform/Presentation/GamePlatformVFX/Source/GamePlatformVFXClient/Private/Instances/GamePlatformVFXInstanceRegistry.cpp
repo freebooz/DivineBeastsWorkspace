@@ -2,9 +2,7 @@
 #include "Definitions/GamePlatformVFXDefinition.h"
 #include "NiagaraComponent.h"
 
-FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::Reserve(
-    UWorld* World,
-    const FGamePlatformVFXRequest* Request)
+FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::Reserve(UWorld* World)
 {
     FGamePlatformVFXHandle Handle;
     Handle.Id = FGuid::NewGuid();
@@ -13,10 +11,6 @@ FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::Reserve(
 
     FGamePlatformVFXInstanceRecord& Record = Records.Add(Handle.Id);
     Record.Handle = Handle;
-    if (Request)
-    {
-        Record.Request = *Request;
-    }
     Record.State = EGamePlatformVFXInstanceState::Pending;
     return Handle;
 }
@@ -31,11 +25,13 @@ bool FGamePlatformVFXInstanceRegistry::SetDefinition(
         return false;
     }
     Record->Definition = Definition;
-    Record->DefinitionPath = FSoftObjectPath(Definition->GetPathName());
     return true;
 }
 
-bool FGamePlatformVFXInstanceRegistry::AttachComponent(const FGamePlatformVFXHandle& Handle, UNiagaraComponent* Component, bool bPooled)
+bool FGamePlatformVFXInstanceRegistry::AttachComponent(
+    const FGamePlatformVFXHandle& Handle,
+    UNiagaraComponent* Component,
+    bool bPooled)
 {
     FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
     if (!Record || Record->Handle != Handle || !IsValid(Component))
@@ -43,13 +39,21 @@ bool FGamePlatformVFXInstanceRegistry::AttachComponent(const FGamePlatformVFXHan
         return false;
     }
 
+    if (UNiagaraComponent* Existing = Record->Component.Get())
+    {
+        ComponentHandles.Remove(Existing);
+    }
+
     Record->Component = Component;
     Record->bPooled = bPooled;
     Record->State = EGamePlatformVFXInstanceState::Active;
+    ComponentHandles.Add(Component, Handle);
     return true;
 }
 
-bool FGamePlatformVFXInstanceRegistry::AddChild(const FGamePlatformVFXHandle& Parent, const FGamePlatformVFXHandle& Child)
+bool FGamePlatformVFXInstanceRegistry::AddChild(
+    const FGamePlatformVFXHandle& Parent,
+    const FGamePlatformVFXHandle& Child)
 {
     FGamePlatformVFXInstanceRecord* Record = Records.Find(Parent.Id);
     if (!Record || Record->Handle != Parent || !Child.IsValid())
@@ -62,7 +66,10 @@ bool FGamePlatformVFXInstanceRegistry::AddChild(const FGamePlatformVFXHandle& Pa
     return true;
 }
 
-bool FGamePlatformVFXInstanceRegistry::Stop(const FGamePlatformVFXHandle& Handle, const bool bStopComponent)
+bool FGamePlatformVFXInstanceRegistry::Stop(
+    const FGamePlatformVFXHandle& Handle,
+    const bool bStopComponent,
+    const bool bStopChildren)
 {
     const FGamePlatformVFXInstanceRecord* Existing = Records.Find(Handle.Id);
     if (!Existing || Existing->Handle != Handle)
@@ -73,9 +80,10 @@ bool FGamePlatformVFXInstanceRegistry::Stop(const FGamePlatformVFXHandle& Handle
     FGamePlatformVFXInstanceRecord Record = *Existing;
     Records.Remove(Handle.Id);
 
-    if (bStopComponent)
+    if (UNiagaraComponent* Component = Record.Component.Get())
     {
-        if (UNiagaraComponent* Component = Record.Component.Get())
+        ComponentHandles.Remove(Component);
+        if (bStopComponent)
         {
             Component->DeactivateImmediate();
             if (!Record.bPooled)
@@ -85,15 +93,19 @@ bool FGamePlatformVFXInstanceRegistry::Stop(const FGamePlatformVFXHandle& Handle
         }
     }
 
-    for (const FGamePlatformVFXHandle& Child : Record.Children)
+    if (bStopChildren)
     {
-        Stop(Child);
+        for (const FGamePlatformVFXHandle& Child : Record.Children)
+        {
+            Stop(Child);
+        }
     }
 
     return true;
 }
 
-bool FGamePlatformVFXInstanceRegistry::IsActive(const FGamePlatformVFXHandle& Handle) const
+bool FGamePlatformVFXInstanceRegistry::IsActive(
+    const FGamePlatformVFXHandle& Handle) const
 {
     const FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
     if (!Record || Record->Handle != Handle)
@@ -108,18 +120,13 @@ bool FGamePlatformVFXInstanceRegistry::IsActive(const FGamePlatformVFXHandle& Ha
 
     if (const UNiagaraComponent* Component = Record->Component.Get())
     {
-        if (Component->IsActive())
-        {
-            return true;
-        }
+        return Component->IsActive();
     }
 
-    for (const FGamePlatformVFXHandle& Child : Record->Children)
+    // Composite父实例自身没有Niagara Component；只要记录仍存在，就由其总生命周期Timer维持活动状态。
+    if (Record->State == EGamePlatformVFXInstanceState::Active)
     {
-        if (IsActive(Child))
-        {
-            return true;
-        }
+        return true;
     }
 
     return false;
@@ -134,26 +141,35 @@ bool FGamePlatformVFXInstanceRegistry::IsActiveId(const FGuid& Id) const
     return false;
 }
 
-UNiagaraComponent* FGamePlatformVFXInstanceRegistry::GetComponent(const FGamePlatformVFXHandle& Handle) const
+UNiagaraComponent* FGamePlatformVFXInstanceRegistry::GetComponent(
+    const FGamePlatformVFXHandle& Handle) const
 {
     const FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
     return Record && Record->Handle == Handle ? Record->Component.Get() : nullptr;
 }
 
-FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::FindByComponent(const UNiagaraComponent* Component) const
+FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::FindByComponent(
+    const UNiagaraComponent* Component) const
 {
-    if (!IsValid(Component)) return {};
-    for (const TPair<FGuid, FGamePlatformVFXInstanceRecord>& Pair : Records)
+    if (!IsValid(Component))
     {
-        if (Pair.Value.Component.Get() == Component) return Pair.Value.Handle;
+        return {};
+    }
+
+    if (const FGamePlatformVFXHandle* Handle = ComponentHandles.Find(Component))
+    {
+        return *Handle;
     }
     return {};
 }
 
-TArray<FGamePlatformVFXHandle> FGamePlatformVFXInstanceRegistry::GetChildren(const FGamePlatformVFXHandle& Handle) const
+TArray<FGamePlatformVFXHandle> FGamePlatformVFXInstanceRegistry::GetChildren(
+    const FGamePlatformVFXHandle& Handle) const
 {
     const FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
-    return Record && Record->Handle == Handle ? Record->Children : TArray<FGamePlatformVFXHandle>();
+    return Record && Record->Handle == Handle
+        ? Record->Children
+        : TArray<FGamePlatformVFXHandle>();
 }
 
 void FGamePlatformVFXInstanceRegistry::Reset()
@@ -167,5 +183,6 @@ void FGamePlatformVFXInstanceRegistry::Reset()
             Stop(Record->Handle);
         }
     }
+    ComponentHandles.Reset();
     Records.Reset();
 }

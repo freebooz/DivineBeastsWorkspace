@@ -4,6 +4,7 @@
 #include "GameplayEffectTypes.h"
 #include "GameplayTagContainer.h"
 #include "Types/GamePlatformCombatHitContext.h"
+#include "Types/GamePlatformCombatTypes.h"
 #include "GamePlatformCombatSpec.generated.h"
 
 class AActor;
@@ -25,6 +26,22 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatSpec
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat")
     float Magnitude = 0.0f;
+
+    /** 伤害类型；治疗路径忽略该字段。默认Untyped保持历史伤害兼容。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Damage")
+    EGamePlatformDamageType DamageType = EGamePlatformDamageType::Untyped;
+
+    /** AttackPower（攻击力）缩放系数；0表示不使用该属性。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Damage", meta=(ClampMin="0.0"))
+    float AttackPowerCoefficient = 0.0f;
+
+    /** AbilityPower（技能强度）缩放系数；0表示不使用该属性。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Damage", meta=(ClampMin="0.0"))
+    float AbilityPowerCoefficient = 0.0f;
+
+    /** 是否允许使用平台CriticalChance/CriticalDamage进行服务器权威暴击判定。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Damage")
+    bool bCanCritical = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat")
     FGameplayTagContainer CombatTags;

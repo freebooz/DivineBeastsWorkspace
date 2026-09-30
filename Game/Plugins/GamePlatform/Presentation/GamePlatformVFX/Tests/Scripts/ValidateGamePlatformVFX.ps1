@@ -92,10 +92,34 @@ Assert-Rule ($definitionValidatorText -match 'LoadSynchronous') 'Editor validato
 
 $worldText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Subsystems/GamePlatformVFXWorldSubsystem.cpp'))
 Assert-Rule ($worldText -match 'AcquireDefinition') 'Standard VFX Definition loading must use IGamePlatformDataService::AcquireDefinition'
+Assert-Rule ($worldText -match 'DefinitionCache') 'VFX must use a World-scoped shared Definition cache'
+Assert-Rule ($worldText -match 'MaxCachedDefinitions') 'VFX Definition cache must have an explicit capacity boundary'
+Assert-Rule (-not ($worldText -match 'PendingDefinitionLeases|ActiveDefinitionLeases|ExplicitPreloadLeases')) 'VFX must not restore per-instance Definition Lease maps'
+Assert-Rule ($worldText -match 'DedupeKeysByHandle') 'VFX dedupe cleanup must keep Handle-to-Key reverse index'
+Assert-Rule (-not ($worldText -match 'PruneDedupeHandles')) 'Play hot path must not restore full dedupe-table pruning'
+Assert-Rule ($worldText -match 'CompositeStepTimers') 'Composite delayed steps must be owned by parent Handle'
 Assert-Rule ($worldText -match 'OnSystemFinished') 'VFX instances must release through Niagara OnSystemFinished lifecycle events'
 Assert-Rule ($worldText -match 'EGamePlatformVFXPredictionState::Corrected') 'VFX must implement Corrected prediction semantics'
 Assert-Rule ($worldText -match 'IsSupportedWorldType') 'VFX WorldSubsystem must restrict creation to supported game world types'
+Assert-Rule ($worldText -match 'TRACE_CPUPROFILER_EVENT_SCOPE') 'VFX hot paths must expose CPU trace scopes'
 Assert-Rule (-not ($worldText -match 'FGamePlatformVFXPreloadCoordinator')) 'WorldSubsystem must not restore the retired private Definition preloader'
+
+$registryText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Instances/GamePlatformVFXInstanceRegistry.cpp'))
+Assert-Rule ($registryText -match 'ComponentHandles\.Find') 'Niagara completion lookup must use Component-to-Handle reverse index'
+
+$poolingText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Pooling/GamePlatformVFXPoolingPolicy.cpp'))
+Assert-Rule (-not ($poolingText -match 'Importance\s*!=\s*EGamePlatformVFXImportance::Critical')) 'Critical VFX must not be globally excluded from Niagara pooling'
+
+$scalabilityText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Scalability/GamePlatformVFXScalabilityPolicy.cpp'))
+Assert-Rule ($scalabilityText -match 'MaxStatusInstances') 'Scalability must reserve capacity above Status effects'
+Assert-Rule ($scalabilityText -match 'MaxAmbientInstances') 'Scalability must cap Ambient effects before Combat budget'
+
+$diagnosticsText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Diagnostics/GamePlatformVFXDiagnostics.cpp'))
+Assert-Rule ($diagnosticsText -match 'STAT_GPVFX_DefinitionCacheHits') 'VFX diagnostics must expose Definition cache metrics'
+Assert-Rule ($diagnosticsText -match 'STAT_GPVFX_PeakTrackedInstances') 'VFX diagnostics must expose peak tracked instances'
+
+Assert-Rule ($definitionValidatorText -match 'EffectTypeMismatch') 'Editor validator must reject Definition/System EffectType mismatch'
+Assert-Rule ($definitionValidatorText -match 'GetEffectType\(\)\s*!=\s*ExpectedEffectType') 'Editor validator must compare Niagara System EffectType with Definition EffectType'
 
 $legacyPreloader = Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Preloading/GamePlatformVFXPreloadCoordinator.cpp'
 Assert-Rule (-not (Test-Path $legacyPreloader)) 'Retired VFX private Definition preloader must stay removed'

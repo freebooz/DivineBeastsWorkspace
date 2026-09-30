@@ -2,6 +2,9 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
+#include "Attributes/GamePlatformControlAttributeSet.h"
+#include "Attributes/GamePlatformDefenseAttributeSet.h"
+#include "Attributes/GamePlatformOffenseAttributeSet.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Effects/GamePlatformCombatGameplayEffects.h"
 #include "Interfaces/GamePlatformCombatant.h"
@@ -38,6 +41,23 @@ void UGamePlatformCombatComponent::BeginPlay()
         CombatAttributeSet =
             const_cast<UGamePlatformCombatAttributeSet*>(
                 AbilitySystemComponent->AddSet<UGamePlatformCombatAttributeSet>());
+    }
+
+    // 平台核心战斗属性集统一由权威 CombatComponent 确保存在；客户端通过 GAS 属性复制观察结果。
+    if (GetOwner()->HasAuthority())
+    {
+        if (!AbilitySystemComponent->GetSet<UGamePlatformOffenseAttributeSet>())
+        {
+            AbilitySystemComponent->AddSet<UGamePlatformOffenseAttributeSet>();
+        }
+        if (!AbilitySystemComponent->GetSet<UGamePlatformDefenseAttributeSet>())
+        {
+            AbilitySystemComponent->AddSet<UGamePlatformDefenseAttributeSet>();
+        }
+        if (!AbilitySystemComponent->GetSet<UGamePlatformControlAttributeSet>())
+        {
+            AbilitySystemComponent->AddSet<UGamePlatformControlAttributeSet>();
+        }
     }
 
     AbilitySystemComponent->RegisterGameplayTagEvent(
@@ -198,7 +218,28 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplyControl(
         return Result;
     }
 
-    SpecHandle.Data->SetDuration(DurationSeconds, true);
+    const UGamePlatformControlAttributeSet* ControlAttributes =
+        TargetASC->GetSet<UGamePlatformControlAttributeSet>();
+    const float Tenacity = IsValid(ControlAttributes)
+        ? ControlAttributes->GetTenacity()
+        : 0.0f;
+    const float FinalDuration = FGamePlatformCombatMath::CalculateControlDuration(
+        DurationSeconds,
+        Tenacity);
+
+    if (FinalDuration <= KINDA_SMALL_NUMBER)
+    {
+        Result.FinalMagnitude = 0.0f;
+        Result.ResultTags.AddTag(GamePlatformCombatTags::Result_ControlResisted);
+        TargetComponent->PublishCombatEvent(
+            EGamePlatformCombatEventType::ControlResisted,
+            Spec,
+            Result);
+        MarkEventCompleted(Spec.EventId);
+        return Result;
+    }
+
+    SpecHandle.Data->SetDuration(FinalDuration, true);
     const FActiveGameplayEffectHandle ActiveHandle =
         SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 
@@ -208,7 +249,7 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplyControl(
         return Result;
     }
 
-    Result.FinalMagnitude = DurationSeconds;
+    Result.FinalMagnitude = FinalDuration;
     Result.ResultTags.AddTag(ResultTag);
     TargetComponent->PublishCombatEvent(
         EGamePlatformCombatEventType::ControlApplied,
@@ -292,6 +333,14 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
     CombatAttributeSet->SetIncomingDamage(0.0f);
     CombatAttributeSet->SetIncomingHealing(0.0f);
 
+    if (const UGamePlatformControlAttributeSet* ControlAttributes =
+            AbilitySystemComponent->GetSet<UGamePlatformControlAttributeSet>())
+    {
+        AbilitySystemComponent->SetNumericAttributeBase(
+            UGamePlatformControlAttributeSet::GetPoiseAttribute(),
+            ControlAttributes->GetMaxPoise());
+    }
+
     bDead = false;
     AvatarGeneration = NewAvatarGeneration;
     ++WorldContextGeneration;
@@ -347,6 +396,26 @@ void UGamePlatformCombatComponent::ResolveIncomingDamage(
             Attributes.GetShield(),
             Attributes.GetHealth(),
             bBypassShield);
+
+    if (Spec.bCanCritical && IsValid(Spec.Source))
+    {
+        if (const UGamePlatformAbilitySystemComponent* SourceASC =
+                Spec.Source->FindComponentByClass<UGamePlatformAbilitySystemComponent>())
+        {
+            if (const UGamePlatformOffenseAttributeSet* Offense =
+                    SourceASC->GetSet<UGamePlatformOffenseAttributeSet>())
+            {
+                Result.bWasCritical = FGamePlatformCombatMath::IsCriticalHit(
+                    true,
+                    Offense->GetCriticalChance(),
+                    FGamePlatformCombatMath::MakeDeterministicUnitRoll(Spec.EventId));
+                if (Result.bWasCritical)
+                {
+                    Result.ResultTags.AddTag(GamePlatformCombatTags::Result_Critical);
+                }
+            }
+        }
+    }
 
     Attributes.SetShield(Result.RemainingShield);
     Attributes.SetHealth(Result.RemainingHealth);
@@ -499,6 +568,27 @@ EGamePlatformCombatError UGamePlatformCombatComponent::ValidateSpec(
     if (Spec.Magnitude > FMath::Max(0.0f, MagnitudeLimit))
     {
         return EGamePlatformCombatError::InvalidMagnitude;
+    }
+
+    if (!bHealing)
+    {
+        const float MaxCoefficient = FMath::Max(0.0f, Settings->MaxDamageAttributeCoefficient);
+        if (!FMath::IsFinite(Spec.AttackPowerCoefficient) ||
+            !FMath::IsFinite(Spec.AbilityPowerCoefficient) ||
+            Spec.AttackPowerCoefficient < 0.0f ||
+            Spec.AbilityPowerCoefficient < 0.0f ||
+            Spec.AttackPowerCoefficient > MaxCoefficient ||
+            Spec.AbilityPowerCoefficient > MaxCoefficient)
+        {
+            return EGamePlatformCombatError::InvalidMagnitude;
+        }
+
+        const int32 DamageTypeValue = static_cast<int32>(Spec.DamageType);
+        if (DamageTypeValue < static_cast<int32>(EGamePlatformDamageType::Untyped) ||
+            DamageTypeValue > static_cast<int32>(EGamePlatformDamageType::TrueDamage))
+        {
+            return EGamePlatformCombatError::InvalidMagnitude;
+        }
     }
 
     if (Spec.Source->GetWorld() != Spec.Target->GetWorld())
@@ -667,6 +757,25 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplyInstantEffect(
 
     EffectSpec.Data->SetSetByCallerMagnitude(MagnitudeTag, Spec.Magnitude);
     EffectSpec.Data->AppendDynamicAssetTags(Spec.CombatTags);
+
+    if (!bHealing)
+    {
+        EffectSpec.Data->SetSetByCallerMagnitude(
+            GamePlatformCombatTags::Data_Damage_AttackPowerCoefficient,
+            Spec.AttackPowerCoefficient);
+        EffectSpec.Data->SetSetByCallerMagnitude(
+            GamePlatformCombatTags::Data_Damage_AbilityPowerCoefficient,
+            Spec.AbilityPowerCoefficient);
+        EffectSpec.Data->SetSetByCallerMagnitude(
+            GamePlatformCombatTags::Data_Damage_Type,
+            static_cast<float>(Spec.DamageType));
+        EffectSpec.Data->SetSetByCallerMagnitude(
+            GamePlatformCombatTags::Data_Damage_CanCritical,
+            Spec.bCanCritical ? 1.0f : 0.0f);
+        EffectSpec.Data->SetSetByCallerMagnitude(
+            GamePlatformCombatTags::Data_Damage_CriticalRoll,
+            FGamePlatformCombatMath::MakeDeterministicUnitRoll(Spec.EventId));
+    }
 
     TargetCombat->PendingResolutionStack.Add(Spec);
 

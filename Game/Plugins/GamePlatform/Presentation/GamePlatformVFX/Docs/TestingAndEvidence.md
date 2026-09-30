@@ -92,3 +92,25 @@ Server 隔离当前只有源码和描述文件门禁，不得替代真实 Server
 当前可以确认：**核心架构整改已落地，VFX Lib 第一批去主题化迁移已落地，静态门禁通过，UE5.8 Editor 定向模块编译通过。**
 
 在 Client Target 终态、Automation、Cook、真实资产 Review Map 和性能工件完成前，不得描述为 Production Ready（生产就绪）。
+
+## 8. 2026-09-30 性能整改
+
+针对高频战斗热路径完成以下源码整改：
+
+- per-instance `AcquireDefinition` 改为 World 共享 Definition Cache，同一 Definition 的并发 Play / Preload 复用一个 Lease；
+- 缓存增加 `MaxCachedDefinitions` 容量边界和空闲 LRU 淘汰；
+- Instance Registry 增加 Component→Handle 反向索引；
+- Dedupe 增加 Handle→Key 反向索引，删除每次 Play 的全表 Prune；
+- Composite 延迟 Timer 绑定 Parent Handle，可随取消/纠正/World退出清除；
+- Critical 不再全局禁用 Niagara Pool；
+- Ambient / Status / Combat 改为分层累计软预算；
+- Editor Validator 增加 Definition EffectType 与所有 Niagara System 变体实际 EffectType 一致性校验；
+- Definition 结构校验只在共享缓存首次加载时执行一次；
+- Spawn 参数覆盖不再先复制合并六类 Parameter TMap；
+- 增加 `stat GamePlatformVFX` 与 CPU Trace Scope 性能观测。
+
+使用 UE5.8 执行 `DivineBeastsArenaEditor Win64 Development -Module=GamePlatformVFXClient -Module=GamePlatformVFXEditor`，17个Action全部编译并链接成功，结果 **Succeeded**。
+
+新增/扩展自动化源码覆盖分层预算、Critical池化资格、Component反向索引。真实 UE Automation 执行结果仍需单独取得。
+
+本次整改解决的是框架CPU/内存热路径，不等于真实Niagara内容GPU达标。仓库仍缺少真实 Niagara System / EffectType / Definition 和 Review Map，因此 1v1 / 5v5 / OpenWorld / Village / Android 性能验收继续保持“未执行”。

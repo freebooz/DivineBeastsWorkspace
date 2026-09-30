@@ -37,6 +37,10 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatResult
     UPROPERTY(BlueprintReadOnly, Category="Combat")
     bool bWasBlocked = false;
 
+    /** 本次伤害是否命中平台通用暴击判定。 */
+    UPROPERTY(BlueprintReadOnly, Category="Combat")
+    bool bWasCritical = false;
+
     UPROPERTY(BlueprintReadOnly, Category="Combat")
     bool bCausedDeath = false;
 

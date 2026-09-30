@@ -9,9 +9,24 @@ enum class EGamePlatformCombatEventType : uint8
     Damage,
     Healing,
     ControlApplied,
+    ControlResisted,
     ControlRemoved,
     Death,
     RespawnReset
+};
+
+/** EGamePlatformDamageType（跨游戏通用伤害类型）。 */
+UENUM(BlueprintType)
+enum class EGamePlatformDamageType : uint8
+{
+    /** 兼容旧路径：不走物理/魔法防御，但仍受通用DamageReduction影响。 */
+    Untyped,
+    /** 使用Armor（护甲）与ArmorPenetration（护甲穿透）。 */
+    Physical,
+    /** 使用MagicResistance（法术抗性）与MagicPenetration（法术穿透）。 */
+    Magic,
+    /** 忽略物理/魔法防御和通用DamageReduction。 */
+    TrueDamage
 };
 
 UENUM(BlueprintType)

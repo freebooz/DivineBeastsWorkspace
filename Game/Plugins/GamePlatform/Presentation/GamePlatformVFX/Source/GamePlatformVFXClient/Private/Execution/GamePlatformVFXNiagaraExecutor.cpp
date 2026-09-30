@@ -70,9 +70,9 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
 
     if (IsValid(Component))
     {
-        FGamePlatformVFXParameters EffectiveParameters = Definition.GetDefaultParameters();
-        EffectiveParameters.Append(Request.Parameters);
-        ApplyParameters(*Component, EffectiveParameters);
+        // 默认参数先写、请求覆盖后写，避免每次Spawn复制并合并六个TMap。
+        ApplyParameters(*Component, Definition.GetDefaultParameters());
+        ApplyParameters(*Component, Request.Parameters);
 
         // 行为差异尽量通过Niagara参数表达，避免平台层建立十套执行器。
         if (const UGamePlatformVFXBeamDefinition* Beam = Cast<UGamePlatformVFXBeamDefinition>(&Definition))

@@ -1,6 +1,7 @@
 #include "Validation/GamePlatformVFXDefinitionValidator.h"
 #include "Definitions/GamePlatformVFXCompositeDefinition.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
+#include "NiagaraEffectType.h"
 #include "NiagaraSystem.h"
 
 void FGamePlatformVFXDefinitionValidator::Validate(
@@ -24,6 +25,7 @@ void FGamePlatformVFXDefinitionValidator::Validate(
         Issue.Message = NSLOCTEXT("GamePlatformVFX", "MissingDefinitionId", "VFX Definition必须声明稳定DefinitionId。");
     }
 
+    UNiagaraEffectType* ExpectedEffectType = nullptr;
     if (Definition.UsesScalability() && Definition.GetEffectType().IsNull())
     {
         FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
@@ -31,9 +33,20 @@ void FGamePlatformVFXDefinitionValidator::Validate(
         Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
         Issue.Message = NSLOCTEXT("GamePlatformVFX", "MissingEffectType", "启用Scalability的VFX Definition必须关联Niagara Effect Type。");
     }
+    else if (!Definition.GetEffectType().IsNull())
+    {
+        ExpectedEffectType = Definition.GetEffectType().LoadSynchronous();
+        if (!IsValid(ExpectedEffectType))
+        {
+            FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
+            Issue.RuleId = TEXT("GPVFX.Definition.EffectTypeLoadFailed");
+            Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
+            Issue.Message = NSLOCTEXT("GamePlatformVFX", "EffectTypeLoadFailed", "VFX Definition配置的Niagara Effect Type无法加载。");
+        }
+    }
 
-    // 编辑器验证允许同步装载软引用，确保默认、平台和质量变体全部接受同一LWC/Bounds约束。
-    const auto ValidateSystem = [&Definition, &OutIssues](
+    // 编辑器验证允许同步装载软引用，确保默认、平台和质量变体全部接受同一LWC/Bounds/EffectType约束。
+    const auto ValidateSystem = [&Definition, ExpectedEffectType, &OutIssues](
         const TSoftObjectPtr<UNiagaraSystem>& SystemRef,
         const FString& VariantLabel)
     {
@@ -52,6 +65,16 @@ void FGamePlatformVFXDefinitionValidator::Validate(
                 NSLOCTEXT("GamePlatformVFX", "VariantLoadFailed", "VFX Niagara变体无法加载：{0}"),
                 FText::FromString(VariantLabel));
             return;
+        }
+
+        if (IsValid(ExpectedEffectType) && System->GetEffectType() != ExpectedEffectType)
+        {
+            FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
+            Issue.RuleId = TEXT("GPVFX.Definition.EffectTypeMismatch");
+            Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
+            Issue.Message = FText::Format(
+                NSLOCTEXT("GamePlatformVFX", "EffectTypeMismatch", "VFX Niagara变体未绑定Definition声明的Effect Type：{0}"),
+                FText::FromString(VariantLabel));
         }
 
         if (Definition.RequiresLargeWorldCoordinates() && !System->SupportsLargeWorldCoordinates())

@@ -30,6 +30,7 @@ bool FGamePlatformVFXParameterSchema::Validate(
     }
 
     TMap<FName, const FGamePlatformVFXParameterRule*> RuleByName;
+    RuleByName.Reserve(Rules.Num());
     for (const FGamePlatformVFXParameterRule& Rule : Rules)
     {
         if (Rule.Name.IsNone() || RuleByName.Contains(Rule.Name) || Rule.MinValue > Rule.MaxValue)
@@ -55,48 +56,53 @@ bool FGamePlatformVFXParameterSchema::Validate(
         return *Found;
     };
 
-    TSet<FName> Supplied;
     for (const TPair<FName, float>& Pair : Parameters.FloatParameters)
     {
-        const FGamePlatformVFXParameterRule* Rule = ValidateNameAndType(Pair.Key, EGamePlatformVFXParameterType::Float);
-        if (!Rule || !FMath::IsFinite(Pair.Value) || Pair.Value < Rule->MinValue || Pair.Value > Rule->MaxValue)
+        const FGamePlatformVFXParameterRule* Rule =
+            ValidateNameAndType(Pair.Key, EGamePlatformVFXParameterType::Float);
+        if (!Rule || !FMath::IsFinite(Pair.Value) ||
+            Pair.Value < Rule->MinValue || Pair.Value > Rule->MaxValue)
         {
             if (Rule)
             {
-                OutReason = FText::Format(LOCTEXT("FloatOutOfRange", "VFX浮点参数越界：{0}"), FText::FromName(Pair.Key));
+                OutReason = FText::Format(
+                    LOCTEXT("FloatOutOfRange", "VFX浮点参数越界：{0}"),
+                    FText::FromName(Pair.Key));
             }
             return false;
         }
-        Supplied.Add(Pair.Key);
     }
     for (const TPair<FName, int32>& Pair : Parameters.IntegerParameters)
     {
-        const FGamePlatformVFXParameterRule* Rule = ValidateNameAndType(Pair.Key, EGamePlatformVFXParameterType::Integer);
-        if (!Rule || static_cast<float>(Pair.Value) < Rule->MinValue || static_cast<float>(Pair.Value) > Rule->MaxValue)
+        const FGamePlatformVFXParameterRule* Rule =
+            ValidateNameAndType(Pair.Key, EGamePlatformVFXParameterType::Integer);
+        if (!Rule || static_cast<float>(Pair.Value) < Rule->MinValue ||
+            static_cast<float>(Pair.Value) > Rule->MaxValue)
         {
             if (Rule)
             {
-                OutReason = FText::Format(LOCTEXT("IntegerOutOfRange", "VFX整数参数越界：{0}"), FText::FromName(Pair.Key));
+                OutReason = FText::Format(
+                    LOCTEXT("IntegerOutOfRange", "VFX整数参数越界：{0}"),
+                    FText::FromName(Pair.Key));
             }
             return false;
         }
-        Supplied.Add(Pair.Key);
     }
     for (const TPair<FName, FVector>& Pair : Parameters.VectorParameters)
     {
-        if (!ValidateNameAndType(Pair.Key, EGamePlatformVFXParameterType::Vector) || Pair.Value.ContainsNaN())
+        if (!ValidateNameAndType(Pair.Key, EGamePlatformVFXParameterType::Vector) ||
+            Pair.Value.ContainsNaN())
         {
             return false;
         }
-        Supplied.Add(Pair.Key);
     }
     for (const TPair<FName, FVector>& Pair : Parameters.PositionParameters)
     {
-        if (!ValidateNameAndType(Pair.Key, EGamePlatformVFXParameterType::Position) || Pair.Value.ContainsNaN())
+        if (!ValidateNameAndType(Pair.Key, EGamePlatformVFXParameterType::Position) ||
+            Pair.Value.ContainsNaN())
         {
             return false;
         }
-        Supplied.Add(Pair.Key);
     }
     for (const TPair<FName, FLinearColor>& Pair : Parameters.ColorParameters)
     {
@@ -108,7 +114,6 @@ bool FGamePlatformVFXParameterSchema::Validate(
         {
             return false;
         }
-        Supplied.Add(Pair.Key);
     }
     for (const TPair<FName, bool>& Pair : Parameters.BooleanParameters)
     {
@@ -116,14 +121,34 @@ bool FGamePlatformVFXParameterSchema::Validate(
         {
             return false;
         }
-        Supplied.Add(Pair.Key);
     }
 
     if (bCheckRequiredParameters)
     {
+        const auto HasParameter = [&Parameters](const FGamePlatformVFXParameterRule& Rule)
+        {
+            switch (Rule.Type)
+            {
+            case EGamePlatformVFXParameterType::Float:
+                return Parameters.FloatParameters.Contains(Rule.Name);
+            case EGamePlatformVFXParameterType::Vector:
+                return Parameters.VectorParameters.Contains(Rule.Name);
+            case EGamePlatformVFXParameterType::Position:
+                return Parameters.PositionParameters.Contains(Rule.Name);
+            case EGamePlatformVFXParameterType::Color:
+                return Parameters.ColorParameters.Contains(Rule.Name);
+            case EGamePlatformVFXParameterType::Integer:
+                return Parameters.IntegerParameters.Contains(Rule.Name);
+            case EGamePlatformVFXParameterType::Boolean:
+                return Parameters.BooleanParameters.Contains(Rule.Name);
+            default:
+                return false;
+            }
+        };
+
         for (const FGamePlatformVFXParameterRule& Rule : Rules)
         {
-            if (Rule.bRequired && !Supplied.Contains(Rule.Name))
+            if (Rule.bRequired && !HasParameter(Rule))
             {
                 OutReason = FText::Format(
                     LOCTEXT("RequiredMissing", "VFX请求缺少Definition要求的参数：{0}"),

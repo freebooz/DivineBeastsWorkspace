@@ -12,6 +12,35 @@ class UNiagaraComponent;
 class UGamePlatformVFXDefinition;
 struct FStreamableHandle;
 
+enum class EGamePlatformVFXDefinitionQueueResult : uint8
+{
+    Failed,
+    Queued,
+    Executed
+};
+
+/** 同一个共享Definition加载完成前等待执行的单个VFX实例。 */
+struct FGamePlatformVFXPendingDefinitionRequest
+{
+    FGamePlatformVFXHandle Handle;
+    FGamePlatformVFXRequest Request;
+};
+
+/**
+ * World级共享Definition缓存项。
+ * 一个Definition在同一World只持有一个GamePlatformData Lease，并服务并发Play与Preload。
+ */
+struct FGamePlatformVFXCachedDefinitionEntry
+{
+    FGamePlatformDataLease Lease;
+    TWeakObjectPtr<UGamePlatformVFXDefinition> Definition;
+    TMap<FGuid, FGamePlatformVFXPendingDefinitionRequest> PendingRequests;
+    TSet<FGuid> PreloadHandles;
+    int32 ActiveUsers = 0;
+    uint64 LastUsedSerial = 0;
+    bool bLoading = false;
+};
+
 /**
  * 世界级 VFX 服务实现。保持 Private，外部只能经 IGamePlatformVFXService 访问。
  * 所有公开调用仅允许游戏线程；Definition 统一通过 GamePlatformData World Lease 获取。
@@ -41,22 +70,38 @@ private:
     void HandleStartupCatalogsLoaded();
     FString MakeDedupeKey(const FGamePlatformVFXRequest& Request) const;
     FName ResolveDefinitionId(const FGamePlatformVFXRequest& Request, bool& bOutAmbiguous) const;
-    bool QueueDefinitionLoad(
+
+    EGamePlatformVFXDefinitionQueueResult QueueDefinitionLoad(
         FName DefinitionId,
         const FGamePlatformVFXRequest& Request,
         const FGamePlatformVFXHandle& ReservedHandle);
-    void HandleDefinitionLoaded(
-        FGamePlatformVFXHandle ReservedHandle,
-        FGamePlatformVFXRequest Request,
+    void HandleCachedDefinitionLoaded(
+        FName DefinitionId,
         FGamePlatformDataLease Lease,
         const FGamePlatformResult& Result);
+    bool EnsureDefinitionCacheCapacity();
+    bool EvictOneCachedDefinition();
+    void ReleaseAllCachedDefinitions();
+    void RemoveDefinitionUse(const FGamePlatformVFXHandle& Handle);
+    void TouchCachedDefinition(FName DefinitionId);
+
     /** Niagara动态多播完成回调；必须是UFUNCTION以便AddDynamic绑定。 */
     UFUNCTION()
     void HandleSystemFinished(UNiagaraComponent* Component);
+
     void CleanupInstance(const FGamePlatformVFXHandle& Handle, bool bStopComponent);
     void ReleaseLease(const FGamePlatformDataLease& Lease) const;
     void ScheduleLifetime(const FGamePlatformVFXHandle& Handle, float Seconds);
-    void PruneDedupeHandles();
+
+    void AddDedupeHandle(const FString& Key, const FGamePlatformVFXHandle& Handle);
+    void RemoveDedupeHandle(const FGamePlatformVFXHandle& Handle);
+
+    void RegisterCompositeTimer(
+        const FGamePlatformVFXHandle& ParentHandle,
+        const FTimerHandle& TimerHandle);
+    void ClearCompositeTimers(const FGamePlatformVFXHandle& ParentHandle);
+
+    void UpdateRuntimeDiagnostics();
 
     bool ExecuteLoadedDefinition(
         UGamePlatformVFXDefinition& Definition,
@@ -70,13 +115,26 @@ private:
 
     FGamePlatformVFXCatalogRegistry CatalogRegistry;
     FGamePlatformVFXInstanceRegistry InstanceRegistry;
-    TMap<FGuid, FGamePlatformDataLease> PendingDefinitionLeases;
-    TMap<FGuid, FGamePlatformDataLease> ActiveDefinitionLeases;
-    TMap<FGuid, FGamePlatformDataLease> ExplicitPreloadLeases;
+
+    /** DefinitionId -> World共享Data Lease与等待者。 */
+    TMap<FName, FGamePlatformVFXCachedDefinitionEntry> DefinitionCache;
+    /** 实例Handle -> DefinitionId，用于O(1)清理Pending/Active使用计数。 */
+    TMap<FGuid, FName> DefinitionIdByHandle;
+    /** PreloadHandle -> DefinitionId。 */
+    TMap<FGuid, FName> PreloadDefinitionIds;
+
     TMap<FGuid, FTimerHandle> LifetimeTimers;
+    TMap<FGuid, TArray<FTimerHandle>> CompositeStepTimers;
+
     TMap<FString, FGamePlatformVFXHandle> DedupeHandles;
+    TMap<FGuid, FString> DedupeKeysByHandle;
+
     TArray<FGamePlatformVFXRegistrationHandle> StartupCatalogHandles;
     TSharedPtr<FStreamableHandle> StartupCatalogLoadLease;
+
+    int32 PendingInstanceCount = 0;
+    int32 PeakTrackedInstances = 0;
+    uint64 DefinitionCacheSerial = 0;
     bool bClosing = false;
 
     /** 以注册句柄持有Catalog强引用；注销时可精确释放，避免Content Pack热切换泄漏。 */

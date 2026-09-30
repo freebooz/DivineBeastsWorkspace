@@ -13,6 +13,7 @@
 #include "Loading/GamePlatformAssetLoader.h"
 #include "NiagaraComponent.h"
 #include "Pooling/GamePlatformVFXPoolingPolicy.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Resolution/GamePlatformVFXResolver.h"
 #include "Scalability/GamePlatformVFXScalabilityPolicy.h"
 #include "Settings/GamePlatformVFXSettings.h"
@@ -67,6 +68,10 @@ void UGamePlatformVFXWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 {
     Super::Initialize(Collection);
     bClosing = false;
+    PendingInstanceCount = 0;
+    PeakTrackedInstances = 0;
+    DefinitionCacheSerial = 0;
+    UpdateRuntimeDiagnostics();
 
     // StartupCatalogs仅保留给旧低层工具兼容；正常Gameplay由GamePlatformPresentation完成唯一语义解析。
     const UGamePlatformVFXSettings* Settings = GetDefault<UGamePlatformVFXSettings>();
@@ -108,31 +113,33 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
         {
             World->GetTimerManager().ClearTimer(Pair.Value);
         }
+        for (TPair<FGuid, TArray<FTimerHandle>>& Pair : CompositeStepTimers)
+        {
+            for (FTimerHandle& Timer : Pair.Value)
+            {
+                World->GetTimerManager().ClearTimer(Timer);
+            }
+        }
     }
+
     LifetimeTimers.Reset();
+    CompositeStepTimers.Reset();
 
-    for (const TPair<FGuid, FGamePlatformDataLease>& Pair : PendingDefinitionLeases)
-    {
-        ReleaseLease(Pair.Value);
-    }
-    for (const TPair<FGuid, FGamePlatformDataLease>& Pair : ActiveDefinitionLeases)
-    {
-        ReleaseLease(Pair.Value);
-    }
-    for (const TPair<FGuid, FGamePlatformDataLease>& Pair : ExplicitPreloadLeases)
-    {
-        ReleaseLease(Pair.Value);
-    }
-
-    PendingDefinitionLeases.Reset();
-    ActiveDefinitionLeases.Reset();
-    ExplicitPreloadLeases.Reset();
-    DedupeHandles.Reset();
+    // 先停实例，再一次性释放World共享Definition租约，避免每个历史实例产生独立Data释放记录。
     InstanceRegistry.Reset();
+    DefinitionIdByHandle.Reset();
+    PreloadDefinitionIds.Reset();
+    DedupeHandles.Reset();
+    DedupeKeysByHandle.Reset();
+    PendingInstanceCount = 0;
+
+    ReleaseAllCachedDefinitions();
+
     CatalogRegistry.Reset();
     StartupCatalogHandles.Reset();
     RegisteredCatalogObjects.Reset();
 
+    UpdateRuntimeDiagnostics();
     Super::Deinitialize();
 }
 
@@ -195,12 +202,67 @@ FName UGamePlatformVFXWorldSubsystem::ResolveDefinitionId(
     return Resolved.IsValid() ? Resolved.DefinitionId : NAME_None;
 }
 
-bool UGamePlatformVFXWorldSubsystem::QueueDefinitionLoad(
+EGamePlatformVFXDefinitionQueueResult
+UGamePlatformVFXWorldSubsystem::QueueDefinitionLoad(
     const FName DefinitionId,
     const FGamePlatformVFXRequest& Request,
     const FGamePlatformVFXHandle& ReservedHandle)
 {
     check(IsInGameThread());
+
+    const UGamePlatformVFXSettings* Settings = GetDefault<UGamePlatformVFXSettings>();
+    if (FGamePlatformVFXCachedDefinitionEntry* Existing = DefinitionCache.Find(DefinitionId))
+    {
+        TouchCachedDefinition(DefinitionId);
+        FGamePlatformVFXDiagnostics::DefinitionCacheHit();
+
+        if (Existing->bLoading)
+        {
+            if (PendingInstanceCount >= Settings->MaxPendingInstancePreloads)
+            {
+                return EGamePlatformVFXDefinitionQueueResult::Failed;
+            }
+
+            FGamePlatformVFXPendingDefinitionRequest Pending;
+            Pending.Handle = ReservedHandle;
+            Pending.Request = Request;
+            Existing->PendingRequests.Add(ReservedHandle.Id, MoveTemp(Pending));
+            DefinitionIdByHandle.Add(ReservedHandle.Id, DefinitionId);
+            ++PendingInstanceCount;
+            UpdateRuntimeDiagnostics();
+            return EGamePlatformVFXDefinitionQueueResult::Queued;
+        }
+
+        if (UGamePlatformVFXDefinition* Definition = Existing->Definition.Get())
+        {
+            DefinitionIdByHandle.Add(ReservedHandle.Id, DefinitionId);
+            ++Existing->ActiveUsers;
+            if (ExecuteLoadedDefinition(*Definition, Request, ReservedHandle))
+            {
+                UpdateRuntimeDiagnostics();
+                return EGamePlatformVFXDefinitionQueueResult::Executed;
+            }
+            return EGamePlatformVFXDefinitionQueueResult::Failed;
+        }
+
+        // Lease仍在但对象不可读属于异常状态；仅在没有活跃使用者时清掉并重新加载。
+        if (Existing->ActiveUsers > 0 ||
+            !Existing->PendingRequests.IsEmpty() ||
+            !Existing->PreloadHandles.IsEmpty())
+        {
+            return EGamePlatformVFXDefinitionQueueResult::Failed;
+        }
+
+        const FGamePlatformDataLease StaleLease = Existing->Lease;
+        DefinitionCache.Remove(DefinitionId);
+        ReleaseLease(StaleLease);
+    }
+
+    if (PendingInstanceCount >= Settings->MaxPendingInstancePreloads ||
+        !EnsureDefinitionCacheCapacity())
+    {
+        return EGamePlatformVFXDefinitionQueueResult::Failed;
+    }
 
     UWorld* World = GetWorld();
     UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
@@ -209,14 +271,29 @@ bool UGamePlatformVFXWorldSubsystem::QueueDefinitionLoad(
         : nullptr;
     if (!Data)
     {
-        return false;
+        return EGamePlatformVFXDefinitionQueueResult::Failed;
     }
 
     FPrimaryAssetId DefinitionAssetId;
     if (!BuildDefinitionAssetId(DefinitionId, DefinitionAssetId))
     {
-        return false;
+        return EGamePlatformVFXDefinitionQueueResult::Failed;
     }
+
+    FGamePlatformVFXCachedDefinitionEntry NewEntry;
+    NewEntry.bLoading = true;
+    NewEntry.LastUsedSerial = ++DefinitionCacheSerial;
+
+    FGamePlatformVFXPendingDefinitionRequest Pending;
+    Pending.Handle = ReservedHandle;
+    Pending.Request = Request;
+    NewEntry.PendingRequests.Add(ReservedHandle.Id, MoveTemp(Pending));
+
+    DefinitionCache.Add(DefinitionId, MoveTemp(NewEntry));
+    DefinitionIdByHandle.Add(ReservedHandle.Id, DefinitionId);
+    ++PendingInstanceCount;
+    FGamePlatformVFXDiagnostics::DefinitionCacheMiss();
+    UpdateRuntimeDiagnostics();
 
     const TWeakObjectPtr<UGamePlatformVFXWorldSubsystem> WeakThis(this);
     FGamePlatformResult Accepted;
@@ -226,15 +303,14 @@ bool UGamePlatformVFXWorldSubsystem::QueueDefinitionLoad(
         { VFXRuntimeBundle },
         EGamePlatformDataLifetime::World,
         this,
-        [WeakThis, ReservedHandle, Request](
+        [WeakThis, DefinitionId](
             const FGamePlatformDataLease& CompletedLease,
             const FGamePlatformResult& Result)
         {
             if (UGamePlatformVFXWorldSubsystem* Self = WeakThis.Get())
             {
-                Self->HandleDefinitionLoaded(
-                    ReservedHandle,
-                    Request,
+                Self->HandleCachedDefinitionLoaded(
+                    DefinitionId,
                     CompletedLease,
                     Result);
             }
@@ -243,27 +319,254 @@ bool UGamePlatformVFXWorldSubsystem::QueueDefinitionLoad(
 
     if (!Accepted.IsSuccess() || !Lease.IsValid())
     {
+        DefinitionCache.Remove(DefinitionId);
+        DefinitionIdByHandle.Remove(ReservedHandle.Id);
+        PendingInstanceCount = FMath::Max(0, PendingInstanceCount - 1);
+        UpdateRuntimeDiagnostics();
+        return EGamePlatformVFXDefinitionQueueResult::Failed;
+    }
+
+    if (FGamePlatformVFXCachedDefinitionEntry* Stored = DefinitionCache.Find(DefinitionId))
+    {
+        Stored->Lease = Lease;
+    }
+    return EGamePlatformVFXDefinitionQueueResult::Queued;
+}
+
+void UGamePlatformVFXWorldSubsystem::HandleCachedDefinitionLoaded(
+    const FName DefinitionId,
+    const FGamePlatformDataLease Lease,
+    const FGamePlatformResult& Result)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(GamePlatformVFX_DefinitionLoaded);
+    check(IsInGameThread());
+
+    if (bClosing)
+    {
+        return;
+    }
+
+    FGamePlatformVFXCachedDefinitionEntry* Entry = DefinitionCache.Find(DefinitionId);
+    if (!Entry ||
+        !Entry->Lease.IsValid() ||
+        Entry->Lease.LeaseId != Lease.LeaseId)
+    {
+        return;
+    }
+
+    Entry->bLoading = false;
+
+    UWorld* World = GetWorld();
+    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+    IGamePlatformDataService* Data = GameInstance
+        ? IGamePlatformDataService::Get(*GameInstance)
+        : nullptr;
+    UGamePlatformVFXDefinition* Definition =
+        Result.IsSuccess() && Data
+            ? const_cast<UGamePlatformVFXDefinition*>(
+                Cast<UGamePlatformVFXDefinition>(
+                    Data->GetLoadedDefinition(Lease)))
+            : nullptr;
+
+    const bool bDefinitionValid =
+        IsValid(Definition) &&
+        Definition->ValidateDefinition().IsSuccess();
+
+    if (!Result.IsSuccess() || !bDefinitionValid)
+    {
+        FGamePlatformVFXDiagnostics::DefinitionLoadFailed(
+            FSoftObjectPath(Lease.DefinitionId.ToString()));
+
+        TMap<FGuid, FGamePlatformVFXPendingDefinitionRequest> FailedPending =
+            MoveTemp(Entry->PendingRequests);
+        TSet<FGuid> FailedPreloads = MoveTemp(Entry->PreloadHandles);
+        const FGamePlatformDataLease FailedLease = Entry->Lease;
+
+        PendingInstanceCount = FMath::Max(
+            0,
+            PendingInstanceCount - FailedPending.Num());
+        DefinitionCache.Remove(DefinitionId);
+
+        for (const FGuid& PreloadId : FailedPreloads)
+        {
+            PreloadDefinitionIds.Remove(PreloadId);
+        }
+
+        ReleaseLease(FailedLease);
+
+        for (const TPair<FGuid, FGamePlatformVFXPendingDefinitionRequest>& Pair : FailedPending)
+        {
+            CleanupInstance(Pair.Value.Handle, true);
+        }
+
+        UpdateRuntimeDiagnostics();
+        return;
+    }
+
+    Entry->Definition = Definition;
+    Entry->LastUsedSerial = ++DefinitionCacheSerial;
+
+    TMap<FGuid, FGamePlatformVFXPendingDefinitionRequest> ReadyPending =
+        MoveTemp(Entry->PendingRequests);
+    Entry->PendingRequests.Reset();
+    PendingInstanceCount = FMath::Max(
+        0,
+        PendingInstanceCount - ReadyPending.Num());
+    UpdateRuntimeDiagnostics();
+
+    for (const TPair<FGuid, FGamePlatformVFXPendingDefinitionRequest>& Pair : ReadyPending)
+    {
+        const FGamePlatformVFXPendingDefinitionRequest& Pending = Pair.Value;
+        if (!InstanceRegistry.IsActive(Pending.Handle))
+        {
+            DefinitionIdByHandle.Remove(Pending.Handle.Id);
+            continue;
+        }
+
+        if (FGamePlatformVFXCachedDefinitionEntry* Current = DefinitionCache.Find(DefinitionId))
+        {
+            ++Current->ActiveUsers;
+            Current->LastUsedSerial = ++DefinitionCacheSerial;
+        }
+
+        if (!ExecuteLoadedDefinition(
+                *Definition,
+                Pending.Request,
+                Pending.Handle))
+        {
+            CleanupInstance(Pending.Handle, true);
+        }
+    }
+
+    UpdateRuntimeDiagnostics();
+}
+
+bool UGamePlatformVFXWorldSubsystem::EnsureDefinitionCacheCapacity()
+{
+    const int32 Limit =
+        FMath::Max(1, GetDefault<UGamePlatformVFXSettings>()->MaxCachedDefinitions);
+    if (DefinitionCache.Num() < Limit)
+    {
+        return true;
+    }
+
+    return EvictOneCachedDefinition() && DefinitionCache.Num() < Limit;
+}
+
+bool UGamePlatformVFXWorldSubsystem::EvictOneCachedDefinition()
+{
+    FName Candidate = NAME_None;
+    uint64 OldestSerial = MAX_uint64;
+
+    for (const TPair<FName, FGamePlatformVFXCachedDefinitionEntry>& Pair : DefinitionCache)
+    {
+        const FGamePlatformVFXCachedDefinitionEntry& Entry = Pair.Value;
+        if (Entry.bLoading ||
+            Entry.ActiveUsers > 0 ||
+            !Entry.PendingRequests.IsEmpty() ||
+            !Entry.PreloadHandles.IsEmpty())
+        {
+            continue;
+        }
+
+        if (Entry.LastUsedSerial < OldestSerial)
+        {
+            OldestSerial = Entry.LastUsedSerial;
+            Candidate = Pair.Key;
+        }
+    }
+
+    if (Candidate.IsNone())
+    {
         return false;
     }
 
-    PendingDefinitionLeases.Add(ReservedHandle.Id, Lease);
+    FGamePlatformVFXCachedDefinitionEntry Removed;
+    if (!DefinitionCache.RemoveAndCopyValue(Candidate, Removed))
+    {
+        return false;
+    }
+
+    ReleaseLease(Removed.Lease);
     return true;
+}
+
+void UGamePlatformVFXWorldSubsystem::ReleaseAllCachedDefinitions()
+{
+    for (const TPair<FName, FGamePlatformVFXCachedDefinitionEntry>& Pair : DefinitionCache)
+    {
+        ReleaseLease(Pair.Value.Lease);
+    }
+    DefinitionCache.Reset();
+}
+
+void UGamePlatformVFXWorldSubsystem::RemoveDefinitionUse(
+    const FGamePlatformVFXHandle& Handle)
+{
+    FName DefinitionId = NAME_None;
+    if (!DefinitionIdByHandle.RemoveAndCopyValue(Handle.Id, DefinitionId))
+    {
+        return;
+    }
+
+    FGamePlatformVFXCachedDefinitionEntry* Entry = DefinitionCache.Find(DefinitionId);
+    if (!Entry)
+    {
+        return;
+    }
+
+    if (Entry->PendingRequests.Remove(Handle.Id) > 0)
+    {
+        PendingInstanceCount = FMath::Max(0, PendingInstanceCount - 1);
+    }
+    else if (Entry->ActiveUsers > 0)
+    {
+        --Entry->ActiveUsers;
+    }
+
+    Entry->LastUsedSerial = ++DefinitionCacheSerial;
+
+    if (Entry->bLoading &&
+        Entry->ActiveUsers == 0 &&
+        Entry->PendingRequests.IsEmpty() &&
+        Entry->PreloadHandles.IsEmpty())
+    {
+        const FGamePlatformDataLease UnusedLease = Entry->Lease;
+        DefinitionCache.Remove(DefinitionId);
+        ReleaseLease(UnusedLease);
+    }
+}
+
+void UGamePlatformVFXWorldSubsystem::TouchCachedDefinition(
+    const FName DefinitionId)
+{
+    if (FGamePlatformVFXCachedDefinitionEntry* Entry = DefinitionCache.Find(DefinitionId))
+    {
+        Entry->LastUsedSerial = ++DefinitionCacheSerial;
+    }
 }
 
 FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
     const FGamePlatformVFXRequest& Request)
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(GamePlatformVFX_Play);
     check(IsInGameThread());
+    FGamePlatformVFXDiagnostics::PlayRequested();
 
     FGamePlatformVFXResult Result;
+    const auto Reject = [&Result](const EGamePlatformVFXResultCode Code)
+    {
+        Result.Code = Code;
+        FGamePlatformVFXDiagnostics::RequestRejected();
+        return Result;
+    };
+
     UWorld* World = GetWorld();
     if (bClosing || !IsValid(World) || World->bIsTearingDown)
     {
-        Result.Code = EGamePlatformVFXResultCode::InvalidWorld;
-        return Result;
+        return Reject(EGamePlatformVFXResultCode::InvalidWorld);
     }
 
-    PruneDedupeHandles();
     const UGamePlatformVFXSettings* Settings = GetDefault<UGamePlatformVFXSettings>();
     const FString DedupeKey = MakeDedupeKey(Request);
 
@@ -273,8 +576,10 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
         {
             if (const FGamePlatformVFXHandle* Existing = DedupeHandles.Find(DedupeKey))
             {
-                Result.Handle = *Existing;
-                Stop(*Existing);
+                const FGamePlatformVFXHandle ExistingHandle = *Existing;
+                Result.Handle = ExistingHandle;
+                Stop(ExistingHandle);
+                FGamePlatformVFXDiagnostics::DedupeHit();
             }
             Result.Code = EGamePlatformVFXResultCode::Cancelled;
             return Result;
@@ -282,48 +587,44 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
 
         if (const FGamePlatformVFXHandle* Existing = DedupeHandles.Find(DedupeKey))
         {
+            const FGamePlatformVFXHandle ExistingHandle = *Existing;
             if (Request.PredictionState == EGamePlatformVFXPredictionState::Corrected)
             {
-                Stop(*Existing);
+                Stop(ExistingHandle);
+                FGamePlatformVFXDiagnostics::DedupeHit();
             }
-            else if (InstanceRegistry.IsActive(*Existing))
+            else if (InstanceRegistry.IsActive(ExistingHandle))
             {
-                Result.Handle = *Existing;
+                Result.Handle = ExistingHandle;
                 Result.Code = EGamePlatformVFXResultCode::Played;
+                FGamePlatformVFXDiagnostics::DedupeHit();
                 return Result;
             }
-            DedupeHandles.Remove(DedupeKey);
+            else
+            {
+                RemoveDedupeHandle(ExistingHandle);
+            }
         }
     }
 
     if (!Request.IsStructurallyValid())
     {
-        Result.Code = EGamePlatformVFXResultCode::InvalidRequest;
-        return Result;
+        return Reject(EGamePlatformVFXResultCode::InvalidRequest);
     }
 
     if (!DedupeKey.IsEmpty() &&
         !DedupeHandles.Contains(DedupeKey) &&
         DedupeHandles.Num() >= Settings->MaxDedupeEntries)
     {
-        Result.Code = EGamePlatformVFXResultCode::RejectedByScalability;
-        return Result;
+        return Reject(EGamePlatformVFXResultCode::RejectedByScalability);
     }
 
-    const int32 TrackedInstances = InstanceRegistry.Num();
     if (!FGamePlatformVFXScalabilityPolicy::ShouldSpawn(
             Request,
-            TrackedInstances,
+            InstanceRegistry.Num(),
             *Settings))
     {
-        Result.Code = EGamePlatformVFXResultCode::RejectedByScalability;
-        return Result;
-    }
-
-    if (PendingDefinitionLeases.Num() >= Settings->MaxPendingInstancePreloads)
-    {
-        Result.Code = EGamePlatformVFXResultCode::RejectedByScalability;
-        return Result;
+        return Reject(EGamePlatformVFXResultCode::RejectedByScalability);
     }
 
     bool bAmbiguous = false;
@@ -333,96 +634,48 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
         FGamePlatformVFXDiagnostics::CatalogAmbiguous(
             Request.SemanticTag,
             Request.ContextId);
-        Result.Code = EGamePlatformVFXResultCode::CatalogAmbiguous;
-        return Result;
+        return Reject(EGamePlatformVFXResultCode::CatalogAmbiguous);
     }
     if (DefinitionId.IsNone())
     {
         FGamePlatformVFXDiagnostics::CatalogMiss(
             Request.SemanticTag,
             Request.ContextId);
-        Result.Code = Request.DefinitionId.IsNone()
-            ? EGamePlatformVFXResultCode::CatalogMiss
-            : EGamePlatformVFXResultCode::InvalidRequest;
-        return Result;
-    }
-
-    FPrimaryAssetId DefinitionAssetId;
-    if (!BuildDefinitionAssetId(DefinitionId, DefinitionAssetId))
-    {
-        Result.Code = EGamePlatformVFXResultCode::InvalidRequest;
-        return Result;
+        return Reject(
+            Request.DefinitionId.IsNone()
+                ? EGamePlatformVFXResultCode::CatalogMiss
+                : EGamePlatformVFXResultCode::InvalidRequest);
     }
 
     FGamePlatformVFXRequest EffectiveRequest = Request;
     EffectiveRequest.DefinitionId = DefinitionId;
 
-    Result.Handle = InstanceRegistry.Reserve(World, &EffectiveRequest);
+    Result.Handle = InstanceRegistry.Reserve(World);
+    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, InstanceRegistry.Num());
+    UpdateRuntimeDiagnostics();
+
     if (!DedupeKey.IsEmpty())
     {
-        DedupeHandles.Add(DedupeKey, Result.Handle);
+        AddDedupeHandle(DedupeKey, Result.Handle);
     }
 
-    if (!QueueDefinitionLoad(DefinitionId, EffectiveRequest, Result.Handle))
+    const EGamePlatformVFXDefinitionQueueResult QueueResult =
+        QueueDefinitionLoad(
+            DefinitionId,
+            EffectiveRequest,
+            Result.Handle);
+
+    if (QueueResult == EGamePlatformVFXDefinitionQueueResult::Failed)
     {
         CleanupInstance(Result.Handle, true);
-        Result.Code = EGamePlatformVFXResultCode::DefinitionLoadFailed;
-        return Result;
+        return Reject(EGamePlatformVFXResultCode::DefinitionLoadFailed);
     }
 
-    Result.Code = EGamePlatformVFXResultCode::Queued;
+    Result.Code =
+        QueueResult == EGamePlatformVFXDefinitionQueueResult::Executed
+            ? EGamePlatformVFXResultCode::Played
+            : EGamePlatformVFXResultCode::Queued;
     return Result;
-}
-
-void UGamePlatformVFXWorldSubsystem::HandleDefinitionLoaded(
-    const FGamePlatformVFXHandle ReservedHandle,
-    FGamePlatformVFXRequest Request,
-    const FGamePlatformDataLease Lease,
-    const FGamePlatformResult& Result)
-{
-    check(IsInGameThread());
-
-    const FGamePlatformDataLease* Pending =
-        PendingDefinitionLeases.Find(ReservedHandle.Id);
-    if (bClosing || !Pending || Pending->LeaseId != Lease.LeaseId)
-    {
-        return;
-    }
-
-    PendingDefinitionLeases.Remove(ReservedHandle.Id);
-
-    if (!Result.IsSuccess() || !InstanceRegistry.IsActive(ReservedHandle))
-    {
-        ReleaseLease(Lease);
-        CleanupInstance(ReservedHandle, true);
-        return;
-    }
-
-    UWorld* World = GetWorld();
-    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
-    IGamePlatformDataService* Data = GameInstance
-        ? IGamePlatformDataService::Get(*GameInstance)
-        : nullptr;
-    UGamePlatformVFXDefinition* Definition = Data
-        ? const_cast<UGamePlatformVFXDefinition*>(
-            Cast<UGamePlatformVFXDefinition>(
-                Data->GetLoadedDefinition(Lease)))
-        : nullptr;
-
-    if (!IsValid(Definition) || !Definition->ValidateDefinition().IsSuccess())
-    {
-        FGamePlatformVFXDiagnostics::DefinitionLoadFailed(
-            FSoftObjectPath(Lease.DefinitionId.ToString()));
-        ReleaseLease(Lease);
-        CleanupInstance(ReservedHandle, true);
-        return;
-    }
-
-    ActiveDefinitionLeases.Add(ReservedHandle.Id, Lease);
-    if (!ExecuteLoadedDefinition(*Definition, Request, ReservedHandle))
-    {
-        CleanupInstance(ReservedHandle, true);
-    }
 }
 
 bool UGamePlatformVFXWorldSubsystem::Stop(
@@ -430,11 +683,8 @@ bool UGamePlatformVFXWorldSubsystem::Stop(
 {
     check(IsInGameThread());
 
-    const bool bKnown =
-        InstanceRegistry.IsActive(Handle) ||
-        PendingDefinitionLeases.Contains(Handle.Id) ||
-        ActiveDefinitionLeases.Contains(Handle.Id);
-    if (!bKnown)
+    if (!InstanceRegistry.IsActive(Handle) &&
+        !DefinitionIdByHandle.Contains(Handle.Id))
     {
         return false;
     }
@@ -463,8 +713,7 @@ void UGamePlatformVFXWorldSubsystem::HandleSystemFinished(
         InstanceRegistry.FindByComponent(Component);
     if (Handle.IsValid())
     {
-        // 自然结束后只回收平台记录/租约/去重状态，不再次Deactivate已结束组件。
-        // 非池化组件按其AutoDestroy语义由Niagara处理，池化组件由Niagara原生池回收。
+        // 自然结束后只回收平台记录、共享Definition使用计数和去重状态，不再次Deactivate已结束组件。
         CleanupInstance(Handle, false);
     }
 }
@@ -477,6 +726,8 @@ void UGamePlatformVFXWorldSubsystem::CleanupInstance(
     {
         return;
     }
+
+    ClearCompositeTimers(Handle);
 
     const TArray<FGamePlatformVFXHandle> Children =
         InstanceRegistry.GetChildren(Handle);
@@ -501,25 +752,12 @@ void UGamePlatformVFXWorldSubsystem::CleanupInstance(
             &UGamePlatformVFXWorldSubsystem::HandleSystemFinished);
     }
 
-    FGamePlatformDataLease Lease;
-    if (PendingDefinitionLeases.RemoveAndCopyValue(Handle.Id, Lease))
-    {
-        ReleaseLease(Lease);
-    }
-    if (ActiveDefinitionLeases.RemoveAndCopyValue(Handle.Id, Lease))
-    {
-        ReleaseLease(Lease);
-    }
+    RemoveDedupeHandle(Handle);
+    RemoveDefinitionUse(Handle);
 
-    for (auto It = DedupeHandles.CreateIterator(); It; ++It)
-    {
-        if (It.Value() == Handle)
-        {
-            It.RemoveCurrent();
-        }
-    }
-
-    InstanceRegistry.Stop(Handle, bStopComponent);
+    // 子实例已经由上面的Cleanup递归处理，Registry不再重复递归Stop。
+    InstanceRegistry.Stop(Handle, bStopComponent, false);
+    UpdateRuntimeDiagnostics();
 }
 
 void UGamePlatformVFXWorldSubsystem::ReleaseLease(
@@ -573,15 +811,73 @@ void UGamePlatformVFXWorldSubsystem::ScheduleLifetime(
         false);
 }
 
-void UGamePlatformVFXWorldSubsystem::PruneDedupeHandles()
+void UGamePlatformVFXWorldSubsystem::AddDedupeHandle(
+    const FString& Key,
+    const FGamePlatformVFXHandle& Handle)
 {
-    for (auto It = DedupeHandles.CreateIterator(); It; ++It)
+    if (Key.IsEmpty() || !Handle.IsValid())
     {
-        if (!InstanceRegistry.IsActive(It.Value()))
+        return;
+    }
+
+    DedupeHandles.Add(Key, Handle);
+    DedupeKeysByHandle.Add(Handle.Id, Key);
+}
+
+void UGamePlatformVFXWorldSubsystem::RemoveDedupeHandle(
+    const FGamePlatformVFXHandle& Handle)
+{
+    FString Key;
+    if (!DedupeKeysByHandle.RemoveAndCopyValue(Handle.Id, Key))
+    {
+        return;
+    }
+
+    if (const FGamePlatformVFXHandle* Existing = DedupeHandles.Find(Key);
+        Existing && *Existing == Handle)
+    {
+        DedupeHandles.Remove(Key);
+    }
+}
+
+void UGamePlatformVFXWorldSubsystem::RegisterCompositeTimer(
+    const FGamePlatformVFXHandle& ParentHandle,
+    const FTimerHandle& TimerHandle)
+{
+    if (!ParentHandle.IsValid() || !TimerHandle.IsValid())
+    {
+        return;
+    }
+
+    CompositeStepTimers.FindOrAdd(ParentHandle.Id).Add(TimerHandle);
+}
+
+void UGamePlatformVFXWorldSubsystem::ClearCompositeTimers(
+    const FGamePlatformVFXHandle& ParentHandle)
+{
+    TArray<FTimerHandle> Timers;
+    if (!CompositeStepTimers.RemoveAndCopyValue(ParentHandle.Id, Timers))
+    {
+        return;
+    }
+
+    if (UWorld* World = GetWorld())
+    {
+        for (FTimerHandle& Timer : Timers)
         {
-            It.RemoveCurrent();
+            World->GetTimerManager().ClearTimer(Timer);
         }
     }
+}
+
+void UGamePlatformVFXWorldSubsystem::UpdateRuntimeDiagnostics()
+{
+    const int32 TrackedInstances = InstanceRegistry.Num();
+    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, TrackedInstances);
+    FGamePlatformVFXDiagnostics::UpdateRuntimeCounts(
+        TrackedInstances,
+        PendingInstanceCount,
+        PeakTrackedInstances);
 }
 
 FGamePlatformVFXPreloadHandle UGamePlatformVFXWorldSubsystem::Preload(
@@ -597,17 +893,32 @@ FGamePlatformVFXPreloadHandle UGamePlatformVFXWorldSubsystem::Preload(
 
     const UGamePlatformVFXSettings* Settings =
         GetDefault<UGamePlatformVFXSettings>();
-    if (ExplicitPreloadLeases.Num() >= Settings->MaxPendingInstancePreloads)
+    if (PreloadDefinitionIds.Num() >= Settings->MaxPendingInstancePreloads)
     {
         return Handle;
     }
 
     bool bAmbiguous = false;
     const FName DefinitionId = ResolveDefinitionId(Request, bAmbiguous);
-    FPrimaryAssetId DefinitionAssetId;
-    if (bAmbiguous ||
-        !BuildDefinitionAssetId(DefinitionId, DefinitionAssetId))
+    if (bAmbiguous || DefinitionId.IsNone())
     {
+        return Handle;
+    }
+
+    Handle.Id = FGuid::NewGuid();
+
+    if (FGamePlatformVFXCachedDefinitionEntry* Existing = DefinitionCache.Find(DefinitionId))
+    {
+        Existing->PreloadHandles.Add(Handle.Id);
+        Existing->LastUsedSerial = ++DefinitionCacheSerial;
+        PreloadDefinitionIds.Add(Handle.Id, DefinitionId);
+        FGamePlatformVFXDiagnostics::DefinitionCacheHit();
+        return Handle;
+    }
+
+    if (!EnsureDefinitionCacheCapacity())
+    {
+        Handle.Id.Invalidate();
         return Handle;
     }
 
@@ -618,11 +929,25 @@ FGamePlatformVFXPreloadHandle UGamePlatformVFXWorldSubsystem::Preload(
         : nullptr;
     if (!Data)
     {
+        Handle.Id.Invalidate();
         return Handle;
     }
 
-    Handle.Id = FGuid::NewGuid();
-    const FGamePlatformVFXPreloadHandle ExternalHandle = Handle;
+    FPrimaryAssetId DefinitionAssetId;
+    if (!BuildDefinitionAssetId(DefinitionId, DefinitionAssetId))
+    {
+        Handle.Id.Invalidate();
+        return Handle;
+    }
+
+    FGamePlatformVFXCachedDefinitionEntry NewEntry;
+    NewEntry.bLoading = true;
+    NewEntry.LastUsedSerial = ++DefinitionCacheSerial;
+    NewEntry.PreloadHandles.Add(Handle.Id);
+    DefinitionCache.Add(DefinitionId, MoveTemp(NewEntry));
+    PreloadDefinitionIds.Add(Handle.Id, DefinitionId);
+    FGamePlatformVFXDiagnostics::DefinitionCacheMiss();
+
     const TWeakObjectPtr<UGamePlatformVFXWorldSubsystem> WeakThis(this);
     FGamePlatformResult Accepted;
     const FGamePlatformDataLease Lease = Data->AcquireDefinition(
@@ -631,33 +956,32 @@ FGamePlatformVFXPreloadHandle UGamePlatformVFXWorldSubsystem::Preload(
         { VFXRuntimeBundle },
         EGamePlatformDataLifetime::World,
         this,
-        [WeakThis, ExternalHandle](
+        [WeakThis, DefinitionId](
             const FGamePlatformDataLease& CompletedLease,
             const FGamePlatformResult& Result)
         {
             if (UGamePlatformVFXWorldSubsystem* Self = WeakThis.Get())
             {
-                if (!Result.IsSuccess())
-                {
-                    FGamePlatformDataLease Stored;
-                    if (Self->ExplicitPreloadLeases.RemoveAndCopyValue(
-                            ExternalHandle.Id,
-                            Stored))
-                    {
-                        Self->ReleaseLease(Stored);
-                    }
-                }
+                Self->HandleCachedDefinitionLoaded(
+                    DefinitionId,
+                    CompletedLease,
+                    Result);
             }
         },
         Accepted);
 
     if (!Accepted.IsSuccess() || !Lease.IsValid())
     {
+        DefinitionCache.Remove(DefinitionId);
+        PreloadDefinitionIds.Remove(Handle.Id);
         Handle.Id.Invalidate();
         return Handle;
     }
 
-    ExplicitPreloadLeases.Add(Handle.Id, Lease);
+    if (FGamePlatformVFXCachedDefinitionEntry* Stored = DefinitionCache.Find(DefinitionId))
+    {
+        Stored->Lease = Lease;
+    }
     return Handle;
 }
 
@@ -666,14 +990,33 @@ bool UGamePlatformVFXWorldSubsystem::CancelPreload(
 {
     check(IsInGameThread());
 
-    FGamePlatformDataLease Lease;
+    FName DefinitionId = NAME_None;
     if (!Handle.IsValid() ||
-        !ExplicitPreloadLeases.RemoveAndCopyValue(Handle.Id, Lease))
+        !PreloadDefinitionIds.RemoveAndCopyValue(Handle.Id, DefinitionId))
     {
         return false;
     }
 
-    ReleaseLease(Lease);
+    FGamePlatformVFXCachedDefinitionEntry* Entry = DefinitionCache.Find(DefinitionId);
+    if (!Entry)
+    {
+        return false;
+    }
+
+    Entry->PreloadHandles.Remove(Handle.Id);
+    Entry->LastUsedSerial = ++DefinitionCacheSerial;
+
+    // 已加载项作为有界World热缓存保留；仍在加载且已无人使用时立即取消并释放。
+    if (Entry->bLoading &&
+        Entry->ActiveUsers == 0 &&
+        Entry->PendingRequests.IsEmpty() &&
+        Entry->PreloadHandles.IsEmpty())
+    {
+        const FGamePlatformDataLease UnusedLease = Entry->Lease;
+        DefinitionCache.Remove(DefinitionId);
+        ReleaseLease(UnusedLease);
+    }
+
     return true;
 }
 
@@ -723,15 +1066,16 @@ bool UGamePlatformVFXWorldSubsystem::ExecuteLoadedDefinition(
     const FGamePlatformVFXRequest& Request,
     const FGamePlatformVFXHandle& ReservedHandle)
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(GamePlatformVFX_ExecuteDefinition);
     check(IsInGameThread());
 
     UWorld* World = GetWorld();
-    if (!IsValid(World) ||
-        !Definition.ValidateDefinition().IsSuccess())
+    if (!IsValid(World))
     {
         return false;
     }
 
+    // Definition结构校验已在共享缓存首次加载完成时执行一次；热路径只校验本次动态参数。
     FText ValidationReason;
     if (!Definition.ValidateRequestParameters(
             Request.Parameters,
@@ -771,6 +1115,17 @@ bool UGamePlatformVFXWorldSubsystem::ExecuteLoadedDefinition(
                         ChildDefinitionId,
                         ChildRequest,
                         ParentHandle);
+                }
+            },
+            [WeakThis](
+                const FGamePlatformVFXHandle& ParentHandle,
+                const FTimerHandle& TimerHandle)
+            {
+                if (UGamePlatformVFXWorldSubsystem* Self = WeakThis.Get())
+                {
+                    Self->RegisterCompositeTimer(
+                        ParentHandle,
+                        TimerHandle);
                 }
             });
 
@@ -837,18 +1192,9 @@ void UGamePlatformVFXWorldSubsystem::PlayDefinitionId(
     if (!FGamePlatformVFXScalabilityPolicy::ShouldSpawn(
             Request,
             InstanceRegistry.Num(),
-            *Settings) ||
-        PendingDefinitionLeases.Num() >=
-            Settings->MaxPendingInstancePreloads)
+            *Settings))
     {
-        return;
-    }
-
-    FPrimaryAssetId DefinitionAssetId;
-    if (!BuildDefinitionAssetId(
-            DefinitionId,
-            DefinitionAssetId))
-    {
+        FGamePlatformVFXDiagnostics::RequestRejected();
         return;
     }
 
@@ -856,20 +1202,29 @@ void UGamePlatformVFXWorldSubsystem::PlayDefinitionId(
     ChildRequest.DefinitionId = DefinitionId;
 
     const FGamePlatformVFXHandle ChildHandle =
-        InstanceRegistry.Reserve(World, &ChildRequest);
+        InstanceRegistry.Reserve(World);
+    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, InstanceRegistry.Num());
+    UpdateRuntimeDiagnostics();
+
     if (!InstanceRegistry.AddChild(
             ParentHandle,
             ChildHandle))
     {
         InstanceRegistry.Stop(ChildHandle);
+        UpdateRuntimeDiagnostics();
         return;
     }
 
-    if (!QueueDefinitionLoad(
+    FGamePlatformVFXDiagnostics::CompositeChild();
+
+    const EGamePlatformVFXDefinitionQueueResult QueueResult =
+        QueueDefinitionLoad(
             DefinitionId,
             ChildRequest,
-            ChildHandle))
+            ChildHandle);
+    if (QueueResult == EGamePlatformVFXDefinitionQueueResult::Failed)
     {
+        FGamePlatformVFXDiagnostics::RequestRejected();
         CleanupInstance(ChildHandle, true);
     }
 }

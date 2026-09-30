@@ -6,8 +6,8 @@ bool FGamePlatformVFXScalabilityPolicy::ShouldSpawn(
     int32 ActiveInstances,
     const UGamePlatformVFXSettings& Settings)
 {
-    // HardMaxTrackedInstances是绝对安全上限，任何重要度都不能绕过。
-    if (ActiveInstances >= FMath::Max(1, Settings.HardMaxTrackedInstances))
+    const int32 HardLimit = FMath::Max(1, Settings.HardMaxTrackedInstances);
+    if (ActiveInstances >= HardLimit)
     {
         return false;
     }
@@ -17,5 +17,27 @@ bool FGamePlatformVFXScalabilityPolicy::ShouldSpawn(
         return true;
     }
 
-    return ActiveInstances < FMath::Max(1, Settings.MaxActiveInstances);
+    const int32 CombatLimit = FMath::Clamp(
+        Settings.MaxActiveInstances,
+        1,
+        HardLimit);
+    const int32 StatusLimit = FMath::Clamp(
+        Settings.MaxStatusInstances,
+        1,
+        CombatLimit);
+    const int32 AmbientLimit = FMath::Clamp(
+        Settings.MaxAmbientInstances,
+        1,
+        StatusLimit);
+
+    switch (Request.Importance)
+    {
+    case EGamePlatformVFXImportance::Ambient:
+        return ActiveInstances < AmbientLimit;
+    case EGamePlatformVFXImportance::Status:
+        return ActiveInstances < StatusLimit;
+    case EGamePlatformVFXImportance::Combat:
+    default:
+        return ActiveInstances < CombatLimit;
+    }
 }

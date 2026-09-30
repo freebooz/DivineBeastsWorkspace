@@ -1,13 +1,13 @@
 #include "Composite/GamePlatformVFXCompositeRunner.h"
 #include "Engine/World.h"
-#include "TimerManager.h"
 
 void FGamePlatformVFXCompositeRunner::Run(
     UWorld& World,
     const UGamePlatformVFXCompositeDefinition& Definition,
     const FGamePlatformVFXRequest& Request,
     const FGamePlatformVFXHandle& ParentHandle,
-    FPlayChild PlayChild)
+    FPlayChild PlayChild,
+    FRegisterTimer RegisterTimer)
 {
     if (!PlayChild)
     {
@@ -53,5 +53,10 @@ void FGamePlatformVFXCompositeRunner::Run(
                 }),
             Step.DelaySeconds,
             false);
+
+        if (RegisterTimer)
+        {
+            RegisterTimer(ParentHandle, TimerHandle);
+        }
     }
 }
