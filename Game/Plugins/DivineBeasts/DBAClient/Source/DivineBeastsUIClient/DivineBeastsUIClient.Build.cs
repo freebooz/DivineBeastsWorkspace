@@ -18,7 +18,7 @@ public class DivineBeastsUIClient : ModuleRules
             "CoreUObject",
             "Engine",
             "UMG",
-            "Slate",
+            "Slate", "InputCore",
             "SlateCore",
             "CommonUI",
             "CommonInput",

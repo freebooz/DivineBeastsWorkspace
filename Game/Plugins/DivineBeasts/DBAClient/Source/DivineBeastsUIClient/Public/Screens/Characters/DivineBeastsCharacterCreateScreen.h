@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Screens/DivineBeastsUIScreen.h"
+#include "Screens/Characters/DivineBeastsCharacterPreviewScreen.h"
 #include "Types/SlateEnums.h"
 #include "DivineBeastsCharacterCreateScreen.generated.h"
 
@@ -15,7 +15,7 @@ class UDivineBeastsCharacterChoiceEntry;
 /** UDivineBeastsCharacterCreateScreen（持久角色创建页面基类）。 */
 UCLASS(Abstract, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsCharacterCreateScreen
-    : public UDivineBeastsUIScreen
+    : public UDivineBeastsCharacterPreviewScreen
 {
     GENERATED_BODY()
 
@@ -29,6 +29,7 @@ public:
 protected:
     /** 激活时绑定本地输入及只读状态事件；失活时全部解绑，不保存业务档案。 */
     virtual void NativeOnActivated() override;
+    virtual void RotatePreviewFromDrag(float DeltaYawDegrees) override;
     virtual void NativeOnDeactivated() override;
 
     /** Monolith页面命名契约；缺少控件必须在蓝图编译时失败。 */

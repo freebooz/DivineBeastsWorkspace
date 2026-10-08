@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Screens/DivineBeastsUIScreen.h"
+#include "Screens/Characters/DivineBeastsCharacterPreviewScreen.h"
 #include "Types/SlateEnums.h"
 #include "DivineBeastsCharacterSelectScreen.generated.h"
 
@@ -14,7 +14,7 @@ class UDivineBeastsCharacterChoiceEntry;
 /** UDivineBeastsCharacterSelectScreen（持久角色选择页面基类）。 */
 UCLASS(Abstract, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsCharacterSelectScreen
-    : public UDivineBeastsUIScreen
+    : public UDivineBeastsCharacterPreviewScreen
 {
     GENERATED_BODY()
 
@@ -28,6 +28,7 @@ public:
 protected:
     /** 只在页面激活期间订阅输入、状态和命令完成事件，无业务Tick。 */
     virtual void NativeOnActivated() override;
+    virtual void RotatePreviewFromDrag(float DeltaYawDegrees) override;
     virtual void NativeOnDeactivated() override;
     /** 可见卡片按钮优先获得焦点，旧页面回退到原有下拉控件。 */
     virtual UWidget* NativeGetDesiredFocusTarget() const override;

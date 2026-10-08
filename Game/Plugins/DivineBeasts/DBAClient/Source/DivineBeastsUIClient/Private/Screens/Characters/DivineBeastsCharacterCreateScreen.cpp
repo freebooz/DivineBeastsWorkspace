@@ -173,3 +173,9 @@ void UDivineBeastsCharacterCreateScreen::HandleCommandCompleted(FGuid, FName) { 
 void UDivineBeastsCharacterCreateScreen::HandleRotateLeft() { if (auto* VM = GetCharacterCreateViewModel()) { VM->RotateCharacterPreview(-30.0f); } }
 void UDivineBeastsCharacterCreateScreen::HandleRotateRight() { if (auto* VM = GetCharacterCreateViewModel()) { VM->RotateCharacterPreview(30.0f); } }
 void UDivineBeastsCharacterCreateScreen::HandleLogout() { if (auto* VM = GetCharacterCreateViewModel()) { VM->Logout(); } }
+
+// 鼠标拖动重用现有本地预览命令，忙碌时不接受交互。
+void UDivineBeastsCharacterCreateScreen::RotatePreviewFromDrag(float DeltaYawDegrees)
+{
+    if (auto* VM = GetCharacterCreateViewModel(); VM && !VM->GetStateRef().bBusy) { VM->RotateCharacterPreview(DeltaYawDegrees); }
+}
