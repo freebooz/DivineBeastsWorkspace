@@ -3,7 +3,7 @@
   "CreationTool": "Monolith MCP",
   "MonolithVersion": "0.20.3",
   "ProjectName": "DivineBeastsArena",
-  "GeneratedAt": "2026-09-28T23:50:15+08:00",
+  "GeneratedAt": "2026-10-08T21:28:43.9436818+08:00",
   "字段说明": {
     "SchemaVersion": "清单结构版本；升级字段结构时递增。",
     "CreationTool": "创建或修改界面二进制资产的唯一工具。",
@@ -46,7 +46,7 @@
       "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate",
       "用途": "持久角色创建、英雄选择与本地三维预览命令页面。",
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterCreateScreen",
-      "WidgetCount": 26,
+      "WidgetCount": 24,
       "CompileErrors": 0,
       "CompileWarnings": 0,
       "Saved": true
@@ -55,10 +55,28 @@
       "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect",
       "用途": "真实角色档案选择与本地预览命令页面。",
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterSelectScreen",
-      "WidgetCount": 23,
+      "WidgetCount": 21,
       "CompileErrors": 0,
       "CompileWarnings": 0,
       "Saved": true
+    },
+    {
+      "用途": "英雄资格磁贴，只提交本地选择意图。",
+      "WidgetCount": 8,
+      "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_HeroChoice",
+      "CompileErrors": 0,
+      "Saved": true,
+      "CompileWarnings": 0,
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterChoiceEntry"
+    },
+    {
+      "用途": "真实角色档案卡片，只投影当前只读快照。",
+      "WidgetCount": 10,
+      "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_CharacterChoice",
+      "CompileErrors": 0,
+      "Saved": true,
+      "CompileWarnings": 0,
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterChoiceEntry"
     }
   ],
   "Verification": {
@@ -86,14 +104,31 @@
     "Date": "2026-10-01",
     "Tool": "Monolith MCP",
     "Version": "0.20.3",
-    "Actions": ["build_ui_from_spec", "set_widget_is_variable", "set_slot_property", "set_widget_property", "compile_widget", "save_packages", "get_widget_tree", "get_saved_asset_state"],
+    "Actions": [
+      "build_ui_from_spec",
+      "set_widget_is_variable",
+      "set_slot_property",
+      "set_widget_property",
+      "compile_widget",
+      "save_packages",
+      "get_widget_tree",
+      "get_saved_asset_state"
+    ],
     "NamedWidgetBindingsVerified": true,
     "InputPolicy": "表单宽320、输入与按钮高36逻辑像素，DPI=1；按状态事件刷新，无业务Tick/HTTP。",
     "TextVisibility": "下拉框和名称输入采用工具支持的颜色格式，实际回读透明度为1；选择列表显示真实档案名称。",
     "EditorRestartReloadVerified": true,
-    "RelatedUIAutomation": {"Passed": 7, "Failed": 0},
+    "RelatedUIAutomation": {
+      "Passed": 7,
+      "Failed": 0
+    },
     "UnrelatedUIAutomationFailure": "Combat.PlayerStatusSnapshot缺少Combat/Momentum属性集；8项全集为7通过、1失败，未伪报全绿。",
-    "AssetRegression": {"ProfilesChecked": 12, "BoneCount": 68, "BaseMaterialsChecked": 2, "Errors": 0},
+    "AssetRegression": {
+      "ProfilesChecked": 12,
+      "BoneCount": 68,
+      "BaseMaterialsChecked": 2,
+      "Errors": 0
+    },
     "EditorAndClientBuildEvidence": "Saved/Validation/FoundationM0/bf4e33ff-04c3-4312-b536-e263f189f84f/Build",
     "CookEvidence": "Saved/Validation/CharacterPreviewFix/20261001/CookStageValidated.log",
     "FinalStageEvidence": "Saved/Validation/CharacterPreviewFix/20261001/StageReleased.log，退出0；使用最新客户端二进制与已验证Cook资产。",
@@ -101,7 +136,11 @@
     "FinalVisualEvidence": "Saved/Validation/CharacterPreviewFix/20261001/SelectPageVerified.png",
     "RuntimeEvidenceRoot": "Saved/Validation/CharacterPreviewFix/20261001",
     "BackendCharacterCreation": "本地测试账号通过真实后端创建PreviewTiger1001，并在重新登录后读取角色列表。",
-    "Limitations": ["创建角色后的新手村分配返回WorldAssignmentUnavailable；末次已有角色选择记录后端确认，但停留ResolveExperience/Submitting，均未完成联机准入。", "桌面自动操作被系统拒绝；引擎截图与命令回读不替代人工鼠标操作或移动设备验收。", "Manny/Quinn是开发原型，未新增正式动画或生肖美术。"]
+    "Limitations": [
+      "创建角色后的新手村分配返回WorldAssignmentUnavailable；末次已有角色选择记录后端确认，但停留ResolveExperience/Submitting，均未完成联机准入。",
+      "桌面自动操作被系统拒绝；引擎截图与命令回读不替代人工鼠标操作或移动设备验收。",
+      "Manny/Quinn是开发原型，未新增正式动画或生肖美术。"
+    ]
   },
   "LatestFixedSizeChange": {
     "Date": "2026-10-01",
@@ -130,5 +169,45 @@
       "未通过窗口自动操作实测拖动缩放；保留人工校验。",
       "本字段记录此前固定尺寸修改；角色创建和选择页已在LatestCharacterPreviewRepair补齐，但登录到Village的完整流程仍未完成。"
     ]
+  },
+  "LatestModernCharacterLayout": {
+    "HeroTileSizeLogicalPixels": [
+      76,
+      60
+    ],
+    "Saved": true,
+    "IndependentCookReloadEvidence": "Saved/Validation/LoginVillageRelease/20261008/ClientModernCookStage.log；独立Cook/Stage/Pak退出0。",
+    "BusinessAuthority": "ViewModel只读快照、既有统一命令端口及真实后端；条目事件不得跳过资格重查。",
+    "CompileWarnings": 0,
+    "Automation": {
+      "Total": 9,
+      "Passed": 8,
+      "Failed": 1,
+      "ExistingFailure": "DivineBeasts.UI.Combat.PlayerStatusSnapshot缺少Combat/Momentum属性集。",
+      "RelatedIdentityTestPassed": true
+    },
+    "Lifetime": "条目重建/页面失活清空身份并解绑；无Tick或HTTP。",
+    "Limitations": [
+      "新手村双客户端联机准入仍需独立验收。",
+      "Manny/Quinn为开发原型；无正式生肖模型及外观定制。",
+      "未完成极小窗口、移动设备和人工视觉签审。"
+    ],
+    "Project": "DivineBeastsArena",
+    "Version": "0.20.3",
+    "NamedWidgetBindingsVerified": true,
+    "CompileErrors": 0,
+    "CharacterCardSizeLogicalPixels": [
+      252,
+      72
+    ],
+    "Date": "2026-10-08",
+    "InputSizeLogicalPixels": [
+      220,
+      36
+    ],
+    "Tool": "Monolith MCP",
+    "Layout": "中央三维角色、左侧十二生肖磁贴、右侧真实档案列表、底部主要操作；深色金色主题。",
+    "EditorAndClientBuildEvidence": "Saved/Validation/FoundationM0/6a5add4e-bd18-4acb-ab61-4cc05ba5dfc4/Build/result.json",
+    "RuntimeEvidence": "Saved/Validation/LoginVillageRelease/20261008/UIEditorModern.log；真实PIE认证后选择页显示当前角色及中央三维预览。"
   }
 }

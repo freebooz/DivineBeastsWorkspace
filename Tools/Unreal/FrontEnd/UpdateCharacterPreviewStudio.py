@@ -66,7 +66,7 @@ volume.set_editor_property('settings', settings)
 
 stage = actors['CharacterPreviewStage']
 pivot = next(c for c in stage.get_components_by_class(unreal.SceneComponent) if c.get_name() == 'CameraPivot')
-# 镜头右侧留出主体，左侧固定宽度表单不遮挡角色；高度仍为平台默认95cm。
-pivot.set_editor_property('relative_location', unreal.Vector(0, 110, 95))
+# 现代角色页把主体放在中央，两侧固定宽度面板展示选项；高度仍为平台默认95cm。
+pivot.set_editor_property('relative_location', unreal.Vector(0, 0, 95))
 assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level(), '保存工作室失败'
 print(json.dumps({'map': PATH, 'lightUnits': 'Lumens', 'fixedExposureLinearBrightness': 16, 'actors': list(actors.keys())}, ensure_ascii=False))
