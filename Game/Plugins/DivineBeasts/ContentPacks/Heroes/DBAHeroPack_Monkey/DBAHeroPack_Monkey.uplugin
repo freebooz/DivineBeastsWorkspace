@@ -2,7 +2,7 @@
   "FileVersion": 3,
   "Version": 1,
   "VersionName": "0.1.0",
-  "FriendlyName": "申猴英雄内容包",
+  "FriendlyName": "DBAHeroPack_Monkey",
   "Description": "申猴英雄内容包；原型阶段承载UE5 Mannequin占位资源，正式阶段在相同插件身份内替换为真实美术，不改变HeroDefinitionId或外观Profile路径。",
   "Category": "DivineBeasts/Content/Hero",
   "CreatedBy": "DivineBeastsWorkspace",

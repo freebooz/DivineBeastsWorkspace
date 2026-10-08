@@ -2,7 +2,7 @@
   "FileVersion": 3,
   "Version": 1,
   "VersionName": "1.0.0",
-  "FriendlyName": "神兽联盟公共用户界面内容包",
+  "FriendlyName": "DBAUIPack_Core",
   "Description": "第三层纯内容插件，持有神兽联盟公共RootLayout、登录页面及后续经批准的共享用户界面资产；界面机制、状态和命令仍由DBAClient提供。",
   "Category": "DivineBeasts.Content.UI",
   "CreatedBy": "DivineBeastsWorkspace",

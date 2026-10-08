@@ -64,3 +64,4 @@ Surface（环境表面材质）同样遵循“机制在平台、项目内容在�
 - 十二生肖技能 VFX 统一遵循 DBAClient/Docs/ZodiacSkillVFXArchitecture.md：代码层只维护 Hero VFX Profile（英雄视觉特效配置）与项目 Catalog（表现目录）规则，具体英雄 VFX 美术归对应 DBAHeroPack_*。真实资产交付时，英雄包内部建议按 VFX/Common、VFX/BasicAttack、VFX/Passive、VFX/Abilities、VFX/Ultimate、VFX/Status、VFX/Movement、VFX/Definitions、VFX/Catalogs 以及 Niagara/Materials/Textures/Meshes/Decals 分类；未交付资源不得创建空资产占位。
 - `F:\\VFX Lib` 第一批复用规划见 `DBAClient/Docs/ZodiacReuseMatrix.md`：平台只迁移去主题化运动/源素材，Rabbit/Horse/Goat/Rooster/Boar 等项目视觉仍归对应 HeroPack；当前 HeroPack 尚无真实技能 Ability，因此不得提前创建空 VFX `.uasset`。
 - 未来按模块拆出的代码能力必须先修改正式代码插件清单，不能伪装为内容插件绕过46个基线。
+- 内容浏览器根目录的显示名来自插件`FriendlyName`。按2026-10-08用户要求，16个内容包均使用自身英文插件身份作为FriendlyName，例如`DBAHeroPack_Tiger`；中文说明与游戏内英雄名称继续保留。只改显示元数据，不迁移挂载点、骨骼、材质或序列化资源身份。
