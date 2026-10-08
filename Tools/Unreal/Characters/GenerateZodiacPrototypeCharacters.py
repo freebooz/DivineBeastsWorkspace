@@ -128,6 +128,10 @@ def ensure_mannequin_mount():
 def ensure_master_material():
     material = unreal.EditorAssetLibrary.load_asset(MASTER_MATERIAL_PATH)
     if material:
+        # Cook不能推断动态覆盖用途，持久化骨骼网格着色器变体。
+        material.set_editor_property("used_with_skeletal_mesh", True)
+        unreal.MaterialEditingLibrary.recompile_material(material)
+        unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False)
         return material
 
     material = get_or_create_asset(
@@ -154,6 +158,7 @@ def ensure_master_material():
         roughness, "", unreal.MaterialProperty.MP_ROUGHNESS
     )
 
+    material.set_editor_property("used_with_skeletal_mesh", True)
     unreal.MaterialEditingLibrary.recompile_material(material)
     unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False)
     return material
@@ -240,7 +245,8 @@ def ensure_appearance_profile(hero, material):
     profile.set_editor_property("development_placeholder", True)
     profile.set_editor_property("development_tint", hex_to_color(hero["colorHex"]))
     profile.set_editor_property("mesh_relative_location", unreal.Vector(0.0, 0.0, -90.0))
-    profile.set_editor_property("mesh_relative_rotation", unreal.Rotator(0.0, -90.0, 0.0))
+    # Python参数为Roll/Pitch/Yaw，与C++不同；使用命名参数避免模型横倒。
+    profile.set_editor_property("mesh_relative_rotation", unreal.Rotator(roll=0.0, pitch=0.0, yaw=-90.0))
     profile.set_editor_property("mesh_relative_scale", unreal.Vector(1.0, 1.0, 1.0))
 
     unreal.EditorAssetLibrary.save_loaded_asset(profile, only_if_is_dirty=False)
@@ -299,6 +305,14 @@ def validate_generated_assets(manifest):
                 missing.append(path)
     if missing:
         fail("以下生成资产缺失: " + ", ".join(missing))
+    # 文件存在不能证明迁移引用完整；禁止再次把断骨架或旋转错误标记为生成成功。
+    for hero in manifest["heroes"]:
+        suffix = hero["heroId"].split(".")[-1]
+        profile = unreal.load_asset("/" + hero["pack"] + "/Characters/DA_Appearance_Zodiac_" + suffix)
+        rotation = profile.get_editor_property("mesh_relative_rotation")
+        mesh = profile.get_editor_property("skeletal_mesh")
+        if not mesh or not mesh.get_editor_property("skeleton") or abs(rotation.pitch) > 0.01 or abs(rotation.yaw + 90.0) > 0.01:
+            fail("外观骨架/旋转校验失败，先通过Monolith恢复既定引用: " + suffix)
 
 
 def main():
@@ -324,4 +338,5 @@ def main():
     log("十二生肖原型角色资产生成完成。")
 
 
-main()
+if __name__ == "__main__":
+    main()

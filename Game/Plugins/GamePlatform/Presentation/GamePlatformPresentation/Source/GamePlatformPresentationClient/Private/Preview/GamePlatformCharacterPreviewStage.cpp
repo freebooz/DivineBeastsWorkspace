@@ -84,6 +84,13 @@ bool AGamePlatformCharacterPreviewStage::ApplyPreviewAppearance(
     }
 
     PreviewMesh->SetAnimInstanceClass(AnimInstanceClass);
+    // 外观偏移通常以胶囊中心为原点，而舞台以脚底为原点。
+    // 仅在本地组件按真实网格包围盒归零高度，避免复用胶囊偏移截腿；
+    // 不修改外观资产、权威碰撞或角色Actor世界坐标。
+    const FBox PreviewBounds = PreviewMesh->CalcBounds(PreviewMesh->GetRelativeTransform()).GetBox();
+    FVector GroundedLocation = PreviewMesh->GetRelativeLocation();
+    GroundedLocation.Z -= PreviewBounds.Min.Z;
+    PreviewMesh->SetRelativeLocation(GroundedLocation);
     return true;
 }
 

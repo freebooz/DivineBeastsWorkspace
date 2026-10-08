@@ -130,7 +130,7 @@ private:
         FName ScreenId,
         UGamePlatformUIScreen* Screen);
 
-    /** 平台页面打开失败事件；清理对应请求，等待资源/RootLayout后续重新触发。 */
+    /** 平台页面打开失败事件；保留原页面并显示资源错误，不改写业务状态。 */
     UFUNCTION()
     void HandlePrimaryScreenOpenFailed(
         FGuid RequestId,
@@ -165,6 +165,8 @@ private:
 
     /** 当前由项目主路由持有的页面；弱引用不延长 Widget 生命周期。 */
     TWeakObjectPtr<UGamePlatformUIScreen> ActivePrimaryScreen;
+    /** 换页期间保留旧页弱引用，加载失败时仍提供可见错误反馈。 */
+    TWeakObjectPtr<UGamePlatformUIScreen> ReplacingPrimaryScreen;
     FName ActivePrimaryScreenId = NAME_None;
 
     /** 正在异步打开的主页面身份与请求。 */

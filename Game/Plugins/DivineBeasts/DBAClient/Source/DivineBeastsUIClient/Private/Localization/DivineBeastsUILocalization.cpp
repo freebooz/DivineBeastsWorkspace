@@ -19,3 +19,23 @@ FText FDivineBeastsUILocalization::ErrorCodeToText(FName ErrorCode)
 }
 
 #undef LOCTEXT_NAMESPACE
+
+#define LOCTEXT_NAMESPACE "DivineBeastsHeroNames"
+FText FDivineBeastsUILocalization::HeroNameToText(FName HeroDefinitionId)
+{
+    // 显示文案属于项目客户端；这里不决定创建资格，不把生肖规则带入平台。
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Rat")) { return LOCTEXT("Rat", "子鼠 · 影牙"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Ox")) { return LOCTEXT("Ox", "丑牛 · 玄角"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Tiger")) { return LOCTEXT("Tiger", "寅虎 · 白君"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Rabbit")) { return LOCTEXT("Rabbit", "卯兔 · 玉灵"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Dragon")) { return LOCTEXT("Dragon", "辰龙 · 苍龙"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Snake")) { return LOCTEXT("Snake", "巳蛇 · 幽鳞"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Horse")) { return LOCTEXT("Horse", "午马 · 雷蹄"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Goat")) { return LOCTEXT("Goat", "未羊 · 玉角"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Monkey")) { return LOCTEXT("Monkey", "申猴 · 灵猴"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Rooster")) { return LOCTEXT("Rooster", "酉鸡 · 金鸣"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Dog")) { return LOCTEXT("Dog", "戌狗 · 天犬"); }
+    if (HeroDefinitionId == TEXT("Hero.Zodiac.Boar")) { return LOCTEXT("Boar", "亥猪 · 玄鬃"); }
+    return LOCTEXT("UnknownHero", "未知英雄");
+}
+#undef LOCTEXT_NAMESPACE

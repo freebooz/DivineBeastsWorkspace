@@ -112,4 +112,6 @@ private:
 
     /** Login调用返回前若已收到完成事件，返回后不得重新标记为待处理。 */
     bool bLoginCompletedDuringSubmit = false;
+    /** 仅开发回归的一次性提交意图；Shipping不会读取启动参数或环境密码。 */
+    bool bDevelopmentAutoLoginRequested = false;
 };

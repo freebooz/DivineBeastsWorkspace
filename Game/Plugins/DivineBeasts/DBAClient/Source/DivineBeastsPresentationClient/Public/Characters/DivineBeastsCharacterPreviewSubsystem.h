@@ -5,6 +5,7 @@
 #include "DivineBeastsCharacterPreviewSubsystem.generated.h"
 
 class AGamePlatformCharacterPreviewStage;
+class ADefaultPawn;
 class UDivineBeastsCharacterAppearanceProfile;
 class ULevelStreamingDynamic;
 class UMaterialInstanceDynamic;
@@ -86,6 +87,11 @@ private:
 
     UPROPERTY(Transient)
     TWeakObjectPtr<AActor> PreviousViewTarget;
+
+    /** 仅借用当前本地默认观测Pawn的可见性，避免球体遮挡脚部；退出时恢复原值。 */
+    UPROPERTY(Transient)
+    TWeakObjectPtr<ADefaultPawn> HiddenPreviewObserver;
+    bool bObserverWasHidden = false;
 
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsCharacterAppearanceProfile> PendingProfile = nullptr;

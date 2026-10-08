@@ -1,7 +1,7 @@
 {
   "EngineVersion": "5.8.0",
   "Patch": "UE5.8-HttpRedirectPolicy.patch",
-  "PatchSHA256": "0BB62D35AB3A3C55736C92309A804E418B3773BB88DE1579332C3D5A0297D9C9",
+  "PatchSHA256": "8F78CDD1FB4E8E02720F90519F7154C8C546CB3C00BC345B53E2B34E885C7F35",
   "Files": [
     {
       "Path": "Engine/Source/Runtime/Online/HTTP/Public/Interfaces/IHttpRequest.h",
@@ -21,7 +21,7 @@
     {
       "Path": "Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp",
       "BeforeSHA256": null,
-      "AfterSHA256": "26E39B9061D0526B47DA802CB6763EF09434183AC5C06278E107C8310FA1C672"
+      "AfterSHA256": "2861D419369AA45D62AC9FE8AC9823A9CCF706A7D9ED9B204E51F6C6AF26225B"
     }
   ]
 }

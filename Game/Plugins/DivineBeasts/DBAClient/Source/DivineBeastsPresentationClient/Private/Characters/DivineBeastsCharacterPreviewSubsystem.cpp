@@ -7,6 +7,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/DefaultPawn.h"
 #include "Loading/GamePlatformAssetLoader.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Preview/GamePlatformCharacterPreviewStage.h"
@@ -87,6 +88,14 @@ void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewScene()
     RequestedHeroDefinitionId = NAME_None;
     PendingProfile = nullptr;
     DevelopmentDynamicMaterials.Reset();
+
+    // 默认观测球体只是本地前端宿主，不是权威角色。只恢复本次借用的实例，
+    // 不隐藏其他玩家或正式ACharacter，不改变碰撞、控制及网络复制。
+    if (ADefaultPawn* Observer = HiddenPreviewObserver.Get())
+    {
+        Observer->SetActorHiddenInGame(bObserverWasHidden);
+    }
+    HiddenPreviewObserver.Reset();
 
     ULocalPlayer* LocalPlayer = GetLocalPlayer();
     APlayerController* Controller =
@@ -204,6 +213,8 @@ void UDivineBeastsCharacterPreviewSubsystem::HandleWorldCleanup(
         PreviewStreamingLevel = nullptr;
         PreviewStage.Reset();
         PreviousViewTarget.Reset();
+        // 世界销毁时原观测Pawn随世界退出，不向新世界实例恢复旧可见性。
+        HiddenPreviewObserver.Reset();
         PendingProfile = nullptr;
         DevelopmentDynamicMaterials.Reset();
     }
@@ -223,8 +234,17 @@ void UDivineBeastsCharacterPreviewSubsystem::ResolvePreviewStage()
         return;
     }
 
+    // 流送卸载是异步的：刚退出的关卡Actor仍可能出现在世界迭代器里。
+    // 只接受当前实例已显示的关卡或显式打开的持久工作室；拒绝旧卸载关卡，
+    // 避免退出后立即重进绑定一个即将销毁的舞台，并隔离其他本地玩家实例。
+    ULevel* OwnedLevel = PreviewStreamingLevel && PreviewStreamingLevel->IsLevelVisible()
+        ? PreviewStreamingLevel->GetLoadedLevel() : nullptr;
     for (TActorIterator<AGamePlatformCharacterPreviewStage> It(World); It; ++It)
     {
+        if (It->GetLevel() != World->PersistentLevel && It->GetLevel() != OwnedLevel)
+        {
+            continue;
+        }
         PreviewStage = *It;
         break;
     }
@@ -244,6 +264,16 @@ void UDivineBeastsCharacterPreviewSubsystem::BindPreviewCamera()
     if (!PreviousViewTarget.IsValid())
     {
         PreviousViewTarget = Controller->GetViewTarget();
+    }
+    if (!HiddenPreviewObserver.IsValid())
+    {
+        if (ADefaultPawn* Observer = Cast<ADefaultPawn>(Controller->GetPawn());
+            Observer && Observer->IsLocallyControlled())
+        {
+            bObserverWasHidden = Observer->IsHidden();
+            HiddenPreviewObserver = Observer;
+            Observer->SetActorHiddenInGame(true);
+        }
     }
     Controller->SetViewTarget(PreviewStage.Get());
 }

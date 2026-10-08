@@ -7,6 +7,7 @@
 #include "Localization/DivineBeastsUILocalization.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "HAL/PlatformMisc.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
 
 UDivineBeastsLoginViewModel*
@@ -20,6 +21,10 @@ void UDivineBeastsLoginScreen::NativeOnActivated()
 {
     Super::NativeOnActivated();
     BindLoginEvents();
+#if !UE_BUILD_SHIPPING
+    // 仅显式开发回归启动允许自动提交一次；仍走真实认证命令和后端校验。
+    bDevelopmentAutoLoginRequested = FParse::Param(FCommandLine::Get(), TEXT("DBADevAutoLogin"));
+#endif
     ApplyDevelopmentCredentialDefaults();
     RefreshLoginPresentation();
 }
@@ -39,10 +44,9 @@ void UDivineBeastsLoginScreen::ApplyDevelopmentCredentialDefaults()
         FCommandLine::Get(),
         TEXT("DBADevLoginUser="),
         DevelopmentUser);
-    const bool bHasSecret = FParse::Value(
-        FCommandLine::Get(),
-        TEXT("DBADevLoginSecret="),
-        DevelopmentSecret);
+    // 命令行会被UE记录，密码改从仅本进程继承的环境读取，禁止出现在启动参数。
+    DevelopmentSecret = FPlatformMisc::GetEnvironmentVariable(TEXT("DBA_DEV_LOGIN_SECRET"));
+    const bool bHasSecret = !DevelopmentSecret.IsEmpty();
 
     if (bHasUser && AccountInput->GetText().IsEmpty())
     {
@@ -64,6 +68,7 @@ void UDivineBeastsLoginScreen::NativeOnDeactivated()
     UnbindLoginEvents();
     ActiveLoginRequestId.Invalidate();
     ClearSensitiveInput();
+    bDevelopmentAutoLoginRequested = false;
     Super::NativeOnDeactivated();
 }
 
@@ -183,7 +188,8 @@ void UDivineBeastsLoginScreen::RefreshLoginPresentation()
 
     if (ErrorText)
     {
-        FText Message = State ? State->ErrorText : FText::GetEmpty();
+        FText Message = GetPageLoadError();
+        if (Message.IsEmpty()) { Message = State ? State->ErrorText : FText::GetEmpty(); }
         if (Message.IsEmpty() && LoginViewModel)
         {
             const FName ErrorCode = LoginViewModel->GetLastCommandErrorCode();
@@ -199,6 +205,14 @@ void UDivineBeastsLoginScreen::RefreshLoginPresentation()
                 ? ESlateVisibility::Collapsed
                 : ESlateVisibility::SelfHitTestInvisible);
     }
+#if !UE_BUILD_SHIPPING
+    // 先消费标志再提交，防止密码清空事件或同步完成回调再次进入此分支。
+    if (bDevelopmentAutoLoginRequested && bCanSubmit)
+    {
+        bDevelopmentAutoLoginRequested = false;
+        HandleLoginClicked();
+    }
+#endif
 }
 
 void UDivineBeastsLoginScreen::ClearSensitiveInput()

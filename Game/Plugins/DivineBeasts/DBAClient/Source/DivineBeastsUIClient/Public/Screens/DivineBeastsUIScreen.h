@@ -22,7 +22,14 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsUIScreen
 {
     GENERATED_BODY()
 
+public:
+    /** 页面资源失败时的可见反馈，仅为客户端显示状态，不改变应用流程或认证状态。 */
+    void ShowPageLoadError(const FText& Message);
+    const FText& GetPageLoadError() const { return PageLoadError; }
+
 protected:
     virtual void NativeOnActivated() override;
     virtual void NativeOnDeactivated() override;
+private:
+    FText PageLoadError;
 };

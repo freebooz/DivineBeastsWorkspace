@@ -145,6 +145,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Unreal\Characters\Generate-Zodi
 
 当前验收基线要求：公共 Manny、Quinn、Skeleton、PhysicsAsset 均存在，且 Hero Definition / Appearance Profile / 原型颜色材质分别为 `12 / 12 / 12`。
 
+2026-10-01补充：资产存在不代表引用完整。公共两网格必须关联`SK_Mannequin_Skeleton`（当前68根骨骼，含root/pelvis/head）和既定物理资产，母材质必须启用SkeletalMesh用途，纹理采样不得为空。十二Profile必须为Pitch=0、Yaw=-90、Roll=0；Python生成器使用具名`unreal.Rotator`参数，避免把位置参数次序误当C++次序。`RepairCharacterPreviewAssets.py`只修复既定表现资产，骨架只读字段先由Monolith属性动作恢复；`Tests/Assets/ValidateCharacterPreviewAssets.py`通过锁定编辑器执行只读回归，不连接后端或修改权威定义。预览舞台的脚底高度只调整本地组件，不改变Profile中用于角色胶囊的偏移。原型仍没有正式动画蓝图，模型/材质/骨架修复不代表正式美术已交付。
+
 ## 5. 后期真实角色替换
 
 每个生肖真实模型完成后，只修改对应 `DBAHeroPack_<Zodiac>` 的 Appearance Profile：

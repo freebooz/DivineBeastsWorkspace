@@ -133,7 +133,7 @@ new file mode 100644
 index 0000000..ace60d2
 --- /dev/null
 +++ b/Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp
-@@ -0,0 +1,169 @@
+@@ -0,0 +1,170 @@
 +// Copyright Epic Games, Inc. All Rights Reserved.
 +
 +#if WITH_DEV_AUTOMATION_TESTS && WITH_CURL
@@ -150,8 +150,9 @@ index 0000000..ace60d2
 +class FRedirectPolicyLifecycleRequest final : public FCurlHttpRequest
 +{
 +public:
++	using FHttpRequestCommon::CleanupRequest; // 仅测试类公开基类虚函数，调用仍分派至Curl私有覆盖。
 +	bool SetupForTest() { return SetupRequest(); }
-+	void CleanupForTest() { (this->*(&FRedirectPolicyLifecycleRequest::FHttpRequestCommon::CleanupRequest))(); }
++	void CleanupForTest() { CleanupRequest(); }
 +};
 +
 +IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHttpRedirectPolicyContractTest,

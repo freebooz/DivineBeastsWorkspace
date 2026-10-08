@@ -6,6 +6,8 @@
 
 - `/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout`：每个本地玩家的根布局，承载平台定义的HUD、WorldProjection、Feedback、Screen、Modal、Notification、Loading、System和Debug九层。
 - `/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login`：账号密码登录页面，仅消费 `UDivineBeastsLoginViewModel` 的只读状态和命令。
+- `/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate`：持久角色创建页，英雄资格来自只读快照，未提交名称只存在输入控件，提交既有创建命令。
+- `/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect`：持久角色选择页，列表来自真实档案，提交既有选择命令；两页均提供本地预览旋转与返回登录。
 
 ## 生成和修改规则
 
@@ -23,4 +25,8 @@
 - CommonUI审计保留1条通用焦点属性警告：项目没有工具所寻找的`DesiredFocusTargetName`属性，而是由平台页面基类的原生焦点契约和页面目录中的`AccountInput`完成初始焦点。该警告不等同于运行验证通过，仍须在PIE中复核真实焦点。
 - `DivineBeastsUIClient` Editor定向构建成功；重启编辑器后7项`DivineBeasts.UI`原生自动化测试全部通过。测试曾真实发现并促使修复初始`NAME_None`路由错误、命令完成事件被修订号变化吞掉以及未交付移动端资产路径被错误生成的问题。
 
-本记录只证明资产创建、编辑器编译、保存和结构回读。当前尚未完成PIE登录交互、真实后端认证、客户端Cook、移动设备适配或人工视觉签审。
+以上2026-09-28记录只证明当时资产创建、编辑器编译、保存和结构回读；后续证据见生成清单的独立更新记录，不能覆盖历史验证边界。
+
+## 2026-10-01 角色页面更新
+
+两页分别为26/23个节点，父类为`DivineBeastsCharacterCreateScreen`和`DivineBeastsCharacterSelectScreen`。Monolith编译、保存、重启回读和独立Cook已执行。固定表单宽320、控件高36逻辑像素；视口DPI为1，窗口变化只改变锚点位置。原生事件处理不轮询业务、不直接HTTP、不保存角色权威状态。页面资源失败保留当前页面和中文错误，避免认证后只剩裸三维视口。实际运行、人工审核和移动适配边界见清单及Saved验证记录。

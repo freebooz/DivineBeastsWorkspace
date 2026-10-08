@@ -41,6 +41,24 @@
       "PasswordDefault": "",
       "PasswordMaskEnabled": true,
       "Saved": true
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate",
+      "用途": "持久角色创建、英雄选择与本地三维预览命令页面。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterCreateScreen",
+      "WidgetCount": 26,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "Saved": true
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect",
+      "用途": "真实角色档案选择与本地预览命令页面。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterSelectScreen",
+      "WidgetCount": 23,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "Saved": true
     }
   ],
   "Verification": {
@@ -63,5 +81,54 @@
     "未完成真实后端认证服务联调。",
     "未执行客户端Cook、移动设备适配和人工视觉签审。",
     "清单只记录资产级证据，不替代引擎构建和运行验收。"
-  ]
+  ],
+  "LatestCharacterPreviewRepair": {
+    "Date": "2026-10-01",
+    "Tool": "Monolith MCP",
+    "Version": "0.20.3",
+    "Actions": ["build_ui_from_spec", "set_widget_is_variable", "set_slot_property", "set_widget_property", "compile_widget", "save_packages", "get_widget_tree", "get_saved_asset_state"],
+    "NamedWidgetBindingsVerified": true,
+    "InputPolicy": "表单宽320、输入与按钮高36逻辑像素，DPI=1；按状态事件刷新，无业务Tick/HTTP。",
+    "TextVisibility": "下拉框和名称输入采用工具支持的颜色格式，实际回读透明度为1；选择列表显示真实档案名称。",
+    "EditorRestartReloadVerified": true,
+    "RelatedUIAutomation": {"Passed": 7, "Failed": 0},
+    "UnrelatedUIAutomationFailure": "Combat.PlayerStatusSnapshot缺少Combat/Momentum属性集；8项全集为7通过、1失败，未伪报全绿。",
+    "AssetRegression": {"ProfilesChecked": 12, "BoneCount": 68, "BaseMaterialsChecked": 2, "Errors": 0},
+    "EditorAndClientBuildEvidence": "Saved/Validation/FoundationM0/bf4e33ff-04c3-4312-b536-e263f189f84f/Build",
+    "CookEvidence": "Saved/Validation/CharacterPreviewFix/20261001/CookStageValidated.log",
+    "FinalStageEvidence": "Saved/Validation/CharacterPreviewFix/20261001/StageReleased.log，退出0；使用最新客户端二进制与已验证Cook资产。",
+    "PreviewLifecycleVerified": "退出后原始DefaultPawn可见性恢复；立即重进后等待新关卡，只有当前可见实例被选为舞台，实际相机目标及完整角色截图回读通过。",
+    "FinalVisualEvidence": "Saved/Validation/CharacterPreviewFix/20261001/SelectPageVerified.png",
+    "RuntimeEvidenceRoot": "Saved/Validation/CharacterPreviewFix/20261001",
+    "BackendCharacterCreation": "本地测试账号通过真实后端创建PreviewTiger1001，并在重新登录后读取角色列表。",
+    "Limitations": ["创建角色后的新手村分配返回WorldAssignmentUnavailable；末次已有角色选择记录后端确认，但停留ResolveExperience/Submitting，均未完成联机准入。", "桌面自动操作被系统拒绝；引擎截图与命令回读不替代人工鼠标操作或移动设备验收。", "Manny/Quinn是开发原型，未新增正式动画或生肖美术。"]
+  },
+  "LatestFixedSizeChange": {
+    "Date": "2026-10-01",
+    "Tool": "Monolith MCP",
+    "Version": "0.20.3",
+    "Project": "DivineBeastsArena",
+    "LayoutPolicy": "窗口变化仅重排位置，不按窗口缩放输入控件。",
+    "FormSize": [
+      520,
+      430
+    ],
+    "CenterAnchor": [
+      0.5,
+      0.5
+    ],
+    "AutoSize": false,
+    "ViewportScale": 1,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "Saved": true,
+    "ReadBackWidgetCount": 13,
+    "IndependentCookReload": "20261001 ClientCompleteCookStage.log，真实新进程Cook和Stage退出0，发布客户端已加载Login并聚焦AccountInput。",
+    "Preview960": "Saved/Validation/LoginVillageRelease/20261001/LoginFixed960.png",
+    "Preview1920": "Saved/Validation/LoginVillageRelease/20261001/LoginFixed1920.png",
+    "RuntimeLimitations": [
+      "未通过窗口自动操作实测拖动缩放；保留人工校验。",
+      "本字段记录此前固定尺寸修改；角色创建和选择页已在LatestCharacterPreviewRepair补齐，但登录到Village的完整流程仍未完成。"
+    ]
+  }
 }

@@ -9,6 +9,7 @@
 #include "Loading/GamePlatformLoadingScreenService.h"
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 #include "Screens/DivineBeastsUIScreenCatalog.h"
+#include "Screens/DivineBeastsUIScreen.h"
 #include "Screens/GamePlatformHUDWidget.h"
 #include "Screens/GamePlatformUIScreen.h"
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
@@ -611,13 +612,6 @@ void UDivineBeastsUIClientSubsystem::SyncPrimaryScreen()
         OpeningPrimaryScreenId = NAME_None;
     }
 
-    if (UGamePlatformUIScreen* Active = ActivePrimaryScreen.Get())
-    {
-        ActivePrimaryScreen.Reset();
-        ActivePrimaryScreenId = NAME_None;
-        PlatformUI->CloseScreen(Active);
-    }
-
     if (!PlatformUI->HasScreenDefinition(DesiredScreenId))
     {
         return;
@@ -633,6 +627,9 @@ void UDivineBeastsUIClientSubsystem::SyncPrimaryScreen()
     // 先记录 ScreenId，再调用平台异步打开。平台可能在参数/Root/Layer无效时同步广播失败；
     // 失败处理会立即清空 OpeningPrimaryScreenId，因此调用返回后不能盲目记录一个已终结请求。
     OpeningPrimaryScreenId = DesiredScreenId;
+    // 下一页成功加载前保留旧页。CommonUI激活新页时会先失活旧页，
+    // 额外弱引用仅用于成功后从栈移除或失败时反馈，不延长资源租约生命周期。
+    ReplacingPrimaryScreen = ActivePrimaryScreen;
     const FGamePlatformUIAsyncRequest Request =
         PlatformUI->OpenScreenAsync(
             DesiredScreenId,
@@ -662,6 +659,11 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpened(
     ActivePrimaryScreenId = IsValid(Screen)
         ? ScreenId
         : NAME_None;
+    if (UGamePlatformUIScreen* Previous = ReplacingPrimaryScreen.Get(); Previous && Previous != Screen)
+    {
+        PlatformUI->CloseScreen(Previous);
+    }
+    ReplacingPrimaryScreen.Reset();
 }
 
 void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed(
@@ -669,7 +671,7 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed(
     FName ScreenId,
     FText Reason)
 {
-    // Reason 只由平台用于界面/诊断展示。本层不把资源路径或加载内部错误写入业务状态。
+    // 内部资源错误只写诊断；用户文案不携带资源路径，也不污染业务快照。
     if (ScreenId != OpeningPrimaryScreenId ||
         (OpeningPrimaryRequestId.IsValid() &&
          RequestId != OpeningPrimaryRequestId))
@@ -679,6 +681,12 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed(
 
     OpeningPrimaryRequestId.Invalidate();
     OpeningPrimaryScreenId = NAME_None;
+    UE_LOG(LogTemp, Warning, TEXT("[DBA UI] Page open failed: %s: %s"), *ScreenId.ToString(), *Reason.ToString());
+    if (UDivineBeastsUIScreen* Previous = Cast<UDivineBeastsUIScreen>(ReplacingPrimaryScreen.Get()))
+    {
+        Previous->ShowPageLoadError(FText::FromString(TEXT("下一页面加载失败，请重新启动客户端后重试。")));
+    }
+    ReplacingPrimaryScreen.Reset();
 }
 
 void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
