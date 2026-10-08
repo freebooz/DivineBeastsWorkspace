@@ -15,6 +15,8 @@ UDivineBeastsCharacterCreateScreen::GetCharacterCreateViewModel() const
 #include "Components/EditableTextBox.h"
 #include "Components/TextBlock.h"
 #include "Localization/DivineBeastsUILocalization.h"
+#include "Components/WrapBox.h"
+#include "Screens/Characters/DivineBeastsCharacterChoiceEntry.h"
 
 void UDivineBeastsCharacterCreateScreen::NativeOnActivated()
 {
@@ -46,6 +48,8 @@ void UDivineBeastsCharacterCreateScreen::NativeOnDeactivated()
         VM->OnViewStateChanged.RemoveDynamic(this, &ThisClass::HandleStateChanged);
         VM->OnCommandCompleted.RemoveDynamic(this, &ThisClass::HandleCommandCompleted);
     }
+    ClearHeroChoices();
+    PresentedHeroIds.Reset();
     Super::NativeOnDeactivated();
 }
 
@@ -71,6 +75,7 @@ void UDivineBeastsCharacterCreateScreen::RefreshPresentation()
             HeroOptions->SetSelectedIndex(Index);
             VM->PreviewCharacterHero(PresentedHeroIds[Index]);
         }
+        RebuildHeroChoices();
     }
     const bool bValidInput = PresentedHeroIds.IsValidIndex(HeroOptions->GetSelectedIndex())
         && !CharacterNameInput->GetText().ToString().TrimStartAndEnd().IsEmpty();
@@ -84,6 +89,57 @@ void UDivineBeastsCharacterCreateScreen::RefreshPresentation()
     if (Error.IsEmpty()) { Error = FDivineBeastsUILocalization::ErrorCodeToText(VM->GetLastCommandErrorCode()); }
     ErrorText->SetText(Error);
     ErrorText->SetVisibility(Error.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
+    RefreshHeroChoices();
+}
+
+void UDivineBeastsCharacterCreateScreen::ClearHeroChoices()
+{
+    // 先关闭输入并解除意图订阅，再移除视觉树；旧条目不能操作新页面。
+    for (UDivineBeastsCharacterChoiceEntry* Entry : ChoiceEntries) { if (Entry) { Entry->ResetChoice(); Entry->OnChoiceRequested.RemoveAll(this); } }
+    ChoiceEntries.Reset();
+    if (HeroChoices) { HeroChoices->ClearChildren(); }
+}
+void UDivineBeastsCharacterCreateScreen::RebuildHeroChoices()
+{
+    ClearHeroChoices();
+    if (!HeroChoices || !ChoiceEntryClass) { return; }
+    for (const FName Id : PresentedHeroIds)
+    {
+        auto* Entry = CreateWidget<UDivineBeastsCharacterChoiceEntry>(GetOwningPlayer(), ChoiceEntryClass);
+        if (!Entry) { continue; }
+        const FText Name = FDivineBeastsUILocalization::HeroNameToText(Id);
+        FString Family, Epithet;
+        Name.ToString().Split(TEXT(" · "), &Family, &Epithet);
+        Entry->ConfigureChoice(Id.ToString(), Name, {}, FText::FromString(Family.Right(1)));
+        Entry->OnChoiceRequested.AddUObject(this, &ThisClass::HandleChoiceRequested);
+        HeroChoices->AddChildToWrapBox(Entry);
+        ChoiceEntries.Add(Entry);
+    }
+}
+void UDivineBeastsCharacterCreateScreen::RefreshHeroChoices()
+{
+    auto* VM = GetCharacterCreateViewModel();
+    if (!VM) { return; }
+    const int32 Selected = HeroOptions->GetSelectedIndex();
+    const FName Id = PresentedHeroIds.IsValidIndex(Selected) ? PresentedHeroIds[Selected] : NAME_None;
+    // 只有真实磁贴全部生成成功才隐藏兼容控件，资源缺失时保留可操作回退。
+    const bool bHasChoices = !ChoiceEntries.IsEmpty() && ChoiceEntries.Num() == PresentedHeroIds.Num();
+    HeroOptions->SetVisibility(bHasChoices ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    for (UDivineBeastsCharacterChoiceEntry* Entry : ChoiceEntries)
+    {
+        Entry->SetChoiceEnabled(!VM->GetStateRef().bBusy);
+        Entry->SetChoiceSelected(Entry->GetChoiceIdentity() == Id.ToString());
+    }
+    if (SelectedHeroName) { SelectedHeroName->SetText(Id.IsNone() ? FText::GetEmpty() : FDivineBeastsUILocalization::HeroNameToText(Id)); }
+}
+void UDivineBeastsCharacterCreateScreen::HandleChoiceRequested(UDivineBeastsCharacterChoiceEntry* Entry)
+{
+    auto* VM = GetCharacterCreateViewModel();
+    if (!Entry || !VM || VM->GetStateRef().bBusy) { return; }
+    const FName Id(*Entry->GetChoiceIdentity());
+    if (!VM->GetStateRef().CreateHeroOptions.ContainsByPredicate([Id](const auto& Item) { return Item.HeroDefinitionId == Id; })) { return; }
+    const int32 Index = PresentedHeroIds.IndexOfByKey(Id);
+    if (Index != INDEX_NONE) { HeroOptions->SetSelectedIndex(Index); }
 }
 
 void UDivineBeastsCharacterCreateScreen::HandleCreate()

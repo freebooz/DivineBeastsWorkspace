@@ -14,6 +14,9 @@ UDivineBeastsCharacterSelectScreen::GetCharacterSelectViewModel() const
 #include "Components/ComboBoxString.h"
 #include "Components/TextBlock.h"
 #include "Localization/DivineBeastsUILocalization.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
+#include "Screens/Characters/DivineBeastsCharacterChoiceEntry.h"
 
 void UDivineBeastsCharacterSelectScreen::NativeOnActivated()
 {
@@ -29,6 +32,11 @@ void UDivineBeastsCharacterSelectScreen::NativeOnActivated()
         VM->OnCommandCompleted.AddUniqueDynamic(this, &ThisClass::HandleCommandCompleted);
     }
     RefreshPresentation();
+    const int32 Index = CharacterList->GetSelectedIndex();
+    if (auto* VM = GetCharacterSelectViewModel(); VM && VM->GetStateRef().Characters.IsValidIndex(Index))
+    {
+        VM->PreviewCharacterHero(VM->GetStateRef().Characters[Index].HeroDefinitionId);
+    }
 }
 void UDivineBeastsCharacterSelectScreen::NativeOnDeactivated()
 {
@@ -42,6 +50,8 @@ void UDivineBeastsCharacterSelectScreen::NativeOnDeactivated()
         VM->OnViewStateChanged.RemoveDynamic(this, &ThisClass::HandleStateChanged);
         VM->OnCommandCompleted.RemoveDynamic(this, &ThisClass::HandleCommandCompleted);
     }
+    ClearCharacterChoices();
+    PresentedCharacterIds.Reset();
     Super::NativeOnDeactivated();
 }
 void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
@@ -52,6 +62,7 @@ void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
     const auto& State = VM->GetStateRef();
     const int32 OldIndex = CharacterList->GetSelectedIndex();
     const FString OldId = PresentedCharacterIds.IsValidIndex(OldIndex) ? PresentedCharacterIds[OldIndex] : FString();
+    const TArray<FString> PreviousIds = PresentedCharacterIds;
     PresentedCharacterIds.Reset();
     CharacterList->ClearOptions();
     int32 SelectedIndex = 0;
@@ -64,6 +75,7 @@ void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
         if (Item.CharacterId == OldId || (OldId.IsEmpty() && Item.bSelected)) { SelectedIndex = Index; }
     }
     if (PresentedCharacterIds.IsValidIndex(SelectedIndex)) { CharacterList->SetSelectedIndex(SelectedIndex); }
+    if (PreviousIds != PresentedCharacterIds || ChoiceEntries.Num() != PresentedCharacterIds.Num()) { RebuildCharacterChoices(); }
     const int32 Index = CharacterList->GetSelectedIndex();
     const bool bEnabled = State.Characters.IsValidIndex(Index) && State.Characters[Index].bEnabled;
     SelectButton->SetIsEnabled(VM->CanSubmitSelection() && bEnabled);
@@ -75,6 +87,70 @@ void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
     if (Error.IsEmpty()) { Error = FDivineBeastsUILocalization::ErrorCodeToText(VM->GetLastCommandErrorCode()); }
     ErrorText->SetText(Error);
     ErrorText->SetVisibility(Error.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
+    RefreshCharacterChoices();
+}
+void UDivineBeastsCharacterSelectScreen::ClearCharacterChoices()
+{
+    for (UDivineBeastsCharacterChoiceEntry* Entry : ChoiceEntries) { if (Entry) { Entry->ResetChoice(); Entry->OnChoiceRequested.RemoveAll(this); } }
+    ChoiceEntries.Reset();
+    if (CharacterChoices) { CharacterChoices->ClearChildren(); }
+}
+void UDivineBeastsCharacterSelectScreen::RebuildCharacterChoices()
+{
+    ClearCharacterChoices();
+    if (!CharacterChoices || !ChoiceEntryClass) { return; }
+    for (const FString& Id : PresentedCharacterIds)
+    {
+        auto* Entry = CreateWidget<UDivineBeastsCharacterChoiceEntry>(GetOwningPlayer(), ChoiceEntryClass);
+        if (!Entry) { continue; }
+        Entry->ConfigureChoice(Id, {}, {}, {});
+        Entry->OnChoiceRequested.AddUObject(this, &ThisClass::HandleChoiceRequested);
+        auto* ChoiceSlot = CharacterChoices->AddChildToVerticalBox(Entry);
+        ChoiceSlot->SetPadding(FMargin(0, 0, 0, 8));
+        ChoiceEntries.Add(Entry);
+    }
+}
+void UDivineBeastsCharacterSelectScreen::RefreshCharacterChoices()
+{
+    auto* VM = GetCharacterSelectViewModel();
+    if (!VM) { return; }
+    const auto& State = VM->GetStateRef();
+    const int32 SelectedIndex = CharacterList->GetSelectedIndex();
+    const FString SelectedId = PresentedCharacterIds.IsValidIndex(SelectedIndex) ? PresentedCharacterIds[SelectedIndex] : FString();
+    const bool bHasChoices = !ChoiceEntries.IsEmpty() && ChoiceEntries.Num() == PresentedCharacterIds.Num();
+    CharacterList->SetVisibility(bHasChoices ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    for (UDivineBeastsCharacterChoiceEntry* Entry : ChoiceEntries)
+    {
+        const FString& Id = Entry->GetChoiceIdentity();
+        const auto* Item = State.Characters.FindByPredicate([&Id](const auto& Candidate) { return Candidate.CharacterId == Id; });
+        if (!Item) { Entry->SetChoiceEnabled(false); continue; }
+        const FText Hero = FDivineBeastsUILocalization::HeroNameToText(Item->HeroDefinitionId);
+        FString Family, Epithet;
+        Hero.ToString().Split(TEXT(" · "), &Family, &Epithet);
+        Entry->ConfigureChoice(Id, Item->DisplayName, Hero, FText::FromString(Family.Right(1)));
+        Entry->SetChoiceEnabled(Item->bEnabled && !State.bBusy);
+        Entry->SetChoiceSelected(Id == SelectedId);
+        Entry->SetToolTipText(Item->bEnabled ? FText::GetEmpty() : Item->DisabledReason);
+    }
+    const auto* Item = State.Characters.FindByPredicate([&SelectedId](const auto& Candidate) { return Candidate.CharacterId == SelectedId; });
+    if (SelectedHeroName) { SelectedHeroName->SetText(Item ? FDivineBeastsUILocalization::HeroNameToText(Item->HeroDefinitionId) : FText::GetEmpty()); }
+    if (SelectedCharacterName) { SelectedCharacterName->SetText(Item ? Item->DisplayName : FText::GetEmpty()); }
+}
+void UDivineBeastsCharacterSelectScreen::HandleChoiceRequested(UDivineBeastsCharacterChoiceEntry* Entry)
+{
+    auto* VM = GetCharacterSelectViewModel();
+    if (!Entry || !VM || VM->GetStateRef().bBusy) { return; }
+    const FString Id = Entry->GetChoiceIdentity();
+    const auto* Item = VM->GetStateRef().Characters.FindByPredicate([&Id](const auto& Candidate) { return Candidate.CharacterId == Id; });
+    if (!Item || !Item->bEnabled) { return; }
+    const int32 Index = PresentedCharacterIds.IndexOfByKey(Id);
+    if (Index != INDEX_NONE) { CharacterList->SetSelectedIndex(Index); }
+}
+UWidget* UDivineBeastsCharacterSelectScreen::NativeGetDesiredFocusTarget() const
+{
+    const int32 Index = CharacterList ? CharacterList->GetSelectedIndex() : INDEX_NONE;
+    if (ChoiceEntries.IsValidIndex(Index) && ChoiceEntries[Index]) { return ChoiceEntries[Index]->GetChoiceFocusTarget(); }
+    return Super::NativeGetDesiredFocusTarget();
 }
 void UDivineBeastsCharacterSelectScreen::HandleCharacterChanged(FString, ESelectInfo::Type)
 {
