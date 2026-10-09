@@ -2,8 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/GamePlatformSlotWidget.h"
-#include "GameplayEffectTypes.h"
-#include "GameplayTagContainer.h"
 #include "ViewModels/DivineBeastsViewModelBase.h"
 #include "DivineBeastsAbilityBarViewModel.generated.h"
 
@@ -12,6 +10,8 @@ class UDivineBeastsAbilityUIProfile;
 class UDivineBeastsCharacterComponent;
 class UGamePlatformAbilitySystemComponent;
 class UAbilitySystemComponent;
+struct FGameplayTag;
+struct FActiveGameplayEffectHandle;
 struct FOnAttributeChangeData;
 struct FActiveGameplayEffect;
 struct FGameplayEffectSpec;

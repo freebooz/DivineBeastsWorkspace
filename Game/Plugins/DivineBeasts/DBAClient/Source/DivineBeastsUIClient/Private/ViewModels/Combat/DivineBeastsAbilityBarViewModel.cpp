@@ -348,7 +348,7 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                 // 项目配置型 Ability 必须额外用主资产编号验证，拒绝迟到或交叉的技能实例。
                 const UDivineBeastsConfiguredGameplayAbility* Configured =
                     Cast<UDivineBeastsConfiguredGameplayAbility>(Spec->Ability);
-                if (Configured &&
+                if (!Configured ||
                     Configured->AbilityDefinitionId.PrimaryAssetName != Grant.AbilityId)
                 {
                     Slot.bPending = true;
@@ -418,8 +418,9 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                     {
                         Slot.bEnabled = false;
                     }
-                    if (Slot.OverlayProgress > 0.0f)
+                    if (Slot.OverlayProgress > 0.0f && Detail.DisabledReason.IsEmpty())
                     {
+                        // 优先显示死亡、眩晕或沉默等更重要的封禁原因。
                         Detail.DisabledReason = FText::FromString(TEXT("技能冷却中"));
                     }
                 }

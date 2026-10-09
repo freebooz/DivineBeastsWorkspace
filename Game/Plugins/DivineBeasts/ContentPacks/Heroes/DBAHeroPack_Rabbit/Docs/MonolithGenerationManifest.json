@@ -2,11 +2,11 @@
   "SchemaVersion": 1,
   "Plugin": "DBAHeroPack_Rabbit",
   "HeroChinese": "卯兔·玉灵",
-  "State": "SourceArtReadyUEImportPending",
+  "State": "TextureAssetsVerifiedGameplayBindingPending",
   "UpdatedAt": "2026-10-09",
   "CreationTool": "Monolith MCP",
-  "MonolithVersion": null,
-  "EditorProjectVerified": false,
+  "MonolithVersion": "0.23.0",
+  "EditorProjectVerified": true,
   "EngineVersionExpected": "5.8.0",
   "Project": "Game/DivineBeastsArena.uproject",
   "SourceArtwork": {
@@ -78,7 +78,193 @@
       }
     ]
   },
-  "Assets": [],
+  "Assets": [
+    {
+      "AssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_BasicAttack_MoonStrike_V1",
+      "ObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_BasicAttack_MoonStrike_V1.T_DBA_Rabbit_BasicAttack_MoonStrike_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "BasicAttack",
+      "ArtMotif": "MoonStrike",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_BasicAttack_MoonStrike_V1.png",
+      "SourcePngSha256": "57F98626821B30DAF0364EE25D1BBC474613413647AFB38F7A7AFA63F1D56928",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_BasicAttack_MoonStrike_V1.uasset",
+      "EngineFileSha256": "76F56FDBB0EF964236E0810D6BB53009690C8AF229442123B22BF0E0DD51BBF0",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Passive_JadeSpirit_V1",
+      "ObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Passive_JadeSpirit_V1.T_DBA_Rabbit_Passive_JadeSpirit_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Passive",
+      "ArtMotif": "JadeSpirit",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_Passive_JadeSpirit_V1.png",
+      "SourcePngSha256": "FBBFF7AA26794F9B460CB3D83B79E0C4D26F4223F82196B94AF928193DBBA378",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_Passive_JadeSpirit_V1.uasset",
+      "EngineFileSha256": "9BA24EE7EDD1B99C21BCFBFCCDF423F33E20D8A1FC0A216FE9FA96C6485868C6",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Active01_MoonLeap_V1",
+      "ObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Active01_MoonLeap_V1.T_DBA_Rabbit_Active01_MoonLeap_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active01",
+      "ArtMotif": "MoonLeap",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_Active01_MoonLeap_V1.png",
+      "SourcePngSha256": "6FD6D640BB63F8EEF42CE742EBFF16E2D25C7B19918F4E4B777CB84033C16EF0",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_Active01_MoonLeap_V1.uasset",
+      "EngineFileSha256": "37ED60543A8D2E2A68FC41B65A88028B9936967BCA70C2CA2ADE6224FE20E663",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Active02_JadeWard_V1",
+      "ObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Active02_JadeWard_V1.T_DBA_Rabbit_Active02_JadeWard_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active02",
+      "ArtMotif": "JadeWard",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_Active02_JadeWard_V1.png",
+      "SourcePngSha256": "291743904672D0D816F8262B75CF270C4BB6375CAD7BA07F7A8E7F75D8350C41",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_Active02_JadeWard_V1.uasset",
+      "EngineFileSha256": "2A62CE39BDBE9B0EA5BA6266759752AF48565278BA4565ACD3D830D7C8E88743",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Ultimate_LunarBloom_V1",
+      "ObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Ultimate_LunarBloom_V1.T_DBA_Rabbit_Ultimate_LunarBloom_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Ultimate",
+      "ArtMotif": "LunarBloom",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_Ultimate_LunarBloom_V1.png",
+      "SourcePngSha256": "52D7BD3D4C74243F25C0C1891F09357DFC5C7616D7A75635750812526F819112",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_Ultimate_LunarBloom_V1.uasset",
+      "EngineFileSha256": "D6E6A30CBD0E5283812F8811823BEF28BF6085E03786972B734BC5748470BB0F",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    }
+  ],
   "PlannedAssets": [
     {
       "AssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_BasicAttack_MoonStrike_V1",
@@ -88,8 +274,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_BasicAttack_MoonStrike_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -105,8 +291,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_Passive_JadeSpirit_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -122,8 +308,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_Active01_MoonLeap_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -139,8 +325,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_Active02_JadeWard_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -156,8 +342,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/T_DBA_Rabbit_Ultimate_LunarBloom_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -171,10 +357,14 @@
     "SourceDimensionsChecked": true,
     "SourceSha256Recorded": true,
     "VisualReviewAt64Pixels": true,
-    "TextureImportVerified": false,
+    "TextureImportVerified": true,
     "ClientCookVerified": false,
     "ServerCookExclusionVerified": false,
-    "GameplayBindingVerified": false
+    "GameplayBindingVerified": false,
+    "TextureSettingsVerified": true,
+    "NativeSourceInspectionCount": 5,
+    "NativeReloadVerified": true,
+    "ServerCookDeclarationVerified": true
   },
   "字段说明": {
     "SourceArtwork": "内置image_gen生成的真实PNG图源，已有文件不等于已导入UE纹理。",
@@ -184,16 +374,27 @@
     "VisualReviewAt64Pixels": "本次在64像素预览中人工检查动作轮廓；不替代HUD、设备或色觉障碍验收。"
   },
   "Limitations": [
-    "正式AbilityId及UI Profile软引用待玩法技能定义确认后绑定。",
-    "本任务十个Editor模块真实构建退出0；Monolith尚未就绪，编辑器启动SDK检查受其他任务全Editor构建脚本锁阻塞，等待其结束后重启验证。",
-    "UI纹理暂未经过实际Cook/产物剥离验证。"
+    "正式AbilityId及UI Profile软引用待玩法技能定义确认后绑定；全部AbilityId保持null，不创建空Profile。",
+    "独立Texture2D不适用Widget树/层栈/焦点/导航/Blueprint编译；未进行真实HUD或设备验收。",
+    "专用服务器已声明十二个UI/Abilities目录NeverCook及窄Pak排除；真实客户端Cook、服务器干净Cook和产物剥离仍未验证。",
+    "初始Editor日志有未具名的Condition failed记录；本次纹理验收不代表全Editor或自动化测试全通过。"
   ],
   "EditorPreparation": {
     "ModuleBuildEvidence": "Saved/Validation/ZodiacSkillIcons-2026-10-09/EditorRemainingModulesBuildRetryResult.json",
     "ModuleBuildExitCode": 0,
     "FullEditorBuildVerified": false,
-    "MonolithReady": false,
+    "MonolithReady": true,
     "ConcurrentBuildObservedProcessId": 47076,
-    "说明": "仅本任务指定十个模块及依赖的真实OnlyModule构建，不等于全工程编译、Monolith服务可用或Cook验收。"
+    "说明": "仅本任务指定十个模块及依赖的真实OnlyModule构建，不等于全工程编译、Monolith服务可用或Cook验收。",
+    "ActualEngineVersion": "5.8.0-0+UE5",
+    "AuthoringIdentityEvidence": "Saved/Validation/ZodiacSkillIcons-2026-10-09/MonolithAuthoringIdentity.json"
+  },
+  "Evidence": {
+    "ImportAndSave": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureImportAndSaveResults.json",
+    "NativeReload": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureNativeBatchReload.json",
+    "PostReloadReadback": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TexturePostReloadVerification.json",
+    "NativeSourceInspection": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureNativeSourceInspection.json",
+    "BinaryFiles": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureBinaryFileVerification.json",
+    "ServerDeclaration": "Saved/Validation/ZodiacSkillIcons-2026-10-09/ServerIconCookDeclarationUpdate.json"
   }
 }

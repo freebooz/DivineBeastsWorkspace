@@ -2,11 +2,11 @@
   "SchemaVersion": 1,
   "Plugin": "DBAHeroPack_Snake",
   "HeroChinese": "巳蛇·幽鳞",
-  "State": "SourceArtReadyUEImportPending",
+  "State": "TextureAssetsVerifiedGameplayBindingPending",
   "UpdatedAt": "2026-10-09",
   "CreationTool": "Monolith MCP",
-  "MonolithVersion": null,
-  "EditorProjectVerified": false,
+  "MonolithVersion": "0.23.0",
+  "EditorProjectVerified": true,
   "EngineVersionExpected": "5.8.0",
   "Project": "Game/DivineBeastsArena.uproject",
   "SourceArtwork": {
@@ -78,7 +78,193 @@
       }
     ]
   },
-  "Assets": [],
+  "Assets": [
+    {
+      "AssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_BasicAttack_FangStrike_V1",
+      "ObjectPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_BasicAttack_FangStrike_V1.T_DBA_Snake_BasicAttack_FangStrike_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "BasicAttack",
+      "ArtMotif": "FangStrike",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_BasicAttack_FangStrike_V1.png",
+      "SourcePngSha256": "39C316566D745809B70841626DD1ADAD795EB6A524D3221678D5512749871BEB",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/Content/UI/Abilities/T_DBA_Snake_BasicAttack_FangStrike_V1.uasset",
+      "EngineFileSha256": "2EA8C2BD601C6706D34B0D99599202A6B370C9FF07B265FA7F20B6CEDFB3F448",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Passive_ScaleShroud_V1",
+      "ObjectPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Passive_ScaleShroud_V1.T_DBA_Snake_Passive_ScaleShroud_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Passive",
+      "ArtMotif": "ScaleShroud",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_Passive_ScaleShroud_V1.png",
+      "SourcePngSha256": "3F05E7043CDF0C8EA8A72AE512F576441BD0B588EAF9601821D34CBBA3A6EDF5",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/Content/UI/Abilities/T_DBA_Snake_Passive_ScaleShroud_V1.uasset",
+      "EngineFileSha256": "B48E5F45DD8CA823C5C7D62C64EC4587B9DCE1316EA895D7A7DAAAD6646D4E1C",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Active01_SerpentBolt_V1",
+      "ObjectPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Active01_SerpentBolt_V1.T_DBA_Snake_Active01_SerpentBolt_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active01",
+      "ArtMotif": "SerpentBolt",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_Active01_SerpentBolt_V1.png",
+      "SourcePngSha256": "0520A6EC0952CCB710615B6C3592369511BA22FFC542F714456B6E8ABBBA4565",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/Content/UI/Abilities/T_DBA_Snake_Active01_SerpentBolt_V1.uasset",
+      "EngineFileSha256": "1422492BE133CC41201236CB73C4BFF2B5C90263886ED9E3EBD542A57FB7F554",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Active02_CoilBind_V1",
+      "ObjectPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Active02_CoilBind_V1.T_DBA_Snake_Active02_CoilBind_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active02",
+      "ArtMotif": "CoilBind",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_Active02_CoilBind_V1.png",
+      "SourcePngSha256": "05087AB65AE132164846F2FEDAD9EF4D20F4BCB23D2565F7DDC7FB671FFF5F04",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/Content/UI/Abilities/T_DBA_Snake_Active02_CoilBind_V1.uasset",
+      "EngineFileSha256": "836218E80F0B3F59EA49BA1DBF39022A9154498FDCE529B5A795717DB8A0C015",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Ultimate_SerpentVortex_V1",
+      "ObjectPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Ultimate_SerpentVortex_V1.T_DBA_Snake_Ultimate_SerpentVortex_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Ultimate",
+      "ArtMotif": "SerpentVortex",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_Ultimate_SerpentVortex_V1.png",
+      "SourcePngSha256": "E752E3CBA1715173B0C4C8AA8CD626CD2EDA368CF341786139E824C538331DE4",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/Content/UI/Abilities/T_DBA_Snake_Ultimate_SerpentVortex_V1.uasset",
+      "EngineFileSha256": "1F38ABF9CC0AEDC3E185549123DC716B0B5909A4B60680056BC00857B51FB2B3",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    }
+  ],
   "PlannedAssets": [
     {
       "AssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_BasicAttack_FangStrike_V1",
@@ -88,8 +274,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_BasicAttack_FangStrike_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -105,8 +291,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_Passive_ScaleShroud_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -122,8 +308,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_Active01_SerpentBolt_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -139,8 +325,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_Active02_CoilBind_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -156,8 +342,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/SourceArt/UI/SkillIcons/T_DBA_Snake_Ultimate_SerpentVortex_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -171,10 +357,14 @@
     "SourceDimensionsChecked": true,
     "SourceSha256Recorded": true,
     "VisualReviewAt64Pixels": true,
-    "TextureImportVerified": false,
+    "TextureImportVerified": true,
     "ClientCookVerified": false,
     "ServerCookExclusionVerified": false,
-    "GameplayBindingVerified": false
+    "GameplayBindingVerified": false,
+    "TextureSettingsVerified": true,
+    "NativeSourceInspectionCount": 5,
+    "NativeReloadVerified": true,
+    "ServerCookDeclarationVerified": true
   },
   "字段说明": {
     "SourceArtwork": "内置image_gen生成的真实PNG图源，已有文件不等于已导入UE纹理。",
@@ -184,16 +374,27 @@
     "VisualReviewAt64Pixels": "本次在64像素预览中人工检查动作轮廓；不替代HUD、设备或色觉障碍验收。"
   },
   "Limitations": [
-    "正式AbilityId及UI Profile软引用待玩法技能定义确认后绑定。",
-    "本任务十个Editor模块真实构建退出0；Monolith尚未就绪，编辑器启动SDK检查受其他任务全Editor构建脚本锁阻塞，等待其结束后重启验证。",
-    "UI纹理暂未经过实际Cook/产物剥离验证。"
+    "正式AbilityId及UI Profile软引用待玩法技能定义确认后绑定；全部AbilityId保持null，不创建空Profile。",
+    "独立Texture2D不适用Widget树/层栈/焦点/导航/Blueprint编译；未进行真实HUD或设备验收。",
+    "专用服务器已声明十二个UI/Abilities目录NeverCook及窄Pak排除；真实客户端Cook、服务器干净Cook和产物剥离仍未验证。",
+    "初始Editor日志有未具名的Condition failed记录；本次纹理验收不代表全Editor或自动化测试全通过。"
   ],
   "EditorPreparation": {
     "ModuleBuildEvidence": "Saved/Validation/ZodiacSkillIcons-2026-10-09/EditorRemainingModulesBuildRetryResult.json",
     "ModuleBuildExitCode": 0,
     "FullEditorBuildVerified": false,
-    "MonolithReady": false,
+    "MonolithReady": true,
     "ConcurrentBuildObservedProcessId": 47076,
-    "说明": "仅本任务指定十个模块及依赖的真实OnlyModule构建，不等于全工程编译、Monolith服务可用或Cook验收。"
+    "说明": "仅本任务指定十个模块及依赖的真实OnlyModule构建，不等于全工程编译、Monolith服务可用或Cook验收。",
+    "ActualEngineVersion": "5.8.0-0+UE5",
+    "AuthoringIdentityEvidence": "Saved/Validation/ZodiacSkillIcons-2026-10-09/MonolithAuthoringIdentity.json"
+  },
+  "Evidence": {
+    "ImportAndSave": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureImportAndSaveResults.json",
+    "NativeReload": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureNativeBatchReload.json",
+    "PostReloadReadback": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TexturePostReloadVerification.json",
+    "NativeSourceInspection": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureNativeSourceInspection.json",
+    "BinaryFiles": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureBinaryFileVerification.json",
+    "ServerDeclaration": "Saved/Validation/ZodiacSkillIcons-2026-10-09/ServerIconCookDeclarationUpdate.json"
   }
 }

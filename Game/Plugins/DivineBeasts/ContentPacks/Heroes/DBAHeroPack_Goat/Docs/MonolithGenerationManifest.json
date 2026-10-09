@@ -2,11 +2,11 @@
   "SchemaVersion": 1,
   "Plugin": "DBAHeroPack_Goat",
   "HeroChinese": "未羊·玉角",
-  "State": "SourceArtReadyUEImportPending",
+  "State": "TextureAssetsVerifiedGameplayBindingPending",
   "UpdatedAt": "2026-10-09",
   "CreationTool": "Monolith MCP",
-  "MonolithVersion": null,
-  "EditorProjectVerified": false,
+  "MonolithVersion": "0.23.0",
+  "EditorProjectVerified": true,
   "EngineVersionExpected": "5.8.0",
   "Project": "Game/DivineBeastsArena.uproject",
   "SourceArtwork": {
@@ -78,7 +78,193 @@
       }
     ]
   },
-  "Assets": [],
+  "Assets": [
+    {
+      "AssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_BasicAttack_HornStrike_V1",
+      "ObjectPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_BasicAttack_HornStrike_V1.T_DBA_Goat_BasicAttack_HornStrike_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "BasicAttack",
+      "ArtMotif": "HornStrike",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_BasicAttack_HornStrike_V1.png",
+      "SourcePngSha256": "49B4A9D86E645A5177EA1D87D9E0F2C6C98F49F07AAB403BAEAD11F0069A7903",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/Content/UI/Abilities/T_DBA_Goat_BasicAttack_HornStrike_V1.uasset",
+      "EngineFileSha256": "CEC000C4225C4E82B34FE64471B1280FDA4A594E1975D2BF21E70972A43A37FE",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Passive_JadeBlessing_V1",
+      "ObjectPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Passive_JadeBlessing_V1.T_DBA_Goat_Passive_JadeBlessing_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Passive",
+      "ArtMotif": "JadeBlessing",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_Passive_JadeBlessing_V1.png",
+      "SourcePngSha256": "F084B67D9ADC641278B11E406B3E3EECB854BA16387517305F8456737247AD82",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/Content/UI/Abilities/T_DBA_Goat_Passive_JadeBlessing_V1.uasset",
+      "EngineFileSha256": "66184276BB4471886C77E728CA6459CE79C0AE3D4035C447520BD2DAFB892AAD",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Active01_GuardianWard_V1",
+      "ObjectPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Active01_GuardianWard_V1.T_DBA_Goat_Active01_GuardianWard_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active01",
+      "ArtMotif": "GuardianWard",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_Active01_GuardianWard_V1.png",
+      "SourcePngSha256": "B6732468791835D4E972986A4CF19129C4F99AFA99CA3473FBD9920197C5A734",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/Content/UI/Abilities/T_DBA_Goat_Active01_GuardianWard_V1.uasset",
+      "EngineFileSha256": "12BD488F767A68AE19059569B5C90CE11FF36B6236D126494E60291EFDCA57D6",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Active02_HaloPulse_V1",
+      "ObjectPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Active02_HaloPulse_V1.T_DBA_Goat_Active02_HaloPulse_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active02",
+      "ArtMotif": "HaloPulse",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_Active02_HaloPulse_V1.png",
+      "SourcePngSha256": "043A3387316C43E208FE74362B7766A1AD968DF29CB8DCE729D9916DFD809ABB",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/Content/UI/Abilities/T_DBA_Goat_Active02_HaloPulse_V1.uasset",
+      "EngineFileSha256": "CAFB7D406D06C53A19531390C7B832381CD6694D3FF677EC77395932F6A31BE5",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Ultimate_SanctuaryDome_V1",
+      "ObjectPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Ultimate_SanctuaryDome_V1.T_DBA_Goat_Ultimate_SanctuaryDome_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Ultimate",
+      "ArtMotif": "SanctuaryDome",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_Ultimate_SanctuaryDome_V1.png",
+      "SourcePngSha256": "FF83330D0C03778D1C20DB00D35D3A8B0BE10F81BF716175FC1E5230A966F495",
+      "EngineFileRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/Content/UI/Abilities/T_DBA_Goat_Ultimate_SanctuaryDome_V1.uasset",
+      "EngineFileSha256": "A35684FCC5EF5212C8BA447550C685A9B02D10DE2F74D040D6247DCC415A4435",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "PropertySaveTool": "Monolith.editor.run_python:set_editor_property/save_loaded_asset",
+      "Saved": true,
+      "PackageDirty": false,
+      "ReloadVerified": true,
+      "ReloadTool": "Monolith.editor.run_python:EditorLoadingAndSavingUtils.reload_packages",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "RuntimeDimensions": [
+        156,
+        156
+      ],
+      "ActualSettings": {
+        "CompressionSettings": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
+        "TextureGroup": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+        "SRGB": true,
+        "MipGenSettings": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+        "MaxTextureSize": 256
+      },
+      "WidgetBlueprintChecks": {
+        "Applicable": false,
+        "Reason": "独立Texture2D没有Widget树、层栈、焦点、导航或Blueprint编译；本次不创建Widget/Profile或玩法绑定。"
+      }
+    }
+  ],
   "PlannedAssets": [
     {
       "AssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_BasicAttack_HornStrike_V1",
@@ -88,8 +274,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_BasicAttack_HornStrike_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -105,8 +291,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_Passive_JadeBlessing_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -122,8 +308,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_Active01_GuardianWard_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -139,8 +325,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_Active02_HaloPulse_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -156,8 +342,8 @@
       "AbilityId": null,
       "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/T_DBA_Goat_Ultimate_SanctuaryDome_V1.png",
       "ImportTool": "Monolith.ui.import_texture_from_bytes",
-      "Saved": false,
-      "ReloadVerified": false,
+      "Saved": true,
+      "ReloadVerified": true,
       "ExpectedSettings": {
         "TextureGroup": "TEXTUREGROUP_UI",
         "SRGB": true,
@@ -171,10 +357,14 @@
     "SourceDimensionsChecked": true,
     "SourceSha256Recorded": true,
     "VisualReviewAt64Pixels": true,
-    "TextureImportVerified": false,
+    "TextureImportVerified": true,
     "ClientCookVerified": false,
     "ServerCookExclusionVerified": false,
-    "GameplayBindingVerified": false
+    "GameplayBindingVerified": false,
+    "TextureSettingsVerified": true,
+    "NativeSourceInspectionCount": 5,
+    "NativeReloadVerified": true,
+    "ServerCookDeclarationVerified": true
   },
   "字段说明": {
     "SourceArtwork": "内置image_gen生成的真实PNG图源，已有文件不等于已导入UE纹理。",
@@ -184,16 +374,27 @@
     "VisualReviewAt64Pixels": "本次在64像素预览中人工检查动作轮廓；不替代HUD、设备或色觉障碍验收。"
   },
   "Limitations": [
-    "正式AbilityId及UI Profile软引用待玩法技能定义确认后绑定。",
-    "本任务十个Editor模块真实构建退出0；Monolith尚未就绪，编辑器启动SDK检查受其他任务全Editor构建脚本锁阻塞，等待其结束后重启验证。",
-    "UI纹理暂未经过实际Cook/产物剥离验证。"
+    "正式AbilityId及UI Profile软引用待玩法技能定义确认后绑定；全部AbilityId保持null，不创建空Profile。",
+    "独立Texture2D不适用Widget树/层栈/焦点/导航/Blueprint编译；未进行真实HUD或设备验收。",
+    "专用服务器已声明十二个UI/Abilities目录NeverCook及窄Pak排除；真实客户端Cook、服务器干净Cook和产物剥离仍未验证。",
+    "初始Editor日志有未具名的Condition failed记录；本次纹理验收不代表全Editor或自动化测试全通过。"
   ],
   "EditorPreparation": {
     "ModuleBuildEvidence": "Saved/Validation/ZodiacSkillIcons-2026-10-09/EditorRemainingModulesBuildRetryResult.json",
     "ModuleBuildExitCode": 0,
     "FullEditorBuildVerified": false,
-    "MonolithReady": false,
+    "MonolithReady": true,
     "ConcurrentBuildObservedProcessId": 47076,
-    "说明": "仅本任务指定十个模块及依赖的真实OnlyModule构建，不等于全工程编译、Monolith服务可用或Cook验收。"
+    "说明": "仅本任务指定十个模块及依赖的真实OnlyModule构建，不等于全工程编译、Monolith服务可用或Cook验收。",
+    "ActualEngineVersion": "5.8.0-0+UE5",
+    "AuthoringIdentityEvidence": "Saved/Validation/ZodiacSkillIcons-2026-10-09/MonolithAuthoringIdentity.json"
+  },
+  "Evidence": {
+    "ImportAndSave": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureImportAndSaveResults.json",
+    "NativeReload": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureNativeBatchReload.json",
+    "PostReloadReadback": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TexturePostReloadVerification.json",
+    "NativeSourceInspection": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureNativeSourceInspection.json",
+    "BinaryFiles": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureBinaryFileVerification.json",
+    "ServerDeclaration": "Saved/Validation/ZodiacSkillIcons-2026-10-09/ServerIconCookDeclarationUpdate.json"
   }
 }

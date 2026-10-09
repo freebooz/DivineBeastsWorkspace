@@ -254,6 +254,12 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
         OutError = TEXT("当前默认技能集合尚不接受动态属性集授权，须使用正式属性初始化流程。");
         return false;
     }
+    if (Set.Abilities.IsEmpty())
+    {
+        // 项目英雄默认技能集必须包含真实授予能力；不能将只含效果的集合伪装为可释放技能栏。
+        OutError = TEXT("英雄默认技能集合缺少实际技能授权条目。");
+        return false;
+    }
 
     // 预检完整资源与当前 ASC 标签冲突；防止部分 GiveAbility 后失败留下半授权。
     TSet<FGameplayTag> NewInputTags;
@@ -286,7 +292,13 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
         }
         const UDivineBeastsConfiguredGameplayAbility* Configured =
             Cast<UDivineBeastsConfiguredGameplayAbility>(AbilityCDO);
-        if (Configured)
+        if (!Configured)
+        {
+            // 默认英雄技能必须由本项目数据驱动能力派生，防止跳过数值、气势与冷却门禁。
+            OutError = TEXT("项目英雄技能未继承统一数据驱动技能基类。");
+            return false;
+        }
+        else
         {
             const FPrimaryAssetId& DefinitionId = Configured->AbilityDefinitionId;
             if (!DefinitionId.IsValid() ||

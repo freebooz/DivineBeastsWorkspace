@@ -79,6 +79,21 @@
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterChoiceEntry"
     }
   ],
+  "LatestAAACombatWidgetDelivery": {
+    "Date": "2026-10-09",
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Manifest": "Docs/AAACombatWidgetDelivery_20261009.json",
+    "DeliveryDocument": "Docs/AAACombatWidgetDelivery_20261009.md",
+    "RealWidgetBlueprintCount": 17,
+    "CombatP0PlannedCount": 12,
+    "BuilderCompileErrorCount": 0,
+    "BuilderCompileWarningCount": 0,
+    "AllAssetsSaved": true,
+    "AllAssetsIndependentlyRestartReadback": false,
+    "PIEAndCookPassed": false,
+    "Note": "本节记录真实新增战斗Widget。原Assets中的6项历史基线及其旧工具版本证据保持不变。"
+  },
   "Verification": {
     "Target": "DivineBeastsArenaEditor Win64 Development",
     "Module": "DivineBeastsUIClient",

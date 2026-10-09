@@ -108,12 +108,21 @@ def check_wiring() -> None:
            and "CreateDefaultSubobject<UDivineBeastsAbilityLoadoutComponent>" in pawn
            and "CreateDefaultSubobject<UDivineBeastsCharacterComponent>" in pawn)
     verify("技能栏订阅持有者Pawn改变且释放旧委托",
-           "OnPossessedPawnChanged.AddDynamic" in panel
+           "OnPossessedPawnChanged.AddUniqueDynamic" in panel
            and "OnPossessedPawnChanged.RemoveDynamic" in panel
            and "RefreshAbilitySourceFromOwningPawn" in panel)
     verify("已有技能栏通用输入绑定保留",
            "ApplyAbilitySlots(" in panel and "GetAbilitySlotsView" in
            read(CLIENT_UI / "Public/Panels/Combat/DivineBeastsAbilityBarPanel.h"))
+    verify("技能栏对正式Widget蓝图开放技能详细提示只读接口",
+           "GetAbilitySlotDetails() const" in read(
+               CLIENT_UI / "Public/Panels/Combat/DivineBeastsAbilityBarPanel.h")
+           and "AbilityBarViewModel->GetSlotDetails()" in panel)
+    grant = read(ABILITIES / "Private/Components/DivineBeastsAbilityLoadoutComponent.cpp")
+    verify("英雄技能集拒绝空技能与绕过数据驱动基类的授予",
+           "Set.Abilities.IsEmpty()" in grant and
+           "if (!Configured)" in grant and
+           "项目英雄技能未继承统一数据驱动技能基类" in grant)
 
 
 

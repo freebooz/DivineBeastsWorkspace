@@ -1,0 +1,765 @@
+{
+  "SchemaVersion": 1,
+  "Status": "DesignCandidatesNotProductionApproved",
+  "GeneratedFor": "DivineBeastsWorkspace",
+  "CreatedAt": "2026-10-09",
+  "FieldsChinese": {
+    "HeroDefinitionId": "平台共享稳定英雄编号",
+    "Slot": "候选槽位：普通攻击、被动、主动一、主动二、终极",
+    "ProposedNameZh": "拟定中文技能名，供设计审批，不构成已发布名称",
+    "ArtMotif": "现有图标美术主题",
+    "InputTagCandidate": "现有项目GAS输入标签候选，仅配置参考",
+    "AbilityId": "正式稳定技能身份：尚未获批，必须保持null",
+    "BaseDamage": "基础伤害，尚未设计定稿，必须保持null",
+    "MomentumCost": "气势成本，尚未设计定稿，必须保持null",
+    "CooldownSeconds": "冷却秒数，尚未设计定稿，必须保持null",
+    "EngineAssetVerified": "UE编辑器真实Gameplay资产有效性，未验收"
+  },
+  "DesignRuleZh": "以现有每英雄五枚技能图源为首期候选，技能栏普通攻击Primary、主动1/2/终极使用Slot1/Slot2/Slot4，Slot3保留未来扩展。不会因为图标或候选名称存在就给予技能授权。",
+  "Heroes": [
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Rat",
+      "HeroNameZh": "子鼠",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "影牙斩",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "影遁本能",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "逐影疾袭",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "双牙交错",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "暗幕猎袭",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Ox",
+      "HeroNameZh": "丑牛",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "玄角撞击",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "磐甲守御",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "玄角冲锋",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "震地波",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "山岳崩裂",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Tiger",
+      "HeroNameZh": "寅虎",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "白虎裂爪",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "君威之势",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "猛虎扑袭",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "月牙虎爪",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "虎啸风暴",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Rabbit",
+      "HeroNameZh": "卯兔",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "灵月击",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "玉灵护佑",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "逐月跃",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "玉光结界",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "月华绽放",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Dragon",
+      "HeroNameZh": "辰龙",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "苍龙爪",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "云心灵息",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "龙卷穿云",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "云光龙息",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "苍龙升天",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Snake",
+      "HeroNameZh": "巳蛇",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "幽鳞刺",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "鳞影潜行",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "蛇影飞袭",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "盘蛇缚",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "万鳞旋涡",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Horse",
+      "HeroNameZh": "午马",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "雷蹄践",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "雷鸣之心",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "追雷疾驰",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "蹄震冲击",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "万马奔雷",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Goat",
+      "HeroNameZh": "未羊",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "玉角击",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "玉泽祝福",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "灵玉护壁",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "清辉疗愈",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "玉阙圣域",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Monkey",
+      "HeroNameZh": "申猴",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "灵棍击",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "灵机变通",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "筋斗翻云",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "灵棍横扫",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "金影千重",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Rooster",
+      "HeroNameZh": "酉鸡",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "金羽击",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "破晓之意",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "翎羽连射",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "啼鸣音环",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "旭日金辉",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Dog",
+      "HeroNameZh": "戌狗",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "天犬扑咬",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "守护本能",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "追踪印记",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "灵犬护跃",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "天穹狩猎",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Boar",
+      "HeroNameZh": "亥猪",
+      "Approval": "Pending",
+      "Skills": [
+        {
+          "Slot": "BasicAttack",
+          "ProposedNameZh": "玄獠突",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Primary",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Passive",
+          "ProposedNameZh": "铁鬃护身",
+          "ArtMotif": null,
+          "InputTagCandidate": null,
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active01",
+          "ProposedNameZh": "蛮力冲撞",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot1",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Active02",
+          "ProposedNameZh": "震岳波",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot2",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        },
+        {
+          "Slot": "Ultimate",
+          "ProposedNameZh": "玄鬃震荡",
+          "ArtMotif": null,
+          "InputTagCandidate": "Platform.Ability.Input.DivineBeasts.Slot4",
+          "AbilityId": null,
+          "BaseDamage": null,
+          "MomentumCost": null,
+          "CooldownSeconds": null,
+          "EngineAssetVerified": false
+        }
+      ]
+    }
+  ]
+}

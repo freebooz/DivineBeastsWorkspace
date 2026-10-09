@@ -1,11 +1,13 @@
 # 《神兽联盟》十大业务域与通用组件 Widget Blueprint 交付清单
 
+> **最新实施状态（2026-10-09，覆盖后文历史规划阶段的「待创建」状态）：** Monolith MCP 0.23.0 已接通正式 UE5.8 编辑器并完成战斗核心12项真实Widget Blueprint创建、编译、保存，另新建通用视觉组件5项，共17份`.uasset`。项目原有6份Widget资产保留；新资产已通过磁盘静态扫描，部分通过Monolith同编辑器树回读，尚未做完整独立重启/PIE/联机/Cook验收。详见`Docs/AAACombatWidgetDelivery_20261009.md`及`Docs/AAACombatWidgetDelivery_20261009.json`。本页其余十域非战斗蓝图仍按实际资产存在情况验收。
+
 > 视觉资产所有者：第三层`DBAUIPack_Core`（神兽联盟公共界面内容包）。
 > 工具：项目要求仅允许 Monolith MCP 操作正式 UE5.8 编辑器。
-> 2026-10-09 当前状态：声明式布局规格已生成，**尚未替代真实.uasset资产**。原有6个Widget/2张纹理仍原位保存，禁止覆盖。
+> 2026-10-09 最新状态：原有6个Widget/2张纹理仍保留；新完成12项战斗P0蓝图和5项通用视觉资源，其他业务域的声明式布局规格仍不能视为真实.uasset。
 > 本清单的“待制作”明确表示尚无真实蓝图，不能作为完成验收的证据。
 >
-> 2026-10-09实测：32份声明式规格静态检查通过，32个目标蓝图均未在磁盘发现。Monolith服务网关可解析但UE5.8 Editor不运行，真实Monolith操作会返回“Unreal Editor not running”；不能填写资产已编译或保存成功。9个新增平台组件已完成UE5.8定向C++编译，不代表蓝图功能可用。
+> 初次审查时32份通用规格均未交付；最新静态回读显示其中5项已生成真实蓝图、27项仍待制作。另有12项战斗专项蓝图已完成（部分与通用清单重叠），不能把两套规划重复合计为29项。Monolith v0.23.0已可在锁定编辑器中实际创建和保存；本轮17项物理资产目录详见最新交付台账。
 
 ## 一、当前已真实交付的Widget（保留原资产）
 
@@ -52,33 +54,33 @@
 
 ## 2026-10-09 AAA增减益与战斗状态蓝图候选
 
-- 当前`WBP_DBA_UI_StatusEffects`（状态效果总托盘）仅有Monolith规格，**不存在已验证的对应蓝图**。
-- 建议在原总托盘下增量组合`WBP_DBA_UI_BuffTray`（增益列表）、`WBP_DBA_UI_DebuffTray`（减益列表）、`WBP_DBA_UI_StatusEffectIcon`（效果单图标）、`WBP_DBA_UI_CrowdControlAlert`（控制效果关键提示）、`WBP_DBA_UI_DispelBadge`（驱散标识）、`WBP_DBA_UI_ImmunityBadge`（免疫标识）、`WBP_DBA_UI_EffectOverflow`（图标溢出+N），均为待制作候选，不冒充已在Content中存在。
+- 当前`WBP_DBA_UI_StatusEffects`（状态效果总托盘）已通过Monolith创建、编译、保存，真实.uasset存在且同编辑器Widget树回读通过；增减益列表的数据适配、动态子项事件仍待接入。
+- 已经实物创建`WBP_DBA_UI_BuffTray`（增益列表）、`WBP_DBA_UI_DebuffTray`（减益列表）、`WBP_DBA_UI_StatusEffectIcon`（效果图标）、`WBP_DBA_UI_ControlAlert`（控制效果警报）、`WBP_DBA_UI_DispelBadge`（驱散）、`WBP_DBA_UI_ImmunityBadge`（免疫）、`WBP_DBA_UI_EffectOverflow`（+N溢出）。原提议的`WBP_DBA_UI_CrowdControlAlert`未创建：使用已实物交付的`WBP_DBA_UI_ControlAlert`保持单一稳定资源身份，避免重复组件。
 - 此处只声明设计目标，不擅自覆盖32份现有布局规格。真实制作优先复用平台`GamePlatformStatusEffectTrayWidget`（通用状态托盘）、`GamePlatformCountdownWidget`（倒计时）及`GamePlatformTooltipWidget`（悬浮提示）等基础类；Boss（首领）、队友与竞技的组合由第三层分别承载。
 - 总清单与所有跨域UI能力见`DBAClient/Docs/3A游戏UI十大业务域组件总清单_V1.0.md`，状态效果扩展、优先级和可见性审核见`GamePlatformUI/Docs/AAA状态效果UI设计规范_V1.0.md`。
 
 ## 2026-10-09 战斗M1十二份正式蓝图制作输入
 
-本轮已生成并静态审核`Saved/Monolith/CombatUIImplementationSpecs/Manifest.json`（战斗视觉声明式清单）和十二份独立布局JSON，不覆盖原有32份通用规格和6个已真实交付Widget。
+已生成并静态审核`Saved/Monolith/CombatUIImplementationSpecs/Manifest.json`（战斗视觉规格索引）和十二份JSON，并经Monolith正式制作成对应十二份真实.uasset，原32份通用布局规格和六份历史Widget未覆盖；详细实物清单单列在`Docs/AAACombatWidgetDelivery_20261009.json`。
 
 | 目标Widget Blueprint（控件蓝图） | 平台真实C++父类 | 功能及资源状态 |
 | --- | --- | --- |
-| `WBP_DBA_UI_CastBar` | `GamePlatformCastProgressWidget` | 普通施法/引导进度；待Monolith创建 |
-| `WBP_DBA_UI_TargetFrame` | `GamePlatformTargetFrameWidget` | 目标肖像、生命、护盾；待创建 |
-| `WBP_DBA_UI_CombatAlert` | `GamePlatformCombatAlertWidget` | 固定关键战斗预警；待创建 |
-| `WBP_DBA_UI_BuffTray` | `GamePlatformStatusEffectTrayWidget` | 增益效果分区；待创建 |
-| `WBP_DBA_UI_DebuffTray` | `GamePlatformStatusEffectTrayWidget` | 减益效果分区；待创建 |
-| `WBP_DBA_UI_ControlAlert` | `GamePlatformCombatAlertWidget` | 眩晕、沉默等硬控警报；待创建 |
-| `WBP_DBA_UI_StatusEffectIcon` | `GamePlatformComponentWidget` | 单图标、叠层和倒计时；待创建 |
-| `WBP_DBA_UI_BossCastAlert` | `GamePlatformCombatAlertWidget` | 首领关键技能预警；待创建 |
-| `WBP_DBA_UI_TargetDebuffTray` | `GamePlatformStatusEffectTrayWidget` | 目标授权减益；待创建 |
-| `WBP_DBA_UI_DispelBadge` | `GamePlatformComponentWidget` | 驱散类别符号；待创建 |
-| `WBP_DBA_UI_ImmunityBadge` | `GamePlatformComponentWidget` | 免控/免伤符号；待创建 |
-| `WBP_DBA_UI_EffectOverflow` | `GamePlatformComponentWidget` | +N效果溢出展开入口；待创建 |
+| `WBP_DBA_UI_CastBar` | `GamePlatformCastProgressWidget` | 普通施法/引导进度；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_TargetFrame` | `GamePlatformTargetFrameWidget` | 目标肖像、生命、护盾；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_CombatAlert` | `GamePlatformCombatAlertWidget` | 固定关键战斗预警；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_BuffTray` | `GamePlatformStatusEffectTrayWidget` | 增益效果分区；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_DebuffTray` | `GamePlatformStatusEffectTrayWidget` | 减益效果分区；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_ControlAlert` | `GamePlatformCombatAlertWidget` | 眩晕、沉默等硬控警报；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_StatusEffectIcon` | `GamePlatformComponentWidget` | 单图标、叠层和倒计时；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_BossCastAlert` | `GamePlatformCombatAlertWidget` | 首领关键技能预警；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_TargetDebuffTray` | `GamePlatformStatusEffectTrayWidget` | 目标授权减益；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_DispelBadge` | `GamePlatformComponentWidget` | 驱散类别符号；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_ImmunityBadge` | `GamePlatformComponentWidget` | 免控/免伤符号；Monolith创建/编译/保存已通过 |
+| `WBP_DBA_UI_EffectOverflow` | `GamePlatformComponentWidget` | +N效果溢出展开入口；Monolith创建/编译/保存已通过 |
 
 **设计与业务边界：** Monolith执行每份布局规格时必须校对真实C++父类、BindWidgetOptional（可选命名子控件）类型、ViewModel事件图、焦点、安全区及PC/移动端布局，并通过蓝图编译、保存、编辑器重载后才能改变对应“待创建”状态。图片、头像、效果和游戏时间均来自授权事实，不能在设计规格里写成已存在业务数据。
 
-**编辑器阻断记录：** 本次尝试启动`F:\UnrealEngine-5.8.0-release\Engine\Binaries\Win64\UnrealEditor.exe`加载正式`Game/DivineBeastsArena.uproject`，但8个缺失模块触发自动重建与`FailedDueToEngineChange`，Monolith实际回调返回编辑器不可用。定向`DivineBeastsInputClient`模块修复构建也未完成依赖，因此**本轮新增的十二个Widget .uasset实际数为0**。不得更新历史MonolithGenerationManifest的Saved/Compile结果。
+**故障与恢复记录：** 早期正式编辑器启动曾被缺失模块和`FailedDueToEngineChange`阻断；此后Monolith v0.23.0和正式UE5.8编辑器连接成功，十二项战斗专项和五项通用视觉蓝图已真实编译保存。此前完整编辑器独立构建曾因`LNK1181`（部分引擎静态库在当时无法链接）失败，这与本次Monolith创建成功是两个独立证据；完整UE构建、PIE和Cook仍需复验。当前MonolithGenerationManifest新增独立交付台账引用，不覆盖历史六个Widget的旧编译证据。
 
 ## 四、布局规格与制作门禁
 

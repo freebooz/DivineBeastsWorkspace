@@ -22,12 +22,18 @@ Codex全局config.toml的`monolith`与`-monolith-`连接项指向该安装的同
 
 ## 备份、切换与回退
 
-完整旧安装备份位于Saved/ToolUpdates/Monolith-0.23.0/Backup/Monolith-0.22.0，位于插件扫描根之外，逐文件校验后才允许替换。旧全局配置备份保留在用户.codex/backups/monolith-0.23.0-20261009目录，不复制潜在敏感全局配置到版本库；正式uproject原文件另保存在Saved。Saved中的日志、下载、备份、HostProject和编译产物均为瞬态工具交付材料，不提交为第三方源码。
+完整旧安装备份位于Saved/ToolUpdates/Monolith-0.23.0/Backup/Monolith-0.22.0，位于插件扫描根之外，1393个文件、459793976字节均已逐文件核对。旧全局配置备份保留在用户.codex/backups/monolith-0.23.0-20261009目录，不复制潜在敏感全局配置到版本库；正式uproject原文件另保存在Saved。Saved中的日志、下载、备份、HostProject和编译产物均为瞬态工具交付材料，不提交为第三方源码。
 
-切换前本任务Editor已确认没有图标资产修改、没有未保存用户包，按PID、工程、启动时间与本任务日志关闭；不按名称终止无关Editor或构建。只允许替换经过绝对路径白名单检查的Monolith安装内容，保持同一全局连接路径。失败时恢复经校验的旧源码/DLL/配置，再启动原引擎；不删除用户资产、原PNG或其他项目修改。
+切换前本任务Editor已确认没有图标资产修改、没有未保存用户包，按PID、工程、启动时间与本任务日志关闭；不按名称终止无关Editor或构建。只允许替换经过绝对路径白名单检查的Monolith安装内容，保持同一全局连接路径。删除前还核当前旧安装与备份完全一致，保护备份后他人修改；安装/回读失败自动恢复旧安装并校验，回退失败单独留证且禁止继续启动。切换脚本经独立只读复核，原两项Important已修，最终范围未发现Critical/Important；该源码审查不冒充故障回退演练。
 
 ## 当前验证边界
 
-官方包下载与SHA校验已执行并一致，旧安装/配置备份和锁定SDK源码构建正在执行；当前尚未宣称安装切换、服务0.23.0回读、动作目录或资产生成通过。完整实际命令、退出码、产物BuildId及安装校验将归档到Saved/ToolUpdates/Monolith-0.23.0，并在完成后同步本文。
+官方包SHA校验一致；锁定UE5.8.0 Win64 Development真实ForeignPlugin构建80动作、358.69秒、退出0，20个DLL齐全。原生BuildId与锁定引擎一致；Staging、Host及最终Package中的732个官方源码/描述文件均与原始SHA一致。发布标签材质源码的C4996真实记录为一条warning，材质模块仍成功链接，未手改第三方源码。
 
-升级后须重新启动正式工程，通过monolith_status读实际服务版本，读取项目文件路径和引擎版本，检查UI原生动作目录；随后继续60枚生肖技能纹理的Monolith导入、保存与原生包重载。工具连通不代替Widget/HUD、游戏运行、网络、Cook或设备视觉验收。
+最终候选含985文件、1509627453字节，保留官方两CLI并排除异BuildId的官方Win64 UE DLL。切换脚本真实退出0，安装985文件逐一回读长度与SHA一致；全局monolith和-monolith-两连接、本项目Editor专用启用项均核对有效，未改全局配置或为升级改项目描述。实际证据为CompiledForLockedEngine/Evidence/EditorCompileResult.json、PackageVerification.json、PackageCliToolVerification.json、InstallResult.json及IntegrationVerification.json。
+
+正式Game/DivineBeastsArena.uproject已用锁定Editor启动，PID18572与参数保存在EditorLaunch.json。两项全局连接的实际monolith_status均回读0.23.0、server_running=true、port9316、1355个动作/26个命名空间；通过Monolith.editor.run_python回读正式工程绝对路径及5.8.0-0+UE5身份一致，UI导入动作已复核。v0.23新增input的13动作与localization的4动作已在真实服务中发现，未把发布说明预估的1400+数量冒充本机启用数量。
+
+初次启动经历原生资源索引、骨骼网格编译与自动关闭的慢任务窗口，期间代理健康查询超时；未据此改装旧版或强行替换资产。Main启动记录有13条无具体测试名的ScriptStruct初始化条件错误，未运行Automation，不将服务健康表述为全Editor零错误或全部游戏类型通过。具体启动日志完整保留。
+
+运行身份与UI动作目录证据为Saved/Validation/ZodiacSkillIcons-2026-10-09/MonolithAuthoringIdentity.json；另一全局连接和新增命名空间回读在本次工具升级目录GlobalSecondaryConnectionStatus.json、InputNamespaceDiscovery.json、LocalizationNamespaceDiscovery.json。全局与项目的0.23.0安装及运行验证已完成，60枚技能纹理导入/保存/原生重载另按逐包清单记录。工具连通不代替Widget/HUD、游戏运行、网络、Cook或设备视觉验收。
