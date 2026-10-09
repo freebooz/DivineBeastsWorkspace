@@ -16,6 +16,7 @@
 #include "Engine/AssetManager.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
+#include "Misc/ConfigCacheIni.h"
 
 UDivineBeastsAbilityLoadoutComponent::UDivineBeastsAbilityLoadoutComponent()
 {
@@ -246,6 +247,27 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
     {
         OutError = TEXT("未通过可信服务器技能集合校验。");
         return false;
+    }
+    // 正式客户端/专用服务器绝不能通过软引用意外加载并授予开发集合。
+    // 仅在UE编辑器内、且配置显式开启后，允许开发样板参加PIE授权验证；
+    // Shipping/Test及独立Client/Server Target始终拒绝，即使内容目录被误Cook。
+    if (Set.bDevelopmentOnly)
+    {
+#if WITH_EDITOR && !UE_BUILD_SHIPPING && !UE_BUILD_TEST
+        bool bAllowDevelopmentAbilitySets = false;
+        if (!GConfig || !GConfig->GetBool(
+                TEXT("DivineBeasts.Abilities"),
+                TEXT("bAllowDevelopmentAbilitySets"),
+                bAllowDevelopmentAbilitySets, GGameIni) ||
+            !bAllowDevelopmentAbilitySets)
+        {
+            OutError = TEXT("开发技能集合仅允许编辑器在显式启用测试开关后授予。");
+            return false;
+        }
+#else
+        OutError = TEXT("正式客户端和服务器目标禁止授予开发技能集合。");
+        return false;
+#endif
     }
     // 现阶段角色所需基础 AttributeSet 已由角色初始化提供；新增动态属性集
     // 一旦无法回滚将破坏授权事务，所以此实现拒绝它，而不是装作全部支持。

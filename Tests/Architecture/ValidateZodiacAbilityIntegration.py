@@ -124,6 +124,13 @@ def check_wiring() -> None:
            "Set.Abilities.IsEmpty()" in grant and
            "if (!Configured)" in grant and
            "项目英雄技能未继承统一数据驱动技能基类" in grant)
+    # 任何正式Client/Server路径均不得依赖编辑器测试开关授予DevelopmentOnly能力集。
+    config = read(ROOT / "Game/Config/DefaultGame.ini")
+    verify("开发能力集显式Editor授权且正式构建强制拒绝",
+           "if (Set.bDevelopmentOnly)" in grant
+           and "#if WITH_EDITOR && !UE_BUILD_SHIPPING && !UE_BUILD_TEST" in grant
+           and "bAllowDevelopmentAbilitySets" in grant
+           and "bAllowDevelopmentAbilitySets=false" in config)
 
 
 

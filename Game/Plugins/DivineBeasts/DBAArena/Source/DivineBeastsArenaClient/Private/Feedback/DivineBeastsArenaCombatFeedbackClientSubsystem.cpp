@@ -7,7 +7,7 @@
 #include "Definitions/GamePlatformDefinitionBase.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
-#include "Engine/World.h"
+#include "Engine/World.h"#include "Framework/GamePlatformArenaGameState.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "MobaPresentationClientSubsystem.h"
@@ -87,6 +87,16 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::BeginForWorld(UWorld* Worl
         return;
     }
 
+    // 该组合根是竞技专用服务：登录、角色预览、Village和OpenWorld均不请求MOBA打击资产。
+    // Client首个PostLoadMap可能早于ArenaGameState复制，此时暂不标记尝试；真正命中时补检查。
+    if (!World->GetGameState<AGamePlatformArenaGameState>())
+    {
+        if (BoundWorld.IsValid() && BoundWorld.Get() != World)
+        {
+            CancelWorldLeases();
+        }
+        return;
+    }
     if (BoundWorld.Get() == World && bCatalogLoadAttemptedForWorld)
     {
         return; // 包括明确未配置的场景，防止每次命中尝试初始化并重复提交IO。
@@ -131,6 +141,35 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::BeginForWorld(UWorld* Worl
                     ActiveData->ReleaseDefinition(Self->CatalogLease);
                 }
                 Self->CatalogLease = FGamePlatformDataLease{};
+                return;
+            }
+
+            // 在目录加载完成时预热前64个唯一Profile；实际命中路径只读已经加载的对象。
+            // 内容优先级由目录条目顺序确定，不依赖TMap/TSet不确定的迭代顺序。
+            IGamePlatformDataService* ActiveData = Self->GetDataService();
+            const UDivineBeastsCombatFeedbackCatalog* LoadedCatalog = ActiveData
+                ? Cast<UDivineBeastsCombatFeedbackCatalog>(
+                    ActiveData->GetLoadedDefinition(Self->CatalogLease))
+                : nullptr;
+            if (!LoadedCatalog)
+            {
+                return;
+            }
+
+            TSet<FPrimaryAssetId> SeenDefinitions;
+            for (const FDivineBeastsCombatFeedbackEntry& Entry : LoadedCatalog->Entries)
+            {
+                if (!Entry.ProfileDefinitionId.IsValid() ||
+                    SeenDefinitions.Contains(Entry.ProfileDefinitionId))
+                {
+                    continue;
+                }
+                SeenDefinitions.Add(Entry.ProfileDefinitionId);
+                if (SeenDefinitions.Num() > MaxActiveProfileLeases)
+                {
+                    break; // 超出本地预算的配置本世界使用通用反馈，禁止无限申请或缓存。
+                }
+                Self->BeginProfileLoad(Entry.ProfileDefinitionId);
             }
         }, RequestResult);
 }

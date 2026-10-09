@@ -95,6 +95,14 @@ MOBA：MobaPresentationRuntime（强度策略）、MobaPresentationClient（可�
 - [x] **正式结构组合门禁。** 首轮`ValidateDesignBaseline.ps1`定位到竞技Client/Editor缺失的两个直接插件描述依赖（GamePlatformCore、GamePlatformCombat，共4条目标错误）；已最小增量补全`DBAArena.uplugin`后重跑，Client/Server/Editor装配均通过，机制插件46与已登记16个内容插件总量未变化。
 - [ ] **风险审查。** 异步Data租约和回调需UE实测世界退出、账号切换、分屏、本地玩家删除；第一击发生时对应Profile尚未预加载会使用通用反馈，正式上线前应基于已授权技能/角色出现事件提前预热。对于RootMotion动画，当前主动跳过视觉顿帧而不是篡改服务器位移。
 
+### 本轮资产预热、场景隔离与UE编译证据补充
+
+- 竞技组合根在已确认Catalog租约成功后，按已配置目录条目顺序去重并主动异步预热最多64个Profile（只请求Client Bundle，VFX/SFX内容通过各自平台Provider与目录处理）。同一World不会无限重试失败目录，Profile失败不影响GAS或恢复操作；配置数超过容量的其它条目使用平台通用反馈，不假装全部加载完成。
+- 仅真实`AGamePlatformArenaGameState`所在竞技World才请求目录和Profile；OpenWorld、Village、登录/选角或非竞技场景不因为装配`DBAArena`被动加载MOBA纯表现资源。PostLoadMap早于GameState复制时不标记加载尝试，首次真实命中可重检。
+- MOBA层已有项目Resolver但未取得当前英雄/技能的Profile时不沿用上一英雄的旧VFX/SFX定义ID；回退通用强度/局部顿帧，不播放错误生肖的特效。
+- UE5.8`DivineBeastsArenaClient Win64 Development`定向编译运行：UHT真实通过，处理13个反射生成文件；后续9个C++编译动作进入当前UE5.8分支的UBA本地执行器，`cl.exe`长时间无CPU进展，最终主动停止本次仅我方创建的Build Job，**没有编译成功退出码**。引擎`ExecutorFactory.cs`证实此分支即便使用`-NoUBA`仍走UBA，仅关闭Detour；应先排查本机UBA状态后重跑，不重复宣称切换到了MSVC本地直接执行器。
+- 本批编译有部分源码在启动后更新（Resolver fallback、目录预热与ArenaGameState范围保护），所以即便首轮编译有成功记录也不能作为最终变更的全量验收。Client/Editor/Server构建、真实Profile资产、UE自动化和Cook/联机仍未完成。
+
 ## 验收证据与回退
 
 优先执行现有 `Tests/Architecture/ValidateProjectHeaders.ps1`（头文件）、`ValidateInheritanceBoundaries.ps1`（三层依赖）、`git diff --check`（差异卫生）。随后使用仓库锁定UE构建脚本，保持真实失败日志。  
