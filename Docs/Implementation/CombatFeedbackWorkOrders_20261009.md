@@ -103,6 +103,32 @@ MOBA：MobaPresentationRuntime（强度策略）、MobaPresentationClient（可�
 - UE5.8`DivineBeastsArenaClient Win64 Development`定向编译运行：UHT真实通过，处理13个反射生成文件；后续9个C++编译动作进入当前UE5.8分支的UBA本地执行器，`cl.exe`长时间无CPU进展，最终主动停止本次仅我方创建的Build Job，**没有编译成功退出码**。引擎`ExecutorFactory.cs`证实此分支即便使用`-NoUBA`仍走UBA，仅关闭Detour；应先排查本机UBA状态后重跑，不重复宣称切换到了MSVC本地直接执行器。
 - 本批编译有部分源码在启动后更新（Resolver fallback、目录预热与ArenaGameState范围保护），所以即便首轮编译有成功记录也不能作为最终变更的全量验收。Client/Editor/Server构建、真实Profile资产、UE自动化和Cook/联机仍未完成。
 
+
+### 2026-10-09 按已授权技能预热与0/3/6帧调试增量
+
+- [x] P5：DBAArena客户端组合根监听LocalPlayer Controller的Pawn接管、World的GameStateSetEvent及当前Pawn的OnLoadoutChanged（已授权技能变更）；仅使用OwnerOnly授予快照中Ready、HeroDefinitionId、AvatarGeneration与有效AbilityId、AbilityLevel选择Profile，不再在Catalog完成后一次加载所有英雄配置。
+- [x] P5：切换Pawn、当前竞技World退出时精准撤销旧技能订阅、GameStateSetEvent与Profile租约；资产加载仍由GamePlatformData完成，技能权威规则不受影响，额外验证旧世界/迟到回调在服务内代次检查后不会覆盖新世界。
+- [x] P2/P7：GamePlatformAnimationClient新增本地控制台变量gp.Combat.HitstopOverrideFrames，-1表示使用Profile，0关闭顿帧，3与6用于60Hz参考时长对比，最大10帧。其他VFX、SFX、UI和Gameplay不被暂停；新增GamePlatform.Animation.Hitstop.Tuning自动化测试源码，但没有执行过UE运行时Automation。
+- [x] P7：新增并执行Tests/Architecture/ValidateCombatFeedbackIntegration.py静态审计22项，覆盖三层插件声明、OwnerOnly已授权技能过滤、异步数据租约、生命周期解绑、根运动保守跳过和控制台帧数策略，结果22/22通过。该静态测试不代表资产、Cook、联机或C++编译通过。
+- [x] 编译修正：独立MSVC语法检查确实定位到C4067，源于DBAArena打击反馈客户端.cpp中重复拼接#include；已修复并加入静态门禁。独立MSVC与同机另一UBT进程并行时曾发生长期无CPU进展，已停止本会话启动的独立检查，未终止其他会话的UBT。
+- [ ] 待验收：重新生成UHT并完成Client/Editor/Server编译；获得真实初始Profile、效果材质、Niagara和音效资产；实际执行0/3/6帧对比、Pawn切换、GameState晚到、5v5并发和专服同步测试。
+
+
+### 首批真实资产目录复核
+
+- [x] 新增 Docs/Implementation/CombatFeedbackAssetGapInventory_20261009.md（丑牛/寅虎/卯兔首批资源现状和资产验收清单）：已在各英雄包目录看到外观定义、原型材质、各5项技能UI资源文件；不把名称相近的UI图标认定为已授权GAS技能或真实命中VFX/SFX/Montage。
+- [ ] 首批正式命中Profile、Catalog、Niagara粒子、分层命中材质音、Overlay和CameraShake曲线尚未由UE Editor/Monolith真实生成与AssetRegistry复核；P1/P3/P5资产项仍未完成。
+- [ ] 0/3/6帧实际手感比较、输入连续性、动画RootMotion保护和5v5压力数据仍无真实客户端演示证据；不能以静态22项通过替代验收。
+
+
+### 最新 UE5.8 构建诊断（P8尚未通过）
+
+- 本轮正式 Client 定向构建重新运行了 UHT，报告 UHT processed DivineBeastsArenaClient in 56.6451854 seconds（写入9份反射生成文件）；其后进入 UBA 本地C++的8个编译动作，首个竞技组合根源文件的cl.exe长期几乎无CPU进展，构建主动停止，未获取最终退出码0。
+- 日志连续显示 Intermediate/Build/Win64/x64/DivineBeastsArenaClient/Development/FileHashCache.bin 读取流尾失败。已在确认无活动UnrealBuildTool后，将该单目标的生成缓存重命名备份为 FileHashCache.bin.backup-combatfeedback-20261009；未清理源码、真实.uasset、Git记录或正在运行的编辑器。
+- 缩小到 GamePlatformAnimationClient 模块的第二次 Client 构建进入3个UBA C++动作后仍表现为cl.exe长时间无CPU进展，亦已停止本会话启动的任务；此处无法断定为新增C++源码编译失败或成功。
+- 当前引擎 F:/UnrealEngine-5.8.0-release 的 ExecutorFactory.cs 确认 -NoUBA 在此版本仅关闭 Detour，仍使用 UBA 执行器；后续需在不覆盖编辑器中未保存UI资产的前提下排除UBA/MSVC环境阻断，重跑完整Client/Editor/Server构建及UE Automation。
+- 刻意未终止或改写其他并行任务的 UnrealEditor 与 Editor SingleFile UBT 作业；P8仍须标记“C++编译未验证完成”，不能因UHT生成、静态结构通过或以前目标的历史成功而升级为已交付。
+
 ## 验收证据与回退
 
 优先执行现有 `Tests/Architecture/ValidateProjectHeaders.ps1`（头文件）、`ValidateInheritanceBoundaries.ps1`（三层依赖）、`git diff --check`（差异卫生）。随后使用仓库锁定UE构建脚本，保持真实失败日志。  

@@ -7,6 +7,10 @@
 #include "Definitions/DivineBeastsCombatFeedbackCatalog.h"
 #include "Feedback/GamePlatformHitFeedbackProfile.h"
 #include "Components/DivineBeastsCharacterComponent.h"
+#include "Components/DivineBeastsAbilityLoadoutComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/GameStateBase.h"
 #include "Definitions/GamePlatformDefinitionBase.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
@@ -48,7 +52,12 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::Initialize(
     PostLoadMapHandle = FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(
         this, &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandlePostLoadMap);
 
-    BeginForWorld(LocalPlayer ? LocalPlayer->GetWorld() : nullptr);
+    WatchWorld(LocalPlayer ? LocalPlayer->GetWorld() : nullptr);
+    if (LocalPlayer && LocalPlayer->GetWorld())
+    {
+        PlayerControllerChanged(
+            LocalPlayer->GetPlayerController(LocalPlayer->GetWorld()));
+    }
 }
 
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::Deinitialize()
@@ -70,6 +79,8 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::Deinitialize()
         Moba->ClearHitFeedbackResolver();
     }
     MobaPresentation.Reset();
+    PlayerControllerChanged(nullptr);
+    UnwatchWorld();
     CancelWorldLeases();
     Super::Deinitialize();
 }
@@ -80,6 +91,194 @@ UDivineBeastsArenaCombatFeedbackClientSubsystem::GetDataService() const
     ULocalPlayer* LocalPlayer = GetLocalPlayer();
     UGameInstance* Instance = LocalPlayer ? LocalPlayer->GetGameInstance() : nullptr;
     return Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::PlayerControllerChanged(
+    APlayerController* NewController)
+{
+    Super::PlayerControllerChanged(NewController);
+
+    if (APlayerController* OldController = ObservedController.Get())
+    {
+        OldController->OnPossessedPawnChanged.RemoveDynamic(
+            this,
+            &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandlePossessedPawnChanged);
+    }
+    UnbindLocalLoadout();
+    ObservedController = NewController;
+
+    if (IsValid(NewController))
+    {
+        NewController->OnPossessedPawnChanged.AddUniqueDynamic(
+            this,
+            &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandlePossessedPawnChanged);
+        WatchWorld(NewController->GetWorld());
+        BindLocalLoadout(NewController->GetPawn());
+    }
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::WatchWorld(UWorld* World)
+{
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    if (!World || !LocalPlayer || LocalPlayer->GetWorld() != World ||
+        World->GetNetMode() == NM_DedicatedServer)
+    {
+        return;
+    }
+
+    if (ObservedWorld.Get() != World)
+    {
+        // 世界指针变化时先撤销旧世界的观察句柄和异步资源租约。
+        UnwatchWorld();
+        CancelWorldLeases();
+        ObservedWorld = World;
+        GameStateSetHandle = World->GameStateSetEvent.AddUObject(
+            this, &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleGameStateSet);
+    }
+
+    // Client的GameState可能晚于PostLoadMap到达；该检查只在世界切换或命中时进行。
+    if (World->GetGameState<AGamePlatformArenaGameState>())
+    {
+        BeginForWorld(World);
+    }
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::UnwatchWorld()
+{
+    if (UWorld* World = ObservedWorld.Get())
+    {
+        if (GameStateSetHandle.IsValid())
+        {
+            World->GameStateSetEvent.Remove(GameStateSetHandle);
+        }
+    }
+    GameStateSetHandle.Reset();
+    ObservedWorld.Reset();
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleGameStateSet(
+    AGameStateBase* GameState)
+{
+    if (!IsValid(GameState) || GameState->GetWorld() != ObservedWorld.Get())
+    {
+        return;
+    }
+    if (GameState->IsA<AGamePlatformArenaGameState>())
+    {
+        BeginForWorld(GameState->GetWorld());
+    }
+    else if (BoundWorld.Get() == GameState->GetWorld())
+    {
+        // 竞技状态被普通世界替换时，及时释放旧竞技Profile与Catalog。
+        CancelWorldLeases();
+    }
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandlePossessedPawnChanged(
+    APawn* /*PreviousPawn*/, APawn* NewPawn)
+{
+    if (IsValid(NewPawn))
+    {
+        WatchWorld(NewPawn->GetWorld());
+    }
+    BindLocalLoadout(NewPawn);
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::BindLocalLoadout(APawn* NewPawn)
+{
+    UWorld* World = ObservedWorld.Get();
+    UDivineBeastsAbilityLoadoutComponent* NewLoadout =
+        IsValid(NewPawn) && NewPawn->GetWorld() == World
+            ? NewPawn->FindComponentByClass<UDivineBeastsAbilityLoadoutComponent>()
+            : nullptr;
+    if (ObservedLoadout.Get() == NewLoadout)
+    {
+        PrewarmAuthorizedLocalAbilities();
+        return;
+    }
+
+    UnbindLocalLoadout();
+    ReleaseProfileLeases(); // 角色/Pawn切换后不保留旧英雄已预加载资源，占用按需受控。
+    ObservedLoadout = NewLoadout;
+    if (IsValid(NewLoadout))
+    {
+        LoadoutChangedHandle = NewLoadout->OnLoadoutChanged().AddUObject(
+            this, &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleLoadoutChanged);
+        PrewarmAuthorizedLocalAbilities();
+    }
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::UnbindLocalLoadout()
+{
+    if (UDivineBeastsAbilityLoadoutComponent* Loadout = ObservedLoadout.Get())
+    {
+        if (LoadoutChangedHandle.IsValid())
+        {
+            Loadout->OnLoadoutChanged().Remove(LoadoutChangedHandle);
+        }
+    }
+    LoadoutChangedHandle.Reset();
+    ObservedLoadout.Reset();
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleLoadoutChanged(
+    const FDivineBeastsAbilityLoadoutState& /*State*/)
+{
+    // 客户端只观察OwnerOnly授予结果，不在此授权、激活或推导技能。
+    PrewarmAuthorizedLocalAbilities();
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::PrewarmAuthorizedLocalAbilities()
+{
+    const UDivineBeastsAbilityLoadoutComponent* Loadout = ObservedLoadout.Get();
+    IGamePlatformDataService* Data = GetDataService();
+    UWorld* World = BoundWorld.Get();
+    if (!IsValid(Loadout) || !Data || !World || !CatalogLease.IsValid() ||
+        !IsValid(Loadout->GetOwner()) || Loadout->GetOwner()->GetWorld() != World)
+    {
+        return;
+    }
+
+    const UDivineBeastsCombatFeedbackCatalog* Catalog =
+        Cast<UDivineBeastsCombatFeedbackCatalog>(
+            Data->GetLoadedDefinition(CatalogLease));
+    if (!Catalog)
+    {
+        return; // 目录尚未完成异步加载，由完成回调再触发一次，不进行同步IO。
+    }
+
+    const FDivineBeastsAbilityLoadoutState& State = Loadout->GetLoadoutStateRef();
+    const UDivineBeastsCharacterComponent* Identity =
+        Loadout->GetOwner()->FindComponentByClass<UDivineBeastsCharacterComponent>();
+    if (!State.bReady || State.HeroDefinitionId.IsNone() ||
+        State.AvatarGeneration <= 0 || !Identity ||
+        Identity->GetHeroDefinitionId() != State.HeroDefinitionId ||
+        Identity->GetAvatarGeneration() != State.AvatarGeneration)
+    {
+        return; // 尚未被服务器授予、旧角色代次或身份不一致时严禁预热。
+    }
+
+    TSet<FPrimaryAssetId> SeenDefinitions;
+    for (const FDivineBeastsGrantedAbilitySlot& Slot : State.Slots)
+    {
+        if (Slot.AbilityId.IsNone() || Slot.AbilityLevel <= 0)
+        {
+            continue;
+        }
+        FDivineBeastsCombatFeedbackEntry Entry;
+        if (!Catalog->TryResolve(State.HeroDefinitionId, Slot.AbilityId, Entry) ||
+            !Entry.ProfileDefinitionId.IsValid() ||
+            SeenDefinitions.Contains(Entry.ProfileDefinitionId))
+        {
+            continue;
+        }
+        SeenDefinitions.Add(Entry.ProfileDefinitionId);
+        if (ProfileLeases.Num() >= MaxActiveProfileLeases)
+        {
+            break; // 与其他已按实际攻击懒加载的资源共用预算，不抢占整场技能资源。
+        }
+        BeginProfileLoad(Entry.ProfileDefinitionId);
+    }
 }
 
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::BeginForWorld(UWorld* World)
@@ -148,33 +347,9 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::BeginForWorld(UWorld* Worl
                 return;
             }
 
-            // 在目录加载完成时预热前64个唯一Profile；实际命中路径只读已经加载的对象。
-            // 内容优先级由目录条目顺序确定，不依赖TMap/TSet不确定的迭代顺序。
-            IGamePlatformDataService* ActiveData = Self->GetDataService();
-            const UDivineBeastsCombatFeedbackCatalog* LoadedCatalog = ActiveData
-                ? Cast<UDivineBeastsCombatFeedbackCatalog>(
-                    ActiveData->GetLoadedDefinition(Self->CatalogLease))
-                : nullptr;
-            if (!LoadedCatalog)
-            {
-                return;
-            }
-
-            TSet<FPrimaryAssetId> SeenDefinitions;
-            for (const FDivineBeastsCombatFeedbackEntry& Entry : LoadedCatalog->Entries)
-            {
-                if (!Entry.ProfileDefinitionId.IsValid() ||
-                    SeenDefinitions.Contains(Entry.ProfileDefinitionId))
-                {
-                    continue;
-                }
-                SeenDefinitions.Add(Entry.ProfileDefinitionId);
-                if (SeenDefinitions.Num() > MaxActiveProfileLeases)
-                {
-                    break; // 超出本地预算的配置本世界使用通用反馈，禁止无限申请或缓存。
-                }
-                Self->BeginProfileLoad(Entry.ProfileDefinitionId);
-            }
+            // 目录就绪后只预热当前LocalPlayer已由服务器授予的真实技能。
+            // 其他敌方技能在收到首次确认命中后按需申请，避免加载十二生肖全部资源。
+            Self->PrewarmAuthorizedLocalAbilities();
         }, RequestResult);
 }
 
@@ -185,9 +360,9 @@ bool UDivineBeastsArenaCombatFeedbackClientSubsystem::ResolveLoadedHitFeedback(
     // 初始加载或Travel时本地玩家World切换事件可能晚于地图回调；首次命中可补一次异步挂载。
     ULocalPlayer* LocalPlayer = GetLocalPlayer();
     UWorld* CurrentWorld = LocalPlayer ? LocalPlayer->GetWorld() : nullptr;
-    if (CurrentWorld && CurrentWorld != BoundWorld.Get())
+    if (CurrentWorld)
     {
-        BeginForWorld(CurrentWorld);
+        WatchWorld(CurrentWorld); // 已观察同一World时O(1)，无需扫描全部战斗Actor。
     }
     UWorld* World = BoundWorld.Get();
     IGamePlatformDataService* Data = GetDataService();
@@ -300,22 +475,31 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::BeginProfileLoad(
     ProfileLeases.Add(ProfileDefinitionId, MoveTemp(Lease));
 }
 
-void UDivineBeastsArenaCombatFeedbackClientSubsystem::CancelWorldLeases()
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::ReleaseProfileLeases()
 {
-    ++WorldRequestGeneration;
     if (IGamePlatformDataService* Data = GetDataService())
     {
         for (const TPair<FPrimaryAssetId, FGamePlatformDataLease>& Pair : ProfileLeases)
         {
             Data->ReleaseDefinition(Pair.Value);
         }
+    }
+    // 释放之后收到异步加载回调时，因请求句柄不再在Map中，不会污染新英雄。
+    ProfileLeases.Reset();
+    FailedProfiles.Reset();
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::CancelWorldLeases()
+{
+    ++WorldRequestGeneration;
+    if (IGamePlatformDataService* Data = GetDataService())
+    {
         if (CatalogLease.IsValid())
         {
             Data->ReleaseDefinition(CatalogLease);
         }
     }
-    ProfileLeases.Reset();
-    FailedProfiles.Reset();
+    ReleaseProfileLeases();
     CatalogLease = FGamePlatformDataLease{};
     BoundWorld.Reset();
     bCatalogLoadAttemptedForWorld = false;
@@ -323,14 +507,25 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::CancelWorldLeases()
 
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandlePostLoadMap(UWorld* World)
 {
-    BeginForWorld(World);
+    WatchWorld(World);
+    if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+    {
+        if (World && LocalPlayer->GetWorld() == World)
+        {
+            PlayerControllerChanged(LocalPlayer->GetPlayerController(World));
+        }
+    }
 }
 
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleWorldCleanup(
     UWorld* World, bool /*bSessionEnded*/, bool /*bCleanupResources*/)
 {
-    if (World && BoundWorld.Get() == World)
+    if (!World || (ObservedWorld.Get() != World && BoundWorld.Get() != World))
     {
-        CancelWorldLeases();
+        return;
     }
+    // Pawn/World退出先注销本地所有者授权订阅，不能再回放旧角色输入或旧资源。
+    PlayerControllerChanged(nullptr);
+    UnwatchWorld();
+    CancelWorldLeases();
 }

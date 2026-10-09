@@ -38,7 +38,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevPrimary.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.rat_dev_primary@1",
+        "dba.ability.rat_dev_passive@1",
+        "dba.ability.rat_dev_active01@1",
+        "dba.ability.rat_dev_active02@1",
+        "dba.ability.rat_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Ox",
@@ -52,7 +69,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.ox_dev_basicattack@1",
+        "dba.ability.ox_dev_passive@1",
+        "dba.ability.ox_dev_active01@1",
+        "dba.ability.ox_dev_active02@1",
+        "dba.ability.ox_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Tiger",
@@ -66,7 +100,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.tiger_dev_basicattack@1",
+        "dba.ability.tiger_dev_passive@1",
+        "dba.ability.tiger_dev_active01@1",
+        "dba.ability.tiger_dev_active02@1",
+        "dba.ability.tiger_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Rabbit",
@@ -80,7 +131,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.rabbit_dev_basicattack@1",
+        "dba.ability.rabbit_dev_passive@1",
+        "dba.ability.rabbit_dev_active01@1",
+        "dba.ability.rabbit_dev_active02@1",
+        "dba.ability.rabbit_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Dragon",
@@ -94,7 +162,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.dragon_dev_basicattack@1",
+        "dba.ability.dragon_dev_passive@1",
+        "dba.ability.dragon_dev_active01@1",
+        "dba.ability.dragon_dev_active02@1",
+        "dba.ability.dragon_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Snake",
@@ -108,7 +193,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.snake_dev_basicattack@1",
+        "dba.ability.snake_dev_passive@1",
+        "dba.ability.snake_dev_active01@1",
+        "dba.ability.snake_dev_active02@1",
+        "dba.ability.snake_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Horse",
@@ -122,7 +224,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.horse_dev_basicattack@1",
+        "dba.ability.horse_dev_passive@1",
+        "dba.ability.horse_dev_active01@1",
+        "dba.ability.horse_dev_active02@1",
+        "dba.ability.horse_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Goat",
@@ -136,7 +255,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.goat_dev_basicattack@1",
+        "dba.ability.goat_dev_passive@1",
+        "dba.ability.goat_dev_active01@1",
+        "dba.ability.goat_dev_active02@1",
+        "dba.ability.goat_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Monkey",
@@ -150,7 +286,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.monkey_dev_basicattack@1",
+        "dba.ability.monkey_dev_passive@1",
+        "dba.ability.monkey_dev_active01@1",
+        "dba.ability.monkey_dev_active02@1",
+        "dba.ability.monkey_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Rooster",
@@ -164,7 +317,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.rooster_dev_basicattack@1",
+        "dba.ability.rooster_dev_passive@1",
+        "dba.ability.rooster_dev_active01@1",
+        "dba.ability.rooster_dev_active02@1",
+        "dba.ability.rooster_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Dog",
@@ -178,7 +348,24 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.dog_dev_basicattack@1",
+        "dba.ability.dog_dev_passive@1",
+        "dba.ability.dog_dev_active01@1",
+        "dba.ability.dog_dev_active02@1",
+        "dba.ability.dog_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     },
     {
       "HeroDefinitionId": "Hero.Zodiac.Boar",
@@ -192,7 +379,30 @@
       "SkillBalanceRowsVerified": 0,
       "SkillIconPathsVerified": [],
       "ImportedArtSlotTexturesVerified": 5,
-      "AbilitySetGrantedByDedicatedServer": false
+      "AbilitySetGrantedByDedicatedServer": false,
+      "DevelopmentSkillDefinitionFiles": [
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevBasicAttack.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevPassive.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevActive01.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevActive02.uasset",
+        "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevUltimate.uasset"
+      ],
+      "DevelopmentSkillIdsNotApproved": [
+        "dba.ability.boar_dev_basicattack@1",
+        "dba.ability.boar_dev_passive@1",
+        "dba.ability.boar_dev_active01@1",
+        "dba.ability.boar_dev_active02@1",
+        "dba.ability.boar_dev_ultimate@1"
+      ],
+      "DevelopmentUIProfileAssetPath": "/Game/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevUIProfile",
+      "DevelopmentSkillAssetsUEEditorVerified": 5,
+      "DevelopmentSetGrantValidatedWithRealServer": false
     }
-  ]
+  ],
+  "DevelopmentDefinitionAssetsUEEditorVerified": 60,
+  "DevelopmentBalanceRowsUEEditorVerified": 60,
+  "DevelopmentUIProfilesUEEditorVerified": 12,
+  "DevelopmentArtSlotReferencesVerified": 60,
+  "DevelopmentAssetAuditTool": "Tools/Unreal/Abilities/ValidateZodiacDevelopmentAssets.py",
+  "DevelopmentDataReleaseStatusZh": "仅开发：正式AbilityId/默认英雄技能集均未批准，所有12英雄默认授权仍为空。"
 }

@@ -47,6 +47,8 @@ bool UGamePlatformCastProgressWidget::BindCastSource(FGuid InScopeId)
     }
     BoundScopeId = InScopeId;
     State = FGamePlatformUICastProgressState();
+    // 尚未收到可信施法快照时不展示空施法条。
+    SetVisibility(ESlateVisibility::Collapsed);
     if (CastProgressBar)
     {
         CastProgressBar->SetPercent(0.0f);
@@ -79,6 +81,10 @@ bool UGamePlatformCastProgressWidget::ApplyCastSnapshot(
     {
         CastNameText->SetText(State.bActive ? State.DisplayName : FText::GetEmpty());
     }
+    // 客户端仅按经授权的bActive（当前施法状态）展开控件，不预测真正技能完成。
+    SetVisibility(State.bActive
+        ? ESlateVisibility::SelfHitTestInvisible
+        : ESlateVisibility::Collapsed);
     BP_OnCastStateChanged(State);
     return true;
 }
@@ -91,6 +97,7 @@ void UGamePlatformCastProgressWidget::ClearCastSource()
     }
     BoundScopeId.Invalidate();
     State = FGamePlatformUICastProgressState();
+    SetVisibility(ESlateVisibility::Collapsed);
     if (CastProgressBar)
     {
         CastProgressBar->SetPercent(0.0f);

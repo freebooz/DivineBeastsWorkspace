@@ -6,6 +6,7 @@
 #include "DivineBeastsPlayerStatusPanel.generated.h"
 
 class UDivineBeastsPlayerStatusViewModel;
+class APawn;
 
 /**
  * UDivineBeastsPlayerStatusPanel（神兽联盟玩家状态面板）。
@@ -59,6 +60,16 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsPlayerStatusViewModel> StatusViewModel = nullptr;
+
+    /** 此面板在本地按Pawn实例持有唯一UI ViewModel，不创建Gameplay侧第二份生命或气势。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UDivineBeastsPlayerStatusViewModel> OwnedStatusViewModel = nullptr;
+
+    UFUNCTION()
+    void HandlePossessedPawnChanged(APawn* PreviousPawn, APawn* NewPawn);
+
+    /** 仅事件驱动重绑当前拥有者ASC，换角色/断开后解除所有旧委托。 */
+    void RefreshStatusSourceFromOwningPawn();
 
     FDelegateHandle StatusChangedHandle;
 };

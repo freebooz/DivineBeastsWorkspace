@@ -1,6 +1,9 @@
 #include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
 
 #include "ViewModels/Combat/DivineBeastsPlayerStatusViewModel.h"
+#include "Components/GamePlatformAbilitySystemComponent.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 
 namespace
 {
@@ -44,17 +47,74 @@ void UDivineBeastsPlayerStatusPanel::ClearStatusViewModel()
 void UDivineBeastsPlayerStatusPanel::NativeConstruct()
 {
     Super::NativeConstruct();
+
+    if (APlayerController* Controller = GetOwningPlayer())
+    {
+        Controller->OnPossessedPawnChanged.AddUniqueDynamic(
+            this, &UDivineBeastsPlayerStatusPanel::HandlePossessedPawnChanged);
+    }
     if (IsValid(ShieldBar))
     {
-        // Shield不是GAS属性，不得把历史蓝图中的空盾资源条显示给玩家。
+        // ShieldBar只是旧控件蓝图兼容字段，不再绑定或展示任何盾容量数值。
         ShieldBar->SetVisibility(ESlateVisibility::Collapsed);
     }
+    RefreshStatusSourceFromOwningPawn();
 }
 
 void UDivineBeastsPlayerStatusPanel::NativeDestruct()
 {
+    if (APlayerController* Controller = GetOwningPlayer())
+    {
+        Controller->OnPossessedPawnChanged.RemoveDynamic(
+            this, &UDivineBeastsPlayerStatusPanel::HandlePossessedPawnChanged);
+    }
+    if (IsValid(OwnedStatusViewModel))
+    {
+        OwnedStatusViewModel->UnbindFromAbilitySystem();
+    }
     ClearStatusViewModel();
+    OwnedStatusViewModel = nullptr;
     Super::NativeDestruct();
+}
+
+void UDivineBeastsPlayerStatusPanel::HandlePossessedPawnChanged(
+    APawn* /*PreviousPawn*/, APawn* /*NewPawn*/)
+{
+    RefreshStatusSourceFromOwningPawn();
+}
+
+void UDivineBeastsPlayerStatusPanel::RefreshStatusSourceFromOwningPawn()
+{
+    if (!IsValid(OwnedStatusViewModel))
+    {
+        OwnedStatusViewModel = NewObject<UDivineBeastsPlayerStatusViewModel>(this);
+    }
+
+    const APawn* Pawn = GetOwningPlayerPawn();
+    UGamePlatformAbilitySystemComponent* ASC = IsValid(Pawn)
+        ? Pawn->FindComponentByClass<UGamePlatformAbilitySystemComponent>()
+        : nullptr;
+
+    if (!IsValid(ASC))
+    {
+        // Pawn切换/失效必须清空旧玩家的生命与气势，不能显示残留快照。
+        OwnedStatusViewModel->UnbindFromAbilitySystem();
+        ClearStatusViewModel();
+        ApplyStatus(FDivineBeastsPlayerStatusViewData());
+        return;
+    }
+
+    // UI ViewModel只订阅现有ASC的复制属性：Health/MaxHealth/Momentum/MaxMomentum。
+    // 自己不进行GameplayEffect写入、技能授权或每帧轮询。
+    if (OwnedStatusViewModel->BindToAbilitySystem(ASC))
+    {
+        BindStatusViewModel(OwnedStatusViewModel);
+    }
+    else
+    {
+        ClearStatusViewModel();
+        ApplyStatus(FDivineBeastsPlayerStatusViewData());
+    }
 }
 
 void UDivineBeastsPlayerStatusPanel::HandleStatusChanged(

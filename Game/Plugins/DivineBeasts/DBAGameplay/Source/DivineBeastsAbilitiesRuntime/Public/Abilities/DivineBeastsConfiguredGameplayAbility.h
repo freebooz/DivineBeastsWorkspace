@@ -59,6 +59,16 @@ public:
     bool TryReadConfiguredBalance(
         FDivineBeastsAbilityBalanceRow& OutRow, FString& OutError) const;
 
+
+    /**
+     * 服务器前向命中样板：从当前可信Avatar生成射线与目标命中事实，
+     * 仅在GAS CommitAbility（成本与冷却提交）成功后使用项目技能数值的范围/基础伤害，
+     * 不接收客户端指定的目标、射线或命中结果，也不另造平台伤害计算。
+     * 可供子鼠等近距离单目标技能的正式实现复用；多目标/治疗/投射物需独立业务策略。
+     */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="DivineBeasts|Ability")
+    bool AuthorityTraceForwardAndApplyDamage(
+        FGamePlatformCombatResult& OutResult, FString& OutError);
     /**
      * 仅由服务端已验证命中事实的具体技能实现调用；客户端不提供任意伤害 RPC。
      * 目标、世界、英雄身份和命中事实不一致时直接拒绝，不产生任何 GameplayEffect。

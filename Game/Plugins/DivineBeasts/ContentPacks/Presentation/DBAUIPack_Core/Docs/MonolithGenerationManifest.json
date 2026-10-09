@@ -79,6 +79,63 @@
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterChoiceEntry"
     }
   ],
+  "LatestCombatHUDWidgetDelivery": {
+    "Date": "2026-10-09",
+    "Project": "DivineBeastsArena",
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Scope": "按照最新2具体GAS属性集8字段规则，重用项目战斗蓝图，取消常驻护盾条，新增战斗主HUD并嵌入RootLayout的HUDLayer。",
+    "CurrentDesignDoc": "Docs/CombatHUDBlueprintDelivery_20261009.md",
+    "Assets": [
+      {"AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD", "ParentClass": "DivineBeastsCombatPanelBase", "WidgetCount": 7, "Children": ["PlayerStatus","PlayerPortrait","TargetFrame","StatusEffects","AbilityBar","CastBar"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout", "ParentClass": "DivineBeastsRootLayout", "WidgetCount": 11, "Contains": ["HUDLayer/CombatHUD"], "DefaultCombatHUDVisibility": "Collapsed", "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerStatus", "ParentClass": "DivineBeastsPlayerStatusPanel", "WidgetCount": 7, "Removed": ["ShieldBar","ShieldBarLabel"], "Kept": ["HealthBar","MomentumBar"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_TargetFrame", "ParentClass": "GamePlatformTargetFrameWidget", "WidgetCount": 6, "Removed": ["TargetShieldBar"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StatusEffects", "ParentClass": "GamePlatformStatusEffectTrayWidget", "WidgetCount": 11, "Headings": ["增益效果","减益效果","关键机制"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true}
+    ],
+    "MonolithPackagesSaved": 5,
+    "SingleEditorAssetTreeReadback": true,
+    "IndependentEditorRestartReadback": false,
+    "UIRuntimeAdapter": "DBAClient/Source/DivineBeastsUIClient/Private/Layers/DivineBeastsRootLayout.cpp（战斗HUD可见性+GAS状态投影）及Private/Panels/Combat/DivineBeastsPlayerStatusPanel.cpp（生命/气势事件自动绑定），需要UHT与三目标编译后实测。",
+    "BlueprintCompiledAgainstNewCpp": false,
+    "CppSingleFileBuild": {
+      "Engine": "UE5.8",
+      "Target": "DivineBeastsArenaEditor Win64 Development",
+      "Result": "Succeeded",
+      "CompileActionsSucceeded": 4,
+      "SourceFiles": [
+        "DBAClient/Source/DivineBeastsUIClient/Private/Layers/DivineBeastsRootLayout.cpp",
+        "DBAClient/Source/DivineBeastsUIClient/Private/Panels/Combat/DivineBeastsPlayerStatusPanel.cpp",
+        "GamePlatformUI/Source/GamePlatformUIClient/Private/Components/GamePlatformTargetFrameWidget.cpp",
+        "GamePlatformUI/Source/GamePlatformUIClient/Private/Components/GamePlatformCastProgressWidget.cpp"
+      ],
+      "LinkAndIndependentReloadVerified": false
+    },
+    "UIClientModuleBuild": {
+      "Target": "DivineBeastsArenaClient Win64 Development",
+      "Modules": ["GamePlatformUIClient", "DivineBeastsUIClient"],
+      "UnrealBuildToolActionsPlanned": 6,
+      "ExitStatus": "stopped_by_current_session",
+      "CompilerErrorObserved": false,
+      "Succeeded": false,
+      "Reason": "任务在6个编译动作队列长期没有产出时由当前会话停止；没有构建成功或链接证据，不代表源代码编译失败。"
+    },
+    "NativeEditorAutomation": {
+      "GamePlatform.UI.CombatPresentation": {"Passed": 2, "Failed": 0},
+      "DivineBeasts.UI.Combat.PlayerStatusSnapshot": {
+        "Passed": 0,
+        "Failed": 1,
+        "Note": "编辑器当前载入的旧编译模块仍使用未注册属性集的测试夹具；磁盘源码已用AddAttributeSetSubobject显式注册，仍须新DLL重载复验。"
+      }
+    },
+    "PIEAndDedicatedServerVerified": false,
+    "MobileDeviceVerified": false,
+    "Warnings": [
+      "当前编辑器加载的旧C++模块可能与新增RootLayout BindWidgetOptional属性不同；必须新版本模块编译、编辑器独立重启、蓝图重新编译保存验证。",
+      "正式生肖AbilitySet、UI Profile和技能名称/图标资产映射尚未完成，技能蓝图五槽不等于角色已获授权技能。",
+      "目标与施法条仍需具体Gameplay目标/施法事实适配器；增减益状态托盘提供安全文本回退，正式图标/精确计时仍待项目授权数据。"
+    ]
+  },
   "LatestAAACombatWidgetDelivery": {
     "Date": "2026-10-09",
     "Tool": "Monolith MCP",

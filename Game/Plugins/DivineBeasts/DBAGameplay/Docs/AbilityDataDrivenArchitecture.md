@@ -62,3 +62,11 @@ HeroDefinition.DefinitionId（英雄定义编号） → HeroDefinition.DefaultAb
 - 十二生肖内容插件的60枚图标已实际导入为 `Texture2D`（真实纹理资产）；`DBAUIPack_Core`（项目公共界面包）中的技能栏、技能单格两份真实 Widget Blueprint（控件蓝图）分别经 Monolith 新编译，均为0错误、0警告。此为新一轮引擎资产证据，更新上方早期“只有PNG”的历史状态；正式 AbilityId（技能编号）、UI Profile（技能界面配置）和服务器授权尚缺。
 - 新增 `Tests/Assets/ValidateZodiacAbilityDelivery.py`（十二生肖技能正式交付只读门禁），`--inventory`（文件实物完整性）退出0，`--release`（生产技能与运行验证）因真实70项缺口按预期退出2。12个英雄各五项正式技能主数据、客户端图标绑定、GAS授权、UE编辑器/客户端/专用服务器编译、Automation（自动化）、双客户端联机、Cook（资源烘焙）均必须补证后才能变更发布状态。
 - 本轮 UBT（虚幻构建工具）尝试 `DivineBeastsAbilitiesRuntime`（项目技能运行模块）Editor定向编译，UHT（反射生成）处理通过，随后编译143个Action（动作），在1200秒执行上限被中止，没有成功链接证据；不可宣称模块已通过真实C++编译。详见 `Docs/Implementation/十二生肖技能数据驱动实施记录_20261009.md`（项目实施台账）。
+## 2026-10-09 统一开发样板资产与正式隔离门禁
+
+- `/Game/Development/DivineBeasts/Abilities`（仅用于编辑器的技能开发资源目录）现由真实UE编辑器工具生成60份 `DivineBeastsAbilityDefinition`（生肖技能逻辑数据资产）与 `DT_DBA_Zodiac_DevBalance`（60行一级测试技能平衡数据表）。每个英雄五个槽位，各自拥有独立 `FGamePlatformId`（稳定技能身份）；60个一级行名按 `Hero_Slot_L1`（英雄_槽位_一级）的统一结构关联。另有12份 `DivineBeastsAbilityUIProfile`（开发技能图标/名称配置）、子鼠开发 `GameplayAbility`（技能蓝图）和 `AbilitySet`（能力授予集合）。所有数据均为 **开发样板**，不是正式策划批准的技能生产资产。
+- 开发样板保留两份数据表文件：`DT_DBA_Rat_DevBalance`（历史子鼠演示表，停止作为当前技能定义真源）与 `DT_DBA_Zodiac_DevBalance`（当前唯一开发数值表）；子鼠普攻定义已切换至统一表的 `Rat_BasicAttack_L1` 行。完整实际文件及 SHA-256 见 `Docs/Implementation/ZodiacDevelopmentUEAssetEvidence_20261009.json`（开发资产证据清单）。
+- `Tools/Unreal/Abilities/ValidateZodiacDevelopmentAssets.py`（UE5.8编辑器原生验证脚本）已在 Monolith `editor.run_python`（编辑器脚本接口）运行，核对**60份实际逻辑定义、60个数值行、12份开发UI配置和60条UE纹理软引用**，结果为0错误。`Tests/Assets/ValidateZodiacDevelopmentSkillAssets.py`（不依赖引擎的文件及摘要门禁）使用 `--require-all-profiles --require-all-definitions --verify-hashes`（全量检查）通过，但不能替代真实引擎。
+- `Game/Config/DefaultGame.ini`（项目默认配置）将整个开发资源目录加入 `DirectoriesToNeverCook`（发行资源烘焙排除清单），并将 `bAllowDevelopmentAbilitySets=false`（开发技能集授予开关）设置为默认值。`UDivineBeastsAbilityLoadoutComponent`（项目权威授权组件）新增编译期及配置双门禁：仅UE编辑器显式启用开发权限才可能授予 `bDevelopmentOnly`（开发集合），正式客户端、专用服务器及发布目标均拒绝。生产英雄 `DefaultAbilitySetId`（默认技能集编号）仍保持空值，不使用此开发样板代替。
+- 已知边界：当前只有一份子鼠可激活的开发 `GameplayAbility`（GAS技能蓝图），它只提交成本/冷却与正常结束，并不执行真正的目标选择、命中或伤害；另外59份技能逻辑定义不能当成已具备可执行技能类。正式 `DataAsset`（玩法资产）、`GameplayEffect`（技能效果）、VFX/SFX、全英雄授权、UI运行显示、三端编译、联机与Cook/Stage须分别验收，不能由全量开发数据反推生产功能完成。
+

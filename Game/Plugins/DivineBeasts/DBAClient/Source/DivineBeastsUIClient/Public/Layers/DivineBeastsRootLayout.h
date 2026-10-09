@@ -1,6 +1,13 @@
 #pragma once
 
 #include "Layers/GamePlatformRootLayout.h"
+
+class APawn;
+class UDivineBeastsCombatPanelBase;
+class UAbilitySystemComponent;
+class UGamePlatformStatusEffectTrayWidget;
+struct FGameplayTag;
+struct FOnAttributeChangeData;
 #include "DivineBeastsRootLayout.generated.h"
 
 /**
@@ -15,4 +22,42 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsRootLayout
     : public UGamePlatformRootLayout
 {
     GENERATED_BODY()
+
+protected:
+    /** 战斗主HUD只应在拥有本地有效战斗Pawn时出现；登录、选角及切换世界时自动隐藏。 */
+    virtual void NativeConstruct() override;
+    virtual void NativeDestruct() override;
+
+    /** 只绑定项目层WBP中的组合入口，继续沿用平台RootLayout的HUDLayer/ScreenLayer。 */
+    UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly, Category="DivineBeasts|UI|Combat")
+    TObjectPtr<UDivineBeastsCombatPanelBase> CombatHUD = nullptr;
+
+private:
+    UFUNCTION()
+    void HandlePossessedPawnChanged(APawn* PreviousPawn, APawn* NewPawn);
+
+    /** 仅在本地拥有者战斗ASC事件变化时投影公开状态，绝不复制或更改Gameplay。 */
+    void BindCombatEffects(APawn* Pawn);
+    void UnbindCombatEffects();
+    void RefreshCombatEffects();
+    void RenderCombatEffects();
+
+    void HandleCombatAttributeChanged(const FOnAttributeChangeData& ChangeData);
+    void HandleCombatTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+    TWeakObjectPtr<UAbilitySystemComponent> BoundEffectsASC;
+    TWeakObjectPtr<UGamePlatformStatusEffectTrayWidget> BoundEffectsWidget;
+
+    FGuid EffectDisplayScopeId;
+    int64 EffectDisplayRevision = 0;
+    FString LastEffectDisplaySignature;
+
+    FDelegateHandle DamageBonusHandle;
+    FDelegateHandle DamageReductionHandle;
+    FDelegateHandle ShieldedTagHandle;
+    FDelegateHandle StunTagHandle;
+    FDelegateHandle SilenceTagHandle;
+
+    /** 事件驱动更新可见性，不扫描世界/不启用Tick，不改变真实Gameplay状态。 */
+    void RefreshCombatHUDVisibility();
 };
