@@ -7,9 +7,13 @@
 #define GAMEPLATFORM_ATTRIBUTE_ACCESSORS(ClassName, PropertyName)     GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName)     GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName)     GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName)     GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 /**
- * UGamePlatformCombatAttributeSet（游戏平台生命/护盾与Meta结算属性集）。
- * 保留现有 Damage/Healing Execution（伤害/治疗执行）主链；攻击、防御、控制属性拆入同插件独立 AttributeSet。
- * Incoming 字段为不复制的瞬时结算元属性，不是长期角色状态。
+ * UGamePlatformCombatAttributeSet（平台统一战斗属性集）。
+ * 唯一基础战斗数值：Health/MaxHealth（生命及上限），DamageBonus（伤害增减）
+ * 与DamageReduction（伤害减免）；后两项支持GAS增减益效果使用加法聚合。
+ * Shield/MaxShield（旧护盾字段）已删除：护盾改由限时GameplayEffect（玩法效果）
+ * 与战斗组件持有的临时吸收池结算，不再维护或复制护盾永久属性。
+ * IncomingDamage/IncomingHealing（伤害/治疗元属性）不复制、消费后清零。
+ * 生命值按Actor网络相关性公开；伤害修正仅拥有者可见。
  */
 UCLASS()
 class GAMEPLATFORMCOMBAT_API UGamePlatformCombatAttributeSet : public UGamePlatformAttributeSet
@@ -37,13 +41,15 @@ public:
     FGameplayAttributeData MaxHealth;
     GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, MaxHealth)
 
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Shield, Category="Combat|Vitals")
-    FGameplayAttributeData Shield;
-    GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, Shield)
+    /** 技能基础伤害的有符号加法修正；正数Buff增强，负数Debuff削弱。 */
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_DamageBonus, Category="Combat|Modifiers")
+    FGameplayAttributeData DamageBonus;
+    GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, DamageBonus)
 
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxShield, Category="Combat|Vitals")
-    FGameplayAttributeData MaxShield;
-    GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, MaxShield)
+    /** 受到伤害的有符号加法减免；正数Buff减伤，负数Debuff使目标易伤。 */
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_DamageReduction, Category="Combat|Modifiers")
+    FGameplayAttributeData DamageReduction;
+    GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, DamageReduction)
 
     UPROPERTY(BlueprintReadOnly, Category="Combat|Meta")
     FGameplayAttributeData IncomingDamage;
@@ -61,8 +67,8 @@ protected:
     void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
 
     UFUNCTION()
-    void OnRep_Shield(const FGameplayAttributeData& OldValue);
+    void OnRep_DamageBonus(const FGameplayAttributeData& OldValue);
 
     UFUNCTION()
-    void OnRep_MaxShield(const FGameplayAttributeData& OldValue);
+    void OnRep_DamageReduction(const FGameplayAttributeData& OldValue);
 };

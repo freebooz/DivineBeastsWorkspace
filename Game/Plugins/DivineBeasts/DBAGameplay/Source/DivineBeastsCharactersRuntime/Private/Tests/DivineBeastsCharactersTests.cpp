@@ -9,6 +9,7 @@
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Definitions/GamePlatformHeroDefinition.h"
 #include "Initialization/GamePlatformCharacterInitializer.h"
+#include "UObject/UnrealType.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsHeroCatalogTest,
@@ -152,7 +153,11 @@ bool FDivineBeastsMomentumContractTest::RunTest(const FString&)
     UDivineBeastsMomentumAttributeSet* Attributes = NewObject<UDivineBeastsMomentumAttributeSet>();
     TestEqual(TEXT("默认Momentum为0"), Attributes->GetMomentum(), 0.0f);
     TestEqual(TEXT("默认MaxMomentum为100"), Attributes->GetMaxMomentum(), 100.0f);
-    TestEqual(TEXT("默认GainMultiplier为1"), Attributes->GetMomentumGainMultiplier(), 1.0f);
+    // 仅保留需要在本地HUD读取的当前气势与上限；旧英雄配置的倍率字段仍能被读取，但不映射至GAS。
+    TestNull(TEXT("气势获得倍率不再是复制GAS属性"),
+        FindFProperty<FProperty>(UDivineBeastsMomentumAttributeSet::StaticClass(), FName(TEXT("MomentumGainMultiplier"))));
+    TestNull(TEXT("气势衰减速率不再是复制GAS属性"),
+        FindFProperty<FProperty>(UDivineBeastsMomentumAttributeSet::StaticClass(), FName(TEXT("MomentumDecayRate"))));
 
     float OverflowMomentum = 150.0f;
     Attributes->PreAttributeChange(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), OverflowMomentum);

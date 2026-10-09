@@ -28,6 +28,8 @@ public class DivineBeastsInputClient : ModuleRules
             "EnhancedInput",
             // 项目输入只通过平台公开AbilityInputReceiver合同驱动GAS，不直接访问私有ASC实现。
             "GamePlatformAbilitySystem",
+            // 命中表现结束时恢复输入缓冲，依赖平台ClientOnly模块而非MOBA/项目竞技。
+            "GamePlatformAnimationClient",
             "DeveloperSettings"
         });
     }

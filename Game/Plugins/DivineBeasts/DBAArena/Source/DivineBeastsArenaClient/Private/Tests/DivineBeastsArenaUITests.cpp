@@ -41,6 +41,10 @@ bool FDivineBeastsArenaUISurfaceInventoryTest::RunTest(const FString&)
         TestTrue(
             TEXT("竞技软资源路径必须归DBAArena挂载点"),
             Surface.WidgetClassPath.StartsWith(TEXT("/DBAArena/")));
+        // 未完成蓝图生成及移动端Cook前，不得登记无法解析的移动端变体。
+        TestTrue(
+            TEXT("竞技移动端资源未交付时必须回退公共Widget"),
+            Surface.MobileWidgetClassPath.IsEmpty());
 
         if (Surface.Kind == EDivineBeastsArenaUISurfaceKind::Screen)
         {

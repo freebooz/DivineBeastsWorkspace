@@ -60,6 +60,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Hero|Momentum")
     FDivineBeastsMomentumDefinition Momentum;
 
+    /** 默认技能集合的 GamePlatformDefinition（平台主资产）逻辑编号；空值兼容旧英雄资产，
+     * 但正式技能授权路径会将空值标记为缺失，不会伪造技能。角色身份模块只保存编号，
+     * 不包含 GAS Ability（玩法技能类）或客户端图标等依赖。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Hero|Abilities")
+    FName DefaultAbilitySetId = NAME_None;
+
     virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
     bool IsProjectDefinitionValid(FString& OutError) const;

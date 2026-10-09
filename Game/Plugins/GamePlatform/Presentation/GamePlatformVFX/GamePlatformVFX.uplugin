@@ -28,6 +28,10 @@
                         "Enabled":  true
                     },
                     {
+                        "Name":  "GamePlatformCore",
+                        "Enabled":  true
+                    },
+                    {
                         "Name":  "GamePlatformData",
                         "Enabled":  true
                     },

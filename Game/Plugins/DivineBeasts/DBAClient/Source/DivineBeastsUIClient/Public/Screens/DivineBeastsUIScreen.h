@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Screens/GamePlatformUIScreen.h"
+#include "Contracts/DivineBeastsUIDomainTypes.h"
 #include "DivineBeastsUIScreen.generated.h"
 
 /**
@@ -21,6 +22,15 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsUIScreen
     : public UGamePlatformUIScreen
 {
     GENERATED_BODY()
+
+public:
+    /** 十大业务域标识仅用于视觉导航、审计与内容归属，不是权限依据。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Domain")
+    EDivineBeastsUIDomain GetBusinessDomain() const { return UIDomain; }
+
+protected:
+    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|UI|Domain")
+    EDivineBeastsUIDomain UIDomain = EDivineBeastsUIDomain::Core;
 
 public:
     /** 页面资源失败时的可见反馈，仅为客户端显示状态，不改变应用流程或认证状态。 */

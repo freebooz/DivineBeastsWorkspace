@@ -34,9 +34,19 @@
 
 项目层用户界面当前设计基线见 `Docs/用户界面设计.md`。该文档定义了分类基础类继承、事件驱动更新、PC/移动端适配、目录规划、界面清单、命名规范和分阶段实施顺序。
 
+2026-10-09 新增 `UDivineBeastsAbilityBarViewModel`（技能栏视图模型）和 `UDivineBeastsAbilityUIProfile`（客户端英雄技能图标/名称主资产类型），现有 `UDivineBeastsAbilityBarPanel`（技能栏面板）已接入服务器授予快照的只读状态。仅源码可用，**尚无真实 Widget 技能栏蓝图、技能图标或完整 GAS 冷却投影**，不得称已在游戏画面展示。详见 [AbilityBarAutoBinding.md（技能栏自动绑定说明）](Docs/AbilityBarAutoBinding.md)。
+
 ### 十二生肖技能 VFX（视觉特效）架构
 
 项目层十二生肖技能 VFX 设计基线见 Docs/ZodiacSkillVFXArchitecture.md。DivineBeastsPresentationRuntime 只保存 HeroDefinitionId（英雄定义编号）、AbilityId（技能编号）、SkinId（皮肤编号）等稳定表现上下文与 Hero VFX Profile（英雄视觉特效配置）；具体 Niagara（粒子特效）、Material（材质）、Texture（纹理）、Mesh（网格）和 Decal（贴花）归各 DBAHeroPack_* 内容包。竞技事实由 MobaPresentation 转为中立表现语义，最终仍由唯一 GamePlatformVFX 执行器播放。当前真实 Ability 资产尚未交付，不得为了填充目录虚构生产技能 ID 或伪 .uasset。
+
+2026-10-09新建 `DivineBeastsPresentationRuntime/Definitions/DivineBeastsCombatFeedbackCatalog`（项目英雄技能命中反馈DataAsset类），精确关联英雄定义ID＋技能定义ID到平台反馈Profile软引用以及VFX/SFX逻辑定义ID，支持重复键与缺失项校验。**未生成真实.uasset，也未在DBAArena竞技组合根注入**；不能视作全部十二生肖已自动加载。详见 `Docs/Implementation/CombatFeedbackExecutionPlan_20261009.md`。
+
+同一专项的 `DivineBeastsInputClient`增加按本地Pawn视觉顿帧自然恢复后的动作回放，消费 `GamePlatformInputClient` 中立有限输入缓冲；按当前BindingGeneration（绑定代次）和有效期筛选，再交给现有GAS `AbilityInputPressed/Released`进行合法性处理。只在Client执行；焦点丢失、切换角色和跨World旧输入不得回放，实际技能取消窗口与Client/Server联机仍需专项验证。
+
+本次还为DBAClient的Client/Editor目标声明GamePlatformSFX依赖，以启用现有SFX表现Provider。项目技能目录目前只是可复用类型，不存在12生肖真实Profile完整资产；竞技组合根应按当前HeroDefinitionId与AbilityDefinitionId从GamePlatformData已加载目录选择Profile和VFX/SFX逻辑ID，在角色切换及世界销毁时撤销租约。实施与阻断见`Docs/Implementation/CombatFeedbackWorkOrders_20261009.md`。
+
+2026-10-09结构落实：`UDivineBeastsCombatFeedbackCatalog`升级为`UGamePlatformDefinitionBase`正式主资产契约，并将每行Profile软路径转换为`FPrimaryAssetId ProfileDefinitionId`，实现与平台DataService租约一致的稳定逻辑身份；所有未知、重复及非法映射发布前拒绝。项目公共客户端保持不依赖Moba；真实按技能加载与注入归可选`DBAArena`客户端组合根。
 
 `F:\\VFX Lib` 的复用映射见 `Docs/ZodiacReuseMatrix.md（十二生肖VFX复用矩阵）`。首批优先 Rabbit（卯兔）、Horse（午马）、Goat（未羊）、Rooster（酉鸡）、Boar（亥猪）；当前只完成平台母版能力与复用规划，未创建任何虚构技能 `.uasset`。
 

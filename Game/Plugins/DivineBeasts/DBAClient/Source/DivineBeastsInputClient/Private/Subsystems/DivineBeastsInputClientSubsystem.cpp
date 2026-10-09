@@ -2,6 +2,10 @@
 
 #include "Async/Async.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Feedback/GamePlatformLocalHitstopSubsystem.h"
+#include "HAL/PlatformTime.h"
+#include "GameFramework/Character.h"
 #include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "EngineGlobals.h"
@@ -47,6 +51,16 @@ void UDivineBeastsInputClientSubsystem::Initialize(FSubsystemCollectionBase& Col
             }
         });
 
+    // 项目输入只观察平台视觉暂停结束，不持有其时钟，也不向底层注入项目语义。
+    LocalHitstopSubsystem = LocalPlayer
+        ? LocalPlayer->GetSubsystem<UGamePlatformLocalHitstopSubsystem>()
+        : nullptr;
+    if (UGamePlatformLocalHitstopSubsystem* Hitstop = LocalHitstopSubsystem.Get())
+    {
+        VisualHitstopFinishedHandle = Hitstop->OnVisualHitstopFinished().AddUObject(
+            this, &UDivineBeastsInputClientSubsystem::HandleVisualHitstopFinished);
+    }
+
     CachedController = LocalPlayer && GetWorld()
         ? LocalPlayer->GetPlayerController(GetWorld())
         : nullptr;
@@ -70,6 +84,15 @@ void UDivineBeastsInputClientSubsystem::Initialize(FSubsystemCollectionBase& Col
 void UDivineBeastsInputClientSubsystem::Deinitialize()
 {
     ClearAbilityInput();
+    if (UGamePlatformLocalHitstopSubsystem* Hitstop = LocalHitstopSubsystem.Get())
+    {
+        if (VisualHitstopFinishedHandle.IsValid())
+        {
+            Hitstop->OnVisualHitstopFinished().Remove(VisualHitstopFinishedHandle);
+        }
+    }
+    VisualHitstopFinishedHandle.Reset();
+    LocalHitstopSubsystem.Reset();
 
     if (PlatformInput)
     {
@@ -345,6 +368,8 @@ void UDivineBeastsInputClientSubsystem::RefreshControlledPawn()
 
 void UDivineBeastsInputClientSubsystem::ClearAbilityInput()
 {
+    // 控制角色更换、输入绑定撤销或应用卸载时，绝不可回放旧技能指令。
+    BufferedAbilityInputs.Reset();
     if (UGamePlatformAbilitySystemComponent* AbilitySystem = CachedAbilitySystem.Get())
     {
         AbilitySystem->ClearAbilityInput();
@@ -423,6 +448,77 @@ void UDivineBeastsInputClientSubsystem::HandleMoveLookInput(
     Controller->AddPitchInput(static_cast<float>(Axis.Y * Scale));
 }
 
+bool UDivineBeastsInputClientSubsystem::IsLocalPawnVisualHitstopActive() const
+{
+    const APawn* Pawn = CachedPawn.Get();
+    const UGamePlatformLocalHitstopSubsystem* Hitstop = LocalHitstopSubsystem.Get();
+    if (!Pawn || !Hitstop)
+    {
+        return false;
+    }
+
+    // 与MobaPresentation的Character主网格提取保持一致，只查询本地受控Pawn。
+    const ACharacter* Character = Cast<ACharacter>(Pawn);
+    const USkeletalMeshComponent* Mesh = Character
+        ? Character->GetMesh() : Pawn->FindComponentByClass<USkeletalMeshComponent>();
+    return Mesh && Hitstop->IsVisualHitstopActive(Mesh);
+}
+
+void UDivineBeastsInputClientSubsystem::FlushBufferedAbilityInput()
+{
+    if (bReplayingBufferedAbilityInput || BufferedAbilityInputs.Num() == 0)
+    {
+        return;
+    }
+    RefreshControlledPawn();
+    if (IsLocalPawnVisualHitstopActive())
+    {
+        return; // 仅视觉动画恢复后重放，绝不提前消费。
+    }
+    if (!PlatformInput || !CachedAbilitySystem.IsValid() || !GetWorld())
+    {
+        BufferedAbilityInputs.Reset();
+        return;
+    }
+
+    const FGamePlatformInputSnapshot Snapshot = PlatformInput->GetInputSnapshot();
+    TArray<FGamePlatformInputEvent> ReadyEvents;
+    BufferedAbilityInputs.ConsumePending(
+        FPlatformTime::Seconds(), Snapshot.BindingGeneration, ReadyEvents);
+    if (ReadyEvents.IsEmpty())
+    {
+        return;
+    }
+
+    // 不重复广播物理事件，也不绕过GAS合法性检查。所有回放仍由现存AbilityInputToken校验。
+    bReplayingBufferedAbilityInput = true;
+    for (const FGamePlatformInputEvent& BufferedEvent : ReadyEvents)
+    {
+        HandleProjectGameplayInput(BufferedEvent);
+    }
+    bReplayingBufferedAbilityInput = false;
+}
+
+void UDivineBeastsInputClientSubsystem::HandleVisualHitstopFinished(
+    USkeletalMeshComponent* RestoredMesh)
+{
+    if (!IsInGameThread() || !IsValid(RestoredMesh))
+    {
+        return;
+    }
+    RefreshControlledPawn();
+    const APawn* Pawn = CachedPawn.Get();
+    const ACharacter* Character = Cast<ACharacter>(Pawn);
+    const USkeletalMeshComponent* LocalMesh = Character
+        ? Character->GetMesh()
+        : (Pawn ? Pawn->FindComponentByClass<USkeletalMeshComponent>() : nullptr);
+    if (LocalMesh == RestoredMesh)
+    {
+        // 仅当前本地角色的视觉暂停结束，才触发技能输入消费。
+        FlushBufferedAbilityInput();
+    }
+}
+
 void UDivineBeastsInputClientSubsystem::HandleProjectGameplayInput(
     const FGamePlatformInputEvent& Event)
 {
@@ -442,6 +538,23 @@ void UDivineBeastsInputClientSubsystem::HandleProjectGameplayInput(
     if (!AbilityInputTag.IsValid() || !AbilitySystem)
     {
         return;
+    }
+
+    if (!bReplayingBufferedAbilityInput && IsLocalPawnVisualHitstopActive())
+    {
+        // 只记录离散按下/释放的物理事件；连续移动和视角仍照常响应。
+        // 缓冲入口完全不驱动技能，其有效性由恢复后的GAS Token决定。
+        if (Event.Phase == ETriggerEvent::Started ||
+            Event.Phase == ETriggerEvent::Completed ||
+            Event.Phase == ETriggerEvent::Canceled)
+        {
+            BufferedAbilityInputs.Enqueue(Event, FPlatformTime::Seconds());
+        }
+        return;
+    }
+    if (!bReplayingBufferedAbilityInput && BufferedAbilityInputs.Num() > 0)
+    {
+        FlushBufferedAbilityInput(); // 即使通知稍晚，也优先重放旧命令。
     }
 
     const FGamePlatformAbilityInputToken Token = AbilitySystem->GetInputToken();

@@ -1,6 +1,46 @@
 # 变更记录
 
+## 2026-10-09｜战斗反馈主资产租约与竞技客户端接线
+
+- 现有平台`UGamePlatformHitFeedbackProfile`和项目`UDivineBeastsCombatFeedbackCatalog`升级为`UGamePlatformDefinitionBase`，通过GamePlatformData统一主资产身份、数据校验、异步租约；Profile的CameraShake/Overlay只在Client Bundle中加载。项目技能表改用ProfileDefinitionId，新增重复映射、非法主资产ID和参数数值校验及UE自动化测试源码。
+- DBAArenaClient加入按LocalPlayer持有的实际异步加载组合根，按角色可信HeroDefinitionId＋权威SourceAbilityId为MobaPresentation提供每击独立的已加载Profile及VFX/SFX逻辑ID；无正式资产时退回平台默认表现，不构造假的Definition ID。世界退出释放Instance租约，异步回调核对世界代次。
+- 平台视觉顿帧新增RootMotion角色与原本已经暂停Mesh的保守跳过策略，避免破坏网络根运动；不把它冒称为已实现真实击退积分冻结。插件和文档均保留三层依赖单向、服务端纯表现剥离原则。
+- 静态检查已通过（614处头文件引用0缺失，477公开头、981类型、175条继承边）；正式Editor/Client/Server构建、UE自动化执行、资源资产和1v1—5v5联机未验收，仍不得宣称P0—P8完成。
+
+- 后续修正：Catalog加载完成即按映射顺序预热最多64个不同Profile，真实竞技场GameState存在才装配资产；没有匹配当前英雄技能时严禁复用前一英雄的VFX/SFX定义。Client定向构建UHT生成13项通过，但C++动作因本机UBA持续不前进而主动停止，不属于已通过编译。
+
+
+## 2026-10-09｜战斗反馈 P0—P8 追加开发与阶段性验证
+
+- 计划：新增 `Docs/Implementation/CombatFeedbackWorkOrders_20261009.md`（三层插件工单和实际验收门禁），旧 `CombatFeedbackExecutionPlan_20261009.md`保留为初始计划，历史声称尚无网络事实等描述以本项最新源码检查为准。
+- GamePlatformCombat（平台权威战斗）增加最小化Unreliable已确认表现RPC、事件GUID/技能ID/角色代次和位置投影，并经World范围只读总线交给表现层；不新增伤害RPC或修改GAS公式。Unreliable丢包只影响可选视觉，不能据此证明双客户端联网已经通过。
+- GamePlatformAnimationClient（客户端动画模块）新增受击网格Overlay短闪白，保存原材质并限时恢复；GamePlatformCameraClient（客户端镜头模块）实现LocalPlayer CameraShake服务和玩家震动关闭倍率，均需真实资源与客户端评审。
+- MobaPresentation（MOBA层）从网络事实总线接收已确认事件，按技能ID采用Skill/Light默认分类，利用统一平台表现Provider分别提交VFX/SFX逻辑请求。独立GUID防止VFX/SFX互相吞并；同一事实各客户端本地去重。
+- GamePlatformPresentationCore可配置Profile增加Overlay/CameraShake软引用；DBAClient新增GamePlatformSFX客户端装配声明，现有英雄技能反馈目录仍需真实DataAsset、资产预加载/租约和DBAArena组合根接入。无新.uplugin、无伪造.uasset。
+- 新增 `GamePlatform.Combat.Feedback.NetworkContract` 和 `GamePlatform.Camera.HitFeedback.UserScale` 自动化测试源码。静态检查和UE真实Client/Server构建、Automation、Cook、Multi-PIE、1v1—5v5的结论分开记录，不能以源码/静态测试宣告完整P8完成。
+
+
+
+## 2026-10-09｜战斗打击感三层配置和客户端局部顿帧
+
+- GamePlatformPresentationCore增加可配置的HitFeedback Profile数据结构；GamePlatformAnimationClient增加本地玩家局部Mesh动画暂停，含60Hz参考帧、命中GUID去重、CoreTicker单调实时时钟、连续10帧窗口封顶和World清理，不暂停Gameplay/全局时间。
+- MobaPresentationRuntime增加轻/重/技能/格挡/挥空和暴击/连击反馈策略、0/3/6帧自动化测试源码，MobaPresentationClient消费已到达的Combat事实触发局部视觉顿帧，不新建MOBA特效播放器。
+- DBAClient/DivineBeastsPresentationRuntime增加英雄技能映射DataAsset类，按Hero＋Ability键查询平台Profile软引用和视觉/音效逻辑ID；无真实 .uasset。
+- 尚未完成真实复制命中通道、闪白、镜头及独立九层视觉资源、专用服务器Cook和联机验证；基础输入缓冲已写入源码但尚未实机验证。保存既有GAS未提交改动，具体门禁见 `Docs/Implementation/CombatFeedbackExecutionPlan_20261009.md`。
+
+- 新增 `GamePlatformInputClient/Buffer/GamePlatformActionInputBuffer` 的真实有限离散输入缓冲（容量/超时/绑定代次/顺序/去重）、自动化测试源码；`DivineBeastsInputClient`订阅本地视觉顿帧自然恢复后，将缓冲输入交由原GAS接收/合法性判断。未开始权威网络事实、真实击退及闪白/相机等完整表现验收。
+
+
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
+
+## 2026-10-09｜十二生肖技能定义、权威授予与技能栏视图骨架
+
+- 专项后续增量：修复可信英雄身份切换时旧技能授权可能残留的问题；平台 GAS 对原生技能列表复制完成发出中立事件；项目 UI 改为匹配当前英雄与角色代次、真实 GAS AbilitySpec、CanActivateAbility（能力可激活性）以及 GameplayEffect（效果）和气势/控制事件，冷却遮罩按真实剩余/总持续时间投影，不做常驻业务 Tick。服务器授权前按级数核对 GameplayEffect 气势负值与时长是否等于 DataTable 配置，并在 GAS Commit 成功后才允许服务端造成伤害。新增 12 英雄×5枚共60张 PNG 图源校验脚本，结果通过，但**不等于引擎 Texture2D 导入或真实游戏 UI 已验收**。
+
+- 在已有 DBAGameplay（项目双端玩法插件）中新设 `DivineBeastsAbilitiesRuntime`（技能运行模块），实现 `UDivineBeastsAbilityDefinition`（玩法主资产定义）、`FDivineBeastsAbilityBalanceRow`（每级伤害、冷却、气势等数值配置）、`UDivineBeastsAbilityLoadoutComponent`（按真实服务器英雄定义的默认 AbilitySet 申请、授予、撤销、OwnerOnly 复制），并保留既有平台 GAS/Combat/Data 为唯一通用能力真源。
+- 新增 `ADivineBeastsGameplayCharacter`（项目可玩角色：ASC、角色身份、权威战斗、技能装配组合），竞技服务器出生逻辑改用该类。`DBAClient/DivineBeastsUIClient`（项目客户端 UI）新增 `UDivineBeastsAbilityUIProfile`（图标与名称）及 `UDivineBeastsAbilityBarViewModel`（授权槽位只读投影），原技能栏面板增量绑定本地玩家 Pawn 切换事件。
+- 增量更新项目三层插件声明、双端技能定义扫描和仅客户端技能表现资源扫描；新增专项静态审计、单测源码及中文插件实施说明。根 AGENTS.md（项目规则）的旧五行/克制/破元/共鸣禁令保持有效，未制造正式技能资产 ID、`.uasset`、图标或 Widget 蓝图。
+- 本批初始静态审计17/17通过（后续继续扩至29项），头文件扫描最初566处0缺失，继承边界扫描470公开头/963类型/175边通过；整体基线仍存在与 DBAWorlds/GamePlatformVFX 相关的16项既有依赖声明问题。之前因误查不完整的 D: 盘 UE 安装目录而未定位可执行文件；现已确认锁定引擎位于 `F:/UnrealEngine-5.8.0-release`，真实技能模块构建正在专项验证。UE 联机、正式技能资产及客户端/专服 Cook/Stage 仍未验收，详见 `Docs/Implementation/十二生肖技能数据驱动实施记录_20261009.md`。
 
 ## 2026-09-29｜登录后角色选择/创建三维前端预览
 

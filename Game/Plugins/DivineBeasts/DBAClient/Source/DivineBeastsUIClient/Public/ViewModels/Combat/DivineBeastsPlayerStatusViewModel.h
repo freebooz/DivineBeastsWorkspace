@@ -14,7 +14,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(
 
 /**
  * UDivineBeastsPlayerStatusViewModel（神兽联盟玩家状态视图模型）。
- * 只订阅 GAS Attribute Change Delegate（属性变化委托），禁止 Tick 轮询 Gameplay 对象。
+ * 仅订阅生命与气势GAS属性事件，不维护盾数值；护盾以GameplayEffect状态图标显示。
  */
 UCLASS(BlueprintType)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsPlayerStatusViewModel final
@@ -48,8 +48,6 @@ private:
 
     FDelegateHandle HealthHandle;
     FDelegateHandle MaxHealthHandle;
-    FDelegateHandle ShieldHandle;
-    FDelegateHandle MaxShieldHandle;
     FDelegateHandle MomentumHandle;
     FDelegateHandle MaxMomentumHandle;
 };

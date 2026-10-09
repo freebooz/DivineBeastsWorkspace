@@ -2,7 +2,7 @@
 
 #include "Components/GamePlatformResourceBarWidget.h"
 #include "Contracts/DivineBeastsPlayerStatusUIContracts.h"
-#include "Panels/DivineBeastsPanelWidget.h"
+#include "Panels/Combat/DivineBeastsCombatPanelBase.h"
 #include "DivineBeastsPlayerStatusPanel.generated.h"
 
 class UDivineBeastsPlayerStatusViewModel;
@@ -10,12 +10,12 @@ class UDivineBeastsPlayerStatusViewModel;
 /**
  * UDivineBeastsPlayerStatusPanel（神兽联盟玩家状态面板）。
  *
- * 组合平台 ResourceBar（资源条）视觉原子，统一展示生命、护盾和气势。
+ * 组合平台ResourceBar（资源条）视觉原子，只显示生命与气势；护盾由状态效果图标显示。
  * 页面/HUD的领域ViewModel在事实变化时调用 ApplyStatus；Panel自身不轮询Gameplay对象。
  */
 UCLASS(Abstract, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsPlayerStatusPanel
-    : public UDivineBeastsPanelWidget
+    : public UDivineBeastsCombatPanelBase
 {
     GENERATED_BODY()
 
@@ -37,6 +37,8 @@ protected:
     UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly, Category="DivineBeasts|UI|Combat")
     TObjectPtr<UGamePlatformResourceBarWidget> HealthBar = nullptr;
 
+    /** 历史蓝图ShieldBar（盾资源条）绑定仍保留以避免资源重载失败，启动时强制隐藏。
+     * 删除蓝图树中的此控件必须由Monolith MCP执行，不能在文本工具中篡改uasset。 */
     UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly, Category="DivineBeasts|UI|Combat")
     TObjectPtr<UGamePlatformResourceBarWidget> ShieldBar = nullptr;
 
@@ -46,6 +48,7 @@ protected:
     UFUNCTION(BlueprintImplementableEvent, Category="DivineBeasts|UI|Combat", meta=(DisplayName="玩家状态已变化"))
     void BP_OnPlayerStatusChanged(FDivineBeastsPlayerStatusViewData NewStatus);
 
+    virtual void NativeConstruct() override;
     virtual void NativeDestruct() override;
 
     void HandleStatusChanged(const FDivineBeastsPlayerStatusViewData& NewStatus);

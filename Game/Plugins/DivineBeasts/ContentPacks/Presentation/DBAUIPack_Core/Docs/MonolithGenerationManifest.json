@@ -79,6 +79,51 @@
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterChoiceEntry"
     }
   ],
+  "LatestAAACombatWidgetDelivery": {
+    "Date": "2026-10-09",
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Manifest": "Docs/AAACombatWidgetDelivery_20261009.json",
+    "DeliveryDocument": "Docs/AAACombatWidgetDelivery_20261009.md",
+    "RealWidgetBlueprintCount": 17,
+    "CombatP0PlannedCount": 12,
+    "BuilderCompileErrorCount": 0,
+    "BuilderCompileWarningCount": 0,
+    "AllAssetsSaved": true,
+    "AllAssetsIndependentlyRestartReadback": false,
+    "PIEAndCookPassed": false,
+    "Note": "本节记录真实新增战斗Widget。原Assets中的6项历史基线及其旧工具版本证据保持不变。"
+  },
+  "LatestZodiacAbilityWidgetAudit": {
+    "Date": "2026-10-09",
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Operation": "只读回读、控件树与事件图审计、重新编译；本次未创建或重排Widget",
+    "AbilityBar": {
+      "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsAbilityBarPanel",
+      "WidgetCount": 6,
+      "NamedChildren": ["PrimaryAbilitySlot", "PassiveAbilitySlot", "ActiveAbilitySlot1", "ActiveAbilitySlot2", "UltimateAbilitySlot"],
+      "FreshCompileErrors": 0,
+      "FreshCompileWarnings": 0,
+      "AccessibilityAuditIssues": 0,
+      "FocusBFSComputed": false
+    },
+    "AbilitySlot": {
+      "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "ParentClass": "/Script/GamePlatformUIClient.GamePlatformSlotWidget",
+      "WidgetCount": 7,
+      "FreshCompileErrors": 0,
+      "FreshCompileWarnings": 0,
+      "SlotStateEventGraphVerified": ["Icon → SetBrushFromSoftTexture", "OverlayProgress → CooldownOverlay.SetRenderOpacity", "bEnabled → AbilityIcon.SetIsEnabled"]
+    },
+    "HeroTexture2DAssetsPresent": 60,
+    "AbilityUIProfileAssetsFound": 0,
+    "AuthorityAbilitySetsConfigured": 0,
+    "EditorRestartReloadVerifiedThisAudit": false,
+    "PIEAndCookPassed": false,
+    "Limitations": "仅验证现存蓝图的结构、当前编辑器编译和静态投影连接；不是真实网络授权、五技能功能联机、所有键盘/触摸焦点、图标正式AbilityId映射或Cook通过。"
+  },
   "Verification": {
     "Target": "DivineBeastsArenaEditor Win64 Development",
     "Module": "DivineBeastsUIClient",

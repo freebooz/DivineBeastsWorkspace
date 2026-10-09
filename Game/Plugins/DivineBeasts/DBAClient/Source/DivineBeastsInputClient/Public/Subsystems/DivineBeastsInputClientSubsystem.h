@@ -3,13 +3,15 @@
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "Types/GamePlatformInputTypes.h"
+#include "Buffer/GamePlatformActionInputBuffer.h"
 #include "UObject/PrimaryAssetId.h"
 #include "DivineBeastsInputClientSubsystem.generated.h"
 
 class IGamePlatformInputService;
 class APlayerController;
 class APawn;
-class UGamePlatformAbilitySystemComponent;
+class UGamePlatformAbilitySystemComponent;class UGamePlatformLocalHitstopSubsystem;
+class USkeletalMeshComponent;
 
 /** 神兽联盟项目输入事件；仍然是客户端请求，不代表服务器技能/移动已经成功。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(
@@ -85,6 +87,10 @@ private:
     void HandleProjectGameplayInput(const FGamePlatformInputEvent& Event);
     void ProcessAbilityInputOncePerFrame();
     void ClearAbilityInput();
+    /** 视觉顿帧结束后只重放未过期、代次一致的动作输入，由GAS判断技能合法性。 */
+    void HandleVisualHitstopFinished(USkeletalMeshComponent* RestoredMesh);
+    void FlushBufferedAbilityInput();
+    bool IsLocalPawnVisualHitstopActive() const;
 
     IGamePlatformInputService* PlatformInput = nullptr;
     FGamePlatformInputSubscription Subscription;
@@ -96,6 +102,11 @@ private:
     int32 RequestedContextPriority = 50;
     bool bActivationRefreshQueued = false;
     uint64 LastAbilityProcessFrame = MAX_uint64;
+    /** 平台动作缓冲：本地输入的Started/End事件，不执行任何服务器权威行为。 */
+    FGamePlatformActionInputBuffer BufferedAbilityInputs;
+    TWeakObjectPtr<UGamePlatformLocalHitstopSubsystem> LocalHitstopSubsystem;
+    FDelegateHandle VisualHitstopFinishedHandle;
+    bool bReplayingBufferedAbilityInput = false;
 
     TWeakObjectPtr<APlayerController> CachedController;
     TWeakObjectPtr<APawn> CachedPawn;

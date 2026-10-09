@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+// 内联就绪查询调用Owner的权威接口，必须包含Actor完整定义以支持独立模块编译。
+#include "GameFramework/Actor.h"
 #include "Initialization/GamePlatformCharacterInitializer.h"
 #include "State/GamePlatformCharacterStateView.h"
 #include "Identity/DivineBeastsZodiacIdentity.h"

@@ -22,6 +22,16 @@
 
 项目竞技场地图、美术及专属内容的目标所有者为`ContentPacks/Worlds/DBAWorldPack_MainArena`。本插件只保留代码与必要项目模式定义，不复制地图或通用VFX执行器。内容包尚未交付，不创建假资产。
 
+## 2026-10-09 战斗打击反馈竞技组合根
+
+- `DivineBeastsArenaClient/Private/Feedback/DivineBeastsArenaCombatFeedbackClientSubsystem.h/.cpp`：真实LocalPlayer客户端组合根，事件驱动按权威HeroDefinitionId＋SourceAbilityId选择项目Catalog，利用统一GamePlatformData主资产租约异步加载Profile与Client Bundle，再注入MobaPresentation的中立可选Resolver。首击资源尚未加载时回退平台默认反馈，不调用LoadSynchronous。
+- `DivineBeastsArenaClient/Private/Feedback/DivineBeastsArenaCombatFeedbackSettings.h`：仅客户端可配置CatalogDefinitionId（目录稳定主资产ID）。默认空，编辑器未创建/校验资产前保持无配置状态；不虚构演示技能ID或.uasset。
+- 租约采用Instance期限但由当前世界和LocalPlayer明确持有，WorldCleanup主动释放、请求代次防止回调串世界；失败目录在同一世界不重复申请。单人及拆分屏幕场景通过独立LocalPlayer隔离；仍需真实UE测试验证。
+- 项目公开DBAClient不依赖Moba或竞技，新增Moba依赖仅属于本插件ClientOnly模块；Server模块不引入MobaPresentationClient和纯表现资源。真实资产、完整技能映射、Client/Server Cook及双客户端手感测试待完成。
+
+- Profile在Catalog主资产异步成功后会按稳定条目顺序提前请求（最多64条唯一配置），不会等到首次技能命中才整体开始加载；角色/技能键不匹配时严禁重用其他英雄的VFX/SFX资源ID。只在真实ArenaGameState世界激活，普通登录、Village和OpenWorld不因该可选竞技组合根加载资源。
+- UE编译目前取得UHT生成成功但C++构建停在本机UBA执行器且被主动停止，不可标记为完成。UE5.8本分支`-NoUBA`只关闭Detour，仍会选用UBA执行器；需要排查运行端编译代理后再进行真实客户端构建、专服和资源Cook。
+
 ## 验证
 
 - `Tests/Architecture/DBAPluginConsolidation.Tests.ps1`：模块唯一归属与声明。

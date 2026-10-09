@@ -5,13 +5,31 @@
 #include "GamePlatformPresentationTypes.h"
 #include "Types/GamePlatformCombatEvent.h"
 #include "Types/MobaPresentationTypes.h"
+#include "Feedback/MobaHitFeedbackPolicy.h"
 #include "MobaPresentationClientSubsystem.generated.h"
 
 class AGamePlatformArenaGameState;
 class AGamePlatformArenaPlayerState;
 class UGamePlatformCombatComponent;
+class UGamePlatformCombatFeedbackWorldSubsystem;
+class UGamePlatformHitFeedbackProfile;
 class UWorld;
 class IMobaPresentationContextContributor;
+
+/**
+ * MOBA通用的每次命中已加载表现配置。Resolver只提供数据，不加载资产、不控制服务器结果。
+ * 生命周期归上层本地玩家组合根；Profile在此不拥有资产租约。
+ */
+struct FMobaResolvedHitFeedbackConfiguration
+{
+    TWeakObjectPtr<UGamePlatformHitFeedbackProfile> LoadedProfile;
+    FName VFXDefinitionId = NAME_None;
+    FName SFXDefinitionId = NAME_None;
+};
+
+/** 由可选第三层组合根提供的同步已加载缓存查询，不允许在回调内同步加载。 */
+using FMobaHitFeedbackResolver = TFunction<bool(
+    const FGamePlatformCombatEvent&, FMobaResolvedHitFeedbackConfiguration&)>;
 
 /**
  * UMobaPresentationClientSubsystem（MOBA客户端表现适配子系统）。
@@ -33,8 +51,37 @@ public:
         FMobaPresentationAdaptedFact Fact);
 
     void AdaptCombatEvent(const FGamePlatformCombatEvent& Event);
-    EGamePlatformPresentationSubmitResult AdaptCriticalFact(
-        const FMobaPresentationCriticalFact& Fact);
+    /**
+     * 根据权威攻击类别执行客户端视觉顿帧，不修改真实硬直、伤害或位移。
+     */
+    void ApplyVisualFeedbackForConfirmedHit(
+        const FGamePlatformCombatEvent& Event,
+        EMobaHitFeedbackContact Contact,
+        int32 ComboStep);
+
+    /** 注入可配置中立反馈参数，供竞技组合根使用。 */
+    void ConfigureHitFeedback(const FGamePlatformHitFeedbackTuning& Tuning)
+    {
+        HitFeedbackTuning = Tuning;
+    }
+
+    /**
+     * 竞技组合根注入已完成GamePlatformData租约加载的Profile与目录逻辑ID。
+     * 未预加载的软资源不得在命中关键路径同步加载；允许单独禁用VFX或SFX。
+     */
+    void ConfigureHitFeedbackProfile(
+        UGamePlatformHitFeedbackProfile* LoadedProfile,
+        FName VFXDefinitionId,
+        FName SFXDefinitionId);
+
+    /** 可选项目层解析器按命中Hero/Ability查找已完成的租约，失败安全回退默认配置。 */
+    void SetHitFeedbackResolver(FMobaHitFeedbackResolver&& Resolver)
+    {
+        HitFeedbackResolver = MoveTemp(Resolver);
+    }
+
+    /** 组合根卸载时移除闭包，防止下一世界访问旧角色/内容包。 */
+    void ClearHitFeedbackResolver() { HitFeedbackResolver = {}; }
     EGamePlatformPresentationSubmitResult AdaptAbilityFact(
         const FMobaPresentationAbilityFact& Fact);
     EGamePlatformPresentationSubmitResult AdaptStatusFact(
@@ -68,7 +115,10 @@ private:
 
     void ResetWorldState(UWorld* NewWorld);
     void UnbindArena();
-    void UnbindCombat();
+    void UnbindCombat();    /** 订阅当前客户端世界已确认事实，不扫描或缓存全场战斗Actor。 */
+    void BindCombatFeedbackWorld(UWorld& World);
+    void UnbindCombatFeedbackWorld();
+    void HandleConfirmedNetworkCombatEvent(const FGamePlatformCombatEvent& Event);
     void BindArena(AGamePlatformArenaGameState* GameState);
     void RefreshArenaPlayerBindings();
 
@@ -88,9 +138,26 @@ private:
     void ApplyContextContributors(FMobaPresentationContext& Context) const;
     FGuid MakeArenaFactId(const FString& Scope, int32 Revision, uint32 Salt = 0) const;
 
+    /** 当前本地玩家唯一可选项目Resolver，不拥有其返回的资源。 */
+    FMobaHitFeedbackResolver HitFeedbackResolver;
+
+    // 本地玩家独立调校数据，不由表现参数更改服务器判定。
+    FGamePlatformHitFeedbackTuning HitFeedbackTuning;
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformHitFeedbackProfile> LoadedHitFeedbackProfile = nullptr;
+    FName HitVFXDefinitionId = NAME_None;
+    FName HitSFXDefinitionId = NAME_None;
+
+    /** 分层VFX/SFX/闪白/镜头共用命中事实去重，不会各自重复播放。 */
+    TSet<FGuid> RenderedHitEvents;
+    TArray<FGuid> RenderedHitOrder;
+    static constexpr int32 MaxRenderedHitEvents = 2048;
+
     TWeakObjectPtr<UWorld> BoundWorld;
     TWeakObjectPtr<AGamePlatformArenaGameState> BoundArenaGameState;
     TWeakObjectPtr<UGamePlatformCombatComponent> BoundCombatComponent;
+    TWeakObjectPtr<UGamePlatformCombatFeedbackWorldSubsystem> BoundCombatWorldBus;
+    FDelegateHandle CombatWorldFeedbackHandle;
 
     FDelegateHandle PostLoadMapHandle;
     FDelegateHandle WorldCleanupHandle;

@@ -16,9 +16,6 @@ public:
         const FGamePlatformCombatEvent& Event,
         TArray<FMobaPresentationAdaptedFact>& OutFacts);
 
-    static FMobaPresentationAdaptedFact FromCriticalFact(
-        const FMobaPresentationCriticalFact& Fact);
-
     static FMobaPresentationAdaptedFact FromAbilityFact(
         const FMobaPresentationAbilityFact& Fact);
 
