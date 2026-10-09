@@ -1,7 +1,21 @@
+// 项目客户端纯路由策略：消费只读流程与本地页面偏好，不生成角色、不登录、不推进权威节点。
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
 
+bool FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(const FDivineBeastsUIViewState& State, FName ScreenId)
+{
+    if (!State.bAuthenticated || State.bBusy || State.Loading.bIsLoading ||
+        State.PageState == EDivineBeastsUIPageState::Error || State.CurrentStep != TEXT("DBA.Flow.CharacterEntry"))
+    {
+        return false;
+    }
+    if (ScreenId == TEXT("UI.Screen.CharacterCreate")) { return State.AllowedCommands.Contains(TEXT("CreateCharacter")); }
+    if (ScreenId == TEXT("UI.Screen.CharacterSelect")) { return !State.Characters.IsEmpty() && State.AllowedCommands.Contains(TEXT("SelectPersistentCharacter")); }
+    return false;
+}
+
 FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
-    const FDivineBeastsUIViewState& State)
+    const FDivineBeastsUIViewState& State,
+    FName CharacterEntryScreenPreference)
 {
     if (State.Loading.bIsLoading)
     {
@@ -36,6 +50,12 @@ FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
     if (Step.Contains(TEXT("CharacterEntry")) ||
         Step.Contains(TEXT("LoadRoster")))
     {
+        // 偏好只在已认证的角色入口中保持，包括提交命令前短暂的忙碌快照；不改写业务角色列表。
+        if (State.CurrentStep == TEXT("DBA.Flow.CharacterEntry") && State.bAuthenticated)
+        {
+            if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterCreate")) { return CharacterEntryScreenPreference; }
+            if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterSelect") && !State.Characters.IsEmpty()) { return CharacterEntryScreenPreference; }
+        }
         return State.Characters.IsEmpty()
             ? FName(TEXT("UI.Screen.CharacterCreate"))
             : FName(TEXT("UI.Screen.CharacterSelect"));

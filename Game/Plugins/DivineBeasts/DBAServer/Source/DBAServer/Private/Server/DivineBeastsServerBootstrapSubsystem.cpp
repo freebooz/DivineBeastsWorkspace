@@ -17,6 +17,34 @@
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "UObject/Package.h"
+#include "Gameplay/DivineBeastsWorldGameMode.h"
+#include "Components/GamePlatformExperienceComponent.h"
+#include "Interfaces/IGamePlatformWorldService.h"
+#include "Definitions/GamePlatformPrimaryDataAsset.h"
+#include "TimerManager.h"
+#include "HAL/PlatformTime.h"
+
+namespace
+{
+/** 当前服务器实例的可信准入读取器；每次出生和Active动作均重查真实连接，旧Epoch拒绝。 */
+class FDivineBeastsWorldAdmissionAuthority final : public IGamePlatformGameplayAdmissionAuthority
+{
+    TWeakObjectPtr<UGamePlatformServerAdmissionSubsystem> Source;
+public:
+    explicit FDivineBeastsWorldAdmissionAuthority(UGamePlatformServerAdmissionSubsystem* S):Source(S){}
+    virtual FGamePlatformResult ValidateCurrentAdmission(const APlayerController& C,const FGamePlatformVerifiedPlayerContext& V) const override
+    {
+        FGamePlatformServerVerifiedAdmission A;
+        FGamePlatformId Experience;
+        if(!Source.IsValid() || !Source->GetVerifiedAdmission(C,A) || !A.IsStructurallyValid()
+            || A.AuthorityUntil<=FDateTime::UtcNow() || A.AdmissionId!=V.AdmissionId || A.ConnectionGeneration!=V.ConnectionGeneration
+            || A.SessionEpoch!=V.SessionEpoch || A.AssignmentId!=V.AssignmentId || A.ServerInstanceId!=V.ServerInstanceId
+            || !FGamePlatformId::TryParse(A.ExperienceId+TEXT("@1"),Experience) || Experience!=V.ExperienceId)
+            return FGamePlatformResult::Failure(TEXT("WorldAdmissionStale"),TEXT("角色准入与当前真实连接不一致"));
+        return FGamePlatformResult::Success();
+    }
+};
+}
 
 bool UDivineBeastsServerBootstrapSubsystem::ShouldCreateSubsystem(
     UObject* Outer) const
@@ -368,6 +396,41 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
 
     ValidatedWorld = &World;
     bWorldValidated = true;
+    if(Instance.ServerRoleId==TEXT("GameServer.Role.Village"))
+    {
+    // 已核对Profile、真实地图和服务器Target后，桥接到平台World/Data与Gameplay唯一运行实例。
+    auto* Mode=World.GetAuthGameMode<ADivineBeastsWorldGameMode>();
+    auto* WorldService=IGamePlatformWorldService::Get(World);
+    if(!Mode || !WorldService){SetFailed(TEXT("ProjectWorldGameModeMissing"));return;}
+    FGamePlatformWorldContext Context;
+    if(!FGamePlatformId::TryParse(Instance.WorldId,Context.WorldId)
+        || !FGamePlatformId::TryParse(Instance.ExperienceId+TEXT("@1"),Context.ExperienceId))
+    {SetFailed(TEXT("ProjectWorldIdentityInvalid"));return;}
+    Context.ServerInstanceId=Instance.GameServerId; Context.ServerStartGeneration=1;
+    Context.ServerRole=TEXT("Village"); Context.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
+    FGamePlatformVersion::TryParse(Instance.BuildVersion,Context.BuildVersion);
+    const FPrimaryAssetId WorldAsset(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),FName(*Instance.WorldId));
+    if(!WorldService->InitializeBoundWorld(WorldAsset,Context).IsSuccess()) {SetFailed(TEXT("ProjectWorldInitializeRejected"));return;}
+    FGamePlatformResult Registered;
+    Mode->RegisterAdmissionAuthority(Mode,MakeShared<FDivineBeastsWorldAdmissionAuthority>(Admission),Registered);
+    if(!Registered.IsSuccess()){SetFailed(Registered.Code);return;}
+    const TWeakObjectPtr<ADivineBeastsWorldGameMode> WeakMode(Mode);
+    Admission->OnAdmissionChanged().AddWeakLambda(Mode,[WeakMode](const APlayerController* Controller,const FGamePlatformServerVerifiedAdmission& A,bool bAccepted)
+    {
+        auto* Current=WeakMode.Get(); if(!Current || !Controller || Controller->GetWorld()!=Current->GetWorld())return;
+        auto& C=*const_cast<APlayerController*>(Controller);
+        if(!bAccepted){Current->RevokeVerifiedAdmission(C,{A.AdmissionId,A.ConnectionGeneration,A.SessionEpoch});return;}
+        FGamePlatformVerifiedPlayerContext V;
+        V.AdmissionId=A.AdmissionId; V.AssignmentId=A.AssignmentId; V.ServerInstanceId=A.ServerInstanceId;
+        V.ServerStartGeneration=1; V.ConnectionGeneration=A.ConnectionGeneration; V.SessionEpoch=A.SessionEpoch;
+        FGamePlatformId::TryCreate(TEXT("divinebeasts.participant"),TEXT("player_")+A.AdmissionId.ToString(EGuidFormats::Digits),1,V.ParticipantId);
+        FGamePlatformId::TryParse(A.ExperienceId+TEXT("@1"),V.ExperienceId);
+        const auto Result=Current->SubmitVerifiedAdmission(C,V);
+        if(!Result.IsSuccess())UE_LOG(LogTemp,Error,TEXT("World admission bridge rejected: %s"),*Result.Code.ToString());
+    });
+    GameplayBootstrapDeadline=FPlatformTime::Seconds()+30;
+    World.GetTimerManager().SetTimer(GameplayBootstrapTimer,this,&ThisClass::AdvanceGameplayBootstrap,0.1f,true);
+    }
     State = EDivineBeastsServerBootstrapState::Registering;
     UGamePlatformServerLifecycleSubsystem* Lifecycle =
         GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>();
@@ -508,5 +571,26 @@ int32 UDivineBeastsServerBootstrapSubsystem::GetCurrentPlayerCount() const
         return -1;
     }
     AGameModeBase* GameMode = World->GetAuthGameMode();
-    return GameMode ? GameMode->GetNumPlayers() : 0;
+    if(ActiveProfile.ServerRoleId!=TEXT("GameServer.Role.Village"))return GameMode?GameMode->GetNumPlayers():0;
+    const auto* Mode=Cast<ADivineBeastsWorldGameMode>(GameMode);
+    const auto* Experience=Mode?Mode->GetExperienceComponent():nullptr;
+    return Experience && Experience->GetExperienceSnapshot().IsServerActive() ? Mode->GetNumPlayers() : -1;
+}
+void UDivineBeastsServerBootstrapSubsystem::AdvanceGameplayBootstrap()
+{
+    auto* World=ValidatedWorld.Get(); if(!World)return;
+    auto* Mode=World->GetAuthGameMode<ADivineBeastsWorldGameMode>();
+    auto* Service=IGamePlatformWorldService::Get(*World);
+    if(!Mode || !Service || FPlatformTime::Seconds()>GameplayBootstrapDeadline)
+    {World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);SetFailed(TEXT("WorldGameplayBootstrapTimeout"));return;}
+    if(Service->GetReadiness().Context.ReadinessState!=EGamePlatformWorldReadiness::Ready)return;
+    auto* Experience=Mode->GetExperienceComponent();
+    if(!Experience)return;
+    if(Experience->GetExperienceSnapshot().Stage==EGamePlatformExperienceStage::Unassigned)
+    {
+        const FPrimaryAssetId Id(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),FName(*(ActiveExperienceId.ToString()+TEXT("@1"))));
+        const auto Result=Experience->BeginExperience(Id);
+        if(!Result.IsSuccess()){World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);SetFailed(Result.Code);}
+    }
+    if(Experience->GetExperienceSnapshot().IsServerActive())World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
 }

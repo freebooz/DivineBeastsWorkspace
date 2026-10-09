@@ -4,6 +4,9 @@
  * 回调在游戏线程核对作用域及代次，注销和世界退出取消请求并释放本实例资源。
  */
 #include "DivineBeastsApplicationFlowSubsystem.h"
+#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Interfaces/IGamePlatformWorldService.h"
+#include "Engine/World.h"
 
 #include "Backend/DivineBeastsApplicationBackend.h"
 #include "Async/Async.h"
@@ -502,6 +505,7 @@ void UDivineBeastsApplicationFlowSubsystem::Initialize(
 
 void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
 {
+    if(ObservedWorldController.IsValid())ObservedWorldController->OnLocalWorldFactsChanged.RemoveAll(this);
     ++StartRequestGeneration;
     bRestartAfterLogout = false;
 
@@ -854,7 +858,7 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
                             return;
                         }
                         Self->FlowContext->GetCharacterRoster().Add(Character);
-                        Self->FlowContext->SetPendingSelection(Character);
+                        // 创建仅增加档案；待验证选择必须来自选择页“进入游戏”，避免创建命令隐式准入。
                         Self->RefreshProjectionFromContext();
                         (*SharedComplete)(FGamePlatformFlowNodeResult::Success());
                     });
@@ -2229,6 +2233,13 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
 
     if (IsSessionFailureState(Snapshot.State))
     {
+        if (IsCurrentNode(FDivineBeastsFlowNodes::TransferWorld()))
+        {
+            SetError(EDivineBeastsFlowError::AdmissionFailed);
+            SubmitCurrentNodeEvent(FDivineBeastsFlowNodes::TransferWorld(),
+                ProjectFailure(EDivineBeastsFlowError::AdmissionFailed, TEXT("进入世界失败，请返回角色选择重试。")));
+            return;
+        }
         if (IsCurrentNode(FDivineBeastsFlowNodes::WorldReady()))
         {
             FailWorldReady(EDivineBeastsFlowError::AdmissionFailed);
@@ -2247,8 +2258,42 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
         }
     }
 
+    ObserveCurrentGameplayWorld();
     TryCompleteWorldReady();
     BroadcastView();
+}
+
+void UDivineBeastsApplicationFlowSubsystem::ObserveCurrentGameplayWorld()
+{
+    if(bObservingGameplayFacts)return;
+    TGuardValue<bool> Guard(bObservingGameplayFacts,true);
+    if(!Session || !ActiveTransferOperationId.IsValid() || !LoadingContext.IsValid())return;
+    const auto S=Session->GetSnapshot();
+    UWorld* World=GetGameInstance()->GetWorld();
+    auto* Controller=World?Cast<ADivineBeastsWorldPlayerController>(World->GetFirstPlayerController()):nullptr;
+    if(!Controller || !Controller->IsLocalController() || S.TransferOperationId!=ActiveTransferOperationId || !S.bAdmissionConfirmed)return;
+    if(ObservedWorldController.Get()!=Controller)
+    {
+        if(ObservedWorldController.IsValid())ObservedWorldController->OnLocalWorldFactsChanged.RemoveAll(this);
+        ObservedWorldController=Controller;
+        Controller->OnLocalWorldFactsChanged.AddUObject(this,&ThisClass::ObserveCurrentGameplayWorld);
+    }
+    const auto& A=ViewState.Assignment;
+    if(!LoadingContext->HasWorldDefinition() || !World->HasBegunPlay())return;
+    auto* Service=IGamePlatformWorldService::Get(*World);
+    if(Service && Service->GetReadiness().Context.AuthorityKind==EGamePlatformWorldAuthority::Unbound)
+    {
+        // 本值来自当前经服务器握手确认的Session，不从界面或URL接受任意世界身份。
+        FGamePlatformWorldContext C;
+        if(!FGamePlatformId::TryParse(A.WorldId.ToString(),C.WorldId) || !FGamePlatformId::TryParse(A.ExperienceId.ToString()+TEXT("@1"),C.ExperienceId))return;
+        C.ServerInstanceId=A.GameServerId; C.ServerStartGeneration=1; C.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
+        const FPrimaryAssetId Id(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),A.WorldId);
+        Service->InitializeBoundWorld(Id,C);
+    }
+    NotifyWorldObserved(ActiveTransferOperationId,A.ExperienceId,A.WorldId,World);
+    if(Controller->IsLocalPawnBound())NotifyCharacterBindingReady(ActiveTransferOperationId);
+    if(Controller->AreLocalResourcesPrepared())NotifyGameplayDataReady(ActiveTransferOperationId);
+    if(Controller->IsWorldGameplayActive())NotifyProjectReadiness(ActiveTransferOperationId);
 }
 
 void UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot(
@@ -2290,6 +2335,7 @@ void UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot(
         break;
     }
 
+    ObserveCurrentGameplayWorld();
     if (Snapshot.State == EGamePlatformLoadingState::Ready ||
         Snapshot.State == EGamePlatformLoadingState::DegradedReady)
     {

@@ -7,7 +7,10 @@
 class DIVINEBEASTSUICLIENT_API FDivineBeastsUIRoutingPolicy
 {
 public:
-    /** 只根据只读View State（视图状态）给出建议页面，不推进Gameplay/Application流程。 */
+    /** 只投影当前流程与本地角色入口页面偏好；偏好不能越过认证、加载、错误或权威选择节点。 */
     static FName ResolvePrimaryScreen(
-        const FDivineBeastsUIViewState& State);
+        const FDivineBeastsUIViewState& State,
+        FName CharacterEntryScreenPreference = NAME_None);
+    /** 仅认证后的空闲CharacterEntry允许切换创建/选择页；无角色时不能返回选择页。 */
+    static bool CanNavigateCharacterEntry(const FDivineBeastsUIViewState& State, FName ScreenId);
 };

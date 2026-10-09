@@ -67,6 +67,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Command")
     FGuid SelectPersistentCharacter(const FString& CharacterId);
 
+    /** 只提交本地角色入口换页意图；由所有者检查认证、忙碌和流程权限，不创建/选择业务角色。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Characters")
+    bool ShowCharacterEntryScreen(FName TargetScreenId);
+
     /** 仅驱动客户端三维预览，不提交业务选择、不改变ApplicationFlow。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|CharacterPreview")
     bool PreviewCharacterHero(FName HeroDefinitionId);

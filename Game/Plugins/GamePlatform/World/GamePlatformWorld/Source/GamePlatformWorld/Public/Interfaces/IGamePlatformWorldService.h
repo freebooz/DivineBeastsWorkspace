@@ -16,6 +16,9 @@ public:
     virtual FGamePlatformResult InitializeDevelopment(const FPrimaryAssetId& DefinitionId, const FGamePlatformVersion& BuildVersion, FName ServerRole = NAME_None) = 0;
     /** 无真实Session公开快照时明确Unsupported；不接收客户端自编Assignment。 */
     virtual FGamePlatformResult InitializeSessionWorld() = 0;
+    /** 原生可信组合根桥接已验证的控制面/Session身份；不暴露给RPC或蓝图。调用方必须核对实际连接。
+     * 平台仍独立加载定义、核对真实地图和全部就绪条件；身份投影本身不能使世界Ready。 */
+    virtual FGamePlatformResult InitializeBoundWorld(const FPrimaryAssetId& DefinitionId, const FGamePlatformWorldContext& VerifiedContext) = 0;
     /** 立即采样现状的值副本，不能借用内部定义指针。 */
     virtual FGamePlatformWorldReadinessSnapshot GetReadiness() = 0;
     /** 只登记当前已声明且已加载区域；重复ID失败。 */

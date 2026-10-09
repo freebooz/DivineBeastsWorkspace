@@ -36,8 +36,8 @@ protected:
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UEditableTextBox> CharacterNameInput;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UComboBoxString> HeroOptions;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> CreateButton;
-    UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> RotateLeftButton;
-    UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> RotateRightButton;
+    /** 已有角色时允许取消表单返回选择；无角色时禁用，不通过注销模拟取消。 */
+    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UButton> BackToCharacterSelectButton;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> LogoutButton;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> StatusText;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> ErrorText;
@@ -64,9 +64,8 @@ private:
     UFUNCTION() void HandleNameChanged(const FText& Text);
     UFUNCTION() void HandleHeroChanged(FString Item, ESelectInfo::Type SelectionType);
     UFUNCTION() void HandleCreate();
-    /** 左右转动每次30度，仅影响本地舞台；注销通过统一命令端口处理。 */
-    UFUNCTION() void HandleRotateLeft();
-    UFUNCTION() void HandleRotateRight();
+    /** 仅返回角色选择界面，未提交创建草稿随页面失活释放。 */
+    UFUNCTION() void HandleBackToCharacterSelect();
     UFUNCTION() void HandleLogout();
     /** 下拉项与快照ID的显示索引，仅用于组装用户命令，不是业务选择状态。 */
     TArray<FName> PresentedHeroIds;

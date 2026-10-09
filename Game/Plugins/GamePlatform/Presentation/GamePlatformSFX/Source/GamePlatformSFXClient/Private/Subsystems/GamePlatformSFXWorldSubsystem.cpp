@@ -1,3 +1,5 @@
+// 平台客户端世界音效执行服务：在游戏线程维护当前世界的异步加载、声音实例和数据租约。
+// 专服与Commandlet不创建；世界退出先拒绝新请求，再清理活跃实例及自身租约。
 #include "Subsystems/GamePlatformSFXWorldSubsystem.h"
 
 #include "Components/AudioComponent.h"
@@ -9,12 +11,15 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/App.h"
 #include "Policy/GamePlatformSFXPolicy.h"
+#include "Sound/SoundBase.h"
+#include "Sound/SoundConcurrency.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogGamePlatformSFX, Log, All);
 
 namespace
 {
-constexpr FName SFXRuntimeBundle(TEXT("SFXRuntime"));
+// FName需要运行时名称表初始化；保持不可变值，但不能声称是编译期常量。
+const FName SFXRuntimeBundle(TEXT("SFXRuntime"));
 constexpr int32 MaxPendingSFXLoads = 128;
 constexpr int32 MaxTrackedSFXInstances = 256;
 

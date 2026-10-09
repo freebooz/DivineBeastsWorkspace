@@ -218,7 +218,27 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
         FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
         FName(TEXT("UI.Screen.CharacterSelect")));
 
+    // 已有角色仍可打开创建表单；仅本地路由偏好，验证节点、忙碌和注销不能被换页绕过。
+    State.CurrentStep = TEXT("DBA.Flow.CharacterEntry");
+    State.bAuthenticated = true;
+    State.AllowedCommands = {TEXT("CreateCharacter"), TEXT("SelectPersistentCharacter")};
+    TestTrue(TEXT("已有角色也允许进入创建页"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
+    TestEqual(TEXT("创建偏好不能被已有角色列表覆盖"), FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.CharacterCreate")));
+    TestTrue(TEXT("取消创建可返回真实角色列表"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect")));
+    State.bBusy = true;
+    TestFalse(TEXT("提交中拒绝新的换页命令"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
+    TestEqual(TEXT("忙碌事件不把已打开的创建页切回选择页"), FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.CharacterCreate")));
+    State.bBusy = false;
+    State.Characters.Reset();
+    TestFalse(TEXT("无角色时拒绝返回空选择页"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect")));
+    TestFalse(TEXT("拒绝借角色换页入口打开任意页面"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.Inventory")));
+    State.Characters.Add(Character);
+    State.bAuthenticated = false;
+    TestFalse(TEXT("注销后旧创建命令无效"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
+    State.bAuthenticated = true;
     State.CurrentStep = TEXT("DBA.Flow.ValidateSelection");
+    TestFalse(TEXT("权威验证节点不允许角色入口换页"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
+    TestEqual(TEXT("创建偏好不能覆盖权威验证页面"), FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.CharacterSelect")));
     State.PageState = EDivineBeastsUIPageState::Submitting;
     TestEqual(
         TEXT("服务端权威验证期间保持角色选择页并由页面显示提交遮罩"),

@@ -240,8 +240,8 @@ Boot
 → LoadProfile
 → LoadRoster
 → CharacterEntry
-   ├─ 无角色 → CharacterCreate → CreateCharacter
-   └─ 有角色 → CharacterSelect
+   ├─ 创建角色 → CharacterCreate → CreateCharacter → LoadRoster → CharacterEntry
+   └─ 选择角色 → CharacterSelect → 点击进入游戏
 → ValidateSelection
 → ResolveExperience
    ├─ 未完成新手引导 → Village.Tutorial
@@ -252,7 +252,7 @@ Boot
 → InWorld / Playing
 ~~~
 
-`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。角色创建成功后流程设置待验证选择并进入 `ValidateSelection（角色选择验证）`；客户端不能绕过后端权威选择结果。
+`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。角色创建成功后流程进入 `LoadRoster（刷新档案）`，随后返回 `CharacterEntry（角色入口）` 显示角色选择页。只有用户点击「进入游戏」才进入 `ValidateSelection（角色选择验证）`；客户端不能绕过后端权威选择结果。
 
 ### 8.3 前台三维场景与正式世界边界
 
@@ -280,6 +280,18 @@ divinebeasts.application.main@1
 2026-09-30 发布验证已生成上述真实资产，并在独立 UE5.8 进程重新加载后校验14节点与逻辑身份，退出码0。生成器对 EditDefaultsOnly 节点采用结构体构造初始化，已有资产只校验，不能自动覆盖；存在但加载失败时明确拒绝。本次证据为 `Saved/Validation/LoginVillageRelease/20260930/VerifyApplicationFlowReopen.log`。此结果只证明定义资产保存与重载，角色创建／选择等规划页面和世界就绪事实的生产调用方仍须单独实现与验证，不代表登录到新手村已经闭环。
 
 ## 9. 验收顺序
+
+### 2026-10-09 角色预览与创建入口修复
+
+公共页面继续归第三层 DBAUIPack_Core，鼠标输入、视图模型和本地换页协调归 DBAClient；平台预览舞台只接收已加载的中立模型、材质和动画，不引用项目资源。未新增插件、服务器角色、协议或第二套应用主流程。
+
+模型不可见已在独立PIE中复现：外观Profile、网格、动画和舞台均存在，`PreviewHero`接受请求但舞台网格仍为空。诊断日志确认严格骨骼父链检查拒绝了共享骨架的Manny/Quinn简化网格。现采用与锁定UE5.8 `USkeletalMeshComponent`动画实例一致的`IsCompatibleMesh(Mesh, false)`，允许裁剪中间骨骼，但仍按真实骨骼映射检查兼容、资源有效性和请求代次；缺失或不兼容继续拒绝，不以固定成功放行。修复后的PIE已读到实际骨骼网格和`ABP_DBA_PreviewIdle_C`动画实例。日志只含项目资源身份和生命周期代次，不含账号、密码或票据。
+
+角色创建和选择页均移除左右转动按钮，使用既有透明预览区接收左键拖动，沿用本地用户/指针身份、捕获取消、异常位移保护和忙碌禁用，不引入Tick轮询。选择页新增`OpenCharacterCreateButton（创建角色入口）`，创建页新增`BackToCharacterSelectButton（返回角色选择）`，由Monolith生成、编译、保存与重载；固定字号和逻辑尺寸，不改变登录输入控件字体。
+
+页面通过`UIViewModel::ShowCharacterEntryScreen`向当前LocalPlayer的UI协调器提交换页意图。协调器在已认证、空闲的`DBA.Flow.CharacterEntry`节点按真实AllowedCommands授权，既有角色仍可创建；无角色时拒绝返回空选择页，提交中拒绝新换页，未知页面身份拒绝。偏好只是当前本地玩家的页面投影，不改变角色列表或服务器选择；新运行、注销、离开角色入口时清除，创建提交中的忙碌快照保留当前表单。实际创建仍经原有ApplicationFlow命令和后端校验执行，不能用打开表单代替创建成功。
+
+验证证据位于`Saved/Validation/VillageFlow/20261009`；原完整世界流程仍存在WorldReady超时，角色预览修复和客户端Cook通过不等于可玩新手村已通过。扩大UI测试时既有`PlayerStatusViewModel`测试因AttributeSet宿主无效导致编辑器崩溃，保留`PreviewRepair.Editor.log`，本轮不冒充整个UI套件通过；新增角色入口路由和既有拖动生命周期测试分别执行并记录独立结果。
 
 1. C++ / UHT / Client Module 构建；
 2. 核对 DBAUIPack_Core 内容插件登记与挂载；

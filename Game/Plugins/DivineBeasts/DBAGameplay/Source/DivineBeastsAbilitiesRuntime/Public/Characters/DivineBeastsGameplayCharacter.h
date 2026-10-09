@@ -9,6 +9,8 @@ class UGamePlatformAbilitySystemComponent;
 class UDivineBeastsCharacterComponent;
 class UDivineBeastsAbilityLoadoutComponent;
 class UGamePlatformCombatComponent;
+class USpringArmComponent;
+class UCameraComponent;
 
 /**
  * ADivineBeastsGameplayCharacter（神兽联盟双端可玩角色）。
@@ -28,8 +30,16 @@ public:
     virtual void BeginPlay() override;
     virtual void PossessedBy(AController* NewController) override;
     virtual void OnRep_PlayerState() override;
+    virtual void SetupPlayerInputComponent(UInputComponent* Input) override;
 
 private:
+    /** 客户端跟随镜头无项目资源硬引用；服务器仍使用ACharacter原生运动复制。 */
+    UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> CameraBoom;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> FollowCamera;
+    void MoveForward(float Value);
+    void MoveRight(float Value);
+    void TurnCamera(float Value);
+    void LookCamera(float Value);
     /** ASC 具有 Owner/Avatar 生命周期；仅服务器给能力，客户端使用 GAS 原生复制。 */
     UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Gameplay")
     TObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystem;

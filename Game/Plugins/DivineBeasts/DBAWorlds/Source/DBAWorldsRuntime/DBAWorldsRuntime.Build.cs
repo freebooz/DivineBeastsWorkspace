@@ -17,7 +17,9 @@ public class DBAWorldsRuntime : ModuleRules
             "GamePlatformCore",
             // UDivineBeastsWorldDefinition继承Data层定义基类，链接其虚函数实现不能依赖World的传递依赖。
             "GamePlatformData",
-            "GamePlatformWorld"
+            "GamePlatformWorld",
+            // 共享项目GameMode/Controller继承平台公开门禁，不链接服务器私有准入实现。
+            "GamePlatformGameplay"
         });
     }
 }

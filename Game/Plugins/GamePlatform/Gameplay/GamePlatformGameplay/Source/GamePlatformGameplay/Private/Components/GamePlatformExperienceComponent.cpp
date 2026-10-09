@@ -251,6 +251,7 @@ void UGamePlatformExperienceComponent::AdvancePreparation()
         }
     }
     Runtime->Local.Stage = EGamePlatformClientExperienceStage::Prepared;
+    OnLocalResourcesPrepared.Broadcast();
     if (bServer) SetStage(EGamePlatformExperienceStage::Active);
 }
 

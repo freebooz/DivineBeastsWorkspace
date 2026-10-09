@@ -1,6 +1,9 @@
+// 平台客户端音效桥接：本地玩家注册中立表现提供者，由当前世界音效服务执行。
+// 不持有玩法权威；失活时撤销自己的注册，世界服务自行管理声音实例及数据租约。
 #include "Integration/Presentation/GamePlatformSFXPresentationBridgeSubsystem.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 #include "GamePlatformPresentationClientSubsystem.h"
 #include "Interfaces/IGamePlatformSFXService.h"
 
