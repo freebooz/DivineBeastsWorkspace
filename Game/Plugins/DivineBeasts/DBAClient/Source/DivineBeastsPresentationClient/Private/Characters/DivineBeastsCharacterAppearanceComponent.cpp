@@ -5,6 +5,7 @@
 
 // TSoftClassPtr::Get会调用UAnimInstance::StaticClass，必须包含完整类型，不能依赖Unity或共享PCH。
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimClassInterface.h"
 
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
@@ -236,6 +237,31 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
         return;
     }
 
+    UClass* AnimClass = Profile->AnimInstanceClass.Get();
+    if (Profile->AnimInstanceClass.IsNull() && Profile->bDevelopmentPlaceholder)
+    {
+        AnimClass = Cast<UClass>(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.ABP_DBA_PreviewIdle_C")).ResolveObject());
+    }
+    if ((!Profile->AnimInstanceClass.IsNull() || Profile->bDevelopmentPlaceholder) && !AnimClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("角色外观动画尚未加载，拒绝本次装配：%s"), *ExpectedHeroDefinitionId.ToString());
+        return;
+    }
+    FString SkeletonError;
+    // 在改网格/材质之前检查，避免新身份挂上旧骨树；原有请求代次及取消门禁保持有效。
+    bool bCompatible = UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(SkeletalMesh, SkeletalMesh->GetSkeleton(), SkeletonError);
+    UClass* EffectiveAnimClass = AnimClass ? AnimClass : MeshComponent->GetAnimClass();
+    const IAnimClassInterface* AnimationInterface = EffectiveAnimClass ? IAnimClassInterface::GetFromClass(EffectiveAnimClass) : nullptr;
+    if (bCompatible && AnimationInterface)
+    {
+        bCompatible = UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(SkeletalMesh, AnimationInterface->GetTargetSkeleton(), SkeletonError);
+    }
+    if (!bCompatible)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("角色外观骨架不兼容，拒绝本次装配：Hero=%s Reason=%s"), *ExpectedHeroDefinitionId.ToString(), *SkeletonError);
+        return;
+    }
+
     // 身份切换时先释放旧占位MID引用；随后SetMaterial会用新Profile重新覆盖所有需要的槽位。
     DevelopmentDynamicMaterials.Reset();
 
@@ -304,13 +330,9 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
         }
     }
 
-    if (UClass* AnimClass = Profile->AnimInstanceClass.Get())
+    if (AnimClass)
     {
         MeshComponent->SetAnimInstanceClass(AnimClass);
-    }
-    else if(Profile->bDevelopmentPlaceholder)
-    {
-        if(auto* Idle=Cast<UClass>(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.ABP_DBA_PreviewIdle_C")).ResolveObject()))MeshComponent->SetAnimInstanceClass(Idle);
     }
 
     AppliedHeroDefinitionId = ExpectedHeroDefinitionId;

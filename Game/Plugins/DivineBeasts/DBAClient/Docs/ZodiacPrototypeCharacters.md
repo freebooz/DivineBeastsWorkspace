@@ -145,7 +145,11 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Unreal\Characters\Generate-Zodi
 
 当前验收基线要求：公共 Manny、Quinn、Skeleton、PhysicsAsset 均存在，且 Hero Definition / Appearance Profile / 原型颜色材质分别为 `12 / 12 / 12`。
 
-2026-10-01补充：资产存在不代表引用完整。公共两网格必须关联`SK_Mannequin_Skeleton`（当前68根骨骼，含root/pelvis/head）和既定物理资产，母材质必须启用SkeletalMesh用途，纹理采样不得为空。十二Profile必须为Pitch=0、Yaw=-90、Roll=0；Python生成器使用具名`unreal.Rotator`参数，避免把位置参数次序误当C++次序。`RepairCharacterPreviewAssets.py`只修复既定表现资产，骨架只读字段先由Monolith属性动作恢复；`Tests/Assets/ValidateCharacterPreviewAssets.py`通过锁定编辑器执行只读回归，不连接后端或修改权威定义。预览舞台的脚底高度只调整本地组件，不改变Profile中用于角色胶囊的偏移。原型仍没有正式动画蓝图，模型/材质/骨架修复不代表正式美术已交付。
+2026-10-10纠正2026-10-01骨架约定：`SK_Mannequin_Skeleton`是68骨UE4资源，错误绑定到89骨UE5 Manny/Quinn会缺少胸部、颈部、手掌与第二扭转骨，旧参考姿势还会改变骨长。本次保留旧资源供原UE4网格使用，新增`/DBAContentPack_Common/Mannequins/UE5/Meshes/SK_Mannequin`（161骨），来源为锁定UE5.8 `Templates/TemplateResources/High/Characters/Content/Mannequins/Meshes/SK_Mannequin.uasset`。该文件是Epic引擎模板生成的真实Skeleton，由Monolith载入、绑定项目网格、设置预览网格并保存；未重命名已有资产或改变英雄身份。
+
+公共Manny/Quinn及稳定`AS_DBA_PreviewIdle`、`ABP_DBA_PreviewIdle`全部使用完整UE5骨架。修复脚本通过原生动画控制器同步Sequencer FK骨树后，按正确参考姿势重建4秒/30fps待机，保留各骨骼单位缩放，仅以轻微胸/颈旋转表现呼吸。身体平移重定向采用Skeleton模式，男女模型保留各自骨长；无根运动。预览及世界外观装配都检查真实骨骼覆盖和最近有效父链；骨架可以比简化网格多骨骼，网格所需骨骼不可缺失。显式动画与开发Idle均检查蓝图目标骨架，错误资源拒绝装配并给出诊断。
+
+母材质启用SkeletalMesh用途，纹理采样不得为空。十二Profile保持Pitch=0、Yaw=-90、Roll=0及单位缩放；预览舞台脚底高度只调整本地组件，不改变世界胶囊。`Tests/Assets/ValidateCharacterPreviewAssets.py`只读检查12外观、2网格、动画轨道及男女模型各5个时间点的骨长/缩放/循环接缝；`DivineBeasts.Presentation.Characters.SkeletonCompatibility`使用真实旧UE4骨架作为拒绝负例。它们不连接后端或修改权威定义。当前模型及动画仍是开发原型，不等同于正式生肖美术或完整移动动画交付。
 
 ## 5. 后期真实角色替换
 

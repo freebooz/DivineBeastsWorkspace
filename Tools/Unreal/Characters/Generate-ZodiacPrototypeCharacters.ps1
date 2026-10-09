@@ -42,7 +42,8 @@ $EditorCmd = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 $CommonRoot = Join-Path $WorkspaceRoot "Game\Plugins\DivineBeasts\ContentPacks\Common\DBAContentPack_Common\Content\Mannequins\DBA\Meshes"
 $CommonManny = Join-Path $CommonRoot "SKM_Manny_Simple.uasset"
 $CommonQuinn = Join-Path $CommonRoot "SKM_Quinn_Simple.uasset"
-$CommonSkeleton = Join-Path $CommonRoot "SK_Mannequin_Skeleton.uasset"
+# UE4的SK_Mannequin_Skeleton仅68骨，不能作为UE5 Manny/Quinn依赖存在性判断。
+$CommonSkeleton = Join-Path $WorkspaceRoot "Game\Plugins\DivineBeasts\ContentPacks\Common\DBAContentPack_Common\Content\Mannequins\UE5\Meshes\SK_Mannequin.uasset"
 $CommonPhysics = Join-Path $CommonRoot "SK_Mannequin_PhysicsAsset.uasset"
 
 if (-not (Test-Path $TargetProject)) { throw "目标项目不存在: $TargetProject" }
@@ -58,6 +59,10 @@ $CommonAssetsReady =
 Write-Host "[DBA] EngineRoot=$EngineRoot"
 Write-Host "[DBA] WorkspaceRoot=$WorkspaceRoot"
 Write-Host "[DBA] CommonAssetsReady=$CommonAssetsReady"
+
+if (-not $CommonAssetsReady -and ((Test-Path -LiteralPath $CommonManny) -or (Test-Path -LiteralPath $CommonQuinn))) {
+    throw '已有公共网格但完整UE5骨架依赖缺失；先用Monolith修复，禁止用旧项目覆盖公共内容。'
+}
 
 if (-not $CommonAssetsReady) {
     if ([string]::IsNullOrWhiteSpace($SourceProjectRoot)) {

@@ -35,6 +35,10 @@ try {
         'DBAUIPack_Core/Content/UI/Textures/DBA_MythicLogo.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset',
+        # 真实蒙皮必须连同完整UE5骨架交付；旧68骨架同名兼容身份不能代替依赖。
+        'DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Quinn_Simple.uasset',
         # 网络世界定义必须进入实际IoStore，不以编辑器磁盘文件代替交付。
         'DBAWorldPack_Village/Content/Definitions/DA_DBA_Pawn_WorldCharacter.uasset',
         'DBAWorldPack_Village/Content/Definitions/DA_DBA_Experience_Village_Tutorial.uasset'
