@@ -5027,11 +5027,22 @@
       "ReportMatchesCompleted": true,
       "Passed": true,
       "IntegratedMain": "36ebc648ceacb38fffaba07f515142b98b77b841",
-      "SourceCommit": null,
+      "SourceCommit": "0eb0a06f1a0ad1df5764bfa836ce757207a2c157",
       "SourceParent": "8f17df4e95e90cfc2eb138719df9680c5fac7868",
-      "SourceState": "最新36及模板兼容修复工作树已冻结并真实验证，正式提交后补身份",
+      "SourceState": "真实验证源码已正式提交并正常推送，远程main回读匹配",
       "StartupUnscopedConditionErrors": 13,
       "Scope": "仅实际189逻辑回归（含真实骨骼正例/旧骨架与空资源负例），不证明资产人工画面/Cook/生产网络/设备性能"
+    },
+    "MainPushReceipt": {
+      "SourceCommit": "0eb0a06f1a0ad1df5764bfa836ce757207a2c157",
+      "Branch": "main",
+      "Remote": "https://github.com/freebooz/DivineBeastsWorkspace.git",
+      "RemoteHeadVerified": "0eb0a06f1a0ad1df5764bfa836ce757207a2c157",
+      "VerifiedUtc": "2026-10-09T17:25:35.3323206Z",
+      "NormalPush": true,
+      "ForcePush": false,
+      "PrimaryWorkspaceModifiedByRoot": false,
+      "Scope": "经最新真实构建/精确回归验证的整改与合并源码正常发布Git主线；不表示部署生产或完成Cook/网络/性能验收"
     }
   },
   "LatestArchitecture": {
@@ -5083,10 +5094,10 @@
     }
   ],
   "Main36Integration": {
-    "SourceCommit": null,
+    "SourceCommit": "0eb0a06f1a0ad1df5764bfa836ce757207a2c157",
     "SourceParent": "8f17df4e95e90cfc2eb138719df9680c5fac7868",
     "IntegratedMain": "36ebc648ceacb38fffaba07f515142b98b77b841",
-    "SourceState": "最新36与模板修复工作树已验证，正式提交后补身份",
+    "SourceState": "真实源码已正常提交并远程回读确认",
     "FinalAcceptance": {
       "Evidence": "Saved/Validation/PluginRemediation-2026-10-09/ActualEditorAutomationMain36Final189Retry",
       "BuildRunId": "95276c52-66f5-4825-883e-f0850e8b1ce8",
@@ -5100,13 +5111,24 @@
       "ReportMatchesCompleted": true,
       "Passed": true,
       "IntegratedMain": "36ebc648ceacb38fffaba07f515142b98b77b841",
-      "SourceCommit": null,
+      "SourceCommit": "0eb0a06f1a0ad1df5764bfa836ce757207a2c157",
       "SourceParent": "8f17df4e95e90cfc2eb138719df9680c5fac7868",
-      "SourceState": "最新36及模板兼容修复工作树已冻结并真实验证，正式提交后补身份",
+      "SourceState": "真实验证源码已正式提交并正常推送，远程main回读匹配",
       "StartupUnscopedConditionErrors": 13,
       "Scope": "仅实际189逻辑回归（含真实骨骼正例/旧骨架与空资源负例），不证明资产人工画面/Cook/生产网络/设备性能"
     },
     "SixFreshGates": true,
-    "MainPushedByThisTask": false
+    "MainPushedByThisTask": true
+  },
+  "MainPushReceipt": {
+    "SourceCommit": "0eb0a06f1a0ad1df5764bfa836ce757207a2c157",
+    "Branch": "main",
+    "Remote": "https://github.com/freebooz/DivineBeastsWorkspace.git",
+    "RemoteHeadVerified": "0eb0a06f1a0ad1df5764bfa836ce757207a2c157",
+    "VerifiedUtc": "2026-10-09T17:25:35.3323206Z",
+    "NormalPush": true,
+    "ForcePush": false,
+    "PrimaryWorkspaceModifiedByRoot": false,
+    "Scope": "经最新真实构建/精确回归验证的整改与合并源码正常发布Git主线；不表示部署生产或完成Cook/网络/性能验收"
   }
 }
