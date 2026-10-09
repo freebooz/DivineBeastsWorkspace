@@ -7,6 +7,10 @@
   "FormalAbilityNamesApproved": false,
   "FormalAbilityDefinitionsVerified": 0,
   "FormalSkillIconsVerified": 0,
+  "SourceIconArtworkManifest": "Docs/Art/ZodiacSkillIconPrompts.json",
+  "SourceIconArtworkAudit": "Tests/Assets/ValidateZodiacSkillIconSources.py",
+  "SourceIconArtworkFilesVerified": 60,
+  "SourceIconArtworkImportStatusZh": "原始PNG图源已逐张校验；UE纹理未验收，正式AbilityId尚未批准",
   "AbilityBarWidgetVerified": false,
   "Heroes": [
     {

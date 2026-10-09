@@ -20,6 +20,36 @@ struct FGamePlatformAbilityAvatarBindingSnapshot;
 struct FDivineBeastsAbilityLoadoutState;
 struct FStreamableHandle;
 
+/** FDivineBeastsAbilitySlotDetails（神兽联盟技能栏单格提示信息）。
+ * 纯客户端只读投影，不提供技能授予、伤害或资源成本写入权限。 */
+USTRUCT(BlueprintType)
+struct DIVINEBEASTSUICLIENT_API FDivineBeastsAbilitySlotDetails
+{
+    GENERATED_BODY()
+
+    /** 原有通用槽位身份；用于与 FGamePlatformUISlotState 一对一关联。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    FName SlotId = NAME_None;
+    /** 已由服务器授权的技能逻辑编号，并非纹理资源路径。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    FName AbilityId = NAME_None;
+    /** 服务端实际授权的技能等级。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    int32 AbilityLevel = 0;
+    /** 仅从客户端 UI Profile（技能表现资产）读取的名称/描述。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    FText DisplayName;
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    FText Description;
+    /** 已复制 GAS 冷却效果的剩余/总秒数；不是网络权威计时器。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    float CooldownRemainingSeconds = 0.0f;
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    float CooldownTotalSeconds = 0.0f;
+    /** 当前 UI 不能交互的原因；服务端 GAS 仍决定最终是否激活。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    FText DisabledReason;
+};
 DECLARE_MULTICAST_DELEGATE_OneParam(
     FDivineBeastsAbilityBarChangedNative, const TArray<FGamePlatformUISlotState>&);
 
@@ -44,6 +74,10 @@ public:
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Ability")
     TArray<FGamePlatformUISlotState> GetSlots() const { return Slots; }
+
+    /** 项目技能名称/等级/冷却文字投影，蓝图按 SlotId 与平台通用槽位匹配。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Ability")
+    TArray<FDivineBeastsAbilitySlotDetails> GetSlotDetails() const { return SlotDetails; }
 
     const TArray<FGamePlatformUISlotState>& GetSlotsRef() const { return Slots; }
     FDivineBeastsAbilityBarChangedNative& OnSlotsChanged() { return SlotsChanged; }
@@ -99,6 +133,10 @@ private:
 
     UPROPERTY(Transient)
     TArray<FGamePlatformUISlotState> Slots;
+
+    /** 与 Slots 按 SlotId 对应，不增加第二套玩法权威状态。 */
+    UPROPERTY(Transient)
+    TArray<FDivineBeastsAbilitySlotDetails> SlotDetails;
 
     FDivineBeastsAbilityBarChangedNative SlotsChanged;
 };

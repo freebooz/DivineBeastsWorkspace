@@ -1,7 +1,8 @@
 #include "ViewModels/Combat/DivineBeastsAbilityBarViewModel.h"
 
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
-#include "Components/GamePlatformAbilitySystemComponent.h"#include "Components/DivineBeastsCharacterComponent.h"
+#include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/DivineBeastsCharacterComponent.h"
 
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
 #include "Tags/GamePlatformCombatTags.h"
@@ -45,9 +46,10 @@ void UDivineBeastsAbilityBarViewModel::UnbindFromLoadout()
     Loadout.Reset();
     ++LoadGeneration;
     ResetProfileLease();
-    if (!Slots.IsEmpty())
+    if (!Slots.IsEmpty() || !SlotDetails.IsEmpty())
     {
         Slots.Reset();
+        SlotDetails.Reset();
         MarkStateChanged();
         SlotsChanged.Broadcast(Slots);
     }
@@ -288,6 +290,8 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
 {
     TArray<FGamePlatformUISlotState> NewSlots;
     NewSlots.Reserve(Snapshot.Slots.Num());
+    TArray<FDivineBeastsAbilitySlotDetails> NewDetails;
+    NewDetails.Reserve(Snapshot.Slots.Num());
     TSet<FName> SeenSlots;
     const UDivineBeastsCharacterComponent* Identity = CharacterIdentity.Get();
     const bool bIdentityCurrent = Identity && Identity->IsCharacterReady() &&
@@ -297,9 +301,10 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
     {
         // 实体已重生、重新选择英雄或新角色身份尚未确认时，立即删除旧槽位。
         // 不能只将上一个英雄的技能灰显：过期图标/技能说明属于另一角色作用域。
-        if (!Slots.IsEmpty())
+        if (!Slots.IsEmpty() || !SlotDetails.IsEmpty())
         {
             Slots.Reset();
+            SlotDetails.Reset();
             MarkStateChanged();
             SlotsChanged.Broadcast(Slots);
         }
@@ -315,6 +320,10 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
         }
         SeenSlots.Add(Grant.SlotId);
         FGamePlatformUISlotState Slot;
+        FDivineBeastsAbilitySlotDetails Detail;
+        Detail.SlotId = Grant.SlotId;
+        Detail.AbilityId = Grant.AbilityId;
+        Detail.AbilityLevel = Grant.AbilityLevel;
         Slot.SlotId = Grant.SlotId;
         Slot.ContentId = Grant.AbilityId;
         Slot.Count = INDEX_NONE;
@@ -343,6 +352,8 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                     Configured->AbilityDefinitionId.PrimaryAssetName != Grant.AbilityId)
                 {
                     Slot.bPending = true;
+                    Detail.DisabledReason = FText::FromString(TEXT("技能编号尚未与授权实例一致"));
+                    NewDetails.Add(MoveTemp(Detail));
                     NewSlots.Add(MoveTemp(Slot));
                     continue;
                 }
@@ -368,6 +379,18 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                 {
                     Slot.bEnabled = false;
                 }
+                if (bDead)
+                {
+                    Detail.DisabledReason = FText::FromString(TEXT("角色已阵亡"));
+                }
+                else if (bStunned)
+                {
+                    Detail.DisabledReason = FText::FromString(TEXT("眩晕中无法使用技能"));
+                }
+                else if (bSilenced && !bPrimaryAttack)
+                {
+                    Detail.DisabledReason = FText::FromString(TEXT("沉默中无法施法"));
+                }
 
                 if (const FGameplayTagContainer* CooldownTags =
                         Spec->Ability->GetCooldownTags();
@@ -384,11 +407,20 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                         {
                             Slot.OverlayProgress = FMath::Max(Slot.OverlayProgress,
                                 FMath::Clamp(Pair.Key / Pair.Value, 0.0f, 1.0f));
+                            if (Pair.Key > Detail.CooldownRemainingSeconds)
+                            {
+                                Detail.CooldownRemainingSeconds = Pair.Key;
+                                Detail.CooldownTotalSeconds = Pair.Value;
+                            }
                         }
                     }
                     if (Slot.OverlayProgress > 0.0f)
                     {
                         Slot.bEnabled = false;
+                    }
+                    if (Slot.OverlayProgress > 0.0f)
+                    {
+                        Detail.DisabledReason = FText::FromString(TEXT("技能冷却中"));
                     }
                 }
             }
@@ -398,8 +430,24 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
             if (const FDivineBeastsAbilityUIEntry* UI = LoadedProfile->FindEntry(Grant.AbilityId))
             {
                 Slot.Icon = UI->Icon;
+                Detail.DisplayName = UI->DisplayName;
+                Detail.Description = UI->Description;
             }
         }
+        if (Detail.DisplayName.IsEmpty())
+        {
+            // 未取得已批准的UI Profile时，不把内部AbilityId展示成游戏技能名称。
+            Detail.DisplayName = FText::FromString(TEXT("技能资料尚未加载"));
+        }
+        if (Slot.bPending && Detail.DisabledReason.IsEmpty())
+        {
+            Detail.DisabledReason = FText::FromString(TEXT("技能授权或角色状态待确认"));
+        }
+        else if (!Slot.bEnabled && Detail.DisabledReason.IsEmpty())
+        {
+            Detail.DisabledReason = FText::FromString(TEXT("当前条件不允许使用技能"));
+        }
+        NewDetails.Add(MoveTemp(Detail));
         NewSlots.Add(MoveTemp(Slot));
     }
 
@@ -420,9 +468,31 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
             }
         }
     }
-    if (bChanged)
+    bool bDetailsChanged = SlotDetails.Num() != NewDetails.Num();
+    if (!bDetailsChanged)
+    {
+        for (int32 Index = 0; Index < NewDetails.Num(); ++Index)
+        {
+            const FDivineBeastsAbilitySlotDetails& A = SlotDetails[Index];
+            const FDivineBeastsAbilitySlotDetails& B = NewDetails[Index];
+            if (A.SlotId != B.SlotId || A.AbilityId != B.AbilityId ||
+                A.AbilityLevel != B.AbilityLevel ||
+                !A.DisplayName.EqualTo(B.DisplayName) ||
+                !A.Description.EqualTo(B.Description) ||
+                !A.DisabledReason.EqualTo(B.DisabledReason) ||
+                !FMath::IsNearlyEqual(A.CooldownRemainingSeconds, B.CooldownRemainingSeconds, 0.01f) ||
+                !FMath::IsNearlyEqual(A.CooldownTotalSeconds, B.CooldownTotalSeconds, 0.01f))
+            {
+                bDetailsChanged = true;
+                break;
+            }
+        }
+    }
+
+    if (bChanged || bDetailsChanged)
     {
         Slots = MoveTemp(NewSlots);
+        SlotDetails = MoveTemp(NewDetails);
         MarkStateChanged();
         SlotsChanged.Broadcast(Slots);
     }

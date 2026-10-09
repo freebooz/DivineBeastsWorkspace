@@ -3,7 +3,8 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/GamePlatformGameplayAbility.h"
 #include "Abilities/DivineBeastsConfiguredGameplayAbility.h"
-#include "Components/DivineBeastsCharacterComponent.h"#include "Attributes/DivineBeastsMomentumAttributeSet.h"
+#include "Components/DivineBeastsCharacterComponent.h"
+#include "Attributes/DivineBeastsMomentumAttributeSet.h"
 
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Definitions/DivineBeastsAbilityDefinition.h"

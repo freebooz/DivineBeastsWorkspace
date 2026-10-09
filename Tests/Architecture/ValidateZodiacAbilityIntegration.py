@@ -180,6 +180,26 @@ def check_runtime_safety() -> None:
            "Balance.MomentumCost > 0.0f" in grant and
            "Balance.CooldownSeconds > 0.0f" in grant)
 
+
+    verify("服务端按真实等级核对GAS成本/冷却实际数值",
+           "GetStaticMagnitudeIfPossible" in grant and
+           "ActualMomentumChange, -Balance.MomentumCost, 0.01f" in grant and
+           "ActualCooldownSeconds, Balance.CooldownSeconds, 0.01f" in grant and
+           "EGameplayEffectDurationType::Instant" in grant and
+           "EGameplayEffectDurationType::HasDuration" in grant)
+
+    verify("UI额外以死亡眩晕和非普攻沉默标志禁用技能",
+           "ASC->HasMatchingGameplayTag" in ui and
+           "bDead || bStunned || (bSilenced && !bPrimaryAttack)" in ui)
+
+    details_h = read(CLIENT_UI / "Public/ViewModels/Combat/DivineBeastsAbilityBarViewModel.h")
+    verify("项目技能提示提供名称等级冷却及禁用原因而不改平台槽位",
+           "FDivineBeastsAbilitySlotDetails" in details_h and
+           "GetSlotDetails()" in details_h and
+           "Detail.DisplayName = UI->DisplayName" in ui and
+           "Detail.Description = UI->Description" in ui and
+           "Detail.CooldownRemainingSeconds = Pair.Key" in ui and
+           "SlotDetails = MoveTemp(NewDetails)" in ui)
     verify("技能伤害必须在GAS正式Commit之后",
            "CommitAbility(" in ability and
            "bCommittedForCurrentActivation = bSucceeded" in ability and

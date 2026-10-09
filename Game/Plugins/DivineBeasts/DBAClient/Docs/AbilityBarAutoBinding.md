@@ -21,6 +21,7 @@ DBAClient 只读 DBAGameplay/DivineBeastsAbilitiesRuntime（项目权威授权�
 
 - 当前 C++ 槽位投影读取 OwnerOnly（拥有者定向）已授权的 AbilityId/SlotId、原生 GAS AbilitySpec（技能授权实例）与 AvatarGeneration（角色代次）。只有英雄身份匹配、已复制 Spec、等级一致并且 `CanActivateAbility`（GAS 原生无副作用资格判定）通过时才将槽位标为 `bEnabled=true`（允许交互）；失效英雄会立即清空旧槽位。`OverlayProgress`（冷却遮罩）由原生冷却 GameplayEffect 的剩余时间/总时长计算，缺失效果保持 0。
 - 当前 ViewModel（视图模型）已订阅平台 `OnAbilitySpecListChanged`（原生技能列表复制）、`OnAvatarBindingChanged`（技能实体代次）、GameplayEffect 新增/移除（冷却变化）、Momentum（气势）属性、Silence/Stun/Dead（沉默/眩晕/死亡）标签及角色就绪事件，并在销毁时解绑。该逻辑仍需 UE 编译、真实联机与 GAS 用例验收；冷却比例仅在事件到来时更新，**秒级连续动画/剩余秒数、详细禁用原因、游戏手柄和触屏展示尚未正式实现**。界面判断是展示提示，最终技能激活仍由服务器 GAS 校验。
+- 后续补充 `FDivineBeastsAbilitySlotDetails`（技能槽详细投影）与 `GetSlotDetails()`（蓝图只读入口）：同 `SlotId` 匹配已授权技能，提供 UI Profile 的中文名称/描述、服务器等级、GAS 最新冷却剩余/总时长及当前禁用原因文字。仅在事件变化时刷新，计时动画仍需正式 Widget 实现，不能视作完整客户端效果。死亡/眩晕禁用全部技能，沉默禁用非普攻动作（仅界面提示，不取代 GAS 判定）。
 - 目前 Profile 数据资产类型位于客户端模块，真实图标资源约定归 DBAHeroPack_*（十二生肖英雄内容包）的 UI/Abilities 路径。客户端 FrontEndClient（正式前端烘焙覆盖）已经登记扫描和资源目录；不能把这份覆盖当成 Editor/其他客户端配置已验证。
 - GUI 真正的 WBP_DBA_UI_AbilityBar（技能栏蓝图）、WBP_DBA_UI_AbilitySlot（技能单格蓝图）及其控件树和焦点导航，**必须**通过 Monolith MCP（UE 界面连接器）在真实 UE5.8 编辑器中制作、编译、保存、重载回读，并更新对应 MonolithGenerationManifest.json（资产操作清单）。
 - 本轮 Monolith MCP 端显示 Unreal Editor not running（虚幻编辑器未启动）；真实蓝图资产和客户端 Cook/Stage（烘焙/暂存）仍为阻断事项。

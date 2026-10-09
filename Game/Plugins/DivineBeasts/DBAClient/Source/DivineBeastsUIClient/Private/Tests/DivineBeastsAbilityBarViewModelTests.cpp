@@ -26,6 +26,23 @@ bool FDivineBeastsAbilityUIProfileValidationTest::RunTest(const FString&)
         FSoftObjectPath(TEXT("/Game/Development/Tests/T_AbilityIconTest.T_AbilityIconTest")));
     Profile->Entries.Add(Entry);
     TestFalse(TEXT("重复稳定 AbilityId 被拒绝"), Profile->ValidateProfile(Error));
+    // 不依赖真实技能资源的最小负向UI安全验证：没有网络授权源时不暴露技能、
+    // 不因构造一个ViewModel就虚构名称、冷却、等级或图标。
+    UDivineBeastsAbilityBarViewModel* ViewModel =
+        NewObject<UDivineBeastsAbilityBarViewModel>();
+    TestNotNull(TEXT("技能栏视图模型可实例化"), ViewModel);
+    if (!ViewModel)
+    {
+        return false;
+    }
+    TestFalse(TEXT("没有技能装配组件时不能绑定授权来源"),
+        ViewModel->BindToLoadout(nullptr));
+    TestEqual(TEXT("无授权时通用技能槽为空"), ViewModel->GetSlots().Num(), 0);
+    TestEqual(TEXT("无授权时专属技能说明为空"), ViewModel->GetSlotDetails().Num(), 0);
+    FDivineBeastsAbilitySlotDetails Detail;
+    TestTrue(TEXT("默认技能显示身份为空"), Detail.AbilityId.IsNone());
+    TestEqual(TEXT("默认冷却剩余秒数为0"), Detail.CooldownRemainingSeconds, 0.0f);
+    ViewModel->UnbindFromLoadout();
     return true;
 }
 #endif
