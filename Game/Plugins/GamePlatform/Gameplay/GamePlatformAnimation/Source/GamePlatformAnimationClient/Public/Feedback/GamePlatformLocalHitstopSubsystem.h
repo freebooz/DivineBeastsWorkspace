@@ -45,6 +45,12 @@ public:
         USkeletalMeshComponent* TargetMesh,
         int32 Frames);
 
+    /**
+     * 将Profile参考帧与当前本地开发覆盖参数解析成0—10帧。
+     * 覆盖帧为负数时使用配置值；0表示仅关闭局部视觉顿帧，其他反馈不受影响。
+     */
+    static int32 ResolveVisualHitstopFrames(int32 ConfiguredFrames, int32 OverrideFrames);
+
     /** 仅查询本LocalPlayer持有的视觉暂停，不代表玩法硬直。 */
     UFUNCTION(BlueprintPure, Category="GamePlatform|Combat Feedback")
     bool IsVisualHitstopActive(const USkeletalMeshComponent* Mesh) const;

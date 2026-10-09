@@ -6,6 +6,24 @@
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
 #include "HAL/PlatformTime.h"
+#include "HAL/IConsoleManager.h"
+
+namespace
+{
+// 纯客户端测试旋钮：-1使用数据资产，0关闭，3/6用于相同技能的AB手感对比；绝不修改服务器时间或伤害。
+TAutoConsoleVariable<int32> CVarGamePlatformHitstopOverrideFrames(
+    TEXT("gp.Combat.HitstopOverrideFrames"),
+    -1,
+    TEXT("客户端打击感顿帧覆盖帧数：-1=Profile，0=关闭，3/6=对照；60Hz参考帧，上限10，不影响Gameplay。"),
+    ECVF_Cheat);
+}
+
+int32 UGamePlatformLocalHitstopSubsystem::ResolveVisualHitstopFrames(
+    int32 ConfiguredFrames, int32 OverrideFrames)
+{
+    return FMath::Clamp(OverrideFrames < 0 ? ConfiguredFrames : OverrideFrames, 0, MaxVisualFrames);
+}
+
 
 void UGamePlatformLocalHitstopSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -35,9 +53,16 @@ bool UGamePlatformLocalHitstopSubsystem::ApplyVisualHitstop(
     UWorld* World = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
     if (!IsInGameThread() || !World ||
         (World->GetNetMode() != NM_Client && World->GetNetMode() != NM_Standalone) ||
-        !EventId.IsValid() || Frames <= 0 || RecentEventIds.Contains(EventId))
+        !EventId.IsValid() || RecentEventIds.Contains(EventId))
     {
         return false;
+    }
+
+    const int32 SafeFrames = ResolveVisualHitstopFrames(
+        Frames, CVarGamePlatformHitstopOverrideFrames.GetValueOnGameThread());
+    if (SafeFrames <= 0)
+    {
+        return false; // 0帧仅关闭该表现层；VFX、SFX、镜头和GAS仍继续执行。
     }
 
     if ((!IsValid(SourceMesh) || SourceMesh->GetWorld() != World) &&
@@ -54,7 +79,6 @@ bool UGamePlatformLocalHitstopSubsystem::ApplyVisualHitstop(
     BoundWorld = World;
 
     // 帧数只作为60Hz设计单位；独立于显示器渲染帧率。
-    const int32 SafeFrames = FMath::Clamp(Frames, 0, MaxVisualFrames);
     // 局部时钟使用单调实时时间，避免其他Gameplay慢动作或暂停修改本次顿帧的时长。
     const double DeadlineSeconds = FPlatformTime::Seconds() + SafeFrames / ReferenceFps;
     bool bAccepted = false;

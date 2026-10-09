@@ -7,6 +7,8 @@
 #include "Definitions/GamePlatformPrimaryDataAsset.h"
 #include "Engine/AssetManager.h"
 #include "GameFramework/Actor.h"
+#include "Engine/World.h"
+#include "CollisionQueryParams.h"
 
 void UDivineBeastsConfiguredGameplayAbility::ActivateAbility(
     const FGameplayAbilitySpecHandle Handle,
@@ -77,6 +79,76 @@ bool UDivineBeastsConfiguredGameplayAbility::TryReadConfiguredBalance(
 
     // GAS 技能等级是服务器授予的数值；Definition 只保存级别到表行的映射。
     return Definition->TryGetLoadedBalance(GetAbilityLevel(), OutRow, OutError);
+}
+
+
+bool UDivineBeastsConfiguredGameplayAbility::AuthorityTraceForwardAndApplyDamage(
+    FGamePlatformCombatResult& OutResult, FString& OutError)
+{
+    OutResult = FGamePlatformCombatResult();
+
+    // 客户端即使持有复制的Ability，也不能凭视觉/输入状态直接提交伤害。
+    AActor* Source = GetAvatarActorFromActorInfo();
+    UWorld* World = IsValid(Source) ? Source->GetWorld() : nullptr;
+    if (!IsActive() || !bCommittedForCurrentActivation ||
+        !IsValid(Source) || !Source->HasAuthority() || !World)
+    {
+        OutError = TEXT("前向伤害查询必须在服务器已提交GAS技能后执行。");
+        return false;
+    }
+
+    FDivineBeastsAbilityBalanceRow Balance;
+    if (!TryReadConfiguredBalance(Balance, OutError))
+    {
+        return false;
+    }
+    if (!FMath::IsFinite(Balance.CastRangeCm) || Balance.CastRangeCm <= 0.0f ||
+        !FMath::IsFinite(Balance.BaseDamage) || Balance.BaseDamage <= 0.0f)
+    {
+        OutError = TEXT("前向伤害技能没有合法施法距离或大于零的基础伤害。");
+        return false;
+    }
+
+    // 先通过项目定义限制合法距离，再只在服务器当前World执行一次真实射线查询。
+    // 通用平台层不理解生肖；此处不依赖MOBA或客户端Camera/VFX。
+    const FVector TraceStart = Source->GetActorLocation() + FVector(0.0, 0.0, 50.0);
+    const FVector Direction = Source->GetActorForwardVector().GetSafeNormal();
+    if (Direction.IsNearlyZero())
+    {
+        OutError = TEXT("角色没有可用于技能命中的有效朝向。");
+        return false;
+    }
+    const FVector TraceEnd = TraceStart + Direction * Balance.CastRangeCm;
+    FCollisionQueryParams QueryParams(
+        FName(TEXT("DivineBeastsAbilityForwardTrace")), false, Source);
+    QueryParams.bReturnPhysicalMaterial = false;
+
+    FHitResult Hit;
+    if (!World->LineTraceSingleByChannel(
+            Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams) ||
+        !Hit.bBlockingHit || !IsValid(Hit.GetActor()) || Hit.GetActor() == Source)
+    {
+        OutError = TEXT("服务器前向技能射线未命中可执行伤害的有效目标。");
+        return false;
+    }
+
+    const float Distance = FVector::Distance(TraceStart, Hit.ImpactPoint);
+    if (!FMath::IsFinite(Distance) || Distance > Balance.CastRangeCm + 1.0f)
+    {
+        OutError = TEXT("服务器命中距离不合法，拒绝处理伤害。");
+        return false;
+    }
+
+    FGamePlatformCombatHitContext HitContext;
+    HitContext.bHasValidatedHit = true;
+    HitContext.TraceStart = TraceStart;
+    HitContext.TraceEnd = TraceEnd;
+    HitContext.ImpactPoint = Hit.ImpactPoint;
+    HitContext.ImpactNormal = Hit.ImpactNormal.GetSafeNormal();
+    HitContext.ValidatedDistance = Distance;
+
+    // 只交给唯一GamePlatformCombat（平台战斗）组件做防御、护盾、血量与重复事件处理。
+    return AuthorityApplyConfiguredDamage(Hit.GetActor(), HitContext, OutResult, OutError);
 }
 
 bool UDivineBeastsConfiguredGameplayAbility::AuthorityApplyConfiguredDamage(

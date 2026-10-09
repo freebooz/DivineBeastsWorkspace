@@ -32,6 +32,7 @@ public class DivineBeastsArenaClient : ModuleRules
             "DivineBeastsApplicationFlowClient",
             // 只在客户端组合根接入已授权角色身份、数据资产租约和MOBA中立反馈回调。
             "DivineBeastsCharactersRuntime",
+            "DivineBeastsAbilitiesRuntime", // 只读取拥有者已授予技能快照，绝不授予/激活技能。
             "DivineBeastsPresentationRuntime",
             "GamePlatformCombat",
             "GamePlatformPresentationCore",

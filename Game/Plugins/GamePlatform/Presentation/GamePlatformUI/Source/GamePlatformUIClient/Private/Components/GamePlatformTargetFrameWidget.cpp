@@ -59,6 +59,8 @@ bool UGamePlatformTargetFrameWidget::BindTargetSource(FGuid InSourceScopeId)
     }
     BoundScopeId = InSourceScopeId;
     State = FGamePlatformUITargetFrameState();
+    // 新观察源尚未确认目标可见，隐藏旧目标容器避免闪现或泄漏。
+    SetVisibility(ESlateVisibility::Collapsed);
     ResetTargetVisuals();
     BP_OnTargetFrameChanged(State);
     return true;
@@ -99,6 +101,10 @@ bool UGamePlatformTargetFrameWidget::ApplyTargetSnapshot(
             TargetShieldBar->ApplyResourceState(State.Shield);
         }
     }
+    // 可见性只能由上游经授权快照确定，未授权/被迷雾隐藏时收起整个目标框。
+    SetVisibility(State.bVisible
+        ? ESlateVisibility::SelfHitTestInvisible
+        : ESlateVisibility::Collapsed);
     BP_OnTargetFrameChanged(State);
     return true;
 }
@@ -111,6 +117,7 @@ void UGamePlatformTargetFrameWidget::ClearTargetSource()
     }
     BoundScopeId.Invalidate();
     State = FGamePlatformUITargetFrameState();
+    SetVisibility(ESlateVisibility::Collapsed);
     ResetTargetVisuals();
     BP_OnTargetFrameChanged(State);
 }

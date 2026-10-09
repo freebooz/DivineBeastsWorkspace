@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import hashlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -40,7 +41,7 @@ def verify(label: str, valid: bool, detail: str = "") -> bool:
     return valid
 
 
-def inspect(*, require_all_profiles: bool) -> int:
+def inspect(*, require_all_profiles: bool, require_all_definitions: bool, verify_hashes: bool) -> int:
     """验证最小真资产链，并单独报告尚未制作的 UI 资产，绝不冒充正式技能内容。"""
     ok = True
     for filename, meaning in SAMPLE_REQUIRED.items():
@@ -82,6 +83,42 @@ def inspect(*, require_all_profiles: bool) -> int:
           f"MISSING={','.join(hero for hero in HEROES if hero not in profiles) or 'None'}")
     if require_all_profiles:
         ok &= verify("十二生肖开发 UIProfile 资产已真实创建", len(profiles) == 12)
+    # 新增正式引擎生成的60个开发逻辑定义，只检查磁盘存在/大小；
+    # UObject反射、逻辑ID、行引用和12×5图标仍需在真正UE编辑器内用Monolith验证。
+    slots = ("BasicAttack", "Passive", "Active01", "Active02", "Ultimate")
+    definition_files = []
+    for hero in HEROES:
+        for slot in slots:
+            suffix = "Primary" if hero == "Rat" and slot == "BasicAttack" else slot
+            definition_files.append(DEV_ASSETS / f"DA_DBA_{hero}_Dev{suffix}.uasset")
+    actual_definition_files = [
+        path for path in definition_files if path.is_file() and path.stat().st_size > 500
+    ]
+    print(f"DEVELOPMENT_DEFINITIONS={len(actual_definition_files)}/60")
+    if require_all_definitions:
+        ok &= verify("60份开发技能逻辑定义真实存在", len(actual_definition_files) == 60)
+        common_table = DEV_ASSETS / "DT_DBA_Zodiac_DevBalance.uasset"
+        ok &= verify("统一开发技能数值表真实存在",
+                     common_table.is_file() and common_table.stat().st_size > 500)
+
+    if verify_hashes:
+        # 审计已归档的UE二进制文件摘要，杜绝旧清单误报“所有资源已保存”。
+        manifest_file = ROOT / "Docs/Implementation/ZodiacDevelopmentUEAssetEvidence_20261009.json"
+        manifest = json.loads(manifest_file.read_text(encoding="utf-8-sig"))
+        registered = manifest.get("Assets", [])
+        hashes_pass = (len(registered) == 76 and manifest.get("AssetCount") == 76)
+        for entry in registered:
+            file_path = ROOT / entry["RelativePath"]
+            if not file_path.is_file():
+                hashes_pass = False
+                continue
+            digest = hashlib.sha256(file_path.read_bytes()).hexdigest()
+            hashes_pass &= digest == entry["SHA256"]
+        ok &= verify("76份开发UE资产的归档SHA-256校验通过",
+                     hashes_pass, f"Entries={len(registered)}")
+        ok &= verify("开发清单明确不包含正式生产技能",
+                     manifest.get("FormalAbilityDefinitionsApproved") == 0
+                     and not manifest.get("ApprovedFormalAbilityIds"))
     print("SCOPE=DEVELOPMENT_ONLY; RELEASE_APPROVED=NO")
     print("REAL_ENGINE_RUNTIME_GRANT_AND_COOK=NOT_COVERED")
     return 0 if ok else 1
@@ -91,5 +128,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="只读核验生肖技能开发资源")
     parser.add_argument("--require-all-profiles", action="store_true",
                         help="同时要求十二生肖开发技能显示配置全部落盘")
+    parser.add_argument("--require-all-definitions", action="store_true",
+                        help="同时要求60份真实开发技能定义和统一数值表文件落盘")
+    parser.add_argument("--verify-hashes", action="store_true",
+                        help="重新核对已归档的76个UE资产的真实SHA-256")
     opts = parser.parse_args()
-    raise SystemExit(inspect(require_all_profiles=opts.require_all_profiles))
+    raise SystemExit(inspect(require_all_profiles=opts.require_all_profiles,
+                             require_all_definitions=opts.require_all_definitions,
+                             verify_hashes=opts.verify_hashes))

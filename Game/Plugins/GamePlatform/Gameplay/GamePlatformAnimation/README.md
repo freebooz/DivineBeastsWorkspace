@@ -11,3 +11,5 @@
 新增 `GamePlatformHitFlashWorldSubsystem`（客户端受击网格短时闪白），通过原生`UMeshComponent::SetOverlayMaterial`作用于被命中模型，不进行全屏闪白，也不每次创建动态材质实例；参考上限2帧、最多64活动网格、恢复先前Overlay并在World退出清理。用户需由真实预加载Profile提供材质资产，空资产时自动跳过；尚不等于实际完成闪白材质和战斗镜头演示。
 
 2026-10-09安全边界补充：`ApplyVisualHitstop`仅当至少一项Mesh实际接纳冻结后返回成功；已有其他系统拥有的`bPauseAnims`状态及`ACharacter::IsPlayingRootMotion`角色一律跳过。该保护防止未完成的视觉根运动分离影响客户端预测，完整RootMotion同步仍需专用服务器双端运行验收。
+
+2026-10-09 调试改进：新增仅客户端本地控制台变量 gp.Combat.HitstopOverrideFrames（参考帧覆盖）。-1读取数据资产值，0关闭视觉顿帧，3/6可在同一技能下比较手感，上限10帧，不影响服务器伤害、全局时间或其它表现层。新增 GamePlatform.Animation.Hitstop.Tuning UE自动化测试源码，覆盖0/3/6与非法输入边界；引擎实际测试执行仍待验证。

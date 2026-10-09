@@ -227,6 +227,15 @@ def check_runtime_safety() -> None:
            "SourceCombat->ApplyDamage(Spec)" in ability and
            "GamePlatformCombatComponent" in ability and
            "CalculateDamageMagnitude" not in ability)
+    ability_header = read(
+        ABILITIES / "Public/Abilities/DivineBeastsConfiguredGameplayAbility.h")
+    verify("项目技能服务器射线判定以真实命中驱动唯一战斗结算",
+           "AuthorityTraceForwardAndApplyDamage" in ability_header
+           and "BlueprintAuthorityOnly" in ability_header
+           and "LineTraceSingleByChannel" in ability
+           and "Source->HasAuthority()" in ability
+           and "HitContext.bHasValidatedHit = true" in ability
+           and "AuthorityApplyConfiguredDamage(Hit.GetActor()" in ability)
 
 
 def check_assets_and_policy() -> None:
