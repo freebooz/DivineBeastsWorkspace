@@ -66,7 +66,8 @@ private:
         bool bWasAnimsPaused = false;
     };
 
-    void ApplyToMesh(USkeletalMeshComponent* Mesh, UWorld& World, double DeadlineSeconds);
+    /** 返回是否真正接受本次Mesh视觉停顿；正在播放根运动或已被其他系统暂停时跳过。 */
+    bool ApplyToMesh(USkeletalMeshComponent* Mesh, UWorld& World, double DeadlineSeconds);
     void RestoreMesh(TWeakObjectPtr<USkeletalMeshComponent> Mesh, bool bBroadcastFinished = true);
     /** 只有存在活动视觉顿帧才临时注册Ticker，无永久逐帧更新。 */
     bool TickVisualHitstop(float DeltaSeconds);

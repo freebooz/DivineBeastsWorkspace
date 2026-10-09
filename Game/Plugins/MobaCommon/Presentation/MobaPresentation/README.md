@@ -15,3 +15,5 @@ MobaPresentation位于 MobaCommon（MOBA通用层），职责是把 Arena（竞�
 验证状态必须区分静态源码、UE5.8编译、Client/Server Cook（客户端/服务器烘焙）、Multi-PIE（多编辑器实例）、Travel/Late Join（切图/晚加入）和压力测试；未执行不得写通过。
 
 2026-10-09继续实施：MobaPresentationClient按World范围订阅平台Combat确认事实，并可从项目/竞技组合根注入已经预加载的`UGamePlatformHitFeedbackProfile`、VFX/SFX逻辑DefinitionId；分层使用唯一GamePlatformPresentation调度、GamePlatformAnimationClient Overlay/局部顿帧与GamePlatformCameraClient本地CameraShake。不直接创建Niagara/Sound/Widget或改变服务器击退。已有技能ID默认归Skill反馈，缺失则为Light；真正重击/格挡/连击段数必须由权威规则定义，不根据伤害数值推断。目前项目实例资产和联机仍待验收。当前GAS已移除权威暴击属性，前文历史暴击提示不得视为现行技能实现。
+
+2026-10-09 P5追加`FMobaHitFeedbackResolver`（客户端按命中获取配置的中立回调），每次命中单独解析Profile及VFX/SFX DefinitionId，未命中目录或异步资源尚未加载时安全使用当前默认配置，杜绝上一位英雄的资源在下一击被误用。Resolver只处理已加载弱引用与值参数，MOBA源码没有引用DivineBeasts项目类型。

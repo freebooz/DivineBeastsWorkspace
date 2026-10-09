@@ -4,6 +4,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "GameFramework/Character.h"
 #include "HAL/PlatformTime.h"
 
 void UGamePlatformLocalHitstopSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -56,14 +57,19 @@ bool UGamePlatformLocalHitstopSubsystem::ApplyVisualHitstop(
     const int32 SafeFrames = FMath::Clamp(Frames, 0, MaxVisualFrames);
     // 局部时钟使用单调实时时间，避免其他Gameplay慢动作或暂停修改本次顿帧的时长。
     const double DeadlineSeconds = FPlatformTime::Seconds() + SafeFrames / ReferenceFps;
+    bool bAccepted = false;
     if (IsValid(SourceMesh) && SourceMesh->GetWorld() == World)
     {
-        ApplyToMesh(SourceMesh, *World, DeadlineSeconds);
+        bAccepted = ApplyToMesh(SourceMesh, *World, DeadlineSeconds);
     }
     if (IsValid(TargetMesh) && TargetMesh != SourceMesh &&
         TargetMesh->GetWorld() == World)
     {
-        ApplyToMesh(TargetMesh, *World, DeadlineSeconds);
+        bAccepted = ApplyToMesh(TargetMesh, *World, DeadlineSeconds) || bAccepted;
+    }
+    if (!bAccepted)
+    {
+        return false; // 未实际暂停任何网格，不伪称已完成表现。
     }
 
     // 有界事实缓存防止预测确认、多次通知或多段装配误触发同一次视觉顿帧。
@@ -77,19 +83,33 @@ bool UGamePlatformLocalHitstopSubsystem::ApplyVisualHitstop(
     return true;
 }
 
-void UGamePlatformLocalHitstopSubsystem::ApplyToMesh(
+bool UGamePlatformLocalHitstopSubsystem::ApplyToMesh(
     USkeletalMeshComponent* Mesh,
     UWorld& World,
     double DeadlineSeconds)
 {
-    if (!IsValid(Mesh))
+    if (!IsValid(Mesh) || Mesh->GetWorld() != &World)
     {
-        return;
+        return false;
     }
     const TWeakObjectPtr<USkeletalMeshComponent> MeshKey(Mesh);
     FPausedMeshRecord* Existing = ActiveMeshes.Find(MeshKey);
     if (!Existing)
     {
+        // 当前动画驱动真实RootMotion时，暂停网格会使客户端预测与服务器权威位移分离。
+        // 在独立视觉代理与RootMotion同步方案实际联机验收前，保守跳过该次停顿。
+        if (const ACharacter* Character = Cast<ACharacter>(Mesh->GetOwner()))
+        {
+            if (Character->IsPlayingRootMotion())
+            {
+                return false;
+            }
+        }
+        if (Mesh->bPauseAnims)
+        {
+            return false; // 该动画已由其他系统暂停，不能冒领其状态所有权。
+        }
+
         FPausedMeshRecord Record;
         Record.Mesh = Mesh;
         Record.World = &World;
@@ -107,7 +127,7 @@ void UGamePlatformLocalHitstopSubsystem::ApplyToMesh(
     const double SafeDeadline = FMath::Min(DeadlineSeconds, AbsoluteWindowLimit);
     if (Existing->DeadlineSeconds >= SafeDeadline)
     {
-        return;
+        return true; // 已有视觉停顿覆盖本次时长，当前网格仍属于本子系统。
     }
     Existing->DeadlineSeconds = SafeDeadline;
 
@@ -119,6 +139,7 @@ void UGamePlatformLocalHitstopSubsystem::ApplyToMesh(
             FTickerDelegate::CreateUObject(
                 this, &UGamePlatformLocalHitstopSubsystem::TickVisualHitstop));
     }
+    return true;
 }
 
 void UGamePlatformLocalHitstopSubsystem::RestoreMesh(

@@ -46,6 +46,8 @@
 
 本次还为DBAClient的Client/Editor目标声明GamePlatformSFX依赖，以启用现有SFX表现Provider。项目技能目录目前只是可复用类型，不存在12生肖真实Profile完整资产；竞技组合根应按当前HeroDefinitionId与AbilityDefinitionId从GamePlatformData已加载目录选择Profile和VFX/SFX逻辑ID，在角色切换及世界销毁时撤销租约。实施与阻断见`Docs/Implementation/CombatFeedbackWorkOrders_20261009.md`。
 
+2026-10-09结构落实：`UDivineBeastsCombatFeedbackCatalog`升级为`UGamePlatformDefinitionBase`正式主资产契约，并将每行Profile软路径转换为`FPrimaryAssetId ProfileDefinitionId`，实现与平台DataService租约一致的稳定逻辑身份；所有未知、重复及非法映射发布前拒绝。项目公共客户端保持不依赖Moba；真实按技能加载与注入归可选`DBAArena`客户端组合根。
+
 `F:\\VFX Lib` 的复用映射见 `Docs/ZodiacReuseMatrix.md（十二生肖VFX复用矩阵）`。首批优先 Rabbit（卯兔）、Horse（午马）、Goat（未羊）、Rooster（酉鸡）、Boar（亥猪）；当前只完成平台母版能力与复用规划，未创建任何虚构技能 `.uasset`。
 
 P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基类、LocalPlayer 自适应子系统和 SafeZone 支持；DivineBeastsUIClient 已新增项目分类基类，并建立登录、真实加载、RootLayout 和五类 HUD 的 C++ / Blueprint 父类。ApplicationFlow 的 Blueprint `uint64` 反射阻断和 GamePlatformUIClient 生成代码错误已经消除；当前完整客户端构建的已知阻断位于主工程 Online/PCG 头依赖及 GamePlatformWorld 测试源码。UI 与 Flow 仍须保持事件驱动、禁止逐帧轮询。

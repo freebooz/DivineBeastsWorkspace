@@ -84,6 +84,17 @@ MOBA：MobaPresentationRuntime（强度策略）、MobaPresentationClient（可�
 - [x] 更新本工单、主实施计划、插件文档与总体目录规划；任何未执行的验收项必须保持未完成。
 - [ ] 不提交、不推送、不删除其他并行任务未提交更改。
 
+## 2026-10-09 继续实施：P1/P2/P5可运行链增量
+
+- [x] **P1｜数据资产身份修正。** `UGamePlatformHitFeedbackProfile`、`UDivineBeastsCombatFeedbackCatalog`改为继承唯一`UGamePlatformDefinitionBase`主资产基类，复用既有`GamePlatformData`版本、身份与租约；Profile的Overlay/CameraShake软资源仅在`Client` Bundle申请时预加载，平台Profile增加参数区间与非有限值校验。
+- [x] **P5｜目录映射与实际组合根。** 目录每行以`FPrimaryAssetId ProfileDefinitionId`作为租约加载的稳定身份，不再使用无法被当前DataService直接租约化的普通DataAsset软路径；新增项目目录重复键、主资产ID和128行边界校验及UE自动化测试源码。此处因暂无正式反馈资产，可无迁移风险地调整未发布字段。
+- [x] **P5｜竞技客户端桥。** `DBAArena/DivineBeastsArenaClient/Private/Feedback`增加真实`ULocalPlayerSubsystem`组合根；根据当前已确认命中的SourceActor角色身份、Avatar代次和SourceAbilityId选择已加载Profile，通过MOBA可选中立Resolver返回VFX/SFX逻辑ID。Catalog通过可配置主资产ID异步加载，Profile首次需要时通过`GamePlatformData`的Client Bundle异步请求，最多持有64个Profile租约，无同步磁盘加载。LocalPlayer不是世界Outer，租约采用实例期限并在WorldCleanup/LocalPlayer注销时主动释放；回调核对请求代次，加载失败不因每次命中反复申请。
+- [x] **P2｜RootMotion防护。** 平台动画顿帧遇到正在播放真实根运动的Character或被其他系统事先暂停的Mesh时主动跳过；只有实际受理至少一个Mesh才返回成功并登记命中ID。此为未完成RootMotion网络隔离之前的保守策略，不宣称根运动也能冻结。
+- [ ] **资产/构建门禁。** `UDivineBeastsArenaCombatFeedbackSettings::CatalogDefinitionId`默认空，必须由实际编辑器创建并通过主资产扫描和Cook后配置；丑牛/寅虎/卯兔真实技能与反馈Profile尚未建立，本轮不伪造.uasset或逻辑身份。资产未加载时仍使用平台默认命中反馈。UE Client/Editor/Server定向编译、自动化实跑和多人评审待实证。
+- [x] **本轮静态门禁。** 自有头文件检查614处0缺失；三层Public头477、类型981、继承边175，退出0。仅代表源码边界检查，不代表UE真实编译。
+- [x] **正式结构组合门禁。** 首轮`ValidateDesignBaseline.ps1`定位到竞技Client/Editor缺失的两个直接插件描述依赖（GamePlatformCore、GamePlatformCombat，共4条目标错误）；已最小增量补全`DBAArena.uplugin`后重跑，Client/Server/Editor装配均通过，机制插件46与已登记16个内容插件总量未变化。
+- [ ] **风险审查。** 异步Data租约和回调需UE实测世界退出、账号切换、分屏、本地玩家删除；第一击发生时对应Profile尚未预加载会使用通用反馈，正式上线前应基于已授权技能/角色出现事件提前预热。对于RootMotion动画，当前主动跳过视觉顿帧而不是篡改服务器位移。
+
 ## 验收证据与回退
 
 优先执行现有 `Tests/Architecture/ValidateProjectHeaders.ps1`（头文件）、`ValidateInheritanceBoundaries.ps1`（三层依赖）、`git diff --check`（差异卫生）。随后使用仓库锁定UE构建脚本，保持真实失败日志。  

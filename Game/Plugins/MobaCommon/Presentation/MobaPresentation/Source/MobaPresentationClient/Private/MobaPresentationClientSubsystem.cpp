@@ -569,15 +569,20 @@ void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
     const bool bHasSpecificProfile = HitFeedbackResolver &&
         HitFeedbackResolver(Event, ResolvedConfiguration) &&
         ResolvedConfiguration.LoadedProfile.IsValid();
+    // 若项目Resolver已经安装但没有匹配到已加载技能资源，不能复用上一击的英雄特化资源。
+    // 仅保留平台通用参数反馈，不伪造VFX/SFX定义，更不能同步加载未命中的资源。
+    const bool bProjectFallback = static_cast<bool>(HitFeedbackResolver) && !bHasSpecificProfile;
     UGamePlatformHitFeedbackProfile* CurrentProfile = bHasSpecificProfile
         ? ResolvedConfiguration.LoadedProfile.Get()
-        : LoadedHitFeedbackProfile.Get();
+        : (bProjectFallback ? nullptr : LoadedHitFeedbackProfile.Get());
     const FGamePlatformHitFeedbackTuning& CurrentTuning = IsValid(CurrentProfile)
         ? CurrentProfile->Tuning : HitFeedbackTuning;
     const FName CurrentVFXDefinitionId = bHasSpecificProfile
-        ? ResolvedConfiguration.VFXDefinitionId : HitVFXDefinitionId;
+        ? ResolvedConfiguration.VFXDefinitionId
+        : (bProjectFallback ? NAME_None : HitVFXDefinitionId);
     const FName CurrentSFXDefinitionId = bHasSpecificProfile
-        ? ResolvedConfiguration.SFXDefinitionId : HitSFXDefinitionId;
+        ? ResolvedConfiguration.SFXDefinitionId
+        : (bProjectFallback ? NAME_None : HitSFXDefinitionId);
 
     FMobaHitFeedbackInput Input;
     Input.Contact = Contact;

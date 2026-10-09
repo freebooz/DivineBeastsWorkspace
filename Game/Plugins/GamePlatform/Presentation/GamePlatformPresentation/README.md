@@ -8,4 +8,6 @@
 
 当前Profile定义另包含CameraShakeClass（镜头震动类）与HitFlashOverlayMaterial（受击Overlay材质）软引用。执行器仍归平台GamePlatformCameraClient与GamePlatformAnimationClient，已有VFX/SFX Provider继续复用；软资源必须提前通过GamePlatformData租约加载，命中热路径禁止同步加载。现有编辑器未重新加载本批新增的反射类，因此不能认为DataAsset实例已制作。
 
+2026-10-09数据资产合同修正：`UGamePlatformHitFeedbackProfile`已继承`UGamePlatformDefinitionBase`，拥有平台稳定LogicalId、DataVersion和统一`ValidateDefinition`；Client Bundle用于异步加载CameraShake类与闪白Overlay材质。无需另一套Assets Manager。由于尚未有真实Profile.uasset，变更不涉及发布资产身份迁移；模型/数值校验源码存在不代表UE资源已创建。
+
 Client 模块同时提供 `AGamePlatformCharacterPreviewStage（平台三维角色预览舞台）`：无 Tick、无复制，只负责已经加载完成的 SkeletalMesh / Material / AnimInstance 的本地展示、镜头距离和角色旋转。它不认识项目 Hero ID、生肖或后端角色身份，可供不同游戏项目的角色选择、捏脸、商城试穿等前端场景复用。

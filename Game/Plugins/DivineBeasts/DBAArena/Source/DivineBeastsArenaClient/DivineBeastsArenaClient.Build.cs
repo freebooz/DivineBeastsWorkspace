@@ -25,7 +25,16 @@ public class DivineBeastsArenaClient : ModuleRules
         // 仅私有接线消费公共流程扩展接口；竞技公开契约不暴露流程实现，公共流程不反向依赖竞技。
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "DivineBeastsApplicationFlowClient"
+            "DivineBeastsApplicationFlowClient",
+            // 只在客户端组合根接入已授权角色身份、数据资产租约和MOBA中立反馈回调。
+            "DivineBeastsCharactersRuntime",
+            "DivineBeastsPresentationRuntime",
+            "GamePlatformCore",
+            "GamePlatformData",
+            "GamePlatformCombat",
+            "GamePlatformPresentationCore",
+            "MobaPresentationClient",
+            "DeveloperSettings"
         });
     }
 }

@@ -34,7 +34,12 @@ bool UDivineBeastsCombatFeedbackCatalog::TryResolve(
 bool UDivineBeastsCombatFeedbackCatalog::ValidateMappings(
     TArray<FString>& OutErrors) const
 {
-    OutErrors.Reset();
+    OutErrors.Reset();    // 防止误登记大量重复内容；12生肖每人多技能应在有限目录中维护。
+    if (Entries.Num() > 128)
+    {
+        OutErrors.Add(TEXT("技能打击反馈映射超过128项，须按内容包拆分目录。"));
+        return false;
+    }
     TSet<FString> SeenKeys;
     for (int32 Index = 0; Index < Entries.Num(); ++Index)
     {

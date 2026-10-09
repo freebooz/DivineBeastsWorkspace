@@ -1,5 +1,13 @@
 # 变更记录
 
+## 2026-10-09｜战斗反馈主资产租约与竞技客户端接线
+
+- 现有平台`UGamePlatformHitFeedbackProfile`和项目`UDivineBeastsCombatFeedbackCatalog`升级为`UGamePlatformDefinitionBase`，通过GamePlatformData统一主资产身份、数据校验、异步租约；Profile的CameraShake/Overlay只在Client Bundle中加载。项目技能表改用ProfileDefinitionId，新增重复映射、非法主资产ID和参数数值校验及UE自动化测试源码。
+- DBAArenaClient加入按LocalPlayer持有的实际异步加载组合根，按角色可信HeroDefinitionId＋权威SourceAbilityId为MobaPresentation提供每击独立的已加载Profile及VFX/SFX逻辑ID；无正式资产时退回平台默认表现，不构造假的Definition ID。世界退出释放Instance租约，异步回调核对世界代次。
+- 平台视觉顿帧新增RootMotion角色与原本已经暂停Mesh的保守跳过策略，避免破坏网络根运动；不把它冒称为已实现真实击退积分冻结。插件和文档均保留三层依赖单向、服务端纯表现剥离原则。
+- 静态检查已通过（614处头文件引用0缺失，477公开头、981类型、175条继承边）；正式Editor/Client/Server构建、UE自动化执行、资源资产和1v1—5v5联机未验收，仍不得宣称P0—P8完成。
+
+
 ## 2026-10-09｜战斗反馈 P0—P8 追加开发与阶段性验证
 
 - 计划：新增 `Docs/Implementation/CombatFeedbackWorkOrders_20261009.md`（三层插件工单和实际验收门禁），旧 `CombatFeedbackExecutionPlan_20261009.md`保留为初始计划，历史声称尚无网络事实等描述以本项最新源码检查为准。

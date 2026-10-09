@@ -11,6 +11,10 @@
   "Plugins": [
     { "Name": "DBAGameplay", "Enabled": true },
     { "Name": "GamePlatformArena", "Enabled": true },
+    { "Name": "GamePlatformData", "Enabled": true },    { "Name": "GamePlatformCore", "Enabled": true },
+    { "Name": "GamePlatformCombat", "Enabled": true },
+    { "Name": "GamePlatformPresentation", "Enabled": true, "TargetAllowList": ["Client", "Editor"] },
+    { "Name": "MobaPresentation", "Enabled": true, "TargetAllowList": ["Client", "Editor"] },
     { "Name": "GamePlatformCharacter", "Enabled": true },
     { "Name": "GamePlatformUI", "Enabled": true, "TargetAllowList": ["Client", "Editor"] },
     { "Name": "DBAClient", "Enabled": true, "TargetAllowList": ["Client", "Editor"] }
