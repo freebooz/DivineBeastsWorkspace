@@ -44,6 +44,11 @@
       "Name": "DivineBeastsCharactersRuntime",
       "Type": "Runtime",
       "LoadingPhase": "Default"
+    },
+    {
+      "Name": "DivineBeastsAbilitiesRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
     }
   ]
 }

@@ -18,8 +18,9 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     const TArray<FDivineBeastsUISurfaceDescriptor>& Surfaces =
         FDivineBeastsUIScreenCatalog::GetSurfaces();
 
-    // 当前公共目录包含9个Screen、4个HUD和1个Notification，共14个非竞技UI表面。
-    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 14);
+    // 十大业务域登记11个公共Screen、4个HUD与1个通知，共16个非竞技表面。
+    // 新登记的社交与运营软路径不表示对应蓝图已通过Monolith交付。
+    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 16);
 
     TSet<FName> Unique;
     for (const FDivineBeastsUISurfaceDescriptor& Surface : Surfaces)
@@ -44,6 +45,8 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
         FName(TEXT("UI.Screen.LoadingTravel")),
         FName(TEXT("UI.Screen.Inventory")),
         FName(TEXT("UI.Screen.Quest")),
+         FName(TEXT("UI.Screen.Social")),
+         FName(TEXT("UI.Screen.LiveOps")),
         FName(TEXT("UI.HUD.OpenWorld")),
         FName(TEXT("UI.HUD.VillageMain")),
         FName(TEXT("UI.HUD.TutorialGuidance")),

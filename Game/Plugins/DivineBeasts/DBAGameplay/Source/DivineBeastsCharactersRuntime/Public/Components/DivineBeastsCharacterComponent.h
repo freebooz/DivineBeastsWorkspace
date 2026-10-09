@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-// 公开Ready内联读取Owner权威，直接依赖完整Actor类型，避免PCH掩盖公开头缺口。
+// 角色组件与可信Owner使用Actor合同；显式提供完整定义，避免公开头依赖宿主PCH才能独立编译。
 #include "GameFramework/Actor.h"
 #include "Initialization/GamePlatformCharacterInitializer.h"
 #include "State/GamePlatformCharacterStateView.h"
@@ -189,6 +189,8 @@ private:
     bool bLocalReady = false;
     bool bConfigurationApplied = false;
     int32 DefinitionRequestGeneration = 0;
+    /** 每次接纳可信身份绑定签发操作身份；同步Ready监听者的真实后继绑定或退出会使旧栈失败关闭。 */
+    FGuid TrustedContextOperationId;
     /** 成功后持续持有至结束/身份变化；不能在完成回调中提前释放。 */
     FGamePlatformDataLease DefinitionLease;
     FGamePlatformResult LastDefinitionLoadResult;

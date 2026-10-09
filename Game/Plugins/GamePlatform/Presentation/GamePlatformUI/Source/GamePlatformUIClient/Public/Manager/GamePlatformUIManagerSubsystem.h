@@ -256,6 +256,8 @@ private:
     TMap<TWeakObjectPtr<UGamePlatformUIScreen>, FGamePlatformDataLease> ActiveScreenLeases;
     TMap<TWeakObjectPtr<UGamePlatformUIScreen>, TWeakObjectPtr<UCommonActivatableWidgetStack>> ScreenStacks;
     TSet<TWeakObjectPtr<UCommonActivatableWidgetStack>> ObservedStacks;
+    /** 移动/其他平台专属Widget加载失败时，只允许针对同一请求回退默认类一次。 */
+    TSet<FGuid> PendingDefaultWidgetRetries;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> PauseScreens;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> TravelPersistentScreens;
     FDelegateHandle PreLoadMapHandle;
@@ -270,12 +272,17 @@ private:
 
     bool IsDefinitionAllowed(const UGamePlatformUIScreenDefinition& Definition) const;
     bool IsRouteTargetValid(const UGamePlatformUIRouteDefinition& Definition) const;
+    /** 默认先解析平台变体，重试阶段强制使用共享Widget类以终止失败循环。 */
     TSoftClassPtr<UGamePlatformUIScreen> ResolveWidgetClass(
-        const UGamePlatformUIScreenDefinition& Definition) const;
+        const UGamePlatformUIScreenDefinition& Definition,
+        bool bUseDefaultWidget = false) const;
 
     bool HasAnyRouteCycle() const;
     void HandlePreLoadMap(const FWorldContext& WorldContext, const FString& MapName);
     void HandleScreenAssetsLoaded(FGuid RequestId, const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
+    /** 同请求仅一次默认类回退；替换本调用方Data租约，外部资源调用后核请求/布局世代。 */
+    bool BeginDefaultWidgetRetry(const FGamePlatformUIAsyncRequest& Request,
+        UGamePlatformUIScreenDefinition& Definition, const FGamePlatformDataLease& PreviousLease);
     /** CommonUI回调返回后重验并提交；失效则撤回原栈控件，随后释放同代Pending租约。 */
     bool CompleteScreenOpen(const FScreenOpenConstruction& Construction, UGamePlatformUIScreen* Screen);
     void HandleScreenActivated(UGamePlatformUIScreen* Screen);

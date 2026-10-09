@@ -21,6 +21,21 @@ public:
     UGamePlatformHealingGameplayEffect();
 };
 
+/**
+ * UGamePlatformShieldGameplayEffect（平台限时护盾玩法效果）。
+ * 只授予Shielded（被护盾保护）标签和独立GE生命周期，不包含Shield/MaxShield数值属性。
+ * 实际可吸收容量属于目标CombatComponent（战斗组件）的服务器临时效果实例账本，
+ * 过期/驱散后不能再吸收。多个独立来源不使用单栈刷新替换。
+ */
+UCLASS()
+class GAMEPLATFORMCOMBAT_API UGamePlatformShieldGameplayEffect final
+    : public UGameplayEffect
+{
+    GENERATED_BODY()
+public:
+    explicit UGamePlatformShieldGameplayEffect(const FObjectInitializer& ObjectInitializer);
+};
+
 UCLASS()
 class GAMEPLATFORMCOMBAT_API UGamePlatformStunGameplayEffect final
     : public UGameplayEffect

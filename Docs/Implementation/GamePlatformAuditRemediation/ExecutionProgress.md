@@ -67,3 +67,6 @@
 - Task 8: Equipment先复制元素再Add，Input及六个LocalPlayer/Viewport夹具使用真实Engine Outer；两组Actor夹具按锁定引擎初始化并跨帧推进Timer，保留原断言和RAII取消清理。六文件独立审查发现Moba双向Controller拥有缺失Important，根用SetPlayer修复后复核无剩余Important；三Gameplay夹具的独立追加复核进行中。
 - Task 8: c48b6a2e待锁构建在上述Moba修复前按自有PID严格停止，保留-1。2c00dab3完整Editor编译无C++错误，26处链接缺SDK中间库而退出6；随后按原始响应真实恢复12份缺库、39项输入齐全。尚未据此宣告最终UE通过。
 - Integration ruling: 用户2026-10-09明确要求提交到主分支。将先保存本整改检查点，在隔离工作树整合最新origin/main和本地main已提交内容，复核冲突及真实验证后正常推送main。原main工作区其他任务的暂存/未提交文件不纳入整改检查点、不重置或覆盖；不强制推送。
+
+- Integration: 主线范围已增至83个插件模块＋主模块84，保留真实DivineBeastsAbilitiesRuntime。ApplicationFlow真实生产核心按当前合并源在Debug/Release各1次CTest退出0；初次Ninja工具缺失、长路径VS配置失败原输出均保留，改用既有VS17/x64及本任务短Temp输出，不降版本/删测试。
+- Integration: 当前主线目录文档本身已有历史嵌套冲突标记，本轮将三组独立追加段完整合并并删除标记，源码登记仍置末尾；未丢失登录等待、UI计划、图标或整改登记。机器台账JSON按ASCII规则仅迁路径、同步六引用，逐字节SHA不变，263项工具静态验证退出0；不是263个Widget交付。

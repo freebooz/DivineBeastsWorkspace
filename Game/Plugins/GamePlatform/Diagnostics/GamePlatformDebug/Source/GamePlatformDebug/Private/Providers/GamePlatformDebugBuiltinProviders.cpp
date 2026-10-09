@@ -398,8 +398,6 @@ namespace
 
         Snapshot.AddField(TEXT("Health"), TEXT("生命值"), FString::SanitizeFloat(Combat->GetCombatHealth()), EGamePlatformDebugValueType::Number);
         Snapshot.AddField(TEXT("MaxHealth"), TEXT("最大生命值"), FString::SanitizeFloat(Combat->GetCombatMaxHealth()), EGamePlatformDebugValueType::Number);
-        Snapshot.AddField(TEXT("Shield"), TEXT("护盾"), FString::SanitizeFloat(Combat->GetCombatShield()), EGamePlatformDebugValueType::Number);
-        Snapshot.AddField(TEXT("MaxShield"), TEXT("最大护盾"), FString::SanitizeFloat(Combat->GetCombatMaxShield()), EGamePlatformDebugValueType::Number);
         Snapshot.AddField(TEXT("Dead"), TEXT("死亡状态"), BoolText(Combat->IsCombatDead()), EGamePlatformDebugValueType::Boolean);
         Snapshot.AddField(TEXT("AvatarGeneration"), TEXT("化身代次"), FString::FromInt(Combat->GetCombatAvatarGeneration()), EGamePlatformDebugValueType::Integer);
         AddNA(Snapshot, TEXT("ControlTags"), TEXT("控制标签"), TEXT("无只读公开摘要接口"));

@@ -1,5 +1,7 @@
 #pragma once
 
+// 平台双端公开流程定义：组合根提供内容和执行器，Data持有身份/租约，本类型只描述路由、等待及校验合同。
+
 #include "Definitions/GamePlatformDefinitionBase.h"
 #include "GamePlatformFlowDefinition.generated.h"
 
@@ -26,6 +28,12 @@ struct GAMEPLATFORMAPPLICATIONFLOW_API FGamePlatformFlowNodeDefinition
     /** 具名成功事件到后继的映射；键不能为None，值为None表示终点。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GamePlatform|Flow")
     TMap<FName, FName> Routes;
+    /**
+     * 人工输入等待：默认false保留既有截止时间。true只用于包含人工等待的交互节点，
+     * 由完成/取消事件唤醒、不安排超时轮询；节点内部网络操作必须自行限时，离页仍正常取消。
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GamePlatform|Flow")
+    bool bWaitForUserInput = false;
 };
 
 /** 只读流程资产，经Data成功租约消费；继承的身份、版本和必需依赖仍由Data负责。 */

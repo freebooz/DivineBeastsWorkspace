@@ -80,6 +80,18 @@
     {
       "Name": "GamePlatformUI",
       "Enabled": true
+    },
+    {
+      "Name": "GamePlatformAnimation",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformSFX",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
     }
   ],
   "Modules": [

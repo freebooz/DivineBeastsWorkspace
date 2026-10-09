@@ -21,6 +21,10 @@ DECLARE_MULTICAST_DELEGATE_OneParam(
     FGamePlatformAbilityAvatarBindingChangedNative,
     const FGamePlatformAbilityAvatarBindingSnapshot&);
 
+/** FGamePlatformAbilitySpecListChangedNative（本地技能授权列表复制完成事件）。
+ * 仅作为客户端/UI 可观察事实，不授权新技能；与服务器原生 GiveAbility 相互独立。 */
+DECLARE_MULTICAST_DELEGATE(FGamePlatformAbilitySpecListChangedNative);
+
 class AActor;
 
 /** 平台级 ASC 基类；不包含具体游戏技能、伤害公式或输入绑定。 */
@@ -65,6 +69,12 @@ public:
         return AvatarBindingChanged;
     }
 
+    /** 订阅当前 ASC 原生授权容器复制完成；跨本地玩家/Avatar 切换必须由调用方解绑。 */
+    FGamePlatformAbilitySpecListChangedNative& OnAbilitySpecListChanged()
+    {
+        return AbilitySpecListChanged;
+    }
+
     // IGamePlatformAbilityInputReceiver（平台能力输入接收器）
     virtual FGamePlatformAbilityInputToken GetInputToken() const override;
     virtual FGamePlatformResult AbilityInputPressed(
@@ -75,6 +85,10 @@ public:
         const FGamePlatformAbilityInputToken& Token) override;
     virtual void ProcessAbilityInput() override;
     virtual void ClearAbilityInput() override;
+
+protected:
+    /** 引擎对客户端新增/删除 AbilitySpec 完成复制后再广播，避免早于真实 GAS 状态。 */
+    virtual void OnRep_ActivateAbilities() override;
 
 private:
     void BroadcastAvatarBinding();
@@ -98,4 +112,6 @@ private:
     int32 ActivationGateGeneration = 0;
     mutable bool bEvaluatingActivationGate = false;
     FGamePlatformAbilityAvatarBindingChangedNative AvatarBindingChanged;
+    /** 原生AbilitySpec复制完成事实；仅供订阅方同步只读投影，不改变Gate或权威技能授权。 */
+    FGamePlatformAbilitySpecListChangedNative AbilitySpecListChanged;
 };

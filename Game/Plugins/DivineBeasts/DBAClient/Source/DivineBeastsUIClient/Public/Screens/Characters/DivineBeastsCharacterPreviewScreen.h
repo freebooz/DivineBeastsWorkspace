@@ -1,5 +1,5 @@
 #pragma once
-#include "Screens/DivineBeastsUIScreen.h"
+#include "Screens/Characters/DivineBeastsCharacterScreenBase.h"
 #include "DivineBeastsCharacterPreviewScreen.generated.h"
 class UBorder;
 
@@ -7,7 +7,7 @@ class UBorder;
  * 控件树归UI内容包，手势归本地页面；无Tick、HTTP、权威角色动作或全局输入状态。
  */
 UCLASS(Abstract, Blueprintable)
-class DIVINEBEASTSUICLIENT_API UDivineBeastsCharacterPreviewScreen : public UDivineBeastsUIScreen
+class DIVINEBEASTSUICLIENT_API UDivineBeastsCharacterPreviewScreen : public UDivineBeastsCharacterScreenBase
 {
     GENERATED_BODY()
 protected:

@@ -1,3 +1,4 @@
+// 平台双端GameInstance流程宿主：拥有本作用域节点、定义租约及事件唤醒，退出时撤销回调并释放自身资源。
 #include "API/GamePlatformApplicationFlowSubsystem.h"
 
 #include "Async/Async.h"
@@ -252,6 +253,7 @@ bool UGamePlatformApplicationFlowSubsystem::Configure(const FGamePlatformFlowDef
         CoreStep.Node = std::make_shared<FGamePlatformFlowNodeAdapter>(this, Step.Node);
         CoreStep.Next = ToCoreName(Step.NextNodeId);
         CoreStep.TimeoutSeconds = Step.TimeoutSeconds;
+        CoreStep.bWaitForUserInput = Step.bWaitForUserInput;
         CoreStep.MaxAttempts = Step.MaxAttempts;
         CoreStep.RetryDelaySeconds = Step.RetryDelaySeconds;
         CoreStep.bRetryOnTimeout = Step.bRetryOnTimeout;
@@ -398,7 +400,7 @@ bool UGamePlatformApplicationFlowSubsystem::TickFlow(float DeltaSeconds)
         const std::optional<double> NextWake = Executor->GetNextWakeTimeSeconds();
         double DelaySeconds = NextWake.has_value()
             ? FMath::Max(0.0, NextWake.value() - NowSeconds)
-            : 0.0;
+            : static_cast<double>(FlowLeaseWatchIntervalSeconds);
 
         // 资产模式还需要观察根定义租约是否被Data作用域提前撤销；最多2Hz复核即可，
         // 普通业务完成仍由Completion/SubmitEvent立即唤醒，不因此增加交互延迟。
@@ -408,7 +410,9 @@ bool UGamePlatformApplicationFlowSubsystem::TickFlow(float DeltaSeconds)
                 DelaySeconds,
                 static_cast<double>(FlowLeaseWatchIntervalSeconds));
         }
-        RequestFlowTick(static_cast<float>(DelaySeconds));
+        // 人工输入没有截止时间；无资产租约时等待事件，有租约时仅按既有2Hz复核，不能退化为每帧Pump。
+        if (NextWake.has_value() || ActiveDefinitionLease.IsValid())
+            RequestFlowTick(static_cast<float>(DelaySeconds));
     }
     return false; // 每个Ticker只执行一次，下一次由RequestFlowTick显式安排。
 }

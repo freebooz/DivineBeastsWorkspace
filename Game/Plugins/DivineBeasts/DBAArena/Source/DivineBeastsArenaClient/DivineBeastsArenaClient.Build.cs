@@ -13,7 +13,10 @@ public class DivineBeastsArenaClient : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
-            // 反射生成的项目Widget虚表直接引用引擎UI符号，不能只借平台头文件可见性。
+            // 公开子系统头持有Data租约值并声明Core结果回调，消费者须获得两个真实公开合同。
+            "GamePlatformCore",
+            "GamePlatformData",
+            // 公开竞技Widget继承UMG/CommonUI，反射虚表与实例创建直接链接对应模块，不能只借下层头可见性。
             "UMG",
             "CommonUI",
             "DivineBeastsArenaRuntime",
@@ -26,7 +29,14 @@ public class DivineBeastsArenaClient : ModuleRules
         // 仅私有接线消费公共流程扩展接口；竞技公开契约不暴露流程实现，公共流程不反向依赖竞技。
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "DivineBeastsApplicationFlowClient"
+            "DivineBeastsApplicationFlowClient",
+            // 只在客户端组合根接入已授权角色身份、数据资产租约和MOBA中立反馈回调。
+            "DivineBeastsCharactersRuntime",
+            "DivineBeastsPresentationRuntime",
+            "GamePlatformCombat",
+            "GamePlatformPresentationCore",
+            "MobaPresentationClient",
+            "DeveloperSettings"
         });
     }
 }

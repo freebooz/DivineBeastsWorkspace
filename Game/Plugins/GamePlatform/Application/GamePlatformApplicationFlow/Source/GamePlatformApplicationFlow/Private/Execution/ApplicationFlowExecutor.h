@@ -1,5 +1,7 @@
 #pragma once
 
+// 平台双端内部调度核心：调用方线程控制流程，邮箱接收异步结果；不持有UE对象、项目登录规则或网络凭据。
+
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -57,6 +59,8 @@ struct FStep
     int MaxAttempts = 1;                       // 总尝试上限；大于 1 表示组合根承诺该节点可安全重试。
     double RetryDelaySeconds = 0.0;            // 重试固定退避时间；不自动扩大业务请求次数。
     bool bRetryOnTimeout = false;
+    // 显式人工输入节点不安排截止唤醒；其内部网络操作仍须自有超时，取消与完成合同不变。
+    bool bWaitForUserInput = false;
 };
 
 struct FDefinition
@@ -114,7 +118,7 @@ public:
     bool IsActive() const;
     /**
      * 返回下一次在没有外部Completion/SubmitEvent时必须唤醒执行器的单调时钟绝对时间。
-     * bNeedsBegin（待开始）返回当前已知时间，RetryWaiting返回RetryAt，活动节点返回Deadline；终态无值。
+     * bNeedsBegin返回当前时间，RetryWaiting返回RetryAt，普通活动节点返回Deadline；人工等待和终态无值。
      * 仅所有者线程读取；邮箱提前完成由宿主显式事件唤醒，不通过此函数轮询检测。
      */
     std::optional<double> GetNextWakeTimeSeconds() const;

@@ -1,5 +1,7 @@
 # 《神兽联盟》核心属性与气势体系执行计划
 
+> **2026-10-09现行规则更新：** 本文是2026-09-30历史执行记录，旧“控制与韧性属性集”不再适用。当前已取消Tenacity/Poise（韧性/失衡）及相关GAS属性集，正式基线为4个具体属性集、17字段，见`Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/Docs/GAS无韧性精简属性实施规范_20261009.md`（最新精简规范）。保留此旧计划仅作工程历史，不得按本文恢复已取消的字段。
+
 版本：1.0
 日期：2026-09-30
 工作空间：DivineBeastsWorkspace（神兽联盟工作空间）

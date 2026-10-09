@@ -10,7 +10,7 @@ class UGamePlatformCombatStateProvider : public UInterface
     GENERATED_BODY()
 };
 
-/** 供上层读取可复制战斗快照，不暴露修改入口。 */
+/** 供上层读取生命与死亡的只读状态；临时护盾由GAS效果标签和权威结算事件表达。 */
 class GAMEPLATFORMCOMBAT_API IGamePlatformCombatStateProvider
 {
     GENERATED_BODY()
@@ -18,8 +18,6 @@ class GAMEPLATFORMCOMBAT_API IGamePlatformCombatStateProvider
 public:
     virtual float GetCombatHealth() const = 0;
     virtual float GetCombatMaxHealth() const = 0;
-    virtual float GetCombatShield() const = 0;
-    virtual float GetCombatMaxShield() const = 0;
     virtual bool IsCombatDead() const = 0;
     virtual int32 GetCombatAvatarGeneration() const = 0;
 };

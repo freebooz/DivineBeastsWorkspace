@@ -2,6 +2,7 @@
 #include "Server/DivineBeastsArenaGameplayLifecycleAdapter.h"
 
 #include "Catalog/DivineBeastsHeroCatalog.h"
+#include "Characters/DivineBeastsGameplayCharacter.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Framework/GamePlatformArenaGameMode.h"
@@ -223,10 +224,11 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
     if (APawn* ExistingPawn = ExpectedPawn.Get()) { ExistingPawn->Destroy(); }
     ExpectedPawn.Reset();
     if (!IsCurrent()) { OutReason = TEXT("旧Pawn退出后原出生上下文已撤销。"); return false; }
-    // 项目Pawn组合平台ASC/Combat/资格默认子组件；生肖差异仍由Definition/外观配置表达。
+    // 可玩角色继承已有权威Pawn，复用唯一ASC/Combat/身份/资格和死亡清理，再增加唯一技能Loadout。
+    // 先解绑并销毁旧Pawn、复核原作用域，再使用主分支稳定类身份出生；不能绕过代次或退出保护。
     TGuardValue<TSubclassOf<APawn>> PawnClassGuard(
         Mode->DefaultPawnClass,
-        ADivineBeastsCharacter::StaticClass());
+        ADivineBeastsGameplayCharacter::StaticClass());
     Mode->RestartPlayerAtPlayerStart(Controller, StartSpot);
 
     ACharacter* Character = ExpectedController.IsValid() ? Cast<ACharacter>(ExpectedController->GetPawn()) : nullptr;

@@ -79,6 +79,51 @@
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterChoiceEntry"
     }
   ],
+  "LatestAAACombatWidgetDelivery": {
+    "Date": "2026-10-09",
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Manifest": "Docs/AAACombatWidgetDelivery_20261009.json",
+    "DeliveryDocument": "Docs/AAACombatWidgetDelivery_20261009.md",
+    "RealWidgetBlueprintCount": 17,
+    "CombatP0PlannedCount": 12,
+    "BuilderCompileErrorCount": 0,
+    "BuilderCompileWarningCount": 0,
+    "AllAssetsSaved": true,
+    "AllAssetsIndependentlyRestartReadback": false,
+    "PIEAndCookPassed": false,
+    "Note": "本节记录真实新增战斗Widget。原Assets中的6项历史基线及其旧工具版本证据保持不变。"
+  },
+  "LatestZodiacAbilityWidgetAudit": {
+    "Date": "2026-10-09",
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Operation": "只读回读、控件树与事件图审计、重新编译；本次未创建或重排Widget",
+    "AbilityBar": {
+      "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsAbilityBarPanel",
+      "WidgetCount": 6,
+      "NamedChildren": ["PrimaryAbilitySlot", "PassiveAbilitySlot", "ActiveAbilitySlot1", "ActiveAbilitySlot2", "UltimateAbilitySlot"],
+      "FreshCompileErrors": 0,
+      "FreshCompileWarnings": 0,
+      "AccessibilityAuditIssues": 0,
+      "FocusBFSComputed": false
+    },
+    "AbilitySlot": {
+      "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "ParentClass": "/Script/GamePlatformUIClient.GamePlatformSlotWidget",
+      "WidgetCount": 7,
+      "FreshCompileErrors": 0,
+      "FreshCompileWarnings": 0,
+      "SlotStateEventGraphVerified": ["Icon → SetBrushFromSoftTexture", "OverlayProgress → CooldownOverlay.SetRenderOpacity", "bEnabled → AbilityIcon.SetIsEnabled"]
+    },
+    "HeroTexture2DAssetsPresent": 60,
+    "AbilityUIProfileAssetsFound": 0,
+    "AuthorityAbilitySetsConfigured": 0,
+    "EditorRestartReloadVerifiedThisAudit": false,
+    "PIEAndCookPassed": false,
+    "Limitations": "仅验证现存蓝图的结构、当前编辑器编译和静态投影连接；不是真实网络授权、五技能功能联机、所有键盘/触摸焦点、图标正式AbilityId映射或Cook通过。"
+  },
   "Verification": {
     "Target": "DivineBeastsArenaEditor Win64 Development",
     "Module": "DivineBeastsUIClient",
@@ -268,6 +313,36 @@
     "ClientInitialPage": "Login，均无自动认证参数，日志确认AccountInput焦点。",
     "ClientVerification": "Saved/Validation/LoginVillageRelease/20261008/LatestLogo.ClientVerification.json",
     "ExistingOptionalBootWarning": "当前Boot Widget未交付，初始化后真实登录页及焦点已加载；不是RootLayout缺失。"
+  },
+  "LatestInputFontsAndLoginWaitRepair": {
+    "UpdatedAt": "2026-10-09",
+    "InputFontField": "WidgetStyle.TextStyle.Font.Size",
+    "FixedInputFontSize": 16,
+    "ViewportScale": 1,
+    "ReviewedWidgetBlueprints": 6,
+    "ReviewedWidgets": 94,
+    "ScaleBoxCount": 0,
+    "RenderScaleAllOne": true,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "SavedAndReloaded": true,
+    "LoginInputEventButtonEnableVerified": true,
+    "EmptyInputButtonDisableVerified": true,
+    "AuthenticationSubmitted": false,
+    "PhysicalClickVerified": false,
+    "Focus": "两个新版客户端均记录AccountInput焦点；静态导航无悬空引用，工具不识别项目从Screen Definition提供的初始焦点。",
+    "NativeFlowCases": 34,
+    "NativeFlowFailures": 0,
+    "FullUEFlowCases": 47,
+    "FullUEFlowPassed": 46,
+    "FullUEFlowFailure": "GamePlatform.ApplicationFlow.Asset.RealLeaseLifecycle：测试夹具前置条件不满足，详见Verification.json。",
+    "ClientBuild": "Saved/Validation/FoundationM0/de55dde8-9502-446e-8a24-949f22c88463/Build",
+    "ServerBuild": "Saved/Validation/FoundationM0/df993711-f6ec-42a3-8ab8-3047223ba1d0/Build",
+    "Cook": "Saved/Validation/FoundationM0/8d401ca6-5a7d-449c-a041-7eeb6896c153/Cook-FrontEndClient",
+    "ClientLaunch": "Saved/Validation/FrontEndClients/cf97aa10-b615-4008-8929-f45e4fee8793/Clients.json",
+    "Evidence": "Saved/Validation/LoginButtonFix/Verification.json",
+    "Screenshot": "Saved/Validation/LoginButtonFix/Login.FixedFonts.png",
+    "Scope": "字体、已交付WBP缩放和登录等待修复；不证明真实认证或Village准入。"
   },
   "LatestPreviewIdleModelRepair": {
     "RuntimeMetadata": "UBT WriteMetadata官方模式生成加载清单，未手改生成物。",

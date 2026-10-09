@@ -653,5 +653,3 @@ PresentationClientSubsystem.h:38-65、Context/Catalog大部分公开字段，Mob
 6. 在上述正确性和原生回归基础上运行UE/联机/资产用例；按批准硬件、真实人数、场景与资产捕获Insights、Audio/Niagara与内存趋势，之后再决定索引/缓存/批处理优化。没有测量依据不重建第二套预算或资产管理器。
 
 此处是审查后的整改顺序，未执行新的源码修改。完整证据保留在专项JSON/Markdown及当前检查日志；保存路径属于Saved瞬态材料，不替代正式交付或人工/运行验收。
-
-

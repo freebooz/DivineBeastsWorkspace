@@ -1,6 +1,8 @@
 #include <atomic>
 #pragma once
 
+// 测试专用：真实生产调度核心的正常/失败/超时/人工等待/取消及并发回归，UE和本机入口共用，不进入生产业务。
+
 #include "Execution/ApplicationFlowExecutor.h"
 #include <limits>
 #include <utility>
@@ -54,6 +56,34 @@ struct FCase
 inline std::vector<FCase> GetCases()
 {
     return {
+        {"UserInputWaitSurvivesDeadlineAndCompletes", [](FChecks& C)
+        {
+            // 回归登录页等待30分钟后失效：人工输入没有活动网络请求，不应被节点计时器终止。
+            auto A = std::make_shared<FTestNode>(); auto S = Step("input", A);
+            S.TimeoutSeconds = 1800; S.bWaitForUserInput = true;
+            FApplicationFlowExecutor E; std::string Error;
+            C.Require(E.Configure({"input", {S}}, Error), "人工输入节点应安装");
+            E.Start(0, Error); E.Tick(0);
+            C.Require(!E.GetNextWakeTimeSeconds().has_value(), "等待输入不应安排计时唤醒或轮询");
+            E.Tick(3601);
+            C.Require(E.IsActive() && A->Finishes.empty(), "超过旧截止时间仍须等待输入");
+            A->Completions.front()(Success()); E.Tick(3602);
+            C.Require(E.GetSnapshot().State == EFlowState::Succeeded, "真实输入完成仍可推进流程");
+            C.Require(A->Finishes.size() == 1, "完成只能释放一次本节点");
+        }},
+        {"UserInputWaitCancelRejectsLateCompletion", [](FChecks& C)
+        {
+            // 无限人工等待不能绕过离页/销毁清理；旧回调不能恢复已取消流程。
+            auto A = std::make_shared<FTestNode>(); auto S = Step("input", A);
+            S.bWaitForUserInput = true;
+            FApplicationFlowExecutor E; std::string Error;
+            C.Require(E.Configure({"input", {S}}, Error), "人工输入节点应安装");
+            const auto RunId = E.Start(0, Error); E.Tick(0); E.Tick(3601);
+            E.Cancel(RunId); A->Completions.front()(Success()); E.Tick(3602);
+            C.Require(E.GetSnapshot().State == EFlowState::Cancelled, "取消后迟到输入不得复活流程");
+            C.Require(A->Finishes.size() == 1 && A->Finishes.front() == EFinishReason::Cancelled,
+                "取消应精确释放一次节点");
+        }},
         {"SequentialAndSynchronousCompletion", [](FChecks& C)
         {
             auto A = std::make_shared<FTestNode>(); auto B = std::make_shared<FTestNode>();

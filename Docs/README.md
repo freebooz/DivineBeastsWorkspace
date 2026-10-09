@@ -16,6 +16,11 @@
 - [游戏端插件系统P0收敛审计](Architecture/游戏端插件系统P0收敛审计.md)：P0-1～P0-9真实审计、Definition迁移矩阵、三层继承门禁、VFX扩展点、Online/Session阻断、3A表现规格、Review Harness与Phase 1执行顺序。
 - [游戏端插件清单设计](Architecture/游戏端插件清单设计.md)：当前46个代码／机制插件的层级、分类、模块端侧、已实现功能、成熟状态、验证资料和后续完善重点主台账；现行40个GamePlatform稳定身份包含新增GamePlatformSurface，GamePlatformOpenWorld继续保持退休。
 - [插件开发规范](../Game/Plugins/插件开发规范.md)：UE 插件依赖、生命周期和交付门禁。
+- [十二生肖技能数据驱动实施计划](superpowers/plans/2026-10-09-zodiac-ability-data-driven-implementation.md)：按现行三层与五个 DBA 代码插件规范，分阶段建设真实技能授权、数值配置、图标与技能栏自动初始化；当前仅为计划，非功能完成证明。
+- [十二生肖技能数据驱动实施记录](Implementation/十二生肖技能数据驱动实施记录_20261009.md)：2026-10-09 新增技能数据定义、GAS 授权/所有者复制、客户端视图及竞技出生接口的真实代码变更，明确实际静态检查、UE/Monolith 阻断与未交付的正式技能/图标/蓝图。
+- [十二生肖技能主数据及资源缺口清单](Implementation/ZodiacAbilityAssetInventory.json)：12 个稳定英雄编号和现存英雄定义文件的机器可读清单，未批准技能名称、伤害数据、技能图标和真实授权均显式为空或待验证。
+
+- `Tests/Assets/ValidateZodiacAbilityDelivery.py`（十二生肖技能交付只读预检）：`--inventory`检查现存12英雄定义、60个已导入图标纹理与2个真实技能Widget，`--release`严格拒绝缺少12套正式技能ID/数值/界面绑定及UE三目标编译、联机、Cook的生产发布；最新结果及70项缺口记录于十二生肖技能实施台账。
 
 ## 历史决策与后续插件实施
 

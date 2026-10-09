@@ -1,3 +1,4 @@
+// 平台双端流程执行器实现：由作用域宿主调用，拥有节点尝试和取消代次；不替代领域服务的I/O超时。
 #include "Execution/ApplicationFlowExecutor.h"
 
 #include <algorithm>
@@ -29,7 +30,8 @@ std::optional<double> FApplicationFlowExecutor::GetNextWakeTimeSeconds() const
     if (!IsActive()) return std::nullopt;
     if (bNeedsBegin) return LastNowSeconds;
     if (Snapshot.State == EFlowState::RetryWaiting) return RetryAtSeconds;
-    if (bAttemptActive) return DeadlineSeconds;
+    if (bAttemptActive)
+        return Definition.Steps[CurrentIndex].bWaitForUserInput ? std::nullopt : std::optional<double>(DeadlineSeconds);
     return LastNowSeconds;
 }
 
@@ -268,7 +270,9 @@ void FApplicationFlowExecutor::Tick(double NowSeconds)
         return;
     }
     if (bNeedsBegin) { BeginAttempt(NowSeconds); return; }
-    if (NowSeconds >= DeadlineSeconds) { HandleFailure({}, true, NowSeconds); return; }
+    // 人工输入由事件邮箱唤醒，不能把用户思考时间误作网络请求超时；普通异步节点继续受截止时间保护。
+    if (!Definition.Steps[CurrentIndex].bWaitForUserInput && NowSeconds >= DeadlineSeconds)
+    { HandleFailure({}, true, NowSeconds); return; }
     std::optional<FNodeResult> Result;
     {
         std::lock_guard<std::mutex> Lock(Mailbox->Mutex);

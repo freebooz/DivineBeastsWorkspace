@@ -38,4 +38,3 @@ private:
     TMap<FName, FGamePlatformTelemetryEventDefinition> Events;
     TMap<FName, FGamePlatformTelemetryMetricDefinition> Metrics;
 };
-

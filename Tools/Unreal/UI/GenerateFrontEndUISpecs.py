@@ -3,6 +3,7 @@
 公共UI视觉归DBAUIPack_Core，命令及生命周期归DBAClient；输出在Saved供Monolith消费和审核。
 背景源图独立登记，输入／按钮为固定逻辑像素；只有背景随视口铺满，不缩放输入控件。
 Monolith 0.20.3构建器对零背景尺寸采用默认偏移；生成后须用set_slot_property将背景四边offsets清零。
+UE5.8输入字体位于WidgetStyle.TextStyle.Font.Size；须执行输出的InputFontProperties后置动作，不能只依赖fontSize声明。
 """
 import json
 from pathlib import Path
@@ -104,3 +105,16 @@ OUTPUT.mkdir(parents=True,exist_ok=True)
 for name,spec in {"Login":login(),"CharacterCreate":character(True),"CharacterSelect":character(False)}.items():
     (OUTPUT/(name+".json")).write_text(json.dumps(spec,ensure_ascii=False,indent=2),encoding="utf-8")
     print(name)
+
+# 工具构建器尚未将EditableTextBox的fontSize写入UE5.8有效样式字段；后置动作仍由Monolith执行。
+input_font_actions = [
+    {"action": "set_widget_property", "params": {
+        "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_" + page,
+        "widget_name": identity, "property_name": "WidgetStyle.TextStyle.Font.Size",
+        "value": "16", "raw_mode": True, "compile": False}}
+    for page, identities in (("Login", ("AccountInput", "PasswordInput")),
+                             ("CharacterCreate", ("CharacterNameInput",)))
+    for identity in identities
+]
+(OUTPUT / "InputFontProperties.json").write_text(
+    json.dumps(input_font_actions, ensure_ascii=False, indent=2), encoding="utf-8")

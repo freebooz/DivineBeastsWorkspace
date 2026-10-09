@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Panels/GamePlatformPanelWidget.h"
+#include "Contracts/DivineBeastsUIDomainTypes.h"
 #include "DivineBeastsPanelWidget.generated.h"
 
 /**
@@ -14,4 +15,13 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsPanelWidget
     : public UGamePlatformPanelWidget
 {
     GENERATED_BODY()
+
+public:
+    /** 表现层领域标识，不作为服务器授权判断。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Domain")
+    EDivineBeastsUIDomain GetBusinessDomain() const { return UIDomain; }
+
+protected:
+    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|UI|Domain")
+    EDivineBeastsUIDomain UIDomain = EDivineBeastsUIDomain::Core;
 };

@@ -68,13 +68,17 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     const FGamePlatformCharacterInitializationContext& Context,
     FString& OutError)
 {
+    check(IsInGameThread());
     AActor* Owner = GetOwner();
-    if (!Owner || !Owner->HasAuthority())
+    UWorld* World = GetWorld();
+    if (!IsValid(Owner) || !Owner->HasAuthority() || bEndingPlay || !World || World->bIsTearingDown)
     {
-        OutError = TEXT("AuthorityBindTrustedContext只能由服务器权威路径调用。");
+        OutError = TEXT("AuthorityBindTrustedContext只能由尚未退出的服务器权威世界调用。");
         return false;
     }
-    if (!Context.IsValid(OutError))
+    // 监听者可以同步发起下一次绑定，不能跨广播继续借用调用方可修改的Context引用。
+    const FGamePlatformCharacterInitializationContext TrustedContext = Context;
+    if (!TrustedContext.IsValid(OutError))
     {
         return false;
     }
@@ -82,7 +86,7 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     EDivineBeastsZodiacIdentity NewZodiac =
         EDivineBeastsZodiacIdentity::Rat;
     if (!FDivineBeastsHeroCatalog::TryGetZodiacIdentity(
-            Context.HeroDefinitionId,
+            TrustedContext.HeroDefinitionId,
             NewZodiac))
     {
         OutError = TEXT("HeroDefinitionId不在十二生肖核心Catalog。");
@@ -90,38 +94,48 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     }
 
     if (RuntimeState.SpawnGeneration > 0 &&
-        Context.SpawnGeneration < RuntimeState.SpawnGeneration)
+        TrustedContext.SpawnGeneration < RuntimeState.SpawnGeneration)
     {
         OutError = TEXT("拒绝旧SpawnGeneration覆盖当前角色。");
         return false;
     }
     if (RuntimeState.AvatarGeneration > 0 &&
-        Context.AvatarGeneration < RuntimeState.AvatarGeneration)
+        TrustedContext.AvatarGeneration < RuntimeState.AvatarGeneration)
     {
         OutError = TEXT("拒绝旧AvatarGeneration覆盖当前角色。");
         return false;
     }
 
-    CancelDefinitionLease();
+    const FGuid OperationId = FGuid::NewGuid(); TrustedContextOperationId = OperationId;
+    const TWeakObjectPtr<AActor> ExpectedOwner(Owner); const TWeakObjectPtr<UWorld> ExpectedWorld(World);
+    const auto IsOriginalOperationCurrent = [this, OperationId, ExpectedOwner, ExpectedWorld]()
+    {
+        return IsValid(this) && !bEndingPlay && TrustedContextOperationId == OperationId &&
+            ExpectedOwner.IsValid() && GetOwner() == ExpectedOwner.Get() && ExpectedOwner->HasAuthority() &&
+            ExpectedWorld.IsValid() && GetWorld() == ExpectedWorld.Get() && !ExpectedWorld->bIsTearingDown;
+    };
     LoadedDefinition = nullptr;
     bConfigurationApplied = false;
     bLocalReady = false;
     bServerReady = false;
-    // 绑定新可信身份先撤销旧角色资格，即使新的异步需求尚未完成也不能继续Active。
-    ReadinessChanged.Broadcast(false);
-
-    CharacterId = Context.CharacterId;
-    RuntimeState.HeroDefinitionId = Context.HeroDefinitionId;
+    CancelDefinitionLease();
+    if (!IsOriginalOperationCurrent()) { OutError = TEXT("撤销旧定义期间可信绑定已被后继操作或退出接管。"); return false; }
+    CharacterId = TrustedContext.CharacterId;
+    RuntimeState.HeroDefinitionId = TrustedContext.HeroDefinitionId;
     RuntimeState.ZodiacIdentity = NewZodiac;
-    RuntimeState.SpawnGeneration = Context.SpawnGeneration;
-    RuntimeState.AvatarGeneration = Context.AvatarGeneration;
+    RuntimeState.SpawnGeneration = TrustedContext.SpawnGeneration;
+    RuntimeState.AvatarGeneration = TrustedContext.AvatarGeneration;
     // Definition版本只能由服务器实际加载的资产确定，绑定新身份时先清空，禁止沿用旧Hero版本。
     RuntimeState.DefinitionVersion = 0;
     RuntimeState.ContentRevision.Reset();
     bPersistentCharacterIdRequired =
-        Context.bPersistentCharacterIdRequired;
+        TrustedContext.bPersistentCharacterIdRequired;
 
+    // 两分支都要求撤销旧资格/技能。统一为一次通知，先发布未Ready的新身份；返回后不得覆盖监听者的更高代次绑定。
+    ReadinessChanged.Broadcast(false);
+    if (!IsOriginalOperationCurrent()) { OutError = TEXT("未就绪通知已使原可信绑定被后继操作或退出撤销。"); return false; }
     RefreshInitialization();
+    if (!IsOriginalOperationCurrent()) { OutError = TEXT("初始化通知已撤销原可信绑定。"); return false; }
     Owner->ForceNetUpdate();
     return true;
 }
@@ -268,13 +282,14 @@ void UDivineBeastsCharacterComponent::CancelDefinitionLease()
     ++DefinitionRequestGeneration;
     // 借用只撤销本组件引用，不释放装配拥有的预热需求。
     BorrowedWarmupOwner.Reset(); BorrowedWarmupLease = {};
-    if (DefinitionLease.IsValid())
+    // 先取走本次租约，再调用外部服务；同步后继绑定可以安装新租约，旧取消栈不能在返回后清空它。
+    const FGamePlatformDataLease OwnedLease = DefinitionLease; DefinitionLease = {};
+    if (OwnedLease.IsValid())
     {
         if (UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr)
         {
-            if (auto* Data = IGamePlatformDataService::Get(*Instance)) { Data->ReleaseResources(DefinitionLease); }
+            if (auto* Data = IGamePlatformDataService::Get(*Instance)) { Data->ReleaseResources(OwnedLease); }
         }
-        DefinitionLease = {};
     }
 }
 

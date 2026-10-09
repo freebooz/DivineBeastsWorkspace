@@ -27,11 +27,7 @@
     },
     {
       "Name": "GamePlatformCharacter",
-      "Enabled": true,
-      "TargetAllowList": [
-        "Server",
-        "Editor"
-      ]
+      "Enabled": true
     },
     {
       "Name": "GamePlatformUI",
@@ -55,11 +51,7 @@
     },
     {
       "Name": "GamePlatformCore",
-      "Enabled": true,
-      "TargetAllowList": [
-        "Server",
-        "Editor"
-      ]
+      "Enabled": true
     },
     {
       "Name": "CommonUI",
@@ -79,6 +71,10 @@
     },
     {
       "Name": "GamePlatformCombat",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformGameplay",
       "Enabled": true,
       "TargetAllowList": [
         "Server",
@@ -86,10 +82,18 @@
       ]
     },
     {
-      "Name": "GamePlatformGameplay",
+      "Name": "GamePlatformPresentation",
       "Enabled": true,
       "TargetAllowList": [
-        "Server",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "MobaPresentation",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
         "Editor"
       ]
     }

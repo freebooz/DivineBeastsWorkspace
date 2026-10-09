@@ -5,6 +5,17 @@
 
 #include "Adapters/MobaPresentationFactAdapters.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Subsystems/GamePlatformCombatFeedbackWorldSubsystem.h"
+
+#include "Components/SkeletalMeshComponent.h"
+#include "Feedback/GamePlatformLocalHitstopSubsystem.h"
+#include "Feedback/GamePlatformHitFlashWorldSubsystem.h"
+#include "Feedback/GamePlatformCameraHitFeedbackSubsystem.h"
+#include "Feedback/GamePlatformHitFeedbackProfile.h"
+#include "Camera/CameraShakeBase.h"
+#include "Tags/MobaPresentationTags.h"
+#include "Feedback/MobaHitFeedbackPolicy.h"
+#include "GameFramework/Character.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
@@ -17,6 +28,8 @@
 #include "MobaPresentationRequestBuilder.h"
 #include "MobaPresentationSemanticRegistry.h"
 #include "UObject/UObjectGlobals.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Misc/ScopeExit.h"
 
 void UMobaPresentationClientSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -44,6 +57,7 @@ void UMobaPresentationClientSubsystem::Deinitialize()
     if (bClosing) return;
     bClosing = true;
     ++BindingGeneration;
+    UnbindCombatFeedbackWorld();
     UnbindCombat();
     UnbindArena();
 
@@ -70,6 +84,11 @@ void UMobaPresentationClientSubsystem::Deinitialize()
     LatestAvatarGeneration.Reset();
     BoundWorld.Reset();
     Super::Deinitialize();
+    RenderedHitEvents.Reset();
+    RenderedHitOrder.Reset();
+    ResolvingHitEvents.Reset();
+    ClearHitFeedbackResolver();
+    ConfigureHitFeedbackProfile(nullptr, NAME_None, NAME_None);
 }
 
 bool UMobaPresentationClientSubsystem::RegisterContextContributor(
@@ -95,6 +114,7 @@ void UMobaPresentationClientSubsystem::ResetWorldState(UWorld* NewWorld)
     ++BindingGeneration;
     UnbindWorldEvents();
     BindController(nullptr);
+    UnbindCombatFeedbackWorld();
     UnbindCombat();
     UnbindArena();
 
@@ -111,6 +131,10 @@ void UMobaPresentationClientSubsystem::ResetWorldState(UWorld* NewWorld)
     FactOrder.Reset();
     LatestAvatarGeneration.Reset();
 
+    RenderedHitEvents.Reset();
+    RenderedHitOrder.Reset();
+    ResolvingHitEvents.Reset();
+    ConfigureHitFeedbackProfile(nullptr, NAME_None, NAME_None);
     RefreshBindings();
 }
 
@@ -140,12 +164,17 @@ void UMobaPresentationClientSubsystem::HandleWorldCleanup(
         BindController(nullptr);
         UnbindCombat();
         UnbindArena();
+        UnbindCombatFeedbackWorld();
         BoundWorld.Reset();
         ++WorldGeneration;
         PredictedFacts.Reset();
         ConfirmedFacts.Reset();
         FactOrder.Reset();
         LatestAvatarGeneration.Reset();
+        RenderedHitEvents.Reset();
+        RenderedHitOrder.Reset();
+        ResolvingHitEvents.Reset();
+        ConfigureHitFeedbackProfile(nullptr, NAME_None, NAME_None);
     }
 }
 
@@ -161,6 +190,9 @@ void UMobaPresentationClientSubsystem::RefreshBindings()
         ResetWorldState(World);
         return;
     }
+
+    // 由权威组件单向复制到本World，避免LocalPawn未出生时漏掉战斗事实。
+    BindCombatFeedbackWorld(*World);
 
     if (AGamePlatformArenaGameState* ArenaState =
         World->GetGameState<AGamePlatformArenaGameState>())
@@ -247,6 +279,53 @@ void UMobaPresentationClientSubsystem::HandleDeferredBindingRefresh(const uint64
         !ExpectedWorld.IsValid() || ExpectedWorld->bIsTearingDown) return;
     PendingBindingRefreshTimer.Invalidate();
     RefreshBindings();
+}
+
+void UMobaPresentationClientSubsystem::BindCombatFeedbackWorld(UWorld& World)
+{
+    if (bClosing || &World != BoundWorld.Get() || World.bIsTearingDown) return;
+    UGamePlatformCombatFeedbackWorldSubsystem* Bus =
+        World.GetSubsystem<UGamePlatformCombatFeedbackWorldSubsystem>();
+    if (BoundCombatWorldBus.Get() == Bus)
+    {
+        return;
+    }
+    UnbindCombatFeedbackWorld();
+    if (Bus)
+    {
+        BoundCombatWorldBus = Bus;
+        // 总线回调同样属于本次World/服务世代；已进入广播栈的旧订阅也不得操作下一世界。
+        const uint64 ExpectedGeneration = BindingGeneration;
+        const TWeakObjectPtr<UWorld> ExpectedWorld(&World);
+        CombatWorldFeedbackHandle = Bus->OnConfirmedFeedback().AddWeakLambda(this,
+            [this, ExpectedGeneration, ExpectedWorld](const FGamePlatformCombatEvent& Event)
+            {
+                if (!bClosing && BindingGeneration == ExpectedGeneration && ExpectedWorld == BoundWorld &&
+                    ExpectedWorld.IsValid() && !ExpectedWorld->bIsTearingDown)
+                    HandleConfirmedNetworkCombatEvent(Event);
+            });
+    }
+}
+
+void UMobaPresentationClientSubsystem::UnbindCombatFeedbackWorld()
+{
+    if (UGamePlatformCombatFeedbackWorldSubsystem* Bus = BoundCombatWorldBus.Get())
+    {
+        if (CombatWorldFeedbackHandle.IsValid())
+        {
+            Bus->OnConfirmedFeedback().Remove(CombatWorldFeedbackHandle);
+        }
+    }
+    CombatWorldFeedbackHandle.Reset();
+    BoundCombatWorldBus.Reset();
+}
+
+void UMobaPresentationClientSubsystem::HandleConfirmedNetworkCombatEvent(
+    const FGamePlatformCombatEvent& Event)
+{
+    if (bClosing || !BoundWorld.IsValid() || BoundWorld->bIsTearingDown) return;
+    // 只投影服务器已确认事实到表现层，不接受客户端自报命中。
+    AdaptCombatEvent(Event);
 }
 
 void UMobaPresentationClientSubsystem::UnbindCombat()
@@ -547,22 +626,252 @@ void UMobaPresentationClientSubsystem::HandleCombatEvent(
     AdaptCombatEvent(Event);
 }
 
+void UMobaPresentationClientSubsystem::ConfigureHitFeedbackProfile(
+    UGamePlatformHitFeedbackProfile* LoadedProfile,
+    FName VFXDefinitionId,
+    FName SFXDefinitionId)
+{
+    if (bClosing && LoadedProfile) return;
+    ++HitFeedbackConfigurationGeneration;
+    // 注入的Profile已由上层通过GamePlatformData完成软资产加载与合法性校验。
+    // 命中热路径只Get()已经在内存中的CameraShake/Overlay资源，绝不LoadSynchronous。
+    LoadedHitFeedbackProfile = LoadedProfile;
+    HitVFXDefinitionId = LoadedProfile ? VFXDefinitionId : NAME_None;
+    HitSFXDefinitionId = LoadedProfile ? SFXDefinitionId : NAME_None;
+    HitFeedbackTuning = LoadedProfile
+        ? LoadedProfile->Tuning
+        : FGamePlatformHitFeedbackTuning{};
+}
+
 void UMobaPresentationClientSubsystem::AdaptCombatEvent(
     const FGamePlatformCombatEvent& Event)
 {
+    if (bClosing) return;
+    RefreshBindings();
+    const uint64 ExpectedBindingGeneration = BindingGeneration;
+    const TWeakObjectPtr<UWorld> ExpectedWorld = BoundWorld;
+    if (!ExpectedWorld.IsValid() || ExpectedWorld->bIsTearingDown ||
+        (IsValid(Event.TargetActor) && Event.TargetActor->GetWorld() != ExpectedWorld.Get()) ||
+        (IsValid(Event.SourceActor) && Event.SourceActor->GetWorld() != ExpectedWorld.Get())) return;
     TArray<FMobaPresentationAdaptedFact> Facts;
     FMobaPresentationFactAdapters::FromCombatEvent(Event, Facts);
     for (FMobaPresentationAdaptedFact& Fact : Facts)
     {
         SubmitAdaptedFact(MoveTemp(Fact));
+        if (bClosing || BindingGeneration != ExpectedBindingGeneration || BoundWorld != ExpectedWorld) return;
     }
+    // 权威Spec携带真实技能ID时按技能反馈；其他命中默认轻击，不依据伤害数字推断重击。
+    const EMobaHitFeedbackContact Contact = Event.SourceAbilityId.IsNone()
+        ? EMobaHitFeedbackContact::Light : EMobaHitFeedbackContact::Skill;
+    ApplyVisualFeedbackForConfirmedHit(Event, Contact, 1);
 }
 
-EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::AdaptCriticalFact(
-    const FMobaPresentationCriticalFact& Fact)
+void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
+    const FGamePlatformCombatEvent& Event,
+    EMobaHitFeedbackContact Contact,
+    int32 ComboStep)
 {
-    return SubmitAdaptedFact(
-        FMobaPresentationFactAdapters::FromCriticalFact(Fact));
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    UWorld* World = LocalPlayer ? LocalPlayer->GetWorld() : nullptr;
+    if (bClosing || !World || World != BoundWorld.Get() || World->bIsTearingDown || !Event.EventId.IsValid() ||
+        Event.EventType != EGamePlatformCombatEventType::Damage ||
+        !IsValid(Event.TargetActor) || Event.TargetActor->GetWorld() != World ||
+        (IsValid(Event.SourceActor) && Event.SourceActor->GetWorld() != World) ||
+        RenderedHitEvents.Contains(Event.EventId) || ResolvingHitEvents.Contains(Event.EventId))
+    {
+        return;
+    }
+    const TStrongObjectPtr<UMobaPresentationClientSubsystem> KeepService(this);
+    const TStrongObjectPtr<ULocalPlayer> KeepPlayer(LocalPlayer);
+    const TStrongObjectPtr<UWorld> KeepWorld(World);
+    const TStrongObjectPtr<AActor> KeepTarget(Event.TargetActor.Get());
+    const TStrongObjectPtr<AActor> KeepSource(Event.SourceActor.Get());
+    const uint64 ExpectedBinding = BindingGeneration;
+    const uint64 ExpectedConfiguration = HitFeedbackConfigurationGeneration;
+    const auto IsCurrent = [this, World, LocalPlayer, ExpectedBinding, ExpectedConfiguration, &Event]
+    {
+        return !bClosing && BindingGeneration == ExpectedBinding &&
+            HitFeedbackConfigurationGeneration == ExpectedConfiguration && BoundWorld.Get() == World &&
+            LocalPlayer->GetWorld() == World && !World->bIsTearingDown && IsValid(Event.TargetActor);
+    };
+    ResolvingHitEvents.Add(Event.EventId);
+    ON_SCOPE_EXIT
+    {
+        if (BindingGeneration == ExpectedBinding) ResolvingHitEvents.Remove(Event.EventId);
+    };
+
+    // 每次命中独立查询项目层已加载的技能反馈映射，不能把上一击的Profile复用到其他英雄。
+    // 本地副本保活正在执行的闭包；回调若自行替换Resolver，不销毁自身栈内函数。
+    const FMobaHitFeedbackResolver Resolver = HitFeedbackResolver;
+    FMobaResolvedHitFeedbackConfiguration ResolvedConfiguration;
+    const bool bHasSpecificProfile = Resolver &&
+        Resolver(Event, ResolvedConfiguration) &&
+        ResolvedConfiguration.LoadedProfile.IsValid();
+    if (!IsCurrent()) return;
+    // 若项目Resolver已经安装但没有匹配到已加载技能资源，不能复用上一击的英雄特化资源。
+    // 仅保留平台通用参数反馈，不伪造VFX/SFX定义，更不能同步加载未命中的资源。
+    const bool bProjectFallback = static_cast<bool>(Resolver) && !bHasSpecificProfile;
+    UGamePlatformHitFeedbackProfile* CurrentProfile = bHasSpecificProfile
+        ? ResolvedConfiguration.LoadedProfile.Get()
+        : (bProjectFallback ? nullptr : LoadedHitFeedbackProfile.Get());
+    const TStrongObjectPtr<UGamePlatformHitFeedbackProfile> KeepProfile(CurrentProfile);
+    const FGamePlatformHitFeedbackTuning CurrentTuning = IsValid(CurrentProfile)
+        ? CurrentProfile->Tuning : HitFeedbackTuning;
+    const FName CurrentVFXDefinitionId = bHasSpecificProfile
+        ? ResolvedConfiguration.VFXDefinitionId
+        : (bProjectFallback ? NAME_None : HitVFXDefinitionId);
+    const FName CurrentSFXDefinitionId = bHasSpecificProfile
+        ? ResolvedConfiguration.SFXDefinitionId
+        : (bProjectFallback ? NAME_None : HitSFXDefinitionId);
+
+    FMobaHitFeedbackInput Input;
+    Input.Contact = Contact;
+    Input.ComboStep = ComboStep;
+    APawn* LocalPawn = nullptr;
+    if (APlayerController* Controller = LocalPlayer->GetPlayerController(World))
+    {
+        LocalPawn = Controller->GetPawn();
+        Input.bLocalVictim = LocalPawn == Event.TargetActor;
+    }
+
+    const FMobaHitFeedbackDecision Decision =
+        FMobaHitFeedbackPolicy::Evaluate(Input, CurrentTuning);
+    if (!Decision.bHasContact)
+    {
+        return; // 挥空/闪避不触发接触层，但攻击挥击动画仍由原技能系统继续播放。
+    }
+
+    // 在发出任何层的表现之前登记EventId，防止本地Pawn与远端确认两条委托重复触发。
+    RenderedHitEvents.Add(Event.EventId);
+    RenderedHitOrder.Add(Event.EventId);
+    if (RenderedHitOrder.Num() > MaxRenderedHitEvents)
+    {
+        RenderedHitEvents.Remove(RenderedHitOrder[0]);
+        RenderedHitOrder.RemoveAt(0, 1, EAllowShrinking::No);
+    }
+
+    auto FindMesh = [](AActor* Actor) -> USkeletalMeshComponent*
+    {
+        if (!IsValid(Actor))
+        {
+            return nullptr;
+        }
+        if (ACharacter* Character = Cast<ACharacter>(Actor))
+        {
+            return Character->GetMesh();
+        }
+        return Actor->FindComponentByClass<USkeletalMeshComponent>();
+    };
+    USkeletalMeshComponent* SourceMesh = FindMesh(Event.SourceActor);
+    USkeletalMeshComponent* TargetMesh = FindMesh(Event.TargetActor);
+    // 外部反馈可同步移除组件并GC；当前调用持有其原Mesh，后续层仍须通过作用域/有效性检查。
+    const TStrongObjectPtr<USkeletalMeshComponent> KeepSourceMesh(SourceMesh);
+    const TStrongObjectPtr<USkeletalMeshComponent> KeepTargetMesh(TargetMesh);
+
+    // 局部顿帧可以设置为0，同时继续触发其余层；不能把0帧当作整套反馈关闭。
+    if (Decision.VisualHitstopFrames > 0)
+    {
+        if (UGamePlatformLocalHitstopSubsystem* Hitstop =
+            LocalPlayer->GetSubsystem<UGamePlatformLocalHitstopSubsystem>())
+        {
+            Hitstop->ApplyVisualHitstop(
+                Event.EventId, SourceMesh, TargetMesh, Decision.VisualHitstopFrames);
+            if (!IsCurrent()) return;
+        }
+    }
+
+    if (IsValid(CurrentProfile))
+    {
+        // 模型高亮仅替换受击Mesh的Overlay，最多参考2帧；缺失材质安全跳过。
+        if (Decision.FlashSeconds > 0.0f && IsValid(TargetMesh))
+        {
+            UMaterialInterface* Overlay =
+                CurrentProfile->HitFlashOverlayMaterial.Get();
+            if (IsValid(Overlay))
+            {
+                if (UGamePlatformHitFlashWorldSubsystem* Flash =
+                    World->GetSubsystem<UGamePlatformHitFlashWorldSubsystem>())
+                {
+                    Flash->PlayHitFlash(
+                        Event.EventId, TargetMesh, Overlay, Decision.FlashSeconds);
+                    if (!IsCurrent()) return;
+                }
+            }
+        }
+
+        // 仅命中与受击双方的本地玩家产生摄像机冲击，其余观战者不被迫震屏。
+        if (LocalPawn && (LocalPawn == Event.TargetActor ||
+            LocalPawn == Event.SourceActor))
+        {
+            if (UGamePlatformCameraHitFeedbackSubsystem* Camera =
+                LocalPlayer->GetSubsystem<UGamePlatformCameraHitFeedbackSubsystem>())
+            {
+                UClass* PreloadedShakeClass =
+                    CurrentProfile->CameraShakeClass.Get();
+                if (PreloadedShakeClass)
+                {
+                    const float Emphasis = Input.bLocalVictim ? 0.8f : 0.25f;
+                    Camera->PlayHitCameraShake(
+                        Event.EventId,
+                        TSubclassOf<UCameraShakeBase>(PreloadedShakeClass),
+                        Decision.Strength *
+                            CurrentTuning.CameraStrength * Emphasis);
+                    if (!IsCurrent()) return;
+                }
+            }
+        }
+    }
+
+    // 两个独立Provider请求复用唯一GamePlatformPresentation执行器，
+    // 同一次Hit使用有区别的稳定Layer GUID，防止VFX与SFX相互吞掉或互相去重。
+    UGamePlatformPresentationClientSubsystem* Presentation =
+        LocalPlayer->GetSubsystem<UGamePlatformPresentationClientSubsystem>();
+    if (!Presentation)
+    {
+        return;
+    }
+
+    auto SubmitLayer = [&](FName Provider, FName DefinitionId, uint32 LayerSalt,
+                           float LayerStrength)
+    {
+        if (!IsCurrent() || DefinitionId.IsNone() || LayerStrength <= 0.0f)
+        {
+            return;
+        }
+        FGamePlatformPresentationRequest Request;
+        Request.RequestId = FGuid(
+            Event.EventId.A ^ LayerSalt, Event.EventId.B,
+            Event.EventId.C, Event.EventId.D);
+        Request.SemanticTag = MobaPresentationTags::Combat_Hit;
+        Request.ContextId = FName(TEXT("Combat.Hit"));
+        Request.ProviderChannel = Provider;
+        Request.DefinitionId = DefinitionId;
+        Request.SourceId = IsValid(Event.SourceActor)
+            ? Event.SourceActor->GetFName() : NAME_None;
+        Request.TargetId = Event.TargetActor->GetFName();
+        Request.SourceLocation = Event.ImpactPoint;
+        Request.TargetLocation = Event.TargetActor->GetActorLocation();
+        Request.ImpactLocation = Event.ImpactPoint;
+        Request.ImpactNormal = Event.ImpactNormal;
+        Request.Magnitude = FMath::Clamp(LayerStrength, 0.0f, 2.0f);
+        Request.ContextTags = Event.ResultTags;
+        // 由同次Submit刷新平台世界世代，不能读旅行前缓存值。
+        Request.WorldGeneration = 0;
+        Request.Context.WorldGeneration = 0;
+        Request.RequestGeneration = ++RequestGeneration;
+        Request.PredictionState = EGamePlatformPresentationPredictionState::Confirmed;
+        Request.Priority = Contact == EMobaHitFeedbackContact::Heavy
+            ? EGamePlatformPresentationPriority::High
+            : EGamePlatformPresentationPriority::Normal;
+        Presentation->Submit(Request); // 可选表现失败不改变GAS权威结算。
+    };
+
+    SubmitLayer(
+        TEXT("VFX"), CurrentVFXDefinitionId, 0x56465831u,
+        Decision.Strength * CurrentTuning.VFXStrength);
+    SubmitLayer(
+        TEXT("SFX"), CurrentSFXDefinitionId, 0x53465831u,
+        Decision.Strength * CurrentTuning.AudioStrength);
 }
 
 EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::AdaptAbilityFact(

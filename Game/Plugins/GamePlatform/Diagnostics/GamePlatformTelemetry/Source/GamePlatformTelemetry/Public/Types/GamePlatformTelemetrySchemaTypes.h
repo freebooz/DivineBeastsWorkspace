@@ -66,5 +66,3 @@ struct GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryMetricDefinition
     /** 规则所属模块/领域名称，用于人工追责；不包含用户身份或凭据。 */
     FString Owner;
 };
-
-

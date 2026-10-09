@@ -23,6 +23,11 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsInventoryScreen
     GENERATED_BODY()
 
 public:
+    UDivineBeastsInventoryScreen()
+    {
+        UIDomain = EDivineBeastsUIDomain::Inventory;
+    }
+
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Inventory")
     EGamePlatformInventoryClientState GetInventoryState() const;
 

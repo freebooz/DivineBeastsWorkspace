@@ -11,6 +11,9 @@ public class DivineBeastsArenaEditorTarget : TargetRules
         ExtraModuleNames.Add("DivineBeastsArena");
         // 编辑器需要加载DBAClient反射类型与Content，才能生成/验证真实Application Flow DataAsset。
         EnablePlugins.Add("DBAClient");
+        // 竞技Widget蓝图由DBAArena拥有；Editor显式挂载其客户端父类，才能由Monolith真实创建与回读。
+        // 公共登录仍在DBAClient中保持独立，正式Server不加载竞技UI客户端模块。
+        EnablePlugins.Add("DBAArena");
         // 编辑器加载Surface客户端契约、资产挂载点与Editor生成/校验模块，用于真实材质资产制作和回读验证。
         EnablePlugins.Add("GamePlatformSurface");
         // GamePlatformPCG（游戏平台PCG）的模板生成、Commandlet（命令行工具）和DataValidation（数据校验）

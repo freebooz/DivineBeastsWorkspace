@@ -678,15 +678,20 @@ bool UGamePlatformUIManagerSubsystem::IsRouteTargetValid(
 }
 
 TSoftClassPtr<UGamePlatformUIScreen> UGamePlatformUIManagerSubsystem::ResolveWidgetClass(
-    const UGamePlatformUIScreenDefinition& Definition) const
+    const UGamePlatformUIScreenDefinition& Definition,
+    bool bUseDefaultWidget) const
 {
-    const FName PlatformName(FPlatformProperties::IniPlatformName());
-    if (const TSoftClassPtr<UGamePlatformUIScreen>* Variant =
-        Definition.PlatformWidgetVariants.Find(PlatformName))
+    // 同一请求最多由平台专属资源降级到默认资源一次，不允许失败时重复命中相同软路径。
+    if (!bUseDefaultWidget)
     {
-        if (!Variant->IsNull())
+        const FName PlatformName(FPlatformProperties::IniPlatformName());
+        if (const TSoftClassPtr<UGamePlatformUIScreen>* Variant =
+            Definition.PlatformWidgetVariants.Find(PlatformName))
         {
-            return *Variant;
+            if (!Variant->IsNull())
+            {
+                return *Variant;
+            }
         }
     }
 
@@ -749,6 +754,55 @@ void UGamePlatformUIManagerSubsystem::HandlePreLoadMap(
     }
 }
 
+bool UGamePlatformUIManagerSubsystem::BeginDefaultWidgetRetry(
+    const FGamePlatformUIAsyncRequest& Request, UGamePlatformUIScreenDefinition& Definition,
+    const FGamePlatformDataLease& PreviousLease)
+{
+    if (bClosing || bReplacingRoot || PendingDefaultWidgetRetries.Contains(Request.RequestId) ||
+        Definition.WidgetClass.IsNull() || ResolveWidgetClass(Definition) == Definition.WidgetClass) return false;
+    const TStrongObjectPtr<UGamePlatformUIManagerSubsystem> KeepManager(this);
+    const TStrongObjectPtr<UGamePlatformUIScreenDefinition> KeepDefinition(&Definition);
+    const TStrongObjectPtr<UGameInstance> GameInstance(GetLocalPlayer() ? GetLocalPlayer()->GetGameInstance() : nullptr);
+    IGamePlatformDataService* Data = GameInstance.IsValid() ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    if (!Data) return false;
+    const uint64 ExpectedLayoutGeneration = RootLayoutGeneration;
+    const auto IsCurrent = [this, Request, ExpectedLayoutGeneration, Instance = GameInstance.Get(),
+        ExpectedDefinition = &Definition]
+    {
+        const auto* Current = PendingRequests.Find(Request.RequestId);
+        return !bClosing && !bReplacingRoot && RootLayoutGeneration == ExpectedLayoutGeneration &&
+            Current && Current->Generation == Request.Generation && GetLocalPlayer() &&
+            GetLocalPlayer()->GetGameInstance() == Instance &&
+            ScreenDefinitions.FindRef(Request.ScreenId) == ExpectedDefinition;
+    };
+    if (!IsCurrent()) return false;
+    PendingDefaultWidgetRetries.Add(Request.RequestId);
+    // 先失效旧回包资格，再释放旧变体租约；Release中的通知不能让旧栈恢复已取消请求。
+    const FGamePlatformDataLease ReleasedLease = PreviousLease;
+    PendingLoads.Remove(Request.RequestId);
+    Data->ReleaseResources(ReleasedLease);
+    if (!IsCurrent()) return false;
+    TArray<FSoftObjectPath> Assets;
+    Assets.Add(Definition.WidgetClass.ToSoftObjectPath());
+    for (const auto& Asset : Definition.PreloadAssets)
+        if (Asset.ToSoftObjectPath().IsValid()) Assets.AddUnique(Asset.ToSoftObjectPath());
+    FGamePlatformResult Accepted;
+    const TWeakObjectPtr<UGamePlatformUIManagerSubsystem> WeakThis(this);
+    const FGuid RequestId = Request.RequestId;
+    // Data公开合同规定完成总是延后；受理返回后登记新完整租约，回包仍核LeaseId。
+    const auto Lease = Data->AcquireResources(Assets,
+        Definition.bSurvivesTravel ? EGamePlatformDataLifetime::Instance : EGamePlatformDataLifetime::World,
+        this, [WeakThis, RequestId](const FGamePlatformDataLease& Completed, const FGamePlatformResult& Result)
+        { if (auto* Self = WeakThis.Get()) Self->HandleScreenAssetsLoaded(RequestId, Completed, Result); }, Accepted);
+    if (!IsCurrent() || !Accepted.IsSuccess() || !Lease.IsValid())
+    {
+        if (Lease.IsValid()) Data->ReleaseResources(Lease);
+        return false;
+    }
+    PendingLoads.Add(RequestId, Lease);
+    return true;
+}
+
 void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId,
     const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result)
 {
@@ -765,13 +819,8 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId,
     if (ConstructingScreenRequests.Contains(RequestId)) return; // 同代完成重入不能启动第二构造。
     UGameInstance* GameInstance=GetLocalPlayer()->GetGameInstance();
     IGamePlatformDataService* Data=GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
-    if (!Result.IsSuccess() || !Data || Data->GetLeaseState(Lease) != EGamePlatformDataRequestState::Succeeded)
-    {
-        const FName ScreenId=RequestPtr->ScreenId;
-        CleanupPendingRequest(RequestId, false);
-        FailRequest(RequestId, ScreenId, LOCTEXT("ResourceLoadFailed", "页面资源租约加载失败或已经撤销。"));
-        return;
-    }
+    const bool bLeaseReady = Result.IsSuccess() && Data &&
+        Data->GetLeaseState(Lease) == EGamePlatformDataRequestState::Succeeded;
     const FGamePlatformUIAsyncRequest Request = *RequestPtr;
     TObjectPtr<UGamePlatformUIScreenDefinition>* DefinitionPtr =
         ScreenDefinitions.Find(Request.ScreenId);
@@ -789,6 +838,35 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId,
         return;
     }
 
+    const bool bDefaultRetry = PendingDefaultWidgetRetries.Contains(RequestId);
+    TSoftClassPtr<UGamePlatformUIScreen> SoftClass =
+        ResolveWidgetClass(*Definition, bDefaultRetry);
+    UClass* LoadedClass = SoftClass.Get();
+    UCommonActivatableWidgetStack* Stack =
+        RootLayout->GetActivatableStack(Definition->Layer);
+    const bool bInvalidWidgetClass =
+        !IsValid(LoadedClass) ||
+        LoadedClass->HasAnyClassFlags(CLASS_Abstract) ||
+        !LoadedClass->IsChildOf(UGamePlatformUIScreen::StaticClass());
+
+    if ((!bLeaseReady || bInvalidWidgetClass) &&
+        !bDefaultRetry &&
+        SoftClass != Definition->WidgetClass &&
+        !Definition->WidgetClass.IsNull() &&
+        IsValid(Stack))
+    {
+        if (BeginDefaultWidgetRetry(Request, *Definition, Lease)) return;
+        if (bClosing || !PendingRequests.Contains(RequestId)) return;
+    }
+
+    if (!bLeaseReady || bInvalidWidgetClass || !IsValid(Stack))
+    {
+        // 默认资源也不可用时给出单次终态失败；不得无限重试或将空白页面当成成功。
+        CleanupPendingRequest(RequestId, false);
+        FailRequest(RequestId, Request.ScreenId, LOCTEXT("LoadFailed", "页面类、必需资源或目标层加载失败。"));
+        return;
+    }
+
     for (const FSoftObjectPath& Path : Lease.ResourcePaths)
     {
         if (!IsValid(Path.ResolveObject()))
@@ -797,20 +875,6 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId,
             FailRequest(RequestId, Request.ScreenId, LOCTEXT("PreloadMissing", "页面必需资源未加载完成。"));
             return;
         }
-    }
-    TSoftClassPtr<UGamePlatformUIScreen> SoftClass = ResolveWidgetClass(*Definition);
-    UClass* LoadedClass = SoftClass.Get();
-    UCommonActivatableWidgetStack* Stack =
-        RootLayout->GetActivatableStack(Definition->Layer);
-
-    if (!IsValid(LoadedClass) ||
-        LoadedClass->HasAnyClassFlags(CLASS_Abstract) ||
-        !LoadedClass->IsChildOf(UGamePlatformUIScreen::StaticClass()) ||
-        !IsValid(Stack))
-    {
-        FailRequest(RequestId, Request.ScreenId, LOCTEXT("LoadFailed", "页面类或目标层加载失败。"));
-        CleanupPendingRequest(RequestId, false);
-        return;
     }
 
     UGamePlatformViewModelBase* ViewModel = nullptr;
@@ -1025,6 +1089,7 @@ void UGamePlatformUIManagerSubsystem::CleanupPendingRequest(
     bool bCancelLoad)
 {
     (void)bCancelLoad; // Data Release同时覆盖Loading取消与成功释放，不直接操作StreamableManager。
+    PendingDefaultWidgetRetries.Remove(RequestId);
     PendingRequests.Remove(RequestId);
     PendingViewModels.Remove(RequestId);
     if (ConstructingScreenRequests.Contains(RequestId)) return; // 同步构造尚未退栈，暂留租约防止提前卸载。

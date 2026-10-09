@@ -6,6 +6,8 @@
 
 设计入口：[插件设计](Docs/Architecture.md)｜[Semantic模型](Docs/SemanticModel.md)｜[Public API说明](Docs/API.md)｜[测试与验证证据](Docs/TestingAndEvidence.md)｜[人工审核](Docs/ManualReview.md)。
 
+2026-10-09 战斗命中反馈专项：在既有 `GamePlatformInputClient/Public/Private/Buffer/GamePlatformActionInputBuffer`（动作输入缓冲）新增有实际实现的纯数据类，默认8项／0.25秒，Started/Completed/Canceled有限队列、同绑定代次序号去重、过期剔除、重绑跨世界清理契约，不缓冲Move/Look连续轴，也不直接执行GAS；`Private/Tests/GamePlatformActionInputBufferTests.cpp`增加队列边界测试源码。项目层 `DivineBeastsInputClient`负责在局部视觉顿帧结束后向GAS合法性接口回放，尚需UE真实编译与人工取消窗口验证。
+
 ## 关键原则
 
 - 平台语义标签与Development测试标签均在引擎初始化后的游戏线程首次使用时读取；禁止全局静态初始化调用`UGameplayTagsManager`。单体Client的CRT阶段没有UObject环境，编辑器DLL模块晚加载会掩盖这一类错误。标签配置和Legacy序列化身份保持不变；Cook客户端初始化回归必须与Editor输入合同测试分别验证。

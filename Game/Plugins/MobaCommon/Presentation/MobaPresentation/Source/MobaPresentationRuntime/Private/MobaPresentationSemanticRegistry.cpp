@@ -24,7 +24,6 @@ const TArray<FMobaPresentationSemanticDefinition>& FMobaPresentationSemanticRegi
     static const TArray<FMobaPresentationSemanticDefinition> Definitions =
     {
         MakeSemantic(MobaPresentationTags::Combat_Hit, TEXT("确认命中"), TEXT("Combat Damage Result"), true),
-        MakeSemantic(MobaPresentationTags::Combat_Critical, TEXT("暴击"), TEXT("Confirmed Critical Fact"), true),
         MakeSemantic(MobaPresentationTags::Combat_Heal, TEXT("治疗"), TEXT("Combat Healing Result"), true),
         MakeSemantic(MobaPresentationTags::Combat_Shield_Hit, TEXT("护盾吸收"), TEXT("Combat Shield Absorb"), true),
         MakeSemantic(MobaPresentationTags::Combat_Control_Apply, TEXT("控制施加"), TEXT("Combat ControlApplied"), true),

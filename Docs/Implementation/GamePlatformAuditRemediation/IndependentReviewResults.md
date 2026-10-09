@@ -46,3 +46,5 @@ Data/VFX跨模块用例消费真实公开数据服务，覆盖抽象约束受理
 - VFX测试标签只读复核：ClientOnly中的Native定义触发非Fatal ensure，不能推断标签一定没入字典；局部读取当前及HEAD既有Presentation.Test，缺失以AddError/false停止，DefinitionId保持空，真实Registry仍走精确语义和Scope/类型资格断言。无新生产标签或全局标签构造，不改宿主类型；未发现阻断问题。根将中文说明限定为避免本测试新增客户端独占标签，整端字典和Cook不作认证；修后编译/运行另记。
 
 - LocalPlayer/Viewport六文件真实引擎合同独立复核：11处实例均使用GEngine，保留显式失败前提及Transient范围。首次确认Moba Controller只有单向PlayerController赋值，世界查询无法识别其LocalPlayer；根补真实SetPlayer后复读闭合。三个Moba世界、UI重入世界和玩家注册都有作用域清理，未发现该范围剩余Important。报告保留初次问题及最终六文件哈希；这不是11项运行通过。
+
+- 三Gameplay测试夹具独立复核：实际读取UE5.8 Controller/GameState/Actor与Timer/Automation销毁链，三SHA在始末匹配，Critical/Important均0。共享owner先摘Mode接口、清自有Timer/监听再释端口和World；只覆盖自有资源释放/unroot，测试World未完整BeginPlay时EndPlay返回false，未把该结果写成全部Actor EndPlay/GC验收。真实五失败修后回归仍须执行。
