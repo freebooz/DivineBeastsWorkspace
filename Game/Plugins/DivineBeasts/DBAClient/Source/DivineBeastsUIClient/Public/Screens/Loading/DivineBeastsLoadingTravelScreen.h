@@ -4,6 +4,7 @@
 #include "DivineBeastsLoadingTravelScreen.generated.h"
 
 class UDivineBeastsLoadingViewModel;
+class UTextBlock;
 
 /**
  * UDivineBeastsLoadingTravelScreen（神兽联盟加载/切服页面 C++ 基类）。
@@ -29,4 +30,16 @@ public:
     /** 返回类型安全的加载 ViewModel。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Loading")
     UDivineBeastsLoadingViewModel* GetLoadingViewModel() const;
+
+protected:
+    /** 仅激活期间订阅ViewModel；页面失活精确解绑，旧世界快照不再改写文本。 */
+    virtual void NativeOnActivated() override;
+    virtual void NativeOnDeactivated() override;
+
+private:
+    /** 展示真实阶段文本；未知进度不显示虚构百分比，也不使用Tick轮询。 */
+    UFUNCTION()
+    void RefreshLoadingPresentation(int32 Revision, int32 PageGeneration);
+    UPROPERTY(meta=(BindWidget))
+    TObjectPtr<UTextBlock> StageText = nullptr;
 };

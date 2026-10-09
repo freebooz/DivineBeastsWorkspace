@@ -52,6 +52,7 @@ public:
     virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override final;
     virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override final;
     virtual UClass* GetDefaultPawnClassForController_Implementation(AController* Controller) override final;
+    /** UE登录期只查询Controller初始位置；真正Pawn出生仍受上述门禁与已批准候选约束。 */
     virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override final;
     virtual void Logout(AController* Exiting) override;
 protected:

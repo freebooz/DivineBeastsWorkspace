@@ -46,6 +46,8 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsUIClientSubsystem final
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
+    /** 地图切换产生新控制器后重新消费真实业务快照；不登录、不推进业务、不使用Tick。 */
+    virtual void PlayerControllerChanged(APlayerController* NewPlayerController) override;
 
     FDivineBeastsUIContractHandle RegisterApplicationContract(
         FName AdapterId,

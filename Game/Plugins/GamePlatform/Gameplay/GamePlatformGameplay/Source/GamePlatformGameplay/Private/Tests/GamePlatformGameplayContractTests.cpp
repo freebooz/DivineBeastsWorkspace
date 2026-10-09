@@ -7,6 +7,35 @@
 #include "Types/GamePlatformExperienceState.h"
 #include "Types/GamePlatformGameplayReadiness.h"
 #include "Types/GamePlatformPlayerLifecycle.h"
+#include "Framework/GamePlatformGameModeBase.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerStart.h"
+
+// 联机黑屏回归：UE在准入握手前先为Controller查询初始位置；查询可成功，但绝不能创建玩法Pawn。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformControllerInitialStartTest,
+    "GamePlatform.Gameplay.Login.InitialLocationDoesNotAuthorizeSpawn",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformControllerInitialStartTest::RunTest(const FString&)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("创建独立瞬态世界，不连接后端"), World)) return false;
+    // CreateWorld默认已执行InitializeNewWorld，不能二次初始化，否则重复WorldSettings会触发引擎Fatal。
+    auto* Mode = World->SpawnActor<AGamePlatformGameModeBase>();
+    auto* Controller = World->SpawnActor<APlayerController>();
+    auto* Start = World->SpawnActor<APlayerStart>();
+    if (Mode && Controller && Start)
+    {
+        TestEqual(TEXT("无Gameplay准入时Controller初始位置仍能使用真实PlayerStart"), Mode->FindPlayerStart(Controller), static_cast<AActor*>(Start));
+        Mode->RestartPlayer(Controller);
+        TestNull(TEXT("查询位置与默认重生不得赋予Pawn"), Controller->GetPawn());
+        TestNull(TEXT("外部坐标也不得绕过出生资格"), Mode->SpawnDefaultPawnAtTransform(Controller, FTransform::Identity));
+        TestFalse(TEXT("初始位置不能视作Gameplay Active"), Mode->IsPlayerGameplayActive(*Controller));
+    }
+    else AddError(TEXT("瞬态登录位置夹具Actor创建失败"));
+    World->DestroyWorld(false);
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformGameplaySafeDefaultsTest,
     "GamePlatform.Gameplay.Contracts.SafeDefaults",

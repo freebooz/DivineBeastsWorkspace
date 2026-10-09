@@ -1,9 +1,9 @@
 {
   "SchemaVersion": 1,
   "CreationTool": "Monolith MCP",
-  "MonolithVersion": "0.20.3",
+  "MonolithVersion": "0.23.0",
   "ProjectName": "DivineBeastsArena",
-  "GeneratedAt": "2026-10-08T23:32:21.8954304+08:00",
+  "GeneratedAt": "2026-10-09T23:50:16.5575763+08:00",
   "字段说明": {
     "SchemaVersion": "清单结构版本；升级字段结构时递增。",
     "CreationTool": "创建或修改界面二进制资产的唯一工具。",
@@ -77,6 +77,33 @@
       "Saved": true,
       "CompileWarnings": 0,
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterChoiceEntry"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LoadingTravel",
+      "用途": "真实切服加载阶段，只消费当前本地玩家的事件快照。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsLoadingTravelScreen",
+      "WidgetCount": 7,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "Saved": true,
+      "Reloaded": true,
+      "VisualDesign": "满屏背景、中央固定控件，18/20/28字号，无ScaleBox缩放。",
+      "SurvivesTravel": true
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_ErrorReconnect",
+      "用途": "连接失败后显示安全错误并提交既有Retry命令。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsErrorReconnectScreen",
+      "WidgetCount": 7,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "Saved": true,
+      "Reloaded": true,
+      "VisualDesign": "满屏背景、中央固定控件，18/20/28字号，无ScaleBox缩放。",
+      "SurvivesTravel": true,
+      "AccessibilityErrors": 0,
+      "AccessibilityWarnings": 0,
+      "FocusNavigation": "RetryButton作为唯一焦点，六向Wrap，中文Tooltip；目录默认焦点为RetryButton。"
     }
   ],
   "LatestCombatHUDWidgetDelivery": {
@@ -87,11 +114,74 @@
     "Scope": "按照最新2具体GAS属性集8字段规则，重用项目战斗蓝图，取消常驻护盾条，新增战斗主HUD并嵌入RootLayout的HUDLayer。",
     "CurrentDesignDoc": "Docs/CombatHUDBlueprintDelivery_20261009.md",
     "Assets": [
-      {"AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD", "ParentClass": "DivineBeastsCombatPanelBase", "WidgetCount": 7, "Children": ["PlayerStatus","PlayerPortrait","TargetFrame","StatusEffects","AbilityBar","CastBar"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
-      {"AssetPath": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout", "ParentClass": "DivineBeastsRootLayout", "WidgetCount": 11, "Contains": ["HUDLayer/CombatHUD"], "DefaultCombatHUDVisibility": "Collapsed", "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
-      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerStatus", "ParentClass": "DivineBeastsPlayerStatusPanel", "WidgetCount": 7, "Removed": ["ShieldBar","ShieldBarLabel"], "Kept": ["HealthBar","MomentumBar"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
-      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_TargetFrame", "ParentClass": "GamePlatformTargetFrameWidget", "WidgetCount": 6, "Removed": ["TargetShieldBar"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
-      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StatusEffects", "ParentClass": "GamePlatformStatusEffectTrayWidget", "WidgetCount": 11, "Headings": ["增益效果","减益效果","关键机制"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true}
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD",
+        "ParentClass": "DivineBeastsCombatPanelBase",
+        "WidgetCount": 7,
+        "Children": [
+          "PlayerStatus",
+          "PlayerPortrait",
+          "TargetFrame",
+          "StatusEffects",
+          "AbilityBar",
+          "CastBar"
+        ],
+        "FreshCompileErrors": 0,
+        "FreshCompileWarnings": 0,
+        "Saved": true
+      },
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+        "ParentClass": "DivineBeastsRootLayout",
+        "WidgetCount": 11,
+        "Contains": [
+          "HUDLayer/CombatHUD"
+        ],
+        "DefaultCombatHUDVisibility": "Collapsed",
+        "FreshCompileErrors": 0,
+        "FreshCompileWarnings": 0,
+        "Saved": true
+      },
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerStatus",
+        "ParentClass": "DivineBeastsPlayerStatusPanel",
+        "WidgetCount": 7,
+        "Removed": [
+          "ShieldBar",
+          "ShieldBarLabel"
+        ],
+        "Kept": [
+          "HealthBar",
+          "MomentumBar"
+        ],
+        "FreshCompileErrors": 0,
+        "FreshCompileWarnings": 0,
+        "Saved": true
+      },
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_TargetFrame",
+        "ParentClass": "GamePlatformTargetFrameWidget",
+        "WidgetCount": 6,
+        "Removed": [
+          "TargetShieldBar"
+        ],
+        "FreshCompileErrors": 0,
+        "FreshCompileWarnings": 0,
+        "Saved": true
+      },
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StatusEffects",
+        "ParentClass": "GamePlatformStatusEffectTrayWidget",
+        "WidgetCount": 11,
+        "Headings": [
+          "增益效果",
+          "减益效果",
+          "关键机制"
+        ],
+        "FreshCompileErrors": 0,
+        "FreshCompileWarnings": 0,
+        "Saved": true
+      }
     ],
     "MonolithPackagesSaved": 5,
     "SingleEditorAssetTreeReadback": true,
@@ -113,7 +203,10 @@
     },
     "UIClientModuleBuild": {
       "Target": "DivineBeastsArenaClient Win64 Development",
-      "Modules": ["GamePlatformUIClient", "DivineBeastsUIClient"],
+      "Modules": [
+        "GamePlatformUIClient",
+        "DivineBeastsUIClient"
+      ],
       "UnrealBuildToolActionsPlanned": 6,
       "ExitStatus": "stopped_by_current_session",
       "CompilerErrorObserved": false,
@@ -121,7 +214,10 @@
       "Reason": "任务在6个编译动作队列长期没有产出时由当前会话停止；没有构建成功或链接证据，不代表源代码编译失败。"
     },
     "NativeEditorAutomation": {
-      "GamePlatform.UI.CombatPresentation": {"Passed": 2, "Failed": 0},
+      "GamePlatform.UI.CombatPresentation": {
+        "Passed": 2,
+        "Failed": 0
+      },
       "DivineBeasts.UI.Combat.PlayerStatusSnapshot": {
         "Passed": 0,
         "Failed": 1,
@@ -474,5 +570,26 @@
     "SavedAndReloaded": true,
     "Regression": "Only creation successor differs; reload asserts create-to-roster-to-entry",
     "ManualEndToEnd": "Pending"
+  },
+  "BlackScreenRepair": {
+    "Date": "2026-10-09",
+    "SourceFailures": [
+      "MissingExperienceContext",
+      "Missing LoadingTravel/ErrorReconnect assets",
+      "Controller initial PlayerStart query blocked",
+      "Root viewport auto-removal on world teardown"
+    ],
+    "Actions": [
+      "Monolith purpose set/save/reload",
+      "Monolith build_ui_from_spec / set_anchor_preset / set_slot_property / set_widget_is_variable / compile_widget / save_packages",
+      "Native readiness and UI travel lifecycle repair"
+    ],
+    "Validated": [
+      "Actual Village definition validation passed after reload",
+      "Actual required screen classes loaded and inherited correct third-layer parents",
+      "Widget tree 7 nodes each; full anchors and fixed sizes verified"
+    ],
+    "Limitations": "最终客户端Cook/Stage与27项IoStore门禁通过，专服体验Active且持续心跳；桌面锁屏，等待人工解锁/登录后继续双客户端WorldReady与行走验收。",
+    "ClientCookEvidence": "Saved/Validation/FoundationM0/e738d0ca-f9eb-46f1-b329-e8a5bcc85dbd/Cook-FrontEndClient"
   }
 }

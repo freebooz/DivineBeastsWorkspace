@@ -2,6 +2,7 @@
 
 #include "Misc/AutomationTest.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -11,7 +12,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformUIAccessibilityPreferencesTest::RunTest(const FString& Parameters)
 {
-    ULocalPlayer* LocalPlayer = NewObject<ULocalPlayer>();
+    // LocalPlayer的ClassWithin是Engine；Transient包外层会触发Ensure，污染真实回归结果。
+    if (!TestNotNull(TEXT("测试具有真实Engine外层"), GEngine)) return false;
+    ULocalPlayer* LocalPlayer = NewObject<ULocalPlayer>(GEngine);
     UGamePlatformUIManagerSubsystem* Manager =
         NewObject<UGamePlatformUIManagerSubsystem>(LocalPlayer);
 

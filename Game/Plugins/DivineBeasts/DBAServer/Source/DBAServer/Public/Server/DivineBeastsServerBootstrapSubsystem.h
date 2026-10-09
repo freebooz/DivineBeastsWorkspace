@@ -69,6 +69,8 @@ private:
     void HandleWorldBeginPlay(UWorld* World);
     void RegisterValidatedWorld(UWorld& World);
     void HandleLifecycleChanged(const struct FGamePlatformServerLifecycleSnapshot& Snapshot);
+    /** 注册完成与真实Gameplay激活均可触发；未满足门禁时等待，不把地图BeginPlay当作可出生。 */
+    void TryPublishReady();
     void SetFailed(FName ErrorCode);
     bool IsConfiguredWorldValid(UWorld& World, FString& OutReason) const;
     /** 返回当前权威GameState中的连接玩家数；世界失效时返回-1使平台心跳Fail Closed。 */

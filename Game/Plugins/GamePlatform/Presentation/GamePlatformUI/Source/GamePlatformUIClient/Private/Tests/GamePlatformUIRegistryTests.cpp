@@ -2,6 +2,7 @@
 
 #include "Misc/AutomationTest.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
 #include "Definitions/GamePlatformUIScreenDefinition.h"
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 #include "Routing/GamePlatformUIRouteDefinition.h"
@@ -14,7 +15,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformUIRegistryTest::RunTest(const FString& Parameters)
 {
-    ULocalPlayer* LocalPlayer = NewObject<ULocalPlayer>();
+    // 与运行期相同的ClassWithin约束；只构造注册表，不连接后端或生成可视资产。
+    if (!TestNotNull(TEXT("测试具有真实Engine外层"), GEngine)) return false;
+    ULocalPlayer* LocalPlayer = NewObject<ULocalPlayer>(GEngine);
     UGamePlatformUIManagerSubsystem* Manager =
         NewObject<UGamePlatformUIManagerSubsystem>(LocalPlayer);
 

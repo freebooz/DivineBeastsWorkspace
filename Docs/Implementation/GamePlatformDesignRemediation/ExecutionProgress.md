@@ -161,3 +161,17 @@ UE复现仍使用 `Build/Game/BuildFoundation.ps1`：显式指定Editor/Client/S
 | Village Server Cook/Stage | 退出0；FoundationM0/18e90b7d-dc32-4aa0-86b4-ecdc32f92363/Cook-VillageServer；保留旧包供回退 |
 
 FoundationM0路径均位于工作空间Saved/Validation；资产打包检查不等于新手村网络流程完成。双客户端本次手动登录、创建后返回选择、真实WorldReady及行走尚待人工验证，服务器表现资产剥离和三角色五模式联机也未在本表验收。
+
+## 2026-10-09 登录后黑屏定位与修复
+
+本次两个正常客户端由用户手动完成登录，再从角色选择进入Village时黑屏。日志与实际资产确认：教学体验Purpose为空导致MissingExperienceContext/ExperienceLeaseFailed；注册完成即Ready过早；平台FindPlayerStart在UE InitNewPlayer查询Controller初始位置时返回空，引擎以Could not find a starting spot拒绝Login；LoadingTravel/ErrorReconnect规划路径没有真实资产，World销毁还会移除仍被引用的RootViewport。
+
+增量修复真实教学体验定义、Village Ready双完成门禁与失败排空；UE控制器初始位置查询不生成Pawn、不修改资格，真正出生仍受准入/候选/资源/Active约束。Monolith创建并保存两张必要页面，固定字号和控件尺寸，只消费ViewModel事件和既有Retry命令；平台Root按LocalPlayer跨图挂载，取消事件清理上层Opening身份，新控制器重新消费已有快照。无自动登录，无伪造WorldReady，无新增插件或模块。
+
+真实UE回归先复现MissingExperienceContext、两页无法加载以及登录位置查询失败，修复后玩法5、平台UI12、世界3、项目UI14项均通过。扩大测试发现并修正既有LocalPlayer ClassWithin/AttributeSet外层夹具；新增测试夹具曾二次初始化World导致测试编辑器退出，已删除重复初始化，实际GameMode位置与出生禁止回归通过。Gameplay与PlayerStatus瞬态世界夹具共5条非失败警告保留。Architecture 73/73、英文路径违规0、源差异空白检查通过；不宣称全库中文说明已合规。
+
+锁定UE5.8 Win64 Development：Editor项目53模块最终退出0（FoundationM0/7c5ffa91-1ba6-4733-acd8-b813c1afdd01/Build-ProjectEditorModules），完整Server目标退出0（dd4f04f8-7a25-47fd-9fef-23c8402e9ff4/Build），完整Client目标退出0（8dcb5a43-3c4c-410b-9131-e7f372ad05ce/Build）。Village Server新Cook/Stage退出0（51f863bb-00b2-4afb-817b-b55ebb606bc2/Cook-VillageServer）。启动新专服后实际Gameplay日志Stage=2/Active、Error=None，并有持续控制面心跳；这证明专服体验可用，不代替两个客户端准入和行走。
+
+全部记录位于Saved/Validation/VillageFlow/20261009及FoundationM0。旧制品和日志保留用于回退，后端五服务沿用现有健康实例，没有重置账号与角色数据。客户端最终Cook与人工登录后WorldReady/行走仍须继续实测，不能由上述编译或服务端事实推导通过。
+
+本轮最终客户端Cook/Stage及27项IoStore资源检查退出0，缺失0：FoundationM0/e738d0ca-f9eb-46f1-b329-e8a5bcc85dbd/Cook-FrontEndClient。错误页已补齐中文Tooltip和六向Wrap导航，Monolith可访问性检查错误/警告均0。新专服PID54368、两个正常客户端PID7808/64544分别记在BlackScreen.Server.json与BlackScreen.Clients.json；两个首屏日志均激活WBP_DBA_UI_Login，无自动登录参数或密码注入。运行时屏幕检查遇到Windows锁屏，依电脑操作规则暂停UI输入，等待用户解锁及手动登录。此时尚未确认本轮双客户端WorldReady/行走，不能标记端到端验收完成。

@@ -6,6 +6,29 @@
 #include "Screens/DivineBeastsUIScreenCatalog.h"
 #include "Localization/DivineBeastsUILocalization.h"
 #include "ViewModels/DivineBeastsUIViewModel.h"
+#include "Screens/Loading/DivineBeastsLoadingTravelScreen.h"
+#include "Screens/Connection/DivineBeastsErrorReconnectScreen.h"
+
+// 黑屏回归：流程真实会路由到LoadingTravel/ErrorReconnect，规划软路径不能代替可实例化页面。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsRequiredFlowScreensTest,
+    "DivineBeasts.UI.Delivery.RequiredTransferScreens",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsRequiredFlowScreensTest::RunTest(const FString&)
+{
+    for (const FName Id : {FName(TEXT("UI.Screen.LoadingTravel")), FName(TEXT("UI.Screen.ErrorReconnect"))})
+    {
+        const auto* Surface = FDivineBeastsUIScreenCatalog::Find(Id);
+        if (!TestNotNull(TEXT("真实流程页面已登记"), Surface)) continue;
+        UClass* Class = FSoftClassPath(Surface->WidgetClassPath).TryLoadClass<UGamePlatformUIScreen>();
+        if (!TestNotNull(*FString::Printf(TEXT("%s必须交付可加载类"), *Id.ToString()), Class)) continue;
+        TestFalse(TEXT("交付页面可实例化"), Class->HasAnyClassFlags(CLASS_Abstract));
+        TestTrue(TEXT("加载与错误页的租约跨地图保留，直到业务关闭"), Surface->bSurvivesTravel);
+        UClass* Expected = Id == TEXT("UI.Screen.LoadingTravel")
+            ? UDivineBeastsLoadingTravelScreen::StaticClass() : UDivineBeastsErrorReconnectScreen::StaticClass();
+        TestTrue(TEXT("页面继承现有第三层事件驱动父类"), Class->IsChildOf(Expected));
+    }
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsUIScreenInventoryTest,

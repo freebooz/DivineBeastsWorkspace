@@ -26,6 +26,7 @@
 
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
+#include "Blueprint/GameViewportSubsystem.h"
 
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
@@ -189,6 +190,14 @@ bool UGamePlatformUIManagerSubsystem::InstallRootLayoutClass(
     }
 
     RootLayout = NewRoot;
+    if (UGameViewportSubsystem* Viewport = UGameViewportSubsystem::Get())
+    {
+        // 根布局归LocalPlayer/GameInstance，跨地图仍承载加载和错误页；页面是否保留由各自租约决定。
+        // 引擎默认在World销毁时移除Viewport控件，会让仍有效的Root指针指向已不可见的布局。
+        FGameViewportWidgetSlot Slot = Viewport->GetWidgetSlot(RootLayout);
+        Slot.bAutoRemoveOnWorldRemoved = false;
+        Viewport->SetWidgetSlot(RootLayout, Slot);
+    }
     if (!RootLayout->AddToPlayerScreen(0))
     {
         RootLayout = nullptr;
@@ -585,7 +594,12 @@ void UGamePlatformUIManagerSubsystem::PrepareForTravel()
     PendingRequests.GetKeys(RequestIds);
     for (const FGuid& RequestId : RequestIds)
     {
+        const auto* Pending = PendingRequests.Find(RequestId);
+        if (!Pending) continue; // 前一次失败通知允许上层同步取消其他在途请求。
+        const FName ScreenId = Pending->ScreenId;
         CleanupPendingRequest(RequestId, true);
+        // 取消必须通知上层清理Opening身份，否则新世界相同路由会被误认为仍在加载而永久不重试。
+        FailRequest(RequestId, ScreenId, LOCTEXT("TravelCancelledOpen", "地图切换取消了尚未完成的页面加载。"));
     }
 
     TArray<TWeakObjectPtr<UGamePlatformUIScreen>> Screens;

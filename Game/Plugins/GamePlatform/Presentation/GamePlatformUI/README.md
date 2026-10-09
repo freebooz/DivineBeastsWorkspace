@@ -33,3 +33,9 @@ CommonGameViewportClient已经配置。当前没有创建任何GamePlatformUI二
 ## 2026-09-30 设计审查修复
 
 本次资源/生命周期与行为合同见 [设计修复说明](Docs/DesignRemediation-2026-09-30.md)。源码及新增回归不等于UE运行、真实资产或Cook验收；准确执行证据由任务修复报告记录。
+
+## 2026-10-09 跨地图界面生命周期修复
+
+RootLayout按LocalPlayer/GameInstance持有，Viewport Slot关闭随旧World销毁自动移除，子页面仍按自身bSurvivesTravel与Data租约清理。PrepareForTravel取消在途页面时同步发布失败通知，调用方可清理请求身份；委托重入取消其他请求时跳过已撤销条目。退出或替换Root仍显式释放资源并从Viewport移除，平台不引用任何项目页面。
+
+本轮实际GamePlatform.UI组12项UE Automation通过；LocalPlayer夹具使用真实Engine Outer。项目客户端完成独立Cook和资源检查，但双客户端切图输入仍待人工继续核验，移动设备与多本地玩家不是本轮结论。

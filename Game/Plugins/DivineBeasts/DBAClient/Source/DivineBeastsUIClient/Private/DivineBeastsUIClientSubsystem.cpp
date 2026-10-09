@@ -31,6 +31,15 @@ namespace
             TEXT("/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C")));
 }
 
+void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
+{
+    Super::PlayerControllerChanged(NewPlayerController);
+    if (!IsValid(NewPlayerController)) return;
+    // 世界退出可以取消在途页面；新控制器是真实可创建Widget的生命周期通知，消费现有快照即可恢复。
+    EnsureDefaultRootLayout();
+    PullInitialState();
+}
+
 void UDivineBeastsUIClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {

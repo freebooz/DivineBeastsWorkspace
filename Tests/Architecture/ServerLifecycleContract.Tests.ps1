@@ -56,7 +56,8 @@ Describe '服务端生命周期实现与Shared控制面契约' {
         $profile = Get-Content -LiteralPath (Join-Path $dbaServerRoot 'Source/DBAServer/Private/Server/DivineBeastsServerRoleProfile.cpp') -Raw
         $bootstrap | Should Match 'IsConfiguredWorldValid\(World, Reason\)[\s\S]*?RegisterInstance\(Instance\)'
         $bootstrap | Should Match 'FindMissingRequiredAssets\(MissingAssets\)'
-        $bootstrap | Should Match 'IsConfiguredWorldValid\(\*Self->ValidatedWorld\.Get\(\), Reason\)[\s\S]*?MarkReady\(\)'
+        # Ready门禁现由唯一TryPublishReady汇集两个异步完成入口；本项只是源码顺序审计，不冒充运行验收。
+        $bootstrap | Should Match 'IsConfiguredWorldValid\(\*ValidatedWorld\.Get\(\), Reason\)[\s\S]*?MarkReady\(\)'
         $profile | Should Match 'DoesPackageExist\(PackageName\)[\s\S]*?AssetPath\.ResolveObject\(\) == nullptr'
     }
 

@@ -1,6 +1,8 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Definitions/DivineBeastsWorldDefinition.h"
+#include "Definitions/GamePlatformExperienceDefinition.h"
+#include "Definitions/GamePlatformPawnDefinition.h"
 
 #include "Misc/AutomationTest.h"
 #include "UObject/StrongObjectPtr.h"
@@ -116,6 +118,24 @@ bool FDivineBeastsWorldArenaContextTest::RunTest(const FString&)
         TEXT("未知竞技模式拒绝"),
         Definition->ValidateDefinition().Code,
         FName(TEXT("InvalidProjectArenaMode")));
+    return true;
+}
+
+// 黑屏回归：验证实际交付的新手村定义，而不是Transient替身；漏填Purpose会使真实Data租约失败。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsVillageDeliveredDefinitionTest,
+    "DivineBeasts.Worlds.Delivery.VillageGameplayDefinitions",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsVillageDeliveredDefinitionTest::RunTest(const FString&)
+{
+    auto* Experience = LoadObject<UGamePlatformExperienceDefinition>(nullptr,
+        TEXT("/DBAWorldPack_Village/Definitions/DA_DBA_Experience_Village_Tutorial.DA_DBA_Experience_Village_Tutorial"));
+    auto* Pawn = LoadObject<UGamePlatformPawnDefinition>(nullptr,
+        TEXT("/DBAWorldPack_Village/Definitions/DA_DBA_Pawn_WorldCharacter.DA_DBA_Pawn_WorldCharacter"));
+    if (!TestNotNull(TEXT("真实体验资产已交付"), Experience) || !TestNotNull(TEXT("真实Pawn资产已交付"), Pawn)) return false;
+    const auto ExperienceResult = Experience->ValidateDefinition();
+    TestTrue(*FString::Printf(TEXT("体验必须通过运行期验证，实际错误=%s"), *ExperienceResult.Code.ToString()), ExperienceResult.IsSuccess());
+    TestTrue(TEXT("真实Pawn定义必须通过运行期验证"), Pawn->ValidateDefinition().IsSuccess());
+    TestEqual(TEXT("体验指向同一真实Pawn身份"), Experience->DefaultPawnDefinitionId, Pawn->GetPrimaryAssetId());
     return true;
 }
 
