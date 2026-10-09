@@ -1,5 +1,7 @@
 # 《神兽联盟》战斗UI Widget Blueprint 实物交付清单（2026-10-09）
 
+> **后续战斗HUD集成更新：** 本文保留原17份控件蓝图的历史交付台账，其中提到的生命/护盾同条及PlayerStatus旧ShieldBar等是旧版视觉结构。当前已通过Monolith创建`/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD`（组合战斗主界面），并从项目层玩家/目标蓝图树删除旧盾资源条，改为只显示生命和气势；临时盾以GAS状态图标表示。现行唯一补充交付详见`Docs/CombatHUDBlueprintDelivery_20261009.md`（战斗主HUD真实蓝图与运行接入记录）。不将本历史台账的盾栏恢复为永久数值属性。
+
 > 工作区：DivineBeastsWorkspace（神兽联盟工作空间）；引擎：UE5.8（虚幻引擎5.8）；制作：Monolith MCP 0.23.0（虚幻UI工具）。
 > 当前状态：**已创建并保存17份真实.uasset，其中12份覆盖原P0战斗视觉清单，另外5份为复用组件；实际联机、PIE与Cook仍待验证。**
 

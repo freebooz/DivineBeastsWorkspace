@@ -1,12 +1,12 @@
 {
   "SchemaVersion": 1,
-  "GeneratedAt": "2026-10-09T17:29:53.088991+08:00",
+  "GeneratedAt": "2026-10-09T18:01:29.422037+08:00",
   "Scope": "DevelopmentOnly",
   "Workspace": "DivineBeastsWorkspace",
   "UEVersion": "5.8",
   "GenerationTool": "Monolith MCP 0.23.0",
-  "DescriptionZh": "子鼠五资产开发样板（Rat UIProfile包含在12份内）及12生肖五槽显示配置真实磁盘证据。样板不代表商业化或正式技能授权与联机通过。",
-  "AssetCount": 16,
+  "DescriptionZh": "子鼠样板及十二生肖60份开发技能定义、12份开发UI配置、60行统一开发数值表与60个UE图标路径的真实磁盘与编辑器校验记录；正式技能授权/战斗/打包仍未获验收。",
+  "AssetCount": 76,
   "UIProfileCount": 12,
   "MappedArtSlots": 60,
   "FormalAbilityDefinitionsApproved": 0,
@@ -14,113 +14,533 @@
   "AllDevelopmentAssetsRequireExcludeFromShipping": true,
   "Assets": [
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3074,
+      "SHA256": "aded843295ae1bafbaa14cd0a08c6a16552d4dd9759bb1180df9db7d735987ec",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3074,
+      "SHA256": "1d85a66984d24e5c7625664243e75cf6a90b2253b6d0aca27d2fadfe635b9f8e",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3300,
+      "SHA256": "57e2d5447017b0a719cd9c0280753ac7596a0668d0249da67c909263aaeb66bd",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3264,
+      "SHA256": "9483e80a45dc9bd422a561a621a680f86f4f6b62477fc0e381624c9e427b34d3",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5266,
       "SHA256": "a1b1d7acd16efa73b16d172a9b08fa92d7de74cc7a1e60baf6b9d41f587e215f",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3274,
+      "SHA256": "d3391a0d3a1f52e272686f6ee5830f560ca5553ea6f2dedad7913e25a7c9a828",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3064,
+      "SHA256": "ef2f96257259bb26c5df748edf8e7ee774eac464f779c4b53feaf46a3b445de2",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3064,
+      "SHA256": "b8d2d9d4b4db20b8a73bd60c248e31b751ee06745906416e92310d91d1566dba",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3290,
+      "SHA256": "ae6a9e48686a5c7a35773aef9ab3d19ab1e18217233283197053a392cf2f7eb1",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3254,
+      "SHA256": "f2ff000c63df0059c30b673706f82a1089c0721d4b6f08b0080c4100ec52d0d2",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5258,
       "SHA256": "fed0a86e0a04fccebd3976cc79b09eeb7912c4e33b969b1d8e889152ffe9e8f1",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3264,
+      "SHA256": "af850d4ea52c3ccdc11a5fa5596773ad28c69affa6c6ae9d18f2c5acdbd2f7a7",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3094,
+      "SHA256": "a47973387478ec54e1c684e40a4595414ba0f67bf102aea89449c8960ee926c3",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3094,
+      "SHA256": "47a5801aedd65a3aff70c3a3286f430b8bd00bd645d0e261baa411078450b389",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3320,
+      "SHA256": "d7802f2ae184a90675219e2f79d312ccc845ffa706bfe9aceec6c704686d5bd8",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3284,
+      "SHA256": "2da469f46a842d45ecd7506ae938d84d1e868d422d7250abdf273eeafe55f744",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5340,
       "SHA256": "3af2707d2076931f0859661a3baafba7300be9deb91bed0bd6bf63953363f80a",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3294,
+      "SHA256": "694e8b5e194e0fdc8ef598fd25ea79c1b0899eb06fa194352e48769f1fe8486a",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3074,
+      "SHA256": "6852ea2b1365dba9b407cc1fb4e72f8d408ecf189ab3f2e6522562a5295196ad",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3074,
+      "SHA256": "7ffb0cef7f6a6a0d56f6444e706aafea885adce2346eaa19f61b1b271e5b3dd3",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3300,
+      "SHA256": "450ea626cacec5e4ee02e6db0e74ad636bec4fe8662467d27c723b5c7a8786e0",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3264,
+      "SHA256": "3753cdd257694f3432eda9f3b72d00bfc7214897e7bec8ba19fb3311b83710a6",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5276,
       "SHA256": "5c989f8d5a85bf08fdb71dac69d97f80fcf8191d4e5f565c9c76f336cba07bb2",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3274,
+      "SHA256": "7eed4ed726a146c94c98ad17a7097475df6f5889e84be18a92dda7e54434ad96",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3084,
+      "SHA256": "f61c1eb955200cc935fd5e1f0323b54735e97c95d2db74d9f96dfa8bdfae546a",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3084,
+      "SHA256": "98f2a43e0d393c9e83be8dcd7282041cf095d5a79ddbfc0c2876b3aa9b65e041",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3310,
+      "SHA256": "cb149bf739e955d5bdeafa25d8e7d257484e21860cfec9ab455453615eb58b01",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3274,
+      "SHA256": "65265649668627bec7da0e62df3db474a691c3c655eed21e8581c1ce879937ba",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5314,
       "SHA256": "0711587f7a7709442f9a621dabb0534820bccbe3e52c54a06d7236b12e6c64cc",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3284,
+      "SHA256": "c6008b69f4a17d0894dfd9d3a8717de4af5062c5631a3a26c02228043a715451",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3094,
+      "SHA256": "e320b798e0fdb8ee348aa44552bc5fc8ca1e3290f84cee9de33cc57107f02116",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3094,
+      "SHA256": "5530dad80f0a307101d258646dc982dd5296e960b084db953e3e0be433d74552",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3320,
+      "SHA256": "19391ac65a983f28948aafac73e645c3dc9af41d87e375e0a9332c32d767978f",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3284,
+      "SHA256": "1fef558551cda8c145584d9c0a9f47a46a479ea5b461f978779f39e52c828b80",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5352,
       "SHA256": "ad8172a554e2fc861e2db7b8a9822ccdc48b55b792f321e1d638a1a818f09f19",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3294,
+      "SHA256": "9c1ce451404263bf6d880871d9021e8d4bc02092e68ce78791b16bc1c1f28164",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3054,
+      "SHA256": "bc78b90159b2ad5d2420ecd10b62b04ddd211583f3bc589d81337f125177001a",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3054,
+      "SHA256": "0fcdf96be0d1e1603251a5fbddd63f73220e819f0b4cb3fcbd56cfc5d26381a6",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3280,
+      "SHA256": "2b9be970b35c9510d399b9670252f75c606c691c0665f9ff2536bd54de05d59e",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3244,
+      "SHA256": "d721d1b155454daf2d3664770c99f0ae3731a6589fe8aaf623a1c154d3a599fa",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5208,
       "SHA256": "0523f11adfeeeafbf384ce3ac64dfa7a7625f6e76dc97baa4bb90a36a90da572",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3254,
+      "SHA256": "b5e7c7b3bf702be675c60b764f4203851d8576fe43aa39a68dd6bf8fb6604e28",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3094,
+      "SHA256": "a1501a6a65f518e56a7adb1469c9534c239fd4e1c0ca5c17cf22411be98d40e1",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3094,
+      "SHA256": "ab188f96b95f62f041a66ad1300c5388025a6cad18f8e9aa580742e946894c70",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3320,
+      "SHA256": "519083026f5a1ae768babbcff3c491b036eac88643ee356c46501b1c10f41e34",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3284,
+      "SHA256": "561edac28a669c5d951d843d0dfb7d2a391a048fd32bc76308d89f3a338c59d4",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5320,
       "SHA256": "7c7261d2fd45cc4c583c9bec4895c9f4f292fc40b133e1af07d38a81e0db0a72",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3294,
+      "SHA256": "c8ec475e5a26e7b27a2e4b851be2b9a14c837b72a8fd46995388374112acf289",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevAbilitySet.uasset",
-      "RoleZh": "子鼠试验玩法技能资产",
+      "RoleZh": "子鼠单技能DevelopmentOnly开发授权集",
       "SizeBytes": 4458,
       "SHA256": "ce50af9bb01b5ea16742615842fc73b61442b56210190f4a2138fd4978036d28",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3064,
+      "SHA256": "23ab659e21199add4f0ef174149e953b1036e7ae5bb1e292432c5b3a1acf5c63",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3064,
+      "SHA256": "553e19ae7f0e1d639562a586ec0aac7c4fc41c73bc26979193d7f9b7c32ae1e0",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3254,
+      "SHA256": "5d3c03eba57bb95e9f2761c6904be6f65074bc4c808f9f795cf9adfa0ac95d8c",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevPrimary.uasset",
-      "RoleZh": "子鼠试验玩法技能资产",
-      "SizeBytes": 3236,
-      "SHA256": "844a5385ae4fbddea8da30f4e3f76ddbf0311a2803172c83c16e2c9e94ebce1c",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3258,
+      "SHA256": "a3685144ffb6562f387c16ec9e254629eed7af628c50d07cd23e16fb72f07f94",
       "AssetFileExistsAndNonempty": true
     },
     {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 2997,
       "SHA256": "7751a8784faa82ad967adaa615f9028d33ab5c42fbfe9f6db22c09deb58f2787",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3264,
+      "SHA256": "4d243384d5a779b5963d8f97ea2f6a56bba6c5f5289d30b1220a761511a9dea0",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3104,
+      "SHA256": "295c6cbe0e201858ed65aede5992a3ec3d59e1fa5eb162f9d8deeee64394c89d",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3104,
+      "SHA256": "0a0b43cf28eb9ed46aceeb3490c3a037bf686cc44798019a0e996f2272419f47",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3330,
+      "SHA256": "9271f8670225b1cb38bdad4ab5410b50047cdc59510b84af95e9ed2f42483e7d",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3294,
+      "SHA256": "1313df9b7ab658d17d5d908a3d9ebb262ca0b0cd784a3c4d1061fcdfdf06d15b",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5368,
       "SHA256": "3c80969ef596587de486c5888b785f7bba2b0b151787b66b11e4171e74931b31",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3304,
+      "SHA256": "8ac15647aac6c040fadc7561b918c5bd580eb9d7a49c4690d3a68ae98e11cae8",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3084,
+      "SHA256": "4e8c388de73123c623532a63aba96b91ac8d4d14f41c389d928505dd646af6cd",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3084,
+      "SHA256": "877b0cab5b861358aaad529ac4154b26e6e379c5ec4627528a08989cef88f2ed",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3310,
+      "SHA256": "e4035a41c4bf7e87b2d13315e911a6438897d2c223afd9f514b096a4af8d807f",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3274,
+      "SHA256": "f548b5e04302ed8f65008a01168ed676fa821413aa38ac4f8cb30c0283baed5c",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5302,
       "SHA256": "f560876c4b354cc70c2111d040d505689593cb4be16e8bcad09c77b33a0de6b1",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3284,
+      "SHA256": "9f4c861bcd9283f325143b5c76babf8a8f5ca8948edd6c65efc71c4bdbdd1c3e",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevActive01.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3084,
+      "SHA256": "4d83449c27360b49bb27de37d2cbc89a4465e857f203da3c8b2705e082dd4cc5",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevActive02.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3084,
+      "SHA256": "e570a704570e501fbe192e05b4be354c6d0503cf9b90f22540a2b27cb332b78c",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevBasicAttack.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3310,
+      "SHA256": "f4586772f8be8bd2bab70825d43359793a201a65d427fdd9ddff3aef30456baa",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevPassive.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3274,
+      "SHA256": "5f56763d87a089fa9267595a52e3a7ae73696899fd916eac830d03d76ffcfa53",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevUIProfile.uasset",
-      "RoleZh": "生肖技能纯客户端显示配置",
+      "RoleZh": "纯客户端开发技能UIProfile，非正式生产资源",
       "SizeBytes": 5292,
       "SHA256": "5559fd313250ab57966358ba8fbc21c561ec45c10dbc1b8d6fe9e57fcd67210f",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevUltimate.uasset",
+      "RoleZh": "每生肖每槽位独立开发技能逻辑定义，非生产技能",
+      "SizeBytes": 3284,
+      "SHA256": "c31e4a4b551a9d929eaf27b97c6c9c2119cddddc28caf87f70760844b47a0748",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DT_DBA_Rat_DevBalance.uasset",
-      "RoleZh": "子鼠试验玩法技能资产",
+      "RoleZh": "早期子鼠一级数值表，现已停用但保留开发样板追溯；统一数值以Zodiac表为准",
       "SizeBytes": 2860,
       "SHA256": "e55fac2b4ec7cc4b78d0fd3e8e86ddc3467957ab74574d4de8e89c06ba158188",
       "AssetFileExistsAndNonempty": true
     },
     {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DT_DBA_Zodiac_DevBalance.uasset",
+      "RoleZh": "十二生肖开发技能统一数值DataTable（60行）",
+      "SizeBytes": 29014,
+      "SHA256": "91f538f8acb7b7d41d901f42dd508b34819875da2088b14606ddb3266de481e2",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
       "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/GA_DBA_Rat_DevPrimary.uasset",
-      "RoleZh": "子鼠试验玩法技能资产",
+      "RoleZh": "子鼠开发GAS技能蓝图；仅Commit与End，无伤害",
       "SizeBytes": 27920,
       "SHA256": "1c02ea28223572775928e705f8c0c18de9da5e5f7fa3e5f0eec6d5abd6bda061",
       "AssetFileExistsAndNonempty": true
@@ -488,5 +908,19 @@
       "FormalAbilityId": null
     }
   ],
-  "ValidationLimitsZh": "文件大小及SHA仅证明写盘未损坏；不证明引擎AssetRegistry、等级数值、网络伤害、蓝图执行或Cook剥离。"
+  "ValidationLimitsZh": "文件大小及SHA仅证明写盘未损坏；不证明引擎AssetRegistry、等级数值、网络伤害、蓝图执行或Cook剥离。",
+  "DevelopmentAbilityDefinitionCount": 60,
+  "DevelopmentBalanceTableRowsUEEditorVerified": 60,
+  "CanonicalDevelopmentBalanceTable": "/Game/Development/DivineBeasts/Abilities/DT_DBA_Zodiac_DevBalance",
+  "DevelopmentReferenceSource": "Tools/Unreal/Abilities/ValidateZodiacDevelopmentAssets.py",
+  "UEEditorReadbackVerified": {
+    "AbilityDefinitions": 60,
+    "BalanceRows": 60,
+    "UIProfiles": 12,
+    "UiEntries": 60,
+    "IconSoftAssetPaths": 60,
+    "BrokenIconPaths": 0,
+    "Scope": "DevelopmentOnly",
+    "CheckedWith": "Monolith editor.run_python"
+  }
 }

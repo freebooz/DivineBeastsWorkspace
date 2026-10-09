@@ -32,6 +32,13 @@
 - Profile在Catalog主资产异步成功后会按稳定条目顺序提前请求（最多64条唯一配置），不会等到首次技能命中才整体开始加载；角色/技能键不匹配时严禁重用其他英雄的VFX/SFX资源ID。只在真实ArenaGameState世界激活，普通登录、Village和OpenWorld不因该可选竞技组合根加载资源。
 - UE编译目前取得UHT生成成功但C++构建停在本机UBA执行器且被主动停止，不可标记为完成。UE5.8本分支`-NoUBA`只关闭Detour，仍会选用UBA执行器；需要排查运行端编译代理后再进行真实客户端构建、专服和资源Cook。
 
+
+## 2026-10-09 已授权技能预热与资源验收边界
+
+- 游戏状态订阅采用UE5.8 World.GameStateSetEvent，避免GameState复制晚于PostLoadMap时遗漏竞技初始化；本地Controller.Pawn变化及OwnerOnly技能授权快照更新后，仅预热可信HeroDefinitionId、AvatarGeneration和已授予AbilityId匹配的Profile，不再无差别加载全部生肖配置。
+- 当前LocalPlayer换英雄或地图时，按原有服务释放本组合根持有的技能Profile租约，及时取消订阅。MobaPresentation只消费低层已加载数据与逻辑VFX/SFX ID，不了解神兽项目资产；当前缺失资源时使用通用默认反馈。
+- 首批丑牛/寅虎/卯兔资源检查见 Docs/Implementation/CombatFeedbackAssetGapInventory_20261009.md；外观/技能UI文件不等于Niagara/声音/受击Montage/Profile真实交付。运行中通过客户端控制台gp.Combat.HitstopOverrideFrames测试0/3/6帧，在UE编译和手工运行验收前只能视为已写入功能。
+
 ## 验证
 
 - `Tests/Architecture/DBAPluginConsolidation.Tests.ps1`：模块唯一归属与声明。

@@ -1,5 +1,12 @@
 # 变更记录
 
+## 2026-10-09｜战斗打击反馈技能授权预热与局部顿帧调节
+
+- 项目竞技ClientOnly组合根根据GameState设置通知及本地Pawn接管事件建立已授权技能订阅；从OwnerOnly授权快照预热当前HeroDefinitionId对应实际授予的有效技能Profile，按角色/世界切换释放旧资源和事件绑定，停止无差别预热十二生肖全部技能。
+- GamePlatformAnimationClient增加本地开发控制台变量gp.Combat.HitstopOverrideFrames，-1按Profile、0关闭、3/6参考帧AB对比、最大10；保留独立时钟、根运动保护、GAS服务端权威。新增局部顿帧计算自动化测试源码与静态接入审计。
+- 独立MSVC已发现并修复竞技反馈.cpp两处C4067预处理器#include拼接错误；三层接入静态22项通过，UE正式编译、反射/资产验证、Multi-PIE和专服联机仍待完成。
+
+
 ## 2026-10-09｜战斗反馈主资产租约与竞技客户端接线
 
 - 现有平台`UGamePlatformHitFeedbackProfile`和项目`UDivineBeastsCombatFeedbackCatalog`升级为`UGamePlatformDefinitionBase`，通过GamePlatformData统一主资产身份、数据校验、异步租约；Profile的CameraShake/Overlay只在Client Bundle中加载。项目技能表改用ProfileDefinitionId，新增重复映射、非法主资产ID和参数数值校验及UE自动化测试源码。

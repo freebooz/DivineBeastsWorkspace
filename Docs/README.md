@@ -19,6 +19,10 @@
 - [十二生肖技能数据驱动实施计划](superpowers/plans/2026-10-09-zodiac-ability-data-driven-implementation.md)：按现行三层与五个 DBA 代码插件规范，分阶段建设真实技能授权、数值配置、图标与技能栏自动初始化；当前仅为计划，非功能完成证明。
 - [十二生肖技能数据驱动实施记录](Implementation/十二生肖技能数据驱动实施记录_20261009.md)：2026-10-09 新增技能数据定义、GAS 授权/所有者复制、客户端视图及竞技出生接口的真实代码变更，明确实际静态检查、UE/Monolith 阻断与未交付的正式技能/图标/蓝图。
 - [十二生肖技能主数据及资源缺口清单](Implementation/ZodiacAbilityAssetInventory.json)：12 个稳定英雄编号和现存英雄定义文件的机器可读清单，未批准技能名称、伤害数据、技能图标和真实授权均显式为空或待验证。
+- [十二生肖开发技能主数据与资产证据](Implementation/ZodiacDevelopmentUEAssetEvidence_20261009.json)：76个实际UE开发资产文件及SHA-256、60份技能逻辑定义、12份技能UI配置和60个图标软引用的验证摘要；全部仅限开发，非正式发行技能。
+- [十二生肖开发技能数值草案](Implementation/ZodiacAbilityDevelopmentDraft_20261009.json)：12生肖×5个技能槽位的中文候选名称和一级数值，正式AbilityId仍全部为空，不得直接作为生产技能表。
+- [十二生肖技能候选策划审核表](Implementation/十二生肖技能候选策划审核表_20261009.md)：把60项开发候选名称、伤害、冷却和气势成本转为可人工逐项审核的中文清单；所有正式技能均维持“未批准”。
+- [UE编辑器生肖开发资产核验脚本](../Tools/Unreal/Abilities/ValidateZodiacDevelopmentAssets.py)：通过Monolith在UE5.8真实编辑器内逐项验证60技能定义、60行开发数值表、12个UI配置及60张已导入图标。
 
 - `Tests/Assets/ValidateZodiacAbilityDelivery.py`（十二生肖技能交付只读预检）：`--inventory`检查现存12英雄定义、60个已导入图标纹理与2个真实技能Widget，`--release`严格拒绝缺少12套正式技能ID/数值/界面绑定及UE三目标编译、联机、Cook的生产发布；最新结果及70项缺口记录于十二生肖技能实施台账。
 
