@@ -27,7 +27,7 @@ HeroDefinition.DefinitionId（英雄定义编号） → HeroDefinition.DefaultAb
 
 1. DefaultAbilitySetId 为空时保留旧英雄资产的读取兼容性，但不给出任何技能，明确报告未配置。不能为十二生肖制造未经批准的正式 AbilityId、技能名或伤害数字。
 2. FGamePlatformId（平台逻辑身份）规范形如 namespace.name@version（命名空间.名称@版本），并非 .uasset 文件路径。新 UDivineBeastsAbilityDefinition 继承 LogicalId，不再定义第二个 AbilityId；Balance 行与技能授权使用该规范字符串互相校验。
-3. 技能数值表字段：Level（等级）、BaseDamage（基础伤害）、AttackPowerCoefficient（攻击加成）、AbilityPowerCoefficient（技能强度加成）、DamageType（平台通用伤害类型）、bCanCritical（是否允许暴击）、CooldownSeconds（冷却秒数）、MomentumCost（气势消耗）、CastRangeCm（厘米施法范围）、AreaRadiusCm（厘米范围半径）。输入参数/单位/合法区间由 Row.Validate 校验。
+3. **当前技能数值表字段已精简**：Level（等级）、BaseDamage（基础伤害）、DamageType（技能伤害类型/表现语义）、CooldownSeconds（冷却秒数）、MomentumCost（气势消耗）、CastRangeCm（厘米施法范围）、AreaRadiusCm（厘米范围半径）。不再有攻击/技能强度系数或暴击开关；各类Buff/Debuff对伤害的增减均归平台Combat属性和结算规则。输入、单位、合法区间由Row.Validate校验，旧DataTable字段需资产兼容审核。
 4. TryGetLoadedBalance（已加载数值查询）禁止 LoadSynchronous（同步加载）；正式资产须在 AbilitySet 的 RequiredDefinitions（定义依赖）列出对应玩法定义，平台 AcquireDefinition 同时加载 AbilitySet 与 Gameplay 分组，缺失则拒绝伤害与施法。
 5. GAS 能力在 CommitAbility（提交技能）阶段执行真实成本/冷却效果，技能数据配置**不会自动变成 GAS GameplayEffect**；必须为每一个正式技能实装并核验该步骤，本轮只是具备读取数值、可信角色校验与提交 CombatSpec 的代码入口。
 6. UDivineBeastsConfiguredGameplayAbility（项目技能基类）不定义鼠、龙等业务动作子类；策划批准后优先用同一 C++ 技能模板/蓝图派生实例绑定不同资产。项目正式禁令：不恢复 Element（旧五行）、克制、破元、共鸣机制。

@@ -1,6 +1,6 @@
 # GamePlatformAbilitySystem（游戏平台技能系统插件）
 
-2026-10-09 **最新无韧性实施规范**：`Docs/GAS无韧性精简属性实施规范_20261009.md`（4个属性集、17字段、4公开/11拥有者/2不复制），移除控制韧性/失衡属性与控制时长减免公式。`Docs/GAS精简属性集与复制分层实施规范_20261009.md`（此前18字段方案）和`Docs/GAS属性集设计与实施建议_20261009.md`（24字段历史方案）均为历史快照，不得再次恢复控制属性集；原生测试和联机实测按最新规范验收。
+**2026-10-09唯一最新规范：** `Docs/GAS统一增减伤与护盾效果实施规范_20261009.md`（2属性集、8字段、2公开/4仅拥有者/2非复制元属性）。通用战斗层只维护Health/MaxHealth、DamageBonus（增强伤害）/DamageReduction（减免伤害）和两个瞬时Meta；项目层保留Momentum/MaxMomentum（气势）。盾改为限时GameplayEffect（玩法效果）与服务器临时吸收容量实例，不再注册护盾属性；物理/法术同公式，不恢复暴击、攻击力、抗性、穿透、韧性。其他2026-10-09 GAS设计文档仅为历史快照；UE正式编译、双客户端与资源Cook仍须独立验收。
 
 跨游戏 GAS（Gameplay Ability System，玩法能力系统）基础层：提供 `UGamePlatformAbilitySystemComponent（平台ASC基类）`、`UGamePlatformGameplayAbility（平台玩法能力基类）`、`UGamePlatformAttributeSet（平台属性集基类）`、AbilitySet授权合同、中立InputTag及 `IGamePlatformAbilityInputReceiver（平台能力输入接收器）`。
 

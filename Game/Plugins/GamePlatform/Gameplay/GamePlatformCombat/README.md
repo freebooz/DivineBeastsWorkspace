@@ -1,10 +1,10 @@
 # GamePlatformCombat（游戏平台战斗插件）
 
-**2026-10-09最新决定：不要韧性设计。** 本插件仅保留生命/护盾、攻击、防御3组具体战斗属性集，全部继承中立 `UGamePlatformAttributeSet（平台属性集基类）`。已移除 `UGamePlatformControlAttributeSet（历史控制属性集）` 及 Tenacity（控制韧性）字段、控制时长抗性减免公式和动态注册逻辑。服务器仍校验并应用Stun/Silence（眩晕/沉默）玩法效果，持续时间按技能可信请求直接设置。项目另有气势属性集，合计4组17个字段：4个公开生命/护盾、11个拥有者私有、2个不复制元属性。参见 `GamePlatformAbilitySystem/Docs/GAS无韧性精简属性实施规范_20261009.md`（最新无韧性属性规范）和 `Tests/Architecture/ValidateCompactGASAttributes.py`（精简属性门禁）。UE编译和双客户端网络测试仍需以本次真实结果验收。
+**2026-10-09唯一最新战斗设计：** 本插件只保留`UGamePlatformCombatAttributeSet（统一战斗数值属性集）`一种具体数值集。6项字段分别为Health/MaxHealth（生命/上限）、DamageBonus（有符号增伤）、DamageReduction（有符号减伤）、IncomingDamage/IncomingHealing（不复制结算元属性）。已删除Shield/MaxShield（盾永久属性）及独立攻击、防御、穿透、抗性、暴击、韧性类。通过`UGamePlatformShieldGameplayEffect（有限时护盾效果）`及CombatComponent（战斗组件）的服务器有界吸收账本保留护盾玩法，过期/耗尽移除GE，不单独复制盾容量。神兽联盟项目层另持气势2字段，合计2类8字段。见`GamePlatformAbilitySystem/Docs/GAS统一增减伤与护盾效果实施规范_20261009.md`（最新统一结算规范）；模块编译、资源迁移、网络性能与双客户端验收仍须实测。
 
 跨游戏通用 GAS（Gameplay Ability System，玩法能力系统）战斗层。正式仅保留一个 `GamePlatformCombat（战斗运行模块）`，Type 为 Runtime（运行时）；客户端与专用服务器共享类型，但伤害、治疗、控制、死亡和重置只有 Authority（服务器权威）路径可产生最终结果。
 
-当前已实现：Combatant 接口、CombatComponent、以 `UGamePlatformAttributeSet（平台属性集基类）` 为统一边界的战斗属性体系、Health/MaxHealth、Shield/MaxShield、IncomingDamage/IncomingHealing、`UGamePlatformOffenseAttributeSet（攻击属性集）`、`UGamePlatformDefenseAttributeSet（防御属性集）`、Damage/Healing Execution、C++ Damage/Healing GameplayEffect、Stun/Silence 控制 Effect、护盾吸收/溢出、BypassShield、死亡幂等、死亡技能取消、Respawn Reset 边界、CombatEvent、GameplayCue、服务器 LineTrace/SphereSweep 命中验证和 AvatarGeneration 过期保护。
+当前源码：Combatant（战斗者接口）、CombatComponent（服务器战斗组件）、唯一具体CombatAttributeSet（生命/增减伤/瞬时元属性）、Damage/Healing Execution（伤害/治疗执行）、C++ Damage/Healing/Shield/Stun/Silence GameplayEffect（伤害/治疗/限时盾/眩晕/沉默玩法效果）、有效GE盾容量消耗/溢出/绕盾、死亡幂等、死亡技能取消、重生边界、CombatEvent（战斗事件）、GameplayCue（表现通知）、服务器LineTrace/SphereSweep（线段/球扫命中验证）和AvatarGeneration（角色代次）保护。
 
 `Root（定身）`未实现：GamePlatformCharacter 尚无可复用 MovementBlocked（移动阻止）接口；本轮不通过 Combat→Character 反向依赖强行补齐。Lag Compensation/Server Rewind（延迟补偿/服务器回溯）也未实现，命中验证仅使用服务器当前时刻世界状态。
 

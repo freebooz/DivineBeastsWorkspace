@@ -6,4 +6,6 @@
 
 2026-10-09新增 `GamePlatformPresentationCore/Public/Feedback/GamePlatformHitFeedbackProfile.h`（平台反馈数据资产契约），提供轻击、重击、技能、格挡、暴击额外帧、闪白与连击强度等中立可调参数。不存生肖资源或Gameplay权威结果；真实DataAsset实例需通过UE编辑器建立。
 
+当前Profile定义另包含CameraShakeClass（镜头震动类）与HitFlashOverlayMaterial（受击Overlay材质）软引用。执行器仍归平台GamePlatformCameraClient与GamePlatformAnimationClient，已有VFX/SFX Provider继续复用；软资源必须提前通过GamePlatformData租约加载，命中热路径禁止同步加载。现有编辑器未重新加载本批新增的反射类，因此不能认为DataAsset实例已制作。
+
 Client 模块同时提供 `AGamePlatformCharacterPreviewStage（平台三维角色预览舞台）`：无 Tick、无复制，只负责已经加载完成的 SkeletalMesh / Material / AnimInstance 的本地展示、镜头距离和角色旋转。它不认识项目 Hero ID、生肖或后端角色身份，可供不同游戏项目的角色选择、捏脸、商城试穿等前端场景复用。

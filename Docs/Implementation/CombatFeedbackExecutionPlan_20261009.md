@@ -1,5 +1,7 @@
 # 战斗打击反馈系统：三层插件实施计划与验收台账
 
+> **2026-10-09 增量说明：** 最新阶段工单、网络确认事实、Overlay短闪白、CameraShake、分层VFX/SFX以及验收门禁统一见 `Docs/Implementation/CombatFeedbackWorkOrders_20261009.md`。下文早期“网络无源码”“镜头/闪白未实现”等是历史状态，需按最新工单核对；尚无UE引擎资产、Cook/双客户端证据，不能改写为验收完成。已取消的权威暴击属性与旧五行玩法不得因原始提示词而恢复。
+
 日期：2026-10-09；工程：DivineBeastsWorkspace / Game/DivineBeastsArena.uproject（UE5.8）；任务范围：平台通用打击反馈、MOBA强度策略、神兽联盟英雄技能配置。
 
 ## 一、设计约束与当前基线（P0）
