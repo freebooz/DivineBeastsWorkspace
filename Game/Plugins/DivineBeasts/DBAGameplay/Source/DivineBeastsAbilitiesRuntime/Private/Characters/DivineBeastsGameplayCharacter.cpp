@@ -37,11 +37,11 @@ void ADivineBeastsGameplayCharacter::OnRep_PlayerState()
 
 void ADivineBeastsGameplayCharacter::BindAbilityActorInfo()
 {
-    if (UGamePlatformAbilitySystemComponent* AbilitySystem = GetGamePlatformAbilitySystemComponent())
+    if (UGamePlatformAbilitySystemComponent* CharacterAbilitySystem = GetGamePlatformAbilitySystemComponent())
     {
         // 公共复制事实查询保留主分支入口，但服务器失控后不能由PlayerState复制/启动重建Avatar。
         // 客户端Controller可能不向远端观察者复制，ActorInfo可存在，实际激活仍由继承的Gate失败关闭。
-        if (GetController() || !HasAuthority()) { AbilitySystem->BindAbilityActorInfo(this, this); }
+        if (GetController() || !HasAuthority()) { CharacterAbilitySystem->BindAbilityActorInfo(this, this); }
         else
         {
             // 与基类拥有关系刷新保持同一边界：无Controller的权威Pawn立即失活并撤销Avatar。
@@ -49,7 +49,7 @@ void ADivineBeastsGameplayCharacter::BindAbilityActorInfo()
             {
                 Eligibility->SetServerPlayerActive(false);
             }
-            AbilitySystem->ClearAbilityAvatar();
+            CharacterAbilitySystem->ClearAbilityAvatar();
         }
     }
 }

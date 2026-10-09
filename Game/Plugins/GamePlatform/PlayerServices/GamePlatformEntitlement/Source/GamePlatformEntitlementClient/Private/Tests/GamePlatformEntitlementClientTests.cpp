@@ -5,9 +5,38 @@
 #include "Misc/AutomationTest.h"
 #include "Queries/GamePlatformEntitlementQuery.h"
 #include "Services/GamePlatformEntitlementClientSubsystem.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
+/**
+ * 仅Automation的合法Outer夹具：LocalPlayer的Within是Engine，领域Subsystem的Within是LocalPlayer。
+ * GT显式构造并强持有两者，不PlayerAdded/不建World或自动登录；原测试Transport/账号前提保持。
+ * 无Viewport时GetGameInstance为nullptr，不能把本夹具当完整GI/Online装配或生产服务。
+ * 任意正常/提前返回先Deinitialize清委托/取消请求，再释放Client与Player，避免GC和测试间残留。
+ */
+struct FEntitlementLocalPlayerFixture
+{
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UGamePlatformEntitlementClientSubsystem> Client;
+    bool Initialize(FAutomationTestBase& Test)
+    {
+        if (!Test.TestNotNull(TEXT("LocalPlayer真实Engine Within宿主"), GEngine)) return false;
+        Player.Reset(NewObject<ULocalPlayer>(GEngine));
+        if (!Test.TestNotNull(TEXT("领域Subsystem真实LocalPlayer Outer"), Player.Get())) return false;
+        Client.Reset(NewObject<UGamePlatformEntitlementClientSubsystem>(Player.Get()));
+        return Test.TestNotNull(TEXT("合法Outer的领域Subsystem实例"), Client.Get());
+    }
+    ~FEntitlementLocalPlayerFixture()
+    {
+        if (Client.IsValid()) Client->Deinitialize();
+        Client.Reset();
+        Player.Reset();
+    }
+};
+
 class FEntitlementMockTransport final
     : public IGamePlatformEntitlementClientTransport
 {
@@ -84,8 +113,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformEntitlementClientAccountTest::RunTest(const FString&)
 {
-    UGamePlatformEntitlementClientSubsystem* Client =
-        NewObject<UGamePlatformEntitlementClientSubsystem>();
+    FEntitlementLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformEntitlementClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FEntitlementMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FEntitlementMockTransport, ESPMode::ThreadSafe>();
@@ -124,8 +154,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformEntitlementDerivedIndexTest::RunTest(const FString&)
 {
-    UGamePlatformEntitlementClientSubsystem* Client =
-        NewObject<UGamePlatformEntitlementClientSubsystem>();
+    FEntitlementLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformEntitlementClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FEntitlementMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FEntitlementMockTransport, ESPMode::ThreadSafe>();
 
@@ -171,7 +202,9 @@ bool FGamePlatformEntitlementDerivedIndexTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEntitlementResetDuringStateTest, "GamePlatform.Entitlement.Client.ResetDuringState", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FEntitlementResetDuringStateTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformEntitlementClientSubsystem>();
+    FEntitlementLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformEntitlementClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FEntitlementMockTransport, ESPMode::ThreadSafe>();
     Client->OnChanged.AddLambda([Client](auto&&...)
     {
@@ -188,7 +221,9 @@ bool FEntitlementResetDuringStateTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEntitlementCloseDuringConfigureTest, "GamePlatform.Entitlement.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FEntitlementCloseDuringConfigureTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformEntitlementClientSubsystem>();
+    FEntitlementLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformEntitlementClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FEntitlementMockTransport, ESPMode::ThreadSafe>();
     TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
     Client->OnChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });

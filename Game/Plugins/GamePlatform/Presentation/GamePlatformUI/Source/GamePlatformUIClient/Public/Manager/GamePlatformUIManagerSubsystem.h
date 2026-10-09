@@ -113,6 +113,15 @@ public:
     UFUNCTION(BlueprintCallable, Category="UI|Manager")
     bool CloseScreen(UGamePlatformUIScreen* Screen);
 
+    /**
+     * GT只读查询具体页面实例是否仍由本Manager登记在ExpectedStack原层栈。
+     * 参数Screen/ExpectedStack必须有效；空值、关闭/布局替换或实例账本已撤销均返回false。
+     * 同ScreenId的其他实例互不等价；暂失活但仍登记且在WidgetList中返回true。
+     * Root退出先撤实例账本再广播兼容ID关闭事件，因此旧容器尚未移除控件时也返回false。
+     * 不暴露资源租约或容器，不生成页面、不改变所有权；调用方不得据此修改真实层栈。
+     */
+    bool IsScreenOwnedByStack(UGamePlatformUIScreen* Screen, UCommonActivatableWidgetStack* ExpectedStack) const;
+
     UFUNCTION(BlueprintCallable, Category="UI|Manager")
     bool AttachHUDWidget(UGamePlatformHUDWidget* Widget);
 
@@ -201,6 +210,10 @@ private:
     friend class FGamePlatformUIScreenLifecycleRegressionTest;
     friend class FGamePlatformUIScreenReentryRegressionTest;
     friend class FGamePlatformUIRootCloseReentryTest;
+#if WITH_DEV_AUTOMATION_TESTS
+    // 中立原生测试访问仅建立受控实例账本前提；定义留Tests，不是生产登记API/项目类型。
+    friend struct FGamePlatformUIScreenOwnershipTestAccess;
+#endif
     /** 单次同步构造快照；弱引用只用于识别旧作用域，调用栈另持强引用防止回调GC。 */
     struct FScreenOpenConstruction
     {

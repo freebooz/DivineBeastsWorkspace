@@ -48,3 +48,9 @@ Data/VFX跨模块用例消费真实公开数据服务，覆盖抽象约束受理
 - LocalPlayer/Viewport六文件真实引擎合同独立复核：11处实例均使用GEngine，保留显式失败前提及Transient范围。首次确认Moba Controller只有单向PlayerController赋值，世界查询无法识别其LocalPlayer；根补真实SetPlayer后复读闭合。三个Moba世界、UI重入世界和玩家注册都有作用域清理，未发现该范围剩余Important。报告保留初次问题及最终六文件哈希；这不是11项运行通过。
 
 - 三Gameplay测试夹具独立复核：实际读取UE5.8 Controller/GameState/Actor与Timer/Automation销毁链，三SHA在始末匹配，Critical/Important均0。共享owner先摘Mode接口、清自有Timer/监听再释端口和World；只覆盖自有资源释放/unroot，测试World未完整BeginPlay时EndPlay返回false，未把该结果写成全部Actor EndPlay/GC验收。真实五失败修后回归仍须执行。
+
+## 主分支整合追加独立复核
+
+用户明确要求将整改提交主分支后，隔离分支正常合入最新主线，保留其技能模块、战斗反馈、真实开发资产和图标。当前独立复核原文快照见 `MainIntegrationReviewResults.json`，首次问题与每轮闭环同时保存。公开竞技UI头的Data/Core依赖已修并独立关闭。配置Overlap回调后的旧写入G01已完成源码闭环；其真实物理世界回归、出生后继归属G02、GAS重置G03及表现事实/界面实例归属A01/A02仍在修复或运行验证阶段，不计作通过。
+
+上述复核范围为本次实际读取的源文件和真实UE5.8调用合同。新的Private反射夹具限定EditorOnlyData，实际UHT生成及Client/Server剔除需最终构建补证。角色默认子对象继承布局变化保留兼容风险，未直接迁移Blueprint资产。

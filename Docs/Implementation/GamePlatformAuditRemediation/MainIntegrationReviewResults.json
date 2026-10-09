@@ -1,0 +1,2280 @@
+{
+  "SchemaVersion": 1,
+  "Scope": "主线整合源码独立复核最终快照，保留各原始发现和闭环；真实构建及回归分别取独立中央结果",
+  "GeneratedUtc": "2026-10-09T14:41:55.7156808Z",
+  "IntegrationHead": "e720d5c26d71acf93af71781bfc3a271529f23cc",
+  "MainIntegratedHead": "eecbc730f9013d95d2e4e46e1e177bc3fe42c5b2",
+  "MainPushedByThisTask": false,
+  "Reports": [
+    {
+      "Name": "RootIndependentReview.json",
+      "SourceSHA256": "57B20D7F3CA20E656EA4FB4F75606E8BD84F024AB597C4E5F33E908F1575DEB5",
+      "Report": {
+        "SchemaVersion": 1,
+        "Task": "Root 主分支五文件整合及机器台账重命名独立只读审查",
+        "Workspace": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace",
+        "ComparedHead": "dc61f02cf2fd314348073c778cdc8c8ac4dbd903",
+        "ComparedMergeHead": "8de5995e3e2060dbe7eb662d33dc911b86e3811a",
+        "CreatedAtUtc": "2026-10-09T12:50:13Z",
+        "Status": "CompleteWithImportantClosedByOwner",
+        "CriticalCount": 0,
+        "ImportantFoundCount": 1,
+        "OpenImportantCount": 0,
+        "Conclusion": "五文件保留整改检查点和主线的有效职责/端侧依赖；台账重命名保持内容和身份。发现的公开Data/Core合同误列Private已由Root修复并由本审查回读关闭。此结论不是合并后UE构建、Cook或运行通过证明。",
+        "ReviewedFiles": [
+          {
+            "Path": "Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin",
+            "AbsolutePath": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin",
+            "Sha256": "BAFA10CD4EDEAC862BCC7656471B85373B5B87AA327298C1402E4CB64EE473ED"
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin",
+            "AbsolutePath": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin",
+            "Sha256": "BCDA7690C52AA0D3B19AB49B4B6B7F581504233B65482C4096C9940F9AE7818C"
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/DBAGameplay/DBAGameplay.uplugin",
+            "AbsolutePath": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAGameplay/DBAGameplay.uplugin",
+            "Sha256": "F7932D7AB6192B44208DB75093177B39379C4B9CD2A9D3BAFFD9338E6824BF2F"
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/DivineBeastsArenaClient.Build.cs",
+            "AbsolutePath": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/DivineBeastsArenaClient.Build.cs",
+            "Sha256": "4AF4EDAEE43BD4395967C6B6C363B94214E0C7EE3F81C4ACE52F65ED7EF26E7C"
+          },
+          {
+            "Path": "Tests/Architecture/DBAPluginConsolidation.Tests.ps1",
+            "AbsolutePath": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Tests/Architecture/DBAPluginConsolidation.Tests.ps1",
+            "Sha256": "0734587A71C7BAC8D1017B0F6DA087A4F4172E9854A1F4E9C804E54F4D94B46C"
+          }
+        ],
+        "Findings": [
+          {
+            "Id": "R01",
+            "Severity": "Important",
+            "Status": "Closed",
+            "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/DivineBeastsArenaClient.Build.cs",
+            "OriginalLine": 34,
+            "Title": "公开竞技UI头的数据租约及结果合同不得只列Private依赖",
+            "OriginalSha256": "8089DE071D77E7B4AF1413A50705A6E346D483DCE10816269205A61C324D3AB6",
+            "Evidence": [
+              {
+                "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+                "Lines": "7;99-101;156-157",
+                "Meaning": "公开头直接包含GamePlatformDataLease.h，声明FGamePlatformResult回调并按值持有两个FGamePlatformDataLease。"
+              },
+              {
+                "Path": "Game/Plugins/插件开发规范.md",
+                "Lines": "91-95",
+                "Meaning": "P05要求区分公开合同和实现依赖；实现专用库才保留Private。"
+              }
+            ],
+            "Impact": "消费此公开头的模块原先借GamePlatformArena->GamePlatformMobaData->GamePlatformData或GamePlatformUIClient的传递Public链获得可见性，构建规则没有直接发布实际合同。当前未运行UBT，不宣称该状态必定产生编译错误。",
+            "OwnerFix": "Root将GamePlatformCore/GamePlatformData从Private移到Public，并增加公开头合同原因中文说明。",
+            "Recheck": {
+              "FixedSha256": "4AF4EDAEE43BD4395967C6B6C363B94214E0C7EE3F81C4ACE52F65ED7EF26E7C",
+              "PublicData": true,
+              "PublicCore": true,
+              "PrivateData": false,
+              "PrivateCore": false,
+              "TargetedDiffCheckExitCode": 0,
+              "SourceReadback": true
+            }
+          }
+        ],
+        "Checks": [
+          {
+            "Id": "D01",
+            "Topic": "插件组合的语义整合",
+            "Result": "确认",
+            "Detail": "DBAArena保留整改侧CommonUI、GameplayAbilities以及明确端侧；保留主线GamePlatformPresentation/MobaPresentation组合。GamePlatformCore/Character/Combat取消仅Server/Editor限制符合竞技客户端反馈对这些共享模块的真实使用。DBAClient加入GamePlatformAnimation用于项目输入缓冲组合，GamePlatformSFX只Client/Editor。"
+          },
+          {
+            "Id": "D02",
+            "Topic": "客户端/服务器与三层方向",
+            "Result": "静态确认",
+            "Detail": "DBAArenaClient为ClientOnly且TargetAllowList Client/Editor；Server为ServerOnly且Server/Editor。Arena对DBAClient、CommonUI、GamePlatformUI、Presentation、MobaPresentation引用均限定Client/Editor。DBAClient五模块的TargetAllowList Game/Client/Editor排除Server，DBAGameplay三Runtime模块无客户UI/Editor模块依赖。DBAClient/DBAGameplay描述无Arena/Moba反向依赖。UE实际ModuleDescriptor与PluginReferenceDescriptor分别执行宿主与allow-list过滤；不把宿主后缀当唯一隔离证据。"
+          },
+          {
+            "Id": "D03",
+            "Topic": "新增技能模块",
+            "Result": "静态确认",
+            "Detail": "DivineBeastsAbilitiesRuntime来自MERGE_HEAD，不创建第六代码插件。存在同名Build规则、IMPLEMENT_MODULE注册和真实Public/Private实现、测试。Abilities->Characters->Runtime单向，角色与技能运行不依赖DBAClient/Arena/Moba/UI/VFX/SFX。Loadout实际HasAuthority与可信Character Ready门禁，COND_OwnerOnly最小UI快照，模块注册不登录、不创建世界或授予技能。该读取只确认装配边界，不是全部授权/取消业务逻辑审计。"
+          },
+          {
+            "Id": "D04",
+            "Topic": "模块/插件依赖闭包",
+            "Result": "静态确认",
+            "Detail": "Build.cs明确使用UMG/CommonUI；Feedback消费的Character、PresentationRuntime、Combat、MobaPresentationClient和DeveloperSettings为Private实现。修复后Data/Core公开。引擎GameplayAbilities、CommonUI、EnhancedInput真实存在；UEBuildTarget:5956-5989递归UnionWith插件依赖，ValidatePlugin:1563-1577按该闭包核模块所有者，因此不能仅因DBAGameplay/DBAClient不重复直列全部内置插件而伪造UBT缺失警告。插件描述声明和模块公开边界是不同检查。"
+          },
+          {
+            "Id": "D05",
+            "Topic": "Pester身份门禁",
+            "Result": "Passed",
+            "Detail": "独立执行现有DBAPluginConsolidation.Tests.ps1：Pester3.4.0，11总/11通过/0失败/0跳过。该测试为静态身份/声明证据，手工expectedDependencies子集与AddRange解析不构成完整UBT依赖分析，也没有覆盖本次R01公共头合同归属。"
+          },
+          {
+            "Id": "D06",
+            "Topic": "JSON重命名",
+            "Result": "确认",
+            "Detail": "新文件SHA256与迁移记录2D921...489B一致；旧路径不存在。新文件git hash-object与MERGE_HEAD旧路径blob同为b1911f03b94390b1730adb68a04480eefc56d327，确认受版本管理内容一致。六引用当前均指向新ASCII名字；目录规划保留旧名字仅作迁移说明。机器台账不等于263个真实控件或新资产。"
+          },
+          {
+            "Id": "D07",
+            "Topic": "迁移读取门禁",
+            "Result": "Passed",
+            "Detail": "独立运行ValidateAAAUIInventory.py退出0：PASS，263记录/10领域，P0=89/P1=115/P2=59，issues为空。ComponentId、现有资产引用及正文未随重命名修改。"
+          }
+        ],
+        "Migration": {
+          "Report": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/InventoryNameMigration.json",
+          "OldPath": "Game/Plugins/DivineBeasts/DBAClient/Docs/3A游戏UI十大业务域组件台账_V1.json",
+          "NewPath": "Game/Plugins/DivineBeasts/DBAClient/Docs/AAAUIComponentInventoryV1.json",
+          "Sha256": "2D921C5FD42C10C172204369EE22734EEECFC3703B6E912D0F4F967FBC7D489B",
+          "GitBlob": "b1911f03b94390b1730adb68a04480eefc56d327",
+          "OldPathAbsent": true,
+          "ReferenceCount": 6,
+          "References": [
+            {
+              "Path": "Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md",
+              "Sha256AtRead": "B33F3EC2A7ACC87442F9CB2D55761F9B8D5566A7EC7C8D6B72F7A38EA0E543D5",
+              "NewReferencePresent": true,
+              "HasHistoricalOldName": true,
+              "OldNameMeaning": "总体目录规划961行明确记录迁移来源和回退路径，不是当前读取路径。"
+            },
+            {
+              "Path": "Tests/Architecture/ValidateAAAUIInventory.py",
+              "Sha256AtRead": "EC021F28572C40D4547872BCC3FED4C58D264822B53B7893A9051B8C717C5C88",
+              "NewReferencePresent": true,
+              "HasHistoricalOldName": false,
+              "OldNameMeaning": null
+            },
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Docs/通用游戏UI组件清单.md",
+              "Sha256AtRead": "72C2D9AD9CF4F7EB0D0F49052DC8C74D2DB7EAAA38DEC2471F33EB88230BB9EC",
+              "NewReferencePresent": true,
+              "HasHistoricalOldName": false,
+              "OldNameMeaning": null
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAClient/Docs/通用游戏界面组件与三层资源清单.md",
+              "Sha256AtRead": "D9BB63CA6D49F07772B551A7FFCD8DAC527F3EEDC0BADEF5ADBC67BEC7DE5FE2",
+              "NewReferencePresent": true,
+              "HasHistoricalOldName": false,
+              "OldNameMeaning": null
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAClient/Docs/用户界面目录规划.md",
+              "Sha256AtRead": "64D5788998CFB196CF0EA46116FEB15032E79001B8E152CB510E86A6D15B12D8",
+              "NewReferencePresent": true,
+              "HasHistoricalOldName": false,
+              "OldNameMeaning": null
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAClient/Docs/3A游戏UI十大业务域组件总清单_V1.0.md",
+              "Sha256AtRead": "E149A3BD37F35BE408DE4A182C2B55B3DD87AE130B7D16B665A9B622E6AF572B",
+              "NewReferencePresent": true,
+              "HasHistoricalOldName": false,
+              "OldNameMeaning": null
+            }
+          ]
+        },
+        "Verification": {
+          "OriginalFiveFileDiffCheckExitCode": 0,
+          "FixDiffCheckExitCode": 0,
+          "ConflictMarkersInFiveFiles": 0,
+          "Pester": {
+            "Version": "3.4.0",
+            "Total": 11,
+            "Passed": 11,
+            "Failed": 0,
+            "Skipped": 0
+          },
+          "InventoryValidator": {
+            "ExitCode": 0,
+            "Status": "PASS",
+            "ComponentCount": 263,
+            "DomainCount": 10
+          }
+        },
+        "EngineSources": [
+          {
+            "Path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Programs/UnrealBuildTool/Configuration/Descriptors/ModuleDescriptor.cs",
+            "Lines": "716-719;805-809"
+          },
+          {
+            "Path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Programs/UnrealBuildTool/Configuration/Descriptors/PluginReferenceDescriptor.cs",
+            "Lines": "405-419"
+          },
+          {
+            "Path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Programs/UnrealBuildTool/Configuration/UEBuildTarget.cs",
+            "Lines": "1563-1577;5956-5989"
+          }
+        ],
+        "Limits": [
+          "未运行UBT、UE、Cook、Server产物审计或资产动作。",
+          "Source子对象/角色继承迁移本次只读边界，下一轮独立Gameplay范围另行审查。",
+          "未审核或替他人处理目录文档的其他新增段/冲突；六引用仅核迁移位置。",
+          "普通Game Target当前源码目录没有单独Game目标；DBAClient保留原Game allow-list，本次未扩展或关闭目标。",
+          "审查人没有修改源、暂存或提交；R01修复由Root执行。"
+        ],
+        "Outputs": [
+          "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/RootIndependentReview.json",
+          "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/RootIndependentReview.md"
+        ],
+        "FinalMergedBuildRecheck": {
+          "ReviewedAtUtc": "2026-10-09T13:36:20Z",
+          "Head": "e720d5c26d71acf93af71781bfc3a271529f23cc",
+          "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/DivineBeastsArenaClient.Build.cs",
+          "Sha256": "44DE1D2021E533C9101522B8BEEB341E52F9D9641E09AB9D0BE5F8E5B6717A07",
+          "R01StillClosed": true,
+          "Evidence": "第二次正常merge后实际规则仍Public声明GamePlatformCore/GamePlatformData，中文说明契约；新增UMG/CommonUI Public直接匹配公开Widget继承，Characters/Abilities/Presentation/Moba注入只在Private组合。定点diffcheck0。",
+          "Limit": "仅补充此Build最新版本；不将原dc61/8de五文件和台账旧冻结默认为本轮全量新构建。"
+        },
+        "UpdatedAtUtc": "2026-10-09T14:31:40Z",
+        "PresentationCoreDependencyRecheck": {
+          "ReviewedAtUtc": "2026-10-09T14:31:40Z",
+          "Status": "NoImportantInNarrowTwoFileScope",
+          "OwnerEvidence": "PresentationCoreActualLinkDependencyRepair.json",
+          "OriginalBuildRun": "d2403604-97d0-4033-a190-4534decbc28d",
+          "Files": [
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/GamePlatformPresentationCore.Build.cs",
+              "ExpectedSha256": "1066F623BD6811BBD2D52BE96BC979F1C0710635DF9BC07ECFD6EE2E97D333BE",
+              "ActualSha256": "1066F623BD6811BBD2D52BE96BC979F1C0710635DF9BC07ECFD6EE2E97D333BE",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/GamePlatformPresentation.uplugin",
+              "ExpectedSha256": "04BEDB232EC3296FC63C8E2E5FD563AAEDFF8C9691B770950563358D0D7FCA99",
+              "ActualSha256": "04BEDB232EC3296FC63C8E2E5FD563AAEDFF8C9691B770950563358D0D7FCA99",
+              "Match": true
+            }
+          ],
+          "Proof": [
+            "HitFeedbackProfile公开106返回FGamePlatformResult；cpp32/38直接调用GAMEPLATFORMCORE_API导出工厂，直接Public GamePlatformCore合同匹配真实使用。",
+            "插件Plugins增GamePlatformCore Enabled，保留既有Data依赖；GamePlatformCore/Foundation规则只Core/CoreUObject，Data Public消费Core，无反向Presentation/Moba/DivineBeasts依赖，未引入环。",
+            "仅增加真实模块与插件直接依赖/中文职责说明，原PresentationCore Runtime、PresentationClient ClientOnly未改变，反射头与类型身份未变。"
+          ],
+          "ChineseExplanationCorrection": {
+            "InitialBuildSha256": "7EA7ADD8510812687CAD351DFD9C91239F47D2C64B303952A44C13910D372F08",
+            "InitialIssue": "注释称Data私有Core依赖，实际Data.Build.cs直接Public Core。",
+            "OwnerCorrection": "只修一句为本模块直接消费Core导出结果符号，不能只依赖Data传递公开依赖；真实依赖代码不变。",
+            "Rechecked": true,
+            "Severity": "DocumentationPrecision"
+          },
+          "GitDiffCheckExitCode": 0,
+          "CriticalCount": 0,
+          "ImportantCount": 0,
+          "UEOrBuildExecutedByReviewer": false,
+          "Limits": "独立源码/依赖回读不能将Root正在执行的完整Editor重试记为Passed；本报告不重审其余已闭合链，不宣称全仓依赖或Cook正确。"
+        }
+      }
+    },
+    {
+      "Name": "GameplayIndependentReview.json",
+      "SourceSHA256": "5A49A8549EB6CA44AFA4CE68BAC137D31F1F65140B3189A11B3DBF7B53B8025F",
+      "Report": {
+        "SchemaVersion": 1,
+        "Task": "Gameplay 主分支整合十文件独立只读审查",
+        "Workspace": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace",
+        "CreatedAtUtc": "2026-10-09T13:00:22Z",
+        "ComparedHead": "dc61f02cf2fd314348073c778cdc8c8ac4dbd903",
+        "ComparedMergeHead": "8de5995e3e2060dbe7eb662d33dc911b86e3811a",
+        "InitialOwnerReport": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace/Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/GameplayMergeReport.json",
+        "Status": "CompleteWithThreeImportantClosedBySourceRecheck",
+        "CriticalCount": 0,
+        "ImportantFoundCount": 3,
+        "OpenImportantCount": 0,
+        "Conclusion": "原3项Important及所有中间残余完整保留；G01最终纯注销运行配置、G02出生/终态清理、G03Combat内部GAS重置均以最新源独立回读闭合。只读审查未执行新构建/UE，回归为真实源码前提未运行。",
+        "InitialFrozenFiles": [
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Server/DivineBeastsArenaGameplayLifecycleAdapter.cpp",
+            "sha256": "B8F1195A5006DEF20535E4F0F8DE0CBBA351E55D69EF97C13125F4E83FEDAFF4",
+            "bytes": 30778,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+            "sha256": "CD5757B6910CF4C49E1CEC7C0A7B892A64F98E8E035DC55C72406AE14BA17B74",
+            "bytes": 9092,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/Source/GamePlatformAbilitySystem/Public/Components/GamePlatformAbilitySystemComponent.h",
+            "sha256": "B1D1EAF4E8E5A575DE95943C0A4D139606056766136E3DF54D4505E7C8B56475",
+            "bytes": 5562,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/README.md",
+            "sha256": "CE4A43BD1A76260A6EAC01009DF258A56ACF6EB22D8CC5C40833ED099A4C8E36",
+            "bytes": 3599,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Characters/DivineBeastsGameplayCharacter.h",
+            "sha256": "89E24BEEDBB30638A9D4D5F70B3E07959456C19AA978535283830D82ED20256A",
+            "bytes": 1800,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Private/Characters/DivineBeastsGameplayCharacter.cpp",
+            "sha256": "C7003941A164B9C412BA3D0DC9B966A8AC259894AC29740657E38F590FC1053C",
+            "bytes": 2232,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Private/Tests/DivineBeastsAbilityAssemblyTests.cpp",
+            "sha256": "9F4C67CC08750B6A0E05A78190FEEEA548F5BE723DF006864DD80AE150853CAF",
+            "bytes": 6719,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/DivineBeastsAbilitiesRuntime.Build.cs",
+            "sha256": "386F574516A4C093971B81C65F88D8D386E328E4A660AABEB292395894441B60",
+            "bytes": 1254,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp",
+            "sha256": "7ED737CB1BF6FD0E544BEB444E3E4F0604CB9C0651A9F8C43E5D59819AEE2C65",
+            "bytes": 23826,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Tests/DivineBeastsCharacterActivationLifecycleTests.cpp",
+            "sha256": "3FF8452A476152045EE01598BD26C5F6B8349EDB8C54F02CBCE685448D1A7207",
+            "bytes": 8285,
+            "MatchedAtReviewStart": true,
+            "MatchedAfterFullRead": true
+          }
+        ],
+        "UnchangedFixtures": [
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Tests/DivineBeastsArenaDeathBridgeTests.cpp",
+            "sha256": "822DF22E70C69D52616D117C7AF769EC1B1EA6EFB8A91855E768BEC71B34555D",
+            "Matched": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Tests/DivineBeastsCharacterPawnTests.cpp",
+            "sha256": "F738E603FEF2A2DB12F3E742D51863B3DFAF9EC3E259B1A5CCD4EA107248CE9C",
+            "Matched": true
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Private/Tests/GamePlatformArenaReconnectTests.cpp",
+            "sha256": "16318469D8C34D9173CF15C6108C7906D31BE811615C7583A9BB523C5F7D8057",
+            "Matched": true
+          }
+        ],
+        "Findings": [
+          {
+            "Id": "G01",
+            "Severity": "Important",
+            "Status": "ClosedBySourceRecheckRuntimeUnverified",
+            "File": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp",
+            "Lines": "207-212;386-420",
+            "Title": "Definition配置的引擎同步回调之后，旧操作仍可写入后继或已结束组件",
+            "Evidence": "ApplyDefinition调用SetCapsuleSize(...,true)及SetCollisionProfileName，随后直接写Movement、Combat及Momentum；RefreshInitialization把ApplyDefinition返回值直接写bConfigurationApplied/Ready，没有在赋值前校验原操作。AuthorityBindTrustedContext只在整个RefreshInitialization返回后查OperationId，已发生的内部写入无法撤回。",
+            "EngineEvidence": [
+              {
+                "Path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/Components/CapsuleComponent.cpp",
+                "Lines": "169-186",
+                "Meaning": "存在PhysicsState时，更新Capsule尺寸会调用UpdateOverlaps。"
+              },
+              {
+                "Path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp",
+                "Lines": "4132-4140;4464-4627",
+                "Meaning": "正常已BeginPlay世界可同步广播OnComponentBeginOverlap/Actor overlap通知。"
+              }
+            ],
+            "Trigger": "真实物理世界中的Overlap通知同步调用AuthorityBindTrustedContext接纳更高代次，或EndPlay/销毁当前组件。旧ApplyDefinition返回后继续使用旧Definition和已捕获组件，外层才发现身份失效。",
+            "Impact": "后继Runtime身份可保持新代次，但移动/碰撞/Momentum来自旧Definition，旧Refresh再把后继的bConfigurationApplied设true；新Definition加载后可能跳过自身配置。关闭时旧栈仍写配置/Ready成员；若对象已销毁还可能继续访问组件。这里只陈述具体条件和源码路径，未声称实际运行已复现。",
+            "RegressionGap": "两个新增回归只在false Readiness通知中重入，并禁用Physics；它们不会触发该真实Capsule配置边界。",
+            "RequestedFix": "各引擎/GAS外部边界返回后，以及RefreshInitialization提交Apply结果前，复核本次操作、弱Owner/World、Definition身份和出生/Avatar代次；失效则退出且不再写后继成员。补实际配置边界的后继/关闭回归。",
+            "InheritedScope": "ApplyDefinition未在本次修改主体，但仍被新操作身份保护的AuthorityBind/初始化链调用；此发现是当前十文件中未闭合的源缺口，不虚构为新引入。",
+            "InitialStatus": "Open",
+            "Recheck": {
+              "ReviewedAtUtc": "2026-10-09T13:27:40Z",
+              "OwnerReport": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/GameplayMergeReentrancyRepairReport.json",
+              "FrozenAtLocal": "2026-10-09T21:17:21+08:00",
+              "Resolution": "独立Refresh nonce及Owner/World/Definition/Context/Request/Spawn/Avatar/版本/ASC ActorInfo快照；Capsule尺寸/Profile、Combat.Reset、属性集/Momentum外部边界返回立即重验，Refresh赋值前再验；预热交接返回复核原操作，不能用后继Ready证明自己的成功。旧Apply已无法覆盖后继碰撞/移动/Momentum及Ready。",
+              "TestsRead": [
+                "DivineBeasts.Characters.Configuration.ReentrantOverlapSuccessor",
+                "DivineBeasts.Characters.Configuration.CloseDuringOverlap"
+              ],
+              "FixtureEvidence": [
+                "InitializeStandalone实际只调用CreateWorld一次，再SetGameMode/InitializeActorsForPlay/BeginPlay；正式Data真实Hero租约异步跨Automation帧World.Tick，不伪造加载/Ready。",
+                "真实Capsule PhysicsState和外置Sphere overlap断言；原小胶囊不重叠，正式Definition扩张触发UE动态OnComponentBeginOverlap；回调换Context并预热配置后继，或组件EndPlay。外部碰撞/移动/Momentum哨兵与后继Ready验证行为。",
+                "反射fixture限WITH_EDITORONLY_DATA，测试限WITH_DEV_AUTOMATION_TESTS && WITH_EDITORONLY_DATA；Own callback取走再执行，结束解绑；latent析构处理Pawn/Sphere/租约/World/GI。"
+              ],
+              "Verification": {
+                "FrozenHashes": 6,
+                "HashMatched": 6,
+                "DiffCheckExit": 0,
+                "UHT": false,
+                "UBT": false,
+                "UEAutomation": false,
+                "RuntimeRedGreenObserved": false
+              },
+              "Boundary": "关闭仅限G01组件自身原配置/Ready尾写；不表示Combat内部G03或Arena调用者G02残余已经修复。"
+            },
+            "LateLifecycleRecheck": {
+              "ReviewedAtUtc": "2026-10-09T13:52:24Z",
+              "ObservedSha256": "5DDAFBCA25B91D20A179FE26FDE3CB6AADE7FFC9385DC50BDB55D0F38448129C",
+              "Origin": "Root明确提出窄观察后独立实读确认；归原G01，不新增Important计数。",
+              "Evidence": [
+                "纯Unregister不EndPlay、不改变nonce；GetWorld可回退Owner，当前IsInitializationCurrent仍true。",
+                "Apply466–471已经要求Actor.BeginPlay及Capsule/Movement注册，但AreOriginalComponentsCurrent479–484未要求Identity自身Registered/Begun；真实Overlap通知只注销Identity时仍继续Movement/Momentum。",
+                "Refresh235–245在Apply返回后只核通用Snapshot，仍可写bConfigurationApplied/bLocalReady/bServerReady；统一公开Ready156拒绝注销不等于停止旧栈内部配置。"
+              ],
+              "CallersRead": [
+                "DivineBeastsCharacterSpawnInitializer.cpp转发AuthorityBind",
+                "平台CharacterInitializationExecutor只核Authority/Context且未承诺组件已经BeginPlay",
+                "实际Arena生产调用在Restart返回后；公开Bind仍允许身份/Definition预绑定，不能机械收紧全局Snapshot影响首次资源受理。"
+              ],
+              "RequestedFix": "只在运行配置阶段增加Identity.IsRegistered/HasBegunPlay：Refresh进入已加载Definition配置段前、Apply入口/每外部返回、Refresh配置结果/Ready提交前检查；保持通用身份/Data加载Snapshot与初始受理可用。注销即停止旧配置尾写，不伪清资产借用或未知后继。",
+              "SuggestedRegression": "真实Physics ComponentBeginOverlap只Unregister Identity而非EndPlay，设置外部移动/Momentum哨兵；验证Apply不继续写，公开Ready/Gate拒绝，真实注册撤销且nonce未伪换。另保预绑定资源受理正常前置。",
+              "RuntimeVerified": false
+            },
+            "FinalRunningLifecycleRecheck": {
+              "ReviewedAtUtc": "2026-10-09T13:59:19Z",
+              "FrozenAtLocal": "2026-10-09T21:57:04+08:00",
+              "Files": [
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp",
+                  "Sha256": "C84FB53907CF93442899DAAD486D205D458E1D42406F40ABDC6217911D9C14DA"
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Tests/DivineBeastsCharacterWarmupTests.cpp",
+                  "Sha256": "99D24C824DEFB7C651DDA65F99CF46EA4743415A2932AC2A9C85F15829CF0A78"
+                }
+              ],
+              "Resolution": "Apply入口与每外部返回AreOriginalComponentsCurrent加入本Identity.Registered/Begun，保ActorBegun；Refresh Apply返回后和所有配置/Ready提交前同样复核。注销停止Movement/Momentum与内部cfg/Ready尾写。通用Snapshot、AuthorityBind和Data资源预绑定没有全局添加注册门禁，合法预受理保持。",
+              "Regression": "新增独立PrettyName DivineBeasts.Characters.Configuration.UnregisterDuringOverlap；现有真实Physics/Data/Overlap夹具用Action枚举保留后继/EndPlay两原注册。真实Unregister不EndPlay、不换nonce，Owner World回退/LoadedDefinition仍在；哨兵Profile、MaxWalkSpeed1234、MaxMomentum321/Momentum123证明旧Apply止写；公开Ready/Gate失败断言不是私有状态镜像。",
+              "Verification": {
+                "FrozenHashMatched": 2,
+                "FrozenHashTotal": 2,
+                "DiffCheckExit": 0,
+                "SourceRead": true,
+                "UBT": false,
+                "UHT": false,
+                "UEAutomation": false
+              },
+              "Limits": "关闭为最新源回读。此前Server29db的46模块通过仍是旧冻结有效证据，本轮两源新增构建/UE由Root另记。"
+            }
+          },
+          {
+            "Id": "G02",
+            "Severity": "Important",
+            "Status": "ClosedBySourceRecheckRuntimeUnverified",
+            "File": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Server/DivineBeastsArenaGameplayLifecycleAdapter.cpp",
+            "Lines": "232-237",
+            "Title": "Restart失败清理可能销毁回调已安装的后继Pawn",
+            "Evidence": "RestartPlayerAtPlayerStart返回后才从Controller.GetPawn捕获Character。IsCurrent失败分支仅检查PlayerState相同就Character.Destroy，没有证明该Pawn是原操作创建且仍归原操作。",
+            "EngineEvidence": [
+              {
+                "Path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/GameModeBase.cpp",
+                "Lines": "1287-1311;1362-1382",
+                "Meaning": "Restart创建并SetPawn后进入FinishRestartPlayer；Possess及K2_OnRestartPlayer均处在返回前的外部边界。"
+              },
+              {
+                "Path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/Controller.cpp",
+                "Lines": "334-350",
+                "Meaning": "Possess可同步调用ReceivePossess、OnNewPawn、OnPossessedPawnChanged。"
+              }
+            ],
+            "Trigger": "拥有或Restart监听者更换Adapter/装配并使同Controller、同PlayerState拥有后继Pawn；原Restart返回后GetPawn读取该后继，原Binding/Generation失效使IsCurrent失败。",
+            "Impact": "旧出生拒绝分支销毁后继对象，违背旧操作只能清理自己资源的所有权边界。没有必要假设Controller/PlayerState已销毁，二者可以仍然有效且相同。",
+            "RequestedFix": "只对有本次准确创建/拥有身份证明的Pawn执行失败销毁；无法证明属于本操作时保留当前后继，不能用返回后的Controller当前Pawn替代本次创建结果。补真实Possess或Restart通知替换Pawn的回归。",
+            "InheritedScope": "该清理分支来自整改检查点，融合新的GameplayCharacter后依然存在；不是宣称类名改动才引入。",
+            "InitialStatus": "Open",
+            "Recheck": {
+              "ReviewedAtUtc": "2026-10-09T13:27:40Z",
+              "RestartBranch": "新Adapter 234–240已拒绝原作用域失效且不销毁未证明属于自己的Controller当前Pawn。真实OnNewPawn切换Binding并Possess后继回归源码已实读，UE未执行。",
+              "ResidualAnchors": [
+                261,
+                266,
+                270,
+                276,
+                277,
+                279
+              ],
+              "Residual": "InitializeCharacter的项目初始化器调用AuthorityBindTrustedContext；真实ReadinessChanged(false)或配置Overlap可同步更高Context接管同Pawn，旧绑定返回false，平台Executor原样返回false。Adapter 266仍无条件Destroy；270原Scope失效、276预热交接返回后的277–280亦缺Pawn可信身份归属证明。即使同Controller/State仍占有，也不能证明原SpawnGeneration拥有该Pawn。",
+              "AdditionalEvidence": [
+                {
+                  "File": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/Source/GamePlatformCharacter/Private/Initialization/GamePlatformCharacterInitializationExecutor.cpp",
+                  "Meaning": "真实唯一项目初始化器返回值直接传回，无补充所有权信息。"
+                },
+                {
+                  "File": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp",
+                  "Lines": [
+                    135,
+                    136,
+                    138,
+                    182,
+                    183
+                  ],
+                  "Meaning": "失效原绑定/预热交接返回false而保留后继，调用者清理必须理解取消语义。"
+                }
+              ],
+              "RequestedFix": "失败/失效清理必须证明Character仍属本次原比赛/连接/Spawn/Avatar/可信Context；失效且无证明时只拒绝，不能销毁或失活后继。将所有初始化、预热、资格/激活后的取消分支一起核原所有权。",
+              "SuggestedRegression": "原Spawn已经创建/拥有Pawn后，在ReadinessChanged或真实Overlap中绑定更高Context到同Pawn（必要时换Adapter），原Initialize失败返回；断言后继Pawn/Context/Ready保持且旧请求失败。Restart通知后继不同Pawn回归不能替代这个用例。"
+            },
+            "RecheckRound2": {
+              "ReviewedAtUtc": "2026-10-09T13:35:06Z",
+              "FrozenAtLocal": "2026-10-09T21:31:30+08:00",
+              "Files": [
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Server/DivineBeastsArenaGameplayLifecycleAdapter.cpp",
+                  "Sha256": "6A5A3227D4B8CA29C4F678C828D0F2E52DC211614D1CD3C69AA35B5EF48C897B"
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+                  "Sha256": "B556F063C4F7F5737490FF5559EA66D2312B3FC3A98BC9FCE1BF21E6B85E5AC5"
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Tests/DivineBeastsArenaWorldOwnershipTests.cpp",
+                  "Sha256": "1BAB2E4B6933CA6DB628273566FEAB7B9853FAE71C89632C80B91B673131E8A3"
+                }
+              ],
+              "ResolvedSubchains": [
+                "InitializeCharacter false无内部原操作ID，现只返回失败，不按Context字段猜所有权，不销毁同Pawn后继。",
+                "成功后立即捕获只读nonce，后续预热/Ready/资格通知后核同Binding/Controller/Pawn/Context完整字段与nonce，同字段重新绑定也能识别。",
+                "正常失败只清当前仍属于成功原nonce的Pawn；激活后失效只撤原DeathHandle，不失活/销毁后继。",
+                "同Automation注册串行独立跑ReplaceAdapter/HigherContext/SameContext三场景，实际Warmup租约Owner改为GameMode，交接所有者与生产一致；Native stack/identity委托均在析构前解绑。"
+              ],
+              "NonceBoundary": "GetTrustedContextOperationId为普通C++ const只读值返回，非UFUNCTION/RPC/准入票据，不提供setter；只有AuthorityBind内在校验权威/World/Context之后签发新nonce。调用者要求成功后捕获，仅作为并行同步操作的观察比较，没有新增客户端命令或权威授权。",
+              "ResidualAnchors": [
+                278,
+                337,
+                338,
+                340
+              ],
+              "Residual": "SetServerPlayerActive(true)发布真实同步Eligibility快照；监听者若只EndPlay Identity，bEnding使Ready=false但nonce和Context仍原样，原守卫可true，Spawn返回true没有最后实际Ready核验。若只Unregister Identity，UE不EndPlay，GetWorld从Owner回退同World，Ready读也未核注册，不能把nonce/World当已注册有效组件证明。",
+              "EngineEvidence": [
+                {
+                  "File": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Components/GamePlatformGameplayEligibilityComponent.cpp",
+                  "Lines": [
+                    30,
+                    32,
+                    33,
+                    69
+                  ],
+                  "Meaning": "Active变化同步发布EligibilityChanged。"
+                },
+                {
+                  "File": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/Components/ActorComponent.cpp",
+                  "Lines": [
+                    2124,
+                    2148,
+                    2150,
+                    1101,
+                    1109
+                  ],
+                  "Meaning": "Unregister不EndPlay，只清WorldPrivate；GetWorld_Uncached回退Owner World。"
+                },
+                {
+                  "File": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Classes/Components/ActorComponent.h",
+                  "Lines": [
+                    548
+                  ],
+                  "Meaning": "WorldPrivate为空仍GetWorld_Uncached。"
+                }
+              ],
+              "RequestedFix": "原成功操作资格检查包含Identity实际注册/HasBegunPlay；最后Active外部返回后读IsCharacterReady并在其返回后再核原nonce/作用域，失败只撤原Death监听，不强行失活或销毁未证明后继。补真实Active快照内EndPlay/Unregister回归。",
+              "Verification": {
+                "FrozenHashMatched": 3,
+                "FrozenHashTotal": 3,
+                "DiffCheckExit": 0,
+                "UHT": false,
+                "UBT": false,
+                "UEAutomation": false
+              },
+              "RegressionPreconditionGap": {
+                "File": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Tests/DivineBeastsArenaWorldOwnershipTests.cpp",
+                "Lines": [
+                  143,
+                  145,
+                  186
+                ],
+                "Evidence": "两玩家只选Hero，没有RequestReady；GameMode RequestHeroSelection 274调用BeginReadyCheckIfReady(331–336)仅到ReadyCheck，而Adapter IsSpawnScopeCurrent(131–134)只允Countdown/InProgress。测试在Spawn入口就失败，实际OnNewPawn/Identity监听不触发。",
+                "RequestedFix": "通过正式RequestReady使两人到Countdown并断言阶段；最后Active通知测试也须经真实Countdown/StartMatch到InProgress。不能直接写PhaseMachine或伪造Adapter/Ready成功。"
+              }
+            },
+            "FinalRecheck": {
+              "ReviewedAtUtc": "2026-10-09T13:46:23Z",
+              "FrozenAtLocal": "2026-10-09T21:43:23+08:00",
+              "Resolution": "原成功nonce守卫现包含Identity.IsRegistered/HasBegunPlay；最后Active通知返回读实际Ready，再核原Binding/Controller/Pawn/Context/nonce，取消只撤原DeathHandle，不Destroy或Inactive未知归属后继。统一IsCharacterReady保留bEnding及资源前提，增加真实Registered/Begun前提，StateView与ActivationGate同时失败关闭。",
+              "TestPreconditionRepair": "前三分支通过正式RequestHeroSelection+RequestReady进入Countdown并断言阶段；末两以正式Adapter实际出生两个团队Pawn，经真实0.01s倒计时与后续Automation帧World.Tick进入InProgress，再使用RespawnPolicy测Active通知；两个实际PlayerStart相距5000，非私有阶段写入或假Spawn端口。",
+              "TestsRead": {
+                "Registration": "DivineBeasts.Arena.Server.SpawnReentrantSuccessorOwnership",
+                "ScenarioCount": 5,
+                "Scenarios": [
+                  "ReplaceAdapter",
+                  "HigherContext",
+                  "SameContext",
+                  "EndDuringActive",
+                  "UnregisterDuringActive"
+                ],
+                "Executed": false,
+                "CountingMeaning": "同一个Automation注册内5个独立latent夹具分支；不是5个已通过测试。"
+              },
+              "TerminalRegression": "实际OnEligibilityChanged(true)内EndPlay/Unregister身份，不改nonce；断言原Spawn失败、后继Pawn/控制器保留、真实公开Ready=false和EvaluateActivationEligibility失败。EndPlay卸Gate由ASC失败关闭；Unregister保Gate但其Ready查询失败，生产注册前提未降低。",
+              "WarmupFixture": "既有预热夹具补合法GameMode/InitializeActorsForPlay/World.BeginPlay；租约等待在真实Automation帧Tick拥有World，完整EndPlay→GI.Shutdown→DestroyWorldContext/DestroyWorld；原冷加载、错误World/Hero、成功借用、不释放装配需求期望保留。",
+              "NonceBoundary": "普通const只读C++观察API，不是RPC/权限/准入票据；真源只有AuthorityBind校验通过之后接纳时签发，字段相同的接纳也换nonce。调用者只在成功返回后捕获，不依靠失败返回读取新身份猜归属。",
+              "Verification": {
+                "FrozenHashMatched": 6,
+                "FrozenHashTotal": 6,
+                "DiffCheckExit": 0,
+                "SourceRead": true,
+                "UHT": false,
+                "UBT": false,
+                "UEAutomation": false,
+                "RuntimeRedGreenObserved": false
+              },
+              "Files": [
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Server/DivineBeastsArenaGameplayLifecycleAdapter.cpp",
+                  "Sha256": "5088164B7114122D71A8E9FF6F27E5ECF5993A2BE53579866EEB3F672DDEBD8E"
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp",
+                  "Sha256": "5DDAFBCA25B91D20A179FE26FDE3CB6AADE7FFC9385DC50BDB55D0F38448129C"
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Tests/DivineBeastsCharacterWarmupTests.cpp",
+                  "Sha256": "9D9445D2AF0E623A1E534A6BBF07D016648C4A2506B53BB6E488E6BFEAC134F4"
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Tests/DivineBeastsArenaWorldOwnershipTests.cpp",
+                  "Sha256": "327D7FA7B1ACA7116C3A4109AD47D48EA309CEAEA75E27028ECEBEE2870F2761"
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+                  "Sha256": "B556F063C4F7F5737490FF5559EA66D2312B3FC3A98BC9FCE1BF21E6B85E5AC5"
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Tests/DivineBeastsCharacterConfigurationTestFixture.h",
+                  "Sha256": "F6B486F9F1985FF81AAE36DFDF014693B20D4F21214BADDD37730B4292B9A3D8"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "G03",
+            "Severity": "Important",
+            "Status": "ClosedBySourceRecheckRuntimeUnverified",
+            "Source": "Root授权追加，独立读实确认",
+            "File": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Private/Components/GamePlatformCombatComponent.cpp",
+            "InitialSha256": "FB606006BBD7137A3C7D29D439543B7B70F7F90F228A9B6FAA9B78708796B909",
+            "Lines": "439-503",
+            "Title": "Combat重生重置内部GAS回调后，旧操作仍可尾写Avatar代次",
+            "Evidence": "ResetForNewAvatar在439-453预检/计算代次后，459移除GE、461移除Dead loose tag、471清盾GE、472写Health，都可调用同步外部GAS事件。随后479-485直接写bDead、AvatarGeneration、WorldContextGeneration并清事件/解析缓存，没有原操作/关闭/Owner/世界/ASC复核；最终RespawnReset广播后直接返回true。",
+            "EngineEvidence": [
+              {
+                "Path": "F:/UnrealEngine-5.8.0-release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/AbilitySystemComponent.h",
+                "Lines": "666-669",
+                "Meaning": "RemoveLooseGameplayTag直接进入UpdateTagMap。"
+              },
+              {
+                "Path": "F:/UnrealEngine-5.8.0-release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Private/AbilitySystemComponent.cpp",
+                "Lines": "715-778",
+                "Meaning": "移除Tag在同一调用栈中Execute已收集的标签事件，Deferred名称不表示跨帧。"
+              },
+              {
+                "Path": "F:/UnrealEngine-5.8.0-release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Private/GameplayEffectTypes.cpp",
+                "Lines": "875-893;921-925",
+                "Meaning": "标签计数的真实原生委托同步Broadcast。"
+              },
+              {
+                "Path": "F:/UnrealEngine-5.8.0-release/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Private/GameplayEffect.cpp",
+                "Lines": "4944",
+                "Meaning": "实际GE移除事件同步Broadcast。"
+              }
+            ],
+            "Trigger": "Dead Tag移除或GE/属性通知的监听者同步发起更高Avatar代次重置，或使组件EndPlay/原Owner退出。旧Reset栈在回调返回后继续清缓存和写旧NewAvatarGeneration。",
+            "Impact": "后继重置可能先发布更高代次，再被旧栈改回低代次；关闭后的组件也继续重置/广播RespawnReset。组件ApplyDefinition的返回复核只能发现发生过失效，不能撤回Combat内部已经发生的尾写。",
+            "RequestedFix": "Combat自身签发重置操作身份并维护关闭/弱Owner/World/ASC/AttributeSet与代次条件；各GAS事件边界及最终广播返回后核原操作，失效不写后继。使用真实原生Tag变化委托补后继/关闭回归，独立冻源后回读。",
+            "InitialStatus": "Open",
+            "Recheck": {
+              "ReviewedAtUtc": "2026-10-09T13:31:29Z",
+              "OwnerReport": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/CombatResetRemediation.json",
+              "OwnerStaticEvidence": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/CombatResetStaticChecks.json",
+              "Resolution": "独立AvatarResetOperationGeneration与ComponentLifecycleGeneration，加先关闭EndPlay状态；Reset在效果/LooseTag/每个护盾句柄/健康及两个生成元属性setter返回后复核原Owner/World/ASC/AttributeSet/ActorInfo/关闭与代次，旧栈只返回false。提交无外部边界且更新自身合法ExpectedAvatar/Context，再用原操作nonce复核最终RespawnReset通知。",
+              "ShieldOwnership": "先捕获本批句柄，但逐一摘当前句柄后Remove，不提前清整账本；后继Reset可看到并处理剩余旧句柄，旧栈失效即停止，后继新盾不被尾清。EndPlay先关闭，公用Spec校验拒绝新的伤害/治疗/控制/盾，关闭清理只持原句柄。",
+              "FinalEventAudit": "Reset使用Owner作为Source/Target；PublishCombatEvent在本地通知后源组件分支不成立，RespawnReset不属于IsSafeForCosmetics允许类型，不发送额外网络反馈；最后返回IsCurrent且无成员尾写。未把整个死亡/伤害链审计扩大为本次Reset通过。",
+              "FixtureEvidence": [
+                "真实CreateWorld仅一次InitializeNewWorld，InIVS直接传CreateWorld；InitializeActorsForPlay后权威Actor实际注册ASC/Combat，InitAbilityActorInfo并由Actor.DispatchBeginPlay路由组件；不是手写Ready/私有字段镜像。",
+                "真实RegisterGameplayTagEvent、GetGameplayAttributeValueChangeDelegate触发后继重置/DestroyComponent；两份真实Shield GE与Stun GE移除实际通知。生成SetIncomingDamage通过锁定UE AttributeSet.h 441–447进入SetNumericAttributeBase，测试验证后继治疗需求不被清。",
+                "ON_SCOPE_EXIT先解绑Native stack引用；随后fixture析构Destroy Actor并DestroyWorld一次。没有latent裸引用、反射替身、帧号修改、网络或生产端口。"
+              ],
+              "TestsRead": [
+                "GamePlatform.Combat.ResetReentry.NativeTagSuccessor",
+                "GamePlatform.Combat.ResetReentry.NativeTagClosing",
+                "GamePlatform.Combat.ResetReentry.AttributeSuccessor",
+                "GamePlatform.Combat.ResetReentry.AttributeClosing",
+                "GamePlatform.Combat.ResetReentry.ShieldSuccessor",
+                "GamePlatform.Combat.ResetReentry.NormalAdvance",
+                "GamePlatform.Combat.ResetReentry.ControlEffectSuccessor",
+                "GamePlatform.Combat.ResetReentry.MetaAttributeSuccessor"
+              ],
+              "Verification": {
+                "FrozenHashMatched": 4,
+                "FrozenHashTotal": 4,
+                "DiffCheckExit": 0,
+                "UHT": false,
+                "UBT": false,
+                "UEAutomation": false,
+                "RuntimeRedGreenObserved": false
+              },
+              "Files": [
+                {
+                  "Path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+                  "Sha256": "F21198182C0449CC6259C9F1FE3CFC2E9992B9FFDB561F4808E762442743F696"
+                },
+                {
+                  "Path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Private/Components/GamePlatformCombatComponent.cpp",
+                  "Sha256": "8026304709999A842DA6401EB466F77C3A4217DA561FA92B6FE9BE7B2064323C"
+                },
+                {
+                  "Path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Docs/AuditRemediation-2026-10-09.md",
+                  "Sha256": "78BC787D8552BCA9156527D406FA2B49CC71ABC5EAB59F71540C98BBAAD633DA"
+                },
+                {
+                  "Path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Private/Tests/GamePlatformCombatAttributeTests.cpp",
+                  "Sha256": "DBC62CD849CD32862C4FE5D08CA177C411105315F07F70DC77FD9021FD98333E"
+                }
+              ]
+            }
+          }
+        ],
+        "Checks": [
+          {
+            "Id": "K01",
+            "Topic": "唯一权威Pawn继承与组件",
+            "Result": "静态确认",
+            "Detail": "GameplayCharacter继承ADivineBeastsCharacter，基类CreateDefaultSubobject创建唯一AbilitySystem/Combat/CharacterIdentity/GameplayEligibility，派生仅创建AbilityLoadout。通过继承取得IAbilitySystemInterface、IGamePlatformCombatant、权威死亡、UnPossessed、OnRep_Controller和EndPlay；Assembly源码显式计数五种组件各1。"
+          },
+          {
+            "Id": "K02",
+            "Topic": "公开函数符号和双端ActorInfo",
+            "Result": "静态确认",
+            "Detail": "原GetAbilitySystemComponent/BeginPlay/PossessedBy/OnRep_PlayerState仍在派生类定义并转发，基类查询返回唯一ASC。无Controller的权威Pawn清Active/Avatar；远端客户端可观察ActorInfo，资格仍由Gate决定。NativeASC Bind对相同Owner/Avatar幂等，重复Super+派生刷新不会生成第二份ASC。"
+          },
+          {
+            "Id": "K03",
+            "Topic": "子对象及ABI范围",
+            "Result": "明确限制",
+            "Detail": "原HeroIdentity默认子对象变为基类CharacterIdentity；AbilitySystem/Combat/Identity反射属性归属移到基类，Loadout子对象名保留。反射类/模块稳定不代表ABI、BP默认值、序列化实例已兼容。中文头与Owner报告准确注明，未做资产迁移或引擎加载验证。"
+          },
+          {
+            "Id": "K04",
+            "Topic": "可信绑定操作",
+            "Result": "通知边界静态确认",
+            "Detail": "AuthorityBind复制Context，拒绝旧代次/非权威/结束World，生成FGuid；清旧租约、false广播及Refresh返回后核操作/Owner/World。false通知中高代次后继使原栈false且保留新身份；EndPlay设置bEndingPlay阻止后续接纳。不能将该确认扩展成G01的配置内部边界已闭合。"
+          },
+          {
+            "Id": "K05",
+            "Topic": "旧租约撤销",
+            "Result": "静态确认",
+            "Detail": "CancelDefinitionLease先取走OwnedLease并清空成员，再ReleaseResources；旧取消返回无DefinitionLease={}尾写，因此不会直接抹掉同步后继新租约。借用预热只撤销引用，不释放装配拥有者租约。"
+          },
+          {
+            "Id": "K06",
+            "Topic": "两个同步通知回归",
+            "Result": "源码有效，未运行",
+            "Detail": "使用真实已初始化Pawn与真实核心Hero目录，无Data/资产时不伪称Ready；测试高代次后继原栈false、字段/代次保持2、两次撤销通知，及通知内EndPlay、后续入口拒绝且不进入无GI初始化。fixture析构Destroy自有Pawn后退World，监听在局部引用结束前移除。"
+          },
+          {
+            "Id": "K07",
+            "Topic": "ASC两个事件",
+            "Result": "静态确认",
+            "Detail": "保留Avatar Gate/代次/输入保护及独立Spec复制事件。实际cpp先Super.OnRep_ActivateAbilities再广播；原生UE发现Spec.Ability尚未到达会排0.5秒重试，事件不能当作能力类/资格/可激活已完成证明。现有UI只读真实Spec与Ready。"
+          },
+          {
+            "Id": "K08",
+            "Topic": "层与端侧",
+            "Result": "静态确认",
+            "Detail": "Abilities Public CharactersRuntime支持公开父类；Private GamePlatformGameplay用于Eligibility实现/回归；Characters没有反向依赖Abilities，平台没有项目类型，ArenaServer没有Client依赖。"
+          },
+          {
+            "Id": "K09",
+            "Topic": "冻结与格式",
+            "Result": "静态通过",
+            "Detail": "完整读前后原十文件SHA全部匹配；git diff --check十文件退出0，冲突标记0。原DeathBridge/Pawn/Reconnect三夹具SHA仍与此前相同。"
+          }
+        ],
+        "Verification": {
+          "DiffCheckExitCode": 0,
+          "ConflictMarkerCount": 0,
+          "FrozenFileCount": 10,
+          "SourceHashesMatched": true,
+          "UBTRun": false,
+          "EditorRun": false,
+          "AutomationRun": false,
+          "AssetsTouched": false,
+          "SourceChangedByReviewer": false
+        },
+        "Limits": [
+          "本次不构成完整Loadout/GAS授权业务、全部战斗流程或网络复制审查。",
+          "两Important关闭前必须独立回读新冻结源；原执行者自查/静态绿色不能代替此步骤。",
+          "原测试世界无物理/World.BeginPlay，不能补证真实Overlap通知。",
+          "保留原发现及修复后SHA/回读依据；不抹去历史。"
+        ],
+        "UpdatedAtUtc": "2026-10-09T13:59:19Z",
+        "AdditionalReadOnlyScope": [
+          {
+            "Path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Private/Components/GamePlatformCombatComponent.cpp",
+            "Sha256": "FB606006BBD7137A3C7D29D439543B7B70F7F90F228A9B6FAA9B78708796B909",
+            "Responsibility": "Root指定第二责任组，审查人只读，不与Gameplay原执行者交叉修改。"
+          }
+        ],
+        "RecheckRound1": {
+          "ReviewedAtUtc": "2026-10-09T13:27:40Z",
+          "Head": "e720d5c26d71acf93af71781bfc3a271529f23cc",
+          "SourceMutated": false,
+          "Files": [
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+              "Sha256": "ED58C5C08FBDBA543919EB31F44C9CB6C86143FE1F87824C4C1CCE5262B713C2"
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp",
+              "Sha256": "7E7806D5BC19DB58F2520B1C310AE06774CB4384C084E73347650BE7C945CAE0"
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Tests/DivineBeastsCharacterConfigurationTestFixture.h",
+              "Sha256": "F6B486F9F1985FF81AAE36DFDF014693B20D4F21214BADDD37730B4292B9A3D8"
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Tests/DivineBeastsCharacterWarmupTests.cpp",
+              "Sha256": "1F4726C7495504642B0C7E31D399C1F5CB3656288A8D8F0EBF43B650558EF75B"
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Server/DivineBeastsArenaGameplayLifecycleAdapter.cpp",
+              "Sha256": "CC8C7BAAB241ED55F94B379AD2D4D3832895D1185C598A80675D321B2C5AD34C"
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/Private/Tests/DivineBeastsArenaWorldOwnershipTests.cpp",
+              "Sha256": "27AAEDFEAC1F9D7AA6C78382ABB140BC95DF84D6016CA5124E95B05064DCB9B2"
+            }
+          ]
+        },
+        "CompilerRepairRecheck": {
+          "Report": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/GameplayCharacterCompilerRepair.json",
+          "Path": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Private/Characters/DivineBeastsGameplayCharacter.cpp",
+          "OriginalSha256": "C7003941A164B9C412BA3D0DC9B966A8AC259894AC29740657E38F590FC1053C",
+          "FixedSha256": "A9698DA4550C0ABDE1F9C82D4CAD126B64E0B58008E86A9FB37F82CE01DF0756",
+          "SourceRead": true,
+          "Scope": "实际Server9bc4编译发现C4458遮蔽新基类成员；只读回查40声明、44 Bind、52 Clear三个局部引用改名CharacterAbilitySystem，继承/公开符号/控制器资格/ActorInfo行为和警告策略无变化。",
+          "UBTRerunClaimed": false,
+          "RuntimeVerified": false
+        }
+      }
+    },
+    {
+      "Name": "ApplicationPresentationIndependentReview.json",
+      "SourceSHA256": "962DF0B033DC747B35C876F8CC69BB4B6D1E12C9986B42D42E67BE111A0CC23C",
+      "Report": {
+        "SchemaVersion": 1,
+        "Task": "应用与表现整合八文件独立只读复核",
+        "Workspace": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace",
+        "CreatedAtUtc": "2026-10-09T13:25:32.425187Z",
+        "CurrentHead": "e720d5c26d71acf93af71781bfc3a271529f23cc",
+        "InitialOwnerReport": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/ApplicationPresentationMergeReport.json",
+        "OwnerStaticEvidence": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/ApplicationPresentationMergeStaticChecks.json",
+        "SourceFreezeUtc": "2026-10-09T20:56:29.667026+08:00",
+        "ComparedCheckpoint": "dc61f02cf2fd314348073c778cdc8c8ac4dbd903",
+        "ComparedMainSource": "8de5995e3e2060dbe7eb662d33dc911b86e3811a",
+        "Status": "CompleteWithTwoImportantClosedBySourceRecheck",
+        "CriticalCount": 0,
+        "ImportantFoundCount": 2,
+        "OpenImportantCount": 0,
+        "Conclusion": "初始2项Important及各轮残余均保留证据；A01/A02已在最新冻结源码定点复核闭合。所有新回归只实读生产/引擎/测试触发与清理链，没有执行UE/UHT/UBT，不能将源码闭合记为运行通过。",
+        "FrozenFiles": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+            "expectedSha256": "A938A2F248632122C5D269CC8C3391FB35E956DDE197175954F9E4616A80AA17",
+            "actualSha256": "A938A2F248632122C5D269CC8C3391FB35E956DDE197175954F9E4616A80AA17",
+            "matched": true
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Manager/GamePlatformUIManagerSubsystem.h",
+            "expectedSha256": "FAF8FCDA5F9748CAD1799ABB7BD92C4F5B6FFEBD74E00AE2DEBD4D042307E414",
+            "actualSha256": "FAF8FCDA5F9748CAD1799ABB7BD92C4F5B6FFEBD74E00AE2DEBD4D042307E414",
+            "matched": true
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Docs/UIManagerSubsystem.md",
+            "expectedSha256": "6155DA763FB2EBB4E51395B1A17BCF798F9B36023AC2CBFCECE8F00186F681BD",
+            "actualSha256": "6155DA763FB2EBB4E51395B1A17BCF798F9B36023AC2CBFCECE8F00186F681BD",
+            "matched": true
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+            "expectedSha256": "DE3296CA8005262FDA9EF4CA680F77A53A448CA9366AAD4842B2D996D6AE4D8C",
+            "actualSha256": "DE3296CA8005262FDA9EF4CA680F77A53A448CA9366AAD4842B2D996D6AE4D8C",
+            "matched": true
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+            "expectedSha256": "3F824DFA2E3CD5B7B0EE6B67C9EBD7472C986F6513ABF0DEBE2D49E40CF0A784",
+            "actualSha256": "3F824DFA2E3CD5B7B0EE6B67C9EBD7472C986F6513ABF0DEBE2D49E40CF0A784",
+            "matched": true
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+            "expectedSha256": "18A71FEA10E045339230FB32A5CAE715E4E456BD1F0F99F13E8A33D4BFFC7D55",
+            "actualSha256": "18A71FEA10E045339230FB32A5CAE715E4E456BD1F0F99F13E8A33D4BFFC7D55",
+            "matched": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp",
+            "expectedSha256": "8D183473BE54E3A922D88687419ADF92E1338FCFE71BC8C33B80E8D445DCAF4C",
+            "actualSha256": "8D183473BE54E3A922D88687419ADF92E1338FCFE71BC8C33B80E8D445DCAF4C",
+            "matched": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+            "expectedSha256": "2C3F8575DDBFE77B7B3D07A21F1ECD2E9554FC49FEA7547F8B13C319AF3E6968",
+            "actualSha256": "2C3F8575DDBFE77B7B3D07A21F1ECD2E9554FC49FEA7547F8B13C319AF3E6968",
+            "matched": true
+          }
+        ],
+        "Findings": [
+          {
+            "Id": "A01",
+            "Severity": "Important",
+            "Status": "ClosedBySourceRecheck",
+            "File": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+            "Lines": [
+              965,
+              1030,
+              1067,
+              1072
+            ],
+            "Title": "MOBA事实扩展及提交返回没有维持原操作/世界身份，贡献者调用未持自身生命周期",
+            "Evidence": [
+              "ApplyContextContributors只拷贝FName键，仍借用ContextContributors内TSharedPtr并调用virtual Contribute；合法自注销可释放服务持有的最后一个SharedPtr，正在执行的贡献者没有本栈强引用。",
+              "PrepareFact在Contribute之后没有复核bClosing、BindingGeneration、LocalPlayer/BoundWorld、World有效性或拆除状态，仍递增RequestGeneration并继续RememberFact。",
+              "SubmitAdaptedFact把平台请求WorldGeneration及Context.WorldGeneration置0；如果贡献者同步换世界/关闭，平台Submit会刷新当前世界并把零值补为新世代，原MOBA事实失去旧World拒绝条件。",
+              "Coordinator->Submit包含Provider Handler及RequestObserved同步外部调用。返回失败后按FactId撤账没有原代次/本次记录证明，旅行或关停再提交同FactId后继时，旧返回可删除后继缓存。",
+              "BindArena 377–398、HandleArenaTeamStatesChanged 507–531、HandleArenaObjectiveStatesChanged 542–564跨Adapt/Recover外部边界继续旧GameState数组迭代和成员写入，也应纳入同作用域的调用者复核。"
+            ],
+            "ContractEvidence": [
+              {
+                "File": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationRuntime/Public/Events/MobaPresentationContextContributor.h",
+                "Lines": [
+                  6,
+                  14
+                ],
+                "Meaning": "公开virtual同步扩展接口；当前契约未禁止同步注销/关停/世界切换。"
+              },
+              {
+                "File": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Private/GamePlatformPresentationClientSubsystem.cpp",
+                "Lines": [
+                  481,
+                  494,
+                  539,
+                  548
+                ],
+                "Meaning": "真实平台接收链刷新世界、零世代补齐、Provider和观测委托同步执行。"
+              }
+            ],
+            "Trigger": "已注册贡献者在Contribute中注销自身并触发关闭/旅行；或平台RequestObserved/Provider回调切换世界并成功注册同FactId的后继，外层同步拒绝随后返回。",
+            "Impact": "扩展对象可在方法执行期间失去最后一个所有者；旧事实可能提交到错误世界，或关闭后重新写入事实缓存；旧失败栈可抹掉后继去重记录。",
+            "RequestedFix": "持SharedPtr值拷贝和必要UObject强引用，捕获原LocalPlayer/World/Binding/WorldGeneration及本次记账身份；每一同步外部边界返回即验证，失效只退出；失败撤账只撤销仍属于本次原代次的记录。数组/调用者也持快照并在返回后复核，不借用回调可改的容器。",
+            "SuggestedRegression": "真实贡献者自注销+关停/世界换代；真实平台Provider/RequestObserved嵌套同FactId后继；两个Team/Objective条目首项回调退出后不继续发布次项。",
+            "Limits": "当前工程没有MOBA贡献者具体注册实现；这是公开可用接口的可复现生命周期缺陷，未声称现有项目场景已经实际触发。",
+            "RecheckRound1": {
+              "ReviewedAtUtc": "2026-10-09T14:15:10Z",
+              "Resolved": "SharedPtr值拷贝、强UObject和LP/World/Binding/ArenaBinding/GS身份返回复核；三竞技数组值快照与每外部返回止旧批次、Refresh绑定停止；精确Fact operation撤账防新World已受理后继被擦。",
+              "Residual": {
+                "File": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+                "Lines": [
+                  999,
+                  1008,
+                  1134,
+                  1166
+                ],
+                "Evidence": "PredictedFacts在外部Provider实际接受前就登记。Provider同World回调内提交同FactId Confirmed时直接升级新operation并return false，Submit据此Submitted且不调用Provider。旧预测随后拒绝，只按旧token撤账失败；新Confirmed成为从未受理的永久成功缓存。",
+                "Trigger": "真实Provider第一调用收到Predicted，同步调用Submit Confirmed相同ID（不旅行），再return false拒绝旧预测；内确认不进入Provider，此后重复仍Submitted。",
+                "RequestedFix": "区分在途预约与已受理预测；同ID确认接管不能凭预约推定已播放。中立Pending若新增须独立检查枚举消费者/兼容，不以Submitted或InvalidRequest伪表示待完成；受理成功/拒绝后的确认处理必须真实且精确token归属。",
+                "Regression": "补同World预测→确认嵌套，外层Provider接受与拒绝两分支，并验证真实Provider调用/去重与返回值，不仅旅行后已受理后继。"
+              },
+              "TestsRead": [
+                "Moba.Presentation.Client.ContributorSelfUnregister",
+                "Moba.Presentation.Client.ContributorScopeReentry",
+                "Moba.Presentation.Client.FactRollbackKeepsSuccessor",
+                "Moba.Presentation.Client.ArenaArrayReentry"
+              ],
+              "FixtureLimits": "实际PlayerAdded、两World/Viewport字段切换、真实virtual和Provider；Provider只记录受理/重入，无资源播放。未运行；Array同注册覆盖Bind/Team/Objective三入口。"
+            },
+            "RecheckRound2": {
+              "ReviewedAtUtc": "2026-10-09T14:28:00Z",
+              "Status": "OpenWithFurtherResidual",
+              "Files": [
+                {
+                  "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+                  "Expected": "8B9F5A4AFCE79963CA6196EAF0B8119F3EF310E77B0849901D401DF1BC5E5688",
+                  "Actual": "8B9F5A4AFCE79963CA6196EAF0B8119F3EF310E77B0849901D401DF1BC5E5688",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+                  "Expected": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+                  "Actual": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+                  "Expected": "392E90870880E88E41A9FF568F07CFCE06A7AE9D6B84D2DFAE597651C2A1A0EF",
+                  "Actual": "392E90870880E88E41A9FF568F07CFCE06A7AE9D6B84D2DFAE597651C2A1A0EF",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationClientTests.cpp",
+                  "Expected": "8690A34BA237FC681F6B55D47D1F36CE868C67C56193AB8C0A2D5C741A1C4896",
+                  "Actual": "8690A34BA237FC681F6B55D47D1F36CE868C67C56193AB8C0A2D5C741A1C4896",
+                  "Match": true
+                }
+              ],
+              "Resolved": [
+                "在途shared Submission与已受理Predicted/Confirmed分离，Provider尚未返回同ID返回诚实Pending；原预测成功后仅升级确认不重播，原预测拒绝后撤本次预约并从真实Submit入口提交确认。",
+                "四新增真实Provider回归分别覆盖拒绝后确认、接受不双播放、二者拒绝后重试，以及关闭/旅行取消；Provider测试受理不等于VFX播放。"
+              ],
+              "Residual": {
+                "File": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+                "Lines": [
+                  436,
+                  438,
+                  1131,
+                  1137,
+                  1177
+                ],
+                "Evidence": "UnbindArena仅推进ArenaBindingGeneration并清竞技修订/监听，不清PendingFactSubmissions。同World更换GameState后IsCurrentScope=false，1177直接StaleWorld返回，精确旧预约仍留存；后继同ID1131–1137永远Pending，甚至留存后继确认到旧Submission。",
+                "Trigger": "原Provider同步UWorld.SetGameState事件→RefreshBindings→UnbindArena/BindArena。同World未清WorldState，旧预约阻挡新绑定相同ID。",
+                "RequestedFix": "解绑竞技代次时撤全部旧在途资格；外层失效返回也只撤仍属于原shared operation/token的预约，不能擦实际后继；保同步栈强对象直到返回，补真实SetGameState重绑后同ID后继受理/去重回归。",
+                "OwnerAcknowledged": true
+              },
+              "Compatibility": "Pending=4明确由Root授权；独立UENUM消费者/反射兼容审查交另一座位，此处不冒领其结果。",
+              "Limits": "四新增测试仅源码实读，未运行。原关闭/旅行fixture不能代替同WorldArenaBinding换代。"
+            },
+            "RecheckRound3": {
+              "ReviewedAtUtc": "2026-10-09T14:30:35Z",
+              "Status": "ClosedBySourceRecheck",
+              "FrozenFiles": [
+                {
+                  "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+                  "Expected": "0C21161755F968FDF3B7DA7021D30C668ED85A90BCD62EA1AA54533FAB2EEEAB",
+                  "Actual": "0C21161755F968FDF3B7DA7021D30C668ED85A90BCD62EA1AA54533FAB2EEEAB",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+                  "Expected": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+                  "Actual": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+                  "Expected": "F999D6931700FDF186EACAA940E9012F2E21B9671733E56B4986C5B9BC0D6D5C",
+                  "Actual": "F999D6931700FDF186EACAA940E9012F2E21B9671733E56B4986C5B9BC0D6D5C",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationClientTests.cpp",
+                  "Expected": "9FFD036FEB397D827A7E50D1C2782D84D139B6DF1ED3D908B56167A99015DDDE",
+                  "Actual": "9FFD036FEB397D827A7E50D1C2782D84D139B6DF1ED3D908B56167A99015DDDE",
+                  "Match": true
+                }
+              ],
+              "Proof": [
+                "UnbindArena436–442先推进竞技绑定世代，再Reset PendingFactSubmissions撤资格；旧同步栈继续持shared Submission，不在回调中销毁正在执行的操作。",
+                "Submit1176–1189两次scope失效返回只以map中的shared Submission和OperationGeneration匹配原预约才Remove，不按FactId裸撤后继；预约已被新操作接管则旧返回拒绝，不影响后继。",
+                "已受理事实只在平台Result Submitted之后Remember。预测拒绝则撤原预约后从公开Submit重新校验/提交确认，预测成功则确认只升级去重；Pending仅表同步原栈未决议。"
+              ],
+              "Regression": {
+                "PrettyName": "Moba.Presentation.Client.PredictionArenaRebindKeepsSuccessor",
+                "Lines": [
+                  381,
+                  420
+                ],
+                "Trigger": "合法World InitializeActorsForPlay后实际Spawn两AGamePlatformArenaGameState，真实UWorld.SetGameState(Successor)同步广播，生产HandleGameStateSet→RefreshBindings→BindArena→UnbindArena生效；没有手动写ArenaBindingGeneration。",
+                "Assertions": "原预测Provider中嵌套确认Pending，同World实际GameState换代，后继同ID实际Provider Submitted；原栈StaleWorld。相同ID真实Provider只2调用、旧确认不排放、后续重复Submitted但不再调用，证明不永久Pending或误撤后继。",
+                "EngineEvidence": [
+                  {
+                    "File": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/World.cpp",
+                    "Lines": [
+                      9686,
+                      9693,
+                      9718
+                    ],
+                    "Meaning": "SetGameState改变World/LevelCollection后同步Broadcast真实GameStateSetEvent。"
+                  },
+                  {
+                    "File": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/GameStateBase.cpp",
+                    "Lines": [
+                      54,
+                      59
+                    ],
+                    "Meaning": "真实SpawnActor的GameState PostInitialize自动SetGameState；fixture随后显式恢复原State形成正确前提。"
+                  }
+                ],
+                "Lifecycle": "强World/GI/LP/State，Provider句柄ScopeExit解绑先于PlayerRemoved→DestroyWorld；未做跨帧生存期借用或生产假资源受理。"
+              },
+              "TestsRead": [
+                "Moba.Presentation.Client.PredictionRejectedConfirmationReentry",
+                "Moba.Presentation.Client.PredictionAcceptedConfirmationReentry",
+                "Moba.Presentation.Client.PredictionConfirmationRetryAfterRefusal",
+                "Moba.Presentation.Client.PredictionPendingScopeCancellation",
+                "Moba.Presentation.Client.PredictionArenaRebindKeepsSuccessor"
+              ],
+              "Documentation": "README已同步同World竞技重绑取消与精确原shared/token撤账，语义/失败/受理/去重/兼容/未执行边界可与源码核对。",
+              "Limits": "只有源码独立复核；没有运行5新增PrettyNames，没有资源播放/Cook/Multi-PIE验收。"
+            }
+          },
+          {
+            "Id": "A02",
+            "Severity": "Important",
+            "Status": "ClosedBySourceRecheck",
+            "File": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp",
+            "Lines": [
+              423,
+              426,
+              428
+            ],
+            "Title": "用ScreenId关闭通知清理实例所有权，会遗忘仍在栈的同名自有竞技页面",
+            "Evidence": [
+              "平台OnScreenClosed只有FName ScreenId，RemoveScreenOwnership在移除任意具体实例后广播其内容ID。",
+              "OpenScreenAsync无ScreenId单例限制，各请求GUID独立；CommonUI按池创建新的活动实例，因此同定义可在栈中存在两个实例。",
+              "Arena HandleArenaScreenClosed只比较ID并清ActiveArenaScreen/ActiveArenaSurfaceId；外部调用者关闭另一个合法同ID实例时，自有实例仍显示且持Data租约，但竞技子系统已失去指针。",
+              "下一复制事件SyncArenaSurface发现没有自有Active实例，可再次打开同表面，旧实例与租约一直留在栈。389–395安装新Active后关闭同IDPrevious也具有相同内容ID/实例ID混淆。"
+            ],
+            "ContractEvidence": [
+              {
+                "File": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Lines": [
+                  343,
+                  1045
+                ],
+                "Meaning": "请求与具体Widget独立拥有；关闭事件只携ScreenId。"
+              },
+              {
+                "File": "F:/UnrealEngine-5.8.0-release/Engine/Plugins/Runtime/CommonUI/Source/CommonUI/Private/Widgets/CommonActivatableWidgetContainer.cpp",
+                "Lines": [
+                  191,
+                  193,
+                  195,
+                  196
+                ],
+                "Meaning": "AddWidgetInternal获取池实例、初始化并注册；没有内容ID单例。"
+              },
+              {
+                "File": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/UMG/Public/Blueprint/UserWidgetPool.h",
+                "Lines": [
+                  101,
+                  109,
+                  120,
+                  138
+                ],
+                "Meaning": "只复用Inactive实例；已有Active时可创建另一Widget并追加ActiveWidgets。"
+              }
+            ],
+            "Trigger": "竞技持有A；另一个合法UI调用者用同ScreenId打开B并关闭B；全局关闭通知的内容ID与A相同。",
+            "Impact": "A仍在栈中但失去项目所有权记录，后續复制刷新可重复创建并遗留资源需求。",
+            "RequestedFix": "仅在真实自有Active实例已离开原栈时清理；或增加含实例/请求身份的关闭通知并保留既有公共通知兼容。不能用页面内容ID证明具体实例归属。",
+            "SuggestedRegression": "通过真实CommonUI/Data打开同ScreenId两个实例，关闭非竞技持有者实例，确认竞技Active仍是A且下一复制刷新不新增页面/租约；替换同ID旧实例也不能清新Active。",
+            "RecheckRound1": {
+              "ReviewedAtUtc": "2026-10-09T14:15:10Z",
+              "Resolved": "保存具体实例原CommonUI栈弱身份；Opened核当前实际栈成员；Closed不按IsActivated判断覆盖页；保活Previous关闭。外部同ID B的真实离场不会清原栈A。",
+              "Residual": {
+                "File": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp",
+                "Lines": [
+                  437,
+                  444
+                ],
+                "Evidence": "UIManager root替换196/Deinitialize120→ClearScreenOwnership，1047先Remove ScreenStacks并释放本次租约，1061立即广播Closed；此时旧栈WidgetList仍含A，因为清账从未RemoveWidget。Arena用旧列表成员而忽略自己的真实撤账。随后根RemoveFromParent/Slate清理才Reset列表，Manager已解绑释放通知，不能补Closed，弱A未GC期间Sync同ID早退导致新根空白。",
+                "PrimaryEvidence": [
+                  {
+                    "File": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                    "Lines": [
+                      120,
+                      196,
+                      1047,
+                      1061,
+                      1063
+                    ]
+                  },
+                  {
+                    "File": "F:/UnrealEngine-5.8.0-release/Engine/Plugins/Runtime/CommonUI/Source/CommonUI/Private/Widgets/CommonActivatableWidgetContainer.cpp",
+                    "Lines": [
+                      123,
+                      131
+                    ]
+                  }
+                ],
+                "RequestedFix": "同时确认平台仍拥有该具体实例的登记/原栈，或使用实例Closed事件；增加中立const只读owner查询可以保旧ID事件，不改变Root清理顺序。不暴露TMap/Data/上层类型。",
+                "Regression": "实际Manager根撤账/Deinitialize通知发生在旧列表清空前，Arena仍必须清自有A；保留真实同ID两实例场景。"
+              },
+              "TestRead": "DivineBeasts.Arena.UI.SameIdInstanceOwnership",
+              "FixtureLimits": "Native CommonUI AddWidgetInstance/RemoveWidget/WidgetList，Root授权ScopedAllowAbstractClassAllocation没有改ClassFlags或创建资产；随后直接调用兼容Closed处理器。不伪造Data受理，不声称真实完整Root/Data/Open加载链；当前未覆盖Manager真实根撤账。"
+            },
+            "RecheckRound2": {
+              "ReviewedAtUtc": "2026-10-09T14:28:00Z",
+              "Status": "ClosedBySourceRecheck",
+              "Files": [
+                {
+                  "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                  "Expected": "160D28EC4AE0AE26DF2B8A09FADABD6E2E2D36A8ABB5272AD794A6DEED2A9CB8",
+                  "Actual": "160D28EC4AE0AE26DF2B8A09FADABD6E2E2D36A8ABB5272AD794A6DEED2A9CB8",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Manager/GamePlatformUIManagerSubsystem.h",
+                  "Expected": "776DA4702518108B5FD5521463A19E6D60636761210B5F87C96DFE1067E5A7F8",
+                  "Actual": "776DA4702518108B5FD5521463A19E6D60636761210B5F87C96DFE1067E5A7F8",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Docs/UIManagerSubsystem.md",
+                  "Expected": "D9ED0E9661335B2C9D75531A85CE8D70330FE9B0A45345A3AAE0DEFF64C8B9BC",
+                  "Actual": "D9ED0E9661335B2C9D75531A85CE8D70330FE9B0A45345A3AAE0DEFF64C8B9BC",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp",
+                  "Expected": "9CF51624A1FD87E3A973C5D6CE2FAB605E7A498E27EB525B764988BA07C5B4A7",
+                  "Actual": "9CF51624A1FD87E3A973C5D6CE2FAB605E7A498E27EB525B764988BA07C5B4A7",
+                  "Match": true
+                },
+                {
+                  "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Tests/DivineBeastsArenaUITests.cpp",
+                  "Expected": "DE3868F87962E89AF4E94BDCF3B4C15AB7187D951333E9AEFAE6B0B29241792D",
+                  "Actual": "DE3868F87962E89AF4E94BDCF3B4C15AB7187D951333E9AEFAE6B0B29241792D",
+                  "Match": true
+                }
+              ],
+              "Proof": [
+                "Manager IsScreenOwnedByStack 1045–1052为纯C++ const GT观察，检查closing/replacing、有效实例与ExpectedStack、ScreenStacks精确Key/原栈和真实WidgetList成员；不暴露租约、不创建或写入所有权、不引用上层类型。",
+                "Arena Opened395只接受当前Root层栈精确平台拥有的实例；保存Active原栈，强持Previous再关闭；Closed445核具体平台账本，根撤账即使旧WidgetList仍含实例也不会忽略真实Closed。",
+                "平台RemoveScreenOwnership1057先撤Key，1068释放自身租约，1071广播兼容ID；ClearScreenOwnership共用于root替换196和Deinitialize120，原顺序保留。",
+                "Native回归184–227真实CommonUI栈及两同ID实例；受控friend只注入ScreenStacks，Manager.CloseScreen与Deinitialize真实动态Closed，不手工调用Closed处理器或广播，旧栈仍含A也立即清项目Active。"
+              ],
+              "Boundary": "新增const owner查询只观察中立实例与栈，线程前提/false语义/失活及root撤账说明完整；test friend为WITH_DEV_AUTOMATION_TESTS中立名，测试不构造Data租约、不改变UClass Flags。",
+              "Limits": "未执行UE/UBT/UHT；受控实例账本关闭回归不是完整Data异步Open或InstallRootLayoutClass/蓝图Root/视觉验收。"
+            }
+          }
+        ],
+        "ConfirmedChains": [
+          {
+            "Area": "UI默认变体Data回退",
+            "Files": [
+              "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+            ],
+            "Result": "同请求最多一次回退；取消旧PendingLoads登记后释放其租约，全部默认类+Preload资源重新受理；返回检查请求/Root/Definition/GI身份。正式Data负责延后完成；无并行StreamableLoader。"
+          },
+          {
+            "Area": "UI构造与提交",
+            "Files": [
+              "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+            ],
+            "Result": "AddWidget期间本栈持Manager/Root/Stack/Definition/ViewModel/Screen强引用；提交检查Request/Lease/RootGeneration/World/GI/真实WidgetList。取消构造先撤资格，移除原控件后才释放租约。"
+          },
+          {
+            "Area": "UI根替换",
+            "Files": [
+              "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+            ],
+            "Result": "CreateWidget、Clear/关闭、RemoveFromParent、AddToPlayerScreen、各Service.SetRootLayout后检查同替换代次，关停不再重新发布根服务。"
+          },
+          {
+            "Area": "竞技HUD",
+            "Files": [
+              "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp"
+            ],
+            "Result": "World Data租约及原GI/World/Root、请求代次护栏；CreateWidget、InitializeViewModel、AttachHUD返回重验；清理先取走成员再卸控件/释放本次租约，无旧栈末尾清后继。"
+          },
+          {
+            "Area": "竞技页面调度",
+            "Files": [
+              "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp"
+            ],
+            "Result": "需求/World/Controller变更才增加Surface操作代次；同表面复制不反复取消；外部VM/页面取消及打开返回核当前操作，关闭先取走自有Request/Screen。A02仍影响全局关闭回调。"
+          },
+          {
+            "Area": "MOBA确认事实总线和命中反馈",
+            "Files": [
+              "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp"
+            ],
+            "Result": "LocalPlayer当前World订阅真实已确认CombatWorldBus；下一帧Pawn接线计时器归本World，解除时取消；命中Resolver闭包/调校/Profile值快照、UObject强引用、Binding和配置代次在外部HitStop/Overlay/Camera/VFX返回后复核。A01通用事实流水线另有缺口。"
+          },
+          {
+            "Area": "三层和端侧",
+            "Result": "本次源保持平台中立、MOBA语义、项目竞技组装单向边界。未引入项目资源到基础层、未播放权威结果替代服务器，未使用业务Tick。"
+          },
+          {
+            "Area": "中文说明",
+            "Result": "八文件的本次新增成员/代次/租约/失败回退均有中文说明；原有接口部分说明仍依赖相邻审计文档，不宣告全仓注释完成。"
+          }
+        ],
+        "Verification": {
+          "FrozenHashMatched": 8,
+          "FrozenHashTotal": 8,
+          "DiffCheckExit": 0,
+          "SourceRead": true,
+          "LockedEngine": "F:/UnrealEngine-5.8.0-release",
+          "EngineVersion": "5.8.0",
+          "SourceMutations": false,
+          "Staging": false,
+          "UBT": false,
+          "UE": false,
+          "Automation": false,
+          "Assets": false
+        },
+        "Limits": [
+          "只读独立源码审查；未编译、UHT、UE Automation、联机、多世界或Cook。",
+          "所有静态符号和括号检查只作辅助；两个Important有具体接口/调用行为证据，尚无新运行红/绿证据。",
+          "本次不扩大到平台协调器整体注册容器重入审计；仅实读其被调用的同步边界以证明Moba返回守卫需求。",
+          "未修改其他人的冻结源或提交。"
+        ],
+        "UpdatedAtUtc": "2026-10-09T14:36:31Z",
+        "RecheckRound1": {
+          "StaticEvidence": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/ApplicationPresentationReentryStaticChecks.json",
+          "InitialSourceAndTestHashes": "第一次读七路径7/7匹配；随后README单EOF修后6其他路径保持；进入新授权窗口时Moba测试哈希已变，等待最新freeze，不冒最终全匹配。",
+          "FrozenFiles": [
+            {
+              "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+              "sha256": "67421B492CC8760E2F697641067879467D3DC31C71D3D684CA57A473089B0FB2",
+              "checks": {
+                "noConflictMarkers": true,
+                "chineseExplanation": true,
+                "noTrailingWhitespace": true,
+                "balancedDelimiters": true
+              }
+            },
+            {
+              "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+              "sha256": "188214EB568BC519076C5D6F4CAE7076216842AB3C03C6AE4F06D25C4078D167",
+              "checks": {
+                "noConflictMarkers": true,
+                "chineseExplanation": true,
+                "noTrailingWhitespace": true,
+                "balancedDelimiters": true,
+                "generatedHeaderLast": true
+              }
+            },
+            {
+              "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+              "sha256": "4EFAA919D70A8EC6CC76972A18281858C4ABDBF074AC3256E1C19843DA28D4CE",
+              "checks": {
+                "noConflictMarkers": true,
+                "chineseExplanation": true,
+                "noTrailingWhitespace": true
+              }
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp",
+              "sha256": "3D8D21824E0BED98A8990CA9F6D9C480D64F5B80C52C5127CC0B833E14DCD9D9",
+              "checks": {
+                "noConflictMarkers": true,
+                "chineseExplanation": true,
+                "noTrailingWhitespace": true,
+                "balancedDelimiters": true
+              }
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+              "sha256": "7BD019D5C82F6FD79B7980431B6BF8A4CF776C0EB35DEE512D9D0872D3C629BE",
+              "checks": {
+                "noConflictMarkers": true,
+                "chineseExplanation": true,
+                "noTrailingWhitespace": true,
+                "balancedDelimiters": true,
+                "generatedHeaderLast": true
+              }
+            },
+            {
+              "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationClientTests.cpp",
+              "sha256": "1DACC25DF274464E650E2DA2669DE0C8A06DCFF866177FAE92C3B45745182D69",
+              "checks": {
+                "noConflictMarkers": true,
+                "chineseExplanation": true,
+                "noTrailingWhitespace": true,
+                "balancedDelimiters": true
+              }
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Tests/DivineBeastsArenaUITests.cpp",
+              "sha256": "130F1D9038BB58ADD06849F94E492A7F3FB702B6C3C85D739C3534C1DA0C1198",
+              "checks": {
+                "noConflictMarkers": true,
+                "chineseExplanation": true,
+                "noTrailingWhitespace": true,
+                "balancedDelimiters": true
+              }
+            }
+          ],
+          "InitialDiffCheckExit": 1,
+          "InitialDiffIssue": "仅Moba README:30 new blank line at EOF；行为无关，责任者单文件修正",
+          "AfterReadmeFixDiffCheckExit": 0,
+          "ReadmeFinalSha256": "4EFAA919D70A8EC6CC76972A18281858C4ABDBF074AC3256E1C19843DA28D4CE",
+          "RuntimeExecuted": false,
+          "SourceMutated": false,
+          "Staging": false,
+          "UBT": false,
+          "UE": false,
+          "Assets": false
+        },
+        "RecheckRound2": {
+          "ReviewedAtUtc": "2026-10-09T14:28:00Z",
+          "Freeze": "ApplicationPresentationAdmissionOwnershipFreeze.json",
+          "MatchedFiles": [
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/Public/GamePlatformPresentationTypes.h",
+              "Expected": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+              "Actual": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+              "Expected": "160D28EC4AE0AE26DF2B8A09FADABD6E2E2D36A8ABB5272AD794A6DEED2A9CB8",
+              "Actual": "160D28EC4AE0AE26DF2B8A09FADABD6E2E2D36A8ABB5272AD794A6DEED2A9CB8",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Manager/GamePlatformUIManagerSubsystem.h",
+              "Expected": "776DA4702518108B5FD5521463A19E6D60636761210B5F87C96DFE1067E5A7F8",
+              "Actual": "776DA4702518108B5FD5521463A19E6D60636761210B5F87C96DFE1067E5A7F8",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Docs/UIManagerSubsystem.md",
+              "Expected": "D9ED0E9661335B2C9D75531A85CE8D70330FE9B0A45345A3AAE0DEFF64C8B9BC",
+              "Actual": "D9ED0E9661335B2C9D75531A85CE8D70330FE9B0A45345A3AAE0DEFF64C8B9BC",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+              "Expected": "8B9F5A4AFCE79963CA6196EAF0B8119F3EF310E77B0849901D401DF1BC5E5688",
+              "Actual": "8B9F5A4AFCE79963CA6196EAF0B8119F3EF310E77B0849901D401DF1BC5E5688",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+              "Expected": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+              "Actual": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+              "Expected": "392E90870880E88E41A9FF568F07CFCE06A7AE9D6B84D2DFAE597651C2A1A0EF",
+              "Actual": "392E90870880E88E41A9FF568F07CFCE06A7AE9D6B84D2DFAE597651C2A1A0EF",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationClientTests.cpp",
+              "Expected": "8690A34BA237FC681F6B55D47D1F36CE868C67C56193AB8C0A2D5C741A1C4896",
+              "Actual": "8690A34BA237FC681F6B55D47D1F36CE868C67C56193AB8C0A2D5C741A1C4896",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp",
+              "Expected": "9CF51624A1FD87E3A973C5D6CE2FAB605E7A498E27EB525B764988BA07C5B4A7",
+              "Actual": "9CF51624A1FD87E3A973C5D6CE2FAB605E7A498E27EB525B764988BA07C5B4A7",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Tests/DivineBeastsArenaUITests.cpp",
+              "Expected": "DE3868F87962E89AF4E94BDCF3B4C15AB7187D951333E9AEFAE6B0B29241792D",
+              "Actual": "DE3868F87962E89AF4E94BDCF3B4C15AB7187D951333E9AEFAE6B0B29241792D",
+              "Match": true
+            }
+          ],
+          "GitDiffCheckExitCode": 0,
+          "CriticalCount": 0,
+          "OpenImportantCount": 1,
+          "UEOrBuildExecuted": false,
+          "OwnerSourceChanged": false
+        },
+        "FinalSourceRecheck": {
+          "ReviewedAtUtc": "2026-10-09T14:30:35Z",
+          "Freeze": "ApplicationPresentationAdmissionOwnershipFreeze.json",
+          "FrozenFiles": [
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/Public/GamePlatformPresentationTypes.h",
+              "Expected": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+              "Actual": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+              "Expected": "160D28EC4AE0AE26DF2B8A09FADABD6E2E2D36A8ABB5272AD794A6DEED2A9CB8",
+              "Actual": "160D28EC4AE0AE26DF2B8A09FADABD6E2E2D36A8ABB5272AD794A6DEED2A9CB8",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Manager/GamePlatformUIManagerSubsystem.h",
+              "Expected": "776DA4702518108B5FD5521463A19E6D60636761210B5F87C96DFE1067E5A7F8",
+              "Actual": "776DA4702518108B5FD5521463A19E6D60636761210B5F87C96DFE1067E5A7F8",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Docs/UIManagerSubsystem.md",
+              "Expected": "D9ED0E9661335B2C9D75531A85CE8D70330FE9B0A45345A3AAE0DEFF64C8B9BC",
+              "Actual": "D9ED0E9661335B2C9D75531A85CE8D70330FE9B0A45345A3AAE0DEFF64C8B9BC",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+              "Expected": "0C21161755F968FDF3B7DA7021D30C668ED85A90BCD62EA1AA54533FAB2EEEAB",
+              "Actual": "0C21161755F968FDF3B7DA7021D30C668ED85A90BCD62EA1AA54533FAB2EEEAB",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+              "Expected": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+              "Actual": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+              "Expected": "F999D6931700FDF186EACAA940E9012F2E21B9671733E56B4986C5B9BC0D6D5C",
+              "Actual": "F999D6931700FDF186EACAA940E9012F2E21B9671733E56B4986C5B9BC0D6D5C",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationClientTests.cpp",
+              "Expected": "9FFD036FEB397D827A7E50D1C2782D84D139B6DF1ED3D908B56167A99015DDDE",
+              "Actual": "9FFD036FEB397D827A7E50D1C2782D84D139B6DF1ED3D908B56167A99015DDDE",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaUIClientSubsystem.cpp",
+              "Expected": "9CF51624A1FD87E3A973C5D6CE2FAB605E7A498E27EB525B764988BA07C5B4A7",
+              "Actual": "9CF51624A1FD87E3A973C5D6CE2FAB605E7A498E27EB525B764988BA07C5B4A7",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Tests/DivineBeastsArenaUITests.cpp",
+              "Expected": "DE3868F87962E89AF4E94BDCF3B4C15AB7187D951333E9AEFAE6B0B29241792D",
+              "Actual": "DE3868F87962E89AF4E94BDCF3B4C15AB7187D951333E9AEFAE6B0B29241792D",
+              "Match": true
+            }
+          ],
+          "All10ShaMatch": true,
+          "GitDiffCheckExitCode": 0,
+          "OpenImportantCount": 0,
+          "CriticalCount": 0,
+          "HistoricalImportantCount": 2,
+          "OwnerSourcesChangedByReviewer": false,
+          "UEOrBuildExecuted": false,
+          "EnumCompatibilityAssignedToSeparateSeat": true,
+          "EnumCompatibilityIndependentReportReceived": false
+        },
+        "MobaContributorExportRecheck": {
+          "ReviewedAtUtc": "2026-10-09T14:36:31Z",
+          "Status": "NoImportantInNarrowTwoFileScope",
+          "OwnerEvidence": "MobaContributorActualExportRepair.json",
+          "OriginalBuild": {
+            "RunId": "e7370714-3e87-4c54-95a9-21e0fdb827ac",
+            "ExitCode": 6,
+            "ResultPath": "Saved/Validation/FoundationM0/e7370714-3e87-4c54-95a9-21e0fdb827ac/Build/result.json",
+            "LogPath": "Saved/Validation/FoundationM0/e7370714-3e87-4c54-95a9-21e0fdb827ac/Build/Editor/UBT.log",
+            "ReadLines": [
+              134,
+              135,
+              136
+            ],
+            "Meaning": "Moba Client Test派生类真实链接缺IMobaPresentationContextContributor导入默认构造/virtual析构两个符号。"
+          },
+          "FrozenFiles": [
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationRuntime/Public/Events/MobaPresentationContextContributor.h",
+              "ExpectedSha256": "8C1207300A4751A843670E06D51783B0D17FE5763318919B8846E2B6E2DAA409",
+              "ActualSha256": "8C1207300A4751A843670E06D51783B0D17FE5763318919B8846E2B6E2DAA409",
+              "Match": true
+            },
+            {
+              "Path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationRuntime/Private/MobaPresentationContextContributor.cpp",
+              "ExpectedSha256": "F83499C054E1061F4CA5B6B4BA1F3BCC0C8AAAC7B9709466826FF342D51D30B3",
+              "ActualSha256": "F83499C054E1061F4CA5B6B4BA1F3BCC0C8AAAC7B9709466826FF342D51D30B3",
+              "Match": true
+            }
+          ],
+          "Proof": [
+            "原公开Class MOBAPRESENTATIONRUNTIME_API保留；默认ctor及virtual dtor在Runtime模块Private cpp独立=default定义，直接匹配缺失导入符号。",
+            "接口仍无实例数据成员、无UObject/World/资源/注册所有权，Contribute纯虚const签名、类名/模块名/继承/反射身份不变；默认特殊成员不是空业务功能。",
+            "消费者继续仅向下依赖Runtime；Private源#include自身Public头，无访问其他Private、项目引用、全局服务或端侧扩张。",
+            "文件及公开成员中文说明覆盖Runtime符号所有权、GT同步借用上下文、调用者强引用、允许自注销/重绑后原scope复核、未提供字段及取消/失效拒绝尾链，析构不冒充服务注销。"
+          ],
+          "BuildInputEvidence": {
+            "File": "F:/UnrealEngine-5.8.0-release/Engine/Source/Programs/UnrealBuildTool/Configuration/UEBuildModuleCPP.cs",
+            "Lines": [
+              2958,
+              2967,
+              3042,
+              3056,
+              3113,
+              3116
+            ],
+            "Meaning": "UBT递归扫描模块目录.cpp进入InputFiles.CPPFiles；新源在既有Runtime/Private真实路径，非插件根Tests或任意文件夹。"
+          },
+          "Verification": {
+            "HeaderGitDiffCheckExitCode": 0,
+            "NewCppConflictMarkers": 0,
+            "BeforeAndAfterShaMatch": true,
+            "ImportantCount": 0,
+            "CriticalCount": 0,
+            "UEOrBuildExecutedByReviewer": false,
+            "ReviewerSourceMutation": false
+          },
+          "DirectoryRegistration": {
+            "ObservedAtUtc": "2026-10-09T14:36:31Z",
+            "File": "Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md",
+            "NewCppNameFound": false,
+            "OwnerNotified": true,
+            "Meaning": "Root当前文档整合进行中，需同变更登记新增编译源；此座位不修改文档。"
+          },
+          "Limits": [
+            "仅两源窄核，没有重新审查已闭合A01/A02。",
+            "本报告读实原Editor失败，不将特殊成员源码修正记为实际新链接Passed；增量UBT与DLL出口由Root另行采证。",
+            "改为导出定义要求消费者重编译；未宣称历史预编译消费者无需重链接。"
+          ]
+        }
+      }
+    },
+    {
+      "Name": "PresentationSubmitResultCompatibilityReview.json",
+      "SourceSHA256": "33594907C383699396493395A9245AB2E6DE1B66654EE597E7E81BFB1B252701",
+      "Report": {
+        "schemaVersion": 1,
+        "reviewId": "PresentationSubmitResultCompatibility-2026-10-09",
+        "role": "独立只读追加复核；只审枚举消费/公开依赖/人工协议配置与反射兼容边界",
+        "workspace": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace",
+        "reviewedAtUtc": "2026-10-09T14:32:01.6893814Z",
+        "status": "CompleteFrozenSourceCompatibilityReviewedRuntimeUnverified",
+        "criticalCount": 0,
+        "importantCount": 0,
+        "minorCount": 0,
+        "findings": [],
+        "conclusion": "最终冻结源码枚举追加Pending=4兼容范围未发现Critical/Important；原0..3保持，16输入已回读真实SHA及5项相关App冻结SHA匹配。Root两处链接依赖修正直接指向基础Core，UE/UHT/资产仍待Root实测。",
+        "scope": {
+          "included": [
+            "GamePlatformPresentationTypes.h枚举定义",
+            "平台Client Submit与RequestObserved原生合同",
+            "DivineBeastsPresentationClient的提交返回转发及具名结果消费",
+            "MobaPresentationClient公开返回入口/结果转发/具名消费及结果断言",
+            "对应Public include、三消费模块和Core构建依赖",
+            "Game/Config、Shared、Backend、Build、Deploy、Tests及文档中的人工协议配置文本"
+          ],
+          "excluded": [
+            "Pending在途账本算法和UI拥有查询由zodiac独立复核，不在本报告重复结论",
+            "uasset/umap/历史Blueprint二进制、资产生成与资产迁移",
+            "UE/UBT/UHT/Automation/Cook/Stage/联机执行",
+            "Git状态/差异/暂存/提交；根明确本次不得Git，未更新分支身份声明"
+          ]
+        },
+        "rules": {
+          "rootAgentsSHA256": "F0FDA3EC8CC807D96C27B0CD9E1266B59A73A268AAB7E9588D470F921612F782",
+          "ancestorCodexAgentsBytes": 0,
+          "localAgentsFound": 0,
+          "meaning": "此前完整读根现行规则，本次只读路径发现检查无额外局部AGENTS/override；按Root明确只读范围执行。"
+        },
+        "enumContract": {
+          "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/Public/GamePlatformPresentationTypes.h",
+          "lines": "53–70",
+          "reflection": "UENUM(BlueprintType)",
+          "underlying": "uint8",
+          "values": {
+            "Submitted": 0,
+            "ProviderMissing": 1,
+            "InvalidRequest": 2,
+            "StaleWorld": 3,
+            "Pending": 4
+          },
+          "observedSHA256": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+          "newMeaning": "同作用域、同事实的同步提交尚未获Provider结果；不得视作Submitted/播放成功。没有添加公开队列服务、RPC/网络协议或通用完成事件。"
+        },
+        "checks": [
+          {
+            "id": "C01",
+            "result": "源码确认",
+            "topic": "旧值/类型/签名稳定",
+            "evidence": "Types.h57–70显式固定Submitted0/ProviderMissing1/InvalidRequest2/StaleWorld3，末尾Pending4；enum名/uint8/UENUM身份不变。公开函数和原生委托仍使用相同enum返回/参数类型。追加枚举项本身不改变源码声明的底层类型或函数签名，未声称二进制ABI/反射兼容实测。"
+          },
+          {
+            "id": "C02",
+            "result": "源码确认",
+            "topic": "平台协调器返回与Observed合同",
+            "evidence": "GamePlatformPresentationClientSubsystem.cpp478–551按具名值返回InvalidRequest/StaleWorld/Submitted/ProviderMissing，ProviderHandler为bool；当前Coordinator没有Pending返回分支。原生RequestObserved同样只广播四种旧终态，没有生产订阅者将Pending推断成功。"
+          },
+          {
+            "id": "C03",
+            "result": "源码确认",
+            "topic": "DBA返回消费",
+            "evidence": "DivineBeastsPresentationClientSubsystem.cpp471–477只转发平台Submit；512与551使用!=Submitted撤销失败历史并原样返回Result，不把新增值当成功。当前路径不经过Moba Submit且平台只返四值，故不会接收Moba Pending；没有因此要求改项目去重算法。"
+          },
+          {
+            "id": "C04",
+            "result": "仅枚举边界确认",
+            "topic": "Moba返回/消费",
+            "evidence": "最终Moba cpp938–976保持四Adapt和Recover的enum原样转发；1139返回Pending，1144已受理才Submitted；1192/1194/1198仍以具名结果比较。新增绑定取消分支仍具名返回StaleWorld，不改变整数/序列化合同。具体Pending账本清理属于zodiac算法复核。"
+          },
+          {
+            "id": "C05",
+            "result": "文本检索无匹配",
+            "topic": "人工协议/配置序列化",
+            "evidence": "精确枚举名和presentation_submit_result等拼写在Shared/Backend/Game Config/Build/Deploy/Tests文本无匹配；广搜旧值名称命中Shared InvalidRequest HTTP通用错误等无关词，不构成本枚举协议。已读公开头中SubmitResult未用作UPROPERTY/Replicated/RPC/SaveGame字段，未发现本枚举的FArchive/NetSerialize/JSON序列化、整数范围4断言、StaticEnum遍历或数字索引。UE自动反射/资产序列化不在该否定结论内。"
+          },
+          {
+            "id": "C06",
+            "result": "源码确认",
+            "topic": "头边界与构建依赖",
+            "evidence": "三消费Public头直接含Types，Build均Public依赖PresentationCore。Root追加PresentationCore Public GamePlatformCore与同插件uplugin Core声明，因HitFeedbackProfile.h106公开ValidateDefinition返回FGamePlatformResult、cpp3/32/38直接调用其结果函数；GamePlatformCore仅依赖Core/CoreUObject，依赖继续向基础层，无循环/ClientServer交叉。"
+          },
+          {
+            "id": "C07",
+            "result": "源码/中文说明确认，运行未验",
+            "topic": "新增值说明与断言",
+            "evidence": "Types62–68和Moba README33说明Pending!=受理/播放、0..3保持、统一重编译/UHT/BP分支检查；Moba tests275/304/335/371/413等明确Pending、StaleWorld、Submitted各自结果，未UE执行。"
+          }
+        ],
+        "searchEvidence": {
+          "typedPattern": "EGamePlatformPresentationSubmitResult",
+          "typedMatchLines": 99,
+          "typedFiles": 11,
+          "typedCppOrHeaders": 10,
+          "typedMarkdownFiles": 1,
+          "noProtocolSearchExitCode": 1,
+          "noProtocolSearchMeaning": "rg退出1表示精确模式无匹配，不是检查执行失败。",
+          "switchOnThisEnumMatches": 0,
+          "searchDirectories": [
+            "Game",
+            "Shared",
+            "Backend",
+            "Build",
+            "Deploy",
+            "Tests",
+            "Docs"
+          ],
+          "excludedDirectories": [
+            "Saved",
+            ".git",
+            "Intermediate",
+            "Binaries",
+            "Content（二进制资产不审）"
+          ],
+          "method": "实际rg类型名、提交函数/Observed回调、手工协议拼写与serialize/switch/数字强转检索；随后逐处读取真实消费者，不从日志成功声明推断。"
+        },
+        "inputFiles": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/Public/GamePlatformPresentationTypes.h",
+            "sha256": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+            "bytes": 5483,
+            "lines": [
+              53,
+              55
+            ]
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/GamePlatformPresentationClientSubsystem.h",
+            "sha256": "979C31791A93DDA946068D988F30FA15165CCE72ADE8C77A1729B0DD52161136",
+            "bytes": 5224,
+            "lines": [
+              26,
+              73
+            ]
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Private/GamePlatformPresentationClientSubsystem.cpp",
+            "sha256": "E60D3713E0AC47B95DD53FED447F0F21BA7AE004F6478F06121C1D37FC49AF49",
+            "bytes": 22116,
+            "lines": [
+              478,
+              484,
+              485,
+              489,
+              490,
+              503,
+              504,
+              510,
+              511,
+              526,
+              527,
+              543,
+              544,
+              550,
+              551
+            ]
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/DivineBeastsPresentationClientSubsystem.h",
+            "sha256": "1B3D553839E18CE77D27F5D523F85F34411BB43E76EEC5A833827202CB6FED00",
+            "bytes": 7782,
+            "lines": [
+              69,
+              72,
+              154
+            ]
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/DivineBeastsPresentationClientSubsystem.cpp",
+            "sha256": "F30CCCAEDE01BEEF8D76E14B5C61355C9F6B9713315AF916E1800D50963AC45D",
+            "bytes": 27487,
+            "lines": [
+              471,
+              477,
+              480,
+              486,
+              490,
+              509,
+              512,
+              520,
+              526,
+              530,
+              549,
+              551
+            ]
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsPresentationActivationTests.cpp",
+            "sha256": "11967049C943F1D6AFB629AF7B73E0444CF0985637321AD61D4F189BF756C405",
+            "bytes": 5535,
+            "lines": [
+              50,
+              51,
+              55,
+              56
+            ]
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+            "sha256": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+            "bytes": 12191,
+            "lines": [
+              64,
+              103,
+              105,
+              107,
+              109,
+              113
+            ]
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+            "sha256": "0C21161755F968FDF3B7DA7021D30C668ED85A90BCD62EA1AA54533FAB2EEEAB",
+            "bytes": 50310,
+            "lines": [
+              938,
+              945,
+              952,
+              959,
+              966,
+              972,
+              1099,
+              1102,
+              1106,
+              1110,
+              1129,
+              1139,
+              1144,
+              1164,
+              1179,
+              1181,
+              1187,
+              1189,
+              1192,
+              1194,
+              1198,
+              1208
+            ]
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationClientTests.cpp",
+            "sha256": "9FFD036FEB397D827A7E50D1C2782D84D139B6DF1ED3D908B56167A99015DDDE",
+            "bytes": 28425,
+            "lines": [
+              182,
+              208,
+              213,
+              234,
+              239,
+              243,
+              257,
+              274,
+              275,
+              279,
+              292,
+              303,
+              304,
+              307,
+              320,
+              334,
+              335,
+              339,
+              356,
+              370,
+              371,
+              375,
+              395,
+              396,
+              412,
+              413,
+              415,
+              418
+            ]
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationPawnBindingTests.cpp",
+            "sha256": "877AC3B0D2E4F6297B605F3F3319BD0DE09B609524F4D21973B49FA8F2FC1579",
+            "bytes": 8811,
+            "lines": [
+              50,
+              51,
+              98,
+              101
+            ]
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+            "sha256": "F999D6931700FDF186EACAA940E9012F2E21B9671733E56B4986C5B9BC0D6D5C",
+            "bytes": 8367,
+            "lines": [
+              33
+            ]
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Docs/AuditRemediation-2026-10-09.md",
+            "sha256": "5DE5CF0D82A0406BD8AED1527313E12C8F49E11A6DB98D5404FD2124C762A102",
+            "bytes": 4193
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/GamePlatformPresentationCore.Build.cs",
+            "sha256": "1066F623BD6811BBD2D52BE96BC979F1C0710635DF9BC07ECFD6EE2E97D333BE",
+            "bytes": 1140
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/GamePlatformPresentationClient.Build.cs",
+            "sha256": "FEBDA16237B8D12701BFF1FC44F93E87440CD56B40DD6100BC337BDA704C7DB8",
+            "bytes": 475
+          },
+          {
+            "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/MobaPresentationClient.Build.cs",
+            "sha256": "F032069EBFAA2A4434A023A78DD30599364340D45E030B937FA89922872BB2F1",
+            "bytes": 995
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/DivineBeastsPresentationClient.Build.cs",
+            "sha256": "6E78F5B0E9CF053E53C76550C71F9846BCB1DEB5965540C4C840542B2B24B754",
+            "bytes": 1625
+          }
+        ],
+        "verification": {
+          "sourceRead": true,
+          "sourceEdited": false,
+          "gitRun": false,
+          "ubtRun": false,
+          "uhtRun": false,
+          "ueAutomationRun": false,
+          "binaryAssetsRead": false,
+          "networkRun": false,
+          "finalFreezeConfirmed": true
+        },
+        "limitations": [
+          "Root已确认最终10文件冻结，Types7E23保持；本报告5相关冻结SHA均实读匹配，16原输入SHA已更新锁定。",
+          "UENUM追加改变反射枚举表；Core/UHT及消费模块必须用相同冻结源重建，旧已编译反射表不能证明包含Pending。",
+          "既有0..3在源码上保持；未读取或推断Blueprint资产，枚举Switch/default pin、自动MAX与枚举遍历的资产消费需Root实际UHT/加载/重载/DataValidation。",
+          "未发现手写网络/存档字段不等于没有UE自动反射资产序列化；不能据文本否定结论宣称存档、网络、Cook或发布兼容。",
+          "本报告不替代A01 Pending具体预约/确认/撤销算法及UI拥有查询独立审读。"
+        ],
+        "observationHistory": [
+          {
+            "reviewedAtUtc": "2026-10-09T14:19:51Z",
+            "status": "ObservedSourceReviewedAwaitingFinalFreezeIdentity",
+            "typedMatchLines": 88,
+            "inputFiles": [
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/Public/GamePlatformPresentationTypes.h",
+                "sha256": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+                "bytes": 5483,
+                "lines": [
+                  53,
+                  55
+                ]
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/GamePlatformPresentationClientSubsystem.h",
+                "sha256": "979C31791A93DDA946068D988F30FA15165CCE72ADE8C77A1729B0DD52161136",
+                "bytes": 5224,
+                "lines": [
+                  26,
+                  73
+                ]
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Private/GamePlatformPresentationClientSubsystem.cpp",
+                "sha256": "E60D3713E0AC47B95DD53FED447F0F21BA7AE004F6478F06121C1D37FC49AF49",
+                "bytes": 22116,
+                "lines": [
+                  478,
+                  484,
+                  485,
+                  489,
+                  490,
+                  503,
+                  504,
+                  510,
+                  511,
+                  526,
+                  527,
+                  543,
+                  544,
+                  550,
+                  551
+                ]
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/DivineBeastsPresentationClientSubsystem.h",
+                "sha256": "1B3D553839E18CE77D27F5D523F85F34411BB43E76EEC5A833827202CB6FED00",
+                "bytes": 7782,
+                "lines": [
+                  69,
+                  72,
+                  154
+                ]
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/DivineBeastsPresentationClientSubsystem.cpp",
+                "sha256": "F30CCCAEDE01BEEF8D76E14B5C61355C9F6B9713315AF916E1800D50963AC45D",
+                "bytes": 27487,
+                "lines": [
+                  471,
+                  477,
+                  480,
+                  486,
+                  490,
+                  509,
+                  512,
+                  520,
+                  526,
+                  530,
+                  549,
+                  551
+                ]
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsPresentationActivationTests.cpp",
+                "sha256": "11967049C943F1D6AFB629AF7B73E0444CF0985637321AD61D4F189BF756C405",
+                "bytes": 5535,
+                "lines": [
+                  50,
+                  51,
+                  55,
+                  56
+                ]
+              },
+              {
+                "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+                "sha256": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+                "bytes": 12191,
+                "lines": [
+                  64,
+                  103,
+                  105,
+                  107,
+                  109,
+                  113
+                ]
+              },
+              {
+                "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+                "sha256": "8B9F5A4AFCE79963CA6196EAF0B8119F3EF310E77B0849901D401DF1BC5E5688",
+                "bytes": 49757,
+                "lines": [
+                  936,
+                  943,
+                  950,
+                  957,
+                  964,
+                  970,
+                  1097,
+                  1100,
+                  1104,
+                  1108,
+                  1127,
+                  1137,
+                  1142,
+                  1162,
+                  1174,
+                  1175,
+                  1177,
+                  1180,
+                  1182,
+                  1186,
+                  1196
+                ]
+              },
+              {
+                "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationClientTests.cpp",
+                "sha256": "7F617262215BA70233BB36A75EEE29BFC16675441576BEB4468191AF54555FD0",
+                "bytes": 22831,
+                "lines": [
+                  182,
+                  208,
+                  213,
+                  234,
+                  239,
+                  243,
+                  257,
+                  274,
+                  275,
+                  279,
+                  292,
+                  303,
+                  304,
+                  307,
+                  320,
+                  334,
+                  335,
+                  339
+                ]
+              },
+              {
+                "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationPawnBindingTests.cpp",
+                "sha256": "877AC3B0D2E4F6297B605F3F3319BD0DE09B609524F4D21973B49FA8F2FC1579",
+                "bytes": 8811,
+                "lines": [
+                  50,
+                  51,
+                  98,
+                  101
+                ]
+              },
+              {
+                "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+                "sha256": "74715138C4353C651E4FF3EBD85833D0CA09087B18FFD5010FD3DF9C15AE5C1E",
+                "bytes": 7925,
+                "lines": [
+                  33
+                ]
+              },
+              {
+                "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Docs/AuditRemediation-2026-10-09.md",
+                "sha256": "5DE5CF0D82A0406BD8AED1527313E12C8F49E11A6DB98D5404FD2124C762A102",
+                "bytes": 4193
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/GamePlatformPresentationCore.Build.cs",
+                "sha256": "C29ED22CF0CEDBCB8E1C392FE6F9517DBD1A04358BDA1DDB7EFF5CB2FB9F2797",
+                "bytes": 473
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/GamePlatformPresentationClient.Build.cs",
+                "sha256": "FEBDA16237B8D12701BFF1FC44F93E87440CD56B40DD6100BC337BDA704C7DB8",
+                "bytes": 475
+              },
+              {
+                "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/MobaPresentationClient.Build.cs",
+                "sha256": "F032069EBFAA2A4434A023A78DD30599364340D45E030B937FA89922872BB2F1",
+                "bytes": 995
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/DivineBeastsPresentationClient.Build.cs",
+                "sha256": "6E78F5B0E9CF053E53C76550C71F9846BCB1DEB5965540C4C840542B2B24B754",
+                "bytes": 1625
+              }
+            ],
+            "reportSHA256": "C133297BB9DF950E0ABCCFB90144EDC40C4D383C3EB0662EAD0DCBD4A4C096F3",
+            "markdownSHA256": "3E23961A137A03F0782E4237D27AE6E96F8659685A61C8C32B4EF1E58049EDE8",
+            "markdownText": "# Presentation提交结果枚举追加兼容性只读复核\n\n当前源码追加Pending=4未发现Critical/Important；原Submitted=0、ProviderMissing=1、InvalidRequest=2、StaleWorld=3显式保留，uint8/UENUM名与公开函数/原生委托签名不变。当前观察Types.h SHA为`7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7`，尚待Root最终冻结身份回读。\n\n实际类型名检索88行、11文件（10份C++头/源码与1份README），逐处读具名结果消费与转发。平台Submit在478–551只返回四种旧终态，Provider仍bool；Moba适配1137才返回同步在途Pending，四Adapt/Recover原样传回。DBA只转发平台Submit，512/551按!=Submitted撤失败记账，当前不接收Moba Pending。没有发现该枚举穷举switch、数值强转/索引、数字4范围假定或手写Serialize/NetSerialize/JSON。\n\nShared/Backend/Game Config/Build/Deploy/Tests中精确enum与presentation_submit_result等拼写检索无匹配；通用HTTP InvalidRequest等同名词与本枚举无关。该否定结论只覆盖已读人工文本，不包括UE自动反射和资产二进制。三个消费公开头都直接含Types，公开构建依赖已有GamePlatformPresentationCore；Core未反向依赖MOBA/项目，无新增层或端侧循环。\n\nTypes.h62–68和Moba README33中文说明明确Pending不是已受理或播放成功，并要求统一重编译/UHT及Blueprint新增分支检查。测试源码275/304/335明确断言Pending，与Submitted分开；未运行这些UE测试。Pending具体预约/确认算法、UI拥有查询由zodiac负责，此处不重复通过声明。\n\nUENUM反射表新增第五值，必须由Root以同冻结源实际UHT/编译、重新加载确认。未读uasset/umap猜Blueprint，旧0..3资产值、Switch/default pin、自动MAX/枚举遍历和Cook/存档/网络兼容均未实测。本座位没有改源、Git、UE/UBT/UHT或联网，只在两个指定Saved报告中留证。完整输入文件SHA、行号和检查边界见同名JSON。\n",
+            "postObservationChange": "首轮16输入回读14匹配，Tests/README追加被识别；没有把未冻结观察当最终结论。"
+          }
+        ],
+        "finalFreeze": {
+          "path": "Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\ApplicationPresentationAdmissionOwnershipFreeze.json",
+          "sha256": "4D3A0B9FDCDA2A2A6A68DE2EFAD99735BC75F507DEEF68DA127BA35BA9DF0914",
+          "rootConfirmed": true,
+          "frozenAfterAuthorizedBindingFollowup": true,
+          "relevantMatches": [
+            {
+              "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/Public/GamePlatformPresentationTypes.h",
+              "frozenSHA256": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+              "actualSHA256": "7E23A7C31674FB15F93C364DECCAEC024F128C8AEC08B39A233CEE46387517E7",
+              "matched": true
+            },
+            {
+              "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/MobaPresentationClientSubsystem.cpp",
+              "frozenSHA256": "0C21161755F968FDF3B7DA7021D30C668ED85A90BCD62EA1AA54533FAB2EEEAB",
+              "actualSHA256": "0C21161755F968FDF3B7DA7021D30C668ED85A90BCD62EA1AA54533FAB2EEEAB",
+              "matched": true
+            },
+            {
+              "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+              "frozenSHA256": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+              "actualSHA256": "274FB9AE0CA9E9EF49F28C5E0B5FEC3ACED056D62B1FD42CD39ECD5E545EC106",
+              "matched": true
+            },
+            {
+              "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+              "frozenSHA256": "F999D6931700FDF186EACAA940E9012F2E21B9671733E56B4986C5B9BC0D6D5C",
+              "actualSHA256": "F999D6931700FDF186EACAA940E9012F2E21B9671733E56B4986C5B9BC0D6D5C",
+              "matched": true
+            },
+            {
+              "path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Private/Tests/MobaPresentationClientTests.cpp",
+              "frozenSHA256": "9FFD036FEB397D827A7E50D1C2782D84D139B6DF1ED3D908B56167A99015DDDE",
+              "actualSHA256": "9FFD036FEB397D827A7E50D1C2782D84D139B6DF1ED3D908B56167A99015DDDE",
+              "matched": true
+            }
+          ],
+          "originalInputCount": 16
+        },
+        "finalDependencySupplement": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/GamePlatformPresentation.uplugin",
+            "sha256": "04BEDB232EC3296FC63C8E2E5FD563AAEDFF8C9691B770950563358D0D7FCA99",
+            "bytes": 960
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/Public/Feedback/GamePlatformHitFeedbackProfile.h",
+            "sha256": "76115F13AE8608FF35DDD0D299D70DFEE1C786EC7C2D5F0C218ECF1DCB308D0A",
+            "bytes": 5358
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/Private/Feedback/GamePlatformHitFeedbackProfile.cpp",
+            "sha256": "F21F4A29806709885B7F8EB4D4EBDB9E1C9FCF526757E9DC153D3BE888BBF108",
+            "bytes": 1818
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Source/GamePlatformCore/GamePlatformCore.Build.cs",
+            "sha256": "2AFD573B4F454E3A815E4B74AF8813ECD2F0FF31B38E33C75BBF3EAA8A5727E5",
+            "bytes": 556
+          }
+        ],
+        "rootCoreCommentCorrection": {
+          "oldSHA256": "1066F623BD6811BBD2D52BE96BC979F1C0710635DF9BC07ECFD6EE2E97D333BE",
+          "newSHA256": "1066F623BD6811BBD2D52BE96BC979F1C0710635DF9BC07ECFD6EE2E97D333BE",
+          "meaning": "Root纠正文句为Data传递公开依赖；实际Public直接Core依赖及uplugin代码不变。发生在第三轮门禁Before捕获前，不需额外重复全轮。",
+          "rootEvidence": "Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\PresentationCoreActualLinkDependencyRepair.json",
+          "rootEvidenceSHA256": "FCDDE9617E5D0A40C85DE3063FFB857F74AF3C1608F7EA5FAF016C008A651E3E"
+        }
+      }
+    }
+  ],
+  "Limits": [
+    "源码问题闭环不等于UE回归完成",
+    "默认及增量引擎回归正在实际执行",
+    "UENUM资产/Blueprint分支、Cook、联网和设备性能未全量验收"
+  ]
+}

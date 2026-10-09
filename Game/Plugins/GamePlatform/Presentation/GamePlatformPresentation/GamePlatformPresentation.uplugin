@@ -8,6 +8,7 @@
     "CreatedBy":  "DivineBeastsWorkspace",
     "CanContainContent":  true,
     "Plugins": [
+        { "Name": "GamePlatformCore", "Enabled": true },
         { "Name": "GamePlatformData", "Enabled": true }
     ],
     "EnabledByDefault":  false,

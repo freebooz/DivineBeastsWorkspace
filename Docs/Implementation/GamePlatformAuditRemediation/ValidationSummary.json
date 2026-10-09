@@ -15,7 +15,7 @@
     "InheritanceExitCode": 0,
     "EnglishNamesExitCode": 0
   },
-  "UEBuild": "Server45/Client65模块构建退出0；Editor83模块及完整Editor目标58c3c771退出0，单次World初始化和四注册名修复已真实编译；后续测试时序/中止清理及VFX标签改动须消费后续结果。OnlyModules/SDK复用/各次失败见UEBuildResults.json；不是服务器/客户端整程序、完整SDK源码或Cook验收",
+  "UEBuild": "最新真实目标尝试详见LatestActualTargetResults/UEBuildResults；旧通过不自动覆盖后来改源；OnlyModules仍是模块编译，完整Editor/SDK复用不等于Cook、Stage或联机",
   "UEAutomation": "默认完整136项实际发现；最新尝试59项完成、53通过、6失败后装备夹具数组别名崩溃；对应修复已冻结，修后完整批次待执行",
   "CookStage": "未执行",
   "NetworkPerformance": "未执行",
@@ -25,26 +25,6 @@
     "ExitCode": 0,
     "Evidence": "Saved/Validation/FoundationM0/ScriptTests-72812416-c1c1-4366-906f-c7d68ccdcb51",
     "Interpretation": "构建/验证入口既有脚本行为回归，不是UE运行验收"
-  },
-  "LatestArchitecture": {
-    "TotalCount": 75,
-    "PassedCount": 75,
-    "FailedCount": 0,
-    "SkippedCount": 0,
-    "PendingCount": 0
-  },
-  "LatestSourceGates": {
-    "DesignBaselineExitCode": 0,
-    "OwnedHeadersExitCode": 0,
-    "OwnedHeaderReferences": 531,
-    "InheritanceExitCode": 0,
-    "PublicHeaders": 440,
-    "PublicTypes": 933,
-    "PublicEdges": 153,
-    "EnglishNamesExitCode": 0,
-    "NamesItemsChecked": 57785,
-    "PluginsChecked": 62,
-    "Interpretation": "只读源码与命名结构门禁；不是资产、运行或烘焙验收"
   },
   "ActualUEAutomation": {
     "SchemaVersion": 1,
@@ -439,5 +419,53 @@
       "默认136清单保留；诊断排除三死亡桥项不冒充完整批次",
       "启动中未具名ScriptStruct条件错误不能当作测试已通过；全编辑器零错误未认证"
     ]
-  }
+  },
+  "LatestArchitecture": {
+    "TotalCount": 75,
+    "PassedCount": 75,
+    "FailedCount": 0,
+    "SkippedCount": 0,
+    "PendingCount": 0,
+    "Evidence": "MainIntegrationSourceGateResults.json",
+    "FinalCurrentSource": false
+  },
+  "LatestSourceGates": {
+    "AllSixExitZero": true,
+    "OwnedHeaderReferences": 716,
+    "MissingHeaders": 0,
+    "PublicHeaders": 480,
+    "PublicTypes": 1012,
+    "PublicEdges": 179,
+    "NamesItemsChecked": 58842,
+    "PluginsChecked": 62,
+    "NamesViolations": 0,
+    "FinalCurrentSource": false,
+    "Interpretation": "主线整合后本次实际只读门禁；记录在后续A01/A02残余修改之前的稳定源快照"
+  },
+  "LatestActualTargetResults": [
+    {
+      "Target": "Server",
+      "RunId": "0aeaf984-3ec8-4124-afd0-3cbfd30fb676",
+      "Status": "Passed",
+      "ExitCode": 0,
+      "OnlyModuleCount": 46,
+      "Evidence": "Saved/Validation/FoundationM0/0aeaf984-3ec8-4124-afd0-3cbfd30fb676/Build/result.json"
+    },
+    {
+      "Target": "Client",
+      "RunId": "7ba11316-4792-46c4-9037-44484f6e8e39",
+      "Status": "Passed",
+      "ExitCode": 0,
+      "OnlyModuleCount": 66,
+      "Evidence": "Saved/Validation/FoundationM0/7ba11316-4792-46c4-9037-44484f6e8e39/Build/result.json"
+    },
+    {
+      "Target": "Editor",
+      "RunId": "06580833-d9df-475c-b61b-85d092ccfcb1",
+      "Status": "Passed",
+      "ExitCode": 0,
+      "OnlyModuleCount": 0,
+      "Evidence": "Saved/Validation/FoundationM0/06580833-d9df-475c-b61b-85d092ccfcb1/Build/result.json"
+    }
+  ]
 }

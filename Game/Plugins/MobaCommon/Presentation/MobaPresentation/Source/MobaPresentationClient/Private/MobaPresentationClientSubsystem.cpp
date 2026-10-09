@@ -81,6 +81,8 @@ void UMobaPresentationClientSubsystem::Deinitialize()
     PredictedFacts.Reset();
     ConfirmedFacts.Reset();
     FactOrder.Reset();
+    FactRecordOperations.Reset();
+    PendingFactSubmissions.Reset();
     LatestAvatarGeneration.Reset();
     BoundWorld.Reset();
     Super::Deinitialize();
@@ -129,6 +131,8 @@ void UMobaPresentationClientSubsystem::ResetWorldState(UWorld* NewWorld)
     PredictedFacts.Reset();
     ConfirmedFacts.Reset();
     FactOrder.Reset();
+    FactRecordOperations.Reset();
+    PendingFactSubmissions.Reset();
     LatestAvatarGeneration.Reset();
 
     RenderedHitEvents.Reset();
@@ -170,6 +174,8 @@ void UMobaPresentationClientSubsystem::HandleWorldCleanup(
         PredictedFacts.Reset();
         ConfirmedFacts.Reset();
         FactOrder.Reset();
+        FactRecordOperations.Reset();
+        PendingFactSubmissions.Reset();
         LatestAvatarGeneration.Reset();
         RenderedHitEvents.Reset();
         RenderedHitOrder.Reset();
@@ -192,13 +198,20 @@ void UMobaPresentationClientSubsystem::RefreshBindings()
     }
 
     // 由权威组件单向复制到本World，避免LocalPawn未出生时漏掉战斗事实。
+    const TStrongObjectPtr<UMobaPresentationClientSubsystem> KeepService(this);
+    const TStrongObjectPtr<UWorld> KeepWorld(World);
+    const uint64 ExpectedBinding = BindingGeneration;
     BindCombatFeedbackWorld(*World);
 
     if (AGamePlatformArenaGameState* ArenaState =
         World->GetGameState<AGamePlatformArenaGameState>())
     {
         BindArena(ArenaState);
+        if (BoundArenaGameState.Get() != ArenaState) return;
     }
+    // 竞技持续事实恢复跨Provider/贡献者边界，回调关闭或旅行后不能继续订阅旧Pawn。
+    if (bClosing || BindingGeneration != ExpectedBinding || BoundWorld.Get() != World ||
+        World->bIsTearingDown || !GetLocalPlayer() || GetLocalPlayer()->GetWorld() != World) return;
 
     APlayerController* PlayerController =
         GetLocalPlayer() ? GetLocalPlayer()->GetPlayerController(World) : nullptr;
@@ -342,13 +355,22 @@ void UMobaPresentationClientSubsystem::UnbindCombat()
 void UMobaPresentationClientSubsystem::BindArena(
     AGamePlatformArenaGameState* GameState)
 {
-    if (!GameState || GameState == BoundArenaGameState.Get())
+    if (bClosing || !IsValid(GameState) || GameState->GetWorld() != BoundWorld.Get() ||
+        GameState == BoundArenaGameState.Get())
     {
         return;
     }
 
     UnbindArena();
     BoundArenaGameState = GameState;
+    const TStrongObjectPtr<UMobaPresentationClientSubsystem> KeepService(this);
+    const TStrongObjectPtr<AGamePlatformArenaGameState> KeepState(GameState);
+    const TStrongObjectPtr<UWorld> KeepWorld(BoundWorld.Get());
+    const uint64 ExpectedBinding = BindingGeneration;
+    const uint64 ExpectedArenaBinding = ArenaBindingGeneration;
+    const auto IsCurrent = [this, ExpectedBinding, ExpectedArenaBinding, GameState, World = KeepWorld.Get()]
+    { return IsArenaBindingCurrent(ExpectedBinding, ExpectedArenaBinding, GameState, World); };
+    if (!IsCurrent()) return;
 
     ArenaPhaseHandle = GameState->OnArenaPhaseChanged.AddLambda(
         [this](EGamePlatformArenaMatchPhase /*Phase*/, int32 Revision)
@@ -375,19 +397,24 @@ void UMobaPresentationClientSubsystem::BindArena(
     LastPhaseRevision = GameState->PhaseRevision;
 
     // 当前比分属于持续状态，可用Persistent请求恢复，而不是伪造历史Score Popup。
-    for (const FGamePlatformArenaTeamState& Team : GameState->TeamStates)
+    // Provider可同步修改GS容器或换绑定：数组/身份都用本批值快照，外部返回逐项复查。
+    const auto Teams = GameState->TeamStates;
+    const auto Objectives = GameState->ObjectiveStates;
+    const FString MatchId = GameState->MatchIdPublic;
+    const FName ModeId = GameState->ArenaModeId;
+    for (const FGamePlatformArenaTeamState& Team : Teams)
     {
         TeamRevisions.Add(Team.TeamId, Team.Revision);
         FMobaPresentationArenaFact ArenaFact;
         ArenaFact.Identity.FactId = MakeArenaFactId(
-            GameState->MatchIdPublic + Team.TeamId.ToString(),
+            MatchId + Team.TeamId.ToString(),
             Team.Revision,
             0x53434F52u);
         ArenaFact.Identity.Revision = Team.Revision;
         ArenaFact.Identity.WorldGeneration = WorldGeneration;
         ArenaFact.Type = EMobaPresentationArenaFactType::ScoreChanged;
-        ArenaFact.MatchId = GameState->MatchIdPublic;
-        ArenaFact.ArenaModeId = GameState->ArenaModeId;
+        ArenaFact.MatchId = MatchId;
+        ArenaFact.ArenaModeId = ModeId;
         ArenaFact.TeamId = Team.TeamId;
         ArenaFact.Value = Team.Score;
         FMobaPresentationAdaptedFact Fact =
@@ -395,9 +422,10 @@ void UMobaPresentationClientSubsystem::BindArena(
         Fact.bTransient = false;
         Fact.Lifetime = EGamePlatformPresentationLifetime::Persistent;
         RecoverPersistentFact(MoveTemp(Fact));
+        if (!IsCurrent()) return;
     }
 
-    for (const FGamePlatformArenaObjectiveState& Objective : GameState->ObjectiveStates)
+    for (const FGamePlatformArenaObjectiveState& Objective : Objectives)
     {
         ObjectiveRevisions.Add(Objective.ObjectiveId, Objective.Revision);
     }
@@ -407,6 +435,10 @@ void UMobaPresentationClientSubsystem::BindArena(
 
 void UMobaPresentationClientSubsystem::UnbindArena()
 {
+    ++ArenaBindingGeneration;
+    // 同World重绑也取消旧在途资格；旧同步栈仍持shared对象，新绑定不能借旧预约返回Pending。
+    PendingFactSubmissions.Reset();
+    TeamRevisions.Reset(); ObjectiveRevisions.Reset(); LastPhaseRevision = INDEX_NONE;
     if (AGamePlatformArenaGameState* GameState = BoundArenaGameState.Get())
     {
         if (ArenaPhaseHandle.IsValid()) GameState->OnArenaPhaseChanged.Remove(ArenaPhaseHandle);
@@ -430,6 +462,15 @@ void UMobaPresentationClientSubsystem::UnbindArena()
     ArenaPlayerHandles.Reset();
     ArenaPlayerSnapshots.Reset();
     BoundArenaGameState.Reset();
+}
+
+bool UMobaPresentationClientSubsystem::IsArenaBindingCurrent(uint64 ExpectedBinding, uint64 ExpectedArenaBinding,
+    AGamePlatformArenaGameState* ExpectedState, UWorld* ExpectedWorld) const
+{
+    return !bClosing && BindingGeneration == ExpectedBinding && ArenaBindingGeneration == ExpectedArenaBinding &&
+        IsValid(ExpectedState) && IsValid(ExpectedWorld) && !ExpectedWorld->bIsTearingDown &&
+        BoundArenaGameState.Get() == ExpectedState && BoundWorld.Get() == ExpectedWorld &&
+        ExpectedState->GetWorld() == ExpectedWorld && GetLocalPlayer() && GetLocalPlayer()->GetWorld() == ExpectedWorld;
 }
 
 void UMobaPresentationClientSubsystem::RefreshArenaPlayerBindings()
@@ -499,12 +540,21 @@ void UMobaPresentationClientSubsystem::HandleArenaPhaseChangedTyped(int32 Revisi
 void UMobaPresentationClientSubsystem::HandleArenaTeamStatesChanged()
 {
     AGamePlatformArenaGameState* GameState = BoundArenaGameState.Get();
-    if (!GameState)
+    if (bClosing || !IsValid(GameState))
     {
         return;
     }
 
-    for (const FGamePlatformArenaTeamState& Team : GameState->TeamStates)
+    const TStrongObjectPtr<UMobaPresentationClientSubsystem> KeepService(this);
+    const TStrongObjectPtr<AGamePlatformArenaGameState> KeepState(GameState);
+    const TStrongObjectPtr<UWorld> KeepWorld(BoundWorld.Get());
+    const uint64 ExpectedBinding = BindingGeneration, ExpectedArenaBinding = ArenaBindingGeneration;
+    const auto IsCurrent = [this, ExpectedBinding, ExpectedArenaBinding, GameState, World = KeepWorld.Get()]
+    { return IsArenaBindingCurrent(ExpectedBinding, ExpectedArenaBinding, GameState, World); };
+    if (!IsCurrent()) return;
+    const auto Teams = GameState->TeamStates;
+    const FString MatchId = GameState->MatchIdPublic; const FName ModeId = GameState->ArenaModeId;
+    for (const FGamePlatformArenaTeamState& Team : Teams)
     {
         const int32 PreviousRevision = TeamRevisions.FindRef(Team.TeamId);
         if (Team.Revision <= PreviousRevision)
@@ -515,17 +565,18 @@ void UMobaPresentationClientSubsystem::HandleArenaTeamStatesChanged()
 
         FMobaPresentationArenaFact Fact;
         Fact.Identity.FactId = MakeArenaFactId(
-            GameState->MatchIdPublic + Team.TeamId.ToString(),
+            MatchId + Team.TeamId.ToString(),
             Team.Revision,
             0x53434F52u);
         Fact.Identity.Revision = Team.Revision;
         Fact.Identity.WorldGeneration = WorldGeneration;
         Fact.Type = EMobaPresentationArenaFactType::ScoreChanged;
-        Fact.MatchId = GameState->MatchIdPublic;
-        Fact.ArenaModeId = GameState->ArenaModeId;
+        Fact.MatchId = MatchId;
+        Fact.ArenaModeId = ModeId;
         Fact.TeamId = Team.TeamId;
         Fact.Value = Team.Score;
         AdaptArenaFact(Fact);
+        if (!IsCurrent()) return;
     }
 
     RefreshArenaPlayerBindings();
@@ -534,12 +585,21 @@ void UMobaPresentationClientSubsystem::HandleArenaTeamStatesChanged()
 void UMobaPresentationClientSubsystem::HandleArenaObjectiveStatesChanged()
 {
     AGamePlatformArenaGameState* GameState = BoundArenaGameState.Get();
-    if (!GameState)
+    if (bClosing || !IsValid(GameState))
     {
         return;
     }
 
-    for (const FGamePlatformArenaObjectiveState& Objective : GameState->ObjectiveStates)
+    const TStrongObjectPtr<UMobaPresentationClientSubsystem> KeepService(this);
+    const TStrongObjectPtr<AGamePlatformArenaGameState> KeepState(GameState);
+    const TStrongObjectPtr<UWorld> KeepWorld(BoundWorld.Get());
+    const uint64 ExpectedBinding = BindingGeneration, ExpectedArenaBinding = ArenaBindingGeneration;
+    const auto IsCurrent = [this, ExpectedBinding, ExpectedArenaBinding, GameState, World = KeepWorld.Get()]
+    { return IsArenaBindingCurrent(ExpectedBinding, ExpectedArenaBinding, GameState, World); };
+    if (!IsCurrent()) return;
+    const auto Objectives = GameState->ObjectiveStates;
+    const FString MatchId = GameState->MatchIdPublic; const FName ModeId = GameState->ArenaModeId;
+    for (const FGamePlatformArenaObjectiveState& Objective : Objectives)
     {
         const int32 PreviousRevision = ObjectiveRevisions.FindRef(Objective.ObjectiveId);
         if (Objective.Revision <= PreviousRevision)
@@ -550,17 +610,18 @@ void UMobaPresentationClientSubsystem::HandleArenaObjectiveStatesChanged()
 
         FMobaPresentationArenaFact Fact;
         Fact.Identity.FactId = MakeArenaFactId(
-            GameState->MatchIdPublic + Objective.ObjectiveId.ToString(),
+            MatchId + Objective.ObjectiveId.ToString(),
             Objective.Revision,
             0x4F424A45u);
         Fact.Identity.Revision = Objective.Revision;
         Fact.Identity.WorldGeneration = WorldGeneration;
         Fact.Type = EMobaPresentationArenaFactType::ObjectiveCompleted;
-        Fact.MatchId = GameState->MatchIdPublic;
-        Fact.ArenaModeId = GameState->ArenaModeId;
+        Fact.MatchId = MatchId;
+        Fact.ArenaModeId = ModeId;
         Fact.TeamId = Objective.OwningTeamId;
         Fact.Value = Objective.Value;
         AdaptArenaFact(Fact);
+        if (!IsCurrent()) return;
     }
 }
 
@@ -916,7 +977,7 @@ EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::RecoverP
 }
 
 bool UMobaPresentationClientSubsystem::RememberFact(
-    const FMobaPresentationFactIdentity& Identity)
+    const FMobaPresentationFactIdentity& Identity, uint64 OperationGeneration)
 {
     if (!Identity.FactId.IsValid())
     {
@@ -943,6 +1004,9 @@ bool UMobaPresentationClientSubsystem::RememberFact(
         if (PredictedFacts.Remove(Identity.FactId) > 0)
         {
             ConfirmedFacts.Add(Identity.FactId);
+            FactRecordOperations.Add(Identity.FactId, OperationGeneration);
+            // 只有已受理预测才能升级；FIFO只保留一次身份，不触发第二次Provider播放。
+            FactOrder.Remove(Identity.FactId);
             FactOrder.Add(Identity.FactId);
             ++PredictedConfirmationCount;
             // 已播放低风险预测表现；确认只升级内部状态，不二次播放。
@@ -951,6 +1015,7 @@ bool UMobaPresentationClientSubsystem::RememberFact(
         ConfirmedFacts.Add(Identity.FactId);
     }
 
+    FactRecordOperations.Add(Identity.FactId, OperationGeneration);
     FactOrder.Add(Identity.FactId);
     while (FactOrder.Num() > MaxRememberedFacts)
     {
@@ -958,12 +1023,13 @@ bool UMobaPresentationClientSubsystem::RememberFact(
         FactOrder.RemoveAt(0, 1, EAllowShrinking::No);
         PredictedFacts.Remove(Evicted);
         ConfirmedFacts.Remove(Evicted);
+        FactRecordOperations.Remove(Evicted);
     }
     return true;
 }
 
-void UMobaPresentationClientSubsystem::ApplyContextContributors(
-    FMobaPresentationContext& Context) const
+bool UMobaPresentationClientSubsystem::ApplyContextContributors(
+    FMobaPresentationContext& Context, TFunctionRef<bool()> IsCurrentScope) const
 {
     TArray<FName> Ids;
     ContextContributors.GetKeys(Ids);
@@ -974,28 +1040,22 @@ void UMobaPresentationClientSubsystem::ApplyContextContributors(
 
     for (const FName& Id : Ids)
     {
-        if (const TSharedPtr<IMobaPresentationContextContributor>* Contributor =
-            ContextContributors.Find(Id))
+        if (!IsCurrentScope()) return false;
+        // 必须是SharedPtr值拷贝；贡献者自注销/替换注册表也不销毁正在执行的virtual对象。
+        const TSharedPtr<IMobaPresentationContextContributor> Contributor = ContextContributors.FindRef(Id);
+        if (Contributor.IsValid())
         {
-            if (Contributor->IsValid())
-            {
-                (*Contributor)->Contribute(Context);
-            }
+            Contributor->Contribute(Context);
+            if (!IsCurrentScope()) return false;
         }
     }
+    return IsCurrentScope();
 }
 
 bool UMobaPresentationClientSubsystem::PrepareFact(
-    FMobaPresentationAdaptedFact& Fact)
+    FMobaPresentationAdaptedFact& Fact, TFunctionRef<bool()> IsCurrentScope)
 {
-    if (bClosing) return false;
-    UWorld* CurrentWorld = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
-    if (CurrentWorld != BoundWorld.Get())
-    {
-        ResetWorldState(CurrentWorld);
-    }
-
-    if (!Fact.IsValid())
+    if (!IsCurrentScope() || !Fact.IsValid())
     {
         return false;
     }
@@ -1003,14 +1063,19 @@ bool UMobaPresentationClientSubsystem::PrepareFact(
     if (Fact.Context.WorldGeneration == 0)
     {
         Fact.Context.WorldGeneration = WorldGeneration;
-        Fact.Identity.WorldGeneration = WorldGeneration;
     }
     else if (Fact.Context.WorldGeneration != WorldGeneration)
     {
         ++StaleDropCount;
         return false;
     }
+    // 两处0值都保留自动补当前作用域合同；显式旧Identity不能被Context的0值悄悄改写。
+    if (Fact.Identity.WorldGeneration == 0) Fact.Identity.WorldGeneration = WorldGeneration;
+    else if (Fact.Identity.WorldGeneration != WorldGeneration) { ++StaleDropCount; return false; }
 
+    if (!ApplyContextContributors(Fact.Context, IsCurrentScope) || !IsCurrentScope() ||
+        Fact.Context.WorldGeneration != WorldGeneration || Fact.Identity.WorldGeneration != WorldGeneration)
+        return false;
     const FString AvatarKey = !Fact.Context.TargetEntityId.IsEmpty()
         ? Fact.Context.TargetEntityId
         : Fact.Context.TargetCharacterId;
@@ -1027,7 +1092,6 @@ bool UMobaPresentationClientSubsystem::PrepareFact(
             FMath::Max(Latest, Fact.Context.AvatarGeneration));
     }
 
-    ApplyContextContributors(Fact.Context);
     Fact.Context.RequestGeneration = ++RequestGeneration;
     return true;
 }
@@ -1035,14 +1099,59 @@ bool UMobaPresentationClientSubsystem::PrepareFact(
 EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::SubmitAdaptedFact(
     FMobaPresentationAdaptedFact Fact)
 {
-    if (!PrepareFact(Fact))
+    if (bClosing || !GetLocalPlayer()) return EGamePlatformPresentationSubmitResult::InvalidRequest;
+    const TStrongObjectPtr<UMobaPresentationClientSubsystem> KeepService(this);
+    const TStrongObjectPtr<ULocalPlayer> Player(GetLocalPlayer());
+    const TStrongObjectPtr<UWorld> World(Player->GetWorld());
+    if (!World.IsValid() || World->bIsTearingDown) return EGamePlatformPresentationSubmitResult::InvalidRequest;
+    if (World.Get() != BoundWorld.Get()) ResetWorldState(World.Get());
+    // ResetWorldState内部竞技恢复可同步关闭/旅行；入口原World不能改成该回调的后继World。
+    if (bClosing || Player->GetWorld() != World.Get() || BoundWorld.Get() != World.Get())
+        return EGamePlatformPresentationSubmitResult::InvalidRequest;
+    const uint64 ExpectedBinding = BindingGeneration;
+    const uint64 ExpectedArenaBinding = ArenaBindingGeneration;
+    const int32 ExpectedWorldGeneration = WorldGeneration;
+    const TWeakObjectPtr<AGamePlatformArenaGameState> ExpectedArenaState = BoundArenaGameState;
+    const bool bHadArenaState = ExpectedArenaState.IsValid();
+    const uint64 OperationGeneration = ++FactOperationGeneration;
+    const auto IsCurrentScope = [this, ExpectedBinding, ExpectedArenaBinding, ExpectedWorldGeneration,
+        ExpectedArenaState, bHadArenaState,
+        Player = Player.Get(), World = World.Get()]
+    {
+        return !bClosing && IsValid(this) && IsValid(Player) && IsValid(World) && !World->bIsTearingDown &&
+            BindingGeneration == ExpectedBinding && ArenaBindingGeneration == ExpectedArenaBinding &&
+            BoundArenaGameState == ExpectedArenaState && ExpectedArenaState.IsValid() == bHadArenaState &&
+            WorldGeneration == ExpectedWorldGeneration && GetLocalPlayer() == Player &&
+            Player->GetWorld() == World && BoundWorld.Get() == World;
+    };
+    if (!PrepareFact(Fact, IsCurrentScope) || !IsCurrentScope())
     {
         return EGamePlatformPresentationSubmitResult::InvalidRequest;
     }
-    if (!RememberFact(Fact.Identity))
+    const FGuid FactId = Fact.Identity.FactId;
+    const bool bPredicted = Fact.Identity.bPredicted && !Fact.Identity.bConfirmed;
+    const TSharedPtr<FPendingFactSubmission> InFlight = PendingFactSubmissions.FindRef(FactId);
+    if (InFlight.IsValid())
     {
+        // Provider尚未返回时不能声称受理。只把首份确认交给同ID原预测操作，保留精确操作身份。
+        if (InFlight->bPredicted && !bPredicted && !InFlight->Confirmation.IsSet())
+            InFlight->Confirmation = MoveTemp(Fact);
+        return EGamePlatformPresentationSubmitResult::Pending;
+    }
+    if (ConfirmedFacts.Contains(FactId) || PredictedFacts.Contains(FactId))
+    {
+        RememberFact(Fact.Identity, OperationGeneration); // 已受理预测的确认只升级，不重播。
         return EGamePlatformPresentationSubmitResult::Submitted;
     }
+    const TSharedPtr<FPendingFactSubmission> Submission = MakeShared<FPendingFactSubmission>();
+    Submission->OperationGeneration = OperationGeneration;
+    Submission->bPredicted = bPredicted;
+    PendingFactSubmissions.Add(FactId, Submission);
+    const auto OwnsPendingSubmission = [this, FactId, OperationGeneration, Submission]
+    {
+        const TSharedPtr<FPendingFactSubmission> Current = PendingFactSubmissions.FindRef(FactId);
+        return Current.IsValid() && Current == Submission && Current->OperationGeneration == OperationGeneration;
+    };
 
     UGamePlatformPresentationClientSubsystem* Coordinator =
         GetLocalPlayer()
@@ -1050,8 +1159,7 @@ EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::SubmitAd
         : nullptr;
     if (!Coordinator)
     {
-        PredictedFacts.Remove(Fact.Identity.FactId); ConfirmedFacts.Remove(Fact.Identity.FactId);
-        FactOrder.Remove(Fact.Identity.FactId);
+        if (IsCurrentScope() && OwnsPendingSubmission()) PendingFactSubmissions.Remove(FactId);
         ++ProviderMissingCount;
         return EGamePlatformPresentationSubmitResult::ProviderMissing;
     }
@@ -1064,17 +1172,41 @@ EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::SubmitAd
     Request.WorldGeneration = 0;
     Request.Context.WorldGeneration = 0;
 
-    const EGamePlatformPresentationSubmitResult Result =
-        Coordinator->Submit(Request);
-    // Submitted仅表示实际受理；同步失败不得通过重复事实被升级成受理成功。
-    if (Result != EGamePlatformPresentationSubmitResult::Submitted)
+    const TStrongObjectPtr<UGamePlatformPresentationClientSubsystem> KeepCoordinator(Coordinator);
+    if (!IsCurrentScope())
     {
-        PredictedFacts.Remove(Fact.Identity.FactId); ConfirmedFacts.Remove(Fact.Identity.FactId);
-        FactOrder.Remove(Fact.Identity.FactId);
+        if (OwnsPendingSubmission()) PendingFactSubmissions.Remove(FactId);
+        return EGamePlatformPresentationSubmitResult::StaleWorld;
     }
-    if (Result == EGamePlatformPresentationSubmitResult::ProviderMissing)
+    const EGamePlatformPresentationSubmitResult Result = Coordinator->Submit(Request);
+    // Provider/观测者可同步旅行并预约同ID；旧返回不写后继统计、受理集合或留存确认。
+    if (!IsCurrentScope())
     {
+        // 失效对象尚未触发常规解绑时也撤本次原token；新绑定/World同ID接管后比较失败，绝不擦后继。
+        if (OwnsPendingSubmission()) PendingFactSubmissions.Remove(FactId);
+        return EGamePlatformPresentationSubmitResult::StaleWorld;
+    }
+    if (!OwnsPendingSubmission()) return EGamePlatformPresentationSubmitResult::StaleWorld;
+    TOptional<FMobaPresentationAdaptedFact> Confirmation = MoveTemp(Submission->Confirmation);
+    PendingFactSubmissions.Remove(FactId);
+    if (Result == EGamePlatformPresentationSubmitResult::Submitted)
+        RememberFact(Fact.Identity, OperationGeneration);
+    if (Result == EGamePlatformPresentationSubmitResult::ProviderMissing)
         ++ProviderMissingCount;
+    if (Confirmation.IsSet())
+    {
+        if (Result == EGamePlatformPresentationSubmitResult::Submitted)
+        {
+            // 原预测已真实受理：确认只升级同份账本，不能再次播放。
+            RememberFact(Confirmation->Identity, OperationGeneration);
+        }
+        else
+        {
+            // 原预测拒绝：已经撤掉精确预约，确认从真实公开入口重新核贡献者/作用域并提交。
+            // 失败不留下受理记录；后续同ID可再次真实尝试。原调用仍返回其自己的预测结果。
+            SubmitAdaptedFact(MoveTemp(Confirmation.GetValue()));
+            if (!IsCurrentScope()) return EGamePlatformPresentationSubmitResult::StaleWorld;
+        }
     }
     return Result;
 }

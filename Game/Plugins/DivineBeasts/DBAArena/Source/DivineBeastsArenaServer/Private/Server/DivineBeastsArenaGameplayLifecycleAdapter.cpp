@@ -234,8 +234,11 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
     ACharacter* Character = ExpectedController.IsValid() ? Cast<ACharacter>(ExpectedController->GetPawn()) : nullptr;
     ExpectedPawn = Character;
     if (!IsCurrent())
-    { if (Character && ExpectedController.IsValid() && ExpectedController->GetPlayerState<AGamePlatformArenaPlayerState>() == ExpectedState.Get()) { Character->Destroy(); }
-      OutReason = TEXT("Restart返回后原比赛/连接已撤销。"); return false; }
+    {
+        // Restart/Possess的原生和Blueprint通知可以切换装配并生成后继Pawn。
+        // 返回后的Controller当前Pawn没有本次创建身份证据；同PlayerState也不能证明归属，拒绝旧请求并保留后继。
+        OutReason = TEXT("Restart返回后原比赛/连接已撤销，未证明归属的当前Pawn保持不动。"); return false;
+    }
     if (!Character)
     {
         OutReason = TEXT("标准GameMode出生入口未生成ACharacter。");
@@ -260,20 +263,51 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
             Context,
             OutReason))
     {
-        Character->Destroy();
+        // false也可能表示同Pawn的更高/相同代次后继已接管；无法拿到本次内部操作身份，不能按字段猜归属。
+        // 未完成出生没有发布Active；由当前拥有者/下一次出生/世界退出收回仍受控Pawn，不在旧失败栈销毁后继。
         return false;
     }
 
-    if (!IsCurrent()) { Character->Destroy(); OutReason = TEXT("角色初始化广播撤销了原比赛。"); return false; }
+    if (!IsCurrent()) { OutReason = TEXT("角色初始化广播撤销了原比赛，保留已被接管的Pawn。"); return false; }
     UDivineBeastsCharacterComponent* CharacterState =
         Character->FindComponentByClass<UDivineBeastsCharacterComponent>();
+    // 初始化器成功返回后、任何后续外部调用前捕获不透明操作ID。字段相同的重新绑定也会换ID，不能冒充原操作。
+    const FGuid OriginalContextOperationId = CharacterState ? CharacterState->GetTrustedContextOperationId() : FGuid();
+    const auto IsOriginalContextCurrent = [&]()
+    {
+        return IsCurrent() && IsValid(Character) && IsValid(CharacterState) && OriginalContextOperationId.IsValid() &&
+            // Unregister不等于EndPlay，且GetWorld可退回Owner；真实出生必须同时保有注册和BeginPlay前提。
+            CharacterState->IsRegistered() && CharacterState->HasBegunPlay() &&
+            Character->FindComponentByClass<UDivineBeastsCharacterComponent>() == CharacterState &&
+            CharacterState->GetTrustedContextOperationId() == OriginalContextOperationId &&
+            CharacterState->GetCharacterId() == Context.CharacterId && CharacterState->GetHeroDefinitionId() == Context.HeroDefinitionId &&
+            CharacterState->GetSpawnGeneration() == Context.SpawnGeneration && CharacterState->GetAvatarGeneration() == Context.AvatarGeneration;
+    };
+    const auto DestroyOnlyOriginalPawn = [&]()
+    {
+        // 只有成功返回的操作ID仍成立，且Binding/Controller/Pawn/完整可信身份未改变，才有正常失败清理证据。
+        if (!IsOriginalContextCurrent()) { return; }
+        UnbindPawnDeath(PlayerId);
+        if (const auto* OwnedPawn = SpawnedPawns.Find(PlayerId); OwnedPawn && OwnedPawn->Get() == Character) { SpawnedPawns.Remove(PlayerId); }
+        Character->Destroy();
+    };
+    if (!IsOriginalContextCurrent()) { OutReason = TEXT("初始化返回身份不属于本次出生，保留当前Pawn。"); return false; }
     const FGamePlatformDataLease* WarmupLease = DefinitionWarmupLeases.FindByPredicate(
         [&DefinitionPath](const auto& Lease) { return Lease.ResourcePaths.Contains(DefinitionPath); });
-    if (CharacterState && !CharacterState->IsCharacterReady() && WarmupLease)
-    { CharacterState->TryUsePreloadedDefinition(*WarmupLease, *Mode, OutReason); }
-    if (!IsCurrent() || !CharacterState || !CharacterState->IsCharacterReady())
+    const bool bInitiallyReady = CharacterState->IsCharacterReady();
+    if (!IsOriginalContextCurrent()) { OutReason = TEXT("就绪读取期间原出生已撤销。"); return false; }
+    if (!bInitiallyReady && WarmupLease)
     {
-        Character->Destroy();
+        const FGamePlatformDataLease OwnedWarmupLease = *WarmupLease;
+        const bool bHandoffSucceeded = CharacterState->TryUsePreloadedDefinition(OwnedWarmupLease, *Mode, OutReason);
+        if (!IsOriginalContextCurrent()) { OutReason = TEXT("预热通知使后继接管，原出生停止清理和激活。"); return false; }
+        if (!bHandoffSucceeded) { DestroyOnlyOriginalPawn(); return false; }
+    }
+    const bool bReady = CharacterState->IsCharacterReady();
+    if (!IsOriginalContextCurrent()) { OutReason = TEXT("预热后原出生身份已撤销，保留后继Pawn。"); return false; }
+    if (!bReady)
+    {
+        DestroyOnlyOriginalPawn();
         OutReason = TEXT("项目角色初始化尚未达到Ready，拒绝进入比赛。");
         return false;
     }
@@ -282,17 +316,31 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
     auto* ASC = Character->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
     auto* Combat = Character->FindComponentByClass<UGamePlatformCombatComponent>();
     auto* Eligibility = Character->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();
-    if (!ASC || !Combat || !Combat->GetCombatAttributeSet() || !Eligibility || ASC->GetAvatarActor() != Character ||
-        !Eligibility->BindServerAvatarGeneration(SpawnGeneration) || Combat->GetCombatAvatarGeneration() != SpawnGeneration)
-    { Character->Destroy(); OutReason = TEXT("真实角色ASC/Combat/ActorInfo/玩法代次尚未完整初始化。"); return false; }
+    if (!ASC || !Combat || !Combat->GetCombatAttributeSet() || !Eligibility || ASC->GetAvatarActor() != Character)
+    { DestroyOnlyOriginalPawn(); OutReason = TEXT("真实角色ASC/Combat/ActorInfo尚未完整初始化。"); return false; }
+    const bool bAvatarBound = Eligibility->BindServerAvatarGeneration(SpawnGeneration);
+    if (!IsOriginalContextCurrent()) { OutReason = TEXT("资格代次通知已撤销原出生，保留后继。"); return false; }
+    const bool bStillReady = CharacterState->IsCharacterReady();
+    if (!IsOriginalContextCurrent()) { OutReason = TEXT("资格通知后读取Ready时原出生已撤销。"); return false; }
+    if (!bAvatarBound || Combat->GetCombatAvatarGeneration() != SpawnGeneration || !bStillReady)
+    { DestroyOnlyOriginalPawn(); OutReason = TEXT("真实角色玩法代次或Ready尚未完整初始化。"); return false; }
     if (auto* ProjectPawn = Cast<ADivineBeastsCharacter>(Character)) { BindPawnDeath(PlayerId, *ProjectPawn, *State, SpawnGeneration); }
     // 初次出生属于倒计时事务；全部Pawn成功后由GameMode统一激活。局内复活则必须仍处于InProgress。
-    if (!IsCurrent())
-    { UnbindPawnDeath(PlayerId); Character->Destroy(); OutReason = TEXT("激活前原出生上下文已撤销。"); return false; }
+    // 保存本次新增委托身份；失效时只撤销该监听，不能按PlayerId清掉同步后继重新注册的监听。
+    const FDeathBinding* OriginalDeath = DeathBindings.Find(PlayerId);
+    const FDelegateHandle OriginalDeathHandle = OriginalDeath ? OriginalDeath->Handle : FDelegateHandle();
+    const auto UnbindOnlyOriginalDeath = [&]()
+    {
+        const auto* Binding = DeathBindings.Find(PlayerId);
+        if (Binding && Binding->Handle == OriginalDeathHandle) { UnbindPawnDeath(PlayerId); }
+    };
+    if (!IsOriginalContextCurrent())
+    { UnbindOnlyOriginalDeath(); OutReason = TEXT("激活前原出生上下文已撤销，保留后继Pawn。"); return false; }
     if (ExpectedPhase == EGamePlatformArenaMatchPhase::InProgress) { Eligibility->SetServerPlayerActive(true); }
-    if (!IsCurrent())
-    { Eligibility->SetServerPlayerActive(false); UnbindPawnDeath(PlayerId); Character->Destroy();
-      OutReason = TEXT("玩法激活后原出生上下文已撤销。"); return false; }
+    // Active通知可只结束/撤销身份组件而不改nonce；实际Ready读取之后还要复核原操作和引擎生命周期。
+    const bool bTerminalReady = IsValid(CharacterState) && CharacterState->IsCharacterReady();
+    if (!IsOriginalContextCurrent() || !bTerminalReady)
+    { UnbindOnlyOriginalDeath(); OutReason = TEXT("玩法激活通知撤销了原出生或Ready，不修改未知归属的资格或Pawn。"); return false; }
     OutReason.Reset();
     return true;
 }

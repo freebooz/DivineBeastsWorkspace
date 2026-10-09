@@ -113,6 +113,11 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
     FString GetDefinitionContentRevision() const { return RuntimeState.ContentRevision; }
 
+    /** GT只读已成功可信绑定的内部操作身份；首次绑定前为空，每次接纳（含相同字段/代次）都会改变。
+     * 调用者只能在AuthorityBind成功返回后立即捕获，用于后续同步回调后的自有资源复核；
+     * 它不是准入票据、权限或客户端命令，不能凭此ID批准角色/比赛。失败返回无法取得原调用身份。 */
+    FGuid GetTrustedContextOperationId() const { return TrustedContextOperationId; }
+
     // IGamePlatformCharacterStateView（平台角色状态只读接口）
     virtual FName GetCharacterStateHeroDefinitionId() const override { return GetHeroDefinitionId(); }
     virtual int32 GetCharacterStateSpawnGeneration() const override { return GetSpawnGeneration(); }
@@ -137,6 +142,27 @@ public:
     }
 
 private:
+    /** 配置栈借用的不可变身份快照；引擎碰撞/GAS及Data同步通知返回后，旧栈只能核查，不能清后继状态。 */
+    struct FInitializationSnapshot
+    {
+        TWeakObjectPtr<AActor> Owner;
+        TWeakObjectPtr<UWorld> World;
+        TWeakObjectPtr<UDivineBeastsHeroDefinition> Definition;
+        TWeakObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystem;
+        TWeakObjectPtr<AActor> AbilityAvatar;
+        int32 AbilityAvatarGeneration = 0;
+        FGuid ContextOperationId;
+        int32 RequestGeneration = 0;
+        int32 SpawnGeneration = 0;
+        int32 AvatarGeneration = 0;
+        FName HeroDefinitionId;
+        int32 DefinitionVersion = 0;
+        FString ContentRevision;
+        bool bAuthority = false;
+    };
+    FInitializationSnapshot CaptureInitializationSnapshot() const;
+    /** 可选配置操作ID区分同身份的递归Refresh；不向外部服务公布或复制。 */
+    bool IsInitializationCurrent(const FInitializationSnapshot& Snapshot, FGuid InitializationId = FGuid()) const;
     /** 任一Hero身份、代次或Definition修订变化都重新建立本地Definition租约，避免旧异步请求污染新角色。 */
     UFUNCTION()
     void OnRep_RuntimeState();
@@ -158,6 +184,8 @@ private:
 
     bool ApplyDefinition(
         const UDivineBeastsHeroDefinition& Definition,
+        const FInitializationSnapshot& Snapshot,
+        FGuid InitializationId,
         FString& OutError);
 
     bool IsIdentityStructurallyValid() const;
@@ -191,6 +219,8 @@ private:
     int32 DefinitionRequestGeneration = 0;
     /** 每次接纳可信身份绑定签发操作身份；同步Ready监听者的真实后继绑定或退出会使旧栈失败关闭。 */
     FGuid TrustedContextOperationId;
+    /** 每次Refresh签发，递归配置会使原栈失效；不能只靠最外层AuthorityBind末端检查。 */
+    FGuid InitializationOperationId;
     /** 成功后持续持有至结束/身份变化；不能在完成回调中提前释放。 */
     FGamePlatformDataLease DefinitionLease;
     FGamePlatformResult LastDefinitionLoadResult;

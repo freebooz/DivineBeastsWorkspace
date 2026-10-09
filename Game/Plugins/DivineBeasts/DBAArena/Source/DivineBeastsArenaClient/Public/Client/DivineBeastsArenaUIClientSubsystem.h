@@ -15,6 +15,7 @@ class UGamePlatformUIScreenDefinition;
 class UGamePlatformUIScreen;
 class UGamePlatformMobaArenaHUDBase;
 class UGameInstance;
+class UCommonActivatableWidgetStack;
 
 /**
  * UDivineBeastsArenaUIClientSubsystem（神兽联盟竞技UI本地玩家子系统）。
@@ -68,6 +69,7 @@ public:
         EGamePlatformArenaClientFlowState InFlowState);
 
 private:
+    friend class FDivineBeastsArenaUIScreenInstanceOwnershipRegressionTest;
     /** 当前LocalPlayer世界的GameState可迟到，订阅引擎设置事件；退出解绑并清空投影，无Tick重试。 */
     void BindWorldReadinessEvents(UWorld* World);
     void HandleWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
@@ -100,7 +102,7 @@ private:
         const FGamePlatformResult& Result);
     void ReleaseArenaHUDLease(const FGamePlatformDataLease& Lease, TWeakObjectPtr<UGameInstance> Instance);
 
-    /** 按请求身份过滤平台回调，避免将公共登录页面事件当成竞技界面。 */
+    /** 打开/失败按请求身份过滤；关闭的兼容内容ID必须再核自有具体实例原栈成员，不能按ID清其他实例。 */
     UFUNCTION()
     void HandleArenaScreenOpened(
         FGuid RequestId, FName ScreenId, UGamePlatformUIScreen* Screen);
@@ -143,6 +145,8 @@ private:
 
     /** 竞技专属页面弱引用，平台页面栈负责具体实例生命周期与资源租约。 */
     TWeakObjectPtr<UGamePlatformUIScreen> ActiveArenaScreen;
+    /** 内容ID可有多个实例；关闭通知必须核自有实例是否已离开登记时的原栈。 */
+    TWeakObjectPtr<UCommonActivatableWidgetStack> ActiveArenaScreenStack;
     FName ActiveArenaSurfaceId = NAME_None;
     FName OpeningArenaSurfaceId = NAME_None;
     FGuid OpeningArenaRequestId;

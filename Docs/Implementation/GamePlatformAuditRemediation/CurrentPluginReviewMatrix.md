@@ -1,6 +1,6 @@
 # 逐插件审查与当前整改状态（2026-10-09）
 
-当前覆盖62个插件身份、82个插件模块；GamePlatform稳定身份40个（物理平台39＋MOBA Arena）。修改前设计/性能/规范保留在Audit/PluginReviewMatrix.json与PluginAudit.md；61个原审查编号逐项保存在FindingDisposition.json，独立追加问题见IndependentReviewResults.md及领域报告。
+当前覆盖62个插件身份、83个插件模块（原审查82，主线既有技能模块整合后83）；GamePlatform稳定身份40个（物理平台39＋MOBA Arena）。修改前设计/性能/规范保留在Audit/PluginReviewMatrix.json与PluginAudit.md；61个原审查编号逐项保存在FindingDisposition.json，独立追加问题见IndependentReviewResults.md及领域报告。
 
 源码整改与模块构建不能证明全部插件设计完善或达到最佳工程实践。批准配置、地图、真实资源、后端与阶段能力缺口保留真实条件；CPU/GPU/内存收益无设备实测，全量中文存量未逐行认证。实际检查与目标构建分别见ValidationSummary.json、UEBuildResults.json。
 
@@ -10,7 +10,7 @@
 | `DBAClient` | 5 | APP-11、F14、F15、F16、F17、G-02 | G-02：Server声明根/模块与Stage规则已修；干净Cook产物未验；APP-11：本轮源码已修；真实UE行为回归待执行；F14：真实Data事务源码已实施；UE资源/回调待验收；F15：格式/失败合同已修；真实默认资源仍缺；F16：主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验；F17：本轮触及范围已补伴随说明；全量存量不在本组验收 |
 | `DBAContentPack_Common` | 0 | F16、G-02 | G-02：Server声明根/模块与Stage规则已修；干净Cook产物未验；F16：主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验 |
 | `DBAFrontEndPack` | 0 |  | 重点源码/消费者审查未发现确认问题；并非全量完备或性能认证，阶段见修改前审查 |
-| `DBAGameplay` | 2 | GW-02 | GW-02：源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收 |
+| `DBAGameplay` | 3 | GW-02 | GW-02：源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收 |
 | `DBAHeroPack_Boar` | 0 | F16、G-02 | G-02：Server声明根/模块与Stage规则已修；干净Cook产物未验；F16：主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验 |
 | `DBAHeroPack_Dog` | 0 | F16、G-02 | G-02：Server声明根/模块与Stage规则已修；干净Cook产物未验；F16：主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验 |
 | `DBAHeroPack_Dragon` | 0 | F16、G-02 | G-02：Server声明根/模块与Stage规则已修；干净Cook产物未验；F16：主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验 |

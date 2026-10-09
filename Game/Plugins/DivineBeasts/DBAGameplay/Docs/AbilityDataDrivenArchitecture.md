@@ -76,3 +76,10 @@ HeroDefinition.DefinitionId（英雄定义编号） → HeroDefinition.DefaultAb
 - `Tools/Unreal/Abilities/ValidateZodiacDevelopmentAssets.py`（UE5.8编辑器原生验证脚本）已在 Monolith `editor.run_python`（编辑器脚本接口）运行，核对**60份实际逻辑定义、60个数值行、12份开发UI配置和60条UE纹理软引用**，结果为0错误。`Tests/Assets/ValidateZodiacDevelopmentSkillAssets.py`（不依赖引擎的文件及摘要门禁）使用 `--require-all-profiles --require-all-definitions --verify-hashes`（全量检查）通过，但不能替代真实引擎。
 - `Game/Config/DefaultGame.ini`（项目默认配置）将整个开发资源目录加入 `DirectoriesToNeverCook`（发行资源烘焙排除清单），并将 `bAllowDevelopmentAbilitySets=false`（开发技能集授予开关）设置为默认值。`UDivineBeastsAbilityLoadoutComponent`（项目权威授权组件）新增编译期及配置双门禁：仅UE编辑器显式启用开发权限才可能授予 `bDevelopmentOnly`（开发集合），正式客户端、专用服务器及发布目标均拒绝。生产英雄 `DefaultAbilitySetId`（默认技能集编号）仍保持空值，不使用此开发样板代替。
 - 已知边界：当前只有一份子鼠可激活的开发 `GameplayAbility`（GAS技能蓝图），它只提交成本/冷却与正常结束，并不执行真正的目标选择、命中或伤害；另外59份技能逻辑定义不能当成已具备可执行技能类。正式 `DataAsset`（玩法资产）、`GameplayEffect`（技能效果）、VFX/SFX、全英雄授权、UI运行显示、三端编译、联机与Cook/Stage须分别验收，不能由全量开发数据反推生产功能完成。
+## 2026-10-09 主线整合同步通知与运行资格整改
+
+角色定义配置调用真实Capsule重叠、碰撞Profile、Combat重置及GAS属性后，均可能同步调用项目监听者。配置执行与预热交接各自捕获原初始化身份、Owner/World、定义和出生/Avatar代次；每次外部调用后重验，最终提交配置/Ready前再验。后继接管或生命周期结束时，旧栈只停止剩余写入，不把已经发生的引擎/GAS修改假装回滚。
+
+`IsCharacterReady`（当前可运行角色资格）除既有资源租约及端侧Ready条件，还要求组件已注册并进入BeginPlay且未结束。真实UnregisterComponent不会自动EndPlay，GetWorld可从Owner回退；因此仅凭可读资源与身份字段，不能证明组件仍能参与玩法。平台只读StateView和项目ActivationGate沿用同一查询，注销期间失败关闭，合法重新注册的生命周期仍需重新核验。
+
+竞技出生使用已受理的可信上下文操作ID作为观察身份；它不是准入凭证。Restart、初始化、预热交接、Avatar绑定及资格激活通知返回后，均核原Adapter/比赛阶段、Controller/Pawn、完整上下文及操作身份。初始化失败无法取得原内部ID时保留未证明归属的角色；后续明确自有的正常失败才可清理。最后实际读取Ready并再次核同一作用域；失效只撤本次死亡监听，不清后继监听或资格。具体真实配置/出生/激活回归和构建结果见中央UE证据，源码闭环不等于联机、Blueprint兼容或Cook验收。

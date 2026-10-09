@@ -4,9 +4,38 @@
 #include "Interfaces/GamePlatformProgressionClientTransport.h"
 #include "Misc/AutomationTest.h"
 #include "Services/GamePlatformProgressionClientSubsystem.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
+/**
+ * 仅Automation的合法Outer夹具：LocalPlayer的Within是Engine，领域Subsystem的Within是LocalPlayer。
+ * GT显式构造并强持有两者，不PlayerAdded/不建World或自动登录；原测试Transport/账号前提保持。
+ * 无Viewport时GetGameInstance为nullptr，不能把本夹具当完整GI/Online装配或生产服务。
+ * 任意正常/提前返回先Deinitialize清委托/取消请求，再释放Client与Player，避免GC和测试间残留。
+ */
+struct FProgressionLocalPlayerFixture
+{
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UGamePlatformProgressionClientSubsystem> Client;
+    bool Initialize(FAutomationTestBase& Test)
+    {
+        if (!Test.TestNotNull(TEXT("LocalPlayer真实Engine Within宿主"), GEngine)) return false;
+        Player.Reset(NewObject<ULocalPlayer>(GEngine));
+        if (!Test.TestNotNull(TEXT("领域Subsystem真实LocalPlayer Outer"), Player.Get())) return false;
+        Client.Reset(NewObject<UGamePlatformProgressionClientSubsystem>(Player.Get()));
+        return Test.TestNotNull(TEXT("合法Outer的领域Subsystem实例"), Client.Get());
+    }
+    ~FProgressionLocalPlayerFixture()
+    {
+        if (Client.IsValid()) Client->Deinitialize();
+        Client.Reset();
+        Player.Reset();
+    }
+};
+
 class FProgressionMockTransport final
     : public IGamePlatformProgressionClientTransport
 {
@@ -35,8 +64,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformProgressionClientAccountTest::RunTest(const FString&)
 {
-    UGamePlatformProgressionClientSubsystem* Client =
-        NewObject<UGamePlatformProgressionClientSubsystem>();
+    FProgressionLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformProgressionClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FProgressionMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
@@ -76,8 +106,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformProgressionClientDerivedCacheTest::RunTest(const FString&)
 {
-    UGamePlatformProgressionClientSubsystem* Client =
-        NewObject<UGamePlatformProgressionClientSubsystem>();
+    FProgressionLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformProgressionClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FProgressionMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
@@ -167,7 +198,9 @@ bool FGamePlatformProgressionClientDerivedCacheTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProgressionViewEventsTest, "GamePlatform.Progression.Client.ViewEvents", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProgressionViewEventsTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformProgressionClientSubsystem>();
+    FProgressionLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformProgressionClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
     int32 Events = 0;
     Client->OnViewChanged.AddLambda([&]() { ++Events; });
@@ -196,7 +229,9 @@ bool FProgressionViewEventsTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProgressionCloseDuringConfigureTest, "GamePlatform.Progression.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProgressionCloseDuringConfigureTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformProgressionClientSubsystem>();
+    FProgressionLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformProgressionClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
     TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
     Client->OnViewChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });

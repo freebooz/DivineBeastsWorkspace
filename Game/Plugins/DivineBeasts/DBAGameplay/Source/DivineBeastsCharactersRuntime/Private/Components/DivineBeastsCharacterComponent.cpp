@@ -151,13 +151,16 @@ bool UDivineBeastsCharacterComponent::HasReadableDefinitionResources() const
 }
 bool UDivineBeastsCharacterComponent::IsCharacterReady() const
 {
-    if (bEndingPlay || !HasReadableDefinitionResources()) { return false; }
+    // UnregisterComponent不触发EndPlay且GetWorld可回退Owner；字段/租约成功不能证明组件仍有可运行生命周期。
+    // 统一只读Ready合同使StateView与ActivationGate一起失败关闭，不靠上层逐处补注册检查。
+    if (bEndingPlay || !IsRegistered() || !HasBegunPlay() || !HasReadableDefinitionResources()) { return false; }
     return GetOwner() && GetOwner()->HasAuthority() ? bServerReady : bServerReady && bLocalReady;
 }
 bool UDivineBeastsCharacterComponent::TryUsePreloadedDefinition(const FGamePlatformDataLease& WarmupLease,
     UObject& WarmupOwner, FString& OutError)
 {
     check(IsInGameThread());
+    const FInitializationSnapshot HandoffSnapshot = CaptureInitializationSnapshot();
     UWorld* World = GetWorld(); UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
     auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
     const FSoftObjectPath Path = FDivineBeastsHeroCatalog::GetDefinitionAssetPath(RuntimeState.HeroDefinitionId);
@@ -166,20 +169,42 @@ bool UDivineBeastsCharacterComponent::TryUsePreloadedDefinition(const FGamePlatf
         !DefinitionLease.IsValid() || !LastDefinitionLoadResult.IsSuccess() || !WarmupLease.ResourcePaths.Contains(Path) ||
         Data->GetLeaseState(WarmupLease) != EGamePlatformDataRequestState::Succeeded)
     { OutError = TEXT("英雄预热交接缺少当前世界的真实成功租约或自身需求未受理。"); return false; }
+    if (!IsInitializationCurrent(HandoffSnapshot)) { OutError = TEXT("预热租约核查期间原交接已撤销。"); return false; }
+    const FGuid ContextOperationId = TrustedContextOperationId;
+    const int32 RequestGeneration = DefinitionRequestGeneration;
+    const int32 SpawnGeneration = RuntimeState.SpawnGeneration;
+    const int32 AvatarGeneration = RuntimeState.AvatarGeneration;
+    const TWeakObjectPtr<AActor> ExpectedOwner(GetOwner());
+    const TWeakObjectPtr<UWorld> ExpectedWorld(World);
     auto* Definition = Cast<UDivineBeastsHeroDefinition>(Path.ResolveObject());
     if (!Definition || Definition->DefinitionId != RuntimeState.HeroDefinitionId)
     { OutError = TEXT("预热资源真实Definition与当前可信Hero身份不一致。"); return false; }
     BorrowedWarmupOwner = &WarmupOwner; BorrowedWarmupLease = WarmupLease;
     HandleDefinitionLoaded(Definition, DefinitionRequestGeneration, RuntimeState.SpawnGeneration, RuntimeState.AvatarGeneration);
-    if (!IsCharacterReady()) { OutError = TEXT("预热Definition配置或真实角色组件未Ready。"); return false; }
+    const auto IsOriginalHandoffCurrent = [&]()
+    {
+        return IsValid(this) && !bEndingPlay && TrustedContextOperationId == ContextOperationId &&
+            DefinitionRequestGeneration == RequestGeneration && RuntimeState.SpawnGeneration == SpawnGeneration &&
+            RuntimeState.AvatarGeneration == AvatarGeneration && ExpectedOwner.IsValid() && GetOwner() == ExpectedOwner.Get() &&
+            ExpectedWorld.IsValid() && GetWorld() == ExpectedWorld.Get() && !ExpectedWorld->bIsTearingDown && LoadedDefinition == Definition;
+    };
+    // 后继可在真实重叠/GAS通知中完成自身预热；其Ready不能被当成本次交接成功，也不能被旧失败栈清空。
+    if (!IsOriginalHandoffCurrent()) { OutError = TEXT("预热配置期间原角色操作已被后继或退出接管。"); return false; }
+    const bool bReady = IsCharacterReady();
+    if (!IsOriginalHandoffCurrent() || !bReady) { OutError = TEXT("预热Definition配置或真实角色组件未Ready。"); return false; }
     OutError.Reset(); return true;
 }
 
 void UDivineBeastsCharacterComponent::RefreshInitialization()
 {
     check(IsInGameThread());
-    if (bEndingPlay) { return; }
+    if (!IsValid(this) || bEndingPlay) { return; }
+    const FGuid InitializationId = FGuid::NewGuid();
+    InitializationOperationId = InitializationId;
+    FInitializationSnapshot Snapshot = CaptureInitializationSnapshot();
+    if (!IsInitializationCurrent(Snapshot, InitializationId)) { return; }
     const bool bPreviousReady = IsCharacterReady();
+    if (!IsInitializationCurrent(Snapshot, InitializationId)) { return; }
 
     if (!IsIdentityStructurallyValid())
     {
@@ -197,14 +222,26 @@ void UDivineBeastsCharacterComponent::RefreshInitialization()
     {
         bLocalReady = false;
         bConfigurationApplied = false;
+        // 正常新请求由本栈推进一次请求代次；外部服务若同步接管，不能再广播旧状态。
+        if (!DefinitionLease.IsValid()) { ++Snapshot.RequestGeneration; }
         BeginDefinitionLoad();
+        if (!IsInitializationCurrent(Snapshot, InitializationId)) { return; }
         BroadcastReadinessIfChanged(bPreviousReady);
         return;
     }
 
     FString Error;
     // 同一身份/版本已配置后不重复初始化Momentum；预热交接后的自身租约回调不会重置已参与玩法的GAS属性。
-    if (!bConfigurationApplied) { bConfigurationApplied = ApplyDefinition(*LoadedDefinition, Error); }
+    if (!bConfigurationApplied)
+    {
+        const bool bApplied = ApplyDefinition(*LoadedDefinition, Snapshot, InitializationId, Error);
+        // Apply返回false可能是旧栈取消，不能把false写进已经成功配置的后继成员。
+        // 身份/Data允许BeginPlay前预绑定；仅配置提交要求本Identity仍已注册并开始运行。
+        // Unregister不经过EndPlay、不换操作ID且GetWorld会回退Owner，不能只用原快照证明可继续尾写。
+        if (!IsInitializationCurrent(Snapshot, InitializationId) || !IsRegistered() || !HasBegunPlay()) { return; }
+        bConfigurationApplied = bApplied;
+    }
+    if (!IsInitializationCurrent(Snapshot, InitializationId) || !IsRegistered() || !HasBegunPlay()) { return; }
     bLocalReady = bConfigurationApplied;
 
     if (GetOwner() && GetOwner()->HasAuthority())
@@ -218,7 +255,9 @@ void UDivineBeastsCharacterComponent::RefreshInitialization()
 void UDivineBeastsCharacterComponent::OnRep_RuntimeState()
 {
     // RuntimeState是一个原子复制事实。任何变化都作废旧租约，避免旧Hero异步加载完成后阻塞或污染新Hero。
+    auto Snapshot = CaptureInitializationSnapshot(); ++Snapshot.RequestGeneration;
     CancelDefinitionLease();
+    if (!IsInitializationCurrent(Snapshot)) { return; }
     LoadedDefinition = nullptr;
     bConfigurationApplied = false;
     bLocalReady = false;
@@ -243,6 +282,7 @@ void UDivineBeastsCharacterComponent::BeginDefinitionLoad()
     const int32 ExpectedSpawnGeneration = RuntimeState.SpawnGeneration;
     const int32 ExpectedAvatarGeneration = RuntimeState.AvatarGeneration;
     const TWeakObjectPtr<UDivineBeastsCharacterComponent> WeakThis(this);
+    const auto RequestSnapshot = CaptureInitializationSnapshot();
 
     UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
     if (!Instance)
@@ -251,7 +291,8 @@ void UDivineBeastsCharacterComponent::BeginDefinitionLoad()
         UpdateReadiness();
         return;
     }
-    DefinitionLease = FDivineBeastsHeroCatalog::AcquireDefinitionResources(
+    FGamePlatformResult AcceptedResult;
+    const FGamePlatformDataLease AcceptedLease = FDivineBeastsHeroCatalog::AcquireDefinitionResources(
         *Instance, RuntimeState.HeroDefinitionId, EGamePlatformDataLifetime::World, this,
         [WeakThis, RequestGeneration, ExpectedSpawnGeneration, ExpectedAvatarGeneration](
             UDivineBeastsHeroDefinition* Definition, const FGamePlatformDataLease& CompletedLease, const FGamePlatformResult& Result)
@@ -265,10 +306,25 @@ void UDivineBeastsCharacterComponent::BeginDefinitionLoad()
             WeakThis->LastDefinitionLoadResult = Result;
             if (Result.IsSuccess()) { WeakThis->BorrowedWarmupOwner.Reset(); WeakThis->BorrowedWarmupLease = {}; }
             // 完成只是加载终态；成功租约必须继续覆盖角色使用期，失败仅撤销本组件需求。
-            if (!Result.IsSuccess()) { WeakThis->CancelDefinitionLease(); }
+            if (!Result.IsSuccess())
+            {
+                auto Snapshot = WeakThis->CaptureInitializationSnapshot(); ++Snapshot.RequestGeneration;
+                WeakThis->CancelDefinitionLease();
+                if (!WeakThis->IsInitializationCurrent(Snapshot)) { return; }
+            }
             WeakThis->HandleDefinitionLoaded(Result.IsSuccess() ? Definition : nullptr,
                 WeakThis->DefinitionRequestGeneration, ExpectedSpawnGeneration, ExpectedAvatarGeneration);
-        }, LastDefinitionLoadResult);
+        }, AcceptedResult);
+    if (!IsInitializationCurrent(RequestSnapshot))
+    {
+        // 外部受理若同步关闭/换身份，返回句柄只属于旧需求；只释放该句柄，不改后继成员。
+        if (AcceptedLease.IsValid())
+        {
+            if (auto* Data = IGamePlatformDataService::Get(*Instance)) { Data->ReleaseResources(AcceptedLease); }
+        }
+        return;
+    }
+    DefinitionLease = AcceptedLease; LastDefinitionLoadResult = AcceptedResult;
     if (!LastDefinitionLoadResult.IsSuccess())
     {
         LoadedDefinition = nullptr;
@@ -299,7 +355,8 @@ void UDivineBeastsCharacterComponent::HandleDefinitionLoaded(
     int32 ExpectedSpawnGeneration,
     int32 ExpectedAvatarGeneration)
 {
-    if (ExpectedRequestGeneration != DefinitionRequestGeneration ||
+    auto Snapshot = CaptureInitializationSnapshot();
+    if (!IsInitializationCurrent(Snapshot) || ExpectedRequestGeneration != DefinitionRequestGeneration ||
         ExpectedSpawnGeneration != RuntimeState.SpawnGeneration ||
         ExpectedAvatarGeneration != RuntimeState.AvatarGeneration)
     {
@@ -309,11 +366,15 @@ void UDivineBeastsCharacterComponent::HandleDefinitionLoaded(
     if (!Definition || Definition->DefinitionId != RuntimeState.HeroDefinitionId)
     {
         if (Definition) { LastDefinitionLoadResult = FGamePlatformResult::Failure(TEXT("HeroDefinitionMismatch"), TEXT("真实Definition与当前可信Hero身份不一致。")); }
+        ++Snapshot.RequestGeneration;
         CancelDefinitionLease();
+        if (!IsInitializationCurrent(Snapshot)) { return; }
         LoadedDefinition = nullptr;
+        Snapshot.Definition.Reset();
         bLocalReady = false;
         bConfigurationApplied = false;
         UpdateReadiness();
+        if (!IsInitializationCurrent(Snapshot)) { return; }
         // Data已进入失败/取消终态，旧Ready查询已为false；仍显式通知宿主撤销此前公布的Active。
         ReadinessChanged.Broadcast(false);
         return;
@@ -324,17 +385,54 @@ void UDivineBeastsCharacterComponent::HandleDefinitionLoaded(
     {
         RuntimeState.DefinitionVersion = Definition->Version;
         RuntimeState.ContentRevision = Definition->ContentRevision;
+        Snapshot.DefinitionVersion = RuntimeState.DefinitionVersion;
+        Snapshot.ContentRevision = RuntimeState.ContentRevision;
         GetOwner()->ForceNetUpdate();
+        if (!IsInitializationCurrent(Snapshot)) { return; }
     }
 
     LoadedDefinition = Definition;
     RefreshInitialization();
 }
 
+UDivineBeastsCharacterComponent::FInitializationSnapshot UDivineBeastsCharacterComponent::CaptureInitializationSnapshot() const
+{
+    FInitializationSnapshot Snapshot;
+    Snapshot.Owner = GetOwner(); Snapshot.World = GetWorld(); Snapshot.Definition = LoadedDefinition;
+    Snapshot.ContextOperationId = TrustedContextOperationId; Snapshot.RequestGeneration = DefinitionRequestGeneration;
+    Snapshot.SpawnGeneration = RuntimeState.SpawnGeneration; Snapshot.AvatarGeneration = RuntimeState.AvatarGeneration;
+    Snapshot.HeroDefinitionId = RuntimeState.HeroDefinitionId; Snapshot.DefinitionVersion = RuntimeState.DefinitionVersion;
+    Snapshot.ContentRevision = RuntimeState.ContentRevision; Snapshot.bAuthority = GetOwner() && GetOwner()->HasAuthority();
+    auto* ASC = GetOwner() ? GetOwner()->FindComponentByClass<UGamePlatformAbilitySystemComponent>() : nullptr;
+    Snapshot.AbilitySystem = ASC;
+    if (ASC) { Snapshot.AbilityAvatar = ASC->GetAvatarActor(); Snapshot.AbilityAvatarGeneration = ASC->GetAvatarBindingSnapshot().AvatarGeneration; }
+    return Snapshot;
+}
+
+bool UDivineBeastsCharacterComponent::IsInitializationCurrent(const FInitializationSnapshot& Snapshot, FGuid InitializationId) const
+{
+    return IsValid(this) && !bEndingPlay && Snapshot.Owner.IsValid() && GetOwner() == Snapshot.Owner.Get() &&
+        Snapshot.Owner->HasAuthority() == Snapshot.bAuthority && Snapshot.World.IsValid() && GetWorld() == Snapshot.World.Get() &&
+        !Snapshot.World->bIsTearingDown && TrustedContextOperationId == Snapshot.ContextOperationId &&
+        DefinitionRequestGeneration == Snapshot.RequestGeneration && RuntimeState.SpawnGeneration == Snapshot.SpawnGeneration &&
+        RuntimeState.AvatarGeneration == Snapshot.AvatarGeneration && RuntimeState.HeroDefinitionId == Snapshot.HeroDefinitionId &&
+        RuntimeState.DefinitionVersion == Snapshot.DefinitionVersion && RuntimeState.ContentRevision == Snapshot.ContentRevision &&
+        LoadedDefinition.Get() == Snapshot.Definition.Get() && (!InitializationId.IsValid() || InitializationOperationId == InitializationId) &&
+        Snapshot.AbilitySystem.Get() == Snapshot.Owner->FindComponentByClass<UGamePlatformAbilitySystemComponent>() &&
+        (!Snapshot.AbilitySystem.IsValid() || (Snapshot.AbilitySystem->GetAvatarActor() == Snapshot.AbilityAvatar.Get() &&
+            Snapshot.AbilitySystem->GetAvatarBindingSnapshot().AvatarGeneration == Snapshot.AbilityAvatarGeneration));
+}
+
 bool UDivineBeastsCharacterComponent::ApplyDefinition(
     const UDivineBeastsHeroDefinition& Definition,
+    const FInitializationSnapshot& Snapshot,
+    FGuid InitializationId,
     FString& OutError)
 {
+    const auto IsOriginalConfigurationCurrent = [&]() { return IsInitializationCurrent(Snapshot, InitializationId); };
+    // 配置实际碰撞/移动/GAS必须处于本Identity的运行生命周期；与可提前受理的身份/Data操作分开。
+    if (!IsOriginalConfigurationCurrent() || !IsRegistered() || !HasBegunPlay())
+    { OutError = TEXT("原Definition配置操作已撤销或角色身份组件尚未运行。"); return false; }
     if (!Definition.IsProjectDefinitionValid(OutError))
     {
         return false;
@@ -382,28 +480,49 @@ bool UDivineBeastsCharacterComponent::ApplyDefinition(
     if (!AbilitySystem || !Combat || AbilitySystem->GetAvatarActor() != Character ||
         !AbilitySystem->GetAvatarBindingSnapshot().bBound)
     { OutError = TEXT("角色缺少ASC、Combat或本Avatar的ActorInfo，禁止发布Ready。"); return false; }
+    const auto AreOriginalComponentsCurrent = [&]()
+    {
+        // 真实Overlap监听者可以只注销Identity而不触发EndPlay；此时旧栈不得继续碰撞/移动/Momentum写入。
+        return IsOriginalConfigurationCurrent() && IsRegistered() && HasBegunPlay() &&
+            Character->HasActorBegunPlay() && IsValid(Capsule) && Capsule->IsRegistered() &&
+            Character->GetCapsuleComponent() == Capsule && IsValid(Movement) && Movement->IsRegistered() &&
+            Character->GetCharacterMovement() == Movement && IsValid(Combat) &&
+            Character->FindComponentByClass<UGamePlatformCombatComponent>() == Combat;
+    };
 
+    // 值拷贝避免同步消费者改变加载对象后继续借用旧配置；每个可触发重叠/物理/GAS事件的调用后立即复核。
+    const auto SpawnEnvelope = Definition.SpawnEnvelope;
+    const auto MovementDefinition = Definition.Movement;
+    const auto MomentumDefinition = Definition.Momentum;
     Capsule->SetCapsuleSize(
-        Definition.SpawnEnvelope.CapsuleRadius,
-        Definition.SpawnEnvelope.CapsuleHalfHeight,
+        SpawnEnvelope.CapsuleRadius,
+        SpawnEnvelope.CapsuleHalfHeight,
         true);
+    if (!AreOriginalComponentsCurrent()) { OutError = TEXT("胶囊尺寸通知撤销了原配置。"); return false; }
     Capsule->SetCollisionProfileName(
-        Definition.SpawnEnvelope.CollisionProfileName);
+        SpawnEnvelope.CollisionProfileName);
+    if (!AreOriginalComponentsCurrent()) { OutError = TEXT("碰撞配置通知撤销了原配置。"); return false; }
 
-    Movement->MaxWalkSpeed = Definition.Movement.MaxWalkSpeed;
-    Movement->MaxAcceleration = Definition.Movement.MaxAcceleration;
-    Movement->JumpZVelocity = Definition.Movement.JumpZVelocity;
-    Movement->RotationRate.Yaw = Definition.Movement.RotationRateYaw;
-    Movement->NavAgentProps.bCanCrouch = Definition.Movement.bCanCrouch;
+    Movement->MaxWalkSpeed = MovementDefinition.MaxWalkSpeed;
+    Movement->MaxAcceleration = MovementDefinition.MaxAcceleration;
+    Movement->JumpZVelocity = MovementDefinition.JumpZVelocity;
+    Movement->RotationRate.Yaw = MovementDefinition.RotationRateYaw;
+    Movement->NavAgentProps.bCanCrouch = MovementDefinition.bCanCrouch;
 
     // Momentum（气势）是神兽联盟项目层核心状态。只在服务器确保 AttributeSet 存在并按 Hero Definition 初始化；
     // 客户端通过 GAS 复制接收，不在 CharacterComponent/UI 保存第二份权威真值。
     if (Character->HasAuthority())
     {
         // 新Pawn的Combat初始代次为1；绑定更大可信Avatar代次时只重置一次，不能让同代次重复配置递增到另一身份。
-        if (!Combat->GetCombatAttributeSet() || Combat->GetCombatAvatarGeneration() > RuntimeState.AvatarGeneration ||
-            (Combat->GetCombatAvatarGeneration() < RuntimeState.AvatarGeneration && !Combat->ResetForNewAvatar(RuntimeState.AvatarGeneration)))
+        if (!Combat->GetCombatAttributeSet() || Combat->GetCombatAvatarGeneration() > Snapshot.AvatarGeneration)
         { OutError = TEXT("战斗组件未建立同Avatar代次的权威属性状态。"); return false; }
+        if (Combat->GetCombatAvatarGeneration() < Snapshot.AvatarGeneration)
+        {
+            const bool bReset = Combat->ResetForNewAvatar(Snapshot.AvatarGeneration);
+            if (!AreOriginalComponentsCurrent()) { OutError = TEXT("GAS重置通知撤销了原配置。"); return false; }
+            if (!bReset || Combat->GetCombatAvatarGeneration() != Snapshot.AvatarGeneration)
+            { OutError = TEXT("战斗重置没有保留原配置Avatar代次。"); return false; }
+        }
         if (UGamePlatformAbilitySystemComponent* MomentumAbilitySystem =
                 Character->FindComponentByClass<UGamePlatformAbilitySystemComponent>())
         {
@@ -414,14 +533,16 @@ bool UDivineBeastsCharacterComponent::ApplyDefinition(
             {
                 MomentumAttributes = const_cast<UDivineBeastsMomentumAttributeSet*>(
                     MomentumAbilitySystem->AddSet<UDivineBeastsMomentumAttributeSet>());
+                if (!AreOriginalComponentsCurrent()) { OutError = TEXT("属性集注册通知撤销了原配置。"); return false; }
             }
             if (!IsValid(MomentumAttributes))
             { OutError = TEXT("服务器未建立Momentum属性集，禁止发布Ready。"); return false; }
-            MomentumAttributes->InitializeFromDefinition(Definition.Momentum);
+            MomentumAttributes->InitializeFromDefinition(MomentumDefinition);
+            if (!AreOriginalComponentsCurrent()) { OutError = TEXT("Momentum初始化通知撤销了原配置。"); return false; }
         }
     }
 
-    return true;
+    return AreOriginalComponentsCurrent();
 }
 
 bool UDivineBeastsCharacterComponent::IsIdentityStructurallyValid() const

@@ -70,3 +70,18 @@
 
 - Integration: 主线范围已增至83个插件模块＋主模块84，保留真实DivineBeastsAbilitiesRuntime。ApplicationFlow真实生产核心按当前合并源在Debug/Release各1次CTest退出0；初次Ninja工具缺失、长路径VS配置失败原输出均保留，改用既有VS17/x64及本任务短Temp输出，不降版本/删测试。
 - Integration: 当前主线目录文档本身已有历史嵌套冲突标记，本轮将三组独立追加段完整合并并删除标记，源码登记仍置末尾；未丢失登录等待、UI计划、图标或整改登记。机器台账JSON按ASCII规则仅迁路径、同步六引用，逐字节SHA不变，263项工具静态验证退出0；不是263个Widget交付。
+
+- Integration checkpoint: dc61f02保存351文件本轮修复；f85b7d8正常整合8de5995，e720d5c进一步整合最新main/eecbc73（含9da90a9）战斗反馈与开发资产。仅在隔离分支提交中间结果，没有推送main；原main状态核对为干净且保留Editor18572。
+- Integration additional independent findings: Root公开Data/Core依赖Important已修并独立关闭；Gameplay配置引擎Overlap回调旧写、Restart出生后清后继Pawn、Combat重置内GAS重入三项已确认，两个互不重叠责任组继续修复。新增真实物理配置回归使用WITH_EDITORONLY_DATA反射夹具，真实UHT与Client/Server剔除待验证；不把静态条件推断当通过。
+- Integration whitespace: 相对旧整改HEAD的完整合并diff含主线既有Markdown硬换行和末尾空白；相对最新目标main核对本轮差异后，修正三源码/规格末尾空白，并保留原审查Markdown在Saved快照后只规范终行空白，没有修改审查事实。最终差异仍须源码再冻结后复验。
+
+- Integration final target attempt: 9bc4c14d真实专用Server当前46模块（含主线技能模块）构建退出6，188.21秒；仅新继承角色的局部AbilitySystem遮蔽成员触发C4458，编译政策保持严格。根改三处局部变量名为CharacterAbilitySystem，公开接口、成员及玩法行为不变，独立只读复核已确认；修后目标尚未通过，不将其他已编译Action计作整目标绿灯。
+- Integration independent recheck: G01配置Overlap与G03战斗GAS重入已完成源码闭环；出生G02独立复核要求额外核真实组件注册/BeginPlay/TerminalReady。界面A01贡献者强持有及旧作用域事实提交、A02同内容ID多实例关闭归属正在最小修复。最终源冻结、编译及逐项运行仍须补证。
+
+- Integration source gates: 本轮两个真实六入口快照分别保留；最终冻结首轮复验在22:02:59–22:03:25(+0800)全退出0，Pester实际75/75、716头引用无缺失、480公开头/1012类型/179继承边、62插件命名0违规、AAA研究台账263/10域无问题。1506源码和51额外输入前后0变化；随后应用独立复核继续确认同World预测预约和Root撤账两残余，所以该绿灯不是后来新源的最终证明。
+- Integration target results: Server29db退出0/46模块；G01纯Unregister改动后0aeaf984再退出0/46模块、42.80秒。Client7ba11316退出0/66模块、203.51秒，已覆盖这次角色修改及应用第一版修复，尚不覆盖应用后来两残余。Server/Client真实Definitions.h均WITH_EDITOR=0、WITH_EDITORONLY_DATA=0、WITH_DEV_AUTOMATION_TESTS=1；Private反射夹具EditorOnlyData排除，不能据此假称Cook/最终产物通过。
+- Integration app closure pending: 仅在途预测与确认预约不能当作已播放，须保留真实拒绝后确认提交和受理后去重；平台Root撤账通知时旧栈尚含页面，须同时核精确平台拥有记录。允许末尾新增中立Pending=4保既有0..3，具体UI实例所有权只读查询保既有ID事件。新源码、消费者/Blueprint兼容说明、回归和独立复核正在完成；未推送main。
+
+- Integration final full Editor: d240真实命中反馈结果符号链接失败，严格核自有UBT身份后中止保留-1；Root补实际PresentationCore Public Core合同与插件声明，独立纠正Data传递Public文句。e737真实74Action退出6，仅跨DLL贡献接口构造/析构2个LNK2019；Root新增Runtime独立默认特殊成员定义，保持类/布局/虚析构/模块身份，并经独立窄复核。06580833最终完整Editor退出0，121.52秒；原生47模块索引合计84唯一模块，BuildId全部与锁定引擎cf41249f一致、文件存在及身份差异0，没有手改索引。
+- Integration actual runtime startup: MainIntegratedDefault Editor35892等待原生全平台ValidatePlatforms所需UBT共享互斥锁，136项尚未发现，严格只停自有树保留-1/0Completed。其他Main编译51980及Editor18572不动。已据真实TargetPlatformManagerModule源码为新逻辑进程临时UE_SKIP_UBT_SDK_SETUP=1，仅复用真实Win64 Editor构建；不改引擎/版本/构建SDK，也不宣告其他平台有效，启动子进程ActualEditorAutomationMainIntegratedSdkReuse继续实际完整默认集合。
+- Integration default actual regression: cf15 Client66与a90 Server46真实退出0；完整Editor065原生84模块通过后，MainIntegratedSdkReuse实际136发现/136完成/132成功/4失败、进程255、无Fatal。死亡桥、死亡通知、重连和装备复制旧问题本轮实际成功。四红灯分别为Commerce非法LocalPlayer Outer、Interaction未InitializeActorsForPlay而挡动态监听、Telemetry遗漏上下文字节使预期16/实际8、Moba已取消Critical后测试仍预期17/实际16。修复仅测试夹具与Semantics说明，保生产行为、原断言和真实失败证据；重新编译及完整覆盖复验待执行。独立增量33实际仍进行，不计通过。

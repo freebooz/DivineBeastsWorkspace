@@ -5,6 +5,7 @@
 // 仅有前置声明时IsValid无法安全地执行指针转换；此处显式引用对应公共头文件。
 #include "Layers/GamePlatformUILayerStack.h"
 #include "Components/PanelWidget.h"
+#include "Widgets/CommonActivatableWidgetContainer.h"
 
 #include "Definitions/GamePlatformUIScreenDefinition.h"
 #include "Interfaces/IGamePlatformDataService.h"
@@ -344,6 +345,7 @@ void UDivineBeastsArenaUIClientSubsystem::CloseArenaScreen()
     bArenaScreenOpenFailedDuringDispatch = false;
     bArenaScreenOpenedDuringDispatch = false;
     ActiveArenaScreen.Reset();
+    ActiveArenaScreenStack.Reset();
     ActiveArenaSurfaceId = NAME_None;
 
     if (UI.IsValid() && RequestId.IsValid())
@@ -386,13 +388,23 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaScreenOpened(
         return;
     }
 
-    UGamePlatformUIScreen* Previous = ActiveArenaScreen.Get();
+    const auto* Surface = FDivineBeastsArenaUIScreenCatalog::Find(ScreenId);
+    auto* Root = IsValid(PlatformUI) ? PlatformUI->GetRootLayout() : nullptr;
+    auto* Stack = IsValid(Root) && Surface ? Root->GetActivatableStack(Surface->Layer) : nullptr;
+    // 更早的Opened观察者可换Root；只有具体实例仍在当前实际层栈，才登记为本域拥有。
+    if (!IsValid(Stack) || !PlatformUI->IsScreenOwnedByStack(Screen, Stack))
+    {
+        if (IsValid(PlatformUI)) PlatformUI->CloseScreen(Screen);
+        return;
+    }
+    const TStrongObjectPtr<UGamePlatformUIScreen> Previous(ActiveArenaScreen.Get());
     ActiveArenaScreen = Screen;
+    ActiveArenaScreenStack = Stack;
     ActiveArenaSurfaceId = ScreenId;
     FailedArenaSurfaceId = NAME_None;
-    if (IsValid(Previous) && Previous != Screen && IsValid(PlatformUI))
+    if (Previous.IsValid() && Previous.Get() != Screen && IsValid(PlatformUI))
     {
-        PlatformUI->CloseScreen(Previous);
+        PlatformUI->CloseScreen(Previous.Get());
     }
 }
 
@@ -425,7 +437,14 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaScreenClosed(FName ScreenId
     if (bDeinitializing) return;
     if (ScreenId == ActiveArenaSurfaceId)
     {
+        auto* Owned = ActiveArenaScreen.Get();
+        auto* OriginalStack = ActiveArenaScreenStack.Get();
+        // 全局通知只带内容ID；平台具体实例账本与登记原栈共同证明后继仍拥有。
+        // Root撤账早于WidgetList清空，不能仅凭旧成员仍在容器忽略自有实例的真正关闭。
+        // 暂失活不改变归属，避免IsActivated把被同栈新页覆盖的自有页误清。
+        if (IsValid(PlatformUI) && PlatformUI->IsScreenOwnedByStack(Owned, OriginalStack)) return;
         ActiveArenaScreen.Reset();
+        ActiveArenaScreenStack.Reset();
         ActiveArenaSurfaceId = NAME_None;
     }
 }

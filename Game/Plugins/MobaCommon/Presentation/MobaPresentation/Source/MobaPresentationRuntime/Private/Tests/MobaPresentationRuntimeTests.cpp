@@ -7,6 +7,11 @@
 #include "MobaPresentationSemanticRegistry.h"
 #include "Tags/MobaPresentationTags.h"
 
+/**
+ * 校验当前有效语义合同，不把保留的历史标签路径当作新的表现事实。
+ * Runtime通过正式Native Tag注册；本测试只读真实注册表，不新增临时标签或伪造加载成功。
+ * 缺任意现行语义、重复/非法标签或历史暴击重新进入有效表均必须失败。
+ */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FMobaPresentationSemanticRegistryTest,
     "Moba.Presentation.Runtime.SemanticRegistry",
@@ -16,8 +21,42 @@ bool FMobaPresentationSemanticRegistryTest::RunTest(const FString&)
 {
     TArray<FString> Errors;
     TestTrue(TEXT("语义注册表必须有效"), FMobaPresentationSemanticRegistry::Validate(Errors));
-    TestEqual(TEXT("第一版语义数量"), FMobaPresentationSemanticRegistry::GetAll().Num(), 17);
+    for (const FString& Error : Errors)
+    {
+        AddError(Error); // 校验失败保留具体诊断，不能仅靠数量断言掩盖注册/重复问题。
+    }
+
+    // 2026-10-09取消暴击输出后，17条已发布Native路径中仅16条是有效语义；另一条只供旧资产兼容。
+    // 期望值按公开现行合同列出，不从被测GetAll推导，替换/遗漏任一正式语义都能被Find断言捕获。
+    const FGameplayTag ExpectedSemantics[] =
+    {
+        MobaPresentationTags::Combat_Hit,
+        MobaPresentationTags::Combat_Heal,
+        MobaPresentationTags::Combat_Shield_Hit,
+        MobaPresentationTags::Combat_Control_Apply,
+        MobaPresentationTags::Ability_Cast_Start,
+        MobaPresentationTags::Ability_Cast_Release,
+        MobaPresentationTags::Ability_Projectile_Spawn,
+        MobaPresentationTags::Ability_Area_Warning,
+        MobaPresentationTags::Status_Apply,
+        MobaPresentationTags::Status_Remove,
+        MobaPresentationTags::Character_Death,
+        MobaPresentationTags::Character_Respawn,
+        MobaPresentationTags::Arena_Match_Start,
+        MobaPresentationTags::Arena_Match_End,
+        MobaPresentationTags::Arena_Score_Changed,
+        MobaPresentationTags::Arena_Objective_Completed
+    };
+    TestEqual(TEXT("现行有效语义数量"), FMobaPresentationSemanticRegistry::GetAll().Num(), 16);
+    for (const FGameplayTag& Tag : ExpectedSemantics)
+    {
+        TestNotNull(FString::Printf(TEXT("现行语义必须可查：%s"), *Tag.ToString()),
+            FMobaPresentationSemanticRegistry::Find(Tag));
+    }
     TestTrue(TEXT("Hit标签有效"), MobaPresentationTags::Combat_Hit.GetTag().IsValid());
+    TestTrue(TEXT("历史暴击Native标签保持旧资产兼容"), MobaPresentationTags::Combat_Critical.GetTag().IsValid());
+    TestNull(TEXT("历史暴击不再登记为有效表现语义"),
+        FMobaPresentationSemanticRegistry::Find(MobaPresentationTags::Combat_Critical));
     return true;
 }
 

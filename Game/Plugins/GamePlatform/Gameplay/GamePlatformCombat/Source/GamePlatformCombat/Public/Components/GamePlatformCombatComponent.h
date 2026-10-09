@@ -89,6 +89,12 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
     bool RemoveControl(EGamePlatformControlType ControlType);
 
+    /**
+     * GT服务器重置当前拥有者化身；HealthFraction为0～1生命比例，非有限值按1处理。
+     * NewAvatarGeneration不大于当前值时按既有合同自动推进；int32代次耗尽拒绝且不改状态。
+     * GAS同步通知可重入更高代次或关闭组件：被接管的旧调用返回false，不覆盖后继结果/需求；
+     * 已完成的GAS写入不伪造回滚。只有本操作完整提交且结束通知后仍有效才返回true。
+     */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
     bool ResetForNewAvatar(
         int32 NewAvatarGeneration,
@@ -110,6 +116,13 @@ public:
     FGamePlatformCombatEventDelegate OnCombatEvent;
 
 private:
+    /** GT组件生命周期身份；BeginPlay建立新作用域，EndPlay先失效，旧同步栈不能复活。 */
+    uint64 ComponentLifecycleGeneration = 0;
+    /** 与复制Avatar值独立的重置操作身份；本次合法推进Avatar不会自行使操作失效。 */
+    uint64 AvatarResetOperationGeneration = 0;
+    /** EndPlay先置位且幂等；只有下一次引擎BeginPlay可建立新的开放作用域。 */
+    bool bCombatClosing = false;
+
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystemComponent = nullptr;
 
@@ -146,6 +159,7 @@ private:
     float GetAvailableShieldEffectCapacity() const;
     void CompactExpiredShieldEffects();
     void ConsumeShieldEffectCapacity(float RequestedAbsorption);
+    /** 逐个摘本批旧句柄后释放；未处理项保持拥有，后继Reset/EndPlay能接管清理，不清新盾。 */
     void ClearShieldEffects();
 
     /**

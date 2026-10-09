@@ -4,9 +4,38 @@
 #include "Interfaces/GamePlatformInventoryClientTransport.h"
 #include "Misc/AutomationTest.h"
 #include "Services/GamePlatformInventoryClientSubsystem.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
+/**
+ * 仅Automation的合法Outer夹具：LocalPlayer的Within是Engine，领域Subsystem的Within是LocalPlayer。
+ * GT显式构造并强持有两者，不PlayerAdded/不建World或自动登录；原测试Transport/账号前提保持。
+ * 无Viewport时GetGameInstance为nullptr，不能把本夹具当完整GI/Online装配或生产服务。
+ * 任意正常/提前返回先Deinitialize清委托/取消请求，再释放Client与Player，避免GC和测试间残留。
+ */
+struct FInventoryLocalPlayerFixture
+{
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UGamePlatformInventoryClientSubsystem> Client;
+    bool Initialize(FAutomationTestBase& Test)
+    {
+        if (!Test.TestNotNull(TEXT("LocalPlayer真实Engine Within宿主"), GEngine)) return false;
+        Player.Reset(NewObject<ULocalPlayer>(GEngine));
+        if (!Test.TestNotNull(TEXT("领域Subsystem真实LocalPlayer Outer"), Player.Get())) return false;
+        Client.Reset(NewObject<UGamePlatformInventoryClientSubsystem>(Player.Get()));
+        return Test.TestNotNull(TEXT("合法Outer的领域Subsystem实例"), Client.Get());
+    }
+    ~FInventoryLocalPlayerFixture()
+    {
+        if (Client.IsValid()) Client->Deinitialize();
+        Client.Reset();
+        Player.Reset();
+    }
+};
+
 class FInventoryMockTransport final
     : public IGamePlatformInventoryClientTransport
 {
@@ -120,8 +149,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventoryClientMutationTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
@@ -216,8 +246,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventoryClientAccountGenerationTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
@@ -260,8 +291,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventoryClientOperationRecoveryTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
@@ -337,8 +369,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformInventoryDerivedCacheTest::RunTest(const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
 
@@ -406,8 +439,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventorySnapshotIntegrityTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
 
@@ -459,8 +493,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventoryDeterministicErrorTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
 
@@ -507,8 +542,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventorySnapshotSingleFlightTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
 
@@ -567,7 +603,9 @@ bool FGamePlatformInventorySnapshotSingleFlightTest::RunTest(
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventoryResetDuringStateTest, "GamePlatform.Inventory.Client.ResetDuringState", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FInventoryResetDuringStateTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
     Client->OnChanged.AddLambda([Client](auto&&...)
     {
@@ -584,7 +622,9 @@ bool FInventoryResetDuringStateTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventoryCloseDuringConfigureTest, "GamePlatform.Inventory.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FInventoryCloseDuringConfigureTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
     TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
     Client->OnChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });
@@ -599,7 +639,9 @@ bool FInventoryCloseDuringConfigureTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventorySynchronousOutcomeTest, "GamePlatform.Inventory.Client.SynchronousOutcome", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FInventorySynchronousOutcomeTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformInventoryClientSubsystem>(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
     Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Sync"), Transport); Transport->CompleteSnapshot(1);
     Transport->bSynchronousMoveFailure = true;
     const auto OperationId = Client->RequestMove(TEXT("Fixture-Item"), TEXT("main"), 1);
@@ -616,7 +658,9 @@ bool FInventorySynchronousOutcomeTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventoryQueryListenerTakeoverTest, "GamePlatform.Inventory.Client.QueryListenerTakeover", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FInventoryQueryListenerTakeoverTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformInventoryClientSubsystem>(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
     Client->ConfigureAuthenticatedAccount(TEXT("Fixture-QueryTakeover"), Transport); Transport->CompleteSnapshot(1);
     const auto OperationId = Client->RequestMove(TEXT("Fixture-Item"), TEXT("main"), 1);
     Transport->CompleteMutation(OperationId, 0, EGamePlatformInventoryError::BackendUnavailable);
@@ -643,7 +687,9 @@ bool FInventoryQueryListenerTakeoverTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventoryConflictListenerTakeoverTest, "GamePlatform.Inventory.Client.ConflictListenerTakeover", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FInventoryConflictListenerTakeoverTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformInventoryClientSubsystem>(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
     Client->ConfigureAuthenticatedAccount(TEXT("Fixture-ConflictTakeover"), Transport); Transport->CompleteSnapshot(1);
     const auto OperationId = Client->RequestMove(TEXT("Fixture-Item"), TEXT("main"), 1);
     bool bTakenOver = false; bool bSnapshotAccepted = false; int32 UnavailableEvents = 0;

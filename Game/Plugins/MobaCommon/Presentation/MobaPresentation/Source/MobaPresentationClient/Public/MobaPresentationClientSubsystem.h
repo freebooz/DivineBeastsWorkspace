@@ -52,8 +52,15 @@ public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
 
+    /** GT事件驱动刷新当前World/Controller/Pawn；外部事实恢复重入换代后旧绑定栈立即停止。 */
     void RefreshBindings();
 
+    /**
+     * GT提交值事实；贡献者/Provider可同步注销、关闭或旅行，失效返回InvalidRequest/StaleWorld。
+     * Submitted仅指已有或本次真正受理；同ID同步在途重入返回Pending，不能视为播放成功。
+     * 预测Provider内到达的首份确认由原栈留存：预测受理后只升级，拒绝后执行真实确认提交。
+     * 原同步栈结束前不递归播放；结束后调用方可同ID查询/重试实际终态，旧作用域不清后继账本。
+     */
     EGamePlatformPresentationSubmitResult SubmitAdaptedFact(
         FMobaPresentationAdaptedFact Fact);
 
@@ -106,9 +113,11 @@ public:
     EGamePlatformPresentationSubmitResult RecoverPersistentFact(
         FMobaPresentationAdaptedFact Fact);
 
+    /** GT注册同步只读扩展器；注册表持有SharedRef，调用栈另持值拷贝，支持回调内自注销。 */
     bool RegisterContextContributor(
         FName ContributorId,
         TSharedRef<IMobaPresentationContextContributor> Contributor);
+    /** GT撤销此ID后续扩展；正在执行的原对象仍由本次调用持有至返回，移除成功返回true。 */
     bool UnregisterContextContributor(FName ContributorId);
 
     int32 GetWorldGeneration() const { return WorldGeneration; }
@@ -118,6 +127,7 @@ public:
 
 private:
     friend class FMobaPresentationPawnBindingRegressionTest;
+    friend class FMobaPresentationArenaArrayReentryTest;
     struct FPlayerSnapshot
     {
         int32 StatsRevision = 0;
@@ -156,9 +166,13 @@ private:
     UFUNCTION()
     void HandleCombatEvent(const FGamePlatformCombatEvent& Event);
 
-    bool PrepareFact(FMobaPresentationAdaptedFact& Fact);
-    bool RememberFact(const FMobaPresentationFactIdentity& Identity);
-    void ApplyContextContributors(FMobaPresentationContext& Context) const;
+    /** 外部贡献回调后必须仍属原作用域；不把旧事实自动转交回调建立的后继World。 */
+    bool PrepareFact(FMobaPresentationAdaptedFact& Fact, TFunctionRef<bool()> IsCurrentScope);
+    /** 只登记已经真实Submitted的事实或升级已受理预测；从不把在途预约写入受理集合。 */
+    bool RememberFact(const FMobaPresentationFactIdentity& Identity, uint64 OperationGeneration);
+    bool ApplyContextContributors(FMobaPresentationContext& Context, TFunctionRef<bool()> IsCurrentScope) const;
+    bool IsArenaBindingCurrent(uint64 ExpectedBinding, uint64 ExpectedArenaBinding,
+        AGamePlatformArenaGameState* ExpectedState, UWorld* ExpectedWorld) const;
     FGuid MakeArenaFactId(const FString& Scope, int32 Revision, uint32 Salt = 0) const;
 
     /** 当前本地玩家唯一可选项目Resolver，不拥有其返回的资源。 */
@@ -191,6 +205,8 @@ private:
     /** 下一调度轮查找的唯一计时器，解绑所属World时取消，不持有World强引用。 */
     FTimerHandle PendingBindingRefreshTimer;
     uint64 BindingGeneration = 1;
+    /** 同World的GameState也能替换，竞技批处理必须另核原GameState绑定操作身份。 */
+    uint64 ArenaBindingGeneration = 1;
     bool bClosing = false;
     TWeakObjectPtr<UGamePlatformCombatFeedbackWorldSubsystem> BoundCombatWorldBus;
     FDelegateHandle CombatWorldFeedbackHandle;
@@ -209,9 +225,22 @@ private:
 
     TMap<FName, TSharedPtr<IMobaPresentationContextContributor>> ContextContributors;
 
+    /** 原同步Submit栈持强引用；注册表换代时清除资格，但不销毁正在执行的本地操作。 */
+    struct FPendingFactSubmission
+    {
+        uint64 OperationGeneration = 0;
+        bool bPredicted = false;
+        // 只留首份同身份确认值快照；重复回调不增加队列，也不借用Provider的输入引用。
+        TOptional<FMobaPresentationAdaptedFact> Confirmation;
+    };
+    TMap<FGuid, TSharedPtr<FPendingFactSubmission>> PendingFactSubmissions;
+    /** 只包含平台已受理事实；在途预约独立保存，不能升级成伪成功。 */
     TSet<FGuid> PredictedFacts;
     TSet<FGuid> ConfirmedFacts;
     TArray<FGuid> FactOrder;
+    /** 当前每个FactId账本的唯一写入操作；计数跨World单调推进，清作用域只清记录。 */
+    TMap<FGuid, uint64> FactRecordOperations;
+    uint64 FactOperationGeneration = 0;
     TMap<FString, int32> LatestAvatarGeneration;
 
     int32 WorldGeneration = 1;

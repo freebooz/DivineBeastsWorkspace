@@ -4,9 +4,38 @@
 #include "Interfaces/GamePlatformCommerceClientTransport.h"
 #include "Misc/AutomationTest.h"
 #include "Services/GamePlatformCommerceClientSubsystem.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
+/**
+ * 仅Automation的合法Outer夹具：LocalPlayer的Within是Engine，领域Subsystem的Within是LocalPlayer。
+ * GT显式构造并强持有两者，不PlayerAdded/不建World或自动登录；原测试Transport/账号前提保持。
+ * 无Viewport时GetGameInstance为nullptr，不能把本夹具当完整GI/Online装配或生产服务。
+ * 任意正常/提前返回先Deinitialize清委托/取消请求，再释放Client与Player，避免GC和测试间残留。
+ */
+struct FCommerceLocalPlayerFixture
+{
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UGamePlatformCommerceClientSubsystem> Client;
+    bool Initialize(FAutomationTestBase& Test)
+    {
+        if (!Test.TestNotNull(TEXT("LocalPlayer真实Engine Within宿主"), GEngine)) return false;
+        Player.Reset(NewObject<ULocalPlayer>(GEngine));
+        if (!Test.TestNotNull(TEXT("领域Subsystem真实LocalPlayer Outer"), Player.Get())) return false;
+        Client.Reset(NewObject<UGamePlatformCommerceClientSubsystem>(Player.Get()));
+        return Test.TestNotNull(TEXT("合法Outer的领域Subsystem实例"), Client.Get());
+    }
+    ~FCommerceLocalPlayerFixture()
+    {
+        if (Client.IsValid()) Client->Deinitialize();
+        Client.Reset();
+        Player.Reset();
+    }
+};
+
 class FCommerceMockTransport final
     : public IGamePlatformCommerceClientTransport
 {
@@ -124,8 +153,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformCommerceClientFlowTest::RunTest(const FString&)
 {
-    UGamePlatformCommerceClientSubsystem* Client =
-        NewObject<UGamePlatformCommerceClientSubsystem>();
+    FCommerceLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformCommerceClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FCommerceMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FCommerceMockTransport, ESPMode::ThreadSafe>();
@@ -221,8 +251,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformCommerceAccountIsolationTest::RunTest(const FString&)
 {
-    UGamePlatformCommerceClientSubsystem* Client =
-        NewObject<UGamePlatformCommerceClientSubsystem>();
+    FCommerceLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformCommerceClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FCommerceMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FCommerceMockTransport, ESPMode::ThreadSafe>();
@@ -255,7 +286,9 @@ bool FGamePlatformCommerceAccountIsolationTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCommerceResetDuringStateTest, "GamePlatform.Commerce.Client.ResetDuringState", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FCommerceResetDuringStateTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformCommerceClientSubsystem>();
+    FCommerceLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformCommerceClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FCommerceMockTransport, ESPMode::ThreadSafe>();
     Client->OnCommerceStateChanged.AddLambda([Client](auto&&...)
     {
@@ -272,7 +305,9 @@ bool FCommerceResetDuringStateTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCommerceCloseDuringConfigureTest, "GamePlatform.Commerce.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FCommerceCloseDuringConfigureTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformCommerceClientSubsystem>();
+    FCommerceLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformCommerceClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FCommerceMockTransport, ESPMode::ThreadSafe>();
     TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
     Client->OnCommerceStateChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });

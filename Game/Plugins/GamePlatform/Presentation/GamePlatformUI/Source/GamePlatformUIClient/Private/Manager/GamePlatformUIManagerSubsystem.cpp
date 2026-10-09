@@ -1042,6 +1042,16 @@ void UGamePlatformUIManagerSubsystem::ReconcileScreenMembership()
     }
     for (const auto& Key:Removed) RemoveScreenOwnership(Key);
 }
+bool UGamePlatformUIManagerSubsystem::IsScreenOwnedByStack(
+    UGamePlatformUIScreen* Screen, UCommonActivatableWidgetStack* ExpectedStack) const
+{
+    if (bClosing || bReplacingRoot || !IsValid(Screen) || !IsValid(ExpectedStack)) return false;
+    const auto* RegisteredStack = ScreenStacks.Find(Screen);
+    // WidgetList保留旧页面不能替代实例账本；RemoveScreenOwnership在Closed前已撤精确Key。
+    return RegisteredStack && RegisteredStack->Get() == ExpectedStack &&
+        ExpectedStack->GetWidgetList().Contains(Screen);
+}
+
 void UGamePlatformUIManagerSubsystem::RemoveScreenOwnership(TWeakObjectPtr<UGamePlatformUIScreen> Key)
 {
     if (!ScreenStacks.Remove(Key)) return; // 容器变化/Slate释放/退出交错只完成一次。

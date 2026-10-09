@@ -4,12 +4,40 @@
 #include "Interfaces/GamePlatformLiveOpsClientTransport.h"
 #include "Misc/AutomationTest.h"
 #include "Services/GamePlatformLiveOpsClientSubsystem.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "UObject/StrongObjectPtr.h"
 #include "HAL/PlatformTime.h"
 
 namespace
 {
+/**
+ * 仅Automation的合法Outer夹具：LocalPlayer的Within是Engine，领域Subsystem的Within是LocalPlayer。
+ * GT显式构造并强持有两者，不PlayerAdded/不建World或自动登录；原测试Transport/账号前提保持。
+ * 无Viewport时GetGameInstance为nullptr，不能把本夹具当完整GI/Online装配或生产服务。
+ * 任意正常/提前返回先Deinitialize清委托/取消请求，再释放Client与Player，避免GC和测试间残留。
+ */
+struct FLiveOpsLocalPlayerFixture
+{
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UGamePlatformLiveOpsClientSubsystem> Client;
+    bool Initialize(FAutomationTestBase& Test)
+    {
+        if (!Test.TestNotNull(TEXT("LocalPlayer真实Engine Within宿主"), GEngine)) return false;
+        Player.Reset(NewObject<ULocalPlayer>(GEngine));
+        if (!Test.TestNotNull(TEXT("领域Subsystem真实LocalPlayer Outer"), Player.Get())) return false;
+        Client.Reset(NewObject<UGamePlatformLiveOpsClientSubsystem>(Player.Get()));
+        return Test.TestNotNull(TEXT("合法Outer的领域Subsystem实例"), Client.Get());
+    }
+    ~FLiveOpsLocalPlayerFixture()
+    {
+        if (Client.IsValid()) Client->Deinitialize();
+        Client.Reset();
+        Player.Reset();
+    }
+};
+
 class FLiveOpsMockTransport final
     : public IGamePlatformLiveOpsClientTransport
 {
@@ -84,8 +112,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformLiveOpsAccountIsolationTest::RunTest(const FString&)
 {
-    UGamePlatformLiveOpsClientSubsystem* Client =
-        NewObject<UGamePlatformLiveOpsClientSubsystem>();
+    FLiveOpsLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformLiveOpsClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FLiveOpsMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
@@ -131,8 +160,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformLiveOpsRevisionTest::RunTest(const FString&)
 {
-    UGamePlatformLiveOpsClientSubsystem* Client =
-        NewObject<UGamePlatformLiveOpsClientSubsystem>();
+    FLiveOpsLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformLiveOpsClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FLiveOpsMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
@@ -175,7 +205,9 @@ bool FGamePlatformLiveOpsRevisionTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLiveOpsSameRevisionViewTest, "GamePlatform.LiveOps.Client.SameRevisionView", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FLiveOpsSameRevisionViewTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformLiveOpsClientSubsystem>();
+    FLiveOpsLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformLiveOpsClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
     Client->ConfigureAuthenticatedAccount(TEXT("Boundary"), Transport);
     Transport->CatalogCompletion(CatalogSnapshot(1), EGamePlatformLiveOpsError::None);
@@ -208,7 +240,10 @@ public:
         if (FPlatformTime::Seconds() - Started > 15.0) { Test->AddError(TEXT("活动真实Ticker边界通知超时")); return true; }
         if (!Client.Get())
         {
-            Client.Reset(NewObject<UGamePlatformLiveOpsClientSubsystem>());
+            // 潜伏命令跨帧持有合法Player Outer；缺Engine记录真实失败并结束，不反复创建非法对象。
+            if (!GEngine) { Test->AddError(TEXT("LiveOps跨帧夹具缺真实Engine Within宿主")); return true; }
+            Player.Reset(NewObject<ULocalPlayer>(GEngine));
+            Client.Reset(NewObject<UGamePlatformLiveOpsClientSubsystem>(Player.Get()));
             Client->Initialize(Collection);
             Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
             Client->ConfigureAuthenticatedAccount(TEXT("BoundaryTicker"), Transport);
@@ -235,6 +270,8 @@ private:
     double Started = FPlatformTime::Seconds();
     int32 CatalogEvents = 0, PlayerEvents = 0;
     FSubsystemCollection<ULocalPlayerSubsystem> Collection;
+    // 在Client之前声明，析构反序保证Client退出/释放时其真实LocalPlayer Outer仍被强持有。
+    TStrongObjectPtr<ULocalPlayer> Player;
     TStrongObjectPtr<UGamePlatformLiveOpsClientSubsystem> Client;
     TSharedPtr<FLiveOpsMockTransport, ESPMode::ThreadSafe> Transport;
 };
@@ -247,7 +284,9 @@ bool FLiveOpsBoundaryNotificationTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLiveOpsCloseDuringConfigureTest, "GamePlatform.LiveOps.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FLiveOpsCloseDuringConfigureTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformLiveOpsClientSubsystem>();
+    FLiveOpsLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformLiveOpsClientSubsystem* Client = Fixture.Client.Get();
     auto Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
     TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
     Client->OnViewChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });
@@ -262,7 +301,9 @@ bool FLiveOpsCloseDuringConfigureTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLiveOpsRequestTerminalGateTest, "GamePlatform.LiveOps.Client.RequestTerminalGate", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FLiveOpsRequestTerminalGateTest::RunTest(const FString&)
 {
-    auto* Client = NewObject<UGamePlatformLiveOpsClientSubsystem>(); auto Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
+    FLiveOpsLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformLiveOpsClientSubsystem* Client = Fixture.Client.Get(); auto Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
     Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Gate"), Transport);
     auto OldCatalog = Transport->CatalogCompletion; OldCatalog(CatalogSnapshot(1), EGamePlatformLiveOpsError::None);
     Transport->StateCompletion(PlayerState(1), EGamePlatformLiveOpsError::None);

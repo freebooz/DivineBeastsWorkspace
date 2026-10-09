@@ -1,3 +1,4 @@
+// 平台双端战斗组件：服务器拥有GAS结算/重置和护盾句柄，客户端只观察；GT作用域退出拒旧重置栈。
 #include "Components/GamePlatformCombatComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
@@ -12,6 +13,7 @@
 #include "Tags/GamePlatformAbilitySystemTags.h"
 #include "Tags/GamePlatformCombatTags.h"
 #include "Types/GamePlatformCombatMath.h"
+#include "UObject/StrongObjectPtr.h"
 
 UGamePlatformCombatComponent::UGamePlatformCombatComponent()
 {
@@ -21,6 +23,9 @@ UGamePlatformCombatComponent::UGamePlatformCombatComponent()
 
 void UGamePlatformCombatComponent::BeginPlay()
 {
+    bCombatClosing = false;
+    ++ComponentLifecycleGeneration;
+    ++AvatarResetOperationGeneration;
     Super::BeginPlay();
 
     AbilitySystemComponent =
@@ -59,6 +64,11 @@ void UGamePlatformCombatComponent::BeginPlay()
 
 void UGamePlatformCombatComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    // GAS效果移除会同步通知；先永久关闭并失效在途Reset，再进入受控旧句柄清理。
+    if (bCombatClosing) return;
+    bCombatClosing = true;
+    ++ComponentLifecycleGeneration;
+    ++AvatarResetOperationGeneration;
     // 玩家换Avatar或世界退出时主动释放本组件持有的独立限时护盾GE，
     // 不删除其他模块/装备授予的效果，避免跨世界残留虚构护盾容量。
     if (GetOwner() && GetOwner()->HasAuthority())
@@ -203,7 +213,38 @@ void UGamePlatformCombatComponent::ConsumeShieldEffectCapacity(float RequestedAb
 
 void UGamePlatformCombatComponent::ClearShieldEffects()
 {
-    // 先取走本组件拥有的句柄，再释放GAS效果，确保回调不会看到半更新账本。
+    const TStrongObjectPtr<UGamePlatformCombatComponent> KeepComponent(this);
+    const TStrongObjectPtr<UGamePlatformAbilitySystemComponent> ASC(AbilitySystemComponent.Get());
+    const TStrongObjectPtr<UGamePlatformCombatAttributeSet> Attributes(CombatAttributeSet.Get());
+    const TStrongObjectPtr<AActor> Owner(GetOwner());
+    const TStrongObjectPtr<UWorld> World(GetWorld());
+    const uint64 ExpectedLifecycle = ComponentLifecycleGeneration;
+    const uint64 ExpectedOperation = AvatarResetOperationGeneration;
+    const int32 ExpectedAvatar = AvatarGeneration;
+    const int32 ExpectedContext = WorldContextGeneration;
+    const bool bClosingAtEntry = bCombatClosing;
+    const auto ASCBinding = ASC.IsValid() ? ASC->GetAvatarBindingSnapshot() : FGamePlatformAbilityAvatarBindingSnapshot();
+    const TWeakObjectPtr<AActor> ASCOwner(ASC.IsValid() ? ASC->GetOwnerActor() : nullptr);
+    const TWeakObjectPtr<AActor> ASCAvatar(ASC.IsValid() ? ASC->GetAvatarActor() : nullptr);
+    const bool bHadASCOwner = ASCOwner.IsValid();
+    const bool bHadASCAvatar = ASCAvatar.IsValid();
+    const auto IsCurrent = [this, ExpectedLifecycle, ExpectedOperation, ExpectedAvatar, ExpectedContext,
+        bClosingAtEntry, ASCBinding, ASCOwner, ASCAvatar, bHadASCOwner, bHadASCAvatar,
+        ASC = ASC.Get(), Attributes = Attributes.Get(),
+        Owner = Owner.Get(), World = World.Get()]
+    {
+        return IsValid(this) && IsValid(ASC) && IsValid(Owner) && IsValid(World) &&
+            ComponentLifecycleGeneration == ExpectedLifecycle && AvatarResetOperationGeneration == ExpectedOperation &&
+            AvatarGeneration == ExpectedAvatar && WorldContextGeneration == ExpectedContext &&
+            bCombatClosing == bClosingAtEntry && AbilitySystemComponent == ASC && CombatAttributeSet == Attributes &&
+            ASC->GetSet<UGamePlatformCombatAttributeSet>() == Attributes && GetOwner() == Owner &&
+            GetWorld() == World && (bClosingAtEntry || (!Owner->IsActorBeingDestroyed() && !World->bIsTearingDown &&
+                ASC->GetAvatarBindingSnapshot().AvatarGeneration == ASCBinding.AvatarGeneration &&
+                ASCOwner.IsValid() == bHadASCOwner && ASCAvatar.IsValid() == bHadASCAvatar &&
+                ASC->GetOwnerActor() == ASCOwner.Get() && ASC->GetAvatarActor() == ASCAvatar.Get()));
+    };
+    // 保存本批身份，但每个外部调用前只摘当前句柄；未处理项仍归成员账本，后继可接管。
+    // 不能一开始Reset整份账本，否则通知内新Reset看不到剩余旧GE，也不能事后Reset清新盾。
     TArray<FActiveGameplayEffectHandle> Handles;
     Handles.Reserve(ActiveShieldEffects.Num());
     for (const FActiveShieldEffectCharge& Charge : ActiveShieldEffects)
@@ -213,13 +254,18 @@ void UGamePlatformCombatComponent::ClearShieldEffects()
             Handles.Add(Charge.EffectHandle);
         }
     }
-    ActiveShieldEffects.Reset();
-    if (IsValid(AbilitySystemComponent))
+    if (!ASC.IsValid())
     {
-        for (const FActiveGameplayEffectHandle& Handle : Handles)
-        {
-            AbilitySystemComponent->RemoveActiveGameplayEffect(Handle);
-        }
+        ActiveShieldEffects.Reset();
+        return;
+    }
+    ActiveShieldEffects.RemoveAll([](const FActiveShieldEffectCharge& Charge) { return !Charge.EffectHandle.IsValid(); });
+    for (const FActiveGameplayEffectHandle& Handle : Handles)
+    {
+        if (!IsCurrent()) return;
+        ActiveShieldEffects.RemoveAll([Handle](const FActiveShieldEffectCharge& Charge) { return Charge.EffectHandle == Handle; });
+        ASC->RemoveActiveGameplayEffect(Handle);
+        if (!IsCurrent()) return;
     }
 }
 
@@ -413,7 +459,7 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplyControl(
 bool UGamePlatformCombatComponent::RemoveControl(
     EGamePlatformControlType ControlType)
 {
-    if (!GetOwner()->HasAuthority() || !IsValid(AbilitySystemComponent))
+    if (bCombatClosing || !IsValid(GetOwner()) || !GetOwner()->HasAuthority() || !IsValid(AbilitySystemComponent))
     {
         return false;
     }
@@ -440,28 +486,66 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
     int32 NewAvatarGeneration,
     float HealthFraction)
 {
-    if (!GetOwner()->HasAuthority() ||
+    if (!IsInGameThread() || bCombatClosing || !IsValid(GetOwner()) ||
+        GetOwner()->IsActorBeingDestroyed() || !GetOwner()->HasAuthority() ||
+        !IsValid(GetWorld()) || GetWorld()->bIsTearingDown ||
         !IsValid(AbilitySystemComponent) ||
-        !IsValid(CombatAttributeSet))
+        !IsValid(CombatAttributeSet) ||
+        AbilitySystemComponent->GetSet<UGamePlatformCombatAttributeSet>() != CombatAttributeSet.Get())
     {
         return false;
     }
 
+    // 世代耗尽时不能溢出成旧身份；未进入任何GAS外部边界前明确拒绝。
+    if (AvatarGeneration == MAX_int32 || WorldContextGeneration == MAX_int32) return false;
     if (NewAvatarGeneration <= AvatarGeneration)
     {
         NewAvatarGeneration = AvatarGeneration + 1;
     }
+    const TStrongObjectPtr<UGamePlatformCombatComponent> KeepComponent(this);
+    const TStrongObjectPtr<AActor> Owner(GetOwner());
+    const TStrongObjectPtr<UWorld> World(GetWorld());
+    const TStrongObjectPtr<UGamePlatformAbilitySystemComponent> ASC(AbilitySystemComponent.Get());
+    const TStrongObjectPtr<UGamePlatformCombatAttributeSet> Attributes(CombatAttributeSet.Get());
+    const uint64 ExpectedLifecycle = ComponentLifecycleGeneration;
+    const uint64 ExpectedOperation = ++AvatarResetOperationGeneration;
+    const auto ASCBinding = ASC->GetAvatarBindingSnapshot();
+    const TWeakObjectPtr<AActor> ASCOwner(ASC->GetOwnerActor());
+    const TWeakObjectPtr<AActor> ASCAvatar(ASC->GetAvatarActor());
+    const bool bHadASCOwner = ASCOwner.IsValid();
+    const bool bHadASCAvatar = ASCAvatar.IsValid();
+    int32 ExpectedAvatar = AvatarGeneration;
+    int32 ExpectedContext = WorldContextGeneration;
+    const auto IsCurrent = [this, ExpectedLifecycle, ExpectedOperation, ASCBinding, ASCOwner, ASCAvatar,
+        bHadASCOwner, bHadASCAvatar,
+        Owner = Owner.Get(), World = World.Get(), ASC = ASC.Get(), Attributes = Attributes.Get(),
+        &ExpectedAvatar, &ExpectedContext]
+    {
+        return !bCombatClosing && IsValid(this) && IsValid(Owner) && !Owner->IsActorBeingDestroyed() &&
+            Owner->HasAuthority() && IsValid(World) && !World->bIsTearingDown &&
+            IsValid(ASC) && IsValid(Attributes) && ComponentLifecycleGeneration == ExpectedLifecycle &&
+            AvatarResetOperationGeneration == ExpectedOperation && AvatarGeneration == ExpectedAvatar &&
+            WorldContextGeneration == ExpectedContext && GetOwner() == Owner && GetWorld() == World &&
+            AbilitySystemComponent == ASC && CombatAttributeSet == Attributes &&
+            ASC->GetSet<UGamePlatformCombatAttributeSet>() == Attributes &&
+            ASC->GetAvatarBindingSnapshot().AvatarGeneration == ASCBinding.AvatarGeneration &&
+            ASC->GetAvatarBindingSnapshot().bBound == ASCBinding.bBound &&
+            ASCOwner.IsValid() == bHadASCOwner && ASCAvatar.IsValid() == bHadASCAvatar &&
+            ASC->GetOwnerActor() == ASCOwner.Get() && ASC->GetAvatarActor() == ASCAvatar.Get();
+    };
 
     FGameplayTagContainer CombatStateTags;
     CombatStateTags.AddTag(GamePlatformCombatTags::State_Dead);
     CombatStateTags.AddTag(GamePlatformCombatTags::Control_Stun);
     CombatStateTags.AddTag(GamePlatformCombatTags::Control_Silence);
-    AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(CombatStateTags);
+    ASC->RemoveActiveEffectsWithGrantedTags(CombatStateTags);
+    if (!IsCurrent()) return false;
 
-    AbilitySystemComponent->RemoveLooseGameplayTag(
+    ASC->RemoveLooseGameplayTag(
         GamePlatformCombatTags::State_Dead,
         1,
         EGameplayTagReplicationState::TagAndCountToAll);
+    if (!IsCurrent()) return false;
 
     const float ClampedHealthFraction = FMath::IsFinite(HealthFraction)
         ? FMath::Clamp(HealthFraction, 0.0f, 1.0f)
@@ -469,16 +553,24 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
 
     // 重生不能承继旧化身的有限时护盾；先释放GE与其临时吸收实例。
     ClearShieldEffects();
-    AbilitySystemComponent->SetNumericAttributeBase(
+    if (!IsCurrent()) return false;
+    ASC->SetNumericAttributeBase(
         UGamePlatformCombatAttributeSet::GetHealthAttribute(),
-        CombatAttributeSet->GetMaxHealth() * ClampedHealthFraction);
+        Attributes->GetMaxHealth() * ClampedHealthFraction);
+    if (!IsCurrent()) return false;
 
-    CombatAttributeSet->SetIncomingDamage(0.0f);
-    CombatAttributeSet->SetIncomingHealing(0.0f);
+    // 这些生成的setter也会调用ASC并广播元属性变化，必须逐个复查而非只检查健康setter。
+    Attributes->SetIncomingDamage(0.0f);
+    if (!IsCurrent()) return false;
+    Attributes->SetIncomingHealing(0.0f);
+    if (!IsCurrent()) return false;
 
+    // 到此没有外部边界：本操作完整提交一次；随后期望值跟随自身合法推进，操作身份仍独立。
     bDead = false;
     AvatarGeneration = NewAvatarGeneration;
     ++WorldContextGeneration;
+    ExpectedAvatar = AvatarGeneration;
+    ExpectedContext = WorldContextGeneration;
     PendingResolutionStack.Reset();
     ResolvedResults.Reset();
     CompletedEventIds.Reset();
@@ -486,21 +578,22 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
 
     FGamePlatformCombatSpec ResetSpec;
     ResetSpec.EventId = FGuid::NewGuid();
-    ResetSpec.Source = GetOwner();
-    ResetSpec.Target = GetOwner();
+    ResetSpec.Source = Owner.Get();
+    ResetSpec.Target = Owner.Get();
     ResetSpec.SourceAvatarGeneration = AvatarGeneration;
     ResetSpec.TargetAvatarGeneration = AvatarGeneration;
 
     FGamePlatformCombatResult Result;
     Result.EventId = ResetSpec.EventId;
-    Result.RemainingHealth = CombatAttributeSet->GetHealth();
+    Result.RemainingHealth = Attributes->GetHealth();
 
     PublishCombatEvent(
         EGamePlatformCombatEventType::RespawnReset,
         ResetSpec,
         Result);
 
-    return true;
+    // 终态通知内也可能换化身/结束；旧调用只返回被接管，不再写任何成员或清后继需求。
+    return IsCurrent();
 }
 
 void UGamePlatformCombatComponent::ResolveIncomingDamage(
@@ -654,7 +747,9 @@ EGamePlatformCombatError UGamePlatformCombatComponent::ValidateSpec(
     bool bHealing,
     bool bCheckSelfPolicy) const
 {
-    if (!GetOwner()->HasAuthority())
+    // EndPlay释放效果的通知也可能发新命令；关闭作用域不能再授盾或启动新的权威结算。
+    if (bCombatClosing) return EGamePlatformCombatError::Cancelled;
+    if (!IsValid(GetOwner()) || !GetOwner()->HasAuthority())
     {
         return EGamePlatformCombatError::NotAuthority;
     }

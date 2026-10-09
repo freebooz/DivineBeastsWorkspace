@@ -1,9 +1,9 @@
 {
   "Baseline": "8a12bbe",
-  "Scope": "62身份/82插件模块；40个GamePlatform稳定身份含MOBA Arena",
+  "Scope": "62身份/83插件模块；原审查82模块，主线技能模块已纳入既有DBAGameplay",
   "PluginCount": 62,
   "FindingCount": 61,
-  "State": "源码整改与已确认链独立复核完成；服务器45/客户端65模块构建通过，编辑器真实结果另表",
+  "State": "原整改检查点已保留；主分支整合、实际目标和UE逻辑状态见中央证据",
   "Limits": "原始设计/性能/规范字段是修改前事实。CurrentDisposition才是当前处置，未将待UE/缺条件计为通过。",
   "Plugins": [
     {
@@ -147,7 +147,7 @@
     {
       "Name": "DBAGameplay",
       "Group": "DivineBeasts",
-      "Modules": 2,
+      "Modules": 3,
       "BaselineDesign": "Shared生成身份/十二生肖定义/角色初始化/Momentum扩展；基础ACharacter可Ready但无ASC",
       "BaselinePerformance": "角色事件/RepNotify驱动；同一RuntimeState版本变化会取消并重新申请定义，未见每帧资产冷加载；MomentumCOND_None复制需实测。",
       "BaselineCompliance": "非竞技项目依赖不引MOBA；真实12个Definition文件；过期异步回调核对请求/Spawn/Avatar代次。 涉及 GW-02。 本轮UE/网络/资产边界未验收。",
