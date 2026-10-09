@@ -78,7 +78,7 @@ def migrate_assets(source_root, target_root, label):
 def ensure_mannequin_mount():
     common_manny = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SKM_Manny_Simple"
     common_quinn = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SKM_Quinn_Simple"
-    common_skeleton = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SK_Mannequin_Skeleton"
+    common_skeleton = "/DBAContentPack_Common/Mannequins/UE5/Meshes/SK_Mannequin"
     common_physics_asset = COMMON_DBA_MANNEQUIN_ROOT + "/Meshes/SK_Mannequin_PhysicsAsset"
     if (
         unreal.EditorAssetLibrary.does_asset_exist(common_manny)
@@ -86,8 +86,24 @@ def ensure_mannequin_mount():
         and unreal.EditorAssetLibrary.does_asset_exist(common_skeleton)
         and unreal.EditorAssetLibrary.does_asset_exist(common_physics_asset)
     ):
-        log("公共Manny/Quinn、Skeleton与PhysicsAsset已经存在，跳过迁移。")
+        # 文件存在只证明路径可解析；旧UE4骨架也含root/pelvis/head，必须检查UE5完整骨骼覆盖。
+        skeleton = unreal.load_asset(common_skeleton)
+        skeleton_names = {str(name) for name in unreal.AnimPoseExtensions.get_bone_names(skeleton.get_reference_pose())}
+        for mesh_path in (common_manny, common_quinn):
+            mesh = unreal.load_asset(mesh_path)
+            mesh_bones = ['root']
+            for bone in mesh_bones:
+                mesh_bones.extend(str(child) for child in mesh.get_bone_children(bone))
+            if mesh.get_editor_property('skeleton') != skeleton or set(mesh_bones) - skeleton_names:
+                fail('公共UE5骨架绑定错误，先通过Monolith修复，不重新迁移或删除现有资源: ' + mesh_path)
+        log("公共Manny/Quinn、完整UE5骨架与PhysicsAsset已验证，跳过迁移。")
         return
+
+    if unreal.EditorAssetLibrary.does_asset_exist(common_manny) or unreal.EditorAssetLibrary.does_asset_exist(common_quinn):
+        fail('已有公共网格但UE5依赖不完整；先通过Monolith修复，禁止清空公共内容包后重迁移。')
+
+    if unreal.EditorAssetLibrary.does_directory_exist('/DBAContentPack_Common/Mannequins'):
+        fail('公共资源不完整，拒绝删除现有模板骨架/材质；从版本库恢复后用Monolith检查。')
 
     # 旧项目的Manny/Quinn网格位于/DBA/...，但默认材质继续引用标准
     # /Game/Characters/Mannequins。两个根必须同时进入编辑器后再迁移，
@@ -120,7 +136,7 @@ def ensure_mannequin_mount():
     if not unreal.EditorAssetLibrary.does_asset_exist(common_quinn):
         fail("迁移后缺少SKM_Quinn_Simple。")
     if not unreal.EditorAssetLibrary.does_asset_exist(common_skeleton):
-        fail("迁移后缺少SK_Mannequin_Skeleton，Manny/Quinn依赖闭包不完整。")
+        fail("迁移后缺少完整UE5骨架SK_Mannequin，旧UE4骨架不满足Manny/Quinn依赖。")
     if not unreal.EditorAssetLibrary.does_asset_exist(common_physics_asset):
         fail("迁移后缺少SK_Mannequin_PhysicsAsset，Manny/Quinn依赖闭包不完整。")
 

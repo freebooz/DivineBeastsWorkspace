@@ -22,4 +22,4 @@
 
 验证状态只能依据真实证据。源码静态检查通过不等于 UE5.8 编译、DataValidation Commandlet、Cook、Shipping 或性能基线已经通过。
 
-动画制作可显式调用`GP.Animation.InitializeDataModel <AnimSequence资产路径>`，由游戏线程使用引擎原生控制器补齐数据模型初始化前置条件。该入口不硬编码项目资源，不自动保存或写入关键帧；调用者随后仍须制作、保存并独立Cook。直接NewObject的序列可能缺失Sequencer MovieScene/ControlRig，工具返回帧数不等于模型有效。模块默认关闭，可在UBT用`-EnablePlugin=GamePlatformDeveloperTools`构建，在编辑器用`-EnablePlugins=GamePlatformDeveloperTools`启用；均仅Editor，不改变客户端／服务器闭包。命令随模块关闭注销，模块启动只注册入口、不修改资产。
+动画制作可显式调用`GP.Animation.InitializeDataModel <AnimSequence资产路径>`，由游戏线程使用引擎原生控制器补齐数据模型初始化前置条件，并通过`UpdateWithSkeleton`同步当前骨架的Sequencer FK骨树。仅修改Skeleton字段可能仍保留旧FK Rig，不能写入新骨骼轨道；正常骨架保留已有轨道，迁移不再存在的骨骼遵循引擎控制器清理，调用者应先备份。该入口不硬编码项目资源，不自动保存或写入关键帧；调用者随后仍须制作、保存并独立Cook。直接NewObject的序列可能缺失Sequencer MovieScene/ControlRig，工具返回帧数不等于模型有效。模块默认关闭，可在UBT用`-EnablePlugin=GamePlatformDeveloperTools`构建，在编辑器用`-EnablePlugins=GamePlatformDeveloperTools`启用；均仅Editor，不改变客户端／服务器闭包。命令随模块关闭注销，模块启动只注册入口、不修改资产。

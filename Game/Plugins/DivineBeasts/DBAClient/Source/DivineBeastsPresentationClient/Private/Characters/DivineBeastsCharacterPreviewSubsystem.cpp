@@ -436,16 +436,21 @@ bool UDivineBeastsCharacterPreviewSubsystem::TryApplyPendingAppearance()
         return false;
     }
 
-    if (AnimClass && PendingProfile->AnimInstanceClass.IsNull() && PendingProfile->bDevelopmentPlaceholder)
+    FString SkeletonError;
+    if (!UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(Mesh, Mesh->GetSkeleton(), SkeletonError))
     {
-        // 与USkeletalMeshComponent运行时动画实例的兼容检查保持一致：简化网格允许裁剪中间骨骼，
-        // 不要求完整父链逐项相同；仍检查真实骨架的骨骼映射，不能仅凭名称标签或固定成功放行。
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview mesh skeleton rejected: %s"), *SkeletonError);
+        return false;
+    }
+    if (AnimClass)
+    {
+        // 显式动画和开发Idle采用相同门禁；原生AnimInstance没有蓝图目标骨架，由其自身动画合同负责。
         const IAnimClassInterface* AnimationInterface = IAnimClassInterface::GetFromClass(AnimClass);
         const USkeleton* AnimationSkeleton = AnimationInterface ? AnimationInterface->GetTargetSkeleton() : nullptr;
-        if (!AnimationSkeleton || !AnimationSkeleton->IsCompatibleMesh(Mesh, false))
+        if (AnimationInterface && !UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(Mesh, AnimationSkeleton, SkeletonError))
         {
-            UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview animation skeleton mismatch: Hero=%s AnimClass=%s AnimationSkeleton=%s MeshSkeleton=%s"),
-                *RequestedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass), *GetNameSafe(AnimationSkeleton), *GetNameSafe(Mesh->GetSkeleton()));
+            UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview animation skeleton rejected: Hero=%s AnimClass=%s Reason=%s"),
+                *RequestedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass), *SkeletonError);
             return false;
         }
     }
