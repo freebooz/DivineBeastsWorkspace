@@ -8,7 +8,10 @@
 
 /**
  * UGamePlatformCombatAttributeSet（游戏平台生命/护盾与Meta结算属性集）。
- * 保留现有 Damage/Healing Execution（伤害/治疗执行）主链；攻击、防御、控制属性拆入同插件独立 AttributeSet。
+ * 保留现有Damage/Healing Execution（伤害/治疗执行）主链；攻击、防御、控制属性拆入同插件独立AttributeSet。
+ * 精简复制策略：Health/MaxHealth/Shield/MaxShield（生命与护盾）4项仅按Actor网络相关性公开；
+ * IncomingDamage/IncomingHealing（伤害/治疗元属性）2项不复制，结算后立即清零。
+ * 网络相关性不等于战场迷雾视野权限；隐藏信息必须在服务器相关性/领域投影另行校验。
  * Incoming 字段为不复制的瞬时结算元属性，不是长期角色状态。
  */
 UCLASS()

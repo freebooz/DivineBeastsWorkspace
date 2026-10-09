@@ -12,7 +12,12 @@ struct FDivineBeastsMomentumDefinition;
     GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
     GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
-/** UDivineBeastsMomentumAttributeSet（神兽联盟气势属性集）。 */
+/**
+ * UDivineBeastsMomentumAttributeSet（神兽联盟气势属性集）。
+ * 仅保留Momentum（当前气势）和MaxMomentum（气势上限）两项运行时属性。
+ * 气势倍率/衰减不再作为复制的GAS属性；旧HeroDefinition字段暂保留用于资源兼容。
+ * 气势仅向拥有者复制；其他观察者仅展示有权限的项目级只读投影。
+ */
 UCLASS()
 class DIVINEBEASTSCHARACTERSRUNTIME_API UDivineBeastsMomentumAttributeSet final
     : public UGamePlatformAttributeSet
@@ -36,19 +41,9 @@ public:
     FGameplayAttributeData MaxMomentum;
     DIVINEBEASTS_MOMENTUM_ATTRIBUTE_ACCESSORS(UDivineBeastsMomentumAttributeSet, MaxMomentum)
 
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MomentumGainMultiplier, Category="DivineBeasts|Momentum")
-    FGameplayAttributeData MomentumGainMultiplier;
-    DIVINEBEASTS_MOMENTUM_ATTRIBUTE_ACCESSORS(UDivineBeastsMomentumAttributeSet, MomentumGainMultiplier)
-
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MomentumDecayRate, Category="DivineBeasts|Momentum")
-    FGameplayAttributeData MomentumDecayRate;
-    DIVINEBEASTS_MOMENTUM_ATTRIBUTE_ACCESSORS(UDivineBeastsMomentumAttributeSet, MomentumDecayRate)
-
 private:
     UFUNCTION() void OnRep_Momentum(const FGameplayAttributeData& OldValue);
     UFUNCTION() void OnRep_MaxMomentum(const FGameplayAttributeData& OldValue);
-    UFUNCTION() void OnRep_MomentumGainMultiplier(const FGameplayAttributeData& OldValue);
-    UFUNCTION() void OnRep_MomentumDecayRate(const FGameplayAttributeData& OldValue);
 };
 
 #undef DIVINEBEASTS_MOMENTUM_ATTRIBUTE_ACCESSORS

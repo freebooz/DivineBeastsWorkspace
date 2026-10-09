@@ -2,6 +2,11 @@
 
 #include "Adapters/MobaPresentationFactAdapters.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Feedback/GamePlatformLocalHitstopSubsystem.h"
+#include "Feedback/MobaHitFeedbackPolicy.h"
+#include "GameFramework/Character.h"
+#include "Tags/GamePlatformCombatTags.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Events/MobaPresentationContextContributor.h"
@@ -466,6 +471,67 @@ void UMobaPresentationClientSubsystem::AdaptCombatEvent(
     for (FMobaPresentationAdaptedFact& Fact : Facts)
     {
         SubmitAdaptedFact(MoveTemp(Fact));
+    }
+    // 未带攻击类型的旧事实按照轻击处理，不根据伤害数字推断攻击种类。
+    ApplyVisualFeedbackForConfirmedHit(Event, EMobaHitFeedbackContact::Light, 1);
+}
+
+void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
+    const FGamePlatformCombatEvent& Event,
+    EMobaHitFeedbackContact Contact,
+    int32 ComboStep)
+{
+    // 普通Delegate不跨网络传播；这里只消费已送达的可信确认事实。
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    UWorld* World = LocalPlayer ? LocalPlayer->GetWorld() : nullptr;
+    if (!World || !Event.EventId.IsValid() ||
+        Event.EventType != EGamePlatformCombatEventType::Damage ||
+        (!IsValid(Event.SourceActor) && !IsValid(Event.TargetActor)))
+    {
+        return;
+    }
+    if ((IsValid(Event.SourceActor) && Event.SourceActor->GetWorld() != World) ||
+        (IsValid(Event.TargetActor) && Event.TargetActor->GetWorld() != World))
+    {
+        return; // 跨World或跨PIE客户端的事实不得操作当前角色。
+    }
+
+    FMobaHitFeedbackInput Input;
+    Input.Contact = Contact;
+    Input.ComboStep = ComboStep;
+    Input.bCritical = Event.ResultTags.HasTag(GamePlatformCombatTags::Result_Critical);
+    if (APlayerController* Controller = LocalPlayer->GetPlayerController(World))
+    {
+        Input.bLocalVictim = Controller->GetPawn() == Event.TargetActor;
+    }
+    const FMobaHitFeedbackDecision Decision =
+        FMobaHitFeedbackPolicy::Evaluate(Input, HitFeedbackTuning);
+    if (!Decision.bHasContact || Decision.VisualHitstopFrames <= 0)
+    {
+        return;
+    }
+
+    auto FindMesh = [](AActor* Actor) -> USkeletalMeshComponent*
+    {
+        if (!IsValid(Actor))
+        {
+            return nullptr;
+        }
+        if (ACharacter* Character = Cast<ACharacter>(Actor))
+        {
+            return Character->GetMesh();
+        }
+        return Actor->FindComponentByClass<USkeletalMeshComponent>();
+    };
+
+    if (UGamePlatformLocalHitstopSubsystem* Hitstop =
+        LocalPlayer->GetSubsystem<UGamePlatformLocalHitstopSubsystem>())
+    {
+        Hitstop->ApplyVisualHitstop(
+            Event.EventId,
+            FindMesh(Event.SourceActor),
+            FindMesh(Event.TargetActor),
+            Decision.VisualHitstopFrames);
     }
 }
 

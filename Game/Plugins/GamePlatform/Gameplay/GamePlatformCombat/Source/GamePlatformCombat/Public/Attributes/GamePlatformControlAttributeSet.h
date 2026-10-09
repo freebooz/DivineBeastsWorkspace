@@ -10,7 +10,12 @@
     GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
     GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
-/** UGamePlatformControlAttributeSet（游戏平台控制与韧性属性集）。 */
+/**
+ * UGamePlatformControlAttributeSet（游戏平台控制持续时间抗性属性集）。
+ * 当前仅保留服务器控制结算实际使用的Tenacity（控制韧性）；
+ * 未接通的Poise/MaxPoise/PoiseRegen（失衡值/上限/恢复）不再定义为GAS属性。
+ * Tenacity仅向拥有者同步；眩晕/沉默由GameplayTag与GameplayEffect表达。
+ */
 UCLASS()
 class GAMEPLATFORMCOMBAT_API UGamePlatformControlAttributeSet final
     : public UGamePlatformAttributeSet
@@ -28,23 +33,8 @@ public:
     FGameplayAttributeData Tenacity;
     GAMEPLATFORM_CONTROL_ATTRIBUTE_ACCESSORS(UGamePlatformControlAttributeSet, Tenacity)
 
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Poise, Category="Combat|Control")
-    FGameplayAttributeData Poise;
-    GAMEPLATFORM_CONTROL_ATTRIBUTE_ACCESSORS(UGamePlatformControlAttributeSet, Poise)
-
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxPoise, Category="Combat|Control")
-    FGameplayAttributeData MaxPoise;
-    GAMEPLATFORM_CONTROL_ATTRIBUTE_ACCESSORS(UGamePlatformControlAttributeSet, MaxPoise)
-
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_PoiseRegen, Category="Combat|Control")
-    FGameplayAttributeData PoiseRegen;
-    GAMEPLATFORM_CONTROL_ATTRIBUTE_ACCESSORS(UGamePlatformControlAttributeSet, PoiseRegen)
-
 private:
     UFUNCTION() void OnRep_Tenacity(const FGameplayAttributeData& OldValue);
-    UFUNCTION() void OnRep_Poise(const FGameplayAttributeData& OldValue);
-    UFUNCTION() void OnRep_MaxPoise(const FGameplayAttributeData& OldValue);
-    UFUNCTION() void OnRep_PoiseRegen(const FGameplayAttributeData& OldValue);
 };
 
 #undef GAMEPLATFORM_CONTROL_ATTRIBUTE_ACCESSORS

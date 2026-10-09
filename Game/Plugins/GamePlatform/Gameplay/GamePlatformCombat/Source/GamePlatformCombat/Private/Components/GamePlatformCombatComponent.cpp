@@ -333,14 +333,6 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
     CombatAttributeSet->SetIncomingDamage(0.0f);
     CombatAttributeSet->SetIncomingHealing(0.0f);
 
-    if (const UGamePlatformControlAttributeSet* ControlAttributes =
-            AbilitySystemComponent->GetSet<UGamePlatformControlAttributeSet>())
-    {
-        AbilitySystemComponent->SetNumericAttributeBase(
-            UGamePlatformControlAttributeSet::GetPoiseAttribute(),
-            ControlAttributes->GetMaxPoise());
-    }
-
     bDead = false;
     AvatarGeneration = NewAvatarGeneration;
     ++WorldContextGeneration;

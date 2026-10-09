@@ -19,5 +19,8 @@ public class MobaPresentationClient : ModuleRules
             "GamePlatformArena",
             "GamePlatformCombat"
         });
+
+        // MOBA客户端只调用平台视觉局部顿帧；不反向包含项目层资源与逻辑。
+        PrivateDependencyModuleNames.AddRange(new string[] { "GamePlatformAnimationClient" });
     }
 }

@@ -1,5 +1,7 @@
 # GamePlatformAbilitySystem（游戏平台技能系统插件）
 
+2026-10-09 最新实施规范：`Docs/GAS精简属性集与复制分层实施规范_20261009.md`（GAS精简属性集与分级复制），保留5个现有具体属性集，已将运行字段从24项收敛到18项：4项公开生命/护盾＋12项拥有者私有＋2项不复制结算属性。`Docs/GAS属性集设计与实施建议_20261009.md`（此前24项方案）只作为历史基线，不得继续按其中的旧属性数和复制条件实施。源码及静态门禁已更新，完整编译与两客户端复制验收须以独立结果为准。
+
 跨游戏 GAS（Gameplay Ability System，玩法能力系统）基础层：提供 `UGamePlatformAbilitySystemComponent（平台ASC基类）`、`UGamePlatformGameplayAbility（平台玩法能力基类）`、`UGamePlatformAttributeSet（平台属性集基类）`、AbilitySet授权合同、中立InputTag及 `IGamePlatformAbilityInputReceiver（平台能力输入接收器）`。
 
 当前ASC统一管理Owner/Avatar ActorInfo、AvatarGeneration代次和输入作用域。重生/换Pawn会先清理旧按压状态并使旧Token失效；能力输入只允许本地拥有者，以 `Platform.Ability.Input.*` 精确匹配唯一Spec，重复InputTag Fail Closed。`UGamePlatformGameplayAbility` 显式提供 OnPressed / WhileHeld 激活策略，输入层不根据项目技能名称猜测策略。

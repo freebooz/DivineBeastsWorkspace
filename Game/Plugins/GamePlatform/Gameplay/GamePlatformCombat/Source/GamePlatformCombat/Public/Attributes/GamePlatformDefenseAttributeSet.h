@@ -10,7 +10,11 @@
     GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
     GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
-/** UGamePlatformDefenseAttributeSet（游戏平台防御属性集）。 */
+/**
+ * UGamePlatformDefenseAttributeSet（游戏平台防御属性集）。
+ * 三项抵抗/减伤数值仅向拥有者复制；其他客户端通过授权战斗结果观察。
+ * 不向未获准观察的敌人或观战者暴露精确防御数值。
+ */
 UCLASS()
 class GAMEPLATFORMCOMBAT_API UGamePlatformDefenseAttributeSet final
     : public UGamePlatformAttributeSet

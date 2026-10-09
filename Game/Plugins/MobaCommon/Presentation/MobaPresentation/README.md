@@ -10,4 +10,6 @@ MobaPresentation位于 MobaCommon（MOBA通用层），职责是把 Arena（竞�
 
 当前实现向 UGamePlatformPresentationClientSubsystem（平台表现客户端子系统）提交 FGamePlatformPresentationRequest（平台表现请求）。若没有Provider（表现提供者），安全返回ProviderMissing（提供者缺失），Gameplay继续。
 
+2026-10-09新增 `FMobaHitFeedbackPolicy`（MOBA接触反馈策略），支持轻击/重击/技能/格挡/挥空、暴击、连击强度封顶和0/3/6帧参数对比，并增加 `Moba.Presentation.HitFeedback.Policy` 自动化测试源码。Moba客户端接入平台GamePlatformAnimationClient局部视觉顿帧，不依赖DivineBeasts。当前历史CombatEvent不携带攻击类别时默认轻击；网络权威事实接线、真正的连击输入、完整九层表现仍为后续任务。
+
 验证状态必须区分静态源码、UE5.8编译、Client/Server Cook（客户端/服务器烘焙）、Multi-PIE（多编辑器实例）、Travel/Late Join（切图/晚加入）和压力测试；未执行不得写通过。

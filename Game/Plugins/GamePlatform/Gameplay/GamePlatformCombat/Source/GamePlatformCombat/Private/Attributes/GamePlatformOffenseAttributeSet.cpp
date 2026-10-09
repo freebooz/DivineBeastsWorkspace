@@ -6,7 +6,6 @@ UGamePlatformOffenseAttributeSet::UGamePlatformOffenseAttributeSet()
 {
     InitAttackPower(0.0f);
     InitAbilityPower(0.0f);
-    InitAttackSpeed(1.0f);
     InitCriticalChance(0.0f);
     InitCriticalDamage(1.5f);
     InitArmorPenetration(0.0f);
@@ -16,10 +15,10 @@ UGamePlatformOffenseAttributeSet::UGamePlatformOffenseAttributeSet()
 void UGamePlatformOffenseAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-#define GP_REP_OFFENSE(Name) DOREPLIFETIME_CONDITION_NOTIFY(UGamePlatformOffenseAttributeSet, Name, COND_None, REPNOTIFY_Always)
+// 攻击内部数值只向拥有者同步；GAS预测修正保持REPNOTIFY_Always（始终通知）。
+#define GP_REP_OFFENSE(Name) DOREPLIFETIME_CONDITION_NOTIFY(UGamePlatformOffenseAttributeSet, Name, COND_OwnerOnly, REPNOTIFY_Always)
     GP_REP_OFFENSE(AttackPower);
     GP_REP_OFFENSE(AbilityPower);
-    GP_REP_OFFENSE(AttackSpeed);
     GP_REP_OFFENSE(CriticalChance);
     GP_REP_OFFENSE(CriticalDamage);
     GP_REP_OFFENSE(ArmorPenetration);
@@ -41,7 +40,6 @@ void UGamePlatformOffenseAttributeSet::PreAttributeChange(const FGameplayAttribu
     }
     else if (Attribute == GetAttackPowerAttribute() ||
              Attribute == GetAbilityPowerAttribute() ||
-             Attribute == GetAttackSpeedAttribute() ||
              Attribute == GetCriticalDamageAttribute() ||
              Attribute == GetArmorPenetrationAttribute() ||
              Attribute == GetMagicPenetrationAttribute())
@@ -56,7 +54,6 @@ void UGamePlatformOffenseAttributeSet::OnRep_##Name(const FGameplayAttributeData
 
 GP_OFFENSE_REPNOTIFY(AttackPower)
 GP_OFFENSE_REPNOTIFY(AbilityPower)
-GP_OFFENSE_REPNOTIFY(AttackSpeed)
 GP_OFFENSE_REPNOTIFY(CriticalChance)
 GP_OFFENSE_REPNOTIFY(CriticalDamage)
 GP_OFFENSE_REPNOTIFY(ArmorPenetration)

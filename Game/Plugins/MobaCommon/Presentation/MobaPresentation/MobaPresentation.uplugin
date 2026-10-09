@@ -12,7 +12,8 @@
         { "Name": "GamePlatformCore", "Enabled": true },
         { "Name": "GamePlatformPresentation", "Enabled": true },
         { "Name": "GamePlatformArena", "Enabled": true },
-        { "Name": "GamePlatformCombat", "Enabled": true }
+        { "Name": "GamePlatformCombat", "Enabled": true },
+        { "Name": "GamePlatformAnimation", "Enabled": true }
     ],
     "Modules": [
         {

@@ -19,6 +19,8 @@ void UGamePlatformCombatAttributeSet::GetLifetimeReplicatedProps(
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+    // 四项生命/护盾可见值按Actor相关性复制，其余战斗细节不由本属性集公开。
+    // 不能仅用COND_None视作迷雾授权：战场视野仍须控制Actor相关性或提供经批准的观测快照。
     DOREPLIFETIME_CONDITION_NOTIFY(
         UGamePlatformCombatAttributeSet,
         Health,

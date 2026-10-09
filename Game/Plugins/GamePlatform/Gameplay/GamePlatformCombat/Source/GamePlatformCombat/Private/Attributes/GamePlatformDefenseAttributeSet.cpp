@@ -12,9 +12,10 @@ UGamePlatformDefenseAttributeSet::UGamePlatformDefenseAttributeSet()
 void UGamePlatformDefenseAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME_CONDITION_NOTIFY(UGamePlatformDefenseAttributeSet, Armor, COND_None, REPNOTIFY_Always);
-    DOREPLIFETIME_CONDITION_NOTIFY(UGamePlatformDefenseAttributeSet, MagicResistance, COND_None, REPNOTIFY_Always);
-    DOREPLIFETIME_CONDITION_NOTIFY(UGamePlatformDefenseAttributeSet, DamageReduction, COND_None, REPNOTIFY_Always);
+    // 只对拥有者同步三项战斗内参；其他观察者仅显示正式授权的战斗快照。
+    DOREPLIFETIME_CONDITION_NOTIFY(UGamePlatformDefenseAttributeSet, Armor, COND_OwnerOnly, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UGamePlatformDefenseAttributeSet, MagicResistance, COND_OwnerOnly, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UGamePlatformDefenseAttributeSet, DamageReduction, COND_OwnerOnly, REPNOTIFY_Always);
 }
 
 void UGamePlatformDefenseAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)

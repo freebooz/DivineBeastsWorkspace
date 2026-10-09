@@ -6,6 +6,7 @@
 #include "Attributes/GamePlatformControlAttributeSet.h"
 #include "Attributes/GamePlatformDefenseAttributeSet.h"
 #include "Attributes/GamePlatformOffenseAttributeSet.h"
+#include "UObject/UnrealType.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGamePlatformCombatAttributeDefaultsTest,
@@ -64,10 +65,19 @@ bool FGamePlatformCombatAttributeFamiliesTest::RunTest(const FString& Parameters
     UGamePlatformOffenseAttributeSet* Offense = NewObject<UGamePlatformOffenseAttributeSet>();
     UGamePlatformDefenseAttributeSet* Defense = NewObject<UGamePlatformDefenseAttributeSet>();
     UGamePlatformControlAttributeSet* Control = NewObject<UGamePlatformControlAttributeSet>();
-    TestEqual(TEXT("默认AttackSpeed"), Offense->GetAttackSpeed(), 1.0f);
-    TestEqual(TEXT("默认CriticalDamage"), Offense->GetCriticalDamage(), 1.5f);
-    TestEqual(TEXT("默认MaxPoise"), Control->GetMaxPoise(), 100.0f);
-    TestEqual(TEXT("默认Poise"), Control->GetPoise(), 100.0f);
+    TestEqual(TEXT("默认CriticalDamage仍与旧战斗公式一致"), Offense->GetCriticalDamage(), 1.5f);
+    TestEqual(TEXT("默认Tenacity不改变"), Control->GetTenacity(), 0.0f);
+
+    // 裁减真正没有运行消费路径的Attribute后，其反射身份也不能继续存在。
+    // 不通过将属性字段设为不复制来伪造“属性已减少”。
+    TestNull(TEXT("未消费的攻击速度字段不得再进入GAS"),
+        FindFProperty<FProperty>(UGamePlatformOffenseAttributeSet::StaticClass(), FName(TEXT("AttackSpeed"))));
+    TestNull(TEXT("失衡Poise尚无真实扣减与恢复机制，暂不注册属性"),
+        FindFProperty<FProperty>(UGamePlatformControlAttributeSet::StaticClass(), FName(TEXT("Poise"))));
+    TestNull(TEXT("失衡上限不应成为预留同步字段"),
+        FindFProperty<FProperty>(UGamePlatformControlAttributeSet::StaticClass(), FName(TEXT("MaxPoise"))));
+    TestNull(TEXT("失衡恢复速率不应成为预留同步字段"),
+        FindFProperty<FProperty>(UGamePlatformControlAttributeSet::StaticClass(), FName(TEXT("PoiseRegen"))));
 
     float CriticalChance = 2.0f;
     Offense->PreAttributeChange(UGamePlatformOffenseAttributeSet::GetCriticalChanceAttribute(), CriticalChance);

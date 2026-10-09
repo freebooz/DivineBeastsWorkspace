@@ -5,6 +5,7 @@
 #include "GamePlatformPresentationTypes.h"
 #include "Types/GamePlatformCombatEvent.h"
 #include "Types/MobaPresentationTypes.h"
+#include "Feedback/MobaHitFeedbackPolicy.h"
 #include "MobaPresentationClientSubsystem.generated.h"
 
 class AGamePlatformArenaGameState;
@@ -33,6 +34,19 @@ public:
         FMobaPresentationAdaptedFact Fact);
 
     void AdaptCombatEvent(const FGamePlatformCombatEvent& Event);
+    /**
+     * 根据权威攻击类别执行客户端视觉顿帧，不修改真实硬直、伤害或位移。
+     */
+    void ApplyVisualFeedbackForConfirmedHit(
+        const FGamePlatformCombatEvent& Event,
+        EMobaHitFeedbackContact Contact,
+        int32 ComboStep);
+
+    /** 注入可配置中立反馈参数，供竞技组合根使用。 */
+    void ConfigureHitFeedback(const FGamePlatformHitFeedbackTuning& Tuning)
+    {
+        HitFeedbackTuning = Tuning;
+    }
     EGamePlatformPresentationSubmitResult AdaptCriticalFact(
         const FMobaPresentationCriticalFact& Fact);
     EGamePlatformPresentationSubmitResult AdaptAbilityFact(
@@ -87,6 +101,9 @@ private:
     bool RememberFact(const FMobaPresentationFactIdentity& Identity);
     void ApplyContextContributors(FMobaPresentationContext& Context) const;
     FGuid MakeArenaFactId(const FString& Scope, int32 Revision, uint32 Salt = 0) const;
+
+    // 本地玩家独立调校数据，不由表现参数更改服务器判定。
+    FGamePlatformHitFeedbackTuning HitFeedbackTuning;
 
     TWeakObjectPtr<UWorld> BoundWorld;
     TWeakObjectPtr<AGamePlatformArenaGameState> BoundArenaGameState;

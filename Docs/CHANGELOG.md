@@ -1,5 +1,13 @@
 # 变更记录
 
+## 2026-10-09｜战斗打击感三层配置和客户端局部顿帧
+
+- GamePlatformPresentationCore增加可配置的HitFeedback Profile数据结构；GamePlatformAnimationClient增加本地玩家局部Mesh动画暂停，含60Hz参考帧、命中GUID去重、覆盖更长到期时间和World清理，不暂停Gameplay/全局时间。
+- MobaPresentationRuntime增加轻/重/技能/格挡/挥空和暴击/连击反馈策略、0/3/6帧自动化测试源码，MobaPresentationClient消费已到达的Combat事实触发局部视觉顿帧，不新建MOBA特效播放器。
+- DBAClient/DivineBeastsPresentationRuntime增加英雄技能映射DataAsset类，按Hero＋Ability键查询平台Profile软引用和视觉/音效逻辑ID；无真实 .uasset。
+- 尚未完成真实复制命中通道、输入缓冲、闪白、镜头及独立九层视觉资源、专用服务器Cook和联机验证。保存既有GAS未提交改动，具体门禁见 `Docs/Implementation/CombatFeedbackExecutionPlan_20261009.md`。
+
+
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。
 
 ## 2026-10-09｜十二生肖技能定义、权威授予与技能栏视图骨架

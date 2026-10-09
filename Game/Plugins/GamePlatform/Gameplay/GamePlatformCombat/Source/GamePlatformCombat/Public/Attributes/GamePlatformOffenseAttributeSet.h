@@ -12,7 +12,10 @@
 
 /**
  * UGamePlatformOffenseAttributeSet（游戏平台攻击属性集）。
- * 只持有跨游戏可复用的攻击数值，不认识生肖、MOBA 模式或项目技能名称。
+ * 只持有六项被服务器伤害公式实际消费的攻击数值。
+ * AttackSpeed（攻击速度）尚无运行消费端，不作为当前GAS属性。
+ * 内部计算值只向拥有者同步，不向所有相关客户端公开攻击、暴击和穿透配置。
+ * 不认识生肖、MOBA模式或项目技能名称。
  */
 UCLASS()
 class GAMEPLATFORMCOMBAT_API UGamePlatformOffenseAttributeSet final
@@ -34,10 +37,6 @@ public:
     FGameplayAttributeData AbilityPower;
     GAMEPLATFORM_OFFENSE_ATTRIBUTE_ACCESSORS(UGamePlatformOffenseAttributeSet, AbilityPower)
 
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_AttackSpeed, Category="Combat|Offense")
-    FGameplayAttributeData AttackSpeed;
-    GAMEPLATFORM_OFFENSE_ATTRIBUTE_ACCESSORS(UGamePlatformOffenseAttributeSet, AttackSpeed)
-
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_CriticalChance, Category="Combat|Offense")
     FGameplayAttributeData CriticalChance;
     GAMEPLATFORM_OFFENSE_ATTRIBUTE_ACCESSORS(UGamePlatformOffenseAttributeSet, CriticalChance)
@@ -57,7 +56,6 @@ public:
 private:
     UFUNCTION() void OnRep_AttackPower(const FGameplayAttributeData& OldValue);
     UFUNCTION() void OnRep_AbilityPower(const FGameplayAttributeData& OldValue);
-    UFUNCTION() void OnRep_AttackSpeed(const FGameplayAttributeData& OldValue);
     UFUNCTION() void OnRep_CriticalChance(const FGameplayAttributeData& OldValue);
     UFUNCTION() void OnRep_CriticalDamage(const FGameplayAttributeData& OldValue);
     UFUNCTION() void OnRep_ArmorPenetration(const FGameplayAttributeData& OldValue);
