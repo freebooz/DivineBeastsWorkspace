@@ -4,6 +4,8 @@
 
 ## 当前资产范围
 
+2026-10-09现行前端：登录页15节点、创建页27节点、选择页24节点，两种角色卡片分别8/10节点；前文日期记录保留各阶段历史。登录账号/密码固定284×42，角色名称220×38逻辑像素，三者实际字体均为16号。通过Monolith写入UE5.8有效的WidgetStyle.TextStyle.Font.Size并保存重载；固定DPI=1，六个公共WBP的94控件RenderScale均为1、无ScaleBox。声明式生成后的字体后置动作及回归入口见实施说明和生成清单。
+
 - `/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout`：每个本地玩家的根布局，承载平台定义的HUD、WorldProjection、Feedback、Screen、Modal、Notification、Loading、System和Debug九层。
 - `/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login`：账号密码登录页面，仅消费 `UDivineBeastsLoginViewModel` 的只读状态和命令。
 - `/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate`：持久角色创建页，英雄资格来自只读快照，未提交名称只存在输入控件，提交既有创建命令。

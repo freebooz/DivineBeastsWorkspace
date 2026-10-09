@@ -1,3 +1,4 @@
+// 平台双端流程资产转换与校验：保留数据定义所有权，将声明投影到唯一调度核心，不执行项目业务或加载资源。
 #include "Definitions/GamePlatformFlowDefinition.h"
 #include "Definitions/GamePlatformFlowDefinitionConversion.h"
 
@@ -16,6 +17,7 @@ FDefinition ConvertAssetGraph(const UGamePlatformFlowDefinition& Definition)
         Step.Id = Name(Node.NodeId);
         Step.Next = Name(Node.NextNodeId);
         Step.TimeoutSeconds = Node.TimeoutSeconds;
+        Step.bWaitForUserInput = Node.bWaitForUserInput;
         for (const auto& Route : Node.Routes) Step.Routes.emplace(Name(Route.Key), Name(Route.Value));
         Result.Steps.push_back(std::move(Step));
     }
