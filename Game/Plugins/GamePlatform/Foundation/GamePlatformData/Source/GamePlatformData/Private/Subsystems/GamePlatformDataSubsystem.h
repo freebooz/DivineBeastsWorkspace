@@ -41,5 +41,7 @@ private:
     void Finish(FGamePlatformDataLease Lease, FGamePlatformResult Result);
     void ReleaseRequest(FGamePlatformDataLease Lease, const FString& Reason);
     void CleanupWorld(UWorld* World, bool bSessionEnded, bool bCleanupResources);
+    /** 仅有租约时启动弱所有者维护；世界退出走即时事件，GC失效最迟在0.25秒维护周期释放。 */
+    void EnsureOwnerWatch();
     bool WatchOwners(float DeltaSeconds);
 };

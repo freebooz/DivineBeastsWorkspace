@@ -39,6 +39,7 @@ bool UGamePlatformServerLifecycleSubsystem::ShouldCreateSubsystem(
 void UGamePlatformServerLifecycleSubsystem::Deinitialize()
 {
     // 使所有迟到回调失效；关闭期间不发新网络操作。
+    bIsClosing = true;
     StopHeartbeatPump();
     CancelControlRetry();
     DeferredControlOperation.Reset();
@@ -55,7 +56,7 @@ bool UGamePlatformServerLifecycleSubsystem::RegisterInstance(
     const FGamePlatformServerInstanceInfo& Instance)
 {
     check(IsInGameThread());
-    if (Snapshot.State != EGamePlatformServerLifecycleState::Unregistered ||
+    if (bIsClosing || Snapshot.State != EGamePlatformServerLifecycleState::Unregistered ||
         !Instance.IsValid())
     {
         return false;
@@ -73,7 +74,7 @@ bool UGamePlatformServerLifecycleSubsystem::SendHeartbeat(int32 CurrentPlayers)
     const bool bCanSend = Snapshot.State == EGamePlatformServerLifecycleState::Registered ||
         Snapshot.State == EGamePlatformServerLifecycleState::Ready ||
         Snapshot.State == EGamePlatformServerLifecycleState::Draining;
-    if (!bCanSend || bHeartbeatInFlight || CurrentPlayers < 0 ||
+    if (bIsClosing || !bCanSend || bHeartbeatInFlight || CurrentPlayers < 0 ||
         CurrentPlayers > ActiveInstance.Capacity)
     {
         return false;
@@ -91,7 +92,7 @@ bool UGamePlatformServerLifecycleSubsystem::StartHeartbeatPump(
         Snapshot.State == EGamePlatformServerLifecycleState::Registered ||
         Snapshot.State == EGamePlatformServerLifecycleState::Ready ||
         Snapshot.State == EGamePlatformServerLifecycleState::Draining;
-    if (!bLifecycleAllowsHeartbeat || !PlayerCountProvider ||
+    if (bIsClosing || !bLifecycleAllowsHeartbeat || !PlayerCountProvider ||
         !FMath::IsFinite(IntervalSeconds) || IntervalSeconds < 1.0f ||
         IntervalSeconds > 60.0f)
     {
@@ -132,6 +133,7 @@ void UGamePlatformServerLifecycleSubsystem::StopHeartbeatPump()
 bool UGamePlatformServerLifecycleSubsystem::MarkReady()
 {
     check(IsInGameThread());
+    if (bIsClosing || DeferredControlOperation.IsSet()) return false;
     if (Snapshot.State != EGamePlatformServerLifecycleState::Registered)
     {
         return false;
@@ -142,14 +144,23 @@ bool UGamePlatformServerLifecycleSubsystem::MarkReady()
 bool UGamePlatformServerLifecycleSubsystem::BeginDrain()
 {
     check(IsInGameThread());
+    if (bIsClosing) return false;
     if (Snapshot.State != EGamePlatformServerLifecycleState::Registered &&
-        Snapshot.State != EGamePlatformServerLifecycleState::Ready)
+        Snapshot.State != EGamePlatformServerLifecycleState::Ready &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Registering &&
+        Snapshot.State != EGamePlatformServerLifecycleState::PublishingReady)
     {
         return false;
     }
 
-    // Drain优先级高于周期心跳：先停止后续心跳，本地立即进入Draining以停止新准入。
+    // Drain优先于周期心跳；控制操作须串行，调用者应先关闭本地准入，再等控制面排空确认。
     StopHeartbeatPump();
+    if (bControlOperationInFlight || PendingControlRetryOperation.IsSet())
+    {
+        // 不能并发Drain与Register/Ready。保留原操作过渡态以便瞬时失败仍可重试，但排空意图持续阻止Ready发布。
+        DeferredControlOperation = EControlOperation::BeginDrain;
+        return true;
+    }
     if (bHeartbeatInFlight)
     {
         DeferredControlOperation = EControlOperation::BeginDrain;
@@ -162,6 +173,7 @@ bool UGamePlatformServerLifecycleSubsystem::BeginDrain()
 bool UGamePlatformServerLifecycleSubsystem::CompleteDrain()
 {
     check(IsInGameThread());
+    if (bIsClosing) return false;
     if (Snapshot.State != EGamePlatformServerLifecycleState::Draining)
     {
         return false;
@@ -183,6 +195,7 @@ bool UGamePlatformServerLifecycleSubsystem::CompleteDrain()
 
 bool UGamePlatformServerLifecycleSubsystem::TickHeartbeat(float)
 {
+    if (bIsClosing) return false;
     check(IsInGameThread());
     const bool bLifecycleAllowsHeartbeat =
         Snapshot.State == EGamePlatformServerLifecycleState::Registered ||
@@ -196,7 +209,11 @@ bool UGamePlatformServerLifecycleSubsystem::TickHeartbeat(float)
         return false;
     }
 
-    const int32 CurrentPlayers = HeartbeatPlayerCountProvider();
+    // 外部人数提供函数可以触发关闭；复制Callable并复查代次，避免销毁正在执行的成员或继续发旧请求。
+    const auto CountProvider = HeartbeatPlayerCountProvider;
+    const uint64 CountGeneration = Generation;
+    const int32 CurrentPlayers = CountProvider();
+    if (bIsClosing || CountGeneration != Generation || !HeartbeatPlayerCountProvider) return !bIsClosing;
     if (CurrentPlayers < 0 || CurrentPlayers > ActiveInstance.Capacity)
     {
         HeartbeatTickerHandle.Reset();
@@ -232,6 +249,7 @@ float UGamePlatformServerLifecycleSubsystem::ComputeControlRetryDelaySeconds() c
 void UGamePlatformServerLifecycleSubsystem::ScheduleControlRetry(EControlOperation Operation)
 {
     check(IsInGameThread());
+    if (bIsClosing) return;
     PendingControlRetryOperation = Operation;
     if (ControlRetryTickerHandle.IsValid())
     {
@@ -265,6 +283,7 @@ void UGamePlatformServerLifecycleSubsystem::CancelControlRetry()
 bool UGamePlatformServerLifecycleSubsystem::TickControlRetry(float)
 {
     check(IsInGameThread());
+    if (bIsClosing) return false;
     ControlRetryTickerHandle.Reset();
     if (!PendingControlRetryOperation.IsSet())
     {
@@ -299,7 +318,7 @@ bool UGamePlatformServerLifecycleSubsystem::TickControlRetry(float)
 void UGamePlatformServerLifecycleSubsystem::TryStartDeferredControlOperation()
 {
     check(IsInGameThread());
-    if (!DeferredControlOperation.IsSet() || bHeartbeatInFlight || bControlOperationInFlight ||
+    if (bIsClosing || !DeferredControlOperation.IsSet() || bHeartbeatInFlight || bControlOperationInFlight ||
         Snapshot.State == EGamePlatformServerLifecycleState::Failed ||
         Snapshot.State == EGamePlatformServerLifecycleState::Stopped)
     {
@@ -332,6 +351,7 @@ bool UGamePlatformServerLifecycleSubsystem::StartProviderOperation(
     int32 CurrentPlayers)
 {
     check(IsInGameThread());
+    if (bIsClosing) return false;
     IGamePlatformServerControlProvider* Provider = ResolveUniqueProvider();
     if (!Provider)
     {
@@ -378,6 +398,8 @@ bool UGamePlatformServerLifecycleSubsystem::StartProviderOperation(
         break;
     }
 
+    // 状态通知允许关闭/重新推进实例；通知后再次核对所有权，关闭期间不能继续创建原操作的HTTP。
+    if (bIsClosing || OperationGeneration != Generation) return false;
     const TWeakObjectPtr<UGamePlatformServerLifecycleSubsystem> WeakThis(this);
     FGamePlatformServerControlCompletion Completion =
         [WeakThis, OperationGeneration, Operation](bool bSucceeded, FName ErrorCode)
@@ -432,7 +454,7 @@ void UGamePlatformServerLifecycleSubsystem::CompleteOperation(
     FName ErrorCode)
 {
     check(IsInGameThread());
-    if (OperationGeneration != Generation)
+    if (bIsClosing || OperationGeneration != Generation)
     {
         return;
     }
@@ -473,8 +495,11 @@ void UGamePlatformServerLifecycleSubsystem::CompleteOperation(
         if (IsTransientControlError(EffectiveError))
         {
             // 注册、Ready和Drain均保持当前过渡态，以指数退避重试；不会逐帧重试或创建并发请求。
-            SetState(Snapshot.State, EffectiveError);
             ScheduleControlRetry(Operation);
+            // 先发布重试所有权；通知中BeginDrain只排队，Deinitialize能完整取消已建立的Ticker。
+            if (bIsClosing || OperationGeneration != Generation ||
+                Snapshot.State == EGamePlatformServerLifecycleState::Failed) return;
+            SetState(Snapshot.State, EffectiveError);
             return;
         }
         CancelControlRetry();
@@ -485,6 +510,16 @@ void UGamePlatformServerLifecycleSubsystem::CompleteOperation(
 
     CancelControlRetry();
     Snapshot.ConsecutiveControlFailures = 0;
+
+    if (Operation != EControlOperation::BeginDrain &&
+        DeferredControlOperation.IsSet() &&
+        DeferredControlOperation.GetValue() == EControlOperation::BeginDrain)
+    {
+        // 注册/Ready确认到达时优先执行已请求的Drain，禁止先广播Ready造成心跳或新准入短暂复活。
+        SetState(EGamePlatformServerLifecycleState::Draining);
+        TryStartDeferredControlOperation();
+        return;
+    }
 
     switch (Operation)
     {
@@ -509,5 +544,6 @@ void UGamePlatformServerLifecycleSubsystem::SetState(
     Snapshot.State = State;
     Snapshot.ErrorCode = ErrorCode;
     Snapshot.OperationGeneration = Generation;
-    LifecycleChanged.Broadcast(Snapshot);
+    const FGamePlatformServerLifecycleSnapshot Published = Snapshot;
+    LifecycleChanged.Broadcast(Published);
 }

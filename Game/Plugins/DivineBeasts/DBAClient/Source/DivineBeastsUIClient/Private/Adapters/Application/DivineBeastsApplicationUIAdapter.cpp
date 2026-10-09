@@ -335,6 +335,10 @@ void UDivineBeastsApplicationUIAdapter::SubmitUICommand(
             Command.PreferredRegion);
         break;
 
+    case EDivineBeastsUICommandType::Retry:
+        bAccepted = Flow->RetryFailedFlow();
+        break;
+
     case EDivineBeastsUICommandType::Logout:
         Flow->LogoutAndRestart();
         break;

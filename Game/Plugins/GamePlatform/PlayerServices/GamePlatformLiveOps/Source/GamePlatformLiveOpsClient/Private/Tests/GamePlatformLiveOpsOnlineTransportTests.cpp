@@ -141,7 +141,8 @@ private:
     TWeakPtr<FGamePlatformLiveOpsGatewayHttpTransport, ESPMode::ThreadSafe> Weak;
 };
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDomainTransportOwnershipTest, "GamePlatform.LiveOps.Client.OnlineOwnership", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FDomainTransportOwnershipTest::RunTest(const FString&)
+// UE Automation以C++类名(TEXT(#TClass))为进程注册键；跨模块同名会拒绝后继测试，本域类名必须唯一，PrettyName保持稳定。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformLiveOpsOnlineTransportOwnershipTest, "GamePlatform.LiveOps.Client.OnlineOwnership", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformLiveOpsOnlineTransportOwnershipTest::RunTest(const FString&)
 { ADD_LATENT_AUTOMATION_COMMAND(FDomainLifetimeCommand(this)); return true; }
 #endif

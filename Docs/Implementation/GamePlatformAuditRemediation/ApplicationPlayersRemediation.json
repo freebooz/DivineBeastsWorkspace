@@ -1,0 +1,672 @@
+{
+  "Title": "Application/PlayerServices整改分组报告（2026-10-09）",
+  "GeneratedAtLocal": "2026-10-09T11:21:44.560276+08:00",
+  "Workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+  "Branch": "codex/gameplatform-audit-fixes-20261009",
+  "IntegratedBaseline": "0f6afcb571185626487c4c5da3ee750a52b71bb0",
+  "CurrentHead": "0f6afcb571185626487c4c5da3ee750a52b71bb0",
+  "SourceFrozen": true,
+  "Committed": false,
+  "Pushed": false,
+  "Scope": "Application五插件、PlayerServices六插件及DBAClient ApplicationFlow/Input/UI；没有改UI资产/两个Presentation模块/Data/Online实现/全局描述与规划。Build.cs中文说明与根目标规则可能同文件协同，根需按完整diff审阅。",
+  "Findings": [
+    {
+      "Id": "APP-01",
+      "Status": "existing_source_reviewed",
+      "Implementation": "当前ListPlayerMappings仅枚举ProfileMappingRows，PreviewRebind通过此集合验行，Apply消费Preview结果；Reset独占集合。旧修真实链已覆盖，不重复实现。",
+      "Limits": "InputPolicy Debug/Release与既有OwnedRowsReset源码；真实外部Context重绑尚待UE运行"
+    },
+    {
+      "Id": "APP-02",
+      "Status": "existing_contract_reviewed",
+      "Implementation": "普通客户端原生SaveSettings/INI Flush均void，明确只bPreferencesSaveSubmitted=true，bPreferencesSaved=false，不宣称落盘。PIE保存明确Unsupported。",
+      "Limits": "真实磁盘失败终态仍无法从原生void接口确认，合同保留未知结果"
+    },
+    {
+      "Id": "APP-03",
+      "Status": "source_fixed_pending_engine",
+      "Implementation": "PIE命名空间加入LocalPlayer服务ScopeId；保存在调用原生SaveSettings/Flush前返回InputPIEPersistenceDisabled，内存偏好隔离。",
+      "Limits": "同ControllerId双PIE、真实INI/原生存档隔离待UE场景"
+    },
+    {
+      "Id": "APP-04",
+      "Status": "existing_source_reviewed",
+      "Implementation": "ReadFile在分配前校验FileSize与打开句柄Size，并按GetMaxEncodedBytes限制实际读取；巨大/备份文件不先全读再拒绝。",
+      "Limits": "真实超大文件/并发/慢盘/掉电回归待UE存储场景"
+    },
+    {
+      "Id": "APP-05",
+      "Status": "existing_source_reviewed",
+      "Implementation": "Loading分发回调返回后核对Scope存在、Id与Generation，再写计数/耗时；回调内GI关闭/新操作不会访问旧Scope。",
+      "Limits": "Loading原生Debug/Release通过；广播内真实GI关闭用例待UE"
+    },
+    {
+      "Id": "APP-06",
+      "Status": "source_fixed_pending_engine",
+      "Implementation": "Inventory/Entitlement/Commerce在状态广播前持有共享Transport快照，广播后核账号/请求代次；Reset递归幂等，广播内Configure拒绝。商店全部六命令与ViewModel/订单后续状态都有保护。",
+      "Limits": "新增ResetDuringState源码，UE未执行；生产HTTP取消/同步重入由根统一验证",
+      "Followup": [
+        "CloseDuringConfigure",
+        "InventorySynchronous"
+      ]
+    },
+    {
+      "Id": "APP-07",
+      "Status": "existing_and_extended_source_pending_engine",
+      "Implementation": "Equipment EndPlay/Destroy清理自有GAS并失效生命周期回调；本轮补每持久请求独立代次和终态消费资格。",
+      "Limits": "生产PersistencePort不存在，现行Port无事务强杀/回滚接口；仅保证本地消费者失效和自有GAS撤销，ASC存活/退出迟到待UE",
+      "Followup": [
+        "EquipmentReentry"
+      ]
+    },
+    {
+      "Id": "APP-08",
+      "Status": "source_fixed_pending_engine",
+      "Implementation": "共享完整/公开装备快照验证唯一槽/物品身份；server在撤销/Grant前预检整份快照和所有定义，visual创建前预检公开投影；复制组件也拒绝畸形快照。",
+      "Limits": "新增重复槽位不撤销旧授予/不发布版本用例源码；真实GAS/网格、后端容量合同待UE与生产Port"
+    },
+    {
+      "Id": "APP-09",
+      "Status": "existing_and_extended_source_pending_engine",
+      "Implementation": "Progression旧修OnViewChanged覆盖首次/轨道增删/错误/Reset/曲线；本轮补Online认证装配及请求代次隔离。兼容XP/等级事件继续只表达既有轨道差异。",
+      "Limits": "现有Client事件Automation未执行；不以业务Tick替代事件"
+    },
+    {
+      "Id": "APP-10",
+      "Status": "source_fixed_pending_engine",
+      "Implementation": "LiveOps Reset发布通用/玩家清空和失效领奖事件，撤销账号Ticker；只在真实Initialize且有账号/Transport时登记UTC边界Ticker。",
+      "Limits": "SameRevisionView/TimeBoundary源码存在，账号A到B失败期间真实UI清空待UE",
+      "Followup": [
+        "LiveOpsRequestGate"
+      ]
+    },
+    {
+      "Id": "APP-11",
+      "Status": "source_fixed_pending_engine",
+      "Implementation": "UI Retry已调用RetryFailedFlow，受理仅走已有取消/清空票据/Online注销后人工登录；无活动运行、不忙、装配完整且非创建结果未知时才公布Retry。",
+      "Limits": "真实失败到新run/注销错误路径/非幂等创建不重发待UE流程资产；默认InputProfile缺真实资产诊断保留"
+    },
+    {
+      "Id": "APP-12",
+      "Status": "source_fixed_pending_engine",
+      "Implementation": "entitlements/tracks必须为实际数组；缺失/错类型拒绝，合法空数组仍成功；revision和等级数值在转整数前校验有限/整数/安全范围。",
+      "Limits": "OnlineOwnership源码补有效时间版本但缺集合、错类型、合法空集合负例；生产传输接收容量由既有Online.MaxResponseBytes统一流式限制，后端正式路由/版本联调仍缺",
+      "Followup": [
+        "ExactIntegerParsing",
+        "CollectionTypeValidation"
+      ]
+    },
+    {
+      "Id": "APP-13",
+      "Status": "native_and_source_verified_pending_engine",
+      "Implementation": "私有Completion返回是否首次受理，adapter仅true才唤醒GT；重复/过期/取消完成不排额外唤醒。",
+      "Limits": "新增256并发完成仅受理一次、终态/取消后false；核心Debug/Release通过，UE TaskGraph/实际队列成本未实测"
+    },
+    {
+      "Id": "APP-14",
+      "Status": "source_fixed_pending_engine",
+      "Implementation": "新增BeginLoad；Client原生异步存在性区分不存在/错误并AsyncLoad，完整校验/迁移/解析后候选原子提交。bLoading终态事件；Reload失败保留旧快照，换账号先撤销旧User。拓扑/销毁/重复/旧代次丢弃，广播快照不可变且拓扑唤醒合并。",
+      "Limits": "新增AsyncLoadGeneration与异步A/B读源码未运行；无生产SettingsProvider、真实慢盘/大档案/平台存档环境未测",
+      "Followup": [
+        "SettingsTopology",
+        "SettingsSave"
+      ]
+    },
+    {
+      "Id": "APP-15",
+      "Status": "bounded_chinese_review_completed",
+      "Implementation": "本轮检查37个PlayerServices Public头文件责任，重点字段单位/空值/错误、命令参数/受理与终态/引用寿命，Build职责与六README；补公开Definition、资格Port、查询、时间估计与ViewModel合同。",
+      "Limits": "人工审核只覆盖本轮公开合同重点与修改流程；Private/历史文档与全工程中文全量审核仍为存量，不声称整体合规"
+    }
+  ],
+  "ChangedFiles": [
+    "Game/Plugins/DivineBeasts/DBAClient/README.md",
+    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Private/DivineBeastsApplicationFlowSubsystem.cpp",
+    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Adapters/Application/DivineBeastsApplicationUIAdapter.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/README.md",
+    "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Execution/ApplicationFlowExecutor.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Execution/ApplicationFlowExecutor.h",
+    "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Subsystems/GamePlatformApplicationFlowSubsystem.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Tests/ApplicationFlowExecutorCases.h",
+    "Game/Plugins/GamePlatform/Application/GamePlatformInput/README.md",
+    "Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Tests/InputPolicyTests.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Public/Interfaces/IGamePlatformInputService.h",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Docs/Migration.md",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Docs/PerformanceAndSecurity.md",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Docs/SettingsLifecycle.md",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsClient/Private/Persistence/GamePlatformSettingsClientPersistenceProvider.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsClient/Private/Persistence/GamePlatformSettingsClientPersistenceProvider.h",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsClient/Private/Tests/GamePlatformSettingsPersistenceScopeTests.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Private/Subsystems/GamePlatformSettingsSubsystem.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Public/Interfaces/IGamePlatformSettingsProvider.h",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Public/Interfaces/IGamePlatformSettingsService.h",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Public/Subsystems/GamePlatformSettingsSubsystem.h",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Public/Types/GamePlatformSettingTypes.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/README.md",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Services/GamePlatformCommerceClientSubsystem.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Tests/GamePlatformCommerceClientTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Transport/GamePlatformCommerceGatewayHttpTransport.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Services/GamePlatformCommerceClientSubsystem.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Transport/GamePlatformCommerceGatewayHttpTransport.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Types/GamePlatformCommerceUITypes.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/ViewModels/GamePlatformCommerceViewModel.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/README.md",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlement/GamePlatformEntitlement.Build.cs",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlement/Public/Definitions/GamePlatformEntitlementDefinition.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlement/Public/Queries/GamePlatformEntitlementQuery.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Private/Services/GamePlatformEntitlementClientSubsystem.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Private/Tests/GamePlatformEntitlementClientTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Private/Tests/GamePlatformEntitlementOnlineTransportTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Private/Transport/GamePlatformEntitlementGatewayHttpTransport.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Services/GamePlatformEntitlementClientSubsystem.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Types/GamePlatformEntitlementClientTypes.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/README.md",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/GamePlatformEquipment.Build.cs",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/Private/Components/GamePlatformEquipmentComponent.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/Public/Components/GamePlatformEquipmentComponent.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/Public/Definitions/GamePlatformEquipmentDefinition.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/Public/Types/GamePlatformEquipmentTypes.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentClient/GamePlatformEquipmentClient.Build.cs",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentClient/Private/Components/GamePlatformEquipmentVisualComponent.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentClient/Public/Components/GamePlatformEquipmentVisualComponent.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentClient/Public/Definitions/GamePlatformEquipmentVisualDefinition.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/GamePlatformEquipmentServer.Build.cs",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Private/Components/GamePlatformEquipmentServerComponent.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Private/Gameplay/GamePlatformEquipmentGASGrantPort.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Private/Tests/GamePlatformEquipmentLifecycleTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Components/GamePlatformEquipmentServerComponent.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Gameplay/GamePlatformEquipmentGASGrantPort.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Interfaces/GamePlatformEquipmentPersistencePort.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/README.md",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/GamePlatformInventoryClient.Build.cs",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Private/Services/GamePlatformInventoryClientSubsystem.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Private/Tests/GamePlatformInventoryClientTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Definitions/GamePlatformInventoryItemDefinition.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Interfaces/GamePlatformInventoryClientTransport.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Services/GamePlatformInventoryClientSubsystem.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Types/GamePlatformInventoryTypes.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/README.md",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Services/GamePlatformLiveOpsClientSubsystem.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Tests/GamePlatformLiveOpsClientTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Transport/GamePlatformLiveOpsGatewayHttpTransport.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Time/GamePlatformLiveOpsServerTimeEstimator.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Transport/GamePlatformLiveOpsGatewayHttpTransport.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Types/GamePlatformLiveOpsTypes.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/README.md",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgression/GamePlatformProgression.Build.cs",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgression/Public/Definitions/GamePlatformProgressionTrackDefinition.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgression/Public/Interfaces/GamePlatformProgressionSnapshotProvider.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgression/Public/Types/GamePlatformProgressionTypes.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Services/GamePlatformProgressionClientSubsystem.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Tests/GamePlatformProgressionClientTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Tests/GamePlatformProgressionOnlineTransportTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Transport/GamePlatformProgressionGatewayHttpTransport.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Services/GamePlatformProgressionClientSubsystem.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Transport/GamePlatformProgressionGatewayHttpTransport.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Types/GamePlatformProgressionClientTypes.h"
+  ],
+  "NewFiles": [
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Private/Tests/GamePlatformSettingsAsyncLoadTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Tests/GamePlatformCommerceJsonValidationTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Tests/JsonIntegerPolicyNativeTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Transport/JsonIntegerPolicy.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Tests/CMakeLists.txt",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Tests/GamePlatformLiveOpsJsonValidationTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Tests/JsonIntegerPolicyNativeTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Transport/JsonIntegerPolicy.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Tests/CMakeLists.txt",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Tests/GamePlatformProgressionJsonValidationTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Tests/JsonIntegerPolicyNativeTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Transport/JsonIntegerPolicy.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Tests/CMakeLists.txt"
+  ],
+  "Commands": [
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\FlowConfigure.log",
+      "ExitCode": 0,
+      "Command": "cmake -S \"C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Application\\GamePlatformApplicationFlow\\Tests\" -B \"C:\\Users\\Freebooz\\.codex\\tmp\\app-flow-20261009\" -G \"Visual Studio 17 2022\" -A x64"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\FlowBuildDebug.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:\\Users\\Freebooz\\.codex\\tmp\\app-flow-20261009\" --config Debug"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\FlowTestsDebug.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:\\Users\\Freebooz\\.codex\\tmp\\app-flow-20261009\" -C Debug --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\FlowBuildRelease.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:\\Users\\Freebooz\\.codex\\tmp\\app-flow-20261009\" --config Release"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\FlowTestsRelease.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:\\Users\\Freebooz\\.codex\\tmp\\app-flow-20261009\" -C Release --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\InputConfigure.log",
+      "ExitCode": 0,
+      "Command": "cmake -S \"C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Application\\GamePlatformInput\\Tests\" -B \"C:\\Users\\Freebooz\\.codex\\tmp\\app-input-20261009\" -G \"Visual Studio 17 2022\" -A x64"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\InputBuildDebug.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:\\Users\\Freebooz\\.codex\\tmp\\app-input-20261009\" --config Debug"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\InputTestsDebug.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:\\Users\\Freebooz\\.codex\\tmp\\app-input-20261009\" -C Debug --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\InputBuildRelease.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:\\Users\\Freebooz\\.codex\\tmp\\app-input-20261009\" --config Release"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\InputTestsRelease.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:\\Users\\Freebooz\\.codex\\tmp\\app-input-20261009\" -C Release --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LoadingConfigure.log",
+      "ExitCode": 0,
+      "Command": "cmake -S \"C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Application\\GamePlatformLoading\\Tests\" -B \"C:\\Users\\Freebooz\\.codex\\tmp\\app-loading-20261009\" -G \"Visual Studio 17 2022\" -A x64"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LoadingBuildDebug.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:\\Users\\Freebooz\\.codex\\tmp\\app-loading-20261009\" --config Debug"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LoadingTestsDebug.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:\\Users\\Freebooz\\.codex\\tmp\\app-loading-20261009\" -C Debug --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LoadingBuildRelease.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:\\Users\\Freebooz\\.codex\\tmp\\app-loading-20261009\" --config Release"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LoadingTestsRelease.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:\\Users\\Freebooz\\.codex\\tmp\\app-loading-20261009\" -C Release --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\DBAConfigure.log",
+      "ExitCode": 0,
+      "Command": "cmake -S \"C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Tests\" -B \"C:\\Users\\Freebooz\\.codex\\tmp\\app-dba-20261009\" -G \"Visual Studio 17 2022\" -A x64"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\DBABuildDebug.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:\\Users\\Freebooz\\.codex\\tmp\\app-dba-20261009\" --config Debug"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\DBATestsDebug.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:\\Users\\Freebooz\\.codex\\tmp\\app-dba-20261009\" -C Debug --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\DBABuildRelease.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:\\Users\\Freebooz\\.codex\\tmp\\app-dba-20261009\" --config Release"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\DBATestsRelease.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:\\Users\\Freebooz\\.codex\\tmp\\app-dba-20261009\" -C Release --output-on-failure"
+    },
+    {
+      "Log": "Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/SettingsArchitecture.log",
+      "ExitCode": 0,
+      "Command": "pwsh -NoProfile -File Game/Plugins/GamePlatform/Application/GamePlatformSettings/Tests/Scripts/TestGamePlatformSettingsArchitecture.ps1"
+    },
+    {
+      "Log": "Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/SaveArchitecture.log",
+      "ExitCode": 0,
+      "Command": "pwsh -NoProfile -File Game/Plugins/GamePlatform/Application/GamePlatformSave/Tests/Scripts/TestGamePlatformSaveArchitecture.ps1"
+    },
+    {
+      "Log": "Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/DBAInputArchitecture.log",
+      "ExitCode": 0,
+      "Command": "pwsh -NoProfile -File Game/Plugins/DivineBeasts/DBAClient/Tests/Scripts/TestInputArchitecture.ps1"
+    },
+    {
+      "Log": "Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/DBAFlowArchitecture.log",
+      "ExitCode": 0,
+      "Command": "pwsh -NoProfile -File Game/Plugins/DivineBeasts/DBAClient/Tests/Scripts/TestApplicationFlowArchitecture.ps1"
+    },
+    {
+      "Command": "python Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/SourceRegressionChecks.py（基线0f6afcb，通过git cat-file只读，不改工作树）",
+      "ExitCode": 1,
+      "Log": "SourceRegression-RED.json",
+      "Meaning": "12项必要源码防护在基线均缺失，静态红灯；不是UE行为执行"
+    },
+    {
+      "Command": "python Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/SourceRegressionChecks.py（当前工作树）",
+      "ExitCode": 0,
+      "Log": "SourceRegression-GREEN.json",
+      "Meaning": "12项必要源码防护存在，静态绿灯；不是UE行为执行"
+    },
+    {
+      "Command": "git -c core.autocrlf=false diff --check -- Application PlayerServices DBAClient三模块",
+      "ExitCode": 0,
+      "Log": "DiffCheck.log"
+    },
+    {
+      "Command": "首轮cmake -S Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Tests -B Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/FlowNative -G \"Visual Studio 17 2022\" -A x64",
+      "ExitCode": 1,
+      "Meaning": "Windows长路径导致FileTracker FTK1011，后续使用独占短路径构建成功，未降低编译器/引擎要求"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\CommerceUIIntegerConfigure.log",
+      "ExitCode": 0,
+      "Command": "cmake -S \"C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\PlayerServices\\GamePlatformCommerceUI\\Tests\" -B \"C:/Users/Freebooz/.codex/tmp/app-commerceui-integer-20261009\" -G \"Visual Studio 17 2022\" -A x64"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\CommerceUIIntegerBuildDebug.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:/Users/Freebooz/.codex/tmp/app-commerceui-integer-20261009\" --config Debug"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\CommerceUIIntegerTestsDebug.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:/Users/Freebooz/.codex/tmp/app-commerceui-integer-20261009\" -C Debug --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\CommerceUIIntegerBuildRelease.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:/Users/Freebooz/.codex/tmp/app-commerceui-integer-20261009\" --config Release"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\CommerceUIIntegerTestsRelease.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:/Users/Freebooz/.codex/tmp/app-commerceui-integer-20261009\" -C Release --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LiveOpsIntegerConfigure.log",
+      "ExitCode": 0,
+      "Command": "cmake -S \"C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\PlayerServices\\GamePlatformLiveOps\\Tests\" -B \"C:/Users/Freebooz/.codex/tmp/app-liveops-integer-20261009\" -G \"Visual Studio 17 2022\" -A x64"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LiveOpsIntegerBuildDebug.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:/Users/Freebooz/.codex/tmp/app-liveops-integer-20261009\" --config Debug"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LiveOpsIntegerTestsDebug.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:/Users/Freebooz/.codex/tmp/app-liveops-integer-20261009\" -C Debug --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LiveOpsIntegerBuildRelease.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:/Users/Freebooz/.codex/tmp/app-liveops-integer-20261009\" --config Release"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\LiveOpsIntegerTestsRelease.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:/Users/Freebooz/.codex/tmp/app-liveops-integer-20261009\" -C Release --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\ProgressionIntegerConfigure.log",
+      "ExitCode": 0,
+      "Command": "cmake -S \"C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\PlayerServices\\GamePlatformProgression\\Tests\" -B \"C:/Users/Freebooz/.codex/tmp/app-progression-integer-20261009\" -G \"Visual Studio 17 2022\" -A x64"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\ProgressionIntegerBuildDebug.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:/Users/Freebooz/.codex/tmp/app-progression-integer-20261009\" --config Debug"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\ProgressionIntegerTestsDebug.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:/Users/Freebooz/.codex/tmp/app-progression-integer-20261009\" -C Debug --output-on-failure"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\ProgressionIntegerBuildRelease.log",
+      "ExitCode": 0,
+      "Command": "cmake --build \"C:/Users/Freebooz/.codex/tmp/app-progression-integer-20261009\" --config Release"
+    },
+    {
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\ProgressionIntegerTestsRelease.log",
+      "ExitCode": 0,
+      "Command": "ctest --test-dir \"C:/Users/Freebooz/.codex/tmp/app-progression-integer-20261009\" -C Release --output-on-failure"
+    },
+    {
+      "Command": "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Tests/Scripts/TestGamePlatformSettingsArchitecture.ps1（追加修复后）",
+      "ExitCode": 0,
+      "Log": "FollowupSettingsArchitecture.log"
+    },
+    {
+      "Command": "python Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/SourceRegressionChecks.py（追加修复后静态必要条件）",
+      "ExitCode": 0,
+      "Log": "FollowupSourceRegression-GREEN.json"
+    },
+    {
+      "Command": "git diff --check -- Application PlayerServices DBA三模块（仓库配置归一化行尾）",
+      "ExitCode": 0,
+      "Log": "FollowupDiffCheckNormalized.log"
+    },
+    {
+      "Command": "git -c core.autocrlf=false diff --check（未归一化CRLF）",
+      "ExitCode": 2,
+      "Log": "FollowupDiffCheck.log",
+      "Meaning": "WindowsCRLF被当作行尾空白；没有源码行为失败，按仓库默认归一化检查退出0"
+    },
+    {
+      "Command": "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Tests/Scripts/TestGamePlatformSettingsArchitecture.ps1（两处剩余Important收尾）",
+      "ExitCode": 0,
+      "Log": "FinalPairSettingsArchitecture.log"
+    },
+    {
+      "Command": "git diff --check -- GamePlatformSettings GamePlatformInventory（仓库配置）",
+      "ExitCode": 0,
+      "Log": "FinalPairDiffCheck.log"
+    },
+    {
+      "Command": "python Saved/Validation/PluginRemediation-2026-10-09/ApplicationPlayers/SourceRegressionChecks.py（静态必要条件）",
+      "ExitCode": 0,
+      "Log": "FinalPairStaticRegression.json"
+    },
+    {
+      "Command": "根统一UE5.8 DivineBeastsArenaServer Win64 Development构建（读取实际process.json）",
+      "ExitCode": 6,
+      "Log": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\FoundationM0\\d7a0e3ef-993d-47c3-a033-019a9b6e47bc\\Build\\Server\\UBT.log",
+      "ProcessRecord": {
+        "FilePath": "F:\\UnrealEngine-5.8.0-release\\Engine\\Binaries\\ThirdParty\\DotNet\\10.0\\win-x64\\dotnet.exe",
+        "Arguments": [
+          "F:\\UnrealEngine-5.8.0-release\\Engine\\Binaries\\DotNET\\UnrealBuildTool\\UnrealBuildTool.dll",
+          "DivineBeastsArenaServer",
+          "Win64",
+          "Development",
+          "-Project=C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\DivineBeastsArena.uproject",
+          "-MaxParallelActions=2",
+          "-NoHotReloadFromIDE",
+          "-Log=C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\FoundationM0\\d7a0e3ef-993d-47c3-a033-019a9b6e47bc\\Build\\Server\\UBT.log",
+          "-EnablePlugin=DBAArena+DBAGameplay+DBAServer+DBAWorldPack_Village+DBAWorlds+GamePlatformAbilitySystem+GamePlatformAI+GamePlatformAnimation+GamePlatformApplicationFlow+GamePlatformArena+GamePlatformCharacter+GamePlatformCombat+GamePlatformCore+GamePlatformData+GamePlatformDebug+GamePlatformEntitlement+GamePlatformEquipment+GamePlatformGameplay+GamePlatformInteraction+GamePlatformLoading+GamePlatformLobby+GamePlatformNavigation+GamePlatformOnline+GamePlatformPCG+GamePlatformPresentation+GamePlatformProgression+GamePlatformQuest+GamePlatformServer+GamePlatformSettings+GamePlatformTelemetry+GamePlatformVillage+GamePlatformWorld+MobaPresentation",
+          "-Module=DBAServer+DBAWorldsRuntime+DivineBeastsArena+DivineBeastsArenaRuntime+DivineBeastsArenaServer+DivineBeastsCharactersRuntime+DivineBeastsRuntime+GamePlatformAbilitySystem+GamePlatformAI+GamePlatformAIServer+GamePlatformAnimation+GamePlatformApplicationFlow+GamePlatformArena+GamePlatformArenaServer+GamePlatformCharacter+GamePlatformCombat+GamePlatformCore+GamePlatformData+GamePlatformDebug+GamePlatformEntitlement+GamePlatformEquipment+GamePlatformEquipmentServer+GamePlatformGameplay+GamePlatformInteraction+GamePlatformLoading+GamePlatformLobby+GamePlatformLobbyServer+GamePlatformMobaCore+GamePlatformMobaData+GamePlatformNavigation+GamePlatformNavigationServer+GamePlatformOnline+GamePlatformPCG+GamePlatformPresentationCore+GamePlatformProgression+GamePlatformQuest+GamePlatformQuestServer+GamePlatformServer+GamePlatformSettingsRuntime+GamePlatformSettingsServer+GamePlatformTelemetry+GamePlatformVillage+GamePlatformVillageServer+GamePlatformWorld+MobaPresentationRuntime",
+          "-NoPCH",
+          "-NoSharedPCH"
+        ],
+        "ProcessId": 33780,
+        "StartTimeUtc": "2026-10-09T03:35:11.0613680Z"
+      },
+      "Meaning": "实际失败，包含本域两处lambda未限定Self；其他领域错误由对应所有者处理。"
+    },
+    {
+      "Command": "git diff --check -- GamePlatformEquipmentServerComponent.cpp",
+      "ExitCode": 0,
+      "Log": "EquipmentLambdaDiffCheck.log"
+    }
+  ],
+  "ActualEvidenceSummary": {
+    "NativeConfigurations": "四个现有入口各Debug/Release configure/build/CTest退出0；Flow核心新增256并发完成回归，Input最终增加同ControllerId作用域键用例后重建/CTest退出0",
+    "StaticGates": "Settings/Save/DBAInput/DBAFlow四专项退出0；Settings实际警告无生产Descriptor Provider",
+    "SourceRedGreen": "12项静态基线红/当前绿；UE专有场景只新增/维护源码，未冒称运行",
+    "FollowupNative": "追加三个本模块私有整数策略入口，共6次Debug/Release CTest；15条configure/build/CTest命令全部退出0。纯值策略由实际生产JSON转换入口调用；不等价UE DOM/HTTP/生命周期运行。",
+    "FollowupRedLimitation": "追加UE回归已按真实入口写入，但本分工禁止UBT，未执行这些用例的修复前红灯和修复后绿灯；不能冒称已完成UE行为验证。已有前轮12静态红/绿只证明必要源码条件。"
+  },
+  "ApiCompatibility": [
+    "IGamePlatformSettingsPersistenceProvider新增virtual BeginLoad改变ABI，所有消费者需重编；默认适配旧Load仅有界内存/Server，Client真实用户Load返回SettingsAsyncLoadRequired。",
+    "Settings Snapshot新增反射bLoading默认false；Reload/Switch返回仅受理，调用方通过事件bLoading=false/LastResult确认终态；原Profile序列化/槽名不变。",
+    "Equipment Types新增两个纯值验证函数；拒绝重复槽/物品/身份畸形快照，不迁移已有类型/字段；空Slots保持合法，Slot.Revision=0兼容保留。",
+    "Entitlement新增只读GetLastError；DBA新增RetryFailedFlow；私有FlowCore Completion由void返回bool，不改变平台公开UObject Completion签名。",
+    "四个领域LocalPlayer默认随Online装配；保留Configure自定义/测试入口，但Reset广播内同步Configure现在拒绝。",
+    "PIE输入真实保存现在明确Unsupported；普通客户端仍只公布受理。",
+    "FGamePlatformEquipmentGASGrantPort::Grant追加默认空作用域TFunction探针；旧源码三参数调用可编译，但导出C++符号变化，插件消费者必须重新编译。",
+    "客户端Transport新增仅WITH_DEV_AUTOMATION_TESTS的friend测试访问，不改变生产公开服务接口或反射身份。五领域Private实例代次/在飞门闩改变类布局，随统一UBT重编译。",
+    "JSON线类型不迁移：Commerce/LiveOps仍消费number，Progression仍消费十进制string；StoreNumbersAsStrings是UE内部DOM选项。旧可省略数组继续成功，明确错类型/非整数/溢出输入现在InvalidResponse。"
+  ],
+  "ChineseReview": {
+    "Reviewed": "本轮Public字段/命令/错误、文件责任与主要修改流程、测试前提/失败意义、Build和README；明确网络权威/账号和请求代次、货币最小单位/XP整数/UTC/秒/槽位范围、借用引用寿命、取消不回滚事务。",
+    "Remaining": "未进行所有Private函数、历史材料、未改模块与全工作空间逐文件中文全量审计；自动扫描不作为人工审核替代。",
+    "FollowupReviewed": "人工抽检追加的实例关闭/账号重入、保存/读取候选、装备GAS授权撤销、十进制算法与JSON适配、实际回归目的/前置/失败意义，以及六README和Settings Lifecycle。没有逐文件全量审核历史Private或全工作区。",
+    "FinalPairReviewed": "抽检本轮Settings准备失败事件所有权、外部Provider代次复核、Inventory广播接管资格、四个实际入口回归目的/前置/失败意义；更新Settings Lifecycle与Inventory README。历史中文全量审核仍未完成。"
+  },
+  "NotExecuted": [
+    "本分工未运行任何UBT/UHT/UE Automation；root冻结后统一执行",
+    "Editor/Client/Server实际模块构建及UE运行，由root统一账本记录",
+    "双PIE/多本地玩家、ASC存活/网格孤儿清理、真实广播退出与HTTP取消",
+    "真实InputProfile资产、Settings生产Descriptor、Equipment生产持久化/GAS解析、四领域后端路由/认证联调、真实支付Provider/经济闭环",
+    "干净Cook/Stage、服务器包表现剥离、联机、慢盘与CPU/GPU/内存实测、Monolith资产运行/人工视觉验收"
+  ],
+  "RemainingProductionConditions": [
+    "本次不生成生产Provider、假资产或真实支付交易；未知后端正式路由/幂等/容量契约须由生产适配落地",
+    "Equipment退出保证逻辑消费失效与自有授予撤销，不宣称取消不可回滚后端事务",
+    "Settings无生产SettingId描述的门禁警告保持；没有未知预算/慢盘性能通过断言",
+    "APP15中文结论为本轮公开合同重点审核，整体全量合规未完成",
+    "未发现Shared/Backend对应当前商店/运营HTTP字段正式schema；缺省集合沿既有测试，reward_schedule仅消费数组长度，奖品元素正式结构仍缺合同，不造生产奖励实现。"
+  ],
+  "NewFileForRootDirectoryPlan": [
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Private/Tests/GamePlatformSettingsAsyncLoadTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Tests/GamePlatformCommerceJsonValidationTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Tests/JsonIntegerPolicyNativeTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Transport/JsonIntegerPolicy.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Tests/CMakeLists.txt",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Tests/GamePlatformLiveOpsJsonValidationTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Tests/JsonIntegerPolicyNativeTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Transport/JsonIntegerPolicy.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Tests/CMakeLists.txt",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Tests/GamePlatformProgressionJsonValidationTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Tests/JsonIntegerPolicyNativeTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Transport/JsonIntegerPolicy.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Tests/CMakeLists.txt"
+  ],
+  "ReviewFocus": [
+    "Settings候选原子事务、外部迁移/拓扑/广播重入",
+    "广播内Reset及同账号迟到/重复终态",
+    "Retry允许状态与注销后安全新运行",
+    "装备重复槽位/持久Port迟到/ASC寿命"
+  ],
+  "FollowupImportantRepairs": [
+    {
+      "Key": "SettingsTopology",
+      "FindingId": "APP-14",
+      "Implementation": "拓扑通知即撤回旧Load代次；Rebuild失败也不得发布旧候选，并以事件通知终态；未保存用户修改/Apply等待期间延后重载。",
+      "Validation": "AsyncLoadGeneration补注册表冲突后旧Completion不发布；UE未执行",
+      "Status": "source_fixed_pending_ue"
+    },
+    {
+      "Key": "SettingsSave",
+      "FindingId": "APP-14",
+      "Implementation": "BeginSave前登记独立SaveRequestGeneration/实例代次/在飞；同步/重复/迟到/启动失败共用完成一次门闩，Provider与值副本保活。",
+      "Validation": "SaveTerminalGate覆盖同步成功、旧重复、新保存资格、启动失败、迟到成功不得清Dirty；UE未执行",
+      "Status": "source_fixed_pending_ue"
+    },
+    {
+      "Key": "CloseDuringConfigure",
+      "FindingId": "APP-06",
+      "Implementation": "Settings账号投影广播后复查；五领域bDeinitializing/InstanceGeneration，Configure的Reset通知关闭后不得复活，公开命令/回调拒绝关闭作用域，取消持活Transport。",
+      "Validation": "五领域CloseDuringConfigure实际Subsystem/测试Port及Settings投影关闭；UE未执行",
+      "Status": "source_fixed_pending_ue"
+    },
+    {
+      "Key": "InventorySynchronous",
+      "FindingId": "APP-06",
+      "Implementation": "Mutation/Query在外部Begin前设状态与独立终态身份；持活Transport并捕获Pending副本、账号与OperationId；快照回调在飞门闩拒绝重复。",
+      "Validation": "SynchronousOutcome及Reset/Close/既有Mutation用例；UE未执行",
+      "Status": "source_fixed_pending_ue"
+    },
+    {
+      "Key": "EquipmentReentry",
+      "FindingId": "APP-07",
+      "Implementation": "Grant/Revoke候选与旧句柄脱离成员，Port/Resolver/Definition保活；解析/GAS每步后检查寿命/Avatar，关闭撤销局部NewHandles，不提交孤儿能力；持久Begin也持活参数。",
+      "Validation": "ComponentRemoval扩展Resolver同步DestroyComponent，ASC仍存活且无授权；UE未执行",
+      "Status": "source_fixed_pending_ue"
+    },
+    {
+      "Key": "ExactIntegerParsing",
+      "FindingId": "APP-12",
+      "Implementation": "Commerce金额/Quantity与LiveOps版本/Revision/priority/计数严格整数范围；UE numeric-string DOM保留原number token，int64全范围精确解析；普通double只接受2^53−1精确范围；Progression字符串严格溢出。",
+      "Validation": "三个生产私有纯值策略各Debug/Release build/CTest退出0；真实JsonValidation调用生产解析器源码未执行",
+      "Status": "source_fixed_pending_ue"
+    },
+    {
+      "Key": "CollectionTypeValidation",
+      "FindingId": "APP-12",
+      "Implementation": "Commerce三集合、LiveOps目录/玩家/嵌套集合明确提供错类型即拒绝；对象/标签已知元素类型拒绝畸形。缺字段维持既有可省略合同，不造required schema。",
+      "Validation": "真实JSON用例覆盖offers:{}、campaign_states:\"bad\"、目录非对象元素、合法省略与空/零值；UE未执行",
+      "Status": "source_fixed_pending_ue"
+    },
+    {
+      "Key": "LiveOpsRequestGate",
+      "FindingId": "APP-10",
+      "Implementation": "目录/玩家状态/领取/领取查询各自独立代次门闩，Claim返回OperationId必须匹配捕获Guid；过期/重复不能消耗新资格。",
+      "Validation": "RequestTerminalGate覆盖同账号旧目录和错/重复ClaimOperationId；UE未执行",
+      "Status": "source_fixed_pending_ue"
+    }
+  ],
+  "FrozenAtLocal": "2026-10-09T11:40:29.705777+08:00",
+  "SecondReviewTargetedRepairs": [
+    {
+      "Key": "SettingsPreparationFailureEvent",
+      "FindingId": "APP-14",
+      "Implementation": "ReloadInternal统一发布Rebuild/ResolvePersistenceProvider准备失败终态，直接Reload与延后Topology唤醒均事件驱动结束Loading；外部调用后核实例/读取代次，caller移除重复Publish。",
+      "Regression": "PreparationFailureEvent观察订阅者非Loading失败、直接/拓扑只一次；DeferredPreparationEvent真实GT延后失败事件。",
+      "Validation": "Settings专项门禁退出0，UE用例未运行，修前/后UE红绿未执行。"
+    },
+    {
+      "Key": "InventoryRecoveryListenerTakeover",
+      "FindingId": "APP-06",
+      "Implementation": "内部Mutation/Query处理器接收原请求代次；OperationNotFound通知后监听器查询B接管则旧A停止；RevisionConflict监听器Snapshot接管则旧栈不再次刷新，不伪报BackendUnavailable。",
+      "Regression": "QueryListenerTakeover/ConflictListenerTakeover实际OnChanged及Transport Begin计数，覆盖后续终态可完成。",
+      "Validation": "范围diff与12必要静态条件退出0，UE用例未运行。"
+    }
+  ],
+  "PreservedRootRepairs": [
+    "ResolvePersistenceProvider无Provider仅清Scoped/Factory，不额外推进LoadGeneration；卸载后bLoading=false/default1/旧Completion回归保留。",
+    "Equipment Definitions.FindRef(...).Get()由根修复，本轮未访问或修改装备源码。"
+  ],
+  "FinalPairChangedFiles": [
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Private/Subsystems/GamePlatformSettingsSubsystem.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Private/Tests/GamePlatformSettingsAsyncLoadTests.cpp",
+    "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Docs/SettingsLifecycle.md",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Private/Services/GamePlatformInventoryClientSubsystem.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Services/GamePlatformInventoryClientSubsystem.h",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Private/Tests/GamePlatformInventoryClientTests.cpp",
+    "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/README.md"
+  ],
+  "FinalPairNewFiles": [],
+  "EquipmentLambdaCompileRepair": {
+    "File": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Private/Components/GamePlatformEquipmentServerComponent.cpp",
+    "Lines": [
+      248,
+      312
+    ],
+    "Cause": "弱引用捕获lambda中的bApplyingRuntimeSnapshot未限定到WeakThis解析出的Self，引发C3493/C2327/C2065。",
+    "Fix": "两处均改Self->bApplyingRuntimeSnapshot；没有改捕获为this，保持弱UObject所有权及寿命/请求代次门闩。",
+    "Review": "同文件四个WeakThis持久化回调与bApplyingRuntimeSnapshot使用位置抽检；其余回调成员访问已通过Self，方法直接成员与受StrongSelf保活的同步ScopeCurrent探针保持原语义。",
+    "DiffCheckExitCode": 0,
+    "DiffCheckLog": "EquipmentLambdaDiffCheck.log",
+    "Rebuild": "本分工未运行UBT；修后UE编译尚未执行，不宣称通过。"
+  }
+}

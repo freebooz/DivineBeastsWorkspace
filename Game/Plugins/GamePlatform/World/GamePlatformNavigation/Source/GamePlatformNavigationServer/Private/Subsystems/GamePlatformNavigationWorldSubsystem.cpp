@@ -58,6 +58,8 @@ void UGamePlatformNavigationWorldSubsystem::Deinitialize()
         FGamePlatformNavigationRequestHandle Handle;
         Handle.RequestId = RequestId;
         Handle.WorldGeneration = WorldGeneration;
+        if (const FAsyncRequestRecord* Record = AsyncRequests.Find(RequestId))
+        { Handle.OperationGeneration = static_cast<int64>(Record->OperationGeneration); }
         CancelRequest(Handle);
     }
 
@@ -345,6 +347,13 @@ UGamePlatformNavigationWorldSubsystem::FindPathAsync(
     }
 
     const int32 ExpectedWorldGeneration = WorldGeneration;
+    // 反射句柄使用正int64；到达上限时明确拒绝，禁止回绕复用旧代次。
+    if (NextOperationGeneration >= static_cast<uint64>(MAX_int64))
+    {
+        FGamePlatformNavigationPathResult Result; Result.RequestId = EffectiveRequestId;
+        Result.WorldGeneration = WorldGeneration; Result.Status = EGamePlatformNavigationPathStatus::Failed;
+        Result.Error = EGamePlatformNavigationError::Unsupported; Completion.ExecuteIfBound(Result); return Handle;
+    }
     const uint64 ExpectedOperationGeneration = ++NextOperationGeneration;
 
     const FNavPathQueryDelegate Delegate =
@@ -413,6 +422,7 @@ UGamePlatformNavigationWorldSubsystem::FindPathAsync(
 
     Handle.RequestId = EffectiveRequestId;
     Handle.WorldGeneration = ExpectedWorldGeneration;
+    Handle.OperationGeneration = static_cast<int64>(ExpectedOperationGeneration);
     return Handle;
 }
 
@@ -428,7 +438,8 @@ bool UGamePlatformNavigationWorldSubsystem::CancelRequest(
     FAsyncRequestRecord* Record =
         AsyncRequests.Find(Handle.RequestId);
 
-    if (!Record)
+    if (!Record || !GamePlatformNavigationRequestPolicy::MatchesHandle(Record->OperationGeneration,
+        static_cast<uint64>(Handle.OperationGeneration), Record->WorldGeneration, Handle.WorldGeneration))
     {
         return false;
     }

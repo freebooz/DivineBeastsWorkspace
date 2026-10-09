@@ -11,9 +11,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterActivationLifecycleTest,
 bool FDivineBeastsCharacterActivationLifecycleTest::RunTest(const FString& Parameters)
 {
     (void)Parameters;
-    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
-    World->InitializeNewWorld(UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false)
-        .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false));
+    // UE5.8的CreateWorld已初始化世界；参数一次性传入，避免二次创建固定名WorldSettings而崩溃。
+    const UWorld::InitializationValues WorldInitializationValues = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false)
+        .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true,
+        ERHIFeatureLevel::Num, &WorldInitializationValues);
     auto* Pawn = World->SpawnActor<ACharacter>(); auto* OtherPawn = World->SpawnActor<ACharacter>();
     auto* ASC = NewObject<UGamePlatformAbilitySystemComponent>(Pawn); Pawn->AddInstanceComponent(ASC); ASC->RegisterComponent();
     ASC->BindAbilityActorInfo(Pawn, Pawn);

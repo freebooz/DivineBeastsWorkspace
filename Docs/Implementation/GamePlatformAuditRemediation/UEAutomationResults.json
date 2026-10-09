@@ -1,0 +1,394 @@
+{
+  "SchemaVersion": 1,
+  "EngineVersion": "5.8.0",
+  "Platform": "Win64",
+  "Mode": "Editor-Cmd/NullRHI/Unattended",
+  "MonolithDisabled": true,
+  "Interpretation": "默认完整136项实际发现；最新尝试59项完成、53通过、6失败后装备夹具数组别名崩溃；对应修复已冻结，修后完整批次待执行",
+  "Attempts": [
+    {
+      "Evidence": "Saved/Validation/PluginRemediation-2026-10-09/ActualEditorAutomation",
+      "Process": {
+        "ExitCode": 1,
+        "ProcessId": 29108,
+        "StartTimeTicks": 639271283013338931,
+        "Ready": false,
+        "TimedOut": false,
+        "Cleaned": true,
+        "DurationSeconds": 208.4157169
+      },
+      "ExpectedCount": 136,
+      "BuildRunId": null,
+      "DiagnosticExclusions": null,
+      "ActualDiscoveredCount": null,
+      "StartedCount": 0,
+      "CompletedCount": 0,
+      "SuccessCount": 0,
+      "FailedCount": 0,
+      "Completed": [],
+      "FatalPresent": false,
+      "LogSHA256": "8612ADFF97333E2B0DB44E84CEE658EDD934CF84CB19E6398A5DFF2DAE7B0627"
+    },
+    {
+      "Evidence": "Saved/Validation/PluginRemediation-2026-10-09/ActualEditorAutomationRetry",
+      "Process": {
+        "ExitCode": -1,
+        "ProcessId": 32180,
+        "StartTimeTicks": 639271286894322206,
+        "Ready": false,
+        "TimedOut": false,
+        "Cleaned": true,
+        "DurationSeconds": 344.908261
+      },
+      "ExpectedCount": 136,
+      "BuildRunId": null,
+      "DiagnosticExclusions": null,
+      "ActualDiscoveredCount": null,
+      "StartedCount": 0,
+      "CompletedCount": 0,
+      "SuccessCount": 0,
+      "FailedCount": 0,
+      "Completed": [],
+      "FatalPresent": false,
+      "LogSHA256": "B99E64D11B866ADDA37B2728A3B94B6B874F236E8A844AE2C8AC2B1DEE3DD0B9"
+    },
+    {
+      "Evidence": "Saved/Validation/PluginRemediation-2026-10-09/ActualEditorAutomationSyntaxRetry",
+      "Process": {
+        "ExitCode": 3,
+        "ProcessId": 45632,
+        "StartTimeTicks": 639271290814571066,
+        "Ready": false,
+        "TimedOut": false,
+        "Cleaned": true,
+        "DurationSeconds": 72.6560152
+      },
+      "ExpectedCount": 136,
+      "BuildRunId": null,
+      "DiagnosticExclusions": null,
+      "ActualDiscoveredCount": 134,
+      "StartedCount": 1,
+      "CompletedCount": 0,
+      "SuccessCount": 0,
+      "FailedCount": 0,
+      "Completed": [],
+      "FatalPresent": true,
+      "LogSHA256": "16923AF287E82BD1566F8E8177D20CDE93311EFF08F4676F697EBD07D999A54C"
+    },
+    {
+      "Evidence": "Saved/Validation/PluginRemediation-2026-10-09/ActualEditorAutomationWorldFixtureRetry",
+      "Process": {
+        "ExitCode": 3,
+        "ProcessId": 50992,
+        "StartTimeTicks": 639271302951041686,
+        "Ready": false,
+        "TimedOut": false,
+        "Cleaned": true,
+        "DurationSeconds": 118.0598633
+      },
+      "ExpectedCount": 136,
+      "BuildRunId": "58c3c771-7a49-4f27-868f-148aa074d74c",
+      "DiagnosticExclusions": null,
+      "ActualDiscoveredCount": 136,
+      "StartedCount": 1,
+      "CompletedCount": 0,
+      "SuccessCount": 0,
+      "FailedCount": 0,
+      "Completed": [],
+      "FatalPresent": true,
+      "LogSHA256": "6C79B4F7413F7FB71EF09346E7737A08E2F5423A2012CBC02E340B012D775B80"
+    },
+    {
+      "Evidence": "Saved/Validation/PluginRemediation-2026-10-09/ActualEditorAutomationOtherCasesDiagnostic",
+      "Process": {
+        "ExitCode": -1,
+        "ProcessId": 39656,
+        "StartTimeTicks": 639271305021178521,
+        "Ready": false,
+        "TimedOut": false,
+        "Cleaned": true,
+        "DurationSeconds": 781.6023976
+      },
+      "ExpectedCount": 133,
+      "BuildRunId": "58c3c771-7a49-4f27-868f-148aa074d74c",
+      "DiagnosticExclusions": [
+        "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.NormalAndOldRequest",
+        "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.QueuedRespawnAfterEnd",
+        "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.StatsListenerEndsMatch"
+      ],
+      "ActualDiscoveredCount": null,
+      "StartedCount": 0,
+      "CompletedCount": 0,
+      "SuccessCount": 0,
+      "FailedCount": 0,
+      "Completed": [],
+      "FatalPresent": false,
+      "LogSHA256": "31BF9FB6605C233EEA7A1D8C7270D35B8202AF2E7F010061CE4BDBAC3ABFBCED"
+    },
+    {
+      "Evidence": "Saved/Validation/PluginRemediation-2026-10-09/ActualEditorAutomationFinalFixture",
+      "Process": {
+        "ExitCode": 3,
+        "ProcessId": 25796,
+        "StartTimeTicks": 639271332838288537,
+        "Ready": false,
+        "TimedOut": false,
+        "Cleaned": true,
+        "DurationSeconds": 169.0029301
+      },
+      "ExpectedCount": 136,
+      "BuildRunId": "731b6219-5c8b-48f4-b8f0-cf930850452f",
+      "DiagnosticExclusions": null,
+      "ActualDiscoveredCount": 136,
+      "StartedCount": 60,
+      "CompletedCount": 59,
+      "SuccessCount": 53,
+      "FailedCount": 6,
+      "Completed": [
+        {
+          "Name": "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.NormalAndOldRequest",
+          "Result": "Fail"
+        },
+        {
+          "Name": "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.QueuedRespawnAfterEnd",
+          "Result": "Fail"
+        },
+        {
+          "Name": "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.StatsListenerEndsMatch",
+          "Result": "Fail"
+        },
+        {
+          "Name": "DivineBeasts.Character.Pawn.AuthoritativeComposition",
+          "Result": "Success"
+        },
+        {
+          "Name": "DivineBeasts.Character.Pawn.AuthoritativeDeathOncePerAvatar",
+          "Result": "Fail"
+        },
+        {
+          "Name": "DivineBeasts.Presentation.Activation.FailureCancellationAndOldGeneration",
+          "Result": "Fail"
+        },
+        {
+          "Name": "DivineBeasts.Presentation.ContentPackContract",
+          "Result": "Success"
+        },
+        {
+          "Name": "DivineBeasts.Presentation.HeroVFXProfiles",
+          "Result": "Success"
+        },
+        {
+          "Name": "DivineBeasts.Presentation.ProjectFacts",
+          "Result": "Success"
+        },
+        {
+          "Name": "DivineBeasts.Presentation.RuntimeContracts",
+          "Result": "Success"
+        },
+        {
+          "Name": "DivineBeasts.Server.WorldRetirement",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.AsynchronousWaitResetsCycleBudget",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.BusyAndReentrantControlRejected",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.CancelAndLateCompletion",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.CancelBeforeFirstTick",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.CompletionAcceptanceBoundsWakeups",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.ConcurrentDuplicateCompletions",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.CycleModeLongChainNotBudgeted",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.CycleModeStillValidatesGraph",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.DeadlineBeatsQueuedCompletion",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.DependencyLossFailsAndCleansUp",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.DuplicateCompletionFirstWins",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.ExactCancellationAndThreadGuards",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.ExplicitCycleOptInAndGeneration",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.ExternalEventUsesAttemptMailbox",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.FailurePreservesError",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.GenerationChangesAcrossRetry",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.GraphPreflightAndAtomicStart",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.ImmediateCycleBudgetFails",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.IndependentScopes",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.InvalidClockFailsAndCleansUp",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.InvalidGraphsAreAtomic",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.InvalidLimitsRejected",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.LongGraphDoesNotRecurse",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.NamedBranchSkipsDefault",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.NextWakeTimeContract",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.OldRunCannotAffectRestart",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.RetryBudgetExhausted",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.RetryDelayAndOldAttemptIsolation",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.SequentialAndSynchronousCompletion",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.ShutdownAndCallbackAfterDestruction",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.ThreadedCompletionAndControl",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.TimeoutRetryAndCancelBackoff",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.ApplicationFlow.Core.UnknownOutcomeFails",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Arena.Client.ResetReplicatedWorldView",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Arena.Lifecycle.ReconnectPreservesGraceUntilSpawnAccepted",
+          "Result": "Fail"
+        },
+        {
+          "Name": "GamePlatform.Arena.Server.VerifiedAdmissionRosterBoundary",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Commerce.Client.AccountIsolation",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Commerce.Client.BackendAuthority",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Commerce.Client.CloseDuringConfigure",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Commerce.Client.JsonValidation",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Commerce.Client.ResetDuringState",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.DeveloperTools.DefinitionIdentityContract",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Entitlement.Client.AccountIsolation",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Entitlement.Client.CloseDuringConfigure",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Entitlement.Client.DerivedIndex",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Entitlement.Client.OnlineOwnership",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Entitlement.Client.ResetDuringState",
+          "Result": "Success"
+        },
+        {
+          "Name": "GamePlatform.Entitlement.Query",
+          "Result": "Success"
+        }
+      ],
+      "FatalPresent": true,
+      "LogSHA256": "281E20E0E34FC3A2FD3BE65E814B0DCA81395E1D915B16F263A2DFD5B65A44B7"
+    }
+  ],
+  "Limits": [
+    "只验证实际所列逻辑用例，不证明生产后端、真实英雄/档案、五模式资源、三角色联机、画面、设备预算或Cook",
+    "默认136清单保留；诊断排除三死亡桥项不冒充完整批次",
+    "启动中未具名ScriptStruct条件错误不能当作测试已通过；全编辑器零错误未认证"
+  ]
+}

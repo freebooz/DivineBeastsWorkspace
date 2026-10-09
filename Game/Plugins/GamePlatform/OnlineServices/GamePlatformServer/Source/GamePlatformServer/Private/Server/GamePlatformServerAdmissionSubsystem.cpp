@@ -80,6 +80,7 @@ bool FGamePlatformServerVerifiedAdmission::IsStructurallyValid() const
     return AdmissionId.IsValid() && ConnectionId.IsValid() &&
         IsBoundedAdmissionText(PlayerId) && IsBoundedAdmissionText(SessionId) &&
         IsBoundedAdmissionText(GameSessionId) &&
+        (MatchId.IsEmpty() || IsBoundedAdmissionText(MatchId)) &&
         IsBoundedAdmissionText(AssignmentId) && IsBoundedAdmissionText(ReservationId) &&
         IsBoundedAdmissionText(ServerInstanceId) && IsBoundedAdmissionText(ServerBootId) &&
         IsBoundedAdmissionText(WorldId) && IsBoundedAdmissionText(ExperienceId) &&
@@ -111,17 +112,8 @@ bool UGamePlatformServerAdmissionSubsystem::ShouldCreateSubsystem(UObject* Outer
 
 void UGamePlatformServerAdmissionSubsystem::Deinitialize()
 {
-    if (IGamePlatformServerAdmissionProvider* Provider = ResolveUniqueProvider())
-    {
-        for (const TPair<FGuid, FPendingAdmission>& Pair : PendingAdmissions)
-        {
-            Provider->CancelOperation(Pair.Key);
-        }
-    }
-    ++OperationGeneration;
-    PendingAdmissions.Reset();
-    VerifiedAdmissions.Reset();
-    ActiveTarget = {};
+    bIsClosing = true;
+    ResetTarget(TEXT("ServerAdmissionScopeClosed"));
     AdmissionChanged.Clear();
     Super::Deinitialize();
 }
@@ -130,12 +122,57 @@ bool UGamePlatformServerAdmissionSubsystem::ConfigureTarget(
     const FGamePlatformServerAdmissionTarget& Target)
 {
     check(IsInGameThread());
-    if (!Target.IsValid() || !PendingAdmissions.IsEmpty() || !VerifiedAdmissions.IsEmpty())
+    if (bIsClosing || bResettingTarget || bStoppingAdmissions || (!bAcceptingAdmissions && ActiveTarget.IsValid()) ||
+        !Target.IsValid() || !PendingAdmissions.IsEmpty() || !VerifiedAdmissions.IsEmpty())
     {
         return false;
     }
     ActiveTarget = Target;
+    bAcceptingAdmissions = true;
     return true;
+}
+
+void UGamePlatformServerAdmissionSubsystem::ResetTarget(FName Reason)
+{
+    check(IsInGameThread());
+    if (bResettingTarget) return;
+    TGuardValue<bool> ResetGuard(bResettingTarget, true);
+    bAcceptingAdmissions = false;
+    ActiveTarget = {};
+    // 先移走账本，使同步取消、撤销通知和迟到完成均不能观察或改写正在迭代的旧状态。
+    auto Verified = MoveTemp(VerifiedAdmissions);
+    VerifiedAdmissions.Reset();
+    CancelPendingAdmissions(Reason);
+    IGamePlatformServerAdmissionProvider* Provider = ResolveUniqueProvider();
+    for (const auto& Pair : Verified)
+    {
+        if (Pair.Key.IsValid()) AdmissionChanged.Broadcast(Pair.Key.Get(), Pair.Value, false);
+        if (Provider) Provider->ReleaseAdmission(Pair.Value, {});
+    }
+}
+
+void UGamePlatformServerAdmissionSubsystem::StopAcceptingAdmissions(FName Reason)
+{
+    check(IsInGameThread());
+    if (bResettingTarget || bStoppingAdmissions) return;
+    // 停止新握手与完整撤销是不同所有权操作；取消通知内的世界退出必须能升级为ResetTarget。
+    // 单独栅栏只拒绝重开/重复停止，不能吞掉关停期间对已有连接的完整撤销。
+    TGuardValue<bool> StopGuard(bStoppingAdmissions, true);
+    bAcceptingAdmissions = false;
+    CancelPendingAdmissions(Reason);
+}
+
+void UGamePlatformServerAdmissionSubsystem::CancelPendingAdmissions(FName Reason)
+{
+    auto Pending = MoveTemp(PendingAdmissions);
+    PendingAdmissions.Reset();
+    IGamePlatformServerAdmissionProvider* Provider = ResolveUniqueProvider();
+    for (auto& Pair : Pending)
+    {
+        if (Provider) Provider->CancelOperation(Pair.Key);
+        if (Pair.Value.Completion) Pair.Value.Completion(MakeFailure(
+            Reason.IsNone() ? FName(TEXT("ServerAdmissionTargetClosed")) : Reason));
+    }
 }
 
 bool UGamePlatformServerAdmissionSubsystem::BeginAdmission(
@@ -144,7 +181,7 @@ bool UGamePlatformServerAdmissionSubsystem::BeginAdmission(
     FGamePlatformServerAdmissionCompletion Completion)
 {
     check(IsInGameThread());
-    if (!ActiveTarget.IsValid() || !Proof.IsValid() ||
+    if (bIsClosing || bResettingTarget || bStoppingAdmissions || !bAcceptingAdmissions || !ActiveTarget.IsValid() || !Proof.IsValid() ||
         Controller.GetWorld() == nullptr || Controller.GetGameInstance() != GetGameInstance())
     {
         if (Completion)
@@ -163,11 +200,18 @@ bool UGamePlatformServerAdmissionSubsystem::BeginAdmission(
     }
     if (VerifiedAdmissions.Contains(&Controller))
     {
+        FGamePlatformServerVerifiedAdmission Current;
+        if (!GetVerifiedAdmission(Controller, Current))
+        {
+            ReleaseAdmission(Controller, {});
+            if (Completion) Completion(MakeFailure(TEXT("ServerAdmissionExpired")));
+            return false;
+        }
         if (Completion)
         {
             FGamePlatformServerAdmissionResult Result;
             Result.bSucceeded = true;
-            Result.Admission = VerifiedAdmissions.FindChecked(&Controller);
+            Result.Admission = MoveTemp(Current);
             Completion(MoveTemp(Result));
         }
         return true;
@@ -298,10 +342,17 @@ void UGamePlatformServerAdmissionSubsystem::CompleteAdmission(
     FGamePlatformServerAdmissionResult Result)
 {
     check(IsInGameThread());
+    const auto* Existing = PendingAdmissions.Find(OperationId);
+    // 先核对代次再取走账本；旧回调不能移除调用者重试复用OperationId后的新请求。
+    if (!Existing || Existing->Generation != Generation) return;
     FPendingAdmission Pending;
-    if (!PendingAdmissions.RemoveAndCopyValue(OperationId, Pending) ||
-        Pending.Generation != Generation || !Pending.Controller.IsValid())
+    if (!PendingAdmissions.RemoveAndCopyValue(OperationId, Pending))
     {
+        return;
+    }
+    if (!Pending.Controller.IsValid())
+    {
+        if (Pending.Completion) Pending.Completion(MakeFailure(TEXT("ServerAdmissionConnectionExpired")));
         return;
     }
 
@@ -311,10 +362,7 @@ void UGamePlatformServerAdmissionSubsystem::CompleteAdmission(
         Result.Admission.ConnectionId != Pending.ConnectionId ||
         Result.Admission.ConnectionGeneration != Pending.ConnectionGeneration)
     {
-        if (Result.ErrorCode.IsNone())
-        {
-            Result = MakeFailure(TEXT("ServerAdmissionVerificationFailed"));
-        }
+        Result = MakeFailure(Result.ErrorCode.IsNone() ? FName(TEXT("ServerAdmissionVerificationFailed")) : Result.ErrorCode);
         if (Pending.Completion)
         {
             Pending.Completion(MoveTemp(Result));
@@ -333,6 +381,10 @@ void UGamePlatformServerAdmissionSubsystem::CompleteAdmission(
 
     VerifiedAdmissions.Add(Controller, Result.Admission);
     AdmissionChanged.Broadcast(Controller, Result.Admission, true);
+    // 通知允许项目层同步撤销目标；成功完成必须以广播后的当前连接账本为准。
+    const auto* Current = VerifiedAdmissions.Find(Controller);
+    if (!Current || Current->AdmissionId != Result.Admission.AdmissionId || !Current->MatchesTarget(ActiveTarget))
+        Result = MakeFailure(TEXT("ServerAdmissionRevokedDuringNotification"));
     if (Pending.Completion)
     {
         Pending.Completion(MoveTemp(Result));

@@ -4,6 +4,7 @@
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Abilities/DivineBeastsCharacterActivationGate.h"
@@ -106,6 +107,8 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     bConfigurationApplied = false;
     bLocalReady = false;
     bServerReady = false;
+    // 绑定新可信身份先撤销旧角色资格，即使新的异步需求尚未完成也不能继续Active。
+    ReadinessChanged.Broadcast(false);
 
     CharacterId = Context.CharacterId;
     RuntimeState.HeroDefinitionId = Context.HeroDefinitionId;
@@ -121,6 +124,41 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     RefreshInitialization();
     Owner->ForceNetUpdate();
     return true;
+}
+
+bool UDivineBeastsCharacterComponent::HasReadableDefinitionResources() const
+{
+    const UWorld* World = GetWorld(); UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
+    auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+    if (!Data || !World || World->bIsTearingDown) { return false; }
+    if (Data->GetLeaseState(DefinitionLease) == EGamePlatformDataRequestState::Succeeded) { return true; }
+    return BorrowedWarmupOwner.IsValid() && BorrowedWarmupOwner->GetWorld() == World &&
+        Data->GetLeaseState(BorrowedWarmupLease) == EGamePlatformDataRequestState::Succeeded;
+}
+bool UDivineBeastsCharacterComponent::IsCharacterReady() const
+{
+    if (bEndingPlay || !HasReadableDefinitionResources()) { return false; }
+    return GetOwner() && GetOwner()->HasAuthority() ? bServerReady : bServerReady && bLocalReady;
+}
+bool UDivineBeastsCharacterComponent::TryUsePreloadedDefinition(const FGamePlatformDataLease& WarmupLease,
+    UObject& WarmupOwner, FString& OutError)
+{
+    check(IsInGameThread());
+    UWorld* World = GetWorld(); UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
+    auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+    const FSoftObjectPath Path = FDivineBeastsHeroCatalog::GetDefinitionAssetPath(RuntimeState.HeroDefinitionId);
+    if (!GetOwner() || !GetOwner()->HasAuthority() || bEndingPlay || !IsIdentityStructurallyValid() ||
+        !World || World->bIsTearingDown || !IsValid(&WarmupOwner) || WarmupOwner.GetWorld() != World || !Data ||
+        !DefinitionLease.IsValid() || !LastDefinitionLoadResult.IsSuccess() || !WarmupLease.ResourcePaths.Contains(Path) ||
+        Data->GetLeaseState(WarmupLease) != EGamePlatformDataRequestState::Succeeded)
+    { OutError = TEXT("英雄预热交接缺少当前世界的真实成功租约或自身需求未受理。"); return false; }
+    auto* Definition = Cast<UDivineBeastsHeroDefinition>(Path.ResolveObject());
+    if (!Definition || Definition->DefinitionId != RuntimeState.HeroDefinitionId)
+    { OutError = TEXT("预热资源真实Definition与当前可信Hero身份不一致。"); return false; }
+    BorrowedWarmupOwner = &WarmupOwner; BorrowedWarmupLease = WarmupLease;
+    HandleDefinitionLoaded(Definition, DefinitionRequestGeneration, RuntimeState.SpawnGeneration, RuntimeState.AvatarGeneration);
+    if (!IsCharacterReady()) { OutError = TEXT("预热Definition配置或真实角色组件未Ready。"); return false; }
+    OutError.Reset(); return true;
 }
 
 void UDivineBeastsCharacterComponent::RefreshInitialization()
@@ -151,7 +189,8 @@ void UDivineBeastsCharacterComponent::RefreshInitialization()
     }
 
     FString Error;
-    bConfigurationApplied = ApplyDefinition(*LoadedDefinition, Error);
+    // 同一身份/版本已配置后不重复初始化Momentum；预热交接后的自身租约回调不会重置已参与玩法的GAS属性。
+    if (!bConfigurationApplied) { bConfigurationApplied = ApplyDefinition(*LoadedDefinition, Error); }
     bLocalReady = bConfigurationApplied;
 
     if (GetOwner() && GetOwner()->HasAuthority())
@@ -210,6 +249,7 @@ void UDivineBeastsCharacterComponent::BeginDefinitionLoad()
                 CompletedLease.Generation != WeakThis->DefinitionLease.Generation)
             { return; }
             WeakThis->LastDefinitionLoadResult = Result;
+            if (Result.IsSuccess()) { WeakThis->BorrowedWarmupOwner.Reset(); WeakThis->BorrowedWarmupLease = {}; }
             // 完成只是加载终态；成功租约必须继续覆盖角色使用期，失败仅撤销本组件需求。
             if (!Result.IsSuccess()) { WeakThis->CancelDefinitionLease(); }
             WeakThis->HandleDefinitionLoaded(Result.IsSuccess() ? Definition : nullptr,
@@ -226,6 +266,8 @@ void UDivineBeastsCharacterComponent::BeginDefinitionLoad()
 void UDivineBeastsCharacterComponent::CancelDefinitionLease()
 {
     ++DefinitionRequestGeneration;
+    // 借用只撤销本组件引用，不释放装配拥有的预热需求。
+    BorrowedWarmupOwner.Reset(); BorrowedWarmupLease = {};
     if (DefinitionLease.IsValid())
     {
         if (UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr)
@@ -257,6 +299,8 @@ void UDivineBeastsCharacterComponent::HandleDefinitionLoaded(
         bLocalReady = false;
         bConfigurationApplied = false;
         UpdateReadiness();
+        // Data已进入失败/取消终态，旧Ready查询已为false；仍显式通知宿主撤销此前公布的Active。
+        ReadinessChanged.Broadcast(false);
         return;
     }
 
@@ -318,6 +362,12 @@ bool UDivineBeastsCharacterComponent::ApplyDefinition(
         return false;
     }
 
+    auto* AbilitySystem = Character->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
+    auto* Combat = Character->FindComponentByClass<UGamePlatformCombatComponent>();
+    if (!AbilitySystem || !Combat || AbilitySystem->GetAvatarActor() != Character ||
+        !AbilitySystem->GetAvatarBindingSnapshot().bBound)
+    { OutError = TEXT("角色缺少ASC、Combat或本Avatar的ActorInfo，禁止发布Ready。"); return false; }
+
     Capsule->SetCapsuleSize(
         Definition.SpawnEnvelope.CapsuleRadius,
         Definition.SpawnEnvelope.CapsuleHalfHeight,
@@ -335,21 +385,24 @@ bool UDivineBeastsCharacterComponent::ApplyDefinition(
     // 客户端通过 GAS 复制接收，不在 CharacterComponent/UI 保存第二份权威真值。
     if (Character->HasAuthority())
     {
-        if (UGamePlatformAbilitySystemComponent* AbilitySystem =
+        // 新Pawn的Combat初始代次为1；绑定更大可信Avatar代次时只重置一次，不能让同代次重复配置递增到另一身份。
+        if (!Combat->GetCombatAttributeSet() || Combat->GetCombatAvatarGeneration() > RuntimeState.AvatarGeneration ||
+            (Combat->GetCombatAvatarGeneration() < RuntimeState.AvatarGeneration && !Combat->ResetForNewAvatar(RuntimeState.AvatarGeneration)))
+        { OutError = TEXT("战斗组件未建立同Avatar代次的权威属性状态。"); return false; }
+        if (UGamePlatformAbilitySystemComponent* MomentumAbilitySystem =
                 Character->FindComponentByClass<UGamePlatformAbilitySystemComponent>())
         {
             UDivineBeastsMomentumAttributeSet* MomentumAttributes =
                 const_cast<UDivineBeastsMomentumAttributeSet*>(
-                    AbilitySystem->GetSet<UDivineBeastsMomentumAttributeSet>());
+                    MomentumAbilitySystem->GetSet<UDivineBeastsMomentumAttributeSet>());
             if (!IsValid(MomentumAttributes))
             {
                 MomentumAttributes = const_cast<UDivineBeastsMomentumAttributeSet*>(
-                    AbilitySystem->AddSet<UDivineBeastsMomentumAttributeSet>());
+                    MomentumAbilitySystem->AddSet<UDivineBeastsMomentumAttributeSet>());
             }
-            if (IsValid(MomentumAttributes))
-            {
-                MomentumAttributes->InitializeFromDefinition(Definition.Momentum);
-            }
+            if (!IsValid(MomentumAttributes))
+            { OutError = TEXT("服务器未建立Momentum属性集，禁止发布Ready。"); return false; }
+            MomentumAttributes->InitializeFromDefinition(Definition.Momentum);
         }
     }
 

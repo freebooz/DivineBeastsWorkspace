@@ -1,3 +1,4 @@
+// 平台玩家服务Automation回归：测试Transport仅控制完成/取消，不访问生产路由；验证状态、账号隔离、广播重置与后端权威显示。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Interfaces/GamePlatformCommerceClientTransport.h"
@@ -246,6 +247,38 @@ bool FGamePlatformCommerceAccountIsolationTest::RunTest(const FString&)
         Client->GetCatalogRevision(),
         int64(0));
 
+    return true;
+}
+
+
+// 验证公开状态监听器在Loading内重置账号：受理失败、旧传输没有请求、清空后的账号状态不被旧栈覆盖。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCommerceResetDuringStateTest, "GamePlatform.Commerce.Client.ResetDuringState", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCommerceResetDuringStateTest::RunTest(const FString&)
+{
+    auto* Client = NewObject<UGamePlatformCommerceClientSubsystem>();
+    auto Transport = MakeShared<FCommerceMockTransport, ESPMode::ThreadSafe>();
+    Client->OnCommerceStateChanged.AddLambda([Client](auto&&...)
+    {
+        if (Client->GetState() == EGamePlatformCommerceClientState::LoadingCatalog) { Client->ResetAccount(); }
+    });
+    TestFalse(TEXT("Loading监听器重置后不得接纳旧账号请求"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Reset"), Transport));
+    TestFalse(TEXT("传输未启动失效请求"), static_cast<bool>(Transport->CatalogCompletion));
+    TestEqual(TEXT("回调返回后保持清空状态"), Client->GetState(), EGamePlatformCommerceClientState::Idle);
+    return true;
+}
+
+
+// 生命周期回归：测试Transport不访问网络；Reset同步通知调用Deinitialize后，关闭作用域必须拒绝恢复账号及公开刷新。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCommerceCloseDuringConfigureTest, "GamePlatform.Commerce.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCommerceCloseDuringConfigureTest::RunTest(const FString&)
+{
+    auto* Client = NewObject<UGamePlatformCommerceClientSubsystem>();
+    auto Transport = MakeShared<FCommerceMockTransport, ESPMode::ThreadSafe>();
+    TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
+    Client->OnCommerceStateChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });
+    TestFalse(TEXT("Reset通知内关闭后Configure不得复活服务"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Closed"), Transport));
+    TestFalse(TEXT("关闭后不得启动请求"), static_cast<bool>(Transport->CatalogCompletion));
+    TestFalse(TEXT("公开刷新拒绝已关闭作用域"), Client->RefreshCatalog());
     return true;
 }
 

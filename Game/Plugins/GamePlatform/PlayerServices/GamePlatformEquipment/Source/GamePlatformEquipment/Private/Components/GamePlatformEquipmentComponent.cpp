@@ -40,6 +40,9 @@ void UGamePlatformEquipmentComponent::SetServerSnapshots(
         return;
     }
 
+    FString Reason;
+    if (!ValidateGamePlatformEquipmentSnapshot(InOwnerSnapshot, Reason)) { return; }
+
     OwnerSnapshot = InOwnerSnapshot;
     PublicSnapshot = BuildPublicSnapshot(InOwnerSnapshot);
     EquipmentRuntimeGeneration = FMath::Max(0, InRuntimeGeneration);
@@ -76,4 +79,35 @@ UGamePlatformEquipmentComponent::BuildPublicSnapshot(
     }
 
     return Result;
+}
+
+bool ValidateGamePlatformEquipmentSnapshot(const FGamePlatformEquipmentSnapshot& Snapshot, FString& OutReason)
+{
+    OutReason.Reset();
+    if (Snapshot.CharacterId.IsEmpty() || Snapshot.EquipmentRevision <= 0)
+    { OutReason = TEXT("装备快照缺少角色身份或正版本。"); return false; }
+    TSet<FName> SlotIds;
+    TSet<FString> ItemInstanceIds;
+    for (const auto& Slot : Snapshot.Slots)
+    {
+        if (Slot.SlotId.IsNone() || Slot.ItemInstanceId.IsEmpty() || Slot.ItemDefinitionId.IsNone() || Slot.EquipmentDefinitionId.IsNone() || Slot.Revision < 0 || SlotIds.Contains(Slot.SlotId) || ItemInstanceIds.Contains(Slot.ItemInstanceId))
+        { OutReason = TEXT("装备快照含无效身份、负版本、重复槽位或重复物品实例。"); return false; }
+        SlotIds.Add(Slot.SlotId); ItemInstanceIds.Add(Slot.ItemInstanceId);
+    }
+    return true;
+}
+
+bool ValidateGamePlatformPublicEquipmentSnapshot(const FGamePlatformPublicEquipmentSnapshot& Snapshot, FString& OutReason)
+{
+    OutReason.Reset();
+    if (Snapshot.PublicStateRevision < 0)
+    { OutReason = TEXT("公开装备版本不得为负数。"); return false; }
+    TSet<FName> SlotIds;
+    for (const auto& Slot : Snapshot.Slots)
+    {
+        if (Slot.SlotId.IsNone() || Slot.EquipmentDefinitionId.IsNone() || SlotIds.Contains(Slot.SlotId))
+        { OutReason = TEXT("公开装备快照含无效身份或重复槽位。"); return false; }
+        SlotIds.Add(Slot.SlotId);
+    }
+    return true;
 }

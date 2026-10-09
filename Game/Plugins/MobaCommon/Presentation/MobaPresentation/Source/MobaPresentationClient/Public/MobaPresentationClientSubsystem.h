@@ -1,3 +1,5 @@
+// 本文件属于MobaCommon可选MOBA层 MobaPresentation，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -5,6 +7,7 @@
 #include "GamePlatformPresentationTypes.h"
 #include "Types/GamePlatformCombatEvent.h"
 #include "Types/MobaPresentationTypes.h"
+#include "TimerManager.h"
 #include "MobaPresentationClientSubsystem.generated.h"
 
 class AGamePlatformArenaGameState;
@@ -12,6 +15,10 @@ class AGamePlatformArenaPlayerState;
 class UGamePlatformCombatComponent;
 class UWorld;
 class IMobaPresentationContextContributor;
+class APlayerController;
+class APawn;
+class AActor;
+class AGameStateBase;
 
 /**
  * UMobaPresentationClientSubsystem（MOBA客户端表现适配子系统）。
@@ -59,6 +66,7 @@ public:
     int32 GetProviderMissingCount() const { return ProviderMissingCount; }
 
 private:
+    friend class FMobaPresentationPawnBindingRegressionTest;
     struct FPlayerSnapshot
     {
         int32 StatsRevision = 0;
@@ -69,6 +77,16 @@ private:
     void ResetWorldState(UWorld* NewWorld);
     void UnbindArena();
     void UnbindCombat();
+    /** 本地玩家与World事件接线；关停/旅行先解绑，回调只刷新当前所属世界。 */
+    void BindWorldEvents(UWorld* World);
+    void UnbindWorldEvents();
+    void BindController(APlayerController* Controller);
+    void HandleControllerChanged(APlayerController* Controller);
+    void HandlePawnChanged(APawn* Pawn);
+    void HandleGameStateSet(AGameStateBase* GameState);
+    void HandleActorSpawned(AActor* Actor);
+    /** 延后出生接线只接受同服务/World世代；已关闭或旅行后的回调不重新订阅。 */
+    void HandleDeferredBindingRefresh(uint64 ExpectedGeneration, TWeakObjectPtr<UWorld> ExpectedWorld);
     void BindArena(AGamePlatformArenaGameState* GameState);
     void RefreshArenaPlayerBindings();
 
@@ -91,6 +109,15 @@ private:
     TWeakObjectPtr<UWorld> BoundWorld;
     TWeakObjectPtr<AGamePlatformArenaGameState> BoundArenaGameState;
     TWeakObjectPtr<UGamePlatformCombatComponent> BoundCombatComponent;
+    TWeakObjectPtr<APlayerController> BoundController;
+    FDelegateHandle PlayerControllerChangedHandle;
+    FDelegateHandle PawnChangedHandle;
+    FDelegateHandle GameStateSetHandle;
+    FDelegateHandle ActorSpawnedHandle;
+    /** 下一调度轮查找的唯一计时器，解绑所属World时取消，不持有World强引用。 */
+    FTimerHandle PendingBindingRefreshTimer;
+    uint64 BindingGeneration = 1;
+    bool bClosing = false;
 
     FDelegateHandle PostLoadMapHandle;
     FDelegateHandle WorldCleanupHandle;

@@ -1,3 +1,4 @@
+// 项目客户端每LocalPlayer竞技UI适配：借用平台页面/Data与MOBA事实，拥有World/Actor委托；退出清空投影，无Widget轮询。
 #include "Client/DivineBeastsArenaUIClientSubsystem.h"
 
 #include "Definitions/GamePlatformUIScreenDefinition.h"
@@ -14,6 +15,7 @@ void UDivineBeastsArenaUIClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    bDeinitializing = false;
 
     Collection.InitializeDependency<UGamePlatformUIManagerSubsystem>();
 
@@ -27,12 +29,16 @@ void UDivineBeastsArenaUIClientSubsystem::Initialize(
     RegisteredDefinitions.Reserve(5);
     BoundPlayerStates.Reserve(10);
 
+    WorldCleanupHandle = FWorldDelegates::OnWorldCleanup.AddUObject(this, &UDivineBeastsArenaUIClientSubsystem::HandleWorldCleanup);
     RegisterArenaScreenDefinitions();
     RefreshArenaViewFromWorld();
 }
 
 void UDivineBeastsArenaUIClientSubsystem::Deinitialize()
 {
+    bDeinitializing = true;
+    FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupHandle);
+    BindWorldReadinessEvents(nullptr);
     UnbindArenaEvents();
     UnregisterArenaScreenDefinitions();
 
@@ -53,12 +59,18 @@ void UDivineBeastsArenaUIClientSubsystem::PlayerControllerChanged(
 
 bool UDivineBeastsArenaUIClientSubsystem::RefreshArenaViewFromWorld()
 {
+    if (bDeinitializing) { return false; }
     UWorld* World = GetWorld();
+    if (World && (World->bIsTearingDown || RetiredWorld.Get() == World)) { World = nullptr; }
+    BindWorldReadinessEvents(World);
     AGamePlatformArenaGameState* GameState =
         World ? World->GetGameState<AGamePlatformArenaGameState>() : nullptr;
     if (!IsValid(GameState) || !IsValid(ArenaViewModel))
     {
+        const bool bHadArenaWorld = BoundGameState.IsValid();
         UnbindArenaEvents();
+        if (IsValid(ArenaViewModel) && (bHadArenaWorld || !ArenaViewModel->MatchId.IsEmpty()))
+        { ArenaViewModel->ResetReplicatedArenaState(); }
         return false;
     }
 
@@ -80,6 +92,25 @@ bool UDivineBeastsArenaUIClientSubsystem::RefreshArenaViewFromWorld()
         GameState,
         PlayerStates);
     return true;
+}
+
+void UDivineBeastsArenaUIClientSubsystem::BindWorldReadinessEvents(UWorld* World)
+{
+    if (BoundWorld.Get() == World) { return; }
+    if (BoundWorld.IsValid()) { BoundWorld->GameStateSetEvent.Remove(GameStateSetHandle); }
+    // 跨世界先失效旧投影；保持新的匹配/连接流程由其拥有者后续事件更新。
+    const bool bResetPreviousWorld = BoundWorld.IsValid();
+    UnbindArenaEvents();
+    BoundWorld = World; GameStateSetHandle.Reset();
+    if (World)
+    { GameStateSetHandle = World->GameStateSetEvent.AddWeakLambda(this, [this](AGameStateBase*) { RefreshArenaViewFromWorld(); }); }
+    if (bResetPreviousWorld && IsValid(ArenaViewModel)) { ArenaViewModel->ResetReplicatedArenaState(); }
+}
+void UDivineBeastsArenaUIClientSubsystem::HandleWorldCleanup(UWorld* World, bool, bool)
+{
+    if (BoundWorld.Get() != World) { return; }
+    RetiredWorld = World;
+    BindWorldReadinessEvents(nullptr);
 }
 
 FName UDivineBeastsArenaUIClientSubsystem::ResolvePrimaryArenaSurfaceId() const
@@ -210,6 +241,7 @@ void UDivineBeastsArenaUIClientSubsystem::EnsureGameStateBinding(
         return;
     }
 
+    GameState->OnArenaPlayersChanged.AddWeakLambda(this, [this]() { RefreshArenaViewFromWorld(); });
     GameState->OnArenaPhaseChanged.AddUObject(
         this,
         &UDivineBeastsArenaUIClientSubsystem::HandleArenaPhaseChanged);
@@ -274,6 +306,7 @@ void UDivineBeastsArenaUIClientSubsystem::UnbindArenaEvents()
 {
     if (AGamePlatformArenaGameState* GameState = BoundGameState.Get())
     {
+        GameState->OnArenaPlayersChanged.RemoveAll(this);
         GameState->OnArenaPhaseChanged.RemoveAll(this);
         GameState->OnArenaTeamStatesChanged.RemoveAll(this);
         GameState->OnArenaResultChanged.RemoveAll(this);

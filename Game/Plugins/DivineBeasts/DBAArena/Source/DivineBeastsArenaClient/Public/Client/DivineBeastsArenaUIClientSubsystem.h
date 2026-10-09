@@ -64,6 +64,9 @@ public:
         EGamePlatformArenaClientFlowState InFlowState);
 
 private:
+    /** 当前LocalPlayer世界的GameState可迟到，订阅引擎设置事件；退出解绑并清空投影，无Tick重试。 */
+    void BindWorldReadinessEvents(UWorld* World);
+    void HandleWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
     void RegisterArenaScreenDefinitions();
     void UnregisterArenaScreenDefinitions();
 
@@ -99,6 +102,11 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UGamePlatformUIScreenDefinition>> RegisteredDefinitions;
 
+    TWeakObjectPtr<UWorld> BoundWorld;
+    TWeakObjectPtr<UWorld> RetiredWorld;
+    bool bDeinitializing = false;
+    FDelegateHandle GameStateSetHandle;
+    FDelegateHandle WorldCleanupHandle;
     TWeakObjectPtr<AGamePlatformArenaGameState> BoundGameState;
     TArray<TWeakObjectPtr<AGamePlatformArenaPlayerState>> BoundPlayerStates;
 };

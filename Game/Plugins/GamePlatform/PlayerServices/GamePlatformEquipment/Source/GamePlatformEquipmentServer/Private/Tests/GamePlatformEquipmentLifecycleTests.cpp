@@ -24,16 +24,19 @@ public:
 class FEquipmentLifecycleResolver final : public IGamePlatformEquipmentGameplayAssetResolver
 {
 public:
-    bool ResolveAbilitySet(FName, TArray<TSubclassOf<UGameplayAbility>>& Abilities, TArray<TSubclassOf<UGameplayEffect>>&) override { Abilities.Add(UGameplayAbility::StaticClass()); return true; }
+    TFunction<void()> OnResolve;
+    bool ResolveAbilitySet(FName, TArray<TSubclassOf<UGameplayAbility>>& Abilities, TArray<TSubclassOf<UGameplayEffect>>&) override { if (OnResolve) { OnResolve(); } Abilities.Add(UGameplayAbility::StaticClass()); return true; }
     bool ResolveGameplayEffect(FName, TSubclassOf<UGameplayEffect>&) override { return false; }
 };
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEquipmentComponentRemovalTest, "GamePlatform.Equipment.Server.ComponentRemoval", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FEquipmentComponentRemovalTest::RunTest(const FString&)
 {
-    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    // UE5.8的CreateWorld内部已InitializeNewWorld；直接传原IVS只初始化一次，避免再次创建固定名WorldSettings崩溃。
+    const UWorld::InitializationValues WorldInitialization = UWorld::InitializationValues()
+        .AllowAudioPlayback(false).CreatePhysicsScene(false).CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &WorldInitialization);
     if (!World) { AddError(TEXT("临时权威世界创建失败")); return false; }
-    World->InitializeNewWorld(UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false).CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false));
     AActor* Owner = World->SpawnActor<AActor>();
     auto* ASC = NewObject<UAbilitySystemComponent>(Owner); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
     auto* State = NewObject<UGamePlatformEquipmentComponent>(Owner); State->RegisterComponent();
@@ -48,14 +51,32 @@ bool FEquipmentComponentRemovalTest::RunTest(const FString&)
     TestTrue(TEXT("初始化接纳真实运行Port"), Runtime->InitializeEquipmentRuntime(TEXT("Player"), TEXT("Character"), State, Persistence, Grant));
     Runtime->BindAvatar(ASC, 1);
     FGamePlatformEquipmentSnapshot Snapshot; Snapshot.CharacterId = TEXT("Character"); Snapshot.EquipmentRevision = 1;
-    FGamePlatformEquipmentSlotState Slot; Slot.SlotId = TEXT("Hand"); Slot.ItemDefinitionId = TEXT("Item"); Slot.EquipmentDefinitionId = TEXT("Equipment"); Snapshot.Slots.Add(Slot);
+    FGamePlatformEquipmentSlotState Slot; Slot.SlotId = TEXT("Hand"); Slot.ItemInstanceId = TEXT("Fixture-Item"); Slot.ItemDefinitionId = TEXT("Item"); Slot.EquipmentDefinitionId = TEXT("Equipment"); Snapshot.Slots.Add(Slot);
     auto Loaded = MoveTemp(Persistence->Pending); Loaded(Snapshot, EGamePlatformEquipmentError::None);
     TestEqual(TEXT("组件拥有一项GAS授予"), ASC->GetActivatableAbilities().Num(), 1);
+    Runtime->Reconcile(); auto InvalidLoaded = MoveTemp(Persistence->Pending);
+    auto Duplicate = Snapshot; Duplicate.EquipmentRevision = 2;
+    // TArray::Add会拒绝同数组元素的引用，防止扩容后悬空；先复制再构造重复槽位，才能真正送入快照预检。
+    const FGamePlatformEquipmentSlotState DuplicateSlot = Duplicate.Slots[0];
+    Duplicate.Slots.Add(DuplicateSlot);
+    InvalidLoaded(Duplicate, EGamePlatformEquipmentError::None);
+    TestEqual(TEXT("重复槽位整份拒绝且不撤销旧自有授予"), ASC->GetActivatableAbilities().Num(), 1);
+    TestEqual(TEXT("重复槽位不发布新装备版本"), State->GetOwnerSnapshot().EquipmentRevision, int64(1));
     Runtime->Reconcile(); auto Late = MoveTemp(Persistence->Pending);
     Runtime->DestroyComponent();
     TestEqual(TEXT("ASC存活但组件授予已经撤销"), ASC->GetActivatableAbilities().Num(), 0);
     Late(Snapshot, EGamePlatformEquipmentError::None);
     TestEqual(TEXT("退出后迟到回调不能重新授予"), ASC->GetActivatableAbilities().Num(), 0);
+    auto* ClosingRuntime = NewObject<UGamePlatformEquipmentServerComponent>(Owner); ClosingRuntime->RegisterComponent();
+    ClosingRuntime->RegisterDefinition(Definition);
+    auto ClosingPersistence = MakeShared<FEquipmentLifecyclePersistence, ESPMode::ThreadSafe>();
+    auto ClosingResolver = MakeShared<FEquipmentLifecycleResolver, ESPMode::ThreadSafe>();
+    auto ClosingGrant = MakeShared<FGamePlatformEquipmentGASGrantPort, ESPMode::ThreadSafe>(ClosingResolver);
+    ClosingRuntime->InitializeEquipmentRuntime(TEXT("Player"), TEXT("Character"), State, ClosingPersistence, ClosingGrant);
+    ClosingRuntime->BindAvatar(ASC, 1);
+    ClosingResolver->OnResolve = [ClosingRuntime]() { ClosingRuntime->DestroyComponent(); };
+    ClosingPersistence->Pending(Snapshot, EGamePlatformEquipmentError::None);
+    TestEqual(TEXT("Resolver同步关闭后不得继续授予孤儿能力"), ASC->GetActivatableAbilities().Num(), 0);
     World->DestroyWorld(false);
     return true;
 }

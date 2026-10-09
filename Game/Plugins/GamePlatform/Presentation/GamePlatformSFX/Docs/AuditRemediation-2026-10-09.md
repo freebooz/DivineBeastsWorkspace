@@ -1,0 +1,21 @@
+# 2026-10-09 表现源码整改与中文审核
+
+本文件是本插件本次变更的伴随职责/API说明。范围只包含人工维护C++、构建规则和测试；没有创建/改写任何uasset、umap、Niagara、材质或Widget Blueprint。唯一正式实现仍在本插件Source。下面的源码检查和原生测试不能代替UE编译、Automation、Cook、设备或人工视觉验收。
+
+所有本次服务API及回调在游戏线程运行；后台资源调度由GamePlatformData提供。值快照可复制，UObject/世界/组件指针不保证越过所属作用域。所有者关停先阻止新请求，撤销自有登记，再取消/停止实例、解绑和释放自有租约。发布通知前先完成内部所有权变更，通知处理器允许同步取消、切图、关闭服务或GC。
+
+## 音效启动与可诊断完成
+
+WorldSubsystem只在非DedicatedServer的Game/PIE/GamePreview创建，无业务Tick；私有实例持有自有Data定义租约、AudioComponent与请求身份。公开Play返回Queued表示Definition租约接纳，不能当成播放成功。请求位置/旋转只表达表现，VolumeMultiplier线性0..4，PitchMultiplier0.25..4，StartTimeSeconds为非负秒，FloatParameters仅定义白名单，AttachComponent为弱目标。音效定义仍统一由Data按SFXRuntime Bundle加载。
+
+预算对Pending+Active统一预留，已有原生生产策略验证255 Active时不能再接纳128 Pending。CreateComponent使用bPlay=false、bAutoDestroy=false，先设置参数、挂载、建立Active账本和Finished/PlayState监听，再Play/FadeIn。引擎失败启动不发Finished，但发Stopped；自然完成先Finished后Stopped，因此未被Finished清理且非显式Stop的Stopped按失败回收。播放函数返回后如果账本已清理，不能再计为Played。组件由本服务销毁，不交给自动销毁竞速。
+
+锁定UE5.8.0源码证据：Engine/Source/Runtime/Engine/Private/Components/AudioComponent.cpp的PlaybackCompleted(uint64,bool)将完成派到游戏线程；PlaybackCompleted(bool)在bFailedToStart=false时发OnAudioFinishedNative，随后总是BroadcastPlayState。Engine/Source/Runtime/Engine/Private/AudioDevice.cpp的FCreateComponentParams.bPlay可关闭自动播放。源码时序证明已关闭原受理后的监听窗口，仍不能替代极短SoundWave、MetaSound、并发抢占、虚拟化与Owner销毁真实音频测试。
+
+GetPlaybackSnapshot返回Loading/Playing/Completed/Cancelled/Failed/WorldDestroyed以及具体Code、原DefinitionId。终态历史最多512项，不保留组件或租约；AddCompletionHandler/RemoveCompletionHandler只在游戏线程，清理完成后通知一次，允许观察者重入。结束确认保留实际失败码，不把启动/加载失败伪装AlreadyCompleted。Stop默认负FadeOutSeconds采用定义淡出；显式非负值限制到0..10秒；重复已开始Stop不重复扣租约。StopByRequestId无实例也接纳取消并留下有界墓碑，防迟到预测复活。世界退出先禁止请求，活跃和待加载记录分别通知WorldDestroyed，再清理订阅。
+
+桥接Provider只有真实服务且Play受理才返回true；合法取消命令已执行也视为处理完毕，它不代表播放成功。纯音效失败不改变权威结果。真实声音/极短完成、双LocalPlayer及Audio Insights仍待统一UE运行，本组不宣称音频实测完成。
+
+快照RequestId保留源请求发生身份，便于把Loading/Playing和失败终态关联到原事实。Submitted/Queued仅表示服务接纳，不能替代真正播放或终态查询。
+
+独立复核补修：Corrected的Stop公开完成通知允许同步关停/旅行/GC，Play保持本次World与服务代次，在Stop返回后重核bClosing/World/Generation，失效返回InvalidWorld，不重新申请替换Definition租约或写回旧请求映射。Deinitialize幂等避免完成通知嵌套关闭重复清理。Private/Tests加入纠正Stop内Deinitialize及关闭后零Pending/请求映射回归；仍未执行UE音频或Automation。

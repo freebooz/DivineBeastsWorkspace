@@ -1,0 +1,117 @@
+{
+  "Title": "GamePlatformTelemetry 自定义Sink生命周期定点整改",
+  "GeneratedAtLocal": "2026-10-09T12:45:00.602930+08:00",
+  "Workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+  "Branch": "codex/gameplatform-audit-fixes-20261009",
+  "Head": "0f6afcb571185626487c4c5da3ee750a52b71bb0",
+  "SourceFrozen": true,
+  "Committed": false,
+  "Pushed": false,
+  "Scope": "仅指定Subsystem公开头/实现、Private/Tests新回归、插件README和SinksAndExporters；未访问Data Private，未改其他模块/资产/生成物。",
+  "ChangedFiles": [
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Public/Subsystems/GamePlatformTelemetrySubsystem.h",
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Subsystems/GamePlatformTelemetrySubsystem.cpp",
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/README.md",
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Docs/SinksAndExporters.md"
+  ],
+  "NewFiles": [
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Tests/GamePlatformTelemetryLifecycleTests.cpp"
+  ],
+  "NewFilesForRootDirectoryPlan": [
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Tests/GamePlatformTelemetryLifecycleTests.cpp"
+  ],
+  "Commands": [
+    {
+      "Command": "pwsh -NoProfile -File Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Tests/Scripts/TestTelemetryArchitecture.ps1",
+      "ExitCode": 0,
+      "Log": "Architecture.log",
+      "Meaning": "只验证静态结构/依赖必要条件，不是生命周期或网络行为执行"
+    },
+    {
+      "Command": "git diff --check -- Telemetry/Public/Subsystems Telemetry/Private/Subsystems（本轮指定范围）",
+      "ExitCode": 0,
+      "Log": "DiffCheck.log",
+      "Meaning": "实际已执行的空白检查；完整文档追加后再核"
+    },
+    {
+      "Command": "pwsh -NoProfile -File Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Tests/Scripts/TestTelemetryArchitecture.ps1",
+      "ExitCode": 0,
+      "Log": "ContextArchitecture.log",
+      "Meaning": "追加上下文整改后的实际静态结构门禁；不是UE行为回归"
+    },
+    {
+      "Command": "git diff --check -- 指定Telemetry Subsystem.h/.cpp、LifecycleTests.cpp、README.md、Docs/SinksAndExporters.md",
+      "ExitCode": 0,
+      "Log": "ContextDiffCheck.log",
+      "Meaning": "最终代码/文档范围空白检查；未跟踪新测试不由git diff检查，已人工检查内容"
+    }
+  ],
+  "Repairs": [
+    {
+      "Issue": "Start内关闭后外层安装候选",
+      "Implementation": "先登记配置门闩、捕获实例/Sink代次，外部Start后复核；失败/关闭候选Shutdown清理一次，不替换旧Sink。",
+      "Regression": "StartClose，ConfigureNested的Start失败/同对象Stopped拒绝"
+    },
+    {
+      "Issue": "Shutdown内重配置/启用/记录复活服务",
+      "Implementation": "Deinitialize先永久closing/代次失效/取消调度/摘Sink；公开控制/新记录拒绝关闭，finalDrain仅内部绑定退休Sink，重入Deinit幂等。",
+      "Regression": "ShutdownReentry验证回调内Configure=false、事件Disabled、无Ticker、候选不Start和最终Drain；ExternalClose验证旧Flush关闭"
+    },
+    {
+      "Issue": "GetHealth换B后旧A继续出队Submit",
+      "Implementation": "持活实际Sink副本，GetHealth后先复核成员身份/代次再BuildBatch；Submit后再次复核，旧栈不能消费后继队列/诊断/调度。",
+      "Regression": "HealthReplacement断言A.Submits=0、队列保留、B可以转交；ExternalClose验证Submit关闭"
+    },
+    {
+      "Issue": "旧/重复异步完成与Ticker影响后继作用域",
+      "Implementation": "完成以TAtomic门闩消费一次，非GT只投递GT；核实例与Sink代次再调度。Ticker另有取消/消费代次，过期不能清新句柄。",
+      "Regression": "CompletionGeneration验证A旧完成不调度B、当前完成可调度、重复不再次调度"
+    }
+  ],
+  "RegressionExecution": "八个实际UE Automation回归仅已写入源码；两次均先补测试源码再修实现，但分工禁止UBT，未执行修前红灯/修后绿灯。两个新增用例的七种场景直接调用真实Subsystem和可同步重入IGamePlatformTelemetrySink；没有复制生产算法或伪装联网。",
+  "PreservedRootChanges": [
+    "公开中文API说明及不透明Private策略边界",
+    "默认构造/FVTableHelper构造/析构外置定义，修UniquePtr不完整类型",
+    "既有缓冲/Schema/采样/速率/网络重试与秒预算实现"
+  ],
+  "ChineseReview": {
+    "Reviewed": "人工抽检本轮GI永久关闭、候选和退休Sink所有权、调用前提/返回/嵌套拒绝、代次和异步线程、最终Drain取消/丢弃语义、测试前置与失败意义、README历史验证边界。 追加人工审核上下文/输出器/采样会话三种代次的区别、边界发布权与后继优先合同、Begin内部结束、三种换Sink与四种上下文后继测试前置/期望；README及SinksAndExporters保持一致。",
+    "Remaining": "未全量审核遥测全部历史实现或全工作区中文合规；静态扫描不替代人工审核。"
+  },
+  "Compatibility": [
+    "无新增公开方法或协议/反射身份迁移；Private布局与实现变化，消费者随统一UBT重编译。",
+    "关闭后同一UObject永久拒绝Initialize/Configure/Enable/Record；后继GI必须新实例，控制入口仅已Initialize作用域可用。",
+    "正在配置（Start及旧Flush/Shutdown）时嵌套Configure现在明确false，测试/自定义Sink需服从合同；返回false不表示旧已安装Sink被成功替换。",
+    "最终Drain不可恢复Ticker，旧Flush中发生关闭时不递归Drain；未转交缓冲按关闭策略丢弃，不保证远端落盘。",
+    "新测试仅WITH_DEV_AUTOMATION_TESTS友元撤销调度前置，不扩展生产公共可变接口。",
+    "单纯更换Sink不再跳过会话结束、新会话或旅行清理；最近真实Begin/End/Travel/UpdateWorldContext拥有边界发布权，旧外部Flush返回栈停止。普通关联/环境属性更新不取得边界身份。无公开API/协议变化，新增Private字段/方法随统一构建重编译。"
+  ],
+  "NotExecuted": [
+    "UBT/UHT及八个UE Automation回归（新增两项/七种场景包含在内）",
+    "跨GI/多PIE、真实网络关闭/重试、后端Ingest/NATS、Cook/Stage",
+    "关闭秒预算/CPU/内存与GT延迟实测"
+  ],
+  "RemainingProductionConditions": [
+    "现有NetworkSink/Transport与后端未知合同不由本轮伪造；没有新生产Provider或真实联网测试。",
+    "原生缓冲/Schema/响应预算算法本轮未改，未重复执行其CMake回归；本轮静态命令和UE待验证边界独立记录。"
+  ],
+  "ContextBoundaryFollowup": {
+    "Issue": "EndSession/BeginSession/BeforeWorldTravel错误地用Sink换代取消账号/世界边界，留下旧身份；单独移除检查又会覆写真实后继上下文。",
+    "Implementation": "ContextOperationGeneration独立保护Begin/End/Travel/UpdateWorldContext；Begin旧会话结束与新会话发布共用身份。外部Flush后核closing/实例/上下文操作，Sink换代仍完成边界，真实后继接管则停止旧发布。边界调用期间保活UObject。",
+    "Regression": "ContextSinkReplacement含End/Begin/Travel三种GetHealth同步ConfigureSink(B)；ContextSuccessor含End->Begin、Begin->End、Travel->UpdateWorldContext、Begin->Travel四种真实后继接管。",
+    "NewFilesThisFollowup": [],
+    "NewPublicApis": [],
+    "NewPrivateApis": [
+      "IsContextOperationCurrent",
+      "EndSessionInternal"
+    ],
+    "NotExecuted": "八个UE Automation源码未运行，未执行修前红灯/修后绿灯，未运行UBT/UHT；静态门禁不证明行为正确。"
+  },
+  "FrozenSourceSha256": {
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Public/Subsystems/GamePlatformTelemetrySubsystem.h": "9db5a52298d4afa8b0bc8798bf63fcc6bd3056e14242bac76b370a5e5e834745",
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Subsystems/GamePlatformTelemetrySubsystem.cpp": "957e16783e0f0c919cc38298721d9db24d741ec19255a9b4ca831a6c7386bf3a",
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/README.md": "0d5a42f580681ae3c266f8c0f338a392c562dbd279735cd4296ddef663fa3445",
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Docs/SinksAndExporters.md": "9609368249f497088ba28bef2b7a59789fd8de8cc130f18fab73ef52f20dfb8d",
+    "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Tests/GamePlatformTelemetryLifecycleTests.cpp": "27e612af1864fc51a65787f6ea2c0a1ec0d7cf2e6a407e68b2ec3e41fdff4920"
+  }
+}

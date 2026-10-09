@@ -46,14 +46,16 @@ public:
     virtual FGamePlatformResult SetAccessibilitySettings(const FGamePlatformInputAccessibilitySettings& Settings) = 0;
     /** 返回当前本地无障碍/舒适度偏好。 */
     virtual FGamePlatformInputAccessibilitySettings GetAccessibilitySettings() const = 0;
-    /** 从原生用户设置枚举登记行；不会通过枚举自动激活。 */
+    /** 从原生用户设置仅枚举当前Profile拥有的登记行；不会枚举/改写外部功能行或通过枚举自动激活。 */
     virtual TArray<FGamePlatformInputMapping> ListPlayerMappings() const = 0;
+    /** 仅本Profile自有行；Slot为原生合法键槽，Key必须支持设备类型，冲突返回稳定错误而不修改映射。 */
     virtual FGamePlatformInputRebindPreview PreviewRebind(FName RowName,int32 Slot,FKey Key) const = 0;
     /** 预检后在内存应用，原生重建回调之后才bMappingsApplied；不自动保存。 */
+    /** 游戏线程先执行自有行/设备/冲突预检；Success仅表示内存重绑，失败不修改外部映射，不自动保存。 */
     virtual FGamePlatformResult ApplyRebind(FName RowName,int32 Slot,FKey Key) = 0;
     /** 仅本配置一行；None为本配置所有已登记行，不能清其他功能。 */
     virtual FGamePlatformResult ResetMappings(FName RowName) = 0;
-    /** 显式提交原生保存；Success只表示提交完成，bPreferencesSaveSubmitted=true且bPreferencesSaved=false，磁盘结果未知。前置校验失败保留已应用键位，不伪造落盘成功。 */
+    /** PIE返回InputPIEPersistenceDisabled且不写真实存档/INI。普通客户端显式提交原生保存；Success只表示提交完成，bPreferencesSaveSubmitted=true且bPreferencesSaved=false，磁盘结果未知。前置校验失败保留已应用键位，不伪造落盘成功。 */
     virtual FGamePlatformResult SaveInputPreferences() = 0;
     /** 限定本地世界拥有者、触点0..9和白名单语义；同动作首版只允许一个触摸源，拒绝冲突。 */
     virtual FGamePlatformInputTouchHandle BeginTouchInput(int32 PointerId,EGamePlatformInputSemantic Semantic,TWeakObjectPtr<UObject> Owner,FGamePlatformResult& OutResult) = 0;

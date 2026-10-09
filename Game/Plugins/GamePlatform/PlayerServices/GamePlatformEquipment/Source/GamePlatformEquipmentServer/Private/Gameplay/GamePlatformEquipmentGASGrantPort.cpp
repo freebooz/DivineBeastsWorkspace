@@ -1,3 +1,4 @@
+// 服务器装备GAS桥：局部保活Resolver，授予候选逐步复核作用域；撤销先脱离句柄，允许GAS通知同步关闭组件。
 #include "Gameplay/GamePlatformEquipmentGASGrantPort.h"
 
 #include "AbilitySystemComponent.h"
@@ -16,23 +17,29 @@ FGamePlatformEquipmentGASGrantPort::FGamePlatformEquipmentGASGrantPort(
 bool FGamePlatformEquipmentGASGrantPort::Grant(
     UAbilitySystemComponent* AbilitySystem,
     const UGamePlatformEquipmentDefinition& Definition,
-    FGamePlatformEquipmentGameplayGrantHandle& OutHandle) const
+    FGamePlatformEquipmentGameplayGrantHandle& OutHandle,
+    TFunction<bool()> IsScopeCurrent) const
 {
     OutHandle.Reset();
+    const TWeakObjectPtr<UAbilitySystemComponent> WeakASC(AbilitySystem);
+    const auto ScopeCurrent = [&]() { return WeakASC.IsValid() && (!IsScopeCurrent || IsScopeCurrent()); };
+    const auto LocalResolver = Resolver;
+    const auto AbilitySetIds = Definition.AbilitySetDefinitionIds;
+    const auto EffectIds = Definition.GameplayEffectDefinitionIds;
 
-    if (!IsValid(AbilitySystem))
+    if (!ScopeCurrent())
     {
         return false;
     }
 
-    if (Definition.AbilitySetDefinitionIds.IsEmpty() &&
-        Definition.GameplayEffectDefinitionIds.IsEmpty())
+    if (AbilitySetIds.IsEmpty() &&
+        EffectIds.IsEmpty())
     {
         OutHandle.GrantId = FGuid::NewGuid();
         return true;
     }
 
-    if (!Resolver.IsValid())
+    if (!LocalResolver.IsValid())
     {
         return false;
     }
@@ -41,17 +48,17 @@ bool FGamePlatformEquipmentGASGrantPort::Grant(
     TArray<TSubclassOf<UGameplayEffect>> Effects;
 
     for (const FName AbilitySetId :
-         Definition.AbilitySetDefinitionIds)
+         AbilitySetIds)
     {
         TArray<TSubclassOf<UGameplayAbility>> SetAbilities;
         TArray<TSubclassOf<UGameplayEffect>> SetEffects;
 
-        if (!Resolver->ResolveAbilitySet(
+        if (!LocalResolver->ResolveAbilitySet(
                 AbilitySetId,
                 SetAbilities,
-                SetEffects))
+                SetEffects) || !ScopeCurrent())
         {
-            Revoke(AbilitySystem, OutHandle);
+            Revoke(WeakASC.Get(), OutHandle);
             return false;
         }
 
@@ -60,15 +67,15 @@ bool FGamePlatformEquipmentGASGrantPort::Grant(
     }
 
     for (const FName EffectId :
-         Definition.GameplayEffectDefinitionIds)
+         EffectIds)
     {
         TSubclassOf<UGameplayEffect> EffectClass;
-        if (!Resolver->ResolveGameplayEffect(
+        if (!LocalResolver->ResolveGameplayEffect(
                 EffectId,
                 EffectClass) ||
-            !EffectClass)
+            !EffectClass || !ScopeCurrent())
         {
-            Revoke(AbilitySystem, OutHandle);
+            Revoke(WeakASC.Get(), OutHandle);
             return false;
         }
 
@@ -82,7 +89,7 @@ bool FGamePlatformEquipmentGASGrantPort::Grant(
     {
         if (!AbilityClass)
         {
-            Revoke(AbilitySystem, OutHandle);
+            Revoke(WeakASC.Get(), OutHandle);
             return false;
         }
 
@@ -96,11 +103,12 @@ bool FGamePlatformEquipmentGASGrantPort::Grant(
 
         if (!Handle.IsValid())
         {
-            Revoke(AbilitySystem, OutHandle);
+            Revoke(WeakASC.Get(), OutHandle);
             return false;
         }
 
         OutHandle.AbilityHandles.Add(Handle);
+        if (!ScopeCurrent()) { Revoke(WeakASC.Get(), OutHandle); return false; }
     }
 
     for (const TSubclassOf<UGameplayEffect>& EffectClass :
@@ -108,21 +116,22 @@ bool FGamePlatformEquipmentGASGrantPort::Grant(
     {
         if (!EffectClass)
         {
-            Revoke(AbilitySystem, OutHandle);
+            Revoke(WeakASC.Get(), OutHandle);
             return false;
         }
 
         const UGameplayEffect* Effect =
             EffectClass->GetDefaultObject<UGameplayEffect>();
 
-        if (!IsValid(Effect))
+        if (!IsValid(Effect) || !ScopeCurrent())
         {
-            Revoke(AbilitySystem, OutHandle);
+            Revoke(WeakASC.Get(), OutHandle);
             return false;
         }
 
         FGameplayEffectContextHandle Context =
             AbilitySystem->MakeEffectContext();
+        if (!ScopeCurrent()) { Revoke(WeakASC.Get(), OutHandle); return false; }
 
         const FActiveGameplayEffectHandle Handle =
             AbilitySystem->ApplyGameplayEffectToSelf(
@@ -132,11 +141,12 @@ bool FGamePlatformEquipmentGASGrantPort::Grant(
 
         if (!Handle.IsValid())
         {
-            Revoke(AbilitySystem, OutHandle);
+            Revoke(WeakASC.Get(), OutHandle);
             return false;
         }
 
         OutHandle.EffectHandles.Add(Handle);
+        if (!ScopeCurrent()) { Revoke(WeakASC.Get(), OutHandle); return false; }
     }
 
     return true;
@@ -146,27 +156,13 @@ void FGamePlatformEquipmentGASGrantPort::Revoke(
     UAbilitySystemComponent* AbilitySystem,
     FGamePlatformEquipmentGameplayGrantHandle& Handle) const
 {
-    if (IsValid(AbilitySystem))
-    {
-        for (const FGameplayAbilitySpecHandle& AbilityHandle :
-             Handle.AbilityHandles)
-        {
-            if (AbilityHandle.IsValid())
-            {
-                AbilitySystem->ClearAbility(AbilityHandle);
-            }
-        }
-
-        for (const FActiveGameplayEffectHandle& EffectHandle :
-             Handle.EffectHandles)
-        {
-            if (EffectHandle.IsValid())
-            {
-                AbilitySystem->RemoveActiveGameplayEffect(
-                    EffectHandle);
-            }
-        }
-    }
-
+    // 先消费所有权；ClearAbility/RemoveEffect可同步再次调用清理，不能遍历被重入清空的容器。
+    auto Abilities = MoveTemp(Handle.AbilityHandles);
+    auto Effects = MoveTemp(Handle.EffectHandles);
     Handle.Reset();
+    const TWeakObjectPtr<UAbilitySystemComponent> WeakASC(AbilitySystem);
+    for (const auto& Ability : Abilities)
+    { if (auto* ASC = WeakASC.Get(); IsValid(ASC) && Ability.IsValid()) { ASC->ClearAbility(Ability); } }
+    for (const auto& Effect : Effects)
+    { if (auto* ASC = WeakASC.Get(); IsValid(ASC) && Effect.IsValid()) { ASC->RemoveActiveGameplayEffect(Effect); } }
 }

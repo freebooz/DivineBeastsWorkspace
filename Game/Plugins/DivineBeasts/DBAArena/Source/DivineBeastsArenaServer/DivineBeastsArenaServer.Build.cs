@@ -7,7 +7,11 @@ public class DivineBeastsArenaServer : ModuleRules
     public DivineBeastsArenaServer(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PrivateDependencyModuleNames.Add("GamePlatformCore");
+        PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformCore", "GamePlatformAbilitySystem", "GamePlatformCombat", "GamePlatformGameplay" });
+        // 死亡桥直接调用ASC/效果规格；保持私有GAS依赖，不依靠平台适配模块间接提供引擎符号。
+        PrivateDependencyModuleNames.Add("GameplayAbilities");
+        // 死亡桥回归使用中立五模式定义；其真实实现归MobaData，与公开准入合同的MobaCore职责不同。
+        PrivateDependencyModuleNames.Add("GamePlatformMobaData");
 
         PublicDependencyModuleNames.AddRange(new string[]
         {
@@ -20,6 +24,8 @@ public class DivineBeastsArenaServer : ModuleRules
             // 公开预热租约类型来自Data，真实加载在cpp通过该服务申请。
             "GamePlatformData",
             "GamePlatformArena",
+            // 公开准入扩展使用Assignment等MOBA合同，Editor DLL须直接声明其数据类型实现模块。
+            "GamePlatformMobaCore",
             "GamePlatformArenaServer"
         });
     }

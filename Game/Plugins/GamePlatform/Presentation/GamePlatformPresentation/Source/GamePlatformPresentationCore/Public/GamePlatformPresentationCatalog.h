@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformPresentation，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -76,7 +78,8 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationCatalogEntry
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     EGamePlatformPresentationCatalogScope Scope =
         EGamePlatformPresentationCatalogScope::Platform;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 Specificity = 0;
+    /** 保留序列化字段，手填权重不参与P13；具体度只由六个已验证等值资格计算。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(DeprecatedProperty, DeprecationMessage="使用六项类型化等值资格")) int32 Specificity = 0;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 Priority = 0;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FString ContentRevision;
 
@@ -124,4 +127,11 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationResolvedEntry
     UPROPERTY(BlueprintReadOnly) FString ContentRevision;
     UPROPERTY(BlueprintReadOnly) EGamePlatformPresentationCatalogScope Scope =
         EGamePlatformPresentationCatalogScope::Platform;
+    /** 真实目录来源与代次；不作为解析平局决胜键。 */
+    UPROPERTY(BlueprintReadOnly) FName CatalogFragmentId = NAME_None;
+    UPROPERTY(BlueprintReadOnly) FName OwnerScopeId = NAME_None;
+    UPROPERTY(BlueprintReadOnly) int32 CatalogRevision = 0;
+    UPROPERTY(BlueprintReadOnly) FGameplayTag MatchedSemanticTag;
+    /** 同键失败时保留全部候选身份/条件；不填DefinitionId，不任意播放一个结果。 */
+    UPROPERTY(BlueprintReadOnly) TArray<FString> AmbiguousCandidates;
 };

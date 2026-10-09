@@ -6,6 +6,7 @@
 #include "CoreMinimal.h"
 #include "Containers/Ticker.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
+#include "GamePlatformOnlineClientSubsystem.h"
 #include "Time/GamePlatformLiveOpsServerTimeEstimator.h"
 #include "Types/GamePlatformLiveOpsTypes.h"
 #include "GamePlatformLiveOpsClientSubsystem.generated.h"
@@ -106,6 +107,17 @@ public:
     FGamePlatformLiveOpsClaimChanged OnClaimChanged;
 
 private:
+    /** 所属GI的Online仅弱引用；账号/请求与委托均由本地玩家作用域退出清理。 */
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> OnlineSubsystem;
+    FDelegateHandle AuthStateChangedHandle;
+    void BindOnlineAuthentication();
+    void UnbindOnlineAuthentication();
+    void HandleAuthStateChanged(const FGamePlatformAuthSnapshot& AuthSnapshot);
+    /** Reset事件可再次请求Reset；正在清空时幂等忽略，禁止在同广播栈重新配置账号。 */
+    bool bResettingAccount = false;
+    /** 永久关闭当前实例作用域；仅Initialize可开启新代次，广播/Cancel重入不能复活服务。 */
+    bool bDeinitializing = false;
+    uint64 InstanceGeneration = 0;
     FString CurrentAccountKey;
     uint64 AccountGeneration = 0;
     uint64 ViewGeneration = 0;
@@ -126,16 +138,25 @@ private:
     TSharedPtr<IGamePlatformLiveOpsClientTransport, ESPMode::ThreadSafe>
         Transport;
 
+    /** 只在真实Initialize后拥有核心Ticker；裸NewObject测试对象不注册全局运行回调。 */
+    bool bLifecycleInitialized = false;
     FDelegateHandle ForegroundHandle;
     FTSTicker::FDelegateHandle BoundaryTickerHandle;
     FDateTime LastBoundaryCheckUtc;
 
+    /** 每类请求独立终态代次；重复/迟到回调不得消费下一次刷新或领取资格。 */
+    uint64 CatalogRequestGeneration = 0;
+    uint64 PlayerStateRequestGeneration = 0;
+    uint64 ClaimRequestGeneration = 0;
+    uint64 ReconcileRequestGeneration = 0;
     bool bCatalogRequestInFlight = false;
     bool bPlayerStateRequestInFlight = false;
     bool bClaimRequestInFlight = false;
     bool bClaimReconcileInFlight = false;
     FGuid ActiveClaimOperationId;
 
+    /** 仅有认证账号时安装低频UTC边界Ticker；账号清空即撤销，不以Tick弥补业务事件。 */
+    void UpdateBoundaryTicker();
     void HandleEnteredForeground();
     /** 1秒服务Ticker检查公开活动窗口，仅有账号/样本时执行；跨边界先通知，再请求刷新。 */
     bool TickBoundaryRefresh(float DeltaSeconds);
@@ -145,16 +166,21 @@ private:
 
     void HandleCatalogCompleted(
         uint64 ExpectedGeneration,
+        uint64 ExpectedRequestGeneration,
         FGamePlatformLiveOpsCatalogSnapshot NewCatalog,
         EGamePlatformLiveOpsError Error);
 
     void HandlePlayerStateCompleted(
         uint64 ExpectedGeneration,
+        uint64 ExpectedRequestGeneration,
         FGamePlatformLiveOpsPlayerState NewState,
         EGamePlatformLiveOpsError Error);
 
     void HandleClaimCompleted(
         uint64 ExpectedGeneration,
+        uint64 ExpectedRequestGeneration,
+        FGuid ExpectedOperationId,
+        bool bReconcile,
         FGamePlatformLiveOpsClaimResult Result,
         EGamePlatformLiveOpsError Error);
 

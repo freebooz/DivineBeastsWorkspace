@@ -1,0 +1,8 @@
+# 客户端原生纯值整数策略回归；只覆盖解析算法，不替代UE HTTP适配/生命周期运行验证。
+cmake_minimum_required(VERSION 3.20)
+project(GamePlatformLiveOpsIntegerTests LANGUAGES CXX)
+enable_testing()
+add_executable(GamePlatformLiveOpsIntegerTests ../Source/GamePlatformLiveOpsClient/Private/Tests/JsonIntegerPolicyNativeTests.cpp)
+target_compile_features(GamePlatformLiveOpsIntegerTests PRIVATE cxx_std_17)
+add_test(NAME GamePlatformLiveOpsIntegerTests COMMAND GamePlatformLiveOpsIntegerTests)
+target_compile_definitions(GamePlatformLiveOpsIntegerTests PRIVATE GP_INTEGER_NATIVE_TEST=1)

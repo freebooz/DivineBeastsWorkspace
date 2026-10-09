@@ -71,7 +71,7 @@ bool FDivineBeastsArenaServerProjectExtension::ValidateAndConfigureGameMode(
     }
 
     Assembly.GameplayLifecycleAdapter =
-        MakeShared<FDivineBeastsArenaGameplayLifecycleAdapter>(GameMode);
+        MakeShared<FDivineBeastsArenaGameplayLifecycleAdapter>(GameMode, Assembly.HeroDefinitionWarmupLeases);
     // 旧桶释放会撤销借用指针；新组合完整接纳后才重新发布资格与生命周期接口。
     GameMode.SetHeroEligibilityProvider(this);
     GameMode.SetGameplayLifecycleAdapter(Assembly.GameplayLifecycleAdapter.Get());

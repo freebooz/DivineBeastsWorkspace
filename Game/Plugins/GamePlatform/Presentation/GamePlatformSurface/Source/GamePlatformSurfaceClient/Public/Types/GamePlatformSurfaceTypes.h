@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformSurface，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -12,7 +14,9 @@ enum class EGamePlatformSurfaceUpdateStatus : uint8
     InvalidWorld UMETA(DisplayName="世界不可用"),
     InvalidState UMETA(DisplayName="状态非法"),
     MaterialBindingUnavailable UMETA(DisplayName="材质参数绑定不可用"),
-    ParameterContractMismatch UMETA(DisplayName="材质参数契约不匹配")
+    ParameterContractMismatch UMETA(DisplayName="材质参数契约不匹配"),
+    /** 本世界Data普通资源租约正在异步加载；状态已缓存，尚未写入材质。 */
+    MaterialBindingPending UMETA(DisplayName="材质参数绑定加载中")
 };
 
 /**

@@ -31,6 +31,9 @@ struct FGamePlatformSettingsPersistencePayload
     TMap<EGamePlatformSettingLayer, TMap<FName, FGamePlatformSettingValue>> Layers;
 };
 
+/** 游戏线程完成读取的纯值快照；失败载荷不发布，取消/过期由消费方代次丢弃。 */
+using FGamePlatformSettingsLoadCompletion = TFunction<void(FGamePlatformSettingsPersistencePayload, const FGamePlatformResult&)>;
+
 using FGamePlatformSettingsSaveCompletion =
     TFunction<void(const FGamePlatformResult&)>;
 
@@ -59,12 +62,29 @@ public:
     virtual FGamePlatformResult SetUserContext(const FString& UserContextKey) = 0;
 
     /**
-     * 读取配置层。实现必须只填充自己拥有的持久化/部署层；
+     * 同步内存/服务器部署配置读取兼容入口；不得在客户端游戏线程执行磁盘读取。
+     * 实现必须只填充自己拥有的持久化/部署层；
      * Runtime 会再次执行 Descriptor/类型/端侧校验。
      */
     virtual FGamePlatformResult Load(
         const TMap<FName, FGamePlatformSettingDescriptor>& Descriptors,
         FGamePlatformSettingsPersistencePayload& OutPayload) = 0;
+
+    /**
+     * 仅游戏线程调用/完成。Success表示读取受理，最终载荷/错误由Completion恰一次通知；失败受理不回调。
+     * 异步实现应在受理时复制用户槽名，不捕获Provider裸指针；旧Load默认适配仅允许有界内存/部署读取。
+     * 新增virtual改变ABI，全部消费者插件需重新编译；源代码旧Provider无需实现即可继续内存/Server合同。
+     */
+    virtual FGamePlatformResult BeginLoad(
+        const TMap<FName, FGamePlatformSettingDescriptor>& Descriptors,
+        FGamePlatformSettingsLoadCompletion Completion)
+    {
+        if (!Completion) { return FGamePlatformResult::Failure(TEXT("SettingsLoadCompletionMissing"), TEXT("设置读取必须提供完成回调。")); }
+        FGamePlatformSettingsPersistencePayload Payload;
+        const auto Result = Load(Descriptors, Payload);
+        if (Result.IsSuccess()) { Completion(MoveTemp(Payload), Result); }
+        return Result;
+    }
 
     /**
      * 异步保存 User 层；Server/不支持持久化的实现返回 Unsupported。

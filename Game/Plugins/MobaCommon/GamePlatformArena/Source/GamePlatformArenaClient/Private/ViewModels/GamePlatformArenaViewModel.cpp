@@ -1,3 +1,4 @@
+// MOBA客户端只读竞技投影：本地玩家持有，复制事件更新；世界退出清空旧身份和路由，不修改服务器事实。
 #include "ViewModels/GamePlatformArenaViewModel.h"
 
 #include "Framework/GamePlatformArenaGameState.h"
@@ -90,6 +91,14 @@ void UGamePlatformArenaViewModel::RefreshFromReplicatedState(
     // 通过平台ViewModel事件统一通知HUD/Screen局部刷新，而不是由Widget逐帧扫描GameState。
     MarkStateChanged();
     OnArenaViewStateChanged.Broadcast();
+}
+
+void UGamePlatformArenaViewModel::ResetReplicatedArenaState()
+{
+    MatchId.Reset(); ArenaModeId = NAME_None; MatchPhase = EGamePlatformArenaMatchPhase::Uninitialized;
+    RemainingPhaseSeconds = 0.0; Teams.Reset(); Scoreboard.Reset(); ResultSummary = {};
+    FlowState = EGamePlatformArenaClientFlowState::Idle;
+    MarkStateChanged(); OnArenaViewStateChanged.Broadcast();
 }
 
 void UGamePlatformArenaViewModel::SetObservedClientFlowState(

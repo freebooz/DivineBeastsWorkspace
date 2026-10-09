@@ -2,6 +2,7 @@
 #include "Transport/GamePlatformCommerceGatewayHttpTransport.h"
 
 #include "Dom/JsonObject.h"
+#include "JsonIntegerPolicy.h"
 #include "GamePlatformOnlineClientSubsystem.h"
 #include "GenericPlatform/GenericPlatformHttp.h"
 #include "Serialization/JsonReader.h"
@@ -17,24 +18,33 @@ FString GuidString(const FGuid& Value)
         : FString();
 }
 
-bool NumberToInt64(
-    const TSharedPtr<FJsonObject>& Json,
-    const TCHAR* Field,
-    int64& OutValue)
-{
-    double Number = 0.0;
-    if (!Json.IsValid() ||
-        !Json->TryGetNumberField(Field, Number) ||
-        !FMath::IsFinite(Number) ||
-        Number < static_cast<double>(MIN_int64) ||
-        Number > static_cast<double>(MAX_int64))
-    {
-        return false;
-    }
 
-    OutValue = static_cast<int64>(Number);
-    return true;
+bool NumberToInt64(const TSharedPtr<FJsonObject>& Json, const TCHAR* Field, int64& Out)
+{
+    if (!Json) { return false; }
+    const auto* Value = Json->Values.Find(Field);
+    if (!Value || !Value->IsValid() || (*Value)->Type != EJson::Number) { return false; }
+    FString Token;
+    if ((*Value)->PreferStringRepresentation() && (*Value)->TryGetString(Token))
+    {
+        std::int64_t Exact = 0;
+        if (!GPIntegerPolicy::ParseJsonInteger(std::basic_string_view<TCHAR>(*Token, Token.Len()), Exact)) { return false; }
+        Out = Exact; return true;
+    }
+    double Number = 0;
+    if (!(*Value)->TryGetNumber(Number) || !FMath::IsFinite(Number) || FMath::FloorToDouble(Number) != Number || Number < -9007199254740991.0 || Number > 9007199254740991.0) { return false; }
+    Out = static_cast<int64>(Number); return true;
 }
+bool NumberToInt32(const TSharedPtr<FJsonObject>& Json, const TCHAR* Field, int32& Out)
+{
+    int64 Exact = 0;
+    if (!NumberToInt64(Json, Field, Exact) || Exact < MIN_int32 || Exact > MAX_int32) { return false; }
+    Out = static_cast<int32>(Exact); return true;
+}
+// 缺省可选集合沿用当前合同；明确提供的null/对象/字符串不能冒充成功空数组。
+bool OptionalArrayHasValidType(const TSharedPtr<FJsonObject>& Json, const TCHAR* Field)
+{ return Json && (!Json->HasField(Field) || Json->HasTypedField<EJson::Array>(Field)); }
+
 }
 
 // 游戏线程中的本领域所有权账本；不保存Token，也不拥有Online/HTTP对象。
@@ -170,7 +180,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginGetCatalog(
                 TJsonReaderFactory<>::Create(Body);
 
             FGamePlatformCommerceCatalogSnapshot Catalog;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToCatalog(Json, Catalog))
             {
                 Completion(
@@ -226,7 +236,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginCreatePurchaseIntent(
                 TJsonReaderFactory<>::Create(ResponseBody);
 
             FGamePlatformCommercePurchaseIntentView Intent;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToIntent(Json, Intent))
             {
                 Completion(
@@ -278,7 +288,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginPurchase(
                 TJsonReaderFactory<>::Create(ResponseBody);
 
             FGamePlatformCommerceOrderStatusView Order;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToOrder(Json, Order))
             {
                 Completion(
@@ -326,7 +336,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginGetOrder(
                 TJsonReaderFactory<>::Create(ResponseBody);
 
             FGamePlatformCommerceOrderStatusView Order;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToOrder(Json, Order))
             {
                 Completion(
@@ -379,7 +389,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginSubmitReceipt(
                 TJsonReaderFactory<>::Create(ResponseBody);
 
             FGamePlatformCommerceOrderStatusView Order;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToOrder(Json, Order))
             {
                 Completion(
@@ -428,7 +438,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::BeginReconcileOrder(
                 TJsonReaderFactory<>::Create(ResponseBody);
 
             FGamePlatformCommerceOrderStatusView Order;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToOrder(Json, Order))
             {
                 Completion(
@@ -480,6 +490,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToCatalog(
     OutCatalog.CatalogRevision = Revision;
 
     TMap<FName, FGamePlatformCommercePriceView> Prices;
+    if (!OptionalArrayHasValidType(*CatalogJson, TEXT("prices"))) { return false; }
     const TArray<TSharedPtr<FJsonValue>>* PriceValues = nullptr;
 
     if ((*CatalogJson)->TryGetArrayField(
@@ -490,7 +501,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToCatalog(
         for (const TSharedPtr<FJsonValue>& Value : *PriceValues)
         {
             const TSharedPtr<FJsonObject> Object =
-                Value.IsValid() ? Value->AsObject() : nullptr;
+                Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
 
             FGamePlatformCommercePriceView Price;
             if (!Object.IsValid() ||
@@ -503,6 +514,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToCatalog(
         }
     }
 
+    if (!OptionalArrayHasValidType(*CatalogJson, TEXT("products"))) { return false; }
     const TArray<TSharedPtr<FJsonValue>>* ProductValues = nullptr;
     if ((*CatalogJson)->TryGetArrayField(
             TEXT("products"),
@@ -512,7 +524,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToCatalog(
         for (const TSharedPtr<FJsonValue>& Value : *ProductValues)
         {
             const TSharedPtr<FJsonObject> Object =
-                Value.IsValid() ? Value->AsObject() : nullptr;
+                Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
             if (!Object.IsValid())
             {
                 return false;
@@ -554,6 +566,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToCatalog(
         }
     }
 
+    if (!OptionalArrayHasValidType(*CatalogJson, TEXT("offers"))) { return false; }
     const TArray<TSharedPtr<FJsonValue>>* OfferValues = nullptr;
     if ((*CatalogJson)->TryGetArrayField(
             TEXT("offers"),
@@ -563,7 +576,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToCatalog(
         for (const TSharedPtr<FJsonValue>& Value : *OfferValues)
         {
             const TSharedPtr<FJsonObject> Object =
-                Value.IsValid() ? Value->AsObject() : nullptr;
+                Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
             if (!Object.IsValid())
             {
                 return false;
@@ -646,7 +659,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToIntent(
 
     FString ProductId;
     FString OfferId;
-    double Quantity = 0.0;
+    int32 Quantity = 0;
     int64 CatalogRevision = 0;
     int64 OfferRevision = 0;
 
@@ -664,9 +677,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToIntent(
         !Json->TryGetStringField(
             TEXT("offer_id"),
             OfferId) ||
-        !Json->TryGetNumberField(
-            TEXT("quantity"),
-            Quantity) ||
+        !NumberToInt32(Json, TEXT("quantity"), Quantity) ||
         !NumberToInt64(
             Json,
             TEXT("catalog_revision"),
@@ -694,7 +705,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToIntent(
 
     OutIntent.ProductId = FName(*ProductId);
     OutIntent.OfferId = FName(*OfferId);
-    OutIntent.Quantity = static_cast<int32>(Quantity);
+    OutIntent.Quantity = Quantity;
     OutIntent.CatalogRevision = CatalogRevision;
     OutIntent.OfferRevision = OfferRevision;
 
@@ -713,7 +724,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToOrder(
 
     FString ProductId;
     FString OfferId;
-    double Quantity = 0.0;
+    int32 Quantity = 0;
     int64 OrderRevision = 0;
     const TSharedPtr<FJsonObject>* PriceJson = nullptr;
 
@@ -727,9 +738,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToOrder(
         !Json->TryGetStringField(
             TEXT("offer_id"),
             OfferId) ||
-        !Json->TryGetNumberField(
-            TEXT("quantity"),
-            Quantity) ||
+        !NumberToInt32(Json, TEXT("quantity"), Quantity) ||
         !Json->TryGetStringField(
             TEXT("order_state"),
             OutOrder.OrderState) ||
@@ -757,7 +766,7 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToOrder(
 
     OutOrder.ProductId = FName(*ProductId);
     OutOrder.OfferId = FName(*OfferId);
-    OutOrder.Quantity = static_cast<int32>(Quantity);
+    OutOrder.Quantity = Quantity;
     OutOrder.OrderRevision = OrderRevision;
 
     const TSharedPtr<FJsonObject>* FlowJson = nullptr;
@@ -837,17 +846,8 @@ bool FGamePlatformCommerceGatewayHttpTransport::JsonToPrice(
     if (OutTotalAmountMinor)
     {
         int64 Total = UnitAmountMinor;
-        if (NumberToInt64(
-                Json,
-                TEXT("total_amount_minor"),
-                Total))
-        {
-            *OutTotalAmountMinor = Total;
-        }
-        else
-        {
-            *OutTotalAmountMinor = UnitAmountMinor;
-        }
+        if (Json->HasField(TEXT("total_amount_minor")) && (!NumberToInt64(Json, TEXT("total_amount_minor"), Total) || Total < 0)) { return false; }
+        *OutTotalAmountMinor = Total;
     }
 
     return true;

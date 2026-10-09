@@ -114,6 +114,8 @@ void UDivineBeastsServerBootstrapSubsystem::Initialize(
     WorldInitializedHandle = FWorldDelegates::OnPostWorldInitialization.AddUObject(
         this,
         &UDivineBeastsServerBootstrapSubsystem::HandleWorldInitialized);
+    WorldCleanupHandle = FWorldDelegates::OnWorldCleanup.AddUObject(
+        this, &ThisClass::HandleWorldCleanup);
 
     // GameInstance可能在首个World BeginPlay之后才创建子系统；只复核当前实例，不强制载图。
     ObserveWorld(GetGameInstance()->GetWorld());
@@ -121,6 +123,9 @@ void UDivineBeastsServerBootstrapSubsystem::Initialize(
 
 void UDivineBeastsServerBootstrapSubsystem::Deinitialize()
 {
+    if (ValidatedWorld.IsValid()) HandleWorldCleanup(ValidatedWorld.Get(), true, true);
+    FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupHandle);
+    WorldCleanupHandle.Reset();
     if (WorldInitializedHandle.IsValid())
     {
         FWorldDelegates::OnPostWorldInitialization.Remove(WorldInitializedHandle);
@@ -158,9 +163,33 @@ void UDivineBeastsServerBootstrapSubsystem::HandleWorldInitialized(
     ObserveWorld(World);
 }
 
+void UDivineBeastsServerBootstrapSubsystem::HandleWorldCleanup(UWorld* World, bool, bool)
+{
+    if (!World || (World != ObservedWorld.Get() && World != ValidatedWorld.Get())) return;
+    if (World != ValidatedWorld.Get())
+    { StopObservingWorld(); return; }
+    // 固定角色Profile只授权已校验的承载世界。先本地关闭，控制面的异步排空确认不能成为继续准入的窗口。
+    bWorldRetired = true;
+    bWorldValidated = false;
+    ValidatedWorld.Reset();
+    StopObservingWorld();
+    if (auto* Admission = GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
+        Admission->ResetTarget(TEXT("ServerWorldRetired"));
+    if (auto* Lifecycle = GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>())
+    {
+        Lifecycle->StopHeartbeatPump();
+        Lifecycle->BeginDrain();
+    }
+    // 重新承载必须由部署启动新实例并重新校验Profile/Boot；常驻世界内部区域流送不走本路径。
+    LastErrorCode = TEXT("ServerWorldRetiredRestartRequired");
+    if (State != EDivineBeastsServerBootstrapState::Draining &&
+        State != EDivineBeastsServerBootstrapState::Stopped)
+        State = EDivineBeastsServerBootstrapState::Failed;
+}
+
 void UDivineBeastsServerBootstrapSubsystem::ObserveWorld(UWorld* World)
 {
-    if (World == nullptr || World->GetGameInstance() != GetGameInstance())
+    if (bWorldRetired || World == nullptr || World->GetGameInstance() != GetGameInstance())
     {
         return;
     }
@@ -229,6 +258,8 @@ bool UDivineBeastsServerBootstrapSubsystem::BeginDrain()
     }
     UGamePlatformServerLifecycleSubsystem* Lifecycle =
         GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>();
+    if (auto* Admission = GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
+        Admission->StopAcceptingAdmissions();
     return Lifecycle != nullptr && Lifecycle->BeginDrain();
 }
 
@@ -283,7 +314,7 @@ void UDivineBeastsServerBootstrapSubsystem::LoadLaunchProfile()
 
 void UDivineBeastsServerBootstrapSubsystem::HandleWorldBeginPlay(UWorld* World)
 {
-    if (!bHasProfile || bWorldValidated || World == nullptr ||
+    if (bWorldRetired || !bHasProfile || bWorldValidated || World == nullptr ||
         World->GetGameInstance() != GetGameInstance() ||
         GetGameInstance()->GetWorld() != World ||
         World->GetNetMode() != NM_DedicatedServer ||
@@ -408,6 +439,15 @@ bool UDivineBeastsServerBootstrapSubsystem::IsConfiguredWorldValid(
 void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
     const FGamePlatformServerLifecycleSnapshot& Snapshot)
 {
+    if (bWorldRetired)
+    {
+        State = Snapshot.State == EGamePlatformServerLifecycleState::Stopped
+            ? EDivineBeastsServerBootstrapState::Stopped
+            : Snapshot.State == EGamePlatformServerLifecycleState::Draining
+                ? EDivineBeastsServerBootstrapState::Draining : EDivineBeastsServerBootstrapState::Failed;
+        LastErrorCode = TEXT("ServerWorldRetiredRestartRequired");
+        return;
+    }
     switch (Snapshot.State)
     {
     case EGamePlatformServerLifecycleState::Registering:
@@ -423,7 +463,7 @@ void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
             AsyncTask(ENamedThreads::GameThread, [WeakThis]()
             {
                 UDivineBeastsServerBootstrapSubsystem* Self = WeakThis.Get();
-                if (!Self || !Self->ValidatedWorld.IsValid() ||
+                if (!Self || Self->bWorldRetired || !Self->ValidatedWorld.IsValid() ||
                     Self->State != EDivineBeastsServerBootstrapState::Registered)
                 {
                     return;
@@ -478,6 +518,8 @@ void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
     case EGamePlatformServerLifecycleState::Draining:
         State = EDivineBeastsServerBootstrapState::Draining;
         LastErrorCode = Snapshot.ErrorCode;
+        if (auto* Admission = GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
+            Admission->StopAcceptingAdmissions();
         break;
     case EGamePlatformServerLifecycleState::Stopped:
         State = EDivineBeastsServerBootstrapState::Stopped;
@@ -498,6 +540,11 @@ void UDivineBeastsServerBootstrapSubsystem::SetFailed(FName ErrorCode)
     LastErrorCode = ErrorCode.IsNone()
         ? FName(TEXT("ServerBootstrapFailed"))
         : ErrorCode;
+    if (GetGameInstance())
+    {
+        if (auto* Admission = GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
+            Admission->ResetTarget(LastErrorCode);
+    }
 }
 
 int32 UDivineBeastsServerBootstrapSubsystem::GetCurrentPlayerCount() const

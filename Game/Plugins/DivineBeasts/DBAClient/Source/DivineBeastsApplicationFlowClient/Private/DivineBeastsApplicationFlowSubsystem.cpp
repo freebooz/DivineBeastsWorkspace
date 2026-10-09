@@ -2379,13 +2379,13 @@ void UDivineBeastsApplicationFlowSubsystem::RefreshAllowedActions()
             EDivineBeastsFlowAction::Logout
         };
     }
-    else if (!ActiveFlow.IsValid() &&
-             ViewState.Error != EDivineBeastsFlowError::None)
+    else if (!ActiveFlow.IsValid() && ViewState.Error != EDivineBeastsFlowError::None)
     {
-        Next = {
-            EDivineBeastsFlowAction::Retry,
-            EDivineBeastsFlowAction::Logout
-        };
+        Next = {EDivineBeastsFlowAction::Logout};
+        // 缺装配/仍忙/创建结果未知不发布可重试能力；受理只走注销后人工登录，不重放旧业务。
+        if (!ViewState.bBusy && ViewState.Error != EDivineBeastsFlowError::CharacterCreateOutcomeUnknown &&
+            ViewState.Error != EDivineBeastsFlowError::FlowNotInitialized && Online && PlatformFlow && Session && Data && Loading)
+        { Next.Insert(EDivineBeastsFlowAction::Retry, 0); }
     }
 
     ViewState.AllowedActions = MoveTemp(Next);
@@ -2457,6 +2457,16 @@ bool UDivineBeastsApplicationFlowSubsystem::RequestPostMatchReturnToWorld()
 {
     return RequestWorldAssignment(
         FDivineBeastsProjectCatalog::GetOpenWorldHubExperience());
+}
+
+bool UDivineBeastsApplicationFlowSubsystem::RetryFailedFlow()
+{
+    check(IsInGameThread());
+    RefreshAllowedActions();
+    if (!ViewState.AllowedActions.Contains(EDivineBeastsFlowAction::Retry)) { return false; }
+    // 使用已经实现的取消/注销/清空票据链，不能重放失败节点中的非幂等创建请求。
+    LogoutAndRestart();
+    return true;
 }
 
 void UDivineBeastsApplicationFlowSubsystem::LogoutAndRestart()

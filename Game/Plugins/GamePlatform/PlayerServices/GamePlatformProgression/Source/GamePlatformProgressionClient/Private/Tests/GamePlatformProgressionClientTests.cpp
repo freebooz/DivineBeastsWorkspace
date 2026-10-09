@@ -191,4 +191,19 @@ bool FProgressionViewEventsTest::RunTest(const FString&)
     Client->OnViewChanged.Clear();
     return true;
 }
+
+// 生命周期回归：测试Transport不访问网络；Reset同步通知调用Deinitialize后，关闭作用域必须拒绝恢复账号及公开刷新。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProgressionCloseDuringConfigureTest, "GamePlatform.Progression.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProgressionCloseDuringConfigureTest::RunTest(const FString&)
+{
+    auto* Client = NewObject<UGamePlatformProgressionClientSubsystem>();
+    auto Transport = MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
+    TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
+    Client->OnViewChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });
+    TestFalse(TEXT("Reset通知内关闭后Configure不得复活服务"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Closed"), Transport));
+    TestFalse(TEXT("关闭后不得启动请求"), static_cast<bool>(Transport->Completion));
+    TestFalse(TEXT("公开刷新拒绝已关闭作用域"), Client->RefreshSnapshot());
+    return true;
+}
+
 #endif

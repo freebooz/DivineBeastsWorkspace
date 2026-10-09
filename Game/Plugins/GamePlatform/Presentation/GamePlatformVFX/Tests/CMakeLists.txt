@@ -1,0 +1,11 @@
+# 原生生产排序回归；输入为纯值候选，输出为P13比较结果，无UE或资产副作用。
+cmake_minimum_required(VERSION 3.20)
+project(VFXPolicies LANGUAGES CXX)
+enable_testing()
+add_executable(VFXPolicies ../Source/GamePlatformVFXClient/Private/Tests/GamePlatformVFXCatalogScoreNativeTests.cpp)
+target_compile_features(VFXPolicies PRIVATE cxx_std_17)
+target_compile_definitions(VFXPolicies PRIVATE GAMEPLATFORM_VFX_NATIVE_TEST=1)
+if(MSVC)
+ target_compile_options(VFXPolicies PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME VFX.Policies COMMAND VFXPolicies)

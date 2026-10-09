@@ -1,0 +1,11 @@
+# 任务持久幂等整改（2026-10-09）
+
+GW-05原审查的先清payload问题已在整合基线缓解；独立复核进一步发现同版本损坏快照和跨任务全量重放。追加整改使用完整快照校验及(QuestId,QuestInstanceId,EventId)归属，保留已提交Q1去重，只重放未提交Q2，失败仍保留原任务和载荷。
+
+GW-06补齐端口合同与真实消费：DuplicateEvent只能代表本批全部EventIds已提交并携带同QuestInstanceId的权威快照，直接确认这批幂等身份，不再次加载/重放。CompletionAlreadyCommitted要求同CompletionId的Completed快照。空/错实例/旧Revision/非法目标进度保持PersistenceOutcomeUnknown与原payload，不能吞掉事件。
+
+RevisionConflict保证本批没有写入才允许加载并以原EventId重放；部分重复或无法确认的落库回包丢失必须使用PersistenceOutcomeUnknown，以原幂等身份重试。外部端口必须异步、游戏线程单次回调，Begin=false不回调。这里没有新建生产Provider，Backend仍缺实际Quest路由与数据库事务实现，不能声明持久幂等生产验收。
+
+新增/扩展Automation夹具验证失败快照、满队列与权威重复确认后不循环对账。现有Quest原生CMake在Debug/Release通过；它只覆盖纯规则，Automation、真实落库回包丢失/重启恢复/联机仍待执行。
+
+追加整改将PublishSnapshot视为同步外部边界，初载/对账/persist/接取/放弃/事件排空均在之后按PlayerRuntimeId重新Find。Private/Tests补同EventId两任务首成功次冲突、同版本缺/错目标和无效实例、损坏成功回包、监听者Unregister后重注册与Deinitialize回归。Quest原生Debug/Release此次重新通过；UE这些行为夹具仍未运行。详细失败、历史兼容与所有权合同见PersistenceAndReconciliation.md。

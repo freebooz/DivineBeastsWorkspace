@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformVFX，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #include "Execution/GamePlatformVFXNiagaraExecutor.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
 #include "Definitions/GamePlatformVFXAreaDefinition.h"
@@ -35,9 +37,8 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     {
         return nullptr;
     }
-    UNiagaraSystem* System = Definition.ResolveNiagaraSystem(
-        Request.PlatformId,
-        Request.QualityTier).Get();
+    UNiagaraSystem* System = (Request.bUseBaseNiagaraSystem ? Definition.GetNiagaraSystem() :
+        Definition.ResolveNiagaraSystem(Request.PlatformId, Request.QualityTier)).Get();
     if (!IsValid(System))
     {
         return nullptr;

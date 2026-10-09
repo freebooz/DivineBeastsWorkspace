@@ -1,4 +1,8 @@
+// 平台层遥测Schema私有注册与验证实现，GI子系统拥有；只验证事件结构/隐私边界，不拥有业务权威状态。
+// 游戏线程按既有服务合同注册/查询；失败返回诊断，注册表生命周期随GI释放，稳定值类型仍可公开扩展。
+// 同名旧Public头保留不透明兼容；首先包含它，再引入Private定义，避免违反UE第一包含规则。
 #include "Schema/GamePlatformTelemetrySchemaRegistry.h"
+#include "Schema/TelemetrySchemaRegistry.h"
 
 namespace
 {

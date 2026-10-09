@@ -35,8 +35,9 @@ void UGamePlatformSettingsSubsystem::Initialize(
     Super::Initialize(Collection);
 
     ScopeId = FGuid::NewGuid();
-    Generation = 1;
-    MutationGeneration = 1;
+    bDeinitializing = false;
+    ++Generation;
+    ++MutationGeneration;
     Registry = MakeUnique<FGamePlatformSettingsRegistry>();
 
     IModularFeatures& Features = IModularFeatures::Get();
@@ -67,6 +68,10 @@ void UGamePlatformSettingsSubsystem::Deinitialize()
 {
     bDeinitializing = true;
     ++Generation;
+    ++LoadGeneration;
+    ++SaveRequestGeneration;
+    bLoadInFlight = false;
+    PendingLoadRegistry.Reset();
 
     IModularFeatures& Features = IModularFeatures::Get();
     if (FeatureRegisteredHandle.IsValid())
@@ -83,6 +88,7 @@ void UGamePlatformSettingsSubsystem::Deinitialize()
     // 异步保存不可强杀；Completion 只捕获弱子系统，销毁后不会回写 UObject。
     bSaveInFlight = false;
     bPendingTopologyReload = false;
+    bTopologyWakeQueued = false;
     Subscriptions.Reset();
     Layers.Reset();
     ScopedPersistenceProvider.Reset();
@@ -107,7 +113,7 @@ UGamePlatformSettingsSubsystem::GetCurrentRuntimeScope() const
 }
 
 bool UGamePlatformSettingsSubsystem::CanMutate(
-    FGamePlatformResult& OutResult)
+    FGamePlatformResult& OutResult, bool bAllowLoadInFlight)
 {
     check(IsInGameThread());
 
@@ -117,6 +123,13 @@ bool UGamePlatformSettingsSubsystem::CanMutate(
         OutResult = FGamePlatformResult::Failure(
             TEXT("SettingsServiceUnavailable"),
             TEXT("设置服务尚未初始化或正在销毁。"));
+        return false;
+    }
+
+    if (bLoadInFlight && !bAllowLoadInFlight)
+    {
+        ++Diagnostics.RejectedMutationCount;
+        OutResult = FGamePlatformResult::Failure(TEXT("SettingsLoadInProgress"), TEXT("设置档案读取尚未完成；查询继续使用已发布只读快照。"));
         return false;
     }
 
@@ -387,6 +400,12 @@ FGamePlatformResult
 UGamePlatformSettingsSubsystem::ResolvePersistenceProvider(
     IGamePlatformSettingsPersistenceProvider*& OutProvider) const
 {
+    const uint64 ExpectedInstanceGeneration = Generation;
+    const uint64 ExpectedLoadGeneration = LoadGeneration;
+    const auto IsScopeCurrent = [this, ExpectedInstanceGeneration, ExpectedLoadGeneration]()
+    { return !bDeinitializing && Generation == ExpectedInstanceGeneration && LoadGeneration == ExpectedLoadGeneration; };
+    const auto Closed = []() { return FGamePlatformResult::Failure(TEXT("SettingsPreparationInvalidated"), TEXT("持久化Provider解析期间作用域已失效。")); };
+
     OutProvider = nullptr;
 
     TArray<IGamePlatformSettingsPersistenceProvider*> Providers =
@@ -398,11 +417,10 @@ UGamePlatformSettingsSubsystem::ResolvePersistenceProvider(
 
     for (IGamePlatformSettingsPersistenceProvider* Provider : Providers)
     {
-        if (!Provider ||
-            !Provider->SupportsRuntime(GetCurrentRuntimeScope()))
-        {
-            continue;
-        }
+        if (!Provider) { continue; }
+        const bool bSupportsRuntime = Provider->SupportsRuntime(GetCurrentRuntimeScope());
+        if (!IsScopeCurrent()) { OutProvider = nullptr; return Closed(); }
+        if (!bSupportsRuntime) { continue; }
 
         if (OutProvider)
         {
@@ -417,21 +435,25 @@ UGamePlatformSettingsSubsystem::ResolvePersistenceProvider(
 
     if (GetCurrentRuntimeScope() == EGamePlatformSettingRuntimeScope::Client)
     {
+        // 查询只解析Provider所有权，不改变读取事务代次；Reload/拓扑/关闭入口统一使旧请求失效。
+        // 无可选持久层时仍需完成本次默认层候选，不能在捕获代次后再次推进而丢弃自己的终态。
         if (!OutProvider) { ScopedPersistenceProvider.Reset(); PersistenceFactory = nullptr; }
         else
         {
             if (PersistenceFactory != OutProvider || !ScopedPersistenceProvider)
             {
                 auto Scoped = OutProvider->CreateScopedProvider();
+                if (!IsScopeCurrent()) { OutProvider = nullptr; return Closed(); }
                 if (!Scoped)
                 {
                     OutProvider = nullptr;
                     return FGamePlatformResult::Unsupported(TEXT("SettingsScopedPersistenceRequired"), TEXT("客户端Provider必须提供GI独占实例，拒绝共享可变用户上下文。"));
                 }
                 const auto ContextResult = Scoped->SetUserContext(CurrentUserContextKey);
+                if (!IsScopeCurrent()) { OutProvider = nullptr; return Closed(); }
                 if (!ContextResult.IsSuccess()) { OutProvider = nullptr; return ContextResult; }
                 PersistenceFactory = OutProvider;
-                ScopedPersistenceProvider = MoveTemp(Scoped);
+                ScopedPersistenceProvider = MakeShareable(Scoped.Release());
             }
             OutProvider = ScopedPersistenceProvider.Get();
         }
@@ -549,6 +571,26 @@ FGamePlatformResult UGamePlatformSettingsSubsystem::Reload()
 FGamePlatformResult UGamePlatformSettingsSubsystem::ReloadInternal(
     const EGamePlatformSettingsChangeReason Reason)
 {
+    if (bDeinitializing || !Registry) { return FGamePlatformResult::Failure(TEXT("SettingsServiceUnavailable"), TEXT("设置作用域已关闭。")); }
+    // 拓扑预检可能失败；仍须先撤销旧候选，防止旧Completion发布已撤回描述。
+    const uint64 ExpectedInstanceGeneration = Generation;
+    const uint64 ExpectedLoadGeneration = ++LoadGeneration;
+    const auto IsCurrentPreparation = [this, ExpectedInstanceGeneration, ExpectedLoadGeneration]()
+    { return !bDeinitializing && Generation == ExpectedInstanceGeneration && LoadGeneration == ExpectedLoadGeneration && static_cast<bool>(Registry); };
+    const auto Invalidated = []() { return FGamePlatformResult::Failure(TEXT("SettingsPreparationInvalidated"), TEXT("读取准备期间作用域或候选代次已失效。")); };
+    // 所有准备入口共用一次失败发布，直接Reload/延后唤醒也能撤销订阅者的Loading投影。
+    // 外部Provider可同步关闭或启动新候选；过期准备栈只返回，不覆盖新代次的终态。
+    const auto PublishPreparationFailure = [this, Reason, &IsCurrentPreparation](const FGamePlatformResult& Failure)
+    {
+        if (IsCurrentPreparation())
+        {
+            Snapshot.LastResult = Failure;
+            FGamePlatformSettingsChangeSet Empty; Empty.Reason = Reason; Empty.Revision = Snapshot.Revision;
+            PublishChanges(Empty);
+        }
+        return Failure;
+    };
+    bLoadInFlight = false; Snapshot.bLoading = false; PendingLoadRegistry.Reset();
     check(IsInGameThread());
 
     const UGamePlatformSettingsProjectSettings* ProjectSettings =
@@ -567,101 +609,95 @@ FGamePlatformResult UGamePlatformSettingsSubsystem::ReloadInternal(
             MaxProviders,
             MaxDescriptors,
             GetCurrentRuntimeScope());
-    if (!RegistryResult.IsSuccess())
-    {
-        Snapshot.LastResult = RegistryResult;
-        return RegistryResult;
-    }
-
-    TMap<EGamePlatformSettingLayer,
-        TMap<FName, FGamePlatformSettingValue>> NewLayers;
-    BuildDefaultLayers(NewRegistry->GetDescriptors(), NewLayers);
+    if (!IsCurrentPreparation()) { return Invalidated(); }
+    if (!RegistryResult.IsSuccess()) { return PublishPreparationFailure(RegistryResult); }
 
     FGamePlatformResult PersistenceResult =
         FGamePlatformResult::Success();
     IGamePlatformSettingsPersistenceProvider* Persistence = nullptr;
     PersistenceResult = ResolvePersistenceProvider(Persistence);
-    if (!PersistenceResult.IsSuccess())
+    if (!IsCurrentPreparation()) { return Invalidated(); }
+    if (!PersistenceResult.IsSuccess()) { return PublishPreparationFailure(PersistenceResult); }
+
+    // 新的候选注册表只属于本次读取；拓扑重载使旧回调失效，不允许半份持久层先发布。
+    PendingLoadRegistry = MoveTemp(NewRegistry);
+    PendingLoadTargetVersion = TargetVersion;
+    PendingLoadReason = Reason;
+    bLoadInFlight = true;
+    Snapshot.bLoading = true;
+    if (!Persistence)
     {
-        Snapshot.LastResult = PersistenceResult;
-        return PersistenceResult;
+        FGamePlatformSettingsPersistencePayload Payload; Payload.SchemaVersion = TargetVersion;
+        HandleLoadCompleted(ExpectedLoadGeneration, MoveTemp(Payload), FGamePlatformResult::Success());
+        return Snapshot.LastResult;
     }
-
-    FGamePlatformSettingsPersistencePayload Payload;
-    Payload.SchemaVersion = TargetVersion;
-
-    if (Persistence)
-    {
-        PersistenceResult =
-            Persistence->Load(NewRegistry->GetDescriptors(), Payload);
-        if (PersistenceResult.IsSuccess())
+    TWeakObjectPtr<UGamePlatformSettingsSubsystem> WeakThis(this);
+    const auto ProviderOwner = ScopedPersistenceProvider;
+    const auto DescriptorCopy = PendingLoadRegistry->GetDescriptors();
+    const auto Accepted = Persistence->BeginLoad(DescriptorCopy,
+        [WeakThis, ExpectedLoadGeneration](FGamePlatformSettingsPersistencePayload Payload, const FGamePlatformResult& Result)
         {
-            const FGamePlatformResult SanitizeResult =
-                SanitizePersistencePayload(
-                    NewRegistry->GetDescriptors(),
-                    Payload);
-            if (!SanitizeResult.IsSuccess())
-            {
-                PersistenceResult = SanitizeResult;
-            }
-        }
-
-        if (PersistenceResult.IsSuccess())
-        {
-            const FGamePlatformResult MigrationResult =
-                ApplyMigrations(Payload, TargetVersion);
-            if (!MigrationResult.IsSuccess())
-            {
-                PersistenceResult = MigrationResult;
-            }
-        }
-    }
-
-    if (PersistenceResult.IsSuccess())
+            check(IsInGameThread());
+            if (auto* Self = WeakThis.Get()) { Self->HandleLoadCompleted(ExpectedLoadGeneration, MoveTemp(Payload), Result); }
+        });
+    if (!Accepted.IsSuccess() && bLoadInFlight && ExpectedLoadGeneration == LoadGeneration)
+    { HandleLoadCompleted(ExpectedLoadGeneration, {}, Accepted); }
+    else if (bLoadInFlight && ExpectedLoadGeneration == LoadGeneration)
     {
-        for (TPair<
-            EGamePlatformSettingLayer,
-            TMap<FName, FGamePlatformSettingValue>>& Pair : Payload.Layers)
-        {
-            TMap<FName, FGamePlatformSettingValue>& Destination =
-                NewLayers.FindOrAdd(Pair.Key);
-            for (TPair<FName, FGamePlatformSettingValue>& ValuePair :
-                Pair.Value)
-            {
-                Destination.Add(ValuePair.Key, MoveTemp(ValuePair.Value));
-            }
-        }
-    }
-    // 持久层损坏/迁移失败不删除原文件；继续使用默认值形成可运行Snapshot并返回失败。
-
-    Registry = MoveTemp(NewRegistry);
-    Layers = MoveTemp(NewLayers);
-    bUserDirty = false;
-    bPendingResolve = true;
-    ++MutationGeneration;
-
-    Diagnostics.ProviderCount = Registry->GetProviderCount();
-    Diagnostics.DescriptorCount = Registry->GetDescriptors().Num();
-
-    const FGamePlatformResult ResolveResult =
-        ResolveAndPublish(Reason, true);
-    if (!ResolveResult.IsSuccess())
-    {
-        return ResolveResult;
-    }
-
-    if (!PersistenceResult.IsSuccess())
-    {
-        Snapshot.LastResult = PersistenceResult;
-
-        FGamePlatformSettingsChangeSet Empty;
-        Empty.Reason = Reason;
-        Empty.Revision = Snapshot.Revision;
+        FGamePlatformSettingsChangeSet Empty; Empty.Reason = Reason; Empty.Revision = Snapshot.Revision;
         PublishChanges(Empty);
-        return PersistenceResult;
     }
+    return Accepted;
+}
 
-    return FGamePlatformResult::Success();
+void UGamePlatformSettingsSubsystem::HandleLoadCompleted(uint64 ExpectedLoadGeneration,
+    FGamePlatformSettingsPersistencePayload Payload, const FGamePlatformResult& Result)
+{
+    check(IsInGameThread());
+    if (bDeinitializing || !bLoadInFlight || ExpectedLoadGeneration != LoadGeneration || !PendingLoadRegistry) { return; }
+    // 先消费终态资格，迁移/事件重入或错误Provider重复Completion不能再消费同一候选。
+    bLoadInFlight = false;
+    Snapshot.bLoading = false;
+    const auto Reason = PendingLoadReason;
+    const int32 TargetVersion = PendingLoadTargetVersion;
+    auto CandidateRegistry = MoveTemp(PendingLoadRegistry);
+    auto FinalResult = Result;
+    if (FinalResult.IsSuccess()) { FinalResult = SanitizePersistencePayload(CandidateRegistry->GetDescriptors(), Payload); }
+    if (FinalResult.IsSuccess()) { FinalResult = ApplyMigrations(Payload, TargetVersion); }
+    // 外部迁移Provider虽只获纯值合同，也可能触发拓扑事件；旧候选不得覆盖重载/换绑后的代次。
+    if (bDeinitializing || ExpectedLoadGeneration != LoadGeneration) { return; }
+    if (!FinalResult.IsSuccess())
+    {
+        // Reload失败保留已发布层；SwitchUserContext已在启动新读取前撤销旧User层，避免账号泄漏。
+        Snapshot.LastResult = FinalResult;
+        FGamePlatformSettingsChangeSet Empty; Empty.Reason = Reason; Empty.Revision = Snapshot.Revision;
+        PublishChanges(Empty); return;
+    }
+    TMap<EGamePlatformSettingLayer, TMap<FName, FGamePlatformSettingValue>> CandidateLayers;
+    BuildDefaultLayers(CandidateRegistry->GetDescriptors(), CandidateLayers);
+    for (auto& Pair : Payload.Layers)
+    {
+        auto& Destination = CandidateLayers.FindOrAdd(Pair.Key);
+        for (auto& ValuePair : Pair.Value) { Destination.Add(ValuePair.Key, MoveTemp(ValuePair.Value)); }
+    }
+    FGamePlatformSettingsSnapshot CandidateSnapshot;
+    FGamePlatformSettingsChangeSet Changes;
+    FinalResult = FGamePlatformSettingsResolver::Resolve(CandidateRegistry->GetDescriptors(), CandidateLayers,
+        GetCurrentRuntimeScope(), Snapshot, Reason, TargetVersion, false, CandidateSnapshot, Changes);
+    if (bDeinitializing || ExpectedLoadGeneration != LoadGeneration) { return; }
+    if (!FinalResult.IsSuccess())
+    {
+        Snapshot.LastResult = FinalResult;
+        FGamePlatformSettingsChangeSet Empty; Empty.Reason = Reason; Empty.Revision = Snapshot.Revision;
+        PublishChanges(Empty); return;
+    }
+    // 所有校验/迁移/解析成功后一次性替换注册表、层和快照；任何失败保留之前的可读状态。
+    Registry = MoveTemp(CandidateRegistry); Layers = MoveTemp(CandidateLayers);
+    CandidateSnapshot.bLoading = false; CandidateSnapshot.bSaveInFlight = bSaveInFlight;
+    CandidateSnapshot.LastResult = FGamePlatformResult::Success(); Snapshot = MoveTemp(CandidateSnapshot);
+    bUserDirty = false; bPendingResolve = false; ++MutationGeneration; ++Diagnostics.ResolveCount;
+    Diagnostics.ProviderCount = Registry->GetProviderCount(); Diagnostics.DescriptorCount = Registry->GetDescriptors().Num();
+    PublishChanges(Changes);
 }
 
 FGamePlatformResult UGamePlatformSettingsSubsystem::ResolveAndPublish(
@@ -697,6 +733,7 @@ FGamePlatformResult UGamePlatformSettingsSubsystem::ResolveAndPublish(
         return Result;
     }
 
+    Candidate.bLoading = bLoadInFlight;
     Candidate.bSaveInFlight = bSaveInFlight;
     Candidate.bDirty = bUserDirty;
     Candidate.LastResult = FGamePlatformResult::Success();
@@ -721,107 +758,50 @@ FGamePlatformResult UGamePlatformSettingsSubsystem::ResolveAndPublish(
 FGamePlatformResult UGamePlatformSettingsSubsystem::Save()
 {
     FGamePlatformResult Guard;
-    if (!CanMutate(Guard))
-    {
-        return Guard;
-    }
-
-    if (bSaveInFlight)
-    {
-        ++Diagnostics.RejectedMutationCount;
-        return FGamePlatformResult::Failure(
-            TEXT("SettingsSaveInFlight"),
-            TEXT("已有异步设置保存正在执行。"));
-    }
-
-    if (bPendingResolve)
-    {
-        ++Diagnostics.RejectedMutationCount;
-        return FGamePlatformResult::Failure(
-            TEXT("SettingsApplyRequiredBeforeSave"),
-            TEXT("存在尚未Apply的设置修改，必须先生成最终Snapshot。"));
-    }
-
-    if (!bUserDirty)
-    {
-        return FGamePlatformResult::Success();
-    }
-
+    if (!CanMutate(Guard)) { return Guard; }
+    if (bSaveInFlight) { return FGamePlatformResult::Failure(TEXT("SettingsSaveInFlight"), TEXT("已有保存正在执行。")); }
+    if (bPendingResolve) { return FGamePlatformResult::Failure(TEXT("SettingsApplyRequiredBeforeSave"), TEXT("保存前必须先Apply生成快照。")); }
+    if (!bUserDirty) { return FGamePlatformResult::Success(); }
     IGamePlatformSettingsPersistenceProvider* Persistence = nullptr;
-    const FGamePlatformResult ProviderResult =
-        ResolvePersistenceProvider(Persistence);
-    if (!ProviderResult.IsSuccess())
-    {
-        return ProviderResult;
-    }
-    if (!Persistence)
-    {
-        return FGamePlatformResult::Unsupported(
-            TEXT("SettingsPersistenceUnavailable"),
-            TEXT("当前端侧没有设置持久化Provider。"));
-    }
-
-    const TMap<FName, FGamePlatformSettingValue>* UserLayer =
-        Layers.Find(EGamePlatformSettingLayer::User);
-    static const TMap<FName, FGamePlatformSettingValue> EmptyUserLayer;
-    const TMap<FName, FGamePlatformSettingValue>& Values =
-        UserLayer ? *UserLayer : EmptyUserLayer;
-
+    const auto ProviderResult = ResolvePersistenceProvider(Persistence);
+    if (!ProviderResult.IsSuccess()) { return ProviderResult; }
+    if (!Persistence) { return FGamePlatformResult::Unsupported(TEXT("SettingsPersistenceUnavailable"), TEXT("当前端侧没有持久化Provider。")); }
+    // Provider可同步完成并触发退出；持有克隆和纯值副本，先登记终态身份再进入外部代码。
+    const auto ProviderOwner = ScopedPersistenceProvider;
+    const auto* UserLayer = Layers.Find(EGamePlatformSettingLayer::User);
+    const TMap<FName, FGamePlatformSettingValue> Values = UserLayer ? *UserLayer : TMap<FName, FGamePlatformSettingValue>();
+    const uint64 ExpectedInstanceGeneration = Generation;
+    const uint64 ExpectedSaveRequestGeneration = ++SaveRequestGeneration;
     const uint64 SavedGeneration = MutationGeneration;
-    const TWeakObjectPtr<UGamePlatformSettingsSubsystem> WeakThis(this);
-    const int32 Version =
-        GetDefault<UGamePlatformSettingsProjectSettings>()
-            ? GetDefault<UGamePlatformSettingsProjectSettings>()->SchemaVersion
-            : 1;
-
-    const FGamePlatformResult StartResult =
-        Persistence->BeginSave(
-            Values,
-            Version,
-            [WeakThis, SavedGeneration](const FGamePlatformResult& Result)
-            {
-                auto Complete = [WeakThis, SavedGeneration, Result]()
-                {
-                    if (UGamePlatformSettingsSubsystem* Self = WeakThis.Get())
-                    {
-                        Self->HandleSaveCompleted(SavedGeneration, Result);
-                    }
-                };
-
-                if (IsInGameThread())
-                {
-                    Complete();
-                }
-                else
-                {
-                    AsyncTask(ENamedThreads::GameThread, MoveTemp(Complete));
-                }
-            });
-
-    if (!StartResult.IsSuccess())
-    {
-        return StartResult;
-    }
-
-    bSaveInFlight = true;
-    Snapshot.bSaveInFlight = true;
-    ++Snapshot.Revision;
-    ++Diagnostics.SaveRequestCount;
-
-    FGamePlatformSettingsChangeSet Empty;
-    Empty.Reason = EGamePlatformSettingsChangeReason::Persistence;
-    Empty.Revision = Snapshot.Revision;
+    bSaveInFlight = true; Snapshot.bSaveInFlight = true;
+    ++Snapshot.Revision; ++Diagnostics.SaveRequestCount;
+    FGamePlatformSettingsChangeSet Empty; Empty.Reason = EGamePlatformSettingsChangeReason::Persistence; Empty.Revision = Snapshot.Revision;
     PublishChanges(Empty);
-    return FGamePlatformResult::Success();
+    if (bDeinitializing || Generation != ExpectedInstanceGeneration || !bSaveInFlight || SaveRequestGeneration != ExpectedSaveRequestGeneration)
+    { return FGamePlatformResult::Failure(TEXT("SettingsServiceUnavailable"), TEXT("保存受理前作用域已失效。")); }
+    const TWeakObjectPtr<UGamePlatformSettingsSubsystem> WeakThis(this);
+    const auto* ProjectSettings = GetDefault<UGamePlatformSettingsProjectSettings>();
+    const auto StartResult = Persistence->BeginSave(Values, ProjectSettings ? ProjectSettings->SchemaVersion : 1,
+        [WeakThis, ExpectedInstanceGeneration, ExpectedSaveRequestGeneration, SavedGeneration](const FGamePlatformResult& Result)
+        {
+            auto Complete = [WeakThis, ExpectedInstanceGeneration, ExpectedSaveRequestGeneration, SavedGeneration, Result]()
+            { if (auto* Self = WeakThis.Get()) { Self->HandleSaveCompleted(ExpectedInstanceGeneration, ExpectedSaveRequestGeneration, SavedGeneration, Result); } };
+            if (IsInGameThread()) { Complete(); } else { AsyncTask(ENamedThreads::GameThread, MoveTemp(Complete)); }
+        });
+    if (!StartResult.IsSuccess()) { HandleSaveCompleted(ExpectedInstanceGeneration, ExpectedSaveRequestGeneration, SavedGeneration, StartResult); }
+    return StartResult;
 }
 
+
 void UGamePlatformSettingsSubsystem::HandleSaveCompleted(
+    const uint64 ExpectedInstanceGeneration,
+    const uint64 ExpectedSaveRequestGeneration,
     const uint64 SavedMutationGeneration,
     const FGamePlatformResult& Result)
 {
     check(IsInGameThread());
 
-    if (bDeinitializing)
+    if (bDeinitializing || Generation != ExpectedInstanceGeneration || SaveRequestGeneration != ExpectedSaveRequestGeneration || !bSaveInFlight)
     {
         return;
     }
@@ -845,6 +825,7 @@ void UGamePlatformSettingsSubsystem::HandleSaveCompleted(
     Empty.Reason = EGamePlatformSettingsChangeReason::Persistence;
     Empty.Revision = Snapshot.Revision;
     PublishChanges(Empty);
+    if (bDeinitializing || Generation != ExpectedInstanceGeneration || SaveRequestGeneration != ExpectedSaveRequestGeneration) { return; }
 
     // Provider拓扑变化可能发生在异步保存期间。只有确认保存覆盖当前MutationGeneration时才安全重载；
     // 保存失败或保存期间又发生新修改时继续保留待重载标志，避免Reload丢失尚未持久化的用户值。
@@ -869,7 +850,7 @@ FGamePlatformResult UGamePlatformSettingsSubsystem::SwitchUserContext(
     const FString& UserContextKey)
 {
     FGamePlatformResult Guard;
-    if (!CanMutate(Guard))
+    if (!CanMutate(Guard, true))
     {
         return Guard;
     }
@@ -919,15 +900,25 @@ FGamePlatformResult UGamePlatformSettingsSubsystem::SwitchUserContext(
             TEXT("当前客户端没有用户设置持久化Provider。"));
     }
 
+    const auto ProviderOwner = ScopedPersistenceProvider;
+    const uint64 ExpectedGeneration = Generation;
     const FGamePlatformResult ContextResult =
         Persistence->SetUserContext(UserContextKey);
+    if (bDeinitializing || Generation != ExpectedGeneration) { return FGamePlatformResult::Failure(TEXT("SettingsServiceUnavailable"), TEXT("用户换绑期间作用域已关闭。")); }
     if (!ContextResult.IsSuccess())
     {
         ++Diagnostics.RejectedMutationCount;
         return ContextResult;
     }
 
+    // 校验/Provider上下文切换成功才取消旧读取消费者；非法/相同键请求不会中断合法在飞读取。
+    ++LoadGeneration; bLoadInFlight = false; Snapshot.bLoading = false; PendingLoadRegistry.Reset();
     CurrentUserContextKey = UserContextKey;
+    // 账号切换不能在读取新档案时继续展示上个账号User层；先事件驱动发布默认/Session投影。
+    Layers.Remove(EGamePlatformSettingLayer::User);
+    bPendingResolve = true;
+    ResolveAndPublish(EGamePlatformSettingsChangeReason::Reload, true);
+    if (bDeinitializing || Generation != ExpectedGeneration) { return FGamePlatformResult::Failure(TEXT("SettingsServiceUnavailable"), TEXT("用户投影通知期间作用域已关闭。")); }
     ++MutationGeneration;
     return ReloadInternal(EGamePlatformSettingsChangeReason::Reload);
 }
@@ -1022,6 +1013,8 @@ void UGamePlatformSettingsSubsystem::PublishChanges(
     TArray<FGuid> SubscriptionIds;
     Subscriptions.GetKeys(SubscriptionIds);
 
+    const auto PublishedSnapshot = Snapshot;
+    const uint64 ExpectedGeneration = Generation;
     bPublishing = true;
     for (const FGuid Id : SubscriptionIds)
     {
@@ -1041,7 +1034,8 @@ void UGamePlatformSettingsSubsystem::PublishChanges(
             Entry->Callback;
         if (Callback)
         {
-            Callback(ChangeSet, Snapshot);
+            Callback(ChangeSet, PublishedSnapshot);
+            if (bDeinitializing || ExpectedGeneration != Generation) { return; }
             ++Diagnostics.SubscriberCallbackCount;
         }
     }
@@ -1061,7 +1055,7 @@ void UGamePlatformSettingsSubsystem::HandleModularFeatureUnregistered(
 {
     // 先释放克隆，避免卸载/重新注册同地址工厂时错误复用旧用户状态。
     if (Type == IGamePlatformSettingsPersistenceProvider::GetModularFeatureName() && Feature == PersistenceFactory)
-    { ScopedPersistenceProvider.Reset(); PersistenceFactory = nullptr; }
+    { ++LoadGeneration; bLoadInFlight = false; Snapshot.bLoading = false; PendingLoadRegistry.Reset(); ScopedPersistenceProvider.Reset(); PersistenceFactory = nullptr; }
     HandleFeatureTopologyChanged(Type);
 }
 
@@ -1077,7 +1071,29 @@ void UGamePlatformSettingsSubsystem::HandleFeatureTopologyChanged(
         return;
     }
 
-    if (bSaveInFlight)
+    // 拓扑通知到达即失效旧候选；即使广播中仅延后重建，旧Completion也不能在唤醒前发布。
+    ++LoadGeneration; bLoadInFlight = false; Snapshot.bLoading = false; PendingLoadRegistry.Reset();
+    if (bPublishing)
+    {
+        bPendingTopologyReload = true;
+        if (!bTopologyWakeQueued)
+        {
+            bTopologyWakeQueued = true;
+            TWeakObjectPtr<UGamePlatformSettingsSubsystem> WeakThis(this);
+            const uint64 ExpectedGeneration = Generation;
+            AsyncTask(ENamedThreads::GameThread, [WeakThis, ExpectedGeneration]()
+            {
+                auto* Self = WeakThis.Get();
+                if (!Self || Self->bDeinitializing || Self->Generation != ExpectedGeneration) { return; }
+                Self->bTopologyWakeQueued = false;
+                if (Self->bPendingTopologyReload && !Self->bPublishing && !Self->bSaveInFlight && !Self->bUserDirty && !Self->bPendingResolve)
+                { Self->bPendingTopologyReload = false; Self->ReloadInternal(EGamePlatformSettingsChangeReason::ProviderChanged); }
+            });
+        }
+        return;
+    }
+
+    if (bSaveInFlight || bUserDirty || bPendingResolve)
     {
         // 保存使用当前User层快照；此时立即重建Registry/Layers会制造保存代次与内存代次竞态。
         bPendingTopologyReload = true;
@@ -1088,6 +1104,7 @@ void UGamePlatformSettingsSubsystem::HandleFeatureTopologyChanged(
         ReloadInternal(EGamePlatformSettingsChangeReason::ProviderChanged);
     if (!Result.IsSuccess())
     {
+        // ReloadInternal统一拥有准备失败的终态事件，本调用方仅记录诊断，避免重复通知。
         UE_LOG(
             LogGamePlatformSettings,
             Error,

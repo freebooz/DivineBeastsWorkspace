@@ -9,30 +9,129 @@
   "CanContainContent": true,
   "EnabledByDefault": false,
   "Plugins": [
-    { "Name": "DBAGameplay", "Enabled": true },
-    { "Name": "DBAWorlds", "Enabled": true },
-    { "Name": "GamePlatformCore", "Enabled": true },
-    { "Name": "GamePlatformApplicationFlow", "Enabled": true },
-    { "Name": "GamePlatformOnline", "Enabled": true },
-    { "Name": "GamePlatformSession", "Enabled": true },
-    { "Name": "GamePlatformLoading", "Enabled": true },
-    { "Name": "GamePlatformData", "Enabled": true },
-    { "Name": "GamePlatformInput", "Enabled": true },
-    { "Name": "GamePlatformCharacter", "Enabled": true },
-    { "Name": "GamePlatformAbilitySystem", "Enabled": true },
-    { "Name": "GamePlatformTelemetry", "Enabled": true },
-    { "Name": "GamePlatformCombat", "Enabled": true },
-    { "Name": "GamePlatformQuest", "Enabled": true },
-    { "Name": "GamePlatformInventory", "Enabled": true },
-    { "Name": "GamePlatformPresentation", "Enabled": true },
-    { "Name": "GamePlatformVFX", "Enabled": true },
-    { "Name": "GamePlatformUI", "Enabled": true }
+    {
+      "Name": "DBAGameplay",
+      "Enabled": true
+    },
+    {
+      "Name": "DBAWorlds",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformApplicationFlow",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformOnline",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformSession",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformLoading",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformData",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformInput",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCharacter",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformAbilitySystem",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformTelemetry",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCombat",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformQuest",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformInventory",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformPresentation",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformVFX",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformUI",
+      "Enabled": true
+    }
   ],
   "Modules": [
-    { "Name": "DivineBeastsApplicationFlowClient", "Type": "ClientOnly", "LoadingPhase": "Default" },
-    { "Name": "DivineBeastsInputClient", "Type": "ClientOnly", "LoadingPhase": "Default" },
-    { "Name": "DivineBeastsPresentationRuntime", "Type": "Runtime", "LoadingPhase": "Default" },
-    { "Name": "DivineBeastsPresentationClient", "Type": "ClientOnly", "LoadingPhase": "Default" },
-    { "Name": "DivineBeastsUIClient", "Type": "ClientOnly", "LoadingPhase": "Default" }
+    {
+      "Name": "DivineBeastsApplicationFlowClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DivineBeastsInputClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DivineBeastsPresentationRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DivineBeastsPresentationClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DivineBeastsUIClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    }
   ]
 }

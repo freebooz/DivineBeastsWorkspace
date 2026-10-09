@@ -114,8 +114,7 @@ void UGamePlatformDataSubsystem::Initialize(FSubsystemCollectionBase& Collection
     Scope->bIsClosing = false;
     Scope->Manager = Cast<UGamePlatformAssetManager>(UAssetManager::GetIfInitialized());
     WorldCleanupHandle = FWorldDelegates::OnWorldCleanup.AddUObject(this, &ThisClass::CleanupWorld);
-    // 弱对象销毁没有统一销毁事件；只做作用域租约存活检查，不执行同步加载或业务逐帧逻辑。
-    OwnerWatchHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &ThisClass::WatchOwners));
+    // 无请求的实例不需要维护；世界退出由上面的委托即时释放，GC弱所有者由有界低频维护兜底。
 }
 void UGamePlatformDataSubsystem::Deinitialize()
 {
@@ -145,8 +144,10 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
         OutResult = FGamePlatformResult::Failure(TEXT("ScopeClosed"), TEXT("数据作用域未初始化或正在关闭。"));
     else if (!Scope->Manager.IsValid())
         OutResult = FGamePlatformResult::Failure(TEXT("AssetManagerNotConfigured"), TEXT("引擎未配置GamePlatformAssetManager，不能创建第二个管理器。"));
-    else if (!ExpectedClass || ExpectedClass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
-        OutResult = FGamePlatformResult::Failure(TEXT("InvalidDefinitionClass"), TEXT("预期定义类为空、抽象、废弃或已被替换。"));
+    // 预期类只作为已加载对象的IsA约束，不创建该类；抽象领域根类是合法的跨模块契约。
+    // 废弃或被替换的反射类仍拒绝，避免旧类约束绕过当前定义版本与类型验证。
+    else if (!ExpectedClass || ExpectedClass->HasAnyClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists))
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidDefinitionClass"), TEXT("预期定义类为空、废弃或已被替换。"));
     else if (DefinitionId.PrimaryAssetType != UGamePlatformPrimaryDataAsset::DefinitionAssetType() || !FGamePlatformId::TryParse(DefinitionId.PrimaryAssetName.ToString(), LogicalId))
         OutResult = FGamePlatformResult::Failure(TEXT("InvalidDefinitionId"), TEXT("定义主资产身份非法。"));
     else if (!CallerBelongsTo(WeakCaller.Get(), GetGameInstance()) || !Completion)
@@ -155,6 +156,8 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
         OutResult = FGamePlatformResult::Failure(TEXT("InvalidLifetime"), TEXT("数据租约期限非法。"));
     else if (Lifetime == EGamePlatformDataLifetime::World && (!WeakCaller->GetWorld() || WeakCaller->GetWorld()->GetGameInstance() != GetGameInstance() || WeakCaller->GetWorld()->bIsTearingDown))
         OutResult = FGamePlatformResult::Failure(TEXT("InvalidWorld"), TEXT("世界租约要求存活且属于本实例的调用者世界。"));
+    else if (Bundles.Num() > GamePlatform::Data::Limits::MaxDefinitionsPerRequest)
+        OutResult = FGamePlatformResult::Failure(TEXT("TooManyBundleInputs"), TEXT("原始分组输入超过统一请求节点安全上限，拒绝大量重复输入放大处理成本。"));
     else if (Bundles.Contains(NAME_None))
         OutResult = FGamePlatformResult::Failure(TEXT("InvalidBundle"), TEXT("分组集合允许为空，但不能包含None名称。"));
     else if (Scope->NextGeneration == MAX_int64)
@@ -194,6 +197,7 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
     Request->Visiting.Add(Request->Lease.DefinitionId);
     // 租约必须在引擎可能同步完成前发布到作用域。
     Scope->Requests.Add(Request->Lease.LeaseId, Request);
+    EnsureOwnerWatch();
     ++Scope->TotalAcceptedRequests;
     const FGamePlatformDataLease Lease = Request->Lease;
     TWeakObjectPtr<UGamePlatformDataSubsystem> WeakThis(this);
@@ -278,7 +282,9 @@ void UGamePlatformDataSubsystem::AssetReady(FGamePlatformDataLease Lease, FPrima
     if (!Result.IsSuccess()) { Finish(Lease, Result); return; }
     auto* Manager = Scope->Manager.Get();
     const auto* Definition = Manager ? Cast<UGamePlatformDefinitionBase>(Manager->GetPrimaryAssetObject(AssetId)) : nullptr;
-    if (!Definition || Definition->GetPrimaryAssetId() != AssetId ||
+    // 抽象类可作为约束，但实际资产必须属于当前可实例化类，旧反射版本不能绕过对象校验。
+    if (!Definition || Definition->GetClass()->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists) ||
+        Definition->GetPrimaryAssetId() != AssetId ||
         (AssetId == Lease.DefinitionId && !Definition->IsA(Request->ExpectedClass.Get())))
     { Finish(Lease, FGamePlatformResult::Failure(TEXT("DefinitionTypeMismatch"), TEXT("实际加载对象的定义类型或稳定身份不匹配。"))); return; }
     Result = Definition->ValidateDefinition();
@@ -373,7 +379,8 @@ const UGamePlatformDefinitionBase* UGamePlatformDataSubsystem::GetLoadedDefiniti
 EGamePlatformDataRequestState UGamePlatformDataSubsystem::GetLeaseState(const FGamePlatformDataLease& Lease) const
 {
     check(IsInGameThread());
-    if (const auto* Found = Scope->Requests.Find(Lease.LeaseId); Found && SameLease((*Found)->Lease, Lease)) return (*Found)->Lease.RequestState;
+    if (const auto* Found = Scope->Requests.Find(Lease.LeaseId); Found && SameLease((*Found)->Lease, Lease))
+        return IsContextAlive(**Found) ? (*Found)->Lease.RequestState : EGamePlatformDataRequestState::Released;
     if (HasAuthenticLease(Lease) && GamePlatform::Data::CanTreatMissingLeaseAsReleased(true, static_cast<uint64>(Lease.Generation), static_cast<uint64>(Scope->NextGeneration))) return EGamePlatformDataRequestState::Released;
     return EGamePlatformDataRequestState::Invalid;
 }
@@ -412,12 +419,21 @@ void UGamePlatformDataSubsystem::CleanupWorld(UWorld* World, bool bSessionEnded,
         if (Pair.Value->Lifetime == EGamePlatformDataLifetime::World && Pair.Value->World == World) Leases.Add(Pair.Value->Lease);
     for (const auto& Lease : Leases) ReleaseRequest(Lease, TEXT("租约绑定的世界正在清理。"));
 }
+void UGamePlatformDataSubsystem::EnsureOwnerWatch()
+{
+    if (!Scope->bIsClosing && !Scope->Requests.IsEmpty() && !OwnerWatchHandle.IsValid())
+        OwnerWatchHandle = FTSTicker::GetCoreTicker().AddTicker(
+            FTickerDelegate::CreateUObject(this, &ThisClass::WatchOwners), 0.25f);
+}
 bool UGamePlatformDataSubsystem::WatchOwners(float DeltaSeconds)
 {
     TArray<FGamePlatformDataLease> Leases;
     for (const auto& Pair : Scope->Requests) if (!IsContextAlive(*Pair.Value)) Leases.Add(Pair.Value->Lease);
     for (const auto& Lease : Leases) ReleaseRequest(Lease, TEXT("租约调用者或世界已销毁。"));
-    return !Scope->bIsClosing;
+    // 回调期间不移除正在执行的Ticker；返回false由Ticker自身摘除，清空句柄允许后续新租约重启。
+    const bool bShouldContinue = !Scope->bIsClosing && !Scope->Requests.IsEmpty();
+    if (!bShouldContinue) OwnerWatchHandle.Reset();
+    return bShouldContinue;
 }
 
 /** 普通资源请求复用同一个实例账本、代次与完成协议；不创建虚假的主资产或并行管理器。 */
@@ -459,6 +475,7 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireResources(const TArray
     Request->Completion = MoveTemp(Completion);
     const FGamePlatformDataLease Lease = Request->Lease;
     Scope->Requests.Add(Lease.LeaseId, Request); ++Scope->TotalAcceptedRequests;
+    EnsureOwnerWatch();
     TWeakObjectPtr<UGamePlatformDataSubsystem> WeakThis(this);
     GamePlatform::Data::NextTick([WeakThis, Lease]() { if (auto* Self = WeakThis.Get()) Self->Advance(Lease); });
     return Lease;

@@ -1,0 +1,774 @@
+{
+  "scope": "Application六插件+PlayerServices六插件+DBAClient Application/Input/UI；只读源码审查",
+  "date": "2026-10-09",
+  "workspace": "E:/poject/feebooz/DivineBeastsWorkspace",
+  "branch": "main",
+  "head": "8a12bbe1d1d02db835b92207646138fabe782b50",
+  "status": "审查开始及收尾git status --short均为空",
+  "rules": "实际根AGENTS 127行；祖先和任务范围无局部规则；读取现行总体规划、插件规范相关边界。规定独立《整合与交付说明》全库文件名/内容检索未找到。",
+  "severityNote": "本范围未确证P1级当前生产故障；P2包括确定功能/生命周期缺陷，未装配能力明确为潜伏或完成度缺口；P3为规范/源码性能风险。",
+  "verification": {
+    "currentStatic": [
+      {
+        "script": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSave/Tests/Scripts/TestGamePlatformSaveArchitecture.ps1",
+        "exit": 0
+      },
+      {
+        "script": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSettings/Tests/Scripts/TestGamePlatformSettingsArchitecture.ps1",
+        "exit": 0,
+        "warning": "No production IGamePlatformSettingsProvider implementation is registered; Runtime/Server remain framework-only."
+      },
+      {
+        "script": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/Tests/Scripts/TestApplicationFlowArchitecture.ps1",
+        "exit": 0
+      },
+      {
+        "script": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/Tests/Scripts/TestInputArchitecture.ps1",
+        "exit": 0
+      }
+    ],
+    "notPerformed": [
+      "本轮未运行UE5.8 Editor/Client/Server构建、UE Automation、PIE、多PIE、网络联调、干净Cook/Stage或实机性能测量。",
+      "现有9月README/Docs构建或原生断言记录仅作历史来源；不视为本次HEAD通过。",
+      "未启动编辑器、未连接后端、未修改源码/资产/正式文档、未提交；当前main不包含上一轮修复554ee8ab。"
+    ]
+  },
+  "plugins": [
+    {
+      "name": "GamePlatformApplicationFlow",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow",
+      "maturity": "机制实现较完整；尚无本轮动态验收",
+      "read": [
+        "uplugin、Build.cs、README/接入与生命周期说明",
+        "Public/API/Flow类型及工厂合同",
+        "完整ApplicationFlowExecutor.cpp/.h；Subsystem的适配、调度、关闭、资产接管、取消/事件路径",
+        "Private/Tests用例索引与Standalone测试入口；DBAClient调用方"
+      ],
+      "design": "GI唯一执行器、单槽完成邮箱、作用域/运行/节点代次、有限重试/超时、关闭和定义租约已落实；按需Ticker与核心分发/广播重入门禁可见。",
+      "performance": "单槽邮箱有界；图校验std::map/set为O((V+E)log V)，主要为启动成本。APP-13指出重复Completion的TaskGraph唤醒尚未合并；无实测结论。",
+      "findings": [
+        "APP-13"
+      ],
+      "compliance": "方向中立、Public稳定合同和中文说明相对完整；无游戏/竞技/项目资源依赖。",
+      "missingDynamic": [
+        "原生32用例未在本轮重跑；真实Data租约、重入关闭、多实例、UHT/UBT与资产流程未本轮运行。"
+      ]
+    },
+    {
+      "name": "GamePlatformInput",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput",
+      "maturity": "机制实现较完整；持久化/所有权缺陷；默认Profile接线未完成",
+      "read": [
+        "uplugin、Build.cs、README、Docs/API/TestingAndEvidence",
+        "Public服务/类型/Profile，Policy/Compiler/Semantics，Subsystem重点生命周期、加载、映射、重绑、触控与事件分发段",
+        "Private/Tests策略与Profile测试索引；DBAInput实际消费"
+      ],
+      "design": "LocalPlayer作用域、Data定义租约、CompactSlot、阻断缓存、Owner回收4Hz、Touch与统一EnhancedInput事件链可见。",
+      "performance": "高频阻断O(1)，订阅/绑定/触点有界；显式Save同步SaveSettings/Flush可能卡菜单；ListMappings每次构造排序O(RlogR)。",
+      "findings": [
+        "APP-01",
+        "APP-02",
+        "APP-03"
+      ],
+      "compliance": "新平台中立语义与项目语义分离较好，ClientOnly+明确targets；公开中文合同承诺与实现存在APP-01~03差异。",
+      "missingDynamic": [
+        "真实InputAction/IMC/Profile及当前默认输入尚无配置；Controller/Pawn更换、PC/手柄/Android/iOS设备桥、PIE同索引隔离、Cook未本轮验证。"
+      ]
+    },
+    {
+      "name": "GamePlatformLoading",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLoading",
+      "maturity": "DAG/租约/屏障已实现；生命周期回调缺口",
+      "read": [
+        "uplugin、Build.cs、README、Docs/TaskModel/ReadinessBarrier/TestingAndEvidence",
+        "Public服务/任务/类型、LoadingPolicy",
+        "Subsystem任务启动/轮询/释放/分发与关闭，完整BuiltinTasks",
+        "Private/Tests源码索引和DBA加载调用方"
+      ],
+      "design": "单操作GI、任务规格256/依赖64、订阅/工厂128上限、Data租约、真实世界事实、20Hz运行/2Hz保留资源监测已具备；SessionReady需真实上层装配。",
+      "performance": "上限存在；执行遍历中每Task再次线性找PolicyRecord（343-344），O(T²)每20Hz且GetSnapshot构造数组，需256任务测量，不可称已优化到O(T)。",
+      "findings": [
+        "APP-05"
+      ],
+      "compliance": "不依赖客户端Session/UI/Flow；中文公开合同较清楚。Runtime描述缺TargetAllowList，应补目标审计，不能靠Runtime名称算四目标验收。",
+      "missingDynamic": [
+        "真实任务租约/WorldReady/Session准入、世界销毁、回调关闭和最大容量压力未本轮验证。"
+      ]
+    },
+    {
+      "name": "GamePlatformLocalization",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLocalization",
+      "maturity": "二期预留空模块",
+      "read": [
+        "全部4个受维护文件：uplugin、Build.cs、3行FDefaultModuleImpl cpp、README；文件库存无Public/测试/Docs"
+      ],
+      "design": "未实现文化切换、文本资源域、客户端加载、事件、配置或运行接口；README已承认预留模块壳。",
+      "performance": "没有本地化逻辑，不能评价业务性能；只有空模块装载/维护负担。",
+      "findings": [],
+      "compliance": "与AGENTS禁止空插件/空模块冲突；活动FriendlyName为英文但源码/Build.cs无职责中文合同；ClientOnly无TargetAllowList。建议按批准规划明确退休/禁用或在真实需求后实现，不能擅自删除。",
+      "missingDynamic": [
+        "无实现验收或测试入口；项目UI本地化使用自身C++映射，不能据此称本插件已工作。"
+      ]
+    },
+    {
+      "name": "GamePlatformSave",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSave",
+      "maturity": "本地非权威存档机制已实现；IO故障验收缺失",
+      "read": [
+        "uplugin、Build.cs、README、Docs/API/PerformanceAndSecurity/TestingAndEvidence",
+        "Public Service/Provider/Types",
+        "Subsystem请求门禁、后台线程IO、完成/迁移/关闭；完整Storage.cpp；Policy容量/编码解码路径",
+        "Private/Tests Policy测试索引和静态脚本"
+      ],
+      "design": "8MiB载荷、16在途、同槽busy、稳定ID、CRC、临时文件/Flush/备份、Provider迁移、GI代次、回调重入门禁齐备；取消为回调失效，后台IO本身仍可结束。",
+      "performance": "后台IO降低游戏线程阻塞，但APP-04读前无限容量；payload编码/复制也会放大16x8MiB峰值，需要测量。",
+      "findings": [
+        "APP-04"
+      ],
+      "compliance": "ClientOnly+Client/Editor、无内容/业务反依赖、中文契约和非权威边界较完整。",
+      "missingDynamic": [
+        "本轮静态门禁退出0；未真实磁盘故障/只读/掉电/原子替换/备份恢复/多请求或UE Automation。"
+      ]
+    },
+    {
+      "name": "GamePlatformSettings",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSettings",
+      "maturity": "设备核心与四模块框架已实现；无生产Descriptor Provider",
+      "read": [
+        "uplugin、四Build.cs、README、Docs/TestingAndEvidence",
+        "Public Service/Provider/Types、Registry/Resolver/Migration、Validation接口",
+        "Runtime Reload/Apply/Save/UserContext/拓扑生命周期，ClientPersistence完整，DeviceSettings预览确认/回滚/Save与Server模块边界",
+        "Runtime与DevicePolicy测试索引和静态门禁"
+      ],
+      "design": "分层解析、单一真源边界、敏感/端侧校验、用户上下文、迁移回滚、设备暂存/预览/确认已具备；当前无非测试IGamePlatformSettingsProvider，Server/Runtime不能称产品设置已接通。",
+      "performance": "0业务Tick，Snapshot查TMap；APP-14同步档案Load，UGameUserSettings Apply/Save同步路径；未测量。",
+      "findings": [
+        "APP-14"
+      ],
+      "compliance": "模块/描述target限制、Runtime中立方向、敏感配置约束与中文说明较好；本轮门禁退出0且生产Provider缺失警告。",
+      "missingDynamic": [
+        "Provider实际注册/Consumer单一真源迁移、账号切换、窗口预览回滚、原生磁盘保存、Server配置真实启动未本轮验证。"
+      ]
+    },
+    {
+      "name": "GamePlatformInventory",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory",
+      "maturity": "六服务中生产认证接线最完整；仍无本轮运行验收",
+      "read": [
+        "uplugin、Build.cs、README、Docs/InventoryModel/TestingAndEvidence",
+        "Public服务/类型/Transport",
+        "Subsystem Online认证装配、Reset/Refresh/操作恢复与Snapshot验证、派生缓存段；HTTP Transport安全通道与数组上限",
+        "Private/Tests 556行用例索引/部分主体；DBAInventoryScreen消费"
+      ],
+      "design": "Online认证自动装配、账户/请求代次、单未决Mutation、原OperationId未知结果查询、RevisionConflict专用对账、64容器/1万物品/12快捷槽验证可见。",
+      "performance": "缓存排序O(NlogN)仅Snapshot变化，FindItem缓存查询；值数组Get...仍O(N)复制，View路径可避免；Transport8在途，上限不代表当前测量。",
+      "findings": [
+        "APP-06",
+        "APP-15"
+      ],
+      "compliance": "Transport在Private、不持Token，业务请求走Online、客户端不持长期真源符合规范；公开参数/线程/失败中文尚不全，模块无TargetAllowList。",
+      "missingDynamic": [
+        "UE Automation、实际认证/令牌刷新/账号切换与库存HTTP/事务、1万物品UI、网络超时/查询重发未本轮运行。"
+      ]
+    },
+    {
+      "name": "GamePlatformEquipment",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment",
+      "maturity": "共享复制+GAS/外观机制部分实现；生产持久化装配缺失",
+      "read": [
+        "uplugin、三Build.cs、README、Docs/API/Respawn/TestingAndEvidence",
+        "Public Definitions/Types/State/Server/Persistence/GAS接口",
+        "完整StateComponent、ServerComponent、GASGrantPort、VisualComponent",
+        "共享/Client Definition测试完整；全库生产Provider/Initialize调用检索"
+      ],
+      "design": "OwnerOnly与Public快照、服务器校验/持久化端口、GAS授予、客户端Data软加载与视觉代次分离；无实际PersistencePort/AssetResolver实现或Initialize生产调用。",
+      "performance": "Apply每次撤销全部授予后全量重建；Visual每次清全组件/加载后重建，O(S+A+E)并伴对象/加载抖动；无slot数上限或性能数据。",
+      "findings": [
+        "APP-07",
+        "APP-08",
+        "APP-15"
+      ],
+      "compliance": "无客户端/服务器互依赖；端侧标签有但无TargetAllowList；服务器私有实现合同缺中文与取消/线程说明，只有Definition测试不能冒充生命周期验收。",
+      "missingDynamic": [
+        "真实PlayerData持久化、GAS/Respawn/PlayerState或Pawn ASC、两个客户端LateJoin/RemoteObserver、EndPlay、Cook剥离未验证。"
+      ]
+    },
+    {
+      "name": "GamePlatformEntitlement",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement",
+      "maturity": "权益快照/查询机制已实现；生产认证装配缺失",
+      "read": [
+        "uplugin、两Build.cs、README、Docs/ValidityAndExpiration/Performance/TestingAndEvidence",
+        "Public快照/定义/查询/服务/Transport接口",
+        "完整Query和Subsystem；HTTP请求/cancel/解析核心",
+        "Private/Tests查询/账号隔离/派生缓存索引；全库Configure与HTTP构造检索"
+      ],
+      "design": "LocalPlayer账户代次、Reset取消、Revision不回退、有效ID/英雄/皮肤派生Set缓存；有效性以后台Snapshot.Status为准；无生产Configure或HTTPTransport构造调用。",
+      "performance": "查询Set平均O(1)，查询类HasAny/All逐数组扫描可能O(KN)，View值返回仍复制；Transport8在途但回应数组与总JSON无容量预检。",
+      "findings": [
+        "APP-06",
+        "APP-12",
+        "APP-15"
+      ],
+      "compliance": "客户端与后台权威区分；具体HTTP实现在Public/Transport且构造接收AccessToken，应收敛为Private+Online安全通道；端侧allowlist/中文字段说明不全。",
+      "missingDynamic": [
+        "真实权益加载/到期/后台撤销推送或refresh、新账号与错误重入、HTTP畸形响应/容量测试未运行。"
+      ]
+    },
+    {
+      "name": "GamePlatformProgression",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression",
+      "maturity": "曲线/快照/缓存部分实现；事件与生产装配缺口",
+      "read": [
+        "uplugin、两Build.cs、README（无Docs目录）",
+        "Public Definitions/Types/SnapshotProvider/Client服务与Transport接口",
+        "完整TrackDefinition与ClientSubsystem；HTTP请求与解析核心",
+        "Private/Tests曲线/账号隔离/DerivedCache索引和部分主体；生产调用检索"
+      ],
+      "design": "服务器中立资格端口、客户端账户代次、版本曲线兼容、嵌套ID索引/派生ViewModel缓存可见；无生产Configure、资格Provider或HTTP构造。",
+      "performance": "曲线二分O(logL)；快照变化重建View是O(NlogL)，查询ID平均O(1)；HTTP数组无上限；值返回复制，无测量。",
+      "findings": [
+        "APP-09",
+        "APP-12",
+        "APP-15"
+      ],
+      "compliance": "HTTP/缓存非权威基础方向正确；公开中文API大段缺失、README不满足最小接入/目标/配置/测试；Public HTTP/Token实现及TargetAllowList不足。",
+      "missingDynamic": [
+        "初始与新增轨道事件、真实后台结果/曲线版本、实际UI状态驱动、异常JSON与容量未本轮验证。"
+      ]
+    },
+    {
+      "name": "GamePlatformLiveOps",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps",
+      "maturity": "运营快照/领取对账/可信时间部分实现；生产认证接线缺失",
+      "read": [
+        "uplugin、Build.cs、README（无Docs目录）",
+        "Public Types/Service/Time/Transport",
+        "完整ServerTimeEstimator；Subsystem配置/重置/请求/查询/边界刷新/回调；HTTP请求与数组解析核心",
+        "Tests账号/领取/服务时间索引与主体；生产调用检索"
+      ],
+      "design": "LocalPlayer代次、全局Catalog与玩家状态分离、ClaimOperationId对账、服务器时间+单调时钟、前台恢复刷新可见；无生产Configure/HTTP构造。",
+      "performance": "Initialize无条件1HzTicker，即未登录也持续唤醒；边界每秒扫描S+E+C；GetSignInViewModels每Campaign对PlayerState线性查，O(CP)，每次重建数组，无输入容量上限/测量。",
+      "findings": [
+        "APP-10",
+        "APP-15"
+      ],
+      "compliance": "后台领奖权威未被客户端替代；缺完整中文接口/参数/错误/时间单位，README与Docs不足；Public具体HTTP/Token/内部时间类、target允许列表不足。",
+      "missingDynamic": [
+        "跨UTC周期领取刷新、客户端持续前台/后台恢复/服务器时钟误差、账号切换消费者清空、真实奖励对账未本轮验证。"
+      ]
+    },
+    {
+      "name": "GamePlatformCommerceUI",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI",
+      "maturity": "购买意图/订单展示状态机制已实现；支付与认证生产链未装配",
+      "read": [
+        "uplugin、Build.cs、README、Docs/InventoryEntitlementProgressionIntegration/TestingAndEvidence",
+        "Public Service/Types/ViewModel/Transport",
+        "Subsystem配置/Reset/目录/Intent/Order/Reconcile/状态、完整ViewModel、HTTP请求/金额解析与格式",
+        "Private/Tests目录/防重/后端fulfilled/账号隔离索引；生产调用检索"
+      ],
+      "design": "每种请求single-flight、AccountGeneration、只有Backend fulfilled+confirmed才Succeeded、Receipt不直接判成功；无生产Configure/HTTP构造/真实支付Provider，不应称商城闭环。",
+      "performance": "8HTTP在途；Catalog与订单值复制、多JSON解析在GameThread、无响应体/数组容量门禁；金额转换double→int64未拒绝小数/2^53精度风险，不构成当前权威扣款错误。",
+      "findings": [
+        "APP-06",
+        "APP-15"
+      ],
+      "compliance": "依赖GamePlatformUI单向、支付权威边界正确；Public具体HTTP/AccessToken与大段公开字段说明不全，ClientOnly无TargetAllowList；真实Widget资源未交付。",
+      "missingDynamic": [
+        "真实支付SDK/Receipt重放/订单对账、后台fulfilled刷新、账户切换、真实UI/UE构建Cook未验证。"
+      ]
+    },
+    {
+      "name": "DBAClient",
+      "root": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/",
+      "maturity": "ApplicationFlow/Input/UI有真实C++装配；产品流程仍有Retry及输入资产接线缺口",
+      "read": [
+        "DBAClient.uplugin/README、Application/Input/UI Build.cs；Docs/ApplicationFlowArchitecture/InputArchitecture/用户界面设计",
+        "ApplicationFlow Public/Context/Readiness、核心源码中的初始化/节点/Backend/租约/取消/世界事实/允许动作/扩展；未宣称完整2502行全部逐行审核",
+        "Input Semantics/Profile/API，Subsystem全部536行",
+        "UI Subsystem/Adapter/ViewModel/Login页面完整重点段、Inventory/Quest/HUD事件调用方及Private/Tests索引；未重复PresentationRuntime/Client",
+        "当前C++消费者与Game Config默认输入检索"
+      ],
+      "design": "复用唯一平台执行器、业务上下文只保留稳定值与瞬态ConnectionMaterial、真实Loading/Session六事实，UI LocalPlayer适配GI流程、页面事件与ViewModel命令，密码提交/失活清空；Input平台语义/GAS适配+合并刷新可见。默认Profile空且配置无赋值，当前默认Gameplay输入C++/配置链未接线；未读取真实UE资产内部图，不能断言所有资产调用均缺失。",
+      "performance": "DBAFlow多次SetBusy/SetError/Refresh...均广播并使UI Adapter复制全ViewState+Revision增，不做等值合并；RootLayout LoadSynchronous在初始化/状态失败重试时可能阻塞；Input无业务Tick且QueueActivationRefresh合并，当前未测。",
+      "findings": [
+        "APP-11"
+      ],
+      "compliance": "公共插件不依赖竞技、模块依赖方向较好；多数中文类责任具备但大量UI合同字段只靠名称缺范围/含义说明，Descriptor ClientOnly模块未列targets。登录源码事件驱动且密码瞬态路径可见，未用静态源码替代Monolith资产/焦点/可访问性验收。",
+      "missingDynamic": [
+        "本轮两个架构脚本退出0；未当前UE目标/Automation/真实登录→角色→准入→世界、五竞技模式/跨世界、Monolith编译保存重载、实际输入资产或真机。"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "APP-01",
+      "priority": "P2",
+      "kind": "功能缺陷",
+      "plugins": [
+        "GamePlatformInput"
+      ],
+      "title": "重置与重绑没有限制为当前Profile拥有的映射行",
+      "scenario": "其他功能（菜单/车辆等）向同一个EnhancedInputUserSettings登记映射行后，ResetMappings(NAME_None)会枚举当前KeyProfile全部行并逐一ResetAllPlayerKeysInRow；ApplyRebind也只验证行存在，不验证本Profile所有权。与公开合同仅本配置/不能清其他功能冲突。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+          "line": 1481,
+          "end": 1504
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+          "line": 1399,
+          "end": 1415
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Public/Interfaces/IGamePlatformInputService.h",
+          "line": 50,
+          "end": 54
+        }
+      ],
+      "recommendation": "追踪Profile登记行的所有权，List/Preview/Apply/Reset只允许该集合；添加外部Context行不受重置影响的回归。"
+    },
+    {
+      "id": "APP-02",
+      "priority": "P2",
+      "kind": "持久化缺陷",
+      "plugins": [
+        "GamePlatformInput"
+      ],
+      "title": "未确认写盘结果就公布输入偏好已保存",
+      "scenario": "SaveInputPreferences在Settings->SaveSettings及GConfig->Flush后无错误/完成检查，立即bPreferencesSaved=true并返回Success；只读文件、磁盘失败时内存状态和公开保存合同失真。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+          "line": 1530,
+          "end": 1543
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Public/Interfaces/IGamePlatformInputService.h",
+          "line": 55,
+          "end": 56
+        }
+      ],
+      "recommendation": "拆开受理与真实写盘终态，传播原生和INI持久化失败；测试失败后保存标志仍为false且键位内存仍生效。"
+    },
+    {
+      "id": "APP-03",
+      "priority": "P2",
+      "kind": "实例隔离缺陷",
+      "plugins": [
+        "GamePlatformInput"
+      ],
+      "title": "PIE输入偏好命名空间缺少实例身份",
+      "scenario": "两个PIE实例使用同一LocalSettingsKey/Profile且ControllerId相同，StableSettingsKey的Namespace均为PIE，最终SettingsSection相同，保存会共享GGameUserSettingsIni区段。公开注释承诺PIE自动另加实例命名空间，当前实现仅区分PIE与Game。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+          "line": 528,
+          "end": 535
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+          "line": 571,
+          "end": 572
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+          "line": 1532,
+          "end": 1538
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Public/Interfaces/IGamePlatformInputService.h",
+          "line": 13,
+          "end": 14
+        }
+      ],
+      "recommendation": "PIE使用作用域/PIE实例身份或禁用真实持久化；验证两个GI同ControllerId的区段与写盘隔离。"
+    },
+    {
+      "id": "APP-04",
+      "priority": "P2",
+      "kind": "性能与输入边界缺陷",
+      "plugins": [
+        "GamePlatformSave"
+      ],
+      "title": "文件容量限制在全文件读入内存后才生效",
+      "scenario": "ReadFile直接LoadFileToArray，没有预检FileSize；DecodeRecord才按8MiB载荷上限拒绝。巨大/损坏gpsav及bak在后台仍会分配全文件内存，16并发门禁不能限制单文件或总字节数。属于源码可推导内存风险，未进行测量。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSave/Source/GamePlatformSaveClient/Private/Storage/GamePlatformSaveStorage.cpp",
+          "line": 79,
+          "end": 101
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSave/Source/GamePlatformSaveClient/Private/Policy/GamePlatformSavePolicy.cpp",
+          "line": 13,
+          "end": 16
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSave/Source/GamePlatformSaveClient/Private/Policy/GamePlatformSavePolicy.cpp",
+          "line": 185,
+          "end": 186
+        }
+      ],
+      "recommendation": "读前限制Envelope最大总字节，使用有界读取；补真实超大文件、备份超大文件、并发内存压力用例。"
+    },
+    {
+      "id": "APP-05",
+      "priority": "P2",
+      "kind": "生命周期缺陷",
+      "plugins": [
+        "GamePlatformLoading"
+      ],
+      "title": "订阅回调关闭服务后继续访问已释放Scope",
+      "scenario": "Loading订阅回调若触发GameInstance关闭/Deinitialize，Deinitialize立即Scope.Reset；Tick回调返回后仍++Scope->TotalSubscriberCallbacks，并随后写耗时。公开订阅合同未禁止关闭，调用前检查Scope不能保护回调返回后的访问。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLoading/Source/GamePlatformLoading/Private/Subsystems/GamePlatformLoadingSubsystem.cpp",
+          "line": 88,
+          "end": 96
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLoading/Source/GamePlatformLoading/Private/Subsystems/GamePlatformLoadingSubsystem.cpp",
+          "line": 372,
+          "end": 378
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLoading/Source/GamePlatformLoading/Private/Subsystems/GamePlatformLoadingSubsystem.cpp",
+          "line": 384,
+          "end": 390
+        }
+      ],
+      "recommendation": "在分发栈延后关闭或持有独立分发状态，回调返回后复查Scope/代次；加入订阅回调内关闭用例。"
+    },
+    {
+      "id": "APP-06",
+      "priority": "P2",
+      "kind": "重入缺陷",
+      "plugins": [
+        "GamePlatformInventory",
+        "GamePlatformEntitlement",
+        "GamePlatformCommerceUI"
+      ],
+      "title": "状态广播可清空Transport，随后仍解引用",
+      "scenario": "订阅OnChanged/OnCommerceStateChanged的消费者在Loading状态调用ResetAccount，源码先广播且无重入保护，ResetAccount清空Transport，广播返回后RefreshSnapshot/RefreshCatalog继续Transport->Begin...而未重新验证。Inventory、Entitlement和Commerce均有这一代码形态；通常现有UI只读不触发，但公开服务没有限制/防护该有效调用。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Private/Services/GamePlatformInventoryClientSubsystem.cpp",
+          "line": 250,
+          "end": 262
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Private/Services/GamePlatformInventoryClientSubsystem.cpp",
+          "line": 190,
+          "end": 212
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Private/Services/GamePlatformEntitlementClientSubsystem.cpp",
+          "line": 59,
+          "end": 70
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Private/Services/GamePlatformEntitlementClientSubsystem.cpp",
+          "line": 28,
+          "end": 46
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Services/GamePlatformCommerceClientSubsystem.cpp",
+          "line": 93,
+          "end": 100
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Private/Services/GamePlatformCommerceClientSubsystem.cpp",
+          "line": 54,
+          "end": 81
+        }
+      ],
+      "recommendation": "广播栈禁止或延后控制变更，或快照Transport并验证账号/请求代次；回归覆盖状态监听器立即重置账号。"
+    },
+    {
+      "id": "APP-07",
+      "priority": "P2",
+      "kind": "生命周期与权威缺陷（未装配时潜伏）",
+      "plugins": [
+        "GamePlatformEquipment"
+      ],
+      "title": "装备服务器组件结束时不撤销GAS授予，也不失效持久化回调",
+      "scenario": "服务器组件只有BindAvatar时撤销旧授予，无EndPlay/取消接口；异步Persistence回调仅WeakThis，没有世界结束/运行代次检查。组件EndPlay后UObject仍可存活，存活于PlayerState的ASC继续保留能力/效果，迟到回调也可再ApplyRuntimeSnapshot。当前未找到生产Provider，故不能宣称当前游戏已经发生该故障。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Components/GamePlatformEquipmentServerComponent.h",
+          "line": 20,
+          "end": 43
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Components/GamePlatformEquipmentServerComponent.h",
+          "line": 73,
+          "end": 97
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Private/Components/GamePlatformEquipmentServerComponent.cpp",
+          "line": 47,
+          "end": 63
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Private/Components/GamePlatformEquipmentServerComponent.cpp",
+          "line": 100,
+          "end": 108
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Private/Components/GamePlatformEquipmentServerComponent.cpp",
+          "line": 449,
+          "end": 465
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Interfaces/GamePlatformEquipmentPersistencePort.h",
+          "line": 16,
+          "end": 41
+        }
+      ],
+      "recommendation": "增加幂等运行关闭、回调代次、持久化取消和旧ASC授予清理；验证Pawn/PlayerState两类ASC寿命及EndPlay迟到响应。"
+    },
+    {
+      "id": "APP-08",
+      "priority": "P2",
+      "kind": "响应校验与资源所有权缺陷（未装配时潜伏）",
+      "plugins": [
+        "GamePlatformEquipment"
+      ],
+      "title": "重复SlotId覆盖授予句柄，导致无法撤销的重复效果",
+      "scenario": "ApplyRuntimeSnapshot不预检Slots唯一性，逐项Grant后NewHandles.Add(Slot.SlotId,Handle)覆盖同键旧Handle；重复SlotId会在ASC产生两次授予但只保留后一份句柄。Visual组件也以SlotId覆盖ActiveStaticMeshes，使先创建的组件失去清理索引。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Private/Components/GamePlatformEquipmentServerComponent.cpp",
+          "line": 401,
+          "end": 441
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentClient/Private/Components/GamePlatformEquipmentVisualComponent.cpp",
+          "line": 78,
+          "end": 95
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentClient/Private/Components/GamePlatformEquipmentVisualComponent.cpp",
+          "line": 242,
+          "end": 245
+        }
+      ],
+      "recommendation": "在任何撤销/授予前验证快照唯一SlotId、容量与身份，拒绝整份无效快照；覆盖重复槽位的GAS与视觉清理回归。"
+    },
+    {
+      "id": "APP-09",
+      "priority": "P2",
+      "kind": "事件合同缺陷",
+      "plugins": [
+        "GamePlatformProgression"
+      ],
+      "title": "首次快照、新轨道、清空与错误无可订阅状态事件",
+      "scenario": "公开事件只有OnXPChanged/OnLevelChanged。ApplySnapshot对新轨道!Old直接continue；ResetAccount清空与Loading/Error/Ready变化也不广播。因此事件驱动UI不能在首次快照、新轨道或账号重置时刷新，必须额外轮询或自建传输逻辑。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Services/GamePlatformProgressionClientSubsystem.h",
+          "line": 77,
+          "end": 78
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Services/GamePlatformProgressionClientSubsystem.cpp",
+          "line": 31,
+          "end": 50
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Services/GamePlatformProgressionClientSubsystem.cpp",
+          "line": 238,
+          "end": 254
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Services/GamePlatformProgressionClientSubsystem.cpp",
+          "line": 296,
+          "end": 317
+        }
+      ],
+      "recommendation": "提供只读Snapshot/State/Error变化事件；首次、增加、删除、错误和重置均发一致事件，并对旧账号响应不广播。"
+    },
+    {
+      "id": "APP-10",
+      "priority": "P2",
+      "kind": "账号隔离的展示缺陷",
+      "plugins": [
+        "GamePlatformLiveOps"
+      ],
+      "title": "账号重置清空玩家状态却不广播失效",
+      "scenario": "ResetAccount清空PlayerState/LastClaim但无OnPlayerStateChanged/OnClaimChanged；已有事件驱动Widget/ViewModel会保留前账号的签到/领取展示，直到新账号请求成功。账户代次阻止旧回调改写内部数据，但不能清空消费者缓存。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Services/GamePlatformLiveOpsClientSubsystem.cpp",
+          "line": 92,
+          "end": 109
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "line": 85,
+          "end": 87
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Services/GamePlatformLiveOpsClientSubsystem.cpp",
+          "line": 623,
+          "end": 632
+        }
+      ],
+      "recommendation": "重置时广播失效快照/统一状态事件，覆盖账号A显示->Logout/B加载失败期间不显示A状态。"
+    },
+    {
+      "id": "APP-11",
+      "priority": "P2",
+      "kind": "当前生产接线缺陷",
+      "plugins": [
+        "DBAClient"
+      ],
+      "title": "失败后的Retry被公布为允许命令，但适配器总拒绝",
+      "scenario": "Flow失败且无ActiveFlow时AllowedActions包含Retry；Adapter将其投影为Retry命令，UIViewModel也能提交。SubmitUICommand没有Retry分支，落入default bAccepted=false，返回UI.Command.Rejected。用户看到允许恢复但无实际恢复链。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Private/DivineBeastsApplicationFlowSubsystem.cpp",
+          "line": 2386,
+          "end": 2392
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Adapters/Application/DivineBeastsApplicationUIAdapter.cpp",
+          "line": 51,
+          "end": 63
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Adapters/Application/DivineBeastsApplicationUIAdapter.cpp",
+          "line": 307,
+          "end": 347
+        }
+      ],
+      "recommendation": "把Retry接到明确安全的流程重启/恢复入口，并限制允许状态；测试失败->Retry->新run/无重复业务操作。"
+    },
+    {
+      "id": "APP-12",
+      "priority": "P2",
+      "kind": "异常响应处理缺陷",
+      "plugins": [
+        "GamePlatformEntitlement",
+        "GamePlatformProgression"
+      ],
+      "title": "集合字段缺失或错类型被接受为空成功快照",
+      "scenario": "JsonToSnapshot读取entitlements/tracks失败时返回true；只要Revision/时间字段有效，畸形集合可替换为合法空Snapshot并把服务置Ready，吞掉结构错误。应明确区分可空数组与缺失/错误类型；当前无共享正式契约证明这些字段可省略。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Private/Transport/GamePlatformEntitlementGatewayHttpTransport.cpp",
+          "line": 179,
+          "end": 185
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Private/Transport/GamePlatformProgressionGatewayHttpTransport.cpp",
+          "line": 185,
+          "end": 191
+        }
+      ],
+      "recommendation": "按现行正式契约要求明确必填/可选；缺失/错类型返回InvalidResponse并保留旧只读快照，添加JSON负例。"
+    },
+    {
+      "id": "APP-13",
+      "priority": "P3",
+      "kind": "源码性能风险",
+      "plugins": [
+        "GamePlatformApplicationFlow"
+      ],
+      "title": "单槽邮箱没有覆盖游戏线程唤醒队列的重复投递",
+      "scenario": "核心邮箱只接首次结果，但Adapter每次Completion（含迟到/重复）都创建AsyncTask唤醒GameThread；没有跨线程coalescing标志。故不能从邮箱有界推断TaskGraph排队有界，错误Provider批量完成可造成无界唤醒负担；无实测瓶颈结论。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Execution/ApplicationFlowExecutor.cpp",
+          "line": 203,
+          "end": 207
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Subsystems/GamePlatformApplicationFlowSubsystem.cpp",
+          "line": 100,
+          "end": 120
+        }
+      ],
+      "recommendation": "完成受理结果参与唤醒决策，或原子合并一次待唤醒；压测重复/迟到Completion且观测待唤醒数。"
+    },
+    {
+      "id": "APP-14",
+      "priority": "P3",
+      "kind": "性能风险",
+      "plugins": [
+        "GamePlatformSettings"
+      ],
+      "title": "用户档案加载在游戏线程同步进行",
+      "scenario": "Load直接在游戏线程DoesSaveGameExist/LoadGameFromSlot，Reload/SwitchUserContext沿该路径读取档案；当前Provider无生产SettingId，但接线后登录/切换账号/重载可能阻塞。BeginSave为异步不能代替读取性能。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsClient/Private/Persistence/GamePlatformSettingsClientPersistenceProvider.cpp",
+          "line": 86,
+          "end": 112
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/Private/Subsystems/GamePlatformSettingsSubsystem.cpp",
+          "line": 569,
+          "end": 572
+        }
+      ],
+      "recommendation": "声明可接受加载预算并测真实档案尺寸/慢盘，或采用异步读与代次原子发布。"
+    },
+    {
+      "id": "APP-15",
+      "priority": "P3",
+      "kind": "公开中文合同与说明缺项",
+      "plugins": [
+        "GamePlatformInventory",
+        "GamePlatformEquipment",
+        "GamePlatformEntitlement",
+        "GamePlatformProgression",
+        "GamePlatformLiveOps",
+        "GamePlatformCommerceUI"
+      ],
+      "title": "玩家服务公开API/字段缺少完整中文合同",
+      "scenario": "Inventory虽有职责注释，RequestMove/Split/Merge/Quickbar等仍缺输入范围、失败与线程合同；Equipment、Entitlement、Progression、LiveOps、Commerce的核心Public接口大段无中文职责/参数/终态说明，Build.cs多无文件责任说明。LiveOps、Progression无Docs目录且README仅一段基线链接。自动ASCII/头检查通过不能证明注释内容合规。",
+      "evidence": [
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Services/GamePlatformInventoryClientSubsystem.h",
+          "line": 82,
+          "end": 101
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Components/GamePlatformEquipmentServerComponent.h",
+          "line": 23,
+          "end": 43
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Interfaces/GamePlatformEquipmentPersistencePort.h",
+          "line": 21,
+          "end": 40
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Services/GamePlatformEntitlementClientSubsystem.h",
+          "line": 20,
+          "end": 38
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Services/GamePlatformProgressionClientSubsystem.h",
+          "line": 32,
+          "end": 42
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "line": 23,
+          "end": 50
+        },
+        {
+          "file": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Services/GamePlatformCommerceClientSubsystem.h",
+          "line": 23,
+          "end": 49
+        }
+      ],
+      "recommendation": "补文件责任、线程、账号与网络权威、单位/范围、异步/失败/取消说明和真实最小接线/测试文档；人工内容审核。"
+    }
+  ]
+}

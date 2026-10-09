@@ -532,7 +532,7 @@ FGamePlatformInputProfileHandle UGamePlatformInputLocalPlayerSubsystem::PrepareI
     Handle.Generation = Generation;
 
     const FString Namespace = LocalPlayer && LocalPlayer->GetWorld() && LocalPlayer->GetWorld()->WorldType == EWorldType::PIE
-        ? TEXT("PIE") : TEXT("Game");
+        ? TEXT("PIE.") + Scope->ScopeId.ToString(EGuidFormats::Digits) : TEXT("Game");
     const int32 PlayerIndex = LocalPlayer ? FMath::Max(0, LocalPlayer->GetControllerId()) : 0;
     const std::string StableKey = Policy::StableSettingsKey(
         TCHAR_TO_UTF8(*Namespace),
@@ -1531,6 +1531,12 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::SaveInputPreferences
     if (!Settings || !GConfig || Scope->SettingsSection.IsEmpty())
     {
         return FGamePlatformResult::Failure(TEXT("InputPreferencesUnavailable"), TEXT("输入偏好持久化服务不可用。"));
+    }
+
+    // EnhancedInput原生存档按ControllerId定位，两个PIE仍可能共用槽；PIE只允许作用域内存偏好。
+    if (GetLocalPlayer() && GetLocalPlayer()->GetWorld() && GetLocalPlayer()->GetWorld()->WorldType == EWorldType::PIE)
+    {
+        return FGamePlatformResult::Unsupported(TEXT("InputPIEPersistenceDisabled"), TEXT("PIE输入偏好仅保留在当前本地玩家作用域，禁止写入真实用户设置。"));
     }
 
     // 磁盘写入只发生在显式Save调用，不进入每帧输入路径。

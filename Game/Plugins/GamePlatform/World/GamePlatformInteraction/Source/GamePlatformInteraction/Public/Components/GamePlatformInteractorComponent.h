@@ -104,6 +104,8 @@ protected:
     void ServerRequestCancelInteraction(FGuid RequestId);
 
 private:
+    // 自动化用例直接驱动真实终态边界；不为生产调用方暴露绕过准入的入口。
+    friend class FInteractionTerminalReentryTest;
     /** BeginPlay及真实拥有关系事件重评估焦点定时器；失去本地拥有者时立即清空本地焦点。 */
     void ReconcileLocalFocusSampling();
     UFUNCTION()
@@ -185,7 +187,8 @@ private:
 
     void PublishEvent(
         EGamePlatformInteractionEventType EventType,
-        const FGamePlatformInteractionResult& Result);
+        const FGamePlatformInteractionResult& Result,
+        const FGamePlatformInteractionSession& Session);
 
     bool ConsumeLocalRequestThrottle(bool bBeginRequest);
     bool ConsumeRequestRateLimit(bool bBeginRequest);

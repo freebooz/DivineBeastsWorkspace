@@ -13,13 +13,38 @@
       "Name": "GamePlatformSurfaceClient",
       "Type": "ClientOnly",
       "LoadingPhase": "Default",
-      "TargetAllowList": [ "Client", "Editor" ]
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
     },
     {
       "Name": "GamePlatformSurfaceEditor",
       "Type": "Editor",
       "LoadingPhase": "PostEngineInit",
-      "TargetAllowList": [ "Editor" ]
+      "TargetAllowList": [
+        "Editor"
+      ]
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor",
+        "Game"
+      ]
+    },
+    {
+      "Name": "GamePlatformData",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor",
+        "Game"
+      ]
     }
   ]
 }

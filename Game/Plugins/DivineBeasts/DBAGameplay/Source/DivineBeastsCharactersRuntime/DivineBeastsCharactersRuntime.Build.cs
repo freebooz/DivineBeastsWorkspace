@@ -1,3 +1,4 @@
+// 项目双端角色模块：公开角色/ASC/Combat契约，私有Gameplay资格适配；角色拥有组件/自有租约，不依赖竞技或公共客户端。
 using UnrealBuildTool;
 
 public class DivineBeastsCharactersRuntime : ModuleRules
@@ -18,6 +19,8 @@ public class DivineBeastsCharactersRuntime : ModuleRules
             "GameplayTags",
             "GamePlatformAbilitySystem",
             "GamePlatformCharacter",
+            // 项目Pawn公开实现中立Combatant契约；真实战斗仍归平台组件。
+            "GamePlatformCombat",
             // 角色公开资源状态返回Data结果/租约值；加载和引用所有权仍归平台Data。
             "GamePlatformData",
             "DivineBeastsRuntime"

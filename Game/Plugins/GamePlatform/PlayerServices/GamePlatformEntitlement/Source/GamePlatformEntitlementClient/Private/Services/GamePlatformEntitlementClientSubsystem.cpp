@@ -1,10 +1,25 @@
+// 平台本地玩家权益投影实现：游戏线程事件与异步领域Transport，Online拥有认证；账号重置清空本地缓存并失效本领域回调。
 #include "Services/GamePlatformEntitlementClientSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+#include "Transport/GamePlatformEntitlementGatewayHttpTransport.h"
 
 #include "Interfaces/GamePlatformEntitlementClientTransport.h"
 #include "Queries/GamePlatformEntitlementQuery.h"
 
+void UGamePlatformEntitlementClientSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    // Initialize建立新实例代次；退出后的迟到回调不能跨重新初始化消费。
+    bDeinitializing = false; ++InstanceGeneration; ++AccountGeneration;
+    Super::Initialize(Collection);
+    BindOnlineAuthentication();
+}
+
 void UGamePlatformEntitlementClientSubsystem::Deinitialize()
 {
+    // 先关闭作用域，再执行任何取消或广播；外部回调不得恢复账号。
+    bDeinitializing = true; ++InstanceGeneration; ++AccountGeneration;
+    UnbindOnlineAuthentication();
     OnChanged.Clear();
     ResetAccount();
     Super::Deinitialize();
@@ -14,12 +29,15 @@ bool UGamePlatformEntitlementClientSubsystem::ConfigureAuthenticatedAccount(
     const FString& AccountKey,
     TSharedPtr<IGamePlatformEntitlementClientTransport, ESPMode::ThreadSafe> InTransport)
 {
-    if (AccountKey.IsEmpty() || !InTransport.IsValid())
+    check(IsInGameThread());
+    if (bDeinitializing || bResettingAccount || AccountKey.IsEmpty() || !InTransport.IsValid())
     {
         return false;
     }
 
+    const uint64 ExpectedInstanceGeneration = InstanceGeneration;
     ResetAccount();
+    if (bDeinitializing || ExpectedInstanceGeneration != InstanceGeneration) { return false; }
     CurrentAccountKey = AccountKey;
     Transport = MoveTemp(InTransport);
     return RefreshSnapshot();
@@ -27,11 +45,16 @@ bool UGamePlatformEntitlementClientSubsystem::ConfigureAuthenticatedAccount(
 
 void UGamePlatformEntitlementClientSubsystem::ResetAccount()
 {
+    check(IsInGameThread());
+    if (bResettingAccount) { return; }
+    TGuardValue<bool> ResetGuard(bResettingAccount, true);
     ++AccountGeneration;
+    ++SnapshotRequestGeneration;
 
-    if (Transport.IsValid())
+    const auto CancelledTransport = Transport;
+    if (CancelledTransport.IsValid())
     {
-        Transport->CancelAllRequests();
+        CancelledTransport->CancelAllRequests();
     }
 
     CurrentAccountKey.Reset();
@@ -48,6 +71,7 @@ void UGamePlatformEntitlementClientSubsystem::ResetAccount()
 
 bool UGamePlatformEntitlementClientSubsystem::RefreshSnapshot()
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         State == EGamePlatformEntitlementClientState::Loading ||
@@ -57,6 +81,8 @@ bool UGamePlatformEntitlementClientSubsystem::RefreshSnapshot()
     }
 
     const uint64 ExpectedGeneration = AccountGeneration;
+    const uint64 ExpectedSnapshotRequestGeneration = ++SnapshotRequestGeneration;
+    const auto RequestTransport = Transport;
     State =
         Snapshot.Revision > 0
             ? EGamePlatformEntitlementClientState::Reconciling
@@ -64,11 +90,13 @@ bool UGamePlatformEntitlementClientSubsystem::RefreshSnapshot()
     LastError = EGamePlatformEntitlementError::None;
     OnChanged.Broadcast();
 
+    // 公开状态事件允许消费者重置账号；广播返回后必须再次核对请求拥有者。
+    if (ExpectedGeneration != AccountGeneration || RequestTransport != Transport) { return false; }
     TWeakObjectPtr<UGamePlatformEntitlementClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginGetSnapshot(
-            [WeakThis, ExpectedGeneration](
+        RequestTransport->BeginGetSnapshot(
+            [WeakThis, ExpectedGeneration, ExpectedSnapshotRequestGeneration](
                 FGamePlatformEntitlementSnapshot NewSnapshot,
                 EGamePlatformEntitlementError Error)
             {
@@ -77,12 +105,13 @@ bool UGamePlatformEntitlementClientSubsystem::RefreshSnapshot()
                 {
                     Self->HandleSnapshotCompleted(
                         ExpectedGeneration,
+                        ExpectedSnapshotRequestGeneration,
                         MoveTemp(NewSnapshot),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedSnapshotRequestGeneration == SnapshotRequestGeneration && RequestTransport == Transport && (State == EGamePlatformEntitlementClientState::Loading || State == EGamePlatformEntitlementClientState::Reconciling))
     {
         State = EGamePlatformEntitlementClientState::Error;
         LastError = EGamePlatformEntitlementError::BackendUnavailable;
@@ -183,10 +212,13 @@ void UGamePlatformEntitlementClientSubsystem::RebuildDerivedCaches()
 
 void UGamePlatformEntitlementClientSubsystem::HandleSnapshotCompleted(
     uint64 ExpectedGeneration,
+    uint64 ExpectedSnapshotRequestGeneration,
     FGamePlatformEntitlementSnapshot NewSnapshot,
     EGamePlatformEntitlementError Error)
 {
-    if (ExpectedGeneration != AccountGeneration)
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedSnapshotRequestGeneration != SnapshotRequestGeneration ||
+        (State != EGamePlatformEntitlementClientState::Loading && State != EGamePlatformEntitlementClientState::Reconciling))
     {
         return;
     }
@@ -229,4 +261,42 @@ bool UGamePlatformEntitlementClientSubsystem::ApplySnapshot(
     Snapshot = NewSnapshot;
     RebuildDerivedCaches();
     return true;
+}
+
+// Online负责认证/刷新/请求签名；领域层只消费脱敏认证快照，缺失路由仍走真实失败终态。
+void UGamePlatformEntitlementClientSubsystem::BindOnlineAuthentication()
+{
+    if (bDeinitializing) { return; }
+    auto* LocalPlayer = GetLocalPlayer();
+    auto* Instance = LocalPlayer ? LocalPlayer->GetGameInstance() : nullptr;
+    auto* Online = Instance ? Instance->GetSubsystem<UGamePlatformOnlineClientSubsystem>() : nullptr;
+    if (!IsValid(Online)) { return; }
+    OnlineSubsystem = Online;
+    if (!AuthStateChangedHandle.IsValid())
+    { AuthStateChangedHandle = Online->OnAuthStateChanged().AddUObject(this, &UGamePlatformEntitlementClientSubsystem::HandleAuthStateChanged); }
+    HandleAuthStateChanged(Online->GetSnapshot());
+}
+
+void UGamePlatformEntitlementClientSubsystem::UnbindOnlineAuthentication()
+{
+    if (auto* Online = OnlineSubsystem.Get())
+    { if (AuthStateChangedHandle.IsValid()) { Online->OnAuthStateChanged().Remove(AuthStateChangedHandle); } }
+    AuthStateChangedHandle.Reset(); OnlineSubsystem.Reset();
+}
+
+void UGamePlatformEntitlementClientSubsystem::HandleAuthStateChanged(const FGamePlatformAuthSnapshot& AuthSnapshot)
+{
+    if (bDeinitializing) { return; }
+    check(IsInGameThread());
+    if (AuthSnapshot.State == EGamePlatformAuthState::Refreshing) { return; }
+    if (AuthSnapshot.State == EGamePlatformAuthState::Authenticated)
+    {
+        auto* Online = OnlineSubsystem.Get();
+        if (!Online || AuthSnapshot.AccountId.IsEmpty()) { ResetAccount(); return; }
+        if (CurrentAccountKey == AuthSnapshot.AccountId && Transport.IsValid()) { return; }
+        ConfigureAuthenticatedAccount(AuthSnapshot.AccountId,
+            MakeShared<FGamePlatformEntitlementGatewayHttpTransport, ESPMode::ThreadSafe>(Online));
+        return;
+    }
+    if (!CurrentAccountKey.IsEmpty() || Transport.IsValid()) { ResetAccount(); }
 }

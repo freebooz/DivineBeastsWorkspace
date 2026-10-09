@@ -1,3 +1,4 @@
+// Actor作用域复制/视觉组件；游戏线程事件驱动，组件退出取消自己的加载与委托；不修改后端物品真源。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -19,11 +20,13 @@ public:
     virtual void GetLifetimeReplicatedProps(
         TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    /** 游戏线程只读借用拥有者私有投影；服务端复制COND_OwnerOnly，不包含GAS句柄，下一变化/退出后引用失效。 */
     const FGamePlatformEquipmentSnapshot& GetOwnerSnapshot() const
     {
         return OwnerSnapshot;
     }
 
+    /** 游戏线程只读借用公开装备外观身份；不泄露物品实例与库存，不承担授权。 */
     const FGamePlatformPublicEquipmentSnapshot& GetPublicSnapshot() const
     {
         return PublicSnapshot;
@@ -35,6 +38,7 @@ public:
         return EquipmentRuntimeGeneration;
     }
 
+    /** 仅服务器游戏线程：完整快照预检失败整份拒绝；成功同步拥有者/公开投影并广播，运行代次非负，不自行落库或授予GAS。 */
     void SetServerSnapshots(
         const FGamePlatformEquipmentSnapshot& InOwnerSnapshot,
         int32 InRuntimeGeneration);

@@ -58,6 +58,7 @@ public:
     virtual FGamePlatformResult Save() = 0;
 
     /** 重新发现 Provider、读取持久层、执行逐版本迁移并生成 Snapshot。 */
+    /** Success仅表示读取受理；订阅Snapshot.bLoading=false与LastResult确认终态。读取失败保留上次发布快照，期间修改返回SettingsLoadInProgress。 */
     virtual FGamePlatformResult Reload() = 0;
 
     /**

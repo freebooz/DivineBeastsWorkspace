@@ -2,6 +2,7 @@
 #include "Transport/GamePlatformProgressionGatewayHttpTransport.h"
 
 #include "Dom/JsonObject.h"
+#include "JsonIntegerPolicy.h"
 #include "GamePlatformOnlineClientSubsystem.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -171,7 +172,8 @@ bool FGamePlatformProgressionGatewayHttpTransport::JsonToSnapshot(
     const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
     if (!Json->TryGetArrayField(TEXT("tracks"), Values) || !Values)
     {
-        return true;
+        // 空数组是合法清空；缺字段或错误类型不是空快照，不得覆盖已有只读状态。
+        return false;
     }
 
     for (const TSharedPtr<FJsonValue>& Value : *Values)
@@ -222,6 +224,13 @@ bool FGamePlatformProgressionGatewayHttpTransport::JsonToSnapshot(
             return false;
         }
 
+        // 数字先验证再转int32，拒绝溢出/小数/非有限输入，不能靠转换后的截断值通过领域校验。
+        if (!FMath::IsFinite(Level) || !FMath::IsFinite(MaxLevel) || !FMath::IsFinite(CurveVersion) ||
+            Level < 1.0 || MaxLevel < Level || CurveVersion < 1.0 ||
+            Level > MAX_int32 || MaxLevel > MAX_int32 || CurveVersion > MAX_int32 ||
+            FMath::FloorToDouble(Level) != Level || FMath::FloorToDouble(MaxLevel) != MaxLevel || FMath::FloorToDouble(CurveVersion) != CurveVersion)
+        { return false; }
+
         Track.SubjectType =
             SubjectType == TEXT("character")
                 ? EGamePlatformProgressionSubjectType::Character
@@ -260,22 +269,16 @@ bool FGamePlatformProgressionGatewayHttpTransport::ParseInt64String(
     int64& OutValue)
 {
     FString Value;
-    if (!Json.IsValid() ||
+    if (!Json.IsValid() || !Json->HasTypedField<EJson::String>(Field) ||
         !Json->TryGetStringField(Field, Value) ||
         Value.IsEmpty())
     {
         return false;
     }
 
-    TCHAR* End = nullptr;
-    const int64 Parsed = FCString::Strtoi64(*Value, &End, 10);
-    if (!End || *End != TEXT('\0'))
-    {
-        return false;
-    }
-
-    OutValue = Parsed;
-    return true;
+    std::int64_t Parsed = 0;
+    if (!GPIntegerPolicy::ParseDecimalInteger(std::basic_string_view<TCHAR>(*Value, Value.Len()), Parsed)) { return false; }
+    OutValue = Parsed; return true;
 }
 
 EGamePlatformProgressionError

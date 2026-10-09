@@ -57,9 +57,12 @@ public:
     }
 
 private:
+    friend class FDivineBeastsServerWorldRetirementTest;
     void LoadLaunchProfile();
     /** 观察属于当前GameInstance的新世界，并在其真正BeginPlay时进入服务器注册门禁。 */
     void HandleWorldInitialized(UWorld* World, const UWorld::InitializationValues InitializationValues);
+    /** 已验证世界退出立即撤销准入并排空控制面；同一Boot不自动复用到下一张地图，须重新启动服务器实例。 */
+    void HandleWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
     /** 切换当前观察世界；跨地图时先解除旧世界委托，避免旧回调污染新实例。 */
     void ObserveWorld(UWorld* World);
     /** 当前观察世界开始运行；从弱引用恢复世界后进入统一校验路径。 */
@@ -81,10 +84,13 @@ private:
     /** 当前Dedicated Server进程唯一Boot身份；同一GameInstance生命周期固定，进程重启后变化。 */
     FString ServerBootId;
     FDelegateHandle WorldInitializedHandle;
+    FDelegateHandle WorldCleanupHandle;
     FDelegateHandle WorldBeginPlayHandle;
     FDelegateHandle LifecycleChangedHandle;
     TWeakObjectPtr<UWorld> ObservedWorld;
     TWeakObjectPtr<UWorld> ValidatedWorld;
     bool bHasProfile = false;
     bool bWorldValidated = false;
+    /** 地图流送不会触发该标志；完整承载世界退出后保持终止栅栏，迟到Ready不能复活。 */
+    bool bWorldRetired = false;
 };

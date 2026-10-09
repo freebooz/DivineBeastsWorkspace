@@ -1,0 +1,386 @@
+[
+  {
+    "Plugin": "DBAClient",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "DBAClient",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformApplicationFlow",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformApplicationFlow",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformInput",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformInput",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformLoading",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformLoading",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformTelemetry",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformTelemetry",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformCore",
+    "Configuration": "Debug",
+    "Tests": 13,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformCore",
+    "Configuration": "Release",
+    "Tests": 13,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformData",
+    "Configuration": "Debug",
+    "Tests": 2,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformData",
+    "Configuration": "Release",
+    "Tests": 2,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformAbilitySystem",
+    "Configuration": "Debug",
+    "Tests": 2,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformAbilitySystem",
+    "Configuration": "Release",
+    "Tests": 2,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformAI",
+    "Configuration": "Debug",
+    "Tests": 3,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformAI",
+    "Configuration": "Release",
+    "Tests": 3,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformGameplay",
+    "Configuration": "Debug",
+    "Tests": 2,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformGameplay",
+    "Configuration": "Release",
+    "Tests": 2,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformQuest",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformQuest",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformOnline",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformOnline",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformServer",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformServer",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformSession",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformSession",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformCommerceUI",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformCommerceUI",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformLiveOps",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformLiveOps",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformProgression",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformProgression",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformPresentation",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformPresentation",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformSFX",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformSFX",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformUI",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformUI",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformVFX",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformVFX",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformNavigation",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformNavigation",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformPCG",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformPCG",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformWorld",
+    "Configuration": "Debug",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  },
+  {
+    "Plugin": "GamePlatformWorld",
+    "Configuration": "Release",
+    "Tests": 1,
+    "ConfigureExitCode": 0,
+    "BuildExitCode": 0,
+    "CTestExitCode": 0
+  }
+]

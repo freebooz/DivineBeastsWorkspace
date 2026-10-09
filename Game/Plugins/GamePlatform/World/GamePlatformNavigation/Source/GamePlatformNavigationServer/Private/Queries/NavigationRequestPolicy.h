@@ -10,4 +10,8 @@ inline bool CanSchedule(std::size_t ActiveCount, std::size_t Limit, bool Duplica
 inline bool MatchesTimeout(std::uint64_t ActualOperation, std::uint64_t ExpectedOperation,
     std::int32_t ActualWorld, std::int32_t ExpectedWorld)
 { return ActualOperation == ExpectedOperation && ActualWorld == ExpectedWorld; }
+// 取消句柄必须携带正操作代次，旧两字段句柄明确失效，不能在复用ID后撤销另一个调用者的操作。
+inline bool MatchesHandle(std::uint64_t ActualOperation, std::uint64_t HandleOperation,
+    std::int32_t ActualWorld, std::int32_t HandleWorld)
+{ return HandleOperation > 0 && MatchesTimeout(ActualOperation, HandleOperation, ActualWorld, HandleWorld); }
 }

@@ -30,27 +30,35 @@ public:
             : Super::GetPrimaryAssetId();
     }
 
+    /** 平台中立物品定义身份；None无效，不携带具体项目资产路径。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
     FName ItemDefinitionId = NAME_None;
 
+    /** 物品名称本地化键；None未提供，由客户端采用可读回退。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
     FName DisplayNameKey = NAME_None;
 
+    /** 产品说明本地化键；空值未提供，不作为机器错误码。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
     FName DescriptionKey = NAME_None;
 
+    /** 客户端物品分类语义；None未分类，不构成服务器规则。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
     FName Category = NAME_None;
 
+    /** 可选中立图标身份；None无图标，加载/映射归数据与表现服务。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
     FName IconId = NAME_None;
 
+    /** 客户端显示堆叠提示正整数，默认1；真实上限来自后端快照，不能据此消费/合并。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory", meta=(ClampMin="1"))
     int32 MaxStackSize = 1;
 
+    /** 仅客户端分类/展示标签集合；空集合合法，不向后端授予权限。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
     TArray<FName> ClientTags;
 
+    /** 仅检查定义必需身份/版本/范围；不加载资源或验证后端授权，false表示不可登记。 */
     bool IsStructurallyValid() const
     {
         return !ItemDefinitionId.IsNone() &&

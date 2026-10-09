@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformPresentation，负责回归用例；夹具仅测试作用域，不伪造生产资源成功。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
@@ -328,4 +330,34 @@ bool FGamePlatformPresentationResolutionRegressionTest::RunTest(const FString&)
     return true;
 }
 
+// F14发布门禁：同键资格相交必须阻断，互斥英雄允许各自映射；不访问任何资产。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformPresentationPreflightRegressionTest,
+    "GamePlatform.Presentation.Catalog.PreflightConflictingQualification", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformPresentationPreflightRegressionTest::RunTest(const FString&)
+{
+    auto* Service = NewObject<UGamePlatformPresentationClientSubsystem>();
+    FGamePlatformPresentationContextQuery Specificity;
+    Specificity.ProjectId = TEXT("Project"); Specificity.ExperienceId = TEXT("Experience"); Specificity.RegionId = TEXT("Region");
+    Specificity.ArenaModeId = TEXT("Arena"); Specificity.ContentPackId = TEXT("Pack");
+    TestEqual(TEXT("项目/体验/区域/模式/包仅资格，不计P13具体度"), Specificity.GetSpecificity(), 0);
+    Specificity.HeroDefinitionId = TEXT("Hero"); Specificity.AbilityId = TEXT("Ability"); Specificity.SkinId = TEXT("Skin");
+    Specificity.WorldId = TEXT("World"); Specificity.PlatformId = TEXT("Platform"); Specificity.QualityTier = EGamePlatformPresentationQualityTier::High;
+    TestEqual(TEXT("P13只计六个明确等值约束"), Specificity.GetSpecificity(), 6);
+    auto A = MakeFragment(TEXT("A"), TEXT("AEntry"), EGamePlatformPresentationCatalogScope::ContentPack, TEXT("presentation.test.a@1"));
+    A.Entries[0].ContextQuery.HeroDefinitionId = TEXT("Hero.A");
+    auto B = A; B.FragmentId = TEXT("B"); B.OwnerScopeId = TEXT("BPack"); B.Entries[0].EntryId = TEXT("BEntry");
+    B.Entries[0].ContextQuery.HeroDefinitionId = NAME_None; B.Entries[0].ContextQuery.AbilityId = TEXT("Ability.B");
+    FString Error; TestTrue(TEXT("单片段可预检"), Service->PreflightCatalogFragment(A, Error)); Service->RegisterCatalogFragment(A);
+    TestFalse(TEXT("Hero.A与Ability.B资格可同时满足，同键必须冲突"), Service->PreflightCatalogFragment(B, Error));
+    TestTrue(TEXT("冲突包含目录/条目身份"), Error.Contains(TEXT("AEntry")) && Error.Contains(TEXT("BEntry")));
+    B.Entries[0].ContextQuery.AbilityId = NAME_None; B.Entries[0].ContextQuery.HeroDefinitionId = TEXT("Hero.B");
+    TestTrue(TEXT("互斥英雄同排序键允许"), Service->PreflightCatalogFragment(B, Error));
+    auto Duplicate = B.Entries[0]; Duplicate.EntryId = TEXT("InternalDuplicate"); B.Entries.Add(Duplicate);
+    TestFalse(TEXT("片段内部完全同键也必须拒绝"), Service->PreflightCatalogFragment(B, Error));
+    Service->RegisterProvider(TEXT("TypedProvider"), 1, FGamePlatformPresentationProviderHandler::CreateLambda(
+        [](const FGamePlatformPresentationRequest&) { return true; }), UObject::StaticClass());
+    TestEqual(TEXT("中立Provider类型合同保留真实Class"), Service->GetProviderDefinitionClass(TEXT("TypedProvider")), UObject::StaticClass());
+    TestNull(TEXT("缺Provider不能猜测定义类型"), Service->GetProviderDefinitionClass(TEXT("MissingProvider")));
+    return true;
+}
 #endif

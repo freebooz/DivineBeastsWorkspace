@@ -4,6 +4,7 @@
 #include "InputMappingContext.h"
 #include "PlayerMappableKeySettings.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
+#include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/UnrealType.h"
@@ -11,7 +12,9 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInputOwnedRowsResetTest, "GamePlatform.Input.Profile.OwnedRowsReset", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FInputOwnedRowsResetTest::RunTest(const FString&)
 {
-    auto* Settings = NewObject<UEnhancedInputUserSettings>(); Settings->Initialize(NewObject<ULocalPlayer>());
+    // ULocalPlayer声明Within=Engine，瞬态夹具也必须使用真实Engine外层，不能以默认Package绕过引擎对象前提。
+    if (!GEngine) { AddError(TEXT("输入映射重置夹具需要有效Engine外层")); return false; }
+    auto* Settings = NewObject<UEnhancedInputUserSettings>(); Settings->Initialize(NewObject<ULocalPlayer>(GEngine));
     auto* Context = NewObject<UInputMappingContext>();
     // 通过原生反射属性设置瞬态Action的Mappable契约，避免派生生产类型仅用于测试访问受保护字段。
     auto* Property = FindFProperty<FObjectPropertyBase>(UInputAction::StaticClass(), TEXT("PlayerMappableKeySettings"));

@@ -1,3 +1,5 @@
+// 本文件属于DivineBeasts项目层 DivineBeastsPresentationClient，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 DBAClient/Docs/PresentationAuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,6 +10,7 @@
 #include "Facts/DivineBeastsPresentationFacts.h"
 #include "GamePlatformPresentationCatalog.h"
 #include "GamePlatformPresentationTypes.h"
+#include "Types/GamePlatformDataLease.h"
 #include "DivineBeastsPresentationClientSubsystem.generated.h"
 
 class UGamePlatformPresentationClientSubsystem;
@@ -23,6 +26,10 @@ DECLARE_MULTICAST_DELEGATE_FourParams(
 DECLARE_MULTICAST_DELEGATE_OneParam(
     FDivineBeastsPresentationLogicalPreloadCancelled,
     const FGuid&);
+
+/** 事务可诊断通知；在记录提交/回滚后游戏线程广播，允许观察者同步取消或退出。 */
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FDivineBeastsPresentationContentPackChanged,
+    const FDivineBeastsPresentationContentPackHandle&, EDivineBeastsPresentationContentPackState, const FString&);
 
 /**
  * UDivineBeastsPresentationClientSubsystem（神兽联盟项目表现客户端子系统）。
@@ -52,6 +59,12 @@ public:
 
     bool DeactivateContentPack(
         const FDivineBeastsPresentationContentPackHandle& Handle);
+    /** 接纳后通过状态/通知确认真正Active；无资产/错误/取消均有具体失败，Loading不是成功发布。 */
+    EDivineBeastsPresentationContentPackState GetContentPackState(
+        const FDivineBeastsPresentationContentPackHandle& Handle, FString& OutError) const;
+    FDivineBeastsPresentationContentPackChanged& OnContentPackChanged() { return ContentPackChanged; }
+    /** 默认公共VFX合同的当前配置错误；空值仅表示默认定义预载及目录发布成功。 */
+    const FString& GetDefaultCatalogConfigurationError() const { return DefaultCatalogError; }
 
     EGamePlatformPresentationSubmitResult SubmitWorldInteractionFact(
         const FDivineBeastsWorldInteractionPresentationFact& Fact);
@@ -82,6 +95,7 @@ public:
     }
 
 private:
+    friend class FDivineBeastsPresentationActivationRegressionTest;
     struct FActivePack
     {
         FDivineBeastsPresentationContentPackHandle Handle;
@@ -98,9 +112,33 @@ private:
         FName OwnerScopeId = NAME_None;
         TArray<FName> DefinitionIds;
         bool bRequired = false;
+        int64 Generation = 0;
+        int32 RemainingLoads = 0;
+        bool bSucceeded = false;
+        TArray<FGamePlatformDataLease> Leases;
+        FDivineBeastsPresentationContentPackHandle PackHandle;
     };
+    struct FPendingPack
+    {
+        FDivineBeastsPresentationContentPackHandle Handle;
+        FDivineBeastsPresentationContentPackFragment Fragment;
+    };
+    struct FPackTerminal
+    {
+        FDivineBeastsPresentationContentPackHandle Handle;
+        EDivineBeastsPresentationContentPackState State = EDivineBeastsPresentationContentPackState::Failed;
+        FString Error;
+    };
+    FGuid BeginLogicalPreload(FName OwnerScopeId, const TArray<FName>& DefinitionIds, bool bRequired,
+        const FDivineBeastsPresentationContentPackHandle& PackHandle);
+    void HandleLogicalPreloadCompleted(FGuid RequestId, int64 Generation,
+        const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
+    void RecordPackTerminal(const FDivineBeastsPresentationContentPackHandle& Handle,
+        EDivineBeastsPresentationContentPackState State, const FString& Error);
+    void ReleaseLogicalLeases(const TArray<FGamePlatformDataLease>& Leases);
 
     void RegisterProjectState();
+    void BeginDefaultCatalogPreload();
     void UnregisterProjectState();
     void HandleWorldCleanup(
         UWorld* World,
@@ -121,9 +159,19 @@ private:
     FDivineBeastsPresentationProjectContext ProjectContext;
     FGamePlatformPresentationRegistrationHandle ContextContributorHandle;
     FGamePlatformPresentationRegistrationHandle DefaultCatalogHandle;
+    FGuid DefaultPreloadRequestId;
+    FString DefaultCatalogError;
 
     TMap<FGuid, FActivePack> ActivePacks;
+    TMap<FGuid, FPendingPack> PendingPacks;
+    TMap<FGuid, FPackTerminal> PackTerminals;
+    TArray<FGuid> PackTerminalOrder;
+    FGuid ScopeId;
+    int64 NextPreloadGeneration = 0;
+    bool bClosing = false;
     TMap<FGuid, FLogicalPreload> LogicalPreloads;
+    /** 同一租约重复完成不能把RemainingLoads提前扣完；请求撤销时一并清理。 */
+    TMap<FGuid, TSet<FGuid>> CompletedPreloadLeases;
     TMap<FGuid, EGamePlatformPresentationPredictionState> RequestStates;
     TArray<FGuid> RequestOrder;
 
@@ -132,4 +180,5 @@ private:
 
     FDivineBeastsPresentationLogicalPreloadRequested LogicalPreloadRequested;
     FDivineBeastsPresentationLogicalPreloadCancelled LogicalPreloadCancelled;
+    FDivineBeastsPresentationContentPackChanged ContentPackChanged;
 };

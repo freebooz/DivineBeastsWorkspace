@@ -1,4 +1,8 @@
+// 平台层遥测私有有界缓冲，由GI子系统在游戏线程持有与调用；不保存世界或用户对象。
+// 字节/事件容量、溢出丢弃与关闭交付语义见本插件SinksAndExporters及私有头，不提供跨线程共享容器。
+// 先包含同名旧Public不透明契约验证其自足性，再包含Private完整实现，遵循UE第一包含规则。
 #include "Buffer/GamePlatformTelemetryBoundedBuffer.h"
+#include "Buffer/TelemetryBoundedBuffer.h"
 
 namespace
 {

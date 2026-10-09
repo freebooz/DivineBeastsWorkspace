@@ -1,5 +1,8 @@
 // 平台运营投影事件实现；服务器权威与本地时间派生视图的代次分离。
 #include "Services/GamePlatformLiveOpsClientSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+#include "Transport/GamePlatformLiveOpsGatewayHttpTransport.h"
 
 #include "Interfaces/GamePlatformLiveOpsClientTransport.h"
 #include "Containers/Ticker.h"
@@ -8,23 +11,27 @@
 void UGamePlatformLiveOpsClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
+    // Initialize建立新实例代次；退出后的迟到回调不能跨重新初始化消费。
+    bDeinitializing = false; ++InstanceGeneration; ++AccountGeneration;
     Super::Initialize(Collection);
+    bLifecycleInitialized = true;
 
     ForegroundHandle =
         FCoreDelegates::ApplicationHasEnteredForegroundDelegate.AddUObject(
             this,
             &UGamePlatformLiveOpsClientSubsystem::HandleEnteredForeground);
+    BindOnlineAuthentication();
 
-    BoundaryTickerHandle =
-        FTSTicker::GetCoreTicker().AddTicker(
-            FTickerDelegate::CreateUObject(
-                this,
-                &UGamePlatformLiveOpsClientSubsystem::TickBoundaryRefresh),
-            1.0f);
+
 }
 
 void UGamePlatformLiveOpsClientSubsystem::Deinitialize()
 {
+    ++CatalogRequestGeneration; ++PlayerStateRequestGeneration; ++ClaimRequestGeneration; ++ReconcileRequestGeneration;
+    // 先关闭作用域，再执行任何取消或广播；外部回调不得恢复账号。
+    bDeinitializing = true; ++InstanceGeneration; ++AccountGeneration;
+    bLifecycleInitialized = false;
+    UnbindOnlineAuthentication();
     if (ForegroundHandle.IsValid())
     {
         FCoreDelegates::ApplicationHasEnteredForegroundDelegate.Remove(
@@ -42,9 +49,10 @@ void UGamePlatformLiveOpsClientSubsystem::Deinitialize()
     OnCatalogChanged.Clear();
     OnPlayerStateChanged.Clear();
     OnClaimChanged.Clear();
-    if (Transport.IsValid())
+    const auto CancelledTransport = Transport;
+    if (CancelledTransport.IsValid())
     {
-        Transport->CancelAllRequests();
+        CancelledTransport->CancelAllRequests();
     }
 
     ++AccountGeneration;
@@ -70,29 +78,39 @@ bool UGamePlatformLiveOpsClientSubsystem::ConfigureAuthenticatedAccount(
     TSharedPtr<IGamePlatformLiveOpsClientTransport, ESPMode::ThreadSafe>
         InTransport)
 {
-    if (AccountKey.IsEmpty() || !InTransport.IsValid())
+    check(IsInGameThread());
+    if (bDeinitializing || bResettingAccount || AccountKey.IsEmpty() || !InTransport.IsValid())
     {
         return false;
     }
 
+    const uint64 ExpectedInstanceGeneration = InstanceGeneration;
     ResetAccount();
+    if (bDeinitializing || ExpectedInstanceGeneration != InstanceGeneration) { return false; }
     CurrentAccountKey = AccountKey;
     Transport = MoveTemp(InTransport);
+    UpdateBoundaryTicker();
 
     return RefreshAll();
 }
 
 void UGamePlatformLiveOpsClientSubsystem::ResetAccount()
 {
+    ++CatalogRequestGeneration; ++PlayerStateRequestGeneration; ++ClaimRequestGeneration; ++ReconcileRequestGeneration;
+    check(IsInGameThread());
+    if (bResettingAccount) { return; }
+    TGuardValue<bool> ResetGuard(bResettingAccount, true);
     ++AccountGeneration;
 
-    if (Transport.IsValid())
+    const auto CancelledTransport = Transport;
+    if (CancelledTransport.IsValid())
     {
-        Transport->CancelAllRequests();
+        CancelledTransport->CancelAllRequests();
     }
 
     CurrentAccountKey.Reset();
     Transport.Reset();
+    UpdateBoundaryTicker();
 
     // Catalog（运营目录）是全局Published数据，可在同一个LocalPlayer作用域保留。
     // PlayerState（玩家状态）必须随账号切换清空。
@@ -112,11 +130,14 @@ void UGamePlatformLiveOpsClientSubsystem::ResetAccount()
         Catalog.CatalogRevision > 0
             ? EGamePlatformLiveOpsClientState::Ready
             : EGamePlatformLiveOpsClientState::Uninitialized;
+    const uint64 ExpectedGeneration = AccountGeneration;
     PublishDerivedViewChanged(false, true);
+    if (ExpectedGeneration == AccountGeneration) { OnClaimChanged.Broadcast(LastClaim); }
 }
 
 bool UGamePlatformLiveOpsClientSubsystem::RefreshAll()
 {
+    if (bDeinitializing) { return false; }
     const bool bCatalog = RefreshCatalog();
     const bool bPlayer = RefreshPlayerState();
     return bCatalog || bPlayer;
@@ -124,6 +145,7 @@ bool UGamePlatformLiveOpsClientSubsystem::RefreshAll()
 
 bool UGamePlatformLiveOpsClientSubsystem::RefreshCatalog()
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         bCatalogRequestInFlight)
@@ -138,11 +160,13 @@ bool UGamePlatformLiveOpsClientSubsystem::RefreshCatalog()
             : EGamePlatformLiveOpsClientState::Loading;
 
     const uint64 ExpectedGeneration = AccountGeneration;
+    const uint64 ExpectedRequestGeneration = ++CatalogRequestGeneration;
+    const auto RequestTransport = Transport;
     TWeakObjectPtr<UGamePlatformLiveOpsClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginGetCatalog(
-            [WeakThis, ExpectedGeneration](
+        RequestTransport->BeginGetCatalog(
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration](
                 FGamePlatformLiveOpsCatalogSnapshot NewCatalog,
                 EGamePlatformLiveOpsError Error)
             {
@@ -151,24 +175,26 @@ bool UGamePlatformLiveOpsClientSubsystem::RefreshCatalog()
                 {
                     Self->HandleCatalogCompleted(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         MoveTemp(NewCatalog),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedRequestGeneration == CatalogRequestGeneration && bCatalogRequestInFlight)
     {
         bCatalogRequestInFlight = false;
         State = EGamePlatformLiveOpsClientState::Error;
         LastError = EGamePlatformLiveOpsError::BackendUnavailable;
     }
 
-    if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
+    if (!bDeinitializing && ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
     return bStarted;
 }
 
 bool UGamePlatformLiveOpsClientSubsystem::RefreshPlayerState()
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         bPlayerStateRequestInFlight)
@@ -183,11 +209,13 @@ bool UGamePlatformLiveOpsClientSubsystem::RefreshPlayerState()
             : EGamePlatformLiveOpsClientState::Loading;
 
     const uint64 ExpectedGeneration = AccountGeneration;
+    const uint64 ExpectedRequestGeneration = ++PlayerStateRequestGeneration;
+    const auto RequestTransport = Transport;
     TWeakObjectPtr<UGamePlatformLiveOpsClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginGetPlayerState(
-            [WeakThis, ExpectedGeneration](
+        RequestTransport->BeginGetPlayerState(
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration](
                 FGamePlatformLiveOpsPlayerState NewState,
                 EGamePlatformLiveOpsError Error)
             {
@@ -196,19 +224,20 @@ bool UGamePlatformLiveOpsClientSubsystem::RefreshPlayerState()
                 {
                     Self->HandlePlayerStateCompleted(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         MoveTemp(NewState),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedRequestGeneration == PlayerStateRequestGeneration && bPlayerStateRequestInFlight)
     {
         bPlayerStateRequestInFlight = false;
         State = EGamePlatformLiveOpsClientState::Error;
         LastError = EGamePlatformLiveOpsError::BackendUnavailable;
     }
 
-    if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
+    if (!bDeinitializing && ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
     return bStarted;
 }
 
@@ -216,6 +245,7 @@ bool UGamePlatformLiveOpsClientSubsystem::ClaimSignIn(
     FName CampaignId,
     const FGuid& ClaimOperationId)
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         CampaignId.IsNone() ||
@@ -231,13 +261,15 @@ bool UGamePlatformLiveOpsClientSubsystem::ClaimSignIn(
     State = EGamePlatformLiveOpsClientState::Reconciling;
 
     const uint64 ExpectedGeneration = AccountGeneration;
+    const uint64 ExpectedRequestGeneration = ++ClaimRequestGeneration;
+    const auto RequestTransport = Transport;
     TWeakObjectPtr<UGamePlatformLiveOpsClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginClaimSignIn(
+        RequestTransport->BeginClaimSignIn(
             ClaimOperationId,
             CampaignId,
-            [WeakThis, ExpectedGeneration](
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration, ExpectedOperationId = ClaimOperationId](
                 FGamePlatformLiveOpsClaimResult Result,
                 EGamePlatformLiveOpsError Error)
             {
@@ -246,12 +278,14 @@ bool UGamePlatformLiveOpsClientSubsystem::ClaimSignIn(
                 {
                     Self->HandleClaimCompleted(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
+                        ExpectedOperationId, false,
                         MoveTemp(Result),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedRequestGeneration == ClaimRequestGeneration && bClaimRequestInFlight)
     {
         bClaimRequestInFlight = false;
         ActiveClaimOperationId.Invalidate();
@@ -259,13 +293,14 @@ bool UGamePlatformLiveOpsClientSubsystem::ClaimSignIn(
         LastError = EGamePlatformLiveOpsError::BackendUnavailable;
     }
 
-    if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
+    if (!bDeinitializing && ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
     return bStarted;
 }
 
 bool UGamePlatformLiveOpsClientSubsystem::ReconcileClaim(
     const FGuid& ClaimOperationId)
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         !ClaimOperationId.IsValid() ||
@@ -280,12 +315,14 @@ bool UGamePlatformLiveOpsClientSubsystem::ReconcileClaim(
     State = EGamePlatformLiveOpsClientState::Reconciling;
 
     const uint64 ExpectedGeneration = AccountGeneration;
+    const uint64 ExpectedRequestGeneration = ++ReconcileRequestGeneration;
+    const auto RequestTransport = Transport;
     TWeakObjectPtr<UGamePlatformLiveOpsClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginQueryClaimOperation(
+        RequestTransport->BeginQueryClaimOperation(
             ClaimOperationId,
-            [WeakThis, ExpectedGeneration](
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration, ExpectedOperationId = ClaimOperationId](
                 FGamePlatformLiveOpsClaimResult Result,
                 EGamePlatformLiveOpsError Error)
             {
@@ -294,12 +331,14 @@ bool UGamePlatformLiveOpsClientSubsystem::ReconcileClaim(
                 {
                     Self->HandleClaimCompleted(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
+                        ExpectedOperationId, true,
                         MoveTemp(Result),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedRequestGeneration == ReconcileRequestGeneration && bClaimReconcileInFlight)
     {
         bClaimReconcileInFlight = false;
         ActiveClaimOperationId.Invalidate();
@@ -307,7 +346,7 @@ bool UGamePlatformLiveOpsClientSubsystem::ReconcileClaim(
         LastError = EGamePlatformLiveOpsError::BackendUnavailable;
     }
 
-    if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
+    if (!bDeinitializing && ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
     return bStarted;
 }
 
@@ -456,6 +495,19 @@ UGamePlatformLiveOpsClientSubsystem::GetSignInViewModels() const
 }
 
 
+void UGamePlatformLiveOpsClientSubsystem::UpdateBoundaryTicker()
+{
+    if (!bLifecycleInitialized || CurrentAccountKey.IsEmpty() || !Transport.IsValid())
+    {
+        if (BoundaryTickerHandle.IsValid()) { FTSTicker::GetCoreTicker().RemoveTicker(BoundaryTickerHandle); BoundaryTickerHandle.Reset(); }
+        return;
+    }
+    if (!BoundaryTickerHandle.IsValid())
+    {
+        BoundaryTickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UGamePlatformLiveOpsClientSubsystem::TickBoundaryRefresh), 1.0f);
+    }
+}
+
 bool UGamePlatformLiveOpsClientSubsystem::TickBoundaryRefresh(
     float)
 {
@@ -547,6 +599,7 @@ bool UGamePlatformLiveOpsClientSubsystem::HasCrossedCatalogBoundary(
 
 void UGamePlatformLiveOpsClientSubsystem::HandleEnteredForeground()
 {
+    if (bDeinitializing) { return; }
     if (!CurrentAccountKey.IsEmpty() &&
         Transport.IsValid())
     {
@@ -556,10 +609,12 @@ void UGamePlatformLiveOpsClientSubsystem::HandleEnteredForeground()
 
 void UGamePlatformLiveOpsClientSubsystem::HandleCatalogCompleted(
     uint64 ExpectedGeneration,
+    uint64 ExpectedRequestGeneration,
     FGamePlatformLiveOpsCatalogSnapshot NewCatalog,
     EGamePlatformLiveOpsError Error)
 {
-    if (ExpectedGeneration != AccountGeneration)
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != CatalogRequestGeneration || !bCatalogRequestInFlight)
     {
         return;
     }
@@ -601,10 +656,12 @@ void UGamePlatformLiveOpsClientSubsystem::HandleCatalogCompleted(
 
 void UGamePlatformLiveOpsClientSubsystem::HandlePlayerStateCompleted(
     uint64 ExpectedGeneration,
+    uint64 ExpectedRequestGeneration,
     FGamePlatformLiveOpsPlayerState NewState,
     EGamePlatformLiveOpsError Error)
 {
-    if (ExpectedGeneration != AccountGeneration)
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != PlayerStateRequestGeneration || !bPlayerStateRequestInFlight)
     {
         return;
     }
@@ -644,15 +701,21 @@ void UGamePlatformLiveOpsClientSubsystem::HandlePlayerStateCompleted(
 
 void UGamePlatformLiveOpsClientSubsystem::HandleClaimCompleted(
     uint64 ExpectedGeneration,
+    uint64 ExpectedRequestGeneration,
+    FGuid ExpectedOperationId,
+    bool bReconcile,
     FGamePlatformLiveOpsClaimResult Result,
     EGamePlatformLiveOpsError Error)
 {
-    if (ExpectedGeneration != AccountGeneration)
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedOperationId != ActiveClaimOperationId || (bReconcile ? ExpectedRequestGeneration != ReconcileRequestGeneration || !bClaimReconcileInFlight : ExpectedRequestGeneration != ClaimRequestGeneration || !bClaimRequestInFlight))
     {
         return;
     }
 
     const bool bWasReconcile = bClaimReconcileInFlight;
+    FGuid ReturnedOperationId;
+    if (Error == EGamePlatformLiveOpsError::None && (!FGuid::Parse(Result.ClaimOperationId, ReturnedOperationId) || ReturnedOperationId != ExpectedOperationId)) { Error = EGamePlatformLiveOpsError::InvalidResponse; }
     bClaimRequestInFlight = false;
     bClaimReconcileInFlight = false;
 
@@ -705,6 +768,7 @@ void UGamePlatformLiveOpsClientSubsystem::HandleClaimCompleted(
 
 void UGamePlatformLiveOpsClientSubsystem::RefreshAggregateState()
 {
+    if (bDeinitializing) { return; }
     if (bCatalogRequestInFlight ||
         bPlayerStateRequestInFlight ||
         bClaimRequestInFlight ||
@@ -743,6 +807,7 @@ void UGamePlatformLiveOpsClientSubsystem::RefreshAggregateState()
 
 void UGamePlatformLiveOpsClientSubsystem::PublishDerivedViewChanged(bool bCatalog, bool bPlayer)
 {
+    if (bDeinitializing) { return; }
     check(IsInGameThread());
     const uint64 ExpectedGeneration = AccountGeneration;
     ++ViewGeneration;
@@ -751,4 +816,42 @@ void UGamePlatformLiveOpsClientSubsystem::PublishDerivedViewChanged(bool bCatalo
     if (bCatalog) { OnCatalogChanged.Broadcast(); }
     if (ExpectedGeneration != AccountGeneration) { return; }
     if (bPlayer) { OnPlayerStateChanged.Broadcast(); }
+}
+
+// Online负责认证/刷新/请求签名；领域层只消费脱敏认证快照，缺失路由仍走真实失败终态。
+void UGamePlatformLiveOpsClientSubsystem::BindOnlineAuthentication()
+{
+    if (bDeinitializing) { return; }
+    auto* LocalPlayer = GetLocalPlayer();
+    auto* Instance = LocalPlayer ? LocalPlayer->GetGameInstance() : nullptr;
+    auto* Online = Instance ? Instance->GetSubsystem<UGamePlatformOnlineClientSubsystem>() : nullptr;
+    if (!IsValid(Online)) { return; }
+    OnlineSubsystem = Online;
+    if (!AuthStateChangedHandle.IsValid())
+    { AuthStateChangedHandle = Online->OnAuthStateChanged().AddUObject(this, &UGamePlatformLiveOpsClientSubsystem::HandleAuthStateChanged); }
+    HandleAuthStateChanged(Online->GetSnapshot());
+}
+
+void UGamePlatformLiveOpsClientSubsystem::UnbindOnlineAuthentication()
+{
+    if (auto* Online = OnlineSubsystem.Get())
+    { if (AuthStateChangedHandle.IsValid()) { Online->OnAuthStateChanged().Remove(AuthStateChangedHandle); } }
+    AuthStateChangedHandle.Reset(); OnlineSubsystem.Reset();
+}
+
+void UGamePlatformLiveOpsClientSubsystem::HandleAuthStateChanged(const FGamePlatformAuthSnapshot& AuthSnapshot)
+{
+    if (bDeinitializing) { return; }
+    check(IsInGameThread());
+    if (AuthSnapshot.State == EGamePlatformAuthState::Refreshing) { return; }
+    if (AuthSnapshot.State == EGamePlatformAuthState::Authenticated)
+    {
+        auto* Online = OnlineSubsystem.Get();
+        if (!Online || AuthSnapshot.AccountId.IsEmpty()) { ResetAccount(); return; }
+        if (CurrentAccountKey == AuthSnapshot.AccountId && Transport.IsValid()) { return; }
+        ConfigureAuthenticatedAccount(AuthSnapshot.AccountId,
+            MakeShared<FGamePlatformLiveOpsGatewayHttpTransport, ESPMode::ThreadSafe>(Online));
+        return;
+    }
+    if (!CurrentAccountKey.IsEmpty() || Transport.IsValid()) { ResetAccount(); }
 }

@@ -52,6 +52,10 @@ public:
         FGamePlatformLiveOpsClaimCompletion Completion) override;
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    // 测试仅访问实际生产解析入口，不复制解析实现或绕过网络权限。
+    friend class FGamePlatformLiveOpsJsonValidationTest;
+#endif
     struct FRuntime;
     TUniquePtr<FRuntime> Runtime;
 

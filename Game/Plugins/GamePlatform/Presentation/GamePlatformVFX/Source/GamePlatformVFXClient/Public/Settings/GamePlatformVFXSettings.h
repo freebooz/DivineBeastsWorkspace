@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformVFX，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -42,6 +44,9 @@ public:
 
     UPROPERTY(Config, EditAnywhere, Category="Runtime", meta=(ClampMin="16", ClampMax="4096"))
     int32 MaxDedupeEntries = 512;
+    /** 定义回退链结构安全深度；不是CPU/GPU预算。每次请求另以Visited身份集拒绝环。 */
+    UPROPERTY(Config, EditAnywhere, Category="Runtime", meta=(ClampMin="1", ClampMax="64"))
+    int32 MaxDefinitionFallbackDepth = 8;
 
     UPROPERTY(Config, EditAnywhere, Category="Catalog", meta=(ClampMin="1", ClampMax="256"))
     int32 MaxRegisteredCatalogs = 64;

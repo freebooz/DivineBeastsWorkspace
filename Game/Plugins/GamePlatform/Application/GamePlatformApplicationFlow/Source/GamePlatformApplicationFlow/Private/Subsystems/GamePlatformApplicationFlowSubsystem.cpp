@@ -98,11 +98,11 @@ public:
             [Complete = std::move(Complete), WeakService](FGamePlatformFlowNodeResult Result) mutable
             {
                 // 完成仅转换值并投递核心单槽邮箱；工作线程绝不解引用Owner/Node。
-                Complete({Result.bSucceeded, Result.bRetryable, ToCoreName(Result.Outcome),
+                if (!Complete({Result.bSucceeded, Result.bRetryable, ToCoreName(Result.Outcome),
                     Result.ErrorCode.IsNone() ? std::string() : std::string(TCHAR_TO_UTF8(*Result.ErrorCode.ToString())),
-                    std::string(TCHAR_TO_UTF8(*Result.ErrorMessage))});
+                    std::string(TCHAR_TO_UTF8(*Result.ErrorMessage))})) { return; }
 
-                // Completion可能来自任意线程。成功/重复投递都只请求一次轻量Pump，
+                // Completion可能来自任意线程。只有本尝试首次受理才请求一次轻量Pump，
                 // 真正结果竞争仍由核心邮箱决定；GameThread路径直接调度，避免额外跨线程跳转。
                 auto Wake = [WeakService]()
                 {

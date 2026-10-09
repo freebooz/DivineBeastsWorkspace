@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformUI，负责回归用例；夹具仅测试作用域，不伪造生产资源成功。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 // F12：失活只结束显示状态，资源/Travel所有权必须等真实栈移除；重复ID不能覆盖旧通知。
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
@@ -9,16 +11,36 @@
 #include "Components/Overlay.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UnrealType.h"
 #include "Definitions/GamePlatformUIScreenDefinition.h"
+#include "ViewModels/GamePlatformViewModelBase.h"
+// F11：关闭观察者开始同一VM新页面时，旧失活不能在广播返回后EndPage新代次。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformUIScreenCloseReentryTest, "GamePlatform.UI.Lifecycle.CloseObserverKeepsNewPage",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformUIScreenCloseReentryTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    auto* Screen = NewObject<UGamePlatformUIScreen>();
+    auto* ViewModel = NewObject<UGamePlatformViewModelBase>();
+    Screen->InitializeScreen(TEXT("Reentry"), ViewModel, NAME_None, EGamePlatformUIInputMode::UIOnly, EGamePlatformUIPausePolicy::Never);
+    Screen->ActivateWidget();
+    Screen->OnPlatformDeactivated().AddLambda([&](UGamePlatformUIScreen*) { ViewModel->BeginPage(); });
+    Screen->DeactivateWidget();
+    TestTrue(TEXT("关闭通知发生在旧VM结束后，观察者的新页面保持有效"), ViewModel->IsPageActive());
+    Screen->OnPlatformDeactivated().Clear(); ViewModel->EndPage();
+    return true;
+}
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformUIScreenLifecycleRegressionTest, "GamePlatform.UI.Lifecycle.SuspensionKeepsOwnership",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FGamePlatformUIScreenLifecycleRegressionTest::RunTest(const FString&)
 {
     FScopedAllowAbstractClassAllocation AllowAbstract; // 仅此测试分配，无Blueprint文件。
-    auto* Player=NewObject<ULocalPlayer>(); auto* Manager=NewObject<UGamePlatformUIManagerSubsystem>(Player);
+    // LocalPlayer与Viewport的ClassWithin为Engine；仅用真实GEngine作Outer，缺引擎明确失败。
+    if (!TestNotNull(TEXT("测试宿主Engine必须存在"), GEngine)) { return false; }
+    auto* Player=NewObject<ULocalPlayer>(GEngine); auto* Manager=NewObject<UGamePlatformUIManagerSubsystem>(Player);
     auto* A=NewObject<UGamePlatformUIScreen>(); auto* Stack=NewObject<UCommonActivatableWidgetStack>();
     Manager->ScreenStacks.Add(A,Stack); Manager->ActiveScreenLeases.Add(A,FGamePlatformDataLease());
     Manager->TravelPersistentScreens.Add(A); Manager->PauseScreens.Add(A);
@@ -55,7 +77,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformUIScreenReentryRegressionTest,
 bool FGamePlatformUIScreenReentryRegressionTest::RunTest(const FString&)
 {
     FScopedAllowAbstractClassAllocation AllowAbstract;
-    const TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>());
+    // LocalPlayer与Viewport的ClassWithin为Engine；仅用真实GEngine作Outer，缺引擎明确失败。
+    if (!TestNotNull(TEXT("测试宿主Engine必须存在"), GEngine)) { return false; }
+    const TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine));
     const TStrongObjectPtr<UGamePlatformUIManagerSubsystem> Manager(NewObject<UGamePlatformUIManagerSubsystem>(Player.Get()));
     const TStrongObjectPtr<UGamePlatformUILayerStack> Root(NewObject<UGamePlatformUILayerStack>());
     const TStrongObjectPtr<UCommonActivatableWidgetStack> Stack(NewObject<UCommonActivatableWidgetStack>());

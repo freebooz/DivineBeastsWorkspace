@@ -88,6 +88,10 @@ private:
 
     /** 运行组件生命周期代次；销毁/重初始化使旧Port回调失效。 */
     uint64 LifetimeGeneration = 0;
+    /** 持久化操作用途请求代次，正常/失败终态只能消费一次，后续操作拒绝上一轮迟到响应。 */
+    uint64 PersistenceRequestGeneration = 0;
+    /** 候选授权事务不能被Resolver/GAS通知同步重新进入。 */
+    bool bApplyingRuntimeSnapshot = false;
     bool bRuntimeClosed = false;
     int32 AvatarGeneration = 0;
     int32 EquipmentRuntimeGeneration = 0;

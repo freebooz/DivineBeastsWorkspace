@@ -1,7 +1,10 @@
+// MOBA双端竞技控制器：服务器RPC只向本World权威GameMode提交玩家命令，客户端接收拒绝通知；不拥有比赛状态或资源。
 #include "Framework/GamePlatformArenaPlayerController.h"
 
 #include "Framework/GamePlatformArenaGameMode.h"
 #include "Framework/GamePlatformArenaPlayerState.h"
+// GetAuthGameMode使用UWorld成员模板，需要完整World定义，不能依赖PCH间接包含。
+#include "Engine/World.h"
 
 namespace
 {

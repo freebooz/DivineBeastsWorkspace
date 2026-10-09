@@ -5,6 +5,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
+#include "GamePlatformOnlineClientSubsystem.h"
 #include "Types/GamePlatformProgressionClientTypes.h"
 #include "GamePlatformProgressionClientSubsystem.generated.h"
 
@@ -34,6 +35,8 @@ class GAMEPLATFORMPROGRESSIONCLIENT_API UGamePlatformProgressionClientSubsystem 
     GENERATED_BODY()
 
 public:
+    /** 绑定所属GI Online认证事件，初始已认证时立即装配业务传输；不创建第二认证框架。 */
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     /** 作用域退出先解绑事件并取消自身请求；无法撤销已经提交的后端事务。 */
     virtual void Deinitialize() override;
     /** 配置已认证账号及独占生命周期的领域传输；空键/空Port拒绝；true仅表示首次读取已受理，不证明数据就绪。 */
@@ -102,8 +105,21 @@ public:
     FGamePlatformProgressionXPChanged OnXPChanged;
 
 private:
+    /** 所属GI的Online仅弱引用；账号/请求与委托均由本地玩家作用域退出清理。 */
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> OnlineSubsystem;
+    FDelegateHandle AuthStateChangedHandle;
+    void BindOnlineAuthentication();
+    void UnbindOnlineAuthentication();
+    void HandleAuthStateChanged(const FGamePlatformAuthSnapshot& AuthSnapshot);
+    /** Reset事件可再次请求Reset；正在清空时幂等忽略，禁止在同广播栈重新配置账号。 */
+    bool bResettingAccount = false;
+    /** 永久关闭当前实例作用域；仅Initialize可开启新代次，广播/Cancel重入不能复活服务。 */
+    bool bDeinitializing = false;
+    uint64 InstanceGeneration = 0;
     FString CurrentAccountKey;
     uint64 AccountGeneration = 0;
+    /** 同账号快照读取代次，阻止上一轮重复响应进入后续读取。 */
+    uint64 SnapshotRequestGeneration = 0;
 
     EGamePlatformProgressionClientState State =
         EGamePlatformProgressionClientState::Uninitialized;
@@ -140,6 +156,7 @@ private:
     /** 游戏线程终态入口；代次不匹配丢弃，错误保留现有投影并通知，合法结果一次应用。 */
     void HandleSnapshotCompleted(
         uint64 ExpectedGeneration,
+        uint64 ExpectedSnapshotRequestGeneration,
         FGamePlatformProgressionSnapshot NewSnapshot,
         EGamePlatformProgressionError Error);
 

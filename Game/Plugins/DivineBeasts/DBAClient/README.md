@@ -41,3 +41,8 @@
 `F:\\VFX Lib` 的复用映射见 `Docs/ZodiacReuseMatrix.md（十二生肖VFX复用矩阵）`。首批优先 Rabbit（卯兔）、Horse（午马）、Goat（未羊）、Rooster（酉鸡）、Boar（亥猪）；当前只完成平台母版能力与复用规划，未创建任何虚构技能 `.uasset`。
 
 P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基类、LocalPlayer 自适应子系统和 SafeZone 支持；DivineBeastsUIClient 已新增项目分类基类，并建立登录、真实加载、RootLayout 和五类 HUD 的 C++ / Blueprint 父类。ApplicationFlow 的 Blueprint `uint64` 反射阻断和 GamePlatformUIClient 生成代码错误已经消除；当前完整客户端构建的已知阻断位于主工程 Online/PCG 头依赖及 GamePlatformWorld 测试源码。UI 与 Flow 仍须保持事件驱动、禁止逐帧轮询。
+
+
+## 2026-10-09 公共流程Retry合同
+
+UI允许Retry时，命令实际调用RetryFailedFlow：取消本流程/后端等待、取消转移、清空连接材料并经Online注销事件重启人工登录。只在无活动运行、不忙、装配完整且错误可恢复时发布Retry；CharacterCreateOutcomeUnknown不发布重试，避免重复创建。true仅表示恢复受理，后续失败/页面投影仍通过既有ViewState事件交付。此改动不涉及Widget/主题/动画资产，实际界面视觉仍须既有Monolith流程验收。

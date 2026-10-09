@@ -302,6 +302,7 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
             FString PlayerId;
             FString SessionId;
             FString AssignmentId;
+            FString MatchId;
             FString WorldId;
             FString ExperienceId;
             FString GameSessionId;
@@ -334,7 +335,10 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
                     TEXT("sessionEpoch"),
                     SessionEpoch);
 
-            if (!bParsed || PlayerId.IsEmpty() || SessionId.IsEmpty() ||
+            // matchId在普通世界响应中可省略；若出现非字符串值则拒绝。角色身份继续来自服务器受信Roster。
+            const bool bMatchParsed = !Json->HasField(TEXT("matchId")) ||
+                Json->TryGetStringField(TEXT("matchId"), MatchId);
+            if (!bParsed || !bMatchParsed || PlayerId.IsEmpty() || SessionId.IsEmpty() ||
                 AssignmentId.IsEmpty() || GameSessionId.IsEmpty() ||
                 ServerBootId != Target.ServerBootId ||
                 WorldId != Target.WorldId ||
@@ -355,6 +359,7 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
             Admission.SessionId = MoveTemp(SessionId);
             Admission.GameSessionId = MoveTemp(GameSessionId);
             Admission.AssignmentId = MoveTemp(AssignmentId);
+            Admission.MatchId = MoveTemp(MatchId);
             Admission.ReservationId = ReservationId;
             Admission.ServerInstanceId = Target.GameServerId;
             Admission.ServerBootId = Target.ServerBootId;

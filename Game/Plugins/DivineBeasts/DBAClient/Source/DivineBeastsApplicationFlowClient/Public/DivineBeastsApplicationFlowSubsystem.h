@@ -114,6 +114,9 @@ public:
     /** 取消当前流程和异步工作，退出Online认证；LoggedOut事件到达后按原策略重新启动。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
     void LogoutAndRestart();
+    /** 游戏线程：只在无活动运行的可恢复失败状态受理；清理会话并注销后重启人工登录，不重发旧创建/消费操作。
+     * true表示恢复已受理，完成/失败由ViewState事件通知；false表示状态/服务不满足。 */
+    bool RetryFailedFlow();
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|ApplicationFlow")
     FDivineBeastsFlowViewState GetViewState() const { return ViewState; }

@@ -28,6 +28,10 @@
     {
       "Name": "GamePlatformGameplay",
       "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCombat",
+      "Enabled": true
     }
   ],
   "Modules": [

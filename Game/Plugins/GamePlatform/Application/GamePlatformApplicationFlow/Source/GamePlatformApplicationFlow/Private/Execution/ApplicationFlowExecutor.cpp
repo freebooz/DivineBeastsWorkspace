@@ -205,8 +205,10 @@ void FApplicationFlowExecutor::BeginAttempt(double NowSeconds)
             {
                 Inbox->Result = std::move(Result);
                 Inbox->bAccepting = false; // 同一尝试只有首次完成可投递。
+                return true;
             }
         }
+        return false; // 未受理结果不得形成TaskGraph唤醒负担。
     });
     bInNodeCallback = false;
     {

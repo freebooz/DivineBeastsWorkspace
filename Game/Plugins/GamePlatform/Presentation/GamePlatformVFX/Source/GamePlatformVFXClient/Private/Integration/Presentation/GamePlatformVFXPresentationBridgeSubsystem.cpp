@@ -1,6 +1,9 @@
+// 本文件属于GamePlatform平台层 GamePlatformVFX，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #include "Integration/Presentation/GamePlatformVFXPresentationBridgeSubsystem.h"
 #include "Integration/Presentation/GamePlatformVFXPresentationProvider.h"
 #include "GamePlatformPresentationClientSubsystem.h"
+#include "Definitions/GamePlatformVFXDefinition.h"
 #include "Engine/LocalPlayer.h"
 
 void UGamePlatformVFXPresentationBridgeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -20,7 +23,7 @@ void UGamePlatformVFXPresentationBridgeSubsystem::Initialize(FSubsystemCollectio
             100,
             FGamePlatformPresentationProviderHandler::CreateUObject(
                 this,
-                &UGamePlatformVFXPresentationBridgeSubsystem::HandlePresentationRequest));
+                &UGamePlatformVFXPresentationBridgeSubsystem::HandlePresentationRequest), UGamePlatformVFXDefinition::StaticClass());
     }
 }
 

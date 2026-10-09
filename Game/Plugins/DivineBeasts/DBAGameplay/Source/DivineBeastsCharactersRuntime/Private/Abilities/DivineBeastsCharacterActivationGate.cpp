@@ -2,6 +2,8 @@
 #include "Abilities/DivineBeastsCharacterActivationGate.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/GamePlatformGameplayEligibilityComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
 #include "Framework/GamePlatformGameModeBase.h"
 #include "Framework/GamePlatformPlayerStateBase.h"
 #include "GameFramework/Pawn.h"
@@ -27,11 +29,24 @@ FGamePlatformResult FDivineBeastsCharacterActivationGate::Evaluate(const UGamePl
     { return Failure(TEXT("CharacterAvatarMismatch")); }
     const auto* Controller = Cast<APlayerController>(Pawn->GetController());
     const auto* PlayerState = Controller ? Controller->GetPlayerState<AGamePlatformPlayerStateBase>() : nullptr;
-    if (!Controller || Controller->GetPawn() != Pawn || !PlayerState || Controller->GetWorld() != World || PlayerState->GetWorld() != World)
+    if (!Controller || Controller->GetPawn() != Pawn || !Controller->PlayerState || Controller->GetWorld() != World || Controller->PlayerState->GetWorld() != World)
     { return Failure(TEXT("GameplayOwnerUnavailable")); }
     const AActor* AbilityOwner = Component.GetOwnerActor();
-    if (AbilityOwner != Pawn && AbilityOwner != Controller && AbilityOwner != PlayerState)
+    if (AbilityOwner != Pawn && AbilityOwner != Controller && AbilityOwner != Controller->PlayerState)
     { return Failure(TEXT("AbilityOwnerMismatch")); }
+    const auto* Combat = Pawn->FindComponentByClass<UGamePlatformCombatComponent>();
+    if (!Combat || Combat->IsCombatDead() || Combat->GetCombatAvatarGeneration() != ExpectedAvatarGeneration)
+    { return Failure(TEXT("CombatAvatarUnavailable")); }
+    if (!PlayerState)
+    {
+        // 非平台Experience宿主（例如MOBA竞技）复用同一中立资格组件；资格只可由服务器出生/死亡/排空适配写入。
+        const auto* Eligibility = Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();
+        if (!Eligibility || !Combat || !Eligibility->IsServerPlayerActiveForGameplay() ||
+            Eligibility->GetGameplayAvatarGeneration() != ExpectedAvatarGeneration || Combat->IsCombatDead())
+        { return Failure(TEXT("GameplayNotActive")); }
+        if (!Pawn->HasAuthority() && !Pawn->IsLocallyControlled()) { return Failure(TEXT("GameplayPredictionNotOwned")); }
+        return FGamePlatformResult::Success();
+    }
     const auto Snapshot = PlayerState->GetLifecycleSnapshot();
     // 项目初始化Context.AvatarGeneration对应可信玩法PawnGeneration；ASC自身绑定计数属于另一个作用域。
     if (!Snapshot.IsServerActive() || Snapshot.ControlledPawn != Pawn ||

@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformSFX，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "Types/GamePlatformSFXTypes.h"
@@ -27,6 +29,11 @@ public:
     virtual bool StopByRequestId(const FGuid& RequestId, float FadeOutSeconds = -1.0f) = 0;
 
     virtual bool IsActive(const FGamePlatformSFXHandle& Handle) const = 0;
+    /** 查询真实Loading/Playing/终态；非法/跨世界/已淘汰历史返回Invalid，不持有资源。 */
+    virtual FGamePlatformSFXPlaybackSnapshot GetPlaybackSnapshot(const FGamePlatformSFXHandle& Handle) const = 0;
+    /** 终态清理完成后通知一次，World退出也通知；处理器允许重入，游戏线程注册/注销。 */
+    virtual FDelegateHandle AddCompletionHandler(const FGamePlatformSFXPlaybackCompleted::FDelegate& Handler) = 0;
+    virtual void RemoveCompletionHandler(FDelegateHandle Handle) = 0;
 
     /** 只允许Definition白名单内的浮点参数；仅活动AudioComponent可更新。 */
     virtual bool SetFloatParameter(const FGamePlatformSFXHandle& Handle, FName Name, float Value) = 0;

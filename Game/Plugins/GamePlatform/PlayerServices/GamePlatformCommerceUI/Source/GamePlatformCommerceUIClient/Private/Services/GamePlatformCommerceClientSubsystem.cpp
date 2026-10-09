@@ -1,4 +1,8 @@
+// 平台本地玩家商店投影实现：游戏线程事件与异步领域Transport，Online拥有认证；账号重置清空本地缓存并失效本领域回调。
 #include "Services/GamePlatformCommerceClientSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+#include "Transport/GamePlatformCommerceGatewayHttpTransport.h"
 
 #include "Interfaces/GamePlatformCommerceClientTransport.h"
 #include "ViewModels/GamePlatformCommerceViewModel.h"
@@ -6,20 +10,29 @@
 void UGamePlatformCommerceClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
+    // Initialize建立新实例代次；退出后的迟到回调不能跨重新初始化消费。
+    bDeinitializing = false; ++InstanceGeneration; ++AccountGeneration;
     Super::Initialize(Collection);
 
     ViewModel =
         NewObject<UGamePlatformCommerceViewModel>(this);
+    BindOnlineAuthentication();
 }
 
 void UGamePlatformCommerceClientSubsystem::Deinitialize()
 {
-    if (Transport.IsValid())
+    // 先关闭作用域，再执行任何取消或广播；外部回调不得恢复账号。
+    bDeinitializing = true; ++InstanceGeneration; ++AccountGeneration;
+    UnbindOnlineAuthentication();
+    OnCommerceStateChanged.Clear(); OnOrderChanged.Clear();
+    const auto CancelledTransport = Transport;
+    if (CancelledTransport.IsValid())
     {
-        Transport->CancelAllRequests();
+        CancelledTransport->CancelAllRequests();
     }
 
     ++AccountGeneration;
+    ++CatalogRequestGeneration; ++IntentRequestGeneration; ++OrderRequestGeneration;
     CurrentAccountKey.Reset();
     Transport.Reset();
     Catalog = {};
@@ -40,12 +53,15 @@ bool UGamePlatformCommerceClientSubsystem::ConfigureAuthenticatedAccount(
     TSharedPtr<IGamePlatformCommerceClientTransport, ESPMode::ThreadSafe>
         InTransport)
 {
-    if (AccountKey.IsEmpty() || !InTransport.IsValid())
+    check(IsInGameThread());
+    if (bDeinitializing || bResettingAccount || AccountKey.IsEmpty() || !InTransport.IsValid())
     {
         return false;
     }
 
+    const uint64 ExpectedInstanceGeneration = InstanceGeneration;
     ResetAccount();
+    if (bDeinitializing || ExpectedInstanceGeneration != InstanceGeneration) { return false; }
     CurrentAccountKey = AccountKey;
     Transport = MoveTemp(InTransport);
     return RefreshCatalog();
@@ -53,11 +69,16 @@ bool UGamePlatformCommerceClientSubsystem::ConfigureAuthenticatedAccount(
 
 void UGamePlatformCommerceClientSubsystem::ResetAccount()
 {
+    check(IsInGameThread());
+    if (bResettingAccount) { return; }
+    TGuardValue<bool> ResetGuard(bResettingAccount, true);
     ++AccountGeneration;
+    ++CatalogRequestGeneration; ++IntentRequestGeneration; ++OrderRequestGeneration;
 
-    if (Transport.IsValid())
+    const auto CancelledTransport = Transport;
+    if (CancelledTransport.IsValid())
     {
-        Transport->CancelAllRequests();
+        CancelledTransport->CancelAllRequests();
     }
 
     CurrentAccountKey.Reset();
@@ -83,6 +104,7 @@ void UGamePlatformCommerceClientSubsystem::ResetAccount()
 
 bool UGamePlatformCommerceClientSubsystem::RefreshCatalog()
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         bCatalogRequestInFlight)
@@ -90,15 +112,19 @@ bool UGamePlatformCommerceClientSubsystem::RefreshCatalog()
         return false;
     }
 
+    const uint64 ExpectedGeneration = AccountGeneration;
+    const auto RequestTransport = Transport;
+    const uint64 ExpectedRequestGeneration = ++CatalogRequestGeneration;
     bCatalogRequestInFlight = true;
     SetState(EGamePlatformCommerceClientState::LoadingCatalog);
 
-    const uint64 ExpectedGeneration = AccountGeneration;
+    // 状态/ViewModel广播可以重置或切换账号，禁止沿旧调用栈发送交易命令。
+    if (ExpectedGeneration != AccountGeneration || RequestTransport != Transport) { return false; }
     TWeakObjectPtr<UGamePlatformCommerceClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginGetCatalog(
-            [WeakThis, ExpectedGeneration](
+        RequestTransport->BeginGetCatalog(
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration](
                 FGamePlatformCommerceCatalogSnapshot Snapshot,
                 EGamePlatformCommerceError Error)
             {
@@ -107,12 +133,13 @@ bool UGamePlatformCommerceClientSubsystem::RefreshCatalog()
                 {
                     Self->HandleCatalog(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         MoveTemp(Snapshot),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && RequestTransport == Transport && ExpectedRequestGeneration == CatalogRequestGeneration && bCatalogRequestInFlight)
     {
         bCatalogRequestInFlight = false;
         LastError = EGamePlatformCommerceError::BackendUnavailable;
@@ -127,6 +154,7 @@ bool UGamePlatformCommerceClientSubsystem::CreatePurchaseIntent(
     int32 Quantity,
     const FGuid& RequestId)
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         OfferId.IsNone() ||
@@ -138,18 +166,22 @@ bool UGamePlatformCommerceClientSubsystem::CreatePurchaseIntent(
         return false;
     }
 
+    const uint64 ExpectedGeneration = AccountGeneration;
+    const auto RequestTransport = Transport;
+    const uint64 ExpectedRequestGeneration = ++IntentRequestGeneration;
     bIntentRequestInFlight = true;
     SetState(EGamePlatformCommerceClientState::CreatingIntent);
 
-    const uint64 ExpectedGeneration = AccountGeneration;
+    // 状态/ViewModel广播可以重置或切换账号，禁止沿旧调用栈发送交易命令。
+    if (ExpectedGeneration != AccountGeneration || RequestTransport != Transport) { return false; }
     TWeakObjectPtr<UGamePlatformCommerceClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginCreatePurchaseIntent(
+        RequestTransport->BeginCreatePurchaseIntent(
             OfferId,
             Quantity,
             RequestId,
-            [WeakThis, ExpectedGeneration](
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration](
                 FGamePlatformCommercePurchaseIntentView Intent,
                 EGamePlatformCommerceError Error)
             {
@@ -158,12 +190,13 @@ bool UGamePlatformCommerceClientSubsystem::CreatePurchaseIntent(
                 {
                     Self->HandleIntent(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         MoveTemp(Intent),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && RequestTransport == Transport && ExpectedRequestGeneration == IntentRequestGeneration && bIntentRequestInFlight)
     {
         bIntentRequestInFlight = false;
         LastError = EGamePlatformCommerceError::BackendUnavailable;
@@ -176,6 +209,7 @@ bool UGamePlatformCommerceClientSubsystem::CreatePurchaseIntent(
 bool UGamePlatformCommerceClientSubsystem::BeginPurchase(
     const FString& PurchaseIntentId)
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         PurchaseIntentId.IsEmpty() ||
@@ -184,16 +218,20 @@ bool UGamePlatformCommerceClientSubsystem::BeginPurchase(
         return false;
     }
 
+    const uint64 ExpectedGeneration = AccountGeneration;
+    const auto RequestTransport = Transport;
+    const uint64 ExpectedRequestGeneration = ++OrderRequestGeneration;
     bOrderRequestInFlight = true;
     SetState(EGamePlatformCommerceClientState::Confirming);
 
-    const uint64 ExpectedGeneration = AccountGeneration;
+    // 状态/ViewModel广播可以重置或切换账号，禁止沿旧调用栈发送交易命令。
+    if (ExpectedGeneration != AccountGeneration || RequestTransport != Transport) { return false; }
     TWeakObjectPtr<UGamePlatformCommerceClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginPurchase(
+        RequestTransport->BeginPurchase(
             PurchaseIntentId,
-            [WeakThis, ExpectedGeneration](
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration](
                 FGamePlatformCommerceOrderStatusView Order,
                 EGamePlatformCommerceError Error)
             {
@@ -202,12 +240,13 @@ bool UGamePlatformCommerceClientSubsystem::BeginPurchase(
                 {
                     Self->HandleOrder(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         MoveTemp(Order),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && RequestTransport == Transport && ExpectedRequestGeneration == OrderRequestGeneration && bOrderRequestInFlight)
     {
         bOrderRequestInFlight = false;
         LastError = EGamePlatformCommerceError::BackendUnavailable;
@@ -220,6 +259,7 @@ bool UGamePlatformCommerceClientSubsystem::SubmitReceipt(
     const FString& OrderId,
     const FString& Receipt)
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         OrderId.IsEmpty() ||
@@ -229,20 +269,24 @@ bool UGamePlatformCommerceClientSubsystem::SubmitReceipt(
         return false;
     }
 
+    const uint64 ExpectedGeneration = AccountGeneration;
+    const auto RequestTransport = Transport;
+    const uint64 ExpectedRequestGeneration = ++OrderRequestGeneration;
     bOrderRequestInFlight = true;
 
     // Receipt（支付凭据）只是待验证输入。
     // 客户端绝不能因为Provider SDK返回Success就进入Succeeded。
     SetState(EGamePlatformCommerceClientState::AwaitingVerification);
 
-    const uint64 ExpectedGeneration = AccountGeneration;
+    // 状态/ViewModel广播可以重置或切换账号，禁止沿旧调用栈发送交易命令。
+    if (ExpectedGeneration != AccountGeneration || RequestTransport != Transport) { return false; }
     TWeakObjectPtr<UGamePlatformCommerceClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginSubmitReceipt(
+        RequestTransport->BeginSubmitReceipt(
             OrderId,
             Receipt,
-            [WeakThis, ExpectedGeneration](
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration](
                 FGamePlatformCommerceOrderStatusView Order,
                 EGamePlatformCommerceError Error)
             {
@@ -251,12 +295,13 @@ bool UGamePlatformCommerceClientSubsystem::SubmitReceipt(
                 {
                     Self->HandleOrder(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         MoveTemp(Order),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && RequestTransport == Transport && ExpectedRequestGeneration == OrderRequestGeneration && bOrderRequestInFlight)
     {
         bOrderRequestInFlight = false;
         LastError = EGamePlatformCommerceError::BackendUnavailable;
@@ -268,6 +313,7 @@ bool UGamePlatformCommerceClientSubsystem::SubmitReceipt(
 bool UGamePlatformCommerceClientSubsystem::RefreshOrder(
     const FString& OrderId)
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         OrderId.IsEmpty() ||
@@ -276,16 +322,20 @@ bool UGamePlatformCommerceClientSubsystem::RefreshOrder(
         return false;
     }
 
+    const uint64 ExpectedGeneration = AccountGeneration;
+    const auto RequestTransport = Transport;
+    const uint64 ExpectedRequestGeneration = ++OrderRequestGeneration;
     bOrderRequestInFlight = true;
     SetState(EGamePlatformCommerceClientState::Reconciling);
 
-    const uint64 ExpectedGeneration = AccountGeneration;
+    // 状态/ViewModel广播可以重置或切换账号，禁止沿旧调用栈发送交易命令。
+    if (ExpectedGeneration != AccountGeneration || RequestTransport != Transport) { return false; }
     TWeakObjectPtr<UGamePlatformCommerceClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginGetOrder(
+        RequestTransport->BeginGetOrder(
             OrderId,
-            [WeakThis, ExpectedGeneration](
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration](
                 FGamePlatformCommerceOrderStatusView Order,
                 EGamePlatformCommerceError Error)
             {
@@ -294,12 +344,13 @@ bool UGamePlatformCommerceClientSubsystem::RefreshOrder(
                 {
                     Self->HandleOrder(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         MoveTemp(Order),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && RequestTransport == Transport && ExpectedRequestGeneration == OrderRequestGeneration && bOrderRequestInFlight)
     {
         bOrderRequestInFlight = false;
         LastError = EGamePlatformCommerceError::BackendUnavailable;
@@ -311,6 +362,7 @@ bool UGamePlatformCommerceClientSubsystem::RefreshOrder(
 bool UGamePlatformCommerceClientSubsystem::ReconcileOrder(
     const FString& OrderId)
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         OrderId.IsEmpty() ||
@@ -319,16 +371,20 @@ bool UGamePlatformCommerceClientSubsystem::ReconcileOrder(
         return false;
     }
 
+    const uint64 ExpectedGeneration = AccountGeneration;
+    const auto RequestTransport = Transport;
+    const uint64 ExpectedRequestGeneration = ++OrderRequestGeneration;
     bOrderRequestInFlight = true;
     SetState(EGamePlatformCommerceClientState::Reconciling);
 
-    const uint64 ExpectedGeneration = AccountGeneration;
+    // 状态/ViewModel广播可以重置或切换账号，禁止沿旧调用栈发送交易命令。
+    if (ExpectedGeneration != AccountGeneration || RequestTransport != Transport) { return false; }
     TWeakObjectPtr<UGamePlatformCommerceClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginReconcileOrder(
+        RequestTransport->BeginReconcileOrder(
             OrderId,
-            [WeakThis, ExpectedGeneration](
+            [WeakThis, ExpectedGeneration, ExpectedRequestGeneration](
                 FGamePlatformCommerceOrderStatusView Order,
                 EGamePlatformCommerceError Error)
             {
@@ -337,12 +393,13 @@ bool UGamePlatformCommerceClientSubsystem::ReconcileOrder(
                 {
                     Self->HandleOrder(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         MoveTemp(Order),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && RequestTransport == Transport && ExpectedRequestGeneration == OrderRequestGeneration && bOrderRequestInFlight)
     {
         bOrderRequestInFlight = false;
         LastError = EGamePlatformCommerceError::BackendUnavailable;
@@ -353,10 +410,12 @@ bool UGamePlatformCommerceClientSubsystem::ReconcileOrder(
 
 void UGamePlatformCommerceClientSubsystem::HandleCatalog(
     uint64 ExpectedGeneration,
+    uint64 ExpectedRequestGeneration,
     FGamePlatformCommerceCatalogSnapshot Snapshot,
     EGamePlatformCommerceError Error)
 {
-    if (ExpectedGeneration != AccountGeneration)
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != CatalogRequestGeneration || !bCatalogRequestInFlight)
     {
         return;
     }
@@ -380,6 +439,7 @@ void UGamePlatformCommerceClientSubsystem::HandleCatalog(
         if (ViewModel)
         {
             ViewModel->ApplyCatalog(Catalog);
+            if (bDeinitializing || ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != CatalogRequestGeneration) { return; }
         }
     }
 
@@ -389,10 +449,12 @@ void UGamePlatformCommerceClientSubsystem::HandleCatalog(
 
 void UGamePlatformCommerceClientSubsystem::HandleIntent(
     uint64 ExpectedGeneration,
+    uint64 ExpectedRequestGeneration,
     FGamePlatformCommercePurchaseIntentView Intent,
     EGamePlatformCommerceError Error)
 {
-    if (ExpectedGeneration != AccountGeneration)
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != IntentRequestGeneration || !bIntentRequestInFlight)
     {
         return;
     }
@@ -414,6 +476,7 @@ void UGamePlatformCommerceClientSubsystem::HandleIntent(
     if (ViewModel)
     {
         ViewModel->ApplyIntent(CurrentIntent);
+        if (bDeinitializing || ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != IntentRequestGeneration) { return; }
     }
 
     LastError = EGamePlatformCommerceError::None;
@@ -422,10 +485,12 @@ void UGamePlatformCommerceClientSubsystem::HandleIntent(
 
 void UGamePlatformCommerceClientSubsystem::HandleOrder(
     uint64 ExpectedGeneration,
+    uint64 ExpectedRequestGeneration,
     FGamePlatformCommerceOrderStatusView Order,
     EGamePlatformCommerceError Error)
 {
-    if (ExpectedGeneration != AccountGeneration)
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != OrderRequestGeneration || !bOrderRequestInFlight)
     {
         return;
     }
@@ -448,6 +513,7 @@ void UGamePlatformCommerceClientSubsystem::HandleOrder(
                 State == EGamePlatformCommerceClientState::Reconciling;
 
             SetState(EGamePlatformCommerceClientState::Reconciling);
+            if (bDeinitializing || ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != OrderRequestGeneration) { return; }
 
             if (!bWasAlreadyReconciling &&
                 !CurrentOrder.OrderId.IsEmpty())
@@ -466,9 +532,12 @@ void UGamePlatformCommerceClientSubsystem::HandleOrder(
     if (ViewModel)
     {
         ViewModel->ApplyOrder(CurrentOrder);
+        if (bDeinitializing || ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != OrderRequestGeneration) { return; }
     }
 
-    OnOrderChanged.Broadcast(CurrentOrder);
+    const auto AcceptedOrder = CurrentOrder;
+    OnOrderChanged.Broadcast(AcceptedOrder);
+    if (bDeinitializing || ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != OrderRequestGeneration) { return; }
     LastError = EGamePlatformCommerceError::None;
     ApplyOrderState(CurrentOrder);
 }
@@ -476,6 +545,7 @@ void UGamePlatformCommerceClientSubsystem::HandleOrder(
 void UGamePlatformCommerceClientSubsystem::SetState(
     EGamePlatformCommerceClientState NewState)
 {
+    if (bDeinitializing) { return; }
     if (State == NewState)
     {
         return;
@@ -520,4 +590,42 @@ void UGamePlatformCommerceClientSubsystem::ApplyOrderState(
     }
 
     SetState(EGamePlatformCommerceClientState::Reconciling);
+}
+
+// Online负责认证/刷新/请求签名；领域层只消费脱敏认证快照，缺失路由仍走真实失败终态。
+void UGamePlatformCommerceClientSubsystem::BindOnlineAuthentication()
+{
+    if (bDeinitializing) { return; }
+    auto* LocalPlayer = GetLocalPlayer();
+    auto* Instance = LocalPlayer ? LocalPlayer->GetGameInstance() : nullptr;
+    auto* Online = Instance ? Instance->GetSubsystem<UGamePlatformOnlineClientSubsystem>() : nullptr;
+    if (!IsValid(Online)) { return; }
+    OnlineSubsystem = Online;
+    if (!AuthStateChangedHandle.IsValid())
+    { AuthStateChangedHandle = Online->OnAuthStateChanged().AddUObject(this, &UGamePlatformCommerceClientSubsystem::HandleAuthStateChanged); }
+    HandleAuthStateChanged(Online->GetSnapshot());
+}
+
+void UGamePlatformCommerceClientSubsystem::UnbindOnlineAuthentication()
+{
+    if (auto* Online = OnlineSubsystem.Get())
+    { if (AuthStateChangedHandle.IsValid()) { Online->OnAuthStateChanged().Remove(AuthStateChangedHandle); } }
+    AuthStateChangedHandle.Reset(); OnlineSubsystem.Reset();
+}
+
+void UGamePlatformCommerceClientSubsystem::HandleAuthStateChanged(const FGamePlatformAuthSnapshot& AuthSnapshot)
+{
+    if (bDeinitializing) { return; }
+    check(IsInGameThread());
+    if (AuthSnapshot.State == EGamePlatformAuthState::Refreshing) { return; }
+    if (AuthSnapshot.State == EGamePlatformAuthState::Authenticated)
+    {
+        auto* Online = OnlineSubsystem.Get();
+        if (!Online || AuthSnapshot.AccountId.IsEmpty()) { ResetAccount(); return; }
+        if (CurrentAccountKey == AuthSnapshot.AccountId && Transport.IsValid()) { return; }
+        ConfigureAuthenticatedAccount(AuthSnapshot.AccountId,
+            MakeShared<FGamePlatformCommerceGatewayHttpTransport, ESPMode::ThreadSafe>(Online));
+        return;
+    }
+    if (!CurrentAccountKey.IsEmpty() || Transport.IsValid()) { ResetAccount(); }
 }

@@ -18,3 +18,12 @@ if(MSVC)
   target_compile_options(AIAbilityActivationPolicyTests PRIVATE /W4 /WX /utf-8)
 endif()
 add_test(NAME AI.AbilityActivation COMMAND AIAbilityActivationPolicyTests)
+
+# 候选容量算法真实消费者回归，比较次数不代替Insights测量。
+add_executable(AICandidateRetentionTests ../Source/GamePlatformAIServer/Private/Tests/AICandidateRetentionTests.cpp)
+target_compile_features(AICandidateRetentionTests PRIVATE cxx_std_17)
+target_compile_definitions(AICandidateRetentionTests PRIVATE GAMEPLATFORM_AI_NATIVE_TEST=1)
+if(MSVC)
+  target_compile_options(AICandidateRetentionTests PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME AI.CandidateRetention COMMAND AICandidateRetentionTests)

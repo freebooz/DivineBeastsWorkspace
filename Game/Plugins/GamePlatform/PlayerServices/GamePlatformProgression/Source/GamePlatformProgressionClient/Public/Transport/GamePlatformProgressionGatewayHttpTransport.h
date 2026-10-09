@@ -36,6 +36,10 @@ public:
         FGamePlatformProgressionSnapshotCompletion Completion) override;
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    // 测试仅访问实际生产解析入口，不复制解析实现或绕过网络权限。
+    friend class FGamePlatformProgressionJsonValidationTest;
+#endif
     struct FRuntime;
     TUniquePtr<FRuntime> Runtime;
 

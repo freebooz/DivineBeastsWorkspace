@@ -20,6 +20,9 @@ DECLARE_MULTICAST_DELEGATE_OneParam(
     FGamePlatformArenaResultChangedNative,
     const FGamePlatformArenaResultSummary&);
 
+/** 玩家Actor可晚于GameState复制到达；引擎Add/Remove事件通知上层重绑，无业务轮询。 */
+DECLARE_MULTICAST_DELEGATE(FGamePlatformArenaPlayersChangedNative);
+
 /** AGamePlatformArenaGameState（竞技公共游戏状态）。
  *  只复制公开比赛事实，不复制TransferTicket、后端凭据或隐藏匹配值。
  */
@@ -51,6 +54,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Arena") double GetPhaseRemainingSeconds() const;
     const FGamePlatformArenaTeamState* FindTeam(FName TeamId) const;
 
+    virtual void AddPlayerState(APlayerState* PlayerState) override;
+    virtual void RemovePlayerState(APlayerState* PlayerState) override;
+    FGamePlatformArenaPlayersChangedNative OnArenaPlayersChanged;
     FGamePlatformArenaPhaseChangedNative OnArenaPhaseChanged;
     FGamePlatformArenaTeamStatesChangedNative OnArenaTeamStatesChanged;
     FGamePlatformArenaObjectiveStatesChangedNative OnArenaObjectiveStatesChanged;

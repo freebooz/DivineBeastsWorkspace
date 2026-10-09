@@ -79,6 +79,9 @@ public:
         const FGamePlatformCharacterInitializationContext& Context,
         FString& OutError);
 
+    /** 游戏线程可信出生适配器借用同世界已Succeeded预热租约；自身租约须已受理。借用者不释放它，所有者须保持到自身完成。 */
+    bool TryUsePreloadedDefinition(const FGamePlatformDataLease& WarmupLease, UObject& WarmupOwner, FString& OutError);
+
     /** 任意身份/Definition/Generation变化后可重复调用，幂等重评估。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Character")
     void RefreshInitialization();
@@ -119,13 +122,7 @@ public:
     virtual bool IsCharacterStateReady() const override { return IsCharacterReady(); }
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
-    bool IsCharacterReady() const
-    {
-        if (bEndingPlay) { return false; }
-        return GetOwner() && GetOwner()->HasAuthority()
-            ? bServerReady
-            : bServerReady && bLocalReady;
-    }
+    bool IsCharacterReady() const;
 
     const UDivineBeastsHeroDefinition* GetLoadedDefinition() const
     {
@@ -147,6 +144,10 @@ private:
     UFUNCTION()
     void OnRep_ServerReady();
 
+    /** 只读Data当前状态；自身需求成功或同World活所有者的真实预热需求成功才能使用Definition。 */
+    bool HasReadableDefinitionResources() const;
+    TWeakObjectPtr<UObject> BorrowedWarmupOwner;
+    FGamePlatformDataLease BorrowedWarmupLease;
     void BeginDefinitionLoad();
     void CancelDefinitionLease();
     void HandleDefinitionLoaded(

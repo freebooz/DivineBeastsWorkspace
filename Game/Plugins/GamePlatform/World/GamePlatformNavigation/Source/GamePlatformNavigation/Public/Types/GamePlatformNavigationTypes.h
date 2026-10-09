@@ -110,7 +110,11 @@ struct GAMEPLATFORMNAVIGATION_API FGamePlatformNavigationRequestHandle
     UPROPERTY(BlueprintReadOnly, Category="Navigation")
     int32 WorldGeneration = 0;
 
-    bool IsValid() const { return RequestId.IsValid() && WorldGeneration > 0; }
+    /** 世界内操作代次，由FindPathAsync返回；0为旧句柄/未接纳请求，取消时拒绝。正int64兼容蓝图读取。 */
+    UPROPERTY(BlueprintReadOnly, Category="Navigation")
+    int64 OperationGeneration = 0;
+
+    bool IsValid() const { return RequestId.IsValid() && WorldGeneration > 0 && OperationGeneration > 0; }
 };
 
 USTRUCT(BlueprintType)

@@ -1,9 +1,13 @@
+// 本文件属于MobaCommon可选MOBA层 MobaPresentation，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
+// MOBA本地玩家事实接线：事件驱动处理迟到Controller/Pawn/GameState与重生；不持有玩法权威或资产租约。
 #include "MobaPresentationClientSubsystem.h"
 
 #include "Adapters/MobaPresentationFactAdapters.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
+#include "TimerManager.h"
 #include "Events/MobaPresentationContextContributor.h"
 #include "Framework/GamePlatformArenaGameState.h"
 #include "Framework/GamePlatformArenaPlayerState.h"
@@ -17,7 +21,13 @@
 void UMobaPresentationClientSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    bClosing = false;
+    ++BindingGeneration;
     BoundWorld = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
+    if (ULocalPlayer* Player = GetLocalPlayer())
+        PlayerControllerChangedHandle = Player->OnPlayerControllerChanged().AddUObject(
+            this, &UMobaPresentationClientSubsystem::HandleControllerChanged);
+    BindWorldEvents(BoundWorld.Get());
 
     PostLoadMapHandle = FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(
         this,
@@ -31,8 +41,16 @@ void UMobaPresentationClientSubsystem::Initialize(FSubsystemCollectionBase& Coll
 
 void UMobaPresentationClientSubsystem::Deinitialize()
 {
+    if (bClosing) return;
+    bClosing = true;
+    ++BindingGeneration;
     UnbindCombat();
     UnbindArena();
+
+    if (ULocalPlayer* Player = GetLocalPlayer()) Player->OnPlayerControllerChanged().Remove(PlayerControllerChangedHandle);
+    PlayerControllerChangedHandle.Reset();
+    UnbindWorldEvents();
+    BindController(nullptr);
 
     if (PostLoadMapHandle.IsValid())
     {
@@ -58,7 +76,7 @@ bool UMobaPresentationClientSubsystem::RegisterContextContributor(
     FName ContributorId,
     TSharedRef<IMobaPresentationContextContributor> Contributor)
 {
-    if (ContributorId.IsNone() || ContextContributors.Contains(ContributorId))
+    if (bClosing || ContributorId.IsNone() || ContextContributors.Contains(ContributorId))
     {
         return false;
     }
@@ -73,10 +91,15 @@ bool UMobaPresentationClientSubsystem::UnregisterContextContributor(FName Contri
 
 void UMobaPresentationClientSubsystem::ResetWorldState(UWorld* NewWorld)
 {
+    if (bClosing) return;
+    ++BindingGeneration;
+    UnbindWorldEvents();
+    BindController(nullptr);
     UnbindCombat();
     UnbindArena();
 
     BoundWorld = NewWorld;
+    BindWorldEvents(NewWorld);
     ++WorldGeneration;
     RequestGeneration = 0;
     LastPhaseRevision = INDEX_NONE;
@@ -93,6 +116,7 @@ void UMobaPresentationClientSubsystem::ResetWorldState(UWorld* NewWorld)
 
 void UMobaPresentationClientSubsystem::HandlePostLoadMap(UWorld* LoadedWorld)
 {
+    if (bClosing) return;
     UWorld* LocalWorld = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
     if (LoadedWorld && LoadedWorld == LocalWorld && LoadedWorld != BoundWorld.Get())
     {
@@ -111,6 +135,9 @@ void UMobaPresentationClientSubsystem::HandleWorldCleanup(
 {
     if (World && World == BoundWorld.Get())
     {
+        ++BindingGeneration;
+        UnbindWorldEvents();
+        BindController(nullptr);
         UnbindCombat();
         UnbindArena();
         BoundWorld.Reset();
@@ -125,7 +152,7 @@ void UMobaPresentationClientSubsystem::HandleWorldCleanup(
 void UMobaPresentationClientSubsystem::RefreshBindings()
 {
     UWorld* World = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
-    if (!World)
+    if (bClosing || !World || World->bIsTearingDown)
     {
         return;
     }
@@ -143,6 +170,7 @@ void UMobaPresentationClientSubsystem::RefreshBindings()
 
     APlayerController* PlayerController =
         GetLocalPlayer() ? GetLocalPlayer()->GetPlayerController(World) : nullptr;
+    BindController(PlayerController);
     APawn* Pawn = PlayerController ? PlayerController->GetPawn() : nullptr;
     UGamePlatformCombatComponent* Combat =
         Pawn ? Pawn->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
@@ -158,6 +186,67 @@ void UMobaPresentationClientSubsystem::RefreshBindings()
                 &UMobaPresentationClientSubsystem::HandleCombatEvent);
         }
     }
+}
+
+void UMobaPresentationClientSubsystem::BindWorldEvents(UWorld* World)
+{
+    if (bClosing || !World || World->bIsTearingDown) return;
+    GameStateSetHandle = World->GameStateSetEvent.AddUObject(this, &UMobaPresentationClientSubsystem::HandleGameStateSet);
+    ActorSpawnedHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(
+        this, &UMobaPresentationClientSubsystem::HandleActorSpawned));
+}
+void UMobaPresentationClientSubsystem::UnbindWorldEvents()
+{
+    if (UWorld* World = BoundWorld.Get())
+    {
+        World->GameStateSetEvent.Remove(GameStateSetHandle);
+        World->RemoveOnActorSpawnedHandler(ActorSpawnedHandle);
+        World->GetTimerManager().ClearTimer(PendingBindingRefreshTimer);
+    }
+    PendingBindingRefreshTimer.Invalidate();
+    GameStateSetHandle.Reset(); ActorSpawnedHandle.Reset();
+}
+void UMobaPresentationClientSubsystem::BindController(APlayerController* Controller)
+{
+    if (bClosing && Controller) return;
+    if (BoundController.Get() == Controller) return;
+    if (APlayerController* Old = BoundController.Get()) Old->GetOnNewPawnNotifier().Remove(PawnChangedHandle);
+    PawnChangedHandle.Reset(); BoundController = Controller;
+    if (Controller) PawnChangedHandle = Controller->GetOnNewPawnNotifier().AddUObject(
+        this, &UMobaPresentationClientSubsystem::HandlePawnChanged);
+}
+void UMobaPresentationClientSubsystem::HandleControllerChanged(APlayerController* Controller)
+{
+    if (bClosing) return;
+    BindController(Controller); RefreshBindings();
+}
+void UMobaPresentationClientSubsystem::HandlePawnChanged(APawn* Pawn)
+{
+    (void)Pawn; RefreshBindings();
+}
+void UMobaPresentationClientSubsystem::HandleGameStateSet(AGameStateBase* GameState)
+{
+    (void)GameState; RefreshBindings();
+}
+void UMobaPresentationClientSubsystem::HandleActorSpawned(AActor* Actor)
+{
+    if (bClosing || !Actor || Actor->GetWorld() != BoundWorld.Get()) return;
+    if (Actor->IsA<AGamePlatformArenaPlayerState>()) RefreshArenaPlayerBindings();
+    // Spawn通知可早于BeginPlay；下一调度轮补一次组件查找，无逐帧或永久重试。
+    if (Actor->IsA<APawn>() || Actor->IsA<AGamePlatformArenaGameState>())
+        if (UWorld* World = BoundWorld.Get(); World && !PendingBindingRefreshTimer.IsValid())
+            PendingBindingRefreshTimer = World->GetTimerManager().SetTimerForNextTick(
+                FTimerDelegate::CreateUObject(this, &UMobaPresentationClientSubsystem::HandleDeferredBindingRefresh,
+                    BindingGeneration, TWeakObjectPtr<UWorld>(World)));
+}
+void UMobaPresentationClientSubsystem::HandleDeferredBindingRefresh(const uint64 ExpectedGeneration,
+    const TWeakObjectPtr<UWorld> ExpectedWorld)
+{
+    // ClearTimer覆盖排队回调；即使回调已进入调度，完整世代/World校验仍拒绝旧服务接线。
+    if (bClosing || BindingGeneration != ExpectedGeneration || ExpectedWorld != BoundWorld ||
+        !ExpectedWorld.IsValid() || ExpectedWorld->bIsTearingDown) return;
+    PendingBindingRefreshTimer.Invalidate();
+    RefreshBindings();
 }
 
 void UMobaPresentationClientSubsystem::UnbindCombat()
@@ -590,6 +679,7 @@ void UMobaPresentationClientSubsystem::ApplyContextContributors(
 bool UMobaPresentationClientSubsystem::PrepareFact(
     FMobaPresentationAdaptedFact& Fact)
 {
+    if (bClosing) return false;
     UWorld* CurrentWorld = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
     if (CurrentWorld != BoundWorld.Get())
     {
@@ -651,6 +741,8 @@ EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::SubmitAd
         : nullptr;
     if (!Coordinator)
     {
+        PredictedFacts.Remove(Fact.Identity.FactId); ConfirmedFacts.Remove(Fact.Identity.FactId);
+        FactOrder.Remove(Fact.Identity.FactId);
         ++ProviderMissingCount;
         return EGamePlatformPresentationSubmitResult::ProviderMissing;
     }
@@ -659,10 +751,18 @@ EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::SubmitAd
         FMobaPresentationRequestBuilder::Build(
             Fact,
             Fact.Context.RequestGeneration);
-    Request.WorldGeneration = Coordinator->GetWorldGeneration();
+    // 已在PrepareFact校验MOBA事实所属World；平台世代由同一次Submit刷新后原子补齐，不读取旅行前缓存。
+    Request.WorldGeneration = 0;
+    Request.Context.WorldGeneration = 0;
 
     const EGamePlatformPresentationSubmitResult Result =
         Coordinator->Submit(Request);
+    // Submitted仅表示实际受理；同步失败不得通过重复事实被升级成受理成功。
+    if (Result != EGamePlatformPresentationSubmitResult::Submitted)
+    {
+        PredictedFacts.Remove(Fact.Identity.FactId); ConfirmedFacts.Remove(Fact.Identity.FactId);
+        FactOrder.Remove(Fact.Identity.FactId);
+    }
     if (Result == EGamePlatformPresentationSubmitResult::ProviderMissing)
     {
         ++ProviderMissingCount;

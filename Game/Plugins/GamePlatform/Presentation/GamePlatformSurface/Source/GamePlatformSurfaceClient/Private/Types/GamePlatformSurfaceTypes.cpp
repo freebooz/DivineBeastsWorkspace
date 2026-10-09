@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformSurface，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 // 表面环境状态的纯数据校验与归一化实现；不访问世界、材质或网络状态。
 #include "Types/GamePlatformSurfaceTypes.h"
 
@@ -47,5 +49,6 @@ bool FGamePlatformSurfaceUpdateResult::IsStateAccepted() const
     return Status == EGamePlatformSurfaceUpdateStatus::Applied ||
            Status == EGamePlatformSurfaceUpdateStatus::Unchanged ||
            Status == EGamePlatformSurfaceUpdateStatus::MaterialBindingUnavailable ||
-           Status == EGamePlatformSurfaceUpdateStatus::ParameterContractMismatch;
+           Status == EGamePlatformSurfaceUpdateStatus::ParameterContractMismatch ||
+           Status == EGamePlatformSurfaceUpdateStatus::MaterialBindingPending;
 }

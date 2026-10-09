@@ -1,0 +1,11 @@
+# 通用竞技准入与重连整改（2026-10-09）
+
+平台Server已有真实PostLogin握手组件装配。ArenaServer每World订阅GameInstance的已验证准入事件，随后重新GetVerifiedAdmission核对当前Controller、Boot与协议目标，精确MatchId、Server、World.MainArena、Experience与权威期限匹配当前Assignment。CharacterId来自已验证Roster唯一槽位，票据没有该字段，不能从客户端提交或凭PlayerId构造跨比赛身份。
+
+准入提前于Assignment时，Assignment成功应用后重新采样当前连接；撤销/到期先移除本连接绑定再失活。新重连发布前移除同玩家旧连接Timer；旧AdmissionId、旧Controller和其他World不得操作新连接。没有合法绑定/可信Roster时保持失败关闭，不新增第二认证服务。
+
+GameMode借用项目生命周期适配器，所有权属当前World装配。重连出生失败不消费原宽限，成功才消费；死亡中重连保留权威剩余复活时刻。选人、Ready、弃权必须精确对应当前连接PlayerState，不能仅靠PlayerId集合包含判定。
+
+最小Gameplay资格下层接口已复用，完整平台Experience的final出生/准备合同与竞技阶段仍需单独迁移设计，未宣称反射父类全部下继承。新增Automation覆盖准入匹配值边界、重连调用与失败回退、客户端投影重置；夹具仅测试生命周期接纳事务，不冒充实际项目Pawn或联网验签。完整服务器/客户端联调与五模式正式资源仍未验收。
+
+首轮Server编译兼容修正：2026-10-09根统一锁定UE5.8.0 Server首轮真实构建失败退出6。GameMode重连Timer与ArenaServer准入期限Timer从只读自有记录复制可变FTimerHandle再ClearTimer；PlayerController补Engine/World.h完整类型与中文职责边界，保留原准入/RPC路由/所有权行为。无公开API或依赖改变，源码重新冻结等待根增量Server重跑，未声明构建或Automation通过。

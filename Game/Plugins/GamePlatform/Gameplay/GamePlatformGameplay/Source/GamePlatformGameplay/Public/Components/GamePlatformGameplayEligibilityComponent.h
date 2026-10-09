@@ -54,6 +54,9 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Gameplay")
     void AdvanceAvatarGeneration();
 
+    /** 游戏线程权威出生适配器绑定正整数Avatar代次；必须先Inactive，旧代次/越界拒绝，不改变Active。 */
+    bool BindServerAvatarGeneration(int32 NewAvatarGeneration);
+
     FGamePlatformGameplayEligibilitySnapshot GetSnapshot() const
     {
         FGamePlatformGameplayEligibilitySnapshot Result;

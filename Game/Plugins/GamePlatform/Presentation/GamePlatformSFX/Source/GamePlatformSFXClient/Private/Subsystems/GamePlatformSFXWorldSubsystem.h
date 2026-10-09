@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformSFX，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "Interfaces/IGamePlatformSFXService.h"
@@ -27,6 +29,9 @@ public:
     virtual bool Stop(const FGamePlatformSFXHandle& Handle, float FadeOutSeconds = -1.0f) override;
     virtual bool StopByRequestId(const FGuid& RequestId, float FadeOutSeconds = -1.0f) override;
     virtual bool IsActive(const FGamePlatformSFXHandle& Handle) const override;
+    virtual FGamePlatformSFXPlaybackSnapshot GetPlaybackSnapshot(const FGamePlatformSFXHandle& Handle) const override;
+    virtual FDelegateHandle AddCompletionHandler(const FGamePlatformSFXPlaybackCompleted::FDelegate& Handler) override;
+    virtual void RemoveCompletionHandler(FDelegateHandle Handle) override;
     virtual bool SetFloatParameter(const FGamePlatformSFXHandle& Handle, FName Name, float Value) override;
     virtual bool SetVolumeMultiplier(const FGamePlatformSFXHandle& Handle, float Value) override;
     virtual FGamePlatformSFXDiagnostics GetDiagnostics() const override;
@@ -60,11 +65,17 @@ private:
     /** UE启动拒绝亦广播Stopped；自然完成/失败/Stop共享幂等回收。 */
     void HandleAudioPlayStateChanged(const UAudioComponent* Component, EAudioComponentPlayState PlayState);
     void FailPending(FGuid HandleId, EGamePlatformSFXResultCode Code);
-    void CleanupActive(FGuid HandleId, bool bStopComponent);
+    void CleanupActive(FGuid HandleId, bool bStopComponent,
+        EGamePlatformSFXPlaybackState State = EGamePlatformSFXPlaybackState::Completed,
+        EGamePlatformSFXResultCode Code = EGamePlatformSFXResultCode::AlreadyCompleted);
+    void CompletePlayback(const FGamePlatformSFXHandle& Handle, EGamePlatformSFXPlaybackState State, EGamePlatformSFXResultCode Code);
+    TMap<FGuid, FGamePlatformSFXPlaybackSnapshot> PlaybackSnapshots;
+    TArray<FGuid> CompletedPlaybackOrder;
+    FGamePlatformSFXPlaybackCompleted PlaybackCompleted;
     void ReleaseLease(const FGamePlatformDataLease& Lease) const;
     void RemoveRequestMapping(const FGuid& RequestId, const FGuid& HandleId);
 
-    struct FTerminalOccurrence { double ExpiresAtSeconds = 0.0; bool bCancelled = false; };
+    struct FTerminalOccurrence { double ExpiresAtSeconds = 0.0; bool bCancelled = false; EGamePlatformSFXResultCode CompletionCode = EGamePlatformSFXResultCode::AlreadyCompleted; };
     void PruneTerminalOccurrences();
     void RecordTerminalOccurrence(const FGuid& RequestId, bool bCancelled);
     /** World局部终态最多512项、30秒；不持有UObject或Data Lease。 */

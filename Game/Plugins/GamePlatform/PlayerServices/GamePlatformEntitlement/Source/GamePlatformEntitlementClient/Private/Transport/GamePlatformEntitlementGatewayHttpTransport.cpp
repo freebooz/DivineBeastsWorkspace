@@ -155,7 +155,7 @@ bool FGamePlatformEntitlementGatewayHttpTransport::JsonToSnapshot(
     double Revision = 0.0;
     FString GeneratedAt;
     if (!Json->TryGetNumberField(TEXT("revision"), Revision) ||
-        Revision <= 0.0 ||
+        !FMath::IsFinite(Revision) || Revision < 1.0 || Revision > 9007199254740991.0 || FMath::FloorToDouble(Revision) != Revision ||
         !Json->TryGetStringField(TEXT("generated_at"), GeneratedAt) ||
         !FDateTime::ParseIso8601(*GeneratedAt, OutSnapshot.GeneratedAtUtc))
     {
@@ -167,7 +167,8 @@ bool FGamePlatformEntitlementGatewayHttpTransport::JsonToSnapshot(
     const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
     if (!Json->TryGetArrayField(TEXT("entitlements"), Values) || !Values)
     {
-        return true;
+        // 空数组是合法清空；缺字段或错误类型不是空快照，不得覆盖已有只读状态。
+        return false;
     }
 
     for (const TSharedPtr<FJsonValue>& Value : *Values)

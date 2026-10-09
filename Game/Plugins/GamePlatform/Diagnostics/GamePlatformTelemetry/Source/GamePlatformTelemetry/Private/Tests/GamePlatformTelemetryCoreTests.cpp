@@ -1,10 +1,10 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Buffer/GamePlatformTelemetryBoundedBuffer.h"
+#include "Buffer/TelemetryBoundedBuffer.h"
 #include "Misc/AutomationTest.h"
 #include "Privacy/GamePlatformTelemetryPrivacyFilter.h"
 #include "Sampling/GamePlatformTelemetrySampling.h"
-#include "Schema/GamePlatformTelemetrySchemaRegistry.h"
+#include "Schema/TelemetrySchemaRegistry.h"
 #include "Containers/Ticker.h"
 #include "Sinks/GamePlatformTelemetryNetworkSink.h"
 #include "Transport/GamePlatformTelemetryTransport.h"

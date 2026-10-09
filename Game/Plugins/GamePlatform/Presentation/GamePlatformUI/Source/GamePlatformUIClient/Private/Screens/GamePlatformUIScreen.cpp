@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformUI，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #include "Screens/GamePlatformUIScreen.h"
 #include "ViewModels/GamePlatformViewModelBase.h"
 #include "Blueprint/WidgetTree.h"
@@ -46,9 +48,9 @@ void UGamePlatformUIScreen::NativeOnActivated()
 
 void UGamePlatformUIScreen::NativeOnDeactivated()
 {
-    // 先通知Manager页面暂时失活，再由父类解绑事件并结束 ViewModel 页面代次。
-    PlatformDeactivated.Broadcast(this);
+    // 先解绑并结束旧页面代次，再开放关闭观察者重入；返回后不能结束观察者的新页面。
     Super::NativeOnDeactivated();
+    if (!IsActivated()) PlatformDeactivated.Broadcast(this);
 }
 
 bool UGamePlatformUIScreen::NativeOnHandleBackAction()

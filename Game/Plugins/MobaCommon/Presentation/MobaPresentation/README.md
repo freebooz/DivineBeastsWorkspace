@@ -11,3 +11,6 @@ MobaPresentation位于 MobaCommon（MOBA通用层），职责是把 Arena（竞�
 当前实现向 UGamePlatformPresentationClientSubsystem（平台表现客户端子系统）提交 FGamePlatformPresentationRequest（平台表现请求）。若没有Provider（表现提供者），安全返回ProviderMissing（提供者缺失），Gameplay继续。
 
 验证状态必须区分静态源码、UE5.8编译、Client/Server Cook（客户端/服务器烘焙）、Multi-PIE（多编辑器实例）、Travel/Late Join（切图/晚加入）和压力测试；未执行不得写通过。
+
+
+本轮事实上下文与迟到接线说明见 [源码整改说明](Docs/AuditRemediation-2026-10-09.md)，UE运行尚待验证。

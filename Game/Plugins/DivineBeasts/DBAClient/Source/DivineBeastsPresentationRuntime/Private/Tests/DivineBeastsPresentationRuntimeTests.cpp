@@ -1,6 +1,9 @@
+// 本文件属于DivineBeasts项目层 DivineBeastsPresentationRuntime，负责回归用例；夹具仅测试作用域，不伪造生产资源成功。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 DBAClient/Docs/PresentationAuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
+#include "Types/GamePlatformId.h"
 #include "Catalog/DivineBeastsPresentationProjectCatalog.h"
 #include "ContentPacks/DivineBeastsPresentationContentPack.h"
 #include "Context/DivineBeastsPresentationContext.h"
@@ -38,6 +41,8 @@ bool FDivineBeastsPresentationRuntimeContractTest::RunTest(const FString&)
         FDivineBeastsPresentationProjectCatalog::BuildDefaultFragment();
     TestTrue(TEXT("Default catalog valid"), DefaultCatalog.IsValid());
     TestEqual(TEXT("Default catalog entries"), DefaultCatalog.Entries.Num(), 2);
+    for (const auto& Entry : DefaultCatalog.Entries)
+    { FGamePlatformId Id; TestTrue(TEXT("默认DefinitionId必须合法且含版本"), FGamePlatformId::TryParse(Entry.DefinitionId.ToString(), Id)); }
     TestEqual(
         TEXT("Default catalog scope"),
         DefaultCatalog.Scope,
@@ -69,7 +74,7 @@ bool FDivineBeastsPresentationContentPackContractTest::RunTest(const FString&)
     Entry.SemanticTag =
         DivineBeastsPresentationTags::World_Interaction_Committed;
     Entry.ProviderChannel = TEXT("VFX");
-    Entry.DefinitionId = TEXT("Presentation.Test.Definition");
+    Entry.DefinitionId = TEXT("presentation.test.definition@1");
     Entry.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
     Entry.ContentRevision = TEXT("2");
     Pack.CatalogFragment.Entries.Add(Entry);

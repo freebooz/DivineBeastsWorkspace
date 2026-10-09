@@ -10,6 +10,14 @@
   "EnabledByDefault": false,
   "Plugins": [
     {
+      "Name": "GameplayAbilities",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Server",
+        "Editor"
+      ]
+    },
+    {
       "Name": "DBAGameplay",
       "Enabled": true
     },
@@ -58,6 +66,30 @@
       "Enabled": true,
       "TargetAllowList": [
         "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformAbilitySystem",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Server",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformCombat",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Server",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformGameplay",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Server",
         "Editor"
       ]
     }

@@ -14,6 +14,8 @@ struct FSettingsSaveSignals
 {
     int32 PendingCount = 0;
     bool bACompleted = false, bBCompleted = false, bASucceeded = false, bBSucceeded = false, bCleanupRequested = false;
+    bool bALoaded = false, bBLoaded = false, bALoadSucceeded = false, bBLoadSucceeded = false;
+    FGamePlatformSettingsPersistencePayload PayloadA, PayloadB;
     FString TestBase;
     void TryCleanup()
     {
@@ -64,9 +66,21 @@ public:
         }
         if (!Signals->bACompleted || !Signals->bBCompleted) { return false; }
         Test->TestTrue(TEXT("A异步落盘成功"), Signals->bASucceeded); Test->TestTrue(TEXT("B异步落盘成功"), Signals->bBSucceeded);
-        FGamePlatformSettingsPersistencePayload PayloadA, PayloadB;
-        Test->TestTrue(TEXT("读取A档案"), A->Load({}, PayloadA).IsSuccess()); Test->TestTrue(TEXT("读取B档案"), B->Load({}, PayloadB).IsSuccess());
-        const auto* LayerA = PayloadA.Layers.Find(EGamePlatformSettingLayer::User); const auto* LayerB = PayloadB.Layers.Find(EGamePlatformSettingLayer::User);
+        if (!bLoadsStarted)
+        {
+            bLoadsStarted = true; Signals->PendingCount = 2;
+            auto LoadA = A->BeginLoad({}, [State = Signals](auto Payload, const auto& Result)
+            { State->PayloadA = MoveTemp(Payload); State->bALoaded = true; State->bALoadSucceeded = Result.IsSuccess(); --State->PendingCount; State->TryCleanup(); });
+            if (!LoadA.IsSuccess()) { --Signals->PendingCount; }
+            auto LoadB = B->BeginLoad({}, [State = Signals](auto Payload, const auto& Result)
+            { State->PayloadB = MoveTemp(Payload); State->bBLoaded = true; State->bBLoadSucceeded = Result.IsSuccess(); --State->PendingCount; State->TryCleanup(); });
+            if (!LoadB.IsSuccess()) { --Signals->PendingCount; }
+            if (!LoadA.IsSuccess() || !LoadB.IsSuccess()) { Test->AddError(TEXT("异步读取未受理")); return true; }
+            return false;
+        }
+        if (!Signals->bALoaded || !Signals->bBLoaded) { return false; }
+        Test->TestTrue(TEXT("读取A真实终态成功"), Signals->bALoadSucceeded); Test->TestTrue(TEXT("读取B真实终态成功"), Signals->bBLoadSucceeded);
+        const auto* LayerA = Signals->PayloadA.Layers.Find(EGamePlatformSettingLayer::User); const auto* LayerB = Signals->PayloadB.Layers.Find(EGamePlatformSettingLayer::User);
         const auto* ValueA = LayerA ? LayerA->Find(TEXT("Value")) : nullptr; const auto* ValueB = LayerB ? LayerB->Find(TEXT("Value")) : nullptr;
         if (!ValueA || !ValueB) { Test->AddError(TEXT("独立档案未保存预期用户层")); return true; }
         Test->TestEqual(TEXT("A保存不受B切换影响"), ValueA->NumberValue, 1.0); Test->TestEqual(TEXT("B使用自身上下文"), ValueB->NumberValue, 2.0);
@@ -80,6 +94,7 @@ private:
     TUniquePtr<IGamePlatformSettingsPersistenceProvider> A, B;
     TSharedRef<FSettingsSaveSignals> Signals = MakeShared<FSettingsSaveSignals>();
     bool bStarted = false;
+    bool bLoadsStarted = false;
 };
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSettingsInterleavedSaveTest, "GamePlatform.Settings.Client.InterleavedSave", EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)

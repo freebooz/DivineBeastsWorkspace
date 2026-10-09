@@ -242,4 +242,46 @@ private:
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLiveOpsBoundaryNotificationTest, "GamePlatform.LiveOps.Client.TimeBoundary", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FLiveOpsBoundaryNotificationTest::RunTest(const FString&)
 { ADD_LATENT_AUTOMATION_COMMAND(FLiveOpsBoundaryCommand(this)); return true; }
+
+// 生命周期回归：测试Transport不访问网络；Reset同步通知调用Deinitialize后，关闭作用域必须拒绝恢复账号及公开刷新。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLiveOpsCloseDuringConfigureTest, "GamePlatform.LiveOps.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FLiveOpsCloseDuringConfigureTest::RunTest(const FString&)
+{
+    auto* Client = NewObject<UGamePlatformLiveOpsClientSubsystem>();
+    auto Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
+    TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
+    Client->OnViewChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });
+    TestFalse(TEXT("Reset通知内关闭后Configure不得复活服务"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Closed"), Transport));
+    TestFalse(TEXT("关闭后不得启动请求"), static_cast<bool>(Transport->CatalogCompletion));
+    TestFalse(TEXT("公开刷新拒绝已关闭作用域"), Client->RefreshCatalog());
+    return true;
+}
+
+
+// 同账号重复回调不得消费后续请求；返回领取OperationId必须与发起请求一致。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLiveOpsRequestTerminalGateTest, "GamePlatform.LiveOps.Client.RequestTerminalGate", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FLiveOpsRequestTerminalGateTest::RunTest(const FString&)
+{
+    auto* Client = NewObject<UGamePlatformLiveOpsClientSubsystem>(); auto Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
+    Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Gate"), Transport);
+    auto OldCatalog = Transport->CatalogCompletion; OldCatalog(CatalogSnapshot(1), EGamePlatformLiveOpsError::None);
+    Transport->StateCompletion(PlayerState(1), EGamePlatformLiveOpsError::None);
+    Client->RefreshCatalog(); OldCatalog(CatalogSnapshot(99), EGamePlatformLiveOpsError::None);
+    TestEqual(TEXT("旧目录终态不能发布新版本"), Client->GetCatalogRevision(), int64(1));
+    Transport->CatalogCompletion(CatalogSnapshot(2), EGamePlatformLiveOpsError::None);
+    const auto OperationA = FGuid::NewGuid(); const auto OperationB = FGuid::NewGuid();
+    Client->ClaimSignIn(TEXT("Campaign"), OperationA); auto OldClaim = Transport->ClaimCompletion;
+    FGamePlatformLiveOpsClaimResult Result; Result.ClaimId = TEXT("claim"); Result.ClaimOperationId = OperationB.ToString(); Result.PlayerStateRevision = 2; Result.ServerTimeUtc = FDateTime(2026,9,24,12,0,0);
+    int32 Claims = 0; Client->OnClaimChanged.AddLambda([&Claims](const auto&) { ++Claims; });
+    OldClaim(Result, EGamePlatformLiveOpsError::None);
+    TestEqual(TEXT("错OperationId不得广播成功"), Claims, 0);
+    TestEqual(TEXT("错OperationId明确InvalidResponse"), Client->GetLastError(), EGamePlatformLiveOpsError::InvalidResponse);
+    TestTrue(TEXT("新领取可重新受理"), Client->ClaimSignIn(TEXT("Campaign"), OperationB));
+    OldClaim(Result, EGamePlatformLiveOpsError::None);
+    TestEqual(TEXT("旧终态不得消费新领取资格"), Claims, 0);
+    Transport->ClaimCompletion(Result, EGamePlatformLiveOpsError::None);
+    TestEqual(TEXT("新资格只完成一次"), Claims, 1);
+    return true;
+}
+
 #endif

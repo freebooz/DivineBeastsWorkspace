@@ -1,0 +1,23 @@
+# 2026-10-09 表现源码整改与中文审核
+
+本文件是本插件本次变更的伴随职责/API说明。范围只包含人工维护C++、构建规则和测试；没有创建/改写任何uasset、umap、Niagara、材质或Widget Blueprint。唯一正式实现仍在本插件Source。下面的源码检查和原生测试不能代替UE编译、Automation、Cook、设备或人工视觉验收。
+
+独立复核补充：Submit在同一游戏线程调用先RefreshWorldGeneration；调用者顶层及Context.WorldGeneration为0时，分别以本次刷新后的平台世代补齐，Provider/Observed得到一致的实际服务世代。显式非零仍按既有旧世界门禁拒绝，不放宽过期事实。MOBA在自身事实World校验之后选择0补齐入口，不读取旅行前平台缓存；双World首次提交回归在MobaPresentation Private/Tests，UE尚未执行。
+
+所有本次服务API及回调在游戏线程运行；后台资源调度由GamePlatformData提供。值快照可复制，UObject/世界/组件指针不保证越过所属作用域。所有者关停先阻止新请求，撤销自有登记，再取消/停止实例、解绑和释放自有租约。发布通知前先完成内部所有权变更，通知处理器允许同步取消、切图、关闭服务或GC。
+
+## 中立目录与发布前预检
+
+Core持有Context、Query和Catalog值合同，不引用MOBA、项目或具体播放器。Client按LocalPlayer持有目录/提供者；World级片段由世界清理撤销。Source中Catalog.cpp实现资格和具体度，ClientSubsystem.cpp做合并、解析、预检与分发，私有CatalogScore.h只比较纯值候选。
+
+资格先过滤。P13顺序为精确语义、逐级显式父回退，然后同语义的Scope、Specificity、Priority。Specificity只计HeroDefinitionId、AbilityId、SkinId、WorldId、PlatformId及非Unknown QualityTier六项已经满足的等值资格。ProjectId、ExperienceId、RegionId、ArenaModeId、ContentPackId仍是资格，不额外计分。旧可编辑Specificity保留序列化身份，但废弃手填排序权重，现有内容应迁移到真实等值字段。
+
+PreflightCatalogFragment(Fragment, OutError)只读验证容量、身份、片段内和已注册片段的潜在完全同键资格交集；失败返回false和定位Pack/Catalog/Entry的中文错误，不发布任何目录。它是逻辑预检，不能代表资产版本、权益、可见性或真实Cook已验收。RegisterCatalogFragment保留旧工具兼容入口，工具登记冲突后Resolver仍返回Ambiguous，不用局部EntryId或注册顺序选胜者。内容事务使用预检后立即注册；两者之间无外部回调。
+
+Context中FName None表示未贡献/未约束，不是玩家权威身份；代次0表示未指定且须由所属作用域补齐；Query的Quality Unknown表示未约束。Scope四层优先级仅用于同语义；Priority为显式有符号顺序，不能越过资格。FragmentId唯一，Revision正整数，OwnerScopeId说明内容所有者，LifecycleScope决定本地玩家/世界/会话清理。
+
+ResolvedEntry.EntryId/ProviderChannel/DefinitionId/ContentRevision/Scope是选中值；CatalogFragmentId、OwnerScopeId、CatalogRevision、MatchedSemanticTag记录来源和回退命中。歧义时DefinitionId为空，AmbiguousCandidates列全部平局候选及条件；任何诊断排序不得用来决胜。提供者返回true只表示接纳请求或执行取消命令，不等于异步资源最终播放成功；最终状态由实际播放器合同查询。
+
+原生测试只验证生产排序纯值策略。新增UE用例覆盖资格交集、片段内冲突、事实源资格与来源诊断，本组未执行UE Automation。
+
+RegisterProvider新增可选DefinitionClass稳定类型合同，旧调用默认空；GetProviderDefinitionClass缺声明返回nullptr。VFX/SFX桥只向平台登记各自公开定义基类，平台不反向链接播放器。项目发布前验证真实加载对象是声明类，缺提供者或类型不符均回滚。

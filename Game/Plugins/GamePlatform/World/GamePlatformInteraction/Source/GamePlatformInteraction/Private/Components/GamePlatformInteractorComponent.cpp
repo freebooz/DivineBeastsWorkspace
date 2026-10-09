@@ -1,3 +1,4 @@
+// 平台双端Actor交互发起器：Focus属本地玩家，会话提交/取消属服务器；持有自己的Timer/幂等结果，外部回调可重入。
 #include "Components/GamePlatformInteractorComponent.h"
 
 #include "Components/GamePlatformInteractableComponent.h"
@@ -592,7 +593,8 @@ void UGamePlatformInteractorComponent::ServerRequestBeginInteraction_Implementat
         RecentRequestResults.Find(Request.RequestId))
     {
         LastResult = Cached->Result;
-        OnResultChanged.Broadcast(LastResult);
+        const FGamePlatformInteractionResult PublishedResult = LastResult;
+        OnResultChanged.Broadcast(PublishedResult);
         return;
     }
 
@@ -1043,9 +1045,11 @@ UGamePlatformInteractorComponent::ValidateActiveSession() const
 void UGamePlatformInteractorComponent::StartSession(
     const FGamePlatformInteractionRequest& Request,
     UGamePlatformInteractableComponent& Target,
-    const FGamePlatformInteractionOption& Option,
+    const FGamePlatformInteractionOption& InOption,
     int32 InteractorGeneration)
 {
+    // 激活广播也允许目标选项变更；整个开始路径使用稳定值，不借用Options元素。
+    const FGamePlatformInteractionOption Option = InOption;
     CurrentSession = {};
     CurrentSession.SessionId = FGuid::NewGuid();
     CurrentSession.RequestId = Request.RequestId;
@@ -1103,7 +1107,10 @@ void UGamePlatformInteractorComponent::StartSession(
             GetWorld()->GetTimeSeconds();
     }
 
-    OnSessionChanged.Broadcast(CurrentSession);
+    const FGamePlatformInteractionSession StartedSession = CurrentSession;
+    OnSessionChanged.Broadcast(StartedSession);
+    if (!IsValid(this) || !IsValid(GetOwner()) || CurrentSession.SessionId != StartedSession.SessionId ||
+        CurrentSession.State != EGamePlatformInteractionSessionState::Active) { return; }
 
     FGamePlatformInteractionResult Started;
     Started.RequestId = Request.RequestId;
@@ -1112,7 +1119,9 @@ void UGamePlatformInteractorComponent::StartSession(
         EGamePlatformInteractionSessionState::Active;
     PublishEvent(
         EGamePlatformInteractionEventType::InteractionStarted,
-        Started);
+        Started, StartedSession);
+    if (!IsValid(this) || !IsValid(GetOwner()) || !GetWorld() || GetWorld()->bIsTearingDown ||
+        CurrentSession.SessionId != StartedSession.SessionId || CurrentSession.State != EGamePlatformInteractionSessionState::Active) { return; }
 
     if (Option.Mode ==
         EGamePlatformInteractionMode::Instant)
@@ -1166,17 +1175,27 @@ void UGamePlatformInteractorComponent::CommitCurrentSession()
         return;
     }
 
+    // 外部Custom提交可以替换Options、取消当前会话或销毁目标；先复制值，返回后只消费同一Committing代次。
+    const FGamePlatformInteractionOption OptionSnapshot = *Option;
+    const FGamePlatformInteractionSession SessionSnapshot = CurrentSession;
+    const TWeakObjectPtr<UGamePlatformInteractableComponent> WeakTarget(Target);
     CurrentSession.State =
         EGamePlatformInteractionSessionState::Committing;
 
     FGamePlatformInteractionResult Result;
     const bool bCommitted =
         Target->CommitSession(
-            CurrentSession,
-            *Option,
+            SessionSnapshot,
+            OptionSnapshot,
             Result);
 
-    Target->ReleaseSession(CurrentSession.SessionId);
+    // 取消/替换已经完成原会话终态；不能释放新会话占位、清新计时器或再次发布Completed。
+    if (!IsValid(this) || !IsValid(GetOwner()) || CurrentSession.SessionId != SessionSnapshot.SessionId ||
+        CurrentSession.InteractorGeneration != SessionSnapshot.InteractorGeneration ||
+        CurrentSession.State != EGamePlatformInteractionSessionState::Committing) { return; }
+    if (!WeakTarget.IsValid() || !GetWorld() || GetWorld()->bIsTearingDown)
+    { CancelSession(EGamePlatformInteractionCancelReason::TargetDestroyed, EGamePlatformInteractionError::TargetDestroyed); return; }
+    WeakTarget->ReleaseSession(SessionSnapshot.SessionId);
     GetWorld()->GetTimerManager().ClearTimer(HoldValidationTimer);
 
     if (!bCommitted)
@@ -1195,13 +1214,13 @@ void UGamePlatformInteractorComponent::CommitCurrentSession()
     EGamePlatformInteractionEventType EventType =
         EGamePlatformInteractionEventType::InteractionCommitted;
 
-    if (Option->CommitKind ==
+    if (OptionSnapshot.CommitKind ==
         EGamePlatformInteractionCommitKind::Consume)
     {
         EventType =
             EGamePlatformInteractionEventType::PickupConsumed;
     }
-    else if (Option->CommitKind ==
+    else if (OptionSnapshot.CommitKind ==
         EGamePlatformInteractionCommitKind::Harvest)
     {
         EventType =
@@ -1290,32 +1309,36 @@ void UGamePlatformInteractorComponent::FinishSession(
     const FGamePlatformInteractionResult& Result,
     EGamePlatformInteractionEventType EventType)
 {
+    // A的终态整个发布过程只读取不可变快照。OnResultChanged可同步开始B，不能混入B身份或覆盖B视图。
+    FGamePlatformInteractionSession FinishedSession = CurrentSession;
     FGamePlatformInteractionResult FinalResult = Result;
-    FinalResult.OptionId = CurrentSession.OptionId;
-
-    LastResult = FinalResult;
-    CurrentSession.State = FinalResult.State;
-    CurrentSession.Result = FinalResult;
-
+    FinalResult.OptionId = FinishedSession.OptionId;
+    FinishedSession.State = FinalResult.State;
+    FinishedSession.Result = FinalResult;
+    CurrentSession = FinishedSession;
     CacheTerminalResult(FinalResult);
-    PublishEvent(EventType, FinalResult);
-
-    OnSessionChanged.Broadcast(CurrentSession);
+    if (!IsValid(this) || !IsValid(GetOwner()) || !GetWorld() || GetWorld()->bIsTearingDown) { return; }
+    // A事实仍可独立发布；此事件既不读取CurrentSession，也不修改重入后的B。
+    PublishEvent(EventType, FinalResult, FinishedSession);
+    if (!IsValid(this) || !IsValid(GetOwner()) || !GetWorld() || GetWorld()->bIsTearingDown ||
+        CurrentSession.SessionId != FinishedSession.SessionId ||
+        CurrentSession.InteractorGeneration != FinishedSession.InteractorGeneration) { return; }
+    OnSessionChanged.Broadcast(FinishedSession);
 }
 
 void UGamePlatformInteractorComponent::PublishEvent(
     EGamePlatformInteractionEventType EventType,
-    const FGamePlatformInteractionResult& Result)
+    const FGamePlatformInteractionResult& Result,
+    const FGamePlatformInteractionSession& Session)
 {
     FGamePlatformInteractionEvent Event;
     Event.EventType = EventType;
     Event.RequestId = Result.RequestId;
     Event.SessionId = Result.SessionId;
-    Event.InteractorActor = GetOwner();
-    Event.TargetActor = CurrentSession.TargetActor;
-    Event.OptionId = CurrentSession.OptionId;
+    Event.InteractorActor = Session.InteractorActor;
+    Event.TargetActor = Session.TargetActor;
+    Event.OptionId = Session.OptionId;
     Event.Result = Result;
-
     OnInteractionEvent.Broadcast(Event);
 }
 
@@ -1458,8 +1481,10 @@ void UGamePlatformInteractorComponent::CacheTerminalResult(
         Cached);
 
     LastResult = Result;
-    OnResultChanged.Broadcast(LastResult);
     PruneRecentRequests();
+    // 在外部广播前完成缓存维护，监听者清理组件后不继续访问可重置的缓存/LastResult引用。
+    const FGamePlatformInteractionResult PublishedResult = LastResult;
+    OnResultChanged.Broadcast(PublishedResult);
 }
 
 UGamePlatformInteractableComponent*

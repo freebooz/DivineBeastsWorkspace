@@ -1,3 +1,4 @@
+// 平台服务器AI控制器：当前Pawn/World拥有感知、候选和技能Gate；游戏线程决策，退出解绑/取消，不维护项目或全局玩家事实。
 #include "Controllers/GamePlatformAIController.h"
 
 #include "Abilities/AIAbilityActivationPolicy.h"
@@ -16,6 +17,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Perception/AIWorldPolicy.h"
+#include "Perception/AICandidateRetention.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Subsystems/GamePlatformNavigationWorldSubsystem.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -832,32 +834,26 @@ void AGamePlatformAIController::PruneCandidates()
             1,
             ActiveDefinition->TargetSelectionProfile.MaxCandidates);
 
-    while (Candidates.Num() > MaxCandidates)
+    if (Candidates.Num() <= MaxCandidates) { return; }
+    // 旧实现每移除一个候选都扫描全表，过量N-K时成本接近平方；一次堆选择只需O(N log K)。
+    TArray<FGamePlatformAITargetCandidate> RankedCandidates;
+    Candidates.GenerateValueArray(RankedCandidates);
+    auto* Removed = GamePlatformAICandidateRetention::SelectRetained(
+        RankedCandidates.GetData(), RankedCandidates.GetData() + RankedCandidates.Num(),
+        static_cast<std::size_t>(MaxCandidates), [](const auto& A, const auto& B)
+        {
+            if (A.LastSensedTime != B.LastSensedTime) { return A.LastSensedTime > B.LastSensedTime; }
+            // 同时间按稳定EntityId显式排序，不依赖TMap扫描顺序。
+            if (A.EntityId.A != B.EntityId.A) { return A.EntityId.A < B.EntityId.A; }
+            if (A.EntityId.B != B.EntityId.B) { return A.EntityId.B < B.EntityId.B; }
+            if (A.EntityId.C != B.EntityId.C) { return A.EntityId.C < B.EntityId.C; }
+            return A.EntityId.D < B.EntityId.D;
+        });
+    for (; Removed != RankedCandidates.GetData() + RankedCandidates.Num(); ++Removed)
     {
-        TWeakObjectPtr<AActor> OldestKey;
-        double OldestTime = TNumericLimits<double>::Max();
-
-        for (const TPair<TWeakObjectPtr<AActor>, FGamePlatformAITargetCandidate>& Pair : Candidates)
-        {
-            if (Pair.Value.LastSensedTime < OldestTime)
-            {
-                OldestTime = Pair.Value.LastSensedTime;
-                OldestKey = Pair.Key;
-            }
-        }
-
-        if (!OldestKey.IsValid())
-        {
-            break;
-        }
-
-        if (AActor* Actor = OldestKey.Get())
-        {
-            Actor->OnDestroyed.RemoveDynamic(
-                this,
-                &AGamePlatformAIController::HandleCandidateDestroyed);
-        }
-        Candidates.Remove(OldestKey);
+        if (AActor* Actor = Removed->Actor.Get())
+        { Actor->OnDestroyed.RemoveDynamic(this, &AGamePlatformAIController::HandleCandidateDestroyed); }
+        Candidates.Remove(Removed->Actor);
     }
 }
 

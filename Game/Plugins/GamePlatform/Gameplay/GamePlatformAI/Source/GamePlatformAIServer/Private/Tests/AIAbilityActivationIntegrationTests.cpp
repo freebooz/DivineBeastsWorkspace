@@ -39,9 +39,11 @@ public:
             if (Tags.IsEmpty()) { Test.AddError(TEXT("能力开发夹具必须登记非空Tag，不能用空Tag掩盖攻击选择。")); return true; }
             Instance.Reset(NewObject<UGameInstance>(GEngine));
             Instance->InitializeStandalone(FName(*(TEXT("AIAbilityTest_") + FGuid::NewGuid().ToString(EGuidFormats::Digits))));
-            World.Reset(UWorld::CreateWorld(EWorldType::Game, false)); World->SetGameInstance(Instance.Get());
-            World->InitializeNewWorld(UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false)
-                .CreateNavigation(false).CreateAISystem(true).ShouldSimulatePhysics(false));
+            // UE5.8的CreateWorld已初始化世界；参数一次性传入，避免二次创建固定名WorldSettings而崩溃。
+            const UWorld::InitializationValues WorldInitializationValues = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false)
+                .CreateNavigation(false).CreateAISystem(true).ShouldSimulatePhysics(false);
+            World.Reset(UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true,
+                ERHIFeatureLevel::Num, &WorldInitializationValues)); World->SetGameInstance(Instance.Get());
             Pawn = World->SpawnActor<APawn>();
             auto* State = NewObject<UGamePlatformAIStateComponent>(Pawn); Pawn->AddInstanceComponent(State); State->RegisterComponent();
             State->InitializeServerState(TEXT("Test.AI.Pending"), 1);

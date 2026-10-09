@@ -4,7 +4,8 @@
 
 /**
  * 客户端用户档案持久化 Provider。
- * Load 在启动/显式Reload时同步读取一次；Save 使用 UE AsyncSaveGameToSlot，不进入Slider高频路径。
+ * BeginLoad使用UE原生异步存在性查询后调用AsyncLoadGameFromSlot；Load只提供无用户/PIE空内存层，禁止同步磁盘读取。
+ * BeginSave使用UE AsyncSaveGameToSlot；回调只捕获值，不依赖Provider寿命。
  */
 class FGamePlatformSettingsClientPersistenceProvider final
     : public IGamePlatformSettingsPersistenceProvider
@@ -20,6 +21,9 @@ public:
     virtual FGamePlatformResult Load(
         const TMap<FName, FGamePlatformSettingDescriptor>& Descriptors,
         FGamePlatformSettingsPersistencePayload& OutPayload) override;
+    virtual FGamePlatformResult BeginLoad(
+        const TMap<FName, FGamePlatformSettingDescriptor>& Descriptors,
+        FGamePlatformSettingsLoadCompletion Completion) override;
     virtual FGamePlatformResult BeginSave(
         const TMap<FName, FGamePlatformSettingValue>& UserValues,
         int32 SchemaVersion,

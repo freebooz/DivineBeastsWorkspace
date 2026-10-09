@@ -53,6 +53,9 @@ public:
         const AGamePlatformArenaGameState* GameState,
         const TArray<AGamePlatformArenaPlayerState*>& PlayerStates);
 
+    /** 游戏线程离开/失去竞技世界时原子清空复制投影和旧路由，发布一次状态变化；不影响服务器权威。 */
+    void ResetReplicatedArenaState();
+
     /**
      * 写入匹配/传输适配器观测到的客户端流程状态。
      * 该值不是比赛权威，只用于匹配、传输、连接等客户端页面路由。

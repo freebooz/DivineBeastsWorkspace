@@ -20,3 +20,20 @@
 配置/目标/模块身份保持插件现有声明，不创建空内容包或伪造资产。
 
 `Docs/TestingAndEvidence.md`列本次验证入口，`Docs/MigrationAndHandover.md`列兼容影响。其余标记为历史设计说明的文档只记录意图，不能证明相应后端已经实现。
+
+
+## 2026-10-09 本轮公开合同与整改
+
+LocalPlayer默认订阅所属GI Online认证事实，构造现有同源领域Transport。Configure受理不表示权益就绪，消费者订阅OnChanged并读取State/GetLastError；Reset清空索引及视图并使账号/请求代次失效。Loading广播内Reset后不发送旧请求，重复/迟到快照也不能进入下一轮读取。
+
+JSON的`entitlements`必须存在且为数组；空数组合法，缺失、null、对象等错类型是InvalidResponse，失败保留旧快照。数字revision必须为1到9007199254740991的有限整数，避免JSON浮点截断。HasAny空集合为false，HasAll空集合按现有集合合同为true；查询仅是Active投影，不替代服务器准入授权。
+
+回归入口：`GamePlatform.Entitlement.Client.ResetDuringState`、`OnlineOwnership`（有效版本/时间但缺集合、错类型及合法空集合）。
+
+以上Automation源码已维护，但本轮分工阶段没有执行UE构建/Automation。实际Editor、Client、Server、Cook和联机证据由根整改账本统一记录；静态源码门禁与原生CMake结果不替代这些验收。中文审核覆盖本轮修改的公开字段、命令范围、线程、异步终态、账号/资源所有权及Build责任；未据此宣称全部历史源码已完成中文审核。
+
+### 2026-10-09 实例退出与同步回调补充
+
+LocalPlayer服务在Deinitialize开始即关闭实例作用域并推进InstanceGeneration/AccountGeneration。Configure的Reset通知同步关闭服务后，外层账号配置不得恢复Transport或发请求；公开刷新/命令及迟到回调同样拒绝已关闭实例。Cancel与Begin调用以局部Transport保活，避免通知释放成员后旧栈继续访问已析构对象。Initialize仅建立新实例代次，不将旧Completion当作新账号结果。
+
+新增CloseDuringConfigure回归使用本领域实际Subsystem和只在Tests存在的手控Transport，验证退出后不发请求。UE自动化尚未执行，运行结果由统一UE验证补证。

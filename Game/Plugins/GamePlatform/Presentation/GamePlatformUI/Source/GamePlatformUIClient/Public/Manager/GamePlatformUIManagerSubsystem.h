@@ -1,3 +1,5 @@
+// 本文件属于平台客户端UI本地玩家服务；拥有屏栈/资源/布局世代，外部通知允许关停与重入。
+// 中文参数、失败/取消、资源与生命周期见本插件Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -198,6 +200,7 @@ public:
 private:
     friend class FGamePlatformUIScreenLifecycleRegressionTest;
     friend class FGamePlatformUIScreenReentryRegressionTest;
+    friend class FGamePlatformUIRootCloseReentryTest;
     /** 单次同步构造快照；弱引用只用于识别旧作用域，调用栈另持强引用防止回调GC。 */
     struct FScreenOpenConstruction
     {

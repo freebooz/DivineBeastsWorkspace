@@ -1,4 +1,5 @@
 using UnrealBuildTool;
+// 平台Editor验证模块：只依赖基础定义契约与引擎工具，按需审计资产，不进入客户端/服务器运行产物。
 
 public class GamePlatformDeveloperTools : ModuleRules
 {
@@ -16,6 +17,8 @@ public class GamePlatformDeveloperTools : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
+            "GamePlatformData",
+            "GamePlatformCore",
             "AssetRegistry",
             "ContentBrowser",
             "DataValidation",

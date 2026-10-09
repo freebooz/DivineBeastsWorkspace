@@ -1,7 +1,9 @@
 # GamePlatformGameplay（游戏平台通用玩法插件）
 
-平台级Gameplay Active（玩法激活）与AvatarGeneration（角色代次）最小权威契约。`UGamePlatformGameplayEligibilityComponent（玩法资格组件）`由服务器修改并复制到客户端，`IGamePlatformGameplayEligibilityProvider（玩法资格接口）`供Interaction等基础插件只读消费。
+本插件已有两种可复用契约：完整服务器体验/玩家生命周期框架，以及可被独立玩法组合的最小Gameplay Active/AvatarGeneration资格组件。服务器是资格写入权威，客户端读取复制快照并消费状态变化事件。
 
-本轮增加客户端/服务器统一Snapshot与变更事件，复制回调会广播最新状态；无Authority Owner不能伪造Active。登录、Session准入、死亡、重生和队伍仍由对应系统负责，不在本插件复制第二套流程。
+`AGamePlatformGameModeBase`拥有当前世界的已验证准入、准备令牌、出生门禁、占位与排空；`AGamePlatformGameStateBase`和`AGamePlatformPlayerStateBase`承载只读复制事实。出生默认入口全部汇入唯一门禁，项目不得绕过final入口直接指定未经批准的位置。账号认证与全球实例分配仍归后端和Server/Session适配，角色身份与定义配置归Character。
 
-本次设计审查整改的真实行为、线程/所有权/失败合同及验证边界见 [2026-09-30专属说明](Docs/DesignRemediation-2026-09-30.md)。其中原生规则测试与UE实际运行分别记录，不混写交付状态。
+`UGamePlatformGameplayEligibilityComponent`是可组合的最小事实载体，不另执行登录/匹配/出生流程。独立竞技宿主通过其服务器生命周期适配设置Active并绑定正整数Avatar代次，死亡、断线与结束立即失活。能力与交互只读消费，客户端不能写入权威状态。
+
+完整体验框架目前通过0.05秒有界Timer推进在途准备/出生状态并检查超时；不得因此宣称全部实现事件驱动或已经完成联机验收。规则与验证边界见[架构说明](Docs/Architecture.md)、[2026-09-30整改说明](Docs/DesignRemediation-2026-09-30.md)。

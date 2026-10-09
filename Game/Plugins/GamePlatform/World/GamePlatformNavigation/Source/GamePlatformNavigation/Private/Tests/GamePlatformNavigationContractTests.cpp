@@ -15,7 +15,9 @@ bool FGamePlatformNavigationContractTest::RunTest(const FString& Parameters)
 
     Handle.RequestId = FGuid::NewGuid();
     Handle.WorldGeneration = 3;
-    TestTrue(TEXT("RequestId+WorldGeneration形成有效Handle"), Handle.IsValid());
+    TestFalse(TEXT("旧两字段句柄缺操作代次必须失效"), Handle.IsValid());
+    Handle.OperationGeneration = 1;
+    TestTrue(TEXT("RequestId+WorldGeneration+OperationGeneration形成有效Handle"), Handle.IsValid());
 
     FGamePlatformNavigationPathResult Result;
     Result.PathLength = 1200.0f;

@@ -80,6 +80,8 @@ public:
         FText& OutReason) const;
 
 private:
+    // 自动化用例只填充内部异步记录，验证真实Cancel/Completion所有权；不是生产查询注入接口。
+    friend class FNavigationReusedHandleTest;
     struct FAsyncRequestRecord
     {
         /** 本世界服务签发的内部操作代次；调用方RequestId复用时旧超时仍不能匹配。 */

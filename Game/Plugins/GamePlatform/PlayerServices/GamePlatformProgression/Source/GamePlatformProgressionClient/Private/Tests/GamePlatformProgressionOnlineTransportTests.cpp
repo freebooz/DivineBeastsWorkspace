@@ -78,12 +78,12 @@ public:
         if (Phase == 2)
         {
             if (!Provider->Pending) { return false; }
-            Provider->Complete(200); ++Phase; return false;
+            Provider->Complete(200, TEXT("{\"progression_revision\":\"1\",\"generated_at\":\"2026-09-30T00:00:00Z\"}")); ++Phase; return false;
         }
         if (Phase == 3)
         {
             if (Completions != 1) { return false; }
-            Test->TestEqual(TEXT("无效JSON明确完成为解析错误"), LastError, EGamePlatformProgressionError::InvalidResponse);
+            Test->TestEqual(TEXT("有效版本时间但缺必填集合仍为解析错误"), LastError, EGamePlatformProgressionError::InvalidResponse);
             Transport.Reset(); Test->TestFalse(TEXT("解析失败终态后传输弱引用释放"), Weak.IsValid());
             Start(); ++Phase; return false;
         }
@@ -117,8 +117,19 @@ public:
             if (!Provider->Pending) { return false; }
             Provider->Complete(200, TEXT("{\"progression_revision\":\"1\",\"generated_at\":\"2026-09-30T00:00:00Z\",\"tracks\":[]}")); ++Phase; return false;
         }
-        if (Completions < 3) { return false; }
-        Test->TestEqual(TEXT("正常领域JSON完成成功"), LastError, EGamePlatformProgressionError::None);
+        if (Phase == 9)
+        {
+            if (Completions < 3) { return false; }
+            Test->TestEqual(TEXT("合法空数组仍成功"), LastError, EGamePlatformProgressionError::None);
+            Start(); ++Phase; return false;
+        }
+        if (Phase == 10)
+        {
+            if (!Provider->Pending) { return false; }
+            Provider->Complete(200, TEXT("{\"progression_revision\":\"1\",\"generated_at\":\"2026-09-30T00:00:00Z\",\"tracks\":{}}")); ++Phase; return false;
+        }
+        if (Completions < 4) { return false; }
+        Test->TestEqual(TEXT("集合错类型明确拒绝"), LastError, EGamePlatformProgressionError::InvalidResponse);
         Transport.Reset(); Test->TestFalse(TEXT("正常终态后传输弱引用释放"), Weak.IsValid());
         auto Unconfigured = MakeShared<FGamePlatformProgressionGatewayHttpTransport, ESPMode::ThreadSafe>(static_cast<UGamePlatformOnlineClientSubsystem*>(nullptr));
         Test->TestFalse(TEXT("未配置启动失败不发起网络请求"), Unconfigured->BeginGetSnapshot([](auto, auto) {}));
@@ -141,7 +152,8 @@ private:
     TWeakPtr<FGamePlatformProgressionGatewayHttpTransport, ESPMode::ThreadSafe> Weak;
 };
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDomainTransportOwnershipTest, "GamePlatform.Progression.Client.OnlineOwnership", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FDomainTransportOwnershipTest::RunTest(const FString&)
+// UE Automation以C++类名(TEXT(#TClass))为进程注册键；跨模块同名会拒绝后继测试，本域类名必须唯一，PrettyName保持稳定。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProgressionOnlineTransportOwnershipTest, "GamePlatform.Progression.Client.OnlineOwnership", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProgressionOnlineTransportOwnershipTest::RunTest(const FString&)
 { ADD_LATENT_AUTOMATION_COMMAND(FDomainLifetimeCommand(this)); return true; }
 #endif

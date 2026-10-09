@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformVFX，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -31,6 +33,12 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX")
     FName ContextId = NAME_None;
 
+    /** 从事实源继承的类型化资格；空值不匹配目录中的非空约束，不从观察者身份推算。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX") FName HeroDefinitionId = NAME_None;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX") FName AbilityId = NAME_None;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX") FName SkinId = NAME_None;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX") FName WorldId = NAME_None;
+
     /** Resolver使用的中立上下文标签；不承载Gameplay权威判断。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX")
     FGameplayTagContainer ContextTags;
@@ -63,6 +71,8 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXRequest
     /** Composite内部递归深度；外部正常请求保持0。 */
     UPROPERTY(Transient)
     int32 CompositeDepth = 0;
+    /** 私有执行链标记：选中变体资源失败后尝试基础Niagara，外部请求保持false。 */
+    UPROPERTY(Transient) bool bUseBaseNiagaraSystem = false;
 
     bool IsStructurallyValid() const
     {

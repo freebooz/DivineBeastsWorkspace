@@ -1,0 +1,12 @@
+# 遥测响应预算原生验收：编译生产私有策略；不启动网络，不替代UE传输器或服务器运行验收。
+cmake_minimum_required(VERSION 3.20)
+project(GamePlatformTelemetryResponseTests LANGUAGES CXX)
+enable_testing()
+add_executable(GamePlatformTelemetryResponseTests ../Source/GamePlatformTelemetry/Private/Tests/TelemetryResponseBudgetTests.cpp)
+target_include_directories(GamePlatformTelemetryResponseTests PRIVATE ../Source/GamePlatformTelemetry/Private)
+target_compile_features(GamePlatformTelemetryResponseTests PRIVATE cxx_std_17)
+target_compile_definitions(GamePlatformTelemetryResponseTests PRIVATE GAMEPLATFORM_TELEMETRY_NATIVE_TEST=1)
+if(MSVC)
+  target_compile_options(GamePlatformTelemetryResponseTests PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME GamePlatform.Telemetry.ResponseBudget COMMAND GamePlatformTelemetryResponseTests)

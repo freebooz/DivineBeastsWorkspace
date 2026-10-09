@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformUI，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 #include "Manager/GamePlatformUIScreenOpenCommitPolicy.h"
 
@@ -74,6 +76,7 @@ void UGamePlatformUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Colle
 
 void UGamePlatformUIManagerSubsystem::Deinitialize()
 {
+    if (bClosing) return; // Closed/结果通知允许重入关闭，首次清理仍拥有全部账本。
     bClosing = true;
     ++RootLayoutGeneration;
     if (PreLoadMapHandle.IsValid())
@@ -151,58 +154,75 @@ bool UGamePlatformUIManagerSubsystem::InstallRootLayoutClass(
         return false;
     }
 
-    APlayerController* PlayerController = GetLocalPlayer()->GetPlayerController(GetWorld());
+    const TStrongObjectPtr<UGamePlatformUIManagerSubsystem> KeepService(this);
+    APlayerController* PlayerController = GetLocalPlayer() ? GetLocalPlayer()->GetPlayerController(GetWorld()) : nullptr;
     if (!IsValid(PlayerController))
     {
         return false;
     }
 
     TGuardValue<bool> ReplacingRoot(bReplacingRoot, true);
-    ++RootLayoutGeneration;
-    UGamePlatformUILayerStack* NewRoot =
-        CreateWidget<UGamePlatformUILayerStack>(PlayerController, RootLayoutClass);
-    if (!IsValid(NewRoot) || bClosing)
+    const uint64 ReplacementGeneration = ++RootLayoutGeneration;
+    const TStrongObjectPtr<UGamePlatformUILayerStack> PreviousRoot(RootLayout);
+    const auto IsReplacementCurrent = [this, ReplacementGeneration, Previous = PreviousRoot.Get()]()
+    {
+        return !bClosing && RootLayoutGeneration == ReplacementGeneration && RootLayout == Previous;
+    };
+    const TStrongObjectPtr<UGamePlatformUILayerStack> NewRoot(
+        CreateWidget<UGamePlatformUILayerStack>(PlayerController, RootLayoutClass));
+    if (!NewRoot.IsValid() || !IsReplacementCurrent())
     {
         return false;
     }
 
-    if (IsValid(RootLayout))
+    if (PreviousRoot.IsValid())
     {
         // 根布局替换前先清理所有依赖旧层容器的短生命周期服务实例。
         if (IsValid(NotificationService))
         {
             NotificationService->Clear();
+            if (!IsReplacementCurrent()) return false;
         }
         if (IsValid(FeedbackService))
         {
             FeedbackService->Clear();
+            if (!IsReplacementCurrent()) return false;
         }
         if (IsValid(WorldUIService))
         {
             WorldUIService->Clear();
+            if (!IsReplacementCurrent()) return false;
         }
         ClearScreenOwnership();
-        RootLayout->RemoveFromParent();
+        // OnScreenClosed是同步外部边界；监听Deinitialize后RootLayout可能已空，不能继续发布新布局。
+        if (!IsReplacementCurrent()) return false;
+        PreviousRoot->RemoveFromParent();
+        if (!IsReplacementCurrent()) return false;
     }
 
-    RootLayout = NewRoot;
+    RootLayout = NewRoot.Get();
     if (!RootLayout->AddToPlayerScreen(0))
     {
-        RootLayout = nullptr;
+        if (!bClosing && RootLayoutGeneration == ReplacementGeneration && RootLayout == NewRoot.Get()) RootLayout = nullptr;
         return false;
     }
+    // AddToPlayerScreen可同步Construct/结果事件；关闭后的服务不会被SetRootLayout重新唤醒。
+    if (bClosing || RootLayoutGeneration != ReplacementGeneration || RootLayout != NewRoot.Get()) return false;
 
     if (IsValid(NotificationService))
     {
         NotificationService->SetRootLayout(RootLayout);
+        if (bClosing || RootLayoutGeneration != ReplacementGeneration || RootLayout != NewRoot.Get()) return false;
     }
     if (IsValid(FeedbackService))
     {
         FeedbackService->SetRootLayout(RootLayout);
+        if (bClosing || RootLayoutGeneration != ReplacementGeneration || RootLayout != NewRoot.Get()) return false;
     }
     if (IsValid(WorldUIService))
     {
         WorldUIService->SetRootLayout(RootLayout);
+        if (bClosing || RootLayoutGeneration != ReplacementGeneration || RootLayout != NewRoot.Get()) return false;
     }
     return true;
 }
@@ -877,6 +897,8 @@ bool UGamePlatformUIManagerSubsystem::CompleteScreenOpen(
         Screen->OnPlatformDeactivated().AddUObject(this, &UGamePlatformUIManagerSubsystem::HandleScreenDeactivated);
         Screen->OnActivated().AddUObject(this, &UGamePlatformUIManagerSubsystem::HandleScreenActivated, Screen);
         Screen->OnPlatformReleased().AddUObject(this, &UGamePlatformUIManagerSubsystem::HandleScreenReleased);
+        // CommonUI非显示页移除也释放Slate；这一真实事件补足不触发DisplayedWidgetChanged的路径。
+        Screen->OnSlateReleased().AddUObject(this, &UGamePlatformUIManagerSubsystem::HandleScreenReleased, Screen);
         ScreenStacks.Add(Screen, Stack);
         ActiveScreenLeases.Add(Screen, Construction.Lease);
         PendingLoads.Remove(RequestId);
@@ -966,6 +988,7 @@ void UGamePlatformUIManagerSubsystem::RemoveScreenOwnership(TWeakObjectPtr<UGame
         Screen->OnPlatformDeactivated().RemoveAll(this);
         Screen->OnActivated().RemoveAll(this);
         Screen->OnPlatformReleased().RemoveAll(this);
+        Screen->OnSlateReleased().RemoveAll(this);
     }
     FGamePlatformDataLease Lease;
     if (ActiveScreenLeases.RemoveAndCopyValue(Key, Lease)) ReleaseScreenLease(Lease);

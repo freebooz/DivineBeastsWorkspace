@@ -24,6 +24,7 @@ using FGamePlatformTelemetryHeaderProvider =
 using FGamePlatformTelemetryRequestAuthorizer =
     TFunction<bool(IHttpRequest&)>;
 
+/** 平台遥测传输边界：Sink在游戏线程提交；true承诺至多一次完成，false表示尚未受理。 */
 class GAMEPLATFORMTELEMETRY_API IGamePlatformTelemetryTransport
 {
 public:
@@ -33,9 +34,11 @@ public:
         const FGamePlatformTelemetryBatch& Batch,
         FGamePlatformTelemetryTransportCompletion Completion) = 0;
 
+    /** 游戏线程取消本传输器所有在途请求；已排队完成可能迟到，Sink须核对自身关闭代次。 */
     virtual void CancelAll() = 0;
 };
 
+/** HTTP实现只拥有本实例请求；认证每次发送注入，发送与接收共用配置字节上限，不持有用户世界。 */
 class GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryHttpTransport final
     : public IGamePlatformTelemetryTransport
     , public TSharedFromThis<
@@ -43,6 +46,7 @@ class GAMEPLATFORMTELEMETRY_API FGamePlatformTelemetryHttpTransport final
         ESPMode::ThreadSafe>
 {
 public:
+    /** InMaxPayloadBytes为单次发送/累计响应字节上限，最小1024，默认256KiB；InTimeoutSeconds最小1秒。 */
     FGamePlatformTelemetryHttpTransport(
         FString InBaseUrl,
         FString InPath,

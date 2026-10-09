@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformSFX，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 // 平台客户端World音频服务：持有自有Data租约和AudioComponent，事件驱动播放/取消/终态及世界退出回收。
 // 仅Game/PIE/GamePreview非专服世界运行；可选表现失败不改变网络权威事实。
 #include "Subsystems/GamePlatformSFXWorldSubsystem.h"
@@ -14,6 +16,7 @@
 #include "Misc/App.h"
 #include "Policy/GamePlatformSFXPolicy.h"
 #include "Policy/GamePlatformSFXBudgetPolicy.h"
+#include "UObject/StrongObjectPtr.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogGamePlatformSFX, Log, All);
 
@@ -49,6 +52,7 @@ void UGamePlatformSFXWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 
 void UGamePlatformSFXWorldSubsystem::Deinitialize()
 {
+    if (bClosing) return; // 终态监听可以重入关闭，第一次清理栈负责清理全部自有账本。
     bClosing = true;
     ++Generation;
 
@@ -59,11 +63,9 @@ void UGamePlatformSFXWorldSubsystem::Deinitialize()
         CleanupActive(Id, true);
     }
 
-    for (const TPair<FGuid, FPendingPlay>& Pair : PendingPlays)
-    {
-        ReleaseLease(Pair.Value.Lease);
-    }
-    PendingPlays.Reset();
+    TArray<FGuid> PendingIds; PendingPlays.GetKeys(PendingIds);
+    for (const auto& Id : PendingIds) FailPending(Id, EGamePlatformSFXResultCode::InvalidWorld);
+    PlaybackCompleted.Clear();
     RequestHandles.Reset();
     TerminalOccurrences.Reset();
 
@@ -75,6 +77,7 @@ FGamePlatformSFXResult UGamePlatformSFXWorldSubsystem::Play(
 {
     check(IsInGameThread());
     ++Diagnostics.PlayRequests;
+    const TStrongObjectPtr<UGamePlatformSFXWorldSubsystem> KeepService(this);
 
     FGamePlatformSFXResult Output;
     UWorld* World = GetWorld();
@@ -85,6 +88,12 @@ FGamePlatformSFXResult UGamePlatformSFXWorldSubsystem::Play(
         return Output;
     }
 
+    const int32 RequestGeneration = Generation;
+    const TStrongObjectPtr<UWorld> KeepWorld(World);
+    const auto IsRequestScopeCurrent = [this, World, RequestGeneration]()
+    {
+        return !bClosing && IsValid(World) && !World->bIsTearingDown && GetWorld() == World && Generation == RequestGeneration;
+    };
     PruneTerminalOccurrences();
     if (Request.RequestId.IsValid())
     {
@@ -98,7 +107,7 @@ FGamePlatformSFXResult UGamePlatformSFXWorldSubsystem::Play(
         {
             if (Terminal->bCancelled || Request.PredictionState != EGamePlatformSFXPredictionState::Corrected)
             {
-                Output.Code=Terminal->bCancelled ? EGamePlatformSFXResultCode::Cancelled : EGamePlatformSFXResultCode::AlreadyCompleted;
+                Output.Code=Terminal->bCancelled ? EGamePlatformSFXResultCode::Cancelled : Terminal->CompletionCode;
                 return Output;
             }
             TerminalOccurrences.Remove(Request.RequestId);
@@ -106,6 +115,9 @@ FGamePlatformSFXResult UGamePlatformSFXWorldSubsystem::Play(
         if (Request.PredictionState == EGamePlatformSFXPredictionState::Corrected)
         {
             if (const auto* Existing=RequestHandles.Find(Request.RequestId)) { const auto Handle=*Existing; Stop(Handle,0.0f); }
+            // 停旧音效会发送公开终态；监听关闭后不能申请替换租约或补回旧请求历史。
+            if (!IsRequestScopeCurrent())
+            { ++Diagnostics.RejectedRequests; Output.Code = EGamePlatformSFXResultCode::InvalidWorld; return Output; }
             TerminalOccurrences.Remove(Request.RequestId);
         }
     }
@@ -207,6 +219,9 @@ FGamePlatformSFXResult UGamePlatformSFXWorldSubsystem::Play(
     }
 
     StoredPending->Lease = Lease;
+    FGamePlatformSFXPlaybackSnapshot Snapshot; Snapshot.Handle = Handle;
+    Snapshot.State = EGamePlatformSFXPlaybackState::Loading; Snapshot.Code = EGamePlatformSFXResultCode::Queued;
+    Snapshot.DefinitionId = Request.DefinitionId; Snapshot.RequestId = Request.RequestId; PlaybackSnapshots.Add(Handle.Id, Snapshot);
     Output.Handle = Handle;
     Output.Code = EGamePlatformSFXResultCode::Queued;
     return Output;
@@ -232,6 +247,7 @@ bool UGamePlatformSFXWorldSubsystem::Stop(
         RemoveRequestMapping(RequestId, Handle.Id);
         ReleaseLease(Lease);
         ++Diagnostics.StoppedInstances;
+        CompletePlayback(Handle, EGamePlatformSFXPlaybackState::Cancelled, EGamePlatformSFXResultCode::Cancelled);
         return true;
     }
 
@@ -369,7 +385,8 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     }
 
     FPendingPlay* Pending = PendingPlays.Find(Handle.Id);
-    if (!Pending || Pending->Lease.LeaseId != Lease.LeaseId)
+    if (!Pending || Pending->Lease.LeaseId != Lease.LeaseId || Pending->Lease.Generation != Lease.Generation ||
+        Pending->Lease.ScopeId != Lease.ScopeId || Pending->Lease.IssuerProof != Lease.IssuerProof || Pending->Lease.DefinitionId != Lease.DefinitionId)
     {
         return;
     }
@@ -487,6 +504,8 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     ActiveInstances.Add(Handle.Id, MoveTemp(Active));
     PendingPlays.Remove(Handle.Id);
 
+    const TStrongObjectPtr<UAudioComponent> KeepComponent(Component);
+    const TStrongObjectPtr<UGamePlatformSFXWorldSubsystem> KeepService(this);
     Component->OnAudioFinishedNative.AddUObject(
         this,
         &UGamePlatformSFXWorldSubsystem::HandleAudioFinished);
@@ -497,13 +516,16 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
         Component->FadeIn(Definition->GetFadeInSeconds(), TargetVolume, Request.StartTimeSeconds);
     else
         Component->Play(Request.StartTimeSeconds);
+    if (!ActiveInstances.Contains(Handle.Id)) return;
     if (!Component->IsPlaying())
     {
         ++Diagnostics.SpawnFailures;
-        CleanupActive(Handle.Id, true);
+        CleanupActive(Handle.Id, true, EGamePlatformSFXPlaybackState::Failed, EGamePlatformSFXResultCode::SpawnFailed);
         return;
     }
 
+    if (auto* Snapshot = PlaybackSnapshots.Find(Handle.Id))
+    { Snapshot->State = EGamePlatformSFXPlaybackState::Playing; Snapshot->Code = EGamePlatformSFXResultCode::Played; }
     ++Diagnostics.PlayedInstances;
     Diagnostics.PeakActiveInstances = FMath::Max(
         Diagnostics.PeakActiveInstances,
@@ -542,7 +564,8 @@ void UGamePlatformSFXWorldSubsystem::HandleAudioPlayStateChanged(
     FGuid HandleId;
     for (const auto& Pair : ActiveInstances)
         if (Pair.Value.Component.Get() == Component) { HandleId = Pair.Key; break; }
-    if (HandleId.IsValid()) CleanupActive(HandleId, false);
+    if (ActiveInstances.Contains(HandleId))
+        CleanupActive(HandleId, false, EGamePlatformSFXPlaybackState::Failed, EGamePlatformSFXResultCode::SpawnFailed);
 }
 
 void UGamePlatformSFXWorldSubsystem::FailPending(
@@ -556,6 +579,9 @@ void UGamePlatformSFXWorldSubsystem::FailPending(
     }
     RemoveRequestMapping(Pending.Request.RequestId, HandleId);
     ReleaseLease(Pending.Lease);
+    RecordTerminalOccurrence(Pending.Request.RequestId, false);
+    if (auto* Terminal = TerminalOccurrences.Find(Pending.Request.RequestId)) if (!Terminal->bCancelled) Terminal->CompletionCode = Code;
+    CompletePlayback(Pending.Handle, bClosing ? EGamePlatformSFXPlaybackState::WorldDestroyed : EGamePlatformSFXPlaybackState::Failed, Code);
 
     UE_LOG(
         LogGamePlatformSFX,
@@ -567,7 +593,7 @@ void UGamePlatformSFXWorldSubsystem::FailPending(
 
 void UGamePlatformSFXWorldSubsystem::CleanupActive(
     const FGuid HandleId,
-    const bool bStopComponent)
+    const bool bStopComponent, EGamePlatformSFXPlaybackState State, EGamePlatformSFXResultCode Code)
 {
     FActiveInstance Active;
     if (!ActiveInstances.RemoveAndCopyValue(HandleId, Active))
@@ -589,6 +615,38 @@ void UGamePlatformSFXWorldSubsystem::CleanupActive(
         Component->DestroyComponent();
     }
     ReleaseLease(Active.Lease);
+    if (bClosing) { State = EGamePlatformSFXPlaybackState::WorldDestroyed; Code = EGamePlatformSFXResultCode::InvalidWorld; }
+    else if (Active.bStopRequested) { State = EGamePlatformSFXPlaybackState::Cancelled; Code = EGamePlatformSFXResultCode::Cancelled; }
+    if (auto* Terminal = TerminalOccurrences.Find(Active.RequestId)) if (!Terminal->bCancelled) Terminal->CompletionCode = Code;
+    CompletePlayback(Active.Handle, State, Code);
+}
+
+FGamePlatformSFXPlaybackSnapshot UGamePlatformSFXWorldSubsystem::GetPlaybackSnapshot(const FGamePlatformSFXHandle& Handle) const
+{
+    check(IsInGameThread());
+    if (const auto* Snapshot = PlaybackSnapshots.Find(Handle.Id))
+        if (Snapshot->Handle.Generation == Handle.Generation && Snapshot->Handle.World == Handle.World) return *Snapshot;
+    return {};
+}
+FDelegateHandle UGamePlatformSFXWorldSubsystem::AddCompletionHandler(const FGamePlatformSFXPlaybackCompleted::FDelegate& Handler)
+{
+    check(IsInGameThread()); return Handler.IsBound() ? PlaybackCompleted.Add(Handler) : FDelegateHandle();
+}
+void UGamePlatformSFXWorldSubsystem::RemoveCompletionHandler(FDelegateHandle Handle)
+{
+    check(IsInGameThread()); PlaybackCompleted.Remove(Handle);
+}
+void UGamePlatformSFXWorldSubsystem::CompletePlayback(const FGamePlatformSFXHandle& Handle,
+    EGamePlatformSFXPlaybackState State, EGamePlatformSFXResultCode Code)
+{
+    const TStrongObjectPtr<UGamePlatformSFXWorldSubsystem> KeepService(this);
+    auto* Stored = PlaybackSnapshots.Find(Handle.Id);
+    if (Stored && Stored->State != EGamePlatformSFXPlaybackState::Loading && Stored->State != EGamePlatformSFXPlaybackState::Playing) return;
+    auto Snapshot = Stored ? *Stored : FGamePlatformSFXPlaybackSnapshot();
+    Snapshot.Handle = Handle; Snapshot.State = State; Snapshot.Code = Code;
+    if (CompletedPlaybackOrder.Num() >= 512) { PlaybackSnapshots.Remove(CompletedPlaybackOrder[0]); CompletedPlaybackOrder.RemoveAt(0); }
+    CompletedPlaybackOrder.Add(Handle.Id); PlaybackSnapshots.Add(Handle.Id, Snapshot);
+    PlaybackCompleted.Broadcast(Snapshot); // 账本/组件/租约已经清理，观察者可同步停止/退出。
 }
 
 void UGamePlatformSFXWorldSubsystem::ReleaseLease(
