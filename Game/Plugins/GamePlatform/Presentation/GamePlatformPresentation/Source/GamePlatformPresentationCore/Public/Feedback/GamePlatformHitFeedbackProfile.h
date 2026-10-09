@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
+#include "Definitions/GamePlatformDefinitionBase.h"
 class UCameraShakeBase;
 class UMaterialInterface;
 #include "GamePlatformHitFeedbackProfile.generated.h"
@@ -79,7 +79,7 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformHitFeedbackTuning
  * 本类是可配置契约，不自动加载或实例化任何Niagara、音频或UI资产。
  */
 UCLASS(BlueprintType)
-class GAMEPLATFORMPRESENTATIONCORE_API UGamePlatformHitFeedbackProfile : public UDataAsset
+class GAMEPLATFORMPRESENTATIONCORE_API UGamePlatformHitFeedbackProfile : public UGamePlatformDefinitionBase
 {
     GENERATED_BODY()
 
@@ -89,13 +89,19 @@ public:
     FGamePlatformHitFeedbackTuning Tuning;
 
     /** 已预加载的客户端镜头震动类；由CameraClient执行，可为空以完全跳过。 */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Hit Feedback|Camera")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit Feedback|Camera", meta=(AssetBundles="Client"))
     TSoftClassPtr<UCameraShakeBase> CameraShakeClass;
 
     /**
-     * 已预加载的命中Overlay材质；由AnimationClient执行，缺失时不使用白色全屏闪烁。
+     * 通过GamePlatformData的客户端资产Bundle异步预加载的命中Overlay材质；由AnimationClient执行。
      * 专用服务器不实例化或Cook纯客户端表现资源。
      */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Hit Feedback|Visual")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit Feedback|Visual", meta=(AssetBundles="Client"))
     TSoftObjectPtr<UMaterialInterface> HitFlashOverlayMaterial;
+
+    /**
+     * 继承GamePlatformData的稳定主资产定义校验。
+     * 客户端表现数值必须有限且位于允许范围；资源可缺失以安全降级。
+     */
+    virtual FGamePlatformResult ValidateDefinition() const override;
 };

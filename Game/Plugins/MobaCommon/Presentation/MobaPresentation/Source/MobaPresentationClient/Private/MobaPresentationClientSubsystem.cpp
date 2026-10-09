@@ -564,6 +564,21 @@ void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
         return;
     }
 
+    // 每次命中独立查询项目层已加载的技能反馈映射，不能把上一击的Profile复用到其他英雄。
+    FMobaResolvedHitFeedbackConfiguration ResolvedConfiguration;
+    const bool bHasSpecificProfile = HitFeedbackResolver &&
+        HitFeedbackResolver(Event, ResolvedConfiguration) &&
+        ResolvedConfiguration.LoadedProfile.IsValid();
+    UGamePlatformHitFeedbackProfile* CurrentProfile = bHasSpecificProfile
+        ? ResolvedConfiguration.LoadedProfile.Get()
+        : LoadedHitFeedbackProfile.Get();
+    const FGamePlatformHitFeedbackTuning& CurrentTuning = IsValid(CurrentProfile)
+        ? CurrentProfile->Tuning : HitFeedbackTuning;
+    const FName CurrentVFXDefinitionId = bHasSpecificProfile
+        ? ResolvedConfiguration.VFXDefinitionId : HitVFXDefinitionId;
+    const FName CurrentSFXDefinitionId = bHasSpecificProfile
+        ? ResolvedConfiguration.SFXDefinitionId : HitSFXDefinitionId;
+
     FMobaHitFeedbackInput Input;
     Input.Contact = Contact;
     Input.ComboStep = ComboStep;
@@ -575,7 +590,7 @@ void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
     }
 
     const FMobaHitFeedbackDecision Decision =
-        FMobaHitFeedbackPolicy::Evaluate(Input, HitFeedbackTuning);
+        FMobaHitFeedbackPolicy::Evaluate(Input, CurrentTuning);
     if (!Decision.bHasContact)
     {
         return; // 挥空/闪避不触发接触层，但攻击挥击动画仍由原技能系统继续播放。
@@ -616,13 +631,13 @@ void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
         }
     }
 
-    if (IsValid(LoadedHitFeedbackProfile))
+    if (IsValid(CurrentProfile))
     {
         // 模型高亮仅替换受击Mesh的Overlay，最多参考2帧；缺失材质安全跳过。
         if (Decision.FlashSeconds > 0.0f && IsValid(TargetMesh))
         {
             UMaterialInterface* Overlay =
-                LoadedHitFeedbackProfile->HitFlashOverlayMaterial.Get();
+                CurrentProfile->HitFlashOverlayMaterial.Get();
             if (IsValid(Overlay))
             {
                 if (UGamePlatformHitFlashWorldSubsystem* Flash =
@@ -642,7 +657,7 @@ void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
                 LocalPlayer->GetSubsystem<UGamePlatformCameraHitFeedbackSubsystem>())
             {
                 UClass* PreloadedShakeClass =
-                    LoadedHitFeedbackProfile->CameraShakeClass.Get();
+                    CurrentProfile->CameraShakeClass.Get();
                 if (PreloadedShakeClass)
                 {
                     const float Emphasis = Input.bLocalVictim ? 0.8f : 0.25f;
@@ -650,7 +665,7 @@ void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
                         Event.EventId,
                         TSubclassOf<UCameraShakeBase>(PreloadedShakeClass),
                         Decision.Strength *
-                            HitFeedbackTuning.CameraStrength * Emphasis);
+                            CurrentTuning.CameraStrength * Emphasis);
                 }
             }
         }
@@ -699,11 +714,11 @@ void UMobaPresentationClientSubsystem::ApplyVisualFeedbackForConfirmedHit(
     };
 
     SubmitLayer(
-        TEXT("VFX"), HitVFXDefinitionId, 0x56465831u,
-        Decision.Strength * HitFeedbackTuning.VFXStrength);
+        TEXT("VFX"), CurrentVFXDefinitionId, 0x56465831u,
+        Decision.Strength * CurrentTuning.VFXStrength);
     SubmitLayer(
-        TEXT("SFX"), HitSFXDefinitionId, 0x53465831u,
-        Decision.Strength * HitFeedbackTuning.AudioStrength);
+        TEXT("SFX"), CurrentSFXDefinitionId, 0x53465831u,
+        Decision.Strength * CurrentTuning.AudioStrength);
 }
 
 EGamePlatformPresentationSubmitResult UMobaPresentationClientSubsystem::AdaptAbilityFact(

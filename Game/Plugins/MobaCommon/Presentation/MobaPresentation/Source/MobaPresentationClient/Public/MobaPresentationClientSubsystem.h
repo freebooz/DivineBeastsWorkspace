@@ -17,6 +17,21 @@ class UWorld;
 class IMobaPresentationContextContributor;
 
 /**
+ * MOBA通用的每次命中已加载表现配置。Resolver只提供数据，不加载资产、不控制服务器结果。
+ * 生命周期归上层本地玩家组合根；Profile在此不拥有资产租约。
+ */
+struct FMobaResolvedHitFeedbackConfiguration
+{
+    TWeakObjectPtr<UGamePlatformHitFeedbackProfile> LoadedProfile;
+    FName VFXDefinitionId = NAME_None;
+    FName SFXDefinitionId = NAME_None;
+};
+
+/** 由可选第三层组合根提供的同步已加载缓存查询，不允许在回调内同步加载。 */
+using FMobaHitFeedbackResolver = TFunction<bool(
+    const FGamePlatformCombatEvent&, FMobaResolvedHitFeedbackConfiguration&)>;
+
+/**
  * UMobaPresentationClientSubsystem（MOBA客户端表现适配子系统）。
  * LocalPlayer作用域保证Multi-PIE隔离；只消费事实并提交平台表现请求，不拥有Gameplay权威。
  */
@@ -58,6 +73,15 @@ public:
         UGamePlatformHitFeedbackProfile* LoadedProfile,
         FName VFXDefinitionId,
         FName SFXDefinitionId);
+
+    /** 可选项目层解析器按命中Hero/Ability查找已完成的租约，失败安全回退默认配置。 */
+    void SetHitFeedbackResolver(FMobaHitFeedbackResolver&& Resolver)
+    {
+        HitFeedbackResolver = MoveTemp(Resolver);
+    }
+
+    /** 组合根卸载时移除闭包，防止下一世界访问旧角色/内容包。 */
+    void ClearHitFeedbackResolver() { HitFeedbackResolver = {}; }
     EGamePlatformPresentationSubmitResult AdaptAbilityFact(
         const FMobaPresentationAbilityFact& Fact);
     EGamePlatformPresentationSubmitResult AdaptStatusFact(
@@ -113,6 +137,9 @@ private:
     bool RememberFact(const FMobaPresentationFactIdentity& Identity);
     void ApplyContextContributors(FMobaPresentationContext& Context) const;
     FGuid MakeArenaFactId(const FString& Scope, int32 Revision, uint32 Salt = 0) const;
+
+    /** 当前本地玩家唯一可选项目Resolver，不拥有其返回的资源。 */
+    FMobaHitFeedbackResolver HitFeedbackResolver;
 
     // 本地玩家独立调校数据，不由表现参数更改服务器判定。
     FGamePlatformHitFeedbackTuning HitFeedbackTuning;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
+#include "Definitions/GamePlatformDefinitionBase.h"
 #include "Feedback/GamePlatformHitFeedbackProfile.h"
 #include "DivineBeastsCombatFeedbackCatalog.generated.h"
 
@@ -22,9 +22,9 @@ struct DIVINEBEASTSPRESENTATIONRUNTIME_API FDivineBeastsCombatFeedbackEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat Feedback")
     FName AbilityDefinitionId = NAME_None;
 
-    /** 客户端反馈参数资产软引用；由GamePlatformData统一负责异步租约和预加载。 */
+    /** 反馈配置主资产逻辑身份；GamePlatformData以此申请独立客户端资源租约，不同步加载。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat Feedback")
-    TSoftObjectPtr<UGamePlatformHitFeedbackProfile> Profile;
+    FPrimaryAssetId ProfileDefinitionId;
 
     /** 对应平台VFX目录中的逻辑DefinitionId，不能直接存硬引用Niagara资源。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat Feedback")
@@ -42,7 +42,7 @@ struct DIVINEBEASTSPRESENTATIONRUNTIME_API FDivineBeastsCombatFeedbackEntry
  */
 UCLASS(BlueprintType)
 class DIVINEBEASTSPRESENTATIONRUNTIME_API UDivineBeastsCombatFeedbackCatalog
-    : public UDataAsset
+    : public UGamePlatformDefinitionBase
 {
     GENERATED_BODY()
 
@@ -62,4 +62,7 @@ public:
 
     /** 资源发布前的目录冲突检查；检测所有无效键或重复键，返回中文原因。 */
     bool ValidateMappings(TArray<FString>& OutErrors) const;
+
+    /** 纳入平台主资产数据门禁；身份、版本、Profile主资产ID和映射键均需合法。 */
+    virtual FGamePlatformResult ValidateDefinition() const override;
 };
