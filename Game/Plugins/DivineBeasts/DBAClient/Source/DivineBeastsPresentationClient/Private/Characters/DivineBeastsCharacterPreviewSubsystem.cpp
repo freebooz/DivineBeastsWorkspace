@@ -8,7 +8,6 @@
 #include "Animation/AnimInstance.h" // 本文件也调用动画软类Get，完整类型不能由另一个Unity源文件提供。
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
-#include "Animation/AnimClassInterface.h"
 #include "Animation/Skeleton.h"
 #include "Components/SkeletalMeshComponent.h" // 材质读取/设置及组件UObject转换需要完整类型，不能依赖PCH或Unity包含顺序。
 #include "Engine/LevelStreamingDynamic.h"
@@ -435,22 +434,11 @@ bool UDivineBeastsCharacterPreviewSubsystem::TryApplyPendingAppearance()
     }
 
     FString SkeletonError;
-    if (!UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(Mesh, Mesh->GetSkeleton(), SkeletonError))
+    if (!UDivineBeastsCharacterAppearanceProfile::ValidateLoadedAnimationClass(Mesh, AnimClass, SkeletonError))
     {
-        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview mesh skeleton rejected: %s"), *SkeletonError);
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview mesh/animation skeleton rejected: Hero=%s AnimClass=%s Reason=%s"),
+            *RequestedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass), *SkeletonError);
         return false;
-    }
-    if (AnimClass)
-    {
-        // 显式动画和开发Idle采用相同门禁；原生AnimInstance没有蓝图目标骨架，由其自身动画合同负责。
-        const IAnimClassInterface* AnimationInterface = IAnimClassInterface::GetFromClass(AnimClass);
-        const USkeleton* AnimationSkeleton = AnimationInterface ? AnimationInterface->GetTargetSkeleton() : nullptr;
-        if (AnimationInterface && !UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(Mesh, AnimationSkeleton, SkeletonError))
-        {
-            UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview animation skeleton rejected: Hero=%s AnimClass=%s Reason=%s"),
-                *RequestedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass), *SkeletonError);
-            return false;
-        }
     }
 
     if (!PreviewStage->ApplyPreviewAppearance(

@@ -2,6 +2,8 @@
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 
 #include "Animation/Skeleton.h"
+#include "Animation/AnimClassInterface.h"
+#include "Animation/AnimInstance.h"
 #include "Engine/SkeletalMesh.h"
 
 #include "Identity/DivineBeastsProjectCatalog.h"
@@ -22,7 +24,7 @@ bool UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(
         OutError = TEXT("角色网格没有真实骨骼。");
         return false;
     }
-    // IsCompatibleMesh在网格已指向该Skeleton时会直接接受；必须绕过这项身份捷径验证实际骨树。
+    // 引擎IsCompatibleMesh允许缺失子骨骼时沿祖先寻找匹配；项目蒙皮要求完整覆盖及最近有效父链，不能只靠宽松匹配放行。
     for (int32 Index = 0; Index < MeshBones.GetNum(); ++Index)
     {
         const FName Bone = MeshBones.GetBoneName(Index);
@@ -49,6 +51,25 @@ bool UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(
         }
     }
     return true;
+}
+
+bool UDivineBeastsCharacterAppearanceProfile::ValidateLoadedAnimationClass(
+    const USkeletalMesh* Mesh, const UClass* AnimClass, FString& OutError)
+{
+    // 先验证网格自己的真实骨树；模板或原生动画都不能给缺失Mesh/Skeleton制造成功。
+    if (!ValidateLoadedSkeleton(Mesh, Mesh ? Mesh->GetSkeleton() : nullptr, OutError)) return false;
+    if (!AnimClass) return true;
+    if (!AnimClass->IsChildOf(UAnimInstance::StaticClass()))
+    {
+        OutError = TEXT("角色动画类必须派生UAnimInstance。");
+        return false;
+    }
+    const IAnimClassInterface* AnimationInterface = IAnimClassInterface::GetFromClass(AnimClass);
+    if (!AnimationInterface) return true; // 原生动画没有蓝图目标骨架，保留其自身动画合同；网格门禁已经完成。
+    const USkeleton* AnimationSkeleton = AnimationInterface->GetTargetSkeleton();
+    // UE5.8 NeedToSpawnAnimScriptInstance对合法模板的空目标使用Mesh Skeleton；不等同于资源缺失。
+    if (!AnimationSkeleton) AnimationSkeleton = Mesh->GetSkeleton();
+    return ValidateLoadedSkeleton(Mesh, AnimationSkeleton, OutError);
 }
 
 bool UDivineBeastsCharacterAppearanceProfile::IsProfileValid(

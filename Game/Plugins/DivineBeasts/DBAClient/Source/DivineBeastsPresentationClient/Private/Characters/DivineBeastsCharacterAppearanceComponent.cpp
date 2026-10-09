@@ -5,7 +5,6 @@
 
 // TSoftClassPtr::Get会调用UAnimInstance::StaticClass，必须包含完整类型，不能依赖Unity或共享PCH。
 #include "Animation/AnimInstance.h"
-#include "Animation/AnimClassInterface.h"
 
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
@@ -249,13 +248,8 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
     }
     FString SkeletonError;
     // 在改网格/材质之前检查，避免新身份挂上旧骨树；原有请求代次及取消门禁保持有效。
-    bool bCompatible = UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(SkeletalMesh, SkeletalMesh->GetSkeleton(), SkeletonError);
     UClass* EffectiveAnimClass = AnimClass ? AnimClass : MeshComponent->GetAnimClass();
-    const IAnimClassInterface* AnimationInterface = EffectiveAnimClass ? IAnimClassInterface::GetFromClass(EffectiveAnimClass) : nullptr;
-    if (bCompatible && AnimationInterface)
-    {
-        bCompatible = UDivineBeastsCharacterAppearanceProfile::ValidateLoadedSkeleton(SkeletalMesh, AnimationInterface->GetTargetSkeleton(), SkeletonError);
-    }
+    const bool bCompatible = UDivineBeastsCharacterAppearanceProfile::ValidateLoadedAnimationClass(SkeletalMesh, EffectiveAnimClass, SkeletonError);
     if (!bCompatible)
     {
         UE_LOG(LogTemp, Warning, TEXT("角色外观骨架不兼容，拒绝本次装配：Hero=%s Reason=%s"), *ExpectedHeroDefinitionId.ToString(), *SkeletonError);

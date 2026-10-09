@@ -1,9 +1,9 @@
 {
   "SchemaVersion": 1,
   "Scope": "主线整合源码独立复核最终快照，保留各原始发现和闭环；真实构建及回归分别取独立中央结果",
-  "GeneratedUtc": "2026-10-09T16:59:45.5403884Z",
+  "GeneratedUtc": "2026-10-09T17:24:08.6236314Z",
   "IntegrationHead": null,
-  "MainIntegratedHead": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+  "MainIntegratedHead": "36ebc648ceacb38fffaba07f515142b98b77b841",
   "MainPushedByThisTask": false,
   "Reports": [
     {
@@ -6542,6 +6542,977 @@
         "AssetsModifiedByRoot": false,
         "AllEqual": true
       }
+    },
+    {
+      "Name": "Main36CharacterIntegrationReview.json",
+      "SourceSHA256": "16C86E309EC80A05C40D249393DDB66C16B133AAB667EEFE3A6E5519A93A5970",
+      "Report": {
+        "generatedUtc": "2026-10-10T01:14:12.611915+08:00",
+        "workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "branch": "codex/gameplatform-audit-fixes-20261009",
+        "headAtInitialReview": "8f17df4e95e90cfc2eb138719df9680c5fac7868",
+        "verifiedSourceCommit": "daf7547",
+        "remoteBase": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+        "incomingCommit": "36ebc648ceacb38fffaba07f515142b98b77b841",
+        "remoteIncrementCount": 21,
+        "remoteIncrementEvidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\Main36RemoteIncrement.txt",
+        "remoteIncrement": [
+          [
+            "A",
+            "Docs/Architecture/角色模型变形修复记录.md"
+          ],
+          [
+            "M",
+            "Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Quinn_Simple.uasset"
+          ],
+          [
+            "A",
+            "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/DBAClient/Docs/FrontendLoginImplementation.md"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/DBAClient/Docs/ZodiacPrototypeCharacters.md"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp"
+          ],
+          [
+            "A",
+            "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp"
+          ],
+          [
+            "M",
+            "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterAppearanceProfile.h"
+          ],
+          [
+            "M",
+            "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/README.md"
+          ],
+          [
+            "M",
+            "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/Source/GamePlatformDeveloperTools/Private/GamePlatformDeveloperTools.cpp"
+          ],
+          [
+            "M",
+            "Tests/Assets/TestFrontEndClientContainer.ps1"
+          ],
+          [
+            "M",
+            "Tests/Assets/ValidateCharacterPreviewAssets.py"
+          ],
+          [
+            "M",
+            "Tools/Unreal/Characters/Generate-ZodiacPrototypeCharacters.ps1"
+          ],
+          [
+            "M",
+            "Tools/Unreal/Characters/GenerateZodiacPrototypeCharacters.py"
+          ],
+          [
+            "M",
+            "Tools/Unreal/Characters/RepairCharacterPreviewAssets.py"
+          ]
+        ],
+        "ownership": "初始只读4生产文件与新测试；Root确认Important后明确授权当前5原路径最小修复。无新文件/反射类型/资产；不改历史Widget/其他模块、不暂存/提交/推送/UE/UBT。",
+        "initialUncommittedOtherPathsUntouched": [
+          "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Interfaces/GamePlatformCommerceClientTransport.h",
+          "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Screens/GamePlatformCommerceScreens.h"
+        ],
+        "readOnlyStage": {
+          "actualHelperName": "ValidateLoadedSkeleton；本次4生产路径与锁定检索没有FindMeshSkeletonCompatible接口，报告以实际名字为准。",
+          "meshValidation": "所有Mesh骨骼必须被Skeleton覆盖，最近仍存在于Mesh的父骨骼必须一致；允许Skeleton中裁剪的中间骨骼。Mesh/Skeleton缺失与空骨树失败，在任何Mesh/材质变更前检查。",
+          "appearanceApplication": "原请求代次/角色身份/PendingProfile入口条件保留，新校验在SetSkeletalMesh/材质/动画设置之前；已明确指定或开发占位AnimClass未加载继续真实拒绝。",
+          "previewPreservation": {
+            "Initialize": true,
+            "Deinitialize": true,
+            "DeactivatePreviewScene": true,
+            "HandleWorldCleanup": true,
+            "ResolvePreviewStage": true,
+            "HandleProfileLoaded": true,
+            "HandleVisualResourcesLoaded": true,
+            "CancelPendingLoads": true
+          },
+          "previewGuardMeaning": "八个预览初始化/Deinitialize/取消/加载完成/世界退出/舞台解析方法与已验证daf来源归一逐字一致：WorldCleanup委托移除、OnLevelShown解绑、资源取消及代次、流送卸载、只接受当前已显示关卡或持久舞台的guard保留。Root/Widget源码不在21增量，不扩大其历史实现审计。",
+          "ImportantFindings": [
+            {
+              "id": "Main36-CHAR-01",
+              "severity": "Important",
+              "initialStatus": "ConfirmedByLockedEngineSourceAndIndependentReviewer",
+              "paths": [
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp"
+              ],
+              "originalLines": {
+                "Preview": [
+                  446,
+                  448
+                ],
+                "AppearanceComponent": [
+                  255,
+                  257
+                ]
+              },
+              "trigger": "显式/默认已加载动画具有真实IAnimClassInterface，但TargetSkeleton为空的合法模板类；Mesh自有Skeleton有效且完整。",
+              "before": "直接ValidateLoadedSkeleton(Mesh,nullptr)将合法template误作缺资源拒绝，和锁定NeedToSpawnAnimScriptInstance target-null回退不一致。",
+              "impact": "合法外观/预览动画配置可被新增门禁拒绝；当前正式ABP是否template未通过资产加载或运行实证，不将可达输入证据冒称当前资产故障。",
+              "rootAuthorization": "Root与独立reviewer确认并授权当前5路径共用入口/真实模板回归，Root未要求关闭完整骨树门禁。"
+            }
+          ],
+          "chineseCorrection": {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp",
+            "originalLine": 25,
+            "before": "IsCompatibleMesh在网格已指向该Skeleton时会直接接受；必须绕过这项身份捷径验证实际骨树。",
+            "evidence": "锁定Skeleton.cpp648–722无该身份分支；实际宽松查找可接受缺子骨而祖先匹配。",
+            "corrected": "说明项目完整蒙皮覆盖/最近有效父链要求为何比引擎宽松匹配更严格。"
+          }
+        },
+        "repairStage": {
+          "status": "SourceFrozen_StaticChecksPassed_IndependentSourceRecheckClosed_RuntimeUnverified",
+          "sourceFrozen": true,
+          "sharedApi": "UDivineBeastsCharacterAppearanceProfile::ValidateLoadedAnimationClass(const USkeletalMesh*, const UClass*, FString&)",
+          "algorithm": "先严格核Mesh及自有Skeleton；可选AnimClass为nullptr仅不指定动画，不能绕过Mesh。非空类须派生UAnimInstance；原生无接口保留其动画合同；真实动画接口target-null回退已验证Mesh Skeleton，非空目标仍完整骨树/父链检查。",
+          "realCallers": "AppearanceComponent使用已解析新动画或现有GetAnimClass；Preview使用显式或开发Idle解析类。双方缺预期动画未加载拒绝条件原样保留。",
+          "sourceFiles": [
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp",
+              "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsPresentationClient\\Private\\Characters\\DivineBeastsCharacterPreviewSubsystem.cpp",
+              "sha256": "0AF99A299B98ED0A8B1284E5A99CB92F6376127D927103A4086995579015CFFD"
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp",
+              "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsPresentationClient\\Private\\Characters\\DivineBeastsCharacterAppearanceComponent.cpp",
+              "sha256": "3320F0C5F390986B58D1DF440F70E7FC7831FB6E92A244FF370BC60294C2C1C7"
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp",
+              "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsPresentationClient\\Private\\Characters\\DivineBeastsCharacterAppearanceProfile.cpp",
+              "sha256": "AAAF729BEB52C1980106AF4C7BF1C51FB2215CF04BD9CF36AF019A5199F9625B"
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterAppearanceProfile.h",
+              "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsPresentationClient\\Public\\Characters\\DivineBeastsCharacterAppearanceProfile.h",
+              "sha256": "304C6E9F9CE43FCEB7F86DCAA19C365F1B7A64F1D287B39474BF8E55C062672E"
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp",
+              "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsPresentationClient\\Private\\Tests\\DivineBeastsCharacterSkeletonTests.cpp",
+              "sha256": "EC6D48C1BB1969058A5D4BED5173A713395D8CE288514580F07C5237F78AA51D"
+            }
+          ],
+          "sourceFreezePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\SourceFreeze.json",
+          "sourceFreezeSha256": "859881F064264C7AE63AD491BF6D7D6C63E750785F221442C748723F3E85B63B",
+          "authorizedRepairDiff": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\AuthorizedTemplateRepair.diff.txt",
+          "beforeFixSnapshots": "当前5原路径HEAD版本分别保存为*.BeforeTemplateFix.txt，保留原Important实现证据。",
+          "formalAddedFiles": [],
+          "formalRemovedFiles": [],
+          "apiCompatibility": "只新增静态C++已加载资源检查函数；旧ValidateLoadedSkeleton/IsProfileValid、反射类型、序列化字段、父类、软资源路径、协议与ClassFlags不变。新调用需要统一重编译/链接，不能直接复用旧DLL；无ABI布局或资产字段迁移。",
+          "previousStatus": "SourceFrozen_StaticChecksPassed_IndependentRecheckPending_RuntimeUnverified"
+        },
+        "actualRegisteredTest": {
+          "class": "FDivineBeastsCharacterSkeletonTest",
+          "prettyName": "DivineBeasts.Presentation.Characters.SkeletonCompatibility",
+          "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter"
+        },
+        "newRegisteredNames": [],
+        "existingTestExpanded": {
+          "prettyName": "DivineBeasts.Presentation.Characters.SkeletonCompatibility",
+          "originalAssertionCount": 10,
+          "currentAssertionCount": 22,
+          "originalAssertionsPreserved": true,
+          "meaning": "保留Main原真实Manny/Quinn、UE5正确/旧UE4负例、缺资源断言；新增原生Transient GeneratedClass的真实GetFromClass/TargetSkeleton路径，调用生产共用方法，不复制算法。",
+          "covered": "target-null模板成功/清错、显式正确目标成功、显式旧目标失败/骨骼原因、原生动画和可选无动画、非动画类拒绝、模板下空Mesh/缺自有Skeleton拒绝。",
+          "requires": "EditorContext与EngineFilter、WITH_DEV_AUTOMATION_TESTS；须可同步加载DBAContentPack_Common真实UE5 Skeleton、旧负例Skeleton、Manny/Quinn两网格。无需地图/真实World/后端/Blueprint编译。",
+          "assetPaths": [
+            "/DBAContentPack_Common/Mannequins/UE5/Meshes/SK_Mannequin.SK_Mannequin",
+            "/DBAContentPack_Common/Mannequins/DBA/Meshes/SK_Mannequin_Skeleton.SK_Mannequin_Skeleton",
+            "/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_Manny_Simple.SKM_Manny_Simple",
+            "/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"
+          ],
+          "testSequence": "先追加真实模板回归调用，再实现共用方法；本Agent未执行红灯或绿灯，禁止把准备测试/静态差异当运行结果。",
+          "expectedOverallRootSelection": 189,
+          "runtimeExecuted": false
+        },
+        "engineApiEvidence": [
+          {
+            "path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/Components/SkeletalMeshComponent.cpp",
+            "lines": [
+              948,
+              958
+            ],
+            "meaning": "GetTargetSkeleton为空时明确回退Mesh自有Skeleton；最终通过IsCompatibleMesh(false)检查，合法template不因null目标拒绝。"
+          },
+          {
+            "path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/Animation/Skeleton.cpp",
+            "lines": [
+              648,
+              722
+            ],
+            "meaning": "遍历raw bones；缺子骨骼可以沿祖先找匹配，允许部分覆盖；没有同Skeleton指针直接成功分支。项目完整覆盖/最近有效父链门禁更严格。"
+          },
+          {
+            "path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Classes/Animation/AnimClassInterface.h",
+            "lines": [
+              204,
+              204,
+              281,
+              283
+            ],
+            "meaning": "GetTargetSkeleton真实返回USkeleton*；GetFromClass同时有const与非const已导出重载，共用入口使用const。"
+          },
+          {
+            "path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/Animation/AnimClassInterface.cpp",
+            "lines": [
+              29,
+              46
+            ],
+            "meaning": "通过真实Cast接口而不是测试镜像查询；原生GeneratedClass确实实现该接口。"
+          },
+          {
+            "path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Classes/Animation/AnimBlueprintGeneratedClass.h",
+            "lines": [
+              364,
+              380,
+              450,
+              451
+            ],
+            "meaning": "原生UAnimBlueprintGeneratedClass实现IAnimClassInterface，公开TargetSkeleton字段及真实GetTargetSkeleton返回字段值。"
+          },
+          {
+            "path": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/CoreUObject/Private/UObject/Class.cpp",
+            "lines": [
+              2541,
+              2546,
+              5838,
+              5853
+            ],
+            "meaning": "真实SetSuperStruct建立父类并更新IsChildOf链/缓存；Transient测试元数据用该API，不修改ClassFlags、不创建或保存Blueprint。"
+          }
+        ],
+        "chineseHumanReview": {
+          "range": "人工阅读本次Preview/Appearance新校验调用、Profile两校验合同与理由、已有SkeletonTests新增真实接口夹具/资源前提与异常意义。",
+          "reviewed": "项目客户端层责任、调用者/GT、只读已加载资源参数、可选/空值区别、失败OutError/成功清错、严格骨树边界、无资源租约转移、模板回退原因、静态新增API兼容、Transient测试元数据/强持有/无资产保存及运行未验证。",
+          "correctedItems": [
+            "Profile错误身份捷径说明已纠正",
+            "共用动画检查API补齐Mesh/AnimClass空值与GT/资源所有权/错误合同",
+            "模板fixture解释真实引擎接口与元数据边界，不声明蓝图编译或完整动画运行"
+          ],
+          "remaining": "没有对历史未改Widget或所有Private函数进行全量中文/同步重入审计；八方法不变证据只证明保留，不证明全部历史生命周期实现运行正确。旧全工程存量边界保持。"
+        },
+        "actualCommands": [
+          {
+            "command": [
+              "git",
+              "show",
+              "HEAD:Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp"
+            ],
+            "exitCode": 0,
+            "saved": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\DivineBeastsCharacterPreviewSubsystem.cpp.BeforeTemplateFix.txt",
+            "sha256": "FB98CA9C5B21E1FF7BCD7110041D79D698EE56D3AD204BBD04C665A09E87ED11"
+          },
+          {
+            "command": [
+              "git",
+              "show",
+              "HEAD:Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp"
+            ],
+            "exitCode": 0,
+            "saved": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\DivineBeastsCharacterAppearanceComponent.cpp.BeforeTemplateFix.txt",
+            "sha256": "B5B325404196C4A4CE759C6E5ED0CB43869302DF00EFA844D0484F98556933F1"
+          },
+          {
+            "command": [
+              "git",
+              "show",
+              "HEAD:Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp"
+            ],
+            "exitCode": 0,
+            "saved": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\DivineBeastsCharacterAppearanceProfile.cpp.BeforeTemplateFix.txt",
+            "sha256": "DD62D59C8E7594D690A2D8465A298A2CDC4990575C308FEF15E9B10BDE9725FC"
+          },
+          {
+            "command": [
+              "git",
+              "show",
+              "HEAD:Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterAppearanceProfile.h"
+            ],
+            "exitCode": 0,
+            "saved": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\DivineBeastsCharacterAppearanceProfile.h.BeforeTemplateFix.txt",
+            "sha256": "939D06B585A1448DE0013C64AA804C16653B2A883780270B85ED8BF9F1449490"
+          },
+          {
+            "command": [
+              "git",
+              "show",
+              "HEAD:Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp"
+            ],
+            "exitCode": 0,
+            "saved": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\DivineBeastsCharacterSkeletonTests.cpp.BeforeTemplateFix.txt",
+            "sha256": "DB04CFA0BE596A701DA84FD522562CB402C904CCBDC8E974DD9BD25F474ADC7E"
+          },
+          {
+            "command": [
+              "git",
+              "diff",
+              "--check",
+              "--",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterAppearanceProfile.h",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp"
+            ],
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "git",
+              "-c",
+              "core.quotepath=false",
+              "diff",
+              "--name-status",
+              "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+              "36ebc648ceacb38fffaba07f515142b98b77b841"
+            ],
+            "exitCode": 0,
+            "saved": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\Main36RemoteIncrement.txt"
+          },
+          {
+            "command": [
+              "git",
+              "diff",
+              "--",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterAppearanceProfile.h",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp"
+            ],
+            "exitCode": 0,
+            "saved": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\AuthorizedTemplateRepair.diff.txt"
+          }
+        ],
+        "actualStaticChecks": {
+          "inlineSavedEvidenceGenerationExitCode": 0,
+          "staticPassed": true,
+          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegration\\StaticChecks.json",
+          "meaning": "实际词法、调用点、原断言/注册、差异格式和哈希证据，不冒充编译或UE。"
+        },
+        "notExecuted": [
+          "UE/UHT/Editor/Client/Server增量构建",
+          "新增22断言/整体189 Automation实际运行",
+          "Asset加载或ABP目标检查、Monolith/资产写入",
+          "动画实例生成/姿态/视觉/设备/网络/旅行运行"
+        ],
+        "priorEvidenceBoundary": "daf7547源自Root实际已验证188，原Failure13attempt及旧证明保留；不能把该来源运行结果移贴到本次最新源码。",
+        "reportPath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main36CharacterIntegrationReview.json",
+        "independentSourceReview": {
+          "reviewer": "/root/zodiac_icon_monolith_import",
+          "reportedViaMessage": "最终5SHA与helper/双生产调用/GeneratedClass真实回归已独立闭环，Main36 target-null Important SourceClosed；未新增Important。",
+          "verifiedApi": "const GetFromClass、GeneratedClass真实TargetSkeleton Getter、UStruct/UClass SetSuperStruct BaseChain/对象hash、先Mesh门禁与显式Legacy/错Class/nullMesh/缺Skeleton边界。",
+          "runtimeExecuted": false,
+          "formalIndependentEvidenceOwner": "独立reviewer自行保存Main36最终审查报告；本Agent不生成或冒称其独立文件哈希。"
+        }
+      }
+    },
+    {
+      "Name": "Main36IndependentReview.json",
+      "SourceSHA256": "885A0234D29914E2D3605C55CAD34E1E1CD2A235496CA6ACF8280DCC31E71677",
+      "Report": {
+        "schemaVersion": 1,
+        "reportId": "Main36IndependentReview",
+        "reviewer": "zodiac_icon_monolith_import",
+        "generatedAtUtc": "2026-10-09 17:18:21 UTC",
+        "workspace": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace",
+        "status": "SourceClosed",
+        "independent": true,
+        "repository": {
+          "head": "8f17df4e95e90cfc2eb138719df9680c5fac7868",
+          "firstParent": "daf75479c1c4cfa8217ed97bf3e1b55a2a8cfb85",
+          "incoming": "36ebc648ceacb38fffaba07f515142b98b77b841",
+          "remoteDelta": "86cb0df..36ebc64",
+          "mergeHeadPresent": false,
+          "normalMergeCompleted": true,
+          "remoteChangedFiles": 21
+        },
+        "scope": "独立只读21项Main36骨骼/Idle增量：Profile真实骨树算法、Appearance/Preview新动画校验、DeveloperTools原生命令、SkeletonTests与修复/生成/只读工具；只核5资产字节保真，不扩历史角色/资产成熟度。App负责Character子scope及已授权修复。",
+        "rules": {
+          "rootAGENTSSHA256": "F0FDA3EC8CC807D96C27B0CD9E1266B59A73A268AAB7E9588D470F921612F782",
+          "affectedLocalOverrideFound": false
+        },
+        "firstObservedFiles": [
+          {
+            "path": "Docs/Architecture/角色模型变形修复记录.md",
+            "sha256": "696FBA3E6DF5AEF0F18D6369FFF0BF5A5035D5CF56C271B1CB80BF6B60B6B9CF",
+            "bytes": 5301,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md",
+            "sha256": "F409BF4813754DA903B59B4BD07DB2BA17F8E20472AF70F0E307F5AB47F4A123",
+            "bytes": 168823,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset",
+            "sha256": "7BC3D4FF19662F58D88DB7E42162AF744E3C2B912C8D9AB7F6ADAC8DBC81B425",
+            "bytes": 65048,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset",
+            "sha256": "216E0B4EF48B3BC00D4636941B72AB09F38A02EB693382DC9F7E0905E961B404",
+            "bytes": 171649,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset",
+            "sha256": "8458827AC728AA6EF5CC2F1390D2458FAD1748DC5C4D1E2A010256982061940B",
+            "bytes": 15825035,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Quinn_Simple.uasset",
+            "sha256": "68609B7F8C576584A164D17236A179508061AD75C55959F1DB2A904DC5E4DDE7",
+            "bytes": 16249178,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset",
+            "sha256": "2A89B9F0C553757C5D0D3400058CEB3697042AD7BBD2DFD35100CA51311076A3",
+            "bytes": 188489,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Docs/FrontendLoginImplementation.md",
+            "sha256": "5166676EE4BE0E8C279D62DFC9F1BB140BF0647A2FCFD5431C5B8A833FD14D4E",
+            "bytes": 17601,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Docs/ZodiacPrototypeCharacters.md",
+            "sha256": "234ACD62BA574B9F5C3360183F9CF1521741D831DE9724D860D2459FA9BA8B08",
+            "bytes": 11872,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp",
+            "sha256": "3FE011313EB93F893F9644B4D0347FACBEB7603474E10E93EF23901D33FB673B",
+            "bytes": 12857,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp",
+            "sha256": "1143F7D1FEF65D525A97BF08B723264EA419A942B73FB63A1F4DC8CB0786C4F1",
+            "bytes": 4692,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp",
+            "sha256": "91B3C5D674ED3D8C777B10DEB8918DB7BE42AD479B0D6BDCE35855373053E987",
+            "bytes": 18308,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp",
+            "sha256": "315BC76C9C8AC5049FB920D6BEC01CA6DC152186E63D2F0A4A21A560108D9BC5",
+            "bytes": 2447,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterAppearanceProfile.h",
+            "sha256": "234A8A6AAA4D5DE47B0563610849C73DF3095701DBC5CD1FC39F84825D759B8F",
+            "bytes": 4896,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/README.md",
+            "sha256": "90EB98AFDAB6985EE6C8B5A66536ED75AF6FB0121F994566A2597DB2EAE9FCF3",
+            "bytes": 2944,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/Source/GamePlatformDeveloperTools/Private/GamePlatformDeveloperTools.cpp",
+            "sha256": "A5EF1C49AD55BA74A380EE2E7050EB2E8D28E20F1914B55BA2B488E56BCA73F3",
+            "bytes": 24562,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tests/Assets/TestFrontEndClientContainer.ps1",
+            "sha256": "C99865101315ACF7B3AF27ECA92C91C94868EF86D5059877A31D3D5F409455AF",
+            "bytes": 4089,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tests/Assets/ValidateCharacterPreviewAssets.py",
+            "sha256": "4D841F2E48DB7B7D9567AE0C5FF80EC3E67B2DBE449C7BC6F672CB66A23487BC",
+            "bytes": 9440,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tools/Unreal/Characters/Generate-ZodiacPrototypeCharacters.ps1",
+            "sha256": "813047E86612A60439DE6535DE5CCEF9281EC4EBB933AF1FC0CB713FB846D80F",
+            "bytes": 8462,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tools/Unreal/Characters/GenerateZodiacPrototypeCharacters.py",
+            "sha256": "1375BC72657B6D9AB740569E1DF7D7A51BFB76C2356FEE7345BDFC515C86734D",
+            "bytes": 16646,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tools/Unreal/Characters/RepairCharacterPreviewAssets.py",
+            "sha256": "80CDE681566A1A23726865B2EFDD76636A29D1317FF7D250CBF05048B9438980",
+            "bytes": 8919,
+            "kind": "SourceOrDocument"
+          }
+        ],
+        "firstObservedNotFinalFreeze": true,
+        "findings": [
+          {
+            "id": "Main36-TemplateAnimation",
+            "severity": "Important",
+            "status": "SourceClosed",
+            "discoveredBy": "repair_application_players_20261009",
+            "independentlyConfirmed": true,
+            "source": [
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp"
+            ],
+            "original": "新代码对真实IAnimClassInterface存在但GetTargetSkeleton()==nullptr直接ValidateLoadedSkeleton(Mesh,nullptr)拒绝。锁定引擎允许模板动画蓝图target-null回退网格Skeleton，原可选AnimClass合同未禁止该输入；显式动画路径出现新增合法输入误拒。",
+            "engineEvidence": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/Engine/Private/Components/SkeletalMeshComponent.cpp:950–958",
+            "authorization": "Root允许App修改3CPP+必要Profile h共用已加载动画类入口+现有SkeletonTests；保严格网格与父链检查，target-null按引擎回退已验证Mesh Skeleton，不造资产/修改flags。",
+            "limit": "未读实际动画蓝图属性或运行引擎，不声称当前正式Idle就是template。",
+            "repair": "两个生产入口共用ValidateLoadedAnimationClass，先严格Mesh实际骨架检查；可选动画nullptr保留但不跳Mesh门禁；非空必须UAnimInstance派生，Native无蓝图接口保持自身合同，真实动画接口target-null回退已验证Mesh Skeleton；显式非空目标仍严格核完整覆盖/最近有效父链。RequiredClass未加载拒绝保留。",
+            "regression": "原SkeletonCompatibility名/flags与10个原断言保留，新增12个源码断言。真实Transient UAnimBlueprintGeneratedClass GetFromClass、TargetSkeleton字段、SetSuperStruct引擎API读实，强持有Correct/Legacy/Mesh/TemplateClass；不造动画实例/资产、不改flags。目标null/Correct接受；Legacy/非AnimInstance类/空mesh/缺Skeleton拒绝；Native/可选null不能绕过网格检查。",
+            "regressionLimit": "源码回归实现闭环；不代表实际189、Template蓝图实例播放或完整外观端到端回归运行通过。"
+          }
+        ],
+        "chinesePrecision": {
+          "original": "Profile.cpp25及两份文档把IsCompatibleMesh(...,false)接受理由说成同Skeleton指针捷径，实际该函数允许缺子骨沿祖先找匹配且false不核父链，结尾matches>0。",
+          "engineEvidence": "Engine/Source/Runtime/Engine/Private/Animation/Skeleton.cpp:648–722",
+          "rootDocsReadback": [
+            {
+              "path": "Docs/Architecture/角色模型变形修复记录.md",
+              "status": "CorrectedReadback",
+              "sha256": "B72249F24326DE4114CDC2E0445D1F422DD94999CE01B2369B7ADDEE9C6C76C9"
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Docs/FrontendLoginImplementation.md",
+              "status": "CorrectedReadback",
+              "sha256": "1AAE2A49FCFDEBFA50FD842F91DE87E9E0E52A7BB7F7F22E4B356A3048B8A32F"
+            }
+          ],
+          "profileCommentStatus": "CorrectedReadback",
+          "scopeCorrection": "此前消息误将ZodiacPrototypeCharacters148带入失真句清单；重新读实该段没有同指针捷径句，已向Root明确无需第三修改。"
+        },
+        "readConclusions": [
+          {
+            "area": "严格骨树算法",
+            "conclusion": "新ValidateLoadedSkeleton清OutError，拒空mesh/skeleton或空骨树；逐mesh骨名查Skeleton，缺骨拒绝；省略中间骨允许，最近共同父骨必须匹配。与字段/已加载合同一致，不加载软资源/改资产/转移租约/授Gameplay权威。"
+          },
+          {
+            "area": "Preview自动合并",
+            "conclusion": "与daf7547首父比较只有原动画检查块替换，其他WorldCleanup/取消/RequestGeneration/PendingProfile与舞台拥有代码原字保留；新骨树校验位于Apply之前，单向Project→Engine/Platform不变。"
+          },
+          {
+            "area": "DeveloperTools",
+            "conclusion": "Startup只注册命令/验证规则；Shutdown注销命令/菜单，实际动画写操作只在显式GT单资产路径调用。原LoadObject/有效Skeleton拒绝保留。InitializeModel→UpdateWithSkeleton→NotifyPopulated使用锁定EngineController；已Populated模型同步FK骨树并按引擎删旧缺骨/曲线，新模型由InitializeModel建MovieScene/FKRig。仅Editor模块、默认关闭，uplugin及Build不新依赖项目/Moba/客户端/服务器。"
+          },
+          {
+            "area": "修复工具",
+            "conclusion": "先检查完整UE5绑定和覆盖，再进行引擎软路径迁移/既有材质和物理修复。稳定AS/ABP要求正确Skeleton，通过原生Controller重建120帧30fps/121keys，骨骼平移来自参考姿势，缩放1，少量胸颈旋转，无RootMotion；add/key/save失败抛错，finally关闭bracket。失败可保留前面已保存材质/Profile，文档明确备份和逐文件回退。"
+          },
+          {
+            "area": "生成器",
+            "conclusion": "已有Manny/Quinn但UE5依赖缺失时明确拒绝，公共Mannequins目录存在时不重迁移/删目录；正确现有依赖先核骨覆盖/绑定再跳过。历史冷迁移与磁盘准备路径并未由本座位执行，不宣称新工程从零生成已验证。"
+          },
+          {
+            "area": "验证与容器",
+            "conclusion": "只读工具遍历真实12外观和网格，核公共UE5必要骨、旧模板依赖、AS/ABP目标和轨道、30fps120frames、男女5个时间点的骨长/尺度/参考旋转/接缝。IoStore检查新增正确Skeleton+2mesh非空WindowsClient ExportBundleData，不能用磁盘存在替代包内存在。"
+          },
+          {
+            "area": "测试",
+            "conclusion": "SkeletonCompatibility加载真实Correct/Legacy/Manny/Quinn，包含缺Skeleton/空mesh拒绝和错误原因、资产本身绑定正确骨架断言，新增一个真实注册名；模板兼容回归待App最小追加。"
+          }
+        ],
+        "assetEvidence": {
+          "rootReport": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/Main36AssetPreservation.json",
+          "independentGitRemoteVsWorkingBlobMatchCount": 5,
+          "allMatch": true,
+          "assetActionByReviewer": false,
+          "engineAssetInspectionByReviewer": false,
+          "assets": [
+            {
+              "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset",
+              "sha256": "7BC3D4FF19662F58D88DB7E42162AF744E3C2B912C8D9AB7F6ADAC8DBC81B425",
+              "bytes": 65048,
+              "kind": "UnrealBinary",
+              "remoteAndWorkingBlobEqual": true
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset",
+              "sha256": "216E0B4EF48B3BC00D4636941B72AB09F38A02EB693382DC9F7E0905E961B404",
+              "bytes": 171649,
+              "kind": "UnrealBinary",
+              "remoteAndWorkingBlobEqual": true
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset",
+              "sha256": "8458827AC728AA6EF5CC2F1390D2458FAD1748DC5C4D1E2A010256982061940B",
+              "bytes": 15825035,
+              "kind": "UnrealBinary",
+              "remoteAndWorkingBlobEqual": true
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Quinn_Simple.uasset",
+              "sha256": "68609B7F8C576584A164D17236A179508061AD75C55959F1DB2A904DC5E4DDE7",
+              "bytes": 16249178,
+              "kind": "UnrealBinary",
+              "remoteAndWorkingBlobEqual": true
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset",
+              "sha256": "2A89B9F0C553757C5D0D3400058CEB3697042AD7BBD2DFD35100CA51311076A3",
+              "bytes": 188489,
+              "kind": "UnrealBinary",
+              "remoteAndWorkingBlobEqual": true
+            }
+          ],
+          "binaryReadDoesNotInspectAssetSemantics": true
+        },
+        "checks": {
+          "remoteDiffWhitespaceExitCode": 0,
+          "pythonASTParseOnly": [
+            "Tests/Assets/ValidateCharacterPreviewAssets.py",
+            "Tools/Unreal/Characters/GenerateZodiacPrototypeCharacters.py",
+            "Tools/Unreal/Characters/RepairCharacterPreviewAssets.py"
+          ],
+          "sourceReads": true,
+          "readOnlyGit": true,
+          "sourceEdited": false,
+          "gitMutation": false,
+          "ueExecuted": false,
+          "ubtExecuted": false,
+          "monolithAction": false,
+          "finalWorkingDiffCheckExitCode": 0,
+          "characterFrozenHashCount": 5,
+          "characterConflictMarkers": 0,
+          "characterTrailingWhitespace": 0,
+          "allCharacterCurrentHashesMatch": true,
+          "originalFreezeMatchesFourPlusTestExplicitRootSupersession": true
+        },
+        "openImportantCount": 0,
+        "openCriticalCount": 0,
+        "finalObservedFiles": [
+          {
+            "path": "Docs/Architecture/角色模型变形修复记录.md",
+            "sha256": "B72249F24326DE4114CDC2E0445D1F422DD94999CE01B2369B7ADDEE9C6C76C9",
+            "bytes": 5406,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md",
+            "sha256": "F409BF4813754DA903B59B4BD07DB2BA17F8E20472AF70F0E307F5AB47F4A123",
+            "bytes": 168823,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset",
+            "sha256": "7BC3D4FF19662F58D88DB7E42162AF744E3C2B912C8D9AB7F6ADAC8DBC81B425",
+            "bytes": 65048,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset",
+            "sha256": "216E0B4EF48B3BC00D4636941B72AB09F38A02EB693382DC9F7E0905E961B404",
+            "bytes": 171649,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset",
+            "sha256": "8458827AC728AA6EF5CC2F1390D2458FAD1748DC5C4D1E2A010256982061940B",
+            "bytes": 15825035,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Quinn_Simple.uasset",
+            "sha256": "68609B7F8C576584A164D17236A179508061AD75C55959F1DB2A904DC5E4DDE7",
+            "bytes": 16249178,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset",
+            "sha256": "2A89B9F0C553757C5D0D3400058CEB3697042AD7BBD2DFD35100CA51311076A3",
+            "bytes": 188489,
+            "kind": "UnrealBinary"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Docs/FrontendLoginImplementation.md",
+            "sha256": "1AAE2A49FCFDEBFA50FD842F91DE87E9E0E52A7BB7F7F22E4B356A3048B8A32F",
+            "bytes": 17652,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Docs/ZodiacPrototypeCharacters.md",
+            "sha256": "234ACD62BA574B9F5C3360183F9CF1521741D831DE9724D860D2459FA9BA8B08",
+            "bytes": 11872,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp",
+            "sha256": "3320F0C5F390986B58D1DF440F70E7FC7831FB6E92A244FF370BC60294C2C1C7",
+            "bytes": 12462,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp",
+            "sha256": "AAAF729BEB52C1980106AF4C7BF1C51FB2215CF04BD9CF36AF019A5199F9625B",
+            "bytes": 5982,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp",
+            "sha256": "0AF99A299B98ED0A8B1284E5A99CB92F6376127D927103A4086995579015CFFD",
+            "bytes": 17557,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp",
+            "sha256": "397FB2D3569DD9C1004E8EBD691BE09A638D20B389B7E918F6A6156B4A0B1CC5",
+            "bytes": 5951,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterAppearanceProfile.h",
+            "sha256": "304C6E9F9CE43FCEB7F86DCAA19C365F1B7A64F1D287B39474BF8E55C062672E",
+            "bytes": 5695,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/README.md",
+            "sha256": "90EB98AFDAB6985EE6C8B5A66536ED75AF6FB0121F994566A2597DB2EAE9FCF3",
+            "bytes": 2944,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/Source/GamePlatformDeveloperTools/Private/GamePlatformDeveloperTools.cpp",
+            "sha256": "A5EF1C49AD55BA74A380EE2E7050EB2E8D28E20F1914B55BA2B488E56BCA73F3",
+            "bytes": 24562,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tests/Assets/TestFrontEndClientContainer.ps1",
+            "sha256": "C99865101315ACF7B3AF27ECA92C91C94868EF86D5059877A31D3D5F409455AF",
+            "bytes": 4089,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tests/Assets/ValidateCharacterPreviewAssets.py",
+            "sha256": "4D841F2E48DB7B7D9567AE0C5FF80EC3E67B2DBE449C7BC6F672CB66A23487BC",
+            "bytes": 9440,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tools/Unreal/Characters/Generate-ZodiacPrototypeCharacters.ps1",
+            "sha256": "813047E86612A60439DE6535DE5CCEF9281EC4EBB933AF1FC0CB713FB846D80F",
+            "bytes": 8462,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tools/Unreal/Characters/GenerateZodiacPrototypeCharacters.py",
+            "sha256": "1375BC72657B6D9AB740569E1DF7D7A51BFB76C2356FEE7345BDFC515C86734D",
+            "bytes": 16646,
+            "kind": "SourceOrDocument"
+          },
+          {
+            "path": "Tools/Unreal/Characters/RepairCharacterPreviewAssets.py",
+            "sha256": "80CDE681566A1A23726865B2EFDD76636A29D1317FF7D250CBF05048B9438980",
+            "bytes": 8919,
+            "kind": "SourceOrDocument"
+          }
+        ],
+        "verifiedCharacterFreeze": {
+          "path": "Saved/MainIntegration/Main36CharacterIntegration/SourceFreeze.json",
+          "checks": [
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterPreviewSubsystem.cpp",
+              "sha256": "0AF99A299B98ED0A8B1284E5A99CB92F6376127D927103A4086995579015CFFD",
+              "matches": true,
+              "bytes": 17557,
+              "conflictMarkers": 0,
+              "trailingWhitespace": 0
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceComponent.cpp",
+              "sha256": "3320F0C5F390986B58D1DF440F70E7FC7831FB6E92A244FF370BC60294C2C1C7",
+              "matches": true,
+              "bytes": 12462,
+              "conflictMarkers": 0,
+              "trailingWhitespace": 0
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Characters/DivineBeastsCharacterAppearanceProfile.cpp",
+              "sha256": "AAAF729BEB52C1980106AF4C7BF1C51FB2215CF04BD9CF36AF019A5199F9625B",
+              "matches": true,
+              "bytes": 5982,
+              "conflictMarkers": 0,
+              "trailingWhitespace": 0
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterAppearanceProfile.h",
+              "sha256": "304C6E9F9CE43FCEB7F86DCAA19C365F1B7A64F1D287B39474BF8E55C062672E",
+              "matches": true,
+              "bytes": 5695,
+              "conflictMarkers": 0,
+              "trailingWhitespace": 0
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp",
+              "sha256": "397FB2D3569DD9C1004E8EBD691BE09A638D20B389B7E918F6A6156B4A0B1CC5",
+              "matches": true,
+              "bytes": 5951,
+              "conflictMarkers": 0,
+              "trailingWhitespace": 0,
+              "supersededSHA256": "EC6D48C1BB1969058A5D4BED5173A713395D8CE288514580F07C5237F78AA51D",
+              "rootCompilerIncludeFix": true
+            }
+          ],
+          "originalFreezeStillMatchesFourProductionFiles": true,
+          "testFreezeSupersededByRootCompilerFix": true
+        },
+        "chineseReview": "本轮Profile公开已加载方法/两调用点/真实SkeletonTests/DeveloperTools/三Python与容器工具的职责、线程、输入/输出、失败、资源拥有和原型边界已人工读实。两根因文档与Profile改为锁定Engine宽松祖先算法的真实理由，不宣称全部存量中文合规。",
+        "retention": {
+          "originalSkeletonTestAssertionCalls": 10,
+          "currentAssertionCalls": 22,
+          "originalAssertionLabelsAllRetained": true,
+          "originalSimpleAssertionStatementsExact": true,
+          "prettyName": "DivineBeasts.Presentation.Characters.SkeletonCompatibility",
+          "flagsUnchanged": true,
+          "newPrettyNamesByApp": [],
+          "sourceCallCountsAreNotRuntimeCounts": true
+        },
+        "rootRunPlan": {
+          "expected189": true,
+          "actuallyExecutedByReviewer": false,
+          "prior188AtDaf7547IsHistoricalOnly": true
+        },
+        "limits": [
+          "原target-null Important最终5源已独立关闭；此次结论只为SourceClosed，本座位未执行新UE/UBT/189/三目标/6门禁/Cook/联机。",
+          "此前daf7547的188/三目标/6门禁历史结果不充作8f17df4及后续新修源码的运行通过。",
+          "角色模型变形修复记录中Main的实际Cook/Monolith/两测试/渲染引用作为远程历史记录读取，未在本座位独立重跑。",
+          "本次5资产只做Git blob/working字节保真；没有以二进制字节或目录说明代替骨架/动画姿势/Monolith/Cook验收。",
+          "Python语法parse不运行UE Python；测试/工具代码可读不等于此隔离源对应资产环境已验证。",
+          "其他历史角色/Asset全量成熟度、移动动画、双客户端登录与新手村行走不在本窄审查结论。",
+          "Main36首Editor2920真实编译因Test缺Package完整定义退出6；Root单include修正已源码回读，但重试通过必须另读真实结果，不能由SourceClosed推断。"
+        ],
+        "compilerIncludeRepair": {
+          "owner": "root",
+          "status": "SourceClosed",
+          "runId": "2920f133-57f4-4451-9f2f-0a3cb9981e30",
+          "originalActualResult": "Failed (OtherCompilationError)",
+          "rootReportedExitCode": 6,
+          "diagnosticReadback": "UBT.log148/174 errorC2672 NewObject；154/180 note UPackage*无法转UObject*；278 Result Failed，71.21秒。",
+          "log": "Saved/Validation/FoundationM0/2920f133-57f4-4451-9f2f-0a3cb9981e30/Build/Editor/UBT.log",
+          "repair": "仅加入UObject/Package.h及中文说明，完整声明UPackage继承UObject以合法转换瞬态Outer，不依赖Unity、不改flags/断言/生产、不降告警。",
+          "engineEvidence": "F:/UnrealEngine-5.8.0-release/Engine/Source/Runtime/CoreUObject/Public/UObject/Package.h:215",
+          "originalSHA256": "EC6D48C1BB1969058A5D4BED5173A713395D8CE288514580F07C5237F78AA51D",
+          "currentSHA256": "397FB2D3569DD9C1004E8EBD691BE09A638D20B389B7E918F6A6156B4A0B1CC5",
+          "currentBytes": 5951,
+          "independentByteProof": "当前源码字节移除新增include与中文说明的唯一一行即精确回到原EC6D freeze。",
+          "workingDiffCheckExitCode": 0,
+          "retryUEOrUBTExecutedByReviewer": false,
+          "currentRetryPassClaim": false
+        }
+      }
+    },
+    {
+      "Name": "Main36AssetPreservation.json",
+      "SourceSHA256": "EDFBE5BF764D06860DCE9FAEC00DF628D4BA0344055DB81B4A4DC0BCCAC90FA4",
+      "Report": {
+        "RemoteHead": "36ebc648ceacb38fffaba07f515142b98b77b841",
+        "CheckedUtc": "2026-10-09T17:03:50.7440121Z",
+        "Assets": [
+          {
+            "Path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset",
+            "RemoteBlob": "1d8aefc5dea922fd97ad02f7a05ef68a78253e35",
+            "WorkBlob": "1d8aefc5dea922fd97ad02f7a05ef68a78253e35",
+            "Equal": true
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset",
+            "RemoteBlob": "aff170598bcfa8a028f499fda359e0f577e3dacd",
+            "WorkBlob": "aff170598bcfa8a028f499fda359e0f577e3dacd",
+            "Equal": true
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset",
+            "RemoteBlob": "cf5f95214352ee8737e87fc547a1a864fab2d56e",
+            "WorkBlob": "cf5f95214352ee8737e87fc547a1a864fab2d56e",
+            "Equal": true
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Quinn_Simple.uasset",
+            "RemoteBlob": "278d777dbaa77ff881cdb705b79e50af5d1455d3",
+            "WorkBlob": "278d777dbaa77ff881cdb705b79e50af5d1455d3",
+            "Equal": true
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset",
+            "RemoteBlob": "aedc07a378eefc7a71a3b0bd611c16115f18b6d8",
+            "WorkBlob": "aedc07a378eefc7a71a3b0bd611c16115f18b6d8",
+            "Equal": true
+          }
+        ],
+        "AssetsModifiedByRoot": false,
+        "AllEqual": true
+      }
+    },
+    {
+      "Name": "Main36CompileHeaderFix.json",
+      "SourceSHA256": "10AA35D4820AED523D3C76AB06859F0934BB9517880ACAF56FA9A1CCC65CF3FE",
+      "Report": {
+        "PriorBuildRunId": "2920f133-57f4-4451-9f2f-0a3cb9981e30",
+        "ExitCode": 6,
+        "Diagnostic": "C2672: UPackage继承不完整，显式UObject/Package.h修正真正Outer转换",
+        "ChangedPath": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Tests/DivineBeastsCharacterSkeletonTests.cpp",
+        "BeforeSHA256": "EC6D48C1BB1969058A5D4BED5173A713395D8CE288514580F07C5237F78AA51D",
+        "AfterSHA256": "397FB2D3569DD9C1004E8EBD691BE09A638D20B389B7E918F6A6156B4A0B1CC5",
+        "AssertionsUnchanged": true,
+        "ProductionUnchanged": true,
+        "NewEditorRunId": "95276c52-66f5-4825-883e-f0850e8b1ce8"
+      }
     }
   ],
   "Limits": [
@@ -6550,6 +7521,6 @@
     "UENUM资产/Blueprint分支、Cook、联网和设备性能未全量验收"
   ],
   "CurrentCanonicalInventoryPath": "Game/Plugins/DivineBeasts/DBAClient/Docs/AAAGameUIBusinessDomainLedger_V1.json",
-  "SourceParent": "022934fb79be058c9df34f67df0f9500def76707",
-  "SourceState": "三方合并工作树已冻结验证；未将原父提交当作当前合并源码提交，正式提交后补身份"
+  "SourceParent": "8f17df4e95e90cfc2eb138719df9680c5fac7868",
+  "SourceState": "最新36及模板兼容修复工作树已冻结并真实验证，正式提交及正常远程推送后补身份"
 }

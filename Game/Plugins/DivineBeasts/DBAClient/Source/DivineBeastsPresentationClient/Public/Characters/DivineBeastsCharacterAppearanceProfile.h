@@ -88,4 +88,13 @@ public:
      * 返回false时OutError说明缺失资源/骨骼/父链，调用者必须拒绝本次装配；成功清空OutError。
      */
     static bool ValidateLoadedSkeleton(const USkeletalMesh* Mesh, const USkeleton* Skeleton, FString& OutError);
+
+    /**
+     * 游戏线程装配前验证已加载网格及可选动画类；两个项目装配入口共用，不加载或修改资产。
+     * Mesh及其实际Skeleton必须通过完整骨树检查；AnimClass为空只表示未指定可选动画，不能跳过网格门禁。
+     * 非空AnimClass必须派生UAnimInstance；原生类无蓝图接口时由自身动画合同负责。
+     * 动画蓝图目标Skeleton为空时按锁定引擎模板规则回退Mesh自有Skeleton，非空目标仍核完整骨树/父链。
+     * false时OutError说明资源、类型或骨树失败，调用者拒绝本次装配；成功清空OutError，不转移资源租约。
+     */
+    static bool ValidateLoadedAnimationClass(const USkeletalMesh* Mesh, const UClass* AnimClass, FString& OutError);
 };
