@@ -1,5 +1,7 @@
 #pragma once
 
+// 平台双端公开流程值合同：调用方持有作用域句柄和事件令牌，数据不承担网络复制或项目业务权威。
+
 #include "CoreMinimal.h"
 #include "UObject/PrimaryAssetId.h"
 #include "UObject/WeakObjectPtr.h"
@@ -103,6 +105,8 @@ struct FGamePlatformFlowStep
     int32 MaxAttempts = 1;               // 包含首次；组合根保证重试的幂等性。
     double RetryDelaySeconds = 0.0;      // 固定退避，基于真实单调时间，不受游戏暂停影响。
     bool bRetryOnTimeout = false;
+    /** 默认false；显式人工输入等待不设节点截止唤醒，内部I/O须自有超时，取消合同不变。 */
+    bool bWaitForUserInput = false;
 };
 
 /** 兼容旧C++显式装配的DAG；入口和所有边一次性校验，资产模式使用单独的UGamePlatformFlowDefinition。 */
