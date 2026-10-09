@@ -26,6 +26,32 @@ public:
     FPrimaryAssetId AbilityDefinitionId;
 
     /**
+     * 记录当前技能激活是否已经通过 GAS CommitAbility（正式消耗与冷却提交）。
+     * 伤害必须在服务器有效激活且成功 Commit 后执行；多段技能在同一次激活中共用此资格。
+     */
+    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+        const FGameplayAbilityActorInfo* ActorInfo,
+        const FGameplayAbilityActivationInfo ActivationInfo,
+        const FGameplayEventData* TriggerEventData) override;
+
+    virtual bool CommitAbility(const FGameplayAbilitySpecHandle Handle,
+        const FGameplayAbilityActorInfo* ActorInfo,
+        const FGameplayAbilityActivationInfo ActivationInfo,
+        FGameplayTagContainer* OptionalRelevantTags = nullptr) override;
+
+    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
+        const FGameplayAbilityActorInfo* ActorInfo,
+        const FGameplayAbilityActivationInfo ActivationInfo,
+        bool bReplicateEndAbility, bool bWasCancelled) override;
+
+private:
+    /** 每个 InstancedPerActor 技能独立持有，结束/取消时立即清零，不复制。 */
+    UPROPERTY(Transient)
+    bool bCommittedForCurrentActivation = false;
+
+public:
+
+    /**
      * 当前技能等级从 GAS 获取；技能数值必须已在授权准备阶段使用 Gameplay Bundle 预加载。
      * 未预热、版本或编号不匹配均返回 false，不在技能施法/命中高频路径同步加载。
      */

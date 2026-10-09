@@ -116,6 +116,82 @@ def check_wiring() -> None:
            read(CLIENT_UI / "Public/Panels/Combat/DivineBeastsAbilityBarPanel.h"))
 
 
+
+
+def check_runtime_safety() -> None:
+    """检查最近补齐的权威授权/冷却/气势和UI事件边界，避免仅复制身份就假装可释放。"""
+    source = read(GAMEPLAY / "Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp")
+    ability = read(ABILITIES / "Private/Abilities/DivineBeastsConfiguredGameplayAbility.cpp")
+    grant = read(ABILITIES / "Private/Components/DivineBeastsAbilityLoadoutComponent.cpp")
+    ui = read(CLIENT_UI / "Private/ViewModels/Combat/DivineBeastsAbilityBarViewModel.cpp")
+    platform_h = read(ROOT /
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/Source/GamePlatformAbilitySystem/Public/Components/GamePlatformAbilitySystemComponent.h")
+    platform_cpp = read(ROOT /
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/Source/GamePlatformAbilitySystem/Private/Components/GamePlatformAbilitySystemComponent.cpp")
+
+    # 必须在旧角色状态被重置之前通知授权组件，否则会漏掉 Ready -> NotReady 边沿。
+    binding = source.split("bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext", 1)[-1]
+    notification = binding.find("ReadinessChanged.Broadcast(false)")
+    invalidation = binding.find("bServerReady = false")
+    verify("可信角色重绑先广播旧技能失效再清空Ready",
+           notification >= 0 and invalidation > notification)
+
+    verify("平台GAS在原生技能列表复制完成后发布事件",
+           "OnRep_ActivateAbilities() override" in platform_h
+           and "Super::OnRep_ActivateAbilities()" in platform_cpp
+           and "AbilitySpecListChanged.Broadcast()" in platform_cpp)
+
+    verify("客户端订阅并注销技能授权复制变化",
+           "OnAbilitySpecListChanged().AddUObject" in ui and
+           "OnAbilitySpecListChanged().Remove" in ui)
+
+    verify("客户端订阅并注销冷却 GameplayEffect 变化",
+           "OnActiveGameplayEffectAddedDelegateToSelf.AddUObject" in ui and
+           "OnActiveGameplayEffectAddedDelegateToSelf.Remove" in ui and
+           "OnAnyGameplayEffectRemovedDelegate().AddUObject" in ui and
+           "OnAnyGameplayEffectRemovedDelegate().Remove" in ui)
+
+    verify("客户端订阅气势与控制状态但不逐帧扫描",
+           "GetMomentumAttribute()" in ui and "Control_Stun" in ui and
+           "Control_Silence" in ui and "State_Dead" in ui and
+           "Tick(" not in ui and "FTSTicker" not in ui)
+
+    verify("客户端先核对角色身份与代次清理旧技能槽位",
+           "GetAvatarGeneration() == Snapshot.AvatarGeneration" in ui and
+           "if (!bIdentityCurrent)" in ui and "Slots.Reset()" in ui)
+
+    verify("技能栏只依据GAS原生Spec校验真实可激活性",
+           "TryResolveGrantedSpec(" in ui and "CanActivateAbility(" in ui and
+           "GetDynamicSpecSourceTags().HasTagExact(InputTag)" in ui and
+           "Spec->Level != Grant.AbilityLevel" in ui)
+
+    verify("技能栏冷却遮罩取自真实GAS效果查询而非固定倒计时",
+           "GetActiveEffectsTimeRemainingAndDuration" in ui and
+           "MakeQuery_MatchAnyOwningTags" in ui and
+           "FMath::Clamp(Pair.Key / Pair.Value" in ui)
+
+    verify("技能界面阻止错误AbilityDefinitionId跨技能冒用",
+           "Configured->AbilityDefinitionId.PrimaryAssetName != Grant.AbilityId" in ui)
+
+    verify("服务器授权前检查气势成本与冷却效果存在",
+           "GetCostGameplayEffect()" in grant and
+           "GetCooldownGameplayEffect()" in grant and
+           "GetMomentumAttribute()" in grant and
+           "Balance.MomentumCost > 0.0f" in grant and
+           "Balance.CooldownSeconds > 0.0f" in grant)
+
+    verify("技能伤害必须在GAS正式Commit之后",
+           "CommitAbility(" in ability and
+           "bCommittedForCurrentActivation = bSucceeded" in ability and
+           "if (!IsActive() || !bCommittedForCurrentActivation)" in ability and
+           "bCommittedForCurrentActivation = false" in ability)
+
+    verify("服务器保留平台Combat伤害唯一真源",
+           "SourceCombat->ApplyDamage(Spec)" in ability and
+           "GamePlatformCombatComponent" in ability and
+           "CalculateDamageMagnitude" not in ability)
+
+
 def check_assets_and_policy() -> None:
     """只检查路径与禁令，真实资产缺失是待办，不应伪造PASS。"""
     cfg = read(ROOT / "Game/Config/DefaultGame.ini")
@@ -136,6 +212,7 @@ def main() -> int:
     check_module()
     check_ownership()
     check_wiring()
+    check_runtime_safety()
     check_assets_and_policy()
     print(f"RESULT | StaticAssertions={PASS + FAIL} Passed={PASS} Failed={FAIL}")
     print("LIMITS | 本脚本不验证UE5.8 UHT/编译、技能数值真实资产、"

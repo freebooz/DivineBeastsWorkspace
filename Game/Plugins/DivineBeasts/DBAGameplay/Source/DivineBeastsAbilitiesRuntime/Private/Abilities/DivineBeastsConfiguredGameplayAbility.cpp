@@ -8,6 +8,42 @@
 #include "Engine/AssetManager.h"
 #include "GameFramework/Actor.h"
 
+void UDivineBeastsConfiguredGameplayAbility::ActivateAbility(
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo* ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo,
+    const FGameplayEventData* TriggerEventData)
+{
+    // 任意新激活均重新开始提交资格；不得沿用上次施法的成本与冷却承诺。
+    bCommittedForCurrentActivation = false;
+    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+}
+
+bool UDivineBeastsConfiguredGameplayAbility::CommitAbility(
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo* ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo,
+    FGameplayTagContainer* OptionalRelevantTags)
+{
+    // 引擎 GAS 负责 CheckCost、CheckCooldown、ApplyCost、ApplyCooldown 和网络预测，
+    // 项目只记住“当前激活已成功提交”的事件，不复制成本/冷却计算。
+    const bool bSucceeded = Super::CommitAbility(
+        Handle, ActorInfo, ActivationInfo, OptionalRelevantTags);
+    bCommittedForCurrentActivation = bSucceeded;
+    return bSucceeded;
+}
+
+void UDivineBeastsConfiguredGameplayAbility::EndAbility(
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo* ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo,
+    bool bReplicateEndAbility, bool bWasCancelled)
+{
+    bCommittedForCurrentActivation = false;
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+
 bool UDivineBeastsConfiguredGameplayAbility::TryReadConfiguredBalance(
     FDivineBeastsAbilityBalanceRow& OutRow, FString& OutError) const
 {
@@ -47,6 +83,12 @@ bool UDivineBeastsConfiguredGameplayAbility::AuthorityApplyConfiguredDamage(
     AActor* Target, const FGamePlatformCombatHitContext& ValidatedHit,
     FGamePlatformCombatResult& OutResult, FString& OutError)
 {
+    if (!IsActive() || !bCommittedForCurrentActivation)
+    {
+        OutError = TEXT("技能未处于有效激活或尚未成功提交 GAS 成本/冷却，拒绝造成伤害。");
+        return false;
+    }
+
     AActor* Source = GetAvatarActorFromActorInfo();
     if (!IsValid(Source) || !Source->HasAuthority() ||
         !IsValid(Target) || !Target->HasAuthority() ||

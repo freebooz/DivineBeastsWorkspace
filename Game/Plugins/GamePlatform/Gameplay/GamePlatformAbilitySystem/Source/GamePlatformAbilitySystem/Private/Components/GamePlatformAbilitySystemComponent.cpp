@@ -15,6 +15,14 @@ UGamePlatformAbilitySystemComponent::UGamePlatformAbilitySystemComponent()
     SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 }
 
+void UGamePlatformAbilitySystemComponent::OnRep_ActivateAbilities()
+{
+    // 只在 UE 原生技能授权容器完成增量复制后通知消费者。
+    // UI 不能从旧的自定义 Loadout 快照推断 GAS Spec 已经同时到达。
+    Super::OnRep_ActivateAbilities();
+    AbilitySpecListChanged.Broadcast();
+}
+
 bool UGamePlatformAbilitySystemComponent::BindAbilityActorInfo(
     AActor* InOwnerActor,
     AActor* InAvatarActor)

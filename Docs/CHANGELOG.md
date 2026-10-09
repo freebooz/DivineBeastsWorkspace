@@ -4,10 +4,12 @@
 
 ## 2026-10-09｜十二生肖技能定义、权威授予与技能栏视图骨架
 
+- 专项后续增量：修复可信英雄身份切换时旧技能授权可能残留的问题；平台 GAS 对原生技能列表复制完成发出中立事件；项目 UI 改为匹配当前英雄与角色代次、真实 GAS AbilitySpec、CanActivateAbility（能力可激活性）以及 GameplayEffect（效果）和气势/控制事件，冷却遮罩按真实剩余/总持续时间投影，不做常驻业务 Tick。服务器授权前按级数核对 GameplayEffect 气势负值与时长是否等于 DataTable 配置，并在 GAS Commit 成功后才允许服务端造成伤害。新增 12 英雄×5枚共60张 PNG 图源校验脚本，结果通过，但**不等于引擎 Texture2D 导入或真实游戏 UI 已验收**。
+
 - 在已有 DBAGameplay（项目双端玩法插件）中新设 `DivineBeastsAbilitiesRuntime`（技能运行模块），实现 `UDivineBeastsAbilityDefinition`（玩法主资产定义）、`FDivineBeastsAbilityBalanceRow`（每级伤害、冷却、气势等数值配置）、`UDivineBeastsAbilityLoadoutComponent`（按真实服务器英雄定义的默认 AbilitySet 申请、授予、撤销、OwnerOnly 复制），并保留既有平台 GAS/Combat/Data 为唯一通用能力真源。
 - 新增 `ADivineBeastsGameplayCharacter`（项目可玩角色：ASC、角色身份、权威战斗、技能装配组合），竞技服务器出生逻辑改用该类。`DBAClient/DivineBeastsUIClient`（项目客户端 UI）新增 `UDivineBeastsAbilityUIProfile`（图标与名称）及 `UDivineBeastsAbilityBarViewModel`（授权槽位只读投影），原技能栏面板增量绑定本地玩家 Pawn 切换事件。
 - 增量更新项目三层插件声明、双端技能定义扫描和仅客户端技能表现资源扫描；新增专项静态审计、单测源码及中文插件实施说明。根 AGENTS.md（项目规则）的旧五行/克制/破元/共鸣禁令保持有效，未制造正式技能资产 ID、`.uasset`、图标或 Widget 蓝图。
-- 静态审计 `ValidateZodiacAbilityIntegration.py` 的17项全部通过、头文件扫描566处0缺失、继承边界扫描470公开头/963类型/175边通过。全局基线 `ValidateDesignBaseline.ps1` 仍有16项既有 DBAWorlds 与 GamePlatformVFX 描述依赖缺口；本机 UE5.8 可执行文件缺失且 Monolith 表示编辑器未运行，故 **UE 编译、自动化、联机、真实技能资产、Cook/Stage 均未验收**。实际证据和未完成任务见 `Docs/Implementation/十二生肖技能数据驱动实施记录_20261009.md`。
+- 本批初始静态审计17/17通过（后续继续扩至29项），头文件扫描最初566处0缺失，继承边界扫描470公开头/963类型/175边通过；整体基线仍存在与 DBAWorlds/GamePlatformVFX 相关的16项既有依赖声明问题。之前因误查不完整的 D: 盘 UE 安装目录而未定位可执行文件；现已确认锁定引擎位于 `F:/UnrealEngine-5.8.0-release`，真实技能模块构建正在专项验证。UE 联机、正式技能资产及客户端/专服 Cook/Stage 仍未验收，详见 `Docs/Implementation/十二生肖技能数据驱动实施记录_20261009.md`。
 
 ## 2026-09-29｜登录后角色选择/创建三维前端预览
 

@@ -3,7 +3,8 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/GamePlatformGameplayAbility.h"
 #include "Abilities/DivineBeastsConfiguredGameplayAbility.h"
-#include "Components/DivineBeastsCharacterComponent.h"
+#include "Components/DivineBeastsCharacterComponent.h"#include "Attributes/DivineBeastsMomentumAttributeSet.h"
+
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Definitions/DivineBeastsAbilityDefinition.h"
 #include "Definitions/GamePlatformAbilitySetDefinition.h"
@@ -309,6 +310,66 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
             if (!Definition->TryGetLoadedBalance(Grant.AbilityLevel, Balance, OutError))
             {
                 return false;
+            }
+            // 静态策划表并不能自动扣气势：GAS Cost 必须是同等级实际负向瞬时修改。
+            // 首批只接受可直接求值的 GE ScalableFloat/Curve Table；动态 SetByCaller
+            // 必须先有独立已审核的成本协议，否则在 GiveAbility 前拒绝，不能默许数值漂移。
+            const UGameplayEffect* CostEffect = Configured->GetCostGameplayEffect();
+            float ActualMomentumChange = 0.0f;
+            int32 MomentumModifiers = 0;
+            if (CostEffect)
+            {
+                if (CostEffect->DurationPolicy != EGameplayEffectDurationType::Instant)
+                {
+                    OutError = TEXT("技能气势成本 GameplayEffect 必须是瞬时效果，不允许周期或无限堆叠扣除。");
+                    return false;
+                }
+                for (const FGameplayModifierInfo& Modifier : CostEffect->Modifiers)
+                {
+                    if (Modifier.Attribute !=
+                        UDivineBeastsMomentumAttributeSet::GetMomentumAttribute())
+                    {
+                        // 其他资源需要扩充经过批准的数值字段和校验，不在此暗中加入成本。
+                        OutError = TEXT("项目技能成本效果包含未在数值表声明的资源修改。");
+                        return false;
+                    }
+                    float Change = 0.0f;
+                    if (Modifier.ModifierOp != EGameplayModOp::Additive ||
+                        !Modifier.ModifierMagnitude.GetStaticMagnitudeIfPossible(
+                            Grant.AbilityLevel, Change) || !FMath::IsFinite(Change))
+                    {
+                        OutError = TEXT("技能气势成本无法按真实技能等级计算静态负数，拒绝授权。");
+                        return false;
+                    }
+                    ++MomentumModifiers;
+                    ActualMomentumChange += Change;
+                }
+            }
+            if ((Balance.MomentumCost > 0.0f && (!CostEffect || MomentumModifiers == 0)) ||
+                !FMath::IsNearlyEqual(
+                    ActualMomentumChange, -Balance.MomentumCost, 0.01f))
+            {
+                OutError = TEXT("技能数值表的气势成本与GAS实际瞬时扣除量不一致。");
+                return false;
+            }
+
+            // 冷却的Duration也必须等于同等级策划表；存在效果却设置0秒同样不允许。
+            const UGameplayEffect* CooldownEffect = Configured->GetCooldownGameplayEffect();
+            if (Balance.CooldownSeconds > 0.0f || CooldownEffect)
+            {
+                float ActualCooldownSeconds = 0.0f;
+                const FGameplayTagContainer* CooldownTags = Configured->GetCooldownTags();
+                if (!CooldownEffect || !CooldownTags || CooldownTags->IsEmpty() ||
+                    CooldownEffect->DurationPolicy != EGameplayEffectDurationType::HasDuration ||
+                    !CooldownEffect->DurationMagnitude.GetStaticMagnitudeIfPossible(
+                        Grant.AbilityLevel, ActualCooldownSeconds) ||
+                    !FMath::IsFinite(ActualCooldownSeconds) ||
+                    !FMath::IsNearlyEqual(
+                        ActualCooldownSeconds, Balance.CooldownSeconds, 0.01f))
+                {
+                    OutError = TEXT("技能冷却标签、持续类型或同等级GE持续秒数与数值表不一致。");
+                    return false;
+                }
             }
         }
         if (Grant.InputTag.IsValid())

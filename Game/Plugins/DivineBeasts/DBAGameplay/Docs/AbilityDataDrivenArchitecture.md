@@ -48,3 +48,10 @@ HeroDefinition.DefinitionId（英雄定义编号） → HeroDefinition.DefaultAb
 - 计划第一阶段只要求经过策划审核的一个子鼠技能，再以辰龙覆盖多阶段/远程范围；不预先宣称已经存在60个正式技能。
 - Server Cook（专用服务器资源烘焙）仅允许玩法 Definition、必要 GameplayEffect/Animation；图标、Widget、VFX/SFX 不在 DBAGameplay 的资源中。
 - 归属设置校验通过仅表示数据结构可加载；真正的 CooldownSeconds/MomentumCost（冷却与气势成本）还必须由已批准的 GAS Ability / GameplayEffect 消费，禁止仅填数值表而宣称施法会自动扣气势、进入冷却。
+## 2026-10-09 增量实现：授权失效与数值对账
+
+- `UDivineBeastsCharacterComponent::AuthorityBindTrustedContext`（可信身份重新绑定）首先发布 `ReadinessChanged(false)`（旧角色失效事件），然后更换英雄身份与出生代次。项目技能组件据此撤销自己的旧 GAS 授权、GameplayEffect（玩法效果）和 Data Lease（数据租约），防止换英雄残留旧技能。已写入源码，仍待实际 UE 编译及重生测试。
+- `UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet`（授权前校验）按获授的真实技能等级，核对技能表的 `MomentumCost`（气势成本）与实际 GameplayEffect 修改幅度一致：只接受 `Instant`（瞬时）负向 `Additive`（加法）气势修改；对其他未声明资源修改一律拒绝。`CooldownSeconds`（冷却秒数）与合法 `HasDuration`（限时）GameplayEffect 的持续秒数相同，并要求冷却 Tag（标签）存在。仅支持可由 `GetStaticMagnitudeIfPossible`（静态幅度计算）求值的配置，容许 0.01 误差；动态 `SetByCaller`（运行时指定数值）需要单独审核，不默许数值漂移。
+- `UDivineBeastsConfiguredGameplayAbility`（技能基类）每次激活清空提交状态，仅 GAS `CommitAbility`（正式提交成本及冷却）成功后允许服务端调用 `AuthorityApplyConfiguredDamage`（可信命中伤害）；技能结束或取消后撤销该资格。不等于已经实现正式技能的攻击动作或特效。
+- 十二生肖内容包已另行产生 60 枚 PNG 图源（每英雄五枚）；不是正式 AbilityId 或 UE Texture2D。源图校验脚本 `Tests/Assets/ValidateZodiacSkillIconSources.py` 与各英雄包清单只检查文件及 SHA-256，不代表图标导入/绑定或运行验收。
+

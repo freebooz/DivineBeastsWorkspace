@@ -2,11 +2,21 @@
 
 #include "CoreMinimal.h"
 #include "Components/GamePlatformSlotWidget.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayTagContainer.h"
 #include "ViewModels/DivineBeastsViewModelBase.h"
 #include "DivineBeastsAbilityBarViewModel.generated.h"
 
 class UDivineBeastsAbilityLoadoutComponent;
 class UDivineBeastsAbilityUIProfile;
+class UDivineBeastsCharacterComponent;
+class UGamePlatformAbilitySystemComponent;
+class UAbilitySystemComponent;
+struct FOnAttributeChangeData;
+struct FActiveGameplayEffect;
+struct FGameplayEffectSpec;
+struct FGameplayAbilitySpec;
+struct FGamePlatformAbilityAvatarBindingSnapshot;
 struct FDivineBeastsAbilityLoadoutState;
 struct FStreamableHandle;
 
@@ -46,8 +56,38 @@ private:
     void RefreshSlots(const FDivineBeastsAbilityLoadoutState& Snapshot);
     void ResetProfileLease();
 
+    /** 当 GAS 能力授予复制、技能效果、气势或阻断标签变化时更新单一快照；不使用 Widget Tick。 */
+    void BindToNativeAbilityEvents();
+    void UnbindFromNativeAbilityEvents();
+    void HandleAbilitySpecListChanged();
+    void HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot);
+    void HandleGameplayEffectAdded(UAbilitySystemComponent* Source,
+        const FGameplayEffectSpec& Effect, FActiveGameplayEffectHandle Handle);
+    void HandleGameplayEffectRemoved(const FActiveGameplayEffect& Effect);
+    void HandleMomentumChanged(const FOnAttributeChangeData& ChangeData);
+    void HandleCombatTagChanged(const FGameplayTag Tag, int32 NewCount);
+    void HandleCharacterReadinessChanged(bool bReady);
+    void RefreshCurrentLoadout();
+
+    /** 只读检查：当前标签只映射到一个已复制原生 AbilitySpec，具体能否激活由 GAS 判断。 */
+    static bool TryResolveGrantedSpec(UGamePlatformAbilitySystemComponent& ASC,
+        FGameplayTag InputTag, const FGameplayAbilitySpec*& OutSpec);
+
     TWeakObjectPtr<UDivineBeastsAbilityLoadoutComponent> Loadout;
     FDelegateHandle LoadoutHandle;
+
+    /** 保留当前本地 ASC 的弱引用；所有真实授权、冷却和成本仍归 GAS。 */
+    TWeakObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystem;
+    TWeakObjectPtr<UDivineBeastsCharacterComponent> CharacterIdentity;
+    FDelegateHandle CharacterReadinessHandle;
+    FDelegateHandle AbilitySpecHandle;
+    FDelegateHandle AbilityAvatarHandle;
+    FDelegateHandle GameplayEffectAddedHandle;
+    FDelegateHandle GameplayEffectRemovedHandle;
+    FDelegateHandle MomentumHandle;
+    FDelegateHandle StunTagHandle;
+    FDelegateHandle SilenceTagHandle;
+    FDelegateHandle DeadTagHandle;
 
     /** 强引用只在本次 UI 作用域有效，回调检查代次避免跨角色污染。 */
     UPROPERTY(Transient)
