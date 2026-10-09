@@ -303,3 +303,15 @@ divinebeasts.application.main@1
 8. UE Automation；
 9. Cook / Stage；
 10. PC 与移动端人工视觉签审。
+
+### 2026-10-09 新手村准入、角色与本地行走接线
+
+DBAWorldsRuntime 的 DivineBeastsWorldGameMode/DivineBeastsWorldPlayerController 向下继承 GamePlatformGameplay 框架，复用既有准入、体验、出生与复制门禁。DBAServer 将实际 ServerAdmission 的已验证连接投影桥接到门禁，重查 AdmissionId、ConnectionGeneration、SessionEpoch、实例和体验；未准入不出生。平台 World 新增仅C++的 InitializeBoundWorld 接口，原生组合根必须先验证当前连接，平台独立加载真实定义并匹配实际地图、区域与流送事实，投影不能直接返回Ready。
+
+Village 内容包新增共享Pawn及Tutorial体验定义。原有PlayerStart位置保留，增加第二个出生点避免两个客户端互相堵住出生。专用服务器的Pawn定义只引用原生角色类，没有UI、VFX或模型硬引用。客户端只从实际地图、当前受控Pawn、共享Data准备和服务器Active事件形成Loading事实，旧世界回调忽略；委托在EndPlay解绑，不用界面Tick轮询。
+
+角色创建成功仅刷新档案并返回选择页，清除创建侧隐式待选择写入；进入世界必须经过选择命令。传输失败优先展示错误而非残留加载层，客户端默认回退到正式前端地图。
+
+原生ACharacter增加WASD移动、鼠标镜头和空格跳跃，使用引擎CharacterMovement网络复制。客户端Avatar表现提示来自已验证选择，复用Appearance组件异步加载，不把视觉提示写成服务器英雄、技能或持久角色权威身份。当前角色模型及IDLE仍属一期占位内容，不能据此宣称英雄技能、移动动画和正式新手村美术全部完成。
+
+验证记录位于Saved/Validation/VillageFlow/20261009；编译、保存资产及Cook与双客户端人工行走验收分别记录，未取得后者证据前不宣称全链路完成。

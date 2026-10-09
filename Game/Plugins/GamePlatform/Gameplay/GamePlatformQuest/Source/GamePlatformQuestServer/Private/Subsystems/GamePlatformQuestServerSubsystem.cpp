@@ -1,4 +1,5 @@
 #include "Subsystems/GamePlatformQuestServerSubsystem.h"
+#include "Engine/World.h" // 专服非Unity编译须显式包含世界与网络模式的完整类型。
 
 #include "Components/GamePlatformQuestStateComponent.h"
 #include "Definitions/GamePlatformQuestDefinition.h"

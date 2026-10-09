@@ -17,14 +17,12 @@ FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
     const FDivineBeastsUIViewState& State,
     FName CharacterEntryScreenPreference)
 {
-    if (State.Loading.bIsLoading)
-    {
-        return TEXT("UI.Screen.LoadingTravel");
-    }
+    // 传输终态失败必须打断残留加载标志，否则连接关闭后界面会继续遮挡错误和返回入口。
     if (State.PageState == EDivineBeastsUIPageState::Error)
     {
         return TEXT("UI.Screen.ErrorReconnect");
     }
+    if (State.Loading.bIsLoading) { return TEXT("UI.Screen.LoadingTravel"); }
 
     const FString Step = State.CurrentStep.ToString();
     // NAME_None 转为字符串后得到 "None"，并不是空字符串；必须先按 FName

@@ -572,7 +572,7 @@ int32 UDivineBeastsServerBootstrapSubsystem::GetCurrentPlayerCount() const
     }
     AGameModeBase* GameMode = World->GetAuthGameMode();
     if(ActiveProfile.ServerRoleId!=TEXT("GameServer.Role.Village"))return GameMode?GameMode->GetNumPlayers():0;
-    const auto* Mode=Cast<ADivineBeastsWorldGameMode>(GameMode);
+    auto* Mode=Cast<ADivineBeastsWorldGameMode>(GameMode);
     const auto* Experience=Mode?Mode->GetExperienceComponent():nullptr;
     return Experience && Experience->GetExperienceSnapshot().IsServerActive() ? Mode->GetNumPlayers() : -1;
 }

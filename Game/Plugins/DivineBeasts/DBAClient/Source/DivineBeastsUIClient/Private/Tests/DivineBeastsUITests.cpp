@@ -190,6 +190,8 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
         FName(TEXT("UI.Screen.Login")));
 
     State.PageState = EDivineBeastsUIPageState::Error;
+    // 网络传输终态失败可与尚未清除的加载快照同批到达；错误入口必须可见。
+    State.Loading.bIsLoading = true;
     TestEqual(
         TEXT("错误优先进入重连/错误页"),
         FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),

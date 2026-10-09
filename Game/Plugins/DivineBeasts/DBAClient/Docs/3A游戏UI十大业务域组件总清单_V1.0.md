@@ -388,7 +388,7 @@ Game/Plugins/MobaCommon/GamePlatformArena/                       # 第二层：M
 Game/Plugins/DivineBeasts/DBAClient/                              # 第三层：项目世界、战斗、账号、社交和系统页面
   Source/DivineBeastsUIClient/Public/                              # 项目域ViewModel、Screen/HUD/Panel，仅组合业务事实
   Docs/3A游戏UI十大业务域组件总清单_V1.0.md                      # 本目标组件清单
-  Docs/3A游戏UI十大业务域组件台账_V1.json                       # 机器可读完整台账（仅描述，非资产）
+  Docs/AAAGameUIBusinessDomainLedger_V1.json                       # 机器可读完整台账（仅描述，非资产）
 Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/ # 第三层公共项目视觉
   Content/UI/                                                    # 真实Widget Blueprint资源，由Monolith制作
 Game/Plugins/DivineBeasts/DBAArena/                              # 第三层可选竞技视觉与页面
