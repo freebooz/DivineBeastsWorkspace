@@ -1,3 +1,4 @@
+// 平台运营投影事件实现；服务器权威与本地时间派生视图的代次分离。
 #include "Services/GamePlatformLiveOpsClientSubsystem.h"
 
 #include "Interfaces/GamePlatformLiveOpsClientTransport.h"
@@ -37,6 +38,10 @@ void UGamePlatformLiveOpsClientSubsystem::Deinitialize()
         BoundaryTickerHandle.Reset();
     }
 
+    OnViewChanged.Clear();
+    OnCatalogChanged.Clear();
+    OnPlayerStateChanged.Clear();
+    OnClaimChanged.Clear();
     if (Transport.IsValid())
     {
         Transport->CancelAllRequests();
@@ -107,6 +112,7 @@ void UGamePlatformLiveOpsClientSubsystem::ResetAccount()
         Catalog.CatalogRevision > 0
             ? EGamePlatformLiveOpsClientState::Ready
             : EGamePlatformLiveOpsClientState::Uninitialized;
+    PublishDerivedViewChanged(false, true);
 }
 
 bool UGamePlatformLiveOpsClientSubsystem::RefreshAll()
@@ -157,6 +163,7 @@ bool UGamePlatformLiveOpsClientSubsystem::RefreshCatalog()
         LastError = EGamePlatformLiveOpsError::BackendUnavailable;
     }
 
+    if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
     return bStarted;
 }
 
@@ -201,6 +208,7 @@ bool UGamePlatformLiveOpsClientSubsystem::RefreshPlayerState()
         LastError = EGamePlatformLiveOpsError::BackendUnavailable;
     }
 
+    if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
     return bStarted;
 }
 
@@ -251,6 +259,7 @@ bool UGamePlatformLiveOpsClientSubsystem::ClaimSignIn(
         LastError = EGamePlatformLiveOpsError::BackendUnavailable;
     }
 
+    if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
     return bStarted;
 }
 
@@ -298,6 +307,7 @@ bool UGamePlatformLiveOpsClientSubsystem::ReconcileClaim(
         LastError = EGamePlatformLiveOpsError::BackendUnavailable;
     }
 
+    if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, false); }
     return bStarted;
 }
 
@@ -479,6 +489,10 @@ bool UGamePlatformLiveOpsClientSubsystem::TickBoundaryRefresh(
 
     if (bCrossed)
     {
+        // 时间有效性先发生变化，网络刷新可能失败/Revision不变，仍需立即告知本地派生视图。
+        const uint64 ExpectedGeneration = AccountGeneration;
+        PublishDerivedViewChanged(true, true);
+        if (ExpectedGeneration != AccountGeneration) { return true; }
         RefreshAll();
     }
 
@@ -573,15 +587,12 @@ void UGamePlatformLiveOpsClientSubsystem::HandleCatalogCompleted(
 
     if (NewCatalog.CatalogRevision >= Catalog.CatalogRevision)
     {
-        const bool bChanged =
-            NewCatalog.CatalogRevision > Catalog.CatalogRevision;
-
         Catalog = MoveTemp(NewCatalog);
-
-        if (bChanged)
-        {
-            OnCatalogChanged.Broadcast();
-        }
+        // 服务器时间采样和派生有效性可变化，而目录持久Revision不推进。
+        LastError = EGamePlatformLiveOpsError::None;
+        RefreshAggregateState();
+        if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(true, true); }
+        return;
     }
 
     LastError = EGamePlatformLiveOpsError::None;
@@ -620,16 +631,11 @@ void UGamePlatformLiveOpsClientSubsystem::HandlePlayerStateCompleted(
     if (NewState.PlayerStateRevision >=
         PlayerState.PlayerStateRevision)
     {
-        const bool bChanged =
-            NewState.PlayerStateRevision >
-            PlayerState.PlayerStateRevision;
-
         PlayerState = MoveTemp(NewState);
-
-        if (bChanged)
-        {
-            OnPlayerStateChanged.Broadcast();
-        }
+        LastError = EGamePlatformLiveOpsError::None;
+        RefreshAggregateState();
+        if (ExpectedGeneration == AccountGeneration) { PublishDerivedViewChanged(false, true); }
+        return;
     }
 
     LastError = EGamePlatformLiveOpsError::None;
@@ -690,6 +696,7 @@ void UGamePlatformLiveOpsClientSubsystem::HandleClaimCompleted(
     ActiveClaimOperationId.Invalidate();
     ServerTimeEstimator.Update(Result.ServerTimeUtc);
     OnClaimChanged.Broadcast(Result);
+    if (ExpectedGeneration != AccountGeneration) { return; }
 
     // Claim成功或查到持久结果后刷新PlayerState，
     // 不由客户端自行修改ClaimedCurrentPeriod。
@@ -708,6 +715,7 @@ void UGamePlatformLiveOpsClientSubsystem::RefreshAggregateState()
              PlayerState.PlayerStateRevision > 0)
                 ? EGamePlatformLiveOpsClientState::Reconciling
                 : EGamePlatformLiveOpsClientState::Loading;
+        PublishDerivedViewChanged(false, false);
         return;
     }
 
@@ -716,6 +724,7 @@ void UGamePlatformLiveOpsClientSubsystem::RefreshAggregateState()
         PlayerState.PlayerStateRevision <= 0)
     {
         State = EGamePlatformLiveOpsClientState::Error;
+        PublishDerivedViewChanged(false, false);
         return;
     }
 
@@ -724,8 +733,22 @@ void UGamePlatformLiveOpsClientSubsystem::RefreshAggregateState()
         ServerTimeEstimator.IsValid())
     {
         State = EGamePlatformLiveOpsClientState::Ready;
+        PublishDerivedViewChanged(false, false);
         return;
     }
 
     State = EGamePlatformLiveOpsClientState::Uninitialized;
+    PublishDerivedViewChanged(false, false);
+}
+
+void UGamePlatformLiveOpsClientSubsystem::PublishDerivedViewChanged(bool bCatalog, bool bPlayer)
+{
+    check(IsInGameThread());
+    const uint64 ExpectedGeneration = AccountGeneration;
+    ++ViewGeneration;
+    OnViewChanged.Broadcast();
+    if (ExpectedGeneration != AccountGeneration) { return; }
+    if (bCatalog) { OnCatalogChanged.Broadcast(); }
+    if (ExpectedGeneration != AccountGeneration) { return; }
+    if (bPlayer) { OnPlayerStateChanged.Broadcast(); }
 }

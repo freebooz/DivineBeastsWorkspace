@@ -1,0 +1,23 @@
+# F16/F26 AI世界与资源所有权（2026-09-30）
+
+共享AI定义和状态契约不启动AI；GamePlatformAIServer真实世界运行只允许Game/PIE、非Commandlet、非客户端且权威。TargetRegistry在ShouldCreateSubsystem/DoesSupportWorldType/Initialize与注册/生成Controller入口均过滤；独立创建的AIController.OnPossess也再次过滤。Editor/EditorPreview打开地图不会因此生成/占有运行Controller。ServerOnly宿主不是编辑器世界隔离的替代。
+
+Controller在游戏线程从现有Data服务AcquireResources申请定义及Brain软路径资源的World租约；唯一中央StreamableManager与需求账本由GamePlatformData持有。定义和Brain租约独立、完整保存签发证明，不手造租约。完成回调核对弱Controller、请求代次、AI实例代次与租约Scope/Lease/Generation，实际ResolveObject前再次确认Succeeded未释放。当前软配置若已更换也拒绝旧定义。成功后持有两份需求至停止Brain后UnPossess/EndPlay/Reset，不在加载完成时释放。
+
+清理先停止Brain、决策计时器及自有委托，再撤销Brain和定义需求；过期回调无法启动旧Brain。资源缺失、错误类、无Data、UnsupportedBrain均走真实禁用/错误路径，没有新资产管理器或生产测试替身。旧AI主资产身份和状态序列化字段不变。资源初始化由Controller消费，CharacterInitializationExecutor无直接加载职责，不为形式增加租约。
+
+涉及 Server 的 Controllers/Perception公开头及Private实现、Perception/AIWorldPolicy.h、Private/Tests/AIWorldPolicyTests.cpp/AITargetRegistryWorldTests.cpp、Tests/CMakeLists.txt。原生回归验证Game/PIE/Editor/Preview/客户端/Commandlet资格；真正非PIE Editor世界服务不创建用UE测试覆盖，运行尚未执行。
+
+## 验证与中文审核边界
+
+本次修改已补上述责任、端侧、游戏线程、所有权、失败和取消合同；新增C++测试放在模块Private/Tests，插件Tests只持原生编译入口。原生结果与UE Automation/Editor/Client/Server编译分别记录于Game/Saved/Reviews/task3-repair-report.md，不能将纯规则通过当引擎时序通过。存量公开类型仍有逐字段中文说明缺口，本页不宣称全插件或全工作空间已经整体合规。
+
+## F22 AI激活链补充
+
+独立复核确认玩家PlayerState/Active Gate不能用于服务器AI。AIController现在拥有中立服务器Gate注册：实际核对本Controller占有当前Pawn、ASC Owner/Avatar、Game/PIE权威世界、AI实例与资源请求代次、真实定义/Brain正在运行、两份Data租约实时Succeeded，以及死亡/眩晕/沉默事实。TryAttackCurrentTarget在TryActivateAbilitiesByTag前查询同一Gate；平台GameplayAbility仍在CanActivateAbility再次查询，未降低门禁。
+
+只对当前Pawn自有且未绑定（或仅旧原生绑定尚无平台代次）的ASC建立Pawn/Pawn ActorInfo；不覆盖宿主其他Owner/Avatar。Controller只清理由自己建立的ActorInfo。定义/Brain完成、Avatar变化和重生后重新注入；失去Pawn/EndPlay先撤销和解绑，Reset拒绝旧资源资格。DBA玩家组件遇到非玩家控制器不抢占该Gate。
+
+AIAbilityActivationPolicyTests先观察就绪AI被永久拒绝的RED（CTest退出8）后修复并GREEN（退出0），覆盖Ready正例及Brain/资源/占有/世界/死亡控制/两代次拒绝。AIAbilityActivationIntegrationTests走真实Controller→Data异步完成→中立Gate→TryActivateAbilitiesByTag→平台CanActivateAbility；须提供真实独占开发夹具参数-GamePlatformAIAbilityTestDefinition=/Game/...Definition及-GamePlatformAIAbilityTestClass=/Game/...Ability_C，定义BT/BB有效且Brain保持运行（例如持续等待任务）、攻击Tag与能力AssetTags精确一致，能力为具体平台派生且允许无目标测试激活。夹具缺失明确测试失败，不能跳过宣称通过。本Task未生成资产、未运行此UE集成用例。
+
+NoPCH实际编译补正：公开/实现直接调用FGamePlatformResult的模块增加直接Public GamePlatformCore依赖；成员调用处直接包含完整Actor头，不依靠PCH或Unity来源掩盖类型/链接所有权。插件描述对应依赖由主执行者同步，统一复编尚待完成。

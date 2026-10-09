@@ -1,4 +1,7 @@
+// 平台诊断注册表实现：进程级仅保存机制和弱目标，快照所属世界由每次调用的Context提供。
+// 采集不改变权威状态，移除/失效目标不会延长Actor/World生命周期；输出统一过滤敏感字段并限长。
 #include "Registry/GamePlatformDebugRegistry.h"
+#include "Engine/World.h"
 
 #include "GameFramework/Actor.h"
 #include "HAL/PlatformTime.h"

@@ -130,3 +130,10 @@ Preview 不写盘；Confirm／Commit 才进行一次原生保存。
 - `Docs/ManualReview.md`：人工审核流程。
 - `Docs/审查整改方案与执行计划.md`：本轮问题、方案、执行和剩余风险。
 
+
+
+## 2026-09-30设计审查修订
+
+进程注册的Client持久化对象只作工厂；每个GI通过CreateScopedProvider拥有独立用户上下文。旧Client自定义Provider未提供作用域克隆时返回SettingsScopedPersistenceRequired，不共享可变用户键。设备UGameUserSettings进程语义保留。ClientContext交错A/B真实保存回归源已补，未执行磁盘验收。
+
+本次真实源码/Native/静态检查与未执行UE/后端/Cook边界见Game/Saved/Reviews/task2-repair-report.md；旧历史运行证据不自动覆盖本次修改。

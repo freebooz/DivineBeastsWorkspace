@@ -1,5 +1,9 @@
 # PersistenceAndTransactions（持久化与事务）
 
+> 2026-09-30审查更正：以下为截至2026-09-29的历史设计/计划材料，其中实现路径、完成宣称与工具环境描述已被当前README和TestingAndEvidence替代。旧Backend/gameplatform路径、迁移、Outbox、DBAServer持久化/奖励及假支付描述不构成当前交付事实；设计约束可供后续立项，必须重核实际源码。
+
+## 历史设计材料（被现行能力矩阵替代）
+
 数据库迁移为 `0007_commerce（商城基础迁移）`和 `0008_commerce_optional_provider_ids（商城可选支付编号修正迁移）`。
 
 `0007`建立 PurchaseIntent、Order、Payment、Fulfillment、Refund、Operation（购买意图、订单、支付、履约、退款、操作）表。创建订单事务使用 PostgreSQL advisory lock（咨询锁）按 game/player/offer（游戏/玩家/报价）串行化购买限制检查，并一次写入订单、RewardSnapshot（奖励快照）对应 Fulfillment Steps（履约步骤）与 CommerceOrderCreated Outbox（订单创建事务外发）。

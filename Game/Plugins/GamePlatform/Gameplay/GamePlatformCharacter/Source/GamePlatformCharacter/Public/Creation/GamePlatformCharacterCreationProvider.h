@@ -2,8 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Features/IModularFeature.h"
+#include "Types/GamePlatformDataLease.h"
+#include "Types/GamePlatformResult.h"
 
 struct FStreamableHandle;
+class UGameInstance;
 
 /** FGamePlatformCharacterCreationHeroDescriptor（平台角色创建英雄描述）。 */
 struct FGamePlatformCharacterCreationHeroDescriptor
@@ -11,6 +14,7 @@ struct FGamePlatformCharacterCreationHeroDescriptor
     FName HeroDefinitionId = NAME_None;
     FName DisplayNameKey = NAME_None;
     FString ContentRevision;
+
 };
 
 /**
@@ -48,4 +52,16 @@ public:
         FName HeroDefinitionId,
         TMap<FString, FString> AppearanceSelection,
         TFunction<void(bool, FString)> Completion) const = 0;
+    /**
+     * 实例作用域草稿校验；调用者持有并显式释放数据租约，最终资格仍由后端拥有。
+     * 默认拒绝尚未迁移的提供者；入口前置条件不满足直接拒绝；交给Data后的校验拒绝或接纳均可能延后一次通知，调用者须核对请求代次。
+     */
+    virtual FGamePlatformDataLease ValidateCreationDraftWithLease(
+        UGameInstance& Instance, TWeakObjectPtr<UObject> WeakCaller, FName HeroDefinitionId,
+        TMap<FString, FString> AppearanceSelection, TFunction<void(bool, FString)> Completion,
+        FGamePlatformResult& OutResult) const
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("ScopedCreationProviderUnavailable"), TEXT("角色创建提供者尚未支持实例资源租约。"));
+        return {};
+    }
 };

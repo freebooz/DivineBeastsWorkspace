@@ -1,0 +1,11 @@
+# 原生测试直接使用生产排序策略，不启动UE；完整fragment解析仍由UE Automation补证。
+cmake_minimum_required(VERSION 3.20)
+project(PresentationPolicies LANGUAGES CXX)
+enable_testing()
+add_executable(PresentationPolicies ../Source/GamePlatformPresentationClient/Private/Tests/GamePlatformPresentationPolicyNativeTests.cpp)
+target_compile_features(PresentationPolicies PRIVATE cxx_std_17)
+target_compile_definitions(PresentationPolicies PRIVATE GAMEPLATFORM_PRESENTATION_NATIVE_TEST=1)
+if(MSVC)
+ target_compile_options(PresentationPolicies PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME Presentation.Policies COMMAND PresentationPolicies)

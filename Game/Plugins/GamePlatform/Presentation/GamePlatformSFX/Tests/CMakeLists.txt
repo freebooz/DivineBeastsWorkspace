@@ -1,0 +1,11 @@
+# 音频槽位生产策略原生回归；真实音频启动/完成需要UE测试。
+cmake_minimum_required(VERSION 3.20)
+project(SFXBudget LANGUAGES CXX)
+enable_testing()
+add_executable(SFXBudget ../Source/GamePlatformSFXClient/Private/Tests/GamePlatformSFXBudgetNativeTests.cpp)
+target_compile_features(SFXBudget PRIVATE cxx_std_17)
+target_compile_definitions(SFXBudget PRIVATE GAMEPLATFORM_SFX_NATIVE_TEST=1)
+if(MSVC)
+ target_compile_options(SFXBudget PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME SFX.Budget COMMAND SFXBudget)

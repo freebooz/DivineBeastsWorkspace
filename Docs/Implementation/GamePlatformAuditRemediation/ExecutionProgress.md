@@ -9,3 +9,6 @@
 - Ruling: 554ee8a作为历史代码三方整合，保留当前main资产/输入/命名变更；每个本轮审查ID重新核对。成本：合并冲突与接口漂移需重编验证。
 - Ruling: 五模式规则/真实资源/生产合同缺失不改固定成功，已向用户询问批准配置路径，独立代码修复继续。成本：完整产品验收仍需材料与真实联机。
 
+- Task 1: 三方冲突4文件已逐段整合：目录规划保留两段新增历史/文件表；预览保留当前动画/拖拽与旧完整头；Input README两方说明并存；ServerRole测试保留当前严格世界前缀并补内容登记核对。
+- Task 1: RED baseline Architecture=72/69/3；GREEN integrated Architecture=73/73/0（新增现有main世界挂载负例与旧回归并存）；结构六装配/继承退出0，头文件482处0缺失。Native及UE在Task8源码冻结后统一执行，未沿用旧成功。
+- Task 1: Ruling: 历史合入未引入.uasset/.umap、Backend/Shared/Deploy变更，当前资源与英文命名保持main；Native测试与当前资产/业务差异分别验收。成本：仍需后续源码/编译复核。

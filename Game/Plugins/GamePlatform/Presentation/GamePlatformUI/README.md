@@ -28,3 +28,8 @@ CommonGameViewportClient已经配置。当前没有创建任何GamePlatformUI二
 
 新增Go业务后端接口：不适用。新增Go微服务：不适用。
 
+
+
+## 2026-09-30 设计审查修复
+
+本次资源/生命周期与行为合同见 [设计修复说明](Docs/DesignRemediation-2026-09-30.md)。源码及新增回归不等于UE运行、真实资产或Cook验收；准确执行证据由任务修复报告记录。

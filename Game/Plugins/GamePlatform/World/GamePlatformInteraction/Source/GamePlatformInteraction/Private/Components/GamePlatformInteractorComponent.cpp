@@ -8,6 +8,8 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
+// 服务器开始交互前直接调用目标公开接口；Cast和CanBeginInteraction需要完整接口声明。
+#include "Interfaces/GamePlatformInteractable.h"
 #include "Interfaces/GamePlatformGameplayEligibilityProvider.h"
 #include "Interfaces/GamePlatformInteractionEligibilityProvider.h"
 #include "Net/UnrealNetwork.h"
@@ -223,11 +225,33 @@ UGamePlatformInteractorComponent::UGamePlatformInteractorComponent()
 void UGamePlatformInteractorComponent::BeginPlay()
 {
     Super::BeginPlay();
+    // Pawn的Controller事件覆盖服务器Possess及客户端OnRep_Controller；Controller宿主覆盖换Pawn。
+    if (APawn* Pawn = Cast<APawn>(GetOwner()))
+    { Pawn->ReceiveControllerChangedDelegate.AddUniqueDynamic(this, &ThisClass::HandleOwnerControllerChanged); }
+    if (AController* Controller = Cast<AController>(GetOwner()))
+    { Controller->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::HandleOwnerPawnChanged); }
+    ReconcileLocalFocusSampling();
+}
 
-    if (IsLocallyControlledOwner() &&
+bool UGamePlatformInteractorComponent::IsLocalFocusSamplingActive() const
+{ return GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(FocusTimer); }
+
+void UGamePlatformInteractorComponent::HandleOwnerControllerChanged(APawn*, AController*, AController*)
+{ ReconcileLocalFocusSampling(); }
+void UGamePlatformInteractorComponent::HandleOwnerPawnChanged(APawn*, APawn*)
+{ ReconcileLocalFocusSampling(); }
+
+void UGamePlatformInteractorComponent::ReconcileLocalFocusSampling()
+{
+    check(IsInGameThread());
+    if (IsLocallyControlledOwner() && ResolveControlledPawn(GetOwner()) &&
         GetWorld() &&
+        !GetWorld()->bIsTearingDown &&
+        (GetWorld()->WorldType == EWorldType::Game || GetWorld()->WorldType == EWorldType::PIE) &&
+        !IsRunningCommandlet() &&
         GetWorld()->GetNetMode() != NM_DedicatedServer)
     {
+        if (IsLocalFocusSamplingActive()) { RefreshLocalFocus(); return; }
         const UGamePlatformInteractionSettings* Settings =
             GetDefault<UGamePlatformInteractionSettings>();
 
@@ -240,11 +264,20 @@ void UGamePlatformInteractorComponent::BeginPlay()
 
         RefreshLocalFocus();
     }
+    else
+    {
+        if (GetWorld()) { GetWorld()->GetTimerManager().ClearTimer(FocusTimer); }
+        if (CurrentFocus.IsValid()) { CurrentFocus = {}; OnFocusChanged.Broadcast(CurrentFocus); }
+    }
 }
 
 void UGamePlatformInteractorComponent::EndPlay(
     const EEndPlayReason::Type EndPlayReason)
 {
+    if (APawn* Pawn = Cast<APawn>(GetOwner()))
+    { Pawn->ReceiveControllerChangedDelegate.RemoveDynamic(this, &ThisClass::HandleOwnerControllerChanged); }
+    if (AController* Controller = Cast<AController>(GetOwner()))
+    { Controller->OnPossessedPawnChanged.RemoveDynamic(this, &ThisClass::HandleOwnerPawnChanged); }
     if (UWorld* World = GetWorld())
     {
         World->GetTimerManager().ClearTimer(FocusTimer);

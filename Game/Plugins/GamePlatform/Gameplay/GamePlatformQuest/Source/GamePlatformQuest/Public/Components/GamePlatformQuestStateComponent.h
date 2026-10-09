@@ -34,6 +34,8 @@ public:
     FGamePlatformQuestSnapshotsChanged OnQuestSnapshotsChanged;
 
 private:
+    /** 本组件生命周期内服务器显示发布序列，非业务落库版本，不接受客户端写入。 */
+    int64 SnapshotSequence = 0;
     UPROPERTY(ReplicatedUsing=OnRep_QuestSnapshots)
     TArray<FGamePlatformQuestSnapshot> QuestSnapshots;
 

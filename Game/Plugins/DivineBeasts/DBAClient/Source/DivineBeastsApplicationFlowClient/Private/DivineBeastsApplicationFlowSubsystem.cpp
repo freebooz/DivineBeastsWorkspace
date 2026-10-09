@@ -27,7 +27,6 @@
 #include "Engine/GameInstance.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "Engine/StreamableManager.h"
 #include "HAL/PlatformMisc.h"
 #include "Misc/PackageName.h"
 #include "Loading/DivineBeastsReadinessFacts.h"
@@ -505,11 +504,7 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
     ++StartRequestGeneration;
     bRestartAfterLogout = false;
 
-    if (CharacterCreationValidationLease.IsValid())
-    {
-        CharacterCreationValidationLease->CancelHandle();
-        CharacterCreationValidationLease.Reset();
-    }
+    ReleaseCharacterCreationValidationLease();
 
     if (Backend.IsValid())
     {
@@ -1327,11 +1322,7 @@ bool UDivineBeastsApplicationFlowSubsystem::SubmitCharacterCreateDraft(
     }
 
     // 完整外观Schema校验必须基于真实Definition；不能把“尚未加载”误判为用户草稿非法。
-    if (CharacterCreationValidationLease.IsValid())
-    {
-        CharacterCreationValidationLease->CancelHandle();
-        CharacterCreationValidationLease.Reset();
-    }
+    ReleaseCharacterCreationValidationLease();
 
     const FGamePlatformFlowNodeToken Token = GetCurrentNodeToken();
     if (!Token.IsValid())
@@ -1341,18 +1332,16 @@ bool UDivineBeastsApplicationFlowSubsystem::SubmitCharacterCreateDraft(
 
     SetBusy(true);
     TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
-    CharacterCreationValidationLease = CreationProvider->ValidateCreationDraftAsync(
-        Draft.HeroDefinitionId,
+    const uint64 ValidationGeneration = CharacterCreationValidationGeneration;
+    FGamePlatformResult Accepted;
+    CharacterCreationValidationLease = CreationProvider->ValidateCreationDraftWithLease(
+        *GetGameInstance(), this, Draft.HeroDefinitionId,
         Draft.AppearanceSelection,
-        [WeakThis, Token, Draft](bool bValid, FString) mutable
+        [WeakThis, Token, Draft, ValidationGeneration](bool bValid, FString) mutable
         {
             UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
-            if (!Self)
-            {
-                return;
-            }
-
-            Self->CharacterCreationValidationLease.Reset();
+            if (!Self || Self->CharacterCreationValidationGeneration != ValidationGeneration) return;
+            Self->ReleaseCharacterCreationValidationLease();
             if (!Self->IsCurrentToken(Token) ||
                 !Self->IsCurrentNode(FDivineBeastsFlowNodes::CharacterEntry()) ||
                 !Self->FlowContext)
@@ -1376,7 +1365,14 @@ bool UDivineBeastsApplicationFlowSubsystem::SubmitCharacterCreateDraft(
             {
                 Self->SetBusy(false);
             }
-        });
+        }, Accepted);
+    if (!Accepted.IsSuccess())
+    {
+        ReleaseCharacterCreationValidationLease();
+        SetError(EDivineBeastsFlowError::HeroCatalogUnavailable);
+        SetBusy(false);
+        return false;
+    }
 
     return true;
 }
@@ -2499,4 +2495,13 @@ void UDivineBeastsApplicationFlowSubsystem::LogoutAndRestart()
         bRestartAfterLogout = false;
         SetError(EDivineBeastsFlowError::FlowNotInitialized);
     }
+}
+
+// 数据服务拥有资源，项目流程只撤销本调用者的草稿租约；不取消别的世界/实例的加载。
+void UDivineBeastsApplicationFlowSubsystem::ReleaseCharacterCreationValidationLease()
+{
+    ++CharacterCreationValidationGeneration;
+    const FGamePlatformDataLease Lease = CharacterCreationValidationLease;
+    CharacterCreationValidationLease = {};
+    if (Data && Lease.IsValid()) Data->ReleaseResources(Lease);
 }

@@ -1,3 +1,4 @@
+// 平台服务器装备作用域实现；终态和GAS所有权说明见同名公开组件。
 #include "Components/GamePlatformEquipmentServerComponent.h"
 
 #include "AbilitySystemComponent.h"
@@ -11,6 +12,37 @@ UGamePlatformEquipmentServerComponent()
     PrimaryComponentTick.bCanEverTick = false;
 }
 
+void UGamePlatformEquipmentServerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    ShutdownEquipmentRuntime();
+    Super::EndPlay(EndPlayReason);
+}
+
+void UGamePlatformEquipmentServerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+    ShutdownEquipmentRuntime();
+    Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
+void UGamePlatformEquipmentServerComponent::ShutdownEquipmentRuntime()
+{
+    check(IsInGameThread());
+    if (bRuntimeClosed) { return; }
+    bRuntimeClosed = true;
+    ++LifetimeGeneration;
+    bReady = false;
+    bPersistenceInFlight = false;
+    RevokeAllRuntimeGrants();
+    GrantPort.Reset();
+    Persistence.Reset();
+    AbilitySystem.Reset();
+    StateComponent.Reset();
+    Definitions.Reset();
+    Snapshot = {};
+    PlayerId.Reset();
+    CharacterId.Reset();
+}
+
 bool UGamePlatformEquipmentServerComponent::InitializeEquipmentRuntime(
     const FString& InPlayerId,
     const FString& InCharacterId,
@@ -21,7 +53,7 @@ bool UGamePlatformEquipmentServerComponent::InitializeEquipmentRuntime(
         InGrantPort)
 {
     AActor* Owner = GetOwner();
-    if (!Owner ||
+    if (bRuntimeClosed || !Owner ||
         !Owner->HasAuthority() ||
         InPlayerId.IsEmpty() ||
         InCharacterId.IsEmpty() ||
@@ -33,6 +65,10 @@ bool UGamePlatformEquipmentServerComponent::InitializeEquipmentRuntime(
         return false;
     }
 
+    // 再初始化不会遗留上一用户/Avatar的能力；已在飞操作须完成后才能进入新代次。
+    RevokeAllRuntimeGrants();
+    ++LifetimeGeneration;
+    Snapshot = {};
     PlayerId = InPlayerId;
     CharacterId = InCharacterId;
     StateComponent = InStateComponent;
@@ -44,19 +80,21 @@ bool UGamePlatformEquipmentServerComponent::InitializeEquipmentRuntime(
     bPersistenceInFlight = true;
     LastError = EGamePlatformEquipmentError::None;
 
+    const uint64 ExpectedLifetimeGeneration = LifetimeGeneration;
     TWeakObjectPtr<UGamePlatformEquipmentServerComponent> WeakThis(this);
 
     const bool bStarted =
         Persistence->BeginLoadEquipment(
             PlayerId,
             CharacterId,
-            [WeakThis](
+            [WeakThis, ExpectedLifetimeGeneration](
                 FGamePlatformEquipmentSnapshot Loaded,
                 EGamePlatformEquipmentError Error)
             {
                 if (UGamePlatformEquipmentServerComponent* Self =
                     WeakThis.Get())
                 {
+                    if (Self->bRuntimeClosed || Self->LifetimeGeneration != ExpectedLifetimeGeneration) { return; }
                     Self->HandleLoadCompleted(
                         MoveTemp(Loaded),
                         Error);
@@ -90,7 +128,7 @@ bool UGamePlatformEquipmentServerComponent::BindAvatar(
     UAbilitySystemComponent* InAbilitySystem,
     int32 InAvatarGeneration)
 {
-    if (!GetOwner() ||
+    if (bRuntimeClosed || !GetOwner() ||
         !GetOwner()->HasAuthority() ||
         !IsValid(InAbilitySystem))
     {
@@ -174,19 +212,21 @@ UGamePlatformEquipmentServerComponent::RequestEquip(
     }
 
     bPersistenceInFlight = true;
+    const uint64 ExpectedLifetimeGeneration = LifetimeGeneration;
     TWeakObjectPtr<UGamePlatformEquipmentServerComponent> WeakThis(this);
 
     const bool bStarted =
         Persistence->BeginEquip(
             PlayerId,
             Request,
-            [WeakThis, OperationId = Request.OperationId](
+            [WeakThis, ExpectedLifetimeGeneration, OperationId = Request.OperationId](
                 FGamePlatformEquipmentSnapshot Persisted,
                 EGamePlatformEquipmentError Error)
             {
                 if (UGamePlatformEquipmentServerComponent* Self =
                     WeakThis.Get())
                 {
+                    if (Self->bRuntimeClosed || Self->LifetimeGeneration != ExpectedLifetimeGeneration) { return; }
                     Self->HandleMutationCompleted(
                         OperationId,
                         MoveTemp(Persisted),
@@ -231,19 +271,21 @@ UGamePlatformEquipmentServerComponent::RequestUnequip(
     }
 
     bPersistenceInFlight = true;
+    const uint64 ExpectedLifetimeGeneration = LifetimeGeneration;
     TWeakObjectPtr<UGamePlatformEquipmentServerComponent> WeakThis(this);
 
     const bool bStarted =
         Persistence->BeginUnequip(
             PlayerId,
             Request,
-            [WeakThis, OperationId = Request.OperationId](
+            [WeakThis, ExpectedLifetimeGeneration, OperationId = Request.OperationId](
                 FGamePlatformEquipmentSnapshot Persisted,
                 EGamePlatformEquipmentError Error)
             {
                 if (UGamePlatformEquipmentServerComponent* Self =
                     WeakThis.Get())
                 {
+                    if (Self->bRuntimeClosed || Self->LifetimeGeneration != ExpectedLifetimeGeneration) { return; }
                     Self->HandleMutationCompleted(
                         OperationId,
                         MoveTemp(Persisted),
@@ -262,7 +304,7 @@ UGamePlatformEquipmentServerComponent::RequestUnequip(
 
 bool UGamePlatformEquipmentServerComponent::Reconcile()
 {
-    if (!Persistence.IsValid() ||
+    if (bRuntimeClosed || !Persistence.IsValid() ||
         PlayerId.IsEmpty() ||
         CharacterId.IsEmpty() ||
         bPersistenceInFlight)
@@ -271,19 +313,21 @@ bool UGamePlatformEquipmentServerComponent::Reconcile()
     }
 
     bPersistenceInFlight = true;
+    const uint64 ExpectedLifetimeGeneration = LifetimeGeneration;
     TWeakObjectPtr<UGamePlatformEquipmentServerComponent> WeakThis(this);
 
     const bool bStarted =
         Persistence->BeginLoadEquipment(
             PlayerId,
             CharacterId,
-            [WeakThis](
+            [WeakThis, ExpectedLifetimeGeneration](
                 FGamePlatformEquipmentSnapshot Loaded,
                 EGamePlatformEquipmentError Error)
             {
                 if (UGamePlatformEquipmentServerComponent* Self =
                     WeakThis.Get())
                 {
+                    if (Self->bRuntimeClosed || Self->LifetimeGeneration != ExpectedLifetimeGeneration) { return; }
                     Self->HandleLoadCompleted(
                         MoveTemp(Loaded),
                         Error);

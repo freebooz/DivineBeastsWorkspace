@@ -1,5 +1,9 @@
 # GamePlatformCommerceUI Implementation Plan
 
+> 2026-09-30审查更正：以下为截至2026-09-29的历史设计/计划材料，其中实现路径、完成宣称与工具环境描述已被当前README和TestingAndEvidence替代。旧Backend/gameplatform路径、迁移、Outbox、DBAServer持久化/奖励及假支付描述不构成当前交付事实；设计约束可供后续立项，必须重核实际源码。
+
+## 历史设计材料（被现行能力矩阵替代）
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 将 GamePlatformCommerceUI 从客户端原型实现为具有统一契约、后端权威、统一认证传输、账号隔离快照和 DBA 项目页面的可验证纵向切片。

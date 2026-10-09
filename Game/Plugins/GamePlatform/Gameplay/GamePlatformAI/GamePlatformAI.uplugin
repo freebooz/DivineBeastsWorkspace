@@ -9,6 +9,7 @@
     "CanContainContent":  true,
     "EnabledByDefault":  false,
     "Plugins":  [
+                    { "Name": "GamePlatformCore", "Enabled": true },
                     { "Name": "GameplayAbilities", "Enabled": true },
                     { "Name": "GamePlatformData", "Enabled": true },
                     { "Name": "GamePlatformAbilitySystem", "Enabled": true },

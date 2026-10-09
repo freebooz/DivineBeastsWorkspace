@@ -1,5 +1,8 @@
+// 服务器AI复制状态：游戏线程仅Authority Owner写入，组件持有本实体身份/代次；客户端只读复制快照。
 #include "Components/GamePlatformAIStateComponent.h"
 
+// HasAuthority直接调用AActor成员；NoPCH/独立编译不能依靠别的源文件间接包含完整类型。
+#include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 
 UGamePlatformAIStateComponent::UGamePlatformAIStateComponent()

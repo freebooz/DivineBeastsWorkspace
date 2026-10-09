@@ -6,9 +6,10 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "Types/GamePlatformAITypes.h"
 #include "Types/GamePlatformCombatEvent.h"
+#include "Types/GamePlatformDataLease.h"
 #include "GamePlatformAIController.generated.h"
 
-struct FStreamableHandle;
+
 class UAIPerceptionComponent;
 class UAISenseConfig_Sight;
 class UAISenseConfig_Hearing;
@@ -19,6 +20,7 @@ class UGamePlatformAIDefinition;
 class UGamePlatformAIStateComponent;
 class UGamePlatformAbilitySystemComponent;
 class UGamePlatformCombatComponent;
+struct FGamePlatformAbilityAvatarBindingSnapshot;
 
 USTRUCT()
 struct FGamePlatformAITargetCandidate
@@ -57,6 +59,10 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="AI")
     void ForceDecisionUpdate();
 
+    /** 游戏线程只读服务器AI资格；注入Gate保存的资源/AI代次必须仍匹配，占有/ActorInfo/Brain/Data均真实就绪才成功。 */
+    FGamePlatformResult EvaluateAIAbilityEligibility(const UGamePlatformAbilitySystemComponent& Component,
+        int32 ExpectedResourceGeneration, int32 ExpectedAIInstanceGeneration) const;
+
 protected:
     UPROPERTY(EditDefaultsOnly, Category="AI")
     TSoftObjectPtr<UGamePlatformAIDefinition> DefaultDefinition;
@@ -86,8 +92,21 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformCombatComponent> CombatComponent;
 
-    TSharedPtr<FStreamableHandle> DefinitionLoadHandle;
-    TSharedPtr<FStreamableHandle> BrainAssetsLoadHandle;
+    /** 世界/控制器作用域Data租约；按脑资源→定义顺序归还，不创建本域资产管理器。 */
+    FGamePlatformDataLease DefinitionResourceLease;
+    FGamePlatformDataLease BrainResourceLease;
+    FSoftObjectPath DefinitionResourcePath;
+    int32 ResourceRequestGeneration = 0;
+    int32 ResourceAIInstanceGeneration = 0;
+    /** 在停止脑执行之后撤销本控制器全部资源需求，失效迟到完成回调。 */
+    void ReleaseResourceLeases();
+    /** ActorInfo建立/Brain完成/重生后重新注入中立AI Gate；不套用项目玩家PlayerState规则。 */
+    void RefreshAIActivationGate();
+    void HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot);
+    /** 失去Pawn/退出解绑事件；仅撤销本Controller Gate与本Controller亲自建立的Pawn ActorInfo。 */
+    void ClearAIActivationGate(bool bDetachAvatarBinding);
+    FDelegateHandle AvatarBindingChangedHandle;
+    bool bOwnsAbilityActorInfo = false;
 
     TMap<TWeakObjectPtr<AActor>, FGamePlatformAITargetCandidate> Candidates;
     TWeakObjectPtr<AActor> CurrentTarget;

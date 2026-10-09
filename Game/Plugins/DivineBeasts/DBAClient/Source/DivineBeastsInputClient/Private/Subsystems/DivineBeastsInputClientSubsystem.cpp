@@ -1,9 +1,12 @@
+// 神兽联盟项目客户端输入适配：订阅本地玩家平台事件并转交受控Pawn/ASC；不重新实现平台绑定或持有服务器权威。
+// GI/本地玩家退出先撤销订阅及自有Profile/Context句柄，弱回调避免销毁后访问；视角速率只在消费端乘一次世界秒差。
 #include "Subsystems/DivineBeastsInputClientSubsystem.h"
 
 #include "Async/Async.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h" // 本文件读取GetDeltaSeconds，需要UWorld完整定义，不能依赖PCH传递头。
 #include "EngineGlobals.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"

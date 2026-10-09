@@ -8,3 +8,5 @@
 
 当前没有新增 Go API（Go 接口）/微服务，不发永久 Inventory（背包）/Quest（任务）/货币奖励。源码层采用无 Tick（每帧轮询）设计，Focus 与 Hold 使用可配置 Timer（定时器）；服务器始终重验权威事实。构建、Automation（自动化测试）、Dedicated Server（专用服务器）、Multi-PIE（多实例编辑器运行）和网络异常验证的真实执行证据见 `Docs/TestingAndEvidence.md（测试与证据）`；未执行项目不得在文档中冒充完成。
 
+
+本次设计审查整改的真实行为、线程/所有权/失败合同及验证边界见 [2026-09-30专属说明](Docs/DesignRemediation-2026-09-30.md)。其中原生规则测试与UE实际运行分别记录，不混写交付状态。

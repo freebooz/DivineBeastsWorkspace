@@ -33,6 +33,7 @@ public:
     virtual void RemoveStateChangedHandler(FDelegateHandle Handle) override;
 
 private:
+    friend class FGamePlatformSurfaceBindingRefreshTest;
     /** 解析配置软引用并绑定当前世界MPC实例；失败不创建伪资产。 */
     bool ResolveMaterialBinding();
 

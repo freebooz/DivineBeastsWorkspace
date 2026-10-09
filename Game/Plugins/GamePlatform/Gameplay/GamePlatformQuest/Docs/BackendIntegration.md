@@ -1,5 +1,7 @@
 # BackendIntegration（后端集成）
 
+> 2026-09-30状态校正：本页保留旧方案/历史证据，旧DBAServer具体Quest HTTP/事件适配与后端交付宣称未在当前项目文件清单确认，不能作为现行验收。当前行为以[本轮整改说明](DesignRemediation-2026-09-30.md)、README与真实源码为准；本轮未执行数据库/Outbox/网络联调。
+
 本轮没有新增 QuestService（独立任务微服务），保持既有五个 Go 服务入口。任务跨会话能力扩展到 `Backend/gameplatform/quest（平台任务后端领域）`、`Backend/gameplatform/internal/persistence/questrepository（PostgreSQL任务仓储）`和既有 `PlayerDataService（玩家数据服务）`。
 
 Shared Contracts（共享契约）新增 `playerdata-quest.v1.yaml`，定义 GetQuestSnapshot、AcceptQuest、SaveQuestProgress、CompleteQuest、AbandonQuest 的内部 PlayerData 语义；另有 `player-quest-completed.v1.schema.json`定义 Outbox 完成事件。

@@ -51,9 +51,11 @@ public:
     EGamePlatformUIInputMode GetInputMode() const { return InputMode; }
     EGamePlatformUIPausePolicy GetPausePolicy() const { return PausePolicy; }
     virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
+    FGamePlatformUIScreenDeactivatedNative& OnPlatformReleased() { return PlatformReleased; }
     FGamePlatformUIScreenDeactivatedNative& OnPlatformDeactivated() { return PlatformDeactivated; }
 
 protected:
+    virtual void NativeDestruct() override;
     virtual void NativeOnActivated() override;
     virtual void NativeOnDeactivated() override;
     virtual bool NativeOnHandleBackAction() override;
@@ -63,6 +65,7 @@ protected:
     bool bAllowBack = true;
 
     FGamePlatformUIScreenDeactivatedNative PlatformDeactivated;
+    FGamePlatformUIScreenDeactivatedNative PlatformReleased;
 
 private:
     UPROPERTY(Transient)

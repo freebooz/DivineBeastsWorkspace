@@ -7,3 +7,5 @@ Objective 目前支持 Interaction（交互）、Combat（战斗）、Region（�
 Quest Runtime（任务运行时）按玩家维护 `QuestId → Snapshot`以及 `EventType → Relevant Objective Bindings`索引，收到事件时只扫描当前玩家该事件类型关联的 Active Objective，不扫描全服任务。
 
 RepeatPolicy（重复策略）第一版真实支持 OneShot（一次性）和 RepeatableManual（手工重复接取）；Periodic（周期任务）只保留 Unsupported 类型，不伪装 Daily/Weekly。
+
+2026-09-30：Snapshot新增显示SnapshotSequence；相同Revision只接纳更高序列，0序列仅保留旧状态变化兼容。服务器GetPlayerPersistenceError暴露失败，重放等待与持久化Revision分离，详见[本轮说明](DesignRemediation-2026-09-30.md)。

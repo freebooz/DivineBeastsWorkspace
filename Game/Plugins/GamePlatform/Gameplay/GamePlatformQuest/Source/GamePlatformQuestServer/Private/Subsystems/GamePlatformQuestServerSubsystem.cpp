@@ -1,10 +1,13 @@
 #include "Subsystems/GamePlatformQuestServerSubsystem.h"
 
+// 服务拥有当前世界的聚合/重试计时器；调用GetTimerManager必须直接包含UWorld完整定义。
+#include "Engine/World.h"
 #include "Components/GamePlatformQuestStateComponent.h"
 #include "Definitions/GamePlatformQuestDefinition.h"
 #include "Interfaces/GamePlatformQuestPersistencePort.h"
 #include "Settings/GamePlatformQuestSettings.h"
 #include "Types/GamePlatformQuestStateMachine.h"
+#include "Types/GamePlatformQuestSnapshotRules.h"
 
 namespace
 {
@@ -174,7 +177,9 @@ void UGamePlatformQuestServerSubsystem::HandleInitialLoadCompleted(
 
     if (Error != EGamePlatformQuestError::None)
     {
-        Players.Remove(PlayerId);
+        // 加载期间可能已接纳延迟事件；保留玩家与载荷，安排重试，不把后端失败变成事件丢失。
+        Runtime->LastPersistenceError = Error; Runtime->bReconcileRequired = true;
+        ScheduleProgressFlush(PlayerId, *Runtime);
         return;
     }
 
@@ -186,7 +191,8 @@ void UGamePlatformQuestServerSubsystem::HandleInitialLoadCompleted(
             Loaded,
             ApplyError))
     {
-        Players.Remove(PlayerId);
+        Runtime->LastPersistenceError = ApplyError; Runtime->bReconcileRequired = true;
+        ScheduleProgressFlush(PlayerId, *Runtime);
         return;
     }
 
@@ -208,16 +214,15 @@ bool UGamePlatformQuestServerSubsystem::ApplyLoadedSnapshots(
 {
     OutError = EGamePlatformQuestError::None;
 
-    Runtime.Quests.Reset();
-    Runtime.PendingEventIds.Reset();
-    Runtime.RecentEventIdsByQuest.Reset();
-    Runtime.RecentEventOrderByQuest.Reset();
+    // 先完整校验到临时值；任何定义/版本/重复键失败都不改变已接纳状态和事件所有权。
+    TMap<FName, FGamePlatformQuestSnapshot> ValidatedQuests;
 
     for (const FGamePlatformQuestSnapshot& Snapshot : Loaded)
     {
         if (Snapshot.QuestId.IsNone())
         {
-            continue;
+            OutError = EGamePlatformQuestError::InvalidQuestEvent;
+            return false;
         }
 
         const UGamePlatformQuestDefinition* Definition =
@@ -240,9 +245,12 @@ bool UGamePlatformQuestServerSubsystem::ApplyLoadedSnapshots(
         }
 
         // 已完成历史事实不因当前Definition版本变化而倒退。
-        Runtime.Quests.Add(Snapshot.QuestId, Snapshot);
+        if (ValidatedQuests.Contains(Snapshot.QuestId))
+        { OutError = EGamePlatformQuestError::RevisionConflict; return false; }
+        ValidatedQuests.Add(Snapshot.QuestId, Snapshot);
     }
 
+    Runtime.Quests = MoveTemp(ValidatedQuests);
     return true;
 }
 
@@ -286,7 +294,7 @@ void UGamePlatformQuestServerSubsystem::UnregisterPlayer(
     if (Runtime &&
         !Runtime->bPersistenceInFlight &&
         Runtime->PendingEventIds.IsEmpty() &&
-        Runtime->DeferredEvents.IsEmpty())
+        Runtime->DeferredEvents.IsEmpty() && Runtime->PendingReplayEvents.IsEmpty())
     {
         Players.Remove(PlayerId);
     }
@@ -304,7 +312,7 @@ EGamePlatformQuestError UGamePlatformQuestServerSubsystem::AcceptQuest(
         return EGamePlatformQuestError::PersistenceUnavailable;
     }
 
-    if (Runtime->bPersistenceInFlight ||
+    if (Runtime->bPersistenceInFlight || Runtime->bReconcileRequired ||
         Runtime->bUnregisterWhenIdle)
     {
         return EGamePlatformQuestError::PersistenceOutcomeUnknown;
@@ -470,7 +478,7 @@ EGamePlatformQuestError UGamePlatformQuestServerSubsystem::AbandonQuest(
         return EGamePlatformQuestError::PersistenceUnavailable;
     }
 
-    if (Runtime->bPersistenceInFlight ||
+    if (Runtime->bPersistenceInFlight || Runtime->bReconcileRequired ||
         Runtime->bUnregisterWhenIdle)
     {
         return EGamePlatformQuestError::PersistenceOutcomeUnknown;
@@ -593,7 +601,7 @@ EGamePlatformQuestError UGamePlatformQuestServerSubsystem::HandleQuestEvent(
         return EGamePlatformQuestError::Unauthorized;
     }
 
-    if (!Runtime->bReady ||
+    if (!Runtime->bReady || Runtime->bReconcileRequired ||
         Runtime->bPersistenceInFlight)
     {
         return EnqueueDeferredEvent(*Runtime, Event)
@@ -773,19 +781,9 @@ bool UGamePlatformQuestServerSubsystem::EnqueueDeferredEvent(
             GetDefault<UGamePlatformQuestSettings>()
                 ->MaxDeferredEventsPerPlayer);
 
-    if (Runtime.DeferredEvents.Num() >= Limit)
-    {
-        return false;
-    }
-
-    if (Runtime.DeferredEvents.ContainsByPredicate(
-            [&Event](const FGamePlatformQuestEvent& Existing)
-            {
-                return Existing.EventId == Event.EventId;
-            }))
-    {
-        return true;
-    }
+    if (Runtime.DeferredEvents.ContainsByPredicate([&Event](const auto& Existing) { return Existing.EventId == Event.EventId; }))
+    { return true; }
+    if (Runtime.DeferredEvents.Num() >= Limit) { Runtime.LastPersistenceError = EGamePlatformQuestError::PersistenceOutcomeUnknown; return false; }
 
     Runtime.DeferredEvents.Add(Event);
     return true;
@@ -798,12 +796,12 @@ void UGamePlatformQuestServerSubsystem::ProcessDeferredEvents(
     while (Runtime.bReady &&
            !Runtime.bPersistenceInFlight &&
            !Runtime.bReconcileRequired &&
-           !Runtime.DeferredEvents.IsEmpty())
+           (!Runtime.PendingReplayEvents.IsEmpty() || !Runtime.DeferredEvents.IsEmpty()))
     {
-        FGamePlatformQuestEvent Event =
-            Runtime.DeferredEvents[0];
-
-        Runtime.DeferredEvents.RemoveAt(
+        // 已接纳的冲突事件先重放；队列满只延后新事件，不能永久阻塞或丢掉旧权威事实。
+        auto& Queue = Runtime.PendingReplayEvents.IsEmpty() ? Runtime.DeferredEvents : Runtime.PendingReplayEvents;
+        FGamePlatformQuestEvent Event = Queue[0];
+        Queue.RemoveAt(
             0,
             1,
             EAllowShrinking::No);
@@ -877,30 +875,38 @@ void UGamePlatformQuestServerSubsystem::HandleReconcileCompleted(
 
     Runtime->bPersistenceInFlight = false;
 
+    Runtime->LastPersistenceError = Error;
     if (Error == EGamePlatformQuestError::None)
     {
+        // Apply只在完整校验后发布新Quests；失败时PendingEventIds/载荷/去重账本全部原样保留。
+        EGamePlatformQuestError ApplyError = EGamePlatformQuestError::None;
         TArray<FGamePlatformQuestEvent> EventsToReplay;
         Runtime->PendingEventPayloads.GenerateValueArray(EventsToReplay);
-        Runtime->PendingEventPayloads.Reset();
-
-        EGamePlatformQuestError ApplyError =
-            EGamePlatformQuestError::None;
-
-        if (ApplyLoadedSnapshots(
-                *Runtime,
-                Loaded,
-                ApplyError))
+        if (ApplyLoadedSnapshots(*Runtime, Loaded, ApplyError))
         {
-            Runtime->bReady = true;
-            BuildEventIndex(*Runtime);
-            Runtime->bReconcileRequired = false;
-            PublishSnapshot(*Runtime);
-
-            for (const FGamePlatformQuestEvent& PendingEvent : EventsToReplay)
+            EventsToReplay.Sort([](const auto& A, const auto& B) { return A.OccurredAtUtc < B.OccurredAtUtc; });
+            const int32 Limit = FMath::Max(16, GetDefault<UGamePlatformQuestSettings>()->MaxDeferredEventsPerPlayer);
+            TArray<FGamePlatformQuestEvent> UniqueReplay;
+            for (const auto& Event : EventsToReplay)
             {
-                EnqueueDeferredEvent(*Runtime, PendingEvent);
+                if (!Runtime->DeferredEvents.ContainsByPredicate([&Event](const auto& Item) { return Item.EventId == Event.EventId; }) &&
+                    !Runtime->PendingReplayEvents.ContainsByPredicate([&Event](const auto& Item) { return Item.EventId == Event.EventId; }))
+                { UniqueReplay.Add(Event); }
             }
+            if (GamePlatformQuestSnapshotPolicy::CanTransferReplay(Runtime->DeferredEvents.Num(), UniqueReplay.Num(), Limit))
+            { Runtime->DeferredEvents.Insert(UniqueReplay, 0); }
+            else
+            {
+                // 不部分入队：有界新事件队列满时，已接受载荷原子转移到待重放所有权，Flush明确报告未完成。
+                Runtime->PendingReplayEvents.Append(UniqueReplay);
+                Runtime->LastPersistenceError = EGamePlatformQuestError::PersistenceOutcomeUnknown;
+            }
+            Runtime->PendingEventPayloads.Reset(); Runtime->PendingEventIds.Reset();
+            Runtime->RecentEventIdsByQuest.Reset(); Runtime->RecentEventOrderByQuest.Reset();
+            Runtime->bReady = true; Runtime->bReconcileRequired = false;
+            BuildEventIndex(*Runtime); PublishSnapshot(*Runtime);
         }
+        else { Runtime->LastPersistenceError = ApplyError; }
     }
 
     FinishPersistenceOperation(PlayerId, *Runtime);
@@ -1115,7 +1121,6 @@ void UGamePlatformQuestServerSubsystem::FlushPlayerProgress(
     FPlayerRuntime* Runtime = Players.Find(PlayerId);
     if (!Runtime ||
         !Runtime->Persistence.IsValid() ||
-        !Runtime->bReady ||
         Runtime->bPersistenceInFlight)
     {
         return;
@@ -1126,6 +1131,7 @@ void UGamePlatformQuestServerSubsystem::FlushPlayerProgress(
         BeginReconcilePlayer(PlayerId, *Runtime);
         return;
     }
+    if (!Runtime->bReady) { return; }
 
     TArray<FName> QuestIds;
     Runtime->PendingEventIds.GetKeys(QuestIds);
@@ -1330,7 +1336,7 @@ void UGamePlatformQuestServerSubsystem::FinishPersistenceOperation(
     if (Current->bUnregisterWhenIdle &&
         !Current->bPersistenceInFlight &&
         Current->PendingEventIds.IsEmpty() &&
-        Current->DeferredEvents.IsEmpty())
+        Current->DeferredEvents.IsEmpty() && Current->PendingReplayEvents.IsEmpty())
     {
         if (GetWorld())
         {
@@ -1377,13 +1383,14 @@ bool UGamePlatformQuestServerSubsystem::FlushPlayerProgressNow(
 
     if (Runtime->bPersistenceInFlight ||
         !Runtime->PendingEventIds.IsEmpty() ||
-        !Runtime->DeferredEvents.IsEmpty())
+        !Runtime->DeferredEvents.IsEmpty() || !Runtime->PendingReplayEvents.IsEmpty() || Runtime->bReconcileRequired)
     {
         OutError =
             EGamePlatformQuestError::PersistenceOutcomeUnknown;
         return false;
     }
 
+    Runtime->LastPersistenceError = EGamePlatformQuestError::None;
     return true;
 }
 
@@ -1393,6 +1400,7 @@ bool UGamePlatformQuestServerSubsystem::IsPlayerReady(
     const FPlayerRuntime* Runtime = Players.Find(PlayerId);
     return Runtime &&
            Runtime->bReady &&
+           !Runtime->bReconcileRequired &&
            !Runtime->bUnregisterWhenIdle;
 }
 
@@ -1502,3 +1510,10 @@ UGamePlatformQuestServerSubsystem::FindActiveQuest(
         : nullptr;
 }
 
+
+EGamePlatformQuestError UGamePlatformQuestServerSubsystem::GetPlayerPersistenceError(const FString& PlayerId) const
+{
+    check(IsInGameThread());
+    const FPlayerRuntime* Runtime = Players.Find(PlayerId);
+    return Runtime ? Runtime->LastPersistenceError : EGamePlatformQuestError::PersistenceUnavailable;
+}

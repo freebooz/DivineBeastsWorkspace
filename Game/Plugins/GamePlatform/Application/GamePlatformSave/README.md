@@ -60,3 +60,10 @@ DivineBeasts → MobaCommon → GamePlatform
 ```
 
 GamePlatformSave 不反向依赖任何上层业务插件。
+
+
+## 2026-09-30设计审查修订
+
+存储层在分配前检查文件元数据与打开句柄长度，固定读取不追随文件增长；主档及备份共用8MiB载荷加Envelope头预算，超限明确SaveFileTooLarge，失败清除输出。
+
+本次真实源码/Native/静态检查与未执行UE/后端/Cook边界见Game/Saved/Reviews/task2-repair-report.md；旧历史运行证据不自动覆盖本次修改。

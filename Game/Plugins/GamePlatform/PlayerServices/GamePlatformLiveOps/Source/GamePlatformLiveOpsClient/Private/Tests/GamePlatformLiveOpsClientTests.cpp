@@ -1,8 +1,12 @@
+// 平台运营客户端事件回归；测试Port仅手控快照/时序，真实Ticker验证时间边界，禁止用于生产或授奖。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Interfaces/GamePlatformLiveOpsClientTransport.h"
 #include "Misc/AutomationTest.h"
 #include "Services/GamePlatformLiveOpsClientSubsystem.h"
+#include "Subsystems/SubsystemCollection.h"
+#include "UObject/StrongObjectPtr.h"
+#include "HAL/PlatformTime.h"
 
 namespace
 {
@@ -167,4 +171,75 @@ bool FGamePlatformLiveOpsRevisionTest::RunTest(const FString&)
     return true;
 }
 
+// 相同服务器Revision也可伴随时间采样推进；UI必须收到派生视图刷新，不能自行轮询。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLiveOpsSameRevisionViewTest, "GamePlatform.LiveOps.Client.SameRevisionView", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FLiveOpsSameRevisionViewTest::RunTest(const FString&)
+{
+    auto* Client = NewObject<UGamePlatformLiveOpsClientSubsystem>();
+    auto Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
+    Client->ConfigureAuthenticatedAccount(TEXT("Boundary"), Transport);
+    Transport->CatalogCompletion(CatalogSnapshot(1), EGamePlatformLiveOpsError::None);
+    Transport->StateCompletion(PlayerState(1), EGamePlatformLiveOpsError::None);
+    int32 CatalogEvents = 0; int32 PlayerEvents = 0;
+    Client->OnCatalogChanged.AddLambda([&]() { ++CatalogEvents; });
+    Client->OnPlayerStateChanged.AddLambda([&]() { ++PlayerEvents; });
+    Client->RefreshAll();
+    auto Catalog = CatalogSnapshot(1); Catalog.ServerTimeUtc += FTimespan::FromHours(1);
+    auto State = PlayerState(1); State.ServerTimeUtc += FTimespan::FromHours(1);
+    Transport->CatalogCompletion(Catalog, EGamePlatformLiveOpsError::None);
+    Transport->StateCompletion(State, EGamePlatformLiveOpsError::None);
+    TestTrue(TEXT("同Revision目录时间刷新通知"), CatalogEvents > 0);
+    TestTrue(TEXT("同Revision签到状态刷新通知"), PlayerEvents > 0);
+    const int32 Previous = PlayerEvents; Client->ResetAccount();
+    TestTrue(TEXT("清空账号通知玩家视图"), PlayerEvents > Previous);
+    Client->OnCatalogChanged.Clear(); Client->OnPlayerStateChanged.Clear();
+    return true;
+}
+// 真实核心Ticker跨越活动开始/结束；网络刷新不完成时，既有Revision仍须发布派生视图通知。
+namespace
+{
+class FLiveOpsBoundaryCommand final : public IAutomationLatentCommand
+{
+public:
+    explicit FLiveOpsBoundaryCommand(FAutomationTestBase* InTest) : Test(InTest) {}
+    ~FLiveOpsBoundaryCommand() override { if (Client.Get()) { Client->Deinitialize(); } }
+    bool Update() override
+    {
+        if (FPlatformTime::Seconds() - Started > 15.0) { Test->AddError(TEXT("活动真实Ticker边界通知超时")); return true; }
+        if (!Client.Get())
+        {
+            Client.Reset(NewObject<UGamePlatformLiveOpsClientSubsystem>());
+            Client->Initialize(Collection);
+            Transport = MakeShared<FLiveOpsMockTransport, ESPMode::ThreadSafe>();
+            Client->ConfigureAuthenticatedAccount(TEXT("BoundaryTicker"), Transport);
+            auto Catalog = CatalogSnapshot(1);
+            FGamePlatformLiveOpsSeason Season; Season.SeasonId = TEXT("Window");
+            Season.TimeWindow.StartsAtUtc = Catalog.ServerTimeUtc + FTimespan::FromSeconds(0.5);
+            Season.TimeWindow.bHasEnd = true; Season.TimeWindow.EndsAtUtc = Catalog.ServerTimeUtc + FTimespan::FromSeconds(1.0);
+            Catalog.Seasons.Add(Season);
+            auto CatalogComplete = MoveTemp(Transport->CatalogCompletion); CatalogComplete(Catalog, EGamePlatformLiveOpsError::None);
+            auto PlayerComplete = MoveTemp(Transport->StateCompletion); PlayerComplete(PlayerState(1), EGamePlatformLiveOpsError::None);
+            Client->OnCatalogChanged.AddLambda([this]() { ++CatalogEvents; });
+            Client->OnPlayerStateChanged.AddLambda([this]() { ++PlayerEvents; });
+            // 超时/退出先Deinitialize解绑这些委托，Ticker不保留潜伏命令地址。
+            return false;
+        }
+        if (FPlatformTime::Seconds() - Started < 2.0 || CatalogEvents == 0 || PlayerEvents == 0) { return false; }
+        Test->TestEqual(TEXT("派生边界通知无需目录Revision提高"), Client->GetCatalogRevision(), int64(1));
+        Test->TestTrue(TEXT("跨结束边界后活动不再有效"), Client->GetActiveSeasonIds().IsEmpty());
+        Test->TestTrue(TEXT("边界刷新请求已受理但未假造后端结果"), !!Transport->CatalogCompletion);
+        return true;
+    }
+private:
+    FAutomationTestBase* Test;
+    double Started = FPlatformTime::Seconds();
+    int32 CatalogEvents = 0, PlayerEvents = 0;
+    FSubsystemCollection<ULocalPlayerSubsystem> Collection;
+    TStrongObjectPtr<UGamePlatformLiveOpsClientSubsystem> Client;
+    TSharedPtr<FLiveOpsMockTransport, ESPMode::ThreadSafe> Transport;
+};
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLiveOpsBoundaryNotificationTest, "GamePlatform.LiveOps.Client.TimeBoundary", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FLiveOpsBoundaryNotificationTest::RunTest(const FString&)
+{ ADD_LATENT_AUTOMATION_COMMAND(FLiveOpsBoundaryCommand(this)); return true; }
 #endif

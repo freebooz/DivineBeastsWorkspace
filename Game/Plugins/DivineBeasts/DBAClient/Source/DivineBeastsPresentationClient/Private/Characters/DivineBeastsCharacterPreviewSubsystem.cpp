@@ -5,13 +5,15 @@
  */
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
 
+#include "Animation/AnimInstance.h" // 本文件也调用动画软类Get，完整类型不能由另一个Unity源文件提供。
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Animation/AnimClassInterface.h"
 #include "Animation/Skeleton.h"
-#include "Engine/SkeletalMesh.h"
+#include "Components/SkeletalMeshComponent.h" // 材质读取/设置及组件UObject转换需要完整类型，不能依赖PCH或Unity包含顺序。
 #include "Engine/LevelStreamingDynamic.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/SkeletalMesh.h" // 本文件读取Profile软网格引用，资产类型也必须直接完整包含。
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"

@@ -19,6 +19,6 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXResult
 
     bool IsAccepted() const
     {
-        return Code == EGamePlatformVFXResultCode::Played || Code == EGamePlatformVFXResultCode::Queued;
+        return Code == EGamePlatformVFXResultCode::Played || Code == EGamePlatformVFXResultCode::Queued || Code == EGamePlatformVFXResultCode::AlreadyCompleted;
     }
 };

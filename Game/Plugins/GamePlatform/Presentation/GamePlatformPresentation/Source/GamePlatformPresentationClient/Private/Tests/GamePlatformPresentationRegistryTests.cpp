@@ -66,6 +66,7 @@ namespace
         FGamePlatformPresentationCatalogEntry Entry;
         Entry.EntryId = EntryId;
         Entry.SemanticTag = Semantic;
+        Entry.bAllowParentFallback = true;
         Entry.ContextQuery.ProjectId = TEXT("Project.Test");
         Entry.ProviderChannel = TEXT("VFX");
         Entry.DefinitionId = DefinitionId;
@@ -284,6 +285,46 @@ bool FGamePlatformPresentationCapacityTest::RunTest(const FString&)
         Oversized.Entries.Add(MoveTemp(Entry));
     }
     TestFalse(TEXT("单Catalog Fragment超过512条目被拒绝"), Oversized.IsValid());
+    return true;
+}
+
+// F08：完整注册与解析回归；删除精确优先或恢复按局部EntryId消歧会失败。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformPresentationResolutionRegressionTest,
+    "GamePlatform.Presentation.Regression.ExactAndFragmentConflict",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformPresentationResolutionRegressionTest::RunTest(const FString&)
+{
+    auto* Subsystem = NewObject<UGamePlatformPresentationClientSubsystem>();
+    auto Parent = MakeFragment(TEXT("Parent"), TEXT("Same"), EGamePlatformPresentationCatalogScope::ContentPack,
+        TEXT("Definition.Parent"), 0, PresentationCatalogTestTag());
+    Parent.Entries[0].bAllowParentFallback = true;
+    Subsystem->RegisterCatalogFragment(Parent);
+    Subsystem->RegisterCatalogFragment(MakeFragment(TEXT("Exact"), TEXT("Exact"),
+        EGamePlatformPresentationCatalogScope::Project, TEXT("Definition.Exact"), 0, PresentationCatalogTestChildTag()));
+    FGamePlatformPresentationContext Context; Context.ProjectId=TEXT("Project.Test");
+    FGamePlatformPresentationResolvedEntry Resolved;
+    TestEqual(TEXT("精确语义必须优先高Scope父语义"), Subsystem->ResolveCatalog(PresentationCatalogTestChildTag(), Context, Resolved),
+        EGamePlatformPresentationCatalogResolveResult::Resolved);
+    TestEqual(TEXT("实际使用精确定义"), Resolved.DefinitionId, FName(TEXT("Definition.Exact")));
+    auto* Conflict = NewObject<UGamePlatformPresentationClientSubsystem>();
+    Conflict->RegisterCatalogFragment(Parent);
+    auto Duplicate=Parent; Duplicate.FragmentId=TEXT("OtherFragment"); Duplicate.OwnerScopeId=TEXT("OtherOwner");
+    Duplicate.Entries[0].DefinitionId=TEXT("Definition.Other");
+    Conflict->RegisterCatalogFragment(Duplicate);
+    TestEqual(TEXT("跨fragment同局部EntryId不掩盖歧义"), Conflict->ResolveCatalog(PresentationCatalogTestTag(), Context, Resolved),
+        EGamePlatformPresentationCatalogResolveResult::Ambiguous);
+    auto* NoFallback = NewObject<UGamePlatformPresentationClientSubsystem>();
+    Parent.Entries[0].bAllowParentFallback=false; NoFallback->RegisterCatalogFragment(Parent);
+    TestEqual(TEXT("父语义未显式允许时拒绝回退"), NoFallback->ResolveCatalog(PresentationCatalogTestChildTag(), Context, Resolved),
+        EGamePlatformPresentationCatalogResolveResult::NoMatch);
+    auto* Parents=NewObject<UGamePlatformPresentationClientSubsystem>();
+    auto Near=MakeFragment(TEXT("Near"),TEXT("Near"),EGamePlatformPresentationCatalogScope::Platform,TEXT("Definition.Near"));
+    auto Far=MakeFragment(TEXT("Far"),TEXT("Far"),EGamePlatformPresentationCatalogScope::ContentPack,TEXT("Definition.Far"),0,
+        UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Presentation"),true));
+    Parents->RegisterCatalogFragment(Far); Parents->RegisterCatalogFragment(Near);
+    TestEqual(TEXT("父回退逐级解析"),Parents->ResolveCatalog(PresentationCatalogTestChildTag(),Context,Resolved),
+        EGamePlatformPresentationCatalogResolveResult::Resolved);
+    TestEqual(TEXT("最近父语义优先远父高Scope"),Resolved.DefinitionId,FName(TEXT("Definition.Near")));
     return true;
 }
 

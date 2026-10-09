@@ -32,7 +32,8 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXSpawnContext
     FVector Scale = FVector::OneVector;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX")
-    TObjectPtr<USceneComponent> AttachComponent = nullptr;
+    TWeakObjectPtr<USceneComponent> AttachComponent;
+    // 弱目标不延长Owner生命周期；异步完成和每个延迟子步骤在执行器再次核对Owner及World。
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX")
     FName AttachPointName = NAME_None;

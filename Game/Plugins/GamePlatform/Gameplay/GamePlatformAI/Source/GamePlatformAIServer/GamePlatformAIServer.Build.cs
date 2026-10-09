@@ -10,6 +10,8 @@ public class GamePlatformAIServer : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            // 本模块公开/实现直接消费FGamePlatformResult，DLL须直接链接其Core所有者，不能依赖Data间接可见。
+            "GamePlatformCore",
             "AIModule",
             "GameplayAbilities",
             "GameplayTags",

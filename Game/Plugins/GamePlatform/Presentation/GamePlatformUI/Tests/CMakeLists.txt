@@ -1,0 +1,13 @@
+# 平台UI同步构造提交策略回归：编译本模块自身Private/Tests，不访问其他UE模块私有头。
+cmake_minimum_required(VERSION 3.20)
+project(GamePlatformUIOpenCommitNativeTests LANGUAGES CXX)
+enable_testing()
+add_executable(UIOpenCommit ../Source/GamePlatformUIClient/Private/Tests/GamePlatformUIScreenOpenCommitNativeTests.cpp)
+target_compile_definitions(UIOpenCommit PRIVATE GAMEPLATFORM_UI_OPEN_COMMIT_NATIVE_TEST=1)
+target_compile_features(UIOpenCommit PRIVATE cxx_std_17)
+if(MSVC)
+    target_compile_options(UIOpenCommit PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(UIOpenCommit PRIVATE -Wall -Wextra -Werror)
+endif()
+add_test(NAME UI.SynchronousOpenCommit COMMAND UIOpenCommit)

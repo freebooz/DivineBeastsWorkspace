@@ -82,6 +82,8 @@ public:
 private:
     struct FAsyncRequestRecord
     {
+        /** 本世界服务签发的内部操作代次；调用方RequestId复用时旧超时仍不能匹配。 */
+        uint64 OperationGeneration = 0;
         uint32 EngineQueryId = 0;
         int32 WorldGeneration = 0;
         TWeakObjectPtr<UObject> Owner;
@@ -95,6 +97,7 @@ private:
     int64 SyncQueryCount = 0;
     int64 AsyncQueryCount = 0;
     int64 CancelledRequestCount = 0;
+    uint64 NextOperationGeneration = 0;
 
     TMap<FName, TWeakObjectPtr<UGamePlatformNavigationAgentProfile>> AgentProfiles;
     TMap<FName, TSubclassOf<UNavigationQueryFilter>> Filters;
@@ -134,12 +137,14 @@ private:
         FNavPathSharedPtr Path,
         FGuid RequestId,
         int32 ExpectedWorldGeneration,
+        uint64 ExpectedOperationGeneration,
         FVector ResolvedStart,
         FVector ResolvedGoal);
 
     void HandleAsyncTimeout(
         FGuid RequestId,
-        int32 ExpectedWorldGeneration);
+        int32 ExpectedWorldGeneration,
+        uint64 ExpectedOperationGeneration);
 
     UFUNCTION()
     void HandleInvokerDestroyed(AActor* DestroyedActor);

@@ -1,3 +1,5 @@
+// 平台开发诊断面板适配：客户端模块只展示中立快照，刷新预算属于开发工具。
+// 模块拥有面板/订阅生命周期，关闭解绑；当前World与Actor均借用，不保存业务权威状态。
 #include "Modules/ModuleManager.h"
 
 #if !UE_BUILD_SHIPPING
@@ -10,6 +12,7 @@
 #include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "HAL/PlatformTime.h"
@@ -339,7 +342,7 @@ namespace
                 return PC->GetViewTarget();
             }
 
-            return PC->GetPawn();
+            return PC->GetPawn().Get();
         }
 
         FString BuildFilteredText(

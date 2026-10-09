@@ -9,7 +9,7 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXCompositeStep
 {
     GENERATED_BODY()
 
-    /** 子Definition统一使用GamePlatformData逻辑身份，不直接保存第二套Definition软对象真源。 */
+    /** 子Definition使用GamePlatformData逻辑身份；对应主资产ID必须同时列入RequiredDefinitions，缺边拒绝启动，间接环由Data完整租约图阻断。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX")
     FName DefinitionId = NAME_None;
 

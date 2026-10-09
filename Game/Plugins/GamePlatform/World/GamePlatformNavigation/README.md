@@ -8,3 +8,5 @@
 
 当前0个 `.uasset/.umap`，因此真实NavMeshBounds、RecastNavMesh、动态重建、SmartLink到达、Invoker Tile、World Partition、Dedicated Server NavData、压力、Build/Cook均待UE5.8工具链和真实测试地图后验证。
 
+
+本次设计审查整改的真实行为、线程/所有权/失败合同及验证边界见 [2026-09-30专属说明](Docs/DesignRemediation-2026-09-30.md)。其中原生规则测试与UE实际运行分别记录，不混写交付状态。

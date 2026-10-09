@@ -1,11 +1,22 @@
-# GamePlatformEquipment（游戏平台装备插件）
+# GamePlatformEquipment（游戏平台装备）
 
-正式路径：`Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment`。
+更新日期：2026-09-30；当前能力依据正式工作树实际文件和调用链。此前有关后端、迁移、Outbox及假支付已实现的文字被本页替代。
 
-插件包含三个 UE（虚幻引擎）模块：`GamePlatformEquipment（装备共享模块）`为 Runtime（双端运行时），`GamePlatformEquipmentClient（装备客户端模块）`为 ClientOnly（仅客户端），`GamePlatformEquipmentServer（装备服务器模块）`为 ServerOnly（仅服务器）。
+三个稳定模块：共享装备/拥有者公共复制快照、服务器Port/GAS授予、客户端网格挂点视觉。服务器组件在EndPlay或移除时撤销自有授予并过滤旧生命周期回调。
 
-权威边界固定为：Inventory（背包）保存长期 ItemInstance（物品实例）所有权；PlayerData Equipment（玩家数据装备）保存 CharacterId（角色编号）维度的长期装备槽状态；UE EquipmentServer 负责当前局内合法性、GAS（玩法能力系统）应用和复制；UE EquipmentClient 只负责 Mesh/Socket/Material（网格/挂点/材质）表现。
+源码里有持久化Port及GAS解析Port；未发现旧文档所称Backend/gameplatform/equipment、0004迁移/Outbox或DBAServer装备HTTP适配器。长期装备/背包所有权、角色归属和真实持久化仍需后端实现及联调。
 
-当前源码已经实现三模块、Owner/Public Snapshot（拥有者/公共快照）、Revision（修订号）、RuntimeGeneration（运行代次）、Equip/Unequip（装备/卸下）、OperationId（操作编号）幂等、Inventory 所有权/Revision事务校验、PostgreSQL 0004 Migration（数据库迁移）、Outbox（事务外发）、DBAServer 异步 Persistence Adapter（持久化适配器）、GAS GrantHandle（授予句柄）框架、StaticMesh（静态网格）异步视觉装配和 Socket 校验。
+| 证据维度 | 当前状态与边界 |
+| --- | --- |
+| 源码 | 上述UE切片与Private/Tests源码存在；接口定义不等于生产适配器接通。 |
+| 模块编译 | 本次修改后的UE5.8 Editor/Client/Server结果由统一执行账本记录；本页不预先宣称通过。 |
+| 自动化运行 | 本次已补生命周期/终态回归源码；UE执行结果尚待统一验证。Task 2源码回归通过仅属静态证据。 |
+| 后端联调 | 上述缺失适配/事务/授权链未完成；未以开发替身冒充后端。 |
+| Cook/联机 | 本次未执行干净Cook、专服加双客户端、真实角色和资产流程。 |
+| 人工验收 | 未执行运行体验/设备/视觉及完整中文注释存量验收。 |
 
-当前限制：GamePlatformAbilitySystem（游戏平台能力系统）仍没有正式 AbilitySet（能力集合）目录/授予 API，因此非空 AbilitySet/Effect 定义需要后续真实 Resolver（解析器）才能运行；项目也没有可验证的 CharacterId↔PlayerId 权威角色归属表。未创建任何伪造 .uasset/.umap（二进制UE资产）。Go/PostgreSQL/UE5.8 运行、Dedicated Server+双客户端、Respawn、Late Join、Build/Cook 和人工审查均保持未执行。
+项目服务器组合根须注入真实已授权的装备持久化Port与GAS资产解析Port；本插件不内置HTTP持久化或长期背包权威。客户端读取公共复制快照只用于显示和挂点视觉。退出只撤销组件自有授予及回调代次，不回滚已提交的后端事务。
+
+配置/目标/模块身份保持插件现有声明，不创建空内容包或伪造资产。
+
+`Docs/TestingAndEvidence.md`列本次验证入口，`Docs/MigrationAndHandover.md`列兼容影响。其余标记为历史设计说明的文档只记录意图，不能证明相应后端已经实现。
