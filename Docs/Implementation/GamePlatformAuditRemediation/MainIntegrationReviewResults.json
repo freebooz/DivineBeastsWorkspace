@@ -1,9 +1,9 @@
 {
   "SchemaVersion": 1,
   "Scope": "主线整合源码独立复核最终快照，保留各原始发现和闭环；真实构建及回归分别取独立中央结果",
-  "GeneratedUtc": "2026-10-09T16:00:01.8855976Z",
-  "IntegrationHead": "382bc52cc84d465daf335ab219f587b7b4c73c8a",
-  "MainIntegratedHead": "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+  "GeneratedUtc": "2026-10-09T16:59:45.5403884Z",
+  "IntegrationHead": null,
+  "MainIntegratedHead": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
   "MainPushedByThisTask": false,
   "Reports": [
     {
@@ -3602,6 +3602,2946 @@
           "工作树生产cpp对当前HEAD无差异只证明这四被测实现没有本轮未提交改变，不推断整个工程生产历史或其他所有者变更。"
         ]
       }
+    },
+    {
+      "Name": "Main86GameplayIntegrationRepairReport.json",
+      "SourceSHA256": "EBA429F8C6941E269F2C9E4440752945EF85371275FB811429FD8ADCAF4ADA68",
+      "Report": {
+        "schemaVersion": 1,
+        "reportId": "Main86GameplayIntegrationRepair",
+        "generatedAtUtc": "2026-10-09T16:47:55.3972981Z",
+        "worker": "review_gameplay_server_20261009",
+        "workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "repositoryAtStart": {
+          "branch": "codex/gameplatform-audit-fixes-20261009",
+          "head": "022934fb79be058c9df34f67df0f9500def76707",
+          "mergeHead": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+          "scope": "真实git status/branch/rev-parse读取，不声称为后续Root合并提交身份"
+        },
+        "rules": {
+          "rootAGENTSSHA256": "F0FDA3EC8CC807D96C27B0CD9E1266B59A73A268AAB7E9588D470F921612F782",
+          "ancestorCodexAGENTSEmpty": true,
+          "affectedLocalOverrideFound": false,
+          "boundary": "现行规则与之前已读规划/插件规范保持；只操作明确扩权文件，不撤销他人变更"
+        },
+        "sourceFrozen": true,
+        "sourceFreeze": [
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAServer\\Source\\DBAServer\\Private\\Server\\DivineBeastsServerBootstrapSubsystem.cpp",
+            "bytes": 38386,
+            "sha256": "C26DFDE8F5F1BBEA7AC2002F7A2BCD81317CBD5FF369CE3BF3FA19ED9C5E7500"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAServer\\Source\\DBAServer\\Public\\Server\\DivineBeastsServerBootstrapSubsystem.h",
+            "bytes": 7377,
+            "sha256": "65DED7A1F8D4957AC5D07B9938072E32CE3F3F2243DA48E28E7FF6BEF163B326"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Gameplay\\GamePlatformGameplay\\README.md",
+            "bytes": 2340,
+            "sha256": "8928845B830F080175B53C2CE6480718EBBF2FD153488BC064D9FA966A14A55C"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Gameplay\\GamePlatformGameplay\\Source\\GamePlatformGameplay\\Private\\Tests\\GamePlatformGameplayContractTests.cpp",
+            "bytes": 7339,
+            "sha256": "645F4EDCEF73E859E3C5B6DC3A1A8ED5B0EF542BA1E98E04DCDC9414B27AFEB9"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAServer\\Source\\DBAServer\\Private\\Tests\\ServerWorldRetirementTests.cpp",
+            "bytes": 7491,
+            "sha256": "F9B379E215BD44751D8533AEAC3AAC111522EF4FCE24EB3CC5B28777D8F7B57F"
+          }
+        ],
+        "ownershipCount": 5,
+        "readOnlyInputs": [
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Gameplay\\GamePlatformGameplay\\Source\\GamePlatformGameplay\\Private\\Framework\\GamePlatformGameModeBase.cpp",
+            "bytes": 44377,
+            "sha256": "627F03EAA898D7C9DC8C0EA32CAAFF238F88F23BFE7951311B09A145E7FB6216"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Gameplay\\GamePlatformGameplay\\Source\\GamePlatformGameplay\\Public\\Framework\\GamePlatformGameModeBase.h",
+            "bytes": 4992,
+            "sha256": "BF8CE73A94D4233648466EB6EBA4D04140D2B5B2198C758F2EA0066DB2D092A6"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAWorlds\\Source\\DBAWorldsRuntime\\Private\\Tests\\DivineBeastsWorldDefinitionTests.cpp",
+            "bytes": 6242,
+            "sha256": "57B864DE4D124F1C2BFEDD641F8DB849D9E50514B36B6E95E43156A57ED654FE"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ServerLifecycleContract.Tests.ps1",
+            "bytes": 4674,
+            "sha256": "0FD4094E71A41F8D4B53DF3EE634BB91E8E031191B8446ED315476E99F260968"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAServer\\Source\\DBAServer\\DBAServer.Build.cs",
+            "bytes": 1476,
+            "sha256": "BCB3EFF95BC2FFFF7C66FE322626F9BDFCB981DEB26DEF6D56E59285AEB91FB9"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAServer\\DBAServer.uplugin",
+            "bytes": 1251,
+            "sha256": "8C537CC30789221B22AB9CC48D3D3F6C1EC3D87A6C1F9C3C6EFF9AAD7F691D92"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\OnlineServices\\GamePlatformServer\\Source\\GamePlatformServer\\Public\\Server\\GamePlatformServerLifecycleSubsystem.h",
+            "bytes": 11406,
+            "sha256": "07960BB9F575838DB9ACC3FDFD92F82461AF7BD47AA44A9C0AD9674E8409FF3D"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\OnlineServices\\GamePlatformServer\\Source\\GamePlatformServer\\Private\\Server\\GamePlatformServerLifecycleSubsystem.cpp",
+            "bytes": 20571,
+            "sha256": "177C7B1A99E20701754522096EE8AAF68DF404444FBEA6AA58A47565EE88ADFB"
+          },
+          {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Gameplay\\GamePlatformGameplay\\Source\\GamePlatformGameplay\\Private\\Components\\GamePlatformExperienceComponent.cpp",
+            "bytes": 22435,
+            "sha256": "4FE911443556F6259EA41E243D86FB38B1A7111EEFC6D1F8FA5874C5CA49EA38"
+          }
+        ],
+        "lockedEngineInputs": [
+          {
+            "path": "F:\\UnrealEngine-5.8.0-release\\Engine\\Source\\Runtime\\Engine\\Private\\Actor.cpp",
+            "bytes": 229299,
+            "sha256": "88121F90F779503FFE793186488DD11360231B39737C8F1B0AF6AE01885B4CB0"
+          },
+          {
+            "path": "F:\\UnrealEngine-5.8.0-release\\Engine\\Source\\Runtime\\Engine\\Private\\GameModeBase.cpp",
+            "bytes": 43654,
+            "sha256": "0B358B96544435A7BFA0826CDBCAF19CB99D4D7CFE3F225A8CE4B8D08281E4C2"
+          },
+          {
+            "path": "F:\\UnrealEngine-5.8.0-release\\Engine\\Source\\Runtime\\Engine\\Classes\\GameFramework\\GameModeBase.h",
+            "bytes": 31616,
+            "sha256": "49EFBE356A9B7507CAF283A7D8BDD46A6B97B4FE52F4251F2B9FB0CAE4EDF93D"
+          }
+        ],
+        "originalStageInputs": [
+          {
+            "gitArgument": ":1:Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "exitCode": 0,
+            "evidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86GameplayInputs\\BootstrapSubsystem.stage1.txt",
+            "normalizedTextSHA256": "886559E9AAFA4B43F17F35F3FCDD6C76535F605294DAAC698A53035F5D5C0578"
+          },
+          {
+            "gitArgument": ":2:Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "exitCode": 0,
+            "evidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86GameplayInputs\\BootstrapSubsystem.stage2.txt",
+            "normalizedTextSHA256": "0491C8E5A2B76D044321C9BD76B97D6469944636A26805E6DC3CF612E89BF3FA"
+          },
+          {
+            "gitArgument": ":3:Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "exitCode": 0,
+            "evidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86GameplayInputs\\BootstrapSubsystem.stage3.txt",
+            "normalizedTextSHA256": "0F21109C9EBEDC7F7DA86C11B2C83E6ACD93DF397DE89A1A9CC3530EF2E4C938"
+          },
+          {
+            "gitArgument": ":1:Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/README.md",
+            "exitCode": 0,
+            "evidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86GameplayInputs\\GameplayREADME.stage1.txt",
+            "normalizedTextSHA256": "2CB179974088FB424BC7C08E9325DA25C9018DEDD39993799FE837714226ED8D"
+          },
+          {
+            "gitArgument": ":2:Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/README.md",
+            "exitCode": 0,
+            "evidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86GameplayInputs\\GameplayREADME.stage2.txt",
+            "normalizedTextSHA256": "752129A8B8E04D39960100A38DFA2FA8A3230ADEE3FE1CD006B37ACBBFC493E7"
+          },
+          {
+            "gitArgument": ":3:Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/README.md",
+            "exitCode": 0,
+            "evidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86GameplayInputs\\GameplayREADME.stage3.txt",
+            "normalizedTextSHA256": "CA39DDCC1B1D0D3A3C365BC939624165974897AC42E3357AB1D54507F3F75716"
+          }
+        ],
+        "conflictDecisions": [
+          {
+            "file": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "hunk": "Deinitialize",
+            "decision": "同时保留ours完整世界撤销/OnWorldCleanup解绑和Main启动Timer清理；新增门闩/nonce最先失效，即使无ValidatedWorld也永不重新承载。"
+          },
+          {
+            "file": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "hunk": "HandleLifecycleChanged",
+            "decision": "世界退休优先，保退休错误；其次Main资源失败终态；显式排空不被迟到Registered/PublishingReady覆写。新Registered签发实例nonce，队列捕原World/GI/Boot/Lifecycle和原通知，只拒绝旧通知，不以平台诊断generation授予权限。"
+          },
+          {
+            "file": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "hunk": "SetFailed/TryPublishReady",
+            "decision": "合并ResetTarget与停Timer/心跳/Drain；失败先失效nonce。统一Main Registered+Village ExperienceActive门禁；virtual GetNumPlayers及MarkReady返回先复核原scope，旧false不会覆盖Deinitialize/退休原因。"
+          },
+          {
+            "file": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "hunk": "World/Data启动",
+            "decision": "保Main Village World/Data/Admission桥及真实Experience启动；InitializeBoundWorld/RegisterAdmissionAuthority/BeginExperience内部Data返回后复核，失效原栈不SetFailed、不清后继Timer或读取旧Experience快照。"
+          },
+          {
+            "file": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/README.md",
+            "hunk": "README",
+            "decision": "保最小GameplayEligibility职责和0.05秒有界Timer真实边界，同时加入Main登录初始位置只查询说明。历史5项UE结果明确为Main历史，不算本次合并运行通过。"
+          }
+        ],
+        "importantEvidence": [
+          {
+            "id": "Main86-Gameplay-ActorInitialization",
+            "original": "新GameplayContractTests CreateWorld后直接FindPlayerStart，缺InitializeActorsForPlay；Actor.cpp1513会挡普通Native UFUNCTION事件，返回空。",
+            "primaryEvidence": "GameModeBase.h415 BlueprintNativeEvent；Actor.cpp1488-1524；新测试原15-30行",
+            "repair": "Root授权只为真实查询夹具补InitializeActorsForPlay(FURL())与AreActorsInitialized断言，保Start/Restart/外部Spawn/Active全部原期望及原注册名。",
+            "status": "源码已修；本座位UE未运行；独立回读另记。"
+          },
+          {
+            "id": "Main86-G03",
+            "original": "MarkReady->StartProviderOperation391 SetState(PublishingReady)->LifecycleChanged548同步通知允许Deinitialize/世界退出；返回false旧TryPublishReady会SetFailed覆盖关闭。Registered队列仅WeakThis/当前Registered不能证明原任务。BeginExperience实际外部边界为Data AcquireDefinition，不是SetStage自身广播。",
+            "repair": "私有FGuid+原World/GI/Boot校验，关闭/失败/排空先失效；原Registered队列捕获任务所有者与身份；三外部返回先复核，MarkReady失败只对原且尚未推进的Registered操作处理。",
+            "status": "源码已修；Provider Dedicated真实重入未运行且当前Editor内存夹具不覆盖，独立源码回读另记。"
+          }
+        ],
+        "findPlayerStartReview": {
+          "changedByThisWorker": false,
+          "source": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Gameplay\\GamePlatformGameplay\\Source\\GamePlatformGameplay\\Private\\Framework\\GamePlatformGameModeBase.cpp",
+          "conclusion": "非内部路径只查询地图Actor，Super IncomingName为空；没有设置bInternalSpawn、占位、创建Pawn或发布Gameplay Active。",
+          "engineEvidence": [
+            "Engine InitNewPlayer772-808先UpdatePlayerStartSpot，初始位置用于Controller登录",
+            "Engine FindPlayerStart1149-1192读取已存StartSpot或ChoosePlayerStart；Choose1093-1137只查PlayerStart/GetDefaultPawnClass CDO并测试适配，不调用Spawn",
+            "项目GetDefaultPawnClass/RestartPlayer/AtStart/AtTransform/SpawnDefaultPawn的final入口仍检查bInternalSpawn；唯一TrySpawn808的TGuard仅在原准入/候选门禁通过后开启"
+          ],
+          "limitation": "未执行真实Login/联机/资产，单次只读查询不代表完成Village交付验收。"
+        },
+        "automation": {
+          "newRegisteredFromMain": [
+            "GamePlatform.Gameplay.Login.InitialLocationDoesNotAuthorizeSpawn",
+            "DivineBeasts.Worlds.Delivery.VillageGameplayDefinitions"
+          ],
+          "affectedOrSelectedExisting": [
+            "GamePlatform.Gameplay.Contracts.SafeDefaults",
+            "GamePlatform.Gameplay.Definitions.Validation",
+            "DivineBeasts.Worlds.Definition.RoleExperience",
+            "DivineBeasts.Worlds.Definition.ArenaContext",
+            "DivineBeasts.Server.WorldRetirement"
+          ],
+          "newRegisteredByThisWorker": [],
+          "preservedWorldRetirement": "原断言全部保留；扩真实Timer、同World/Boot Registered换nonce、真实GT后置屏障+活Bootstrap公开Deinitialize、未验证World关闭。沿用原注册名，普通原生fixture/latent，无新增UCLASS。",
+          "abortCleanup": "共享fixture析构公开Deinitialize并DestroyWorld，latent被中止也释放自有资源；屏障在同一GT队列，不能靠GC死亡冒充旧回调拒绝。",
+          "honestTestBoundary": "该内存GI未初始化Dedicated生命周期，ExpectedLifecycle为空也会拒绝排队lambda，不能把其拒绝单独归因为nonce护栏；未用真实GetSubsystem走Provider MarkReady通知重入，没有注入伪成功Provider或改生产ShouldCreate。真实队列/公开关闭/Timer撤销与Dedicated Provider重入覆盖分别记录。"
+        },
+        "worldDefinitionTestReview": "新Delivery用例LoadObject两个真实Village定义，非Transient替身；验证Experience/Pawn ValidateDefinition及同PrimaryAssetId，缺资源直接失败。本座位不读二进制猜资产内容，资产由Root/引擎验证。",
+        "pesterChangeReview": "ServerLifecycleContract.Tests.ps1原服务端世界/必要资源校验项改为匹配唯一TryPublishReady中的IsConfiguredWorldValid(*ValidatedWorld.Get(),Reason)后MarkReady，仍仅源码顺序审计；无新增It，尚未本轮执行。",
+        "coreDependencyPreserved": {
+          "buildSHA256": "BCB3EFF95BC2FFFF7C66FE322626F9BDFCB981DEB26DEF6D56E59285AEB91FB9",
+          "pluginSHA256": "8C537CC30789221B22AB9CC48D3D3F6C1EC3D87A6C1F9C3C6EFF9AAD7F691D92",
+          "privateCore": true,
+          "pluginCoreEnabled": true,
+          "changedByThisWorker": false
+        },
+        "checks": {
+          "workingDiffCheckExitCode": 0,
+          "authorizedGitAddExitCode": 0,
+          "indexDiffCheckExitCode": 0,
+          "ownedConflictMarkerCount": 0.0,
+          "stagedOnlyOwnedFiveFiles": true,
+          "noCommit": true,
+          "ueExecuted": false,
+          "ubtExecuted": false,
+          "staticSixExecutedYet": false
+        },
+        "staticNextStep": "AfterMain86Freeze全6新执行/0复用runner准备中，等待Root全组最终冻结；输入前后SHA覆盖源/公开头/测试fixture/门禁脚本和3新增/变更资产，不复用旧5。",
+        "chineseReview": {
+          "method": "按本座位实际源码调用与异常路径人工核读，不用中文字符扫描代替内容审核；原领域实施者的汇总仅作为有归属的历史范围证据，不冒充本人逐行认证。",
+          "currentFive": {
+            "implementation": "Bootstrap cpp 文件头说明第三层 Server/Editor/Village 组合根、World/Data/Experience依赖和自有委托/Timer；逐段核生命周期永久退休、Initialize关闭拒绝、Boot/nonce身份、外部返回复核、排空与Reset区别、失败/取消、旧Registered GT队列、Provider MarkReady边界。",
+            "publicHeader": "核第三层/Dedicated/GameInstance职责与资源所有权；补枚举状态含义、引擎创建/初始化/关闭钩子、心跳/排空公开命令的游戏线程/输入/失败语义，以及3个只读查询的默认/返回/空值/指针借用/实例寿命/不提供准入能力说明；私有nonce不透明拒绝身份保留。",
+            "gameplayReadme": "核完整体验/准入/准备/出生/排空职责与最小Eligibility职责、0.05秒Timer事实、登录只读PlayerStart与权威出生门禁，保历史UE与本次未跑区分。",
+            "loginFixture": "核真实瞬态World、InitializeActorsForPlay前提与引擎NativeEvent原因、失败销毁、自有World清理、真实PlayerStart查询和原拒绝Pawn/Active期望，不联网/不造资产。",
+            "retirementFixture": "核普通原生开发测试替身、真实Timer/GT队列/后置屏障、强持有避免GC伪拒绝、命令中止析构清理、未初始化GI/ExpectedLifecycle空门禁限制。"
+          },
+          "historicalReadScope": "本座位既往实际复核与合并范围包含ASC/Gate/ActorInfo、Character配置/租约/代次、Combat死亡事实、Arena Adapter原Pawn归属/重连Timer、Quest终态重复与广播重入、World预热/所有者，以及Server/Admission/DBAServer退出链；参见历史个人整合/独立报告。没有本轮重扫已关闭旧链或扩大到未改存量。",
+          "historicalEvidence": [
+            "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/GameplayMergeReport.json 的 chineseDocumentationReview",
+            "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/GameplayMergeReentrancyRepairReport.json 的 chineseReview/documentationAdditional",
+            "Saved/Validation/PluginRemediation-2026-10-09/GameplayWorld/RepairReport.json 的 chinese_review（原实施者负责归属，不作为本人全量源码认证）"
+          ],
+          "rectifiedCurrentGaps": [
+            "Bootstrap Public.h GetBootstrapState：补GT只读投影/Unconfigured默认/不授予准入/关闭后最后记录值；无ValidatedWorld的Deinitialize不保证State枚举推进，不能误写所有关闭都已终态",
+            "Bootstrap Public.h GetLastErrorCode：补NAME_None与稳定错误码，明确只有完整承载世界退休保证要求新实例原因",
+            "Bootstrap Public.h GetActiveProfile：补未加载nullptr、本实例借用指针与不得跨关闭缓存",
+            "补该头受影响公开生命周期/命令职责与线程/失败说明，枚举数字/反射身份/实现不变"
+          ],
+          "concreteCurrentGaps": [],
+          "sourceFreezeHistory": "此前实际冻结通知Bootstrap cpp 940540828E70335EB528F879E7CF794B1E2B7FA6CC53FBE65B6C10815BB73DA9记录保留；当前C26D追加Initialize退休early guard。Public.h原9C77BB99C3DDC0487FA142251036DC6D423E07F1CC69FF1939F304A4D793736A追加纯中文公开API/状态说明，2FD0中误写所有关闭均投影终态的文字已核实际无World路径更正后为65DED，不改类型布局、反射身份或枚举值。",
+          "remaining": "原领域报告已明确未全量审计所有存量Private/公开字段/Build.cs/Animation/Lobby/Village/Quest/Nav API；本座位未读的历史路径不认证。计划121不能仅靠这些局部证据勾为全工程完成。"
+        },
+        "limitations": [
+          "本次仅本人5授权文件修改/暂存，Root/App其它冲突、UI生命周期与3资产由其负责",
+          "未运行UE/UBT/UHT/180/三端/Cook/联机或生产网络，源码闭环与独立/实际运行结论分开",
+          "没有新反射类型/模块/权限服务/进程全局状态；既有Header增加非反射私有实例字段仍需真实重编译",
+          "历史172/178/180由Root精确集合规划消费，未执行集合不记为尝试或通过",
+          "旧Main348及四夹具/3→4冻结证据都保留，不算本Main86最终门禁"
+        ]
+      }
+    },
+    {
+      "Name": "Main86UIIntegrationRepairReport.json",
+      "SourceSHA256": "79AF7D92E220883E2F10A6D09BF983C29F214F9606B21990335EABE6C5F282AE",
+      "Report": {
+        "generatedUtc": "2026-10-10T00:27:18.765664+08:00",
+        "workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "status": "SourceFrozen_SevenOwnedFilesStaged_RuntimeNotExecuted",
+        "sourceFreezePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\SourceFreeze.json",
+        "sourceFiles": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+            "sha256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+            "sha256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+            "sha256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+            "sha256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+            "sha256": "9ADC33DE9F94ABEF8259F97F5EA053E89CB180FBA5186AB9B1A6C3946E6A6519"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+            "sha256": "187A6AB2D2264EF1F470F6C81FBBF35536DD622B91FE8975C8849817E7231439"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "sha256": "0E1013F1BEF3B598DDFBB0E646C65DE95C5F82A3AF5F445C0B88FF25B2228089"
+          }
+        ],
+        "formalAddedFiles": [],
+        "formalRemovedFiles": [],
+        "originalConflictCountOwned": 4,
+        "resolvedConflictDecisions": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+            "sha256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+            "decision": "NewRoot.Get强持有发布与Main viewport bAutoRemove=false结合；Travel取消捕获身份失败通知，后续外部边界按Root/World/代次/closing停旧栈。",
+            "resolvedConflictBlocks": 1
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+            "sha256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+            "decision": "双方等价GEngine Outer前提合并中文原因，保ours既有失败断言和其余全部原测试逻辑/注册。",
+            "resolvedConflictBlocks": 1
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+            "sha256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+            "decision": "双方等价GEngine Outer前提合并中文原因，保ours既有失败断言和其余全部原测试逻辑/注册。",
+            "resolvedConflictBlocks": 1
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+            "sha256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+            "decision": "保AuditRemediation链接与Main跨地图生命周期说明；历史验证标明Main原记录，合并版本未运行不冒绿灯。",
+            "resolvedConflictBlocks": 1
+          }
+        ],
+        "threeWayOriginalEvidence": {
+          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\ThreeWayEvidence.json",
+          "ours": "022934fb79be058c9df34f67df0f9500def76707",
+          "main": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+          "allStage1_2_3SnapshotsPreserved": true
+        },
+        "ownership": "原四个GPUI冲突文件；Root明确扩权LoadingTravel cpp/h和现有DivineBeastsUITests cpp；仅显式七路径暂存。",
+        "managerCombination": {
+          "preservedAudit": "除Viewport slot新增块与Travel作用域护栏外，Manager源码逆向比较与Stage2完全相等；保Deinitialize幂等、Root强持有/代次检查、默认类重试完整Data租约和精确实例Owner查询。",
+          "preservedMain": "Root发布NewRoot.Get()；Viewport slot bAutoRemoveOnWorldRemoved=false；显式退出/替换仍RemoveFromParent；Travel撤在途账本后按捕获RequestId/ScreenId失败通知释放Opening。",
+          "reentryGuard": "入口强持有Manager/Root及三服务，捕获Root/World/RootGeneration；Failed/Closed/各Clear返回核closing/作用域，过期旧栈不继续清后继层。活跃实例入口先快照，不将回调新实例加入旧遍历。",
+          "limits": "没有模拟Data受理或手工广播成功；本次Travel失败/Viewport跨图组合未执行UE。"
+        },
+        "Main86_UI01": {
+          "finding": "原派生NativeOnActivated在Super真实通知同步失活后仍直接绑定/刷新；合法换VM不拆旧派生委托，Refresh未核PageGeneration。",
+          "sourceRepair": "改用平台统一门闩约束的RefreshInitialState/OnViewModelStateChanged；派生不另持动态委托；刷新再核IsActivated、IsPageActive和当前PageGeneration。",
+          "reflectedCompatibility": "保Abstract/Blueprintable、UDivineBeastsLoadingScreen父类、原RefreshLoadingPresentation UFUNCTION二int32签名、GetLoadingScreenId/GetLoadingViewModel与StageText BindWidget字段，不修改uasset。",
+          "tests": [
+            "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+            "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement"
+          ],
+          "testImplementation": "现有UITests增加2真实Native回归；引擎受控抽象分配，不改ClassFlags；Transient StageText反射注入不是资产构造。实际Activate/Deactivate、InitializeVM、LoadingService token更新与文本值；ScopeExit拆observer/解绑VM/释放令牌。",
+          "redEvidence": "独立review与修前源码保留；旧路径违反新断言的失活订阅/文本及旧VM解绑不变量。未执行UE红/绿运行，不伪造测试结果。",
+          "runtimeStatus": "UnverifiedByThisAgent"
+        },
+        "autoMergedReadOnlyReview": [
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+            "observed": "Main新增PlayerControllerChanged在有效Controller事件上EnsureDefaultRootLayout/PullInitialState；既有LoadingTravel VM注入LoadingService，PrimaryFailure按请求匹配清Opening；Deinitialize实际拆Query/平台事件/请求与PlatformUI。文件未改。",
+            "boundary": "仅新增接线及相关路径只读核对，不宣称历史UIClient全部重入实现已全量审计。"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+            "observed": "LoadingTravel/ErrorReconnect设置bSurvivesTravel=true；Loading/Modal层、UIOnly和DBAUIPack_Core挂载点不变；文件未改。",
+            "boundary": "目录项不等于资产加载、运行和人工视觉验收。"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "observed": "保Main新增RequiredTransferScreens的真实软加载Class/父类/非Abstract/SurvivesTravel断言和全部原测试，逆向精确相等。"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+            "observed": "Main使用真实World内原生Character持有ASC/AttributeSet，InitAbilityActorInfo，Max先于当前值设置，正常解绑VM并销毁世界/失败销毁世界；注册不变，仅只读。",
+            "boundary": "未执行World/GAS，不扩写此文件，实际选集执行由Root负责。"
+          }
+        ],
+        "automaticMergeReadOnlyHashes": [
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+            "sha256": "6A1B8A584789C9E3BA87BC8160EDDFA51DB07C57A43A3531DB7DE41C4D34E176",
+            "diffCommand": [
+              "git",
+              "diff",
+              "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+              "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+              "--",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp"
+            ],
+            "exitCode": 0
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h",
+            "sha256": "30F8D8AA065942A06B2EE50098CE578D60CDD5717E41B80F11AE41358E0D9F03",
+            "diffCommand": [
+              "git",
+              "diff",
+              "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+              "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+              "--",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h"
+            ],
+            "exitCode": 0
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+            "sha256": "C5D1316557BA23E21FF89BA4A3ACDA793116108DE0E4E2A514F4A6B47F6AB3AA",
+            "diffCommand": [
+              "git",
+              "diff",
+              "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+              "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+              "--",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp"
+            ],
+            "exitCode": 0
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+            "sha256": "AD688C1D7ACFE431847D22C44C85F730D64E214CA5F14ADB9B7DB1288CCCBC20",
+            "diffCommand": [
+              "git",
+              "diff",
+              "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+              "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+              "--",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp"
+            ],
+            "exitCode": 0
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "sha256": "0E1013F1BEF3B598DDFBB0E646C65DE95C5F82A3AF5F445C0B88FF25B2228089",
+            "diffCommand": [
+              "git",
+              "diff",
+              "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+              "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+              "--",
+              "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+            ],
+            "exitCode": 0
+          }
+        ],
+        "automationSelection": {
+          "exactNames": [
+            "GamePlatform.UI.Accessibility.PreferencesAndReducedMotion",
+            "GamePlatform.UI.Registry.DuplicateAndRouteCycle",
+            "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+            "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement",
+            "DivineBeasts.UI.Delivery.RequiredTransferScreens",
+            "DivineBeasts.UI.ScreenInventory",
+            "DivineBeasts.UI.CommandContract",
+            "DivineBeasts.UI.CommandCompletionLifetime",
+            "DivineBeasts.UI.RoutingPolicy",
+            "DivineBeasts.UI.Localization",
+            "DivineBeasts.UI.Combat.PlayerStatusSnapshot"
+          ],
+          "newNames": [
+            "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+            "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement"
+          ],
+          "exactRegex": "^GamePlatform.UI.Accessibility.PreferencesAndReducedMotion$+^GamePlatform.UI.Registry.DuplicateAndRouteCycle$+^DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates$+^DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement$+^DivineBeasts.UI.Delivery.RequiredTransferScreens$+^DivineBeasts.UI.ScreenInventory$+^DivineBeasts.UI.CommandContract$+^DivineBeasts.UI.CommandCompletionLifetime$+^DivineBeasts.UI.RoutingPolicy$+^DivineBeasts.UI.Localization$+^DivineBeasts.UI.Combat.PlayerStatusSnapshot$",
+          "execCmdsSyntax": "Automation SetFilter Engine;RunTests <exactRegex>;Quit",
+          "mustDisableMonolith": true,
+          "notExecuted": true,
+          "limits": [
+            "两个新Native回归不需要World/Viewport/项目资产，实际Native对象和真实CommonUI事件，不证明Slate视觉或输入验收。",
+            "RequiredTransferScreens实际TryLoadClass需要DBAUIPack_Core两个真实Widget Blueprint；本子任务未执行加载。",
+            "PlayerStatusSnapshot需要CreateWorld/真实原生Character/ASC；无后端和BeginPlay，不等同完整角色装配。",
+            "NullRHI/Unattended不能验证实际渲染、焦点/输入、双客户端旅行或设备体验。"
+          ]
+        },
+        "allAffectedSourceRegistrations": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+            "line": 10,
+            "class": "FGamePlatformUIAccessibilityPreferencesTest",
+            "prettyName": "GamePlatform.UI.Accessibility.PreferencesAndReducedMotion",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+            "line": 13,
+            "class": "FGamePlatformUIRegistryTest",
+            "prettyName": "GamePlatform.UI.Registry.DuplicateAndRouteCycle",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 21,
+            "class": "FDivineBeastsLoadingTravelActivationReentryTest",
+            "prettyName": "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": true,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 62,
+            "class": "FDivineBeastsLoadingTravelViewModelReplacementTest",
+            "prettyName": "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": true,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 110,
+            "class": "FDivineBeastsRequiredFlowScreensTest",
+            "prettyName": "DivineBeasts.UI.Delivery.RequiredTransferScreens",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": true,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 130,
+            "class": "FDivineBeastsUIScreenInventoryTest",
+            "prettyName": "DivineBeasts.UI.ScreenInventory",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 211,
+            "class": "FDivineBeastsUICommandContractTest",
+            "prettyName": "DivineBeasts.UI.CommandContract",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 248,
+            "class": "FDivineBeastsUICommandCompletionLifetimeTest",
+            "prettyName": "DivineBeasts.UI.CommandCompletionLifetime",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 292,
+            "class": "FDivineBeastsUIRoutingPolicyTest",
+            "prettyName": "DivineBeasts.UI.RoutingPolicy",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 373,
+            "class": "FDivineBeastsUILocalizationTest",
+            "prettyName": "DivineBeasts.UI.Localization",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+            "line": 11,
+            "class": "FDivineBeastsPlayerStatusViewModelSnapshotTest",
+            "prettyName": "DivineBeasts.UI.Combat.PlayerStatusSnapshot",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": true
+          }
+        ],
+        "allAffectedRegistrationCount": 11,
+        "overallRootSelectionImpact": "Root报告旧172全部保留，Main6已增至178；另2新注册应增至180；Runner由Root维护，此子任务未修改。",
+        "chineseReview": {
+          "range": "四冲突决策，新Travel作用域/终态原因，两个测试目标/前提/退出清理，Loading钩子参数/兼容说明，README历史验证边界。",
+          "remaining": "未全量审查历史UI/API/资产中文说明；只读UIClient不是全生命周期审计。"
+        },
+        "actualChecks": {
+          "inlinePythonStaticComparisonExitCode": 0,
+          "staticEvidencePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\FinalStaticChecks.json",
+          "stageCommands": [
+            {
+              "command": [
+                "git",
+                "add",
+                "--",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+              ],
+              "exitCode": 0,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "git",
+                "ls-files",
+                "-u",
+                "--",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+              ],
+              "exitCode": 0,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "git",
+                "diff",
+                "--cached",
+                "--check",
+                "--",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+              ],
+              "exitCode": 0,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "git",
+                "status",
+                "--short",
+                "--",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+              ],
+              "exitCode": 0,
+              "stdout": "M  Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp\nM  Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp\nM  Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h\nM  Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md\nM  Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp\nM  Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp\nM  Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp\n",
+              "stderr": ""
+            }
+          ],
+          "threeWayReadCommands": [
+            {
+              "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+              "beforeSha256": "7EBD6AEB293E0EB88DCF1D37BAE868658311B2C029CBD57406F8AD5B1F318EE1",
+              "stages": [
+                {
+                  "stage": 1,
+                  "command": [
+                    "git",
+                    "show",
+                    ":1:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIManagerSubsystem.cpp.Stage1.txt",
+                  "sha256": "D05DDBE15B2C52BC71FFBEFF52E85F804F240E7E7E03A3403925D74183444170"
+                },
+                {
+                  "stage": 2,
+                  "command": [
+                    "git",
+                    "show",
+                    ":2:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIManagerSubsystem.cpp.Stage2.txt",
+                  "sha256": "A21C64B109B094BA2FAE5F25119DD29E0AFD3C1494CEC266E1799993E558563D"
+                },
+                {
+                  "stage": 3,
+                  "command": [
+                    "git",
+                    "show",
+                    ":3:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIManagerSubsystem.cpp.Stage3.txt",
+                  "sha256": "815E75F698417B1C1E887A77910EC7F9219C25F834DF94AF1F7000B8373759B0"
+                }
+              ]
+            },
+            {
+              "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+              "beforeSha256": "642264D9FD00AD21A00CD1368CACF7C888EB6EC357B5A933E9D8302C2F76677F",
+              "stages": [
+                {
+                  "stage": 1,
+                  "command": [
+                    "git",
+                    "show",
+                    ":1:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIAccessibilityTests.cpp.Stage1.txt",
+                  "sha256": "14175E667F5269A87B97199A8D1709E31F011F4E042473DA07A8164D6B7ADF01"
+                },
+                {
+                  "stage": 2,
+                  "command": [
+                    "git",
+                    "show",
+                    ":2:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIAccessibilityTests.cpp.Stage2.txt",
+                  "sha256": "ED7E0827B3F0AAC276505BC3264D007DAF54FC883D7776D2156DEF11FDA46EF1"
+                },
+                {
+                  "stage": 3,
+                  "command": [
+                    "git",
+                    "show",
+                    ":3:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIAccessibilityTests.cpp.Stage3.txt",
+                  "sha256": "7913D1D31D3D482E6E652EBF6D79419F6BAFFB4497697D91574794A202767236"
+                }
+              ]
+            },
+            {
+              "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+              "beforeSha256": "E47CAE34B43EC3947A9F5F43225493EE518A089FBDDDAD7F664EBEB93929E113",
+              "stages": [
+                {
+                  "stage": 1,
+                  "command": [
+                    "git",
+                    "show",
+                    ":1:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIRegistryTests.cpp.Stage1.txt",
+                  "sha256": "A837AC97B6B259DE95636AB7E1C8C8169A304F9AE6F6B3800627ACC93CCB3A72"
+                },
+                {
+                  "stage": 2,
+                  "command": [
+                    "git",
+                    "show",
+                    ":2:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIRegistryTests.cpp.Stage2.txt",
+                  "sha256": "C215BF5E26F12F829D964D0E9A870529B08C07A566C4D1104B8B2D14355589E3"
+                },
+                {
+                  "stage": 3,
+                  "command": [
+                    "git",
+                    "show",
+                    ":3:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIRegistryTests.cpp.Stage3.txt",
+                  "sha256": "71206AD5AF2FCA06A2EE64791067317FBB1FCEBDF3FD321522B91D65DD675F43"
+                }
+              ]
+            },
+            {
+              "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+              "beforeSha256": "F1CFCF38F73571B013F6C2C9046A88711A5271C235BD93E05BB1FB9389307689",
+              "stages": [
+                {
+                  "stage": 1,
+                  "command": [
+                    "git",
+                    "show",
+                    ":1:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\README.md.Stage1.txt",
+                  "sha256": "0882146F97D749616DDF626972E48306F88B898399536C25C8CA9181391E46D7"
+                },
+                {
+                  "stage": 2,
+                  "command": [
+                    "git",
+                    "show",
+                    ":2:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\README.md.Stage2.txt",
+                  "sha256": "E01D6D55131F54CAED0CFC8E0FB355BFE3FD3BA79C554568EEFF7D3FE4C863F5"
+                },
+                {
+                  "stage": 3,
+                  "command": [
+                    "git",
+                    "show",
+                    ":3:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md"
+                  ],
+                  "exitCode": 0,
+                  "saved": "Saved\\MainIntegration\\Main86UIIntegration\\README.md.Stage3.txt",
+                  "sha256": "832D6D2FB98A3EA81F6D4BFE43033EA59B895EEC05AFCEA08E3A70031FB4D1D7"
+                }
+              ]
+            }
+          ],
+          "readOnlyDiffCommands": [
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+              "sha256": "6A1B8A584789C9E3BA87BC8160EDDFA51DB07C57A43A3531DB7DE41C4D34E176",
+              "diffCommand": [
+                "git",
+                "diff",
+                "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                "--",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp"
+              ],
+              "exitCode": 0
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h",
+              "sha256": "30F8D8AA065942A06B2EE50098CE578D60CDD5717E41B80F11AE41358E0D9F03",
+              "diffCommand": [
+                "git",
+                "diff",
+                "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                "--",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h"
+              ],
+              "exitCode": 0
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+              "sha256": "C5D1316557BA23E21FF89BA4A3ACDA793116108DE0E4E2A514F4A6B47F6AB3AA",
+              "diffCommand": [
+                "git",
+                "diff",
+                "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                "--",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp"
+              ],
+              "exitCode": 0
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+              "sha256": "AD688C1D7ACFE431847D22C44C85F730D64E214CA5F14ADB9B7DB1288CCCBC20",
+              "diffCommand": [
+                "git",
+                "diff",
+                "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                "--",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp"
+              ],
+              "exitCode": 0
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+              "sha256": "0E1013F1BEF3B598DDFBB0E646C65DE95C5F82A3AF5F445C0B88FF25B2228089",
+              "diffCommand": [
+                "git",
+                "diff",
+                "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                "--",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+              ],
+              "exitCode": 0
+            }
+          ],
+          "unresolvedOwnedConflicts": 0,
+          "originalTestsPreserved": true
+        },
+        "notExecuted": [
+          "UBT/UE Editor/Client/Server编译",
+          "UE Automation",
+          "Monolith/资产编译保存重载",
+          "PIE/双客户端旅行/Cook/设备视觉输入",
+          "Git commit/push/merge completion（Root负责）"
+        ],
+        "sourceFrozen": true,
+        "evidencePreservation": "原Stage1/2/3、冲突前/自动合入缺陷前内容、三方diff与freeze保存于Saved/MainIntegration/Main86UIIntegration；不覆盖此前整改报告。",
+        "reportPath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86UIIntegrationRepairReport.json"
+      }
+    },
+    {
+      "Name": "Main86UIFinalIntegrationRepairReport.json",
+      "SourceSHA256": "F12D59B552F8BE7E8D4E3C783ABC4FF429231F0E9C37EAE2249EA053DA1A24A2",
+      "Report": {
+        "generatedUtc": "2026-10-10T00:52:30.290656+08:00",
+        "workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "status": "SourceFrozen_StaticChecksPassed_IndependentSourceRecheckClosed_RuntimeUnverified",
+        "sourceFrozen": true,
+        "sourceFreezePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\SourceFreeze.FinalUI02.json",
+        "sourceFreezeSha256": "D43F2DBC835303B19DD675644A39774E40C10F88A17C0CCE14688F333474B703",
+        "sourceFiles": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+            "sha256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Presentation\\GamePlatformUI\\Source\\GamePlatformUIClient\\Private\\Manager\\GamePlatformUIManagerSubsystem.cpp"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+            "sha256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Presentation\\GamePlatformUI\\Source\\GamePlatformUIClient\\Private\\Tests\\GamePlatformUIAccessibilityTests.cpp"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+            "sha256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Presentation\\GamePlatformUI\\Source\\GamePlatformUIClient\\Private\\Tests\\GamePlatformUIRegistryTests.cpp"
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+            "sha256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Presentation\\GamePlatformUI\\README.md"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+            "sha256": "9ADC33DE9F94ABEF8259F97F5EA053E89CB180FBA5186AB9B1A6C3946E6A6519",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsUIClient\\Private\\Screens\\Loading\\DivineBeastsLoadingTravelScreen.cpp"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+            "sha256": "187A6AB2D2264EF1F470F6C81FBBF35536DD622B91FE8975C8849817E7231439",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsUIClient\\Public\\Screens\\Loading\\DivineBeastsLoadingTravelScreen.h"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "sha256": "6ABCE1AFE91FAFE6F5D03976FE3D46E21FD086B33F679D0C08D2B3E2705C2AB4",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsUIClient\\Private\\Tests\\DivineBeastsUITests.cpp"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+            "sha256": "8799DA875E349B257D9B708FB8F0E563E5A38FFABCD8598929B2EE2CD243337C",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsUIClient\\Private\\Screens\\DivineBeastsUIScreen.cpp"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h",
+            "sha256": "C3ED642D74DFA6F9491DF96D05AFB225119716EF5196CC36F04DE2D597CDB4E5",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsUIClient\\Public\\Screens\\DivineBeastsUIScreen.h"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+            "sha256": "B7D841E4369E45505013F512E394A96736EF314D638C6F283B01587AEB57FA72",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsUIClient\\Private\\Screens\\Connection\\DivineBeastsErrorReconnectScreen.cpp"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h",
+            "sha256": "70766FA2FC5551C644FD1E913745F8C0ED65A546251092FFCEE54C03F0BA07C7",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsUIClient\\Public\\Screens\\Connection\\DivineBeastsErrorReconnectScreen.h"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h",
+            "sha256": "223D2F0CB6F04EBA4B8F900705BF77DC59565F8586E8859DCE8394AFA0269FED",
+            "absolutePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\DBAClient\\Source\\DivineBeastsUIClient\\Private\\Tests\\DivineBeastsUIReentryObserver.h"
+          }
+        ],
+        "originalOwnedFileCount": 11,
+        "totalOwnedFileCount": 12,
+        "formalAddedFiles": [
+          "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h"
+        ],
+        "formalRemovedFiles": [],
+        "formalFileRegistrationOwner": "Root负责总体目录规划登记唯一新增Private/Tests/DivineBeastsUIReentryObserver.h；本Agent不改根规划。",
+        "ownership": "仅授权原11路径与唯一Observer头，已精确暂存12路径；无提交/推送/UE/UBT/资产动作，不撤销其他Agent修改。",
+        "priorSevenRound": {
+          "preservedReportPath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86UIIntegrationRepairReport.json",
+          "preservedReportSha256": "79AF7D92E220883E2F10A6D09BF983C29F214F9606B21990335EABE6C5F282AE",
+          "preservedFreezePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\SourceFreeze.SevenUI01.json",
+          "completeRecord": {
+            "generatedUtc": "2026-10-10T00:27:18.765664+08:00",
+            "workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+            "status": "SourceFrozen_SevenOwnedFilesStaged_RuntimeNotExecuted",
+            "sourceFreezePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\SourceFreeze.json",
+            "sourceFiles": [
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "sha256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF"
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "sha256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54"
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "sha256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8"
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "sha256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018"
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "sha256": "9ADC33DE9F94ABEF8259F97F5EA053E89CB180FBA5186AB9B1A6C3946E6A6519"
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "sha256": "187A6AB2D2264EF1F470F6C81FBBF35536DD622B91FE8975C8849817E7231439"
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "sha256": "0E1013F1BEF3B598DDFBB0E646C65DE95C5F82A3AF5F445C0B88FF25B2228089"
+              }
+            ],
+            "formalAddedFiles": [],
+            "formalRemovedFiles": [],
+            "originalConflictCountOwned": 4,
+            "resolvedConflictDecisions": [
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "sha256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+                "decision": "NewRoot.Get强持有发布与Main viewport bAutoRemove=false结合；Travel取消捕获身份失败通知，后续外部边界按Root/World/代次/closing停旧栈。",
+                "resolvedConflictBlocks": 1
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "sha256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+                "decision": "双方等价GEngine Outer前提合并中文原因，保ours既有失败断言和其余全部原测试逻辑/注册。",
+                "resolvedConflictBlocks": 1
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "sha256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+                "decision": "双方等价GEngine Outer前提合并中文原因，保ours既有失败断言和其余全部原测试逻辑/注册。",
+                "resolvedConflictBlocks": 1
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "sha256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+                "decision": "保AuditRemediation链接与Main跨地图生命周期说明；历史验证标明Main原记录，合并版本未运行不冒绿灯。",
+                "resolvedConflictBlocks": 1
+              }
+            ],
+            "threeWayOriginalEvidence": {
+              "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\ThreeWayEvidence.json",
+              "ours": "022934fb79be058c9df34f67df0f9500def76707",
+              "main": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+              "allStage1_2_3SnapshotsPreserved": true
+            },
+            "ownership": "原四个GPUI冲突文件；Root明确扩权LoadingTravel cpp/h和现有DivineBeastsUITests cpp；仅显式七路径暂存。",
+            "managerCombination": {
+              "preservedAudit": "除Viewport slot新增块与Travel作用域护栏外，Manager源码逆向比较与Stage2完全相等；保Deinitialize幂等、Root强持有/代次检查、默认类重试完整Data租约和精确实例Owner查询。",
+              "preservedMain": "Root发布NewRoot.Get()；Viewport slot bAutoRemoveOnWorldRemoved=false；显式退出/替换仍RemoveFromParent；Travel撤在途账本后按捕获RequestId/ScreenId失败通知释放Opening。",
+              "reentryGuard": "入口强持有Manager/Root及三服务，捕获Root/World/RootGeneration；Failed/Closed/各Clear返回核closing/作用域，过期旧栈不继续清后继层。活跃实例入口先快照，不将回调新实例加入旧遍历。",
+              "limits": "没有模拟Data受理或手工广播成功；本次Travel失败/Viewport跨图组合未执行UE。"
+            },
+            "Main86_UI01": {
+              "finding": "原派生NativeOnActivated在Super真实通知同步失活后仍直接绑定/刷新；合法换VM不拆旧派生委托，Refresh未核PageGeneration。",
+              "sourceRepair": "改用平台统一门闩约束的RefreshInitialState/OnViewModelStateChanged；派生不另持动态委托；刷新再核IsActivated、IsPageActive和当前PageGeneration。",
+              "reflectedCompatibility": "保Abstract/Blueprintable、UDivineBeastsLoadingScreen父类、原RefreshLoadingPresentation UFUNCTION二int32签名、GetLoadingScreenId/GetLoadingViewModel与StageText BindWidget字段，不修改uasset。",
+              "tests": [
+                "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+                "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement"
+              ],
+              "testImplementation": "现有UITests增加2真实Native回归；引擎受控抽象分配，不改ClassFlags；Transient StageText反射注入不是资产构造。实际Activate/Deactivate、InitializeVM、LoadingService token更新与文本值；ScopeExit拆observer/解绑VM/释放令牌。",
+              "redEvidence": "独立review与修前源码保留；旧路径违反新断言的失活订阅/文本及旧VM解绑不变量。未执行UE红/绿运行，不伪造测试结果。",
+              "runtimeStatus": "UnverifiedByThisAgent"
+            },
+            "autoMergedReadOnlyReview": [
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+                "observed": "Main新增PlayerControllerChanged在有效Controller事件上EnsureDefaultRootLayout/PullInitialState；既有LoadingTravel VM注入LoadingService，PrimaryFailure按请求匹配清Opening；Deinitialize实际拆Query/平台事件/请求与PlatformUI。文件未改。",
+                "boundary": "仅新增接线及相关路径只读核对，不宣称历史UIClient全部重入实现已全量审计。"
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+                "observed": "LoadingTravel/ErrorReconnect设置bSurvivesTravel=true；Loading/Modal层、UIOnly和DBAUIPack_Core挂载点不变；文件未改。",
+                "boundary": "目录项不等于资产加载、运行和人工视觉验收。"
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "observed": "保Main新增RequiredTransferScreens的真实软加载Class/父类/非Abstract/SurvivesTravel断言和全部原测试，逆向精确相等。"
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+                "observed": "Main使用真实World内原生Character持有ASC/AttributeSet，InitAbilityActorInfo，Max先于当前值设置，正常解绑VM并销毁世界/失败销毁世界；注册不变，仅只读。",
+                "boundary": "未执行World/GAS，不扩写此文件，实际选集执行由Root负责。"
+              }
+            ],
+            "automaticMergeReadOnlyHashes": [
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+                "sha256": "6A1B8A584789C9E3BA87BC8160EDDFA51DB07C57A43A3531DB7DE41C4D34E176",
+                "diffCommand": [
+                  "git",
+                  "diff",
+                  "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                  "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                  "--",
+                  "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp"
+                ],
+                "exitCode": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h",
+                "sha256": "30F8D8AA065942A06B2EE50098CE578D60CDD5717E41B80F11AE41358E0D9F03",
+                "diffCommand": [
+                  "git",
+                  "diff",
+                  "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                  "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                  "--",
+                  "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h"
+                ],
+                "exitCode": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+                "sha256": "C5D1316557BA23E21FF89BA4A3ACDA793116108DE0E4E2A514F4A6B47F6AB3AA",
+                "diffCommand": [
+                  "git",
+                  "diff",
+                  "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                  "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                  "--",
+                  "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp"
+                ],
+                "exitCode": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+                "sha256": "AD688C1D7ACFE431847D22C44C85F730D64E214CA5F14ADB9B7DB1288CCCBC20",
+                "diffCommand": [
+                  "git",
+                  "diff",
+                  "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                  "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                  "--",
+                  "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp"
+                ],
+                "exitCode": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "sha256": "0E1013F1BEF3B598DDFBB0E646C65DE95C5F82A3AF5F445C0B88FF25B2228089",
+                "diffCommand": [
+                  "git",
+                  "diff",
+                  "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                  "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                  "--",
+                  "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+                ],
+                "exitCode": 0
+              }
+            ],
+            "automationSelection": {
+              "exactNames": [
+                "GamePlatform.UI.Accessibility.PreferencesAndReducedMotion",
+                "GamePlatform.UI.Registry.DuplicateAndRouteCycle",
+                "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+                "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement",
+                "DivineBeasts.UI.Delivery.RequiredTransferScreens",
+                "DivineBeasts.UI.ScreenInventory",
+                "DivineBeasts.UI.CommandContract",
+                "DivineBeasts.UI.CommandCompletionLifetime",
+                "DivineBeasts.UI.RoutingPolicy",
+                "DivineBeasts.UI.Localization",
+                "DivineBeasts.UI.Combat.PlayerStatusSnapshot"
+              ],
+              "newNames": [
+                "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+                "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement"
+              ],
+              "exactRegex": "^GamePlatform.UI.Accessibility.PreferencesAndReducedMotion$+^GamePlatform.UI.Registry.DuplicateAndRouteCycle$+^DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates$+^DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement$+^DivineBeasts.UI.Delivery.RequiredTransferScreens$+^DivineBeasts.UI.ScreenInventory$+^DivineBeasts.UI.CommandContract$+^DivineBeasts.UI.CommandCompletionLifetime$+^DivineBeasts.UI.RoutingPolicy$+^DivineBeasts.UI.Localization$+^DivineBeasts.UI.Combat.PlayerStatusSnapshot$",
+              "execCmdsSyntax": "Automation SetFilter Engine;RunTests <exactRegex>;Quit",
+              "mustDisableMonolith": true,
+              "notExecuted": true,
+              "limits": [
+                "两个新Native回归不需要World/Viewport/项目资产，实际Native对象和真实CommonUI事件，不证明Slate视觉或输入验收。",
+                "RequiredTransferScreens实际TryLoadClass需要DBAUIPack_Core两个真实Widget Blueprint；本子任务未执行加载。",
+                "PlayerStatusSnapshot需要CreateWorld/真实原生Character/ASC；无后端和BeginPlay，不等同完整角色装配。",
+                "NullRHI/Unattended不能验证实际渲染、焦点/输入、双客户端旅行或设备体验。"
+              ]
+            },
+            "allAffectedSourceRegistrations": [
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "line": 10,
+                "class": "FGamePlatformUIAccessibilityPreferencesTest",
+                "prettyName": "GamePlatform.UI.Accessibility.PreferencesAndReducedMotion",
+                "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "line": 13,
+                "class": "FGamePlatformUIRegistryTest",
+                "prettyName": "GamePlatform.UI.Registry.DuplicateAndRouteCycle",
+                "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "line": 21,
+                "class": "FDivineBeastsLoadingTravelActivationReentryTest",
+                "prettyName": "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+                "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": true,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "line": 62,
+                "class": "FDivineBeastsLoadingTravelViewModelReplacementTest",
+                "prettyName": "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement",
+                "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": true,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "line": 110,
+                "class": "FDivineBeastsRequiredFlowScreensTest",
+                "prettyName": "DivineBeasts.UI.Delivery.RequiredTransferScreens",
+                "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": true,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "line": 130,
+                "class": "FDivineBeastsUIScreenInventoryTest",
+                "prettyName": "DivineBeasts.UI.ScreenInventory",
+                "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "line": 211,
+                "class": "FDivineBeastsUICommandContractTest",
+                "prettyName": "DivineBeasts.UI.CommandContract",
+                "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "line": 248,
+                "class": "FDivineBeastsUICommandCompletionLifetimeTest",
+                "prettyName": "DivineBeasts.UI.CommandCompletionLifetime",
+                "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "line": 292,
+                "class": "FDivineBeastsUIRoutingPolicyTest",
+                "prettyName": "DivineBeasts.UI.RoutingPolicy",
+                "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "line": 373,
+                "class": "FDivineBeastsUILocalizationTest",
+                "prettyName": "DivineBeasts.UI.Localization",
+                "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": false,
+                "needsWorld": false
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+                "line": 11,
+                "class": "FDivineBeastsPlayerStatusViewModelSnapshotTest",
+                "prettyName": "DivineBeasts.UI.Combat.PlayerStatusSnapshot",
+                "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+                "newByThisRepair": false,
+                "needsAssets": false,
+                "needsWorld": true
+              }
+            ],
+            "allAffectedRegistrationCount": 11,
+            "overallRootSelectionImpact": "Root报告旧172全部保留，Main6已增至178；另2新注册应增至180；Runner由Root维护，此子任务未修改。",
+            "chineseReview": {
+              "range": "四冲突决策，新Travel作用域/终态原因，两个测试目标/前提/退出清理，Loading钩子参数/兼容说明，README历史验证边界。",
+              "remaining": "未全量审查历史UI/API/资产中文说明；只读UIClient不是全生命周期审计。"
+            },
+            "actualChecks": {
+              "inlinePythonStaticComparisonExitCode": 0,
+              "staticEvidencePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\FinalStaticChecks.json",
+              "stageCommands": [
+                {
+                  "command": [
+                    "git",
+                    "add",
+                    "--",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "stdout": "",
+                  "stderr": ""
+                },
+                {
+                  "command": [
+                    "git",
+                    "ls-files",
+                    "-u",
+                    "--",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "stdout": "",
+                  "stderr": ""
+                },
+                {
+                  "command": [
+                    "git",
+                    "diff",
+                    "--cached",
+                    "--check",
+                    "--",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "stdout": "",
+                  "stderr": ""
+                },
+                {
+                  "command": [
+                    "git",
+                    "status",
+                    "--short",
+                    "--",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+                  ],
+                  "exitCode": 0,
+                  "stdout": "M  Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp\nM  Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp\nM  Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h\nM  Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md\nM  Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp\nM  Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp\nM  Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp\n",
+                  "stderr": ""
+                }
+              ],
+              "threeWayReadCommands": [
+                {
+                  "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                  "beforeSha256": "7EBD6AEB293E0EB88DCF1D37BAE868658311B2C029CBD57406F8AD5B1F318EE1",
+                  "stages": [
+                    {
+                      "stage": 1,
+                      "command": [
+                        "git",
+                        "show",
+                        ":1:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIManagerSubsystem.cpp.Stage1.txt",
+                      "sha256": "D05DDBE15B2C52BC71FFBEFF52E85F804F240E7E7E03A3403925D74183444170"
+                    },
+                    {
+                      "stage": 2,
+                      "command": [
+                        "git",
+                        "show",
+                        ":2:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIManagerSubsystem.cpp.Stage2.txt",
+                      "sha256": "A21C64B109B094BA2FAE5F25119DD29E0AFD3C1494CEC266E1799993E558563D"
+                    },
+                    {
+                      "stage": 3,
+                      "command": [
+                        "git",
+                        "show",
+                        ":3:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIManagerSubsystem.cpp.Stage3.txt",
+                      "sha256": "815E75F698417B1C1E887A77910EC7F9219C25F834DF94AF1F7000B8373759B0"
+                    }
+                  ]
+                },
+                {
+                  "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                  "beforeSha256": "642264D9FD00AD21A00CD1368CACF7C888EB6EC357B5A933E9D8302C2F76677F",
+                  "stages": [
+                    {
+                      "stage": 1,
+                      "command": [
+                        "git",
+                        "show",
+                        ":1:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIAccessibilityTests.cpp.Stage1.txt",
+                      "sha256": "14175E667F5269A87B97199A8D1709E31F011F4E042473DA07A8164D6B7ADF01"
+                    },
+                    {
+                      "stage": 2,
+                      "command": [
+                        "git",
+                        "show",
+                        ":2:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIAccessibilityTests.cpp.Stage2.txt",
+                      "sha256": "ED7E0827B3F0AAC276505BC3264D007DAF54FC883D7776D2156DEF11FDA46EF1"
+                    },
+                    {
+                      "stage": 3,
+                      "command": [
+                        "git",
+                        "show",
+                        ":3:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIAccessibilityTests.cpp.Stage3.txt",
+                      "sha256": "7913D1D31D3D482E6E652EBF6D79419F6BAFFB4497697D91574794A202767236"
+                    }
+                  ]
+                },
+                {
+                  "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                  "beforeSha256": "E47CAE34B43EC3947A9F5F43225493EE518A089FBDDDAD7F664EBEB93929E113",
+                  "stages": [
+                    {
+                      "stage": 1,
+                      "command": [
+                        "git",
+                        "show",
+                        ":1:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIRegistryTests.cpp.Stage1.txt",
+                      "sha256": "A837AC97B6B259DE95636AB7E1C8C8169A304F9AE6F6B3800627ACC93CCB3A72"
+                    },
+                    {
+                      "stage": 2,
+                      "command": [
+                        "git",
+                        "show",
+                        ":2:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIRegistryTests.cpp.Stage2.txt",
+                      "sha256": "C215BF5E26F12F829D964D0E9A870529B08C07A566C4D1104B8B2D14355589E3"
+                    },
+                    {
+                      "stage": 3,
+                      "command": [
+                        "git",
+                        "show",
+                        ":3:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\GamePlatformUIRegistryTests.cpp.Stage3.txt",
+                      "sha256": "71206AD5AF2FCA06A2EE64791067317FBB1FCEBDF3FD321522B91D65DD675F43"
+                    }
+                  ]
+                },
+                {
+                  "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                  "beforeSha256": "F1CFCF38F73571B013F6C2C9046A88711A5271C235BD93E05BB1FB9389307689",
+                  "stages": [
+                    {
+                      "stage": 1,
+                      "command": [
+                        "git",
+                        "show",
+                        ":1:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\README.md.Stage1.txt",
+                      "sha256": "0882146F97D749616DDF626972E48306F88B898399536C25C8CA9181391E46D7"
+                    },
+                    {
+                      "stage": 2,
+                      "command": [
+                        "git",
+                        "show",
+                        ":2:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\README.md.Stage2.txt",
+                      "sha256": "E01D6D55131F54CAED0CFC8E0FB355BFE3FD3BA79C554568EEFF7D3FE4C863F5"
+                    },
+                    {
+                      "stage": 3,
+                      "command": [
+                        "git",
+                        "show",
+                        ":3:Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md"
+                      ],
+                      "exitCode": 0,
+                      "saved": "Saved\\MainIntegration\\Main86UIIntegration\\README.md.Stage3.txt",
+                      "sha256": "832D6D2FB98A3EA81F6D4BFE43033EA59B895EEC05AFCEA08E3A70031FB4D1D7"
+                    }
+                  ]
+                }
+              ],
+              "readOnlyDiffCommands": [
+                {
+                  "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+                  "sha256": "6A1B8A584789C9E3BA87BC8160EDDFA51DB07C57A43A3531DB7DE41C4D34E176",
+                  "diffCommand": [
+                    "git",
+                    "diff",
+                    "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                    "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                    "--",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp"
+                  ],
+                  "exitCode": 0
+                },
+                {
+                  "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h",
+                  "sha256": "30F8D8AA065942A06B2EE50098CE578D60CDD5717E41B80F11AE41358E0D9F03",
+                  "diffCommand": [
+                    "git",
+                    "diff",
+                    "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                    "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                    "--",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h"
+                  ],
+                  "exitCode": 0
+                },
+                {
+                  "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+                  "sha256": "C5D1316557BA23E21FF89BA4A3ACDA793116108DE0E4E2A514F4A6B47F6AB3AA",
+                  "diffCommand": [
+                    "git",
+                    "diff",
+                    "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                    "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                    "--",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp"
+                  ],
+                  "exitCode": 0
+                },
+                {
+                  "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+                  "sha256": "AD688C1D7ACFE431847D22C44C85F730D64E214CA5F14ADB9B7DB1288CCCBC20",
+                  "diffCommand": [
+                    "git",
+                    "diff",
+                    "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                    "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                    "--",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp"
+                  ],
+                  "exitCode": 0
+                },
+                {
+                  "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                  "sha256": "0E1013F1BEF3B598DDFBB0E646C65DE95C5F82A3AF5F445C0B88FF25B2228089",
+                  "diffCommand": [
+                    "git",
+                    "diff",
+                    "348e92ae7bc8e1b9cc94dfdb0e3c1bbe267064df",
+                    "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+                    "--",
+                    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp"
+                  ],
+                  "exitCode": 0
+                }
+              ],
+              "unresolvedOwnedConflicts": 0,
+              "originalTestsPreserved": true
+            },
+            "notExecuted": [
+              "UBT/UE Editor/Client/Server编译",
+              "UE Automation",
+              "Monolith/资产编译保存重载",
+              "PIE/双客户端旅行/Cook/设备视觉输入",
+              "Git commit/push/merge completion（Root负责）"
+            ],
+            "sourceFrozen": true,
+            "evidencePreservation": "原Stage1/2/3、冲突前/自动合入缺陷前内容、三方diff与freeze保存于Saved/MainIntegration/Main86UIIntegration；不覆盖此前整改报告。",
+            "reportPath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86UIIntegrationRepairReport.json"
+          }
+        },
+        "conflictResolutions": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+            "sha256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+            "decision": "NewRoot.Get强持有发布与Main viewport bAutoRemove=false结合；Travel取消捕获身份失败通知，后续外部边界按Root/World/代次/closing停旧栈。",
+            "resolvedConflictBlocks": 1
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+            "sha256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+            "decision": "双方等价GEngine Outer前提合并中文原因，保ours既有失败断言和其余全部原测试逻辑/注册。",
+            "resolvedConflictBlocks": 1
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+            "sha256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+            "decision": "双方等价GEngine Outer前提合并中文原因，保ours既有失败断言和其余全部原测试逻辑/注册。",
+            "resolvedConflictBlocks": 1
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+            "sha256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+            "decision": "保AuditRemediation链接与Main跨地图生命周期说明；历史验证标明Main原记录，合并版本未运行不冒绿灯。",
+            "resolvedConflictBlocks": 1
+          }
+        ],
+        "Main86_UI01": {
+          "evidencePreserved": true,
+          "repair": "Loading派生不再于Super激活通知后自挂VM状态事件，使用平台RefreshInitialState/OnViewModelStateChanged；刷新二次核Activated/精确VM页面代次，原StageText与反射签名保留。",
+          "newNames": [
+            "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+            "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement"
+          ],
+          "runtimeExecuted": false
+        },
+        "Main86_UI02": {
+          "confirmedFailure": "原Error派生和公共项目UIScreen在Super激活通知同步失活之后仍订阅；合法换VM不拆精确旧项目/命令订阅；Retry外部同步返回旧栈可能写入后继ActiveRetryRequestId。",
+          "projectParentRepair": "公共父链复用平台Bind/Unbind/Refresh/VM状态安全钩子，以精确旧/新项目VM、页面代次和独立binding操作身份协调。解绑先撤自身资格再调用旧VM业务取消；旧VM强持有，每个外部返回核仍属于原选择，不清后继。",
+          "errorRepair": "仅拥有按钮及精确VM命令完成，状态订阅继续由平台唯一持有。换VM/失活递增scope与submission并清本次资格，Retry前登记提交、值拷贝UI状态；返回核原VM/Page/scope/submission，完成以最终返回ID判断，拒绝旧栈尾写。",
+          "realRegressions": [
+            "DivineBeasts.UI.ErrorReconnect.ActivationObserverDeactivates",
+            "DivineBeasts.UI.ErrorReconnect.ActiveViewModelReplacement",
+            "DivineBeasts.UI.ErrorReconnect.SynchronousRetryKeepsSuccessor"
+          ],
+          "testFixtureBoundary": "Transient UI输入资格受控；无生产Contract实际同步失败，按钮Broadcast仅测试用户输入，终态由真实Owner/VM产生，不广播模拟成功。",
+          "reflectionObserver": "唯一新头EditorOnlyData Transient NotBlueprintable反射UObject，两UFUNCTION定义位于现有UITests相同EditorOnlyData条件、在DevAutomation过滤外；动作和实例仅测试显式创建。",
+          "runtimeExecuted": false
+        },
+        "compatibility": [
+          "原反射类名、父类、UFUNCTION签名和BindWidget字段身份全部保留；不修改uasset/配置/协议/枚举。",
+          "UIScreen/Error/Loading新增或更换受保护C++ virtual hook实现及内部Transient字段，类布局变化须以锁定UE重新编译模块，不承诺旧二进制直接复用。",
+          "新的Bound项目/命令VM字段仅Transient内部拥有关系，不改变持久化数据/资产默认字段合同；没有资产逐个重载/Blueprint运行认证。",
+          "Error Retry仍表示原命令受理/终态，按钮资格仍来自VM；同步拒绝保持UI.Command.Invalid等真实错误，未增加后端恢复或网络自动重试策略。",
+          "新增Observer为Private编辑器测试反射类型，遵循当前实际已编译测试fixture条件约定；新头的实际UHT/链接待Root构建。"
+        ],
+        "autoMergedReadOnlyReview": [
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+            "observed": "Main新增PlayerControllerChanged在有效Controller事件上EnsureDefaultRootLayout/PullInitialState；既有LoadingTravel VM注入LoadingService，PrimaryFailure按请求匹配清Opening；Deinitialize实际拆Query/平台事件/请求与PlatformUI。文件未改。",
+            "boundary": "仅新增接线及相关路径只读核对，不宣称历史UIClient全部重入实现已全量审计。"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+            "observed": "LoadingTravel/ErrorReconnect设置bSurvivesTravel=true；Loading/Modal层、UIOnly和DBAUIPack_Core挂载点不变；文件未改。",
+            "boundary": "目录项不等于资产加载、运行和人工视觉验收。"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "observed": "保Main新增RequiredTransferScreens的真实软加载Class/父类/非Abstract/SurvivesTravel断言和全部原测试，逆向精确相等。"
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+            "observed": "Main使用真实World内原生Character持有ASC/AttributeSet，InitAbilityActorInfo，Max先于当前值设置，正常解绑VM并销毁世界/失败销毁世界；注册不变，仅只读。",
+            "boundary": "未执行World/GAS，不扩写此文件，实际选集执行由Root负责。"
+          }
+        ],
+        "allAffectedSourceRegistrations": [
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+            "line": 10,
+            "class": "FGamePlatformUIAccessibilityPreferencesTest",
+            "prettyName": "GamePlatform.UI.Accessibility.PreferencesAndReducedMotion",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": true
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+            "line": 13,
+            "class": "FGamePlatformUIRegistryTest",
+            "prettyName": "GamePlatform.UI.Registry.DuplicateAndRouteCycle",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 46,
+            "class": "FDivineBeastsLoadingTravelActivationReentryTest",
+            "prettyName": "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": true,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 87,
+            "class": "FDivineBeastsLoadingTravelViewModelReplacementTest",
+            "prettyName": "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": true,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 180,
+            "class": "FDivineBeastsErrorActivationReentryTest",
+            "prettyName": "DivineBeasts.UI.ErrorReconnect.ActivationObserverDeactivates",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": true,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": true,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 206,
+            "class": "FDivineBeastsErrorViewModelReplacementTest",
+            "prettyName": "DivineBeasts.UI.ErrorReconnect.ActiveViewModelReplacement",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": true,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": true,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 234,
+            "class": "FDivineBeastsErrorRetrySuccessorTest",
+            "prettyName": "DivineBeasts.UI.ErrorReconnect.SynchronousRetryKeepsSuccessor",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": true,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": true,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": true
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 280,
+            "class": "FDivineBeastsRequiredFlowScreensTest",
+            "prettyName": "DivineBeasts.UI.Delivery.RequiredTransferScreens",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": true,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 300,
+            "class": "FDivineBeastsUIScreenInventoryTest",
+            "prettyName": "DivineBeasts.UI.ScreenInventory",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 381,
+            "class": "FDivineBeastsUICommandContractTest",
+            "prettyName": "DivineBeasts.UI.CommandContract",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 418,
+            "class": "FDivineBeastsUICommandCompletionLifetimeTest",
+            "prettyName": "DivineBeasts.UI.CommandCompletionLifetime",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 462,
+            "class": "FDivineBeastsUIRoutingPolicyTest",
+            "prettyName": "DivineBeasts.UI.RoutingPolicy",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "line": 543,
+            "class": "FDivineBeastsUILocalizationTest",
+            "prettyName": "DivineBeasts.UI.Localization",
+            "flags": "EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": false,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+            "line": 11,
+            "class": "FDivineBeastsPlayerStatusViewModelSnapshotTest",
+            "prettyName": "DivineBeasts.UI.Combat.PlayerStatusSnapshot",
+            "flags": "EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter",
+            "newByThisRepair": false,
+            "needsAssets": false,
+            "needsWorld": true,
+            "requiresEditorOnlyData": false,
+            "requiresDevAutomationTests": true,
+            "requiresGEngine": false
+          }
+        ],
+        "allAffectedRegistrationCount": 14,
+        "automationSelectionPath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\AffectedAutomationSelection.FinalUI02.json",
+        "overallRootSelectionImpact": {
+          "previousMainSelection": 178,
+          "afterUI01Expected": 180,
+          "afterUI02Expected": 183,
+          "newNames": [
+            "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+            "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement",
+            "DivineBeasts.UI.ErrorReconnect.ActivationObserverDeactivates",
+            "DivineBeasts.UI.ErrorReconnect.ActiveViewModelReplacement",
+            "DivineBeasts.UI.ErrorReconnect.SynchronousRetryKeepsSuccessor"
+          ],
+          "rootRunnerOwnedByRoot": true,
+          "meaning": "数量为新增注册集合推导，不冒称运行发现或执行成功；保留原172全部选项，Root另证实际最终集合。"
+        },
+        "chineseHumanReview": {
+          "performedOnChangedPaths": true,
+          "reviewType": "逐段阅读职责/合同/异常与所有权，不用hasChinese自动扫描替代人工内容审核。",
+          "current11PlusObserver": [
+            {
+              "paths": [
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp"
+              ],
+              "range": "Manager本次冲突段与PrepareForTravel全新路径",
+              "reviewed": "人工复核平台客户端层责任、Root/World/服务所有权、游戏线程外部回调、取消与失败终态、Pending副本身份、关闭/Root代次护栏和为什么先清理后通知。保留精确实例owner账本及原重入修复；不把取消声明为事务回滚。"
+            },
+            {
+              "paths": [
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp"
+              ],
+              "range": "两个冲突夹具Engine/LocalPlayer前提及原测试断言/ScopeExit",
+              "reviewed": "人工复核ClassWithin=Engine合法Outer、GEngine缺失是真实失败、测试对象强持有/Deinitialize/原期望，解释测试不创建真实Viewport/地图或资产。"
+            },
+            {
+              "paths": [
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md"
+              ],
+              "range": "README冲突段/跨地图说明/验证来源",
+              "reviewed": "同时保留Audit整改链接和Main跨地图Root保留语义，明确历史Main验证记录与本合并版本未运行的区别，不重复承诺当前构建通过。"
+            },
+            {
+              "paths": [
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h"
+              ],
+              "range": "LoadingTravel cpp/h本次刷新钩子及字段/反射兼容路径",
+              "reviewed": "人工复核项目层只展示真实快照、平台唯一事件订阅、GT/Revision/PageGeneration含义、错VM/空VM/失活/过期忽略、无Tick和无假进度；原StageText/函数签名及父类身份保留，字段职责由邻接说明解释。"
+            },
+            {
+              "paths": [
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h"
+              ],
+              "range": "项目公共UIScreen cpp/h新增四安全钩子/协调方法及五内部订阅字段",
+              "reviewed": "人工复核精确BoundProjectViewModel资源归属、Transient含义、页面/操作代次不等于时间或帧号、先撤资格后取消命令、旧VM强持有及外部返回后继优先。保留ShowPageLoadError可见反馈及域字段仅用于内容导航不是权限的语义。"
+            },
+            {
+              "paths": [
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h"
+              ],
+              "range": "ErrorReconnect cpp/h所有修改的绑定/刷新/Retry/完成路径与相关私有字段",
+              "reviewed": "人工复核仅提交现有Retry意图不决定网络恢复；游戏线程、精确VM/Page/作用域/提交身份、空错类型VM、失活/取消/换VM先撤资格、完成只匹配最终RequestId、同步失败不留在飞、外部返回不尾写后继。保留安全错误文本和所有原BindWidget/反射签名，集合只记录同步完成身份不是业务状态。"
+            },
+            {
+              "paths": [
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h"
+              ],
+              "range": "UITests五新增真实回归/辅助夹具/Observer定义与声明",
+              "reviewed": "人工复核每项验证目标/前置/动作/失败意义、Transient原生分配受控作用域、强持有、ScopeExit/析构清委托和令牌、GEngine→Player→Owner合法Outer、实际失败命令链。Observer仅EditorOnlyData两正确反射委托签名，不在生产自动创建/注册；Action先MoveTemp保证重入安全，计数/身份不制造成功。"
+            }
+          ],
+          "knownMissingItemsInCurrentChangedPaths": [],
+          "previousApplicationPlayers": {
+            "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\ApplicationPlayers\\RepairReport.json",
+            "sha256": "9FA5EA86F4802B08E30EEA24767D1DEFA5415F0E64F1B9F17A57EAE5F4D4ECC9",
+            "scope": "Application五插件、PlayerServices六插件及DBAClient ApplicationFlow/Input/UI；没有改UI资产/两个Presentation模块/Data/Online实现/全局描述与规划。Build.cs中文说明与根目标规则可能同文件协同，根需按完整diff审阅。",
+            "APP15": {
+              "Id": "APP-15",
+              "Status": "bounded_chinese_review_completed",
+              "Implementation": "本轮检查37个PlayerServices Public头文件责任，重点字段单位/空值/错误、命令参数/受理与终态/引用寿命，Build职责与六README；补公开Definition、资格Port、查询、时间估计与ViewModel合同。",
+              "Limits": "人工审核只覆盖本轮公开合同重点与修改流程；Private/历史文档与全工程中文全量审核仍为存量，不声称整体合规"
+            },
+            "manualReviewRecord": {
+              "Reviewed": "本轮Public字段/命令/错误、文件责任与主要修改流程、测试前提/失败意义、Build和README；明确网络权威/账号和请求代次、货币最小单位/XP整数/UTC/秒/槽位范围、借用引用寿命、取消不回滚事务。",
+              "Remaining": "未进行所有Private函数、历史材料、未改模块与全工作空间逐文件中文全量审计；自动扫描不作为人工审核替代。",
+              "FollowupReviewed": "人工抽检追加的实例关闭/账号重入、保存/读取候选、装备GAS授权撤销、十进制算法与JSON适配、实际回归目的/前置/失败意义，以及六README和Settings Lifecycle。没有逐文件全量审核历史Private或全工作区。",
+              "FinalPairReviewed": "抽检本轮Settings准备失败事件所有权、外部Provider代次复核、Inventory广播接管资格、四个实际入口回归目的/前置/失败意义；更新Settings Lifecycle与Inventory README。历史中文全量审核仍未完成。"
+            },
+            "apiCompatibility": [
+              "IGamePlatformSettingsPersistenceProvider新增virtual BeginLoad改变ABI，所有消费者需重编；默认适配旧Load仅有界内存/Server，Client真实用户Load返回SettingsAsyncLoadRequired。",
+              "Settings Snapshot新增反射bLoading默认false；Reload/Switch返回仅受理，调用方通过事件bLoading=false/LastResult确认终态；原Profile序列化/槽名不变。",
+              "Equipment Types新增两个纯值验证函数；拒绝重复槽/物品/身份畸形快照，不迁移已有类型/字段；空Slots保持合法，Slot.Revision=0兼容保留。",
+              "Entitlement新增只读GetLastError；DBA新增RetryFailedFlow；私有FlowCore Completion由void返回bool，不改变平台公开UObject Completion签名。",
+              "四个领域LocalPlayer默认随Online装配；保留Configure自定义/测试入口，但Reset广播内同步Configure现在拒绝。",
+              "PIE输入真实保存现在明确Unsupported；普通客户端仍只公布受理。",
+              "FGamePlatformEquipmentGASGrantPort::Grant追加默认空作用域TFunction探针；旧源码三参数调用可编译，但导出C++符号变化，插件消费者必须重新编译。",
+              "客户端Transport新增仅WITH_DEV_AUTOMATION_TESTS的friend测试访问，不改变生产公开服务接口或反射身份。五领域Private实例代次/在飞门闩改变类布局，随统一UBT重编译。",
+              "JSON线类型不迁移：Commerce/LiveOps仍消费number，Progression仍消费十进制string；StoreNumbersAsStrings是UE内部DOM选项。旧可省略数组继续成功，明确错类型/非整数/溢出输入现在InvalidResponse。"
+            ],
+            "remainingProductionConditions": [
+              "本次不生成生产Provider、假资产或真实支付交易；未知后端正式路由/幂等/容量契约须由生产适配落地",
+              "Equipment退出保证逻辑消费失效与自有授予撤销，不宣称取消不可回滚后端事务",
+              "Settings无生产SettingId描述的门禁警告保持；没有未知预算/慢盘性能通过断言",
+              "APP15中文结论为本轮公开合同重点审核，整体全量合规未完成",
+              "未发现Shared/Backend对应当前商店/运营HTTP字段正式schema；缺省集合沿既有测试，reward_schedule仅消费数组长度，奖品元素正式结构仍缺合同，不造生产奖励实现。"
+            ],
+            "meaning": "回读已有实际整改人工审核记录，仅继承其声明范围；本轮未重新逐文件认证所有87修改/13新增或后来主线全源码。"
+          },
+          "remainingInventory": [
+            "历史未改Private函数、历史材料、未改模块、全工作空间公开API与中文说明仍未逐文件全量审计；不能宣称项目整体合规。",
+            "UIClient自动合入仅新Controller/Root接线和相关清理路径只读抽检，不等于该历史Subsystem全部生命周期重入认证。",
+            "资产中文正文、设备视觉、真实Blueprint父类/绑定运行验收、网络线程/后端生产合同由Root实际运行与各领域证据补充，不以源码说明代替。"
+          ],
+          "auxiliaryScanMeaning": "FinalUI02StaticChecks.json的chinesePresentAuxiliaryOnly只检查字符存在，不是中文人工验收结论。"
+        },
+        "actualChecks": {
+          "inlinePythonStaticComparisonExitCode": 0,
+          "staticEvidencePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\FinalUI02StaticChecks.json",
+          "stageCommands": [
+            {
+              "command": [
+                "git",
+                "diff",
+                "--check",
+                "--",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h"
+              ],
+              "exitCode": 0,
+              "stdout": "",
+              "stderr": "warning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h', LF will be replaced by CRLF the next time Git touches it\n"
+            },
+            {
+              "command": [
+                "git",
+                "add",
+                "--",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h"
+              ],
+              "exitCode": 0,
+              "stdout": "",
+              "stderr": "warning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h', LF will be replaced by CRLF the next time Git touches it\n"
+            },
+            {
+              "command": [
+                "git",
+                "ls-files",
+                "-u",
+                "--",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h"
+              ],
+              "exitCode": 0,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "git",
+                "diff",
+                "--cached",
+                "--check",
+                "--",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h",
+                "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h"
+              ],
+              "exitCode": 0,
+              "stdout": "",
+              "stderr": ""
+            }
+          ],
+          "stagingEvidencePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\MainIntegration\\Main86UIIntegration\\StagingEvidence.FinalUI02.json",
+          "frozenSourceHashesRechecked": true,
+          "actualRegistrationScan": {
+            "count": 14,
+            "uniquePrettyNames": 14,
+            "uniqueMacroClasses": 14,
+            "allPriorNamesAndFlagsPreserved": true
+          },
+          "lineEndingWarnings": "Git提示LF将按仓库策略转CRLF，实际退出0；没有以关闭检查隐藏错误。"
+        },
+        "independentSourceReview": {
+          "reviewer": "/root/zodiac_icon_monolith_import",
+          "reportedViaMessage": "最终12 SHA/4生产源+Observer+3Error回归已独立读实，UI02/共同父链SourceClosed，0新Critical/Important；原Loading与FrontEnd主体/names/flags保留。",
+          "reportedRuntimeExecuted": false,
+          "formalIndependentReportOwner": "reviewer另存Main86IndependentReview，Root读取该真实独立报告；本报告不伪造其文件哈希。"
+        },
+        "notExecuted": [
+          "UE Automation五新增测试与整体183集合",
+          "UE UHT/Editor/Client/Server构建",
+          "资产重载/Blueprint运行/Cook",
+          "实际视觉/焦点/输入/设备/双客户端旅行",
+          "联网后端恢复/支付/生产Provider"
+        ],
+        "evidencePreservation": "原四冲突Stage1/2/3、旧7冻结、旧UI01中央报告、UI02前快照、实际命令与旧Important证据不覆盖删除；最终报告使用新版本路径。",
+        "reportPath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\Main86UIFinalIntegrationRepairReport.json"
+      }
+    },
+    {
+      "Name": "Main86IndependentReview.json",
+      "SourceSHA256": "AF1E00E9A15EF59E7A4B71BF8EA1C49A692BC77E81907382E7B583EC34DE28F5",
+      "Report": {
+        "schemaVersion": 1,
+        "reportId": "Main86IndependentReview",
+        "reviewer": "zodiac_icon_monolith_import",
+        "generatedAtUtc": "2026-10-09 16:53:16 UTC",
+        "workspace": "C:/Users/Freebooz/.codex/worktrees/gameplatform-review-fixes/DivineBeastsWorkspace",
+        "status": "SourceClosed",
+        "independent": true,
+        "repositoryAtObservation": {
+          "head": "022934fb79be058c9df34f67df0f9500def76707",
+          "mergeHead": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+          "remoteDelta": "348e92a..86cb0df",
+          "remoteFileCount": 29
+        },
+        "scope": "独立只读复核29项Main86增量，以及Root明确扩权的两首次交付页面和共同父链；不扩全历史Widget。Saved报告可写，源码/Git/UE/UBT/资产未动。",
+        "remoteFiles": [
+          {
+            "remoteChange": "M",
+            "path": "Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md",
+            "sha256Observed": "B6A536EF1E90DD93210336E81DAEFD50AF43495959BC9C9C939CDB8395C145C2",
+            "bytesObserved": 165936,
+            "type": "SourceOrDocument",
+            "remoteBlob": "e26e43b66876573c18d2a88d8e3077ca3ceda32f"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Docs/Implementation/GamePlatformDesignRemediation/ExecutionProgress.md",
+            "sha256Observed": "FA488E50F02B54B2B15FF7FF1D28D863854D24557FABE15AB0F0AC1CA8274075",
+            "bytesObserved": 21924,
+            "type": "SourceOrDocument",
+            "remoteBlob": "f4734be848dde1470874101e71325067b8153e94"
+          },
+          {
+            "remoteChange": "A",
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_ErrorReconnect.uasset",
+            "sha256Observed": "C8F8F1781BAA6AA447ABF2B469595E64016ACAAFC00CCE93087764977B57FDC0",
+            "bytesObserved": 37989,
+            "type": "UnrealBinary",
+            "remoteBlob": "de74de7967e68b757c4df89c02f11a948cd793bc"
+          },
+          {
+            "remoteChange": "A",
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_LoadingTravel.uasset",
+            "sha256Observed": "7CD8A34B2C2ED6C5948EC988207B30C69ACE9F690828A28C40DA44653B2453E2",
+            "bytesObserved": 37614,
+            "type": "UnrealBinary",
+            "remoteBlob": "6d02d0b36c2b2a470ab3dc08dba5db5eb542ec04"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/MonolithGenerationManifest.json",
+            "sha256Observed": "648D546269BA4D400CB889231F5EE7A6C6ABBDFAAB1464C8E7AFC799CEE789C7",
+            "bytesObserved": 27002,
+            "type": "SourceOrDocument",
+            "remoteBlob": "72d44b2ad5ee810c3e8dfe5c9b3679d83c0a91e4"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/前端视觉与预览实施说明.md",
+            "sha256Observed": "405BE2CA8AF3DB62BB076ED7001E22F9635B942BE4922D40D04A765AADE7A66B",
+            "bytesObserved": 13108,
+            "type": "SourceOrDocument",
+            "remoteBlob": "96a474d42ce56e7940a797690dc4d658111d7a7c"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Definitions/DA_DBA_Experience_Village_Tutorial.uasset",
+            "sha256Observed": "CB9E34F851B8CA9215CE0F90D460FA727719E9A619D8B50326B1BDECCFB78915",
+            "bytesObserved": 3145,
+            "type": "UnrealBinary",
+            "remoteBlob": "2155db62d27a7346f7265b3f4ac7cfc13a3d141b"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/README.md",
+            "sha256Observed": "3705BE51C2429E5E173BDA1C2A843CE5549CECEA848006D90B4967F26479EAA7",
+            "bytesObserved": 1754,
+            "type": "SourceOrDocument",
+            "remoteBlob": "67c6939662f9a239b1eaaff6e2d32983a957f9e0"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+            "sha256Observed": "6A1B8A584789C9E3BA87BC8160EDDFA51DB07C57A43A3531DB7DE41C4D34E176",
+            "bytesObserved": 25021,
+            "type": "SourceOrDocument",
+            "remoteBlob": "8aeacf00095233da303ba31cb8b4b7df67dd651e"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+            "sha256Observed": "C5D1316557BA23E21FF89BA4A3ACDA793116108DE0E4E2A514F4A6B47F6AB3AA",
+            "bytesObserved": 7292,
+            "type": "SourceOrDocument",
+            "remoteBlob": "b9d29de2d19320084ff32d14a79b5f737516142b"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+            "sha256Observed": "9ADC33DE9F94ABEF8259F97F5EA053E89CB180FBA5186AB9B1A6C3946E6A6519",
+            "bytesObserved": 2080,
+            "type": "SourceOrDocument",
+            "remoteBlob": "7c705bc8379c273d2c8df675ce04df282e38264c"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+            "sha256Observed": "AD688C1D7ACFE431847D22C44C85F730D64E214CA5F14ADB9B7DB1288CCCBC20",
+            "bytesObserved": 3029,
+            "type": "SourceOrDocument",
+            "remoteBlob": "8a57137c44a055172141765391ad381636eb5b8d"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "sha256Observed": "0E1013F1BEF3B598DDFBB0E646C65DE95C5F82A3AF5F445C0B88FF25B2228089",
+            "bytesObserved": 20082,
+            "type": "SourceOrDocument",
+            "remoteBlob": "8982edbceb30d5e2963749398eec4e38e82d98d2"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h",
+            "sha256Observed": "30F8D8AA065942A06B2EE50098CE578D60CDD5717E41B80F11AE41358E0D9F03",
+            "bytesObserved": 7282,
+            "type": "SourceOrDocument",
+            "remoteBlob": "b3ea27a660c96d002b9f926f19e18b78259e0ec4"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+            "sha256Observed": "187A6AB2D2264EF1F470F6C81FBBF35536DD622B91FE8975C8849817E7231439",
+            "bytesObserved": 2088,
+            "type": "SourceOrDocument",
+            "remoteBlob": "26f2adc359ad20799de737fdb9293097ca977807"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAServer/README.md",
+            "sha256Observed": "8494757E2F2B0AB0743FA372A6F0B7BA876F9345921BAD1A4E3F3748B1ED1374",
+            "bytesObserved": 2757,
+            "type": "SourceOrDocument",
+            "remoteBlob": "42136f941407ca1533fbffe6200e25e4c47c0082"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "sha256Observed": "D4EC13F3FA5B4780A0389089B1D4F63163E5A3F75BC183B1F050770B62B862D7",
+            "bytesObserved": 31631,
+            "type": "SourceOrDocument",
+            "remoteBlob": "3c433e7675f0e8a163fad0e6e83c51620dea4da8"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Public/Server/DivineBeastsServerBootstrapSubsystem.h",
+            "sha256Observed": "DF04804BE0D6B398D62C28297AFC2DBBDA1E7F85FD38194FEE81BEDC664E5F63",
+            "bytesObserved": 4659,
+            "type": "SourceOrDocument",
+            "remoteBlob": "5c49bf902caa3a136edb8684df002580309a6e1a"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/DivineBeasts/DBAWorlds/Source/DBAWorldsRuntime/Private/Tests/DivineBeastsWorldDefinitionTests.cpp",
+            "sha256Observed": "57B864DE4D124F1C2BFEDD641F8DB849D9E50514B36B6E95E43156A57ED654FE",
+            "bytesObserved": 6242,
+            "type": "SourceOrDocument",
+            "remoteBlob": "a7e60566d5f99cd3fe4dc34aa39c10131cf9c84a"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/README.md",
+            "sha256Observed": "8928845B830F080175B53C2CE6480718EBBF2FD153488BC064D9FA966A14A55C",
+            "bytesObserved": 2340,
+            "type": "SourceOrDocument",
+            "remoteBlob": "e8351fc45e512906f78d2bc574eb7fa20fb0cbb4"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Framework/GamePlatformGameModeBase.cpp",
+            "sha256Observed": "627F03EAA898D7C9DC8C0EA32CAAFF238F88F23BFE7951311B09A145E7FB6216",
+            "bytesObserved": 44377,
+            "type": "SourceOrDocument",
+            "remoteBlob": "353dfcee6451a003d5e03982af7960304d0f60ec"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Tests/GamePlatformGameplayContractTests.cpp",
+            "sha256Observed": "645F4EDCEF73E859E3C5B6DC3A1A8ED5B0EF542BA1E98E04DCDC9414B27AFEB9",
+            "bytesObserved": 7339,
+            "type": "SourceOrDocument",
+            "remoteBlob": "367c3acc29e267aa7c0e43aa4d9afe06354a67bc"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Framework/GamePlatformGameModeBase.h",
+            "sha256Observed": "BF8CE73A94D4233648466EB6EBA4D04140D2B5B2198C758F2EA0066DB2D092A6",
+            "bytesObserved": 4992,
+            "type": "SourceOrDocument",
+            "remoteBlob": "5fa1abe361beb870299c39d90c3a4649370fc5d3"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+            "sha256Observed": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+            "bytesObserved": 5219,
+            "type": "SourceOrDocument",
+            "remoteBlob": "7048b3b7229050a974ca4bef0d97200d5650c52a"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+            "sha256Observed": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+            "bytesObserved": 47213,
+            "type": "SourceOrDocument",
+            "remoteBlob": "3213237c8c65dac60aa104c389941e16d4e505ae"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+            "sha256Observed": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+            "bytesObserved": 2418,
+            "type": "SourceOrDocument",
+            "remoteBlob": "1b76ceca026f657d8766b2eaa079785c2ad3b121"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+            "sha256Observed": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+            "bytesObserved": 6101,
+            "type": "SourceOrDocument",
+            "remoteBlob": "f7da925d02174c3f65e428af2f38e0971e507197"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Tests/Architecture/ServerLifecycleContract.Tests.ps1",
+            "sha256Observed": "0FD4094E71A41F8D4B53DF3EE634BB91E8E031191B8446ED315476E99F260968",
+            "bytesObserved": 4674,
+            "type": "SourceOrDocument",
+            "remoteBlob": "d84834e318e6aedff5b18fc397aad9fbe6b05da2"
+          },
+          {
+            "remoteChange": "M",
+            "path": "Tests/Assets/TestFrontEndClientContainer.ps1",
+            "sha256Observed": "69622BD388BC4F923CCC575152C55E2D5CE969E01BC941FB98068C394C5AA5E2",
+            "bytesObserved": 3719,
+            "type": "SourceOrDocument",
+            "remoteBlob": "08b0c014da50291c0e77970e38cf6b8f45232e4f"
+          }
+        ],
+        "remoteHashesAreFirstObservation": true,
+        "verifiedFreezes": {
+          "ui01Seven": {
+            "source": "Saved/MainIntegration/Main86UIIntegration/SourceFreeze.SevenUI01.json",
+            "files": [
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "sha256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+                "matches": true,
+                "conflictMarkers": 0
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "sha256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+                "matches": true,
+                "conflictMarkers": 0
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "sha256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+                "matches": true,
+                "conflictMarkers": 0
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "sha256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+                "matches": true,
+                "conflictMarkers": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "sha256": "9ADC33DE9F94ABEF8259F97F5EA053E89CB180FBA5186AB9B1A6C3946E6A6519",
+                "matches": true,
+                "conflictMarkers": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "sha256": "187A6AB2D2264EF1F470F6C81FBBF35536DD622B91FE8975C8849817E7231439",
+                "matches": true,
+                "conflictMarkers": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "sha256": "0E1013F1BEF3B598DDFBB0E646C65DE95C5F82A3AF5F445C0B88FF25B2228089",
+                "matches": true,
+                "conflictMarkers": 0
+              }
+            ]
+          },
+          "gameplayFive": [
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+              "sha256": "C26DFDE8F5F1BBEA7AC2002F7A2BCD81317CBD5FF369CE3BF3FA19ED9C5E7500",
+              "supersededSha256": "940540828E70335EB528F879E7CF794B1E2B7FA6CC53FBE65B6C10815BB73DA9"
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Public/Server/DivineBeastsServerBootstrapSubsystem.h",
+              "sha256": "65DED7A1F8D4957AC5D07B9938072E32CE3F3F2243DA48E28E7FF6BEF163B326",
+              "supersededSha256": [
+                "9C77BB99C3DDC0487FA142251036DC6D423E07F1CC69FF1939F304A4D793736A",
+                "2FD0F5BA4AC857F0ABB34B1F4CD1CEF2E4508F415A98BD564C75E8A1927995B1"
+              ]
+            },
+            {
+              "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/README.md",
+              "sha256": "8928845B830F080175B53C2CE6480718EBBF2FD153488BC064D9FA966A14A55C"
+            },
+            {
+              "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Tests/GamePlatformGameplayContractTests.cpp",
+              "sha256": "645F4EDCEF73E859E3C5B6DC3A1A8ED5B0EF542BA1E98E04DCDC9414B27AFEB9"
+            },
+            {
+              "path": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Tests/ServerWorldRetirementTests.cpp",
+              "sha256": "F9B379E215BD44751D8533AEAC3AAC111522EF4FCE24EB3CC5B28777D8F7B57F"
+            }
+          ],
+          "ui02FinalTwelve": {
+            "source": "Saved/MainIntegration/Main86UIIntegration/SourceFreeze.FinalUI02.json",
+            "files": [
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+                "expectedSHA256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+                "actualSHA256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+                "matches": true,
+                "bytes": 47213,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+                "expectedSHA256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+                "actualSHA256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+                "matches": true,
+                "bytes": 2418,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+                "expectedSHA256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+                "actualSHA256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+                "matches": true,
+                "bytes": 6101,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+                "expectedSHA256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+                "actualSHA256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+                "matches": true,
+                "bytes": 5219,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+                "expectedSHA256": "9ADC33DE9F94ABEF8259F97F5EA053E89CB180FBA5186AB9B1A6C3946E6A6519",
+                "actualSHA256": "9ADC33DE9F94ABEF8259F97F5EA053E89CB180FBA5186AB9B1A6C3946E6A6519",
+                "matches": true,
+                "bytes": 2080,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+                "expectedSHA256": "187A6AB2D2264EF1F470F6C81FBBF35536DD622B91FE8975C8849817E7231439",
+                "actualSHA256": "187A6AB2D2264EF1F470F6C81FBBF35536DD622B91FE8975C8849817E7231439",
+                "matches": true,
+                "bytes": 2088,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+                "expectedSHA256": "6ABCE1AFE91FAFE6F5D03976FE3D46E21FD086B33F679D0C08D2B3E2705C2AB4",
+                "actualSHA256": "6ABCE1AFE91FAFE6F5D03976FE3D46E21FD086B33F679D0C08D2B3E2705C2AB4",
+                "matches": true,
+                "bytes": 30146,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+                "expectedSHA256": "8799DA875E349B257D9B708FB8F0E563E5A38FFABCD8598929B2EE2CD243337C",
+                "actualSHA256": "8799DA875E349B257D9B708FB8F0E563E5A38FFABCD8598929B2EE2CD243337C",
+                "matches": true,
+                "bytes": 3288,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h",
+                "expectedSHA256": "C3ED642D74DFA6F9491DF96D05AFB225119716EF5196CC36F04DE2D597CDB4E5",
+                "actualSHA256": "C3ED642D74DFA6F9491DF96D05AFB225119716EF5196CC36F04DE2D597CDB4E5",
+                "matches": true,
+                "bytes": 2789,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+                "expectedSHA256": "B7D841E4369E45505013F512E394A96736EF314D638C6F283B01587AEB57FA72",
+                "actualSHA256": "B7D841E4369E45505013F512E394A96736EF314D638C6F283B01587AEB57FA72",
+                "matches": true,
+                "bytes": 8369,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h",
+                "expectedSHA256": "70766FA2FC5551C644FD1E913745F8C0ED65A546251092FFCEE54C03F0BA07C7",
+                "actualSHA256": "70766FA2FC5551C644FD1E913745F8C0ED65A546251092FFCEE54C03F0BA07C7",
+                "matches": true,
+                "bytes": 4405,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              },
+              {
+                "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h",
+                "expectedSHA256": "223D2F0CB6F04EBA4B8F900705BF77DC59565F8586E8859DCE8394AFA0269FED",
+                "actualSHA256": "223D2F0CB6F04EBA4B8F900705BF77DC59565F8586E8859DCE8394AFA0269FED",
+                "matches": true,
+                "bytes": 1637,
+                "conflictMarkers": 0,
+                "trailingWhitespace": 0
+              }
+            ]
+          }
+        },
+        "findings": [
+          {
+            "id": "Main86-UI01",
+            "severity": "Important",
+            "status": "SourceClosed",
+            "original": "LoadingTravel在Super NativeOnActivated同步通知失活后仍直接订阅VM；活页合法VM替换留下旧派生委托，旧状态可更新当前页。",
+            "source": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+            "originalEngineEvidence": "CommonActivatableWidget.cpp281–295先广播激活通知；平台安全Native hooks已经校验激活/绑定/page代次。",
+            "repairReadback": "改用唯一平台RefreshInitialState/OnViewModelStateChanged；刷新核IsActivated/VM页活跃/原PageGeneration；私人反射刷新签名、父类和StageText保留。两个真实Native CommonUI/LoadingService/VM替换回归原断言读实。",
+            "tests": [
+              "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+              "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement"
+            ],
+            "closureLimit": "最终12源共同父链也已读实；原Loading两完整测试主体精确保持。仅源码及回归实现闭环，不声称UE/Cook/联机通过。"
+          },
+          {
+            "id": "Main86-G02",
+            "severity": "Important",
+            "status": "SourceClosed",
+            "original": "新InitialLocation测试未InitializeActorsForPlay，Actor::ProcessEvent前提不满足，真实FindPlayerStart BlueprintNativeEvent不能执行。",
+            "source": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Tests/GamePlatformGameplayContractTests.cpp",
+            "repairReadback": "只增加InitializeActorsForPlay(FURL())和AreActorsInitialized断言，缺前提DestroyWorld并失败。真实Start查询与Restart/外部Spawn/GameplayActive的所有原拒绝断言、注册名和flags保留。",
+            "test": "GamePlatform.Gameplay.Login.InitialLocationDoesNotAuthorizeSpawn"
+          },
+          {
+            "id": "Main86-G03",
+            "severity": "Important",
+            "status": "SourceClosed",
+            "original": "MarkReady同步PublishingReady通知可Deinitialize或退出，返回false后旧栈SetFailed覆盖关闭原因；Registered队列仅WeakThis+当前Registered不足以证明原任务。BeginExperience的真实外部边界是内部Data AcquireDefinition。",
+            "source": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "repairReadback": "私有不透明FGuid仅观察操作身份，原World/GI/Boot/Lifecycle/通知被捕获；Deinit(即使无World)/失败/排空先关闭nonce，所有读实外部返回核原scope。MarkReady只对原Registered且平台generation未推进的拒绝SetFailed。正常Register签A→Registered签B不会取消体验Timer，因为Timer不捕A而每次Advance捕当前nonce。 Initialize新增关闭guard在Super和全局委托/Telemetry之前拒绝原退休对象。",
+            "tests": [
+              "DivineBeasts.Server.WorldRetirement"
+            ],
+            "testLimits": "fixture保活GI/World/Bootstrap，真实Timer撤销和GT后置屏障/公开Deinit/RAII读实。GI未初始化Lifecycle，队列lambda还会因ExpectedLifecycle为空拒绝；不能声称单独证明nonce分支，或覆盖Dedicated Provider MarkReady同步重入。"
+          },
+          {
+            "id": "Main86-UI02",
+            "severity": "Important",
+            "status": "SourceClosed",
+            "original": "新ErrorReconnect真实资产消费的旧Native层在同步失活后绑定事件、在VM替换时解除当前而非原VM；Retry同步拒绝/命令完成可关闭或换VM，旧尾栈仍写提交状态。共同DivineBeastsUIScreen在平台Super返回已失活时仍ProjectVM.OnScreenActivated，重新绑定Owner。",
+            "source": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+            "additionalSource": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+            "owner": "repair_application_players_20261009",
+            "authorization": "Root已扩最小Error cpp/h、共同UIScreen cpp/h和既有UITests；当前等待最终冻结。",
+            "repairReadback": "UIScreen由唯一平台安全Bind/Unbind/Refresh/State钩子管理项目订阅，保存精确VM/Page/BindingGeneration；解绑先失效，强持有原VM，外部取消返回不清后继。Error保存精确命令VM/Page以及Scope/Submission代次，状态仍由平台唯一订阅；Retry返回先核原身份，同步完成只在最终SubmittedId集合匹配时结束，其他命令不能假终结重试。反射函数/父类/BindWidget身份保留。",
+            "tests": [
+              "DivineBeasts.UI.ErrorReconnect.ActivationObserverDeactivates",
+              "DivineBeasts.UI.ErrorReconnect.ActiveViewModelReplacement",
+              "DivineBeasts.UI.ErrorReconnect.SynchronousRetryKeepsSuccessor"
+            ],
+            "fixtureReadback": "合法GEngine→ULocalPlayer→UIClient Owner均强持有；实际CommonUI Native页/按钮/文本通过引擎受控抽象分配与Transient字段注入。仅给Transient快照Retry输入资格，真实Owner无CommandContract，命令结果通过真实VM/Owner UI.Command.Invalid同步失败。Observer只监听真实动态委托，动作先MoveTemp，一次执行；ScopeExit解除所有捕获引用，fixture析构Deactivate→VM清空→Owner Deinitialize。没有Provider/成功伪数据/资产动作。",
+            "observer": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h",
+            "observerBoundary": "WITH_EDITORONLY_DATA UCLASS(Transient, NotBlueprintable)，UITests中的两个方法实现采用同条件；仅Editor反射观察者，无自动生产实例，仍需Root真实UHT/编译。",
+            "closureLimit": "新3用例尚未由本座位运行；已读实源码，可交Root统一运行183。取消接口通用所有回调并未全量动态覆盖；默认ApplicationUIAdapter CancelUICommand只诚实false。"
+          }
+        ],
+        "otherReadConclusions": [
+          {
+            "area": "Manager合并与旅行",
+            "conclusion": "Root viewport slot只将bAutoRemoveOnWorldRemoved设false；保原RootLayoutGeneration/strong实例/清理后每边界身份复核。PrepareForTravel捕原root/gen与具体service，快照pending和旧活动key后清理，Closed exact-owner账本/Stack成员查询保留。"
+          },
+          {
+            "area": "UIClient自动合入",
+            "conclusion": "PlayerControllerChanged的新默认Root/PullInitialState只消费既有UI状态和安装接口，没有登录/Spawn权威动作；根移除与调用寿命仍由平台/LocalPlayer控制。"
+          },
+          {
+            "area": "登录初始位置与准入",
+            "conclusion": "非内部FindPlayerStart只查询真实位置，忽略Portal；无bInternalSpawn赋权、占位、生成Pawn或发布Active。唯一内部spawn仍由已验证候选ReservedSource门禁开启。已读锁定Engine InitNewPlayer/FindPlayerStart/ChoosePlayerStart和项目final拒绝入口。"
+          },
+          {
+            "area": "新测试和合法Outer",
+            "conclusion": "PlayerStatus夹具Transient World一次初始化、Character Outer的GAS AttributeSet，实际注册GetSet断言，VM解绑再DestroyWorld；原声明/断言读实。WorldDefinition新用例加载真实Village定义并ValidateDefinition/对齐PrimaryAssetId。Accessibility/Registry合并保持GEngine→LocalPlayer→Subsystem合法Outer与原flags/断言。"
+          },
+          {
+            "area": "三资产",
+            "conclusion": "Root保真证据记录remote/index/working blob一致，我读取hash与证据；2新UI资产归DBAUIPack_Core，Village Experience归原世界包。没有以哈希或清单内容宣称自己运行过Monolith/编译/Widget树/真实Cook。"
+          }
+        ],
+        "assetPreservationEvidence": "Saved/Validation/PluginRemediation-2026-10-09/MainIntegration/Main86AssetPreservation.json",
+        "executedByReviewer": {
+          "sourceReads": true,
+          "readOnlyGitDiffShowStatus": true,
+          "frozenHashReadback": true,
+          "jsonReportWritten": true,
+          "sourceEdited": false,
+          "gitMutation": false,
+          "ueExecuted": false,
+          "ubtExecuted": false,
+          "assetAction": false
+        },
+        "limits": [
+          "当前结论为SourceClosed，4原Important记录保留；本座位未运行最新UE/UBT/UHT/183/Cook/联机。",
+          "历史172实际通过与未执行178/180/183计划不能充作Main86新源通过。",
+          "WorldRetirement内存GI无Lifecycle，队列还有ExpectedLifecycle空拒绝；真实Dedicated Provider MarkReady重入只源码核查，尚未动态覆盖。",
+          "3资产只核Root原字节保真证据与working哈希；没有以清单、文本或哈希代替实际Widget树/资产编译/重载/Cook。",
+          "共同父链和两首次交付页已审；其他历史Widget仍未全量审查，不能把本次复核扩大成全部UI完备。",
+          "Observer新增文件目录登记已独立回读关闭；文档和运行证据不替代最新源码动态验收。"
+        ],
+        "openCriticalCount": 0,
+        "openImportantCount": 0,
+        "finalObservedFiles": [
+          {
+            "path": "Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md",
+            "sha256": "4E20A8AED3C0D66975301F3DAC62D72E015083789175A3F0CC3A700BEB7A0A4D",
+            "bytes": 166517
+          },
+          {
+            "path": "Docs/Implementation/GamePlatformDesignRemediation/ExecutionProgress.md",
+            "sha256": "FA488E50F02B54B2B15FF7FF1D28D863854D24557FABE15AB0F0AC1CA8274075",
+            "bytes": 21924
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_ErrorReconnect.uasset",
+            "sha256": "C8F8F1781BAA6AA447ABF2B469595E64016ACAAFC00CCE93087764977B57FDC0",
+            "bytes": 37989
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_LoadingTravel.uasset",
+            "sha256": "7CD8A34B2C2ED6C5948EC988207B30C69ACE9F690828A28C40DA44653B2453E2",
+            "bytes": 37614
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/MonolithGenerationManifest.json",
+            "sha256": "648D546269BA4D400CB889231F5EE7A6C6ABBDFAAB1464C8E7AFC799CEE789C7",
+            "bytes": 27002
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/前端视觉与预览实施说明.md",
+            "sha256": "405BE2CA8AF3DB62BB076ED7001E22F9635B942BE4922D40D04A765AADE7A66B",
+            "bytes": 13108
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Definitions/DA_DBA_Experience_Village_Tutorial.uasset",
+            "sha256": "CB9E34F851B8CA9215CE0F90D460FA727719E9A619D8B50326B1BDECCFB78915",
+            "bytes": 3145
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/README.md",
+            "sha256": "3705BE51C2429E5E173BDA1C2A843CE5549CECEA848006D90B4967F26479EAA7",
+            "bytes": 1754
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/DivineBeastsUIClientSubsystem.cpp",
+            "sha256": "6A1B8A584789C9E3BA87BC8160EDDFA51DB07C57A43A3531DB7DE41C4D34E176",
+            "bytes": 25021
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreenCatalog.cpp",
+            "sha256": "C5D1316557BA23E21FF89BA4A3ACDA793116108DE0E4E2A514F4A6B47F6AB3AA",
+            "bytes": 7292
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Loading/DivineBeastsLoadingTravelScreen.cpp",
+            "sha256": "9ADC33DE9F94ABEF8259F97F5EA053E89CB180FBA5186AB9B1A6C3946E6A6519",
+            "bytes": 2080
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsPlayerStatusViewModelTests.cpp",
+            "sha256": "AD688C1D7ACFE431847D22C44C85F730D64E214CA5F14ADB9B7DB1288CCCBC20",
+            "bytes": 3029
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUITests.cpp",
+            "sha256": "6ABCE1AFE91FAFE6F5D03976FE3D46E21FD086B33F679D0C08D2B3E2705C2AB4",
+            "bytes": 30146
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/DivineBeastsUIClientSubsystem.h",
+            "sha256": "30F8D8AA065942A06B2EE50098CE578D60CDD5717E41B80F11AE41358E0D9F03",
+            "bytes": 7282
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Loading/DivineBeastsLoadingTravelScreen.h",
+            "sha256": "187A6AB2D2264EF1F470F6C81FBBF35536DD622B91FE8975C8849817E7231439",
+            "bytes": 2088
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAServer/README.md",
+            "sha256": "8494757E2F2B0AB0743FA372A6F0B7BA876F9345921BAD1A4E3F3748B1ED1374",
+            "bytes": 2757
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+            "sha256": "C26DFDE8F5F1BBEA7AC2002F7A2BCD81317CBD5FF369CE3BF3FA19ED9C5E7500",
+            "bytes": 38386
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Public/Server/DivineBeastsServerBootstrapSubsystem.h",
+            "sha256": "65DED7A1F8D4957AC5D07B9938072E32CE3F3F2243DA48E28E7FF6BEF163B326",
+            "bytes": 7377
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAWorlds/Source/DBAWorldsRuntime/Private/Tests/DivineBeastsWorldDefinitionTests.cpp",
+            "sha256": "57B864DE4D124F1C2BFEDD641F8DB849D9E50514B36B6E95E43156A57ED654FE",
+            "bytes": 6242
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/README.md",
+            "sha256": "8928845B830F080175B53C2CE6480718EBBF2FD153488BC064D9FA966A14A55C",
+            "bytes": 2340
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Framework/GamePlatformGameModeBase.cpp",
+            "sha256": "627F03EAA898D7C9DC8C0EA32CAAFF238F88F23BFE7951311B09A145E7FB6216",
+            "bytes": 44377
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Tests/GamePlatformGameplayContractTests.cpp",
+            "sha256": "645F4EDCEF73E859E3C5B6DC3A1A8ED5B0EF542BA1E98E04DCDC9414B27AFEB9",
+            "bytes": 7339
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Framework/GamePlatformGameModeBase.h",
+            "sha256": "BF8CE73A94D4233648466EB6EBA4D04140D2B5B2198C758F2EA0066DB2D092A6",
+            "bytes": 4992
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+            "sha256": "E60157C41F2CB6B0ED24CC369BB6A16C699386FB102E05D917E2FF5956D44018",
+            "bytes": 5219
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Manager/GamePlatformUIManagerSubsystem.cpp",
+            "sha256": "4E49042A1DDF3CEBFA675622EDC13B2D8FAE95E395B7B8B7D07E9D31329500EF",
+            "bytes": 47213
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIAccessibilityTests.cpp",
+            "sha256": "68B03FD768761F6DDBA51B8DA12A3835CD4421D6089941EDA0C4D869BEB83C54",
+            "bytes": 2418
+          },
+          {
+            "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Tests/GamePlatformUIRegistryTests.cpp",
+            "sha256": "A1C069E3C75AFFADF3F13EC2A3ECC1791D9D0CAA8503A5AE364F361A1EC947D8",
+            "bytes": 6101
+          },
+          {
+            "path": "Tests/Architecture/ServerLifecycleContract.Tests.ps1",
+            "sha256": "0FD4094E71A41F8D4B53DF3EE634BB91E8E031191B8446ED315476E99F260968",
+            "bytes": 4674
+          },
+          {
+            "path": "Tests/Assets/TestFrontEndClientContainer.ps1",
+            "sha256": "69622BD388BC4F923CCC575152C55E2D5CE969E01BC941FB98068C394C5AA5E2",
+            "bytes": 3719
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/DivineBeastsUIScreen.cpp",
+            "sha256": "8799DA875E349B257D9B708FB8F0E563E5A38FFABCD8598929B2EE2CD243337C",
+            "bytes": 3288
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/DivineBeastsUIScreen.h",
+            "sha256": "C3ED642D74DFA6F9491DF96D05AFB225119716EF5196CC36F04DE2D597CDB4E5",
+            "bytes": 2789
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Screens/Connection/DivineBeastsErrorReconnectScreen.cpp",
+            "sha256": "B7D841E4369E45505013F512E394A96736EF314D638C6F283B01587AEB57FA72",
+            "bytes": 8369
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Public/Screens/Connection/DivineBeastsErrorReconnectScreen.h",
+            "sha256": "70766FA2FC5551C644FD1E913745F8C0ED65A546251092FFCEE54C03F0BA07C7",
+            "bytes": 4405
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIReentryObserver.h",
+            "sha256": "223D2F0CB6F04EBA4B8F900705BF77DC59565F8586E8859DCE8394AFA0269FED",
+            "bytes": 1637
+          },
+          {
+            "path": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Tests/ServerWorldRetirementTests.cpp",
+            "sha256": "F9B379E215BD44751D8533AEAC3AAC111522EF4FCE24EB3CC5B28777D8F7B57F",
+            "bytes": 7491
+          }
+        ],
+        "finalObservedFileCount": 35,
+        "finalHashesAreObservationNotRootFullDeliveryFreeze": true,
+        "finalChecks": {
+          "scopedIndexDiffCheckExitCode": 0,
+          "scopedWorkingDiffCheckExitCode": 0,
+          "ui12FrozenHashesMatch": true,
+          "gameplay5FrozenHashesMatch": true,
+          "ui12ConflictMarkers": 0,
+          "ui12TrailingWhitespace": 0
+        },
+        "retentionCheck": {
+          "baseline": "Saved/MainIntegration/Main86UIIntegration/DivineBeastsUITests.cpp.BeforeUI02.txt",
+          "originalLoadingTwoBodyExact": true,
+          "originalAfterFrontEndBodyExact": true,
+          "allOriginalPrettyNamesAndFlagsRetained": true,
+          "newErrorPrettyNames": [
+            "DivineBeasts.UI.ErrorReconnect.ActivationObserverDeactivates",
+            "DivineBeasts.UI.ErrorReconnect.ActiveViewModelReplacement",
+            "DivineBeasts.UI.ErrorReconnect.SynchronousRetryKeepsSuccessor"
+          ]
+        },
+        "testPlans": {
+          "rootLatestPlannedExactCount": 183,
+          "executedByReviewer": false,
+          "independentReportDoesNotClaimPlannedCountPassed": true
+        },
+        "chineseReview": "读实本轮声明/接口线程/VM与page操作身份/强持有与解绑/Ready操作以及失败和永久退休中文说明。Bootstrap最终头将无ValidatedWorld关闭查询描述为最后记录值，反射名/枚举序号/公开签名不变。不宣称全部历史Widget或全项目中文合规。",
+        "rootDocumentationFollowup": {
+          "path": "Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md",
+          "status": "Closed",
+          "line": 971,
+          "sha256Observed": "4E20A8AED3C0D66975301F3DAC62D72E015083789175A3F0CC3A700BEB7A0A4D",
+          "item": "已回读新增Observer正式登记，路径、EditorOnlyData/无生产实例/不生成资产/UHT待验边界正确。可选文字精度已告Root：直接关闭/换页动作位于StateAction，CommandCompleted当前仅观察实际ID/计数。",
+          "blocksCodeSourceClosure": false,
+          "deliveryStillNeedsRootUpdate": false
+        }
+      }
+    },
+    {
+      "Name": "Main86AssetPreservation.json",
+      "SourceSHA256": "3B41C737D1946B64337332962FC473D4B42CE6BFAF0564892E43E351394407CE",
+      "Report": {
+        "RemoteHead": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+        "CheckedUtc": "2026-10-09T16:11:19.8251927Z",
+        "Assets": [
+          {
+            "Path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_ErrorReconnect.uasset",
+            "RemoteBlob": "de74de7967e68b757c4df89c02f11a948cd793bc",
+            "IndexBlob": "de74de7967e68b757c4df89c02f11a948cd793bc",
+            "WorkBlob": "de74de7967e68b757c4df89c02f11a948cd793bc",
+            "Equal": true
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_LoadingTravel.uasset",
+            "RemoteBlob": "6d02d0b36c2b2a470ab3dc08dba5db5eb542ec04",
+            "IndexBlob": "6d02d0b36c2b2a470ab3dc08dba5db5eb542ec04",
+            "WorkBlob": "6d02d0b36c2b2a470ab3dc08dba5db5eb542ec04",
+            "Equal": true
+          },
+          {
+            "Path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Definitions/DA_DBA_Experience_Village_Tutorial.uasset",
+            "RemoteBlob": "2155db62d27a7346f7265b3f4ac7cfc13a3d141b",
+            "IndexBlob": "2155db62d27a7346f7265b3f4ac7cfc13a3d141b",
+            "WorkBlob": "2155db62d27a7346f7265b3f4ac7cfc13a3d141b",
+            "Equal": true
+          }
+        ],
+        "AssetsModifiedByRoot": false,
+        "AllEqual": true
+      }
     }
   ],
   "Limits": [
@@ -3609,5 +6549,7 @@
     "默认及增量引擎回归正在实际执行",
     "UENUM资产/Blueprint分支、Cook、联网和设备性能未全量验收"
   ],
-  "CurrentCanonicalInventoryPath": "Game/Plugins/DivineBeasts/DBAClient/Docs/AAAGameUIBusinessDomainLedger_V1.json"
+  "CurrentCanonicalInventoryPath": "Game/Plugins/DivineBeasts/DBAClient/Docs/AAAGameUIBusinessDomainLedger_V1.json",
+  "SourceParent": "022934fb79be058c9df34f67df0f9500def76707",
+  "SourceState": "三方合并工作树已冻结验证；未将原父提交当作当前合并源码提交，正式提交后补身份"
 }

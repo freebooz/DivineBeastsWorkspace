@@ -1,11 +1,301 @@
+#include "Tests/DivineBeastsUIReentryObserver.h"
+
+#if WITH_EDITORONLY_DATA
+// 两个反射函数与UHT类型采用同一EditorOnlyData条件；类型实现不依赖测试是否被过滤执行。
+void UDivineBeastsUIReentryObserver::HandleStateChanged(int32 Revision, int32 PageGeneration)
+{
+    (void)Revision; (void)PageGeneration;
+    ++StateNotifications;
+    auto Action = MoveTemp(StateAction);
+    if (Action) Action();
+}
+void UDivineBeastsUIReentryObserver::HandleCommandCompleted(FGuid RequestId, FName ErrorCode)
+{
+    (void)ErrorCode;
+    ++CommandNotifications;
+    LastCompletedRequestId = RequestId;
+    auto Action = MoveTemp(CommandAction);
+    if (Action) Action(RequestId);
+}
+#endif
+
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
+#include "DivineBeastsUIClientSubsystem.h"
+#include "Components/Button.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
 #include "Contracts/DivineBeastsUIContracts.h"
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
 #include "Screens/DivineBeastsUIScreenCatalog.h"
 #include "Localization/DivineBeastsUILocalization.h"
 #include "ViewModels/DivineBeastsUIViewModel.h"
+#include "Screens/Loading/DivineBeastsLoadingTravelScreen.h"
+#include "Screens/Connection/DivineBeastsErrorReconnectScreen.h"
+#include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
+#include "Loading/GamePlatformLoadingScreenService.h"
+#include "Components/TextBlock.h"
+#include "Misc/ScopeExit.h"
+#include "UObject/StrongObjectPtr.h"
+#include "UObject/UnrealType.h"
+#include "UObject/UObjectGlobals.h"
+
+// 真实CommonUI激活通知可同步失活：派生旧激活栈不能重新订阅VM，也不能刷新StageText。
+// 测试只分配Transient原生页/文本/VM，使用引擎受控抽象分配作用域；不修改类标志或资产。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsLoadingTravelActivationReentryTest,
+    "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsLoadingTravelActivationReentryTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    const TStrongObjectPtr<UDivineBeastsLoadingTravelScreen> Screen(NewObject<UDivineBeastsLoadingTravelScreen>());
+    const TStrongObjectPtr<UDivineBeastsLoadingViewModel> ViewModel(NewObject<UDivineBeastsLoadingViewModel>());
+    const TStrongObjectPtr<UTextBlock> Stage(NewObject<UTextBlock>(Screen.Get()));
+    FDelegateHandle ActivationHandle;
+    ON_SCOPE_EXIT
+    {
+        Screen->OnActivated().Remove(ActivationHandle);
+        Screen->DeactivateWidget();
+        Screen->InitializeActivatableViewModel(nullptr);
+    };
+    auto* StageProperty = FindFProperty<FObjectPropertyBase>(Screen->GetClass(), TEXT("StageText"));
+    if (!TestNotNull(TEXT("真实BindWidget StageText字段存在"), StageProperty)) return false;
+    StageProperty->SetObjectPropertyValue_InContainer(Screen.Get(), Stage.Get());
+    const FText Sentinel = FText::FromString(TEXT("失活页保持原文本"));
+    Stage->SetText(Sentinel);
+    Screen->InitializeActivatableViewModel(ViewModel.Get());
+    bool bActivationObserved = false;
+    ActivationHandle = Screen->OnActivated().AddLambda([&bActivationObserved, Selected = Screen.Get()]()
+    {
+        bActivationObserved = true;
+        Selected->DeactivateWidget();
+    });
+    Screen->ActivateWidget(); // 实际CommonUI NativeOnActivated通知，未手工调用派生函数或广播模拟结果。
+    TestTrue(TEXT("真实激活通知触发观察者"), bActivationObserved);
+    TestFalse(TEXT("观察者同步失活后页面保持失活"), Screen->IsActivated());
+    TestFalse(TEXT("旧激活栈不会启动失活VM页面"), ViewModel->IsPageActive());
+    TestFalse(TEXT("失活页不残留任何VM动态订阅"), ViewModel->OnViewStateChanged.GetAllObjects().Contains(Screen.Get()));
+    TestTrue(TEXT("旧激活栈不会改写失活页StageText"), Stage->GetText().EqualTo(Sentinel));
+    ViewModel->MarkStateChanged();
+    TestTrue(TEXT("失活VM后续真实状态通知也不改写文本"), Stage->GetText().EqualTo(Sentinel));
+    return true;
+}
+
+// 激活中合法替换VM必须撤旧订阅、启动新页面代次并读取真实LoadingService快照。
+// 只注入Transient文本字段；令牌/换VM/激活均走真实公开API，作用域退出解绑并释放令牌。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsLoadingTravelViewModelReplacementTest,
+    "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsLoadingTravelViewModelReplacementTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    const TStrongObjectPtr<UDivineBeastsLoadingTravelScreen> Screen(NewObject<UDivineBeastsLoadingTravelScreen>());
+    const TStrongObjectPtr<UDivineBeastsLoadingViewModel> Previous(NewObject<UDivineBeastsLoadingViewModel>());
+    const TStrongObjectPtr<UDivineBeastsLoadingViewModel> Incoming(NewObject<UDivineBeastsLoadingViewModel>());
+    const TStrongObjectPtr<UGamePlatformLoadingScreenService> Service(NewObject<UGamePlatformLoadingScreenService>());
+    const TStrongObjectPtr<UTextBlock> Stage(NewObject<UTextBlock>(Screen.Get()));
+    ON_SCOPE_EXIT
+    {
+        Screen->DeactivateWidget();
+        Screen->InitializeActivatableViewModel(nullptr);
+        Service->ReleaseAll();
+    };
+    auto* StageProperty = FindFProperty<FObjectPropertyBase>(Screen->GetClass(), TEXT("StageText"));
+    if (!TestNotNull(TEXT("真实BindWidget StageText字段存在"), StageProperty)) return false;
+    StageProperty->SetObjectPropertyValue_InContainer(Screen.Get(), Stage.Get());
+    const FText InitialStage = FText::FromString(TEXT("实际加载初始阶段"));
+    const FGamePlatformLoadingToken Token = Service->AcquireToken(InitialStage, -1.0f);
+    if (!TestTrue(TEXT("真实Loading令牌受理"), Token.IsValid())) return false;
+    Previous->InitializeLoadingService(Service.Get());
+    Incoming->InitializeLoadingService(Service.Get());
+    Screen->InitializeActivatableViewModel(Previous.Get());
+    Screen->ActivateWidget();
+    TestTrue(TEXT("真实激活后的初始快照可见"), Stage->GetText().EqualTo(InitialStage));
+    Screen->InitializeActivatableViewModel(Incoming.Get());
+    TestEqual(TEXT("合法替换保持新VM身份"), Screen->GetLoadingViewModel(), Incoming.Get());
+    TestFalse(TEXT("旧VM页面生命周期已经结束"), Previous->IsPageActive());
+    TestTrue(TEXT("新VM页面生命周期已经开始"), Incoming->IsPageActive());
+    TestFalse(TEXT("旧VM动态委托精确移除页面"), Previous->OnViewStateChanged.GetAllObjects().Contains(Screen.Get()));
+    TestEqual(TEXT("新VM仅有平台统一订阅，不存在派生双订阅"), Incoming->OnViewStateChanged.GetAllObjects().Num(), 1);
+    const FText Sentinel = FText::FromString(TEXT("旧VM通知不应覆盖"));
+    Stage->SetText(Sentinel);
+    Previous->MarkStateChanged();
+    TestTrue(TEXT("旧VM真实状态通知不触发当前页刷新"), Stage->GetText().EqualTo(Sentinel));
+    const FText UpdatedStage = FText::FromString(TEXT("实际加载下一阶段"));
+    TestTrue(TEXT("真实令牌阶段更新"), Service->UpdateToken(Token, UpdatedStage, -1.0f));
+    TestTrue(TEXT("新VM真实快照事件更新StageText"), Stage->GetText().EqualTo(UpdatedStage));
+    Screen->DeactivateWidget();
+    TestFalse(TEXT("失活后新VM动态订阅也被撤销"), Incoming->OnViewStateChanged.GetAllObjects().Contains(Screen.Get()));
+    TestFalse(TEXT("失活后LoadingService无VM订阅残留"), Service->OnSnapshotChanged.IsBound());
+    return true;
+}
+
+#if WITH_EDITORONLY_DATA
+namespace
+{
+/** 真实Engine/LocalPlayer/项目Owner与Native错误页；不Initialize Owner/创建世界/登录或资产。 */
+struct FDivineBeastsErrorNativeFixture
+{
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UDivineBeastsUIClientSubsystem> Owner;
+    TStrongObjectPtr<UDivineBeastsErrorReconnectScreen> Screen;
+    TStrongObjectPtr<UButton> Button;
+    TStrongObjectPtr<UTextBlock> Text;
+    bool Initialize(FAutomationTestBase& Test)
+    {
+        if (!Test.TestNotNull(TEXT("错误页夹具需要真实Engine Outer"), GEngine)) return false;
+        Player.Reset(NewObject<ULocalPlayer>(GEngine));
+        Owner.Reset(NewObject<UDivineBeastsUIClientSubsystem>(Player.Get()));
+        Screen.Reset(NewObject<UDivineBeastsErrorReconnectScreen>());
+        Button.Reset(NewObject<UButton>(Screen.Get()));
+        Text.Reset(NewObject<UTextBlock>(Screen.Get()));
+        auto* ButtonProperty = FindFProperty<FObjectPropertyBase>(Screen->GetClass(), TEXT("RetryButton"));
+        auto* TextProperty = FindFProperty<FObjectPropertyBase>(Screen->GetClass(), TEXT("ErrorText"));
+        if (!Test.TestNotNull(TEXT("真实RetryButton字段存在"), ButtonProperty) ||
+            !Test.TestNotNull(TEXT("真实ErrorText字段存在"), TextProperty)) return false;
+        ButtonProperty->SetObjectPropertyValue_InContainer(Screen.Get(), Button.Get());
+        TextProperty->SetObjectPropertyValue_InContainer(Screen.Get(), Text.Get());
+        return true;
+    }
+    ~FDivineBeastsErrorNativeFixture()
+    {
+        if (Screen.IsValid()) { Screen->DeactivateWidget(); Screen->InitializeActivatableViewModel(nullptr); }
+        if (Owner.IsValid()) Owner->Deinitialize();
+    }
+};
+/** 只给Transient UI快照设置测试按钮输入资格；Owner仍无Contract，真实命令必须同步失败，绝非后端授权/成功替身。 */
+bool AllowFixtureRetry(FAutomationTestBase& Test, UDivineBeastsUIViewModel& ViewModel)
+{
+    auto* StateProperty = FindFProperty<FStructProperty>(ViewModel.GetClass(), TEXT("State"));
+    if (!Test.TestNotNull(TEXT("真实VM只读快照字段存在"), StateProperty)) return false;
+    auto* State = StateProperty->ContainerPtrToValuePtr<FDivineBeastsUIViewState>(&ViewModel);
+    State->AllowedCommands = {FName(TEXT("Retry"))}; State->bBusy = false;
+    ViewModel.MarkStateChanged();
+    return true;
+}
+}
+
+// 真实CommonUI激活观察者同步失活，项目父链不得重挂Owner State/按钮/VM状态或命令事件。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsErrorActivationReentryTest,
+    "DivineBeasts.UI.ErrorReconnect.ActivationObserverDeactivates",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsErrorActivationReentryTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    FDivineBeastsErrorNativeFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    const TStrongObjectPtr<UDivineBeastsUIViewModel> ViewModel(NewObject<UDivineBeastsUIViewModel>());
+    ViewModel->InitializeForScreen(Fixture.Owner.Get(), TEXT("UI.Screen.ErrorReconnect"));
+    Fixture.Screen->InitializeActivatableViewModel(ViewModel.Get());
+    bool bObserved = false;
+    const FDelegateHandle Handle = Fixture.Screen->OnActivated().AddLambda([&bObserved, Screen = Fixture.Screen.Get()]
+    { bObserved = true; Screen->DeactivateWidget(); });
+    ON_SCOPE_EXIT { Fixture.Screen->OnActivated().Remove(Handle); };
+    Fixture.Screen->ActivateWidget();
+    TestTrue(TEXT("真实CommonUI通知确已执行"), bObserved);
+    TestFalse(TEXT("页面保持观察者关闭结果"), Fixture.Screen->IsActivated());
+    TestFalse(TEXT("父链不复活Owner状态订阅"), Fixture.Owner->OnStateChanged().IsBoundToObject(ViewModel.Get()));
+    TestFalse(TEXT("失活后按钮不重挂"), Fixture.Button->OnClicked.IsBound());
+    TestFalse(TEXT("失活后VM状态不重挂"), ViewModel->OnViewStateChanged.GetAllObjects().Contains(Fixture.Screen.Get()));
+    TestFalse(TEXT("失活后VM命令不重挂"), ViewModel->OnCommandCompleted.GetAllObjects().Contains(Fixture.Screen.Get()));
+    return true;
+}
+
+// 激活期间合法VM替换，父链Owner订阅与Error命令订阅都必须精确拆旧接新。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsErrorViewModelReplacementTest,
+    "DivineBeasts.UI.ErrorReconnect.ActiveViewModelReplacement",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsErrorViewModelReplacementTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    FDivineBeastsErrorNativeFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    const TStrongObjectPtr<UDivineBeastsUIViewModel> Previous(NewObject<UDivineBeastsUIViewModel>());
+    const TStrongObjectPtr<UDivineBeastsUIViewModel> Incoming(NewObject<UDivineBeastsUIViewModel>());
+    Previous->InitializeForScreen(Fixture.Owner.Get(), TEXT("UI.Screen.ErrorReconnect"));
+    Incoming->InitializeForScreen(Fixture.Owner.Get(), TEXT("UI.Screen.ErrorReconnect"));
+    Fixture.Screen->InitializeActivatableViewModel(Previous.Get()); Fixture.Screen->ActivateWidget();
+    TestTrue(TEXT("父链实际订阅旧Owner状态"), Fixture.Owner->OnStateChanged().IsBoundToObject(Previous.Get()));
+    Fixture.Screen->InitializeActivatableViewModel(Incoming.Get());
+    TestFalse(TEXT("旧Owner状态订阅被精确移除"), Fixture.Owner->OnStateChanged().IsBoundToObject(Previous.Get()));
+    TestTrue(TEXT("新Owner状态订阅建立"), Fixture.Owner->OnStateChanged().IsBoundToObject(Incoming.Get()));
+    TestFalse(TEXT("旧VM状态委托被移除"), Previous->OnViewStateChanged.GetAllObjects().Contains(Fixture.Screen.Get()));
+    TestFalse(TEXT("旧VM命令委托被移除"), Previous->OnCommandCompleted.GetAllObjects().Contains(Fixture.Screen.Get()));
+    TestEqual(TEXT("新VM只有平台唯一状态订阅"), Incoming->OnViewStateChanged.GetAllObjects().Num(), 1);
+    TestEqual(TEXT("新VM只有本页唯一命令订阅"), Incoming->OnCommandCompleted.GetAllObjects().Num(), 1);
+    Fixture.Screen->DeactivateWidget();
+    TestFalse(TEXT("失活移除新Owner状态订阅"), Fixture.Owner->OnStateChanged().IsBoundToObject(Incoming.Get()));
+    TestFalse(TEXT("失活移除新命令订阅"), Incoming->OnCommandCompleted.IsBound());
+    return true;
+}
+
+// 真实无Contract Owner同步拒绝Retry：状态通知中关闭并建立后继页，旧返回栈不得尾写新请求。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsErrorRetrySuccessorTest,
+    "DivineBeasts.UI.ErrorReconnect.SynchronousRetryKeepsSuccessor",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsErrorRetrySuccessorTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    FDivineBeastsErrorNativeFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    const TStrongObjectPtr<UDivineBeastsUIViewModel> Previous(NewObject<UDivineBeastsUIViewModel>());
+    const TStrongObjectPtr<UDivineBeastsUIViewModel> Incoming(NewObject<UDivineBeastsUIViewModel>());
+    const TStrongObjectPtr<UDivineBeastsUIReentryObserver> Observer(NewObject<UDivineBeastsUIReentryObserver>());
+    Previous->InitializeForScreen(Fixture.Owner.Get(), TEXT("UI.Screen.ErrorReconnect"));
+    Incoming->InitializeForScreen(Fixture.Owner.Get(), TEXT("UI.Screen.ErrorReconnect"));
+    Fixture.Screen->InitializeActivatableViewModel(Previous.Get()); Fixture.Screen->ActivateWidget();
+    if (!AllowFixtureRetry(*this, *Previous)) return false;
+    Previous->OnViewStateChanged.AddDynamic(Observer.Get(), &UDivineBeastsUIReentryObserver::HandleStateChanged);
+    Previous->OnCommandCompleted.AddDynamic(Observer.Get(), &UDivineBeastsUIReentryObserver::HandleCommandCompleted);
+    Incoming->OnCommandCompleted.AddDynamic(Observer.Get(), &UDivineBeastsUIReentryObserver::HandleCommandCompleted);
+    ON_SCOPE_EXIT
+    {
+        Observer->StateAction = nullptr; Observer->CommandAction = nullptr;
+        Previous->OnViewStateChanged.RemoveAll(Observer.Get());
+        Previous->OnCommandCompleted.RemoveAll(Observer.Get()); Incoming->OnCommandCompleted.RemoveAll(Observer.Get());
+    };
+    Observer->StateAction = [this, &Fixture, Selected = Incoming.Get()]
+    {
+        Fixture.Screen->DeactivateWidget();
+        Fixture.Screen->InitializeActivatableViewModel(Selected); Fixture.Screen->ActivateWidget();
+        AllowFixtureRetry(*this, *Selected);
+    };
+    Fixture.Button->OnClicked.Broadcast(); // 真实按钮委托为测试输入；完成结果由真实VM/Owner同步失败链产生。
+    TestTrue(TEXT("实际Retry状态通知触发重入"), Observer->StateNotifications > 0);
+    TestTrue(TEXT("实际同步失败有非空命令身份"), Observer->LastCompletedRequestId.IsValid());
+    TestEqual(TEXT("无Contract真实错误保持"), Previous->GetLastCommandErrorCode(), FName(TEXT("UI.Command.Invalid")));
+    TestTrue(TEXT("后继页面保持激活"), Fixture.Screen->IsActivated());
+    TestEqual(TEXT("后继VM身份保持"), Fixture.Screen->GetViewModel(), static_cast<UGamePlatformViewModelBase*>(Incoming.Get()));
+    TestTrue(TEXT("旧Retry返回不能将后继按钮误标忙碌"), Fixture.Button->GetIsEnabled());
+    const int32 Before = Observer->CommandNotifications;
+    Fixture.Button->OnClicked.Broadcast();
+    TestEqual(TEXT("后继仍可实际提交一次Retry"), Observer->CommandNotifications, Before + 1);
+    TestTrue(TEXT("后继同步失败终态不遗留在飞"), Fixture.Button->GetIsEnabled());
+    return true;
+}
+#endif
+
+// 黑屏回归：流程真实会路由到LoadingTravel/ErrorReconnect，规划软路径不能代替可实例化页面。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsRequiredFlowScreensTest,
+    "DivineBeasts.UI.Delivery.RequiredTransferScreens",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsRequiredFlowScreensTest::RunTest(const FString&)
+{
+    for (const FName Id : {FName(TEXT("UI.Screen.LoadingTravel")), FName(TEXT("UI.Screen.ErrorReconnect"))})
+    {
+        const auto* Surface = FDivineBeastsUIScreenCatalog::Find(Id);
+        if (!TestNotNull(TEXT("真实流程页面已登记"), Surface)) continue;
+        UClass* Class = FSoftClassPath(Surface->WidgetClassPath).TryLoadClass<UGamePlatformUIScreen>();
+        if (!TestNotNull(*FString::Printf(TEXT("%s必须交付可加载类"), *Id.ToString()), Class)) continue;
+        TestFalse(TEXT("交付页面可实例化"), Class->HasAnyClassFlags(CLASS_Abstract));
+        TestTrue(TEXT("加载与错误页的租约跨地图保留，直到业务关闭"), Surface->bSurvivesTravel);
+        UClass* Expected = Id == TEXT("UI.Screen.LoadingTravel")
+            ? UDivineBeastsLoadingTravelScreen::StaticClass() : UDivineBeastsErrorReconnectScreen::StaticClass();
+        TestTrue(TEXT("页面继承现有第三层事件驱动父类"), Class->IsChildOf(Expected));
+    }
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsUIScreenInventoryTest,

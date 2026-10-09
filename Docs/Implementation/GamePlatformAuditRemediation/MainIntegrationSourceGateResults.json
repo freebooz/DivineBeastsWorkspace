@@ -1,23 +1,49 @@
 {
   "SchemaVersion": 1,
-  "Scope": "最终4夹具冻结：Header本轮新执行、其余5入口分别复用最近真实通过且相关输入无变化的结果；1511+51输入前后稳定；静态不替代172运行、Cook或资产兼容",
-  "ReportSHA256": "E27232CAAE093300AA34DB528BE6E3E834953920F6660B1B42463F960A631BEB",
+  "Scope": "最新Main86与加载页生命周期修复冻结后，六入口全部新执行且输入稳定；静态不替代运行/Cook/资产兼容",
+  "ReportSHA256": "FF164D26A3D4B4837CA18BA5F05456A21553615D8183892811952AF838390151",
   "CurrentAllSourceFinallyValidated": true,
   "ActualReport": {
     "schemaVersion": 1,
-    "reportId": "MainIntegration-FinalSourceGates-AfterAllSubsystemFixtureFreeze",
-    "generatedAtUtc": "2026-10-09T15:54:35.106932Z",
+    "reportId": "MainIntegration-FinalSourceGates-AfterMain86Freeze",
+    "generatedAtUtc": "2026-10-09T16:50:06.0751827Z",
     "executedBy": "review_gameplay_server_20261009",
     "workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
-    "evidenceDirectory": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterAllSubsystemFixtureFreeze",
+    "evidenceDirectory": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze",
+    "reviewStartedFromHead": "022934fb79be058c9df34f67df0f9500def76707",
+    "rootReportedIncomingMain": "86cb0df55cc59e0acbb0ef0b220eb65967a5278a",
+    "firstStartedUtc": "2026-10-09T16:49:04.8848284Z",
+    "lastEndedUtc": "2026-10-09T16:49:33.3769769Z",
     "passed": true,
-    "freshGateCount": 1,
-    "reusedGateCount": 5,
-    "allSixRerunThisRound": false,
-    "firstStartedUtc": "2026-10-09T15:54:03.6095347Z",
-    "lastEndedUtc": "2026-10-09T15:54:04.7825871Z",
-    "conclusion": "四个既有Within测试CPP最终冻结后，Header本轮实际退出0；其它五项分别复用最近真实已通过结果，授权四CPP差异与冻结SHA相符，本轮输入稳定。",
-    "freshExecutions": [
+    "allSixExitZero": true,
+    "sourceInputsStable": true,
+    "allCountsReadFromThisRound": true,
+    "freshGateCount": 6,
+    "reusedGateCount": 0,
+    "allSixRerunThisRound": true,
+    "conclusion": "Main86三方全源冻结后的六个现有入口本轮实际全部退出0；计数与源/补充/资产输入SHA从本轮读取，旧轮证据保持。",
+    "executions": [
+      {
+        "Gate": "DesignBaseline",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateDesignBaseline.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
+        ],
+        "StartedUtc": "2026-10-09T16:49:04.8929908Z",
+        "EndedUtc": "2026-10-09T16:49:10.7492324Z",
+        "DurationSeconds": 5.8517575,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\DesignBaseline.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\DesignBaseline.stderr.log",
+        "StdoutSHA256": "FAFC7C021F72D532020F75D1C38133D4BE9C994D5E2CEFD526E446014B554242",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
       {
         "Gate": "ProjectHeaders",
         "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
@@ -29,260 +55,125 @@
           "-WorkspaceRoot",
           "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
         ],
-        "StartedUtc": "2026-10-09T15:54:03.6095347Z",
-        "EndedUtc": "2026-10-09T15:54:04.7825871Z",
-        "DurationSeconds": 1.1698005,
+        "StartedUtc": "2026-10-09T16:49:04.900863Z",
+        "EndedUtc": "2026-10-09T16:49:06.3132098Z",
+        "DurationSeconds": 1.4094099,
         "ExitCode": 0,
-        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterAllSubsystemFixtureFreeze\\ProjectHeaders.stdout.log",
-        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterAllSubsystemFixtureFreeze\\ProjectHeaders.stderr.log",
-        "StdoutSHA256": "6081525E2D7F60B99236F2D50B97216F9C57813249E8481A787223EED5247FB6",
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\ProjectHeaders.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\ProjectHeaders.stderr.log",
+        "StdoutSHA256": "4B3051CE9F55D0E020C6ACFE96832AA8FDB31F4A935DA96B85351BB6E876861A",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "InheritanceBoundaries",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateInheritanceBoundaries.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
+        ],
+        "StartedUtc": "2026-10-09T16:49:04.8848284Z",
+        "EndedUtc": "2026-10-09T16:49:06.8372981Z",
+        "DurationSeconds": 1.9497604,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\InheritanceBoundaries.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\InheritanceBoundaries.stderr.log",
+        "StdoutSHA256": "2E4B54F3A6D84FE9636D3F28D7B58E55ADC382E6FBAC01A019EADE62D7953044",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "EnglishNames",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\TestEnglishProjectNames.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+          "-ReportPath",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\EnglishNames.json"
+        ],
+        "StartedUtc": "2026-10-09T16:49:04.9087996Z",
+        "EndedUtc": "2026-10-09T16:49:08.1573369Z",
+        "DurationSeconds": 3.2458629,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\EnglishNames.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\EnglishNames.stderr.log",
+        "StdoutSHA256": "04F7BF1D30AF6A8CE862975AC44612B19B6FE5BE2AAE9CFBCDCF8883BB8B4FFD",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "ArchitecturePester",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\RunArchitecturePester.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
+        ],
+        "StartedUtc": "2026-10-09T16:49:04.9196734Z",
+        "EndedUtc": "2026-10-09T16:49:33.3769769Z",
+        "DurationSeconds": 28.4526966,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\ArchitecturePester.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\ArchitecturePester.stderr.log",
+        "StdoutSHA256": "509DC4C94A5C5802407213816E238CD7B65FF29EBBA949FBC24AD8E41965DA88",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "AAAUIInventory",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "Arguments": [
+          "-X",
+          "utf8",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateAAAUIInventory.py"
+        ],
+        "StartedUtc": "2026-10-09T16:49:04.9213643Z",
+        "EndedUtc": "2026-10-09T16:49:05.020866Z",
+        "DurationSeconds": 0.0968736,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\AAAUIInventory.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain86Freeze\\AAAUIInventory.stderr.log",
+        "StdoutSHA256": "3808EF3194F5ACF08E993FC20EC5B19C07B609209BFF8C1E64F1B0FAAA57C230",
         "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
         "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
       }
     ],
-    "reusedExecutions": [
-      {
-        "gate": "DesignBaseline",
-        "rerunThisRound": false,
-        "evidenceDirectory": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterDBAServerCoreDependency",
-        "execution": {
-          "Gate": "DesignBaseline",
-          "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
-          "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
-          "Arguments": [
-            "-NoProfile",
-            "-File",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateDesignBaseline.ps1",
-            "-WorkspaceRoot",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
-          ],
-          "StartedUtc": "2026-10-09T15:34:38.2305901Z",
-          "EndedUtc": "2026-10-09T15:34:43.345556Z",
-          "DurationSeconds": 5.1107388,
-          "ExitCode": 0,
-          "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterDBAServerCoreDependency\\DesignBaseline.stdout.log",
-          "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterDBAServerCoreDependency\\DesignBaseline.stderr.log",
-          "StdoutSHA256": "831838EB259DFDF04F5D86416CA078F165C1FA9C6ED4A8CF703535077FDEDE19",
-          "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
-          "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
-        }
-      },
-      {
-        "gate": "ArchitecturePester",
-        "rerunThisRound": false,
-        "evidenceDirectory": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterDBAServerCoreDependency",
-        "execution": {
-          "Gate": "ArchitecturePester",
-          "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
-          "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
-          "Arguments": [
-            "-NoProfile",
-            "-File",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterDBAServerCoreDependency\\RunArchitecturePester.ps1",
-            "-WorkspaceRoot",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
-          ],
-          "StartedUtc": "2026-10-09T15:34:38.2899652Z",
-          "EndedUtc": "2026-10-09T15:35:01.6264684Z",
-          "DurationSeconds": 23.3320279,
-          "ExitCode": 0,
-          "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterDBAServerCoreDependency\\ArchitecturePester.stdout.log",
-          "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterDBAServerCoreDependency\\ArchitecturePester.stderr.log",
-          "StdoutSHA256": "454A63E942B1C1A3525B529CC5A50F80F20DAD38C903DE4C4713041F69DAD6E9",
-          "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
-          "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
-        }
-      },
-      {
-        "gate": "InheritanceBoundaries",
-        "rerunThisRound": false,
-        "evidenceDirectory": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze",
-        "execution": {
-          "Gate": "InheritanceBoundaries",
-          "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
-          "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
-          "Arguments": [
-            "-NoProfile",
-            "-File",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateInheritanceBoundaries.ps1",
-            "-WorkspaceRoot",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
-          ],
-          "StartedUtc": "2026-10-09T15:23:52.0806531Z",
-          "EndedUtc": "2026-10-09T15:23:54.0038976Z",
-          "DurationSeconds": 1.9202845,
-          "ExitCode": 0,
-          "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze\\InheritanceBoundaries.stdout.log",
-          "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze\\InheritanceBoundaries.stderr.log",
-          "StdoutSHA256": "9AFB9F094549F2F3C2725F8FF4D5C362A3A1A43287A25C940DD025D3D8D2FCE4",
-          "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
-          "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
-        }
-      },
-      {
-        "gate": "EnglishNames",
-        "rerunThisRound": false,
-        "evidenceDirectory": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze",
-        "execution": {
-          "Gate": "EnglishNames",
-          "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
-          "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
-          "Arguments": [
-            "-NoProfile",
-            "-File",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\TestEnglishProjectNames.ps1",
-            "-WorkspaceRoot",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
-            "-ReportPath",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze\\EnglishNames.json"
-          ],
-          "StartedUtc": "2026-10-09T15:23:52.0760796Z",
-          "EndedUtc": "2026-10-09T15:23:55.329395Z",
-          "DurationSeconds": 3.2503209,
-          "ExitCode": 0,
-          "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze\\EnglishNames.stdout.log",
-          "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze\\EnglishNames.stderr.log",
-          "StdoutSHA256": "B0BBFCE84C7D88DB8E9219743268F915B3A18DBE8682BB125454CF1CE7587734",
-          "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
-          "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
-        }
-      },
-      {
-        "gate": "AAAUIInventory",
-        "rerunThisRound": false,
-        "evidenceDirectory": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze",
-        "execution": {
-          "Gate": "AAAUIInventory",
-          "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
-          "Program": "C:\\Users\\Freebooz\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
-          "Arguments": [
-            "-X",
-            "utf8",
-            "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateAAAUIInventory.py"
-          ],
-          "StartedUtc": "2026-10-09T15:23:52.1062306Z",
-          "EndedUtc": "2026-10-09T15:23:52.1970524Z",
-          "DurationSeconds": 0.0878384,
-          "ExitCode": 0,
-          "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze\\AAAUIInventory.stdout.log",
-          "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterMain348Freeze\\AAAUIInventory.stderr.log",
-          "StdoutSHA256": "3808EF3194F5ACF08E993FC20EC5B19C07B609209BFF8C1E64F1B0FAAA57C230",
-          "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
-          "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
-        }
-      }
-    ],
-    "reuseChecks": {
-      "exactFourExistingTestCpp": true,
-      "extraChanges": [],
-      "sourceFreezePath": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\PresentationRegistryFixtureOwnership\\SourceFreeze.json",
-      "sourceFreezeInputCopy": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\PluginRemediation-2026-10-09\\MainIntegration\\FinalSourceGates\\AfterAllSubsystemFixtureFreeze\\SourceFreezeInput.json",
-      "sourceFreezeSHA256": "CB9258A19E2E3C1AB21CF24C2D23976C83F322E8A5B97EF5BC95A57A052C5AF1",
-      "sourceFreezeChecks": [
-        {
-          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Presentation\\GamePlatformPresentation\\Source\\GamePlatformPresentationClient\\Private\\Tests\\GamePlatformPresentationRegistryTests.cpp",
-          "expectedSHA256": "BB54D873554FCF29E1765956A390D1B71C1D976D908D9D925FEA3B74BDB762EC",
-          "actualSHA256": "BB54D873554FCF29E1765956A390D1B71C1D976D908D9D925FEA3B74BDB762EC",
-          "matches": true
-        },
-        {
-          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Gameplay\\GamePlatformQuest\\Source\\GamePlatformQuestClient\\Private\\Tests\\GamePlatformQuestClientTests.cpp",
-          "expectedSHA256": "5786FCF80E95E038D92C899411FF31F2A14A7347975AB3C74AF9691E84CBFACB",
-          "actualSHA256": "5786FCF80E95E038D92C899411FF31F2A14A7347975AB3C74AF9691E84CBFACB",
-          "matches": true
-        },
-        {
-          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Presentation\\GamePlatformCamera\\Source\\GamePlatformCameraClient\\Private\\Tests\\GamePlatformCameraHitFeedbackTests.cpp",
-          "expectedSHA256": "49CC498AC1A078BC7EDE8FDB3C4B69DE50EE48AB4C6073AFBC9BE72D333500ED",
-          "actualSHA256": "49CC498AC1A078BC7EDE8FDB3C4B69DE50EE48AB4C6073AFBC9BE72D333500ED",
-          "matches": true
-        },
-        {
-          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\OnlineServices\\GamePlatformSession\\Source\\GamePlatformSession\\Private\\Tests\\GamePlatformSessionContractTests.cpp",
-          "expectedSHA256": "7F16727E577724FE7F4E8DED12D95DE6D3A405CBF6507209AC3CDBEFEC32C0F6",
-          "actualSHA256": "7F16727E577724FE7F4E8DED12D95DE6D3A405CBF6507209AC3CDBEFEC32C0F6",
-          "matches": true
-        }
-      ],
-      "frozenRegisteredNames": [
-        "GamePlatform.Presentation.ContextRegistry",
-        "GamePlatform.Presentation.CatalogResolution",
-        "GamePlatform.Presentation.CapacityGuards",
-        "GamePlatform.Presentation.Regression.ExactAndFragmentConflict",
-        "GamePlatform.Presentation.Catalog.PreflightConflictingQualification",
-        "GamePlatform.Quest.Client.SameRevisionProgressSequence",
-        "GamePlatform.Quest.Client.RevisionProtection",
-        "GamePlatform.Quest.Client.SortedCache",
-        "GamePlatform.Camera.HitFeedback.UserScale",
-        "GamePlatform.Session.TransferRequest.Validation",
-        "GamePlatform.Session.Fact.InvalidEnumRejected"
-      ],
-      "frozenRegisteredTestCount": 11,
-      "supplementUnchangedSincePrevious": true,
-      "supplementChangesFromPrevious": [],
-      "previousMixedSummarySHA256": "0D97071D7B8F2ED22C72346B6460A7EC9192F22818378CEC0216F65933F02461",
-      "lastCompleteSummarySHA256": "EF036F967F315E0BC12D1706EAED30E1E510A98533F702318DF4EDFC292EEE8E",
-      "boundaries": [
-        "Design/Pester复用23:34:38–23:35:01实际通过记录；仅平台Private/Tests CPP变化，生产、模块、描述、配置、Architecture脚本与相关契约保持",
-        "Inheritance复用23:23:52–23:24:16完整轮：全部Public头/类型身份不变，未增加反射头/文件",
-        "English复用上一完整轮实际名称计数；路径集合不变、4CPP不更改FriendlyName/模块/插件身份，不伪称本轮扫描全部生成物",
-        "AAA现行脚本、JSON及中文清单/规范输入保持，复用上一完整轮；本次无资产变更，不能据此宣称Widget结构验收"
-      ]
-    },
-    "deltaFromDBAServerCoreDependency": {
-      "previousCount": 1511,
-      "currentCount": 1511,
-      "changes": [
-        {
-          "kind": "Changed",
-          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Gameplay\\GamePlatformQuest\\Source\\GamePlatformQuestClient\\Private\\Tests\\GamePlatformQuestClientTests.cpp",
-          "before": "3E8F820C555D4C001F69D24FFD92E88D654EF5CBF2BC39C019949664DA8413B2",
-          "after": "5786FCF80E95E038D92C899411FF31F2A14A7347975AB3C74AF9691E84CBFACB"
-        },
-        {
-          "kind": "Changed",
-          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\OnlineServices\\GamePlatformSession\\Source\\GamePlatformSession\\Private\\Tests\\GamePlatformSessionContractTests.cpp",
-          "before": "444C48EF5920D0039F0A6E1DAE8C433DE9C3A88C975F46B2367B453F9C59C85A",
-          "after": "7F16727E577724FE7F4E8DED12D95DE6D3A405CBF6507209AC3CDBEFEC32C0F6"
-        },
-        {
-          "kind": "Changed",
-          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Presentation\\GamePlatformCamera\\Source\\GamePlatformCameraClient\\Private\\Tests\\GamePlatformCameraHitFeedbackTests.cpp",
-          "before": "AD07B8C18E23D739B1EF1247A3157F96B80B2DBA33FAE39CEB8FC3FBBF7CBF8C",
-          "after": "49CC498AC1A078BC7EDE8FDB3C4B69DE50EE48AB4C6073AFBC9BE72D333500ED"
-        },
-        {
-          "kind": "Changed",
-          "path": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Game\\Plugins\\GamePlatform\\Presentation\\GamePlatformPresentation\\Source\\GamePlatformPresentationClient\\Private\\Tests\\GamePlatformPresentationRegistryTests.cpp",
-          "before": "9A6CFCAC1E00E08D1DDD0D678A34C67A15AF535570557627FB1AB48D68A53A23",
-          "after": "BB54D873554FCF29E1765956A390D1B71C1D976D908D9D925FEA3B74BDB762EC"
-        }
-      ]
-    },
-    "sourceInputChanges": {
-      "BeforeCount": 1511,
-      "AfterCount": 1511,
-      "ChangedCount": 0,
-      "Changes": []
-    },
-    "supplementalInputChanges": {
-      "BeforeCount": 51,
-      "AfterCount": 51,
-      "ChangedCount": 0,
-      "Changes": []
-    },
     "counts": {
-      "projectHeaders": {
-        "includes": 731,
-        "missing": 0
-      },
       "design": {
         "pluginDescriptors": 62,
         "gamePlatform": 40,
         "divineBeastsCodePlugins": 5,
         "codePluginBaseline": 46,
         "contentPlugins": 16,
-        "actualOutput": "声明装配Client：公共=True；竞技=True\r\n声明装配Server：公共=True；竞技=True\r\n声明装配Editor：公共=True；竞技=True\r\n继承边界：PublicHeaders=482；Types=1015；Edges=180；Passed=True\r\n工作空间：C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\r\n插件描述：62/62；GamePlatform：40/40；DBA：5/5\r\n工程：1；Target：3/3；必选默认配置：8/8；配置文件总数：9\r\n代码／机制基线：46；内容插件：16/16（单独登记，不计入40个GamePlatform身份）\r\nGamePlatform 分类数量：\r\n  Foundation: 2\r\n  Application: 6\r\n  OnlineServices: 3\r\n  World: 4\r\n  Gameplay: 7\r\n  Presentation: 6\r\n  GameModes: 2\r\n  Moba: 1\r\n  PlayerServices: 6\r\n  Diagnostics: 3\r\n结构审计通过。此结果不代表 UE 编译、Cook/Stage、资产引用、网络或运行时验收通过。\r\n"
+        "actualOutput": "声明装配Client：公共=True；竞技=True\r\n声明装配Server：公共=True；竞技=True\r\n声明装配Editor：公共=True；竞技=True\r\n继承边界：PublicHeaders=482；Types=1016；Edges=180；Passed=True\r\n工作空间：C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\r\n插件描述：62/62；GamePlatform：40/40；DBA：5/5\r\n工程：1；Target：3/3；必选默认配置：8/8；配置文件总数：9\r\n代码／机制基线：46；内容插件：16/16（单独登记，不计入40个GamePlatform身份）\r\nGamePlatform 分类数量：\r\n  Foundation: 2\r\n  Application: 6\r\n  OnlineServices: 3\r\n  World: 4\r\n  Gameplay: 7\r\n  Presentation: 6\r\n  GameModes: 2\r\n  Moba: 1\r\n  PlayerServices: 6\r\n  Diagnostics: 3\r\n结构审计通过。此结果不代表 UE 编译、Cook/Stage、资产引用、网络或运行时验收通过。\r\n"
+      },
+      "projectHeaders": {
+        "includes": 740,
+        "missing": 0
+      },
+      "inheritance": {
+        "publicHeaders": 482,
+        "types": 1016,
+        "edges": 180
+      },
+      "englishNames": {
+        "Passed": true,
+        "ItemsChecked": 59782,
+        "PluginsChecked": 62,
+        "ViolationCount": 0,
+        "Violations": []
       },
       "architecturePester": {
         "modulePath": "C:/Program Files/WindowsPowerShell/Modules/Pester/3.4.0/Pester.psd1",
@@ -298,19 +189,8 @@
         "nunitTotal": 75,
         "nunitErrors": 0,
         "nunitInconclusiveCount": 0,
-        "testDurationSeconds": 22.1283087
-      },
-      "inheritance": {
-        "publicHeaders": 482,
-        "types": 1015,
-        "edges": 180
-      },
-      "englishNames": {
-        "Passed": true,
-        "ItemsChecked": 59398,
-        "PluginsChecked": 62,
-        "ViolationCount": 0,
-        "Violations": []
+        "testDurationSeconds": 26.9747516,
+        "boundary": "全部本轮真实计数；Pester3.4.0缺InconclusiveCount属性则保留null，XML实际字段另记。"
       },
       "aaaUIInventory": {
         "status": "PASS",
@@ -336,14 +216,32 @@
         "issues": []
       }
     },
-    "rootReportedRuntimeBoundary": "Root报告原167实际166Success/1Fail，最终172集合为旧167加Quest3/Camera1/SessionInvalid1，171只是未执行的中途方案；本座位不编造171尝试或172通过，夹具语义由Zodiac独立复核、引擎执行由Root留证。",
-    "priorThreeFileSnapshot": "AfterPresentationFixtureFreeze旧三CPP时刻执行及FreezeWithdrawnNotice保持；Session第四CPP与Camera文案修改不归入同一旧快照。",
+    "sourceInputChanges": {
+      "BeforeCount": 1522,
+      "AfterCount": 1522,
+      "ChangedCount": 0,
+      "Changes": []
+    },
+    "supplementalInputChanges": {
+      "BeforeCount": 51,
+      "AfterCount": 51,
+      "ChangedCount": 0,
+      "Changes": []
+    },
+    "assetInputChanges": {
+      "BeforeCount": 176,
+      "AfterCount": 176,
+      "ChangedCount": 0,
+      "Changes": []
+    },
+    "newlyIntegratedBoundary": "Main86 World/Village准入、公开头/测试/Assets脚本、真实UI/体验资产及同步重入修复有变化；全6重新执行/0复用，新增Editor反射观察fixture也纳入SHA。",
+    "priorEvidence": "Main348/DBAServerCore/3→4子系统夹具与更早冻结快照/失败日志全部保留，不能替代本次Main86整合最终结果。",
     "limitations": [
-      "1新/5复用，不能声称本轮6入口重跑；每项采用的实际命令、时间与输出SHA分别保留",
-      "ProjectHeaders扫描731处一方头引用，不证明Engine完整类型、API、include路径或UE编译通过；合法Within/新增UE头由独立语义与Root实际编译补证",
-      "本座位只写Saved，未改源/正式文档/索引/分支，未运行UE/UBT/UHT/Automation/Cook/资产/网络",
-      "静态结果不证明171运行通过、三端或ProductReady；所有旧轮/原失败保留"
-    ],
-    "allSixExitZero": true
+      "本座位只运行静态源码/合同/名称/清单门禁，没有UE/UBT/UHT/Automation/Cook/联机或资产Registry执行",
+      "Pester是现有Architecture脚本，AAA是研究清单；均不能证明游戏运行或界面资产结构验收",
+      "正式插件资产只核实际字节SHA/身份，不解读二进制猜父类或资产行为",
+      "中文人工合并说明只覆盖本座位5源及明确历史已读范围，其他组独立职责由其报告消费",
+      "所有命令、退出码、UTC时间、实际计数和stdout/stderr SHA可回读；异常缺值不会填历史75或固定成功"
+    ]
   }
 }

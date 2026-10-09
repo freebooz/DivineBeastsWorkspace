@@ -7,3 +7,8 @@
 `UGamePlatformGameplayEligibilityComponent`是可组合的最小事实载体，不另执行登录/匹配/出生流程。独立竞技宿主通过其服务器生命周期适配设置Active并绑定正整数Avatar代次，死亡、断线与结束立即失活。能力与交互只读消费，客户端不能写入权威状态。
 
 完整体验框架目前通过0.05秒有界Timer推进在途准备/出生状态并检查超时；不得因此宣称全部实现事件驱动或已经完成联机验收。规则与验证边界见[架构说明](Docs/Architecture.md)、[2026-09-30整改说明](Docs/DesignRemediation-2026-09-30.md)。
+## 2026-10-09 UE登录初始位置与权威出生边界
+
+UE InitNewPlayer必须先查询真实PlayerStart以初始化Controller位置，之后才发生Gameplay准入握手。FindPlayerStart的非内部调用允许只读选择地图位置，并忽略外部Portal名称；这一步不占用玩法候选、不生成Pawn、不修改Active资格。RestartPlayer、SpawnDefaultPawn、GetDefaultPawnClass及内部候选路径仍使用唯一资格门禁，实际出生仍消费已验证的ReservedSource。
+
+真实瞬态世界回归先通过`InitializeActorsForPlay`建立Actor事件运行前提，再确认可找到真实PlayerStart，外部Restart/Spawn仍无Pawn且无Gameplay Active。主线原说明记录了Gameplay组5项UE Automation执行；本次合并未重跑引擎，不将历史结果算作整合后通过。原生规则测试、静态源码门禁与UE实际运行分别记录，不能由此宣称真实联机或全部角色模式已验收。

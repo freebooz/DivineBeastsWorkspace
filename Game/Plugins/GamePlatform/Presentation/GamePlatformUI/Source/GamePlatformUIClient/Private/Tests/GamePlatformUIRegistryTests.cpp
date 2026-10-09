@@ -17,7 +17,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformUIRegistryTest::RunTest(const FString& Parameters)
 {
-    // LocalPlayer与Viewport的ClassWithin为Engine；仅用真实GEngine作Outer，缺引擎明确失败。
+    // LocalPlayer的ClassWithin为Engine；Package外层会触发Ensure，缺GEngine明确失败。
+    // 夹具仅构造注册/可访问性配置，不连接业务后端或创建实际可视资产。
     if (!TestNotNull(TEXT("测试宿主Engine必须存在"), GEngine)) { return false; }
     ULocalPlayer* LocalPlayer = NewObject<ULocalPlayer>(GEngine);
     UGamePlatformUIManagerSubsystem* Manager =

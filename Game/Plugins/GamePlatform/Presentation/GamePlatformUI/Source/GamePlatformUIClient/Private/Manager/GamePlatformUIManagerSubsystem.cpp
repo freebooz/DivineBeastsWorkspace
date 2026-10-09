@@ -27,6 +27,7 @@
 
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
+#include "Blueprint/GameViewportSubsystem.h"
 
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
@@ -203,6 +204,14 @@ bool UGamePlatformUIManagerSubsystem::InstallRootLayoutClass(
     }
 
     RootLayout = NewRoot.Get();
+    if (UGameViewportSubsystem* Viewport = UGameViewportSubsystem::Get())
+    {
+        // 根布局归LocalPlayer/GameInstance，跨地图仍承载加载和错误页；页面是否保留由各自租约决定。
+        // 引擎默认在World销毁时移除Viewport控件，会让仍有效的Root指针指向已不可见的布局。
+        FGameViewportWidgetSlot Slot = Viewport->GetWidgetSlot(RootLayout);
+        Slot.bAutoRemoveOnWorldRemoved = false;
+        Viewport->SetWidgetSlot(RootLayout, Slot);
+    }
     if (!RootLayout->AddToPlayerScreen(0))
     {
         if (!bClosing && RootLayoutGeneration == ReplacementGeneration && RootLayout == NewRoot.Get()) RootLayout = nullptr;
@@ -599,16 +608,35 @@ bool UGamePlatformUIManagerSubsystem::UnregisterWorldUI(FGuid RequestId)
 
 void UGamePlatformUIManagerSubsystem::PrepareForTravel()
 {
-    ++RootLayoutGeneration; // 在途构造即使仍看见原Root指针，也已属于旧世界切换代次。
+    if (bClosing) return;
+    const TStrongObjectPtr<UGamePlatformUIManagerSubsystem> KeepManager(this);
+    const TStrongObjectPtr<UGamePlatformUILayerStack> TravelRoot(RootLayout);
+    const TStrongObjectPtr<UGamePlatformNotificationService> TravelNotifications(NotificationService);
+    const TStrongObjectPtr<UGamePlatformFeedbackService> TravelFeedback(FeedbackService);
+    const TStrongObjectPtr<UGamePlatformWorldUIService> TravelWorldUI(WorldUIService);
+    const uint64 TravelGeneration = ++RootLayoutGeneration;
+    const auto IsTravelCurrent = [this, TravelGeneration, ExpectedRoot = TravelRoot.Get(), ExpectedWorld = GetWorld()]()
+    {
+        return !bClosing && RootLayoutGeneration == TravelGeneration &&
+            RootLayout == ExpectedRoot && GetWorld() == ExpectedWorld;
+    };
+    // 清理快照仅包含入口时的实例。失败/Closed通知可重入换Root、Travel或关闭，旧栈不能清后继界面。
+    TArray<TWeakObjectPtr<UGamePlatformUIScreen>> Screens;
+    ActiveScreenLeases.GetKeys(Screens);
     TArray<FGuid> RequestIds;
     PendingRequests.GetKeys(RequestIds);
     for (const FGuid& RequestId : RequestIds)
     {
+        const auto* Pending = PendingRequests.Find(RequestId);
+        if (!Pending) continue; // 前一次失败通知允许上层同步取消其他在途请求。
+        const FName ScreenId = Pending->ScreenId;
         CleanupPendingRequest(RequestId, true);
+        if (bClosing) return;
+        // 本请求已撤账，终态仍按捕获身份通知以释放Opening；换Root不能把它伪装成仍在加载。
+        FailRequest(RequestId, ScreenId, LOCTEXT("TravelCancelledOpen", "地图切换取消了尚未完成的页面加载。"));
+        if (!IsTravelCurrent()) return;
     }
 
-    TArray<TWeakObjectPtr<UGamePlatformUIScreen>> Screens;
-    ActiveScreenLeases.GetKeys(Screens);
     for (const TWeakObjectPtr<UGamePlatformUIScreen>& ScreenPtr : Screens)
     {
         if (TravelPersistentScreens.Contains(ScreenPtr))
@@ -619,28 +647,36 @@ void UGamePlatformUIManagerSubsystem::PrepareForTravel()
         if (UGamePlatformUIScreen* Screen = ScreenPtr.Get())
         {
             CloseScreen(Screen);
+            if (!IsTravelCurrent()) return;
         }
     }
 
-    if (IsValid(NotificationService))
+    if (TravelNotifications.IsValid())
     {
-        NotificationService->Clear();
+        TravelNotifications->Clear();
+        if (!IsTravelCurrent()) return;
     }
-    if (IsValid(FeedbackService))
+    if (TravelFeedback.IsValid())
     {
-        FeedbackService->Clear();
+        TravelFeedback->Clear();
+        if (!IsTravelCurrent()) return;
     }
-    if (IsValid(WorldUIService))
+    if (TravelWorldUI.IsValid())
     {
-        WorldUIService->Clear();
+        TravelWorldUI->Clear();
+        if (!IsTravelCurrent()) return;
     }
 
-    if (IsValid(RootLayout))
+    if (TravelRoot.IsValid())
     {
-        RootLayout->ClearHUD();
-        RootLayout->ClearWorldProjection();
-        RootLayout->ClearFeedback();
-        RootLayout->ClearNotifications();
+        TravelRoot->ClearHUD();
+        if (!IsTravelCurrent()) return;
+        TravelRoot->ClearWorldProjection();
+        if (!IsTravelCurrent()) return;
+        TravelRoot->ClearFeedback();
+        if (!IsTravelCurrent()) return;
+        TravelRoot->ClearNotifications();
+        if (!IsTravelCurrent()) return;
     }
 
     ++NextGeneration;

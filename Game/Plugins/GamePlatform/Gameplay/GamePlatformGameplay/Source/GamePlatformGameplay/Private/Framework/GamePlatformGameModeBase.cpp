@@ -1165,7 +1165,10 @@ AActor* AGamePlatformGameModeBase::FindPlayerStart_Implementation(AController* P
 {
     if (!Runtime || !Runtime->bInternalSpawn)
     {
-        return nullptr;
+        // UE InitNewPlayer在准入握手前查询Controller初始位置。这里仅查询地图Actor，不生成Pawn、
+        // 不占用玩法候选、不修改Active资格；禁止查询会让引擎直接拒绝Login，握手因此永远无法完成。
+        // 忽略外部Portal名称，实际玩法出生仍只消费后续通过准入和候选占位验证的ReservedSource。
+        return Super::FindPlayerStart_Implementation(Player, FString());
     }
 
     if (APlayerController* PlayerController = Cast<APlayerController>(Player))

@@ -5,6 +5,8 @@
 #include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "ViewModels/Combat/DivineBeastsPlayerStatusViewModel.h"
+#include "Characters/DivineBeastsGameplayCharacter.h"
+#include "Engine/World.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsPlayerStatusViewModelSnapshotTest,
@@ -13,14 +15,18 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDivineBeastsPlayerStatusViewModelSnapshotTest::RunTest(const FString&)
 {
-    // 测试只构造未附着 Actor 的临时 ASC，不应使用面向正式 Actor 生命周期的 AddSet。
-    // 显式建立两个真实 AttributeSet 实例并登记到 ASC，才能准确测试 ViewModel 的订阅/读取。
-    // 这不是生产初始化路径：正式角色仍由 CombatComponent 与 CharacterComponent 管理属性集。
-    UGamePlatformAbilitySystemComponent* ASC = NewObject<UGamePlatformAbilitySystemComponent>();
+    // GAS AttributeSet必须直接归Actor所有，ASC也须具有真实Owner/Avatar；旧夹具归ASC会在SetHealth时Fatal。
+    // 使用独立瞬态世界内的现有原生角色，无后端、无BeginPlay；正式初始化仍由角色组件负责。
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("测试世界创建成功"), World)) return false;
+    auto* Character = World->SpawnActor<ADivineBeastsGameplayCharacter>();
+    auto* ASC = Character ? Cast<UGamePlatformAbilitySystemComponent>(Character->GetAbilitySystemComponent()) : nullptr;
+    if (!TestNotNull(TEXT("真实角色持有ASC"), ASC)) { World->DestroyWorld(false); return false; }
+    ASC->InitAbilityActorInfo(Character, Character);
     UGamePlatformCombatAttributeSet* Combat =
-        NewObject<UGamePlatformCombatAttributeSet>(ASC);
+        NewObject<UGamePlatformCombatAttributeSet>(Character);
     UDivineBeastsMomentumAttributeSet* Momentum =
-        NewObject<UDivineBeastsMomentumAttributeSet>(ASC);
+        NewObject<UDivineBeastsMomentumAttributeSet>(Character);
     ASC->AddAttributeSetSubobject(Combat);
     ASC->AddAttributeSetSubobject(Momentum);
 
@@ -32,13 +38,14 @@ bool FDivineBeastsPlayerStatusViewModelSnapshotTest::RunTest(const FString&)
         ASC->GetSet<UDivineBeastsMomentumAttributeSet>() == Momentum);
     if (!Combat || !Momentum)
     {
+        World->DestroyWorld(false);
         return false;
     }
 
-    Combat->SetHealth(75.0f);
     Combat->SetMaxHealth(100.0f);
-    Momentum->SetMomentum(40.0f);
+    Combat->SetHealth(75.0f);
     Momentum->SetMaxMomentum(100.0f);
+    Momentum->SetMomentum(40.0f);
 
     UDivineBeastsPlayerStatusViewModel* ViewModel = NewObject<UDivineBeastsPlayerStatusViewModel>();
     TestTrue(TEXT("ViewModel绑定ASC成功"), ViewModel->BindToAbilitySystem(ASC));
@@ -49,6 +56,7 @@ bool FDivineBeastsPlayerStatusViewModelSnapshotTest::RunTest(const FString&)
     TestFalse(TEXT("Health大于0时非死亡"), Status.bDead);
 
     ViewModel->UnbindFromAbilitySystem();
+    World->DestroyWorld(false);
     return true;
 }
 

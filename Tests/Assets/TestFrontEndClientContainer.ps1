@@ -25,6 +25,9 @@ try {
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_Login.uasset',
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_CharacterCreate.uasset',
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_CharacterSelect.uasset',
+        # 加载与恢复是真实流程必要页面，缺少时连接失败会变成不可操作的黑屏。
+        'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_LoadingTravel.uasset',
+        'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_ErrorReconnect.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_HeroChoice.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_CharacterChoice.uasset',
         'DBAClient/Content/Definitions/DA_DivineBeastsApplicationFlow.uasset',

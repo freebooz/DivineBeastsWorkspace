@@ -62,3 +62,7 @@ Data/VFX跨模块用例消费真实公开数据服务，覆盖抽象约束受理
 新的Editor f8、Client a7ef、Server512真实退出0；最新167唯一项实际完成166成功1失败，原四项均Success。剩余Presentation目录测试缺合法LocalPlayer Outer仍待补夹具并完整复验；不把ensure一次报告遮蔽的其他非法构造称为正确。全编辑器启动中的13条未具名条件错误、测试World无context和GameplayCue路径warning仍保留，不认证全编辑器零诊断、资源默认子对象兼容或真实网络/Cook。
 
 最终补证：四个Within夹具的独立只读复核0新增Critical/Important，原67断言条件和注册保留，Camera失真说明闭合，Session使用合法GI宿主；原始报告见中央JSON。最后172全部Success及三个目标退出0已真实核验，166/1保留为历史；这里仍不证明Blueprint默认子对象迁移、Cook或生产网络。
+
+## 最新主线86整合最终复核
+
+最新Main86增量按真实三方源码合并，保留两真实流程Widget与Village体验定义Git字节；TryPublishReady保服务器退出护栏，初始FindPlayerStart只查询位置不授权Pawn。加载页、重连页及共同父类激活失活/换ViewModel与命令返回残余由既有安全生命周期钩子和精确身份修复，并纳真实新增回归。当前Editor 3f9eab02-f644-4bf3-b2d8-0e26e13025e0、Client d530fedd-d5d5-449c-b0a9-abaee9fcd7b4的66模块、Server 8344cab4-48a0-4696-9a9a-31babffa8b83的46模块均真实退出0。最新Main86整合后188 唯一具名UE逻辑用例全部发现、完成并Success，进程0、无Fatal；精确选择集、日志与引擎JSON一致，172项无用例warning、16项带warning。历史172通过及早期失败/中止完整保留；启动13 条未具名条件错误仍未认证全编辑器零诊断，Cook/联机/性能/资源迁移未验。 六门禁全部重新执行，逐插件/中文重点说明审核仍受已登记生产资源、全量历史中文存量、Cook、Stage、联机和实测预算边界约束。 独立复核原发现与关闭依据保存在MainIntegrationReviewResults.json，旧报告不抹除。

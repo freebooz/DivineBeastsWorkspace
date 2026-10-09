@@ -1,3 +1,5 @@
+// 第三层Server/Editor组合根：Profile授权当前承载世界，Village复用平台World/Data/Experience与准入链。
+// 自有世界委托/启动Timer在失败或退出时撤销；永久世界退休门闩使旧Ready/体验回调不能重新接纳。
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
 
 #include "Identity/DivineBeastsProjectCatalog.h"
@@ -56,7 +58,10 @@ bool UDivineBeastsServerBootstrapSubsystem::ShouldCreateSubsystem(
 void UDivineBeastsServerBootstrapSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
+    // 已退休实例不重新注册全局委托/Telemetry或签发操作；重新承载必须创建新的服务器实例。
+    if (bWorldRetired) { return; }
     Super::Initialize(Collection);
+    BootstrapOperationId = FGuid::NewGuid();
     State = EDivineBeastsServerBootstrapState::Unconfigured;
 
     // Boot身份只在服务器进程/当前GameInstance启动时确定一次。
@@ -151,6 +156,11 @@ void UDivineBeastsServerBootstrapSubsystem::Initialize(
 
 void UDivineBeastsServerBootstrapSubsystem::Deinitialize()
 {
+    // 即使尚无ValidatedWorld也永久关闭本实例；外部清理/Telemetry通知之前先使所有原操作失效。
+    bWorldRetired = true;
+    BootstrapOperationId.Invalidate();
+    // 先撤本世界的启动Timer，再走完整退出撤销；ValidatedWorld会在Cleanup内清空，不能之后才找Timer所有者。
+    if (UWorld* World = ValidatedWorld.Get()) World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
     if (ValidatedWorld.IsValid()) HandleWorldCleanup(ValidatedWorld.Get(), true, true);
     FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupHandle);
     WorldCleanupHandle.Reset();
@@ -198,7 +208,10 @@ void UDivineBeastsServerBootstrapSubsystem::HandleWorldCleanup(UWorld* World, bo
     { StopObservingWorld(); return; }
     // 固定角色Profile只授权已校验的承载世界。先本地关闭，控制面的异步排空确认不能成为继续准入的窗口。
     bWorldRetired = true;
+    BootstrapOperationId.Invalidate();
     bWorldValidated = false;
+    // 世界退出也撤销Main新增体验推进Timer；该Boot不再承载后继地图，已排队回调仍由退休门闩拒绝。
+    World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
     ValidatedWorld.Reset();
     StopObservingWorld();
     if (auto* Admission = GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
@@ -286,8 +299,13 @@ bool UDivineBeastsServerBootstrapSubsystem::BeginDrain()
     }
     UGamePlatformServerLifecycleSubsystem* Lifecycle =
         GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>();
+    // 本地排空意图先关闭Ready/体验队列；平台在途Register可能仍投影Registered，但不能重新开启项目准入。
+    State = EDivineBeastsServerBootstrapState::Draining;
+    BootstrapOperationId.Invalidate();
+    if (UWorld* World = ValidatedWorld.Get()) World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
     if (auto* Admission = GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
         Admission->StopAcceptingAdmissions();
+    if (bWorldRetired) { return false; }
     return Lifecycle != nullptr && Lifecycle->BeginDrain();
 }
 
@@ -427,6 +445,11 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
 
     ValidatedWorld = &World;
     bWorldValidated = true;
+    BootstrapOperationId = FGuid::NewGuid();
+    const FGuid OperationId = BootstrapOperationId;
+    const TWeakObjectPtr<UWorld> ExpectedWorld(&World);
+    const TWeakObjectPtr<UGameInstance> ExpectedInstance(GetGameInstance());
+    const FString ExpectedBootId = ServerBootId;
     if(Instance.ServerRoleId==TEXT("GameServer.Role.Village"))
     {
     // 已核对Profile、真实地图和服务器Target后，桥接到平台World/Data与Gameplay唯一运行实例。
@@ -441,9 +464,12 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
     Context.ServerRole=TEXT("Village"); Context.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
     FGamePlatformVersion::TryParse(Instance.BuildVersion,Context.BuildVersion);
     const FPrimaryAssetId WorldAsset(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),FName(*Instance.WorldId));
-    if(!WorldService->InitializeBoundWorld(WorldAsset,Context).IsSuccess()) {SetFailed(TEXT("ProjectWorldInitializeRejected"));return;}
+    const auto BoundWorldResult = WorldService->InitializeBoundWorld(WorldAsset,Context);
+    if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
+    if(!BoundWorldResult.IsSuccess()) {SetFailed(TEXT("ProjectWorldInitializeRejected"));return;}
     FGamePlatformResult Registered;
     Mode->RegisterAdmissionAuthority(Mode,MakeShared<FDivineBeastsWorldAdmissionAuthority>(Admission),Registered);
+    if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
     if(!Registered.IsSuccess()){SetFailed(Registered.Code);return;}
     const TWeakObjectPtr<ADivineBeastsWorldGameMode> WeakMode(Mode);
     Admission->OnAdmissionChanged().AddWeakLambda(Mode,[WeakMode](const APlayerController* Controller,const FGamePlatformServerVerifiedAdmission& A,bool bAccepted)
@@ -469,11 +495,15 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
     {
         SetFailed(TEXT("ServerLifecycleUnavailable"));
     }
-    else if (!Lifecycle->RegisterInstance(Instance) &&
-        Lifecycle->GetSnapshot().State != EGamePlatformServerLifecycleState::Failed)
+    else
     {
-        // 若平台层已同步推进Failed，则保留其更精确的错误码，不用泛化错误覆盖诊断信息。
-        SetFailed(TEXT("ServerRegistrationRejected"));
+        const bool bRegistered = Lifecycle->RegisterInstance(Instance);
+        if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
+        if (!bRegistered && Lifecycle->GetSnapshot().State != EGamePlatformServerLifecycleState::Failed)
+        {
+            // 若平台层已同步推进Failed，则保留其更精确的错误码，不用泛化错误覆盖诊断信息。
+            SetFailed(TEXT("ServerRegistrationRejected"));
+        }
     }
 }
 
@@ -511,6 +541,18 @@ void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
         LastErrorCode = TEXT("ServerWorldRetiredRestartRequired");
         return;
     }
+    // 资源失败是项目启动终态；排空回调或迟到的注册完成不能重新发布Ready。
+    if (State == EDivineBeastsServerBootstrapState::Failed)
+    {
+        if (Snapshot.State == EGamePlatformServerLifecycleState::Registered || Snapshot.State == EGamePlatformServerLifecycleState::Ready)
+            if (auto* Lifecycle = GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>()) Lifecycle->BeginDrain();
+        return;
+    }
+    // 显式Drain可能在平台Register/Ready在途时排队，Registered/PublishingReady旧通知不能清掉本地排空意图。
+    if (State == EDivineBeastsServerBootstrapState::Draining &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Draining &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Stopped &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Failed) { return; }
     switch (Snapshot.State)
     {
     case EGamePlatformServerLifecycleState::Registering:
@@ -518,37 +560,33 @@ void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
         LastErrorCode = Snapshot.ErrorCode;
         break;
     case EGamePlatformServerLifecycleState::Registered:
+        BootstrapOperationId = FGuid::NewGuid();
         State = EDivineBeastsServerBootstrapState::Registered;
         LastErrorCode = Snapshot.ErrorCode;
         if (bWorldValidated && ValidatedWorld.IsValid())
         {
             const TWeakObjectPtr<UDivineBeastsServerBootstrapSubsystem> WeakThis(this);
-            AsyncTask(ENamedThreads::GameThread, [WeakThis]()
+            const FGuid OperationId = BootstrapOperationId;
+            const TWeakObjectPtr<UWorld> ExpectedWorld = ValidatedWorld;
+            const TWeakObjectPtr<UGameInstance> ExpectedInstance(GetGameInstance());
+            const FString ExpectedBootId = ServerBootId;
+            const TWeakObjectPtr<UGamePlatformServerLifecycleSubsystem> ExpectedLifecycle(
+                GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>());
+            AsyncTask(ENamedThreads::GameThread, [WeakThis, OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId, ExpectedLifecycle, Snapshot]()
             {
                 UDivineBeastsServerBootstrapSubsystem* Self = WeakThis.Get();
-                if (!Self || Self->bWorldRetired || !Self->ValidatedWorld.IsValid() ||
-                    Self->State != EDivineBeastsServerBootstrapState::Registered)
+                // weakThis和当前Registered不足以区分原排队任务；nonce拒绝同World/Boot的新通知接管。
+                if (!Self || !Self->IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId) ||
+                    Self->State != EDivineBeastsServerBootstrapState::Registered || !ExpectedLifecycle.IsValid() ||
+                    ExpectedInstance->GetSubsystem<UGamePlatformServerLifecycleSubsystem>() != ExpectedLifecycle.Get())
                 {
                     return;
                 }
-                FString Reason;
-                if (!Self->IsConfiguredWorldValid(*Self->ValidatedWorld.Get(), Reason))
-                {
-                    Self->SetFailed(TEXT("ServerReadyGateLost"));
-                    return;
-                }
-                UGamePlatformServerLifecycleSubsystem* Lifecycle =
-                    Self->GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>();
-                if (Lifecycle == nullptr)
-                {
-                    Self->SetFailed(TEXT("ServerLifecycleUnavailable"));
-                }
-                else if (!Lifecycle->MarkReady() &&
-                    Lifecycle->GetSnapshot().State != EGamePlatformServerLifecycleState::Failed)
-                {
-                    // 平台层若已给出永久失败原因，不再用项目层通用错误覆盖。
-                    Self->SetFailed(TEXT("ServerReadyRejected"));
-                }
+                const auto Current = ExpectedLifecycle->GetSnapshot();
+                // 平台诊断快照这里只用于拒绝旧通知，不作为授权或替代平台自身异步代次校验。
+                if (Current.OperationGeneration != Snapshot.OperationGeneration || Current.State != EGamePlatformServerLifecycleState::Registered ||
+                    Current.GameServerId != Snapshot.GameServerId || Current.ExperienceId != Snapshot.ExperienceId) { return; }
+                Self->TryPublishReady();
             });
         }
         break;
@@ -599,33 +637,111 @@ void UDivineBeastsServerBootstrapSubsystem::HandleLifecycleChanged(
 
 void UDivineBeastsServerBootstrapSubsystem::SetFailed(FName ErrorCode)
 {
+    if (bWorldRetired) { return; }
+    BootstrapOperationId.Invalidate();
     State = EDivineBeastsServerBootstrapState::Failed;
     LastErrorCode = ErrorCode.IsNone()
         ? FName(TEXT("ServerBootstrapFailed"))
         : ErrorCode;
-    if (GetGameInstance())
+    // 先停本地体验推进，再撤销准入Target；Reset可能同步通知消费者，世界退出终态必须优先保留。
+    if (UWorld* World = ValidatedWorld.Get()) World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
+    UE_LOG(LogTemp, Error, TEXT("[DBA Server] Bootstrap failed: %s"), *LastErrorCode.ToString());
+    if (UGameInstance* GameInstance = GetGameInstance())
     {
-        if (auto* Admission = GetGameInstance()->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
+        if (auto* Admission = GameInstance->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
             Admission->ResetTarget(LastErrorCode);
+        if (bWorldRetired) { return; }
+        if (auto* Lifecycle = GameInstance->GetSubsystem<UGamePlatformServerLifecycleSubsystem>())
+        {
+            Lifecycle->StopHeartbeatPump();
+            // 注册后失败撤销控制面可接纳状态；BeginDrain异步返回不改写上述项目终态。
+            const auto LifecycleState = Lifecycle->GetSnapshot().State;
+            if (LifecycleState == EGamePlatformServerLifecycleState::Registered ||
+                LifecycleState == EGamePlatformServerLifecycleState::Ready) Lifecycle->BeginDrain();
+        }
     }
+}
+
+void UDivineBeastsServerBootstrapSubsystem::TryPublishReady()
+{
+    // Registered与体验Active的先后不固定，但世界退休/失败后两种迟到完成都不能重新发布Ready。
+    if (bWorldRetired || State != EDivineBeastsServerBootstrapState::Registered || !bWorldValidated || !ValidatedWorld.IsValid()) return;
+    const FGuid OperationId = BootstrapOperationId;
+    const TWeakObjectPtr<UWorld> ExpectedWorld = ValidatedWorld;
+    const TWeakObjectPtr<UGameInstance> ExpectedInstance(GetGameInstance());
+    const FString ExpectedBootId = ServerBootId;
+    if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
+    FString Reason;
+    if (!IsConfiguredWorldValid(*ValidatedWorld.Get(), Reason)) { SetFailed(TEXT("ServerReadyGateLost")); return; }
+    // Village出生依赖唯一Experience执行器；Preparing/Failed均不能接纳。其他角色沿用既有Profile门禁。
+    if (ActiveProfile.ServerRoleId == TEXT("GameServer.Role.Village"))
+    {
+        const int32 Players = GetCurrentPlayerCount();
+        if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
+        if (Players < 0) { return; }
+    }
+    auto* Lifecycle = GetGameInstance()->GetSubsystem<UGamePlatformServerLifecycleSubsystem>();
+    if (!Lifecycle) { SetFailed(TEXT("ServerLifecycleUnavailable")); return; }
+    // PublishingReady阶段仍投影为Registered，使用平台阶段防止重复提交同一Ready操作。
+    if (Lifecycle->GetSnapshot().State != EGamePlatformServerLifecycleState::Registered) return;
+    const TWeakObjectPtr<UGamePlatformServerLifecycleSubsystem> ExpectedLifecycle(Lifecycle);
+    const auto BeforeReady = Lifecycle->GetSnapshot();
+    const bool bReadyAccepted = Lifecycle->MarkReady();
+    // PublishingReady原生通知允许退出/Deinitialize/后继操作。先核本栈原scope，旧false不得覆盖退休错误。
+    if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId) ||
+        !ExpectedLifecycle.IsValid() || ExpectedInstance->GetSubsystem<UGamePlatformServerLifecycleSubsystem>() != ExpectedLifecycle.Get()) { return; }
+    const auto AfterReady = ExpectedLifecycle->GetSnapshot();
+    if (!bReadyAccepted && AfterReady.State == EGamePlatformServerLifecycleState::Registered &&
+        AfterReady.OperationGeneration == BeforeReady.OperationGeneration)
+        SetFailed(TEXT("ServerReadyRejected"));
+}
+
+bool UDivineBeastsServerBootstrapSubsystem::IsBootstrapScopeCurrent(FGuid OperationId, TWeakObjectPtr<UWorld> World,
+    TWeakObjectPtr<UGameInstance> Instance, const FString& BootId) const
+{
+    return IsValid(this) && !bWorldRetired && OperationId.IsValid() && BootstrapOperationId == OperationId &&
+        World.IsValid() && ValidatedWorld == World && bWorldValidated && !World->bIsTearingDown &&
+        Instance.IsValid() && GetGameInstance() == Instance.Get() && World->GetGameInstance() == Instance.Get() &&
+        ServerBootId == BootId && State != EDivineBeastsServerBootstrapState::Failed &&
+        State != EDivineBeastsServerBootstrapState::Draining && State != EDivineBeastsServerBootstrapState::Stopped;
 }
 
 int32 UDivineBeastsServerBootstrapSubsystem::GetCurrentPlayerCount() const
 {
+    const FGuid OperationId = BootstrapOperationId;
+    const TWeakObjectPtr<UWorld> ExpectedWorld = ValidatedWorld;
+    const TWeakObjectPtr<UGameInstance> ExpectedInstance(GetGameInstance());
+    const FString ExpectedBootId = ServerBootId;
+    if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return -1; }
     const UWorld* World = ValidatedWorld.Get();
     if (World == nullptr || World->GetGameInstance() != GetGameInstance())
     {
         return -1;
     }
     AGameModeBase* GameMode = World->GetAuthGameMode();
-    if(ActiveProfile.ServerRoleId!=TEXT("GameServer.Role.Village"))return GameMode?GameMode->GetNumPlayers():0;
+    if(ActiveProfile.ServerRoleId!=TEXT("GameServer.Role.Village"))
+    {
+        const int32 Players = GameMode ? GameMode->GetNumPlayers() : 0;
+        return IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId) ? Players : -1;
+    }
     auto* Mode=Cast<ADivineBeastsWorldGameMode>(GameMode);
     const auto* Experience=Mode?Mode->GetExperienceComponent():nullptr;
-    return Experience && Experience->GetExperienceSnapshot().IsServerActive() ? Mode->GetNumPlayers() : -1;
+    if (!Experience || !Experience->GetExperienceSnapshot().IsServerActive()) { return -1; }
+    const int32 Players = Mode->GetNumPlayers();
+    return IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId) ? Players : -1;
 }
 void UDivineBeastsServerBootstrapSubsystem::AdvanceGameplayBootstrap()
 {
     auto* World=ValidatedWorld.Get(); if(!World)return;
+    const FGuid OperationId = BootstrapOperationId;
+    const TWeakObjectPtr<UWorld> ExpectedWorld = ValidatedWorld;
+    const TWeakObjectPtr<UGameInstance> ExpectedInstance(GetGameInstance());
+    const FString ExpectedBootId = ServerBootId;
+    if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
+    // Timer可能已排队；失败、排空或退出后只撤本世界Timer，不再启动体验或尝试Ready。
+    if (bWorldRetired || State == EDivineBeastsServerBootstrapState::Failed ||
+        State == EDivineBeastsServerBootstrapState::Draining || State == EDivineBeastsServerBootstrapState::Stopped)
+    { World->GetTimerManager().ClearTimer(GameplayBootstrapTimer); return; }
     auto* Mode=World->GetAuthGameMode<ADivineBeastsWorldGameMode>();
     auto* Service=IGamePlatformWorldService::Get(*World);
     if(!Mode || !Service || FPlatformTime::Seconds()>GameplayBootstrapDeadline)
@@ -637,7 +753,19 @@ void UDivineBeastsServerBootstrapSubsystem::AdvanceGameplayBootstrap()
     {
         const FPrimaryAssetId Id(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),FName(*(ActiveExperienceId.ToString()+TEXT("@1"))));
         const auto Result=Experience->BeginExperience(Id);
-        if(!Result.IsSuccess()){World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);SetFailed(Result.Code);}
+        // 真正外部边界为内部Data AcquireDefinition；返回先复核，旧失败不能调用SetFailed或清后继Timer。
+        if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
+        if(!Result.IsSuccess()){World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);SetFailed(Result.Code);return;}
+        // BeginExperience内部Data调用可同步重入；只继续读取原承载世界，不在退出/失败后的旧Timer栈发布Ready。
+        if (bWorldRetired || ValidatedWorld.Get() != World || State == EDivineBeastsServerBootstrapState::Failed) return;
     }
-    if(Experience->GetExperienceSnapshot().IsServerActive())World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
+    const auto Snapshot = Experience->GetExperienceSnapshot();
+    if (Snapshot.Stage == EGamePlatformExperienceStage::Failed)
+    { SetFailed(Snapshot.FailureCode.IsNone() ? FName(TEXT("WorldExperienceFailed")) : Snapshot.FailureCode); return; }
+    if(Snapshot.IsServerActive())
+    {
+        World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
+        // 注册完成和体验激活先后顺序不固定，后到的一方再次进入同一门禁。
+        TryPublishReady();
+    }
 }
