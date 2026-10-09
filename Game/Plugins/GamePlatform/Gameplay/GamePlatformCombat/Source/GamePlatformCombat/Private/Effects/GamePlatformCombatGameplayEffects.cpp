@@ -64,9 +64,13 @@ UGamePlatformShieldGameplayEffect::UGamePlatformShieldGameplayEffect(
     const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
-    // 每次施加都是独立的有限期效果。剩余可吸收量不以GAS属性在每次命中时复制。
+    // 每次施加都是独立的有限期效果。盾容量不以GAS属性在每次命中时复制。
     DurationPolicy = EGameplayEffectDurationType::HasDuration;
     DurationMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(1.0f));
+    // 确保多来源GE拥有不同的有效句柄，不能因聚合式叠层重用旧盾容量。
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
+    StackingType = EGameplayEffectStackingType::None;
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
     UTargetTagsGameplayEffectComponent* TagsComponent =
         ObjectInitializer.CreateDefaultSubobject<UTargetTagsGameplayEffectComponent>(
             this, TEXT("GrantedShieldTags"));

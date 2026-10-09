@@ -12,5 +12,7 @@
 
 2026-10-09新增可选战斗反馈网络投影：`FGamePlatformCombatFeedbackNetEvent`（最小权威事件负载）和`UGamePlatformCombatFeedbackWorldSubsystem`（World范围只读确认事实），通过现有`UGamePlatformCombatComponent::MulticastConfirmedCombatFeedback`（Unreliable服务器单向表现通知）分发事件GUID、角色代次、技能ID、位置和非权威展示数值。该路径不接受客户端任意命中RPC、不更改GAS数据或独立决定击退。对应`Private/Tests/GamePlatformCombatFeedbackNetTests.cpp`仅提供契约源码测试；后续必须以真实Client/Server构建、可见性丢包模拟和双客户端运行证明实际播发行为。
 
+2026-10-09网络边界补充：客户端只接受与当前AvatarGeneration/WorldContextGeneration严格一致的事实，避免提前到达的未来代次事件污染旧角色；Damage事件的护盾吸收不得超过本次伤害，异常事实拒绝进入表现层。这可能丢失早于状态复制到达的可选视觉效果，但不影响服务器GAS结算。
+
 当前状态（2026-09-30）：核心属性扩展已使用 `F:\UnrealEngine-5.8.0-release` 对 `DivineBeastsArenaEditor Win64 Development` 定向编译 `GamePlatformCombat + DivineBeastsCharactersRuntime + DivineBeastsUIClient`，40 个构建动作全部成功。UE Automation 本轮在进入测试队列前被本机 VisionOS SDK 缺少 `MainVersion` 的平台校验阻断；真实 Development 资产、Client/Server 三目标构建、Cook、双客户端 Dedicated Server 联网、延迟模拟仍需后续专项验证。
 

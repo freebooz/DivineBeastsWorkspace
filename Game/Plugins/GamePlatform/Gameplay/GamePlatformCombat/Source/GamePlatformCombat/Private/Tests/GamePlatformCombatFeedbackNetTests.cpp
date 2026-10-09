@@ -27,6 +27,8 @@ bool FGamePlatformCombatFeedbackNetTest::RunTest(const FString&)
 
     Event.AppliedToShield = -1.0f;
     TestFalse(TEXT("负护盾吸收拒绝"), Event.IsSafeForCosmetics());
+    Event.AppliedToShield = 43.0f;
+    TestFalse(TEXT("护盾吸收不能大于本次结算损伤"), Event.IsSafeForCosmetics());
     Event.AppliedToShield = 0.0f;
 
     Event.AppliedMagnitude = -0.01f;

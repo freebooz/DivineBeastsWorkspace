@@ -13,14 +13,23 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDivineBeastsPlayerStatusViewModelSnapshotTest::RunTest(const FString&)
 {
+    // 测试只构造未附着 Actor 的临时 ASC，不应使用面向正式 Actor 生命周期的 AddSet。
+    // 显式建立两个真实 AttributeSet 实例并登记到 ASC，才能准确测试 ViewModel 的订阅/读取。
+    // 这不是生产初始化路径：正式角色仍由 CombatComponent 与 CharacterComponent 管理属性集。
     UGamePlatformAbilitySystemComponent* ASC = NewObject<UGamePlatformAbilitySystemComponent>();
-    UGamePlatformCombatAttributeSet* Combat = const_cast<UGamePlatformCombatAttributeSet*>(
-        ASC->AddSet<UGamePlatformCombatAttributeSet>());
-    UDivineBeastsMomentumAttributeSet* Momentum = const_cast<UDivineBeastsMomentumAttributeSet*>(
-        ASC->AddSet<UDivineBeastsMomentumAttributeSet>());
+    UGamePlatformCombatAttributeSet* Combat =
+        NewObject<UGamePlatformCombatAttributeSet>(ASC);
+    UDivineBeastsMomentumAttributeSet* Momentum =
+        NewObject<UDivineBeastsMomentumAttributeSet>(ASC);
+    ASC->AddAttributeSetSubobject(Combat);
+    ASC->AddAttributeSetSubobject(Momentum);
 
     TestNotNull(TEXT("创建Combat AttributeSet"), Combat);
     TestNotNull(TEXT("创建Momentum AttributeSet"), Momentum);
+    TestTrue(TEXT("ASC实际登记战斗属性集"),
+        ASC->GetSet<UGamePlatformCombatAttributeSet>() == Combat);
+    TestTrue(TEXT("ASC实际登记气势属性集"),
+        ASC->GetSet<UDivineBeastsMomentumAttributeSet>() == Momentum);
     if (!Combat || !Momentum)
     {
         return false;

@@ -942,6 +942,8 @@ void UGamePlatformCombatComponent::EnterDeadState(
     InOutResult.bCausedDeath = true;
     // 死亡后旧GE盾立即消失，绝不继承到复活后的下一代Avatar。
     ClearShieldEffects();
+    // 死亡事件和本次伤害结果也必须反映已经销毁的盾，避免客户端误显示残留保护值。
+    InOutResult.RemainingShield = 0.0f;
     InOutResult.ResultTags.AddTag(GamePlatformCombatTags::State_Dead);
 
     if (IsValid(AbilitySystemComponent))
@@ -1037,8 +1039,8 @@ void UGamePlatformCombatComponent::MulticastConfirmedCombatFeedback_Implementati
     UWorld* World = GetWorld();
     if (!World || World->GetNetMode() != NM_Client ||
         !Feedback.IsSafeForCosmetics() || !IsValid(GetOwner()) ||
-        Feedback.TargetAvatarGeneration < AvatarGeneration ||
-        Feedback.WorldContextGeneration < WorldContextGeneration)
+        Feedback.TargetAvatarGeneration != AvatarGeneration ||
+        Feedback.WorldContextGeneration != WorldContextGeneration)
     {
         // 主机/专服已有本地权威Delegate，不能在这里重复广播；旧角色/世界直接丢弃。
         return;

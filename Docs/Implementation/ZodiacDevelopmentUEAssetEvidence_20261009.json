@@ -1,0 +1,492 @@
+{
+  "SchemaVersion": 1,
+  "GeneratedAt": "2026-10-09T17:29:53.088991+08:00",
+  "Scope": "DevelopmentOnly",
+  "Workspace": "DivineBeastsWorkspace",
+  "UEVersion": "5.8",
+  "GenerationTool": "Monolith MCP 0.23.0",
+  "DescriptionZh": "子鼠五资产开发样板（Rat UIProfile包含在12份内）及12生肖五槽显示配置真实磁盘证据。样板不代表商业化或正式技能授权与联机通过。",
+  "AssetCount": 16,
+  "UIProfileCount": 12,
+  "MappedArtSlots": 60,
+  "FormalAbilityDefinitionsApproved": 0,
+  "ApprovedFormalAbilityIds": [],
+  "AllDevelopmentAssetsRequireExcludeFromShipping": true,
+  "Assets": [
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Boar_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5266,
+      "SHA256": "a1b1d7acd16efa73b16d172a9b08fa92d7de74cc7a1e60baf6b9d41f587e215f",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dog_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5258,
+      "SHA256": "fed0a86e0a04fccebd3976cc79b09eeb7912c4e33b969b1d8e889152ffe9e8f1",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Dragon_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5340,
+      "SHA256": "3af2707d2076931f0859661a3baafba7300be9deb91bed0bd6bf63953363f80a",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Goat_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5276,
+      "SHA256": "5c989f8d5a85bf08fdb71dac69d97f80fcf8191d4e5f565c9c76f336cba07bb2",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Horse_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5314,
+      "SHA256": "0711587f7a7709442f9a621dabb0534820bccbe3e52c54a06d7236b12e6c64cc",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Monkey_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5352,
+      "SHA256": "ad8172a554e2fc861e2db7b8a9822ccdc48b55b792f321e1d638a1a818f09f19",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Ox_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5208,
+      "SHA256": "0523f11adfeeeafbf384ce3ac64dfa7a7625f6e76dc97baa4bb90a36a90da572",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rabbit_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5320,
+      "SHA256": "7c7261d2fd45cc4c583c9bec4895c9f4f292fc40b133e1af07d38a81e0db0a72",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevAbilitySet.uasset",
+      "RoleZh": "子鼠试验玩法技能资产",
+      "SizeBytes": 4458,
+      "SHA256": "ce50af9bb01b5ea16742615842fc73b61442b56210190f4a2138fd4978036d28",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevPrimary.uasset",
+      "RoleZh": "子鼠试验玩法技能资产",
+      "SizeBytes": 3236,
+      "SHA256": "844a5385ae4fbddea8da30f4e3f76ddbf0311a2803172c83c16e2c9e94ebce1c",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rat_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 2997,
+      "SHA256": "7751a8784faa82ad967adaa615f9028d33ab5c42fbfe9f6db22c09deb58f2787",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Rooster_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5368,
+      "SHA256": "3c80969ef596587de486c5888b785f7bba2b0b151787b66b11e4171e74931b31",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Snake_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5302,
+      "SHA256": "f560876c4b354cc70c2111d040d505689593cb4be16e8bcad09c77b33a0de6b1",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DA_DBA_Tiger_DevUIProfile.uasset",
+      "RoleZh": "生肖技能纯客户端显示配置",
+      "SizeBytes": 5292,
+      "SHA256": "5559fd313250ab57966358ba8fbc21c561ec45c10dbc1b8d6fe9e57fcd67210f",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/DT_DBA_Rat_DevBalance.uasset",
+      "RoleZh": "子鼠试验玩法技能资产",
+      "SizeBytes": 2860,
+      "SHA256": "e55fac2b4ec7cc4b78d0fd3e8e86ddc3467957ab74574d4de8e89c06ba158188",
+      "AssetFileExistsAndNonempty": true
+    },
+    {
+      "RelativePath": "Game/Content/Development/DivineBeasts/Abilities/GA_DBA_Rat_DevPrimary.uasset",
+      "RoleZh": "子鼠试验玩法技能资产",
+      "SizeBytes": 27920,
+      "SHA256": "1c02ea28223572775928e705f8c0c18de9da5e5f7fa3e5f0eec6d5abd6bda061",
+      "AssetFileExistsAndNonempty": true
+    }
+  ],
+  "IconArtMappings": [
+    {
+      "Hero": "Rat",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_BasicAttack_FangSlash_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rat",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_Passive_ShadowInstinct_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rat",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_Active01_ShadowDash_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rat",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_Active02_CrossFangs_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rat",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_Ultimate_ShadowAmbush_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Ox",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_BasicAttack_HornStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Ox",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_Passive_Stonehide_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Ox",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_Active01_HornCharge_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Ox",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_Active02_EarthPulse_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Ox",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_Ultimate_MountainRupture_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Tiger",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_BasicAttack_ClawStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Tiger",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_Passive_RegalSpirit_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Tiger",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_Active01_Pounce_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Tiger",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_Active02_CrescentRake_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Tiger",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_Ultimate_RoarStorm_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rabbit",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_BasicAttack_MoonStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rabbit",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Passive_JadeSpirit_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rabbit",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Active01_MoonLeap_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rabbit",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Active02_JadeWard_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rabbit",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Ultimate_LunarBloom_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dragon",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_BasicAttack_DragonClaw_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dragon",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_Passive_CloudHeart_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dragon",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_Active01_DragonSpiral_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dragon",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_Active02_CloudBeam_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dragon",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_Ultimate_DragonAscension_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Snake",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_BasicAttack_FangStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Snake",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Passive_ScaleShroud_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Snake",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Active01_SerpentBolt_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Snake",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Active02_CoilBind_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Snake",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Ultimate_SerpentVortex_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Horse",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_BasicAttack_HoofStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Horse",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Passive_ThunderHeart_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Horse",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Active01_LightningDash_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Horse",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Active02_HoofPulse_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Horse",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Ultimate_ThunderStampede_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Goat",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_BasicAttack_HornStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Goat",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Passive_JadeBlessing_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Goat",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Active01_GuardianWard_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Goat",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Active02_HaloPulse_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Goat",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Ultimate_SanctuaryDome_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Monkey",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_BasicAttack_StaffStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Monkey",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_Passive_TricksterSpirit_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Monkey",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_Active01_CloudFlip_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Monkey",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_Active02_StaffSweep_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Monkey",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_Ultimate_GoldenAfterimages_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rooster",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_BasicAttack_FeatherStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rooster",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Passive_DawnSpirit_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rooster",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Active01_FeatherFan_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rooster",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Active02_SonicRing_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Rooster",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Ultimate_DawnRadiance_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dog",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_BasicAttack_BiteStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dog",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_Passive_GuardianInstinct_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dog",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_Active01_TrackingMark_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dog",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_Active02_GuardianLeap_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Dog",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_Ultimate_CelestialHunt_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Boar",
+      "ArtSlot": "BasicAttack",
+      "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_BasicAttack_TuskStrike_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Boar",
+      "ArtSlot": "Passive",
+      "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Passive_IronMane_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Boar",
+      "ArtSlot": "Active01",
+      "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Active01_HeavyRam_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Boar",
+      "ArtSlot": "Active02",
+      "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Active02_PressureWave_V1",
+      "FormalAbilityId": null
+    },
+    {
+      "Hero": "Boar",
+      "ArtSlot": "Ultimate",
+      "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Ultimate_ManeShockwave_V1",
+      "FormalAbilityId": null
+    }
+  ],
+  "ValidationLimitsZh": "文件大小及SHA仅证明写盘未损坏；不证明引擎AssetRegistry、等级数值、网络伤害、蓝图执行或Cook剥离。"
+}

@@ -61,6 +61,9 @@ MOBA：MobaPresentationRuntime（强度策略）、MobaPresentationClient（可�
 - [x] 在现有 `GamePlatformCombatComponent` 增加服务器单向Unreliable `MulticastConfirmedCombatFeedback`，只传最小命中表现信息，不改变GAS与GameplayCue。
 - [x] `UGamePlatformCombatFeedbackWorldSubsystem`（世界事实总线）只读广播给MobaPresentationClient，不采用全局进程单例；传输使用GUID、角色/世界代次进行过期过滤。
 - [x] `SourceAbilityId`由权威CombatSpec流入CombatEvent，再到可选网络表现事实和MOBA请求。
+- [x] 本轮加强网络迟到事实校验：目标角色代次与世界代次必须严格匹配当前复制状态，既拒绝旧代次也拒绝提前到达的新代次；伤害事实中护盾吸收不得超过本次伤害。新增对应异常数值自动化断言。该变更会在复制状态尚未追上表现事实时安全丢弃可选表现，不改变GAS结算。
+- [x] 本轮重复执行静态门禁：`ValidateProjectHeaders.ps1`（599处引用、0缺失）、`ValidateInheritanceBoundaries.ps1`（477个公开头、978个类型、173条继承边）和`git diff --check`均通过。另有并行UI测试文件变更，未予修改。
+- [ ] `DivineBeastsArenaClient` 的 `GamePlatformCombat` 定向编译已重新启动，只有实际完成并取得退出码0才可标记构建通过。
 - [ ] 双客户端真实确认网络Relevancy、丢包、预测撤销、重复EventId、LateJoin和断线重连；纯表现不承担真实击退或碰撞，真实位移仍由服务器Gameplay决定。
 - [ ] 目前只实现客户端已确认事实路径，完整预测/纠正业务和权威位移实现尚未验收。
 

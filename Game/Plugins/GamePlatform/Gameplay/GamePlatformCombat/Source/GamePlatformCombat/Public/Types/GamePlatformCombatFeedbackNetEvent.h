@@ -68,6 +68,8 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatFeedbackNetEvent
             WorldContextGeneration > 0 && FMath::IsFinite(AppliedMagnitude) &&
             FMath::IsFinite(AppliedToShield) &&
             AppliedMagnitude >= 0.0f && AppliedToShield >= 0.0f &&
+            (EventType != EGamePlatformCombatEventType::Damage ||
+             AppliedToShield <= AppliedMagnitude) &&
             (EventType == EGamePlatformCombatEventType::Damage ||
              EventType == EGamePlatformCombatEventType::Healing ||
              EventType == EGamePlatformCombatEventType::ControlApplied ||
