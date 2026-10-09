@@ -2,7 +2,6 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
-#include "Attributes/GamePlatformControlAttributeSet.h"
 #include "Attributes/GamePlatformDefenseAttributeSet.h"
 #include "Attributes/GamePlatformOffenseAttributeSet.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
@@ -53,10 +52,6 @@ void UGamePlatformCombatComponent::BeginPlay()
         if (!AbilitySystemComponent->GetSet<UGamePlatformDefenseAttributeSet>())
         {
             AbilitySystemComponent->AddSet<UGamePlatformDefenseAttributeSet>();
-        }
-        if (!AbilitySystemComponent->GetSet<UGamePlatformControlAttributeSet>())
-        {
-            AbilitySystemComponent->AddSet<UGamePlatformControlAttributeSet>();
         }
     }
 
@@ -218,28 +213,10 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplyControl(
         return Result;
     }
 
-    const UGamePlatformControlAttributeSet* ControlAttributes =
-        TargetASC->GetSet<UGamePlatformControlAttributeSet>();
-    const float Tenacity = IsValid(ControlAttributes)
-        ? ControlAttributes->GetTenacity()
-        : 0.0f;
-    const float FinalDuration = FGamePlatformCombatMath::CalculateControlDuration(
-        DurationSeconds,
-        Tenacity);
-
-    if (FinalDuration <= KINDA_SMALL_NUMBER)
-    {
-        Result.FinalMagnitude = 0.0f;
-        Result.ResultTags.AddTag(GamePlatformCombatTags::Result_ControlResisted);
-        TargetComponent->PublishCombatEvent(
-            EGamePlatformCombatEventType::ControlResisted,
-            Spec,
-            Result);
-        MarkEventCompleted(Spec.EventId);
-        return Result;
-    }
-
-    SpecHandle.Data->SetDuration(FinalDuration, true);
+    // 神兽联盟现行规则不包含控制韧性/失衡数值。服务器已在上文核验控制持续时间，
+    // 直接应用已批准的技能时长；眩晕/沉默仍由GameplayEffect和GameplayTag负责。
+    // 原有服务器权威、幂等和技能授权边界均保持，不能让客户端修改持续时间。
+    SpecHandle.Data->SetDuration(DurationSeconds, true);
     const FActiveGameplayEffectHandle ActiveHandle =
         SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 
@@ -249,7 +226,7 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplyControl(
         return Result;
     }
 
-    Result.FinalMagnitude = FinalDuration;
+    Result.FinalMagnitude = DurationSeconds;
     Result.ResultTags.AddTag(ResultTag);
     TargetComponent->PublishCombatEvent(
         EGamePlatformCombatEventType::ControlApplied,

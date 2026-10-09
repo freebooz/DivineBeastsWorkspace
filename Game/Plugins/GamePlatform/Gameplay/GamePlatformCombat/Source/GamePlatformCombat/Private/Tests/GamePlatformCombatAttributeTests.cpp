@@ -3,7 +3,6 @@
 #include "Misc/AutomationTest.h"
 #include "Attributes/GamePlatformAttributeSet.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
-#include "Attributes/GamePlatformControlAttributeSet.h"
 #include "Attributes/GamePlatformDefenseAttributeSet.h"
 #include "Attributes/GamePlatformOffenseAttributeSet.h"
 #include "UObject/UnrealType.h"
@@ -59,25 +58,16 @@ bool FGamePlatformCombatAttributeFamiliesTest::RunTest(const FString& Parameters
         UGamePlatformOffenseAttributeSet::StaticClass()->IsChildOf(UGamePlatformAttributeSet::StaticClass()));
     TestTrue(TEXT("防御属性集必须继承平台AttributeSet"),
         UGamePlatformDefenseAttributeSet::StaticClass()->IsChildOf(UGamePlatformAttributeSet::StaticClass()));
-    TestTrue(TEXT("控制属性集必须继承平台AttributeSet"),
-        UGamePlatformControlAttributeSet::StaticClass()->IsChildOf(UGamePlatformAttributeSet::StaticClass()));
 
     UGamePlatformOffenseAttributeSet* Offense = NewObject<UGamePlatformOffenseAttributeSet>();
     UGamePlatformDefenseAttributeSet* Defense = NewObject<UGamePlatformDefenseAttributeSet>();
-    UGamePlatformControlAttributeSet* Control = NewObject<UGamePlatformControlAttributeSet>();
     TestEqual(TEXT("默认CriticalDamage仍与旧战斗公式一致"), Offense->GetCriticalDamage(), 1.5f);
-    TestEqual(TEXT("默认Tenacity不改变"), Control->GetTenacity(), 0.0f);
 
     // 裁减真正没有运行消费路径的Attribute后，其反射身份也不能继续存在。
     // 不通过将属性字段设为不复制来伪造“属性已减少”。
     TestNull(TEXT("未消费的攻击速度字段不得再进入GAS"),
         FindFProperty<FProperty>(UGamePlatformOffenseAttributeSet::StaticClass(), FName(TEXT("AttackSpeed"))));
-    TestNull(TEXT("失衡Poise尚无真实扣减与恢复机制，暂不注册属性"),
-        FindFProperty<FProperty>(UGamePlatformControlAttributeSet::StaticClass(), FName(TEXT("Poise"))));
-    TestNull(TEXT("失衡上限不应成为预留同步字段"),
-        FindFProperty<FProperty>(UGamePlatformControlAttributeSet::StaticClass(), FName(TEXT("MaxPoise"))));
-    TestNull(TEXT("失衡恢复速率不应成为预留同步字段"),
-        FindFProperty<FProperty>(UGamePlatformControlAttributeSet::StaticClass(), FName(TEXT("PoiseRegen"))));
+    // 控制时长不使用韧性/失衡属性集。控制状态直接由服务器GameplayEffect与Tag表达。
 
     float CriticalChance = 2.0f;
     Offense->PreAttributeChange(UGamePlatformOffenseAttributeSet::GetCriticalChanceAttribute(), CriticalChance);
@@ -87,9 +77,6 @@ bool FGamePlatformCombatAttributeFamiliesTest::RunTest(const FString& Parameters
     Defense->PreAttributeChange(UGamePlatformDefenseAttributeSet::GetDamageReductionAttribute(), DamageReduction);
     TestEqual(TEXT("DamageReduction限制在0..1"), DamageReduction, 1.0f);
 
-    float Tenacity = -1.0f;
-    Control->PreAttributeChange(UGamePlatformControlAttributeSet::GetTenacityAttribute(), Tenacity);
-    TestEqual(TEXT("Tenacity限制在0..1"), Tenacity, 0.0f);
     return true;
 }
 

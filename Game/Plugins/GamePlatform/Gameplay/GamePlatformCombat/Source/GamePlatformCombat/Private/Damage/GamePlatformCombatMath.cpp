@@ -97,13 +97,6 @@ bool FGamePlatformCombatMath::IsCriticalHit(
         SafeUnit(CriticalRoll) < SafeUnit(CriticalChance);
 }
 
-float FGamePlatformCombatMath::CalculateControlDuration(
-    float RequestedDuration,
-    float Tenacity)
-{
-    return SafeNonNegative(RequestedDuration) * (1.0f - SafeUnit(Tenacity));
-}
-
 FGamePlatformCombatResult FGamePlatformCombatMath::ResolveDamage(
     const FGuid& EventId,
     float RequestedMagnitude,

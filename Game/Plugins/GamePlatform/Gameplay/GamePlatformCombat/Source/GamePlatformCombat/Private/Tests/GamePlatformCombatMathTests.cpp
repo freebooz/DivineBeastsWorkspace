@@ -197,23 +197,4 @@ bool FGamePlatformCombatTrueDamageFormulaTest::RunTest(const FString& Parameters
     return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-    FGamePlatformCombatControlTenacityFormulaTest,
-    "GamePlatform.Combat.Math.Control.Tenacity",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
-bool FGamePlatformCombatControlTenacityFormulaTest::RunTest(const FString& Parameters)
-{
-    TestEqual(TEXT("25%韧性将4秒控制缩短为3秒"),
-        FGamePlatformCombatMath::CalculateControlDuration(4.0f, 0.25f),
-        3.0f);
-    TestEqual(TEXT("100%韧性完全抵抗控制"),
-        FGamePlatformCombatMath::CalculateControlDuration(4.0f, 1.0f),
-        0.0f);
-    TestEqual(TEXT("负韧性按0处理"),
-        FGamePlatformCombatMath::CalculateControlDuration(4.0f, -1.0f),
-        4.0f);
-    return true;
-}
-
 #endif

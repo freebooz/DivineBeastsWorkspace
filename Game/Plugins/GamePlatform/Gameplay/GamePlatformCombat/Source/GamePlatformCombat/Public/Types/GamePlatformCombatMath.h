@@ -46,9 +46,6 @@ public:
 
     static bool IsCriticalHit(bool bCanCritical, float CriticalChance, float CriticalRoll);
 
-    /** Tenacity（韧性）按0..1缩短控制持续时间；1表示完全抵抗。 */
-    static float CalculateControlDuration(float RequestedDuration, float Tenacity);
-
     static FGamePlatformCombatResult ResolveDamage(
         const FGuid& EventId,
         float RequestedMagnitude,

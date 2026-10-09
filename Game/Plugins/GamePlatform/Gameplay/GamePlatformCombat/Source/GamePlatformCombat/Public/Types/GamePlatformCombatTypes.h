@@ -9,7 +9,7 @@ enum class EGamePlatformCombatEventType : uint8
     Damage,
     Healing,
     ControlApplied,
-    ControlResisted,
+    ControlResisted, // 仅保留历史枚举序号兼容；已取消按数值韧性抵抗控制。
     ControlRemoved,
     Death,
     RespawnReset
