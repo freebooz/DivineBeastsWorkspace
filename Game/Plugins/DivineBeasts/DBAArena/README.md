@@ -30,7 +30,7 @@
 - 项目公开DBAClient不依赖Moba或竞技，新增Moba依赖仅属于本插件ClientOnly模块；Server模块不引入MobaPresentationClient和纯表现资源。真实资产、完整技能映射、Client/Server Cook及双客户端手感测试待完成。
 
 - Profile在Catalog主资产异步成功后会按稳定条目顺序提前请求（最多64条唯一配置），不会等到首次技能命中才整体开始加载；角色/技能键不匹配时严禁重用其他英雄的VFX/SFX资源ID。只在真实ArenaGameState世界激活，普通登录、Village和OpenWorld不因该可选竞技组合根加载资源。
-- UE编译目前取得UHT生成成功但C++构建停在本机UBA执行器且被主动停止，不可标记为完成。UE5.8本分支`-NoUBA`只关闭Detour，仍会选用UBA执行器；需要排查运行端编译代理后再进行真实客户端构建、专服和资源Cook。
+- 早期UE编译仅取得UHT生成成功，C++构建曾停在本机UBA执行器且被主动停止；该历史记录不能作为当前构建结果。UE5.8本分支`-NoUBA`只关闭Detour，仍会选用UBA执行器；需要排查运行端编译代理后再进行真实客户端构建、专服和资源Cook。
 
 
 ## 2026-10-09 已授权技能预热与资源验收边界
@@ -45,3 +45,7 @@
 - `Tests/Architecture/PluginCompositionAudit.Tests.ps1`：禁用竞技后的公共闭包、竞技Server不引入客户端、循环与隐藏依赖负例。
 - `Tests/Architecture/ValidateDesignBaseline.ps1`：46个代码／机制插件＋登记内容插件。
 - UE测试源码仍位于各模块的`Private/Tests`。结构检查不是UE编译、Cook、网络或五模式运行验收；本轮证据见总体实施规划。
+
+2026-10-09 联机验证前修复：竞技反馈组合根的两个include曾拼接在同一行，引发C4067；现已分行并补充本地玩家/世界租约边界说明。受影响Editor模块重新编译退出0；Client、Server、Cook和双客户端准入结果分别记录，不能由该结果推断。
+
+本次完整Native构建证据：Client退出0见Saved/Validation/FoundationM0/0d516f9c-7d9c-4a49-b509-167c307aec0e/Build/Client；Server退出0见Saved/Validation/FoundationM0/8e56f639-5f43-4097-9d05-8ad14d337cbc/Build/Server。它们不代表Cook、真实WorldReady或功能体验验收通过。

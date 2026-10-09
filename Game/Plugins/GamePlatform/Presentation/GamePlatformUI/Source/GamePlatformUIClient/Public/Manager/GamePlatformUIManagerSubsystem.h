@@ -269,7 +269,7 @@ private:
     TMap<TWeakObjectPtr<UGamePlatformUIScreen>, FGamePlatformDataLease> ActiveScreenLeases;
     TMap<TWeakObjectPtr<UGamePlatformUIScreen>, TWeakObjectPtr<UCommonActivatableWidgetStack>> ScreenStacks;
     TSet<TWeakObjectPtr<UCommonActivatableWidgetStack>> ObservedStacks;
-    /** 移动/其他平台专属Widget加载失败时，只允许针对同一请求回退默认类一次。 */
+    /** 同一请求的专属Widget变体最多回退默认类一次；所有加载仍归Data租约。 */
     TSet<FGuid> PendingDefaultWidgetRetries;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> PauseScreens;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> TravelPersistentScreens;

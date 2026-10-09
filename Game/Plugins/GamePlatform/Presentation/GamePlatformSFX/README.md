@@ -50,6 +50,9 @@ Gameplay / Application Fact
 - `Docs/ManualReview.md`：人工审核和组件清单；
 - `Docs/审查整改方案与执行计划.md`：本轮审查结论、整改方案与执行计划。
 
+2026-10-09 独立编译修复：音效桥接显式包含Engine/World.h，世界执行器显式包含SoundBase与SoundConcurrency的完整类型；SFXRuntime Bundle标识使用不可变const FName，避免运行时名称表类型被误写为constexpr。原完整Client构建的C2664/C2131复现日志位于Saved/Validation/FoundationM0/1d5d3f17-a598-4f01-ad58-9a094ffbde8e/Build/Client；后续构建结果单独记录，不改变声音或玩法行为。
+
+本次完整Native构建证据：Client退出0见Saved/Validation/FoundationM0/0d516f9c-7d9c-4a49-b509-167c307aec0e/Build/Client；Server退出0见Saved/Validation/FoundationM0/8e56f639-5f43-4097-9d05-8ad14d337cbc/Build/Server。它们不代表Cook、真实WorldReady或功能体验验收通过。
 
 ## 2026-09-30 设计审查修复
 

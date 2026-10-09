@@ -11,6 +11,8 @@ class GAMEPLATFORMGAMEPLAY_API AGamePlatformPlayerControllerBase : public APlaye
 {
     GENERATED_BODY()
 public:
+    /** 拥有者准备令牌复制变化，仅用于触发本地事实重新采样。 */
+    FSimpleMulticastDelegate OnPreparationChanged;
     /** 返回当前拥有者令牌；仅供关联准备状态，禁止用作认证凭据。 */
     FGamePlatformPreparationToken GetPreparationToken() const { return PreparationToken; }
     /**

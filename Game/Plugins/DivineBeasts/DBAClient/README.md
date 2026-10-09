@@ -50,7 +50,14 @@
 
 `F:\\VFX Lib` 的复用映射见 `Docs/ZodiacReuseMatrix.md（十二生肖VFX复用矩阵）`。首批优先 Rabbit（卯兔）、Horse（午马）、Goat（未羊）、Rooster（酉鸡）、Boar（亥猪）；当前只完成平台母版能力与复用规划，未创建任何虚构技能 `.uasset`。
 
-P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基类、LocalPlayer 自适应子系统和 SafeZone 支持；DivineBeastsUIClient 已新增项目分类基类，并建立登录、真实加载、RootLayout 和五类 HUD 的 C++ / Blueprint 父类。ApplicationFlow 的 Blueprint `uint64` 反射阻断和 GamePlatformUIClient 生成代码错误已经消除；当前完整客户端构建的已知阻断位于主工程 Online/PCG 头依赖及 GamePlatformWorld 测试源码。UI 与 Flow 仍须保持事件驱动、禁止逐帧轮询。
+P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基类、LocalPlayer 自适应子系统和 SafeZone 支持；DivineBeastsUIClient 已新增项目分类基类，并建立登录、真实加载、RootLayout 和五类 HUD 的 C++ / Blueprint 父类。ApplicationFlow 的 Blueprint `uint64` 反射阻断和 GamePlatformUIClient 生成代码错误已经消除；早期完整客户端构建曾阻断于主工程 Online/PCG 头依赖及 GamePlatformWorld 测试源码；本次2026-10-09完整Client构建已退出0，旧阻断不再代表当前状态。UI 与 Flow 仍须保持事件驱动、禁止逐帧轮询。
+
+2026-10-09 联机验证前修复：DivineBeastsPresentationRuntime直接使用平台身份与结果的DLL导出方法，Build.cs现显式声明GamePlatformCore公开依赖。原链接缺失FGamePlatformId/FGamePlatformResult符号的复现日志与修复后退出0日志位于Saved/Validation/VillageFlow/20261009/EditorModulesBuild.json所指证据目录。登录和非竞技世界的依赖方向不变。
+
+同次独立编译整改：角色外观与预览的.cpp直接包含其使用的AnimInstance、SkeletalMesh及SkeletalMeshComponent完整类型，不依赖Unity文件顺序或共享PCH补齐模板类型。这些修改仅补充编译边界，不调整角色身份、资源租约或运行时流程。
+
+本次完整Native构建证据：Client退出0见Saved/Validation/FoundationM0/0d516f9c-7d9c-4a49-b509-167c307aec0e/Build/Client；Server退出0见Saved/Validation/FoundationM0/8e56f639-5f43-4097-9d05-8ad14d337cbc/Build/Server。它们不代表Cook、真实WorldReady或功能体验验收通过。
+
 
 
 ## 2026-10-09 公共流程Retry合同

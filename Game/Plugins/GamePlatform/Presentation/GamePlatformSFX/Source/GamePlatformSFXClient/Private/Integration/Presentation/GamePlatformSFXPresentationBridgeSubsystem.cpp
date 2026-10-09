@@ -5,7 +5,7 @@
 #include "Integration/Presentation/GamePlatformSFXPresentationBridgeSubsystem.h"
 
 #include "Engine/LocalPlayer.h"
-#include "Engine/World.h" // GetWorld传入UObject服务入口需完整UWorld继承类型，不能依赖PCH。
+#include "Engine/World.h"
 #include "GamePlatformPresentationClientSubsystem.h"
 #include "Interfaces/IGamePlatformSFXService.h"
 #include "Definitions/GamePlatformSFXDefinition.h"

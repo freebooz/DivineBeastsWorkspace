@@ -1,14 +1,18 @@
-// 神兽联盟项目层客户端外观适配：读取已复制英雄身份，通过既有兼容加载器取得Profile/视觉资源并装配Mesh。
-// 本组件持有加载句柄、就绪委托及有限重试定时器；身份切换/EndPlay取消旧代请求，不参与服务器权威规则。
+// 项目层客户端角色外观组件：由角色只读状态驱动骨骼、材质与动画资源的异步加载，不承载服务器权威规则。
+// 依赖平台数据加载服务；加载请求、状态委托、重试计时器及动态材质由本组件持有。
+// 生命周期跟随所属角色，EndPlay解绑状态、取消请求并释放自身引用，避免离开世界后应用过期结果。
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 
-#include "Animation/AnimInstance.h" // TSoftClassPtr::Get需完整UAnimInstance类型，NoPCH下不依赖间接包含。
+// TSoftClassPtr::Get会调用UAnimInstance::StaticClass，必须包含完整类型，不能依赖Unity或共享PCH。
+#include "Animation/AnimInstance.h"
+
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h" // 软引用Get执行类型检查，需要网格资产完整类型而非组件头的前向声明。
 #include "Engine/StreamableManager.h"
+#include "Engine/SkeletalMesh.h"
 #include "GameFramework/Character.h"
 #include "Loading/GamePlatformAssetLoader.h"
 #include "Materials/MaterialInterface.h"
@@ -19,6 +23,16 @@ UDivineBeastsCharacterAppearanceComponent::UDivineBeastsCharacterAppearanceCompo
 {
     PrimaryComponentTick.bCanEverTick = false;
     SetIsReplicatedByDefault(false);
+}
+FName UDivineBeastsCharacterAppearanceComponent::CurrentVisualHero() const
+{
+    const FName Bound=CharacterState?CharacterState->GetHeroDefinitionId():NAME_None;
+    return Bound.IsNone()?ApprovedVisualHero:Bound;
+}
+void UDivineBeastsCharacterAppearanceComponent::ApplyApprovedVisualHero(FName HeroId)
+{
+    if(GetNetMode()==NM_DedicatedServer || HeroId.IsNone())return;
+    ApprovedVisualHero=HeroId; TryBindCharacterState(); RefreshAppearance();
 }
 
 void UDivineBeastsCharacterAppearanceComponent::BeginPlay()
@@ -100,7 +114,7 @@ void UDivineBeastsCharacterAppearanceComponent::RefreshAppearance()
         return;
     }
 
-    const FName HeroDefinitionId = CharacterState->GetHeroDefinitionId();
+    const FName HeroDefinitionId = CurrentVisualHero();
     if (HeroDefinitionId.IsNone())
     {
         return;
@@ -139,7 +153,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleProfileLoaded(
 {
     if (ExpectedRequestGeneration != RequestGeneration ||
         !CharacterState ||
-        CharacterState->GetHeroDefinitionId() != ExpectedHeroDefinitionId)
+        CurrentVisualHero() != ExpectedHeroDefinitionId)
     {
         return;
     }
@@ -174,6 +188,11 @@ void UDivineBeastsCharacterAppearanceComponent::HandleProfileLoaded(
     {
         Assets.AddUnique(Profile->AnimInstanceClass.ToSoftObjectPath());
     }
+    else if(Profile->bDevelopmentPlaceholder)
+    {
+        // 一期真实占位模型沿用已交付IDLE；只加载客户端表现，不能作为服务器技能/根运动依据。
+        Assets.AddUnique(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.ABP_DBA_PreviewIdle_C")));
+    }
 
     const TWeakObjectPtr<UDivineBeastsCharacterAppearanceComponent> WeakThis(this);
     VisualLease = FGamePlatformAssetLoader::RequestAsyncLoad(
@@ -201,7 +220,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
 {
     if (ExpectedRequestGeneration != RequestGeneration ||
         !CharacterState ||
-        CharacterState->GetHeroDefinitionId() != ExpectedHeroDefinitionId ||
+        CurrentVisualHero() != ExpectedHeroDefinitionId ||
         PendingProfile != Profile)
     {
         return;
@@ -288,6 +307,10 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
     if (UClass* AnimClass = Profile->AnimInstanceClass.Get())
     {
         MeshComponent->SetAnimInstanceClass(AnimClass);
+    }
+    else if(Profile->bDevelopmentPlaceholder)
+    {
+        if(auto* Idle=Cast<UClass>(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.ABP_DBA_PreviewIdle_C")).ResolveObject()))MeshComponent->SetAnimInstanceClass(Idle);
     }
 
     AppliedHeroDefinitionId = ExpectedHeroDefinitionId;

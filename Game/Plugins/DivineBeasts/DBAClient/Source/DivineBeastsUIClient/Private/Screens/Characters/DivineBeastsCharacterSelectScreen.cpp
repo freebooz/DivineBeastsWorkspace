@@ -23,8 +23,7 @@ void UDivineBeastsCharacterSelectScreen::NativeOnActivated()
     Super::NativeOnActivated();
     SelectButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleSelect);
     LogoutButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleLogout);
-    RotateLeftButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleRotateLeft);
-    RotateRightButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleRotateRight);
+    if (OpenCharacterCreateButton) { OpenCharacterCreateButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleOpenCharacterCreate); }
     CharacterList->OnSelectionChanged.AddUniqueDynamic(this, &ThisClass::HandleCharacterChanged);
     if (auto* VM = GetCharacterSelectViewModel())
     {
@@ -42,8 +41,7 @@ void UDivineBeastsCharacterSelectScreen::NativeOnDeactivated()
 {
     SelectButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleSelect);
     LogoutButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleLogout);
-    RotateLeftButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleRotateLeft);
-    RotateRightButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleRotateRight);
+    if (OpenCharacterCreateButton) { OpenCharacterCreateButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleOpenCharacterCreate); }
     CharacterList->OnSelectionChanged.RemoveDynamic(this, &ThisClass::HandleCharacterChanged);
     if (auto* VM = GetCharacterSelectViewModel())
     {
@@ -79,6 +77,7 @@ void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
     const int32 Index = CharacterList->GetSelectedIndex();
     const bool bEnabled = State.Characters.IsValidIndex(Index) && State.Characters[Index].bEnabled;
     SelectButton->SetIsEnabled(VM->CanSubmitSelection() && bEnabled);
+    if (OpenCharacterCreateButton) { OpenCharacterCreateButton->SetIsEnabled(State.bAuthenticated && !State.bBusy && State.AllowedCommands.Contains(TEXT("CreateCharacter"))); }
     CharacterList->SetIsEnabled(!State.bBusy);
     StatusText->SetText(State.Characters.IsValidIndex(Index) && !bEnabled ? State.Characters[Index].DisabledReason
         : FText::FromString(State.bBusy ? TEXT("正在确认角色，请稍候…") : TEXT("选择角色后点击确认。")));
@@ -180,8 +179,7 @@ void UDivineBeastsCharacterSelectScreen::HandleSelect()
 void UDivineBeastsCharacterSelectScreen::HandleStateChanged(int32, int32) { RefreshPresentation(); }
 void UDivineBeastsCharacterSelectScreen::HandleCommandCompleted(FGuid, FName) { RefreshPresentation(); }
 // 转动只修改预览舞台；注销结束统一会话，不在页面中直接改变业务状态。
-void UDivineBeastsCharacterSelectScreen::HandleRotateLeft() { if (auto* VM = GetCharacterSelectViewModel()) { VM->RotateCharacterPreview(-30.0f); } }
-void UDivineBeastsCharacterSelectScreen::HandleRotateRight() { if (auto* VM = GetCharacterSelectViewModel()) { VM->RotateCharacterPreview(30.0f); } }
+void UDivineBeastsCharacterSelectScreen::HandleOpenCharacterCreate() { if (auto* VM = GetCharacterSelectViewModel()) { VM->ShowCharacterEntryScreen(TEXT("UI.Screen.CharacterCreate")); } }
 void UDivineBeastsCharacterSelectScreen::HandleLogout() { if (auto* VM = GetCharacterSelectViewModel()) { VM->Logout(); } }
 
 // 鼠标拖动重用现有本地预览命令，忙碌时不接受交互。

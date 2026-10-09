@@ -133,6 +133,10 @@ public:
     }
 
 private:
+    /** 只从本次已确认Session、真实受控Pawn和共享体验资源采集事实，旧世界事件忽略。 */
+    void ObserveCurrentGameplayWorld();
+    TWeakObjectPtr<class ADivineBeastsWorldPlayerController> ObservedWorldController;
+    bool bObservingGameplayFacts=false;
     /** 注册本GameInstance全部项目ExecutorId；任一失败时回滚本次已注册句柄。 */
     bool RegisterNodeFactories();
     void UnregisterNodeFactories();

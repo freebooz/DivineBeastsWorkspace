@@ -11,7 +11,7 @@
 #include "Components/Overlay.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 #include "Engine/LocalPlayer.h"
-#include "Engine/Engine.h"
+#include "Engine/Engine.h" // LocalPlayer的ClassWithin要求真实Engine作为Outer，Transient包不合法。
 #include "UObject/UObjectGlobals.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UnrealType.h"
@@ -98,6 +98,8 @@ bool FGamePlatformUIScreenReentryRegressionTest::RunTest(const FString&)
     FGamePlatformDataLease Lease; Lease.LeaseId = FGuid::NewGuid();
     Manager->PendingRequests.Add(Request.RequestId, Request);
     Manager->PendingLoads.Add(Request.RequestId, Lease);
+    // 回退中的请求同样会经历真实CommonUI同步重入；取消必须撤销重试资格且暂留构造租约。
+    Manager->PendingDefaultWidgetRetries.Add(Request.RequestId);
     Manager->ConstructingScreenRequests.Add(Request.RequestId);
     UGamePlatformUIManagerSubsystem::FScreenOpenConstruction Construction;
     Construction.Request = Request; Construction.Lease = Lease;
@@ -115,6 +117,7 @@ bool FGamePlatformUIScreenReentryRegressionTest::RunTest(const FString&)
     Stack->AddWidgetInstance(*B); // 真实容器激活B/失活A的同步调用边界。
     TestEqual(TEXT("A失活用户事件在调用返回前取消B"), CancelEvents, 1);
     TestFalse(TEXT("请求资格已取消"), Manager->PendingRequests.Contains(Request.RequestId));
+    TestFalse(TEXT("同步取消清除默认类回退资格"), Manager->PendingDefaultWidgetRetries.Contains(Request.RequestId));
     TestTrue(TEXT("构造返回前仍保留Pending租约"), Manager->PendingLoads.Contains(Request.RequestId));
     TestFalse(TEXT("取消的B不得完成提交"), Manager->CompleteScreenOpen(Construction, B.Get()));
     TestFalse(TEXT("原栈撤回B"), Stack->GetWidgetList().Contains(B.Get()));

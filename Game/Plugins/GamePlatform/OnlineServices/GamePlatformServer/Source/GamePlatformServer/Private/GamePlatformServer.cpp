@@ -9,6 +9,7 @@
 #include "Components/GamePlatformAdmissionHandshakeComponent.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/World.h" // 专服模块直接查询世界，不能依赖其他模块的PCH提供完整类型。
 
 class FGamePlatformServerModule final : public IModuleInterface
 {

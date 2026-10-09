@@ -84,6 +84,39 @@ FGamePlatformResult UGamePlatformWorldSubsystem::InitializeDevelopment(const FPr
     if(!Accepted.IsSuccess())Fail(Accepted.Code,Accepted.Message);
     return Accepted;
 }
+FGamePlatformResult UGamePlatformWorldSubsystem::InitializeBoundWorld(const FPrimaryAssetId& Id, const FGamePlatformWorldContext& Verified)
+{
+    check(IsInGameThread());
+    if (!CanMutate() || bStarted) return WorldError(TEXT("WorldBusyOrClosing"));
+    // 只接受已绑定实例身份。旧世界GUID由本服务创建，不采用外部提交的就绪布尔或GUID。
+    if (!Id.IsValid() || !Verified.WorldId.IsValid() || !Verified.ExperienceId.IsValid()
+        || Verified.ServerInstanceId.IsEmpty() || Verified.ServerStartGeneration == 0
+        || Verified.AuthorityKind != EGamePlatformWorldAuthority::SessionProjection)
+        return WorldError(TEXT("BoundWorldIdentityInvalid"));
+    auto* GI = GetWorld()->GetGameInstance();
+    auto* Data = GI ? IGamePlatformDataService::Get(*GI) : nullptr;
+    if (!Data) return WorldError(TEXT("DataUnavailable"));
+    const FGuid Generation = Snapshot.Context.ContextGeneration;
+    Snapshot.Context = Verified; Snapshot.Context.ContextGeneration = Generation;
+    Snapshot.Context.ReadinessState = EGamePlatformWorldReadiness::Waiting;
+    Snapshot.Context.Result = {}; Snapshot.bSessionContextMatched = true;
+    bStarted = true; DeadlineSeconds = FPlatformTime::Seconds() + 60;
+    FGamePlatformResult Accepted;
+    DefinitionLease = Data->AcquireDefinition(Id, UGamePlatformWorldDefinition::StaticClass(), {}, EGamePlatformDataLifetime::World, this,
+        [Weak=TWeakObjectPtr<UGamePlatformWorldSubsystem>(this),Generation](const auto& Lease,const auto& Result)
+        {
+            auto* Self=Weak.Get(); if (!Self || !Self->CanMutate() || Self->Snapshot.Context.ContextGeneration!=Generation) return;
+            if (!Result.IsSuccess()) { Self->Fail(Result.Code,Result.Message); return; }
+            auto* Service=IGamePlatformDataService::Get(*Self->GetWorld()->GetGameInstance());
+            const auto* Definition=Service?Cast<UGamePlatformWorldDefinition>(Service->GetLoadedDefinition(Lease)):nullptr;
+            if (!Definition || Definition->LogicalId!=Self->Snapshot.Context.WorldId || Definition->DefaultExperienceId!=Self->Snapshot.Context.ExperienceId)
+            { Self->Fail(TEXT("BoundWorldDefinitionMismatch"),TEXT("权威实例身份与实际世界定义不一致")); return; }
+            Self->DeadlineSeconds=FPlatformTime::Seconds()+Definition->ReadinessTimeoutSeconds;
+            Self->LoadRegions(Definition->Regions); Self->Refresh();
+        },Accepted);
+    if (!Accepted.IsSuccess()) Fail(Accepted.Code,Accepted.Message);
+    return Accepted;
+}
 void UGamePlatformWorldSubsystem::LoadRegions(const TArray<FPrimaryAssetId>& Ids)
 {
     auto* GI=GetWorld()->GetGameInstance();auto* Data=GI?IGamePlatformDataService::Get(*GI):nullptr;

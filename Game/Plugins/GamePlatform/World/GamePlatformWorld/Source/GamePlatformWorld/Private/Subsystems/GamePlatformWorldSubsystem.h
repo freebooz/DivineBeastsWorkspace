@@ -25,6 +25,7 @@ public:
     virtual void OnWorldEndPlay(UWorld& World) override;
     virtual FGamePlatformResult InitializeDevelopment(const FPrimaryAssetId&, const FGamePlatformVersion&, FName) override;
     virtual FGamePlatformResult InitializeSessionWorld() override;
+    virtual FGamePlatformResult InitializeBoundWorld(const FPrimaryAssetId&, const FGamePlatformWorldContext&) override;
     virtual FGamePlatformWorldReadinessSnapshot GetReadiness() override;
     virtual FGamePlatformWorldRegistration RegisterRegionProvider(const FGamePlatformRegionProvider&,FGamePlatformResult&) override;
     virtual bool UnregisterRegionProvider(const FGamePlatformWorldRegistration&) override;

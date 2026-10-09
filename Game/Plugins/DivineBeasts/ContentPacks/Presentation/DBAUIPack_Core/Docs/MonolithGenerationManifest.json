@@ -160,7 +160,13 @@
       "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsAbilityBarPanel",
       "WidgetCount": 6,
-      "NamedChildren": ["PrimaryAbilitySlot", "PassiveAbilitySlot", "ActiveAbilitySlot1", "ActiveAbilitySlot2", "UltimateAbilitySlot"],
+      "NamedChildren": [
+        "PrimaryAbilitySlot",
+        "PassiveAbilitySlot",
+        "ActiveAbilitySlot1",
+        "ActiveAbilitySlot2",
+        "UltimateAbilitySlot"
+      ],
       "FreshCompileErrors": 0,
       "FreshCompileWarnings": 0,
       "AccessibilityAuditIssues": 0,
@@ -172,7 +178,11 @@
       "WidgetCount": 7,
       "FreshCompileErrors": 0,
       "FreshCompileWarnings": 0,
-      "SlotStateEventGraphVerified": ["Icon → SetBrushFromSoftTexture", "OverlayProgress → CooldownOverlay.SetRenderOpacity", "bEnabled → AbilityIcon.SetIsEnabled"]
+      "SlotStateEventGraphVerified": [
+        "Icon → SetBrushFromSoftTexture",
+        "OverlayProgress → CooldownOverlay.SetRenderOpacity",
+        "bEnabled → AbilityIcon.SetIsEnabled"
+      ]
     },
     "HeroTexture2DAssetsPresent": 60,
     "AbilityUIProfileAssetsFound": 0,
@@ -417,5 +427,52 @@
     "RootCause": "Monolith build_sequence_from_poses未初始化Sequencer MovieScene/ControlRig，初次Cook真实失败27项。",
     "CookPassed": true,
     "CookEvidence": "Saved/Validation/FoundationM0/be293776-9d44-47d9-a70f-e8a6b62c09d0/Cook-FrontEndClient/result.json"
+  },
+  "LatestPreviewTransparencyRepair": {
+    "Date": "2026-10-09",
+    "Tool": "Monolith MCP 0.20.3",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Assets": [
+      "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate",
+      "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect"
+    ],
+    "Property": "PreviewDragSurface.BrushColor",
+    "BeforeAlpha": 1.0,
+    "AfterAlpha": 0.0,
+    "Visibility": "Visible",
+    "Compiled": true,
+    "Saved": true,
+    "ReloadVerified": true,
+    "RuntimeValidation": "Latest client Cook and 23-item IoStore gate passed; opaque rectangle removal observed in both clients. Character model remains invisible; dual-client WorldReady validation failed.",
+    "Evidence": "Saved/Validation/VillageFlow/20261009"
+  },
+  "LatestCharacterSelectionReferenceLayout": {
+    "Date": "2026-10-09",
+    "Tool": "Monolith MCP 0.23.0",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect",
+    "Reference": "User supplied character-selection image",
+    "Layout": "Left official logo and journey guide; center model drag region; right roster and creation action; bottom name and enter action",
+    "FixedFontSizes": true,
+    "FixedControlSizes": true,
+    "RotateButtonsPresent": false,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "Saved": true,
+    "ReloadVerified": true,
+    "DanglingNavigation": 0,
+    "RuntimeVisualAcceptance": "Pending: physical Escape stopped computer use",
+    "WorldReadyAccepted": false,
+    "CookEvidence": "Saved/Validation/FoundationM0/f754933c-6ff1-4c70-8d72-01cbf8c32aee/Cook-FrontEndClient"
+  },
+  "LatestCreateReturnFlow": {
+    "Date": "2026-10-09",
+    "Asset": "/DBAClient/Definitions/DA_DivineBeastsApplicationFlow",
+    "ChangedSuccessor": "CreateCharacter -> LoadRoster -> CharacterEntry",
+    "OtherNodesPreserved": 13,
+    "InputWaitFlagsPreserved": true,
+    "SavedAndReloaded": true,
+    "Regression": "Only creation successor differs; reload asserts create-to-roster-to-entry",
+    "ManualEndToEnd": "Pending"
   }
 }

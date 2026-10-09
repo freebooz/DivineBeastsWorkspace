@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-// 角色组件与可信Owner使用Actor合同；显式提供完整定义，避免公开头依赖宿主PCH才能独立编译。
+// 可信Owner与配置快照使用Actor完整合同，公开头直接声明该依赖；Ready实现已外置，不依赖宿主PCH或旧内联描述。
 #include "GameFramework/Actor.h"
 #include "Initialization/GamePlatformCharacterInitializer.h"
 #include "State/GamePlatformCharacterStateView.h"

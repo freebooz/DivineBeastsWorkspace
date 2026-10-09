@@ -15,3 +15,6 @@
 2026-10-09 专项增量：`UGamePlatformAbilitySystemComponent`（平台技能系统组件）现在覆盖 UE 原生 `OnRep_ActivateAbilities`（技能授权列表复制完成），调用父类后发送无项目语义的 `OnAbilitySpecListChanged`（原生技能规格列表变更）C++ 委托；技能 UI 领域适配据此处理 OwnerOnly（仅拥有者）自定义技能槽状态先于原生 AbilitySpec 复制到达的乱序情况。公开接口不包含十二生肖类型、具体 UI、Cooldown 业务或客户端资产；订阅调用方必须解绑。此代码已写入源码，尚待锁定 UE5.8 的模块编译和复制回归，不能宣称正式运行通过。
 
 主分支整合同时保留两类独立合同：激活资格由当前Avatar的同世界弱Owner Gate读取并失败关闭；技能规格复制事件只报告已经到达的GAS事实，不授予技能、不开放资格，也不跳过冷却/费用/权威审查。Avatar替换仍先清输入和旧Gate，再广播绑定变化；客户端HUD调用方须同时处理自己的拥有者/Avatar切换并解绑原ASC事件。此前检查点验证结果不能替代整合后重新编译、技能复制乱序与世界退出回归。
+
+2026-10-09 专项增量：`UGamePlatformAbilitySystemComponent`（平台技能系统组件）现在覆盖 UE 原生 `OnRep_ActivateAbilities`（技能授权列表复制完成），调用父类后发送无项目语义的 `OnAbilitySpecListChanged`（原生技能规格列表变更）C++ 委托；技能 UI 领域适配据此处理 OwnerOnly（仅拥有者）自定义技能槽状态先于原生 AbilitySpec 复制到达的乱序情况。公开接口不包含十二生肖类型、具体 UI、Cooldown 业务或客户端资产；订阅调用方必须解绑。此代码已写入源码，尚待锁定 UE5.8 的模块编译和复制回归，不能宣称正式运行通过。
+本次设计审查整改的真实行为、线程/所有权/失败合同及验证边界见 [2026-09-30专属说明](Docs/DesignRemediation-2026-09-30.md)。其中原生规则测试与UE实际运行分别记录，不混写交付状态。

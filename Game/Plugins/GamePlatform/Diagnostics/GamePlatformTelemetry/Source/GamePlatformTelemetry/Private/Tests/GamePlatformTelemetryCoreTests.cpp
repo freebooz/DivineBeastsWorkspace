@@ -256,7 +256,7 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
         TEXT("Buffer始终有界"),
         Diagnostics.BufferDepth,
         16);
-    TestEqual(TEXT("事件与上下文同时计入缓冲预算"), Diagnostics.BufferBytes, 8192);
+    TestEqual(TEXT("事件与上下文同时计入缓冲预算"), Diagnostics.BufferBytes, static_cast<int64>(8192));
 
     TestTrue(
         TEXT("至少记录一次Drop"),
@@ -286,7 +286,7 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
     }
     const FGamePlatformTelemetryDiagnostics ByteDiagnostics = ByteBoundedBuffer.GetDiagnostics();
     TestEqual(TEXT("上下文成本使4096字节最多容纳8条记录"), ByteDiagnostics.BufferDepth, 8);
-    TestEqual(TEXT("字节限额没有被记录数上限覆盖"), ByteDiagnostics.BufferBytes, 4096);
+    TestEqual(TEXT("字节限额没有被记录数上限覆盖"), ByteDiagnostics.BufferBytes, static_cast<int64>(4096));
     TestEqual(TEXT("因字节预算驱逐的旧记录均被统计"), ByteDiagnostics.DroppedNormal, static_cast<int64>(8));
 
     return true;

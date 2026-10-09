@@ -9,12 +9,32 @@
   "CanContainContent": true,
   "EnabledByDefault": false,
   "Plugins": [
-    { "Name": "DBAGameplay", "Enabled": true },
-    { "Name": "GamePlatformCore", "Enabled": true },
-    { "Name": "GamePlatformData", "Enabled": true },
-    { "Name": "GamePlatformWorld", "Enabled": true }
+    {
+      "Name": "DBAGameplay",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformData",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformWorld",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformGameplay",
+      "Enabled": true
+    }
   ],
   "Modules": [
-    { "Name": "DBAWorldsRuntime", "Type": "Runtime", "LoadingPhase": "Default" }
+    {
+      "Name": "DBAWorldsRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
   ]
 }

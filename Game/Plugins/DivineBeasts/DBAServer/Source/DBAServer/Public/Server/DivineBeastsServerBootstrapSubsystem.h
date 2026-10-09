@@ -76,6 +76,10 @@ private:
     bool IsConfiguredWorldValid(UWorld& World, FString& OutReason) const;
     /** 返回当前权威GameState中的连接玩家数；世界失效时返回-1使平台心跳Fail Closed。 */
     int32 GetCurrentPlayerCount() const;
+    /** 本世界平台/Data真正就绪后启动一次体验；截止失败不继续发布可准入实例。 */
+    void AdvanceGameplayBootstrap();
+    FTimerHandle GameplayBootstrapTimer;
+    double GameplayBootstrapDeadline=0;
 
     FDivineBeastsServerRoleProfile ActiveProfile;
     FName ActiveExperienceId = NAME_None;

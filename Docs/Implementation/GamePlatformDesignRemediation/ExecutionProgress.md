@@ -139,3 +139,25 @@ UE复现仍使用 `Build/Game/BuildFoundation.ps1`：显式指定Editor/Client/S
 | 文件与差异 | 76新增文件全部在总体目录规划登记；未生成/提交二进制资产、Saved日志或Intermediates；最终diff检查退出0 |
 
 本表只确认本轮已执行的检查，不提升五个预留插件、后端、玩家ActorInfo、设置生产Provider、端到端世界/竞技及存量中文注释的成熟度。
+
+## 2026-10-09 主分支整合复核
+
+用户要求所有修改统一留在main。平台整改分支的内容已与近期登录、角色预览、战斗UI和Village行走接线共同整合；保留现有稳定身份、真实资产和三层依赖。主分支内容提交与正式分支祖先关系分别核对，合并记录不得通过重置或强推改写已有主线。
+
+本次人工审查覆盖20处冲突及其调用路径：插件直接依赖、公开技能事件与激活资格、预览完整类型包含、SFX预算/终态、CommonUI构造重入与Data租约、服务器地图登记，以及对应中文合同和目录增量。界面平台变体的一次默认回退保留，但两代请求均使用Data租约；新租约接替后释放本调用者旧需求，旧完成不能提交新页面。真实编辑器回归发现LocalPlayer夹具违反ClassWithin约束，已改用真实Engine作为Outer，并保留取消期间构造租约的验证。补齐DBAClient对Gameplay/World的真实插件声明；旧模块清单补回既有DivineBeastsAbilitiesRuntime身份。上述范围不是全库历史中文注释合规宣称。
+
+本次使用D:/UnrealEngine-5.8.0-release，UE5.8.0、Win64 Development。以下均为本次实际执行，不复用2026-09-30的结果：
+
+| 检查 | 结果与独立证据 |
+| --- | --- |
+| Architecture Pester | 73/73，Failed=0、Skipped=0；Saved/Validation/VillageFlow/20261009/MainMerge.Architecture.json |
+| 三层公开接口边界、英文命名 | 480公开头、992类型、177继承边通过；62活动插件、路径违规0；MainMerge.EnglishNames.json |
+| 平台Native策略 | 18入口、Debug/Release共68次测试执行，失败0；本机VS2022，MainMergeNative/Results.json |
+| Editor项目模块 | 53模块编译/链接退出0；FoundationM0/2f0062cf-5859-4657-bbc5-44afd759ee7f/Build-ProjectEditorModules；不冒充完整引擎Editor构建 |
+| 正式Client目标 | 完整编译/链接退出0；FoundationM0/9353c867-dd07-4f17-9d4c-c2b9e8d035d7/Build；使用NoSharedPCH |
+| 正式Server目标 | 完整编译/链接退出0；FoundationM0/1d891c5c-6f05-47e4-a63f-d8ce48ac5aef/Build；未传NoSharedPCH，含实际引擎依赖构建 |
+| 真实UE Automation | CommonUI暂停保留资源、同步取消撤回新页面、错误路由、鼠标预览生命周期共4/4，错误和警告均0；MainMerge.Automation.json |
+| 客户端Cook/Stage及最终IoStore | 退出0；25项必需资产缺失0，含新Pawn/体验定义；FoundationM0/530b9825-a2e3-4d92-96bd-fc52e9d5f426/Cook-FrontEndClient |
+| Village Server Cook/Stage | 退出0；FoundationM0/18e90b7d-dc32-4aa0-86b4-ecdc32f92363/Cook-VillageServer；保留旧包供回退 |
+
+FoundationM0路径均位于工作空间Saved/Validation；资产打包检查不等于新手村网络流程完成。双客户端本次手动登录、创建后返回选择、真实WorldReady及行走尚待人工验证，服务器表现资产剥离和三角色五模式联机也未在本表验收。

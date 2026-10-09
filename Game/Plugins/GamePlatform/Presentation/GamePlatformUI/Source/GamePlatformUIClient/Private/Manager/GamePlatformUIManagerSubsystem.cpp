@@ -1,5 +1,7 @@
-// 本文件属于GamePlatform平台层 GamePlatformUI，负责生产合同/实现。
-// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
+// 平台层本地玩家UI门面：注册中立页面定义，异步打开CommonUI层栈，不持有项目业务权威。
+// 页面类与预加载资源统一归Data；本门面持有每个请求/实例的租约，暂时失活保留，退栈/退出释放。
+// 游戏线程按请求、根布局和世界代次校验完成；变体最多回退一次，构造重入不得发布过期成功。
+// 中文参数、失败/取消和资源生命周期见本插件Docs/AuditRemediation-2026-10-09.md。
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 #include "Manager/GamePlatformUIScreenOpenCommitPolicy.h"
 
@@ -759,18 +761,24 @@ bool UGamePlatformUIManagerSubsystem::BeginDefaultWidgetRetry(
     const FGamePlatformDataLease& PreviousLease)
 {
     if (bClosing || bReplacingRoot || PendingDefaultWidgetRetries.Contains(Request.RequestId) ||
+        !IsValid(RootLayout) || !IsDefinitionAllowed(Definition) ||
+        !IsValid(RootLayout->GetActivatableStack(Definition.Layer)) ||
         Definition.WidgetClass.IsNull() || ResolveWidgetClass(Definition) == Definition.WidgetClass) return false;
     const TStrongObjectPtr<UGamePlatformUIManagerSubsystem> KeepManager(this);
+    const TStrongObjectPtr<UGamePlatformUILayerStack> KeepRoot(RootLayout);
     const TStrongObjectPtr<UGamePlatformUIScreenDefinition> KeepDefinition(&Definition);
     const TStrongObjectPtr<UGameInstance> GameInstance(GetLocalPlayer() ? GetLocalPlayer()->GetGameInstance() : nullptr);
     IGamePlatformDataService* Data = GameInstance.IsValid() ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
     if (!Data) return false;
     const uint64 ExpectedLayoutGeneration = RootLayoutGeneration;
     const auto IsCurrent = [this, Request, ExpectedLayoutGeneration, Instance = GameInstance.Get(),
-        ExpectedDefinition = &Definition]
+        ExpectedDefinition = &Definition, ExpectedRoot = KeepRoot.Get()]
     {
         const auto* Current = PendingRequests.Find(Request.RequestId);
+        // 合并Main回退资格与原关闭护栏：释放/受理回调若换Root或撤定义，旧栈不继续申请/发布默认页。
         return !bClosing && !bReplacingRoot && RootLayoutGeneration == ExpectedLayoutGeneration &&
+            RootLayout == ExpectedRoot && IsValid(ExpectedRoot) && IsDefinitionAllowed(*ExpectedDefinition) &&
+            IsValid(ExpectedRoot->GetActivatableStack(ExpectedDefinition->Layer)) &&
             Current && Current->Generation == Request.Generation && GetLocalPlayer() &&
             GetLocalPlayer()->GetGameInstance() == Instance &&
             ScreenDefinitions.FindRef(Request.ScreenId) == ExpectedDefinition;
@@ -819,6 +827,7 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId,
     if (ConstructingScreenRequests.Contains(RequestId)) return; // 同代完成重入不能启动第二构造。
     UGameInstance* GameInstance=GetLocalPlayer()->GetGameInstance();
     IGamePlatformDataService* Data=GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    // Main变体文件缺失会令Data租约失败；先保留失败输入，完整判定回退资格后才发布终态。
     const bool bLeaseReady = Result.IsSuccess() && Data &&
         Data->GetLeaseState(Lease) == EGamePlatformDataRequestState::Succeeded;
     const FGamePlatformUIAsyncRequest Request = *RequestPtr;
@@ -966,6 +975,7 @@ bool UGamePlatformUIManagerSubsystem::CompleteScreenOpen(
         ScreenStacks.Add(Screen, Stack);
         ActiveScreenLeases.Add(Screen, Construction.Lease);
         PendingLoads.Remove(RequestId);
+        PendingDefaultWidgetRetries.Remove(RequestId);
         ConstructingScreenRequests.Remove(RequestId);
         if (Definition->bSurvivesTravel) TravelPersistentScreens.Add(Screen);
         CleanupPendingRequest(RequestId, false);

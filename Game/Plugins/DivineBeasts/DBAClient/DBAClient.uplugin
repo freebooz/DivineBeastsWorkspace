@@ -92,6 +92,22 @@
         "Client",
         "Editor"
       ]
+    },
+    {
+      "Name": "GamePlatformGameplay",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformWorld",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
     }
   ],
   "Modules": [

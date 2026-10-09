@@ -29,11 +29,15 @@ class DIVINEBEASTSPRESENTATIONCLIENT_API UDivineBeastsCharacterAppearanceCompone
 
 public:
     UDivineBeastsCharacterAppearanceComponent();
+    /** 本地受控Avatar的表现提示来自已验证选择；不写服务器英雄身份、技能或网络状态。 */
+    void ApplyApprovedVisualHero(FName HeroId);
 
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+    FName ApprovedVisualHero=NAME_None;
+    FName CurrentVisualHero() const;
     /** 尝试绑定项目角色状态组件；动态复制组件尚未到达时使用有限次数定时重试，不启用Tick。 */
     void TryBindCharacterState();
 

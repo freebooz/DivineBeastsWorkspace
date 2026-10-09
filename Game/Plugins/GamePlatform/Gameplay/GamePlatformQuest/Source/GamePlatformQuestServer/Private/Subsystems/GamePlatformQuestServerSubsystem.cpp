@@ -1,5 +1,6 @@
 // 平台服务器世界任务聚合：自有玩家运行代次、pending事件和Timer；持久权威归异步端口，失败保留原幂等身份与载荷。
 #include "Subsystems/GamePlatformQuestServerSubsystem.h"
+#include "Engine/World.h" // 专服非Unity编译须显式包含世界与网络模式的完整类型。
 
 // 服务拥有当前世界的聚合/重试计时器；调用GetTimerManager必须直接包含UWorld完整定义。
 #include "Engine/World.h"

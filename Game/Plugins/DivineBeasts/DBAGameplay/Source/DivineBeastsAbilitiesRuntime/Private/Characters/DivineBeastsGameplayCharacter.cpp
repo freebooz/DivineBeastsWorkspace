@@ -1,16 +1,52 @@
-// 项目双端技能角色装配：复用权威Pawn全生命周期，只拥有新增Loadout；不重复ASC/战斗/身份或放行失控角色。
+// 项目双端技能角色装配：复用权威Pawn全生命周期，拥有Loadout及主线镜头/输入；不重复ASC/战斗/身份或放行失控角色。
 #include "Characters/DivineBeastsGameplayCharacter.h"
 
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/InputComponent.h"
 
 ADivineBeastsGameplayCharacter::ADivineBeastsGameplayCharacter()
 {
     bReplicates = true;
-    // 基类已经拥有AbilitySystem/Combat/CharacterIdentity/GameplayEligibility；只保留本模块的稳定Loadout子对象名。
+    // 保留主线镜头的默认子对象名、相对布局和运动默认值；可信Definition就绪后仍由继承身份组件应用配置。
+    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+    CameraBoom->SetupAttachment(GetRootComponent()); CameraBoom->TargetArmLength = 380.f;
+    CameraBoom->SocketOffset = FVector(0, 0, 80); CameraBoom->bUsePawnControlRotation = true;
+    FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+    FollowCamera->SetupAttachment(CameraBoom); FollowCamera->bUsePawnControlRotation = false;
+    bUseControllerRotationYaw = false;
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+    GetCharacterMovement()->MaxWalkSpeed = 450.f; GetCharacterMovement()->JumpZVelocity = 500.f;
+    // 基类已拥有唯一ASC/Combat/CharacterIdentity/GameplayEligibility；不能重建主线旧HeroIdentity或遮蔽继承成员。
     AbilityLoadout = CreateDefaultSubobject<UDivineBeastsAbilityLoadoutComponent>(TEXT("AbilityLoadout"));
 }
+void ADivineBeastsGameplayCharacter::SetupPlayerInputComponent(UInputComponent* Input)
+{
+    Super::SetupPlayerInputComponent(Input);
+    // 原生输入只请求ACharacter运动，不提交坐标RPC；服务器仍校验运动与准入资格。
+    Input->BindAxis(TEXT("DBA.MoveForward"), this, &ThisClass::MoveForward);
+    Input->BindAxis(TEXT("DBA.MoveRight"), this, &ThisClass::MoveRight);
+    Input->BindAxis(TEXT("DBA.Turn"), this, &ThisClass::TurnCamera);
+    Input->BindAxis(TEXT("DBA.Look"), this, &ThisClass::LookCamera);
+    Input->BindAction(TEXT("DBA.Jump"), IE_Pressed, this, &ACharacter::Jump);
+    Input->BindAction(TEXT("DBA.Jump"), IE_Released, this, &ACharacter::StopJumping);
+}
+void ADivineBeastsGameplayCharacter::MoveForward(float Value)
+{
+    if (Controller && !Controller->IsMoveInputIgnored())
+    { AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::X), Value); }
+}
+void ADivineBeastsGameplayCharacter::MoveRight(float Value)
+{
+    if (Controller && !Controller->IsMoveInputIgnored())
+    { AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), Value); }
+}
+void ADivineBeastsGameplayCharacter::TurnCamera(float Value) { AddControllerYawInput(Value); }
+void ADivineBeastsGameplayCharacter::LookCamera(float Value) { AddControllerPitchInput(Value); }
 
 UAbilitySystemComponent* ADivineBeastsGameplayCharacter::GetAbilitySystemComponent() const
 {

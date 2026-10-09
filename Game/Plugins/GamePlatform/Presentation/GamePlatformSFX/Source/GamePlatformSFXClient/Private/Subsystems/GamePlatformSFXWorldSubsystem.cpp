@@ -15,6 +15,8 @@
 #include "HAL/PlatformTime.h"
 #include "Misc/App.h"
 #include "Policy/GamePlatformSFXPolicy.h"
+#include "Sound/SoundBase.h"
+#include "Sound/SoundConcurrency.h"
 #include "Policy/GamePlatformSFXBudgetPolicy.h"
 #include "UObject/StrongObjectPtr.h"
 

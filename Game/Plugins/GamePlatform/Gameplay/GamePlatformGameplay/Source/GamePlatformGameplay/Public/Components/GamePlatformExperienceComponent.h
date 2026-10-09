@@ -15,6 +15,8 @@ class GAMEPLATFORMGAMEPLAY_API UGamePlatformExperienceComponent : public UActorC
 {
     GENERATED_BODY()
 public:
+    /** 本端定义租约完成事件；服务器Active复制不代替客户端资源Prepared。 */
+    FSimpleMulticastDelegate OnLocalResourcesPrepared;
     UGamePlatformExperienceComponent();
     UGamePlatformExperienceComponent(FVTableHelper& Helper);
     virtual ~UGamePlatformExperienceComponent() override;

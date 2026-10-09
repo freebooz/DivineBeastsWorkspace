@@ -6,6 +6,18 @@
 
 环境表面材质机制归第一层`GamePlatformSurface`：DBAWorlds不依赖其ClientOnly实现，也不在Runtime复制雪／苔藓／湿润／积水算法。具体`MI_DBA_*`材质实例、项目纹理和世界场景资产归对应`DBAWorldPack_*`；客户端世界表现适配可在项目客户端／内容装配层把天气或世界表现事实提交给Surface，Dedicated Server继续只消费服务器安全的世界／玩法Definition。
 
-当前工程没有任何已交付`.uasset`或`.umap`。因此本插件不是世界内容交付完成的证明；构建后仍须创建真实地图和定义资产并通过编辑器验证、Cook/Stage及运行检查。当前交付项目定义约束源码，尚未通过实际UE构建，不伪造资产或可编译性结论。
+当前工程已有引擎生成的前端与Village地图、世界定义及角色体验定义，实际资源归对应内容包。2026-10-09已执行Client、Server完整原生构建及项目Editor模块构建；这些结果不代替当前版本Cook/Stage、真实网络准入与双客户端人工行走验收，具体边界见下节和独立验证记录。
 
 2026-09-27修正UE测试中遗留的四角色正向夹具：大厅和旧大厅兼容体验都归OpenWorld，明确拒绝独立Lobby角色，并检查合法大厅附带竞技模式返回`ArenaModeWorldContextMismatch`。跨语言真源与正向夹具的一致性由`Tests/Architecture/ServerRoleProfiles.Tests.ps1`检查；这不替代尚未执行的UE自动化测试。
+
+### 2026-10-09 新手村准入、角色与本地行走接线
+
+DBAWorldsRuntime 的 DivineBeastsWorldGameMode/DivineBeastsWorldPlayerController 向下继承 GamePlatformGameplay 框架，复用既有准入、体验、出生与复制门禁。DBAServer 将实际 ServerAdmission 的已验证连接投影桥接到门禁，重查 AdmissionId、ConnectionGeneration、SessionEpoch、实例和体验；未准入不出生。平台 World 新增仅C++的 InitializeBoundWorld 接口，原生组合根必须先验证当前连接，平台独立加载真实定义并匹配实际地图、区域与流送事实，投影不能直接返回Ready。
+
+Village 内容包新增共享Pawn及Tutorial体验定义。原有PlayerStart位置保留，增加第二个出生点避免两个客户端互相堵住出生。专用服务器的Pawn定义只引用原生角色类，没有UI、VFX或模型硬引用。客户端只从实际地图、当前受控Pawn、共享Data准备和服务器Active事件形成Loading事实，旧世界回调忽略；委托在EndPlay解绑，不用界面Tick轮询。
+
+角色创建成功仅刷新档案并返回选择页，清除创建侧隐式待选择写入；进入世界必须经过选择命令。传输失败优先展示错误而非残留加载层，客户端默认回退到正式前端地图。
+
+原生ACharacter增加WASD移动、鼠标镜头和空格跳跃，使用引擎CharacterMovement网络复制。客户端Avatar表现提示来自已验证选择，复用Appearance组件异步加载，不把视觉提示写成服务器英雄、技能或持久角色权威身份。当前角色模型及IDLE仍属一期占位内容，不能据此宣称英雄技能、移动动画和正式新手村美术全部完成。
+
+验证记录位于Saved/Validation/VillageFlow/20261009；编译、保存资产及Cook与双客户端人工行走验收分别记录，未取得后者证据前不宣称全链路完成。

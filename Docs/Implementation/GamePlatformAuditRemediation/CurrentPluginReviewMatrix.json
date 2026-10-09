@@ -24,7 +24,7 @@
       "CurrentDisposition": [
         {
           "Id": "G-01",
-          "Status": "真实依赖声明与静态闭包已修；服务器45/客户端65模块构建通过，编辑器结果另表",
+          "Status": "真实依赖声明与静态闭包已修；服务器46/客户端66及完整Editor84的实际构建另见UEBuildResults，最新主线整合需消费最终RunId",
           "Report": "RootRemediationReport.md"
         },
         {
@@ -539,7 +539,7 @@
       "CurrentDisposition": [
         {
           "Id": "G-01",
-          "Status": "真实依赖声明与静态闭包已修；服务器45/客户端65模块构建通过，编辑器结果另表",
+          "Status": "真实依赖声明与静态闭包已修；服务器46/客户端66及完整Editor84的实际构建另见UEBuildResults，最新主线整合需消费最终RunId",
           "Report": "RootRemediationReport.md"
         }
       ],
@@ -1413,7 +1413,7 @@
       "CurrentDisposition": [
         {
           "Id": "R-05",
-          "Status": "HTTP持有/预算及Sink/上下文重入源码已修并独立窄复核；服务器模块已编译，UE行为/真实请求未运行",
+          "Status": "HTTP持有/预算及Sink/上下文重入源码已修并独立窄复核；具名UE逻辑结果见UEAutomationResults，真实HTTP请求/生产关闭预算未验",
           "Report": "TelemetryLifecycleRemediation.json"
         },
         {
@@ -1474,7 +1474,7 @@
       "CurrentDisposition": [
         {
           "Id": "G-01",
-          "Status": "真实依赖声明与静态闭包已修；服务器45/客户端65模块构建通过，编辑器结果另表",
+          "Status": "真实依赖声明与静态闭包已修；服务器46/客户端66及完整Editor84的实际构建另见UEBuildResults，最新主线整合需消费最终RunId",
           "Report": "RootRemediationReport.md"
         },
         {

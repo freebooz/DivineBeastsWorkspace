@@ -34,8 +34,8 @@ protected:
     virtual UWidget* NativeGetDesiredFocusTarget() const override;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UComboBoxString> CharacterList;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> SelectButton;
-    UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> RotateLeftButton;
-    UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> RotateRightButton;
+    /** 创建入口由Monolith公共页面提供；旧资产可暂缺，正式资产门禁检查它必须存在。 */
+    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UButton> OpenCharacterCreateButton;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> LogoutButton;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> StatusText;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> ErrorText;
@@ -60,8 +60,8 @@ private:
     UFUNCTION() void HandleCommandCompleted(FGuid RequestId, FName ErrorCode);
     UFUNCTION() void HandleCharacterChanged(FString Item, ESelectInfo::Type SelectionType);
     UFUNCTION() void HandleSelect();
-    UFUNCTION() void HandleRotateLeft();
-    UFUNCTION() void HandleRotateRight();
+    /** 只打开创建表单，提交创建仍由创建页经统一命令端口执行。 */
+    UFUNCTION() void HandleOpenCharacterCreate();
     UFUNCTION() void HandleLogout();
     /** 仅缓存显示项对应ID；提交和预览前重新查询当前只读快照，拒绝失效项。 */
     TArray<FString> PresentedCharacterIds;

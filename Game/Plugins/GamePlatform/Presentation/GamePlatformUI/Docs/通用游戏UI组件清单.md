@@ -6,7 +6,7 @@
 
 ## 2026-10-09 3A通用 UI 体系补充索引
 
-已参考《魔兽世界》《最终幻想XIV》《命运2》《暗黑破坏神IV》《英雄联盟手游》及《无畏契约》官方公开界面资料，整理为`DBAClient/Docs/3A游戏UI十大业务域组件总清单_V1.0.md`（263个目标条目、十个业务域）。完整机器可读台账为`DBAClient/Docs/AAAUIComponentInventoryV1.json`。该清单属于**目标设计库**，不等同于263个新类/蓝图已实现。
+已参考《魔兽世界》《最终幻想XIV》《命运2》《暗黑破坏神IV》《英雄联盟手游》及《无畏契约》官方公开界面资料，整理为`DBAClient/Docs/3A游戏UI十大业务域组件总清单_V1.0.md`（263个目标条目、十个业务域）。完整机器可读台账为`DBAClient/Docs/AAAGameUIBusinessDomainLedger_V1.json`。该清单属于**目标设计库**，不等同于263个新类/蓝图已实现。
 
 Buff（增益）、Debuff（减益）、CC（控制）、DoT/HoT（持续伤害/治疗）、驱散、免疫、到期提醒、显示优先级和战斗关键警告的复用机制详见本插件`Docs/AAA状态效果UI设计规范_V1.0.md`。继续以现有`UGamePlatformStatusEffectTrayWidget`（状态效果托盘）为唯一公共基础类，不恢复/新建相互重复的Buff与Debuff业务服务，不把玩法权威状态放入UI。
 

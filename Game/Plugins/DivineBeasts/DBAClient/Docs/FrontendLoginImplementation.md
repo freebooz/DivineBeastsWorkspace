@@ -240,8 +240,8 @@ Boot
 → LoadProfile
 → LoadRoster
 → CharacterEntry
-   ├─ 无角色 → CharacterCreate → CreateCharacter
-   └─ 有角色 → CharacterSelect
+   ├─ 创建角色 → CharacterCreate → CreateCharacter → LoadRoster → CharacterEntry
+   └─ 选择角色 → CharacterSelect → 点击进入游戏
 → ValidateSelection
 → ResolveExperience
    ├─ 未完成新手引导 → Village.Tutorial
@@ -252,7 +252,7 @@ Boot
 → InWorld / Playing
 ~~~
 
-`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。角色创建成功后流程设置待验证选择并进入 `ValidateSelection（角色选择验证）`；客户端不能绕过后端权威选择结果。
+`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。角色创建成功后流程进入 `LoadRoster（刷新档案）`，随后返回 `CharacterEntry（角色入口）` 显示角色选择页。只有用户点击「进入游戏」才进入 `ValidateSelection（角色选择验证）`；客户端不能绕过后端权威选择结果。
 
 ### 8.3 前台三维场景与正式世界边界
 
@@ -281,6 +281,18 @@ divinebeasts.application.main@1
 
 ## 9. 验收顺序
 
+### 2026-10-09 角色预览与创建入口修复
+
+公共页面继续归第三层 DBAUIPack_Core，鼠标输入、视图模型和本地换页协调归 DBAClient；平台预览舞台只接收已加载的中立模型、材质和动画，不引用项目资源。未新增插件、服务器角色、协议或第二套应用主流程。
+
+模型不可见已在独立PIE中复现：外观Profile、网格、动画和舞台均存在，`PreviewHero`接受请求但舞台网格仍为空。诊断日志确认严格骨骼父链检查拒绝了共享骨架的Manny/Quinn简化网格。现采用与锁定UE5.8 `USkeletalMeshComponent`动画实例一致的`IsCompatibleMesh(Mesh, false)`，允许裁剪中间骨骼，但仍按真实骨骼映射检查兼容、资源有效性和请求代次；缺失或不兼容继续拒绝，不以固定成功放行。修复后的PIE已读到实际骨骼网格和`ABP_DBA_PreviewIdle_C`动画实例。日志只含项目资源身份和生命周期代次，不含账号、密码或票据。
+
+角色创建和选择页均移除左右转动按钮，使用既有透明预览区接收左键拖动，沿用本地用户/指针身份、捕获取消、异常位移保护和忙碌禁用，不引入Tick轮询。选择页新增`OpenCharacterCreateButton（创建角色入口）`，创建页新增`BackToCharacterSelectButton（返回角色选择）`，由Monolith生成、编译、保存与重载；固定字号和逻辑尺寸，不改变登录输入控件字体。
+
+页面通过`UIViewModel::ShowCharacterEntryScreen`向当前LocalPlayer的UI协调器提交换页意图。协调器在已认证、空闲的`DBA.Flow.CharacterEntry`节点按真实AllowedCommands授权，既有角色仍可创建；无角色时拒绝返回空选择页，提交中拒绝新换页，未知页面身份拒绝。偏好只是当前本地玩家的页面投影，不改变角色列表或服务器选择；新运行、注销、离开角色入口时清除，创建提交中的忙碌快照保留当前表单。实际创建仍经原有ApplicationFlow命令和后端校验执行，不能用打开表单代替创建成功。
+
+验证证据位于`Saved/Validation/VillageFlow/20261009`；原完整世界流程仍存在WorldReady超时，角色预览修复和客户端Cook通过不等于可玩新手村已通过。扩大UI测试时既有`PlayerStatusViewModel`测试因AttributeSet宿主无效导致编辑器崩溃，保留`PreviewRepair.Editor.log`，本轮不冒充整个UI套件通过；新增角色入口路由和既有拖动生命周期测试分别执行并记录独立结果。
+
 1. C++ / UHT / Client Module 构建；
 2. 核对 DBAUIPack_Core 内容插件登记与挂载；
 3. 通过 Monolith 创建并回读 RootLayout / Login Widget Blueprint；
@@ -291,3 +303,15 @@ divinebeasts.application.main@1
 8. UE Automation；
 9. Cook / Stage；
 10. PC 与移动端人工视觉签审。
+
+### 2026-10-09 新手村准入、角色与本地行走接线
+
+DBAWorldsRuntime 的 DivineBeastsWorldGameMode/DivineBeastsWorldPlayerController 向下继承 GamePlatformGameplay 框架，复用既有准入、体验、出生与复制门禁。DBAServer 将实际 ServerAdmission 的已验证连接投影桥接到门禁，重查 AdmissionId、ConnectionGeneration、SessionEpoch、实例和体验；未准入不出生。平台 World 新增仅C++的 InitializeBoundWorld 接口，原生组合根必须先验证当前连接，平台独立加载真实定义并匹配实际地图、区域与流送事实，投影不能直接返回Ready。
+
+Village 内容包新增共享Pawn及Tutorial体验定义。原有PlayerStart位置保留，增加第二个出生点避免两个客户端互相堵住出生。专用服务器的Pawn定义只引用原生角色类，没有UI、VFX或模型硬引用。客户端只从实际地图、当前受控Pawn、共享Data准备和服务器Active事件形成Loading事实，旧世界回调忽略；委托在EndPlay解绑，不用界面Tick轮询。
+
+角色创建成功仅刷新档案并返回选择页，清除创建侧隐式待选择写入；进入世界必须经过选择命令。传输失败优先展示错误而非残留加载层，客户端默认回退到正式前端地图。
+
+原生ACharacter增加WASD移动、鼠标镜头和空格跳跃，使用引擎CharacterMovement网络复制。客户端Avatar表现提示来自已验证选择，复用Appearance组件异步加载，不把视觉提示写成服务器英雄、技能或持久角色权威身份。当前角色模型及IDLE仍属一期占位内容，不能据此宣称英雄技能、移动动画和正式新手村美术全部完成。
+
+验证记录位于Saved/Validation/VillageFlow/20261009；编译、保存资产及Cook与双客户端人工行走验收分别记录，未取得后者证据前不宣称全链路完成。

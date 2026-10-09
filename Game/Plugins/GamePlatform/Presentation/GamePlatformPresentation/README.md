@@ -12,6 +12,9 @@
 
 Client 模块同时提供 `AGamePlatformCharacterPreviewStage（平台三维角色预览舞台）`：无 Tick、无复制，只负责已经加载完成的 SkeletalMesh / Material / AnimInstance 的本地展示、镜头距离和角色旋转。它不认识项目 Hero ID、生肖或后端角色身份，可供不同游戏项目的角色选择、捏脸、商城试穿等前端场景复用。
 
+2026-10-09 联机验证前修复：GamePlatformPresentationCore直接使用FGamePlatformResult验证定义，模块公开依赖与插件描述均显式声明GamePlatformCore，避免只看到Data公开头但没有链接其导出符号。Editor受影响模块修复后编译退出0；完整引擎目标、Cook、网络和人工效果验收另行记录。
+
+本次完整Native构建证据：Client退出0见Saved/Validation/FoundationM0/0d516f9c-7d9c-4a49-b509-167c307aec0e/Build/Client；Server退出0见Saved/Validation/FoundationM0/8e56f639-5f43-4097-9d05-8ad14d337cbc/Build/Server。它们不代表Cook、真实WorldReady或功能体验验收通过。
 
 ## 2026-09-30 设计审查修复
 

@@ -1,8 +1,8 @@
 {
   "SchemaVersion": 1,
-  "Scope": "最终源码静态门禁：3受影响入口新执行、3不受影响入口复用第三轮实际结果；全部适用门禁通过",
+  "Scope": "本记录保留贡献者导出冻结时3新/3复用通过；最新348主线三方整合已经改变输入，最终全部6门禁尚待冻结后执行",
   "ReportSHA256": "3D9F55848B0C1C5BBDBC100652931C6B045FF412A6064EBD8CD61FFFA4C5B1D2",
-  "CurrentAllSourceFinallyValidated": true,
+  "CurrentAllSourceFinallyValidated": false,
   "ActualReport": {
     "schemaVersion": 1,
     "reportId": "MainIntegration-FinalSourceGates-AfterContributorExportFix",

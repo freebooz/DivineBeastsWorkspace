@@ -112,6 +112,6 @@ private:
     int32 ActivationGateGeneration = 0;
     mutable bool bEvaluatingActivationGate = false;
     FGamePlatformAbilityAvatarBindingChangedNative AvatarBindingChanged;
-    /** 原生AbilitySpec复制完成事实；仅供订阅方同步只读投影，不改变Gate或权威技能授权。 */
+    /** 真实原生AbilitySpec复制完成事实；只同步订阅方投影，与Gate独立，不改变Avatar资格或权威技能授权。 */
     FGamePlatformAbilitySpecListChangedNative AbilitySpecListChanged;
 };

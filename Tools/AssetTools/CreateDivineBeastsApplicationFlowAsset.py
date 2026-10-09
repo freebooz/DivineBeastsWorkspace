@@ -55,7 +55,8 @@ def expected_values():
                 "SelectCharacter": "DBA.Flow.ValidateSelection",
             },
         ),
-        node("DBA.Flow.CreateCharacter", "DBA.Flow.Executor.CreateCharacter", 30, "DBA.Flow.ValidateSelection"),
+        # 创建成功先重新读取后端档案并回到角色入口等待人工选择；禁止由创建动作直接进入世界。
+        node("DBA.Flow.CreateCharacter", "DBA.Flow.Executor.CreateCharacter", 30, "DBA.Flow.LoadRoster"),
         node("DBA.Flow.ValidateSelection", "DBA.Flow.Executor.ValidateSelection", 30, "DBA.Flow.ResolveExperience"),
         node("DBA.Flow.ResolveExperience", "DBA.Flow.Executor.ResolveExperience", 5, "DBA.Flow.RequestWorld"),
         node("DBA.Flow.RequestWorld", "DBA.Flow.Executor.RequestWorld", 45, "DBA.Flow.TransferWorld"),

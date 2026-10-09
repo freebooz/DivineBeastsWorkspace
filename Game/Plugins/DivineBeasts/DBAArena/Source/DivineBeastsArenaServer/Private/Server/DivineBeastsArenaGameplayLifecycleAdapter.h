@@ -1,4 +1,5 @@
 #pragma once
+#include "Engine/TimerHandle.h" // 私有适配器持有真实计时器句柄，不依赖调用文件隐式包含。
 
 #include "CoreMinimal.h"
 #include "Engine/TimerHandle.h"

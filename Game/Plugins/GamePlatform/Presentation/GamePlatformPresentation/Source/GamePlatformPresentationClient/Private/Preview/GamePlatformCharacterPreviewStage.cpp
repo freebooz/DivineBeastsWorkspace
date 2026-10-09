@@ -1,8 +1,8 @@
-// 平台客户端三维角色预览舞台：由上层UI传入已加载外观资源，不承担网络权威或资源加载。
-// Actor拥有预览网格/相机组件；调用方持有资源租约，清空或世界销毁结束展示。
+// 平台客户端本地预览舞台：只展示调用者已加载的模型、材质和动画，供上层界面组合。
+// 不拥有后端角色或权威动作；世界销毁时由Actor组件生命周期回收相机和网格。
 #include "Preview/GamePlatformCharacterPreviewStage.h"
 
-#include "Animation/AnimInstance.h" // TSubclassOf转UClass需完整UAnimInstance，不能依赖PCH/Unity偶然可见。
+#include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
