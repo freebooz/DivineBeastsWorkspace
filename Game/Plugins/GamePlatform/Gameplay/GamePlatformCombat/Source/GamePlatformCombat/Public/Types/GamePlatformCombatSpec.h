@@ -31,18 +31,6 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatSpec
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Damage")
     EGamePlatformDamageType DamageType = EGamePlatformDamageType::Untyped;
 
-    /** AttackPower（攻击力）缩放系数；0表示不使用该属性。 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Damage", meta=(ClampMin="0.0"))
-    float AttackPowerCoefficient = 0.0f;
-
-    /** AbilityPower（技能强度）缩放系数；0表示不使用该属性。 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Damage", meta=(ClampMin="0.0"))
-    float AbilityPowerCoefficient = 0.0f;
-
-    /** 是否允许使用平台CriticalChance/CriticalDamage进行服务器权威暴击判定。 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Damage")
-    bool bCanCritical = false;
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat")
     FGameplayTagContainer CombatTags;
 

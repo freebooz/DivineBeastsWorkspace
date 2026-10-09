@@ -13,3 +13,5 @@ MobaPresentation位于 MobaCommon（MOBA通用层），职责是把 Arena（竞�
 2026-10-09新增 `FMobaHitFeedbackPolicy`（MOBA接触反馈策略），支持轻击/重击/技能/格挡/挥空、暴击、连击强度封顶和0/3/6帧参数对比，并增加 `Moba.Presentation.HitFeedback.Policy` 自动化测试源码。Moba客户端接入平台GamePlatformAnimationClient局部视觉顿帧，不依赖DivineBeasts。当前历史CombatEvent不携带攻击类别时默认轻击；网络权威事实接线、真正的连击输入、完整九层表现仍为后续任务。
 
 验证状态必须区分静态源码、UE5.8编译、Client/Server Cook（客户端/服务器烘焙）、Multi-PIE（多编辑器实例）、Travel/Late Join（切图/晚加入）和压力测试；未执行不得写通过。
+
+2026-10-09继续实施：MobaPresentationClient按World范围订阅平台Combat确认事实，并可从项目/竞技组合根注入已经预加载的`UGamePlatformHitFeedbackProfile`、VFX/SFX逻辑DefinitionId；分层使用唯一GamePlatformPresentation调度、GamePlatformAnimationClient Overlay/局部顿帧与GamePlatformCameraClient本地CameraShake。不直接创建Niagara/Sound/Widget或改变服务器击退。已有技能ID默认归Skill反馈，缺失则为Light；真正重击/格挡/连击段数必须由权威规则定义，不根据伤害数值推断。目前项目实例资产和联机仍待验收。当前GAS已移除权威暴击属性，前文历史暴击提示不得视为现行技能实现。

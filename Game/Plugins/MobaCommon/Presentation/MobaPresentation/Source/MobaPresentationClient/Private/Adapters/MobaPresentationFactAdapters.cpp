@@ -55,7 +55,7 @@ void FMobaPresentationFactAdapters::FromCombatEvent(
     auto FillCombatContext = [&](FMobaPresentationAdaptedFact& Fact, float Magnitude)
     {
         Fact.Context.SourceEntityId = SourceId;
-        Fact.Context.TargetEntityId = TargetId;
+        Fact.Context.TargetEntityId = TargetId;        Fact.Context.AbilityId = Event.SourceAbilityId.ToString();
         Fact.Context.SourceLocation = IsValid(Event.SourceActor)
             ? Event.SourceActor->GetActorLocation()
             : FVector::ZeroVector;
@@ -79,20 +79,6 @@ void FMobaPresentationFactAdapters::FromCombatEvent(
             MakeBase(Identity, MobaPresentationTags::Combat_Hit);
         FillCombatContext(Hit, Event.AppliedMagnitude);
         OutFacts.Add(MoveTemp(Hit));
-
-        if (Event.ResultTags.HasTag(GamePlatformCombatTags::Result_Critical))
-        {
-            FMobaPresentationAdaptedFact Critical =
-                MakeBase(Identity, MobaPresentationTags::Combat_Critical);
-            Critical.Identity.FactId = MakeRevisionFactId(
-                Event.EventId.ToString(EGuidFormats::DigitsWithHyphens),
-                Event.TargetAvatarGeneration,
-                0x43524954u); // "CRIT"
-            FillCombatContext(Critical, Event.AppliedMagnitude);
-            Critical.Context.bCritical = true;
-            Critical.Priority = EGamePlatformPresentationPriority::High;
-            OutFacts.Add(MoveTemp(Critical));
-        }
 
         if (Event.AppliedToShield > 0.0f)
         {
@@ -127,6 +113,10 @@ void FMobaPresentationFactAdapters::FromCombatEvent(
     {
         FMobaPresentationAdaptedFact Death =
             MakeBase(Identity, MobaPresentationTags::Character_Death);
+        // 同次致死伤害可能先产生Death再产生Damage，两类事实不能共用去重GUID。
+        Death.Identity.FactId = MakeRevisionFactId(
+            Event.EventId.ToString(EGuidFormats::DigitsWithHyphens),
+            Event.TargetAvatarGeneration, 0x44454144u);
         FillCombatContext(Death, 0.0f);
         Death.Priority = EGamePlatformPresentationPriority::High;
         OutFacts.Add(MoveTemp(Death));
@@ -145,24 +135,6 @@ void FMobaPresentationFactAdapters::FromCombatEvent(
     default:
         break;
     }
-}
-
-FMobaPresentationAdaptedFact FMobaPresentationFactAdapters::FromCriticalFact(
-    const FMobaPresentationCriticalFact& Fact)
-{
-    FMobaPresentationAdaptedFact Result =
-        MakeBase(Fact.Identity, MobaPresentationTags::Combat_Critical);
-    Result.Context.SourceEntityId = Fact.SourceEntityId;
-    Result.Context.TargetEntityId = Fact.TargetEntityId;
-    Result.Context.ImpactLocation = Fact.ImpactLocation;
-    Result.Context.Magnitude = Fact.Magnitude;
-    Result.Context.bCritical = true;
-    Result.Context.WorldGeneration = Fact.Identity.WorldGeneration;
-    Result.Context.AvatarGeneration = Fact.Identity.AvatarGeneration;
-    Result.Context.bPredicted = Fact.Identity.bPredicted;
-    Result.Context.bConfirmed = Fact.Identity.bConfirmed;
-    Result.Priority = EGamePlatformPresentationPriority::High;
-    return Result;
 }
 
 FMobaPresentationAdaptedFact FMobaPresentationFactAdapters::FromAbilityFact(

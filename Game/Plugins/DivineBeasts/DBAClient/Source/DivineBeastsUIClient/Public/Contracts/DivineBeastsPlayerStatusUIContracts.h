@@ -19,12 +19,6 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsPlayerStatusViewData
     double MaxHealth = 0.0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    double Shield = 0.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
-    double MaxShield = 0.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
     double Momentum = 0.0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")

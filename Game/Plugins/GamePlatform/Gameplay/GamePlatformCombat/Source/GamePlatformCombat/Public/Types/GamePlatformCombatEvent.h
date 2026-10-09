@@ -24,6 +24,10 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatEvent
     UPROPERTY(BlueprintReadOnly, Category="Combat")
     TObjectPtr<AActor> TargetActor = nullptr;
 
+    /** 由权威技能Spec带入的逻辑技能ID，用于客户端选择对应表现配置，不参与结算。 */
+    UPROPERTY(BlueprintReadOnly, Category="Combat")
+    FName SourceAbilityId = NAME_None;
+
     UPROPERTY(BlueprintReadOnly, Category="Combat")
     int32 SourceAvatarGeneration = 0;
 

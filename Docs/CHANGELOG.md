@@ -1,11 +1,24 @@
 # 变更记录
 
+## 2026-10-09｜战斗反馈 P0—P8 追加开发与阶段性验证
+
+- 计划：新增 `Docs/Implementation/CombatFeedbackWorkOrders_20261009.md`（三层插件工单和实际验收门禁），旧 `CombatFeedbackExecutionPlan_20261009.md`保留为初始计划，历史声称尚无网络事实等描述以本项最新源码检查为准。
+- GamePlatformCombat（平台权威战斗）增加最小化Unreliable已确认表现RPC、事件GUID/技能ID/角色代次和位置投影，并经World范围只读总线交给表现层；不新增伤害RPC或修改GAS公式。Unreliable丢包只影响可选视觉，不能据此证明双客户端联网已经通过。
+- GamePlatformAnimationClient（客户端动画模块）新增受击网格Overlay短闪白，保存原材质并限时恢复；GamePlatformCameraClient（客户端镜头模块）实现LocalPlayer CameraShake服务和玩家震动关闭倍率，均需真实资源与客户端评审。
+- MobaPresentation（MOBA层）从网络事实总线接收已确认事件，按技能ID采用Skill/Light默认分类，利用统一平台表现Provider分别提交VFX/SFX逻辑请求。独立GUID防止VFX/SFX互相吞并；同一事实各客户端本地去重。
+- GamePlatformPresentationCore可配置Profile增加Overlay/CameraShake软引用；DBAClient新增GamePlatformSFX客户端装配声明，现有英雄技能反馈目录仍需真实DataAsset、资产预加载/租约和DBAArena组合根接入。无新.uplugin、无伪造.uasset。
+- 新增 `GamePlatform.Combat.Feedback.NetworkContract` 和 `GamePlatform.Camera.HitFeedback.UserScale` 自动化测试源码。静态检查和UE真实Client/Server构建、Automation、Cook、Multi-PIE、1v1—5v5的结论分开记录，不能以源码/静态测试宣告完整P8完成。
+
+
+
 ## 2026-10-09｜战斗打击感三层配置和客户端局部顿帧
 
-- GamePlatformPresentationCore增加可配置的HitFeedback Profile数据结构；GamePlatformAnimationClient增加本地玩家局部Mesh动画暂停，含60Hz参考帧、命中GUID去重、覆盖更长到期时间和World清理，不暂停Gameplay/全局时间。
+- GamePlatformPresentationCore增加可配置的HitFeedback Profile数据结构；GamePlatformAnimationClient增加本地玩家局部Mesh动画暂停，含60Hz参考帧、命中GUID去重、CoreTicker单调实时时钟、连续10帧窗口封顶和World清理，不暂停Gameplay/全局时间。
 - MobaPresentationRuntime增加轻/重/技能/格挡/挥空和暴击/连击反馈策略、0/3/6帧自动化测试源码，MobaPresentationClient消费已到达的Combat事实触发局部视觉顿帧，不新建MOBA特效播放器。
 - DBAClient/DivineBeastsPresentationRuntime增加英雄技能映射DataAsset类，按Hero＋Ability键查询平台Profile软引用和视觉/音效逻辑ID；无真实 .uasset。
-- 尚未完成真实复制命中通道、输入缓冲、闪白、镜头及独立九层视觉资源、专用服务器Cook和联机验证。保存既有GAS未提交改动，具体门禁见 `Docs/Implementation/CombatFeedbackExecutionPlan_20261009.md`。
+- 尚未完成真实复制命中通道、闪白、镜头及独立九层视觉资源、专用服务器Cook和联机验证；基础输入缓冲已写入源码但尚未实机验证。保存既有GAS未提交改动，具体门禁见 `Docs/Implementation/CombatFeedbackExecutionPlan_20261009.md`。
+
+- 新增 `GamePlatformInputClient/Buffer/GamePlatformActionInputBuffer` 的真实有限离散输入缓冲（容量/超时/绑定代次/顺序/去重）、自动化测试源码；`DivineBeastsInputClient`订阅本地视觉顿帧自然恢复后，将缓冲输入交由原GAS接收/合法性判断。未开始权威网络事实、真实击退及闪白/相机等完整表现验收。
 
 
 保留已有工程变更记录；不根据历史聊天补造不存在的提交或验收记录。

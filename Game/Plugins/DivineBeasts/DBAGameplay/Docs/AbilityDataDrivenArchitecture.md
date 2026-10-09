@@ -55,3 +55,10 @@ HeroDefinition.DefinitionId（英雄定义编号） → HeroDefinition.DefaultAb
 - `UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet`（授权前校验）按获授的真实技能等级，核对技能表的 `MomentumCost`（气势成本）与实际 GameplayEffect 修改幅度一致：只接受 `Instant`（瞬时）负向 `Additive`（加法）气势修改；对其他未声明资源修改一律拒绝。`CooldownSeconds`（冷却秒数）与合法 `HasDuration`（限时）GameplayEffect 的持续秒数相同，并要求冷却 Tag（标签）存在。仅支持可由 `GetStaticMagnitudeIfPossible`（静态幅度计算）求值的配置，容许 0.01 误差；动态 `SetByCaller`（运行时指定数值）需要单独审核，不默许数值漂移。
 - `UDivineBeastsConfiguredGameplayAbility`（技能基类）每次激活清空提交状态，仅 GAS `CommitAbility`（正式提交成本及冷却）成功后允许服务端调用 `AuthorityApplyConfiguredDamage`（可信命中伤害）；技能结束或取消后撤销该资格。不等于已经实现正式技能的攻击动作或特效。
 - 十二生肖内容包已另行产生 60 枚 PNG 图源（每英雄五枚）；不是正式 AbilityId 或 UE Texture2D。源图校验脚本 `Tests/Assets/ValidateZodiacSkillIconSources.py` 与各英雄包清单只检查文件及 SHA-256，不代表图标导入/绑定或运行验收。
+
+## 2026-10-09 实际技能资产与发布门禁复核
+
+- Monolith 0.23.0（虚幻编辑器界面工具）已回读十二个生肖英雄真实主资产，`DefaultAbilitySetId`（默认技能集编号）全部为 `None`。即使代码具备授予流程，**在未绑定真实 AbilitySet（技能授权集合）前，不得声明任何生肖已可施法或结算伤害**。
+- 十二生肖内容插件的60枚图标已实际导入为 `Texture2D`（真实纹理资产）；`DBAUIPack_Core`（项目公共界面包）中的技能栏、技能单格两份真实 Widget Blueprint（控件蓝图）分别经 Monolith 新编译，均为0错误、0警告。此为新一轮引擎资产证据，更新上方早期“只有PNG”的历史状态；正式 AbilityId（技能编号）、UI Profile（技能界面配置）和服务器授权尚缺。
+- 新增 `Tests/Assets/ValidateZodiacAbilityDelivery.py`（十二生肖技能正式交付只读门禁），`--inventory`（文件实物完整性）退出0，`--release`（生产技能与运行验证）因真实70项缺口按预期退出2。12个英雄各五项正式技能主数据、客户端图标绑定、GAS授权、UE编辑器/客户端/专用服务器编译、Automation（自动化）、双客户端联机、Cook（资源烘焙）均必须补证后才能变更发布状态。
+- 本轮 UBT（虚幻构建工具）尝试 `DivineBeastsAbilitiesRuntime`（项目技能运行模块）Editor定向编译，UHT（反射生成）处理通过，随后编译143个Action（动作），在1200秒执行上限被中止，没有成功链接证据；不可宣称模块已通过真实C++编译。详见 `Docs/Implementation/十二生肖技能数据驱动实施记录_20261009.md`（项目实施台账）。

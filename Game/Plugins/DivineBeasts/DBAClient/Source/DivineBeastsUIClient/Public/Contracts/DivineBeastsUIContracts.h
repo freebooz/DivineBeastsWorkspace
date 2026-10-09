@@ -99,8 +99,6 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsUIWorldProjection
 
     UPROPERTY(BlueprintReadOnly) float Health = 0.0f;
     UPROPERTY(BlueprintReadOnly) float MaxHealth = 0.0f;
-    UPROPERTY(BlueprintReadOnly) float Shield = 0.0f;
-    UPROPERTY(BlueprintReadOnly) float MaxShield = 0.0f;
 
     /** 当前工作树尚无统一项目HUD模型时可为空。 */
     UPROPERTY(BlueprintReadOnly) TArray<FName> AbilityIds;

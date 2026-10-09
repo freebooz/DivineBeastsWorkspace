@@ -19,13 +19,13 @@ enum class EGamePlatformCombatEventType : uint8
 UENUM(BlueprintType)
 enum class EGamePlatformDamageType : uint8
 {
-    /** 兼容旧路径：不走物理/魔法防御，但仍受通用DamageReduction影响。 */
+    /** 兼容旧身份：无类型普通伤害也统一执行增伤-减伤。 */
     Untyped,
-    /** 使用Armor（护甲）与ArmorPenetration（护甲穿透）。 */
+    /** Physical（物理）：只作已发布的技能与表现类型，统一增减伤计算。 */
     Physical,
-    /** 使用MagicResistance（法术抗性）与MagicPenetration（法术穿透）。 */
+    /** Magic（法术）：与物理共用DamageBonus/DamageReduction（增伤/减伤）公式。 */
     Magic,
-    /** 忽略物理/魔法防御和通用DamageReduction。 */
+    /** TrueDamage（真实伤害）：保留来源增伤但绕过目标普通减伤；限时GE盾仍可吸收，除非显式绕盾。 */
     TrueDamage
 };
 

@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+class UCameraShakeBase;
+class UMaterialInterface;
 #include "GamePlatformHitFeedbackProfile.generated.h"
 
 /**
@@ -29,10 +31,6 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformHitFeedbackTuning
     /** 格挡时的短促顿帧数。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit Feedback|Hitstop", meta=(ClampMin="0", ClampMax="10"))
     int32 BlockHitstopFrames = 1;
-
-    /** 暴击额外帧数；与其他加成求和后按上限裁剪。 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit Feedback|Hitstop", meta=(ClampMin="0", ClampMax="3"))
-    int32 CriticalExtraFrames = 2;
 
     /** 破防额外帧数；仅由可信规则显式指定。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit Feedback|Hitstop", meta=(ClampMin="0", ClampMax="3"))
@@ -89,4 +87,15 @@ public:
     /** 完整客户端命中反馈调校参数，支持为不同技能配置资源实例。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Hit Feedback")
     FGamePlatformHitFeedbackTuning Tuning;
+
+    /** 已预加载的客户端镜头震动类；由CameraClient执行，可为空以完全跳过。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Hit Feedback|Camera")
+    TSoftClassPtr<UCameraShakeBase> CameraShakeClass;
+
+    /**
+     * 已预加载的命中Overlay材质；由AnimationClient执行，缺失时不使用白色全屏闪烁。
+     * 专用服务器不实例化或Cook纯客户端表现资源。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Hit Feedback|Visual")
+    TSoftObjectPtr<UMaterialInterface> HitFlashOverlayMaterial;
 };

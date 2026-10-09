@@ -27,25 +27,6 @@ bool FMobaPresentationAbilityAdapterTest::RunTest(const FString&)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-    FMobaPresentationCriticalAdapterTest,
-    "Moba.Presentation.Client.CriticalAdapter",
-    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
-
-bool FMobaPresentationCriticalAdapterTest::RunTest(const FString&)
-{
-    FMobaPresentationCriticalFact Fact;
-    Fact.Identity.FactId = FGuid::NewGuid();
-    Fact.Identity.bConfirmed = true;
-    Fact.Magnitude = 88.0f;
-
-    const FMobaPresentationAdaptedFact Adapted =
-        FMobaPresentationFactAdapters::FromCriticalFact(Fact);
-    TestEqual(TEXT("Critical语义"), Adapted.Semantic, MobaPresentationTags::Combat_Critical.GetTag());
-    TestTrue(TEXT("Critical上下文标志"), Adapted.Context.bCritical);
-    return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FMobaPresentationPersistentStatusTest,
     "Moba.Presentation.Client.PersistentStatus",
     EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
@@ -66,12 +47,16 @@ bool FMobaPresentationPersistentStatusTest::RunTest(const FString&)
 }
 
 
+/**
+ * 历史暴击标签仅为资产兼容保留，MOBA不能据此产生额外表现事实。
+ * 已确认伤害只有一个普通Hit（命中）事实，不能双重播放。
+ */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-    FMobaPresentationCombatCriticalEventAdapterTest,
-    "Moba.Presentation.Client.CombatCriticalEventAdapter",
+    FMobaPresentationLegacyCriticalIgnoredTest,
+    "Moba.Presentation.Client.LegacyCriticalIgnored",
     EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 
-bool FMobaPresentationCombatCriticalEventAdapterTest::RunTest(const FString&)
+bool FMobaPresentationLegacyCriticalIgnoredTest::RunTest(const FString&)
 {
     FGamePlatformCombatEvent Event;
     Event.EventId = FGuid::NewGuid();
@@ -82,13 +67,11 @@ bool FMobaPresentationCombatCriticalEventAdapterTest::RunTest(const FString&)
 
     TArray<FMobaPresentationAdaptedFact> Facts;
     FMobaPresentationFactAdapters::FromCombatEvent(Event, Facts);
-    TestEqual(TEXT("暴击伤害事件产生Hit+Critical两个表现事实"), Facts.Num(), 2);
-    if (Facts.Num() == 2)
+    TestEqual(TEXT("历史暴击标签不得产生第二个表现事实"), Facts.Num(), 1);
+    if (Facts.Num() == 1)
     {
-        TestEqual(TEXT("第一事实为普通命中"), Facts[0].Semantic, MobaPresentationTags::Combat_Hit.GetTag());
-        TestEqual(TEXT("第二事实为暴击语义"), Facts[1].Semantic, MobaPresentationTags::Combat_Critical.GetTag());
-        TestTrue(TEXT("暴击上下文标志"), Facts[1].Context.bCritical);
-        TestEqual(TEXT("暴击表现使用实际伤害值"), Facts[1].Context.Magnitude, 200.0f);
+        TestEqual(TEXT("只保留正常命中语义"), Facts[0].Semantic, MobaPresentationTags::Combat_Hit.GetTag());
+        TestEqual(TEXT("正常命中使用实际伤害值"), Facts[0].Context.Magnitude, 200.0f);
     }
     return true;
 }

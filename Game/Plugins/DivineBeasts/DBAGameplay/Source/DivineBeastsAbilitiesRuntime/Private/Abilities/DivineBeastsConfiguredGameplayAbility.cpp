@@ -119,15 +119,12 @@ bool UDivineBeastsConfiguredGameplayAbility::AuthorityApplyConfiguredDamage(
     Spec.Target = Target;
     Spec.Magnitude = Balance.BaseDamage;
     Spec.DamageType = Balance.DamageType;
-    Spec.AttackPowerCoefficient = Balance.AttackPowerCoefficient;
-    Spec.AbilityPowerCoefficient = Balance.AbilityPowerCoefficient;
-    Spec.bCanCritical = Balance.bCanCritical;
     Spec.HitContext = ValidatedHit;
     Spec.SourceAbilityId = Balance.AbilityId;
     Spec.SourceAvatarGeneration = SourceCombat->GetCombatAvatarGeneration();
     Spec.TargetAvatarGeneration = TargetCombat->GetCombatAvatarGeneration();
 
-    // 复用 GamePlatformCombat 的命中审查、攻击防御属性与一致性判定。
+    // 技能仅提交已批准的基础伤害；Buff/Debuff、护盾GE及生命扣减均由平台战斗统一结算。
     OutResult = SourceCombat->ApplyDamage(Spec);
     if (OutResult.Error != EGamePlatformCombatError::None)
     {

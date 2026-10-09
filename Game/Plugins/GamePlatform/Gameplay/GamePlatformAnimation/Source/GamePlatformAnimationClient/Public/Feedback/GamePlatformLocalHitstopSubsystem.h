@@ -8,6 +8,9 @@
 class USkeletalMeshComponent;
 class UWorld;
 
+/** 局部视觉停顿自然结束事件；不通知Gameplay授权或技能合法性。 */
+DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformVisualHitstopFinished, USkeletalMeshComponent*);
+
 /**
  * UGamePlatformLocalHitstopSubsystem（本地命中视觉顿帧子系统）。
  *
@@ -24,6 +27,8 @@ class GAMEPLATFORMANIMATIONCLIENT_API UGamePlatformLocalHitstopSubsystem : publi
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
+    /** 只对自然到期的Mesh广播恢复，世界退出/显式取消不触发输入消费。 */
+    FGamePlatformVisualHitstopFinished& OnVisualHitstopFinished() { return VisualHitstopFinished; }
 
     /**
      * 以60fps参考帧配置本次视觉顿帧。
@@ -54,23 +59,28 @@ private:
     {
         TWeakObjectPtr<USkeletalMeshComponent> Mesh;
         TWeakObjectPtr<UWorld> World;
+        /** 本次连续停顿的起点，用于限制连击刷新造成的无限停顿。 */
+        double FirstPausedAtSeconds = 0.0;
         /** 基于单调实时时钟，不受世界TimeDilation变化影响。 */
         double DeadlineSeconds = 0.0;
         bool bWasAnimsPaused = false;
     };
 
     void ApplyToMesh(USkeletalMeshComponent* Mesh, UWorld& World, double DeadlineSeconds);
-    void RestoreMesh(TWeakObjectPtr<USkeletalMeshComponent> Mesh);
+    void RestoreMesh(TWeakObjectPtr<USkeletalMeshComponent> Mesh, bool bBroadcastFinished = true);
     /** 只有存在活动视觉顿帧才临时注册Ticker，无永久逐帧更新。 */
     bool TickVisualHitstop(float DeltaSeconds);
     void HandleWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
+
+    FGamePlatformVisualHitstopFinished VisualHitstopFinished;
 
     TMap<TWeakObjectPtr<USkeletalMeshComponent>, FPausedMeshRecord> ActiveMeshes;
     TSet<FGuid> RecentEventIds;
     TArray<FGuid> RecentEventOrder;
     TWeakObjectPtr<UWorld> BoundWorld;
     FDelegateHandle WorldCleanupHandle;
-    FDelegateHandle ActiveTickHandle;
+    /** FTSTicker返回专用句柄类型，不能与普通FDelegateHandle混用。 */
+    FTSTicker::FDelegateHandle ActiveTickHandle;
 
     static constexpr int32 MaxRecentEvents = 256;
     static constexpr int32 MaxVisualFrames = 10;

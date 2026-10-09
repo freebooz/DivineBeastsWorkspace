@@ -42,6 +42,8 @@
 
 2026-10-09新建 `DivineBeastsPresentationRuntime/Definitions/DivineBeastsCombatFeedbackCatalog`（项目英雄技能命中反馈DataAsset类），精确关联英雄定义ID＋技能定义ID到平台反馈Profile软引用以及VFX/SFX逻辑定义ID，支持重复键与缺失项校验。**未生成真实.uasset，也未在DBAArena竞技组合根注入**；不能视作全部十二生肖已自动加载。详见 `Docs/Implementation/CombatFeedbackExecutionPlan_20261009.md`。
 
+同一专项的 `DivineBeastsInputClient`增加按本地Pawn视觉顿帧自然恢复后的动作回放，消费 `GamePlatformInputClient` 中立有限输入缓冲；按当前BindingGeneration（绑定代次）和有效期筛选，再交给现有GAS `AbilityInputPressed/Released`进行合法性处理。只在Client执行；焦点丢失、切换角色和跨World旧输入不得回放，实际技能取消窗口与Client/Server联机仍需专项验证。
+
 `F:\\VFX Lib` 的复用映射见 `Docs/ZodiacReuseMatrix.md（十二生肖VFX复用矩阵）`。首批优先 Rabbit（卯兔）、Horse（午马）、Goat（未羊）、Rooster（酉鸡）、Boar（亥猪）；当前只完成平台母版能力与复用规划，未创建任何虚构技能 `.uasset`。
 
 P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基类、LocalPlayer 自适应子系统和 SafeZone 支持；DivineBeastsUIClient 已新增项目分类基类，并建立登录、真实加载、RootLayout 和五类 HUD 的 C++ / Blueprint 父类。ApplicationFlow 的 Blueprint `uint64` 反射阻断和 GamePlatformUIClient 生成代码错误已经消除；当前完整客户端构建的已知阻断位于主工程 Online/PCG 头依赖及 GamePlatformWorld 测试源码。UI 与 Flow 仍须保持事件驱动、禁止逐帧轮询。

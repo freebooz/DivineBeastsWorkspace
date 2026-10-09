@@ -13,7 +13,8 @@
         { "Name": "GamePlatformPresentation", "Enabled": true },
         { "Name": "GamePlatformArena", "Enabled": true },
         { "Name": "GamePlatformCombat", "Enabled": true },
-        { "Name": "GamePlatformAnimation", "Enabled": true }
+        { "Name": "GamePlatformAnimation", "Enabled": true },
+        { "Name": "GamePlatformCamera", "Enabled": true, "TargetAllowList": ["Client", "Editor"] }
     ],
     "Modules": [
         {

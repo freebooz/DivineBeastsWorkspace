@@ -2,8 +2,6 @@
 
 #include "AbilitySystemComponent.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
-#include "Attributes/GamePlatformDefenseAttributeSet.h"
-#include "Attributes/GamePlatformOffenseAttributeSet.h"
 #include "Settings/GamePlatformCombatSettings.h"
 #include "Tags/GamePlatformCombatTags.h"
 #include "Types/GamePlatformCombatMath.h"
@@ -28,23 +26,6 @@ void UGamePlatformDamageExecutionCalculation::Execute_Implementation(
 
     FGamePlatformDamageFormulaInput Formula;
     Formula.BaseDamage = Requested;
-    Formula.AttackPowerCoefficient = Spec.GetSetByCallerMagnitude(
-        GamePlatformCombatTags::Data_Damage_AttackPowerCoefficient,
-        false,
-        0.0f);
-    Formula.AbilityPowerCoefficient = Spec.GetSetByCallerMagnitude(
-        GamePlatformCombatTags::Data_Damage_AbilityPowerCoefficient,
-        false,
-        0.0f);
-    Formula.bCanCritical = Spec.GetSetByCallerMagnitude(
-        GamePlatformCombatTags::Data_Damage_CanCritical,
-        false,
-        0.0f) > 0.5f;
-    Formula.CriticalRoll = Spec.GetSetByCallerMagnitude(
-        GamePlatformCombatTags::Data_Damage_CriticalRoll,
-        false,
-        1.0f);
-    Formula.DefenseMitigationConstant = Settings->DefenseMitigationConstant;
 
     const int32 DamageTypeValue = FMath::Clamp(
         FMath::RoundToInt(Spec.GetSetByCallerMagnitude(
@@ -60,28 +41,22 @@ void UGamePlatformDamageExecutionCalculation::Execute_Implementation(
     const UAbilitySystemComponent* TargetASC =
         ExecutionParams.GetTargetAbilitySystemComponent();
 
+    // 由GAS属性聚合器读取来源/目标当前值：已包含持续Buff/Debuff的加法效果。
     if (SourceASC)
     {
-        if (const UGamePlatformOffenseAttributeSet* Offense =
-                SourceASC->GetSet<UGamePlatformOffenseAttributeSet>())
+        if (const UGamePlatformCombatAttributeSet* Source =
+                SourceASC->GetSet<UGamePlatformCombatAttributeSet>())
         {
-            Formula.AttackPower = Offense->GetAttackPower();
-            Formula.AbilityPower = Offense->GetAbilityPower();
-            Formula.ArmorPenetration = Offense->GetArmorPenetration();
-            Formula.MagicPenetration = Offense->GetMagicPenetration();
-            Formula.CriticalChance = Offense->GetCriticalChance();
-            Formula.CriticalDamage = Offense->GetCriticalDamage();
+            Formula.DamageBonus = Source->GetDamageBonus();
         }
     }
 
     if (TargetASC)
     {
-        if (const UGamePlatformDefenseAttributeSet* Defense =
-                TargetASC->GetSet<UGamePlatformDefenseAttributeSet>())
+        if (const UGamePlatformCombatAttributeSet* Target =
+                TargetASC->GetSet<UGamePlatformCombatAttributeSet>())
         {
-            Formula.Armor = Defense->GetArmor();
-            Formula.MagicResistance = Defense->GetMagicResistance();
-            Formula.DamageReduction = Defense->GetDamageReduction();
+            Formula.DamageReduction = Target->GetDamageReduction();
         }
     }
 

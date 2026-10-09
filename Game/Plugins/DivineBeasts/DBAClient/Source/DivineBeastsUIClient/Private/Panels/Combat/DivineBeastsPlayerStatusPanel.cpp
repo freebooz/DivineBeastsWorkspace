@@ -41,6 +41,16 @@ void UDivineBeastsPlayerStatusPanel::ClearStatusViewModel()
     StatusViewModel = nullptr;
 }
 
+void UDivineBeastsPlayerStatusPanel::NativeConstruct()
+{
+    Super::NativeConstruct();
+    if (IsValid(ShieldBar))
+    {
+        // Shield不是GAS属性，不得把历史蓝图中的空盾资源条显示给玩家。
+        ShieldBar->SetVisibility(ESlateVisibility::Collapsed);
+    }
+}
+
 void UDivineBeastsPlayerStatusPanel::NativeDestruct()
 {
     ClearStatusViewModel();
@@ -59,8 +69,6 @@ void UDivineBeastsPlayerStatusPanel::ApplyStatus(
     const bool bEquivalent =
         FMath::IsNearlyEqual(Status.Health, InStatus.Health, 0.0001) &&
         FMath::IsNearlyEqual(Status.MaxHealth, InStatus.MaxHealth, 0.0001) &&
-        FMath::IsNearlyEqual(Status.Shield, InStatus.Shield, 0.0001) &&
-        FMath::IsNearlyEqual(Status.MaxShield, InStatus.MaxShield, 0.0001) &&
         FMath::IsNearlyEqual(Status.Momentum, InStatus.Momentum, 0.0001) &&
         FMath::IsNearlyEqual(Status.MaxMomentum, InStatus.MaxMomentum, 0.0001) &&
         Status.bDead == InStatus.bDead;
@@ -82,11 +90,7 @@ void UDivineBeastsPlayerStatusPanel::ApplyStatus(
     }
     if (IsValid(ShieldBar))
     {
-        ShieldBar->ApplyResourceState(
-            MakeBarState(
-                TEXT("Shield"),
-                Status.Shield,
-                Status.MaxShield));
+        ShieldBar->SetVisibility(ESlateVisibility::Collapsed);
     }
     if (IsValid(MomentumBar))
     {

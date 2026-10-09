@@ -12,8 +12,6 @@ bool IsEquivalentStatus(
 {
     return FMath::IsNearlyEqual(A.Health, B.Health, 0.0001) &&
         FMath::IsNearlyEqual(A.MaxHealth, B.MaxHealth, 0.0001) &&
-        FMath::IsNearlyEqual(A.Shield, B.Shield, 0.0001) &&
-        FMath::IsNearlyEqual(A.MaxShield, B.MaxShield, 0.0001) &&
         FMath::IsNearlyEqual(A.Momentum, B.Momentum, 0.0001) &&
         FMath::IsNearlyEqual(A.MaxMomentum, B.MaxMomentum, 0.0001) &&
         A.bDead == B.bDead;
@@ -34,12 +32,6 @@ bool UDivineBeastsPlayerStatusViewModel::BindToAbilitySystem(UAbilitySystemCompo
             this, &UDivineBeastsPlayerStatusViewModel::HandleAttributeChanged);
     MaxHealthHandle = InAbilitySystem->GetGameplayAttributeValueChangeDelegate(
         UGamePlatformCombatAttributeSet::GetMaxHealthAttribute()).AddUObject(
-            this, &UDivineBeastsPlayerStatusViewModel::HandleAttributeChanged);
-    ShieldHandle = InAbilitySystem->GetGameplayAttributeValueChangeDelegate(
-        UGamePlatformCombatAttributeSet::GetShieldAttribute()).AddUObject(
-            this, &UDivineBeastsPlayerStatusViewModel::HandleAttributeChanged);
-    MaxShieldHandle = InAbilitySystem->GetGameplayAttributeValueChangeDelegate(
-        UGamePlatformCombatAttributeSet::GetMaxShieldAttribute()).AddUObject(
             this, &UDivineBeastsPlayerStatusViewModel::HandleAttributeChanged);
     MomentumHandle = InAbilitySystem->GetGameplayAttributeValueChangeDelegate(
         UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()).AddUObject(
@@ -64,14 +56,6 @@ void UDivineBeastsPlayerStatusViewModel::UnbindFromAbilitySystem()
         {
             ASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetMaxHealthAttribute()).Remove(MaxHealthHandle);
         }
-        if (ShieldHandle.IsValid())
-        {
-            ASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetShieldAttribute()).Remove(ShieldHandle);
-        }
-        if (MaxShieldHandle.IsValid())
-        {
-            ASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetMaxShieldAttribute()).Remove(MaxShieldHandle);
-        }
         if (MomentumHandle.IsValid())
         {
             ASC->GetGameplayAttributeValueChangeDelegate(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()).Remove(MomentumHandle);
@@ -85,8 +69,6 @@ void UDivineBeastsPlayerStatusViewModel::UnbindFromAbilitySystem()
     AbilitySystem.Reset();
     HealthHandle.Reset();
     MaxHealthHandle.Reset();
-    ShieldHandle.Reset();
-    MaxShieldHandle.Reset();
     MomentumHandle.Reset();
     MaxMomentumHandle.Reset();
 }
@@ -115,8 +97,6 @@ void UDivineBeastsPlayerStatusViewModel::RefreshSnapshot(bool bForceBroadcast)
     {
         NewStatus.Health = Combat->GetHealth();
         NewStatus.MaxHealth = Combat->GetMaxHealth();
-        NewStatus.Shield = Combat->GetShield();
-        NewStatus.MaxShield = Combat->GetMaxShield();
         NewStatus.bDead = Combat->GetMaxHealth() > 0.0f && Combat->GetHealth() <= 0.0f;
     }
     if (const UDivineBeastsMomentumAttributeSet* Momentum = ASC->GetSet<UDivineBeastsMomentumAttributeSet>())

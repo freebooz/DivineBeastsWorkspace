@@ -82,7 +82,6 @@ struct MOBAPRESENTATIONRUNTIME_API FMobaPresentationContext
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite) float Magnitude = 0.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bCritical = false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bPredicted = false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bConfirmed = true;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bLocalSource = false;
@@ -109,17 +108,6 @@ struct MOBAPRESENTATIONRUNTIME_API FMobaPresentationHitPayload
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FString TargetEntityId;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector ImpactLocation = FVector::ZeroVector;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector ImpactNormal = FVector::UpVector;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) float Magnitude = 0.0f;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bCritical = false;
-};
-
-/** Critical（暴击）表现载荷。 */
-USTRUCT(BlueprintType)
-struct MOBAPRESENTATIONRUNTIME_API FMobaPresentationCriticalPayload
-{
-    GENERATED_BODY()
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FString SourceEntityId;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FString TargetEntityId;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) float Magnitude = 0.0f;
 };
 
@@ -209,19 +197,6 @@ struct MOBAPRESENTATIONRUNTIME_API FMobaPresentationRespawnPayload
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FString CharacterId;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector Location = FVector::ZeroVector;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 AvatarGeneration = 0;
-};
-
-/** Critical（暴击）确认事实。只有上游明确确认暴击时才能产生，不能由客户端数值差推断。 */
-USTRUCT(BlueprintType)
-struct MOBAPRESENTATIONRUNTIME_API FMobaPresentationCriticalFact
-{
-    GENERATED_BODY()
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FMobaPresentationFactIdentity Identity;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FString SourceEntityId;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FString TargetEntityId;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector ImpactLocation = FVector::ZeroVector;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) float Magnitude = 0.0f;
 };
 
 /** Ability（技能）公共表现事实；由真实Ability公共通知适配，不创建Gameplay投射物。 */

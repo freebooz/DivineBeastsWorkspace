@@ -4,6 +4,9 @@
 
 ## 当前真实状态
 
+> 2026-10-09战斗反馈增量：已在现有`GamePlatformCameraClient`新增`UGamePlatformCameraHitFeedbackSubsystem`（仅LocalPlayer镜头冲击）、`GamePlatform.Camera.HitFeedback.UserScale`自动化测试源码。支持预加载CameraShake类、重复事件过滤、最小触发间隔和玩家0倍率关闭；不震动UMG界面、不改变Gameplay权威。完整相机模式栈、镜头衰减曲线资源与真实游戏运行尚未交付；下列旧“只有模块壳”的状态应理解为相机模式系统的历史说明，而非本次HitFeedback功能的现状。
+
+
 - 当前版本仍为 `0.1.0`，只有 `GamePlatformCameraClient（ClientOnly）` 模块注册壳。
 - 当前没有公开相机服务、Camera Mode Definition（相机模式定义）、模式栈、模式／效果句柄、UE 相机适配器、数据租约、自动化测试或 Review Map。
 - 当前没有正式模块或目标依赖该插件；不能据此宣称它已进入编辑器、客户端、竞技、观战、死亡或开放世界运行路径。

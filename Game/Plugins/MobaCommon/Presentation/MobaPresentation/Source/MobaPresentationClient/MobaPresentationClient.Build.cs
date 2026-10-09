@@ -21,6 +21,7 @@ public class MobaPresentationClient : ModuleRules
         });
 
         // MOBA客户端只调用平台视觉局部顿帧；不反向包含项目层资源与逻辑。
-        PrivateDependencyModuleNames.AddRange(new string[] { "GamePlatformAnimationClient" });
+        // 客户端只复用平台动画闪白/顿帧与CameraShake，不引入Niagara/SFX播放器依赖。
+        PrivateDependencyModuleNames.AddRange(new string[] { "GamePlatformAnimationClient", "GamePlatformCameraClient" });
     }
 }

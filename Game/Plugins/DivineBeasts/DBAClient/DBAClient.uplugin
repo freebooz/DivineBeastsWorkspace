@@ -17,7 +17,7 @@
     { "Name": "GamePlatformSession", "Enabled": true },
     { "Name": "GamePlatformLoading", "Enabled": true },
     { "Name": "GamePlatformData", "Enabled": true },
-    { "Name": "GamePlatformInput", "Enabled": true },
+    { "Name": "GamePlatformInput", "Enabled": true },    { "Name": "GamePlatformAnimation", "Enabled": true },
     { "Name": "GamePlatformCharacter", "Enabled": true },
     { "Name": "GamePlatformAbilitySystem", "Enabled": true },
     { "Name": "GamePlatformTelemetry", "Enabled": true },
@@ -25,7 +25,7 @@
     { "Name": "GamePlatformQuest", "Enabled": true },
     { "Name": "GamePlatformInventory", "Enabled": true },
     { "Name": "GamePlatformPresentation", "Enabled": true },
-    { "Name": "GamePlatformVFX", "Enabled": true },
+    { "Name": "GamePlatformVFX", "Enabled": true },    { "Name": "GamePlatformSFX", "Enabled": true, "TargetAllowList": ["Client", "Editor"] },
     { "Name": "GamePlatformUI", "Enabled": true }
   ],
   "Modules": [

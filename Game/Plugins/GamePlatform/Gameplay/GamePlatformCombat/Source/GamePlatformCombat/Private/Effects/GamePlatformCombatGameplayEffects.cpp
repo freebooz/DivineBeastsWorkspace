@@ -60,6 +60,20 @@ UGamePlatformHealingGameplayEffect::UGamePlatformHealingGameplayEffect()
     Executions.Add(Execution);
 }
 
+UGamePlatformShieldGameplayEffect::UGamePlatformShieldGameplayEffect(
+    const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
+{
+    // 每次施加都是独立的有限期效果。剩余可吸收量不以GAS属性在每次命中时复制。
+    DurationPolicy = EGameplayEffectDurationType::HasDuration;
+    DurationMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(1.0f));
+    UTargetTagsGameplayEffectComponent* TagsComponent =
+        ObjectInitializer.CreateDefaultSubobject<UTargetTagsGameplayEffectComponent>(
+            this, TEXT("GrantedShieldTags"));
+    GEComponents.Add(TagsComponent);
+    ConfigureGrantedTag(*TagsComponent, GamePlatformCombatTags::State_Shielded);
+}
+
 UGamePlatformStunGameplayEffect::UGamePlatformStunGameplayEffect(
     const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)

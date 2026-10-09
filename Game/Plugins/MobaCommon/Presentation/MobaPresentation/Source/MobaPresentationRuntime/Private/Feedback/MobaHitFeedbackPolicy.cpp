@@ -35,15 +35,11 @@ FMobaHitFeedbackDecision FMobaHitFeedbackPolicy::Evaluate(
         break;
     }
 
-    // 暴击/破防只对有效非格挡命中附加帧数，之后执行一次统一上限裁剪。
-    int32 ExtraFrames = 0;
-    if (!bBlocked)
-    {
-        ExtraFrames += Input.bCritical
-            ? FMath::Clamp(Tuning.CriticalExtraFrames, 0, 3) : 0;
-        ExtraFrames += Input.bGuardBroken
-            ? FMath::Clamp(Tuning.GuardBreakExtraFrames, 0, 3) : 0;
-    }
+    // 没有暴击表现：只有可信确认的非格挡破防事件可以增加局部视觉顿帧。
+    // bGuardBroken（已确认破防）只是表现事实，不恢复失衡/韧性数值。
+    const int32 ExtraFrames = !bBlocked && Input.bGuardBroken
+        ? FMath::Clamp(Tuning.GuardBreakExtraFrames, 0, 3)
+        : 0;
     const int32 Limit = FMath::Clamp(Tuning.MaxHitstopFrames, 0, 10);
     Decision.VisualHitstopFrames = FMath::Clamp(BaseFrames + ExtraFrames, 0, Limit);
     Decision.VisualHitstopSeconds = Decision.VisualHitstopFrames / 60.0f;

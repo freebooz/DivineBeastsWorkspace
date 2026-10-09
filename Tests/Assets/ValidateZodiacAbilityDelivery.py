@@ -33,7 +33,9 @@ VISUAL_ROOT = (
     "DBAUIPack_Core/Content/UI/Combat"
 )
 HERO_PACK_ROOT = ROOT / "Game/Plugins/DivineBeasts/ContentPacks/Heroes"
-DEFAULT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+\.[A-Za-z][A-Za-z0-9_]*@[1-9][0-9]*$")
+# 平台 FGamePlatformId（稳定逻辑身份）允许单段命名空间，例如 dba.abilityset@1。
+# 必须至少一段命名空间加一段名称；禁止把二段式合法ID误判为失败。
+DEFAULT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+@[1-9][0-9]*$")
 
 
 def require_files(inventory: dict) -> list[str]:
@@ -157,9 +159,9 @@ def main() -> int:
 
         blockers = unmet_release_requirements(inventory)
         print(f"RELEASE_BLOCKERS={len(blockers)}")
-        for reason in blockers:
-            print("BLOCKED:", reason)
         if args.release or not args.inventory:
+            for reason in blockers:
+                print("BLOCKED:", reason)
             if blockers:
                 print("RELEASE_READINESS=BLOCKED;ExitCode=2")
                 return 2

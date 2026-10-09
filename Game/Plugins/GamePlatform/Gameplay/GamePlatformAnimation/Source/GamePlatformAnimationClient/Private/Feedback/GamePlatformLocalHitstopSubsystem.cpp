@@ -88,23 +88,28 @@ void UGamePlatformLocalHitstopSubsystem::ApplyToMesh(
     }
     const TWeakObjectPtr<USkeletalMeshComponent> MeshKey(Mesh);
     FPausedMeshRecord* Existing = ActiveMeshes.Find(MeshKey);
-    if (Existing && Existing->DeadlineSeconds >= DeadlineSeconds)
-    {
-        return; // 新命中不能缩短已有剩余时间，也不能将时长逐次相加。
-    }
-
     if (!Existing)
     {
         FPausedMeshRecord Record;
         Record.Mesh = Mesh;
         Record.World = &World;
+        Record.FirstPausedAtSeconds = FPlatformTime::Seconds();
         Record.bWasAnimsPaused = Mesh->bPauseAnims;
         ActiveMeshes.Add(MeshKey, MoveTemp(Record));
         Existing = ActiveMeshes.Find(MeshKey);
         Mesh->bPauseAnims = true;
     }
 
-    Existing->DeadlineSeconds = DeadlineSeconds;
+    // 新命中仅延长到本次连续暂停窗口的上限，不将多个命中帧数累加。
+    // 避免高频多段攻击不断刷新，导致动画永久无法恢复。
+    const double AbsoluteWindowLimit =
+        Existing->FirstPausedAtSeconds + MaxVisualFrames / ReferenceFps;
+    const double SafeDeadline = FMath::Min(DeadlineSeconds, AbsoluteWindowLimit);
+    if (Existing->DeadlineSeconds >= SafeDeadline)
+    {
+        return;
+    }
+    Existing->DeadlineSeconds = SafeDeadline;
 
     // CoreTicker依据真实经过时间驱动，仅在活动顿帧期间工作。
     // 使用每Mesh截止时间而非TimerManager的世界时间，可避免全局时间膨胀导致的停顿拖长。
@@ -117,7 +122,7 @@ void UGamePlatformLocalHitstopSubsystem::ApplyToMesh(
 }
 
 void UGamePlatformLocalHitstopSubsystem::RestoreMesh(
-    TWeakObjectPtr<USkeletalMeshComponent> MeshKey)
+    TWeakObjectPtr<USkeletalMeshComponent> MeshKey, bool bBroadcastFinished)
 {
     FPausedMeshRecord* Record = ActiveMeshes.Find(MeshKey);
     if (!Record)
@@ -126,14 +131,20 @@ void UGamePlatformLocalHitstopSubsystem::RestoreMesh(
     }
 
     // 只恢复本世界仍存在的原始网格；销毁或跨世界网格仅回收弱引用。
-    if (USkeletalMeshComponent* Mesh = Record->Mesh.Get())
+    USkeletalMeshComponent* ValidMesh = Record->Mesh.Get();
+    const bool bSameWorld = IsValid(ValidMesh) &&
+        ValidMesh->GetWorld() == Record->World.Get();
+    const bool bRestoreOriginalState = Record->bWasAnimsPaused;
+    ActiveMeshes.Remove(MeshKey);
+    if (bSameWorld)
     {
-        if (Mesh->GetWorld() == Record->World.Get())
+        ValidMesh->bPauseAnims = bRestoreOriginalState;
+        if (bBroadcastFinished)
         {
-            Mesh->bPauseAnims = Record->bWasAnimsPaused;
+            // 记录已移除后再通知上层Input；事件消费者不能恢复/移除本条记录。
+            VisualHitstopFinished.Broadcast(ValidMesh);
         }
     }
-    ActiveMeshes.Remove(MeshKey);
 }
 
 /**
@@ -184,7 +195,7 @@ void UGamePlatformLocalHitstopSubsystem::CancelAllVisualHitstops()
     ActiveMeshes.GetKeys(MeshKeys);
     for (const TWeakObjectPtr<USkeletalMeshComponent>& MeshKey : MeshKeys)
     {
-        RestoreMesh(MeshKey);
+        RestoreMesh(MeshKey, false); // 世界清理/取消不回放技能输入。
     }
     ActiveMeshes.Reset();
     RecentEventIds.Reset();

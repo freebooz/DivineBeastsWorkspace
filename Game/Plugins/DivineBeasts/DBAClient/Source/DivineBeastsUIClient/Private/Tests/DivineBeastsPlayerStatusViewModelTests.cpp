@@ -28,8 +28,6 @@ bool FDivineBeastsPlayerStatusViewModelSnapshotTest::RunTest(const FString&)
 
     Combat->SetHealth(75.0f);
     Combat->SetMaxHealth(100.0f);
-    Combat->SetShield(20.0f);
-    Combat->SetMaxShield(50.0f);
     Momentum->SetMomentum(40.0f);
     Momentum->SetMaxMomentum(100.0f);
 
@@ -37,7 +35,7 @@ bool FDivineBeastsPlayerStatusViewModelSnapshotTest::RunTest(const FString&)
     TestTrue(TEXT("ViewModel绑定ASC成功"), ViewModel->BindToAbilitySystem(ASC));
     const FDivineBeastsPlayerStatusViewData Status = ViewModel->GetStatus();
     TestEqual(TEXT("Health投影"), Status.Health, 75.0);
-    TestEqual(TEXT("Shield投影"), Status.Shield, 20.0);
+    TestEqual(TEXT("最大生命投影"), Status.MaxHealth, 100.0);
     TestEqual(TEXT("Momentum投影"), Status.Momentum, 40.0);
     TestFalse(TEXT("Health大于0时非死亡"), Status.bDead);
 

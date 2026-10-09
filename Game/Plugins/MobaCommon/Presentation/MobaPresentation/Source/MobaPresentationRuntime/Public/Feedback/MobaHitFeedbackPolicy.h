@@ -30,9 +30,6 @@ struct MOBAPRESENTATIONRUNTIME_API FMobaHitFeedbackInput
     EMobaHitFeedbackContact Contact = EMobaHitFeedbackContact::Light;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit Feedback")
-    bool bCritical = false;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit Feedback")
     bool bGuardBroken = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit Feedback")

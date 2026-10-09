@@ -11,6 +11,8 @@
 class AGamePlatformArenaGameState;
 class AGamePlatformArenaPlayerState;
 class UGamePlatformCombatComponent;
+class UGamePlatformCombatFeedbackWorldSubsystem;
+class UGamePlatformHitFeedbackProfile;
 class UWorld;
 class IMobaPresentationContextContributor;
 
@@ -47,8 +49,15 @@ public:
     {
         HitFeedbackTuning = Tuning;
     }
-    EGamePlatformPresentationSubmitResult AdaptCriticalFact(
-        const FMobaPresentationCriticalFact& Fact);
+
+    /**
+     * 竞技组合根注入已完成GamePlatformData租约加载的Profile与目录逻辑ID。
+     * 未预加载的软资源不得在命中关键路径同步加载；允许单独禁用VFX或SFX。
+     */
+    void ConfigureHitFeedbackProfile(
+        UGamePlatformHitFeedbackProfile* LoadedProfile,
+        FName VFXDefinitionId,
+        FName SFXDefinitionId);
     EGamePlatformPresentationSubmitResult AdaptAbilityFact(
         const FMobaPresentationAbilityFact& Fact);
     EGamePlatformPresentationSubmitResult AdaptStatusFact(
@@ -82,7 +91,10 @@ private:
 
     void ResetWorldState(UWorld* NewWorld);
     void UnbindArena();
-    void UnbindCombat();
+    void UnbindCombat();    /** 订阅当前客户端世界已确认事实，不扫描或缓存全场战斗Actor。 */
+    void BindCombatFeedbackWorld(UWorld& World);
+    void UnbindCombatFeedbackWorld();
+    void HandleConfirmedNetworkCombatEvent(const FGamePlatformCombatEvent& Event);
     void BindArena(AGamePlatformArenaGameState* GameState);
     void RefreshArenaPlayerBindings();
 
@@ -104,10 +116,21 @@ private:
 
     // 本地玩家独立调校数据，不由表现参数更改服务器判定。
     FGamePlatformHitFeedbackTuning HitFeedbackTuning;
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformHitFeedbackProfile> LoadedHitFeedbackProfile = nullptr;
+    FName HitVFXDefinitionId = NAME_None;
+    FName HitSFXDefinitionId = NAME_None;
+
+    /** 分层VFX/SFX/闪白/镜头共用命中事实去重，不会各自重复播放。 */
+    TSet<FGuid> RenderedHitEvents;
+    TArray<FGuid> RenderedHitOrder;
+    static constexpr int32 MaxRenderedHitEvents = 2048;
 
     TWeakObjectPtr<UWorld> BoundWorld;
     TWeakObjectPtr<AGamePlatformArenaGameState> BoundArenaGameState;
     TWeakObjectPtr<UGamePlatformCombatComponent> BoundCombatComponent;
+    TWeakObjectPtr<UGamePlatformCombatFeedbackWorldSubsystem> BoundCombatWorldBus;
+    FDelegateHandle CombatWorldFeedbackHandle;
 
     FDelegateHandle PostLoadMapHandle;
     FDelegateHandle WorldCleanupHandle;

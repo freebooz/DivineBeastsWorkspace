@@ -3,7 +3,7 @@
 namespace MobaPresentationTags
 {
     UE_DEFINE_GAMEPLAY_TAG_COMMENT(Combat_Hit, "Moba.Combat.Hit", "MOBA确认命中表现语义。");
-    UE_DEFINE_GAMEPLAY_TAG_COMMENT(Combat_Critical, "Moba.Combat.Critical", "MOBA暴击表现语义。");
+    UE_DEFINE_GAMEPLAY_TAG_COMMENT(Combat_Critical, "Moba.Combat.Critical", "历史标签仅作资产兼容，不再产生或提交暴击表现。");
     UE_DEFINE_GAMEPLAY_TAG_COMMENT(Combat_Heal, "Moba.Combat.Heal", "MOBA治疗表现语义。");
     UE_DEFINE_GAMEPLAY_TAG_COMMENT(Combat_Shield_Hit, "Moba.Combat.Shield.Hit", "MOBA护盾吸收命中表现语义。");
     UE_DEFINE_GAMEPLAY_TAG_COMMENT(Combat_Control_Apply, "Moba.Combat.Control.Apply", "MOBA控制施加表现语义。");

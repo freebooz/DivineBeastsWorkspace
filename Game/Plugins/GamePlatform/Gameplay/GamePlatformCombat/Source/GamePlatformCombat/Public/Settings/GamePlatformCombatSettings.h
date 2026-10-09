@@ -17,13 +17,13 @@ public:
     UPROPERTY(Config, EditAnywhere, Category="Magnitude", meta=(ClampMin="0.0"))
     float MaxHealingMagnitude = 100000.0f;
 
-    /** 单个AttackPower/AbilityPower伤害系数安全上限，防止错误Definition放大到非有限范围。 */
-    UPROPERTY(Config, EditAnywhere, Category="DamageFormula", meta=(ClampMin="0.0"))
-    float MaxDamageAttributeCoefficient = 10.0f;
+    /** 每个服务器权威盾效果最多可吸收的点数；防止错配资源无限堆叠。 */
+    UPROPERTY(Config, EditAnywhere, Category="ShieldEffects", meta=(ClampMin="0.0"))
+    float MaxShieldCapacity = 100000.0f;
 
-    /** Armor/MagicResistance减伤曲线常数；默认100。 */
-    UPROPERTY(Config, EditAnywhere, Category="DamageFormula", meta=(ClampMin="1.0"))
-    float DefenseMitigationConstant = 100.0f;
+    /** 临时盾效果持续秒数上限，失效由GAS定时器负责，不由每帧Tick轮询。 */
+    UPROPERTY(Config, EditAnywhere, Category="ShieldEffects", meta=(ClampMin="0.0"))
+    float MaxShieldDuration = 120.0f;
 
     UPROPERTY(Config, EditAnywhere, Category="HitValidation", meta=(ClampMin="0.0"))
     float MaxHitDistance = 5000.0f;

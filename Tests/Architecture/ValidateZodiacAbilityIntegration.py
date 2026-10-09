@@ -75,8 +75,9 @@ def check_ownership() -> None:
            and all(term not in definition for term in ("TSoftObjectPtr<UTexture2D>", "TSoftObjectPtr<UNiagaraSystem>", "TSoftObjectPtr<USoundBase>")))
     verify("每级伤害/成本由技能数值行集中配置",
            all(name in read(ABILITIES / "Public/Types/DivineBeastsAbilityBalanceRow.h")
-               for name in ["BaseDamage", "AttackPowerCoefficient", "AbilityPowerCoefficient",
-                            "CooldownSeconds", "MomentumCost", "CastRangeCm"]))
+               for name in ["BaseDamage", "CooldownSeconds", "MomentumCost", "CastRangeCm"])
+           and all(name not in read(ABILITIES / "Public/Types/DivineBeastsAbilityBalanceRow.h")
+                   for name in ["AttackPowerCoefficient", "AbilityPowerCoefficient"]))
     verify("服务端唯一授予写入和来源授权撤销",
            "ASC->GiveAbility(Spec)" in runtime and "ASC->ClearAbility(Handle)" in runtime
            and "OwnedAbilityHandles" in state)

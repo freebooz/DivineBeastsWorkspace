@@ -18,8 +18,7 @@ bool FDivineBeastsAbilityBalanceRow::Validate(FString& OutError) const
 
     // 非有限值不得进入伤害、冷却或客户端提示计算；上限抑制错误表导致溢出。
     const float Values[] = {
-        BaseDamage, AttackPowerCoefficient, AbilityPowerCoefficient,
-        CooldownSeconds, MomentumCost, CastRangeCm, AreaRadiusCm
+        BaseDamage, CooldownSeconds, MomentumCost, CastRangeCm, AreaRadiusCm
     };
     for (const float Value : Values)
     {

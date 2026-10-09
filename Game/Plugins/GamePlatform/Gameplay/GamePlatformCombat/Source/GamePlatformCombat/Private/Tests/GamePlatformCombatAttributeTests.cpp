@@ -3,8 +3,6 @@
 #include "Misc/AutomationTest.h"
 #include "Attributes/GamePlatformAttributeSet.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
-#include "Attributes/GamePlatformDefenseAttributeSet.h"
-#include "Attributes/GamePlatformOffenseAttributeSet.h"
 #include "UObject/UnrealType.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -19,7 +17,6 @@ bool FGamePlatformCombatAttributeDefaultsTest::RunTest(const FString& Parameters
 
     TestEqual(TEXT("默认MaxHealth"), Attributes->GetMaxHealth(), 100.0f);
     TestEqual(TEXT("默认Health"), Attributes->GetHealth(), 100.0f);
-    TestEqual(TEXT("默认Shield"), Attributes->GetShield(), 0.0f);
 
     float NegativeMaxHealth = -10.0f;
     Attributes->PreAttributeChange(
@@ -52,30 +49,36 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformCombatAttributeFamiliesTest::RunTest(const FString& Parameters)
 {
-    TestTrue(TEXT("生命/Meta属性集必须继承平台AttributeSet"),
+    TestTrue(TEXT("唯一平台战斗数值属性集继承中立GAS基类"),
         UGamePlatformCombatAttributeSet::StaticClass()->IsChildOf(UGamePlatformAttributeSet::StaticClass()));
-    TestTrue(TEXT("攻击属性集必须继承平台AttributeSet"),
-        UGamePlatformOffenseAttributeSet::StaticClass()->IsChildOf(UGamePlatformAttributeSet::StaticClass()));
-    TestTrue(TEXT("防御属性集必须继承平台AttributeSet"),
-        UGamePlatformDefenseAttributeSet::StaticClass()->IsChildOf(UGamePlatformAttributeSet::StaticClass()));
 
-    UGamePlatformOffenseAttributeSet* Offense = NewObject<UGamePlatformOffenseAttributeSet>();
-    UGamePlatformDefenseAttributeSet* Defense = NewObject<UGamePlatformDefenseAttributeSet>();
-    TestEqual(TEXT("默认CriticalDamage仍与旧战斗公式一致"), Offense->GetCriticalDamage(), 1.5f);
+    UGamePlatformCombatAttributeSet* Combat = NewObject<UGamePlatformCombatAttributeSet>();
+    TestEqual(TEXT("初始伤害增强为0"), Combat->GetDamageBonus(), 0.0f);
+    TestEqual(TEXT("初始伤害减免为0"), Combat->GetDamageReduction(), 0.0f);
 
-    // 裁减真正没有运行消费路径的Attribute后，其反射身份也不能继续存在。
-    // 不通过将属性字段设为不复制来伪造“属性已减少”。
-    TestNull(TEXT("未消费的攻击速度字段不得再进入GAS"),
-        FindFProperty<FProperty>(UGamePlatformOffenseAttributeSet::StaticClass(), FName(TEXT("AttackSpeed"))));
-    // 控制时长不使用韧性/失衡属性集。控制状态直接由服务器GameplayEffect与Tag表达。
+    // 删除盾永久属性：临时盾只由GameplayEffect与组件效果实例负责。
+    TestNull(TEXT("盾属性不再存在"),
+        FindFProperty<FProperty>(UGamePlatformCombatAttributeSet::StaticClass(), FName(TEXT("Shield"))));
+    TestNull(TEXT("最大盾属性不再存在"),
+        FindFProperty<FProperty>(UGamePlatformCombatAttributeSet::StaticClass(), FName(TEXT("MaxShield"))));
 
-    float CriticalChance = 2.0f;
-    Offense->PreAttributeChange(UGamePlatformOffenseAttributeSet::GetCriticalChanceAttribute(), CriticalChance);
-    TestEqual(TEXT("CriticalChance限制在0..1"), CriticalChance, 1.0f);
+    // Buff/Debuff可用有符号加减修饰器，不再提供攻击/防御/穿透/抗性等同义字段。
+    float Weakness = -20.0f;
+    Combat->PreAttributeChange(UGamePlatformCombatAttributeSet::GetDamageBonusAttribute(), Weakness);
+    TestEqual(TEXT("削弱攻击的Debuff允许负增伤"), Weakness, -20.0f);
+    float Vulnerability = -15.0f;
+    Combat->PreAttributeChange(UGamePlatformCombatAttributeSet::GetDamageReductionAttribute(), Vulnerability);
+    TestEqual(TEXT("降低减免的易伤Debuff允许负减免"), Vulnerability, -15.0f);
 
-    float DamageReduction = 2.0f;
-    Defense->PreAttributeChange(UGamePlatformDefenseAttributeSet::GetDamageReductionAttribute(), DamageReduction);
-    TestEqual(TEXT("DamageReduction限制在0..1"), DamageReduction, 1.0f);
+    for (const FName Retired : {
+        FName(TEXT("AttackPower")), FName(TEXT("AbilityPower")),
+        FName(TEXT("Penetration")), FName(TEXT("Resistance")),
+        FName(TEXT("CriticalChance")), FName(TEXT("CriticalDamage"))
+    })
+    {
+        TestNull(TEXT("旧攻击防御属性未迁入新的公共数值集"),
+            FindFProperty<FProperty>(UGamePlatformCombatAttributeSet::StaticClass(), Retired));
+    }
 
     return true;
 }

@@ -22,9 +22,9 @@ bool FDivineBeastsAbilityDataValidationTest::RunTest(const FString&)
     Row.CooldownSeconds = 3.0f;
     TestTrue(TEXT("合法技能数值行接受"), Row.Validate(Error));
 
-    Row.AttackPowerCoefficient = std::numeric_limits<float>::quiet_NaN();
-    TestFalse(TEXT("非有限伤害系数拒绝"), Row.Validate(Error));
-    Row.AttackPowerCoefficient = 0.5f;
+    Row.BaseDamage = std::numeric_limits<float>::quiet_NaN();
+    TestFalse(TEXT("非有限基础伤害必须拒绝"), Row.Validate(Error));
+    Row.BaseDamage = 60.0f;
     Row.MomentumCost = -1.0f;
     TestFalse(TEXT("负气势消耗拒绝"), Row.Validate(Error));
     Row.MomentumCost = 10.0f;

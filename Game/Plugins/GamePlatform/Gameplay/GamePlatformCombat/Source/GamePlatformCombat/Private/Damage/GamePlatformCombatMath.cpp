@@ -7,10 +7,6 @@ float SafeNonNegative(float Value)
     return FMath::IsFinite(Value) ? FMath::Max(0.0f, Value) : 0.0f;
 }
 
-float SafeUnit(float Value)
-{
-    return FMath::IsFinite(Value) ? FMath::Clamp(Value, 0.0f, 1.0f) : 0.0f;
-}
 }
 
 FGamePlatformDamageFormulaOutput FGamePlatformCombatMath::CalculateDamageMagnitude(
@@ -19,89 +15,33 @@ FGamePlatformDamageFormulaOutput FGamePlatformCombatMath::CalculateDamageMagnitu
     FGamePlatformDamageFormulaOutput Output;
 
     const float BaseDamage = SafeNonNegative(Input.BaseDamage);
-    const float AttackPower = SafeNonNegative(Input.AttackPower);
-    const float AttackCoefficient = SafeNonNegative(Input.AttackPowerCoefficient);
-    const float AbilityPower = SafeNonNegative(Input.AbilityPower);
-    const float AbilityCoefficient = SafeNonNegative(Input.AbilityPowerCoefficient);
+    // 一条服务器权威加减链：技能基础伤害 + 来源GAS伤害增减。
+    // 增减数值通过GAS GameplayEffect的Additive修饰器叠加，无需额外属性集。
+    const float Bonus = FMath::IsFinite(Input.DamageBonus)
+        ? Input.DamageBonus : 0.0f;
+    const float Reduction = FMath::IsFinite(Input.DamageReduction)
+        ? Input.DamageReduction : 0.0f;
+    const float Enhanced = SafeNonNegative(BaseDamage + Bonus);
+    Output.RawDamage = Enhanced;
 
-    float RawDamage = BaseDamage +
-        (AttackPower * AttackCoefficient) +
-        (AbilityPower * AbilityCoefficient);
-
-    Output.bCritical = IsCriticalHit(
-        Input.bCanCritical,
-        Input.CriticalChance,
-        Input.CriticalRoll);
-    if (Output.bCritical)
+    // 保留Physical/Magic（物理/法术）的原有类型身份，但不再走不同的护甲/法抗公式。
+    // TrueDamage（真实伤害）保留绕过普通减伤的约定，仍可由独立护盾GE先吸收。
+    if (Input.DamageType == EGamePlatformDamageType::TrueDamage)
     {
-        RawDamage *= FMath::Max(1.0f, SafeNonNegative(Input.CriticalDamage));
-    }
-
-    Output.RawDamage = SafeNonNegative(RawDamage);
-    float MitigationMultiplier = 1.0f;
-
-    switch (Input.DamageType)
-    {
-    case EGamePlatformDamageType::Physical:
-    {
-        Output.EffectiveDefense = FMath::Max(
-            0.0f,
-            SafeNonNegative(Input.Armor) - SafeNonNegative(Input.ArmorPenetration));
-        const float Constant = FMath::Max(1.0f, SafeNonNegative(Input.DefenseMitigationConstant));
-        MitigationMultiplier = Constant / (Constant + Output.EffectiveDefense);
-        break;
-    }
-    case EGamePlatformDamageType::Magic:
-    {
-        Output.EffectiveDefense = FMath::Max(
-            0.0f,
-            SafeNonNegative(Input.MagicResistance) - SafeNonNegative(Input.MagicPenetration));
-        const float Constant = FMath::Max(1.0f, SafeNonNegative(Input.DefenseMitigationConstant));
-        MitigationMultiplier = Constant / (Constant + Output.EffectiveDefense);
-        break;
-    }
-    case EGamePlatformDamageType::TrueDamage:
-        // TrueDamage（真实伤害）明确忽略护甲/法抗和通用DamageReduction。
-        Output.FinalDamage = Output.RawDamage;
+        Output.FinalDamage = Enhanced;
         return Output;
-    case EGamePlatformDamageType::Untyped:
-    default:
-        break;
     }
 
-    const float DamageReductionMultiplier = 1.0f - SafeUnit(Input.DamageReduction);
-    Output.FinalDamage = SafeNonNegative(
-        Output.RawDamage * MitigationMultiplier * DamageReductionMultiplier);
+    // 普通防御Buff增加Reduction，易伤Debuff可使Reduction为负，提高最终伤害。
+    Output.FinalDamage = SafeNonNegative(Enhanced - Reduction);
     return Output;
-}
-
-float FGamePlatformCombatMath::MakeDeterministicUnitRoll(const FGuid& EventId)
-{
-    if (!EventId.IsValid())
-    {
-        return 1.0f;
-    }
-
-    const uint32 Hash = GetTypeHash(EventId);
-    constexpr uint32 Mask24 = 0x00FFFFFFu;
-    constexpr float Denominator = 16777216.0f; // 2^24
-    return static_cast<float>(Hash & Mask24) / Denominator;
-}
-
-bool FGamePlatformCombatMath::IsCriticalHit(
-    bool bCanCritical,
-    float CriticalChance,
-    float CriticalRoll)
-{
-    return bCanCritical &&
-        SafeUnit(CriticalRoll) < SafeUnit(CriticalChance);
 }
 
 FGamePlatformCombatResult FGamePlatformCombatMath::ResolveDamage(
     const FGuid& EventId,
     float RequestedMagnitude,
     float FinalMagnitude,
-    float CurrentShield,
+    float AvailableShieldEffectCapacity,
     float CurrentHealth,
     bool bBypassShield)
 {
@@ -110,7 +50,8 @@ FGamePlatformCombatResult FGamePlatformCombatMath::ResolveDamage(
     Result.RequestedMagnitude = FMath::Max(0.0f, RequestedMagnitude);
     Result.FinalMagnitude = FMath::Max(0.0f, FinalMagnitude);
 
-    const float SafeShield = FMath::Max(0.0f, CurrentShield);
+    // Shield只是限时GE的剩余吸收容量，不再来自AttributeSet（永久GAS属性）。
+    const float SafeShield = SafeNonNegative(AvailableShieldEffectCapacity);
     const float SafeHealth = FMath::Max(0.0f, CurrentHealth);
     float RemainingDamage = Result.FinalMagnitude;
 
@@ -140,8 +81,7 @@ FGamePlatformCombatResult FGamePlatformCombatMath::ResolveHealing(
     float RequestedMagnitude,
     float FinalMagnitude,
     float CurrentHealth,
-    float MaxHealth,
-    float CurrentShield)
+    float MaxHealth)
 {
     FGamePlatformCombatResult Result;
     Result.EventId = EventId;
@@ -155,6 +95,5 @@ FGamePlatformCombatResult FGamePlatformCombatMath::ResolveHealing(
     Result.AppliedToHealth = FMath::Min(MissingHealth, Result.FinalMagnitude);
     Result.RemainingHealth =
         FMath::Min(SafeMaxHealth, SafeHealth + Result.AppliedToHealth);
-    Result.RemainingShield = FMath::Max(0.0f, CurrentShield);
     return Result;
 }
