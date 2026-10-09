@@ -34,6 +34,8 @@
 
 项目层用户界面当前设计基线见 `Docs/用户界面设计.md`。该文档定义了分类基础类继承、事件驱动更新、PC/移动端适配、目录规划、界面清单、命名规范和分阶段实施顺序。
 
+2026-10-09 新增 `UDivineBeastsAbilityBarViewModel`（技能栏视图模型）和 `UDivineBeastsAbilityUIProfile`（客户端英雄技能图标/名称主资产类型），现有 `UDivineBeastsAbilityBarPanel`（技能栏面板）已接入服务器授予快照的只读状态。仅源码可用，**尚无真实 Widget 技能栏蓝图、技能图标或完整 GAS 冷却投影**，不得称已在游戏画面展示。详见 [AbilityBarAutoBinding.md（技能栏自动绑定说明）](Docs/AbilityBarAutoBinding.md)。
+
 ### 十二生肖技能 VFX（视觉特效）架构
 
 项目层十二生肖技能 VFX 设计基线见 Docs/ZodiacSkillVFXArchitecture.md。DivineBeastsPresentationRuntime 只保存 HeroDefinitionId（英雄定义编号）、AbilityId（技能编号）、SkinId（皮肤编号）等稳定表现上下文与 Hero VFX Profile（英雄视觉特效配置）；具体 Niagara（粒子特效）、Material（材质）、Texture（纹理）、Mesh（网格）和 Decal（贴花）归各 DBAHeroPack_* 内容包。竞技事实由 MobaPresentation 转为中立表现语义，最终仍由唯一 GamePlatformVFX 执行器播放。当前真实 Ability 资产尚未交付，不得为了填充目录虚构生产技能 ID 或伪 .uasset。

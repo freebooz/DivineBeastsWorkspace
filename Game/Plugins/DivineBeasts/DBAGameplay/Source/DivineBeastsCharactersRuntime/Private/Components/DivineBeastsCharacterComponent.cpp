@@ -91,6 +91,12 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
         return false;
     }
 
+    // 新可信出生身份（即使上一个英雄尚在异步加载）必须先作废旧技能授权。
+    // 此时角色和技能装配组件仍在同一服务器实例，立即广播未就绪，
+    // 避免先清除 bServerReady 再刷新导致漏掉 Ready->NotReady 边沿，残留旧技能。
+    // 首次绑定也允许无害广播 false：调用者据此取消任何本代次以前的技能租约。
+    ReadinessChanged.Broadcast(false);
+
     CancelDefinitionLease();
     LoadedDefinition = nullptr;
     bConfigurationApplied = false;

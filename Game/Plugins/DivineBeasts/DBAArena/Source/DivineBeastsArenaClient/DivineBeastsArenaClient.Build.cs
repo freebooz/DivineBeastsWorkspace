@@ -11,6 +11,10 @@ public class DivineBeastsArenaClient : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            // 公共竞技HUD等公开UI类型继承UMG和CommonUI基类；
+            // 创建真实Widget、反射类及虚函数链接必须直接依赖对应引擎模块。
+            "UMG",
+            "CommonUI",
             "DivineBeastsArenaRuntime",
             "GamePlatformArena",
             "GamePlatformArenaClient",

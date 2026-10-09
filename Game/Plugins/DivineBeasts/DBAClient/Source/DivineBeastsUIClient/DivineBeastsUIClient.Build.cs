@@ -43,6 +43,10 @@ public class DivineBeastsUIClient : ModuleRules
             "GameplayAbilities",
             "GamePlatformAbilitySystem",
             "DivineBeastsCharactersRuntime",
+            // 技能栏仅读取项目双端已授权技能快照和本地表现主资产，不取得 GAS 权威写权限。
+            "DivineBeastsAbilitiesRuntime",
+            "GamePlatformCore",
+            "GamePlatformData",
             // 角色选择/创建页只通过项目表现子系统驱动三维预览，不直接加载Mesh或地图资产。
             "DivineBeastsPresentationClient"
         });

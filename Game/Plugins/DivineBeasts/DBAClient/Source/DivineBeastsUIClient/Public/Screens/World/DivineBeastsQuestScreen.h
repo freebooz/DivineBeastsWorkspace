@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Screens/DivineBeastsUIScreen.h"
+#include "Screens/World/DivineBeastsWorldScreenBase.h"
 #include "Services/GamePlatformQuestClientSubsystem.h"
 #include "DivineBeastsQuestScreen.generated.h"
 
@@ -12,7 +12,7 @@
  */
 UCLASS(Abstract, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsQuestScreen
-    : public UDivineBeastsUIScreen
+    : public UDivineBeastsWorldScreenBase
 {
     GENERATED_BODY()
 

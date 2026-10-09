@@ -1,0 +1,199 @@
+{
+  "SchemaVersion": 1,
+  "Plugin": "DBAHeroPack_Horse",
+  "HeroChinese": "午马·雷蹄",
+  "State": "SourceArtReadyUEImportPending",
+  "UpdatedAt": "2026-10-09",
+  "CreationTool": "Monolith MCP",
+  "MonolithVersion": null,
+  "EditorProjectVerified": false,
+  "EngineVersionExpected": "5.8.0",
+  "Project": "Game/DivineBeastsArena.uproject",
+  "SourceArtwork": {
+    "CreationTool": "built-in image_gen",
+    "PromptSet": "Docs/Art/ZodiacSkillIconPrompts.json",
+    "Count": 5,
+    "ImageDimensions": "1254x1254",
+    "OpaqueBackground": true,
+    "Files": [
+      {
+        "Hero": "Horse",
+        "Slot": "BasicAttack",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2502242,
+        "Sha256": "F9621D236DBAF7A7A9FDF1C2E01A26B18C061DB026C74ECDB671D06D47840A83",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_BasicAttack_HoofStrike_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_BasicAttack_HoofStrike_V1"
+      },
+      {
+        "Hero": "Horse",
+        "Slot": "Passive",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2233788,
+        "Sha256": "0E5E96B9437B129FBE15E0A94A68335F6C08E91F0BAF730652D8648002891C32",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_Passive_ThunderHeart_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Passive_ThunderHeart_V1"
+      },
+      {
+        "Hero": "Horse",
+        "Slot": "Active01",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2392488,
+        "Sha256": "EA472F439CE9C0B211A6C0B34EBD0EB4089BBCDBCA083699696E72AB736107CA",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_Active01_LightningDash_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Active01_LightningDash_V1"
+      },
+      {
+        "Hero": "Horse",
+        "Slot": "Active02",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2477245,
+        "Sha256": "94EC0D13D71FCFC007374D17A89050FDAD7F329C0EDC3F725DC8FEBE1CF7254F",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_Active02_HoofPulse_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Active02_HoofPulse_V1"
+      },
+      {
+        "Hero": "Horse",
+        "Slot": "Ultimate",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2504387,
+        "Sha256": "3BBEE84EDE58F34FE430BB558C736634A6D73741D89FF55D50ABDD2E8DEDDDB1",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_Ultimate_ThunderStampede_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Ultimate_ThunderStampede_V1"
+      }
+    ]
+  },
+  "Assets": [],
+  "PlannedAssets": [
+    {
+      "AssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_BasicAttack_HoofStrike_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "BasicAttack",
+      "ArtMotif": "HoofStrike",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_BasicAttack_HoofStrike_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Passive_ThunderHeart_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Passive",
+      "ArtMotif": "ThunderHeart",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_Passive_ThunderHeart_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Active01_LightningDash_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active01",
+      "ArtMotif": "LightningDash",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_Active01_LightningDash_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Active02_HoofPulse_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active02",
+      "ArtMotif": "HoofPulse",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_Active02_HoofPulse_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Ultimate_ThunderStampede_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Ultimate",
+      "ArtMotif": "ThunderStampede",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/SourceArt/UI/SkillIcons/T_DBA_Horse_Ultimate_ThunderStampede_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    }
+  ],
+  "Verification": {
+    "SourcePngCount": 5,
+    "SourceDimensionsChecked": true,
+    "SourceSha256Recorded": true,
+    "VisualReviewAt64Pixels": true,
+    "TextureImportVerified": false,
+    "ClientCookVerified": false,
+    "ServerCookExclusionVerified": false,
+    "GameplayBindingVerified": false
+  },
+  "字段说明": {
+    "SourceArtwork": "内置image_gen生成的真实PNG图源，已有文件不等于已导入UE纹理。",
+    "Assets": "仅登记由Monolith实际导入、保存和回读完成的引擎资产；空数组表示尚未完成。",
+    "PlannedAssets": "计划导入路径和期望设置，不作为成功证据。",
+    "AbilityId": "正式技能尚未登记，保持null；本清单不授予技能、不定义数值。",
+    "VisualReviewAt64Pixels": "本次在64像素预览中人工检查动作轮廓；不替代HUD、设备或色觉障碍验收。"
+  },
+  "Limitations": [
+    "正式AbilityId及UI Profile软引用待玩法技能定义确认后绑定。",
+    "本任务十个Editor模块真实构建退出0；Monolith尚未就绪，编辑器启动SDK检查受其他任务全Editor构建脚本锁阻塞，等待其结束后重启验证。",
+    "UI纹理暂未经过实际Cook/产物剥离验证。"
+  ],
+  "EditorPreparation": {
+    "ModuleBuildEvidence": "Saved/Validation/ZodiacSkillIcons-2026-10-09/EditorRemainingModulesBuildRetryResult.json",
+    "ModuleBuildExitCode": 0,
+    "FullEditorBuildVerified": false,
+    "MonolithReady": false,
+    "ConcurrentBuildObservedProcessId": 47076,
+    "说明": "仅本任务指定十个模块及依赖的真实OnlyModule构建，不等于全工程编译、Monolith服务可用或Cook验收。"
+  }
+}

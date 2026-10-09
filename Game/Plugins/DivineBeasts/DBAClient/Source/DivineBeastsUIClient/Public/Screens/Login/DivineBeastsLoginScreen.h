@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Screens/DivineBeastsUIScreen.h"
+#include "Screens/Account/DivineBeastsAccountScreenBase.h"
 #include "DivineBeastsLoginScreen.generated.h"
 
 class UDivineBeastsLoginViewModel;
@@ -19,7 +19,7 @@ class UWidget;
  */
 UCLASS(Abstract, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsLoginScreen
-    : public UDivineBeastsUIScreen
+    : public UDivineBeastsAccountScreenBase
 {
     GENERATED_BODY()
 

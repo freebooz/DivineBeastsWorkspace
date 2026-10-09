@@ -230,6 +230,8 @@ private:
     FGamePlatformUIAccessibilityPreferences AccessibilityPreferences;
 
     TMap<FGuid, TSharedPtr<FStreamableHandle>> PendingLoads;
+    /** 移动/其他平台专属Widget加载失败时，只允许针对同一请求回退默认类一次。 */
+    TSet<FGuid> PendingDefaultWidgetRetries;
     TMap<TWeakObjectPtr<UGamePlatformUIScreen>, TSharedPtr<FStreamableHandle>> ActiveScreenLeases;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> PauseScreens;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> TravelPersistentScreens;
@@ -240,8 +242,10 @@ private:
 
     bool IsDefinitionAllowed(const UGamePlatformUIScreenDefinition& Definition) const;
     bool IsRouteTargetValid(const UGamePlatformUIRouteDefinition& Definition) const;
+    /** 默认先解析平台变体，重试阶段强制使用共享Widget类以终止失败循环。 */
     TSoftClassPtr<UGamePlatformUIScreen> ResolveWidgetClass(
-        const UGamePlatformUIScreenDefinition& Definition) const;
+        const UGamePlatformUIScreenDefinition& Definition,
+        bool bUseDefaultWidget = false) const;
 
     bool HasAnyRouteCycle() const;
     void HandlePreLoadMap(const FWorldContext& WorldContext, const FString& MapName);

@@ -91,6 +91,9 @@ namespace
             MakeScreen(TEXT("UI.Screen.SystemMenu"), TEXT("SystemMenu"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::GameAndUI, TEXT("ResumeButton")),
             MakeScreen(TEXT("UI.Screen.Inventory"), TEXT("Inventory"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("InventoryGrid")),
             MakeScreen(TEXT("UI.Screen.Quest"), TEXT("Quest"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("QuestList")),
+            // 社交与运营是第三层公共项目页面，不属于MOBA竞技；软加载仍需提供可见失败结果。
+            MakeScreen(TEXT("UI.Screen.Social"), TEXT("Social"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("FriendsButton")),
+            MakeScreen(TEXT("UI.Screen.LiveOps"), TEXT("LiveOps"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("NoticesButton")),
             MakeHUD(TEXT("UI.HUD.OpenWorld"), TEXT("OpenWorldHUD")),
             MakeHUD(TEXT("UI.HUD.VillageMain"), TEXT("VillageMainHUD")),
             MakeHUD(TEXT("UI.HUD.TutorialGuidance"), TEXT("TutorialGuidance")),

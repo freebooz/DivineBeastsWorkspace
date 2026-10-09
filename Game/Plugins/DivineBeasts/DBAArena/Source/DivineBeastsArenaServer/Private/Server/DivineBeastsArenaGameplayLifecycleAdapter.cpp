@@ -1,6 +1,7 @@
 #include "Server/DivineBeastsArenaGameplayLifecycleAdapter.h"
 
 #include "Catalog/DivineBeastsHeroCatalog.h"
+#include "Characters/DivineBeastsGameplayCharacter.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Framework/GamePlatformArenaGameMode.h"
@@ -159,10 +160,11 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
         return false;
     }
 
-    // 原型阶段统一使用基础ACharacter运行实体；真实生肖只替换Appearance/Animation Profile。
+    // 统一使用已有三层内的项目可玩角色：内含一个 ASC、可信英雄身份组件和技能授权组件，
+    // 角色外观仍由项目表现包替换；不得让原型 ACharacter 缺少 GAS 而伪称技能可用。
     TGuardValue<TSubclassOf<APawn>> PawnClassGuard(
         Mode->DefaultPawnClass,
-        ACharacter::StaticClass());
+        ADivineBeastsGameplayCharacter::StaticClass());
     Mode->RestartPlayerAtPlayerStart(Controller, StartSpot);
 
     ACharacter* Character = Cast<ACharacter>(Controller->GetPawn());

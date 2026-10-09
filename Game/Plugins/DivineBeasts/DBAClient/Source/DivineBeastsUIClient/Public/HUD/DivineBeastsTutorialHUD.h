@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HUD/DivineBeastsHUDWidget.h"
+#include "HUD/World/DivineBeastsWorldHUDBase.h"
 #include "DivineBeastsTutorialHUD.generated.h"
 
 /**
@@ -11,7 +11,7 @@
  */
 UCLASS(Abstract, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsTutorialHUD
-    : public UDivineBeastsHUDWidget
+    : public UDivineBeastsWorldHUDBase
 {
     GENERATED_BODY()
 

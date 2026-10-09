@@ -11,6 +11,9 @@ class AGamePlatformArenaPlayerState;
 class UGamePlatformArenaViewModel;
 class UGamePlatformUIManagerSubsystem;
 class UGamePlatformUIScreenDefinition;
+class UGamePlatformUIScreen;
+class UGamePlatformMobaArenaHUDBase;
+struct FStreamableHandle;
 
 /**
  * UDivineBeastsArenaUIClientSubsystem（神兽联盟竞技UI本地玩家子系统）。
@@ -80,6 +83,26 @@ private:
     /** 使用当前已绑定复制对象更新通用ArenaViewModel。 */
     bool RefreshViewModelFromBoundState();
 
+    /**
+     * 仅在竞技状态或控制器生命周期事件到达时同步页面/HUD。
+     * 所有页面归本子系统所有，不覆盖DBAClient公共主页面；失败记忆避免重复软加载。
+     */
+    void SyncArenaSurface();
+    void CloseArenaScreen();
+    void EnsureArenaHUD();
+    void RemoveArenaHUD();
+    void HandleArenaHUDLoaded(uint32 RequestGeneration);
+
+    /** 按请求身份过滤平台回调，避免将公共登录页面事件当成竞技界面。 */
+    UFUNCTION()
+    void HandleArenaScreenOpened(
+        FGuid RequestId, FName ScreenId, UGamePlatformUIScreen* Screen);
+    UFUNCTION()
+    void HandleArenaScreenOpenFailed(
+        FGuid RequestId, FName ScreenId, FText Reason);
+    UFUNCTION()
+    void HandleArenaScreenClosed(FName ScreenId);
+
     void HandleArenaPhaseChanged(
         EGamePlatformArenaMatchPhase MatchPhase,
         int32 Revision);
@@ -101,4 +124,22 @@ private:
 
     TWeakObjectPtr<AGamePlatformArenaGameState> BoundGameState;
     TArray<TWeakObjectPtr<AGamePlatformArenaPlayerState>> BoundPlayerStates;
+
+    /** 竞技专属页面弱引用，平台页面栈负责具体实例生命周期与资源租约。 */
+    TWeakObjectPtr<UGamePlatformUIScreen> ActiveArenaScreen;
+    FName ActiveArenaSurfaceId = NAME_None;
+    FName OpeningArenaSurfaceId = NAME_None;
+    FGuid OpeningArenaRequestId;
+    /** 同一状态缺少资源时不重复尝试；状态或控制器切换后可重新检查。 */
+    FName FailedArenaSurfaceId = NAME_None;
+    bool bDispatchingArenaScreenOpen = false;
+    bool bArenaScreenOpenFailedDuringDispatch = false;
+    bool bArenaScreenOpenedDuringDispatch = false;
+
+    /** HUD不进入CommonUI页面栈，由本竞技子系统单独创建、挂载与卸载。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformMobaArenaHUDBase> ActiveArenaHUD = nullptr;
+    TSharedPtr<FStreamableHandle> PendingArenaHUDLoad;
+    TSharedPtr<FStreamableHandle> ActiveArenaHUDLease;
+    uint32 ArenaHUDRequestGeneration = 0;
 };

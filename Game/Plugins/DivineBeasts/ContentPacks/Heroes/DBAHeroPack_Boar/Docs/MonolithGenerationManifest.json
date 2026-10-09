@@ -1,0 +1,199 @@
+{
+  "SchemaVersion": 1,
+  "Plugin": "DBAHeroPack_Boar",
+  "HeroChinese": "亥猪·玄鬃",
+  "State": "SourceArtReadyUEImportPending",
+  "UpdatedAt": "2026-10-09",
+  "CreationTool": "Monolith MCP",
+  "MonolithVersion": null,
+  "EditorProjectVerified": false,
+  "EngineVersionExpected": "5.8.0",
+  "Project": "Game/DivineBeastsArena.uproject",
+  "SourceArtwork": {
+    "CreationTool": "built-in image_gen",
+    "PromptSet": "Docs/Art/ZodiacSkillIconPrompts.json",
+    "Count": 5,
+    "ImageDimensions": "1254x1254",
+    "OpaqueBackground": true,
+    "Files": [
+      {
+        "Hero": "Boar",
+        "Slot": "BasicAttack",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2561896,
+        "Sha256": "E31B7D28E3DD3FFFE2DE25FB594EA2706E46711864D878023E428BDF693F30AE",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_BasicAttack_TuskStrike_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_BasicAttack_TuskStrike_V1"
+      },
+      {
+        "Hero": "Boar",
+        "Slot": "Passive",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2493579,
+        "Sha256": "495FB5D599B6DC70C9F3484398E6A777B81D4DAB9E9A8BADFAF1D594F9255D62",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_Passive_IronMane_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Passive_IronMane_V1"
+      },
+      {
+        "Hero": "Boar",
+        "Slot": "Active01",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2732555,
+        "Sha256": "02D29C8D50080B868F1E4C5A5D9B6996432496211BAAB4425F78008AADA8D16E",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_Active01_HeavyRam_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Active01_HeavyRam_V1"
+      },
+      {
+        "Hero": "Boar",
+        "Slot": "Active02",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2933197,
+        "Sha256": "D7669A6BF6CCC589821BB030EB4097757A3DC7D5B9E2B97A923C3E18FB99F49D",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_Active02_PressureWave_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Active02_PressureWave_V1"
+      },
+      {
+        "Hero": "Boar",
+        "Slot": "Ultimate",
+        "Status": "Present",
+        "Width": 1254,
+        "Height": 1254,
+        "Square": true,
+        "Bytes": 2857619,
+        "Sha256": "5593382555CE94F0092A8EE11DB91C9048C861A78294FA7367BB842179CAF611",
+        "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_Ultimate_ManeShockwave_V1.png",
+        "TextureAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Ultimate_ManeShockwave_V1"
+      }
+    ]
+  },
+  "Assets": [],
+  "PlannedAssets": [
+    {
+      "AssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_BasicAttack_TuskStrike_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "BasicAttack",
+      "ArtMotif": "TuskStrike",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_BasicAttack_TuskStrike_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Passive_IronMane_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Passive",
+      "ArtMotif": "IronMane",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_Passive_IronMane_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Active01_HeavyRam_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active01",
+      "ArtMotif": "HeavyRam",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_Active01_HeavyRam_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Active02_PressureWave_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Active02",
+      "ArtMotif": "PressureWave",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_Active02_PressureWave_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    },
+    {
+      "AssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Ultimate_ManeShockwave_V1",
+      "Class": "/Script/Engine.Texture2D",
+      "Slot": "Ultimate",
+      "ArtMotif": "ManeShockwave",
+      "AbilityId": null,
+      "SourceRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/SourceArt/UI/SkillIcons/T_DBA_Boar_Ultimate_ManeShockwave_V1.png",
+      "ImportTool": "Monolith.ui.import_texture_from_bytes",
+      "Saved": false,
+      "ReloadVerified": false,
+      "ExpectedSettings": {
+        "TextureGroup": "TEXTUREGROUP_UI",
+        "SRGB": true,
+        "MaxTextureSize": 256,
+        "MipGenSettings": "TMGS_NoMipmaps"
+      }
+    }
+  ],
+  "Verification": {
+    "SourcePngCount": 5,
+    "SourceDimensionsChecked": true,
+    "SourceSha256Recorded": true,
+    "VisualReviewAt64Pixels": true,
+    "TextureImportVerified": false,
+    "ClientCookVerified": false,
+    "ServerCookExclusionVerified": false,
+    "GameplayBindingVerified": false
+  },
+  "字段说明": {
+    "SourceArtwork": "内置image_gen生成的真实PNG图源，已有文件不等于已导入UE纹理。",
+    "Assets": "仅登记由Monolith实际导入、保存和回读完成的引擎资产；空数组表示尚未完成。",
+    "PlannedAssets": "计划导入路径和期望设置，不作为成功证据。",
+    "AbilityId": "正式技能尚未登记，保持null；本清单不授予技能、不定义数值。",
+    "VisualReviewAt64Pixels": "本次在64像素预览中人工检查动作轮廓；不替代HUD、设备或色觉障碍验收。"
+  },
+  "Limitations": [
+    "正式AbilityId及UI Profile软引用待玩法技能定义确认后绑定。",
+    "本任务十个Editor模块真实构建退出0；Monolith尚未就绪，编辑器启动SDK检查受其他任务全Editor构建脚本锁阻塞，等待其结束后重启验证。",
+    "UI纹理暂未经过实际Cook/产物剥离验证。"
+  ],
+  "EditorPreparation": {
+    "ModuleBuildEvidence": "Saved/Validation/ZodiacSkillIcons-2026-10-09/EditorRemainingModulesBuildRetryResult.json",
+    "ModuleBuildExitCode": 0,
+    "FullEditorBuildVerified": false,
+    "MonolithReady": false,
+    "ConcurrentBuildObservedProcessId": 47076,
+    "说明": "仅本任务指定十个模块及依赖的真实OnlyModule构建，不等于全工程编译、Monolith服务可用或Cook验收。"
+  }
+}

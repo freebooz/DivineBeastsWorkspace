@@ -97,5 +97,6 @@ void UDivineBeastsPlayerStatusPanel::ApplyStatus(
                 Status.MaxMomentum));
     }
 
+    NotifyCombatPresentationChanged();
     BP_OnPlayerStatusChanged(Status);
 }

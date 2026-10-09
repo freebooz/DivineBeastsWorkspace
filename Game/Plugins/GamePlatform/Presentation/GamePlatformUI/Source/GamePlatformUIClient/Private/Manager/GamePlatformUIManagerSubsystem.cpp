@@ -642,15 +642,20 @@ bool UGamePlatformUIManagerSubsystem::IsRouteTargetValid(
 }
 
 TSoftClassPtr<UGamePlatformUIScreen> UGamePlatformUIManagerSubsystem::ResolveWidgetClass(
-    const UGamePlatformUIScreenDefinition& Definition) const
+    const UGamePlatformUIScreenDefinition& Definition,
+    bool bUseDefaultWidget) const
 {
-    const FName PlatformName(FPlatformProperties::IniPlatformName());
-    if (const TSoftClassPtr<UGamePlatformUIScreen>* Variant =
-        Definition.PlatformWidgetVariants.Find(PlatformName))
+    // 同一请求最多由平台专属资源降级到默认资源一次，不允许失败时重复命中相同软路径。
+    if (!bUseDefaultWidget)
     {
-        if (!Variant->IsNull())
+        const FName PlatformName(FPlatformProperties::IniPlatformName());
+        if (const TSoftClassPtr<UGamePlatformUIScreen>* Variant =
+            Definition.PlatformWidgetVariants.Find(PlatformName))
         {
-            return *Variant;
+            if (!Variant->IsNull())
+            {
+                return *Variant;
+            }
         }
     }
 
@@ -738,16 +743,52 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId)
         return;
     }
 
-    TSoftClassPtr<UGamePlatformUIScreen> SoftClass = ResolveWidgetClass(*Definition);
+    const bool bDefaultRetry = PendingDefaultWidgetRetries.Contains(RequestId);
+    TSoftClassPtr<UGamePlatformUIScreen> SoftClass =
+        ResolveWidgetClass(*Definition, bDefaultRetry);
     UClass* LoadedClass = SoftClass.Get();
     UCommonActivatableWidgetStack* Stack =
         RootLayout->GetActivatableStack(Definition->Layer);
-
-    if (!IsValid(LoadedClass) ||
+    const bool bInvalidWidgetClass =
+        !IsValid(LoadedClass) ||
         LoadedClass->HasAnyClassFlags(CLASS_Abstract) ||
-        !LoadedClass->IsChildOf(UGamePlatformUIScreen::StaticClass()) ||
-        !IsValid(Stack))
+        !LoadedClass->IsChildOf(UGamePlatformUIScreen::StaticClass());
+
+    if (bInvalidWidgetClass &&
+        !bDefaultRetry &&
+        SoftClass != Definition->WidgetClass &&
+        !Definition->WidgetClass.IsNull() &&
+        IsValid(Stack))
     {
+        // 平台专属变体资源缺失或类不合法时，只为当前请求重新异步加载默认类。
+        // 同时重申预加载依赖，保持最终页面完整生命周期的资源租约。
+        PendingDefaultWidgetRetries.Add(RequestId);
+        TArray<FSoftObjectPath> FallbackAssets;
+        FallbackAssets.Add(Definition->WidgetClass.ToSoftObjectPath());
+        for (const TSoftObjectPtr<UObject>& Asset : Definition->PreloadAssets)
+        {
+            if (Asset.ToSoftObjectPath().IsValid())
+            {
+                FallbackAssets.AddUnique(Asset.ToSoftObjectPath());
+            }
+        }
+        TSharedPtr<FStreamableHandle> FallbackHandle =
+            FGamePlatformAssetLoader::RequestAsyncLoad(
+                FallbackAssets,
+                FStreamableDelegate::CreateUObject(
+                    this,
+                    &UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded,
+                    RequestId));
+        if (FallbackHandle.IsValid())
+        {
+            PendingLoads.Add(RequestId, MoveTemp(FallbackHandle));
+            return;
+        }
+    }
+
+    if (bInvalidWidgetClass || !IsValid(Stack))
+    {
+        // 默认资源也不可用时给出单次终态失败；不得无限重试或将空白页面当成成功。
         FailRequest(RequestId, Request.ScreenId, LOCTEXT("LoadFailed", "页面类或目标层加载失败。"));
         CleanupPendingRequest(RequestId, false);
         return;
@@ -843,6 +884,7 @@ void UGamePlatformUIManagerSubsystem::CleanupPendingRequest(
     }
 
     PendingLoads.Remove(RequestId);
+    PendingDefaultWidgetRetries.Remove(RequestId);
     PendingRequests.Remove(RequestId);
     PendingViewModels.Remove(RequestId);
 }

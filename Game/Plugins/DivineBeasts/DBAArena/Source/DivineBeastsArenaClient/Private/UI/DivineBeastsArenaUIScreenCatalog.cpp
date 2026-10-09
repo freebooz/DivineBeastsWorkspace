@@ -22,10 +22,9 @@ FDivineBeastsArenaUISurfaceDescriptor MakeScreen(
         TEXT("/DBAArena/UI/Screens/WBP_DBA_UI_Arena_%s.WBP_DBA_UI_Arena_%s_C"),
         AssetName,
         AssetName);
-    Descriptor.MobileWidgetClassPath = FString::Printf(
-        TEXT("/DBAArena/UI/Screens/WBP_DBA_UI_Arena_%s_Mobile.WBP_DBA_UI_Arena_%s_Mobile_C"),
-        AssetName,
-        AssetName);
+    // 竞技移动端控件尚未通过Monolith编译/保存/Cook，禁止登记不存在的软类路径。
+    // 空路径意味着平台安全回退共享布局；真实移动变体交付并验收后再逐项登记。
+    Descriptor.MobileWidgetClassPath.Reset();
     return Descriptor;
 }
 
@@ -38,8 +37,8 @@ FDivineBeastsArenaUISurfaceDescriptor MakeHUD()
     Descriptor.InputMode = EGamePlatformUIInputMode::GameOnly;
     Descriptor.WidgetClassPath =
         TEXT("/DBAArena/UI/HUD/WBP_DBA_UI_ArenaHUD.WBP_DBA_UI_ArenaHUD_C");
-    Descriptor.MobileWidgetClassPath =
-        TEXT("/DBAArena/UI/HUD/WBP_DBA_UI_ArenaHUD_Mobile.WBP_DBA_UI_ArenaHUD_Mobile_C");
+    // HUD移动专用资源尚未交付，先使用公共布局而非制造必然失败的软引用。
+    Descriptor.MobileWidgetClassPath.Reset();
     return Descriptor;
 }
 

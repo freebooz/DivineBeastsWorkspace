@@ -2,7 +2,7 @@
 
 #include "Components/GamePlatformResourceBarWidget.h"
 #include "Contracts/DivineBeastsPlayerStatusUIContracts.h"
-#include "Panels/DivineBeastsPanelWidget.h"
+#include "Panels/Combat/DivineBeastsCombatPanelBase.h"
 #include "DivineBeastsPlayerStatusPanel.generated.h"
 
 class UDivineBeastsPlayerStatusViewModel;
@@ -15,7 +15,7 @@ class UDivineBeastsPlayerStatusViewModel;
  */
 UCLASS(Abstract, Blueprintable)
 class DIVINEBEASTSUICLIENT_API UDivineBeastsPlayerStatusPanel
-    : public UDivineBeastsPanelWidget
+    : public UDivineBeastsCombatPanelBase
 {
     GENERATED_BODY()
 
