@@ -354,6 +354,21 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                     Spec->Handle, ASC->AbilityActorInfo.Get(),
                     nullptr, nullptr, &FailureTags);
 
+                // 平台战斗标签是权威 GameplayEffect 的复制事实：死亡/眩晕禁用全部动作，
+                // 沉默只禁用非普通攻击技能。UI只改变按钮样式，不能反向决定服务器资格。
+                const bool bDead = ASC->HasMatchingGameplayTag(
+                    GamePlatformCombatTags::State_Dead);
+                const bool bStunned = ASC->HasMatchingGameplayTag(
+                    GamePlatformCombatTags::Control_Stun);
+                const bool bSilenced = ASC->HasMatchingGameplayTag(
+                    GamePlatformCombatTags::Control_Silence);
+                const bool bPrimaryAttack =
+                    Grant.InputTag.ToString().EndsWith(TEXT(".Primary"));
+                if (bDead || bStunned || (bSilenced && !bPrimaryAttack))
+                {
+                    Slot.bEnabled = false;
+                }
+
                 if (const FGameplayTagContainer* CooldownTags =
                         Spec->Ability->GetCooldownTags();
                     CooldownTags && !CooldownTags->IsEmpty())
