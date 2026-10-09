@@ -1,3 +1,4 @@
+// 神兽联盟角色初始化适配：双端游戏线程消费可信身份；本组件拥有Data租约与ASC Gate注册，退出/换身份撤销。
 #include "Components/DivineBeastsCharacterComponent.h"
 
 #include "Catalog/DivineBeastsHeroCatalog.h"
@@ -5,7 +6,12 @@
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Definitions/DivineBeastsHeroDefinition.h"
-#include "Engine/StreamableManager.h"
+#include "Abilities/DivineBeastsCharacterActivationGate.h"
+#include "Interfaces/IGamePlatformDataService.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -19,12 +25,16 @@ UDivineBeastsCharacterComponent::UDivineBeastsCharacterComponent()
 void UDivineBeastsCharacterComponent::BeginPlay()
 {
     Super::BeginPlay();
+    bEndingPlay = false;
+    RefreshActivationGateBinding();
     RefreshInitialization();
 }
 
 void UDivineBeastsCharacterComponent::EndPlay(
     const EEndPlayReason::Type EndPlayReason)
 {
+    bEndingPlay = true;
+    DetachActivationGate();
     CancelDefinitionLease();
     LoadedDefinition = nullptr;
     bLocalReady = false;
@@ -121,6 +131,8 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
 
 void UDivineBeastsCharacterComponent::RefreshInitialization()
 {
+    check(IsInGameThread());
+    if (bEndingPlay) { return; }
     const bool bPreviousReady = IsCharacterReady();
 
     if (!IsIdentityStructurallyValid())
@@ -169,6 +181,7 @@ void UDivineBeastsCharacterComponent::OnRep_RuntimeState()
 void UDivineBeastsCharacterComponent::OnRep_ServerReady()
 {
     // RepNotify本身即表示服务器Ready事实发生变化；客户端广播当前合成Ready状态。
+    RefreshActivationGateBinding();
     ReadinessChanged.Broadcast(IsCharacterReady());
 }
 
@@ -184,23 +197,36 @@ void UDivineBeastsCharacterComponent::BeginDefinitionLoad()
     const int32 ExpectedAvatarGeneration = RuntimeState.AvatarGeneration;
     const TWeakObjectPtr<UDivineBeastsCharacterComponent> WeakThis(this);
 
-    DefinitionLease = FDivineBeastsHeroCatalog::RequestDefinition(
-        RuntimeState.HeroDefinitionId,
-        [WeakThis,
-         RequestGeneration,
-         ExpectedSpawnGeneration,
-         ExpectedAvatarGeneration](
-            UDivineBeastsHeroDefinition* Definition)
+    UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
+    if (!Instance)
+    {
+        LastDefinitionLoadResult = FGamePlatformResult::Failure(TEXT("DataGameInstanceUnavailable"), TEXT("角色所在世界没有资源租约作用域。"));
+        UpdateReadiness();
+        return;
+    }
+    DefinitionLease = FDivineBeastsHeroCatalog::AcquireDefinitionResources(
+        *Instance, RuntimeState.HeroDefinitionId, EGamePlatformDataLifetime::World, this,
+        [WeakThis, RequestGeneration, ExpectedSpawnGeneration, ExpectedAvatarGeneration](
+            UDivineBeastsHeroDefinition* Definition, const FGamePlatformDataLease& CompletedLease, const FGamePlatformResult& Result)
         {
-            if (WeakThis.IsValid())
-            {
-                WeakThis->HandleDefinitionLoaded(
-                    Definition,
-                    RequestGeneration,
-                    ExpectedSpawnGeneration,
-                    ExpectedAvatarGeneration);
-            }
-        });
+            if (!WeakThis.IsValid() || WeakThis->bEndingPlay ||
+                RequestGeneration != WeakThis->DefinitionRequestGeneration ||
+                CompletedLease.ScopeId != WeakThis->DefinitionLease.ScopeId ||
+                CompletedLease.LeaseId != WeakThis->DefinitionLease.LeaseId ||
+                CompletedLease.Generation != WeakThis->DefinitionLease.Generation)
+            { return; }
+            WeakThis->LastDefinitionLoadResult = Result;
+            // 完成只是加载终态；成功租约必须继续覆盖角色使用期，失败仅撤销本组件需求。
+            if (!Result.IsSuccess()) { WeakThis->CancelDefinitionLease(); }
+            WeakThis->HandleDefinitionLoaded(Result.IsSuccess() ? Definition : nullptr,
+                WeakThis->DefinitionRequestGeneration, ExpectedSpawnGeneration, ExpectedAvatarGeneration);
+        }, LastDefinitionLoadResult);
+    if (!LastDefinitionLoadResult.IsSuccess())
+    {
+        LoadedDefinition = nullptr;
+        bConfigurationApplied = false;
+        UpdateReadiness();
+    }
 }
 
 void UDivineBeastsCharacterComponent::CancelDefinitionLease()
@@ -208,8 +234,11 @@ void UDivineBeastsCharacterComponent::CancelDefinitionLease()
     ++DefinitionRequestGeneration;
     if (DefinitionLease.IsValid())
     {
-        DefinitionLease->CancelHandle();
-        DefinitionLease.Reset();
+        if (UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr)
+        {
+            if (auto* Data = IGamePlatformDataService::Get(*Instance)) { Data->ReleaseResources(DefinitionLease); }
+        }
+        DefinitionLease = {};
     }
 }
 
@@ -226,9 +255,10 @@ void UDivineBeastsCharacterComponent::HandleDefinitionLoaded(
         return;
     }
 
-    DefinitionLease.Reset();
     if (!Definition || Definition->DefinitionId != RuntimeState.HeroDefinitionId)
     {
+        if (Definition) { LastDefinitionLoadResult = FGamePlatformResult::Failure(TEXT("HeroDefinitionMismatch"), TEXT("真实Definition与当前可信Hero身份不一致。")); }
+        CancelDefinitionLease();
         LoadedDefinition = nullptr;
         bLocalReady = false;
         bConfigurationApplied = false;
@@ -373,9 +403,72 @@ void UDivineBeastsCharacterComponent::UpdateReadiness()
 void UDivineBeastsCharacterComponent::BroadcastReadinessIfChanged(
     bool bPreviousReady)
 {
+    RefreshActivationGateBinding();
     const bool bCurrentReady = IsCharacterReady();
     if (bPreviousReady != bCurrentReady)
     {
         ReadinessChanged.Broadcast(bCurrentReady);
     }
+}
+
+void UDivineBeastsCharacterComponent::RefreshActivationGateBinding()
+{
+    check(IsInGameThread());
+    if (bEndingPlay) { return; }
+    AActor* Owner = GetOwner();
+    UGamePlatformAbilitySystemComponent* CurrentASC = Owner ? Owner->FindComponentByClass<UGamePlatformAbilitySystemComponent>() : nullptr;
+    // 支持宿主把ASC放在PlayerState/Controller；资格仍核对其ActorInfo当前Avatar和真实所有权。
+    if (!CurrentASC)
+    {
+        if (const auto* Pawn = Cast<APawn>(Owner))
+        {
+            const auto* Controller = Cast<APlayerController>(Pawn->GetController());
+            if (Controller)
+            {
+                CurrentASC = Controller->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
+                if (!CurrentASC && Controller->PlayerState)
+                { CurrentASC = Controller->PlayerState->FindComponentByClass<UGamePlatformAbilitySystemComponent>(); }
+            }
+        }
+    }
+    if (BoundAbilitySystem.Get() != CurrentASC)
+    {
+        DetachActivationGate();
+        BoundAbilitySystem = CurrentASC;
+        if (CurrentASC)
+        {
+            AvatarBindingChangedHandle = CurrentASC->OnAvatarBindingChanged().AddUObject(this,
+                &UDivineBeastsCharacterComponent::HandleAbilityAvatarBindingChanged);
+        }
+    }
+    if (!CurrentASC) { return; }
+    CurrentASC->ClearActivationGate(this);
+    const auto Snapshot = CurrentASC->GetAvatarBindingSnapshot();
+    const APawn* PawnOwner = Cast<APawn>(Owner);
+    // 玩家项目Gate不能抢占AI/NPC控制器的中立Gate；无Controller时先保持失败关闭，随后ActorInfo事件重评估。
+    const bool bPlayerOrUnpossessed = !PawnOwner || !PawnOwner->GetController() || Cast<APlayerController>(PawnOwner->GetController());
+    if (bPlayerOrUnpossessed && Snapshot.bBound && CurrentASC->GetAvatarActor() == Owner)
+    {
+        // 即使尚未Ready也注入只读Gate，Evaluate返回明确CharacterNotReady；Ready/身份变化会重新捕获代次。
+        CurrentASC->SetActivationGate(this, MakeShared<FDivineBeastsCharacterActivationGate>(*this,
+            RuntimeState.SpawnGeneration, RuntimeState.AvatarGeneration));
+    }
+}
+
+void UDivineBeastsCharacterComponent::HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot)
+{
+    (void)Snapshot;
+    // ASC已经在新ActorInfo就绪后发布事件；旧Gate已由ASC撤销，再按当前项目身份重新注入。
+    RefreshActivationGateBinding();
+}
+
+void UDivineBeastsCharacterComponent::DetachActivationGate()
+{
+    if (auto* ASC = BoundAbilitySystem.Get())
+    {
+        ASC->ClearActivationGate(this);
+        ASC->OnAvatarBindingChanged().Remove(AvatarBindingChangedHandle);
+    }
+    AvatarBindingChangedHandle.Reset();
+    BoundAbilitySystem.Reset();
 }

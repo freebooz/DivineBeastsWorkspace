@@ -50,3 +50,9 @@ Android / iOS
 - Android 模块构建已尝试，但当前 Runner 缺少 NDK r27c；Android/iOS 真机触控、屏幕适配和性能验收均未完成。
 - 没有 Client Cook/Stage 证明。
 - 没有把本地输入当作服务器权威。
+
+## 2026-09-30设计审查修订
+
+ResetMappings(None)只重置当前Profile声明且原生已登记的行；显式外部行拒绝。SaveInputPreferences的Success表示提交原生void保存，不证明落盘；bPreferencesSaveSubmitted表明已提交，bPreferencesSaved保留身份但当前保持false。磁盘成功/失败不可观测，前置失败明确返回。
+
+本次真实源码/Native/静态检查与未执行UE/后端/Cook边界见Game/Saved/Reviews/task2-repair-report.md；旧历史运行证据不自动覆盖本次修改。

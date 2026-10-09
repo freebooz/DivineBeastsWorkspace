@@ -2,6 +2,7 @@
 #include "Engine/TimerHandle.h" // 私有适配器持有真实计时器句柄，不依赖调用文件隐式包含。
 
 #include "CoreMinimal.h"
+#include "Engine/TimerHandle.h"
 #include "Arena/GamePlatformArenaPolicies.h"
 
 class AGamePlatformArenaGameMode;
@@ -16,6 +17,7 @@ class AGamePlatformArenaPlayerState;
  * - 本适配器只调用 UE GameMode 标准 RestartPlayerAtPlayerStart，不直接 SpawnActor / Possess；
  * - 角色项目初始化统一委托 GamePlatformCharacter 的 InitializationExecutor；
  * - Hero Definition 未预热或初始化未 Ready 时 Fail Closed，比赛不得进入 InProgress。
+ * - 每个GameMode独占适配器、出生代次和复活定时器；销毁时取消自身定时器，不影响其他世界。
  */
 class FDivineBeastsArenaGameplayLifecycleAdapter final
     : public IGamePlatformArenaGameplayLifecycleAdapter

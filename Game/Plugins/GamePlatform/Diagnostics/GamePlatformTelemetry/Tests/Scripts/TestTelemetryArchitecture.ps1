@@ -44,11 +44,11 @@ $Sink = [System.IO.File]::ReadAllText($SinkPath, $Utf8)
 foreach($Required in @('ScheduleRetry(','CancelRetryTickers(','FinalizeShutdownAfterBudget(','RetryAfterSeconds')){
     if(-not $Sink.Contains($Required)){ throw "Reconnect/retry contract missing: $Required" }
 }
-if($Sink.Contains('Batch = MoveTemp(Batch),') -and $Sink.Contains('BeginSubmitBatch(')){
-    # 当前实现允许独立RetryBatch Move捕获，但禁止把同一个提交实参Batch直接Move进Completion闭包。
-    if($Sink.Contains('[WeakThis,' + [Environment]::NewLine + '             Batch = MoveTemp(Batch)')){
-        throw 'Unsafe BeginSubmitBatch argument/capture evaluation order detected.'
-    }
+# 按实际提交调用的第二实参捕获列表判断，独立ScheduleRetry不能污染该调用的结果。
+Import-Module (Join-Path $PSScriptRoot 'TelemetrySubmitCaptureAudit.psm1') -Force
+$UnsafeSubmitCaptures = @(Get-TelemetryUnsafeSubmitCaptures -Source $Sink)
+if($UnsafeSubmitCaptures.Count -gt 0){
+    throw ('Unsafe BeginSubmitBatch argument/capture evaluation order detected: ' + ($UnsafeSubmitCaptures -join '; '))
 }
 
 $Transport = [System.IO.File]::ReadAllText($TransportPath, $Utf8)

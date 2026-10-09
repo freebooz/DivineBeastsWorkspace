@@ -1,7 +1,9 @@
-# MigrationAndHandover（迁移与交接）
+# 迁移与交付
 
-新增数据库变更只使用 `Backend/migrations/gameplatform/0003_player_entitlement.up.sql/down.sql`，不修改 0001 Quest 或 0002 Inventory 历史 Migration。
+2026-09-30：插件、模块、反射类型、协议与资产身份没有更名，未修改发布字段号，未创建/删除UE二进制资产。旧后端路径/迁移/Outbox完成宣称撤销为尚需立项/联调；这不是后端能力修复。
 
-项目具体 Entitlement Catalog 与 Quest Reward Map 位于 Backend/configs/games 和 Shared/Contracts/Games/DivineBeasts；平台通用 API/Event Contract 位于 Shared/Contracts/GamePlatform。
+客户端默认领域适配新增Online实例构造；旧URL/Token构造保留为显式弃用、未配置入口。工程C++搜索未发现旧构造消费者；外部消费者必须注入同一GameInstance已配置Online。回退需整体恢复源码及相应描述依赖，不可单独恢复分散Token缓存。
 
-后续接真实 Hero/Skin 流程时只需要映射 RequiredEntitlementId 并调用 DBAServer 授权服务，不应把项目英雄名称反向写入 Foundation 模块。
+Equipment退出现在撤销自己的GAS句柄；后端在飞事务可能已经提交，组件销毁只失效本地回调，不伪造服务器回滚。Progression/LiveOps新增视图事件，既有读取/API与XP/等级事件身份保持。
+
+当前检查、未执行项、新增源码和中文说明检查范围见Game/Saved/Reviews/task2-repair-report.md及正式统一执行账本；静态通过不等于运行验收。

@@ -10,6 +10,7 @@
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h" // 软引用Get执行类型检查，需要网格资产完整类型而非组件头的前向声明。
 #include "Engine/StreamableManager.h"
 #include "Engine/SkeletalMesh.h"
 #include "GameFramework/Character.h"

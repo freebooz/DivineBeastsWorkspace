@@ -1,4 +1,7 @@
+// 平台服务器机制注册模块：持有控制/准入提供者与PostLogin订阅，关闭先解绑再释放。
+// 仅权威World接入握手组件；启动阶段不登录、不读取凭据、不连接生产后端。
 #include "Modules/ModuleManager.h"
+#include "Engine/World.h"
 #include "Features/IModularFeatures.h"
 #include "Server/GamePlatformHttpControlProvider.h"
 #include "Server/GamePlatformHttpAdmissionProvider.h"
@@ -59,6 +62,8 @@ public:
             IModularFeatures::Get().UnregisterModularFeature(
                 IGamePlatformServerAdmissionProvider::GetModularFeatureName(),
                 AdmissionProvider.Get());
+            // 注销后先清除在飞HTTP回调；不能以释放Provider代替请求生命周期关闭。
+            AdmissionProvider->Shutdown();
             AdmissionProvider.Reset();
         }
         if (ControlProvider)

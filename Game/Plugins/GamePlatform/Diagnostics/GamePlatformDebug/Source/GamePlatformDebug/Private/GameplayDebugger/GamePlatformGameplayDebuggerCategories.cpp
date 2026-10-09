@@ -1,3 +1,5 @@
+// 平台GameplayDebugger分类适配，只展示经过注册表过滤的当前World快照。
+// 调试器拥有分类生命周期，模块负责注册/注销；不会持有Actor或改变玩法权威结果。
 #include "GamePlatformDebugPrivate.h"
 
 #if WITH_GAMEPLAY_DEBUGGER && !UE_BUILD_SHIPPING
@@ -8,6 +10,7 @@
 
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
 
 namespace
 {
@@ -36,7 +39,7 @@ namespace
             Context.World = World;
             Context.Target = DebugActor
                 ? DebugActor
-                : (OwnerPC ? OwnerPC->GetPawn() : nullptr);
+                : (OwnerPC ? OwnerPC->GetPawn().Get() : nullptr);
             Context.SourceView =
                 World->GetNetMode() == NM_Client
                     ? EGamePlatformDebugSourceView::Client

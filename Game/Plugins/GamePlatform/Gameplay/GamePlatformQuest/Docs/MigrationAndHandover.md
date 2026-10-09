@@ -1,5 +1,7 @@
 # MigrationAndHandover（迁移与交接）
 
+> 2026-09-30状态校正：本页保留旧方案/历史证据，旧DBAServer具体Quest HTTP/事件适配与后端交付宣称未在当前项目文件清单确认，不能作为现行验收。当前行为以[本轮整改说明](DesignRemediation-2026-09-30.md)、README与真实源码为准；本轮未执行数据库/Outbox/网络联调。
+
 实施前 GamePlatformQuest 三模块均为空骨架，Backend quest/playerdata/migrations/contracts 也只有占位目录；因此本轮没有旧 Quest Progress 真源需要迁移，也没有第二套任务框架。
 
 后端仍保持 GatewayService、IdentityService、PlayerDataService、MatchService、GameServerControlService 五个入口；没有新增 QuestService。PlayerDataService 从空入口扩展为 PostgreSQL quest repository + internal HTTP API。

@@ -7,6 +7,23 @@
 #include "EngineUtils.h"
 #include "Perception/AIPerceptionSystem.h"
 #include "Perception/AISense_Sight.h"
+#include "Perception/AIWorldPolicy.h"
+#include "Engine/World.h"
+
+bool UGamePlatformAITargetRegistrySubsystem::DoesSupportWorldType(EWorldType::Type WorldType) const
+{ return WorldType == EWorldType::Game || WorldType == EWorldType::PIE; }
+bool UGamePlatformAITargetRegistrySubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+    const UWorld* World = Cast<UWorld>(Outer);
+    return World && Super::ShouldCreateSubsystem(Outer) && GamePlatformAIWorldPolicy::CanRun(
+        DoesSupportWorldType(World->WorldType), World->GetNetMode() != NM_Client, IsRunningCommandlet());
+}
+bool UGamePlatformAITargetRegistrySubsystem::IsAuthorityRuntimeWorld() const
+{
+    const UWorld* World = GetWorld();
+    return World && !World->bIsTearingDown && GamePlatformAIWorldPolicy::CanRun(
+        DoesSupportWorldType(World->WorldType), World->GetNetMode() != NM_Client, IsRunningCommandlet());
+}
 
 void UGamePlatformAITargetRegistrySubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
@@ -14,7 +31,7 @@ void UGamePlatformAITargetRegistrySubsystem::Initialize(
     Super::Initialize(Collection);
 
     UWorld* World = GetWorld();
-    if (!World || World->GetNetMode() == NM_Client)
+    if (!IsAuthorityRuntimeWorld())
     {
         return;
     }
@@ -55,7 +72,7 @@ void UGamePlatformAITargetRegistrySubsystem::HandleActorSpawned(AActor* Actor)
 void UGamePlatformAITargetRegistrySubsystem::RegisterActorIfEligible(
     AActor* Actor)
 {
-    if (!IsValid(Actor) ||
+    if (!IsAuthorityRuntimeWorld() || !IsValid(Actor) || !Actor->HasAuthority() || Actor->GetWorld() != GetWorld() ||
         !Actor->FindComponentByClass<UGamePlatformAITargetComponent>())
     {
         return;
@@ -71,7 +88,7 @@ void UGamePlatformAITargetRegistrySubsystem::EnsureServerAIController(
     AActor* Actor)
 {
     APawn* Pawn = Cast<APawn>(Actor);
-    if (!IsValid(Pawn) ||
+    if (!IsAuthorityRuntimeWorld() || !IsValid(Pawn) || !Pawn->HasAuthority() || Pawn->GetWorld() != GetWorld() ||
         Pawn->GetController() ||
         !Pawn->FindComponentByClass<UGamePlatformAIStateComponent>() ||
         !GetWorld() ||

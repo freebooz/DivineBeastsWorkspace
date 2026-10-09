@@ -1,5 +1,7 @@
 # Troubleshooting（故障排查）
 
+> 2026-09-30状态校正：本页保留旧方案/历史证据，旧DBAServer具体Quest HTTP/事件适配与后端交付宣称未在当前项目文件清单确认，不能作为现行验收。当前行为以[本轮整改说明](DesignRemediation-2026-09-30.md)、README与真实源码为准；本轮未执行数据库/Outbox/网络联调。
+
 RegisterPlayer 返回 DefinitionMissing/DefinitionVersionMismatch：检查非 Completed 历史任务的 Definition 是否已加载且版本兼容；已完成任务允许保留历史版本，不应倒退。
 
 事件不推进：检查 Event.PlayerId/PlayerRuntimeId、EventType、SemanticTags、RegionId 和当前 EventIndex；Combat 必须是当前玩家作为 Source 的 Death 事实，Interaction 必须是 Committed 类终态。

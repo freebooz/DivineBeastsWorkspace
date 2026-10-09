@@ -1,7 +1,10 @@
+// 平台交互目标状态组件：游戏线程由服务器Owner权威维护实例/代次/选项，生命周期内发布只读复制事实。
 #include "Components/GamePlatformInteractableComponent.h"
 
 #include "Components/GamePlatformInteractorComponent.h"
 #include "Interfaces/GamePlatformInteractable.h"
+// Owner权威、位置与IsValid继承转换均需要完整Actor类型，不依靠Unity/PCH间接包含。
+#include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 #include "Settings/GamePlatformInteractionSettings.h"
 #include "Types/GamePlatformInteractionSession.h"

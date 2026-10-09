@@ -28,6 +28,9 @@ void UGamePlatformQuestStateComponent::SetServerQuestSnapshots(
     }
 
     QuestSnapshots = InSnapshots;
+    // 同一次OwnerOnly发布使用同一序列；目标进度更新即使尚未落库也会使客户端视图前进。
+    const int64 PublishedSequence = ++SnapshotSequence;
+    for (auto& Snapshot : QuestSnapshots) { Snapshot.SnapshotSequence = PublishedSequence; }
     OnQuestSnapshotsChanged.Broadcast();
 }
 

@@ -8,6 +8,10 @@ static int Checks = 0;
 static void Require(bool Condition) { ++Checks; if (!Condition) { std::cerr << "failed " << Checks << '\n'; std::exit(1); } }
 int main()
 {
+    // 129次按顺序清理后，每次都应有可用活动槽；历史诊断不能成为永久累计配额。
+    for (std::uint32_t Completed = 0; Completed < 129; ++Completed)
+    { Require(CanAcceptRequest(0, Completed)); }
+    Require(!CanAcceptRequest(4, 0));
     NumericProfile Profile;
     Require(Validate(Profile).empty());
     Profile.HalfExtentCm = {0,100,100}; Require(Validate(Profile) == "InvalidBounds");

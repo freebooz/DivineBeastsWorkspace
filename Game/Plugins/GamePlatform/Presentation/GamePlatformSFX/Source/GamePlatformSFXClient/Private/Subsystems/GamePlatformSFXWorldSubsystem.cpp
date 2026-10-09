@@ -8,20 +8,22 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Interfaces/IGamePlatformDataService.h"
-#include "Kismet/GameplayStatics.h"
+#include "AudioDevice.h"
+#include "GameFramework/Actor.h"
+#include "HAL/PlatformTime.h"
 #include "Misc/App.h"
 #include "Policy/GamePlatformSFXPolicy.h"
 #include "Sound/SoundBase.h"
 #include "Sound/SoundConcurrency.h"
+#include "Policy/GamePlatformSFXBudgetPolicy.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogGamePlatformSFX, Log, All);
 
 namespace
 {
-// FName需要运行时名称表初始化；保持不可变值，但不能声称是编译期常量。
-const FName SFXRuntimeBundle(TEXT("SFXRuntime"));
-constexpr int32 MaxPendingSFXLoads = 128;
-constexpr int32 MaxTrackedSFXInstances = 256;
+const FName SFXRuntimeBundle(TEXT("SFXRuntime")); // FName依赖运行时名称池，不能声明为constexpr常量。
+constexpr int32 MaxTerminalSFXRequests = 512;
+constexpr double TerminalSFXRetentionSeconds = 30.0;
 
 bool IsSupportedWorldType(const EWorldType::Type WorldType)
 {
@@ -65,6 +67,7 @@ void UGamePlatformSFXWorldSubsystem::Deinitialize()
     }
     PendingPlays.Reset();
     RequestHandles.Reset();
+    TerminalOccurrences.Reset();
 
     Super::Deinitialize();
 }
@@ -82,6 +85,31 @@ FGamePlatformSFXResult UGamePlatformSFXWorldSubsystem::Play(
         ++Diagnostics.RejectedRequests;
         Output.Code = EGamePlatformSFXResultCode::InvalidWorld;
         return Output;
+    }
+
+    PruneTerminalOccurrences();
+    if (Request.RequestId.IsValid())
+    {
+        if (Request.PredictionState == EGamePlatformSFXPredictionState::Cancelled)
+        {
+            StopByRequestId(Request.RequestId);
+            Output.Code=EGamePlatformSFXResultCode::Cancelled;
+            return Output;
+        }
+        if (const auto* Terminal=TerminalOccurrences.Find(Request.RequestId))
+        {
+            if (Terminal->bCancelled || Request.PredictionState != EGamePlatformSFXPredictionState::Corrected)
+            {
+                Output.Code=Terminal->bCancelled ? EGamePlatformSFXResultCode::Cancelled : EGamePlatformSFXResultCode::AlreadyCompleted;
+                return Output;
+            }
+            TerminalOccurrences.Remove(Request.RequestId);
+        }
+        if (Request.PredictionState == EGamePlatformSFXPredictionState::Corrected)
+        {
+            if (const auto* Existing=RequestHandles.Find(Request.RequestId)) { const auto Handle=*Existing; Stop(Handle,0.0f); }
+            TerminalOccurrences.Remove(Request.RequestId);
+        }
     }
 
     const FGamePlatformResult Validation = FGamePlatformSFXPolicy::ValidateRequest(Request);
@@ -110,8 +138,7 @@ FGamePlatformSFXResult UGamePlatformSFXWorldSubsystem::Play(
         }
     }
 
-    if (PendingPlays.Num() >= MaxPendingSFXLoads ||
-        ActiveInstances.Num() >= MaxTrackedSFXInstances)
+    if (!FGamePlatformSFXBudgetPolicy::CanReserve(PendingPlays.Num(), ActiveInstances.Num()))
     {
         ++Diagnostics.RejectedRequests;
         Output.Code = EGamePlatformSFXResultCode::UnsupportedEnvironment;
@@ -197,6 +224,8 @@ bool UGamePlatformSFXWorldSubsystem::Stop(
         return false;
     }
 
+    if (const auto* Pending=PendingPlays.Find(Handle.Id)) RecordTerminalOccurrence(Pending->Request.RequestId,true);
+    if (const auto* Active=ActiveInstances.Find(Handle.Id)) RecordTerminalOccurrence(Active->RequestId,true);
     if (FPendingPlay* Pending = PendingPlays.Find(Handle.Id))
     {
         const FGuid RequestId = Pending->Request.RequestId;
@@ -237,7 +266,8 @@ bool UGamePlatformSFXWorldSubsystem::Stop(
     }
     else
     {
-        Component->Stop();
+        // Stop在已非活动组件上不会承诺完成事件；显式回收避免历史失败实例占槽。
+        CleanupActive(Handle.Id, true);
     }
     return true;
 }
@@ -252,10 +282,11 @@ bool UGamePlatformSFXWorldSubsystem::StopByRequestId(
         return false;
     }
 
+    RecordTerminalOccurrence(RequestId, true);
     const FGamePlatformSFXHandle* Found = RequestHandles.Find(RequestId);
     if (!Found)
     {
-        return false;
+        return true; // 取消已被接纳，墓碑阻断迟到的首次播放。
     }
     const FGamePlatformSFXHandle Handle = *Found;
     return Stop(Handle, FadeOutSeconds);
@@ -398,65 +429,27 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     const float TargetPitch = Definition->GetPitchMultiplier() * Request.PitchMultiplier;
     const float InitialVolume = Definition->GetFadeInSeconds() > 0.0f ? 0.0f : TargetVolume;
 
-    UAudioComponent* Component = nullptr;
-    switch (Definition->GetPlaybackSpace())
+    USceneComponent* AttachTo = nullptr;
+    if (Definition->GetPlaybackSpace() == EGamePlatformSFXPlaybackSpace::Attached)
     {
-    case EGamePlatformSFXPlaybackSpace::TwoD:
-        Component = UGameplayStatics::SpawnSound2D(
-            World,
-            Sound,
-            InitialVolume,
-            TargetPitch,
-            Request.StartTimeSeconds,
-            Concurrency,
-            false,
-            false);
-        break;
-
-    case EGamePlatformSFXPlaybackSpace::World:
-        Component = UGameplayStatics::SpawnSoundAtLocation(
-            World,
-            Sound,
-            Request.Location,
-            Request.Rotation,
-            InitialVolume,
-            TargetPitch,
-            Request.StartTimeSeconds,
-            Attenuation,
-            Concurrency,
-            false);
-        break;
-
-    case EGamePlatformSFXPlaybackSpace::Attached:
-    {
-        USceneComponent* AttachTo = Request.AttachComponent.Get();
-        if (!IsValid(AttachTo) || AttachTo->GetWorld() != World)
+        AttachTo = Request.AttachComponent.Get();
+        if (!IsValid(AttachTo) || AttachTo->GetWorld() != World ||
+            !IsValid(AttachTo->GetOwner()) || AttachTo->GetOwner()->IsActorBeingDestroyed())
         {
             ++Diagnostics.RejectedRequests;
             FailPending(Handle.Id, EGamePlatformSFXResultCode::OwnerInvalid);
             return;
         }
-        Component = UGameplayStatics::SpawnSoundAttached(
-            Sound,
-            AttachTo,
-            Request.AttachPointName,
-            FVector::ZeroVector,
-            FRotator::ZeroRotator,
-            EAttachLocation::KeepRelativeOffset,
-            Definition->ShouldStopWhenOwnerDestroyed(),
-            InitialVolume,
-            TargetPitch,
-            Request.StartTimeSeconds,
-            Attenuation,
-            Concurrency,
-            false);
-        break;
     }
-
-    default:
-        break;
-    }
-
+    FAudioDevice::FCreateComponentParams Params(World, AttachTo ? AttachTo->GetOwner() : nullptr);
+    Params.bPlay = false;
+    Params.bAutoDestroy = false;
+    Params.bStopWhenOwnerDestroyed = AttachTo && Definition->ShouldStopWhenOwnerDestroyed();
+    Params.AttenuationSettings = Attenuation;
+    if (Concurrency) Params.ConcurrencySet.Add(Concurrency);
+    if (Definition->GetPlaybackSpace() != EGamePlatformSFXPlaybackSpace::TwoD)
+        Params.SetLocation(AttachTo ? AttachTo->GetComponentLocation() : Request.Location);
+    UAudioComponent* Component = FAudioDevice::CreateComponent(Sound, Params);
     if (!IsValid(Component))
     {
         ++Diagnostics.SpawnFailures;
@@ -464,6 +457,18 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
         return;
     }
 
+    Component->SetVolumeMultiplier(InitialVolume);
+    Component->SetPitchMultiplier(TargetPitch);
+    Component->bAllowSpatialization = Definition->GetPlaybackSpace() != EGamePlatformSFXPlaybackSpace::TwoD && Params.ShouldUseAttenuation();
+    if (AttachTo)
+    {
+        Component->AttachToComponent(AttachTo, FAttachmentTransformRules::KeepRelativeTransform, Request.AttachPointName);
+        Component->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
+    }
+    else if (Definition->GetPlaybackSpace() == EGamePlatformSFXPlaybackSpace::World)
+    {
+        Component->SetWorldLocationAndRotation(Request.Location, Request.Rotation);
+    }
     Component->SetUISound(Definition->GetPlaybackSpace() == EGamePlatformSFXPlaybackSpace::TwoD);
     for (const TPair<FName, float>& Pair : Definition->GetDefaultFloatParameters())
     {
@@ -487,9 +492,18 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     Component->OnAudioFinishedNative.AddUObject(
         this,
         &UGamePlatformSFXWorldSubsystem::HandleAudioFinished);
+    // UE失败启动不发AudioFinished，但仍广播Stopped；先绑定再播放能覆盖异步Concurrency拒绝。
+    Component->OnAudioPlayStateChangedNative.AddUObject(this,
+        &UGamePlatformSFXWorldSubsystem::HandleAudioPlayStateChanged);
     if (Definition->GetFadeInSeconds() > 0.0f)
+        Component->FadeIn(Definition->GetFadeInSeconds(), TargetVolume, Request.StartTimeSeconds);
+    else
+        Component->Play(Request.StartTimeSeconds);
+    if (!Component->IsPlaying())
     {
-        Component->AdjustVolume(Definition->GetFadeInSeconds(), TargetVolume);
+        ++Diagnostics.SpawnFailures;
+        CleanupActive(Handle.Id, true);
+        return;
     }
 
     ++Diagnostics.PlayedInstances;
@@ -522,6 +536,17 @@ void UGamePlatformSFXWorldSubsystem::HandleAudioFinished(UAudioComponent* Compon
     }
 }
 
+void UGamePlatformSFXWorldSubsystem::HandleAudioPlayStateChanged(
+    const UAudioComponent* Component, const EAudioComponentPlayState PlayState)
+{
+    if (PlayState != EAudioComponentPlayState::Stopped) return;
+    // 记录先移出再销毁组件，解绑回调保证Stop/Finished/FailedToStart交错仅释放一次。
+    FGuid HandleId;
+    for (const auto& Pair : ActiveInstances)
+        if (Pair.Value.Component.Get() == Component) { HandleId = Pair.Key; break; }
+    if (HandleId.IsValid()) CleanupActive(HandleId, false);
+}
+
 void UGamePlatformSFXWorldSubsystem::FailPending(
     const FGuid HandleId,
     const EGamePlatformSFXResultCode Code)
@@ -552,11 +577,13 @@ void UGamePlatformSFXWorldSubsystem::CleanupActive(
         return;
     }
 
+    RecordTerminalOccurrence(Active.RequestId, false);
     RemoveRequestMapping(Active.RequestId, HandleId);
     UAudioComponent* Component = Active.Component.Get();
     if (IsValid(Component))
     {
         Component->OnAudioFinishedNative.RemoveAll(this);
+        Component->OnAudioPlayStateChangedNative.RemoveAll(this);
         if (bStopComponent && Component->IsPlaying())
         {
             Component->Stop();
@@ -598,4 +625,27 @@ void UGamePlatformSFXWorldSubsystem::RemoveRequestMapping(
     {
         RequestHandles.Remove(RequestId);
     }
+}
+
+// 历史表只保证30秒/512项范围内的去重；达到容量淘汰最早期限，不作持久化或跨世界记录。
+void UGamePlatformSFXWorldSubsystem::PruneTerminalOccurrences()
+{
+    const double Now=FPlatformTime::Seconds();
+    for (auto It=TerminalOccurrences.CreateIterator(); It; ++It)
+        if (It.Value().ExpiresAtSeconds <= Now) It.RemoveCurrent();
+}
+void UGamePlatformSFXWorldSubsystem::RecordTerminalOccurrence(const FGuid& RequestId, const bool bCancelled)
+{
+    if (!RequestId.IsValid()) return;
+    PruneTerminalOccurrences();
+    if (auto* Existing=TerminalOccurrences.Find(RequestId)) { Existing->bCancelled |= bCancelled; return; }
+    if (TerminalOccurrences.Num() >= MaxTerminalSFXRequests)
+    {
+        FGuid Oldest; double Time=TNumericLimits<double>::Max();
+        for (const auto& Pair:TerminalOccurrences)
+            if (Pair.Value.ExpiresAtSeconds < Time) { Time=Pair.Value.ExpiresAtSeconds; Oldest=Pair.Key; }
+        TerminalOccurrences.Remove(Oldest);
+    }
+    FTerminalOccurrence Entry; Entry.ExpiresAtSeconds=FPlatformTime::Seconds()+TerminalSFXRetentionSeconds; Entry.bCancelled=bCancelled;
+    TerminalOccurrences.Add(RequestId, Entry);
 }

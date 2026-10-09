@@ -29,7 +29,7 @@ public:
     }
 
 private:
-    /** 客户端唯一User Profile持久化适配器；不持有GameInstance/World。 */
+    /** 进程级无用户工厂；Runtime克隆GI独占适配器，不在此对象切换用户。 */
     TUniquePtr<FGamePlatformSettingsClientPersistenceProvider>
         PersistenceProvider;
 };

@@ -14,7 +14,7 @@ public:
     /** 生成主档对应的.bak备份路径。 */
     static FString BuildBackupPath(const FString& PrimaryPath);
 
-    /** 读取单个文件；不存在返回SaveFileNotFound。 */
+    /** 有界读取单个主档或备份；不存在返回SaveFileNotFound，超限返回SaveFileTooLarge且不分配载荷，读取/长度变化失败清空OutBytes。 */
     static FGamePlatformResult ReadFile(
         const FString& Path,
         TArray<uint8>& OutBytes);

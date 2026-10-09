@@ -9,9 +9,12 @@ public class GamePlatformCharacter : ModuleRules
         {
             "Core",
             "CoreUObject",
-            "Engine"
+            "Engine",
+            // 本模块公开/实现直接消费FGamePlatformResult，DLL须直接链接其Core所有者，不能依赖Data间接可见。
+            "GamePlatformCore",
+            // 公开英雄加载合同返回Data租约；声明真实Public依赖，保持插件唯一资源所有者。
+            "GamePlatformData"
         });
 
-        PrivateDependencyModuleNames.Add("GamePlatformData");
     }
 }

@@ -87,7 +87,13 @@ FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::ApplyEnviro
         return Result;
     }
 
-    Result = RefreshMaterialBinding();
+    // 普通状态事件复用绑定；只有显式Refresh命令重读配置，避免每次状态变化重复装载。
+    if (ResolveMaterialBinding()) Result = PushCurrentStateToMaterialParameters();
+    else
+    {
+        Result.Status = EGamePlatformSurfaceUpdateStatus::MaterialBindingUnavailable;
+        Result.Revision = Revision;
+    }
     if (bStateChanged)
     {
         StateChanged.Broadcast(CurrentState, Revision);
@@ -112,6 +118,10 @@ FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::RefreshMate
     FGamePlatformSurfaceUpdateResult Result;
     Result.Revision = Revision;
 
+    // Refresh是显式重解析命令，配置即便更换或清空也不能沿用旧集合实例。
+    BoundInstance.Reset();
+    BoundCollection = nullptr;
+    bLoggedBindingFailure = false;
     if (bClosing || !IsValid(GetWorld()) || !ResolveMaterialBinding())
     {
         Result.Status = EGamePlatformSurfaceUpdateStatus::MaterialBindingUnavailable;

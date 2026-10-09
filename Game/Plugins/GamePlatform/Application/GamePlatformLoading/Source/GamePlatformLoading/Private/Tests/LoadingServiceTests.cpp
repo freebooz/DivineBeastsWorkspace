@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Misc/AutomationTest.h"
+#include "Containers/Ticker.h"
 #include "UObject/StrongObjectPtr.h"
 #include "HAL/PlatformTime.h"
 
@@ -148,4 +149,30 @@ bool FLoadingServiceLifecycleTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLoadingRealDataTest,"GamePlatform.Loading.Data.RealLeases",EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FLoadingRealDataTest::RunTest(const FString&)
 { ADD_LATENT_AUTOMATION_COMMAND(FLoadingIntegrationCommand(this,true)); return true; }
+// 回调可终止GameInstance；本测试在派发中触发真实Shutdown，后续不得读已Reset的Scope。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLoadingSubscriberShutdownTest,"GamePlatform.Loading.Service.SubscriberShutdown",EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FLoadingSubscriberShutdownTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
+    auto* Loading = IGamePlatformLoadingService::Get(*Instance);
+    if (!Loading) { AddError(TEXT("Loading服务缺失")); return false; }
+    FGamePlatformLoadingOperationSpec Spec; Spec.Purpose = TEXT("ShutdownInCallback");
+    FGamePlatformLoadingTaskSpec Task; Task.TaskId = TEXT("World"); Task.TaskType = TEXT("WorldPresence"); Spec.Tasks.Add(Task);
+    Spec.TargetWorldPackage = TEXT("/Game/AutomationWaitingWorld");
+    FGamePlatformResult Result;
+    const auto Handle = Loading->StartLoadingOperation(Spec,Instance.Get(),Result);
+    TestTrue(TEXT("等待操作已受理"), Result.IsSuccess());
+    int32 Calls = 0;
+    UWorld* World = Instance->GetWorld();
+    Loading->SubscribeLoadingState(Handle,Instance.Get(),[&](const auto&)
+    {
+        ++Calls;
+        Instance->Shutdown();
+    });
+    FTSTicker::GetCoreTicker().Tick(1.0f);
+    TestEqual(TEXT("派发关闭回调仅执行一次"), Calls, 1);
+    if (World) { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); }
+    return true;
+}
 #endif

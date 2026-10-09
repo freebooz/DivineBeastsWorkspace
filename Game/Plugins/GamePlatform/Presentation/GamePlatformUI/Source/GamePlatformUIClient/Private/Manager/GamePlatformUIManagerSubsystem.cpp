@@ -1,7 +1,13 @@
+// 平台层本地玩家UI门面：注册中立页面定义，异步打开CommonUI层栈，不持有项目业务权威。
+// 页面类与预加载资源统一归Data；本门面持有每个请求/实例的租约，暂时失活保留，退栈/退出释放。
+// 游戏线程按请求、根布局和世界代次校验完成；变体最多回退一次，构造重入不得发布过期成功。
 #include "Manager/GamePlatformUIManagerSubsystem.h"
+#include "Manager/GamePlatformUIScreenOpenCommitPolicy.h"
 
 #include "Definitions/GamePlatformUIScreenDefinition.h"
-#include "Loading/GamePlatformAssetLoader.h"
+#include "Interfaces/IGamePlatformDataService.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Dialogs/GamePlatformToastWidget.h"
 #include "HAL/PlatformProperties.h"
 #include "Input/GamePlatformUIInputPolicy.h"
@@ -20,10 +26,11 @@
 
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
-#include "Engine/StreamableManager.h"
+
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
 #include "UObject/UObjectGlobals.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 #define LOCTEXT_NAMESPACE "GamePlatformUI"
@@ -39,6 +46,7 @@ constexpr int32 MaxPreloadAssetsPerScreen = 32;
 void UGamePlatformUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    bClosing = false;
     LoadingScreenService = NewObject<UGamePlatformLoadingScreenService>(this);
     NotificationService = NewObject<UGamePlatformNotificationService>(this);
     FeedbackService = NewObject<UGamePlatformFeedbackService>(this);
@@ -69,6 +77,8 @@ void UGamePlatformUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Colle
 
 void UGamePlatformUIManagerSubsystem::Deinitialize()
 {
+    bClosing = true;
+    ++RootLayoutGeneration;
     if (PreLoadMapHandle.IsValid())
     {
         FCoreUObjectDelegates::PreLoadMapWithContext.Remove(PreLoadMapHandle);
@@ -107,19 +117,7 @@ void UGamePlatformUIManagerSubsystem::Deinitialize()
     FeedbackService = nullptr;
     WorldUIService = nullptr;
 
-    TArray<TWeakObjectPtr<UGamePlatformUIScreen>> ActiveScreens;
-    ActiveScreenLeases.GetKeys(ActiveScreens);
-    for (const TWeakObjectPtr<UGamePlatformUIScreen>& ScreenPtr : ActiveScreens)
-    {
-        if (UGamePlatformUIScreen* Screen = ScreenPtr.Get())
-        {
-            Screen->OnPlatformDeactivated().RemoveAll(this);
-            Screen->DeactivateWidget();
-        }
-    }
-
-    ActiveScreenLeases.Reset();
-    PauseScreens.Reset();
+    ClearScreenOwnership();
 
     if (IsValid(RootLayout))
     {
@@ -150,7 +148,7 @@ void UGamePlatformUIManagerSubsystem::PlayerControllerChanged(APlayerController*
 bool UGamePlatformUIManagerSubsystem::InstallRootLayoutClass(
     TSubclassOf<UGamePlatformUILayerStack> RootLayoutClass)
 {
-    if (!RootLayoutClass ||
+    if (bClosing || bReplacingRoot || !RootLayoutClass ||
         RootLayoutClass->HasAnyClassFlags(CLASS_Abstract))
     {
         return false;
@@ -162,9 +160,11 @@ bool UGamePlatformUIManagerSubsystem::InstallRootLayoutClass(
         return false;
     }
 
+    TGuardValue<bool> ReplacingRoot(bReplacingRoot, true);
+    ++RootLayoutGeneration;
     UGamePlatformUILayerStack* NewRoot =
         CreateWidget<UGamePlatformUILayerStack>(PlayerController, RootLayoutClass);
-    if (!IsValid(NewRoot))
+    if (!IsValid(NewRoot) || bClosing)
     {
         return false;
     }
@@ -184,6 +184,7 @@ bool UGamePlatformUIManagerSubsystem::InstallRootLayoutClass(
         {
             WorldUIService->Clear();
         }
+        ClearScreenOwnership();
         RootLayout->RemoveFromParent();
     }
 
@@ -331,6 +332,11 @@ FGamePlatformUIAsyncRequest UGamePlatformUIManagerSubsystem::OpenScreenAsync(
     Request.ScreenId = ScreenId;
     Request.Generation = NextGeneration++;
 
+    if (bClosing || bReplacingRoot)
+    {
+        FailRequest(Request.RequestId, ScreenId, LOCTEXT("ScopeClosing", "页面作用域正在关闭或替换。"));
+        return Request;
+    }
     if (PendingRequests.Num() >= MaxPendingOpenRequests)
     {
         FailRequest(Request.RequestId, ScreenId, LOCTEXT("OpenBackpressure", "并发页面打开请求过多，请稍后重试。"));
@@ -404,22 +410,30 @@ FGamePlatformUIAsyncRequest UGamePlatformUIManagerSubsystem::OpenScreenAsync(
         PendingViewModels.Add(Request.RequestId, ViewModel);
     }
 
-    TSharedPtr<FStreamableHandle> Handle =
-        FGamePlatformAssetLoader::RequestAsyncLoad(
-            AssetsToLoad,
-            FStreamableDelegate::CreateUObject(
-                this,
-                &UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded,
-                Request.RequestId));
-
-    if (!Handle.IsValid())
+    UGameInstance* GameInstance=GetLocalPlayer()->GetGameInstance();
+    IGamePlatformDataService* Data=GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    if (!Data)
+    {
+        FailRequest(Request.RequestId, ScreenId, LOCTEXT("MissingData", "统一资源服务不可用。"));
+        CleanupPendingRequest(Request.RequestId, false);
+        return Request;
+    }
+    FGamePlatformResult Accepted;
+    const TWeakObjectPtr<UGamePlatformUIManagerSubsystem> WeakThis(this);
+    const FGuid RequestId=Request.RequestId;
+    const FGamePlatformDataLease Lease=Data->AcquireResources(AssetsToLoad,
+        Definition->bSurvivesTravel ? EGamePlatformDataLifetime::Instance : EGamePlatformDataLifetime::World,
+        this, [WeakThis,RequestId](const FGamePlatformDataLease& CompletedLease, const FGamePlatformResult& Result)
+        {
+            if (auto* Self=WeakThis.Get()) Self->HandleScreenAssetsLoaded(RequestId,CompletedLease,Result);
+        }, Accepted);
+    if (!Accepted.IsSuccess() || !Lease.IsValid())
     {
         FailRequest(Request.RequestId, ScreenId, LOCTEXT("LoadRejected", "页面资源加载请求未被接受。"));
         CleanupPendingRequest(Request.RequestId, false);
         return Request;
     }
-
-    PendingLoads.Add(Request.RequestId, Handle);
+    PendingLoads.Add(Request.RequestId, Lease);
     return Request;
 }
 
@@ -495,7 +509,11 @@ bool UGamePlatformUIManagerSubsystem::CloseScreen(UGamePlatformUIScreen* Screen)
         return false;
     }
 
-    Screen->DeactivateWidget();
+    const auto* StackPtr=ScreenStacks.Find(TWeakObjectPtr<UGamePlatformUIScreen>(Screen));
+    auto* Stack=StackPtr ? StackPtr->Get() : nullptr;
+    if (!Stack) return false;
+    Stack->RemoveWidget(*Screen);
+    ReconcileScreenMembership();
     return true;
 }
 
@@ -562,6 +580,7 @@ bool UGamePlatformUIManagerSubsystem::UnregisterWorldUI(FGuid RequestId)
 
 void UGamePlatformUIManagerSubsystem::PrepareForTravel()
 {
+    ++RootLayoutGeneration; // 在途构造即使仍看见原Root指针，也已属于旧世界切换代次。
     TArray<FGuid> RequestIds;
     PendingRequests.GetKeys(RequestIds);
     for (const FGuid& RequestId : RequestIds)
@@ -580,7 +599,7 @@ void UGamePlatformUIManagerSubsystem::PrepareForTravel()
 
         if (UGamePlatformUIScreen* Screen = ScreenPtr.Get())
         {
-            Screen->DeactivateWidget();
+            CloseScreen(Screen);
         }
     }
 
@@ -718,14 +737,33 @@ void UGamePlatformUIManagerSubsystem::HandlePreLoadMap(
     }
 }
 
-void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId)
+void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId,
+    const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result)
 {
     const FGamePlatformUIAsyncRequest* RequestPtr = PendingRequests.Find(RequestId);
-    if (!RequestPtr)
+    if (!RequestPtr) return;
+    if (bClosing || bReplacingRoot)
     {
+        CleanupPendingRequest(RequestId, true);
         return;
     }
 
+    const FGamePlatformDataLease* ExpectedLease=PendingLoads.Find(RequestId);
+    if (!ExpectedLease || ExpectedLease->LeaseId != Lease.LeaseId) return;
+    if (ConstructingScreenRequests.Contains(RequestId)) return; // 同代完成重入不能启动第二构造。
+    UGameInstance* GameInstance=GetLocalPlayer()->GetGameInstance();
+    IGamePlatformDataService* Data=GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    if (!Result.IsSuccess() || !Data || Data->GetLeaseState(Lease) != EGamePlatformDataRequestState::Succeeded)
+    {
+        // 变体文件缺失会令整个Data租约失败，必须在发布终态前尝试默认类一次。
+        // 缺服务、页面撤销或默认依赖也失败时仍明确结束，不把空白页面视作成功。
+        const UGamePlatformUIScreenDefinition* Definition = ScreenDefinitions.FindRef(RequestPtr->ScreenId);
+        if (IsValid(Definition) && TryDefaultWidgetFallback(*RequestPtr, *Definition)) return;
+        const FName ScreenId=RequestPtr->ScreenId;
+        CleanupPendingRequest(RequestId, false);
+        FailRequest(RequestId, ScreenId, LOCTEXT("ResourceLoadFailed", "页面资源租约加载失败或已经撤销。"));
+        return;
+    }
     const FGamePlatformUIAsyncRequest Request = *RequestPtr;
     TObjectPtr<UGamePlatformUIScreenDefinition>* DefinitionPtr =
         ScreenDefinitions.Find(Request.ScreenId);
@@ -743,7 +781,16 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId)
         return;
     }
 
-    const bool bDefaultRetry = PendingDefaultWidgetRetries.Contains(RequestId);
+    for (const FSoftObjectPath& Path : Lease.ResourcePaths)
+    {
+        if (!IsValid(Path.ResolveObject()))
+        {
+            CleanupPendingRequest(RequestId, false);
+            FailRequest(RequestId, Request.ScreenId, LOCTEXT("PreloadMissing", "页面必需资源未加载完成。"));
+            return;
+        }
+    }
+        const bool bDefaultRetry = PendingDefaultWidgetRetries.Contains(RequestId);
     TSoftClassPtr<UGamePlatformUIScreen> SoftClass =
         ResolveWidgetClass(*Definition, bDefaultRetry);
     UClass* LoadedClass = SoftClass.Get();
@@ -760,30 +807,7 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId)
         !Definition->WidgetClass.IsNull() &&
         IsValid(Stack))
     {
-        // 平台专属变体资源缺失或类不合法时，只为当前请求重新异步加载默认类。
-        // 同时重申预加载依赖，保持最终页面完整生命周期的资源租约。
-        PendingDefaultWidgetRetries.Add(RequestId);
-        TArray<FSoftObjectPath> FallbackAssets;
-        FallbackAssets.Add(Definition->WidgetClass.ToSoftObjectPath());
-        for (const TSoftObjectPtr<UObject>& Asset : Definition->PreloadAssets)
-        {
-            if (Asset.ToSoftObjectPath().IsValid())
-            {
-                FallbackAssets.AddUnique(Asset.ToSoftObjectPath());
-            }
-        }
-        TSharedPtr<FStreamableHandle> FallbackHandle =
-            FGamePlatformAssetLoader::RequestAsyncLoad(
-                FallbackAssets,
-                FStreamableDelegate::CreateUObject(
-                    this,
-                    &UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded,
-                    RequestId));
-        if (FallbackHandle.IsValid())
-        {
-            PendingLoads.Add(RequestId, MoveTemp(FallbackHandle));
-            return;
-        }
+        if (TryDefaultWidgetFallback(Request, *Definition)) return;
     }
 
     if (bInvalidWidgetClass || !IsValid(Stack))
@@ -801,7 +825,28 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId)
         ViewModel = ViewModelPtr->Get();
     }
 
+    if (!ObservedStacks.Contains(Stack))
+    {
+        Stack->OnDisplayedWidgetChanged().AddUObject(this, &UGamePlatformUIManagerSubsystem::HandleStackChanged);
+        ObservedStacks.Add(Stack);
+    }
     TSubclassOf<UGamePlatformUIScreen> ScreenClass = LoadedClass;
+    FScreenOpenConstruction Construction;
+    Construction.Request = Request;
+    Construction.Lease = Lease;
+    Construction.Root = RootLayout;
+    Construction.Stack = Stack;
+    Construction.Definition = Definition;
+    Construction.World = GetWorld();
+    Construction.GameInstance = GameInstance;
+    Construction.LayoutGeneration = RootLayoutGeneration;
+    // AddWidget的Init/失活/激活/切栈事件可同步取消、替换布局或GC；原对象必须撑到撤回结束。
+    const TStrongObjectPtr<UGamePlatformUIManagerSubsystem> KeepManager(this);
+    const TStrongObjectPtr<UGamePlatformUILayerStack> KeepRoot(RootLayout);
+    const TStrongObjectPtr<UCommonActivatableWidgetStack> KeepStack(Stack);
+    const TStrongObjectPtr<UGamePlatformUIScreenDefinition> KeepDefinition(Definition);
+    const TStrongObjectPtr<UGamePlatformViewModelBase> KeepViewModel(ViewModel);
+    ConstructingScreenRequests.Add(RequestId);
     UGamePlatformUIScreen* Screen =
         Stack->AddWidget<UGamePlatformUIScreen>(
             ScreenClass,
@@ -815,35 +860,126 @@ void UGamePlatformUIManagerSubsystem::HandleScreenAssetsLoaded(FGuid RequestId)
                     Definition->PausePolicy);
             });
 
-    if (!IsValid(Screen))
+    const TStrongObjectPtr<UGamePlatformUIScreen> KeepScreen(Screen); // 撤回/暂停事件内GC也不能释放当前检查对象。
+    CompleteScreenOpen(Construction, Screen);
+}
+
+bool UGamePlatformUIManagerSubsystem::TryDefaultWidgetFallback(
+    const FGamePlatformUIAsyncRequest& Request,
+    const UGamePlatformUIScreenDefinition& Definition)
+{
+    if (bClosing || bReplacingRoot || !PendingRequests.Contains(Request.RequestId) ||
+        PendingDefaultWidgetRetries.Contains(Request.RequestId) || !IsValid(RootLayout) ||
+        !IsDefinitionAllowed(Definition) || Definition.WidgetClass.IsNull() ||
+        ResolveWidgetClass(Definition) == Definition.WidgetClass ||
+        !IsValid(RootLayout->GetActivatableStack(Definition.Layer))) return false;
+
+    UGameInstance* GameInstance = GetLocalPlayer() ? GetLocalPlayer()->GetGameInstance() : nullptr;
+    IGamePlatformDataService* Data = GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    if (!Data) return false;
+
+    TArray<FSoftObjectPath> Assets;
+    Assets.Add(Definition.WidgetClass.ToSoftObjectPath());
+    for (const TSoftObjectPtr<UObject>& Asset : Definition.PreloadAssets)
     {
-        FailRequest(RequestId, Request.ScreenId, LOCTEXT("CreateFailed", "页面实例创建失败。"));
+        if (Asset.ToSoftObjectPath().IsValid()) Assets.AddUnique(Asset.ToSoftObjectPath());
+    }
+    // 先登记重试资格；Data合同保证完成通知异步交付，旧租约完成不能覆盖新租约。
+    PendingDefaultWidgetRetries.Add(Request.RequestId);
+    const TWeakObjectPtr<UGamePlatformUIManagerSubsystem> WeakThis(this);
+    const FGuid RequestId = Request.RequestId;
+    FGamePlatformResult Accepted;
+    const FGamePlatformDataLease NewLease = Data->AcquireResources(Assets,
+        Definition.bSurvivesTravel ? EGamePlatformDataLifetime::Instance : EGamePlatformDataLifetime::World,
+        this, [WeakThis, RequestId](const FGamePlatformDataLease& CompletedLease, const FGamePlatformResult& Result)
+        {
+            if (auto* Self = WeakThis.Get()) Self->HandleScreenAssetsLoaded(RequestId, CompletedLease, Result);
+        }, Accepted);
+    if (!Accepted.IsSuccess() || !NewLease.IsValid()) return false;
+
+    FGamePlatformDataLease OldLease;
+    PendingLoads.RemoveAndCopyValue(RequestId, OldLease);
+    PendingLoads.Add(RequestId, NewLease);
+    // 只释放本页面上一代需求，不取消其他世界/本地玩家持有的相同资源。
+    ReleaseScreenLease(OldLease);
+    return true;
+}
+
+bool UGamePlatformUIManagerSubsystem::CompleteScreenOpen(
+    const FScreenOpenConstruction& Construction, UGamePlatformUIScreen* Screen)
+{
+    const FGuid RequestId = Construction.Request.RequestId;
+    const auto* CurrentRequest = PendingRequests.Find(RequestId);
+    const auto* CurrentLease = PendingLoads.Find(RequestId);
+    auto* Stack = Construction.Stack.Get();
+    auto* Definition = Construction.Definition.Get();
+    auto* World = Construction.World.Get();
+    auto* GameInstance = Construction.GameInstance.Get();
+    auto* Player = GetLocalPlayer();
+    auto* Data = GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    FGamePlatformUIScreenOpenCommitState State;
+    State.bScreenValid = IsValid(Screen);
+    State.bScopeCurrent = !bClosing && !bReplacingRoot && IsValid(World) &&
+        !World->bIsTearingDown && World == GetWorld() && GameInstance && Player &&
+        GameInstance == Player->GetGameInstance();
+    State.bRequestCurrent = CurrentRequest && CurrentLease &&
+        CurrentRequest->Generation == Construction.Request.Generation &&
+        CurrentRequest->ScreenId == Construction.Request.ScreenId &&
+        CurrentLease->LeaseId == Construction.Lease.LeaseId &&
+        CurrentLease->Generation == Construction.Lease.Generation &&
+        CurrentLease->ScopeId == Construction.Lease.ScopeId &&
+        CurrentLease->IssuerProof == Construction.Lease.IssuerProof;
+    State.bLayoutCurrent = Construction.LayoutGeneration == RootLayoutGeneration &&
+        Construction.Root.IsValid() && Construction.Root.Get() == RootLayout &&
+        IsValid(Definition) && ScreenDefinitions.FindRef(Construction.Request.ScreenId) == Definition &&
+        IsDefinitionAllowed(*Definition) && IsValid(Stack) &&
+        RootLayout->GetActivatableStack(Definition->Layer) == Stack;
+    State.bLeaseSucceeded = Data &&
+        Data->GetLeaseState(Construction.Lease) == EGamePlatformDataRequestState::Succeeded;
+    State.bScreenInStack = IsValid(Stack) && State.bScreenValid && Stack->GetWidgetList().Contains(Screen);
+    return State.Complete([&]
+    {
+        // 校验后先完整转移唯一租约并结束Pending，再调用可能发布用户事件的暂停/Opened逻辑。
+        Screen->OnPlatformDeactivated().AddUObject(this, &UGamePlatformUIManagerSubsystem::HandleScreenDeactivated);
+        Screen->OnActivated().AddUObject(this, &UGamePlatformUIManagerSubsystem::HandleScreenActivated, Screen);
+        Screen->OnPlatformReleased().AddUObject(this, &UGamePlatformUIManagerSubsystem::HandleScreenReleased);
+        ScreenStacks.Add(Screen, Stack);
+        ActiveScreenLeases.Add(Screen, Construction.Lease);
+        PendingLoads.Remove(RequestId);
+        PendingDefaultWidgetRetries.Remove(RequestId);
+        ConstructingScreenRequests.Remove(RequestId);
+        if (Definition->bSurvivesTravel) TravelPersistentScreens.Add(Screen);
         CleanupPendingRequest(RequestId, false);
-        return;
-    }
-
-    Screen->OnPlatformDeactivated().AddUObject(
-        this,
-        &UGamePlatformUIManagerSubsystem::HandleScreenDeactivated);
-
-    if (TSharedPtr<FStreamableHandle>* LoadHandle = PendingLoads.Find(RequestId))
+        if (Screen->IsActivated()) HandleScreenActivated(Screen);
+        // SetPause/页面事件若进一步关闭作用域，不能对已经移除的实例发布Opened。
+        if (!bClosing && !bReplacingRoot && IsValid(Screen) &&
+            Construction.LayoutGeneration == RootLayoutGeneration && Construction.Root.Get() == RootLayout &&
+            Construction.World.IsValid() && Construction.World.Get() == GetWorld() && !Construction.World->bIsTearingDown &&
+            ActiveScreenLeases.Contains(Screen) && Stack->GetWidgetList().Contains(Screen))
+            OnScreenOpened.Broadcast(RequestId, Construction.Request.ScreenId, Screen);
+    }, [&]
     {
-        ActiveScreenLeases.Add(TWeakObjectPtr<UGamePlatformUIScreen>(Screen), *LoadHandle);
-    }
-
-    if (UGamePlatformUIInputPolicy::CanPauseWorld(GetWorld(), Definition->PausePolicy))
-    {
-        PauseScreens.Add(TWeakObjectPtr<UGamePlatformUIScreen>(Screen));
-        RefreshStandalonePause();
-    }
-
-    if (Definition->bSurvivesTravel)
-    {
-        TravelPersistentScreens.Add(TWeakObjectPtr<UGamePlatformUIScreen>(Screen));
-    }
-
-    CleanupPendingRequest(RequestId, false);
-    OnScreenOpened.Broadcast(RequestId, Request.ScreenId, Screen);
+        // 此时还未登记Active，原容器负责撤回本次新控件；RemoveWidget也可同步重入。
+        if (State.bScreenInStack)
+        {
+            // 失败构造没有入场资格，不保留正常退场动画；让CommonUI同步完成撤回再释放租约。
+            const float PreviousDuration = Stack->GetTransitionDuration();
+            Stack->SetTransitionDuration(0.0f);
+            Stack->RemoveWidget(*Screen);
+            if (Stack->GetTransitionDuration() == 0.0f) Stack->SetTransitionDuration(PreviousDuration);
+        }
+        ConstructingScreenRequests.Remove(RequestId);
+        const auto* RemainingRequest = PendingRequests.Find(RequestId);
+        const bool bSameRequest = RemainingRequest &&
+            RemainingRequest->Generation == Construction.Request.Generation;
+        const auto* RemainingLease = PendingLoads.Find(RequestId);
+        if ((!RemainingRequest || bSameRequest) && (!RemainingLease ||
+            RemainingLease->LeaseId == Construction.Lease.LeaseId))
+            CleanupPendingRequest(RequestId, false);
+        if (bSameRequest && !bClosing)
+            FailRequest(RequestId, Construction.Request.ScreenId,
+                LOCTEXT("OpenReentered", "页面构造期间请求、资源或布局已经失效。"));
+    });
 }
 
 void UGamePlatformUIManagerSubsystem::HandleScreenDeactivated(
@@ -854,13 +990,70 @@ void UGamePlatformUIManagerSubsystem::HandleScreenDeactivated(
         return;
     }
 
-    const FName ClosedScreenId = Screen->GetScreenId();
-    const TWeakObjectPtr<UGamePlatformUIScreen> ScreenKey(Screen);
-    ActiveScreenLeases.Remove(ScreenKey);
-    PauseScreens.Remove(ScreenKey);
-    TravelPersistentScreens.Remove(ScreenKey);
+    // 推入B只会暂时失活A；此事件仅调整显示暂停，不释放实例/Travel/Data账本。
+    PauseScreens.Remove(Screen);
     RefreshStandalonePause();
-    OnScreenClosed.Broadcast(ClosedScreenId);
+}
+
+void UGamePlatformUIManagerSubsystem::HandleScreenActivated(UGamePlatformUIScreen* Screen)
+{
+    if (!IsValid(Screen) || !ScreenStacks.Contains(Screen)) return;
+    if (UGamePlatformUIInputPolicy::CanPauseWorld(GetWorld(), Screen->GetPausePolicy())) PauseScreens.Add(Screen);
+    RefreshStandalonePause();
+}
+void UGamePlatformUIManagerSubsystem::HandleScreenReleased(UGamePlatformUIScreen* Screen)
+{
+    (void)Screen;
+    // CommonUI池释放Slate可能发生在WidgetList移除之前，下一调度轮再核对真实成员关系。
+    if (UWorld* World=GetWorld()) World->GetTimerManager().SetTimerForNextTick(
+        FTimerDelegate::CreateUObject(this, &UGamePlatformUIManagerSubsystem::ReconcileScreenMembership));
+}
+void UGamePlatformUIManagerSubsystem::HandleStackChanged(UCommonActivatableWidget* DisplayedWidget)
+{
+    (void)DisplayedWidget;
+    ReconcileScreenMembership();
+}
+void UGamePlatformUIManagerSubsystem::ReconcileScreenMembership()
+{
+    TArray<TWeakObjectPtr<UGamePlatformUIScreen>> Removed;
+    for (const auto& Pair:ScreenStacks)
+    {
+        auto* Screen=Pair.Key.Get(); auto* Stack=Pair.Value.Get();
+        if (!Screen || !Stack || !Stack->GetWidgetList().Contains(Screen)) Removed.Add(Pair.Key);
+    }
+    for (const auto& Key:Removed) RemoveScreenOwnership(Key);
+}
+void UGamePlatformUIManagerSubsystem::RemoveScreenOwnership(TWeakObjectPtr<UGamePlatformUIScreen> Key)
+{
+    if (!ScreenStacks.Remove(Key)) return; // 容器变化/Slate释放/退出交错只完成一次。
+    FName ScreenId=NAME_None;
+    if (auto* Screen=Key.Get())
+    {
+        ScreenId=Screen->GetScreenId();
+        Screen->OnPlatformDeactivated().RemoveAll(this);
+        Screen->OnActivated().RemoveAll(this);
+        Screen->OnPlatformReleased().RemoveAll(this);
+    }
+    FGamePlatformDataLease Lease;
+    if (ActiveScreenLeases.RemoveAndCopyValue(Key, Lease)) ReleaseScreenLease(Lease);
+    PauseScreens.Remove(Key); TravelPersistentScreens.Remove(Key);
+    RefreshStandalonePause();
+    if (!ScreenId.IsNone()) OnScreenClosed.Broadcast(ScreenId);
+}
+void UGamePlatformUIManagerSubsystem::ClearScreenOwnership()
+{
+    TArray<TWeakObjectPtr<UGamePlatformUIScreen>> Screens; ScreenStacks.GetKeys(Screens);
+    for (const auto& Key:Screens) RemoveScreenOwnership(Key);
+    for (const auto& Stack:ObservedStacks)
+        if (auto* ValidStack=Stack.Get()) ValidStack->OnDisplayedWidgetChanged().RemoveAll(this);
+    ObservedStacks.Reset();
+    ActiveScreenLeases.Reset(); PauseScreens.Reset(); TravelPersistentScreens.Reset();
+}
+void UGamePlatformUIManagerSubsystem::ReleaseScreenLease(const FGamePlatformDataLease& Lease)
+{
+    if (!Lease.IsValid()) return;
+    auto* Player=GetLocalPlayer(); auto* GameInstance=Player ? Player->GetGameInstance() : nullptr;
+    if (auto* Data=GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr) Data->ReleaseResources(Lease);
 }
 
 void UGamePlatformUIManagerSubsystem::FailRequest(
@@ -875,18 +1068,13 @@ void UGamePlatformUIManagerSubsystem::CleanupPendingRequest(
     FGuid RequestId,
     bool bCancelLoad)
 {
-    if (TSharedPtr<FStreamableHandle>* Handle = PendingLoads.Find(RequestId))
-    {
-        if (bCancelLoad)
-        {
-            FGamePlatformAssetLoader::Cancel(*Handle);
-        }
-    }
-
-    PendingLoads.Remove(RequestId);
+    (void)bCancelLoad; // Data Release同时覆盖Loading取消与成功释放，不直接操作StreamableManager。
     PendingDefaultWidgetRetries.Remove(RequestId);
     PendingRequests.Remove(RequestId);
     PendingViewModels.Remove(RequestId);
+    if (ConstructingScreenRequests.Contains(RequestId)) return; // 同步构造尚未退栈，暂留租约防止提前卸载。
+    FGamePlatformDataLease Lease;
+    if (PendingLoads.RemoveAndCopyValue(RequestId, Lease)) ReleaseScreenLease(Lease);
 }
 
 void UGamePlatformUIManagerSubsystem::RefreshStandalonePause()
@@ -904,8 +1092,8 @@ void UGamePlatformUIManagerSubsystem::RefreshStandalonePause()
         PauseScreens.Remove(Screen);
     }
 
-    APlayerController* PlayerController =
-        GetLocalPlayer()->GetPlayerController(GetWorld());
+    APlayerController* PlayerController = GetLocalPlayer()
+        ? GetLocalPlayer()->GetPlayerController(GetWorld()) : nullptr;
     if (!IsValid(PlayerController))
     {
         return;

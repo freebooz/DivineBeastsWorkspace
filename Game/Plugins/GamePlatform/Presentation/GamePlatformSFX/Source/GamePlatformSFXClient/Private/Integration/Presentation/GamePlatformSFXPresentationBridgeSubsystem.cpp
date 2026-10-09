@@ -55,21 +55,16 @@ bool UGamePlatformSFXPresentationBridgeSubsystem::HandlePresentationRequest(
         return true;
     }
 
-    if (Request.PredictionState == EGamePlatformPresentationPredictionState::Cancelled)
-    {
-        Service->StopByRequestId(Request.RequestId);
-        return true;
-    }
-
-    // Corrected（预测纠正）不能沿用普通去重，否则旧预测声音会继续播放。
-    // 先终止同RequestId旧实例，再使用纠正后的空间/Definition重新提交。
-    if (Request.PredictionState == EGamePlatformPresentationPredictionState::Corrected)
-    {
-        Service->StopByRequestId(Request.RequestId, 0.0f);
-    }
-
     FGamePlatformSFXRequest SFXRequest;
     SFXRequest.RequestId = Request.RequestId;
+    switch (Request.PredictionState)
+    {
+    case EGamePlatformPresentationPredictionState::Predicted: SFXRequest.PredictionState=EGamePlatformSFXPredictionState::Predicted; break;
+    case EGamePlatformPresentationPredictionState::Confirmed: SFXRequest.PredictionState=EGamePlatformSFXPredictionState::Confirmed; break;
+    case EGamePlatformPresentationPredictionState::Corrected: SFXRequest.PredictionState=EGamePlatformSFXPredictionState::Corrected; break;
+    case EGamePlatformPresentationPredictionState::Cancelled: SFXRequest.PredictionState=EGamePlatformSFXPredictionState::Cancelled; break;
+    default: break;
+    }
     SFXRequest.DefinitionId = Request.DefinitionId;
     SFXRequest.ContextId = Request.ContextId;
     SFXRequest.ContextTags = Request.ContextTags;

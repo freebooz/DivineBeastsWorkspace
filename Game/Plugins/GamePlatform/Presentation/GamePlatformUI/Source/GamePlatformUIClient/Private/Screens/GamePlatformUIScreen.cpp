@@ -31,6 +31,13 @@ TOptional<FUIInputConfig> UGamePlatformUIScreen::GetDesiredInputConfig() const
     return UGamePlatformUIInputPolicy::BuildInputConfig(InputMode);
 }
 
+void UGamePlatformUIScreen::NativeDestruct()
+{
+    // 池中UObject可复用；Slate释放后交由Manager核对是否真的离开栈。
+    PlatformReleased.Broadcast(this);
+    Super::NativeDestruct();
+}
+
 void UGamePlatformUIScreen::NativeOnActivated()
 {
     // ViewModel BeginPage、事件绑定和初始刷新由平台可激活基类统一完成。
@@ -39,7 +46,7 @@ void UGamePlatformUIScreen::NativeOnActivated()
 
 void UGamePlatformUIScreen::NativeOnDeactivated()
 {
-    // 先通知 Manager 页面准备关闭，再由父类解绑事件并结束 ViewModel 页面代次。
+    // 先通知Manager页面暂时失活，再由父类解绑事件并结束 ViewModel 页面代次。
     PlatformDeactivated.Broadcast(this);
     Super::NativeOnDeactivated();
 }

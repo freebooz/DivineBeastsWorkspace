@@ -1,3 +1,4 @@
+// 平台GI设置运行服务：中立描述/解析/用户层；每GI拥有持久化克隆和用户键，设备层由Client单独消费；退出失效保存回调。
 #pragma once
 
 #include "Interfaces/IGamePlatformSettingsService.h"
@@ -109,6 +110,9 @@ private:
     /** 当前不透明用户上下文键；只用于协调持久化Provider，不进入日志/Snapshot。 */
     FString CurrentUserContextKey;
 
+    /** 客户端持久化由本GI独占；缓存工厂身份只用于拓扑变化时重新创建，不访问其他GI账号键。 */
+    mutable TUniquePtr<IGamePlatformSettingsPersistenceProvider> ScopedPersistenceProvider;
+    mutable IGamePlatformSettingsPersistenceProvider* PersistenceFactory = nullptr;
     TUniquePtr<FGamePlatformSettingsRegistry> Registry;
     TMap<EGamePlatformSettingLayer,
         TMap<FName, FGamePlatformSettingValue>> Layers;

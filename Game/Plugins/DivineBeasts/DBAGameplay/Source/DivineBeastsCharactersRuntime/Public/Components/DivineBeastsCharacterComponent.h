@@ -7,10 +7,12 @@
 #include "Initialization/GamePlatformCharacterInitializer.h"
 #include "State/GamePlatformCharacterStateView.h"
 #include "Identity/DivineBeastsZodiacIdentity.h"
+#include "Types/GamePlatformDataLease.h"
 #include "DivineBeastsCharacterComponent.generated.h"
 
-struct FStreamableHandle;
 class UDivineBeastsHeroDefinition;
+class UGamePlatformAbilitySystemComponent;
+struct FGamePlatformAbilityAvatarBindingSnapshot;
 
 /** FDivineBeastsCharacterReadinessChangedNative（项目角色就绪变化）。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(
@@ -119,6 +121,7 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
     bool IsCharacterReady() const
     {
+        if (bEndingPlay) { return false; }
         return GetOwner() && GetOwner()->HasAuthority()
             ? bServerReady
             : bServerReady && bLocalReady;
@@ -128,6 +131,8 @@ public:
     {
         return LoadedDefinition;
     }
+    /** 真实Data加载最近结果；接纳不等于Ready，失败明确保留结果供组合根显示/诊断，不包含敏感身份。 */
+    FGamePlatformResult GetLastDefinitionLoadResult() const { return LastDefinitionLoadResult; }
 
     FDivineBeastsCharacterReadinessChangedNative& OnReadinessChanged()
     {
@@ -157,6 +162,11 @@ private:
     bool IsIdentityStructurallyValid() const;
     void UpdateReadiness();
     void BroadcastReadinessIfChanged(bool bPreviousReady);
+    /** 当前ASC存在则绑定Avatar事件，ActorInfo就绪后注入项目只读Gate；不代替宿主绑定ActorInfo。 */
+    void RefreshActivationGateBinding();
+    void HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot);
+    /** 组件结束时撤销本组件Gate并移除原生委托；ASC可继续存活，不留下旧项目Owner。 */
+    void DetachActivationGate();
 
     /** Owner-only持久身份，避免向所有观察者复制PlayerData档案ID。 */
     UPROPERTY(Replicated, Transient)
@@ -178,7 +188,12 @@ private:
     bool bLocalReady = false;
     bool bConfigurationApplied = false;
     int32 DefinitionRequestGeneration = 0;
-    TSharedPtr<FStreamableHandle> DefinitionLease;
+    /** 成功后持续持有至结束/身份变化；不能在完成回调中提前释放。 */
+    FGamePlatformDataLease DefinitionLease;
+    FGamePlatformResult LastDefinitionLoadResult;
+    TWeakObjectPtr<UGamePlatformAbilitySystemComponent> BoundAbilitySystem;
+    FDelegateHandle AvatarBindingChangedHandle;
+    bool bEndingPlay = false;
 
     FDivineBeastsCharacterReadinessChangedNative ReadinessChanged;
 };

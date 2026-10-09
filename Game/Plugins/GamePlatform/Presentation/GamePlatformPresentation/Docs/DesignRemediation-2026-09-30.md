@@ -1,0 +1,8 @@
+# 2026-09-30 目录解析修复合同
+
+平台中立目录由LocalPlayer服务持有。解析先筛选上下文资格，再精确语义；无精确合格候选时，仅允许`bAllowParentFallback=true`的条目参与父级回退，按直接父级距离逐级推进。同层语义比较ContentPack、Project、Moba、Platform，再比较具体度和显式优先级。等排序键的多个已注册候选返回Ambiguous，即使跨fragment使用相同局部EntryId也不能选择首项。
+
+新增回退许可默认false。发布EntryId/FragmentId/DefinitionId及模块身份保持；现有内容需要逐条明确父回退许可，不能自动把全部旧条目开启。原有测试中的父回退显式开启。Private纯值Score没有注册所有权、不访问UObject，供生产解析及Native回归共同使用。Native排序已观察RED→GREEN；完整注册、上下文、冲突和最近父级的UE Automation已登记但本Task未运行。
+# NoPCH编译补证
+
+2026-09-30真实UE5.8 NoPCH构建发现预览舞台SetAnimInstanceClass使用TSubclassOf<UAnimInstance>转换，但翻译单元只有前向声明。Private/Preview/GamePlatformCharacterPreviewStage.cpp已直接包含Animation/AnimInstance.h，保持稳定类型、资源加载及纯展示职责。真实错误来自构建日志；补头后的UE重编译由主执行串行完成，本任务未单独启动UBT，不能将静态检查称为UE编译通过。

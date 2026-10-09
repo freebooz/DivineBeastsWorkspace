@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interfaces/IGamePlatformSFXService.h"
+#include "Components/AudioComponent.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Types/GamePlatformDataLease.h"
 #include "GamePlatformSFXWorldSubsystem.generated.h"
@@ -31,6 +32,7 @@ public:
     virtual FGamePlatformSFXDiagnostics GetDiagnostics() const override;
 
 private:
+    friend class FGamePlatformSFXLifecycleRegressionTest;
     struct FPendingPlay
     {
         FGamePlatformSFXHandle Handle;
@@ -55,10 +57,18 @@ private:
         const FGamePlatformDataLease& Lease,
         const FGamePlatformResult& Result);
     void HandleAudioFinished(UAudioComponent* Component);
+    /** UE启动拒绝亦广播Stopped；自然完成/失败/Stop共享幂等回收。 */
+    void HandleAudioPlayStateChanged(const UAudioComponent* Component, EAudioComponentPlayState PlayState);
     void FailPending(FGuid HandleId, EGamePlatformSFXResultCode Code);
     void CleanupActive(FGuid HandleId, bool bStopComponent);
     void ReleaseLease(const FGamePlatformDataLease& Lease) const;
     void RemoveRequestMapping(const FGuid& RequestId, const FGuid& HandleId);
+
+    struct FTerminalOccurrence { double ExpiresAtSeconds = 0.0; bool bCancelled = false; };
+    void PruneTerminalOccurrences();
+    void RecordTerminalOccurrence(const FGuid& RequestId, bool bCancelled);
+    /** World局部终态最多512项、30秒；不持有UObject或Data Lease。 */
+    TMap<FGuid, FTerminalOccurrence> TerminalOccurrences;
 
     int32 Generation = 1;
     bool bClosing = false;

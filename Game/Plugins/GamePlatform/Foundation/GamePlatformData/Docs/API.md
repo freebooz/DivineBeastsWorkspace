@@ -158,3 +158,8 @@ Runtime 与 Editor 必须使用同一常量，禁止分别硬编码。
 用于从 AssetRegistry 扫描并确认某个逻辑 Definition 只有一个真实源路径。
 
 运行时 Registry 未就绪时显式返回失败，调用方按异步流程重试；编辑器验证可以等待注册表完成。
+## 2026-09-30 新增普通资源API与句柄兼容说明
+
+AcquireResources(ResourcePaths, Lifetime, WeakCaller, Completion, OutResult)返回FGamePlatformDataLease；ReleaseResources(Lease)只接受ResourcePaths非空的普通资源租约。DefinitionId与ResourcePaths互斥。所有方法仅游戏线程；成功回调后可ResolveObject，并持有租约到用途结束。原始输入最多MaxDefinitionsPerRequest个有效路径，重复路径规范化。异步接纳、失败与取消沿用定义租约协议，OutResult给出同步校验；有效弱调用者上的拒绝通知同样延后一次，因此调用方即使同步失败也应使本请求代次失效。
+
+IssuerProof是本实例完整身份摘要，不是网络凭据；不得自行构造、持久化或改写租约。旧版本手工构造的句柄不再有效；所有消费者应使用服务签发返回值。原枚举值和既有Definition身份未更名。ReleasedLeaseRecords恒为0，TotalAcceptedRequests/TotalRejectedRequests现在同时包含两类资源请求。

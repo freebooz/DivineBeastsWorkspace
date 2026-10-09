@@ -1,5 +1,7 @@
 # ServerAuthorityAndAntiCheat（服务器权威与反作弊）
 
+> 2026-09-30状态校正：本页保留旧方案/历史证据，旧DBAServer具体Quest HTTP/事件适配与后端交付宣称未在当前项目文件清单确认，不能作为现行验收。当前行为以[本轮整改说明](DesignRemediation-2026-09-30.md)、README与真实源码为准；本轮未执行数据库/Outbox/网络联调。
+
 实时 Objective 推进只接受 `FGamePlatformQuestEvent`服务器事实。普通 Client 没有 `ProgressDelta`、`CompleteQuest=true`、GrantReward 或内部 Quest Progress Server RPC。
 
 Event.PlayerRuntimeId 必须与 QuestServer 当前注册的玩家 RuntimeId 一致，否则返回 Unauthorized；DBAServer 适配器只在 Authority（权威服务器）执行。

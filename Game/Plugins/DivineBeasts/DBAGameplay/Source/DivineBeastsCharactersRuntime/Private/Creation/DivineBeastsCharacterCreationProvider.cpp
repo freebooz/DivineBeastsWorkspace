@@ -1,3 +1,4 @@
+// 项目双端草稿适配：只读定义和外观Schema；不拥有后端资格，资源租约归应用流程。
 #include "Creation/DivineBeastsCharacterCreationProvider.h"
 
 #include "Catalog/DivineBeastsHeroCatalog.h"
@@ -130,6 +131,30 @@ public:
                     Error);
                 Completion(bValid, MoveTemp(Error));
             });
+    }
+
+    virtual FGamePlatformDataLease ValidateCreationDraftWithLease(
+        UGameInstance& Instance, TWeakObjectPtr<UObject> WeakCaller, FName HeroDefinitionId,
+        TMap<FString, FString> AppearanceSelection, TFunction<void(bool, FString)> Completion,
+        FGamePlatformResult& OutResult) const override
+    {
+        if (!Completion)
+        {
+            OutResult = FGamePlatformResult::Failure(TEXT("InvalidCompletion"), TEXT("草稿校验必须提供完成回调。"));
+            return {};
+        }
+        return FDivineBeastsHeroCatalog::AcquireDefinitionResources(Instance, HeroDefinitionId,
+            EGamePlatformDataLifetime::Instance, WeakCaller,
+            [HeroDefinitionId, AppearanceSelection = MoveTemp(AppearanceSelection), Completion = MoveTemp(Completion)]
+            (UDivineBeastsHeroDefinition* Definition, const FGamePlatformDataLease&, const FGamePlatformResult& Result) mutable
+            {
+                if (!Result.IsSuccess() || !Definition || Definition->DefinitionId != HeroDefinitionId)
+                { Completion(false, TEXT("真实英雄定义加载失败或身份不匹配。")); return; }
+                FString Error;
+                const bool bValid = Definition->IsProjectDefinitionValid(Error) &&
+                    Definition->AppearanceSchema.ValidateSelection(AppearanceSelection, Error);
+                Completion(bValid, MoveTemp(Error));
+            }, OutResult);
     }
 
     virtual bool TryGetZodiacIdentity(

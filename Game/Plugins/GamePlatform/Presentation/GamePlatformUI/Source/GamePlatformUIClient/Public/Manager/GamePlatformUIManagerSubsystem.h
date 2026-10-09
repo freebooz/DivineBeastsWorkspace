@@ -4,12 +4,14 @@
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "GameplayTagContainer.h"
 #include "GamePlatformUITypes.h"
+#include "Types/GamePlatformDataLease.h"
 #include "Requests/GamePlatformUIFeedbackRequest.h"
 #include "Requests/GamePlatformUINotificationRequest.h"
 #include "Requests/GamePlatformWorldUIRequest.h"
 #include "GamePlatformUIManagerSubsystem.generated.h"
 
-struct FStreamableHandle;
+class UCommonActivatableWidget;
+class UCommonActivatableWidgetStack;
 class UGamePlatformHUDWidget;
 class UGamePlatformFeedbackService;
 class UGamePlatformFeedbackWidget;
@@ -24,6 +26,7 @@ class UGamePlatformUIScreenDefinition;
 class UGamePlatformViewModelBase;
 class UGamePlatformWorldUIService;
 class UGamePlatformWorldWidgetBase;
+class UGameInstance;
 struct FWorldContext;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(
@@ -193,6 +196,20 @@ public:
     FGamePlatformUIAccessibilityPreferencesChanged OnAccessibilityPreferencesChanged;
 
 private:
+    friend class FGamePlatformUIScreenLifecycleRegressionTest;
+    friend class FGamePlatformUIScreenReentryRegressionTest;
+    /** 单次同步构造快照；弱引用只用于识别旧作用域，调用栈另持强引用防止回调GC。 */
+    struct FScreenOpenConstruction
+    {
+        FGamePlatformUIAsyncRequest Request;
+        FGamePlatformDataLease Lease;
+        TWeakObjectPtr<UGamePlatformUILayerStack> Root;
+        TWeakObjectPtr<UCommonActivatableWidgetStack> Stack;
+        TWeakObjectPtr<UGamePlatformUIScreenDefinition> Definition;
+        TWeakObjectPtr<UWorld> World;
+        TWeakObjectPtr<UGameInstance> GameInstance;
+        uint64 LayoutGeneration = 0;
+    };
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformUILayerStack> RootLayout = nullptr;
 
@@ -229,16 +246,26 @@ private:
     UPROPERTY(Transient)
     FGamePlatformUIAccessibilityPreferences AccessibilityPreferences;
 
-    TMap<FGuid, TSharedPtr<FStreamableHandle>> PendingLoads;
-    /** 移动/其他平台专属Widget加载失败时，只允许针对同一请求回退默认类一次。 */
+    /** 待打开和已入栈实例各持本调用方Data资源租约；暂时失活不释放。 */
+    TMap<FGuid, FGamePlatformDataLease> PendingLoads;
+    /** 构造期间取消只撤销请求资格，租约到AddWidget返回、撤回控件后才释放。 */
+    TSet<FGuid> ConstructingScreenRequests;
+    TMap<TWeakObjectPtr<UGamePlatformUIScreen>, FGamePlatformDataLease> ActiveScreenLeases;
+    TMap<TWeakObjectPtr<UGamePlatformUIScreen>, TWeakObjectPtr<UCommonActivatableWidgetStack>> ScreenStacks;
+    TSet<TWeakObjectPtr<UCommonActivatableWidgetStack>> ObservedStacks;
+    /** 同一请求的专属Widget变体最多回退默认类一次；所有加载仍归Data租约。 */
     TSet<FGuid> PendingDefaultWidgetRetries;
-    TMap<TWeakObjectPtr<UGamePlatformUIScreen>, TSharedPtr<FStreamableHandle>> ActiveScreenLeases;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> PauseScreens;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> TravelPersistentScreens;
     FDelegateHandle PreLoadMapHandle;
 
     int32 NextGeneration = 1;
+    /** 根布局替换/退出代次；即使回调结束时指针相同，也不能提交旧构造。 */
+    uint64 RootLayoutGeneration = 1;
     bool bPauseAppliedByUI = false;
+    /** 退出/替换布局时拒绝新页面，防止OnScreenClosed重入把资源加入正在撤销的账本。 */
+    bool bClosing = false;
+    bool bReplacingRoot = false;
 
     bool IsDefinitionAllowed(const UGamePlatformUIScreenDefinition& Definition) const;
     bool IsRouteTargetValid(const UGamePlatformUIRouteDefinition& Definition) const;
@@ -249,7 +276,19 @@ private:
 
     bool HasAnyRouteCycle() const;
     void HandlePreLoadMap(const FWorldContext& WorldContext, const FString& MapName);
-    void HandleScreenAssetsLoaded(FGuid RequestId);
+    void HandleScreenAssetsLoaded(FGuid RequestId, const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
+    /** 同一请求最多接受一次默认类回退；以新Data租约接替旧代，未接受时由调用方结束请求。 */
+    bool TryDefaultWidgetFallback(const FGamePlatformUIAsyncRequest& Request,
+        const UGamePlatformUIScreenDefinition& Definition);
+    /** CommonUI回调返回后重验并提交；失效则撤回原栈控件，随后释放同代Pending租约。 */
+    bool CompleteScreenOpen(const FScreenOpenConstruction& Construction, UGamePlatformUIScreen* Screen);
+    void HandleScreenActivated(UGamePlatformUIScreen* Screen);
+    void HandleScreenReleased(UGamePlatformUIScreen* Screen);
+    void HandleStackChanged(UCommonActivatableWidget* DisplayedWidget);
+    void ReconcileScreenMembership();
+    void RemoveScreenOwnership(TWeakObjectPtr<UGamePlatformUIScreen> Screen);
+    void ClearScreenOwnership();
+    void ReleaseScreenLease(const FGamePlatformDataLease& Lease);
     void HandleScreenDeactivated(UGamePlatformUIScreen* Screen);
     void FailRequest(FGuid RequestId, FName ScreenId, const FText& Reason);
     void CleanupPendingRequest(FGuid RequestId, bool bCancelLoad);

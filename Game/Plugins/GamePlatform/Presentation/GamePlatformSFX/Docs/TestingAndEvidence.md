@@ -18,7 +18,7 @@ Source/GamePlatformSFXClient/Private/Tests/GamePlatformSFXPolicyTests.cpp
 GamePlatform.SFX.*
 ```
 
-覆盖：规范Definition逻辑ID、禁止资产路径、请求参数范围。
+覆盖：规范Definition逻辑ID、禁止资产路径、请求参数范围；新增GamePlatformSFXLifecycleTests.cpp覆盖Stopped回收、终态容量/期限与先取消。新增Native总预算测试已观察RED→GREEN（128 Pending及256总槽边界）。新增UE用例尚未执行。
 
 ## 2. 静态架构门禁
 

@@ -42,6 +42,9 @@ struct FGamePlatformPCGWorldScope
     uint64 Generation = 0;
     TMap<FGuid,TSharedPtr<FPCGOwnedRequest>> Requests;
     TMap<FGuid,TSharedPtr<FPCGSubscriber>> Subscribers;
+    // 终态只保留值快照，绝不保留Actor、组件、订阅或Data租约；最多最近128条。
+    TMap<FGuid,FGamePlatformPCGSnapshot> TerminalSnapshots;
+    TArray<FGuid> TerminalOrder;
     bool bStopping = false;
     bool bProcessing = false;
 };
@@ -95,7 +98,7 @@ FGamePlatformPCGHandle UGamePlatformPCGWorldSubsystem::RequestGeneration(const F
         !WorldService->QueryRegion(Input.CenterCm,Region).IsSuccess() || Region != Input.RegionId)
     { OutResult = PCGFailure(TEXT("WorldOrRegionMismatch")); return {}; }
     int32 Active = 0; for (const auto& Pair : Scope->Requests) { Active += Pair.Value->Lifecycle.Phase != Policy::Phase::Cleaned; }
-    if (Active >= 4 || Scope->Requests.Num() >= 128)
+    if (!Policy::CanAcceptRequest(Active, Scope->TerminalSnapshots.Num()))
     { OutResult = PCGFailure(TEXT("RequestBudgetExceeded")); return {}; }
     auto Request = MakeShared<FPCGOwnedRequest>(); Request->Input = Input;
     Request->Snapshot.Handle = {Scope->Id,FGuid::NewGuid(),Input.ContextGeneration,++Scope->Generation};
@@ -120,7 +123,11 @@ FGamePlatformPCGHandle UGamePlatformPCGWorldSubsystem::RequestGeneration(const F
 FGamePlatformResult UGamePlatformPCGWorldSubsystem::CancelGeneration(const FGamePlatformPCGHandle& Handle)
 {
     check(IsInGameThread()); auto* Found = Scope ? Scope->Requests.Find(Handle.OperationId) : nullptr;
-    if (!Found || !(Handle == (*Found)->Snapshot.Handle)) { return PCGFailure(TEXT("StaleRequest")); }
+    if (!Found || !(Handle == (*Found)->Snapshot.Handle))
+    {
+        const auto* Terminal = Scope ? Scope->TerminalSnapshots.Find(Handle.OperationId) : nullptr;
+        return Terminal && Handle == Terminal->Handle ? FGamePlatformResult::Success() : PCGFailure(TEXT("StaleRequest"));
+    }
     if (Scope->bProcessing) { return PCGFailure(TEXT("ReentrantMutation")); }
     if ((*Found)->Lifecycle.Outcome == Policy::Outcome::Pending)
     { (*Found)->Lifecycle.Stop(Policy::Outcome::Cancelled); (*Found)->Snapshot.Result = FGamePlatformResult::Cancelled(TEXT("本地生成取消，等待清理")); BeginCleanup(Handle.OperationId); }
@@ -129,6 +136,8 @@ FGamePlatformResult UGamePlatformPCGWorldSubsystem::CancelGeneration(const FGame
 FGamePlatformResult UGamePlatformPCGWorldSubsystem::ReleaseGeneration(const FGamePlatformPCGHandle& Handle)
 {
     const auto Result = CancelGeneration(Handle); if (!Result.IsSuccess()) { return Result; }
+    // 终态幂等窗口内重复释放成功；墓碑淘汰后返回StaleRequest，不伪造旧句柄真实性。
+    if (!Scope->Requests.Contains(Handle.OperationId)) { return FGamePlatformResult::Success(); }
     auto& Request = *Scope->Requests.FindChecked(Handle.OperationId);
     if (Request.Lifecycle.BeginCleanup()) { BeginCleanup(Handle.OperationId); }
     return FGamePlatformResult::Success();
@@ -136,7 +145,12 @@ FGamePlatformResult UGamePlatformPCGWorldSubsystem::ReleaseGeneration(const FGam
 FGamePlatformPCGSnapshot UGamePlatformPCGWorldSubsystem::GetGenerationSnapshot(const FGamePlatformPCGHandle& Handle) const
 {
     check(IsInGameThread()); auto* Found = Scope ? Scope->Requests.Find(Handle.OperationId) : nullptr;
-    if (!Found || !(Handle == (*Found)->Snapshot.Handle)) { FGamePlatformPCGSnapshot Invalid; Invalid.Result = PCGFailure(TEXT("StaleRequest")); return Invalid; }
+    if (!Found || !(Handle == (*Found)->Snapshot.Handle))
+    {
+        const auto* Terminal = Scope ? Scope->TerminalSnapshots.Find(Handle.OperationId) : nullptr;
+        if (Terminal && Handle == Terminal->Handle) { return *Terminal; }
+        FGamePlatformPCGSnapshot Invalid; Invalid.Result = PCGFailure(TEXT("StaleRequest")); return Invalid;
+    }
     auto Snapshot = (*Found)->Snapshot;
     Snapshot.Phase = static_cast<EGamePlatformPCGPhase>((*Found)->Lifecycle.Phase);
     Snapshot.Outcome = static_cast<EGamePlatformPCGOutcome>((*Found)->Lifecycle.Outcome);
@@ -311,19 +325,35 @@ bool UGamePlatformPCGWorldSubsystem::Tick(float)
         TGuardValue<bool> Guard(Scope->bProcessing,true);
         for (const auto Id : Ids) { ProcessRequest(Id); }
     }
+    const FGuid DispatchScopeId = Scope->Id;
     TArray<FGuid> Subscribers; Scope->Subscribers.GenerateKeyArray(Subscribers);
     for (const auto Id : Ids)
     {
-        if (!Scope) { return false; }
-        auto Request = Scope->Requests.FindChecked(Id); if (!Request->bDirty) { continue; } Request->bDirty = false;
+        if (!Scope || Scope->Id != DispatchScopeId) { return false; }
+        auto* Current = Scope->Requests.Find(Id); if (!Current) { continue; }
+        auto Request = *Current; if (!Request->bDirty) { continue; } Request->bDirty = false;
         const auto Snapshot = GetGenerationSnapshot(Request->Snapshot.Handle);
         for (const auto Subscription : Subscribers)
         {
-            if (!Scope) { return false; }
+            if (!Scope || Scope->Id != DispatchScopeId) { return false; }
             auto* Found = Scope->Subscribers.Find(Subscription); if (!Found) { continue; }
             auto Entry = *Found;
             if (!Entry->Owner.IsValid()) { Scope->Subscribers.Remove(Subscription); continue; }
             if (Entry->Handle == Snapshot.Handle) { Entry->Callback(Snapshot); }
+        }
+        // 最终快照派发后归还活动槽；回调可以关闭世界，因此必须重核同一作用域。
+        if (!Scope || Scope->Id != DispatchScopeId) { return false; }
+        if (Request->Lifecycle.Phase == Policy::Phase::Cleaned)
+        {
+            Scope->TerminalSnapshots.Add(Id, Snapshot); Scope->TerminalOrder.Add(Id);
+            Scope->Requests.Remove(Id);
+            for (auto It = Scope->Subscribers.CreateIterator(); It; ++It)
+            { if (It.Value()->Handle == Snapshot.Handle) { It.RemoveCurrent(); } }
+            while (Scope->TerminalOrder.Num() > 128)
+            {
+                Scope->TerminalSnapshots.Remove(Scope->TerminalOrder[0]);
+                Scope->TerminalOrder.RemoveAt(0, 1, EAllowShrinking::No);
+            }
         }
     }
     return true;

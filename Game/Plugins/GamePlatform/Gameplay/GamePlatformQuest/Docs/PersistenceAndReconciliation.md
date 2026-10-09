@@ -1,11 +1,11 @@
 # PersistenceAndReconciliation（持久化与对账）
 
-跨会话任务真源位于既有 `PlayerDataService（玩家数据服务） + PostgreSQL`。UE `GamePlatformQuestServer`不直接访问数据库，而通过异步 `IGamePlatformQuestPersistencePort（任务持久化端口）`加载/接取/保存进度/完成/放弃；DBAServer 已提供基于异步 `FHttpModule（HTTP模块）`的 PlayerData 实现。真实 UE→Go 运行联调仍因 UE/Go/PostgreSQL 环境缺失而未执行。
+当前UE只通过异步IGamePlatformQuestPersistencePort加载/接取/保存/完成/放弃任务；当前DBAServer未发现对应具体HTTP绑定。本页说明端口和内存所有权合同，不表示PlayerData/数据库/Outbox已联调。游戏线程调用和完成，项目适配器必须自行保障网络线程切回游戏线程及服务鉴权。
 
-普通 Objective（目标）事件先在 UE Dedicated Server（专用服务器）内存中即时推进，再按 `ProgressFlushDelaySeconds（进度刷新延迟）`聚合 `QuestId → EventIds[]`并批量写入绝对 Snapshot（快照）。接取、放弃、任务完成和迁服/登出前 Flush 属于高价值状态，要求立即持久化。
+普通可信Objective事件先推进内存进度并聚合QuestId→EventIds，按ProgressFlushDelaySeconds安排持久化。Revision由持久化端口确认，SnapshotSequence由状态组件每次显示发布递增，客户端因此可接纳同Revision进度。客户端序列不用于数据库写入或授权。
 
-PostgreSQL 使用 `revision（修订号）`乐观并发：更新条件包含 `WHERE revision = expected_revision`，成功后 `revision++`；冲突返回 RevisionConflict，不覆盖较新状态。UE 冲突后进入 `bReconcileRequired（必须对账）`，先从 PlayerData 重新加载快照，再重放仍未持久化的完整 Pending QuestEvent（待持久化任务事件）；重载失败时不会继续拿旧 Revision 写入。
+RevisionConflict使运行时停止旧版本写入并要求重新加载。Loaded整体先在临时Quests校验，空/重复QuestId与Definition缺失/版本错误均失败；旧进度、Pending载荷与去重账本保持。成功后先保障全部未落库载荷的新重放所有权再撤销原Pending：Deferred有足够空间整体转移，否则完整放入PendingReplayEvents优先排空并报告PersistenceOutcomeUnknown。新事件仍受原有Deferred限额，重复先去重，队列满明确拒绝尚未接受的新事件。
 
-`player_quest_processed_event（已处理任务事件表）`以 game/player/quest_instance/event_id 为主键，使服务重启后同一任务实例仍能识别事件重放；一次可信事实可推进多个不同 Quest，因为幂等作用域包含 quest_instance_id。
+加载失败保留运行时等待重试；GetPlayerPersistenceError读取最近真实错误。FlushPlayerProgressNow有任何在途、Deferred、PendingReplay、Pending或对账时不能报告落库完成。Unregister禁止新事件并继续排空既有所有权，不以关闭为由静默删除已接受事件。端口失败、奖励状态和世界终结仍须按项目集成政策处理。
 
-QuestServer 对每个玩家只允许一个持久化请求在途；持久化期间到达的新事件进入有界 `DeferredEvents（延迟事件队列）`。迁服/登出时禁止新事件，但已经进入 Deferred/Pending 的事件会继续排空和持久化，队列清空后才移除玩家 Runtime。
+真实源码范围、测试夹具及未运行项见[设计审查整改说明](DesignRemediation-2026-09-30.md)。

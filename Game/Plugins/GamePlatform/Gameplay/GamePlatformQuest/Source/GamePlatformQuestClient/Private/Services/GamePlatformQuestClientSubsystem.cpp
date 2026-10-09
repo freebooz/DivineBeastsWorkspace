@@ -1,6 +1,7 @@
 #include "Services/GamePlatformQuestClientSubsystem.h"
 
 #include "Settings/GamePlatformQuestSettings.h"
+#include "Types/GamePlatformQuestSnapshotRules.h"
 
 void UGamePlatformQuestClientSubsystem::Deinitialize()
 {
@@ -27,14 +28,8 @@ bool UGamePlatformQuestClientSubsystem::ApplyAuthoritativeSnapshots(
         FGamePlatformQuestSnapshot* Existing =
             QuestCache.Find(Snapshot.QuestId);
 
-        if (Existing && Snapshot.Revision < Existing->Revision)
-        {
-            continue;
-        }
-
-        if (!Existing ||
-            Snapshot.Revision > Existing->Revision ||
-            Snapshot.State != Existing->State)
+        if (!Existing || GamePlatformQuestSnapshotPolicy::ShouldAccept(Snapshot.Revision, Snapshot.SnapshotSequence,
+            Snapshot.State != Existing->State, Existing->Revision, Existing->SnapshotSequence))
         {
             QuestCache.Add(Snapshot.QuestId, Snapshot);
             bChanged = true;

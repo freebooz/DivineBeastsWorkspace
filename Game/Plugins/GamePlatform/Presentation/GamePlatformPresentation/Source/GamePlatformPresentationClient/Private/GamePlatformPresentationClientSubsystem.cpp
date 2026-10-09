@@ -1,6 +1,7 @@
 #include "GamePlatformPresentationClientSubsystem.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Resolution/GamePlatformPresentationCatalogScore.h"
 #include "Engine/World.h"
 
 namespace
@@ -118,38 +119,7 @@ namespace
                    Policy);
     }
 
-    struct FCatalogScore
-    {
-        int32 SemanticRank = 0;
-        int32 Specificity = 0;
-        int32 Scope = 0;
-        int32 Priority = 0;
 
-        bool IsBetterThan(const FCatalogScore& Other) const
-        {
-            if (Scope != Other.Scope)
-            {
-                return Scope > Other.Scope;
-            }
-            if (SemanticRank != Other.SemanticRank)
-            {
-                return SemanticRank > Other.SemanticRank;
-            }
-            if (Specificity != Other.Specificity)
-            {
-                return Specificity > Other.Specificity;
-            }
-            return Priority > Other.Priority;
-        }
-
-        bool IsEquivalentTo(const FCatalogScore& Other) const
-        {
-            return SemanticRank == Other.SemanticRank &&
-                   Specificity == Other.Specificity &&
-                   Scope == Other.Scope &&
-                   Priority == Other.Priority;
-        }
-    };
 }
 
 
@@ -349,7 +319,7 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
     }
 
     const FGamePlatformPresentationCatalogEntry* BestEntry = nullptr;
-    FCatalogScore BestScore;
+    FGamePlatformPresentationCatalogScore BestScore;
     bool bAmbiguous = false;
 
     for (const FCatalogFragmentEntry& FragmentEntry : CatalogFragments)
@@ -358,13 +328,21 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
              FragmentEntry.Fragment.Entries)
         {
             int32 SemanticRank = 0;
+            int32 SemanticDistance = 0;
             if (SemanticTag == Entry.SemanticTag)
             {
                 SemanticRank = 2;
             }
-            else if (SemanticTag.MatchesTag(Entry.SemanticTag))
+            else if (Entry.bAllowParentFallback && SemanticTag.MatchesTag(Entry.SemanticTag))
             {
                 SemanticRank = 1;
+                // 按直接父级逐层计算距离；同语义层级才进入Scope排序。
+                FGameplayTag Parent = SemanticTag;
+                while (Parent.IsValid() && Parent != Entry.SemanticTag)
+                {
+                    Parent = Parent.RequestDirectParent();
+                    ++SemanticDistance;
+                }
             }
             else
             {
@@ -376,8 +354,9 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
                 continue;
             }
 
-            FCatalogScore Score;
+            FGamePlatformPresentationCatalogScore Score;
             Score.SemanticRank = SemanticRank;
+            Score.SemanticDistance = SemanticDistance;
             Score.Specificity =
                 Entry.Specificity + Entry.ContextQuery.GetSpecificity();
             Score.Scope = static_cast<int32>(Entry.Scope);
@@ -389,8 +368,7 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
                 BestScore = Score;
                 bAmbiguous = false;
             }
-            else if (Score.IsEquivalentTo(BestScore) &&
-                     BestEntry->EntryId != Entry.EntryId)
+            else if (Score.IsEquivalentTo(BestScore))
             {
                 bAmbiguous = true;
             }

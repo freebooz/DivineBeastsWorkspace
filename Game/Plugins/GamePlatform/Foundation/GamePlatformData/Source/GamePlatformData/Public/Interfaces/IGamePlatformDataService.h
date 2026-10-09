@@ -23,9 +23,19 @@ public:
         TSubclassOf<UGamePlatformDefinitionBase> ExpectedClass, const TArray<FName>& Bundles,
         EGamePlatformDataLifetime Lifetime, TWeakObjectPtr<UObject> WeakCaller,
         FGamePlatformDataCompletion Completion, FGamePlatformResult& OutResult) = 0;
+    /**
+     * 为普通软对象/软类建立中央资源租约，保留发布路径/主资产身份。仅游戏线程，路径不能为空且不得重复超限。
+     * 调用方/期限约束与AcquireDefinition相同；完成总是延后且至多一次。成功后可ResolveObject直到释放。
+     * 唯一AssetManager持有原生StreamableHandle；取消只撤销本租约，不Unload其他世界或外部请求。
+     */
+    virtual FGamePlatformDataLease AcquireResources(const TArray<FSoftObjectPath>& ResourcePaths,
+        EGamePlatformDataLifetime Lifetime, TWeakObjectPtr<UObject> WeakCaller,
+        FGamePlatformDataCompletion Completion, FGamePlatformResult& OutResult) = 0;
+    /** 释放普通资源的完整签发句柄；成功/失败/取消后重复释放幂等，错实例或篡改失败。 */
+    virtual FGamePlatformResult ReleaseResources(const FGamePlatformDataLease& Lease) = 0;
     /** 成功租约读取只读定义；跨作用域、过期、已释放、非就绪或调用者失效均返回nullptr。 */
     virtual const UGamePlatformDefinitionBase* GetLoadedDefinition(const FGamePlatformDataLease& Lease) const = 0;
-    /** 仅释放本作用域本代次需求；重复释放实际签发过的同一完整句柄成功，伪造／跨作用域失败。 */
+    /** 仅释放本作用域本代次需求；签发证明支持旧完整句柄无状态幂等，伪造／跨作用域失败。 */
     virtual FGamePlatformResult ReleaseDefinition(const FGamePlatformDataLease& Lease) = 0;
     /** 返回即时状态；已移除的合法本作用域句柄返回Released，非法／跨作用域返回Invalid。 */
     virtual EGamePlatformDataRequestState GetLeaseState(const FGamePlatformDataLease& Lease) const = 0;

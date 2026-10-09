@@ -3,8 +3,10 @@
 #include "CoreMinimal.h"
 #include "Arena/GamePlatformArenaPolicies.h"
 #include "Server/GamePlatformArenaServerProjectExtension.h"
+#include "Types/GamePlatformDataLease.h"
 
-struct FStreamableHandle;
+class UGameInstance;
+class UWorld;
 
 /**
  * FDivineBeastsArenaServerProjectExtension（神兽联盟竞技服务器项目扩展）。
@@ -15,6 +17,10 @@ class DIVINEBEASTSARENASERVER_API FDivineBeastsArenaServerProjectExtension final
     , public IGamePlatformArenaHeroEligibilityProvider
 {
 public:
+    /** 注册世界清理监听，不启动地图、连接或资源加载。 */
+    FDivineBeastsArenaServerProjectExtension();
+    /** 游戏线程销毁组合根，显式撤销自己持有的当前世界资源需求。 */
+    virtual ~FDivineBeastsArenaServerProjectExtension() override;
     virtual bool ResolveModeSpec(
         const FGamePlatformArenaAssignment& Assignment,
         FGamePlatformArenaModeSpec& OutModeSpec,
@@ -32,9 +38,18 @@ public:
         FName ArenaModeId,
         FString& OutReason) const override;
 private:
-    /** 当前MainArena世界唯一玩法生命周期适配器；GameMode仅借用原始接口指针。 */
-    TSharedPtr<IGamePlatformArenaGameplayLifecycleAdapter> GameplayLifecycleAdapter;
-
-    /** Server-safe Hero Definition预热租约；比赛结束/新Assignment覆盖时随扩展生命周期释放。 */
-    TArray<TSharedPtr<FStreamableHandle>> HeroDefinitionWarmupLeases;
+    /** 模块Provider仅作为路由；每个真实GameMode拥有独立适配器、实例和预热需求。 */
+    struct FWorldAssembly
+    {
+        TSharedPtr<IGamePlatformArenaGameplayLifecycleAdapter> GameplayLifecycleAdapter;
+        TArray<FGamePlatformDataLease> HeroDefinitionWarmupLeases;
+        TWeakObjectPtr<UGameInstance> Instance;
+    };
+    TMap<TWeakObjectPtr<AGamePlatformArenaGameMode>, FWorldAssembly> WorldAssemblies;
+    FDelegateHandle WorldCleanupHandle;
+    /** 只撤销指定世界的所有权；先从路由移除，再清GameMode借用指针和租约，允许重复调用。 */
+    void ReleaseWorldAssembly(TWeakObjectPtr<AGamePlatformArenaGameMode> Mode);
+    /** 世界退出及时回收桶，防止模块存活期间积累失效世界。 */
+    void HandleWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
+    friend class FDivineBeastsArenaWorldOwnershipTest;
 };

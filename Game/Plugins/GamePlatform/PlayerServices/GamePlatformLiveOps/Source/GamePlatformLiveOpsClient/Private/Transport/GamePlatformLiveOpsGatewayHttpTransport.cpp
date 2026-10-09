@@ -1,11 +1,8 @@
+// 平台客户端业务JSON适配；线程、生命周期与迁移合同见同名公开头。
 #include "Transport/GamePlatformLiveOpsGatewayHttpTransport.h"
 
-#include "Async/Async.h"
 #include "Dom/JsonObject.h"
-#include "HttpModule.h"
-#include "Interfaces/IHttpRequest.h"
-#include "Interfaces/IHttpResponse.h"
-#include "Misc/ScopeLock.h"
+#include "GamePlatformOnlineClientSubsystem.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -20,159 +17,131 @@ FString GuidString(const FGuid& Guid)
 }
 }
 
-FGamePlatformLiveOpsGatewayHttpTransport::
-FGamePlatformLiveOpsGatewayHttpTransport(
-    FString InGatewayBaseUrl,
-    FString InAccessToken)
-    : GatewayBaseUrl(MoveTemp(InGatewayBaseUrl))
-    , AccessToken(MoveTemp(InAccessToken))
+// 游戏线程中的本领域所有权账本；不保存Token，也不拥有Online/HTTP对象。
+struct FGamePlatformLiveOpsGatewayHttpTransport::FRuntime
 {
-    GatewayBaseUrl.RemoveFromEnd(TEXT("/"));
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> Online;
+    TArray<FGamePlatformOnlineRequestHandle> ActiveRequests;
+    uint64 CancellationGeneration = 0;
+};
+
+FGamePlatformLiveOpsGatewayHttpTransport::FGamePlatformLiveOpsGatewayHttpTransport(UGamePlatformOnlineClientSubsystem* InOnlineSubsystem)
+    : Runtime(MakeUnique<FRuntime>())
+{
+    check(IsInGameThread());
+    Runtime->Online = InOnlineSubsystem;
+}
+
+FGamePlatformLiveOpsGatewayHttpTransport::FGamePlatformLiveOpsGatewayHttpTransport(FString InGatewayBaseUrl, FString InAccessToken)
+    : Runtime(MakeUnique<FRuntime>())
+{
+    // 旧消费者须迁入Online组合根；不把传入票据复制到长期对象或日志。
+    (void)InGatewayBaseUrl;
+    InAccessToken.Reset();
+}
+
+FGamePlatformLiveOpsGatewayHttpTransport::~FGamePlatformLiveOpsGatewayHttpTransport()
+{
+    CancelAllRequests();
 }
 
 bool FGamePlatformLiveOpsGatewayHttpTransport::IsConfigured() const
 {
-    return !GatewayBaseUrl.IsEmpty() &&
-           !AccessToken.IsEmpty();
+    check(IsInGameThread());
+    const auto* Online = Runtime ? Runtime->Online.Get() : nullptr;
+    if (!IsValid(Online)) { return false; }
+    const auto State = Online->GetSnapshot().State;
+    return State == EGamePlatformAuthState::Authenticated || State == EGamePlatformAuthState::Refreshing;
 }
 
 void FGamePlatformLiveOpsGatewayHttpTransport::CancelAllRequests()
 {
-    TArray<TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>> Requests;
+    check(IsInGameThread());
+    if (!Runtime) { return; }
+    ++Runtime->CancellationGeneration;
+    auto Requests = MoveTemp(Runtime->ActiveRequests);
+    Runtime->ActiveRequests.Reset();
+    if (auto* Online = Runtime->Online.Get())
     {
-        FScopeLock Lock(&ActiveRequestsMutex);
-        Requests = ActiveRequests;
-        ActiveRequests.Reset();
+        for (const auto& Request : Requests) { Online->Cancel(Request); }
     }
+}
 
-    for (const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request :
-         Requests)
-    {
-        if (Request.IsValid())
-        {
-            Request->CancelRequest();
-        }
-    }
+void FGamePlatformLiveOpsGatewayHttpTransport::UnregisterRequest(const FGuid& RequestId)
+{
+    Runtime->ActiveRequests.RemoveAll([&RequestId](const auto& Handle) { return Handle.RequestId == RequestId; });
 }
 
 bool FGamePlatformLiveOpsGatewayHttpTransport::StartJsonRequest(
     const FString& Verb,
     const FString& Path,
     const TSharedPtr<FJsonObject>& Body,
-    TFunction<void(int32, const FString&)> Completion)
+    TFunction<void(int32, const FString&, EGamePlatformLiveOpsError)> Completion)
 {
-    if (!IsConfigured() ||
-        Path.IsEmpty() ||
-        !Completion)
-    {
-        return false;
-    }
-
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
-        FHttpModule::Get().CreateRequest();
-    TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> RequestPtr = Request;
-
-    Request->SetURL(GatewayBaseUrl + Path);
-    Request->SetVerb(Verb);
-    Request->SetHeader(
-        TEXT("Authorization"),
-        FString::Printf(TEXT("Bearer %s"), *AccessToken));
-    Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
-
+    check(IsInGameThread());
+    if (!Completion || !IsConfigured() || Runtime->ActiveRequests.Num() >= 8) { return false; }
+    FGamePlatformAuthenticatedRequest Request;
+    Request.Verb = Verb;
+    Request.RelativePath = Path;
+    // 只读请求允许Online重试；写命令没有端点级幂等合同前禁止自动重放。
+    Request.bIdempotent = Request.Verb == TEXT("GET") || Request.Verb == TEXT("HEAD");
     if (Body.IsValid())
     {
-        FString Payload;
-        TSharedRef<TJsonWriter<>> Writer =
-            TJsonWriterFactory<>::Create(&Payload);
-
-        if (!FJsonSerializer::Serialize(
-                Body.ToSharedRef(),
-                Writer))
-        {
-            return false;
-        }
-
-        Request->SetHeader(
-            TEXT("Content-Type"),
-            TEXT("application/json"));
-        Request->SetContentAsString(Payload);
+        const auto Writer = TJsonWriterFactory<>::Create(&Request.Body);
+        if (!FJsonSerializer::Serialize(Body.ToSharedRef(), Writer)) { return false; }
     }
-
-    {
-        FScopeLock Lock(&ActiveRequestsMutex);
-        constexpr int32 MaxConcurrentHttpRequests = 8;
-        if (ActiveRequests.Num() >= MaxConcurrentHttpRequests)
+    const uint64 ExpectedCancellationGeneration = Runtime->CancellationGeneration;
+    const TWeakPtr<FGamePlatformLiveOpsGatewayHttpTransport, ESPMode::ThreadSafe> WeakSelf = AsShared();
+    const auto HandleBox = MakeShared<FGamePlatformOnlineRequestHandle, ESPMode::ThreadSafe>();
+    auto Handle = Runtime->Online->SendAuthenticatedRequest(
+        MoveTemp(Request), FGamePlatformOnlineRequestOptions(),
+        [WeakSelf, HandleBox, ExpectedCancellationGeneration, Completion = MoveTemp(Completion)](
+            FGamePlatformAuthenticatedResponse Response) mutable
         {
-            return false;
-        }
-        ActiveRequests.Add(RequestPtr);
-    }
-
-    TSharedRef<
-        FGamePlatformLiveOpsGatewayHttpTransport,
-        ESPMode::ThreadSafe> Self = AsShared();
-
-    Request->OnProcessRequestComplete().BindLambda(
-        [Self,
-         RequestPtr,
-         Completion = MoveTemp(Completion)](
-            FHttpRequestPtr,
-            FHttpResponsePtr Response,
-            bool bConnectedSuccessfully) mutable
-        {
-            const int32 StatusCode =
-                bConnectedSuccessfully && Response.IsValid()
-                    ? Response->GetResponseCode()
-                    : 0;
-
-            const FString ResponseBody =
-                Response.IsValid()
-                    ? Response->GetContentAsString()
-                    : FString();
-
-            Self->UnregisterRequest(RequestPtr);
-
-            AsyncTask(
-                ENamedThreads::GameThread,
-                [Completion = MoveTemp(Completion),
-                 StatusCode,
-                 ResponseBody]() mutable
-                {
-                    Completion(StatusCode, ResponseBody);
-                });
+            const auto Self = WeakSelf.Pin();
+            if (!Self || !Self->Runtime || Self->Runtime->CancellationGeneration != ExpectedCancellationGeneration) { return; }
+            Self->UnregisterRequest(HandleBox->RequestId);
+            EGamePlatformLiveOpsError Error = EGamePlatformLiveOpsError::None;
+            if (!Response.IsSuccess())
+            {
+                if (Response.Error == EGamePlatformAuthError::AuthExpired ||
+                    Response.Error == EGamePlatformAuthError::InvalidCredentials ||
+                    Response.Error == EGamePlatformAuthError::Forbidden)
+                { Error = EGamePlatformLiveOpsError::Unauthorized; }
+                else if (Response.Error == EGamePlatformAuthError::Cancelled)
+                { Error = Response.bMayHaveReachedServer ? EGamePlatformLiveOpsError::OutcomeUnknown : EGamePlatformLiveOpsError::Cancelled; }
+                else if (Response.Error == EGamePlatformAuthError::TimedOut)
+                { Error = Response.bMayHaveReachedServer ? EGamePlatformLiveOpsError::OutcomeUnknown : EGamePlatformLiveOpsError::TimedOut; }
+                else if (Response.Error == EGamePlatformAuthError::OutcomeUnknown)
+                { Error = EGamePlatformLiveOpsError::OutcomeUnknown; }
+                else { Error = MapHttpError(Response.HttpStatusCode, Response.Body); }
+            }
+            Completion(Response.HttpStatusCode, Response.Body, Error);
         });
-
-    const bool bStarted = Request->ProcessRequest();
-    if (!bStarted)
-    {
-        UnregisterRequest(RequestPtr);
-    }
-    return bStarted;
-}
-
-void FGamePlatformLiveOpsGatewayHttpTransport::UnregisterRequest(
-    const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request)
-{
-    FScopeLock Lock(&ActiveRequestsMutex);
-    ActiveRequests.Remove(Request);
+    *HandleBox = Handle;
+    if (!Handle.RequestId.IsValid()) { return false; }
+    Runtime->ActiveRequests.Add(Handle);
+    return true;
 }
 
 bool FGamePlatformLiveOpsGatewayHttpTransport::BeginGetCatalog(
     FGamePlatformLiveOpsCatalogCompletion Completion)
 {
+    if (!Completion) { return false; }
     return StartJsonRequest(
         TEXT("GET"),
         TEXT("/v1/liveops/catalog"),
         nullptr,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& Body) mutable
+            const FString& Body,
+            EGamePlatformLiveOpsError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformLiveOpsError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, Body));
+                    TransportError != EGamePlatformLiveOpsError::None ? TransportError : MapHttpError(StatusCode, Body));
                 return;
             }
 
@@ -199,19 +168,21 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginGetCatalog(
 bool FGamePlatformLiveOpsGatewayHttpTransport::BeginGetPlayerState(
     FGamePlatformLiveOpsPlayerStateCompletion Completion)
 {
+    if (!Completion) { return false; }
     return StartJsonRequest(
         TEXT("GET"),
         TEXT("/v1/liveops/state"),
         nullptr,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& Body) mutable
+            const FString& Body,
+            EGamePlatformLiveOpsError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformLiveOpsError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, Body));
+                    TransportError != EGamePlatformLiveOpsError::None ? TransportError : MapHttpError(StatusCode, Body));
                 return;
             }
 
@@ -240,6 +211,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginClaimSignIn(
     FName CampaignId,
     FGamePlatformLiveOpsClaimCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (!ClaimOperationId.IsValid() ||
         CampaignId.IsNone())
     {
@@ -262,15 +234,14 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginClaimSignIn(
         Body,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformLiveOpsError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformLiveOpsError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(
-                        StatusCode,
-                        ResponseBody));
+                    TransportError != EGamePlatformLiveOpsError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 
@@ -298,6 +269,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginQueryClaimOperation(
     const FGuid& ClaimOperationId,
     FGamePlatformLiveOpsClaimCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (!ClaimOperationId.IsValid())
     {
         return false;
@@ -311,15 +283,14 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginQueryClaimOperation(
         nullptr,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformLiveOpsError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformLiveOpsError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(
-                        StatusCode,
-                        ResponseBody));
+                    TransportError != EGamePlatformLiveOpsError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 

@@ -17,3 +17,12 @@ else()
 endif()
 
 add_test(NAME GameplayPolicyTests COMMAND GameplayPolicyTests)
+
+# 受保护出生入口的候选变换回归；不启动UE世界，不代替真实Pawn碰撞测试。
+add_executable(SpawnCandidateOperationTests ../Source/GamePlatformGameplay/Private/Tests/SpawnCandidateOperationTests.cpp)
+target_compile_features(SpawnCandidateOperationTests PRIVATE cxx_std_20)
+target_compile_definitions(SpawnCandidateOperationTests PRIVATE GAMEPLAY_NATIVE_TESTS=1)
+if(MSVC)
+    target_compile_options(SpawnCandidateOperationTests PRIVATE /W4 /WX /permissive- /utf-8)
+endif()
+add_test(NAME Gameplay.SpawnCandidateTransform COMMAND SpawnCandidateOperationTests)

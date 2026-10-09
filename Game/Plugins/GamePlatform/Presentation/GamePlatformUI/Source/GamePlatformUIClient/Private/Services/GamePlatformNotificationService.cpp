@@ -50,6 +50,8 @@ FGuid UGamePlatformNotificationService::SubmitNotification(
         Request.RequestId = FGuid::NewGuid();
     }
 
+    // RequestId为实例身份，重复提交拒绝；NotificationKey才是允许优先级替换的业务合并键。
+    if (ActiveNotifications.Contains(Request.RequestId)) return FGuid();
     UGamePlatformNotificationWidget* Widget =
         CreateWidget<UGamePlatformNotificationWidget>(
             PlayerController,
@@ -95,6 +97,8 @@ bool UGamePlatformNotificationService::AttachNotificationWidget(
     {
         return false;
     }
+
+    if (ActiveNotifications.Contains(Request.RequestId)) return false;
 
     if (!Request.NotificationKey.IsNone())
     {

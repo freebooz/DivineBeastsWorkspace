@@ -37,4 +37,9 @@ private:
     void RemoveDemand(const FPrimaryAssetId& AssetId, const FString& LeaseKey);
     void Reconcile(const FPrimaryAssetId& AssetId);
     void CompleteReconcile(FPrimaryAssetId AssetId, FGuid Serial);
+    /** 普通软资源沿用唯一引擎StreamableManager，以完整租约键隔离需求；只释放自己的原生句柄。 */
+    FGamePlatformResult AddResourceDemand(const TArray<FSoftObjectPath>& Paths, const FString& LeaseKey,
+        TFunction<void(FGamePlatformResult)> Completion);
+    void RemoveResourceDemand(const FString& LeaseKey);
+    void CompleteResourceDemand(const FString& LeaseKey, FGuid Serial);
 };

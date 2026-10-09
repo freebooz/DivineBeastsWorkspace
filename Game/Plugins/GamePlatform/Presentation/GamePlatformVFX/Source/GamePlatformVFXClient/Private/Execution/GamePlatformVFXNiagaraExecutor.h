@@ -10,6 +10,10 @@ class UWorld;
 class FGamePlatformVFXNiagaraExecutor
 {
 public:
+    /** 游戏线程检查弱目标、Owner与World；附着定义要求有效目标，失效目标不能退化为落地播放。 */
+    static bool IsAttachmentValid(const UWorld& World, const UGamePlatformVFXDefinition& Definition,
+        const FGamePlatformVFXSpawnContext& Spawn);
+
     static UNiagaraComponent* Spawn(
         UWorld& World,
         const UGamePlatformVFXDefinition& Definition,

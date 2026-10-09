@@ -1,3 +1,5 @@
+// 平台实例数据作用域：GI拥有请求与签发密钥，统一维护定义/普通软资源租约。
+// 所有账本与UObject访问在游戏线程；World/调用者失效撤销自身需求，终态通知延后且至多一次。
 #include "Subsystems/GamePlatformDataSubsystem.h"
 #include "Loading/GamePlatformAssetManager.h"
 #include "Loading/DataNextTick.h"
@@ -5,6 +7,9 @@
 #include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Types/GamePlatformDataLimits.h"
+#include "Ownership/DataLeaseTerminalPolicy.h"
+#include "Hash/Blake3.h"
+#include "Serialization/MemoryWriter.h"
 
 namespace
 {
@@ -15,6 +20,7 @@ struct FDependencyFrame
     int32 NextChild = 0;
     bool bIsLoaded = false;
 };
+// 沿用私有历史名；DefinitionId与ResourcePaths互斥，普通资源分支共用同一取消/通知账本。
 struct FDefinitionRequest
 {
     FGamePlatformDataLease Lease;
@@ -34,7 +40,33 @@ struct FDefinitionRequest
 // 校验完整句柄快照中身份与分组；RequestState是可过期的观察值，不参与所有权比较。
 bool SameLease(const FGamePlatformDataLease& A, const FGamePlatformDataLease& B)
 {
-    return A.ScopeId == B.ScopeId && A.LeaseId == B.LeaseId && A.Generation == B.Generation && A.DefinitionId == B.DefinitionId && A.Bundles == B.Bundles;
+    return A.ScopeId == B.ScopeId && A.LeaseId == B.LeaseId && A.Generation == B.Generation && A.DefinitionId == B.DefinitionId && A.Bundles == B.Bundles && A.ResourcePaths == B.ResourcePaths && A.IssuerProof == B.IssuerProof;
+}
+/** 私有实例密钥与长度明确的完整租约身份生成摘要；状态快照不入摘要，因此Loading副本释放仍有效。 */
+FGuid LeaseProof(const FGamePlatformDataLease& Lease, const FGuid& SecretA, const FGuid& SecretB)
+{
+    TArray<uint8> Payload;
+    FMemoryWriter Writer(Payload);
+    FGuid ScopeId = Lease.ScopeId, LeaseId = Lease.LeaseId;
+    int64 Generation = Lease.Generation;
+    Writer << ScopeId << LeaseId << Generation;
+    FString DefinitionId = Lease.DefinitionId.ToString().ToLower();
+    Writer << DefinitionId;
+    int32 BundleCount = Lease.Bundles.Num(), ResourceCount = Lease.ResourcePaths.Num();
+    Writer << BundleCount;
+    for (FName Bundle : Lease.Bundles) { FString Name = Bundle.ToString().ToLower(); Writer << Name; }
+    Writer << ResourceCount;
+    for (const FSoftObjectPath& Path : Lease.ResourcePaths)
+    {
+        FString Asset = Path.GetAssetPathString().ToLower(), SubPath = Path.GetSubPathString();
+        Writer << Asset << SubPath;
+    }
+    FBlake3 Hash;
+    Hash.Update(&SecretA, sizeof(SecretA)); Hash.Update(&SecretB, sizeof(SecretB));
+    Hash.Update(Payload.GetData(), static_cast<uint64>(Payload.Num()));
+    const FBlake3Hash Digest = Hash.Finalize();
+    uint32 Words[4]; FMemory::Memcpy(Words, Digest.GetBytes(), sizeof(Words));
+    return FGuid(Words[0], Words[1], Words[2], Words[3]);
 }
 bool CallerBelongsTo(UObject* Caller, UGameInstance* Instance)
 {
@@ -54,8 +86,9 @@ struct FGamePlatformDataScope
     bool bIsClosing = false;
     TWeakObjectPtr<UGamePlatformAssetManager> Manager;
     TMap<FGuid, TSharedPtr<FDefinitionRequest>> Requests;
-    // 幂等释放仍核对真实签发记录，不能把伪造的未知LeaseId判为已经释放。
-    TMap<FGuid, FGamePlatformDataLease> ReleasedLeases;
+    // 作用域私有签发材料永不导出；完整身份摘要支持严格幂等且无需保存每个已释放请求。
+    FGuid IssuerSecretA;
+    FGuid IssuerSecretB;
     FGamePlatformResult LastResult;
     int64 TotalAcceptedRequests = 0;
     int64 TotalRejectedRequests = 0;
@@ -76,6 +109,8 @@ void UGamePlatformDataSubsystem::Initialize(FSubsystemCollectionBase& Collection
 {
     Super::Initialize(Collection);
     Scope->Id = FGuid::NewGuid();
+    Scope->IssuerSecretA = FGuid::NewGuid();
+    Scope->IssuerSecretB = FGuid::NewGuid();
     Scope->bIsClosing = false;
     Scope->Manager = Cast<UGamePlatformAssetManager>(UAssetManager::GetIfInitialized());
     WorldCleanupHandle = FWorldDelegates::OnWorldCleanup.AddUObject(this, &ThisClass::CleanupWorld);
@@ -147,6 +182,7 @@ FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireDefinition(const FPrim
     for (FName Bundle : Bundles) Request->Lease.Bundles.AddUnique(Bundle);
     Request->Lease.Bundles.Sort(FNameLexicalLess());
     Request->Lease.RequestState = EGamePlatformDataRequestState::Loading;
+    Request->Lease.IssuerProof = LeaseProof(Request->Lease, Scope->IssuerSecretA, Scope->IssuerSecretB);
     Request->ExpectedClass.Reset(ExpectedClass.Get());
     Request->Caller = WeakCaller;
     Request->Lifetime = Lifetime;
@@ -174,6 +210,16 @@ void UGamePlatformDataSubsystem::Advance(FGamePlatformDataLease Lease)
     if (Scope->bIsClosing || !IsContextAlive(*Request)) { ReleaseRequest(Lease, TEXT("请求上下文已失效。")); return; }
     auto* Manager = Scope->Manager.Get();
     if (!Manager) { Finish(Lease, FGamePlatformResult::Failure(TEXT("AssetManagerUnavailable"), TEXT("资产管理器已失效。"))); return; }
+    if (!Lease.ResourcePaths.IsEmpty())
+    {
+        Request->bIsWaiting = true;
+        TWeakObjectPtr<UGamePlatformDataSubsystem> WeakThis(this);
+        const FGamePlatformResult Result = Manager->AddResourceDemand(Lease.ResourcePaths, Request->Key(),
+            [WeakThis, Lease](FGamePlatformResult LoadedResult)
+            { if (auto* Self = WeakThis.Get()) Self->ResourcesReady(Lease, MoveTemp(LoadedResult)); });
+        if (!Result.IsSuccess()) { Request->bIsWaiting = false; Finish(Lease, Result); }
+        return;
+    }
     // 显式栈代替C++递归；每条路径最多128层，单请求最多4096个定义，避免不可信图耗尽栈或内存。
     while (!Request->Stack.IsEmpty())
     {
@@ -264,7 +310,10 @@ void UGamePlatformDataSubsystem::Finish(FGamePlatformDataLease Lease, FGamePlatf
         {
             Self->Scope->LastResult = Result;
             if (auto* Manager = Self->Scope->Manager.Get())
+            {
                 for (const auto& Id : Request->DemandedAssets) Manager->RemoveDemand(Id, Request->Key());
+                if (!Request->Lease.ResourcePaths.IsEmpty()) Manager->RemoveResourceDemand(Request->Key());
+            }
             Request->DemandedAssets.Empty();
         }
         auto Callback = MoveTemp(Request->Completion);
@@ -278,9 +327,11 @@ void UGamePlatformDataSubsystem::ReleaseRequest(FGamePlatformDataLease Lease, co
     if (!Found || !SameLease((*Found)->Lease, Lease)) return;
     auto Request = *Found;
     Scope->Requests.Remove(Lease.LeaseId); // 先撤销，再调用可能同步取消的引擎操作。
-    Scope->ReleasedLeases.Add(Lease.LeaseId, Lease);
     if (auto* Manager = Scope->Manager.Get())
+    {
         for (const auto& Id : Request->DemandedAssets) Manager->RemoveDemand(Id, Request->Key());
+        if (!Lease.ResourcePaths.IsEmpty()) Manager->RemoveResourceDemand(Request->Key());
+    }
     if (!Request->bHasPublishedTerminal)
     {
         Request->bHasPublishedTerminal = true;
@@ -301,8 +352,10 @@ FGamePlatformResult UGamePlatformDataSubsystem::ReleaseDefinition(const FGamePla
     check(IsInGameThread());
     if (!Lease.IsValid() || Lease.ScopeId != Scope->Id)
         return FGamePlatformResult::Failure(TEXT("InvalidLeaseScope"), TEXT("不能释放无效或其他实例的租约。"));
-    if (const auto* Released = Scope->ReleasedLeases.Find(Lease.LeaseId); Released && SameLease(*Released, Lease)) return FGamePlatformResult::Success();
+    if (!HasAuthenticLease(Lease))
+        return FGamePlatformResult::Failure(TEXT("InvalidLeaseProof"), TEXT("租约不是当前实例签发的完整身份，拒绝伪造或篡改。"));
     const auto* Found = Scope->Requests.Find(Lease.LeaseId);
+    if (!Found && GamePlatform::Data::CanTreatMissingLeaseAsReleased(true, static_cast<uint64>(Lease.Generation), static_cast<uint64>(Scope->NextGeneration))) return FGamePlatformResult::Success();
     if (!Found || !SameLease((*Found)->Lease, Lease))
         return FGamePlatformResult::Failure(TEXT("InvalidLeaseGeneration"), TEXT("租约未签发或身份、分组、代次被修改。"));
     ReleaseRequest(Lease, TEXT("调用者释放了尚未完成的数据请求。"));
@@ -321,7 +374,7 @@ EGamePlatformDataRequestState UGamePlatformDataSubsystem::GetLeaseState(const FG
 {
     check(IsInGameThread());
     if (const auto* Found = Scope->Requests.Find(Lease.LeaseId); Found && SameLease((*Found)->Lease, Lease)) return (*Found)->Lease.RequestState;
-    if (const auto* Released = Scope->ReleasedLeases.Find(Lease.LeaseId); Released && SameLease(*Released, Lease)) return EGamePlatformDataRequestState::Released;
+    if (HasAuthenticLease(Lease) && GamePlatform::Data::CanTreatMissingLeaseAsReleased(true, static_cast<uint64>(Lease.Generation), static_cast<uint64>(Scope->NextGeneration))) return EGamePlatformDataRequestState::Released;
     return EGamePlatformDataRequestState::Invalid;
 }
 FGamePlatformDataDiagnostics UGamePlatformDataSubsystem::GetDiagnostics() const
@@ -330,7 +383,7 @@ FGamePlatformDataDiagnostics UGamePlatformDataSubsystem::GetDiagnostics() const
     FGamePlatformDataDiagnostics Result;
     Result.ScopeId = Scope->Id;
     Result.LastResult = Scope->LastResult;
-    Result.ReleasedLeaseRecords = Scope->ReleasedLeases.Num();
+    Result.ReleasedLeaseRecords = 0; // 兼容诊断字段；真实签发证明取代无界历史表。
     Result.TotalAcceptedRequests = Scope->TotalAcceptedRequests;
     Result.TotalRejectedRequests = Scope->TotalRejectedRequests;
     Result.TotalSucceededRequests = Scope->TotalSucceededRequests;
@@ -341,7 +394,7 @@ FGamePlatformDataDiagnostics UGamePlatformDataSubsystem::GetDiagnostics() const
     for (const auto& Pair : Scope->Requests)
     {
         const auto& Request = *Pair.Value;
-        Definitions.Add(Request.Lease.DefinitionId);
+        if (Request.Lease.DefinitionId.IsValid()) Definitions.Add(Request.Lease.DefinitionId);
         for (const FPrimaryAssetId& Id : Request.DemandedAssets) Definitions.Add(Id);
         for (const FName Bundle : Request.Lease.Bundles) Bundles.Add(Bundle);
         if (Request.Lease.RequestState == EGamePlatformDataRequestState::Loading) ++Result.PendingRequests;
@@ -365,4 +418,69 @@ bool UGamePlatformDataSubsystem::WatchOwners(float DeltaSeconds)
     for (const auto& Pair : Scope->Requests) if (!IsContextAlive(*Pair.Value)) Leases.Add(Pair.Value->Lease);
     for (const auto& Lease : Leases) ReleaseRequest(Lease, TEXT("租约调用者或世界已销毁。"));
     return !Scope->bIsClosing;
+}
+
+/** 普通资源请求复用同一个实例账本、代次与完成协议；不创建虚假的主资产或并行管理器。 */
+FGamePlatformDataLease UGamePlatformDataSubsystem::AcquireResources(const TArray<FSoftObjectPath>& ResourcePaths,
+    EGamePlatformDataLifetime Lifetime, TWeakObjectPtr<UObject> WeakCaller,
+    FGamePlatformDataCompletion Completion, FGamePlatformResult& OutResult)
+{
+    check(IsInGameThread());
+    if (!Scope->bIsClosing && !Scope->Manager.IsValid()) Scope->Manager = Cast<UGamePlatformAssetManager>(UAssetManager::GetIfInitialized());
+    OutResult = FGamePlatformResult::Success();
+    TArray<FSoftObjectPath> Paths;
+    // 先限制原始输入，再做去重和排序；大量重复路径同样不能绕过申请处理成本上限。
+    if (ResourcePaths.Num() <= GamePlatform::Data::Limits::MaxDefinitionsPerRequest)
+        for (const FSoftObjectPath& Path : ResourcePaths) Paths.AddUnique(Path);
+    Paths.Sort([](const FSoftObjectPath& A, const FSoftObjectPath& B) { return A.ToString() < B.ToString(); });
+    if (Scope->bIsClosing || !Scope->Id.IsValid()) OutResult = FGamePlatformResult::Failure(TEXT("ScopeClosed"), TEXT("数据作用域关闭，不能申请资源。"));
+    else if (!Scope->Manager.IsValid()) OutResult = FGamePlatformResult::Failure(TEXT("AssetManagerNotConfigured"), TEXT("必须使用正式唯一GamePlatformAssetManager。"));
+    else if (Paths.IsEmpty() || Paths.Num() > GamePlatform::Data::Limits::MaxDefinitionsPerRequest || Paths.ContainsByPredicate([](const FSoftObjectPath& Path) { return !Path.IsValid(); }))
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidResourcePaths"), TEXT("资源路径必须非空、有效且不超过统一请求节点安全上限。"));
+    else if (!CallerBelongsTo(WeakCaller.Get(), GetGameInstance()) || !Completion) OutResult = FGamePlatformResult::Failure(TEXT("InvalidCaller"), TEXT("有效弱调用者必须属于本实例且提供完成回调。"));
+    else if (Lifetime != EGamePlatformDataLifetime::Instance && Lifetime != EGamePlatformDataLifetime::World) OutResult = FGamePlatformResult::Failure(TEXT("InvalidLifetime"), TEXT("资源期限非法。"));
+    else if (Lifetime == EGamePlatformDataLifetime::World && (!WeakCaller->GetWorld() || WeakCaller->GetWorld()->GetGameInstance() != GetGameInstance() || WeakCaller->GetWorld()->bIsTearingDown))
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidWorld"), TEXT("世界资源租约要求同实例的存活世界。"));
+    else if (Scope->NextGeneration == MAX_int64) OutResult = FGamePlatformResult::Failure(TEXT("GenerationExhausted"), TEXT("拒绝复用耗尽的申请代次。"));
+    if (!OutResult.IsSuccess())
+    {
+        ++Scope->TotalRejectedRequests; Scope->LastResult = OutResult;
+        GamePlatform::Data::NextTick([WeakCaller, Callback = MoveTemp(Completion), Result = OutResult]() mutable
+        { if (WeakCaller.IsValid() && Callback) Callback({}, Result); });
+        return {};
+    }
+    auto Request = MakeShared<FDefinitionRequest>();
+    Request->Lease.ScopeId = Scope->Id; Request->Lease.LeaseId = FGuid::NewGuid();
+    Request->Lease.Generation = ++Scope->NextGeneration; Request->Lease.ResourcePaths = MoveTemp(Paths);
+    Request->Lease.RequestState = EGamePlatformDataRequestState::Loading;
+    Request->Lease.IssuerProof = LeaseProof(Request->Lease, Scope->IssuerSecretA, Scope->IssuerSecretB);
+    Request->Caller = WeakCaller; Request->Lifetime = Lifetime;
+    if (Lifetime == EGamePlatformDataLifetime::World) Request->World = WeakCaller->GetWorld();
+    Request->Completion = MoveTemp(Completion);
+    const FGamePlatformDataLease Lease = Request->Lease;
+    Scope->Requests.Add(Lease.LeaseId, Request); ++Scope->TotalAcceptedRequests;
+    TWeakObjectPtr<UGamePlatformDataSubsystem> WeakThis(this);
+    GamePlatform::Data::NextTick([WeakThis, Lease]() { if (auto* Self = WeakThis.Get()) Self->Advance(Lease); });
+    return Lease;
+}
+void UGamePlatformDataSubsystem::ResourcesReady(FGamePlatformDataLease Lease, FGamePlatformResult Result)
+{
+    const auto* Found = Scope->Requests.Find(Lease.LeaseId);
+    if (!Found || !SameLease((*Found)->Lease, Lease) || (*Found)->bHasPublishedTerminal || !(*Found)->bIsWaiting) return;
+    (*Found)->bIsWaiting = false;
+    if (Scope->bIsClosing || !IsContextAlive(**Found)) { ReleaseRequest(Lease, TEXT("普通资源完成时调用者/世界失效。")); return; }
+    Finish(Lease, Result);
+}
+bool UGamePlatformDataSubsystem::HasAuthenticLease(const FGamePlatformDataLease& Lease) const
+{
+    // 不可信的复制句柄在序列化签发证明前先受相同结构上限约束。
+    return Lease.IsValid() && Lease.Bundles.Num() <= GamePlatform::Data::Limits::MaxBundlesPerLease &&
+        Lease.ResourcePaths.Num() <= GamePlatform::Data::Limits::MaxDefinitionsPerRequest &&
+        Lease.ScopeId == Scope->Id && Lease.Generation <= Scope->NextGeneration &&
+        Lease.IssuerProof == LeaseProof(Lease, Scope->IssuerSecretA, Scope->IssuerSecretB);
+}
+FGamePlatformResult UGamePlatformDataSubsystem::ReleaseResources(const FGamePlatformDataLease& Lease)
+{
+    if (Lease.ResourcePaths.IsEmpty()) return FGamePlatformResult::Failure(TEXT("InvalidResourceLease"), TEXT("释放普通资源必须使用普通资源租约。"));
+    return ReleaseDefinition(Lease);
 }

@@ -79,3 +79,13 @@ foreach($Required in @(
 }
 
 Write-Host 'GamePlatformServer architecture gate passed: layers=clean server-only=yes code-only=yes timeout=yes redirect-reject=yes bounded-response=yes heartbeat=yes retry-backoff=yes drain-gate=yes.'
+
+# 准入与控制面使用不同HTTP实现；两者必须分别检查，不以其中一个的机制冒充另一个已加固。
+$Admission = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformServer/Private/Server/GamePlatformHttpAdmissionProvider.cpp'), $Utf8)
+foreach ($Required in @('FGamePlatformHttpAdmissionProvider::Shutdown()', 'SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread)', 'SetResponseBodyReceiveStreamDelegateV2', 'CanAcceptAdmissionResponseBytes', 'OnProcessRequestComplete().Unbind()')) {
+    if (-not $Admission.Contains($Required)) { throw "准入请求生命周期/接收边界缺失：$Required" }
+}
+if ($Admission.Contains('Response->GetContent()')) { throw '准入实现不得在完整缓存之后才检查响应预算。' }
+$Module = [IO.File]::ReadAllText((Join-Path $PluginRoot 'Source/GamePlatformServer/Private/GamePlatformServer.cpp'), $Utf8)
+if (-not $Module.Contains('AdmissionProvider->Shutdown()')) { throw '模块卸载缺少准入请求关闭。' }
+Write-Host 'Admission source gate passed: explicit shutdown, game-thread completion, bounded receive. This is not a network test.'

@@ -9,15 +9,46 @@
   "CanContainContent": true,
   "EnabledByDefault": false,
   "Plugins": [
-    { "Name": "GamePlatformCore", "Enabled": true },
-    { "Name": "GamePlatformCharacter", "Enabled": true },
-    { "Name": "GamePlatformAbilitySystem", "Enabled": true },
-    { "Name": "GamePlatformData", "Enabled": true },
-    { "Name": "GamePlatformCombat", "Enabled": true }
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCharacter",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformAbilitySystem",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformData",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCombat",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformGameplay",
+      "Enabled": true
+    }
   ],
   "Modules": [
-    { "Name": "DivineBeastsRuntime", "Type": "Runtime", "LoadingPhase": "Default" },
-    { "Name": "DivineBeastsCharactersRuntime", "Type": "Runtime", "LoadingPhase": "Default" },
-    { "Name": "DivineBeastsAbilitiesRuntime", "Type": "Runtime", "LoadingPhase": "Default" }
+    {
+      "Name": "DivineBeastsRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "DivineBeastsCharactersRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "DivineBeastsAbilitiesRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
   ]
 }

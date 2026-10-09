@@ -11,6 +11,7 @@
     "Plugins": [
         { "Name": "GameplayAbilities", "Enabled": true },
         { "Name": "GamePlatformCombat", "Enabled": true },
+        { "Name": "GamePlatformCharacter", "Enabled": true },
         { "Name": "GamePlatformAI", "Enabled": true },
         { "Name": "GamePlatformTelemetry", "Enabled": true }
     ],

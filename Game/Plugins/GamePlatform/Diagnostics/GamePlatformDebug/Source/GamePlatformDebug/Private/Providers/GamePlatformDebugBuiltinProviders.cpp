@@ -1,4 +1,7 @@
+// 平台内置只读诊断提供者：注册机制可跨世界复用，所有业务事实来自本次CollectContext。
+// 只借用World/GI/Actor，不缓存玩家状态；模块关闭注销提供者，Shipping不装配开发诊断。
 #include "GamePlatformDebugPrivate.h"
+#include "Engine/GameInstance.h"
 
 #include "Registry/GamePlatformDebugRegistry.h"
 

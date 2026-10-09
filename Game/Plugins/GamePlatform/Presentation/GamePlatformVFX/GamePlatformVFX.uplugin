@@ -23,6 +23,7 @@
                     }
                 ],
     "Plugins":  [
+                    { "Name": "GamePlatformCore", "Enabled": true },
                     {
                         "Name":  "Niagara",
                         "Enabled":  true

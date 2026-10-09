@@ -19,6 +19,10 @@ enum class EGamePlatformSFXPlaybackSpace : uint8
     Attached
 };
 
+/** 客户端表现请求的预测终态；只控制本世界去重，没有网络权威含义。 */
+UENUM(BlueprintType)
+enum class EGamePlatformSFXPredictionState : uint8 { None, Predicted, Confirmed, Corrected, Cancelled };
+
 /** EGamePlatformSFXResultCode（音效请求结果码）。 */
 UENUM(BlueprintType)
 enum class EGamePlatformSFXResultCode : uint8
@@ -36,7 +40,9 @@ enum class EGamePlatformSFXResultCode : uint8
     AssetUnavailable,
     OwnerInvalid,
     SpawnFailed,
-    StaleRequest
+    StaleRequest,
+    /** 已完成的请求被确认；未创建新的音频组件，Handle为空。 */
+    AlreadyCompleted
 };
 
 /**
@@ -75,6 +81,10 @@ struct GAMEPLATFORMSFXCLIENT_API FGamePlatformSFXRequest
     /** 跨Presentation/SFX链路的请求身份；有效时用于预测请求去重与取消。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SFX")
     FGuid RequestId;
+
+    /** 同RequestId预测/确认共享身份；Corrected可替换正常完成实例，Cancelled在历史保留期不可复活。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SFX")
+    EGamePlatformSFXPredictionState PredictionState = EGamePlatformSFXPredictionState::None;
 
     /** 例如 presentation.sfx.hit@1；不得填写 /Game/... 资产路径。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SFX")
@@ -132,7 +142,7 @@ struct GAMEPLATFORMSFXCLIENT_API FGamePlatformSFXResult
     bool IsAccepted() const
     {
         return Code == EGamePlatformSFXResultCode::Played ||
-               Code == EGamePlatformSFXResultCode::Queued;
+               Code == EGamePlatformSFXResultCode::Queued || Code == EGamePlatformSFXResultCode::AlreadyCompleted;
     }
 };
 

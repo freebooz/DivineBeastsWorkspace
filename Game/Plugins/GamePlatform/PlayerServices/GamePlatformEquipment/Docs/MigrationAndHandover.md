@@ -1,7 +1,9 @@
-# MigrationAndHandover（迁移与交接）
+# 迁移与交付
 
-新增数据库变更仅使用 `Backend/migrations/gameplatform/0004_player_equipment.up.sql/down.sql`，不修改 Quest/Inventory/Entitlement 历史 Migration。
+2026-09-30：插件、模块、反射类型、协议与资产身份没有更名，未修改发布字段号，未创建/删除UE二进制资产。旧后端路径/迁移/Outbox完成宣称撤销为尚需立项/联调；这不是后端能力修复。
 
-通用 Equipment API/Event Contract 位于 Shared/Contracts/GamePlatform；项目 Equipment Catalog Schema 位于 Shared/Contracts/Games/DivineBeasts。
+服务器装备Port签名与组件稳定身份保持；项目组合根仍须注入真正持久化/资产解析实现，不因本轮组件生命周期修复而增加或伪造后端适配。回退需整体恢复组件生命周期源码，不能只撤销回调代次保护。
 
-后续 Progression（成长）如增加 RequiredLevel，应通过稳定 RequirementId/应用层组合，不在 Equipment 中创建假等级系统。下一插件仍是 GamePlatformProgression，本轮未进入。
+Equipment退出现在撤销自己的GAS句柄；后端在飞事务可能已经提交，组件销毁只失效本地回调，不伪造服务器回滚。
+
+当前检查、未执行项、新增源码和中文说明检查范围见Game/Saved/Reviews/task2-repair-report.md及正式统一执行账本；静态通过不等于运行验收。

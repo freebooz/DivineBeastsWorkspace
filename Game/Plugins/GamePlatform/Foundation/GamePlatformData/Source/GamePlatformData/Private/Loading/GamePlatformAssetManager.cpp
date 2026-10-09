@@ -1,3 +1,5 @@
+// 平台唯一资产管理适配：进程级只保存跨GI需求账本，用户/世界状态留在各实例子系统。
+// Definition与普通资源都由引擎StreamableManager持有；最后一个自有需求结束只释放自身句柄。
 #include "Loading/GamePlatformAssetManager.h"
 #include "Loading/DataNextTick.h"
 #include "Ownership/DataDemandLedger.h"
@@ -19,11 +21,20 @@ struct FAssetDemand
     TMap<FString, TFunction<void(FGamePlatformResult)>> Waiters;
     FGuid Serial;
 };
+/** 普通软资源需求由唯一引擎管理器持有；回调不强捕获自身/句柄，避免完成后循环保留。 */
+struct FResourceDemand
+{
+    TArray<FSoftObjectPath> Paths;
+    TSharedPtr<FStreamableHandle> Operation;
+    TFunction<void(FGamePlatformResult)> Completion;
+    FGuid Serial;
+};
 }
 struct FGamePlatformProcessDemands
 {
     GamePlatform::Data::FDemandLedger Ledger;
     TMap<FPrimaryAssetId, FAssetDemand> Assets;
+    TMap<FString, FResourceDemand> Resources;
     bool bIsApplyingOwnedDemand = false;
 };
 
@@ -218,4 +229,55 @@ void UGamePlatformAssetManager::CompleteReconcile(FPrimaryAssetId AssetId, FGuid
     if (!ProcessDemands->Ledger.HasDemand(LedgerKey(AssetId.ToString())))
         ProcessDemands->Assets.Remove(AssetId); // 外部基线仍由引擎持有，绝不Unload。
     for (auto& Waiter : Waiters) Waiter.Value(Result);
+}
+
+FGamePlatformResult UGamePlatformAssetManager::AddResourceDemand(const TArray<FSoftObjectPath>& Paths,
+    const FString& LeaseKey, TFunction<void(FGamePlatformResult)> Completion)
+{
+    check(IsInGameThread());
+    if (Paths.IsEmpty() || LeaseKey.IsEmpty() || !Completion || ProcessDemands->Resources.Contains(LeaseKey))
+        return FGamePlatformResult::Failure(TEXT("InvalidResourceDemand"), TEXT("普通资源需求必须有效且不能覆盖已有租约键。"));
+    FResourceDemand Demand;
+    Demand.Paths = Paths; Demand.Completion = MoveTemp(Completion); Demand.Serial = FGuid::NewGuid();
+    const FGuid Serial = Demand.Serial;
+    ProcessDemands->Resources.Add(LeaseKey, MoveTemp(Demand));
+    TWeakObjectPtr<UGamePlatformAssetManager> WeakThis(this);
+    FStreamableDelegate Complete = FStreamableDelegate::CreateLambda([WeakThis, LeaseKey, Serial]()
+    {
+        GamePlatform::Data::NextTick([WeakThis, LeaseKey, Serial]()
+        { if (auto* Self = WeakThis.Get()) Self->CompleteResourceDemand(LeaseKey, Serial); });
+    });
+    // 先发布账本，再启动原生加载；每个租约的非managed句柄独立持有共享原生资源引用。
+    // 引擎StreamableManager负责重叠路径去重，本层不调用全局Unload(path)。
+    auto Handle = GetStreamableManager().RequestAsyncLoad(Paths, Complete,
+        FStreamableManager::DefaultAsyncLoadPriority, false, true, TEXT("GamePlatformResourceLease"));
+    if (auto* Current = ProcessDemands->Resources.Find(LeaseKey); Current && Current->Serial == Serial)
+        Current->Operation = Handle;
+    if (Handle) Handle->StartStalledHandle();
+    if (!Handle || Handle->HasLoadCompleted() || Handle->WasCanceled()) Complete.ExecuteIfBound();
+    return FGamePlatformResult::Success();
+}
+void UGamePlatformAssetManager::CompleteResourceDemand(const FString& LeaseKey, FGuid Serial)
+{
+    check(IsInGameThread());
+    auto* Demand = ProcessDemands->Resources.Find(LeaseKey);
+    if (!Demand || Demand->Serial != Serial || !Demand->Completion) return;
+    if (Demand->Operation && !Demand->Operation->HasLoadCompleted() && !Demand->Operation->WasCanceled()) return;
+    const bool bFailed = !Demand->Operation || Demand->Operation->WasCanceled() || Demand->Operation->HasError() ||
+        Demand->Paths.ContainsByPredicate([](const FSoftObjectPath& Path) { return !Path.ResolveObject(); });
+    auto Callback = MoveTemp(Demand->Completion);
+    Callback(bFailed ? FGamePlatformResult::Failure(TEXT("ResourceLoadFailed"), TEXT("普通资源加载失败，调用方租约将回滚。")) : FGamePlatformResult::Success());
+}
+void UGamePlatformAssetManager::RemoveResourceDemand(const FString& LeaseKey)
+{
+    check(IsInGameThread());
+    FResourceDemand Demand;
+    if (!ProcessDemands->Resources.RemoveAndCopyValue(LeaseKey, Demand)) return;
+    // 先撤销代次/回调，再释放本租约原生句柄；其他租约、主资产束及外部句柄不受影响。
+    Demand.Completion = nullptr;
+    if (Demand.Operation)
+    {
+        if (!Demand.Operation->HasLoadCompleted() && !Demand.Operation->WasCanceled()) Demand.Operation->CancelHandle();
+        else Demand.Operation->ReleaseHandle();
+    }
 }

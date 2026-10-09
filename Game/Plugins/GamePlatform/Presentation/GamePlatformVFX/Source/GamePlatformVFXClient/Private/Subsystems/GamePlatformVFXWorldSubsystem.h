@@ -99,6 +99,7 @@ public:
     virtual bool UnregisterCatalog(const FGamePlatformVFXRegistrationHandle& Handle) override;
 
 private:
+    friend class FGamePlatformVFXPredictionTerminalTest;
     void HandleStartupCatalogsLoaded();
     FGamePlatformVFXDedupeKey MakeDedupeKey(const FGamePlatformVFXRequest& Request) const;
     FName ResolveDefinitionId(const FGamePlatformVFXRequest& Request, bool& bOutAmbiguous) const;
@@ -127,6 +128,10 @@ private:
 
     void AddDedupeHandle(const FGamePlatformVFXDedupeKey& Key, const FGamePlatformVFXHandle& Handle);
     void RemoveDedupeHandle(const FGamePlatformVFXHandle& Handle);
+
+    struct FTerminalOccurrence { double ExpiresAtSeconds = 0.0; bool bCancelled = false; };
+    void PruneTerminalOccurrences();
+    void RecordTerminalOccurrence(const FGamePlatformVFXDedupeKey& Key, bool bCancelled);
 
     void RegisterCompositeTimer(
         const FGamePlatformVFXHandle& ParentHandle,
@@ -160,6 +165,9 @@ private:
 
     TMap<FGamePlatformVFXDedupeKey, FGamePlatformVFXHandle> DedupeHandles;
     TMap<FGuid, FGamePlatformVFXDedupeKey> DedupeKeysByHandle;
+
+    /** 完成/取消历史最多MaxDedupeEntries项、保留30秒；压力淘汰最早到期记录，旧世界不可见。 */
+    TMap<FGamePlatformVFXDedupeKey, FTerminalOccurrence> TerminalOccurrences;
 
     TArray<FGamePlatformVFXRegistrationHandle> StartupCatalogHandles;
     TSharedPtr<FStreamableHandle> StartupCatalogLoadLease;
