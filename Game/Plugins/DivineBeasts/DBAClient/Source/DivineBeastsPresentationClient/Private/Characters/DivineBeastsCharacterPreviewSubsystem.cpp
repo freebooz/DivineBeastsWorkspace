@@ -1,7 +1,15 @@
+/**
+ * 项目层本地玩家角色预览：接收界面ViewModel命令，组合平台预览舞台和项目外观软引用。
+ * 仅拥有本地相机、流送工作室及异步资源租约；不改变持久档案、世界角色或服务器动画权威。
+ * 切换英雄、失活及世界退出依请求代次取消加载，解绑并释放本实例资源。
+ */
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
 
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
+#include "Animation/AnimClassInterface.h"
+#include "Animation/Skeleton.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/LevelStreamingDynamic.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
@@ -14,6 +22,9 @@
 
 namespace
 {
+    // 开发原型的待机只归本地预览；不写入通用角色外观Profile，不覆盖游戏内移动／权威动画。
+    const TSoftClassPtr<UAnimInstance> DevelopmentPreviewIdleClass(
+        FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.ABP_DBA_PreviewIdle_C")));
     const TSoftObjectPtr<UWorld> CharacterStudioWorld(
         FSoftObjectPath(
             TEXT("/DBAFrontEndPack/Maps/L_DBA_CharacterStudio.L_DBA_CharacterStudio")));
@@ -336,6 +347,11 @@ void UDivineBeastsCharacterPreviewSubsystem::HandleProfileLoaded(
     {
         Assets.AddUnique(Profile->AnimInstanceClass.ToSoftObjectPath());
     }
+    else if (Profile->bDevelopmentPlaceholder)
+    {
+        // 使用同一异步资源租约，取消或切换英雄时仍由既有代次栅栏丢弃迟到回调。
+        Assets.AddUnique(DevelopmentPreviewIdleClass.ToSoftObjectPath());
+    }
 
     const TWeakObjectPtr<UDivineBeastsCharacterPreviewSubsystem> WeakThis(this);
     VisualLease = FGamePlatformAssetLoader::RequestAsyncLoad(
@@ -400,11 +416,22 @@ bool UDivineBeastsCharacterPreviewSubsystem::TryApplyPendingAppearance()
     }
 
     UClass* AnimClass = PendingProfile->AnimInstanceClass.IsNull()
-        ? nullptr
+        ? (PendingProfile->bDevelopmentPlaceholder ? DevelopmentPreviewIdleClass.Get() : nullptr)
         : PendingProfile->AnimInstanceClass.Get();
-    if (!PendingProfile->AnimInstanceClass.IsNull() && !AnimClass)
+    if ((!PendingProfile->AnimInstanceClass.IsNull() || PendingProfile->bDevelopmentPlaceholder) && !AnimClass)
     {
         return false;
+    }
+
+    if (AnimClass && PendingProfile->AnimInstanceClass.IsNull() && PendingProfile->bDevelopmentPlaceholder)
+    {
+        // 开发待机只能用于经真实骨架验证的原型；名称标签相同不等于骨骼层级兼容。
+        const IAnimClassInterface* AnimationInterface = IAnimClassInterface::GetFromClass(AnimClass);
+        const USkeleton* AnimationSkeleton = AnimationInterface ? AnimationInterface->GetTargetSkeleton() : nullptr;
+        if (!AnimationSkeleton || !AnimationSkeleton->IsCompatibleMesh(Mesh))
+        {
+            return false;
+        }
     }
 
     if (!PreviewStage->ApplyPreviewAppearance(

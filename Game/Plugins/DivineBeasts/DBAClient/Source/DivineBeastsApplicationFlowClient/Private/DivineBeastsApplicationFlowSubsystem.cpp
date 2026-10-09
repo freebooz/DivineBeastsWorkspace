@@ -1,3 +1,8 @@
+/**
+ * 项目层客户端应用流程组合：GameInstance拥有单一流程、请求代次与当前世界准入上下文。
+ * UI命令经本子系统协调平台认证、角色、世界与加载服务；后端保持业务权威。
+ * 回调在游戏线程核对作用域及代次，注销和世界退出取消请求并释放本实例资源。
+ */
 #include "DivineBeastsApplicationFlowSubsystem.h"
 
 #include "Backend/DivineBeastsApplicationBackend.h"
@@ -2183,7 +2188,8 @@ void UDivineBeastsApplicationFlowSubsystem::HandleAuthSnapshot(
         bRestartAfterLogout)
     {
         bRestartAfterLogout = false;
-        StartFlow(true);
+        // 主动注销后回到干净的人工登录页；不得立即触发未配置的凭据恢复并显示失效错误。
+        StartFlow(false);
         return;
     }
 

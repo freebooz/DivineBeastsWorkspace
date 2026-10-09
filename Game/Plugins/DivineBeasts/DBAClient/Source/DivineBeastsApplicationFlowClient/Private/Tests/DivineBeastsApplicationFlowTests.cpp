@@ -113,6 +113,10 @@ bool FDivineBeastsFlowContextLifetimeTest::RunTest(const FString&)
     FString Ticket;
     TestTrue(TEXT("第一次允许取走连接材料"), Context->ConsumeConnectionMaterial(Endpoint, Ticket));
     TestFalse(TEXT("票据消费后不能再次复用"), Context->ConsumeConnectionMaterial(Endpoint, Ticket));
+    // 人工登录是正常首屏策略；开启过自动恢复后，新运行也不能继承旧策略或连接材料。
+    Context->ResetForNewRun(false);
+    TestFalse(TEXT("人工登录运行不触发自动恢复"), Context->ShouldTryAutoLogin());
+    TestFalse(TEXT("重启人工登录运行清除旧准入票据"), Context->ConsumeConnectionMaterial(Endpoint, Ticket));
     return true;
 }
 

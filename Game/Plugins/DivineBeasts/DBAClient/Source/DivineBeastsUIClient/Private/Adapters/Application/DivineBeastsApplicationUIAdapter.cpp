@@ -1,3 +1,7 @@
+/**
+ * 项目层客户端界面适配：由本地玩家UI消费，将GameInstance应用流程投影成只读状态及命令能力。
+ * 认证、档案与准入仍归既有流程和后端；适配器只订阅事件，关闭时解绑，不保存密码或令牌。
+ */
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
 
 #include "DivineBeastsApplicationFlowSubsystem.h"
@@ -98,7 +102,9 @@ bool UDivineBeastsApplicationUIAdapter::Initialize(ULocalPlayer& LocalPlayer)
         Flow->GetViewState().FlowRunId == 0 &&
         Flow->GetViewState().CurrentStep.IsNone())
     {
-        Flow->StartFlow(true);
+        // 首次进入必须等待用户输入；网关没有安全凭据仓，自动恢复会把正常首屏误报为会话过期。
+        // 显式开发登录仍由登录页提交真实凭据命令，不依赖平台自动恢复认证。
+        Flow->StartFlow(false);
     }
 
     return true;

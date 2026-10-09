@@ -3,7 +3,7 @@
   "CreationTool": "Monolith MCP",
   "MonolithVersion": "0.20.3",
   "ProjectName": "DivineBeastsArena",
-  "GeneratedAt": "2026-10-08T21:28:43.9436818+08:00",
+  "GeneratedAt": "2026-10-08T23:32:21.8954304+08:00",
   "字段说明": {
     "SchemaVersion": "清单结构版本；升级字段结构时递增。",
     "CreationTool": "创建或修改界面二进制资产的唯一工具。",
@@ -27,9 +27,9 @@
     },
     {
       "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
-      "用途": "黑色极简账号密码登录页面；只消费ViewModel状态并通过登录按钮提交登录命令。",
+      "用途": "用户确认的正式LOGO、东方神话背景及中央偏下人工登录表单；只消费ViewModel并提交命令。",
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsLoginScreen",
-      "WidgetCount": 13,
+      "WidgetCount": 15,
       "CompileErrors": 0,
       "CompileWarnings": 0,
       "AccessibilityErrors": 0,
@@ -37,7 +37,7 @@
       "CommonUIErrors": 0,
       "CommonUIWarnings": 1,
       "CommonUIWarningDisposition": "工具要求DesiredFocusTargetName属性；项目使用平台页面基类的原生焦点契约，并在页面目录中把AccountInput设为默认焦点。必须在PIE继续验证。",
-      "VisualDesign": "纯黑页面背景；用户名和密码输入框使用黑色填充、灰色边框及蓝色聚焦描边；保留蓝色登录按钮；不使用卡片或面板容器。",
+      "VisualDesign": "左上224×224等比正式LOGO；中央偏下284×42固定输入与登录按钮；背景四边铺满。",
       "PasswordDefault": "",
       "PasswordMaskEnabled": true,
       "Saved": true
@@ -91,9 +91,10 @@
     "AutomationFailed": 0,
     "ArchitecturePesterTotal": 5,
     "ArchitecturePesterPassed": 5,
-    "ArchitecturePesterFailed": 0
+    "ArchitecturePesterFailed": 0,
+    "Scope": "历史首次UI交付检查；本次LOGO验证见LatestLogoReplacement。"
   },
-  "Preview": "Game/Saved/Monolith/Previews/WBP_DBA_UI_Login_Black_Inputs_Reloaded2.png",
+  "Preview": "Saved/Validation/LoginVillageRelease/20261008/LatestUserLogo.Login.png",
   "Limitations": [
     "未执行PIE登录交互与焦点切换验收。",
     "未完成真实后端认证服务联调。",
@@ -209,5 +210,80 @@
     "Layout": "中央三维角色、左侧十二生肖磁贴、右侧真实档案列表、底部主要操作；深色金色主题。",
     "EditorAndClientBuildEvidence": "Saved/Validation/FoundationM0/6a5add4e-bd18-4acb-ab61-4cc05ba5dfc4/Build/result.json",
     "RuntimeEvidence": "Saved/Validation/LoginVillageRelease/20261008/UIEditorModern.log；真实PIE认证后选择页显示当前角色及中央三维预览。"
+  },
+  "LatestLogoReplacement": {
+    "Date": "2026-10-08",
+    "Tool": "Monolith MCP",
+    "Version": "0.20.3",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "SourceKind": "用户最新明确指定的青龙白虎正式LOGO，原图字节保持一致。",
+    "SourcePath": "SourceArt/UI/DBA_MythicLogo.png",
+    "SourceSHA256": "720EEB1E762DDBF4C7DA59FCE3B5EDE7B1B277A9BC3BC120CBF6576A9FF02942",
+    "SourceMatchesAttachment": true,
+    "TextureAsset": "/DBAUIPack_Core/UI/Textures/DBA_MythicLogo",
+    "SourceDimensions": [
+      1254,
+      1254
+    ],
+    "SourceAlphaRange": [
+      0,
+      255
+    ],
+    "Widget": "BrandLogo",
+    "DisplaySizeLogicalPixels": [
+      224,
+      224
+    ],
+    "PositionLogicalPixels": [
+      24,
+      18
+    ],
+    "WidgetCount": 15,
+    "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsLoginScreen",
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "Saved": true,
+    "EditorRestartReloadVerified": true,
+    "LoginPIEVerified": true,
+    "AccountAndPasswordInitiallyBlank": true,
+    "InitialErrorCode": "None",
+    "BackgroundOffsets": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "LayerOwnership": "第三层DBAUIPack_Core持有图源与纹理；DBAClient交互；平台只提供中立基类，无新增MOBA依赖。",
+    "EvidenceDirectory": "Saved/Validation/LoginVillageRelease/20261008",
+    "Packaging": {
+      "RequiredAssetCount": 23,
+      "ContainerEvidence": "Saved/Validation/FoundationM0/be293776-9d44-47d9-a70f-e8a6b62c09d0/Cook-FrontEndClient/ClientContainer.json",
+      "Evidence": "Saved/Validation/FoundationM0/be293776-9d44-47d9-a70f-e8a6b62c09d0/Cook-FrontEndClient/result.json",
+      "Passed": true,
+      "MissingAssetCount": 0
+    },
+    "Scope": "本记录验证正式LOGO替换、首屏显示与资产依赖，不证明Village联机或角色动画验收。",
+    "ClientLaunchEvidence": "Saved/Validation/FrontEndClients/97c4aab8-0f51-44ed-bf3a-0664653f801f/Clients.json",
+    "ClientCount": 2,
+    "ClientInitialPage": "Login，均无自动认证参数，日志确认AccountInput焦点。",
+    "ClientVerification": "Saved/Validation/LoginVillageRelease/20261008/LatestLogo.ClientVerification.json",
+    "ExistingOptionalBootWarning": "当前Boot Widget未交付，初始化后真实登录页及焦点已加载；不是RootLayout缺失。"
+  },
+  "LatestPreviewIdleModelRepair": {
+    "RuntimeMetadata": "UBT WriteMetadata官方模式生成加载清单，未手改生成物。",
+    "Saved": true,
+    "MovieSceneOwner": "AS_DBA_PreviewIdle:AnimationSequencerDataModel.MovieScene",
+    "BuildEvidence": "Saved/Validation/FoundationM0/d2f62b38-ab50-4311-9741-45d85b7d63ca/Build-AnimationAuthoring",
+    "Tool": "Monolith MCP + 已编译的GamePlatformDeveloperTools中立Editor入口",
+    "InitCommand": "GP.Animation.InitializeDataModel <AnimSequence资产路径>",
+    "TargetFrames": 120,
+    "Scope": "本地开发预览资产；不覆盖游戏内角色或权威动画。",
+    "DurationSeconds": 4,
+    "SampleKeys": 121,
+    "EvidenceDirectory": "Saved/Validation/LoginVillageRelease/20261008",
+    "FrameRate": 30,
+    "RootCause": "Monolith build_sequence_from_poses未初始化Sequencer MovieScene/ControlRig，初次Cook真实失败27项。",
+    "CookPassed": true,
+    "CookEvidence": "Saved/Validation/FoundationM0/be293776-9d44-47d9-a70f-e8a6b62c09d0/Cook-FrontEndClient/result.json"
   }
 }

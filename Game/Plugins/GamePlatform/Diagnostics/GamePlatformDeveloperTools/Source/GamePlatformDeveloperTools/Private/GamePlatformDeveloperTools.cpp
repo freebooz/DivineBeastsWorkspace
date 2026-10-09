@@ -1,11 +1,17 @@
+/** 平台层Editor/CI工具组合：注册中立验证规则、编辑器菜单与显式资产制作命令。
+ * 不拥有项目玩法或服务器状态；资产修改只由调用者显式指定，模块启动不修改内容，关闭注销入口。
+ */
 #include "Modules/ModuleManager.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/IAssetRegistry.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/AnimData/IAnimationDataController.h"
 #include "ContentBrowserModule.h"
 #include "DataValidationModule.h"
 #include "Editor.h"
 #include "HAL/FileManager.h"
+#include "HAL/IConsoleManager.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
 #include "IContentBrowserSingleton.h"
@@ -27,6 +33,11 @@ public:
     virtual void StartupModule() override
     {
         FGamePlatformValidationService::RegisterBuiltInRules();
+        // 引擎原生初始化是动画关键帧制作的前置条件；只注册入口，不扫描或自动改写资产。
+        AnimationDataModelCommand = MakeUnique<FAutoConsoleCommand>(
+            TEXT("GP.Animation.InitializeDataModel"),
+            TEXT("显式初始化指定AnimSequence的数据模型；参数为资产路径，不自动保存或覆盖关键帧。"),
+            FConsoleCommandWithArgsDelegate::CreateStatic(&InitializeAnimationDataModel));
 
         if (!IsRunningCommandlet())
         {
@@ -39,6 +50,7 @@ public:
 
     virtual void ShutdownModule() override
     {
+        AnimationDataModelCommand.Reset();
         if (!IsRunningCommandlet())
         {
             UToolMenus::UnRegisterStartupCallback(this);
@@ -49,6 +61,30 @@ public:
     }
 
 private:
+    /** 仅游戏线程Editor制作调用；失败明确报错，保存及后续关键帧仍归调用者，不含项目资源身份。 */
+    static void InitializeAnimationDataModel(const TArray<FString>& Arguments)
+    {
+        if (!IsInGameThread() || Arguments.Num() != 1)
+        {
+            UE_LOG(LogTemp, Error, TEXT("GP.Animation.InitializeDataModel要求游戏线程和一个资产路径。"));
+            return;
+        }
+        UAnimSequence* Sequence = LoadObject<UAnimSequence>(nullptr, *Arguments[0]);
+        if (!Sequence || !Sequence->GetSkeleton())
+        {
+            UE_LOG(LogTemp, Error, TEXT("动画或骨架不可用：%s"), *Arguments[0]);
+            return;
+        }
+        // 直接NewObject的序列可能只有模型对象，没有Sequencer的MovieScene/ControlRig子对象。
+        // 使用引擎初始化入口补齐；已初始化模型由引擎保持不变，不手工写只读字段或改第三方实现。
+        Sequence->GetController().InitializeModel();
+        Sequence->GetController().NotifyPopulated();
+        Sequence->MarkPackageDirty();
+        UE_LOG(LogTemp, Display, TEXT("动画数据模型初始化完成，仍需关键帧、保存及独立Cook验证：%s"), *Sequence->GetPathName());
+    }
+    /** 编辑器模块独占命令注册；关闭时释放，避免重载后重复入口。 */
+    TUniquePtr<FAutoConsoleCommand> AnimationDataModelCommand;
+
     void RegisterMenus()
     {
         FToolMenuOwnerScoped OwnerScoped(this);

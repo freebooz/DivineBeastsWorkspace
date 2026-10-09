@@ -2,6 +2,7 @@
 """生成东方神话前端的Monolith声明式布局文档，不创建或伪造任何UE二进制资产。
 公共UI视觉归DBAUIPack_Core，命令及生命周期归DBAClient；输出在Saved供Monolith消费和审核。
 背景源图独立登记，输入／按钮为固定逻辑像素；只有背景随视口铺满，不缩放输入控件。
+Monolith 0.20.3构建器对零背景尺寸采用默认偏移；生成后须用set_slot_property将背景四边offsets清零。
 """
 import json
 from pathlib import Path
@@ -44,27 +45,24 @@ def document(name,parent,children):
         "rootWidget":node("CanvasPanel","RootCanvas",children,style={"visibility":"SelfHitTestInvisible"})}
 
 def login():
-    """首屏为用户登录，原生命名控件合同与敏感输入清理逻辑保持不变。"""
+    """参考大型MMO的左上品牌、中央偏下登录表单；只借鉴布局，保留原创视觉与原生命令合同。"""
     children=[node("Image","MythicBackground",slot=place("stretch_fill",0,0,0,0,z=0),style={"visibility":"HitTestInvisible"},
-        content={"brushPath":"/DBAUIPack_Core/UI/Textures/T_DBA_MythicLogin"}),
-        text("BrandTitle","神兽联盟",44,GOLD,place("top_left",42,38,400,64)),
-        text("BrandSubtitle","DIVINE BEASTS",13,MUTED,place("top_left",46,108,380,28)),
-        text("WorldTagline","山海为界 · 万灵共生",19,WHITE,place("bottom_left",44,-64,440,36,0,1)),
-        text("WorldCaption","开启属于你的神话旅程",12,MUTED,place("bottom_left",46,-30,440,25,0,1)),
-        panel("LoginShadow",place("center_right",-40,5,354,418,1,0.5),color("000000",170)),
-        panel("LoginPanel",place("center_right",-48,0,344,410,1,0.5)),
-        panel("LoginTopRule",place("center_right",-48,-205,344,2,1,0),GOLD),
-        text("LoginHeading","欢迎归来",27,WHITE,place("center_right",-78,-172,284,45,1,0)),
-        text("LoginSubtitle","登录你的神兽联盟账号",13,MUTED,place("center_right",-78,-119,284,28,1,0)),
-        text("AccountLabel","账号",13,GOLD,place("center_right",-78,-72,284,24,1,0)),
-        node("EditableTextBox","AccountInput",slot=place("center_right",-78,-43,284,42,1,0),content={"placeholder":"请输入账号","fontSize":16,"fontColor":WHITE}),
-        text("PasswordLabel","密码",13,GOLD,place("center_right",-78,21,284,24,1,0)),
-        node("EditableTextBox","PasswordInput",slot=place("center_right",-78,49,284,42,1,0),content={"placeholder":"请输入密码","fontSize":16,"fontColor":WHITE}),
-        button("LoginButton","登  录",place("center_right",-78,117,284,44,1,0)),
-        text("LoginHint","登录后选择角色，开启新手村冒险",12,MUTED,place("center_right",-78,174,284,26,1,0)),
-        text("BusyIndicator","正在登录…",12,GOLD,place("center_right",-78,98,284,20,1,0)),
-        text("MaintenanceText","服务器维护中，请稍后再试",13,GOLD,place("center_right",-78,-103,284,30,1,0)),
-        text("ErrorText","",13,color("E69586"),place("center_right",-78,199,284,44,1,0))]
+        content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogin.DBA_MythicLogin"}),
+        # 用户确认的正式LOGO为正方形透明图，固定等比显示，禁止沿用此前横版比例拉伸。
+        node("Image","BrandLogo",slot=place("top_left",24,18,224,224),style={"visibility":"HitTestInvisible"},
+             content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogo.DBA_MythicLogo"}),
+        text("WorldTagline","山海为界 · 万灵共生",13,WHITE,place("bottom_left",26,-24,280,22,0,1)),
+        text("WorldCaption","神兽联盟",11,MUTED,place("bottom_right",-26,-24,150,22,1,1)),
+        # 中央锚点只移动表单，不改变逻辑像素尺寸；960×540时仍为完整可用的首屏。
+        text("AccountLabel","神兽联盟账号",15,GOLD,place("center",0,-25,284,24,0.5,0)),
+        node("EditableTextBox","AccountInput",slot=place("center",0,0,284,42,0.5,0),content={"placeholder":"请输入账号","fontSize":16,"fontColor":WHITE}),
+        text("PasswordLabel","密码",15,GOLD,place("center",0,62,284,24,0.5,0)),
+        node("EditableTextBox","PasswordInput",slot=place("center",0,86,284,42,0.5,0),content={"placeholder":"请输入密码","fontSize":16,"fontColor":WHITE}),
+        button("LoginButton","登  录",place("center",0,151,284,42,0.5,0)),
+        text("LoginHint","登录后选择角色，开启新手村冒险",11,MUTED,place("center",0,201,284,22,0.5,0)),
+        text("BusyIndicator","正在登录…",12,GOLD,place("center",0,130,284,20,0.5,0)),
+        text("MaintenanceText","服务器维护中，请稍后再试",12,GOLD,place("center",0,224,284,26,0.5,0)),
+        text("ErrorText","",12,color("E69586"),place("center",0,224,284,34,0.5,0))]
     return document("WBP_DBA_UI_Login","DivineBeastsLoginScreen",children)
 
 def character(create):

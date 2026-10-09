@@ -27,7 +27,11 @@ try {
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_CharacterSelect.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_HeroChoice.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_CharacterChoice.uasset',
-        'DBAClient/Content/Definitions/DA_DivineBeastsApplicationFlow.uasset'
+        'DBAClient/Content/Definitions/DA_DivineBeastsApplicationFlow.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/DBA_MythicLogin.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/DBA_MythicLogo.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset'
     )
     foreach ($hero in @('Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Boar')) {
         $required += "DBAHeroPack_$hero/Content/Characters/DA_Appearance_Zodiac_$hero.uasset"
