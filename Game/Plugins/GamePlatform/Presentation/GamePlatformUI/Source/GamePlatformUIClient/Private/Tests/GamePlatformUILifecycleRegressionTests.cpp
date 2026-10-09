@@ -9,6 +9,7 @@
 #include "Components/Overlay.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h" // LocalPlayer的ClassWithin要求真实Engine作为Outer，Transient包不合法。
 #include "UObject/UObjectGlobals.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UnrealType.h"
@@ -18,7 +19,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformUIScreenLifecycleRegressionTest, "
 bool FGamePlatformUIScreenLifecycleRegressionTest::RunTest(const FString&)
 {
     FScopedAllowAbstractClassAllocation AllowAbstract; // 仅此测试分配，无Blueprint文件。
-    auto* Player=NewObject<ULocalPlayer>(); auto* Manager=NewObject<UGamePlatformUIManagerSubsystem>(Player);
+    if (!TestNotNull(TEXT("编辑器测试具有真实Engine外层"), GEngine)) return false;
+    auto* Player=NewObject<ULocalPlayer>(GEngine); auto* Manager=NewObject<UGamePlatformUIManagerSubsystem>(Player);
     auto* A=NewObject<UGamePlatformUIScreen>(); auto* Stack=NewObject<UCommonActivatableWidgetStack>();
     Manager->ScreenStacks.Add(A,Stack); Manager->ActiveScreenLeases.Add(A,FGamePlatformDataLease());
     Manager->TravelPersistentScreens.Add(A); Manager->PauseScreens.Add(A);
@@ -55,7 +57,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformUIScreenReentryRegressionTest,
 bool FGamePlatformUIScreenReentryRegressionTest::RunTest(const FString&)
 {
     FScopedAllowAbstractClassAllocation AllowAbstract;
-    const TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>());
+    if (!TestNotNull(TEXT("同步重入夹具具有真实Engine外层"), GEngine)) return false;
+    const TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine));
     const TStrongObjectPtr<UGamePlatformUIManagerSubsystem> Manager(NewObject<UGamePlatformUIManagerSubsystem>(Player.Get()));
     const TStrongObjectPtr<UGamePlatformUILayerStack> Root(NewObject<UGamePlatformUILayerStack>());
     const TStrongObjectPtr<UCommonActivatableWidgetStack> Stack(NewObject<UCommonActivatableWidgetStack>());
