@@ -1,7 +1,50 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Services/GamePlatformQuestClientSubsystem.h"
+
+namespace
+{
+    /**
+     * 仅测试使用的本地玩家作用域，验证快照版本、排序缓存与进度序列；不创建实际玩家控制器、
+     * 世界、视口或镜头播放，不触发 PlayerAdded/自动依赖初始化。即使只测纯参数/缓存，
+     * 引擎 ClassWithin 仍要求 Engine → LocalPlayer → Subsystem 的合法 Outer。
+     * 强持有宿主和子系统，所有退出先 Deinitialize，再释放子系统和玩家。
+     */
+    struct FQuestLocalPlayerFixture
+    {
+        TStrongObjectPtr<ULocalPlayer> Player;
+        TStrongObjectPtr<UGamePlatformQuestClientSubsystem> Subsystem;
+
+        bool Initialize(FAutomationTestBase& Test)
+        {
+            if (!Test.TestNotNull(TEXT("本地玩家夹具需要真实Engine宿主"), GEngine))
+            {
+                return false;
+            }
+            Player.Reset(NewObject<ULocalPlayer>(GEngine));
+            if (!Test.TestNotNull(TEXT("本地玩家具有合法Engine Outer"), Player.Get()))
+            {
+                return false;
+            }
+            Subsystem.Reset(NewObject<UGamePlatformQuestClientSubsystem>(Player.Get()));
+            return Test.TestNotNull(TEXT("子系统具有合法LocalPlayer Outer"), Subsystem.Get());
+        }
+
+        ~FQuestLocalPlayerFixture()
+        {
+            if (Subsystem.IsValid())
+            {
+                Subsystem->Deinitialize();
+            }
+            Subsystem.Reset();
+            Player.Reset();
+        }
+    };
+}
 
 // 同落库版本仍可能有新的权威目标进度；显示序列必须接纳新值并拒绝迟到同版本快照。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FQuestSameRevisionProgressTest,
@@ -10,7 +53,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FQuestSameRevisionProgressTest,
 bool FQuestSameRevisionProgressTest::RunTest(const FString& Parameters)
 {
     (void)Parameters;
-    auto* Client = NewObject<UGamePlatformQuestClientSubsystem>();
+    FQuestLocalPlayerFixture ClientFixture;
+    if (!ClientFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformQuestClientSubsystem* Client = ClientFixture.Subsystem.Get();
     FGamePlatformQuestSnapshot Snapshot; Snapshot.QuestId = TEXT("Quest.Progress");
     Snapshot.State = EGamePlatformQuestState::Active; Snapshot.Revision = 5; Snapshot.SnapshotSequence = 1;
     FGamePlatformQuestObjectiveProgress Progress; Progress.ObjectiveId = TEXT("Count"); Progress.RequiredValue = 10;
@@ -29,8 +77,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformQuestClientRevisionTest::RunTest(const FString& Parameters)
 {
-    UGamePlatformQuestClientSubsystem* Client =
-        NewObject<UGamePlatformQuestClientSubsystem>();
+    FQuestLocalPlayerFixture ClientFixture;
+    if (!ClientFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformQuestClientSubsystem* Client = ClientFixture.Subsystem.Get();
 
     FGamePlatformQuestSnapshot Newer;
     Newer.QuestId = TEXT("Quest.Test");
@@ -59,8 +111,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformQuestClientSortedCacheTest::RunTest(const FString& Parameters)
 {
-    UGamePlatformQuestClientSubsystem* Client =
-        NewObject<UGamePlatformQuestClientSubsystem>();
+    FQuestLocalPlayerFixture ClientFixture;
+    if (!ClientFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformQuestClientSubsystem* Client = ClientFixture.Subsystem.Get();
 
     FGamePlatformQuestSnapshot B;
     B.QuestId = TEXT("Quest.B");

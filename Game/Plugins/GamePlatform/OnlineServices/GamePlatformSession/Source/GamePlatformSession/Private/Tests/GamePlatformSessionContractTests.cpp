@@ -1,11 +1,46 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
+#include "Engine/GameInstance.h"
+#include "UObject/StrongObjectPtr.h"
 #include "GamePlatformSessionClientSubsystem.h"
 #include "Types/GamePlatformSessionErrors.h"
 
 namespace
 {
+    /**
+     * 仅测试使用的合法 GameInstance 作用域：Session 继承的 ClassWithin 要求
+     * GameInstance Outer，即使只验证非法枚举也不能使用 Package。显式构造并强持有
+     * 实例和子系统，不 Init 游戏实例、不初始化自动依赖、不创建 World/网络连接。
+     * 所有退出先 Deinitialize 清理请求/委托/Ticker，再释放子系统及宿主。
+     */
+    struct FSessionGameInstanceFixture
+    {
+        TStrongObjectPtr<UGameInstance> Instance;
+        TStrongObjectPtr<UGamePlatformSessionClientSubsystem> Subsystem;
+
+        bool Initialize(FAutomationTestBase& Test)
+        {
+            Instance.Reset(NewObject<UGameInstance>());
+            if (!Test.TestNotNull(TEXT("会话夹具需要合法GameInstance宿主"), Instance.Get()))
+            {
+                return false;
+            }
+            Subsystem.Reset(NewObject<UGamePlatformSessionClientSubsystem>(Instance.Get()));
+            return Test.TestNotNull(TEXT("会话子系统具有合法GameInstance Outer"), Subsystem.Get());
+        }
+
+        ~FSessionGameInstanceFixture()
+        {
+            if (Subsystem.IsValid())
+            {
+                Subsystem->Deinitialize();
+            }
+            Subsystem.Reset();
+            Instance.Reset();
+        }
+    };
+
 FGamePlatformSessionTransferRequest MakeValidRequest()
 {
     FGamePlatformSessionTransferRequest Request;
@@ -71,8 +106,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformSessionInvalidFactTest::RunTest(const FString&)
 {
-    UGamePlatformSessionClientSubsystem* Subsystem =
-        NewObject<UGamePlatformSessionClientSubsystem>(GetTransientPackage());
+    FSessionGameInstanceFixture SubsystemFixture;
+    if (!SubsystemFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformSessionClientSubsystem* Subsystem = SubsystemFixture.Subsystem.Get();
     TestNotNull(TEXT("可创建测试Session子系统对象"), Subsystem);
     if (!Subsystem)
     {

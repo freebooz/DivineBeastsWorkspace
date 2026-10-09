@@ -3,12 +3,52 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "UObject/StrongObjectPtr.h"
 #include "GameplayTagsManager.h"
 #include "GamePlatformPresentationClientSubsystem.h"
 
 
 namespace
 {
+    /**
+     * 仅测试使用的注册表作用域：ULocalPlayer 的 Within 要求 Engine，表现子系统的
+     * Within 要求 LocalPlayer，不能用默认 Package Outer 冒充合法夹具。强持有两者，
+     * 正常返回及前提失败都先 Deinitialize 子系统，再释放玩家。此夹具只测注册/解析，
+     * 不 PlayerAdded、不创建世界/视口、不自动初始化依赖，也不代表资源或播放器验收。
+     */
+    struct FPresentationLocalPlayerFixture
+    {
+        TStrongObjectPtr<ULocalPlayer> Player;
+        TStrongObjectPtr<UGamePlatformPresentationClientSubsystem> Subsystem;
+
+        bool Initialize(FAutomationTestBase& Test)
+        {
+            if (!Test.TestNotNull(TEXT("注册表夹具需要真实Engine宿主"), GEngine))
+            {
+                return false;
+            }
+            Player.Reset(NewObject<ULocalPlayer>(GEngine));
+            if (!Test.TestNotNull(TEXT("本地玩家具有合法Engine Outer"), Player.Get()))
+            {
+                return false;
+            }
+            Subsystem.Reset(NewObject<UGamePlatformPresentationClientSubsystem>(Player.Get()));
+            return Test.TestNotNull(TEXT("表现子系统具有合法LocalPlayer Outer"), Subsystem.Get());
+        }
+
+        ~FPresentationLocalPlayerFixture()
+        {
+            if (Subsystem.IsValid())
+            {
+                Subsystem->Deinitialize();
+            }
+            Subsystem.Reset();
+            Player.Reset();
+        }
+    };
+
     FGameplayTag PresentationCatalogTestTag()
     {
         return UGameplayTagsManager::Get().RequestGameplayTag(
@@ -88,8 +128,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformPresentationContextRegistryTest::RunTest(const FString&)
 {
-    UGamePlatformPresentationClientSubsystem* Subsystem =
-        NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture SubsystemFixture;
+    if (!SubsystemFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* Subsystem = SubsystemFixture.Subsystem.Get();
     TestNotNull(TEXT("Presentation subsystem"), Subsystem);
     if (!Subsystem)
     {
@@ -153,8 +197,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformPresentationCatalogResolutionTest::RunTest(const FString&)
 {
-    UGamePlatformPresentationClientSubsystem* Subsystem =
-        NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture SubsystemFixture;
+    if (!SubsystemFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* Subsystem = SubsystemFixture.Subsystem.Get();
     TestNotNull(TEXT("Presentation subsystem"), Subsystem);
     if (!Subsystem)
     {
@@ -212,8 +260,12 @@ bool FGamePlatformPresentationCatalogResolutionTest::RunTest(const FString&)
             Resolved),
         EGamePlatformPresentationCatalogResolveResult::Ambiguous);
 
-    UGamePlatformPresentationClientSubsystem* ParentSubsystem =
-        NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture ParentSubsystemFixture;
+    if (!ParentSubsystemFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* ParentSubsystem = ParentSubsystemFixture.Subsystem.Get();
     TestTrue(
         TEXT("Parent semantic registered"),
         ParentSubsystem->RegisterCatalogFragment(
@@ -247,8 +299,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformPresentationCapacityTest::RunTest(const FString&)
 {
-    UGamePlatformPresentationClientSubsystem* Subsystem =
-        NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture SubsystemFixture;
+    if (!SubsystemFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* Subsystem = SubsystemFixture.Subsystem.Get();
     TestNotNull(TEXT("Presentation subsystem"), Subsystem);
     if (!Subsystem)
     {
@@ -296,7 +352,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformPresentationResolutionRegressionTe
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FGamePlatformPresentationResolutionRegressionTest::RunTest(const FString&)
 {
-    auto* Subsystem = NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture SubsystemFixture;
+    if (!SubsystemFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* Subsystem = SubsystemFixture.Subsystem.Get();
     auto Parent = MakeFragment(TEXT("Parent"), TEXT("Same"), EGamePlatformPresentationCatalogScope::ContentPack,
         TEXT("Definition.Parent"), 0, PresentationCatalogTestTag());
     Parent.Entries[0].bAllowParentFallback = true;
@@ -308,18 +369,33 @@ bool FGamePlatformPresentationResolutionRegressionTest::RunTest(const FString&)
     TestEqual(TEXT("精确语义必须优先高Scope父语义"), Subsystem->ResolveCatalog(PresentationCatalogTestChildTag(), Context, Resolved),
         EGamePlatformPresentationCatalogResolveResult::Resolved);
     TestEqual(TEXT("实际使用精确定义"), Resolved.DefinitionId, FName(TEXT("Definition.Exact")));
-    auto* Conflict = NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture ConflictFixture;
+    if (!ConflictFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* Conflict = ConflictFixture.Subsystem.Get();
     Conflict->RegisterCatalogFragment(Parent);
     auto Duplicate=Parent; Duplicate.FragmentId=TEXT("OtherFragment"); Duplicate.OwnerScopeId=TEXT("OtherOwner");
     Duplicate.Entries[0].DefinitionId=TEXT("Definition.Other");
     Conflict->RegisterCatalogFragment(Duplicate);
     TestEqual(TEXT("跨fragment同局部EntryId不掩盖歧义"), Conflict->ResolveCatalog(PresentationCatalogTestTag(), Context, Resolved),
         EGamePlatformPresentationCatalogResolveResult::Ambiguous);
-    auto* NoFallback = NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture NoFallbackFixture;
+    if (!NoFallbackFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* NoFallback = NoFallbackFixture.Subsystem.Get();
     Parent.Entries[0].bAllowParentFallback=false; NoFallback->RegisterCatalogFragment(Parent);
     TestEqual(TEXT("父语义未显式允许时拒绝回退"), NoFallback->ResolveCatalog(PresentationCatalogTestChildTag(), Context, Resolved),
         EGamePlatformPresentationCatalogResolveResult::NoMatch);
-    auto* Parents=NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture ParentsFixture;
+    if (!ParentsFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* Parents = ParentsFixture.Subsystem.Get();
     auto Near=MakeFragment(TEXT("Near"),TEXT("Near"),EGamePlatformPresentationCatalogScope::Platform,TEXT("Definition.Near"));
     auto Far=MakeFragment(TEXT("Far"),TEXT("Far"),EGamePlatformPresentationCatalogScope::ContentPack,TEXT("Definition.Far"),0,
         UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Presentation"),true));
@@ -335,7 +411,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformPresentationPreflightRegressionTes
     "GamePlatform.Presentation.Catalog.PreflightConflictingQualification", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FGamePlatformPresentationPreflightRegressionTest::RunTest(const FString&)
 {
-    auto* Service = NewObject<UGamePlatformPresentationClientSubsystem>();
+    FPresentationLocalPlayerFixture ServiceFixture;
+    if (!ServiceFixture.Initialize(*this))
+    {
+        return false;
+    }
+    UGamePlatformPresentationClientSubsystem* Service = ServiceFixture.Subsystem.Get();
     FGamePlatformPresentationContextQuery Specificity;
     Specificity.ProjectId = TEXT("Project"); Specificity.ExperienceId = TEXT("Experience"); Specificity.RegionId = TEXT("Region");
     Specificity.ArenaModeId = TEXT("Arena"); Specificity.ContentPackId = TEXT("Pack");

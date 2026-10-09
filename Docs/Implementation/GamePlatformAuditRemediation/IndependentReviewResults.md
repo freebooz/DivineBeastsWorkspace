@@ -54,3 +54,11 @@ Data/VFX跨模块用例消费真实公开数据服务，覆盖抽象约束受理
 用户明确要求将整改提交主分支后，隔离分支正常合入最新主线，保留其技能模块、战斗反馈、真实开发资产和图标。当前独立复核原文快照见 `MainIntegrationReviewResults.json`，首次问题与每轮闭环同时保存。公开竞技UI头的Data/Core依赖已修并独立关闭。配置Overlap回调后的旧写入G01已完成源码闭环；其真实物理世界回归、出生后继归属G02、GAS重置G03及表现事实/界面实例归属A01/A02仍在修复或运行验证阶段，不计作通过。
 
 上述复核范围为本次实际读取的源文件和真实UE5.8调用合同。新的Private反射夹具限定EditorOnlyData，实际UHT生成及Client/Server剔除需最终构建补证。角色默认子对象继承布局变化保留兼容风险，未直接迁移Blueprint资产。
+
+## 最新主线348整合冻结复核
+
+上节描述的是整合过程中的冻结状态。G01/G02/G03及A01/A02已由独立审查逐项关闭；后续33项真实增量全部Success。正常三方合并382bc52保留主线镜头/输入/预览、独立唯一ASC/Combat/Identity、默认类回退资格与原请求代次护栏，十源再次独立回读未发现新增Critical/Important。直接依赖、机器台账路径和四夹具修正也独立复核；报告原文与源SHA见MainIntegrationReviewResults.json。
+
+新的Editor f8、Client a7ef、Server512真实退出0；最新167唯一项实际完成166成功1失败，原四项均Success。剩余Presentation目录测试缺合法LocalPlayer Outer仍待补夹具并完整复验；不把ensure一次报告遮蔽的其他非法构造称为正确。全编辑器启动中的13条未具名条件错误、测试World无context和GameplayCue路径warning仍保留，不认证全编辑器零诊断、资源默认子对象兼容或真实网络/Cook。
+
+最终补证：四个Within夹具的独立只读复核0新增Critical/Important，原67断言条件和注册保留，Camera失真说明闭合，Session使用合法GI宿主；原始报告见中央JSON。最后172全部Success及三个目标退出0已真实核验，166/1保留为历史；这里仍不证明Blueprint默认子对象迁移、Cook或生产网络。
