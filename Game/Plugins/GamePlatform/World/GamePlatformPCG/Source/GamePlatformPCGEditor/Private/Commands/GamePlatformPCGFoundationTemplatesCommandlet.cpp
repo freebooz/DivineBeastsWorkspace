@@ -17,6 +17,19 @@ int32 UGamePlatformPCGFoundationTemplatesCommandlet::Main(const FString& Params)
 {
     // 蓝图属于项目ContentPack，需显式参数指定已注册挂载点；平台插件不持有项目包名。
     FString Error;
+    // 首轮UE5.8发现Pin名称不兼容后，只允许显式修复本任务已生成的19项开发图。
+    // 保留Graph资产身份与Package，不改Village地图或项目内容，不以修复代替运行验收。
+    if (FParse::Param(*Params, TEXT("RepairGeneratedFoundations")))
+    {
+        if (!UGamePlatformPCGEditorLibrary::RepairSavedFoundationAssets(Error))
+        {
+            UE_LOG(LogGamePlatformPCG, Error, TEXT("Foundation受控针脚迁移失败：%s"), *Error);
+            return 1;
+        }
+        UE_LOG(LogGamePlatformPCG, Display, TEXT("Foundation受控针脚迁移完成，19项资产已重新核验。"));
+        return 0;
+    }
+
     FString BlueprintRoot;
     if (FParse::Value(*Params, TEXT("BlueprintRoot="), BlueprintRoot))
     {

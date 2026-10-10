@@ -25,6 +25,14 @@ namespace GamePlatformPCGEditor
         const UGamePlatformPCGProfileDefinition& Profile,
         const UGamePlatformPCGMeshSetDefinition& MeshSet, FString& Error);
 
+    /**
+     * 修复既有、受控Foundation资产的UE5.8针脚迁移缺口，只针对已登记模板和子图：
+     * SplineSampler须连接Spline输入针脚、ProjectOnLandscape须先UpdatePins再连Landscape。
+     * 不重建Graph、不丢失资产身份或覆盖其它作者的图，输出真实变更标记交由编辑器安全保存。
+     */
+    bool RepairFoundationGraphEdges(UPCGGraph& Graph, FName ContractId,
+        bool& bOutChanged, FString& Error);
+
     /** 创建M0/M1公共Foundation Subgraph（基础子图）；只使用官方/批准节点，不执行世界生成。 */
     UPCGGraph* CreateFoundationSubgraphGraph(UObject* Outer, FName Name, FName SubgraphId, FString& Error);
 }

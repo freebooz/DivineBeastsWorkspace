@@ -6,6 +6,7 @@
 
 class UGamePlatformPCGProfileDefinition;
 class UGamePlatformPCGMeshSetDefinition;
+class UGamePlatformDefinitionBase;
 class UPCGGraph;
 class AGamePlatformPCGWorldDirector;
 class AGamePlatformPCGActorBase;
@@ -34,6 +35,31 @@ public:
     /** 模板+子图统一入口；先对全部目标包做占用预检，再执行真实资产创建。Commandlet应优先调用本函数。 */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool CreateFoundationAssets(FString& Error);
+    /**
+     * 只修复已生成的19个M0/M1 Foundation开发资产的UE5.8针脚连接。
+     * 必须通过显式Commandlet -RepairGeneratedFoundations调用；不删除资源或重建主资产ID，
+     * 不修改正式关卡及Village内容包，所有目标仍须符合已登记模板/子图身份和类型。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool RepairSavedFoundationAssets(FString& Error);
+    /**
+     * 仅为GoldLevel（PCG开发金标准）首次创建的未保存Definition配置强类型字段。
+     * Python不能写EditDefaultsOnly属性；此接口在Editor C++内设值、验证及依赖声明，
+     * 严禁修改已保存定义、其它AssetRoot、客户端或服务器运行资产。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool ConfigureGoldDevelopmentDefinition(
+        UGamePlatformDefinitionBase* Definition, FName ShortName, FString& Error);
+
+    /** 同上：将真实Foundation模板及已批准MeshSet绑定到未保存的开发Profile。 */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool ConfigureGoldDevelopmentProfile(
+        UGamePlatformPCGProfileDefinition* Profile, FName ShortName, UPCGGraph* FoundationTemplate,
+        UGamePlatformPCGMeshSetDefinition* MeshSet, FString& Error);
+    /** 实际Spawner图保存成功后，在原Profile落盘前最终绑定图引用并复验Definition合同。 */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool FinalizeGoldDevelopmentProfile(
+        UGamePlatformPCGProfileDefinition* Profile, UPCGGraph* RealizedGraph, FString& Error);
     /**
      * P2～P5真实蓝图创作：在项目已注册内容包的PCG/Blueprints目录生成11个通用Actor子蓝图，
      * 不创建文本伪资产、不覆盖已有包；图与具体网格留由项目图实例配置，世界地图不自动修改。

@@ -71,7 +71,8 @@ def check() -> None:
     actor_code = text(PCG / "Source/GamePlatformPCG/Private/Actors/GamePlatformPCGActors.cpp")
     masks_header = text(PCG / "Source/GamePlatformPCG/Public/Services/GamePlatformPCGSpatialRules.h")
     masks_code = text(PCG / "Source/GamePlatformPCG/Private/Nodes/GamePlatformPCGSpatialRules.cpp")
-    blueprints = set(re.findall(r'TEXT\("(BP_PCG_[^"]+)"\)', creator))
+    specs_block = creator.split("const TArray<FBlueprintSpec> Specifications =", 1)[1].split("};", 1)[0]
+    blueprints = set(re.findall(r'TEXT\("(BP_PCG_[^"]+)"\)', specs_block))
     assert_equal(blueprints, set(reopens["BLUEPRINT_NAMES"]), "平台蓝图生成器与验证清单一致")
     for name in reopens["TEMPLATE_IDS"]:
         symbol = "FGamePlatformPCGTemplateIds::" + name.removeprefix("TPL_")
@@ -96,4 +97,8 @@ def check() -> None:
         "默认模式必须只读，真实创建须明确Apply"
 
     print("PCG_GOLD_AUTHORING_STATIC_CONTRACTS_PASS")
-    print("TEMPLATES=12 SUBGRAPHS=7 BLUEPRINTS=11 DEFINITIONS=17 REALIZED=3 PROF
+    print("TEMPLATES=12 SUBGRAPHS=7 BLUEPRINTS=11 DEFINITIONS=17 REALIZED=3 PROFILES=3")
+
+
+if __name__ == "__main__":
+    check()

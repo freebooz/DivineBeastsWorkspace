@@ -72,3 +72,16 @@
 - MSVC 14.44`/Zs`基于UBT真实响应文件完成PCG 26份中的前18份语法检查（均退出0），余下8份因同时存在其它正式构建主动停止重复检查；**未编译的8份不可标记通过**。并行正式UBT日志显示PCG Runtime及Editor Unity C++编译推进至链接，但因`LNK1181`缺引擎导入库未完成正式构建。
 - 本次静态架构和金标准前置检查返回0；原生策略测试六项通过，证据`Saved/Validation/GamePlatformPCG/762e800a-fea7-4906-a044-6e5e6c08cbe3/`，综合总码2表示实际UE验收仍缺失。
 - 正式Foundation/PCG蓝图/验证地图`.uasset`/ `.umap`新增数均为0，UE Automation、Editor独立重开、GoldLevel、Client/Server Cook、专服权威/性能/人工验收仍未执行。不得因旧编译日期DLL存在而把新增蓝图创作接口当成已运行。
+## 2026-10-10｜新增源码与资产创建交付判定
+
+- 正式UBT编译退出0：`Saved/Validation/GamePlatformPCG/PCG_P0_P7_ModuleBuild_Retry_20261010.log`，确认当时`GamePlatformPCG`和`GamePlatformPCGEditor（运行/编辑器模块）`真实DLL已生成。但之后继续变更`bFillInterior（围栏内部填充）`及其回归测试，最新代码仍需UE重编。
+- 引擎DLL导出恢复中间`.lib`的来源/哈希/导出数量证据：`Saved/Validation/GamePlatformPCG/RecoveredImportLibs/restore_manifest.json`；仅开发期工具链修复，不代替UE官方构建。
+- 新增`Tests/Architecture/VerifyPCGGoldAuthoring.py`（PCG金标准资产静态合同测试），返回0，核对12模板/7子图/11 Blueprint/17 Definition/3已规划Spawner图/3 Profile及主资产扫描、禁用Cook配置；PCG Architecture（架构）与Gold前置静态检查也均返回0。新增UE围栏闭合线与实心地块区分回归源码，**尚未由UE自动化执行**。
+- 实际UE命令行模板生成首次启动，因构建锁占用及未就绪的项目模块无法进入资产落盘；这次尝试已安全停止。正式新增Foundation`.uasset`、Village`.uasset`和PCG GoldLevel`.umap`均为0，禁止标记成“真实资产已交付”。创建工具的Python语法/只读模式与PowerShell AST检查通过不代表UE执行成功。
+- 完整Editor/Client/Server构建、G01～G16功能矩阵、完整资源依赖租约、打包Cook、服务器权威恢复、性能与人工验收继续保留“未完成”。
+### 本轮进一步链接与生成状态（13:22 +08:00）
+
+- `Saved/Validation/GamePlatformPCG/PCG_EditorRuntimeModules_Group1_20261010.log`：编辑器依赖源文件已编译，但六个官方引擎中间导入库缺失导致整体退出失败，不能推导出完整模块DLL可加载。
+- `Saved/Validation/GamePlatformPCG/PCG_EditorModules_RecoveredAdditional_20261010.log`：独立缩小范围仍因`UnrealEditor-UnrealEd.lib`被UBT判定过期删除而两模块链接失败。`RecoveredImportLibsAdditional/restore_manifest.json`及`RecoveredImportLibsLatest/UnrealEdLatest.json`存储DLL真实导出及SHA-256来源供复核；不能把本地合成导入库认作官方构建闭包。
+- 因别的UBT使用相同目标模块/中间目录，受控MSVC手动链接按并发门禁明确拒绝，项目`GamePlatformDataEditor`与`GamePlatformWorldEditor`尚无新的DLL。PCG自己的13:00构建通过不包含随后修订的围栏掩码和新回归测试。
+- GoldLevel真实模板/Definition/Blueprint/Graph/地图新增数量仍为0；不执行未满足前置条件的真实资产生成或服务器Cook，也不写“完成”。

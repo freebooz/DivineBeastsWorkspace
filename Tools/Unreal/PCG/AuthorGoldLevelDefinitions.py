@@ -81,6 +81,12 @@ def main() -> None:
         loaded_meshes[short] = mesh
 
     runtime_types = {}
+    # UE5.8 Python反射将UPROPERTY bStaticCollision公开为static_collision而不是b_static_collision。
+    # 先验证通用网格集合结构，防止创建部分DataAsset后才因字段名称异常中断。
+    probe_entry = unreal.GamePlatformPCGMeshSetEntry()
+    probe_entry.get_editor_property("static_collision")
+    probe_entry.get_editor_property("mesh")
+    probe_entry.get_editor_property("weight")
     for name, class_name in TYPES.items():
         cls = getattr(unreal, class_name, None)
         if cls is None:
@@ -93,111 +99,25 @@ def main() -> None:
     if not library.does_directory_exist(ROOT):
         library.make_directory(ROOT)
 
-    def as_primary_asset_id(short):
-        # 原始类型约定在GamePlatformData（平台数据）底层定义，不能使用另一个资产ID命名空间。
-        logical = identity(short)
-        ctor = getattr(unreal.PrimaryAssetId, "from_string", None)
-        if callable(ctor):
-            candidate = ctor("GamePlatformDefinition:" + logical)
-            if candidate is not None:
-                return candidate
-        # UE5.8反射结构支持属性赋值；若引擎API变更则直接失败关闭，不省略依赖。
-        kind = unreal.PrimaryAssetType()
-        kind.set_editor_property("name", "GamePlatformDefinition")
-        result = unreal.PrimaryAssetId()
-        result.set_editor_property("primary_asset_type", kind)
-        result.set_editor_property("primary_asset_name", logical)
-        return result
-
-
-    # 在创建第一份DataAsset前验证完整主资产ID构造链，避免已经写盘7个Definition后才遇到UE反射兼容错误。
-    preflight_ids = {name: as_primary_asset_id(name) for name in ORDER}
-    if len({str(value) for value in preflight_ids.values()}) != len(preflight_ids):
-        raise RuntimeError("PCG Definition身份构造结果重复，拒绝开始真实保存。")
-
     def new_asset(short):
         factory = unreal.DataAssetFactory()
         factory.set_editor_property("data_asset_class", runtime_types[short])
         result = tools.create_asset("DA_PCGGold_" + short, ROOT, runtime_types[short], factory)
         if result is None or not isinstance(result, runtime_types[short]):
             raise RuntimeError("UE资产工具未能创建正确的PCG Definition类型：" + short)
-        logical = unreal.GamePlatformId()
-        logical.set_editor_property("namespace", "foundation")
-        logical.set_editor_property("name", "pcg_gold_" + short.lower())
-        logical.set_editor_property("logical_version", 1)
-        version = unreal.GamePlatformDataVersion()
-        version.set_editor_property("schema_version", 1)
-        version.set_editor_property("content_revision", 1)
-        result.set_editor_property("logical_id", logical)
-        result.set_editor_property("data_version", version)
+        # 具体默认值及依赖由Editor C++强类型配置，避免违反EditDefaultsOnly字段约束。
         return result
 
-    def require(asset, short, *dependencies):
-        ids = [as_primary_asset_id(dep) for dep in dependencies]
-        if len({str(value) for value in ids}) != len(ids):
-            raise ValueError("PCG依赖身份重复：" + short)
-        asset.set_editor_property("required_definitions", ids)
-
-    def prop(asset, name, value):
-        asset.set_editor_property(name, value)
+    configurator = getattr(unreal.GamePlatformPCGEditorLibrary, "configure_gold_development_definition", None)
+    if not callable(configurator):
+        raise RuntimeError("缺少最新版GamePlatformPCGEditor强类型Gold Definition初始化接口")
 
     for short in ORDER:
         definition = new_asset(short)
-        if short in MESHES:
-            entry = unreal.GamePlatformPCGMeshSetEntry()
-            prop(entry, "mesh", loaded_meshes[short])
-            prop(entry, "weight", 1.0)
-            prop(entry, "b_static_collision", short == "MeshFence")
-            prop(definition, "entries", [entry])
-        elif short == "PolicyForest":
-            prop(definition, "density", 0.45)
-            prop(definition, "self_prune_distance_cm", 130.0)
-        elif short == "PolicyCrop":
-            prop(definition, "density", 0.75)
-            prop(definition, "self_prune_distance_cm", 30.0)
-        elif short.startswith("Layer"):
-            domain = {
-                "LayerCanopy": ("Canopy", "MeshCanopy", "PolicyForest"),
-                "LayerFloor": ("GroundCover", "MeshCanopy", "PolicyForest"),
-                "LayerCrop": ("Crop", "MeshCrop", "PolicyCrop"),
-            }
-            label, mesh, policy = domain[short]
-            prop(definition, "layer_name", label)
-            prop(definition, "mesh_set_id", as_primary_asset_id(mesh))
-            prop(definition, "spawn_policy_id", as_primary_asset_id(policy))
-            require(definition, short, mesh, policy)
-        elif short == "Biome":
-            prop(definition, "biome_id", "GoldBiome")
-            prop(definition, "layer_ids", [
-                as_primary_asset_id("LayerCanopy"), as_primary_asset_id("LayerFloor"),
-                as_primary_asset_id("LayerCrop")
-            ])
-            require(definition, short, "LayerCanopy", "LayerFloor", "LayerCrop")
-        elif short == "Exclusion":
-            prop(definition, "source_id", "ManualLock")
-            prop(definition, "strength", 1.0)
-        elif short == "Enclosure":
-            prop(definition, "post_mesh_set_id", as_primary_asset_id("MeshFence"))
-            prop(definition, "span_mesh_set_id", as_primary_asset_id("MeshFence"))
-            require(definition, short, "MeshFence")
-        elif short == "Parcel":
-            prop(definition, "edge_enclosure_profile_id", as_primary_asset_id("Enclosure"))
-            require(definition, short, "Enclosure")
-        elif short == "Crop":
-            prop(definition, "seasonal_mesh_set_ids", [as_primary_asset_id("MeshCrop")])
-            require(definition, short, "MeshCrop")
-        elif short == "Connector":
-            for item_name in ("Gate", "Bridge"):
-                entry = unreal.GamePlatformPCGConnectorCatalogEntry()
-                entry.set_editor_property("item_id", "Gold" + item_name)
-                entry.set_editor_property("content_definition_id", as_primary_asset_id("MeshFence"))
-                if item_name == "Bridge":
-                    entry.set_editor_property("type", unreal.GamePlatformPCGConnectorType.BRIDGE)
-                else:
-                    entry.set_editor_property("type", unreal.GamePlatformPCGConnectorType.GATE)
-                existing = definition.get_editor_property("entries")
-                prop(definition, "entries", list(existing) + [entry])
-            require(definition, short, "MeshFence")
+        result = configurator(definition, short)
+        ok = result[0] if isinstance(result, tuple) else result
+        if ok is not True:
+            raise RuntimeError("GoldLevel定义初始化与RequiredDefinitions校验失败：" + short + " " + str(result))
 
         if not library.save_loaded_asset(definition, only_if_is_dirty=False):
             raise RuntimeError("UE5.8未能真实保存PCG定义：" + short)

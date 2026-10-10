@@ -57,21 +57,6 @@ def main() -> None:
     if cls is None or graph_cls is None or mesh_cls is None or not callable(maker):
         raise RuntimeError("UE5.8缺少新编译的PCG Profile/Graph/MeshSet/编辑器真实生成接口")
 
-    def primary_id(name: str):
-        text = "GamePlatformDefinition:" + id_string(name)
-        try:
-            result = unreal.PrimaryAssetId.from_string(text)
-            if result is not None:
-                return result
-        except (AttributeError, ValueError, TypeError):
-            pass
-        asset_type = unreal.PrimaryAssetType()
-        asset_type.set_editor_property("name", "GamePlatformDefinition")
-        result = unreal.PrimaryAssetId()
-        result.set_editor_property("primary_asset_type", asset_type)
-        result.set_editor_property("primary_asset_name", id_string(name))
-        return result
-
     # 防止半成品覆盖正式资源：对3个Profile与3个Graph先逐一做全部目标占用预检。
     all_paths = [
         actual_asset_path("Realized", "PCG_Gold_" + record[0]) for record in DESCRIPTORS
@@ -93,15 +78,16 @@ def main() -> None:
         loaded[label] = (template, mesh)
 
 
-    # 将后续需要的反射枚举和Definition ID预先解析完毕，避免产生半套可见图实例。
-    policy = getattr(unreal, "GamePlatformPCGExecutionPolicy", None)
-    use = getattr(unreal, "GamePlatformPCGOutputUsage", None)
-    if policy is None or use is None or not hasattr(policy, "EDITOR_GENERATED_STATIC") or not hasattr(use, "COSMETIC"):
-        raise RuntimeError("锁定UE5.8未提供安全静态PCG策略或纯装饰输出枚举")
-    resolved_ids = {name: primary_id(name) for _, _, name, _ in DESCRIPTORS}
-    if not all(resolved_ids.values()):
-        raise RuntimeError("PCG MeshSet主资产ID缺失；不能创建Graph Instance")
+    configure = getattr(editor_cls, "configure_gold_development_profile", None)
+    finalize = getattr(editor_cls, "finalize_gold_development_profile", None)
+    if not callable(configure) or not callable(finalize):
+        raise RuntimeError("GamePlatformPCGEditor缺少Gold Profile强类型初始化或最终图绑定入口")
 
+    # 实际WeightedSpawner只消费已按PCGGeneration租约预加载的网格，不会在生成线程同步加载。
+    for shape in ("/Engine/BasicShapes/Cylinder.Cylinder", "/Engine/BasicShapes/Sphere.Sphere"):
+        preloaded = assets.load_asset(shape)
+        if not isinstance(preloaded, unreal.StaticMesh):
+            raise RuntimeError("真实静态网格预加载失败：" + shape)
     for folder in (REALIZED, PROFILES):
         if not assets.does_directory_exist(folder):
             assets.make_directory(folder)
@@ -115,35 +101,20 @@ def main() -> None:
         if not isinstance(profile, cls):
             raise RuntimeError("UE未能创建Profile类型的DataAsset：" + profile_path)
 
-        ident = unreal.GamePlatformId()
-        ident.set_editor_property("namespace", "foundation")
-        ident.set_editor_property("name", "pcg_gold_profile_" + label.lower())
-        ident.set_editor_property("logical_version", 1)
-        profile.set_editor_property("logical_id", ident)
-        version = unreal.GamePlatformDataVersion()
-        version.set_editor_property("schema_version", 1)
-        version.set_editor_property("content_revision", 1)
-        profile.set_editor_property("data_version", version)
-
-        region = unreal.GamePlatformId()
-        region.set_editor_property("namespace", "foundation")
-        region.set_editor_property("name", "region_a")
-        region.set_editor_property("logical_version", 1)
-        profile.set_editor_property("region_id", region)
-        profile.set_editor_property("template_id", template_name)
-        profile.set_editor_property("template_version", 1)
-        profile.set_editor_property("graph_reference", template)
-        profile.set_editor_property("mesh_set_definition_id", resolved_ids[mesh_name])
-        profile.set_editor_property("required_definitions", [resolved_ids[mesh_name]])
-        profile.set_editor_property("execution_policy", policy.EDITOR_GENERATED_STATIC)
-        profile.set_editor_property("output_usage", use.COSMETIC)
-        profile.set_editor_property("minimum_outputs", 0)
+        # 逻辑ID、Region、Definition Lease和EditDefaultsOnly字段由Editor C++强类型设置。
+        configuration = configure(profile, label, template, mesh)
+        configured = configuration[0] if isinstance(configuration, tuple) else configuration
+        if configured is not True:
+            raise RuntimeError("GoldLevel Profile初始化失败：" + label + " " + str(configuration))
         path = actual_asset_path("Realized", "PCG_Gold_" + label)
         raw = maker(path, profile, mesh)
         graph = next((x for x in raw if isinstance(x, graph_cls)), None) if isinstance(raw, tuple) else raw
         if not isinstance(graph, graph_cls):
             raise RuntimeError("UE没有产生批准的StaticMeshSpawner Graph：" + path + " " + str(raw))
-        profile.set_editor_property("graph_reference", graph)
+        finalization = finalize(profile, graph)
+        finished = finalization[0] if isinstance(finalization, tuple) else finalization
+        if finished is not True:
+            raise RuntimeError("GoldLevel实际Spawner图回写Profile失败：" + label + " " + str(finalization))
         if not assets.save_loaded_asset(profile, only_if_is_dirty=False):
             raise RuntimeError("PCG真实Profile不能保存：" + profile_path)
         reloaded = assets.load_asset(profile_path)

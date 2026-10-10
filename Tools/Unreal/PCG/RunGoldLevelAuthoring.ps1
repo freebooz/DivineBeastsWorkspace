@@ -4,7 +4,7 @@ PCG Gold Level（PCG金标准）UE5.8真实资产创作入口。
 先读检查、再显式-Apply，禁止覆盖/删除文件/抢占其他编辑器进程。
 #>
 [CmdletBinding()]
-param([string]$EngineRoot = $env:UE_ROOT, [switch]$Apply)
+param([string]$EngineRoot = $env:UE_ROOT, [switch]$Apply, [switch]$RepairGeneratedFoundations)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $project = Join-Path $root 'Game/DivineBeastsArena.uproject'
@@ -47,7 +47,33 @@ try {
     foreach ($item in @($editor,$project,$plugin,$definitions,$realizedScript,$mapScript,$reopenScript)) {
         if (!(Test-Path -LiteralPath $item)) { throw "引擎/PCG编辑器模块/源码前置条件缺失：$item" }
     }
-    foreach ($item in @((Join-Path $foundation 'Templates'),(Join-Path $foundation 'Subgraphs'),(Join-Path $foundation 'Definitions'),(Join-Path $village 'Blueprints'))) {
+    # 默认仍只能首次创建；若19项Foundation已由本工具生成但Pin合同旧版失效，
+    # 必须显式-RepairGeneratedFoundations，逐项验证资产清单，禁止覆盖其他资产。
+    $templatesPath = Join-Path $foundation 'Templates'
+    $subgraphsPath = Join-Path $foundation 'Subgraphs'
+    if ($RepairGeneratedFoundations) {
+        $templateNames = @(
+            'TPL_Base','TPL_ScatterSurface','TPL_BiomeGenerator','TPL_LinearDresser',
+            'TPL_Enclosure','TPL_EnclosureClosed','TPL_Connector','TPL_GateInsert',
+            'TPL_ParcelFill','TPL_CropField','TPL_AssemblySpawn','TPL_InterfaceBand'
+        ) | ForEach-Object { $_ + '.uasset' }
+        $subgraphNames = @(
+            'SG_ProjectOnLandscape','SG_PriorityCarve','SG_ApplySpawnPolicy',
+            'SG_AssignMeshSet','SG_FitPostsToSpline','SG_BreakByIntersection',
+            'SG_WriteClosedExclude'
+        ) | ForEach-Object { $_ + '.uasset' }
+        $existingTemplates = @(Get-ChildItem $templatesPath -File -Filter '*.uasset' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+        $existingSubgraphs = @(Get-ChildItem $subgraphsPath -File -Filter '*.uasset' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+        if (@(Compare-Object $templateNames $existingTemplates).Count -gt 0 -or
+            @(Compare-Object $subgraphNames $existingSubgraphs).Count -gt 0) {
+            throw '受控修复仅支持已存在且名称完全匹配的12模板＋7子图；拒绝未知或缺失资源。'
+        }
+    }
+    else {
+        Assert-Free $templatesPath
+        Assert-Free $subgraphsPath
+    }
+    foreach ($item in @((Join-Path $foundation 'Definitions'),(Join-Path $village 'Blueprints'))) {
         Assert-Free $item
     }
     # Gold实例独立占用审查；/Profiles可能还含旧版DA_PCG_Cosmetic等开发资产，不属于本次所有权。
@@ -67,7 +93,9 @@ try {
     $oldMap = $env:PCG_GOLD_MAP_MODE
     $oldReopen = $env:PCG_GOLD_VALIDATE_MODE
     try {
-        Invoke-UE '01-FoundationGraphs' @('-run=GamePlatformPCGFoundationTemplates')
+        $foundationArgs = @('-run=GamePlatformPCGFoundationTemplates')
+        if ($RepairGeneratedFoundations) { $foundationArgs += '-RepairGeneratedFoundations' }
+        Invoke-UE '01-FoundationGraphs' $foundationArgs
         Invoke-UE '02-VillageBlueprints' @('-run=GamePlatformPCGFoundationTemplates','-BlueprintRoot=/DBAWorldPack_Village/PCG/Blueprints/')
         $env:PCG_GOLD_DEFINITION_MODE = 'apply'
         Invoke-UE '03-GoldDefinitions' @("-ExecutePythonScript=$definitions",'-EnablePlugins=PythonScriptPlugin','-EnablePython')

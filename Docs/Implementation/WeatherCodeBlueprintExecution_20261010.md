@@ -31,6 +31,30 @@
 - 真实UE Editor未加载天气插件，Monolith无法实际创作蓝图/Niagara；`GamePlatformSurface/Content`与`GamePlatformVFX/Content/Weather`的真实天气资产仍为0。
 - 未执行Cook/Stage、双客户端、断线重连和ProfileGPU。其他工作区并行任务仍在运行，不强行结束它们。
 
+## 2026-10-10 13时后续实测：编辑器真实资产创建阻断
+
+- 当前工作区已有更新后的Weather Runtime/Client/Server编辑器DLL（已检查文件真实存在），并成功使用UBT`DivineBeastsArenaEditor -Module=DivineBeastsArenaClient`生成竞技客户端模块，退出码0。不能据此替代正式全目标构建。
+- 正式全Editor Build的188个动作运行至182后因LNK1181缺少引擎`UnrealEd`、`PCG`、`RenderCore`等导入库失败；随后尝试`UnrealEditor -Module=UnrealEd+RenderCore+PCG`遭MonolithBABridge.Build.cs规则空引用失败；采用正式项目目标`DivineBeastsArenaEditor -Module=UnrealEd+RenderCore+PCG`，UBT报告`Unable to find output items for module UnrealEd`。未写入任何伪.lib。
+- 为制作真正Surface MPC，两次启动`UnrealEditor-Cmd.exe <正式uproject> -run=GamePlatformSurfaceCoreAssets -unattended -nop4 -nosplash -NullRHI`：首轮会话未取得可信结束状态且MPC不存在；第二轮返回Exit=1，真实日志报告`GamePlatformCameraClient`插件模块缺失，MPC仍不存在。
+- 随后在正式项目编辑器目标执行`-Module=GamePlatformCameraClient+GamePlatformVFXClient+GamePlatformVFXEditor`：CameraClient DLL成功链接，但VFX Client与Editor因缺少UE引擎侧`NiagaraCore`与`NiagaraEditor`导入库出现LNK1181、构建退出码6。项目当前不具备可实际执行Monolith雨雪Niagara与材质编辑的稳定编辑器。
+- 本轮检查另见非天气范围`DivineBeastsAbilityAssemblyTests.cpp`已包含Git冲突标记，导致部分更大范围编辑器构建失败。按既定保护原则没有擅自选择冲突内容、覆盖其他任务。
+- 截至本次记录，`GamePlatformSurface/Content`及`GamePlatformVFX/Content/Weather`中雨雪真实uasset仍为0，`MPC_GP_SurfaceGlobal`也不存在，P5及UE联机/Cook验收不得宣称通过。
+
+### 13时后构建、引擎资源生成及最终集中复核
+
+- 再次执行正式Editor全目标构建，188动作运行至182项，WeatherRuntime与WeatherClient成功链接；整体结果`Exit=6`，主要阻断为`UnrealEd`、`PCG`、`RenderCore`等引擎链接输入`LNK1181`。
+- 尝试引擎`UnrealEditor -Module=UnrealEd+RenderCore+PCG`时报`MonolithBABridge.Build.cs`空引用，改为项目`DivineBeastsArenaEditor -Module=UnrealEd+RenderCore+PCG`又报告`Unable to find output items for module UnrealEd`。
+- 定向构建`DivineBeastsArenaClient`成功，Exit=0。其后真正运行Surface MPC Commandlet，先因GamePlatformCameraClient无法加载退出。定向构建CameraClient+VFXClient+VFXEditor时相机客户端模块成功链接，但VFXClient、VFXEditor因缺`NiagaraCore`与`NiagaraEditor`引擎导入库返回LNK1181。再尝试`DivineBeastsArenaEditor -Module=NiagaraCore+NiagaraEditor`，UBT报告`Unable to find output items for module NiagaraCore`；均没有复制/伪造库文件。
+- 切实执行命令`UnrealEditor-Cmd -run=GamePlatformSurfaceCoreAssets`的最新结果仍为Exit=1，本次日志证实通过Zen服务初始化但不能成功创建MPC。部分其他业务插件模块或引擎依赖不完整，尚不能进行真实材质与Niagara/蓝图制作。
+- 统一脚本`Build/Validation/VerifyWeatherDelivery.ps1`最新实际Exit=0，仅表示静态阶段通过：12个PNG/WAV源文件、10个天气作者脚本合同、3个Niagara系统5个Emitter规格、Python语法、47插件架构与Pester18/18通过。引擎门禁显示`WEATHER_P5_BINARY_PACKAGES_PRESENT=0/9`，九个关键UE资源均未生成，明确`PENDING_REAL_EDITOR`。
+- 其他独立业务`DivineBeastsAbilityAssemblyTests.cpp`出现Git冲突标记的事实已记录；没有在天气任务内强行选择冲突版本。所有状态应由实际的退出码与包存在性判定，不能将引擎初始化或DLL文件存在等同天气可视化完成。
+
+本轮结论：代码与素材静态门禁已通过，但真正的天气UE资产、完整Editor链接、Client/Server生产构建、网络和Cook端到端验收仍受同一工作空间引擎构建链与其他插件状态阻断。未经解决这些具体阻断，不能将P5/P8写成已完成。
+
+
+下一工程阻断的实际解除条件是修复/补齐同一UE5.8引擎与项目模块版本匹配的`NiagaraCore/NiagaraEditor/RenderCore/UnrealEd/PCG`导入库与必要DLL，处理已有非天气源码冲突，再用真实Editor成功创建MPC与Texture/Material/Niagara/Blueprint uasset，保存回读后才可以执行项目双端和Cook验收。
+
+
 ## 统一验收余项
 
 1. 完成真实Editor完整DLL构建并能启动`Game/DivineBeastsArena.uproject`。

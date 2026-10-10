@@ -284,6 +284,118 @@ bool UGamePlatformPCGEditorLibrary::CreateFoundationAssets(FString& Error)
     return CreateFoundationTemplateAssets(Error) && CreateFoundationSubgraphAssets(Error);
 }
 
+bool UGamePlatformPCGEditorLibrary::RepairSavedFoundationAssets(FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+
+    struct FFoundationGraphItem
+    {
+        UPCGGraph* Graph = nullptr;
+        FName ContractId = NAME_None;
+        bool bTemplate = false;
+    };
+    TArray<FFoundationGraphItem> Items;
+    Items.Reserve(19);
+
+    // 必须完整加载预期12模板＋7公共子图后才开始修改；不会扫描并覆盖其它项目资产。
+    const auto LoadKnownGraph = [&Items, &Error](const TArray<FName>& Ids,
+        const TCHAR* Folder, bool bTemplate) -> bool
+    {
+        for (const FName Id : Ids)
+        {
+            const FString PackageName = AssetRoot + Folder + Id.ToString();
+            const FString ObjectPath = PackageName + TEXT(".") + Id.ToString();
+            UPCGGraph* Graph = LoadObject<UPCGGraph>(nullptr, *ObjectPath);
+            if (!IsValid(Graph) || Graph->GetOutermost()->GetName() != PackageName ||
+                !Graph->bIsTemplate || !Graph->bExposeToLibrary)
+            {
+                Error = TEXT("既有Foundation资产类型/身份/模板标志与审批合同不符，拒绝覆盖：") + ObjectPath;
+                return false;
+            }
+            Items.Add({Graph, Id, bTemplate});
+        }
+        return true;
+    };
+
+    if (!LoadKnownGraph(GetM0M1FoundationTemplateIds(), TEXT("Templates/"), true) ||
+        !LoadKnownGraph(GetM0M1FoundationSubgraphIds(), TEXT("Subgraphs/"), false) ||
+        Items.Num() != 19)
+    {
+        return false;
+    }
+
+    TArray<UPCGGraph*> Changed;
+    for (const FFoundationGraphItem& Item : Items)
+    {
+        bool bChanged = false;
+        if (!GamePlatformPCGEditor::RepairFoundationGraphEdges(
+            *Item.Graph, Item.ContractId, bChanged, Error))
+        {
+            return false;
+        }
+
+        if (Item.bTemplate)
+        {
+            // 更新现有图之前验证标准模板合同；不把当前版本声明为已执行或可生产Cook。
+            UGamePlatformPCGProfileDefinition* Probe =
+                NewObject<UGamePlatformPCGProfileDefinition>(GetTransientPackage());
+            if (!FGamePlatformId::TryParse(TEXT("foundation.pcg_repair_probe@1"), Probe->LogicalId) ||
+                !FGamePlatformId::TryParse(TEXT("foundation.region_a@1"), Probe->RegionId))
+            {
+                Error = TEXT("PCG修复探针身份无效。");
+                return false;
+            }
+            Probe->GraphReference = Item.Graph;
+            Probe->TemplateId = Item.ContractId;
+            Probe->TemplateVersion = 1;
+            Probe->ExecutionPolicy = EGamePlatformPCGExecutionPolicy::EditorGeneratedStatic;
+            Probe->OutputUsage = EGamePlatformPCGOutputUsage::Cosmetic;
+            Probe->MinimumOutputs = 0;
+            const FGamePlatformResult Result = GamePlatformPCGInspection::ValidateApprovedGraph(*Probe);
+            if (!Result.IsSuccess())
+            {
+                Error = TEXT("已保存Foundation图修复后仍未通过批准合同：") +
+                    Item.ContractId.ToString() + TEXT("：") + Result.Message;
+                return false;
+            }
+        }
+
+        if (bChanged)
+        {
+            Changed.Add(Item.Graph);
+        }
+    }
+
+    for (UPCGGraph* Graph : Changed)
+    {
+        UPackage* Package = Graph->GetOutermost();
+        const FString PackageName = Package->GetName();
+        if (!PackageName.StartsWith(AssetRoot + TEXT("Templates/")) &&
+            !PackageName.StartsWith(AssetRoot + TEXT("Subgraphs/")))
+        {
+            Error = TEXT("修复保存目标超出指定的19项Foundation开发资源边界。");
+            return false;
+        }
+
+        Package->MarkPackageDirty();
+        const FString Filename = FPackageName::LongPackageNameToFilename(
+            PackageName, FPackageName::GetAssetPackageExtension());
+        FSavePackageArgs Args;
+        Args.TopLevelFlags = RF_Public | RF_Standalone;
+        Args.SaveFlags = SAVE_NoError;
+        if (!UPackage::SavePackage(Package, Graph, *Filename, Args))
+        {
+            Error = TEXT("更新已有Foundation图的引擎保存失败：") + Filename;
+            return false;
+        }
+    }
+
+    UE_LOG(LogTemp, Display, TEXT("Foundation受控图针脚修复：校验19项，实际更新%d项；未删除或重建资产。"),
+        Changed.Num());
+    return true;
+}
+
 UPCGGraph* UGamePlatformPCGEditorLibrary::CreateDevelopmentRealizedGraphAsset(
     const FString& PackageName, UGamePlatformPCGProfileDefinition* Profile,
     UGamePlatformPCGMeshSetDefinition* MeshSet, FString& Error)

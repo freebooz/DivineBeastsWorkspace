@@ -1,6 +1,8 @@
 #include "Authoring/PCGDevelopmentGraph.h"
 #include "PCGGraph.h"
 #include "PCGNode.h"
+#include "PCGPin.h"
+#include "PCGEdge.h"
 #include "Elements/PCGCreatePointsGrid.h"
 #include "Elements/PCGTransformPoints.h"
 #include "Elements/PCGDensityFilter.h"
@@ -19,6 +21,53 @@
 
 namespace
 {
+/** 比较实际UPCGEdge两端的Pin，而不是仅依赖Graph.AddEdge的不可靠非空返回值。 */
+bool HasGraphLink(const UPCGNode* From, FName FromLabel, const UPCGNode* To, FName ToLabel)
+{
+    const UPCGPin* Source = From ? From->GetOutputPin(FromLabel) : nullptr;
+    const UPCGPin* Target = To ? To->GetInputPin(ToLabel) : nullptr;
+    if (!Source || !Target)
+    {
+        return false;
+    }
+    for (const TObjectPtr<UPCGEdge>& Edge : Source->Edges)
+    {
+        if (Edge && Edge->GetOtherPin(Source) == Target)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** UE5.8的Graph.AddEdge返回目标Node，即使Pin连接失败也可能返回非空；必须验证真实Edge。 */
+bool ConnectGraphPins(UPCGGraph& Graph, UPCGNode* From, FName FromLabel, UPCGNode* To, FName ToLabel)
+{
+    const UPCGPin* Source = From ? From->GetOutputPin(FromLabel) : nullptr;
+    const UPCGPin* Destination = To ? To->GetInputPin(ToLabel) : nullptr;
+    if (!Source || !Destination || !Source->CanConnect(Destination))
+    {
+        return false;
+    }
+
+    const auto HasEdge = [Source, Destination]()
+    {
+        for (const TObjectPtr<UPCGEdge>& Edge : Source->Edges)
+        {
+            if (IsValid(Edge) && Edge->GetOtherPin(Source) == Destination)
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+    if (!HasEdge())
+    {
+        Graph.AddEdge(From, FromLabel, To, ToLabel);
+    }
+    return HasEdge();
+}
+
 template <typename TSettings>
 UPCGNode* AddTemplateNode(UPCGGraph& Graph, FString& Error)
 {
@@ -45,7 +94,7 @@ bool AppendTemplateNode(UPCGGraph& Graph, UPCGNode*& Tail, FName& TailPin, FStri
         return false;
     }
 
-    if (!Graph.AddEdge(Tail, TailPin, Node, PCGPinConstants::DefaultInputLabel))
+    if (!ConnectGraphPins(Graph, Tail, TailPin, Node, PCGPinConstants::DefaultInputLabel))
     {
         Error = FString::Printf(TEXT("Foundation模板节点接线失败：%s"), *TSettings::StaticClass()->GetName());
         return false;
@@ -82,7 +131,7 @@ bool ConnectTailToOutput(UPCGGraph& Graph, UPCGNode* Tail, FName TailPin, FStrin
 {
     const TArray<FPCGPinProperties> Outputs = Graph.DefaultOutputPinProperties();
     if (!Tail || Outputs.IsEmpty() || !Graph.GetOutputNode() ||
-        !Graph.AddEdge(Tail, TailPin, Graph.GetOutputNode(), Outputs[0].Label))
+        !ConnectGraphPins(Graph, Tail, TailPin, Graph.GetOutputNode(), Outputs[0].Label))
     {
         Error = TEXT("Foundation子图连接到Graph Output失败。");
         return false;
@@ -165,10 +214,10 @@ UPCGGraph* GamePlatformPCGEditor::CreateDevelopmentGraph(UObject* Outer, FName N
     }
     const FName OutPin = PCGPinConstants::DefaultOutputLabel;
     const FName InPin = PCGPinConstants::DefaultInputLabel;
-    if (!Graph->AddEdge(GridNode, OutPin, TransformNode, InPin) ||
-        !Graph->AddEdge(TransformNode, OutPin, FilterNode, InPin) ||
-        !Graph->AddEdge(FilterNode, OutPin, SpawnerNode, InPin) ||
-        !Graph->AddEdge(SpawnerNode, OutPin, Graph->GetOutputNode(), OutPin))
+    if (!ConnectGraphPins(*Graph, GridNode, OutPin, TransformNode, InPin) ||
+        !ConnectGraphPins(*Graph, TransformNode, OutPin, FilterNode, InPin) ||
+        !ConnectGraphPins(*Graph, FilterNode, OutPin, SpawnerNode, InPin) ||
+        !ConnectGraphPins(*Graph, SpawnerNode, OutPin, Graph->GetOutputNode(), OutPin))
     {
         Error = TEXT("原生PCG四节点接线失败；未保存或执行图");
         return nullptr;
@@ -258,7 +307,8 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationTemplateGraph(
         Sampler->SamplerParams.DistanceIncrement = 200.0f;
         Sampler->SamplerParams.bUnbounded = false;
         Sampler->SetExecuteOnGPU(false);
-        if (!Graph->AddEdge(Tail, TailPin, SamplerNode, PCGPinConstants::DefaultInputLabel))
+        // UE5.8 SplineSampler的必填输入针脚实际叫Spline，不是通用In。
+        if (!ConnectGraphPins(*Graph, Tail, TailPin, SamplerNode, PCGSplineSamplerConstants::SplineLabel))
         {
             Error = TEXT("Foundation模板Spline数据与官方Sampler输入接线失败。");
             return nullptr;
@@ -336,7 +386,7 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationTemplateGraph(
         return nullptr;
     }
 
-    if (!Graph->AddEdge(Tail, TailPin, Graph->GetOutputNode(), GraphOutputs[0].Label))
+    if (!ConnectGraphPins(*Graph, Tail, TailPin, Graph->GetOutputNode(), GraphOutputs[0].Label))
     {
         Error = TEXT("Foundation模板ValidateSchema到Graph Output接线失败。");
         return nullptr;
@@ -456,9 +506,9 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationRealizedGraph(
             bCollision ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
     }
 
-    if (!Graph->AddEdge(Validator, PCGPinConstants::DefaultOutputLabel,
+    if (!ConnectGraphPins(*Graph, Validator, PCGPinConstants::DefaultOutputLabel,
             SpawnerNode, PCGPinConstants::DefaultInputLabel) ||
-        !Graph->AddEdge(SpawnerNode, PCGPinConstants::DefaultOutputLabel,
+        !ConnectGraphPins(*Graph, SpawnerNode, PCGPinConstants::DefaultOutputLabel,
             Graph->GetOutputNode(), GraphOutputs[0].Label))
     {
         Error = TEXT("真实网格生成器与Schema校验/图输出连接失败。");
@@ -513,8 +563,17 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationSubgraphGraph(
             Error = TEXT("SG_ProjectOnLandscape无法取得Graph Input设置。");
             return nullptr;
         }
-        const FPCGPinProperties& LandscapePin = InputSettings->AddPin(
-            FPCGPinProperties(PCGInputOutputConstants::DefaultLandscapeLabel, EPCGDataType::Landscape));
+        const FName LandscapePinLabel = InputSettings->AddPin(
+            FPCGPinProperties(PCGInputOutputConstants::DefaultLandscapeLabel, EPCGDataType::Landscape)).Label;
+        // AddPin只改变设置，必须同步重建真实UPCGNode输出针脚才能连接。
+        // UpdatePins受保护；官方公开SetSettingsInterface在同一Settings上可完成Pin同步。
+        Graph->GetInputNode()->SetSettingsInterface(
+            Graph->GetInputNode()->GetSettingsInterface(), true);
+        if (!Graph->GetInputNode()->GetOutputPin(LandscapePinLabel))
+        {
+            Error = TEXT("SG_ProjectOnLandscape缺少实际Landscape输出针脚，拒绝保存子图。");
+            return nullptr;
+        }
 
         UPCGProjectionSettings* ProjectionSettings = nullptr;
         UPCGNode* ProjectionNode = Graph->AddNodeOfType(ProjectionSettings);
@@ -525,8 +584,8 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationSubgraphGraph(
         }
         ProjectionSettings->bForceCollapseToPoint = true;
         ProjectionSettings->SetExecuteOnGPU(false);
-        if (!Graph->AddEdge(Tail, TailPin, ProjectionNode, PCGPinConstants::DefaultInputLabel) ||
-            !Graph->AddEdge(Graph->GetInputNode(), LandscapePin.Label, ProjectionNode, PCGProjectionConstants::ProjectionTargetLabel))
+        if (!ConnectGraphPins(*Graph, Tail, TailPin, ProjectionNode, PCGPinConstants::DefaultInputLabel) ||
+            !ConnectGraphPins(*Graph, Graph->GetInputNode(), LandscapePinLabel, ProjectionNode, PCGProjectionConstants::ProjectionTargetLabel))
         {
             Error = TEXT("SG_ProjectOnLandscape投影输入接线失败。");
             return nullptr;
@@ -574,3 +633,121 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationSubgraphGraph(
 
     return ConnectTailToOutput(*Graph, Tail, TailPin, Error) ? Graph : nullptr;
 }
+bool GamePlatformPCGEditor::RepairFoundationGraphEdges(
+    UPCGGraph& Graph, FName ContractId, bool& bOutChanged, FString& Error)
+{
+    check(IsInGameThread());
+    bOutChanged = false;
+    Error.Reset();
+
+    // 仅允许同一Foundation合同内的逻辑模板；不修改玩法地图与项目Graph Instance。
+    if ((!IsM0M1Template(ContractId) && !IsM0M1Subgraph(ContractId)) ||
+        !Graph.bIsTemplate || !Graph.bExposeToLibrary ||
+        !Graph.GetInputNode() || !Graph.GetOutputNode())
+    {
+        Error = TEXT("拒绝修复非批准的Foundation图；请人工审查已有资产所有权和结构。");
+        return false;
+    }
+
+    const bool bRequiresSpline = ContractId == FGamePlatformPCGTemplateIds::LinearDresser ||
+        ContractId == FGamePlatformPCGTemplateIds::Enclosure ||
+        ContractId == FGamePlatformPCGTemplateIds::EnclosureClosed ||
+        ContractId == FGamePlatformPCGTemplateIds::ParcelFill ||
+        ContractId == FGamePlatformPCGTemplateIds::CropField;
+
+    if (bRequiresSpline)
+    {
+        UPCGNode* Sampler = nullptr;
+        for (UPCGNode* Node : Graph.GetNodes())
+        {
+            if (Node && Node->GetSettings() && Node->GetSettings()->IsA<UPCGSplineSamplerSettings>())
+            {
+                if (Sampler)
+                {
+                    Error = TEXT("Foundation样条图出现重复Sampler，拒绝破坏性修复。");
+                    return false;
+                }
+                Sampler = Node;
+            }
+        }
+
+        const TArray<FPCGPinProperties> Inputs = Graph.DefaultInputPinProperties();
+        if (!Sampler || Inputs.IsEmpty())
+        {
+            Error = TEXT("Foundation样条图缺少官方Sampler或Graph Input，拒绝修复。");
+            return false;
+        }
+
+        const FName SourceLabel = Inputs[0].Label;
+        const FName TargetLabel = PCGSplineSamplerConstants::SplineLabel;
+        if (!HasGraphLink(Graph.GetInputNode(), SourceLabel, Sampler, TargetLabel))
+        {
+            Graph.Modify();
+            if (!ConnectGraphPins(Graph, Graph.GetInputNode(), SourceLabel, Sampler, TargetLabel))
+            {
+                Error = FString::Printf(TEXT("Foundation样条图%s真实Pin无法连接：%s→%s"),
+                    *ContractId.ToString(), *SourceLabel.ToString(), *TargetLabel.ToString());
+                return false;
+            }
+            bOutChanged = true;
+        }
+    }
+
+    if (ContractId == FGamePlatformPCGSubgraphIds::ProjectOnLandscape)
+    {
+        UPCGNode* Projection = nullptr;
+        for (UPCGNode* Node : Graph.GetNodes())
+        {
+            if (Node && Node->GetSettings() && Node->GetSettings()->IsA<UPCGProjectionSettings>())
+            {
+                if (Projection)
+                {
+                    Error = TEXT("ProjectOnLandscape存在重复Projection节点，拒绝修复。");
+                    return false;
+                }
+                Projection = Node;
+            }
+        }
+
+        UPCGGraphInputOutputSettings* InputSettings =
+            Cast<UPCGGraphInputOutputSettings>(Graph.GetInputNode()->GetSettings());
+        if (!InputSettings || !Projection)
+        {
+            Error = TEXT("ProjectOnLandscape缺少Graph Input或Projection节点，拒绝修复。");
+            return false;
+        }
+
+        const FName LandscapeLabel = PCGInputOutputConstants::DefaultLandscapeLabel;
+        const TArray<FPCGPinProperties> Pins = InputSettings->AllOutputPinProperties();
+        if (!Pins.ContainsByPredicate([LandscapeLabel](const FPCGPinProperties& Pin)
+            { return Pin.Label == LandscapeLabel; }))
+        {
+            Error = TEXT("ProjectOnLandscape缺少已声明的Landscape配置针脚，拒绝自动创建不同协议。");
+            return false;
+        }
+
+        if (!Graph.GetInputNode()->GetOutputPin(LandscapeLabel))
+        {
+            Graph.Modify();
+            Graph.GetInputNode()->SetSettingsInterface(
+                Graph.GetInputNode()->GetSettingsInterface(), true);
+            bOutChanged = true;
+        }
+
+        if (!HasGraphLink(Graph.GetInputNode(), LandscapeLabel, Projection,
+            PCGProjectionConstants::ProjectionTargetLabel))
+        {
+            Graph.Modify();
+            if (!ConnectGraphPins(Graph, Graph.GetInputNode(), LandscapeLabel, Projection,
+                PCGProjectionConstants::ProjectionTargetLabel))
+            {
+                Error = TEXT("ProjectOnLandscape实际Landscape→Projection Target针脚无法连接。");
+                return false;
+            }
+            bOutChanged = true;
+        }
+    }
+
+    return true;
+}
+

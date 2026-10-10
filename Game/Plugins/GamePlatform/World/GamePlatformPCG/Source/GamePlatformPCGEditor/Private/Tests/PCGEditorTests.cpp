@@ -6,6 +6,8 @@
 #include "Definitions/GamePlatformPCGEnvironmentDefinitions.h"
 #include "Elements/PCGStaticMeshSpawner.h"
 #include "PCGNode.h"
+#include "PCGPin.h"
+#include "PCGEdge.h"
 #include "Services/GamePlatformPCGInspection.h"
 #include "Services/GamePlatformPCGTemplateContract.h"
 #include "Engine/StaticMesh.h"
@@ -15,6 +17,22 @@
 #include "Elements/PCGSplineSampler.h"
 #include "Elements/PCGCreatePointsGrid.h"
 #include "Nodes/GamePlatformPCGNodes.h"
+
+namespace
+{
+/** 图节点名称与图属性存在不代表真实连接。使用UE5.8 PCGEdge验证上游与下游完整连线。 */
+bool HasVerifiedGraphEdge(const UPCGNode* From, FName FromPinName,
+    const UPCGNode* To, FName ToPinName)
+{
+    const UPCGPin* FromPin = From ? From->GetOutputPin(FromPinName) : nullptr;
+    const UPCGPin* ToPin = To ? To->GetInputPin(ToPinName) : nullptr;
+    if (!FromPin || !ToPin) { return false; }
+    return FromPin->Edges.ContainsByPredicate([FromPin, ToPin](const TObjectPtr<UPCGEdge>& Edge)
+    {
+        return Edge && Edge->GetOtherPin(FromPin) == ToPin;
+    });
+}
+}
 
 // 顺序不参与来源身份；依赖内容和引擎版本必须参与，不能只哈希路径或随机种子。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPCGSourceFingerprintTest, "GamePlatform.PCG.Editor.SourceFingerprint",
@@ -124,6 +142,20 @@ bool FPCGFoundationTemplateGraphTest::RunTest(const FString& Parameters)
                 {
                     return Node && Node->GetSettings() && Node->GetSettings()->IsA<UPCGSplineSamplerSettings>();
                 }));
+            const TArray<FPCGPinProperties> Inputs = Graph->DefaultInputPinProperties();
+            bool bHasTrueSplineConnection = false;
+            for (const UPCGNode* Node : Graph->GetNodes())
+            {
+                if (Node && Node->GetSettings() &&
+                    Node->GetSettings()->IsA<UPCGSplineSamplerSettings>() && !Inputs.IsEmpty())
+                {
+                    bHasTrueSplineConnection = HasVerifiedGraphEdge(
+                        Graph->GetInputNode(), Inputs[0].Label, Node,
+                        PCGSplineSamplerConstants::SplineLabel);
+                }
+            }
+            TestTrue(TEXT("样条Graph Input到Sampler.Spline存在真正UPCGEdge"),
+                bHasTrueSplineConnection);
         }
     }
 
@@ -153,9 +185,21 @@ bool FPCGFoundationSubgraphTest::RunTest(const FString& Parameters)
             TestNotNull(TEXT("ProjectOnLandscape存在Graph Input设置"), InputSettings);
             if (InputSettings)
             {
-                const TArray<FPCGPinProperties> OutputPins = InputSettings->DefaultOutputPinProperties();
+                const TArray<FPCGPinProperties> OutputPins = InputSettings->AllOutputPinProperties();
                 TestTrue(TEXT("ProjectOnLandscape公开Landscape输入Pin"), OutputPins.ContainsByPredicate(
                     [](const FPCGPinProperties& Pin) { return Pin.Label == PCGInputOutputConstants::DefaultLandscapeLabel; }));
+                const UPCGNode* Projection = nullptr;
+                for (const UPCGNode* Node : Graph->GetNodes())
+                {
+                    if (Node && Node->GetSettings() && Node->GetSettings()->IsA<UPCGProjectionSettings>())
+                    {
+                        Projection = Node;
+                    }
+                }
+                TestTrue(TEXT("Landscape自定义Pin必须在Node实例化并真正接入投影目标"),
+                    HasVerifiedGraphEdge(Graph->GetInputNode(),
+                        PCGInputOutputConstants::DefaultLandscapeLabel,
+                        Projection, PCGProjectionConstants::ProjectionTargetLabel));
             }
             TestTrue(TEXT("ProjectOnLandscape使用官方Projection节点"), Graph->GetNodes().ContainsByPredicate(
                 [](const UPCGNode* Node) { return Node && Node->GetSettings() && Node->GetSettings()->IsA<UPCGProjectionSettings>(); }));

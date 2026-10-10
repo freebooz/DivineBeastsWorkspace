@@ -10,14 +10,12 @@
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Definitions/DivineBeastsAbilityDefinition.h"
-<<<<<<< HEAD
+// 合并两条工程验收路径：无世界效果回滚与真实Pawn控制生命周期，均保留为独立UE自动化。
 #include "GameplayEffect.h"
 #include "UObject/UnrealType.h"
-=======
 #include "Engine/World.h"
 #include "Engine/EngineBaseTypes.h"
 #include "GameFramework/PlayerController.h"
->>>>>>> 097a3488dd8e822effc223d312147693d7705c03
 
 /**
  * 验证新增业务类的真实反射继承和默认拒绝状态：
@@ -85,8 +83,6 @@ bool FDivineBeastsAbilityAssemblyContractTest::RunTest(const FString&)
         TestFalse(TEXT("没有已加载主资产时拒绝读取伤害参数"),
             Ability->TryReadConfiguredBalance(Row, Error));
     }
-<<<<<<< HEAD
-
     return true;
 }
 
@@ -142,7 +138,20 @@ bool FDivineBeastsReversibleStartupEffectTest::RunTest(const FString&)
     }
 #endif
 
-=======
+    return true;
+}
+
+/**
+ * 实际控制器拥有/解除拥有的权威链路回归：与纯数据回滚用例相互独立，
+ * 允许任意一项失败时定位到确切生命周期，不能在旧用例中提前返回而跳过。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsAbilityPossessionLifecycleTest,
+    "DivineBeasts.Abilities.Assembly.PossessionLifecycle",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsAbilityPossessionLifecycleTest::RunTest(const FString&)
+{
     // 真正的拥有/失控事件必须沿权威基类清理。没有Definition的测试Pawn不能因新增Loadout而取得Active。
     const UWorld::InitializationValues Values = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false)
         .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
@@ -167,7 +176,6 @@ bool FDivineBeastsReversibleStartupEffectTest::RunTest(const FString&)
     TestFalse(TEXT("失控及PlayerState通知后Avatar仍已撤销"), ASC->GetAvatarBindingSnapshot().bBound);
     TestFalse(TEXT("失控后资格仍失败关闭"), Eligibility->IsServerPlayerActiveForGameplay());
     Pawn->Destroy(); World->EndPlay(EEndPlayReason::Quit); World->DestroyWorld(false);
->>>>>>> 097a3488dd8e822effc223d312147693d7705c03
     return true;
 }
 #endif

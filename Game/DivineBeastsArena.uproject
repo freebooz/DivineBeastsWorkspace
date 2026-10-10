@@ -171,6 +171,15 @@
       ]
     },
     {
+      "Name": "DBAUIPack_Core",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
       "Name": "DBAWorldPack_Village",
       "Enabled": true
     }

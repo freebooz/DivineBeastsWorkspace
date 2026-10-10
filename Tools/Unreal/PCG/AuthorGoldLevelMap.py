@@ -208,6 +208,7 @@ def main():
             actor.set_editor_property("carve_half_width_cm", 125.0)
         elif label == "PCG_FieldFence":
             actor.set_editor_property("carve_priority", 48)
+            actor.set_editor_property("carve_half_width_cm", 35.0)
         elif label == "PCG_Parcel":
             actor.set_editor_property("carve_priority", 50)
 
