@@ -21,5 +21,7 @@ public class DBAWorldsRuntime : ModuleRules
             // 共享项目GameMode/Controller继承平台公开门禁，不链接服务器私有准入实现。
             "GamePlatformGameplay"
         });
+        // 项目本地准备必须读取角色定义Ready并订阅事件；不链接服务器私有准入或客户端表现模块。
+        PrivateDependencyModuleNames.Add("DivineBeastsCharactersRuntime");
     }
 }

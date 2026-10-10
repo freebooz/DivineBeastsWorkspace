@@ -16,6 +16,10 @@ public:
     /** 校验真实Controller连接、完整上下文、实例启动代次和当前有效期限；每个权威动作会重新查询。 */
     virtual FGamePlatformResult ValidateCurrentAdmission(const APlayerController& Controller,
         const FGamePlatformVerifiedPlayerContext& Context) const = 0;
+    /** 从AwaitingClient转为Active前额外复核必要Pawn资源；默认仍调用同一真实准入校验而非固定放行。
+     * 项目可向下实现资源Ready门禁；此同步只读查询不能联网、修改玩家或替代准入，失败保留准备令牌等待事件或超时撤销。 */
+    virtual FGamePlatformResult ValidatePlayerActivation(const APlayerController& Controller,
+        const FGamePlatformVerifiedPlayerContext& Context) const { return ValidateCurrentAdmission(Controller, Context); }
 };
 
 /** 服务器GameMode提供的C++接收边界；不是RPC，不暴露任意设置认证状态的蓝图函数。 */

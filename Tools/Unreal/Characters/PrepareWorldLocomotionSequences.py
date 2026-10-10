@@ -18,6 +18,10 @@ redirects = unreal.Map(unreal.SoftObjectPath, unreal.SoftObjectPath)
 redirects[unreal.SoftObjectPath('/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin')] = unreal.SoftObjectPath(SKELETON + '.SK_Mannequin')
 for name in ('SKM_Manny_Simple', 'SKM_Quinn_Simple'):
     redirects[unreal.SoftObjectPath('/Game/Characters/Mannequins/Meshes/' + name + '.' + name)] = unreal.SoftObjectPath('/DBAContentPack_Common/Mannequins/DBA/Meshes/' + name + '.' + name)
+for relative in ('MM_Idle', 'Walk/MF_Unarmed_Walk_Fwd', 'Jog/MF_Unarmed_Jog_Fwd', 'Jump/MM_Fall_Loop'):
+    name = relative.rsplit('/', 1)[-1]
+    # 模板部分序列保存自身原始软路径；迁移后同步到本包，不能留下Cook时不可解析的旧/Game依赖。
+    redirects[unreal.SoftObjectPath('/Game/Characters/Mannequins/Anims/Unarmed/' + relative + '.' + name)] = unreal.SoftObjectPath(BASE + name + '.' + name)
 saved = []
 editor_world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
 for name in ('MM_Idle', 'MF_Unarmed_Walk_Fwd', 'MF_Unarmed_Jog_Fwd', 'MM_Fall_Loop'):

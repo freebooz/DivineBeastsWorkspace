@@ -18,6 +18,12 @@
 
 namespace DivineBeasts::WorldCharacterAdmission
 {
+bool IsPawnReadyForActivation(const APlayerController& Controller)
+{
+    const APawn* Pawn = Controller.GetPawn();
+    const auto* Identity = Pawn ? Pawn->FindComponentByClass<UDivineBeastsCharacterComponent>() : nullptr;
+    return Identity && Identity->IsCharacterReady();
+}
 bool ParseSelectedCharacter(const FString& Json, const FString& VerifiedPlayerId, FString& OutCharacterId)
 {
     OutCharacterId.Reset();
@@ -82,9 +88,17 @@ void FDivineBeastsWorldCharacterAdmission::ObserveAdmissions()
 void FDivineBeastsWorldCharacterAdmission::ReleaseConnection(const TSharedPtr<FConnection>& Connection)
 {
     Connection->OperationId.Invalidate();
+    Connection->PawnOperationId.Invalidate();
     if (Connection->Request) { Connection->Request->OnProcessRequestComplete().Unbind(); Connection->Request->CancelRequest(); Connection->Request.Reset(); }
     if (Connection->PlayerState.IsValid()) Connection->PlayerState->OnLifecycleChanged.Remove(Connection->LifecycleHandle);
     Connection->LifecycleHandle.Reset();
+    if (Connection->CharacterIdentity.IsValid()) Connection->CharacterIdentity->OnReadinessChanged().Remove(Connection->ReadinessHandle);
+    Connection->ReadinessHandle.Reset();
+    if (Mode.IsValid() && Mode->GetWorld())
+    {
+        Mode->GetWorld()->GetTimerManager().ClearTimer(Connection->InitializationTimeout);
+        Mode->GetWorld()->GetTimerManager().ClearTimer(Connection->FailureTimer);
+    }
 }
 void FDivineBeastsWorldCharacterAdmission::Close()
 {
@@ -134,11 +148,13 @@ void FDivineBeastsWorldCharacterAdmission::RequestJson(APlayerController& Contro
     Request->SetVerb(TEXT("GET")); Request->SetTimeout(5.0f);
     Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
     Request->OnProcessRequestComplete().BindLambda([WeakThis, WeakController, Connection, Completed = MoveTemp(Completed)](
-        FHttpRequestPtr, FHttpResponsePtr Response, bool bSucceeded)
+        FHttpRequestPtr FinishedRequest, FHttpResponsePtr Response, bool bSucceeded)
     {
+        // 完成请求先断开自身持有环；Controller已销毁/请求已被替换时不能留下Request↔Connection引用。
+        // 精确比较避免旧请求回调误清理同一记录中的后继Roster请求。
+        if (Connection->Request == FinishedRequest) Connection->Request.Reset();
         auto Self = WeakThis.Pin(); auto* C = WeakController.Get();
         if (!Self || !Self->IsCurrent(C, Connection)) return;
-        Connection->Request.Reset();
         if (!bSucceeded || !Response || Response->GetResponseCode() != 200 || Response->GetContent().Num() > 2 * 1024 * 1024)
         { Self->Fail(*C, Connection, TEXT("WorldCharacterPlayerDataUnavailable")); return; }
         Completed(Response->GetContentAsString());
@@ -201,19 +217,50 @@ void FDivineBeastsWorldCharacterAdmission::BindSpawnedPawn(APlayerController& Co
     Context.CharacterId = Connection->CharacterId; Context.HeroDefinitionId = Connection->HeroId;
     Context.SpawnGeneration = static_cast<int32>(Snapshot.SpawnGeneration); Context.AvatarGeneration = static_cast<int32>(Snapshot.PawnGeneration);
     // 同步Readiness回调可能重入生命周期；先记录本次Pawn，失败走下一时隙撤销而非重复初始化。
-    Connection->BoundPawn = Pawn; FString Error;
+    if (Connection->CharacterIdentity.IsValid()) Connection->CharacterIdentity->OnReadinessChanged().Remove(Connection->ReadinessHandle);
+    Mode->GetWorld()->GetTimerManager().ClearTimer(Connection->InitializationTimeout);
+    Mode->GetWorld()->GetTimerManager().ClearTimer(Connection->FailureTimer);
+    Connection->PawnOperationId = FGuid::NewGuid(); const FGuid PawnOperationId = Connection->PawnOperationId;
+    Connection->BoundPawn = Pawn; Connection->CharacterIdentity = Identity; Connection->bWasCharacterReady = false;
+    Connection->bFailureScheduled = false;
+    const TWeakPtr<FDivineBeastsWorldCharacterAdmission> WeakThis = AsShared(); const TWeakObjectPtr<APlayerController> C = &Controller;
+    Connection->ReadinessHandle = Identity->OnReadinessChanged().AddWeakLambda(Identity, [WeakThis, C, Connection, PawnOperationId](bool)
+    { if (auto Self = WeakThis.Pin(); Self && Self->IsCurrent(C.Get(), Connection) && Connection->PawnOperationId == PawnOperationId) Self->ObserveCharacterInitialization(*C, Connection); });
+    Mode->GetWorld()->GetTimerManager().SetTimer(Connection->InitializationTimeout, FTimerDelegate::CreateLambda([WeakThis, C, Connection, PawnOperationId]()
+    { if (auto Self = WeakThis.Pin(); Self && Self->IsCurrent(C.Get(), Connection) && Connection->PawnOperationId == PawnOperationId) Self->Fail(*C, Connection, TEXT("WorldCharacterInitializationTimedOut")); }), 10.0f, false);
+    FString Error;
     if (!Identity->AuthorityBindTrustedContext(Context, Error)) { Fail(Controller, Connection, TEXT("WorldCharacterInitializationRejected")); return; }
+    if (!IsCurrent(&Controller, Connection)) return;
+    ObserveCharacterInitialization(Controller, Connection);
     UE_LOG(LogTemp, Display, TEXT("WorldCharacter bound: Pawn=%s Hero=%s Spawn=%d Avatar=%d Position=%s"), *Pawn->GetName(), *Context.HeroDefinitionId.ToString(), Context.SpawnGeneration, Context.AvatarGeneration, *Pawn->GetActorLocation().ToCompactString());
+}
+void FDivineBeastsWorldCharacterAdmission::ObserveCharacterInitialization(APlayerController& Controller, const TSharedPtr<FConnection>& Connection)
+{
+    auto* Identity = Connection->CharacterIdentity.Get();
+    if (!IsCurrent(&Controller, Connection) || Connection->bFailureScheduled || !Identity
+        || Controller.GetPawn() != Connection->BoundPawn.Get() || Identity->GetOwner() != Connection->BoundPawn.Get()) return;
+    if (Identity->IsCharacterReady())
+    {
+        Mode->GetWorld()->GetTimerManager().ClearTimer(Connection->InitializationTimeout);
+        if (!Connection->bWasCharacterReady) UE_LOG(LogTemp, Display, TEXT("WorldCharacter ready: Pawn=%s Hero=%s Version=%d"),
+            *Connection->BoundPawn->GetName(), *Identity->GetHeroDefinitionId().ToString(), Identity->GetDefinitionVersion());
+        Connection->bWasCharacterReady = true; return;
+    }
+    const auto Result = Identity->GetLastDefinitionLoadResult();
+    if (Connection->bWasCharacterReady || Result.Status == EGamePlatformResultStatus::Failed
+        || Result.Status == EGamePlatformResultStatus::Cancelled || Result.Status == EGamePlatformResultStatus::Unsupported)
+        Fail(Controller, Connection, TEXT("WorldCharacterDefinitionFailed"));
 }
 void FDivineBeastsWorldCharacterAdmission::Fail(APlayerController& Controller, const TSharedPtr<FConnection>& Connection, FName Code)
 {
-    if (!IsCurrent(&Controller, Connection)) return;
+    if (!IsCurrent(&Controller, Connection) || Connection->bFailureScheduled) return;
+    Connection->bFailureScheduled = true;
     UE_LOG(LogTemp, Error, TEXT("WorldCharacter admission failed: %s"), *Code.ToString());
     const TWeakPtr<FDivineBeastsWorldCharacterAdmission> WeakThis = AsShared(); const TWeakObjectPtr<APlayerController> C = &Controller;
-    Mode->GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([WeakThis, C, Connection]()
+    const FGuid FailedPawnOperationId = Connection->PawnOperationId;
+    Connection->FailureTimer = Mode->GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([WeakThis, C, Connection, FailedPawnOperationId]()
     {
-        auto Self = WeakThis.Pin(); if (!Self || !Self->IsCurrent(C.Get(), Connection)) return;
-        const auto A = Connection->Verified;
+        auto Self = WeakThis.Pin(); if (!Self || !Self->IsCurrent(C.Get(), Connection) || Connection->PawnOperationId != FailedPawnOperationId) return;
         // Release发布真实撤销并释放本连接的后端绑定；监听者负责同步清理平台玩家，不伪装仍在线。
         Self->Admission->ReleaseAdmission(*C, {});
         if (Self->Connections.FindRef(C) == Connection) { Self->Connections.Remove(C); Self->ReleaseConnection(Connection); }

@@ -4,6 +4,7 @@
 class AGamePlatformPlayerStateBase;
 class UGamePlatformExperienceComponent;
 class AGameStateBase;
+class UDivineBeastsCharacterComponent;
 
 /** 第三层双端控制器：事件驱动读取真实体验、Pawn及准备令牌；客户端不提交认证结论。
  * 输入在服务器Active后开放，EndPlay解除本世界全部订阅；不Tick轮询业务状态。 */
@@ -31,5 +32,7 @@ private:
     void BindGameState(AGameStateBase* State);
     TWeakObjectPtr<AGamePlatformPlayerStateBase> ObservedPlayer;
     TWeakObjectPtr<UGamePlatformExperienceComponent> ObservedExperience;
+    /** 当前本地受控Pawn的角色定义Ready订阅；换Pawn及EndPlay先解绑，不使用永久轮询。 */
+    TWeakObjectPtr<UDivineBeastsCharacterComponent> ObservedCharacter;
     bool bRefreshingFacts=false;
 };

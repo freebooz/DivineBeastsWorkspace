@@ -5,6 +5,7 @@
 #include "Components/GamePlatformExperienceComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "Components/DivineBeastsCharacterComponent.h"
 void ADivineBeastsWorldPlayerController::BeginPlay()
 {
     Super::BeginPlay();
@@ -31,7 +32,8 @@ bool ADivineBeastsWorldPlayerController::IsLocalPawnBound() const
 }
 bool ADivineBeastsWorldPlayerController::IsWorldGameplayActive() const
 {
-    return ObservedPlayer.IsValid() && ObservedPlayer->GetLifecycleSnapshot().IsServerActive() && IsLocalPawnBound();
+    return ObservedPlayer.IsValid() && ObservedPlayer->GetLifecycleSnapshot().IsServerActive() && IsLocalPawnBound()
+        && ObservedCharacter.IsValid() && ObservedCharacter->IsCharacterReady();
 }
 void ADivineBeastsWorldPlayerController::RefreshLocalWorldFacts()
 {
@@ -44,7 +46,15 @@ void ADivineBeastsWorldPlayerController::RefreshLocalWorldFacts()
         ObservedPlayer=State;
         if(State) State->OnLifecycleChanged.AddUObject(this,&ThisClass::RefreshLocalWorldFacts);
     }
-    if(AreLocalResourcesPrepared() && IsLocalPawnBound())
+    auto* CurrentCharacterIdentity = GetPawn() ? GetPawn()->FindComponentByClass<UDivineBeastsCharacterComponent>() : nullptr;
+    if (ObservedCharacter.Get() != CurrentCharacterIdentity)
+    {
+        if (ObservedCharacter.IsValid()) ObservedCharacter->OnReadinessChanged().RemoveAll(this);
+        ObservedCharacter = CurrentCharacterIdentity;
+        if (CurrentCharacterIdentity) CurrentCharacterIdentity->OnReadinessChanged().AddWeakLambda(this, [this](bool) { RefreshLocalWorldFacts(); });
+    }
+    // Prepare令牌只提交一次，必须等项目必要定义Ready后再报告，避免被服务器拒绝后没有新事件重试。
+    if(AreLocalResourcesPrepared() && IsLocalPawnBound() && CurrentCharacterIdentity && CurrentCharacterIdentity->IsCharacterReady())
     {
         FGamePlatformLocalPreparationFacts Facts;
         Facts.bClientExperiencePrepared=AreLocalResourcesPrepared(); Facts.bClientPawnBound=IsLocalPawnBound();
@@ -63,5 +73,6 @@ void ADivineBeastsWorldPlayerController::EndPlay(const EEndPlayReason::Type Reas
     OnPreparationChanged.RemoveAll(this); GetWorld()->GameStateSetEvent.RemoveAll(this);
     if(ObservedPlayer.IsValid()) ObservedPlayer->OnLifecycleChanged.RemoveAll(this);
     if(ObservedExperience.IsValid()) ObservedExperience->OnLocalResourcesPrepared.RemoveAll(this);
+    if(ObservedCharacter.IsValid()) ObservedCharacter->OnReadinessChanged().RemoveAll(this);
     OnLocalWorldFactsChanged.Clear(); Super::EndPlay(Reason);
 }

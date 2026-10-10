@@ -34,7 +34,11 @@ bool FDivineBeastsWorldLocomotionTest::RunTest(const FString&)
         const FString MeshPath = FString::Printf(TEXT("/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_%s_Simple.SKM_%s_Simple"), Name, Name);
         USkeletalMesh* Asset = LoadObject<USkeletalMesh>(nullptr, *MeshPath);
         if (!TestNotNull(TEXT("实际男女蒙皮网格"), Asset)) return false;
-        ACharacter* Character = World->SpawnActor<ACharacter>();
+        // 两个模型只做独立姿势评估，不做碰撞验收；测试世界一次清理全部Actor。
+        // 避免逐Actor销毁访问不存在的游戏WorldContext，产生与动画无关的测试警告。
+        FActorSpawnParameters SpawnParameters;
+        SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        ACharacter* Character = World->SpawnActor<ACharacter>(SpawnParameters);
         if (!TestNotNull(TEXT("真实移动所有者"), Character)) return false;
         USkeletalMeshComponent* Mesh = Character->GetMesh();
         Mesh->SetSkeletalMesh(Asset);
@@ -67,7 +71,6 @@ bool FDivineBeastsWorldLocomotionTest::RunTest(const FString&)
         Mesh->TickAnimation(1.0f / 30.0f, false);
         Mesh->RefreshBoneTransforms();
         TestTrue(TEXT("实际ABP获得下落状态"), Falling->GetPropertyValue_InContainer(Instance));
-        Character->Destroy();
     }
     return true;
 }

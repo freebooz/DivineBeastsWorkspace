@@ -65,5 +65,6 @@ private:
     void TrySpawn(APlayerController& Controller);
     void RemovePlayer(APlayerController& Controller, FName Reason, bool bFailed);
     void PublishPlayer(APlayerController& Controller, EGamePlatformPlayerStage Stage, FName Code = NAME_None);
-    FGamePlatformResult ValidateAdmission(const APlayerController& Controller) const;
+    /** 普通准入复核与最后激活复核共用当前登记；激活查询可附加项目必要Pawn资源门禁。 */
+    FGamePlatformResult ValidateAdmission(const APlayerController& Controller, bool bForActivation = false) const;
 };
