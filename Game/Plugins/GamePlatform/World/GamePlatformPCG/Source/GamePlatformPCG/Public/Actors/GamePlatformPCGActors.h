@@ -29,6 +29,13 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG")
     TObjectPtr<USceneComponent> SceneRoot;
+    /**
+     * UE5.8官方PCG执行源必须拥有有效的UPrimitiveComponent空间包围盒。
+     * 样条、地块和连接件原本只有USceneComponent，可能导致PCGTrackingManager报Invalid bounds。
+     * 本组件仅定义编辑器生成范围：不产生碰撞、重叠、导航或专服Gameplay效果。
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Bounds")
+    TObjectPtr<UBoxComponent> GenerationBounds;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG")
     TObjectPtr<UPCGComponent> PCGComponent;

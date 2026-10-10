@@ -9,5 +9,7 @@
 namespace GamePlatformPCGGoldMap
 {
     bool Create(FString& Error);
+    /** 只对已生成的唯一GoldLevel修复非碰撞生成空间；校验全部Actor后备份并原位保存。 */
+    bool Repair(FString& Error);
     bool Verify(FString& Error);
 }

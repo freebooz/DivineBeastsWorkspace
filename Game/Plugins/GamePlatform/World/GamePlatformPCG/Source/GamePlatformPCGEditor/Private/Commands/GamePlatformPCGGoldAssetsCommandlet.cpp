@@ -251,13 +251,17 @@ int32 UGamePlatformPCGGoldAssetsCommandlet::Main(const FString& Params)
     {
         bSuccess = GamePlatformPCGGoldMap::Create(Error);
     }
+    else if (Stage.Equals(TEXT("RepairMap"), ESearchCase::IgnoreCase))
+    {
+        bSuccess = GamePlatformPCGGoldMap::Repair(Error);
+    }
     else if (Stage.Equals(TEXT("Verify"), ESearchCase::IgnoreCase))
     {
         bSuccess = GamePlatformPCGGoldMap::Verify(Error);
     }
     else
     {
-        Error = TEXT("仅支持Definitions/Realized/Map/Verify四个固定GoldLevel阶段。");
+        Error = TEXT("仅支持Definitions/Realized/Map/RepairMap/Verify五个固定GoldLevel阶段。");
     }
     if (!bSuccess)
     {

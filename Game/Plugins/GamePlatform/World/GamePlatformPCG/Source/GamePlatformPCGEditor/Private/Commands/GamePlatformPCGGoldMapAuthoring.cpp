@@ -17,6 +17,7 @@
 #include "GamePlatformPCGLog.h"
 #include "HAL/FileManager.h"
 #include "Misc/PackageName.h"
+#include "Misc/Paths.h"
 #include "PCGComponent.h"
 #include "PCGGraph.h"
 #include "Types/GamePlatformPCGDomainIds.h"
@@ -93,13 +94,66 @@ FString GetGraphPath(const FPlacement& Item)
     return GoldRoot + Folder + Name + TEXT(".") + Name;
 }
 
+
+/**
+ * 在绑定UPCGGraph前准备固定编辑器生成范围。UE5.8跟踪器通过Actor的PrimitiveComponent
+ * 推导执行源Bounds；Spline/Polygon/Connector单独没有Primitive范围，会在地图保存/重开时
+ * 报Invalid bounds。生成范围只是无碰撞、无导航的静态数字快照，不主动生成PCG或影响服务器。
+ */
+bool ApplyGenerationBounds(AGamePlatformPCGActorBase& Actor, const FPlacement& Spec, FString& Error)
+{
+    UBoxComponent* Bounds = Actor.GenerationBounds.Get();
+    if (!IsValid(Bounds))
+    {
+        Error = TEXT("平台PCG放置器缺少无碰撞GenerationBounds，不能交给官方PCG追踪。");
+        return false;
+    }
+
+    FVector Center = Actor.GetActorLocation();
+    FVector Half = !Spec.HalfExtents.IsNearlyZero()
+        ? Spec.HalfExtents : FVector(250.0f, 250.0f, 200.0f);
+    if (!Spec.Shape.IsEmpty())
+    {
+        FBox ShapeBounds(EForceInit::ForceInit);
+        for (const FVector& Point : Spec.Shape)
+        {
+            if (Point.ContainsNaN())
+            {
+                Error = TEXT("GoldLevel样条存在非法空间点坐标。");
+                return false;
+            }
+            ShapeBounds += Point;
+        }
+        if (!ShapeBounds.IsValid)
+        {
+            Error = TEXT("GoldLevel几何不能计算合法的PCG空间范围。");
+            return false;
+        }
+        const double Margin = Spec.HalfWidth >= 0.0f ? Spec.HalfWidth : 100.0;
+        Center = ShapeBounds.GetCenter();
+        Half = ShapeBounds.GetExtent() + FVector(Margin, Margin, 200.0);
+    }
+    if (!FMath::IsFinite(Half.X) || !FMath::IsFinite(Half.Y) ||
+        !FMath::IsFinite(Half.Z) || Half.GetMin() < 1.0)
+    {
+        Error = TEXT("GoldLevel生成范围必须包含有限且非零的XYZ体积。");
+        return false;
+    }
+    Bounds->Modify();
+    Bounds->SetBoxExtent(Half, false);
+    Bounds->SetWorldLocation(Center);
+    Bounds->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Bounds->SetGenerateOverlapEvents(false);
+    Bounds->SetCanEverAffectNavigation(false);
+    return true;
+}
 bool Preflight(const TArray<FPlacement>& Specs, TArray<UClass*>& Classes,
-    TArray<UPCGGraph*>& Graphs, FString& Error)
+    TArray<UPCGGraph*>& Graphs, FString& Error, bool bRequiresNewMap = true)
 {
     const FString TargetFilename = FPackageName::LongPackageNameToFilename(
         MapPackage, FPackageName::GetMapPackageExtension());
-    if (FPackageName::DoesPackageExist(MapPackage) ||
-        IFileManager::Get().FileExists(*TargetFilename))
+    if (bRequiresNewMap && (FPackageName::DoesPackageExist(MapPackage) ||
+        IFileManager::Get().FileExists(*TargetFilename)))
     {
         Error = TEXT("PCG GoldLevel地图已存在，绝不覆盖。");
         return false;
@@ -206,13 +260,6 @@ bool GamePlatformPCGGoldMap::Create(FString& Error)
         Actor->DomainId = Spec.Domain;
         Actor->WorldStage = Spec.Stage;
         if (!Actor->SourceId.IsValid()) { Actor->SourceId = FGuid::NewGuid(); }
-
-        if (!UGamePlatformPCGEditorLibrary::BindPlacedActorGraph(Actor, Graphs[Index], Error))
-        {
-            Error = FString(Spec.Label) + TEXT("PCG图绑定失败：") + Error;
-            return false;
-        }
-
         if (!Spec.Shape.IsEmpty())
         {
             USplineComponent* Spline = nullptr;
@@ -273,6 +320,14 @@ bool GamePlatformPCGGoldMap::Create(FString& Error)
                 Exclusion->CarvePriority = Spec.Priority;
                 Exclusion->Strength = 1.0f;
             }
+        }
+
+        // 严格先配置样条/空间几何，再把批准的Graph交给官方PCGComponent追踪器。
+        if (!ApplyGenerationBounds(*Actor, Spec, Error) ||
+            !UGamePlatformPCGEditorLibrary::BindPlacedActorGraph(Actor, Graphs[Index], Error))
+        {
+            Error = FString(Spec.Label) + TEXT("生成范围/PCG图绑定失败：") + Error;
+            return false;
         }
 
         if (!Director->RegisterParticipant(Actor))
@@ -352,6 +407,112 @@ bool GamePlatformPCGGoldMap::Create(FString& Error)
     return true;
 }
 
+bool GamePlatformPCGGoldMap::Repair(FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+    // 明确只修复本工单已有GoldLevel，不创建新地图、不执行Generate、不修改其它世界内容包。
+    const FString Filename = FPackageName::LongPackageNameToFilename(
+        MapPackage, FPackageName::GetMapPackageExtension());
+    if (!FPackageName::DoesPackageExist(MapPackage) || !IFileManager::Get().FileExists(*Filename))
+    {
+        Error = TEXT("指定GoldLevel原始地图不存在，不允许借修复命令创建新地图。");
+        return false;
+    }
+    TArray<UClass*> Classes;
+    TArray<UPCGGraph*> Graphs;
+    const TArray<FPlacement> Specs = GetPlacements();
+    if (!Preflight(Specs, Classes, Graphs, Error, /*bRequiresNewMap=*/false))
+    {
+        return false;
+    }
+    UWorld* World = UEditorLoadingAndSavingUtils::LoadMap(Filename);
+    if (!IsValid(World) || !IsValid(World->PersistentLevel) ||
+        !IsValid(World->GetOutermost()) || World->GetOutermost()->GetName() != MapPackage)
+    {
+        Error = TEXT("UE无法按唯一GoldLevel绝对文件路径加载预先保存的真实UWorld。");
+        return false;
+    }
+
+    AGamePlatformPCGWorldDirector* Director = nullptr;
+    TMap<FString, AGamePlatformPCGActorBase*> Found;
+    for (AActor* Actor : World->PersistentLevel->Actors)
+    {
+        if (!IsValid(Actor)) { continue; }
+        if (AGamePlatformPCGWorldDirector* Candidate = Cast<AGamePlatformPCGWorldDirector>(Actor))
+        {
+            if (Director)
+            {
+                Error = TEXT("GoldLevel包含多个WorldDirector，拒绝更改未知地图。");
+                return false;
+            }
+            Director = Candidate;
+        }
+        if (AGamePlatformPCGActorBase* Placement = Cast<AGamePlatformPCGActorBase>(Actor))
+        {
+            const FString Label = Placement->GetActorLabel();
+            if (!Placement->SourceId.IsValid() || Found.Contains(Label))
+            {
+                Error = TEXT("GoldLevel旧Actor身份无效或Label重复，拒绝修复。");
+                return false;
+            }
+            Found.Add(Label, Placement);
+        }
+    }
+    if (!Director || Found.Num() != Specs.Num() || !Director->ValidateParticipantSet(Error))
+    {
+        Error = TEXT("GoldLevel真实Actor和WorldDirector注册集合不符合原批准的11项配置：") + Error;
+        return false;
+    }
+    for (int32 Index = 0; Index < Specs.Num(); ++Index)
+    {
+        const FPlacement& Spec = Specs[Index];
+        AGamePlatformPCGActorBase* const* Ptr = Found.Find(Spec.Label);
+        if (!Ptr || !IsValid(*Ptr) || !(*Ptr)->IsA(Classes[Index]) ||
+            (*Ptr)->DomainId != Spec.Domain || (*Ptr)->WorldStage != Spec.Stage ||
+            (*Ptr)->Graph.IsNull())
+        {
+            Error = FString(TEXT("GoldLevel未知/非法Actor类型、领域或状态，拒绝改动：")) + Spec.Label;
+            return false;
+        }
+        // 可被后端存档的SourceId不因Bounds修复而重新派生。
+    }
+
+    // 先对唯一目标.umap建立不会影响Cook的Saved诊断备份；禁止覆盖已有备份。
+    const FString BackupRoot = FPaths::ProjectSavedDir() +
+        TEXT("Validation/GamePlatformPCG/GoldMapRepairs/");
+    IFileManager::Get().MakeDirectory(*BackupRoot, true);
+    const FString Backup = BackupRoot + TEXT("PCG_GoldLevel_M1_before_bounds_") +
+        FDateTime::UtcNow().ToString(TEXT("%Y%m%d_%H%M%S")) + TEXT(".umap");
+    if (IFileManager::Get().FileExists(*Backup) ||
+        IFileManager::Get().Copy(*Backup, *Filename, true, true) != COPY_OK)
+    {
+        Error = TEXT("GoldLevel原始.umap在Saved验证目录中备份失败，拒绝原位修复。");
+        return false;
+    }
+
+    World->Modify();
+    for (const FPlacement& Spec : Specs)
+    {
+        AGamePlatformPCGActorBase* Actor = Found.FindChecked(Spec.Label);
+        Actor->Modify();
+        if (!ApplyGenerationBounds(*Actor, Spec, Error))
+        {
+            Error = FString(Spec.Label) + TEXT("空间范围原位修复失败：") + Error;
+            return false;
+        }
+    }
+    if (!UEditorLoadingAndSavingUtils::SaveMap(World, MapPackage))
+    {
+        Error = TEXT("GoldLevel空间范围已经校正但UE原位保存失败，原始备份见：") + Backup;
+        return false;
+    }
+    UE_LOG(LogGamePlatformPCG, Display,
+        TEXT("PCG GoldLevel受控Bounds修复已保存，保留11稳定来源ID；原始地图备份：%s"),
+        *Backup);
+    return true;
+}
+
 bool GamePlatformPCGGoldMap::Verify(FString& Error)
 {
     check(IsInGameThread());
@@ -378,7 +539,9 @@ bool GamePlatformPCGGoldMap::Verify(FString& Error)
         if (const AGamePlatformPCGActorBase* Placement = Cast<AGamePlatformPCGActorBase>(Actor))
         {
             if (!Placement->SourceId.IsValid() || Sources.Contains(Placement->SourceId) ||
-                Placement->Graph.IsNull() || !IsValid(Placement->PCGComponent.Get()))
+                Placement->Graph.IsNull() || !IsValid(Placement->PCGComponent.Get()) ||
+                !IsValid(Placement->GenerationBounds.Get()) ||
+                !Placement->GetComponentsBoundingBox().IsValid)
             {
                 Error = TEXT("重开地图后PCG来源ID重复或图/原生组件缺失。");
                 return false;

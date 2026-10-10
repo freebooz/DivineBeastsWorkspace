@@ -13,6 +13,14 @@ AGamePlatformPCGActorBase::AGamePlatformPCGActorBase()
 
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     SetRootComponent(SceneRoot);
+    // 所有平台PCG放置器均须具备有效原生空间包围盒：
+    // Spline/Polygon/Connector本身没有UPrimitiveComponent，不能依赖视觉网格或玩法碰撞。
+    GenerationBounds = CreateDefaultSubobject<UBoxComponent>(TEXT("GenerationBounds"));
+    GenerationBounds->SetupAttachment(SceneRoot);
+    GenerationBounds->SetBoxExtent(FVector(250.0f, 250.0f, 200.0f), false);
+    GenerationBounds->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    GenerationBounds->SetGenerateOverlapEvents(false);
+    GenerationBounds->SetCanEverAffectNavigation(false);
 
     PCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("PCGComponent"));
     PCGComponent->GenerationTrigger = EPCGComponentGenerationTrigger::GenerateOnDemand;
