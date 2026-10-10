@@ -30,6 +30,8 @@ public class DivineBeastsArenaClient : ModuleRules
             "DivineBeastsCharactersRuntime",
             "DivineBeastsAbilitiesRuntime", // 只读取拥有者已授予技能快照，绝不授予/激活技能。
             "DivineBeastsPresentationRuntime",
+            // 竞技客户端只复用项目战斗UI DTO→平台反馈的现有适配，不新造Widget或复制UI管理器。
+            "DivineBeastsUIClient",
             "GamePlatformCore",
             "GamePlatformData",
             "GamePlatformCombat",

@@ -211,6 +211,87 @@ check(
     "竞技组合根存在同一行拼接的#include预处理器错误",
 )
 
+# 战斗可选表现新增：World事实去重、Controller生命周期和浮动数值UI适配。
+feedback_bus_cpp = source(
+    "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/"
+    "GamePlatformCombat/Private/Subsystems/GamePlatformCombatFeedbackWorldSubsystem.cpp"
+)
+feedback_policy_h = source(
+    "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/"
+    "GamePlatformCombat/Private/Feedback/GamePlatformCombatFeedbackDedupePolicy.h"
+)
+feedback_dedupe_test = source(
+    "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/"
+    "GamePlatformCombat/Private/Tests/GamePlatformCombatFeedbackDedupeTests.cpp"
+)
+arena_settings_h = source(
+    "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/"
+    "Private/Feedback/DivineBeastsArenaCombatFeedbackSettings.h"
+)
+combat_ui_cpp = source(
+    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/"
+    "Private/Adapters/Combat/DivineBeastsCombatUIFeedbackLibrary.cpp"
+)
+combat_ui_test = source(
+    "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/"
+    "Private/Tests/DivineBeastsCombatUIFeedbackTests.cpp"
+)
+controller_handler = (
+    client_cpp.split(
+        "void UDivineBeastsArenaCombatFeedbackClientSubsystem::PlayerControllerChanged(",
+        1,
+    )[-1].split(
+        "void UDivineBeastsArenaCombatFeedbackClientSubsystem::WatchWorld(",
+        1,
+    )[0]
+)
+check(
+    "ReleaseProfileLeases();" in controller_handler
+    and "ObservedController.Get() == NewController" in controller_handler,
+    "控制器注销或切换未释放旧英雄Profile，或重复通知导致资源抖动",
+)
+check(
+    "FCache::TryRememberState(" in feedback_bus_cpp
+    and "TryRememberState(" in feedback_policy_h
+    and "MaxRememberedFeedback" in feedback_bus_cpp,
+    "客户端World总线未复用测试同源、有界事件去重策略",
+)
+check(
+    "EGamePlatformCombatEventType::Death" in feedback_dedupe_test
+    and "EGamePlatformCombatEventType::Damage" in feedback_dedupe_test
+    and "NumUniqueEvents()" in feedback_dedupe_test,
+    "缺少同Guid的Damage/Death独立播发与有界去重自动化测试源码",
+)
+check(
+    "OnConfirmedFeedback().AddUObject" in client_cpp
+    and "OnConfirmedFeedback().Remove" in client_cpp,
+    "竞技Client浮字桥未按World绑定/注销已确认Combat事实",
+)
+check(
+    "TSoftClassPtr<UGamePlatformFeedbackWidget>" in arena_settings_h
+    and "FGamePlatformAssetLoader::RequestAsyncLoad" in client_cpp
+    and "FGamePlatformAssetLoader::Cancel" in client_cpp,
+    "浮字Widget未使用客户端软类引用及统一异步加载/释放服务",
+)
+check(
+    "UDivineBeastsCombatUIFeedbackLibrary::SubmitFloatingText" in client_cpp
+    and "EDivineBeastsCombatFeedbackKind::ShieldDamage" in client_cpp
+    and "EDivineBeastsCombatFeedbackKind::Death" in client_cpp,
+    "已确认战斗事实未复用项目UI映射转换为分层浮字",
+)
+check(
+    "ShieldDamage" in combat_ui_cpp
+    and "MergePrefix" in combat_ui_cpp
+    and "FMath::IsFinite(Input.Magnitude)" in combat_ui_cpp,
+    "生命/护盾/治疗合并键混淆或非有限数字可以进入UI格式化",
+)
+check(
+    "TestNotEqual" in combat_ui_test
+    and "quiet_NaN()" in combat_ui_test
+    and "1000000000.0" in combat_ui_test,
+    "缺少UI浮字不同通道合并键、NaN和极端数值的自动化测试源码",
+)
+
 if issues:
     print(f"三层命中反馈静态门禁：{checked}项，失败{len(issues)}项")
     for issue in issues:
