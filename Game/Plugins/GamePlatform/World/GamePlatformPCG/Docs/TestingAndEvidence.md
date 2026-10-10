@@ -43,3 +43,11 @@
 8. 性能Profile。
 
 在上述步骤未实际成功前，不得把对应项写为“通过”。本文件后续记录真实命令、结果和外部阻塞。
+
+## 2026-10-10：P0/P1最新实施证据
+
+- 已修复旧`VerifyPCG.ps1`文档真源检查清单，并增加现行中文实施计划入口；移除非必需`-NoSharedPCH`构建标志以避免额外的引擎响应文件变化。
+- `VerifyPCGArchitecture.ps1`和`VerifyPCGGoldLevelPrerequisites.ps1`静态门禁返回0；CMake Debug/Release原生构建及CTest均通过，证据目录为`Saved/Validation/GamePlatformPCG/18bebe99-1d40-493c-94a1-396dc5e701d6/`。综合脚本返回2表示整体UE验收仍缺失，不能写成全通过。
+- Editor Win64 Development构建尝试在UBT出现4178/4179项引擎级动作，两个Job均经调用者主动停止；无完整UE编译结论。UBT日志位于`Saved/Validation/GamePlatformPCG/ca5782fa-8925-498e-81a6-84c302bb1696/`及`6409243c-b792-4def-8473-d1ef577f6239/`。
+- `UnrealEditor-Cmd -run=GamePlatformPCGFoundationTemplates`实际启动后，因完整工程缺失`GamePlatformCameraClient`模块而在插件加载阶段失败；`Game/Saved/Logs/DivineBeastsArena.log`记录`LogPluginManager: Error`。目前Foundation模板/子图实际落盘数0。
+- 本次未执行UE Automation、Gold Level地图、AssetRegistry/DataValidation、独立关闭重开、Client/Server Cook、专服剥离及性能测试。P1为外部模块装配阻断，P2～P7尚未启动，不能宣称PCG生产链已完成。

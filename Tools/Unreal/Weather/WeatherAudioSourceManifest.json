@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "generator": "Tools/Unreal/Weather/GenerateWeatherAudio.py",
+  "note": "原创合成基底，不是第三方授权录音，需在UE中实际导入为SoundWave并经试听审核。",
+  "audio": [
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Weather/Audio/SW_DBA_Weather_RainLight_Loop.wav",
+      "assetName": "SW_DBA_Weather_RainLight_Loop",
+      "recommendedAssetPath": "/DBASFXPack_Core/Weather/Audio/SW_DBA_Weather_RainLight_Loop",
+      "destinationState": "客户端独立内容包尚未登记；当前Village SourceArt只存未烘焙WAV",
+      "sha256": "571f182271987ec3cff375d1f26b33519db258c3eadc7befb52f672fddff3982",
+      "sampleRate": 48000,
+      "channels": 2,
+      "sampleWidthBits": 16,
+      "durationSeconds": 12,
+      "peak": 0.285841,
+      "rms": 0.056234,
+      "origin": "synthetic-generated-in-workspace",
+      "license": "workspace-original",
+      "engineAssetCreated": false,
+      "qualityGate": "人工试听/循环无爆音/MetaSound混音/真实场景响度测量"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Weather/Audio/SW_DBA_Weather_RainHeavy_Loop.wav",
+      "assetName": "SW_DBA_Weather_RainHeavy_Loop",
+      "recommendedAssetPath": "/DBASFXPack_Core/Weather/Audio/SW_DBA_Weather_RainHeavy_Loop",
+      "destinationState": "客户端独立内容包尚未登记；当前Village SourceArt只存未烘焙WAV",
+      "sha256": "f7273ba21ea4066d28d2de6fade5483beb499ab70fe6f97a00308aea8e7f4127",
+      "sampleRate": 48000,
+      "channels": 2,
+      "sampleWidthBits": 16,
+      "durationSeconds": 12,
+      "peak": 0.581686,
+      "rms": 0.112202,
+      "origin": "synthetic-generated-in-workspace",
+      "license": "workspace-original",
+      "engineAssetCreated": false,
+      "qualityGate": "人工试听/循环无爆音/MetaSound混音/真实场景响度测量"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Weather/Audio/SW_DBA_Weather_Wind_Loop.wav",
+      "assetName": "SW_DBA_Weather_Wind_Loop",
+      "recommendedAssetPath": "/DBASFXPack_Core/Weather/Audio/SW_DBA_Weather_Wind_Loop",
+      "destinationState": "客户端独立内容包尚未登记；当前Village SourceArt只存未烘焙WAV",
+      "sha256": "d540f789bf7bcc5f9e7a102aa9390f7beaa2cca88f352f675bfe5e0e2736e939",
+      "sampleRate": 48000,
+      "channels": 2,
+      "sampleWidthBits": 16,
+      "durationSeconds": 12,
+      "peak": 0.381785,
+      "rms": 0.063096,
+      "origin": "synthetic-generated-in-workspace",
+      "license": "workspace-original",
+      "engineAssetCreated": false,
+      "qualityGate": "人工试听/循环无爆音/MetaSound混音/真实场景响度测量"
+    }
+  ]
+}

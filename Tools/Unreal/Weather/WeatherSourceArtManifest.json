@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "generator": "Tools/Unreal/Weather/GenerateWeatherSourceTextures.py",
+  "seed": 20261010,
+  "notes": "仅为可重复的天气源纹理，必须经UE编辑器导入/设置材质/编译才能成为可运行资源；不声称生成Niagara或.uasset。",
+  "textures": [
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/SourceArt/Weather/T_GP_Weather_RainStreak_Source.png",
+      "owner": "VFX",
+      "use": "雨线Sprite透明度",
+      "sha256": "13e97280ee51a8d50d830b68a3ad962923e25375e343bac8d7228ac10529309e",
+      "size": [
+        512,
+        1024
+      ],
+      "mode": "RGBA",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/SourceArt/Weather/T_GP_Weather_RainRipple_Source.png",
+      "owner": "VFX",
+      "use": "局部水面环纹透明度",
+      "sha256": "a09ecfa86781e1b1f23aa6b79c4402aa518cb6d368f0b8280f7f5eacaf7b5985",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/SourceArt/Weather/T_GP_Weather_RainSplashFlipbook_Source.png",
+      "owner": "VFX",
+      "use": "4x4水花序列帧，按行依次播放",
+      "sha256": "fc146294bf64ecf9f40c8bf1f91cdcd38d3721b1159f6306fcd138bb99a904f9",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/SourceArt/Weather/T_GP_Weather_SnowflakeAtlas_Source.png",
+      "owner": "VFX",
+      "use": "4x4形态不同的雪花图集",
+      "sha256": "4bf5c06911610492ab5246bf8be9ac3707868397048850c20f4a00d362d4b4e2",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Weather/T_GP_Weather_WetnessNoise_Source.png",
+      "owner": "Surface",
+      "use": "无缝湿润宏观噪声",
+      "sha256": "cc5bc2075b97c12c01febcf24ec65f8fca49698d62a5c844aed86500483306f0",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "sourceSRGB": false,
+      "recommendedCompression": "Masks",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Weather/T_GP_Weather_PuddleMask_Source.png",
+      "owner": "Surface",
+      "use": "无缝积水辅助遮罩，不能独自替代地形坡度/高度规则",
+      "sha256": "1f838594a0e0c286d5dd098b47d5b7e260f1da062c450aceec97da1e86200d62",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "sourceSRGB": false,
+      "recommendedCompression": "Masks",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Weather/T_GP_Weather_SnowAlbedo_Source.png",
+      "owner": "Surface",
+      "use": "雪色PBR基础颜色源贴图",
+      "sha256": "85d39590175ed4dcf9ddaa0361f97db8c95de0fe1cb064a611c6be0c7782551e",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Weather/T_GP_Weather_SnowNormal_Source.png",
+      "owner": "Surface",
+      "use": "雪面切线空间Normal源贴图",
+      "sha256": "e881087d1700fe7a4db41840e0e3ef721632fc22d18b5cbe5584c1ea46b34dcd",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Weather/T_GP_Weather_SnowORM_Source.png",
+      "owner": "Surface",
+      "use": "R=AO,G=Roughness,B=Metallic线性打包",
+      "sha256": "5dd39aed77985558d97d5fa6d09d02dc3499cc39eafe5e590e363365edb6131c",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sourceSRGB": false,
+      "recommendedCompression": "Masks",
+      "originalArt": "procedural-self-generated",
+      "license": "workspace-original",
+      "engineAssetCreated": false
+    }
+  ]
+}

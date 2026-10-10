@@ -113,6 +113,14 @@ public:
     }
 
 private:
+    /** 读取项目默认主题编号并交给平台UI服务；空配置兼容旧页面，失败不阻断登录。 */
+    void EnsureConfiguredTheme();
+    UFUNCTION()
+    void HandleThemeRequestFinished(FGuid RequestId, bool bSuccess, FText Reason);
+    /** 只记录本组合根发起的请求，不取消设置页面或其他合法调用方的主题请求。 */
+    FGuid PendingThemeRequestId;
+    bool bDefaultThemeRequested = false;
+
     /**
      * 从DBAUIPack_Core稳定软路径安装项目默认RootLayout。
      * 只在初始化或真实状态事件到达时重试，不使用Tick；成功后由平台层持有实例。

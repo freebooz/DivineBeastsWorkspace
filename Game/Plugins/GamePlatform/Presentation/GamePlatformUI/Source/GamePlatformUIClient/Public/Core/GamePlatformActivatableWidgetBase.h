@@ -4,8 +4,10 @@
 
 #include "CommonActivatableWidget.h"
 #include "GamePlatformUITypes.h"
+#include "Styling/GamePlatformUIThemeTypes.h"
 #include "GamePlatformActivatableWidgetBase.generated.h"
 
+class UGamePlatformUIThemeBinding;
 class UGamePlatformUIAdaptiveSubsystem;
 class UGamePlatformViewModelBase;
 
@@ -29,6 +31,10 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformActivatableWidgetBase
     GENERATED_BODY()
 
 public:
+    /** 默认空数组保持旧页面不变；名称只引用自身WidgetTree，不更改按钮类型或业务命令。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI|Theme")
+    TArray<FGamePlatformUIWidgetStyleBinding> ThemeBindings;
+
     /**
      * 设置当前可激活界面的 ViewModel。
      * 激活状态下替换 ViewModel 时，会结束旧页面代次并启动新页面代次。
@@ -75,6 +81,10 @@ protected:
     void BP_OnAdaptiveContextChanged(FGamePlatformUIAdaptiveContext Context);
 
 private:
+    /** 激活期间接收主题事件，失活保留实际绘制类引用，重新激活使用最新主题。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformUIThemeBinding> ThemeBinding = nullptr;
+
     /** 接收 ViewModel 状态变化，并转发到 C++ / Blueprint 扩展点。 */
     UFUNCTION()
     void HandleViewModelStateChanged(int32 Revision, int32 PageGeneration);

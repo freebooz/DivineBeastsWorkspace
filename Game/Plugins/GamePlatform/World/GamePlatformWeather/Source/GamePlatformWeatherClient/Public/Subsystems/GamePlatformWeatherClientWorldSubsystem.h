@@ -39,7 +39,9 @@ private:
     FGamePlatformWeatherVisualChanged VisualChanged;
     FDelegateHandle SourceSnapshotHandle;
     FTimerHandle TransitionTimer;
-    FGuid ActiveRequestId;
+    /** VFX和SFX使用不同请求身份，避免统一表现总线/播放器将两条请求去重成一条。 */
+    FGuid ActiveVfxRequestId;
+    FGuid ActiveSfxRequestId;
     FName ActiveVfxTag;
     FName ActiveSfxTag;
     bool bClosing = false;

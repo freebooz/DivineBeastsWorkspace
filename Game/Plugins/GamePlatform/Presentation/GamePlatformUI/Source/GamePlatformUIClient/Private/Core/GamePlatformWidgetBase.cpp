@@ -3,6 +3,7 @@
 #include "Adaptive/GamePlatformUIAdaptiveSubsystem.h"
 #include "Engine/LocalPlayer.h"
 #include "ViewModels/GamePlatformViewModelBase.h"
+#include "Styling/GamePlatformUIThemeBinding.h"
 
 void UGamePlatformWidgetBase::InitializeWidgetViewModel(
     UGamePlatformViewModelBase* InViewModel)
@@ -53,6 +54,12 @@ void UGamePlatformWidgetBase::NativeConstruct()
 
     // 初始刷新只执行一次，不引入持续 Tick 或轮询。
     RefreshInitialState();
+    // 样式应用可能调用CommonUI蓝图回调，必须放在事件登记完成之后；销毁可立即解绑。
+    if (bPlatformEventsBound && !ThemeBindings.IsEmpty())
+    {
+        if (!ThemeBinding) ThemeBinding = NewObject<UGamePlatformUIThemeBinding>(this);
+        ThemeBinding->Initialize(this, ThemeBindings);
+    }
 }
 
 void UGamePlatformWidgetBase::NativeDestruct()
@@ -107,6 +114,7 @@ void UGamePlatformWidgetBase::BindPlatformEvents()
 
 void UGamePlatformWidgetBase::UnbindPlatformEvents()
 {
+    if (ThemeBinding) ThemeBinding->Unbind();
     if (IsValid(ViewModel))
     {
         ViewModel->OnViewStateChanged.RemoveDynamic(

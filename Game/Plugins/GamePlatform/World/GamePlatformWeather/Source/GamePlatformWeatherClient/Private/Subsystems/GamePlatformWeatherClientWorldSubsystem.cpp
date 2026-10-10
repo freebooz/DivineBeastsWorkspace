@@ -90,9 +90,20 @@ void UGamePlatformWeatherClientWorldSubsystem::OnSnapshotReceived(
     const FGamePlatformWeatherSnapshot& Snapshot)
 {
     check(IsInGameThread());
-    if (bClosing || Snapshot.Revision <= ActiveSnapshot.Revision) return;
+    if (bClosing || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
+    if (Snapshot.Revision == 0)
+    {
+        // 当前复制Actor退出；先撤销持久特效，再清理过渡，允许同一世界新的Actor从Revision=1重新绑定。
+        CancelPreviousPresentation();
+        GetWorld()->GetTimerManager().ClearTimer(TransitionTimer);
+        ActiveSnapshot = FGamePlatformWeatherSnapshot();
+        ApplyVisualState(FGamePlatformWeatherState());
+        return;
+    }
+    if (Snapshot.Revision <= ActiveSnapshot.Revision) return;
     ActiveSnapshot = Snapshot;
     CancelPreviousPresentation();
+    if (bClosing || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
     const FGamePlatformWeatherState Destination = Snapshot.To.Decode();
     SendPresentationEvent(Destination, false);
     UpdateTransition();
@@ -136,7 +147,9 @@ void UGamePlatformWeatherClientWorldSubsystem::ApplyVisualState(const FGamePlatf
             Surface->ApplyEnvironmentState(Visual);
         }
     }
-    VisualChanged.Broadcast(LastVisualState);
+    // 派发稳定值快照，委托内部再次切换天气时不更改正在发出的数据。
+    const FGamePlatformWeatherState PublishedState = LastVisualState;
+    VisualChanged.Broadcast(PublishedState);
 }
 
 FDelegateHandle UGamePlatformWeatherClientWorldSubsystem::AddVisualChangedHandler(
@@ -159,7 +172,8 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
     if (!World || !World->GetGameInstance()) return;
     if (!bCancellation)
     {
-        ActiveRequestId = FGuid::NewGuid();
+        ActiveVfxRequestId = FGuid::NewGuid();
+        ActiveSfxRequestId = FGuid::NewGuid();
         const FString Base = FString(TEXT("Presentation.Weather.")) + WeatherTagSuffix(State.Type);
         ActiveVfxTag = FName(*(Base + TEXT(".VFX")));
         ActiveSfxTag = FName(*(Base + TEXT(".SFX")));
@@ -169,12 +183,13 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
         if (!IsValid(LocalPlayer) || LocalPlayer->GetWorld() != World) continue;
         auto* Presentation = LocalPlayer->GetSubsystem<UGamePlatformPresentationClientSubsystem>();
         if (!Presentation) continue;
-        for (const FName TagName : {ActiveVfxTag, ActiveSfxTag})
+        for (int32 Channel = 0; Channel < 2; ++Channel)
         {
+            const FName TagName = Channel == 0 ? ActiveVfxTag : ActiveSfxTag;
             const FGameplayTag SemanticTag = UGameplayTagsManager::Get().RequestGameplayTag(TagName, false);
             if (!SemanticTag.IsValid()) continue; // 配置无标签时静默降级，不私建Native Tag。
             FGamePlatformPresentationRequest Request;
-            Request.RequestId = ActiveRequestId;
+            Request.RequestId = Channel == 0 ? ActiveVfxRequestId : ActiveSfxRequestId;
             Request.SemanticTag = SemanticTag;
             Request.SourceId = TEXT("GamePlatformWeather");
             Request.ContextId = TEXT("WorldWeather");
@@ -191,10 +206,11 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
 
 void UGamePlatformWeatherClientWorldSubsystem::CancelPreviousPresentation()
 {
-    if (ActiveRequestId.IsValid())
+    if (ActiveVfxRequestId.IsValid() || ActiveSfxRequestId.IsValid())
     {
         SendPresentationEvent(LastVisualState, true);
-        ActiveRequestId.Invalidate();
+        ActiveVfxRequestId.Invalidate();
+        ActiveSfxRequestId.Invalidate();
         ActiveVfxTag = NAME_None;
         ActiveSfxTag = NAME_None;
     }

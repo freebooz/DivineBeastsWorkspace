@@ -13,13 +13,14 @@ class GAMEPLATFORMWEATHERRUNTIME_API AGamePlatformWeatherReplicator final : publ
 public:
     AGamePlatformWeatherReplicator();
     const FGamePlatformWeatherSnapshot& GetSnapshot() const { return Snapshot; }
-    /** 只允许当前世界的权威天气子系统调用，变更会主动刷新网络复制。 */
-    bool PublishAuthoritativeSnapshot(const FGamePlatformWeatherSnapshot& InSnapshot);
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 private:
+    friend class UGamePlatformWeatherWorldSubsystem;
+    /** 写权限仅赋予服务器世界服务，其他代码不得绕过天气状态机直接发布网络快照。 */
+    bool PublishAuthoritativeSnapshot(const FGamePlatformWeatherSnapshot& InSnapshot);
     UPROPERTY(ReplicatedUsing=OnRep_WeatherSnapshot)
     FGamePlatformWeatherSnapshot Snapshot;
     UFUNCTION()

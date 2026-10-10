@@ -72,6 +72,7 @@ Game/Plugins/GamePlatform/World/GamePlatformPCG
 正式改造方案与执行计划：
 
 - [Docs/改造方案与执行计划.md](Docs/改造方案与执行计划.md)
+- [PCG实施工作包P0～P7（2026-10-10）](../../../../../Docs/Implementation/GamePlatformPCG/PCGExecutionPlan_20261010.md) —— 含任务顺序、三层归属、验收门禁与回退策略；计划不代表已完成实施。
 - [Docs/组件清单与使用说明.md](Docs/组件清单与使用说明.md) —— 面向程序、TA（技术美术）、地编、美术和测试的完整组件表、状态和使用方式。
 
 编辑器模块当前真实能力与断点：

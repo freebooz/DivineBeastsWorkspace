@@ -7,10 +7,18 @@
 #include "GameplayTagContainer.h"
 #include "GamePlatformUITypes.h"
 #include "Types/GamePlatformDataLease.h"
+#include "Styling/GamePlatformUIThemeTypes.h"
 #include "Requests/GamePlatformUIFeedbackRequest.h"
 #include "Requests/GamePlatformUINotificationRequest.h"
 #include "Requests/GamePlatformWorldUIRequest.h"
 #include "GamePlatformUIManagerSubsystem.generated.h"
+
+class UGamePlatformUIThemeService;
+
+/** 已完整切换主题后的本地玩家事件；仅低频触发，不传递业务权威。 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGamePlatformUIThemeChanged, int64, Revision);
+/** 请求终态：成功、失败或取消。失败时当前主题保持不变。 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FGamePlatformUIThemeRequestFinished, FGuid, RequestId, bool, bSuccess, FText, Reason);
 
 class UCommonActivatableWidget;
 class UCommonActivatableWidgetStack;
@@ -64,6 +72,21 @@ public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
     virtual void PlayerControllerChanged(APlayerController* NewPlayerController) override;
+
+    /** 异步切换本地玩家主题；非法/关闭/发布重入返回无效GUID，接纳后事件通知终态。 */
+    UFUNCTION(BlueprintCallable, Category="UI|Theme")
+    FGuid RequestThemeAsync(FPrimaryAssetId ThemeDefinitionId, FGamePlatformUIThemeContext Context);
+    /** 只取消指定的当前请求，保留已生效主题。 */
+    UFUNCTION(BlueprintCallable, Category="UI|Theme")
+    bool CancelThemeRequest(FGuid RequestId);
+    UFUNCTION(BlueprintPure, Category="UI|Theme")
+    FPrimaryAssetId GetCurrentThemeId() const;
+    UFUNCTION(BlueprintPure, Category="UI|Theme")
+    int64 GetThemeRevision() const;
+    /** 供平台兼容绑定使用，返回已加载只读类；无资源时不执行加载。 */
+    UClass* ResolveThemeStyle(EGamePlatformUIStyleKind Kind, FName StyleId, bool bAllowParentFallback, FText& Error) const;
+    UPROPERTY(BlueprintAssignable, Category="UI|Theme") FGamePlatformUIThemeChanged OnThemeChanged;
+    UPROPERTY(BlueprintAssignable, Category="UI|Theme") FGamePlatformUIThemeRequestFinished OnThemeRequestFinished;
 
     UFUNCTION(BlueprintCallable, Category="UI|Manager")
     bool InstallRootLayoutClass(TSubclassOf<UGamePlatformUILayerStack> RootLayoutClass);
@@ -243,6 +266,10 @@ private:
     /** 世界空间UI集中投影服务。 */
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformWorldUIService> WorldUIService = nullptr;
+
+    /** 每个LocalPlayer唯一本地主题服务；沿用Data租约，没有第二个主题Subsystem。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformUIThemeService> ThemeService = nullptr;
 
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UGamePlatformUIScreenDefinition>> ScreenDefinitions;

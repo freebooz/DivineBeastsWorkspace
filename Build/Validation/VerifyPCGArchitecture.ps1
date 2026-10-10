@@ -40,11 +40,25 @@ foreach ($path in @($descriptorPath,$runtimeBuild,$editorBuild,$schemaHeader,$pr
 if ($findings.Count -eq 0) {
     $descriptor = Get-Content -LiteralPath $descriptorPath -Raw -Encoding UTF8 | ConvertFrom-Json
     Assert-True (@($descriptor.Modules).Count -eq 2) '插件必须保持GamePlatformPCG Runtime + GamePlatformPCGEditor Editor双模块。'
+    # 既查模块数量也查实际注册名/宿主，防止空壳或误把编辑器服务装入Dedicated Server。
+    $runtimeModule = @($descriptor.Modules | Where-Object { $_.Name -eq 'GamePlatformPCG' -and $_.Type -eq 'Runtime' })
+    $editorModule = @($descriptor.Modules | Where-Object { $_.Name -eq 'GamePlatformPCGEditor' -and $_.Type -eq 'Editor' })
+    Assert-True ($runtimeModule.Count -eq 1 -and $editorModule.Count -eq 1) 'PCG必须且仅能注册共享Runtime与Editor两个准确模块。'
+    Assert-True (@($editorModule[0].TargetAllowList).Count -eq 1 -and @($editorModule[0].TargetAllowList)[0] -eq 'Editor') 'PCGEditor目标白名单必须明确限制为Editor。'
+    foreach ($dependency in @('GamePlatformCore','GamePlatformData','GamePlatformWorld','PCG')) {
+        Assert-True (@($descriptor.Plugins | Where-Object { $_.Name -eq $dependency -and $_.Enabled }).Count -eq 1) ("PCG缺少或重复插件依赖：{0}" -f $dependency)
+    }
     $editorTargetSource = Get-Content -LiteralPath $editorTarget -Raw -Encoding UTF8
     Assert-True ($editorTargetSource.Contains('EnablePlugins.Add("GamePlatformPCG")')) 'DivineBeastsArenaEditor Target必须显式装配GamePlatformPCG编辑器工具能力。'
     Assert-True (-not [bool]$descriptor.CanContainContent) '生产模板资产尚未验收前CanContainContent必须保持false。'
     $editorBuildSource = Get-Content -LiteralPath $editorBuild -Raw -Encoding UTF8
     Assert-True ($editorBuildSource.Contains('DataValidation')) 'GamePlatformPCGEditor必须显式依赖DataValidation以承载原生Editor Validator。'
+    $runtimeBuildSource = Get-Content -LiteralPath $runtimeBuild -Raw -Encoding UTF8
+    Assert-True ($runtimeBuildSource.Contains('"PCG"') -and $runtimeBuildSource.Contains('"GamePlatformData"') -and $runtimeBuildSource.Contains('"GamePlatformCore"')) 'PCGRuntime模块必须通过构建规则显式依赖官方PCG、Data与Core。'
+    Assert-True (-not $runtimeBuildSource.Contains('"UnrealEd"') -and -not $runtimeBuildSource.Contains('"GamePlatformPCGEditor"')) '共享Runtime不允许反向依赖编辑器模块。'
+    Assert-True ($editorBuildSource.Contains('"GamePlatformPCG"') -and $editorBuildSource.Contains('"UnrealEd"')) 'PCGEditor必须以私有依赖消费共享Runtime与编辑器接口。'
+    $worldSubsystem = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Private/Subsystems/GamePlatformPCGWorldSubsystem.cpp') -Raw -Encoding UTF8
+    Assert-True ($worldSubsystem.Contains('NM_DedicatedServer') -and $worldSubsystem.Contains('NM_ListenServer') -and $worldSubsystem.Contains('ServerCosmeticForbidden')) '平台PCG共享运行端必须拒绝服务端纯装饰生成。'
 
     $runtimeFiles = Get-ChildItem (Join-Path $pluginRoot 'Source/GamePlatformPCG') -Recurse -File -Include *.h,*.cpp,*.cs
     $runtimeSource = ($runtimeFiles | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 }) -join "`n"
@@ -75,6 +89,10 @@ if ($findings.Count -eq 0) {
     Assert-True ($environmentHeader.Contains('AssetBundles="PCGGeneration"')) 'MeshSet真实网格软引用必须进入PCGGeneration Asset Bundle。'
 
     $template = Get-Content -LiteralPath $templateHeader -Raw -Encoding UTF8
+    # 领域清单包含42个跨游戏稳定语义ID，仅作静态映射合同；资产实际存在性由Editor/AssetRegistry另验。
+    $domainCatalog = Get-Content -LiteralPath (Join-Path $pluginRoot 'Docs/DomainCatalog.md') -Encoding UTF8
+    $domainNames = @($domainCatalog | ForEach-Object { if ($_ -match '^\|\s*([A-Za-z]+\.[A-Za-z]+)\s*\|') { $Matches[1] } })
+    Assert-True ($domainNames.Count -eq 42 -and @($domainNames | Sort-Object -Unique).Count -eq 42) 'PCG领域目录必须恰好登记42个无重复稳定语义。'
     foreach ($name in @('ScatterSurface','LinearDresser','EnclosureClosed','CropField','RailingAttached')) {
         Assert-True ($template.Contains($name)) ("Template Contract缺少模板ID：{0}" -f $name)
     }

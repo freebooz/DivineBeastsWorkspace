@@ -30,3 +30,29 @@
 4. 实施有限编辑器创作入口，真实图由引擎创建；不能启动正式工程时资产与保存/重开保持未执行。
 5. 实施有限范围World消费与Loading组合层贡献，不等待世界总Ready；真实Session联调保持前置阻塞。
 6. 执行可用检查、补十四份审查正文及32组追溯，独立列出源码、UE生成、保存、Cook、网络和人工状态。
+
+## 2026-10-10｜依据PCGExecutionPlan_20261010.md实施的检查点
+
+> 工单范围：P0工程整改与P1编辑器模板生成尝试；P2～P7因前置生产验收未通过而未实施。当前HEAD=a412a7ed6daeb8cf4d516021fe55ce45b615d5e5（执行前基线，后续外部更改须重新核验）；保留其它任务的未提交工作，不执行Git提交或推送。
+
+### 已实施修改
+
+- `Build/Validation/VerifyPCG.ps1`（PCG综合验证脚本）：用现行中文版文档/执行计划取代已退休的英文占位文档列表；保留综合报告退出码2表示“未完成全部UE验收”的严格语义；取消导致引擎级大量动作失效重编的 `-NoSharedPCH` 参数，继续输出构建日志/退出码。
+- `Build/Validation/VerifyPCGArchitecture.ps1`（架构门禁）：增加真实Runtime/Editor模块身份、Editor目标允许列表、插件依赖、Runtime构建模块隔离、服务端纯装饰拒绝和42领域ID唯一性静态检查；不冒充AssetRegistry（资产注册）或动态行为验证。
+- 本执行记录及 `GamePlatformPCG/Docs/TestingAndEvidence.md`（PCG测试证据）同步更新。未修改PCG Runtime/Editor C++核心算法、地图或ContentPack（内容包）装配。
+
+### 已执行验证（真实结果）
+
+1. `VerifyPCGArchitecture.ps1`（PCG架构静态检查）：通过，退出码0。
+2. `VerifyPCGGoldLevelPrerequisites.ps1`（金标准关卡前置静态检查）：通过，退出码0。
+3. `VerifyPCG.ps1 -NativeTests`（综合原生验证）：`DocumentPresenceOnly`、CMake Configure、Debug/Release Build、Debug/Release CTest 均为通过；子项退出码均为0；总入口返回2属于脚本既定“完整UE验收未完成”语义。实际证据：`Saved/Validation/GamePlatformPCG/18bebe99-1d40-493c-94a1-396dc5e701d6/`。
+4. `DivineBeastsArenaEditor Win64 Development`（编辑器构建）：尝试两次，分别要求执行约4178和4179项引擎级构建动作。为避免在并行任务环境下继续开展无边界引擎大重编，已通过Runner仅停止本次创建的两个构建Job；**无最终UBT成功/失败结论**，不得将主动停止误判成编译失败或通过。证据目录分别为 `Saved/Validation/GamePlatformPCG/ca5782fa-8925-498e-81a6-84c302bb1696/` 与 `Saved/Validation/GamePlatformPCG/6409243c-b792-4def-8473-d1ef577f6239/`。
+5. `UnrealEditor-Cmd.exe -run=GamePlatformPCGFoundationTemplates`（官方编辑器命令行生成模板）：使用存在的2026-10-09 PCG模块二进制尝试执行；引擎启动阶段在完整项目的 `GamePlatformCamera（游戏平台相机插件）` 缺少 `GamePlatformCameraClient（相机客户端模块）` 时报告 `LogPluginManager: Error`，退出码1，未到PCG模板生成执行阶段。真实日志：`Game/Saved/Logs/DivineBeastsArena.log`，相关时间约2026-10-10 10:49。未为绕过故障禁用相机插件、修改正式工程或伪造生成资产。
+6. `Game/Content/Development/Foundation/PCG/` 下实际PCG `.uasset` 新增数量：0。真实Template保存/重开、Gold Level、UE Automation（UE自动化）、Client/Server干净Cook、服务器碰撞/导航一致性及性能验证均**未执行**，不得写成已完成。
+
+### 当前阻断及下一包准入
+
+- **P0状态：部分完成，UE构建/项目装配阻断。** 架构、原生测试及现行文档验证通过，尚无最新完整UE Editor/Client/Server构建证据。
+- **P1状态：尝试生成，未完成。** 项目编辑器启动时缺少GamePlatformCameraClient二进制。需由Camera/构建环境责任范围先恢复完整项目模块构建及编辑器加载，之后重新运行现有Foundation Commandlet并确认19个模板/子图的真实创建、独立重开及合同验证；不可擅自关闭其它必需插件来声明生产通过。
+- **P2～P7：未启动。** P1不满足生成/资产/Cook准入时，不能开展真实关卡或后续世界生产里程碑。
+- 下次恢复时先核对并行修改、UBT为何触发数千引擎动作、项目相机模块二进制实际状态，再以已有正式目标增量编译复验；证据齐全后才能继续实施PCG资源绑定、Gold Level及项目层资产配置。

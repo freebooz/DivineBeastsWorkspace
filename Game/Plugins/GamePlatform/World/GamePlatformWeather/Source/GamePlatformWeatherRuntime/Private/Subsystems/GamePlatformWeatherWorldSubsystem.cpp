@@ -185,7 +185,9 @@ void UGamePlatformWeatherWorldSubsystem::ObserveReplicator(
         return;
     Replicator = const_cast<AGamePlatformWeatherReplicator*>(Source);
     CurrentSnapshot = Snapshot;
-    SnapshotChanged.Broadcast(CurrentSnapshot);
+    // 事件按值持有当前快照，重入回调再次改变天气时不污染当前通知的事实。
+    const FGamePlatformWeatherSnapshot PublishedSnapshot = CurrentSnapshot;
+    SnapshotChanged.Broadcast(PublishedSnapshot);
 }
 
 void UGamePlatformWeatherWorldSubsystem::ForgetReplicator(const AGamePlatformWeatherReplicator* Source)
@@ -196,6 +198,8 @@ void UGamePlatformWeatherWorldSubsystem::ForgetReplicator(const AGamePlatformWea
         StopSchedule();
         Replicator.Reset();
         CurrentSnapshot = FGamePlatformWeatherSnapshot();
-        // 实例意外销毁时不把旧状态视为新天气；客户端适配会在世界结束时释放自身资源。
+        // 同一世界Actor意外销毁时广播显式空状态，避免新Actor从Revision=1重启却被客户端旧代次拒绝。
+        const FGamePlatformWeatherSnapshot ResetSnapshot;
+        SnapshotChanged.Broadcast(ResetSnapshot);
     }
 }

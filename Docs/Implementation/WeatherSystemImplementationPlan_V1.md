@@ -24,6 +24,22 @@
 
 尚需单独验证：三目标UE构建、引擎自动化测试、真实资产生成、客户端粒子/雨雪声音、双客户端网络、Cook/Stage、性能及人工效果。新天气类型与湿润参数是通用合同，不允许把客户端视觉值用作权威摩擦/战斗结算。
 
+## 2026-10-10 执行进度与剩余阻断
+
+- P0：天气插件独立职责及三层边界已落地，基线47代码插件＋16内容插件；静态基线审计Passed=True，Pester架构13/13与天气隔离5/5。
+- P1：天气数值、网络量化与`UGamePlatformWeatherPresetDefinition`已实现，天气测试源文件通过C++编译；`GamePlatform.Weather.Runtime.QuantizationAndTransition`自动化用例尚未在UE运行。
+- P2：服务器世界手动天气、自动权重调度、状态过渡及取消代码已落地，定向编译通过；未执行World运行自动化。
+- P3：单世界权威复制Actor、From/To量化快照、版本过滤、晚加入时钟重建代码已落地；Server/Editor定向编译通过，**联机/重连行为未验证**。
+- P4：WeatherClient世界子系统已完成Surface参数写入和VFX/SFX中立表现提交，独立请求身份和世界取消已修复；Client/Editor定向编译通过，真实视觉资源不可用。
+- P5：**未完成**。Monolith服务虽可解析，实际查询返回Unreal Editor未运行；天气插件尚无完整加载DLL，Surface真实MPC、母材质/函数及雨雪Niagara/SFX资产缺失，不创建假二进制文件。
+  - 本轮补充P5源素材：真实生成9张程序化天气PNG和3份原创合成WAV，并通过SHA256与12资源形态门禁；已提供默认只读、显式授权才导入的UE Texture2D脚本。
+  - 实际尝试运行MPC核心Commandlet时因为`GamePlatformServer` Editor模块缺少可加载DLL而失败；限定模块构建因其他同工作区构建互斥未取得成功DLL。本项仍为**未完成**，实际Niagara、材质、SoundWave、Definition、Catalog和人工视觉审核全部待验。证据见`Docs/Implementation/WeatherSourceAssetsExecution_20261010.md`。
+- P6：DBAWorlds正式世界GameMode增加天气激活与项目默认天气/调度配置，Server/Editor定向编译通过；真实新手村地图人工验证未执行。
+- P7：已落实世界Scoped生命周期、无持续天气Tick、状态变化网络复制、0.1秒过渡定时器、量化编码、取消与重入快照处理；尚无性能指标与长稳运行证据。
+- P8：三个正式Target下7次关键C++定向编译全部退出码0，Pester合计18通过；**三目标完整链接/UE Automation/Cook/双客户端/人工可见雨雪未通过或未执行**。全量Editor构建因触发4178项引擎级重建被显式终止，不计通过。
+
+详细执行命令、证据和限制归`Game/Plugins/GamePlatform/World/GamePlatformWeather/Docs/TestingAndEvidence.md`。后续必须在编辑器实际运行且Weather模块完成正式构建链接后，依序创建真实天气资产、绑定目录与世界材质实例，运行UE自动化及双客户端网络场景；不得凭源码存在将P5/P8标记完成。
+
 ## 原有修改保护
 
 执行开始时工作区已有未提交战斗反馈变更：`Docs/Implementation/CombatFeedbackWorkOrders_20261009.md`与`Tests/Architecture/InspectCombatFeedbackDeliveryReadiness.py`。本次天气任务不得覆盖、撤销或提交这些文件。合入前核对Git diff并分离天气变更。

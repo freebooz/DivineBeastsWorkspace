@@ -2,8 +2,10 @@
 
 #include "CommonUserWidget.h"
 #include "GamePlatformUITypes.h"
+#include "Styling/GamePlatformUIThemeTypes.h"
 #include "GamePlatformWidgetBase.generated.h"
 
+class UGamePlatformUIThemeBinding;
 class UGamePlatformUIAdaptiveSubsystem;
 class UGamePlatformViewModelBase;
 
@@ -31,6 +33,10 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformWidgetBase : public UCommonUserWidge
     GENERATED_BODY()
 
 public:
+    /** 显式语义绑定，默认空保持历史Widget的布局/样式与业务行为；仅由编辑器资产配置。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI|Theme")
+    TArray<FGamePlatformUIWidgetStyleBinding> ThemeBindings;
+
     /**
      * 设置当前控件使用的 ViewModel。
      * 如果控件已经构造完成，会安全解绑旧 ViewModel、绑定新 ViewModel，并立即刷新初始状态。
@@ -77,6 +83,10 @@ protected:
     void BP_OnAdaptiveContextChanged(FGamePlatformUIAdaptiveContext Context);
 
 private:
+    /** 绑定对象由当前控件实例持有，销毁/失活注销事件，不修改共享CDO。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformUIThemeBinding> ThemeBinding = nullptr;
+
     /** 处理平台 ViewModel 的统一状态变化广播。 */
     UFUNCTION()
     void HandleViewModelStateChanged(int32 Revision, int32 PageGeneration);

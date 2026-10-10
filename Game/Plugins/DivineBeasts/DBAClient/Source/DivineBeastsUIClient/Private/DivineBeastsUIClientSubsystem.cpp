@@ -2,6 +2,8 @@
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Misc/ConfigCacheIni.h"
+#include "HAL/PlatformProperties.h"
 
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
@@ -36,6 +38,7 @@ void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* 
     Super::PlayerControllerChanged(NewPlayerController);
     if (!IsValid(NewPlayerController)) return;
     // 世界退出可以取消在途页面；新控制器是真实可创建Widget的生命周期通知，消费现有快照即可恢复。
+    EnsureConfiguredTheme();
     EnsureDefaultRootLayout();
     PullInitialState();
 }
@@ -62,10 +65,13 @@ void UDivineBeastsUIClientSubsystem::Initialize(
         PlatformUI->OnScreenClosed.AddDynamic(
             this,
             &UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed);
+        PlatformUI->OnThemeRequestFinished.AddUniqueDynamic(
+            this, &UDivineBeastsUIClientSubsystem::HandleThemeRequestFinished);
     }
 
     RegisterDefaultScreenDefinitions();
     EnsureDefaultRootLayout();
+    EnsureConfiguredTheme();
 
     // DBAClient 内部由项目 UI 层单向依赖项目 ApplicationFlow，
     // 不要求流程模块反向认识任何 Widget/ViewModel 类型。
@@ -91,6 +97,13 @@ void UDivineBeastsUIClientSubsystem::Initialize(
 
 void UDivineBeastsUIClientSubsystem::Deinitialize()
 {
+    if (PlatformUI)
+    {
+        PlatformUI->OnThemeRequestFinished.RemoveDynamic(
+            this, &UDivineBeastsUIClientSubsystem::HandleThemeRequestFinished);
+        if (PendingThemeRequestId.IsValid()) PlatformUI->CancelThemeRequest(PendingThemeRequestId);
+    }
+    PendingThemeRequestId.Invalidate();
     if (PlatformUI && LoadingToken.IsValid())
     {
         if (UGamePlatformLoadingScreenService* LoadingService =
@@ -136,6 +149,37 @@ void UDivineBeastsUIClientSubsystem::Deinitialize()
     PlatformUI = nullptr;
     StateChanged.Clear();
     Super::Deinitialize();
+}
+
+void UDivineBeastsUIClientSubsystem::EnsureConfiguredTheme()
+{
+    if (bDefaultThemeRequested || !PlatformUI || !GConfig) return;
+    FString ConfiguredId;
+    if (!GConfig->GetString(TEXT("DivineBeasts.UI.Theme"), TEXT("DefaultThemeDefinitionId"), ConfiguredId, GGameIni) ||
+        ConfiguredId.IsEmpty()) return;
+    const FPrimaryAssetId ThemeId(ConfiguredId);
+    if (!ThemeId.IsValid())
+    {
+        bDefaultThemeRequested = true;
+        UE_LOG(LogTemp, Warning, TEXT("神兽联盟主题编号格式不合法，保留原有界面。"));
+        return;
+    }
+    FGamePlatformUIThemeContext Context;
+    Context.PlatformId = FName(FPlatformProperties::PlatformName());
+    PendingThemeRequestId = PlatformUI->RequestThemeAsync(ThemeId, Context);
+    bDefaultThemeRequested = PendingThemeRequestId.IsValid();
+}
+
+void UDivineBeastsUIClientSubsystem::HandleThemeRequestFinished(
+    FGuid RequestId, bool bSuccess, FText Reason)
+{
+    if (RequestId != PendingThemeRequestId) return;
+    PendingThemeRequestId.Invalidate();
+    if (!bSuccess)
+    {
+        // 仅诊断视觉资源失败，不跳转流程、不自动认证，也不逐帧重试。
+        UE_LOG(LogTemp, Warning, TEXT("神兽联盟主题切换未完成：%s"), *Reason.ToString());
+    }
 }
 
 FDivineBeastsUIContractHandle

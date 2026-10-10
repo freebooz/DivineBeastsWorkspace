@@ -22,6 +22,7 @@
 #include "Services/GamePlatformFeedbackService.h"
 #include "Services/GamePlatformNotificationService.h"
 #include "Services/GamePlatformWorldUIService.h"
+#include "Styling/GamePlatformUIThemeService.h"
 #include "WorldUI/GamePlatformWorldWidgetBase.h"
 #include "ViewModels/GamePlatformViewModelBase.h"
 
@@ -53,6 +54,8 @@ void UGamePlatformUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Colle
     NotificationService = NewObject<UGamePlatformNotificationService>(this);
     FeedbackService = NewObject<UGamePlatformFeedbackService>(this);
     WorldUIService = NewObject<UGamePlatformWorldUIService>(this);
+    ThemeService = NewObject<UGamePlatformUIThemeService>(this);
+    ThemeService->Initialize(this);
 
     if (IsValid(NotificationService))
     {
@@ -82,6 +85,8 @@ void UGamePlatformUIManagerSubsystem::Deinitialize()
     if (bClosing) return; // Closed/结果通知允许重入关闭，首次清理仍拥有全部账本。
     bClosing = true;
     ++RootLayoutGeneration;
+    if (ThemeService) ThemeService->Shutdown();
+    ThemeService = nullptr;
     if (PreLoadMapHandle.IsValid())
     {
         FCoreUObjectDelegates::PreLoadMapWithContext.Remove(PreLoadMapHandle);
@@ -140,6 +145,37 @@ void UGamePlatformUIManagerSubsystem::Deinitialize()
     ScreenDefinitions.Reset();
     RouteDefinitions.Reset();
     Super::Deinitialize();
+}
+
+FGuid UGamePlatformUIManagerSubsystem::RequestThemeAsync(FPrimaryAssetId ThemeDefinitionId, FGamePlatformUIThemeContext Context)
+{
+    return !bClosing && ThemeService ? ThemeService->RequestThemeAsync(ThemeDefinitionId, Context) : FGuid();
+}
+
+bool UGamePlatformUIManagerSubsystem::CancelThemeRequest(FGuid RequestId)
+{
+    return ThemeService && ThemeService->CancelThemeRequest(RequestId);
+}
+
+FPrimaryAssetId UGamePlatformUIManagerSubsystem::GetCurrentThemeId() const
+{
+    return ThemeService ? ThemeService->GetCurrentThemeId() : FPrimaryAssetId();
+}
+
+int64 UGamePlatformUIManagerSubsystem::GetThemeRevision() const
+{
+    return ThemeService ? ThemeService->GetRevision() : 0;
+}
+
+UClass* UGamePlatformUIManagerSubsystem::ResolveThemeStyle(EGamePlatformUIStyleKind Kind,
+    FName StyleId, bool bAllowParentFallback, FText& Error) const
+{
+    if (bClosing || !ThemeService)
+    {
+        Error = FText::FromString(TEXT("本地玩家主题服务尚未初始化或正在关闭。"));
+        return nullptr;
+    }
+    return ThemeService->ResolveStyle(Kind, StyleId, bAllowParentFallback, Error);
 }
 
 void UGamePlatformUIManagerSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)

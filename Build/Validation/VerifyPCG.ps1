@@ -54,9 +54,21 @@ function Invoke-PCGCheck([string]$Name,[string]$Executable,[string[]]$Arguments,
 }
 $exitCode=2; $message='分项检查不代表完整UE验收。'
 try {
-    $docs=@('README.md','Docs/Architecture.md','Docs/API.md','Docs/GenerationProfiles.md','Docs/GraphAuthoring.md','Docs/LifecycleAndCleanup.md','Docs/AuthorityAndConsistency.md','Docs/WorldAndLoadingIntegration.md','Docs/BackendIntegration.md','Docs/ConfigurationAndRun.md','Docs/TestingAndEvidence.md','Docs/Troubleshooting.md','Docs/MigrationAndHandover.md','Docs/ManualReview.md')
-    $missing=@($docs | Where-Object { -not (Test-Path -LiteralPath (Join-Path $plugin $_)) })
-    $records.Add(@{Name='DocumentPresenceOnly';ExitCode=$(if($missing.Count){1}else{0});Status=$(if($missing.Count){'失败'}else{'通过'});Missing=$missing})
+    # PCG已采用现行中文专题文档体系；旧版十四份英文占位目录已不再是交付合同。
+    # 静态文档存在性检查仅证明路径可读，不能代替真实UE图、资源、关卡或Cook验收。
+    $docs = @(
+        'README.md',
+        'Docs/改造方案与执行计划.md', 'Docs/组件清单与使用说明.md',
+        'Docs/DomainCatalog.md', 'Docs/PrimitiveModel.md', 'Docs/SchemaV1.md',
+        'Docs/Nodes.md', 'Docs/Templates.md', 'Docs/DataDefinitions.md',
+        'Docs/PriorityAndOverride.md', 'Docs/WorldDirector.md',
+        'Docs/GoldLevelAcceptance.md', 'Docs/TestingAndEvidence.md',
+        'Docs/DesignRemediation-2026-09-30.md'
+    )
+    $requiredDocuments = @($docs | ForEach-Object { Join-Path $plugin $_ })
+    $requiredDocuments += Join-Path $root 'Docs/Implementation/GamePlatformPCG/PCGExecutionPlan_20261010.md'
+    $missing = @($requiredDocuments | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) })
+    $records.Add(@{Name='DocumentPresenceOnly';ExitCode=$(if($missing.Count){1}else{0});Status=$(if($missing.Count){'失败'}else{'通过'});Checked=$requiredDocuments;Missing=$missing})
     if ($NativeTests) {
         $cmakePath=(Get-Command $CMake -ErrorAction Stop).Source
         $native=Join-Path $evidence 'Native'
@@ -78,7 +90,9 @@ try {
         $ubt=Join-Path $engine 'Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.dll'
         $dotnet=Join-Path $engine 'Engine/Binaries/ThirdParty/DotNet/10.0/win-x64/dotnet.exe'
         foreach ($target in $Targets) {
-            $null=Invoke-PCGCheck "UE-$target" $dotnet @($ubt,"DivineBeastsArena$target",'Win64','Development',"-Project=$project",'-MaxParallelActions=2','-NoSharedPCH','-NoHotReloadFromIDE',"-Log=$(Join-Path $evidence "UBT-$target.log")") (Join-Path $engine 'Engine/Source')
+            # 统一使用工程既有的Shared PCH（共享预编译头）构建配置；NoSharedPCH会造成引擎模块大规模失效重编，
+            # 不属于PCG定向编译所必需的隔离手段。保留实际UBT错误、退出码和目标日志作为证据。
+            $null=Invoke-PCGCheck "UE-$target" $dotnet @($ubt,"DivineBeastsArena$target",'Win64','Development',"-Project=$project",'-MaxParallelActions=2','-NoHotReloadFromIDE',"-Log=$(Join-Path $evidence "UBT-$target.log")") (Join-Path $engine 'Engine/Source')
         }
     }
     $failed=@($records.ToArray() | Where-Object { $_.ExitCode -ne 0 })

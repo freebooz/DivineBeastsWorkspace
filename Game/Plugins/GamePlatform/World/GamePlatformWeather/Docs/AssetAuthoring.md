@@ -18,3 +18,11 @@
 ## P5验收证据
 
 逐资源记录包路径、资产原生类型、编译日志、保存/回读状态、相关Preview截图、ProfileGPU测量、Client Cook/Stage验证和Dedicated Server包资产剥离。没有这些证据不得将P5标记完成。
+
+## 2026-10-10 真实SourceArt交付（不等于UE资源交付）
+
+- 已生成9张PNG源纹理：`GamePlatformVFX/SourceArt/Weather`四张雨雪粒子透明贴图，`GamePlatformSurface/SourceArt/Weather`五张雪／湿润／积水PBR技术源纹理；含4×4水花Flipbook及4×4雪花Atlas。
+- 已生成原创合成雨／风WAV音源3段（48kHz、16-bit、双声道、12秒），暂存`DBAWorldPack_Village/SourceArt/Weather/Audio`；**严禁将实际SoundWave放入Server AlwaysCook的新手村共享Content目录**。以后真正的音频资产应交付项目客户端独立内容包`DBASFXPack_Core`，按真实资产完成后再建立插件与登记；通用音效播放机制仍属于`GamePlatformSFX`。
+- 源纹理生成／校验：`Tools/Unreal/Weather/GenerateWeatherSourceTextures.py`、`WeatherSourceArtManifest.json`；声音生成／校验：`GenerateWeatherAudio.py`、`WeatherAudioSourceManifest.json`。合成声音已修复首尾循环接缝，均已按SHA256检查。
+- `Tests/Architecture/ValidateWeatherSourceArt.py`检查图像尺寸、透明度、无缝边界、雪法线方向及WAV声学基本参数。 `Tools/Unreal/Weather/ImportWeatherSourceArt.py`仅在正式UE PythonScriptPlugin中且设置`WEATHER_ASSET_IMPORT_MODE=apply`后导入Texture2D；普通Python运行仅做只读预检。
+- 正式工程上实际尝试`GamePlatformSurfaceCoreAssets` Commandlet返回1，`GamePlatformServer`模块缺DLL。引擎资产、MPC、Niagara、材质母版与声音Definition均未交付。完整证据：`Docs/Implementation/WeatherSourceAssetsExecution_20261010.md`。

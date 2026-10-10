@@ -6,6 +6,7 @@
 #include "Engine/LocalPlayer.h"
 #include "ViewModels/GamePlatformViewModelBase.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Styling/GamePlatformUIThemeBinding.h"
 
 void UGamePlatformActivatableWidgetBase::InitializeActivatableViewModel(
     UGamePlatformViewModelBase* InViewModel)
@@ -87,6 +88,12 @@ void UGamePlatformActivatableWidgetBase::NativeOnActivated()
     BindUIEvents();
     if (!IsActivationCurrent() || (Selected.IsValid() && Selected->GetPageGeneration() != ExpectedPageGeneration)) return;
     RefreshInitialState();
+    // 样式回调也可能关闭页面；只在同一可见代次的最后绑定，避免失活后继续新增委托。
+    if (IsActivationCurrent() && !ThemeBindings.IsEmpty())
+    {
+        if (!ThemeBinding) ThemeBinding = NewObject<UGamePlatformUIThemeBinding>(this);
+        ThemeBinding->Initialize(this, ThemeBindings);
+    }
 }
 
 void UGamePlatformActivatableWidgetBase::NativeOnDeactivated()
@@ -164,6 +171,7 @@ void UGamePlatformActivatableWidgetBase::BindPlatformEvents()
 
 void UGamePlatformActivatableWidgetBase::UnbindPlatformEvents()
 {
+    if (ThemeBinding) ThemeBinding->Unbind();
     if (IsValid(ViewModel))
     {
         ViewModel->OnViewStateChanged.RemoveDynamic(
