@@ -71,6 +71,8 @@ private:
     TArray<TObjectPtr<UMaterialInstanceDynamic>> DevelopmentDynamicMaterials;
 
     FDelegateHandle ReadinessDelegateHandle;
+    /** 与Readiness独立的公开Hero复制事件；EndPlay必须解绑，避免旧世界访问已释放组件。 */
+    FDelegateHandle IdentityDelegateHandle;
     FTimerHandle StateRetryTimer;
 
     TSharedPtr<FStreamableHandle> ProfileLease;

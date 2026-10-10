@@ -1,6 +1,7 @@
 // 第三层Server/Editor组合根：Profile授权当前承载世界，Village复用平台World/Data/Experience与准入链。
 // 自有世界委托/启动Timer在失败或退出时撤销；永久世界退休门闩使旧Ready/体验回调不能重新接纳。
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
+#include "Characters/DivineBeastsWorldCharacterAdmission.h"
 
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
@@ -159,6 +160,7 @@ void UDivineBeastsServerBootstrapSubsystem::Deinitialize()
     // 即使尚无ValidatedWorld也永久关闭本实例；外部清理/Telemetry通知之前先使所有原操作失效。
     bWorldRetired = true;
     BootstrapOperationId.Invalidate();
+    if (WorldCharacterAdmission) { WorldCharacterAdmission->Close(); WorldCharacterAdmission.Reset(); }
     // 先撤本世界的启动Timer，再走完整退出撤销；ValidatedWorld会在Cleanup内清空，不能之后才找Timer所有者。
     if (UWorld* World = ValidatedWorld.Get()) World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
     if (ValidatedWorld.IsValid()) HandleWorldCleanup(ValidatedWorld.Get(), true, true);
@@ -210,6 +212,7 @@ void UDivineBeastsServerBootstrapSubsystem::HandleWorldCleanup(UWorld* World, bo
     bWorldRetired = true;
     BootstrapOperationId.Invalidate();
     bWorldValidated = false;
+    if (WorldCharacterAdmission) { WorldCharacterAdmission->Close(); WorldCharacterAdmission.Reset(); }
     // 世界退出也撤销Main新增体验推进Timer；该Boot不再承载后继地图，已排队回调仍由退休门闩拒绝。
     World->GetTimerManager().ClearTimer(GameplayBootstrapTimer);
     ValidatedWorld.Reset();
@@ -471,20 +474,9 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
     Mode->RegisterAdmissionAuthority(Mode,MakeShared<FDivineBeastsWorldAdmissionAuthority>(Admission),Registered);
     if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
     if(!Registered.IsSuccess()){SetFailed(Registered.Code);return;}
-    const TWeakObjectPtr<ADivineBeastsWorldGameMode> WeakMode(Mode);
-    Admission->OnAdmissionChanged().AddWeakLambda(Mode,[WeakMode](const APlayerController* Controller,const FGamePlatformServerVerifiedAdmission& A,bool bAccepted)
-    {
-        auto* Current=WeakMode.Get(); if(!Current || !Controller || Controller->GetWorld()!=Current->GetWorld())return;
-        auto& C=*const_cast<APlayerController*>(Controller);
-        if(!bAccepted){Current->RevokeVerifiedAdmission(C,{A.AdmissionId,A.ConnectionGeneration,A.SessionEpoch});return;}
-        FGamePlatformVerifiedPlayerContext V;
-        V.AdmissionId=A.AdmissionId; V.AssignmentId=A.AssignmentId; V.ServerInstanceId=A.ServerInstanceId;
-        V.ServerStartGeneration=1; V.ConnectionGeneration=A.ConnectionGeneration; V.SessionEpoch=A.SessionEpoch;
-        FGamePlatformId::TryCreate(TEXT("divinebeasts.participant"),TEXT("player_")+A.AdmissionId.ToString(EGuidFormats::Digits),1,V.ParticipantId);
-        FGamePlatformId::TryParse(A.ExperienceId+TEXT("@1"),V.ExperienceId);
-        const auto Result=Current->SubmitVerifiedAdmission(C,V);
-        if(!Result.IsSuccess())UE_LOG(LogTemp,Error,TEXT("World admission bridge rejected: %s"),*Result.Code.ToString());
-    });
+    // 先读取准入玩家的真实角色资料，再交唯一平台状态机生成；角色身份不再只由本机UI补外观。
+    WorldCharacterAdmission = MakeShared<FDivineBeastsWorldCharacterAdmission>(*Mode, *Admission);
+    WorldCharacterAdmission->ObserveAdmissions();
     GameplayBootstrapDeadline=FPlatformTime::Seconds()+30;
     World.GetTimerManager().SetTimer(GameplayBootstrapTimer,this,&ThisClass::AdvanceGameplayBootstrap,0.1f,true);
     }

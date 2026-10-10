@@ -49,6 +49,8 @@ void UDivineBeastsCharacterAppearanceComponent::EndPlay(
         CharacterState->OnReadinessChanged().Remove(ReadinessDelegateHandle);
     }
     ReadinessDelegateHandle.Reset();
+    if (CharacterState && IdentityDelegateHandle.IsValid()) CharacterState->OnIdentityChanged().Remove(IdentityDelegateHandle);
+    IdentityDelegateHandle.Reset();
 
     if (UWorld* World = GetWorld())
     {
@@ -81,6 +83,7 @@ void UDivineBeastsCharacterAppearanceComponent::TryBindCharacterState()
         ReadinessDelegateHandle = CharacterState->OnReadinessChanged().AddUObject(
             this,
             &UDivineBeastsCharacterAppearanceComponent::HandleCharacterReadinessChanged);
+        IdentityDelegateHandle = CharacterState->OnIdentityChanged().AddUObject(this, &UDivineBeastsCharacterAppearanceComponent::RefreshAppearance);
         RefreshAppearance();
         return;
     }
@@ -190,8 +193,8 @@ void UDivineBeastsCharacterAppearanceComponent::HandleProfileLoaded(
     }
     else if(Profile->bDevelopmentPlaceholder)
     {
-        // 一期真实占位模型沿用已交付IDLE；只加载客户端表现，不能作为服务器技能/根运动依据。
-        Assets.AddUnique(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.ABP_DBA_PreviewIdle_C")));
+        // 世界角色按实际复制速度播放移动动画；前端角色预览仍使用独立IDLE，不把表现当权威根运动。
+        Assets.AddUnique(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_WorldLocomotion.ABP_DBA_WorldLocomotion_C")));
     }
 
     const TWeakObjectPtr<UDivineBeastsCharacterAppearanceComponent> WeakThis(this);
@@ -239,7 +242,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
     UClass* AnimClass = Profile->AnimInstanceClass.Get();
     if (Profile->AnimInstanceClass.IsNull() && Profile->bDevelopmentPlaceholder)
     {
-        AnimClass = Cast<UClass>(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.ABP_DBA_PreviewIdle_C")).ResolveObject());
+        AnimClass = Cast<UClass>(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_WorldLocomotion.ABP_DBA_WorldLocomotion_C")).ResolveObject());
     }
     if ((!Profile->AnimInstanceClass.IsNull() || Profile->bDevelopmentPlaceholder) && !AnimClass)
     {
@@ -330,6 +333,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
     }
 
     AppliedHeroDefinitionId = ExpectedHeroDefinitionId;
+    UE_LOG(LogTemp, Display, TEXT("WorldAppearance applied: Pawn=%s Local=%d Hero=%s Anim=%s"), *Character->GetName(), Character->IsLocallyControlled()?1:0, *ExpectedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass));
 }
 
 void UDivineBeastsCharacterAppearanceComponent::CancelPendingLoads()

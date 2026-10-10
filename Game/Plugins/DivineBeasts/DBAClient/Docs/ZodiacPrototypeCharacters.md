@@ -206,3 +206,13 @@ MainArena 已接入 `FDivineBeastsArenaGameplayLifecycleAdapter（神兽联盟�
 - Shipping 禁止开发占位回退。
 - MainArena 全员必须在 `InProgress` 前完成标准 Pawn 出生、唯一 Character Initializer 初始化和 `CharacterReady`；
 - MainArena Server 定向模块编译必须通过，且项目生命周期适配器源码不得出现直接 `SpawnActor/Possess` 调用。
+
+## 8. 2026-10-10 世界行走动画修复
+
+世界开发外观使用独立`ABP_DBA_WorldLocomotion`，角色选择舞台继续使用`ABP_DBA_PreviewIdle`。世界ABP资源归公共开发角色包`DBAContentPack_Common/Mannequins/DBA/Animations`，直接继承平台客户端`UGamePlatformLocomotionAnimInstance`；平台只提供当前Pawn速度/下落只读快照，项目内容负责真实动画与混合参数，没有第二套角色移动或动画执行框架。
+
+`BS_DBA_WorldLocomotion`以水平速度厘米/秒混合0（Idle）、150（Walk）和500（Run）。四个真实序列保留模板名称`MM_Idle`、`MF_Unarmed_Walk_Fwd`、`MF_Unarmed_Jog_Fwd`、`MM_Fall_Loop`，位于Animations/WorldLocomotion；来源为锁定UE5.8的`Templates/TemplateResources/High/Characters/Content/Mannequins/Anims/Unarmed`，属于引擎模板内容，使用和分发遵循项目采用的Epic引擎许可。全部绑定161骨UE5公共Skeleton，关闭根运动并锁定根骨，CharacterMovement仍拥有权威位移。
+
+直接复制模板文件后，原`/Game/Characters`骨架引用无法解析时Sequencer FK Rig可能未初始化；单独修改Skeleton字段会留下“有长度、能加载、实际输出参考姿势”的资源。因此通过Monolith显式绑定后，由`Tools/Unreal/Characters/PrepareWorldLocomotionSequences.py`执行已有中立`GP.Animation.InitializeDataModel`，恢复当前骨树和既有模板轨道、修正旧软引用并保存。脚本只改本次新增四序列，不修改PreviewIdle、正式地图、PlayerStart或角色身份。
+
+`Tests/Assets/ValidateWorldLocomotionAssets.py`由Monolith运行，真实加载ABP/BlendSpace/四序列，检查平台父类、骨架、速度采样、无根运动、压缩腿骨随时间变化、无旧模板挂载依赖和独立预览Idle。资源检查曾因缺少世界ABP出现预期红灯。原生移动快照用例为`GamePlatform.Animation.Locomotion.PawnMovement`。实际构建、资源保存后重载、双客户端行走和Cook验收分别记录，不把Monolith抓帧返回success或文件存在当成全部验收通过。

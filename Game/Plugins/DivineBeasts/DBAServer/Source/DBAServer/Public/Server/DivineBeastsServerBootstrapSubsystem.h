@@ -9,6 +9,7 @@
 #include "DivineBeastsServerBootstrapSubsystem.generated.h"
 
 class UGamePlatformServerLifecycleSubsystem;
+class FDivineBeastsWorldCharacterAdmission;
 
 /** 神兽联盟本实例启动状态；游戏线程只读投影，枚举本身不是准入证明，不新增或复用已发布枚举序号。 */
 UENUM(BlueprintType)
@@ -94,6 +95,8 @@ private:
     void AdvanceGameplayBootstrap();
     FTimerHandle GameplayBootstrapTimer;
     double GameplayBootstrapDeadline=0;
+    /** 当前已验证世界的项目角色准入适配；关闭/退休时先取消资料请求，防止旧响应初始化后继Pawn。 */
+    TSharedPtr<FDivineBeastsWorldCharacterAdmission> WorldCharacterAdmission;
 
     FDivineBeastsServerRoleProfile ActiveProfile;
     FName ActiveExperienceId = NAME_None;

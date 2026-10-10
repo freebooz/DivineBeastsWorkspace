@@ -141,6 +141,9 @@ public:
         return ReadinessChanged;
     }
 
+    /** GT公开复制身份变化事件；外观在Ready尚未变化时也必须重新读取Hero，不以Ready=false替代身份通知。 */
+    FSimpleMulticastDelegate& OnIdentityChanged() { return IdentityChanged; }
+
 private:
     /** 配置栈借用的不可变身份快照；引擎碰撞/GAS及Data同步通知返回后，旧栈只能核查，不能清后继状态。 */
     struct FInitializationSnapshot
@@ -229,4 +232,6 @@ private:
     bool bEndingPlay = false;
 
     FDivineBeastsCharacterReadinessChangedNative ReadinessChanged;
+    /** 本组件原生通知，无网络RPC；网络观察者由OnRep_RuntimeState触发各自本地事件。 */
+    FSimpleMulticastDelegate IdentityChanged;
 };

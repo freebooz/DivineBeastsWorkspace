@@ -131,6 +131,9 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     bPersistentCharacterIdRequired =
         TrustedContext.bPersistentCharacterIdRequired;
 
+    IdentityChanged.Broadcast();
+    if (!IsOriginalOperationCurrent()) { OutError = TEXT("身份通知已撤销原可信绑定。"); return false; }
+
     // 两分支都要求撤销旧资格/技能。统一为一次通知，先发布未Ready的新身份；返回后不得覆盖监听者的更高代次绑定。
     ReadinessChanged.Broadcast(false);
     if (!IsOriginalOperationCurrent()) { OutError = TEXT("未就绪通知已使原可信绑定被后继操作或退出撤销。"); return false; }
@@ -261,6 +264,10 @@ void UDivineBeastsCharacterComponent::OnRep_RuntimeState()
     LoadedDefinition = nullptr;
     bConfigurationApplied = false;
     bLocalReady = false;
+    // 初次收到Hero时Ready可能仍为false；单独的身份事件确保远端模型立即开始加载。
+    const auto IdentitySnapshot = CaptureInitializationSnapshot();
+    IdentityChanged.Broadcast();
+    if (!IsInitializationCurrent(IdentitySnapshot)) { return; }
     RefreshInitialization();
 }
 
