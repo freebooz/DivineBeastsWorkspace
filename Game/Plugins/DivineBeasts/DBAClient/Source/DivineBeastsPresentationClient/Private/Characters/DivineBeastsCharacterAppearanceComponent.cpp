@@ -123,7 +123,7 @@ void UDivineBeastsCharacterAppearanceComponent::RefreshAppearance()
         return;
     }
 
-    if (AppliedHeroDefinitionId == HeroDefinitionId && PendingProfile)
+    if (AppliedHeroDefinitionId == HeroDefinitionId && PendingProfile && PendingProfile->HeroDefinitionId == HeroDefinitionId)
     {
         // Definition可能晚于视觉资源调整胶囊；相同身份也需响应Ready事件，不能沿用旧高度。
         RefreshMeshPlacement();

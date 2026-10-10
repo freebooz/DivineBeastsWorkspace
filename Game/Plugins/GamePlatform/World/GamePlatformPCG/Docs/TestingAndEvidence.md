@@ -1,5 +1,11 @@
 # TestingAndEvidence（测试与证据）
 
+## 2026-10-10｜正式目标编译边界修正
+
+新手村外观修复的真实Client构建发现`PCGGraphInspection.cpp`两处读取`UPCGGraph::bIsTemplate`导致C2039。锁定UE5.8将该字段置于`WITH_EDITORONLY_DATA`，运行目标不存在该字段。现只在编辑器数据可用时读取真实模板标记；发布端按已实现图要求执行原有Schema、MeshSet和Spawner完整检查，未完成图仍拒绝，不开放模板运行生成权威，不修改模块目标或资产。
+
+修正的验证证据统一在`Saved/Validation/VillageMovement/20261010`及对应Foundation构建目录，须分别核对Editor模块、真实Client/Server编译和模板/真实图原生回归结果；本项不代表PCG Gold全量交付或真实世界生成验收。
+
 ## 当前新增源码测试
 
 `Private/Tests/PCGEnvironmentContractTests.cpp`覆盖：

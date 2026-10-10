@@ -1,3 +1,5 @@
+// 平台双端PCG图/输出白名单检查：消费调用方已租用的图和资源，不加载资产、不授予生成权威。
+// 编辑器可审查未实现模板；发布端只接受已具备Schema和真实Spawner链的图，不依赖被Cook剥离的编辑器字段。
 #include "Services/GamePlatformPCGInspection.h"
 #include "Definitions/GamePlatformPCGProfileDefinition.h"
 #include "PCGComponent.h"
@@ -127,6 +129,12 @@ bool ValidateSpawnerDescriptor(const UPCGStaticMeshSpawnerSettings& Spawner, con
 
 FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinition& Profile, UPCGGraph& Graph)
 {
+    // UE5.8的模板标记只存在于编辑器数据；运行端按已实现图要求检查，未配置Spawner的模板仍失败关闭。
+    // 不能为通过Client/Server编译而移除下面的Schema、MeshSet或生成副作用门禁。
+    bool bIsAuthoringTemplate = false;
+#if WITH_EDITORONLY_DATA
+    bIsAuthoringTemplate = Graph.bIsTemplate;
+#endif
     if (!FGamePlatformPCGTemplateContract::IsTemplateHeaderValid(Profile))
     {
         return Rejected(TEXT("InvalidTemplateContract"));
@@ -165,7 +173,7 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
 
         if (const UPCGStaticMeshSpawnerSettings* Spawner = Cast<UPCGStaticMeshSpawnerSettings>(Settings))
         {
-            if (SpawnerNode || Graph.bIsTemplate || !ValidateSpawnerDescriptor(*Spawner, Profile))
+            if (SpawnerNode || bIsAuthoringTemplate || !ValidateSpawnerDescriptor(*Spawner, Profile))
             {
                 return Rejected(TEXT("TemplateSpawnerSideEffectsForbidden"));
             }
@@ -184,7 +192,7 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
     }
     // Foundation模板只能输出通过Schema校验的点；绑定项目MeshSet后，必须在校验后真正生成网格。
     // 运行服务仍失败关闭，避免把编辑器静态图意外用于客户端权威/专用服务器。
-    if (!Graph.bIsTemplate && (!SpawnerNode || !Profile.MeshSetDefinitionId.IsValid() ||
+    if (!bIsAuthoringTemplate && (!SpawnerNode || !Profile.MeshSetDefinitionId.IsValid() ||
         !IsNodeReachable(*SchemaValidatorNode,*SpawnerNode) || !IsNodeReachable(*SpawnerNode,*OutputNode)))
     {
         return Rejected(TEXT("RealizedTemplateSpawnerMissing"));

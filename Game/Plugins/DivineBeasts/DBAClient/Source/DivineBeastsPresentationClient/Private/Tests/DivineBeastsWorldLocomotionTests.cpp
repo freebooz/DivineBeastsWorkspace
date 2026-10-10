@@ -29,6 +29,8 @@ bool FDivineBeastsNetworkMeshPlacementTest::RunTest(const FString&)
     ON_SCOPE_EXIT { World->DestroyWorld(false); };
     ACharacter* Character = World->SpawnActor<ACharacter>();
     auto* Appearance = NewObject<UDivineBeastsCharacterAppearanceComponent>(Character);
+    // 夹具组件未注册，不依赖EndPlay；快速切换分支发起的真实租约必须先取消，再销毁测试世界。
+    ON_SCOPE_EXIT { Appearance->CancelPendingLoads(); };
     auto* Identity = NewObject<UDivineBeastsCharacterComponent>(Character);
     auto* Profile = NewObject<UDivineBeastsCharacterAppearanceProfile>(Appearance);
     Profile->HeroDefinitionId = TEXT("Hero.Zodiac.Horse");
@@ -68,6 +70,14 @@ bool FDivineBeastsNetworkMeshPlacementTest::RunTest(const FString&)
     FString Error;
     TestFalse(TEXT("非法参考高度拒绝装配"), Profile->IsProfileValid(Error));
     TestTrue(TEXT("非法参考高度返回具体中文错误"), Error.Contains(TEXT("参考胶囊半高")));
+    // A外观仍在显示，B的Profile已到但Mesh尚未完成，此时切回A不能把B的变换缓存到A。
+    auto* OtherProfile = NewObject<UDivineBeastsCharacterAppearanceProfile>(Appearance);
+    OtherProfile->HeroDefinitionId = TEXT("Hero.Zodiac.Rooster");
+    OtherProfile->MeshRelativeLocation = FVector(0.0, 0.0, -300.0);
+    Appearance->PendingProfile = OtherProfile;
+    Appearance->RefreshAppearance();
+    TestTrue(TEXT("切回已显示角色不能应用另一身份的待加载变换"), Mesh->GetRelativeLocation().Equals(BeforeStaleCallback, 0.01));
+    TestTrue(TEXT("切回角色必须撤销另一身份的待加载Profile"), Appearance->PendingProfile != OtherProfile);
     return true;
 }
 
