@@ -8,6 +8,10 @@
 输出Saved下独占运行证据和准确进程身份；启动成功不代表登录、角色选择或Village准入通过。
 #>
 param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2,
+    # 同机双窗口验证默认每端60帧，避免无限制渲染争用显卡；0保留游戏设置，不修改持久化玩家偏好。
+    [ValidateRange(0,240)][int]$FrameRateLimit=60,
+    # 只记录运动/复制的事件采样，供人工移动后按三端时间戳定位延迟，不包含登录信息。
+    [switch]$MovementDiagnostics,
     [string]$GatewayUrl='http://127.0.0.1:28081',[guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference='Stop'
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -29,8 +33,10 @@ foreach($i in 1..$Count) {
     foreach($argument in @('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-windowed','-ResX=960','-ResY=540',"-WinX=$((($i-1)*980)+20)",'-WinY=60','-nosplash',"-abslog=$log")) {
         $info.ArgumentList.Add($argument)
     }
+    if ($FrameRateLimit -gt 0) { $info.ArgumentList.Add("-ExecCmds=t.MaxFPS $FrameRateLimit") }
+    if ($MovementDiagnostics) { $info.ArgumentList.Add('-DBAMovementDiagnostics') }
     $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;InitialScreen='Login';AutoLogin=$false}
+    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;MovementDiagnostics=[bool]$MovementDiagnostics}
 }
 $records|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $directory 'Clients.json') -Encoding utf8
 $records|Select-Object PID,InitialScreen,AutoLogin|ConvertTo-Json

@@ -36,6 +36,8 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+    // 原生回归只访问异步完成边界，验证引擎网络平滑所需的实际Mesh基准，不开放玩法API。
+    friend class FDivineBeastsNetworkMeshPlacementTest;
     FName ApprovedVisualHero=NAME_None;
     FName CurrentVisualHero() const;
     /** 尝试绑定项目角色状态组件；动态复制组件尚未到达时使用有限次数定时重试，不启用Tick。 */
@@ -46,6 +48,9 @@ private:
 
     /** 按当前HeroDefinitionId重新申请Appearance Profile。 */
     void RefreshAppearance();
+
+    /** 游戏线程按已装配Profile和实际胶囊尺寸更新表现位置及引擎平滑基准；不修改权威胶囊、位置或资源租约。 */
+    void RefreshMeshPlacement();
 
     void HandleProfileLoaded(
         UDivineBeastsCharacterAppearanceProfile* Profile,

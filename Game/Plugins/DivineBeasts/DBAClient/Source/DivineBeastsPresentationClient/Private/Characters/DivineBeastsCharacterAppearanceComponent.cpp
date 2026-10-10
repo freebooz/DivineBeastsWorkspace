@@ -10,9 +10,9 @@
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/SkeletalMesh.h" // 软引用Get执行类型检查，需要网格资产完整类型而非组件头的前向声明。
 #include "Engine/StreamableManager.h"
-#include "Engine/SkeletalMesh.h"
 #include "GameFramework/Character.h"
 #include "Loading/GamePlatformAssetLoader.h"
 #include "Materials/MaterialInterface.h"
@@ -125,6 +125,8 @@ void UDivineBeastsCharacterAppearanceComponent::RefreshAppearance()
 
     if (AppliedHeroDefinitionId == HeroDefinitionId && PendingProfile)
     {
+        // Definition可能晚于视觉资源调整胶囊；相同身份也需响应Ready事件，不能沿用旧高度。
+        RefreshMeshPlacement();
         return;
     }
 
@@ -263,9 +265,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
     DevelopmentDynamicMaterials.Reset();
 
     MeshComponent->SetSkeletalMesh(SkeletalMesh, true);
-    MeshComponent->SetRelativeLocation(Profile->MeshRelativeLocation);
-    MeshComponent->SetRelativeRotation(Profile->MeshRelativeRotation);
-    MeshComponent->SetRelativeScale3D(Profile->MeshRelativeScale);
+    RefreshMeshPlacement();
 
     if (Profile->MaterialOverrides.Num() == 1)
     {
@@ -334,6 +334,24 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
 
     AppliedHeroDefinitionId = ExpectedHeroDefinitionId;
     UE_LOG(LogTemp, Display, TEXT("WorldAppearance applied: Pawn=%s Local=%d Hero=%s Anim=%s"), *Character->GetName(), Character->IsLocallyControlled()?1:0, *ExpectedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass));
+}
+
+void UDivineBeastsCharacterAppearanceComponent::RefreshMeshPlacement()
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character || !PendingProfile || !Character->GetMesh() || !Character->GetCapsuleComponent()) return;
+    FVector Location = PendingProfile->MeshRelativeLocation;
+    if (PendingProfile->MeshReferenceCapsuleHalfHeightCm > 0.0f)
+    {
+        // 相对位置与胶囊均使用未缩放厘米，保留模型原点/美术微调，不改变服务器碰撞和移动。
+        Location.Z += PendingProfile->MeshReferenceCapsuleHalfHeightCm - Character->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+    }
+    auto* Mesh = Character->GetMesh();
+    Mesh->SetRelativeLocation(Location);
+    Mesh->SetRelativeRotation(PendingProfile->MeshRelativeRotation);
+    Mesh->SetRelativeScale3D(PendingProfile->MeshRelativeScale);
+    // ACharacter在PostInitializeComponents只缓存一次；异步外观必须更新，否则远端平滑会恢复初始零偏移/朝向。
+    Character->CacheInitialMeshOffset(Location, PendingProfile->MeshRelativeRotation);
 }
 
 void UDivineBeastsCharacterAppearanceComponent::CancelPendingLoads()

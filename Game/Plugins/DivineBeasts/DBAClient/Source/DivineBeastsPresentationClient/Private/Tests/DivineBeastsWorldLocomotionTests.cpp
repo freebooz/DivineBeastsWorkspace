@@ -9,8 +9,68 @@
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/UnrealType.h"
+#include "Characters/DivineBeastsCharacterAppearanceComponent.h"
+#include "Characters/DivineBeastsCharacterAppearanceProfile.h"
+#include "Components/DivineBeastsCharacterComponent.h"
+#include "Components/CapsuleComponent.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
+// 回归真实异步外观完成后的偏移，模拟Definition晚于外观把胶囊从88cm调整到96cm。
+// 不连接后端、不伪造Ready，不改正式资产；直接消费已加载资源，只验证客户端表现和引擎缓存合同。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsNetworkMeshPlacementTest,
+    "DivineBeasts.Presentation.Characters.NetworkMeshPlacement",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsNetworkMeshPlacementTest::RunTest(const FString&)
+{
+    const auto Settings = UWorld::InitializationValues().CreatePhysicsScene(false)
+        .ShouldSimulatePhysics(false).CreateNavigation(false).CreateAISystem(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Settings);
+    if (!TestNotNull(TEXT("独立外观回归世界"), World)) return false;
+    ON_SCOPE_EXIT { World->DestroyWorld(false); };
+    ACharacter* Character = World->SpawnActor<ACharacter>();
+    auto* Appearance = NewObject<UDivineBeastsCharacterAppearanceComponent>(Character);
+    auto* Identity = NewObject<UDivineBeastsCharacterComponent>(Character);
+    auto* Profile = NewObject<UDivineBeastsCharacterAppearanceProfile>(Appearance);
+    Profile->HeroDefinitionId = TEXT("Hero.Zodiac.Horse");
+    Profile->bDevelopmentPlaceholder = true;
+    Profile->SkeletalMesh = LoadObject<USkeletalMesh>(nullptr,
+        TEXT("/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+    Profile->AnimInstanceClass = LoadClass<UAnimInstance>(nullptr,
+        TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_WorldLocomotion.ABP_DBA_WorldLocomotion_C"));
+    if (!TestNotNull(TEXT("真实Mesh"), Profile->SkeletalMesh.Get()) || !TestNotNull(TEXT("真实动画类"), Profile->AnimInstanceClass.Get())) return false;
+    Appearance->CharacterState = Identity;
+    Appearance->ApprovedVisualHero = Profile->HeroDefinitionId;
+    Appearance->PendingProfile = Profile;
+    Appearance->HandleVisualResourcesLoaded(Profile, Profile->HeroDefinitionId, Appearance->RequestGeneration);
+    auto* Mesh = Character->GetMesh();
+    TestTrue(TEXT("网络平滑缓存必须保存异步模型偏移"), Character->GetBaseTranslationOffset().Equals(Mesh->GetRelativeLocation(), 0.01));
+    TestTrue(TEXT("网络平滑缓存必须保存异步模型朝向"), Character->GetBaseRotationOffset().Equals(Mesh->GetRelativeRotation().Quaternion(), 0.001));
+    TestEqual(TEXT("原型脚底锚点与初始胶囊底部重合"), Mesh->GetRelativeLocation().Z, -88.0);
+    Character->GetCapsuleComponent()->SetCapsuleHalfHeight(96.0f, false);
+    Appearance->HandleCharacterReadinessChanged(true);
+    TestEqual(TEXT("Definition到达后同Hero也必须更新落地偏移"), Mesh->GetRelativeLocation().Z, -96.0);
+    TestTrue(TEXT("更新胶囊后网络平滑不得恢复旧高度"), Character->GetBaseTranslationOffset().Equals(Mesh->GetRelativeLocation(), 0.01));
+    // 正式模型允许保留美术校准；胶囊缩放不能把相对厘米补偿重复缩放。
+    Profile->MeshRelativeLocation = FVector(2.0, 3.0, -92.0);
+    Character->SetActorScale3D(FVector(2.0));
+    Appearance->HandleCharacterReadinessChanged(true);
+    TestTrue(TEXT("美术偏移保留且胶囊采用未缩放单位"), Mesh->GetRelativeLocation().Equals(FVector(2.0, 3.0, -98.0), 0.01));
+    Profile->MeshReferenceCapsuleHalfHeightCm = 0.0f;
+    Appearance->HandleCharacterReadinessChanged(true);
+    TestTrue(TEXT("固定绝对偏移兼容选项"), Mesh->GetRelativeLocation().Equals(Profile->MeshRelativeLocation, 0.01));
+    const FVector BeforeStaleCallback = Mesh->GetRelativeLocation();
+    Profile->MeshRelativeLocation = FVector(0.0, 0.0, -200.0);
+    Appearance->HandleVisualResourcesLoaded(Profile, Profile->HeroDefinitionId, Appearance->RequestGeneration - 1);
+    TestTrue(TEXT("过期异步完成不能修改有效模型基准"), Mesh->GetRelativeLocation().Equals(BeforeStaleCallback, 0.01));
+    Profile->ProfileId = TEXT("Appearance.Hero.Zodiac.Horse.Default");
+    Profile->SkeletonCompatibilityId = TEXT("UE5Mannequin");
+    Profile->MeshReferenceCapsuleHalfHeightCm = -1.0f;
+    FString Error;
+    TestFalse(TEXT("非法参考高度拒绝装配"), Profile->IsProfileValid(Error));
+    TestTrue(TEXT("非法参考高度返回具体中文错误"), Error.Contains(TEXT("参考胶囊半高")));
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldLocomotionTest,
     "DivineBeasts.Presentation.Characters.WorldLocomotion",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

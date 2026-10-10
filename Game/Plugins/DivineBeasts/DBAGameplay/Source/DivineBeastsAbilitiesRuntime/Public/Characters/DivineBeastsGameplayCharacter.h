@@ -28,6 +28,8 @@ public:
     virtual void BeginPlay() override;
     virtual void PossessedBy(AController* NewController) override;
     virtual void OnRep_PlayerState() override;
+    /** 原生移动复制完成后可选记录接收时间；诊断仅Development显式开启，不改变复制或平滑规则。 */
+    virtual void OnRep_ReplicatedMovement() override;
     /** GT绑定主线原生运动/镜头输入；只使用引擎Pawn输入，不授予技能、不提交坐标或绕过服务器资格。 */
     virtual void SetupPlayerInputComponent(UInputComponent* Input) override;
 
@@ -46,4 +48,16 @@ private:
     TObjectPtr<UDivineBeastsAbilityLoadoutComponent> AbilityLoadout;
     /** GT幂等绑定继承ASC；服务器无Controller时只撤销，客户端无Controller只观察GAS，资格仍由Gate拒绝。 */
     void BindAbilityActorInfo();
+    /** 复用引擎运动完成委托，采样本机/服务器运动和帧耗时；不新增Tick或RPC。 */
+    UFUNCTION()
+    void HandleMovementDiagnosticUpdate(float DeltaSeconds, FVector InitialLocation, FVector InitialVelocity);
+    /** 仅记录运动开始/停止及移动中的每秒样本；不含账号、角色持久ID或准入凭据。 */
+    void RecordMovementDiagnostic(bool bReceivedReplication, float DeltaSeconds);
+    bool bMovementDiagnosticsEnabled = false;
+    bool bDiagnosticWasMoving = false;
+    bool bDiagnosticReceivedMoving = false;
+    /** 单调实时时间，单位秒；0表示尚未记录，运动采样与复制接收各自节流。 */
+    double LastMovementDiagnosticSeconds = 0.0;
+    double LastReplicationDiagnosticSeconds = 0.0;
+    double LastMovementReplicationSeconds = 0.0;
 };

@@ -107,6 +107,11 @@ bool UDivineBeastsCharacterAppearanceProfile::IsProfileValid(
         OutError = TEXT("Character Appearance的Mesh相对变换必须为有限数值。");
         return false;
     }
+    if (!FMath::IsFinite(MeshReferenceCapsuleHalfHeightCm) || MeshReferenceCapsuleHalfHeightCm < 0.0f)
+    {
+        OutError = TEXT("角色外观参考胶囊半高必须为有限非负厘米数，0表示固定绝对偏移。");
+        return false;
+    }
     if (MeshRelativeScale.X <= 0.0 ||
         MeshRelativeScale.Y <= 0.0 ||
         MeshRelativeScale.Z <= 0.0)

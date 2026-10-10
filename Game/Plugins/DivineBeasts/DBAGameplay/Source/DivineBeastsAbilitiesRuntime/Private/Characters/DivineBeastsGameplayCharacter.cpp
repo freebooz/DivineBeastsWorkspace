@@ -8,6 +8,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/InputComponent.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "HAL/PlatformTime.h"
 
 ADivineBeastsGameplayCharacter::ADivineBeastsGameplayCharacter()
 {
@@ -57,6 +60,47 @@ void ADivineBeastsGameplayCharacter::BeginPlay()
 {
     Super::BeginPlay();
     BindAbilityActorInfo();
+#if !UE_BUILD_SHIPPING
+    // 只在显式诊断启动时订阅已有事件；正式默认不采样，不把诊断当玩家业务状态。
+    bMovementDiagnosticsEnabled = FParse::Param(FCommandLine::Get(), TEXT("DBAMovementDiagnostics"));
+    if (bMovementDiagnosticsEnabled)
+    {
+        OnCharacterMovementUpdated.AddDynamic(this, &ThisClass::HandleMovementDiagnosticUpdate);
+        RecordMovementDiagnostic(false, 0.0f);
+    }
+#endif
+}
+
+void ADivineBeastsGameplayCharacter::OnRep_ReplicatedMovement()
+{
+    Super::OnRep_ReplicatedMovement();
+    RecordMovementDiagnostic(true, 0.0f);
+}
+
+void ADivineBeastsGameplayCharacter::HandleMovementDiagnosticUpdate(float DeltaSeconds, FVector, FVector)
+{
+    RecordMovementDiagnostic(false, DeltaSeconds);
+}
+
+void ADivineBeastsGameplayCharacter::RecordMovementDiagnostic(bool bReceivedReplication, float DeltaSeconds)
+{
+    if (!bMovementDiagnosticsEnabled) return;
+    const double Now = FPlatformTime::Seconds();
+    const FVector Velocity = bReceivedReplication ? GetReplicatedMovement().LinearVelocity : GetVelocity();
+    const bool bMoving = Velocity.SizeSquared2D() > 1.0;
+    double& LastSample = bReceivedReplication ? LastReplicationDiagnosticSeconds : LastMovementDiagnosticSeconds;
+    bool& bWasMoving = bReceivedReplication ? bDiagnosticReceivedMoving : bDiagnosticWasMoving;
+    // 每条复制先更新时间，日志采样再节流；PacketGap是真实回调间隔，不是端到端延迟或RTT。
+    const double PacketGapSeconds = bReceivedReplication && LastMovementReplicationSeconds > 0.0 ? Now - LastMovementReplicationSeconds : 0.0;
+    if (bReceivedReplication) LastMovementReplicationSeconds = Now;
+    if (LastSample > 0.0 && bMoving == bWasMoving && (!bMoving || Now - LastSample < 1.0)) return;
+    LastSample = Now;
+    bWasMoving = bMoving;
+    const FVector Position = bReceivedReplication ? GetReplicatedMovement().Location : GetActorLocation();
+    UE_LOG(LogTemp, Display, TEXT("MovementDiagnostic Pawn=%s Role=%d Local=%d Source=%s Moving=%d PositionCm=%s VelocityCmPerSecond=%s FrameMs=%.2f PacketGapMs=%.2f"),
+        *GetName(), static_cast<int32>(GetLocalRole()), IsLocallyControlled() ? 1 : 0,
+        bReceivedReplication ? TEXT("Replication") : TEXT("Movement"), bMoving ? 1 : 0,
+        *Position.ToCompactString(), *Velocity.ToCompactString(), DeltaSeconds * 1000.0f, PacketGapSeconds * 1000.0);
 }
 
 void ADivineBeastsGameplayCharacter::PossessedBy(AController* NewController)

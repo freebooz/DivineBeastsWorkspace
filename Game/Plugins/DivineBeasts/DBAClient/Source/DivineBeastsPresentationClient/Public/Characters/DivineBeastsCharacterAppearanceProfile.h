@@ -50,9 +50,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance")
     TSoftClassPtr<UAnimInstance> AnimInstanceClass;
 
-    /** Mesh挂到标准ACharacter Mesh组件后的相对位置；Manny/Quinn默认使用Z=-90cm。 */
+    /** 在参考胶囊半高下制作的相对位置，单位厘米；世界装配保留美术偏移并补偿实际胶囊高度差。预览不做胶囊补偿。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance")
     FVector MeshRelativeLocation = FVector(0.0, 0.0, -90.0);
+
+    /** 制作MeshRelativeLocation时的胶囊半高，单位厘米；默认90兼容既有原型资产。0表示固定绝对偏移，必须为有限非负值。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance", meta=(ClampMin="0", Units="cm"))
+    float MeshReferenceCapsuleHalfHeightCm = 90.0f;
 
     /** Mesh相对旋转；UE5 Mannequin默认面向角色前方需要Yaw=-90度。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Character|Appearance")
