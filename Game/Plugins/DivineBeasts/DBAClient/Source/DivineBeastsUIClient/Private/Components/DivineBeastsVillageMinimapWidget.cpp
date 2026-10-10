@@ -39,11 +39,13 @@ void UDivineBeastsVillageMinimapWidget::NativeDestruct()
 
 void UDivineBeastsVillageMinimapWidget::BeginDestroy()
 {
-    ClearPawnBinding();
+    // 重设蓝图父类时旧实例直接变为不可达；销毁仍取消原生请求，但禁止经ApplyMinimapState调用蓝图。
+    bDestroyingNativeResources = true;
+    ClearPawnBinding(false);
     Super::BeginDestroy();
 }
 
-void UDivineBeastsVillageMinimapWidget::ClearPawnBinding()
+void UDivineBeastsVillageMinimapWidget::ClearPawnBinding(bool bPublishEmptySnapshot)
 {
     ++BindingGeneration;
     if (ACharacter* Character = BoundCharacter.Get())
@@ -54,6 +56,9 @@ void UDivineBeastsVillageMinimapWidget::ClearPawnBinding()
     BoundCharacter.Reset();
     FGamePlatformAssetLoader::Cancel(MapLoadHandle);
     MapLoadHandle.Reset();
+    // 资源先清理、发布后判定；GC路径不能省掉解绑或取消，也不能修改可能已半销毁的Widget树。
+    if (!bPublishEmptySnapshot || bDestroyingNativeResources || !IsValid(this) || IsUnreachable() ||
+        HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed)) { return; }
     // 平台快照同样撤销软引用与旧位置；取消后蓝图读取也不能再次显示上一角色。
     FGamePlatformUIMinimapState EmptySnapshot;
     EmptySnapshot.MapId = TEXT("Village.Start");
@@ -67,6 +72,7 @@ void UDivineBeastsVillageMinimapWidget::ClearPawnBinding()
 
 void UDivineBeastsVillageMinimapWidget::BindToPawn(APawn* Pawn)
 {
+    if (bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     ACharacter* Character = Cast<ACharacter>(Pawn);
     if (BoundCharacter.Get() == Character && IsValid(Character)) { RefreshProjection(); return; }
     ClearPawnBinding();
@@ -93,6 +99,7 @@ void UDivineBeastsVillageMinimapWidget::HandlePawnDestroyed(AActor*) { ClearPawn
 
 void UDivineBeastsVillageMinimapWidget::RefreshProjection()
 {
+    if (bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     ACharacter* Character = BoundCharacter.Get();
     FVector2D UV;
     if (!IsValid(Character) || Character != GetOwningPlayerPawn() ||

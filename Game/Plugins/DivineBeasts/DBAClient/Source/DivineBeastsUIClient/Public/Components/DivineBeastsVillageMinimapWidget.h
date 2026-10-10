@@ -33,11 +33,14 @@ private:
     void HandlePawnDestroyed(AActor* DestroyedActor);
     /** 当前纹理已加载才发布完整快照；过期回调由绑定代次和弱引用阻止。 */
     void RefreshProjection();
-    void ClearPawnBinding();
+    /** 原生事件/加载句柄始终释放；正常解绑发布空快照，GC销毁不能访问Widget树或调用蓝图。 */
+    void ClearPawnBinding(bool bPublishEmptySnapshot = true);
 
     TWeakObjectPtr<ACharacter> BoundCharacter;
     TSharedPtr<FStreamableHandle> MapLoadHandle;
     uint64 BindingGeneration = 0;
     /** 只增不减，避免同一Widget重绑相同MapId被平台版本门禁拒绝。 */
     int64 SnapshotRevision = 0;
+    /** 防止Super销毁重入NativeDestruct或取消请求期间的回调重新发布界面。 */
+    bool bDestroyingNativeResources = false;
 };

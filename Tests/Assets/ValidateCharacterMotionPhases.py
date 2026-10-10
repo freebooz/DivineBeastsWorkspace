@@ -30,6 +30,10 @@ def validate_non_reference_pose(sequence):
 fall = unreal.load_asset(BASE + 'WorldLocomotion/MM_Fall_Loop')
 assert fall, '下落资源必须存在'
 validate_non_reference_pose(fall)
+for phase in ('MM_Jump', 'MM_Land'):
+    animation = unreal.load_asset(BASE + 'WorldLocomotion/' + phase)
+    assert animation, phase + '资源必须存在'
+    validate_non_reference_pose(animation)
 idle = unreal.load_asset(BASE + 'WorldLocomotion/MM_Idle')
 assert idle, '待机资源必须存在'
 validate_non_reference_pose(idle)

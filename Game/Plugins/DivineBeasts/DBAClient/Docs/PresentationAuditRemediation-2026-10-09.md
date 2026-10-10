@@ -25,3 +25,11 @@ GetContentPackState返回Loading/Active/Failed/Cancelled/Deactivated；非法、
 发布前还需由平台Provider登记的DefinitionClass验证实际加载对象；项目不直接引用VFX/SFX实现类，空声明、缺提供者、错误定义领域都不能成为Active。
 
 世界交互与Village反馈只在平台返回Submitted（真实受理）后保留FactId去重历史。ProviderMissing、无目录、过期世界等同步拒绝会撤销本次去重记账；相同事实重送仍返回实际失败，不能把首次未受理合成为Submitted。Submitted本身不等于实际播放完成，异步结果由播放器公开GetPlaybackSnapshot及完成订阅查询；快照RequestId可关联原FactId，VFX子实例另外携带ParentHandle，调用方需识别根实例。相同已受理事实仍按预测/确认规则去重，失败表现不改变权威事实。本轮新增世界交互、合法教学反馈重复未受理回归；UE Automation仍未执行。
+
+## 2026-10-11 真实预览舞台动画诊断与回归
+
+平台`AGamePlatformCharacterPreviewStage::ApplyPreviewAppearance`只接收已加载的Mesh、材质和AnimInstance类；Mesh组件保持独立Tick、未暂停动画，默认`AlwaysTickPoseAndRefreshBones`。舞台Actor自身关闭Tick仅停止Actor业务更新，不停止Mesh组件动画。项目`UDivineBeastsCharacterPreviewSubsystem`在实际游戏世界流送角色工作室，绑定舞台相机；外观租约完成后装配动画，退出和世界清理撤销加载、清空舞台及卸载流送关卡。上述路径未发现显式暂停动画或关闭Mesh更新的设置，本次不据截图冻结直接修改舞台生产配置。
+
+本机Monolith的`editor.capture_anim_frames`在一次调用内循环采样，使用`World->Tick(LEVELTICK_PauseTick, ...)`加Mesh `TickComponent`。UE5.8的`USkeletalMeshComponent::ShouldTickPose`通过`PoseTickedThisFrame`检查`GFrameCounter`，`TickPose`记录当前引擎帧，因此同一工具调用的后续样本可被同帧去重拒绝；暂停World Tick并不等于跨越引擎帧。`FPreviewScene`实际已调用`InitializeActorsForPlay`，不能仅把EditorPreview世界类型或缺少Actor初始化当成确定根因。工具重复图像只能证明该捕获入口没有得到变化，不能证明真实预览舞台Idle正常或失败。
+
+项目侧`DivineBeasts.Presentation.Characters.PreviewStageAnimation`使用保存的`SKM_Manny_Simple`和`ABP_DBA_PreviewIdle`，通过正式平台Stage装配API创建独立GameInstance及受控GameMode/游戏世界，保留Stage默认Tick和组件属性。Automation latent命令等待真实引擎帧，使用正常`World->Tick(LEVELTICK_All)`，不修改`GFrameCounter`、不手动调用`TickAnimation`或伪造动画时间。检查实际Idle播放器时间、状态和组件空间骨姿势变化；超时或不推进明确失败，记录差异数值。用例退出先EndPlay，关闭GameInstance并销毁其WorldContext/World，不改正式地图、出生点或资产。此回归须以锁定UE自动化运行日志为准，源码存在和序列压缩数据可变均不代表Stage动画已通过；人工选角视觉、客户端运行和Cook仍分别验收。

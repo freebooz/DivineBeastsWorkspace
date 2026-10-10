@@ -1,0 +1,84 @@
+# 动画、新手村HUD与开发技能验证记录
+
+用户授权：2026-10-11批准60技能定义、60技能蓝图、12技能集、36成本、36冷却与12显示配置迁移；只用于开发验证。界面方向为上古原始自然风格：商代青铜、部落图腾、萨满元素。字体和输入控件保持固定字号，不增加界面整体缩放。
+
+## 修改边界
+
+- 平台动画快照提供地面速度、垂直速度、真实落地与上升状态；项目公共动画包持有具体待机、起跳、下落与落地资源。
+- 项目客户端的头像和地图适配消费当前本地玩家身份与移动事件，公共界面资源归DBAUIPack_Core；各英雄肖像源图和纹理归各英雄包。无可信等级时隐藏等级。没有新增服务器角色或第二套资产管理器。
+- 小地图范围来自当前源地图Landscape的实际边界：中心零点、50400厘米正方形，+X向上、+Y向右。底图拍摄当前真实地图，不编造村庄建筑或路线；手工修改地图仍由用户维护。
+- 开发技能为服务器权威基础伤害验证，41项支持、19项拒绝；正式英雄默认配置不变。独立开发开关同时要求配置和命令行，Shipping/Test拒绝。
+
+## 已发现并整改的问题
+
+预览原待机仅有极小脊柱摆动，改用现有完整Idle。下落序列原压缩数据返回参考姿势，通过真实骨轨重写触发重新压缩，原始159轨道保留。只读姿势回归曾重现原失败，修复后输出CHARACTER_MOTION_POSES_PASS。
+
+OnlyModules在单体客户端仅检查模块对象文件，不重新链接EXE；先前0动作退出0不能作为新客户端产物证据。完整Client构建5a92189f和Server构建02917be7均已实际链接程序并退出0。新增真实帧预览回归后，Client增量构建6fb94321和Editor模块构建67852ae1亦退出0；具体动作及时间戳保留在对应FoundationM0目录。
+
+Monolith重设小地图父类时暴露BeginDestroy清理仍调用蓝图通知的缺陷，编辑器日志确认不可达对象触发BP_OnMinimapChanged。销毁路径已改为原生解绑、取消与资源释放；正常页面退出才发布空快照。编译通过，DivineBeasts.UI.Village.GarbageCollectionCleanup实际回归通过。头像与小地图的过期回调、身份变化和页面退出保护同步保留。
+
+Monolith的ABP多时间截图发生在同一GFrameCounter，ShouldTickPose去重会产生相同帧，不能据此判定游戏动画冻结。新增真实Stage、GameInstance与World的跨帧潜伏回归，不手改帧号或调用TickAnimation。2026-10-11保存UI时调用方误传相对包名，触发LongPackageNameToFilename致命错误；修正为完整挂载路径并重新执行未保存的修改。全部自动保存保留于Saved/Validation/AnimationHUD/AfterSavePathCrash，正式用户地图源文件不覆盖。
+
+总体目录说明发现历史合并标记，保留两侧登记项后移除标记，未删除对应文件。
+
+## 当前验收状态
+
+开发资产作者已执行，定义60、集合12与正式英雄12隔离的编辑器只读审计通过；36冷却组件已逐包保存。独立真实GAS成本回归36项扣费通过；真实玩家技能激活、冷却、联网授权仍待人工验证。
+
+界面主题采用真实导入的自然图腾背景、商代青铜框与深色控制面。十二头像通过实际外观Profile的网格及材质分帧拍摄，并按单材质覆盖全部槽位的正式规则导入对应英雄包；这些仍为现有Manny/Quinn开发模型，不是正式生肖美术。空背景的首批捕获未用于交付。最终编译、保存重载、Cook与人工视觉验收分别记录，不能互相替代。
+
+客户端GUI按用户先前要求仅检查代码与日志，未执行游戏窗口自动点击或移动。旧两个客户端使用先前发布包，不包含本轮修改；不能以其已进入新手村证明新增HUD和动画通过。
+
+### 代码审查前发布证据（后续更新见下节）
+
+- 真实帧自动化报告PreviewAutomation/index.json：预览、骨架兼容、网络模型偏移、世界行走共4项通过；Idle 0.1667秒到0.7667秒，最大骨旋转差0.300593弧度、位移差4.094473厘米。另运行Village HUD 3项、平台移动2项、开发集合隔离1项及命名前缀1项，均通过。
+- Monolith最终编译并保存11份Widget，错误和警告为零；关闭后重开检查真实父类及树。三页交互审计零错误，27条低于工具18pt建议的既有字号警告保留；字体和输入框不随窗口缩放。Tooltip与Up/Down/Tab/Shift-Tab均有明确导航，不给文本编辑的Left/Right强制跳焦点。静态图片预览没有角色与业务状态，不能代替运行验收。
+- Client最终发布b5c7400d-d3a8-40a9-a9b2-1de2a3b633f6：实际Cook、Stage、Pak、IoStore检查退出0，282项必需资源全部存在。Server最终发布b360c6c6-9e67-4b23-bad7-3131a1097b22：实际Cook/Stage/Pak退出0，包含207份开发技能相关资产；项目纯客户端UI、头像、登录关卡资产为零。引擎既有VREditor音效仍在包内，本轮没有扩大到引擎资源全量瘦身。
+- 专服旧包被控制面确认Drain后停止；新进程46848加载真实Village地图、监听17778，体验到Stage=2/Error=None。运行日志确认已实际找到开发DefaultGame及DefaultGameplayTags，不把参数存在当成加载成功。服务五个/health/ready端点均200/ready。
+- 新客户端58428、31788使用本轮最终包，保留人工空白登录；日志分别显示Login页面激活、Menu输入模式及AccountInput焦点。未自动认证，技能授予、真实扣费/冷却与网络跳跃动画仍待本轮用户人工操作确认。
+- 两个客户端启动日志存在UI.Screen.Boot资源失败后正常进入Login的警告；专服继承CommonUI视口配置而回退原生GameViewportClient的日志错误也仍存在。二者不阻断本轮启动，保留为存量整改项，不宣称日志全零。
+
+本轮恢复备份留在Saved/Validation/AnimationHUD；源树中自己生成的临时L_AnimationHUD_CaptureBackup及外置编辑数据保留作恢复材料，不用于正式关卡或发布验收，不与用户地图混合提交。关闭编辑器曾被自动审批拒绝；独立读取脏包为零的证据后，使用原生QUIT_EDITOR安全关闭获批，保存资产已重开读取。
+
+### 最终代码审查整改
+
+- 技能条移除后保留ViewModel但丢失订阅：刷新时单独核对委托句柄，复用也重订阅；真实保存Widget的同对象重新构建回归先失败两项，修复后通过，并验证一次事件只增加一次版本。
+- 开发GA缺少平台权威阻断分类：普攻添加Ability.Active，主动/大招同时添加Ability.Spell；60份保存类重载审计通过。实际眩晕阻断普攻和技能、沉默允许普攻并阻断施法的GAS测试先失败三项，修复后通过。
+- 作者脚本把Momentum FieldPath错误绑定至AbilitiesRuntime而非CharactersRuntime。原名称字符串审计未发现，补充引擎AbilitySystemLibrary.is_valid及所有者检查后，36成本GE产生72条真实失败；修正36份保存资产后审计通过。真实GAS测试核对字段身份、瞬时加法、有限负值并逐项实际扣费，全部通过。没有修改引擎或共享GE CDO。
+- ReviewRegressionGreen编辑器加载新DLL后上述回归通过；其中首个GAS测试的既有GameplayCueNotifyPaths回退警告保留，成本测试零警告。新Editor构建b1effe36有6个实际动作，完整Client/Server构建9d612117均退出0。
+- Monolith同步run_automation_tests不能执行包含跨帧潜伏命令的PreviewStageAnimation，触发LatentCommands.IsEmpty断言退出；这是验证工具调用方式错误，改用UE原生Automation控制台队列，不修改生产动画或声称该次通过。
+
+## 开发配置Cook、Stage与运行时加载
+
+UE5.8的三个阶段分别选择配置，不能把Cook收到开发参数解释为发布程序也已加载开发技能。现有Server Target收据仍为DedicatedServer，本轮不修改目标、引擎或收据。
+
+- Cook：两个入口只通过AdditionalCookerOptions传入所选CustomConfig，决定开发技能与客户端/专服内容边界。
+- Stage：仅VillageDevelopmentClient或VillageDevelopmentServer分别追加两项精确的-ini:Game:[Staging]:+AllowedConfigFiles参数，路径为DivineBeastsArena/Config/Custom/所选配置/DefaultGame.ini及DefaultGameplayTags.ini。第一份包含开发开关、十二集合映射与客户端UIProfile扫描；第二份包含36个独立冷却标签。默认FrontEndClient、FoundationStandalone和VillageServer没有这些开发白名单。
+- 两个入口均不向UAT顶层传CustomConfig。ProjectParams虽然不直接解析它，但UBT ConfigCache仍会从进程参数覆盖配置层；顶层开发配置会让DedicatedServer的PakFileRules读取另一目录，破坏既有专服剥离边界。精确白名单保留原收据的Stage/Pak规则。
+- 运行时：开发客户端必须同时附带-CustomConfig=VillageDevelopmentClient、-DBADevelopmentSkills和-textconfig；开发专服使用对应VillageDevelopmentServer，完整参数如下。textconfig要求从已Stage的文本INI层重新读取，避免按正式收据生成的BinaryConfig.ini缓存错误层级。省略配置或开发开关仍拒绝授予，Shipping/Test由项目代码无条件拒绝。
+
+客户端开发启动参数：
+
+`-CustomConfig=VillageDevelopmentClient -DBADevelopmentSkills -textconfig`
+
+专服开发启动参数：
+
+`-CustomConfig=VillageDevelopmentServer -DBADevelopmentSkills -textconfig`
+
+启动诊断可另加-dumpiniloads，只检查配置文件读取路径；日志不得包含密码或服务器生产凭据。发布证据还须分别检查UFS清单/最终pak中的上述两份INI，以及运行日志实际读取所选DefaultGame和DefaultGameplayTags；仅IoStore资产列表无法证明配置已经附带并生效。
+
+源码依据为锁定UE5.8的Engine/Source：Programs/AutomationTool/AutomationUtils/DeploymentContext.cs第540行从收据选择CustomConfig，第644行读Stage白名单；Programs/AutomationTool/Scripts/CopyBuildToStagingDirectory.Automation.cs第2530行先接受精确白名单，第2574行再过滤其他Custom目录；Programs/UnrealBuildTool/Configuration/Ini/ConfigCache.cs第333行开始解析全局配置覆盖；Runtime/Core/Public/Misc/ConfigHierarchy.h第29行定义原生CustomConfig层；Runtime/Core/Private/Misc/ConfigCacheIni.cpp第6729行支持textconfig跳过二进制缓存，第6836行读取运行时CustomConfig覆盖。
+
+2026-10-11实际执行Tests/Foundation/Scripts/TestFoundationPackagingConfig.ps1：既有3项数组合并检查及新增5组脚本参数/真实UBT配置回归通过，退出码0。测试从两个脚本的实际参数表达式提取白名单并交给UE5.8现成配置解析器，确认默认路径没有开发白名单、开发路径恰有两项、正式默认开关仍关闭、专服Pak剥离规则保留；不调用构建、Cook、Stage或游戏启动。证据为Saved/Validation/FoundationM0/df58334e-b9d1-4fde-93ce-243bf44468c7/PackagingConfig/result.json。修复后的实际发布与运行读取已分别留证。
+
+## 审查整改后的最终发布
+
+完整Client/Server构建9d612117-3537-480e-b806-d99e8d2c3831退出0。原生动画队列报告FinalAnimationAutomation/index.json为4成功、0警告、0失败；ReviewRegressionGreenResults.json记录技能条、开发隔离/控制/36项实际成本及Village HUD全部通过。重开编辑器后60技能、12集合、12正式英雄隔离审计通过，错误气势字段PostSerialize警告已消失。
+
+最终客户端Cook为d1f31bba-38f2-41a8-a95c-862df303407c，实际Cook/Stage/Pak/IoStore退出0，282项必需资产零缺失。最终专服Cook为d666f150-7117-47cf-82bc-109846e316dd，实际Cook/Stage/Pak退出0；ServerContainerAudit.Reviewed.json记录759份实际Export、207份开发技能资源、零项目纯客户端资产。两端UFS清单及实际运行均找到各自开发DefaultGame/DefaultGameplayTags。
+
+ReviewedVillageRun记录控制面Drain旧测试专服确认。隔离环境Get-Process看不到宿主启动的进程，曾误判启动器回收；独立宿主查询确认进程实际存活，关闭误判造成的两个重复测试窗口。最终PersistentVillageRun记录专服PID1248、真实Village体验Stage=2/Error=None、监听17778。两个新版客户端运行记录位于FrontEndClients/7757ae07-b009-4e92-8fba-092f9b04f28d，PID14628与15712在宿主确认存活，正常人工登录激活、AccountInput焦点；无自动认证。真实两窗口进入新手村、跳跃视觉、头像地图显示、网络技能激活及冷却尚未得到本轮人工反馈，不能标记联机验收完成。
+
+本轮导入产生的12份无引用临时T_DBA_*_Portrait1纹理已完整备份；自动审批要求明确删除授权，当前保留、不作为正式头像身份纳入提交。地图恢复备份亦不纳入功能提交。源地图与HEAD一致，没有覆盖用户手工编辑。英文命名门禁审查107955项、63插件、零违规；该数字仅说明检查时的路径命名状态。
+
+中文说明人工审查覆盖本轮作者与只读审计、原生测试、Widget生命周期与异步清理、平台动画快照、开发开关和Cook/Stage配置边界，并同步本目录规划及插件说明。既有全项目中文注释存量、正式生肖模型、完整候选特殊机制、引擎资源全量瘦身及真人联网验收仍未完成，未宣称全项目通过。

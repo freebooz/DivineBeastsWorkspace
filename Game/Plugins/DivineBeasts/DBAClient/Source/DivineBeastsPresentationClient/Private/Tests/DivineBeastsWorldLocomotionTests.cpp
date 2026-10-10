@@ -13,8 +13,127 @@
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/GameInstance.h"
+#include "Engine/Engine.h"
+#include "Preview/GamePlatformCharacterPreviewStage.h"
+#include "UObject/StrongObjectPtr.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
+/** 实际引擎帧中的舞台动画回归；保持正式Stage默认属性，不手动TickAnimation、不改全局帧号或资产。 */
+class FDivineBeastsPreviewStageAnimationCommand final : public IAutomationLatentCommand
+{
+public:
+    explicit FDivineBeastsPreviewStageAnimationCommand(FAutomationTestBase* InTest) : Test(InTest) {}
+    virtual ~FDivineBeastsPreviewStageAnimationCommand() override
+    {
+        // 独立GameInstance/World作用域最终关闭；不让测试持有的Stage、动画和流式资源跨到正式世界。
+        if (Instance.IsValid())
+        {
+            UWorld* World = Instance->GetWorld();
+            if (World) { World->EndPlay(EEndPlayReason::Quit); }
+            Instance->Shutdown();
+            if (World) { GEngine->DestroyWorldContext(World); World->DestroyWorld(false); }
+        }
+    }
+
+    virtual bool Update() override
+    {
+        if (!Instance.IsValid())
+        {
+            AnimationClass = LoadClass<UAnimInstance>(nullptr,
+                TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.ABP_DBA_PreviewIdle_C"));
+            auto* Asset = LoadObject<USkeletalMesh>(nullptr,
+                TEXT("/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+            if (!Test->TestNotNull(TEXT("已保存真实预览动画类"), AnimationClass) ||
+                !Test->TestNotNull(TEXT("真实预览模型"), Asset)) { return true; }
+            Instance.Reset(NewObject<UGameInstance>(GEngine));
+            Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
+            UWorld* World = Instance->GetWorld();
+            if (!Test->TestNotNull(TEXT("舞台独立游戏世界"), World)) { return true; }
+            FURL URL;
+            URL.AddOption(TEXT("game=/Script/Engine.GameModeBase"));
+            if (!Test->TestTrue(TEXT("受控基础GameMode启动"), World->SetGameMode(URL))) { return true; }
+            World->InitializeActorsForPlay(URL);
+            World->BeginPlay();
+            Stage = World->SpawnActor<AGamePlatformCharacterPreviewStage>();
+            if (!Test->TestTrue(TEXT("真实Stage生成"), Stage.IsValid())) { return true; }
+            if (!Test->TestTrue(TEXT("正式ApplyPreviewAppearance装配"), Stage->ApplyPreviewAppearance(
+                Asset, {}, AnimationClass, FVector(0, 0, -88), FRotator(0, -90, 0), FVector::OneVector))) { return true; }
+            auto* Mesh = Stage->GetPreviewMeshComponent();
+            if (!Test->TestNotNull(TEXT("舞台拥有真实Mesh组件"), Mesh) ||
+                !Test->TestNotNull(TEXT("舞台已创建实际AnimInstance"), Mesh->GetAnimInstance())) { return true; }
+            Test->TestFalse(TEXT("Stage无Actor业务Tick，动画仍由独立Mesh组件评估"), Stage->PrimaryActorTick.bCanEverTick);
+            Test->TestTrue(TEXT("实际Mesh组件Tick已启用"), Mesh->IsComponentTickEnabled());
+            Test->TestTrue(TEXT("实际Mesh已注册"), Mesh->IsRegistered());
+            Test->TestFalse(TEXT("实际Stage未暂停动画"), Mesh->bPauseAnims);
+            Test->TestEqual(TEXT("实际Stage默认持续更新姿势与骨骼"), Mesh->VisibilityBasedAnimTickOption,
+                EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones);
+            Test->TestTrue(TEXT("游戏世界Actor已初始化"), World->AreActorsInitialized());
+            StartSeconds = FPlatformTime::Seconds();
+            LastEngineFrame = GFrameCounter;
+            return false;
+        }
+        if (FPlatformTime::Seconds() - StartSeconds > 30.0)
+        { Test->AddError(TEXT("舞台动画回归等待真实引擎帧超时，不能将冻结截图当成通过")); return true; }
+        // ShouldTickPose按GFrameCounter去重；Automation真正跨帧才能复现游戏路径，禁止测试伪造帧号。
+        if (LastEngineFrame == GFrameCounter) { return false; }
+        LastEngineFrame = GFrameCounter;
+        UWorld* World = Instance->GetWorld();
+        auto* Mesh = Stage.IsValid() ? Stage->GetPreviewMeshComponent() : nullptr;
+        if (!Test->TestNotNull(TEXT("帧推进时真实Mesh仍存活"), Mesh)) { return true; }
+        World->Tick(LEVELTICK_All, 1.0f / 30.0f);
+        World->SendAllEndOfFrameUpdates();
+        ++AdvancedFrames;
+        auto* Animation = Mesh->GetAnimInstance();
+        if (!Test->TestNotNull(TEXT("帧推进时动画实例仍存活"), Animation)) { return true; }
+        if (AdvancedFrames == 5)
+        {
+            PlayerIndex = Animation->GetInstanceAssetPlayerIndex(TEXT("PreviewIdle"), TEXT("Idle"));
+            if (!Test->TestTrue(TEXT("保存动画图实际拥有Idle资产播放器"), PlayerIndex != INDEX_NONE)) { return true; }
+            FirstTime = Animation->GetInstanceAssetPlayerTime(PlayerIndex);
+            FirstPose = Mesh->GetComponentSpaceTransforms();
+        }
+        if (AdvancedFrames < 23) { return false; }
+        const float SecondTime = Animation->GetInstanceAssetPlayerTime(PlayerIndex);
+        Test->TestTrue(TEXT("正式World组件Tick使Idle播放器时间推进"), FMath::Abs(SecondTime - FirstTime) > 0.05f);
+        Test->TestEqual(TEXT("预览保持实际Idle状态"), Animation->GetCurrentStateName(0), FName(TEXT("Idle")));
+        const auto& SecondPose = Mesh->GetComponentSpaceTransforms();
+        Test->TestTrue(TEXT("真实预览模型骨骼已求值"), !FirstPose.IsEmpty() && FirstPose.Num() == SecondPose.Num());
+        double MaximumAngle = 0;
+        double MaximumTranslationCm = 0;
+        for (int32 Index = 0; Index < FMath::Min(FirstPose.Num(), SecondPose.Num()); ++Index)
+        {
+            MaximumAngle = FMath::Max(MaximumAngle, FirstPose[Index].GetRotation().AngularDistance(SecondPose[Index].GetRotation()));
+            MaximumTranslationCm = FMath::Max(MaximumTranslationCm, FVector::Distance(FirstPose[Index].GetTranslation(), SecondPose[Index].GetTranslation()));
+        }
+        Test->TestTrue(TEXT("实际Stage骨姿势随动画时间改变，不能停留A姿势"), MaximumAngle > 0.0001 || MaximumTranslationCm > 0.001);
+        Test->AddInfo(FString::Printf(TEXT("PreviewStage: 真实引擎帧=%d IdleTime=%.4f→%.4f MaxBoneAngle=%.6f rad MaxBoneTranslation=%.6f cm"),
+            AdvancedFrames, FirstTime, SecondTime, MaximumAngle, MaximumTranslationCm));
+        return true;
+    }
+
+private:
+    FAutomationTestBase* Test;
+    TStrongObjectPtr<UGameInstance> Instance;
+    TWeakObjectPtr<AGamePlatformCharacterPreviewStage> Stage;
+    UClass* AnimationClass = nullptr;
+    uint64 LastEngineFrame = 0;
+    double StartSeconds = 0;
+    int32 AdvancedFrames = 0;
+    int32 PlayerIndex = INDEX_NONE;
+    float FirstTime = 0;
+    TArray<FTransform> FirstPose;
+};
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPreviewStageAnimationTest,
+    "DivineBeasts.Presentation.Characters.PreviewStageAnimation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPreviewStageAnimationTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(FDivineBeastsPreviewStageAnimationCommand(this));
+    return true;
+}
+
 // 回归真实异步外观完成后的偏移，模拟Definition晚于外观把胶囊从88cm调整到96cm。
 // 不连接后端、不伪造Ready，不改正式资产；直接消费已加载资源，只验证客户端表现和引擎缓存合同。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsNetworkMeshPlacementTest,

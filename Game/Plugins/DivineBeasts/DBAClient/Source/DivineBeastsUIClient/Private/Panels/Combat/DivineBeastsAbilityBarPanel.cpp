@@ -1,3 +1,5 @@
+// 项目客户端技能HUD适配：消费当前Pawn的只读授权/冷却事件，不发送业务HTTP或授予技能。
+// Widget独占ViewModel与订阅句柄；每次构造恢复订阅、失活解绑，允许同一Widget跨显示周期复用。
 #include "Panels/Combat/DivineBeastsAbilityBarPanel.h"
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "ViewModels/Combat/DivineBeastsAbilityBarViewModel.h"
@@ -45,6 +47,11 @@ bool UDivineBeastsAbilityBarPanel::RefreshAbilitySourceFromOwningPawn()
     if (!AbilityBarViewModel)
     {
         AbilityBarViewModel = NewObject<UDivineBeastsAbilityBarViewModel>(this);
+    }
+    // RemoveFromParent后ViewModel仍被Widget拥有，NativeDestruct已撤销句柄；
+    // 订阅生命周期必须独立于对象创建，否则再次显示后异步授权/冷却不再进入真实槽位。
+    if (!ViewModelSlotsHandle.IsValid())
+    {
         ViewModelSlotsHandle = AbilityBarViewModel->OnSlotsChanged().AddUObject(
             this, &UDivineBeastsAbilityBarPanel::HandleViewModelSlotsChanged);
     }

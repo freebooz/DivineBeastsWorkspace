@@ -28,6 +28,14 @@ public:
     UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion")
     bool bIsFalling = false;
 
+    /** CharacterMovement当前确认为地面行走/导航行走；无Pawn、无移动组件、飞行/游泳或失活均为false，不能用非下落反推落地。 */
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion")
+    bool bIsGrounded = false;
+
+    /** 下落模式且实际垂直速度严格大于零；供状态机直接读取上升条件。顶点、下降、非法速度、无Pawn和失活为false。 */
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion")
+    bool bIsRising = false;
+
     /** Mesh切换或动画实例初始化后清理上一所有者的状态；由引擎游戏线程调用。 */
     virtual void NativeInitializeAnimation() override;
 

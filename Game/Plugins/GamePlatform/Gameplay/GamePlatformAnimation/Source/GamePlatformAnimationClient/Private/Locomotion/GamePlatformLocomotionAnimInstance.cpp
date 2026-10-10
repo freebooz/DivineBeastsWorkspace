@@ -10,6 +10,8 @@ void UGamePlatformLocomotionAnimInstance::NativeInitializeAnimation()
     GroundSpeedCmPerSecond = 0.0f;
     VerticalSpeedCmPerSecond = 0.0f;
     bIsFalling = false;
+    bIsGrounded = false;
+    bIsRising = false;
 }
 
 void UGamePlatformLocomotionAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -27,6 +29,9 @@ void UGamePlatformLocomotionAnimInstance::NativeUpdateAnimation(float DeltaSecon
     const ACharacter* Character = Cast<ACharacter>(Pawn);
     const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
     bIsFalling = Movement && Movement->IsFalling();
+    // 显式快照让简单布尔转换规则无需组合/取反；真实移动模式确认地面，缺Owner或其他移动模式不能误播Landing。
+    bIsGrounded = Movement && Movement->IsMovingOnGround();
+    bIsRising = bIsFalling && VerticalSpeedCmPerSecond > 0.0f;
 }
 
 void UGamePlatformLocomotionAnimInstance::NativeUninitializeAnimation()
@@ -34,5 +39,7 @@ void UGamePlatformLocomotionAnimInstance::NativeUninitializeAnimation()
     GroundSpeedCmPerSecond = 0.0f;
     VerticalSpeedCmPerSecond = 0.0f;
     bIsFalling = false;
+    bIsGrounded = false;
+    bIsRising = false;
     Super::NativeUninitializeAnimation();
 }

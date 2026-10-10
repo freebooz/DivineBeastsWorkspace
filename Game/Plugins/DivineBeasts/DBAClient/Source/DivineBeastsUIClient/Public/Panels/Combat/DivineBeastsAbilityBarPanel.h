@@ -58,6 +58,8 @@ protected:
     void BP_OnAbilitySlotsChanged();
 
 private:
+    // 自动化夹具验证同一Widget反复构造/失活的真实事件投影，不为测试公开产品接口。
+    friend class FDivineBeastsAbilityBarReconstructTest;
     UFUNCTION()
     void HandlePossessedPawnChanged(APawn* PreviousPawn, APawn* NewPawn);
 

@@ -35,17 +35,23 @@ void UDivineBeastsPlayerPortraitWidget::NativeConstruct()
 }
 
 void UDivineBeastsPlayerPortraitWidget::NativeDestruct() { ClearAllBindings(); Super::NativeDestruct(); }
-void UDivineBeastsPlayerPortraitWidget::BeginDestroy() { ClearAllBindings(); Super::BeginDestroy(); }
+void UDivineBeastsPlayerPortraitWidget::BeginDestroy()
+{
+    // 蓝图重编译会直接GC旧实例，未必经过NativeDestruct；此时只能原生清理，不能ProcessEvent或触碰Widget树。
+    bDestroyingNativeResources = true;
+    ClearAllBindings(false);
+    Super::BeginDestroy();
+}
 
-void UDivineBeastsPlayerPortraitWidget::ClearAllBindings()
+void UDivineBeastsPlayerPortraitWidget::ClearAllBindings(bool bPublishEmptySnapshot)
 {
     if (auto* Flow = BoundFlow.Get()) { Flow->OnViewStateChanged().Remove(FlowHandle); }
     BoundFlow.Reset();
     FlowHandle.Reset();
-    ClearPawnBinding();
+    ClearPawnBinding(bPublishEmptySnapshot);
 }
 
-void UDivineBeastsPlayerPortraitWidget::ClearPawnBinding()
+void UDivineBeastsPlayerPortraitWidget::ClearPawnBinding(bool bPublishEmptySnapshot)
 {
     ++LoadGeneration;
     if (auto* Identity = BoundIdentity.Get())
@@ -61,6 +67,9 @@ void UDivineBeastsPlayerPortraitWidget::ClearPawnBinding()
     FGamePlatformAssetLoader::Cancel(PortraitLoadHandle);
     PortraitLoadHandle.Reset();
     RequestedPortraitPath.Reset();
+    // 不可达对象的反射事件会触发引擎断言；必须在资源已释放之后退出，而不是把整个清理路径跳过。
+    if (!bPublishEmptySnapshot || bDestroyingNativeResources || !IsValid(this) || IsUnreachable() ||
+        HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed)) { return; }
     ApplyPortraitState(FGamePlatformUIPortraitState());
     RenderPortrait();
     SetVisibility(ESlateVisibility::Collapsed);
@@ -68,6 +77,7 @@ void UDivineBeastsPlayerPortraitWidget::ClearPawnBinding()
 
 void UDivineBeastsPlayerPortraitWidget::BindToPawn(APawn* Pawn)
 {
+    if (bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     if (BoundPawn.Get() == Pawn && IsValid(Pawn)) { RefreshPortrait(); return; }
     ClearPawnBinding();
     if (!IsValid(Pawn) || !Pawn->IsLocallyControlled()) { return; }
@@ -88,6 +98,7 @@ void UDivineBeastsPlayerPortraitWidget::HandlePawnDestroyed(AActor*) { ClearPawn
 
 void UDivineBeastsPlayerPortraitWidget::RefreshPortrait()
 {
+    if (bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     auto* Identity = BoundIdentity.Get();
     if (!IsValid(Identity) || BoundPawn.Get() != GetOwningPlayerPawn()) { return; }
     const FName HeroId = Identity->GetHeroDefinitionId();
@@ -132,6 +143,7 @@ void UDivineBeastsPlayerPortraitWidget::RefreshPortrait()
 
 void UDivineBeastsPlayerPortraitWidget::RenderPortrait()
 {
+    if (bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     const auto State = GetPortraitState();
     if (auto* Image = Cast<UImage>(GetWidgetFromName(TEXT("PortraitImage"))))
     {

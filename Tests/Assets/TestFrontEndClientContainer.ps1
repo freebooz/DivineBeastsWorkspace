@@ -8,7 +8,7 @@
 退出0表示包内容门禁通过，1表示缺失或清单无效；不代表登录、材质效果或新手村联机通过。
 #>
 [CmdletBinding()]
-param([Parameter(Mandatory)][string]$ContainerCsv, [string]$ReportPath)
+param([Parameter(Mandatory)][string]$ContainerCsv, [string]$ReportPath, [switch]$DevelopmentSkills)
 $ErrorActionPreference = 'Stop'
 try {
     # 引擎CSV头和值带空格；按实际列名裁剪后读取，避免把有效清单误判为空。
@@ -42,6 +42,11 @@ try {
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MF_Unarmed_Walk_Fwd.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MF_Unarmed_Jog_Fwd.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MM_Fall_Loop.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MM_Jump.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MM_Land.uasset',
+        'DBAUIPack_Core/Content/UI/Maps/T_DBA_Village_Minimap.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Primal/T_DBA_PrimalLoginBackdrop.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Primal/T_DBA_ShangBronzePanel.uasset',
         # 真实蒙皮必须连同完整UE5骨架交付；旧68骨架同名兼容身份不能代替依赖。
         'DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset',
@@ -53,7 +58,25 @@ try {
     foreach ($hero in @('Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Boar')) {
         $required += "DBAHeroPack_$hero/Content/Characters/DA_Appearance_Zodiac_$hero.uasset"
         $required += "DBAGameplay/Content/Definitions/DA_Hero_Zodiac_$hero.uasset"
+        $required += "DBAHeroPack_$hero/Content/UI/Portraits/T_DBA_${hero}_Portrait.uasset"
+        if ($DevelopmentSkills) {
+            # 开发候选只核对用户批准的真实资产闭包；不将数据交付等同于全部机制实现。
+            $root = 'DivineBeastsArena/Content/Development/DivineBeasts/Abilities'
+            $required += "$root/DA_DBA_${hero}_DevAbilitySet.uasset"
+            $required += "$root/UI/Profiles/DA_DBA_${hero}_DevUIProfile.uasset"
+            foreach ($slot in @('BasicAttack','Active01','Active02','Passive','Ultimate')) {
+                $tail = if ($hero -eq 'Rat' -and $slot -eq 'BasicAttack') { 'Primary' } else { $slot }
+                $native = if ($hero -eq 'Rat' -and $slot -eq 'BasicAttack') { 'Native' } else { '' }
+                $required += "$root/DA_DBA_${hero}_Dev$tail.uasset"
+                $required += "$root/GA_DBA_${hero}_Dev$tail$native.uasset"
+                if ($slot -in @('Active01','Active02','Ultimate')) {
+                    $required += "$root/GE_DBA_${hero}_Dev${slot}Cost.uasset"
+                    $required += "$root/GE_DBA_${hero}_Dev${slot}Cooldown.uasset"
+                }
+            }
+        }
     }
+    if ($DevelopmentSkills) { $required += 'DivineBeastsArena/Content/Development/DivineBeasts/Abilities/DT_DBA_Zodiac_DevBalance.uasset' }
     # 软路径在C++目录中构造，地图引用扫描不能发现；要求实际导出数据而非配置或仅包名。
     $missing = @($required | Where-Object {
         $suffix = '/' + $_

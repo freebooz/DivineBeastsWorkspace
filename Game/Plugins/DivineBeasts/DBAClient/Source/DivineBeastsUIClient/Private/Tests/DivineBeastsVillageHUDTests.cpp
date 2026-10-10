@@ -3,6 +3,8 @@
 #include "Components/DivineBeastsPlayerPortraitWidget.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Image.h"
 #include <limits>
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -55,6 +57,55 @@ bool FDivineBeastsPortraitIdentityTest::RunTest(const FString&)
     Minimap->BindToPawn(nullptr);
     TestTrue(TEXT("取消清空底图引用"), Minimap->GetMinimapStateView().MapTexture.IsNull());
     TestTrue(TEXT("取消保持单调版本，旧回调不得覆盖"), Minimap->GetMinimapStateView().Revision > OldMap.Revision);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsVillageHUDGarbageCollectionTest,
+    "DivineBeasts.UI.Village.GarbageCollectionCleanup", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsVillageHUDGarbageCollectionTest::RunTest(const FString&)
+{
+    // 复现蓝图重设父类时的真实GC入口：对象已不可达，BeginDestroy不能经Apply*触发任何ProcessEvent。
+    // 非空快照保证旧实现必定发布变化；保留画刷/可见性验证销毁路径没有操作Widget树。
+    auto* Portrait = NewObject<UDivineBeastsPlayerPortraitWidget>();
+    Portrait->WidgetTree = NewObject<UWidgetTree>(Portrait);
+    auto* PortraitImage = Portrait->WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), TEXT("PortraitImage"));
+    Portrait->WidgetTree->RootWidget = PortraitImage;
+    auto* PortraitTexture = NewObject<UTexture2D>();
+    FGamePlatformUIPortraitState PreviousPortrait;
+    PreviousPortrait.DisplayId = TEXT("Hero.Zodiac.Rat");
+    PreviousPortrait.DisplayName = FText::FromString(TEXT("销毁前快照"));
+    Portrait->ApplyPortraitState(PreviousPortrait);
+    PortraitImage->SetBrushFromTexture(PortraitTexture);
+    Portrait->SetVisibility(ESlateVisibility::Visible);
+    Portrait->MarkAsGarbage();
+    Portrait->SetInternalFlags(EInternalObjectFlags::Unreachable);
+    TestTrue(TEXT("肖像实际进入BeginDestroy"), Portrait->ConditionalBeginDestroy());
+    TestEqual(TEXT("GC不得经ApplyPortraitState发布空快照/蓝图事件"), Portrait->GetPortraitState().DisplayId, PreviousPortrait.DisplayId);
+    TestEqual(TEXT("GC不触碰肖像画刷"), PortraitImage->GetBrush().GetResourceObject(), static_cast<UObject*>(PortraitTexture));
+    TestEqual(TEXT("GC不修改肖像可见性"), Portrait->GetVisibility(), ESlateVisibility::Visible);
+    TestFalse(TEXT("重复销毁幂等"), Portrait->ConditionalBeginDestroy());
+    // 恢复临时不可达标志，让后续正常GC自行完成回收；不复活已标记Garbage的对象。
+    Portrait->ClearInternalFlags(EInternalObjectFlags::Unreachable);
+
+    auto* Minimap = NewObject<UDivineBeastsVillageMinimapWidget>();
+    Minimap->WidgetTree = NewObject<UWidgetTree>(Minimap);
+    auto* MapImage = Minimap->WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), TEXT("MapImage"));
+    Minimap->WidgetTree->RootWidget = MapImage;
+    auto* MapTexture = NewObject<UTexture2D>();
+    FGamePlatformUIMinimapState PreviousMap;
+    PreviousMap.MapId = TEXT("Village.Start");
+    PreviousMap.Revision = 99;
+    TestTrue(TEXT("销毁前有非空地图快照"), Minimap->ApplyMinimapState(PreviousMap));
+    MapImage->SetBrushFromTexture(MapTexture);
+    Minimap->SetVisibility(ESlateVisibility::Visible);
+    Minimap->MarkAsGarbage();
+    Minimap->SetInternalFlags(EInternalObjectFlags::Unreachable);
+    TestTrue(TEXT("小地图实际进入BeginDestroy"), Minimap->ConditionalBeginDestroy());
+    TestEqual(TEXT("GC不得经ApplyMinimapState发布新版本/蓝图事件"), Minimap->GetMinimapStateView().Revision, PreviousMap.Revision);
+    TestEqual(TEXT("GC不触碰地图画刷"), MapImage->GetBrush().GetResourceObject(), static_cast<UObject*>(MapTexture));
+    TestEqual(TEXT("GC不修改小地图可见性"), Minimap->GetVisibility(), ESlateVisibility::Visible);
+    TestFalse(TEXT("地图重复销毁幂等"), Minimap->ConditionalBeginDestroy());
+    Minimap->ClearInternalFlags(EInternalObjectFlags::Unreachable);
     return true;
 }
 #endif

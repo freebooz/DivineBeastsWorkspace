@@ -36,8 +36,10 @@ private:
     void RefreshPortrait();
     /** 只更新已由Monolith创建的命名控件；此处不创建视觉资产或Widget树。 */
     void RenderPortrait();
-    void ClearPawnBinding();
-    void ClearAllBindings();
+    /** 始终解绑与取消自有请求；只有正常页面退出/换Pawn才发布空快照，GC销毁禁止蓝图事件及Widget操作。 */
+    void ClearPawnBinding(bool bPublishEmptySnapshot = true);
+    /** 流程事件同样在GC销毁时原生撤销；参数只控制最后的界面发布，不跳过资源释放。 */
+    void ClearAllBindings(bool bPublishEmptySnapshot = true);
 
     TWeakObjectPtr<APawn> BoundPawn;
     TWeakObjectPtr<UDivineBeastsCharacterComponent> BoundIdentity;
@@ -48,4 +50,6 @@ private:
     TSharedPtr<FStreamableHandle> PortraitLoadHandle;
     FSoftObjectPath RequestedPortraitPath;
     uint64 LoadGeneration = 0;
+    /** BeginDestroy首先置位，覆盖Super销毁可能重入NativeDestruct的情况；销毁后任何回调不得渲染。 */
+    bool bDestroyingNativeResources = false;
 };

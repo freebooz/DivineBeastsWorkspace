@@ -3,6 +3,8 @@
 #include "Misc/AutomationTest.h"
 #include "Adapters/Combat/DivineBeastsCombatUIFeedbackLibrary.h"
 #include "Requests/GamePlatformUIFeedbackRequest.h"
+#include "Panels/Combat/DivineBeastsAbilityBarPanel.h"
+#include "UObject/StrongObjectPtr.h"
 
 #include <limits>
 
@@ -77,6 +79,39 @@ bool FDivineBeastsCombatUIFeedbackTest::RunTest(const FString&)
         UDivineBeastsCombatUIFeedbackLibrary::BuildFloatingTextRequest(
             Input, InvalidRequest));
 
+    return true;
+}
+// 真实已保存技能条Widget的生命周期回归；控制UI事件输入，不授予或激活网络技能。
+// 同一对象移除再加入后应继续显示异步快照，且重复刷新不能导致一次事件通知多次。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilityBarReconstructTest,
+    "DivineBeasts.UI.Combat.AbilityBarReconstruct",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsAbilityBarReconstructTest::RunTest(const FString&)
+{
+    UClass* Class = LoadClass<UDivineBeastsAbilityBarPanel>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar.WBP_DBA_UI_AbilityBar_C"));
+    if (!TestNotNull(TEXT("真实已保存技能条类"), Class)) return false;
+    TStrongObjectPtr<UDivineBeastsAbilityBarPanel> Widget(NewObject<UDivineBeastsAbilityBarPanel>(GetTransientPackage(), Class));
+    Widget->Initialize();
+    Widget->NativeConstruct();
+    UDivineBeastsAbilityBarViewModel* Original = Widget->AbilityBarViewModel;
+    if (!TestNotNull(TEXT("实际技能视图模型"), Original)) return false;
+    Widget->NativeDestruct();
+    Widget->NativeConstruct();
+    TestEqual(TEXT("保留并复用同一视图模型"), Widget->AbilityBarViewModel.Get(), Original);
+    Widget->RefreshAbilitySourceFromOwningPawn();
+    Widget->RefreshAbilitySourceFromOwningPawn();
+    FGamePlatformUISlotState Slot;
+    Slot.SlotId = TEXT("Platform.Ability.Input.DivineBeasts.Primary");
+    TArray<FGamePlatformUISlotState> Snapshot { Slot };
+    const int32 Revision = Widget->GetPresentationRevision();
+    Original->OnSlotsChanged().Broadcast(Snapshot);
+    TestEqual(TEXT("复用后事件更新实际槽位"), Widget->GetAbilitySlotsView().Num(), 1);
+    TestEqual(TEXT("一次视图事件只发布一次变化"), Widget->GetPresentationRevision(), Revision + 1);
+    Widget->NativeDestruct();
+    const int32 InactiveRevision = Widget->GetPresentationRevision();
+    Original->OnSlotsChanged().Broadcast({});
+    TestEqual(TEXT("失活后不再消费异步视图事件"), Widget->GetPresentationRevision(), InactiveRevision);
     return true;
 }
 #endif

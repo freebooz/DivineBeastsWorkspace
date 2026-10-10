@@ -12,6 +12,9 @@ param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2
     [ValidateRange(0,240)][int]$FrameRateLimit=60,
     # 只记录运动/复制的事件采样，供人工移动后按三端时间戳定位延迟，不包含登录信息。
     [switch]$MovementDiagnostics,
+    # 仅显式开发验证加载已批准候选技能；三个参数共同选择文本INI、开发配置及运行开关。
+    # 首屏仍为人工登录，不向进程传账号或密码；默认false保持正式前端流程。
+    [switch]$DevelopmentSkills,
     [string]$GatewayUrl='http://127.0.0.1:28081',[guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference='Stop'
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -35,8 +38,13 @@ foreach($i in 1..$Count) {
     }
     if ($FrameRateLimit -gt 0) { $info.ArgumentList.Add("-ExecCmds=t.MaxFPS $FrameRateLimit") }
     if ($MovementDiagnostics) { $info.ArgumentList.Add('-DBAMovementDiagnostics') }
+    if ($DevelopmentSkills) {
+        foreach ($argument in @('-CustomConfig=VillageDevelopmentClient','-DBADevelopmentSkills','-textconfig','-dumpiniloads')) {
+            $info.ArgumentList.Add($argument)
+        }
+    }
     $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;MovementDiagnostics=[bool]$MovementDiagnostics}
+    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills}
 }
 $records|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $directory 'Clients.json') -Encoding utf8
 $records|Select-Object PID,InitialScreen,AutoLogin|ConvertTo-Json

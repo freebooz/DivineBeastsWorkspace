@@ -61,6 +61,10 @@ def audit():
         cdo = unreal.get_default_object(cls)
         check(isinstance(cdo, unreal.DivineBeastsDevelopmentGameplayAbility), label + ":没有真实开发执行器")
         check("SERVER_ONLY" in str(cdo.get_editor_property("NetExecutionPolicy")).upper(), label + ":非服务器独占")
+        # 验证真实保存CDO的权威分类：眩晕阻断所有动作，沉默不误伤普通攻击。
+        asset_tags = cdo.get_editor_property("AbilityTags").export_text()
+        check(('TagName="Ability.Active"' in asset_tags) == (slot != "Passive"), label + ":眩晕动作阻断分类错误")
+        check(('TagName="Ability.Spell"' in asset_tags) == (slot not in ("BasicAttack", "Passive")), label + ":沉默施法分类错误")
         check(str(cdo.get_editor_property("AbilityDefinitionId").get_editor_property("PrimaryAssetName")) == entry["DevelopmentAbilityId"], label + ":CDO绑定ID错误")
         balance = entry["Level1BalanceDraft"]
         active = slot != "Passive" and balance["BaseDamage"] > 0 and balance["CastRangeCm"] > 0
@@ -79,7 +83,10 @@ def audit():
             check("INSTANT" in str(cost_cdo.get_editor_property("DurationPolicy")).upper(), label + ":成本不是瞬时效果")
             check(len(modifiers) == 1, label + ":成本不是唯一气势修改")
             if len(modifiers) == 1:
-                check("Momentum" in modifiers[0].get_editor_property("Attribute").export_text(), label + ":成本属性不是气势")
+                attribute = modifiers[0].get_editor_property("Attribute")
+                # ImportText可以留下名称却没有解析字段，必须核对引擎有效性及真实模块所有者。
+                check(unreal.AbilitySystemLibrary.is_valid(attribute), label + ":成本属性字段无法真实解析")
+                check("/Script/DivineBeastsCharactersRuntime.DivineBeastsMomentumAttributeSet" in attribute.export_text(), label + ":成本属性所有者错误")
                 check(abs(static_value(modifiers[0].get_editor_property("ModifierMagnitude")) + balance["MomentumCost"]) < 0.01, label + ":实际扣气势数值错误")
         cooldown = cdo.get_editor_property("CooldownGameplayEffectClass")
         check((cooldown is not None) == (balance["CooldownSeconds"] > 0), label + ":冷却GE存在性错误")

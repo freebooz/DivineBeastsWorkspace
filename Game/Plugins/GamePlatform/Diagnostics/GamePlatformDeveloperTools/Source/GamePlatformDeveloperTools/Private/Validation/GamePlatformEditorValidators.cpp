@@ -1,3 +1,4 @@
+// 平台Editor逐资产验证入口：只读已加载资产及配置，报告命名/内容/身份等规则结果，不修改或保存资产。
 #include "Validation/GamePlatformEditorValidators.h"
 #include "Definitions/GamePlatformDefinitionBase.h"
 
@@ -24,36 +25,6 @@ namespace
         return Package.StartsWith(TEXT("/Game/"))
             || Package.StartsWith(TEXT("/GamePlatform"))
             || Package.StartsWith(TEXT("/DBA"));
-    }
-
-    FString ExpectedPrefixForClass(const FString& ClassName)
-    {
-        const UGamePlatformValidationSettings* Settings = GetDefault<UGamePlatformValidationSettings>();
-        static const TCHAR* PriorityKeys[] =
-        {
-            TEXT("MaterialInstance"),
-            TEXT("WidgetBlueprint"),
-            TEXT("NiagaraSystem"),
-            TEXT("SkeletalMesh"),
-            TEXT("StaticMesh"),
-            TEXT("Texture"),
-            TEXT("Material"),
-            TEXT("Blueprint"),
-            TEXT("Sound")
-        };
-
-        for (const TCHAR* Key : PriorityKeys)
-        {
-            if (ClassName.Contains(Key))
-            {
-                if (const FString* Prefix = Settings->AssetClassPrefixes.Find(Key))
-                {
-                    return *Prefix;
-                }
-            }
-        }
-
-        return FString();
     }
 
     FString ExportPropertyValue(UObject* Object, FProperty* Property)
@@ -155,7 +126,8 @@ EDataValidationResult UGamePlatformNamingValidator::ValidateLoadedAsset_Implemen
     UObject* InAsset,
     FDataValidationContext& Context)
 {
-    const FString Prefix = ExpectedPrefixForClass(InAssetData.AssetClassPath.GetAssetName().ToString());
+    // UBlueprint资产类型不能代表技能/效果领域；使用已加载对象的真实ParentClass祖先与统一配置解析。
+    const FString Prefix = GetDefault<UGamePlatformValidationSettings>()->ResolveAssetPrefix(InAsset);
     if (!Prefix.IsEmpty() && !InAssetData.AssetName.ToString().StartsWith(Prefix))
     {
         if (IsAllowlisted(TEXT("GP.Naming"), InAssetData))

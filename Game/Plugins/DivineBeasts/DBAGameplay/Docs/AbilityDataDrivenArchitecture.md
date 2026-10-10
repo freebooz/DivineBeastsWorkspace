@@ -84,6 +84,18 @@ HeroDefinition.DefinitionId（英雄定义编号） → HeroDefinition.DefaultAb
 - `Tools/Unreal/Abilities/ValidateZodiacDevelopmentAssets.py`（UE5.8编辑器原生验证脚本）已在 Monolith `editor.run_python`（编辑器脚本接口）运行，核对**60份实际逻辑定义、60个数值行、12份开发UI配置和60条UE纹理软引用**，结果为0错误。`Tests/Assets/ValidateZodiacDevelopmentSkillAssets.py`（不依赖引擎的文件及摘要门禁）使用 `--require-all-profiles --require-all-definitions --verify-hashes`（全量检查）通过，但不能替代真实引擎。
 - `Game/Config/DefaultGame.ini`（项目默认配置）将整个开发资源目录加入 `DirectoriesToNeverCook`（发行资源烘焙排除清单），并将 `bAllowDevelopmentAbilitySets=false`（开发技能集授予开关）设置为默认值。`UDivineBeastsAbilityLoadoutComponent`（项目权威授权组件）新增编译期及配置双门禁：仅UE编辑器显式启用开发权限才可能授予 `bDevelopmentOnly`（开发集合），正式客户端、专用服务器及发布目标均拒绝。生产英雄 `DefaultAbilitySetId`（默认技能集编号）仍保持空值，不使用此开发样板代替。
 - 已知边界：当前只有一份子鼠可激活的开发 `GameplayAbility`（GAS技能蓝图），它只提交成本/冷却与正常结束，并不执行真正的目标选择、命中或伤害；另外59份技能逻辑定义不能当成已具备可执行技能类。正式 `DataAsset`（玩法资产）、`GameplayEffect`（技能效果）、VFX/SFX、全英雄授权、UI运行显示、三端编译、联机与Cook/Stage须分别验收，不能由全量开发数据反推生产功能完成。
+## 2026-10-11 用户批准的新手村开发技能验证
+
+本次用户明确批准备份清单 `Saved/Validation/AnimationHUD/DevelopmentAbilityChangePlan.json`：维护60份既有定义、60份独立原生子类技能蓝图、12份技能集、统一数值表、36份气势成本及36份冷却效果。12份界面配置迁到同一开发根目录的 `UI/Profiles`，逻辑主资产身份保持不变；权威技能定义不引用界面纹理。作者入口为 `Tools/Unreal/Abilities/AuthorZodiacDevelopmentAbilities.py`，冷却效果目标标签组件由 Monolith GAS `add_ge_component(target_tags)`补充并逐包保存。旧子鼠提交后直接结束的蓝图保留为历史样板，当前授权指向新原生子类。
+
+授权需同时满足非Shipping/Test、CustomConfig显式配置及启动参数 `-DBADevelopmentSkills`。`VillageDevelopmentClient` 和 `VillageDevelopmentServer` 提供相同英雄到开发集合映射；默认配置关闭、正式英雄DefaultAbilitySetId仍为空。服务器通过既有GAS提交成本与冷却、平台权威射线命中和伤害管线执行。按键1、2、3、4分别绑定普攻、一技能、二技能、终极技能；被动槽没有输入，不借用其他英雄技能。
+
+候选方案中仅41项有正伤害和正射程，可执行基础单目标伤害样本；另外19项明确拒绝激活。候选描述中的召唤、控制、治疗、增益、范围与特殊被动尚无对应完整机制，不能宣称60项正式技能已经完成，也不能将伤害样本当成全部候选效果。失配英雄、缺失定义、开发授权关闭和不支持机制均在提交成本前拒绝；合法射线未命中仍保留已经提交的成本，避免无限免费试探。
+
+核验分为原生回归、保存后资产审计、双端实际链接、Cook/IoStore内容与联机人工操作。当前进度记录在 `Docs/Implementation/AnimationHUDDevelopmentValidation.md`，未执行项目不由资产数量或编译结果替代。新增文件中文职责、权威边界、参数与取消清理已纳入本次审核；历史全项目中文说明存量仍未做全量验收。
+
+开发GA实际资产分类遵循平台阻断合同：普攻只有Ability.Active，非被动施法另有Ability.Spell；眩晕/沉默由GAS标签阻断，不能仅依赖界面按钮灰显。成本的Momentum字段真实所有者为DivineBeastsCharactersRuntime，作者脚本保存前调用引擎字段有效性检查。只读重载审计同时检查字段解析及完整模块路径；36项实际GE成本回归检查瞬时、加法、有限负值，并通过隔离ASC实际扣费。单独GAS结算测试不代表联网玩家已完成技能释放、冷却或命中验收。
+
 ## 2026-10-09 主线整合同步通知与运行资格整改
 
 角色定义配置调用真实Capsule重叠、碰撞Profile、Combat重置及GAS属性后，均可能同步调用项目监听者。配置执行与预热交接各自捕获原初始化身份、Owner/World、定义和出生/Avatar代次；每次外部调用后重验，最终提交配置/Ready前再验。后继接管或生命周期结束时，旧栈只停止剩余写入，不把已经发生的引擎/GAS修改假装回滚。

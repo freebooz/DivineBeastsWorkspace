@@ -1,4 +1,11 @@
+// 平台Editor工具回归：只创建瞬态对象和调用真实规则，不保存资产、不修改全局配置或运行时业务状态。
 #include "Misc/AutomationTest.h"
+#include "Animation/AnimBlueprint.h"
+#include "Engine/Blueprint.h"
+#include "Animation/AnimInstance.h"
+#include "GameFramework/Actor.h"
+#include "Settings/GamePlatformValidationSettings.h"
+#include "UObject/Package.h"
 
 #include "Performance/GamePlatformPerformanceTestRunner.h"
 #include "Review/GamePlatformReviewTypes.h"
@@ -154,6 +161,57 @@ bool FGamePlatformDeveloperToolsPerformanceTest::RunTest(const FString& Paramete
     B.HardwareProfile = TEXT("HW-B");
     TestFalse(TEXT("Different hardware cannot compare"), Runner->CanCompareBaselines(A, B, Reason));
 
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformNamingBlueprintParentPrefixesTest,
+    "GamePlatform.DeveloperTools.Naming.BlueprintParentPrefixes",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+/** 验证蓝图父类事实而非资产名决定领域前缀，覆盖原生中间派生、配置覆盖和专用蓝图优先级。 */
+bool FGamePlatformNamingBlueprintParentPrefixesTest::RunTest(const FString&)
+{
+    UGamePlatformValidationSettings* Settings = NewObject<UGamePlatformValidationSettings>();
+    UBlueprint* Blueprint = NewObject<UBlueprint>();
+    // 只通过引擎反射路径加载类型：测试无需给平台工具增加GAS头文件、链接或项目类型依赖。
+    UClass* AbilityClass = LoadObject<UClass>(nullptr, TEXT("/Script/GameplayAbilities.GameplayAbility"));
+    UClass* JumpAbilityClass = LoadObject<UClass>(nullptr, TEXT("/Script/GameplayAbilities.GameplayAbility_CharacterJump"));
+    UClass* EffectClass = LoadObject<UClass>(nullptr, TEXT("/Script/GameplayAbilities.GameplayEffect"));
+    UClass* WidgetBlueprintClass = LoadObject<UClass>(nullptr, TEXT("/Script/UMGEditor.WidgetBlueprint"));
+    if (!TestNotNull(TEXT("启用GAS宿主的技能基类"), AbilityClass)
+        || !TestNotNull(TEXT("引擎原生跳跃技能派生类"), JumpAbilityClass)
+        || !TestNotNull(TEXT("启用GAS宿主的效果基类"), EffectClass)
+        || !TestNotNull(TEXT("Editor宿主的WidgetBlueprint类型"), WidgetBlueprintClass))
+    {
+        return false;
+    }
+    Blueprint->ParentClass = AbilityClass;
+    TestEqual(TEXT("技能蓝图采用领域GA前缀"), Settings->ResolveAssetPrefix(Blueprint), FString(TEXT("GA_")));
+    Blueprint->ParentClass = JumpAbilityClass;
+    TestEqual(TEXT("中间原生派生仍沿祖先识别GameplayAbility"), Settings->ResolveAssetPrefix(Blueprint), FString(TEXT("GA_")));
+    Settings->AssetClassPrefixes.Add(TEXT("GameplayAbility_CharacterJump"), TEXT("GAJ_"));
+    TestEqual(TEXT("最近祖先配置优先于较远领域基类"), Settings->ResolveAssetPrefix(Blueprint), FString(TEXT("GAJ_")));
+    Settings->AssetClassPrefixes.Add(TEXT("/Script/GameplayAbilities.GameplayAbility_CharacterJump"), TEXT("GAJP_"));
+    TestEqual(TEXT("同一祖先的完整路径配置优先于短类名"), Settings->ResolveAssetPrefix(Blueprint), FString(TEXT("GAJP_")));
+    Blueprint->ParentClass = EffectClass;
+    TestEqual(TEXT("效果蓝图采用领域GE前缀"), Settings->ResolveAssetPrefix(Blueprint), FString(TEXT("GE_")));
+    Settings->AssetClassPrefixes.Add(TEXT("GameplayEffect"), TEXT("Effect_"));
+    TestEqual(TEXT("领域前缀读取配置覆盖值"), Settings->ResolveAssetPrefix(Blueprint), FString(TEXT("Effect_")));
+    Blueprint->ParentClass = AActor::StaticClass();
+    TestEqual(TEXT("普通Actor蓝图保留BP前缀"), Settings->ResolveAssetPrefix(Blueprint), FString(TEXT("BP_")));
+    Blueprint->ParentClass = nullptr;
+    TestEqual(TEXT("尚未指定父类的普通蓝图保留BP前缀"), Settings->ResolveAssetPrefix(Blueprint), FString(TEXT("BP_")));
+
+    UAnimBlueprint* AnimationBlueprint = NewObject<UAnimBlueprint>();
+    AnimationBlueprint->ParentClass = UAnimInstance::StaticClass();
+    Settings->AssetClassPrefixes.Add(TEXT("AnimInstance"), TEXT("Parent_"));
+    TestEqual(TEXT("动画蓝图资产类型优先于父类规则"), Settings->ResolveAssetPrefix(AnimationBlueprint), FString(TEXT("ABP_")));
+    UBlueprint* WidgetBlueprint = NewObject<UBlueprint>(GetTransientPackage(), WidgetBlueprintClass);
+    WidgetBlueprint->ParentClass = UObject::StaticClass();
+    Settings->AssetClassPrefixes.Add(TEXT("Object"), TEXT("Parent_"));
+    TestEqual(TEXT("Widget蓝图资产类型优先于父类规则"), Settings->ResolveAssetPrefix(WidgetBlueprint), FString(TEXT("WBP_")));
+    TestEqual(TEXT("空资产不生成虚构命名要求"), Settings->ResolveAssetPrefix(nullptr), FString());
     return true;
 }
 

@@ -86,12 +86,14 @@ def author(update_ui_profiles=True):
         return value
 
     def tags(tag_name):
-        """仅使用已在配置中注册的标签；空串表示无冷却或未实现输入。"""
+        """仅使用已登记的原生或配置标签；空串/空列表表示无分类或无冷却。"""
         value = unreal.GameplayTagContainer()
-        if tag_name:
-            tag(tag_name)  # 冷却标签同样须核对字典，不能仅把可解析文本当作有效网络标签。
-        if tag_name and not value.import_text('(GameplayTags=((TagName="' + tag_name + '")))'):
-            raise RuntimeError("标签容器导入失败: " + tag_name)
+        names = [tag_name] if isinstance(tag_name, str) and tag_name else (tag_name or [])
+        for name in names:
+            tag(name)  # 标签须核对真实字典，不能把可解析文本当成有效网络分类。
+        text = '(GameplayTags=(' + ','.join('(TagName="' + name + '")' for name in names) + '))'
+        if names and not value.import_text(text):
+            raise RuntimeError("标签容器导入失败: " + str(names))
         return value
 
     def tag(tag_name):
@@ -169,13 +171,16 @@ def author(update_ui_profiles=True):
                 cost_bp, cost_class, cost_cdo = blueprint(ROOT + "/GE" + prefix + "Cost", unreal.GameplayEffect)
                 cost_cdo.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.INSTANT)
                 attr = unreal.GameplayAttribute()
-                attr_text = '(Attribute="/Script/DivineBeastsAbilitiesRuntime.DivineBeastsMomentumAttributeSet:Momentum",AttributeOwner="/Script/DivineBeastsAbilitiesRuntime.DivineBeastsMomentumAttributeSet",AttributeName="Momentum")'
-                if not attr.import_text(attr_text):
+                attr_text = '(Attribute="/Script/DivineBeastsCharactersRuntime.DivineBeastsMomentumAttributeSet:Momentum",AttributeOwner="/Script/DivineBeastsCharactersRuntime.DivineBeastsMomentumAttributeSet",AttributeName="Momentum")'
+                # 气势字段由角色模块拥有；ImportText成功不代表字段已解析，保存前必须通过引擎有效性检查。
+                if not attr.import_text(attr_text) or not unreal.AbilitySystemLibrary.is_valid(attr):
                     raise RuntimeError("气势属性真实FieldPath导入失败")
                 modifier = unreal.GameplayModifierInfo()
-                modifier.set_editor_property("Attribute", attr)
-                modifier.set_editor_property("ModifierOp", unreal.GameplayModOp.ADD_BASE)
-                modifier.set_editor_property("ModifierMagnitude", magnitude(-balance["MomentumCost"]))
+                # UE5.8把修正器字段声明为EditDefaultsOnly，结构实例使用官方ImportText一次完整写入。
+                # 属性FieldPath与静态负幅值随后由实际GAS装配门禁复核，不修改引擎只读标志。
+                modifier_text = '(Attribute=' + attr.export_text() + ',ModifierOp=AddBase,ModifierMagnitude=' + magnitude(-balance["MomentumCost"]).export_text() + ')'
+                if not modifier.import_text(modifier_text):
+                    raise RuntimeError("气势成本修正器导入失败")
                 cost_cdo.set_editor_property("Modifiers", [modifier])
                 unreal.BlueprintEditorLibrary.compile_blueprint(cost_bp)
                 save(cost_bp)
@@ -193,6 +198,12 @@ def author(update_ui_profiles=True):
             cdo.set_editor_property("CooldownGameplayEffectClass", cooldown_class)
             cdo.set_editor_property("DevelopmentCooldownTags", tags(cooldown_tag))
             cdo.set_editor_property("bDevelopmentDamageSampleSupported", is_damage_sample(entry))
+            # 平台眩晕阻断Ability.Active，沉默阻断Ability.Spell；服务端GAS决定资格，不能仅依赖UI灰显。
+            # 普攻属于动作但不属于施法；未实现被动不加动作分类，仍由开发支持门禁拒绝主动释放。
+            control_tags = [] if slot == "Passive" else ["Ability.Active"]
+            if slot not in ("BasicAttack", "Passive"):
+                control_tags.append("Ability.Spell")
+            cdo.set_editor_property("AbilityTags", tags(control_tags))
             unreal.BlueprintEditorLibrary.compile_blueprint(bp)
             save(bp)
             cls = unreal.EditorAssetLibrary.load_blueprint_class(ability_path)
