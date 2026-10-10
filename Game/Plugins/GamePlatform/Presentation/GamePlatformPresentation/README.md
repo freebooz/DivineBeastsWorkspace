@@ -10,6 +10,8 @@
 
 2026-10-09数据资产合同修正：`UGamePlatformHitFeedbackProfile`已继承`UGamePlatformDefinitionBase`，拥有平台稳定LogicalId、DataVersion和统一`ValidateDefinition`；Client Bundle用于异步加载CameraShake类与闪白Overlay材质。无需另一套Assets Manager。由于尚未有真实Profile.uasset，变更不涉及发布资产身份迁移；模型/数值校验源码存在不代表UE资源已创建。
 
+2026-10-10专项编译进展：`GamePlatformHitFeedbackProfile.cpp`已通过正式UE5.8/UnrealBuildTool/MSVC编辑器目标的`-SingleFile`编译（退出码0），但本次`GamePlatformPresentationCore`整模块因Engine/Unity依赖调度停滞未取得DLL新链接结果。不能据此认为Profile反射UClass已在编辑器加载，也不能制作/声称存在正式数据资产。最新阻断及回退见`Docs/Implementation/CombatFeedbackBuildRecovery_20261010.md`。
+
 Client 模块同时提供 `AGamePlatformCharacterPreviewStage（平台三维角色预览舞台）`：无 Tick、无复制，只负责已经加载完成的 SkeletalMesh / Material / AnimInstance 的本地展示、镜头距离和角色旋转。它不认识项目 Hero ID、生肖或后端角色身份，可供不同游戏项目的角色选择、捏脸、商城试穿等前端场景复用。
 
 2026-10-09 联机验证前修复：GamePlatformPresentationCore直接使用FGamePlatformResult验证定义，模块公开依赖与插件描述均显式声明GamePlatformCore，避免只看到Data公开头但没有链接其导出符号。Editor受影响模块修复后编译退出0；完整引擎目标、Cook、网络和人工效果验收另行记录。

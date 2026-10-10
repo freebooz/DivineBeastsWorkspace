@@ -14,6 +14,8 @@ public class DivineBeastsArenaServerTarget : TargetRules
         CustomConfig = "DedicatedServer";
         // 公共服务器组合负责三类服务器角色的生命周期、Ready与准入，并通过依赖拉入DBAGameplay角色规则。
         EnablePlugins.Add("DBAServer");
+        // 仅装配天气共享权威模块；ClientOnly模块不进入Dedicated Server目标。
+        EnablePlugins.Add("GamePlatformWeather");
         // MainArena与OpenWorld/Village共用同一Server Target；竞技插件的ServerOnly模块在MainArena配置下提供项目竞技适配，
         // 其DBAClient依赖带Client/Editor目标白名单，不会进入Dedicated Server产物。
         EnablePlugins.Add("DBAArena");

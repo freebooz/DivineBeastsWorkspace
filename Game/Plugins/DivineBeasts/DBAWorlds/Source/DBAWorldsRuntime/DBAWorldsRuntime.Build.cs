@@ -18,6 +18,8 @@ public class DBAWorldsRuntime : ModuleRules
             // UDivineBeastsWorldDefinition继承Data层定义基类，链接其虚函数实现不能依赖World的传递依赖。
             "GamePlatformData",
             "GamePlatformWorld",
+            // 第三层世界服务器组合使用平台天气权威入口，不携带客户端表面/音效实现。
+            "GamePlatformWeatherRuntime",
             // 共享项目GameMode/Controller继承平台公开门禁，不链接服务器私有准入实现。
             "GamePlatformGameplay"
         });

@@ -6,6 +6,8 @@
 
 环境表面材质机制归第一层`GamePlatformSurface`：DBAWorlds不依赖其ClientOnly实现，也不在Runtime复制雪／苔藓／湿润／积水算法。具体`MI_DBA_*`材质实例、项目纹理和世界场景资产归对应`DBAWorldPack_*`；客户端世界表现适配可在项目客户端／内容装配层把天气或世界表现事实提交给Surface，Dedicated Server继续只消费服务器安全的世界／玩法Definition。
 
+2026-10-10天气系统一期：现有`ADivineBeastsWorldGameMode`仅在权威世界`BeginPlay`激活`GamePlatformWeatherWorldSubsystem`，默认晴天，不在登录前端部署；`InitialWeather`可通过项目GameMode蓝图默认值调整，`bEnableWeatherSchedule`和`WeatherSchedule`启用合法天气周期。Runtime只依赖`GamePlatformWeatherRuntime`，不访问客户端Niagara/SFX/Surface，客户端天气模块订阅网络快照。若需要正式项目世界专属天气Definition实例，必须由GamePlatformData有效租约加载并在第三层内容包创建真实UE资产，不允许硬引用不存在的天气蓝图。
+
 当前工程已有引擎生成的前端与Village地图、世界定义及角色体验定义，实际资源归对应内容包。2026-10-09已执行Client、Server完整原生构建及项目Editor模块构建；这些结果不代替当前版本Cook/Stage、真实网络准入与双客户端人工行走验收，具体边界见下节和独立验证记录。
 
 2026-09-27修正UE测试中遗留的四角色正向夹具：大厅和旧大厅兼容体验都归OpenWorld，明确拒绝独立Lobby角色，并检查合法大厅附带竞技模式返回`ArenaModeWorldContextMismatch`。跨语言真源与正向夹具的一致性由`Tests/Architecture/ServerRoleProfiles.Tests.ps1`检查；这不替代尚未执行的UE自动化测试。

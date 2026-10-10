@@ -1,5 +1,12 @@
 # 变更记录
 
+## 2026-10-10｜UE5.8战斗反馈20份真实MSVC单文件构建验证
+
+- 通过`Build.bat DivineBeastsArenaEditor Win64 Development -Module=GamePlatformAnimation`对平台动画共享模块完成25/25动作并正式链接模块DLL，退出码0；引擎Core依赖同步编译产物实际更新。
+- 通用命中Profile、局部视觉顿帧、闪白、摄像机、短时输入缓冲、MOBA强度策略、项目技能目录、输入及反馈客户端、UI浮字、网络事实总线和有关自动化测试源码，合计20个源文件逐一通过正式UnrealBuildTool/MSVC `-SingleFile`定向编译（20/20退出码0）。编译成功不代表原生测试运行或DLL完整链接。
+- 其它多模块/单并发编译仍被Engine/Unity依赖停滞，已按实际日志记录并停止。新增`Tests/Architecture/InspectCombatFeedbackDeliveryReadiness.py`只读核对模块DLL、`UnrealEditor.modules`的BuildId及浮字Widget文件；首轮10项模块有5项DLL、仅4项磁盘可装载候选，缺少正式浮字WBP。详见`Docs/Implementation/CombatFeedbackBuildRecovery_20261010.md`。不声称资产、UE运行、Cook或多人联机已通过。
+
+
 ## 2026-10-10｜竞技打击反馈授权Profile释放及编辑器实测
 
 - `DBAArena/DivineBeastsArenaClient`修复同World重复初始化可能清除浮字Widget租约、Arena已就绪时平台数据服务晚到后Profile加载永久跳过问题。新增纯策略`DivineBeastsHitFeedbackGrantPolicy`并接入实际OwnerOnly授权缓存：技能集合无变化不抖动加载，技能撤销/英雄切换/角色重生清理旧Profile租约，增加UE自动化测试源码。

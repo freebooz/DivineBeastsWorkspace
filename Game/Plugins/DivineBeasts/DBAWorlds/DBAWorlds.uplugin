@@ -26,6 +26,10 @@
       "Enabled": true
     },
     {
+      "Name": "GamePlatformWeather",
+      "Enabled": true
+    },
+    {
       "Name": "GamePlatformGameplay",
       "Enabled": true
     }

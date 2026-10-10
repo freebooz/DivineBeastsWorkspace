@@ -1,0 +1,21 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "GamePlatformWeather",
+  "Description": "跨游戏世界天气定义、服务器权威调度、轻量网络快照及客户端环境表现桥接。",
+  "Category": "GamePlatform/World",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Modules": [
+    {"Name":"GamePlatformWeatherRuntime","Type":"Runtime","LoadingPhase":"Default"},
+    {"Name":"GamePlatformWeatherClient","Type":"ClientOnly","LoadingPhase":"Default","TargetAllowList":["Client","Editor"]}
+  ],
+  "Plugins": [
+    {"Name":"GamePlatformCore","Enabled":true},
+    {"Name":"GamePlatformData","Enabled":true},
+    {"Name":"GamePlatformSurface","Enabled":true,"TargetAllowList":["Client","Editor"]},
+    {"Name":"GamePlatformPresentation","Enabled":true,"TargetAllowList":["Client","Editor"]}
+  ]
+}

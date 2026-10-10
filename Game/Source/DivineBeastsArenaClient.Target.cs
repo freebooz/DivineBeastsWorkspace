@@ -18,6 +18,8 @@ public class DivineBeastsArenaClientTarget : TargetRules
         EnablePlugins.Add("MobaPresentation");
         // 通用环境表面材质属于纯客户端表现能力；显式按Client Target装配，避免Dedicated Server携带材质代码与Content。
         EnablePlugins.Add("GamePlatformSurface");
+        // 世界天气事实和表现模块由正式客户端装配，不能放入单纯的前端登录流程。
+        EnablePlugins.Add("GamePlatformWeather");
         // 公共UI二进制资产由第三层纯内容插件拥有；客户端显式启用，服务器目标不携带。
         EnablePlugins.Add("DBAUIPack_Core");
         // 登录后角色选择/创建的三维前端地图只进入客户端，不属于DBAWorlds服务器世界。

@@ -16,6 +16,8 @@ public class DivineBeastsArenaEditorTarget : TargetRules
         EnablePlugins.Add("DBAArena");
         // 编辑器加载Surface客户端契约、资产挂载点与Editor生成/校验模块，用于真实材质资产制作和回读验证。
         EnablePlugins.Add("GamePlatformSurface");
+        // 编辑器需要天气定义的反射、地图组合和客户端表面表现来验证资产与运行行为。
+        EnablePlugins.Add("GamePlatformWeather");
         // GamePlatformPCG（游戏平台PCG）的模板生成、Commandlet（命令行工具）和DataValidation（数据校验）
         // 需要在Editor Target（编辑器目标）显式装配；不会改变Client/Server目标插件闭包。
         EnablePlugins.Add("GamePlatformPCG");

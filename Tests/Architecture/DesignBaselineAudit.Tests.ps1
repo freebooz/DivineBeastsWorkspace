@@ -9,7 +9,7 @@
         Foundation = @('GamePlatformCore', 'GamePlatformData')
         Application = @('GamePlatformApplicationFlow', 'GamePlatformInput', 'GamePlatformLoading', 'GamePlatformSettings', 'GamePlatformSave', 'GamePlatformLocalization')
         OnlineServices = @('GamePlatformOnline', 'GamePlatformSession', 'GamePlatformServer')
-        World = @('GamePlatformWorld', 'GamePlatformPCG', 'GamePlatformInteraction', 'GamePlatformNavigation')
+        World = @('GamePlatformWorld', 'GamePlatformWeather', 'GamePlatformPCG', 'GamePlatformInteraction', 'GamePlatformNavigation')
         Gameplay = @('GamePlatformGameplay', 'GamePlatformCharacter', 'GamePlatformAbilitySystem', 'GamePlatformCombat', 'GamePlatformAI', 'GamePlatformQuest', 'GamePlatformAnimation')
         Presentation = @('GamePlatformUI', 'GamePlatformPresentation', 'GamePlatformVFX', 'GamePlatformSFX', 'GamePlatformCamera', 'GamePlatformSurface')
         GameModes = @('GamePlatformLobby', 'GamePlatformVillage')
@@ -72,14 +72,14 @@
         return $workspaceRoot
     }
 
-    It '接受跨三层的40个GamePlatform身份、5个项目插件及独立MOBA表现插件、一个工程、三个Target和八项默认配置' {
+    It '接受跨三层的41个GamePlatform身份、5个项目插件及独立MOBA表现插件、一个工程、三个Target和八项默认配置' {
         $workspaceRoot = New-DesignBaselineFixtureRoot
 
         $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
 
         $result.Passed | Should Be $true
-        $result.PluginCounts.Actual | Should Be 46
-        $result.PluginCounts.GamePlatform | Should Be 40
+        $result.PluginCounts.Actual | Should Be 47
+        $result.PluginCounts.GamePlatform | Should Be 41
         $result.PluginCounts.Project | Should Be 5
         $result.PluginCounts.MobaPresentation | Should Be 1
         $result.ProjectCount | Should Be 1
@@ -117,9 +117,9 @@
             Set-Content -LiteralPath (Join-Path $registryRoot 'ContentPackRegistry.json')
         '{"FileVersion":3,"CanContainContent":true}' | Set-Content -LiteralPath (Join-Path $packRoot 'DBAHeroPack_Rat.uplugin')
         $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
-        $result.PluginCounts.Baseline | Should Be 46
+        $result.PluginCounts.Baseline | Should Be 47
         $result.PluginCounts.ContentPacks | Should Be 1
-        $result.PluginCounts.GamePlatform | Should Be 40
+        $result.PluginCounts.GamePlatform | Should Be 41
         $result.PluginCounts.Project | Should Be 5
         $result.Passed | Should Be $false
         ($result.Errors -join "`n") | Should Match '内容包.*缺少真实UE资产'

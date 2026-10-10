@@ -29,7 +29,7 @@
 - 租约采用Instance期限但由当前世界和LocalPlayer明确持有，WorldCleanup主动释放、请求代次防止回调串世界；失败目录在同一世界不重复申请。单人及拆分屏幕场景通过独立LocalPlayer隔离；仍需真实UE测试验证。
 - 项目公开DBAClient不依赖Moba或竞技，新增Moba依赖仅属于本插件ClientOnly模块；Server模块不引入MobaPresentationClient和纯表现资源。真实资产、完整技能映射、Client/Server Cook及双客户端手感测试待完成。
 
-- Profile在Catalog主资产异步成功后会按稳定条目顺序提前请求（最多64条唯一配置），不会等到首次技能命中才整体开始加载；角色/技能键不匹配时严禁重用其他英雄的VFX/SFX资源ID。只在真实ArenaGameState世界激活，普通登录、Village和OpenWorld不因该可选竞技组合根加载资源。
+- Profile在Catalog主资产异步成功后只按当前本地玩家OwnerOnly（仅拥有者）已授予技能快照中的真实技能ID预热；收到尚未预加载的远端技能首次确认命中时按需异步申请，最多保留64份配置。不再遍历Catalog整体预热十二生肖技能，技能/角色代次更换时释放旧租约；技能键不匹配时严禁复用其他英雄的VFX/SFX定义。仅真实ArenaGameState世界激活，普通登录、Village和OpenWorld不因此加载资源。
 - 早期UE编译仅取得UHT生成成功，C++构建曾停在本机UBA执行器且被主动停止；该历史记录不能作为当前构建结果。UE5.8本分支`-NoUBA`只关闭Detour，仍会选用UBA执行器；需要排查运行端编译代理后再进行真实客户端构建、专服和资源Cook。
 
 
@@ -38,6 +38,8 @@
 - 游戏状态订阅采用UE5.8 World.GameStateSetEvent，避免GameState复制晚于PostLoadMap时遗漏竞技初始化；本地Controller.Pawn变化及OwnerOnly技能授权快照更新后，仅预热可信HeroDefinitionId、AvatarGeneration和已授予AbilityId匹配的Profile，不再无差别加载全部生肖配置。
 - 当前LocalPlayer换英雄或地图时，按原有服务释放本组合根持有的技能Profile租约，及时取消订阅。MobaPresentation只消费低层已加载数据与逻辑VFX/SFX ID，不了解神兽项目资产；当前缺失资源时使用通用默认反馈。
 - 首批丑牛/寅虎/卯兔资源检查见 Docs/Implementation/CombatFeedbackAssetGapInventory_20261009.md；外观/技能UI文件不等于Niagara/声音/受击Montage/Profile真实交付。运行中通过客户端控制台gp.Combat.HitstopOverrideFrames测试0/3/6帧，在UE编译和手工运行验收前只能视为已写入功能。
+
+2026-10-10进一步实证：竞技反馈客户端组合根`DivineBeastsArenaCombatFeedbackClientSubsystem.cpp`、项目UI映射`DivineBeastsCombatUIFeedbackLibrary.cpp`及授权、Catalog、UI测试源码均经正式UE5.8 UBT调用MSVC单文件编译，退出码0；不代表最新客户端DLL完成链接或编辑器已经加载新反射类型。真实Catalog、Profile和伤害浮字WBP尚无完整保存/回读。构建和内容门禁见`Docs/Implementation/CombatFeedbackBuildRecovery_20261010.md`及`Tests/Architecture/InspectCombatFeedbackDeliveryReadiness.py`。
 
 ## 验证
 

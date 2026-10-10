@@ -143,6 +143,16 @@ MOBA：MobaPresentationRuntime（强度策略）、MobaPresentationClient（可�
 
 - [x] **2026-10-10补充回归审计**：再运行`Tests/Architecture/ValidateCombatFeedbackIntegration.py`（33/33）、`Tests/Architecture/ValidateCombatFeedbackThreeTier.py`（25/25）、`Tests/Architecture/ValidateProjectHeaders.ps1`（761处头引用，0缺失）、`Tests/Architecture/ValidateInheritanceBoundaries.ps1`（公开头483、类型1019、边180）和`ValidateDesignBaseline.ps1`（Client/Server/Editor装配全通过、62/62插件描述），`git diff --check`退出码0。说明当前仓库已有其他会话同步增量，因此统计数目以本轮实际输出为准。
 
+### 2026-10-10｜P8编辑器二进制构建阻断实际突破
+
+- [x] **厘清失败原因**：源码引擎`F:/UnrealEngine-5.8.0-release`的UnrealBuildTool在`BuildMode.cs`中的`-NoEngineChanges`保护会拒绝覆盖Engine已存在的过期产物；编辑器自动启动构建因`FailedDueToEngineChange`退出，并非新增反馈C++已经被证明编译失败。
+- [x] **执行真实编辑器构建并成功**：使用正式`DivineBeastsArenaEditor Win64 Development`目标、`-Module=GamePlatformAnimation -NoUBA -MaxParallelActions=3 -NoHotReloadFromIDE`执行25/25个实际动作，包含平台动画模块及20项引擎Core目标对象重建与静态库链接；`UnrealEditor-GamePlatformAnimation.dll`实际落盘，UBT输出`Result: Succeeded`、退出码0、总耗时125.57秒。本项只证明GamePlatformAnimation（不包括其ClientOnly模块或其它九层表现）的编辑器二进制已通过。
+- [x] **构建计划可复现**：用`-WriteOutdatedActions`无编译方式得到25项ActionGraph，原先`-UsePrecompiled`仍会触发Core旧文件更新，不能当作本源码版引擎的兼容修复；后续应逐项真实构建缺失的客户端及MOBA模块，而非让编辑器启动时自动修改引擎产物。
+- [x] **增加真实就绪门禁工具**：`Tests/Architecture/InspectCombatFeedbackDeliveryReadiness.py`只读检查正式10个编辑器模块DLL、模块清单和实际浮字Widget文件；首次运行10项DLL已有5项，缺失`GamePlatformAnimationClient`、`GamePlatformCameraClient`、`GamePlatformSFXClient`、`MobaPresentationRuntime`、`MobaPresentationClient`；`WBP_DBA_UI_FloatingCombatText.uasset`尚未保存。工具可用`--require-ready`作为后续失败门禁，但即使全部文件存在也不替代UE实际加载、AssetRegistry、Cook及联机。
+- [!] **第二组构建实况**：`GamePlatformPresentationCore`、`DivineBeastsPresentationRuntime`和`MobaPresentationRuntime`批次解析87项动作，前6项ISPC后MSVC进程长期空等，已停止且无成功退出码；以`-MaxParallelActions=1`单独重试`GamePlatformPresentationCore`仍解析72项引擎/Unity动作并在`GamePlatformData`首个编译进程停滞，亦已停止。**但20项分离的MSVC单文件编译全部成功**，不等于模块完整链接或UClass加载。证据详见`Docs/Implementation/CombatFeedbackBuildRecovery_20261010.md`。
+
+- [x] **2026-10-10正式编译20源文件验证**：P1 Profile、P2输入及局部顿帧、P3闪白/镜头/UI浮字、P4 MOBA策略、P5 Catalog与OwnerOnly映射、P6网络事实总线和P7对应自动化测试源码均用锁定UE5.8的`-SingleFile`调用MSVC，合计20/20退出码0；共享GamePlatformAnimation模块25/25动作链接完成并有实际DLL。当前**仍不得宣告P7原生测试执行成功或P8完全完成**。完整逐项信息见`Docs/Implementation/CombatFeedbackBuildRecovery_20261010.md`。
+
 ## 验收证据与回退
 
 优先执行现有 `Tests/Architecture/ValidateProjectHeaders.ps1`（头文件）、`ValidateInheritanceBoundaries.ps1`（三层依赖）、`git diff --check`（差异卫生）。随后使用仓库锁定UE构建脚本，保持真实失败日志。  
