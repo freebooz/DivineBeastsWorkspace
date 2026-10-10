@@ -203,7 +203,7 @@ void FDivineBeastsWorldCharacterAdmission::BindSpawnedPawn(APlayerController& Co
     // 同步Readiness回调可能重入生命周期；先记录本次Pawn，失败走下一时隙撤销而非重复初始化。
     Connection->BoundPawn = Pawn; FString Error;
     if (!Identity->AuthorityBindTrustedContext(Context, Error)) { Fail(Controller, Connection, TEXT("WorldCharacterInitializationRejected")); return; }
-    UE_LOG(LogTemp, Display, TEXT("WorldCharacter bound: Pawn=%s Hero=%s Spawn=%d Avatar=%d"), *Pawn->GetName(), *Context.HeroDefinitionId.ToString(), Context.SpawnGeneration, Context.AvatarGeneration);
+    UE_LOG(LogTemp, Display, TEXT("WorldCharacter bound: Pawn=%s Hero=%s Spawn=%d Avatar=%d Position=%s"), *Pawn->GetName(), *Context.HeroDefinitionId.ToString(), Context.SpawnGeneration, Context.AvatarGeneration, *Pawn->GetActorLocation().ToCompactString());
 }
 void FDivineBeastsWorldCharacterAdmission::Fail(APlayerController& Controller, const TSharedPtr<FConnection>& Connection, FName Code)
 {

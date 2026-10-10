@@ -35,6 +35,13 @@ try {
         'DBAUIPack_Core/Content/UI/Textures/DBA_MythicLogo.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset',
+        # 世界移动是独立速度驱动ABP，缺任一依赖会退化为静止或空模型；预览Idle不作为行走替代。
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_WorldLocomotion.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/BS_DBA_WorldLocomotion.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MM_Idle.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MF_Unarmed_Walk_Fwd.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MF_Unarmed_Jog_Fwd.uasset',
+        'DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MM_Fall_Loop.uasset',
         # 真实蒙皮必须连同完整UE5骨架交付；旧68骨架同名兼容身份不能代替依赖。
         'DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset',
@@ -45,6 +52,7 @@ try {
     )
     foreach ($hero in @('Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Boar')) {
         $required += "DBAHeroPack_$hero/Content/Characters/DA_Appearance_Zodiac_$hero.uasset"
+        $required += "DBAGameplay/Content/Definitions/DA_Hero_Zodiac_$hero.uasset"
     }
     # 软路径在C++目录中构造，地图引用扫描不能发现；要求实际导出数据而非配置或仅包名。
     $missing = @($required | Where-Object {
