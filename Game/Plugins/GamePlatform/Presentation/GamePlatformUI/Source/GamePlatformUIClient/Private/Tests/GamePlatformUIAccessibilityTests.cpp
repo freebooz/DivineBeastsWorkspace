@@ -1,7 +1,10 @@
+// GamePlatformUI客户端结构回归：Transient本地玩家由真实Engine拥有；不加载或伪造Widget资产，不启动业务流程。
+// 本文件验证定义/路由或可访问性配置边界，调用方为Editor Automation；正常与前置失败不持有跨帧资源。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -11,7 +14,10 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformUIAccessibilityPreferencesTest::RunTest(const FString& Parameters)
 {
-    ULocalPlayer* LocalPlayer = NewObject<ULocalPlayer>();
+    // LocalPlayer的ClassWithin为Engine；Package外层会触发Ensure，缺GEngine明确失败。
+    // 夹具仅构造注册/可访问性配置，不连接业务后端或创建实际可视资产。
+    if (!TestNotNull(TEXT("测试宿主Engine必须存在"), GEngine)) { return false; }
+    ULocalPlayer* LocalPlayer = NewObject<ULocalPlayer>(GEngine);
     UGamePlatformUIManagerSubsystem* Manager =
         NewObject<UGamePlatformUIManagerSubsystem>(LocalPlayer);
 

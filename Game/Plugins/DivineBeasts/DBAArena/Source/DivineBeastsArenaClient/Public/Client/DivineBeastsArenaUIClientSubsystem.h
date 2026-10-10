@@ -4,6 +4,7 @@
 #include "Client/GamePlatformArenaClientTypes.h"
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
+#include "Types/GamePlatformDataLease.h"
 #include "DivineBeastsArenaUIClientSubsystem.generated.h"
 
 class AGamePlatformArenaGameState;
@@ -13,7 +14,8 @@ class UGamePlatformUIManagerSubsystem;
 class UGamePlatformUIScreenDefinition;
 class UGamePlatformUIScreen;
 class UGamePlatformMobaArenaHUDBase;
-struct FStreamableHandle;
+class UGameInstance;
+class UCommonActivatableWidgetStack;
 
 /**
  * UDivineBeastsArenaUIClientSubsystem（神兽联盟竞技UI本地玩家子系统）。
@@ -67,6 +69,10 @@ public:
         EGamePlatformArenaClientFlowState InFlowState);
 
 private:
+    friend class FDivineBeastsArenaUIScreenInstanceOwnershipRegressionTest;
+    /** 当前LocalPlayer世界的GameState可迟到，订阅引擎设置事件；退出解绑并清空投影，无Tick重试。 */
+    void BindWorldReadinessEvents(UWorld* World);
+    void HandleWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
     void RegisterArenaScreenDefinitions();
     void UnregisterArenaScreenDefinitions();
 
@@ -91,9 +97,12 @@ private:
     void CloseArenaScreen();
     void EnsureArenaHUD();
     void RemoveArenaHUD();
-    void HandleArenaHUDLoaded(uint32 RequestGeneration);
+    /** Data完成总是延后；回包核请求、租约及原GI/World，构造外部边界后再核当前资格。 */
+    void HandleArenaHUDLoaded(uint32 RequestGeneration, const FGamePlatformDataLease& Lease,
+        const FGamePlatformResult& Result);
+    void ReleaseArenaHUDLease(const FGamePlatformDataLease& Lease, TWeakObjectPtr<UGameInstance> Instance);
 
-    /** 按请求身份过滤平台回调，避免将公共登录页面事件当成竞技界面。 */
+    /** 打开/失败按请求身份过滤；关闭的兼容内容ID必须再核自有具体实例原栈成员，不能按ID清其他实例。 */
     UFUNCTION()
     void HandleArenaScreenOpened(
         FGuid RequestId, FName ScreenId, UGamePlatformUIScreen* Screen);
@@ -122,11 +131,22 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UGamePlatformUIScreenDefinition>> RegisteredDefinitions;
 
+    TWeakObjectPtr<UWorld> BoundWorld;
+    TWeakObjectPtr<UWorld> RetiredWorld;
+    bool bDeinitializing = false;
+    /** 外部VM/页面/控件通知可同步接管流程；旧栈不能重新发布请求或覆盖后继状态。 */
+    uint64 SurfaceOperationGeneration = 1;
+    /** 同一表面的重复复制通知不取消在途打开；只有需求/World/Controller换代才接管旧栈。 */
+    FName LastArenaSurfaceDemand = NAME_None;
+    FDelegateHandle GameStateSetHandle;
+    FDelegateHandle WorldCleanupHandle;
     TWeakObjectPtr<AGamePlatformArenaGameState> BoundGameState;
     TArray<TWeakObjectPtr<AGamePlatformArenaPlayerState>> BoundPlayerStates;
 
     /** 竞技专属页面弱引用，平台页面栈负责具体实例生命周期与资源租约。 */
     TWeakObjectPtr<UGamePlatformUIScreen> ActiveArenaScreen;
+    /** 内容ID可有多个实例；关闭通知必须核自有实例是否已离开登记时的原栈。 */
+    TWeakObjectPtr<UCommonActivatableWidgetStack> ActiveArenaScreenStack;
     FName ActiveArenaSurfaceId = NAME_None;
     FName OpeningArenaSurfaceId = NAME_None;
     FGuid OpeningArenaRequestId;
@@ -139,7 +159,10 @@ private:
     /** HUD不进入CommonUI页面栈，由本竞技子系统单独创建、挂载与卸载。 */
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformMobaArenaHUDBase> ActiveArenaHUD = nullptr;
-    TSharedPtr<FStreamableHandle> PendingArenaHUDLoad;
-    TSharedPtr<FStreamableHandle> ActiveArenaHUDLease;
+    FGamePlatformDataLease PendingArenaHUDLoad;
+    FGamePlatformDataLease ActiveArenaHUDLease;
+    TWeakObjectPtr<UGameInstance> PendingArenaHUDInstance;
+    TWeakObjectPtr<UGameInstance> ActiveArenaHUDInstance;
+    TWeakObjectPtr<UWorld> PendingArenaHUDWorld;
     uint32 ArenaHUDRequestGeneration = 0;
 };

@@ -204,7 +204,7 @@ public:
     void StopHeartbeatPump();
     /** 只有项目资源与世界门禁完成后才能显式发布Ready。 */
     bool MarkReady();
-    /** 在停止接纳新会话前通知控制面开始Drain；不自动销毁World或踢出玩家。 */
+    /** 游戏线程请求Drain；Register/Ready在途时先排队，确认后优先排空且不广播Ready。调用方须即时关闭本地准入。 */
     bool BeginDrain();
     /** 本地玩家／比赛资源已清理后结束本地生命周期；控制面Drain由BeginDrain完成。 */
     bool CompleteDrain();
@@ -216,6 +216,7 @@ public:
     }
 
 private:
+    friend class FGamePlatformServerControlReentrancyTest;
     enum class EControlOperation : uint8
     {
         Register,
@@ -253,4 +254,6 @@ private:
     uint64 Generation = 0;
     bool bHeartbeatInFlight = false;
     bool bControlOperationInFlight = false;
+    /** 关闭后永久拒绝新网络/定时器；同步Lifecycle通知中的Deinitialize必须立即生效。 */
+    bool bIsClosing = false;
 };

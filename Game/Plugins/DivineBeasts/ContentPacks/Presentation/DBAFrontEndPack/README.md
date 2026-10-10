@@ -24,13 +24,15 @@
 - `DivineBeastsArenaEditor Target（编辑器目标）`：启用。
 - `DivineBeastsArenaServer Target（专用服务器目标）`：禁止启用。
 
-因此本包不会进入 Dedicated Server 的 Cook / Stage。
+这些声明限制Dedicated Server装配；最终未携带本包仍须以干净服务器Cook / Stage及产物审计确认，本轮源码审查不代替该证据。
 
 ## 启动地图说明
 
 当前不在共享 `DefaultEngine.ini` 中设置 `GameDefaultMap（默认游戏地图）` 为 `L_DBA_FrontEnd`。原因是该配置同时被 Client / Server 读取，直接设置会破坏 Dedicated Server 的地图隔离。
 
-现阶段 `L_DBA_CharacterStudio` 已由 `UDivineBeastsCharacterPreviewSubsystem` 根据 `CharacterEntry / CreateCharacter / ValidateSelection` 状态按需流送，因此角色三维预览不依赖全局默认地图。`L_DBA_FrontEnd` 作为正式客户端宿主资产已经交付；后续建立 Client-only 启动映射入口时再将其设置为客户端默认入口。
+现有 `Game/Config/Custom/FrontEndClient/DefaultEngine.ini` 配置前端客户端默认地图；`Build/Game/RunFrontEndClients.ps1` 与 `CookFrontEndClient.ps1` 是该工作流的实际入口。共享默认配置仍不指定此前端地图，避免服务器继承客户端入口。
+
+`L_DBA_CharacterStudio` 由 `UDivineBeastsCharacterPreviewSubsystem` 根据 `CharacterEntry / CreateCharacter / ValidateSelection` 状态按需流送，角色预览按当前流送实例解析舞台。现有地图属于已登记原型资产；本轮没有修改二进制地图，也没有运行前端客户端或Cook，不能将入口存在称为本轮运行通过。
 
 ## 2026-10-01 预览工作室修复
 

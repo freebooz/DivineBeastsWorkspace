@@ -233,6 +233,7 @@ void TestAxisAndSettings()
     Check(!Key.empty(), "settings key available without IO");
     Check(Key == StableSettingsKey("Game", "opaque-user", 0, "Default"), "settings key repeatable");
     Check(Key != StableSettingsKey("PIE", "opaque-user", 0, "Default"), "PIE namespace isolated");
+    Check(StableSettingsKey("PIE.ScopeA", "opaque-user", 0, "Default") != StableSettingsKey("PIE.ScopeB", "opaque-user", 0, "Default"), "same controller index is isolated by PIE scope");
     Check(Key != StableSettingsKey("Game", "another-user", 0, "Default"), "opaque user isolated");
     Check(Key != StableSettingsKey("Game", "opaque-user", 1, "Default"), "local player isolated");
     Check(Key != StableSettingsKey("Game", "opaque-user", 0, "Alternate"), "profile isolated");

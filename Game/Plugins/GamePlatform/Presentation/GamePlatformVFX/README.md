@@ -56,3 +56,11 @@ Gameplay / Application Fact
 迁移说明见 `Docs/VFXLibMigration.md（VFX Lib迁移说明）`。
 
 当前仓库仍没有真实 `.uasset/.umap` VFX 二进制资产。UE5.8 `GamePlatformVFXClient + GamePlatformVFXEditor` 性能整改后的定向模块编译已真实通过；但真实 1v1/5v5/OpenWorld/Village、Android Niagara Insights、Cook/Stage 与 Review Map 性能证据仍未取得，因此不能把源码和 Editor 编译结果描述为 Production Ready（生产就绪）。
+
+
+## 2026-09-30 设计审查修复
+
+本次资源/生命周期与行为合同见 [设计修复说明](Docs/DesignRemediation-2026-09-30.md)。源码及新增回归不等于UE运行、真实资产或Cook验收；准确执行证据由任务修复报告记录。
+
+
+2026-10-09本插件源码整改、中文API/所有权说明和待UE验收边界见 [本轮源码说明](Docs/AuditRemediation-2026-10-09.md)。

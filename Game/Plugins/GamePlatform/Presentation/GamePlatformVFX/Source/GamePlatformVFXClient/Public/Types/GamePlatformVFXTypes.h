@@ -95,5 +95,7 @@ enum class EGamePlatformVFXResultCode : uint8
     CatalogAmbiguous,
     DefinitionLoadFailed,
     InvalidWorld,
-    InvalidRequest
+    InvalidRequest,
+    /** 请求已在当前世界历史中完成；无需新组件，返回的实例Handle为空。 */
+    AlreadyCompleted
 };

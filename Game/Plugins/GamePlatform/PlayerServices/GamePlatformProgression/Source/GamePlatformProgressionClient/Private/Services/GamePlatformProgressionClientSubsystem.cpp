@@ -1,10 +1,26 @@
+// 平台成长投影事件实现；客户端没有XP权威，生命周期与派生缓存合同见同名公开头。
 #include "Services/GamePlatformProgressionClientSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+#include "Transport/GamePlatformProgressionGatewayHttpTransport.h"
 
 #include "Definitions/GamePlatformProgressionTrackDefinition.h"
 #include "Interfaces/GamePlatformProgressionClientTransport.h"
 
+void UGamePlatformProgressionClientSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    // Initialize建立新实例代次；退出后的迟到回调不能跨重新初始化消费。
+    bDeinitializing = false; ++InstanceGeneration; ++AccountGeneration;
+    Super::Initialize(Collection);
+    BindOnlineAuthentication();
+}
+
 void UGamePlatformProgressionClientSubsystem::Deinitialize()
 {
+    // 先关闭作用域，再执行任何取消或广播；外部回调不得恢复账号。
+    bDeinitializing = true; ++InstanceGeneration; ++AccountGeneration;
+    UnbindOnlineAuthentication();
+    OnViewChanged.Clear();
     OnLevelChanged.Clear();
     OnXPChanged.Clear();
     ResetAccount();
@@ -17,12 +33,15 @@ bool UGamePlatformProgressionClientSubsystem::ConfigureAuthenticatedAccount(
     TSharedPtr<IGamePlatformProgressionClientTransport, ESPMode::ThreadSafe>
         InTransport)
 {
-    if (AccountKey.IsEmpty() || !InTransport.IsValid())
+    check(IsInGameThread());
+    if (bDeinitializing || bResettingAccount || AccountKey.IsEmpty() || !InTransport.IsValid())
     {
         return false;
     }
 
+    const uint64 ExpectedInstanceGeneration = InstanceGeneration;
     ResetAccount();
+    if (bDeinitializing || ExpectedInstanceGeneration != InstanceGeneration) { return false; }
     CurrentAccountKey = AccountKey;
     Transport = MoveTemp(InTransport);
     return RefreshSnapshot();
@@ -30,11 +49,16 @@ bool UGamePlatformProgressionClientSubsystem::ConfigureAuthenticatedAccount(
 
 void UGamePlatformProgressionClientSubsystem::ResetAccount()
 {
+    check(IsInGameThread());
+    if (bResettingAccount) { return; }
+    TGuardValue<bool> ResetGuard(bResettingAccount, true);
     ++AccountGeneration;
+    ++SnapshotRequestGeneration;
 
-    if (Transport.IsValid())
+    const auto CancelledTransport = Transport;
+    if (CancelledTransport.IsValid())
     {
-        Transport->CancelAllRequests();
+        CancelledTransport->CancelAllRequests();
     }
 
     CurrentAccountKey.Reset();
@@ -48,10 +72,20 @@ void UGamePlatformProgressionClientSubsystem::ResetAccount()
     CachedViewDefinitionGeneration = ~uint64(0);
     State = EGamePlatformProgressionClientState::Uninitialized;
     LastError = EGamePlatformProgressionError::None;
+    PublishViewChanged();
+}
+
+void UGamePlatformProgressionClientSubsystem::PublishViewChanged()
+{
+    if (bDeinitializing) { return; }
+    check(IsInGameThread());
+    ++ViewGeneration;
+    OnViewChanged.Broadcast();
 }
 
 bool UGamePlatformProgressionClientSubsystem::RefreshSnapshot()
 {
+    if (bDeinitializing) { return false; }
     if (CurrentAccountKey.IsEmpty() ||
         !Transport.IsValid() ||
         State == EGamePlatformProgressionClientState::Loading ||
@@ -61,6 +95,8 @@ bool UGamePlatformProgressionClientSubsystem::RefreshSnapshot()
     }
 
     const uint64 ExpectedGeneration = AccountGeneration;
+    const uint64 ExpectedSnapshotRequestGeneration = ++SnapshotRequestGeneration;
+    const auto RequestTransport = Transport;
 
     State =
         Snapshot.ProgressionRevision > 0
@@ -72,8 +108,8 @@ bool UGamePlatformProgressionClientSubsystem::RefreshSnapshot()
     TWeakObjectPtr<UGamePlatformProgressionClientSubsystem> WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginGetSnapshot(
-            [WeakThis, ExpectedGeneration](
+        RequestTransport->BeginGetSnapshot(
+            [WeakThis, ExpectedGeneration, ExpectedSnapshotRequestGeneration](
                 FGamePlatformProgressionSnapshot NewSnapshot,
                 EGamePlatformProgressionError Error)
             {
@@ -82,23 +118,27 @@ bool UGamePlatformProgressionClientSubsystem::RefreshSnapshot()
                 {
                     Self->HandleSnapshotCompleted(
                         ExpectedGeneration,
+                        ExpectedSnapshotRequestGeneration,
                         MoveTemp(NewSnapshot),
                         Error);
                 }
             });
 
-    if (!bStarted)
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedSnapshotRequestGeneration == SnapshotRequestGeneration && RequestTransport == Transport && (State == EGamePlatformProgressionClientState::Loading || State == EGamePlatformProgressionClientState::Reconciling))
     {
         State = EGamePlatformProgressionClientState::Error;
         LastError = EGamePlatformProgressionError::BackendUnavailable;
     }
 
+    // 受理/启动失败也必须通知忙碌与错误；账号若在同步完成中改变，保留新账号状态。
+    if (AccountGeneration == ExpectedGeneration) { PublishViewChanged(); }
     return bStarted;
 }
 
 void UGamePlatformProgressionClientSubsystem::RegisterTrackDefinition(
     UGamePlatformProgressionTrackDefinition* Definition)
 {
+    if (bDeinitializing) { return; }
     if (!IsValid(Definition) ||
         Definition->ProgressionTrackId.IsNone())
     {
@@ -122,6 +162,7 @@ void UGamePlatformProgressionClientSubsystem::RegisterTrackDefinition(
         Definition->ProgressionTrackId,
         Definition);
     ++DefinitionGeneration;
+    PublishViewChanged();
 }
 
 int32 UGamePlatformProgressionClientSubsystem::GetLevel(
@@ -227,10 +268,13 @@ UGamePlatformProgressionClientSubsystem::GetViewModels() const
 
 void UGamePlatformProgressionClientSubsystem::HandleSnapshotCompleted(
     uint64 ExpectedGeneration,
+    uint64 ExpectedSnapshotRequestGeneration,
     FGamePlatformProgressionSnapshot NewSnapshot,
     EGamePlatformProgressionError Error)
 {
-    if (ExpectedGeneration != AccountGeneration)
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedSnapshotRequestGeneration != SnapshotRequestGeneration ||
+        (State != EGamePlatformProgressionClientState::Loading && State != EGamePlatformProgressionClientState::Reconciling))
     {
         return;
     }
@@ -239,6 +283,7 @@ void UGamePlatformProgressionClientSubsystem::HandleSnapshotCompleted(
     {
         State = EGamePlatformProgressionClientState::Error;
         LastError = Error;
+        PublishViewChanged();
         return;
     }
 
@@ -246,11 +291,14 @@ void UGamePlatformProgressionClientSubsystem::HandleSnapshotCompleted(
     {
         State = EGamePlatformProgressionClientState::Error;
         LastError = EGamePlatformProgressionError::InvalidResponse;
+        PublishViewChanged();
         return;
     }
 
+    if (ExpectedGeneration != AccountGeneration) { return; }
     State = EGamePlatformProgressionClientState::Ready;
     LastError = EGamePlatformProgressionError::None;
+    PublishViewChanged();
 }
 
 bool UGamePlatformProgressionClientSubsystem::ApplySnapshot(
@@ -282,14 +330,12 @@ bool UGamePlatformProgressionClientSubsystem::ApplySnapshot(
     Snapshot = NewSnapshot;
     ++SnapshotGeneration;
 
-    for (const FGamePlatformProgressionTrackState& Track :
-         Snapshot.Tracks)
+    // XP/等级兼容事件可能重入ResetAccount；遍历不可变副本并在每次广播后核对账号代次。
+    const auto AcceptedTracks = Snapshot.Tracks;
+    const uint64 ExpectedAccountGeneration = AccountGeneration;
+    for (const FGamePlatformProgressionTrackState& Track : AcceptedTracks)
     {
-        const FString Key =
-            Track.ProgressionTrackId.ToString() +
-            TEXT("|") +
-            Track.SubjectId;
-
+        const FString Key = Track.ProgressionTrackId.ToString() + TEXT("|") + Track.SubjectId;
         const FGamePlatformProgressionTrackState* Old =
             Previous.Find(Key);
 
@@ -305,6 +351,7 @@ bool UGamePlatformProgressionClientSubsystem::ApplySnapshot(
                 Track.SubjectId,
                 Old->TotalXP,
                 Track.TotalXP);
+            if (ExpectedAccountGeneration != AccountGeneration) { return true; }
         }
 
         if (Track.Level > Old->Level)
@@ -314,6 +361,7 @@ bool UGamePlatformProgressionClientSubsystem::ApplySnapshot(
                 Track.SubjectId,
                 Old->Level,
                 Track.Level);
+            if (ExpectedAccountGeneration != AccountGeneration) { return true; }
         }
     }
 
@@ -342,4 +390,42 @@ UGamePlatformProgressionClientSubsystem::FindTrack(
     return Index && Snapshot.Tracks.IsValidIndex(*Index)
         ? &Snapshot.Tracks[*Index]
         : nullptr;
+}
+
+// Online负责认证/刷新/请求签名；领域层只消费脱敏认证快照，缺失路由仍走真实失败终态。
+void UGamePlatformProgressionClientSubsystem::BindOnlineAuthentication()
+{
+    if (bDeinitializing) { return; }
+    auto* LocalPlayer = GetLocalPlayer();
+    auto* Instance = LocalPlayer ? LocalPlayer->GetGameInstance() : nullptr;
+    auto* Online = Instance ? Instance->GetSubsystem<UGamePlatformOnlineClientSubsystem>() : nullptr;
+    if (!IsValid(Online)) { return; }
+    OnlineSubsystem = Online;
+    if (!AuthStateChangedHandle.IsValid())
+    { AuthStateChangedHandle = Online->OnAuthStateChanged().AddUObject(this, &UGamePlatformProgressionClientSubsystem::HandleAuthStateChanged); }
+    HandleAuthStateChanged(Online->GetSnapshot());
+}
+
+void UGamePlatformProgressionClientSubsystem::UnbindOnlineAuthentication()
+{
+    if (auto* Online = OnlineSubsystem.Get())
+    { if (AuthStateChangedHandle.IsValid()) { Online->OnAuthStateChanged().Remove(AuthStateChangedHandle); } }
+    AuthStateChangedHandle.Reset(); OnlineSubsystem.Reset();
+}
+
+void UGamePlatformProgressionClientSubsystem::HandleAuthStateChanged(const FGamePlatformAuthSnapshot& AuthSnapshot)
+{
+    if (bDeinitializing) { return; }
+    check(IsInGameThread());
+    if (AuthSnapshot.State == EGamePlatformAuthState::Refreshing) { return; }
+    if (AuthSnapshot.State == EGamePlatformAuthState::Authenticated)
+    {
+        auto* Online = OnlineSubsystem.Get();
+        if (!Online || AuthSnapshot.AccountId.IsEmpty()) { ResetAccount(); return; }
+        if (CurrentAccountKey == AuthSnapshot.AccountId && Transport.IsValid()) { return; }
+        ConfigureAuthenticatedAccount(AuthSnapshot.AccountId,
+            MakeShared<FGamePlatformProgressionGatewayHttpTransport, ESPMode::ThreadSafe>(Online));
+        return;
+    }
+    if (!CurrentAccountKey.IsEmpty() || Transport.IsValid()) { ResetAccount(); }
 }

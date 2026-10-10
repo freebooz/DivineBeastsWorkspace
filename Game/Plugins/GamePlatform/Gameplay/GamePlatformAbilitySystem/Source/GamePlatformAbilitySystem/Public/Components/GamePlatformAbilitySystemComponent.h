@@ -2,6 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "Interfaces/IGamePlatformAbilityInputReceiver.h"
+#include "Interfaces/IGamePlatformAbilityActivationGate.h"
 #include "GamePlatformAbilitySystemComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -42,6 +43,18 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="GamePlatform|AbilitySystem")
     void ClearAbilityAvatar();
+
+    /**
+     * 项目组合根在ActorInfo就绪后注入当前Avatar的资格读取器；仅游戏线程，Owner须存活并属同一世界。
+     * 不接纳空Avatar、重复其他所有者或查询重入；换Avatar自动撤销，新绑定必须重新注入。
+     * Gate只读真实玩法事实，不发网络请求；ASC仅持该读取器和Owner弱引用，不拥有玩法状态。
+     */
+    FGamePlatformResult SetActivationGate(TWeakObjectPtr<UObject> Owner,
+        TSharedRef<IGamePlatformAbilityActivationGate> Gate);
+    /** 只允许原注入所有者撤销；重复撤销返回false，不影响其他实例。仅游戏线程。 */
+    bool ClearActivationGate(TWeakObjectPtr<UObject> Owner);
+    /** GAS实际激活前同步查询；缺失/过期/未Active都返回失败，客户端成功只允许预测尝试。 */
+    FGamePlatformResult EvaluateActivationEligibility() const;
 
     FGamePlatformAbilityAvatarBindingSnapshot GetAvatarBindingSnapshot() const
     {
@@ -93,5 +106,12 @@ private:
     TArray<FGameplayAbilitySpecHandle> HeldInputHandles;
 
     int32 AvatarGeneration = 0;
-    FGamePlatformAbilityAvatarBindingChangedNative AvatarBindingChanged;    FGamePlatformAbilitySpecListChangedNative AbilitySpecListChanged;
+    /** 非反射只读适配器；弱Owner和当前Avatar代次共同界定注入生命周期。 */
+    TWeakObjectPtr<UObject> ActivationGateOwner;
+    TSharedPtr<IGamePlatformAbilityActivationGate> ActivationGate;
+    int32 ActivationGateGeneration = 0;
+    mutable bool bEvaluatingActivationGate = false;
+    FGamePlatformAbilityAvatarBindingChangedNative AvatarBindingChanged;
+    /** 真实原生AbilitySpec复制完成事实；只同步订阅方投影，与Gate独立，不改变Avatar资格或权威技能授权。 */
+    FGamePlatformAbilitySpecListChangedNative AbilitySpecListChanged;
 };

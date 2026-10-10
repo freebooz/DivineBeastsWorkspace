@@ -37,7 +37,8 @@ struct FExecutionContext
     std::uint64_t NodeGeneration = 0; // 每次进入／重试的邮箱代次；循环不得复用。
 };
 
-using FCompletion = std::function<void(FNodeResult)>;
+/** 返回true仅表示本代次首次结果进入邮箱；重复、取消、过期或已退出返回false，调用者仅true时唤醒。 */
+using FCompletion = std::function<bool(FNodeResult)>;
 
 /** Start/Finish 在所有者线程调用且不得阻塞。Completion 可在任意线程调用并可被迟到调用。 */
 class IFlowNode

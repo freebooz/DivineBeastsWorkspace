@@ -1,3 +1,4 @@
+#include <atomic>
 #pragma once
 
 // 测试专用：真实生产调度核心的正常/失败/超时/人工等待/取消及并发回归，UE和本机入口共用，不进入生产业务。
@@ -248,6 +249,18 @@ inline std::vector<FCase> GetCases()
             std::thread Worker([&] { bCancelled = E.Cancel(Id); A->Completions[0](Success()); }); Worker.join();
             C.Require(!bCancelled && E.IsActive(), "工作线程只投递完成，不控制状态"); E.Tick(1);
             C.Require(E.GetSnapshot().State == EFlowState::Succeeded, "跨线程完成在所有者线程消费");
+        }},
+        {"CompletionAcceptanceBoundsWakeups", [](FChecks& C)
+        {
+            auto A = std::make_shared<FTestNode>(); FApplicationFlowExecutor E; std::string Error;
+            E.Configure({"a", {Step("a", A)}}, Error); E.Start(0, Error); E.Tick(0);
+            std::atomic<int> Accepted{0}; std::vector<std::thread> Workers;
+            for (int I = 0; I < 256; ++I) Workers.emplace_back([&] { if (A->Completions[0](Success())) { ++Accepted; } });
+            for (auto& Worker : Workers) { Worker.join(); }
+            C.Require(Accepted == 1, "并发重复完成最多唤醒一次"); E.Tick(1);
+            C.Require(!A->Completions[0](Success()), "终态之后完成不能唤醒");
+            E.Start(2, Error); E.Tick(2); E.Cancel(E.GetSnapshot().RunId);
+            C.Require(!A->Completions.back()(Success()), "取消后迟到完成不能唤醒");
         }},
         {"ConcurrentDuplicateCompletions", [](FChecks& C)
         {

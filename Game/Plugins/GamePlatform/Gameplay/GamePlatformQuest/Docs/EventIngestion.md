@@ -1,5 +1,7 @@
 # EventIngestion（事件接入）
 
+> 2026-09-30状态校正：本页保留旧方案/历史证据，旧DBAServer具体Quest HTTP/事件适配与后端交付宣称未在当前项目文件清单确认，不能作为现行验收。当前行为以[本轮整改说明](DesignRemediation-2026-09-30.md)、README与真实源码为准；本轮未执行数据库/Outbox/网络联调。
+
 `FGamePlatformQuestEvent`包含 EventId、EventType、PlayerId、PlayerRuntimeId、CharacterId、WorldId、RegionId、SourceEntityId、TargetEntityId、SemanticTags、NumericValue、OccurredAtUtc 和 SourceGeneration。EventId 必须是稳定事实编号，不能仅用时间戳。
 
 `DBAServer/QuestIntegration/UDBAQuestEventAdapterComponent（项目任务事件适配组件）`监听玩家服务器 CombatEvent 和 InteractionEvent：Combat Death 且 SourceActor 为当前玩家时映射 `Combat.Defeat`；Interaction 只有 Committed/PickupConsumed/HarvestCompleted 映射 `Interaction.Committed`。客户端 Focus 不会推进任务。

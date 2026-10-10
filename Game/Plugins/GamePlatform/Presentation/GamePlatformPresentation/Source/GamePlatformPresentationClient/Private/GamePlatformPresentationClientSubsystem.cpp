@@ -1,6 +1,9 @@
+// 本文件属于GamePlatform平台层 GamePlatformPresentation，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #include "GamePlatformPresentationClientSubsystem.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Resolution/GamePlatformPresentationCatalogScore.h"
 #include "Engine/World.h"
 
 namespace
@@ -118,38 +121,7 @@ namespace
                    Policy);
     }
 
-    struct FCatalogScore
-    {
-        int32 SemanticRank = 0;
-        int32 Specificity = 0;
-        int32 Scope = 0;
-        int32 Priority = 0;
 
-        bool IsBetterThan(const FCatalogScore& Other) const
-        {
-            if (Scope != Other.Scope)
-            {
-                return Scope > Other.Scope;
-            }
-            if (SemanticRank != Other.SemanticRank)
-            {
-                return SemanticRank > Other.SemanticRank;
-            }
-            if (Specificity != Other.Specificity)
-            {
-                return Specificity > Other.Specificity;
-            }
-            return Priority > Other.Priority;
-        }
-
-        bool IsEquivalentTo(const FCatalogScore& Other) const
-        {
-            return SemanticRank == Other.SemanticRank &&
-                   Specificity == Other.Specificity &&
-                   Scope == Other.Scope &&
-                   Priority == Other.Priority;
-        }
-    };
 }
 
 
@@ -183,7 +155,7 @@ void UGamePlatformPresentationClientSubsystem::Deinitialize()
 FGuid UGamePlatformPresentationClientSubsystem::RegisterProvider(
     FName ProviderId,
     int32 Priority,
-    FGamePlatformPresentationProviderHandler Handler)
+    FGamePlatformPresentationProviderHandler Handler, TSubclassOf<UObject> DefinitionClass)
 {
     if (ProviderId.IsNone() || !Handler.IsBound())
     {
@@ -205,6 +177,7 @@ FGuid UGamePlatformPresentationClientSubsystem::RegisterProvider(
     Entry.ProviderId = ProviderId;
     Entry.Priority = Priority;
     Entry.Handler = MoveTemp(Handler);
+    Entry.DefinitionClass = DefinitionClass.Get();
     const FGuid Result = Entry.RegistrationId;
     Providers.Add(MoveTemp(Entry));
 
@@ -217,6 +190,13 @@ FGuid UGamePlatformPresentationClientSubsystem::RegisterProvider(
         return A.ProviderId.LexicalLess(B.ProviderId);
     });
     return Result;
+}
+
+UClass* UGamePlatformPresentationClientSubsystem::GetProviderDefinitionClass(FName ProviderId) const
+{
+    check(IsInGameThread());
+    const auto* Provider = Providers.FindByPredicate([ProviderId](const auto& Item) { return Item.ProviderId == ProviderId; });
+    return Provider ? Provider->DefinitionClass.Get() : nullptr;
 }
 
 bool UGamePlatformPresentationClientSubsystem::UnregisterProvider(
@@ -304,6 +284,56 @@ UGamePlatformPresentationClientSubsystem::RegisterCatalogFragment(
     return Result;
 }
 
+bool UGamePlatformPresentationClientSubsystem::PreflightCatalogFragment(
+    const FGamePlatformPresentationCatalogFragment& Fragment, FString& OutError) const
+{
+    check(IsInGameThread());
+    OutError.Reset();
+    if (!Fragment.IsValid() || CatalogFragments.Num() >= MaxPresentationCatalogFragments)
+    { OutError = TEXT("目录片段无效或作用域容量已满。"); return false; }
+    const auto QueriesCanOverlap = [](const FGamePlatformPresentationContextQuery& A, const FGamePlatformPresentationContextQuery& B)
+    {
+        const auto Compatible = [](FName X, FName Y) { return X.IsNone() || Y.IsNone() || X == Y; };
+        return Compatible(A.ProjectId,B.ProjectId) && Compatible(A.HeroDefinitionId,B.HeroDefinitionId) &&
+            Compatible(A.AbilityId,B.AbilityId) && Compatible(A.SkinId,B.SkinId) && Compatible(A.WorldId,B.WorldId) &&
+            Compatible(A.ExperienceId,B.ExperienceId) && Compatible(A.RegionId,B.RegionId) &&
+            Compatible(A.ArenaModeId,B.ArenaModeId) && Compatible(A.ContentPackId,B.ContentPackId) &&
+            Compatible(A.PlatformId,B.PlatformId) && (A.QualityTier == EGamePlatformPresentationQualityTier::Unknown ||
+            B.QualityTier == EGamePlatformPresentationQualityTier::Unknown || A.QualityTier == B.QualityTier);
+    };
+    const auto Conflicts = [&](const auto& A, const auto& B)
+    {
+        return A.SemanticTag == B.SemanticTag && A.Scope == B.Scope && A.Priority == B.Priority &&
+            A.ContextQuery.GetSpecificity() == B.ContextQuery.GetSpecificity() && QueriesCanOverlap(A.ContextQuery,B.ContextQuery);
+    };
+    for (int32 Index = 0; Index < Fragment.Entries.Num(); ++Index)
+    {
+        const auto& Candidate = Fragment.Entries[Index];
+        for (int32 Other = 0; Other < Index; ++Other)
+            if (Conflicts(Candidate, Fragment.Entries[Other]))
+            {
+                OutError = FString::Printf(TEXT("目录同键资格冲突：Pack=%s Catalog=%s Entries=%s/%s。"),
+                    *Fragment.OwnerScopeId.ToString(), *Fragment.FragmentId.ToString(),
+                    *Candidate.EntryId.ToString(), *Fragment.Entries[Other].EntryId.ToString());
+                return false;
+            }
+        for (const auto& Existing : CatalogFragments)
+        {
+            if (Existing.Fragment.FragmentId == Fragment.FragmentId)
+            { OutError = TEXT("目录身份已经登记，拒绝重复或版本漂移。"); return false; }
+            for (const auto& Entry : Existing.Fragment.Entries)
+                if (Conflicts(Candidate, Entry))
+                {
+                    OutError = FString::Printf(TEXT("目录同键资格冲突：Pack=%s Catalog=%s Entry=%s；Pack=%s Catalog=%s Entry=%s。"),
+                        *Fragment.OwnerScopeId.ToString(), *Fragment.FragmentId.ToString(), *Candidate.EntryId.ToString(),
+                        *Existing.Fragment.OwnerScopeId.ToString(), *Existing.Fragment.FragmentId.ToString(), *Entry.EntryId.ToString());
+                    return false;
+                }
+        }
+    }
+    return true;
+}
+
 bool UGamePlatformPresentationClientSubsystem::UnregisterCatalogFragment(
     const FGamePlatformPresentationRegistrationHandle& Handle)
 {
@@ -349,7 +379,8 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
     }
 
     const FGamePlatformPresentationCatalogEntry* BestEntry = nullptr;
-    FCatalogScore BestScore;
+    const FGamePlatformPresentationCatalogFragment* BestFragment = nullptr;
+    FGamePlatformPresentationCatalogScore BestScore;
     bool bAmbiguous = false;
 
     for (const FCatalogFragmentEntry& FragmentEntry : CatalogFragments)
@@ -358,13 +389,21 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
              FragmentEntry.Fragment.Entries)
         {
             int32 SemanticRank = 0;
+            int32 SemanticDistance = 0;
             if (SemanticTag == Entry.SemanticTag)
             {
                 SemanticRank = 2;
             }
-            else if (SemanticTag.MatchesTag(Entry.SemanticTag))
+            else if (Entry.bAllowParentFallback && SemanticTag.MatchesTag(Entry.SemanticTag))
             {
                 SemanticRank = 1;
+                // 按直接父级逐层计算距离；同语义层级才进入Scope排序。
+                FGameplayTag Parent = SemanticTag;
+                while (Parent.IsValid() && Parent != Entry.SemanticTag)
+                {
+                    Parent = Parent.RequestDirectParent();
+                    ++SemanticDistance;
+                }
             }
             else
             {
@@ -376,23 +415,31 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
                 continue;
             }
 
-            FCatalogScore Score;
+            FGamePlatformPresentationCatalogScore Score;
             Score.SemanticRank = SemanticRank;
+            Score.SemanticDistance = SemanticDistance;
             Score.Specificity =
-                Entry.Specificity + Entry.ContextQuery.GetSpecificity();
+                Entry.ContextQuery.GetSpecificity();
             Score.Scope = static_cast<int32>(Entry.Scope);
             Score.Priority = Entry.Priority;
 
+            const auto& Query = Entry.ContextQuery;
+            const auto DescribeCandidate = [&]() { return FString::Printf(TEXT("Pack=%s Catalog=%s Entry=%s Semantic=%s Hero=%s Ability=%s Skin=%s World=%s Platform=%s Quality=%d Project=%s Experience=%s Region=%s Arena=%s ContentPack=%s"),
+                *FragmentEntry.Fragment.OwnerScopeId.ToString(), *FragmentEntry.Fragment.FragmentId.ToString(), *Entry.EntryId.ToString(),
+                *Entry.SemanticTag.ToString(), *Query.HeroDefinitionId.ToString(), *Query.AbilityId.ToString(), *Query.SkinId.ToString(),
+                *Query.WorldId.ToString(), *Query.PlatformId.ToString(), static_cast<int32>(Query.QualityTier), *Query.ProjectId.ToString(),
+                *Query.ExperienceId.ToString(), *Query.RegionId.ToString(), *Query.ArenaModeId.ToString(), *Query.ContentPackId.ToString()); };
             if (!BestEntry || Score.IsBetterThan(BestScore))
             {
-                BestEntry = &Entry;
+                BestEntry = &Entry; BestFragment = &FragmentEntry.Fragment;
                 BestScore = Score;
                 bAmbiguous = false;
+                OutResolved.AmbiguousCandidates = {DescribeCandidate()};
             }
-            else if (Score.IsEquivalentTo(BestScore) &&
-                     BestEntry->EntryId != Entry.EntryId)
+            else if (Score.IsEquivalentTo(BestScore))
             {
                 bAmbiguous = true;
+                OutResolved.AmbiguousCandidates.Add(DescribeCandidate());
             }
         }
     }
@@ -406,6 +453,9 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
         return EGamePlatformPresentationCatalogResolveResult::NoMatch;
     }
 
+    OutResolved.AmbiguousCandidates.Reset();
+    OutResolved.CatalogFragmentId = BestFragment->FragmentId; OutResolved.OwnerScopeId = BestFragment->OwnerScopeId;
+    OutResolved.CatalogRevision = BestFragment->Revision; OutResolved.MatchedSemanticTag = BestEntry->SemanticTag;
     OutResolved.EntryId = BestEntry->EntryId;
     OutResolved.ProviderChannel = BestEntry->ProviderChannel;
     OutResolved.DefinitionId = BestEntry->DefinitionId;
@@ -441,6 +491,7 @@ EGamePlatformPresentationSubmitResult UGamePlatformPresentationClientSubsystem::
     }
 
     FGamePlatformPresentationRequest ResolvedRequest = Request;
+    if (ResolvedRequest.WorldGeneration == 0) ResolvedRequest.WorldGeneration = WorldGeneration;
     if (ResolvedRequest.Context.WorldGeneration == 0)
     {
         ResolvedRequest.Context.WorldGeneration = WorldGeneration;

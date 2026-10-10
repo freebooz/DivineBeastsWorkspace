@@ -1,4 +1,5 @@
 #include "Transport/GamePlatformTelemetryTransport.h"
+#include "Transport/TelemetryResponseBudget.h"
 
 #include "Async/Async.h"
 #include "Dom/JsonObject.h"
@@ -6,11 +7,19 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Misc/ScopeLock.h"
+#include "HAL/ThreadSafeCounter.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 
 namespace
 {
+/** 每请求独立接收账本；HTTP线程只访问该账本，不触碰UObject或传输器生命周期。 */
+struct FTelemetryResponseBudget
+{
+    FCriticalSection Mutex;
+    int64 ReceivedBytes = 0;
+    bool bOverflow = false;
+};
 TSharedPtr<FJsonObject> ContextJson(
     const FGamePlatformTelemetryContext& Context)
 {
@@ -213,6 +222,19 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
         TEXT("Accept"),
         TEXT("application/json"));
     Request->SetTimeout(TimeoutSeconds);
+    Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
+    const auto ResponseBudget = MakeShared<FTelemetryResponseBudget, ESPMode::ThreadSafe>();
+    FHttpRequestStreamDelegateV2 Receive = FHttpRequestStreamDelegateV2::CreateLambda(
+        [ResponseBudget, LimitBytes = MaxPayloadBytes](void* Data, int64& InOutLength)
+        {
+            FScopeLock Lock(&ResponseBudget->Mutex);
+            if (ResponseBudget->bOverflow || (InOutLength > 0 && !Data) ||
+                !GamePlatform::Telemetry::CanReceiveBytes(ResponseBudget->ReceivedBytes, InOutLength, LimitBytes))
+            { ResponseBudget->bOverflow = true; InOutLength = 0; return; }
+            // 遥测只消费HTTP状态与Retry-After，不保存正文；仍限制累计接收字节以阻止无限确认响应。
+            ResponseBudget->ReceivedBytes += InOutLength;
+        });
+    if (!Request->SetResponseBodyReceiveStreamDelegateV2(MoveTemp(Receive))) return false;
 
     for (const TPair<FString, FString>& Header : StaticHeaders)
     {
@@ -258,11 +280,19 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
         FGamePlatformTelemetryHttpTransport,
         ESPMode::ThreadSafe> WeakThis = AsShared();
 
+    const auto CompletionGate = MakeShared<FThreadSafeCounter, ESPMode::ThreadSafe>();
+    const auto SharedCompletion = MakeShared<FGamePlatformTelemetryTransportCompletion, ESPMode::ThreadSafe>(MoveTemp(Completion));
+    const auto CompleteOnce = [SharedCompletion, CompletionGate](FGamePlatformTelemetryTransportResult Result)
+    {
+        if (CompletionGate->Increment() != 1) return;
+        AsyncTask(ENamedThreads::GameThread, [SharedCompletion, Result = MoveTemp(Result)]() mutable
+        { if (*SharedCompletion) (*SharedCompletion)(MoveTemp(Result)); });
+    };
     Request->OnProcessRequestComplete().BindLambda(
         [WeakThis,
-         RequestPtr,
-         Completion = MoveTemp(Completion)](
-            FHttpRequestPtr,
+         ResponseBudget,
+         CompleteOnce](
+            FHttpRequestPtr CompletedRequest,
             FHttpResponsePtr Response,
             bool bConnectedSuccessfully) mutable
         {
@@ -271,12 +301,20 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
                     ESPMode::ThreadSafe> Self =
                     WeakThis.Pin())
             {
-                Self->UnregisterRequest(RequestPtr);
+                // 使用回调参数，不捕获Request自身；避免Request→委托→Request强引用环。
+                Self->UnregisterRequest(CompletedRequest);
             }
 
             FGamePlatformTelemetryTransportResult Result;
 
-            if (!bConnectedSuccessfully || !Response.IsValid())
+            bool bOverflow = false;
+            { FScopeLock Lock(&ResponseBudget->Mutex); bOverflow = ResponseBudget->bOverflow; }
+            if (bOverflow)
+            {
+                Result.bRetryable = false;
+                Result.Error = TEXT("response_too_large");
+            }
+            else if (!bConnectedSuccessfully || !Response.IsValid())
             {
                 Result.bRetryable = true;
                 Result.Error = TEXT("transport_unavailable");
@@ -311,22 +349,22 @@ bool FGamePlatformTelemetryHttpTransport::BeginSubmitBatch(
                 }
             }
 
-            AsyncTask(
-                ENamedThreads::GameThread,
-                [Completion = MoveTemp(Completion),
-                 Result]() mutable
-                {
-                    Completion(Result);
-                });
+            CompleteOnce(MoveTemp(Result));
         });
 
     const bool bStarted = Request->ProcessRequest();
     if (!bStarted)
     {
+        Request->OnProcessRequestComplete().Unbind();
         UnregisterRequest(RequestPtr);
+        FGamePlatformTelemetryTransportResult Result;
+        Result.bRetryable = true;
+        Result.Error = TEXT("request_start_failed");
+        CompleteOnce(MoveTemp(Result));
     }
 
-    return bStarted;
+    // 安装完成协议后即受理；启动失败也由同一个门闩回调完成，避免上层同时处理false和迟到回调。
+    return true;
 }
 
 void FGamePlatformTelemetryHttpTransport::CancelAll()

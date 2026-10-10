@@ -3,6 +3,16 @@
 #include "CoreMinimal.h"
 #include "Arena/GamePlatformArenaTypes.h"
 
+class APawn;
+/** 当前玩家的只读玩法拥有快照；Pawn由世界拥有，代次由出生适配器签发，不授予权威资格。 */
+struct FGamePlatformArenaGameplayOwnership
+{
+    /** 借用受控Pawn。已准入重连尚未出生时可为空；调用方不得销毁或据此授权Active。 */
+    TWeakObjectPtr<APawn> Pawn;
+    /** 正数是本装配最后已签发的出生代次，0表示没有可捕获的身份；不是客户端自报代次。 */
+    int32 AvatarGeneration = 0;
+};
+
 /** IGamePlatformArenaScorePolicy（竞技评分策略接口）。仅消费服务器可信事件。 */
 class IGamePlatformArenaScorePolicy
 {
@@ -42,11 +52,16 @@ class IGamePlatformArenaGameplayLifecycleAdapter
 {
 public:
     virtual ~IGamePlatformArenaGameplayLifecycleAdapter() = default;
+    /** 游戏线程只读捕获PlayerId当前受控Pawn/正代次；false清空OutOwnership，缺世界/连接/已出生代次即失败。
+     * 成功不代表Ready/Active，不产生出生或权限副作用；重连尚无Pawn时保留原已签发代次。 */
+    virtual bool CapturePlayerGameplayOwnership(const FString& PlayerId, FGamePlatformArenaGameplayOwnership& OutOwnership) const = 0;
     virtual bool SpawnPlayer(
         const FString& PlayerId,
         FName TeamId,
         FName SpawnPolicyId,
         FString& OutReason) = 0;
+    /** 游戏线程权威设置当前Pawn资格；Active需完整Ready/ActorInfo/拥有关系，Inactive同时取消本玩家复活计时器。 */
+    virtual bool SetPlayerGameplayActive(const FString& PlayerId, bool bActive, FString& OutReason) = 0;
     virtual bool RequestRespawn(
         const FString& PlayerId,
         FName TeamId,

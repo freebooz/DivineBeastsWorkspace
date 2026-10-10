@@ -1,3 +1,4 @@
+// 本地玩家背包投影及命令契约；游戏线程读取/完成，后端持有物品权威与版本，账号代次隔离异步结果。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -65,6 +66,7 @@ public:
 
     /** C++高频读取使用：按 Snapshot + Pending Operation 缓存派生 ViewModel。 */
     const TArray<FGamePlatformInventoryItemViewModel>& GetViewModelsView() const;
+    /** 游戏线程只读借用；空/未知身份返回nullptr，指针仅有效到下一次快照变化/重置，调用方不得保存跨事件引用。 */
     const FGamePlatformInventoryItemInstance* FindItem(const FString& ItemInstanceId) const;
 
     /**
@@ -79,25 +81,30 @@ public:
      */
     bool RetryPendingOperation();
 
+    /** 游戏线程：非空实例、已有目标容器、[0,Capacity)槽位；返回有效Guid仅表示幂等写操作受理，非法/忙返回无效Guid，终态看OnChanged。 */
     FGuid RequestMove(
         const FString& ItemInstanceId,
         FName TargetContainerId,
         int32 TargetSlotIndex);
 
+    /** 游戏线程：SplitQuantity在(0,源Quantity)且源支持堆叠，目标空槽有效；返回Guid受理或无效拒绝，失败保留未决操作供对账。 */
     FGuid RequestSplit(
         const FString& SourceItemInstanceId,
         int32 SplitQuantity,
         FName TargetContainerId,
         int32 TargetSlotIndex);
 
+    /** 游戏线程：两个不同的非空实例且定义兼容、目标总量不超后端MaxStackSize；返回Guid受理，后端版本冲突不能本地合并。 */
     FGuid RequestMerge(
         const FString& SourceItemInstanceId,
         const FString& TargetItemInstanceId);
 
+    /** 游戏线程：SlotIndex范围[0,12)，非空实例必须属于当前快照；Guid只表示请求受理，快捷栏不拥有物品。 */
     FGuid RequestSetQuickbar(
         int32 SlotIndex,
         const FString& ItemInstanceId);
 
+    /** 游戏线程：SlotIndex范围[0,12)，有效Guid表示后端清空命令受理；无效输入/忙拒绝，取消本地等待不回滚后端。 */
     FGuid RequestClearQuickbar(int32 SlotIndex);
 
     /** 背包状态、快照、Pending 或错误变化通知；高频 UI 不应 Tick 轮询。 */
@@ -120,8 +127,16 @@ private:
         }
     };
 
+    /** Reset事件可再次请求Reset；正在清空时幂等忽略，禁止在同广播栈重新配置账号。 */
+    bool bResettingAccount = false;
+    /** 永久关闭当前实例作用域；仅Initialize可开启新代次，广播/Cancel重入不能复活服务。 */
+    bool bDeinitializing = false;
+    uint64 InstanceGeneration = 0;
     FString CurrentAccountKey;
     uint64 AccountGeneration = 0;
+    /** 写入和操作查询共享顺序终态门闩；账号清空独立失效，未知结果仍保留Pending身份。 */
+    uint64 OperationRequestGeneration = 0;
+    bool bOperationRequestInFlight = false;
     EGamePlatformInventoryClientState State =
         EGamePlatformInventoryClientState::Uninitialized;
     EGamePlatformInventoryError LastError =
@@ -177,14 +192,18 @@ private:
         FGamePlatformInventorySnapshot NewSnapshot,
         EGamePlatformInventoryError Error);
 
+    /** 终态已消费在飞资格；仍保留原请求代次，广播监听器接管时旧栈必须停止。 */
     void HandleOperationQueryCompleted(
         uint64 ExpectedGeneration,
+        uint64 ExpectedRequestGeneration,
         FGuid ExpectedOperationId,
         FGamePlatformInventoryMutationResult Result,
         EGamePlatformInventoryError Error);
 
+    /** 终态已消费在飞资格；仍保留原请求代次，广播监听器接管时旧栈必须停止。 */
     void HandleMutationCompleted(
         uint64 ExpectedGeneration,
+        uint64 ExpectedRequestGeneration,
         FGuid ExpectedOperationId,
         FGamePlatformInventoryMutationResult Result,
         EGamePlatformInventoryError Error);

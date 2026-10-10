@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformVFX，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -39,6 +41,8 @@ public:
     bool RequiresFixedBounds() const { return bRequireFixedBounds; }
     bool ShouldAutoDestroy() const { return bAutoDestroy; }
     float GetMaxLifetimeSeconds() const { return MaxLifetimeSeconds; }
+    /** 基础定义软引用只作缺资源回退；实际加载必须经Data，不能同步加载或替代权威事实。 */
+    const TSoftObjectPtr<UGamePlatformVFXDefinition>& GetFallbackDefinition() const { return FallbackDefinition; }
 
     TSoftObjectPtr<UNiagaraSystem> ResolveNiagaraSystem(
         FName PlatformId,

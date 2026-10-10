@@ -17,6 +17,7 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformUILayerStack
     : public UGamePlatformWidgetBase
 {
     GENERATED_BODY()
+    friend class FGamePlatformUINotificationDuplicateTest;
 
 public:
     UCommonActivatableWidgetStack* GetActivatableStack(EGamePlatformUILayer Layer) const;

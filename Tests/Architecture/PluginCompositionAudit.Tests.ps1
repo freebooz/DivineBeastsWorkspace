@@ -33,12 +33,35 @@ Describe '插件按目标装配及非竞技闭包审计' {
         ($result.ReachableModules -contains 'DivineBeastsArenaServer') | Should Be $true
     }
 
+    It '实际主工程与Server目标装配排除纯客户端内容依赖' {
+        # 从真实项目启用项和Server Target共同取根；避免只验最小样例闭包遗漏主工程全局启用的内容包。
+        $project = Get-Content (Join-Path $workspaceRoot 'Game/DivineBeastsArena.uproject') -Raw | ConvertFrom-Json
+        $roots = @($project.Plugins | Where-Object {
+            $_.Enabled -and (-not $_.PSObject.Properties['TargetAllowList'] -or 'Server' -in $_.TargetAllowList)
+        } | ForEach-Object { $_.Name })
+        $target = Get-Content (Join-Path $workspaceRoot 'Game/Source/DivineBeastsArenaServer.Target.cs') -Raw
+        $roots += @([regex]::Matches($target, 'EnablePlugins\.Add\("([^"]+)"\)') | ForEach-Object { $_.Groups[1].Value })
+        $result = Test-PluginComposition -WorkspaceRoot $workspaceRoot -RootPlugins ($roots | Sort-Object -Unique) -Target Server
+        ($result.Errors -join "`n") | Should BeNullOrEmpty
+        ($result.ReachablePlugins -contains 'DBAClient') | Should Be $false
+        ($result.ReachableModules -contains 'DivineBeastsPresentationRuntime') | Should Be $false
+        ($result.ReachableModules -contains 'GamePlatformVFXClient') | Should Be $false
+    }
+
     It '竞技客户端保留公开流程扩展所需的单向依赖' {
         $result = Test-PluginComposition -WorkspaceRoot $workspaceRoot -RootPlugins @('DBAArena') -Target Client
         ($result.Errors -join "`n") | Should BeNullOrEmpty
         $result.Passed | Should Be $true
         ($result.ReachablePlugins -contains 'DBAClient') | Should Be $true
         ($result.ReachableModules -contains 'DivineBeastsArenaServer') | Should Be $false
+    }
+
+    It '公共客户端Runtime在额外验证启用时仍被Server模块列表排除' {
+        # 保护真实模块允许列表；只验证源码声明，不能替代插件资产挂载/Cook或最终包审计。
+        $result = Test-PluginComposition -WorkspaceRoot $workspaceRoot -RootPlugins @('DBAClient') -Target Server
+        ($result.Errors -join "`n") | Should BeNullOrEmpty
+        ($result.ReachableModules -contains 'DivineBeastsPresentationRuntime') | Should Be $false
+        ($result.ReachableModules -contains 'DivineBeastsApplicationFlowClient') | Should Be $false
     }
 
     It '间接依赖被禁用插件时指出完整责任链' {

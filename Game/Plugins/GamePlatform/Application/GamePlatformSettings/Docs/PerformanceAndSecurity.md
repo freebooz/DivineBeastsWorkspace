@@ -76,3 +76,9 @@ Runtime 不从后台线程直接操作 UObject，不捕获必须存活的裸 UOb
 
 客户端用户设置不参与网络权威。Server 配置只决定被批准的服务器设置项，不替代 GamePlatformServer／DBAServer 的生命周期、准入、容量和比赛权限逻辑。
 
+
+## 2026-10-09 IO边界与证据
+
+客户端读取真实Profile走原生异步存在性查询与AsyncLoadGameFromSlot，避免在GT调用同步LoadGameFromSlot；未据此声明慢盘成本或序列化预算实测达标。原生存在性返回Corrupt/UnspecifiedError明确失败，只有DoesNotExist是合法空User层。完成仅捕获值/弱Runtime，不捕获Provider裸指针。读取加载期间Snapshot.bLoading为true，旧快照可读但不代表新账号档案就绪。
+
+`GamePlatform.Settings.Runtime.AsyncLoadGeneration`源码覆盖重复/失败/换绑/卸载/退出；`Client.InterleavedSave`已改为等待A/B真实异步读取完成。未执行UE Automation与慢盘测试，结果由统一验证提供。

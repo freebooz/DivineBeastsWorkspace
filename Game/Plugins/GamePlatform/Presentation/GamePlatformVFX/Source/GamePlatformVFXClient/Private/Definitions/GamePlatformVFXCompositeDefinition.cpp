@@ -42,6 +42,13 @@ FGamePlatformResult UGamePlatformVFXCompositeDefinition::ValidateDefinition() co
                 TEXT("Composite步骤的DefinitionId或DelaySeconds非法。"));
         }
 
+        const FPrimaryAssetId ChildId(DefinitionAssetType(), FName(*Parsed.ToString()));
+        if (!RequiredDefinitions.Contains(ChildId))
+        {
+            return FGamePlatformResult::Failure(TEXT("VFX.CompositeDependencyMissing"),
+                TEXT("每个Composite Steps子定义必须声明到RequiredDefinitions；Data租约统一预检缺失与间接环并整体回滚。"));
+        }
+
         if (!SelfId.IsNone() && FName(*Parsed.ToString()) == SelfId)
         {
             return FGamePlatformResult::Failure(

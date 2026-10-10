@@ -3,6 +3,7 @@
 #include "Framework/GamePlatformGameModeBase.h"
 #include "Framework/GamePlatformPlayerStateBase.h"
 #include "Net/UnrealNetwork.h"
+#include "Engine/World.h" // 非Unity客户端目标需要UWorld完整类型来解析权威GameMode。
 
 FGamePlatformResult AGamePlatformPlayerControllerBase::ReportLocalPreparation(const FGamePlatformLocalPreparationFacts& Facts)
 {
@@ -59,6 +60,7 @@ void AGamePlatformPlayerControllerBase::OnRep_PreparationToken()
     {
         LastSubmittedToken.Invalidate();
     }
+    OnPreparationChanged.Broadcast();
 }
 
 void AGamePlatformPlayerControllerBase::ServerReportPrepared_Implementation(FGamePlatformPreparationToken Token)

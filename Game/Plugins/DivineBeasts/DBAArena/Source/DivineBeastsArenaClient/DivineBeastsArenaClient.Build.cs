@@ -1,3 +1,5 @@
+// 项目竞技客户端适配与页面类型；真实公开Widget继承链直接链接UMG/CommonUI及下层竞技UI。
+// 仅Client/Editor装配，服务器不得依赖；公共流程扩展仅在私有组合处消费。
 using UnrealBuildTool;
 
 public class DivineBeastsArenaClient : ModuleRules
@@ -11,8 +13,10 @@ public class DivineBeastsArenaClient : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
-            // 公共竞技HUD等公开UI类型继承UMG和CommonUI基类；
-            // 创建真实Widget、反射类及虚函数链接必须直接依赖对应引擎模块。
+            // 公开子系统头持有Data租约值并声明Core结果回调，消费者须获得两个真实公开合同。
+            "GamePlatformCore",
+            "GamePlatformData",
+            // 公开竞技Widget继承UMG/CommonUI，反射虚表与实例创建直接链接对应模块，不能只借下层头可见性。
             "UMG",
             "CommonUI",
             "DivineBeastsArenaRuntime",
@@ -32,8 +36,6 @@ public class DivineBeastsArenaClient : ModuleRules
             "DivineBeastsPresentationRuntime",
             // 竞技客户端只复用项目战斗UI DTO→平台反馈的现有适配，不新造Widget或复制UI管理器。
             "DivineBeastsUIClient",
-            "GamePlatformCore",
-            "GamePlatformData",
             "GamePlatformCombat",
             "GamePlatformPresentationCore",
             "MobaPresentationClient",

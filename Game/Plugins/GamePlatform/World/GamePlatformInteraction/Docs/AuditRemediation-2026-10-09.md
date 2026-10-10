@@ -1,0 +1,9 @@
+# 自定义交互提交重入整改（2026-10-09）
+
+GW-09提交前复制Option/Session值，避免Custom回调SetOptions后读取旧数组元素。目标组件公开CommitSession同样复制输入；处理器返回后检查Owner/目标代次与原会话占位，已撤销或销毁的目标不缓存成功、不推进提交修订号。
+
+Interactor返回后只处理同SessionId/InteractorGeneration且仍Committing的会话。已经取消/替换的原会话不释放新占位、不清新Timer、不再次完成。开始会话的同步广播也使用稳定Option，并在广播后重核Active身份，避免选项变更继续启动旧Hold任务。
+
+Custom处理器本身负责自己的权威副作用和幂等；框架只确认本次占位/会话是否仍可完成，回调取消不能回滚处理器已自行提交的业务事务。新增Private/Tests引擎夹具通过真实目标SetOptions触发同步取消，不能作为生产交互目标配置。本轮未运行Automation，仍须在真实World覆盖目标销毁与当前Interactor取消的回调场景。
+
+追加独立复核发现FinishSession在OnResultChanged中开始B后仍从CurrentSession读取B目标/选项。现终态先保存A完整不可变Session/Result，缓存维护在外部广播前完成；A事件只读取A快照。每次广播后核对象/世界与代次，当前会话已为B时不再向会话视图广播A终态，也不修改B。Private/Tests补OnResultChanged同步开启另一目标B并核A事件目标/选项及B当前状态；未执行UE Automation，不以原生/静态字符串检查替代该行为。

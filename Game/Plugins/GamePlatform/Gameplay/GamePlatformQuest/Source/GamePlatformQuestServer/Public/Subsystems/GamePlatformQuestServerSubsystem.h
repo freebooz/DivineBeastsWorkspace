@@ -51,6 +51,9 @@ public:
         const FString& PlayerId,
         EGamePlatformQuestError& OutError);
 
+    /** 游戏线程读取最近对账/持久化状态；队列满时为PersistenceOutcomeUnknown，已接纳事件仍由本实例保留。 */
+    EGamePlatformQuestError GetPlayerPersistenceError(const FString& PlayerId) const;
+
     UFUNCTION(BlueprintPure, Category="Quest")
     bool IsPlayerReady(const FString& PlayerId) const;
 
@@ -59,6 +62,14 @@ private:
     {
         FName QuestId = NAME_None;
         int32 ObjectiveIndex = INDEX_NONE;
+    };
+
+    /** 已接纳未提交的事件归属：同一EventId可命中多个任务，重放不能再次修改已经提交的任务。 */
+    struct FQuestReplayEvent
+    {
+        FName QuestId;
+        FGuid QuestInstanceId;
+        FGamePlatformQuestEvent Event;
     };
 
     struct FPlayerRuntime
@@ -74,6 +85,9 @@ private:
         TMap<FName, TArray<FGuid>> PendingEventIds;
         TMap<FGuid, FGamePlatformQuestEvent> PendingEventPayloads;
         TArray<FGamePlatformQuestEvent> DeferredEvents;
+        /** 已接纳但须在新权威快照上重放的事件；与新事件限长队列分离，所有权转移后才清旧账本。 */
+        TArray<FQuestReplayEvent> PendingReplayEvents;
+        EGamePlatformQuestError LastPersistenceError = EGamePlatformQuestError::None;
         FTimerHandle ProgressFlushTimer;
         bool bReady = false;
         bool bPersistenceInFlight = false;
@@ -89,6 +103,11 @@ private:
         FGuid ExpectedRuntimeId,
         TArray<FGamePlatformQuestSnapshot> Loaded,
         EGamePlatformQuestError Error);
+
+    /** 完整校验持久快照；Completed旧版本仅保留自含历史事实，不为旧版本重建当前目标。 */
+    bool ValidatePersistedSnapshot(const FGamePlatformQuestSnapshot& Snapshot, EGamePlatformQuestError& OutError) const;
+    /** 广播可能注销/重注册玩家；后续只能重新取得同一运行代次，不能继续使用广播前裸引用。 */
+    FPlayerRuntime* FindPlayerRuntime(const FString& PlayerId, const FGuid& ExpectedRuntimeId);
 
     bool ApplyLoadedSnapshots(
         FPlayerRuntime& Runtime,
@@ -127,7 +146,9 @@ private:
 
     EGamePlatformQuestError ProcessQuestEventNow(
         const FGamePlatformQuestEvent& Event,
-        FPlayerRuntime& Runtime);
+        FPlayerRuntime& Runtime,
+        FName ReplayQuestId = NAME_None,
+        FGuid ReplayInstanceId = FGuid());
 
     bool EnqueueDeferredEvent(
         FPlayerRuntime& Runtime,
@@ -135,7 +156,7 @@ private:
 
     void ProcessDeferredEvents(
         const FString& PlayerId,
-        FPlayerRuntime& Runtime);
+        FGuid ExpectedRuntimeId);
 
     void ScheduleProgressFlush(
         const FString& PlayerId,
@@ -172,7 +193,7 @@ private:
 
     void FinishPersistenceOperation(
         const FString& PlayerId,
-        FPlayerRuntime& Runtime);
+        FGuid ExpectedRuntimeId);
 
     void RemovePersistedEventPayloads(
         FPlayerRuntime& Runtime,

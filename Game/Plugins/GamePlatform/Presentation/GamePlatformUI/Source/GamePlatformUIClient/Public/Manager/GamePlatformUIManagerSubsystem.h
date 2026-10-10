@@ -1,15 +1,19 @@
+// 本文件属于平台客户端UI本地玩家服务；拥有屏栈/资源/布局世代，外部通知允许关停与重入。
+// 中文参数、失败/取消、资源与生命周期见本插件Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "GameplayTagContainer.h"
 #include "GamePlatformUITypes.h"
+#include "Types/GamePlatformDataLease.h"
 #include "Requests/GamePlatformUIFeedbackRequest.h"
 #include "Requests/GamePlatformUINotificationRequest.h"
 #include "Requests/GamePlatformWorldUIRequest.h"
 #include "GamePlatformUIManagerSubsystem.generated.h"
 
-struct FStreamableHandle;
+class UCommonActivatableWidget;
+class UCommonActivatableWidgetStack;
 class UGamePlatformHUDWidget;
 class UGamePlatformFeedbackService;
 class UGamePlatformFeedbackWidget;
@@ -24,6 +28,7 @@ class UGamePlatformUIScreenDefinition;
 class UGamePlatformViewModelBase;
 class UGamePlatformWorldUIService;
 class UGamePlatformWorldWidgetBase;
+class UGameInstance;
 struct FWorldContext;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(
@@ -107,6 +112,15 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="UI|Manager")
     bool CloseScreen(UGamePlatformUIScreen* Screen);
+
+    /**
+     * GT只读查询具体页面实例是否仍由本Manager登记在ExpectedStack原层栈。
+     * 参数Screen/ExpectedStack必须有效；空值、关闭/布局替换或实例账本已撤销均返回false。
+     * 同ScreenId的其他实例互不等价；暂失活但仍登记且在WidgetList中返回true。
+     * Root退出先撤实例账本再广播兼容ID关闭事件，因此旧容器尚未移除控件时也返回false。
+     * 不暴露资源租约或容器，不生成页面、不改变所有权；调用方不得据此修改真实层栈。
+     */
+    bool IsScreenOwnedByStack(UGamePlatformUIScreen* Screen, UCommonActivatableWidgetStack* ExpectedStack) const;
 
     UFUNCTION(BlueprintCallable, Category="UI|Manager")
     bool AttachHUDWidget(UGamePlatformHUDWidget* Widget);
@@ -193,6 +207,25 @@ public:
     FGamePlatformUIAccessibilityPreferencesChanged OnAccessibilityPreferencesChanged;
 
 private:
+    friend class FGamePlatformUIScreenLifecycleRegressionTest;
+    friend class FGamePlatformUIScreenReentryRegressionTest;
+    friend class FGamePlatformUIRootCloseReentryTest;
+#if WITH_DEV_AUTOMATION_TESTS
+    // 中立原生测试访问仅建立受控实例账本前提；定义留Tests，不是生产登记API/项目类型。
+    friend struct FGamePlatformUIScreenOwnershipTestAccess;
+#endif
+    /** 单次同步构造快照；弱引用只用于识别旧作用域，调用栈另持强引用防止回调GC。 */
+    struct FScreenOpenConstruction
+    {
+        FGamePlatformUIAsyncRequest Request;
+        FGamePlatformDataLease Lease;
+        TWeakObjectPtr<UGamePlatformUILayerStack> Root;
+        TWeakObjectPtr<UCommonActivatableWidgetStack> Stack;
+        TWeakObjectPtr<UGamePlatformUIScreenDefinition> Definition;
+        TWeakObjectPtr<UWorld> World;
+        TWeakObjectPtr<UGameInstance> GameInstance;
+        uint64 LayoutGeneration = 0;
+    };
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformUILayerStack> RootLayout = nullptr;
 
@@ -229,16 +262,26 @@ private:
     UPROPERTY(Transient)
     FGamePlatformUIAccessibilityPreferences AccessibilityPreferences;
 
-    TMap<FGuid, TSharedPtr<FStreamableHandle>> PendingLoads;
-    /** 移动/其他平台专属Widget加载失败时，只允许针对同一请求回退默认类一次。 */
+    /** 待打开和已入栈实例各持本调用方Data资源租约；暂时失活不释放。 */
+    TMap<FGuid, FGamePlatformDataLease> PendingLoads;
+    /** 构造期间取消只撤销请求资格，租约到AddWidget返回、撤回控件后才释放。 */
+    TSet<FGuid> ConstructingScreenRequests;
+    TMap<TWeakObjectPtr<UGamePlatformUIScreen>, FGamePlatformDataLease> ActiveScreenLeases;
+    TMap<TWeakObjectPtr<UGamePlatformUIScreen>, TWeakObjectPtr<UCommonActivatableWidgetStack>> ScreenStacks;
+    TSet<TWeakObjectPtr<UCommonActivatableWidgetStack>> ObservedStacks;
+    /** 同一请求的专属Widget变体最多回退默认类一次；所有加载仍归Data租约。 */
     TSet<FGuid> PendingDefaultWidgetRetries;
-    TMap<TWeakObjectPtr<UGamePlatformUIScreen>, TSharedPtr<FStreamableHandle>> ActiveScreenLeases;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> PauseScreens;
     TSet<TWeakObjectPtr<UGamePlatformUIScreen>> TravelPersistentScreens;
     FDelegateHandle PreLoadMapHandle;
 
     int32 NextGeneration = 1;
+    /** 根布局替换/退出代次；即使回调结束时指针相同，也不能提交旧构造。 */
+    uint64 RootLayoutGeneration = 1;
     bool bPauseAppliedByUI = false;
+    /** 退出/替换布局时拒绝新页面，防止OnScreenClosed重入把资源加入正在撤销的账本。 */
+    bool bClosing = false;
+    bool bReplacingRoot = false;
 
     bool IsDefinitionAllowed(const UGamePlatformUIScreenDefinition& Definition) const;
     bool IsRouteTargetValid(const UGamePlatformUIRouteDefinition& Definition) const;
@@ -249,7 +292,19 @@ private:
 
     bool HasAnyRouteCycle() const;
     void HandlePreLoadMap(const FWorldContext& WorldContext, const FString& MapName);
-    void HandleScreenAssetsLoaded(FGuid RequestId);
+    void HandleScreenAssetsLoaded(FGuid RequestId, const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
+    /** 同请求仅一次默认类回退；替换本调用方Data租约，外部资源调用后核请求/布局世代。 */
+    bool BeginDefaultWidgetRetry(const FGamePlatformUIAsyncRequest& Request,
+        UGamePlatformUIScreenDefinition& Definition, const FGamePlatformDataLease& PreviousLease);
+    /** CommonUI回调返回后重验并提交；失效则撤回原栈控件，随后释放同代Pending租约。 */
+    bool CompleteScreenOpen(const FScreenOpenConstruction& Construction, UGamePlatformUIScreen* Screen);
+    void HandleScreenActivated(UGamePlatformUIScreen* Screen);
+    void HandleScreenReleased(UGamePlatformUIScreen* Screen);
+    void HandleStackChanged(UCommonActivatableWidget* DisplayedWidget);
+    void ReconcileScreenMembership();
+    void RemoveScreenOwnership(TWeakObjectPtr<UGamePlatformUIScreen> Screen);
+    void ClearScreenOwnership();
+    void ReleaseScreenLease(const FGamePlatformDataLease& Lease);
     void HandleScreenDeactivated(UGamePlatformUIScreen* Screen);
     void FailRequest(FGuid RequestId, FName ScreenId, const FText& Reason);
     void CleanupPendingRequest(FGuid RequestId, bool bCancelLoad);

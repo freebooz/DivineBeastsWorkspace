@@ -1,5 +1,9 @@
-# Architecture（架构）
+# GamePlatformGameplay（通用玩法架构）
 
-GamePlatformGameplay当前P0只拥有跨玩法插件需要的最小Gameplay Eligibility事实：bServerPlayerActive与AvatarGeneration。服务器是写入权威，客户端通过ReplicatedUsing同步并收到SnapshotChanged事件。
+当前源码已超出最小Eligibility组件阶段。平台GameMode是完整体验宿主中的服务器规则/玩家登记所有者，通过统一准入Sink接受非敏感可信玩家投影，要求准备令牌与体验必要资源就绪后才能出生；GameState/PlayerState只复制公开生命周期，内部认证映射不复制。World退出先失效代次与令牌，再取消在途操作、撤销Pawn和占位。
 
-该插件不拥有登录、Session、角色出生/死亡/重生、Arena阶段或队伍逻辑；这些系统只在状态变化时更新这里的中立事实。Interaction等基础插件通过IGamePlatformGameplayEligibilityProvider只读查询。
+所有权威API仅游戏线程。平台注册AdmissionAuthority/SpawnPolicy使用弱Owner和作用域句柄，旧世界/代次与撤销后的调用必须失败。出生、重启、PlayerStart/Transform入口全部final，不能通过直接调用UE父类跳过准备/占位门禁。0.05秒Timer用于在途状态/超时推进，当前不是全事件驱动的完成声明。
+
+最小GameplayEligibility组件继续作为独立组合合同：只拥有Active和AvatarGeneration复制事实。服务器在Inactive时可单调绑定正整数代次，过期/溢出拒绝；其他插件只读查询。竞技由唯一Arena生命周期适配负责何时出生/失活，项目Pawn组合ASC/Combat/资格组件，不在组件内复制比赛执行器。
+
+MOBA现有GameMode与平台完整Experience宿主存在final出生入口和PlayerState私有生命周期合同冲突，不能机械更换反射父类。当前竞技复用下层资格/角色初始化/战斗接口；完整Experience迁移仍需准备令牌、Roster准入与倒计时、出生策略以及真实Blueprint父类/资产兼容评审，未宣称GW-11全部下继承完成。

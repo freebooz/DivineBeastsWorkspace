@@ -1,3 +1,4 @@
+// 平台本地玩家背包投影实现：游戏线程事件与异步领域Transport，Online拥有认证；账号重置清空本地缓存并失效本领域回调。
 #include "Services/GamePlatformInventoryClientSubsystem.h"
 
 #include "Engine/GameInstance.h"
@@ -38,20 +39,26 @@ uint32 GetTypeHash(const FInventorySlotKey& Key)
 void UGamePlatformInventoryClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
+    // Initialize建立新实例代次；退出后的迟到回调不能跨重新初始化消费。
+    bDeinitializing = false; ++InstanceGeneration; ++AccountGeneration;
     Super::Initialize(Collection);
     BindOnlineAuthentication();
 }
 
 void UGamePlatformInventoryClientSubsystem::Deinitialize()
 {
+    // 先关闭作用域，再执行任何取消或广播；外部回调不得恢复账号。
+    bDeinitializing = true; ++InstanceGeneration; ++AccountGeneration;
     UnbindOnlineAuthentication();
     OnChanged.Clear();
     ResetAccount();
+    State = EGamePlatformInventoryClientState::Uninitialized;
     Super::Deinitialize();
 }
 
 void UGamePlatformInventoryClientSubsystem::BindOnlineAuthentication()
 {
+    if (bDeinitializing) { return; }
     ULocalPlayer* LocalPlayer = GetLocalPlayer();
     UGameInstance* GameInstance =
         IsValid(LocalPlayer)
@@ -101,6 +108,7 @@ void UGamePlatformInventoryClientSubsystem::UnbindOnlineAuthentication()
 void UGamePlatformInventoryClientSubsystem::HandleAuthStateChanged(
     const FGamePlatformAuthSnapshot& AuthSnapshot)
 {
+    if (bDeinitializing) { return; }
     switch (AuthSnapshot.State)
     {
     case EGamePlatformAuthState::Authenticated:
@@ -168,28 +176,33 @@ bool UGamePlatformInventoryClientSubsystem::ConfigureAuthenticatedAccount(
         IGamePlatformInventoryClientTransport,
         ESPMode::ThreadSafe> InTransport)
 {
-    if (AccountKey.IsEmpty() || !InTransport.IsValid())
+    check(IsInGameThread());
+    if (bDeinitializing || bResettingAccount || AccountKey.IsEmpty() || !InTransport.IsValid())
     {
         return false;
     }
 
+    const uint64 ExpectedInstanceGeneration = InstanceGeneration;
     ResetAccount();
+    if (bDeinitializing || ExpectedInstanceGeneration != InstanceGeneration) { return false; }
     CurrentAccountKey = AccountKey;
     Transport = MoveTemp(InTransport);
-    SetState(
-        EGamePlatformInventoryClientState::Loading,
-        EGamePlatformInventoryError::None);
     return RefreshSnapshot();
 }
 
 void UGamePlatformInventoryClientSubsystem::ResetAccount()
 {
+    ++OperationRequestGeneration; bOperationRequestInFlight = false;
+    check(IsInGameThread());
+    if (bResettingAccount) { return; }
+    TGuardValue<bool> ResetGuard(bResettingAccount, true);
     ++AccountGeneration;
     ++SnapshotRequestGeneration;
 
-    if (Transport.IsValid())
+    const auto CancelledTransport = Transport;
+    if (CancelledTransport.IsValid())
     {
-        Transport->CancelAllRequests();
+        CancelledTransport->CancelAllRequests();
     }
 
     CurrentAccountKey.Reset();
@@ -217,6 +230,7 @@ void UGamePlatformInventoryClientSubsystem::ResetAccount()
 
 bool UGamePlatformInventoryClientSubsystem::RefreshSnapshot()
 {
+    if (bDeinitializing) { return false; }
     if (!Transport.IsValid() ||
         CurrentAccountKey.IsEmpty())
     {
@@ -244,6 +258,7 @@ bool UGamePlatformInventoryClientSubsystem::RefreshSnapshot()
     const uint64 ExpectedGeneration = AccountGeneration;
     const uint64 ExpectedSnapshotRequestGeneration =
         ++SnapshotRequestGeneration;
+    const auto RequestTransport = Transport;
 
     bSnapshotRequestInFlight = true;
 
@@ -255,11 +270,16 @@ bool UGamePlatformInventoryClientSubsystem::RefreshSnapshot()
             ? EGamePlatformInventoryError::RevisionConflict
             : EGamePlatformInventoryError::None);
 
+    // Loading监听器可以同步ResetAccount/切换账号；旧传输快照只保活，不允许启动已失效请求。
+    if (ExpectedGeneration != AccountGeneration || ExpectedSnapshotRequestGeneration != SnapshotRequestGeneration || RequestTransport != Transport)
+    {
+        return false;
+    }
     TWeakObjectPtr<UGamePlatformInventoryClientSubsystem>
         WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginGetSnapshot(
+        RequestTransport->BeginGetSnapshot(
             [WeakThis,
              ExpectedGeneration,
              ExpectedSnapshotRequestGeneration,
@@ -282,7 +302,7 @@ bool UGamePlatformInventoryClientSubsystem::RefreshSnapshot()
     if (!bStarted &&
         ExpectedGeneration == AccountGeneration &&
         ExpectedSnapshotRequestGeneration ==
-            SnapshotRequestGeneration)
+            SnapshotRequestGeneration && bSnapshotRequestInFlight)
     {
         bSnapshotRequestInFlight = false;
         SetState(
@@ -455,6 +475,7 @@ FGuid UGamePlatformInventoryClientSubsystem::RequestMove(
     FName TargetContainerId,
     int32 TargetSlotIndex)
 {
+    if (bDeinitializing) { return {}; }
     if (!BeginPendingOperation() ||
         ItemInstanceId.IsEmpty() ||
         TargetContainerId.IsNone() ||
@@ -484,6 +505,7 @@ FGuid UGamePlatformInventoryClientSubsystem::RequestSplit(
     FName TargetContainerId,
     int32 TargetSlotIndex)
 {
+    if (bDeinitializing) { return {}; }
     if (!BeginPendingOperation() ||
         SourceItemInstanceId.IsEmpty() ||
         SplitQuantity <= 0 ||
@@ -516,6 +538,7 @@ FGuid UGamePlatformInventoryClientSubsystem::RequestMerge(
     const FString& SourceItemInstanceId,
     const FString& TargetItemInstanceId)
 {
+    if (bDeinitializing) { return {}; }
     if (!BeginPendingOperation() ||
         SourceItemInstanceId.IsEmpty() ||
         TargetItemInstanceId.IsEmpty() ||
@@ -544,6 +567,7 @@ FGuid UGamePlatformInventoryClientSubsystem::RequestSetQuickbar(
     int32 SlotIndex,
     const FString& ItemInstanceId)
 {
+    if (bDeinitializing) { return {}; }
     if (!BeginPendingOperation() ||
         SlotIndex < 0 ||
         SlotIndex >= MaxInventoryQuickbarSlots ||
@@ -569,6 +593,7 @@ FGuid UGamePlatformInventoryClientSubsystem::RequestSetQuickbar(
 FGuid UGamePlatformInventoryClientSubsystem::RequestClearQuickbar(
     int32 SlotIndex)
 {
+    if (bDeinitializing) { return {}; }
     if (!BeginPendingOperation() ||
         SlotIndex < 0 ||
         SlotIndex >= MaxInventoryQuickbarSlots)
@@ -603,6 +628,7 @@ BeginPendingOperation()
 bool UGamePlatformInventoryClientSubsystem::
 SendPendingOperation()
 {
+    if (bDeinitializing) { return false; }
     if (!Transport.IsValid() ||
         Pending.Type ==
             EGamePlatformInventoryOperationType::None ||
@@ -613,6 +639,12 @@ SendPendingOperation()
 
     const uint64 ExpectedGeneration = AccountGeneration;
     const FGuid ExpectedOperationId = Pending.OperationId;
+    const auto RequestTransport = Transport;
+    const auto Request = Pending;
+    const uint64 ExpectedRequestGeneration = ++OperationRequestGeneration;
+    bOperationRequestInFlight = true;
+    SetState(EGamePlatformInventoryClientState::Mutating, EGamePlatformInventoryError::None);
+    if (bDeinitializing || ExpectedGeneration != AccountGeneration || ExpectedOperationId != Pending.OperationId || RequestTransport != Transport) { return false; }
 
     TWeakObjectPtr<UGamePlatformInventoryClientSubsystem>
         WeakThis(this);
@@ -620,15 +652,18 @@ SendPendingOperation()
     FGamePlatformInventoryMutationCompletion Completion =
         [WeakThis,
          ExpectedGeneration,
-         ExpectedOperationId](
+         ExpectedOperationId, ExpectedRequestGeneration](
             FGamePlatformInventoryMutationResult Result,
             EGamePlatformInventoryError Error)
         {
             if (UGamePlatformInventoryClientSubsystem* Self =
                     WeakThis.Get())
             {
+                if (Self->bDeinitializing || Self->AccountGeneration != ExpectedGeneration || Self->OperationRequestGeneration != ExpectedRequestGeneration || !Self->bOperationRequestInFlight || Self->Pending.OperationId != ExpectedOperationId) { return; }
+                Self->bOperationRequestInFlight = false;
                 Self->HandleMutationCompleted(
                     ExpectedGeneration,
+                    ExpectedRequestGeneration,
                     ExpectedOperationId,
                     MoveTemp(Result),
                     Error);
@@ -637,40 +672,40 @@ SendPendingOperation()
 
     bool bStarted = false;
 
-    switch (Pending.Type)
+    switch (Request.Type)
     {
     case EGamePlatformInventoryOperationType::Move:
         bStarted =
-            Transport->BeginMove(
-                Pending.Move,
+            RequestTransport->BeginMove(
+                Request.Move,
                 MoveTemp(Completion));
         break;
 
     case EGamePlatformInventoryOperationType::Split:
         bStarted =
-            Transport->BeginSplit(
-                Pending.Split,
+            RequestTransport->BeginSplit(
+                Request.Split,
                 MoveTemp(Completion));
         break;
 
     case EGamePlatformInventoryOperationType::Merge:
         bStarted =
-            Transport->BeginMerge(
-                Pending.Merge,
+            RequestTransport->BeginMerge(
+                Request.Merge,
                 MoveTemp(Completion));
         break;
 
     case EGamePlatformInventoryOperationType::SetQuickbar:
         bStarted =
-            Transport->BeginSetQuickbar(
-                Pending.Quickbar,
+            RequestTransport->BeginSetQuickbar(
+                Request.Quickbar,
                 MoveTemp(Completion));
         break;
 
     case EGamePlatformInventoryOperationType::ClearQuickbar:
         bStarted =
-            Transport->BeginClearQuickbar(
-                Pending.Quickbar,
+            RequestTransport->BeginClearQuickbar(
+                Request.Quickbar,
                 MoveTemp(Completion));
         break;
 
@@ -678,23 +713,16 @@ SendPendingOperation()
         break;
     }
 
-    if (bStarted)
-    {
-        SetState(
-            EGamePlatformInventoryClientState::Mutating,
-            EGamePlatformInventoryError::None);
-        return true;
-    }
-
-    SetState(
-        EGamePlatformInventoryClientState::Error,
-        EGamePlatformInventoryError::BackendUnavailable);
-    return false;
+    // 同步终态已经消费门闩时返回栈只能返回受理结果，不能再次改变领域状态。
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedOperationId == Pending.OperationId && ExpectedRequestGeneration == OperationRequestGeneration && bOperationRequestInFlight)
+    { bOperationRequestInFlight = false; SetState(EGamePlatformInventoryClientState::Error, EGamePlatformInventoryError::BackendUnavailable); }
+    return bStarted;
 }
 
 bool UGamePlatformInventoryClientSubsystem::
 RetryPendingOperation()
 {
+    if (bDeinitializing) { return false; }
     if (Pending.Type ==
             EGamePlatformInventoryOperationType::None ||
         !Pending.OperationId.IsValid() ||
@@ -716,53 +744,59 @@ RetryPendingOperation()
 
     const uint64 ExpectedGeneration = AccountGeneration;
     const FGuid ExpectedOperationId = Pending.OperationId;
+    const auto RequestTransport = Transport;
+    const uint64 ExpectedRequestGeneration = ++OperationRequestGeneration;
+    bOperationRequestInFlight = true;
+    SetState(EGamePlatformInventoryClientState::Reconciling, EGamePlatformInventoryError::None);
+    if (bDeinitializing || ExpectedGeneration != AccountGeneration || ExpectedOperationId != Pending.OperationId || RequestTransport != Transport) { return false; }
 
     TWeakObjectPtr<UGamePlatformInventoryClientSubsystem>
         WeakThis(this);
 
     const bool bStarted =
-        Transport->BeginGetOperation(
-            Pending.OperationId,
+        RequestTransport->BeginGetOperation(
+            ExpectedOperationId,
             [WeakThis,
              ExpectedGeneration,
-             ExpectedOperationId](
+             ExpectedOperationId, ExpectedRequestGeneration](
                 FGamePlatformInventoryMutationResult Result,
                 EGamePlatformInventoryError Error)
             {
                 if (UGamePlatformInventoryClientSubsystem* Self =
                         WeakThis.Get())
                 {
+                    if (Self->bDeinitializing || Self->AccountGeneration != ExpectedGeneration || Self->OperationRequestGeneration != ExpectedRequestGeneration || !Self->bOperationRequestInFlight || Self->Pending.OperationId != ExpectedOperationId) { return; }
+                    Self->bOperationRequestInFlight = false;
                     Self->HandleOperationQueryCompleted(
                         ExpectedGeneration,
+                        ExpectedRequestGeneration,
                         ExpectedOperationId,
                         MoveTemp(Result),
                         Error);
                 }
             });
 
-    if (bStarted)
-    {
-        SetState(
-            EGamePlatformInventoryClientState::Reconciling,
-            EGamePlatformInventoryError::None);
-    }
-
+    if (!bStarted && !bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedOperationId == Pending.OperationId && ExpectedRequestGeneration == OperationRequestGeneration && bOperationRequestInFlight)
+    { bOperationRequestInFlight = false; SetState(EGamePlatformInventoryClientState::Error, EGamePlatformInventoryError::BackendUnavailable); }
     return bStarted;
 }
 
 void UGamePlatformInventoryClientSubsystem::
 HandleOperationQueryCompleted(
     uint64 ExpectedGeneration,
+    uint64 ExpectedRequestGeneration,
     FGuid ExpectedOperationId,
     FGamePlatformInventoryMutationResult Result,
     EGamePlatformInventoryError Error)
 {
-    if (ExpectedGeneration != AccountGeneration ||
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != OperationRequestGeneration ||
         Pending.OperationId != ExpectedOperationId)
     {
         return;
     }
 
+    const uint64 SnapshotGenerationBeforeNotification = SnapshotRequestGeneration;
     if (Error ==
         EGamePlatformInventoryError::OperationNotFound)
     {
@@ -770,8 +804,12 @@ HandleOperationQueryCompleted(
             EGamePlatformInventoryClientState::Error,
             EGamePlatformInventoryError::OutcomeUnknown);
 
-        // 后端明确确认 OperationId 尚无持久结果后，才允许复用同一 OperationId 重发一次。
-        SendPendingOperation();
+        // 通知监听器可先启动查询B；即使B同步终态已清在飞标记，原请求代次变化也表示接管。
+        // 同时复核Snapshot资格，避免旧查询栈覆盖监听器发起的对账。
+        if (!bDeinitializing && ExpectedGeneration == AccountGeneration && ExpectedOperationId == Pending.OperationId &&
+            ExpectedRequestGeneration == OperationRequestGeneration && !bOperationRequestInFlight &&
+            SnapshotGenerationBeforeNotification == SnapshotRequestGeneration && !bSnapshotRequestInFlight)
+        { SendPendingOperation(); }
         return;
     }
 
@@ -808,9 +846,10 @@ HandleSnapshotCompleted(
     FGamePlatformInventorySnapshot NewSnapshot,
     EGamePlatformInventoryError Error)
 {
+    if (bDeinitializing) { return; }
     if (ExpectedGeneration != AccountGeneration ||
         ExpectedSnapshotRequestGeneration !=
-            SnapshotRequestGeneration)
+            SnapshotRequestGeneration || !bSnapshotRequestInFlight)
     {
         return;
     }
@@ -850,11 +889,13 @@ HandleSnapshotCompleted(
 void UGamePlatformInventoryClientSubsystem::
 HandleMutationCompleted(
     uint64 ExpectedGeneration,
+    uint64 ExpectedRequestGeneration,
     FGuid ExpectedOperationId,
     FGamePlatformInventoryMutationResult Result,
     EGamePlatformInventoryError Error)
 {
-    if (ExpectedGeneration != AccountGeneration ||
+    if (bDeinitializing) { return; }
+    if (ExpectedGeneration != AccountGeneration || ExpectedRequestGeneration != OperationRequestGeneration ||
         Pending.OperationId != ExpectedOperationId)
     {
         return;
@@ -863,17 +904,18 @@ HandleMutationCompleted(
     if (Error ==
         EGamePlatformInventoryError::RevisionConflict)
     {
+        const uint64 SnapshotGenerationBeforeNotification = SnapshotRequestGeneration;
         bConflictSnapshotReconcile = true;
         SetState(
             EGamePlatformInventoryClientState::Reconciling,
             Error);
 
-        if (!RefreshSnapshot())
-        {
-            SetState(
-                EGamePlatformInventoryClientState::Error,
-                EGamePlatformInventoryError::BackendUnavailable);
-        }
+        // 监听器可能已经受理/同步完成Snapshot对账，或改为新的操作查询；旧栈不能抢回资格。
+        if (bDeinitializing || ExpectedGeneration != AccountGeneration || ExpectedOperationId != Pending.OperationId ||
+            ExpectedRequestGeneration != OperationRequestGeneration || bOperationRequestInFlight ||
+            SnapshotGenerationBeforeNotification != SnapshotRequestGeneration || bSnapshotRequestInFlight || !bConflictSnapshotReconcile) { return; }
+        // RefreshSnapshot自身负责启动失败终态；false也可能表示被监听器接管，不能统一伪报后端不可用。
+        RefreshSnapshot();
         return;
     }
 
@@ -1044,6 +1086,7 @@ void UGamePlatformInventoryClientSubsystem::SetState(
     EGamePlatformInventoryClientState NewState,
     EGamePlatformInventoryError Error)
 {
+    if (bDeinitializing) { return; }
     const EGamePlatformInventoryClientState OldState =
         State;
 

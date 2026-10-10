@@ -1,7 +1,11 @@
+// 本文件属于GamePlatform平台层 GamePlatformSurface，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 // Surface世界服务：事件驱动缓存全局表现状态，并批量桥接到MPC。
 #include "Subsystems/GamePlatformSurfaceWorldSubsystem.h"
 
 #include "Engine/World.h"
+#include "Engine/GameInstance.h"
+#include "Interfaces/IGamePlatformDataService.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
 #include "Misc/App.h"
@@ -47,8 +51,7 @@ void UGamePlatformSurfaceWorldSubsystem::Deinitialize()
 {
     bClosing = true;
     StateChanged.Clear();
-    BoundInstance.Reset();
-    BoundCollection = nullptr;
+    ReleaseMaterialBinding();
     Super::Deinitialize();
 }
 
@@ -80,17 +83,24 @@ FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::ApplyEnviro
         ++Revision;
     }
 
-    if (!bStateChanged && BoundInstance.IsValid())
+    if (!bStateChanged && BoundInstance.IsValid() && LastBindingResult.Status == EGamePlatformSurfaceUpdateStatus::Applied)
     {
         Result.Status = EGamePlatformSurfaceUpdateStatus::Unchanged;
         Result.Revision = Revision;
         return Result;
     }
 
-    Result = RefreshMaterialBinding();
+    // 普通状态事件复用绑定；只有显式Refresh命令重读配置，避免每次状态变化重复装载。
+    if (ResolveMaterialBinding()) Result = PushCurrentStateToMaterialParameters();
+    else
+    {
+        Result = LastBindingResult;
+        Result.Revision = Revision;
+    }
     if (bStateChanged)
     {
-        StateChanged.Broadcast(CurrentState, Revision);
+        const auto Snapshot = CurrentState; const int32 SnapshotRevision = Revision;
+        StateChanged.Broadcast(Snapshot, SnapshotRevision);
     }
     return Result;
 }
@@ -112,9 +122,14 @@ FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::RefreshMate
     FGamePlatformSurfaceUpdateResult Result;
     Result.Revision = Revision;
 
+    // Refresh是显式重解析命令，配置即便更换或清空也不能沿用旧集合实例。
+    ReleaseMaterialBinding();
+    bBindingAttempted = false;
+    bLoggedBindingFailure = false;
     if (bClosing || !IsValid(GetWorld()) || !ResolveMaterialBinding())
     {
-        Result.Status = EGamePlatformSurfaceUpdateStatus::MaterialBindingUnavailable;
+        Result = LastBindingResult;
+        Result.Revision = Revision;
         return Result;
     }
 
@@ -139,52 +154,72 @@ void UGamePlatformSurfaceWorldSubsystem::RemoveStateChangedHandler(const FDelega
 
 bool UGamePlatformSurfaceWorldSubsystem::ResolveMaterialBinding()
 {
+    if (BoundCollection && BoundInstance.IsValid()) return true;
+    if (bBindingAttempted) return false; // 缺失/失败保持诊断，普通天气事件不能同步反复查资产。
+    bBindingAttempted = true;
+    LastBindingResult.Status = EGamePlatformSurfaceUpdateStatus::MaterialBindingUnavailable;
     UWorld* World = GetWorld();
-    if (!IsValid(World))
-    {
-        return false;
-    }
-
-    if (BoundCollection && BoundInstance.IsValid())
-    {
-        return true;
-    }
-
-    BoundInstance.Reset();
-    BoundCollection = nullptr;
-
-    const UGamePlatformSurfaceSettings* Settings = GetDefault<UGamePlatformSurfaceSettings>();
-    UMaterialParameterCollection* Collection = Settings
-        ? Settings->GlobalParameterCollection.LoadSynchronous()
-        : nullptr;
-    if (!IsValid(Collection))
-    {
-        if (!bLoggedBindingFailure && Settings && Settings->bWarnOnMaterialBindingFailure)
+    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+    auto* Data = GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    const auto* Settings = GetDefault<UGamePlatformSurfaceSettings>();
+    const FSoftObjectPath Path = Settings ? Settings->GlobalParameterCollection.ToSoftObjectPath() : FSoftObjectPath();
+    if (bClosing || !World || World->bIsTearingDown || !Data || !Path.IsValid()) return false;
+    const int64 RequestedGeneration = ++BindingGeneration;
+    const TWeakObjectPtr<UGamePlatformSurfaceWorldSubsystem> WeakThis(this);
+    FGamePlatformResult Accepted;
+    BindingLease = Data->AcquireResources({Path}, EGamePlatformDataLifetime::World, this,
+        [WeakThis, RequestedGeneration](const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result)
         {
-            UE_LOG(
-                LogGamePlatformSurface,
-                Warning,
-                TEXT("Surface全局MPC不可用；状态仍会缓存，但材质不会更新。请在编辑器中生成/配置MPC_GP_SurfaceGlobal。"));
-            bLoggedBindingFailure = true;
-        }
-        return false;
-    }
+            if (auto* Self = WeakThis.Get()) Self->HandleMaterialBindingLoaded(RequestedGeneration, Lease, Result);
+        }, Accepted);
+    if (Accepted.IsSuccess() && BindingLease.IsValid())
+        LastBindingResult.Status = EGamePlatformSurfaceUpdateStatus::MaterialBindingPending;
+    return false;
+}
 
-    UMaterialParameterCollectionInstance* Instance = World->GetParameterCollectionInstance(Collection);
-    if (!IsValid(Instance))
+void UGamePlatformSurfaceWorldSubsystem::HandleMaterialBindingLoaded(const int64 RequestedGeneration,
+    const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result)
+{
+    check(IsInGameThread());
+    UWorld* World = GetWorld();
+    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+    auto* Data = GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    if (bClosing || !World || World->bIsTearingDown || RequestedGeneration != BindingGeneration ||
+        !Lease.IsValid() || Lease.LeaseId != BindingLease.LeaseId || Lease.Generation != BindingLease.Generation ||
+        Lease.ScopeId != BindingLease.ScopeId || Lease.IssuerProof != BindingLease.IssuerProof || Lease.ResourcePaths != BindingLease.ResourcePaths) return;
+    LastBindingResult.Status = EGamePlatformSurfaceUpdateStatus::MaterialBindingUnavailable;
+    if (Result.IsSuccess() && Data && Data->GetLeaseState(Lease) == EGamePlatformDataRequestState::Succeeded && Lease.ResourcePaths.Num() == 1)
     {
-        if (!bLoggedBindingFailure && Settings && Settings->bWarnOnMaterialBindingFailure)
+        auto* Collection = Cast<UMaterialParameterCollection>(Lease.ResourcePaths[0].ResolveObject());
+        auto* Instance = Collection ? World->GetParameterCollectionInstance(Collection) : nullptr;
+        if (IsValid(Collection) && IsValid(Instance))
         {
-            UE_LOG(LogGamePlatformSurface, Warning, TEXT("当前世界无法取得Surface材质参数集合实例。"));
-            bLoggedBindingFailure = true;
+            BoundCollection = Collection; BoundInstance = Instance;
+            LastBindingResult = PushCurrentStateToMaterialParameters();
+            return;
         }
-        return false;
     }
+    // 失败只释放本次普通资源需求；保留稳定失败状态，显式Refresh才允许新一代重试。
+    if (Data) Data->ReleaseResources(Lease);
+    BindingLease = {};
+    if (!bLoggedBindingFailure && GetDefault<UGamePlatformSurfaceSettings>()->bWarnOnMaterialBindingFailure)
+    {
+        UE_LOG(LogGamePlatformSurface, Warning, TEXT("Surface MPC未配置、加载失败或类型不符；状态已缓存，需完成真实材质链后显式Refresh。"));
+        bLoggedBindingFailure = true;
+    }
+}
 
-    BoundCollection = Collection;
-    BoundInstance = Instance;
-    bLoggedBindingFailure = false;
-    return true;
+void UGamePlatformSurfaceWorldSubsystem::ReleaseMaterialBinding()
+{
+    ++BindingGeneration;
+    const auto Lease = BindingLease; BindingLease = {};
+    BoundInstance.Reset(); BoundCollection = nullptr;
+    if (Lease.IsValid())
+    {
+        auto* World = GetWorld(); auto* GameInstance = World ? World->GetGameInstance() : nullptr;
+        if (auto* Data = GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr) Data->ReleaseResources(Lease);
+    }
+    LastBindingResult.Status = EGamePlatformSurfaceUpdateStatus::MaterialBindingUnavailable;
 }
 
 FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::PushCurrentStateToMaterialParameters()
@@ -240,5 +275,6 @@ FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::PushCurrent
         Result.Status = EGamePlatformSurfaceUpdateStatus::Applied;
     }
 
+    LastBindingResult = Result;
     return Result;
 }

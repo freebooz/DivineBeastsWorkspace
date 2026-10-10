@@ -52,6 +52,7 @@ public:
     virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override final;
     virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override final;
     virtual UClass* GetDefaultPawnClassForController_Implementation(AController* Controller) override final;
+    /** UE登录期只查询Controller初始位置；真正Pawn出生仍受上述门禁与已批准候选约束。 */
     virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override final;
     virtual void Logout(AController* Exiting) override;
 protected:
@@ -64,5 +65,6 @@ private:
     void TrySpawn(APlayerController& Controller);
     void RemovePlayer(APlayerController& Controller, FName Reason, bool bFailed);
     void PublishPlayer(APlayerController& Controller, EGamePlatformPlayerStage Stage, FName Code = NAME_None);
-    FGamePlatformResult ValidateAdmission(const APlayerController& Controller) const;
+    /** 普通准入复核与最后激活复核共用当前登记；激活查询可附加项目必要Pawn资源门禁。 */
+    FGamePlatformResult ValidateAdmission(const APlayerController& Controller, bool bForActivation = false) const;
 };

@@ -19,29 +19,29 @@ enum class EGamePlatformInventoryClientState : uint8
 UENUM(BlueprintType)
 enum class EGamePlatformInventoryError : uint8
 {
-    None,
-    InventoryNotLoaded,
-    ItemNotFound,
-    DefinitionNotFound,
-    InvalidQuantity,
-    StackNotSupported,
-    StackLimitExceeded,
-    SlotOutOfRange,
-    SlotOccupied,
-    ContainerNotFound,
-    RevisionConflict,
-    DuplicateOperation,
-    OperationInProgress,
-    OperationNotFound,
-    InventoryFull,
-    ConsumeNotAllowed,
-    InsufficientQuantity,
-    OutcomeUnknown,
-    BackendUnavailable,
-    Unauthorized,
-    Cancelled,
-    TimedOut,
-    InvalidResponse
+    None, // 当前操作无错误，不表示客户端获得权威写权限
+    InventoryNotLoaded, // 尚无完整背包快照，不能创建写请求
+    ItemNotFound, // 后端或当前有效投影不存在该物品实例
+    DefinitionNotFound, // 需要的定义身份缺失或未加载
+    InvalidQuantity, // 数量非正/超过源物品或业务范围
+    StackNotSupported, // 该物品不支持堆叠/拆分
+    StackLimitExceeded, // 合并结果超过后端权威堆叠上限
+    SlotOutOfRange, // 目标槽位不在权威容器/快捷栏范围
+    SlotOccupied, // 目标槽位已有物品，不能覆盖
+    ContainerNotFound, // 后端/当前快照不存在目标容器
+    RevisionConflict, // 期望版本与权威版本不一致，必须重读
+    DuplicateOperation, // 操作身份已登记，后端须幂等返回原结果
+    OperationInProgress, // 已有未决操作，禁止并行修改
+    OperationNotFound, // 后端明确不存在原操作记录，恢复策略才可按原身份重试
+    InventoryFull, // 权威库存没有可用容量
+    ConsumeNotAllowed, // 权威规则不允许该消费
+    InsufficientQuantity, // 权威库存数量不足
+    OutcomeUnknown, // 请求可能已提交，必须按原操作/订单身份查询对账
+    BackendUnavailable, // 领域传输/后端不可用，保留可读投影
+    Unauthorized, // 认证失效或调用方权限不足
+    Cancelled, // 仅本地等待取消，不能回滚已提交的权威事务
+    TimedOut, // 等待截止时间已到，是否提交依终态与原操作对账
+    InvalidResponse // 响应结构/身份/版本无法验证，不能替换旧快照
 };
 
 UENUM()
@@ -81,24 +81,31 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemInstance
 {
     GENERATED_BODY()
 
+    /** 后端唯一物品实例身份；空值表示未绑定，装备/背包写请求必须非空。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FString ItemInstanceId;
 
+    /** 平台中立物品定义身份；None无效，不携带具体项目资产路径。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName ItemDefinitionId = NAME_None;
 
+    /** 物品单位整数数量；有效实例/购买请求必须大于0，不使用浮点或本地授予。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int32 Quantity = 0;
 
+    /** 服务端稳定容器身份；默认main，实际容量来自Containers快照。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName ContainerId = TEXT("main");
 
+    /** 从0开始的槽位索引；INDEX_NONE未绑定，容器操作必须小于权威Capacity，快捷栏小于12。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int32 SlotIndex = INDEX_NONE;
 
+    /** 服务端条目单调修订号；0初始未知，具体有效范围由所属快照校验。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int64 Revision = 0;
 
+    /** 服务端实例状态投影；默认active，客户端只用于展示与请求预检。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName InstanceState = TEXT("active");
 
@@ -125,12 +132,15 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryQuickbarSlot
 {
     GENERATED_BODY()
 
+    /** 从0开始的槽位索引；INDEX_NONE未绑定，容器操作必须小于权威Capacity，快捷栏小于12。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int32 SlotIndex = INDEX_NONE;
 
+    /** 后端唯一物品实例身份；空值表示未绑定，装备/背包写请求必须非空。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FString ItemInstanceId;
 
+    /** 服务端条目单调修订号；0初始未知，具体有效范围由所属快照校验。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int64 Revision = 0;
 };
@@ -141,6 +151,7 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventorySnapshot
 {
     GENERATED_BODY()
 
+    /** 后端单调背包快照版本；0未加载，客户端不能据本地修改自增。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int64 InventoryRevision = 0;
 
@@ -148,9 +159,11 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventorySnapshot
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     TArray<FGamePlatformInventoryContainerSnapshot> Containers;
 
+    /** 服务端物品实例集合；空集合合法，不由客户端添加权威物品。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     TArray<FGamePlatformInventoryItemInstance> Items;
 
+    /** 快捷栏引用集合；只引用已有物品身份，不另拥有或复制物品。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     TArray<FGamePlatformInventoryQuickbarSlot> Quickbar;
 };
@@ -160,6 +173,7 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryMutationResult
 {
     GENERATED_BODY()
 
+    /** 全局唯一幂等操作身份；无效Guid拒绝，同一未决写操作恢复使用原身份。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FGuid OperationId;
 
@@ -181,12 +195,14 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemDefinitionView
 {
     GENERATED_BODY()
 
+    /** 平台中立物品定义身份；None无效，不携带具体项目资产路径。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName ItemDefinitionId = NAME_None;
 
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName DisplayNameKey = NAME_None;
 
+    /** 产品说明本地化键；空值未提供，不作为机器错误码。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName DescriptionKey = NAME_None;
 
@@ -208,15 +224,19 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemViewModel
 {
     GENERATED_BODY()
 
+    /** 后端唯一物品实例身份；空值表示未绑定，装备/背包写请求必须非空。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FString ItemInstanceId;
 
+    /** 平台中立物品定义身份；None无效，不携带具体项目资产路径。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName ItemDefinitionId = NAME_None;
 
+    /** 物品单位整数数量；有效实例/购买请求必须大于0，不使用浮点或本地授予。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int32 Quantity = 0;
 
+    /** 服务端稳定容器身份；默认main，实际容量来自Containers快照。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     FName ContainerId = NAME_None;
 
@@ -224,6 +244,7 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemViewModel
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int32 MaxStackSize = 1;
 
+    /** 从0开始的槽位索引；INDEX_NONE未绑定，容器操作必须小于权威Capacity，快捷栏小于12。 */
     UPROPERTY(BlueprintReadOnly, Category="Inventory")
     int32 SlotIndex = INDEX_NONE;
 

@@ -9,7 +9,23 @@
   "CanContainContent": true,
   "EnabledByDefault": false,
   "Plugins": [
-    { "Name": "DBAClient", "Enabled": true },
-    { "Name": "DBAContentPack_Common", "Enabled": true }
+    {
+      "Name": "DBAClient",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAContentPack_Common",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    }
   ]
 }

@@ -232,8 +232,9 @@ FDivineBeastsUIViewState UDivineBeastsApplicationUIAdapter::BuildViewState(
     // 世界切换才进入项目 LoadingTravel（切服加载）路由。
     // Boot / Initialize 使用独立 Boot 页面，避免被通用 LoadingTravel 抢占。
     const bool bWorldLoading =
-        FlowState.CurrentStep == FDivineBeastsFlowNodes::TransferWorld() ||
-        FlowState.CurrentStep == FDivineBeastsFlowNodes::WorldReady();
+        FlowState.Error == EDivineBeastsFlowError::None &&
+        (FlowState.CurrentStep == FDivineBeastsFlowNodes::TransferWorld() ||
+        FlowState.CurrentStep == FDivineBeastsFlowNodes::WorldReady());
     Result.Loading.bIsLoading = bWorldLoading;
     Result.Loading.ActiveTokenCount = bWorldLoading ? 1 : 0;
     Result.Loading.Stage = FlowState.LoadingSummary.IsEmpty()
@@ -333,6 +334,10 @@ void UDivineBeastsApplicationUIAdapter::SubmitUICommand(
         bAccepted = Flow->RequestWorldAssignment(
             Command.DesiredExperienceId,
             Command.PreferredRegion);
+        break;
+
+    case EDivineBeastsUICommandType::Retry:
+        bAccepted = Flow->RetryFailedFlow();
         break;
 
     case EDivineBeastsUICommandType::Logout:

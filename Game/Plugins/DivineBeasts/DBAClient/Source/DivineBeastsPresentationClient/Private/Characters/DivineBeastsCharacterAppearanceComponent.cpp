@@ -1,10 +1,18 @@
+// 项目层客户端角色外观组件：由角色只读状态驱动骨骼、材质与动画资源的异步加载，不承载服务器权威规则。
+// 依赖平台数据加载服务；加载请求、状态委托、重试计时器及动态材质由本组件持有。
+// 生命周期跟随所属角色，EndPlay解绑状态、取消请求并释放自身引用，避免离开世界后应用过期结果。
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
+
+// TSoftClassPtr::Get会调用UAnimInstance::StaticClass，必须包含完整类型，不能依赖Unity或共享PCH。
+#include "Animation/AnimInstance.h"
 
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h" // 软引用Get执行类型检查，需要网格资产完整类型而非组件头的前向声明。
 #include "Engine/StreamableManager.h"
+#include "Engine/SkeletalMesh.h"
 #include "GameFramework/Character.h"
 #include "Loading/GamePlatformAssetLoader.h"
 #include "Materials/MaterialInterface.h"
@@ -15,6 +23,16 @@ UDivineBeastsCharacterAppearanceComponent::UDivineBeastsCharacterAppearanceCompo
 {
     PrimaryComponentTick.bCanEverTick = false;
     SetIsReplicatedByDefault(false);
+}
+FName UDivineBeastsCharacterAppearanceComponent::CurrentVisualHero() const
+{
+    const FName Bound=CharacterState?CharacterState->GetHeroDefinitionId():NAME_None;
+    return Bound.IsNone()?ApprovedVisualHero:Bound;
+}
+void UDivineBeastsCharacterAppearanceComponent::ApplyApprovedVisualHero(FName HeroId)
+{
+    if(GetNetMode()==NM_DedicatedServer || HeroId.IsNone())return;
+    ApprovedVisualHero=HeroId; TryBindCharacterState(); RefreshAppearance();
 }
 
 void UDivineBeastsCharacterAppearanceComponent::BeginPlay()
@@ -31,6 +49,8 @@ void UDivineBeastsCharacterAppearanceComponent::EndPlay(
         CharacterState->OnReadinessChanged().Remove(ReadinessDelegateHandle);
     }
     ReadinessDelegateHandle.Reset();
+    if (CharacterState && IdentityDelegateHandle.IsValid()) CharacterState->OnIdentityChanged().Remove(IdentityDelegateHandle);
+    IdentityDelegateHandle.Reset();
 
     if (UWorld* World = GetWorld())
     {
@@ -63,6 +83,7 @@ void UDivineBeastsCharacterAppearanceComponent::TryBindCharacterState()
         ReadinessDelegateHandle = CharacterState->OnReadinessChanged().AddUObject(
             this,
             &UDivineBeastsCharacterAppearanceComponent::HandleCharacterReadinessChanged);
+        IdentityDelegateHandle = CharacterState->OnIdentityChanged().AddUObject(this, &UDivineBeastsCharacterAppearanceComponent::RefreshAppearance);
         RefreshAppearance();
         return;
     }
@@ -91,12 +112,12 @@ void UDivineBeastsCharacterAppearanceComponent::HandleCharacterReadinessChanged(
 
 void UDivineBeastsCharacterAppearanceComponent::RefreshAppearance()
 {
-    if (!CharacterState)
+    if (GetNetMode() == NM_DedicatedServer || !CharacterState)
     {
         return;
     }
 
-    const FName HeroDefinitionId = CharacterState->GetHeroDefinitionId();
+    const FName HeroDefinitionId = CurrentVisualHero();
     if (HeroDefinitionId.IsNone())
     {
         return;
@@ -135,7 +156,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleProfileLoaded(
 {
     if (ExpectedRequestGeneration != RequestGeneration ||
         !CharacterState ||
-        CharacterState->GetHeroDefinitionId() != ExpectedHeroDefinitionId)
+        CurrentVisualHero() != ExpectedHeroDefinitionId)
     {
         return;
     }
@@ -170,6 +191,11 @@ void UDivineBeastsCharacterAppearanceComponent::HandleProfileLoaded(
     {
         Assets.AddUnique(Profile->AnimInstanceClass.ToSoftObjectPath());
     }
+    else if(Profile->bDevelopmentPlaceholder)
+    {
+        // 世界角色按实际复制速度播放移动动画；前端角色预览仍使用独立IDLE，不把表现当权威根运动。
+        Assets.AddUnique(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_WorldLocomotion.ABP_DBA_WorldLocomotion_C")));
+    }
 
     const TWeakObjectPtr<UDivineBeastsCharacterAppearanceComponent> WeakThis(this);
     VisualLease = FGamePlatformAssetLoader::RequestAsyncLoad(
@@ -197,7 +223,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
 {
     if (ExpectedRequestGeneration != RequestGeneration ||
         !CharacterState ||
-        CharacterState->GetHeroDefinitionId() != ExpectedHeroDefinitionId ||
+        CurrentVisualHero() != ExpectedHeroDefinitionId ||
         PendingProfile != Profile)
     {
         return;
@@ -210,6 +236,26 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
     USkeletalMesh* SkeletalMesh = Profile ? Profile->SkeletalMesh.Get() : nullptr;
     if (!MeshComponent || !SkeletalMesh)
     {
+        return;
+    }
+
+    UClass* AnimClass = Profile->AnimInstanceClass.Get();
+    if (Profile->AnimInstanceClass.IsNull() && Profile->bDevelopmentPlaceholder)
+    {
+        AnimClass = Cast<UClass>(FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_WorldLocomotion.ABP_DBA_WorldLocomotion_C")).ResolveObject());
+    }
+    if ((!Profile->AnimInstanceClass.IsNull() || Profile->bDevelopmentPlaceholder) && !AnimClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("角色外观动画尚未加载，拒绝本次装配：%s"), *ExpectedHeroDefinitionId.ToString());
+        return;
+    }
+    FString SkeletonError;
+    // 在改网格/材质之前检查，避免新身份挂上旧骨树；原有请求代次及取消门禁保持有效。
+    UClass* EffectiveAnimClass = AnimClass ? AnimClass : MeshComponent->GetAnimClass();
+    const bool bCompatible = UDivineBeastsCharacterAppearanceProfile::ValidateLoadedAnimationClass(SkeletalMesh, EffectiveAnimClass, SkeletonError);
+    if (!bCompatible)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("角色外观骨架不兼容，拒绝本次装配：Hero=%s Reason=%s"), *ExpectedHeroDefinitionId.ToString(), *SkeletonError);
         return;
     }
 
@@ -281,12 +327,13 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
         }
     }
 
-    if (UClass* AnimClass = Profile->AnimInstanceClass.Get())
+    if (AnimClass)
     {
         MeshComponent->SetAnimInstanceClass(AnimClass);
     }
 
     AppliedHeroDefinitionId = ExpectedHeroDefinitionId;
+    UE_LOG(LogTemp, Display, TEXT("WorldAppearance applied: Pawn=%s Local=%d Hero=%s Anim=%s"), *Character->GetName(), Character->IsLocallyControlled()?1:0, *ExpectedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass));
 }
 
 void UDivineBeastsCharacterAppearanceComponent::CancelPendingLoads()

@@ -1,6 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Buffer/GamePlatformTelemetryBoundedBuffer.h"
+#include "Buffer/TelemetryBoundedBuffer.h"
 #include "HAL/PlatformTime.h"
 #include "Misc/AutomationTest.h"
 

@@ -1,5 +1,8 @@
+// 平台客户端本地预览舞台：只展示调用者已加载的模型、材质和动画，供上层界面组合。
+// 不拥有后端角色或权威动作；世界销毁时由Actor组件生命周期回收相机和网格。
 #include "Preview/GamePlatformCharacterPreviewStage.h"
 
+#include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"

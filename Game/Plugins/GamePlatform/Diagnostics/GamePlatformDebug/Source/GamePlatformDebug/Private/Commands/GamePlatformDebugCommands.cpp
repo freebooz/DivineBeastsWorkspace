@@ -1,3 +1,5 @@
+// 平台开发控制台适配：只读取当前World的中立快照，变更命令需显式开发开关。
+// 模块拥有命令注册句柄并在关闭时注销；目标Actor为借用对象，不保存玩家/世界强引用。
 #include "GamePlatformDebugPrivate.h"
 
 #include "Registry/GamePlatformDebugRegistry.h"
@@ -5,6 +7,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/OutputDevice.h"
 #include "Subsystems/GamePlatformTelemetrySubsystem.h"
@@ -68,7 +71,8 @@ namespace
             return ViewTarget;
         }
 
-        return PC->GetPawn();
+        // UE5.8返回TObjectPtr，先取原始Pawn再向上转换；不依赖PCH补全继承关系。
+        return PC->GetPawn().Get();
     }
 
     EGamePlatformDebugSourceView ResolveSourceView(UWorld* World)

@@ -28,3 +28,16 @@ CommonGameViewportClient已经配置。当前没有创建任何GamePlatformUI二
 
 新增Go业务后端接口：不适用。新增Go微服务：不适用。
 
+
+
+## 2026-09-30 设计审查修复
+
+本次资源/生命周期与行为合同见 [设计修复说明](Docs/DesignRemediation-2026-09-30.md)。源码及新增回归不等于UE运行、真实资产或Cook验收；准确执行证据由任务修复报告记录。
+
+2026-10-09本插件源码整改、中文API/所有权说明和待UE验收边界见 [本轮源码说明](Docs/AuditRemediation-2026-10-09.md)。
+
+## 2026-10-09 跨地图界面生命周期修复
+
+RootLayout按LocalPlayer/GameInstance持有，Viewport Slot关闭随旧World销毁自动移除，子页面仍按自身bSurvivesTravel与Data租约清理。PrepareForTravel取消在途页面时同步发布失败通知，调用方可清理请求身份；委托重入取消其他请求时跳过已撤销条目；已撤请求用捕获身份发布失败终态，后续清理逐次复核原Root、World与代次，关闭或后继Travel不会被旧栈覆盖。退出或替换Root仍显式释放资源并从Viewport移除，平台不引用任何项目页面。
+
+Main 86cb0df 的原交付记录为GamePlatform.UI组12项UE Automation通过；LocalPlayer夹具使用真实Engine Outer，项目客户端完成独立Cook和资源检查。该历史记录不代表本次三方合并版本已经验证；本次合并的编译与自动化执行由独立报告记录。双客户端切图输入仍待人工继续核验，移动设备与多本地玩家不属于此记录结论。

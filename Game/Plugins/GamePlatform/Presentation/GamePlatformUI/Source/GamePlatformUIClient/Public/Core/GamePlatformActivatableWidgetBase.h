@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层客户端UI，约束可激活页与VM事件/页面代次所有权；不持有业务权威。
+// 中文参数/失败/重入/生命周期见本插件Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CommonActivatableWidget.h"
@@ -97,4 +99,8 @@ private:
 
     /** 防止同一激活周期重复绑定委托。 */
     bool bPlatformEventsBound = false;
+    /** 激活/失活每次递增；外部钩子返回后必须仍属于同一可见周期。 */
+    uint64 ActivationGeneration = 0;
+    /** VM更换每次递增；嵌套更换优先，旧栈返回不得覆盖或重新绑定。 */
+    uint64 ViewModelBindingGeneration = 0;
 };

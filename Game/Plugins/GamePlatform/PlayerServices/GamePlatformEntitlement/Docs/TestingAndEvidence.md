@@ -1,7 +1,9 @@
-# TestingAndEvidence（测试与证据）
+# 测试与证据
 
-`Build/Validation/VerifyEntitlement.ps1（权益静态验证入口）`覆盖 Client、Backend、HeroAuthorization、QuestReward 四个静态门禁。全工作区 `Test-PluginLayers.ps1`只验证结构和字面依赖。
+更新日期：2026-09-30。真实源码范围为GamePlatformEntitlement现存模块及Private/Tests；测试替身只控制完成时序，不作为生产后端。模块构建、UE测试运行、后端联调和Cook分开记录。
 
-UE 自动化测试源码当前覆盖共享查询 Has/Any/All/Target 与客户端 AccountGeneration 隔离。Go 测试源码覆盖 DefinitionCatalog、Grant 有效期、Revoke selector 与 Quest Reward 稳定 OperationId。
+Task 2一次性源码回归位于Game/Saved/Reviews/task2-regression.py，初次12项失败(exit1)，修复后12项静态通过(exit0)。它只能检查危险源码路径已撤销，不能证明UE生命周期、资源释放或磁盘行为通过。Loading/Input现有原生策略套件Debug/Release实际执行，结果写Task 2报告；这些不是本插件业务或后端运行证据。
 
-Runner 当前没有 Go/psql/PostgreSQL/UE5.8 完整运行环境，因此 Go tests、Migration 实跑、数据库并发、Gateway 真登录、Hero/Skin 真流程、Quest Reward 消费、Build/Cook 均未执行。
+本次领域测试在Private/Tests中包含账号隔离及真实Online子系统的完成/错误/取消迟到响应/退出后弱引用释放用例；Equipment另有ASC持续存活的组件移除用例。UE5.8编译与实际Automation结果由统一执行账本记录，本页不预填通过数。
+
+后端持久化、授权、数据库并发、消息/奖励链、真实支付、联机、干净Cook与人工体验本次未执行。旧VerifyEntitlement/旧后端目录或旧假支付用例的宣称已撤销；契约测试和接口代码不能替代相应运行实现。

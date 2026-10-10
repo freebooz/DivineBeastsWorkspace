@@ -1,5 +1,8 @@
+// AI目标实体身份与服务器资格：游戏线程仅Authority Owner修改，随组件生命周期提供中立目标事实。
 #include "Components/GamePlatformAITargetComponent.h"
 
+// HasAuthority直接调用AActor成员；NoPCH/独立编译不能依靠别的源文件间接包含完整类型。
+#include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 
 UGamePlatformAITargetComponent::UGamePlatformAITargetComponent()

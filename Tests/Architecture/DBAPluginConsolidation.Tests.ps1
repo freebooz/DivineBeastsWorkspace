@@ -1,3 +1,7 @@
+# 项目插件静态身份/声明回归：只读源码和描述，验证五个代码插件及真实直接依赖。
+# CommonUI是锁定UE5.8的Engine/Plugins/Runtime/CommonUI/CommonUI.uplugin，不能误当缺失项目插件。
+# GameplayAbilities同样已核锁定UE5.8的Runtime/GameplayAbilities/GameplayAbilities.uplugin；服务器ASC桥直接消费其模块。
+# 此已核对的内置身份不证明本机引擎/二进制可用；UBT链接、Cook及运行仍须独立验收。
 Describe '神兽联盟项目插件按DBA边界收敛' {
     $workspaceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
     $projectPluginRoot = Join-Path $workspaceRoot 'Game/Plugins/DivineBeasts'
@@ -45,7 +49,8 @@ Describe '神兽联盟项目插件按DBA边界收敛' {
             # DivineBeastsInputClient 是项目输入语义与平台输入/GAS之间的客户端组合边界，
             # 必须作为 DBAClient 的独立 ClientOnly 模块纳入正式身份清单。
             DBAClient = @('DivineBeastsApplicationFlowClient', 'DivineBeastsInputClient', 'DivineBeastsPresentationClient', 'DivineBeastsPresentationRuntime', 'DivineBeastsUIClient')
-            DBAGameplay = @('DivineBeastsCharactersRuntime', 'DivineBeastsRuntime')
+            # 主线真实技能授权模块归既有DBAGameplay，保持五插件身份；它不是新竞技或内容播放器。
+            DBAGameplay = @('DivineBeastsAbilitiesRuntime', 'DivineBeastsCharactersRuntime', 'DivineBeastsRuntime')
             DBAServer = @('DBAServer')
             DBAWorlds = @('DBAWorldsRuntime')
         }
@@ -64,13 +69,15 @@ Describe '神兽联盟项目插件按DBA边界收敛' {
 
     It '插件依赖声明覆盖模块直接依赖且只指向真实插件' {
         $expectedDependencies = @{
-            DBAArena = @('DBAGameplay', 'DBAClient', 'GamePlatformArena')
+            DBAArena = @('DBAGameplay', 'DBAClient', 'GamePlatformArena', 'GamePlatformCore', 'GamePlatformData', 'CommonUI')
             DBAClient = @('DBAGameplay', 'GamePlatformApplicationFlow', 'GamePlatformCharacter', 'GamePlatformLoading', 'GamePlatformOnline', 'GamePlatformPresentation', 'GamePlatformSession', 'GamePlatformUI')
             DBAGameplay = @('GamePlatformCharacter', 'GamePlatformCore')
             DBAServer = @('DBAGameplay', 'GamePlatformServer')
             DBAWorlds = @('DBAGameplay', 'GamePlatformWorld')
         }
         $installedPluginNames = @(Get-ChildItem -LiteralPath (Join-Path $workspaceRoot 'Game/Plugins') -Filter '*.uplugin' -File -Recurse | ForEach-Object { $_.BaseName })
+        # 限定已读取真实UE描述的内置身份，其他未知名字仍失败，不无条件放行仓库外依赖。
+        $knownEnginePluginNames = @('CommonUI', 'GameplayAbilities')
         foreach ($pluginName in $expectedPluginNames) {
             $descriptorPath = Join-Path $projectPluginRoot "$pluginName/$pluginName.uplugin"
             if (-not (Test-Path -LiteralPath $descriptorPath -PathType Leaf)) {
@@ -83,9 +90,20 @@ Describe '神兽联盟项目插件按DBA边界收敛' {
                 ($actual -contains $dependency) | Should Be $true
             }
             foreach ($dependency in $actual) {
-                ($installedPluginNames -contains $dependency) | Should Be $true
+                (($installedPluginNames -contains $dependency) -or ($knownEnginePluginNames -contains $dependency)) | Should Be $true
             }
         }
+    }
+
+    It '竞技客户端直接链接真实UI基类且CommonUI不进入服务器装配' {
+        # 新链接回归：项目Widget虚表直接使用UMG/CommonUI；描述限定端侧，不能靠传递头可见性。
+        $arenaDescriptor = Get-Content -LiteralPath (Join-Path $projectPluginRoot 'DBAArena/DBAArena.uplugin') -Raw | ConvertFrom-Json
+        $commonUI = @($arenaDescriptor.Plugins | Where-Object Name -eq 'CommonUI')
+        $commonUI.Count | Should Be 1
+        (@($commonUI[0].TargetAllowList | Sort-Object) -join ',') | Should Be 'Client,Editor'
+        $clientDependencies = @(Get-ModuleDependenciesFromBuildRule -Path (Join-Path $projectPluginRoot 'DBAArena/Source/DivineBeastsArenaClient/DivineBeastsArenaClient.Build.cs'))
+        ($clientDependencies -contains 'UMG') | Should Be $true
+        ($clientDependencies -contains 'CommonUI') | Should Be $true
     }
 
     It '每个声明模块都有同名构建规则、注册入口或真实外部模块类型' {

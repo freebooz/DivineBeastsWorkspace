@@ -260,3 +260,7 @@ BeginTouchInputBySemantic
 ## 13. 验收原则
 
 模块编译、原生策略测试、UE Automation、真实键鼠/手柄、Android/iOS 真机、设置重启恢复、UI/Gameplay 仲裁和 Client Cook 是不同证据，不互相冒充。
+
+## 2026-09-30现行合同补充
+
+ResetMappings(None)只重置当前Profile声明且原生已登记的行；显式外部行拒绝。SaveInputPreferences的Success表示提交原生void保存，不证明落盘；bPreferencesSaveSubmitted表明已提交，bPreferencesSaved保留身份但当前保持false。磁盘成功/失败不可观测，前置失败明确返回。

@@ -7,6 +7,7 @@
 #include "Loading/GamePlatformAssetLoader.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInterface.h"
+#include "GameFramework/Actor.h"
 
 UGamePlatformEquipmentVisualComponent::UGamePlatformEquipmentVisualComponent()
 {
@@ -61,22 +62,26 @@ void UGamePlatformEquipmentVisualComponent::BindAvatar(
 void UGamePlatformEquipmentVisualComponent::RefreshVisuals()
 {
     ++VisualRequestGeneration;
-    ClearVisuals();
-
     UGamePlatformEquipmentComponent* Equipment =
         EquipmentComponent.Get();
     USkeletalMeshComponent* Avatar = AvatarMesh.Get();
 
     if (!IsValid(Equipment) || !IsValid(Avatar))
     {
+        ClearVisuals();
         return;
     }
 
+    // 畸形复制投影整份拒绝；保留已有可清理的视觉，不产生丢失SlotId索引的孤儿组件。
+    const auto Snapshot = Equipment->GetPublicSnapshot();
+    FString Reason;
+    if (!ValidateGamePlatformPublicEquipmentSnapshot(Snapshot, Reason)) { return; }
+    ClearVisuals();
     const uint64 RequestGeneration = VisualRequestGeneration;
     const int32 ExpectedAvatarGeneration = AvatarGeneration;
 
     for (const FGamePlatformPublicEquipmentSlotState& Slot :
-         Equipment->GetPublicSnapshot().Slots)
+         Snapshot.Slots)
     {
         UGamePlatformEquipmentVisualDefinition* Definition =
             Definitions.FindRef(Slot.VisualDefinitionId);

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+// 公开焦点有效性内联需确认Actor到UObject继承转换，直接包含完整Actor类型。
+#include "GameFramework/Actor.h"
 #include "Types/GamePlatformInteractionOption.h"
 #include "GamePlatformInteractionFocusSnapshot.generated.h"
-
-class AActor;
 
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMINTERACTION_API FGamePlatformInteractionFocusSnapshot
@@ -32,9 +32,10 @@ struct GAMEPLATFORMINTERACTION_API FGamePlatformInteractionFocusSnapshot
     UPROPERTY(BlueprintReadOnly, Category="Interaction")
     bool bLocallyAvailable = false;
 
+    /** 游戏线程只读焦点形状；本地有效不等于服务器许可，Target失效立即为false。 */
     bool IsValid() const
     {
-        return ::IsValid(TargetActor) &&
+        return ::IsValid(TargetActor.Get()) &&
                TargetInstanceId.IsValid() &&
                !Option.OptionId.IsNone();
     }

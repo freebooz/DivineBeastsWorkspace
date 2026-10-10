@@ -1,4 +1,5 @@
 #include "Validation/GamePlatformEditorValidators.h"
+#include "Definitions/GamePlatformDefinitionBase.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/IAssetRegistry.h"
@@ -235,49 +236,31 @@ bool UGamePlatformDefinitionValidator::CanValidateAsset_Implementation(
     UObject* InObject,
     FDataValidationContext& InContext) const
 {
-    return InObject != nullptr && InObject->GetClass()->GetName().Contains(TEXT("Definition"));
+    return InObject && InObject->IsA<UGamePlatformDefinitionBase>();
 }
 
 EDataValidationResult UGamePlatformDefinitionValidator::ValidateLoadedAsset_Implementation(
-    const FAssetData& InAssetData,
-    UObject* InAsset,
-    FDataValidationContext& Context)
+    const FAssetData& InAssetData, UObject* InAsset, FDataValidationContext& Context)
 {
-    FProperty* IdProperty = InAsset->GetClass()->FindPropertyByName(TEXT("DefinitionId"));
-    if (!IdProperty || ExportPropertyValue(InAsset, IdProperty).IsEmpty())
+    // 引擎注册的逐资产路径与全局审计共用真实平台类型合同；类/资产名字不能代替LogicalId与版本校验。
+    const auto* Definition = Cast<UGamePlatformDefinitionBase>(InAsset);
+    const FGamePlatformResult Result = Definition
+        ? Definition->ValidateDefinition()
+        : FGamePlatformResult::Failure(TEXT("DefinitionTypeMismatch"), TEXT("资产不是平台定义派生。"));
+    if (!Result.IsSuccess() || !Definition || !Definition->GetPrimaryAssetId().IsValid())
     {
         if (IsAllowlisted(TEXT("GP.Definition"), InAssetData))
         {
-            AssetWarning(InAsset, FText::FromString(TEXT("GP.Definition：缺少DefinitionId，但命中有效Allowlist（临时豁免）。")));
+            AssetWarning(InAsset, FText::FromString(TEXT("GP.Definition：真实定义合同失败，命中有效审批豁免；不代表资源已运行。")));
             AssetPasses(InAsset);
             return EDataValidationResult::Valid;
         }
-
-        AssetFails(InAsset, FText::FromString(TEXT("GP.Definition：Definition必须提供非空DefinitionId。")));
+        AssetFails(InAsset, FText::FromString(TEXT("GP.Definition：") + Result.Message));
         return EDataValidationResult::Invalid;
     }
-
-    if (FProperty* VersionProperty = InAsset->GetClass()->FindPropertyByName(TEXT("Version")))
-    {
-        const FString VersionText = ExportPropertyValue(InAsset, VersionProperty);
-        if (FCString::Atoi(*VersionText) <= 0)
-        {
-            if (IsAllowlisted(TEXT("GP.Definition"), InAssetData))
-            {
-                AssetWarning(InAsset, FText::FromString(TEXT("GP.Definition：Version非法，但命中有效Allowlist（临时豁免）。")));
-                AssetPasses(InAsset);
-                return EDataValidationResult::Valid;
-            }
-
-            AssetFails(InAsset, FText::FromString(TEXT("GP.Definition：Version必须大于0。")));
-            return EDataValidationResult::Invalid;
-        }
-    }
-
     AssetPasses(InAsset);
     return EDataValidationResult::Valid;
 }
-
 bool UGamePlatformStableIdValidator::CanValidateAsset_Implementation(
     const FAssetData& InAssetData,
     UObject* InObject,
@@ -287,6 +270,8 @@ bool UGamePlatformStableIdValidator::CanValidateAsset_Implementation(
     {
         return false;
     }
+
+    if (InObject->IsA<UGamePlatformPrimaryDataAsset>()) return true;
 
     for (TFieldIterator<FProperty> It(InObject->GetClass()); It; ++It)
     {
@@ -303,6 +288,24 @@ EDataValidationResult UGamePlatformStableIdValidator::ValidateLoadedAsset_Implem
     UObject* InAsset,
     FDataValidationContext& Context)
 {
+    // 平台资产身份由LogicalId完整结构/规范主资产ID决定；版本分隔符等不走旧字符串字段猜测。
+    if (const auto* Primary = Cast<UGamePlatformPrimaryDataAsset>(InAsset))
+    {
+        if (!Primary->GetPrimaryAssetId().IsValid())
+        {
+            // 保留现行规则的限期豁免合同；豁免只改变审计结果，不给Data签发非法主资产身份。
+            if (IsAllowlisted(TEXT("GP.StableId"), InAssetData))
+            {
+                AssetWarning(InAsset, FText::FromString(TEXT("GP.StableId：LogicalId非法，但命中有效Allowlist（临时豁免）。")));
+                AssetPasses(InAsset);
+                return EDataValidationResult::Valid;
+            }
+            AssetFails(InAsset, FText::FromString(TEXT("GP.StableId：LogicalId必须形成有效规范主资产身份。")));
+            return EDataValidationResult::Invalid;
+        }
+        AssetPasses(InAsset);
+        return EDataValidationResult::Valid;
+    }
     for (TFieldIterator<FProperty> It(InAsset->GetClass()); It; ++It)
     {
         FProperty* Property = *It;

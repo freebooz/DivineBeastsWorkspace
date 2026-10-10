@@ -46,6 +46,8 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsUIClientSubsystem final
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
+    /** 地图切换产生新控制器后重新消费真实业务快照；不登录、不推进业务、不使用Tick。 */
+    virtual void PlayerControllerChanged(APlayerController* NewPlayerController) override;
 
     FDivineBeastsUIContractHandle RegisterApplicationContract(
         FName AdapterId,
@@ -63,6 +65,10 @@ public:
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI")
     FName GetRecommendedPrimaryScreenId() const;
+
+    /** 本地角色入口换页命令；仅空闲且已认证时接受，注销或流程离开入口后撤销偏好。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Characters")
+    bool RequestCharacterEntryScreen(FName ScreenId);
 
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI")
     FGamePlatformUIAsyncRequest OpenScreen(
@@ -168,6 +174,8 @@ private:
     /** 换页期间保留旧页弱引用，加载失败时仍提供可见错误反馈。 */
     TWeakObjectPtr<UGamePlatformUIScreen> ReplacingPrimaryScreen;
     FName ActivePrimaryScreenId = NAME_None;
+    /** 只描述当前本地玩家显示创建或选择页，不属于业务角色选择或持久化资料。 */
+    FName CharacterEntryScreenPreference = NAME_None;
 
     /** 正在异步打开的主页面身份与请求。 */
     FName OpeningPrimaryScreenId = NAME_None;

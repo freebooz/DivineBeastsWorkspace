@@ -75,8 +75,6 @@ def character(create):
         node("Border","PreviewDragSurface",slot=place("top_center",0,90,400,296,0.5,0,z=1),style={"background":"#00000000","visibility":"Visible"}),
         text("PreviewHelp","按住鼠标左键拖动，旋转角色",11,MUTED,place("bottom_center",0,-88,290,20,0.5,1)),
         text("SelectedHeroName","",22,GOLD,place("bottom_center",0,-154,290,34,0.5,1)),
-        button("RotateLeftButton","◀",place("bottom_center",-48,-112,36,28,0.5,1)),
-        button("RotateRightButton","▶",place("bottom_center",48,-112,36,28,0.5,1)),
         button("LogoutButton","返回登录",place("bottom_left",28,-28,128,34,0,1)),
         text("StatusText","",12,MUTED,place("bottom_right",-28,-78,252,40,1,1)),
         text("ErrorText","",12,color("E69586"),place("bottom_right",-28,-20,252,42,1,1))]
@@ -90,14 +88,39 @@ def character(create):
             text("CreationInfoTitle","新的旅程",18,GOLD,place("top_right",-40,114,168,30,1,0)),
             text("CreationInfoBody","选择英雄与角色名称，\n从新手村开始冒险。",14,MUTED,place("top_right",-40,164,168,105,1,0)),
             node("EditableTextBox","CharacterNameInput",slot=place("bottom_center",-83,-28,220,38,0.5,1),content={"placeholder":"角色名称","fontSize":16,"fontColor":WHITE}),
-            button("CreateButton","创建角色",place("bottom_center",155,-28,130,38,0.5,1))]
+            button("CreateButton","创建角色",place("bottom_center",155,-28,130,38,0.5,1)),
+            button("BackToCharacterSelectButton","返回角色选择",place("top_right",-40,330,168,38,1,0))]
     else:
-        children += [panel("RosterPanel",place("top_right",-24,96,284,322,1,0)),
-            text("RosterHeading","你的角色",18,GOLD,place("top_right",-40,111,252,32,1,0)),
-            node("ScrollBox","CharacterScroll",[node("VerticalBox","CharacterChoices")],slot=place("top_right",-40,157,252,246,1,0)),
-            node("ComboBoxString","CharacterList",slot=place("top_right",-40,157,252,36,1,0)),
-            text("SelectedCharacterName","",26,WHITE,place("bottom_center",0,-194,290,38,0.5,1)),
-            button("SelectButton","进入游戏",place("bottom_center",0,-26,200,42,0.5,1))]
+        # 参考角色选择页的三栏布局：品牌与引导在左，三维人物居中，档案及创建入口在右。
+        # 仅移动固定像素控件，不通过ScaleBox缩小文字；拖动区随视口高度伸展并避开底部操作。
+        for item in children:
+            identity = item["id"]
+            if identity in ("BrandTitle", "BrandSubtitle", "TopRule"):
+                item.setdefault("style", {})["visibility"] = "Collapsed"
+            elif identity == "PreviewDragSurface":
+                item["slot"] = place("stretch_vertical",0,70,400,118,0.5,0,z=1)
+            elif identity == "PreviewHelp":
+                item["slot"] = place("bottom_center",0,-12,290,20,0.5,1)
+            elif identity == "SelectedHeroName":
+                item["slot"] = place("bottom_center",0,-84,290,24,0.5,1)
+                item["content"]["fontSize"] = 16
+            elif identity == "StatusText":
+                item["slot"] = place("top_center",0,18,290,40,0.5,0)
+            elif identity == "ErrorText":
+                # 540像素高度时也不覆盖右侧创建按钮；状态信息置于中央顶部。
+                item["slot"] = place("top_center",0,60,290,42,0.5,0)
+        children += [
+            node("Image","BrandLogo",slot=place("top_left",26,8,160,160),style={"visibility":"HitTestInvisible"},content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogo.DBA_MythicLogo"}),
+            panel("JourneyGuidePanel",place("top_left",24,184,224,284)),
+            text("JourneyGuideTitle","山海之旅",18,GOLD,place("top_left",40,200,192,28)),
+            text("JourneyGuideBody","选择你的角色\n\n在右侧选择角色，查看神兽形象。\n\n按住鼠标左键拖动，可旋转角色。\n\n点击「进入游戏」继续旅程。\n\n也可创建新的角色。",14,MUTED,place("top_left",40,246,192,190)),
+            panel("RosterPanel",place("top_right",-24,96,252,380,1,0)),
+            text("RosterHeading","你的角色",18,GOLD,place("top_right",-40,111,220,32,1,0)),
+            node("ScrollBox","CharacterScroll",[node("VerticalBox","CharacterChoices")],slot=place("top_right",-40,157,220,246,1,0)),
+            node("ComboBoxString","CharacterList",slot=place("top_right",-40,157,220,36,1,0)),
+            text("SelectedCharacterName","",26,WHITE,place("bottom_center",0,-112,290,32,0.5,1)),
+            button("SelectButton","进入游戏",place("bottom_center",0,-38,200,42,0.5,1)),
+            button("OpenCharacterCreateButton","创建角色",place("top_right",-40,422,220,38,1,0))]
     suffix="CharacterCreate" if create else "CharacterSelect"
     return document("WBP_DBA_UI_"+suffix,"DivineBeasts"+suffix+"Screen",children)
 
@@ -118,3 +141,15 @@ input_font_actions = [
 ]
 (OUTPUT / "InputFontProperties.json").write_text(
     json.dumps(input_font_actions, ensure_ascii=False, indent=2), encoding="utf-8")
+
+# Border的透明background样式未写入UE实际BrushColor；后置属性动作由Monolith执行。
+# 保留Visible以接收拖动事件，仅将绘制透明，防止白色默认笔刷遮挡三维角色。
+preview_transparency_actions = [
+    {"action": "set_widget_property", "params": {
+        "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_" + page,
+        "widget_name": "PreviewDragSurface", "property_name": "BrushColor",
+        "value": "{\"r\":1,\"g\":1,\"b\":1,\"a\":0}", "compile": False}}
+    for page in ("CharacterCreate", "CharacterSelect")
+]
+(OUTPUT / "PreviewTransparencyProperties.json").write_text(
+    json.dumps(preview_transparency_actions, ensure_ascii=False, indent=2), encoding="utf-8")

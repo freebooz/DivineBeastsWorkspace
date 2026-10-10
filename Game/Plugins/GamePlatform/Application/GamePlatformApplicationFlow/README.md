@@ -68,3 +68,8 @@ UGamePlatformApplicationFlowSubsystem* Flow =
 - [目录规划说明](Docs/目录规划说明.md)：全部文件的中文职责及维护要求。
 - [测试与验证说明](Docs/测试与验证说明.md)：行为用例、命令、证据与未验证事项。
 - [神兽联盟历史对话与插件工程实现参考](../../../../../Docs/Architecture/神兽联盟历史对话与插件工程实现参考.md)：当前采用的历史要求与后续插件职责。
+
+
+## 2026-10-09 完成受理与唤醒
+
+私有纯值核心Completion返回首次受理布尔值；同一请求重复、取消/过期及执行器退出均false。UObject适配只在true时创建GT唤醒，同尝试错误Provider重复完成不会无限排队。原生新增256并发完成只受理一次、终态/取消后不唤醒用例；Debug/Release实际结果在本轮ApplicationPlayers日志，仍不替代UE线程/世界集成验证。

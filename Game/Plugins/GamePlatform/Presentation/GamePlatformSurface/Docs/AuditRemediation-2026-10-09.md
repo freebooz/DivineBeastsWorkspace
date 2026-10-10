@@ -1,0 +1,17 @@
+# 2026-10-09 表现源码整改与中文审核
+
+本文件是本插件本次变更的伴随职责/API说明。范围只包含人工维护C++、构建规则和测试；没有创建/改写任何uasset、umap、Niagara、材质或Widget Blueprint。唯一正式实现仍在本插件Source。下面的源码检查和原生测试不能代替UE编译、Automation、Cook、设备或人工视觉验收。
+
+所有本次服务API及回调在游戏线程运行；后台资源调度由GamePlatformData提供。值快照可复制，UObject/世界/组件指针不保证越过所属作用域。所有者关停先阻止新请求，撤销自有登记，再取消/停止实例、解绑和释放自有租约。发布通知前先完成内部所有权变更，通知处理器允许同步取消、切图、关闭服务或GC。
+
+## 世界MPC异步资源合同
+
+Surface世界服务只缓存8个客户端环境标量并写MPC，不提供天气/碰撞/摩擦权威，无Tick。普通资源唯一所有者仍为Data。Source Client Build.cs的Data私有依赖与插件描述依赖须同步。默认MPC路径只是合同，当前缺真实MPC、母材质/函数链，不是可见表面产品完成。
+
+ResolveMaterialBinding首次通过Data.AcquireResources为配置MPC申请World租约；不会LoadSynchronous或自建StreamableManager。绑定回调检查World未退出、请求Generation和完整Lease身份，成功且类型为MPC才绑定本世界Instance并推送缓存状态。失败释放本次租约并保留MaterialBindingUnavailable；相同状态不会再次申请。RefreshMaterialBinding显式先换代、清空绑定、释放自身租约，再申请新配置；旧完成不能覆盖新配置。世界退出同样先换代再释放，不影响其他World。
+
+ApplyEnvironmentState拒绝非有限数与退出世界，有限输入被夹取到既有安全范围。Revision仅状态真实变化递增，事件传值快照防重入修改输入。MaterialBindingPending表示状态已缓存但正在Data加载，Applied表示本次8个参数全部写入；只有上次Applied且相同状态才Unchanged。ParameterContractMismatch会稳定保持，不因BoundInstance有效就伪装Unchanged；普通变化继续缓存。GetEnvironmentState只读本世界缓存，不表示GPU同步成功。
+
+参数GlobalWetness/GlobalSnowAmount/GlobalMossInfluence/GlobalPuddleAmount/RainIntensity/SnowIntensity为0..1倍率；GlobalSnowHeightCm为厘米，既有安全夹取范围±100000000cm；TemperatureCelsius为摄氏度，沿用既有范围。UpdatedParameterCount/FailedParameterCount为本次8项写入结果；Revision为非负本世界状态代次。LastBindingResult保留资源/契约错误；BindingGeneration是异步请求代次，不等于状态Revision。
+
+Private/Tests的Transient空MPC只验证稳定失配、旧代回执、取消与退出，不生成/保存资产。本组未执行该UE用例、Shader编译或GPU测量；真实材质资产仍须UE工具及人工核验。

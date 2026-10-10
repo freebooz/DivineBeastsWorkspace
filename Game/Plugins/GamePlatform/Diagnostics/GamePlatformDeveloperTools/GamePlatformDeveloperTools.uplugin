@@ -9,7 +9,9 @@
     "CanContainContent": false,
     "EnabledByDefault": false,
     "Plugins": [
-        { "Name": "DataValidation", "Enabled": true }
+        { "Name": "DataValidation", "Enabled": true },
+        { "Name": "GamePlatformData", "Enabled": true, "TargetAllowList": ["Editor"] },
+        { "Name": "GamePlatformCore", "Enabled": true, "TargetAllowList": ["Editor"] }
     ],
     "Modules": [
         {

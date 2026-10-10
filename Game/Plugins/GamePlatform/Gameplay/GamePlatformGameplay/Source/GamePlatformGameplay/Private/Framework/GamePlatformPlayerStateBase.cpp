@@ -10,8 +10,7 @@ void AGamePlatformPlayerStateBase::GetLifetimeReplicatedProps(TArray<FLifetimePr
 
 void AGamePlatformPlayerStateBase::OnRep_Snapshot()
 {
-    // 当前平台层只提供值快照，不在PlayerState内部建立第二套事件状态机。
-    // 客户端消费者应在自己的组合根按复制后的StateRevision幂等重算。
+    OnLifecycleChanged.Broadcast();
 }
 
 void AGamePlatformPlayerStateBase::Publish(const FGamePlatformPlayerLifecycleSnapshot& Value)
@@ -22,5 +21,6 @@ void AGamePlatformPlayerStateBase::Publish(const FGamePlatformPlayerLifecycleSna
     }
 
     Snapshot = Value;
+    OnLifecycleChanged.Broadcast();
     ForceNetUpdate();
 }

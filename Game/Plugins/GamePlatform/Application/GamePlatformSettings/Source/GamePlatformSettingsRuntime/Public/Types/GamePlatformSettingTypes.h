@@ -256,6 +256,10 @@ struct GAMEPLATFORMSETTINGSRUNTIME_API FGamePlatformSettingsSnapshot
 {
     GENERATED_BODY()
 
+    /** true表示本GI档案读取已受理且尚未终态；Revision/Values仍是已发布快照，不能据受理推断加载完成。 */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Settings")
+    bool bLoading = false;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Settings")
     TMap<FName, FGamePlatformResolvedSetting> Values;
 

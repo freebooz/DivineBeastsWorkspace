@@ -145,7 +145,11 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Unreal\Characters\Generate-Zodi
 
 当前验收基线要求：公共 Manny、Quinn、Skeleton、PhysicsAsset 均存在，且 Hero Definition / Appearance Profile / 原型颜色材质分别为 `12 / 12 / 12`。
 
-2026-10-01补充：资产存在不代表引用完整。公共两网格必须关联`SK_Mannequin_Skeleton`（当前68根骨骼，含root/pelvis/head）和既定物理资产，母材质必须启用SkeletalMesh用途，纹理采样不得为空。十二Profile必须为Pitch=0、Yaw=-90、Roll=0；Python生成器使用具名`unreal.Rotator`参数，避免把位置参数次序误当C++次序。`RepairCharacterPreviewAssets.py`只修复既定表现资产，骨架只读字段先由Monolith属性动作恢复；`Tests/Assets/ValidateCharacterPreviewAssets.py`通过锁定编辑器执行只读回归，不连接后端或修改权威定义。预览舞台的脚底高度只调整本地组件，不改变Profile中用于角色胶囊的偏移。原型仍没有正式动画蓝图，模型/材质/骨架修复不代表正式美术已交付。
+2026-10-10纠正2026-10-01骨架约定：`SK_Mannequin_Skeleton`是68骨UE4资源，错误绑定到89骨UE5 Manny/Quinn会缺少胸部、颈部、手掌与第二扭转骨，旧参考姿势还会改变骨长。本次保留旧资源供原UE4网格使用，新增`/DBAContentPack_Common/Mannequins/UE5/Meshes/SK_Mannequin`（161骨），来源为锁定UE5.8 `Templates/TemplateResources/High/Characters/Content/Mannequins/Meshes/SK_Mannequin.uasset`。该文件是Epic引擎模板生成的真实Skeleton，由Monolith载入、绑定项目网格、设置预览网格并保存；未重命名已有资产或改变英雄身份。
+
+公共Manny/Quinn及稳定`AS_DBA_PreviewIdle`、`ABP_DBA_PreviewIdle`全部使用完整UE5骨架。修复脚本通过原生动画控制器同步Sequencer FK骨树后，按正确参考姿势重建4秒/30fps待机，保留各骨骼单位缩放，仅以轻微胸/颈旋转表现呼吸。身体平移重定向采用Skeleton模式，男女模型保留各自骨长；无根运动。预览及世界外观装配都检查真实骨骼覆盖和最近有效父链；骨架可以比简化网格多骨骼，网格所需骨骼不可缺失。显式动画与开发Idle均检查蓝图目标骨架，错误资源拒绝装配并给出诊断。
+
+母材质启用SkeletalMesh用途，纹理采样不得为空。十二Profile保持Pitch=0、Yaw=-90、Roll=0及单位缩放；预览舞台脚底高度只调整本地组件，不改变世界胶囊。`Tests/Assets/ValidateCharacterPreviewAssets.py`只读检查12外观、2网格、动画轨道及男女模型各5个时间点的骨长/缩放/循环接缝；`DivineBeasts.Presentation.Characters.SkeletonCompatibility`使用真实旧UE4骨架作为拒绝负例。它们不连接后端或修改权威定义。当前模型及动画仍是开发原型，不等同于正式生肖美术或完整移动动画交付。
 
 ## 5. 后期真实角色替换
 
@@ -202,3 +206,13 @@ MainArena 已接入 `FDivineBeastsArenaGameplayLifecycleAdapter（神兽联盟�
 - Shipping 禁止开发占位回退。
 - MainArena 全员必须在 `InProgress` 前完成标准 Pawn 出生、唯一 Character Initializer 初始化和 `CharacterReady`；
 - MainArena Server 定向模块编译必须通过，且项目生命周期适配器源码不得出现直接 `SpawnActor/Possess` 调用。
+
+## 8. 2026-10-10 世界行走动画修复
+
+世界开发外观使用独立`ABP_DBA_WorldLocomotion`，角色选择舞台继续使用`ABP_DBA_PreviewIdle`。世界ABP资源归公共开发角色包`DBAContentPack_Common/Mannequins/DBA/Animations`，直接继承平台客户端`UGamePlatformLocomotionAnimInstance`；平台只提供当前Pawn速度/下落只读快照，项目内容负责真实动画与混合参数，没有第二套角色移动或动画执行框架。
+
+`BS_DBA_WorldLocomotion`以水平速度厘米/秒混合0（Idle）、150（Walk）和500（Run）。四个真实序列保留模板名称`MM_Idle`、`MF_Unarmed_Walk_Fwd`、`MF_Unarmed_Jog_Fwd`、`MM_Fall_Loop`，位于Animations/WorldLocomotion；来源为锁定UE5.8的`Templates/TemplateResources/High/Characters/Content/Mannequins/Anims/Unarmed`，属于引擎模板内容，使用和分发遵循项目采用的Epic引擎许可。全部绑定161骨UE5公共Skeleton，关闭根运动并锁定根骨，CharacterMovement仍拥有权威位移。
+
+直接复制模板文件后，原`/Game/Characters`骨架引用无法解析时Sequencer FK Rig可能未初始化；单独修改Skeleton字段会留下“有长度、能加载、实际输出参考姿势”的资源。因此通过Monolith显式绑定后，由`Tools/Unreal/Characters/PrepareWorldLocomotionSequences.py`执行已有中立`GP.Animation.InitializeDataModel`，恢复当前骨树和既有模板轨道、修正旧软引用并保存。脚本只改本次新增四序列，不修改PreviewIdle、正式地图、PlayerStart或角色身份。
+
+`Tests/Assets/ValidateWorldLocomotionAssets.py`由Monolith运行，真实加载ABP/BlendSpace/四序列，检查平台父类、骨架、速度采样、无根运动、压缩腿骨随时间变化、无旧模板挂载依赖和独立预览Idle。资源检查曾因缺少世界ABP出现预期红灯。原生移动快照用例为`GamePlatform.Animation.Locomotion.PawnMovement`。实际构建、资源保存后重载、双客户端行走和Cook验收分别记录，不把Monolith抓帧返回success或文件存在当成全部验收通过。

@@ -1,38 +1,12 @@
+// 本文件属于GamePlatform平台层 GamePlatformVFX，负责资格过滤/确定性纯值排序；不拥有资源加载。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
+// 客户端兼容目录解析：游戏线程资格过滤后按P13排序；缓存不拥有资源加载。
 #include "Resolution/GamePlatformVFXCatalogRegistry.h"
+#include "Resolution/GamePlatformVFXCatalogScore.h"
 
 namespace
 {
 constexpr int32 MaxResolveCacheEntries = 1024;
-struct FResolverRank
-{
-    int32 SemanticTier = 0;
-    int32 SemanticDepth = 0;
-    int32 ContextTier = 0;
-    int32 Specificity = 0;
-    int32 Scope = 0;
-    int64 Priority = 0;
-
-    bool operator==(const FResolverRank& Other) const
-    {
-        return SemanticTier == Other.SemanticTier &&
-            SemanticDepth == Other.SemanticDepth &&
-            ContextTier == Other.ContextTier &&
-            Specificity == Other.Specificity &&
-            Scope == Other.Scope &&
-            Priority == Other.Priority;
-    }
-};
-
-bool IsBetterRank(const FResolverRank& A, const FResolverRank& B)
-{
-    if (A.SemanticTier != B.SemanticTier) return A.SemanticTier > B.SemanticTier;
-    if (A.SemanticDepth != B.SemanticDepth) return A.SemanticDepth > B.SemanticDepth;
-    if (A.ContextTier != B.ContextTier) return A.ContextTier > B.ContextTier;
-    if (A.Specificity != B.Specificity) return A.Specificity > B.Specificity;
-    if (A.Scope != B.Scope) return A.Scope > B.Scope;
-    return A.Priority > B.Priority;
-}
-
 int32 GetSemanticDepth(const FGameplayTag& Tag)
 {
     if (!Tag.IsValid()) return 0;
@@ -90,7 +64,7 @@ FGamePlatformVFXResolvedDefinition FGamePlatformVFXCatalogRegistry::Resolve(cons
 
     FGamePlatformVFXResolvedDefinition Best;
     Best.RegistryRevision = Revision;
-    FResolverRank BestRank;
+    FGamePlatformVFXCatalogScore BestRank;
     bool bHasBest = false;
 
     for (const FRegisteredCatalog& Registered : Catalogs)
@@ -114,11 +88,11 @@ FGamePlatformVFXResolvedDefinition FGamePlatformVFXCatalogRegistry::Resolve(cons
                 continue;
             }
 
-            FResolverRank Rank;
+            FGamePlatformVFXCatalogScore Rank;
             if (bDirectDefinition)
             {
                 Rank.SemanticTier = 4;
-                Rank.SemanticDepth = GetSemanticDepth(Entry.SemanticTag);
+                Rank.SemanticDepth = 0; // 直接ID路径无语义层级，不让目录标签深度干扰同ID候选。
             }
             else if (Entry.SemanticTag == Request.SemanticTag && Entry.SemanticTag.IsValid())
             {
@@ -167,11 +141,20 @@ FGamePlatformVFXResolvedDefinition FGamePlatformVFXCatalogRegistry::Resolve(cons
                 continue;
             }
 
-            Rank.Specificity = Entry.Specificity + Entry.RequiredContextTags.Num();
+            // P13只计六个已验证等值项；标签集合与历史ContextId只作资格，不影响层级。
+            if ((!Entry.HeroDefinitionId.IsNone() && Entry.HeroDefinitionId != Request.HeroDefinitionId) ||
+                (!Entry.AbilityId.IsNone() && Entry.AbilityId != Request.AbilityId) ||
+                (!Entry.SkinId.IsNone() && Entry.SkinId != Request.SkinId) ||
+                (!Entry.WorldId.IsNone() && Entry.WorldId != Request.WorldId)) continue;
+            Rank.Specificity = (!Entry.HeroDefinitionId.IsNone() ? 1 : 0) +
+                (!Entry.AbilityId.IsNone() ? 1 : 0) + (!Entry.SkinId.IsNone() ? 1 : 0) +
+                (!Entry.WorldId.IsNone() ? 1 : 0) + (!Entry.PlatformId.IsNone() ? 1 : 0) +
+                (!Entry.bAnyQuality ? 1 : 0);
             Rank.Scope = static_cast<int32>(Entry.Scope);
-            Rank.Priority = static_cast<int64>(Catalog->Priority) * 1000000LL + Entry.Priority;
+            // 两处显式Priority按64位相加；不保留百万权重这一隐式排序维度。
+            Rank.Priority = static_cast<int64>(Catalog->Priority) + Entry.Priority;
 
-            if (!bHasBest || IsBetterRank(Rank, BestRank))
+            if (!bHasBest || Rank.IsBetterThan(BestRank))
             {
                 bHasBest = true;
                 BestRank = Rank;
@@ -206,7 +189,7 @@ void FGamePlatformVFXCatalogRegistry::Reset()
 FString FGamePlatformVFXCatalogRegistry::MakeCacheKey(const FGamePlatformVFXRequest& Request) const
 {
     return FString::Printf(
-        TEXT("%llu|%s|%s|%s|%s|%s|%d|%d"),
+        TEXT("%llu|%s|%s|%s|%s|%s|%d|%d|%s|%s|%s|%s"),
         Revision,
         *Request.SemanticTag.ToString(),
         *Request.DefinitionId.ToString(),
@@ -214,7 +197,9 @@ FString FGamePlatformVFXCatalogRegistry::MakeCacheKey(const FGamePlatformVFXRequ
         *Request.ContextTags.ToStringSimple(false),
         *Request.PlatformId.ToString(),
         static_cast<int32>(Request.QualityTier),
-        Request.bAllowFallback ? 1 : 0);
+        Request.bAllowFallback ? 1 : 0,
+        *Request.HeroDefinitionId.ToString(), *Request.AbilityId.ToString(),
+        *Request.SkinId.ToString(), *Request.WorldId.ToString());
 }
 
 void FGamePlatformVFXCatalogRegistry::InvalidateCache()

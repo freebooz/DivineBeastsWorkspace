@@ -8,6 +8,7 @@
 class UAnimInstance;
 class UMaterialInterface;
 class USkeletalMesh;
+class USkeleton;
 
 /**
  * UDivineBeastsCharacterAppearanceProfile（神兽联盟角色外观配置）。
@@ -79,4 +80,21 @@ public:
 
     /** 纯字段校验，不同步加载软资源。 */
     bool IsProfileValid(FString& OutError) const;
+
+    /**
+     * 游戏线程装配前验证已加载骨架的真实覆盖与父链，不加载资产、不转移租约或修改资源。
+     * Mesh为实际蒙皮网格；Skeleton可为其绑定骨架或动画蓝图目标骨架。
+     * 允许骨架中存在网格已裁剪的中间骨骼；网格需要的骨骼不可缺失，最近有效父骨骼必须匹配。
+     * 返回false时OutError说明缺失资源/骨骼/父链，调用者必须拒绝本次装配；成功清空OutError。
+     */
+    static bool ValidateLoadedSkeleton(const USkeletalMesh* Mesh, const USkeleton* Skeleton, FString& OutError);
+
+    /**
+     * 游戏线程装配前验证已加载网格及可选动画类；两个项目装配入口共用，不加载或修改资产。
+     * Mesh及其实际Skeleton必须通过完整骨树检查；AnimClass为空只表示未指定可选动画，不能跳过网格门禁。
+     * 非空AnimClass必须派生UAnimInstance；原生类无蓝图接口时由自身动画合同负责。
+     * 动画蓝图目标Skeleton为空时按锁定引擎模板规则回退Mesh自有Skeleton，非空目标仍核完整骨树/父链。
+     * false时OutError说明资源、类型或骨树失败，调用者拒绝本次装配；成功清空OutError，不转移资源租约。
+     */
+    static bool ValidateLoadedAnimationClass(const USkeletalMesh* Mesh, const UClass* AnimClass, FString& OutError);
 };

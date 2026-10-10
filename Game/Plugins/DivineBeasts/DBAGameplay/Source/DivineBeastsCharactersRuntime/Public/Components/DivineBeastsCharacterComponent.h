@@ -2,15 +2,17 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-// 内联就绪查询调用Owner的权威接口，必须包含Actor完整定义以支持独立模块编译。
+// 可信Owner与配置快照使用Actor完整合同，公开头直接声明该依赖；Ready实现已外置，不依赖宿主PCH或旧内联描述。
 #include "GameFramework/Actor.h"
 #include "Initialization/GamePlatformCharacterInitializer.h"
 #include "State/GamePlatformCharacterStateView.h"
 #include "Identity/DivineBeastsZodiacIdentity.h"
+#include "Types/GamePlatformDataLease.h"
 #include "DivineBeastsCharacterComponent.generated.h"
 
-struct FStreamableHandle;
 class UDivineBeastsHeroDefinition;
+class UGamePlatformAbilitySystemComponent;
+struct FGamePlatformAbilityAvatarBindingSnapshot;
 
 /** FDivineBeastsCharacterReadinessChangedNative（项目角色就绪变化）。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(
@@ -77,6 +79,9 @@ public:
         const FGamePlatformCharacterInitializationContext& Context,
         FString& OutError);
 
+    /** 游戏线程可信出生适配器借用同世界已Succeeded预热租约；自身租约须已受理。借用者不释放它，所有者须保持到自身完成。 */
+    bool TryUsePreloadedDefinition(const FGamePlatformDataLease& WarmupLease, UObject& WarmupOwner, FString& OutError);
+
     /** 任意身份/Definition/Generation变化后可重复调用，幂等重评估。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Character")
     void RefreshInitialization();
@@ -108,6 +113,11 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
     FString GetDefinitionContentRevision() const { return RuntimeState.ContentRevision; }
 
+    /** GT只读已成功可信绑定的内部操作身份；首次绑定前为空，每次接纳（含相同字段/代次）都会改变。
+     * 调用者只能在AuthorityBind成功返回后立即捕获，用于后续同步回调后的自有资源复核；
+     * 它不是准入票据、权限或客户端命令，不能凭此ID批准角色/比赛。失败返回无法取得原调用身份。 */
+    FGuid GetTrustedContextOperationId() const { return TrustedContextOperationId; }
+
     // IGamePlatformCharacterStateView（平台角色状态只读接口）
     virtual FName GetCharacterStateHeroDefinitionId() const override { return GetHeroDefinitionId(); }
     virtual int32 GetCharacterStateSpawnGeneration() const override { return GetSpawnGeneration(); }
@@ -117,24 +127,45 @@ public:
     virtual bool IsCharacterStateReady() const override { return IsCharacterReady(); }
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Character")
-    bool IsCharacterReady() const
-    {
-        return GetOwner() && GetOwner()->HasAuthority()
-            ? bServerReady
-            : bServerReady && bLocalReady;
-    }
+    bool IsCharacterReady() const;
 
     const UDivineBeastsHeroDefinition* GetLoadedDefinition() const
     {
         return LoadedDefinition;
     }
+    /** 真实Data加载最近结果；接纳不等于Ready，失败明确保留结果供组合根显示/诊断，不包含敏感身份。 */
+    FGamePlatformResult GetLastDefinitionLoadResult() const { return LastDefinitionLoadResult; }
 
     FDivineBeastsCharacterReadinessChangedNative& OnReadinessChanged()
     {
         return ReadinessChanged;
     }
 
+    /** GT公开复制身份变化事件；外观在Ready尚未变化时也必须重新读取Hero，不以Ready=false替代身份通知。 */
+    FSimpleMulticastDelegate& OnIdentityChanged() { return IdentityChanged; }
+
 private:
+    /** 配置栈借用的不可变身份快照；引擎碰撞/GAS及Data同步通知返回后，旧栈只能核查，不能清后继状态。 */
+    struct FInitializationSnapshot
+    {
+        TWeakObjectPtr<AActor> Owner;
+        TWeakObjectPtr<UWorld> World;
+        TWeakObjectPtr<UDivineBeastsHeroDefinition> Definition;
+        TWeakObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystem;
+        TWeakObjectPtr<AActor> AbilityAvatar;
+        int32 AbilityAvatarGeneration = 0;
+        FGuid ContextOperationId;
+        int32 RequestGeneration = 0;
+        int32 SpawnGeneration = 0;
+        int32 AvatarGeneration = 0;
+        FName HeroDefinitionId;
+        int32 DefinitionVersion = 0;
+        FString ContentRevision;
+        bool bAuthority = false;
+    };
+    FInitializationSnapshot CaptureInitializationSnapshot() const;
+    /** 可选配置操作ID区分同身份的递归Refresh；不向外部服务公布或复制。 */
+    bool IsInitializationCurrent(const FInitializationSnapshot& Snapshot, FGuid InitializationId = FGuid()) const;
     /** 任一Hero身份、代次或Definition修订变化都重新建立本地Definition租约，避免旧异步请求污染新角色。 */
     UFUNCTION()
     void OnRep_RuntimeState();
@@ -142,6 +173,10 @@ private:
     UFUNCTION()
     void OnRep_ServerReady();
 
+    /** 只读Data当前状态；自身需求成功或同World活所有者的真实预热需求成功才能使用Definition。 */
+    bool HasReadableDefinitionResources() const;
+    TWeakObjectPtr<UObject> BorrowedWarmupOwner;
+    FGamePlatformDataLease BorrowedWarmupLease;
     void BeginDefinitionLoad();
     void CancelDefinitionLease();
     void HandleDefinitionLoaded(
@@ -152,11 +187,18 @@ private:
 
     bool ApplyDefinition(
         const UDivineBeastsHeroDefinition& Definition,
+        const FInitializationSnapshot& Snapshot,
+        FGuid InitializationId,
         FString& OutError);
 
     bool IsIdentityStructurallyValid() const;
     void UpdateReadiness();
     void BroadcastReadinessIfChanged(bool bPreviousReady);
+    /** 当前ASC存在则绑定Avatar事件，ActorInfo就绪后注入项目只读Gate；不代替宿主绑定ActorInfo。 */
+    void RefreshActivationGateBinding();
+    void HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot);
+    /** 组件结束时撤销本组件Gate并移除原生委托；ASC可继续存活，不留下旧项目Owner。 */
+    void DetachActivationGate();
 
     /** Owner-only持久身份，避免向所有观察者复制PlayerData档案ID。 */
     UPROPERTY(Replicated, Transient)
@@ -178,7 +220,18 @@ private:
     bool bLocalReady = false;
     bool bConfigurationApplied = false;
     int32 DefinitionRequestGeneration = 0;
-    TSharedPtr<FStreamableHandle> DefinitionLease;
+    /** 每次接纳可信身份绑定签发操作身份；同步Ready监听者的真实后继绑定或退出会使旧栈失败关闭。 */
+    FGuid TrustedContextOperationId;
+    /** 每次Refresh签发，递归配置会使原栈失效；不能只靠最外层AuthorityBind末端检查。 */
+    FGuid InitializationOperationId;
+    /** 成功后持续持有至结束/身份变化；不能在完成回调中提前释放。 */
+    FGamePlatformDataLease DefinitionLease;
+    FGamePlatformResult LastDefinitionLoadResult;
+    TWeakObjectPtr<UGamePlatformAbilitySystemComponent> BoundAbilitySystem;
+    FDelegateHandle AvatarBindingChangedHandle;
+    bool bEndingPlay = false;
 
     FDivineBeastsCharacterReadinessChangedNative ReadinessChanged;
+    /** 本组件原生通知，无网络RPC；网络观察者由OnRep_RuntimeState触发各自本地事件。 */
+    FSimpleMulticastDelegate IdentityChanged;
 };

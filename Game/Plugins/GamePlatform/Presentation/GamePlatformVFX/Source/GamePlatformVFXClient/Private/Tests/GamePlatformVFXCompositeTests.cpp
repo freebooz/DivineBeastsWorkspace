@@ -20,4 +20,21 @@ bool FGamePlatformVFXCompositeDefinitionDefaultsTest::RunTest(const FString& Par
     return true;
 }
 
+// F10：Steps的每一条边必须进入Data统一依赖图，否则租约预检无法发现A↔B环。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformVFXCompositeDependencyTest,
+    "GamePlatform.VFX.Composite.RequiredDependencyEdges",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformVFXCompositeDependencyTest::RunTest(const FString&)
+{
+    auto* Definition=NewObject<UGamePlatformVFXCompositeDefinition>();
+    Definition->LogicalId.Namespace=TEXT("presentation.vfx"); Definition->LogicalId.Name=TEXT("parent"); Definition->LogicalId.LogicalVersion=1;
+    Definition->DataVersion.SchemaVersion=1; Definition->DataVersion.ContentRevision=1;
+    FGamePlatformVFXCompositeStep Step; Step.DefinitionId=TEXT("presentation.vfx.child@1");
+    Definition->Steps.Add(Step);
+    TestFalse(TEXT("没有依赖边的Steps必须在播放前失败"), Definition->ValidateDefinition().IsSuccess());
+    Definition->RequiredDefinitions.Add(FPrimaryAssetId(TEXT("GamePlatformDefinition"), TEXT("presentation.vfx.child@1")));
+    TestTrue(TEXT("完整声明依赖后允许Data继续递归验证"), Definition->ValidateDefinition().IsSuccess());
+    return true;
+}
+
 #endif

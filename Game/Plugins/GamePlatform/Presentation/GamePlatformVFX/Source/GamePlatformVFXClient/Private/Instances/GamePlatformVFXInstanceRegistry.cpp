@@ -1,6 +1,10 @@
+// 本文件属于GamePlatform平台层GamePlatformVFX客户端，落实实例账本所有权；自然失活和资源清理分别判定。
+// 中文接口/所有权/完成与取消语义见本插件Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #include "Instances/GamePlatformVFXInstanceRegistry.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
 #include "NiagaraComponent.h"
+// 把UWorld转为UObject弱引用需要完整继承定义，不能依赖Unity/PCH间接包含。
+#include "Engine/World.h"
 
 FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::Reserve(UWorld* World)
 {
@@ -142,6 +146,12 @@ bool FGamePlatformVFXInstanceRegistry::IsActiveId(const FGuid& Id) const
         return IsActive(Record->Handle);
     }
     return false;
+}
+
+bool FGamePlatformVFXInstanceRegistry::OwnsHandle(const FGamePlatformVFXHandle& Handle) const
+{
+    const FGamePlatformVFXInstanceRecord* Record = Records.Find(Handle.Id);
+    return Handle.IsValid() && Record && Record->Handle == Handle;
 }
 
 UNiagaraComponent* FGamePlatformVFXInstanceRegistry::GetComponent(

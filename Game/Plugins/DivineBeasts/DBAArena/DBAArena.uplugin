@@ -9,19 +9,118 @@
   "CanContainContent": true,
   "EnabledByDefault": false,
   "Plugins": [
-    { "Name": "DBAGameplay", "Enabled": true },
-    { "Name": "GamePlatformArena", "Enabled": true },
-    { "Name": "GamePlatformData", "Enabled": true },    { "Name": "GamePlatformCore", "Enabled": true },
-    { "Name": "GamePlatformCombat", "Enabled": true },
-    { "Name": "GamePlatformPresentation", "Enabled": true, "TargetAllowList": ["Client", "Editor"] },
-    { "Name": "MobaPresentation", "Enabled": true, "TargetAllowList": ["Client", "Editor"] },
-    { "Name": "GamePlatformCharacter", "Enabled": true },
-    { "Name": "GamePlatformUI", "Enabled": true, "TargetAllowList": ["Client", "Editor"] },
-    { "Name": "DBAClient", "Enabled": true, "TargetAllowList": ["Client", "Editor"] }
+    {
+      "Name": "GameplayAbilities",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Server",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAGameplay",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformArena",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCharacter",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformUI",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAClient",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformData",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true
+    },
+    {
+      "Name": "CommonUI",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformAbilitySystem",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Server",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformCombat",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformGameplay",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Server",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformPresentation",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "MobaPresentation",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    }
   ],
   "Modules": [
-    { "Name": "DivineBeastsArenaRuntime", "Type": "Runtime", "LoadingPhase": "Default" },
-    { "Name": "DivineBeastsArenaClient", "Type": "ClientOnly", "LoadingPhase": "Default", "TargetAllowList": ["Client", "Editor"] },
-    { "Name": "DivineBeastsArenaServer", "Type": "ServerOnly", "LoadingPhase": "Default", "TargetAllowList": ["Server", "Editor"] }
+    {
+      "Name": "DivineBeastsArenaRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "DivineBeastsArenaClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DivineBeastsArenaServer",
+      "Type": "ServerOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Server",
+        "Editor"
+      ]
+    }
   ]
 }

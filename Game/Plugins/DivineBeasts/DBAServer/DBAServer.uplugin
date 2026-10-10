@@ -9,11 +9,52 @@
   "CanContainContent": false,
   "EnabledByDefault": false,
   "Plugins": [
-    { "Name": "DBAGameplay", "Enabled": true },
-    { "Name": "GamePlatformServer", "Enabled": true },
-    { "Name": "GamePlatformTelemetry", "Enabled": true }
+    {
+      "Name": "GamePlatformCharacter",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true
+    },
+    {
+      "Name": "DBAGameplay",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformServer",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformTelemetry",
+      "Enabled": true
+    },
+    {
+      "Name": "DBAWorlds",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformGameplay",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformWorld",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformData",
+      "Enabled": true
+    }
   ],
   "Modules": [
-    { "Name": "DBAServer", "Type": "ServerOnly", "LoadingPhase": "Default", "TargetAllowList": ["Server", "Editor"] }
+    {
+      "Name": "DBAServer",
+      "Type": "ServerOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Server",
+        "Editor"
+      ]
+    }
   ]
 }

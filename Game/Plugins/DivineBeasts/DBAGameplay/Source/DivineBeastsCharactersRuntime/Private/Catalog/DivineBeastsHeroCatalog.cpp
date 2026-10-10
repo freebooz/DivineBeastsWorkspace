@@ -1,3 +1,4 @@
+// 项目双端英雄目录：身份来自Shared，资源由平台数据服务拥有；不决定玩家资格或技能激活。
 #include "Catalog/DivineBeastsHeroCatalog.h"
 
 #include "Definitions/DivineBeastsHeroDefinition.h"
@@ -205,6 +206,29 @@ FSoftObjectPath FDivineBeastsHeroCatalog::GetDefinitionAssetPath(
     return PrimaryId.IsValid()
         ? UAssetManager::Get().GetPrimaryAssetPath(PrimaryId)
         : FSoftObjectPath();
+}
+
+FGamePlatformDataLease FDivineBeastsHeroCatalog::AcquireDefinitionResources(
+    UGameInstance& Instance, FName HeroDefinitionId, EGamePlatformDataLifetime Lifetime,
+    TWeakObjectPtr<UObject> WeakCaller,
+    TFunction<void(UDivineBeastsHeroDefinition*, const FGamePlatformDataLease&, const FGamePlatformResult&)> Completion,
+    FGamePlatformResult& OutResult)
+{
+    if (!IsCoreHeroId(HeroDefinitionId) || !Completion)
+    {
+        OutResult = FGamePlatformResult::Failure(TEXT("InvalidHeroRequest"), TEXT("英雄身份或完成回调无效。"));
+        return {};
+    }
+    return FGamePlatformHeroDefinitionLoader::AcquireDefinitionResources(Instance,
+        GetDefinitionPrimaryAssetId(HeroDefinitionId), Lifetime, WeakCaller,
+        [Completion = MoveTemp(Completion), HeroDefinitionId](UGamePlatformHeroDefinition* Base,
+            const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result) mutable
+        {
+            auto* Definition = Cast<UDivineBeastsHeroDefinition>(Base);
+            if (Result.IsSuccess() && (!Definition || Definition->DefinitionId != HeroDefinitionId))
+                Completion(nullptr, Lease, FGamePlatformResult::Failure(TEXT("HeroIdentityMismatch"), TEXT("真实项目定义类型或身份不匹配。")));
+            else Completion(Definition, Lease, Result);
+        }, OutResult);
 }
 
 TSharedPtr<FStreamableHandle> FDivineBeastsHeroCatalog::RequestDefinition(

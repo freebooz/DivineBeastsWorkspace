@@ -1,3 +1,4 @@
+// 平台共享设置模块：唯一拥有统一日志类别的定义；生命周期仅注册默认模块，无用户/世界状态与启动IO。
 #include "Modules/ModuleManager.h"
 
 #include "GamePlatformSettingsLog.h"

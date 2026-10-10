@@ -26,3 +26,11 @@ public:
 ```
 
 提升 SchemaVersion 前必须补齐旧版本、跨多版本和失败恢复测试，并验证旧文件在迁移失败后保持不变。
+
+## 2026-10-09 异步读取接口兼容
+
+`IGamePlatformSettingsPersistenceProvider::BeginLoad`新增virtual，全部依赖插件必须重新编译，既有稳定身份/序列化字段不迁移。默认实现兼容调用旧Load，但旧Load仅适用于有界内存或服务器部署读取；客户端真实用户档案Load返回SettingsAsyncLoadRequired，消费者迁入BeginLoad。客户端先用UE5.8原生DoesSaveGameExistAsync区分不存在/错误，再AsyncLoadGameFromSlot；不存在可发布合法空User层，损坏或未知IO错误不能伪装成空成功。
+
+Reload/换绑返回Success仅表示受理；订阅Snapshot.bLoading=false并检查LastResult才确认终态。Runtime候选注册表、层和快照在完整校验/迁移/解析成功后原子提交；失败保留上次只读快照。账号换绑成功时先撤销上账号User层并发布默认/Session投影，再异步加载新账号，失败不恢复旧账号数据。读取在飞期间普通修改明确拒绝，换绑可失效旧读取消费者；非法/相同用户键不取消合法在飞读取。
+
+拓扑重载、Provider卸载和销毁推进LoadGeneration，重复/过期完成丢弃。逻辑取消只停止消费者接纳，不承诺强杀平台IO或回滚磁盘。新增反射bLoading字段默认false，现有档案类和槽名保持。

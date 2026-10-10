@@ -1,0 +1,11 @@
+# 外部原生策略回归入口；UE服务和持久化事务仍由Private/Tests的引擎回归补证。
+cmake_minimum_required(VERSION 3.20)
+project(GamePlatformQuestSnapshotPolicyTests LANGUAGES CXX)
+enable_testing()
+add_executable(QuestSnapshotPolicyTests ../Source/GamePlatformQuest/Private/Tests/QuestSnapshotPolicyTests.cpp)
+target_compile_features(QuestSnapshotPolicyTests PRIVATE cxx_std_17)
+target_compile_definitions(QuestSnapshotPolicyTests PRIVATE GAMEPLATFORM_QUEST_NATIVE_TEST=1)
+if(MSVC)
+  target_compile_options(QuestSnapshotPolicyTests PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME Quest.SnapshotTransaction COMMAND QuestSnapshotPolicyTests)

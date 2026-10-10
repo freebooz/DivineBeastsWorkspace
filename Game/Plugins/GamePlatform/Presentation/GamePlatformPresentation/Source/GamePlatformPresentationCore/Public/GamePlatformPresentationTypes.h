@@ -54,10 +54,20 @@ enum class EGamePlatformPresentationPredictionState : uint8
 UENUM(BlueprintType)
 enum class EGamePlatformPresentationSubmitResult : uint8
 {
-    Submitted,
-    ProviderMissing,
-    InvalidRequest,
-    StaleWorld
+    // 已有反射/Blueprint数值0..3保持稳定；不得重排或复用已发布身份。
+    Submitted = 0,
+    ProviderMissing = 1,
+    InvalidRequest = 2,
+    StaleWorld = 3,
+    /**
+     * 当前同作用域、同事实身份已有同步提交栈尚未得到Provider结果，本调用仅保留在途资格。
+     * 不代表Provider已受理，也不代表播放成功；不得按Submitted处理。
+     * 原提交栈返回后完成资格：已受理预测的确认仅升级去重；预测拒绝时确认需真实提交。
+     * 原作用域关闭/换代则撤销留存资格。调用方可在原同步栈结束后以同身份查询/重试，
+     * 依实际终态决定受理或失败；本枚举不建立独立异步队列/网络协议或通用完成事件。
+     * 新值追加为4；消费插件/UHT需统一重编译，Blueprint需检查新增分支及默认分支。
+     */
+    Pending = 4
 };
 
 /**

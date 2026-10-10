@@ -1,3 +1,6 @@
+// 本文件属于MobaCommon可选MOBA层 MobaPresentation，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
+// MOBA共享语义转平台中立请求；保持事实源身份，既不读取项目资产也不执行客户端播放。
 #include "MobaPresentationRequestBuilder.h"
 
 FGamePlatformPresentationRequest FMobaPresentationRequestBuilder::Build(
@@ -31,5 +34,10 @@ FGamePlatformPresentationRequest FMobaPresentationRequestBuilder::Build(
         : EGamePlatformPresentationPredictionState::Confirmed;
     Request.WorldGeneration = Fact.Context.WorldGeneration;
     Request.RequestGeneration = RequestGeneration;
+    Request.Context.HeroDefinitionId = Fact.Context.HeroDefinitionId.IsEmpty() ? NAME_None : FName(*Fact.Context.HeroDefinitionId);
+    Request.Context.AbilityId = Fact.Context.AbilityId.IsEmpty() ? NAME_None : FName(*Fact.Context.AbilityId);
+    Request.Context.ArenaModeId = Fact.Context.ArenaModeId;
+    Request.Context.AvatarGeneration = Fact.Context.AvatarGeneration;
+    Request.Context.WorldGeneration = Fact.Context.WorldGeneration;
     return Request;
 }

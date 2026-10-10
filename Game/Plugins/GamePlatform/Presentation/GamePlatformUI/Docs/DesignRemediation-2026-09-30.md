@@ -1,0 +1,17 @@
+# 2026-09-30 页面、通知与资源租约合同
+
+UIManager通过IGamePlatformDataService::AcquireResources统一加载页面SoftClass及PreloadAssets；普通页面World期限、bSurvivesTravel页面Instance期限。成功后核对租约、全部路径和真实类型，将Pending租约转移给栈内实例。取消、失败、最终移除、布局替换和服务退出仅ReleaseResources本调用方租约，不创建第二StreamableManager。稳定Screen/Route/Widget反射身份及序列化字段保持。
+
+CommonUI的AddWidget不是原子无回调操作：初始化、旧页面失活、新页面激活及显示变化都可同步调用用户逻辑。UIManager在调用前复制Request/Lease和Root布局代次、Root/Stack/Definition/World/GI身份，并以调用栈强引用保住原Root、Stack、Definition、ViewModel和Manager。构造期间CancelOpen立即移除请求资格；自有Pending租约保留到调用返回，不能先卸载构造仍可能使用的资源。Data世界/GI撤销具有独立所有权，返回后仍必须查询Succeeded，UI延迟释放不能覆盖Data撤销。
+
+AddWidget返回后重验同Request代次、完整Lease身份和Data实时成功状态、未关闭的同GI/World、同Root布局代次和目标Stack、定义资格以及新控件真实成员关系。只有全部有效才绑定实例事件、转移唯一租约、结束Pending并发布Opened。失效先从原Stack撤回本次新控件，再解除构造守卫并清理同代Pending；失败构造撤回使用即时切换，正常页面退场动画保持既有合同。取消和退出不发布Opened，旧代构造不得清理后来代次的请求。暂停回调再次关闭作用域时也不发布已移除实例的Opened。
+
+NativeOnDeactivated代表暂时失活：仅撤销该页面的显示暂停需求；推入B时A继续拥有Data/Travel账本。重新激活按自身PausePolicy恢复暂停。最终移除由CommonUI WidgetList成员关系确认：容器显示变更立即核对，Slate释放事件下一调度轮核对；不用Tick轮询业务。只有真正离栈或作用域关闭才释放租约并发布OnScreenClosed。CloseScreen通过所拥有容器RemoveWidget，包括关闭非当前页；布局替换解绑旧容器事件。
+
+通知RequestId是实例身份，在创建Widget及按NotificationKey替换前拒绝重复ID，保持旧Widget/Timer；业务合并仍按NotificationKey和优先级。Clear能够撤销全部自有条目，不留被覆盖的孤儿Widget。所有新增机制仅游戏线程运行，无网络权威/HTTP/UI视觉资产生成。
+
+Private/Tests覆盖失活保留资源/Travel、最终移除、重复通知保留旧Widget，并新增GamePlatform.UI.Lifecycle.SynchronousCancelWithdrawsNewWidget：真实CommonUI把B入栈时失活A，A事件取消B，UIManager返回后必须撤回B且无Active租约。该UE用例使用Transient页面、原容器和构造边界，不创建资产；测试租约只检查UI账本，不能证明Data真实加载。此用例尚未执行；真实A→B→A动画/焦点/暂停、Data异步取消、布局替换/GI关闭及跨图持有仍需UE Automation/客户端补证。
+
+GamePlatformUIScreenOpenCommitNativeTests.cpp复用生产提交策略，单独验证取消/旧请求代次、布局变化、作用域关闭、租约撤销、控件移除、控件创建失败都拒绝提交、执行一次撤回且不发布Opened；合法快照只提交一次。2026-09-30在MSVC 19.38/Visual Studio 2022下运行，旧仅IsValid策略CTest失败（退出8，前五类错误提交）；修复后1/1通过（退出0）。Native状态夹具只检验提交策略，不能替代UE/Slate/Data行为。
+
+正式独立Native入口为插件Tests/CMakeLists.txt，用例名UI.SynchronousOpenCommit。从工作空间执行cmake -S Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Tests -B Game/Saved/Reviews/Task4/UIReentry/Standalone，然后cmake --build该构建目录及ctest --test-dir该目录即可；Visual Studio生成器需传Debug配置。本入口只编译UI自身Private/Tests、包含UI自身私有生产策略；不创建UE运行模块，不访问其他模块Private。2026-09-30独立入口Configure/Build/CTest均退出0、1/1通过，日志位于Game/Saved/Reviews/Task4/UIReentry/standalone-*.log；旧红绿证据保留red.log/green.log。本任务未运行UBT。

@@ -1,3 +1,4 @@
+// MOBA双端公共复制载体：服务器写公开比赛事实，客户端仅观察；PlayerArray由引擎拥有，事件供上层迟到Actor重绑。
 #include "Framework/GamePlatformArenaGameState.h"
 
 #include "Net/UnrealNetwork.h"
@@ -121,3 +122,9 @@ void AGamePlatformArenaGameState::GetLifetimeReplicatedProps(TArray<FLifetimePro
     DOREPLIFETIME(AGamePlatformArenaGameState, ObjectiveStates);
     DOREPLIFETIME(AGamePlatformArenaGameState, ResultSummary);
 }
+
+// PlayerArray成员由引擎维护；仅广播已更新事实，允许迟到Actor与离场Actor驱动客户端重绑。
+void AGamePlatformArenaGameState::AddPlayerState(APlayerState* PlayerState)
+{ Super::AddPlayerState(PlayerState); OnArenaPlayersChanged.Broadcast(); }
+void AGamePlatformArenaGameState::RemovePlayerState(APlayerState* PlayerState)
+{ Super::RemovePlayerState(PlayerState); OnArenaPlayersChanged.Broadcast(); }

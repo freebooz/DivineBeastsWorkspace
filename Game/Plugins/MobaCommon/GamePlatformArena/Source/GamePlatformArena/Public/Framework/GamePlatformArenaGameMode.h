@@ -34,6 +34,8 @@ public:
 
     virtual void BeginPlay() override;
     virtual void Logout(AController* Exiting) override;
+    /** 世界退出撤销所有玩法资格与本模式Timer，再清空借用接口；不能影响其他World。 */
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
     bool ApplyAssignment(const FGamePlatformArenaAssignment& Assignment, FString& OutError);
     bool ApplyAssignmentWithModeSpec(
@@ -60,7 +62,13 @@ public:
 
     void SetHeroEligibilityProvider(const IGamePlatformArenaHeroEligibilityProvider* InProvider) { HeroEligibilityProvider = InProvider; }
     const IGamePlatformArenaHeroEligibilityProvider* GetHeroEligibilityProvider() const { return HeroEligibilityProvider; }
-    void SetGameplayLifecycleAdapter(IGamePlatformArenaGameplayLifecycleAdapter* InAdapter) { GameplayLifecycleAdapter = InAdapter; }
+    /** 游戏线程替换借用装配时签发新BindingId；清空即失效。调用方仍拥有Adapter并须在释放前解绑。 */
+    void SetGameplayLifecycleAdapter(IGamePlatformArenaGameplayLifecycleAdapter* InAdapter);
+    /** 只读绑定身份，不能用于客户端准入；用于外部命令/广播后拒绝已经替换的借用者。 */
+    FGuid GetGameplayLifecycleBindingId() const { return GameplayLifecycleBindingId; }
+    bool IsGameplayLifecycleAdapter(const IGamePlatformArenaGameplayLifecycleAdapter* ExpectedAdapter, FGuid ExpectedBindingId) const;
+    /** 权威阶段只读值；复制视图不能代替此值来批准出生或复活。 */
+    EGamePlatformArenaMatchPhase GetMatchPhase() const { return PhaseMachine.GetPhase(); }
     bool HasGameplayLifecycleAdapter() const { return GameplayLifecycleAdapter != nullptr; }
 
     const FGamePlatformArenaAssignment& GetAssignment() const { return CurrentAssignment; }
@@ -81,6 +89,7 @@ private:
         EGamePlatformArenaForfeitState ForfeitState = EGamePlatformArenaForfeitState::None;
     };
 
+    bool IsCurrentConnectedPlayer(const AGamePlatformArenaPlayerState* PlayerState) const;
     bool Transition(EGamePlatformArenaMatchPhase NewPhase, FString& OutError, double DurationSeconds = 0.0);
     bool ValidateAssignment(const FGamePlatformArenaAssignment& Assignment, const FGamePlatformArenaModeSpec& Mode, FString& OutError) const;
     bool AreAllPlayersAdmitted() const;
@@ -102,11 +111,15 @@ private:
     TMap<FString, TWeakObjectPtr<AGamePlatformArenaPlayerState>> PlayerStatesById;
     TMap<FString, FPlayerRecoveryState> RecoveryStatesById;
     TMap<FString, FTimerHandle> ReconnectTimers;
+    /** 当前世界秒数中的最早复活时刻；断线不会抹掉死亡等待，世界退出直接清空。 */
+    TMap<FString, double> RespawnDeadlinesById;
     TSet<FString> ProcessedEventIds;
     FGamePlatformArenaMatchResult PendingResult;
     FDateTime MatchStartedAtUtc;
     const IGamePlatformArenaHeroEligibilityProvider* HeroEligibilityProvider = nullptr;
     IGamePlatformArenaGameplayLifecycleAdapter* GameplayLifecycleAdapter = nullptr;
+    /** 实际装配替换代次，空为未绑定，地址复用也不能匹配旧命令。 */
+    FGuid GameplayLifecycleBindingId;
     FTimerHandle CountdownTimer;
     FTimerHandle PreMatchTimeoutTimer;
     FTimerHandle MatchDeadlineTimer;

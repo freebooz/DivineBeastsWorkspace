@@ -1,10 +1,12 @@
+// 平台层遥测内部逻辑回归：由开发自动化调用私有策略，验证隐私、限流、有界缓存与传输失败清理。
+// 夹具只持有值对象和测试传输器，不发送生产网络；容量同时受记录数与含上下文的估算字节约束。
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Buffer/GamePlatformTelemetryBoundedBuffer.h"
+#include "Buffer/TelemetryBoundedBuffer.h"
 #include "Misc/AutomationTest.h"
 #include "Privacy/GamePlatformTelemetryPrivacyFilter.h"
 #include "Sampling/GamePlatformTelemetrySampling.h"
-#include "Schema/GamePlatformTelemetrySchemaRegistry.h"
+#include "Schema/TelemetrySchemaRegistry.h"
 #include "Containers/Ticker.h"
 #include "Sinks/GamePlatformTelemetryNetworkSink.h"
 #include "Transport/GamePlatformTelemetryTransport.h"
@@ -206,9 +208,9 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
     const FString&)
 {
     FGamePlatformTelemetryLimits Limits;
-    // 生产Buffer明确把最小事件容量夹到16；测试必须使用真实有效下限，不能假定2条容量。
+    // 每条记录还保守计入256字节上下文；给足16条的总预算，才能单独验证记录数上限及优先级驱逐。
     Limits.MaxBufferEvents = 16;
-    Limits.MaxBufferBytes = 4096;
+    Limits.MaxBufferBytes = 8192;
     Limits.MaxBatchEvents = 1;
     Limits.MaxBatchBytes = 4096;
     Limits.MaxEventBytes = 2048;
@@ -254,6 +256,7 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
         TEXT("Buffer始终有界"),
         Diagnostics.BufferDepth,
         16);
+    TestEqual(TEXT("事件与上下文同时计入缓冲预算"), Diagnostics.BufferBytes, static_cast<int64>(8192));
 
     TestTrue(
         TEXT("至少记录一次Drop"),
@@ -270,6 +273,21 @@ bool FGamePlatformTelemetryBoundedBufferTest::RunTest(
         TEXT("Batch受MaxBatchEvents限制"),
         Batch.Events.Num(),
         1);
+
+    // 字节限制可先于记录数限制生效；同优先级新记录替换旧记录，但不能超过包含上下文的真实预算。
+    FGamePlatformTelemetryLimits ByteLimits = Limits;
+    ByteLimits.MaxBufferBytes = 4096;
+    FGamePlatformTelemetryBoundedBuffer ByteBoundedBuffer(ByteLimits);
+    for (int32 Index = 0; Index < 16; ++Index)
+    {
+        FGamePlatformTelemetryEvent Item = Normal;
+        Item.EventId = FGuid::NewGuid();
+        TestTrue(TEXT("字节限额下同优先级记录可替换旧记录"), ByteBoundedBuffer.EnqueueEvent(MoveTemp(Item), 256));
+    }
+    const FGamePlatformTelemetryDiagnostics ByteDiagnostics = ByteBoundedBuffer.GetDiagnostics();
+    TestEqual(TEXT("上下文成本使4096字节最多容纳8条记录"), ByteDiagnostics.BufferDepth, 8);
+    TestEqual(TEXT("字节限额没有被记录数上限覆盖"), ByteDiagnostics.BufferBytes, static_cast<int64>(4096));
+    TestEqual(TEXT("因字节预算驱逐的旧记录均被统计"), ByteDiagnostics.DroppedNormal, static_cast<int64>(8));
 
     return true;
 }

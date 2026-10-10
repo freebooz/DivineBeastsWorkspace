@@ -1,0 +1,5 @@
+# 2026-09-30 MPC刷新合同修复
+
+显式RefreshMaterialBinding先清除旧Collection/Instance绑定及失败诊断标志，再重读当前GlobalParameterCollection配置，向新世界实例推送缓存环境状态。配置被清空或加载失败时保持状态但不再写旧MPC；Revision只由状态变化增加。普通ApplyEnvironmentState的相同状态去重保持。
+
+Private/Tests使用Transient MPC A/B和空配置覆盖刷新，不生成或保存任何资产。这项UE Automation尚未运行，实际渲染材质、配置重载、客户端设备以及服务器Cook排除仍待验证。

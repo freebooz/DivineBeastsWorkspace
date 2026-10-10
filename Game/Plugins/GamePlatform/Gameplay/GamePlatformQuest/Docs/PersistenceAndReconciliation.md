@@ -1,11 +1,15 @@
-# PersistenceAndReconciliation（持久化与对账）
+# 任务持久化与对账合同
 
-跨会话任务真源位于既有 `PlayerDataService（玩家数据服务） + PostgreSQL`。UE `GamePlatformQuestServer`不直接访问数据库，而通过异步 `IGamePlatformQuestPersistencePort（任务持久化端口）`加载/接取/保存进度/完成/放弃；DBAServer 已提供基于异步 `FHttpModule（HTTP模块）`的 PlayerData 实现。真实 UE→Go 运行联调仍因 UE/Go/PostgreSQL 环境缺失而未执行。
+当前UE只通过异步IGamePlatformQuestPersistencePort加载/接取/保存/完成/放弃任务；当前DBAServer未发现对应具体HTTP绑定。本文是端口与内存所有权合同，不表示PlayerData、数据库和Outbox已联调。所有调用和完成限定游戏线程，完成一次，Begin=false不得回调；项目适配器负责切回游戏线程及服务鉴权。
 
-普通 Objective（目标）事件先在 UE Dedicated Server（专用服务器）内存中即时推进，再按 `ProgressFlushDelaySeconds（进度刷新延迟）`聚合 `QuestId → EventIds[]`并批量写入绝对 Snapshot（快照）。接取、放弃、任务完成和迁服/登出前 Flush 属于高价值状态，要求立即持久化。
+普通可信Objective事件先推进内存进度，并按QuestId聚合EventIds。Revision由持久端确认，SnapshotSequence只供同Revision的显示更新，不用于CAS写入或授权。None、DuplicateEvent只有确认本批全部事件已提交且返回完整同实例权威快照时才消费pending；CompletionAlreadyCommitted还须同CompletionId的Completed快照。部分已处理或落库回包丢失必须返回PersistenceOutcomeUnknown，以原身份重试。
 
-PostgreSQL 使用 `revision（修订号）`乐观并发：更新条件包含 `WHERE revision = expected_revision`，成功后 `revision++`；冲突返回 RevisionConflict，不覆盖较新状态。UE 冲突后进入 `bReconcileRequired（必须对账）`，先从 PlayerData 重新加载快照，再重放仍未持久化的完整 Pending QuestEvent（待持久化任务事件）；重载失败时不会继续拿旧 Revision 写入。
+RevisionConflict只在本批无事件写入时允许对账。已接纳未提交的重放记录保存(QuestId,QuestInstanceId,EventId)与事件载荷，按发生时间先排空PendingReplayEvents，再排空受限Deferred新事件。只对精确任务实例重放，不将Q2未提交事件再次展开到已提交Q1；只撤销未提交归属的Recent去重记录，已提交任务的账本保留。既有接纳事件不因新事件队列满而丢失，也不占用新的准入配额。
 
-`player_quest_processed_event（已处理任务事件表）`以 game/player/quest_instance/event_id 为主键，使服务重启后同一任务实例仍能识别事件重放；一次可信事实可推进多个不同 Quest，因为幂等作用域包含 quest_instance_id。
+Load/Reconcile/Persist共同校验非空QuestId、有效QuestInstanceId、正DefinitionVersion/Revision、非负显示序列、合法运行状态/奖励枚举、完整唯一Objective身份与顺序、RequiredValue匹配、有限范围内CurrentValue与完成位自洽。CompletionPending/Completed须合法CompletionId，当前定义版本的完成状态须全部必要目标完成。非Completed任务定义缺失或版本不符明确拒绝；Completed历史允许当前定义缺失/版本不同，但仍须自含合法实例、修订、完成身份和目标值，不猜历史目标或重新创建当前版本任务。
 
-QuestServer 对每个玩家只允许一个持久化请求在途；持久化期间到达的新事件进入有界 `DeferredEvents（延迟事件队列）`。迁服/登出时禁止新事件，但已经进入 Deferred/Pending 的事件会继续排空和持久化，队列清空后才移除玩家 Runtime。
+对账先完整校验临时Quests与全部pending/replay归属；缺目标、错目标、无效/变更实例、缺失任务或不能继续重放的终态均不替换原Quests，不清载荷和去重记录。Persist成功响应也不能使当前已接纳进度或状态倒退，否则保持原批次并报告PersistenceOutcomeUnknown。生产端口须严格履行事务合同，不能把损坏响应当成成功。
+
+PublishSnapshot同步广播是外部调用边界。初载、对账、persist、接取/放弃以及事件排空之后只按PlayerId+PlayerRuntimeId重新Find；监听者注销、重新注册或Deinitialize后，旧引用和旧代次不会继续驱动新玩家。Unregister禁止新事件并继续排空已有所有权，Flush有在途、Deferred、PendingReplay、Pending或对账时不能报告落库完成。世界销毁只取消自有Timer/释放内存，不被视为事务提交点。
+
+原生入口只测试生产纯值策略。Private/Tests含两任务共享事件首成功次冲突、同版本损坏快照、损坏持久成功响应与广播中退休Runtime的行为夹具；它们没有生产副作用，本轮未执行UE Automation。真实落库回包丢失、重启恢复、跨服和联机仍需验收。

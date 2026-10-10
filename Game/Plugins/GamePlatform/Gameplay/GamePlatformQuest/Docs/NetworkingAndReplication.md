@@ -7,3 +7,5 @@
 QuestServer 没有公开 `ProgressDelta`、CompleteQuest、GrantReward 等客户端 Server RPC。游戏行为先在服务器形成 Combat/Interaction/Region/Gameplay 事实，再由 DBAServer 项目组合适配为 QuestEvent。
 
 Dedicated Server + 1/2 Client、OwnerOnly 隔离、Late Join（晚加入）恢复、断线重连、A 玩家事件不推进 B 玩家等真实网络测试因 UE_ROOT/测试 Definition/真实 Transport 缺失而未执行。
+
+2026-09-30：Snapshot新增显示SnapshotSequence；相同Revision只接纳更高序列，0序列仅保留旧状态变化兼容。服务器GetPlayerPersistenceError暴露失败，重放等待与持久化Revision分离，详见[本轮说明](DesignRemediation-2026-09-30.md)。

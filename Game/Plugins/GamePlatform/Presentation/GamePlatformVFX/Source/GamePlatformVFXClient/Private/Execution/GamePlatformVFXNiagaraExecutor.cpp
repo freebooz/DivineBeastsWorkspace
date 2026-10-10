@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformVFX，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #include "Execution/GamePlatformVFXNiagaraExecutor.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
 #include "Definitions/GamePlatformVFXAreaDefinition.h"
@@ -8,6 +10,22 @@
 #include "NiagaraSystem.h"
 #include "Components/SceneComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/Actor.h"
+
+bool FGamePlatformVFXNiagaraExecutor::IsAttachmentValid(const UWorld& World,
+    const UGamePlatformVFXDefinition& Definition, const FGamePlatformVFXSpawnContext& Spawn)
+{
+    check(IsInGameThread());
+    USceneComponent* Target = Spawn.AttachComponent.Get();
+    if (!Target)
+    {
+        return Spawn.AttachComponent.IsExplicitlyNull() &&
+            Definition.GetBehavior() != EGamePlatformVFXBehavior::Attached;
+    }
+    AActor* Owner = Target->GetOwner();
+    return IsValid(Target) && Target->IsRegistered() && IsValid(Owner) &&
+        !Owner->IsActorBeingDestroyed() && Target->GetWorld() == &World && !World.bIsTearingDown;
+}
 
 UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     UWorld& World,
@@ -15,9 +33,12 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     const FGamePlatformVFXRequest& Request,
     bool bUsePool)
 {
-    UNiagaraSystem* System = Definition.ResolveNiagaraSystem(
-        Request.PlatformId,
-        Request.QualityTier).Get();
+    if (!IsAttachmentValid(World, Definition, Request.SpawnContext))
+    {
+        return nullptr;
+    }
+    UNiagaraSystem* System = (Request.bUseBaseNiagaraSystem ? Definition.GetNiagaraSystem() :
+        Definition.ResolveNiagaraSystem(Request.PlatformId, Request.QualityTier)).Get();
     if (!IsValid(System))
     {
         return nullptr;
@@ -27,7 +48,7 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     const FGamePlatformVFXSpawnContext& Spawn = Request.SpawnContext;
 
     UNiagaraComponent* Component = nullptr;
-    if (IsValid(Spawn.AttachComponent))
+    if (USceneComponent* AttachTarget = Spawn.AttachComponent.Get())
     {
         FName AttachPointName = Spawn.AttachPointName;
         if (AttachPointName.IsNone())
@@ -39,7 +60,7 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
         }
         Component = UNiagaraFunctionLibrary::SpawnSystemAttached(
             System,
-            Spawn.AttachComponent,
+            AttachTarget,
             AttachPointName,
             Spawn.Location,
             Spawn.Rotation,

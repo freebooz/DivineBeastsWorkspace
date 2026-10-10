@@ -8,3 +8,5 @@
 
 Runner当前没有可用且锁定的UE5.8工具链，且正式DA/BB/BT/NavMesh测试地图必须由Unreal Editor创建，因此UE编译、真实BehaviorTree运行、专服网络、压力测试与Cook仍待验证。
 
+
+本次设计审查整改的真实行为、线程/所有权/失败合同及验证边界见 [2026-09-30专属说明](Docs/DesignRemediation-2026-09-30.md)。其中原生规则测试与UE实际运行分别记录，不混写交付状态。

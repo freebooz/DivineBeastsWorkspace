@@ -1,3 +1,4 @@
+// MOBA双端竞技模块依赖规则：公开契约来自下层Core/Data，目标隔离见插件描述；不链接项目或客户端私有实现。
 using UnrealBuildTool;
 
 public class GamePlatformArena : ModuleRules

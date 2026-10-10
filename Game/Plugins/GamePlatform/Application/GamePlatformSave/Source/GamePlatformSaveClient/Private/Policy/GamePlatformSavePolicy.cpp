@@ -1,3 +1,4 @@
+// 平台本地存档纯值策略：双端无关客户端Envelope校验；不访问UObject/磁盘/网络，线程间值传递而无共享可变状态。
 #include "Policy/GamePlatformSavePolicy.h"
 
 #include "Misc/Crc.h"
@@ -37,6 +38,11 @@ namespace
         }
         return true;
     }
+}
+
+int32 FGamePlatformSavePolicy::GetMaxEncodedBytes()
+{
+    return FixedHeaderBytes + MaxPayloadBytes;
 }
 
 int32 FGamePlatformSavePolicy::GetMaxPayloadBytes()

@@ -23,8 +23,7 @@ void UDivineBeastsCharacterCreateScreen::NativeOnActivated()
     Super::NativeOnActivated();
     CreateButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleCreate);
     LogoutButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleLogout);
-    RotateLeftButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleRotateLeft);
-    RotateRightButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleRotateRight);
+    if (BackToCharacterSelectButton) { BackToCharacterSelectButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleBackToCharacterSelect); }
     HeroOptions->OnSelectionChanged.AddUniqueDynamic(this, &ThisClass::HandleHeroChanged);
     CharacterNameInput->OnTextChanged.AddUniqueDynamic(this, &ThisClass::HandleNameChanged);
     if (auto* VM = GetCharacterCreateViewModel())
@@ -39,8 +38,7 @@ void UDivineBeastsCharacterCreateScreen::NativeOnDeactivated()
 {
     CreateButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleCreate);
     LogoutButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleLogout);
-    RotateLeftButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleRotateLeft);
-    RotateRightButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleRotateRight);
+    if (BackToCharacterSelectButton) { BackToCharacterSelectButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleBackToCharacterSelect); }
     HeroOptions->OnSelectionChanged.RemoveDynamic(this, &ThisClass::HandleHeroChanged);
     CharacterNameInput->OnTextChanged.RemoveDynamic(this, &ThisClass::HandleNameChanged);
     if (auto* VM = GetCharacterCreateViewModel())
@@ -80,6 +78,7 @@ void UDivineBeastsCharacterCreateScreen::RefreshPresentation()
     const bool bValidInput = PresentedHeroIds.IsValidIndex(HeroOptions->GetSelectedIndex())
         && !CharacterNameInput->GetText().ToString().TrimStartAndEnd().IsEmpty();
     CreateButton->SetIsEnabled(VM->CanSubmitCreation() && bValidInput);
+    if (BackToCharacterSelectButton) { BackToCharacterSelectButton->SetIsEnabled(State.bAuthenticated && !State.bBusy && !State.Characters.IsEmpty() && State.AllowedCommands.Contains(TEXT("SelectPersistentCharacter"))); }
     HeroOptions->SetIsEnabled(!State.bBusy);
     CharacterNameInput->SetIsEnabled(!State.bBusy);
     StatusText->SetText(FText::FromString(State.bBusy ? TEXT("正在创建角色，请稍候…")
@@ -170,8 +169,7 @@ void UDivineBeastsCharacterCreateScreen::HandleNameChanged(const FText&) { Refre
 void UDivineBeastsCharacterCreateScreen::HandleStateChanged(int32, int32) { RefreshPresentation(); }
 void UDivineBeastsCharacterCreateScreen::HandleCommandCompleted(FGuid, FName) { RefreshPresentation(); }
 // 转动复用纯表现端口；注销复用统一命令，页面不访问网络。
-void UDivineBeastsCharacterCreateScreen::HandleRotateLeft() { if (auto* VM = GetCharacterCreateViewModel()) { VM->RotateCharacterPreview(-30.0f); } }
-void UDivineBeastsCharacterCreateScreen::HandleRotateRight() { if (auto* VM = GetCharacterCreateViewModel()) { VM->RotateCharacterPreview(30.0f); } }
+void UDivineBeastsCharacterCreateScreen::HandleBackToCharacterSelect() { if (auto* VM = GetCharacterCreateViewModel()) { VM->ShowCharacterEntryScreen(TEXT("UI.Screen.CharacterSelect")); } }
 void UDivineBeastsCharacterCreateScreen::HandleLogout() { if (auto* VM = GetCharacterCreateViewModel()) { VM->Logout(); } }
 
 // 鼠标拖动重用现有本地预览命令，忙碌时不接受交互。

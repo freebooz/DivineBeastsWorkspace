@@ -20,3 +20,7 @@
 # Go 测试与覆盖率临时产物
 /Backend/*.test
 /Backend/coverage.out
+
+# 编辑器Python运行生成的字节码缓存；维护真源.py，不把本机解释器缓存作为项目交付资源。
+__pycache__/
+*.pyc

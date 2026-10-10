@@ -1,0 +1,11 @@
+# 外部原生回归入口；编译模块Private/Tests中的策略用例，不链接UE或其他模块私有实现。
+cmake_minimum_required(VERSION 3.20)
+project(GamePlatformNavigationRequestPolicyTests LANGUAGES CXX)
+enable_testing()
+add_executable(NavigationRequestPolicyTests ../Source/GamePlatformNavigationServer/Private/Tests/NavigationRequestPolicyTests.cpp)
+target_compile_features(NavigationRequestPolicyTests PRIVATE cxx_std_17)
+target_compile_definitions(NavigationRequestPolicyTests PRIVATE GAMEPLATFORM_NAVIGATION_NATIVE_TEST=1)
+if(MSVC)
+  target_compile_options(NavigationRequestPolicyTests PRIVATE /W4 /WX /utf-8)
+endif()
+add_test(NAME Navigation.RequestOwnership COMMAND NavigationRequestPolicyTests)

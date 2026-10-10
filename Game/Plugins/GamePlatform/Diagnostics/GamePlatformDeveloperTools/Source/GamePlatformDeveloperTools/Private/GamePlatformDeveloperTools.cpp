@@ -36,7 +36,7 @@ public:
         // 引擎原生初始化是动画关键帧制作的前置条件；只注册入口，不扫描或自动改写资产。
         AnimationDataModelCommand = MakeUnique<FAutoConsoleCommand>(
             TEXT("GP.Animation.InitializeDataModel"),
-            TEXT("显式初始化指定AnimSequence的数据模型；参数为资产路径，不自动保存或覆盖关键帧。"),
+            TEXT("显式初始化指定AnimSequence的数据模型并同步当前骨架；参数为资产路径，不自动保存或覆盖关键帧。"),
             FConsoleCommandWithArgsDelegate::CreateStatic(&InitializeAnimationDataModel));
 
         if (!IsRunningCommandlet())
@@ -76,8 +76,11 @@ private:
             return;
         }
         // 直接NewObject的序列可能只有模型对象，没有Sequencer的MovieScene/ControlRig子对象。
-        // 使用引擎初始化入口补齐；已初始化模型由引擎保持不变，不手工写只读字段或改第三方实现。
+        // 使用引擎初始化入口补齐。已存在的FK Control Rig可能仍是换骨架前的骨树，
+        // 只初始化不会增加新骨骼，随后写轨道会失败；显式同步当前骨架后才能制作关键帧。
+        // 不手工改Rig内部对象、不改第三方实现，正常兼容骨架保留已有轨道。
         Sequence->GetController().InitializeModel();
+        Sequence->GetController().UpdateWithSkeleton(Sequence->GetSkeleton(), false);
         Sequence->GetController().NotifyPopulated();
         Sequence->MarkPackageDirty();
         UE_LOG(LogTemp, Display, TEXT("动画数据模型初始化完成，仍需关键帧、保存及独立Cook验证：%s"), *Sequence->GetPathName());

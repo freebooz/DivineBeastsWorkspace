@@ -1,3 +1,5 @@
+// 平台服务器HTTP准入适配；模块拥有Provider，每次请求独立拥有有界接收缓冲与一次完成门。
+// 接收线程仅操作受锁缓冲；解析/权威处理/取消/关闭通知统一在游戏线程，关闭先移账本再解绑。
 #include "Server/GamePlatformHttpAdmissionProvider.h"
 
 #include "Dom/JsonObject.h"
@@ -9,12 +11,20 @@
 #include "Misc/ScopeLock.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Server/AdmissionResponseBudget.h"
 
 namespace
 {
 constexpr float DefaultAdmissionTimeoutSeconds = 5.0f;
 constexpr int32 MaxAdmissionResponseBytes = 32 * 1024;
 constexpr int32 MaxAdmissionCredentialBytes = 16 * 1024;
+/** HTTP接收线程持有有界缓冲；游戏线程完成时在锁下取出，绝不先无界接收后检查。 */
+struct FAdmissionResponseBody
+{
+    FCriticalSection Mutex;
+    TArray<uint8> Bytes;
+    bool bHasOverflow = false;
+};
 
 float ResolveAdmissionTimeoutSeconds()
 {
@@ -93,6 +103,12 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
 
     const FGuid OperationId = Proof.OperationId;
     const FString ReservationId = Proof.ReservationId;
+
+    if (bIsClosing || Requests.Contains(OperationId))
+    {
+        if (Completion) Completion(MakeAdmissionFailure(bIsClosing ? TEXT("ServerAdmissionProviderClosed") : TEXT("ServerAdmissionOperationDuplicate")));
+        return;
+    }
 
     if (!Target.IsValid() || !ConnectionId.IsValid() ||
         ConnectionGeneration == 0 || !Proof.IsValid() || !Completion)
@@ -186,6 +202,20 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
     Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
     Request->SetTimeout(ResolveAdmissionTimeoutSeconds());
     Request->SetContentAsString(SerializeAdmissionBody(Body));
+    // Shutdown与完成均在游戏线程串行；接收回调只访问独立共享缓冲，避免裸Provider跨线程悬空。
+    Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
+    const auto ResponseBody = MakeShared<FAdmissionResponseBody, ESPMode::ThreadSafe>();
+    FHttpRequestStreamDelegateV2 Receive = FHttpRequestStreamDelegateV2::CreateLambda(
+        [ResponseBody](void* Data, int64& InOutLength)
+        {
+            if (!Data || InOutLength <= 0) return;
+            FScopeLock Lock(&ResponseBody->Mutex);
+            if (ResponseBody->bHasOverflow || !GamePlatform::Server::CanAcceptAdmissionResponseBytes(ResponseBody->Bytes.Num(), InOutLength, MaxAdmissionResponseBytes))
+            { ResponseBody->bHasOverflow = true; InOutLength = 0; return; }
+            ResponseBody->Bytes.Append(static_cast<const uint8*>(Data), static_cast<int32>(InOutLength));
+        });
+    if (!Request->SetResponseBodyReceiveStreamDelegateV2(MoveTemp(Receive)))
+    { Completion(MakeAdmissionFailure(TEXT("ServerAdmissionResponseLimitUnavailable"))); return; }
 
     const TSharedRef<FGamePlatformServerAdmissionCompletion, ESPMode::ThreadSafe>
         SharedCompletion =
@@ -213,12 +243,19 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
          ConnectionId,
          ConnectionGeneration,
          ReservationId,
-         CompleteOnce](
+         CompleteOnce,
+         ResponseBody](
             FHttpRequestPtr,
             FHttpResponsePtr Response,
             bool bSucceeded) mutable
         {
             UntrackRequest(OperationId);
+
+            TArray<uint8> Bytes;
+            bool bOverflow = false;
+            { FScopeLock Lock(&ResponseBody->Mutex); Bytes = MoveTemp(ResponseBody->Bytes); bOverflow = ResponseBody->bHasOverflow; }
+            if (bOverflow)
+            { CompleteOnce(MakeAdmissionFailure(TEXT("ServerAdmissionResponseTooLarge"))); return; }
 
             if (!bSucceeded || !Response.IsValid())
             {
@@ -237,7 +274,6 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
                 return;
             }
 
-            const TArray<uint8>& Bytes = Response->GetContent();
             if (Bytes.IsEmpty() ||
                 Bytes.Num() > MaxAdmissionResponseBytes)
             {
@@ -266,6 +302,7 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
             FString PlayerId;
             FString SessionId;
             FString AssignmentId;
+            FString MatchId;
             FString WorldId;
             FString ExperienceId;
             FString GameSessionId;
@@ -298,7 +335,10 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
                     TEXT("sessionEpoch"),
                     SessionEpoch);
 
-            if (!bParsed || PlayerId.IsEmpty() || SessionId.IsEmpty() ||
+            // matchId在普通世界响应中可省略；若出现非字符串值则拒绝。角色身份继续来自服务器受信Roster。
+            const bool bMatchParsed = !Json->HasField(TEXT("matchId")) ||
+                Json->TryGetStringField(TEXT("matchId"), MatchId);
+            if (!bParsed || !bMatchParsed || PlayerId.IsEmpty() || SessionId.IsEmpty() ||
                 AssignmentId.IsEmpty() || GameSessionId.IsEmpty() ||
                 ServerBootId != Target.ServerBootId ||
                 WorldId != Target.WorldId ||
@@ -319,6 +359,7 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
             Admission.SessionId = MoveTemp(SessionId);
             Admission.GameSessionId = MoveTemp(GameSessionId);
             Admission.AssignmentId = MoveTemp(AssignmentId);
+            Admission.MatchId = MoveTemp(MatchId);
             Admission.ReservationId = ReservationId;
             Admission.ServerInstanceId = Target.GameServerId;
             Admission.ServerBootId = Target.ServerBootId;
@@ -341,9 +382,11 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
             CompleteOnce(MoveTemp(Result));
         });
 
-    TrackRequest(OperationId, Request);
+    TrackRequest(OperationId, Request, CompleteOnce);
     if (!Request->ProcessRequest())
     {
+        // 启动失败也必须解除裸Provider完成委托；该请求此后不再属于关闭账本。
+        Request->OnProcessRequestComplete().Unbind();
         UntrackRequest(OperationId);
         CompleteOnce(MakeAdmissionFailure(
             TEXT("ServerAdmissionRequestStartFailed")));
@@ -376,30 +419,42 @@ void FGamePlatformHttpAdmissionProvider::ReleaseAdmission(
     }
 }
 
-void FGamePlatformHttpAdmissionProvider::CancelOperation(
-    const FGuid& OperationId)
+FGamePlatformHttpAdmissionProvider::~FGamePlatformHttpAdmissionProvider() { Shutdown(); }
+
+void FGamePlatformHttpAdmissionProvider::Shutdown()
 {
-    FHttpRequestPtr Request;
+    check(IsInGameThread());
+    TArray<FTrackedRequest> Pending;
     {
         FScopeLock Lock(&RequestsMutex);
-        Requests.RemoveAndCopyValue(OperationId, Request);
+        if (bIsClosing) return;
+        bIsClosing = true;
+        for (auto& Pair : Requests) Pending.Add(MoveTemp(Pair.Value));
+        Requests.Empty();
     }
-    if (Request.IsValid())
-    {
-        Request->CancelRequest();
-    }
+    // 必须先解绑全部请求，再调用任何取消完成；完成回调重入不能看到半关闭账本。
+    for (auto& Operation : Pending)
+        if (Operation.Request) { Operation.Request->OnProcessRequestComplete().Unbind(); Operation.Request->CancelRequest(); }
+    for (auto& Operation : Pending)
+        if (Operation.Completion) Operation.Completion(MakeAdmissionFailure(TEXT("ServerAdmissionCancelled")));
 }
-
-void FGamePlatformHttpAdmissionProvider::TrackRequest(
-    const FGuid& OperationId,
-    const FHttpRequestPtr& Request)
+void FGamePlatformHttpAdmissionProvider::CancelOperation(const FGuid& OperationId)
+{
+    check(IsInGameThread());
+    FTrackedRequest Operation;
+    { FScopeLock Lock(&RequestsMutex); if (!Requests.RemoveAndCopyValue(OperationId, Operation)) return; }
+    if (Operation.Request) { Operation.Request->OnProcessRequestComplete().Unbind(); Operation.Request->CancelRequest(); }
+    if (Operation.Completion) Operation.Completion(MakeAdmissionFailure(TEXT("ServerAdmissionCancelled")));
+}
+void FGamePlatformHttpAdmissionProvider::TrackRequest(const FGuid& OperationId, const FHttpRequestPtr& Request,
+    FGamePlatformServerAdmissionCompletion Completion)
 {
     FScopeLock Lock(&RequestsMutex);
-    Requests.Add(OperationId, Request);
+    check(!bIsClosing && !Requests.Contains(OperationId));
+    FTrackedRequest Operation; Operation.Request = Request; Operation.Completion = MoveTemp(Completion);
+    Requests.Add(OperationId, MoveTemp(Operation));
 }
-
-void FGamePlatformHttpAdmissionProvider::UntrackRequest(
-    const FGuid& OperationId)
+void FGamePlatformHttpAdmissionProvider::UntrackRequest(const FGuid& OperationId)
 {
     FScopeLock Lock(&RequestsMutex);
     Requests.Remove(OperationId);

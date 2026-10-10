@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "Game/Plugins/DivineBeasts/DBAClient/Docs"
-MANIFEST = DOCS / "3A游戏UI十大业务域组件台账_V1.json"
+MANIFEST = DOCS / "AAAGameUIBusinessDomainLedger_V1.json"
 CATALOG = DOCS / "3A游戏UI十大业务域组件总清单_V1.0.md"
 STATUS_SPEC = ROOT / "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Docs/AAA状态效果UI设计规范_V1.0.md"
 DOMAINS = {

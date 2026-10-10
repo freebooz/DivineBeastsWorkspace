@@ -1,4 +1,7 @@
 #include "DivineBeastsUIClientSubsystem.h"
+#include "Characters/DivineBeastsCharacterAppearanceComponent.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
@@ -26,6 +29,15 @@ namespace
     const TSoftClassPtr<UGamePlatformUILayerStack> DefaultRootLayoutClass(
         FSoftObjectPath(
             TEXT("/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C")));
+}
+
+void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
+{
+    Super::PlayerControllerChanged(NewPlayerController);
+    if (!IsValid(NewPlayerController)) return;
+    // 世界退出可以取消在途页面；新控制器是真实可创建Widget的生命周期通知，消费现有快照即可恢复。
+    EnsureDefaultRootLayout();
+    PullInitialState();
 }
 
 void UDivineBeastsUIClientSubsystem::Initialize(
@@ -188,7 +200,15 @@ TArray<FName> UDivineBeastsUIClientSubsystem::GetRegisteredScreenIds() const
 
 FName UDivineBeastsUIClientSubsystem::GetRecommendedPrimaryScreenId() const
 {
-    return FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(ViewState);
+    return FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(ViewState, CharacterEntryScreenPreference);
+}
+
+bool UDivineBeastsUIClientSubsystem::RequestCharacterEntryScreen(FName ScreenId)
+{
+    if (!FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(ViewState, ScreenId)) { return false; }
+    CharacterEntryScreenPreference = ScreenId;
+    SyncPrimaryScreen();
+    return true;
 }
 
 FGamePlatformUIAsyncRequest
@@ -450,6 +470,12 @@ void UDivineBeastsUIClientSubsystem::HandleViewStateChanged(
         return;
     }
 
+    // 页面偏好随账号运行和角色入口生命周期清理，旧账号/旧操作不得覆盖登录、传送或世界页面。
+    if (bNewRun || !NewState.bAuthenticated ||
+        (NewState.CurrentStep != TEXT("DBA.Flow.CharacterEntry") && NewState.CurrentStep != TEXT("DBA.Flow.CreateCharacter")))
+    {
+        CharacterEntryScreenPreference = NAME_None;
+    }
     ViewState = NewState;
     StateChanged.Broadcast(ViewState);
     SyncLoadingService();
@@ -528,6 +554,18 @@ void UDivineBeastsUIClientSubsystem::SyncCharacterPreview()
     if (!bCharacterFrontEnd)
     {
         Preview->DeactivatePreviewScene();
+        // 已确认选择仅用于本地Avatar表现；服务器准入/技能身份不由UI写入。
+        if(ViewState.CurrentStep==TEXT("DBA.Flow.InWorld") && !ViewState.SelectedHeroDefinitionId.IsNone())
+        {
+            auto* Controller=GetLocalPlayer()->GetPlayerController(GetWorld());
+            APawn* Pawn=Controller?Controller->GetPawn():nullptr;
+            if(Pawn)
+            {
+                auto* Appearance=Pawn->FindComponentByClass<UDivineBeastsCharacterAppearanceComponent>();
+                if(!Appearance){Appearance=NewObject<UDivineBeastsCharacterAppearanceComponent>(Pawn);Pawn->AddInstanceComponent(Appearance);Appearance->RegisterComponent();}
+                Appearance->ApplyApprovedVisualHero(ViewState.SelectedHeroDefinitionId);
+            }
+        }
         return;
     }
 
@@ -574,7 +612,7 @@ void UDivineBeastsUIClientSubsystem::SyncPrimaryScreen()
     TGuardValue<bool> Guard(bSynchronizingPrimaryScreen, true);
 
     const FName DesiredScreenId =
-        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(ViewState);
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(ViewState, CharacterEntryScreenPreference);
 
     if (DesiredScreenId.IsNone())
     {
@@ -727,4 +765,5 @@ void UDivineBeastsUIClientSubsystem::DetachContract()
         LoadingToken = {};
     }
     ViewState = FDivineBeastsUIViewState();
+    CharacterEntryScreenPreference = NAME_None;
 }

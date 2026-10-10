@@ -81,6 +81,13 @@ public:
                 { if (Alive.IsValid()) { ++CountCancelled; Test->TestTrue(TEXT("取消抢先时仅取消终态"), Result.Status == EGamePlatformResultStatus::Cancelled); } }, Accepted);
             Test->TestTrue(TEXT("首次释放成功"), ServiceA->ReleaseDefinition(CancelLease).IsSuccess());
             Test->TestTrue(TEXT("重复释放幂等"), ServiceA->ReleaseDefinition(CancelLease).IsSuccess());
+            // 已释放身份没有历史表；签发证明必须拒绝伪造ID、分组与载荷，原件仍幂等。
+            auto ChangedId = CancelLease; ChangedId.LeaseId = FGuid::NewGuid();
+            Test->TestFalse(TEXT("伪造已释放ID不能幂等成功"), ServiceA->ReleaseDefinition(ChangedId).IsSuccess());
+            auto ChangedBundles = CancelLease; ChangedBundles.Bundles.Add(TEXT("ForgedBundle"));
+            Test->TestTrue(TEXT("篡改释放句柄为无效"), ServiceA->GetLeaseState(ChangedBundles) == EGamePlatformDataRequestState::Invalid);
+            auto ChangedProof = CancelLease; ChangedProof.IssuerProof = FGuid::NewGuid();
+            Test->TestFalse(TEXT("伪造签发证明拒绝"), ServiceA->ReleaseDefinition(ChangedProof).IsSuccess());
             Test->TestEqual(TEXT("取消不同步重入"), CountCancelled, 0);
             // 实际世界销毁只清理对应世界租约，实例租约在同一事件后仍继续加载。
             World.Reset(UWorld::CreateWorld(EWorldType::Game, false));
@@ -184,7 +191,7 @@ public:
         Test->TestTrue(TEXT("诊断累计记录已接纳请求"), DiagnosticsB.TotalAcceptedRequests >= 4);
         Test->TestTrue(TEXT("诊断累计记录成功终态"), DiagnosticsB.TotalSucceededRequests >= 3);
         Test->TestTrue(TEXT("诊断累计记录取消终态"), DiagnosticsB.TotalCancelledRequests >= 1);
-        Test->TestTrue(TEXT("严格幂等释放记录可观测"), DiagnosticsB.ReleasedLeaseRecords >= 4);
+        Test->TestEqual(TEXT("真实签发证明支持幂等且不积累释放历史"), DiagnosticsB.ReleasedLeaseRecords, 0);
         Test->TestEqual(TEXT("释放全部测试租约后无追踪Definition"), DiagnosticsB.UniqueTrackedDefinitions, 0);
         Test->TestEqual(TEXT("释放全部测试租约后无请求Bundle"), DiagnosticsB.UniqueRequestedBundles, 0);
         Cleanup();

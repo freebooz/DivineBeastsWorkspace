@@ -110,6 +110,11 @@ bool UDivineBeastsUIViewModel::PreviewCharacterHero(FName HeroDefinitionId)
     return Preview && Preview->PreviewHero(HeroDefinitionId);
 }
 
+bool UDivineBeastsUIViewModel::ShowCharacterEntryScreen(FName TargetScreenId)
+{
+    return IsPageActive() && Owner && Owner->RequestCharacterEntryScreen(TargetScreenId);
+}
+
 void UDivineBeastsUIViewModel::ClearCharacterPreview()
 {
     ULocalPlayer* LocalPlayer = Owner ? Owner->GetLocalPlayer() : nullptr;

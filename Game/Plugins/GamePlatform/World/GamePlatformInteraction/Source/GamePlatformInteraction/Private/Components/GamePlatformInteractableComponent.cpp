@@ -1,7 +1,11 @@
+// 平台双端交互目标：服务器拥有当前实例/代次、选项和会话占位；Custom处理器拥有业务副作用，配置/退出同步取消占位。
+// 平台交互目标状态组件：游戏线程由服务器Owner权威维护实例/代次/选项，生命周期内发布只读复制事实。
 #include "Components/GamePlatformInteractableComponent.h"
 
 #include "Components/GamePlatformInteractorComponent.h"
 #include "Interfaces/GamePlatformInteractable.h"
+// Owner权威、位置与IsValid继承转换均需要完整Actor类型，不依靠Unity/PCH间接包含。
+#include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 #include "Settings/GamePlatformInteractionSettings.h"
 #include "Types/GamePlatformInteractionSession.h"
@@ -311,10 +315,13 @@ void UGamePlatformInteractableComponent::ReleaseSession(const FGuid& SessionId)
 }
 
 bool UGamePlatformInteractableComponent::CommitSession(
-    const FGamePlatformInteractionSession& Session,
-    const FGamePlatformInteractionOption& Option,
+    const FGamePlatformInteractionSession& InSession,
+    const FGamePlatformInteractionOption& InOption,
     FGamePlatformInteractionResult& OutResult)
 {
+    // 公开C++调用同样不得借用可被Custom回调修改的数组元素或会话对象。
+    const FGamePlatformInteractionSession Session = InSession;
+    const FGamePlatformInteractionOption Option = InOption;
     OutResult.RequestId = Session.RequestId;
     OutResult.SessionId = Session.SessionId;
     OutResult.OptionId = Option.OptionId;
@@ -388,6 +395,10 @@ bool UGamePlatformInteractableComponent::CommitSession(
             Cast<IGamePlatformInteractable>(GetOwner()))
         {
             bCommitted = Interface->CommitInteraction(Session, Option);
+            // 处理器副作用是否成功不等于原占位仍然有效；配置撤销/目标销毁后不缓存成功、不推进提交修订号。
+            if (!IsValid(this) || !IsValid(GetOwner()) || Session.TargetGeneration != TargetGeneration ||
+                !CanContinueSession(Session.SessionId, Option))
+            { OutResult.Error = EGamePlatformInteractionError::TargetUnavailable; return false; }
         }
         else
         {

@@ -10,6 +10,8 @@ class GAMEPLATFORMGAMEPLAY_API AGamePlatformPlayerStateBase : public APlayerStat
 {
     GENERATED_BODY()
 public:
+    /** 当前复制事实变化事件；只通知消费者重新读取快照，不维护另一套状态机。 */
+    FSimpleMulticastDelegate OnLifecycleChanged;
     /** 当前公开值快照；Pawn可能尚未网络解析，观察者应再次采样。 */
     FGamePlatformPlayerLifecycleSnapshot GetLifecycleSnapshot() const { return Snapshot; }
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

@@ -30,3 +30,10 @@ Loading拥有操作、任务尝试与屏障，不拥有主资产、旅行、认�
 12. [人工审查](Docs/ManualReview.md)：待人工签审表。
 
 当前原生任务算法 Debug/Release 各1/1通过并输出46条断言；Editor／Client／Server 三个 `GamePlatformLoading` 模块构建均成功。真实租约 UE Automation、Foundation真实场景、多PIE、Session准入、Cook/Stage及人工签审仍未执行。2026-09-21 曾因历史空白插件描述在扫描阶段阻断三目标，该证据作为历史保留；最新状态见仓库 `Docs/Production/GamePlatformLoadingVerification.md`，不得把46条原生断言或模块编译换算成46项UE运行验收。
+
+
+## 2026-09-30设计审查修订
+
+订阅回调后重新核对Scope身份和操作代次；实例关闭或下一操作开始即停止旧派发。Private/Tests新增回调中Shutdown回归，UE执行待统一验证。
+
+本次真实源码/Native/静态检查与未执行UE/后端/Cook边界见Game/Saved/Reviews/task2-repair-report.md；旧历史运行证据不自动覆盖本次修改。

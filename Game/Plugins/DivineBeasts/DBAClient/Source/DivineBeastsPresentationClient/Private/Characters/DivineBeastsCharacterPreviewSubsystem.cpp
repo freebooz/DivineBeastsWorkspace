@@ -5,13 +5,14 @@
  */
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
 
+#include "Animation/AnimInstance.h" // 本文件也调用动画软类Get，完整类型不能由另一个Unity源文件提供。
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
-#include "Animation/AnimClassInterface.h"
 #include "Animation/Skeleton.h"
-#include "Engine/SkeletalMesh.h"
+#include "Components/SkeletalMeshComponent.h" // 材质读取/设置及组件UObject转换需要完整类型，不能依赖PCH或Unity包含顺序。
 #include "Engine/LevelStreamingDynamic.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/SkeletalMesh.h" // 本文件读取Profile软网格引用，资产类型也必须直接完整包含。
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
@@ -19,6 +20,9 @@
 #include "Loading/GamePlatformAssetLoader.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Preview/GamePlatformCharacterPreviewStage.h"
+
+// 只记录项目资源身份和生命周期代次，便于定位预览失败；不记录用户账号、密码或票据。
+DEFINE_LOG_CATEGORY_STATIC(LogDivineBeastsCharacterPreview, Log, All);
 
 namespace
 {
@@ -310,6 +314,8 @@ void UDivineBeastsCharacterPreviewSubsystem::HandleProfileLoaded(
     FName ExpectedHeroDefinitionId,
     int32 ExpectedRequestGeneration)
 {
+    UE_LOG(LogDivineBeastsCharacterPreview, Display, TEXT("Profile callback: Hero=%s Generation=%d/%d Profile=%s"),
+        *ExpectedHeroDefinitionId.ToString(), ExpectedRequestGeneration, RequestGeneration, *GetNameSafe(Profile));
     if (ExpectedRequestGeneration != RequestGeneration ||
         ExpectedHeroDefinitionId != RequestedHeroDefinitionId)
     {
@@ -319,12 +325,14 @@ void UDivineBeastsCharacterPreviewSubsystem::HandleProfileLoaded(
     ProfileLease.Reset();
     if (!Profile || Profile->HeroDefinitionId != ExpectedHeroDefinitionId)
     {
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview profile missing or hero identity mismatch."));
         return;
     }
 
     FString Error;
     if (!Profile->IsProfileValid(Error))
     {
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Invalid preview profile: %s"), *Error);
         return;
     }
 
@@ -399,6 +407,7 @@ bool UDivineBeastsCharacterPreviewSubsystem::TryApplyPendingAppearance()
     USkeletalMesh* Mesh = PendingProfile->SkeletalMesh.Get();
     if (!Mesh)
     {
+        UE_LOG(LogDivineBeastsCharacterPreview, Verbose, TEXT("Preview mesh is not loaded: %s"), *PendingProfile->SkeletalMesh.ToSoftObjectPath().ToString());
         return false;
     }
 
@@ -420,18 +429,16 @@ bool UDivineBeastsCharacterPreviewSubsystem::TryApplyPendingAppearance()
         : PendingProfile->AnimInstanceClass.Get();
     if ((!PendingProfile->AnimInstanceClass.IsNull() || PendingProfile->bDevelopmentPlaceholder) && !AnimClass)
     {
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Required preview animation class is not loaded: Hero=%s"), *RequestedHeroDefinitionId.ToString());
         return false;
     }
 
-    if (AnimClass && PendingProfile->AnimInstanceClass.IsNull() && PendingProfile->bDevelopmentPlaceholder)
+    FString SkeletonError;
+    if (!UDivineBeastsCharacterAppearanceProfile::ValidateLoadedAnimationClass(Mesh, AnimClass, SkeletonError))
     {
-        // 开发待机只能用于经真实骨架验证的原型；名称标签相同不等于骨骼层级兼容。
-        const IAnimClassInterface* AnimationInterface = IAnimClassInterface::GetFromClass(AnimClass);
-        const USkeleton* AnimationSkeleton = AnimationInterface ? AnimationInterface->GetTargetSkeleton() : nullptr;
-        if (!AnimationSkeleton || !AnimationSkeleton->IsCompatibleMesh(Mesh))
-        {
-            return false;
-        }
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview mesh/animation skeleton rejected: Hero=%s AnimClass=%s Reason=%s"),
+            *RequestedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass), *SkeletonError);
+        return false;
     }
 
     if (!PreviewStage->ApplyPreviewAppearance(
@@ -442,8 +449,12 @@ bool UDivineBeastsCharacterPreviewSubsystem::TryApplyPendingAppearance()
             PendingProfile->MeshRelativeRotation,
             PendingProfile->MeshRelativeScale))
     {
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("Preview stage rejected appearance: Hero=%s"), *RequestedHeroDefinitionId.ToString());
         return false;
     }
+
+    UE_LOG(LogDivineBeastsCharacterPreview, Display, TEXT("Preview appearance applied: Hero=%s Mesh=%s AnimClass=%s"),
+        *RequestedHeroDefinitionId.ToString(), *GetNameSafe(Mesh), *GetNameSafe(AnimClass));
 
     DevelopmentDynamicMaterials.Reset();
     if (PendingProfile->bDevelopmentPlaceholder)

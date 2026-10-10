@@ -1,3 +1,6 @@
+// 项目竞技客户端组合根：按本地玩家和当前世界注册命中反馈解析、监听竞技复制事实。
+// 只消费平台数据租约与MOBA中立接口；不改变服务器权威战斗结果。
+// 激活时绑定回调，世界清理及失活时精确撤销自身回调和租约，避免跨世界遗留。
 #include "Feedback/DivineBeastsArenaCombatFeedbackClientSubsystem.h"
 
 #include "Feedback/DivineBeastsArenaCombatFeedbackSettings.h"

@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformSFX，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -19,6 +21,10 @@ enum class EGamePlatformSFXPlaybackSpace : uint8
     Attached
 };
 
+/** 客户端表现请求的预测终态；只控制本世界去重，没有网络权威含义。 */
+UENUM(BlueprintType)
+enum class EGamePlatformSFXPredictionState : uint8 { None, Predicted, Confirmed, Corrected, Cancelled };
+
 /** EGamePlatformSFXResultCode（音效请求结果码）。 */
 UENUM(BlueprintType)
 enum class EGamePlatformSFXResultCode : uint8
@@ -36,7 +42,9 @@ enum class EGamePlatformSFXResultCode : uint8
     AssetUnavailable,
     OwnerInvalid,
     SpawnFailed,
-    StaleRequest
+    StaleRequest,
+    /** 已完成的请求被确认；未创建新的音频组件，Handle为空。 */
+    AlreadyCompleted
 };
 
 /**
@@ -75,6 +83,10 @@ struct GAMEPLATFORMSFXCLIENT_API FGamePlatformSFXRequest
     /** 跨Presentation/SFX链路的请求身份；有效时用于预测请求去重与取消。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SFX")
     FGuid RequestId;
+
+    /** 同RequestId预测/确认共享身份；Corrected可替换正常完成实例，Cancelled在历史保留期不可复活。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SFX")
+    EGamePlatformSFXPredictionState PredictionState = EGamePlatformSFXPredictionState::None;
 
     /** 例如 presentation.sfx.hit@1；不得填写 /Game/... 资产路径。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SFX")
@@ -132,9 +144,25 @@ struct GAMEPLATFORMSFXCLIENT_API FGamePlatformSFXResult
     bool IsAccepted() const
     {
         return Code == EGamePlatformSFXResultCode::Played ||
-               Code == EGamePlatformSFXResultCode::Queued;
+               Code == EGamePlatformSFXResultCode::Queued || Code == EGamePlatformSFXResultCode::AlreadyCompleted;
     }
 };
+
+/** 受理后的实时/终态；失败、取消、撤销、世界退出不会冒充自然完成。 */
+UENUM(BlueprintType)
+enum class EGamePlatformSFXPlaybackState : uint8 { Invalid, Loading, Playing, Completed, Cancelled, Failed, ContentRevoked, WorldDestroyed };
+
+/** 不持有组件或Data资源的诊断快照；游戏线程取得，终态历史最多512条直到世界销毁。 */
+struct GAMEPLATFORMSFXCLIENT_API FGamePlatformSFXPlaybackSnapshot
+{
+    FGamePlatformSFXHandle Handle;
+    /** 原中立事实/请求身份；仅用于诊断关联，不是网络授权令牌。 */
+    FGuid RequestId;
+    EGamePlatformSFXPlaybackState State = EGamePlatformSFXPlaybackState::Invalid;
+    EGamePlatformSFXResultCode Code = EGamePlatformSFXResultCode::InvalidRequest;
+    FName DefinitionId = NAME_None;
+};
+DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformSFXPlaybackCompleted, const FGamePlatformSFXPlaybackSnapshot&);
 
 /** FGamePlatformSFXDiagnostics（低频音效诊断快照）。 */
 USTRUCT(BlueprintType)

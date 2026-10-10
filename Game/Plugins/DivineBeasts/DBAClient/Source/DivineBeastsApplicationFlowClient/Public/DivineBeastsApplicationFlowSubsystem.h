@@ -20,7 +20,6 @@ class UGamePlatformSessionClientSubsystem;
 struct FGamePlatformAuthSnapshot;
 struct FGamePlatformLoadingSnapshot;
 struct FGamePlatformSessionSnapshot;
-struct FStreamableHandle;
 
 /**
  * UDivineBeastsApplicationFlowSubsystem（神兽联盟应用流程协调子系统）。
@@ -115,6 +114,9 @@ public:
     /** 取消当前流程和异步工作，退出Online认证；LoggedOut事件到达后按原策略重新启动。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
     void LogoutAndRestart();
+    /** 游戏线程：只在无活动运行的可恢复失败状态受理；清理会话并注销后重启人工登录，不重发旧创建/消费操作。
+     * true表示恢复已受理，完成/失败由ViewState事件通知；false表示状态/服务不满足。 */
+    bool RetryFailedFlow();
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|ApplicationFlow")
     FDivineBeastsFlowViewState GetViewState() const { return ViewState; }
@@ -131,6 +133,10 @@ public:
     }
 
 private:
+    /** 只从本次已确认Session、真实受控Pawn和共享体验资源采集事实，旧世界事件忽略。 */
+    void ObserveCurrentGameplayWorld();
+    TWeakObjectPtr<class ADivineBeastsWorldPlayerController> ObservedWorldController;
+    bool bObservingGameplayFacts=false;
     /** 注册本GameInstance全部项目ExecutorId；任一失败时回滚本次已注册句柄。 */
     bool RegisterNodeFactories();
     void UnregisterNodeFactories();
@@ -204,7 +210,11 @@ private:
 
     FGamePlatformDataLease PendingFlowDefinitionLease;
     /** 角色创建草稿异步Definition校验租约；新提交会取消旧请求，离开GameInstance时显式释放。 */
-    TSharedPtr<FStreamableHandle> CharacterCreationValidationLease;
+    FGamePlatformDataLease CharacterCreationValidationLease;
+    /** 每次提交/取消递增，旧回调不能释放或覆盖新草稿。 */
+    uint64 CharacterCreationValidationGeneration = 0;
+    /** 先作废代次、清空本地句柄再撤销自有租约；游戏线程，可重复调用。 */
+    void ReleaseCharacterCreationValidationLease();
     FGamePlatformFlowHandle ActiveFlow;
     TArray<FGamePlatformFlowFactoryHandle> FactoryHandles;
 

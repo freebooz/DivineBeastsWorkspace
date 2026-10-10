@@ -297,15 +297,15 @@ Data 插件只提供统一 Definition 身份、AssetRegistry 元数据和加载�
 
 这些值可由 Debug/Telemetry 上层读取，但 Data 不反向依赖 Telemetry。
 
-`ReleasedLeaseRecords` 还用于显式观察当前严格幂等释放记录的线性增长风险。
+`ReleasedLeaseRecords` 保留诊断字段兼容，目前恒为0。2026-09-30以实例秘密签发完整租约身份摘要，保留两个秘密与单调代次即可验证重复释放，不再维护已释放记录表。此摘要不替代网络认证，句柄不可跨进程或实例恢复。
 
 ## 15. 当前已知限制
 
-1. ReleasedLeases 为保证严格幂等释放而保留到 GameInstance 销毁，长寿命实例记录数会线性增长。
+1. 活跃及未显式释放的失败终态仍需调用方结束用途后释放；移除已释放历史并不取消调用方的清理责任。
 2. 源身份唯一性检查当前仍可能扫描 AssetRegistry 类型，尚未做带失效通知的缓存索引和性能量化。
 3. Owner（所有者）弱引用存活检查当前使用 CoreTicker（核心Ticker）；尚未基于实测调整检查频率。
-4. 当前没有真实 `.uasset/.umap` 生产内容，因此无法完成正式 Cook/Chunk/Server-safe 验证。
-5. UE Automation（虚幻自动化）当前没有可启动的 UnrealEditor/UnrealEditor-Cmd 可执行程序，尚未实跑。
+4. 资源与内容验收依赖正式主工程实际资产；本轮源码修复没有新建或修改资产，也不能替代干净Cook/Chunk/Server产物审计。
+5. 本轮已找到锁定UE5.8.0的编辑器可执行文件；历史Automation未运行记录保持为历史证据，本轮动态结果统一见修复执行记录。
 
 ## 16. 当前验证状态
 
@@ -320,3 +320,8 @@ Data 插件只提供统一 Definition 身份、AssetRegistry 元数据和加载�
 - Cook / Stage / Chunk：未验证。
 
 详细证据见 [TestingAndEvidence.md](TestingAndEvidence.md)。
+## 2026-09-30 普通资源租约
+
+IGamePlatformDataService新增AcquireResources/ReleaseResources。普通资源沿用真实软路径，不改变既有HeroDefinition、BehaviorTree、Blackboard、Widget主资产身份；在同一实例请求账本使用同一ScopeId、LeaseId、Generation、IssuerProof与弱调用者清理协议。资源加载复用唯一AssetManager的StreamableManager；每个请求只释放自己持有的引擎句柄，不按路径全局Unload，跨世界与多实例需求不互相撤销。
+
+原始路径数先受统一节点安全上限约束，再去重排序。它是防异常输入的界限，不是CPU/GPU性能预算。成功后调用者持租约直到真实用途结束；失败回滚加载，取消与世界销毁只发布一次请求终态。Definition递归依赖仍走现有DFS，不把普通资源路径视为新的Definition依赖树。

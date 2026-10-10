@@ -1,11 +1,9 @@
+// 平台客户端业务JSON适配；线程、生命周期与迁移合同见同名公开头。
 #include "Transport/GamePlatformLiveOpsGatewayHttpTransport.h"
 
-#include "Async/Async.h"
 #include "Dom/JsonObject.h"
-#include "HttpModule.h"
-#include "Interfaces/IHttpRequest.h"
-#include "Interfaces/IHttpResponse.h"
-#include "Misc/ScopeLock.h"
+#include "JsonIntegerPolicy.h"
+#include "GamePlatformOnlineClientSubsystem.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -18,161 +16,159 @@ FString GuidString(const FGuid& Guid)
         ? Guid.ToString(EGuidFormats::DigitsWithHyphensLower)
         : FString();
 }
+bool NumberToInt64(const TSharedPtr<FJsonObject>& Json, const TCHAR* Field, int64& Out)
+{
+    if (!Json) { return false; }
+    const auto* Value = Json->Values.Find(Field);
+    if (!Value || !Value->IsValid() || (*Value)->Type != EJson::Number) { return false; }
+    FString Token;
+    if ((*Value)->PreferStringRepresentation() && (*Value)->TryGetString(Token))
+    {
+        std::int64_t Exact = 0;
+        if (!GPIntegerPolicy::ParseJsonInteger(std::basic_string_view<TCHAR>(*Token, Token.Len()), Exact)) { return false; }
+        Out = Exact; return true;
+    }
+    double Number = 0;
+    if (!(*Value)->TryGetNumber(Number) || !FMath::IsFinite(Number) || FMath::FloorToDouble(Number) != Number || Number < -9007199254740991.0 || Number > 9007199254740991.0) { return false; }
+    Out = static_cast<int64>(Number); return true;
+}
+bool NumberToInt32(const TSharedPtr<FJsonObject>& Json, const TCHAR* Field, int32& Out)
+{
+    int64 Exact = 0;
+    if (!NumberToInt64(Json, Field, Exact) || Exact < MIN_int32 || Exact > MAX_int32) { return false; }
+    Out = static_cast<int32>(Exact); return true;
+}
+// 缺省可选集合沿用当前合同；明确提供的null/对象/字符串不能冒充成功空数组。
+bool OptionalArrayHasValidType(const TSharedPtr<FJsonObject>& Json, const TCHAR* Field)
+{ return Json && (!Json->HasField(Field) || Json->HasTypedField<EJson::Array>(Field)); }
+
 }
 
-FGamePlatformLiveOpsGatewayHttpTransport::
-FGamePlatformLiveOpsGatewayHttpTransport(
-    FString InGatewayBaseUrl,
-    FString InAccessToken)
-    : GatewayBaseUrl(MoveTemp(InGatewayBaseUrl))
-    , AccessToken(MoveTemp(InAccessToken))
+// 游戏线程中的本领域所有权账本；不保存Token，也不拥有Online/HTTP对象。
+struct FGamePlatformLiveOpsGatewayHttpTransport::FRuntime
 {
-    GatewayBaseUrl.RemoveFromEnd(TEXT("/"));
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> Online;
+    TArray<FGamePlatformOnlineRequestHandle> ActiveRequests;
+    uint64 CancellationGeneration = 0;
+};
+
+FGamePlatformLiveOpsGatewayHttpTransport::FGamePlatformLiveOpsGatewayHttpTransport(UGamePlatformOnlineClientSubsystem* InOnlineSubsystem)
+    : Runtime(MakeUnique<FRuntime>())
+{
+    check(IsInGameThread());
+    Runtime->Online = InOnlineSubsystem;
+}
+
+FGamePlatformLiveOpsGatewayHttpTransport::FGamePlatformLiveOpsGatewayHttpTransport(FString InGatewayBaseUrl, FString InAccessToken)
+    : Runtime(MakeUnique<FRuntime>())
+{
+    // 旧消费者须迁入Online组合根；不把传入票据复制到长期对象或日志。
+    (void)InGatewayBaseUrl;
+    InAccessToken.Reset();
+}
+
+FGamePlatformLiveOpsGatewayHttpTransport::~FGamePlatformLiveOpsGatewayHttpTransport()
+{
+    CancelAllRequests();
 }
 
 bool FGamePlatformLiveOpsGatewayHttpTransport::IsConfigured() const
 {
-    return !GatewayBaseUrl.IsEmpty() &&
-           !AccessToken.IsEmpty();
+    check(IsInGameThread());
+    const auto* Online = Runtime ? Runtime->Online.Get() : nullptr;
+    if (!IsValid(Online)) { return false; }
+    const auto State = Online->GetSnapshot().State;
+    return State == EGamePlatformAuthState::Authenticated || State == EGamePlatformAuthState::Refreshing;
 }
 
 void FGamePlatformLiveOpsGatewayHttpTransport::CancelAllRequests()
 {
-    TArray<TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>> Requests;
+    check(IsInGameThread());
+    if (!Runtime) { return; }
+    ++Runtime->CancellationGeneration;
+    auto Requests = MoveTemp(Runtime->ActiveRequests);
+    Runtime->ActiveRequests.Reset();
+    if (auto* Online = Runtime->Online.Get())
     {
-        FScopeLock Lock(&ActiveRequestsMutex);
-        Requests = ActiveRequests;
-        ActiveRequests.Reset();
+        for (const auto& Request : Requests) { Online->Cancel(Request); }
     }
+}
 
-    for (const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request :
-         Requests)
-    {
-        if (Request.IsValid())
-        {
-            Request->CancelRequest();
-        }
-    }
+void FGamePlatformLiveOpsGatewayHttpTransport::UnregisterRequest(const FGuid& RequestId)
+{
+    Runtime->ActiveRequests.RemoveAll([&RequestId](const auto& Handle) { return Handle.RequestId == RequestId; });
 }
 
 bool FGamePlatformLiveOpsGatewayHttpTransport::StartJsonRequest(
     const FString& Verb,
     const FString& Path,
     const TSharedPtr<FJsonObject>& Body,
-    TFunction<void(int32, const FString&)> Completion)
+    TFunction<void(int32, const FString&, EGamePlatformLiveOpsError)> Completion)
 {
-    if (!IsConfigured() ||
-        Path.IsEmpty() ||
-        !Completion)
-    {
-        return false;
-    }
-
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
-        FHttpModule::Get().CreateRequest();
-    TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> RequestPtr = Request;
-
-    Request->SetURL(GatewayBaseUrl + Path);
-    Request->SetVerb(Verb);
-    Request->SetHeader(
-        TEXT("Authorization"),
-        FString::Printf(TEXT("Bearer %s"), *AccessToken));
-    Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
-
+    check(IsInGameThread());
+    if (!Completion || !IsConfigured() || Runtime->ActiveRequests.Num() >= 8) { return false; }
+    FGamePlatformAuthenticatedRequest Request;
+    Request.Verb = Verb;
+    Request.RelativePath = Path;
+    // 只读请求允许Online重试；写命令没有端点级幂等合同前禁止自动重放。
+    Request.bIdempotent = Request.Verb == TEXT("GET") || Request.Verb == TEXT("HEAD");
     if (Body.IsValid())
     {
-        FString Payload;
-        TSharedRef<TJsonWriter<>> Writer =
-            TJsonWriterFactory<>::Create(&Payload);
-
-        if (!FJsonSerializer::Serialize(
-                Body.ToSharedRef(),
-                Writer))
-        {
-            return false;
-        }
-
-        Request->SetHeader(
-            TEXT("Content-Type"),
-            TEXT("application/json"));
-        Request->SetContentAsString(Payload);
+        const auto Writer = TJsonWriterFactory<>::Create(&Request.Body);
+        if (!FJsonSerializer::Serialize(Body.ToSharedRef(), Writer)) { return false; }
     }
-
-    {
-        FScopeLock Lock(&ActiveRequestsMutex);
-        constexpr int32 MaxConcurrentHttpRequests = 8;
-        if (ActiveRequests.Num() >= MaxConcurrentHttpRequests)
+    const uint64 ExpectedCancellationGeneration = Runtime->CancellationGeneration;
+    const TWeakPtr<FGamePlatformLiveOpsGatewayHttpTransport, ESPMode::ThreadSafe> WeakSelf = AsShared();
+    const auto HandleBox = MakeShared<FGamePlatformOnlineRequestHandle, ESPMode::ThreadSafe>();
+    auto Handle = Runtime->Online->SendAuthenticatedRequest(
+        MoveTemp(Request), FGamePlatformOnlineRequestOptions(),
+        [WeakSelf, HandleBox, ExpectedCancellationGeneration, Completion = MoveTemp(Completion)](
+            FGamePlatformAuthenticatedResponse Response) mutable
         {
-            return false;
-        }
-        ActiveRequests.Add(RequestPtr);
-    }
-
-    TSharedRef<
-        FGamePlatformLiveOpsGatewayHttpTransport,
-        ESPMode::ThreadSafe> Self = AsShared();
-
-    Request->OnProcessRequestComplete().BindLambda(
-        [Self,
-         RequestPtr,
-         Completion = MoveTemp(Completion)](
-            FHttpRequestPtr,
-            FHttpResponsePtr Response,
-            bool bConnectedSuccessfully) mutable
-        {
-            const int32 StatusCode =
-                bConnectedSuccessfully && Response.IsValid()
-                    ? Response->GetResponseCode()
-                    : 0;
-
-            const FString ResponseBody =
-                Response.IsValid()
-                    ? Response->GetContentAsString()
-                    : FString();
-
-            Self->UnregisterRequest(RequestPtr);
-
-            AsyncTask(
-                ENamedThreads::GameThread,
-                [Completion = MoveTemp(Completion),
-                 StatusCode,
-                 ResponseBody]() mutable
-                {
-                    Completion(StatusCode, ResponseBody);
-                });
+            const auto Self = WeakSelf.Pin();
+            if (!Self || !Self->Runtime || Self->Runtime->CancellationGeneration != ExpectedCancellationGeneration) { return; }
+            Self->UnregisterRequest(HandleBox->RequestId);
+            EGamePlatformLiveOpsError Error = EGamePlatformLiveOpsError::None;
+            if (!Response.IsSuccess())
+            {
+                if (Response.Error == EGamePlatformAuthError::AuthExpired ||
+                    Response.Error == EGamePlatformAuthError::InvalidCredentials ||
+                    Response.Error == EGamePlatformAuthError::Forbidden)
+                { Error = EGamePlatformLiveOpsError::Unauthorized; }
+                else if (Response.Error == EGamePlatformAuthError::Cancelled)
+                { Error = Response.bMayHaveReachedServer ? EGamePlatformLiveOpsError::OutcomeUnknown : EGamePlatformLiveOpsError::Cancelled; }
+                else if (Response.Error == EGamePlatformAuthError::TimedOut)
+                { Error = Response.bMayHaveReachedServer ? EGamePlatformLiveOpsError::OutcomeUnknown : EGamePlatformLiveOpsError::TimedOut; }
+                else if (Response.Error == EGamePlatformAuthError::OutcomeUnknown)
+                { Error = EGamePlatformLiveOpsError::OutcomeUnknown; }
+                else { Error = MapHttpError(Response.HttpStatusCode, Response.Body); }
+            }
+            Completion(Response.HttpStatusCode, Response.Body, Error);
         });
-
-    const bool bStarted = Request->ProcessRequest();
-    if (!bStarted)
-    {
-        UnregisterRequest(RequestPtr);
-    }
-    return bStarted;
-}
-
-void FGamePlatformLiveOpsGatewayHttpTransport::UnregisterRequest(
-    const TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>& Request)
-{
-    FScopeLock Lock(&ActiveRequestsMutex);
-    ActiveRequests.Remove(Request);
+    *HandleBox = Handle;
+    if (!Handle.RequestId.IsValid()) { return false; }
+    Runtime->ActiveRequests.Add(Handle);
+    return true;
 }
 
 bool FGamePlatformLiveOpsGatewayHttpTransport::BeginGetCatalog(
     FGamePlatformLiveOpsCatalogCompletion Completion)
 {
+    if (!Completion) { return false; }
     return StartJsonRequest(
         TEXT("GET"),
         TEXT("/v1/liveops/catalog"),
         nullptr,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& Body) mutable
+            const FString& Body,
+            EGamePlatformLiveOpsError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformLiveOpsError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, Body));
+                    TransportError != EGamePlatformLiveOpsError::None ? TransportError : MapHttpError(StatusCode, Body));
                 return;
             }
 
@@ -181,7 +177,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginGetCatalog(
                 TJsonReaderFactory<>::Create(Body);
 
             FGamePlatformLiveOpsCatalogSnapshot Catalog;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToCatalog(Json, Catalog))
             {
                 Completion(
@@ -199,19 +195,21 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginGetCatalog(
 bool FGamePlatformLiveOpsGatewayHttpTransport::BeginGetPlayerState(
     FGamePlatformLiveOpsPlayerStateCompletion Completion)
 {
+    if (!Completion) { return false; }
     return StartJsonRequest(
         TEXT("GET"),
         TEXT("/v1/liveops/state"),
         nullptr,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& Body) mutable
+            const FString& Body,
+            EGamePlatformLiveOpsError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformLiveOpsError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(StatusCode, Body));
+                    TransportError != EGamePlatformLiveOpsError::None ? TransportError : MapHttpError(StatusCode, Body));
                 return;
             }
 
@@ -220,7 +218,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginGetPlayerState(
                 TJsonReaderFactory<>::Create(Body);
 
             FGamePlatformLiveOpsPlayerState State;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToPlayerState(Json, State))
             {
                 Completion(
@@ -240,6 +238,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginClaimSignIn(
     FName CampaignId,
     FGamePlatformLiveOpsClaimCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (!ClaimOperationId.IsValid() ||
         CampaignId.IsNone())
     {
@@ -262,15 +261,14 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginClaimSignIn(
         Body,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformLiveOpsError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformLiveOpsError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(
-                        StatusCode,
-                        ResponseBody));
+                    TransportError != EGamePlatformLiveOpsError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 
@@ -279,7 +277,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginClaimSignIn(
                 TJsonReaderFactory<>::Create(ResponseBody);
 
             FGamePlatformLiveOpsClaimResult Claim;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToClaim(Json, Claim))
             {
                 Completion(
@@ -298,6 +296,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginQueryClaimOperation(
     const FGuid& ClaimOperationId,
     FGamePlatformLiveOpsClaimCompletion Completion)
 {
+    if (!Completion) { return false; }
     if (!ClaimOperationId.IsValid())
     {
         return false;
@@ -311,15 +310,14 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginQueryClaimOperation(
         nullptr,
         [Completion = MoveTemp(Completion)](
             int32 StatusCode,
-            const FString& ResponseBody) mutable
+            const FString& ResponseBody,
+            EGamePlatformLiveOpsError TransportError) mutable
         {
-            if (StatusCode < 200 || StatusCode >= 300)
+            if (TransportError != EGamePlatformLiveOpsError::None || StatusCode < 200 || StatusCode >= 300)
             {
                 Completion(
                     {},
-                    MapHttpError(
-                        StatusCode,
-                        ResponseBody));
+                    TransportError != EGamePlatformLiveOpsError::None ? TransportError : MapHttpError(StatusCode, ResponseBody));
                 return;
             }
 
@@ -328,7 +326,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::BeginQueryClaimOperation(
                 TJsonReaderFactory<>::Create(ResponseBody);
 
             FGamePlatformLiveOpsClaimResult Claim;
-            if (!FJsonSerializer::Deserialize(Reader, Json) ||
+            if (!FJsonSerializer::Deserialize(Reader, Json, FJsonSerializer::EFlags::StoreNumbersAsStrings) ||
                 !JsonToClaim(Json, Claim))
             {
                 Completion(
@@ -367,15 +365,11 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
         return false;
     }
 
-    double Version = 0.0;
-    double Revision = 0.0;
+    int32 Version = 0;
+    int64 Revision = 0;
 
-    if (!(*CatalogJson)->TryGetNumberField(
-            TEXT("catalog_version"),
-            Version) ||
-        !(*CatalogJson)->TryGetNumberField(
-            TEXT("catalog_revision"),
-            Revision) ||
+    if (!NumberToInt32((*CatalogJson), TEXT("catalog_version"), Version) ||
+        !NumberToInt64((*CatalogJson), TEXT("catalog_revision"), Revision) ||
         Version < 1.0 ||
         Revision < 1.0)
     {
@@ -393,6 +387,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
         OutCatalog.PublishedAtUtc,
         false);
 
+    if (!OptionalArrayHasValidType(*CatalogJson, TEXT("seasons"))) { return false; }
     const TArray<TSharedPtr<FJsonValue>>* Seasons = nullptr;
     if ((*CatalogJson)->TryGetArrayField(
             TEXT("seasons"),
@@ -402,7 +397,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
         for (const TSharedPtr<FJsonValue>& Value : *Seasons)
         {
             const TSharedPtr<FJsonObject> Object =
-                Value.IsValid() ? Value->AsObject() : nullptr;
+                Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
             if (!Object.IsValid())
             {
                 return false;
@@ -411,14 +406,14 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
             FString Id;
             FString NameKey;
             FString Presentation;
-            double ItemVersion = 0.0;
-            double Priority = 0.0;
+            int32 ItemVersion = 0;
+            int32 Priority = 0;
 
             FGamePlatformLiveOpsSeason Season;
             if (!Object->TryGetStringField(TEXT("season_id"), Id) ||
                 !Object->TryGetStringField(TEXT("name_key"), NameKey) ||
-                !Object->TryGetNumberField(TEXT("version"), ItemVersion) ||
-                !Object->TryGetNumberField(TEXT("priority"), Priority) ||
+                !NumberToInt32(Object, TEXT("version"), ItemVersion) ||
+                !NumberToInt32(Object, TEXT("priority"), Priority) ||
                 !ParseTimeWindow(Object, Season.TimeWindow))
             {
                 return false;
@@ -428,6 +423,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
                 TEXT("presentation_metadata_id"),
                 Presentation);
 
+            if (Id.IsEmpty() || ItemVersion < 1) { return false; }
             Season.SeasonId = FName(*Id);
             Season.Version = static_cast<int32>(ItemVersion);
             Season.NameKey = NameKey;
@@ -437,6 +433,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
         }
     }
 
+    if (!OptionalArrayHasValidType(*CatalogJson, TEXT("events"))) { return false; }
     const TArray<TSharedPtr<FJsonValue>>* Events = nullptr;
     if ((*CatalogJson)->TryGetArrayField(
             TEXT("events"),
@@ -446,7 +443,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
         for (const TSharedPtr<FJsonValue>& Value : *Events)
         {
             const TSharedPtr<FJsonObject> Object =
-                Value.IsValid() ? Value->AsObject() : nullptr;
+                Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
             if (!Object.IsValid())
             {
                 return false;
@@ -456,12 +453,12 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
             FString Type;
             FString SeasonId;
             FString Presentation;
-            double Priority = 0.0;
+            int32 Priority = 0;
 
             FGamePlatformLiveOpsEvent Event;
             if (!Object->TryGetStringField(TEXT("event_id"), Id) ||
                 !Object->TryGetStringField(TEXT("event_type"), Type) ||
-                !Object->TryGetNumberField(TEXT("priority"), Priority) ||
+                !NumberToInt32(Object, TEXT("priority"), Priority) ||
                 !ParseTimeWindow(Object, Event.TimeWindow))
             {
                 return false;
@@ -472,24 +469,27 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
                 TEXT("presentation_metadata_id"),
                 Presentation);
 
+            if (Id.IsEmpty()) { return false; }
             Event.EventId = FName(*Id);
             Event.EventType = FName(*Type);
             Event.SeasonId = FName(*SeasonId);
             Event.PresentationMetadataId = FName(*Presentation);
             Event.Priority = static_cast<int32>(Priority);
 
+            if (!OptionalArrayHasValidType(Object, TEXT("tags"))) { return false; }
             const TArray<TSharedPtr<FJsonValue>>* Tags = nullptr;
             if (Object->TryGetArrayField(TEXT("tags"), Tags) && Tags)
             {
                 for (const TSharedPtr<FJsonValue>& Tag : *Tags)
                 {
                     FString TagString;
-                    if (Tag.IsValid() &&
+                    if (Tag.IsValid() && Tag->Type == EJson::String &&
                         Tag->TryGetString(TagString) &&
                         !TagString.IsEmpty())
                     {
                         Event.Tags.Add(FName(*TagString));
                     }
+                    else { return false; }
                 }
             }
 
@@ -497,6 +497,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
         }
     }
 
+    if (!OptionalArrayHasValidType(*CatalogJson, TEXT("sign_in_campaigns"))) { return false; }
     const TArray<TSharedPtr<FJsonValue>>* Campaigns = nullptr;
     if ((*CatalogJson)->TryGetArrayField(
             TEXT("sign_in_campaigns"),
@@ -506,7 +507,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
         for (const TSharedPtr<FJsonValue>& Value : *Campaigns)
         {
             const TSharedPtr<FJsonObject> Object =
-                Value.IsValid() ? Value->AsObject() : nullptr;
+                Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
             if (!Object.IsValid())
             {
                 return false;
@@ -514,11 +515,11 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
 
             FString Id;
             FString Presentation;
-            double ItemVersion = 0.0;
+            int32 ItemVersion = 0;
 
             FGamePlatformLiveOpsSignInCampaign Campaign;
             if (!Object->TryGetStringField(TEXT("campaign_id"), Id) ||
-                !Object->TryGetNumberField(TEXT("version"), ItemVersion) ||
+                !NumberToInt32(Object, TEXT("version"), ItemVersion) ||
                 !ParseTimeWindow(Object, Campaign.TimeWindow))
             {
                 return false;
@@ -528,10 +529,12 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToCatalog(
                 TEXT("presentation_metadata_id"),
                 Presentation);
 
+            if (Id.IsEmpty() || ItemVersion < 1) { return false; }
             Campaign.CampaignId = FName(*Id);
             Campaign.Version = static_cast<int32>(ItemVersion);
             Campaign.PresentationMetadataId = FName(*Presentation);
 
+            if (!OptionalArrayHasValidType(Object, TEXT("reward_schedule"))) { return false; }
             const TArray<TSharedPtr<FJsonValue>>* Schedule = nullptr;
             if (Object->TryGetArrayField(
                     TEXT("reward_schedule"),
@@ -557,10 +560,8 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToPlayerState(
         return false;
     }
 
-    double Revision = 0.0;
-    if (!Json->TryGetNumberField(
-            TEXT("player_state_revision"),
-            Revision) ||
+    int64 Revision = 0;
+    if (!NumberToInt64(Json, TEXT("player_state_revision"), Revision) ||
         Revision < 1.0 ||
         !ParseIsoTime(
             Json,
@@ -579,6 +580,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToPlayerState(
     OutState.PlayerStateRevision =
         static_cast<int64>(Revision);
 
+    if (!OptionalArrayHasValidType(Json, TEXT("campaign_states"))) { return false; }
     const TArray<TSharedPtr<FJsonValue>>* Campaigns = nullptr;
     if (Json->TryGetArrayField(
             TEXT("campaign_states"),
@@ -588,7 +590,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToPlayerState(
         for (const TSharedPtr<FJsonValue>& Value : *Campaigns)
         {
             const TSharedPtr<FJsonObject> Object =
-                Value.IsValid() ? Value->AsObject() : nullptr;
+                Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
             if (!Object.IsValid())
             {
                 return false;
@@ -598,8 +600,8 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToPlayerState(
             FString PeriodKey;
             FString RewardStatus;
             bool bClaimed = false;
-            double TotalClaims = 0.0;
-            double NextReward = 0.0;
+            int32 TotalClaims = 0;
+            int32 NextReward = 0;
 
             if (!Object->TryGetStringField(TEXT("campaign_id"), Id) ||
                 !Object->TryGetStringField(
@@ -608,12 +610,8 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToPlayerState(
                 !Object->TryGetBoolField(
                     TEXT("claimed_current_period"),
                     bClaimed) ||
-                !Object->TryGetNumberField(
-                    TEXT("total_claim_count"),
-                    TotalClaims) ||
-                !Object->TryGetNumberField(
-                    TEXT("next_reward_index"),
-                    NextReward) ||
+                !NumberToInt32(Object, TEXT("total_claim_count"), TotalClaims) ||
+                !NumberToInt32(Object, TEXT("next_reward_index"), NextReward) ||
                 !Object->TryGetStringField(
                     TEXT("reward_status"),
                     RewardStatus))
@@ -622,6 +620,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToPlayerState(
             }
 
             FGamePlatformLiveOpsCampaignState Campaign;
+            if (Id.IsEmpty() || TotalClaims < 0 || NextReward < 0) { return false; }
             Campaign.CampaignId = FName(*Id);
             Campaign.CurrentPeriodKey = PeriodKey;
             Campaign.bClaimedCurrentPeriod = bClaimed;
@@ -647,7 +646,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToClaim(
     }
 
     FString CampaignId;
-    double Revision = 0.0;
+    int64 Revision = 0;
 
     if (!Json->TryGetStringField(TEXT("claim_id"), OutClaim.ClaimId) ||
         !Json->TryGetStringField(
@@ -662,9 +661,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToClaim(
         !Json->TryGetStringField(
             TEXT("status"),
             OutClaim.Status) ||
-        !Json->TryGetNumberField(
-            TEXT("player_state_revision"),
-            Revision) ||
+        !NumberToInt64(Json, TEXT("player_state_revision"), Revision) ||
         !ParseIsoTime(
             Json,
             TEXT("server_time_utc"),
@@ -678,7 +675,7 @@ bool FGamePlatformLiveOpsGatewayHttpTransport::JsonToClaim(
     OutClaim.PlayerStateRevision =
         static_cast<int64>(Revision);
 
-    return !OutClaim.ClaimId.IsEmpty() &&
+    return Revision > 0 && !OutClaim.ClaimId.IsEmpty() &&
            !OutClaim.ClaimOperationId.IsEmpty() &&
            !OutClaim.CampaignId.IsNone();
 }

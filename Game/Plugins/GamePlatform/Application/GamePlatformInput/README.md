@@ -50,3 +50,16 @@ Android / iOS
 - Android 模块构建已尝试，但当前 Runner 缺少 NDK r27c；Android/iOS 真机触控、屏幕适配和性能验收均未完成。
 - 没有 Client Cook/Stage 证明。
 - 没有把本地输入当作服务器权威。
+
+## 2026-09-30设计审查修订
+
+ResetMappings(None)只重置当前Profile声明且原生已登记的行；显式外部行拒绝。SaveInputPreferences的Success表示提交原生void保存，不证明落盘；bPreferencesSaveSubmitted表明已提交，bPreferencesSaved保留身份但当前保持false。磁盘成功/失败不可观测，前置失败明确返回。
+
+本次真实源码/Native/静态检查与未执行UE/后端/Cook边界见Game/Saved/Reviews/task2-repair-report.md；旧历史运行证据不自动覆盖本次修改。
+
+
+## 2026-10-09 映射与PIE合同
+
+List/Preview/Apply重绑定均从当前Profile拥有的映射行读取，Reset也仅拥有者集合。PIE的本地配置区段命名空间包含本LocalPlayer服务随机ScopeId，两个同ControllerId的PIE不会读取相同区段；显式保存返回InputPIEPersistenceDisabled，既不调用原生EnhancedInput保存也不Flush真实INI。普通客户端SaveInputPreferences依旧只报告受理，bPreferencesSaved保持false，不能据void原生API宣布落盘成功。
+
+本轮Input原生策略Debug/Release由ApplicationPlayers证据目录记录；真实PIE/设备/磁盘验收待统一UE测试。默认Profile缺实际定义资产时仍保留既有明确诊断，不生成占位资产。

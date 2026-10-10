@@ -1,6 +1,9 @@
 #pragma once
 
+// 平台诊断稳定数据契约；供开发调试提供者/控制台使用，快照不持有玩法权威状态。
+// Actor和World仅为弱目标标识，不延长其生命周期；实例上下文由调用者显式传递。
 #include "CoreMinimal.h"
+#include "UObject/WeakObjectPtr.h"
 
 class AActor;
 class UWorld;

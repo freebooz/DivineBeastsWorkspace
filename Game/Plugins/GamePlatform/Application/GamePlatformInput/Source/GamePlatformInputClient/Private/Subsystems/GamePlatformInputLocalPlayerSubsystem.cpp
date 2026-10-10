@@ -1,3 +1,4 @@
+// 平台LocalPlayer输入服务：GI Data租约发现Profile，原生Enhanced Input消费上下文，自有登记行/绑定/订阅精确释放，游戏线程事件驱动。
 #include "Subsystems/GamePlatformInputLocalPlayerSubsystem.h"
 
 #include "Definitions/GamePlatformInputProfileDefinition.h"
@@ -5,6 +6,7 @@
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Policy/InputPolicy.h"
 #include "Profiles/InputProfileCompiler.h"
+#include "Profiles/InputMappingReset.h"
 #include "Services/GamePlatformInputServices.h"
 
 #include "EnhancedInputComponent.h"
@@ -130,6 +132,7 @@ bool IsSameInputSnapshot(const FGamePlatformInputSnapshot& Left, const FGamePlat
         Left.bMappingsApplied == Right.bMappingsApplied &&
         Left.bGameplayInputEnabled == Right.bGameplayInputEnabled &&
         Left.bPreferencesSaved == Right.bPreferencesSaved &&
+        Left.bPreferencesSaveSubmitted == Right.bPreferencesSaveSubmitted &&
         Left.ActiveDeviceFamily == Right.ActiveDeviceFamily &&
         Left.ProfileGeneration == Right.ProfileGeneration &&
         Left.BindingGeneration == Right.BindingGeneration &&
@@ -221,6 +224,8 @@ struct FGamePlatformInputScope
     TMap<uint8, int32> LegacySlotBySemantic;
     TMap<FName, TWeakObjectPtr<UInputMappingContext>> Contexts;
     TSet<TWeakObjectPtr<UInputMappingContext>> PreferenceContextsOwned;
+    /** 当前Profile所有上下文声明的可重绑行；其他功能注册的行不属于本服务重置范围。 */
+    TSet<FName> ProfileMappingRows;
 
     TMap<FGuid, FInputContextRecord> ContextLeases;
     TMap<FGuid, FInputBlockRecord> Blocks;
@@ -244,6 +249,7 @@ struct FGamePlatformInputScope
     bool bProfilePrepared = false;
     bool bMappingsApplied = false;
     bool bPreferencesSaved = false;
+    bool bPreferencesSaveSubmitted = false;
     bool bHasFocus = true;
     bool bDispatching = false;
     bool bAdjustingContexts = false;
@@ -526,7 +532,7 @@ FGamePlatformInputProfileHandle UGamePlatformInputLocalPlayerSubsystem::PrepareI
     Handle.Generation = Generation;
 
     const FString Namespace = LocalPlayer && LocalPlayer->GetWorld() && LocalPlayer->GetWorld()->WorldType == EWorldType::PIE
-        ? TEXT("PIE") : TEXT("Game");
+        ? TEXT("PIE.") + Scope->ScopeId.ToString(EGuidFormats::Digits) : TEXT("Game");
     const int32 PlayerIndex = LocalPlayer ? FMath::Max(0, LocalPlayer->GetControllerId()) : 0;
     const std::string StableKey = Policy::StableSettingsKey(
         TCHAR_TO_UTF8(*Namespace),
@@ -573,6 +579,7 @@ FGamePlatformInputProfileHandle UGamePlatformInputLocalPlayerSubsystem::PrepareI
     Scope->bProfilePrepared = false;
     Scope->bMappingsApplied = false;
     Scope->bPreferencesSaved = false;
+    Scope->bPreferencesSaveSubmitted = false;
     Scope->LastResult = FGamePlatformResult::Success();
     PublishState();
 
@@ -688,10 +695,15 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::PreparePreferences()
     }
 
     Scope->PreferenceContextsOwned.Reset();
+    Scope->ProfileMappingRows.Reset();
     for (const auto& Pair : Scope->Contexts)
     {
         if (UInputMappingContext* Context = Pair.Value.Get())
         {
+            for (const auto& Mapping : Context->GetMappings())
+            {
+                if (Mapping.IsPlayerMappable() && !Mapping.GetMappingName().IsNone()) { Scope->ProfileMappingRows.Add(Mapping.GetMappingName()); }
+            }
             if (!Settings->IsMappingContextRegistered(Context) && Settings->RegisterInputMappingContext(Context))
             {
                 Scope->PreferenceContextsOwned.Add(Context);
@@ -756,6 +768,7 @@ void UGamePlatformInputLocalPlayerSubsystem::ReleasePreferences()
         }
     }
     Scope->PreferenceContextsOwned.Reset();
+    Scope->ProfileMappingRows.Reset();
 }
 
 FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::ReleaseInputProfile(const FGamePlatformInputProfileHandle& Handle)
@@ -803,6 +816,7 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::ReleaseInputProfile(
     Scope->bProfilePrepared = false;
     Scope->bMappingsApplied = false;
     Scope->bPreferencesSaved = false;
+    Scope->bPreferencesSaveSubmitted = false;
     Scope->LastResult = FGamePlatformResult::Success();
     PublishState();
     return FGamePlatformResult::Success();
@@ -886,6 +900,7 @@ FGamePlatformInputContextHandle UGamePlatformInputLocalPlayerSubsystem::AcquireI
 
     Scope->bMappingsApplied = false;
     Scope->bPreferencesSaved = false;
+    Scope->bPreferencesSaveSubmitted = false;
     ScheduleMaintenance();
     OutResult = FGamePlatformResult::Success();
     PublishState();
@@ -1238,6 +1253,7 @@ FGamePlatformInputSnapshot UGamePlatformInputLocalPlayerSubsystem::GetInputSnaps
             static_cast<uint8>(EGamePlatformInputChannel::Look) |
             static_cast<uint8>(EGamePlatformInputChannel::Actions));
     Snapshot.bPreferencesSaved = Scope->bPreferencesSaved;
+    Snapshot.bPreferencesSaveSubmitted = Scope->bPreferencesSaveSubmitted;
     Snapshot.ActiveDeviceFamily = Scope->ActiveDeviceFamily;
     Snapshot.Accessibility = Scope->Accessibility;
     Snapshot.ProfileGeneration = Scope->ProfileHandle.Generation;
@@ -1341,6 +1357,7 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::SetAccessibilitySett
 
     Scope->Accessibility = Settings;
     Scope->bPreferencesSaved = false;
+    Scope->bPreferencesSaveSubmitted = false;
     PublishState();
     return FGamePlatformResult::Success();
 }
@@ -1360,10 +1377,11 @@ TArray<FGamePlatformInputMapping> UGamePlatformInputLocalPlayerSubsystem::ListPl
         LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
     UEnhancedInputUserSettings* Settings = Enhanced ? Enhanced->GetUserSettings() : nullptr;
     UEnhancedPlayerMappableKeyProfile* KeyProfile = Settings ? Settings->GetActiveKeyProfile() : nullptr;
-    if (!KeyProfile) { return Result; }
+    if (!Scope || !KeyProfile) { return Result; }
 
     for (const auto& RowPair : KeyProfile->GetPlayerMappingRows())
     {
+        if (!Scope->ProfileMappingRows.Contains(RowPair.Key)) { continue; }
         for (const FPlayerKeyMapping& Mapping : RowPair.Value.Mappings)
         {
             if (!Mapping.IsValid()) { continue; }
@@ -1457,6 +1475,7 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::ApplyRebind(FName Ro
 
     Settings->ApplySettings();
     Scope->bPreferencesSaved = false;
+    Scope->bPreferencesSaveSubmitted = false;
     RebuildMappings();
     return FGamePlatformResult::Success();
 }
@@ -1478,35 +1497,22 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::ResetMappings(FName 
         return FGamePlatformResult::Failure(TEXT("InputUserSettingsUnavailable"), TEXT("Enhanced Input用户设置不可用。"));
     }
 
-    TArray<FName> Rows;
-    if (RowName.IsNone())
+    // 多行重置不是原生事务：失败前可能已经改变部分自有行，必须同步脏状态和视图而不能伪装成未改动。
+    Scope->bPreferencesSaved = false;
+    Scope->bPreferencesSaveSubmitted = false;
+    const auto ResetResult = ResetGamePlatformProfileMappings(*Settings, Scope->ProfileMappingRows, RowName);
+    if (!ResetResult.IsSuccess())
     {
-        KeyProfile->GetPlayerMappingRows().GetKeys(Rows);
-    }
-    else
-    {
-        if (!KeyProfile->GetPlayerMappingRows().Contains(RowName))
-        {
-            return FGamePlatformResult::Failure(TEXT("RebindRowMissing"), TEXT("待重置的映射行不存在。"));
-        }
-        Rows.Add(RowName);
-    }
-
-    for (const FName Row : Rows)
-    {
-        FMapPlayerKeyArgs Args;
-        Args.MappingName = Row;
-        Args.Slot = EPlayerMappableKeySlot::Unspecified;
-        FGameplayTagContainer FailureReason;
-        Settings->ResetAllPlayerKeysInRow(Args, FailureReason);
-        if (!FailureReason.IsEmpty())
-        {
-            return FGamePlatformResult::Failure(TEXT("ResetMappingRejected"), TEXT("Enhanced Input拒绝映射重置请求。"));
-        }
+        Settings->ApplySettings();
+        RebuildMappings();
+        Scope->LastResult = ResetResult;
+        PublishState();
+        return ResetResult;
     }
 
     Settings->ApplySettings();
     Scope->bPreferencesSaved = false;
+    Scope->bPreferencesSaveSubmitted = false;
     RebuildMappings();
     return FGamePlatformResult::Success();
 }
@@ -1527,6 +1533,12 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::SaveInputPreferences
         return FGamePlatformResult::Failure(TEXT("InputPreferencesUnavailable"), TEXT("输入偏好持久化服务不可用。"));
     }
 
+    // EnhancedInput原生存档按ControllerId定位，两个PIE仍可能共用槽；PIE只允许作用域内存偏好。
+    if (GetLocalPlayer() && GetLocalPlayer()->GetWorld() && GetLocalPlayer()->GetWorld()->WorldType == EWorldType::PIE)
+    {
+        return FGamePlatformResult::Unsupported(TEXT("InputPIEPersistenceDisabled"), TEXT("PIE输入偏好仅保留在当前本地玩家作用域，禁止写入真实用户设置。"));
+    }
+
     // 磁盘写入只发生在显式Save调用，不进入每帧输入路径。
     Settings->SaveSettings();
     GConfig->SetDouble(*Scope->SettingsSection, TEXT("LookSensitivityMultiplier"), Scope->Accessibility.LookSensitivityMultiplier, GGameUserSettingsIni);
@@ -1537,7 +1549,9 @@ FGamePlatformResult UGamePlatformInputLocalPlayerSubsystem::SaveInputPreferences
     GConfig->SetBool(*Scope->SettingsSection, TEXT("InvertLookY"), Scope->Accessibility.bInvertLookY, GGameUserSettingsIni);
     GConfig->Flush(false, GGameUserSettingsIni);
 
-    Scope->bPreferencesSaved = true;
+    // UE SaveSettings/INI Flush返回void，无法证明落盘；只声明已提交，Saved保持false。
+    Scope->bPreferencesSaveSubmitted = true;
+    Scope->bPreferencesSaved = false;
     ++Scope->SettingsRevision;
     PublishState();
     return FGamePlatformResult::Success();

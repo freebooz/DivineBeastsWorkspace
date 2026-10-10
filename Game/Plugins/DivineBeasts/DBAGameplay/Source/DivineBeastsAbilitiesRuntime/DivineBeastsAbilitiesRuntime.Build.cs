@@ -18,6 +18,7 @@ public class DivineBeastsAbilitiesRuntime : ModuleRules
             "GamePlatformCombat", "DivineBeastsCharactersRuntime"
         });
         // NetCore 仅用于本模块拥有者定向复制实现；不将服务器内部入口公开给客户端。
-        PrivateDependencyModuleNames.AddRange(new string[] { "NetCore" });
+        // 真实角色装配回归直接读取平台GameplayEligibility合同，须直接声明所属模块，不依赖Characters间接链接。
+        PrivateDependencyModuleNames.AddRange(new string[] { "NetCore", "GamePlatformGameplay" });
     }
 }

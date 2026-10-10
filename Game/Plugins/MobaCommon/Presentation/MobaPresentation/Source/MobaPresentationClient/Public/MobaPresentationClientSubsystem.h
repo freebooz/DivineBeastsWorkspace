@@ -1,3 +1,5 @@
+// 本文件属于MobaCommon可选MOBA层 MobaPresentation，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -5,6 +7,7 @@
 #include "GamePlatformPresentationTypes.h"
 #include "Types/GamePlatformCombatEvent.h"
 #include "Types/MobaPresentationTypes.h"
+#include "TimerManager.h"
 #include "Feedback/MobaHitFeedbackPolicy.h"
 #include "MobaPresentationClientSubsystem.generated.h"
 
@@ -15,6 +18,10 @@ class UGamePlatformCombatFeedbackWorldSubsystem;
 class UGamePlatformHitFeedbackProfile;
 class UWorld;
 class IMobaPresentationContextContributor;
+class APlayerController;
+class APawn;
+class AActor;
+class AGameStateBase;
 
 /**
  * MOBA通用的每次命中已加载表现配置。Resolver只提供数据，不加载资产、不控制服务器结果。
@@ -45,8 +52,15 @@ public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
 
+    /** GT事件驱动刷新当前World/Controller/Pawn；外部事实恢复重入换代后旧绑定栈立即停止。 */
     void RefreshBindings();
 
+    /**
+     * GT提交值事实；贡献者/Provider可同步注销、关闭或旅行，失效返回InvalidRequest/StaleWorld。
+     * Submitted仅指已有或本次真正受理；同ID同步在途重入返回Pending，不能视为播放成功。
+     * 预测Provider内到达的首份确认由原栈留存：预测受理后只升级，拒绝后执行真实确认提交。
+     * 原同步栈结束前不递归播放；结束后调用方可同ID查询/重试实际终态，旧作用域不清后继账本。
+     */
     EGamePlatformPresentationSubmitResult SubmitAdaptedFact(
         FMobaPresentationAdaptedFact Fact);
 
@@ -62,6 +76,8 @@ public:
     /** 注入可配置中立反馈参数，供竞技组合根使用。 */
     void ConfigureHitFeedback(const FGamePlatformHitFeedbackTuning& Tuning)
     {
+        if (bClosing) return;
+        ++HitFeedbackConfigurationGeneration;
         HitFeedbackTuning = Tuning;
     }
 
@@ -74,14 +90,16 @@ public:
         FName VFXDefinitionId,
         FName SFXDefinitionId);
 
-    /** 可选项目层解析器按命中Hero/Ability查找已完成的租约，失败安全回退默认配置。 */
+    /** GT同步按命中Hero/Ability查已完成租约；未命中只用中立参数，不复用其他英雄的Profile/VFX/SFX。 */
     void SetHitFeedbackResolver(FMobaHitFeedbackResolver&& Resolver)
     {
+        if (bClosing) return;
+        ++HitFeedbackConfigurationGeneration;
         HitFeedbackResolver = MoveTemp(Resolver);
     }
 
     /** 组合根卸载时移除闭包，防止下一世界访问旧角色/内容包。 */
-    void ClearHitFeedbackResolver() { HitFeedbackResolver = {}; }
+    void ClearHitFeedbackResolver() { ++HitFeedbackConfigurationGeneration; HitFeedbackResolver = {}; }
     EGamePlatformPresentationSubmitResult AdaptAbilityFact(
         const FMobaPresentationAbilityFact& Fact);
     EGamePlatformPresentationSubmitResult AdaptStatusFact(
@@ -95,9 +113,11 @@ public:
     EGamePlatformPresentationSubmitResult RecoverPersistentFact(
         FMobaPresentationAdaptedFact Fact);
 
+    /** GT注册同步只读扩展器；注册表持有SharedRef，调用栈另持值拷贝，支持回调内自注销。 */
     bool RegisterContextContributor(
         FName ContributorId,
         TSharedRef<IMobaPresentationContextContributor> Contributor);
+    /** GT撤销此ID后续扩展；正在执行的原对象仍由本次调用持有至返回，移除成功返回true。 */
     bool UnregisterContextContributor(FName ContributorId);
 
     int32 GetWorldGeneration() const { return WorldGeneration; }
@@ -106,6 +126,8 @@ public:
     int32 GetProviderMissingCount() const { return ProviderMissingCount; }
 
 private:
+    friend class FMobaPresentationPawnBindingRegressionTest;
+    friend class FMobaPresentationArenaArrayReentryTest;
     struct FPlayerSnapshot
     {
         int32 StatsRevision = 0;
@@ -115,7 +137,18 @@ private:
 
     void ResetWorldState(UWorld* NewWorld);
     void UnbindArena();
-    void UnbindCombat();    /** 订阅当前客户端世界已确认事实，不扫描或缓存全场战斗Actor。 */
+    void UnbindCombat();
+    /** 本地玩家与World事件接线；关停/旅行先解绑，回调只刷新当前所属世界。 */
+    void BindWorldEvents(UWorld* World);
+    void UnbindWorldEvents();
+    void BindController(APlayerController* Controller);
+    void HandleControllerChanged(APlayerController* Controller);
+    void HandlePawnChanged(APawn* Pawn);
+    void HandleGameStateSet(AGameStateBase* GameState);
+    void HandleActorSpawned(AActor* Actor);
+    /** 延后出生接线只接受同服务/World世代；已关闭或旅行后的回调不重新订阅。 */
+    void HandleDeferredBindingRefresh(uint64 ExpectedGeneration, TWeakObjectPtr<UWorld> ExpectedWorld);
+    /** 订阅当前客户端世界已确认事实，不扫描或缓存全场战斗Actor。 */
     void BindCombatFeedbackWorld(UWorld& World);
     void UnbindCombatFeedbackWorld();
     void HandleConfirmedNetworkCombatEvent(const FGamePlatformCombatEvent& Event);
@@ -133,13 +166,21 @@ private:
     UFUNCTION()
     void HandleCombatEvent(const FGamePlatformCombatEvent& Event);
 
-    bool PrepareFact(FMobaPresentationAdaptedFact& Fact);
-    bool RememberFact(const FMobaPresentationFactIdentity& Identity);
-    void ApplyContextContributors(FMobaPresentationContext& Context) const;
+    /** 外部贡献回调后必须仍属原作用域；不把旧事实自动转交回调建立的后继World。 */
+    bool PrepareFact(FMobaPresentationAdaptedFact& Fact, TFunctionRef<bool()> IsCurrentScope);
+    /** 只登记已经真实Submitted的事实或升级已受理预测；从不把在途预约写入受理集合。 */
+    bool RememberFact(const FMobaPresentationFactIdentity& Identity, uint64 OperationGeneration);
+    bool ApplyContextContributors(FMobaPresentationContext& Context, TFunctionRef<bool()> IsCurrentScope) const;
+    bool IsArenaBindingCurrent(uint64 ExpectedBinding, uint64 ExpectedArenaBinding,
+        AGamePlatformArenaGameState* ExpectedState, UWorld* ExpectedWorld) const;
     FGuid MakeArenaFactId(const FString& Scope, int32 Revision, uint32 Salt = 0) const;
 
     /** 当前本地玩家唯一可选项目Resolver，不拥有其返回的资源。 */
     FMobaHitFeedbackResolver HitFeedbackResolver;
+    /** 同步Resolver或Provider可更换配置；旧调用栈不能继续使用上一份Profile/目录身份。 */
+    uint64 HitFeedbackConfigurationGeneration = 1;
+    /** Resolver阶段也拒绝同EventId嵌套，结束后撤销临时资格，正常去重仍由Rendered集合持有。 */
+    TSet<FGuid> ResolvingHitEvents;
 
     // 本地玩家独立调校数据，不由表现参数更改服务器判定。
     FGamePlatformHitFeedbackTuning HitFeedbackTuning;
@@ -156,6 +197,17 @@ private:
     TWeakObjectPtr<UWorld> BoundWorld;
     TWeakObjectPtr<AGamePlatformArenaGameState> BoundArenaGameState;
     TWeakObjectPtr<UGamePlatformCombatComponent> BoundCombatComponent;
+    TWeakObjectPtr<APlayerController> BoundController;
+    FDelegateHandle PlayerControllerChangedHandle;
+    FDelegateHandle PawnChangedHandle;
+    FDelegateHandle GameStateSetHandle;
+    FDelegateHandle ActorSpawnedHandle;
+    /** 下一调度轮查找的唯一计时器，解绑所属World时取消，不持有World强引用。 */
+    FTimerHandle PendingBindingRefreshTimer;
+    uint64 BindingGeneration = 1;
+    /** 同World的GameState也能替换，竞技批处理必须另核原GameState绑定操作身份。 */
+    uint64 ArenaBindingGeneration = 1;
+    bool bClosing = false;
     TWeakObjectPtr<UGamePlatformCombatFeedbackWorldSubsystem> BoundCombatWorldBus;
     FDelegateHandle CombatWorldFeedbackHandle;
 
@@ -173,9 +225,22 @@ private:
 
     TMap<FName, TSharedPtr<IMobaPresentationContextContributor>> ContextContributors;
 
+    /** 原同步Submit栈持强引用；注册表换代时清除资格，但不销毁正在执行的本地操作。 */
+    struct FPendingFactSubmission
+    {
+        uint64 OperationGeneration = 0;
+        bool bPredicted = false;
+        // 只留首份同身份确认值快照；重复回调不增加队列，也不借用Provider的输入引用。
+        TOptional<FMobaPresentationAdaptedFact> Confirmation;
+    };
+    TMap<FGuid, TSharedPtr<FPendingFactSubmission>> PendingFactSubmissions;
+    /** 只包含平台已受理事实；在途预约独立保存，不能升级成伪成功。 */
     TSet<FGuid> PredictedFacts;
     TSet<FGuid> ConfirmedFacts;
     TArray<FGuid> FactOrder;
+    /** 当前每个FactId账本的唯一写入操作；计数跨World单调推进，清作用域只清记录。 */
+    TMap<FGuid, uint64> FactRecordOperations;
+    uint64 FactOperationGeneration = 0;
     TMap<FString, int32> LatestAvatarGeneration;
 
     int32 WorldGeneration = 1;

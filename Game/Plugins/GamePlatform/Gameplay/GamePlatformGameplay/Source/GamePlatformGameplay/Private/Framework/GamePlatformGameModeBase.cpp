@@ -13,6 +13,7 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerStart.h"
 #include "HAL/PlatformTime.h"
+#include "Policies/SpawnCandidateOperation.h"
 
 namespace
 {
@@ -245,7 +246,7 @@ bool AGamePlatformGameModeBase::UnregisterSpawnPolicy(const FGamePlatformGamepla
     return true;
 }
 
-FGamePlatformResult AGamePlatformGameModeBase::ValidateAdmission(const APlayerController& Controller) const
+FGamePlatformResult AGamePlatformGameModeBase::ValidateAdmission(const APlayerController& Controller, bool bForActivation) const
 {
     check(IsInGameThread());
 
@@ -268,7 +269,9 @@ FGamePlatformResult AGamePlatformGameModeBase::ValidateAdmission(const APlayerCo
     }
 
     TGuardValue<bool> ExternalGuard(Runtime->bExternalCall, true);
-    const FGamePlatformResult AuthorityResult = AuthorityRecord.Authority->ValidateCurrentAdmission(Controller, Record->Admission);
+    const FGamePlatformResult AuthorityResult = bForActivation
+        ? AuthorityRecord.Authority->ValidatePlayerActivation(Controller, Record->Admission)
+        : AuthorityRecord.Authority->ValidateCurrentAdmission(Controller, Record->Admission);
     if (!AuthorityResult.IsSuccess())
     {
         return AuthorityResult;
@@ -805,7 +808,9 @@ void AGamePlatformGameModeBase::TrySpawn(APlayerController& Controller)
 
         {
             TGuardValue<bool> InternalSpawnGuard(Runtime->bInternalSpawn, true);
-            Super::RestartPlayerAtPlayerStart(&Controller, Candidate.Source.Get());
+            // 来源Actor仅提供候选身份；真正生成位置必须与已通过区域验证的Transform相同。
+            GamePlatformGameplay::Policy::RestartAtValidatedTransform(Candidate,
+                [this, &Controller](const FTransform& Transform) { Super::RestartPlayerAtTransform(&Controller, Transform); });
         }
 
         Runtime->CandidateReservations.Remove(Candidate.CandidateId);
@@ -883,7 +888,8 @@ FGamePlatformResult AGamePlatformGameModeBase::AcceptPreparation(
         return GameplayFailure(TEXT("PreparationTokenStale"));
     }
 
-    const FGamePlatformResult Admission = ValidateAdmission(Controller);
+    // 客户端准备事实不能批准缺失的必要Pawn资源；服务器在消费令牌前复核项目激活门禁。
+    const FGamePlatformResult Admission = ValidateAdmission(Controller, true);
     if (!Admission.IsSuccess() || !ExperienceSnapshot.IsServerActive())
     {
         return Admission.IsSuccess() ? GameplayFailure(TEXT("ExperienceNotActive")) : Admission;
@@ -1162,7 +1168,10 @@ AActor* AGamePlatformGameModeBase::FindPlayerStart_Implementation(AController* P
 {
     if (!Runtime || !Runtime->bInternalSpawn)
     {
-        return nullptr;
+        // UE InitNewPlayer在准入握手前查询Controller初始位置。这里仅查询地图Actor，不生成Pawn、
+        // 不占用玩法候选、不修改Active资格；禁止查询会让引擎直接拒绝Login，握手因此永远无法完成。
+        // 忽略外部Portal名称，实际玩法出生仍只消费后续通过准入和候选占位验证的ReservedSource。
+        return Super::FindPlayerStart_Implementation(Player, FString());
     }
 
     if (APlayerController* PlayerController = Cast<APlayerController>(Player))

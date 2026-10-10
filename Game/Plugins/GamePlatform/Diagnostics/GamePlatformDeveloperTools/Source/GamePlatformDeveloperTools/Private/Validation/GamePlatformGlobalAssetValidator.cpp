@@ -1,4 +1,5 @@
 #include "Validation/GamePlatformGlobalAssetValidator.h"
+#include "Definitions/GamePlatformDefinitionBase.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/IAssetRegistry.h"
@@ -12,59 +13,7 @@ namespace
     {
         return Package.StartsWith(TEXT("/Game/"))
             || Package.StartsWith(TEXT("/GamePlatform"))
-            || Package.StartsWith(TEXT("/DBA"));
-    }
-
-    bool IsDefinitionAsset(const FAssetData& Asset)
-    {
-        return Asset.AssetClassPath.GetAssetName().ToString().Contains(TEXT("Definition"))
-            || Asset.AssetName.ToString().Contains(TEXT("Definition"));
-    }
-
-    bool IsGlobalAssetStableIdProperty(FName Name)
-    {
-        static const TSet<FName> Names =
-        {
-            TEXT("DefinitionId"),
-            TEXT("ArenaModeId"),
-            TEXT("ServerRole"),
-            TEXT("ExperienceId"),
-            TEXT("ItemDefinitionId"),
-            TEXT("EntitlementId"),
-            TEXT("ProgressionTrackId"),
-            TEXT("QuestId"),
-            TEXT("EquipmentSlotId")
-        };
-        return Names.Contains(Name);
-    }
-
-    FString ExportGlobalAssetPropertyValue(UObject* Object, FProperty* Property)
-    {
-        FString Value;
-        if (!Object || !Property)
-        {
-            return Value;
-        }
-
-        const void* Address = Property->ContainerPtrToValuePtr<void>(Object);
-        Property->ExportTextItem_Direct(Value, Address, nullptr, Object, PPF_None);
-        Value.TrimStartAndEndInline();
-        Value.RemoveFromStart(TEXT("\""));
-        Value.RemoveFromEnd(TEXT("\""));
-        return Value;
-    }
-
-    FString NormalizeRequirementToken(FString Value)
-    {
-        Value.TrimStartAndEndInline();
-        Value.RemoveFromStart(TEXT("\""));
-        Value.RemoveFromEnd(TEXT("\""));
-        Value.RemoveFromStart(TEXT("'"));
-        Value.RemoveFromEnd(TEXT("'"));
-        Value.RemoveFromStart(TEXT("("));
-        Value.RemoveFromEnd(TEXT(")"));
-        Value.TrimStartAndEndInline();
-        return Value;
+            || Package.StartsWith(TEXT("/DBA")) || Package.StartsWith(TEXT("/MobaPresentation/"));
     }
 
     FGamePlatformValidationResult MakeGlobalAssetResult(
@@ -112,210 +61,98 @@ void FGamePlatformGlobalAssetValidator::ValidateDefinitionsAndStableIds(
     const TArray<FAssetData>& ProjectAssets,
     TArray<FGamePlatformValidationResult>& OutResults)
 {
-    TMap<FString, FString> StableIdOwners;
+    // 编辑器游戏线程一次获取继承集合，筛选元数据后才加载对象；类/资产重命名不改变定义资格。
+    IAssetRegistry& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
+    const FTopLevelAssetPath BasePath = UGamePlatformDefinitionBase::StaticClass()->GetClassPathName();
+    TSet<FTopLevelAssetPath> DefinitionClasses;
+    Registry.GetDerivedClassNames({ BasePath }, {}, DefinitionClasses);
+    DefinitionClasses.Add(BasePath);
     TMap<FString, FString> DefinitionIdToAsset;
     TMap<FString, TArray<FString>> DefinitionEdges;
     TArray<FString> Failures;
-
+    bool bHasDuplicateIdentity = false;
     for (const FAssetData& Asset : ProjectAssets)
     {
-        if (!IsDefinitionAsset(Asset))
+        if (!DefinitionClasses.Contains(Asset.AssetClassPath)) continue;
+        const auto* Definition = Cast<UGamePlatformDefinitionBase>(Asset.GetAsset());
+        if (!Definition)
         {
+            Failures.Add(FString::Printf(TEXT("%s：定义类元数据与实际对象不一致或无法加载。"), *Asset.PackageName.ToString()));
             continue;
         }
-
-        UObject* Object = Asset.GetAsset();
-        if (!Object)
+        const FGamePlatformResult Validation = Definition->ValidateDefinition();
+        const FPrimaryAssetId PrimaryId = Definition->GetPrimaryAssetId();
+        if (!Validation.IsSuccess() || !PrimaryId.IsValid())
         {
-            Failures.Add(FString::Printf(
-                TEXT("%s：Definition资产无法加载。"),
-                *Asset.PackageName.ToString()));
+            Failures.Add(FString::Printf(TEXT("%s：定义身份/版本/字段无效：%s。"), *Asset.PackageName.ToString(), *Validation.Message));
             continue;
         }
-
-        FString DefinitionId;
-        for (TFieldIterator<FProperty> It(Object->GetClass()); It; ++It)
+        // 当前平台真源是LogicalId→PrimaryAssetId；其他字段中的Role/Item等引用并不是其唯一所有者。
+        const FString Id = PrimaryId.ToString();
+        if (const FString* Previous = DefinitionIdToAsset.Find(Id))
         {
-            FProperty* Property = *It;
-            if (!IsGlobalAssetStableIdProperty(Property->GetFName()))
-            {
-                continue;
-            }
-
-            const FString Value = ExportGlobalAssetPropertyValue(Object, Property);
-            if (Value.IsEmpty())
-            {
-                continue;
-            }
-
-            const FString Key = Property->GetName() + TEXT("=") + Value;
-            if (const FString* ExistingOwner = StableIdOwners.Find(Key))
-            {
-                Failures.Add(FString::Printf(
-                    TEXT("重复Stable ID：%s，资产=%s 与 %s。"),
-                    *Key,
-                    **ExistingOwner,
-                    *Asset.PackageName.ToString()));
-            }
-            else
-            {
-                StableIdOwners.Add(Key, Asset.PackageName.ToString());
-            }
-
-            if (Property->GetFName() == TEXT("DefinitionId"))
-            {
-                DefinitionId = Value;
-            }
+            bHasDuplicateIdentity = true;
+            Failures.Add(FString::Printf(TEXT("重复Stable ID：%s，资产=%s 与 %s。"), *Id, **Previous, *Asset.PackageName.ToString()));
+            continue; // 已经明确失败，不能覆盖首项或按扫描顺序选择合法定义。
         }
-
-        if (DefinitionId.IsEmpty())
-        {
-            Failures.Add(FString::Printf(
-                TEXT("%s：缺少DefinitionId。"),
-                *Asset.PackageName.ToString()));
-            continue;
-        }
-
-        DefinitionIdToAsset.Add(DefinitionId, Asset.PackageName.ToString());
-
-        const FPrimaryAssetId PrimaryId = Object->GetPrimaryAssetId();
-        if (!PrimaryId.IsValid())
-        {
-            Failures.Add(FString::Printf(
-                TEXT("%s：Definition未返回有效PrimaryAssetId。"),
-                *Asset.PackageName.ToString()));
-        }
-
-        FProperty* RequiredProperty =
-            Object->GetClass()->FindPropertyByName(TEXT("RequiredDefinitions"));
-        FArrayProperty* RequiredArray = CastField<FArrayProperty>(RequiredProperty);
-        if (!RequiredArray)
-        {
-            continue;
-        }
-
-        void* ArrayAddress = RequiredArray->ContainerPtrToValuePtr<void>(Object);
-        FScriptArrayHelper Helper(RequiredArray, ArrayAddress);
-
-        TArray<FString>& Edges = DefinitionEdges.FindOrAdd(DefinitionId);
-        for (int32 Index = 0; Index < Helper.Num(); ++Index)
-        {
-            FString RequiredText;
-            RequiredArray->Inner->ExportTextItem_Direct(
-                RequiredText,
-                Helper.GetRawPtr(Index),
-                nullptr,
-                Object,
-                PPF_None);
-
-            RequiredText = NormalizeRequirementToken(RequiredText);
-            if (!RequiredText.IsEmpty())
-            {
-                Edges.AddUnique(RequiredText);
-            }
-        }
+        DefinitionIdToAsset.Add(Id, Asset.PackageName.ToString());
+        auto& Edges = DefinitionEdges.FindOrAdd(Id);
+        for (const FPrimaryAssetId& RequiredId : Definition->RequiredDefinitions) Edges.AddUnique(RequiredId.ToString());
     }
-
-    for (const TPair<FString, TArray<FString>>& Pair : DefinitionEdges)
-    {
+    for (const auto& Pair : DefinitionEdges)
         for (const FString& RequiredId : Pair.Value)
-        {
             if (!DefinitionIdToAsset.Contains(RequiredId))
-            {
-                // 路径型RequiredDefinitions由Asset Registry引用检查负责；
-                // 这里只对明确的稳定ID形式判缺失，避免把SoftObjectPath误报成ID。
-                if (!RequiredId.Contains(TEXT("/"))
-                    && !RequiredId.Contains(TEXT("."))
-                    && !RequiredId.Contains(TEXT(":")))
-                {
-                    Failures.Add(FString::Printf(
-                        TEXT("%s -> %s：RequiredDefinitions缺失。"),
-                        *Pair.Key,
-                        *RequiredId));
-                }
-            }
-        }
-    }
+                Failures.Add(FString::Printf(TEXT("%s -> %s：必需定义未在本次项目定义视图中完整通过校验。"), *Pair.Key, *RequiredId));
 
+    // 显式DFS栈按已扫描定义数有界，不以未限定的C++递归处理资产图；每条边只访问一次。
+    struct FVisitFrame { FString Id; int32 NextEdgeIndex = 0; };
     TMap<FString, uint8> VisitState;
-    TArray<FString> Stack;
     FString CycleEvidence;
-
-    TFunction<bool(const FString&)> Visit = [&](const FString& Id)
+    for (const auto& Root : DefinitionIdToAsset)
     {
-        VisitState.FindOrAdd(Id) = 1;
-        Stack.Add(Id);
-
-        for (const FString& Next : DefinitionEdges.FindRef(Id))
+        if (VisitState.FindRef(Root.Key) != 0) continue;
+        TArray<FVisitFrame> Stack;
+        Stack.Add({ Root.Key, 0 });
+        VisitState.Add(Root.Key, 1);
+        while (!Stack.IsEmpty() && CycleEvidence.IsEmpty())
         {
-            if (!DefinitionIdToAsset.Contains(Next))
+            auto& Frame = Stack.Last();
+            const auto* Edges = DefinitionEdges.Find(Frame.Id);
+            if (!Edges || Frame.NextEdgeIndex >= Edges->Num())
             {
+                VisitState.Add(Frame.Id, 2);
+                Stack.Pop();
                 continue;
             }
-
+            const FString Next = (*Edges)[Frame.NextEdgeIndex++];
+            if (!DefinitionIdToAsset.Contains(Next)) continue;
             const uint8 State = VisitState.FindRef(Next);
             if (State == 0)
             {
-                if (Visit(Next))
-                {
-                    return true;
-                }
+                VisitState.Add(Next, 1);
+                Stack.Add({ Next, 0 });
             }
             else if (State == 1)
             {
-                const int32 Start = Stack.Find(Next);
                 TArray<FString> Cycle;
-                if (Start != INDEX_NONE)
-                {
-                    for (int32 Index = Start; Index < Stack.Num(); ++Index)
-                    {
-                        Cycle.Add(Stack[Index]);
-                    }
-                }
+                bool bInCycle = false;
+                for (const auto& Item : Stack)
+                { bInCycle |= Item.Id == Next; if (bInCycle) Cycle.Add(Item.Id); }
                 Cycle.Add(Next);
                 CycleEvidence = FString::Join(Cycle, TEXT(" -> "));
-                return true;
             }
         }
-
-        Stack.Pop();
-        VisitState.FindOrAdd(Id) = 2;
-        return false;
-    };
-
-    for (const TPair<FString, FString>& Pair : DefinitionIdToAsset)
-    {
-        if (VisitState.FindRef(Pair.Key) == 0 && Visit(Pair.Key))
-        {
-            Failures.Add(TEXT("Definition依赖循环：") + CycleEvidence);
-            break;
-        }
+        if (!CycleEvidence.IsEmpty()) { Failures.Add(TEXT("定义依赖循环：") + CycleEvidence); break; }
     }
-
-    OutResults.Add(MakeGlobalAssetResult(
-        TEXT("GP.Definition"),
-        TEXT("DefinitionGraph"),
-        Failures.IsEmpty()
-            ? EGamePlatformValidationStatus::Passed
-            : EGamePlatformValidationStatus::Failed,
-        Failures.IsEmpty()
-            ? TEXT("DefinitionId/PrimaryAssetId/RequiredDefinitions/循环依赖聚合检查通过。")
-            : TEXT("Definition聚合检查发现问题。"),
+    OutResults.Add(MakeGlobalAssetResult(TEXT("GP.Definition"), TEXT("DefinitionGraph"),
+        Failures.IsEmpty() ? EGamePlatformValidationStatus::Passed : EGamePlatformValidationStatus::Failed,
+        Failures.IsEmpty() ? TEXT("真实定义基类/LogicalId/PrimaryAssetId/版本/必需依赖/循环聚合检查通过。") : TEXT("定义聚合检查发现问题。"),
         FString::Join(Failures, TEXT("; "))));
-
-    OutResults.Add(MakeGlobalAssetResult(
-        TEXT("GP.StableId"),
-        TEXT("StableIdIndex"),
-        Failures.ContainsByPredicate([](const FString& Failure)
-        {
-            return Failure.Contains(TEXT("Stable ID"));
-        })
-            ? EGamePlatformValidationStatus::Failed
-            : EGamePlatformValidationStatus::Passed,
-        TEXT("稳定ID重复索引检查完成。"),
-        FString::Printf(TEXT("indexed=%d"), StableIdOwners.Num())));
+    OutResults.Add(MakeGlobalAssetResult(TEXT("GP.StableId"), TEXT("StableIdIndex"),
+        bHasDuplicateIdentity ? EGamePlatformValidationStatus::Failed : EGamePlatformValidationStatus::Passed,
+        TEXT("只索引定义自己拥有的主资产身份，不将重复引用误报为多个所有者。"),
+        FString::Printf(TEXT("indexed=%d"), DefinitionIdToAsset.Num())));
 }
-
 void FGamePlatformGlobalAssetValidator::ValidatePrimaryAssetsChunksAndReferences(
     const TArray<FAssetData>& ProjectAssets,
     TArray<FGamePlatformValidationResult>& OutResults)

@@ -1,11 +1,41 @@
+// 平台成长客户端投影回归；测试Port仅手控权威输入，验证错误/清空/轨道变更事件，不模拟生产XP写入。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Interfaces/GamePlatformProgressionClientTransport.h"
 #include "Misc/AutomationTest.h"
 #include "Services/GamePlatformProgressionClientSubsystem.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
+/**
+ * 仅Automation的合法Outer夹具：LocalPlayer的Within是Engine，领域Subsystem的Within是LocalPlayer。
+ * GT显式构造并强持有两者，不PlayerAdded/不建World或自动登录；原测试Transport/账号前提保持。
+ * 无Viewport时GetGameInstance为nullptr，不能把本夹具当完整GI/Online装配或生产服务。
+ * 任意正常/提前返回先Deinitialize清委托/取消请求，再释放Client与Player，避免GC和测试间残留。
+ */
+struct FProgressionLocalPlayerFixture
+{
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UGamePlatformProgressionClientSubsystem> Client;
+    bool Initialize(FAutomationTestBase& Test)
+    {
+        if (!Test.TestNotNull(TEXT("LocalPlayer真实Engine Within宿主"), GEngine)) return false;
+        Player.Reset(NewObject<ULocalPlayer>(GEngine));
+        if (!Test.TestNotNull(TEXT("领域Subsystem真实LocalPlayer Outer"), Player.Get())) return false;
+        Client.Reset(NewObject<UGamePlatformProgressionClientSubsystem>(Player.Get()));
+        return Test.TestNotNull(TEXT("合法Outer的领域Subsystem实例"), Client.Get());
+    }
+    ~FProgressionLocalPlayerFixture()
+    {
+        if (Client.IsValid()) Client->Deinitialize();
+        Client.Reset();
+        Player.Reset();
+    }
+};
+
 class FProgressionMockTransport final
     : public IGamePlatformProgressionClientTransport
 {
@@ -34,8 +64,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformProgressionClientAccountTest::RunTest(const FString&)
 {
-    UGamePlatformProgressionClientSubsystem* Client =
-        NewObject<UGamePlatformProgressionClientSubsystem>();
+    FProgressionLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformProgressionClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FProgressionMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
@@ -75,8 +106,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformProgressionClientDerivedCacheTest::RunTest(const FString&)
 {
-    UGamePlatformProgressionClientSubsystem* Client =
-        NewObject<UGamePlatformProgressionClientSubsystem>();
+    FProgressionLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformProgressionClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FProgressionMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
@@ -159,6 +191,53 @@ bool FGamePlatformProgressionClientDerivedCacheTest::RunTest(const FString&)
         TEXT("新Snapshot使View缓存更新"),
         Client->GetViewModelsView()[0].Level,
         4);
+    return true;
+}
+
+// 状态事件覆盖首次轨道、失败、删除/清空；测试替身仅供应领域完成，不模拟后端持久化。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProgressionViewEventsTest, "GamePlatform.Progression.Client.ViewEvents", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProgressionViewEventsTest::RunTest(const FString&)
+{
+    FProgressionLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformProgressionClientSubsystem* Client = Fixture.Client.Get();
+    auto Transport = MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
+    int32 Events = 0;
+    Client->OnViewChanged.AddLambda([&]() { ++Events; });
+    Client->ConfigureAuthenticatedAccount(TEXT("ViewEvents"), Transport);
+    const int32 StartedEvents = Events;
+    FGamePlatformProgressionSnapshot First; First.ProgressionRevision = 1; First.GeneratedAtUtc = FDateTime::UtcNow();
+    FGamePlatformProgressionTrackState Track;
+    Track.SubjectType = EGamePlatformProgressionSubjectType::Player; Track.SubjectId = TEXT("Player"); Track.ProgressionTrackId = TEXT("Level");
+    Track.Level = 1; Track.MaxLevel = 10; Track.CurveVersion = 1; Track.Revision = 1; First.Tracks.Add(Track);
+    auto Completed = MoveTemp(Transport->Completion); Completed(First, EGamePlatformProgressionError::None);
+    TestTrue(TEXT("首次快照通知派生视图"), Events > StartedEvents);
+    Client->RefreshSnapshot(); const int32 LoadingEvents = Events;
+    auto Failed = MoveTemp(Transport->Completion); Failed({}, EGamePlatformProgressionError::BackendUnavailable);
+    TestTrue(TEXT("失败状态通知"), Events > LoadingEvents);
+    Client->RefreshSnapshot(); const int32 BeforeRemoved = Events;
+    FGamePlatformProgressionSnapshot Empty; Empty.ProgressionRevision = 2; Empty.GeneratedAtUtc = FDateTime::UtcNow();
+    auto Removed = MoveTemp(Transport->Completion); Removed(Empty, EGamePlatformProgressionError::None);
+    TestTrue(TEXT("轨道删除通知"), Events > BeforeRemoved);
+    const int32 BeforeReset = Events; Client->ResetAccount();
+    TestTrue(TEXT("账号清空通知"), Events > BeforeReset);
+    Client->OnViewChanged.Clear();
+    return true;
+}
+
+// 生命周期回归：测试Transport不访问网络；Reset同步通知调用Deinitialize后，关闭作用域必须拒绝恢复账号及公开刷新。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProgressionCloseDuringConfigureTest, "GamePlatform.Progression.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProgressionCloseDuringConfigureTest::RunTest(const FString&)
+{
+    FProgressionLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformProgressionClientSubsystem* Client = Fixture.Client.Get();
+    auto Transport = MakeShared<FProgressionMockTransport, ESPMode::ThreadSafe>();
+    TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
+    Client->OnViewChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });
+    TestFalse(TEXT("Reset通知内关闭后Configure不得复活服务"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Closed"), Transport));
+    TestFalse(TEXT("关闭后不得启动请求"), static_cast<bool>(Transport->Completion));
+    TestFalse(TEXT("公开刷新拒绝已关闭作用域"), Client->RefreshSnapshot());
     return true;
 }
 

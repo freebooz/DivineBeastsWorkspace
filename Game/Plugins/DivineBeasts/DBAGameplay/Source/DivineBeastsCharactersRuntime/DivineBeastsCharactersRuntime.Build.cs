@@ -1,3 +1,4 @@
+// 项目双端角色模块：公开角色/ASC/Combat契约，私有Gameplay资格适配；角色拥有组件/自有租约，不依赖竞技或公共客户端。
 using UnrealBuildTool;
 
 public class DivineBeastsCharactersRuntime : ModuleRules
@@ -12,15 +13,22 @@ public class DivineBeastsCharactersRuntime : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            // 本模块公开/实现直接消费FGamePlatformResult，DLL须直接链接其Core所有者，不能依赖Data间接可见。
+            "GamePlatformCore",
             "GameplayAbilities",
             "GameplayTags",
             "GamePlatformAbilitySystem",
             "GamePlatformCharacter",
+            // 项目Pawn公开实现中立Combatant契约；真实战斗仍归平台组件。
+            "GamePlatformCombat",
+            // 角色公开资源状态返回Data结果/租约值；加载和引用所有权仍归平台Data。
+            "GamePlatformData",
             "DivineBeastsRuntime"
         });
 
         // UnrealNetwork仅用于本模块复制实现，不能通过Public依赖向上层传播。
         // GameplayAbilities/GamePlatformAbilitySystem 为 Public：Momentum AttributeSet 的公开头继承平台 AttributeSet 并暴露 GAS 属性类型。
-        PrivateDependencyModuleNames.Add("NetCore");
+        // Gameplay只用于项目层资格组合，平台AbilitySystem不反向认识Gameplay或生肖。
+        PrivateDependencyModuleNames.AddRange(new[] { "NetCore", "GamePlatformGameplay" });
     }
 }

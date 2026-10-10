@@ -23,6 +23,13 @@ class GAMEPLATFORMABILITYSYSTEM_API UGamePlatformGameplayAbility
 
 public:
     UGamePlatformGameplayAbility();
+    /**
+     * 平台能力所有GAS激活入口统一经过当前Avatar的项目资格Gate，再执行原生费用/冷却/标签检查。
+     * 仅游戏线程同步读取；无Gate拒绝。原生派生不能跳过此门禁，额外资格使用GAS标签或K2事件。
+     */
+    virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+        const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr,
+        FGameplayTagContainer* OptionalRelevantTags = nullptr) const override final;
 
     /**
      * 输入触发策略。

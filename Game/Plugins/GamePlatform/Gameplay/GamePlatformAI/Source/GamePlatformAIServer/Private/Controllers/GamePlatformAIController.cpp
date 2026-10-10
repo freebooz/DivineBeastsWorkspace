@@ -1,5 +1,7 @@
+// 平台服务器AI控制器：当前Pawn/World拥有感知、候选和技能Gate；游戏线程决策，退出解绑/取消，不维护项目或全局玩家事实。
 #include "Controllers/GamePlatformAIController.h"
 
+#include "Abilities/AIAbilityActivationPolicy.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BlackboardData.h"
@@ -11,7 +13,11 @@
 #include "Components/GamePlatformCombatComponent.h"
 #include "Data/GamePlatformAIDefinition.h"
 #include "Interfaces/GamePlatformAITargetEligibilityProvider.h"
-#include "Loading/GamePlatformAssetLoader.h"
+#include "Interfaces/IGamePlatformDataService.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
+#include "Perception/AIWorldPolicy.h"
+#include "Perception/AICandidateRetention.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Subsystems/GamePlatformNavigationWorldSubsystem.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -30,6 +36,24 @@
 
 namespace
 {
+/** 服务器AI的只读Gate：弱Controller和两种代次保护，事实从实际Controller读取，无固定成功或项目依赖。 */
+class FGamePlatformAIActivationGate final : public IGamePlatformAbilityActivationGate
+{
+public:
+    FGamePlatformAIActivationGate(AGamePlatformAIController& Owner, int32 ResourceGeneration, int32 AIInstanceGeneration)
+        : Controller(&Owner), ExpectedResourceGeneration(ResourceGeneration), ExpectedAIInstanceGeneration(AIInstanceGeneration) {}
+    FGamePlatformResult Evaluate(const UGamePlatformAbilitySystemComponent& Component) const override
+    {
+        const auto* Owner = Controller.Get();
+        return Owner ? Owner->EvaluateAIAbilityEligibility(Component, ExpectedResourceGeneration, ExpectedAIInstanceGeneration)
+            : FGamePlatformResult::Failure(TEXT("AIControllerUnavailable"), TEXT("AI资格拥有者已失效。"));
+    }
+private:
+    TWeakObjectPtr<AGamePlatformAIController> Controller;
+    int32 ExpectedResourceGeneration = 0;
+    int32 ExpectedAIInstanceGeneration = 0;
+};
+
 template <typename TInterface>
 const TInterface* FindProvider(const AActor* Actor)
 {
@@ -93,7 +117,9 @@ void AGamePlatformAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    if (!HasAuthority() || !IsValid(InPawn))
+    if (!HasAuthority() || !IsValid(InPawn) || !GetWorld() || GetWorld()->bIsTearingDown ||
+        !GamePlatformAIWorldPolicy::CanRun(GetWorld()->WorldType == EWorldType::Game || GetWorld()->WorldType == EWorldType::PIE,
+            GetWorld()->GetNetMode() != NM_Client, IsRunningCommandlet()))
     {
         ResetRuntimeState(EGamePlatformAIError::NotAuthority);
         return;
@@ -112,6 +138,18 @@ void AGamePlatformAIController::OnPossess(APawn* InPawn)
         return;
     }
 
+    if (AbilitySystemComponent)
+    {
+        AvatarBindingChangedHandle = AbilitySystemComponent->OnAvatarBindingChanged().AddUObject(this,
+            &AGamePlatformAIController::HandleAbilityAvatarBindingChanged);
+        // 权威AIController拥有本Pawn占有流程，只为Pawn自有且尚未绑定的ASC建立ActorInfo，不覆盖宿主已有绑定。
+        if (AbilitySystemComponent->GetOwner() == InPawn &&
+            ((!AbilitySystemComponent->GetAvatarActor() && !AbilitySystemComponent->GetOwnerActor()) ||
+             (AbilitySystemComponent->GetAvatarActor() == InPawn && AbilitySystemComponent->GetOwnerActor() == InPawn &&
+              AbilitySystemComponent->GetAvatarBindingSnapshot().AvatarGeneration <= 0)))
+        { bOwnsAbilityActorInfo = AbilitySystemComponent->BindAbilityActorInfo(InPawn, InPawn); }
+        RefreshAIActivationGate();
+    }
     HomeLocation = InPawn->GetActorLocation();
     bStoppedForDeath = false;
     LastError = EGamePlatformAIError::None;
@@ -122,22 +160,13 @@ void AGamePlatformAIController::OnPossess(APawn* InPawn)
 
 void AGamePlatformAIController::OnUnPossess()
 {
+    ClearAIActivationGate(true);
     StopBrain(TEXT("UnPossess"));
     StopDecisionTimer();
     StopMovement();
     UnbindCombatSignals();
 
-    if (DefinitionLoadHandle.IsValid())
-    {
-        FGamePlatformAssetLoader::Cancel(DefinitionLoadHandle);
-    }
-    if (BrainAssetsLoadHandle.IsValid())
-    {
-        FGamePlatformAssetLoader::Cancel(BrainAssetsLoadHandle);
-    }
-
-    DefinitionLoadHandle.Reset();
-    BrainAssetsLoadHandle.Reset();
+    ReleaseResourceLeases();
 
     if (PlatformPerceptionComponent)
     {
@@ -173,8 +202,10 @@ void AGamePlatformAIController::OnUnPossess()
 void AGamePlatformAIController::EndPlay(
     const EEndPlayReason::Type EndPlayReason)
 {
+    ClearAIActivationGate(true);
     StopBrain(TEXT("EndPlay"));
     StopDecisionTimer();
+    UnbindCombatSignals(); ReleaseResourceLeases(); ActiveDefinition = nullptr;
     Super::EndPlay(EndPlayReason);
 }
 
@@ -230,6 +261,9 @@ bool AGamePlatformAIController::TryAttackCurrentTarget()
     FGameplayTagContainer AbilityTags;
     AbilityTags.AddTag(AbilityTag);
 
+    // AI的实际攻击入口也先读取中立Gate，外部原生能力不能绕过本Controller权威资格。
+    if (!AbilitySystemComponent->EvaluateActivationEligibility().IsSuccess())
+    { LastError = EGamePlatformAIError::AbilityUnavailable; return false; }
     const bool bActivationAttempted =
         AbilitySystemComponent->TryActivateAbilitiesByTag(
             AbilityTags,
@@ -400,6 +434,8 @@ void AGamePlatformAIController::HandleCombatEvent(
         }
         Candidates.Reset();
         CurrentTarget.Reset();
+        ResourceAIInstanceGeneration = GetCurrentGeneration();
+        RefreshAIActivationGate();
         StartDecisionTimer();
         EvaluateDecision();
     }
@@ -468,44 +504,43 @@ void AGamePlatformAIController::BeginDefinitionLoad()
         return;
     }
 
-    const int32 Generation = GetCurrentGeneration();
-    DefinitionLoadHandle =
-        FGamePlatformAssetLoader::RequestAsyncLoad(
-            {Path},
-            FStreamableDelegate::CreateUObject(
-                this,
-                &AGamePlatformAIController::HandleDefinitionLoaded,
-                Generation));
+    auto* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
+    auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+    if (!Data) { ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed); return; }
+    const int32 Generation = ++ResourceRequestGeneration;
+    ResourceAIInstanceGeneration = GetCurrentGeneration(); DefinitionResourcePath = Path;
+    FGamePlatformResult Accepted;
+    DefinitionResourceLease = Data->AcquireResources({Path}, EGamePlatformDataLifetime::World, this,
+        [WeakThis = TWeakObjectPtr<AGamePlatformAIController>(this), Generation](const auto& Lease, const auto& Result)
+        {
+            auto* Self = WeakThis.Get();
+            if (!Self || Generation != Self->ResourceRequestGeneration || (Lease.LeaseId != Self->DefinitionResourceLease.LeaseId || Lease.ScopeId != Self->DefinitionResourceLease.ScopeId || Lease.Generation != Self->DefinitionResourceLease.Generation)) { return; }
+            if (!Result.IsSuccess()) { Self->ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed); return; }
+            Self->HandleDefinitionLoaded(Generation);
+        }, Accepted);
+    if (!Accepted.IsSuccess()) { ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed); }
 
-    if (!DefinitionLoadHandle.IsValid())
-    {
-        HandleDefinitionLoaded(Generation);
-    }
 }
 
 void AGamePlatformAIController::HandleDefinitionLoaded(
     int32 ExpectedGeneration)
 {
     if (!StateComponent ||
-        ExpectedGeneration != GetCurrentGeneration())
+        ExpectedGeneration != ResourceRequestGeneration || ResourceAIInstanceGeneration != GetCurrentGeneration())
     {
         return;
     }
 
-    TSoftObjectPtr<UGamePlatformAIDefinition> Definition =
-        StateComponent->GetDefinitionAsset();
-    if (Definition.IsNull())
-    {
-        Definition = DefaultDefinition;
-    }
-
-    UGamePlatformAIDefinition* Loaded =
-        Definition.Get();
-    if (!IsValid(Loaded))
-    {
-        Loaded = Cast<UGamePlatformAIDefinition>(
-            Definition.ToSoftObjectPath().ResolveObject());
-    }
+    auto* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
+    auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+    if (!Data || Data->GetLeaseState(DefinitionResourceLease) != EGamePlatformDataRequestState::Succeeded)
+    { ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed); return; }
+    // 完成时只读取本次租约预检过的路径；配置已切换却未更新代次也不能串用另一个定义。
+    auto CurrentDefinition = StateComponent->GetDefinitionAsset();
+    if (CurrentDefinition.IsNull()) { CurrentDefinition = DefaultDefinition; }
+    if (CurrentDefinition.ToSoftObjectPath() != DefinitionResourcePath)
+    { ResetRuntimeState(EGamePlatformAIError::InvalidDefinition); return; }
+    UGamePlatformAIDefinition* Loaded = Cast<UGamePlatformAIDefinition>(DefinitionResourcePath.ResolveObject());
 
     if (!IsValid(Loaded) || !InitializeDefinition(*Loaded))
     {
@@ -562,18 +597,20 @@ void AGamePlatformAIController::BeginBrainAssetLoad(
     TArray<FSoftObjectPath> Assets;
     ActiveDefinition->GetReferencedAssetPaths(Assets);
 
-    BrainAssetsLoadHandle =
-        FGamePlatformAssetLoader::RequestAsyncLoad(
-            Assets,
-            FStreamableDelegate::CreateUObject(
-                this,
-                &AGamePlatformAIController::HandleBrainAssetsLoaded,
-                ExpectedGeneration));
+    auto* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
+    auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+    if (!Data) { ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed); return; }
+    FGamePlatformResult Accepted;
+    BrainResourceLease = Data->AcquireResources(Assets, EGamePlatformDataLifetime::World, this,
+        [WeakThis = TWeakObjectPtr<AGamePlatformAIController>(this), ExpectedGeneration](const auto& Lease, const auto& Result)
+        {
+            auto* Self = WeakThis.Get();
+            if (!Self || ExpectedGeneration != Self->ResourceRequestGeneration || (Lease.LeaseId != Self->BrainResourceLease.LeaseId || Lease.ScopeId != Self->BrainResourceLease.ScopeId || Lease.Generation != Self->BrainResourceLease.Generation)) { return; }
+            if (!Result.IsSuccess()) { Self->ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed); return; }
+            Self->HandleBrainAssetsLoaded(ExpectedGeneration);
+        }, Accepted);
+    if (!Accepted.IsSuccess()) { ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed); }
 
-    if (!BrainAssetsLoadHandle.IsValid())
-    {
-        HandleBrainAssetsLoaded(ExpectedGeneration);
-    }
 }
 
 void AGamePlatformAIController::HandleBrainAssetsLoaded(
@@ -581,11 +618,16 @@ void AGamePlatformAIController::HandleBrainAssetsLoaded(
 {
     if (!ActiveDefinition ||
         !StateComponent ||
-        ExpectedGeneration != GetCurrentGeneration())
+        ExpectedGeneration != ResourceRequestGeneration || ResourceAIInstanceGeneration != GetCurrentGeneration())
     {
         return;
     }
 
+    auto* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
+    auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+    if (!Data || Data->GetLeaseState(DefinitionResourceLease) != EGamePlatformDataRequestState::Succeeded ||
+        Data->GetLeaseState(BrainResourceLease) != EGamePlatformDataRequestState::Succeeded)
+    { ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed); return; }
     if (!StartBehaviorTreeBrain(*ActiveDefinition))
     {
         ResetRuntimeState(EGamePlatformAIError::AssetLoadFailed);
@@ -593,6 +635,7 @@ void AGamePlatformAIController::HandleBrainAssetsLoaded(
     }
 
     bBrainReady = true;
+    RefreshAIActivationGate();
     LastError = EGamePlatformAIError::None;
     StartDecisionTimer();
     EvaluateDecision();
@@ -791,32 +834,26 @@ void AGamePlatformAIController::PruneCandidates()
             1,
             ActiveDefinition->TargetSelectionProfile.MaxCandidates);
 
-    while (Candidates.Num() > MaxCandidates)
+    if (Candidates.Num() <= MaxCandidates) { return; }
+    // 旧实现每移除一个候选都扫描全表，过量N-K时成本接近平方；一次堆选择只需O(N log K)。
+    TArray<FGamePlatformAITargetCandidate> RankedCandidates;
+    Candidates.GenerateValueArray(RankedCandidates);
+    auto* Removed = GamePlatformAICandidateRetention::SelectRetained(
+        RankedCandidates.GetData(), RankedCandidates.GetData() + RankedCandidates.Num(),
+        static_cast<std::size_t>(MaxCandidates), [](const auto& A, const auto& B)
+        {
+            if (A.LastSensedTime != B.LastSensedTime) { return A.LastSensedTime > B.LastSensedTime; }
+            // 同时间按稳定EntityId显式排序，不依赖TMap扫描顺序。
+            if (A.EntityId.A != B.EntityId.A) { return A.EntityId.A < B.EntityId.A; }
+            if (A.EntityId.B != B.EntityId.B) { return A.EntityId.B < B.EntityId.B; }
+            if (A.EntityId.C != B.EntityId.C) { return A.EntityId.C < B.EntityId.C; }
+            return A.EntityId.D < B.EntityId.D;
+        });
+    for (; Removed != RankedCandidates.GetData() + RankedCandidates.Num(); ++Removed)
     {
-        TWeakObjectPtr<AActor> OldestKey;
-        double OldestTime = TNumericLimits<double>::Max();
-
-        for (const TPair<TWeakObjectPtr<AActor>, FGamePlatformAITargetCandidate>& Pair : Candidates)
-        {
-            if (Pair.Value.LastSensedTime < OldestTime)
-            {
-                OldestTime = Pair.Value.LastSensedTime;
-                OldestKey = Pair.Key;
-            }
-        }
-
-        if (!OldestKey.IsValid())
-        {
-            break;
-        }
-
-        if (AActor* Actor = OldestKey.Get())
-        {
-            Actor->OnDestroyed.RemoveDynamic(
-                this,
-                &AGamePlatformAIController::HandleCandidateDestroyed);
-        }
-        Candidates.Remove(OldestKey);
+        if (AActor* Actor = Removed->Actor.Get())
+        { Actor->OnDestroyed.RemoveDynamic(this, &AGamePlatformAIController::HandleCandidateDestroyed); }
+        Candidates.Remove(Removed->Actor);
     }
 }
 
@@ -1385,13 +1422,84 @@ void AGamePlatformAIController::ResetRuntimeState(
     EGamePlatformAIError Error)
 {
     LastError = Error;
+    ClearAIActivationGate(false);
     StopDecisionTimer();
     StopMovement();
     StopBrain(TEXT("ResetRuntimeState"));
+    ReleaseResourceLeases(); ActiveDefinition = nullptr;
 
     if (StateComponent)
     {
         StateComponent->SetServerPublicState(
             EGamePlatformAIPublicState::Disabled);
+    }
+}
+
+void AGamePlatformAIController::ReleaseResourceLeases()
+{
+    check(IsInGameThread()); ++ResourceRequestGeneration;
+    auto* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
+    if (auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr)
+    {
+        if (BrainResourceLease.IsValid()) { Data->ReleaseResources(BrainResourceLease); }
+        if (DefinitionResourceLease.IsValid()) { Data->ReleaseResources(DefinitionResourceLease); }
+    }
+    BrainResourceLease = {}; DefinitionResourceLease = {}; DefinitionResourcePath.Reset();
+    ResourceAIInstanceGeneration = 0;
+}
+
+FGamePlatformResult AGamePlatformAIController::EvaluateAIAbilityEligibility(
+    const UGamePlatformAbilitySystemComponent& Component, int32 ExpectedResourceGeneration, int32 ExpectedAIInstanceGeneration) const
+{
+    check(IsInGameThread());
+    const APawn* ControlledPawn = GetPawn(); const UWorld* World = GetWorld();
+    const bool bAuthorityWorld = HasAuthority() && ControlledPawn && ControlledPawn->HasAuthority() && World && !World->bIsTearingDown &&
+        GamePlatformAIWorldPolicy::CanRun(World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE,
+            World->GetNetMode() != NM_Client, IsRunningCommandlet());
+    const bool bOwnerCurrent = ControlledPawn && ControlledPawn->GetController() == this && ControlledPawn->GetWorld() == World &&
+        AbilitySystemComponent == &Component && Component.GetWorld() == World && Component.GetAvatarActor() == ControlledPawn &&
+        (Component.GetOwnerActor() == ControlledPawn || Component.GetOwnerActor() == this);
+    auto* Instance = World ? World->GetGameInstance() : nullptr;
+    auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+    const bool bResourcesHeld = Data && Data->GetLeaseState(DefinitionResourceLease) == EGamePlatformDataRequestState::Succeeded &&
+        Data->GetLeaseState(BrainResourceLease) == EGamePlatformDataRequestState::Succeeded;
+    const bool bDefinitionReady = StateComponent && StateComponent->GetOwner() == ControlledPawn && ActiveDefinition &&
+        !ActiveDefinition->AIDefinitionId.IsNone() && StateComponent->GetSnapshot().AIDefinitionId == ActiveDefinition->AIDefinitionId &&
+        bBrainReady && BrainComponent && BrainComponent->IsRunning() && ResourceAIInstanceGeneration == GetCurrentGeneration();
+    if (!GamePlatformAIAbilityPolicy::CanActivate(bAuthorityWorld, bOwnerCurrent, bDefinitionReady, bResourcesHeld,
+        !bStoppedForDeath && !IsSelfDead() && !IsSelfStunned() && !IsSelfSilenced(), GetCurrentGeneration(), ExpectedAIInstanceGeneration,
+        ResourceRequestGeneration, ExpectedResourceGeneration))
+    { return FGamePlatformResult::Failure(TEXT("AIActivationNotReady"), TEXT("AI当前权威占有、代次、定义、Brain或资源资格不满足。")); }
+    return FGamePlatformResult::Success();
+}
+
+void AGamePlatformAIController::RefreshAIActivationGate()
+{
+    check(IsInGameThread());
+    if (!AbilitySystemComponent) { return; }
+    AbilitySystemComponent->ClearActivationGate(this);
+    if (HasAuthority() && GetPawn() && GetPawn()->GetController() == this &&
+        AbilitySystemComponent->GetAvatarBindingSnapshot().bBound && AbilitySystemComponent->GetAvatarActor() == GetPawn())
+    {
+        AbilitySystemComponent->SetActivationGate(this, MakeShared<FGamePlatformAIActivationGate>(*this,
+            ResourceRequestGeneration, GetCurrentGeneration()));
+    }
+}
+
+void AGamePlatformAIController::HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot)
+{ (void)Snapshot; RefreshAIActivationGate(); }
+
+void AGamePlatformAIController::ClearAIActivationGate(bool bDetachAvatarBinding)
+{
+    if (!AbilitySystemComponent) { return; }
+    AbilitySystemComponent->ClearActivationGate(this);
+    if (bDetachAvatarBinding)
+    {
+        AbilitySystemComponent->OnAvatarBindingChanged().Remove(AvatarBindingChangedHandle);
+        AvatarBindingChangedHandle.Reset();
+        if (bOwnsAbilityActorInfo && AbilitySystemComponent->GetAvatarActor() == GetPawn() &&
+            AbilitySystemComponent->GetOwnerActor() == GetPawn())
+        { AbilitySystemComponent->ClearAbilityAvatar(); }
+        bOwnsAbilityActorInfo = false;
     }
 }

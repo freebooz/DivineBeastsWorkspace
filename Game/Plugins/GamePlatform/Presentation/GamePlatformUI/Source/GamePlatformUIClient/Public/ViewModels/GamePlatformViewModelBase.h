@@ -1,3 +1,5 @@
+// 本文件属于GamePlatform平台层 GamePlatformUI，负责对外稳定合同/值类型；所属线程、空值、代次和所有权按相邻说明。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 Docs/AuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -59,7 +61,7 @@ protected:
     virtual void OnPageBegan() {}
 
     /**
-     * 页面退出激活状态前的扩展点。
+     * 页面旧代次已失效后的清理扩展点；不依赖IsPageActive=true作为解绑前提。
      * 派生 ViewModel 必须在此解绑自身订阅，避免不可见页面持续接收事件。
      */
     virtual void OnPageEnded() {}

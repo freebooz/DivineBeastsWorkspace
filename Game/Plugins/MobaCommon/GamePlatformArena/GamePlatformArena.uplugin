@@ -1,35 +1,65 @@
 {
-    "FileVersion":  3,
-    "Version":  1,
-    "VersionName":  "1.0.0",
-    "FriendlyName":  "GamePlatformArena",
-    "Description":  "GamePlatformArena（游戏平台竞技场插件）：MOBA通用层唯一竞技插件，提供1v1至5v5统一MainArena竞技契约、数据、双端状态及客户端/服务器适配。",
-    "Category":  "MobaCommon",
-    "CreatedBy":  "DivineBeastsWorkspace",
-    "CanContainContent":  true,
-    "EnabledByDefault":  false,
-    "Plugins": [
-        { "Name": "GamePlatformCore", "Enabled": true },
-        { "Name": "GamePlatformData", "Enabled": true },
-        { "Name": "GamePlatformUI", "Enabled": true, "TargetAllowList": ["Client", "Editor"] }
-    ],
-    "Modules":  [
-                    { "Name": "GamePlatformMobaCore", "Type": "Runtime", "LoadingPhase": "Default" },
-                    { "Name": "GamePlatformMobaData", "Type": "Runtime", "LoadingPhase": "Default" },
-                    {
-                        "Name":  "GamePlatformArena",
-                        "Type":  "Runtime",
-                        "LoadingPhase":  "Default"
-                    },
-                    {
-                        "Name":  "GamePlatformArenaClient",
-                        "Type":  "ClientOnly",
-                        "LoadingPhase":  "Default"
-                    },
-                    {
-                        "Name":  "GamePlatformArenaServer",
-                        "Type":  "ServerOnly",
-                        "LoadingPhase":  "Default"
-                    }
-                ]
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "GamePlatformArena",
+  "Description": "GamePlatformArena（游戏平台竞技场插件）：MOBA通用层唯一竞技插件，提供1v1至5v5统一MainArena竞技契约、数据、双端状态及客户端/服务器适配。",
+  "Category": "MobaCommon",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformData",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformUI",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformServer",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Server",
+        "Editor",
+        "Game"
+      ]
+    }
+  ],
+  "Modules": [
+    {
+      "Name": "GamePlatformMobaCore",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "GamePlatformMobaData",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "GamePlatformArena",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "GamePlatformArenaClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "GamePlatformArenaServer",
+      "Type": "ServerOnly",
+      "LoadingPhase": "Default"
+    }
+  ]
 }

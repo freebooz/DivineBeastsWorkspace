@@ -1,17 +1,51 @@
+// 平台玩家服务Automation回归：测试Transport仅控制完成/取消，不访问生产路由；验证状态、账号隔离、广播重置与后端权威显示。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Interfaces/GamePlatformInventoryClientTransport.h"
 #include "Misc/AutomationTest.h"
 #include "Services/GamePlatformInventoryClientSubsystem.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
+/**
+ * 仅Automation的合法Outer夹具：LocalPlayer的Within是Engine，领域Subsystem的Within是LocalPlayer。
+ * GT显式构造并强持有两者，不PlayerAdded/不建World或自动登录；原测试Transport/账号前提保持。
+ * 无Viewport时GetGameInstance为nullptr，不能把本夹具当完整GI/Online装配或生产服务。
+ * 任意正常/提前返回先Deinitialize清委托/取消请求，再释放Client与Player，避免GC和测试间残留。
+ */
+struct FInventoryLocalPlayerFixture
+{
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UGamePlatformInventoryClientSubsystem> Client;
+    bool Initialize(FAutomationTestBase& Test)
+    {
+        if (!Test.TestNotNull(TEXT("LocalPlayer真实Engine Within宿主"), GEngine)) return false;
+        Player.Reset(NewObject<ULocalPlayer>(GEngine));
+        if (!Test.TestNotNull(TEXT("领域Subsystem真实LocalPlayer Outer"), Player.Get())) return false;
+        Client.Reset(NewObject<UGamePlatformInventoryClientSubsystem>(Player.Get()));
+        return Test.TestNotNull(TEXT("合法Outer的领域Subsystem实例"), Client.Get());
+    }
+    ~FInventoryLocalPlayerFixture()
+    {
+        if (Client.IsValid()) Client->Deinitialize();
+        Client.Reset();
+        Player.Reset();
+    }
+};
+
 class FInventoryMockTransport final
     : public IGamePlatformInventoryClientTransport
 {
 public:
     FGamePlatformInventorySnapshotCompletion SnapshotCompletion;
     FGamePlatformInventoryMutationCompletion MutationCompletion;
+    bool bSynchronousMoveFailure = false;
+    int32 SnapshotStarts = 0;
+    int32 QueryStarts = 0;
+    int32 MoveStarts = 0;
 
     virtual void CancelAllRequests() override
     {
@@ -22,6 +56,7 @@ public:
     virtual bool BeginGetSnapshot(
         FGamePlatformInventorySnapshotCompletion Completion) override
     {
+        ++SnapshotStarts;
         SnapshotCompletion = MoveTemp(Completion);
         return true;
     }
@@ -30,6 +65,7 @@ public:
         const FGuid&,
         FGamePlatformInventoryMutationCompletion Completion) override
     {
+        ++QueryStarts;
         MutationCompletion = MoveTemp(Completion);
         return true;
     }
@@ -38,7 +74,9 @@ public:
         const FGamePlatformInventoryMoveRequest&,
         FGamePlatformInventoryMutationCompletion Completion) override
     {
+        ++MoveStarts;
         MutationCompletion = MoveTemp(Completion);
+        if (bSynchronousMoveFailure) { MutationCompletion({}, EGamePlatformInventoryError::OutcomeUnknown); }
         return true;
     }
 
@@ -111,8 +149,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventoryClientMutationTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
@@ -207,8 +246,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventoryClientAccountGenerationTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
@@ -251,8 +291,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventoryClientOperationRecoveryTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
 
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
@@ -328,8 +369,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FGamePlatformInventoryDerivedCacheTest::RunTest(const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
 
@@ -397,8 +439,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventorySnapshotIntegrityTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
 
@@ -450,8 +493,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventoryDeterministicErrorTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
 
@@ -498,8 +542,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGamePlatformInventorySnapshotSingleFlightTest::RunTest(
     const FString&)
 {
-    UGamePlatformInventoryClientSubsystem* Client =
-        NewObject<UGamePlatformInventoryClientSubsystem>();
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
     TSharedPtr<FInventoryMockTransport, ESPMode::ThreadSafe> Transport =
         MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
 
@@ -551,6 +596,119 @@ bool FGamePlatformInventorySnapshotSingleFlightTest::RunTest(
         Client->RefreshSnapshot());
 
     return true;
+}
+
+
+// 验证公开状态监听器在Loading内重置账号：受理失败、旧传输没有请求、清空后的账号状态不被旧栈覆盖。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventoryResetDuringStateTest, "GamePlatform.Inventory.Client.ResetDuringState", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FInventoryResetDuringStateTest::RunTest(const FString&)
+{
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
+    auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    Client->OnChanged.AddLambda([Client](auto&&...)
+    {
+        if (Client->GetState() == EGamePlatformInventoryClientState::Loading) { Client->ResetAccount(); }
+    });
+    TestFalse(TEXT("Loading监听器重置后不得接纳旧账号请求"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Reset"), Transport));
+    TestFalse(TEXT("传输未启动失效请求"), static_cast<bool>(Transport->SnapshotCompletion));
+    TestEqual(TEXT("回调返回后保持清空状态"), Client->GetState(), EGamePlatformInventoryClientState::Uninitialized);
+    return true;
+}
+
+
+// 生命周期回归：测试Transport不访问网络；Reset同步通知调用Deinitialize后，关闭作用域必须拒绝恢复账号及公开刷新。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventoryCloseDuringConfigureTest, "GamePlatform.Inventory.Client.CloseDuringConfigure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FInventoryCloseDuringConfigureTest::RunTest(const FString&)
+{
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
+    auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    TestTrue(TEXT("前置账号请求成功受理"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Previous"), Transport));
+    Client->OnChanged.AddLambda([Client](auto&&...) { Client->Deinitialize(); });
+    TestFalse(TEXT("Reset通知内关闭后Configure不得复活服务"), Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Closed"), Transport));
+    TestFalse(TEXT("关闭后不得启动请求"), static_cast<bool>(Transport->SnapshotCompletion));
+    TestFalse(TEXT("公开刷新拒绝已关闭作用域"), Client->RefreshSnapshot());
+    return true;
+}
+
+
+// 同步真实Transport回调不得被BeginMove返回栈覆盖；旧终态也不能消耗下一次持久结果查询。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventorySynchronousOutcomeTest, "GamePlatform.Inventory.Client.SynchronousOutcome", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FInventorySynchronousOutcomeTest::RunTest(const FString&)
+{
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    Client->ConfigureAuthenticatedAccount(TEXT("Fixture-Sync"), Transport); Transport->CompleteSnapshot(1);
+    Transport->bSynchronousMoveFailure = true;
+    const auto OperationId = Client->RequestMove(TEXT("Fixture-Item"), TEXT("main"), 1);
+    TestTrue(TEXT("请求保留操作身份"), OperationId.IsValid());
+    TestEqual(TEXT("同步未知结果保持Error"), Client->GetState(), EGamePlatformInventoryClientState::Error);
+    auto Old = Transport->MutationCompletion; Client->RetryPendingOperation();
+    Old({}, EGamePlatformInventoryError::BackendUnavailable);
+    TestEqual(TEXT("旧Mutation终态不得覆盖新查询"), Client->GetState(), EGamePlatformInventoryClientState::Reconciling);
+    return true;
+}
+
+
+// 操作查询A的未知结果通知允许监听器启动查询B；旧A返回栈不能自动重发Mutation并覆盖B。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventoryQueryListenerTakeoverTest, "GamePlatform.Inventory.Client.QueryListenerTakeover", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FInventoryQueryListenerTakeoverTest::RunTest(const FString&)
+{
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    Client->ConfigureAuthenticatedAccount(TEXT("Fixture-QueryTakeover"), Transport); Transport->CompleteSnapshot(1);
+    const auto OperationId = Client->RequestMove(TEXT("Fixture-Item"), TEXT("main"), 1);
+    Transport->CompleteMutation(OperationId, 0, EGamePlatformInventoryError::BackendUnavailable);
+    Client->RetryPendingOperation(); auto QueryA = Transport->MutationCompletion;
+    bool bTakenOver = false; bool bQueryBAccepted = false;
+    Client->OnChanged.AddLambda([Client, &bTakenOver, &bQueryBAccepted]()
+    {
+        if (!bTakenOver && Client->GetLastError() == EGamePlatformInventoryError::OutcomeUnknown)
+        { bTakenOver = true; bQueryBAccepted = Client->RetryPendingOperation(); }
+    });
+    QueryA({}, EGamePlatformInventoryError::OperationNotFound);
+    TestTrue(TEXT("通知监听器接管查询B"), bQueryBAccepted);
+    TestEqual(TEXT("查询A旧栈不得重发Mutation"), Transport->MoveStarts, 1);
+    TestEqual(TEXT("只受理A/B两个持久结果查询"), Transport->QueryStarts, 2);
+    TestEqual(TEXT("查询B保持Reconciling"), Client->GetState(), EGamePlatformInventoryClientState::Reconciling);
+    Transport->CompleteMutation(OperationId, 2, EGamePlatformInventoryError::None);
+    TestEqual(TEXT("B终态可以完成并恢复Ready"), Client->GetState(), EGamePlatformInventoryClientState::Ready);
+    QueryA({}, EGamePlatformInventoryError::OperationNotFound);
+    TestEqual(TEXT("A重复终态不得发新Mutation"), Transport->MoveStarts, 1);
+    Client->Deinitialize(); return true;
+}
+
+// RevisionConflict通知监听器先启动Snapshot对账；旧Mutation栈不得再次刷新并误报BackendUnavailable。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInventoryConflictListenerTakeoverTest, "GamePlatform.Inventory.Client.ConflictListenerTakeover", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FInventoryConflictListenerTakeoverTest::RunTest(const FString&)
+{
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get(); auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    Client->ConfigureAuthenticatedAccount(TEXT("Fixture-ConflictTakeover"), Transport); Transport->CompleteSnapshot(1);
+    const auto OperationId = Client->RequestMove(TEXT("Fixture-Item"), TEXT("main"), 1);
+    bool bTakenOver = false; bool bSnapshotAccepted = false; int32 UnavailableEvents = 0;
+    Client->OnChanged.AddLambda([Client, &bTakenOver, &bSnapshotAccepted, &UnavailableEvents]()
+    {
+        if (Client->GetLastError() == EGamePlatformInventoryError::BackendUnavailable) { ++UnavailableEvents; }
+        if (!bTakenOver && Client->GetLastError() == EGamePlatformInventoryError::RevisionConflict)
+        { bTakenOver = true; bSnapshotAccepted = Client->RefreshSnapshot(); }
+    });
+    Transport->CompleteMutation(OperationId, 0, EGamePlatformInventoryError::RevisionConflict);
+    TestTrue(TEXT("监听器对账Snapshot已受理"), bSnapshotAccepted);
+    TestEqual(TEXT("总计仅初始化及对账两次Snapshot"), Transport->SnapshotStarts, 2);
+    TestEqual(TEXT("对账保持Reconciling"), Client->GetState(), EGamePlatformInventoryClientState::Reconciling);
+    TestEqual(TEXT("接管后不得出现伪BackendUnavailable"), UnavailableEvents, 0);
+    TestEqual(TEXT("保留真实RevisionConflict待终态"), Client->GetLastError(), EGamePlatformInventoryError::RevisionConflict);
+    Transport->CompleteSnapshot(2);
+    TestFalse(TEXT("对账成功释放旧Pending资格"), Client->HasPendingOperation());
+    TestEqual(TEXT("对账成功恢复Ready"), Client->GetState(), EGamePlatformInventoryClientState::Ready);
+    Client->Deinitialize(); return true;
 }
 
 #endif

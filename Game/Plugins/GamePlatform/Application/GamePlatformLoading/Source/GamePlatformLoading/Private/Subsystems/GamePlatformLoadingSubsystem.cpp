@@ -1,3 +1,4 @@
+// 平台GI加载执行器：拥有本作用域任务、订阅和Data租约，游戏线程派发；回调可退出/切换代次，必须终止旧Scope访问。
 #include "Subsystems/GamePlatformLoadingSubsystem.h"
 #include "Operations/LoadingPolicy.h"
 #include "Tasks/LoadingBuiltinTasks.h"
@@ -364,6 +365,8 @@ bool UGamePlatformLoadingSubsystem::Tick(float)
         auto Snapshots = MoveTemp(Scope->PendingSnapshots); Scope->PendingSnapshots.Reset();
         Snapshots.Add(GetLoadingSnapshot());
         Scope->TotalSnapshotsPublished += Snapshots.Num();
+        const FGuid DispatchScopeId = Scope->Id;
+        const uint64 DispatchGeneration = Scope->Generation;
         TArray<TSharedPtr<FLoadingSubscription>> Subscribers; Scope->Subscriptions.GenerateValueArray(Subscribers);
         for (const auto& Snapshot : Snapshots)
         {
@@ -375,6 +378,8 @@ bool UGamePlatformLoadingSubsystem::Tick(float)
             {
                 Entry->bTerminalDelivered = Snapshot.State != EGamePlatformLoadingState::Running && Snapshot.State != EGamePlatformLoadingState::Idle;
                 Entry->Callback(Snapshot);
+                // 回调允许关闭GI或启动下一代操作；不能再写旧计数或把旧快照派发给新Scope。
+                if (!Scope || Scope->Id != DispatchScopeId || Scope->Generation != DispatchGeneration) { return false; }
                 ++Scope->TotalSubscriberCallbacks;
             }
         }

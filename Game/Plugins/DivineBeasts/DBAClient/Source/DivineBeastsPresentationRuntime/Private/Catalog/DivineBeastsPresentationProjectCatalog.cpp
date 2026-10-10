@@ -1,3 +1,6 @@
+// 本文件属于DivineBeasts项目层 DivineBeastsPresentationRuntime，负责生产合同/实现。
+// 中文职责、调用方、参数/单位、失败/取消及资源生命周期见本插件 DBAClient/Docs/PresentationAuditRemediation-2026-10-09.md（2026-10-09本轮范围）。
+// 项目默认目录合同：逻辑ID合法不代表已交付资产，客户端真实Data预载成功才发布。
 #include "Catalog/DivineBeastsPresentationProjectCatalog.h"
 
 #include "Identity/DivineBeastsProjectCatalog.h"
@@ -21,7 +24,7 @@ FDivineBeastsPresentationProjectCatalog::BuildDefaultFragment()
         FDivineBeastsProjectCatalog::GetProjectId();
     Interaction.ProviderChannel = TEXT("VFX");
     Interaction.DefinitionId =
-        TEXT("Presentation.DBA.World.Interaction.Committed.Default");
+        TEXT("presentation.dba.world.interaction.committed.default@1");
     Interaction.Scope = EGamePlatformPresentationCatalogScope::Project;
     Interaction.Specificity = 1;
     Interaction.Priority = 0;
@@ -36,7 +39,7 @@ FDivineBeastsPresentationProjectCatalog::BuildDefaultFragment()
         FDivineBeastsProjectCatalog::GetProjectId();
     Guidance.ProviderChannel = TEXT("VFX");
     Guidance.DefinitionId =
-        TEXT("Presentation.DBA.Village.Guidance.Ready.Default");
+        TEXT("presentation.dba.village.guidance.ready.default@1");
     Guidance.Scope = EGamePlatformPresentationCatalogScope::Project;
     Guidance.Specificity = 1;
     Guidance.Priority = 0;

@@ -31,3 +31,11 @@
 PCG负责“在哪里生成什么”；Surface负责“表面如何表现”；VFX负责雨滴、雪花、水雾、飞溅等动态效果；Surface负责湿润、积雪、苔藓、积水等表面状态。
 
 详细说明见 `Docs/Architecture.md`、`Docs/组件清单与使用说明.md`、`Docs/AssetAuthoring.md`、`Docs/PerformanceAndServer.md`、`Docs/TestingAndEvidence.md`、`Docs/ManualReview.md`。
+
+
+## 2026-09-30 设计审查修复
+
+本次资源/生命周期与行为合同见 [设计修复说明](Docs/DesignRemediation-2026-09-30.md)。源码及新增回归不等于UE运行、真实资产或Cook验收；准确执行证据由任务修复报告记录。
+
+
+2026-10-09本插件源码整改、中文API/所有权说明和待UE验收边界见 [本轮源码说明](Docs/AuditRemediation-2026-10-09.md)。
