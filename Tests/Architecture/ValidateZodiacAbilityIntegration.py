@@ -124,12 +124,15 @@ def check_wiring() -> None:
            "Set.Abilities.IsEmpty()" in grant and
            "if (!Configured)" in grant and
            "项目英雄技能未继承统一数据驱动技能基类" in grant)
-    # 任何正式Client/Server路径均不得依赖编辑器测试开关授予DevelopmentOnly能力集。
+    # 用户批准的Development Client/Server验证必须配置与启动参数双重启用；Shipping/Test始终拒绝。
     config = read(ROOT / "Game/Config/DefaultGame.ini")
-    verify("开发能力集显式Editor授权且正式构建强制拒绝",
-           "if (Set.bDevelopmentOnly)" in grant
-           and "#if WITH_EDITOR && !UE_BUILD_SHIPPING && !UE_BUILD_TEST" in grant
-           and "bAllowDevelopmentAbilitySets" in grant
+    development_policy = read(ABILITIES / "Private/Development/DivineBeastsDevelopmentAbilityPolicy.h")
+    verify("开发能力集双重显式启用且Shipping/Test强制拒绝",
+           "Set.bDevelopmentOnly && !DivineBeasts::DevelopmentAbilities::IsEnabledForCurrentProcess()" in grant
+           and "#if !UE_BUILD_SHIPPING && !UE_BUILD_TEST" in development_policy
+           and "bAllowDevelopmentAbilitySets" in development_policy
+           and "DBADevelopmentSkills" in development_policy
+           and "bEligibleBuild && bConfigured && bCommandLineOptIn" in development_policy
            and "bAllowDevelopmentAbilitySets=false" in config)
 
 

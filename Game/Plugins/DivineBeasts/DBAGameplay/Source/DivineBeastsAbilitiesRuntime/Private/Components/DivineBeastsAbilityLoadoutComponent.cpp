@@ -18,6 +18,9 @@
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 #include "Misc/ConfigCacheIni.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "Development/DivineBeastsDevelopmentAbilityPolicy.h"
 
 UDivineBeastsAbilityLoadoutComponent::UDivineBeastsAbilityLoadoutComponent()
 {
@@ -122,7 +125,17 @@ bool UDivineBeastsAbilityLoadoutComponent::AuthorityRefreshFromCharacter(FString
         OutError = TEXT("当前英雄逻辑定义尚未完整加载或与出生身份不一致。");
         return false;
     }
-    if (Hero->DefaultAbilitySetId.IsNone())
+    // 开发覆盖只改变本次请求的集合身份，正式Hero资产不会持有NeverCook开发软引用。
+    FString DevelopmentSetId;
+    const bool bDevelopmentEnabled = DivineBeasts::DevelopmentAbilities::IsEnabledForCurrentProcess();
+    if (bDevelopmentEnabled && GConfig)
+    {
+        GConfig->GetString(TEXT("DivineBeasts.Abilities.DevelopmentSets"),
+            *Hero->DefinitionId.ToString(), DevelopmentSetId, GGameIni);
+    }
+    const FName RequestedSetId = DivineBeasts::DevelopmentAbilities::ResolveSetId(
+        Hero->DefinitionId, Hero->DefaultAbilitySetId, bDevelopmentEnabled, DevelopmentSetId);
+    if (RequestedSetId.IsNone())
     {
         ++RequestSerial;
         RevokeOwnedGrants();
@@ -133,13 +146,13 @@ bool UDivineBeastsAbilityLoadoutComponent::AuthorityRefreshFromCharacter(FString
 
     if (LoadoutState.HeroDefinitionId == Hero->DefinitionId &&
         LoadoutState.AvatarGeneration == Character->GetAvatarGeneration() &&
-        LoadoutState.bReady && PendingSetId == Hero->DefaultAbilitySetId)
+        LoadoutState.bReady && PendingSetId == RequestedSetId)
     {
         OutError.Reset();
         return true;
     }
     // 同集合异步请求尚未完成时重复刷新是幂等的，不再重复 Acquire。
-    if (DefinitionLease.IsValid() && PendingSetId == Hero->DefaultAbilitySetId &&
+    if (DefinitionLease.IsValid() && PendingSetId == RequestedSetId &&
         LoadoutState.HeroDefinitionId == Hero->DefinitionId &&
         LoadoutState.AvatarGeneration == Character->GetAvatarGeneration())
     {
@@ -157,7 +170,7 @@ bool UDivineBeastsAbilityLoadoutComponent::AuthorityRefreshFromCharacter(FString
         return false;
     }
 
-    PendingSetId = Hero->DefaultAbilitySetId;
+    PendingSetId = RequestedSetId;
     const int32 Serial = RequestSerial;
     const FName ExpectedHero = Hero->DefinitionId;
     const int32 ExpectedAvatar = Character->GetAvatarGeneration();
@@ -291,26 +304,12 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
         OutError = TEXT("未通过可信服务器技能集合校验。");
         return false;
     }
-    // 正式客户端/专用服务器绝不能通过软引用意外加载并授予开发集合。
-    // 仅在UE编辑器内、且配置显式开启后，允许开发样板参加PIE授权验证；
-    // Shipping/Test及独立Client/Server Target始终拒绝，即使内容目录被误Cook。
-    if (Set.bDevelopmentOnly)
+    // Development客户端与Dedicated Server均可参加用户明确开启的验证；
+    // 配置和启动参数缺一不可，Shipping/Test由编译期无条件关闭，即使开发目录被误Cook。
+    if (Set.bDevelopmentOnly && !DivineBeasts::DevelopmentAbilities::IsEnabledForCurrentProcess())
     {
-#if WITH_EDITOR && !UE_BUILD_SHIPPING && !UE_BUILD_TEST
-        bool bAllowDevelopmentAbilitySets = false;
-        if (!GConfig || !GConfig->GetBool(
-                TEXT("DivineBeasts.Abilities"),
-                TEXT("bAllowDevelopmentAbilitySets"),
-                bAllowDevelopmentAbilitySets, GGameIni) ||
-            !bAllowDevelopmentAbilitySets)
-        {
-            OutError = TEXT("开发技能集合仅允许编辑器在显式启用测试开关后授予。");
-            return false;
-        }
-#else
-        OutError = TEXT("正式客户端和服务器目标禁止授予开发技能集合。");
+        OutError = TEXT("开发技能集合需要非Shipping/Test构建、显式开发配置与-DBADevelopmentSkills启动参数。");
         return false;
-#endif
     }
     // 现阶段角色所需基础 AttributeSet 已由角色初始化提供；新增动态属性集
     // 一旦无法回滚将破坏授权事务，所以此实现拒绝它，而不是装作全部支持。

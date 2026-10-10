@@ -148,8 +148,8 @@ Editor：
 
 ## 9. 2026-10-10 移动动画快照增量
 
-`UGamePlatformLocomotionAnimInstance`位于客户端模块Public/Locomotion，供项目真实动画蓝图向下继承。引擎游戏线程动画评估读取当前Pawn的实际水平速度（厘米/秒）与CharacterMovement下落模式；本地角色和复制代理采用同一入口，不按输入意图伪造行走，也不读取账号、HTTP、UI或业务状态。初始化、无Pawn和动画失活都清除旧状态，不缓存所有者，不拥有委托、计时器或资源加载器。
+`UGamePlatformLocomotionAnimInstance`位于客户端模块Public/Locomotion，供项目真实动画蓝图向下继承。引擎游戏线程动画评估读取当前Pawn的实际水平速度与世界Z轴垂直速度（均为厘米/秒），以及CharacterMovement下落模式；本地角色和复制代理采用同一入口，不按输入意图伪造行走或起跳，也不读取账号、HTTP、UI或业务状态。初始化、无Pawn和动画失活都清除旧状态，不缓存所有者，不拥有委托、计时器或资源加载器。
 
-项目动画资源拥有者决定Idle/Walk/Run/Fall资源与速度轴；平台类不引用项目挂载点、生肖或MOBA。纯表现采用原地动画，权威位移仍由角色移动组件计算。平台新增类不要求项目、MOBA再创建没有独立职责的中间C++类。
+项目动画资源拥有者决定Idle/Walk/Run/Jump/Land资源与速度轴；平台类不引用项目挂载点、生肖或MOBA。`bIsFalling`表示移动组件处于空中模式，包括起跳上升；`VerticalSpeedCmPerSecond`正值为上升、负值为下降。动画图应结合两者选择空中段，不能把顶点的零垂直速度当成落地；落地由`bIsFalling`变为false确认，非循环落地动画的完成转换归资产状态机。非有限或超出float范围的垂直速度归零，且不影响移动组件的空中模式或独立水平速度。纯表现采用原地动画，权威位移仍由角色移动组件计算。平台新增类不要求项目、MOBA再创建没有独立职责的中间C++类。
 
-模块Private/Tests中的`GamePlatform.Animation.Locomotion.PawnMovement`使用真实瞬态Character与移动组件，覆盖水平速度、垂直速度排除、下落、停止、失活清理和无Pawn预览。该测试不修改正式地图或出生点；执行结果须以本轮锁定UE构建和自动化日志为准，源码存在不表示运行通过。项目资产检查与双客户端移动验收另外执行，不能用此用例替代Cook或联机视觉验收。
+模块Private/Tests中的`GamePlatform.Animation.Locomotion.PawnMovement`使用真实瞬态Character与移动组件，覆盖水平速度、垂直速度排除、下落、停止、失活清理和无Pawn预览；无Pawn用例预置旧快照再更新，验证实际清理行为。`GamePlatform.Animation.Locomotion.AirborneVerticalSpeed`覆盖起跳正Z、顶点零Z且仍离地、下降负Z、NaN/Infinity隔离、落地模式与空中失活，以及初始化复位。测试不修改正式地图或出生点；执行结果须以本轮锁定UE构建和自动化日志为准，源码存在不表示运行通过。项目资产检查与双客户端移动验收另外执行，不能用此用例替代Cook或联机视觉验收。

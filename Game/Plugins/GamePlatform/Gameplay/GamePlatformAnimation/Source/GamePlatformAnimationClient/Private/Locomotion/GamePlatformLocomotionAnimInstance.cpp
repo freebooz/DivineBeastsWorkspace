@@ -8,6 +8,7 @@ void UGamePlatformLocomotionAnimInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
     GroundSpeedCmPerSecond = 0.0f;
+    VerticalSpeedCmPerSecond = 0.0f;
     bIsFalling = false;
 }
 
@@ -19,6 +20,10 @@ void UGamePlatformLocomotionAnimInstance::NativeUpdateAnimation(float DeltaSecon
     const FVector Velocity = Pawn ? Pawn->GetVelocity() : FVector::ZeroVector;
     const double GroundSpeed = Velocity.Size2D();
     GroundSpeedCmPerSecond = FMath::IsFinite(GroundSpeed) ? static_cast<float>(GroundSpeed) : 0.0f;
+    // 先转换为蓝图字段精度再检查，拒绝NaN/Infinity及超出float范围的Z；水平与垂直快照互不污染。
+    // IsFalling只说明离地，正负Z补充上升/下降方向，顶点与落地仍由实际移动模式区分。
+    const float VerticalSpeed = static_cast<float>(Velocity.Z);
+    VerticalSpeedCmPerSecond = FMath::IsFinite(VerticalSpeed) ? VerticalSpeed : 0.0f;
     const ACharacter* Character = Cast<ACharacter>(Pawn);
     const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
     bIsFalling = Movement && Movement->IsFalling();
@@ -27,6 +32,7 @@ void UGamePlatformLocomotionAnimInstance::NativeUpdateAnimation(float DeltaSecon
 void UGamePlatformLocomotionAnimInstance::NativeUninitializeAnimation()
 {
     GroundSpeedCmPerSecond = 0.0f;
+    VerticalSpeedCmPerSecond = 0.0f;
     bIsFalling = false;
     Super::NativeUninitializeAnimation();
 }

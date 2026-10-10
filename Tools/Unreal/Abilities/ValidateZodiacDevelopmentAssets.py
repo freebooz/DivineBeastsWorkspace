@@ -49,7 +49,8 @@ def validate():
         row_names = set()
 
     for hero in HEROES:
-        profile_path = ROOT + "DA_DBA_" + hero + "_DevUIProfile"
+        # 客户端配置与服务器安全逻辑分目录；稳定PrimaryAssetId不因引擎迁移改变。
+        profile_path = ROOT + "UI/Profiles/DA_DBA_" + hero + "_DevUIProfile"
         profile = unreal.EditorAssetLibrary.load_asset(profile_path)
         check(profile is not None, hero + ":技能界面开发资产不存在", errors)
 

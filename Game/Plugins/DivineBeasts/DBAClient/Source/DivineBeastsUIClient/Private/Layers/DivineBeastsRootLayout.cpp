@@ -13,6 +13,8 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Panels/Combat/DivineBeastsCombatPanelBase.h"
+#include "Components/DivineBeastsPlayerPortraitWidget.h"
+#include "Components/DivineBeastsVillageMinimapWidget.h"
 
 
 namespace
@@ -105,6 +107,11 @@ void UDivineBeastsRootLayout::NativeDestruct()
     UnbindCombatEffects();
     if (IsValid(CombatHUD))
     {
+        // 销毁根布局时明确撤销子组件的数据来源，避免旅行后旧Pawn委托仍访问上一界面。
+        if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(TEXT("PlayerPortrait"))))
+        { Portrait->BindToPawn(nullptr); }
+        if (auto* Minimap = Cast<UDivineBeastsVillageMinimapWidget>(CombatHUD->GetWidgetFromName(TEXT("Minimap"))))
+        { Minimap->BindToPawn(nullptr); }
         CombatHUD->SetVisibility(ESlateVisibility::Collapsed);
     }
     Super::NativeDestruct();
@@ -138,6 +145,18 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
 
     // 世界加载/本地Pawn换代时，重新绑定效果投影并丢弃旧玩家的数据作用域。
     BindCombatEffects(bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr);
+    // 组合根只为真实本地Pawn注入展示来源；项目肖像/小地图各自持有事件与纹理句柄，无MOBA依赖。
+    APawn* DisplayPawn = bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr;
+    if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(TEXT("PlayerPortrait"))))
+    {
+        Portrait->SetOwningPlayer(GetOwningPlayer());
+        Portrait->BindToPawn(DisplayPawn);
+    }
+    if (auto* Minimap = Cast<UDivineBeastsVillageMinimapWidget>(CombatHUD->GetWidgetFromName(TEXT("Minimap"))))
+    {
+        Minimap->SetOwningPlayer(GetOwningPlayer());
+        Minimap->BindToPawn(DisplayPawn);
+    }
 }
 
 void UDivineBeastsRootLayout::BindCombatEffects(APawn* Pawn)

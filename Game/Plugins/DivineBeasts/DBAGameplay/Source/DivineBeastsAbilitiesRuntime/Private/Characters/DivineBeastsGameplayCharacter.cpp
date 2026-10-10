@@ -12,6 +12,9 @@
 #include "Misc/Parse.h"
 #include "HAL/PlatformTime.h"
 
+// 原生按键委托携带稳定输入标签；显式声明避免误用无参数的默认BindAction重载。
+DECLARE_DELEGATE_OneParam(FDivineBeastsTaggedAbilityInputDelegate, FGameplayTag);
+
 ADivineBeastsGameplayCharacter::ADivineBeastsGameplayCharacter()
 {
     bReplicates = true;
@@ -37,6 +40,29 @@ void ADivineBeastsGameplayCharacter::SetupPlayerInputComponent(UInputComponent* 
     Input->BindAxis(TEXT("DBA.Look"), this, &ThisClass::LookCamera);
     Input->BindAction(TEXT("DBA.Jump"), IE_Pressed, this, &ACharacter::Jump);
     Input->BindAction(TEXT("DBA.Jump"), IE_Released, this, &ACharacter::StopJumping);
+    // 槽位由已注册的稳定输入标签指定，不按授权数组顺序推算生肖技能。
+    const TCHAR* Actions[] = { TEXT("DBA.PrimaryAbility"), TEXT("DBA.AbilityOne"), TEXT("DBA.AbilityTwo"), TEXT("DBA.UltimateAbility") };
+    const TCHAR* AbilityInputTagNames[] = { TEXT("Platform.Ability.Input.DivineBeasts.Primary"), TEXT("Platform.Ability.Input.DivineBeasts.Slot1"), TEXT("Platform.Ability.Input.DivineBeasts.Slot2"), TEXT("Platform.Ability.Input.DivineBeasts.Slot4") };
+    for (int32 Index = 0; Index < UE_ARRAY_COUNT(Actions); ++Index)
+    {
+        const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(AbilityInputTagNames[Index]));
+        Input->BindAction<FDivineBeastsTaggedAbilityInputDelegate>(Actions[Index], IE_Pressed, this, &ThisClass::HandleAbilityInputPressed, Tag);
+        Input->BindAction<FDivineBeastsTaggedAbilityInputDelegate>(Actions[Index], IE_Released, this, &ThisClass::HandleAbilityInputReleased, Tag);
+    }
+}
+void ADivineBeastsGameplayCharacter::HandleAbilityInputPressed(FGameplayTag InputTag)
+{
+    if (!IsLocallyControlled() || !Controller || Controller->IsMoveInputIgnored()) { return; }
+    if (UGamePlatformAbilitySystemComponent* ASC = GetGamePlatformAbilitySystemComponent())
+    {
+        // 每次按下只处理一次OnPressed请求，禁止在角色Tick中反复尝试或本地授予技能。
+        if (ASC->AbilityInputPressed(InputTag, ASC->GetInputToken()).IsSuccess()) { ASC->ProcessAbilityInput(); }
+    }
+}
+void ADivineBeastsGameplayCharacter::HandleAbilityInputReleased(FGameplayTag InputTag)
+{
+    if (UGamePlatformAbilitySystemComponent* ASC = GetGamePlatformAbilitySystemComponent())
+    { ASC->AbilityInputReleased(InputTag, ASC->GetInputToken()); }
 }
 void ADivineBeastsGameplayCharacter::MoveForward(float Value)
 {

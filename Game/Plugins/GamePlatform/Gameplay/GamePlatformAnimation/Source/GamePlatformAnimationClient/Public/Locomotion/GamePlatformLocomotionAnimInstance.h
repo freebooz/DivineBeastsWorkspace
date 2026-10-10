@@ -16,7 +16,15 @@ public:
     UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion", meta=(Units="cm/s"))
     float GroundSpeedCmPerSecond = 0.0f;
 
-    /** CharacterMovement当前是否下落；无Character或失活时为false，不推断权威跳跃规则。 */
+    /**
+     * 当前Pawn沿世界Z轴的实际速度，厘米/秒；正值上升、负值下降、零为无垂直速度。
+     * 无Pawn、非有限速度或失活时为零。图须结合bIsFalling区分空中顶点与地面，不能仅由Z判断落地；
+     * 只表达本地/复制移动事实，不依据输入推断起跳，不持有跳跃计时或改变权威移动。
+     */
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion", meta=(Units="cm/s"))
+    float VerticalSpeedCmPerSecond = 0.0f;
+
+    /** CharacterMovement当前是否处于空中下落模式（包含跳跃上升）；无Character或失活为false，不推断权威跳跃规则。 */
     UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion")
     bool bIsFalling = false;
 

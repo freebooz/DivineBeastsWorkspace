@@ -7,6 +7,7 @@
 class UDivineBeastsAbilityLoadoutComponent;
 class USpringArmComponent;
 class UCameraComponent;
+struct FGameplayTag;
 
 /**
  * ADivineBeastsGameplayCharacter（神兽联盟双端可玩角色）。
@@ -43,6 +44,9 @@ private:
     /** 本地镜头轴输入交给引擎Controller处理；不修改权威位置、出生身份或技能资格。 */
     void TurnCamera(float Value);
     void LookCamera(float Value);
+    /** 本地数字键只向唯一ASC提交输入；当前令牌、授权Spec、消耗与冷却仍由平台和服务器校验。 */
+    void HandleAbilityInputPressed(FGameplayTag InputTag);
+    void HandleAbilityInputReleased(FGameplayTag InputTag);
     /** Pawn拥有唯一技能装配组件；只在可信身份Ready后授予，换身份/退出由组件撤销自有租约与授权。 */
     UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Gameplay")
     TObjectPtr<UDivineBeastsAbilityLoadoutComponent> AbilityLoadout;

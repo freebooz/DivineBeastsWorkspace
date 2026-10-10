@@ -25,7 +25,7 @@ SAMPLE_REQUIRED = {
     "DA_DBA_Rat_DevPrimary.uasset": "开发技能逻辑定义",
     "GA_DBA_Rat_DevPrimary.uasset": "开发 GAS 技能蓝图",
     "DA_DBA_Rat_DevAbilitySet.uasset": "开发技能授权集",
-    "DA_DBA_Rat_DevUIProfile.uasset": "开发技能显示配置",
+    "UI/Profiles/DA_DBA_Rat_DevUIProfile.uasset": "开发技能显示配置（与服务器逻辑隔离）",
 }
 HEROES = (
     "Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
@@ -77,7 +77,7 @@ def inspect(*, require_all_profiles: bool, require_all_definitions: bool, verify
                  and texture_path.stat().st_size > 500)
     profiles = [
         hero for hero in HEROES
-        if (DEV_ASSETS / f"DA_DBA_{hero}_DevUIProfile.uasset").is_file()
+        if (DEV_ASSETS / f"UI/Profiles/DA_DBA_{hero}_DevUIProfile.uasset").is_file()
     ]
     print(f"DEVELOPMENT_PROFILES={len(profiles)}/12; "
           f"MISSING={','.join(hero for hero in HEROES if hero not in profiles) or 'None'}")
