@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "GeneratedUtc": "2026-10-10T01:27:21.6700070Z",
+  "GeneratedUtc": "2026-10-10T01:27:21.670007Z",
   "Scope": "本次用户要求提交远程主分支：合入6f52c22战斗HUD/已确认反馈及开发资产，保留0a78645主线世界移动增量；两处冲突按真实所有权增量解决，不修改引擎资产",
   "LocalSourceCommit": "6f52c22492e5e80694c7adf3ba00ad892eda1c2e",
   "ValidatedRemoteParent": "0a78645ab23e3f5283351a54615e9285d222fba2",
@@ -1500,5 +1500,1398 @@
   ],
   "RemotePushReceipt": null,
   "PrimaryWorkspaceModifiedByRoot": false,
-  "OtherTasksSourcePreserved": true
+  "OtherTasksSourcePreserved": true,
+  "LatestMainIntegration": {
+    "IntegratedRemote": "dc02d5e13ac56a8c8f817732cf59fa5bf4215ba9",
+    "VerifiedCheckpoint": "38fb403cf2e1fd26ad88119997193e7ae41a63f0",
+    "SourceState": "最新主线与本地提交合并工作树已冻结并真实验证，正式远程回读后补提交身份",
+    "SourceInputCount": 2062,
+    "SourceInputsChanged": 0,
+    "SourceFreezeSHA256": "6580C7A2B0E1814D433B4A86293BC2BD33D6795A4C3419F0E47ECC9F2358B222",
+    "BuildResults": [
+      {
+        "Target": "Editor",
+        "RunId": "9a074dd3-24e1-4a68-84a7-8fb86c160a70",
+        "Evidence": "Saved/Validation/FoundationM0/9a074dd3-24e1-4a68-84a7-8fb86c160a70/Build/result.json",
+        "SHA256": "EB626332E373179F44721E2B0D14D0A120D3790DE744F89FBD0B2DF88103241F",
+        "ActualResult": {
+          "Operation": "Build",
+          "RunId": "9a074dd3-24e1-4a68-84a7-8fb86c160a70",
+          "Status": "Passed",
+          "ExitCode": 0,
+          "Message": "所选目标已顺序执行；后续目标在首次失败时停止。",
+          "TimestampUtc": "2026-10-10T01:30:35.9888605Z",
+          "Workspace": "K:\\",
+          "EngineRoot": "F:\\UnrealEngine-5.8.0-release",
+          "OnlyModules": [],
+          "EngineVersion": "5.8.0",
+          "Configuration": "Development",
+          "AdditionalPlugins": [
+            "DBAArena",
+            "DBAClient",
+            "DBAContentPack_Common",
+            "DBAFrontEndPack",
+            "DBAGameplay",
+            "DBAHeroPack_Boar",
+            "DBAHeroPack_Dog",
+            "DBAHeroPack_Dragon",
+            "DBAHeroPack_Goat",
+            "DBAHeroPack_Horse",
+            "DBAHeroPack_Monkey",
+            "DBAHeroPack_Ox",
+            "DBAHeroPack_Rabbit",
+            "DBAHeroPack_Rat",
+            "DBAHeroPack_Rooster",
+            "DBAHeroPack_Snake",
+            "DBAHeroPack_Tiger",
+            "DBAServer",
+            "DBAUIPack_Core",
+            "DBAWorldPack_Village",
+            "DBAWorlds",
+            "GamePlatformAbilitySystem",
+            "GamePlatformAI",
+            "GamePlatformAnimation",
+            "GamePlatformApplicationFlow",
+            "GamePlatformArena",
+            "GamePlatformCamera",
+            "GamePlatformCharacter",
+            "GamePlatformCombat",
+            "GamePlatformCommerceUI",
+            "GamePlatformCore",
+            "GamePlatformData",
+            "GamePlatformDebug",
+            "GamePlatformDeveloperTools",
+            "GamePlatformEntitlement",
+            "GamePlatformEquipment",
+            "GamePlatformGameplay",
+            "GamePlatformInput",
+            "GamePlatformInteraction",
+            "GamePlatformInventory",
+            "GamePlatformLiveOps",
+            "GamePlatformLoading",
+            "GamePlatformLobby",
+            "GamePlatformLocalization",
+            "GamePlatformNavigation",
+            "GamePlatformOnline",
+            "GamePlatformPCG",
+            "GamePlatformPresentation",
+            "GamePlatformProgression",
+            "GamePlatformQuest",
+            "GamePlatformSave",
+            "GamePlatformServer",
+            "GamePlatformSession",
+            "GamePlatformSettings",
+            "GamePlatformSFX",
+            "GamePlatformSurface",
+            "GamePlatformTelemetry",
+            "GamePlatformUI",
+            "GamePlatformVFX",
+            "GamePlatformVillage",
+            "GamePlatformWorld",
+            "MobaPresentation"
+          ],
+          "Platform": "Win64",
+          "UsePrecompiled": true,
+          "Targets": [
+            {
+              "Target": "DivineBeastsArenaEditor",
+              "Evidence": "K:\\Saved\\Validation\\FoundationM0\\9a074dd3-24e1-4a68-84a7-8fb86c160a70\\Build\\Editor",
+              "Result": {
+                "ExitCode": 0,
+                "ProcessId": 26968,
+                "StartTimeTicks": 639271925481961239,
+                "Ready": false,
+                "TimedOut": false,
+                "Cleaned": true,
+                "DurationSeconds": 87.7497963
+              }
+            }
+          ]
+        }
+      },
+      {
+        "Target": "Client",
+        "RunId": "1de59610-d2b3-427a-b358-22127b309eff",
+        "Evidence": "Saved/Validation/FoundationM0/1de59610-d2b3-427a-b358-22127b309eff/Build/result.json",
+        "SHA256": "9C17F81D093721B7A2422462238068462D7D7CFF14F54F54231DE47479BE3164",
+        "ActualResult": {
+          "Operation": "Build",
+          "RunId": "1de59610-d2b3-427a-b358-22127b309eff",
+          "Status": "Passed",
+          "ExitCode": 0,
+          "Message": "所选目标已顺序执行；后续目标在首次失败时停止。",
+          "TimestampUtc": "2026-10-10T01:32:09.7308793Z",
+          "Workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+          "AdditionalPlugins": [
+            "DBAArena",
+            "DBAClient",
+            "DBAContentPack_Common",
+            "DBAFrontEndPack",
+            "DBAGameplay",
+            "DBAHeroPack_Boar",
+            "DBAHeroPack_Dog",
+            "DBAHeroPack_Dragon",
+            "DBAHeroPack_Goat",
+            "DBAHeroPack_Horse",
+            "DBAHeroPack_Monkey",
+            "DBAHeroPack_Ox",
+            "DBAHeroPack_Rabbit",
+            "DBAHeroPack_Rat",
+            "DBAHeroPack_Rooster",
+            "DBAHeroPack_Snake",
+            "DBAHeroPack_Tiger",
+            "DBAUIPack_Core",
+            "DBAWorldPack_Village",
+            "DBAWorlds",
+            "GamePlatformAbilitySystem",
+            "GamePlatformAI",
+            "GamePlatformAnimation",
+            "GamePlatformApplicationFlow",
+            "GamePlatformArena",
+            "GamePlatformCamera",
+            "GamePlatformCharacter",
+            "GamePlatformCombat",
+            "GamePlatformCommerceUI",
+            "GamePlatformCore",
+            "GamePlatformData",
+            "GamePlatformDebug",
+            "GamePlatformEntitlement",
+            "GamePlatformEquipment",
+            "GamePlatformGameplay",
+            "GamePlatformInput",
+            "GamePlatformInteraction",
+            "GamePlatformInventory",
+            "GamePlatformLiveOps",
+            "GamePlatformLoading",
+            "GamePlatformLobby",
+            "GamePlatformLocalization",
+            "GamePlatformNavigation",
+            "GamePlatformOnline",
+            "GamePlatformPCG",
+            "GamePlatformPresentation",
+            "GamePlatformProgression",
+            "GamePlatformQuest",
+            "GamePlatformSave",
+            "GamePlatformSession",
+            "GamePlatformSettings",
+            "GamePlatformSFX",
+            "GamePlatformSurface",
+            "GamePlatformTelemetry",
+            "GamePlatformUI",
+            "GamePlatformVFX",
+            "GamePlatformVillage",
+            "GamePlatformWorld",
+            "MobaPresentation"
+          ],
+          "EngineVersion": "5.8.0",
+          "Configuration": "Development",
+          "Platform": "Win64",
+          "Targets": [
+            {
+              "Evidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\FoundationM0\\1de59610-d2b3-427a-b358-22127b309eff\\Build\\Client",
+              "Target": "DivineBeastsArenaClient",
+              "Result": {
+                "ExitCode": 0,
+                "ProcessId": 33700,
+                "StartTimeTicks": 639271926580292645,
+                "Ready": false,
+                "TimedOut": false,
+                "Cleaned": true,
+                "DurationSeconds": 71.6828803
+              }
+            }
+          ],
+          "UsePrecompiled": false,
+          "OnlyModules": [
+            "DBAWorldsRuntime",
+            "DivineBeastsAbilitiesRuntime",
+            "DivineBeastsApplicationFlowClient",
+            "DivineBeastsArena",
+            "DivineBeastsArenaClient",
+            "DivineBeastsArenaRuntime",
+            "DivineBeastsCharactersRuntime",
+            "DivineBeastsInputClient",
+            "DivineBeastsPresentationClient",
+            "DivineBeastsPresentationRuntime",
+            "DivineBeastsRuntime",
+            "DivineBeastsUIClient",
+            "GamePlatformAbilitySystem",
+            "GamePlatformAI",
+            "GamePlatformAnimation",
+            "GamePlatformAnimationClient",
+            "GamePlatformApplicationFlow",
+            "GamePlatformArena",
+            "GamePlatformArenaClient",
+            "GamePlatformCameraClient",
+            "GamePlatformCharacter",
+            "GamePlatformCombat",
+            "GamePlatformCommerceUIClient",
+            "GamePlatformCore",
+            "GamePlatformData",
+            "GamePlatformDebug",
+            "GamePlatformDebugClient",
+            "GamePlatformEntitlement",
+            "GamePlatformEntitlementClient",
+            "GamePlatformEquipment",
+            "GamePlatformEquipmentClient",
+            "GamePlatformGameplay",
+            "GamePlatformInputClient",
+            "GamePlatformInteraction",
+            "GamePlatformInventoryClient",
+            "GamePlatformLiveOpsClient",
+            "GamePlatformLoading",
+            "GamePlatformLobby",
+            "GamePlatformLobbyClient",
+            "GamePlatformLocalizationClient",
+            "GamePlatformMobaCore",
+            "GamePlatformMobaData",
+            "GamePlatformNavigation",
+            "GamePlatformOnline",
+            "GamePlatformOnlineClient",
+            "GamePlatformPCG",
+            "GamePlatformPresentationClient",
+            "GamePlatformPresentationCore",
+            "GamePlatformProgression",
+            "GamePlatformProgressionClient",
+            "GamePlatformQuest",
+            "GamePlatformQuestClient",
+            "GamePlatformSaveClient",
+            "GamePlatformSession",
+            "GamePlatformSettingsClient",
+            "GamePlatformSettingsRuntime",
+            "GamePlatformSFXClient",
+            "GamePlatformSurfaceClient",
+            "GamePlatformTelemetry",
+            "GamePlatformUIClient",
+            "GamePlatformVFXClient",
+            "GamePlatformVillage",
+            "GamePlatformVillageClient",
+            "GamePlatformWorld",
+            "MobaPresentationClient",
+            "MobaPresentationRuntime"
+          ],
+          "EngineRoot": "F:\\UnrealEngine-5.8.0-release"
+        }
+      },
+      {
+        "Target": "Server",
+        "RunId": "6807fca6-9e59-4969-85cf-910ecde5573d",
+        "Evidence": "Saved/Validation/FoundationM0/6807fca6-9e59-4969-85cf-910ecde5573d/Build/result.json",
+        "SHA256": "A6B3623E4A37C0B8A0558AB08B69E75F2B33FD227497F62D87B7A811541A0D2F",
+        "ActualResult": {
+          "Operation": "Build",
+          "RunId": "6807fca6-9e59-4969-85cf-910ecde5573d",
+          "Status": "Passed",
+          "ExitCode": 0,
+          "Message": "所选目标已顺序执行；后续目标在首次失败时停止。",
+          "TimestampUtc": "2026-10-10T01:33:07.5594266Z",
+          "Workspace": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+          "OnlyModules": [
+            "DBAServer",
+            "DBAWorldsRuntime",
+            "DivineBeastsAbilitiesRuntime",
+            "DivineBeastsArena",
+            "DivineBeastsArenaRuntime",
+            "DivineBeastsArenaServer",
+            "DivineBeastsCharactersRuntime",
+            "DivineBeastsRuntime",
+            "GamePlatformAbilitySystem",
+            "GamePlatformAI",
+            "GamePlatformAIServer",
+            "GamePlatformAnimation",
+            "GamePlatformApplicationFlow",
+            "GamePlatformArena",
+            "GamePlatformArenaServer",
+            "GamePlatformCharacter",
+            "GamePlatformCombat",
+            "GamePlatformCore",
+            "GamePlatformData",
+            "GamePlatformDebug",
+            "GamePlatformEntitlement",
+            "GamePlatformEquipment",
+            "GamePlatformEquipmentServer",
+            "GamePlatformGameplay",
+            "GamePlatformInteraction",
+            "GamePlatformLoading",
+            "GamePlatformLobby",
+            "GamePlatformLobbyServer",
+            "GamePlatformMobaCore",
+            "GamePlatformMobaData",
+            "GamePlatformNavigation",
+            "GamePlatformNavigationServer",
+            "GamePlatformOnline",
+            "GamePlatformPCG",
+            "GamePlatformPresentationCore",
+            "GamePlatformProgression",
+            "GamePlatformQuest",
+            "GamePlatformQuestServer",
+            "GamePlatformServer",
+            "GamePlatformSettingsRuntime",
+            "GamePlatformSettingsServer",
+            "GamePlatformTelemetry",
+            "GamePlatformVillage",
+            "GamePlatformVillageServer",
+            "GamePlatformWorld",
+            "MobaPresentationRuntime"
+          ],
+          "Targets": [
+            {
+              "Result": {
+                "ExitCode": 0,
+                "ProcessId": 22112,
+                "StartTimeTicks": 639271927301950471,
+                "Ready": false,
+                "TimedOut": false,
+                "Cleaned": true,
+                "DurationSeconds": 57.3471084
+              },
+              "Evidence": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\FoundationM0\\6807fca6-9e59-4969-85cf-910ecde5573d\\Build\\Server",
+              "Target": "DivineBeastsArenaServer"
+            }
+          ],
+          "EngineVersion": "5.8.0",
+          "EngineRoot": "F:\\UnrealEngine-5.8.0-release",
+          "UsePrecompiled": false,
+          "Configuration": "Development",
+          "AdditionalPlugins": [
+            "DBAArena",
+            "DBAGameplay",
+            "DBAServer",
+            "DBAWorldPack_Village",
+            "DBAWorlds",
+            "GamePlatformAbilitySystem",
+            "GamePlatformAI",
+            "GamePlatformAnimation",
+            "GamePlatformApplicationFlow",
+            "GamePlatformArena",
+            "GamePlatformCharacter",
+            "GamePlatformCombat",
+            "GamePlatformCore",
+            "GamePlatformData",
+            "GamePlatformDebug",
+            "GamePlatformEntitlement",
+            "GamePlatformEquipment",
+            "GamePlatformGameplay",
+            "GamePlatformInteraction",
+            "GamePlatformLoading",
+            "GamePlatformLobby",
+            "GamePlatformNavigation",
+            "GamePlatformOnline",
+            "GamePlatformPCG",
+            "GamePlatformPresentation",
+            "GamePlatformProgression",
+            "GamePlatformQuest",
+            "GamePlatformServer",
+            "GamePlatformSettings",
+            "GamePlatformTelemetry",
+            "GamePlatformVillage",
+            "GamePlatformWorld",
+            "MobaPresentation"
+          ],
+          "Platform": "Win64"
+        }
+      }
+    ],
+    "UEAutomation": {
+      "SchemaVersion": 1,
+      "EngineVersion": "5.8.0",
+      "Platform": "Win64",
+      "Mode": "Editor-Cmd/NullRHI/Unattended",
+      "MonolithDisabled": true,
+      "Interpretation": "dc02最新主线合入后的195唯一逻辑/资源用例全部精确验收，包含实际Walk/Run姿势与必要Definition拒绝激活；不认证完整联机/Cook/设备画面性能",
+      "Attempts": [
+        {
+          "Evidence": "Saved/Validation/PluginRemediation-2026-10-09/ActualEditorAutomationMainPush20261010Final195",
+          "Process": {
+            "ExitCode": 0,
+            "ProcessId": 56200,
+            "StartTimeTicks": 639271926580269524,
+            "Ready": false,
+            "TimedOut": false,
+            "Cleaned": true,
+            "DurationSeconds": 103.0085744
+          },
+          "ExpectedCount": 195,
+          "BuildRunId": "9a074dd3-24e1-4a68-84a7-8fb86c160a70",
+          "DiagnosticExclusions": null,
+          "ActualDiscoveredCount": 195,
+          "StartedCount": 195,
+          "CompletedCount": 195,
+          "SuccessCount": 195,
+          "FailedCount": 0,
+          "Completed": [
+            {
+              "Name": "DivineBeasts.Abilities.Assembly.Contract",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.NormalAndOldRequest",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.QueuedRespawnAfterEnd",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Arena.Server.AuthoritativeDeathBridgeRejectsRetiredPawn.StatsListenerEndsMatch",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Arena.Server.SpawnReentrantSuccessorOwnership",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Arena.UI.SameIdInstanceOwnership",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Character.Pawn.AuthoritativeComposition",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Character.Pawn.AuthoritativeDeathOncePerAvatar",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Character.Pawn.VerifiedWarmupHandoff",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Characters.Configuration.CloseDuringOverlap",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Characters.Configuration.ReentrantOverlapSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Characters.Configuration.UnregisterDuringOverlap",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Characters.TrustedContext.CloseDuringNotification",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Characters.TrustedContext.ReentrantSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Presentation.Activation.FailureCancellationAndOldGeneration",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Presentation.Characters.SkeletonCompatibility",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Presentation.Characters.WorldLocomotion",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Presentation.ContentPackContract",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Presentation.HeroVFXProfiles",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Presentation.ProjectFacts",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Presentation.RuntimeContracts",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Server.WorldCharacterAdmission.RequiredDefinition",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Server.WorldCharacterAdmission.Roster",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Server.WorldRetirement",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.Combat.FeedbackMapping",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.Combat.PlayerStatusSnapshot",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.Delivery.RequiredTransferScreens",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.ErrorReconnect.ActivationObserverDeactivates",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.ErrorReconnect.ActiveViewModelReplacement",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.ErrorReconnect.SynchronousRetryKeepsSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.LoadingTravel.ActivationObserverDeactivates",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.LoadingTravel.ActiveViewModelReplacement",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.CommandCompletionLifetime",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.CommandContract",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.Localization",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.RoutingPolicy",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.UI.ScreenInventory",
+              "Result": "Success"
+            },
+            {
+              "Name": "DivineBeasts.Worlds.Delivery.VillageGameplayDefinitions",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Animation.Locomotion.PawnMovement",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.AsynchronousWaitResetsCycleBudget",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.BusyAndReentrantControlRejected",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.CancelAndLateCompletion",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.CancelBeforeFirstTick",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.CompletionAcceptanceBoundsWakeups",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.ConcurrentDuplicateCompletions",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.CycleModeLongChainNotBudgeted",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.CycleModeStillValidatesGraph",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.DeadlineBeatsQueuedCompletion",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.DependencyLossFailsAndCleansUp",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.DuplicateCompletionFirstWins",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.ExactCancellationAndThreadGuards",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.ExplicitCycleOptInAndGeneration",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.ExternalEventUsesAttemptMailbox",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.FailurePreservesError",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.GenerationChangesAcrossRetry",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.GraphPreflightAndAtomicStart",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.ImmediateCycleBudgetFails",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.IndependentScopes",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.InvalidClockFailsAndCleansUp",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.InvalidGraphsAreAtomic",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.InvalidLimitsRejected",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.LongGraphDoesNotRecurse",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.NamedBranchSkipsDefault",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.NextWakeTimeContract",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.OldRunCannotAffectRestart",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.RetryBudgetExhausted",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.RetryDelayAndOldAttemptIsolation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.SequentialAndSynchronousCompletion",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.ShutdownAndCallbackAfterDestruction",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.ThreadedCompletionAndControl",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.TimeoutRetryAndCancelBackoff",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.ApplicationFlow.Core.UnknownOutcomeFails",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Arena.Client.ResetReplicatedWorldView",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Arena.Lifecycle.ReconnectPreservesGraceUntilSpawnAccepted",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Arena.Server.VerifiedAdmissionRosterBoundary",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Camera.HitFeedback.UserScale",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.Feedback.Dedupe",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.ResetReentry.AttributeClosing",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.ResetReentry.AttributeSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.ResetReentry.ControlEffectSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.ResetReentry.MetaAttributeSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.ResetReentry.NativeTagClosing",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.ResetReentry.NativeTagSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.ResetReentry.NormalAdvance",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Combat.ResetReentry.ShieldSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Commerce.Client.AccountIsolation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Commerce.Client.BackendAuthority",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Commerce.Client.CloseDuringConfigure",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Commerce.Client.JsonValidation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Commerce.Client.OnlineOwnership",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Commerce.Client.ResetDuringState",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.DeveloperTools.DefinitionIdentityContract",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Entitlement.Client.AccountIsolation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Entitlement.Client.CloseDuringConfigure",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Entitlement.Client.DerivedIndex",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Entitlement.Client.OnlineOwnership",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Entitlement.Client.ResetDuringState",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Entitlement.Query",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Equipment.Server.ComponentRemoval",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Gameplay.Contracts.SafeDefaults",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Gameplay.Definitions.Validation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Gameplay.Login.InitialLocationDoesNotAuthorizeSpawn",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Input.Profile.OwnedRowsReset",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Interaction.Lifecycle.CustomCommitReentrantOptions",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Interaction.Lifecycle.TerminalListenerStartsDifferentTarget",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.AccountGeneration",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.CloseDuringConfigure",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.ConflictListenerTakeover",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.DerivedCache",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.DeterministicError",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.MutationAndRevision",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.OperationRecovery",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.QueryListenerTakeover",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.ResetDuringState",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.SnapshotIntegrity",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.SnapshotSingleFlightAndPendingIsolation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Inventory.Client.SynchronousOutcome",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.LiveOps.Client.AccountIsolation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.LiveOps.Client.CloseDuringConfigure",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.LiveOps.Client.JsonValidation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.LiveOps.Client.OnlineOwnership",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.LiveOps.Client.RequestTerminalGate",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.LiveOps.Client.Revision",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.LiveOps.Client.SameRevisionView",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.LiveOps.Client.TimeBoundary",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Navigation.Contracts.PathResultAndHandle",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Navigation.Server.OldHandleCannotCancelReusedRequest",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Presentation.Catalog.PreflightConflictingQualification",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Presentation.Regression.ExactAndFragmentConflict",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Presentation.CapacityGuards",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Presentation.CatalogResolution",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Presentation.ContextRegistry",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Progression.Client.AccountIsolation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Progression.Client.CloseDuringConfigure",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Progression.Client.DerivedCache",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Progression.Client.JsonValidation",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Progression.Client.OnlineOwnership",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Progression.Client.ViewEvents",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Quest.Client.RevisionProtection",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Quest.Client.SameRevisionProgressSequence",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Quest.Client.SortedCache",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Quest.Server.ReconcileRetainsAcceptedEvents",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Quest.Server.ReplayOnlyUncommittedQuestInstance",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Quest.Server.SnapshotListenerRetiresRuntime",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Server.Admission.ResetTarget",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Server.Control.ReentrantRetryOwnership",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Session.Fact.InvalidEnumRejected",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Settings.Runtime.AsyncLoadGeneration",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Settings.Runtime.DeferredPreparationEvent",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Settings.Runtime.PreparationFailureEvent",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Settings.Runtime.SaveTerminalGate",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.SFX.Lifecycle.StoppedAndTerminal",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Surface.Binding.StickyFailureAndOldGeneration",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Lifecycle.CompletionGeneration",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Lifecycle.ConfigureNested",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Lifecycle.ContextSinkReplacement",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Lifecycle.ContextSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Lifecycle.ExternalClose",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Lifecycle.HealthReplacement",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Lifecycle.ShutdownReentry",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Lifecycle.StartClose",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Network.ReconnectRecovery",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Network.ShutdownCancelsRetry",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.Performance.Development1000Records",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.BoundedBuffer",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.ContextBatchBoundary",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.MetricCoalescing",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.PrivacyAndSchema",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.PrivacyBoundaryDiscard",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.Telemetry.SamplingAndRateLimit",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.UI.Accessibility.PreferencesAndReducedMotion",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.UI.Lifecycle.CloseObserverKeepsNewPage",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.UI.Lifecycle.RootReplacementAndFailureNotificationClose",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.UI.Lifecycle.SuspensionKeepsOwnership",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.UI.Lifecycle.SynchronousCancelWithdrawsNewWidget",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.UI.Lifecycle.ViewModelChangeSelfCloseAndNestedChange",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.UI.Notification.DuplicateIdKeepsOldWidget",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.UI.Registry.DuplicateAndRouteCycle",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.VFX.Data.AbstractConstraintMissingDefinitionAndNaturalLeaseRelease",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.VFX.Lifecycle.ResourceCancellationAndTerminalOnce",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.VFX.Resolver.Exact",
+              "Result": "Success"
+            },
+            {
+              "Name": "GamePlatform.VFX.Resolver.P13ScopeAndTypedEligibility",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.ArenaArrayReentry",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.ContributorScopeReentry",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.ContributorSelfUnregister",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.FactRollbackKeepsSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.FirstFactAfterTravelUsesCurrentCoordinatorGeneration",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.LatePawnAndRespawnBindings",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.PredictionAcceptedConfirmationReentry",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.PredictionArenaRebindKeepsSuccessor",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.PredictionConfirmationRetryAfterRefusal",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.PredictionPendingScopeCancellation",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Client.PredictionRejectedConfirmationReentry",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Runtime.RequestBuilder",
+              "Result": "Success"
+            },
+            {
+              "Name": "Moba.Presentation.Runtime.SemanticRegistry",
+              "Result": "Success"
+            }
+          ],
+          "SelectedNamesExactlyCompleted": true,
+          "ReportMatchesCompleted": true,
+          "FinalSelectedSetPassed": true,
+          "ReportSHA256": "92267C0CFDD76413B42720FF632CCDDD6D2A71159EE2F95D6B5DDBCC3640AF9D",
+          "ReportCounts": {
+            "SuccessWithoutWarnings": 179,
+            "SuccessWithWarnings": 16,
+            "Failed": 0,
+            "NotRun": 0,
+            "InProcess": 0
+          },
+          "FatalPresent": false,
+          "LogSHA256": "E6E8951BE53B4854494EB1D9D661C9B58267C48FB24226187CA89CE63E624726"
+        }
+      ],
+      "Limits": [
+        "只验证实际所列逻辑用例，不证明生产后端、真实英雄/档案、五模式资源、三角色联机、画面、设备预算或Cook",
+        "默认136清单保留；诊断排除三死亡桥项不冒充完整批次",
+        "启动中未具名ScriptStruct条件错误不能当作测试已通过；全编辑器零错误未认证"
+      ]
+    },
+    "StartupUnscopedConditionErrors": 13,
+    "SourceGateExecutions": [
+      {
+        "Gate": "DesignBaseline",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateDesignBaseline.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
+        ],
+        "StartedUtc": "2026-10-10T01:29:45.0501638Z",
+        "EndedUtc": "2026-10-10T01:29:53.464461Z",
+        "DurationSeconds": 8.4098347,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\DesignBaseline.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\DesignBaseline.stderr.log",
+        "StdoutSHA256": "7C2F4C913FA40D3204E7E602F993FB72BD093B970328AD80E801FB4250C89794",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "ProjectHeaders",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateProjectHeaders.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
+        ],
+        "StartedUtc": "2026-10-10T01:29:53.8676394Z",
+        "EndedUtc": "2026-10-10T01:29:55.2204558Z",
+        "DurationSeconds": 1.3495525,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\ProjectHeaders.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\ProjectHeaders.stderr.log",
+        "StdoutSHA256": "3A61A369B16B5282E50A7DC3C598DCAE7DD814E5654A1940CB2B46D8C38EC5A1",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "InheritanceBoundaries",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateInheritanceBoundaries.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
+        ],
+        "StartedUtc": "2026-10-10T01:29:55.6049105Z",
+        "EndedUtc": "2026-10-10T01:29:57.4260504Z",
+        "DurationSeconds": 1.8180731,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\InheritanceBoundaries.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\InheritanceBoundaries.stderr.log",
+        "StdoutSHA256": "BD264A1FBBBD4261C7046F67A64C3718CA94CE517E8386084AB9EF488BC6364B",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "EnglishNames",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\TestEnglishProjectNames.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+          "-ReportPath",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\EnglishNames.json"
+        ],
+        "StartedUtc": "2026-10-10T01:29:57.7598922Z",
+        "EndedUtc": "2026-10-10T01:30:00.8287606Z",
+        "DurationSeconds": 3.0658547,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\EnglishNames.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\EnglishNames.stderr.log",
+        "StdoutSHA256": "FEB0C1FAA7BC97B2083629A81539FD75E51623679164B6B465B806086A95A77F",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "ArchitecturePester",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+        "Arguments": [
+          "-NoProfile",
+          "-File",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\RunArchitecturePester.ps1",
+          "-WorkspaceRoot",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace"
+        ],
+        "StartedUtc": "2026-10-10T01:30:01.1593106Z",
+        "EndedUtc": "2026-10-10T01:30:25.7362127Z",
+        "DurationSeconds": 24.5723784,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\ArchitecturePester.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\ArchitecturePester.stderr.log",
+        "StdoutSHA256": "3BEFFD39542D7D241BD4087E3E2164D29795C383B03AE6A0269D7661FA4E808E",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      },
+      {
+        "Gate": "AAAUIInventory",
+        "WorkspaceRoot": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace",
+        "Program": "C:\\Users\\Freebooz\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "Arguments": [
+          "-X",
+          "utf8",
+          "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Tests\\Architecture\\ValidateAAAUIInventory.py"
+        ],
+        "StartedUtc": "2026-10-10T01:30:26.0828099Z",
+        "EndedUtc": "2026-10-10T01:30:26.1759154Z",
+        "DurationSeconds": 0.0900645,
+        "ExitCode": 0,
+        "Stdout": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\AAAUIInventory.stdout.log",
+        "Stderr": "C:\\Users\\Freebooz\\.codex\\worktrees\\gameplatform-review-fixes\\DivineBeastsWorkspace\\Saved\\Validation\\MainPush20261010\\AfterDc02\\SourceGates\\AAAUIInventory.stderr.log",
+        "StdoutSHA256": "3808EF3194F5ACF08E993FC20EC5B19C07B609209BFF8C1E64F1B0FAAA57C230",
+        "StderrSHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "Boundary": "只证明既有入口实际执行结果；不是UE编译、Cook、资产Registry、联机或运行验收。"
+      }
+    ],
+    "FreshSourceGates": 6,
+    "ArchitectureCounts": {
+      "Total": 75,
+      "Passed": 75,
+      "Failed": 0
+    },
+    "Names": {
+      "Passed": true,
+      "ItemsChecked": 60356,
+      "PluginsChecked": 62,
+      "ViolationCount": 0,
+      "Violations": []
+    },
+    "ChangedUpstreamAssets": [
+      {
+        "Path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_WorldLocomotion.uasset",
+        "GitBlob": "1c5c0f4171c494f910c12fea4bd59aab72949c6f",
+        "SHA256": "B34238EB2DEBEC06C09C36677F509677875D7FF4EA00C15BFE4CB682BC74A66C",
+        "MatchesUpstream": true
+      },
+      {
+        "Path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MM_Fall_Loop.uasset",
+        "GitBlob": "f4bfdb6e8bf0ff50578990874c03c4abc6888d84",
+        "SHA256": "6098018E024660E4DDA5B51E317F81BE2CAD82165089751B00F4C0372D2DC97F",
+        "MatchesUpstream": true
+      },
+      {
+        "Path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/Content/Mannequins/DBA/Animations/WorldLocomotion/MM_Idle.uasset",
+        "GitBlob": "358c92c4dd8fd25bc3fd43d80987baa7b184dd72",
+        "SHA256": "3970A06BEE6694E44249B41B1658D1C72A3EFDE6C4F61A518F1E7C946EC7278D",
+        "MatchesUpstream": true
+      }
+    ],
+    "PreviousMissingWorldBlueprintResolved": true,
+    "GeneratedCachePolicy": "按dc02上游新增忽略规则停止跟踪三份Python生成缓存；Root仅停止跟踪生肖缓存，实际本机文件保留，不作为人工维护代码",
+    "Unexecuted": [
+      "Cook/Stage",
+      "双客户端和三服务器角色联机",
+      "设备视觉与CPU/GPU/内存预算实测",
+      "历史全工程中文说明全量审查"
+    ],
+    "SourceCommit": null
+  }
 }

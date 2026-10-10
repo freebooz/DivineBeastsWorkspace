@@ -25,14 +25,16 @@ def validate():
     skeleton = require_asset(SKELETON)
     blueprint = require_asset(BASE + 'ABP_DBA_WorldLocomotion')
     assert blueprint.get_editor_property('target_skeleton') == skeleton, '世界ABP必须使用完整UE5骨架'
-    parent = blueprint.get_editor_property('parent_class')
-    assert parent.get_path_name() == '/Script/GamePlatformAnimationClient.GamePlatformLocomotionAnimInstance', '世界动画必须读取Pawn真实移动状态'
-    assert unreal.EditorAssetLibrary.load_blueprint_class(BASE + 'ABP_DBA_WorldLocomotion'), '世界ABP必须编译出真实类'
+    generated = unreal.EditorAssetLibrary.load_blueprint_class(BASE + 'ABP_DBA_WorldLocomotion')
+    assert generated, '世界ABP必须编译出真实类'
+    # UE5.8 Blueprint.ParentClass不是Python可读编辑属性；使用实际GeneratedClass的CDO类型检查继承合同。
+    parent = unreal.GamePlatformLocomotionAnimInstance.static_class()
+    assert isinstance(unreal.get_default_object(generated), unreal.GamePlatformLocomotionAnimInstance), '世界动画必须继承平台Pawn移动快照'
     blend = require_asset(BASE + 'BS_DBA_WorldLocomotion')
     assert blend.get_editor_property('skeleton') == skeleton, '移动BlendSpace骨架一致'
     samples = list(blend.get_editor_property('sample_data'))
     assert len(samples) == 3, 'Idle/Walk/Run必须都是实际采样点'
-    speeds = sorted(sample.sample_value.x for sample in samples)
+    speeds = sorted(sample.get_editor_property('sample_value').x for sample in samples)
     assert speeds == [0.0, 150.0, 500.0], '速度轴以厘米/秒定义'
     registry = unreal.AssetRegistryHelpers.get_asset_registry()
     records = []

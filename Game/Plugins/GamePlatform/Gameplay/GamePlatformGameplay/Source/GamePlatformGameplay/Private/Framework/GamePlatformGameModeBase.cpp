@@ -246,7 +246,7 @@ bool AGamePlatformGameModeBase::UnregisterSpawnPolicy(const FGamePlatformGamepla
     return true;
 }
 
-FGamePlatformResult AGamePlatformGameModeBase::ValidateAdmission(const APlayerController& Controller) const
+FGamePlatformResult AGamePlatformGameModeBase::ValidateAdmission(const APlayerController& Controller, bool bForActivation) const
 {
     check(IsInGameThread());
 
@@ -269,7 +269,9 @@ FGamePlatformResult AGamePlatformGameModeBase::ValidateAdmission(const APlayerCo
     }
 
     TGuardValue<bool> ExternalGuard(Runtime->bExternalCall, true);
-    const FGamePlatformResult AuthorityResult = AuthorityRecord.Authority->ValidateCurrentAdmission(Controller, Record->Admission);
+    const FGamePlatformResult AuthorityResult = bForActivation
+        ? AuthorityRecord.Authority->ValidatePlayerActivation(Controller, Record->Admission)
+        : AuthorityRecord.Authority->ValidateCurrentAdmission(Controller, Record->Admission);
     if (!AuthorityResult.IsSuccess())
     {
         return AuthorityResult;
@@ -886,7 +888,8 @@ FGamePlatformResult AGamePlatformGameModeBase::AcceptPreparation(
         return GameplayFailure(TEXT("PreparationTokenStale"));
     }
 
-    const FGamePlatformResult Admission = ValidateAdmission(Controller);
+    // 客户端准备事实不能批准缺失的必要Pawn资源；服务器在消费令牌前复核项目激活门禁。
+    const FGamePlatformResult Admission = ValidateAdmission(Controller, true);
     if (!Admission.IsSuccess() || !ExperienceSnapshot.IsServerActive())
     {
         return Admission.IsSuccess() ? GameplayFailure(TEXT("ExperienceNotActive")) : Admission;

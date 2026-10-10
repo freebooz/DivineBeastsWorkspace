@@ -2,6 +2,8 @@
 // 自有世界委托/启动Timer在失败或退出时撤销；永久世界退休门闩使旧Ready/体验回调不能重新接纳。
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
 #include "Characters/DivineBeastsWorldCharacterAdmission.h"
+#include "Components/DivineBeastsCharacterComponent.h"
+#include "GameFramework/Pawn.h"
 
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
@@ -45,6 +47,13 @@ public:
             || !FGamePlatformId::TryParse(A.ExperienceId+TEXT("@1"),Experience) || Experience!=V.ExperienceId)
             return FGamePlatformResult::Failure(TEXT("WorldAdmissionStale"),TEXT("角色准入与当前真实连接不一致"));
         return FGamePlatformResult::Success();
+    }
+    virtual FGamePlatformResult ValidatePlayerActivation(const APlayerController& C,const FGamePlatformVerifiedPlayerContext& V) const override
+    {
+        const auto Verified = ValidateCurrentAdmission(C, V);
+        if (!Verified.IsSuccess()) return Verified;
+        return DivineBeasts::WorldCharacterAdmission::IsPawnReadyForActivation(C) ? Verified
+            : FGamePlatformResult::Failure(TEXT("WorldCharacterNotReady"), TEXT("必要英雄定义及角色初始化尚未真正就绪。"));
     }
 };
 }

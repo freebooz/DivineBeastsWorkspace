@@ -112,7 +112,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleCharacterReadinessChanged(
 
 void UDivineBeastsCharacterAppearanceComponent::RefreshAppearance()
 {
-    if (!CharacterState)
+    if (GetNetMode() == NM_DedicatedServer || !CharacterState)
     {
         return;
     }
