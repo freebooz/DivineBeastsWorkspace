@@ -5,6 +5,7 @@
 `UGamePlatformPCGWorldValidator（PCG世界编辑器校验器）`已加入 `GamePlatformPCGEditor（PCG编辑器模块）`源码，并显式依赖 `DataValidation（数据校验模块）`。规则：
 
 1. 地图中没有任何 `AGamePlatformPCGActorBase（PCG放置器基类）`且没有 Director 时返回 NotValidated（不适用），普通非PCG地图不被强制污染。
+   - UE5.8实际编辑器日志显示：CanValidateAsset（是否接管资源）若误对所有UWorld返回true，再以NotValidated结束，会导致DataValidation记录“did not return a validation result”。现改为入口先审查已加载PCG放置器/Director及WorldPartition中的PCG ActorDesc（未加载描述符），**普通天气/前端地图在入口直接跳过**，含未加载PCG的地图继续失败关闭。最终编辑器回归仍须独立执行。
 2. 一旦存在平台 PCG 放置器，必须恰好一个 `AGamePlatformPCGWorldDirector`。
 3. Director 自身参与者集合必须通过 `ValidateParticipantSet（验证参与者集合）`：同World、稳定SourceId、Schema主版本一致。
 4. 地图中每一个真实 PCG 放置器必须显式注册到唯一 Director；禁止依赖运行时 `GetAllActorsOfClass（全世界Actor扫描）`补漏。

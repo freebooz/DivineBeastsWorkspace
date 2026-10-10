@@ -51,6 +51,18 @@
 
 本轮结论：代码与素材静态门禁已通过，但真正的天气UE资产、完整Editor链接、Client/Server生产构建、网络和Cook端到端验收仍受同一工作空间引擎构建链与其他插件状态阻断。未经解决这些具体阻断，不能将P5/P8写成已完成。
 
+## 2026-10-10 16:08后真实天气Niagara资产迭代
+
+- HEAD为`8d0c361`。现场已发现真正的`MPC_GP_SurfaceGlobal`、Surface材质/函数、九张纹理和8份项目天气预设，以及三套Niagara系统（非虚假二进制）；这些初始资产由并行工作流落地，本次没有声明为自行生成。
+- 实际连接运行中的`DivineBeastsArena` UE5.8编辑器，Monolith返回`server_running=true`及Niagara域可用。读取`NS_GP_Weather_Rain`和`NS_GP_Weather_Snow`的系统摘要：分别有一个Near真实发射器和一个未配置的`Minimal`模板发射器，没有预期的Far。通过Monolith`duplicate_emitter`各自复制Near为`NE_GP_Rain_Far`及`NE_GP_Snow_Far`，再`remove_emitter`清除各自Minimal；这样保证远景不再是完全空模板，但Far现仍继承Near的部分速度、材质和发射强度参数，尚须专业美术按近远层分别优化。
+- `NS_GP_Weather_RainSplash`当时仅有默认`Minimal`；本轮通过真实Monolith`rename_emitter`改名为`NE_GP_Rain_Splash`，并增加SpawnRate、BoxLocation、AddVelocity和SolveForcesAndVelocity等真实Niagara Script模块。其完整4×4序列帧绑定、地面有效性及音频并未完成验收。
+- 三套Niagara均执行`save_system`并从Monolith得到`saved=true,was_dirty=true,asset_class=NiagaraSystem`。从磁盘验证对应实际包已修改、可读：`NS_GP_Weather_Rain.uasset` 367159B、`NS_GP_Weather_Snow.uasset` 367296B、`NS_GP_Weather_RainSplash.uasset` 213570B（本轮时间分别16:11:45、16:11:51、16:11:55）。
+- RainSplash的Monolith`validate_system`返回`valid=true,errors=[],warnings=[]`；随后Editor/Monolith连接掉线，雨/雪的最终`validate_system`和Shader编译未能取得可靠结果。编辑器进程已退出，禁止将全套VFX标记为通过。
+- 剩余：重新启动正确UE5.8编辑器并连接Monolith，检查Rain/Snow Near/Far发射率及本地空间运动与Niagara User参数绑定，完成Splash真实Renderer材质/Flipbook，运行`request_compile/get_system_diagnostics/validate_system`并再次保存重载；之后审核材质和八个预设与蓝图、游戏内场景、Client/Server Cook、双客户端和性能。
+
+上述本轮改动只涉及三份`GamePlatformVFX/Content/Weather/Niagara/*.uasset`天气资产及本文档，不覆盖并行PCG/UI资产，不进行Git提交或推送。
+
+
 ## 2026-10-10 14:17后继续执行事实
 
 - 当前工作区`main`已更新到`acb63c8`（更新由其他并行任务产生，天气任务没有主动提交），天气制作现有`Tools/Unreal/Weather/RunWeatherP5Authoring.ps1`分阶段PowerShell包装脚本。发现该脚本为UTF-8无BOM中文源文件，在工作区默认Windows PowerShell 5.1下产生ParserError。已为脚本增加UTF-8 BOM并真实执行`-Stage MPC`的默认只读预检，Exit=0，得到`WEATHER_P5_INSPECT_ONLY`，未创建假资产。

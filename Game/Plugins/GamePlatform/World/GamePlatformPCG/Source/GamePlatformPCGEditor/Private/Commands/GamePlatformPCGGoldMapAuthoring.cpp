@@ -3,6 +3,7 @@
 #include "Actors/GamePlatformPCGActors.h"
 #include "Authoring/GamePlatformPCGEditorLibrary.h"
 #include "Components/BoxComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SplineComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Editor.h"
@@ -18,11 +19,17 @@
 #include "HAL/FileManager.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
+#include "Misc/ScopeExit.h"
 #include "PCGComponent.h"
 #include "PCGGraph.h"
+#include "PCGManagedResource.h"
+#include "PCGNode.h"
+#include "Nodes/GamePlatformPCGNodes.h"
+#include "Services/GamePlatformPCGSpatialRules.h"
 #include "Types/GamePlatformPCGDomainIds.h"
 #include "UObject/Package.h"
 #include "UObject/SavePackage.h"
+#include "WorldPartition/WorldPartitionHelpers.h"
 
 namespace
 {
@@ -570,3 +577,458 @@ bool GamePlatformPCGGoldMap::Verify(FString& Error)
         TEXT("GoldLevel独立重开：1 WorldDirector、11参与者、3份实际图均可读取（G01-G16仍待正式测试）。"));
     return true;
 }
+
+bool GamePlatformPCGGoldMap::ProbeSpatial(FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+
+    // 此入口只从磁盘读入本工单批准的GoldLevel；不运行PCG、不保存或替换用户地图。
+    const FString Filename = FPackageName::LongPackageNameToFilename(
+        MapPackage, FPackageName::GetMapPackageExtension());
+    if (!FPackageName::DoesPackageExist(MapPackage) || !IFileManager::Get().FileExists(*Filename))
+    {
+        Error = TEXT("GoldLevel真实地图缺失，不允许从预设坐标伪造验证结果。");
+        return false;
+    }
+    UWorld* World = UEditorLoadingAndSavingUtils::LoadMap(Filename);
+    if (!IsValid(World) || !IsValid(World->PersistentLevel) ||
+        World->GetOutermost()->GetName() != MapPackage)
+    {
+        Error = TEXT("UE5.8未能独立重开已保存的GoldLevel UWorld。");
+        return false;
+    }
+
+    AGamePlatformPCGWorldDirector* Director = nullptr;
+    TMap<FString, AGamePlatformPCGActorBase*> ByLabel;
+    for (AActor* Actor : World->PersistentLevel->Actors)
+    {
+        if (!IsValid(Actor)) { continue; }
+        if (AGamePlatformPCGWorldDirector* Found = Cast<AGamePlatformPCGWorldDirector>(Actor))
+        {
+            if (Director)
+            {
+                Error = TEXT("金标准地图存在多个WorldDirector，拒绝选择任意一个绕过注册审查。");
+                return false;
+            }
+            Director = Found;
+        }
+        if (AGamePlatformPCGActorBase* Placement = Cast<AGamePlatformPCGActorBase>(Actor))
+        {
+            if (ByLabel.Contains(Placement->GetActorLabel()))
+            {
+                Error = TEXT("金标准放置器Label重复，无法建立唯一来源映射。");
+                return false;
+            }
+            ByLabel.Add(Placement->GetActorLabel(), Placement);
+        }
+    }
+    if (!Director || ByLabel.Num() != GetPlacements().Num() ||
+        !Director->ValidateParticipantSet(Error))
+    {
+        Error = TEXT("GoldLevel唯一世界编排器、放置器数量或注册集合非法：") + Error;
+        return false;
+    }
+    for (const FPlacement& Spec : GetPlacements())
+    {
+        AGamePlatformPCGActorBase* const* Placement = ByLabel.Find(Spec.Label);
+        if (!Placement || !IsValid(*Placement) || !(*Placement)->SourceId.IsValid() ||
+            (*Placement)->DomainId != Spec.Domain || (*Placement)->WorldStage != Spec.Stage ||
+            !Director->GetParticipantsForStage(Spec.Stage).Contains(*Placement))
+        {
+            Error = TEXT("已保存GoldLevel来源不符合领域、阶段或登记约束：") + FString(Spec.Label);
+            return false;
+        }
+    }
+
+    TArray<FGamePlatformPCGSpatialMask> AllMasks;
+    if (!Director->CollectSpatialMasks(AllMasks, Error) || AllMasks.Num() < 7)
+    {
+        Error = TEXT("已保存的道路、农田、围栏、门桥或排除体积缺失：") + Error;
+        return false;
+    }
+    TArray<FGamePlatformPCGSpatialMask> CropMasks = AllMasks;
+    // 农田与作物不能自相排斥；该过滤规则与批准的Crop Graph实例保持一致。
+    CropMasks.RemoveAll([](const FGamePlatformPCGSpatialMask& Mask)
+    {
+        return Mask.DomainId == FGamePlatformPCGDomainIds::AgriParcel ||
+            Mask.DomainId == FGamePlatformPCGDomainIds::AgriCrop;
+    });
+
+    // 读取真正保存的3份图节点参数，防止仅WorldDirector数值输入正确，但Spawner图仍使用旧空间快照。
+    const auto VerifySavedGraph = [&Error](const TCHAR* Name, int32 Priority,
+        const TArray<FGamePlatformPCGSpatialMask>& ExpectedMasks) -> bool
+    {
+        const FString AssetName = FString(TEXT("PCG_Gold_")) + Name;
+        const FString ObjectPath = GoldRoot + TEXT("Realized/") +
+            AssetName + TEXT(".") + AssetName;
+        UPCGGraph* Graph = LoadObject<UPCGGraph>(nullptr, *ObjectPath);
+        if (!IsValid(Graph) || Graph->bIsTemplate)
+        {
+            Error = TEXT("GoldLevel真实图缺失或仍是不能实例化的模板：") + ObjectPath;
+            return false;
+        }
+        const UGamePlatformPCGSpatialCarveSettings* Settings = nullptr;
+        for (const UPCGNode* Node : Graph->GetNodes())
+        {
+            if (const auto* Found = Node
+                    ? Cast<UGamePlatformPCGSpatialCarveSettings>(Node->GetSettings()) : nullptr)
+            {
+                if (Settings)
+                {
+                    Error = TEXT("已保存的PCG图存在重复SpatialCarve节点：") + ObjectPath;
+                    return false;
+                }
+                Settings = Found;
+            }
+        }
+        if (!Settings || Settings->SubjectPriority != Priority ||
+            Settings->Masks.Num() != ExpectedMasks.Num())
+        {
+            Error = TEXT("PCG图节点掩码数量或优先级与当前GoldLevel真实来源不一致：") + ObjectPath;
+            return false;
+        }
+        for (const FGamePlatformPCGSpatialMask& Expected : ExpectedMasks)
+        {
+            const FGamePlatformPCGSpatialMask* Saved = Settings->Masks.FindByPredicate(
+                [&Expected](const FGamePlatformPCGSpatialMask& Value)
+                {
+                    return Value.SourceId == Expected.SourceId;
+                });
+            if (!Saved || Saved->DomainId != Expected.DomainId ||
+                Saved->Priority != Expected.Priority || Saved->bClosed != Expected.bClosed ||
+                Saved->bFillInterior != Expected.bFillInterior ||
+                !FMath::IsNearlyEqual(Saved->Strength, Expected.Strength) ||
+                !FMath::IsNearlyEqual(Saved->HalfWidthCm, Expected.HalfWidthCm, 0.01f) ||
+                Saved->Vertices.Num() != Expected.Vertices.Num())
+            {
+                Error = TEXT("PCG图中的静态排除快照已过期，来源/强度/几何结构变化：") +
+                    ObjectPath + TEXT(" / ") + Expected.SourceId.ToString(EGuidFormats::Digits);
+                return false;
+            }
+            for (int32 Index = 0; Index < Expected.Vertices.Num(); ++Index)
+            {
+                if (FVector2D::DistSquared(Saved->Vertices[Index],
+                        Expected.Vertices[Index]) > FMath::Square(0.1))
+                {
+                    Error = TEXT("PCG实际图空间顶点与地图保存结果存在超过0.1厘米差异：") + ObjectPath;
+                    return false;
+                }
+            }
+        }
+        UE_LOG(LogGamePlatformPCG, Display,
+            TEXT("GoldLevel已保存真实Graph空间快照与11名参与者匹配：%s"), Name);
+        return true;
+    };
+    if (!VerifySavedGraph(TEXT("Canopy"), 30, AllMasks) ||
+        !VerifySavedGraph(TEXT("Rock"), 15, AllMasks) ||
+        !VerifySavedGraph(TEXT("Crop"), 20, CropMasks))
+    {
+        return false;
+    }
+
+    const auto Probe = [&Error, &ByLabel](const TCHAR* CaseName, const FVector2D Position,
+        int32 Priority, const TCHAR* ExpectedLabel, const TArray<FGamePlatformPCGSpatialMask>& Masks) -> bool
+    {
+        float Strength = 0.0f;
+        FGuid Source;
+        if (!FGamePlatformPCGSpatialRules::Evaluate(Position, Priority, 0.5f, Masks, Strength, Source))
+        {
+            Error = FString(CaseName) + TEXT("：真实地图的空间Mask数据非法，拒绝输出。");
+            return false;
+        }
+        if (ExpectedLabel)
+        {
+            AGamePlatformPCGActorBase* const* Actor = ByLabel.Find(ExpectedLabel);
+            if (!Actor || Source != (*Actor)->SourceId || !FMath::IsNearlyEqual(Strength, 1.0f))
+            {
+                Error = FString(CaseName) + TEXT("：选中的来源或排除强度不符，应来自") +
+                    ExpectedLabel + TEXT("；实际来源=") + Source.ToString(EGuidFormats::Digits);
+                return false;
+            }
+        }
+        else if (Source.IsValid() || Strength > KINDA_SMALL_NUMBER)
+        {
+            Error = FString(CaseName) + TEXT("：非排除区域被误切，来源=") +
+                Source.ToString(EGuidFormats::Digits);
+            return false;
+        }
+        UE_LOG(LogGamePlatformPCG, Display,
+            TEXT("GoldLevel只读空间规则探针通过：%s"), CaseName);
+        return true;
+    };
+
+    // 数值取样只证明持久化几何/优先级合同，不统计官方PCG生成的真实网格实例。
+    if (!Probe(TEXT("道路切林"), FVector2D(-700, 0), 30, TEXT("PCG_MajorRoad"), AllMasks) ||
+        !Probe(TEXT("小径切林"), FVector2D(-700, -500), 30, TEXT("PCG_MinorPath"), AllMasks) ||
+        !Probe(TEXT("道路切田"), FVector2D(700, 100), 20, TEXT("PCG_MajorRoad"), CropMasks) ||
+        !Probe(TEXT("农门优先保留"), FVector2D(650, -150), 30, TEXT("PCG_Gate"), AllMasks) ||
+        !Probe(TEXT("桥梁优先保留"), FVector2D(-1100, 0), 30, TEXT("PCG_HandPlacedBridge"), AllMasks) ||
+        !Probe(TEXT("人工锁最高优先级"), FVector2D(-20, 0), 30, TEXT("PCG_ManualLock"), AllMasks) ||
+        !Probe(TEXT("农田内部作物不误排除"), FVector2D(700, 500), 20, nullptr, CropMasks) ||
+        !Probe(TEXT("森林非排除区保持可生成"), FVector2D(-700, -350), 30, nullptr, AllMasks) ||
+        !Probe(TEXT("高优先级对象不被道路切除"), FVector2D(-700, 0), 80, nullptr, AllMasks))
+    {
+        return false;
+    }
+
+    const AGamePlatformPCGActorBase* const* FenceActor = ByLabel.Find(TEXT("PCG_FieldFence"));
+    const FGamePlatformPCGSpatialMask* Fence = FenceActor
+        ? AllMasks.FindByPredicate([FenceActor](const FGamePlatformPCGSpatialMask& Mask)
+            { return Mask.SourceId == (*FenceActor)->SourceId; }) : nullptr;
+    if (!Fence || !Fence->bClosed || Fence->bFillInterior ||
+        !FGamePlatformPCGSpatialRules::ContainsPoint(*Fence, FVector2D(400, 50)) ||
+        FGamePlatformPCGSpatialRules::ContainsPoint(*Fence, FVector2D(700, 500)))
+    {
+        Error = TEXT("闭合田篱应只排除边线缓冲区，不能清空内部全部作物。");
+        return false;
+    }
+
+    TArray<FGamePlatformPCGSpatialMask> Reversed = AllMasks;
+    for (int32 L = 0, R = Reversed.Num() - 1; L < R; ++L, --R)
+    {
+        Reversed.Swap(L, R);
+    }
+    if (!Probe(TEXT("逆序登记仍有稳定优先级"), FVector2D(-700, 0), 30,
+            TEXT("PCG_MajorRoad"), Reversed))
+    {
+        return false;
+    }
+
+    UE_LOG(LogGamePlatformPCG, Display,
+        TEXT("GoldLevel只读空间探针已核验：1编排器、11真实放置器、%d排除来源及10项数值取样。"
+             "尚未执行PCG Generate、Spawner实例、G01～G16正式验收、导航或Cook。"),
+        AllMasks.Num());
+    return true;
+}
+
+bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+
+    // 实际调用官方PCG生成：只在新的UE Editor命令行加载本工单地图。
+    // 本函数不保存地图/组件、不执行Cook，不允许任何正式Village资产被本次测试修改。
+    const FString Filename = FPackageName::LongPackageNameToFilename(
+        MapPackage, FPackageName::GetMapPackageExtension());
+    if (!GEditor || !FPackageName::DoesPackageExist(MapPackage) ||
+        !IFileManager::Get().FileExists(*Filename))
+    {
+        Error = TEXT("真实GoldLevel地图或UE编辑器上下文缺失，拒绝伪造静态实例生成结果。");
+        return false;
+    }
+    UWorld* World = UEditorLoadingAndSavingUtils::LoadMap(Filename);
+    if (!IsValid(World) || World->WorldType != EWorldType::Editor ||
+        !IsValid(World->PersistentLevel) || World->GetOutermost()->GetName() != MapPackage)
+    {
+        Error = TEXT("仅允许在独立UE Editor加载已保存的GoldLevel地图。");
+        return false;
+    }
+
+    AGamePlatformPCGWorldDirector* Director = nullptr;
+    TMap<FString, AGamePlatformPCGActorBase*> Actors;
+    for (AActor* Actor : World->PersistentLevel->Actors)
+    {
+        if (!IsValid(Actor)) { continue; }
+        if (auto* Found = Cast<AGamePlatformPCGWorldDirector>(Actor))
+        {
+            if (Director)
+            {
+                Error = TEXT("已有多个PCG世界编排器，禁止继续真实生成。");
+                return false;
+            }
+            Director = Found;
+        }
+        if (auto* Placement = Cast<AGamePlatformPCGActorBase>(Actor))
+        {
+            if (Actors.Contains(Placement->GetActorLabel()))
+            {
+                Error = TEXT("PCG参与者存在重复Label，无法限定本次拥有的生成结果。");
+                return false;
+            }
+            Actors.Add(Placement->GetActorLabel(), Placement);
+        }
+    }
+    if (!Director || Actors.Num() != GetPlacements().Num() ||
+        !Director->ValidateParticipantSet(Error))
+    {
+        Error = TEXT("GoldLevel来源数量、稳定ID或编排器注册无效：") + Error;
+        return false;
+    }
+    TArray<AGamePlatformPCGActorBase*> Plan;
+    if (!Director->BuildStaticExecutionPlan(Plan, Error) || Plan.Num() != Actors.Num())
+    {
+        Error = TEXT("PCG静态阶段或已保存的Graph合同不合法：") + Error;
+        return false;
+    }
+    TArray<FGamePlatformPCGSpatialMask> AllMasks;
+    if (!Director->CollectSpatialMasks(AllMasks, Error))
+    {
+        Error = TEXT("PCG已保存的道路/地块/人工锁几何不合法：") + Error;
+        return false;
+    }
+    TArray<FGamePlatformPCGSpatialMask> CropMasks = AllMasks;
+    CropMasks.RemoveAll([](const FGamePlatformPCGSpatialMask& Mask)
+    {
+        return Mask.DomainId == FGamePlatformPCGDomainIds::AgriParcel ||
+            Mask.DomainId == FGamePlatformPCGDomainIds::AgriCrop;
+    });
+
+    struct FPreview
+    {
+        const TCHAR* Label;
+        const TCHAR* GraphName;
+        int32 Priority;
+        const TArray<FGamePlatformPCGSpatialMask>* Masks;
+    };
+    const TArray<FPreview> Previews = {
+        {TEXT("PCG_Canopy"), TEXT("Canopy"), 30, &AllMasks},
+        {TEXT("PCG_Rock"), TEXT("Rock"), 15, &AllMasks},
+        {TEXT("PCG_Crops"), TEXT("Crop"), 20, &CropMasks}
+    };
+    TArray<TWeakObjectPtr<UPCGComponent>> ThisRunComponents;
+    ThisRunComponents.Reserve(Previews.Num());
+
+    // 始终清理本次新启动的组件。拒绝对地图原有已生成/管理资源运行，以免误删除用户结果。
+    ON_SCOPE_EXIT
+    {
+        for (const TWeakObjectPtr<UPCGComponent>& Weak : ThisRunComponents)
+        {
+            if (UPCGComponent* Component = Weak.Get())
+            {
+                if (Component->IsGenerating())
+                {
+                    Component->CancelGeneration();
+                }
+                Component->CleanupLocalImmediate(/*bRemoveComponents=*/true,
+                    /*bCleanupLocalComponents=*/true);
+            }
+        }
+    };
+
+    // UE官方PCGWorldPartitionBuilder也采用FakeEngineTick驱动编辑器任务；
+    // 此处限定每组件最长60秒，超时即取消并清理，不无限循环。
+    World->BlockTillLevelStreamingCompleted();
+    FWorldPartitionHelpers::FakeEngineTick(World);
+
+    for (const FPreview& Spec : Previews)
+    {
+        AGamePlatformPCGActorBase* const* ActorPtr = Actors.Find(Spec.Label);
+        AGamePlatformPCGActorBase* Actor = ActorPtr ? *ActorPtr : nullptr;
+        UPCGComponent* Component = IsValid(Actor) ? Actor->PCGComponent.Get() : nullptr;
+        const FString GraphName = FString(TEXT("PCG_Gold_")) + Spec.GraphName;
+        const FString Path = GoldRoot + TEXT("Realized/") +
+            GraphName + TEXT(".") + GraphName;
+        UPCGGraph* SavedGraph = LoadObject<UPCGGraph>(nullptr, *Path);
+        if (!IsValid(Component) || !IsValid(SavedGraph) || SavedGraph->bIsTemplate ||
+            Component->GetGraph() != SavedGraph || Component->IsGenerating() ||
+            Component->IsCleaningUp() || Component->bGenerated ||
+            Component->IsGeneratedOffline() || !Component->AreManagedResourcesAccessible() ||
+            !Component->GetGeneratedGraphOutput().TaggedData.IsEmpty())
+        {
+            Error = FString(TEXT("Gold实际预览生成前置不满足、图不是审批实例或已有结果：")) +
+                Spec.Label;
+            return false;
+        }
+
+        bool bExistingManagedResource = false;
+        Component->ForEachConstManagedResource(
+            [&bExistingManagedResource](const UPCGManagedResource*)
+            {
+                bExistingManagedResource = true;
+            });
+        if (bExistingManagedResource)
+        {
+            Error = FString(TEXT("已有PCG Managed Resource，拒绝覆盖/清理：")) + Spec.Label;
+            return false;
+        }
+
+        const FPCGTaskId Task = Component->GenerateLocalGetTaskId(/*bForce=*/true);
+        if (Task == InvalidPCGTaskId)
+        {
+            Error = FString(TEXT("官方PCG引擎拒绝调度网格生成任务：")) + Spec.Label;
+            return false;
+        }
+        ThisRunComponents.Add(Component);
+
+        const double Start = FPlatformTime::Seconds();
+        while (Component->IsGenerating() && FPlatformTime::Seconds() - Start < 60.0)
+        {
+            FWorldPartitionHelpers::FakeEngineTick(World);
+            FPlatformProcess::Sleep(0.005f);
+        }
+        if (Component->IsGenerating() || Component->IsCleaningUp() ||
+            Component->GetGeneratedGraphOutput().bCancelExecution ||
+            !Component->AreManagedResourcesAccessible())
+        {
+            Error = FString(TEXT("官方PCG生成超时或取消、资源仍不可读取：")) + Spec.Label;
+            return false;
+        }
+
+        int64 TotalInstances = 0;
+        bool bValid = true;
+        Component->ForEachConstManagedResource(
+            [&bValid, &TotalInstances, &Spec, World, Component](const UPCGManagedResource* Resource)
+            {
+                const UPCGManagedISMComponent* Managed = Cast<UPCGManagedISMComponent>(Resource);
+                if (!Managed)
+                {
+                    bValid = false;
+                    return;
+                }
+                const UInstancedStaticMeshComponent* ISM = Managed->GetComponent();
+                if (!IsValid(ISM) || !ISM->IsRegistered() ||
+                    ISM->GetWorld() != World || ISM->GetOwner() != Component->GetOwner() ||
+                    !IsValid(ISM->GetStaticMesh()) ||
+                    ISM->GetCollisionEnabled() != ECollisionEnabled::NoCollision ||
+                    ISM->GetGenerateOverlapEvents() || ISM->CanEverAffectNavigation() ||
+                    ISM->GetIsReplicated())
+                {
+                    bValid = false;
+                    return;
+                }
+                const int32 N = ISM->GetInstanceCount();
+                if (N < 0 || N > 20000 || TotalInstances + N > 20000)
+                {
+                    bValid = false;
+                    return;
+                }
+                for (int32 I = 0; I < N; ++I)
+                {
+                    FTransform Transform;
+                    if (!ISM->GetInstanceTransform(I, Transform, /*bWorldSpace=*/true))
+                    {
+                        bValid = false;
+                        return;
+                    }
+                    const FVector Point = Transform.GetLocation();
+                    float Strength = 0.0f;
+                    FGuid Source;
+                    if (!FGamePlatformPCGSpatialRules::Evaluate(
+                            FVector2D(Point.X, Point.Y), Spec.Priority, 0.5f,
+                            *Spec.Masks, Strength, Source) || Source.IsValid())
+                    {
+                        bValid = false;
+                        return;
+                    }
+                }
+                TotalInstances += N;
+            });
+        if (!bValid || TotalInstances <= 0)
+        {
+            Error = FString(TEXT("GoldLevel官方PCG没有产生合法非碰撞实例、越过排除区或超出预算：")) +
+                Spec.Label + TEXT("，实例数=") + FString::Printf(TEXT("%lld"), TotalInstances);
+            return false;
+        }
+        UE_LOG(LogGamePlatformPCG, Display,
+            TEXT("GoldLevel官方PCG实例生成预览：%s，实际ISM实例=%lld，耗时=%.3fs；"
+                 "范围内排除Mask与非碰撞/导航/复制隔离已复核。"),
+            Spec.Label, TotalInstances, FPlatformTime::Seconds() - Start);
+    }
+
+    UE_LOG(LogGamePlatformPCG, Display,
+        TEXT("GoldLevel三份已批准Graph真实生成预览完成：全部有非碰撞网格实例且无禁区实例。"
+             "已注册自动清理，不保存地图；尚非G01-G16完整验收或客户端/服务器Cook。"));
+    return true;
+}
+

@@ -259,9 +259,19 @@ int32 UGamePlatformPCGGoldAssetsCommandlet::Main(const FString& Params)
     {
         bSuccess = GamePlatformPCGGoldMap::Verify(Error);
     }
+    else if (Stage.Equals(TEXT("SpatialProbe"), ESearchCase::IgnoreCase))
+    {
+        // 单独UE编辑器命令行只读加载已保存的Gold地图，不启动PCG或覆写资源。
+        bSuccess = GamePlatformPCGGoldMap::ProbeSpatial(Error);
+    }
+    else if (Stage.Equals(TEXT("GeneratePreview"), ESearchCase::IgnoreCase))
+    {
+        // 必须先完成代码/图/资源创作；这里仅在独立Editor里生成受控装饰实例并清理，不修改关卡。
+        bSuccess = GamePlatformPCGGoldMap::PreviewGenerated(Error);
+    }
     else
     {
-        Error = TEXT("仅支持Definitions/Realized/Map/RepairMap/Verify五个固定GoldLevel阶段。");
+        Error = TEXT("仅支持Definitions/Realized/Map/RepairMap/Verify/SpatialProbe/GeneratePreview七个固定GoldLevel阶段。");
     }
     if (!bSuccess)
     {

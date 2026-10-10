@@ -91,3 +91,9 @@
 - 编辑器基础模块诊断：`RecoveredCurrentPCGEditorLinks/source_provenance.json`记录当前UE官方DLL哈希与符号数；基于UE此前生成的编译对象及链接响应文件手工链接PCGEditor成功（开发诊断，不等于正式目标构建成功）。
 - 实际运行`GoldLevelAuthoring/3161248a-74b6-4e74-9c07-1df3f131549d/03-GoldDefinitions.out.log`的UE5.8命令行启动推进到资产系统，但数分钟没有出现Python Definition配置或保存回调；由于并行UE引擎构建占锁，本次己方作业安全停止，保留日志。真实金标准17 Definition、3 Realized Graph、3 Profile及GoldLevel地图均未新增。
 - 本轮遵照“先代码、蓝图、资源，最后统一自动化”的执行顺序；除文件完整性检查/PowerShell语法校验外，不宣称UE Automation、G01～G16、Cook或服务器状态测试通过。
+
+## 2026-10-10｜金标准空间规则只读探针及校验器问题修复
+
+- `GamePlatformPCGGoldAssetsCommandlet（PCG金标准命令）`新增`-Stage=SpatialProbe（空间探针阶段）`。从真实`PCG_GoldLevel_M1.umap`重开读取唯一WorldDirector（世界编排器）、11个注册放置器及道路/小径/农田/桥梁/锁定遮罩，并核对3份持久化Realized Graph（实例化图）的SpatialCarve（空间裁剪）节点来源ID、领域、优先级、强度和顶点是否与真实地图一致。只检查来源数值，不生成网格、不写地图，不称作G01～G16完整验收。Gold命令与金标准创作C++的UE5.8实际编译响应文件MSVC `/Zs`检查退出0；**尚未完成新的正式UBT链接和实际Editor运行**。
+- `Tools/Unreal/PCG/RunGoldSpatialProbe.ps1（空间探针脚本）`先检查已锁定UE5.8、独占Editor进程、共享UBT构建锁及PCGEditor DLL是否比本次源代码新；旧DLL与其它编辑器占用会拒绝执行，禁止把旧运行状态认作新探针通过。该脚本PowerShell AST解析退出0。
+- `UGamePlatformPCGWorldValidator（PCG世界校验器）`的`CanValidateAsset（可校验条件）`从所有UWorld缩小到有真实PCG放置器/编排器或WorldPartition未加载PCG描述符的地图，以修复天气审查世界的`did not return a validation result`日志。其单独MSVC语法检查因编译器长时间资源等待已停止，**本次不得标记为编译通过**。官方UE Editor构建及运行时验证仍待执行。

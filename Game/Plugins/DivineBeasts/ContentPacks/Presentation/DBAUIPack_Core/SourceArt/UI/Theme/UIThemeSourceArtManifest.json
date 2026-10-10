@@ -1,0 +1,110 @@
+{
+  "SchemaVersion": 1,
+  "Count": 9,
+  "ImportedIntoUE": false,
+  "DescriptionZh": "原创东方神话青铜云纹面板及主要/次要按钮四态；文本、LOGO及交互不烘入纹理。",
+  "PanelNineSliceMargin": [
+    0.09,
+    0.09,
+    0.09,
+    0.09
+  ],
+  "ButtonNineSliceMargin": [
+    0.1,
+    0.23,
+    0.1,
+    0.23
+  ],
+  "Files": [
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_PanelFrame_BronzeCloud.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_PanelFrame_BronzeCloud",
+      "Size": [
+        1024,
+        1024
+      ],
+      "Bytes": 60230,
+      "SHA256": "4da79fbc99e1801dde88d96d1c29cc8b798d05f1704852d7cfbd72bacb13095b"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_Button_Primary_Normal.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Primary_Normal",
+      "Size": [
+        640,
+        160
+      ],
+      "Bytes": 2297,
+      "SHA256": "be001a41d7f8f72b98d3f01d3f111438eabd28ed1bc4bd6c748e8ea600699a48"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_Button_Primary_Hovered.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Primary_Hovered",
+      "Size": [
+        640,
+        160
+      ],
+      "Bytes": 2444,
+      "SHA256": "a028b85629eccd6c38434661a33693cbdc30f93f693fee6692332f7cab3ac6e3"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_Button_Primary_Pressed.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Primary_Pressed",
+      "Size": [
+        640,
+        160
+      ],
+      "Bytes": 2021,
+      "SHA256": "eb4d9df13e124d5f1cf152400c374b1d52e5a7529cfea76cba5006093d312d75"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_Button_Primary_Disabled.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Primary_Disabled",
+      "Size": [
+        640,
+        160
+      ],
+      "Bytes": 2265,
+      "SHA256": "a4f259612396d3355fea39c2c4dfed657569209526b5452b4e27554e518664ec"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_Button_Secondary_Normal.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Secondary_Normal",
+      "Size": [
+        640,
+        160
+      ],
+      "Bytes": 2108,
+      "SHA256": "11da91a70e39dc65f22dd8ccfb0fb58bb1f809f8459f2416819042e4293e5e03"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_Button_Secondary_Hovered.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Secondary_Hovered",
+      "Size": [
+        640,
+        160
+      ],
+      "Bytes": 2450,
+      "SHA256": "5b12e9d1b4d09a8526ada7fce3b7f03b247cabc214eb01b6a368320d7344af68"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_Button_Secondary_Pressed.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Secondary_Pressed",
+      "Size": [
+        640,
+        160
+      ],
+      "Bytes": 2239,
+      "SHA256": "b9c15d1fd15657a56ad16a2ab08d710de77f5519af1c4f7472a4a4aaf95e87f5"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme/T_DBA_UI_Button_Secondary_Disabled.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Secondary_Disabled",
+      "Size": [
+        640,
+        160
+      ],
+      "Bytes": 2029,
+      "SHA256": "9d9d5ed62daf34fa01a08b61aba61e7392298b14675e0867a04d7a4331b9ee51"
+    }
+  ]
+}

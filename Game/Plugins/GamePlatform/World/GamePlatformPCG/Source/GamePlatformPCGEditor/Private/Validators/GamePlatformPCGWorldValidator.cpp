@@ -7,12 +7,52 @@
 #include "WorldPartition/WorldPartitionHelpers.h"
 #include "WorldPartition/WorldPartitionActorDescInstance.h"
 
+namespace
+{
+/**
+ * 先识别真实PCG世界内容：空天气/UI/角色预览图没有PCG Actor时应直接跳过本校验器。
+ * DataValidation已调用CanValidateAsset之后若又返回NotValidated，会在UE5.8产生日志错误。
+ * WorldPartition未加载的PCG描述符也属于必须校验的范围，禁止因只看已加载Actor而放过。
+ */
+bool HasAnyPCGWorldContent(UWorld* World)
+{
+    if (!IsValid(World)) { return false; }
+    for (TActorIterator<AGamePlatformPCGActorBase> It(World); It; ++It)
+    {
+        if (IsValid(*It)) { return true; }
+    }
+    for (TActorIterator<AGamePlatformPCGWorldDirector> It(World); It; ++It)
+    {
+        if (IsValid(*It)) { return true; }
+    }
+    if (UWorldPartition* Partition = World->GetWorldPartition())
+    {
+        bool bHasRelevantDescriptor = false;
+        const auto FindOne = [&bHasRelevantDescriptor](const FWorldPartitionActorDescInstance*)
+        {
+            bHasRelevantDescriptor = true;
+            return false;
+        };
+        FWorldPartitionHelpers::ForEachActorDescInstance(
+            Partition, AGamePlatformPCGActorBase::StaticClass(), FindOne);
+        if (!bHasRelevantDescriptor)
+        {
+            FWorldPartitionHelpers::ForEachActorDescInstance(
+                Partition, AGamePlatformPCGWorldDirector::StaticClass(), FindOne);
+        }
+        return bHasRelevantDescriptor;
+    }
+    return false;
+}
+}
+
+
 bool UGamePlatformPCGWorldValidator::CanValidateAsset_Implementation(
     const FAssetData&,
     UObject* InObject,
     FDataValidationContext&) const
 {
-    return InObject && InObject->IsA<UWorld>();
+    return HasAnyPCGWorldContent(Cast<UWorld>(InObject));
 }
 
 EDataValidationResult UGamePlatformPCGWorldValidator::ValidateLoadedAsset_Implementation(

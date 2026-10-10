@@ -117,6 +117,8 @@
 - **下一关键工作**：先按锁定UE5.8正式构建规范恢复预编译引擎导入库（重点`PCG/AssetRegistry/GameplayTags/Projects`），并协调其它并行模块编译。再完整生成并链接GamePlatformPCG/GamePlatformPCGEditor/DBAWorldsRuntime，执行新增UE Automation，调用真正已更新的Editor Commandlet创建12模板、7子图及11蓝图，保存、独立重开、按G01～G16验收后再双端Cook。继续保护其他任务未提交修改，不擅自提交/推送/部署。
 ## 2026-10-10｜P0～P7后续推进与真实编辑器构建／金标准资源状态
 
+> **2026-10-10 16:17（UTC+08）续接补充**：项目现有17个Definition、3个Realized Graph、3个Profile、1张GoldLevel地图及此前12模板、7子图、11 Village蓝图均可枚举；`Saved/Validation/GamePlatformPCG/GoldAssetsInventory_20261010.json（金标准资源SHA审计）`已确认文件完整性，但不能证明真实G01～G16。代码已有独立只读`GamePlatformPCGGoldAssets -Stage=SpatialProbe（空间探针命令）`，本次新增`Tests/Architecture/VerifyPCGGoldSpatialProbe.py`，静态核对10类取样、11项已保存地图/图快照约束和安全启动门禁，运行返回0。当前共享`UnrealEditor.exe（虚幻编辑器）`由其它任务使用，本次没有抢占或运行该UE空间探针；最新源码还存在未提交的地图Bounds（生成空间范围）修复，须先完成编译再以独立UE进程执行。静态代码通过不得写成G01～G16已经通过。
+
 > **2026-10-10 资源最新核验补充**：当前主工程已实际存在12 Foundation模板、7公共子图、11 Village蓝图、17 Gold Definition、3 Realized Graph、3 Profile及1张`PCG_GoldLevel_M1.umap`。新增`Tools/Unreal/PCG/InventoryGoldAssets.py`（金标准资源文件审计），对后24份资源的名称、数量、文件长度和SHA-256检查返回0；证据`Saved/Validation/GamePlatformPCG/GoldAssetsInventory_20261010.json`。此前本文提到“资源数量0”的段落均为当时历史状态，不再代表当前资源数量。UE编辑器独立重开、金标准G01～G16、PCG真实生成与权威碰撞/导航、Server/Client Cook仍待真实验收。此工作区有其他进程正在运行UnrealEditor.exe（虚幻编辑器），本次未争用写入。
 
 **审查范围**：本次在唯一正式`DivineBeastsWorkspace/Game/DivineBeastsArena.uproject（神兽联盟主工程）`内继续；未更名插件、创建平行PCG模块、删除/覆盖他人资产，也未提交/推送代码。
@@ -149,3 +151,13 @@
 6. **最新真实计数**：Foundation 12模板＋7子图；Village 11蓝图；Gold Definitions（正式金标准定义）0、Realized Graph（实际网格生成图）0、Profile（生成配置）0、GoldLevel地图0。最新UE自动化、G01～G16、Client/Server双Cook、HiGen/HLOD、Gameplay持久化、桥/洞穴/导航和人工视觉评审仍未完成，不能签发P0～P7全部完成。
 
 **后续阻断解除条件**：等待既有引擎UBT完全结束，避免其它编辑器/资源写入进程；用最新正式UBT重新编译并加载PCGEditor等所需插件，然后只对金标准余下阶段执行`-Apply -ResumeApprovedPCGAssets`。出现真实Python/C++错误时仅在PCG范围内修复；若成功保存17定义，再执行3图实例及配置、独立GoldLevel地图、新进程回读。全部资源真实存在并回读以后才进入用户指定的统一自动化、G01～G16与双Cook流程。
+
+## 2026-10-10｜代码与金标准场景空间实证补齐（更新）
+
+1. **当前正式工作区资源数量复核**：Foundation有12个模板与7个公共子图；Village内容包有11个真实放置器蓝图；Gold Foundation还包含17份Definition（定义）、3份Realized Graph（实际网格图）、3份Profile（配置）和1份真实`PCG_GoldLevel_M1.umap`。这些文件于本轮之前已经在工作区落盘；仅存在不代表G01～G16测试通过。
+2. **新增原生空间探针**：在`GamePlatformPCGEditor/Private/Commands/GamePlatformPCGGoldMapAuthoring.cpp（PCG编辑器金标准地图创作）`新增`ProbeSpatial（空间探针）`，并在现有Gold Commandlet（命令行）登记`-Stage=SpatialProbe`。运行时只读加载已有地图，核对唯一WorldDirector、11名注册参与者、道路/小径/农田/围栏/桥/人工排除的稳定SourceId（来源ID）与优先级，并把三份实际图中`SpatialCarve（空间裁剪）`节点已保存的Mask快照和当前地图几何逐项比对；发现陈旧掩码立即失败关闭。
+3. **MSVC真实目标参数检查**：使用当前UE5.8 UBT（虚幻构建工具）产生的`.obj.rsp`对Gold地图创作C++与Gold命令行执行`/Zs`语法检查。Gold地图创作与命令行在本轮第一次修复头文件引用后均返回0；随后追加图快照对比源码，单文件再次返回0。**这是源码语法检查，不代表正式Editor DLL已重新编译/链接或UE程序已执行探针**。
+4. **非PCG世界校验误接管修复**：从`Game/Saved/Logs/DivineBeastsArena-backup-2026.10.10-07.50.09.log（UE编辑器运行日志）`发现天气审核地图触发`GamePlatformPCGWorldValidator did not return a validation result`。原`CanValidateAsset（接管校验）`对所有UWorld返回true，非PCG地图随后返回NotValidated（不适用）。现改为只接管实际包含已加载PCG放置器/Director或WorldPartition未加载PCG ActorDesc（世界分区描述符）的世界；普通天气/前端地图应直接不接管。已落盘，需最新UE编辑器编译与运行复验。
+5. **新增安全执行入口**：`Tools/Unreal/PCG/RunGoldSpatialProbe.ps1（空间探针脚本）`只运行本工单的独立Editor Commandlet，不覆盖真实资源，预检最新模块DLL时间、其它UE编辑器/UBT任务，防止在最新源码尚未正式编译时调用旧版DLL冒充成功。PowerShell AST（语法树）解析返回0。
+6. **严格保留未完成项**：现有UE编辑器由其他任务占用，本轮没有抢占、关闭或修改Gold地图；尚未通过独立UE进程执行SpatialProbe、静态PCG真实Generate/Spawner实例核验、G01～G16、Editor/Client/Server三目标、双Cook、HiGen/HLOD、专服权威存档/性能或人工审查。按用户要求代码、蓝图、资源优先，全部关键资源和代码完成后再统一开展验收，不虚构通过。
+7. **独立编译的准确边界**：WorldValidator（世界PCG校验器）已写入仅PCG世界的早期过滤；使用当前UE5.8 UBT的编译响应文件进行MSVC `/Zs`检查时，编译器持续在Executive等待状态，未返回通过/失败诊断。为释放资源只停止本工单的语法检查作业。因此该改动暂记为“源码完成，需正式UBT编译验证”，不能冒充已通过。
