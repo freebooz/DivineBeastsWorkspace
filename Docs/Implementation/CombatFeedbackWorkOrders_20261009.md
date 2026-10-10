@@ -51,10 +51,10 @@ MOBA：MobaPresentationRuntime（强度策略）、MobaPresentationClient（可�
 
 ## P5 — 项目英雄映射和真实内容
 
-- [x] `UDivineBeastsCombatFeedbackCatalog`（项目反馈数据资产类）：HeroDefinitionId＋AbilityDefinitionId唯一键、Profile软引用、VFX/SFX逻辑DefinitionId。
+- [x] `UDivineBeastsCombatFeedbackCatalog`（项目反馈定义主资产类型）：HeroDefinitionId＋AbilityDefinitionId唯一键、ProfileDefinitionId（主资产ID）、VFX/SFX逻辑DefinitionId；实际Catalog.uasset尚未创建。
 - [x] Moba客户端接受已加载Profile与两个逻辑DefinitionId进行无同步加载的组合调校。
 - [ ] 真实英雄技能Profile、正确英雄/技能身份、项目内容包注册和自动预加载/租约尚未交付；要先核对现有技能Definition资产，再为丑牛、寅虎、卯兔首批真实技能创建映射，禁止制造假技能名称或.uasset。
-- [ ] DBAArena竞技组合根按真实已授权技能ID接入匹配与生命周期释放；公共DBAClient保持非竞技独立。
+- [x] DBAArena竞技组合根已按真实已授权技能ID接入Profile映射、异步租约及生命周期释放，公共DBAClient不反向依赖竞技；**真实Profile/Catalog资源实例、UE编译、联机验证仍未完成**。
 
 ## P6 — 网络事实与位移权威
 
@@ -128,6 +128,20 @@ MOBA：MobaPresentationRuntime（强度策略）、MobaPresentationClient（可�
 - 缩小到 GamePlatformAnimationClient 模块的第二次 Client 构建进入3个UBA C++动作后仍表现为cl.exe长时间无CPU进展，亦已停止本会话启动的任务；此处无法断定为新增C++源码编译失败或成功。
 - 当前引擎 F:/UnrealEngine-5.8.0-release 的 ExecutorFactory.cs 确认 -NoUBA 在此版本仅关闭 Detour，仍使用 UBA 执行器；后续需在不覆盖编辑器中未保存UI资产的前提下排除UBA/MSVC环境阻断，重跑完整Client/Editor/Server构建及UE Automation。
 - 刻意未终止或改写其他并行任务的 UnrealEditor 与 Editor SingleFile UBT 作业；P8仍须标记“C++编译未验证完成”，不能因UHT生成、静态结构通过或以前目标的历史成功而升级为已交付。
+
+### 2026-10-10｜客户端资源租约与编辑器可用性复核
+
+- [x] **P5状态门禁已修复**：`BeginForWorld`只在World实际变化时清理旧租约；Arena GameState 已就绪但 GamePlatformData 服务暂不可用时保持可重试，而不是提前将`bCatalogLoadAttemptedForWorld`锁死；不在重复的同World访问中取消浮字Widget请求。
+- [x] **P5已授权技能集变更回收**：根据真实OwnerOnly的HeroDefinitionId、AvatarGeneration、有效AbilityId，先确定整份`FPrimaryAssetId` Profile集合，使用`DivineBeastsHitFeedbackGrantPolicy::RequiresRefresh`判定是否变化；同集合不同槽位顺序不重复加载，技能撤销、角色变化、重生代次变化释放旧Profile租约。新增`Private/Tests/DivineBeastsHitFeedbackGrantPolicyTests.cpp`原生自动化测试源码。
+- [x] **本轮C++检查**：对更新的竞技反馈组合根、授权集合策略测试运行独立`clang-cl`语法与类型检查，退出码均为0；GrantPolicy测试源码同时实际编译为约333KB的目标文件。尚未由UBT完成正式Client/Editor/Server链接，也未在编辑器真正运行新增自动化测试。
+- [x] **现有静态门禁**：`Tests/Architecture/ValidateCombatFeedbackIntegration.py`增加迟到Data、授权集合变更检查共33项，全部通过；`ValidateProjectHeaders.ps1`检查632处自有头文件引用0缺失；`ValidateInheritanceBoundaries.ps1`公开头477、类型982、继承边175，`ValidateDesignBaseline.ps1` Client/Editor/Server三目标及62个插件描述均通过（以上为该源码版本的静态检查，后续改变须重跑）。
+- [!] **2026-10-10 Monolith实测阻断**：MCP确认连接正式`DivineBeastsArena`工程，`GamePlatformPresentationCore`与`DivineBeastsPresentationRuntime`模块曾在旧编辑器加载，但`UGamePlatformHitFeedbackProfile`、`UDivineBeastsCombatFeedbackCatalog`两类没有出现在运行中的反射表中；引擎没有加载新类，不能用Monolith安全生成正式Profile、Catalog .uasset或更新项目配置。
+- [!] **UI资产未保存，禁止当作完成**：Monolith在正确`DBAUIPack_Core`路径`/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_FloatingCombatText`临时创建了父类为`UGamePlatformFloatingTextWidget`的真实蓝图编辑会话，增加TextBlock并将`BP_OnFeedbackRequestApplied`与`BP_OnFeedbackRequestMerged`分别接到UI文本和合并数值；**编译/保存前编辑器会话中断**，磁盘核验该.uasset不存在。不得声称此蓝图已交付，也不得用文本/伪二进制替代。
+- [!] **编辑器重启实证失败**：本次尝试启动同一工程的UE5.8编辑器，但项目存在`GamePlatformCameraClient`、`MobaPresentationRuntime/Client`、`GamePlatformAnimation/Client`等不兼容或缺失模块，UBT启动阶段返回`FailedDueToEngineChange`并提示从IDE构建；日志为`Game/Saved/Logs/DivineBeastsArena.log`，本次自有启动任务已停止。未改动或保存其他同事的原有UI/动画.uasset。
+- [!] **既有战斗UI原生自动化实跑失败**：Monolith实际运行`DivineBeasts.UI.Combat.PlayerStatusSnapshot`，结果1项失败，2条断言报告无法创建Combat/Momentum AttributeSet。编辑器Python独立`new_object`两个类成功，仅说明类可实例化；不能据此证明原生测试已修复或权威运行正常。需要正式Editor模块链接并重新加载后复验。
+- [ ] **P1/P3/P5/P7/P8发布门禁仍未完成**：修复引擎/UBT/UBA构建环境并编译加载新C++模块，确认AssetRegistry存在两种UClass，Monolith重新制作并独立编译保存回读真正的三个Profile、Catalog、闪白材质、CameraShake、受击Animation、Niagara、SFX及浮字WBP；再运行UE Automation、专服Cook与1v1—5v5真实网络/性能回归。无实证项目维持未完成状态。
+
+- [x] **2026-10-10补充回归审计**：再运行`Tests/Architecture/ValidateCombatFeedbackIntegration.py`（33/33）、`Tests/Architecture/ValidateCombatFeedbackThreeTier.py`（25/25）、`Tests/Architecture/ValidateProjectHeaders.ps1`（761处头引用，0缺失）、`Tests/Architecture/ValidateInheritanceBoundaries.ps1`（公开头483、类型1019、边180）和`ValidateDesignBaseline.ps1`（Client/Server/Editor装配全通过、62/62插件描述），`git diff --check`退出码0。说明当前仓库已有其他会话同步增量，因此统计数目以本轮实际输出为准。
 
 ## 验收证据与回退
 

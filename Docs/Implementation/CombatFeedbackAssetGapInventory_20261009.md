@@ -33,6 +33,15 @@
 5. DBAArena客户端：当前按已确认 HeroDefinitionId、SourceAbilityId、Avatar代次及 OwnerOnly Loadout 快照挑选已加载Profile；未加载时安全回退。不允许项目目录与输入代码进行 LoadSynchronous。
 6. Gameplay服务器：技能结算、碰撞、硬直、真实击退和属性变化继续由Combat/GAS授权实现。视觉Profile参数仅在客户端生效。
 
+## 2026-10-10 真实Monolith制作尝试与资产阻断
+
+- 实际编辑器是`E:/poject/feebooz/DivineBeastsWorkspace/Game/`，Monolith 0.23.0一度健康连接，反射查询证明`GamePlatformHitFeedbackProfile`和`DivineBeastsCombatFeedbackCatalog`在加载中的编辑器均不存在，因此**本批未创建三个Profile或正式技能Catalog**；无法凭C++头文件就制作可用的.uasset。
+- 核心UI内容包有真实可加载的基类`/Script/GamePlatformUIClient.GamePlatformFloatingTextWidget`，曾调用真实Monolith编辑操作，针对`/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_FloatingCombatText`创建未保存的WidgetBlueprint，TextBlock为`TXT_CombatValue`；覆盖`BP_OnFeedbackRequestApplied`并将Request.Text连接到TextBlock.SetText，覆盖`BP_OnFeedbackRequestMerged`并将Request.NumericValue经ToText连接到SetText，已通过Monolith原生Graph读取确认连接。
+- **此蓝图未完成编译与保存**：Monolith调用`compile_widget`时服务因UE编辑器退出失联。随后确认目标`.uasset`磁盘文件不存在，不允许将编辑会话中的阶段性图结构登记为正式交付。
+- 重新启动正式UE5.8工程后，编辑器日志提示`GamePlatformCameraClient`、`MobaPresentationRuntime`、`MobaPresentationClient`、`GamePlatformSFXClient`、`GamePlatformAnimationClient`等模块缺失或不兼容，并终止于`Result: Failed (FailedDueToEngineChange)`，提示需在IDE中构建，未进入可编辑状态。日志位置`Game/Saved/Logs/DivineBeastsArena.log`。此构建问题优先于继续生成新技能、Overlay和特效资产。
+- 在上述构建与模块可加载门禁达成以前，**不尝试写文本占位uasset，不修改现有真实UI/Mannequin资产，不保存其他未确认所有权的脏包**。原编辑器退出前另有未保存的Rat开发UIProfile；无法确认其未保存的内存修改是否恢复，后续需人工核对。
+- 项目下次编辑器资产验收需要执行：UHT/UBT正式成功编译并载入新增类 → 新建3种可配置Profile主资产 → 技能反馈Catalog按实际授予ID精确映射 → 命中闪白Overlay、CameraShake、Niagara/SFX内容 → 上述WBP重新制作且`compile_widget`无错误 → 单资产保存后磁盘和AssetRegistry回读 → Client/Cook/2客户端测试。
+
 ## 三、正式验收门槛
 
 - 创建并真实保存三种可调参考Profile，并可在编辑器重新加载和查询GamePlatformDefinition主资产ID；确认软件并非仅生成JSON或空占位蓝图。

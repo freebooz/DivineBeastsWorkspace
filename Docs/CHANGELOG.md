@@ -1,5 +1,14 @@
 # 变更记录
 
+## 2026-10-10｜竞技打击反馈授权Profile释放及编辑器实测
+
+- `DBAArena/DivineBeastsArenaClient`修复同World重复初始化可能清除浮字Widget租约、Arena已就绪时平台数据服务晚到后Profile加载永久跳过问题。新增纯策略`DivineBeastsHitFeedbackGrantPolicy`并接入实际OwnerOnly授权缓存：技能集合无变化不抖动加载，技能撤销/英雄切换/角色重生清理旧Profile租约，增加UE自动化测试源码。
+- 独立`clang-cl`成功检查更新后的竞技反馈组合根和授权测试，并实际编译授权测试目标文件；专项静态33项通过。此前真实UHT生成结果有效，但当前完整客户端/服务器构建尚无成功退出码。
+- Monolith MCP连接真实工程核对后发现新`UGamePlatformHitFeedbackProfile`和项目`UDivineBeastsCombatFeedbackCatalog`反射类尚未在编辑器加载；在DBAUIPack_Core中临时建立的浮字Widget因编辑器会话在蓝图编译保存前断开，磁盘无目标.uasset，不记资产交付。重新启动编辑器遭`FailedDueToEngineChange`（多个客户端模块缺失或不兼容）；未保存/覆盖其他任务资产。
+- 实际运行已注册`DivineBeasts.UI.Combat.PlayerStatusSnapshot`测试得到1项失败、2条属性集创建断言；独立编辑器Python构造属性集可行，不代表原生测试通过。完整Editor/Client/Server链接、真实Profile与Niagara/SFX/WBP、Automation、Cook及多人联机保持未通过。
+
+
+
 ## 2026-10-10｜生肖技能可回滚启动效果授予与单文件构建验证
 
 - `DivineBeastsAbilitiesRuntime`（神兽联盟双端技能运行模块）增加 `IsStartupEffectReversible`（启动GameplayEffect可撤销预检），拒绝瞬时、周期、执行计算、堆叠及未审核附加效果组件；利用UE5.8公开FindComponent（查找组件）API维持引擎封装。授权顺序收敛为完整预检→先应用可回滚GE→再授权GAS技能Spec，失败仅撤销本组件真实句柄，保留平台原生能力机制。
