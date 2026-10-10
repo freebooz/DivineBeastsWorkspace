@@ -22,6 +22,16 @@
 - `VillageServer/DefaultGame.ini`对整个`/DBAWorldPack_Village` AlwaysCook。小雨/大雨/风声只存`SourceArt`，**正式SoundWave不得直接导入Village共享Content目录**；须等有实资产时登记客户端独立`DBASFXPack_Core`或经过服务器Cook剥离证明的合规拥有者。
 - 源美术是可使用的技术底稿，不能等同人工打磨的AAA贴图或专业录音；需进一步制作PBR完整材质、Niagara与试听混音。
 
+## 继续实施的门槛## 2026-10-10 先代码与蓝图、再集中测试的新批次
+
+用户已明确将工作顺序调整为“完成代码/蓝图与制作方案，最后统一自动化测试”。本阶段新增：
+- 平台层`UGamePlatformWeatherBlueprintLibrary`真正蓝图API，项目层`ADivineBeastsWeatherReviewController`功能Actor（可派生蓝图、不发权威RPC）；
+- `Tools/Unreal/Weather/AuthorWeatherSurfaceAssets.py`（7个函数＋2个真实材质图）、`AuthorWeatherVFXMaterials.py`（3个粒子材质）、`AuthorWeatherBlueprintAssets.py`（8份天气定义＋1个实际审核蓝图）、`AuthorWeatherVFXDefinitions.py`（真实Rain/Snow Niagara存在才制作DataAsset）、`AuthorWeatherAudioAssets.py`（客户端独立声音包存在才导入SoundWave并制作定义）和`WeatherNiagaraAuthoringSpec_V1.json`（真实Niagara编辑器模块/发射器/渲染器制作合同）。
+- `GamePlatformPresentationCore`增加中立浮点参数、响度系数和弱附着目标；VFX/SFX桥透传到各自请求，天气客户端为雨雪设置可验证的`User.WeatherIntensity`或`WeatherIntensity`，持续天气附着本地ViewTarget组件而不是世界原点；`DBAClient`新增雨、雪VFX和SFX目录构造器（**未激活**，避免缺资源造成伪成功）。
+- Editor模块构建因引擎级编译89个动作且超时，**未**完成Weather/Server/SFX动态库链接，也未创建目标MPC、Texture2D、Material、Blueprint、Niagara、MetaSound资产。其他会话PCG/UI未提交文件已保留。此项属于代码完成阶段，不应填作UE资源交付。
+
+最后统一验证范围：Python脚本语法和源素材、三层架构门禁、C++定向编译、真实UE Editor启动与生成脚本、Shader/蓝图/Niagara编译回读、双客户端与Cook/性能；实际未执行项目单独标为待验证。
+
 ## 继续实施的门槛
 
 1. Editor完整模块链接并使用正式`DivineBeastsArena.uproject`成功进入编辑器。

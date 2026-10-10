@@ -54,3 +54,25 @@ $env:WEATHER_ASSET_IMPORT_MODE = "apply"
 - 天气引擎定义、Provider目录及Niagara NiagaraSystem/SFX Definition的原生资产和跨端状态保持独立，最终以真实新手村与双客户端运行证据验收。
 
 执行证据详见`Docs/Implementation/WeatherSourceAssetsExecution_20261010.md`。
+
+## 2026-10-10 先代码与蓝图、最后统一测试（当前新增）
+
+在不修改任何正式地图的前提下，先完成了可执行的真实UE编辑器资源制作脚本：
+
+1. `AuthorWeatherSurfaceAssets.py`：目标`/GamePlatformSurface/MaterialFunctions/`下七个有实际运算连接的函数，以及`M_GP_Surface_Master`、`M_GP_Surface_Lite`两个真正连接了MPC的母材质；`WEATHER_SURFACE_AUTHOR_PHASE=functions|materials|all`决定批次，`WEATHER_SURFACE_AUTHOR_MODE=apply`才执行。
+2. `AuthorWeatherVFXMaterials.py`：在`/GamePlatformVFX/Weather/Materials/`创建雨线、雪花、雨水飞溅三个实际粒子材质，要求真实PNG Texture2D已导入。
+3. `WeatherNiagaraAuthoringSpec_V1.json`：为Monolith Niagara工具提供三套天气系统、近远景雨雪发射器、飞溅发射器、Shader与Niagara强度参数、原生特效裁剪/附着策略的明确生产合同。该JSON不是运行Niagara资产，系统与发射器须由真实UE Editor制作，严格禁止先创建空`.uasset`。
+4. `AuthorWeatherBlueprintAssets.py`：在`/DBAWorldPack_Village/Weather/Definitions/`创建八个Server-safe天气数据资产（晴、阴、轻雨、暴雨、轻雪、暴雪、雨后、雪后）；另基于项目世界GameMode和审核Actor分别创建`BP_DBA_WeatherReviewGameMode`与`BP_DBA_WeatherReviewController`两份真实审核蓝图，须UE编译、保存与重载。
+5. `AuthorWeatherVFXDefinitions.py`：待真实Rain/Snow Niagara具备有效Emitter与渲染器后，创建两个`UGamePlatformVFXAttachedDefinition`资产；VFX强度参数严格采用`User.WeatherIntensity`，并要求天气效果通过观察者ViewTarget根组件弱附着，不在世界原点播放。
+6. `AuthorWeatherAudioAssets.py`：只在客户端独立`DBASFXPack_Core`已有实资产并正式登记时，才导入三段WAV，设置SoundWave循环，并创建雨/雪SFX Definition；不在Village AlwaysCook共享地图包放纯音频。雨声当前可先用已有SoundWave的请求音量映射，MetaSound强度混合后续真实制作。
+7. `AuthorWeatherReviewMap.py`：在已真实加载两个审核蓝图及Surface母材质的编辑器中，生成`/Game/Development/Weather/Maps/L_DBA_WeatherReview`独立开发审核关卡，布置地面、岩石测试网格、屋顶、PlayerStart、光源及天气控制器蓝图，编译保存回读；不得自动修改Village正式地图或增加Server Cook路径。
+8. `DBAWorlds`正式GameMode通过`InitialWeatherPresetId`消费上述天气DataAsset：使用平台Data的World生命周期异步Definition租约，成功后交给唯一平台天气服务应用并释放，失败保留初始天气。与自动天气表互斥，后者优先。
+9. `DBAClient`本地玩家表现从平台World天气快照事件自动发现雨雪，分别通过既有`ActivateContentPack`为VFX和SFX进行独立异步预载及类型预检，成功发布目录后通知WeatherClient重发本世界当前天气，解决晚加入和资源迟加载问题。项目只用公开Weather Runtime/Client，不访问Niagara或SFX内部执行器。
+
+### 运行顺序
+
+**先修复Editor模块加载 → MPC真实生成/校验 → 导入九张真实Texture2D → 制作七个MF和两个Surface母版 → 制作三张VFX材质 → Monolith制作三个Niagara和发射器 → 导入项目天气DataAsset并实际编译审核蓝图 → 按内容包门禁制作SFX → 统一测试。**
+
+所有`AuthorWeather*.py`默认`inspect`只读；它们是实际可调用的Editor API代码，不是资产本体，也未能在本轮完整Editor DLL缺失时执行`apply`。后续任何执行产生部分资产时，应保留现场进行编译/引用审查，不自动删除或覆盖，不用伪造文件填空。
+
+天气权威API新增`UGamePlatformWeatherBlueprintLibrary`，项目审核Actor是`ADivineBeastsWeatherReviewController`（不发RPC、不复制天气事实）。通用表现增加中立浮点参数和可选弱附着组件，VFX/SFX桥各自接入，原来不带参数的请求维持默认行为。

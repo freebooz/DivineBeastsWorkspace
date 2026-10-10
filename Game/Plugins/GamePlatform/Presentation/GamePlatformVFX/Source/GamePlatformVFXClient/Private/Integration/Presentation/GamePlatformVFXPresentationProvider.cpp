@@ -40,9 +40,14 @@ bool FGamePlatformVFXPresentationProvider::Handle(
     VFXRequest.DefinitionId = Request.DefinitionId;
     VFXRequest.PlatformId = FName(FPlatformProperties::IniPlatformName());
     VFXRequest.SpawnContext.Location = Request.SourceLocation;
+    VFXRequest.SpawnContext.AttachComponent = Request.AttachComponent;
     VFXRequest.SpawnContext.TargetLocation = Request.TargetLocation;
     VFXRequest.SpawnContext.ImpactLocation = Request.ImpactLocation;
     VFXRequest.SpawnContext.ImpactNormal = Request.ImpactNormal;
+
+    // 中立浮点参数只映射到本领域请求，后续按VFXDefinition的ParameterSchema严格校验，
+    // 不为Weather或任何项目建立专用Niagara执行器，也不为未声明参数开后门。
+    VFXRequest.Parameters.FloatParameters = Request.FloatParameters;
 
     switch (Request.Priority)
     {

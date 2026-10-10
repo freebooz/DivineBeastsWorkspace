@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "assetAuthoringState": "spec_only_not_uasset",
+  "engine": "Unreal Engine 5.8",
+  "authoringBackend": "Monolith MCP niagara_query create_system_from_spec or equivalent UE Editor Niagara graph API",
+  "owner": "GamePlatformVFX",
+  "rules": {
+    "neverCreateEmptySystem": true,
+    "requireCompileAndSave": true,
+    "requireReloadAndEmitterCount": true,
+    "systemRoot": "/GamePlatformVFX/Weather/Niagara",
+    "materialRoot": "/GamePlatformVFX/Weather/Materials",
+    "qualityPolicy": "Reuse Niagara EffectType and client scalability; never replicate particles",
+    "coordinatePolicy": "Spawn near local viewer; attach to view target root via Presentation.AttachComponent; keep in local simulation space and never spawn at world origin",
+    "materials": [
+      "M_GP_VFX_Weather_Rain",
+      "M_GP_VFX_Weather_Snow",
+      "M_GP_VFX_Weather_Splash"
+    ]
+  },
+  "parameters": [
+    {
+      "name": "User.WeatherIntensity",
+      "type": "Float",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "description": "雨雪粒子强度；按Presentation float白名单，直接传给Niagara"
+    },
+    {
+      "name": "User.WeatherWind",
+      "type": "Float",
+      "default": 0.1,
+      "min": 0,
+      "max": 1,
+      "description": "横向风力；预留真正风向Vector的协议更新"
+    },
+    {
+      "name": "User.WeatherExtent",
+      "type": "Vector3",
+      "default": [
+        1800,
+        1800,
+        1400
+      ],
+      "description": "观察者局部降水生成盒厘米"
+    },
+    {
+      "name": "User.LocalViewPosition",
+      "type": "Position",
+      "description": "选配；优先使用AttachedDefinition的ViewTarget SceneComponent"
+    }
+  ],
+  "systems": [
+    {
+      "name": "NS_GP_Weather_Rain",
+      "description": "小雨大雨共享的持续降雨",
+      "simulationTarget": "GPU",
+      "localSpace": true,
+      "emitters": [
+        {
+          "name": "NE_GP_Rain_Near",
+          "template": "Niagara blank emitter + complete sprite stack",
+          "requiredModules": [
+            "EmitterState",
+            "SpawnRate",
+            "InitializeParticle",
+            "BoxLocation",
+            "AddVelocity",
+            "GravityForce",
+            "SolveForcesAndVelocity",
+            "SpriteRenderer"
+          ],
+          "spriteMaterial": "M_GP_VFX_Weather_Rain",
+          "spawnRateAtIntensity1": 1400,
+          "spawnScale": "User.WeatherIntensity",
+          "lifetimeRangeSeconds": [
+            0.4,
+            1.5
+          ],
+          "sizeCm": [
+            1,
+            3,
+            25,
+            85
+          ],
+          "initialVelocityCmPerSec": [
+            -150,
+            150,
+            -1600,
+            -900
+          ],
+          "spawnExtentCm": [
+            1600,
+            1600,
+            1000
+          ],
+          "depthCollision": "Optional GPU low cost only"
+        },
+        {
+          "name": "NE_GP_Rain_Far",
+          "template": "Niagara blank emitter + complete sprite stack",
+          "requiredModules": [
+            "EmitterState",
+            "SpawnRate",
+            "InitializeParticle",
+            "BoxLocation",
+            "AddVelocity",
+            "SolveForcesAndVelocity",
+            "SpriteRenderer"
+          ],
+          "spriteMaterial": "M_GP_VFX_Weather_Rain",
+          "spawnRateAtIntensity1": 800,
+          "spawnScale": "User.WeatherIntensity",
+          "lifetimeRangeSeconds": [
+            0.7,
+            1.7
+          ],
+          "sizeCm": [
+            1,
+            2,
+            18,
+            48
+          ],
+          "initialVelocityCmPerSec": [
+            -100,
+            100,
+            -1300,
+            -750
+          ],
+          "spawnExtentCm": [
+            2300,
+            2300,
+            1300
+          ],
+          "depthCollision": "None"
+        }
+      ],
+      "maxEmitterLifetimeSeconds": 0,
+      "scalability": "Ambient budget, distance culling, low quality disable Near collision, GPU bounds; no Tick C++",
+      "persistent": true,
+      "providerDefinitionClass": "UGamePlatformVFXAttachedDefinition",
+      "definitionId": "platform.weather.rain@1",
+      "semantic": "Presentation.Weather.Rain.VFX",
+      "mustNotUse": "Projectile VFX or one actor per raindrop"
+    },
+    {
+      "name": "NS_GP_Weather_Snow",
+      "description": "小雪大雪共享的持续飘雪",
+      "simulationTarget": "GPU",
+      "localSpace": true,
+      "emitters": [
+        {
+          "name": "NE_GP_Snow_Near",
+          "requiredModules": [
+            "EmitterState",
+            "SpawnRate",
+            "InitializeParticle",
+            "BoxLocation",
+            "AddVelocity",
+            "CurlNoiseForce",
+            "SolveForcesAndVelocity",
+            "SpriteRenderer"
+          ],
+          "spriteMaterial": "M_GP_VFX_Weather_Snow",
+          "spawnRateAtIntensity1": 500,
+          "spawnScale": "User.WeatherIntensity",
+          "lifetimeRangeSeconds": [
+            3,
+            8
+          ],
+          "sizeCm": [
+            2,
+            8,
+            2,
+            8
+          ],
+          "initialVelocityCmPerSec": [
+            -80,
+            80,
+            -200,
+            -50
+          ],
+          "spawnExtentCm": [
+            1600,
+            1600,
+            850
+          ],
+          "collision": "None"
+        },
+        {
+          "name": "NE_GP_Snow_Far",
+          "requiredModules": [
+            "EmitterState",
+            "SpawnRate",
+            "InitializeParticle",
+            "BoxLocation",
+            "AddVelocity",
+            "SolveForcesAndVelocity",
+            "SpriteRenderer"
+          ],
+          "spriteMaterial": "M_GP_VFX_Weather_Snow",
+          "spawnRateAtIntensity1": 320,
+          "spawnScale": "User.WeatherIntensity",
+          "lifetimeRangeSeconds": [
+            4,
+            9
+          ],
+          "sizeCm": [
+            1,
+            4,
+            1,
+            4
+          ],
+          "initialVelocityCmPerSec": [
+            -65,
+            65,
+            -160,
+            -40
+          ],
+          "spawnExtentCm": [
+            2500,
+            2500,
+            1000
+          ],
+          "collision": "None"
+        }
+      ],
+      "maxEmitterLifetimeSeconds": 0,
+      "persistent": true,
+      "providerDefinitionClass": "UGamePlatformVFXAttachedDefinition",
+      "definitionId": "platform.weather.snow@1",
+      "semantic": "Presentation.Weather.Snow.VFX"
+    },
+    {
+      "name": "NS_GP_Weather_RainSplash",
+      "description": "局部随机地面雨花，不能为每个雨滴模拟网络Actor",
+      "simulationTarget": "GPU",
+      "localSpace": false,
+      "emitters": [
+        {
+          "name": "NE_GP_Rain_Splash",
+          "requiredModules": [
+            "EmitterState",
+            "SpawnRate",
+            "InitializeParticle",
+            "BoxLocation",
+            "InitializeSpriteSize",
+            "SpriteRenderer",
+            "SubImageAnimation"
+          ],
+          "spriteMaterial": "M_GP_VFX_Weather_Splash",
+          "spawnRateAtIntensity1": 90,
+          "lifetimeRangeSeconds": [
+            0.3,
+            0.85
+          ],
+          "atlasGrid": [
+            4,
+            4
+          ],
+          "collision": "Ground sampler / verified surface zones, not all rain particle collisions"
+        }
+      ],
+      "persistent": false,
+      "providerDefinitionClass": "UGamePlatformVFXInstantDefinition",
+      "definitionId": "platform.weather.rain_splash@1",
+      "semantic": "Presentation.Weather.RainSplash.VFX"
+    }
+  ],
+  "materialInputTextures": {
+    "rain": "/GamePlatformVFX/Weather/Textures/T_GP_Weather_RainStreak",
+    "snow": "/GamePlatformVFX/Weather/Textures/T_GP_Weather_SnowflakeAtlas",
+    "splash": "/GamePlatformVFX/Weather/Textures/T_GP_Weather_RainSplashFlipbook",
+    "ripple": "/GamePlatformVFX/Weather/Textures/T_GP_Weather_RainRipple"
+  },
+  "userFacingChinese": "上述文件为需要在真实UE5.8 Niagara编辑器执行的节点合同；只有通过Monolith/编辑器新建实际Emitter、Renderer、属性，完成Shader编译/保存/回读，才可将状态改为已制作。"
+}

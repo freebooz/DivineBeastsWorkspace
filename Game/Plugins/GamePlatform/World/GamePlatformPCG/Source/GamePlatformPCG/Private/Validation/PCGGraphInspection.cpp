@@ -84,34 +84,42 @@ bool IsNodeReachable(const UPCGNode& Start,const UPCGNode& Target)
 bool ValidateSpawnerDescriptor(const UPCGStaticMeshSpawnerSettings& Spawner, const UGamePlatformPCGProfileDefinition& Profile)
 {
     const UPCGMeshSelectorWeighted* Selector = Cast<UPCGMeshSelectorWeighted>(Spawner.MeshSelectorParameters);
-    if (!Selector || Selector->GetClass() != UPCGMeshSelectorWeighted::StaticClass() || Selector->MeshEntries.Num() != 1 ||
+    if (!Selector || Selector->GetClass() != UPCGMeshSelectorWeighted::StaticClass() ||
+        Selector->MeshEntries.IsEmpty() || Selector->MeshEntries.Num() > 64 ||
         Selector->bUseAttributeMaterialOverrides || !Spawner.PostProcessFunctionNames.IsEmpty() || !Spawner.TargetActor.IsNull() ||
         !Spawner.StaticMeshComponentPropertyOverrides.IsEmpty() || Spawner.InstanceDataPackerParameters || Spawner.InstanceDataPackerType ||
-        Spawner.MeshSelectorType != UPCGMeshSelectorWeighted::StaticClass() || !Selector->MaterialOverrideAttributes.IsEmpty())
+        Spawner.MeshSelectorType != UPCGMeshSelectorWeighted::StaticClass() || !Selector->MaterialOverrideAttributes.IsEmpty() ||
+        Spawner.bAllowDescriptorChanges || Spawner.bAllowMergeDifferentDataInSameInstancedComponents)
     {
         return false;
     }
 
-    const auto& Descriptor = Selector->MeshEntries[0].Descriptor;
-    if (Descriptor.StaticMesh.ToSoftObjectPath() != Profile.OutputMesh.ToSoftObjectPath() || !Descriptor.OverrideMaterials.IsEmpty() ||
-        Descriptor.ComponentClass != UInstancedStaticMeshComponent::StaticClass() || Selector->MeshEntries[0].Weight <= 0)
-    {
-        return false;
-    }
+    const bool bLegacy = Profile.TemplateId.IsNone();
+    if (bLegacy && Selector->MeshEntries.Num() != 1) { return false; }
+    if (!bLegacy && !Profile.MeshSetDefinitionId.IsValid()) { return false; }
 
-    if (Profile.OutputUsage == EGamePlatformPCGOutputUsage::Cosmetic &&
-        (Descriptor.bUseDefaultCollision || Descriptor.BodyInstance.GetCollisionEnabled() != ECollisionEnabled::NoCollision ||
-         Descriptor.bGenerateOverlapEvents || Descriptor.bCanEverAffectNavigation))
+    for (const FPCGMeshSelectorWeightedEntry& Entry : Selector->MeshEntries)
     {
-        return false;
+        const auto& Descriptor = Entry.Descriptor;
+        if (Descriptor.StaticMesh.IsNull() || !Descriptor.OverrideMaterials.IsEmpty() ||
+            Descriptor.ComponentClass != UInstancedStaticMeshComponent::StaticClass() ||
+            Entry.Weight <= 0 || Descriptor.bUseDefaultCollision || Descriptor.bGenerateOverlapEvents ||
+            (bLegacy && Descriptor.StaticMesh.ToSoftObjectPath() != Profile.OutputMesh.ToSoftObjectPath()))
+        {
+            return false;
+        }
+        if (Profile.OutputUsage == EGamePlatformPCGOutputUsage::Cosmetic &&
+            (Descriptor.BodyInstance.GetCollisionEnabled() != ECollisionEnabled::NoCollision ||
+             Descriptor.bCanEverAffectNavigation))
+        {
+            return false;
+        }
+        if (Profile.OutputUsage == EGamePlatformPCGOutputUsage::StaticCollision &&
+            Descriptor.BodyInstance.GetCollisionEnabled() != ECollisionEnabled::QueryAndPhysics)
+        {
+            return false;
+        }
     }
-
-    if (Profile.OutputUsage == EGamePlatformPCGOutputUsage::StaticCollision &&
-        Descriptor.BodyInstance.GetCollisionEnabled() != ECollisionEnabled::QueryAndPhysics)
-    {
-        return false;
-    }
-
     return true;
 }
 
@@ -130,6 +138,7 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
 
     UPCGNode* SchemaWriterNode = nullptr;
     UPCGNode* SchemaValidatorNode = nullptr;
+    UPCGNode* SpawnerNode = nullptr;
 
     for (UPCGNode* Node : Graph.GetNodes())
     {
@@ -154,10 +163,11 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
 
         if (const UPCGStaticMeshSpawnerSettings* Spawner = Cast<UPCGStaticMeshSpawnerSettings>(Settings))
         {
-            if (!ValidateSpawnerDescriptor(*Spawner, Profile))
+            if (SpawnerNode || Graph.bIsTemplate || !ValidateSpawnerDescriptor(*Spawner, Profile))
             {
                 return Rejected(TEXT("TemplateSpawnerSideEffectsForbidden"));
             }
+            SpawnerNode = Node;
         }
     }
 
@@ -169,6 +179,13 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
     if (!IsNodeReachable(*SchemaWriterNode,*SchemaValidatorNode) || !IsNodeReachable(*SchemaValidatorNode,*OutputNode))
     {
         return Rejected(TEXT("TemplateSchemaBoundaryDisconnected"));
+    }
+    // Foundation模板只能输出通过Schema校验的点；绑定项目MeshSet后，必须在校验后真正生成网格。
+    // 运行服务仍失败关闭，避免把编辑器静态图意外用于客户端权威/专用服务器。
+    if (!Graph.bIsTemplate && (!SpawnerNode || !Profile.MeshSetDefinitionId.IsValid() ||
+        !IsNodeReachable(*SchemaValidatorNode,*SpawnerNode) || !IsNodeReachable(*SpawnerNode,*OutputNode)))
+    {
+        return Rejected(TEXT("RealizedTemplateSpawnerMissing"));
     }
 
     return FGamePlatformResult::Success();

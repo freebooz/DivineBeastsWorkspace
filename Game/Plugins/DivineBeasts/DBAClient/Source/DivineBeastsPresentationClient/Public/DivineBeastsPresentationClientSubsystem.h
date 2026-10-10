@@ -14,7 +14,7 @@
 #include "DivineBeastsPresentationClientSubsystem.generated.h"
 
 class UGamePlatformPresentationClientSubsystem;
-class UWorld;
+class UWorld;struct FGamePlatformWeatherSnapshot;
 
 DECLARE_MULTICAST_DELEGATE_FourParams(
     FDivineBeastsPresentationLogicalPreloadRequested,
@@ -56,6 +56,14 @@ public:
     FDivineBeastsPresentationContentPackHandle ActivateContentPack(
         const FDivineBeastsPresentationContentPackFragment& Fragment,
         FString& OutError);
+
+    /** 雨雪两套VFXDefinition完成真实资产预载后才注册项目天气目录，返回值只表示Loading已受理。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Weather")
+    FDivineBeastsPresentationContentPackHandle ActivateWeatherVisuals(FString& OutError);
+
+    /** 与VFX独立预载天气SFX内容包；缺音频不阻断视觉及权威天气。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Weather")
+    FDivineBeastsPresentationContentPackHandle ActivateWeatherAudio(FString& OutError);
 
     bool DeactivateContentPack(
         const FDivineBeastsPresentationContentPackHandle& Handle);
@@ -145,6 +153,11 @@ private:
         bool bSessionEnded,
         bool bCleanupResources);
     void HandlePostLoadMap(UWorld* World);
+    /** 只绑定当前LocalPlayer所属世界，消费第一次服务器天气快照后启动可选内容包。 */
+    void BindWeatherWorld(UWorld* World);
+    void UnbindWeatherWorld();
+    void HandleWeatherSnapshot(const FGamePlatformWeatherSnapshot& Snapshot);
+    FDivineBeastsPresentationContentPackHandle ActivateWeatherPack(bool bVisual, FString& OutError);
     void DeactivatePacksByScope(
         EGamePlatformPresentationContextScope Scope);
     void CancelAllLogicalPreloads();
@@ -177,6 +190,14 @@ private:
 
     FDelegateHandle WorldCleanupHandle;
     FDelegateHandle PostLoadMapHandle;
+
+    /** 本地天气表现独立于游戏模式，和用户身份/World代次共同决定目录预载期限。 */
+    TWeakObjectPtr<UWorld> WeatherBoundWorld;
+    FDelegateHandle WeatherSnapshotHandle;
+    FDivineBeastsPresentationContentPackHandle WeatherVisualHandle;
+    FDivineBeastsPresentationContentPackHandle WeatherAudioHandle;
+    bool bWeatherVisualAttempted = false;
+    bool bWeatherAudioAttempted = false;
 
     FDivineBeastsPresentationLogicalPreloadRequested LogicalPreloadRequested;
     FDivineBeastsPresentationLogicalPreloadCancelled LogicalPreloadCancelled;

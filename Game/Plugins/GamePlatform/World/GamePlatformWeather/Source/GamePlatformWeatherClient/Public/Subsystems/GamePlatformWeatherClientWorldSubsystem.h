@@ -26,9 +26,18 @@ public:
     FDelegateHandle AddVisualChangedHandler(FGamePlatformWeatherVisualChanged::FDelegate Handler);
     void RemoveVisualChangedHandler(FDelegateHandle Handle);
 
+    /**
+     * 项目内容包真实预载并发布目录后重发当前天气表现。
+     * 只在本地世界消费既有权威快照，不创建新天气、不重复注册Provider。
+     * 不对普通客户端提供天气权威写入。
+     */
+    void RefreshPresentationAfterContentActivation();
+
 private:
     void OnSnapshotReceived(const FGamePlatformWeatherSnapshot& Snapshot);
     void UpdateTransition();
+    /** 分离快照首帧与Timer推进；避免首帧用未来目标天气瞬间播放满量雨雪。 */
+    void SampleAndApplyTransition(bool bRefreshPresentation);
     void ApplyVisualState(const FGamePlatformWeatherState& State);
     float GetEstimatedServerTimeSeconds() const;
     void SendPresentationEvent(const FGamePlatformWeatherState& State, bool bCancellation);
@@ -44,5 +53,7 @@ private:
     FGuid ActiveSfxRequestId;
     FName ActiveVfxTag;
     FName ActiveSfxTag;
+    /** 已提交的VFX/SFX天气强度；仅在过渡节点或完成时有限次重新发布，不按0.1s重建粒子。 */
+    float LastPresentedIntensity = -1.f;
     bool bClosing = false;
 };

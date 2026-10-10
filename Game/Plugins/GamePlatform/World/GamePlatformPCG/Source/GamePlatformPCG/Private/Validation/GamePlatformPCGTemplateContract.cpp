@@ -6,6 +6,7 @@
 #include "Elements/PCGStaticMeshSpawner.h"
 #include "Elements/PCGTransformPoints.h"
 #include "Elements/PCGProjectionElement.h"
+#include "Elements/PCGSplineSampler.h"
 #include "Nodes/GamePlatformPCGNodes.h"
 #include "Schema/GamePlatformPCGSchema.h"
 
@@ -73,11 +74,13 @@ bool FGamePlatformPCGTemplateContract::IsApprovedSettingsClass(const UClass* Set
         UPCGCreatePointsGridSettings::StaticClass(),
         UPCGTransformPointsSettings::StaticClass(),
         UPCGProjectionSettings::StaticClass(),
+        UPCGSplineSamplerSettings::StaticClass(),
         UPCGDensityFilterSettings::StaticClass(),
         UPCGStaticMeshSpawnerSettings::StaticClass(),
         UGamePlatformPCGWriteSchemaDefaultsSettings::StaticClass(),
         UGamePlatformPCGWriteExcludeSettings::StaticClass(),
         UGamePlatformPCGPriorityCarveSettings::StaticClass(),
+        UGamePlatformPCGSpatialCarveSettings::StaticClass(),
         UGamePlatformPCGProjectAlignSettings::StaticClass(),
         UGamePlatformPCGApplySpawnPolicySettings::StaticClass(),
         UGamePlatformPCGAssignMeshSetSettings::StaticClass(),

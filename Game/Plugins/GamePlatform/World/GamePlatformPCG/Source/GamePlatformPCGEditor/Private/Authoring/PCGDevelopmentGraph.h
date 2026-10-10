@@ -2,6 +2,8 @@
 #include "CoreMinimal.h"
 class UPCGGraph;
 class UStaticMesh;
+class UGamePlatformPCGProfileDefinition;
+class UGamePlatformPCGMeshSetDefinition;
 
 namespace GamePlatformPCGEditor
 {
@@ -14,6 +16,14 @@ namespace GamePlatformPCGEditor
      * 仅支持M0/M1批准模板ID，不创建M2+模板，不执行图，不绑定项目资源。
      */
     UPCGGraph* CreateFoundationTemplateGraph(UObject* Outer, FName Name, FName TemplateId, FString& Error);
+    /**
+     * 为已加载、已租约的项目MeshSet构建可实际生成网格的Graph Instance。
+     * 只做编辑器图创作，不执行Generate或同步加载软资源；调用者负责外层资产保存及关联Profile。
+     * 初期限定Scatter/Biome/Crop/Assembly/InterfaceBand，不冒充道路多MeshSet选择已实现。
+     */
+    UPCGGraph* CreateFoundationRealizedGraph(UObject* Outer, FName Name,
+        const UGamePlatformPCGProfileDefinition& Profile,
+        const UGamePlatformPCGMeshSetDefinition& MeshSet, FString& Error);
 
     /** 创建M0/M1公共Foundation Subgraph（基础子图）；只使用官方/批准节点，不执行世界生成。 */
     UPCGGraph* CreateFoundationSubgraphGraph(UObject* Outer, FName Name, FName SubgraphId, FString& Error);

@@ -1,5 +1,8 @@
 # DBAClient（神兽联盟客户端组合插件）
 
+2026-10-10项目主题入口已接入现有`DivineBeastsUIClientSubsystem`（项目本地玩家UI组合根），读取配置后交给平台主题服务。当前默认主题ID为空，不改变现有登录、LOGO、字号与命名控件；真实主题/样式须经Monolith创建验收后再启用。详见[UIThemeIntegration（项目主题接入）](Docs/UIThemeIntegration.md)。
+
+
 正式位置：`Game/Plugins/DivineBeasts/DBAClient/`。插件按模块宿主类型隔离客户端代码；虽然包含一个`Runtime`项目表现语义模块，服务器模块不得依赖任一`ClientOnly`模块。
 
 | 模块 | 宿主 | 当前职责 |

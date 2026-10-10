@@ -108,6 +108,14 @@
         "Client",
         "Editor"
       ]
+    },
+    {
+      "Name": "GamePlatformWeather",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
     }
   ],
   "Modules": [

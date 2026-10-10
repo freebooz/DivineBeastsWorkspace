@@ -5,6 +5,8 @@
 #include "GamePlatformPresentationContext.h"
 #include "GamePlatformPresentationTypes.generated.h"
 
+class USceneComponent;
+
 /** 跨表现插件共享的中立语义事件，不携带UI/VFX/SFX具体实现类型。 */
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationEvent
@@ -97,6 +99,10 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
     FVector SourceLocation = FVector::ZeroVector;
 
+    /** 可选的本地表现附着组件；仅弱持有，切图/角色销毁不能延长组件生命周期。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
+    TWeakObjectPtr<USceneComponent> AttachComponent;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
     FVector TargetLocation = FVector::ZeroVector;
 
@@ -108,6 +114,17 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationRequest
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
     float Magnitude = 0.0f;
+
+    /**
+     * 少量纯表现浮点覆盖。中立总线不解析字段业务含义，VFX/SFX下游各自按Definition白名单校验。
+     * 键名例如User.WeatherIntensity或WeatherIntensity；禁止纳入战斗权威及网络复制。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
+    TMap<FName, float> FloatParameters;
+
+    /** 仅客户端SFX使用的可选响度系数；空调用的默认1保持历史行为。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation", meta=(ClampMin="0.0",ClampMax="4.0"))
+    float VolumeMultiplier = 1.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
     FGameplayTagContainer ContextTags;
@@ -144,6 +161,14 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationRequest
 
     bool IsValid() const
     {
-        return RequestId.IsValid() && SemanticTag.IsValid();
+        if (!RequestId.IsValid() || !SemanticTag.IsValid() ||
+            !FMath::IsFinite(Magnitude) || FloatParameters.Num() > 16 ||
+            !FMath::IsFinite(VolumeMultiplier) || VolumeMultiplier < 0.f ||
+            VolumeMultiplier > 4.f) return false;
+        for (const TPair<FName, float>& Pair : FloatParameters)
+        {
+            if (Pair.Key.IsNone() || !FMath::IsFinite(Pair.Value)) return false;
+        }
+        return true;
     }
 };

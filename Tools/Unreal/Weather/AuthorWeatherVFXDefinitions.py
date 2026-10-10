@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""使用真实UE5.8编辑器制作平台天气VFX Definition数据资产（雨、雪）。
+
+正式Niagara系统及其Emitters必须已由Monolith/UE编辑器创建、Shader编译、保存。
+本脚本不会创建空系统，也不会在雨雪Niagara不存在时制造假Definition。
+默认WEATHER_VFX_DEFINITION_MODE=inspect，只有apply才创建两个GamePlatformVFXAttachedDefinition。
+"""
+from __future__ import annotations
+import os
+
+MODE = os.environ.get("WEATHER_VFX_DEFINITION_MODE", "inspect").strip().lower()
+DEST = "/GamePlatformVFX/Weather/Definitions"
+CASES = (
+    ("DA_GP_VFX_Weather_Rain", "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_Rain",
+     "platform.weather.rain@1"),
+    ("DA_GP_VFX_Weather_Snow", "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_Snow",
+     "platform.weather.snow@1"),
+)
+
+
+def main() -> None:
+    for name, system, logical_id in CASES:
+        print("VFX_DEFINITION_TARGET", DEST + "/" + name, system, logical_id)
+    if MODE == "inspect":
+        print("WEATHER_VFX_DEFINITION_INSPECT_ONLY：未创建任何uasset")
+        return
+    if MODE != "apply":
+        raise ValueError("WEATHER_VFX_DEFINITION_MODE只能是inspect或apply")
+    try:
+        import unreal  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError("必须在UE5.8编辑器中执行，不允许普通Python生成虚假Definition") from exc
+
+    assets = unreal.EditorAssetLibrary
+    tools = unreal.AssetToolsHelpers.get_asset_tools()
+    klass = unreal.GamePlatformVFXAttachedDefinition
+    for name, system, _ in CASES:
+        if not assets.does_asset_exist(system):
+            raise FileNotFoundError("未找到真实Niagara System：" + system)
+        obj = assets.load_asset(system)
+        if not isinstance(obj, unreal.NiagaraSystem):
+            raise RuntimeError(f"Niagara真实资产类型不合法：{system}")
+        if assets.does_asset_exist(DEST + "/" + name):
+            raise FileExistsError("定义已存在，拒绝覆盖：" + name)
+
+    if not assets.does_directory_exist(DEST):
+        assets.make_directory(DEST)
+    factory = unreal.DataAssetFactory()
+    factory.set_editor_property("data_asset_class", klass)
+
+    for name, system, logical_id in CASES:
+        d = tools.create_asset(name, DEST, klass, factory)
+        if not isinstance(d, klass):
+            raise RuntimeError("无法创建真实VFX定义：" + name)
+        namespace_and_name, generation = logical_id.rsplit("@", 1)
+        namespace, simple_name = namespace_and_name.rsplit(".", 1)
+        ident = unreal.GamePlatformId()
+        ident.set_editor_property("namespace", namespace)
+        ident.set_editor_property("name", simple_name)
+        ident.set_editor_property("logical_version", int(generation))
+        d.set_editor_property("logical_id", ident)
+        revision = unreal.GamePlatformDataVersion()
+        revision.set_editor_property("schema_version", 1)
+        revision.set_editor_property("content_revision", 1)
+        d.set_editor_property("data_version", revision)
+        d.set_editor_property("niagara_system", assets.load_asset(system))
+        d.set_editor_property("auto_destroy", False)
+        d.set_editor_property("allow_pooling", True)
+        d.set_editor_property("enable_scalability", True)
+
+        intensity_rule = unreal.GamePlatformVFXParameterRule()
+        intensity_rule.set_editor_property("name", unreal.Name("User.WeatherIntensity"))
+        intensity_rule.set_editor_property("type", unreal.GamePlatformVFXParameterType.FLOAT)
+        intensity_rule.set_editor_property("required", True)
+        intensity_rule.set_editor_property("min_value", 0.0)
+        intensity_rule.set_editor_property("max_value", 1.0)
+        schema = unreal.GamePlatformVFXParameterSchema()
+        schema.set_editor_property("max_override_count", 16)
+        schema.set_editor_property("rules", [intensity_rule])
+        d.set_editor_property("parameter_schema", schema)
+
+        if not assets.save_loaded_asset(d, only_if_is_dirty=False):
+            raise RuntimeError("VFX Definition保存失败：" + name)
+        check = assets.load_asset(DEST + "/" + name)
+        if not isinstance(check, klass):
+            raise RuntimeError("VFX Definition回读类型异常：" + name)
+        print("UE_WEATHER_VFX_DEFINITION_SAVED", check.get_path_name())
+
+
+if __name__ == "__main__":
+    main()

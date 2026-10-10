@@ -1,6 +1,7 @@
 #include "Definitions/DivineBeastsWorldDefinition.h"
 
 #include "Identity/DivineBeastsProjectCatalog.h"
+#include "Definitions/GamePlatformPrimaryDataAsset.h"
 
 FGamePlatformResult UDivineBeastsWorldDefinition::ValidateDefinition() const
 {
@@ -63,6 +64,30 @@ FGamePlatformResult UDivineBeastsWorldDefinition::ValidateDefinition() const
             return FGamePlatformResult::Failure(
                 TEXT("ArenaModeWorldContextMismatch"),
                 TEXT("竞技模式映射角色和体验必须与该世界定义一致；非竞技世界不能携带竞技模式。"));
+        }
+    }
+
+    // 村庄、常驻世界和竞技场共享平台PCG静态合同；项目层只组合真实已发布的定义和烘焙清单。
+    // 不能使用任意AssetType绕过GamePlatformData的定义租约，也不在校验时同步加载Graph/网格。
+    TSet<FPrimaryAssetId> SeenPCG;
+    for (const TArray<FPrimaryAssetId>* Group : {&EnvironmentPCGProfileIds, &PCGBakeManifestIds})
+    {
+        for (const FPrimaryAssetId& Id : *Group)
+        {
+            if (!Id.IsValid() || Id.PrimaryAssetType != UGamePlatformPrimaryDataAsset::DefinitionAssetType() ||
+                SeenPCG.Contains(Id))
+            {
+                return FGamePlatformResult::Failure(
+                    TEXT("InvalidWorldPCGDefinitionId"),
+                    TEXT("PCG Profile/Manifest必须是唯一且有效的GamePlatformDefinition主资产身份。"));
+            }
+            if (!RequiredDefinitions.Contains(Id))
+            {
+                return FGamePlatformResult::Failure(
+                    TEXT("UndeclaredWorldPCGDependency"),
+                    TEXT("项目世界引用PCG定义时必须同步登记RequiredDefinitions，使用统一数据租约。"));
+            }
+            SeenPCG.Add(Id);
         }
     }
 

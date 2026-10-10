@@ -4,6 +4,10 @@
 
 ## 现行规则与规划
 
+- [跨项目UI主题与统一样式执行计划](superpowers/plans/2026-10-10-ui-theme-and-shared-styles.md)：T0—T6，按平台机制、项目选择和第三层内容资产归集实施。
+- [UI主题实施记录与验收边界](Implementation/UIThemeImplementation_20261010.md)：已落盘代码、真实编译、Monolith/资产/运行/Cook未完成项及恢复入口，不以源码存在冒充视觉交付。
+
+
 - [全局工程规则](../AGENTS.md)：命名、中文注释、分层、权限及验证规则。
 - [游戏端核心要求](Architecture/游戏端核心要求.md)：UE5.8客户端与Dedicated Server的插件化、复用、解耦、端侧权威、独立演示和人工审核核心基线。
 - [业务后端核心要求](Backend/业务后端核心要求.md)：Go业务控制面的领域模块化、五薄入口、跨游戏复用、UE权威边界、契约治理、一致性、安全和真实验收核心基线。

@@ -42,3 +42,10 @@ E:\poject\feebooz\DivineBeastsWorkspace\Game\DivineBeastsArena.uproject
 这些资产属于 Development（开发验证）模板，不进入正式世界 ContentPack（内容包）所有权。只有 Gold Level、AssetRegistry/DataValidation、Client/Server Cook 和性能验收完成后，才另行评审正式发布模板的资产归属和 `CanContainContent` 策略。
 
 当前模板合同仍不等于“模板可以运行”：真实 Template `.uasset`、Definition 参数绑定、MeshSetId→真实 Spawner 资源解析、Bake 输出审查尚未形成闭环，因此 Runtime Service 对 `TemplateId` 非空的请求继续 Fail-Closed（失败关闭）并返回 Unsupported。
+### 2026-10-10 P1～P7代码补齐入口
+
+- Foundation散布/群系/界面带/组合件模板添加UE5.8原生CreatePointsGrid（网格点采样），道路线性/农田模板添加官方SplineSampler（样条采样）；M0/M1批准节点保持CPU执行。
+- `CreateFoundationRealizedGraph（生成已绑定网格的图）`及`CreateDevelopmentRealizedGraphAsset（创建真实图资产）`使用已加载且在RequiredDefinitions登记的MeshSet，在Editor内加入加权StaticMeshSpawner并严格检查碰撞/导航用途。当前仅批准散布、群系、界面带、农田及简单组合模板；道路/围栏按ID映射多个网格尚不能声称完成。
+- `ConfigureRealizedGraphSpatialMasks（配置空间掩码）`从WorldDirector读取已验证几何快照，绑定非模板Graph Instance；不会扫描全世界Actor、同步加载材质或更改专用服务器权威地形。
+- `CreatePCGPlacementBlueprints（创建PCG放置器蓝图）`由正式UE Editor创作11类派生平台基类的真实Blueprint，必须显式指定已经注册的`/…/PCG/Blueprints/`内容包挂载点，不覆盖现有包。示例编辑器命令：`-run=GamePlatformPCGFoundationTemplates -BlueprintRoot=/DBAWorldPack_Village/PCG/Blueprints/`（仅当项目编辑器编译与所有必需模块加载成功后执行）。蓝图默认值只包含领域/原语/阶段，项目网格及图实例仍需单独绑定。
+- 此轮用户要求先编写代码、最后统一自动化测试。尚未生成/保存/重开真实`.uasset`或`.umap`，也没有完成正式Cook和G01～G16，不得把Editor创作函数声明视作生成已成功。

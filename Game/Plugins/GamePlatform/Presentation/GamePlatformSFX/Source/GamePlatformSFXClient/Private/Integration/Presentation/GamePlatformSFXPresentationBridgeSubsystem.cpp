@@ -72,6 +72,12 @@ bool UGamePlatformSFXPresentationBridgeSubsystem::HandlePresentationRequest(
     SFXRequest.ContextId = Request.ContextId;
     SFXRequest.ContextTags = Request.ContextTags;
     SFXRequest.Location = Request.SourceLocation;
+    SFXRequest.AttachComponent = Request.AttachComponent;
+
+    // 透明转发小规模表现参数；Sound Definition必须将每个参数列入白名单才接收。
+    // 默认空集合使旧音效请求行为不变，严禁把Magnitude套到全部游戏音量上。
+    SFXRequest.FloatParameters = Request.FloatParameters;
+    SFXRequest.VolumeMultiplier = Request.VolumeMultiplier;
 
     const auto Result = Service->Play(SFXRequest);
     return Result.IsAccepted() || (SFXRequest.PredictionState == EGamePlatformSFXPredictionState::Cancelled && Result.Code == EGamePlatformSFXResultCode::Cancelled);

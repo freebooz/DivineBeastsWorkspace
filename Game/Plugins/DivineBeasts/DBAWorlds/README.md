@@ -4,9 +4,13 @@
 
 `DBAWorldsRuntime`派生平台`UGamePlatformWorldDefinition`，校验项目服务器角色、默认体验和可选竞技模式映射；它不分配服务器、不加载/Travel地图、不引入网络凭据，也不代替平台World/Data模块的运行时生命周期。
 
+2026-10-10 PCG三层接线：项目世界定义额外登记`EnvironmentPCGProfileIds（世界PCG配置引用）`与`PCGBakeManifestIds（静态烘焙清单引用）`，必须列入`GamePlatformData.RequiredDefinitions（平台必需定义依赖）`；跨世界采集/门状态仍是服务器玩法与存档职责，PCG只提供候选稳定锚点。`GamePlatformPCGEditor（平台PCG编辑器模块）`可通过`-BlueprintRoot=/DBAWorldPack_Village/PCG/Blueprints/`生成11类真实放置器Blueprint（蓝图）；但在项目UE5.8构建/编辑器模块恢复并成功执行前，仅是源码创作入口，并非已交付蓝图或地图。
+
 环境表面材质机制归第一层`GamePlatformSurface`：DBAWorlds不依赖其ClientOnly实现，也不在Runtime复制雪／苔藓／湿润／积水算法。具体`MI_DBA_*`材质实例、项目纹理和世界场景资产归对应`DBAWorldPack_*`；客户端世界表现适配可在项目客户端／内容装配层把天气或世界表现事实提交给Surface，Dedicated Server继续只消费服务器安全的世界／玩法Definition。
 
 2026-10-10天气系统一期：现有`ADivineBeastsWorldGameMode`仅在权威世界`BeginPlay`激活`GamePlatformWeatherWorldSubsystem`，默认晴天，不在登录前端部署；`InitialWeather`可通过项目GameMode蓝图默认值调整，`bEnableWeatherSchedule`和`WeatherSchedule`启用合法天气周期。Runtime只依赖`GamePlatformWeatherRuntime`，不访问客户端Niagara/SFX/Surface，客户端天气模块订阅网络快照。若需要正式项目世界专属天气Definition实例，必须由GamePlatformData有效租约加载并在第三层内容包创建真实UE资产，不允许硬引用不存在的天气蓝图。
+
+本轮新增项目天气审核Actor`ADivineBeastsWeatherReviewController`（蓝图可派生，具备运行期ApplyReviewWeather/ReadCurrentWeather）；只允许权威世界显式执行，默认不自动改天气，且不复制或新建WeatherReplicator。真正审核蓝图的编辑器生成入口为`Tools/Unreal/Weather/AuthorWeatherBlueprintAssets.py`，目标位于`/Game/Development/Weather/Blueprints`，不是正式Village地图的一部分。所需8份项目天气Definition资产也由同一UE Editor脚本创建，数据只有天气标量，不包含纯客户端Niagara/SFX硬引用。
 
 当前工程已有引擎生成的前端与Village地图、世界定义及角色体验定义，实际资源归对应内容包。2026-10-09已执行Client、Server完整原生构建及项目Editor模块构建；这些结果不代替当前版本Cook/Stage、真实网络准入与双客户端人工行走验收，具体边界见下节和独立验证记录。
 

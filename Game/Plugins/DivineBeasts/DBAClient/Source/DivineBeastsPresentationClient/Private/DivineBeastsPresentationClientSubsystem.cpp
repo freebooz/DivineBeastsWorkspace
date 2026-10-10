@@ -11,7 +11,7 @@
 #include "Definitions/GamePlatformPrimaryDataAsset.h"
 #include "Types/GamePlatformId.h"
 #include "Engine/World.h"
-#include "GamePlatformPresentationClientSubsystem.h"
+#include "GamePlatformPresentationClientSubsystem.h"#include "Subsystems/GamePlatformWeatherWorldSubsystem.h"#include "Subsystems/GamePlatformWeatherClientWorldSubsystem.h"
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Tags/DivineBeastsPresentationTags.h"
 #include "UObject/UObjectGlobals.h"
@@ -38,6 +38,11 @@ void UDivineBeastsPresentationClientSubsystem::Initialize(
     PostLoadMapHandle = FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(
         this,
         &UDivineBeastsPresentationClientSubsystem::HandlePostLoadMap);
+    // 处理玩家在既有世界中途加入与新世界PostLoadMap两种时序；不使用Ticker/Tick。
+    if (ULocalPlayer* Player = GetLocalPlayer())
+    {
+        BindWeatherWorld(Player->GetWorld());
+    }
 }
 
 void UDivineBeastsPresentationClientSubsystem::Deinitialize()
@@ -55,6 +60,11 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
 
     bClosing = true;
     UnregisterProjectState();
+    UnbindWeatherWorld();
+    WeatherVisualHandle = {};
+    WeatherAudioHandle = {};
+    bWeatherVisualAttempted = false;
+    bWeatherAudioAttempted = false;
     CancelAllLogicalPreloads();
     ActivePacks.Reset(); PendingPacks.Reset();
     PackTerminals.Reset(); PackTerminalOrder.Reset(); ContentPackChanged.Clear();
@@ -141,12 +151,27 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
     {
         DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
     }
+    if (bWorldScopeChanged)
+    {
+        WeatherVisualHandle = {};
+        WeatherAudioHandle = {};
+        bWeatherVisualAttempted = false;
+        bWeatherAudioAttempted = false;
+    }
 
     ProjectContext = MoveTemp(Normalized);
     if (bCharacterScopeChanged || bWorldScopeChanged)
     {
         RequestStates.Reset();
         RequestOrder.Reset();
+    }
+    if (bWorldScopeChanged)
+    {
+        if (UWorld* WeatherWorld = WeatherBoundWorld.Get())
+        {
+            if (auto* Weather = WeatherWorld->GetSubsystem<UGamePlatformWeatherWorldSubsystem>())
+                HandleWeatherSnapshot(Weather->GetCurrentSnapshot());
+        }
     }
     return true;
 }
@@ -168,6 +193,16 @@ void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
     RequestStates.Reset();
     RequestOrder.Reset();
     BeginDefaultCatalogPreload();
+    // 切换账号后仍可能处于同一个世界，已有天气事实需重新激活本地资源租约。
+    WeatherVisualHandle = {};
+    WeatherAudioHandle = {};
+    bWeatherVisualAttempted = false;
+    bWeatherAudioAttempted = false;
+    if (UWorld* WeatherWorld = WeatherBoundWorld.Get())
+    {
+        if (auto* Weather = WeatherWorld->GetSubsystem<UGamePlatformWeatherWorldSubsystem>())
+            HandleWeatherSnapshot(Weather->GetCurrentSnapshot());
+    }
 }
 
 FGamePlatformPresentationContextPatch
@@ -373,6 +408,27 @@ void UDivineBeastsPresentationClientSubsystem::HandleLogicalPreloadCompleted(con
     Active.PreloadRequestIds.Add(RequestId); ActivePacks.Add(PackHandle.Id, MoveTemp(Active));
     const FString NoError;
     ContentPackChanged.Broadcast(PackHandle, EDivineBeastsPresentationContentPackState::Active, NoError);
+    // 初次天气快照可能在真实VFX/SFX内容包异步加载完成之前到达。
+    // Catalog已成功提交后按当前服务器时间重新发布本世界天气一次，
+    // 避免“只有下一次切换天气后才能看到雨雪”。不添加Ticker/重复实例管理器。
+    if (!bClosing && (Fragment.ContentPackId == FName(TEXT("GamePlatformVFX")) ||
+                      Fragment.ContentPackId == FName(TEXT("DBASFXPack_Core"))))
+    {
+        if (ULocalPlayer* Player = GetLocalPlayer())
+        {
+            if (UWorld* World = Player->GetWorld())
+            {
+                if (!World->bIsTearingDown)
+                {
+                    if (auto* WeatherClient =
+                            World->GetSubsystem<UGamePlatformWeatherClientWorldSubsystem>())
+                    {
+                        WeatherClient->RefreshPresentationAfterContentActivation();
+                    }
+                }
+            }
+        }
+    }
 }
 
 void UDivineBeastsPresentationClientSubsystem::ReleaseLogicalLeases(const TArray<FGamePlatformDataLease>& Leases)
@@ -568,7 +624,12 @@ void UDivineBeastsPresentationClientSubsystem::HandleWorldCleanup(
         return;
     }
 
+    UnbindWeatherWorld();
     DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
+    WeatherVisualHandle = {};
+    WeatherAudioHandle = {};
+    bWeatherVisualAttempted = false;
+    bWeatherAudioAttempted = false;
     ProjectContext.WorldId = NAME_None;
     ProjectContext.ExperienceId = NAME_None;
     ProjectContext.RegionId = NAME_None;
@@ -588,5 +649,139 @@ void UDivineBeastsPresentationClientSubsystem::HandlePostLoadMap(UWorld* World)
         ProjectContext.WorldGeneration = 0;
         RequestStates.Reset();
         RequestOrder.Reset();
+        BindWeatherWorld(World);
     }
 }
+/**
+ * 分别激活雨雪VFX与SFX内容包。只复用项目已有ActivateContentPack原子预载/门禁：
+ * 输入映射是项目配置，定义只有全部经GamePlatformData合法租约加载后才发布。
+ * 不能因为VFX可用就假定SFX也可用，也不能用虚假的ContentRevision冒充资产。
+ */
+FDivineBeastsPresentationContentPackHandle
+UDivineBeastsPresentationClientSubsystem::ActivateWeatherPack(
+    const bool bVisual, FString& OutError)
+{
+    OutError.Reset();
+    if (bClosing || !IsValid(PlatformPresentation))
+    {
+        OutError = TEXT("本地玩家表现服务已经关闭，不能激活天气资源。");
+        return {};
+    }
+
+    const FName OwnerId = bVisual ? FName(TEXT("GamePlatformVFX"))
+        : FName(TEXT("DBASFXPack_Core"));
+    FDivineBeastsPresentationContentPackFragment Fragment;
+    Fragment.ContentPackId = OwnerId;
+    Fragment.Revision = 1;
+    Fragment.LifecycleScope = EGamePlatformPresentationContextScope::World;
+    Fragment.bRequiredPreload = true;
+    Fragment.CatalogFragment = bVisual
+        ? FDivineBeastsPresentationProjectCatalog::BuildWeatherVFXFragment()
+        : FDivineBeastsPresentationProjectCatalog::BuildWeatherSFXFragment();
+
+    // BuildWeather*生成项目级纯契约；交付真实Definition之后通过内容包标准事务发布，
+    // 需要同时提升Fragment与每条Entry的Scope，满足平台严格目录一致性校验。
+    Fragment.CatalogFragment.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
+    Fragment.CatalogFragment.OwnerScopeId = OwnerId;
+    Fragment.CatalogFragment.LifecycleScope = Fragment.LifecycleScope;
+    for (FGamePlatformPresentationCatalogEntry& Entry : Fragment.CatalogFragment.Entries)
+    {
+        Entry.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
+    }
+
+    return ActivateContentPack(Fragment, OutError);
+}
+
+FDivineBeastsPresentationContentPackHandle
+UDivineBeastsPresentationClientSubsystem::ActivateWeatherVisuals(FString& OutError)
+{
+    const auto Handle = ActivateWeatherPack(true, OutError);
+    if (Handle.IsValid()) WeatherVisualHandle = Handle;
+    return Handle;
+}
+
+FDivineBeastsPresentationContentPackHandle
+UDivineBeastsPresentationClientSubsystem::ActivateWeatherAudio(FString& OutError)
+{
+    const auto Handle = ActivateWeatherPack(false, OutError);
+    if (Handle.IsValid()) WeatherAudioHandle = Handle;
+    return Handle;
+}
+
+void UDivineBeastsPresentationClientSubsystem::BindWeatherWorld(UWorld* World)
+{
+    check(IsInGameThread());
+    if (bClosing || !IsValid(World) || World->bIsTearingDown ||
+        !GetLocalPlayer() || World != GetLocalPlayer()->GetWorld())
+        return;
+    if (WeatherBoundWorld.Get() == World && WeatherSnapshotHandle.IsValid())
+        return;
+
+    UnbindWeatherWorld();
+    UGamePlatformWeatherWorldSubsystem* Weather =
+        World->GetSubsystem<UGamePlatformWeatherWorldSubsystem>();
+    if (!Weather) return;
+
+    WeatherBoundWorld = World;
+    WeatherSnapshotHandle = Weather->AddSnapshotHandler(
+        FGamePlatformWeatherSnapshotChanged::FDelegate::CreateUObject(
+            this, &UDivineBeastsPresentationClientSubsystem::HandleWeatherSnapshot));
+    // 本地玩家可能在权威天气Actor复制完成之后才创建，不能依赖未来再次发生OnRep。
+    if (WeatherSnapshotHandle.IsValid())
+    {
+        HandleWeatherSnapshot(Weather->GetCurrentSnapshot());
+    }
+}
+
+void UDivineBeastsPresentationClientSubsystem::UnbindWeatherWorld()
+{
+    check(IsInGameThread());
+    if (WeatherSnapshotHandle.IsValid())
+    {
+        if (UWorld* World = WeatherBoundWorld.Get())
+        {
+            if (!World->bIsTearingDown)
+            {
+                if (UGamePlatformWeatherWorldSubsystem* Weather =
+                        World->GetSubsystem<UGamePlatformWeatherWorldSubsystem>())
+                {
+                    Weather->RemoveSnapshotHandler(WeatherSnapshotHandle);
+                }
+            }
+        }
+    }
+    WeatherSnapshotHandle.Reset();
+    WeatherBoundWorld.Reset();
+}
+
+void UDivineBeastsPresentationClientSubsystem::HandleWeatherSnapshot(
+    const FGamePlatformWeatherSnapshot& Snapshot)
+{
+    check(IsInGameThread());
+    if (bClosing || Snapshot.Revision <= 0 || !WeatherBoundWorld.IsValid())
+        return;
+
+    // 每个世界至多尝试一次VFX/SFX内容挂载；加载成功、失败都由统一Data/内容包事务定论。
+    // 不使用轮询/睡眠重试；项目后续装载真实内容时可显式重新发起ActivateWeather*。
+    if (!bWeatherVisualAttempted && !WeatherVisualHandle.IsValid())
+    {
+        bWeatherVisualAttempted = true;
+        FString Error;
+        const FDivineBeastsPresentationContentPackHandle Handle = ActivateWeatherVisuals(Error);
+        if (!Handle.IsValid() && !Error.IsEmpty())
+        {
+            UE_LOG(LogTemp, Verbose, TEXT("天气VFX可选内容尚未就绪：%s"), *Error);
+        }
+    }
+    if (!bWeatherAudioAttempted && !WeatherAudioHandle.IsValid())
+    {
+        bWeatherAudioAttempted = true;
+        FString Error;
+        const FDivineBeastsPresentationContentPackHandle Handle = ActivateWeatherAudio(Error);
+        if (!Handle.IsValid() && !Error.IsEmpty())
+        {
+            UE_LOG(LogTemp, Verbose, TEXT("天气音频可选内容尚未就绪，不影响雨雪VFX：%s"), *Error);
+        }
+    }
+}
+

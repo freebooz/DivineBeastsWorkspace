@@ -5,6 +5,9 @@
 #include "GamePlatformPCGEditorLibrary.generated.h"
 
 class UGamePlatformPCGProfileDefinition;
+class UGamePlatformPCGMeshSetDefinition;
+class UPCGGraph;
+class AGamePlatformPCGWorldDirector;
 
 /** Python/蓝图编辑器入口；固定开发资产范围，拒绝正式地图和已有包覆盖，不是运行时服务。 */
 UCLASS()
@@ -30,6 +33,30 @@ public:
     /** 模板+子图统一入口；先对全部目标包做占用预检，再执行真实资产创建。Commandlet应优先调用本函数。 */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool CreateFoundationAssets(FString& Error);
+    /**
+     * P2～P5真实蓝图创作：在项目已注册内容包的PCG/Blueprints目录生成11个通用Actor子蓝图，
+     * 不创建文本伪资产、不覆盖已有包；图与具体网格留由项目图实例配置，世界地图不自动修改。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool CreatePCGPlacementBlueprints(const FString& RootPackagePath, FString& Error);
+    /**
+     * 为已完成GamePlatformData租约加载的项目MeshSet生成真正带Weighted Spawner的开发图实例。
+     * 仅创建于/Game/Development/Foundation/PCG/Realized/，不修改共享模板或Profile、不写正式地图；
+     * 成功后使用编辑器将返回Graph与Profile.GraphReference关联并另行保存、验证与烘焙。
+     * Profile中的MeshSetDefinitionId须列在RequiredDefinitions中，且所有Mesh均须已加载。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static UPCGGraph* CreateDevelopmentRealizedGraphAsset(const FString& PackageName,
+        UGamePlatformPCGProfileDefinition* Profile, UGamePlatformPCGMeshSetDefinition* MeshSet,
+        FString& Error);
+    /**
+     * 编辑器阶段从显式注册的WorldDirector提取确定性空间几何，注入已绑定的Graph Instance。
+     * 不保存/执行、不扫描全世界Actor；调用者需要随后在UE编辑器明确保存真实资产。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool ConfigureRealizedGraphSpatialMasks(
+        UPCGGraph* RealizedGraph, AGamePlatformPCGWorldDirector* Director,
+        int32 SubjectPriority, FString& Error);
     /** 游戏线程；Profile及其图/网格必须已加载且保存。返回真实依赖字节指纹，不批准生成结果或重开状态。 */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool InspectProfileSource(UGamePlatformPCGProfileDefinition* Profile, FString& Fingerprint,

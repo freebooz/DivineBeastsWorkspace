@@ -9,6 +9,9 @@
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/GameStateBase.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/Actor.h"
+#include "Components/SceneComponent.h"
 #include "TimerManager.h"
 #include "GameplayTagsManager.h"
 
@@ -104,9 +107,11 @@ void UGamePlatformWeatherClientWorldSubsystem::OnSnapshotReceived(
     ActiveSnapshot = Snapshot;
     CancelPreviousPresentation();
     if (bClosing || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
-    const FGamePlatformWeatherState Destination = Snapshot.To.Decode();
-    SendPresentationEvent(Destination, false);
-    UpdateTransition();
+    const int32 ReceivedRevision = Snapshot.Revision;
+    // 首次收到快照时先采样服务器当前过渡进度，不能立即用未来目标天气播放满量粒子。
+    SampleAndApplyTransition(false);
+    if (bClosing || ActiveSnapshot.Revision != ReceivedRevision) return;
+    SendPresentationEvent(LastVisualState, false);
     if (UWorld* World = GetWorld())
     {
         const float Remaining = Snapshot.StartedAtServerSeconds + Snapshot.TransitionSeconds - GetEstimatedServerTimeSeconds();
@@ -118,14 +123,53 @@ void UGamePlatformWeatherClientWorldSubsystem::OnSnapshotReceived(
 
 void UGamePlatformWeatherClientWorldSubsystem::UpdateTransition()
 {
+    SampleAndApplyTransition(true);
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::SampleAndApplyTransition(
+    const bool bRefreshPresentation)
+{
     if (bClosing || ActiveSnapshot.Revision <= 0) return;
-    const float Now = GetEstimatedServerTimeSeconds();
-    ApplyVisualState(ActiveSnapshot.Sample(Now));
-    if (Now >= ActiveSnapshot.StartedAtServerSeconds + ActiveSnapshot.TransitionSeconds)
+    const int32 Revision = ActiveSnapshot.Revision;
+    const float ServerNow = GetEstimatedServerTimeSeconds();
+    const FGamePlatformWeatherState Sampled = ActiveSnapshot.Sample(ServerNow);
+    const EGamePlatformWeatherType PreviousType = LastVisualState.Type;
+    const bool bFinished = ServerNow >=
+        ActiveSnapshot.StartedAtServerSeconds + ActiveSnapshot.TransitionSeconds;
+    ApplyVisualState(Sampled);
+    if (bClosing || ActiveSnapshot.Revision != Revision) return; // 允许观察者同步切换天气重入。
+
+    const float CurrentIntensity =
+        FMath::Max(Sampled.RainIntensity, Sampled.SnowIntensity);
+    // 一次过渡最多在“天气种类切换”和“最终强度稳定”两个节点重启对应粒子/声音。
+    // 避免每0.1秒用Corrected不停Stop/Spawn Niagara，产生闪烁和资源池抖动。
+    const bool bIntensityCorrection = bFinished && LastPresentedIntensity >= 0.f &&
+        FMath::Abs(CurrentIntensity - LastPresentedIntensity) >= 0.10f;
+    if (bRefreshPresentation && (PreviousType != Sampled.Type || bIntensityCorrection))
+    {
+        CancelPreviousPresentation();
+        SendPresentationEvent(Sampled, false);
+    }
+
+    if (bFinished)
     {
         if (UWorld* World = GetWorld())
             World->GetTimerManager().ClearTimer(TransitionTimer);
     }
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::RefreshPresentationAfterContentActivation()
+{
+    check(IsInGameThread());
+    if (bClosing || ActiveSnapshot.Revision <= 0 || !IsValid(GetWorld()) ||
+        GetWorld()->bIsTearingDown) return;
+
+    // 内容包加载成功可能晚于首次OnRep，必须用当前服务器时钟的天气值重发，
+    // 不能依赖下一次服务器改天气才看见雨雪。原RequestId撤销后产生新的一次实例。
+    const FGamePlatformWeatherState Current =
+        ActiveSnapshot.Sample(GetEstimatedServerTimeSeconds());
+    CancelPreviousPresentation();
+    SendPresentationEvent(Current, false);
 }
 
 void UGamePlatformWeatherClientWorldSubsystem::ApplyVisualState(const FGamePlatformWeatherState& State)
@@ -170,6 +214,19 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
 {
     UWorld* World = GetWorld();
     if (!World || !World->GetGameInstance()) return;
+    // P0只有雨与雪对应可加载的持续VFX/SFX目录。晴、阴、风、雾等仅由
+    // Surface/未来Sky适配处理；此处不提交尚无Definition的虚假表现请求。
+    // 取消请求必须保留原请求ID，不受此过滤影响。
+    const bool bRain = State.Type == EGamePlatformWeatherType::LightRain ||
+        State.Type == EGamePlatformWeatherType::HeavyRain;
+    const bool bSnow = State.Type == EGamePlatformWeatherType::LightSnow ||
+        State.Type == EGamePlatformWeatherType::HeavySnow;
+    if (!bCancellation && !bRain && !bSnow) return;
+    if (!bCancellation)
+    {
+        LastPresentedIntensity = bRain || bSnow
+            ? FMath::Max(State.RainIntensity, State.SnowIntensity) : -1.f;
+    }
     if (!bCancellation)
     {
         ActiveVfxRequestId = FGuid::NewGuid();
@@ -193,7 +250,36 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
             Request.SemanticTag = SemanticTag;
             Request.SourceId = TEXT("GamePlatformWeather");
             Request.ContextId = TEXT("WorldWeather");
+            // 天气视觉必须跟随本地观察主体，不能永远在世界原点生成雨雪。
+            // Attached VFX Definition按玩家ViewTarget根组件持续跟随；不持有强指针。
+            if (APlayerController* Controller = LocalPlayer->GetPlayerController(World))
+            {
+                FVector ViewPosition = FVector::ZeroVector;
+                FRotator ViewRotation = FRotator::ZeroRotator;
+                Controller->GetPlayerViewPoint(ViewPosition, ViewRotation);
+                Request.SourceLocation = ViewPosition;
+                if (AActor* Target = Controller->GetViewTarget())
+                {
+                    Request.AttachComponent = Target->GetRootComponent();
+                }
+            }
             Request.Magnitude = FMath::Max(FMath::Max(State.RainIntensity, State.SnowIntensity), State.WindIntensity);
+            // Rain/Snow两档共用一套资源；客户端按Definition白名单传递实际0..1强度。
+            // VFX以Niagara原生User参数接收，SFX以MetaSound允许的浮点参数接收，
+            // 资源不支持此参数时由领域Definition拒绝，不偷偷播放错误强度的天气。
+            const bool bParametricWeather = bRain || bSnow;
+            if (bParametricWeather)
+            {
+                const float Strength = FMath::Clamp(
+                    FMath::Max(State.RainIntensity, State.SnowIntensity), 0.f, 1.f);
+                Request.FloatParameters.Add(
+                    Channel == 0 ? FName(TEXT("User.WeatherIntensity")) :
+                        FName(TEXT("WeatherIntensity")), Strength);
+                // SoundWave尚未接上动态MetaSound时仍能按强度控制请求级音量。
+                // Niagara一侧保留默认1倍，防止天气光效被声学系数污染。
+                if (Channel == 1)
+                    Request.VolumeMultiplier = FMath::Lerp(.15f, 1.f, Strength);
+            }
             Request.Priority = EGamePlatformPresentationPriority::Low;
             Request.Lifetime = EGamePlatformPresentationLifetime::Persistent;
             Request.PredictionState = bCancellation
@@ -213,5 +299,6 @@ void UGamePlatformWeatherClientWorldSubsystem::CancelPreviousPresentation()
         ActiveSfxRequestId.Invalidate();
         ActiveVfxTag = NAME_None;
         ActiveSfxTag = NAME_None;
+        LastPresentedIntensity = -1.f;
     }
 }

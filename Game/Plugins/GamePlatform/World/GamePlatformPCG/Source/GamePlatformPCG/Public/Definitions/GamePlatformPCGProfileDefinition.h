@@ -40,6 +40,13 @@ public:
 
     UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG|Template")
     FPrimaryAssetId PriorityTableId;
+    /**
+     * 1.0项目Graph Instance（图实例）选用的MeshSet Definition（网格集合定义）。
+     * 必须与RequiredDefinitions一起声明、由GamePlatformData持有PCGGeneration资源租约；
+     * Foundation模板原型允许为空，但真实Spawner输出要求有效身份，不能依赖OutputMesh旧字段。
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="PCG|Template")
+    FPrimaryAssetId MeshSetDefinitionId;
     /** 编辑器静态与运行时装饰互斥；RuntimeAuthoritative永远Unsupported。 */
     UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="PCG")
     EGamePlatformPCGExecutionPolicy ExecutionPolicy = EGamePlatformPCGExecutionPolicy::RuntimeCosmetic;

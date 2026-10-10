@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "Types/GamePlatformId.h"
 #include "Types/GamePlatformPCGEnvironmentTypes.h"
+#include "Services/GamePlatformPCGSpatialRules.h"
+#include "Services/GamePlatformPCGAnchorContracts.h"
 #include "GamePlatformPCGActors.generated.h"
 
 class UBoxComponent;
@@ -65,6 +67,9 @@ public:
     /** 编辑器实例稳定来源ID；不作为网络授权或玩家身份。 */
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, NonPIEDuplicateTransient, Category="GamePlatform|PCG")
     FGuid SourceId;
+    /** 选填领域ID，玩法候选锚点必须使用Play.Resource/Cover/Climb/Spawn之一。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Domain")
+    FName DomainId = NAME_None;
 };
 
 UCLASS(Blueprintable)
@@ -87,6 +92,15 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG")
     TObjectPtr<USplineComponent> Spline;
+    /** 道路、林径等线性系统写入确定性二维排除缓冲区；只供低优先级生成层使用。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Spatial")
+    bool bExportsSpatialMask = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Spatial", meta=(ClampMin="0.0"))
+    float CarveHalfWidthCm = 200.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Spatial", meta=(ClampMin="0", ClampMax="100"))
+    int32 CarvePriority = 70;
 };
 
 UCLASS(Blueprintable)
@@ -98,6 +112,12 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG")
     TObjectPtr<USplineComponent> Boundary;
+    /** 地块/院落内部排除低优先级乔木；允许项目关闭以便生成叠加地被。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Spatial")
+    bool bExportsSpatialMask = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Spatial", meta=(ClampMin="0", ClampMax="100"))
+    int32 CarvePriority = 50;
 };
 
 UCLASS(Blueprintable)
@@ -116,6 +136,12 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Connector")
     FPrimaryAssetId ConnectorCatalogId;
+    /** 门、手摆桥的保留区域半径，防止自动树木/作物与连接件碰撞。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Spatial", meta=(ClampMin="0.0"))
+    float CarveRadiusCm = 220.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Spatial", meta=(ClampMin="0", ClampMax="100"))
+    int32 CarvePriority = 80;
 };
 
 UCLASS(Blueprintable)
@@ -130,6 +156,8 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Exclusion", meta=(ClampMin="0.0", ClampMax="1.0"))
     float Strength = 1.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GamePlatform|PCG|Exclusion", meta=(ClampMin="0", ClampMax="100"))
+    int32 CarvePriority = 100;
 };
 
 /**
@@ -154,6 +182,27 @@ public:
 
     UFUNCTION(BlueprintPure, Category="GamePlatform|PCG|Director")
     bool ValidateParticipantSet(FString& OutError) const;
+    /**
+     * 只读取已注册参与者的世界空间数值快照，不扫描地图其它Actor、不启动官方PCG任务。
+     * 输出优先级排序确定、空间几何有界；非法/缺失样条会失败关闭，不产生半套掩码。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Director")
+    bool CollectSpatialMasks(TArray<FGamePlatformPCGSpatialMask>& OutMasks, FString& OutError) const;
+
+    /**
+     * 生成固定阶段的确定性参与者计划；M0/M1不执行TerrainWrite、挖填、室内及动态状态。
+     * 真正的图生成仍由UE PCGComponent和编辑器工具承担，Director不取代官方调度器。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Director")
+    bool BuildStaticExecutionPlan(TArray<AGamePlatformPCGActorBase*>& OutPlan, FString& OutError) const;
+    /**
+     * P5从显式注册的GameplayAnchors放置器产生稳定空间候选。
+     * 结果必须再交服务器Gameplay/Navigation/Interaction审批；不直接执行玩家出生或资源发放。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Director")
+    bool CollectGameplayAnchorCandidates(const FGamePlatformId& WorldId,
+        const FGamePlatformId& RegionId, int32 ContentRevision,
+        TArray<FGamePlatformPCGAnchorCandidate>& OutCandidates, FString& OutError) const;
 
 private:
     UPROPERTY(EditInstanceOnly, Category="GamePlatform|PCG|Director")

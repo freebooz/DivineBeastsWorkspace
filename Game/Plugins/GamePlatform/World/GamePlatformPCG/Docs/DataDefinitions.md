@@ -25,5 +25,15 @@
 | UGamePlatformPCGBakeManifest | 烘焙清单 | 现有并扩展 | Source/Output Fingerprint及Schema/Template/Stage等生产证据 |
 
 River/Rail/Utility/Building/SpaceGraph/State（河流/铁路/管线/建筑/空间图/状态）不因外部方案存在就创建空类型；按M2～M4真实消费者出现后再实施。
+## 2026-10-10 P4～P7新增真实数据定义代码
+
+- `UGamePlatformPCGWorldFeatureDefinition（环境领域配置）`：水岸、湖泊边缘、林缘、果园、岩组和栏杆的阶段/带宽/MeshSet/SpawnPolicy定义，只允许编辑器静态交付；真实水体来自对应世界机制，Surface/Weather/VFX不由PCG实现。
+- `UGamePlatformPCGAssemblyDefinition（组合件配置）`：古风建筑、院落、岩组使用稳定插槽＋网格集合主资产ID；64个插槽上限、拒绝无效变换和循环/漏登记资源；具体模型与构图由项目内容包持有。
+- `UGamePlatformPCGAnchorPolicyDefinition（玩法锚点策略）`：资源、掩体、攀爬和出生候选预算；不得绕过服务器审批。
+- `UGamePlatformPCGCavityDefinition（体腔排除）`：当前仅支持非破坏性三维排除体积，所有地形写入请求返回Unsupported（不支持）。
+- `UGamePlatformPCGSpatialGraphDefinition（室内空间图）`：最多64节点、128边，拒绝重复、不可达、非法净空；不自动生产尚未审核的室内美术、碰撞及NavMesh。
+- `FGamePlatformPCGAnchorCandidate / FGamePlatformPCGObjectStateSnapshot（候选/权威状态快照）`：由稳定世界/区域/来源/修订身份生成GUID；PCG只验状态身份和服务器序列，不承担GamePlatformSave或Gameplay持久化实现。
+以上均为源代码/反射类及编辑器创作接口；没有真实Definition .uasset、经Data加载的租约或Cook记录时不可当作交付完成。
+
 
 Source Fingerprint（源指纹）除 Profile/Graph/Legacy OutputMesh 外，还会解析 Profile 的直接 `RequiredDefinitions（必需定义）`主资产路径并纳入来源记录。更深层嵌套 Definition 的完整闭包在生产 Bake（烘焙）启用前仍须结合 GamePlatformData 的递归租约结果补齐验证，不得把当前直接依赖覆盖误写为最终闭包证明。

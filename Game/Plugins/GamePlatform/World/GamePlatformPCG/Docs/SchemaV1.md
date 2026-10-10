@@ -34,8 +34,9 @@ Schema v1 是 `GamePlatformPCG（游戏平台程序化内容生成插件）`内�
 1. 平台源码不得散落手写未知 `Pcg.*` 字符串；新增字段必须先修改 Schema。
 2. Graph（图）不直接携带项目任意 SoftPath（软路径）；资源属性优先保存稳定 ID。
 3. `WriteSchemaDefaults（写协议默认值）`补齐 M0/M1 基础字段。
-4. `ValidateSchema（验证协议）`缺字段时输出安全空结果并记录 Warning（警告），不崩溃。
+4. `ValidateSchema（验证协议）`始终验证 Layer.Name、Exclude.Mask、Exec.Seed 等核心字段；显式必需清单只能增加约束，不能绕过核心检查。已注册的 `Pcg.*` 字段必须匹配UE5.8 Metadata（元数据）的真实值类型，未知 `Pcg.*`、缺失字段、类型错误均安全丢弃输入并记录 Warning（警告），不崩溃。
 5. `Pcg.Mutable.Id` 在 M3 真正写入前必须针对 UE5.8 PCG Metadata（PCG元数据）FGuid 存储能力补运行证据；当前代码不伪装已完成写入。
+6. 当前 UInt8（8位枚举语义）接受已采用的 PCG Integer32（32位整数）写入，或UE5.8原生 Byte（字节）元数据；Guid（全局唯一标识）实际存储尚未验证，若提前写入 Pcg.Mutable.Id 一律拒绝执行。2026-10-10已增加对应C++验证路径与自动化测试源码，但尚缺真实UE构建/测试通过证据。
 
 ## 4. 版本
 

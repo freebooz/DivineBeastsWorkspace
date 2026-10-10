@@ -3,6 +3,7 @@
 #include "Definitions/DivineBeastsWorldDefinition.h"
 #include "Definitions/GamePlatformExperienceDefinition.h"
 #include "Definitions/GamePlatformPawnDefinition.h"
+#include "Definitions/GamePlatformPrimaryDataAsset.h"
 
 #include "Misc/AutomationTest.h"
 #include "UObject/StrongObjectPtr.h"
@@ -136,6 +137,40 @@ bool FDivineBeastsVillageDeliveredDefinitionTest::RunTest(const FString&)
     TestTrue(*FString::Printf(TEXT("体验必须通过运行期验证，实际错误=%s"), *ExperienceResult.Code.ToString()), ExperienceResult.IsSuccess());
     TestTrue(TEXT("真实Pawn定义必须通过运行期验证"), Pawn->ValidateDefinition().IsSuccess());
     TestEqual(TEXT("体验指向同一真实Pawn身份"), Experience->DefaultPawnDefinitionId, Pawn->GetPrimaryAssetId());
+    return true;
+}
+
+// PCG配置/烘焙清单只由项目世界持有Definition身份，不反向引用平台图或客户端网格。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsWorldPCGDependenciesTest,
+    "DivineBeasts.Worlds.Definition.PCGDependencies",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsWorldPCGDependenciesTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UDivineBeastsWorldDefinition> World(NewObject<UDivineBeastsWorldDefinition>());
+    ConfigureProjectWorld(*World, TEXT("GameServer.Role.Village"), TEXT("experience.village.main@1"));
+    const FPrimaryAssetId ProfileId(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),
+        FName(TEXT("test.pcg_profile@1")));
+    const FPrimaryAssetId ManifestId(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),
+        FName(TEXT("test.pcg_manifest@1")));
+
+    World->EnvironmentPCGProfileIds.Add(ProfileId);
+    TestEqual(TEXT("未声明项目PCG依赖必须失败"),
+        World->ValidateDefinition().Code, FName(TEXT("UndeclaredWorldPCGDependency")));
+    World->RequiredDefinitions.Add(ProfileId);
+    TestTrue(TEXT("仅登记Profile时符合Definition依赖边界"), World->ValidateDefinition().IsSuccess());
+
+    World->PCGBakeManifestIds.Add(ManifestId);
+    TestEqual(TEXT("Manifest也必须单独登记"),
+        World->ValidateDefinition().Code, FName(TEXT("UndeclaredWorldPCGDependency")));
+    World->RequiredDefinitions.Add(ManifestId);
+    TestTrue(TEXT("登记Profile与Manifest后允许静态世界定义"),
+        World->ValidateDefinition().IsSuccess());
+
+    World->PCGBakeManifestIds.Add(ProfileId);
+    TestEqual(TEXT("跨组重复PCG资产身份拒绝"),
+        World->ValidateDefinition().Code, FName(TEXT("InvalidWorldPCGDefinitionId")));
     return true;
 }
 

@@ -47,7 +47,7 @@ FGamePlatformResult UGamePlatformPCGProfileDefinition::ValidateDefinition() cons
     { return FGamePlatformResult::Failure(TEXT("PCGSchemaVersionMismatch"),TEXT("Profile要求的PCG Schema主版本与当前平台不一致")); }
     if (!TemplateId.IsNone() && TemplateVersion <= 0)
     { return FGamePlatformResult::Failure(TEXT("PCGTemplateVersionMissing"),TEXT("声明TemplateId时必须同时提供正数TemplateVersion")); }
-    for (const FPrimaryAssetId& OptionalDefinition : {ExecPresetId, PriorityTableId})
+    for (const FPrimaryAssetId& OptionalDefinition : {ExecPresetId, PriorityTableId, MeshSetDefinitionId})
     {
         const FGamePlatformResult Dependency = ValidateOptionalDeclaredDependency(*this, OptionalDefinition);
         if (!Dependency.IsSuccess()) { return Dependency; }

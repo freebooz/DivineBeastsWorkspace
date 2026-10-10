@@ -51,3 +51,18 @@
 - Editor Win64 Development构建尝试在UBT出现4178/4179项引擎级动作，两个Job均经调用者主动停止；无完整UE编译结论。UBT日志位于`Saved/Validation/GamePlatformPCG/ca5782fa-8925-498e-81a6-84c302bb1696/`及`6409243c-b792-4def-8473-d1ef577f6239/`。
 - `UnrealEditor-Cmd -run=GamePlatformPCGFoundationTemplates`实际启动后，因完整工程缺失`GamePlatformCameraClient`模块而在插件加载阶段失败；`Game/Saved/Logs/DivineBeastsArena.log`记录`LogPluginManager: Error`。目前Foundation模板/子图实际落盘数0。
 - 本次未执行UE Automation、Gold Level地图、AssetRegistry/DataValidation、独立关闭重开、Client/Server Cook、专服剥离及性能测试。P1为外部模块装配阻断，P2～P7尚未启动，不能宣称PCG生产链已完成。
+
+## 2026-10-10：继续实施P1元数据校验（补充检查点）
+
+- `AssignMeshSet`已通过模块内`GamePlatformPCGNodeMetadata::AssignMeshSetId`明确逐点赋值，避免已有Schema默认空ID导致下游网格目录丢失；`ValidateSchema`增加核心必需、已注册属性类型、未知`Pcg.*`及未经批准Guid字段的失败关闭。源码对应`Private/Nodes/GamePlatformPCGNodes.cpp`，新私有合同为`Private/Nodes/GamePlatformPCGNodeMetadata.h`。
+- UE Automation源码新增`GamePlatform.PCG.Metadata.AssignMeshSetToPoints`与`GamePlatform.PCG.Schema.MetadataTypes`，**尚未编译或运行，不能写“通过”**；专项架构门禁、Gold Level前置门禁和`git diff --check`已返回0。
+- 最新原生CMake Debug/Release编译与CTest均通过，证据`Saved/Validation/GamePlatformPCG/1dd443f1-64b0-48f4-80f0-310a645508d1/`；这些测试不覆盖本轮UE PCG点数据行为。
+- 单模块`GamePlatformCameraClient`（相机客户端）UBT编译先遇到外部`ConflictingInstance`（互斥锁冲突，退出码10）；重试并加`-NoEngineChanges`后因必须更新已有引擎文件而返回`FailedDueToEngineChange`（退出码5），详见`Saved/Validation/GamePlatformPCG/CameraClient_ModuleBuild_20261010_retry.log`。当前缺8个实际编辑器DLL；在正式构建环境修复前，不能伪造UE运行证据。
+- 新Foundation模板/子图资产数量仍为0；独立Editor关闭重开、AssetRegistry/DataValidation（资产注册/数据校验）、G01～G16、Client/Server Cook、三世界权威一致性与性能Profile（性能实测）仍待执行。P1为代码局部已修复、引擎验收受阻；P2～P7未取得生产准入。
+## 2026-10-10｜P2～P7统一测试回执（代码优先）
+
+- 静态：`VerifyPCGArchitecture.ps1`和`VerifyPCGGoldLevelPrerequisites.ps1`均返回0；它们只核查源码结构与前置合同。
+- 原生：`VerifyPCG.ps1 -NativeTests`中的文档、CMake Debug/Release编译及CTest全部子项返回0，证据`Saved/Validation/GamePlatformPCG/7e4b497f-8c3e-4f24-aa89-62fafb6d8d5f/`，总码2按约定表示整体验收未完成。新增高级空间及存档边界的UE测试源码**未被该原生目标编译或运行**。
+- UE5.8 Editor定向模块构建：UHT解析`DBAWorldsRuntime/Public/Gameplay/DivineBeastsWorldGameMode.h(37)`时报`Invalid use of keyword 'private'`（退出码6），在进入PCG C++编译前失败。日志`Saved/Validation/GamePlatformPCG/PCG_P2P7_EditorModules_20261010.log`；该文件属于并行世界/天气修改，未由PCG任务覆盖。
+- 真实UE Blueprint、PCG模板/子图、DataAsset和GoldLevel世界地图还没有成功生成并完成关闭重开；Server Cook、多人状态恢复、HiGen/HLOD以及可视化性能/人工验收均未执行。
+- 本任务只确认P2～P7核心源码与Blueprint生成工具的落盘，不宣布每项计划已经实现可投入生产的运行闭环。

@@ -33,3 +33,9 @@ Official PCG（官方PCG）
 ## 使用方式
 
 地编/项目组合层显式把放置器注册到每关唯一 Director。Editor Validator 源码已经检查 Director 数量、参与者集合合法性和地图中放置器是否完整注册。DirtyBounds（脏区域）、批次编排和正式阶段执行仍属于后续增量，不将尚未完成能力写成已交付。
+### P2～P6增量接口
+
+- `CollectSpatialMasks（收集空间排除快照）`：从显式注册放置器读取道路样条、农田闭合地块、连接件、人工排除盒，输出最多256份确定性二维掩码；非法输入整体拒绝。
+- `BuildStaticExecutionPlan（构造静态阶段计划）`：按固定WorldStage与SourceId排序，拒绝TerrainWrite/CutFill/Interiors/ApplyState/RuntimeDetail提前执行；**只是执行计划，不自动调用PCG生成或宣称Bake完成**。
+- `CollectGameplayAnchorCandidates（收集玩法候选）`：仅消费已声明Play.*领域、属于GameplayAnchors阶段的参与者，并为世界/区域/修订派生稳定ID。服务器准入、出生、采集及存档必须通过项目已有权威系统。
+- `UGamePlatformPCGWorldValidator（世界校验器）`增加WorldPartition ActorDesc（未加载Actor描述符）审查：发现未加载PCG放置器或Director时失败关闭，要求加载相关分区后重验。未加载分区的资产注册与Cook仍需要独立审计，静态检查不是全图通过证明。

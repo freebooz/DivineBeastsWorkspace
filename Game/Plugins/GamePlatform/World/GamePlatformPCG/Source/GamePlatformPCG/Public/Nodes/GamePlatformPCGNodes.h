@@ -4,6 +4,7 @@
 #include "PCGElement.h"
 #include "PCGSettings.h"
 #include "Definitions/GamePlatformPCGEnvironmentDefinitions.h"
+#include "Services/GamePlatformPCGSpatialRules.h"
 #include "GamePlatformPCGNodes.generated.h"
 
 /** 所有首批点节点共用单点输入/输出合同；不额外创建模块。 */
@@ -103,6 +104,44 @@ protected:
 };
 
 class GAMEPLATFORMPCG_API FGamePlatformPCGPriorityCarveElement final : public IPCGElement
+{
+protected:
+    virtual bool ExecuteInternal(FPCGContext* Context) const override;
+    virtual EPCGElementExecutionLoopMode ExecutionLoopMode(const UPCGSettings*) const override { return EPCGElementExecutionLoopMode::SinglePrimaryPin; }
+    virtual bool SupportsBasePointDataInputs(FPCGContext*) const override { return true; }
+};
+
+/**
+ * P2空间掩码节点：消费Editor/WorldDirector预先采样并校验的数值边界。
+ * 不在运行中扫描Actor、不做同步资源加载、不创建碰撞或网络权威对象。
+ */
+UCLASS(BlueprintType, ClassGroup=(Procedural))
+class GAMEPLATFORMPCG_API UGamePlatformPCGSpatialCarveSettings final : public UGamePlatformPCGPointNodeSettings
+{
+    GENERATED_BODY()
+public:
+#if WITH_EDITOR
+    virtual FName GetDefaultNodeName() const override { return TEXT("GP_SpatialCarve"); }
+    virtual FText GetDefaultNodeTitle() const override { return NSLOCTEXT("GamePlatformPCG", "SpatialCarve", "GamePlatform | PCG | Spatial Carve"); }
+    virtual EPCGSettingsType GetType() const override { return EPCGSettingsType::PointOps; }
+#endif
+
+    /** 当前层优先级来自PriorityTable；不能用较低或同级道路切掉更高优先级地块。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial", meta=(ClampMin="0", ClampMax="100"))
+    int32 SubjectPriority = 30;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial", meta=(ClampMin="0.0", ClampMax="1.0"))
+    float ExcludeThreshold = 0.5f;
+
+    /** Editor生成快照的纯几何，最多256个来源；失效或非法来源时整批Fail-Safe输出空。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial")
+    TArray<FGamePlatformPCGSpatialMask> Masks;
+
+protected:
+    virtual FPCGElementPtr CreateElement() const override;
+};
+
+class GAMEPLATFORMPCG_API FGamePlatformPCGSpatialCarveElement final : public IPCGElement
 {
 protected:
     virtual bool ExecuteInternal(FPCGContext* Context) const override;

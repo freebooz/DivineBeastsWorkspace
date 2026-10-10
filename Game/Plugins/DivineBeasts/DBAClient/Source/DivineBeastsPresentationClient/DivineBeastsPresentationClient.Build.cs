@@ -27,7 +27,11 @@ public class DivineBeastsPresentationClient : ModuleRules
         // DivineBeastsCharactersRuntime仅用于读取项目角色状态组件并订阅Ready变化，依赖方向保持项目表现层 -> 项目玩法层。
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "DivineBeastsCharactersRuntime"
+            "DivineBeastsCharactersRuntime",
+            // 本地玩家表现编排按世界天气快照订阅，只有第三层依赖平台天气Runtime；不引入服务器私有或天气客户端执行器。
+            "GamePlatformWeatherRuntime",
+            // 第三层在真实内容包激活后，仅回调平台天气客户端重新发布当前视觉；不访问Niagara/SFX执行器私有实现。
+            "GamePlatformWeatherClient"
         });
 
     }

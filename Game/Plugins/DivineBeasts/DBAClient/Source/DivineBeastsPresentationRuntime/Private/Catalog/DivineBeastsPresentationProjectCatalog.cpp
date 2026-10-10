@@ -48,3 +48,59 @@ FDivineBeastsPresentationProjectCatalog::BuildDefaultFragment()
 
     return Fragment;
 }
+
+namespace
+{
+/** 只构造无资产路径的中立项目天气目录，真实可见性由已有Data租约与发布门禁决定。 */
+FGamePlatformPresentationCatalogFragment MakeWeatherFragment(
+    const bool bVisual)
+{
+    FGamePlatformPresentationCatalogFragment Fragment;
+    Fragment.FragmentId = bVisual
+        ? TEXT("DBA.Presentation.Weather.VFX") : TEXT("DBA.Presentation.Weather.SFX");
+    Fragment.Revision = 1;
+    Fragment.Scope = EGamePlatformPresentationCatalogScope::Project;
+    Fragment.OwnerScopeId = FDivineBeastsProjectCatalog::GetProjectId();
+    Fragment.LifecycleScope = EGamePlatformPresentationContextScope::World;
+
+    auto Add = [&Fragment, bVisual](const TCHAR* Suffix, const TCHAR* Definition)
+    {
+        FGamePlatformPresentationCatalogEntry Entry;
+        Entry.EntryId = FName(*(FString(TEXT("DBA.Weather.")) +
+            Suffix + (bVisual ? TEXT(".VFX") : TEXT(".SFX"))));
+        const FString Tag = FString(TEXT("Presentation.Weather.")) +
+            Suffix + (bVisual ? TEXT(".VFX") : TEXT(".SFX"));
+        Entry.SemanticTag = FGameplayTag::RequestGameplayTag(FName(*Tag), false);
+        Entry.ProviderChannel = bVisual ? TEXT("VFX") : TEXT("SFX");
+        Entry.DefinitionId = FName(Definition);
+        Entry.ContextQuery.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
+        Entry.Scope = EGamePlatformPresentationCatalogScope::Project;
+        Entry.Priority = 0;
+        Entry.ContentRevision = TEXT("1");
+        Fragment.Entries.Add(MoveTemp(Entry));
+    };
+    if (bVisual)
+    {
+        Add(TEXT("Rain"), TEXT("platform.weather.rain@1"));
+        Add(TEXT("Snow"), TEXT("platform.weather.snow@1"));
+    }
+    else
+    {
+        Add(TEXT("Rain"), TEXT("presentation.dba.weather.rain@1"));
+        Add(TEXT("Snow"), TEXT("presentation.dba.weather.snow@1"));
+    }
+    return Fragment;
+}
+}
+
+FGamePlatformPresentationCatalogFragment
+FDivineBeastsPresentationProjectCatalog::BuildWeatherVFXFragment()
+{
+    return MakeWeatherFragment(true);
+}
+
+FGamePlatformPresentationCatalogFragment
+FDivineBeastsPresentationProjectCatalog::BuildWeatherSFXFragment()
+{
+    return MakeWeatherFragment(false);
+}

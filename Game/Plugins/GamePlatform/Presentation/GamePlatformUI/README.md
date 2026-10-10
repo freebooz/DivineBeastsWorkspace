@@ -1,5 +1,8 @@
 # GamePlatformUI（游戏平台UI插件）
 
+2026-10-10新增通用主题机制：`UGamePlatformUIThemeDefinition`（原生CommonUI样式的类型化映射）、UIManager内部的LocalPlayer主题事务服务，以及两类控件基类的可选`ThemeBindings`（语义绑定）。沿用GamePlatformData租约，不新增插件、不修改共享CDO或重建业务页面。实现/资源边界见[StylingAndContent（样式与内容）](Docs/StylingAndContent.md)；完整DLL、Monolith主题资产及Cook是否通过以专项实施记录为准。
+
+
 跨游戏可复用的 CommonUI（通用UI）/UMG（虚幻动态图形界面）基础框架。正式唯一代码模块为 GamePlatformUIClient（游戏平台UI客户端模块），宿主类型为 ClientOnly（仅客户端）。
 
 核心能力：

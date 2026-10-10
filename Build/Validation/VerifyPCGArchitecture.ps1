@@ -87,6 +87,16 @@ if ($findings.Count -eq 0) {
     Assert-True ($graphInspection.Contains('DuplicateTemplateSchemaValidator')) 'Template Contract必须拒绝重复Schema Validator。'
     $environmentHeader = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Definitions/GamePlatformPCGEnvironmentDefinitions.h') -Raw -Encoding UTF8
     Assert-True ($environmentHeader.Contains('AssetBundles="PCGGeneration"')) 'MeshSet真实网格软引用必须进入PCGGeneration Asset Bundle。'
+    # 防止回归为仅给属性设置默认值而没有覆盖已有点数据的实际MeshSetId。
+    # 这是源码形状检查；真正的元数据值与重复赋值语义由UE Automation运行验证。
+    $meshMetadataHeader = Join-Path $pluginRoot 'Source/GamePlatformPCG/Private/Nodes/GamePlatformPCGNodeMetadata.h'
+    $meshNodeCpp = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Private/Nodes/GamePlatformPCGNodes.cpp') -Raw -Encoding UTF8
+    $meshTests = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Private/Tests/PCGEnvironmentContractTests.cpp') -Raw -Encoding UTF8
+    Assert-True (Test-Path -LiteralPath $meshMetadataHeader -PathType Leaf) '缺少MeshSetId逐点写入私有契约。'
+    Assert-True ($meshNodeCpp.Contains('Attribute->SetValue(Key, MeshSetId)') -and $meshNodeCpp.Contains('AssignMeshSetId(*OutputData, Settings->MeshSetId)')) 'AssignMeshSet必须实际逐点写入ID，不能只设置属性默认值。'
+    Assert-True ($meshTests.Contains('GamePlatform.PCG.Metadata.AssignMeshSetToPoints')) '缺少MeshSetId默认空值与重复赋值的UE自动化回归测试源码。'
+    Assert-True ($meshNodeCpp.Contains('GamePlatformPCGNodeMetadata::HasAllRequiredAttributes') -and $meshNodeCpp.Contains('ValidateRequiredAttributes(Available)') -and $meshNodeCpp.Contains('IsSchemaTypeCompatible') -and $meshNodeCpp.Contains('Pcg.')) 'ValidateSchema必须校验核心字段、实际元数据类型并拒绝未知Pcg前缀。'
+    Assert-True ($meshTests.Contains('GamePlatform.PCG.Schema.MetadataTypes')) '缺少PCG元数据类型/核心字段失败关闭的UE自动化回归测试源码。'
 
     $template = Get-Content -LiteralPath $templateHeader -Raw -Encoding UTF8
     # 领域清单包含42个跨游戏稳定语义ID，仅作静态映射合同；资产实际存在性由Editor/AssetRegistry另验。
@@ -116,6 +126,31 @@ if ($findings.Count -eq 0) {
     $validator = Get-Content -LiteralPath $worldValidator -Raw -Encoding UTF8
     Assert-True ($validator.Contains('Directors.Num() != 1')) '世界校验器必须要求PCG地图恰好一个WorldDirector。'
     Assert-True ($validator.Contains('Registered.Contains(Participant)')) '世界校验器必须拒绝未注册到WorldDirector的PCG放置器。'
+
+
+    # P2～P7代码交付静态门禁：这些检查只保证归属、入口与失败关闭源码存在，不能替代UE生成/编译。
+    $advancedHeader = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Definitions/GamePlatformPCGAdvancedDefinitions.h') -Raw -Encoding UTF8
+    $advancedAlgorithms = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Services/GamePlatformPCGAdvancedSpatialRules.h') -Raw -Encoding UTF8
+    $actorHeader = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Actors/GamePlatformPCGActors.h') -Raw -Encoding UTF8
+    $anchorContract = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Public/Services/GamePlatformPCGAnchorContracts.h') -Raw -Encoding UTF8
+    $advancedTests = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCG/Private/Tests/PCGAdvancedContractTests.cpp') -Raw -Encoding UTF8
+    $editorBlueprintSource = Get-Content -LiteralPath (Join-Path $pluginRoot 'Source/GamePlatformPCGEditor/Private/Authoring/GamePlatformPCGEditorLibrary.cpp') -Raw -Encoding UTF8
+    foreach ($keyword in @('UGamePlatformPCGWorldFeatureDefinition','UGamePlatformPCGAssemblyDefinition',
+            'UGamePlatformPCGAnchorPolicyDefinition','UGamePlatformPCGCavityDefinition',
+            'UGamePlatformPCGSpatialGraphDefinition')) {
+        Assert-True ($advancedHeader.Contains($keyword)) ("P4～P7缺少实际通用定义源码：{0}" -f $keyword)
+    }
+    foreach ($keyword in @('FindBridgeCandidates','IsInsideCavity','ValidateSpatialGraph')) {
+        Assert-True ($advancedAlgorithms.Contains($keyword)) ("P7缺少稳定纯空间算法入口：{0}" -f $keyword)
+    }
+    Assert-True ($actorHeader.Contains('CollectSpatialMasks') -and $actorHeader.Contains('CollectGameplayAnchorCandidates')) 'P2/P5世界编排器缺少空间与候选锚点入口。'
+    Assert-True ($anchorContract.Contains('ValidateAuthoritativeStates')) 'P6必须保留服务器权威状态快照校验，不在PCG中复制Save。'
+    Assert-True ($editorBlueprintSource.Contains('FKismetEditorUtilities::CreateBlueprint') -and
+        $editorBlueprintSource.Contains('CreatePCGPlacementBlueprints')) 'Editor必须有UE原生蓝图创作入口，不能生成文本假资源。'
+    Assert-True ($advancedTests.Contains('GamePlatform.PCG.Advanced.BridgeCavitySpatialGraph') -and
+        $advancedTests.Contains('GamePlatform.PCG.Advanced.StableAnchorAndAuthority')) '缺少P4～P7正式UE自动化用例源码。'
+    $validatorSource = Get-Content -LiteralPath $worldValidator -Raw -Encoding UTF8
+    Assert-True ($validatorSource.Contains('FWorldPartitionHelpers::ForEachActorDescInstance')) '世界分区校验不能只使用已加载TActorIterator。'
 
     $docs = Get-Content -LiteralPath $componentDoc -Raw -Encoding UTF8
     foreach ($token in @('怎么使用','当前实现状态','M2','不允许的用法')) {
