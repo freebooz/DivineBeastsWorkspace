@@ -7,18 +7,25 @@
 
 | 三层逻辑归属 | Widget Blueprint（控件蓝图） | 父类、真实Widget树与更新 | 当前编辑器编译 |
 | --- | --- | --- | --- |
-| 第三层DBAUIPack_Core（项目客户端界面内容包） | `/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD`（战斗主HUD） | 新建；父类 `DivineBeastsCombatPanelBase`（项目战斗面板），CanvasPanel（画布）+ PlayerStatus（玩家状态）、PlayerPortrait（头像）、TargetFrame（目标）、StatusEffects（增减益托盘）、AbilityBar（五技能槽）和CastBar（施法条），合计7个树节点 | 0错误、0警告 |
+| 第三层DBAUIPack_Core（项目客户端界面内容包） | `/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD`（战斗主HUD） | 新建；父类 `DivineBeastsCombatPanelBase`（项目战斗面板），CanvasPanel（画布）+ PlayerStatus（玩家状态）、PlayerPortrait（头像）、TargetFrame（目标）、StatusEffects（增减益托盘）、AbilityBar（五技能槽）和CastBar（施法条），最新共10个树节点，新增小地图、队伍列表与倒计时三个可选子控件 | 0错误、0警告 |
 | 第三层DBAUIPack_Core | `/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout`（客户端根布局） | 在已存在的 `HUDLayer`（HUD层）里真实增加`CombatHUD`（战斗主界面）子控件，Slot为Fill（填满），默认Collapsed（隐藏）以免遮挡登录/选角；根树共11节点 | 0错误、0警告 |
 | 第三层DBAUIPack_Core | `/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerStatus`（玩家状态） | 删除 `ShieldBar`（旧护盾条）与 `ShieldBarLabel`（护盾标签），只保留同名且可绑定的HealthBar（生命条）、MomentumBar（气势条）；重新压缩高度和重排位置，共7节点 | 0错误、0警告 |
 | 第三层DBAUIPack_Core | `/DBAUIPack_Core/UI/Components/WBP_DBA_UI_TargetFrame`（当前目标框） | 删除 `TargetShieldBar`（旧目标盾条），保留授权生命、头像与状态标签；压缩布局，共6节点 | 0错误、0警告 |
 | 第三层DBAUIPack_Core | `/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StatusEffects`（状态托盘） | 保留已存在的BuffItems（增益区）、DebuffItems（减益区）、CriticalItems（关键机制区），标题中文化；Critical在这里表示重要控制/关键机制，**不是被删除的伤害暴击属性**；共11节点 | 0错误、0警告 |
 | 第三层DBAUIPack_Core | `/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar`（五槽技能栏） | 复用已存在5个真实命名子控件及 `DivineBeastsAbilityBarPanel`（项目技能面板），不复制创建第二套技能条；6节点 | 旧资源原有编译状态，现已复核树结构 |
+| 第三层DBAUIPack_Core | `/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_MatchCountdown`（比赛倒计时） | 新建；继承 `GamePlatformCountdownWidget`（平台倒计时组件），真实绑定 `CountdownText`（时间文本），4节点 | 0错误、0警告 |
+| 第三层DBAUIPack_Core | `/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_Minimap`（战斗小地图） | 新建；继承 `GamePlatformMinimapWidget`（平台小地图组件），具备 `MapImage`（已加载地图纹理）变量及`PlayerMarker`（仅按授权位置显示的玩家标记），5节点 | 0错误、0警告 |
+| 第三层DBAUIPack_Core | `/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_PartyRoster`（组队成员栏） | 新建；继承 `GamePlatformPartyRosterWidget`（平台组队显示组件），预留 `PartyMembers`（成员列表）变量，5节点 | 0错误、0警告 |
 
 以上前5个包通过Monolith `save_packages`（保存实际引擎资源）**成功保存5/5**，并由 `get_widget_tree`（回读真实控件树）再次确认身份、父类、控件数量及嵌套关系。没有通过纯文本生成或伪造uasset资产。
+
+新一轮已通过Monolith另外创建并保存倒计时、小地图、队伍成员栏3份真实蓝图，并将其作为3个可选子控件组合到原`CombatHUD`（主战斗界面）：主蓝图从7个节点增至10个节点。该轮4份受影响的.uasset（3新建＋主界面更新）均成功保存；全部使用第一层通用UI基类，不创建第二套同领域C++控制器。地图、队伍和倒计时缺少可靠授权数据时均默认折叠，不展示虚构内容。具体Monolith回读结果已更新资产清单的`LatestCombatHUDSecondaryWidgets`（P0补充三控件记录）。
 
 ## 二、蓝图布局与运行数据
 
 - HUD布局：玩家头像+生命/气势位于左上；目标身份与生命位于上方中央；增益/减益/关键机制位于右上；技能栏与施法条位于底部中央。对应使用CanvasPanel锚点和Alignment（对齐点），不是固定1920屏幕绝对坐标。移动平台仍需安全区/DPI实机验收。
+- 新增小地图放在右下、队伍成员放在左侧、竞技倒计时位于目标框下方；采用相对窗口四边或中线的锚点。它们当前只实现真实WBP及输入快照通用父类，尚未从World（世界）、Party（队伍）、Arena（竞技）领域订阅已授权的地图、成员和对局截止时间。没有合法数据时控件保持Collapsed（隐藏）；不得声称业务已联通或有可用的实时倒计时。
+- 追加通用控件源代码行为：`GamePlatformCountdownWidget`（通用倒计时）已接入可信快照的`bActive`（活动标志）显示/隐藏和文本刷新；`GamePlatformMinimapWidget`（通用小地图）只展示已异步加载到内存的底图、按0～1位置把`PlayerMarker`移动到对应纹理内，不主动同步加载；`GamePlatformPartyRosterWidget`（通用队友栏）以最大32人的正式快照生成显示名称及生命百分比，切换来源或退出时清理条目，**不展示已经移除的护盾GAS数值**。当前只有数据投影和视觉更新入口，并未接通游戏世界、组队、竞技的真实来源；不把静态蓝图等同完整玩法运行。
 - 目标框TargetFrame（目标状态控件）与CastBar（施法条）在新的CombatHUD蓝图中**初始Collapsed（隐藏）**；GamePlatformTargetFrameWidget（平台目标框）仅在收到已授权bVisible（当前目标可见）时展开，GamePlatformCastProgressWidget（平台施法条）仅在bActive（当前施法活跃）时展开；清空来源/结束/取消后恢复隐藏。真实目标与施法事实适配尚待运行测试，当前不生成假数据或永远空白的边框。
 - 第二层MobaCommon（MOBA通用层）不复制技能栏与GAS基础属性，不添加MOBA专用必选HUD。第一层GamePlatformUI（平台通用界面层）复用ResourceBar（资源条）、Slot（技能槽）、StatusEffectTray（效果托盘）、TargetFrame（目标框）中立基类；第三层只组合生肖界面与只读数据适配。
 - `UDivineBeastsRootLayout`（项目根布局C++）增加事件驱动CombatHUD子控件绑定和本地Pawn OnPossessedPawnChanged（被控制角色变化事件）。当前Pawn同时持有GamePlatformAbilitySystemComponent（GAS组件）与GamePlatformCombatComponent（平台战斗组件）时显示战斗HUD；Boot/Login/CharacterSelect（启动/登录/选角）没有正式角色时隐藏，不在UI中增加Tick（逐帧更新）。

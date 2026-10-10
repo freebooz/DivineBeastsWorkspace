@@ -29,9 +29,10 @@ bool UDivineBeastsCombatUIFeedbackLibrary::BuildFloatingTextRequest(
 {
     OutRequest = FGamePlatformUIFeedbackRequest();
 
-    if (!Input.EventId.IsValid())
+    if (!Input.EventId.IsValid() || !FMath::IsFinite(Input.Magnitude) ||
+        Input.WorldLocation.ContainsNaN())
     {
-        return false;
+        return false; // 非有限值不能传给UI数值格式化或屏幕世界坐标投影。
     }
 
     OutRequest.OccurrenceId = Input.EventId;
@@ -66,16 +67,22 @@ bool UDivineBeastsCombatUIFeedbackLibrary::BuildFloatingTextRequest(
         return false;
     }
 
+    // 本层只负责显示；极端非法/过大数值不能在int32文本转换时溢出变成负数。
     OutRequest.NumericValue =
-        FMath::Max(0.0, Input.Magnitude);
+        FMath::Clamp(Input.Magnitude, 0.0, 1000000000.0);
     OutRequest.bHasNumericValue = true;
     OutRequest.bAllowMerge =
         !Input.TargetVisualKey.IsNone();
-    OutRequest.MergeKey = BuildMergeKey(
-        Input.TargetVisualKey,
+
+    // 同一目标的护盾吸收、生命伤害和治疗必须使用独立合并键，不能互相吞掉。
+    const TCHAR* MergePrefix =
         Input.Kind == EDivineBeastsCombatFeedbackKind::Healing
             ? TEXT("Healing")
-            : TEXT("Damage"));
+            : (Input.Kind == EDivineBeastsCombatFeedbackKind::ShieldDamage
+                ? TEXT("ShieldDamage")
+                : TEXT("Damage"));
+    OutRequest.MergeKey = BuildMergeKey(
+        Input.TargetVisualKey, MergePrefix);
     OutRequest.Text = FText::AsNumber(
         FMath::RoundToInt(OutRequest.NumericValue));
     return OutRequest.NumericValue > KINDA_SMALL_NUMBER;

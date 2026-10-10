@@ -1,5 +1,14 @@
 # 变更记录
 
+## 2026-10-09｜生肖技能开发资产数据一致性、网络执行策略与审计增强
+
+- 通过 UE5.8 Monolith 原生 AssetRegistry（资源注册索引）与 Editor Python（编辑器脚本）核对十二生肖全部60份开发 `UDivineBeastsAbilityDefinition`（技能逻辑资产）、60行 `DT_DBA_Zodiac_DevBalance`（统一等级数值表）、12份开发 `AbilityUIProfile`（客户端显示配置）和60张图标：真实资产归属、类型、逻辑ID、等级行全部无误；与 `ZodiacAbilityDevelopmentDraft_20261009.json`（开发数值草案）逐字段对比60行数值为0差异。
+- 子鼠开发GAS技能蓝图 `GA_DBA_Rat_DevPrimary`（子鼠开发普攻）改用 `ServerOnly`（服务器独占执行）网络策略并由 Monolith 真实编译、保存、回读，避免把伤害权威交给客户端预测路径。编辑器已加载的旧 C++ 反射尚未包含 `AuthorityTraceForwardAndApplyDamage`（服务器前向射线伤害）接口，因此没有伪造蓝图执行连接，不把该示例声称为真实命中/伤害完成。
+- 增强现有 `Tools/Unreal/Abilities/ValidateZodiacDevelopmentAssets.py`（生肖开发资产引擎审计），新增真实60个 UI 技能编号与60个玩法技能定义的全量相等检查、技能类型校验、子鼠开发蓝图服务器独占策略及 AbilityDefinitionId 校验；Monolith执行通过，Python语法检查通过。
+- 修改蓝图后同步更正 `Docs/Implementation/ZodiacDevelopmentUEAssetEvidence_20261009.json`（76个开发资源SHA-256证据）中的子鼠技能蓝图摘要，文件级门禁 `--require-all-profiles --require-all-definitions --verify-hashes`（全资源及摘要）实测76/76通过。生产英雄默认技能集不使用这些开发ID，正式能力仍缺真实授权、双客户端联机、完整UE三端构建与Cook/Stage验收；详细证据见 `Docs/Implementation/十二生肖技能数据驱动实施记录_20261009.md`。
+
+
+
 ## 2026-10-09｜战斗打击反馈技能授权预热与局部顿帧调节
 
 - 项目竞技ClientOnly组合根根据GameState设置通知及本地Pawn接管事件建立已授权技能订阅；从OwnerOnly授权快照预热当前HeroDefinitionId对应实际授予的有效技能Profile，按角色/世界切换释放旧资源和事件绑定，停止无差别预热十二生肖全部技能。

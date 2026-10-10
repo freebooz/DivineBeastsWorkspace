@@ -114,74 +114,11 @@
     "Scope": "按照最新2具体GAS属性集8字段规则，重用项目战斗蓝图，取消常驻护盾条，新增战斗主HUD并嵌入RootLayout的HUDLayer。",
     "CurrentDesignDoc": "Docs/CombatHUDBlueprintDelivery_20261009.md",
     "Assets": [
-      {
-        "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD",
-        "ParentClass": "DivineBeastsCombatPanelBase",
-        "WidgetCount": 7,
-        "Children": [
-          "PlayerStatus",
-          "PlayerPortrait",
-          "TargetFrame",
-          "StatusEffects",
-          "AbilityBar",
-          "CastBar"
-        ],
-        "FreshCompileErrors": 0,
-        "FreshCompileWarnings": 0,
-        "Saved": true
-      },
-      {
-        "AssetPath": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
-        "ParentClass": "DivineBeastsRootLayout",
-        "WidgetCount": 11,
-        "Contains": [
-          "HUDLayer/CombatHUD"
-        ],
-        "DefaultCombatHUDVisibility": "Collapsed",
-        "FreshCompileErrors": 0,
-        "FreshCompileWarnings": 0,
-        "Saved": true
-      },
-      {
-        "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerStatus",
-        "ParentClass": "DivineBeastsPlayerStatusPanel",
-        "WidgetCount": 7,
-        "Removed": [
-          "ShieldBar",
-          "ShieldBarLabel"
-        ],
-        "Kept": [
-          "HealthBar",
-          "MomentumBar"
-        ],
-        "FreshCompileErrors": 0,
-        "FreshCompileWarnings": 0,
-        "Saved": true
-      },
-      {
-        "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_TargetFrame",
-        "ParentClass": "GamePlatformTargetFrameWidget",
-        "WidgetCount": 6,
-        "Removed": [
-          "TargetShieldBar"
-        ],
-        "FreshCompileErrors": 0,
-        "FreshCompileWarnings": 0,
-        "Saved": true
-      },
-      {
-        "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StatusEffects",
-        "ParentClass": "GamePlatformStatusEffectTrayWidget",
-        "WidgetCount": 11,
-        "Headings": [
-          "增益效果",
-          "减益效果",
-          "关键机制"
-        ],
-        "FreshCompileErrors": 0,
-        "FreshCompileWarnings": 0,
-        "Saved": true
-      }
+      {"AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD", "ParentClass": "DivineBeastsCombatPanelBase", "WidgetCount": 10, "Children": ["PlayerStatus","PlayerPortrait","TargetFrame","StatusEffects","AbilityBar","CastBar","MatchCountdown","Minimap","PartyRoster"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout", "ParentClass": "DivineBeastsRootLayout", "WidgetCount": 11, "Contains": ["HUDLayer/CombatHUD"], "DefaultCombatHUDVisibility": "Collapsed", "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerStatus", "ParentClass": "DivineBeastsPlayerStatusPanel", "WidgetCount": 7, "Removed": ["ShieldBar","ShieldBarLabel"], "Kept": ["HealthBar","MomentumBar"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_TargetFrame", "ParentClass": "GamePlatformTargetFrameWidget", "WidgetCount": 6, "Removed": ["TargetShieldBar"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StatusEffects", "ParentClass": "GamePlatformStatusEffectTrayWidget", "WidgetCount": 11, "Headings": ["增益效果","减益效果","关键机制"], "FreshCompileErrors": 0, "FreshCompileWarnings": 0, "Saved": true}
     ],
     "MonolithPackagesSaved": 5,
     "SingleEditorAssetTreeReadback": true,
@@ -231,6 +168,50 @@
       "正式生肖AbilitySet、UI Profile和技能名称/图标资产映射尚未完成，技能蓝图五槽不等于角色已获授权技能。",
       "目标与施法条仍需具体Gameplay目标/施法事实适配器；增减益状态托盘提供安全文本回退，正式图标/精确计时仍待项目授权数据。"
     ]
+  },
+  "LatestCombatHUDSecondaryWidgets": {
+    "Date": "2026-10-09",
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Purpose": "在现有战斗HUD中复用平台通用倒计时、小地图和队伍列表控件基类，不恢复盾永久属性。",
+    "Assets": [
+      {"AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_MatchCountdown", "ParentClass": "GamePlatformCountdownWidget", "WidgetCount": 4, "NamedRuntimeWidget": "CountdownText", "CompileErrors": 0, "CompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_Minimap", "ParentClass": "GamePlatformMinimapWidget", "WidgetCount": 5, "NamedRuntimeWidget": "MapImage", "PlayerMarkerWidget": "PlayerMarker", "CompileErrors": 0, "CompileWarnings": 0, "Saved": true},
+      {"AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_PartyRoster", "ParentClass": "GamePlatformPartyRosterWidget", "WidgetCount": 5, "NamedRuntimeWidget": "PartyMembers", "CompileErrors": 0, "CompileWarnings": 0, "Saved": true}
+    ],
+    "MonolithPackagesSaved": 4,
+    "CompositeHUDWidgetCount": 10,
+    "CompositeHUDChildren": ["MatchCountdown","Minimap","PartyRoster"],
+    "InitialVisibility": "Collapsed",
+    "Status": "已创建真实资源、编译和保存，并已通过Monolith回读；业务数据适配尚未完成",
+    "AuthorizedMinimapDataConnected": false,
+    "AuthorizedPartyRosterDataConnected": false,
+    "AuthorizedCountdownDataConnected": false,
+    "ClientDualUIModuleBuildAttempt": {
+      "Target": "DivineBeastsArenaClient Win64 Development",
+      "Modules": ["GamePlatformUIClient", "DivineBeastsUIClient"],
+      "StartedAt": "2026-10-09T22:35:06+08:00",
+      "UHT": "Succeeded",
+      "ActionsPlanned": 2,
+      "Exit": "timed_out_after_900_seconds",
+      "CompletedModuleLink": false,
+      "CompilerErrorObserved": false,
+      "Note": "UE5.8即使传-NoUBA也经UBA本地执行器；两项模块编译动作超时，并非已知C++语法错误。"
+    },
+    "MinimapMarkerAssetResaved": true,
+    "RuntimeSnapshotVisualBindingWritten": true,
+    "RuntimeSnapshotVisualBindingScope": ["GamePlatformCountdownWidget.cpp", "GamePlatformMinimapWidget.cpp", "GamePlatformPartyRosterWidget.cpp"],
+    "RuntimeCppBuildVerified": true,
+    "RuntimeCppSingleFileCompile": {
+      "Target": "DivineBeastsArenaEditor Win64 Development",
+      "UnrealHeaderToolResult": "Succeeded",
+      "SourceFiles": ["GamePlatformCountdownWidget.cpp", "GamePlatformMinimapWidget.cpp", "GamePlatformPartyRosterWidget.cpp"],
+      "ActionsSucceeded": 3,
+      "ExitCode": 0,
+      "CompleteModuleLinkVerified": false
+    },
+    "IndependentEditorRestartReadback": false,
+    "PIEAndCookVerified": false
   },
   "LatestAAACombatWidgetDelivery": {
     "Date": "2026-10-09",

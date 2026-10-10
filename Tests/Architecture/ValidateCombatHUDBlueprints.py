@@ -32,7 +32,7 @@ else:
         issues.append("静态资产台账不得伪造实际PIE/联机验收状态")
 
 expected = {
-    "UI/Combat/WBP_DBA_UI_CombatHUD": (7, "DivineBeastsCombatPanelBase"),
+    "UI/Combat/WBP_DBA_UI_CombatHUD": (10, "DivineBeastsCombatPanelBase"),
     "UI/Root/WBP_DBA_UI_RootLayout": (11, "DivineBeastsRootLayout"),
     "UI/Components/WBP_DBA_UI_PlayerStatus": (7, "DivineBeastsPlayerStatusPanel"),
     "UI/Components/WBP_DBA_UI_TargetFrame": (6, "GamePlatformTargetFrameWidget"),
@@ -70,6 +70,61 @@ for name in ("UI/Components/WBP_DBA_UI_PlayerStatus", "UI/Components/WBP_DBA_UI_
     if not any("Shield" in removed for removed in record.get("Removed", [])):
         issues.append("移除永久盾数值后必须清理项目层旧护盾条：" + name)
 
+
+# 2026-10-09追加：竞技倒计时、小地图、队友列表均复用第一层平台中立控件基类。
+# 没有正式授权地图/队伍/计时来源时，不能用假数据冒充业务集成。
+secondary = doc.get("LatestCombatHUDSecondaryWidgets", {}) if MANIFEST.is_file() else {}
+secondary_expected = {
+    "UI/Combat/WBP_DBA_UI_MatchCountdown": (4, "GamePlatformCountdownWidget", "CountdownText"),
+    "UI/Combat/WBP_DBA_UI_Minimap": (5, "GamePlatformMinimapWidget", "MapImage"),
+    "UI/Combat/WBP_DBA_UI_PartyRoster": (5, "GamePlatformPartyRosterWidget", "PartyMembers"),
+}
+supp_assets = {
+    a["AssetPath"]: a for a in secondary.get("Assets", []) if "AssetPath" in a
+}
+if secondary.get("Tool") != "Monolith MCP" or secondary.get("MonolithPackagesSaved") != 4:
+    issues.append("三个P0补充蓝图与组合HUD必须已由Monolith编译、保存并登记")
+if secondary.get("CompositeHUDWidgetCount") != 10:
+    issues.append("真实HUD组合后预期共10个Widget树节点")
+if secondary.get("InitialVisibility") != "Collapsed":
+    issues.append("地图/队伍/倒计时在缺少授权来源前必须隐藏")
+for prefix in ("AuthorizedMinimapDataConnected", "AuthorizedPartyRosterDataConnected",
+               "AuthorizedCountdownDataConnected"):
+    if secondary.get(prefix) is not False:
+        issues.append("未提供Gameplay适配运行证据时不得声称功能已经联机：" + prefix)
+
+for relative, (count, parent, bound) in secondary_expected.items():
+    package = "/DBAUIPack_Core/" + relative
+    binary = CONTENT / "Content" / (relative + ".uasset")
+    item = supp_assets.get(package)
+    if not binary.is_file() or binary.stat().st_size <= 1024:
+        issues.append("补充蓝图的UE真实二进制资源缺失：" + package)
+    if not item:
+        issues.append("缺少补充蓝图的Monolith回读台账：" + package)
+        continue
+    if item.get("ParentClass") != parent or item.get("WidgetCount") != count:
+        issues.append("补充蓝图未正确复用第一层平台Widget基类：" + package)
+    if item.get("NamedRuntimeWidget") != bound:
+        issues.append("运行时Widget绑定名称与平台接口不符：" + package)
+    if "Minimap" in relative and item.get("PlayerMarkerWidget") != "PlayerMarker":
+        issues.append("项目小地图必须由真实PlayerMarker子控件接收授权玩家地图位置")
+    if item.get("CompileErrors") != 0 or item.get("CompileWarnings") != 0 or not item.get("Saved"):
+        issues.append("补充蓝图必须编译零错误零警告并保存：" + package)
+
+# 现行通用UI基类必须在数据快照更新时显示合法信息；不能只创建隐藏的空蓝图。
+platform_ui = ROOT / "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Components"
+render_signatures = {
+    "GamePlatformCountdownWidget.cpp": ("State.bActive", "SetVisibility", "CountdownText"),
+    "GamePlatformMinimapWidget.cpp": ("State.MapTexture.Get()", "MapImage", "PlayerMarker", "SetVisibility"),
+    "GamePlatformPartyRosterWidget.cpp": ("Member.Portrait.DisplayName", "PartyMembers", "SetVisibility", "Rows->ClearChildren()"),
+}
+for name, tokens in render_signatures.items():
+    code = (platform_ui / name).read_text(encoding="utf-8-sig")
+    if any(token not in code for token in tokens):
+        issues.append("通用UI组件未从正式快照驱动显示、解绑或销毁：" + name)
+if not set(secondary.get("CompositeHUDChildren", [])).issubset(set(main_widget.get("Children", []))):
+    issues.append("新增地图/组队/倒计时蓝图尚未嵌入项目CombatHUD主树")
+
 layout_h = (CLIENT / "Public/Layers/DivineBeastsRootLayout.h").read_text(encoding="utf-8-sig")
 layout_cpp = (CLIENT / "Private/Layers/DivineBeastsRootLayout.cpp").read_text(encoding="utf-8-sig")
 status_cpp = (CLIENT / "Private/Panels/Combat/DivineBeastsPlayerStatusPanel.cpp").read_text(encoding="utf-8-sig")
@@ -96,7 +151,7 @@ for retired in ("FGameplayAttributeData Shield;", "FGameplayAttributeData MaxShi
 report = {
     "status": "PASS" if not issues else "FAIL",
     "monolithAssetRecords": len(assets),
-    "expectedReusedOrCreatedAssets": len(expected),
+    "expectedReusedOrCreatedAssets": len(expected) + len(secondary_expected),
     "issues": issues,
     "limits": "仅静态结构门禁；Monolith当前编辑器编译/保存另有真实证据，C++模块与UE独立重载、PIE、双客户端、Cook需另测。",
 }

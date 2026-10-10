@@ -32,6 +32,7 @@ def check(condition, message, errors):
 def validate():
     errors = []
     identities = set()
+    ui_identities = set()
     icon_paths = set()
     ability_count = 0
     ui_profile_count = 0
@@ -63,7 +64,7 @@ def validate():
             entries = profile.get_editor_property("Entries")
             check(len(entries) == len(SLOTS),
                   hero + ":客户端技能配置不是5个槽位", errors)
-            for entry in entries:
+            for entry_index, entry in enumerate(entries):
                 ui_entry_count += 1
                 entry_text = str(entry)
                 icon_match = re.search(r'icon: "([^"]+)"', entry_text)
@@ -76,10 +77,20 @@ def validate():
                         hero + ":客户端图标真实UE资产不存在: " + icon_path,
                         errors)
                 development_id = str(entry.get_editor_property("AbilityId"))
-                check(development_id.startswith("dba.ability.") and
-                      development_id.endswith("@1"),
-                      hero + ":开发技能身份格式错误: " + development_id,
+                # 界面五槽不是独立技能真源：每个图标必须与同一英雄/槽位的技能定义使用完全相同的ID。
+                # 只在开发目录内检查测试身份，绝不自动签发正式技能编号。
+                if entry_index < len(SLOTS):
+                    slot = SLOTS[entry_index]
+                    name = ("rat_dev_primary" if hero == "Rat" and slot == "BasicAttack"
+                            else hero.lower() + "_dev_" + slot.lower())
+                    expected_id = "dba.ability." + name + "@1"
+                    check(development_id == expected_id,
+                          hero + "/" + slot + ":界面技能编号不等于玩法Definition: " +
+                          development_id, errors)
+                check(development_id not in ui_identities,
+                      hero + ":不同图标复用同一技能编号: " + development_id,
                       errors)
+                ui_identities.add(development_id)
 
         for slot in SLOTS:
             tail = "Primary" if hero == "Rat" and slot == "BasicAttack" else slot
@@ -97,6 +108,14 @@ def validate():
                 str(ability.get_editor_property("HeroDefinitionId")) ==
                 "Hero.Zodiac." + hero,
                 hero + "/" + slot + ":定义所属英雄错误", errors)
+            # 数值行为不得冒充具体技能类型；主动与被动互换应被真实引擎审计识别。
+            expected_kind = ("PRIMARY" if slot == "BasicAttack" else
+                             "PASSIVE" if slot == "Passive" else
+                             "ULTIMATE" if slot == "Ultimate" else "ACTIVE")
+            real_kind = str(ability.get_editor_property("Kind")).upper()
+            check("." + expected_kind + ":" in real_kind,
+                  hero + "/" + slot + ":技能类型与槽位不一致: " + real_kind,
+                  errors)
 
             id_struct = ability.get_editor_property("LogicalId")
             namespace = str(id_struct.get_editor_property("Namespace"))
@@ -127,6 +146,8 @@ def validate():
     check(ui_entry_count == 60, "技能界面开发条目不是60条", errors)
     check(len(icon_paths) == 60, "客户端软纹理身份不唯一", errors)
     check(len(identities) == 60, "逻辑技能身份不唯一", errors)
+    check(len(ui_identities) == 60 and ui_identities == identities,
+          "UI显示条目的全部技能ID与60份玩法Definition集合不一致", errors)
 
     ability_set = unreal.EditorAssetLibrary.load_asset(
         ROOT + "DA_DBA_Rat_DevAbilitySet")
@@ -143,12 +164,31 @@ def validate():
     blueprint = unreal.EditorAssetLibrary.load_asset(
         ROOT + "GA_DBA_Rat_DevPrimary")
     check(blueprint is not None, "子鼠开发GAS技能蓝图不存在", errors)
+    if blueprint is not None:
+        cls = unreal.EditorAssetLibrary.load_blueprint_class(
+            ROOT + "GA_DBA_Rat_DevPrimary")
+        check(cls is not None, "子鼠开发技能蓝图没有有效生成类", errors)
+        if cls is not None:
+            cdo = unreal.get_default_object(cls)
+            policy = str(cdo.get_editor_property("NetExecutionPolicy")).upper()
+            check("SERVER_ONLY" in policy,
+                  "子鼠开发技能未采用服务器独占执行策略", errors)
+            identifier = cdo.get_editor_property("AbilityDefinitionId")
+            check(
+                str(identifier.get_editor_property("PrimaryAssetName")) ==
+                "dba.ability.rat_dev_primary@1" and
+                str(identifier.get_editor_property("PrimaryAssetType").get_editor_property("Name")) ==
+                "GamePlatformDefinition",
+                "子鼠技能类绑定的技能主资产与能力集不一致", errors)
 
     print("UE_DEVELOPMENT_ABILITY_DEFINITIONS=" + str(ability_count) + "/60")
     print("UE_DEVELOPMENT_BALANCE_ROWS=" + str(len(row_names)) + "/60")
     print("UE_DEVELOPMENT_UI_PROFILES=" + str(ui_profile_count) + "/12")
     print("UE_DEVELOPMENT_ICON_ENTRIES=" + str(ui_entry_count) + "/60")
     print("UE_DEVELOPMENT_ICON_ASSET_PATHS=" + str(len(icon_paths)) + "/60")
+    print("UE_DEVELOPMENT_UI_IDS_MATCH_DEFINITIONS=" +
+          str(len(ui_identities & identities)) + "/60")
+    print("UE_DEVELOPMENT_RAT_EXECUTION_POLICY=SERVER_ONLY")
     print("DEVELOPMENT_ONLY=TRUE; FORMAL_RELEASE_NOT_VERIFIED")
     if errors:
         for problem in errors:

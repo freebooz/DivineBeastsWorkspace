@@ -37,5 +37,11 @@ public:
     virtual void Deinitialize() override;
 
 private:
+    /** 只记有限个Guid和类型位，不存Actor或可复制Gameplay状态。 */
+    TMap<FGuid, uint8> SeenFeedbackTypes;
+    TArray<FGuid> FeedbackRing;
+    int32 NextFeedbackSlot = 0;
+    static constexpr int32 MaxRememberedFeedback = 2048;
+
     FGamePlatformConfirmedCombatFeedback ConfirmedFeedback;
 };

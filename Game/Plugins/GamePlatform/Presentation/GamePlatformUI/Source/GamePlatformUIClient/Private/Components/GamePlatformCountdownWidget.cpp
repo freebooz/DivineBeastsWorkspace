@@ -28,6 +28,10 @@ bool UGamePlatformCountdownWidget::ApplyCountdownState(
     {
         CountdownText->SetText(GetCountdownText());
     }
+    // 仅已确认处于活动状态的赛事/任务倒计时可见；UI不得逐帧自行推演权威剩余秒数。
+    SetVisibility(State.bActive
+        ? ESlateVisibility::SelfHitTestInvisible
+        : ESlateVisibility::Collapsed);
     BP_OnCountdownChanged(State);
     return true;
 }

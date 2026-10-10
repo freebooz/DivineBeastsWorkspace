@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
 #include "UObject/PrimaryAssetId.h"
+class UGamePlatformFeedbackWidget;
 #include "DivineBeastsArenaCombatFeedbackSettings.generated.h"
 
 /**
@@ -19,4 +20,11 @@ public:
     /** 命中反馈目录的GamePlatformDefinition主资产身份；无正式资产时保持为空。 */
     UPROPERTY(Config, EditAnywhere, Category="DivineBeasts|Combat Feedback")
     FPrimaryAssetId CatalogDefinitionId;
+
+    /**
+     * 客户端浮动战斗数字Widget软类引用；由GamePlatformAssetLoader异步加载，
+     * 缺少真实Widget蓝图时不提交浮字，也不创建额外的UI渲染器。
+     */
+    UPROPERTY(Config, EditAnywhere, Category="DivineBeasts|Combat Feedback")
+    TSoftClassPtr<UGamePlatformFeedbackWidget> FloatingTextWidgetClass;
 };

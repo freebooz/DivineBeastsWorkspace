@@ -6,7 +6,11 @@
 #include "Types/GamePlatformCombatEvent.h"
 #include "DivineBeastsArenaCombatFeedbackClientSubsystem.generated.h"
 
-class UDivineBeastsCombatFeedbackCatalog;class UDivineBeastsAbilityLoadoutComponent;
+class UDivineBeastsCombatFeedbackCatalog;
+class UGamePlatformCombatFeedbackWorldSubsystem;
+class UGamePlatformFeedbackWidget;
+class UClass;
+struct FStreamableHandle;class UDivineBeastsAbilityLoadoutComponent;
 class AGameStateBase;
 class APlayerController;
 class APawn;
@@ -38,6 +42,15 @@ private:
     void WatchWorld(UWorld* World);
     void UnwatchWorld();
     void HandleGameStateSet(AGameStateBase* GameState);
+
+    /** 当前竞技World的已确认战斗事实，仅在Widget类预载成功后提交平台UI反馈。 */
+    void BindWorldCombatFeedback(UWorld& World);
+    void UnbindWorldCombatFeedback();
+    void HandleConfirmedCombatFeedback(const FGamePlatformCombatEvent& Event);
+
+    /** 普通UI资源统一使用GamePlatformAssetLoader薄异步服务，生命周期由本LocalPlayer持有。 */
+    void BeginFloatingTextWidgetLoad();
+    void HandleFloatingTextWidgetLoaded(int32 ExpectedWorldRequestGeneration);
 
     /** 只订阅本地拥有者Pawn的真实技能授权变化；不会预热其他英雄或未授予技能。 */
     void BindLocalLoadout(APawn* NewPawn);
@@ -74,6 +87,13 @@ private:
     FDelegateHandle PostLoadMapHandle;    /** GameState/Pawn/授权快照所有订阅均归当前LocalPlayer，换图须清理。 */
     TWeakObjectPtr<UWorld> ObservedWorld;
     FDelegateHandle GameStateSetHandle;
+    TWeakObjectPtr<UGamePlatformCombatFeedbackWorldSubsystem> BoundFeedbackWorldBus;
+    FDelegateHandle FeedbackWorldBusHandle;
+
+    /** 该资源不属于Gameplay主资产，不使用无效的Definition租约。 */
+    TSharedPtr<FStreamableHandle> FloatingTextWidgetLoadHandle;
+    TWeakObjectPtr<UClass> LoadedFloatingTextWidgetClass;
+    bool bFloatingTextWidgetLoadRequested = false;
     TWeakObjectPtr<APlayerController> ObservedController;
     TWeakObjectPtr<UDivineBeastsAbilityLoadoutComponent> ObservedLoadout;
     FDelegateHandle LoadoutChangedHandle;

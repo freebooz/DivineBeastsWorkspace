@@ -19,6 +19,11 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "MobaPresentationClientSubsystem.h"
+#include "Adapters/Combat/DivineBeastsCombatUIFeedbackLibrary.h"
+#include "Feedback/GamePlatformFeedbackWidget.h"
+#include "Loading/GamePlatformAssetLoader.h"
+#include "Subsystems/GamePlatformCombatFeedbackWorldSubsystem.h"
+#include "Engine/StreamableManager.h"
 #include "UObject/UObjectGlobals.h"
 
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::Initialize(
@@ -98,6 +103,14 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::PlayerControllerChanged(
 {
     Super::PlayerControllerChanged(NewController);
 
+    if (IsValid(NewController) && ObservedController.Get() == NewController)
+    {
+        // 同一Controller的重复通知不撤销再申请Profile，保持已加载资源和订阅稳定。
+        WatchWorld(NewController->GetWorld());
+        BindLocalLoadout(NewController->GetPawn());
+        return;
+    }
+
     if (APlayerController* OldController = ObservedController.Get())
     {
         OldController->OnPossessedPawnChanged.RemoveDynamic(
@@ -105,7 +118,11 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::PlayerControllerChanged(
             &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandlePossessedPawnChanged);
     }
     UnbindLocalLoadout();
-    ObservedController = NewController;
+
+    // 切换Controller或失去本地拥有者时释放旧角色资源。
+    // 原实现只Unbind，空Pawn时会跳过BindLocalLoadout中的释放路径，导致旧Profile持续占用内存。
+    ReleaseProfileLeases();
+    ObservedController = IsValid(NewController) ? NewController : nullptr;
 
     if (IsValid(NewController))
     {
@@ -141,6 +158,11 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::WatchWorld(UWorld* World)
     {
         BeginForWorld(World);
     }
+    if (World->GetGameState<AGamePlatformArenaGameState>())
+    {
+        BindWorldCombatFeedback(*World);
+        BeginFloatingTextWidgetLoad();
+    }
 }
 
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::UnwatchWorld()
@@ -152,8 +174,160 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::UnwatchWorld()
             World->GameStateSetEvent.Remove(GameStateSetHandle);
         }
     }
+    UnbindWorldCombatFeedback();
     GameStateSetHandle.Reset();
     ObservedWorld.Reset();
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::BindWorldCombatFeedback(UWorld& World)
+{
+    UGamePlatformCombatFeedbackWorldSubsystem* Bus =
+        World.GetSubsystem<UGamePlatformCombatFeedbackWorldSubsystem>();
+    if (BoundFeedbackWorldBus.Get() == Bus)
+    {
+        return;
+    }
+    UnbindWorldCombatFeedback();
+    if (Bus)
+    {
+        BoundFeedbackWorldBus = Bus;
+        FeedbackWorldBusHandle = Bus->OnConfirmedFeedback().AddUObject(
+            this, &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleConfirmedCombatFeedback);
+    }
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::UnbindWorldCombatFeedback()
+{
+    if (UGamePlatformCombatFeedbackWorldSubsystem* Bus = BoundFeedbackWorldBus.Get())
+    {
+        if (FeedbackWorldBusHandle.IsValid())
+        {
+            Bus->OnConfirmedFeedback().Remove(FeedbackWorldBusHandle);
+        }
+    }
+    FeedbackWorldBusHandle.Reset();
+    BoundFeedbackWorldBus.Reset();
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::BeginFloatingTextWidgetLoad()
+{
+    if (bFloatingTextWidgetLoadRequested || !BoundWorld.IsValid())
+    {
+        return;
+    }
+
+    const UDivineBeastsArenaCombatFeedbackSettings* Settings =
+        GetDefault<UDivineBeastsArenaCombatFeedbackSettings>();
+    if (!Settings || Settings->FloatingTextWidgetClass.IsNull())
+    {
+        bFloatingTextWidgetLoadRequested = true;
+        return; // 没有真实Widget资产时不创建假的UI控件，也不影响攻击反馈。
+    }
+
+    const FSoftObjectPath WidgetPath = Settings->FloatingTextWidgetClass.ToSoftObjectPath();
+    if (!WidgetPath.IsValid())
+    {
+        bFloatingTextWidgetLoadRequested = true;
+        return;
+    }
+
+    bFloatingTextWidgetLoadRequested = true;
+    const int32 ExpectedGeneration = WorldRequestGeneration;
+    TArray<FSoftObjectPath> AssetsToLoad;
+    AssetsToLoad.Add(WidgetPath);
+    FloatingTextWidgetLoadHandle = FGamePlatformAssetLoader::RequestAsyncLoad(
+        AssetsToLoad,
+        FStreamableDelegate::CreateUObject(
+            this,
+            &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleFloatingTextWidgetLoaded,
+            ExpectedGeneration));
+    if (!FloatingTextWidgetLoadHandle.IsValid())
+    {
+        // 请求失败不按每一条命中再次加载；地图改变后可重新尝试。
+        return;
+    }
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleFloatingTextWidgetLoaded(
+    int32 ExpectedWorldRequestGeneration)
+{
+    if (WorldRequestGeneration != ExpectedWorldRequestGeneration || !BoundWorld.IsValid())
+    {
+        return;
+    }
+    const UDivineBeastsArenaCombatFeedbackSettings* Settings =
+        GetDefault<UDivineBeastsArenaCombatFeedbackSettings>();
+    UClass* WidgetType = Settings ? Settings->FloatingTextWidgetClass.Get() : nullptr;
+    if (IsValid(WidgetType) &&
+        WidgetType->IsChildOf(UGamePlatformFeedbackWidget::StaticClass()) &&
+        !WidgetType->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated))
+    {
+        LoadedFloatingTextWidgetClass = WidgetType;
+    }
+}
+
+void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleConfirmedCombatFeedback(
+    const FGamePlatformCombatEvent& Event)
+{
+    // 世界网络事件已由权威Combat单向转发；本桥仅做只读DTO→平台UI反馈。
+    // 绝不调用Damage/ASC或添加第二套World Widget管理器。
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    UWorld* World = BoundWorld.Get();
+    UClass* WidgetType = LoadedFloatingTextWidgetClass.Get();
+    if (!IsInGameThread() || !LocalPlayer || !World ||
+        LocalPlayer->GetWorld() != World ||
+        !IsValid(WidgetType) || !IsValid(Event.TargetActor) ||
+        Event.TargetActor->GetWorld() != World || !Event.EventId.IsValid())
+    {
+        return;
+    }
+
+    // 不直接传递Gameplay对象或账号身份，UI只消费一次性的已确认展示数字。
+    FDivineBeastsCombatFeedbackInput Input;
+    Input.EventId = Event.EventId;
+    Input.TargetVisualKey = Event.TargetActor->GetFName();
+    Input.WorldLocation = Event.ImpactPoint.ContainsNaN()
+        ? Event.TargetActor->GetActorLocation() : FVector(Event.ImpactPoint);
+
+    const TSubclassOf<UGamePlatformFeedbackWidget> FeedbackWidgetClass(WidgetType);
+    auto Submit = [&Input, LocalPlayer, FeedbackWidgetClass](
+        EDivineBeastsCombatFeedbackKind Kind, double Magnitude, uint32 ChannelSalt)
+    {
+        if (!FMath::IsFinite(Magnitude) || Magnitude < 0.0)
+        {
+            return;
+        }
+        Input.Kind = Kind;
+        Input.Magnitude = Magnitude;
+        Input.EventId.A ^= ChannelSalt;
+        UDivineBeastsCombatUIFeedbackLibrary::SubmitFloatingText(
+            LocalPlayer, Input, FeedbackWidgetClass);
+        Input.EventId.A ^= ChannelSalt;
+    };
+
+    switch (Event.EventType)
+    {
+    case EGamePlatformCombatEventType::Damage:
+        if (Event.AppliedToHealth > 0.0f)
+        {
+            Submit(EDivineBeastsCombatFeedbackKind::Damage, Event.AppliedToHealth, 0u);
+        }
+        if (Event.AppliedToShield > 0.0f)
+        {
+            // Damage与ShieldDamage同源但视觉样式独立；稳定ChannelSalt防止UI去重互相吞并。
+            Submit(EDivineBeastsCombatFeedbackKind::ShieldDamage,
+                Event.AppliedToShield, 0x53484C44u);
+        }
+        break;
+    case EGamePlatformCombatEventType::Healing:
+        Submit(EDivineBeastsCombatFeedbackKind::Healing, Event.AppliedMagnitude, 0x4845414Cu);
+        break;
+    case EGamePlatformCombatEventType::Death:
+        Submit(EDivineBeastsCombatFeedbackKind::Death, 0.0, 0x44454154u);
+        break;
+    default:
+        break;
+    }
 }
 
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleGameStateSet(
@@ -166,10 +340,13 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleGameStateSet(
     if (GameState->IsA<AGamePlatformArenaGameState>())
     {
         BeginForWorld(GameState->GetWorld());
+        BindWorldCombatFeedback(*GameState->GetWorld());
+        BeginFloatingTextWidgetLoad();
     }
     else if (BoundWorld.Get() == GameState->GetWorld())
     {
-        // 竞技状态被普通世界替换时，及时释放旧竞技Profile与Catalog。
+        // 竞技状态被普通世界替换时，停止UI反馈并释放旧竞技Profile与目录。
+        UnbindWorldCombatFeedback();
         CancelWorldLeases();
     }
 }
@@ -193,7 +370,15 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::BindLocalLoadout(APawn* Ne
             : nullptr;
     if (ObservedLoadout.Get() == NewLoadout)
     {
-        PrewarmAuthorizedLocalAbilities();
+        // 旧Pawn已销毁导致弱引用转空时，也不能让该英雄的Profile租约继续存活。
+        if (NewLoadout)
+        {
+            PrewarmAuthorizedLocalAbilities();
+        }
+        else
+        {
+            ReleaseProfileLeases();
+        }
         return;
     }
 
@@ -492,6 +677,10 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::ReleaseProfileLeases()
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::CancelWorldLeases()
 {
     ++WorldRequestGeneration;
+    FGamePlatformAssetLoader::Cancel(FloatingTextWidgetLoadHandle);
+    FloatingTextWidgetLoadHandle.Reset();
+    LoadedFloatingTextWidgetClass.Reset();
+    bFloatingTextWidgetLoadRequested = false;
     if (IGamePlatformDataService* Data = GetDataService())
     {
         if (CatalogLease.IsValid())
