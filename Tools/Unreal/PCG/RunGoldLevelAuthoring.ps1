@@ -4,7 +4,9 @@ PCG Gold Level（PCG金标准）UE5.8真实资产创作入口。
 先读检查、再显式-Apply，禁止覆盖/删除文件/抢占其他编辑器进程。
 #>
 [CmdletBinding()]
-param([string]$EngineRoot = $env:UE_ROOT, [switch]$Apply, [switch]$RepairGeneratedFoundations)
+param([string]$EngineRoot = $env:UE_ROOT, [switch]$Apply,
+    [switch]$RepairGeneratedFoundations, [switch]$ResumeApprovedPCGAssets,
+    [switch]$UsePythonGoldCreation)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $project = Join-Path $root 'Game/DivineBeastsArena.uproject'
@@ -17,6 +19,22 @@ $definitions = Join-Path $PSScriptRoot 'AuthorGoldLevelDefinitions.py'
 $realizedScript = Join-Path $PSScriptRoot 'AuthorGoldRealizedGraphs.py'
 $mapScript = Join-Path $PSScriptRoot 'AuthorGoldLevelMap.py'
 $reopenScript = Join-Path $PSScriptRoot 'ValidateGoldLevelAssets.py'
+$inventoryScript = Join-Path $PSScriptRoot 'InventoryFoundationAssets.py'
+# 仅调整本次UE5.8进程的插件装配，正式工程的uproject/Target保持原样。
+$commonDisabled = @(
+    'Monolith','DBAClient','DBAArena','GamePlatformSurface',
+    'DBAUIPack_Core','DBAFrontEndPack','DBAContentPack_Common',
+    'DBAHeroPack_Rat','DBAHeroPack_Ox','DBAHeroPack_Tiger','DBAHeroPack_Rabbit',
+    'DBAHeroPack_Dragon','DBAHeroPack_Snake','DBAHeroPack_Horse','DBAHeroPack_Goat',
+    'DBAHeroPack_Monkey','DBAHeroPack_Rooster','DBAHeroPack_Dog','DBAHeroPack_Boar'
+)
+$developmentOnly = $commonDisabled + @('GamePlatformWeather','DBAWorldPack_Village')
+$baseUnrealArgs = @('-unattended','-nop4','-nosplash','-nullrhi','-nosound','-stdout')
+$devArgs = @("-DisablePlugins=$($developmentOnly -join ',')",'-EnablePlugins=CommonUI,DBAGameplay')
+$villageArgs = @("-DisablePlugins=$($commonDisabled -join ',')",'-EnablePlugins=CommonUI,DBAGameplay,DBAWorlds,DBAWorldPack_Village')
+$devPythonArgs = @("-DisablePlugins=$($developmentOnly -join ',')",'-EnablePlugins=PythonScriptPlugin,CommonUI,DBAGameplay')
+$villagePythonArgs = @("-DisablePlugins=$($commonDisabled -join ',')",'-EnablePlugins=PythonScriptPlugin,CommonUI,DBAGameplay,DBAWorlds,DBAWorldPack_Village')
+
 
 function Assert-Free([string]$Path) {
     if (Test-Path -LiteralPath $Path) {
@@ -27,7 +45,7 @@ function Assert-Free([string]$Path) {
 function Invoke-UE([string]$Stage,[string[]]$Arguments) {
     $out = Join-Path $evidence "$Stage.out.log"
     $err = Join-Path $evidence "$Stage.err.log"
-    $args = @($project) + $Arguments + @('-unattended','-nop4','-nosplash','-nullrhi','-stdout')
+    $args = @($project) + $Arguments + $baseUnrealArgs
     $process = Start-Process -FilePath $editor -ArgumentList $args -Wait -PassThru -RedirectStandardOutput $out -RedirectStandardError $err
     $records.Add(@{Stage=$Stage;ExitCode=$process.ExitCode;StdOut=$out;StdErr=$err})
     if ($process.ExitCode -ne 0) {
@@ -51,7 +69,7 @@ try {
     # 必须显式-RepairGeneratedFoundations，逐项验证资产清单，禁止覆盖其他资产。
     $templatesPath = Join-Path $foundation 'Templates'
     $subgraphsPath = Join-Path $foundation 'Subgraphs'
-    if ($RepairGeneratedFoundations) {
+    if ($RepairGeneratedFoundations -or $ResumeApprovedPCGAssets) {
         $templateNames = @(
             'TPL_Base','TPL_ScatterSurface','TPL_BiomeGenerator','TPL_LinearDresser',
             'TPL_Enclosure','TPL_EnclosureClosed','TPL_Connector','TPL_GateInsert',
@@ -73,9 +91,19 @@ try {
         Assert-Free $templatesPath
         Assert-Free $subgraphsPath
     }
-    foreach ($item in @((Join-Path $foundation 'Definitions'),(Join-Path $village 'Blueprints'))) {
-        Assert-Free $item
+    $villageBlueprintPath = Join-Path $village 'Blueprints'
+    if ($RepairGeneratedFoundations -or $ResumeApprovedPCGAssets) {
+        $approved = @('Forest','Rock','Road','Field','Crops','Bridge','Exclusion',
+            'WaterBank','Building','Resource','Spawn') | ForEach-Object { 'BP_PCG_' + $_ + '.uasset' }
+        $found = @(Get-ChildItem $villageBlueprintPath -File -Filter '*.uasset' -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty Name)
+        if (@(Compare-Object $approved $found).Count -gt 0) {
+            throw 'Village PCG 11个真实蓝图与批准的完整清单不一致，拒绝跳过现有资产的审查。'
+        }
+    } else {
+        Assert-Free $villageBlueprintPath
     }
+    Assert-Free (Join-Path $foundation 'Definitions')
     # Gold实例独立占用审查；/Profiles可能还含旧版DA_PCG_Cosmetic等开发资产，不属于本次所有权。
     foreach ($name in @('Canopy','Rock','Crop')) {
         foreach ($relative in @("Realized/PCG_Gold_$name.uasset","Profiles/DA_PCGGold_$name.uasset")) {
@@ -84,6 +112,15 @@ try {
         }
     }
     if (Test-Path (Join-Path $foundation 'Validation/PCG_GoldLevel_M1.umap')) { throw 'GoldLevel地图已存在，拒绝覆盖。' }
+    # 续接/受控修复之前对30项已存在的真实资产做只读SHA-256快照。
+    # 该校验只保证文件集合完整，不代表引擎AssetRegistry/蓝图逻辑审查已通过。
+    if ($RepairGeneratedFoundations -or $ResumeApprovedPCGAssets) {
+        if (!(Test-Path $inventoryScript)) { throw '缺少PCG基础资源完整性审查工具。' }
+        $inventoryReport = Join-Path $evidence 'foundation_inventory.json'
+        & python $inventoryScript '--report' $inventoryReport
+        if ($LASTEXITCODE -ne 0) { throw '既有12模板+7子图+11蓝图的资源文件集合/校验值检查失败，拒绝续接。' }
+    }
+
     if (!$Apply) { Write-Host 'PCG资产创作只读预检通过；-Apply才执行真实UE资产保存。'; return }
     if (@(Get-Process UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count) {
         throw '其他UE编辑器正在运行，禁止竞争资产写入。'
@@ -93,19 +130,37 @@ try {
     $oldMap = $env:PCG_GOLD_MAP_MODE
     $oldReopen = $env:PCG_GOLD_VALIDATE_MODE
     try {
-        $foundationArgs = @('-run=GamePlatformPCGFoundationTemplates')
-        if ($RepairGeneratedFoundations) { $foundationArgs += '-RepairGeneratedFoundations' }
-        Invoke-UE '01-FoundationGraphs' $foundationArgs
-        Invoke-UE '02-VillageBlueprints' @('-run=GamePlatformPCGFoundationTemplates','-BlueprintRoot=/DBAWorldPack_Village/PCG/Blueprints/')
-        $env:PCG_GOLD_DEFINITION_MODE = 'apply'
-        Invoke-UE '03-GoldDefinitions' @("-ExecutePythonScript=$definitions",'-EnablePlugins=PythonScriptPlugin','-EnablePython')
-        $env:PCG_GOLD_REALIZE_MODE = 'apply'
-        Invoke-UE '04-RealizedSpawnerGraphs' @("-ExecutePythonScript=$realizedScript",'-EnablePlugins=PythonScriptPlugin','-EnablePython')
-        $env:PCG_GOLD_MAP_MODE = 'apply'
-        Invoke-UE '05-GoldLevelMap' @("-ExecutePythonScript=$mapScript",'-EnablePlugins=PythonScriptPlugin','-EnablePython')
-        # 必须启动与创作独立的UE进程重新打开所有资产，复查蓝图/定义/地图的实际反射类别。
-        $env:PCG_GOLD_VALIDATE_MODE = 'reopen'
-        Invoke-UE '06-FreshEditorReopen' @("-ExecutePythonScript=$reopenScript",'-EnablePlugins=PythonScriptPlugin','-EnablePython')
+        if ($RepairGeneratedFoundations) {
+            Invoke-UE '01-FoundationRepair' (@('-run=GamePlatformPCGFoundationTemplates',
+                '-RepairGeneratedFoundations') + $devArgs)
+        } elseif (!$ResumeApprovedPCGAssets) {
+            Invoke-UE '01-FoundationGraphs' (@('-run=GamePlatformPCGFoundationTemplates') + $devArgs)
+        }
+        if (!$ResumeApprovedPCGAssets -and !$RepairGeneratedFoundations) {
+            Invoke-UE '02-VillageBlueprints' (@('-run=GamePlatformPCGFoundationTemplates',
+                '-BlueprintRoot=/DBAWorldPack_Village/PCG/Blueprints/') + $villageArgs)
+        }
+        # 默认采用原生UE C++命令行，跳过无关的PythonScriptPlugin启动/工具注册；
+        # 显式UsePythonGoldCreation才保留原有Python Editor创作链供独立比对。
+        if ($UsePythonGoldCreation) {
+            $env:PCG_GOLD_DEFINITION_MODE = 'apply'
+            Invoke-UE '03-GoldDefinitions' (@("-ExecutePythonScript=$definitions") + $devPythonArgs)
+            $env:PCG_GOLD_REALIZE_MODE = 'apply'
+            Invoke-UE '04-RealizedSpawnerGraphs' (@("-ExecutePythonScript=$realizedScript") + $devPythonArgs)
+        } else {
+            Invoke-UE '03-GoldDefinitions' (@('-run=GamePlatformPCGGoldAssets', '-Stage=Definitions') + $devArgs)
+            Invoke-UE '04-RealizedSpawnerGraphs' (@('-run=GamePlatformPCGGoldAssets', '-Stage=Realized') + $devArgs)
+        }
+        if ($UsePythonGoldCreation) {
+            $env:PCG_GOLD_MAP_MODE = 'apply'
+            Invoke-UE '05-GoldLevelMap' (@("-ExecutePythonScript=$mapScript") + $villagePythonArgs)
+            $env:PCG_GOLD_VALIDATE_MODE = 'reopen'
+            Invoke-UE '06-FreshEditorReopen' (@("-ExecutePythonScript=$reopenScript") + $villagePythonArgs)
+        } else {
+            # 使用原生UE5.8命令在独立进程中保存.umap并重新加载核验，保持正式Village地图不变。
+            Invoke-UE '05-GoldLevelMap' (@('-run=GamePlatformPCGGoldAssets', '-Stage=Map') + $villageArgs)
+            Invoke-UE '06-FreshEditorReopen' (@('-run=GamePlatformPCGGoldAssets', '-Stage=Verify') + $villageArgs)
+        }
     } finally {
         $env:PCG_GOLD_DEFINITION_MODE = $oldDef
         $env:PCG_GOLD_REALIZE_MODE = $oldRealize

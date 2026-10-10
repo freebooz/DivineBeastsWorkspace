@@ -10,7 +10,11 @@ RunGoldLevelAuthoring.ps1（统一创作入口）：真实UE命令行先创建12
 
 AuthorGoldRealizedGraphs.py（实际网格生成图创建工具）：在Foundation模板和17项Definition真实保存后，使用已加载的MeshSet与GamePlatformData主资产ID调用平台编辑器接口，为森林、岩石和作物创建三份含StaticMeshSpawner（静态网格生成器）的Graph Instance（图实例）与三份Profile（配置定义）。默认只读，正式执行需要UE5.8+PCG_GOLD_REALIZE_MODE=apply；不冒充道路/围栏复杂组合资产已生产。
 
+GamePlatformPCGGoldAssetsCommandlet（平台PCG原生金标准资产命令）：编译在既有`GamePlatformPCGEditor（平台PCG编辑器模块）`中，阶段为`-Stage=Definitions（17项定义）`、`-Stage=Realized（3份实际网格图及配置）`、`-Stage=Map（独立测试地图及空间规则）`、`-Stage=Verify（全新编辑器进程只读回读）`。默认创作入口使用C++原生命令绕开Python插件初始化；需显式`-UsePythonGoldCreation`才用Python兼容方案。所有地图与资源使用UE真实资产格式、不接受任意保存目录。能编译不等于已执行和通过全部阶段。
+
 ValidateGoldLevelAssets.py（独立编辑器重开校验工具）：在全新UE编辑器进程中校验12模板、7子图、11蓝图、17定义、3份真实Spawner图实例、3份Profile和1张UWorld地图的实际存在、反射类型和最低参与者数量。检查脚本只认真实AssetRegistry（资产注册）结果，不声称已执行G01～G16空间生成验收。统一入口第6阶段调用该工具。
+
+InventoryFoundationAssets.py（已有基础资产完整性工具）：核对12模板、7子图、11个真实蓝图文件的批准名称、长度、SHA-256；默认只读，可使用`--report Saved/Validation/GamePlatformPCG/FoundationInventory_20261010.json`（证据路径）保存报告。统一入口启用`-ResumeApprovedPCGAssets`（受控续接）或`-RepairGeneratedFoundations`（受控修复）时会先执行该检查，拒绝覆盖已有资产。该清单不能取代独立UE Editor对资源类型和执行行为的验收。
 
 使用命令（EngineRoot为固定UE5.8路径）：
 

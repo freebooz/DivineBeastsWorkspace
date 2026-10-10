@@ -112,13 +112,18 @@ def main() -> None:
     if not callable(configurator):
         raise RuntimeError("缺少最新版GamePlatformPCGEditor强类型Gold Definition初始化接口")
 
+    # 全部17个Definition先初始化与C++强类型验证，再开始首次写盘；
+    # 单项校验失败不会留下已保存的一半Gold测试资产。
+    prepared = []
     for short in ORDER:
         definition = new_asset(short)
         result = configurator(definition, short)
         ok = result[0] if isinstance(result, tuple) else result
         if ok is not True:
             raise RuntimeError("GoldLevel定义初始化与RequiredDefinitions校验失败：" + short + " " + str(result))
+        prepared.append((short, definition))
 
+    for short, definition in prepared:
         if not library.save_loaded_asset(definition, only_if_is_dirty=False):
             raise RuntimeError("UE5.8未能真实保存PCG定义：" + short)
         reloaded = library.load_asset(asset_path(short))

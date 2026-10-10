@@ -135,3 +135,15 @@
 - 定向`GamePlatformDataEditor+GamePlatformWorldEditor -UsePrecompiled -NoEngineChanges（平台数据/世界编辑器）`重新构建时，UBT 14项编译/链接任务已完成两模块C++编译，但因UBT重建过程中删除了旧`UnrealEditor-UnrealEd.lib`、随后链接时报`LNK1181`，结果仍未通过；日志`Saved/Validation/GamePlatformPCG/PCG_EditorModules_RecoveredAdditional_20261010.log`。重新从官方`UnrealEditor-UnrealEd.dll`导出符号生成的当前版本导入库，来源记录`Saved/Validation/GamePlatformPCG/RecoveredImportLibsLatest/UnrealEdLatest.json`。尝试受控MSVC直接链接时，发现同一项目其他UBT仍在运行，按并发安全规则拒绝执行，**未成功创建DataEditor/WorldEditor新DLL**。
 - PCG最近一次正式UBT重编`Saved/Validation/GamePlatformPCG/PCG_Latest_RuntimeEditorBuild_20261010.log`在其他引擎任务占用构建锁期间已主动停止；本次任务不会为了“完成”抢占其他UI/天气/引擎编译进程。当前只承认之前`GamePlatformPCG+GamePlatformPCGEditor`在13:00的通过日志；13:00之后新增的围栏边界填充和UE回归源码**仍待新的完整编译**。
 - 完整金标准创作、UnrealEditor/Client/Server构建以及所有G01～G16/AssetRegistry/Cook/性能/专服状态验收未取得新成功证据。工程不包含本次新增的任何真正`.uasset`或`.umap`，因此不能签发生产完成。
+## 2026-10-10 14:31（UTC+08）｜已有真实资源确认、受控续接与金标准创建尝试
+
+本次接续时Git主分支HEAD为`acb63c8`，工作树存在其它UI/天气并行修改，本工单保留未提交修改、不提交或推送。
+
+1. **真实Foundation基础资产已经落盘（状态更新）**：`/Game/Development/Foundation/PCG/Templates`现有12份真正的`.uasset`，`Subgraphs`现有7份；`DBAWorldPack_Village/Content/PCG/Blueprints`现有11份真实Blueprint资源。它们不是本次生成的伪文件；本轮没有再次创建、覆盖或删除这些资源。
+2. **新增`Tools/Unreal/PCG/InventoryFoundationAssets.py`（资产文件审计）**：只读核对批准的12＋7＋11资源文件名、非空长度和SHA-256，审计证据`Saved/Validation/GamePlatformPCG/FoundationInventory_20261010.json`，本轮执行退出0。此检查是文件完整性，不是独立UE资产注册/蓝图逻辑验收。
+3. **改进六阶段作者入口续接保护**：`RunGoldLevelAuthoring.ps1`的`-ResumeApprovedPCGAssets`（从既有基础资产安全续接）与`-RepairGeneratedFoundations`（受控修复）会先执行上述真实文件完整性校验并保存独立证据，避免重新覆盖12模板/7子图/11蓝图。PowerShell语法检查通过。
+4. **本轮开发诊断链接PCGEditor DLL成功**：从锁定UE5.8真正的`UnrealEditor-UnrealEd.dll`、`UnrealEditor-PCG.dll`导出符号，验证不存在对应导入库后，以MSVC官方工具产生仅用于当前机器的中间导入库，保存`Saved/Validation/GamePlatformPCG/RecoveredCurrentPCGEditorLinks/source_provenance.json`来源/哈希清单。使用上一正式UBT生成的`.obj`及`.dll.rsp`受控诊断链接`UnrealEditor-GamePlatformPCGEditor.dll`成功（返回0，412160字节）。**直接链接不能代替完整官方UE构建与发行验收。**
+5. **真实Gold资源续接执行情况**：显式执行`RunGoldLevelAuthoring.ps1 -Apply -ResumeApprovedPCGAssets`，文件完整性门禁通过，随后启动真实`UnrealEditor-Cmd.exe`进入`03-GoldDefinitions（17个金标准定义）`阶段。编辑器初始化日志推进到`LogToolsetRegistry`、`Analytics`和`SourceControl`，但持续数分钟没有触发Python创作回调、无`UE_PCG_GOLD_DEFINITION_SAVED`证据。外部引擎构建同时对`UnrealEd/NiagaraCore/NiagaraEditor/PCG`启动数百动作的编译，资源创作进程CPU近空闲。为避免长时间占用编辑器写锁，已停止**本次任务拥有的**UE创作作业，没有停止其它工程任务。日志与清单保留：`Saved/Validation/GamePlatformPCG/GoldLevelAuthoring/3161248a-74b6-4e74-9c07-1df3f131549d/`。
+6. **最新真实计数**：Foundation 12模板＋7子图；Village 11蓝图；Gold Definitions（正式金标准定义）0、Realized Graph（实际网格生成图）0、Profile（生成配置）0、GoldLevel地图0。最新UE自动化、G01～G16、Client/Server双Cook、HiGen/HLOD、Gameplay持久化、桥/洞穴/导航和人工视觉评审仍未完成，不能签发P0～P7全部完成。
+
+**后续阻断解除条件**：等待既有引擎UBT完全结束，避免其它编辑器/资源写入进程；用最新正式UBT重新编译并加载PCGEditor等所需插件，然后只对金标准余下阶段执行`-Apply -ResumeApprovedPCGAssets`。出现真实Python/C++错误时仅在PCG范围内修复；若成功保存17定义，再执行3图实例及配置、独立GoldLevel地图、新进程回读。全部资源真实存在并回读以后才进入用户指定的统一自动化、G01～G16与双Cook流程。

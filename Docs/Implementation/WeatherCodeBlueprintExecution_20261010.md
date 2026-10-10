@@ -51,6 +51,17 @@
 
 本轮结论：代码与素材静态门禁已通过，但真正的天气UE资产、完整Editor链接、Client/Server生产构建、网络和Cook端到端验收仍受同一工作空间引擎构建链与其他插件状态阻断。未经解决这些具体阻断，不能将P5/P8写成已完成。
 
+## 2026-10-10 14:17后继续执行事实
+
+- 当前工作区`main`已更新到`acb63c8`（更新由其他并行任务产生，天气任务没有主动提交），天气制作现有`Tools/Unreal/Weather/RunWeatherP5Authoring.ps1`分阶段PowerShell包装脚本。发现该脚本为UTF-8无BOM中文源文件，在工作区默认Windows PowerShell 5.1下产生ParserError。已为脚本增加UTF-8 BOM并真实执行`-Stage MPC`的默认只读预检，Exit=0，得到`WEATHER_P5_INSPECT_ONLY`，未创建假资产。
+- 观察到一个已有的`UnrealEditor -Module=NiagaraCore+NiagaraEditor+PCG`底层重编任务，UBT报告381个编译动作，随后该Job由其他任务请求停止（`job stopped by request`）；本轮天气任务没有干扰也没有将停止当成功。
+- 重新检查锁定引擎Editor开发构建导入库：`UnrealEd`、`NiagaraCore`和`NiagaraEditor`仍不存在，`RenderCore`、`AssetRegistry`、`Projects`存在。当前Engine并没有足够的真实链接产物，不能继续声称SurfaceEditor/NiagaraEditor可成功创建天气材质。
+- 集中执行`Build/Validation/VerifyWeatherDelivery.ps1`，实际退出码0，12份PNG/WAV真实素材、10个天气作者脚本接口、3个Niagara系统与5个Emitter创作合同、Python语法、47代码插件架构、Pester18通过0失败。**这是静态阶段成功，不等于UE可运行天气**。同一命令明确显示`WEATHER_P5_BINARY_PACKAGES_PRESENT=0/9`，九个关键真实引擎资产均不存在。
+- 保留并行PCG文件修改及其它用户生成的天气制作脚本，不清理中间文件、不覆盖工作树、更不伪造引擎导入库或uasset。
+
+当前P5真实雨雪资产生产的严格阻断为锁定UE5.8引擎`UnrealEd/NiagaraCore/NiagaraEditor`开发导入库不完整；需要先在未被并发取消的构建窗口内完成引擎目标库与Editor的完整链接，成功启动编辑器并经Monolith连接，再逐阶段执行真正MPC、Texture、Material、Niagara、Blueprint保存/回读和Client/Server Cook。
+
+
 
 下一工程阻断的实际解除条件是修复/补齐同一UE5.8引擎与项目模块版本匹配的`NiagaraCore/NiagaraEditor/RenderCore/UnrealEd/PCG`导入库与必要DLL，处理已有非天气源码冲突，再用真实Editor成功创建MPC与Texture/Material/Niagara/Blueprint uasset，保存回读后才可以执行项目双端和Cook验收。
 

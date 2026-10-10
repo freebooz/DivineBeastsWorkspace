@@ -63,12 +63,13 @@ $prev=$env:WEATHER_AUTHOR_PHASE
 try{
     $env:WEATHER_AUTHOR_PHASE=$Phase
     $normalized=$Task.Replace('\\','/')
-    Invoke-WeatherUE @('-ExecutePythonScript='+$normalized) ('ASSET_'+$Phase)
+    # PythonScriptPlugin（内置Python编辑器脚本插件）仅用于本次资源制作进程。
+    Invoke-WeatherUE @('-EnablePlugins=PythonScriptPlugin',('-ExecutePythonScript='+$normalized)) ('ASSET_'+$Phase)
     if($VerifyAfter){
         $old=$env:WEATHER_ASSET_VERIFY_MODE
         try{
             $env:WEATHER_ASSET_VERIFY_MODE='verify'
-            Invoke-WeatherUE @('-ExecutePythonScript='+$Verify.Replace('\\','/')) 'ASSET_VERIFY'
+            Invoke-WeatherUE @('-EnablePlugins=PythonScriptPlugin',('-ExecutePythonScript='+$Verify.Replace('\\','/'))) 'ASSET_VERIFY'
         }finally{
             $env:WEATHER_ASSET_VERIFY_MODE=$old
         }

@@ -85,3 +85,9 @@
 - `Saved/Validation/GamePlatformPCG/PCG_EditorModules_RecoveredAdditional_20261010.log`：独立缩小范围仍因`UnrealEditor-UnrealEd.lib`被UBT判定过期删除而两模块链接失败。`RecoveredImportLibsAdditional/restore_manifest.json`及`RecoveredImportLibsLatest/UnrealEdLatest.json`存储DLL真实导出及SHA-256来源供复核；不能把本地合成导入库认作官方构建闭包。
 - 因别的UBT使用相同目标模块/中间目录，受控MSVC手动链接按并发门禁明确拒绝，项目`GamePlatformDataEditor`与`GamePlatformWorldEditor`尚无新的DLL。PCG自己的13:00构建通过不包含随后修订的围栏掩码和新回归测试。
 - GoldLevel真实模板/Definition/Blueprint/Graph/地图新增数量仍为0；不执行未满足前置条件的真实资产生成或服务器Cook，也不写“完成”。
+## 2026-10-10 14:31（UTC+08）｜资源文件与编辑器续接记录
+
+- 已核实并由`InventoryFoundationAssets.py（PCG基础资产审计）`记录：12份基础模板、7份公共子图、11份Village放置器蓝图均是当前工作区真实非空`.uasset`，校验退出0。证据：`Saved/Validation/GamePlatformPCG/FoundationInventory_20261010.json`。**SHA文件完整性不能代替UE的类别/蓝图父类/节点连接/独立重开验证。**
+- 编辑器基础模块诊断：`RecoveredCurrentPCGEditorLinks/source_provenance.json`记录当前UE官方DLL哈希与符号数；基于UE此前生成的编译对象及链接响应文件手工链接PCGEditor成功（开发诊断，不等于正式目标构建成功）。
+- 实际运行`GoldLevelAuthoring/3161248a-74b6-4e74-9c07-1df3f131549d/03-GoldDefinitions.out.log`的UE5.8命令行启动推进到资产系统，但数分钟没有出现Python Definition配置或保存回调；由于并行UE引擎构建占锁，本次己方作业安全停止，保留日志。真实金标准17 Definition、3 Realized Graph、3 Profile及GoldLevel地图均未新增。
+- 本轮遵照“先代码、蓝图、资源，最后统一自动化”的执行顺序；除文件完整性检查/PowerShell语法校验外，不宣称UE Automation、G01～G16、Cook或服务器状态测试通过。
