@@ -31,8 +31,11 @@ Runtime不得依赖Client，Server Target不得装配WeatherClient；没有Weath
 - 新增`UGamePlatformWeatherBlueprintLibrary`，提供ReadWeather（读权威快照插值）、SetWeatherOnAuthority（只有服务端可写）、ApplyWeatherPresetOnAuthority（预加载资产且有效租约期间执行），不维护第二套WeatherService，不发送客户端天气写入RPC。
 - 第三层`ADivineBeastsWeatherReviewController`只供项目天气审查，内部调用前述平台接口，开关`bApplyAtBeginPlay`默认false，项目测试蓝图拟生成到`/Game/Development/Weather/Blueprints/BP_DBA_WeatherReviewController`，正式竞技地图不得放置该开发Actor。
 - 平台Presentation的中立请求支持可选`FloatParameters`、`VolumeMultiplier`和弱`AttachComponent`：雨雪VFX接收`User.WeatherIntensity`并用观察者ViewTarget根组件附着，雨雪SFX接收`WeatherIntensity`，普通无参数请求保持默认行为。VFX/SFX分别由各自Definition参数白名单校验，不建立天气专用渲染播放器。
-- `FDivineBeastsPresentationProjectCatalog`新增天气VFX与SFX两个独立目录构造器，仅返回中立逻辑ID与语义，**尚未自动注册或激活**；待真实Niagara/SoundWave、Definition经Data租约预载成功后，再由已存在项目内容包激活事务注册。不可把未交付Definition当作已存在。
+- `FDivineBeastsPresentationProjectCatalog`已有独立天气VFX与SFX中立目录构造器。`UDivineBeastsPresentationClientSubsystem`在首份权威天气快照到达时，分别复用项目层内容包事务异步预载雨雪Definition；全部通过`GamePlatformData`身份/类型/租约门禁才发布Catalog。VFX/SFX相互独立，缺音频不阻断雨雪视觉。真实Definition缺失只保留可诊断失败，不发布伪Catalog。
 - 两个真实Surface母材质、七个Material Function、三张Niagara Sprite材质、八个项目天气预设和审核Actor蓝图均已备好UE Editor作者脚本，但运行资产仍以Editor执行、保存、编译、回读为准，不能凭脚本目录宣称已完成。
+- 第三层`ADivineBeastsWorldGameMode`增加可选`InitialWeatherPresetId`（如`db.weather.lightrain@1`），在权威世界通过GamePlatformData的World期限异步Definition租约加载，成功后投影天气数值并释放租约，失败保留默认天气。自动天气表优先于初始预设，两者不并发；退出地图释放待完成租约。
+- 天气客户端按服务器当前过渡状态启动粒子而非立即采用目标强度，类型切换和最终强度稳定时最多有限次重发VFX/SFX，不在0.1秒表面定时器内不断Spawn Niagara。目录预载成功以后，通过`RefreshPresentationAfterContentActivation`重发当前天气，修复首次OnRep先于真实资源时看不到雨雪的问题。
+- 审核蓝图现在包含GameMode和Controller两份，另有独立天气Review Map作者脚本；均需在UE5.8真实编译、保存、回读后才能计入资源交付，不自动改动Village正式地图。
 
 
 ## 网络与异常

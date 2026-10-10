@@ -45,7 +45,7 @@ bool InsidePolygon(const TArray<FVector2D>& Vertices, const FVector2D& Point)
 /** 输入已通过ValidateMask，供请求内批量EvaluatePrepared与单点ContainsPoint共享。 */
 bool ContainsValidated(const FGamePlatformPCGSpatialMask& Mask, const FVector2D& Position)
 {
-    if (Mask.bClosed && InsidePolygon(Mask.Vertices, Position))
+    if (Mask.bClosed && Mask.bFillInterior && InsidePolygon(Mask.Vertices, Position))
     {
         return true;
     }

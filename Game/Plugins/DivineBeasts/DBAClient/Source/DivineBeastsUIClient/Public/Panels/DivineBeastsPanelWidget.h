@@ -17,6 +17,9 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsPanelWidget
     GENERATED_BODY()
 
 public:
+    /** 项目面板默认语义Style绑定；仅在有同名Widget和有效主题时覆盖本实例视觉。 */
+    UDivineBeastsPanelWidget();
+
     /** 表现层领域标识，不作为服务器授权判断。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Domain")
     EDivineBeastsUIDomain GetBusinessDomain() const { return UIDomain; }

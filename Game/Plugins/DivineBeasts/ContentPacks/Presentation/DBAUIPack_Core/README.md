@@ -2,6 +2,12 @@
 
 `DBAUIPack_Core`是 DivineBeasts（神兽联盟项目层）内部的纯内容插件，负责公共用户界面二进制资产的唯一所有权。它不是第四架构层，也不重新实现 `GamePlatformUI` 或 `DBAClient` 的运行机制。
 
+## 2026-10-10 项目统一主题资产归属与待制作清单
+
+- 项目公共Theme（主题）/Styles（样式）仍全部归本内容包：正式目标路径为 `/DBAUIPack_Core/UI/Themes/DA_DBA_UITheme_Default`（默认主题）与 `/DBAUIPack_Core/UI/Styles/BP_DBA_*`（统一CommonUI样式蓝图）。不同游戏项目替换内容资产，不改GamePlatformUI平台机制，竞技公共规则也不复制另一套主题服务。
+- `Docs/UIThemeMonolithAuthoringSpec_20261010.json`（Monolith真实UE资产制作输入规范）记录按钮主要/次要、文字正文/标题、面板背景五类样式蓝图，以及 `WBP_DBA_UI_StandardPanel`（标准面板蓝图）和中性对照开发主题的拟定身份、可访问性要求与编译/重载核验清单。**本规范是待执行输入，不等于这些.uasset已经生成。**
+- DBAClient中的已有登录、选角、创建和角色卡片已增量声明语义绑定；所有项目视觉蓝图仍必须由Monolith在锁定的UE5.8编辑器内制作。未获得完整真实样式资产、主题Definition、编译/保存/重读及最小UI完整性验证前，`DefaultThemeDefinitionId` 保持空值，当前页面继续使用原来已验收样式。
+
 ## 当前资产范围
 
 2026-10-09现行前端：登录页15节点、创建页27节点、选择页24节点，两种角色卡片分别8/10节点；前文日期记录保留各阶段历史。登录账号/密码固定284×42，角色名称220×38逻辑像素，三者实际字体均为16号。通过Monolith写入UE5.8有效的WidgetStyle.TextStyle.Font.Size并保存重载；固定DPI=1，六个公共WBP的94控件RenderScale均为1、无ScaleBox。声明式生成后的字体后置动作及回归入口见实施说明和生成清单。

@@ -16,6 +16,9 @@ struct GAMEPLATFORMPCG_API FGamePlatformPCGSpatialMask
     /** 来源放置器的稳定GUID；项目不能用数组索引代替已发布来源身份。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial")
     FGuid SourceId;
+    /** 来源的稳定领域语义；由WorldDirector读取DomainCatalog标识，用于编辑器候选过滤。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial")
+    FName DomainId = NAME_None;
 
     /** 自该来源向外扩张的线条半宽（厘米）；闭合地块可设置0。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial", meta=(ClampMin="0.0"))
@@ -29,6 +32,9 @@ struct GAMEPLATFORMPCG_API FGamePlatformPCGSpatialMask
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial")
     bool bClosed = false;
+    /** 是否挖除闭合曲线内部：地块为true，闭合围栏/沿线装饰为false（只沿边界挖除），避免把农田作物全部清空。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial")
+    bool bFillInterior = true;
 
     /** 采样后的世界XY坐标；高度投影由官方PCG处理，空间互斥不写Landscape。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GamePlatform|PCG|Spatial")

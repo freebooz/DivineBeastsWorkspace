@@ -1,4 +1,5 @@
 #include "Screens/Login/DivineBeastsLoginScreen.h"
+#include "Styling/DivineBeastsUIStyleBindings.h"
 
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
@@ -9,6 +10,17 @@
 #include "Misc/Parse.h"
 #include "HAL/PlatformMisc.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
+
+// 默认主题语义只保存在项目层CDO：当项目主题ID为空时平台兼容绑定保持旧Widget样式。
+// 不修改已有Widget树、命名控件、焦点、登录输入/命令或加载任何项目纹理。
+UDivineBeastsLoginScreen::UDivineBeastsLoginScreen()
+{
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("LoginButton"), DivineBeasts::UI::Styling::Keys::ButtonPrimary, EGamePlatformUIStyleKind::Button));
+    // 旧UMG UButton不管理内部文本样式；命名子TextBlock按相同正文视觉单独可选适配。
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("LoginButtonLabel"), DivineBeasts::UI::Styling::Keys::TextBody, EGamePlatformUIStyleKind::Text, true));
+}
 
 UDivineBeastsLoginViewModel*
 UDivineBeastsLoginScreen::GetLoginViewModel() const

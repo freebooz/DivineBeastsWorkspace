@@ -8,6 +8,7 @@ class UGamePlatformPCGProfileDefinition;
 class UGamePlatformPCGMeshSetDefinition;
 class UPCGGraph;
 class AGamePlatformPCGWorldDirector;
+class AGamePlatformPCGActorBase;
 
 /** Python/蓝图编辑器入口；固定开发资产范围，拒绝正式地图和已有包覆盖，不是运行时服务。 */
 UCLASS()
@@ -40,6 +41,13 @@ public:
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool CreatePCGPlacementBlueprints(const FString& RootPackagePath, FString& Error);
     /**
+     * Editor-only将已加载的合法PCGGraph绑定给实际放置器及原生PCGComponent。
+     * 只建立本地图引用，不调用Generate、网络广播、同步加载资产或修改服务器权威。
+     */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
+    static bool BindPlacedActorGraph(AGamePlatformPCGActorBase* Actor, UPCGGraph* ApprovedGraph,
+        FString& Error);
+    /**
      * 为已完成GamePlatformData租约加载的项目MeshSet生成真正带Weighted Spawner的开发图实例。
      * 仅创建于/Game/Development/Foundation/PCG/Realized/，不修改共享模板或Profile、不写正式地图；
      * 成功后使用编辑器将返回Graph与Profile.GraphReference关联并另行保存、验证与烘焙。
@@ -51,12 +59,12 @@ public:
         FString& Error);
     /**
      * 编辑器阶段从显式注册的WorldDirector提取确定性空间几何，注入已绑定的Graph Instance。
-     * 不保存/执行、不扫描全世界Actor；调用者需要随后在UE编辑器明确保存真实资产。
+     * 可排除同一农田/作物布局的自掩码，防止农田自身把作物全部切空；不得排除道路、桥、人工锁定。
      */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool ConfigureRealizedGraphSpatialMasks(
         UPCGGraph* RealizedGraph, AGamePlatformPCGWorldDirector* Director,
-        int32 SubjectPriority, FString& Error);
+        int32 SubjectPriority, const TArray<FName>& IgnoredSourceDomains, FString& Error);
     /** 游戏线程；Profile及其图/网格必须已加载且保存。返回真实依赖字节指纹，不批准生成结果或重开状态。 */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|PCG|Editor")
     static bool InspectProfileSource(UGamePlatformPCGProfileDefinition* Profile, FString& Fingerprint,

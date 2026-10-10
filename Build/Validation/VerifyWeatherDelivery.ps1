@@ -21,7 +21,10 @@ try {
         'Tools/Unreal/Weather/AuthorWeatherBlueprintAssets.py',
         'Tools/Unreal/Weather/AuthorWeatherVFXDefinitions.py',
         'Tools/Unreal/Weather/AuthorWeatherAudioAssets.py',
-        'Tools/Unreal/Weather/AuthorWeatherReviewMap.py'
+        'Tools/Unreal/Weather/AuthorWeatherReviewMap.py',
+        'Tools/Unreal/Weather/GenerateWeatherMonolithSpecs.py',
+        'Tools/Unreal/Weather/AuthorWeatherProductionPipeline.py',
+        'Tools/Unreal/Weather/VerifyWeatherUnrealAssets.py'
     )
     & python -m py_compile @Scripts
     if($LASTEXITCODE -ne 0){throw "天气Python源码语法有错误"}
@@ -41,6 +44,24 @@ try {
     if($tests.FailedCount -gt 0){throw 'Pester静态架构回归失败'}
 
     Write-Output '=== WEATHER ENGINE GATE ==='
+    # 本引擎资产门禁既要检查真实可加载模块，还要检查二进制内容资源存在，
+    # 不能仅因GPU或SourceArt源图片存在就标记天气P5完成。
+    $requiredPackages = @(
+        'Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/ParameterCollections/MPC_GP_SurfaceGlobal.uasset',
+        'Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Materials/M_GP_Surface_Master.uasset',
+        'Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Materials/M_GP_Surface_Lite.uasset',
+        'Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Weather/Niagara/NS_GP_Weather_Rain.uasset',
+        'Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Weather/Niagara/NS_GP_Weather_Snow.uasset',
+        'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Weather/Definitions/DA_DBA_Weather_Clear.uasset',
+        'Game/Content/Development/Weather/Blueprints/BP_DBA_WeatherReviewController.uasset',
+        'Game/Content/Development/Weather/Blueprints/BP_DBA_WeatherReviewGameMode.uasset',
+        'Game/Content/Development/Weather/Maps/L_DBA_WeatherReview.umap'
+    )
+    $missingPackages=@($requiredPackages | Where-Object {-not (Test-Path $_)})
+    Write-Output ('WEATHER_P5_BINARY_PACKAGES_PRESENT='+($requiredPackages.Count-$missingPackages.Count)+'/'+$requiredPackages.Count)
+    foreach($package in $missingPackages) {Write-Output ('MISSING_WEATHER_ASSET '+$package)}
+    if($RequireEngineAssets -and $missingPackages.Count -gt 0) {throw '天气真实二进制资源尚未制作，不得声明P5完成'}
+
     $requiredModules = @(
         'Game/Plugins/GamePlatform/World/GamePlatformWeather/Binaries/Win64/UnrealEditor-GamePlatformWeatherRuntime.dll',
         'Game/Plugins/GamePlatform/World/GamePlatformWeather/Binaries/Win64/UnrealEditor-GamePlatformWeatherClient.dll',

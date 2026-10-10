@@ -1,5 +1,10 @@
 # DBAClient（神兽联盟客户端组合插件）
 
+## 天气视觉内容包编排（2026-10-10）
+
+`DivineBeastsPresentationClient`在本地玩家绑定的World收到第一份权威天气快照后，复用既有`ActivateContentPack`的Data租约、定义类型校验和目录预检，分别为雨雪VFX及独立客户端SFX建立World期限内容包。音频尚无真实资源时只让SFX片段失败，绝不影响VFX和服务器Gameplay。
+真实Definition全部加载并成功发布某类Catalog后，会通知`GamePlatformWeatherClient`按当前服务器天气重新提交表现；后加入玩家不需要等下一次天气变化才看到雨雪。切图、账号切换或World退出会主动解绑及回收各自租约，不新增表现播放器。完整联机与Cook验收仍待真实引擎和.uasset资源。
+
 2026-10-10项目主题入口已接入现有`DivineBeastsUIClientSubsystem`（项目本地玩家UI组合根），读取配置后交给平台主题服务。当前默认主题ID为空，不改变现有登录、LOGO、字号与命名控件；真实主题/样式须经Monolith创建验收后再启用。详见[UIThemeIntegration（项目主题接入）](Docs/UIThemeIntegration.md)。
 
 

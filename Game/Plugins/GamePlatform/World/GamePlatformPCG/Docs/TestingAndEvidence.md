@@ -66,3 +66,9 @@
 - UE5.8 Editor定向模块构建：UHT解析`DBAWorldsRuntime/Public/Gameplay/DivineBeastsWorldGameMode.h(37)`时报`Invalid use of keyword 'private'`（退出码6），在进入PCG C++编译前失败。日志`Saved/Validation/GamePlatformPCG/PCG_P2P7_EditorModules_20261010.log`；该文件属于并行世界/天气修改，未由PCG任务覆盖。
 - 真实UE Blueprint、PCG模板/子图、DataAsset和GoldLevel世界地图还没有成功生成并完成关闭重开；Server Cook、多人状态恢复、HiGen/HLOD以及可视化性能/人工验收均未执行。
 - 本任务只确认P2～P7核心源码与Blueprint生成工具的落盘，不宣布每项计划已经实现可投入生产的运行闭环。
+## 2026-10-10｜UHT恢复及PCG C++检查补充证据
+
+- 修复`DivineBeastsWorldGameMode.h`中拼接的include后，UBT不再报原先的`private` UHT语法错误；定向UBT因`-NoEngineChanges`触发`FailedDueToEngineChange`（5）而停止，日志`Saved/Validation/GamePlatformPCG/PCG_P2P7_EditorModules_20261010_recheck.log`。该阻断属于正式引擎构建链，不是PCG源文件的编译诊断。
+- MSVC 14.44`/Zs`基于UBT真实响应文件完成PCG 26份中的前18份语法检查（均退出0），余下8份因同时存在其它正式构建主动停止重复检查；**未编译的8份不可标记通过**。并行正式UBT日志显示PCG Runtime及Editor Unity C++编译推进至链接，但因`LNK1181`缺引擎导入库未完成正式构建。
+- 本次静态架构和金标准前置检查返回0；原生策略测试六项通过，证据`Saved/Validation/GamePlatformPCG/762e800a-fea7-4906-a044-6e5e6c08cbe3/`，综合总码2表示实际UE验收仍缺失。
+- 正式Foundation/PCG蓝图/验证地图`.uasset`/ `.umap`新增数均为0，UE Automation、Editor独立重开、GoldLevel、Client/Server Cook、专服权威/性能/人工验收仍未执行。不得因旧编译日期DLL存在而把新增蓝图创作接口当成已运行。

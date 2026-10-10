@@ -77,7 +77,20 @@ def main() -> None:
         intensity_rule.set_editor_property("max_value", 1.0)
         schema = unreal.GamePlatformVFXParameterSchema()
         schema.set_editor_property("max_override_count", 16)
-        schema.set_editor_property("rules", [intensity_rule])
+        # 与Niagara Emitter的Spawn Rate原生参数绑定同步：雨/雪近远景独立发射率。
+        near_rule = unreal.GamePlatformVFXParameterRule()
+        near_rule.set_editor_property("name", unreal.Name("User.WeatherNearSpawnRate"))
+        near_rule.set_editor_property("type", unreal.GamePlatformVFXParameterType.FLOAT)
+        near_rule.set_editor_property("required", True)
+        near_rule.set_editor_property("min_value", 0.0)
+        near_rule.set_editor_property("max_value", 1600.0)
+        far_rule = unreal.GamePlatformVFXParameterRule()
+        far_rule.set_editor_property("name", unreal.Name("User.WeatherFarSpawnRate"))
+        far_rule.set_editor_property("type", unreal.GamePlatformVFXParameterType.FLOAT)
+        far_rule.set_editor_property("required", True)
+        far_rule.set_editor_property("min_value", 0.0)
+        far_rule.set_editor_property("max_value", 1000.0)
+        schema.set_editor_property("rules", [intensity_rule, near_rule, far_rule])
         d.set_editor_property("parameter_schema", schema)
 
         if not assets.save_loaded_asset(d, only_if_is_dirty=False):

@@ -10,8 +10,9 @@ AGamePlatformWeatherReplicator::AGamePlatformWeatherReplicator()
     bReplicates = true;
     bAlwaysRelevant = true; // 一个世界只有一个很小的状态；不按玩家位置重复生成天气对象。
     SetReplicateMovement(false); // UE5.8通过公开API控制移动复制，不访问AActor私有字段。
-    NetUpdateFrequency = 2.f;
-    MinNetUpdateFrequency = 0.1f;
+    // UE5.8使用公开接口，直接写AActor网络频率字段已标记弃用。
+    SetNetUpdateFrequency(2.f);
+    SetMinNetUpdateFrequency(0.1f);
     SetReplicates(true);
 }
 

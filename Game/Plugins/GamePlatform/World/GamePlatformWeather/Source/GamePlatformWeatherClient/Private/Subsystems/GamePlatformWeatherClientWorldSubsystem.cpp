@@ -158,18 +158,20 @@ void UGamePlatformWeatherClientWorldSubsystem::SampleAndApplyTransition(
     }
 }
 
-void UGamePlatformWeatherClientWorldSubsystem::RefreshPresentationAfterContentActivation()
+void UGamePlatformWeatherClientWorldSubsystem::RefreshPresentationAfterContentActivation(
+    const bool bVisual)
 {
     check(IsInGameThread());
     if (bClosing || ActiveSnapshot.Revision <= 0 || !IsValid(GetWorld()) ||
         GetWorld()->bIsTearingDown) return;
 
-    // 内容包加载成功可能晚于首次OnRep，必须用当前服务器时钟的天气值重发，
-    // 不能依赖下一次服务器改天气才看见雨雪。原RequestId撤销后产生新的一次实例。
+    // 内容包迟于OnRep加载时只刷新所属领域；不能因为SFX定义晚到
+    // 就撤销、重建已经在播放的Niagara雨雪实例（反之亦然）。
+    const int32 Channel = bVisual ? 0 : 1;
     const FGamePlatformWeatherState Current =
         ActiveSnapshot.Sample(GetEstimatedServerTimeSeconds());
-    CancelPreviousPresentation();
-    SendPresentationEvent(Current, false);
+    CancelPreviousPresentation(Channel);
+    SendPresentationEvent(Current, false, Channel);
 }
 
 void UGamePlatformWeatherClientWorldSubsystem::ApplyVisualState(const FGamePlatformWeatherState& State)
@@ -210,7 +212,8 @@ void UGamePlatformWeatherClientWorldSubsystem::RemoveVisualChangedHandler(FDeleg
 }
 
 void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
-    const FGamePlatformWeatherState& State, const bool bCancellation)
+    const FGamePlatformWeatherState& State, const bool bCancellation,
+    const int32 ChannelFilter)
 {
     UWorld* World = GetWorld();
     if (!World || !World->GetGameInstance()) return;
@@ -229,11 +232,18 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
     }
     if (!bCancellation)
     {
-        ActiveVfxRequestId = FGuid::NewGuid();
-        ActiveSfxRequestId = FGuid::NewGuid();
-        const FString Base = FString(TEXT("Presentation.Weather.")) + WeatherTagSuffix(State.Type);
-        ActiveVfxTag = FName(*(Base + TEXT(".VFX")));
-        ActiveSfxTag = FName(*(Base + TEXT(".SFX")));
+        const FString Base = FString(TEXT("Presentation.Weather.")) +
+            WeatherTagSuffix(State.Type);
+        if (ChannelFilter < 0 || ChannelFilter == 0)
+        {
+            ActiveVfxRequestId = FGuid::NewGuid();
+            ActiveVfxTag = FName(*(Base + TEXT(".VFX")));
+        }
+        if (ChannelFilter < 0 || ChannelFilter == 1)
+        {
+            ActiveSfxRequestId = FGuid::NewGuid();
+            ActiveSfxTag = FName(*(Base + TEXT(".SFX")));
+        }
     }
     for (ULocalPlayer* LocalPlayer : World->GetGameInstance()->GetLocalPlayers())
     {
@@ -242,11 +252,14 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
         if (!Presentation) continue;
         for (int32 Channel = 0; Channel < 2; ++Channel)
         {
+            if (ChannelFilter >= 0 && ChannelFilter != Channel) continue;
+            const FGuid ChannelId = Channel == 0 ? ActiveVfxRequestId : ActiveSfxRequestId;
+            if (!ChannelId.IsValid()) continue;
             const FName TagName = Channel == 0 ? ActiveVfxTag : ActiveSfxTag;
             const FGameplayTag SemanticTag = UGameplayTagsManager::Get().RequestGameplayTag(TagName, false);
             if (!SemanticTag.IsValid()) continue; // 配置无标签时静默降级，不私建Native Tag。
             FGamePlatformPresentationRequest Request;
-            Request.RequestId = Channel == 0 ? ActiveVfxRequestId : ActiveSfxRequestId;
+            Request.RequestId = ChannelId;
             Request.SemanticTag = SemanticTag;
             Request.SourceId = TEXT("GamePlatformWeather");
             Request.ContextId = TEXT("WorldWeather");
@@ -275,6 +288,15 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
                 Request.FloatParameters.Add(
                     Channel == 0 ? FName(TEXT("User.WeatherIntensity")) :
                         FName(TEXT("WeatherIntensity")), Strength);
+                if (Channel == 0)
+                {
+                    // Niagara两级雨雪Emitter分别用原生SpawnRate绑定，强度真正改变发射率，
+                    // 不是仅透传一个未绑定的WeatherIntensity数值。单位：粒子/秒。
+                    Request.FloatParameters.Add(TEXT("User.WeatherNearSpawnRate"),
+                        (bRain ? 1400.f : 500.f) * Strength);
+                    Request.FloatParameters.Add(TEXT("User.WeatherFarSpawnRate"),
+                        (bRain ? 800.f : 320.f) * Strength);
+                }
                 // SoundWave尚未接上动态MetaSound时仍能按强度控制请求级音量。
                 // Niagara一侧保留默认1倍，防止天气光效被声学系数污染。
                 if (Channel == 1)
@@ -290,15 +312,21 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
     }
 }
 
-void UGamePlatformWeatherClientWorldSubsystem::CancelPreviousPresentation()
+void UGamePlatformWeatherClientWorldSubsystem::CancelPreviousPresentation(
+    const int32 ChannelFilter)
 {
-    if (ActiveVfxRequestId.IsValid() || ActiveSfxRequestId.IsValid())
+    if ((ChannelFilter < 0 || ChannelFilter == 0) && ActiveVfxRequestId.IsValid())
     {
-        SendPresentationEvent(LastVisualState, true);
+        SendPresentationEvent(LastVisualState, true, 0);
         ActiveVfxRequestId.Invalidate();
-        ActiveSfxRequestId.Invalidate();
         ActiveVfxTag = NAME_None;
-        ActiveSfxTag = NAME_None;
-        LastPresentedIntensity = -1.f;
     }
+    if ((ChannelFilter < 0 || ChannelFilter == 1) && ActiveSfxRequestId.IsValid())
+    {
+        SendPresentationEvent(LastVisualState, true, 1);
+        ActiveSfxRequestId.Invalidate();
+        ActiveSfxTag = NAME_None;
+    }
+    if (!ActiveVfxRequestId.IsValid() && !ActiveSfxRequestId.IsValid())
+        LastPresentedIntensity = -1.f;
 }

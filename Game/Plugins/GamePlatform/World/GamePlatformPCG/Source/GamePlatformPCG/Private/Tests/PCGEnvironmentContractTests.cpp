@@ -266,6 +266,14 @@ bool FGamePlatformPCGSpatialMasksTest::RunTest(const FString&)
     TestTrue(TEXT("道路缓冲区命中"), FGamePlatformPCGSpatialRules::ContainsPoint(Road, FVector2D(0.0, 149.0)));
     TestFalse(TEXT("道路缓冲区外不命中"), FGamePlatformPCGSpatialRules::ContainsPoint(Road, FVector2D(0.0, 151.0)));
     TestTrue(TEXT("闭合农田内命中"), FGamePlatformPCGSpatialRules::ContainsPoint(Parcel, FVector2D(20.0, 20.0)));
+    // 同一个闭合四边形，田地Mask应填充内部，栏杆Mask应只清除边缘。
+    FGamePlatformPCGSpatialMask Fence = Parcel;
+    Fence.SourceId = FGuid(4, 3, 2, 1);
+    Fence.bFillInterior = false;
+    Fence.HalfWidthCm = 12.0f;
+    TestFalse(TEXT("闭合围栏不能排空院内全部作物"), FGamePlatformPCGSpatialRules::ContainsPoint(Fence, FVector2D(0.0, 0.0)));
+    TestTrue(TEXT("闭合围栏沿边界缓冲应正确排除"), FGamePlatformPCGSpatialRules::ContainsPoint(Fence, FVector2D(98.0, 0.0)));
+
 
     float Mask = 0.0f;
     FGuid Source;

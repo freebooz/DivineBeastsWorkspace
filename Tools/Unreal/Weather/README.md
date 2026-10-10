@@ -55,6 +55,14 @@ $env:WEATHER_ASSET_IMPORT_MODE = "apply"
 
 执行证据详见`Docs/Implementation/WeatherSourceAssetsExecution_20261010.md`。
 
+## 一次编辑器启动批量执行方案（准备期 / 实际交付分离）
+
+- `AuthorWeatherProductionPipeline.py`按`WEATHER_AUTHOR_PHASE`决定一个实际Editor进程中的依赖阶段。
+- 默认`inspect`只列计划，不写资产。先通过现有`GamePlatformSurfaceCoreAssets` Commandlet创建MPC并用`-ValidateOnly`回读，再在真实UE Editor中设置`WEATHER_AUTHOR_PHASE=prepare`统一运行纹理导入、七个MF、两材质母版、三种VFX材质、八份项目天气Definition、两份审核蓝图和独立Review地图。
+- Niagara必须由Monolith`niagara_query(create_system_from_spec)`逐个真实制作，检查Emitter/Renderer/绑定和编译，之后设置`WEATHER_AUTHOR_PHASE=vfx-definition`制作两个VFX Definition。客户端独立SFX包具备真实资源与登记后，设置`WEATHER_AUTHOR_PHASE=audio`导入SoundWave和定义。
+- `VerifyWeatherUnrealAssets.py`是实际UE反射资源验收脚本：需`WEATHER_ASSET_VERIFY_MODE=verify`，逐个加载MPC、Texture、MaterialFunction、Material、NiagaraSystem、DataAsset、Blueprint和World，并校验Shader。它不是Monolith Niagara逐Emitter检验的替代，也不代表Client/Server Cook和真实联机已通过。
+- 在完整Editor模块尚不能加载以前，**这些脚本均只有作者代码/静态检查交付状态，真实.uasset仍为零**。
+
 ## 2026-10-10 先代码与蓝图、最后统一测试（当前新增）
 
 在不修改任何正式地图的前提下，先完成了可执行的真实UE编辑器资源制作脚本：
@@ -62,6 +70,8 @@ $env:WEATHER_ASSET_IMPORT_MODE = "apply"
 1. `AuthorWeatherSurfaceAssets.py`：目标`/GamePlatformSurface/MaterialFunctions/`下七个有实际运算连接的函数，以及`M_GP_Surface_Master`、`M_GP_Surface_Lite`两个真正连接了MPC的母材质；`WEATHER_SURFACE_AUTHOR_PHASE=functions|materials|all`决定批次，`WEATHER_SURFACE_AUTHOR_MODE=apply`才执行。
 2. `AuthorWeatherVFXMaterials.py`：在`/GamePlatformVFX/Weather/Materials/`创建雨线、雪花、雨水飞溅三个实际粒子材质，要求真实PNG Texture2D已导入。
 3. `WeatherNiagaraAuthoringSpec_V1.json`：为Monolith Niagara工具提供三套天气系统、近远景雨雪发射器、飞溅发射器、Shader与Niagara强度参数、原生特效裁剪/附着策略的明确生产合同。该JSON不是运行Niagara资产，系统与发射器须由真实UE Editor制作，严格禁止先创建空`.uasset`。
+   - `GenerateWeatherMonolithSpecs.py`与`WeatherNiagaraMonolithPayloads_V1.json`进一步按锁定引擎中的真实`/Niagara/DefaultAssets/Templates/Emitters/Minimal`模板、`/Niagara/Modules/Emitter/SpawnRate`和粒子Spawn/Update原生模块准备Monolith接口的`create_system_from_spec`三份输入，共五个发射器。
+   - `User.WeatherNearSpawnRate`、`User.WeatherFarSpawnRate`是分别传至雨/雪近远景Emitter的粒子/秒速率，天气客户端根据当前雨雪强度计算，VFX Definition的Schema已加入参数白名单。生成JSON本身不会产生Niagara资源，也不会重编Shader。真实Monolith运行结果必须`failed_steps=0`、有效Emitter/Renderer/ParameterBinding，编译、保存、回读合格才视为交付。
 4. `AuthorWeatherBlueprintAssets.py`：在`/DBAWorldPack_Village/Weather/Definitions/`创建八个Server-safe天气数据资产（晴、阴、轻雨、暴雨、轻雪、暴雪、雨后、雪后）；另基于项目世界GameMode和审核Actor分别创建`BP_DBA_WeatherReviewGameMode`与`BP_DBA_WeatherReviewController`两份真实审核蓝图，须UE编译、保存与重载。
 5. `AuthorWeatherVFXDefinitions.py`：待真实Rain/Snow Niagara具备有效Emitter与渲染器后，创建两个`UGamePlatformVFXAttachedDefinition`资产；VFX强度参数严格采用`User.WeatherIntensity`，并要求天气效果通过观察者ViewTarget根组件弱附着，不在世界原点播放。
 6. `AuthorWeatherAudioAssets.py`：只在客户端独立`DBASFXPack_Core`已有实资产并正式登记时，才导入三段WAV，设置SoundWave循环，并创建雨/雪SFX Definition；不在Village AlwaysCook共享地图包放纯音频。雨声当前可先用已有SoundWave的请求音量映射，MetaSound强度混合后续真实制作。

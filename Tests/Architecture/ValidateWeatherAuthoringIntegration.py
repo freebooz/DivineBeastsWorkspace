@@ -63,11 +63,24 @@ def audit() -> None:
         "AuthorWeatherAudioAssets.py",
         "ImportWeatherSourceArt.py",
         "AuthorWeatherReviewMap.py",
+        "GenerateWeatherMonolithSpecs.py",
+        "AuthorWeatherProductionPipeline.py",
+        "VerifyWeatherUnrealAssets.py",
     ]
+    ue_author_scripts = set(paths) - {"GenerateWeatherMonolithSpecs.py",
+                                    "VerifyWeatherUnrealAssets.py"}
     for name in paths:
         source = text("Tools/Unreal/Weather/" + name)
-        assert '"inspect"' in source and '"apply"' in source, name
-        assert "import unreal" in source, name
+        if name in ue_author_scripts:
+            # 只有写.uasset的编辑器作者脚本具备inspect/apply闸门，不能错误要求
+            # JSON规格生成器或只读验证器必须包含名为apply的写入状态。
+            assert '"inspect"' in source and '"apply"' in source, name
+        if name != "GenerateWeatherMonolithSpecs.py":
+            assert "import unreal" in source, name
+    verifier = text("Tools/Unreal/Weather/VerifyWeatherUnrealAssets.py")
+    assert '"verify"' in verifier and '"inspect"' in verifier
+    generator = text("Tools/Unreal/Weather/GenerateWeatherMonolithSpecs.py")
+    assert "create_system_from_spec" in generator, "Monolith载荷生成器不完整"
 
     spec = json.loads(text("Tools/Unreal/Weather/WeatherNiagaraAuthoringSpec_V1.json"))
     assert spec.get("schemaVersion") == 1
@@ -76,6 +89,23 @@ def audit() -> None:
     assert names == {"NS_GP_Weather_Rain", "NS_GP_Weather_Snow", "NS_GP_Weather_RainSplash"}
     assert "User.WeatherIntensity" in [x["name"] for x in spec["parameters"]]
     assert len(spec["systems"][0]["emitters"]) == 2 and len(spec["systems"][1]["emitters"]) == 2
+    # Monolith对接必须使用真实的UE5.8 NiagaraEmitter模板，并显式包含两个发射率参数。
+    generated = json.loads(text("Tools/Unreal/Weather/WeatherNiagaraMonolithPayloads_V1.json"))
+    assert generated["schemaVersion"] == 1
+    assert generated["state"] == "prepared_specs_not_ue_assets"
+    assert len(generated["payloads"]) == 3
+    assert sum(len(x["params"]["spec"]["emitters"]) for x in generated["payloads"]) == 5
+    for payload in generated["payloads"]:
+        assert payload["action"] == "create_system_from_spec"
+        assert payload["params"]["save_path"].startswith("/GamePlatformVFX/Weather/Niagara/")
+        assert all(x["asset"] == generated["sourceEmitter"] for x in payload["params"]["spec"]["emitters"])
+        assert set(("User.WeatherNearSpawnRate", "User.WeatherFarSpawnRate")) <= {
+            p["name"] for p in payload["params"]["spec"]["user_parameters"]
+        }
+    assert "User.WeatherNearSpawnRate" in client and "User.WeatherFarSpawnRate" in client
+    vfxdefs = text("Tools/Unreal/Weather/AuthorWeatherVFXDefinitions.py")
+    for name in ("User.WeatherIntensity", "User.WeatherNearSpawnRate", "User.WeatherFarSpawnRate"):
+        assert name in vfxdefs, name
 
     # 确保当前的编辑器制作步骤不会错误地声称空资产已创建成功。
     for domain, base in (
@@ -85,7 +115,7 @@ def audit() -> None:
         folder = ROOT / base
         actual = list(folder.rglob("*.uasset")) if folder.exists() else []
         print("ACTUAL_UE_ASSETS", domain, len(actual))
-    print("WEATHER_AUTHORING_STATIC_PASS scripts=7 systems=3")
+    print("WEATHER_AUTHORING_STATIC_PASS scripts=10 systems=3 emitters=5")
 
 
 if __name__ == "__main__":

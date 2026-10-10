@@ -11,7 +11,9 @@
 #include "Definitions/GamePlatformPrimaryDataAsset.h"
 #include "Types/GamePlatformId.h"
 #include "Engine/World.h"
-#include "GamePlatformPresentationClientSubsystem.h"#include "Subsystems/GamePlatformWeatherWorldSubsystem.h"#include "Subsystems/GamePlatformWeatherClientWorldSubsystem.h"
+#include "GamePlatformPresentationClientSubsystem.h"
+#include "Subsystems/GamePlatformWeatherWorldSubsystem.h"
+#include "Subsystems/GamePlatformWeatherClientWorldSubsystem.h"
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Tags/DivineBeastsPresentationTags.h"
 #include "UObject/UObjectGlobals.h"
@@ -411,19 +413,20 @@ void UDivineBeastsPresentationClientSubsystem::HandleLogicalPreloadCompleted(con
     // 初次天气快照可能在真实VFX/SFX内容包异步加载完成之前到达。
     // Catalog已成功提交后按当前服务器时间重新发布本世界天气一次，
     // 避免“只有下一次切换天气后才能看到雨雪”。不添加Ticker/重复实例管理器。
-    if (!bClosing && (Fragment.ContentPackId == FName(TEXT("GamePlatformVFX")) ||
-                      Fragment.ContentPackId == FName(TEXT("DBASFXPack_Core"))))
+    if (!bClosing && (Fragment.ContentPackId == FName(TEXT("DBA.Weather.VFX")) ||
+                      Fragment.ContentPackId == FName(TEXT("DBA.Weather.SFX"))))
     {
-        if (ULocalPlayer* Player = GetLocalPlayer())
+        if (ULocalPlayer* LocalWeatherPlayer = GetLocalPlayer())
         {
-            if (UWorld* World = Player->GetWorld())
+            if (UWorld* World = LocalWeatherPlayer->GetWorld())
             {
                 if (!World->bIsTearingDown)
                 {
                     if (auto* WeatherClient =
                             World->GetSubsystem<UGamePlatformWeatherClientWorldSubsystem>())
                     {
-                        WeatherClient->RefreshPresentationAfterContentActivation();
+                        WeatherClient->RefreshPresentationAfterContentActivation(
+                            Fragment.ContentPackId == FName(TEXT("DBA.Weather.VFX")));
                     }
                 }
             }
@@ -668,8 +671,10 @@ UDivineBeastsPresentationClientSubsystem::ActivateWeatherPack(
         return {};
     }
 
-    const FName OwnerId = bVisual ? FName(TEXT("GamePlatformVFX"))
-        : FName(TEXT("DBASFXPack_Core"));
+    // 内容包事务身份按项目天气领域唯一，不占用平台VFX或其他项目SFX包的激活槽。
+    // 真实Definition仍由GamePlatformVFX或项目音效内容包拥有，注册ScopeId不是文件路径。
+    const FName OwnerId = bVisual ? FName(TEXT("DBA.Weather.VFX"))
+        : FName(TEXT("DBA.Weather.SFX"));
     FDivineBeastsPresentationContentPackFragment Fragment;
     Fragment.ContentPackId = OwnerId;
     Fragment.Revision = 1;
@@ -759,6 +764,14 @@ void UDivineBeastsPresentationClientSubsystem::HandleWeatherSnapshot(
 {
     check(IsInGameThread());
     if (bClosing || Snapshot.Revision <= 0 || !WeatherBoundWorld.IsValid())
+        return;
+    // 晴天/阴天与纯地表残留态无需抢先加载雨雪Niagara/音频内容包。
+    // 当目标或过渡来源真正涉及降水时才启动一次内容包预载。
+    const FGamePlatformWeatherState FromWeather = Snapshot.From.Decode();
+    const FGamePlatformWeatherState ToWeather = Snapshot.To.Decode();
+    if (FMath::Max(
+            FMath::Max(FromWeather.RainIntensity, FromWeather.SnowIntensity),
+            FMath::Max(ToWeather.RainIntensity, ToWeather.SnowIntensity)) <= KINDA_SMALL_NUMBER)
         return;
 
     // 每个世界至多尝试一次VFX/SFX内容挂载；加载成功、失败都由统一Data/内容包事务定论。

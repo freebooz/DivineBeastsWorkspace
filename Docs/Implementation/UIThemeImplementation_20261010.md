@@ -43,6 +43,14 @@ Game/Config/DefaultGame.ini已将/DBAUIPack_Core/UI/Themes加入既有GamePlatfo
 
 用户追加要求“先代码及蓝图，最后统一自动化”。本轮不重复运行上述历史测试，先完成T5资产。已修正显式主题绑定的原生UButton背景乘色：设置统一样式后将BackgroundColor恢复白色，避免旧页面的局部蓝色/深色与新主题Brush相乘导致项目主题不一致；保留内容色、字号、尺寸、焦点、命令和禁用状态。同时仅编写对应源码断言，留到最后集中运行。现有引擎构建为其他会话已有工作，未主动终止或重复发起。
 
+
+### 2026-10-10 用户指定“代码和蓝图优先”的增量实施
+
+- 先复核 T1—T4 已存在的代码，不创建第二套主题定义或主题子系统，保留 GamePlatformUI、GamePlatformData（平台数据租约）及 DBAClient 既有实现。
+- 在 `DivineBeastsUIClient/Private/Styling/DivineBeastsUIStyleBindings.h`（项目统一语义样式键）集中维护按钮主要/次要、文字正文/标题及面板背景五类键；由 `UDivineBeastsLoginScreen`（登录页面）、`UDivineBeastsCharacterSelectScreen`（角色选择页面）、`UDivineBeastsCharacterCreateScreen`（角色创建页面）、`UDivineBeastsCharacterChoiceEntry`（角色选择卡片）和 `UDivineBeastsPanelWidget`（项目功能面板）构造时声明绑定，使用原来已有的 UButton/UTextBlock/UBorder（按钮/文本/边框）类型，保留现有尺寸与字体字号，不进行 Widget 重建和业务流程变更。新增单独的 `Private/Panels/DivineBeastsPanelWidget.cpp`（项目通用面板默认样式语义），PanelBackground/PanelTitle/CloseButton（面板背景/标题/关闭按钮）均为可选命名绑定，避免误拒绝没有标准可视树的旧面板。
+- 新增第三层纯内容包 `DBAUIPack_Core/Docs/UIThemeMonolithAuthoringSpec_20261010.json`（Monolith主题资产制作合同），定义五个正式样式 Blueprint、默认主题 DataAsset、一个标准面板 Widget Blueprint，以及开发专用 A/B（双风格对比）资产的确切挂载点、父类、语义键和安全要求。该 JSON 是**资产制作输入规格**，未创建任何引擎二进制；不得将其登记成 Monolith 实际生产或发布证据。
+- 现阶段另有两项其它会话UE引擎/编辑器编译作业运行，Monolith虽然注册正常，但对真实 `monolith_status` 返回 `Unreal Editor not running`（编辑器未运行）。保护并行构建结果，本轮未强行启动编辑器、重命名蓝图、手写 .uasset，亦未提前执行T6整套自动化测试。待构建环境释放、真实 UE5.8 编辑器接入及新反射模块加载后，按 T5 顺序生产样式/主题/标准面板/页面兼容绑定，执行资产编译、保存、重载、验证，并在最后集中测试。
+
 ## 五、未完成门禁与恢复顺序
 
 完成最终C++和完整DLL链接→启动主工程并确认ThemeDefinition/ThemeBindings反射→运行GamePlatform.UI.Theme.*原生测试→Monolith创建五种原生样式和默认主题/中性测试主题→绑定实际命名控件、编译保存重载→启用默认主题ID→两套主题/LocalPlayer隔离/取消回退实测→客户端Cook与服务器剥离审计。

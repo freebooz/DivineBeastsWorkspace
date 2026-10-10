@@ -1,0 +1,180 @@
+{
+  "SchemaVersion": 1,
+  "Status": "PendingMonolithEditor",
+  "DescriptionZh": "《神兽联盟》公共界面主题真实资产制作输入合同。仅用于Monolith操作，未经引擎实际写盘、编译、保存、重读不得记为已交付。",
+  "Workspace": "DivineBeastsWorkspace",
+  "UEVersion": "5.8",
+  "Project": "Game/DivineBeastsArena.uproject",
+  "ThemeDefinition": {
+    "AssetPath": "/DBAUIPack_Core/UI/Themes/DA_DBA_UITheme_Default",
+    "Class": "/Script/GamePlatformUIClient.GamePlatformUIThemeDefinition",
+    "PrimaryAssetId": "GamePlatformDefinition:dba.ui.theme.default@1",
+    "LogicalId": {
+      "Namespace": "dba.ui.theme",
+      "Name": "default",
+      "LogicalVersion": 1
+    },
+    "DataVersion": {
+      "SchemaVersion": 1,
+      "ContentRevision": 1
+    },
+    "Scope": "Project",
+    "RequiredStyleIds": [
+      "UI.Style.Button.Primary",
+      "UI.Style.Button.Secondary",
+      "UI.Style.Text.Body",
+      "UI.Style.Text.Title",
+      "UI.Style.Border.Panel"
+    ]
+  },
+  "SharedPaletteZh": {
+    "Background": "#182826",
+    "Panel": "#1E3030",
+    "BronzeBorder": "#A88B59",
+    "HoverJade": "#3D6658",
+    "PressedJade": "#203E35",
+    "PrimaryText": "#F1E5CB",
+    "BodyText": "#D8E0D9",
+    "Disabled": "#4B5651",
+    "Title": "#D4B777"
+  },
+  "StyleBlueprints": [
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Primary",
+      "ParentClass": "/Script/CommonUI.CommonButtonStyle",
+      "StyleId": "UI.Style.Button.Primary",
+      "NotesZh": "主要操作按钮；普通/悬停/按下/禁用四态，暗青绿底、玉色悬停、细青铜强调。不得在按钮类CDO中保存玩家状态。"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Secondary",
+      "ParentClass": "/Script/CommonUI.CommonButtonStyle",
+      "StyleId": "UI.Style.Button.Secondary",
+      "NotesZh": "次要操作按钮；与主要按钮共享尺寸、字体与阴影逻辑，降低饱和度。"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Styles/BP_DBA_TextStyle_Body",
+      "ParentClass": "/Script/CommonUI.CommonTextStyle",
+      "StyleId": "UI.Style.Text.Body",
+      "NotesZh": "普通正文、描述与卡片副标题；平台兼容绑定保留现有字体大小，只统一字体族、颜色、可读性。"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Styles/BP_DBA_TextStyle_Title",
+      "ParentClass": "/Script/CommonUI.CommonTextStyle",
+      "StyleId": "UI.Style.Text.Title",
+      "NotesZh": "神话青铜淡金标题；避免变更角色卡片已审核尺寸。"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Styles/BP_DBA_BorderStyle_Panel",
+      "ParentClass": "/Script/CommonUI.CommonBorderStyle",
+      "StyleId": "UI.Style.Border.Panel",
+      "NotesZh": "面板背景使用暗青灰低对比Brush和细青铜边框；预留可伸缩九宫格纹理引用，正式背景纹理由Monolith导入后绑定；不可将标题与背景合成一张图。"
+    }
+  ],
+  "DevelopmentTheme": {
+    "AssetPath": "/Game/Development/UITheme/DA_DBA_UITheme_NeutralDev",
+    "Status": "PendingMonolithEditor",
+    "ShippingAllowed": false,
+    "NotesZh": "仅用于第二套中性视觉A/B验证，保持现有DirectoriesToNeverCook目录约束。"
+  },
+  "CompatibleWidgetClasses": [
+    {
+      "Class": "DivineBeastsLoginScreen",
+      "Required": [
+        "LoginButton"
+      ],
+      "NotesZh": "保留用户名/密码输入框与正式品牌背景；只有按钮绑定统一主要样式"
+    },
+    {
+      "Class": "DivineBeastsCharacterSelectScreen",
+      "Required": [
+        "SelectButton",
+        "LogoutButton"
+      ],
+      "Optional": [
+        "OpenCharacterCreateButton",
+        "SelectedHeroName",
+        "SelectedCharacterName"
+      ]
+    },
+    {
+      "Class": "DivineBeastsCharacterCreateScreen",
+      "Required": [
+        "CreateButton",
+        "LogoutButton"
+      ],
+      "Optional": [
+        "BackToCharacterSelectButton",
+        "SelectedHeroName"
+      ]
+    },
+    {
+      "Class": "DivineBeastsCharacterChoiceEntry",
+      "Required": [
+        "ChoiceButton",
+        "ChoiceTitle",
+        "ChoiceSubtitle",
+        "ChoiceEmblem"
+      ],
+      "NotesZh": "选择高亮边框由业务状态管理，主题不覆盖选中状态的Color"
+    },
+    {
+      "Class": "DivineBeastsPanelWidget",
+      "Optional": [
+        "PanelBackground",
+        "PanelTitle",
+        "CloseButton"
+      ],
+      "NotesZh": "仅命中标准命名组件，缺少可选控件不改变旧面板"
+    }
+  ],
+  "WidgetBlueprintsToAuthor": [
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StandardPanel",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsPanelWidget",
+      "RequiredWidgetTree": [
+        {"Name": "PanelBackground", "Type": "Border", "StyleId": "UI.Style.Border.Panel"},
+        {"Name": "PanelTitle", "Type": "TextBlock", "StyleId": "UI.Style.Text.Title"},
+        {"Name": "CloseButton", "Type": "Button", "StyleId": "UI.Style.Button.Secondary"},
+        {"Name": "ContentSlot", "Type": "NamedSlot", "StyleId": null}
+      ],
+      "NotesZh": "新建复用组件，不重命名原有窗口或现有HUD；命名控件满足项目PanelWidget的可选主题绑定。控制层处理关闭命令，蓝图本身不得直接修改业务状态。"
+    }
+  ],
+  "DevelopmentStyleBlueprints": [
+    {
+      "AssetPath": "/Game/Development/UITheme/Styles/BP_DBA_ButtonStyle_NeutralDev",
+      "ParentClass": "/Script/CommonUI.CommonButtonStyle",
+      "NotesZh": "开发A/B对照，使用中性灰阶，不纳入正式Cook。"
+    },
+    {
+      "AssetPath": "/Game/Development/UITheme/Styles/BP_DBA_BorderStyle_NeutralDev",
+      "ParentClass": "/Script/CommonUI.CommonBorderStyle",
+      "NotesZh": "开发A/B对照，使用中性灰阶，不纳入正式Cook。"
+    }
+  ],
+  "AuthoringColorRules": {
+    "DesignInput": "sRGB 8位十六进制设计色",
+    "EngineProperty": "FLinearColor（线性颜色）",
+    "ConversionZh": "Monolith实际set_cdo_properties写入颜色时必须先执行sRGB到线性颜色转换；不能将设计色RGB整数直接当作0至1线性值。",
+    "FontZh": "保持既有中文可读字体和全部已审核字号，未确认覆盖中文字符的正式字体不得替换原有Font对象。",
+    "BackgroundZh": "第一阶段可先用可伸缩深青灰Brush验证框架，但项目面板正式背景纹理须由Monolith导入青铜云纹Texture2D并填入BorderStyle.Background，不能用整屏Login背景充当功能面板纹理。"
+  },
+  "MonolithReadbackRequirementsZh": [
+    "先核对正式编辑器的ProjectName=DivineBeastsArena与项目uproj绝对路径",
+    "完成所有Blueprint及DataAsset的创建、编译、保存、关开后回读，逐个核对父类与soft类路径",
+    "读取DA_DBA_UITheme_Default的5条StyleId、真实类软引用、逻辑ID和DataVersion，内容缺失则DefaultThemeDefinitionId仍保持空值",
+    "回读现有登录与角色页面的ThemeBindings实际蓝图类默认值；若BP历史覆盖为空，用Monolith写入显式绑定，禁止改动WidgetTree和业务输入",
+    "查看登录表单宽高、密码遮罩、键盘Tab和手柄焦点，主题应用前后必须一致",
+    "标准面板Blueprint核对PanelBackground、PanelTitle、CloseButton、ContentSlot真实命名控件与父类",
+    "开发对照主题存储在NeverCook目录，不注册为正式默认主题",
+    "证据只由Monolith实际编译/保存/重载/AssetRegistry写入MonolithGenerationManifest，不得凭本Spec宣称已生成"
+  ],
+  "SafetyConstraints": [
+    "所有真实蓝图和主题资产仅由Monolith MCP在正确UE5.8 Editor中创建修改",
+    "编译、保存、关闭后回读所有实际资产并留MonolithGenerationManifest证据",
+    "不以此JSON替代.uasset或证明美术验收通过",
+    "启动前默认ThemeDefinitionId为空，只有完整主题、样式与页面绑定通过后才能启用",
+    "现有登录LOGO、背景、字体大小、输入尺寸与控件焦点不改",
+    "GamePlatformUI不可包含项目资源硬引用、DedicatedServer不能Cook客户端纯主题"
+  ]
+}

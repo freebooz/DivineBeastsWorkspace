@@ -35,8 +35,11 @@
   - 本轮补充P5源素材：真实生成9张程序化天气PNG和3份原创合成WAV，并通过SHA256与12资源形态门禁；已提供默认只读、显式授权才导入的UE Texture2D脚本。
   - 实际尝试运行MPC核心Commandlet时因为`GamePlatformServer` Editor模块缺少可加载DLL而失败；限定模块构建因其他同工作区构建互斥未取得成功DLL。本项仍为**未完成**，实际Niagara、材质、SoundWave、Definition、Catalog和人工视觉审核全部待验。证据见`Docs/Implementation/WeatherSourceAssetsExecution_20261010.md`。
 - P6：DBAWorlds正式世界GameMode增加天气激活与项目默认天气/调度配置，Server/Editor定向编译通过；真实新手村地图人工验证未执行。
+  - 2026-10-10后续代码增量：增加`InitialWeatherPresetId`+GamePlatformData世界期限异步Definition预载与租约取消，可由项目天气DataAsset真正驱动服务器初始天气。制作审核GameMode/Controller两份蓝图和独立Review Map的UE编辑器脚本，真实资产保存仍待引擎恢复。
+- P4补充：项目本地玩家订阅世界天气复制快照，VFX/SFX分别通过已有内容包原子预载及目录发布，晚到的内容主动刷新当前天气；客户端过渡只在天气类型/终点强度关键节点刷新，不每0.1秒反复Spawn。新增代码已写入，联机与视觉表现待实证。
 - P7：已落实世界Scoped生命周期、无持续天气Tick、状态变化网络复制、0.1秒过渡定时器、量化编码、取消与重入快照处理；尚无性能指标与长稳运行证据。
 - P8：三个正式Target下7次关键C++定向编译全部退出码0，Pester合计18通过；**三目标完整链接/UE Automation/Cook/双客户端/人工可见雨雪未通过或未执行**。全量Editor构建因触发4178项引擎级重建被显式终止，不计通过。
+  - 最新增量：在Editor目标对8个天气/项目集成相关C++文件执行`-SingleFile`编译，全部返回0；修复新增项目表现客户端include拼接及C4456变量遮蔽。新的统一脚本静态门禁再次18/18通过。真实天气资产与完整DLL仍缺失；当前验证还不包含修改后的Client/Server完整构建、Editor启动、联机、Cook或性能。证据见`Docs/Implementation/WeatherCodeBlueprintExecution_20261010.md`。
 
 详细执行命令、证据和限制归`Game/Plugins/GamePlatform/World/GamePlatformWeather/Docs/TestingAndEvidence.md`。后续必须在编辑器实际运行且Weather模块完成正式构建链接后，依序创建真实天气资产、绑定目录与世界材质实例，运行UE自动化及双客户端网络场景；不得凭源码存在将P5/P8标记完成。
 

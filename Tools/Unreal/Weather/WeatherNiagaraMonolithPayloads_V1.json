@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "state": "prepared_specs_not_ue_assets",
+  "monolithNamespace": "niagara",
+  "tool": "niagara_query",
+  "sourceEmitter": "/Niagara/DefaultAssets/Templates/Emitters/Minimal.Minimal",
+  "moduleScripts": [
+    "/Niagara/Modules/Emitter/SpawnRate.SpawnRate",
+    "/Niagara/Modules/Spawn/Initialization/InitializeParticle.InitializeParticle",
+    "/Niagara/Modules/Spawn/Location/BoxLocation.BoxLocation",
+    "/Niagara/Modules/Spawn/Velocity/AddVelocity.AddVelocity",
+    "/Niagara/Modules/Update/Forces/GravityForce.GravityForce",
+    "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+  ],
+  "payloads": [
+    {
+      "action": "create_system_from_spec",
+      "params": {
+        "save_path": "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_Rain",
+        "spec": {
+          "user_parameters": [
+            {
+              "name": "User.WeatherIntensity",
+              "type": "Float",
+              "default": 0.5
+            },
+            {
+              "name": "User.WeatherNearSpawnRate",
+              "type": "Float",
+              "default": 700.0
+            },
+            {
+              "name": "User.WeatherFarSpawnRate",
+              "type": "Float",
+              "default": 400.0
+            }
+          ],
+          "emitters": [
+            {
+              "name": "NE_GP_Rain_Near",
+              "asset": "/Niagara/DefaultAssets/Templates/Emitters/Minimal.Minimal",
+              "modules": [
+                {
+                  "stage": "emitter_update",
+                  "script": "/Niagara/Modules/Emitter/SpawnRate.SpawnRate",
+                  "bindings": {
+                    "Spawn Rate": "User.WeatherNearSpawnRate"
+                  }
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Initialization/InitializeParticle.InitializeParticle"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Location/BoxLocation.BoxLocation"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Velocity/AddVelocity.AddVelocity"
+                },
+                {
+                  "stage": "particle_update",
+                  "script": "/Niagara/Modules/Update/Forces/GravityForce.GravityForce"
+                },
+                {
+                  "stage": "particle_update",
+                  "script": "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+                }
+              ],
+              "renderers": [
+                {
+                  "class": "Sprite",
+                  "material": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_Weather_Rain"
+                }
+              ]
+            },
+            {
+              "name": "NE_GP_Rain_Far",
+              "asset": "/Niagara/DefaultAssets/Templates/Emitters/Minimal.Minimal",
+              "modules": [
+                {
+                  "stage": "emitter_update",
+                  "script": "/Niagara/Modules/Emitter/SpawnRate.SpawnRate",
+                  "bindings": {
+                    "Spawn Rate": "User.WeatherFarSpawnRate"
+                  }
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Initialization/InitializeParticle.InitializeParticle"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Location/BoxLocation.BoxLocation"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Velocity/AddVelocity.AddVelocity"
+                },
+                {
+                  "stage": "particle_update",
+                  "script": "/Niagara/Modules/Update/Forces/GravityForce.GravityForce"
+                },
+                {
+                  "stage": "particle_update",
+                  "script": "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+                }
+              ],
+              "renderers": [
+                {
+                  "class": "Sprite",
+                  "material": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_Weather_Rain"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "validation": {
+        "expectedEmitters": 2,
+        "minimumRenderersPerEmitter": 1,
+        "requireModuleInputsBound": [
+          "User.WeatherNearSpawnRate",
+          "User.WeatherFarSpawnRate"
+        ],
+        "requireShaderCompile": true,
+        "requireSaveAndReload": true,
+        "requireNonEmptySystem": true
+      },
+      "notes": "仅供真实Monolith执行：每次返回failed_steps/errors必须为0；创建前必须先有真实粒子材质与有效模板。"
+    },
+    {
+      "action": "create_system_from_spec",
+      "params": {
+        "save_path": "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_Snow",
+        "spec": {
+          "user_parameters": [
+            {
+              "name": "User.WeatherIntensity",
+              "type": "Float",
+              "default": 0.5
+            },
+            {
+              "name": "User.WeatherNearSpawnRate",
+              "type": "Float",
+              "default": 250.0
+            },
+            {
+              "name": "User.WeatherFarSpawnRate",
+              "type": "Float",
+              "default": 160.0
+            }
+          ],
+          "emitters": [
+            {
+              "name": "NE_GP_Snow_Near",
+              "asset": "/Niagara/DefaultAssets/Templates/Emitters/Minimal.Minimal",
+              "modules": [
+                {
+                  "stage": "emitter_update",
+                  "script": "/Niagara/Modules/Emitter/SpawnRate.SpawnRate",
+                  "bindings": {
+                    "Spawn Rate": "User.WeatherNearSpawnRate"
+                  }
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Initialization/InitializeParticle.InitializeParticle"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Location/BoxLocation.BoxLocation"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Velocity/AddVelocity.AddVelocity"
+                },
+                {
+                  "stage": "particle_update",
+                  "script": "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+                }
+              ],
+              "renderers": [
+                {
+                  "class": "Sprite",
+                  "material": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_Weather_Snow"
+                }
+              ]
+            },
+            {
+              "name": "NE_GP_Snow_Far",
+              "asset": "/Niagara/DefaultAssets/Templates/Emitters/Minimal.Minimal",
+              "modules": [
+                {
+                  "stage": "emitter_update",
+                  "script": "/Niagara/Modules/Emitter/SpawnRate.SpawnRate",
+                  "bindings": {
+                    "Spawn Rate": "User.WeatherFarSpawnRate"
+                  }
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Initialization/InitializeParticle.InitializeParticle"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Location/BoxLocation.BoxLocation"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Velocity/AddVelocity.AddVelocity"
+                },
+                {
+                  "stage": "particle_update",
+                  "script": "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+                }
+              ],
+              "renderers": [
+                {
+                  "class": "Sprite",
+                  "material": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_Weather_Snow"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "validation": {
+        "expectedEmitters": 2,
+        "minimumRenderersPerEmitter": 1,
+        "requireModuleInputsBound": [
+          "User.WeatherNearSpawnRate",
+          "User.WeatherFarSpawnRate"
+        ],
+        "requireShaderCompile": true,
+        "requireSaveAndReload": true,
+        "requireNonEmptySystem": true
+      },
+      "notes": "仅供真实Monolith执行：每次返回failed_steps/errors必须为0；创建前必须先有真实粒子材质与有效模板。"
+    },
+    {
+      "action": "create_system_from_spec",
+      "params": {
+        "save_path": "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_RainSplash",
+        "spec": {
+          "user_parameters": [
+            {
+              "name": "User.WeatherIntensity",
+              "type": "Float",
+              "default": 0.5
+            },
+            {
+              "name": "User.WeatherNearSpawnRate",
+              "type": "Float",
+              "default": 45.0
+            },
+            {
+              "name": "User.WeatherFarSpawnRate",
+              "type": "Float",
+              "default": 0
+            }
+          ],
+          "emitters": [
+            {
+              "name": "NE_GP_Rain_Splash",
+              "asset": "/Niagara/DefaultAssets/Templates/Emitters/Minimal.Minimal",
+              "modules": [
+                {
+                  "stage": "emitter_update",
+                  "script": "/Niagara/Modules/Emitter/SpawnRate.SpawnRate",
+                  "bindings": {
+                    "Spawn Rate": "User.WeatherNearSpawnRate"
+                  }
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Initialization/InitializeParticle.InitializeParticle"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Location/BoxLocation.BoxLocation"
+                },
+                {
+                  "stage": "particle_spawn",
+                  "script": "/Niagara/Modules/Spawn/Velocity/AddVelocity.AddVelocity"
+                },
+                {
+                  "stage": "particle_update",
+                  "script": "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+                }
+              ],
+              "renderers": [
+                {
+                  "class": "Sprite",
+                  "material": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_Weather_Splash"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "validation": {
+        "expectedEmitters": 1,
+        "minimumRenderersPerEmitter": 1,
+        "requireModuleInputsBound": [
+          "User.WeatherNearSpawnRate"
+        ],
+        "requireShaderCompile": true,
+        "requireSaveAndReload": true,
+        "requireNonEmptySystem": true
+      },
+      "notes": "仅供真实Monolith执行：每次返回failed_steps/errors必须为0；创建前必须先有真实粒子材质与有效模板。"
+    }
+  ],
+  "workflow": [
+    "确认Niagara模板.uasset及全部模块脚本确实存在于锁定UE5.8。",
+    "确保9张真实Texture2D及三张真实雨雪VFX材质已通过UE保存和回读。",
+    "调用niagara_query(create_system_from_spec)逐系统制作；验证failed_steps=0。",
+    "使用get_ordered_modules/get_module_inputs检查SpawnRate绑定User.WeatherNear/FarSpawnRate。",
+    "逐System调用request_compile/get_system_diagnostics/validate_system/save_system，检查真实渲染器材质和Shader。",
+    "禁止将空发射器或只有名称的uasset标记已完成。"
+  ]
+}

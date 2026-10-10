@@ -20,6 +20,8 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsCharacterCreateScreen
     GENERATED_BODY()
 
 public:
+    /** 跨项目语义化样式默认绑定；具体外观由DBAUIPack_Core资源主题统一决定。 */
+    UDivineBeastsCharacterCreateScreen();
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|CharacterCreate")
     FName GetCharacterCreateScreenId() const { return TEXT("UI.Screen.CharacterCreate"); }
 

@@ -4,6 +4,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/SplineComponent.h"
 #include "PCGComponent.h"
+#include "PCGGraph.h"
 #include "Schema/GamePlatformPCGSchema.h"
 
 AGamePlatformPCGActorBase::AGamePlatformPCGActorBase()
@@ -31,6 +32,19 @@ void AGamePlatformPCGActorBase::OnConstruction(const FTransform& Transform)
     }
 
     RequiredSchemaMajor = FMath::Max(1, RequiredSchemaMajor);
+#if WITH_EDITOR
+    // Editor地编放置器持有经审批的Graph软引用；已加载后必须向官方PCGComponent设置本地图。
+    // 使用SetGraphLocal而不是NetMulticast SetGraph，不触发任何网络复制；只绑定，不调用Generate。
+    // 服务器Cook/运行期仍只消费已验收的静态成果，避免未授权的运行时装饰生成。
+    if (!HasAnyFlags(RF_ClassDefaultObject) && IsValid(PCGComponent))
+    {
+        UPCGGraph* LoadedGraph = Graph.Get();
+        if (LoadedGraph && PCGComponent->GetGraph() != LoadedGraph)
+        {
+            PCGComponent->SetGraphLocal(LoadedGraph);
+        }
+    }
+#endif
 }
 
 AGamePlatformPCGVolumeActor::AGamePlatformPCGVolumeActor()

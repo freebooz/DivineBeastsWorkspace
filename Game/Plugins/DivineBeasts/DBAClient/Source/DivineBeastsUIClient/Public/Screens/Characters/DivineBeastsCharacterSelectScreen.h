@@ -19,6 +19,8 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsCharacterSelectScreen
     GENERATED_BODY()
 
 public:
+    /** 跨项目语义化样式默认绑定；具体外观由DBAUIPack_Core资源主题统一决定。 */
+    UDivineBeastsCharacterSelectScreen();
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|CharacterSelect")
     FName GetCharacterSelectScreenId() const { return TEXT("UI.Screen.CharacterSelect"); }
 

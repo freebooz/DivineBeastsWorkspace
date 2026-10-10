@@ -89,7 +89,9 @@ bool ValidateSpawnerDescriptor(const UPCGStaticMeshSpawnerSettings& Spawner, con
         Selector->bUseAttributeMaterialOverrides || !Spawner.PostProcessFunctionNames.IsEmpty() || !Spawner.TargetActor.IsNull() ||
         !Spawner.StaticMeshComponentPropertyOverrides.IsEmpty() || Spawner.InstanceDataPackerParameters || Spawner.InstanceDataPackerType ||
         Spawner.MeshSelectorType != UPCGMeshSelectorWeighted::StaticClass() || !Selector->MaterialOverrideAttributes.IsEmpty() ||
-        Spawner.bAllowDescriptorChanges || Spawner.bAllowMergeDifferentDataInSameInstancedComponents)
+        // Legacy 0.1.0生成器保留官方默认Spawner开关；新模板实例强制锁定描述符，避免破坏旧已保存图。
+        (!Profile.TemplateId.IsNone() && (Spawner.bAllowDescriptorChanges ||
+            Spawner.bAllowMergeDifferentDataInSameInstancedComponents)))
     {
         return false;
     }

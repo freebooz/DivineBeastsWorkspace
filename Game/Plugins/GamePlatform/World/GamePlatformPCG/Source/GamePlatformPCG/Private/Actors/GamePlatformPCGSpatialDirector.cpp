@@ -72,6 +72,7 @@ bool AGamePlatformPCGWorldDirector::CollectSpatialMasks(
         if (!IsValid(Participant)) { OutError = TEXT("PCG放置器失效，拒绝构造不完整空间快照。"); OutMasks.Reset(); return false; }
         FGamePlatformPCGSpatialMask Mask;
         Mask.SourceId = Participant->SourceId;
+        Mask.DomainId = Participant->DomainId;
 
         if (const AGamePlatformPCGExclusionActor* Exclusion = Cast<AGamePlatformPCGExclusionActor>(Participant))
         {
@@ -90,6 +91,8 @@ bool AGamePlatformPCGWorldDirector::CollectSpatialMasks(
             if (!Road->bExportsSpatialMask) { continue; }
             Mask.Priority = Road->CarvePriority;
             Mask.HalfWidthCm = Road->CarveHalfWidthCm;
+            // 闭合围栏只是围合边界，不是把院内全部排空的实心地块；只剔除边界宽度内实例。
+            Mask.bFillInterior = false;
             if (!Road->Spline || !AppendSplineVertices(*Road->Spline, Road->Spline->IsClosedLoop(), Mask))
             {
                 OutError = TEXT("道路线性样条为空、异常或超出1024采样点上限。");

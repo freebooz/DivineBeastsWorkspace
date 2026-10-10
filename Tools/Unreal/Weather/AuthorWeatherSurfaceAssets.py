@@ -163,11 +163,15 @@ def run_editor() -> None:
             if not isinstance(fn, unreal.MaterialFunction):
                 raise RuntimeError("UE无法创建真实材质函数：" + name)
             if name == "MF_GP_SlopeMask":
-                normal = node(fn, unreal.MaterialExpressionVertexNormalWS, -900, -100) # 使用未受Normal输入影响的顶点法线，避免雪遮罩/Normal输出构成环形材质依赖。
+                # VertexNormalWS本身属于Vertex阶段，必须通过VertexInterpolator送入
+                # Pixel阶段的遮罩计算。不能直接接到BaseColor或雪法线依赖图。
+                normal = node(fn, unreal.MaterialExpressionVertexNormalWS, -1100, -100)
+                interpolator = node(fn, unreal.MaterialExpressionVertexInterpolator, -860, -100)
+                link(normal, interpolator, "Input")
                 mask = node(fn, unreal.MaterialExpressionComponentMask, -650, -100)
                 setprop(mask, "r", False); setprop(mask, "g", False)
                 setprop(mask, "b", True); setprop(mask, "a", False)
-                link(normal, mask, "Input")
+                link(interpolator, mask, "Input")
                 saturated = node(fn, unreal.MaterialExpressionSaturate, -420, -100)
                 link(mask, saturated, "Input")
                 function_output(fn, saturated, "SlopeMask", -140, -100)
@@ -275,9 +279,13 @@ def run_editor() -> None:
                 snowcolor = node(mat, unreal.MaterialExpressionTextureSampleParameter2D, -1130, 720)
                 setprop(snowcolor, "parameter_name", unreal.Name("SnowAlbedoTexture"))
                 setprop(snowcolor, "texture", snow_texture)
-                normalws = node(mat, unreal.MaterialExpressionVertexNormalWS, -1410, -1200) # 不得由本材质Normal反向参与坡度遮罩。
+                # 只取几何法线进行坡度控制：先从Vertex阶段插值到Pixel，避免
+                # PixelNormalWS引用本材质Normal后循环依赖，并满足UE材质阶段约束。
+                normalws = node(mat, unreal.MaterialExpressionVertexNormalWS, -1540, -1180)
+                interpolated = node(mat, unreal.MaterialExpressionVertexInterpolator, -1320, -1180)
+                link(normalws, interpolated, "Input")
                 up = color(mat, 0, 0, 1, -1390, -1450)
-                slope_dot = binary(mat, unreal.MaterialExpressionDotProduct, normalws, up, -1100, -1180)
+                slope_dot = binary(mat, unreal.MaterialExpressionDotProduct, interpolated, up, -1100, -1180)
                 slope = node(mat, unreal.MaterialExpressionSaturate, -920, -1160)
                 link(slope_dot, slope, "Input")
                 snow_alpha = binary(mat, unreal.MaterialExpressionMultiply, snowamount, slope, -690, -700)

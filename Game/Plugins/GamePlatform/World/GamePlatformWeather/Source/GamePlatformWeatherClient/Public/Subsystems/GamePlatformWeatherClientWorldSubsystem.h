@@ -31,7 +31,7 @@ public:
      * 只在本地世界消费既有权威快照，不创建新天气、不重复注册Provider。
      * 不对普通客户端提供天气权威写入。
      */
-    void RefreshPresentationAfterContentActivation();
+    void RefreshPresentationAfterContentActivation(bool bVisual);
 
 private:
     void OnSnapshotReceived(const FGamePlatformWeatherSnapshot& Snapshot);
@@ -40,8 +40,10 @@ private:
     void SampleAndApplyTransition(bool bRefreshPresentation);
     void ApplyVisualState(const FGamePlatformWeatherState& State);
     float GetEstimatedServerTimeSeconds() const;
-    void SendPresentationEvent(const FGamePlatformWeatherState& State, bool bCancellation);
-    void CancelPreviousPresentation();
+    /** ChannelFilter: -1全部，0仅VFX，1仅SFX；保持独立请求身份，禁止跨通道误取消。 */
+    void SendPresentationEvent(const FGamePlatformWeatherState& State,
+        bool bCancellation, int32 ChannelFilter = -1);
+    void CancelPreviousPresentation(int32 ChannelFilter = -1);
 
     FGamePlatformWeatherSnapshot ActiveSnapshot;
     FGamePlatformWeatherState LastVisualState;

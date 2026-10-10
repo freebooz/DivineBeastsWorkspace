@@ -24,6 +24,8 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsLoginScreen
     GENERATED_BODY()
 
 public:
+    /** 跨项目语义化样式默认绑定；具体外观由DBAUIPack_Core资源主题统一决定。 */
+    UDivineBeastsLoginScreen();
     /** 返回稳定页面标识，与项目 UI Catalog 保持一致。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Login")
     FName GetLoginScreenId() const

@@ -6,6 +6,8 @@
 #include "Actors/GamePlatformPCGActors.h"
 #include "Nodes/GamePlatformPCGNodes.h"
 #include "PCGNode.h"
+#include "PCGComponent.h"
+#include "Engine/World.h"
 #include "Services/GamePlatformPCGInspection.h"
 #include "Services/GamePlatformPCGTemplateContract.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -338,7 +340,7 @@ UPCGGraph* UGamePlatformPCGEditorLibrary::CreateDevelopmentRealizedGraphAsset(
 
 bool UGamePlatformPCGEditorLibrary::ConfigureRealizedGraphSpatialMasks(
     UPCGGraph* RealizedGraph, AGamePlatformPCGWorldDirector* Director,
-    int32 SubjectPriority, FString& Error)
+    int32 SubjectPriority, const TArray<FName>& IgnoredSourceDomains, FString& Error)
 {
     check(IsInGameThread());
     Error.Reset();
@@ -353,6 +355,26 @@ bool UGamePlatformPCGEditorLibrary::ConfigureRealizedGraphSpatialMasks(
     if (!Director->CollectSpatialMasks(Masks, Error))
     {
         return false;
+    }
+    // 农田地块优先级高于作物是为了排除乔木；若作物生成直接消费同一地块Mask，
+    // 结果会被其自身“全部挖掉”。只允许项目排除这两类自掩码，禁止关闭人工锁定、道路或桥的排除。
+    TSet<FName> Ignored;
+    for (const FName Domain : IgnoredSourceDomains)
+    {
+        if (Domain != FGamePlatformPCGDomainIds::AgriParcel &&
+            Domain != FGamePlatformPCGDomainIds::AgriCrop)
+        {
+            Error = TEXT("只允许跳过农田/作物自身领域掩码，不能跳过道路、人工锁定或连接件。");
+            return false;
+        }
+        Ignored.Add(Domain);
+    }
+    if (!Ignored.IsEmpty())
+    {
+        Masks.RemoveAll([&Ignored](const FGamePlatformPCGSpatialMask& Item)
+        {
+            return Ignored.Contains(Item.DomainId);
+        });
     }
 
     UGamePlatformPCGSpatialCarveSettings* Target = nullptr;
@@ -379,6 +401,35 @@ bool UGamePlatformPCGEditorLibrary::ConfigureRealizedGraphSpatialMasks(
     Target->SubjectPriority = SubjectPriority;
     Target->Masks = MoveTemp(Masks);
     RealizedGraph->MarkPackageDirty();
+    return true;
+}
+
+bool UGamePlatformPCGEditorLibrary::BindPlacedActorGraph(
+    AGamePlatformPCGActorBase* Actor, UPCGGraph* ApprovedGraph, FString& Error)
+{
+    check(IsInGameThread());
+    Error.Reset();
+    const UWorld* World = IsValid(Actor) ? Actor->GetWorld() : nullptr;
+    if (!IsValid(Actor) || !IsValid(ApprovedGraph) || !IsValid(Actor->PCGComponent) ||
+        !IsValid(World) ||
+        (World->WorldType != EWorldType::Editor && World->WorldType != EWorldType::EditorPreview) ||
+        Actor->PCGComponent->IsGenerating() || Actor->PCGComponent->IsCleaningUp())
+    {
+        Error = TEXT("只能为未生成中的Editor世界放置器绑定已加载真实PCGGraph；禁止运行时修改或同步载入。");
+        return false;
+    }
+
+    Actor->Modify();
+    Actor->PCGComponent->Modify();
+    Actor->Graph = ApprovedGraph;
+    // 官方NetMulticast SetGraph会触发网络RPC；这里仅设置Editor本地GraphInstance。
+    Actor->PCGComponent->SetGraphLocal(ApprovedGraph);
+    if (Actor->PCGComponent->GetGraph() != ApprovedGraph)
+    {
+        Error = TEXT("Graph字段与官方PCGComponent图不同步；不允许保存无法生成的放置器。");
+        return false;
+    }
+    Actor->MarkPackageDirty();
     return true;
 }
 
@@ -414,7 +465,7 @@ bool UGamePlatformPCGEditorLibrary::CreatePCGPlacementBlueprints(
         {TEXT("BP_PCG_Rock"), AGamePlatformPCGVolumeActor::StaticClass(), FGamePlatformPCGDomainIds::RockScatter, EGamePlatformPCGPrimitive::P1_Scatter, EGamePlatformPCGWorldStage::Scatter},
         {TEXT("BP_PCG_Road"), AGamePlatformPCGSplineActor::StaticClass(), FGamePlatformPCGDomainIds::RoadNetwork, EGamePlatformPCGPrimitive::P2_Linear, EGamePlatformPCGWorldStage::Networks},
         {TEXT("BP_PCG_Field"), AGamePlatformPCGPolygonActor::StaticClass(), FGamePlatformPCGDomainIds::AgriParcel, EGamePlatformPCGPrimitive::P4_Parcel, EGamePlatformPCGWorldStage::Parcels},
-        {TEXT("BP_PCG_Crops"), AGamePlatformPCGVolumeActor::StaticClass(), FGamePlatformPCGDomainIds::AgriCrop, EGamePlatformPCGPrimitive::P1_Scatter, EGamePlatformPCGWorldStage::Scatter},
+        {TEXT("BP_PCG_Crops"), AGamePlatformPCGPolygonActor::StaticClass(), FGamePlatformPCGDomainIds::AgriCrop, EGamePlatformPCGPrimitive::P1_Scatter, EGamePlatformPCGWorldStage::Scatter},
         {TEXT("BP_PCG_Bridge"), AGamePlatformPCGConnectorActor::StaticClass(), FGamePlatformPCGDomainIds::BridgeSpan, EGamePlatformPCGPrimitive::P3_Connector, EGamePlatformPCGWorldStage::Connectors},
         {TEXT("BP_PCG_Exclusion"), AGamePlatformPCGExclusionActor::StaticClass(), FGamePlatformPCGDomainIds::GameplayExclusion, EGamePlatformPCGPrimitive::P0_Field, EGamePlatformPCGWorldStage::FieldRead},
         {TEXT("BP_PCG_WaterBank"), AGamePlatformPCGSplineActor::StaticClass(), FGamePlatformPCGDomainIds::WaterBank, EGamePlatformPCGPrimitive::P6_InterfaceBand, EGamePlatformPCGWorldStage::InterfaceBands},

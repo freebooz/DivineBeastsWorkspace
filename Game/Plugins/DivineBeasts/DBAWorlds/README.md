@@ -10,6 +10,8 @@
 
 2026-10-10天气系统一期：现有`ADivineBeastsWorldGameMode`仅在权威世界`BeginPlay`激活`GamePlatformWeatherWorldSubsystem`，默认晴天，不在登录前端部署；`InitialWeather`可通过项目GameMode蓝图默认值调整，`bEnableWeatherSchedule`和`WeatherSchedule`启用合法天气周期。Runtime只依赖`GamePlatformWeatherRuntime`，不访问客户端Niagara/SFX/Surface，客户端天气模块订阅网络快照。若需要正式项目世界专属天气Definition实例，必须由GamePlatformData有效租约加载并在第三层内容包创建真实UE资产，不允许硬引用不存在的天气蓝图。
 
+天气预设的正式消费入口已加至`ADivineBeastsWorldGameMode::InitialWeatherPresetId`：为空时使用可编辑InitialWeather；填写`db.weather.clear@1`、`db.weather.lightrain@1`等合法逻辑ID时，先完成权威世界初始化，再经GamePlatformData的World期限异步Definition租约加载真实天气资产。回执必须核对完整Lease身份与代次，成功后应用目标数值并释放，失败保留原天气。EndPlay主动释放待完成租约，旧世界回调不修改新世界。如果启用自动天气调度，则自动调度优先，不并发加载初始预设。
+
 本轮新增项目天气审核Actor`ADivineBeastsWeatherReviewController`（蓝图可派生，具备运行期ApplyReviewWeather/ReadCurrentWeather）；只允许权威世界显式执行，默认不自动改天气，且不复制或新建WeatherReplicator。真正审核蓝图的编辑器生成入口为`Tools/Unreal/Weather/AuthorWeatherBlueprintAssets.py`，目标位于`/Game/Development/Weather/Blueprints`，不是正式Village地图的一部分。所需8份项目天气Definition资产也由同一UE Editor脚本创建，数据只有天气标量，不包含纯客户端Niagara/SFX硬引用。
 
 当前工程已有引擎生成的前端与Village地图、世界定义及角色体验定义，实际资源归对应内容包。2026-10-09已执行Client、Server完整原生构建及项目Editor模块构建；这些结果不代替当前版本Cook/Stage、真实网络准入与双客户端人工行走验收，具体边界见下节和独立验证记录。

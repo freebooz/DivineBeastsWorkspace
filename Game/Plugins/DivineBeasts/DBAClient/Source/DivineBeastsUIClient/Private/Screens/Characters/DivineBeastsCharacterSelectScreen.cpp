@@ -1,6 +1,30 @@
 #include "Screens/Characters/DivineBeastsCharacterSelectScreen.h"
+#include "Styling/DivineBeastsUIStyleBindings.h"
 
 #include "ViewModels/Characters/DivineBeastsCharacterSelectViewModel.h"
+
+// 默认主题语义只保存在项目层CDO：当项目主题ID为空时平台兼容绑定保持旧Widget样式。
+// 不修改已有Widget树、命名控件、焦点、登录输入/命令或加载任何项目纹理。
+UDivineBeastsCharacterSelectScreen::UDivineBeastsCharacterSelectScreen()
+{
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("SelectButton"), DivineBeasts::UI::Styling::Keys::ButtonPrimary, EGamePlatformUIStyleKind::Button));
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("OpenCharacterCreateButton"), DivineBeasts::UI::Styling::Keys::ButtonSecondary, EGamePlatformUIStyleKind::Button, true));
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("LogoutButton"), DivineBeasts::UI::Styling::Keys::ButtonSecondary, EGamePlatformUIStyleKind::Button));
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("SelectedHeroName"), DivineBeasts::UI::Styling::Keys::TextTitle, EGamePlatformUIStyleKind::Text, true));
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("SelectedCharacterName"), DivineBeasts::UI::Styling::Keys::TextBody, EGamePlatformUIStyleKind::Text, true));
+    // 旧UMG UButton不管理内部文本样式；命名子TextBlock按相同正文视觉单独可选适配。
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("SelectButtonLabel"), DivineBeasts::UI::Styling::Keys::TextBody, EGamePlatformUIStyleKind::Text, true));
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("LogoutButtonLabel"), DivineBeasts::UI::Styling::Keys::TextBody, EGamePlatformUIStyleKind::Text, true));
+    ThemeBindings.Add(DivineBeasts::UI::Styling::MakeBinding(
+        TEXT("OpenCharacterCreateButtonLabel"), DivineBeasts::UI::Styling::Keys::TextBody, EGamePlatformUIStyleKind::Text, true));
+}
 
 UDivineBeastsCharacterSelectViewModel*
 UDivineBeastsCharacterSelectScreen::GetCharacterSelectViewModel() const

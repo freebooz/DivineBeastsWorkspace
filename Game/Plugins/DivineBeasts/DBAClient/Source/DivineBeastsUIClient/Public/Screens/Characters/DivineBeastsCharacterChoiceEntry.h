@@ -21,6 +21,8 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsCharacterChoiceEntry : public UGameP
 {
     GENERATED_BODY()
 public:
+    /** 跨项目语义化样式默认绑定；具体外观由DBAUIPack_Core资源主题统一决定。 */
+    UDivineBeastsCharacterChoiceEntry();
     /** 游戏线程刷新显示身份和文案；空身份拒绝点击。Identity可在条目复用时替换。 */
     void ConfigureChoice(const FString& Identity, const FText& Title, const FText& Subtitle, const FText& Emblem);
     /** 只改变本地选中边框，不推进应用流程或保存角色选择。 */
