@@ -21,7 +21,7 @@
     {
       "Name": "GamePlatformSurfaceEditor",
       "Type": "Editor",
-      "LoadingPhase": "PostEngineInit",
+      "LoadingPhase": "Default",
       "TargetAllowList": [
         "Editor"
       ]

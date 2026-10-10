@@ -98,7 +98,8 @@ def apply_ue_assets(items: list[dict]) -> None:
             "compression_settings",
             settings_enum[item["entry"]["recommendedCompression"]]
         )
-        texture.post_edit_change()
+        # UE5.8的unreal.Texture2D Python代理没有post_edit_change方法；
+        # set_editor_property后直接走EditorAssetLibrary保存并按类别回读。
         if not unreal.EditorAssetLibrary.save_loaded_asset(texture, only_if_is_dirty=False):
             raise RuntimeError(f"UE未能保存真实Texture2D：{item['asset_path']}")
         reload_tex = unreal.EditorAssetLibrary.load_asset(item["asset_path"])

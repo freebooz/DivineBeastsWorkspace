@@ -4,7 +4,7 @@
 
 资产范围：
   Server-safe数据定义8个 -> DBAWorldPack_Village/Weather/Definitions
-  可派生的真实审查蓝图2个（GameMode/Actor） -> /Game/Development/Weather/Blueprints
+  可派生的真实天气审核Actor蓝图1个 -> /Game/Development/Weather/Blueprints；服务器GameMode禁止蓝图派生
 
 默认WEATHER_BLUEPRINT_AUTHOR_MODE=inspect，只输出清单。
 apply之前必须编辑器已加载DBAWorldsRuntime和GamePlatformWeatherRuntime。
@@ -20,7 +20,6 @@ MODE = os.environ.get("WEATHER_BLUEPRINT_AUTHOR_MODE", "inspect").strip().lower(
 DEFINITION_DIR = "/DBAWorldPack_Village/Weather/Definitions"
 REVIEW_DIR = "/Game/Development/Weather/Blueprints"
 REVIEW_BLUEPRINT = REVIEW_DIR + "/BP_DBA_WeatherReviewController"
-REVIEW_GAMEMODE_BLUEPRINT = REVIEW_DIR + "/BP_DBA_WeatherReviewGameMode"
 
 # 具体数值只用于服务器安全的天气预设，不硬引用客户端Niagara/音效/纹理。
 # 字段 = (天气类型,降雨强度,降雪强度,湿润,积雪,积水,雾,风,摄氏温度,过渡秒数)
@@ -41,9 +40,7 @@ ENUM_VALUES = {
 }
 
 def plans() -> list[str]:
-    return [f"{DEFINITION_DIR}/DA_DBA_Weather_{rec[0]}" for rec in PRESETS] + [
-        REVIEW_BLUEPRINT, REVIEW_GAMEMODE_BLUEPRINT
-    ]
+    return [f"{DEFINITION_DIR}/DA_DBA_Weather_{rec[0]}" for rec in PRESETS] + [REVIEW_BLUEPRINT]
 
 
 def create_assets():
@@ -60,9 +57,17 @@ def create_assets():
     if not parent_def or not parent_review or not parent_game_mode:
         raise RuntimeError("项目天气反射C++类型未加载，请先完成编辑器模块链接")
 
+    # 允许断点续作；已有目标只回读合法类型并保持不变，不进行任何覆盖。
     for target in plans():
         if assets.does_asset_exist(target):
-            raise FileExistsError(f"项目天气资产已存在，拒绝覆盖：{target}")
+            expected = parent_review if target == REVIEW_BLUEPRINT else parent_def
+            obj = assets.load_asset(target)
+            if target == REVIEW_BLUEPRINT:
+                if not isinstance(obj, unreal.Blueprint):
+                    raise TypeError(f"既有天气审核蓝图类型错误：{target}")
+            elif not isinstance(obj, expected):
+                raise TypeError(f"既有天气定义类型错误：{target}")
+            print("UE_WEATHER_ASSET_ALREADY_EXISTS", target)
     for folder in (DEFINITION_DIR, REVIEW_DIR):
         if not assets.does_directory_exist(folder):
             assets.make_directory(folder)
@@ -93,6 +98,9 @@ def create_assets():
 
     for row in PRESETS:
         name = "DA_DBA_Weather_" + row[0]
+        existing_path = DEFINITION_DIR + "/" + name
+        if assets.does_asset_exist(existing_path):
+            continue  # 已保存且经过类型核对，绝不覆盖其他任务修改。
         asset = tools.create_asset(name, DEFINITION_DIR, parent_def, data_factory)
         if asset is None or not isinstance(asset, parent_def):
             raise RuntimeError(f"没有创建真实的GamePlatformWeatherPresetDefinition：{name}")
@@ -102,8 +110,7 @@ def create_assets():
         ident.set_editor_property("logical_version", 1)
         asset.set_editor_property("logical_id", ident)
         version = unreal.GamePlatformDataVersion()
-        version.set_editor_property("schema_version", 1)
-        version.set_editor_property("content_revision", 1)
+        # 两字段均为C++ EditDefaultsOnly，Python独立结构实例不可写；默认值已为1。
         asset.set_editor_property("data_version", version)
 
         entry = unreal.GamePlatformWeatherScheduleEntry()
@@ -121,8 +128,7 @@ def create_assets():
             raise RuntimeError(f"天气预设回读类别错误：{name}")
         print("UE_WEATHER_PRESET_SAVED", reloaded.get_path_name())
 
-    # 创建两个真正的项目蓝图：Review GameMode只组合现有权威天气机制，
-    # Review Actor只供地图审查按钮/人工蓝图事件调用，不在前端或正式竞技中自动执行。
+    # 唯一真正的项目审核Actor蓝图。平台GameMode标记NotBlueprintable，不允许绕过可信服务器门禁。
     bp_editor = getattr(unreal, "BlueprintEditorLibrary", None)
     compiler = getattr(bp_editor, "compile_blueprint", None)
     if compiler is None:
@@ -131,10 +137,9 @@ def create_assets():
     if compiler is None:
         raise RuntimeError("UE5.8蓝图编译API不可用；拒绝创建无法校验的蓝图")
 
-    for name, parent in (
-        ("BP_DBA_WeatherReviewController", parent_review),
-        ("BP_DBA_WeatherReviewGameMode", parent_game_mode),
-    ):
+    for name, parent in (("BP_DBA_WeatherReviewController", parent_review),):
+        if assets.does_asset_exist(REVIEW_DIR + "/" + name):
+            continue
         factory = unreal.BlueprintFactory()
         factory.set_editor_property("parent_class", parent)
         blueprint = tools.create_asset(name, REVIEW_DIR, unreal.Blueprint, factory)
@@ -149,7 +154,7 @@ def create_assets():
         print("UE_WEATHER_BLUEPRINT_SAVED", loaded.get_path_name())
 
     # 天气预设通过项目GameMode的InitialWeatherPresetId由GamePlatformData世界租约加载。
-    # 审核GameMode默认保持晴天，用户可在蓝图类默认值中选择db.weather.lightrain@1等ID。
+    # 审核地图直接使用原生DivineBeastsWorldGameMode；初始天气由Data逻辑ID配置。
 
 
 def main() -> None:

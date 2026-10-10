@@ -70,7 +70,11 @@ def run_editor() -> None:
             raise FileNotFoundError("缺少正式UE前置资产：" + name)
     for path in paths():
         if assets.does_asset_exist(path):
-            raise FileExistsError("已存在资源；拒绝覆盖：" + path)
+            existing = assets.load_asset(path)
+            expected_type = unreal.MaterialFunction if "/MaterialFunctions/" in path else unreal.Material
+            if not isinstance(existing, expected_type):
+                raise TypeError(f"现有资源类别错误、拒绝覆盖：{path}")
+            # 允许上次UE部分成功后的增量继续；create_functions/materials会安全跳过。
 
     mpc = assets.load_asset(MPC)
     snow_texture = assets.load_asset(T_SNOW)
@@ -94,7 +98,13 @@ def run_editor() -> None:
         obj.set_editor_property(prop, value)
 
     def link(left, right, pin: str, output=""):
-        if not lib.connect_material_expressions(left, output, right, pin):
+        # UE5.8部分单输入表达式（Saturate/ComponentMask）暴露空FName输入，
+        # 并非统一名为Input。仅在明确的单输入语义下尝试未命名引脚。
+        ok = lib.connect_material_expressions(left, output, right, pin)
+        if not ok and pin in ("Input", "Position"):
+            # UE5.8中部分表达式的GetInputName返回NAME_None，不按UPROPERTY名称解析。
+            ok = lib.connect_material_expressions(left, output, right, "")
+        if not ok:
             raise RuntimeError(f"材质图连接失败：{left.get_name()} -> {right.get_name()}({pin})")
 
     def constant(owner, value, x, y):
@@ -132,15 +142,13 @@ def run_editor() -> None:
         kind = ("FUNCTION_INPUT_VECTOR3" if vector else "FUNCTION_INPUT_SCALAR")
         setprop(o, "input_type", getattr(unreal.FunctionInputType, kind))
         setprop(o, "use_preview_value_as_default", True)
-        # 仅HeightRangeCm设100厘米非零默认预览值，避免未连接函数输入导致除0或无意义Shader。
-        if name == "HeightRangeCm":
-            setprop(o, "preview_value", unreal.LinearColor(100.0, 0.0, 0.0, 0.0))
+        # 函数输入预览值在UE5.8由材质函数编辑器维护；调用方必须提供非零的HeightRangeCm。
         return o
 
     def function_output(owner, source, name, x, y):
         o = node(owner, unreal.MaterialExpressionFunctionOutput, x, y)
         setprop(o, "output_name", name)
-        link(source, o, "A")
+        link(source, o, "")  # UMaterialExpressionFunctionOutput::GetInputName返回NAME_None
 
     def finish_function(asset, label):
         count = lib.get_num_material_expressions_in_function(asset)
@@ -159,31 +167,33 @@ def run_editor() -> None:
             dest = f"{SURFACE}/MaterialFunctions/{area}"
             if not assets.does_directory_exist(dest):
                 assets.make_directory(dest)
+            target = dest + "/" + name
+            if assets.does_asset_exist(target):
+                existing = assets.load_asset(target)
+                if not isinstance(existing, unreal.MaterialFunction):
+                    raise TypeError(f"已有同名资产不是MaterialFunction：{target}")
+                print("UE_WEATHER_FUNCTION_ALREADY_EXISTS", target)
+                continue  # 断点续作：绝不覆盖前轮已保存函数。
             fn = tools.create_asset(name, dest, unreal.MaterialFunction, factory)
             if not isinstance(fn, unreal.MaterialFunction):
                 raise RuntimeError("UE无法创建真实材质函数：" + name)
             if name == "MF_GP_SlopeMask":
-                # VertexNormalWS本身属于Vertex阶段，必须通过VertexInterpolator送入
-                # Pixel阶段的遮罩计算。不能直接接到BaseColor或雪法线依赖图。
-                normal = node(fn, unreal.MaterialExpressionVertexNormalWS, -1100, -100)
-                interpolator = node(fn, unreal.MaterialExpressionVertexInterpolator, -860, -100)
-                link(normal, interpolator, "Input")
-                mask = node(fn, unreal.MaterialExpressionComponentMask, -650, -100)
-                setprop(mask, "r", False); setprop(mask, "g", False)
-                setprop(mask, "b", True); setprop(mask, "a", False)
-                link(interpolator, mask, "Input")
+                # 坡度遮罩只用于BaseColor/Roughness，PixelNormalWS来自材质Normal输入。
+                # 材质Normal不能再依赖坡度遮罩，否则形成Shader环形引用。
+                normal = node(fn, unreal.MaterialExpressionPixelNormalWS, -900, -100)
+                # 用DotProduct直接取世界Z法线，无需ComponentMask的UE5.8输入脚本适配。
+                up = color(fn, 0, 0, 1, -900, 180)
+                projected = binary(fn, unreal.MaterialExpressionDotProduct, normal, up, -610, -100)
                 saturated = node(fn, unreal.MaterialExpressionSaturate, -420, -100)
-                link(mask, saturated, "Input")
+                link(projected, saturated, "Input")
                 function_output(fn, saturated, "SlopeMask", -140, -100)
             elif name == "MF_GP_HeightMask":
                 position = node(fn, unreal.MaterialExpressionWorldPosition, -900, -100)
-                zmask = node(fn, unreal.MaterialExpressionComponentMask, -650, -120)
-                setprop(zmask, "r", False); setprop(zmask, "g", False)
-                setprop(zmask, "b", True); setprop(zmask, "a", False)
-                link(position, zmask, "Input")
+                up = color(fn, 0, 0, 1, -900, 110)
+                height_z = binary(fn, unreal.MaterialExpressionDotProduct, position, up, -650, -120)
                 height_start = function_input(fn, "HeightStartCm", False, -900, 260)
                 height_range = function_input(fn, "HeightRangeCm", False, -900, 520)
-                offset = binary(fn, unreal.MaterialExpressionSubtract, zmask, height_start, -380, -100)
+                offset = binary(fn, unreal.MaterialExpressionSubtract, height_z, height_start, -380, -100)
                 divided = binary(fn, unreal.MaterialExpressionDivide, offset, height_range, -170, -100)
                 clamp = node(fn, unreal.MaterialExpressionSaturate, 30, -100)
                 link(divided, clamp, "Input")
@@ -254,6 +264,13 @@ def run_editor() -> None:
             assets.make_directory(destination)
         for name in MATERIALS:
             lite = name.endswith("_Lite")
+            target = destination + "/" + name
+            if assets.does_asset_exist(target):
+                previous = assets.load_asset(target)
+                if not isinstance(previous, unreal.Material):
+                    raise TypeError(f"已有同名对象非Material：{target}")
+                print("UE_WEATHER_MATERIAL_ALREADY_EXISTS", target)
+                continue
             mat = tools.create_asset(name, destination, unreal.Material, unreal.MaterialFactoryNew())
             if not isinstance(mat, unreal.Material):
                 raise RuntimeError("创建真实Surface材质失败：" + name)
@@ -279,13 +296,10 @@ def run_editor() -> None:
                 snowcolor = node(mat, unreal.MaterialExpressionTextureSampleParameter2D, -1130, 720)
                 setprop(snowcolor, "parameter_name", unreal.Name("SnowAlbedoTexture"))
                 setprop(snowcolor, "texture", snow_texture)
-                # 只取几何法线进行坡度控制：先从Vertex阶段插值到Pixel，避免
-                # PixelNormalWS引用本材质Normal后循环依赖，并满足UE材质阶段约束。
-                normalws = node(mat, unreal.MaterialExpressionVertexNormalWS, -1540, -1180)
-                interpolated = node(mat, unreal.MaterialExpressionVertexInterpolator, -1320, -1180)
-                link(normalws, interpolated, "Input")
+                # PixelNormalWS可供颜色/粗糙度遮罩；Normal输出本身不依赖此遮罩。
+                normalws = node(mat, unreal.MaterialExpressionPixelNormalWS, -1410, -1180)
                 up = color(mat, 0, 0, 1, -1390, -1450)
-                slope_dot = binary(mat, unreal.MaterialExpressionDotProduct, interpolated, up, -1100, -1180)
+                slope_dot = binary(mat, unreal.MaterialExpressionDotProduct, normalws, up, -1100, -1180)
                 slope = node(mat, unreal.MaterialExpressionSaturate, -920, -1160)
                 link(slope_dot, slope, "Input")
                 snow_alpha = binary(mat, unreal.MaterialExpressionMultiply, snowamount, slope, -690, -700)
@@ -310,7 +324,8 @@ def run_editor() -> None:
                 ntex = node(mat, unreal.MaterialExpressionTextureSampleParameter2D, -950, 1930)
                 setprop(ntex, "parameter_name", unreal.Name("SnowNormalTexture"))
                 setprop(ntex, "texture", normal_texture)
-                output_normal = mix(mat, flatnormal, ntex, snow_alpha, -470, 1840)
+                # 禁止Normal反向引用由PixelNormalWS算出的snow_alpha，否则材质图循环。
+                output_normal = mix(mat, flatnormal, ntex, snowamount, -470, 1840)
             if not lib.connect_material_property(output_normal, "", unreal.MaterialProperty.MP_NORMAL):
                 raise RuntimeError("Normal输出未连接")
             finish_material(mat)

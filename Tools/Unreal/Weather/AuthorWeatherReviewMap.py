@@ -14,7 +14,7 @@ import os
 
 MODE = os.environ.get("WEATHER_REVIEW_MAP_MODE", "inspect").strip().lower()
 MAP = "/Game/Development/Weather/Maps/L_DBA_WeatherReview"
-GAMEMODE = "/Game/Development/Weather/Blueprints/BP_DBA_WeatherReviewGameMode"
+GAMEMODE = "/Script/DBAWorldsRuntime.DivineBeastsWorldGameMode" # 原生权威GameMode，禁止蓝图派生
 CONTROLLER = "/Game/Development/Weather/Blueprints/BP_DBA_WeatherReviewController"
 SURFACE = "/GamePlatformSurface/Materials/M_GP_Surface_Master"
 ENGINE_CUBE = "/Engine/BasicShapes/Cube.Cube"
@@ -40,17 +40,17 @@ def main():
     levels = unreal.EditorLevelLibrary
     if assets.does_asset_exist(MAP):
         raise FileExistsError("天气审核地图已存在，禁止覆盖：" + MAP)
-    for dep in (GAMEMODE, CONTROLLER, SURFACE, ENGINE_CUBE, ENGINE_PLANE):
+    for dep in (CONTROLLER, SURFACE, ENGINE_CUBE, ENGINE_PLANE):
         if not assets.does_asset_exist(dep):
             raise FileNotFoundError("真实UE地图前置资产不存在：" + dep)
 
-    mode_class = assets.load_blueprint_class(GAMEMODE)
+    mode_class = getattr(unreal, "DivineBeastsWorldGameMode", None)
     actor_class = assets.load_blueprint_class(CONTROLLER)
     ground_material = assets.load_asset(SURFACE)
     cube = assets.load_asset(ENGINE_CUBE)
     plane = assets.load_asset(ENGINE_PLANE)
     if mode_class is None or actor_class is None:
-        raise RuntimeError("实际审核GameMode或Actor蓝图不可加载；请先编译保存两个蓝图")
+        raise RuntimeError("原生GameMode或审核Actor蓝图不可加载，必须保持服务器准入门禁")
     if not isinstance(ground_material, unreal.Material):
         raise TypeError("Surface完整母材质非真实UMaterial")
     if not isinstance(cube, unreal.StaticMesh) or not isinstance(plane, unreal.StaticMesh):

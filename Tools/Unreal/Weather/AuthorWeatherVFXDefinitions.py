@@ -61,8 +61,7 @@ def main() -> None:
         ident.set_editor_property("logical_version", int(generation))
         d.set_editor_property("logical_id", ident)
         revision = unreal.GamePlatformDataVersion()
-        revision.set_editor_property("schema_version", 1)
-        revision.set_editor_property("content_revision", 1)
+        # C++定义默认SchemaVersion/ContentRevision=1，不在临时Python结构实例上修改。
         d.set_editor_property("data_version", revision)
         d.set_editor_property("niagara_system", assets.load_asset(system))
         d.set_editor_property("auto_destroy", False)

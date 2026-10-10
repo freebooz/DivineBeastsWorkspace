@@ -126,8 +126,7 @@ def main() -> None:
         ident.set_editor_property("logical_version", int(version))
         definition.set_editor_property("logical_id", ident)
         revision = unreal.GamePlatformDataVersion()
-        revision.set_editor_property("schema_version", 1)
-        revision.set_editor_property("content_revision", 1)
+        # 使用C++默认结构版本及修订=1；EditDefaultsOnly不接受实例写入。
         definition.set_editor_property("data_version", revision)
         definition.set_editor_property("sound", sound)
         definition.set_editor_property("allowed_float_parameters", [unreal.Name("WeatherIntensity")])

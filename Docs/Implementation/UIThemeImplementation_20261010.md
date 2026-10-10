@@ -92,6 +92,14 @@ Game/Config/DefaultGame.ini已将/DBAUIPack_Core/UI/Themes加入既有GamePlatfo
 - 实际执行生成器输出 `Saved/Monolith/UITheme20261010/AuthoringRequests.json`（请求队列），结果 `STYLE_DEFINITIONS=5 REQUEST_ACTIONS=41 EXECUTED=NO ASSETS_CREATED=NO AUTOMATION_RUN=NO`；这41项为**待由Monolith真实执行的编辑器操作**，并非已保存的41件资产。原样式蓝图、正式主题、标准面板WBP与项目页面主题CDO都要在编辑器真实加载后处理。
 - 按用户明确顺序，本轮没有执行原生主题自动化、统一静态测试、Cook或Stage发布验证。完成资产前保持 `DefaultThemeDefinitionId` 为空以维持既有登录、角色页面原样式与焦点。
 
+### 2026-10-10 15:52 后续实施：真实主题资产回读与标准面板待接入
+
+- 本轮主工程 `DivineBeastsWorkspace`（神兽联盟工作空间）主分支检查点为 `cc4607a`，执行前工作树包含PCG、天气和真实主题资源的其他协作改动；未清理、重置、提交或推送任何修改。
+- 实际文件系统确认 `/DBAUIPack_Core/UI/Styles/`（项目公共主题样式）已存在5个真实非空UE资产：`BP_DBA_ButtonStyle_Primary`（主要按钮）、`BP_DBA_ButtonStyle_Secondary`（次要按钮）、`BP_DBA_TextStyle_Body`（正文）、`BP_DBA_TextStyle_Title`（标题）、`BP_DBA_BorderStyle_Panel`（面板）。`/DBAUIPack_Core/UI/Themes/DA_DBA_UITheme_Default`（项目默认主题）也真实存在；`/Game/Development/UITheme/`（开发主题目录）包含中性按钮/边框样式及`DA_DBA_UITheme_NeutralDev`（开发对照主题）。
+- Monolith MCP（引擎内部资产工具）一度成功通过`blueprint.get_cdo_properties`（资产默认属性回读）实读`DA_DBA_UITheme_Default`：Buttons两项、Texts两项、Borders一项以及RequiredStyles五项，语义键分别为`UI.Style.Button.Primary/Secondary`（主要/次要按钮）、`UI.Style.Text.Body/Title`（正文/标题）、`UI.Style.Border.Panel`（面板边框），Scope均为Project且GeneratedClass软路径非空；这证明主题主资产映射真实写入，但不代替每种按钮Brush、文字字体或客户端显示验收。
+- 标准面板 `WBP_DBA_UI_StandardPanel`（项目统一面板控件蓝图）本轮仍未找到真实交付文件。后续编辑器/Monolith请求暂时报`Provider request was not started; no downstream effect was dispatched`（未调度），同期另一会话正通过Runner启动锁定UE5.8的`UnrealEditor.exe`（正式编辑器）。本轮不争用、杀停其进程、不使用普通文件工具代造.uasset。
+- 下一步须待Monolith真实稳定：逐一回读五种CommonUI样式实际CDO画刷/字体、编译和保存状态，制作标准面板并验证`PanelBackground/PanelTitle/CloseButton/ContentSlot`命名树，核对现有登录/角色页面的ThemeBindings继承默认值；再对已经完整确认的正式主题启用DefaultThemeDefinitionId，最后按照用户要求统一执行自动化、性能和客户端/专服Cook审计。本轮没有运行统一自动化测试。
+
 ## 五、未完成门禁与恢复顺序
 
 完成最终C++和完整DLL链接→启动主工程并确认ThemeDefinition/ThemeBindings反射→运行GamePlatform.UI.Theme.*原生测试→Monolith创建五种原生样式和默认主题/中性测试主题→绑定实际命名控件、编译保存重载→启用默认主题ID→两套主题/LocalPlayer隔离/取消回退实测→客户端Cook与服务器剥离审计。

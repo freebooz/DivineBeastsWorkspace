@@ -49,10 +49,24 @@ if(-not (Test-Path $Task) -or -not (Test-Path $Verify)){
 }
 function Invoke-WeatherUE([string[]]$CallArgs,[string]$Title) {
     Write-Output ('START_WEATHER_UE '+$Title)
-    & $Editor $Project @CallArgs -unattended -nop4 -nosplash
+    # UnrealEditor-Cmd的Python执行器出现Traceback时也可能返回0；必须额外检查作者脚本的成功终态。
+    $Output=@(& $Editor $Project @CallArgs -unattended -nop4 -nosplash 2>&1 | ForEach-Object { [string]$_ })
     $e=$LASTEXITCODE
+    $Output | Select-Object -Last 30 | ForEach-Object { Write-Output $_ }
     Write-Output ('WEATHER_UE_EXIT '+$Title+'='+$e)
     if($e -ne 0){throw "UE真实制作失败：$Title（$e）；请检查Saved/Logs后增量修复，禁止覆盖现有资产"}
+    if($Title -like 'ASSET_*' -and $Title -ne 'ASSET_VERIFY'){
+        # UE5.8启动Python工具的LogPython结果会写入最新项目编辑器日志，
+        # 而命令行stdout可能只含UBT/引擎前期内容。双来源检查，不误报空资产成功。
+        $ProjectLogs=Join-Path $Root 'Game\Saved\Logs'
+        $Latest=Get-ChildItem $ProjectLogs -Filter 'DivineBeastsArena*.log' -File |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        $Success=$Output -match 'WEATHER_AUTHOR_UE_PHASE_COMPLETED'
+        if(-not $Success -and $Latest){
+            $Success= [bool] (Select-String -LiteralPath $Latest.FullName -SimpleMatch -Pattern ('WEATHER_AUTHOR_UE_PHASE_COMPLETED '+$Title.Substring(6)+' tasks ') -Quiet)
+        }
+        if(-not $Success){throw "UE Python作者脚本未返回成功终态，拒绝将${Title}误报完成，请查LogPython错误。"}
+    }
 }
 # 首次生成MPC，若已存在则只做ValidateOnly；避免命令将同名资源当作新资产覆盖。
 if(-not (Test-Path $MpcPath)){

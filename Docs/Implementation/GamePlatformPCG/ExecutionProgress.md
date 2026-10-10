@@ -117,6 +117,8 @@
 - **下一关键工作**：先按锁定UE5.8正式构建规范恢复预编译引擎导入库（重点`PCG/AssetRegistry/GameplayTags/Projects`），并协调其它并行模块编译。再完整生成并链接GamePlatformPCG/GamePlatformPCGEditor/DBAWorldsRuntime，执行新增UE Automation，调用真正已更新的Editor Commandlet创建12模板、7子图及11蓝图，保存、独立重开、按G01～G16验收后再双端Cook。继续保护其他任务未提交修改，不擅自提交/推送/部署。
 ## 2026-10-10｜P0～P7后续推进与真实编辑器构建／金标准资源状态
 
+> **2026-10-10 资源最新核验补充**：当前主工程已实际存在12 Foundation模板、7公共子图、11 Village蓝图、17 Gold Definition、3 Realized Graph、3 Profile及1张`PCG_GoldLevel_M1.umap`。新增`Tools/Unreal/PCG/InventoryGoldAssets.py`（金标准资源文件审计），对后24份资源的名称、数量、文件长度和SHA-256检查返回0；证据`Saved/Validation/GamePlatformPCG/GoldAssetsInventory_20261010.json`。此前本文提到“资源数量0”的段落均为当时历史状态，不再代表当前资源数量。UE编辑器独立重开、金标准G01～G16、PCG真实生成与权威碰撞/导航、Server/Client Cook仍待真实验收。此工作区有其他进程正在运行UnrealEditor.exe（虚幻编辑器），本次未争用写入。
+
 **审查范围**：本次在唯一正式`DivineBeastsWorkspace/Game/DivineBeastsArena.uproject（神兽联盟主工程）`内继续；未更名插件、创建平行PCG模块、删除/覆盖他人资产，也未提交/推送代码。
 
 1. **PCG正式编译一次通过（截至当时源码）**：`DivineBeastsArenaEditor Win64 Development`针对`GamePlatformCore、GamePlatformData、GamePlatformWorld、GamePlatformPCG、GamePlatformPCGEditor（平台核心、数据、世界、PCG运行、PCG编辑器模块）`的UBT构建退出码0；`Saved/Validation/GamePlatformPCG/PCG_P0_P7_ModuleBuild_Retry_20261010.log`显示PCG两个DLL真实编译、链接成功。但本轮随后又修改闭合围栏掩码及回归测试，这份日志不能作为**最新源码**的完整UE编译凭证。

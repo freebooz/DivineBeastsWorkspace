@@ -2,6 +2,8 @@
 
 这里的脚本只能通过真正的UE5.8编辑器创建资源，不创建文本伪uasset/umap，不覆盖已有资源。
 
+InventoryGoldAssets.py（金标准资产文件审计）：只读核验已真实落盘的17个Definition（数据定义）、3份Realized Graph（实例化生成图）、3份Profile（配置）与1张地图，记录每份文件的长度与SHA-256。可选`--report Saved/Validation/GamePlatformPCG/GoldAssetsInventory_20261010.json`（审计报告）；只证明文件完整性，不替代AssetRegistry（资产注册）、图执行、NavMesh（导航网格）或G01～G16验收。
+
 AuthorGoldLevelDefinitions.py（数据定义生成工具）：为M1测试关卡提供17个资产，包括3个MeshSet（网格集合）、2个SpawnPolicy（生成策略）、3个Layer（生成层）、道路/围栏/农田/连接件等定义。默认只读清单；PCG_GOLD_DEFINITION_MODE=apply仅在UE5.8编辑器中启用。
 
 AuthorGoldLevelMap.py（金标准地图生成工具）：目标是 /Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1，按照G01～G16的场景素材要求放置一个WorldDirector（世界编排器）、道路/小径/田篱样条、闭合地块、森林、资源、桥、门和排除区。默认只读；PCG_GOLD_MAP_MODE=apply仅在UE5.8编辑器中启用。
