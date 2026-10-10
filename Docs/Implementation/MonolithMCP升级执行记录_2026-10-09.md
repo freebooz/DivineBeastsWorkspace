@@ -1,39 +1,65 @@
 # Monolith MCP v0.23.0 全局与项目升级执行记录
 
-2026-10-09用户明确授权升级全局和本项目Monolith MCP到v0.23.0。本文记录真实安装、连接、锁定引擎兼容及回退边界；进行中的步骤不能作为工具已升级可用或资产验收通过的证据。
+2026-10-09 用户明确要求将 Monolith MCP v0.23.0 作为全局插件，并供所有项目共用。本文只记录本次实际执行结果、验证证据和适用边界；不把文档结论替代引擎加载、MCP 实际调用、游戏运行、Cook 或人工视觉验收。
 
-## 来源与实际安装范围
+## 安装范围与复用方式
 
-官方源为tumourlove/monolith的v0.23.0发布，选择Monolith-v0.23.0-UE5.8.zip；发布页校验标记与下载文件均为SHA-256 `550be7b4e5f232bfca0f5800df7e917836fb405b53af02664f1b359405191d89`。只使用该发布源码，不把master后续提交冒充v0.23.0。
+- 全局引擎级安装位置为 `D:/UnrealEngine-5.8.0-release/Engine/Plugins/Marketplace/Monolith`。
+- Codex 全局配置 `C:/Users/Administrator/.codex/config.toml` 中的 `mcp_servers.monolith` 指向上述安装的 `Binaries/monolith_proxy.exe`。配置工作目录 `E:/work/Game/PCG` 实际存在，本次无需修改个人配置。
+- 官方描述文件保持 `EnabledByDefault=true`。因此，使用这套 `D:/UnrealEngine-5.8.0-release` 引擎的项目共用同一份引擎级插件，不在各项目内复制 Monolith 源码或二进制。
+- 正式项目 `Game/DivineBeastsArena.uproject` 仍显式启用 Monolith，并通过 `TargetAllowList=["Editor"]` 限定为编辑器目标。
+- “全局和所有项目”只覆盖使用当前这套 UE5.8 引擎的项目。其他引擎目录、不同 UE 小版本或不同 BuildId 必须分别编译和安装，不能直接复用本次 DLL。
 
-当前机器引擎级安装位于`F:/UnrealEngine-5.8.0-release/Engine/Plugins/Marketplace/Monolith`。这是本次环境证据，工程构建仍按已有EngineRoot解析方式运行；不会把个人路径写成新的通用构建规则。升级前插件描述和源码宏均为0.22.0。
+## 官方来源与下载校验
 
-Codex全局config.toml的`monolith`与`-monolith-`连接项指向该安装的同一个Binaries/monolith_proxy.exe。正式项目Game/DivineBeastsArena.uproject启用引擎级Monolith且只允许Editor目标。没有项目内另一个Monolith实现，也未新建同名插件或扩展46个自有代码/机制插件基线；两项连接及项目均消费同一份升级后的安装。
+- 官方来源：`tumourlove/monolith` 的 `v0.23.0` 发布。
+- 下载文件：`Monolith-v0.23.0-UE5.8.zip`。
+- 实际 SHA-256：`550be7b4e5f232bfca0f5800df7e917836fb405b53af02664f1b359405191d89`，与官方发布标记一致。
+- 官方包包含 20 个模块、731 个源码文件及全局代理、离线查询工具。只使用发布包内容，不把后续主分支提交冒充 v0.23.0。
 
-现有代理exe与官方v0.23.0包完全同字节，SHA-256均为`37c69776fea8edf715a7a389eb54024b7bcff1a7d7e340d1aa8d2b972d4910cc`。保留已经满足新包身份的在用代理，避免中断其他已连接stdio会话；离线monolith_query.exe的版本字节确有变化，随新包更新。exe没有Windows版本资源，不用文件日期推定语义版本。
+## 锁定引擎兼容与重新编译
 
-## 锁定工具链与真实编译
+当前源码引擎为 UE5.8.0，`D:/UnrealEngine-5.8.0-release/Engine/Binaries/Win64/UnrealEditor.modules` 的真实 BuildId 为 `49444017-86c4-46bd-a6ce-36b57136a1f9`。官方发布包的预编译 BuildId 为 `55116800`，两者不兼容，不能直接复制官方 DLL 或手改模块索引冒充兼容。
 
-项目锁定UE5.8.0源码引擎，实际BuildId为`cf41249f-44dc-4956-bd09-4a42f079e86b`；发布包UnrealEditor.modules的BuildId为`55116800`，不能手改索引把原二进制冒充兼容。v0.23.0源码须经锁定引擎重新构建，生成真实模块索引与DLL后再安装。
+本次使用当前引擎的 `RunUAT.bat BuildPlugin`，仅构建 Win64 编辑器宿主，不构建 UnrealGame、服务器、其他平台或 Shipping 产物。实际构建共执行 185 个动作，UnrealBuildTool 退出码为 0，总执行时间 171.38 秒，20 个 Monolith DLL 全部成功链接。官方 `MonolithMaterialActions.cpp` 在 UE5.8 下产生 1 条 C4996 弃用警告，当前仍成功编译；未修改第三方源码以隐藏该警告。
 
-锁定引擎的BuildPluginCommand.Automation.cs不转发UsePrecompiled/MaxParallelActions，因此采用其等价原生ForeignPlugin构建：在Saved临时HostProject复制官方源码，官方UBT显式-Plugin/-Manifest/-UsePrecompiled/-MaxParallelActions=2真实编译20个Editor宿主模块（19个Editor模块和MonolithAudioRuntime），引擎依赖保持已有预编译产物。UEBuildTarget的ForeignPlugin分支只对该插件清除bUsePrecompiled并执行precompile；不构建另一份正式游戏插件或修改第三方源码。
-
-本项目Monolith仅Editor启用；该构建不宣称UnrealGame Development/Shipping、服务器、其他平台、完整引擎源码或Cook通过。v0.23.0发布说明记录了源码中的一处5.8弃用告警和master后续修正，实际构建结果保留，不静默换分支、降低引擎或禁用模块。
+最终安装候选保留官方完整目录、`monolith_proxy.exe` 和 `monolith_query.exe`，仅用本机编译的 20 个 DLL 与 `UnrealEditor.modules` 替换发布包内的异 BuildId 二进制。候选包含 853 个文件、54,265,710 字节，不包含 `Intermediate` 或约 1.45GB 的 PDB 调试中间产物。20 个模块索引与 DLL 数量一致，BuildId 与锁定引擎完全一致；731 个源码文件与官方发布源码逐文件 SHA-256 一致。
 
 ## 备份、切换与回退
 
-完整旧安装备份位于Saved/ToolUpdates/Monolith-0.23.0/Backup/Monolith-0.22.0，位于插件扫描根之外，1393个文件、459793976字节均已逐文件核对。旧全局配置备份保留在用户.codex/backups/monolith-0.23.0-20261009目录，不复制潜在敏感全局配置到版本库；正式uproject原文件另保存在Saved。Saved中的日志、下载、备份、HostProject和编译产物均为瞬态工具交付材料，不提交为第三方源码。
+- 旧版实际为 v0.20.3，不是历史记录中误写的 v0.22.0。
+- 工作空间备份位于 `Saved/ToolUpdates/Monolith-0.23.0/Backup/Monolith-0.20.3`，共 1904 个文件、486,363,496 字节。排除可重建的 `Saved` 和 `Intermediate` 后，815 个静态插件文件已逐项 SHA-256 一致。
+- 旧版运行索引 `Saved/ProjectIndex.db` 在备份校验时被既有进程占用，无法用普通只读句柄计算源文件哈希；复制件的长度和时间戳一致。该数据库是可重建项目索引，不作为插件源码和二进制兼容证据。
+- 切换时先在引擎插件目录创建并验证 v0.23.0 临时候选，再把旧安装移动到 `D:/UnrealEngine-5.8.0-release/Engine/Saved/MonolithUpgradeRollback/Monolith-0.20.3-20261009`，最后将新版移动到固定全局路径。切换命令退出码为 0；若中途失败，命令会把旧目录恢复到固定路径。
+- 安装后 853 个文件与最终候选逐文件 SHA-256 一致。全局配置继续使用固定路径，无需因版本升级改变项目或 MCP 地址。
 
-切换前本任务Editor已确认没有图标资产修改、没有未保存用户包，按PID、工程、启动时间与本任务日志关闭；不按名称终止无关Editor或构建。只允许替换经过绝对路径白名单检查的Monolith安装内容，保持同一全局连接路径。删除前还核当前旧安装与备份完全一致，保护备份后他人修改；安装/回读失败自动恢复旧安装并校验，回退失败单独留证且禁止继续启动。切换脚本经独立只读复核，原两项Important已修，最终范围未发现Critical/Important；该源码审查不冒充故障回退演练。
+## 真实运行验证
 
-## 当前验证边界
+验证时发现已有编辑器进程正在运行正式项目，命令行为 `Game/DivineBeastsArena.uproject /DBAFrontEndPack/Maps/L_DBA_CharacterStudio`。该进程不是本次升级任务启动的，因此本次未关闭、重启或接管该会话，只进行了只读核验。
 
-官方包SHA校验一致；锁定UE5.8.0 Win64 Development真实ForeignPlugin构建80动作、358.69秒、退出0，20个DLL齐全。原生BuildId与锁定引擎一致；Staging、Host及最终Package中的732个官方源码/描述文件均与原始SHA一致。发布标签材质源码的C4996真实记录为一条warning，材质模块仍成功链接，未手改第三方源码。
+编辑器日志 `Saved/Validation/VillageFlow/20261009/PreviewRepair.Editor.log` 记录：
 
-最终候选含985文件、1509627453字节，保留官方两CLI并排除异BuildId的官方Win64 UE DLL。切换脚本真实退出0，安装985文件逐一回读长度与SHA一致；全局monolith和-monolith-两连接、本项目Editor专用启用项均核对有效，未改全局配置或为升级改项目描述。实际证据为CompiledForLockedEngine/Evidence/EditorCompileResult.json、PackageVerification.json、PackageCliToolVerification.json、InstallResult.json及IntegrationVerification.json。
+- 从固定全局路径加载 `UnrealEditor-MonolithCore.dll`；
+- `Monolith 0.23.0 — Core module initializing`；
+- MCP 服务在 9316 端口首次尝试即监听成功；
+- 项目索引完成，249 个资产和深度索引均为 0 错误。
 
-正式Game/DivineBeastsArena.uproject已用锁定Editor启动，PID18572与参数保存在EditorLaunch.json。两项全局连接的实际monolith_status均回读0.23.0、server_running=true、port9316、1355个动作/26个命名空间；通过Monolith.editor.run_python回读正式工程绝对路径及5.8.0-0+UE5身份一致，UI导入动作已复核。v0.23新增input的13动作与localization的4动作已在真实服务中发现，未把发布说明预估的1400+数量冒充本机启用数量。
+通过安装后的全局 `monolith_proxy.exe` 进行实际 MCP JSON-RPC 调用，结果为：
 
-初次启动经历原生资源索引、骨骼网格编译与自动关闭的慢任务窗口，期间代理健康查询超时；未据此改装旧版或强行替换资产。Main启动记录有13条无具体测试名的ScriptStruct初始化条件错误，未运行Automation，不将服务健康表述为全Editor零错误或全部游戏类型通过。具体启动日志完整保留。
+- 代理版本：1.1.1；
+- Monolith 版本：0.23.0；
+- `server_running=true`，端口 9316；
+- 项目名称：`DivineBeastsArena`；
+- 运行时动作数：1355；命名空间数：26；
+- 新增 `input` 命名空间可发现 13 个动作；
+- 新增 `localization` 命名空间可发现 4 个动作。
 
-运行身份与UI动作目录证据为Saved/Validation/ZodiacSkillIcons-2026-10-09/MonolithAuthoringIdentity.json；另一全局连接和新增命名空间回读在本次工具升级目录GlobalSecondaryConnectionStatus.json、InputNamespaceDiscovery.json、LocalizationNamespaceDiscovery.json。全局与项目的0.23.0安装及运行验证已完成，60枚技能纹理导入/保存/原生重载另按逐包清单记录。工具连通不代替Widget/HUD、游戏运行、网络、Cook或设备视觉验收。
+首次代理查询在受限沙箱中被本地套接字策略拒绝，表现为“编辑器不可用”；编辑器日志同时已经证明服务启动。使用获准的本机回环网络权限重跑同一只读查询后全部成功，因此该次失败属于执行沙箱限制，不是 Monolith 模块或编辑器服务故障。
+
+## 验收边界与已知事项
+
+- 已验证：官方包身份、锁定引擎编译、模块 BuildId、全局安装文件、正式项目真实加载、MCP 状态、动作总数以及 v0.23.0 新命名空间。
+- 本次没有修改 Monolith 第三方源码，也没有修改项目业务代码或用户界面资产。
+- 当前编辑器日志另有角色预览骨骼缺失提示和前端资源加载提示，这些属于既有项目内容问题，不是 Monolith 升级失败，未在本次工具升级中扩大处理范围。
+- 本次未验证其他 UE 引擎目录、UnrealGame/Server/Shipping 构建、Cook、设备运行或所有项目逐一启动；这些结果不得从一次编辑器加载外推。
+- 当前既有编辑器会话已经加载 v0.23.0。其他此前已启动且加载旧 DLL 的编辑器进程需要在保存工作后自行重启，才能使用新版模块；不得强行终止未确认所有权的编辑器进程。

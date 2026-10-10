@@ -1,6 +1,8 @@
 #include "Feedback/DivineBeastsArenaCombatFeedbackClientSubsystem.h"
 
 #include "Feedback/DivineBeastsArenaCombatFeedbackSettings.h"
+#include "Feedback/DivineBeastsHitFeedbackGrantPolicy.h"
+
 #include "Definitions/DivineBeastsCombatFeedbackCatalog.h"
 #include "Feedback/GamePlatformHitFeedbackProfile.h"
 #include "Components/DivineBeastsCharacterComponent.h"
@@ -150,13 +152,11 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::WatchWorld(UWorld* World)
             this, &UDivineBeastsArenaCombatFeedbackClientSubsystem::HandleGameStateSet);
     }
 
-    // Client的GameState可能晚于PostLoadMap到达；该检查只在世界切换或命中时进行。
+    // 客户端GameState可能晚于PostLoadMap复制；同一World只进行一次竞技资格判断。
+    // 未确认竞技时不加载任何竞技表现资产。
     if (World->GetGameState<AGamePlatformArenaGameState>())
     {
         BeginForWorld(World);
-    }
-    if (World->GetGameState<AGamePlatformArenaGameState>())
-    {
         BindWorldCombatFeedback(*World);
         BeginFloatingTextWidgetLoad();
     }
@@ -437,10 +437,18 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::PrewarmAuthorizedLocalAbil
         Identity->GetHeroDefinitionId() != State.HeroDefinitionId ||
         Identity->GetAvatarGeneration() != State.AvatarGeneration)
     {
-        return; // 尚未被服务器授予、旧角色代次或身份不一致时严禁预热。
+        // 服务器撤销授予或角色尚未就绪时，不能延续上一代角色的反馈资产。
+        if (!AuthorizedLocalProfileIds.IsEmpty() ||
+            !AuthorizedHeroDefinitionId.IsNone() || AuthorizedAvatarGeneration > 0)
+        {
+            ReleaseProfileLeases();
+        }
+        return;
     }
 
-    TSet<FPrimaryAssetId> SeenDefinitions;
+    // 先根据OwnerOnly授予快照构建完整集合，再决定是否需要释放旧租约。
+    TSet<FPrimaryAssetId> DesiredProfiles;
+    TArray<FPrimaryAssetId> OrderedProfiles;
     for (const FDivineBeastsGrantedAbilitySlot& Slot : State.Slots)
     {
         if (Slot.AbilityId.IsNone() || Slot.AbilityLevel <= 0)
@@ -450,16 +458,37 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::PrewarmAuthorizedLocalAbil
         FDivineBeastsCombatFeedbackEntry Entry;
         if (!Catalog->TryResolve(State.HeroDefinitionId, Slot.AbilityId, Entry) ||
             !Entry.ProfileDefinitionId.IsValid() ||
-            SeenDefinitions.Contains(Entry.ProfileDefinitionId))
+            DesiredProfiles.Contains(Entry.ProfileDefinitionId))
         {
             continue;
         }
-        SeenDefinitions.Add(Entry.ProfileDefinitionId);
-        if (ProfileLeases.Num() >= MaxActiveProfileLeases)
+        DesiredProfiles.Add(Entry.ProfileDefinitionId);
+        OrderedProfiles.Add(Entry.ProfileDefinitionId);
+    }
+
+    const bool bAuthorizationChanged =
+        DivineBeastsHitFeedbackGrantPolicy::RequiresRefresh(
+            AuthorizedLocalProfileIds, AuthorizedHeroDefinitionId, AuthorizedAvatarGeneration,
+            DesiredProfiles, State.HeroDefinitionId, State.AvatarGeneration);
+
+    if (bAuthorizationChanged)
+    {
+        // 技能授权被撤销或角色代次变化时清理旧租约，避免旧技能长期占用客户端资源。
+        ReleaseProfileLeases();
+        AuthorizedLocalProfileIds = MoveTemp(DesiredProfiles);
+        AuthorizedHeroDefinitionId = State.HeroDefinitionId;
+        AuthorizedAvatarGeneration = State.AvatarGeneration;
+    }
+
+    // 按服务器授予槽位顺序预热，预算不足时不会遍历整个生肖目录申请大量资源。
+    for (const FPrimaryAssetId& Id : OrderedProfiles)
+    {
+        if (ProfileLeases.Num() >= MaxActiveProfileLeases &&
+            !ProfileLeases.Contains(Id))
         {
-            break; // 与其他已按实际攻击懒加载的资源共用预算，不抢占整场技能资源。
+            break;
         }
-        BeginProfileLoad(Entry.ProfileDefinitionId);
+        BeginProfileLoad(Id);
     }
 }
 
@@ -482,22 +511,34 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::BeginForWorld(UWorld* Worl
         }
         return;
     }
-    if (BoundWorld.Get() == World && bCatalogLoadAttemptedForWorld)
+    if (BoundWorld.Get() != World)
     {
-        return; // 包括明确未配置的场景，防止每次命中尝试初始化并重复提交IO。
+        // 仅在真正切换World时失效旧异步请求；禁止同一World的重复检查取消浮字句柄。
+        CancelWorldLeases();
+        BoundWorld = World;
     }
-    CancelWorldLeases();
-    BoundWorld = World;
-    bCatalogLoadAttemptedForWorld = true;
+    if (bCatalogLoadAttemptedForWorld)
+    {
+        return; // 同世界已有有效申请或明确没有配置，禁止重复向数据服务请求。
+    }
 
     const UDivineBeastsArenaCombatFeedbackSettings* Settings =
         GetDefault<UDivineBeastsArenaCombatFeedbackSettings>();
-    IGamePlatformDataService* Data = GetDataService();
-    if (!Settings || !Settings->CatalogDefinitionId.IsValid() || !Data)
+    if (!Settings || !Settings->CatalogDefinitionId.IsValid())
     {
-        return; // 尚无正式目录资产时安全关闭个性化反馈，保留平台默认强度。
+        // 编辑器尚无真正Catalog资产时永久降级本场竞技通用表现，不编造主资产身份。
+        bCatalogLoadAttemptedForWorld = true;
+        return;
+    }
+    IGamePlatformDataService* Data = GetDataService();
+    if (!Data)
+    {
+        // 数据服务可能晚于ArenaGameState就绪：不提前标记已申请，也不取消UI租约。
+        // 后续GameState/Pawn/命中事件可重新检查，无效服务状态不会发起磁盘IO。
+        return;
     }
 
+    bCatalogLoadAttemptedForWorld = true;
     const int32 ExpectedGeneration = WorldRequestGeneration;
     TWeakObjectPtr<UDivineBeastsArenaCombatFeedbackClientSubsystem> WeakThis(this);
     FGamePlatformResult RequestResult;
@@ -669,6 +710,9 @@ void UDivineBeastsArenaCombatFeedbackClientSubsystem::ReleaseProfileLeases()
     // 释放之后收到异步加载回调时，因请求句柄不再在Map中，不会污染新英雄。
     ProfileLeases.Reset();
     FailedProfiles.Reset();
+    AuthorizedLocalProfileIds.Reset();
+    AuthorizedHeroDefinitionId = NAME_None;
+    AuthorizedAvatarGeneration = 0;
 }
 
 void UDivineBeastsArenaCombatFeedbackClientSubsystem::CancelWorldLeases()

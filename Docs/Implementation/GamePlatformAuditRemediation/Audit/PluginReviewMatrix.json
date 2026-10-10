@@ -1,0 +1,728 @@
+{
+  "date": "2026-10-09",
+  "head": "8a12bbe1d1d02db835b92207646138fabe782b50",
+  "plugins": [
+    {
+      "name": "DBAArena",
+      "design": "五模式结构目录/可选客户端流程与服务器扩展；全部生产模式NotConfigured；多世界适配器共享缺陷",
+      "performance": "每Assignment预热12定义且全局重置句柄；Spawn按Controller迭代查玩家为最多10人的有界操作；UI按复制事件重建而无Tick。",
+      "compliance": "Server/Editor明确目标限制、不带DBAClient；模式未批准配置Fail Closed，公共流程由扩展接入不复制执行器。 涉及 GW-02、GW-04、GW-15、GW-16、GW-17。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-02",
+        "GW-04",
+        "GW-15",
+        "GW-16",
+        "GW-17"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin",
+      "modules": 3,
+      "group": "DivineBeasts"
+    },
+    {
+      "name": "DBAClient",
+      "design": "ApplicationFlow/Input/UI有真实C++装配；产品流程仍有Retry及输入资产接线缺口 复用唯一平台执行器、业务上下文只保留稳定值与瞬态ConnectionMaterial、真实Loading/Session六事实，UI LocalPlayer适配GI流程、页面事件与ViewModel命令，密码提交/失活清空；Input平台语义/GAS适配+合并刷新可见。默认Profile空且配置无赋值，当前Gameplay输入没有真实资产接线。 表现/外观：表现包协调D1、角色外观/预览D2。公共实现不依赖MOBA，外观使用平台薄软加载入口、请求代次取消、真实角色Ready事件；预览隔离旧卸载流送关卡并恢复原相机/Pawn可见性。F14激活伪事务及F15默认Definition不可执行；Client无Private/Tests，复杂生命周期仅有历史Manifest片段。",
+      "performance": "DBAFlow多次SetBusy/SetError/Refresh...均广播并使UI Adapter复制全ViewState+Revision增，不做等值合并；RootLayout LoadSynchronous在初始化/状态失败重试时可能阻塞；Input无业务Tick且QueueActivationRefresh合并，当前未测。 表现：外观每角色最多约5秒20次状态查找重试；BeginPlay只扫一次角色；预览激活事件扫Actor选择舞台；每原型材质槽生成MID。无永久Tick，但首次大量角色加载/GC需测。",
+      "compliance": "公共插件不依赖竞技、模块依赖方向较好；多数中文类责任具备但大量UI合同字段只靠名称缺范围/含义说明，Descriptor ClientOnly模块未列targets。登录源码事件驱动且密码瞬态路径可见，未用静态源码替代Monolith资产/焦点/可访问性验收。 另见表现F14/F15及服务器G-02。",
+      "findings": [
+        "APP-11",
+        "F14",
+        "F15",
+        "G-02"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin",
+      "modules": 5,
+      "group": "DivineBeasts"
+    },
+    {
+      "name": "DBAContentPack_Common",
+      "design": "D2原型共享源；131402435字节源包。具有明确所有者；Common内DBA/Standard同名母材质并存应通过AssetRegistry确认是否仍有合法消费者。共同H风险。",
+      "performance": "源文件字节不等于Cook后内存/GPU成本；需骨架/纹理LOD/动画授权及引用、干净Cook去冗余验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/DBAContentPack_Common.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAFrontEndPack",
+      "design": "D2前端原型。与权威世界分离；平台舞台C++消费者存在；目前README仍说没有Client启动映射而配置已提供Custom FrontEndClient，应同步说明。",
+      "performance": "流送切入/切出、不同LocalPlayer舞台所有权、灯光与曝光、Cook引用需当前UE回读；没有场景GPU实测。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 ",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/DBAFrontEndPack.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAGameplay",
+      "design": "Shared生成身份/十二生肖定义/角色初始化/Momentum扩展；基础ACharacter可Ready但无ASC",
+      "performance": "角色事件/RepNotify驱动；同一RuntimeState版本变化会取消并重新申请定义，未见每帧资产冷加载；MomentumCOND_None复制需实测。",
+      "compliance": "非竞技项目依赖不引MOBA；真实12个Definition文件；过期异步回调核对请求/Spawn/Avatar代次。 涉及 GW-02。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-02"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAGameplay/DBAGameplay.uplugin",
+      "modules": 2,
+      "group": "DivineBeasts"
+    },
+    {
+      "name": "DBAHeroPack_Boar",
+      "design": "D2亥猪外观原型；Boar与当前消费者一致，未改旧身份；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/DBAHeroPack_Boar.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Dog",
+      "design": "D2戌狗外观原型；非完整英雄内容；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/DBAHeroPack_Dog.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Dragon",
+      "design": "D2辰龙外观原型；非完整英雄内容；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/DBAHeroPack_Dragon.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Goat",
+      "design": "D2未羊外观原型；非完整英雄内容；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/DBAHeroPack_Goat.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Horse",
+      "design": "D2午马外观原型；非完整英雄内容；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/DBAHeroPack_Horse.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Monkey",
+      "design": "D2申猴外观原型；非完整英雄内容；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/DBAHeroPack_Monkey.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Ox",
+      "design": "D2丑牛外观原型；非完整英雄内容；共同H风险",
+      "performance": "同上，不能用描述中“占位资源”证明资产可运行。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/DBAHeroPack_Ox.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Rabbit",
+      "design": "D2卯兔外观原型；非完整英雄内容；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/DBAHeroPack_Rabbit.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Rat",
+      "design": "D2子鼠外观原型；非完整英雄内容；共同H风险",
+      "performance": "仅原型颜色；真实Mesh/骨架兼容、引用、材质参数、LOD、运行成本未回读。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/DBAHeroPack_Rat.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Rooster",
+      "design": "D2酉鸡外观原型；非完整英雄内容；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/DBAHeroPack_Rooster.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Snake",
+      "design": "D2巳蛇外观原型；非完整英雄内容；共同H风险",
+      "performance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/DBAHeroPack_Snake.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAHeroPack_Tiger",
+      "design": "D2寅虎外观原型；非完整英雄内容；共同H风险",
+      "performance": "同上；Manifest中的历史Tiger预览不能替代当前MainArena运行。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/DBAHeroPack_Tiger.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAServer",
+      "design": "三角色Profile、必要资产/BeginPlay验证、注册Ready/心跳/排空装配存在；世界退出后的Ready撤销路径需完善。",
+      "performance": "角色配置/资产就绪低频，心跳统计遍历当时玩家数；不重复进行全局分片分配。",
+      "compliance": "唯一Server目标、OpenWorld PersistentShardedWorld/Village ExperienceInstance/MainArena PerMatch策略不同；只从服务器环境读取内部凭据。",
+      "findings": [
+        "R-08",
+        "G-02"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAServer/DBAServer.uplugin",
+      "modules": 1,
+      "group": "DivineBeasts"
+    },
+    {
+      "name": "DBAUIPack_Core",
+      "design": "D2。合法项目UI资产归属与英文FriendlyName；Manifest记录Monolith0.20.3、历史编译/保存/回读和明确限制。当前Editor未运行，未读取Widget树/动态父类/焦点。",
+      "performance": "历史LOGO/PIE/Cook条目只证明当时范围；小窗口、移动、可访问性、真实键鼠、最新硬引用及服务器容器均待证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 ",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/DBAUIPack_Core.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAWorldPack_Village",
+      "design": "D1首批流程地图与世界Definition。README:9还把Main/Training写后续，实际两Definition已在盘；最终湖心三岛PCG/世界美术未完成，不能称三体验内容验收通过。",
+      "performance": "地图内部Actor、导航、碰撞、权威PCG结果、出生安全点未在UE读取；三角色联机/地图Cook与服务器Ready须另证。",
+      "compliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 ",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/DBAWorldPack_Village.uplugin",
+      "modules": 0,
+      "group": "ContentPacks"
+    },
+    {
+      "name": "DBAWorlds",
+      "design": "项目World Definition派生与正式角色/体验/模式一致性校验；不拥有地图运行能力",
+      "performance": "纯定义验证/小Shared目录查询，未发现高频热点；不能由定义文件证明地图/Cook可用。",
+      "compliance": "三角色正式目录校验，Lobby落OpenWorld；非竞技世界携带ArenaMode拒绝。主代理另报Core/Data描述依赖缺失。  本轮UE/网络/资产边界未验收。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAWorlds/DBAWorlds.uplugin",
+      "modules": 1,
+      "group": "DivineBeasts"
+    },
+    {
+      "name": "GamePlatformAbilitySystem",
+      "design": "GAS基类、ActorInfo/输入代次与AbilitySet字段校验；Gate/授权事务未落入ASC生产路径",
+      "performance": "InputTag每次按压/释放扫描全部AbilitySpec；WhileHeld每处理尝试激活，缓存查询为线性；未实测。",
+      "compliance": "输入精确标签冲突失败、换Avatar先清输入、每ASC独立随机作用域、Mixed复制策略。 涉及 GW-01、GW-02。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-01",
+        "GW-02"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/GamePlatformAbilitySystem.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformAI",
+      "design": "共享事实与服务器BT/感知/目标/导航/GAS攻击源码；正式BT/NavMesh运行未验证",
+      "performance": "一次初始化Actor扫描；定时决策扫描候选，Prune超限循环每次再全扫，超限突发为平方量级；入候选到决策间没有即时数量裁剪。",
+      "compliance": "目标Provider+EntityId/Generation同世界校验、无每帧全世界扫描、攻击退避、取消加载/解绑路径存在。 涉及 GW-12。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-12"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/GamePlatformAI.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformAnimation",
+      "design": "2模块空壳；README明确一期关键能力未完成",
+      "performance": "没有实现可评估动画成本，也没有真实动作/GAS/RootMotion时序验收。",
+      "compliance": "未用固定成功接口伪装完成；已有实施规格说明。 涉及 GW-13、GW-12。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-13",
+        "GW-12"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/GamePlatformAnimation.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformApplicationFlow",
+      "design": "机制实现较完整；尚无本轮动态验收 GI唯一执行器、单槽完成邮箱、作用域/运行/节点代次、有限重试/超时、关闭和定义租约已落实；按需Ticker与核心分发/广播重入门禁可见。",
+      "performance": "单槽邮箱有界；图校验std::map/set为O((V+E)log V)，主要为启动成本。APP-13指出重复Completion的TaskGraph唤醒尚未合并；无实测结论。",
+      "compliance": "方向中立、Public稳定合同和中文说明相对完整；无游戏/竞技/项目资源依赖。",
+      "findings": [
+        "APP-13"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/GamePlatformApplicationFlow.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformArena",
+      "design": "五模式契约/数据/状态/复制UI/HTTP适配实现；票据准入无真实调用方、重连未恢复Pawn",
+      "performance": "双队最多10玩家，阵容/比分重建为小型有界扫描；Result复制到每次重试并立即最多5次重试，无退避；需故障/网络测量。",
+      "compliance": "1v1~5v5人数来自ModeSpec，Hero资格缺Provider拒绝、比赛事件去重有界、客户端服务器不互依。 涉及 GW-03、GW-04、GW-11、GW-12。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-03",
+        "GW-04",
+        "GW-11",
+        "GW-12"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/MobaCommon/GamePlatformArena/GamePlatformArena.uplugin",
+      "modules": 5,
+      "group": "MobaCommon"
+    },
+    {
+      "name": "GamePlatformCamera",
+      "design": "D0。0.1.0；唯一 ClientOnly 模块只依赖 Core、仅3行注册。方案A已批准但实现未开始。没有服务、模式栈、租约、测试、实际消费者；不得称相机功能已完成。",
+      "performance": "无运行机制，无法评价相机算法性能。当前预览相机在 Presentation/项目预览实现中，不能记为 Camera 插件集成。",
+      "compliance": "按源码职责/端侧/中文说明核对；D0。0.1.0；唯一 ClientOnly 模块只依赖 Core、仅3行注册。方案A已批准但实现未开始。没有服务、模式栈、租约、测试、实际消费者；不得称相机功能已完成。 动态验收仍待证。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/GamePlatformCamera.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformCharacter",
+      "design": "可复用Definition/创建Provider/初始化Executor/异步加载基础；不是完整角色战斗装配",
+      "performance": "冷定义异步加载，热对象同步完成；无角色业务Tick；需测量大批出生的定义预热与包络成本。",
+      "compliance": "唯一初始化器Fail Closed、服务器Authority校验、不拥有Spawn/Possess；公开通用定义不绑定项目表现。 涉及 GW-02。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-02"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/GamePlatformCharacter.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformCombat",
+      "design": "伤害/治疗/控制/GAS属性/死亡/当前帧Trace实现；网络与正式玩法组合未验证",
+      "performance": "无Tick；事件去重有界但RemoveAt(0)移动历史数组；属性大量COND_None复制，需要按可见性与网路实测。",
+      "compliance": "Authority、同World、代次/数值上限验证；未伪实现Root/ServerRewind；可选表现不决定权威伤害。 涉及 GW-02。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-02"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/GamePlatformCombat.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformCommerceUI",
+      "design": "购买意图/订单展示状态机制已实现；支付与认证生产链未装配 每种请求single-flight、AccountGeneration、只有Backend fulfilled+confirmed才Succeeded、Receipt不直接判成功；无生产Configure/HTTP构造/真实支付Provider，不应称商城闭环。",
+      "performance": "8HTTP在途；Catalog与订单值复制、多JSON解析在GameThread、无响应体/数组容量门禁；金额转换double→int64未拒绝小数/2^53精度风险，不构成当前权威扣款错误。",
+      "compliance": "依赖GamePlatformUI单向、支付权威边界正确；Public具体HTTP/AccessToken与大段公开字段说明不全，ClientOnly无TargetAllowList；真实Widget资源未交付。",
+      "findings": [
+        "APP-06",
+        "APP-15"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/GamePlatformCommerceUI.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformCore",
+      "design": "中立身份、错误、版本、结果值与私有解析算法已实现；本轮未发现阻断性设计缺陷。",
+      "performance": "输入长度/字段范围有界；值校验、规范化与哈希重复解析/分配，应在真实热路径测量，不能仅凭微测试认定瓶颈。",
+      "compliance": "不依赖Engine/业务/世界，默认结果非成功，Public主要契约中文说明完整；13个现有CTest用例各在Debug/Release通过。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/GamePlatformCore.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformData",
+      "design": "统一主资产定义、依赖DFS、跨实例分组并集及租约实现；终态历史无界。普通软资源已有平台薄封装，其作用域安全需核各调用方。",
+      "performance": "ReleasedLeases随全生命周期释放总数增长；每帧扫描全部活跃请求，资产依赖最多128深度/4096节点。",
+      "compliance": "GameInstance/World/代次与弱调用者校验、取消一次终态、失败撤销自有需求；普通软资源通过Data薄入口返回原生流式句柄，由调用方取消/释放。",
+      "findings": [
+        "R-01",
+        "R-02"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/GamePlatformData.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformDebug",
+      "design": "开发/测试诊断提供者、命令注册、目标弱引用与快照脱敏已实现；未发现当前分区阻断性功能缺陷。",
+      "performance": "按需采集，昂贵Provider显式授权；每次快照清理所有曾查询目标，规模成本需測量；无每帧全世界扫描证据。",
+      "compliance": "Shipping配置白名单排除，进程注册表持机制与弱目标，没有持有用户/比赛强对象。部分新增公开/私有函数中文说明仍须人工补齐。",
+      "findings": [
+        "G-04"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/GamePlatformDebug.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformDeveloperTools",
+      "design": "Editor验证/静态与资产规则/报告/性能执行器接口存在；性能场景无生产注册调用，资产扫描以名称判断定义有覆盖边界。",
+      "performance": "GetAllAssets后筛选、GetAsset同步加载所有定义；属Editor全量审计成本，应测量大内容库内存/耗时，不能归为游戏帧率瓶颈。",
+      "compliance": "Editor专用，未知性能执行器明确失败，不伪造测量；C++继承门禁通过仍不能代替Blueprint资产检查。",
+      "findings": [
+        "R-07"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/GamePlatformDeveloperTools.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformEntitlement",
+      "design": "权益快照/查询机制已实现；生产认证装配缺失 LocalPlayer账户代次、Reset取消、Revision不回退、有效ID/英雄/皮肤派生Set缓存；有效性以后台Snapshot.Status为准；无生产Configure或HTTPTransport构造调用。",
+      "performance": "查询Set平均O(1)，查询类HasAny/All逐数组扫描可能O(KN)，View值返回仍复制；Transport8在途但回应数组与总JSON无容量预检。",
+      "compliance": "客户端与后台权威区分；具体HTTP实现在Public/Transport且构造接收AccessToken，应收敛为Private+Online安全通道；端侧allowlist/中文字段说明不全。",
+      "findings": [
+        "APP-06",
+        "APP-12",
+        "APP-15"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/GamePlatformEntitlement.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformEquipment",
+      "design": "共享复制+GAS/外观机制部分实现；生产持久化装配缺失 OwnerOnly与Public快照、服务器校验/持久化端口、GAS授予、客户端Data软加载与视觉代次分离；无实际PersistencePort/AssetResolver实现或Initialize生产调用。",
+      "performance": "Apply每次撤销全部授予后全量重建；Visual每次清全组件/加载后重建，O(S+A+E)并伴对象/加载抖动；无slot数上限或性能数据。",
+      "compliance": "无客户端/服务器互依赖；端侧标签有但无TargetAllowList；服务器私有实现合同缺中文与取消/线程说明，只有Definition测试不能冒充生命周期验收。",
+      "findings": [
+        "APP-07",
+        "APP-08",
+        "APP-15"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/GamePlatformEquipment.uplugin",
+      "modules": 3,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformGameplay",
+      "design": "体验/准入/出生/玩家生命周期与复制资格源码已存在；当前真实资格接线缺失",
+      "performance": "0.05秒GameMode全玩家推进、等待出生重复PlayerStart全扫描；Experience另有0.05秒轮询。建议测量等待状态和并发玩家成本。",
+      "compliance": "权威登记、作用域/代次、自动出生阻断、取消/排空路径与公开资格事件存在。 涉及 GW-02、GW-11、GW-14。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-02",
+        "GW-11",
+        "GW-14"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/GamePlatformGameplay.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformInput",
+      "design": "机制实现较完整；持久化/所有权缺陷；真实Profile未装配 LocalPlayer作用域、Data定义租约、CompactSlot、阻断缓存、Owner回收4Hz、Touch与统一EnhancedInput事件链可见。",
+      "performance": "高频阻断O(1)，订阅/绑定/触点有界；显式Save同步SaveSettings/Flush可能卡菜单；ListMappings每次构造排序O(RlogR)。",
+      "compliance": "新平台中立语义与项目语义分离较好，ClientOnly+明确targets；公开中文合同承诺与实现存在APP-01~03差异。",
+      "findings": [
+        "APP-01",
+        "APP-02",
+        "APP-03"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/GamePlatformInput.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformInteraction",
+      "design": "Focus/Instant/Hold/目标并发/幂等/限流/外部结果Reservation源码；Custom回调重入有悬垂引用风险",
+      "performance": "无Tick；Focus定时Trace、Hold定时复验；反复资格读取遍历Actor/Pawn/Controller/PlayerState组件，按实际组件量测量。",
+      "compliance": "资格默认拒绝、组件级目标身份、独立Begin/Cancel限流、幂等缓存、共享会话不会被无关Revision误杀。 涉及 GW-09。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-09"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformInteraction/GamePlatformInteraction.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformInventory",
+      "design": "六服务中生产认证接线最完整；仍无本轮运行验收 Online认证自动装配、账户/请求代次、单未决Mutation、原OperationId未知结果查询、RevisionConflict专用对账、64容器/1万物品/12快捷槽验证可见。",
+      "performance": "缓存排序O(NlogN)仅Snapshot变化，FindItem缓存查询；值数组Get...仍O(N)复制，View路径可避免；Transport8在途，上限不代表当前测量。",
+      "compliance": "Transport在Private、不持Token，业务请求走Online、客户端不持长期真源符合规范；公开参数/线程/失败中文尚不全，模块无TargetAllowList。",
+      "findings": [
+        "APP-06",
+        "APP-15"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/GamePlatformInventory.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformLiveOps",
+      "design": "运营快照/领取对账/可信时间部分实现；生产认证接线缺失 LocalPlayer代次、全局Catalog与玩家状态分离、ClaimOperationId对账、服务器时间+单调时钟、前台恢复刷新可见；无生产Configure/HTTP构造。",
+      "performance": "Initialize无条件1HzTicker，即未登录也持续唤醒；边界每秒扫描S+E+C；GetSignInViewModels每Campaign对PlayerState线性查，O(CP)，每次重建数组，无输入容量上限/测量。",
+      "compliance": "后台领奖权威未被客户端替代；缺完整中文接口/参数/错误/时间单位，README与Docs不足；Public具体HTTP/Token/内部时间类、target允许列表不足。",
+      "findings": [
+        "APP-10",
+        "APP-15"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/GamePlatformLiveOps.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformLoading",
+      "design": "DAG/租约/屏障已实现；生命周期回调缺口 单操作GI、任务规格256/依赖64、订阅/工厂128上限、Data租约、真实世界事实、20Hz运行/2Hz保留资源监测已具备；SessionReady需真实上层装配。",
+      "performance": "上限存在；执行遍历中每Task再次线性找PolicyRecord（343-344），O(T²)每20Hz且GetSnapshot构造数组，需256任务测量，不可称已优化到O(T)。",
+      "compliance": "不依赖客户端Session/UI/Flow；中文公开合同较清楚。Runtime描述缺TargetAllowList，应补目标审计，不能靠Runtime名称算四目标验收。",
+      "findings": [
+        "APP-05"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLoading/GamePlatformLoading.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformLobby",
+      "design": "3模块空壳；无活动源码消费者；现行规则明确条件保留",
+      "performance": "无实际运行机制可测；不应宣称已提供大厅服务器。",
+      "compliance": "README明确Lobby属于OpenWorld体验、不恢复独立服务器角色。 涉及 GW-13、GW-12。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-13",
+        "GW-12"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/GamePlatformLobby.uplugin",
+      "modules": 3,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformLocalization",
+      "design": "二期预留空模块 未实现文化切换、文本资源域、客户端加载、事件、配置或运行接口；README已承认预留模块壳。",
+      "performance": "没有本地化逻辑，不能评价业务性能；只有空模块装载/维护负担。",
+      "compliance": "与AGENTS禁止空插件/空模块冲突；活动FriendlyName为英文但源码/Build.cs无职责中文合同；ClientOnly无TargetAllowList。建议按批准规划明确退休/禁用或在真实需求后实现，不能擅自删除。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLocalization/GamePlatformLocalization.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformNavigation",
+      "design": "原生导航桥接、同步/异步、取消/超时/Invoker/Profile实现；重复RequestId生命周期缺陷",
+      "performance": "同步FindPath/TestPath调用在调用线程执行；异步总量有上限；调用方应限制高频同步查询并实测NavData规模。",
+      "compliance": "MaxPathDistance/MaxProjectionExtent、PartialPath、世界代次、取消/超时与原生导航能力复用。 涉及 GW-07、GW-12。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-07",
+        "GW-12"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformNavigation/GamePlatformNavigation.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformOnline",
+      "design": "公共门面与客户端HTTP、刷新单飞、有界排队/重试/流式响应限制已实现；锁定HTTP补丁与真实Gateway联调待本轮补证。",
+      "performance": "并发与队列有上限，0.1秒有工作时检查；无需逐帧轮询认证，正文流式上限值得保留。",
+      "compliance": "WeakThis/终态Gate、析构CancelAll、凭据保护和拒绝自动重定向路径存在。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/GamePlatformOnline.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformPCG",
+      "design": "有界装饰请求与编辑器模板/Schema/节点基础；终态历史耗尽128请求容量；正式模板资产未交付",
+      "performance": "0.05秒遍历所有历史请求和订阅；清理使用原生同步CleanupLocalImmediate；四并发限制不能阻止128终身累计上限。",
+      "compliance": "Dedicated/Listen拒绝RuntimeCosmetic、Data租约、当前Region/World代次验证、清理原生输出后才释放。 涉及 GW-08。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-08"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformPCG/GamePlatformPCG.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformPresentation",
+      "design": "D1。中立请求、LocalPlayer注册、上下文贡献、目录和预览舞台成立，平台未反向引用项目。P13排序/歧义仍有 F01/F02。Public接口和字段中文说明不完整。",
+      "performance": "Contributor注册时排序，Submit无需复制排序；目录每次双层全扫，上限64片段×512项；没有语义索引/解析缓存。是热点候选，不是实测瓶颈。预览Actor无Tick。",
+      "compliance": "按源码职责/端侧/中文说明核对；D1。中立请求、LocalPlayer注册、上下文贡献、目录和预览舞台成立，平台未反向引用项目。P13排序/歧义仍有 F01/F02。Public接口和字段中文说明不完整。 动态验收仍待证。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/GamePlatformPresentation.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformProgression",
+      "design": "曲线/快照/缓存部分实现；事件与生产装配缺口 服务器中立资格端口、客户端账户代次、版本曲线兼容、嵌套ID索引/派生ViewModel缓存可见；无生产Configure、资格Provider或HTTP构造。",
+      "performance": "曲线二分O(logL)；快照变化重建View是O(NlogL)，查询ID平均O(1)；HTTP数组无上限；值返回复制，无测量。",
+      "compliance": "HTTP/缓存非权威基础方向正确；公开中文API大段缺失、README不满足最小接入/目标/配置/测试；Public HTTP/Token实现及TargetAllowList不足。",
+      "findings": [
+        "APP-09",
+        "APP-12",
+        "APP-15"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/GamePlatformProgression.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformQuest",
+      "design": "状态机/OwnerOnly复制/事件索引/单飞持久化/对账框架；对账失败与满队列会丢重放材料",
+      "performance": "每个变更事件重建全部活跃目标索引并生成/排序/复制全任务快照；不是每帧扫描，但高事件率/历史任务规模需测量。",
+      "compliance": "权威事件RuntimeId、每任务去重、Completion/Reward标识、异步Port和跨世界弱回调存在。 涉及 GW-05、GW-06、GW-12。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-05",
+        "GW-06",
+        "GW-12"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/GamePlatformQuest.uplugin",
+      "modules": 3,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformSave",
+      "design": "本地非权威存档机制已实现；IO故障验收缺失 8MiB载荷、16在途、同槽busy、稳定ID、CRC、临时文件/Flush/备份、Provider迁移、GI代次、回调重入门禁齐备；取消为回调失效，后台IO本身仍可结束。",
+      "performance": "后台IO降低游戏线程阻塞，但APP-04读前无限容量；payload编码/复制也会放大16x8MiB峰值，需要测量。",
+      "compliance": "ClientOnly+Client/Editor、无内容/业务反依赖、中文契约和非权威边界较完整。",
+      "findings": [
+        "APP-04"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSave/GamePlatformSave.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformServer",
+      "design": "注册/就绪/心跳/排空与双端Gameplay准入桥接实现；准入HTTP关闭生命周期和响应内存上限存在缺口。",
+      "performance": "心跳有间隔和重试，准入响应完成后才检查32KiB；并发登录压力与容量准入需实测。",
+      "compliance": "模块启动只注册机制、不连生产；目标/Boot/SessionEpoch校验及终态门禁存在，控制面HTTP使用流式上限。",
+      "findings": [
+        "R-03",
+        "R-04"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/GamePlatformServer.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformSession",
+      "design": "会话转移状态机、票据握手、Binding/事实一致性、失败与重连原语存在；端到端正式世界仍依赖未完成装配。",
+      "performance": "单活动转移，0.1秒截止/握手检查；首本地Controller等待不是全Actor扫描，实际网络时延与超时需测试。",
+      "compliance": "票据不进URL/日志；世界弱指针、代次、取消/解绑、失败事实存在；原生核心通过不证明Travel成功。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/GamePlatformSession.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformSettings",
+      "design": "设备核心与四模块框架已实现；无生产Descriptor Provider 分层解析、单一真源边界、敏感/端侧校验、用户上下文、迁移回滚、设备暂存/预览/确认已具备；当前无非测试IGamePlatformSettingsProvider，Server/Runtime不能称产品设置已接通。",
+      "performance": "0业务Tick，Snapshot查TMap；APP-14同步档案Load，UGameUserSettings Apply/Save同步路径；未测量。",
+      "compliance": "模块/描述target限制、Runtime中立方向、敏感配置约束与中文说明较好；本轮门禁退出0且生产Provider缺失警告。",
+      "findings": [
+        "APP-14"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSettings/GamePlatformSettings.uplugin",
+      "modules": 4,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformSFX",
+      "design": "D1。0.2.0；ClientOnly且Client/Editor白名单、游戏世界/非Dedicated/非Commandlet过滤、Data Definition租约、AudioFinished清理成立。P2 F06/F07；终态接口不足F08。产品Target/项目组合未启用SFX，项目无真实音效Definition/Sound。",
+      "performance": "无Tick；每声音独立AcquireDefinition，完成时线性遍历最多256名义实例找Component，始终Spawn/Destroy而非自建池；重度5v5需Audio Insights/并发虚拟化验证。",
+      "compliance": "按源码职责/端侧/中文说明核对；D1。0.2.0；ClientOnly且Client/Editor白名单、游戏世界/非Dedicated/非Commandlet过滤、Data Definition租约、AudioFinished清理成立。P2 F06/F07；终态接口不足F08。产品Target/项目组合未启用SFX，项目无真实音效Definition/Sound。 动态验收仍待证。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformSFX/GamePlatformSFX.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformSurface",
+      "design": "D1。状态验证/裁剪/事件/MPC桥完整，Client+Editor端侧正确；F09默认资源链缺失，F10同步加载。没有Content目录，MPC、9个必需母材质/函数均只有路径合同；无项目C++消费者。",
+      "performance": "无Tick；状态变化写固定8参数，重复状态去重。首次绑定在游戏线程LoadSynchronous，缺MPC时每次更新会重试加载。没有Shader/材质/设备成本证据。",
+      "compliance": "按源码职责/端侧/中文说明核对；D1。状态验证/裁剪/事件/MPC桥完整，Client+Editor端侧正确；F09默认资源链缺失，F10同步加载。没有Content目录，MPC、9个必需母材质/函数均只有路径合同；无项目C++消费者。 动态验收仍待证。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/GamePlatformSurface.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformTelemetry",
+      "design": "Schema/隐私/采样/有界缓冲/分批/重试存在；HTTP持有闭环与Public实现暴露需整改。",
+      "performance": "缓冲计数/字节上限、最多64条Metric合并、头索引摊销与8并发/有界重试存在；响应无接收上限，请求自持有风险未实测。",
+      "compliance": "不影响权威动作，账号切换丢弃旧队列、不可变上下文共享、锁外回调、关停预算存在。",
+      "findings": [
+        "R-05",
+        "R-06"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/GamePlatformTelemetry.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformUI",
+      "design": "D2。CommonUI层栈、LocalPlayer、ViewModel事件及普通软资源句柄可用，存在真实项目UI消费者。F11失活过早撤销资源需求/重入时序；不将Widget直接HTTP或业务Tick指控到平台。",
+      "performance": "世界投影按需30Hz遍历最多128Widget，有池复用；通知/反馈低频事件定时器；池按类线性查找。无实际设备/复杂Widget布局性能测量。",
+      "compliance": "按源码职责/端侧/中文说明核对；D2。CommonUI层栈、LocalPlayer、ViewModel事件及普通软资源句柄可用，存在真实项目UI消费者。F11失活过早撤销资源需求/重入时序；不将Widget直接HTTP或业务Tick指控到平台。 动态验收仍待证。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformUI/GamePlatformUI.uplugin",
+      "modules": 1,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformVFX",
+      "design": "D1。0.2.0；私有世界执行、World共享Definition缓存、Data租约、实例反向映射、Niagara原生池、取消/子定时器所有权已存在。真实Niagara/Definition/ReviewMap为0，SourceArt=6 PNG+shader源；P13兼容解析排序F03、复合依赖F04、未用回退F05。VFX→Core描述漏依赖由父代理实际架构门禁另证。",
+      "performance": "标准Play直接DefinitionId，热路径复用World缓存，不重复语义解析；兼容Resolver全目录扫描但有1024结果缓存；结束按Component map定位；LRU淘汰线性扫缓存。池策略有实际AutoRelease，但需真实Niagara取消/复用/GC留存验证。没有Insights、GPU、设备预算数据。",
+      "compliance": "按源码职责/端侧/中文说明核对；D1。0.2.0；私有世界执行、World共享Definition缓存、Data租约、实例反向映射、Niagara原生池、取消/子定时器所有权已存在。真实Niagara/Definition/ReviewMap为0，SourceArt=6 PNG+shader源；P13兼容解析排序F03、复合依赖F04、未用回退F05。VFX→Core描述漏依赖由父代理实际架构门禁另证。 动态验收仍待证。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/GamePlatformVFX.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformVillage",
+      "design": "3模块空壳；无活动源码消费者；教学训练应优先组合既有插件",
+      "performance": "无运行机制可测；Village服务器角色不由此壳证明。",
+      "compliance": "README明确教学/训练是Village体验、不能从角色名推导专用机制。 涉及 GW-13、GW-12。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-13",
+        "GW-12"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/GamePlatformVillage.uplugin",
+      "modules": 3,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "GamePlatformWorld",
+      "design": "开发世界身份/租约/区域/流送/就绪源码；网络Session入口明确Unsupported",
+      "performance": "0.1秒扫描区域/观察者/订阅；Observer线性查找与每观察者全区域查询，约O(O²+O×R)；GetReadiness还同步Refresh/流送采样。",
+      "compliance": "Game/PIE与命令行过滤、GUID上下文代次、跨World所有权、Data租约、持续就绪失效清理。 涉及 GW-10。 本轮UE/网络/资产边界未验收。",
+      "findings": [
+        "GW-10"
+      ],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformWorld/GamePlatformWorld.uplugin",
+      "modules": 2,
+      "group": "GamePlatform"
+    },
+    {
+      "name": "MobaPresentation",
+      "design": "D1。17个中立语义、Combat/Arena事实适配、预测去重、世界退出解绑可见，无Niagara执行或项目反向引用。F12类型化上下文丢失、F13迟到Pawn漏绑定。",
+      "performance": "无Tick；每个Fact重新取Contributor Keys并排序；去重超过2048时RemoveAt(0)搬移；LatestAvatarGeneration长世界会话随实体增长，暂无数量/淘汰界限。需5v5高频事实和迟到复制联调。",
+      "compliance": "按源码职责/端侧/中文说明核对；D1。17个中立语义、Combat/Arena事实适配、预测去重、世界退出解绑可见，无Niagara执行或项目反向引用。F12类型化上下文丢失、F13迟到Pawn漏绑定。 动态验收仍待证。",
+      "findings": [],
+      "descriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin",
+      "modules": 2,
+      "group": "MobaCommon"
+    }
+  ]
+}

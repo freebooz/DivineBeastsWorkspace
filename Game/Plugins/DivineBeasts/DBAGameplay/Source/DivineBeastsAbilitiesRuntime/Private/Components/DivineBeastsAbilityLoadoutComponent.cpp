@@ -11,6 +11,7 @@
 #include "Definitions/GamePlatformAbilitySetDefinition.h"
 #include "Definitions/GamePlatformPrimaryDataAsset.h"
 #include "GameplayEffect.h"
+#include "GameplayEffectComponent.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Engine/GameInstance.h"
 #include "Engine/AssetManager.h"
@@ -238,6 +239,48 @@ void UDivineBeastsAbilityLoadoutComponent::HandleAbilitySetLoaded(
     PublishLoadout(ExpectedHero, ExpectedAvatar, true, Slots);
 }
 
+
+bool UDivineBeastsAbilityLoadoutComponent::IsStartupEffectReversible(
+    const UGameplayEffect& Effect, float EffectLevel, FString& OutError)
+{
+    // 瞬时 GameplayEffect 没有可撤销句柄，不能用于需要原子回滚的 AbilitySet 启动授予。
+    if (Effect.DurationPolicy == EGameplayEffectDurationType::Instant)
+    {
+        OutError = TEXT("默认技能集合启动效果必须可撤销，不能授予瞬时GameplayEffect。");
+        return false;
+    }
+
+    // 周期效果与自定义执行计算可能已经触发无法撤销的治疗/伤害。
+    const float PeriodSeconds = Effect.Period.GetValueAtLevel(EffectLevel);
+    if (!FMath::IsFinite(PeriodSeconds) ||
+        !FMath::IsNearlyZero(PeriodSeconds) ||
+        !Effect.Executions.IsEmpty())
+    {
+        OutError = TEXT("默认技能集合启动效果不能包含周期计算或执行计算；请在技能激活阶段使用。");
+        return false;
+    }
+
+    // 堆叠到其他来源已经持有的同类GE时，简单RemoveActiveGameplayEffect不能只撤销本次授予。
+    if (Effect.GetStackingType() != EGameplayEffectStackingType::None)
+    {
+        OutError = TEXT("默认技能集合启动效果不允许与其他来源堆叠，必须保持独立可撤销句柄。");
+        return false;
+    }
+
+    // UE5.8 的GameplayEffectComponent可能在应用/移除事件中创建额外效果、授权技能或执行自定义逻辑。
+    // 首阶段没有经过逐类审计的白名单，不允许启动效果携带组件，避免移除主句柄后残留副作用。
+    // UE5.8 的 GEComponents 为受保护成员，使用引擎公开的 FindComponent(BaseClass)
+    // 判断是否存在任意派生组件，不越过封装读取受保护数组。
+    if (Effect.FindComponent(UGameplayEffectComponent::StaticClass()) != nullptr)
+    {
+        OutError = TEXT("技能集启动效果附加GameplayEffectComponent尚未通过回滚安全审核，拒绝授予。");
+        return false;
+    }
+
+    OutError.Reset();
+    return true;
+}
+
 bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
     const UGamePlatformAbilitySetDefinition& Set, FString& OutError)
 {
@@ -427,11 +470,35 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
     }
     for (const FGamePlatformEffectGrant& Grant : Set.Effects)
     {
-        if (!Grant.EffectClass.Get())
+        const UClass* EffectClass = Grant.EffectClass.Get();
+        const UGameplayEffect* Effect = EffectClass
+            ? EffectClass->GetDefaultObject<UGameplayEffect>() : nullptr;
+        if (!Effect)
         {
-            OutError = TEXT("启动 GameplayEffect 尚未预加载；拒绝部分授予。");
+            OutError = TEXT("启动 GameplayEffect 尚未预加载或类型错误，拒绝部分授予。");
             return false;
         }
+        if (!IsStartupEffectReversible(*Effect, Grant.Level, OutError))
+        {
+            // 全部效果须在首项GiveAbility或ApplyGameplayEffectToSelf之前预检，避免半事务残留。
+            return false;
+        }
+    }
+
+    // 依照既有平台授权合同：启动可回滚效果在先，技能Spec在后。
+    // 单项失败由本组件调用方RevokeOwnedGrants按来源句柄撤销，绝不清空其它插件授予。
+    for (const FGamePlatformEffectGrant& Grant : Set.Effects)
+    {
+        const UGameplayEffect* Effect =
+            Grant.EffectClass.Get()->GetDefaultObject<UGameplayEffect>();
+        const FActiveGameplayEffectHandle Handle = ASC->ApplyGameplayEffectToSelf(
+            Effect, Grant.Level, ASC->MakeEffectContext());
+        if (!Handle.IsValid())
+        {
+            OutError = TEXT("可回滚启动效果应用失败，本次技能集合授予将撤销。");
+            return false;
+        }
+        OwnedEffectHandles.Add(Handle);
     }
 
     for (const FGamePlatformAbilityGrant& Grant : Set.Abilities)
@@ -444,28 +511,10 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
         const FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
         if (!Handle.IsValid())
         {
-            OutError = TEXT("服务器 GAS 授予技能失败。");
+            OutError = TEXT("服务器 GAS 授予技能失败，本次启动效果及技能集合将撤销。");
             return false;
         }
         OwnedAbilityHandles.Add(Handle);
-    }
-
-    for (const FGamePlatformEffectGrant& Grant : Set.Effects)
-    {
-        const UGameplayEffect* Effect = Grant.EffectClass.Get()->GetDefaultObject<UGameplayEffect>();
-        if (!Effect)
-        {
-            OutError = TEXT("启动效果默认对象无效。");
-            return false;
-        }
-        const FActiveGameplayEffectHandle Handle = ASC->ApplyGameplayEffectToSelf(
-            Effect, Grant.Level, ASC->MakeEffectContext());
-        if (!Handle.IsValid())
-        {
-            OutError = TEXT("启动效果应用失败，授予将回滚。");
-            return false;
-        }
-        OwnedEffectHandles.Add(Handle);
     }
     OutError.Reset();
     return true;

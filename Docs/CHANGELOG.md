@@ -1,5 +1,15 @@
 # 变更记录
 
+## 2026-10-10｜生肖技能可回滚启动效果授予与单文件构建验证
+
+- `DivineBeastsAbilitiesRuntime`（神兽联盟双端技能运行模块）增加 `IsStartupEffectReversible`（启动GameplayEffect可撤销预检），拒绝瞬时、周期、执行计算、堆叠及未审核附加效果组件；利用UE5.8公开FindComponent（查找组件）API维持引擎封装。授权顺序收敛为完整预检→先应用可回滚GE→再授权GAS技能Spec，失败仅撤销本组件真实句柄，保留平台原生能力机制。
+- 新增独立UE自动化合同 `DivineBeasts.Abilities.GrantTransaction.ReversibleStartupEffect`，覆盖无世界的正反向样例；旧版技能装配测试不再作为新逻辑通过的依据。
+- 真实锁定UE5.8 `DivineBeastsArenaEditor Win64 Development`（Windows编辑器开发构建）分别对技能授权组件及授权事务测试源码执行 `-SingleFile` 定向编译，**两个UBT任务均返回Result: Succeeded、进程退出码0**；未完成整模块DLL链接、重新加载编辑器、Client/Server/Cook及真实联机。三层授权静态门禁41/41通过，头文件引用扫描632处无缺失。
+- 同一UE5.8目标补充验证 `DivineBeastsConfiguredGameplayAbility.cpp`（服务器技能命中/伤害基类源码）与 `DivineBeastsPlayerStatusViewModelTests.cpp`（UI状态快照测试源码）的定向单文件编译，均返回 `Succeeded`（成功）、退出码0。由此四个针对性C++文件已获得独立编译证据；完整DLL和自动化重新加载仍未完成。
+- 详细测试范围、未完成发布门禁及后续接线顺序见 `Docs/Implementation/十二生肖技能数据驱动实施记录_20261009.md`（生肖技能执行台账）。
+
+
+
 ## 2026-10-09｜生肖技能开发资产数据一致性、网络执行策略与审计增强
 
 - 通过 UE5.8 Monolith 原生 AssetRegistry（资源注册索引）与 Editor Python（编辑器脚本）核对十二生肖全部60份开发 `UDivineBeastsAbilityDefinition`（技能逻辑资产）、60行 `DT_DBA_Zodiac_DevBalance`（统一等级数值表）、12份开发 `AbilityUIProfile`（客户端显示配置）和60张图标：真实资产归属、类型、逻辑ID、等级行全部无误；与 `ZodiacAbilityDevelopmentDraft_20261009.json`（开发数值草案）逐字段对比60行数值为0差异。

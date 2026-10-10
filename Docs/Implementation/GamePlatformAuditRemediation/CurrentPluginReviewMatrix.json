@@ -1,0 +1,1588 @@
+{
+  "Baseline": "8a12bbe",
+  "Scope": "62身份/83插件模块；原审查82模块，主线技能模块已纳入既有DBAGameplay",
+  "PluginCount": 62,
+  "FindingCount": 61,
+  "State": "原整改检查点已保留；主分支整合、实际目标和UE逻辑状态见中央证据",
+  "Limits": "原始设计/性能/规范字段是修改前事实。CurrentDisposition才是当前处置，未将待UE/缺条件计为通过。",
+  "Plugins": [
+    {
+      "Name": "DBAArena",
+      "Group": "DivineBeasts",
+      "Modules": 3,
+      "BaselineDesign": "五模式结构目录/可选客户端流程与服务器扩展；全部生产模式NotConfigured；多世界适配器共享缺陷",
+      "BaselinePerformance": "每Assignment预热12定义且全局重置句柄；Spawn按Controller迭代查玩家为最多10人的有界操作；UI按复制事件重建而无Tick。",
+      "BaselineCompliance": "Server/Editor明确目标限制、不带DBAClient；模式未批准配置Fail Closed，公共流程由扩展接入不复制执行器。 涉及 GW-02、GW-04、GW-15、GW-16、GW-17。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "G-01",
+        "GW-02",
+        "GW-04",
+        "GW-15",
+        "GW-16",
+        "GW-17"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-01",
+          "Status": "真实依赖声明与静态闭包已修；服务器46/客户端66及完整Editor84的实际构建另见UEBuildResults，最新主线整合需消费最终RunId",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "GW-02",
+          "Status": "源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-04",
+          "Status": "重连与死亡复活受理源码已补；真实到期Spawn/Possess待UE",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-15",
+          "Status": "整合基线已消除；双World实机待验证",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-16",
+          "Status": "缺批准配置/地图；正确NotConfigured保持",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-17",
+          "Status": "本轮源码修复；Travel/迟到复制待UE验证",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin"
+    },
+    {
+      "Name": "DBAClient",
+      "Group": "DivineBeasts",
+      "Modules": 5,
+      "BaselineDesign": "ApplicationFlow/Input/UI有真实C++装配；产品流程仍有Retry及输入资产接线缺口 复用唯一平台执行器、业务上下文只保留稳定值与瞬态ConnectionMaterial、真实Loading/Session六事实，UI LocalPlayer适配GI流程、页面事件与ViewModel命令，密码提交/失活清空；Input平台语义/GAS适配+合并刷新可见。默认Profile空且配置无赋值，当前Gameplay输入没有真实资产接线。 表现/外观：表现包协调D1、角色外观/预览D2。公共实现不依赖MOBA，外观使用平台薄软加载入口、请求代次取消、真实角色Ready事件；预览隔离旧卸载流送关卡并恢复原相机/Pawn可见性。F14激活伪事务及F15默认Definition不可执行；Client无Private/Tests，复杂生命周期仅有历史Manifest片段。",
+      "BaselinePerformance": "DBAFlow多次SetBusy/SetError/Refresh...均广播并使UI Adapter复制全ViewState+Revision增，不做等值合并；RootLayout LoadSynchronous在初始化/状态失败重试时可能阻塞；Input无业务Tick且QueueActivationRefresh合并，当前未测。 表现：外观每角色最多约5秒20次状态查找重试；BeginPlay只扫一次角色；预览激活事件扫Actor选择舞台；每原型材质槽生成MID。无永久Tick，但首次大量角色加载/GC需测。",
+      "BaselineCompliance": "公共插件不依赖竞技、模块依赖方向较好；多数中文类责任具备但大量UI合同字段只靠名称缺范围/含义说明，Descriptor ClientOnly模块未列targets。登录源码事件驱动且密码瞬态路径可见，未用静态源码替代Monolith资产/焦点/可访问性验收。 另见表现F14/F15及服务器G-02。",
+      "FindingIds": [
+        "APP-11",
+        "F14",
+        "F15",
+        "F16",
+        "F17",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "APP-11",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "F14",
+          "Status": "真实Data事务源码已实施；UE资源/回调待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F15",
+          "Status": "格式/失败合同已修；真实默认资源仍缺",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F17",
+          "Status": "本轮触及范围已补伴随说明；全量存量不在本组验收",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin"
+    },
+    {
+      "Name": "DBAContentPack_Common",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2原型共享源；131402435字节源包。具有明确所有者；Common内DBA/Standard同名母材质并存应通过AssetRegistry确认是否仍有合法消费者。共同H风险。",
+      "BaselinePerformance": "源文件字节不等于Cook后内存/GPU成本；需骨架/纹理LOD/动画授权及引用、干净Cook去冗余验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/DBAContentPack_Common.uplugin"
+    },
+    {
+      "Name": "DBAFrontEndPack",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2前端原型。与权威世界分离；平台舞台C++消费者存在；目前README仍说没有Client启动映射而配置已提供Custom FrontEndClient，应同步说明。",
+      "BaselinePerformance": "流送切入/切出、不同LocalPlayer舞台所有权、灯光与曝光、Cook引用需当前UE回读；没有场景GPU实测。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 ",
+      "FindingIds": [],
+      "CurrentDisposition": [],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/DBAFrontEndPack.uplugin"
+    },
+    {
+      "Name": "DBAGameplay",
+      "Group": "DivineBeasts",
+      "Modules": 3,
+      "BaselineDesign": "Shared生成身份/十二生肖定义/角色初始化/Momentum扩展；基础ACharacter可Ready但无ASC",
+      "BaselinePerformance": "角色事件/RepNotify驱动；同一RuntimeState版本变化会取消并重新申请定义，未见每帧资产冷加载；MomentumCOND_None复制需实测。",
+      "BaselineCompliance": "非竞技项目依赖不引MOBA；真实12个Definition文件；过期异步回调核对请求/Spawn/Avatar代次。 涉及 GW-02。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-02",
+          "Status": "源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAGameplay/DBAGameplay.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Boar",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2亥猪外观原型；Boar与当前消费者一致，未改旧身份；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/DBAHeroPack_Boar.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Dog",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2戌狗外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/DBAHeroPack_Dog.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Dragon",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2辰龙外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/DBAHeroPack_Dragon.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Goat",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2未羊外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/DBAHeroPack_Goat.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Horse",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2午马外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/DBAHeroPack_Horse.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Monkey",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2申猴外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/DBAHeroPack_Monkey.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Ox",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2丑牛外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "同上，不能用描述中“占位资源”证明资产可运行。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/DBAHeroPack_Ox.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Rabbit",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2卯兔外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/DBAHeroPack_Rabbit.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Rat",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2子鼠外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "仅原型颜色；真实Mesh/骨架兼容、引用、材质参数、LOD、运行成本未回读。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/DBAHeroPack_Rat.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Rooster",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2酉鸡外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/DBAHeroPack_Rooster.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Snake",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2巳蛇外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "当前无独立技能特效资源；需AssetRegistry和跨端资源剥离验证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/DBAHeroPack_Snake.uplugin"
+    },
+    {
+      "Name": "DBAHeroPack_Tiger",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2寅虎外观原型；非完整英雄内容；共同H风险",
+      "BaselinePerformance": "同上；Manifest中的历史Tiger预览不能替代当前MainArena运行。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 涉及服务器G-02/F16。",
+      "FindingIds": [
+        "F16",
+        "G-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F16",
+          "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/DBAHeroPack_Tiger.uplugin"
+    },
+    {
+      "Name": "DBAServer",
+      "Group": "DivineBeasts",
+      "Modules": 1,
+      "BaselineDesign": "三角色Profile、必要资产/BeginPlay验证、注册Ready/心跳/排空装配存在；世界退出后的Ready撤销路径需完善。",
+      "BaselinePerformance": "角色配置/资产就绪低频，心跳统计遍历当时玩家数；不重复进行全局分片分配。",
+      "BaselineCompliance": "唯一Server目标、OpenWorld PersistentShardedWorld/Village ExperienceInstance/MainArena PerMatch策略不同；只从服务器环境读取内部凭据。",
+      "FindingIds": [
+        "G-02",
+        "R-08"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "R-08",
+          "Status": "世界退休与排空源码已修；三角色运行待UE",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "G-02",
+          "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+          "Report": "RootRemediationReport.md"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAServer/DBAServer.uplugin"
+    },
+    {
+      "Name": "DBAUIPack_Core",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D2。合法项目UI资产归属与英文FriendlyName；Manifest记录Monolith0.20.3、历史编译/保存/回读和明确限制。当前Editor未运行，未读取Widget树/动态父类/焦点。",
+      "BaselinePerformance": "历史LOGO/PIE/Cook条目只证明当时范围；小窗口、移动、可访问性、真实键鼠、最新硬引用及服务器容器均待证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 ",
+      "FindingIds": [],
+      "CurrentDisposition": [],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/DBAUIPack_Core.uplugin"
+    },
+    {
+      "Name": "DBAWorldPack_Village",
+      "Group": "ContentPacks",
+      "Modules": 0,
+      "BaselineDesign": "D1首批流程地图与世界Definition。README:9还把Main/Training写后续，实际两Definition已在盘；最终湖心三岛PCG/世界美术未完成，不能称三体验内容验收通过。",
+      "BaselinePerformance": "地图内部Actor、导航、碰撞、权威PCG结果、出生安全点未在UE读取；三角色联机/地图Cook与服务器Ready须另证。",
+      "BaselineCompliance": "已登记纯内容包、英文FriendlyName；仅磁盘清单和历史Manifest，父类/引用/Cook未本轮回读。 ",
+      "FindingIds": [],
+      "CurrentDisposition": [],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/DBAWorldPack_Village.uplugin"
+    },
+    {
+      "Name": "DBAWorlds",
+      "Group": "DivineBeasts",
+      "Modules": 1,
+      "BaselineDesign": "项目World Definition派生与正式角色/体验/模式一致性校验；不拥有地图运行能力",
+      "BaselinePerformance": "纯定义验证/小Shared目录查询，未发现高频热点；不能由定义文件证明地图/Cook可用。",
+      "BaselineCompliance": "三角色正式目录校验，Lobby落OpenWorld；非竞技世界携带ArenaMode拒绝。主代理另报Core/Data描述依赖缺失。  本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "G-01"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-01",
+          "Status": "真实依赖声明与静态闭包已修；服务器46/客户端66及完整Editor84的实际构建另见UEBuildResults，最新主线整合需消费最终RunId",
+          "Report": "RootRemediationReport.md"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/DivineBeasts/DBAWorlds/DBAWorlds.uplugin"
+    },
+    {
+      "Name": "GamePlatformAbilitySystem",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "GAS基类、ActorInfo/输入代次与AbilitySet字段校验；Gate/授权事务未落入ASC生产路径",
+      "BaselinePerformance": "InputTag每次按压/释放扫描全部AbilitySpec；WhileHeld每处理尝试激活，缓存查询为线性；未实测。",
+      "BaselineCompliance": "输入精确标签冲突失败、换Avatar先清输入、每ASC独立随机作用域、Mixed复制策略。 涉及 GW-01、GW-02。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-01",
+        "GW-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-01",
+          "Status": "整合基线已消除；真实GAS运行待UE验证",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-02",
+          "Status": "源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/GamePlatformAbilitySystem.uplugin"
+    },
+    {
+      "Name": "GamePlatformAI",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "共享事实与服务器BT/感知/目标/导航/GAS攻击源码；正式BT/NavMesh运行未验证",
+      "BaselinePerformance": "一次初始化Actor扫描；定时决策扫描候选，Prune超限循环每次再全扫，超限突发为平方量级；入候选到决策间没有即时数量裁剪。",
+      "BaselineCompliance": "目标Provider+EntityId/Generation同世界校验、无每帧全世界扫描、攻击退避、取消加载/解绑路径存在。 涉及 GW-12。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-12"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-12",
+          "Status": "目标声明/服务器闭包已修；全量中文历史存量未审完，运行产物另验",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/GamePlatformAI.uplugin"
+    },
+    {
+      "Name": "GamePlatformAnimation",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "2模块空壳；README明确一期关键能力未完成",
+      "BaselinePerformance": "没有实现可评估动画成本，也没有真实动作/GAS/RootMotion时序验收。",
+      "BaselineCompliance": "未用固定成功接口伪装完成；已有实施规格说明。 涉及 GW-13、GW-12。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-12",
+        "GW-13"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-12",
+          "Status": "目标声明/服务器闭包已修；全量中文历史存量未审完，运行产物另验",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-13",
+          "Status": "授权保留的未实现能力；不计功能完成",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/GamePlatformAnimation.uplugin"
+    },
+    {
+      "Name": "GamePlatformApplicationFlow",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "机制实现较完整；尚无本轮动态验收 GI唯一执行器、单槽完成邮箱、作用域/运行/节点代次、有限重试/超时、关闭和定义租约已落实；按需Ticker与核心分发/广播重入门禁可见。",
+      "BaselinePerformance": "单槽邮箱有界；图校验std::map/set为O((V+E)log V)，主要为启动成本。APP-13指出重复Completion的TaskGraph唤醒尚未合并；无实测结论。",
+      "BaselineCompliance": "方向中立、Public稳定合同和中文说明相对完整；无游戏/竞技/项目资源依赖。",
+      "FindingIds": [
+        "APP-13"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-13",
+          "Status": "原生策略回归和源码复核完成；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/GamePlatformApplicationFlow.uplugin"
+    },
+    {
+      "Name": "GamePlatformArena",
+      "Group": "MobaCommon",
+      "Modules": 5,
+      "BaselineDesign": "五模式契约/数据/状态/复制UI/HTTP适配实现；票据准入无真实调用方、重连未恢复Pawn",
+      "BaselinePerformance": "双队最多10玩家，阵容/比分重建为小型有界扫描；Result复制到每次重试并立即最多5次重试，无退避；需故障/网络测量。",
+      "BaselineCompliance": "1v1~5v5人数来自ModeSpec，Hero资格缺Provider拒绝、比赛事件去重有界、客户端服务器不互依。 涉及 GW-03、GW-04、GW-11、GW-12。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-03",
+        "GW-04",
+        "GW-11",
+        "GW-12"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-03",
+          "Status": "本轮源码接线；待真实握手/后端联调",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-04",
+          "Status": "重连与死亡复活受理源码已补；真实到期Spawn/Possess待UE",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-11",
+          "Status": "部分接口复用；完整Experience迁移待设计/资产评审",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-12",
+          "Status": "目标声明/服务器闭包已修；全量中文历史存量未审完，运行产物另验",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/MobaCommon/GamePlatformArena/GamePlatformArena.uplugin"
+    },
+    {
+      "Name": "GamePlatformCamera",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "D0。0.1.0；唯一 ClientOnly 模块只依赖 Core、仅3行注册。方案A已批准但实现未开始。没有服务、模式栈、租约、测试、实际消费者；不得称相机功能已完成。",
+      "BaselinePerformance": "无运行机制，无法评价相机算法性能。当前预览相机在 Presentation/项目预览实现中，不能记为 Camera 插件集成。",
+      "BaselineCompliance": "按源码职责/端侧/中文说明核对；D0。0.1.0；唯一 ClientOnly 模块只依赖 Core、仅3行注册。方案A已批准但实现未开始。没有服务、模式栈、租约、测试、实际消费者；不得称相机功能已完成。 动态验收仍待证。",
+      "FindingIds": [],
+      "CurrentDisposition": [],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/GamePlatformCamera.uplugin"
+    },
+    {
+      "Name": "GamePlatformCharacter",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "可复用Definition/创建Provider/初始化Executor/异步加载基础；不是完整角色战斗装配",
+      "BaselinePerformance": "冷定义异步加载，热对象同步完成；无角色业务Tick；需测量大批出生的定义预热与包络成本。",
+      "BaselineCompliance": "唯一初始化器Fail Closed、服务器Authority校验、不拥有Spawn/Possess；公开通用定义不绑定项目表现。 涉及 GW-02。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-02",
+          "Status": "源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/GamePlatformCharacter.uplugin"
+    },
+    {
+      "Name": "GamePlatformCombat",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "伤害/治疗/控制/GAS属性/死亡/当前帧Trace实现；网络与正式玩法组合未验证",
+      "BaselinePerformance": "无Tick；事件去重有界但RemoveAt(0)移动历史数组；属性大量COND_None复制，需要按可见性与网路实测。",
+      "BaselineCompliance": "Authority、同World、代次/数值上限验证；未伪实现Root/ServerRewind；可选表现不决定权威伤害。 涉及 GW-02。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-02",
+          "Status": "源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/GamePlatformCombat.uplugin"
+    },
+    {
+      "Name": "GamePlatformCommerceUI",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "购买意图/订单展示状态机制已实现；支付与认证生产链未装配 每种请求single-flight、AccountGeneration、只有Backend fulfilled+confirmed才Succeeded、Receipt不直接判成功；无生产Configure/HTTP构造/真实支付Provider，不应称商城闭环。",
+      "BaselinePerformance": "8HTTP在途；Catalog与订单值复制、多JSON解析在GameThread、无响应体/数组容量门禁；金额转换double→int64未拒绝小数/2^53精度风险，不构成当前权威扣款错误。",
+      "BaselineCompliance": "依赖GamePlatformUI单向、支付权威边界正确；Public具体HTTP/AccessToken与大段公开字段说明不全，ClientOnly无TargetAllowList；真实Widget资源未交付。",
+      "FindingIds": [
+        "APP-06",
+        "APP-15"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-06",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-15",
+          "Status": "本轮触及范围中文说明已审核；全量历史存量未完成审核",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/GamePlatformCommerceUI.uplugin"
+    },
+    {
+      "Name": "GamePlatformCore",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "中立身份、错误、版本、结果值与私有解析算法已实现；本轮未发现阻断性设计缺陷。",
+      "BaselinePerformance": "输入长度/字段范围有界；值校验、规范化与哈希重复解析/分配，应在真实热路径测量，不能仅凭微测试认定瓶颈。",
+      "BaselineCompliance": "不依赖Engine/业务/世界，默认结果非成功，Public主要契约中文说明完整；13个现有CTest用例各在Debug/Release通过。",
+      "FindingIds": [],
+      "CurrentDisposition": [],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformCore/GamePlatformCore.uplugin"
+    },
+    {
+      "Name": "GamePlatformData",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "统一主资产定义、依赖DFS、跨实例分组并集及租约实现；终态历史无界。普通软资源已有平台薄封装，其作用域安全需核各调用方。",
+      "BaselinePerformance": "ReleasedLeases随全生命周期释放总数增长；每帧扫描全部活跃请求，资产依赖最多128深度/4096节点。",
+      "BaselineCompliance": "GameInstance/World/代次与弱调用者校验、取消一次终态、失败撤销自有需求；普通软资源通过Data薄入口返回原生流式句柄，由调用方取消/释放。",
+      "FindingIds": [
+        "R-01",
+        "R-02"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "R-01",
+          "Status": "源码已修；真实多实例资源与GC待UE",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "R-02",
+          "Status": "源码改为按需低频与世界事件；性能收益未实测",
+          "Report": "RootRemediationReport.md"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Foundation/GamePlatformData/GamePlatformData.uplugin"
+    },
+    {
+      "Name": "GamePlatformDebug",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "开发/测试诊断提供者、命令注册、目标弱引用与快照脱敏已实现；未发现当前分区阻断性功能缺陷。",
+      "BaselinePerformance": "按需采集，昂贵Provider显式授权；每次快照清理所有曾查询目标，规模成本需測量；无每帧全世界扫描证据。",
+      "BaselineCompliance": "Shipping配置白名单排除，进程注册表持机制与弱目标，没有持有用户/比赛强对象。部分新增公开/私有函数中文说明仍须人工补齐。",
+      "FindingIds": [
+        "G-04"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-04",
+          "Status": "触及范围补中文；全量存量人工审核未完成",
+          "Report": "RootRemediationReport.md"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/GamePlatformDebug.uplugin"
+    },
+    {
+      "Name": "GamePlatformDeveloperTools",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "Editor验证/静态与资产规则/报告/性能执行器接口存在；性能场景无生产注册调用，资产扫描以名称判断定义有覆盖边界。",
+      "BaselinePerformance": "GetAllAssets后筛选、GetAsset同步加载所有定义；属Editor全量审计成本，应测量大内容库内存/耗时，不能归为游戏帧率瓶颈。",
+      "BaselineCompliance": "Editor专用，未知性能执行器明确失败，不伪造测量；C++继承门禁通过仍不能代替Blueprint资产检查。",
+      "FindingIds": [
+        "G-04",
+        "R-07"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "R-07",
+          "Status": "真实定义审计已修；生产性能场景执行器仍缺批准场景",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "G-04",
+          "Status": "触及范围补中文；全量存量人工审核未完成",
+          "Report": "RootRemediationReport.md"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/GamePlatformDeveloperTools.uplugin"
+    },
+    {
+      "Name": "GamePlatformEntitlement",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "权益快照/查询机制已实现；生产认证装配缺失 LocalPlayer账户代次、Reset取消、Revision不回退、有效ID/英雄/皮肤派生Set缓存；有效性以后台Snapshot.Status为准；无生产Configure或HTTPTransport构造调用。",
+      "BaselinePerformance": "查询Set平均O(1)，查询类HasAny/All逐数组扫描可能O(KN)，View值返回仍复制；Transport8在途但回应数组与总JSON无容量预检。",
+      "BaselineCompliance": "客户端与后台权威区分；具体HTTP实现在Public/Transport且构造接收AccessToken，应收敛为Private+Online安全通道；端侧allowlist/中文字段说明不全。",
+      "FindingIds": [
+        "APP-06",
+        "APP-12",
+        "APP-15"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-06",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-12",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-15",
+          "Status": "本轮触及范围中文说明已审核；全量历史存量未完成审核",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/GamePlatformEntitlement.uplugin"
+    },
+    {
+      "Name": "GamePlatformEquipment",
+      "Group": "GamePlatform",
+      "Modules": 3,
+      "BaselineDesign": "共享复制+GAS/外观机制部分实现；生产持久化装配缺失 OwnerOnly与Public快照、服务器校验/持久化端口、GAS授予、客户端Data软加载与视觉代次分离；无实际PersistencePort/AssetResolver实现或Initialize生产调用。",
+      "BaselinePerformance": "Apply每次撤销全部授予后全量重建；Visual每次清全组件/加载后重建，O(S+A+E)并伴对象/加载抖动；无slot数上限或性能数据。",
+      "BaselineCompliance": "无客户端/服务器互依赖；端侧标签有但无TargetAllowList；服务器私有实现合同缺中文与取消/线程说明，只有Definition测试不能冒充生命周期验收。",
+      "FindingIds": [
+        "APP-07",
+        "APP-08",
+        "APP-15"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-07",
+          "Status": "已复核既有修复并补本轮边界；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-08",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-15",
+          "Status": "本轮触及范围中文说明已审核；全量历史存量未完成审核",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/GamePlatformEquipment.uplugin"
+    },
+    {
+      "Name": "GamePlatformGameplay",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "体验/准入/出生/玩家生命周期与复制资格源码已存在；当前真实资格接线缺失",
+      "BaselinePerformance": "0.05秒GameMode全玩家推进、等待出生重复PlayerStart全扫描；Experience另有0.05秒轮询。建议测量等待状态和并发玩家成本。",
+      "BaselineCompliance": "权威登记、作用域/代次、自动出生阻断、取消/排空路径与公开资格事件存在。 涉及 GW-02、GW-11、GW-14。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-02",
+        "GW-11",
+        "GW-14"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-02",
+          "Status": "源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-11",
+          "Status": "部分接口复用；完整Experience迁移待设计/资产评审",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-14",
+          "Status": "本轮文档修复",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/GamePlatformGameplay.uplugin"
+    },
+    {
+      "Name": "GamePlatformInput",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "机制实现较完整；持久化/所有权缺陷；真实Profile未装配 LocalPlayer作用域、Data定义租约、CompactSlot、阻断缓存、Owner回收4Hz、Touch与统一EnhancedInput事件链可见。",
+      "BaselinePerformance": "高频阻断O(1)，订阅/绑定/触点有界；显式Save同步SaveSettings/Flush可能卡菜单；ListMappings每次构造排序O(RlogR)。",
+      "BaselineCompliance": "新平台中立语义与项目语义分离较好，ClientOnly+明确targets；公开中文合同承诺与实现存在APP-01~03差异。",
+      "FindingIds": [
+        "APP-01",
+        "APP-02",
+        "APP-03"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-01",
+          "Status": "已复核整合后的既有源码；实际UE行为仍待运行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-02",
+          "Status": "已复核现有合同与失败边界；正式后端/资产集成仍待验证",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-03",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformInput/GamePlatformInput.uplugin"
+    },
+    {
+      "Name": "GamePlatformInteraction",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "Focus/Instant/Hold/目标并发/幂等/限流/外部结果Reservation源码；Custom回调重入有悬垂引用风险",
+      "BaselinePerformance": "无Tick；Focus定时Trace、Hold定时复验；反复资格读取遍历Actor/Pawn/Controller/PlayerState组件，按实际组件量测量。",
+      "BaselineCompliance": "资格默认拒绝、组件级目标身份、独立Begin/Cancel限流、幂等缓存、共享会话不会被无关Revision误杀。 涉及 GW-09。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-09"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-09",
+          "Status": "Custom及终态广播重入源码修复；UE行为回归未执行",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformInteraction/GamePlatformInteraction.uplugin"
+    },
+    {
+      "Name": "GamePlatformInventory",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "六服务中生产认证接线最完整；仍无本轮运行验收 Online认证自动装配、账户/请求代次、单未决Mutation、原OperationId未知结果查询、RevisionConflict专用对账、64容器/1万物品/12快捷槽验证可见。",
+      "BaselinePerformance": "缓存排序O(NlogN)仅Snapshot变化，FindItem缓存查询；值数组Get...仍O(N)复制，View路径可避免；Transport8在途，上限不代表当前测量。",
+      "BaselineCompliance": "Transport在Private、不持Token，业务请求走Online、客户端不持长期真源符合规范；公开参数/线程/失败中文尚不全，模块无TargetAllowList。",
+      "FindingIds": [
+        "APP-06",
+        "APP-15"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-06",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-15",
+          "Status": "本轮触及范围中文说明已审核；全量历史存量未完成审核",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/GamePlatformInventory.uplugin"
+    },
+    {
+      "Name": "GamePlatformLiveOps",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "运营快照/领取对账/可信时间部分实现；生产认证接线缺失 LocalPlayer代次、全局Catalog与玩家状态分离、ClaimOperationId对账、服务器时间+单调时钟、前台恢复刷新可见；无生产Configure/HTTP构造。",
+      "BaselinePerformance": "Initialize无条件1HzTicker，即未登录也持续唤醒；边界每秒扫描S+E+C；GetSignInViewModels每Campaign对PlayerState线性查，O(CP)，每次重建数组，无输入容量上限/测量。",
+      "BaselineCompliance": "后台领奖权威未被客户端替代；缺完整中文接口/参数/错误/时间单位，README与Docs不足；Public具体HTTP/Token/内部时间类、target允许列表不足。",
+      "FindingIds": [
+        "APP-10",
+        "APP-15"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-10",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-15",
+          "Status": "本轮触及范围中文说明已审核；全量历史存量未完成审核",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/GamePlatformLiveOps.uplugin"
+    },
+    {
+      "Name": "GamePlatformLoading",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "DAG/租约/屏障已实现；生命周期回调缺口 单操作GI、任务规格256/依赖64、订阅/工厂128上限、Data租约、真实世界事实、20Hz运行/2Hz保留资源监测已具备；SessionReady需真实上层装配。",
+      "BaselinePerformance": "上限存在；执行遍历中每Task再次线性找PolicyRecord（343-344），O(T²)每20Hz且GetSnapshot构造数组，需256任务测量，不可称已优化到O(T)。",
+      "BaselineCompliance": "不依赖客户端Session/UI/Flow；中文公开合同较清楚。Runtime描述缺TargetAllowList，应补目标审计，不能靠Runtime名称算四目标验收。",
+      "FindingIds": [
+        "APP-05"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-05",
+          "Status": "已复核整合后的既有源码；实际UE行为仍待运行",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLoading/GamePlatformLoading.uplugin"
+    },
+    {
+      "Name": "GamePlatformLobby",
+      "Group": "GamePlatform",
+      "Modules": 3,
+      "BaselineDesign": "3模块空壳；无活动源码消费者；现行规则明确条件保留",
+      "BaselinePerformance": "无实际运行机制可测；不应宣称已提供大厅服务器。",
+      "BaselineCompliance": "README明确Lobby属于OpenWorld体验、不恢复独立服务器角色。 涉及 GW-13、GW-12。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-12",
+        "GW-13"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-12",
+          "Status": "目标声明/服务器闭包已修；全量中文历史存量未审完，运行产物另验",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-13",
+          "Status": "授权保留的未实现能力；不计功能完成",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/GamePlatformLobby.uplugin"
+    },
+    {
+      "Name": "GamePlatformLocalization",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "二期预留空模块 未实现文化切换、文本资源域、客户端加载、事件、配置或运行接口；README已承认预留模块壳。",
+      "BaselinePerformance": "没有本地化逻辑，不能评价业务性能；只有空模块装载/维护负担。",
+      "BaselineCompliance": "与AGENTS禁止空插件/空模块冲突；活动FriendlyName为英文但源码/Build.cs无职责中文合同；ClientOnly无TargetAllowList。建议按批准规划明确退休/禁用或在真实需求后实现，不能擅自删除。",
+      "FindingIds": [],
+      "CurrentDisposition": [],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformLocalization/GamePlatformLocalization.uplugin"
+    },
+    {
+      "Name": "GamePlatformNavigation",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "原生导航桥接、同步/异步、取消/超时/Invoker/Profile实现；重复RequestId生命周期缺陷",
+      "BaselinePerformance": "同步FindPath/TestPath调用在调用线程执行；异步总量有上限；调用方应限制高频同步查询并实测NavData规模。",
+      "BaselineCompliance": "MaxPathDistance/MaxProjectionExtent、PartialPath、世界代次、取消/超时与原生导航能力复用。 涉及 GW-07、GW-12。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-07",
+        "GW-12"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-07",
+          "Status": "在飞重复ID基线已修；追加完成后复用ID的旧取消句柄修复",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-12",
+          "Status": "目标声明/服务器闭包已修；全量中文历史存量未审完，运行产物另验",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformNavigation/GamePlatformNavigation.uplugin"
+    },
+    {
+      "Name": "GamePlatformOnline",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "公共门面与客户端HTTP、刷新单飞、有界排队/重试/流式响应限制已实现；锁定HTTP补丁与真实Gateway联调待本轮补证。",
+      "BaselinePerformance": "并发与队列有上限，0.1秒有工作时检查；无需逐帧轮询认证，正文流式上限值得保留。",
+      "BaselineCompliance": "WeakThis/终态Gate、析构CancelAll、凭据保护和拒绝自动重定向路径存在。",
+      "FindingIds": [],
+      "CurrentDisposition": [],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/GamePlatformOnline.uplugin"
+    },
+    {
+      "Name": "GamePlatformPCG",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "有界装饰请求与编辑器模板/Schema/节点基础；终态历史耗尽128请求容量；正式模板资产未交付",
+      "BaselinePerformance": "0.05秒遍历所有历史请求和订阅；清理使用原生同步CleanupLocalImmediate；四并发限制不能阻止128终身累计上限。",
+      "BaselineCompliance": "Dedicated/Listen拒绝RuntimeCosmetic、Data租约、当前Region/World代次验证、清理原生输出后才释放。 涉及 GW-08。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-08"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-08",
+          "Status": "整合基线已消除；原生规则通过/真实129次PCG待验证",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformPCG/GamePlatformPCG.uplugin"
+    },
+    {
+      "Name": "GamePlatformPresentation",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "D1。中立请求、LocalPlayer注册、上下文贡献、目录和预览舞台成立，平台未反向引用项目。P13排序/歧义仍有 F01/F02。Public接口和字段中文说明不完整。",
+      "BaselinePerformance": "Contributor注册时排序，Submit无需复制排序；目录每次双层全扫，上限64片段×512项；没有语义索引/解析缓存。是热点候选，不是实测瓶颈。预览Actor无Tick。",
+      "BaselineCompliance": "按源码职责/端侧/中文说明核对；D1。中立请求、LocalPlayer注册、上下文贡献、目录和预览舞台成立，平台未反向引用项目。P13排序/歧义仍有 F01/F02。Public接口和字段中文说明不完整。 动态验收仍待证。",
+      "FindingIds": [
+        "F01",
+        "F02",
+        "F17"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "F01",
+          "Status": "已合入旧修复复核；六字段具体度补修；UE待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F02",
+          "Status": "旧消歧修复复核；诊断与只读预检补齐；UE待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F17",
+          "Status": "本轮触及范围已补伴随说明；全量存量不在本组验收",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/GamePlatformPresentation.uplugin"
+    },
+    {
+      "Name": "GamePlatformProgression",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "曲线/快照/缓存部分实现；事件与生产装配缺口 服务器中立资格端口、客户端账户代次、版本曲线兼容、嵌套ID索引/派生ViewModel缓存可见；无生产Configure、资格Provider或HTTP构造。",
+      "BaselinePerformance": "曲线二分O(logL)；快照变化重建View是O(NlogL)，查询ID平均O(1)；HTTP数组无上限；值返回复制，无测量。",
+      "BaselineCompliance": "HTTP/缓存非权威基础方向正确；公开中文API大段缺失、README不满足最小接入/目标/配置/测试；Public HTTP/Token实现及TargetAllowList不足。",
+      "FindingIds": [
+        "APP-09",
+        "APP-12",
+        "APP-15"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-09",
+          "Status": "已复核既有修复并补本轮边界；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-12",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        },
+        {
+          "Id": "APP-15",
+          "Status": "本轮触及范围中文说明已审核；全量历史存量未完成审核",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/GamePlatformProgression.uplugin"
+    },
+    {
+      "Name": "GamePlatformQuest",
+      "Group": "GamePlatform",
+      "Modules": 3,
+      "BaselineDesign": "状态机/OwnerOnly复制/事件索引/单飞持久化/对账框架；对账失败与满队列会丢重放材料",
+      "BaselinePerformance": "每个变更事件重建全部活跃目标索引并生成/排序/复制全任务快照；不是每帧扫描，但高事件率/历史任务规模需测量。",
+      "BaselineCompliance": "权威事件RuntimeId、每任务去重、Completion/Reward标识、异步Port和跨世界弱回调存在。 涉及 GW-05、GW-06、GW-12。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-05",
+        "GW-06",
+        "GW-12"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-05",
+          "Status": "追加修复完整快照与按任务实例重放；UE行为回归未执行",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-06",
+          "Status": "整批幂等与广播重入源码修复；生产Quest端口缺交付",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-12",
+          "Status": "目标声明/服务器闭包已修；全量中文历史存量未审完，运行产物另验",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/GamePlatformQuest.uplugin"
+    },
+    {
+      "Name": "GamePlatformSave",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "本地非权威存档机制已实现；IO故障验收缺失 8MiB载荷、16在途、同槽busy、稳定ID、CRC、临时文件/Flush/备份、Provider迁移、GI代次、回调重入门禁齐备；取消为回调失效，后台IO本身仍可结束。",
+      "BaselinePerformance": "后台IO降低游戏线程阻塞，但APP-04读前无限容量；payload编码/复制也会放大16x8MiB峰值，需要测量。",
+      "BaselineCompliance": "ClientOnly+Client/Editor、无内容/业务反依赖、中文契约和非权威边界较完整。",
+      "FindingIds": [
+        "APP-04"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-04",
+          "Status": "已复核整合后的既有源码；实际UE行为仍待运行",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSave/GamePlatformSave.uplugin"
+    },
+    {
+      "Name": "GamePlatformServer",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "注册/就绪/心跳/排空与双端Gameplay准入桥接实现；准入HTTP关闭生命周期和响应内存上限存在缺口。",
+      "BaselinePerformance": "心跳有间隔和重试，准入响应完成后才检查32KiB；并发登录压力与容量准入需实测。",
+      "BaselineCompliance": "模块启动只注册机制、不连生产；目标/Boot/SessionEpoch校验及终态门禁存在，控制面HTTP使用流式上限。",
+      "FindingIds": [
+        "R-03",
+        "R-04"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "R-03",
+          "Status": "Provider/子系统生命周期与重入源码已修；真实握手待联调",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "R-04",
+          "Status": "流式接收预算已修；压力/超时待网络",
+          "Report": "RootRemediationReport.md"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/GamePlatformServer.uplugin"
+    },
+    {
+      "Name": "GamePlatformSession",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "会话转移状态机、票据握手、Binding/事实一致性、失败与重连原语存在；端到端正式世界仍依赖未完成装配。",
+      "BaselinePerformance": "单活动转移，0.1秒截止/握手检查；首本地Controller等待不是全Actor扫描，实际网络时延与超时需测试。",
+      "BaselineCompliance": "票据不进URL/日志；世界弱指针、代次、取消/解绑、失败事实存在；原生核心通过不证明Travel成功。",
+      "FindingIds": [],
+      "CurrentDisposition": [],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/GamePlatformSession.uplugin"
+    },
+    {
+      "Name": "GamePlatformSettings",
+      "Group": "GamePlatform",
+      "Modules": 4,
+      "BaselineDesign": "设备核心与四模块框架已实现；无生产Descriptor Provider 分层解析、单一真源边界、敏感/端侧校验、用户上下文、迁移回滚、设备暂存/预览/确认已具备；当前无非测试IGamePlatformSettingsProvider，Server/Runtime不能称产品设置已接通。",
+      "BaselinePerformance": "0业务Tick，Snapshot查TMap；APP-14同步档案Load，UGameUserSettings Apply/Save同步路径；未测量。",
+      "BaselineCompliance": "模块/描述target限制、Runtime中立方向、敏感配置约束与中文说明较好；本轮门禁退出0且生产Provider缺失警告。",
+      "FindingIds": [
+        "APP-14"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "APP-14",
+          "Status": "本轮源码已修；真实UE行为回归待执行",
+          "Report": "ApplicationPlayersRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Application/GamePlatformSettings/GamePlatformSettings.uplugin"
+    },
+    {
+      "Name": "GamePlatformSFX",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "D1。0.2.0；ClientOnly且Client/Editor白名单、游戏世界/非Dedicated/非Commandlet过滤、Data Definition租约、AudioFinished清理成立。P2 F06/F07；终态接口不足F08。产品Target/项目组合未启用SFX，项目无真实音效Definition/Sound。",
+      "BaselinePerformance": "无Tick；每声音独立AcquireDefinition，完成时线性遍历最多256名义实例找Component，始终Spawn/Destroy而非自建池；重度5v5需Audio Insights/并发虚拟化验证。",
+      "BaselineCompliance": "按源码职责/端侧/中文说明核对；D1。0.2.0；ClientOnly且Client/Editor白名单、游戏世界/非Dedicated/非Commandlet过滤、Data Definition租约、AudioFinished清理成立。P2 F06/F07；终态接口不足F08。产品Target/项目组合未启用SFX，项目无真实音效Definition/Sound。 动态验收仍待证。",
+      "FindingIds": [
+        "F06",
+        "F07",
+        "F08",
+        "F17"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "F06",
+          "Status": "旧修复已覆盖；原生回归通过；UE待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F07",
+          "Status": "旧先监听修复及真实引擎源码已复核；实播待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F08",
+          "Status": "公开终态合同及去重失败已实施；UE待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F17",
+          "Status": "本轮触及范围已补伴随说明；全量存量不在本组验收",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformSFX/GamePlatformSFX.uplugin"
+    },
+    {
+      "Name": "GamePlatformSurface",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "D1。状态验证/裁剪/事件/MPC桥完整，Client+Editor端侧正确；F09默认资源链缺失，F10同步加载。没有Content目录，MPC、9个必需母材质/函数均只有路径合同；无项目C++消费者。",
+      "BaselinePerformance": "无Tick；状态变化写固定8参数，重复状态去重。首次绑定在游戏线程LoadSynchronous，缺MPC时每次更新会重试加载。没有Shader/材质/设备成本证据。",
+      "BaselineCompliance": "按源码职责/端侧/中文说明核对；D1。状态验证/裁剪/事件/MPC桥完整，Client+Editor端侧正确；F09默认资源链缺失，F10同步加载。没有Content目录，MPC、9个必需母材质/函数均只有路径合同；无项目C++消费者。 动态验收仍待证。",
+      "FindingIds": [
+        "F09",
+        "F10",
+        "F17"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "F09",
+          "Status": "实际内容缺口保留；本轮不生成资产",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F10",
+          "Status": "源码已实施；新旧代/取消回归待UE",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F17",
+          "Status": "本轮触及范围已补伴随说明；全量存量不在本组验收",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/GamePlatformSurface.uplugin"
+    },
+    {
+      "Name": "GamePlatformTelemetry",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "Schema/隐私/采样/有界缓冲/分批/重试存在；HTTP持有闭环与Public实现暴露需整改。",
+      "BaselinePerformance": "缓冲计数/字节上限、最多64条Metric合并、头索引摊销与8并发/有界重试存在；响应无接收上限，请求自持有风险未实测。",
+      "BaselineCompliance": "不影响权威动作，账号切换丢弃旧队列、不可变上下文共享、锁外回调、关停预算存在。",
+      "FindingIds": [
+        "G-04",
+        "R-05",
+        "R-06"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "R-05",
+          "Status": "HTTP持有/预算及Sink/上下文重入源码已修并独立窄复核；具名UE逻辑结果见UEAutomationResults，真实HTTP请求/生产关闭预算未验",
+          "Report": "TelemetryLifecycleRemediation.json"
+        },
+        {
+          "Id": "R-06",
+          "Status": "Public边界已收窄并保留不透明兼容；构造/析构完整类型修正已被服务器模块编译",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "G-04",
+          "Status": "触及范围补中文；全量存量人工审核未完成",
+          "Report": "RootRemediationReport.md"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/GamePlatformTelemetry.uplugin"
+    },
+    {
+      "Name": "GamePlatformUI",
+      "Group": "GamePlatform",
+      "Modules": 1,
+      "BaselineDesign": "D2。CommonUI层栈、LocalPlayer、ViewModel事件及普通软资源句柄可用，存在真实项目UI消费者。F11失活过早撤销资源需求/重入时序；不将Widget直接HTTP或业务Tick指控到平台。",
+      "BaselinePerformance": "世界投影按需30Hz遍历最多128Widget，有池复用；通知/反馈低频事件定时器；池按类线性查找。无实际设备/复杂Widget布局性能测量。",
+      "BaselineCompliance": "按源码职责/端侧/中文说明核对；D2。CommonUI层栈、LocalPlayer、ViewModel事件及普通软资源句柄可用，存在真实项目UI消费者。F11失活过早撤销资源需求/重入时序；不将Widget直接HTTP或业务Tick指控到平台。 动态验收仍待证。",
+      "FindingIds": [
+        "F11",
+        "F17"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "F11",
+          "Status": "旧资源所有权修复复核；事件时序补齐；UE待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F17",
+          "Status": "本轮触及范围已补伴随说明；全量存量不在本组验收",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformUI/GamePlatformUI.uplugin"
+    },
+    {
+      "Name": "GamePlatformVFX",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "D1。0.2.0；私有世界执行、World共享Definition缓存、Data租约、实例反向映射、Niagara原生池、取消/子定时器所有权已存在。真实Niagara/Definition/ReviewMap为0，SourceArt=6 PNG+shader源；P13兼容解析排序F03、复合依赖F04、未用回退F05。VFX→Core描述漏依赖由父代理实际架构门禁另证。",
+      "BaselinePerformance": "标准Play直接DefinitionId，热路径复用World缓存，不重复语义解析；兼容Resolver全目录扫描但有1024结果缓存；结束按Component map定位；LRU淘汰线性扫缓存。池策略有实际AutoRelease，但需真实Niagara取消/复用/GC留存验证。没有Insights、GPU、设备预算数据。",
+      "BaselineCompliance": "按源码职责/端侧/中文说明核对；D1。0.2.0；私有世界执行、World共享Definition缓存、Data租约、实例反向映射、Niagara原生池、取消/子定时器所有权已存在。真实Niagara/Definition/ReviewMap为0，SourceArt=6 PNG+shader源；P13兼容解析排序F03、复合依赖F04、未用回退F05。VFX→Core描述漏依赖由父代理实际架构门禁另证。 动态验收仍待证。",
+      "FindingIds": [
+        "F03",
+        "F04",
+        "F05",
+        "F08",
+        "F17",
+        "G-01"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "G-01",
+          "Status": "真实依赖声明与静态闭包已修；服务器46/客户端66及完整Editor84的实际构建另见UEBuildResults，最新主线整合需消费最终RunId",
+          "Report": "RootRemediationReport.md"
+        },
+        {
+          "Id": "F03",
+          "Status": "生产评分回归红转绿；UE Registry待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F04",
+          "Status": "旧依赖门禁复核；根树生命周期补齐；UE待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F05",
+          "Status": "源码回退与资源租约已实施；实际资产待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F08",
+          "Status": "公开终态合同及去重失败已实施；UE待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F17",
+          "Status": "本轮触及范围已补伴随说明；全量存量不在本组验收",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/GamePlatformVFX.uplugin"
+    },
+    {
+      "Name": "GamePlatformVillage",
+      "Group": "GamePlatform",
+      "Modules": 3,
+      "BaselineDesign": "3模块空壳；无活动源码消费者；教学训练应优先组合既有插件",
+      "BaselinePerformance": "无运行机制可测；Village服务器角色不由此壳证明。",
+      "BaselineCompliance": "README明确教学/训练是Village体验、不能从角色名推导专用机制。 涉及 GW-13、GW-12。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-12",
+        "GW-13"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-12",
+          "Status": "目标声明/服务器闭包已修；全量中文历史存量未审完，运行产物另验",
+          "Report": "GameplayWorldRemediation.json"
+        },
+        {
+          "Id": "GW-13",
+          "Status": "授权保留的未实现能力；不计功能完成",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/GamePlatformVillage.uplugin"
+    },
+    {
+      "Name": "GamePlatformWorld",
+      "Group": "GamePlatform",
+      "Modules": 2,
+      "BaselineDesign": "开发世界身份/租约/区域/流送/就绪源码；网络Session入口明确Unsupported",
+      "BaselinePerformance": "0.1秒扫描区域/观察者/订阅；Observer线性查找与每观察者全区域查询，约O(O²+O×R)；GetReadiness还同步Refresh/流送采样。",
+      "BaselineCompliance": "Game/PIE与命令行过滤、GUID上下文代次、跨World所有权、Data租约、持续就绪失效清理。 涉及 GW-10。 本轮UE/网络/资产边界未验收。",
+      "FindingIds": [
+        "GW-10"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "GW-10",
+          "Status": "缺交付条件；正确失败关闭保持",
+          "Report": "GameplayWorldRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/GamePlatform/World/GamePlatformWorld/GamePlatformWorld.uplugin"
+    },
+    {
+      "Name": "MobaPresentation",
+      "Group": "MobaCommon",
+      "Modules": 2,
+      "BaselineDesign": "D1。17个中立语义、Combat/Arena事实适配、预测去重、世界退出解绑可见，无Niagara执行或项目反向引用。F12类型化上下文丢失、F13迟到Pawn漏绑定。",
+      "BaselinePerformance": "无Tick；每个Fact重新取Contributor Keys并排序；去重超过2048时RemoveAt(0)搬移；LatestAvatarGeneration长世界会话随实体增长，暂无数量/淘汰界限。需5v5高频事实和迟到复制联调。",
+      "BaselineCompliance": "按源码职责/端侧/中文说明核对；D1。17个中立语义、Combat/Arena事实适配、预测去重、世界退出解绑可见，无Niagara执行或项目反向引用。F12类型化上下文丢失、F13迟到Pawn漏绑定。 动态验收仍待证。",
+      "FindingIds": [
+        "F12",
+        "F13",
+        "F17"
+      ],
+      "CurrentDisposition": [
+        {
+          "Id": "F12",
+          "Status": "源码已实施；UE映射回归待执行",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F13",
+          "Status": "引擎事件接线已实施；UE/联机待验收",
+          "Report": "PresentationRemediation.json"
+        },
+        {
+          "Id": "F17",
+          "Status": "本轮触及范围已补伴随说明；全量存量不在本组验收",
+          "Report": "PresentationRemediation.json"
+        }
+      ],
+      "CurrentAcceptance": "源码重点审查与修复；真实目标构建见UEBuildResults，实际UE逻辑尝试见UEAutomationResults；资产/Cook/网络/性能/全量中文存量未验",
+      "BaselineDescriptor": "E:/poject/feebooz/DivineBeastsWorkspace/Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin"
+    }
+  ]
+}

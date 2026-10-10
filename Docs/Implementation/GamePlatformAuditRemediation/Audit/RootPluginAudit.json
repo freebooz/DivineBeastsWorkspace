@@ -1,0 +1,357 @@
+{
+  "audit_date": "2026-10-09",
+  "workspace": "E:/poject/feebooz/DivineBeastsWorkspace",
+  "branch": "main",
+  "head": "8a12bbe1d1d02db835b92207646138fabe782b50",
+  "limits": [
+    "按插件职责、Public契约、主要实现/异常/清理路径、描述/构建/调用关系与现有测试审查，不是逐行全量中文注释认证。",
+    "未执行UE编译、Automation、Cook/Stage、联机、Insights；性能不包含实测CPU/GPU/内存基线。"
+  ],
+  "plugins": [
+    {
+      "name": "GamePlatformCore",
+      "maturity": "中立身份、错误、版本、结果值与私有解析算法已实现；本轮未发现阻断性设计缺陷。",
+      "performance": "输入长度/字段范围有界；值校验、规范化与哈希重复解析/分配，应在真实热路径测量，不能仅凭微测试认定瓶颈。",
+      "findings": [],
+      "positive": "不依赖Engine/业务/世界，默认结果非成功，Public主要契约中文说明完整；13个现有CTest用例各在Debug/Release通过。"
+    },
+    {
+      "name": "GamePlatformData",
+      "maturity": "统一主资产定义、依赖DFS、跨实例分组并集及租约实现；终态历史无界。普通软资源已有平台薄封装，其作用域安全需核各调用方。",
+      "performance": "ReleasedLeases随全生命周期释放总数增长；每帧扫描全部活跃请求，资产依赖最多128深度/4096节点。",
+      "findings": [
+        "R-01",
+        "R-02"
+      ],
+      "positive": "GameInstance/World/代次与弱调用者校验、取消一次终态、失败撤销自有需求；普通软资源通过Data薄入口返回原生流式句柄，由调用方取消/释放。"
+    },
+    {
+      "name": "GamePlatformOnline",
+      "maturity": "公共门面与客户端HTTP、刷新单飞、有界排队/重试/流式响应限制已实现；锁定HTTP补丁与真实Gateway联调待本轮补证。",
+      "performance": "并发与队列有上限，0.1秒有工作时检查；无需逐帧轮询认证，正文流式上限值得保留。",
+      "findings": [],
+      "positive": "WeakThis/终态Gate、析构CancelAll、凭据保护和拒绝自动重定向路径存在。"
+    },
+    {
+      "name": "GamePlatformSession",
+      "maturity": "会话转移状态机、票据握手、Binding/事实一致性、失败与重连原语存在；端到端正式世界仍依赖未完成装配。",
+      "performance": "单活动转移，0.1秒截止/握手检查；首本地Controller等待不是全Actor扫描，实际网络时延与超时需测试。",
+      "findings": [],
+      "positive": "票据不进URL/日志；世界弱指针、代次、取消/解绑、失败事实存在；原生核心通过不证明Travel成功。"
+    },
+    {
+      "name": "GamePlatformServer",
+      "maturity": "注册/就绪/心跳/排空与双端Gameplay准入桥接实现；准入HTTP关闭生命周期和响应内存上限存在缺口。",
+      "performance": "心跳有间隔和重试，准入响应完成后才检查32KiB；并发登录压力与容量准入需实测。",
+      "findings": [
+        "R-03",
+        "R-04"
+      ],
+      "positive": "模块启动只注册机制、不连生产；目标/Boot/SessionEpoch校验及终态门禁存在，控制面HTTP使用流式上限。"
+    },
+    {
+      "name": "GamePlatformTelemetry",
+      "maturity": "Schema/隐私/采样/有界缓冲/分批/重试存在；HTTP持有闭环与Public实现暴露需整改。",
+      "performance": "缓冲计数/字节上限、最多64条Metric合并、头索引摊销与8并发/有界重试存在；响应无接收上限，请求自持有风险未实测。",
+      "findings": [
+        "R-05",
+        "R-06"
+      ],
+      "positive": "不影响权威动作，账号切换丢弃旧队列、不可变上下文共享、锁外回调、关停预算存在。"
+    },
+    {
+      "name": "GamePlatformDebug",
+      "maturity": "开发/测试诊断提供者、命令注册、目标弱引用与快照脱敏已实现；未发现当前分区阻断性功能缺陷。",
+      "performance": "按需采集，昂贵Provider显式授权；每次快照清理所有曾查询目标，规模成本需測量；无每帧全世界扫描证据。",
+      "findings": [
+        "G-04"
+      ],
+      "positive": "Shipping配置白名单排除，进程注册表持机制与弱目标，没有持有用户/比赛强对象。部分新增公开/私有函数中文说明仍须人工补齐。"
+    },
+    {
+      "name": "GamePlatformDeveloperTools",
+      "maturity": "Editor验证/静态与资产规则/报告/性能执行器接口存在；性能场景无生产注册调用，资产扫描以名称判断定义有覆盖边界。",
+      "performance": "GetAllAssets后筛选、GetAsset同步加载所有定义；属Editor全量审计成本，应测量大内容库内存/耗时，不能归为游戏帧率瓶颈。",
+      "findings": [
+        "R-07"
+      ],
+      "positive": "Editor专用，未知性能执行器明确失败，不伪造测量；C++继承门禁通过仍不能代替Blueprint资产检查。"
+    },
+    {
+      "name": "DBAServer",
+      "maturity": "三角色Profile、必要资产/BeginPlay验证、注册Ready/心跳/排空装配存在；世界退出后的Ready撤销路径需完善。",
+      "performance": "角色配置/资产就绪低频，心跳统计遍历当时玩家数；不重复进行全局分片分配。",
+      "findings": [
+        "R-08",
+        "G-02"
+      ],
+      "positive": "唯一Server目标、OpenWorld PersistentShardedWorld/Village ExperienceInstance/MainArena PerMatch策略不同；只从服务器环境读取内部凭据。"
+    }
+  ],
+  "findings": [
+    {
+      "id": "R-01",
+      "priority": "P2",
+      "kind": "长期内存增长",
+      "plugins": [
+        "GamePlatformData"
+      ],
+      "claim": "每次ReleaseRequest把整份Lease（含Bundles）追加到ReleasedLeases，整个GameInstance内没有淘汰/压缩。活动资产虽能释放，幂等历史按累计请求数永久增长，长时间运行/频繁UI和特效加载会持续积累内存。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformData/Private/Subsystems/GamePlatformDataSubsystem.cpp",
+          "line": 58
+        },
+        {
+          "file": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformData/Private/Subsystems/GamePlatformDataSubsystem.cpp",
+          "line": 281
+        }
+      ],
+      "confidence": "源码可确认增长；未量化实际字节/小时。"
+    },
+    {
+      "id": "R-02",
+      "priority": "P2",
+      "kind": "逐帧扫描热点",
+      "plugins": [
+        "GamePlatformData"
+      ],
+      "claim": "OwnerWatch以未设置间隔的CoreTicker执行，每轮遍历全部请求并检测Caller/World；已成功但仍持有租约也参与。当前没有活跃租约上限或失效事件索引，成本随租约数线性增长。应保留正确释放语义，增加事件驱动清理或经过测量的周期/分批策略。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformData/Private/Subsystems/GamePlatformDataSubsystem.cpp",
+          "line": 83
+        },
+        {
+          "file": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformData/Private/Subsystems/GamePlatformDataSubsystem.cpp",
+          "line": 362
+        }
+      ],
+      "confidence": "静态复杂度热点，不是已实测帧率瓶颈。"
+    },
+    {
+      "id": "R-03",
+      "priority": "P1",
+      "kind": "HTTP提供者关闭生命周期缺失",
+      "plugins": [
+        "GamePlatformServer"
+      ],
+      "claim": "Admission HTTP完成委托捕获裸this并访问Requests；提供者没有析构/Shutdown取消和解绑所有请求。模块Shutdown直接Reset提供者，即使请求仍由HTTP系统持有也未解除回调，存在模块关停/热重载后的悬垂访问风险。子系统取消部分操作不能证明模块卸载时已清空所有请求。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/Source/GamePlatformServer/Private/Server/GamePlatformHttpAdmissionProvider.cpp",
+          "line": 210
+        },
+        {
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/Source/GamePlatformServer/Private/GamePlatformServer.cpp",
+          "line": 61
+        }
+      ],
+      "confidence": "生命周期路径源码可证；尚未执行关停期间迟到HTTP回调复现。"
+    },
+    {
+      "id": "R-04",
+      "priority": "P2",
+      "kind": "响应内存上限滞后",
+      "plugins": [
+        "GamePlatformServer"
+      ],
+      "claim": "Admission使用默认响应缓冲，完成后调用GetContent才检查32KiB。超大响应已先分配/接收，因此32KiB不是传输接收内存上限；同插件ControlProvider已有流式限额，可沿用单一策略。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/Source/GamePlatformServer/Private/Server/GamePlatformHttpAdmissionProvider.cpp",
+          "line": 240
+        }
+      ],
+      "confidence": "源码可确认限制时点；未做大正文压测。"
+    },
+    {
+      "id": "R-05",
+      "priority": "P2",
+      "kind": "HTTP持有与接收预算风险",
+      "plugins": [
+        "GamePlatformTelemetry"
+      ],
+      "claim": "Request的完成委托强捕获同一个RequestPtr，形成Request→Delegate→Request持有环；完成/失败/CancelAll均未主动Unbind，依赖引擎隐含清理。MaxPayloadBytes限制发送正文，响应接收没有流式限额。可能持续保留请求或大响应，应以锁定HTTP实现和故障/取消用例确认释放。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Transport/GamePlatformTelemetryTransport.cpp",
+          "line": 261
+        },
+        {
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Transport/GamePlatformTelemetryTransport.cpp",
+          "line": 332
+        }
+      ],
+      "confidence": "持有图与缺接收限额可确认；未声称已经测得实际泄漏。"
+    },
+    {
+      "id": "R-06",
+      "priority": "P2",
+      "kind": "Public实现边界与中文API说明",
+      "plugins": [
+        "GamePlatformTelemetry"
+      ],
+      "claim": "Public/Buffer公开具体有界缓存实现，Public/Schema公开注册表实现，且Buffer的多数公开入口没有中文参数/失败/线程合同。现行规则要求缓存/注册表策略留Private；需保留必要稳定Schema数据及扩展接口，先核对外部消费者再收窄实现暴露。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Public/Buffer/GamePlatformTelemetryBoundedBuffer.h",
+          "line": 6
+        },
+        {
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Public/Schema/GamePlatformTelemetrySchemaRegistry.h",
+          "line": 47
+        }
+      ],
+      "confidence": "现行规范直接对应；迁移需先影响检查，不擅改公开身份。"
+    },
+    {
+      "id": "R-07",
+      "priority": "P2",
+      "kind": "性能验收能力未装配",
+      "plugins": [
+        "GamePlatformDeveloperTools"
+      ],
+      "claim": "PerformanceExecutorRegistry存在注册入口，但活动Game源码检索只有定义/测试，未找到生产性能场景执行器。RunProfile会正确拒绝缺执行器；现阶段无法通过该工具生成真实场景CPU/GPU/内存证据。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/Source/GamePlatformDeveloperTools/Private/Performance/GamePlatformPerformanceTestRunner.cpp",
+          "line": 12
+        },
+        {
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/Source/GamePlatformDeveloperTools/Private/Performance/GamePlatformPerformanceTestRunner.cpp",
+          "line": 51
+        }
+      ],
+      "confidence": "交付缺口，拒绝路径是合理设计。"
+    },
+    {
+      "id": "R-08",
+      "priority": "P2",
+      "kind": "世界就绪所有权未闭合",
+      "plugins": [
+        "DBAServer"
+      ],
+      "claim": "首次世界验证后bWorldValidated一直为true；观察新World不重置该标记，未订阅WorldCleanup撤销Ready/准入/心跳。旧World退出而GameInstance仍存活时，后续World BeginPlay被短路，注册就绪状态可能继续代表旧世界。应按角色策略明确禁止Travel或实现退出后撤销/重验。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+          "line": 166
+        },
+        {
+          "file": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+          "line": 286
+        },
+        {
+          "file": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Server/DivineBeastsServerBootstrapSubsystem.cpp",
+          "line": 370
+        }
+      ],
+      "confidence": "同GameInstance世界更替场景风险，非正常同实例区域流送故障。"
+    },
+    {
+      "id": "G-01",
+      "priority": "P2",
+      "kind": "插件依赖声明门禁失败",
+      "plugins": [
+        "DBAWorlds",
+        "GamePlatformVFX",
+        "DBAArena"
+      ],
+      "claim": "六种Client/Server/Editor公共与竞技装配报18条重复诊断，对应4条独立缺失描述依赖：DBAWorlds→Core/Data，VFX→Core，DBAArena→Character。Build.cs已有真实模块依赖而.uplugin未同步；72项架构回归因此失败3项。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/DivineBeasts/DBAWorlds/DBAWorlds.uplugin",
+          "line": 12
+        },
+        {
+          "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/GamePlatformVFX.uplugin",
+          "line": 29
+        },
+        {
+          "file": "Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin",
+          "line": 12
+        }
+      ],
+      "confidence": "本轮实际门禁失败，可复现。"
+    },
+    {
+      "id": "G-02",
+      "priority": "P2",
+      "kind": "服务器声明装配带入公共客户端",
+      "plugins": [
+        "DBAClient",
+        "DBAServer",
+        "DBAContentPack_Common",
+        "DBAHeroPack_Boar",
+        "DBAHeroPack_Dog",
+        "DBAHeroPack_Dragon",
+        "DBAHeroPack_Goat",
+        "DBAHeroPack_Horse",
+        "DBAHeroPack_Monkey",
+        "DBAHeroPack_Ox",
+        "DBAHeroPack_Rabbit",
+        "DBAHeroPack_Rat",
+        "DBAHeroPack_Rooster",
+        "DBAHeroPack_Snake",
+        "DBAHeroPack_Tiger"
+      ],
+      "claim": "实际.uproject全目标启用12英雄/Common；英雄无目标白名单依赖DBAClient。合并Server Target根后，当前静态闭包确实包含DBAClient和DivineBeastsPresentationRuntime。DedicatedServer Stage规则不排除Common/Hero，不能据模块后缀或Target仅未显式Enable英雄宣告服务器表现剥离。应拆审权威最小资源与纯表现目录；尚无本轮Cook/Stage制品证据。",
+      "evidence": [
+        {
+          "file": "Game/DivineBeastsArena.uproject",
+          "line": 20
+        },
+        {
+          "file": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/DBAHeroPack_Dragon.uplugin",
+          "line": 13
+        },
+        {
+          "file": "Game/Source/DivineBeastsArenaServer.Target.cs",
+          "line": 12
+        }
+      ],
+      "confidence": "源码声明闭包可证；不声称服务器已经打包全部客户端/VFX资产。"
+    },
+    {
+      "id": "G-03",
+      "priority": "P3",
+      "kind": "正式文档与当前源码失配",
+      "plugins": [],
+      "claim": "总体规划仍称.uproject为Foundation最小装配；插件规范附录仍写内容N=1、DBAClient四模块与规划Pig，实际已16内容、DBAClient五模块及Boar。独立《整合与交付说明》未检索到；三层实施规划只提供历史整合证据。失真说明不满足同步工程文档要求。",
+      "evidence": [
+        {
+          "file": "Docs/Architecture/解决方案总体规划.md",
+          "line": 467
+        },
+        {
+          "file": "Game/Plugins/插件开发规范.md",
+          "line": 855
+        }
+      ],
+      "confidence": "当前文件/描述盘点可证，历史执行记录原样保留不算伪造。"
+    },
+    {
+      "id": "G-04",
+      "priority": "P2",
+      "kind": "中文说明未达到全量门禁",
+      "plugins": [
+        "GamePlatformDebug",
+        "GamePlatformDeveloperTools",
+        "GamePlatformTelemetry"
+      ],
+      "claim": "例如Telemetry Buffer、Debug Registry与DeveloperTools ValidationService大量公开入口缺逐项中文调用/错误/线程说明；文件职责文档与部分注释已存在，不能推导全量注释合规。自动ASCII/继承门禁不检查中文说明质量。各分区另列私有实现与Build.cs存量，需纳入人工整改清单。",
+      "evidence": [
+        {
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/Source/GamePlatformDeveloperTools/Public/Validation/GamePlatformValidationService.h",
+          "line": 17
+        },
+        {
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/Source/GamePlatformDebug/Public/Registry/GamePlatformDebugRegistry.h",
+          "line": 17
+        }
+      ],
+      "confidence": "抽检实际缺项；未统计全库未合规文件数。"
+    }
+  ]
+}

@@ -104,6 +104,10 @@ private:
     int32 WorldRequestGeneration = 0;
     FGamePlatformDataLease CatalogLease;
     TMap<FPrimaryAssetId, FGamePlatformDataLease> ProfileLeases;
+    /** 上一次本地玩家技能授权对应的Profile身份集合；角色代次切换时重置。 */
+    TSet<FPrimaryAssetId> AuthorizedLocalProfileIds;
+    FName AuthorizedHeroDefinitionId = NAME_None;
+    int32 AuthorizedAvatarGeneration = 0;
     TSet<FPrimaryAssetId> FailedProfiles;
     static constexpr int32 MaxActiveProfileLeases = 64;
 };

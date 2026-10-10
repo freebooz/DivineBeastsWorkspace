@@ -1,0 +1,752 @@
+[
+  {
+    "Id": "R-01",
+    "Title": "长期内存增长",
+    "Status": "源码已修；真实多实例资源与GC待UE",
+    "Plugins": [
+      "GamePlatformData"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "R-02",
+    "Title": "逐帧扫描热点",
+    "Status": "源码改为按需低频与世界事件；性能收益未实测",
+    "Plugins": [
+      "GamePlatformData"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "R-03",
+    "Title": "HTTP提供者关闭生命周期缺失",
+    "Status": "Provider/子系统生命周期与重入源码已修；真实握手待联调",
+    "Plugins": [
+      "GamePlatformServer"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "R-04",
+    "Title": "响应内存上限滞后",
+    "Status": "流式接收预算已修；压力/超时待网络",
+    "Plugins": [
+      "GamePlatformServer"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "R-05",
+    "Title": "HTTP持有与接收预算风险",
+    "Status": "HTTP持有/预算及Sink/上下文重入源码已修并独立窄复核；具名UE逻辑结果见UEAutomationResults，真实HTTP请求/生产关闭预算未验",
+    "Plugins": [
+      "GamePlatformTelemetry"
+    ],
+    "Report": "TelemetryLifecycleRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "R-06",
+    "Title": "Public实现边界与中文API说明",
+    "Status": "Public边界已收窄并保留不透明兼容；构造/析构完整类型修正已被服务器模块编译",
+    "Plugins": [
+      "GamePlatformTelemetry"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "R-07",
+    "Title": "性能验收能力未装配",
+    "Status": "真实定义审计已修；生产性能场景执行器仍缺批准场景",
+    "Plugins": [
+      "GamePlatformDeveloperTools"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "R-08",
+    "Title": "世界就绪所有权未闭合",
+    "Status": "世界退休与排空源码已修；三角色运行待UE",
+    "Plugins": [
+      "DBAServer"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "G-01",
+    "Title": "插件依赖声明门禁失败",
+    "Status": "真实依赖声明与静态闭包已修；服务器46/客户端66及完整Editor84的实际构建另见UEBuildResults，最新主线整合需消费最终RunId",
+    "Plugins": [
+      "DBAWorlds",
+      "GamePlatformVFX",
+      "DBAArena"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "G-02",
+    "Title": "服务器声明装配带入公共客户端",
+    "Status": "Server声明根/模块与Stage规则已修；干净Cook产物未验",
+    "Plugins": [
+      "DBAClient",
+      "DBAServer",
+      "DBAContentPack_Common",
+      "DBAHeroPack_Boar",
+      "DBAHeroPack_Dog",
+      "DBAHeroPack_Dragon",
+      "DBAHeroPack_Goat",
+      "DBAHeroPack_Horse",
+      "DBAHeroPack_Monkey",
+      "DBAHeroPack_Ox",
+      "DBAHeroPack_Rabbit",
+      "DBAHeroPack_Rat",
+      "DBAHeroPack_Rooster",
+      "DBAHeroPack_Snake",
+      "DBAHeroPack_Tiger"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "G-03",
+    "Title": "正式文档与当前源码失配",
+    "Status": "正式文档与目录阶段已同步；不改历史执行数",
+    "Plugins": [],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "G-04",
+    "Title": "中文说明未达到全量门禁",
+    "Status": "触及范围补中文；全量存量人工审核未完成",
+    "Plugins": [
+      "GamePlatformDebug",
+      "GamePlatformDeveloperTools",
+      "GamePlatformTelemetry"
+    ],
+    "Report": "RootRemediationReport.md",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-01",
+    "Title": "IGamePlatformAbilityActivationGate只声明，没有被生产ASC或技能基类消费。输入路径仅核对本地拥有者/代次，TryActivateAbility沿用原生条件；Inactive/排空等玩法资格不能阻止已授予能力激活。孤立AllowsInput策略测试不证明真实GAS门禁。",
+    "Status": "整合基线已消除；真实GAS运行待UE验证",
+    "Resolution": "平台GameplayAbility.CanActivateAbility已实际消费ASC激活资格，保留原门禁；本轮补项目Pawn与竞技资格实际接线。",
+    "Plugins": [
+      "GamePlatformAbilitySystem"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-02",
+    "Title": "MainArena显式生成基础ACharacter，初始化器只加DivineBeastsCharacterComponent。没有ASC/Combat/ActorInfo接线；角色ApplyDefinition找不到ASC时仍返回成功，Ready可成立而Momentum/技能/Combat不存在。全活动C++的BindAbilityActorInfo和SetServerPlayerActive只有定义及测试调用。",
+    "Status": "源码装配与真实死亡事实桥接已补；完整UE/地图/联机未验收",
+    "Resolution": "真实项目Pawn默认ASC/Combat/资格、ActorInfo与必要Definition租约；新增中立权威死亡委托实际由竞技私有Adapter消费，受信目标死亡只发布一次，不猜击杀归因。",
+    "Plugins": [
+      "GamePlatformGameplay",
+      "GamePlatformCharacter",
+      "GamePlatformAbilitySystem",
+      "GamePlatformCombat",
+      "DBAGameplay",
+      "DBAArena"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-03",
+    "Title": "ValidateTicketAndAdmit仅有声明/定义；ServerSubsystem只加载Assignment与提交Result，PlayerController只有选人/Ready/弃权RPC。当前源码没有真实连接入口消费票据并准入Roster，比赛无法自动凑齐已准入玩家。",
+    "Status": "本轮源码接线；待真实握手/后端联调",
+    "Resolution": "现有PostLogin握手经ServerAdmission发布后，竞技重新查询当前Controller验证事实；MatchId+PlayerId精确匹配可信Roster并选择CharacterId，不能混用AssignmentId/GameSessionId。",
+    "Plugins": [
+      "GamePlatformArena"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-04",
+    "Title": "TryReconnectPlayer只恢复新PlayerState与统计并消耗重连Timer；没有重新Spawn/Possess/角色初始化。MainArena DefaultPawnClass被设空，新Controller即便准入成功也没有可控制Pawn；只依靠已安排死亡复活计时器不能覆盖活玩家断线重连。",
+    "Status": "重连与死亡复活受理源码已补；真实到期Spawn/Possess待UE",
+    "Resolution": "重连失败保留宽限、成功才消费；当前受信Pawn死亡精确匹配Match/World/Roster/代次后发起自有复活Timer，零秒NextTick避免广播栈销毁Pawn。Timer受理并不等于复活成功。 第二轮追加死亡统计通知与失活后重核原装配/World/Match/State/Pawn/代次；复活Timer独立RequestId捕获并到期核原上下文，结束后不得出生。",
+    "Plugins": [
+      "GamePlatformArena",
+      "DBAArena"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-05",
+    "Title": "HandleReconcileCompleted先GenerateValueArray并Reset PendingEventPayloads，随后ApplyLoadedSnapshots失败时丢失全部待重放payload；成功后EnqueueDeferredEvent的容量失败也被忽略，满队列时尚未持久化事件永久丢失。",
+    "Status": "追加修复完整快照与按任务实例重放；UE行为回归未执行",
+    "Resolution": "同Version也校验实例/修订/状态/完整目标与值；失败保留Quests和载荷。待重放保存QuestId+QuestInstanceId+EventId，只重放未提交归属，已提交Q1不再次累加。",
+    "Plugins": [
+      "GamePlatformQuest"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-06",
+    "Title": "DuplicateEvent触发Reconcile，加载快照不带持久已处理事件集合，ApplyLoadedSnapshots清空Recent去重，随后将全部pending事件重放。主代理检索当前Backend未发现Quest领域/端点实现，持久幂等返回语义尚无真实实现可补证；接口必须明确已处理EventId/权威快照与重放边界，否则在未来适配中存在重复加进度、反复冲突对账的风险。",
+    "Status": "整批幂等与广播重入源码修复；生产Quest端口缺交付",
+    "Resolution": "整批已提交须完整同实例单调权威快照；广播后重新Find同PlayerRuntimeId，监听者注销/Deinitialize不访问旧Runtime或驱动新代次。",
+    "Plugins": [
+      "GamePlatformQuest"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-07",
+    "Title": "同世界使用相同RequestId启动第二个异步查询，AsyncRequests.Add覆盖旧Record/Completion但不取消旧查询和Timeout。旧完成被EngineQueryId比较丢弃；旧Timeout只比RequestId/WorldGeneration，会删除并Abort新查询。不能保证每个请求单次终态。",
+    "Status": "在飞重复ID基线已修；追加完成后复用ID的旧取消句柄修复",
+    "Resolution": "取消句柄新增正OperationGeneration并严格匹配当前记录；旧两字段/旧世界/旧A句柄拒绝，B保留独立完成。Native通过，真实Nav与UE回归未执行。",
+    "Plugins": [
+      "GamePlatformNavigation"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-08",
+    "Title": "Cleaned记录永不移除，ReleaseGeneration只启动清理。RequestGeneration按Requests.Num>=128拒绝，即使全部输出已清理，常驻UWorld第129次装饰请求永久失败；0.05秒Ticker仍遍历所有终态历史。",
+    "Status": "整合基线已消除；原生规则通过/真实129次PCG待验证",
+    "Resolution": "Cleaned最终快照派发后归还活动槽并移除订阅，终态历史限制128；未重复重写。",
+    "Plugins": [
+      "GamePlatformPCG"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-09",
+    "Title": "CommitCurrentSession持有Options数组元素裸指针并传入Custom CommitInteraction；公开SetOptions允许回调替换数组并取消当前会话。Commit返回后仍读取旧Option->CommitKind，且没有重新核对Session代次/状态，存在悬垂读取与取消后再完成风险。",
+    "Status": "Custom及终态广播重入源码修复；UE行为回归未执行",
+    "Resolution": "Option/Session复制且回调后核代次；FinishSession缓存/事件使用A不可变快照，OnResultChanged开B后A事件仍指向A，不再向B会话视图广播A终态。",
+    "Plugins": [
+      "GamePlatformInteraction"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-10",
+    "Title": "InitializeSessionWorld始终Unsupported(SessionPrerequisiteMissing)。目前只存在显式Foundation开发初始化，正式网络世界会话/真实三维世界就绪链未完成；这是公开声明且正确拒绝的产品验收阻断。",
+    "Status": "缺交付条件；正确失败关闭保持",
+    "Resolution": "正式InitializeSessionWorld仍Unsupported(SessionPrerequisiteMissing)，没有借本轮审查制造真实世界会话成功。",
+    "Plugins": [
+      "GamePlatformWorld"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-11",
+    "Title": "MOBA GameMode/GameState/PlayerState/PlayerController直接继承UE类，GamePlatformGameplay已有稳定同领域平台基类却未复用，竞技独立处理准入/出生/玩家阶段，造成两套生命周期与资格接线分离；不违反依赖反向但不满足现行优先下继承规范。",
+    "Status": "部分接口复用；完整Experience迁移待设计/资产评审",
+    "Resolution": "已复用下层资格/角色初始化/Combat；平台final出生与私有PlayerState准备合同同竞技倒计时冲突，不能机械更换Blueprint父类。",
+    "Plugins": [
+      "GamePlatformGameplay",
+      "GamePlatformArena"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-12",
+    "Title": "这些ClientOnly/ServerOnly描述未声明模块TargetAllowList，不能仅凭宿主名称证明普通Game目标已审计隔离。QuestServerSubsystem/NavWorldSubsystem公开API及多个Build.cs/模块入口没有完整中文线程/所有权/失败说明；当前不能声明全量注释规范通过。",
+    "Status": "目标声明/服务器闭包已修；全量中文历史存量未审完，运行产物另验",
+    "Resolution": "本领域新增/修改关键责任、权威、资源借用、失败/取消/代次和测试限制中文说明；未触及Quest/Nav其他公开API和所有Build/入口中文存量，不宣称全工程通过。",
+    "Plugins": [
+      "GamePlatformAI",
+      "GamePlatformQuest",
+      "GamePlatformAnimation",
+      "GamePlatformNavigation",
+      "GamePlatformLobby",
+      "GamePlatformVillage",
+      "GamePlatformArena"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-13",
+    "Title": "Animation 2模块与Lobby/Village各3模块仅IMPLEMENT_MODULE、Core依赖，无Public契约/测试/运行消费者。README已诚实标为未完成/条件保留；保留稳定身份是现行文档授权例外，不能直接按空壳规则擅删，但不能计入已实现能力。",
+    "Status": "授权保留的未实现能力；不计功能完成",
+    "Resolution": "未修改Animation/Lobby/Village稳定身份空壳，不造Provider或伪造完整能力。",
+    "Plugins": [
+      "GamePlatformAnimation",
+      "GamePlatformLobby",
+      "GamePlatformVillage"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-14",
+    "Title": "README与Docs/Architecture仍宣称仅最小Eligibility且不拥有出生/重生，但当前GameModeBase存在完整体验/准入/出生/排空实现及0.05秒轮询；职责文档落后于源码。",
+    "Status": "本轮文档修复",
+    "Resolution": "Gameplay README/Architecture已按真实体验、准入、准备、出生、排空及0.05秒推进职责更新。",
+    "Plugins": [
+      "GamePlatformGameplay"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-15",
+    "Title": "模块注册一个进程级ProjectExtension，扩展只持有一份shared GameplayLifecycleAdapter。第二个GameMode配置覆盖并释放前一份，前GameMode保留裸指针并在Spawn/Respawn解引用；前世界的复活计时器也随析构清空。预热句柄同样全局重置，违背每World所有权。",
+    "Status": "整合基线已消除；双World实机待验证",
+    "Resolution": "WorldAssemblies按GameMode持有独立Adapter/资源，先撤销借用再结束Pawn/Timer/租约；本轮补预热借用者结束顺序。",
+    "Plugins": [
+      "DBAArena"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-16",
+    "Title": "五个正式模式都由MakeStructuralMode设置NotConfigured；客户端ValidateProduction拒绝匹配、服务器ProjectExtension也只接受ProductionSpec。五模式人数/结构存在，不等于五模式可运行；需要真实批准配置/地图资产与五模式联调。",
+    "Status": "缺批准配置/地图；正确NotConfigured保持",
+    "Resolution": "五人数结构仍在；批准生产地图、胜利/出生策略、版本/预算与真实联调未提供，不能改ProductionReady。",
+    "Plugins": [
+      "DBAArena"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "GW-17",
+    "Title": "RefreshArenaViewFromWorld遇到非竞技/尚无GameState仅Unbind后返回，未清空竞技ViewModel。ResolvePrimaryArenaSurfaceId仍按旧FlowState选HUD/结算，世界迁移期间可显示上一场身份/比分；初始未找到GameState后也缺少明确世界就绪重试订阅。",
+    "Status": "本轮源码修复；Travel/迟到复制待UE验证",
+    "Resolution": "当前World退出清空旧VM，订阅GameStateSetEvent、Arena PlayerArray变化，不使用Tick；广播重入不重绑正在清理的World。",
+    "Plugins": [
+      "DBAArena"
+    ],
+    "Report": "GameplayWorldRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-01",
+    "Title": "重置与重绑没有限制为当前Profile拥有的映射行",
+    "Status": "已复核整合后的既有源码；实际UE行为仍待运行",
+    "Resolution": "当前ListPlayerMappings仅枚举ProfileMappingRows，PreviewRebind通过此集合验行，Apply消费Preview结果；Reset独占集合。旧修真实链已覆盖，不重复实现。",
+    "Limits": "InputPolicy Debug/Release与既有OwnedRowsReset源码；真实外部Context重绑尚待UE运行",
+    "Plugins": [
+      "GamePlatformInput"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-02",
+    "Title": "未确认写盘结果就公布输入偏好已保存",
+    "Status": "已复核现有合同与失败边界；正式后端/资产集成仍待验证",
+    "Resolution": "普通客户端原生SaveSettings/INI Flush均void，明确只bPreferencesSaveSubmitted=true，bPreferencesSaved=false，不宣称落盘。PIE保存明确Unsupported。",
+    "Limits": "真实磁盘失败终态仍无法从原生void接口确认，合同保留未知结果",
+    "Plugins": [
+      "GamePlatformInput"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-03",
+    "Title": "PIE输入偏好命名空间缺少实例身份",
+    "Status": "本轮源码已修；真实UE行为回归待执行",
+    "Resolution": "PIE命名空间加入LocalPlayer服务ScopeId；保存在调用原生SaveSettings/Flush前返回InputPIEPersistenceDisabled，内存偏好隔离。",
+    "Limits": "同ControllerId双PIE、真实INI/原生存档隔离待UE场景",
+    "Plugins": [
+      "GamePlatformInput"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-04",
+    "Title": "文件容量限制在全文件读入内存后才生效",
+    "Status": "已复核整合后的既有源码；实际UE行为仍待运行",
+    "Resolution": "ReadFile在分配前校验FileSize与打开句柄Size，并按GetMaxEncodedBytes限制实际读取；巨大/备份文件不先全读再拒绝。",
+    "Limits": "真实超大文件/并发/慢盘/掉电回归待UE存储场景",
+    "Plugins": [
+      "GamePlatformSave"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-05",
+    "Title": "订阅回调关闭服务后继续访问已释放Scope",
+    "Status": "已复核整合后的既有源码；实际UE行为仍待运行",
+    "Resolution": "Loading分发回调返回后核对Scope存在、Id与Generation，再写计数/耗时；回调内GI关闭/新操作不会访问旧Scope。",
+    "Limits": "Loading原生Debug/Release通过；广播内真实GI关闭用例待UE",
+    "Plugins": [
+      "GamePlatformLoading"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-06",
+    "Title": "状态广播可清空Transport，随后仍解引用",
+    "Status": "本轮源码已修；真实UE行为回归待执行",
+    "Resolution": "Inventory/Entitlement/Commerce在状态广播前持有共享Transport快照，广播后核账号/请求代次；Reset递归幂等，广播内Configure拒绝。商店全部六命令与ViewModel/订单后续状态都有保护。",
+    "Limits": "新增ResetDuringState源码，UE未执行；生产HTTP取消/同步重入由根统一验证",
+    "Plugins": [
+      "GamePlatformInventory",
+      "GamePlatformEntitlement",
+      "GamePlatformCommerceUI"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-07",
+    "Title": "装备服务器组件结束时不撤销GAS授予，也不失效持久化回调",
+    "Status": "已复核既有修复并补本轮边界；真实UE行为回归待执行",
+    "Resolution": "Equipment EndPlay/Destroy清理自有GAS并失效生命周期回调；本轮补每持久请求独立代次和终态消费资格。",
+    "Limits": "生产PersistencePort不存在，现行Port无事务强杀/回滚接口；仅保证本地消费者失效和自有GAS撤销，ASC存活/退出迟到待UE",
+    "Plugins": [
+      "GamePlatformEquipment"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-08",
+    "Title": "重复SlotId覆盖授予句柄，导致无法撤销的重复效果",
+    "Status": "本轮源码已修；真实UE行为回归待执行",
+    "Resolution": "共享完整/公开装备快照验证唯一槽/物品身份；server在撤销/Grant前预检整份快照和所有定义，visual创建前预检公开投影；复制组件也拒绝畸形快照。",
+    "Limits": "新增重复槽位不撤销旧授予/不发布版本用例源码；真实GAS/网格、后端容量合同待UE与生产Port",
+    "Plugins": [
+      "GamePlatformEquipment"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-09",
+    "Title": "首次快照、新轨道、清空与错误无可订阅状态事件",
+    "Status": "已复核既有修复并补本轮边界；真实UE行为回归待执行",
+    "Resolution": "Progression旧修OnViewChanged覆盖首次/轨道增删/错误/Reset/曲线；本轮补Online认证装配及请求代次隔离。兼容XP/等级事件继续只表达既有轨道差异。",
+    "Limits": "现有Client事件Automation未执行；不以业务Tick替代事件",
+    "Plugins": [
+      "GamePlatformProgression"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-10",
+    "Title": "账号重置清空玩家状态却不广播失效",
+    "Status": "本轮源码已修；真实UE行为回归待执行",
+    "Resolution": "LiveOps Reset发布通用/玩家清空和失效领奖事件，撤销账号Ticker；只在真实Initialize且有账号/Transport时登记UTC边界Ticker。",
+    "Limits": "SameRevisionView/TimeBoundary源码存在，账号A到B失败期间真实UI清空待UE",
+    "Plugins": [
+      "GamePlatformLiveOps"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-11",
+    "Title": "失败后的Retry被公布为允许命令，但适配器总拒绝",
+    "Status": "本轮源码已修；真实UE行为回归待执行",
+    "Resolution": "UI Retry已调用RetryFailedFlow，受理仅走已有取消/清空票据/Online注销后人工登录；无活动运行、不忙、装配完整且非创建结果未知时才公布Retry。",
+    "Limits": "真实失败到新run/注销错误路径/非幂等创建不重发待UE流程资产；默认InputProfile缺真实资产诊断保留",
+    "Plugins": [
+      "DBAClient"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-12",
+    "Title": "集合字段缺失或错类型被接受为空成功快照",
+    "Status": "本轮源码已修；真实UE行为回归待执行",
+    "Resolution": "entitlements/tracks必须为实际数组；缺失/错类型拒绝，合法空数组仍成功；revision和等级数值在转整数前校验有限/整数/安全范围。",
+    "Limits": "OnlineOwnership源码补有效时间版本但缺集合、错类型、合法空集合负例；生产传输接收容量由既有Online.MaxResponseBytes统一流式限制，后端正式路由/版本联调仍缺",
+    "Plugins": [
+      "GamePlatformEntitlement",
+      "GamePlatformProgression"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-13",
+    "Title": "单槽邮箱没有覆盖游戏线程唤醒队列的重复投递",
+    "Status": "原生策略回归和源码复核完成；真实UE行为回归待执行",
+    "Resolution": "私有Completion返回是否首次受理，adapter仅true才唤醒GT；重复/过期/取消完成不排额外唤醒。",
+    "Limits": "新增256并发完成仅受理一次、终态/取消后false；核心Debug/Release通过，UE TaskGraph/实际队列成本未实测",
+    "Plugins": [
+      "GamePlatformApplicationFlow"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-14",
+    "Title": "用户档案加载在游戏线程同步进行",
+    "Status": "本轮源码已修；真实UE行为回归待执行",
+    "Resolution": "新增BeginLoad；Client原生异步存在性区分不存在/错误并AsyncLoad，完整校验/迁移/解析后候选原子提交。bLoading终态事件；Reload失败保留旧快照，换账号先撤销旧User。拓扑/销毁/重复/旧代次丢弃，广播快照不可变且拓扑唤醒合并。",
+    "Limits": "新增AsyncLoadGeneration与异步A/B读源码未运行；无生产SettingsProvider、真实慢盘/大档案/平台存档环境未测",
+    "Plugins": [
+      "GamePlatformSettings"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "APP-15",
+    "Title": "玩家服务公开API/字段缺少完整中文合同",
+    "Status": "本轮触及范围中文说明已审核；全量历史存量未完成审核",
+    "Resolution": "本轮检查37个PlayerServices Public头文件责任，重点字段单位/空值/错误、命令参数/受理与终态/引用寿命，Build职责与六README；补公开Definition、资格Port、查询、时间估计与ViewModel合同。",
+    "Limits": "人工审核只覆盖本轮公开合同重点与修改流程；Private/历史文档与全工程中文全量审核仍为存量，不声称整体合规",
+    "Plugins": [
+      "GamePlatformInventory",
+      "GamePlatformEquipment",
+      "GamePlatformEntitlement",
+      "GamePlatformProgression",
+      "GamePlatformLiveOps",
+      "GamePlatformCommerceUI"
+    ],
+    "Report": "ApplicationPlayersRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F01",
+    "Title": "目录精确语义与显式父回退优先级",
+    "Status": "已合入旧修复复核；六字段具体度补修；UE待验收",
+    "Resolution": "资格仍检查全部合同字段；排名只统计Hero/Ability/Skin/World/Platform/Quality六个等值项。旧Specificity反射字段保留并标为弃用，不参与排名。",
+    "Limits": "实际Registry UE用例、真实目录资产加载及父标签层级运行尚未执行。",
+    "Plugins": [
+      "GamePlatformPresentation"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F02",
+    "Title": "跨片段同局部EntryId歧义及发布前冲突",
+    "Status": "旧消歧修复复核；诊断与只读预检补齐；UE待验收",
+    "Resolution": "ResolvedEntry保存目录/Owner/Revision/匹配语义及所有最高同键候选诊断。PreflightCatalogFragment检查片段内部同键、已注册片段资格交集和容量/身份；工具Register兼容入口仍允许注册后由Resolver明确拒绝歧义。预检是逻辑资格检查，非资产验收。",
+    "Limits": "UE Automation未执行；真实包资产拥有者与版本仍须Data/AssetRegistry验证。",
+    "Plugins": [
+      "GamePlatformPresentation"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F03",
+    "Title": "VFX兼容Resolver采用统一P13排序",
+    "Status": "生产评分回归红转绿；UE Registry待验收",
+    "Resolution": "先资格，再精确/显式逐级父语义、Scope、六等值项、显式Priority；Context集合不加分。typed Hero/Ability/Skin/World传入兼容请求。ContextTier仅保留内部兼容值，不影响比较。Catalog.Priority+Entry.Priority使用64位加法，弃用百万权重。",
+    "Limits": "UE加载真实StartupCatalogs/父标签/画质变体尚未执行；旧兼容目录显式Priority需迁移复核。",
+    "Plugins": [
+      "GamePlatformVFX"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F04",
+    "Title": "Composite依赖与根树清理预算",
+    "Status": "旧依赖门禁复核；根树生命周期补齐；UE待验收",
+    "Resolution": "按根请求累计全部后代出生数和深度，子结束不退还总树预算；必需子失败取消根及兄弟。清理重入护栏防重复释放；父已失效则新计时器立即清理。Preload遍历RequiredSteps并去重、有限深度/定义数量。 独立复核补修：Run/子受理/Timer登记返回bool，全部必需步骤预检，拒绝Failed并撤销整树。",
+    "Limits": "真实A到B到A资产图、嵌套后代上限、Niagara子启动失败/世界退出及计时器运行未执行；不能称资产无环验收通过。",
+    "Plugins": [
+      "GamePlatformVFX"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F05",
+    "Title": "可选Niagara变体及FallbackDefinition真实回退",
+    "Status": "源码回退与资源租约已实施；实际资产待验收",
+    "Resolution": "定义元数据空Bundle租约与本次选中Niagara/EffectType/PreloadAssets资源租约分离。选中变体失败先尝试同定义基础，再经Data读取FallbackDefinition元数据及合法ID；不LoadSynchronous、不另建AssetManager。Visited和MaxDefinitionFallbackDepth防环，缺回退保持明确Failed。停止/销毁清理各自租约，权威事实不受影响。",
+    "Limits": "没有真实Definition/Niagara/EffectType/关键预警基础资产，回退实播、多世界Data释放、原生池/GC仍未执行。",
+    "Plugins": [
+      "GamePlatformVFX"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F06",
+    "Title": "SFX总受理容量预留",
+    "Status": "旧修复已覆盖；原生回归通过；UE待验收",
+    "Resolution": "保留既有总额策略，终态/取消继续释放对应预留一次。",
+    "Limits": "真实255 Active加128 Pending批量完成、抢占、并发、5v5 Audio Insights未执行。",
+    "Plugins": [
+      "GamePlatformSFX"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F07",
+    "Title": "SFX起播完成监听窗口",
+    "Status": "旧先监听修复及真实引擎源码已复核；实播待验收",
+    "Resolution": "保留先监听后播放，真实UE5.8.0 PlaybackCompleted实现证实自然完成Finished先于Stopped，而失败起播跳过Finished后仍发Stopped；未被Finished回收且非显式Stop的Stopped按真实失败清理。移除无用bStarted。",
+    "Limits": "极短SoundWave/MetaSound、并发拒绝、虚拟化、Owner销毁真实音频仍未测试。",
+    "Plugins": [
+      "GamePlatformSFX"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F08",
+    "Title": "受理后真实终态与桥接拒绝",
+    "Status": "公开终态合同及去重失败已实施；UE待验收",
+    "Resolution": "VFX/SFX公开GetPlaybackSnapshot与完成订阅，保存具体Code、RequestId（VFX ParentHandle区分根子），终态最多512项。清理后一次通知；结束确认保留真实失败。Provider返回实际受理或已处理取消。DBA两个提交入口与Moba同步非Submitted撤销本次去重，重复未受理不伪成功。Submitted/Queued仅表示受理。 独立复核补修：新增OwnsHandle精确身份查询，Cleanup/Stop/世界退出按账本清理，CleaningInstances及终态仅完成一次。 独立复核补修：捕获World和生命周期代次，Stop及执行返回后复核；关闭返回InvalidWorld。 独立复核补修：强引用服务/World，Stop后核closing/World/Generation；Deinitialize幂等。",
+    "Limits": "UE Automation与真实异步失败尚未执行。普通目录撤销使未来映射不可见，已播放实例保留自有租约到结束；ContentRevoked enum预留但该普通注销策略不生成该终态。",
+    "Plugins": [
+      "GamePlatformSFX",
+      "GamePlatformVFX"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F09",
+    "Title": "Surface实际MPC与材质链缺失",
+    "Status": "实际内容缺口保留；本轮不生成资产",
+    "Resolution": "机制切片和缺配置失败在中文文档保留，不造Niagara/MPC/材质/UI占位资产。",
+    "Limits": "真实MPC与9路径材质合同、世界消费者、Shader编译、设备GPU成本/美术验收待内容阶段。",
+    "Plugins": [
+      "GamePlatformSurface"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F10",
+    "Title": "Surface异步Data租约与稳定失败",
+    "Status": "源码已实施；新旧代/取消回归待UE",
+    "Resolution": "使用Data既有普通资源World租约；刷新先取消释放自身旧代，成功回调再核World、generation及完整lease身份。Pending新增枚举尾项，LastBindingResult稳定保存缺资源/参数失配；普通重复状态不重试，只显式Refresh换代。",
+    "Limits": "真实Data资产成功/失败及MPC参数写入UE运行未执行；Surface.uplugin的Data依赖由主执行者统一修改，非本组改动。",
+    "Plugins": [
+      "GamePlatformSurface"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F11",
+    "Title": "UI实际离栈释放与初始化/广播重入",
+    "Status": "旧资源所有权修复复核；事件时序补齐；UE待验收",
+    "Resolution": "CommonUI SlateRelease也触发真实移除核对。激活先建立事件绑定后BeginPage并复核自闭；失活先解绑/结束旧代再通知，重入新代不能被旧EndPage结束。ViewModel.EndPage在OnPageEnded前使旧代失效。 独立复核补修：强引用原/新Root、布局代次和closing核验每个外部边界；关闭后不重新发布。 独立复核补修：先发布选择及绑定，旧End/newBegin/BindUI/Refresh捕获VM/页面/激活/选择代次；嵌套选择优先。",
+    "Limits": "真实CommonUI Stack覆盖/返回/GC软预载、初始化自闭、广播重入、焦点与多LocalPlayer未执行。无Widget视觉资产改动，未调用Monolith。",
+    "Plugins": [
+      "GamePlatformUI"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F12",
+    "Title": "MOBA事实类型化上下文迁移",
+    "Status": "源码已实施；UE映射回归待执行",
+    "Resolution": "显式复制事实源HeroDefinitionId/AbilityId为FName，ArenaModeId/AvatarGeneration/WorldGeneration进入Request.Context；MOBA事实自身世界代次先校验；平台顶层/Context世代由同次Submit刷新并补齐。空字符串None，不推断观察者英雄。 独立复核补修：MOBA自身事实先核World；中立世代0交同次平台Submit刷新后补齐top/context。",
+    "Limits": "真实英雄/技能Definition映射、旁观他人及多人事实未执行。",
+    "Plugins": [
+      "MobaPresentation"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F13",
+    "Title": "迟到Pawn/GameState与重生订阅",
+    "Status": "引擎事件接线已实施；UE/联机待验收",
+    "Resolution": "订阅LocalPlayer ControllerChanged、Controller NewPawnNotifier、World GameStateSet/ActorSpawned，相关出生下一调度轮补一次查找；无永久Tick。替换Controller/Combat/Arena先解绑旧事件，世界清理全部解绑。 独立复核补修：持有PendingBindingRefreshTimer，旅行/关闭取消，回调核closing/绑定代次/World。",
+    "Limits": "未执行UE Automation/迟到复制联机；任意更晚动态插入Combat而无组件就绪事件仍需要既有RefreshBindings，不宣称全动态自动就绪。",
+    "Plugins": [
+      "MobaPresentation"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F14",
+    "Title": "内容激活预载成功后原子发布",
+    "Status": "真实Data事务源码已实施；UE资源/回调待验收",
+    "Resolution": "Pending独立Loading，定义及声明必需Bundle实际Data成功后验证Provider声明DefinitionClass、执行逻辑Preflight再一次注册/Active。失败取消整组自有租约，先回滚再广播；旧代/账户/世界/跨Scope拒绝。Active撤销先取消映射再释放自身。状态查询和终态有界128。",
+    "Limits": "真实Data定义/Bundle/资产拥有者、回调重入、完整成功发布未执行。当前内容事务预检声明VFXRuntime/SFXRuntime必需资源；可选上下文变体预热仍须明确项目选择合同，不能称全部可选Ready。",
+    "Plugins": [
+      "DBAClient"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F15",
+    "Title": "合法默认ID与实际资源缺配置",
+    "Status": "格式/失败合同已修；真实默认资源仍缺",
+    "Resolution": "两默认ID改为presentation.dba.world.interaction.committed.default@1及presentation.dba.village.guidance.ready.default@1。包所有逻辑ID经现有GamePlatformId验证；默认目录等待真实预载成功才发布，错误可查询，不把合法ID当真实播放成功。",
+    "Limits": "DBAPresentationPack_Core及两真实Definition/基础Niagara没有交付，因此默认世界交互/教学反馈视觉尚未验收。",
+    "Plugins": [
+      "DBAClient"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F16",
+    "Title": "Common/Hero服务器装配及表现剥离",
+    "Status": "主执行者已修服务器声明根/模块与Stage规则；实际干净Cook/Stage产物未验",
+    "Resolution": "本组未更改.uproject/Targets/全局描述或Cook规则；服务器闭包和表现剥离由主执行者整改及同HEAD统一验证。",
+    "Limits": "Editor/Client/Server构建、干净Cook/Stage、最终容器Common/Hero/UI/VFX/Surface与最小权威动画审核仍待主执行者证据。",
+    "Plugins": [
+      "DBAClient",
+      "DBAContentPack_Common",
+      "DBAHeroPack_Boar",
+      "DBAHeroPack_Dog",
+      "DBAHeroPack_Dragon",
+      "DBAHeroPack_Goat",
+      "DBAHeroPack_Horse",
+      "DBAHeroPack_Monkey",
+      "DBAHeroPack_Ox",
+      "DBAHeroPack_Rabbit",
+      "DBAHeroPack_Rat",
+      "DBAHeroPack_Rooster",
+      "DBAHeroPack_Snake",
+      "DBAHeroPack_Tiger"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  },
+  {
+    "Id": "F17",
+    "Title": "本轮中文职责/API与迁移说明",
+    "Status": "本轮触及范围已补伴随说明；全量存量不在本组验收",
+    "Resolution": "63个本轮修改/新增源码有中文职责/端侧/所有权文件头和七份伴随中文文档；说明调用前提、字段/单位、错误/取消、线程、代次、资源租约、重入及兼容迁移。README链接同步；ASCII路径与稳定反射/挂载点保留。",
+    "Limits": "公开Context/Moba原有未触及Types、Camera及各内容包历史说明仍需后续逐项中文审计；主执行者统一根目录规划和全局交付说明。",
+    "Plugins": [
+      "GamePlatformPresentation",
+      "GamePlatformVFX",
+      "GamePlatformSFX",
+      "GamePlatformUI",
+      "GamePlatformSurface",
+      "MobaPresentation",
+      "DBAClient"
+    ],
+    "Report": "PresentationRemediation.json",
+    "UeBehaviorVerified": false
+  }
+]

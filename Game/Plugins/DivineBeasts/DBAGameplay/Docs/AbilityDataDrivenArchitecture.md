@@ -42,6 +42,14 @@ HeroDefinition.DefinitionId（英雄定义编号） → HeroDefinition.DefaultAb
 - 仅向 Owner（拥有者）复制最小的 FDivineBeastsAbilityLoadoutState（技能列表及等级、输入与槽位），不给客户端复制真实技能类引用或可修改的伤害数据。
 - 尚缺在 OpenWorld/Village 公共出生路径的真实可玩 Pawn 装配、断线重连全链验证、以及正式技能资产授权；这些是后续必过门禁，不可记作完成。
 
+### 2026-10-10 启动 GameplayEffect 授权的事务回滚安全约束
+
+- `UDivineBeastsAbilityLoadoutComponent::IsStartupEffectReversible`（服务器启动效果可撤销校验）在 `GiveAbility`（授予技能）前拒绝 `Instant`（瞬时效果）、有周期执行的 `GameplayEffect`（玩法效果）、自定义 `Executions`（执行计算）、非 `None`（不堆叠）的堆叠策略及尚未经过专门安全审核的 `GameplayEffectComponent`（附加效果组件）。防止在授权半途失败时，由瞬时生命变化、定时计算、额外子效果或其他来源堆叠留下不可逆副作用。
+- 当前第一批只允许无周期、无执行计算、无附加组件且非堆叠的有限时长或无限时长启动效果。Buff/Debuff（增益/减益）的更多原生效果组件支持，必须先建立白名单和独立的回滚测试，再扩大范围，不得在游戏运行期自行放开。
+- `ApplyAbilitySet`（应用技能集合）现在**先预检全部素材与效果，再先应用可回滚的启动效果，最后授予技能Spec**，与平台 `EffectGrantPolicy::WhileGranted`（效果跟随授权）和既有“效果→技能”的公共契约保持一致；错误时调用 `RevokeOwnedGrants`（撤销本组件授予），只按本组件保存的真实句柄释放，不清空外部GAS授权。
+- UE5.8 中 `UGameplayEffect::GEComponents`（附加效果组件数组）为引擎受保护字段，本项目通过官方公开的 `FindComponent(UGameplayEffectComponent::StaticClass())` 判断任意附加组件存在，不越过 Unreal Engine（虚幻引擎）C++ 类封装。
+- 新增独立 `DivineBeasts.Abilities.GrantTransaction.ReversibleStartupEffect`（技能授权事务可撤销性）UE自动化用例，覆盖合法无限效果与瞬时、周期、执行计算、堆叠负例。该用例只读取世界无关的瞬态GameplayEffect并通过UE原生反射设置编辑器专属堆叠字段，不跨模块链接未导出的编辑器设置API。**源码已经写入，须等新DLL生成并重新加载编辑器后才可能在测试列表中出现，不将旧DLL的2项技能测试误认作新增用例通过。**
+
 ## 正式资产尚缺（不可写伪 .uasset）
 
 - 12 个已批准 DefaultAbilitySetId 数据填充、真实 AbilitySet、每级技能定义和 DataTable（数据表）、技能行为蓝图/Effect。

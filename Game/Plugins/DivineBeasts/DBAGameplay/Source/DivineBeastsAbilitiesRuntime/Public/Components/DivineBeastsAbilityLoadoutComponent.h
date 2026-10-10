@@ -11,6 +11,7 @@
 class UAbilitySystemComponent;
 class UDivineBeastsCharacterComponent;
 class UGamePlatformAbilitySetDefinition;
+class UGameplayEffect;
 class IGamePlatformDataService;
 
 /**
@@ -95,6 +96,13 @@ public:
 
     /** 供可信服务器组合点重复调用；非服务器调用返回 false。 */
     bool AuthorityRefreshFromCharacter(FString& OutError);
+    /**
+     * 启动 GameplayEffect（玩法效果）必须可以仅通过移除本组件持有的 ActiveEffect 句柄回滚。
+     * 仅允许非瞬时、无周期执行、无执行计算且不与其它来源堆叠的基础效果。
+     * 供服务器授权预检与 UE 自动化测试共用；不加载资产、不触发效果。
+     */
+    static bool IsStartupEffectReversible(
+        const UGameplayEffect& Effect, float EffectLevel, FString& OutError);
 
 private:
     UFUNCTION()

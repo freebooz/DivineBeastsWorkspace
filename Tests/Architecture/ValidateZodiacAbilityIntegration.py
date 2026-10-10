@@ -197,6 +197,38 @@ def check_runtime_safety() -> None:
            "Balance.MomentumCost > 0.0f" in grant and
            "Balance.CooldownSeconds > 0.0f" in grant)
 
+    # 启动效果与GAS技能成本不同：启动集合必须能仅靠它自己的效果句柄进行回滚。
+    verify("技能集合启动效果拒绝瞬时和周期/执行计算",
+           "IsStartupEffectReversible(" in grant and
+           "Effect.DurationPolicy == EGameplayEffectDurationType::Instant" in grant and
+           "Effect.Period.GetValueAtLevel(EffectLevel)" in grant and
+           "!Effect.Executions.IsEmpty()" in grant)
+    verify("启动效果拒绝和其他技能来源的效果堆叠",
+           "Effect.GetStackingType() != EGameplayEffectStackingType::None" in grant)
+    verify("技能集启动效果用UE公开API拒绝隐式GameplayEffectComponent副作用",
+           "Effect.FindComponent(UGameplayEffectComponent::StaticClass())" in grant and
+           'GameplayEffectComponent.h' in grant and
+           "!Effect.GEComponents.IsEmpty()" not in grant)
+
+    # 先验证所有效果，再按平台原始承诺先效果、后技能授予；错误时原路撤销句柄。
+    effect_begin = grant.find("    // 依照既有平台授权合同：启动可回滚效果在先")
+    grant_effect = grant.find("ASC->ApplyGameplayEffectToSelf(", effect_begin)
+    grant_ability = grant.find("ASC->GiveAbility(Spec)", effect_begin)
+    verify("启动效果先于技能Spec授予且仅撤销本组件持有句柄",
+           effect_begin >= 0 and effect_begin < grant_effect < grant_ability and
+           "OwnedEffectHandles.Add(Handle)" in grant and
+           "ASC->RemoveActiveGameplayEffect(Handle)" in grant)
+    startup_tests = read(ABILITIES /
+        "Private/Tests/DivineBeastsAbilityAssemblyTests.cpp")
+    verify("可回滚启动效果具有无世界的正反向UE自动化测试",
+           "IsStartupEffectReversible(" in startup_tests and
+           "EGameplayEffectDurationType::Instant" in startup_tests and
+           "Period.SetValue(2.0f)" in startup_tests and
+           "Executions.AddDefaulted()" in startup_tests and
+           "FindFProperty<FEnumProperty>" in startup_tests and
+           "EGameplayEffectStackingType::AggregateBySource" in startup_tests)
+
+
 
     verify("服务端按真实等级核对GAS成本/冷却实际数值",
            "GetStaticMagnitudeIfPossible" in grant and

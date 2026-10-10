@@ -292,6 +292,42 @@ check(
     "缺少UI浮字不同通道合并键、NaN和极端数值的自动化测试源码",
 )
 
+# 本轮防止数据服务迟到时把Catalog标记为已加载，并消除同World UI租约抖动。
+begin_world = client_cpp.split(
+    "void UDivineBeastsArenaCombatFeedbackClientSubsystem::BeginForWorld(", 1
+)[-1].split(
+    "bool UDivineBeastsArenaCombatFeedbackClientSubsystem::ResolveLoadedHitFeedback(", 1
+)[0]
+check(
+    "if (BoundWorld.Get() != World)" in begin_world
+    and "if (!Data)" in begin_world
+    and begin_world.index("if (!Data)") < begin_world.rindex("bCatalogLoadAttemptedForWorld = true;"),
+    "数据服务尚未就绪时提前锁定本World Catalog或重复撤销浮字加载",
+)
+grant_policy_h = source(
+    "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/"
+    "Private/Feedback/DivineBeastsHitFeedbackGrantPolicy.h"
+)
+grant_policy_test = source(
+    "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/"
+    "Private/Tests/DivineBeastsHitFeedbackGrantPolicyTests.cpp"
+)
+check(
+    "DivineBeastsHitFeedbackGrantPolicy::RequiresRefresh" in client_cpp
+    and "AuthorizedLocalProfileIds" in client_h
+    and "AuthorizedAvatarGeneration = 0;" in client_cpp
+    and "DesiredProfiles" in client_cpp,
+    "英雄、角色代次或技能授权集合发生变化后可能保留旧Profile租约",
+)
+check(
+    "CachedHeroId != AuthorizedHeroId" in grant_policy_h
+    and "CachedAvatarGeneration != AuthorizedAvatarGeneration" in grant_policy_h
+    and "CachedIds.Contains" in grant_policy_h
+    and "服务端撤销技能" in grant_policy_test
+    and "Avatar代次变化" in grant_policy_test,
+    "授权集合比较策略缺少增删、角色重生和相同集合不重复申请的测试",
+)
+
 if issues:
     print(f"三层命中反馈静态门禁：{checked}项，失败{len(issues)}项")
     for issue in issues:

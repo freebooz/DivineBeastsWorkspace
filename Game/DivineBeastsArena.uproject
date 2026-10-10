@@ -4,32 +4,175 @@
   "Category": "Games",
   "Description": "神兽联盟唯一正式游戏工程；FoundationStandalone 为显式开发验证入口。",
   "Modules": [
-    { "Name": "DivineBeastsArena", "Type": "Runtime", "LoadingPhase": "Default" }
+    {
+      "Name": "DivineBeastsArena",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
   ],
   "Plugins": [
-    { "Name": "GamePlatformCore", "Enabled": true },
-    { "Name": "GamePlatformData", "Enabled": true },
-    { "Name": "GamePlatformApplicationFlow", "Enabled": true },
-    { "Name": "GamePlatformOnline", "Enabled": true },
-    { "Name": "GamePlatformLoading", "Enabled": true },
-    { "Name": "GamePlatformWorld", "Enabled": true },
-    { "Name": "GamePlatformPCG", "Enabled": true },
-    { "Name": "Monolith", "Enabled": true, "TargetAllowList": ["Editor"] },
-    { "Name": "VibeUE", "Enabled": false, "TargetAllowList": ["Editor"] },
-    { "Name": "DBAContentPack_Common", "Enabled": true },
-    { "Name": "DBAHeroPack_Rat", "Enabled": true },
-    { "Name": "DBAHeroPack_Ox", "Enabled": true },
-    { "Name": "DBAHeroPack_Tiger", "Enabled": true },
-    { "Name": "DBAHeroPack_Rabbit", "Enabled": true },
-    { "Name": "DBAHeroPack_Dragon", "Enabled": true },
-    { "Name": "DBAHeroPack_Snake", "Enabled": true },
-    { "Name": "DBAHeroPack_Horse", "Enabled": true },
-    { "Name": "DBAHeroPack_Goat", "Enabled": true },
-    { "Name": "DBAHeroPack_Monkey", "Enabled": true },
-    { "Name": "DBAHeroPack_Rooster", "Enabled": true },
-    { "Name": "DBAHeroPack_Dog", "Enabled": true },
-    { "Name": "DBAHeroPack_Boar", "Enabled": true },
-    { "Name": "DBAWorldPack_Village", "Enabled": true }
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformData",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformApplicationFlow",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformOnline",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformLoading",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformWorld",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformPCG",
+      "Enabled": true
+    },
+    {
+      "Name": "Monolith",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
+      "Name": "VibeUE",
+      "Enabled": false,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAContentPack_Common",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Rat",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Ox",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Tiger",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Rabbit",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Dragon",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Snake",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Horse",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Goat",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Monkey",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Rooster",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Dog",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAHeroPack_Boar",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBAWorldPack_Village",
+      "Enabled": true
+    }
   ]
 }
-
