@@ -75,6 +75,17 @@ def main() -> None:
         if point["Pcg.Exclude.Mask"]>=.5:
             assert point["Pcg.Exclude.Source"]=="Road.Network"
     assert points==sample_pcg_schema_v1(masks,expected,h,geo,grid_step=32)
+    # 与GamePlatformPCGEditor命令中的默认0.18阈值保持同源；每个区域都必须有
+    # 至少一批实际Landscape采样点，否则Graph虽然能创建，但QA场景是空图。
+    sample_indices=np.arange(0,h.shape[0],32)
+    biome_hits={}
+    for label in ("Grass","Rock","ShoreMud","RoadDirt"):
+        image=derived[label][np.ix_(sample_indices,sample_indices)]
+        biome_hits[label]=int(np.count_nonzero(image.astype(np.float32)/255.0>=.18))
+        if biome_hits[label]<10:
+            raise AssertionError("PCG图层阈值导致"+label+"产生不足10个样本点")
+    print("TERRAIN_PCG_BIOME_THRESHOLD_QA",biome_hits,"threshold=.18")
+
     raises(lambda:parse_source(doc,False),"没有真实Gaea的技术样本")
     raises(lambda:coerce_masks({"Slope":masks["Slope"]}),"缺少其他八种语义Mask")
     bad=dict(masks)

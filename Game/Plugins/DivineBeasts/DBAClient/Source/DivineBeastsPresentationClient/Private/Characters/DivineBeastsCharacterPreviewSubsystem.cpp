@@ -142,6 +142,12 @@ void UDivineBeastsCharacterPreviewSubsystem::EnsurePreviewFoliage()
         UE_LOG(LogDivineBeastsCharacterPreview, Warning,
             TEXT("前端环境落叶未启用：%s"), *Error);
     }
+    // 鸟群与落叶独立加载；使用地面采样高度指定远景安全空域，不遮挡英雄主体。
+    FString BirdError;
+    const FVector BirdOrigin(Origin.X + 1800.0, Origin.Y + 1800.0, GroundZ + 800.0);
+    if (!Presentation->StartAmbientBirdFlock(TEXT("DBA.FrontEnd.CharacterStudio.Birds"),
+            TEXT("Seagull"), 12, BirdOrigin, BirdError) && !BirdError.IsEmpty())
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning, TEXT("前端鸟群未启用：%s"), *BirdError);
 }
 
 void UDivineBeastsCharacterPreviewSubsystem::Initialize(
@@ -213,7 +219,10 @@ void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewScene()
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
     {
         if (auto* Presentation = LocalPlayer->GetSubsystem<UDivineBeastsPresentationClientSubsystem>())
+        {
             Presentation->StopFrontEndFoliage();
+            Presentation->StopAmbientBirdFlock(TEXT("DBA.FrontEnd.CharacterStudio.Birds"));
+        }
     }
     CancelPendingLoads();
     RequestedHeroDefinitionId = NAME_None;

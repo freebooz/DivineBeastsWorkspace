@@ -18,4 +18,9 @@ public:
     /** 前端角色预览四类可替换自然飘落外观；只生成中立目录映射，无Niagara播放器。 */
     static FGamePlatformPresentationCatalogFragment BuildFrontEndFoliageFragment(FName StyleId);
 
+    /** 鸟群三物种共享一份目录，通过不同语义映射到真实WorldDefinition。 */
+    static FGamePlatformPresentationCatalogFragment BuildBirdFlockFragment();
+    /** 项目物种名称转语义；未知名称返回无效标签，平台层不认识这些鸟种。 */
+    static FGameplayTag GetBirdFlockTag(FName SpeciesId);
+
 };

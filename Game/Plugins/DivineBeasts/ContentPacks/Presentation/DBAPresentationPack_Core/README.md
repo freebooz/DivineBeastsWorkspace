@@ -14,3 +14,14 @@
 四种`UGamePlatformVFXWorldDefinition（平台世界环境特效定义）`以`GamePlatformDefinition（平台主资产类型）`统一登记，`Game/Config/DefaultGame.ini`的主资产扫描目录必须包含本内容包的`VFX/Environment/FallingFoliage/Definitions`；FrontEndClient客户端专用Cook配置分别收录本内容包、通用GamePlatformVFX运动模板与前端地面锚点。缺任意一环只允许报告加载或目录失败，不得将编辑器中文件存在当成打包可用。
 
 专用服务器不得装配本纯表现内容包；目标构建、Cook与Stage都须单独验证。UE .uasset / .umap必须由UE工具生成并重新加载通过。
+## 扩展的自然环境粒子库（2026-10-11）
+
+- `SourceArt/AmbientNature/AmbientNatureStyleCatalog.json（39种风格身份清单）`：4种既有落叶、33种新增项目视觉风格、2种由平台天气插件承接的雨雪；唯一StyleId、稳定Definition逻辑版本及归属记录。
+- `SourceArt/AmbientNature/AmbientNatureAreaProfiles.json（21组候选区域风格/权重配置）`：前端角色工作室、新手村桃林与梨园、世界红枫坡/银杏院/梧桐大道等。**仅数据化候选，不代表地图已经激活这些特效**。
+- `SourceArt/AmbientNature/Textures（颜色及法线源PNG）`：新增33种各两张共66张1024×1024透明贴图，配套`GeneratedTextureManifest.json（原始SHA-256清单）`和人工复核图。
+- `Content/VFX/Environment/AmbientNature/Textures（66张实际Texture2D）`、`Materials（33个项目材质实例）`、`Niagara（33个项目外观变体）`、`Definitions（33份实际世界环境定义）`。该层只引用平台机制与平台材质，绝不由平台硬引用神兽联盟资源。
+- 平台`GamePlatformVFX/Content/Environment/AmbientNature（游戏平台通用自然环境资源）`拥有`M_GP_AmbientNature_Soft（柔和半透明母材质）`、`M_GP_AmbientNature_Glow（发光母材质）`、`NS_GP_AmbientFloat_Base（基础漂浮粒子）`，后者暂复用雪花漂移作为第一版通用运动，不代表火星、萤火虫等的专属动效已完成。
+- `UDivineBeastsAmbientRegionProfile（项目区域DataAsset类型）`的脚本`AuthorAmbientRegionProfilesUE58.py（真实编辑器资产生成器）`专门将候选区域落盘成真实引擎数据资产，只有Editor目标模块实际构建、编辑器真实保存后才可将其标记为完成。
+- 39种风格不为每个资产新增代码插件或Niagara播放器。原有`FallingFoliage（飘落物）`系统/定义保持身份；雨雪依旧归原`GamePlatformWeather（平台天气）`与`GamePlatformVFX（统一执行）`。
+- 来自当前对话的梨花、樱花、银杏、梧桐、枫叶高清参考图集导出为可人工导入的源包；远程连接器未能接受ImageGen原图文件引用，当前工程内33套新源图是独立程序绘制版本。待原图可信传入`SourceArt/AmbientNature/ExternalReferences`后，使用`ImportApprovedAmbientReferenceArtUE58.py（原图SHA校验与UE导入工具）`做可回滚的手工批准替换；任何未知来源图片不得冒充已交付原图。
+- 实施细节、未完成门禁和证据见`Docs/Implementation/AmbientNatureAssetLibrary_20261011.md（自然环境资源库实施文档）`。正式验收仍需地图区域动态接入、Editor目标反射注册、区域DataAsset落盘、Cook/Stage、D3D12及移动端实际性能与人工视觉测试。

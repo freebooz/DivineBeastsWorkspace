@@ -122,6 +122,12 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
     TMap<FName, float> FloatParameters;
 
+    /** 中立整数覆盖，数量/模式/种子等参数保留类型；下游Definition校验范围。
+     * 浮点和整数覆盖合计最多16个，同名字段不得占用两个类型。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
+    TMap<FName, int32> IntegerParameters;
+
     /** 仅客户端SFX使用的可选响度系数；空调用的默认1保持历史行为。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation", meta=(ClampMin="0.0",ClampMax="4.0"))
     float VolumeMultiplier = 1.f;
@@ -162,12 +168,16 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationRequest
     bool IsValid() const
     {
         if (!RequestId.IsValid() || !SemanticTag.IsValid() ||
-            !FMath::IsFinite(Magnitude) || FloatParameters.Num() > 16 ||
+            !FMath::IsFinite(Magnitude) || FloatParameters.Num() + IntegerParameters.Num() > 16 ||
             !FMath::IsFinite(VolumeMultiplier) || VolumeMultiplier < 0.f ||
             VolumeMultiplier > 4.f) return false;
         for (const TPair<FName, float>& Pair : FloatParameters)
         {
             if (Pair.Key.IsNone() || !FMath::IsFinite(Pair.Value)) return false;
+        }
+        for (const TPair<FName, int32>& Pair : IntegerParameters)
+        {
+            if (Pair.Key.IsNone() || FloatParameters.Contains(Pair.Key)) return false;
         }
         return true;
     }

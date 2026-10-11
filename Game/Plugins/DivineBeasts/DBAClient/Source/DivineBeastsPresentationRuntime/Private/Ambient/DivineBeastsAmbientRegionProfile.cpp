@@ -1,39 +1,58 @@
 #include "Ambient/DivineBeastsAmbientRegionProfile.h"
 
-FName UDivineBeastsAmbientRegionProfile::SelectStyle(float NormalizedSample) const
+namespace
 {
-    // 仅按已配置项目数据选择，不触发Niagara、服务器RPC或游戏世界修改。
+/** 私有选择助手：使风格与Definition身份共用同一随机区间，避免不同资源映射。 */
+const FDivineBeastsAmbientStyleWeight* SelectWeightedEntry(
+    const TArray<FDivineBeastsAmbientStyleWeight>& Entries,
+    const float NormalizedSample)
+{
     double TotalWeight = 0.0;
-    for (const FDivineBeastsAmbientStyleWeight& Entry : Styles)
+    for (const FDivineBeastsAmbientStyleWeight& Entry : Entries)
     {
-        if (!Entry.StyleId.IsNone() && FMath::IsFinite(Entry.Weight) && Entry.Weight > 0.f)
+        if (!Entry.StyleId.IsNone() && !Entry.DefinitionId.IsNone() &&
+            FMath::IsFinite(Entry.Weight) && Entry.Weight > 0.f)
         {
             TotalWeight += static_cast<double>(Entry.Weight);
         }
     }
     if (TotalWeight <= 0.0)
     {
-        return NAME_None;
+        return nullptr;
     }
 
     const double Sample = FMath::IsFinite(NormalizedSample)
         ? static_cast<double>(FMath::Clamp(NormalizedSample, 0.f, 1.f)) : 0.0;
-    double Target = Sample * TotalWeight; // 恰好1.0时最终返回LastValid（稳定的最后风格）。
-
-    FName LastValid = NAME_None;
-    for (const FDivineBeastsAmbientStyleWeight& Entry : Styles)
+    double Target = Sample * TotalWeight;
+    const FDivineBeastsAmbientStyleWeight* LastValid = nullptr;
+    for (const FDivineBeastsAmbientStyleWeight& Entry : Entries)
     {
-        if (Entry.StyleId.IsNone() || !FMath::IsFinite(Entry.Weight) || Entry.Weight <= 0.f)
+        if (Entry.StyleId.IsNone() || Entry.DefinitionId.IsNone() ||
+            !FMath::IsFinite(Entry.Weight) || Entry.Weight <= 0.f)
         {
             continue;
         }
-        LastValid = Entry.StyleId;
+        LastValid = &Entry;
         if (Target < static_cast<double>(Entry.Weight))
         {
-            return Entry.StyleId;
+            return &Entry;
         }
         Target -= static_cast<double>(Entry.Weight);
     }
-    // 浮点边界退化路径始终保持同一数据集内稳定身份。
-    return LastValid;
+    return LastValid; // 边界1.0及浮点误差：返回最后有效身份。
+}
+}
+
+FName UDivineBeastsAmbientRegionProfile::SelectStyle(const float NormalizedSample) const
+{
+    const FDivineBeastsAmbientStyleWeight* Selected =
+        SelectWeightedEntry(Styles, NormalizedSample);
+    return Selected ? Selected->StyleId : NAME_None;
+}
+
+FName UDivineBeastsAmbientRegionProfile::SelectDefinitionId(const float NormalizedSample) const
+{
+    const FDivineBeastsAmbientStyleWeight* Selected =
+        SelectWeightedEntry(Styles, NormalizedSample);
+    return Selected ? Selected->DefinitionId : NAME_None;
 }

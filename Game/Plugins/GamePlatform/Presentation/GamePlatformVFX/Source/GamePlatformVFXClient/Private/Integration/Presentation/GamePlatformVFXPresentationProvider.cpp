@@ -48,6 +48,8 @@ bool FGamePlatformVFXPresentationProvider::Handle(
     // 中立浮点参数只映射到本领域请求，后续按VFXDefinition的ParameterSchema严格校验，
     // 不为Weather或任何项目建立专用Niagara执行器，也不为未声明参数开后门。
     VFXRequest.Parameters.FloatParameters = Request.FloatParameters;
+    // 数量/模式等Integer参数按类型透传，继续接受统一Definition白名单和范围校验。
+    VFXRequest.Parameters.IntegerParameters = Request.IntegerParameters;
 
     switch (Request.Priority)
     {

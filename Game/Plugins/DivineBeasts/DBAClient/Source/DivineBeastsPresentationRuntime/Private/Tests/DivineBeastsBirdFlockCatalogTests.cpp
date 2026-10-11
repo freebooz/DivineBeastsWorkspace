@@ -3,6 +3,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Catalog/DivineBeastsPresentationProjectCatalog.h"
+#include "GamePlatformPresentationTypes.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsBirdFlockCatalogTest,
     "DivineBeasts.Presentation.BirdFlock.Catalog",
@@ -25,6 +26,17 @@ bool FDivineBeastsBirdFlockCatalogTest::RunTest(const FString&)
     TestEqual(TEXT("不同物种不会产生解析冲突"),Semantics.Num(),3);
     TestFalse(TEXT("未知鸟种不静默回退"),FDivineBeastsPresentationProjectCatalog::GetBirdFlockTag(TEXT("Unknown")).IsValid());
     TestTrue(TEXT("海鸥可选"),FDivineBeastsPresentationProjectCatalog::GetBirdFlockTag(TEXT("Seagull")).IsValid());
+    FGamePlatformPresentationRequest Request;
+    Request.RequestId=FGuid::NewGuid();
+    Request.SemanticTag=FDivineBeastsPresentationProjectCatalog::GetBirdFlockTag(TEXT("Seagull"));
+    Request.IntegerParameters.Add(TEXT("User.BirdCount"),512);
+    TestTrue(TEXT("整数数量可通过中立表现总线"),Request.IsValid());
+    Request.FloatParameters.Add(TEXT("User.BirdCount"),512.0f);
+    TestFalse(TEXT("同名整数浮点冲突被拒绝"),Request.IsValid());
+    Request.FloatParameters.Reset();
+    for(int32 Index=0;Index<16;++Index)
+        Request.IntegerParameters.Add(FName(*FString::Printf(TEXT("User.Extra%d"),Index)),Index);
+    TestFalse(TEXT("所有类型合计超过16个字段被拒绝"),Request.IsValid());
     return true;
 }
 #endif

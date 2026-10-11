@@ -1,6 +1,22 @@
 # 《神兽联盟》Gaea × Landscape多层材质 × PCG一体化实施执行计划
 日期：2026-10-11｜唯一工作区：DivineBeastsWorkspace｜正式引擎：UE5.8｜状态：分阶段实施中
 
+## P0–P7实际执行状态更新（2026-10-11）
+
+本节按原生UE资产、进程退出码与日志计数，优先于下文初始待执行说明。
+
+- P0完成：审查三层插件与PCG Schema v1/金标准资产；保留正式Village桥接材质，真实Gaea 2.3源工程/出口暂未找到。
+- P1技术校准完成：50份PNG源图（30 PBR+1份1009平方16位高程+9掩码+10权重），SHA和纹理质量检查通过，全部1,018,081像素的十层权重总和为255。不是最终3A扫描贴图，不是Gaea真实输出。
+- P2部分完成：49个UE Texture2D、146节点十层UMaterial及MI在UE5.8真实保存和独立回读；AssetRegistry确认新母材质无直接Surface/VFX客户端硬依赖。10个ULandscapeLayerInfoObject尚未制作。通用SurfaceEditor LayerInfo/地图导入Commandlet已成功由MSVC编译为目标文件，Editor DLL链接受并发编辑器锁阻断。
+- P3校准投影完成，正式Gaea导入阻断：Gaea版本/坐标/SHA验证器、10张R8/1张little endian R16、1024条PCG Schema v1候选点及非法输入拒绝已完成。无真实Gaea 2.3出口，不能宣称生产导入。ALandscape::Import尚未在更新Editor DLL下执行。
+- P4部分完成：原有PCG放置器复用生成4份真实项目Blueprint；2节点4边的GetLandscape→SurfaceSampler PCG输入Graph已保存并跨进程回读。新增GamePlatformPCGEditor地形权重过滤Graph通用Commandlet源码；UHT编译、真实Biome图、PCG Spawn/Bake均待完成。
+- P5尚未完成：1009原生高程/权重清单已备好；独立L_DBA_TerrainMaskReview.umap尚未创建；正式Village不受校准高程影响。
+- P6部分测试：源图QA、7组非法输入、Shader/UE资产类型/依赖检查与Surface C++编译通过；完整Editor链接、QA地图、PCG运行、Client/Server新Cook均未取得本工单成功证据。受控RunTerrainGaeaFullReview.ps1已通过DryRun，并在并发UE Editor/UBT存在时按预期拒绝-Apply，不会写入地图。
+- P7待人工签收：无十层Landscape/PCG实际融合画面与本工单GPU Profile，不得宣布最终完成。
+
+证据位于Game/Saved/Logs/TerrainTextureImport20261011.log、TerrainMultiLayerAuthor20261011.log、TerrainMultiLayerUEAssetAudit20261011.log、TerrainPCGReviewBlueprints20261011.log、TerrainPCGLandscapeSampling20261011.log、TerrainPCGBlueprintGraphAudit20261011.log，及Saved/Validation/TerrainGaea。接续顺序：共享编辑器锁解除→Editor DLL正式链接→10 LayerInfo→4张权重过滤Graph→独立Landscape地图→PCG运行/Bake→三目标构建与双Cook→GPU与人工审核。
+
+
 ## 一、目标与工程边界
 
 将Gaea真实高程及掩码来源标准化，映射为10种基础地表权重及原有PCG Schema v1地貌语义，再用UE5.8的Landscape多层母材质与PCG编辑器生成可复用场景。风格定位为《魔兽世界》式清晰的地貌区块、自然造型和区域辨识度，配合精细但克制、低颗粒感的电影级PBR地表。必须能够在不同项目、不同生物群系中复用平台算法。
@@ -28,7 +44,7 @@ Landscape采用WeightBlend为底，局部允许HeightBlend作细节融合；不�
 门禁：实际路径、分层单向依赖及服务器权威边界能复核。
 
 ### P1 优先制作源纹理和校准地貌资源
-按十基础层生成10×3组技术PBR贴图：BaseColor（sRGB）、Normal（线性）、ORM（R遮蔽G粗糙B金属度）。1024x1024可平铺、宏观色块完整、避免尖锐高频噪声。生成一份可导入测试的1009x1009 Height 16位和8种中立地貌Mask（不是实际Gaea输出），导出10张8位Landscape权重图，每像素权重合计255。附材质调色表、SOURCE_MANIFEST及SHA256。重运行不得覆盖不同内容。
+按十基础层生成10×3组技术PBR贴图：BaseColor（sRGB）、Normal（线性）、ORM（R遮蔽G粗糙B金属度）。1024x1024可平铺、宏观色块完整、避免尖锐高频噪声。生成一份可导入测试的1009x1009 Height 16位和9种中立地貌Mask（不是实际Gaea输出），导出10张8位Landscape权重图，每像素权重合计255。附材质调色表、SOURCE_MANIFEST及SHA256。重运行不得覆盖不同内容。
 门禁：真实PNG非空、RGBA/16位/8位正确、无缝纹理和权重归一校验，通过后才实施引擎资产导入。
 工具：Tools/Unreal/Terrain下独占新脚本；项目内容归DBAWorldPack_Village/SourceArt/Terrain。
 

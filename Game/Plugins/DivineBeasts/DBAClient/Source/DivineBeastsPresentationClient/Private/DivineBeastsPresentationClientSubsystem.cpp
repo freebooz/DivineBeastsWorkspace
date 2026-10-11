@@ -44,6 +44,7 @@ void UDivineBeastsPresentationClientSubsystem::Initialize(
     if (ULocalPlayer* Player = GetLocalPlayer())
     {
         BindWeatherWorld(Player->GetWorld());
+        StartDefaultWorldBirdFlock(Player->GetWorld());
     }
 }
 
@@ -62,6 +63,7 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
 
     // 先停止持久环境VFX，再撤销目录，防止纯视觉实例泄漏到退出后的世界。
     StopFrontEndFoliage();
+    StopAllAmbientBirdFlocks();
     bClosing = true;
     UnregisterProjectState();
     UnbindWeatherWorld();
@@ -277,6 +279,8 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
     }
     if (bWorldScopeChanged)
     {
+        // 先取消鸟群，再撤销用于解析取消语义的目录。
+        StopAllAmbientBirdFlocks();
         DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
     }
     if (bWorldScopeChanged)
@@ -297,6 +301,7 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
     }
     if (bWorldScopeChanged)
     {
+        StartDefaultWorldBirdFlock(GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr);
         if (UWorld* WeatherWorld = WeatherBoundWorld.Get())
         {
             if (auto* Weather = WeatherWorld->GetSubsystem<UGamePlatformWeatherWorldSubsystem>())
@@ -309,6 +314,7 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
 void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
 {
     StopFrontEndFoliage();
+    StopAllAmbientBirdFlocks();
     TArray<FDivineBeastsPresentationContentPackHandle> ActiveHandles;
     for (const auto& Pair : ActivePacks) ActiveHandles.Add(Pair.Value.Handle);
     for (const auto& Handle : ActiveHandles) DeactivateContentPack(Handle);
@@ -549,6 +555,11 @@ void UDivineBeastsPresentationClientSubsystem::HandleLogicalPreloadCompleted(con
             EDivineBeastsPresentationContentPackState::Active)
             SubmitFrontEndFoliage();
     }
+    // 共享鸟类目录只有本代Active后才可发射，迟到预载回调不会复活已取消实例。
+    if (!bClosing && Fragment.ContentPackId == TEXT("DBA.Environment.BirdFlock") &&
+        BirdFlockPack.IsValid() && BirdFlockPack.Id == PackHandle.Id &&
+        BirdFlockPack.Generation == PackHandle.Generation)
+        SubmitPendingBirdFlocks();
     // 初次天气快照可能在真实VFX/SFX内容包异步加载完成之前到达。
     // Catalog已成功提交后按当前服务器时间重新发布本世界天气一次，
     // 避免“只有下一次切换天气后才能看到雨雪”。不添加Ticker/重复实例管理器。
@@ -767,6 +778,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleWorldCleanup(
     }
 
     StopFrontEndFoliage();
+    StopAllAmbientBirdFlocks();
     UnbindWeatherWorld();
     DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
     WeatherVisualHandle = {};
@@ -793,6 +805,7 @@ void UDivineBeastsPresentationClientSubsystem::HandlePostLoadMap(UWorld* World)
         RequestStates.Reset();
         RequestOrder.Reset();
         BindWeatherWorld(World);
+        StartDefaultWorldBirdFlock(World);
     }
 }
 /**

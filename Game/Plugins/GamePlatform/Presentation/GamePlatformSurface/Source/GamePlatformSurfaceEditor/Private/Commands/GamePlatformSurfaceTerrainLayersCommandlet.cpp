@@ -47,6 +47,7 @@ namespace
     }
 }
 
+// UE5.8编辑器增量构建复验：原生SetLayerName与WeightBlend合同以真实Commandlet执行为准。
 int32 UGamePlatformSurfaceTerrainLayersCommandlet::Main(const FString& Params)
 {
     check(IsInGameThread());
@@ -54,7 +55,8 @@ int32 UGamePlatformSurfaceTerrainLayersCommandlet::Main(const FString& Params)
     FString Root, NamesString, AssetPrefix, LayerPrefix;
     const bool bValidateOnly = FParse::Param(*Params, TEXT("ValidateOnly"));
     if (!FParse::Value(*Params, TEXT("LayerRoot="), Root) ||
-        !FParse::Value(*Params, TEXT("LayerIds="), NamesString))
+        !FParse::Value(*Params, TEXT("LayerIds="), NamesString,
+                       /*bShouldStopOnSeparator=*/false))
     {
         UE_LOG(LogGamePlatformSurfaceTerrain, Error,
             TEXT("必须指定-LayerRoot=/项目挂载点/... 与-LayerIds=Grass,Rock等受控图层标识。"));

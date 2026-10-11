@@ -71,6 +71,22 @@ public:
     /** 按RequestId取消持久Niagara并释放本地世界目录和Data预载租约。 */
     void StopFrontEndFoliage();
 
+    /** 事件驱动创建/修改本地鸟群；种类Seagull/Swallow/Eagle，数量0..512，0取消该群。
+     * FlockId为本世界场景锚点唯一名称；返回true只表示请求已受理，资源就绪后才提交。
+     */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|BirdFlock")
+    bool StartAmbientBirdFlock(FName FlockId, FName SpeciesId, int32 BirdCount,
+        const FVector& WorldOrigin, FString& OutError);
+    /** 先取消表现RequestId再释放共享内容租约；不会影响同世界其他鸟群。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|BirdFlock")
+    void StopAmbientBirdFlock(FName FlockId);
+    /** 世界/账号退出时一次取消所有鸟群；重复调用安全，不会触发新加载。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|BirdFlock")
+    void StopAllAmbientBirdFlocks();
+    /** 只报告请求配置数量，不冒充GPU当前实际可见数量。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Environment|BirdFlock")
+    int32 GetRequestedBirdCount(FName FlockId) const;
+
     bool DeactivateContentPack(
         const FDivineBeastsPresentationContentPackHandle& Handle);
     /** 接纳后通过状态/通知确认真正Active；无资产/错误/取消均有具体失败，Loading不是成功发布。 */
@@ -153,6 +169,10 @@ private:
 
     /** 真实内容包Active时调用；失败不得假装已播放。 */
     void SubmitFrontEndFoliage();
+    /** 仅在本代Data租约及共享目录Active后提交待播放鸟群。 */
+    void SubmitPendingBirdFlocks();
+    void CancelBirdFlockRequest(const FGuid& RequestId, FName SpeciesId, FName FlockId);
+    void StartDefaultWorldBirdFlock(UWorld* World);
 
     void RegisterProjectState();
     void BeginDefaultCatalogPreload();
@@ -199,6 +219,17 @@ private:
 
     FDelegateHandle WorldCleanupHandle;
     FDelegateHandle PostLoadMapHandle;
+
+    /** 只保存中立请求值，没有Niagara指针/独立资产加载器；实例由平台VFX世界服务管理。 */
+    struct FBirdFlockRequestState
+    {
+        FName SpeciesId = NAME_None;
+        FVector Origin = FVector::ZeroVector;
+        int32 Count = 0;
+        FGuid RequestId;
+    };
+    TMap<FName, FBirdFlockRequestState> AmbientBirdFlocks;
+    FDivineBeastsPresentationContentPackHandle BirdFlockPack;
 
     /** 角色预览工作室共享的单组自然飘落VFX，和天气/战斗独立。 */
     FDivineBeastsPresentationContentPackHandle FrontEndFoliagePack;

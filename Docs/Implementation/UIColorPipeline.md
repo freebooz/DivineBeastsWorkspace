@@ -42,7 +42,7 @@ Monolith导入动作不接受EditorIcon参数，必须原生导入后用严格�
 4. 用真实RHI运行DivineBeasts.UI.Color.SourceToSlate；读取线性浮点GPU结果并与真实原稿像素解码值比较，不依赖有额外编码的预览PNG，不操作人工客户端。
 5. Cook后核验新产物和资产，再由用户验收最终显示。编辑器回归、布局PNG均不能代替最终客户端验收。
 
-最新LOGO原稿2172×724，SHA-256为ca7704dd63b5580c8a255009e6b17a5366cc94a7ee88b18821b6084a30fef910，沿用/DBAUIPack_Core/UI/Textures/DBA_MythicLogo。登录420×140，角色选择240×80。暂保留原稿深色背景，不以生成图改写RGB。
+最新正式LOGO为用户2026-10-11指定的透明原图2172×724，SHA-256为938b069367543456ec463da94c0df15651750fed0f20d4187b5eb95b77b637f6；Alpha范围0—255，完全透明像素649341个。沿用/DBAUIPack_Core/UI/Textures/DBA_MythicLogo，登录420×140、角色选择240×80，白色乘色与原生Alpha显示；没有抠图、滤色、重绘或缩放源像素。替代此前同尺寸但不透明的ca7704dd原稿；旧图和三个受影响引擎资产已逐件哈希备份至Saved/Validation/UIBrandLogo/20261011-TransparentOriginal/Before。Monolith已重新导入无损sRGB纹理、编译两页并仅保存重载三个指定包；未覆盖其他脏地图或鸟群资产。最终Cook及客户端视觉验收另计，不沿用旧包验收结论。
 
 不声称全部存量图像或最终客户端已经视觉验收。本轮GPU结果须以实际测试报告为准。
 

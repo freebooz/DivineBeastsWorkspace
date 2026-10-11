@@ -17,6 +17,12 @@ struct FDivineBeastsAmbientStyleWeight
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AmbientNature")
     FName StyleId = NAME_None;
 
+    /** DefinitionId（平台数据定义身份），例如presentation.dba.environment.ambient.pearpetal@1。
+     * 仅客户端项目预载时使用；保持GamePlatformData为唯一资产身份服务。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AmbientNature")
+    FName DefinitionId = NAME_None;
+
     /** Weight（相对权重，非粒子生成率），必须为有限正数才参与选择。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AmbientNature", meta=(ClampMin="0.0"))
     float Weight = 1.f;
@@ -63,4 +69,12 @@ public:
      */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|AmbientNature")
     FName SelectStyle(float NormalizedSample) const;
+
+    /**
+     * SelectDefinitionId（按同一权重选取稳定的世界特效定义身份）。
+     * 返回NAME_None表示缺失/无效配置；调用方必须先做GamePlatformData预载。
+     * 不会创建Niagara实例或产生服务器同步。
+     */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|AmbientNature")
+    FName SelectDefinitionId(float NormalizedSample) const;
 };
