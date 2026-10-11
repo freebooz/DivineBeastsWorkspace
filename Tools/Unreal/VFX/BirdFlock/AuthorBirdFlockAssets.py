@@ -83,7 +83,9 @@ def import_texture(unreal,tools,assets,name):
 
 
 def import_mesh(unreal,tools,assets,name):
-    dest=f"{MESH_ROOT}/SM_DBA_Bird_{name}"
+    # UE自带Blender米到厘米转换；不再施加额外100倍缩放。
+    # _Cm后缀区分早期导入错误的测试资源，避免覆盖并发编辑器正在加载的网格。
+    dest=f"{MESH_ROOT}/SM_DBA_Bird_{name}_Cm"
     if assets.does_asset_exist(dest):
         old=assets.load_asset(dest)
         if not isinstance(old,unreal.StaticMesh):
@@ -99,11 +101,11 @@ def import_mesh(unreal,tools,assets,name):
     data=opt.get_editor_property("static_mesh_import_data")
     data.set_editor_property("combine_meshes",True)
     data.set_editor_property("import_mesh_lo_ds",False)
-    data.set_editor_property("import_uniform_scale",100.0)
+    data.set_editor_property("import_uniform_scale",1.0)
     task=unreal.AssetImportTask()
     task.set_editor_property("filename",str(SOURCE/"Meshes"/f"SM_DBA_Bird_{name}.fbx"))
     task.set_editor_property("destination_path",MESH_ROOT)
-    task.set_editor_property("destination_name",f"SM_DBA_Bird_{name}")
+    task.set_editor_property("destination_name",f"SM_DBA_Bird_{name}_Cm")
     task.set_editor_property("options",opt)
     task.set_editor_property("automated",True)
     task.set_editor_property("replace_existing",False)
@@ -277,7 +279,7 @@ def main():
     master=make_master(unreal,tools,assets)
     make_instances(unreal,tools,assets,master,textures,meshes)
     for name in SPECIES:
-        mesh=assets.load_asset(f"{MESH_ROOT}/SM_DBA_Bird_{name}")
+        mesh=assets.load_asset(f"{MESH_ROOT}/SM_DBA_Bird_{name}_Cm")
         if not isinstance(mesh,unreal.StaticMesh):
             raise RuntimeError("鸟模型回读缺少有效几何："+name)
     print("BIRD_UE_ASSET_CREATION_OK",len(SPECIES))

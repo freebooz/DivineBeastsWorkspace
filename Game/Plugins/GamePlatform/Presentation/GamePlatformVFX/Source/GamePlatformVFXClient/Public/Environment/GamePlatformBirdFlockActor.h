@@ -13,7 +13,8 @@ class USceneComponent;
 
 /** 同一模型的鸟群实例使用单一ISM，不创建逐鸟Actor、独立骨骼或复制状态。 */
 UCLASS(BlueprintType, Blueprintable)
-class GAMEPLATFORMVFXCLIENT_API AGamePlatformBirdFlockActor final : public AActor
+// 允许项目蓝图从通用Actor派生，仅覆盖物种/数量配置，不重写飞行执行器。
+class GAMEPLATFORMVFXCLIENT_API AGamePlatformBirdFlockActor : public AActor
 {
     GENERATED_BODY()
 

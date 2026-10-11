@@ -63,7 +63,7 @@ def execute():
 
     loaded={}
     for name,settings in SPECIES.items():
-        mesh=assets.load_asset(MESH+"/SM_DBA_Bird_"+name)
+        mesh=assets.load_asset(MESH+"/SM_DBA_Bird_"+name+"_Cm")
         material=assets.load_asset(MATERIAL+"/MI_DBA_Bird_"+name)
         if not isinstance(mesh,unreal.StaticMesh) or not isinstance(material,unreal.MaterialInterface):
             raise RuntimeError("鸟群资源缺失："+name)

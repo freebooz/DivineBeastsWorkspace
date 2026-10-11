@@ -1,0 +1,765 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "Tools/Unreal/Terrain/GenerateTerrainCalibrationPBR.py",
+  "generatedSeed": 20261011,
+  "sourceKind": "procedural_calibration_not_gaea",
+  "styleZh": "魔兽世界清晰地貌区与神兽联盟温润3A材质的技术校准样本；非最终3A扫描素材",
+  "terrainSamples": [
+    1009,
+    1009
+  ],
+  "pbrTextureSize": [
+    1024,
+    1024
+  ],
+  "baseLayers": [
+    "Grass",
+    "ForestSoil",
+    "Dirt",
+    "Rock",
+    "Scree",
+    "Sand",
+    "Gravel",
+    "RoadDirt",
+    "FarmSoil",
+    "ShoreMud"
+  ],
+  "maskNames": [
+    "Slope",
+    "Erosion",
+    "Deposition",
+    "RockExposure",
+    "Flow",
+    "Shore",
+    "Forest",
+    "Buildable",
+    "Exclusion"
+  ],
+  "weightSum": 255,
+  "heightEncoding": "PNG 16bit grayscale I;16",
+  "worldConvention": {
+    "axisX": "positive_right",
+    "axisY": "positive_up",
+    "imageRows": "top_down",
+    "flipX": false,
+    "flipY": true,
+    "worldSizeCm": [
+      100800.0,
+      100800.0
+    ],
+    "minHeightCm": -10000.0,
+    "maxHeightCm": 20000.0
+  },
+  "projectUEMount": "/DBAWorldPack_Village",
+  "files": [
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Grass/T_DBA_Terrain_Grass_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_BaseColor",
+      "role": "BaseColor",
+      "layer": "Grass",
+      "descriptionZh": "青绿草地",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "f4dfaf260e5da3535ae7e73efad7c9e92c14766b10386644f6d21bfd683e006e",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Grass/T_DBA_Terrain_Grass_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_Normal",
+      "role": "Normal",
+      "layer": "Grass",
+      "descriptionZh": "青绿草地",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "bcf54a3b811f2c5243833d74cf936a7053f426bb261de136a24e240cb1d5b047",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Grass/T_DBA_Terrain_Grass_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_ORM",
+      "role": "ORM",
+      "layer": "Grass",
+      "descriptionZh": "青绿草地",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "2c5fe9e4829a9bac8bc0855e2f5fb964fc6e8c8373cb0d3abad5fb3e1d58e39d",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ForestSoil/T_DBA_Terrain_ForestSoil_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_BaseColor",
+      "role": "BaseColor",
+      "layer": "ForestSoil",
+      "descriptionZh": "森林腐殖土",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "7aa6766bdec98dd951f5d04cd40d4269fb4f7278805d18882442467efc449619",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ForestSoil/T_DBA_Terrain_ForestSoil_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_Normal",
+      "role": "Normal",
+      "layer": "ForestSoil",
+      "descriptionZh": "森林腐殖土",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "5aa9a8dea146d7e6f8a29b13cd55c66b7a0cd57f6fb2303da2329abff8165a9b",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ForestSoil/T_DBA_Terrain_ForestSoil_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_ORM",
+      "role": "ORM",
+      "layer": "ForestSoil",
+      "descriptionZh": "森林腐殖土",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "faf99b26fa87c43e374c66b23c614c363d9db013b17947de16a6e18ae87b2260",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Dirt/T_DBA_Terrain_Dirt_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_BaseColor",
+      "role": "BaseColor",
+      "layer": "Dirt",
+      "descriptionZh": "普通泥土",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "c62dfb772434fd3f952cadc5dcdbccc5c534641a4ae2d3753c6362c6e7e6be46",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Dirt/T_DBA_Terrain_Dirt_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_Normal",
+      "role": "Normal",
+      "layer": "Dirt",
+      "descriptionZh": "普通泥土",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "9d9f17ab8ca3765a6b9d9a5b61b521e34964bd7c28c75b83fa5015975c3abe4d",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Dirt/T_DBA_Terrain_Dirt_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_ORM",
+      "role": "ORM",
+      "layer": "Dirt",
+      "descriptionZh": "普通泥土",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "afbb9a3fb5ea5312b59a28e070e0201f1b344a5a6d73b7b63175d296307179c4",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Rock/T_DBA_Terrain_Rock_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_BaseColor",
+      "role": "BaseColor",
+      "layer": "Rock",
+      "descriptionZh": "山体岩石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "3608bf3c4fdfc4ef275e9ad6346147051001fe8efda9bd1f7cf891d90992c13a",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Rock/T_DBA_Terrain_Rock_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_Normal",
+      "role": "Normal",
+      "layer": "Rock",
+      "descriptionZh": "山体岩石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "3e710239ed3f7e3f3e96daad9a25f17aeb74318290531a1b43cda76cde74d620",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Rock/T_DBA_Terrain_Rock_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_ORM",
+      "role": "ORM",
+      "layer": "Rock",
+      "descriptionZh": "山体岩石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "a4500f485aadad2ce29c4bacd83b8c9428d16ba9a807dbd1f7fe73b41d7b34a7",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Scree/T_DBA_Terrain_Scree_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_BaseColor",
+      "role": "BaseColor",
+      "layer": "Scree",
+      "descriptionZh": "山地碎石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "4a59cbb1e331a7d3f775d8e34740cebbba246cb2c3c342a246d99f6eac00539d",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Scree/T_DBA_Terrain_Scree_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_Normal",
+      "role": "Normal",
+      "layer": "Scree",
+      "descriptionZh": "山地碎石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "c19e9a5bdc83695f17a9b6bc47a3d2f40c3c584c4274bd13149b12d2c5da248b",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Scree/T_DBA_Terrain_Scree_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_ORM",
+      "role": "ORM",
+      "layer": "Scree",
+      "descriptionZh": "山地碎石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "64b4ddb71edeed7e130fba232ef12a4b5bc9cf8838cf246cd8106cc8e9ee6d93",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Sand/T_DBA_Terrain_Sand_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_BaseColor",
+      "role": "BaseColor",
+      "layer": "Sand",
+      "descriptionZh": "湖岸沙地",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "ad11e83d967d692330ad73318be6996b52728022e694224183aeb7c1c5bfb6c9",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Sand/T_DBA_Terrain_Sand_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_Normal",
+      "role": "Normal",
+      "layer": "Sand",
+      "descriptionZh": "湖岸沙地",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "88b091873c96fc7aec649e3845a773b56cade45395b3be610dcff00abef63d1c",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Sand/T_DBA_Terrain_Sand_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_ORM",
+      "role": "ORM",
+      "layer": "Sand",
+      "descriptionZh": "湖岸沙地",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "9bc45c3b2c52f05095d26f971aedcf912bce148bb83d65211a967f2cef911511",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Gravel/T_DBA_Terrain_Gravel_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_BaseColor",
+      "role": "BaseColor",
+      "layer": "Gravel",
+      "descriptionZh": "河滩砾石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "24c23f04969a7d0ec784940955701f84abe559c369266b595310b1ce7da505f4",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Gravel/T_DBA_Terrain_Gravel_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_Normal",
+      "role": "Normal",
+      "layer": "Gravel",
+      "descriptionZh": "河滩砾石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "003098cacf4737c05f042c5f4470c80059c1c6fbce1dffb60ddf425756624a18",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Gravel/T_DBA_Terrain_Gravel_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_ORM",
+      "role": "ORM",
+      "layer": "Gravel",
+      "descriptionZh": "河滩砾石",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "275b0be806c02128b17376839ee3d9eebac9b29554b045fd94be2e3cea646be7",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RoadDirt/T_DBA_Terrain_RoadDirt_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_BaseColor",
+      "role": "BaseColor",
+      "layer": "RoadDirt",
+      "descriptionZh": "压实土路",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "2558cf8a888eb6203bd0769cf421ab2fa2cfd61962a5a15f7ed3c190ac26c768",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RoadDirt/T_DBA_Terrain_RoadDirt_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_Normal",
+      "role": "Normal",
+      "layer": "RoadDirt",
+      "descriptionZh": "压实土路",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "1e9e58444eabdab509825063841bbabad739583edbb9600be7e2e0eadfe58172",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RoadDirt/T_DBA_Terrain_RoadDirt_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_ORM",
+      "role": "ORM",
+      "layer": "RoadDirt",
+      "descriptionZh": "压实土路",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "77c5c754fdbb930bf248f863f7f416e9314d8cc95520128163df1d68849b5417",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/FarmSoil/T_DBA_Terrain_FarmSoil_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_BaseColor",
+      "role": "BaseColor",
+      "layer": "FarmSoil",
+      "descriptionZh": "耕作农田",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "d9244700a66bb9eec07f5f1dfcd907b89176be83f8cd19a3a4eae299b802e032",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/FarmSoil/T_DBA_Terrain_FarmSoil_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_Normal",
+      "role": "Normal",
+      "layer": "FarmSoil",
+      "descriptionZh": "耕作农田",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "99b6f7bc4d3b10e720e0f4e6b8e156d0e3aee2314456bd3f57764ad2391bd05f",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/FarmSoil/T_DBA_Terrain_FarmSoil_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_ORM",
+      "role": "ORM",
+      "layer": "FarmSoil",
+      "descriptionZh": "耕作农田",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "20ad89e1808dbd81db9b45ad3fb0bdf66cf14bc44070c1f7ace2376d65a0657b",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ShoreMud/T_DBA_Terrain_ShoreMud_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_BaseColor",
+      "role": "BaseColor",
+      "layer": "ShoreMud",
+      "descriptionZh": "湖岸湿泥",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": true,
+      "compression": "Default",
+      "sha256": "e6ee089ed1f7711f2a6b1d51aa8b76f725f806498da6dd6850d0040abaf28e69",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ShoreMud/T_DBA_Terrain_ShoreMud_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_Normal",
+      "role": "Normal",
+      "layer": "ShoreMud",
+      "descriptionZh": "湖岸湿泥",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Normalmap",
+      "sha256": "5582603814f3144e9d9dfd947489410d4f1441eb93ff7e70dd9b07318aa7ef13",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ShoreMud/T_DBA_Terrain_ShoreMud_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_ORM",
+      "role": "ORM",
+      "layer": "ShoreMud",
+      "descriptionZh": "湖岸湿泥",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "sRGB": false,
+      "compression": "Masks",
+      "sha256": "7efb8a9af3f14c97bc20f7e0ed9da6de51d64ce1e8eb9a42a535fd28bafd9820",
+      "category": "PBR_TECHNICAL"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Height_1009_R16_Source.png",
+      "category": "HEIGHT_R16_CALIBRATION",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "I;16",
+      "sha256": "d25635ef3895f81ea579cd6e1178c9b7c3943e9e080287cf65781e1e74f052dc",
+      "noteZh": "程序地形校准样本，不是Gaea出口"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/Slope_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "Slope",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "1397c9ad7a01f763c816adaec73412cc973fc0407aeff5282bfca041a7e29128",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/Erosion_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "Erosion",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "42db59c07c49d6db3ecb8fa6712c3f0608824d9190d9bd7d983eb3b9a451683e",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/Deposition_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "Deposition",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "17c31f5205dc7f96e7108d5f91aa05cbfdf5abdad632301ac5c897572a78e79c",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/RockExposure_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "RockExposure",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "72f1ab7f5cc07c882475ad801be0a91e3133bee9b5778278ba20a09367666d43",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/Flow_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "Flow",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "675ca2fe0f74daaa7b76096c834339cc01f89bdee37a7a0aaa4ddfc2ce2c07b4",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/Shore_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "Shore",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "52a0a9feca8308b67b1bc197a1dc69d37788f2866fe1083a13c007415bf863ad",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/Forest_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "Forest",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "694d80432e22b1340d1bf5ced38688df128f4c73d48ff85dfc403de593ac4032",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/Buildable_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "Buildable",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "9dd92b4c3b6bb94d5dcb0aa00c50fb01476b1598daddb581ca9669d47e5a0169",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Masks/Exclusion_Source.png",
+      "category": "GAEA_COMPATIBLE_SAMPLE_MASK",
+      "maskName": "Exclusion",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "64ab104c8065fa059c0069e637f9637fc3c28115ec10e90bc3ddf5bb2052c6b0",
+      "noteZh": "语义掩码校准样本，不是Gaea"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_Grass_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "Grass",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "2b9ad6c0ef0a27b1beb0b31d0fd3a07fd24cedc860b77c50f2cbd0b149355c26"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_ForestSoil_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "ForestSoil",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "8ff794beb20ebb8d48ec4220d6f06e6e5fb56f9cc55d00cbd3a14455fce5d02b"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_Dirt_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "Dirt",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "d8c062b72003f22bd79ae3d53bbe2c844b7fddec1e41ef68c4eb34807fcaa38a"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_Rock_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "Rock",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "9ef5e6a948b5d261de951142edad64d8a3d39a631bba2440a03e23a256ac8aba"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_Scree_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "Scree",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "66011f4fe11650633a6eafc390c99d10a7ea597c5ea2d95879b9541aca6f68e2"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_Sand_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "Sand",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "5727d2bcb737f46407a9791b51321f664cf811c6e1a251c2d769dbb22568172d"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_Gravel_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "Gravel",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "9d5033be2df18ca7bf659715622fb4edf29ba0d67cba312513d49f4b7e3c7048"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_RoadDirt_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "RoadDirt",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "d7d67c360de76cf37ac5547e760bcc12708c955263fc6496ece4a1fccb5beed9"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_FarmSoil_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "FarmSoil",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "2501665c5cc3771ae81ce4cb13a5366a5ba389c2ff6d3da89551020bde66adb6"
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/Calibration/Weights/LS_ShoreMud_Source.png",
+      "category": "LANDSCAPE_WEIGHT",
+      "layer": "ShoreMud",
+      "size": [
+        1009,
+        1009
+      ],
+      "mode": "L",
+      "sha256": "ba9920ff3a6c5eab44595b89d323ce9969a2fd871cf8c4e7f01d7ee77d884ce9"
+    }
+  ]
+}

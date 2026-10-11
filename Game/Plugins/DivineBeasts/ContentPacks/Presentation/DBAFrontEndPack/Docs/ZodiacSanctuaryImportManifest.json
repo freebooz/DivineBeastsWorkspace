@@ -5,12 +5,36 @@
   "source_blend_sha256": "2e021bbfae2c0d2192dec43095e5c07a4a2e76f0851cc8046eebd40735bef1ed",
   "backup": "E:\\work\\2026\\DivineBeastsWorkspace\\Game\\Saved\\Validation\\ZodiacSanctuary\\BeforeSanctuary",
   "stage_class": "GamePlatformCharacterPreviewStage",
-  "camera_location_cm": "<Struct 'Vector' (0x000001B58E649460) {x: 650.000000, y: 0.000000, z: 340.000000}>",
+  "camera_location_cm": [650, 0, 340],
   "actions": [
     "FBX import",
     "PBR material graph",
     "preserve stage and foliage anchor",
     "save studio"
   ],
-  "client_cook": "not_run"
+  "client_cook": {
+    "status": "passed",
+    "run_id": "6a27b3ba-9d5d-44a6-aee9-a544839f4c71",
+    "existing_gate_required_count": 134,
+    "sanctuary_gate_required_count": 47,
+    "missing": [],
+    "evidence": "Saved/Validation/FoundationM0/6a27b3ba-9d5d-44a6-aee9-a544839f4c71/Cook-FrontEndClient"
+  },
+  "saved_asset_validation": {
+    "blender_reopened": true,
+    "unreal_map_reloaded": true,
+    "meshes": 17,
+    "sculptures": 6,
+    "materials": 14,
+    "referenced_textures": 15
+  },
+  "runtime_validation": {
+    "scope": "development PIE preview only; not authenticated character creation",
+    "streamed_from_frontend": true,
+    "hero_definition_id": "Hero.Zodiac.Tiger",
+    "preview_mesh": "/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_Manny_Simple",
+    "camera_bound": true,
+    "previous_view_restored_on_deactivation": true
+  },
+  "visual_acceptance": "prototype; not signed off as reference-quality AAA production asset"
 }

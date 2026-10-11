@@ -4,6 +4,14 @@
 
 ## 资产职责
 
+### 2026-10-11 神兽圣境三维初版
+
+现有`L_DBA_CharacterStudio`已接入Blender制作的神兽圣境，选择角色与创建角色共用，不创建第二张运行地图。
+可编辑源文件：`SourceArt/Blender/ZodiacSanctuary/DBA_ZodiacSanctuary.blend`；真实UE资产归`Content/CharacterPreview/Environment/ZodiacSanctuary/{Meshes,Materials,Textures}`。
+场景含17个分件、六尊石兽、14种PBR材质及15张当前引用纹理；真实岩石使用许可明确的Poly Haven Rock 3，源图/许可随`ThirdParty/PolyHaven/Rock3`交付。
+日光照度20000勒克斯、固定线性曝光512，替代以下旧室内曝光说明；重跑旧工作室光照脚本会覆盖本轮镜头/曝光，不应用于圣境。
+制作、导入、回退、运行及Cook证据统一见`Docs/Implementation/ZodiacSanctuary.md`。当前为可运行初版，不能视为参考图电影级视觉签收。
+
 - `/DBAFrontEndPack/Maps/L_DBA_FrontEnd`：登录、角色选择、角色创建共用的本地前端宿主地图。
 - `/DBAFrontEndPack/Maps/L_DBA_CharacterStudio`：角色选择/创建时按需流送的三维角色预览工作室。
 - `/DBAFrontEndPack/Materials/M_DBA_PreviewBackdrop`：工作室共用背景与地面材质，无角色身份和玩法含义。

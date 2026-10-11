@@ -15,6 +15,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MANIFEST = ROOT / "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/UIColorImportManifest.json"
 
+def validate_import_settings(role: str, settings: dict) -> list[str]:
+    """检查真实回读值，返回全部违反项；缺字段也失败，不能用缺省成功掩盖未读到的设置。"""
+    errors = []
+    if role not in ("Color", "AlphaMask"):
+        errors.append("未知颜色角色")
+    if settings.get("srgb") is not (role == "Color"):
+        errors.append("sRGB与颜色角色不一致")
+    # UE枚举回读可能是短名或带模块/数值的文本，按枚举标识规范化而不猜测资产名。
+    def enum_name(value):
+        return str(value).split(":")[0].split(".")[-1].strip("<> ").replace("_", "").lower()
+    for field, expected in (("compression", "tceditoricon"), ("mips", "tmgsnomipmaps"), ("group", "texturegroupui")):
+        if enum_name(settings.get(field)) != expected:
+            errors.append(field + "设置不符合无损UI合同")
+    if settings.get("adjustments") != [1.0, 1.0, 1.0, 0.0]:
+        errors.append("存在额外颜色调整或未完整回读")
+    return errors
+
 def prepare(manifest: dict, root: Path) -> list[dict]:
     """完整预检后才返回动作；目标仅限第三层公共UI，稳定身份和源RGB不变。"""
     requests = []
@@ -42,6 +59,11 @@ def prepare(manifest: dict, root: Path) -> list[dict]:
         requests.append({"tool": "material.get_texture_properties", "params": {"asset_path": dest}})
     # 保存不是验收；sRGB变更后须复核材质采样器类型，并重新加载执行GPU颜色回归。
     requests.append({"tool": "editor.save_packages", "params": {"packages": [item["Destination"] for item in manifest["Files"]]}})
+    # 最后一项是实际引擎资产审计，失败会抛出错误；读取已存在资源仍须经过此门禁。
+    requests.append({"tool": "editor.run_python", "params": {
+        "command": "import runpy; runpy.run_path(" + repr(str(root / "Tests/Assets/AuditUIColorImportedAssetsMonolith.py"))
+            + ", run_name='__main__', init_globals={'IMPORT_MANIFEST': " + repr(manifest) + "})",
+        "mode": "execute_file", "unattended": True}})
     return requests
 
 def main() -> None:

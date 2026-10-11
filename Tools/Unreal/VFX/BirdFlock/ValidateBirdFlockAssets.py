@@ -39,7 +39,7 @@ def main():
     print("BIRD_VERIFY_PLATFORM_MASTER",parent.get_path_name())
     checked=1
     for name in SPECIES:
-        mesh=lib.load_asset(BIRD+"/Meshes/SM_DBA_Bird_"+name)
+        mesh=lib.load_asset(BIRD+"/Meshes/SM_DBA_Bird_"+name+"_Cm")
         tex=lib.load_asset(BIRD+"/Textures/T_DBA_Bird_"+name+"_Albedo")
         mat=lib.load_asset(BIRD+"/Materials/MI_DBA_Bird_"+name)
         if not isinstance(mesh,unreal.StaticMesh):
@@ -55,8 +55,10 @@ def main():
         if min(x,y)<256:
             raise RuntimeError("鸟群纹理分辨率异常："+name)
         dims=mesh.get_bounds().box_extent
-        if max(abs(dims.x),abs(dims.y),abs(dims.z))<1.0:
-            raise RuntimeError("鸟群FBX导入缩放错误："+name)
+        max_extent=max(abs(dims.x),abs(dims.y),abs(dims.z))
+        # 三种真实鸟翼展开半宽必须在30..300cm量级，严防100倍误缩放。
+        if max_extent<30.0 or max_extent>300.0:
+            raise RuntimeError("鸟群FBX导入缩放错误："+name+"，半宽cm="+str(max_extent))
         print("BIRD_VERIFY_SPECIES_OK",name,
               "texture",x,y,
               "meshHalfExtentCm",round(dims.x,2),round(dims.y,2),round(dims.z,2))
