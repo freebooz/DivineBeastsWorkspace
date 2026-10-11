@@ -37,7 +37,7 @@
       "CommonUIErrors": 0,
       "CommonUIWarnings": 1,
       "CommonUIWarningDisposition": "工具要求DesiredFocusTargetName属性；项目使用平台页面基类的原生焦点契约，并在页面目录中把AccountInput设为默认焦点。必须在PIE继续验证。",
-      "VisualDesign": "左上224×224等比正式LOGO；中央偏下284×42固定输入与登录按钮；背景四边铺满。",
+      "VisualDesign": "独立LOGO ScaleBox按窗口等比缩放，原稿画刷2172×724；600×315底部登录面板、284×42固定输入和16字号；背景独立等比铺满并居中裁切。",
       "PasswordDefault": "",
       "PasswordMaskEnabled": true,
       "Saved": true
@@ -1589,5 +1589,24 @@
     "EditorRestartReloadVerified": false,
     "ClientCookVerified": false,
     "GPUVerification": "Deferred by user request to keep shared editor open"
+  },
+  "FrontEndVisualRepair20261011": {
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Documentation": "Docs/Implementation/FrontEndVisualRepair_20261011.md",
+    "AssetActionsCompletedBeforePause": [
+      "Login: independent BrandLogoScale/ScaleToFit and 2172x724 brush; fixed bottom anchored inputs",
+      "CharacterCreate and CharacterSelect: background panels z2, controls z10",
+      "NatureMenuReference: retain RGB sampling and fill interior plaque Alpha"
+    ],
+    "PageCompileErrors": 0,
+    "PageCompileWarnings": 0,
+    "SavedAndReloadedBeforePause": true,
+    "BackgroundReadback": "ScaleToFill, Both, ClipToBounds; child centered; source 1672x941",
+    "PreparedBackgroundActions": "Saved/Monolith/FrontEndMythicSpecs/CoverBackgroundProperties.json",
+    "PreparedSourceCheck": "Saved/Validation/FrontEndVisualRepair/20261011/PreparedChangesCheck.json",
+    "EditorAssetWorkDeferredByUser": true,
+    "FinalClientVisualAcceptance": "Pending editor resume and manual validation",
+    "ClientPackageSelectionChanged": false
   }
 }

@@ -55,7 +55,7 @@ Gameplay / Application Fact
 
 ## 通用鸟群视觉表现（2026-10-11，开发中）
 
-已在现有 `GamePlatformVFXClient` 中增加数据驱动的鸟群配置、0–512只数量限制、盘旋/掠过/八字轨迹、风扰动及批量实例渲染。海鸥、燕子、雄鹰的原始模型、材质和厘米单位网格分别归入 `DBAPresentationPack_Core`。Client与Server编译已通过；客户端真实自动化中数量合同与ISM Actor实例生命周期两项测试均成功（2/2，0失败）。详见 [鸟群VFX实现说明](Docs/BirdFlock.md) 和 `Docs/Implementation/BirdFlockVFXImplementationPlan.md`。
+鸟群正式实现已升级为共享Niagara GPU机制，项目场景组件通过现有Presentation/Data/VFX链路选择三种WorldDefinition并控制0–512只数量；旧ISM只保留回归夹具。海鸥、燕子、雄鹰资源归第三层`DBAPresentationPack_Core`。受影响Editor模块、完整Client/Server构建、客户端3项自动化、15组GPU数量及600秒稳定性通过；最终客户端鸟群资源19/19齐全，服务器IoStore鸟群资源0项。详见 [鸟群VFX实现说明](Docs/BirdFlock.md)、`Docs/Implementation/BirdFlockP4P7Execution_20261011.md`及人工验收单。
 
 P4–P7续接已完成真实Niagara GPU模板/三物种系统、三种正式WorldDefinition、`BP_DBA_BirdFlockAmbient`与项目场景组件、直接GPU和正式表现链路两张审核地图。正式运行不使用旧ISM原型：通过既有Presentation/Data/VFX链路自动播放/取消。三物种×0/1/32/128/512共15组真实GPU数量、非法请求保护及世界清理已通过；最新客户端目录/数量/原型回归3项通过。新Flight网格修正顶点羽色和共面翼面问题。完整构建、Cook及长期运行结果见`Docs/Implementation/BirdFlockP4P7Execution_20261011.md`；人工视觉验收仍待用户确认。
 

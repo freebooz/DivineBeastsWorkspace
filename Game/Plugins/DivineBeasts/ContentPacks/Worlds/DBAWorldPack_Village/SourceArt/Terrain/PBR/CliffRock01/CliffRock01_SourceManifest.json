@@ -1,0 +1,56 @@
+{
+    "schemaVersion":  1,
+    "kind":  "third_party_pbr_scan_candidate",
+    "sourceId":  "marble_cliff_05",
+    "sourceResolution":  "4k",
+    "sourceAssetUrl":  "https://polyhaven.com/a/marble_cliff_05",
+    "sourceFilesApi":  "https://api.polyhaven.com/files/marble_cliff_05",
+    "license":  "CC0 1.0",
+    "licenseUrl":  "https://polyhaven.com/license",
+    "creator":  "Amal Kumar",
+    "referenceWidthMeters":  20,
+    "actualAssetWidthMeters":  20,
+    "scanSourceIsWarmBeige":  true,
+    "projectTargetColorZh":  "青灰色悬崖裸岩；只对BaseColor执行可追溯的低饱和冷色校正",
+    "originalMapsImmutable":  true,
+    "productionAssetApproved":  false,
+    "notesZh":  "UE5.8神兽联盟第三层内容包项目候选，未通过用户本人最终审核不得替换正式Village",
+    "maps":  [
+                 {
+                     "localPath":  "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/CliffRock01/Original/T_DBA_CliffRock01_BaseColor_4K_Original.png",
+                     "bytes":  100056028,
+                     "sourceUrl":  "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/marble_cliff_05/marble_cliff_05_diff_4k.png",
+                     "upstreamMap":  "Diffuse",
+                     "sha256":  "701e062ce32aaea8ed3ec5be75baa5c6fadbdb370eab9c4a081603e8bc66001e",
+                     "role":  "BaseColor",
+                     "upstreamMd5":  "e09b5d0ddea792bef192f068c95f394f"
+                 },
+                 {
+                     "localPath":  "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/CliffRock01/Original/T_DBA_CliffRock01_NormalDX_4K_Original.png",
+                     "bytes":  95724128,
+                     "sourceUrl":  "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/marble_cliff_05/marble_cliff_05_nor_dx_4k.png",
+                     "upstreamMap":  "nor_dx",
+                     "sha256":  "599e315e9cb49cc4cf679c885228c2b2b79169563a6020b41edd529d035572a4",
+                     "role":  "NormalDX",
+                     "upstreamMd5":  "fc4688f94aa03b3bab248003e3555425"
+                 },
+                 {
+                     "localPath":  "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/CliffRock01/Original/T_DBA_CliffRock01_ORM_4K_Original.png",
+                     "bytes":  43406011,
+                     "sourceUrl":  "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/marble_cliff_05/marble_cliff_05_arm_4k.png",
+                     "upstreamMap":  "arm",
+                     "sha256":  "3ca12dd39a3c32d0d180ad685ba1821ea852aa0f5cc8001fa8e7b3ff22bf7192",
+                     "role":  "ORM",
+                     "upstreamMd5":  "b9f709d5836460f376f192b29d8e2caa"
+                 },
+                 {
+                     "localPath":  "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/CliffRock01/Original/T_DBA_CliffRock01_Height_4K_Original.png",
+                     "bytes":  18353643,
+                     "sourceUrl":  "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/marble_cliff_05/marble_cliff_05_disp_4k.png",
+                     "upstreamMap":  "Displacement",
+                     "sha256":  "36edfa4e0448b990a2f0427a94bb420980020e9c624d87aa165f19ae10f8cab9",
+                     "role":  "Height",
+                     "upstreamMd5":  "4ad4e8685f9d8ab033d1fdc6e66060be"
+                 }
+             ]
+}

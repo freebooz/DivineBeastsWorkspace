@@ -56,3 +56,32 @@ UE5.8编辑器中新增了正式平台母材质：
 - ⏳ ZIP原始数据待通过可信方式复制到Windows工程；项目33个MaterialInstance尚未用新六图集替换。
 - ⏳ 部分源图轮廓截断/FX多对象未达到直接重导门禁，需提供完整分离精灵或人工重新绘制。
 - ⏳ 分批UE真实导入、Material Shader编译、Niagara可见粒子效果/地面不穿插与客户端Cook/Stage/人工验收均尚未取得通过证据。
+## 七、2026-10-11 18:38 用户重新上传后的传输核查
+
+用户已在同一会话上传原始ZIP `DivineBeasts_NiagaraPBR_AtlasAssets_20261011(1).zip`，大小28,051,967字节，SHA-256：
+`07c5b03e056a0318af8c2368cc3a06c39ff2ef26c181b2912ef2f78f57084015`。
+ChatGPT当前会话挂载的原件已由Python直接读取，ZIP CRC通过，Manifest包含6组Atlas、33个物种和132个独立PBR贴图，138个Atlas+贴图SHA-256全部匹配（0项错误）；其中15类为auto_candidate，7类review_only，11类fx_reference_only。
+
+**跨环境阻断（需要真实日志支持）：** HWebCodex `import_conversation_files_to_project（会话附件导入远程工程）` 使用用户刚上传的精确文件ID再次尝试，仍返回 `requires trusted MCP host-file provenance`（缺少可信宿主文件来源）；替代的Library文件ID亦非该工具接受的OpenAiHostFileRef类型。Windows Runner遍历项目Incoming及Windows下载目录仍没有找到ZIP。因此**本次没有执行项目材质实例正式重导，UE5.8既有PBR母材质已保存但33个项目MI仍引用此前的旧纹理**。
+
+`RunPBRAtlasImport.ps1（分批导入入口）`已经容许固定的原始ZIP名称及本次下载常见的`(1).zip`副本名称；用户只需将已上传的同一个ZIP下载并放入Windows工程既有Incoming目录，后续无需重新生成图片或资源清单。该入口默认只检查，不在原ZIP缺失时删除/覆盖旧资源。正式导入仍应执行3批用户授权的15个独立物种候选，其他18类需独立人工品质审查。
+
+视觉及运行门禁保持未通过：Niagara实际颜色、地表穿插、粒子尺寸、角色预览和客户端Cook不可仅凭ZIP校验宣称通过。
+
+## 八、2026-10-11 18:45 后续执行情况（用户授权覆盖旧材质）
+
+- 已尝试通过HWebCodex接收用户新上传的精确 ZIP，插件仍返回`requires trusted MCP host-file provenance（缺少可信宿主文件来源）`；Windows工作区与下载目录均未发现原图ZIP。拒绝使用未授权公网中转、Base64文本分块或虚构资产覆盖。
+- 本次通过当前聊天工作容器直接读取真实ZIP，验证压缩包SHA-256=`07c5b03e056a0318af8c2368cc3a06c39ff2ef26c181b2912ef2f78f57084015`，141项存档成员、6张图集、33套132张PBR纹理及Manifest物理尺寸全部符合格式；无错误CRC。上述文件校验不等于Windows导入。
+- 已修复并加固`PreflightPBRAtlases.py（用户批准图集来源预检）`：固定ZIP哈希、独立PNG 512像素/8位RGB-Alpha与灰度通道核对、15个合格导入候选上限，以及重复执行时暂存Manifest冲突拒绝。
+- `ImportPBRAtlasAssetsUE58.py（UE材质替换工具）`现在必须读取AssetImportTask返回的`imported_object_paths（实际导入路径集合）`，否则明确失败；同时记录每份旧Texture2D和MaterialInstance的备份路径与SHA-256，断点重跑新增通道资产时也需先备份。
+- `RunPBRAtlasImport.ps1（安全分批入口）`已强制覆旧时携带`-Batch 1/2/3`，三批日志独立保存；`Tests/Assets/TestAmbientPBRAtlasPipeline.py（导入安全回归）`已增补检查，共21项静态检查通过，Python编译/PowerShell解析及本次目标Git差异检查全部成功。
+- **本轮未实际替换旧材质，也未开始客户端Cook或角色工作室视觉验收。** 唯一待用户动作：把本次已经上传聊天的ZIP保存到Windows项目`SourceArt/AmbientNature/Incoming（待导入文件夹）`。文件到达后先只读预检，然后三个批次执行备份覆旧；不能把用户二次聊天上传误报为Windows已收到ZIP。
+
+## 九、最新安全增量（2026-10-11 晚间）
+
+- 当前会话重新直接验证上传ZIP：6张原始图集及132张贴图的SHA-256与8位PNG通道均通过，共33套，15套已初审可参与自动覆盖，其余18套继续阻断。本轮官方HWebCodex文件导入接口分别采用用户文件ID、宿主文件路径和结构化原始文件引用尝试后，都返回可信来源校验失败；Windows项目Incoming仍无ZIP，**本轮零份项目PBR材质被新图集覆盖**。
+- 新增`StagePBRFromDownloads.ps1（Windows下载目录可信自动接收入口）`：用户仅需从本会话下载ZIP到本机Downloads；随后HWebCodex可在Windows直接执行SHA-256匹配、原子复制到固定工程Incoming，发现不同版本拒绝覆盖。实际在ZIP尚未下载到Windows时运行，返回`PBR_SOURCE_WAITING_FOR_WINDOWS_DOWNLOAD`，并已打开本机下载目录。
+- `RunPBRAtlasImport.ps1（PBR批次导入）`现已集成上述自动接收；使用`-Apply`覆盖前检测`UnrealEditor.exe（虚幻编辑器）`及其他编辑器实例，避免并发写入同一.uasset。当前用户有运行中的编辑器进程，**必须先手动保存并正常关闭才能覆旧**，工具不会强行关闭。
+- E盘仅余约1.6GB、D盘约162GB，导入脚本在E盘不足3GB时将暂存解包内容与旧资产备份放到D盘`D:\DivineBeastsWorkspace_PBR_WorkCache_20261011（非项目临时缓存）`；**目标.uasset仍写固定DivineBeastsWorkspace**。若项目盘低于1.2GB或备份盘低于700MB则拒绝覆盖。
+- 新增`AmbientPBRPhysicalScaleManifest.json（33种物种视觉尺寸清单，单位cm）`；原ZIP内的物种尺寸、导入权限必须与清单一致才允许覆盖。该清单明确`niagaraSizeApplied=false`：材质贴图更新并不能自动调节Niagara的Particles.SpriteSize，形状/大小需后续单独调参和实机审核。
+- `Tests/Assets/TestAmbientPBRAtlasPipeline.py（PBR流水线静态门禁）`增加数据身份、备份冲突、下载自动接收、编辑器占用、临时磁盘分流检查。当前实际Windows验证：29项通过、0失败，Python编译与PowerShell 5.1脚本解析通过；仅证明流程安全，不能当作图集已进入UE或Niagara效果合格。

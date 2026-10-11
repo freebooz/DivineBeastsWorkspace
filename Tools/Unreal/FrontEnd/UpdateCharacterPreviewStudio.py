@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """预览工作室光照与构图更新，仅由锁定UE编辑器/Monolith执行。
 要求当前打开既定工作室地图，无未保存的其他用户资产。保留既有舞台身份，
-更新三点动态光，增加无碰撞背景/地面并固定曝光；只保存此地图。
+仅旧室内工作室更新三点光；圣境场景复用唯一月光作者规则，避免旧工具重跑恢复日光。
+增加无碰撞背景/地面并固定曝光；只保存此地图。
 不进入正式服务器世界，不改登录流程、不创建用户界面或权威碰撞。
 """
 import json
+import runpy
+from pathlib import Path
 import unreal
 
 PATH = '/DBAFrontEndPack/Maps/L_DBA_CharacterStudio'
@@ -12,6 +15,7 @@ world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_wor
 assert world.get_path_name().split('.')[0] == PATH, '先通过Monolith打开既定预览工作室'
 actors_api = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 actors = {a.get_actor_label(): a for a in actors_api.get_all_level_actors()}
+has_sanctuary = any(item.actor_has_tag('DBA.Preview.ZodiacSanctuary') for item in actors.values())
 
 def actor(label, cls, position, scale=None):
     """复用命名Actor，不重复生成；新增对象只归当前工作室关卡。"""
@@ -26,11 +30,11 @@ def actor(label, cls, position, scale=None):
         item.set_actor_scale3d(unreal.Vector(*scale))
     return item
 
-for label, position, lumens in (
+for label, position, lumens in (() if has_sanctuary else (
     ('PreviewKeyLight', (220, 120, 230), 3000),
     ('PreviewFillLight', (120, -170, 140), 1800),
     ('PreviewRimLight', (-120, 80, 230), 2200),
-):
+)):
     item = actor(label, unreal.PointLight, position)
     component = item.get_component_by_class(unreal.PointLightComponent)
     component.set_mobility(unreal.ComponentMobility.MOVABLE)
@@ -72,6 +76,12 @@ settings.set_editor_property('override_auto_exposure_bias', True)
 settings.set_editor_property('auto_exposure_bias', 0.0)
 volume.set_editor_property('settings', settings)
 
+# 圣境与旧室内工作室不能共用曝光强度：仅调用作者文件的明确光照函数，
+# 不导入/重建场景、不重设舞台和用户手工Actor。真实执行仍须由Monolith触发。
+if has_sanctuary:
+    authoring = runpy.run_path(str(Path(__file__).with_name('ImportZodiacSanctuary.py')))
+    authoring['configure_studio_moonlight'](actors)
+
 stage = actors['CharacterPreviewStage']
 pivot = next(c for c in stage.get_components_by_class(unreal.SceneComponent) if c.get_name() == 'CameraPivot')
 # 用户指定的正面完整角色构图；环境修复重跑时同样保留该镜头，不恢复高处广角远景。
@@ -85,4 +95,4 @@ camera.set_editor_property('aspect_ratio', 16./9.)
 camera.set_editor_property('override_aspect_ratio_axis_constraint', True)
 camera.set_editor_property('aspect_ratio_axis_constraint', unreal.AspectRatioAxisConstraint.ASPECT_RATIO_MAINTAIN_YFOV)
 assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level(), '保存工作室失败'
-print(json.dumps({'map': PATH, 'lightUnits': 'Lumens', 'fixedExposureLinearBrightness': 1, 'actors': list(actors.keys())}, ensure_ascii=False))
+print(json.dumps({'map': PATH, 'lighting': 'Moonlight' if has_sanctuary else 'LegacyIndoor', 'fixedExposureLinearBrightness': .4 if has_sanctuary else 1, 'actors': list(actors.keys())}, ensure_ascii=False))

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """生成东方神话前端的Monolith声明式布局文档，不创建或伪造任何UE二进制资产。
 公共UI视觉归DBAUIPack_Core，命令及生命周期归DBAClient；输出在Saved供Monolith消费和审核。
-背景源图独立登记，输入／按钮为固定逻辑像素；只有背景随视口铺满，不缩放输入控件。
+背景源图独立登记，输入／按钮为固定逻辑像素；背景与品牌图独立缩放，不缩放输入控件。
 Monolith 0.20.3构建器对零背景尺寸采用默认偏移；生成后须用set_slot_property将背景四边offsets清零。
 UE5.8输入字体位于WidgetStyle.TextStyle.Font.Size；须执行输出的InputFontProperties后置动作，不能只依赖fontSize声明。
 """
@@ -34,6 +34,9 @@ def text(identity,value,size=16,tint=WHITE,slot=None):
     return node("TextBlock",identity,slot=slot,content={"text":value,"fontSize":size,"fontColor":tint,"wrapMode":"Auto"})
 
 def panel(identity,slot,tint=None):
+    """面板背景必须低于兄弟控件，避免后置的不透明CommonBorder遮住选择按钮。"""
+    if identity in ("HeroPanel", "CreationInfoPanel", "RosterPanel", "JourneyGuidePanel"):
+        slot["zOrder"] = 2
     return node("Border",identity,slot=slot,style={"background":tint or color("0B121A",235),"visibility":"HitTestInvisible"})
 
 def button(identity,label,slot):
@@ -47,14 +50,16 @@ def document(name,parent,children):
 
 def login():
     """参考大型MMO的左上品牌、中央偏下登录表单；只借鉴布局，保留原创视觉与原生命令合同。"""
-    # 仅封面图进入ScaleBox，保持原稿长宽比；字体、LOGO、输入与按钮仍是RootCanvas独立固定控件。
+    # 封面与品牌图分别等比缩放；输入与文字保持固定尺寸，不放入这两个ScaleBox。
     children=[node("ScaleBox","CoverBackgroundScale",[
         node("Image","MythicBackground",style={"visibility":"HitTestInvisible"},
              content={"brushPath":"/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop.T_DBA_NatureLoginBackdrop"})],
         slot=place("stretch_fill",0,0,0,0,z=0),style={"visibility":"HitTestInvisible"}),
-        # 2026-10-11用户最新原稿为2172×724横版；固定3:1比例，沿用稳定资源身份。
-        node("Image","BrandLogo",slot=place("top_center",0,6,420,140,.5,0),style={"visibility":"HitTestInvisible"},
-             content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogo.DBA_MythicLogo"}),
+        # 后置动作将该容器锚点设为视口28%至72%；原稿画刷必须声明3:1，不能沿用旧方形LOGO尺寸。
+        node("ScaleBox","BrandLogoScale",[
+            node("Image","BrandLogo",style={"visibility":"HitTestInvisible"},
+                 content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogo.DBA_MythicLogo"})],
+            slot=place("stretch_fill",0,0,0,0),style={"visibility":"HitTestInvisible"}),
         text("WorldTagline","山海为界 · 万灵共生",13,WHITE,place("bottom_left",26,-24,280,22,0,1)),
         text("WorldCaption","神兽联盟",11,MUTED,place("bottom_right",-26,-24,150,22,1,1)),
         # 中央锚点只移动表单，不改变逻辑像素尺寸；960×540时仍为完整可用的首屏。
@@ -67,6 +72,25 @@ def login():
         text("BusyIndicator","正在登录…",12,GOLD,place("center",0,130,284,20,0.5,0)),
         text("MaintenanceText","服务器维护中，请稍后再试",12,GOLD,place("center",0,224,284,26,0.5,0)),
         text("ErrorText","",12,color("E69586"),place("center",0,224,284,34,0.5,0))]
+    # 当前原稿圆形登录区域与两个输入框采用独立固定控件；底部参考线距窗口240像素。
+    # 名称与密码只存在原生瞬态输入控件，布局生成器不写认证默认值。
+    active_positions = {"AccountInput": (-122, -278, 284, 42),
+                        "PasswordInput": (-122, -207, 284, 42),
+                        "LoginButton": (172, -272, 104, 104),
+                        "BusyIndicator": (-122, -149, 284, 20),
+                        "MaintenanceText": (-122, -119, 284, 26),
+                        "ErrorText": (-122, -119, 284, 34)}
+    for item in children:
+        if item["id"] in active_positions:
+            item["slot"] = place("bottom_center", *active_positions[item["id"]])
+        if item["id"] in ("AccountLabel", "PasswordLabel", "LoginHint"):
+            item.setdefault("style", {})["visibility"] = "Collapsed"
+        if item["id"] == "LoginButton":
+            item["children"][0].setdefault("style", {})["visibility"] = "Collapsed"
+    children += [node("Image", "LoginBronzeFrame", slot=place("bottom_center",0,-200,600,315,.5,.5,z=5),
+                      style={"visibility":"HitTestInvisible"},
+                      content={"brushPath":"/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureLoginPanelReference.M_DBA_NatureLoginPanelReference"}),
+                 node("Button", "PasswordRevealButton", slot=place("bottom_center",106,-203,42,36,z=12))]
     return document("WBP_DBA_UI_Login","DivineBeastsLoginScreen",children)
 
 def character(create):
@@ -158,15 +182,41 @@ preview_transparency_actions = [
     json.dumps(preview_transparency_actions, ensure_ascii=False, indent=2), encoding="utf-8")
 
 # 原生UISpec构建后须执行背景专用后置动作；不可把ScaleBox移到整页根部缩放字体。
+# 等比铺满采用max(窗口宽/1672,窗口高/941)，多余图像居中裁切；禁止Fill非等比拉伸。
+# 四边零偏移与子图居中也必须显式落盘，避免再次生成后继承旧容器的留边或偏移。
 cover_actions = [
+    {"action": "set_slot_property", "params": {
+        "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+        "widget_name": "CoverBackgroundScale",
+        "anchors": {"min_x": 0, "min_y": 0, "max_x": 1, "max_y": 1},
+        "offsets": {"left": 0, "top": 0, "right": 0, "bottom": 0}, "z_order": 0}},
+    {"action": "set_slot_property", "params": {
+        "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+        "widget_name": "MythicBackground", "h_align": "Center", "v_align": "Center"}},
+] + [
     {"action": "set_widget_property", "params": {
         "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
         "widget_name": "CoverBackgroundScale", "property_name": prop,
         "value": value, "raw_mode": True}}
-    for prop, value in (("Stretch", "ScaleToFill"), ("Clipping", "ClipToBounds"))
+    for prop, value in (("Stretch", "ScaleToFill"), ("StretchDirection", "Both"),
+                        ("Clipping", "ClipToBounds"))
 ] + [{"action": "set_image", "params": {
     "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login", "widget_name": "MythicBackground",
     "texture_path": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop",
     "size": {"x":1672,"y":941}, "tint_color":"#FFFFFFFF"}}]
 (OUTPUT / "CoverBackgroundProperties.json").write_text(
     json.dumps(cover_actions, ensure_ascii=False, indent=2), encoding="utf-8")
+
+# 独立品牌适配动作；仅修改图像容器和画刷原生比例，不涉及输入字体、认证或页面命令。
+logo_actions = [{"action": "set_slot_property", "params": {
+    "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login", "widget_name": "BrandLogoScale",
+    "anchors": {"min_x": .28, "min_y": .01, "max_x": .72, "max_y": .30},
+    "offsets": {"left": 0, "top": 0, "right": 0, "bottom": 0}, "z_order": 10}}]
+for widget, prop, value in (("BrandLogoScale", "Stretch", "ScaleToFit"),
+                           ("BrandLogoScale", "StretchDirection", "Both"),
+                           ("BrandLogo", "Brush.ImageSize", "(X=2172,Y=724)")):
+    logo_actions.append({"action": "set_widget_property", "params": {
+        "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login", "widget_name": widget,
+        "property_name": prop, "value": value, "raw_mode": True}})
+(OUTPUT / "LogoViewportProperties.json").write_text(
+    json.dumps(logo_actions, ensure_ascii=False, indent=2), encoding="utf-8")

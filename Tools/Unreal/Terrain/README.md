@@ -19,6 +19,16 @@
 12. 最终仍需Cook/Stage/UnrealPak、PCG真实生成与人工签收。
 13. CheckGaeaTileSeams.py：对Gaea 2.3真实多瓦片R16与九张Mask做基于SHA256和明确Y方向的左右、上下接缝比对；--self-test只验证算法拦截故意制造的裂缝，当前未取得真实Gaea瓦片的可验收记录。
 
+## 2026-10-11 新款CliffRock01（青灰悬崖岩）候选PBR制作
+
+- AcquireCliffRock01Source.ps1：Poly Haven真实CC0裸岩Marble Cliff 05四张4096PNG，官方MD5与本地SHA256核对；原始源不能覆盖。
+- GenerateCliffRock01BlueGrayAlbedo.py：只派生青灰BaseColor（线性亮度保留），NormalDX/ORM/16位Height原样保留；--verify校验可重复性。
+- ReviewCliffRock01PBR.py：四张真实源图、2×2平铺、旧暖色与青灰对照和量化诊断，不假冒UE截图。
+- AuthorCliffRock01UE.py：创建4张原生Texture2D、10节点PBR材质、预览MI和十层Rock专属MI；旧林地Rock01与Village地图均不覆盖。
+- AuthorCliffRock01WorldAlignedUE.py：创建UE原生三向世界对齐14节点Material及20m扫描尺度MI；临时残缺母材质经过备份、单路径节点重建后恢复，未触碰其它资产。
+- VerifyCliffRock01UEAssets.py：独立UE5.8进程验证4纹理、2 Material、3MI、函数数目、2000cm投射尺度及纹理引用。
+- 限制：真实UE三向预览出现暗黑/棋盘格，仍需可控光照的实际悬崖审核关卡复测及GPU验收；人工签收待用户本人批准。说明见Docs/Implementation/TerrainCliffRock01PBRManualReview_20261011.md。
+
 ## 已经实际通过的证据（2026-10-11）
 
 - 技术源PNG 50/50，纹理QA、SHA256、16位高程、单像素图层权重总和255全部通过。

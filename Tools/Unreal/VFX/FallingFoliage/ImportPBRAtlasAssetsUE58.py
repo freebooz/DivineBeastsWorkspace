@@ -10,15 +10,19 @@ MobaCommon（通用MOBA）不产生额外纯表现实现；Dedicated Server不�
 风险：UE5.8 shader/GPU/区域实际运行/打包验收属于后续门禁，成功保存不等于播放成功。
 """
 from __future__ import annotations
-import hashlib, json, os, shutil, traceback
+import hashlib, json, math, os, shutil, traceback
 from pathlib import Path
 import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve().parent
 SOURCE=ROOT/"Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/SourceArt/AmbientNature"
-STAGE=ROOT/"Saved/Validation/FallingFoliage/PBRAtlas20261011/Stage"
+PHYSICAL_META=SOURCE/"AmbientPBRPhysicalScaleManifest.json"
+CACHE_ROOT=Path(os.environ.get("AMBIENT_PBR_CACHE_ROOT",str(ROOT/"Saved/Validation/FallingFoliage/PBRAtlas20261011")))
+if not CACHE_ROOT.is_absolute():
+    raise RuntimeError("PBR暂存目录必须为绝对路径")
+STAGE=CACHE_ROOT/"Stage"
 REPORT=ROOT/"Saved/Validation/FallingFoliage/PBRAtlas20261011/UEBatchImportReport.json"
-BACKUP=ROOT/"Saved/Validation/FallingFoliage/PBRAtlas20261011/UEBackup"
+BACKUP=CACHE_ROOT/"UEBackup"
 CONTENT=ROOT/"Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/AmbientNature"
 PREFIX="/DBAPresentationPack_Core/VFX/Environment/AmbientNature"
 MASTER="/GamePlatformVFX/Environment/AmbientNature/Materials/M_GP_AmbientNature_PBR_Foliage"
@@ -29,7 +33,9 @@ TOOLS=unreal.AssetToolsHelpers.get_asset_tools()
 LIB=unreal.MaterialEditingLibrary
 OUTPUT={"engine":str(unreal.SystemLibrary.get_engine_version()),"project":str(unreal.Paths.get_project_file_path()),
         "mode":MODE,"styles":[],"failures":[],"warnings":[],
-        "editorSavedAssets":[],"runtimeVisualValidated":False,"clientCookValidated":False}
+        "editorSavedAssets":[],"originalAssetBackups":[],
+        "batch":os.environ.get("AMBIENT_PBR_BATCH_INDEX","0"),
+        "runtimeVisualValidated":False,"clientCookValidated":False}
 
 def expected_identity():
     if not OUTPUT["engine"].startswith("5.8.") or not OUTPUT["project"].replace("\\","/").endswith("/DivineBeastsArena.uproject"):
@@ -52,30 +58,43 @@ def copy_before_edit(path):
         raise RuntimeError("目标UE资产文件不存在，拒绝覆盖："+str(file))
     target=BACKUP/(relative+".uasset")
     target.parent.mkdir(parents=True,exist_ok=True)
+    current_hash=hashlib.sha256(file.read_bytes()).hexdigest()
     if not target.exists():
         shutil.copy2(file,target)
-    return str(target),hashlib.sha256(file.read_bytes()).hexdigest()
+    backup_hash=hashlib.sha256(target.read_bytes()).hexdigest()
+    if backup_hash!=current_hash:
+        raise RuntimeError("当前资产与此前备份已不一致（可能存在部分旧批次导入或其他编辑器修改），拒绝二次覆盖："+path)
+    OUTPUT["originalAssetBackups"].append({
+        "asset":path,"projectFile":str(file),
+        "projectFileSha256BeforeImport":current_hash,
+        "backupFile":str(target),"backupFileSha256":backup_hash,
+        "originalBackupReused":False})
+    return str(target),current_hash
 
 def reimport_texture(style,kind,source,overwrite=True):
     path,name=item_path(style,kind)
-    if overwrite:
-        if not ED.does_asset_exist(path):
-            raise RuntimeError("现有UE纹理身份失效："+path)
-    else:
-        if ED.does_asset_exist(path):
-            tex=ED.load_asset(path)
-            if not isinstance(tex,unreal.Texture2D):
-                raise TypeError("同名纹理存在其他资产类型："+path)
-            return tex
+    target_exists=ED.does_asset_exist(path)
+    if overwrite and not target_exists:
+        raise RuntimeError("既有UE纹理身份失效："+path)
+    # Roughness/Opacity若为断点恢复时已存在，同样校验来源并重新导入；旧资产先备份。
+    if target_exists and not overwrite:
+        existing=ED.load_asset(path)
+        if not isinstance(existing,unreal.Texture2D):
+            raise TypeError("同名纹理存在其他资产类型："+path)
+        copy_before_edit(path)
     task=unreal.AssetImportTask()
     settings=(
         ("filename",str(source)),("destination_path",PREFIX+"/Textures"),
         ("destination_name",name),("automated",True),
-        ("replace_existing",overwrite),("save",False)
+        ("replace_existing",target_exists),("save",False)
     )
     for key,value in settings:
         task.set_editor_property(key,value)
     TOOLS.import_asset_tasks([task])
+    # Unreal可能返回旧已加载对象但实际导入失败；必须验证AssetImportTask产生了目标路径。
+    imported=task.get_editor_property("imported_object_paths")
+    if not imported or not any(name in str(item) for item in imported):
+        raise RuntimeError("UE导入任务未报告成功资产，拒绝将旧纹理冒充新导入："+path)
     tex=ED.load_asset(path)
     if not isinstance(tex,unreal.Texture2D):
         raise RuntimeError("引擎实际纹理导入失败："+path)
@@ -97,7 +116,7 @@ def reimport_texture(style,kind,source,overwrite=True):
     print("AMBIENT_PBR_TEXTURE_IMPORTED",style,kind,flush=True)
     return tex
 
-def assign_material(style,textures,master,sizes):
+def assign_material(style,textures,master):
     path=PREFIX+"/Materials/MI_DBA_Ambient_"+style
     mi=ED.load_asset(path)
     if not isinstance(mi,unreal.MaterialInstanceConstant):
@@ -142,6 +161,21 @@ def load_source():
     obj=json.loads(path.read_text(encoding="utf-8"))
     if len(obj.get("styles",[]))!=33:
         raise RuntimeError("拆分纹理清单不是预期的33套")
+    if not PHYSICAL_META.is_file():
+        raise FileNotFoundError("缺少用户批准的物种物理尺寸/审核策略清单："+str(PHYSICAL_META))
+    physical=json.loads(PHYSICAL_META.read_text(encoding="utf-8"))
+    if (physical.get("sourceZipSha256")!="07c5b03e056a0318af8c2368cc3a06c39ff2ef26c181b2912ef2f78f57084015"
+            or len(physical.get("species",[]))!=33):
+        raise RuntimeError("物理尺寸清单与本次批准的PBR图集身份不一致")
+    sizes={x["id"]:x for x in physical["species"]}
+    if len(sizes)!=33:
+        raise RuntimeError("物理尺寸清单含重复的物种ID")
+    for info in obj["styles"]:
+        ref=sizes.get(info["id"])
+        if (not ref or ref["importPolicy"]!=info["importPolicy"] or
+            not math.isclose(float(ref["widthCm"]),float(info["physicalWidthCm"]),rel_tol=0,abs_tol=0.001) or
+            not math.isclose(float(ref["heightCm"]),float(info["physicalHeightCm"]),rel_tol=0,abs_tol=0.001)):
+            raise RuntimeError("图集物理尺寸或自动导入门禁与项目清单不符："+info["id"])
     candidates=[s for s in obj["styles"] if s.get("importPolicy")=="auto_candidate" and s.get("kind") in ("petal","leaf")]
     if NAME_FILTER:
         extra=set(NAME_FILTER)-{s["id"] for s in candidates}
@@ -179,8 +213,11 @@ def run():
         OUTPUT["success"]=True
         return
     free=shutil.disk_usage(ROOT).free
-    if free<1_400_000_000:
-        raise RuntimeError("E盘剩余空间不足1.4GB，不安全导入并保存资产，避免其他任务构建失败")
+    if free<1_200_000_000:
+        raise RuntimeError("项目盘剩余空间不足1.2GB，无法保证UE资产保存的安全性")
+    BACKUP.parent.mkdir(parents=True,exist_ok=True)
+    if shutil.disk_usage(BACKUP.parent).free<700_000_000:
+        raise RuntimeError("材质原资产备份盘剩余空间不足700MB，不执行覆盖")
     # 建立整批原始资产备份，保留原材质身份及恢复证据。
     for s in chosen:
         name=s["id"]
@@ -196,11 +233,11 @@ def run():
             if not spec:raise RuntimeError("缺PBR通道："+name+"/"+kind)
             assets[kind]=reimport_texture(name,kind,STAGE/spec["file"],
                      overwrite=kind in ("Albedo","Normal"))
-        mat=assign_material(name,assets,master,
-             (s["physicalWidthCm"],s["physicalHeightCm"]))
+        mat=assign_material(name,assets,master)
         renderer_count=verify_existing_niagara(name,mat)
         OUTPUT["styles"].append({"id":name,"maps":4,"miPath":mat.get_path_name(),
               "niagaraRenderersChecked":renderer_count,"visualSizeCm":[s["physicalWidthCm"],s["physicalHeightCm"]],
+              "niagaraSpriteSizeApplied":False,
               "status":"ue_assets_saved_visual_pending"})
     OUTPUT["success"]=True
 

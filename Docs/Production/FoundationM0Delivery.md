@@ -126,3 +126,7 @@ pwsh -NoProfile -File Build/Game/RunFoundation.ps1 -Start -FoundationStandalone 
 - 新Village专服已运行并注册新Boot身份；两个可见Client从空白登录页启动，无自动登录。后续人工登录、角色创建/选择、共同实例准入和画面结论以本轮`ReleaseState.json`及`ClientFlowEvidence.json`为准，未获人工确认前不得将其标记通过。
 
 中文说明审核范围包含本轮契约测试、构建入口和UI资产回归前置条件；历史源码中文注释的全量合规仍未完成审计。
+
+### 前端Stage空间控制补充
+
+历史前端发布包每次复制约2.7GB PDB导致E盘不足；已精确清理28份未使用的旧Stage符号，释放69.69 GiB，保留当前服务器和近期回退包。`CookFrontEndClient.ps1`新增并默认启用`SkipDebugSymbols`，需要随包调试时使用`-SkipDebugSymbols:$false`；原始符号仍由Game/Binaries管理。省略Stage符号不改变目标配置、Cook或资源门禁。最新7e20试验Cook已验证该开关，但花瓣颜色与前端画面验收尚未完成，未更新人工客户端发布选择。详见`../Implementation/FrontEndVisualRepair_20261011.md`。

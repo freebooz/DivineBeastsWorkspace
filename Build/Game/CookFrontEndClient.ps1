@@ -10,6 +10,9 @@
 退出2表示未执行，1表示检查失败；引擎非零码原样保留。通过不等于新手村网络准入通过。
 #>
 param([string]$EngineRoot, [switch]$Cook,
+    # 默认不向每个独占Stage重复复制数GB的PDB；原始调试符号仍归Game/Binaries。
+    # 需要随包调试时显式传-SkipDebugSymbols:$false，不降低配置、不跳过Cook与资产容器检查。
+    [switch]$SkipDebugSymbols=$true,
     # 默认发行前端保持开发资源隔离；候选技能必须显式选择用户批准的开发客户端配置。
     [ValidateSet('FrontEndClient','VillageDevelopmentClient')][string]$CustomConfig='FrontEndClient',
     [ValidateRange(1,86400)][int]$TimeoutSeconds=1800, [guid]$RunId=[guid]::NewGuid())
@@ -36,6 +39,8 @@ try {
         '-clientconfig=Development','-client','-ddc=NoZenLocalFallback',
         "-AdditionalCookerOptions=-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback",
         ('-map='+($maps -join '+')), "-CookOutputDir=$cookDirectory", "-stagingdirectory=$stageDirectory")
+    if ($SkipDebugSymbols) { $arguments += '-nodebuginfo' }
+    $details.SkipDebugSymbols = [bool]$SkipDebugSymbols
     if ($CustomConfig -eq 'VillageDevelopmentClient') {
         # Cook的CustomConfig不决定Stage：Stage仍按目标收据过滤Config/Custom目录。
         # UAT顶层CustomConfig又会被UBT配置缓存读取，影响其他Stage层，因此只精确白名单这两份开发INI。

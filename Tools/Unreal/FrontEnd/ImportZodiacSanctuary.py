@@ -253,6 +253,50 @@ def import_resources(start=0, count=4, prepare_materials=False):
         print('SANCTUARY_MESH_SAVED ' + mesh.get_path_name())
 
 
+def configure_studio_moonlight(actors):
+    """共用选角/创建场景采用柔和冷色月光；仅维护本地展示灯，不触碰角色和玩法。
+
+    固定线性曝光与月光照度共同校准，不能只将日光调低后保留512曝光导致黑屏。
+    宽光源补光保持面部可读；关闭自动曝光适应，避免页面停留后忽明忽暗。
+    """
+    sun = actors['DirectionalLight']
+    sun.set_actor_rotation(unreal.Rotator(pitch=-25, yaw=-150, roll=0), False)
+    light = sun.get_component_by_class(unreal.DirectionalLightComponent)
+    light.set_mobility(unreal.ComponentMobility.MOVABLE)
+    light.set_editor_property('intensity', 2.4)
+    light.set_light_color(unreal.LinearColor(.48, .66, 1., 1.), False)
+    light.set_editor_property('atmosphere_sun_light', True)
+    light.set_editor_property('light_source_angle', 1.5)
+    sky = actors['SkyLight'].get_component_by_class(unreal.SkyLightComponent)
+    sky.set_mobility(unreal.ComponentMobility.MOVABLE)
+    sky.set_editor_property('real_time_capture', True)
+    sky.set_editor_property('intensity', .35)
+    api = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    for label, location, lumens in (
+            ('PreviewMoonFill', (180, -220, 240), 180.),
+            ('PreviewMoonRim', (-160, 160, 230), 220.)):
+        item = actors.get(label) or api.spawn_actor_from_class(unreal.PointLight, unreal.Vector(*location))
+        item.set_actor_label(label)
+        item.set_actor_location(unreal.Vector(*location), False, False)
+        component = item.get_component_by_class(unreal.PointLightComponent)
+        component.set_mobility(unreal.ComponentMobility.MOVABLE)
+        component.set_editor_property('intensity_units', unreal.LightUnits.LUMENS)
+        component.set_editor_property('intensity', lumens)
+        component.set_editor_property('attenuation_radius', 700.)
+        component.set_editor_property('source_radius', 100.)
+        component.set_editor_property('soft_source_radius', 120.)
+        component.set_light_color(unreal.LinearColor(.72, .84, 1., 1.), False)
+    volume = actors['PreviewExposure']
+    settings = volume.get_editor_property('settings')
+    assert unreal.SystemLibrary.get_console_variable_int_value('r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange') == 0, '曝光单位变化，必须重新校准'
+    for prop in ('min', 'max'):
+        settings.set_editor_property('override_auto_exposure_' + prop + '_brightness', True)
+        settings.set_editor_property('auto_exposure_' + prop + '_brightness', .4)
+    settings.set_editor_property('override_auto_exposure_bias', True)
+    settings.set_editor_property('auto_exposure_bias', 0.)
+    volume.set_editor_property('settings', settings)
+
+
 def author_studio():
     """原位装配共用预览地图，保留稳定软路径、平台舞台和已有风吹锚点。
 
@@ -298,30 +342,12 @@ def author_studio():
     camera.set_editor_property('aspect_ratio', 16./9.)
     camera.set_editor_property('override_aspect_ratio_axis_constraint', True)
     camera.set_editor_property('aspect_ratio_axis_constraint', unreal.AspectRatioAxisConstraint.ASPECT_RATIO_MAINTAIN_YFOV)
-    sun = actors['DirectionalLight']; sun.set_actor_rotation(unreal.Rotator(pitch=-34, yaw=-150, roll=0), False)
-    light = sun.get_component_by_class(unreal.DirectionalLightComponent)
-    light.set_mobility(unreal.ComponentMobility.MOVABLE)
-    # 户外日光按照度配置，不能复用旧室内工作室的数勒克斯与曝光1，否则整体近黑。
-    light.set_editor_property('intensity', 20000.)
-    light.set_editor_property('atmosphere_sun_light', True)
-    sky = actors['SkyLight'].get_component_by_class(unreal.SkyLightComponent)
-    sky.set_mobility(unreal.ComponentMobility.MOVABLE)
-    sky.set_editor_property('real_time_capture', True)
-    sky.set_editor_property('intensity', .8)
+    configure_studio_moonlight(actors)
     fog = actors['ExponentialHeightFog'].get_component_by_class(unreal.ExponentialHeightFogComponent)
     fog.set_editor_property('fog_density', .025)
     fog.set_editor_property('fog_height_falloff', .2)
     fog.set_editor_property('start_distance', 550.)
     fog.set_editor_property('enable_volumetric_fog', True)
-    volume = actors['PreviewExposure']; settings = volume.get_editor_property('settings')
-    settings.set_editor_property('override_auto_exposure_min_brightness', True)
-    settings.set_editor_property('override_auto_exposure_max_brightness', True)
-    assert unreal.SystemLibrary.get_console_variable_int_value('r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange') == 0, '曝光单位变化，必须重新校准'
-    settings.set_editor_property('auto_exposure_min_brightness', 512.)
-    settings.set_editor_property('auto_exposure_max_brightness', 512.)
-    settings.set_editor_property('override_auto_exposure_bias', True)
-    settings.set_editor_property('auto_exposure_bias', 0.)
-    volume.set_editor_property('settings', settings)
     assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level(), '工作室保存失败'
     unreal.EditorLevelLibrary.set_level_viewport_camera_info(camera.get_world_location(), camera.get_world_rotation())
     report = {'map': STUDIO, 'environment_scale': ENVIRONMENT_SCALE, 'mesh_actor_count': len(MANIFEST['objects']), 'source_blend_sha256': hashlib.sha256((SOURCE / 'DBA_ZodiacSanctuary.blend').read_bytes()).hexdigest(), 'backup': str(backup), 'stage_class': stage.get_class().get_name(), 'camera_location_cm': str(camera.get_world_location()), 'actions': ['FBX import', 'PBR material graph', 'preserve stage and foliage anchor', 'save studio'], 'client_cook': 'not_run'}

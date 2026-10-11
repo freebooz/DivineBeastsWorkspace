@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "sourceZipSha256": "07c5b03e056a0318af8c2368cc3a06c39ff2ef26c181b2912ef2f78f57084015",
+  "physicalUnit": "cm",
+  "noteZh": "外观尺寸是基于常见物种形态的视觉估算值，并非实物扫描测量。须在Niagara中独立绑定SpriteSize（精灵物理尺寸）并实际验证；创建此清单不等于改变粒子大小。",
+  "niagaraSizeApplied": false,
+  "species": [
+    {
+      "id": "OsmanthusBlossom",
+      "widthCm": 0.7,
+      "heightCm": 0.7,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "RosePetal",
+      "widthCm": 4.5,
+      "heightCm": 5,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "GenericPetalPink",
+      "widthCm": 2.6,
+      "heightCm": 2.8,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "GenericPetalWhite",
+      "widthCm": 2.6,
+      "heightCm": 2.8,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "GenericPetalRed",
+      "widthCm": 2.6,
+      "heightCm": 2.8,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "RedSpiderLilyPetal",
+      "widthCm": 1.2,
+      "heightCm": 7,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "PearPetal",
+      "widthCm": 2.3,
+      "heightCm": 3,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "CherryPetal",
+      "widthCm": 2,
+      "heightCm": 2.4,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "PlumPetal",
+      "widthCm": 1.2,
+      "heightCm": 1.5,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "ApricotPetal",
+      "widthCm": 1.8,
+      "heightCm": 2.2,
+      "importPolicy": "review_only"
+    },
+    {
+      "id": "MagnoliaPetal",
+      "widthCm": 5,
+      "heightCm": 8,
+      "importPolicy": "review_only"
+    },
+    {
+      "id": "LotusPetal",
+      "widthCm": 7,
+      "heightCm": 12,
+      "importPolicy": "review_only"
+    },
+    {
+      "id": "PlaneLeaf",
+      "widthCm": 14,
+      "heightCm": 15,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "WillowLeaf",
+      "widthCm": 1.8,
+      "heightCm": 11,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "PoplarLeaf",
+      "widthCm": 7,
+      "heightCm": 9,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "OakLeaf",
+      "widthCm": 10,
+      "heightCm": 13,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "BirchLeaf",
+      "widthCm": 6,
+      "heightCm": 8,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "YellowLeaf",
+      "widthCm": 12,
+      "heightCm": 13,
+      "importPolicy": "auto_candidate"
+    },
+    {
+      "id": "RedLeaf",
+      "widthCm": 12,
+      "heightCm": 13,
+      "importPolicy": "review_only"
+    },
+    {
+      "id": "DryLeaf",
+      "widthCm": 9,
+      "heightCm": 12,
+      "importPolicy": "review_only"
+    },
+    {
+      "id": "PineNeedle",
+      "widthCm": 14,
+      "heightCm": 18,
+      "importPolicy": "review_only"
+    },
+    {
+      "id": "PalmLeaf",
+      "widthCm": 50,
+      "heightCm": 55,
+      "importPolicy": "review_only"
+    },
+    {
+      "id": "WillowCatkin",
+      "widthCm": 3,
+      "heightCm": 8,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "DandelionSeed",
+      "widthCm": 4,
+      "heightCm": 6,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "Feather",
+      "widthCm": 3,
+      "heightCm": 10,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "PaperFragment",
+      "widthCm": 6,
+      "heightCm": 6,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "Confetti",
+      "widthCm": 1.5,
+      "heightCm": 1.5,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "Ash",
+      "widthCm": 1.4,
+      "heightCm": 1.4,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "Ember",
+      "widthCm": 0.6,
+      "heightCm": 1,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "SandDust",
+      "widthCm": 3,
+      "heightCm": 3,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "FloatingDust",
+      "widthCm": 3,
+      "heightCm": 3,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "Spore",
+      "widthCm": 1,
+      "heightCm": 1,
+      "importPolicy": "fx_reference_only"
+    },
+    {
+      "id": "Firefly",
+      "widthCm": 1.2,
+      "heightCm": 2.3,
+      "importPolicy": "fx_reference_only"
+    }
+  ]
+}

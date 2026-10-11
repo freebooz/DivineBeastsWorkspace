@@ -5,19 +5,41 @@
 支持--inspect/--extract；解包校验原图及独立四通道哈希，阻止目录穿越和误覆盖。
 """
 from __future__ import annotations
-import argparse, hashlib, json, pathlib, shutil, sys, zipfile
+import argparse, hashlib, json, os, pathlib, struct, zipfile
 
 ROOT=pathlib.Path(__file__).resolve().parents[4]
 CONTENT=ROOT/"Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/SourceArt/AmbientNature"
 INCOMING=CONTENT/"Incoming/DivineBeasts_NiagaraPBR_AtlasAssets_20261011.zip"
-STAGE=ROOT/"Saved/Validation/FallingFoliage/PBRAtlas20261011/Stage"
+CACHE_ROOT=pathlib.Path(os.environ.get("AMBIENT_PBR_CACHE_ROOT",str(ROOT/"Saved/Validation/FallingFoliage/PBRAtlas20261011")))
+if not CACHE_ROOT.is_absolute():
+    raise RuntimeError("PBR暂存路径必须为绝对路径，禁止在项目内隐式解析工作目录")
+STAGE=CACHE_ROOT/"Stage"
 REPORT=ROOT/"Saved/Validation/FallingFoliage/PBRAtlas20261011/PreflightReport.json"
 CHANNELS=("Albedo","Normal","Roughness","Opacity")
+# 锁定由用户实际上传并已本地校验的原始PBR ZIP SHA-256；名称变化不会改变文件内容身份。
+APPROVED_ZIP_SHA256="07c5b03e056a0318af8c2368cc3a06c39ff2ef26c181b2912ef2f78f57084015"
+
+
+def inspect_png_header(source:bytes,member:dict)->None:
+    """使用标准库检查PNG IHDR的尺寸/色彩类型，禁止文件后缀或像素模式混淆。"""
+    if len(source)<33 or source[:8]!=bytes((137,80,78,71,13,10,26,10)):
+        raise RuntimeError("PBR纹理不是合法PNG："+member["file"])
+    chunk_size=struct.unpack(">I",source[8:12])[0]
+    if source[12:16]!=b"IHDR" or chunk_size!=13:
+        raise RuntimeError("PBR纹理缺少正确IHDR："+member["file"])
+    width,height,depth,color_type=struct.unpack(">IIBB",source[16:26])
+    expected_type=6 if member["mode"]=="RGBA" else 0 if member["mode"]=="L" else -1
+    if ((width,height)!=(member["width"],member["height"]) or depth!=8 or
+            color_type!=expected_type or (width,height)!=(512,512)):
+        raise RuntimeError("PBR图像分辨率/8位RGBA或灰度通道错误："+member["file"])
+
 
 
 def validate_archive(path: pathlib.Path) -> dict:
     if not path.is_file():
         raise FileNotFoundError("缺少用户图集ZIP，请将其复制至: "+str(path))
+    if hashlib.sha256(path.read_bytes()).hexdigest()!=APPROVED_ZIP_SHA256:
+        raise RuntimeError("ZIP与用户本次确认上传版本不一致；禁止覆盖正式旧材质")
     with zipfile.ZipFile(path) as z:
         if z.testzip() is not None:
             raise RuntimeError("原始ZIP校验失败，禁止导入")
@@ -31,6 +53,9 @@ def validate_archive(path: pathlib.Path) -> dict:
             if len(normalized.parts)>5:
                 raise RuntimeError("目录深度异常："+name)
         manifest=json.loads(z.read("Manifest.json").decode("utf8"))
+        if (manifest.get("schemaVersion")!=1 or manifest.get("sourceAtlasCount")!=6 or
+                manifest.get("pbrMapCount")!=132 or manifest.get("autoCandidateCount")!=15):
+            raise RuntimeError("PBR图集目录版本或总数不匹配")
         species=manifest["styles"]
         if len(species)!=33 or len({s["id"] for s in species})!=33:
             raise RuntimeError("仅接受预期33套纹理身份")
@@ -48,10 +73,16 @@ def validate_archive(path: pathlib.Path) -> dict:
                 raise RuntimeError("图集未包含4个不同通道："+style["id"])
             if style["importPolicy"] not in ("auto_candidate","review_only","fx_reference_only"):
                 raise RuntimeError("非法导入权限："+style["id"])
+            if style["importPolicy"]=="auto_candidate" and style["kind"] not in ("petal","leaf"):
+                raise RuntimeError("不允许多粒子FX图自动覆盖植被材质："+style["id"])
+            if (not (0.0<style["physicalWidthCm"]<=60.0) or
+                    not (0.0<style["physicalHeightCm"]<=60.0)):
+                raise RuntimeError("缺少合理的视觉尺寸配置（单位厘米）："+style["id"])
             for member in style["maps"]:
                 data=z.read(member["file"])
                 if hashlib.sha256(data).hexdigest()!=member["sha256"]:
                     raise RuntimeError("纹理文件SHA-256不符："+member["file"])
+                inspect_png_header(data,member)
                 maps_count+=1
         if maps_count!=132:
             raise RuntimeError("33套四通道贴图数量不足")
@@ -74,6 +105,12 @@ def main():
                 STAGE.mkdir(parents=True,exist_ok=False)
                 with zipfile.ZipFile(args.file) as z:
                     z.extractall(STAGE)
+            # 重试时拒绝利用之前批次留下的另一份Manifest，避免旧规格覆盖新纹理。
+            with zipfile.ZipFile(args.file) as z:
+                approved_manifest_hash=hashlib.sha256(z.read("Manifest.json")).hexdigest()
+            staged_manifest=STAGE/"Manifest.json"
+            if not staged_manifest.is_file() or hashlib.sha256(staged_manifest.read_bytes()).hexdigest()!=approved_manifest_hash:
+                raise RuntimeError("暂存Manifest与当前用户批准ZIP不一致；请人工审查，不自动清空旧暂存目录")
             for style in manifest["styles"]:
                 for member in style["maps"]:
                     p=STAGE/member["file"]

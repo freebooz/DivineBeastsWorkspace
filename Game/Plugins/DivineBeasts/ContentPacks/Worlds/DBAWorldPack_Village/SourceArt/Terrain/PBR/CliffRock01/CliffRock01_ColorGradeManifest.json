@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "Tools/Unreal/Terrain/GenerateCliffRock01BlueGrayAlbedo.py",
+  "sourceId": "marble_cliff_05",
+  "originalBaseColorSHA256": "701e062ce32aaea8ed3ec5be75baa5c6fadbdb370eab9c4a081603e8bc66001e",
+  "gradedBaseColorSHA256": "813221888826b714c1b9faece49d4d133868d93726d57699d5bff3294a272af6",
+  "colorSpace": "sRGB→linearRGB→luma/chroma→sRGB",
+  "luminanceWeights": [
+    0.2126,
+    0.7152,
+    0.0722
+  ],
+  "luminancePerChannelCoefficients": [
+    0.75,
+    0.8700000047683716,
+    1.0099999904632568
+  ],
+  "originalChromaticVariationRetention": 0.07999999821186066,
+  "sourceResolution": [
+    4096,
+    4096
+  ],
+  "sourcePackage": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Textures/T_DBA_CliffRock01_BaseColor_BlueGray",
+  "gradedSourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/CliffRock01/Derived/T_DBA_CliffRock01_BaseColor_BlueGray_4K_Source.png",
+  "meanOriginalRGB": [
+    147.32000732421875,
+    140.22999572753906,
+    130.7899932861328
+  ],
+  "meanGradedRGB": [
+    124.2699966430664,
+    132.36000061035156,
+    141.10000610351562
+  ],
+  "normalOrmHeightSourceUnchanged": true,
+  "productionAssetApproved": false,
+  "descriptionZh": "保留裂隙/石理形状和同源物理贴图，只修正暖米黄为低饱和自然青灰，用户尚未审核批准"
+}
