@@ -8,6 +8,7 @@ Opacity（遮罩）验证真实梨花纹理轮廓；PBR复用现有独立母材�
 审核：保存资源不代表真实D3D12视觉通过，后续需读取GPU截图。
 """
 import json
+import hashlib
 from pathlib import Path
 import unreal
 
@@ -24,6 +25,16 @@ TOOLS = unreal.AssetToolsHelpers.get_asset_tools()
 VARIANTS = ("Solid", "UV0", "Opacity")
 report = {"status": "pending", "created": [], "renderers": [],
           "errors": [], "map": MAP, "gpuVisualPassed": False}
+# 首次运行被错误的TextureSample输入引脚中止，只允许续用当次已保存且字节未变的四份开发探针。
+# 这些SHA为首轮生成的精确内容身份，不匹配时立即拒绝重用，避免覆盖其他会话的修改。
+RESUME_FILES = {
+    "M_DBA_FoliageShaderIsolation_Solid": "1b558c6dd6fc6564092a626d67896315267456aa7b16b2d652c491a17d21095b",
+    "NS_DBA_FoliageShaderIsolation_Solid": "d95a2bbcf7c994bd327fa3a619e772c47048379d6e041d5a00fdf7bb3448d94c",
+    "M_DBA_FoliageShaderIsolation_UV0": "dbcd3023beb228530128524fd75f13a229c7f47cd65acacc3438b222f0f5c63e",
+    "NS_DBA_FoliageShaderIsolation_UV0": "482b418c80fd52ce6d14423d88a2a813aefd4f02237f70f8ba510da81208cf80",
+}
+resume_from_previous = False
+
 
 def require(condition, message):
     """条件不满足时失败，禁止把残缺资产冒充成功。"""
@@ -49,6 +60,12 @@ def port(a, output, property_name):
 def author_material(style, albedo, mask):
     """一材质一问题，消除PBR及地面运动的干扰。"""
     name = "M_DBA_FoliageShaderIsolation_" + style
+    if resume_from_previous and style in ("Solid", "UV0"):
+        existing = ED.load_asset(BASE + "/" + name)
+        require(isinstance(existing, unreal.Material), "无法重新加载首轮已保存材质")
+        require(existing.get_editor_property("used_with_niagara_sprites"),
+                "首轮已保存的Shader不是Niagara材质")
+        return existing
     m = TOOLS.create_asset(name, BASE, unreal.Material, unreal.MaterialFactoryNew())
     require(isinstance(m, unreal.Material), "无法创建Niagara测试材质")
     report["created"].append(BASE + "/" + name)
@@ -71,17 +88,15 @@ def author_material(style, albedo, mask):
         edge(z, "", vector, "B")
         port(vector, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     elif style == "Opacity":
-        uv = expr(m, unreal.MaterialExpressionTextureCoordinate, -900, -320)
-        uv.set_editor_property("coordinate_index", 0)
+        # UE5.8 TextureSample 未连接 UV 输入时使用默认的 TextureCoordinate0。
+        # 以独立 UV0 渐变 Shader 确认 SpriteRenderer 实际输入后再做PBR判断。
         tex = expr(m, unreal.MaterialExpressionTextureSample, -600, -350)
         tex.set_editor_property("texture", albedo)
         tex.set_editor_property("sampler_type", unreal.MaterialSamplerType.SAMPLERTYPE_COLOR)
-        edge(uv, "", tex, "Coordinates")
         port(tex, "RGB", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
         alpha = expr(m, unreal.MaterialExpressionTextureSample, -600, 0)
         alpha.set_editor_property("texture", mask)
         alpha.set_editor_property("sampler_type", unreal.MaterialSamplerType.SAMPLERTYPE_MASKS)
-        edge(uv, "", alpha, "Coordinates")
         port(alpha, "R", unreal.MaterialProperty.MP_OPACITY_MASK)
     else:
         raise RuntimeError("未知测试风格：" + style)
@@ -99,6 +114,19 @@ def author_material(style, albedo, mask):
 def clone_system(style, m):
     """复制经验证可产生GPU粒子的天气Niagara，避免混入GroundMotion错误。"""
     dst = BASE + "/NS_DBA_FoliageShaderIsolation_" + style
+    if resume_from_previous and style in ("Solid", "UV0"):
+        existing = ED.load_asset(dst)
+        require(isinstance(existing, unreal.NiagaraSystem), "无法重新加载首轮Niagara系统")
+        checked = 0
+        for sprite in unreal.ObjectIterator(unreal.NiagaraSpriteRendererProperties):
+            if sprite.get_path_name().startswith(existing.get_path_name() + ":"):
+                require(sprite.get_editor_property("material") == m,
+                        "已保存Niagara的Shader引用被外部修改")
+                checked += 1
+        require(checked == 2, "首轮近远景SpriteRenderer数量被外部修改")
+        report["renderers"].append({"system": dst, "material": m.get_path_name(),
+                                     "count": checked, "subImages": "1x1", "reused": True})
+        return existing
     ns = ED.duplicate_asset(ORIG, dst)
     require(isinstance(ns, unreal.NiagaraSystem), "不能复制天气GPU粒子")
     report["created"].append(dst)
@@ -167,8 +195,31 @@ try:
     paths = [BASE + "/M_DBA_FoliageShaderIsolation_" + k for k in VARIANTS]
     paths += [BASE + "/NS_DBA_FoliageShaderIsolation_" + k for k in VARIANTS]
     paths += [MAP]
+    # 仅当上一轮失败身份完全吻合且四个已存盘探针与原SHA一致时允许断点续建。
+    previous = json.loads(OUT.read_text(encoding="utf8")) if OUT.is_file() else None
+    if previous and previous.get("status") == "failed":
+        expected_created = [BASE + "/M_DBA_FoliageShaderIsolation_Solid",
+                            BASE + "/NS_DBA_FoliageShaderIsolation_Solid",
+                            BASE + "/M_DBA_FoliageShaderIsolation_UV0",
+                            BASE + "/NS_DBA_FoliageShaderIsolation_UV0",
+                            BASE + "/M_DBA_FoliageShaderIsolation_Opacity"]
+        require(previous.get("created") == expected_created and
+                previous.get("errors") == ["材质输入连接失败：Coordinates"],
+                "前次失败来源不符合本次精确断点，拒绝覆盖")
+        for filename, digest in RESUME_FILES.items():
+            disk = ROOT / "Game/Content/Development/FallingFoliage/Probes" / (filename + ".uasset")
+            require(disk.is_file() and hashlib.sha256(disk.read_bytes()).hexdigest() == digest,
+                    "已保存试验资源与首轮SHA不一致：" + filename)
+        incomplete = ROOT / "Game/Content/Development/FallingFoliage/Probes/M_DBA_FoliageShaderIsolation_Opacity.uasset"
+        require(not incomplete.exists(), "前次未保存的Opacity材质已被外部编辑，拒绝续建")
+        resume_from_previous = True
+        report["resumedFromFailure"] = previous["errors"][0]
+        report["reusedAssets"] = [BASE + "/" + n for n in RESUME_FILES]
     for path in paths:
-        require(not ED.does_asset_exist(path), "测试目标存在，拒绝覆盖：" + path)
+        if resume_from_previous and path in report.get("reusedAssets", []):
+            require(ED.does_asset_exist(path), "前次Probe在Editor中不可加载：" + path)
+        else:
+            require(not ED.does_asset_exist(path), "测试目标存在，拒绝覆盖：" + path)
     mi = ED.load_asset(PEAR)
     pbr = ED.load_asset(PBR)
     require(isinstance(mi, unreal.MaterialInstanceConstant), "梨花MI源资产无效")

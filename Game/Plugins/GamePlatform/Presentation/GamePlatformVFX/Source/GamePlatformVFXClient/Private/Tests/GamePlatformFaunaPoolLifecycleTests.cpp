@@ -4,6 +4,7 @@
 
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
+#include "Misc/ScopedCVar.h"
 #include "HAL/IConsoleManager.h"
 #include "Engine/World.h"
 #include "Instances/GamePlatformVFXInstanceRegistry.h"
@@ -33,7 +34,9 @@ bool FGamePlatformFaunaPoolLifecycleTest::RunTest(const FString&)
 
     IConsoleVariable* PoolEnabled = IConsoleManager::Get().FindConsoleVariable(TEXT("FX.NiagaraComponentPool.Enable"));
     if (!TestNotNull(TEXT("真实Niagara池开关必须存在"), PoolEnabled)) return false;
-    const int32 PreviousPoolEnabled = PoolEnabled->GetInt();
+    // 原生临时优先级按独立Tag入栈；先声明此守卫，确保后声明的世界清理守卫先执行。
+    const FScopedCVar<int32> EnabledPoolScope(TEXT("FX.NiagaraComponentPool.Enable"), 1,
+        FName(TEXT("GamePlatformFaunaPoolLifecycle.Enabled")));
 
     // 真实FX预览World避免启动项目Gameplay/LocalPlayer；原生World初始化委托创建真实Niagara管理器。
     const UWorld::InitializationValues Init = UWorld::InitializationValues()
@@ -46,13 +49,11 @@ bool FGamePlatformFaunaPoolLifecycleTest::RunTest(const FString&)
     {
         Registry.Reset();
         if (World.Get()) World->DestroyWorld(false);
-        PoolEnabled->SetWithCurrentPriority(PreviousPoolEnabled);
     };
     if (!TestNotNull(TEXT("真实测试World必须创建成功"), World.Get())) return false;
     FNiagaraWorldManager* WorldManager = FNiagaraWorldManager::Get(World.Get());
     if (!TestNotNull(TEXT("World初始化必须创建真实Niagara管理器"), WorldManager) ||
         !TestNotNull(TEXT("真实世界原生池必须存在"), WorldManager->GetComponentPool())) return false;
-    PoolEnabled->SetWithCurrentPriority(1);
     if (!TestTrue(TEXT("真实原生池开关已开启"), UNiagaraComponentPool::Enabled())) return false;
 
     const auto SpawnUnactivated = [&](ENCPoolMethod PoolMethod)
@@ -95,22 +96,26 @@ bool FGamePlatformFaunaPoolLifecycleTest::RunTest(const FString&)
     TestTrue(TEXT("并存句柄正常停止"), Registry.Stop(ConcurrentHandle));
     TestEqual(TEXT("停止两份租约后生产账本为空"), Registry.Num(), 0);
 
-    PoolEnabled->SetWithCurrentPriority(0);
-    if (!TestFalse(TEXT("真实全局池开关已关闭"), UNiagaraComponentPool::Enabled())) return false;
-    for (const ENCPoolMethod Mode : {ENCPoolMethod::AutoRelease, ENCPoolMethod::None})
     {
-        UNiagaraComponent* Unpooled = SpawnUnactivated(Mode);
-        if (!TestNotNull(TEXT("无池情况下仍创建真实组件"), Unpooled)) return false;
-        const TWeakObjectPtr<UNiagaraComponent> UnpooledWeak(Unpooled);
-        const auto UnpooledHandle = Registry.Reserve(World.Get());
-        // 故意保留请求时bPooled=true，证明销毁以真实组件/原生池状态为准。
-        if (!TestTrue(TEXT("无池组件绑定生产Registry"), Registry.AttachComponent(UnpooledHandle, Unpooled, true))) return false;
-        TestFalse(TEXT("无池组件同样尚未激活"), Unpooled->IsActive());
-        if (Mode == ENCPoolMethod::None)
-            TestEqual(TEXT("显式None组件保留真实非池方式"), Unpooled->PoolingMethod, ENCPoolMethod::None);
-        TestTrue(TEXT("无池Stop正常结束"), Registry.Stop(UnpooledHandle));
-        TestFalse(TEXT("无池Stop必须销毁对象，不能只置为不活跃"), UnpooledWeak.IsValid());
-        TestFalse(TEXT("销毁后的重复Stop不再处理组件"), Registry.Stop(UnpooledHandle));
+        // 内层关池使用另一Tag；退出此块撤销内层值，外层最后恢复测试前的值和SetBy优先级。
+        const FScopedCVar<int32> DisabledPoolScope(TEXT("FX.NiagaraComponentPool.Enable"), 0,
+            FName(TEXT("GamePlatformFaunaPoolLifecycle.Disabled")));
+        if (!TestFalse(TEXT("真实全局池开关已关闭"), UNiagaraComponentPool::Enabled())) return false;
+        for (const ENCPoolMethod Mode : {ENCPoolMethod::AutoRelease, ENCPoolMethod::None})
+        {
+            UNiagaraComponent* Unpooled = SpawnUnactivated(Mode);
+            if (!TestNotNull(TEXT("无池情况下仍创建真实组件"), Unpooled)) return false;
+            const TWeakObjectPtr<UNiagaraComponent> UnpooledWeak(Unpooled);
+            const auto UnpooledHandle = Registry.Reserve(World.Get());
+            // 故意保留请求时bPooled=true，证明销毁以真实组件/原生池状态为准。
+            if (!TestTrue(TEXT("无池组件绑定生产Registry"), Registry.AttachComponent(UnpooledHandle, Unpooled, true))) return false;
+            TestFalse(TEXT("无池组件同样尚未激活"), Unpooled->IsActive());
+            if (Mode == ENCPoolMethod::None)
+                TestEqual(TEXT("显式None组件保留真实非池方式"), Unpooled->PoolingMethod, ENCPoolMethod::None);
+            TestTrue(TEXT("无池Stop正常结束"), Registry.Stop(UnpooledHandle));
+            TestFalse(TEXT("无池Stop必须销毁对象，不能只置为不活跃"), UnpooledWeak.IsValid());
+            TestFalse(TEXT("销毁后的重复Stop不再处理组件"), Registry.Stop(UnpooledHandle));
+        }
     }
     TestEqual(TEXT("所有终态后生产Registry为空"), Registry.Num(), 0);
     return true;

@@ -16,7 +16,7 @@
 ## 任务1 飞鸟修复
 - [x] 读取生产请求、组件、目录、执行器和资源作者链，记录问题与证据。
 - [x] 修复身份/所有权、失败替换、重入、上下文重放和真实终态问题，保持稳定类型/接口兼容。
-- [x] 独立代码审查；真实 PIE 飞鸟 Owner 9 项、Fauna Owner 13 项通过。旧三物种 15 组 GPU 报告仍需区分本次重跑状态。
+- [x] 独立代码审查；真实 PIE 飞鸟 Owner 9 项、Fauna Owner 13 项通过。旧海鸥/燕子/鹰各 0/1/32/128/512 的 15 组 GPU 本轮重跑全部通过，运行前后 harness 与平台/项目 DLL 指纹未变化。
 
 ## 任务2 通用群落算法
 - [x] 按 FaunaSimulationTask_20261011.md 实现生产纯 C++ 状态和真实行为测试。
@@ -42,7 +42,7 @@
 - [x] 实际资源制作/保存、类型/参数/引用校验；LOD 后两物种 Niagara 编译均 0 错误、0 警告。
 - [x] 真实 Blueprint→项目服务→Data/VFX→GPU 两物种 0/1/32/128/512 共 10 组通过；停栖/惊扰、GPU 运动、非法输入保留、外部终态显式恢复、StopAll 和 PIE 清理通过。
 - [x] 原生 Niagara 暂停/恢复和游戏世界暂停/恢复四项通过，CPU 位置确实冻结/继续；算法长稳为 10 分钟模拟时间，不冒称硬件持续压测。
-- [ ] 实际 PIE 视口截图：正在修正 UE 5.8 Python 截图入口差异，以 VisualReviewLatest.json 最终状态为准。
+- [x] 独立重新启动编辑器，保存后资产实际加载；PIE 总览/蝴蝶/鱼三张 1600×900 截图写出，VisualReviewLatest.json status=captured，四项暂停恢复同时通过。技术视觉检查未见网格爆裂或材质丢失；用户美术验收仍独立保留。
 - [ ] Client/Server Cook/Stage、容器收录/排除和目标硬件帧预算：不能用静态配置或 Editor 通过代替。
 - [x] FaunaDelivery_20261011.md、FaunaSimulationReport_20261011.md、BirdFlockAudit_20261011.md 与 FaunaCookValidationPlan_20261011.md 分别记录实现、证据、边界和后续验证入口。
 

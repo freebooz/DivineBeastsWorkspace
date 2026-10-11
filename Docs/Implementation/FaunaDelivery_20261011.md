@@ -189,6 +189,26 @@ Saved/Validation/Fauna/MeshLODNiagaraCompile.json：两个物种系统在 LOD �
 
 作者阶段报告中的 runtime/manual pending 是当时的历史快照；后续运行结果应读各自的实际运行报告。
 
+### 飞鸟三物种新一轮图形回归：15 组通过
+
+Saved/Validation/BirdFlockAudit/FaunaRegression_20261011T150801/IntegrationReview.json，status=passed。海鸥、燕子、鹰各验证 0、1、32、128、512，15/15 GPU 数量正确；自动场景通过，StopAll 后活动 Niagara 为 0，worldCleanup=true，实际测试阶段 34.516 秒。
+
+Inputs.json 记录本轮 harness 以及平台/项目两个实际 DLL 的 SHA-256，运行前后均未变化。VerifiedSummary.json 严格核对矩阵、清理及输入指纹。报告 SHA-256：BED47E58B19E2448906D8C9720CFFB5F1E3A5380ABDB0B177C2280EF6B116F90。
+
+### 暂停与实际视口：四项通过、三张截图
+
+Saved/Validation/Fauna/VisualReviewLatest.json 为 captured。通过独立重新启动的真实图形编辑器加载已保存的审核地图和资源，验证原生 Niagara 暂停/恢复、游戏世界暂停/恢复共四项：暂停时 CPU 位置冻结，恢复后鱼群继续运动。实际检查阶段 15.484 秒，编辑器自动正常退出，进程 exit 0。
+
+截图均为实际 PIE 游戏视口 HighResShot，1600×900，位于 Saved/Validation/Fauna/VisualReview_20261011T150552/：
+
+- Overview.png：769ade6eba9ef1f46eda91e5de1eea36166f1754062676bed9e30ea9c7af8c13。
+- Butterfly.png：eff803701b249a294e5b00e576c3ed47ae7602d53b2b27bda24e2b27d273a03d。
+- Fish.png：b9d5948ec45a4f010862426011ee64fe9ee821ac0429625adeafd94ee206daa3。
+
+两次独立技术视觉检查都能看到真实蝶翼、收翼停栖和银蓝鱼体/尾鳍，未见明显网格爆裂、严重变形或材质丢失。静态图片不能单独证明整个运动过程都避障，也不能精确验证亚厘米足点；这些结论应分别引用动态 GPU 检查和原生算法测试。
+
+审核图使用简化花床、透明水池和球形障碍，并保留开发用 Preview 阴影。鱼群个别高光较亮、停栖蝶翼内侧偏暗，仍可在正式场景近景中调整。技术可见性检查不替代用户的最终美术认可；原始自动报告 imageInspection/humanArtAcceptance 的 pending 历史字段不改写为人工认可。
+
 ## 8. 构建与尚待收尾的证据
 
 本轮确实运行过 UHT/C++ 编译和 Editor 模块链接，并在加载新接口的真实编辑器完成上述完整链路测试。第一次定向构建的最终失败来自引擎 Niagara/NiagaraEditor/Landscape 导入库缺失，另一次链接遇到并行 Editor 占用 DLL；两者均保留失败记录，没有修改引擎接口或伪造库。
@@ -202,4 +222,4 @@ Saved/Validation/Fauna/MeshLODNiagaraCompile.json：两个物种系统在 LOD �
 
 完整 Client/Server Cook/Stage、最终容器收录/排除和目标硬件帧预算需要独立实际结果。FaunaCookValidationPlan_20261011.md 给出了既有正式入口及定向资产 Cook 的准确范围；静态 AlwaysCook/NeverCook 规则不是 Cook 通过的证据。
 
-实际视口截图与原生暂停/世界暂停检查由 CaptureFaunaReview.py 独立记录；以 Saved/Validation/Fauna/VisualReviewLatest.json 的最终状态为准。截图写出与人工美术认可也分别记录。
+实际视口和暂停证据见上节。此前截图测试失败来自 UE 5.8 未暴露 PlayerController.console_command，已修正为实际 SystemLibrary.execute_console_command 入口并重新运行成功；失败的历史运行目录仍保留。

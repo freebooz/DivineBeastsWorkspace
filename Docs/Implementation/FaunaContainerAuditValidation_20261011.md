@@ -33,3 +33,10 @@ Editor（编辑器）四模块构建已通过。Client/Server完整目标构建�
 - 工程当前使用 Zen cooked output store（资源烘焙存储）；Zen manifest只有松散配置及元数据，不包含传统的全部.uasset文件。因此一次普通文件搜索为零不能证明Fauna遗漏；反过来也不能用上述成功计数证明全部20个必需资源都已打进最终Client发行容器。
 - 剩余条件：读取Zen package oplog或以受控的 -skipzenstore 重新Cook取得loose package，再核实20个资源；正式Client/Server Stage与UnrealPak逐容器清单尚待执行。完整Client/Server C++目标在本轮尚未通过，不因定向Editor Cook退出0而视为成功。
 
+## 本次 Village WindowsServer 定向资源 Cook（后续实际执行）
+- 实际目标：WindowsServer；配置为 VillageServer；指定正式地图 /DBAWorldPack_Village/Maps/L_Village_Start。
+- 日志：Saved/Validation/Fauna/VillageServerAssetCook_20261011/Cook.log。进程退出码0、最终0 error/0 warning、耗时约6.30秒。
+- 真实烘焙统计：Packages Cooked=644、Skipped by Platform=9、Total=653；含正式Village地图，但不等价于完整Server可执行文件构建或Stage完成。
+- 两个Zen Cook运行包都已生成AssetRegistry.bin及DevelopmentAssetRegistry.bin。
+- 辅助诊断 Saved/Validation/Fauna/CookRegistryNameProbe_20261011.json：从Cook后AssetRegistry.bin二进制内容查找20个预期资源名，WindowsClient识别20/20，WindowsServer识别0/20；保存两个原始Registry的SHA-256。此为名称存在性佐证，不是可靠的包级解析、Cook Store Oplog清单或最终IoStore容器审计。
+- 仍待完成：正式Client/Server构建、真实 Stage、逐个UnrealPak IoStore CSV核验以及新手村实际场景布置。禁止将目前Cook通过直接升级为完整发布通过。

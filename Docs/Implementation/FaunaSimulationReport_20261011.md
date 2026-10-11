@@ -131,10 +131,10 @@ pwsh -NoProfile -File Tests/VFX/Fauna/RunFaunaSimulationTests.ps1 -RunId Verifie
 
 Saved/Validation/FaunaNative/Verified_PerchOffset_20261011/Result.json 记录时间为 2026-10-11T13:59:27.2924981Z，仍使用 MSVC 14.44.35207，真实编译正式 GamePlatformFaunaSimulation.cpp。编译退出码 0、测试退出码 0；同目录 Tests.log 逐项记录原有 15 项及以下两项，最终为 **17 passed, 0 failed**。原生命令保留 .obj、.exe、Compile.log、Tests.log 和 Result.json；此次报告修订已重新回读两个阶段的 Result.json 与 Tests.log，没有重跑。
 
-| 新增用例 | 实际验证内容 |
-| --- | --- |
-| Butterfly_FootContactOffset | 默认 BodyRadius = 7 厘米、PerchOffset = 0.72 厘米，分别使用竖直和倾斜花面法线；运行真实状态机至 Perched，检查 Agent.Position - Normal * 0.72 与花槽接触位置一致，以及 UpVector 与归一化法线一致。 |
-| PerchOffset_Validation_AndBodyClearance | 负数、超过 BodyRadius、NaN、无穷大偏移初始化失败并保留旧状态；0、0.25 与 BodyRadius 边界值合法；贴近盒底或球障碍的花站仍按完整 BodyRadius 拒绝，防止较小接触偏移削弱避障和边界约束。 |
+新增两项回归的验证内容：
+
+- **Butterfly_FootContactOffset**：默认 BodyRadius = 7 厘米、PerchOffset = 0.72 厘米，分别使用竖直和倾斜花面法线；运行真实状态机至 Perched，检查 Agent.Position - Normal * 0.72 与花槽接触位置一致，以及 UpVector 与归一化法线一致。
+- **PerchOffset_Validation_AndBodyClearance**：负数、超过 BodyRadius、NaN、无穷大偏移初始化失败并保留旧状态；0、0.25 与 BodyRadius 边界值合法；贴近盒底或球障碍的花站仍按完整 BodyRadius 拒绝，防止较小接触偏移削弱避障和边界约束。
 
 这里的脚底检查依据当前模型约定的局部接触偏移，在 CPU 生产输出上验证几何关系；没有读取渲染后的顶点，也不证明 GPU 姿态、Niagara 数组或实际画面已经正确。观察首次停栖时最多推进 1950 个 1/30 秒固定步（65 秒模拟时间），不等于真实 PIE 已运行 65 秒。
 

@@ -20,6 +20,7 @@
 #include "RHI.h"
 #include "ShaderCompiler.h"
 #include "CommonInputSettings.h"
+#include "ICommonInputModule.h" // CommonUI读取的是模块持有的运行设置实例，不是类默认对象。
 
 namespace DivineBeastsUIColorTests
 {
@@ -48,11 +49,12 @@ namespace DivineBeastsUIColorTests
         Target->InitCustomFormat(Size.X,Size.Y,PF_FloatRGBA,true);
         Target->UpdateResourceImmediate(true);
         auto* Renderer=new FWidgetRenderer(false,true);
-        // 蓝图加载/Initialize可能重新装载输入设置；在构造真正Slate树的边界完成正式数据加载。
-        // 回读真实Back行同时验证本次初始化生效，避免之前的页面加载让前置状态失效。
-        auto* InputSettings=GetMutableDefault<UCommonInputSettings>();
-        InputSettings->LoadData();
-        Test.TestNotNull(TEXT("颜色页渲染前已加载真实返回动作表"),InputSettings->GetDefaultBackAction().DataTable.Get());
+        // CommonInput模块通过NewObject拥有独立的运行设置；加载CDO不会初始化控件实际使用的对象。
+        // 必须与CommonActivatableWidget读取同一实例，且保留真实Back行和全部RHI颜色断言。
+        UCommonInputSettings& InputSettings=ICommonInputModule::GetSettings();
+        InputSettings.LoadData();
+        Test.AddInfo(FString::Printf(TEXT("颜色预览使用CommonInput运行实例：%s"),*InputSettings.GetPathName()));
+        Test.TestNotNull(TEXT("颜色页渲染前已加载真实返回动作表"),InputSettings.GetDefaultBackAction().DataTable.Get());
         const auto SlateWidget=Widget->TakeWidget();
         Renderer->DrawWidget(Target.Get(),SlateWidget,FVector2D(Size),0.f);
         FlushRenderingCommands();
@@ -134,8 +136,8 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
         return false;
     }
     // 离屏编辑器没有本地玩家子系统替我们加载CommonUI动作数据；真实设置页仍要使用正式输入定义。
-    // 明确完成前置初始化，不注入替代数据，不吞掉ensure，也不依赖别的测试恰好先运行。
-    GetMutableDefault<UCommonInputSettings>()->LoadData();
+    // 在模块实际持有的设置实例上初始化；不注入替代数据、不吞ensure、不依赖测试执行顺序。
+    ICommonInputModule::GetSettings().LoadData();
     for(const TCHAR* Name:{TEXT("Menu"),TEXT("Ability"),TEXT("Minimap"),TEXT("PlayerFrame"),TEXT("LoginPanel"),TEXT("Panel"),TEXT("Logo"),TEXT("Cover")})
     {
         const FString Path=FCString::Strcmp(Name,TEXT("Logo"))==0

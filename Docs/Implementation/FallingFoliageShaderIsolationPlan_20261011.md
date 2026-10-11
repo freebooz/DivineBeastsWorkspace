@@ -30,4 +30,12 @@
 
 ## 5. 当前任务状态
 
-当前已完成：真实 Git/工作空间及架构核对、原始源图与截图审查、已有 GPU 导出的MI与采样器链路核对、新增独立 Shader 测试作者脚本。待完成：运行本次新脚本、实际UE资源生成及4路GPU截图、确定根因、正式平台修复、角色选择/创建和天气/地面风场最终回归与人工签收。其他并发引擎任务正在执行，不擅自结束共享编辑器或覆盖他人工作。**状态：未完成。**
+当前已完成：真实 Git/架构审查及 PBR 源图、遮罩采样器、Niagara 渲染器实例回读；新增两套隔离测试作者工具、运行 `AuthorFoliageShaderIsolationUE58.py` 并完成断点续建，在真实 UE5.8 下保存三套 Shader、三套 Niagara 系统和一张 Development Probe UM​​AP；在 D3D12 离屏游戏模式下获得 `Saved/Validation/FallingFoliage/PBRAtlas20261011/GPUSceneReview/ShaderIsolationGPUReview_1440.jpg` 和 2560×1440 原图 `Game/Saved/Screenshots/WindowsEditor/HighresScreenshot00019.png`。**四组独立 Niagara 粒子仍呈灰色方块，说明问题范围包括最简纯色 Shader，不能仅修 Mask/UV/PBR。**
+
+## 6. 2026-10-11 23时 GPU回归追踪
+
+- `Saved/Validation/FallingFoliage/PBRAtlas20261011/GPUSceneReview/ShaderIsolationAudit.json` 记录独立 `Solid`、`UV0`、`Opacity` 系统各两个 SpriteRenderer，资源创建成功，GPU 签收仍为 `false`。第一次作者运行曾因UE MaterialEditingLibrary不能连接测试脚本写的 `Coordinates` 输入引脚而中止；已纠正为TextureSample默认UV0，并通过精确的四资源SHA断点续建完成测试资源。
+- D3D12截图中纯色红色Shader对应的粒子仍为灰片，表明默认/回退材质或SpriteRenderer实际Shader使用路径值得优先调查；这不是材料引用回读就能排除的错误。当前没有足够证据认定哪一个运行时环节出错。
+- 新增 `Tools/Unreal/VFX/FallingFoliage/AuthorFoliageShaderMeshControlUE58.py`，拟建第二道 StaticMesh 四材质对照关卡，鉴别材质本身与Niagara路径。其Python语法已通过，但第一次UE编辑器运行180秒后超时（UE模块加载耗时长，且有共享UBT互斥锁），**尚未创建真实关卡、尚无GPU截图，不宣称成功。**
+- 仍待完成：StaticMesh对照的UE作者执行和真实D3D12截图、最终根因修复、平台运动模块经备份有门禁的修改、高空飘落/地面风吹/角色选择与创建场景复测、整体验收与GPU性能量化。本轮未触及正式平台母材质及 Niagara 运动模块。**总状态：未完成。**
+
