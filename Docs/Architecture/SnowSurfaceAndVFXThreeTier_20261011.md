@@ -1,0 +1,9 @@
+# 神兽联盟写实积雪三层架构与插件归属
+
+第一层 GamePlatformSurface：通用写实积雪母材质、世界空间雪层遮罩、MPC参数、雪面源纹理；GamePlatformWeather保留已有服务器权威天气事实；GamePlatformVFX提供通用近远景降雪和独立地表雪粉Niagara。不得同步单个粒子、不能把视觉积雪当玩法权威。
+
+第二层 MobaCommon：不具有本通用表面雪材质的业务规则，不新增模块。
+
+第三层 DBAPresentationPack_Core：跨地图可复用的神兽联盟积雪材质实例MI_DBA_Snow_Detailed。项目开发审核地图L_DBA_SnowReview位于Game/Development/Snow，不修改正式Village地图。
+
+客户端FrontEndClient Cook显式收录雪源Texture2D和项目MI；DedicatedServer配置排除所有纯客户端雪表面纹理、材质、Niagara和开发审核地图。有关实际资产、工具、测试及人工验收状态见Docs/Implementation/SnowSurfaceAndVFXImplementationPlan_20261011.md。

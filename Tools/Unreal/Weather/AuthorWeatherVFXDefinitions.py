@@ -42,7 +42,13 @@ def main() -> None:
         if not isinstance(obj, unreal.NiagaraSystem):
             raise RuntimeError(f"Niagara真实资产类型不合法：{system}")
         if assets.does_asset_exist(DEST + "/" + name):
-            raise FileExistsError("定义已存在，拒绝覆盖：" + name)
+            # 允许同类同系统的中断续作；绝不覆盖引用到其他Niagara的Definition。
+            existing = assets.load_asset(DEST + "/" + name)
+            if not isinstance(existing, klass):
+                raise TypeError("已有同名资源不是平台天气Definition：" + name)
+            current = existing.get_editor_property("niagara_system")
+            if current and current.get_path_name() != obj.get_path_name():
+                raise RuntimeError("现存定义引用其他Niagara，拒绝覆盖：" + name)
 
     if not assets.does_directory_exist(DEST):
         assets.make_directory(DEST)
@@ -50,7 +56,9 @@ def main() -> None:
     factory.set_editor_property("data_asset_class", klass)
 
     for name, system, logical_id in CASES:
-        d = tools.create_asset(name, DEST, klass, factory)
+        path = DEST + "/" + name
+        d = (assets.load_asset(path) if assets.does_asset_exist(path)
+             else tools.create_asset(name, DEST, klass, factory))
         if not isinstance(d, klass):
             raise RuntimeError("无法创建真实VFX定义：" + name)
         namespace_and_name, generation = logical_id.rsplit("@", 1)
@@ -68,28 +76,25 @@ def main() -> None:
         d.set_editor_property("allow_pooling", True)
         d.set_editor_property("enable_scalability", True)
 
-        intensity_rule = unreal.GamePlatformVFXParameterRule()
-        intensity_rule.set_editor_property("name", unreal.Name("User.WeatherIntensity"))
-        intensity_rule.set_editor_property("type", unreal.GamePlatformVFXParameterType.FLOAT)
-        intensity_rule.set_editor_property("required", True)
-        intensity_rule.set_editor_property("min_value", 0.0)
-        intensity_rule.set_editor_property("max_value", 1.0)
-        schema = unreal.GamePlatformVFXParameterSchema()
-        schema.set_editor_property("max_override_count", 16)
-        # 与Niagara Emitter的Spawn Rate原生参数绑定同步：雨/雪近远景独立发射率。
-        near_rule = unreal.GamePlatformVFXParameterRule()
-        near_rule.set_editor_property("name", unreal.Name("User.WeatherNearSpawnRate"))
-        near_rule.set_editor_property("type", unreal.GamePlatformVFXParameterType.FLOAT)
-        near_rule.set_editor_property("required", True)
-        near_rule.set_editor_property("min_value", 0.0)
-        near_rule.set_editor_property("max_value", 1600.0)
-        far_rule = unreal.GamePlatformVFXParameterRule()
-        far_rule.set_editor_property("name", unreal.Name("User.WeatherFarSpawnRate"))
-        far_rule.set_editor_property("type", unreal.GamePlatformVFXParameterType.FLOAT)
-        far_rule.set_editor_property("required", True)
-        far_rule.set_editor_property("min_value", 0.0)
-        far_rule.set_editor_property("max_value", 1000.0)
-        schema.set_editor_property("rules", [intensity_rule, near_rule, far_rule])
+        # EditDefaultsOnly字段在UE5.8临时结构体上不能set_editor_property；
+        # 用UStruct关键字构造器一次性初始化，再写入真正的DataAsset默认对象。
+        def scalar_rule(param_name: str, maximum: float):
+            return unreal.GamePlatformVFXParameterRule(
+                name=unreal.Name(param_name),
+                type=unreal.GamePlatformVFXParameterType.FLOAT,
+                required=True,
+                min_value=0.0,
+                max_value=maximum,
+            )
+
+        schema = unreal.GamePlatformVFXParameterSchema(
+            max_override_count=16,
+            rules=[
+                scalar_rule("User.WeatherIntensity", 1.0),
+                scalar_rule("User.WeatherNearSpawnRate", 1600.0),
+                scalar_rule("User.WeatherFarSpawnRate", 1000.0),
+            ],
+        )
         d.set_editor_property("parameter_schema", schema)
 
         if not assets.save_loaded_asset(d, only_if_is_dirty=False):

@@ -51,6 +51,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|CharacterPreview")
     void SetPreviewCameraDistance(float DistanceCentimeters);
 
+    /** 场景风格切换仅替换VFX Definition，不重新流送工作室或改变角色。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|CharacterPreview")
+    void SetPreviewFoliageStyle(FName StyleId);
+
     UFUNCTION(BlueprintPure, Category="DivineBeasts|CharacterPreview")
     FName GetPreviewHeroDefinitionId() const { return RequestedHeroDefinitionId; }
 
@@ -66,6 +70,8 @@ private:
         bool bSessionEnded,
         bool bCleanupResources);
 
+    /** 角色选择/创建复用一组本地世界环境粒子，世界和子关卡变化时按代次重建。 */
+    void EnsurePreviewFoliage();
     void ResolvePreviewStage();
     void BindPreviewCamera();
     void CancelPendingLoads();
@@ -99,6 +105,8 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UMaterialInstanceDynamic>> DevelopmentDynamicMaterials;
 
+    /** 缺配置默认桃花花瓣，允许蓝图选择Peach/Maple/Bamboo/Ginkgo。 */
+    FName PreviewFoliageStyle = TEXT("Peach");
     FName RequestedHeroDefinitionId = NAME_None;
     int32 RequestGeneration = 0;
     TSharedPtr<FStreamableHandle> ProfileLease;

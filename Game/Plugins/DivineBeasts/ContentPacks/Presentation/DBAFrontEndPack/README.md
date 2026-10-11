@@ -9,6 +9,12 @@
 - `/DBAFrontEndPack/Materials/M_DBA_PreviewBackdrop`：工作室共用背景与地面材质，无角色身份和玩法含义。
 - 后续可在 `CharacterPreview/Environment`、`Lighting`、`Materials`、`Audio` 下增加项目专属前端场景资源。
 
+## 角色工作室自然飘落
+
+`L_DBA_CharacterStudio（角色三维预览地图）` 新增 `BP_DBA_FoliageGroundAnchor（地面风吹锚点蓝图）` 实例，Actor Tag为 `DBA.Foliage.Ground`，该Actor的Z值代表可见地面高度，保持 `PreviewFloor` 原有无碰撞设置。
+
+`UDivineBeastsCharacterPreviewSubsystem::SetPreviewFoliageStyle` 可切换Peach（桃花，默认）、Maple（枫叶）、Bamboo（竹叶）、Ginkgo（银杏）。由GamePlatformPresentation统一目录/低层VFX播放，不在两个UI Widget中分别生成Niagara。切换界面共享工作室实例，退出时停止并释放。
+
 ## 架构边界
 
 - 不继承、不替代 `DBAWorlds（神兽联盟项目世界）`。

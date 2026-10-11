@@ -32,7 +32,7 @@ World Position Offset（世界位置偏移）、三平面投射、复杂程序�
 
 ## 项目资产归属
 
-平台只放跨游戏通用默认资产。神兽联盟雪、苔藓、岩石、泥土、桃林和建筑纹理，以及 `MI_DBA_*` 材质实例，归对应 `DBAWorldPack_*`。二进制资产必须由 Unreal Editor 创建、保存和回读，禁止文本占位。
+平台只放跨游戏通用默认资产。神兽联盟地图专属雪、苔藓、岩石、泥土、桃林和建筑纹理、MI实例归对应DBAWorldPack_*；跨地图通用的MI_DBA_Snow_Detailed归纯客户端DBAPresentationPack_Core，其父级M_GP_SnowCover_Detailed归GamePlatformSurface。二进制资产必须由Unreal Editor创建、保存和回读，禁止文本占位。
 
 2026-10-10已有五张Surface源纹理（WetnessNoise、PuddleMask、SnowAlbedo、SnowNormal、SnowORM）位于`GamePlatformSurface/SourceArt/Weather`，由`Tools/Unreal/Weather/GenerateWeatherSourceTextures.py`及其Manifest校验。**源PNG不是Texture2D.uasset**：必须通过正式UE导入脚本、材质节点连接与Shader编译，配合MPC真实创建和Server Cook剥离后才可转为P5通过。
 

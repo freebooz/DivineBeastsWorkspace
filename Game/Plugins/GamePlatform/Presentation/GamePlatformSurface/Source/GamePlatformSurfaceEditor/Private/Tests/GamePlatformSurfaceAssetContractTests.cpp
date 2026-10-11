@@ -41,6 +41,11 @@ bool FGamePlatformSurfaceMPCContractTest::RunTest(const FString& Parameters)
         FGamePlatformSurfaceAssetContract::ValidateGlobalParameterCollection(*Collection, Error));
     TestTrue(TEXT("失败必须返回可读中文原因"), !Error.IsEmpty());
 
+    // 雪材质可由其他项目复用，但不强迫不含雪场景安装可选资产。
+    TestTrue(TEXT("写实积雪位于平台可选材质合同中"),
+        FGamePlatformSurfaceAssetContract::GetOptionalMaterialAuthoringPackages().Contains(
+            TEXT("/GamePlatformSurface/Materials/M_GP_SnowCover_Detailed")));
+
     return true;
 }
 

@@ -65,6 +65,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Weather")
     FDivineBeastsPresentationContentPackHandle ActivateWeatherAudio(FString& OutError);
 
+    /** 角色选择/创建共用的一份场景持续落叶；真资产异步激活成功后才播放。返回true表示受理。 */
+    bool StartFrontEndFoliage(FName StyleId, const FVector& WorldOrigin,
+        float GroundHeightCm, FString& OutError);
+    /** 按RequestId取消持久Niagara并释放本地世界目录和Data预载租约。 */
+    void StopFrontEndFoliage();
+
     bool DeactivateContentPack(
         const FDivineBeastsPresentationContentPackHandle& Handle);
     /** 接纳后通过状态/通知确认真正Active；无资产/错误/取消均有具体失败，Loading不是成功发布。 */
@@ -145,6 +151,9 @@ private:
         EDivineBeastsPresentationContentPackState State, const FString& Error);
     void ReleaseLogicalLeases(const TArray<FGamePlatformDataLease>& Leases);
 
+    /** 真实内容包Active时调用；失败不得假装已播放。 */
+    void SubmitFrontEndFoliage();
+
     void RegisterProjectState();
     void BeginDefaultCatalogPreload();
     void UnregisterProjectState();
@@ -190,6 +199,13 @@ private:
 
     FDelegateHandle WorldCleanupHandle;
     FDelegateHandle PostLoadMapHandle;
+
+    /** 角色预览工作室共享的单组自然飘落VFX，和天气/战斗独立。 */
+    FDivineBeastsPresentationContentPackHandle FrontEndFoliagePack;
+    FGuid FrontEndFoliageRequestId;
+    FName FrontEndFoliageStyle = NAME_None;
+    FVector FrontEndFoliageOrigin = FVector::ZeroVector;
+    float FrontEndFoliageGroundHeightCm = 0.f;
 
     /** 本地天气表现独立于游戏模式，和用户身份/World代次共同决定目录预载期限。 */
     TWeakObjectPtr<UWorld> WeatherBoundWorld;

@@ -6,6 +6,8 @@
 #include "UObject/Package.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Image.h"
+#include "Components/Button.h"
+#include "GameFramework/Character.h"
 #include "Components/TextBlock.h"
 #include "Components/GamePlatformResourceBarWidget.h"
 #include "Layers/DivineBeastsRootLayout.h"
@@ -20,6 +22,43 @@
 #include <limits>
 
 #if WITH_DEV_AUTOMATION_TESTS
+// 实际保存的小地图必须把已加载底图绑定给MapImage，而不仅发布快照/裁剪UV；夹具世界不连接后端。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsMinimapImageBindingTest,
+    "DivineBeasts.UI.Village.MinimapImageBinding", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsMinimapImageBindingTest::RunTest(const FString&)
+{
+    auto* Texture = LoadObject<UTexture2D>(nullptr, TEXT("/DBAUIPack_Core/UI/Maps/T_DBA_Village_Minimap.T_DBA_Village_Minimap"));
+    UClass* Class = LoadClass<UDivineBeastsVillageMinimapWidget>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_Minimap.WBP_DBA_UI_Minimap_C"));
+    if (!TestNotNull(TEXT("真实地图纹理"), Texture) || !TestNotNull(TEXT("真实小地图类"), Class)) return false;
+    auto* Package = CreatePackage(TEXT("/Temp/MinimapImageBinding/L_Village_Start"));
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, TEXT("MinimapImageBindingWorld"), Package);
+    if (!TestNotNull(TEXT("独立夹具世界"), World) || !TestNotNull(TEXT("Engine"), GEngine)) return false;
+    TStrongObjectPtr<UDivineBeastsVillageMinimapWidget> Widget(NewObject<UDivineBeastsVillageMinimapWidget>(GetTransientPackage(), Class));
+    ON_SCOPE_EXIT { Widget->BindToPawn(nullptr); World->DestroyWorld(false); };
+    auto* Controller = World->SpawnActor<APlayerController>();
+    auto* Character = World->SpawnActor<ACharacter>();
+    if (!TestNotNull(TEXT("夹具控制器"), Controller) || !TestNotNull(TEXT("夹具角色"), Character)) return false;
+    World->AddController(Controller);
+    ON_SCOPE_EXIT { World->RemoveController(Controller); };
+    auto* Player = NewObject<ULocalPlayer>(GEngine);
+    Controller->SetPlayer(Player);
+    Controller->Possess(Character);
+    Widget->SetPlayerContext(FLocalPlayerContext(Controller));
+    Widget->Initialize();
+    auto* Image = Cast<UImage>(Widget->GetWidgetFromName(TEXT("MapImage")));
+    if (!TestNotNull(TEXT("命名地图图像"), Image)) return false;
+    Image->SetBrushFromTexture(nullptr);
+    const auto DrawType = Image->GetBrush().DrawAs;
+    Widget->BindToPawn(Character);
+    TestEqual(TEXT("快照采用真实加载底图"), Widget->GetMinimapStateView().MapTexture.Get(), Texture);
+    TestEqual(TEXT("首帧实际图像绑定底图，不能显示空画刷"), Image->GetBrush().GetResourceObject(), static_cast<UObject*>(Texture));
+    TestEqual(TEXT("绑定保持作者圆形裁剪样式"), Image->GetBrush().DrawAs, DrawType);
+    Widget->BindToPawn(nullptr);
+    TestNull(TEXT("解绑释放实际地图画刷"), Image->GetBrush().GetResourceObject());
+    return true;
+}
+
 // 同一世界UV经过1/2/4倍显示后仍使用真实位置；验证边缘裁剪、圆形标记边界和拒绝非法值后的输出保持。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsMinimapViewportTest,
     "DivineBeasts.UI.Village.MinimapViewport", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

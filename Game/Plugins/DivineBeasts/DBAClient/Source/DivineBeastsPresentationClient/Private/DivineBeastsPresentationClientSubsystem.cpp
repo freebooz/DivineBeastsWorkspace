@@ -60,6 +60,8 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
         PostLoadMapHandle.Reset();
     }
 
+    // 先停止持久环境VFX，再撤销目录，防止纯视觉实例泄漏到退出后的世界。
+    StopFrontEndFoliage();
     bClosing = true;
     UnregisterProjectState();
     UnbindWeatherWorld();
@@ -74,6 +76,130 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
     RequestOrder.Reset();
     PlatformPresentation = nullptr;
     Super::Deinitialize();
+}
+
+
+bool UDivineBeastsPresentationClientSubsystem::StartFrontEndFoliage(
+    const FName StyleId, const FVector& WorldOrigin, const float GroundHeightCm,
+    FString& OutError)
+{
+    check(IsInGameThread());
+    OutError.Reset();
+    UWorld* World = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
+    if (bClosing || !World || World->bIsTearingDown ||
+        World->GetNetMode() == NM_DedicatedServer ||
+        // UE5.8的FVector没有IsFinite成员；ContainsNaN同时拒绝NaN与无穷分量，保留原坐标资格边界。
+        WorldOrigin.ContainsNaN() || !FMath::IsFinite(GroundHeightCm))
+    {
+        OutError = TEXT("当前预览世界不可用，或自然飘落参数无效。");
+        return false;
+    }
+
+    const auto Catalog = FDivineBeastsPresentationProjectCatalog::BuildFrontEndFoliageFragment(StyleId);
+    if (Catalog.Entries.Num() != 1)
+    {
+        OutError = TEXT("未知的落叶外观。允许Peach/Maple/Bamboo/Ginkgo四种项目预设。");
+        return false;
+    }
+
+    // 同一预览世界且同风格仅保留一个正在加载或活跃的目录和Niagara请求。
+    if (FrontEndFoliagePack.IsValid() && FrontEndFoliageStyle == StyleId)
+    {
+        FString StateError;
+        const auto State = GetContentPackState(FrontEndFoliagePack, StateError);
+        if (State == EDivineBeastsPresentationContentPackState::Loading ||
+            State == EDivineBeastsPresentationContentPackState::Active)
+        {
+            if (State == EDivineBeastsPresentationContentPackState::Active &&
+                !FrontEndFoliageRequestId.IsValid())
+            {
+                FrontEndFoliageOrigin = WorldOrigin;
+                FrontEndFoliageGroundHeightCm = GroundHeightCm;
+                SubmitFrontEndFoliage();
+            }
+            return true;
+        }
+    }
+
+    StopFrontEndFoliage();
+    FDivineBeastsPresentationContentPackFragment Fragment;
+    Fragment.ContentPackId = TEXT("DBA.FrontEnd.Foliage");
+    Fragment.Revision = 1;
+    Fragment.LifecycleScope = EGamePlatformPresentationContextScope::World;
+    Fragment.bRequiredPreload = true;
+    Fragment.CatalogFragment = Catalog;
+    Fragment.CatalogFragment.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
+    Fragment.CatalogFragment.OwnerScopeId = Fragment.ContentPackId;
+    Fragment.CatalogFragment.LifecycleScope = Fragment.LifecycleScope;
+    for (FGamePlatformPresentationCatalogEntry& Entry : Fragment.CatalogFragment.Entries)
+        Entry.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
+
+    const auto Handle = ActivateContentPack(Fragment, OutError);
+    if (!Handle.IsValid())
+        return false;
+
+    FrontEndFoliagePack = Handle;
+    FrontEndFoliageStyle = StyleId;
+    FrontEndFoliageOrigin = WorldOrigin;
+    FrontEndFoliageGroundHeightCm = GroundHeightCm;
+    return true; // 异步加载已受理，并非真实粒子已运行。
+}
+
+void UDivineBeastsPresentationClientSubsystem::SubmitFrontEndFoliage()
+{
+    check(IsInGameThread());
+    if (bClosing || FrontEndFoliageRequestId.IsValid() || !FrontEndFoliagePack.IsValid())
+        return;
+    UWorld* World = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
+    if (!World || World->bIsTearingDown || !PlatformPresentation)
+        return;
+
+    FGamePlatformPresentationRequest Request;
+    Request.RequestId = FGuid::NewGuid();
+    Request.SemanticTag = DivineBeastsPresentationTags::FrontEnd_FallingFoliage;
+    Request.ContextId = TEXT("DBA.FrontEnd.CharacterStudio");
+    Request.SourceLocation = FrontEndFoliageOrigin;
+    Request.ImpactLocation = FVector(FrontEndFoliageOrigin.X, FrontEndFoliageOrigin.Y,
+                                    FrontEndFoliageGroundHeightCm);
+    Request.ImpactNormal = FVector::UpVector;
+    Request.Priority = EGamePlatformPresentationPriority::Low;
+    Request.Lifetime = EGamePlatformPresentationLifetime::Persistent;
+    Request.PredictionState = EGamePlatformPresentationPredictionState::Confirmed;
+    // 场景视觉参数，不依赖服务器天气，不改变真实角色运动或碰撞。
+    Request.FloatParameters.Add(TEXT("User.FoliageGroundHeight"), FrontEndFoliageGroundHeightCm);
+    const auto Result = SubmitProjectRequest(Request);
+    if (Result == EGamePlatformPresentationSubmitResult::Submitted)
+        FrontEndFoliageRequestId = Request.RequestId;
+    else
+        UE_LOG(LogTemp, Warning,
+            TEXT("前端落叶VFX请求未受理，状态=%d，保留内容包供明确重试。"),
+            static_cast<int32>(Result));
+}
+
+void UDivineBeastsPresentationClientSubsystem::StopFrontEndFoliage()
+{
+    check(IsInGameThread());
+    const FGuid OldRequestId = FrontEndFoliageRequestId;
+    FrontEndFoliageRequestId.Invalidate();
+    if (OldRequestId.IsValid() && PlatformPresentation)
+    {
+        // 必须先向平台发送同RequestId的取消，再撤销内容包目录。
+        // 专用服务器和其他LocalPlayer均不承接此本地装饰表现。
+        FGamePlatformPresentationRequest Cancel;
+        Cancel.RequestId = OldRequestId;
+        Cancel.SemanticTag = DivineBeastsPresentationTags::FrontEnd_FallingFoliage;
+        Cancel.ContextId = TEXT("DBA.FrontEnd.CharacterStudio");
+        Cancel.Priority = EGamePlatformPresentationPriority::Low;
+        Cancel.Lifetime = EGamePlatformPresentationLifetime::Persistent;
+        Cancel.PredictionState = EGamePlatformPresentationPredictionState::Cancelled;
+        SubmitProjectRequest(Cancel);
+    }
+    if (FrontEndFoliagePack.IsValid())
+        DeactivateContentPack(FrontEndFoliagePack);
+    FrontEndFoliagePack = {};
+    FrontEndFoliageStyle = NAME_None;
+    FrontEndFoliageOrigin = FVector::ZeroVector;
+    FrontEndFoliageGroundHeightCm = 0.f;
 }
 
 void UDivineBeastsPresentationClientSubsystem::RegisterProjectState()
@@ -154,6 +280,8 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
         DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
     }
     if (bWorldScopeChanged)
+        StopFrontEndFoliage();
+    if (bWorldScopeChanged)
     {
         WeatherVisualHandle = {};
         WeatherAudioHandle = {};
@@ -180,6 +308,7 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
 
 void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
 {
+    StopFrontEndFoliage();
     TArray<FDivineBeastsPresentationContentPackHandle> ActiveHandles;
     for (const auto& Pair : ActivePacks) ActiveHandles.Add(Pair.Value.Handle);
     for (const auto& Handle : ActiveHandles) DeactivateContentPack(Handle);
@@ -410,6 +539,16 @@ void UDivineBeastsPresentationClientSubsystem::HandleLogicalPreloadCompleted(con
     Active.PreloadRequestIds.Add(RequestId); ActivePacks.Add(PackHandle.Id, MoveTemp(Active));
     const FString NoError;
     ContentPackChanged.Broadcast(PackHandle, EDivineBeastsPresentationContentPackState::Active, NoError);
+    // Active广播允许同步撤销：只在本代目录仍Active时提交可取消的场景特效。
+    if (!bClosing && Fragment.ContentPackId == TEXT("DBA.FrontEnd.Foliage") &&
+        FrontEndFoliagePack.IsValid() && FrontEndFoliagePack.Id == PackHandle.Id &&
+        FrontEndFoliagePack.Generation == PackHandle.Generation)
+    {
+        FString StateError;
+        if (GetContentPackState(PackHandle, StateError) ==
+            EDivineBeastsPresentationContentPackState::Active)
+            SubmitFrontEndFoliage();
+    }
     // 初次天气快照可能在真实VFX/SFX内容包异步加载完成之前到达。
     // Catalog已成功提交后按当前服务器时间重新发布本世界天气一次，
     // 避免“只有下一次切换天气后才能看到雨雪”。不添加Ticker/重复实例管理器。
@@ -627,6 +766,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleWorldCleanup(
         return;
     }
 
+    StopFrontEndFoliage();
     UnbindWeatherWorld();
     DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
     WeatherVisualHandle = {};

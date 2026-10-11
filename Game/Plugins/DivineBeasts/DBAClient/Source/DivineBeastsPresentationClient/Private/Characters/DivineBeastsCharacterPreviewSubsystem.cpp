@@ -7,10 +7,12 @@
 
 #include "Animation/AnimInstance.h" // 本文件也调用动画软类Get，完整类型不能由另一个Unity源文件提供。
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
+#include "DivineBeastsPresentationClientSubsystem.h" // 项目表现层中立请求，不直接加载Niagara。
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Animation/Skeleton.h"
 #include "Components/SkeletalMeshComponent.h" // 材质读取/设置及组件UObject转换需要完整类型，不能依赖PCH或Unity包含顺序。
 #include "Engine/LevelStreamingDynamic.h"
+#include "Engine/Level.h" // 查询当前流送工作室的地面Actor归属。
 #include "Engine/LocalPlayer.h"
 #include "Engine/SkeletalMesh.h" // 本文件读取Profile软网格引用，资产类型也必须直接完整包含。
 #include "Engine/World.h"
@@ -32,6 +34,57 @@ namespace
     const TSoftObjectPtr<UWorld> CharacterStudioWorld(
         FSoftObjectPath(
             TEXT("/DBAFrontEndPack/Maps/L_DBA_CharacterStudio.L_DBA_CharacterStudio")));
+}
+
+
+void UDivineBeastsCharacterPreviewSubsystem::SetPreviewFoliageStyle(FName StyleId)
+{
+    // 蓝图可按项目内容选择外观；只允许现有已登记且具有真实Definition的种类。
+    if (StyleId != TEXT("Peach") && StyleId != TEXT("Maple") &&
+        StyleId != TEXT("Bamboo") && StyleId != TEXT("Ginkgo"))
+    {
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning,
+            TEXT("无效自然飘落外观：%s"), *StyleId.ToString());
+        return;
+    }
+    if (PreviewFoliageStyle == StyleId)
+        return;
+    PreviewFoliageStyle = StyleId;
+    EnsurePreviewFoliage(); // 世界未就绪时由OnLevelShown延迟启用。
+}
+
+void UDivineBeastsCharacterPreviewSubsystem::EnsurePreviewFoliage()
+{
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    UWorld* World = LocalPlayer ? LocalPlayer->GetWorld() : nullptr;
+    if (!World || !PreviewStage.IsValid() || World->bIsTearingDown)
+        return;
+    UDivineBeastsPresentationClientSubsystem* Presentation =
+        LocalPlayer->GetSubsystem<UDivineBeastsPresentationClientSubsystem>();
+    if (!Presentation)
+        return;
+
+    // 当前原型使用NoCollision平面。按场景可选Tag读取可见工作室地面，不启用玩法碰撞。
+    const FVector Origin = PreviewStage->GetActorLocation();
+    float GroundZ = Origin.Z - 1.f;
+    ULevel* StudioLevel = PreviewStreamingLevel && PreviewStreamingLevel->IsLevelVisible()
+        ? PreviewStreamingLevel->GetLoadedLevel() : nullptr;
+    for (TActorIterator<AActor> It(World); It; ++It)
+    {
+        if ((StudioLevel && It->GetLevel() != StudioLevel) ||
+            !It->ActorHasTag(TEXT("DBA.Foliage.Ground")))
+            continue;
+        GroundZ = It->GetActorLocation().Z;
+        break;
+    }
+
+    FString Error;
+    if (!Presentation->StartFrontEndFoliage(
+            PreviewFoliageStyle, Origin, GroundZ, Error) && !Error.IsEmpty())
+    {
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning,
+            TEXT("前端环境落叶未启用：%s"), *Error);
+    }
 }
 
 void UDivineBeastsCharacterPreviewSubsystem::Initialize(
@@ -68,6 +121,7 @@ bool UDivineBeastsCharacterPreviewSubsystem::ActivatePreviewScene()
     if (PreviewStage.IsValid())
     {
         BindPreviewCamera();
+        EnsurePreviewFoliage();
         TryApplyPendingAppearance();
         return true;
     }
@@ -99,6 +153,11 @@ bool UDivineBeastsCharacterPreviewSubsystem::ActivatePreviewScene()
 
 void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewScene()
 {
+    if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+    {
+        if (auto* Presentation = LocalPlayer->GetSubsystem<UDivineBeastsPresentationClientSubsystem>())
+            Presentation->StopFrontEndFoliage();
+    }
     CancelPendingLoads();
     RequestedHeroDefinitionId = NAME_None;
     PendingProfile = nullptr;
@@ -214,6 +273,8 @@ void UDivineBeastsCharacterPreviewSubsystem::HandlePreviewLevelShown()
     ResolvePreviewStage();
     BindPreviewCamera();
     TryApplyPendingAppearance();
+    // 预览关卡已显示后才绑定该世界的落叶表现，不能在清理函数签名内调用。
+    EnsurePreviewFoliage();
 }
 
 void UDivineBeastsCharacterPreviewSubsystem::HandleWorldCleanup(

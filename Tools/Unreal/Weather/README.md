@@ -3,6 +3,19 @@
 工作空间：`DivineBeastsWorkspace（神兽联盟工作空间）`；适用虚幻引擎：锁定UE5.8。
 这些源文件不产生新的游戏机制插件，也不替代实际材质、Niagara、MetaSound或SoundWave资产。
 
+## 2026-10-11 已实施：真实积雪增强与地表风吹雪粉
+
+新增固定种子原创资源：Surface/SourceArt/Snow目录两张2048灰度PNG（雪面微高度/宏观覆盖），VFX/SourceArt/Snow目录一张512 RGBA雪粉PNG；三者已在锁定UE5.8编辑器中导入、保存为真实Texture2D，Manifest记录SHA-256。
+
+首次生产由 Tools/Unreal/Weather/GenerateSnowDetailSourceArt.py 创建；--verify为只读完整性复核。源素材验证脚本：Tests/Architecture/ValidateSnowDetailSourceArt.py。引擎资源脚本：ImportSnowDetailSourceArt.py、AuthorSnowDetailedAssets.py、AuthorSnowReviewMap.py，由 AuthorSnowDetailedPipeline.py 通过SNOW_AUTHOR_PIPELINE_MODE=all显式调用；默认inspect只读。
+
+平台通用高细节母材质M_GP_SnowCover_Detailed有53表达式，雪粉材质M_GP_VFX_SnowGroundPuff有6表达式且开启used_with_niagara_sprites。第三层项目实例MI_DBA_Snow_Detailed存DBAPresentationPack_Core，不复制平台主材质。新NS_GP_Weather_Snow_Detailed使用真实Niagara构建并保存，三个发射器分别负责近雪、远雪、短生命周期贴地雪粉；Monolith校验0错误0警告。缺失的原有雨雪VFX Definition通过修复后的AuthorWeatherVFXDefinitions.py生成；BindSnowDetailedVFXDefinition.py仅把原逻辑ID platform.weather.snow@1的表现引用切换到增强NS，原NS留作回滚。
+
+核验：在真实UE5.8编辑器执行VerifySnowDetailedAssets.py，应输出SNOW_UE_ASSET_VALIDATION_PASS。独立审核地图 /Game/Development/Snow/Maps/L_DBA_SnowReview；必须由人工评审坡度、积雪真实感、远近发射和帧率。客户端/服务器Cook与正式Village地图接入仍需以各自实际执行日志为准。
+
+当前引擎与工程：D:/UnrealEngine-5.8.0-release 以及 E:/work/2026/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject。下方2026-10-10记录包含旧路径与早期尚未执行状态，仅为历史，不能作为2026-10-11的结果。
+
+
 ## 现已产生的源素材（2026-10-10）
 
 - `GamePlatformVFX/SourceArt/Weather/`：雨线、雨水波纹、16帧水花、16格雪花RGBA源纹理4张；

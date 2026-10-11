@@ -45,6 +45,14 @@ Gameplay / Application Fact
 - 非 Composite Behavior 统一以 Generic Niagara（通用 Niagara）执行，不建立十套播放器。Beam/Area/Attached 仅有少量通用参数/附着适配；
 - 已启动 `F:\\VFX Lib` 第一批平台化迁移：通用 Shader 位于 `Shaders/Private/GamePlatformVFXCommonMotion.ush`，源美术只进入 `SourceArt`，不会冒充运行时 `.uasset`。
 
+## 自然飘落物（2026-10-11）
+
+`Content/Environment/FallingFoliage` 保存统一双层GPU Niagara系统 `NS_GP_FallingFoliage_Base`、`NM_GP_FoliageAirMotion`（空中风阻和摇摆）、`NM_GP_FoliageGroundMotion`（落地、贴地风滑及阵风再次扬起）、`NET_GP_FallingFoliage_Ambient`（环境性能预算）和 `M_GP_FallingFoliage_Master`（双面叶片母材质）。
+
+平台层只保留跨游戏机制。桃花、枫叶、竹叶、银杏的项目贴图、材质实例、Niagara变体和Definition归 `DBAPresentationPack_Core`。角色选择/创建共用一条世界持续VFX请求，离开流送工作室时按RequestId取消；专用服务器不执行纯视觉粒子。
+
+引擎资产已由UE编辑器和Monolith保存；性能、Niagara GPU编译、Cook和人工视觉检查以最终验证结果为准，不能以文件存在冒充通过。
+
 ## 边界
 
 平台层不得认识《神兽联盟》生肖、英雄、技能或 MOBA 规则。项目层只负责：

@@ -98,6 +98,8 @@ def author_materials(assets,asset_tools,unreal):
     master.set_editor_property("blend_mode",unreal.BlendMode.BLEND_MASKED)
     master.set_editor_property("shading_model",unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
     master.set_editor_property("two_sided",True)
+    # Niagara Sprite材质必须显式开启使用标志，否则真实运行会回退默认材质。
+    master.set_editor_property("used_with_niagara_sprites",True)
     master.set_editor_property("opacity_mask_clip_value",0.20)
     def node(cls,x,y):
         return lib.create_material_expression(master,cls,x,y)

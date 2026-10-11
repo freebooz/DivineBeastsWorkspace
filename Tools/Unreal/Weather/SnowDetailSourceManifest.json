@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "generator": "Tools/Unreal/Weather/GenerateSnowDetailSourceArt.py",
+  "seed": 20261011,
+  "noteZh": "仅为原始PNG；Texture2D、材质和Niagara需通过真实UE5.8创建、回读和编译",
+  "textures": [
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Snow/T_GP_Snow_MicroHeight_Source.png",
+      "assetPath": "/GamePlatformSurface/Textures/Snow/T_GP_Snow_MicroHeight",
+      "usageZh": "2048雪面微高度与光学遮罩",
+      "sha256": "9e5e1b62caf34eedd247815044d385b7bb2a94dfc01b56c97b9659b36e13cbfa",
+      "size": [
+        2048,
+        2048
+      ],
+      "mode": "L",
+      "sourceSRGB": false,
+      "recommendedCompression": "Masks",
+      "originalArt": "procedural-workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Snow/T_GP_Snow_CoverageNoise_Source.png",
+      "assetPath": "/GamePlatformSurface/Textures/Snow/T_GP_Snow_CoverageNoise",
+      "usageZh": "2048世界空间积雪覆盖噪声",
+      "sha256": "03eedfd7a2f7dd7259db76946f68425854ccfcd7c9d0428922eb41879ab90980",
+      "size": [
+        2048,
+        2048
+      ],
+      "mode": "L",
+      "sourceSRGB": false,
+      "recommendedCompression": "Masks",
+      "originalArt": "procedural-workspace-original",
+      "engineAssetCreated": false
+    },
+    {
+      "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/SourceArt/Snow/T_GP_Snow_GroundPuff_Source.png",
+      "assetPath": "/GamePlatformVFX/Weather/Textures/T_GP_Snow_GroundPuff",
+      "usageZh": "512贴地风吹雪粉半透明Sprite",
+      "sha256": "77603fd2bcc3e898ebd17bc8dd494b341c275c7d8b582f97ad3fd076a5791579",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "originalArt": "procedural-workspace-original",
+      "engineAssetCreated": false
+    }
+  ]
+}

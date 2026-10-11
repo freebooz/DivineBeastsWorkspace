@@ -53,6 +53,8 @@ const TArray<FString>& FGamePlatformSurfaceAssetContract::GetOptionalMaterialAut
 {
     static const TArray<FString> Packages =
     {
+        // 写实积雪属于可选增强材质；不提升为全部游戏项目的必需资源。
+        TEXT("/GamePlatformSurface/Materials/M_GP_SnowCover_Detailed"),
         TEXT("/GamePlatformSurface/Materials/M_GP_Surface_Landscape"),
         TEXT("/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_DirtLayer"),
         TEXT("/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_DustLayer"),
