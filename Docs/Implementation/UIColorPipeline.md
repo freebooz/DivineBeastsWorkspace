@@ -54,3 +54,9 @@ Monolith导入动作不接受EditorIcon参数，必须原生导入后用严格�
 封面增量：用户新图1672×941，哈希87e6ac3803f3a0530eb8e05f4039f37b0171d42985f9dc52a16cad663d6bd227；复用NatureLoginBackdrop稳定身份。仅背景在CoverBackgroundScale中等比铺满并裁切，LOGO、文字、账号密码和按钮是根布局的独立固定控件。纹理与登录WBP经Monolith编译保存；用户明确保留共享编辑器，重启/最终客户端验证延期。
 
 用户最新要求登录背景保持原图比例铺满：生成器现显式输出ScaleToFill/Both/ClipToBounds、背景四边零偏移及子图居中后置动作。LOGO按用户要求改为独立容器随窗口等比缩放，字体和输入仍为固定大小；上文固定LOGO尺寸属于历史状态。当前真实资产回读已见等比铺满模式；用户明确关闭编辑器并要求稍后修改资产，最终窗口比例及客户端视觉复核待恢复后执行。详见`FrontEndVisualRepair_20261011.md`。
+
+## 再次发生后的强制纠正
+
+原先“错误Gamma预览仅作布局”的允许范围已撤销：Monolith 0.23.0 capture_scene_preview(widget)禁止用于神兽联盟界面预览及用户展示，避免布局图又被误当实际颜色。改用真实RHI线性浮点回读、单次PNG编码或原生客户端截图；禁止调暗、滤色或锐化原稿补偿截图错误。
+
+Build/Game/TestUIColorRHI.ps1读取实际Automation结果，要求SourceToSlate用例存在且成功，并核对五份截图和完整公共UI/源图指纹。CookFrontEndClient默认执行VerifyOnly，报告缺失、失败、未加载测试、NullRHI或资源变化均拒绝发布。缺失报告拒绝路径已真实执行，退出1；新C++回归正在构建，其成功结果另记，不沿用此前颜色未验证的包结论。

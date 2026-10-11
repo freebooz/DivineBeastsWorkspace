@@ -295,6 +295,47 @@ def configure_studio_moonlight(actors):
     settings.set_editor_property('override_auto_exposure_bias', True)
     settings.set_editor_property('auto_exposure_bias', 0.)
     volume.set_editor_property('settings', settings)
+    configure_studio_mist(actors)
+
+
+def configure_studio_mist(actors):
+    """在角色后方维护柔和月光体积雾，复用引擎原生体积，不创建第二套特效服务。
+
+    展示镜头位于X=430厘米、人物位于原点，局部雾球最近边界为X=-400厘米；
+    人物和相机均不在雾球内。全局体积雾从550厘米处淡入，保持面部与UI清晰。
+    仅修改第三层共用展示地图，不触碰PlayerStart、人物比例、曝光或登录流程。
+    """
+    fog = actors['ExponentialHeightFog'].get_component_by_class(unreal.ExponentialHeightFogComponent)
+    fog.set_editor_property('fog_density', .006)
+    fog.set_editor_property('fog_height_falloff', .2)
+    fog.set_editor_property('start_distance', 550.)
+    fog.set_editor_property('enable_volumetric_fog', True)
+    fog.set_editor_property('volumetric_fog_start_distance', 550.)
+    fog.set_editor_property('volumetric_fog_near_fade_in_distance', 100.)
+    fog.set_editor_property('volumetric_fog_distance', 5000.)
+    fog.set_editor_property('volumetric_fog_extinction_scale', .7)
+    fog.set_editor_property('volumetric_fog_scattering_distribution', .35)
+    fog.set_editor_property('volumetric_fog_albedo', unreal.Color(180, 208, 224, 255))
+    fog.set_editor_property('volumetric_fog_emissive', unreal.LinearColor(0., 0., 0., 1.))
+    api = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    rear = actors.get('PreviewRearMoonMist') or api.spawn_actor_from_class(
+        unreal.LocalFogVolume, unreal.Vector(-850., 0., 180.))
+    rear.set_actor_label('PreviewRearMoonMist')
+    rear.set_folder_path('ZodiacSanctuary/Atmosphere')
+    rear.tags = [unreal.Name('DBA.Preview.RearMoonMist')]
+    rear.set_actor_location(unreal.Vector(-850., 0., 180.), False, False)
+    # 原生局部雾基础半径为500厘米，统一0.9缩放得到450厘米半径。
+    # 引擎全局起始距离为1000厘米，局部雾置于可渲染的后景范围；不改全局CVar影响其他世界。
+    rear.set_actor_scale3d(unreal.Vector(.9, .9, .9))
+    local = rear.get_component_by_class(unreal.LocalFogVolumeComponent)
+    local.set_editor_property('radial_fog_extinction', .9)
+    local.set_editor_property('height_fog_extinction', .35)
+    local.set_editor_property('height_fog_falloff', 3.)
+    local.set_editor_property('height_fog_offset', -.3)
+    local.set_editor_property('fog_phase_g', .35)
+    local.set_editor_property('fog_albedo', unreal.LinearColor(.42, .58, .68, 1.))
+    local.set_editor_property('fog_emissive', unreal.LinearColor(0., 0., 0., 1.))
+    local.set_editor_property('fog_start_distance', 500.)
 
 
 def author_studio():
@@ -343,11 +384,6 @@ def author_studio():
     camera.set_editor_property('override_aspect_ratio_axis_constraint', True)
     camera.set_editor_property('aspect_ratio_axis_constraint', unreal.AspectRatioAxisConstraint.ASPECT_RATIO_MAINTAIN_YFOV)
     configure_studio_moonlight(actors)
-    fog = actors['ExponentialHeightFog'].get_component_by_class(unreal.ExponentialHeightFogComponent)
-    fog.set_editor_property('fog_density', .025)
-    fog.set_editor_property('fog_height_falloff', .2)
-    fog.set_editor_property('start_distance', 550.)
-    fog.set_editor_property('enable_volumetric_fog', True)
     assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level(), '工作室保存失败'
     unreal.EditorLevelLibrary.set_level_viewport_camera_info(camera.get_world_location(), camera.get_world_rotation())
     report = {'map': STUDIO, 'environment_scale': ENVIRONMENT_SCALE, 'mesh_actor_count': len(MANIFEST['objects']), 'source_blend_sha256': hashlib.sha256((SOURCE / 'DBA_ZodiacSanctuary.blend').read_bytes()).hexdigest(), 'backup': str(backup), 'stage_class': stage.get_class().get_name(), 'camera_location_cm': str(camera.get_world_location()), 'actions': ['FBX import', 'PBR material graph', 'preserve stage and foliage anchor', 'save studio'], 'client_cook': 'not_run'}

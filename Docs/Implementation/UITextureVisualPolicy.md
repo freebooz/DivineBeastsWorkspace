@@ -24,4 +24,4 @@
 
 ## 神兽联盟导入执行门禁
 
-后续每次导入或重导入项目界面原稿，必须执行[颜色链路规范](UIColorPipeline.md)中的导入后阻断审计：通过Monolith调用`Tests/Assets/AuditUIColorImportedAssetsMonolith.py`，包括已存在的纹理。动作自身的失败字段必须阻断后续交付，不得只看工具传输层是否报错；无损设置、正确sRGB及源图哈希通过后，仍须完成材质采样器、保存重载、真实GPU及新版客户端验证。禁止以Monolith 0.23.0的Widget预览PNG作为颜色基准，或调暗/锐化原稿补偿其额外Gamma编码。任一环节未执行或失败必须明确标为未验收。
+后续每次导入或重导入项目界面原稿，必须执行[颜色链路规范](UIColorPipeline.md)中的导入后阻断审计：通过Monolith调用`Tests/Assets/AuditUIColorImportedAssetsMonolith.py`，包括已存在的纹理。动作自身的失败字段必须阻断后续交付，不得只看工具传输层是否报错；无损设置、正确sRGB及源图哈希通过后，仍须完成材质采样器、保存重载、真实GPU及新版客户端验证。禁止调用Monolith 0.23.0的Widget预览PNG路径用于界面预览、用户展示或验收，禁止调暗/锐化原稿补偿其额外Gamma编码。采用原生截图或线性浮点RHI回读且单次编码的PNG；前端发布须通过TestUIColorRHI的当前资源指纹门禁。任一环节未执行或失败必须明确标为未验收。

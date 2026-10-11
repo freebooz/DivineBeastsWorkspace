@@ -18,6 +18,7 @@
 #include "HAL/FileManager.h"
 #include "Misc/Paths.h"
 #include "RHI.h"
+#include "ShaderCompiler.h"
 
 namespace DivineBeastsUIColorTests
 {
@@ -34,29 +35,55 @@ namespace DivineBeastsUIColorTests
 
     // 从真实保存页面生成颜色正确的布局证据：线性浮点目标无Slate输出Gamma，PNG编码仅一次。
     // 这不是编辑资产的替代工具；仅测试未激活页面，无账号数据、网络、设备设置写入和世界操作。
-    bool SaveSettingsPreview()
+    bool SavePagePreview(const TCHAR* ClassPath, const TCHAR* FileName, const FIntPoint Size,
+        FAutomationTestBase& Test, const bool bVerifyCover)
     {
-        UClass* Class=LoadClass<UUserWidget>(nullptr,TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Settings.WBP_DBA_UI_Settings_C"));
+        UClass* Class=LoadClass<UUserWidget>(nullptr,ClassPath);
         if(!Class)return false;
         TStrongObjectPtr<UUserWidget> Widget(NewObject<UUserWidget>(GetTransientPackage(),Class));
         if(!Widget->Initialize())return false;
         TStrongObjectPtr<UTextureRenderTarget2D> Target(NewObject<UTextureRenderTarget2D>());
         Target->ClearColor=FLinearColor::Transparent;
-        Target->InitCustomFormat(960,540,PF_FloatRGBA,true);
+        Target->InitCustomFormat(Size.X,Size.Y,PF_FloatRGBA,true);
         Target->UpdateResourceImmediate(true);
         auto* Renderer=new FWidgetRenderer(false,true);
         const auto SlateWidget=Widget->TakeWidget();
-        Renderer->DrawWidget(Target.Get(),SlateWidget,FVector2D(960,540),0.f);
+        Renderer->DrawWidget(Target.Get(),SlateWidget,FVector2D(Size),0.f);
         FlushRenderingCommands();
-        Renderer->DrawWidget(Target.Get(),SlateWidget,FVector2D(960,540),0.f);
+        if(GShaderCompilingManager)GShaderCompilingManager->FinishAllCompilation();
+        Renderer->DrawWidget(Target.Get(),SlateWidget,FVector2D(Size),0.f);
         FlushRenderingCommands();
-        const FString Path=FPaths::ProjectSavedDir()/TEXT("Validation/AnimationHUD/PanelColorLinearVerified.png");
+        bool bColorsValid=true;
+        if(bVerifyCover)
+        {
+            // 选取不被LOGO或表单覆盖的三处背景。直接比较最终页面GPU像素，覆盖原稿到显示的完整路径。
+            UTexture2D* Cover=LoadObject<UTexture2D>(nullptr,TEXT("/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop"));
+            FImage Source;
+            TArray<FFloat16Color> Pixels;
+            bColorsValid=Cover&&Cover->Source.GetMipImage(Source,0)
+                &&Target->GameThread_GetRenderTargetResource()->ReadFloat16Pixels(Pixels)&&Pixels.Num()==Size.X*Size.Y;
+            if(bColorsValid)
+            {
+                const float Scale=FMath::Max(float(Size.X)/Source.SizeX,float(Size.Y)/Source.SizeY);
+                const FVector2f Crop((Source.SizeX*Scale-Size.X)*.5f,(Source.SizeY*Scale-Size.Y)*.5f);
+                for(const FVector2f Sample:{FVector2f(.90f,.10f),FVector2f(.08f,.45f),FVector2f(.92f,.70f)})
+                {
+                    const int32 X=FMath::FloorToInt(Sample.X*Size.X),Y=FMath::FloorToInt(Sample.Y*Size.Y);
+                    const FVector2f UV((X+.5f+Crop.X)/(Source.SizeX*Scale),(Y+.5f+Crop.Y)/(Source.SizeY*Scale));
+                    const FLinearColor Expected=SampleDesign(Source,UV);
+                    const FLinearColor Actual=Pixels[Y*Size.X+X].GetFloats();
+                    bColorsValid&=Test.TestTrue(*FString::Printf(TEXT("%s 最终背景颜色误差≤0.008，actual=%s expected=%s"),FileName,*Actual.ToString(),*Expected.ToString()),
+                        FMath::Abs(Actual.R-Expected.R)<=.008f&&FMath::Abs(Actual.G-Expected.G)<=.008f&&FMath::Abs(Actual.B-Expected.B)<=.008f);
+                }
+            }
+        }
+        const FString Path=FPaths::ProjectSavedDir()/TEXT("Validation/UIColorRHI")/FileName;
         IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path),true);
         TUniquePtr<FArchive> Writer(IFileManager::Get().CreateFileWriter(*Path));
         const bool bSaved=Writer&&FImageUtils::ExportRenderTarget2DAsPNG(Target.Get(),*Writer);
         if(Writer)Writer->Close();
         BeginCleanup(Renderer);
-        return bSaved;
+        return bSaved&&bColorsValid;
     }
 
     // 仅生成瞬态Slate图像和16×16浮点目标；同步GPU后读取中心像素并按引擎延迟清理释放渲染器。
@@ -77,6 +104,7 @@ namespace DivineBeastsUIColorTests
         // 首次绘制建立材质句柄；再次绘制使用已编译资源。测试必须在有RHI的编辑器运行。
         Renderer->DrawWidget(Target.Get(),Widget,FVector2D(16,16),0.f);
         FlushRenderingCommands();
+        if(GShaderCompilingManager)GShaderCompilingManager->FinishAllCompilation();
         Renderer->DrawWidget(Target.Get(),Widget,FVector2D(16,16),0.f);
         FlushRenderingCommands();
         TArray<FFloat16Color> Pixels;
@@ -139,7 +167,14 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
             FMath::Abs(Actual.R-Expected.R)<=.008f&&FMath::Abs(Actual.G-Expected.G)<=.008f&&FMath::Abs(Actual.B-Expected.B)<=.008f);
         TestTrue(TEXT("实心面板内部不透出场景"),Actual.A>=.99f);
     }
-    TestTrue(TEXT("线性浮点页面证据成功导出，不使用有额外编码的普通预览"),DivineBeastsUIColorTests::SaveSettingsPreview());
+    TestTrue(TEXT("线性浮点设置页面证据成功导出"),DivineBeastsUIColorTests::SavePagePreview(
+        TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Settings.WBP_DBA_UI_Settings_C"),TEXT("SettingsLinearVerified.png"),FIntPoint(960,540),*this,false));
+    for(const FIntPoint Size:{FIntPoint(960,540),FIntPoint(1920,1080),FIntPoint(1280,1024),FIntPoint(2560,1080)})
+    {
+        const FString FileName=FString::Printf(TEXT("Login%d_%d_LinearVerified.png"),Size.X,Size.Y);
+        TestTrue(TEXT("登录页等比铺满且最终颜色正确"),DivineBeastsUIColorTests::SavePagePreview(
+            TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login.WBP_DBA_UI_Login_C"),*FileName,Size,*this,true));
+    }
     return true;
 }
 #endif

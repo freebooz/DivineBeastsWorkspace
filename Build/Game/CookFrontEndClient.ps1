@@ -13,6 +13,8 @@ param([string]$EngineRoot, [switch]$Cook,
     # 默认不向每个独占Stage重复复制数GB的PDB；原始调试符号仍归Game/Binaries。
     # 需要随包调试时显式传-SkipDebugSymbols:$false，不降低配置、不跳过Cook与资产容器检查。
     [switch]$SkipDebugSymbols=$true,
+    # 必须匹配当前公共UI与原图的真实RHI颜色报告；资源变化后旧报告拒绝发布。
+    [string]$UIColorRHIReport,
     # 默认发行前端保持开发资源隔离；候选技能必须显式选择用户批准的开发客户端配置。
     [ValidateSet('FrontEndClient','VillageDevelopmentClient')][string]$CustomConfig='FrontEndClient',
     [ValidateRange(1,86400)][int]$TimeoutSeconds=1800, [guid]$RunId=[guid]::NewGuid())
@@ -28,6 +30,10 @@ try {
     $tool=Get-FoundationManagedTool $engine AutomationTool
     Assert-FoundationFile $context.Project
     Assert-FoundationFile (Join-Path $context.Workspace "Game/Config/Custom/$CustomConfig/DefaultGame.ini")
+    if(!$UIColorRHIReport){$UIColorRHIReport=Join-Path $context.Workspace 'Game/Saved/Validation/UIColorRHI/Latest.json'}
+    & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $PSScriptRoot 'TestUIColorRHI.ps1') -VerifyOnly -ReportPath $UIColorRHIReport
+    if($LASTEXITCODE -ne 0){throw '真实RHI颜色门禁未通过；拒绝发布缺失、失败或过期的UI颜色证据。'}
+    $details.UIColorRHIReport=[IO.Path]::GetFullPath($UIColorRHIReport)
     $lock=Enter-FoundationEngineLock $engine.Root
     $cookDirectory=Join-Path $context.Directory 'Cooked/WindowsClient'
     $stageDirectory=Join-Path $context.Directory 'Stage'
