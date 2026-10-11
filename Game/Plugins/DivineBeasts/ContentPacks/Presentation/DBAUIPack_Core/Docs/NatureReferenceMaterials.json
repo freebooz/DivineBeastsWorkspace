@@ -1,69 +1,993 @@
 {
-  "SchemaVersion": 1,
-  "用途": "第三层客户端UI原稿取样材质说明；JSON不是引擎资产，全部材质由Monolith创建编译保存。",
-  "色彩合同": "原稿sRGB、TC_EditorIcon无损、NoMipmaps；输出RGB只取样原稿，不乘色/调色。Alpha仅移除底色和固定业务示意。",
-  "所有权": "DBAUIPack_Core；平台不引用项目纹理，材质不改变服务器/GAS状态。",
-  "材料": [
+  "Description": "第三层原稿UI材质证据；五张原稿RGB不改色，四张轮廓Alpha独立；动态技能图案采用原稿碧绿晶纹色系，不改变技能身份或授权。",
+  "Materials": [
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMenuReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReference",
-      "Code": "// 原稿RGB只采样，不加乘色或色调变换；命令文案区域从邻近无字石板重新取样。\nfloat2 P = UV;\nif (UV.x > 0.345 && UV.x < 0.71 && UV.y > 0.255 && UV.y < 0.745) P.x = 0.30 + frac((UV.x-0.345)*9.0)*0.035;\nfloat3 C = Texture2DSample(Source, SourceSampler, P).rgb;\n// 原稿深色背景仅改透明度；不把它当贴图颜色染黑。\nAlpha = smoothstep(0.022, 0.038, max(C.r,max(C.g,C.b)));\nreturn C;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMenuReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          },
+          {
+            "id": "OpaqueSilhouette",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReferenceMatte"
+            }
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 原稿RGB只采样，不加乘色或色调变换；命令文案区域从邻近无字石板重新取样。\nfloat2 P = UV;\nif (UV.x > 0.345 && UV.x < 0.71 && UV.y > 0.255 && UV.y < 0.745) P.x = 0.30 + frac((UV.x-0.345)*9.0)*0.035;\nfloat3 C = Texture2DSample(Source, SourceSampler, P).rgb;\n// 原稿深色背景仅改透明度；不把它当贴图颜色染黑。\nAlpha=Texture2DSample(Matte,MatteSampler,UV).a;\nreturn C;",
+            "description": "保留原稿RGB，显示遮罩只修改Alpha；项目第三层客户端UI专用",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              },
+              {
+                "name": "Matte"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          },
+          {
+            "from": "OpaqueSilhouette",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Matte"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureAbilityReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
-      "Code": "// 原稿装饰RGB保持原采样；固定肖像、生命/气势填充、技能图标/快捷键、库存和菜单示意不属于实时数据。\nfloat3 C = Texture2DSample(Source, SourceSampler, UV).rgb;\nAlpha = smoothstep(0.014,0.03,max(C.r,max(C.g,C.b)));\nfloat2 Portrait = (UV-float2(0.184,0.488))/float2(0.061,0.183);\nif(dot(Portrait,Portrait)<1.0) Alpha=0;\nif(UV.x>0.274 && UV.x<0.735 && UV.y>0.277 && UV.y<0.31) Alpha=0;\nif(UV.x>0.274 && UV.x<0.735 && UV.y>0.338 && UV.y<0.366) Alpha=0;\nif(UV.x>0.275 && UV.x<0.737 && UV.y>0.399 && UV.y<0.686) Alpha=0;\nif(UV.x>0.737 && UV.x<0.879 && UV.y>0.399 && UV.y<0.73) Alpha=0;\nif(UV.x>0.168 && UV.x<0.203 && UV.y>0.633 && UV.y<0.718) Alpha=0;\nreturn C;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureAbilityReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          },
+          {
+            "id": "OpaqueSilhouette",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReferenceMatte"
+            }
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 原稿RGB直采；动态肖像/数值保留既有替换窗口，技能间框线与右侧图案不整块挖空。\nfloat3 C=Texture2DSample(Source,SourceSampler,UV).rgb;\nAlpha=Texture2DSample(Matte,MatteSampler,UV).a;\nfloat2 Portrait=(UV-float2(.184,.488))/float2(.061,.183);\nif(dot(Portrait,Portrait)<1)Alpha=0;\nif(UV.x>.274&&UV.x<.735&&UV.y>.277&&UV.y<.31)Alpha=0;\nif(UV.x>.274&&UV.x<.735&&UV.y>.338&&UV.y<.366)Alpha=0;\n// 仅清理五个示意图案的内部；使用原稿不透明暗底，不使槽间或底座露出场景。\nfloat Slot=floor((UV.x-.276)/.09);\nfloat InnerX=UV.x-(.276+Slot*.09);\nif(Slot>=0&&Slot<5&&InnerX>.008&&InnerX<.070&&UV.y>.444&&UV.y<.625)C=Texture2DSample(Source,SourceSampler,float2(.767,.424)).rgb;\n// 示意快捷键由真实PlayerInput映射覆盖，底板保持不透明。\nif(Slot>=0&&Slot<5&&InnerX>.028&&InnerX<.054&&UV.y>.655&&UV.y<.695)C=Texture2DSample(Source,SourceSampler,float2(.31,.7)).rgb;\n// 右侧物品画面是装饰；擦除原稿3/1示意库存，不伪造实际背包数量。\nif((UV.x>.800&&UV.x<.820||UV.x>.864&&UV.x<.880)&&UV.y>.520&&UV.y<.579)C=Texture2DSample(Source,SourceSampler,float2(.767,.424)).rgb;\nif(UV.x>.168&&UV.x<.203&&UV.y>.633&&UV.y<.718)C=Texture2DSample(Source,SourceSampler,float2(.179+frac(UV.x*8)*.007,.635+frac(UV.y*8)*.007)).rgb;\nreturn C;",
+            "description": "原稿RGB直采，动态数据遮罩；第三层客户端UI",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              },
+              {
+                "name": "Matte"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          },
+          {
+            "from": "OpaqueSilhouette",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Matte"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMinimapReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapReference",
-      "Code": "// 仅移除参考地图与固定交互标记；保留原稿外框的RGB，不改绿色、金色、石材或玉石颜色。\nfloat3 C = Texture2DSample(Source, SourceSampler, UV).rgb;\nAlpha=smoothstep(0.018,0.038,max(C.r,max(C.g,C.b)));\nif(distance(UV,float2(0.5,0.447))<0.335) Alpha=0;\n// 右侧原稿加减/叶子由真实按钮替换，避免同一按钮绘制两次。\nif(UV.x>0.807 && UV.x<0.884 && UV.y>0.512 && UV.y<0.718) Alpha=0;\nreturn C;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMinimapReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          },
+          {
+            "id": "OpaqueSilhouette",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapReferenceMatte"
+            }
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 原稿RGB保持不变；真实俯视底图只替换地图窗口，原稿标题、罗盘及缩放按钮全部保留。\nfloat3 C=Texture2DSample(Source,SourceSampler,UV).rgb;\nAlpha=Texture2DSample(Matte,MatteSampler,UV).a;\nbool MapWindow=distance(UV,float2(.5,.447))<.335;\nbool Plaque=UV.x>.35&&UV.x<.65&&UV.y>.112&&UV.y<.195;\nbool Compass=distance(UV,float2(.5,.204))<.036||distance(UV,float2(.175,.438))<.035||distance(UV,float2(.822,.439))<.035||distance(UV,float2(.5,.697))<.036;\nbool Buttons=distance(UV,float2(.844,.549))<.032||distance(UV,float2(.840,.614))<.032||distance(UV,float2(.828,.683))<.032;\nif(MapWindow&&!Plaque&&!Compass&&!Buttons)Alpha=0;\nreturn C;",
+            "description": "保留原稿RGB，显示遮罩只修改Alpha；项目第三层客户端UI专用",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              },
+              {
+                "name": "Matte"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          },
+          {
+            "from": "OpaqueSilhouette",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Matte"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReference",
-      "Code": "// 四边复用原稿无字装饰取样；中央透明，由页面自己的背景承载，不以生成画稿代替原稿颜色。\nfloat2 P=UV;\nAlpha=1;\nif(UV.y<0.16) P=float2(UV.x,UV.y*1.375);\nelse if(UV.y>0.84) P=float2(UV.x,0.76+(UV.y-0.84)*1.5);\nelse if(UV.x<0.16) P=float2(UV.x*1.75,0.20+UV.y*0.58);\nelse if(UV.x>0.84) P=float2(0.72+(UV.x-0.84)*1.75,0.20+UV.y*0.58);\nelse Alpha=0;\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha*=smoothstep(0.022,0.038,max(C.r,max(C.g,C.b)));\nreturn C;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          },
+          {
+            "id": "OpaqueSilhouette",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReferenceMatte"
+            }
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 四边复用原稿无字装饰取样；中央透明，由页面自己的背景承载，不以生成画稿代替原稿颜色。\nfloat2 P=UV;\nAlpha=1;\nif(UV.y<0.16) P=float2(UV.x,UV.y*1.375);\nelse if(UV.y>0.84) P=float2(UV.x,0.76+(UV.y-0.84)*1.5);\nelse if(UV.x<0.16) P=float2(UV.x*1.75,0.20+UV.y*0.58);\nelse if(UV.x>0.84) P=float2(0.72+(UV.x-0.84)*1.75,0.20+UV.y*0.58);\nelse Alpha=0;\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha*=Texture2DSample(Matte,MatteSampler,P).a;\nreturn C;",
+            "description": "保留原稿RGB，显示遮罩只修改Alpha；项目第三层客户端UI专用",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              },
+              {
+                "name": "Matte"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          },
+          {
+            "from": "OpaqueSilhouette",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Matte"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureSkillFrameReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
-      "Code": "// 原稿第一个技能石框；中心和固定快捷键区域透明，实际图标/快捷键来自授予技能快照。\nfloat2 P=float2(0.271+UV.x*0.088,0.39+UV.y*0.294);\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=1;\nif(UV.x>0.10 && UV.x<0.90 && UV.y>0.10 && UV.y<0.87) Alpha=0;\nif(UV.x>0.29 && UV.x<0.71 && UV.y>0.85) Alpha=0;\nreturn C;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureSkillFrameReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 原稿第一个技能石框；中心和固定快捷键区域透明，实际图标/快捷键来自授予技能快照。\nfloat2 P=float2(0.271+UV.x*0.088,0.39+UV.y*0.294);\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=1;\nif(UV.x>0.10 && UV.x<0.90 && UV.y>0.10 && UV.y<0.87) Alpha=0;\nif(UV.x>0.29 && UV.x<0.71 && UV.y>0.85) Alpha=0;\nreturn C;",
+            "description": "保留原稿RGB，显示遮罩只修改Alpha；项目第三层客户端UI专用",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureHealthFillReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
-      "Code": "// 生命填充直接采样原稿绿色晶纹；比例由ProgressBar裁剪，不以乘色代替原图。\nfloat2 P=float2(0.285+UV.x*0.428,0.277+UV.y*0.025);\n// 中央固定示例数字不参与填充；从原稿无字区域取样，仍不改变RGB。\nif(P.x>0.42 && P.x<0.61) P.x=0.30+frac(UV.x*4)*0.10;\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureHealthFillReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 生命填充直接采样原稿绿色晶纹；比例由ProgressBar裁剪，不以乘色代替原图。\nfloat2 P=float2(0.285+UV.x*0.428,0.277+UV.y*0.025);\n// 中央固定示例数字不参与填充；从原稿无字区域取样，仍不改变RGB。\nif(P.x>0.42 && P.x<0.61) P.x=0.30+frac(UV.x*4)*0.10;\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;",
+            "description": "原稿RGB无染色取样，第三层客户端UI",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMomentumFillReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
-      "Code": "// 气势填充直接采样原稿蓝色晶纹；不假设为法力，不写GAS数值。\nfloat2 P=float2(0.285+UV.x*0.428,0.338+UV.y*0.018);\n// 中央固定示例数字不参与填充；从原稿无字区域取样，仍不改变RGB。\nif(P.x>0.42 && P.x<0.61) P.x=0.30+frac(UV.x*4)*0.10;\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMomentumFillReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 气势填充直接采样原稿蓝色晶纹；不假设为法力，不写GAS数值。\nfloat2 P=float2(0.285+UV.x*0.428,0.338+UV.y*0.018);\n// 中央固定示例数字不参与填充；从原稿无字区域取样，仍不改变RGB。\nif(P.x>0.42 && P.x<0.61) P.x=0.30+frac(UV.x*4)*0.10;\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;",
+            "description": "原稿RGB无染色取样，第三层客户端UI",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureUltimateFrameReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
-      "Code": "// 原稿中央终极技能金色石框，中心与固化快捷键透明；图标和快捷键仍来自实时数据。\nfloat2 P=float2(0.447+UV.x*0.097,0.373+UV.y*0.326);\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=1;\nif(UV.x>0.15 && UV.x<0.85 && UV.y>0.14 && UV.y<0.87) Alpha=0;\nif(UV.x>0.29 && UV.x<0.71 && UV.y>0.85) Alpha=0;\nreturn C;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureUltimateFrameReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 原稿中央终极技能金色石框，中心与固化快捷键透明；图标和快捷键仍来自实时数据。\nfloat2 P=float2(0.447+UV.x*0.097,0.373+UV.y*0.326);\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=1;\nif(UV.x>0.15 && UV.x<0.85 && UV.y>0.14 && UV.y<0.87) Alpha=0;\nif(UV.x>0.29 && UV.x<0.71 && UV.y>0.85) Alpha=0;\nreturn C;",
+            "description": "原稿RGB无染色取样，第三层客户端UI",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
-      "Code": "// 原稿框架的RGB直接取样；示意角色、名称、属性数字和图腾由真实只读状态覆盖。\nfloat3 C=Texture2DSample(Source,SourceSampler,UV).rgb;\nAlpha=smoothstep(0.006,0.018,max(C.r,max(C.g,C.b)));\nfloat2 Portrait=(UV-float2(0.231,0.461))/float2(0.141,0.25);\nif(dot(Portrait,Portrait)<1) Alpha=0;\n// 玩家名称区域只用原稿无字绿色石板，不保留“玩家名称”示例。\nif(UV.x>0.552 && UV.x<0.727 && UV.y>0.228 && UV.y<0.298){\n float2 P=float2(0.535+frac(UV.x*5)*0.012,UV.y);\n C=Texture2DSample(Source,SourceSampler,P).rgb;\n}\nif(UV.x>0.471 && UV.x<0.886 && UV.y>0.383 && UV.y<0.438) Alpha=0;\nif(UV.x>0.471 && UV.x<0.886 && UV.y>0.496 && UV.y<0.55) Alpha=0;\n// 等级来源尚未接入，清除60示例；原生控件显示未知标记。\nif(UV.x>0.508 && UV.x<0.574 && UV.y>0.677 && UV.y<0.755) Alpha=0;\nfloat2 Totem=(UV-float2(0.736,0.68))/float2(0.047,0.086);\nif(dot(Totem,Totem)<1) Alpha=0;\n// 图腾只是当前英雄肖像装饰，不恢复已取消的印记玩法。\nif(UV.x>0.695 && UV.x<0.794 && UV.y>0.775 && UV.y<0.818) Alpha=0;\nreturn C;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          },
+          {
+            "id": "OpaqueSilhouette",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReferenceMatte"
+            }
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 原稿框架的RGB直接取样；示意角色、名称、属性数字和图腾由真实只读状态覆盖。\nfloat3 C=Texture2DSample(Source,SourceSampler,UV).rgb;\n// 轮廓Alpha与RGB亮度无关，石材暗部、藤蔓缝隙及玉石底色保持不透明。\nAlpha=Texture2DSample(Matte,MatteSampler,UV).a;\nfloat2 Portrait=(UV-float2(0.231,0.461))/float2(0.141,0.25);\nif(dot(Portrait,Portrait)<1) Alpha=0;\n// 玩家名称区域只用原稿无字绿色石板，不保留“玩家名称”示例。\nif(UV.x>0.552 && UV.x<0.727 && UV.y>0.228 && UV.y<0.298){\n float2 P=float2(0.535+frac(UV.x*5)*0.012,UV.y);\n C=Texture2DSample(Source,SourceSampler,P).rgb;\n}\nif(UV.x>0.471 && UV.x<0.886 && UV.y>0.383 && UV.y<0.438) Alpha=0;\nif(UV.x>0.471 && UV.x<0.886 && UV.y>0.496 && UV.y<0.55) Alpha=0;\n// 等级来源尚未接入，清除60示例；原生控件显示未知标记。\nif(UV.x>0.508 && UV.x<0.574 && UV.y>0.677 && UV.y<0.755) C=Texture2DSample(Source,SourceSampler,float2(.515+frac(UV.x*8)*.01,.656+frac(UV.y*8)*.005)).rgb;\nfloat2 Totem=(UV-float2(0.736,0.68))/float2(0.047,0.086);\nif(dot(Totem,Totem)<1) Alpha=0;\n// 图腾只是当前英雄肖像装饰，不恢复已取消的印记玩法。\nif(UV.x>0.695 && UV.x<0.794 && UV.y>0.775 && UV.y<0.818) C=Texture2DSample(Source,SourceSampler,float2(.693+frac(UV.x*8)*.007,UV.y)).rgb;\nreturn C;",
+            "description": "原稿RGB直采，动态数据遮罩；第三层客户端UI",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              },
+              {
+                "name": "Matte"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          },
+          {
+            "from": "OpaqueSilhouette",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Matte"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
-      "Code": "// 直接复用原稿生命条的无字碧绿晶纹；数值、裁剪比例来自GAS只读快照。\nfloat2 P=float2(0.559+frac(UV.x*3)*0.063,0.388+UV.y*0.043);\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 直接复用原稿生命条的无字碧绿晶纹；数值、裁剪比例来自GAS只读快照。\nfloat2 P=float2(0.559+frac(UV.x*3)*0.063,0.388+UV.y*0.043);\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;",
+            "description": "原稿RGB直采，动态数据遮罩；第三层客户端UI",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
-      "Code": "// 直接复用原稿蓝色晶纹；显示项目真实气势，不假定为法力或图片中的1280。\nfloat2 P=float2(0.559+frac(UV.x*3)*0.063,0.5+UV.y*0.043);\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// 直接复用原稿蓝色晶纹；显示项目真实气势，不假定为法力或图片中的1280。\nfloat2 P=float2(0.559+frac(UV.x*3)*0.063,0.5+UV.y*0.043);\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;",
+            "description": "原稿RGB直采，动态数据遮罩；第三层客户端UI",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     },
     {
-      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureLoginPanelReference",
-      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginPanelReference",
-      "Code": "// RGB只采样原稿；透明键仅去除外部黑底，输入与圆形装饰内部保持不透明。\nfloat2 O=float2(UV.x,0.145+UV.y*0.70);\nfloat2 P=O;\nif(P.x>0.399 && P.x<0.621 && P.y>0.348 && P.y<0.405) P.x=0.63+frac(UV.x*5)*0.018;\nif(P.x>0.400 && P.x<0.574 && P.y>0.504 && P.y<0.56) P.x=0.594+frac(UV.x*5)*0.018;\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=smoothstep(0.002,0.006,max(C.r,max(C.g,C.b)));\nfloat2 A=float2(max(abs(O.x-0.529)-0.179,0.0)/0.045,(O.y-0.371)/0.059);\nfloat2 B=float2(max(abs(O.x-0.529)-0.179,0.0)/0.045,(O.y-0.530)/0.060);\nfloat2 L=(O-float2(0.166,0.451))/float2(0.117,0.155);\nfloat2 R=(O-float2(0.865,0.450))/float2(0.080,0.107);\nif(dot(A,A)<1 || dot(B,B)<1 || dot(L,L)<1 || dot(R,R)<1) Alpha=1;\n// 登录字样属于固定尺寸原稿；不覆盖其RGB，按钮无底色叠加承接点击。\nreturn C;"
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureLoginPanelReference",
+      "spec": {
+        "nodes": [
+          {
+            "id": "OriginalTexture",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginPanelReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PreserveOriginalRGB",
+            "code": "// RGB只采样原稿；透明键仅去除外部黑底，输入与圆形装饰内部保持不透明。\nfloat2 O=float2(UV.x,0.145+UV.y*0.70);\nfloat2 P=O;\nif(P.x>0.399 && P.x<0.621 && P.y>0.348 && P.y<0.405) P.x=0.63+frac(UV.x*5)*0.018;\nif(P.x>0.400 && P.x<0.574 && P.y>0.504 && P.y<0.56) P.x=0.594+frac(UV.x*5)*0.018;\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=smoothstep(0.002,0.006,max(C.r,max(C.g,C.b)));\nfloat2 A=float2(max(abs(O.x-0.529)-0.179,0.0)/0.045,(O.y-0.371)/0.059);\nfloat2 B=float2(max(abs(O.x-0.529)-0.179,0.0)/0.045,(O.y-0.530)/0.060);\nfloat2 L=(O-float2(0.166,0.451))/float2(0.117,0.155);\nfloat2 R=(O-float2(0.865,0.450))/float2(0.080,0.107);\nif(dot(A,A)<1 || dot(B,B)<1 || dot(L,L)<1 || dot(R,R)<1) Alpha=1;\n// 登录字样属于固定尺寸原稿；不覆盖其RGB，按钮无底色叠加承接点击。\nreturn C;",
+            "description": "原稿登录面板RGB直采，密码只存在输入控件",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "OriginalTexture",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "Source"
+          },
+          {
+            "from": "UV",
+            "to": "PreserveOriginalRGB",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PreserveOriginalRGB",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PreserveOriginalRGB",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureAbilityIconPalette",
+      "spec": {
+        "nodes": [
+          {
+            "id": "RenderedIcon",
+            "class": "TextureObjectParameter",
+            "props": {
+              "ParameterName": "Texture",
+              "Texture": "/Engine/EngineResources/WhiteSquareTexture"
+            }
+          },
+          {
+            "id": "OriginalPalette",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "IconPalette",
+            "description": "只对实时技能图标采用原稿碧绿晶纹色系；图标轮廓、异步资源、授权与冷却不改变。",
+            "code": "// 形状亮度取实时图标最大通道，避免紫蓝图案被绿色亮度权重和第二次乘算压黑。\nfloat4 I=Texture2DSample(Icon,IconSampler,UV);\nfloat Shape=pow(saturate(max(I.r,max(I.g,I.b))),.45);\nfloat3 Dark=Texture2DSample(Palette,PaletteSampler,float2(.470,.480)).rgb;\nfloat3 Mid=Texture2DSample(Palette,PaletteSampler,float2(.495,.510)).rgb;\nfloat3 Highlight=Texture2DSample(Palette,PaletteSampler,float2(.515,.570)).rgb;\nfloat3 C=lerp(Dark,Mid,smoothstep(0,.65,Shape));\nC=lerp(C,Highlight,smoothstep(.65,1,Shape));\nAlpha=I.a;\nreturn C;",
+            "output_type": "float3",
+            "inputs": [
+              {
+                "name": "Icon"
+              },
+              {
+                "name": "Palette"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "RenderedIcon",
+            "to": "IconPalette",
+            "to_pin": "Icon"
+          },
+          {
+            "from": "OriginalPalette",
+            "to": "IconPalette",
+            "to_pin": "Palette"
+          },
+          {
+            "from": "UV",
+            "to": "IconPalette",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "IconPalette",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "IconPalette",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelNineSlice",
+      "spec": {
+        "nodes": [
+          {
+            "id": "Source",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReference"
+            }
+          },
+          {
+            "id": "Matte",
+            "class": "TextureObject",
+            "props": {
+              "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReferenceMatte"
+            }
+          },
+          {
+            "id": "UV",
+            "class": "TextureCoordinate"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "PanelPixels",
+            "code": "// 原稿RGB直采；裁去外部留白，Slate九宫格负责保留边角，不调整色调或Gamma。\nfloat2 P=lerp(float2(.02,.07),float2(.98,.895),UV);\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=Texture2DSample(Matte,MatteSampler,P).a;\n// 实心内容区不得因生成轮廓中的细小孔隙透出场景。\nif(P.x>.12&&P.x<.88&&P.y>.18&&P.y<.82)Alpha=1;\nreturn C;",
+            "output_type": "float3",
+            "description": "第三层公共面板原稿直采与独立外围透明轮廓；Slate原生Box九宫格，无字体缩放。",
+            "inputs": [
+              {
+                "name": "Source"
+              },
+              {
+                "name": "Matte"
+              },
+              {
+                "name": "UV"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "Alpha",
+                "type": "float"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "Source",
+            "to": "PanelPixels",
+            "to_pin": "Source"
+          },
+          {
+            "from": "Matte",
+            "to": "PanelPixels",
+            "to_pin": "Matte"
+          },
+          {
+            "from": "UV",
+            "to": "PanelPixels",
+            "to_pin": "UV"
+          }
+        ],
+        "outputs": [
+          {
+            "from": "PanelPixels",
+            "to_property": "EmissiveColor"
+          },
+          {
+            "from": "PanelPixels",
+            "from_pin": "Alpha",
+            "to_property": "Opacity"
+          }
+        ]
+      }
     }
-  ],
-  "工具颜色赋值": "ColorAndOpacity与FillColorAndOpacity使用#FFFFFFFF并回读；CSV不能作为赋值成功证据。"
+  ]
 }

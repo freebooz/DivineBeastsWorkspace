@@ -2526,16 +2526,23 @@ void UDivineBeastsApplicationFlowSubsystem::LogoutAndRestart()
     }
     ReleaseLoadingOperation();
 
-    if (Session)
-    {
-        FGamePlatformResult Ignored;
-        Session->CancelTransfer(Ignored);
-    }
-
     if (PlatformFlow && ActiveFlow.IsValid())
     {
         PlatformFlow->Cancel(ActiveFlow);
         ActiveFlow = {};
+    }
+
+    // 先取消唯一流程与就绪观察，再离开会话：Leave会同步广播/触发地图退出，旧事实不能推进InWorld。
+    if (auto* Controller = ObservedWorldController.Get()) Controller->OnLocalWorldFactsChanged.RemoveAll(this);
+    ObservedWorldController.Reset();
+    bObservingGameplayFacts = false;
+    if (Session)
+    {
+        FGamePlatformResult LeaveResult;
+        // CancelTransfer只取消未结束传输，Ready后没有活动传输，必须用现有LeaveSession清已确认连接。
+        // UE Transport负责ReturnToMainMenu和真实断线，不创建另一套客户端Travel执行器。
+        if (!Session->LeaveSession(LeaveResult))
+            UE_LOG(LogTemp, Warning, TEXT("[DBA Flow] Logout session leave failed: %s"), *LeaveResult.Code.ToString());
     }
 
     ReleasePendingFlowDefinitionLease();

@@ -29,3 +29,17 @@ Village 内容包新增共享Pawn及Tutorial体验定义。原有PlayerStart位�
 原生ACharacter增加WASD移动、鼠标镜头和空格跳跃，使用引擎CharacterMovement网络复制。客户端Avatar表现提示来自已验证选择，复用Appearance组件异步加载，不把视觉提示写成服务器英雄、技能或持久角色权威身份。当前角色模型及IDLE仍属一期占位内容，不能据此宣称英雄技能、移动动画和正式新手村美术全部完成。
 
 验证记录位于Saved/Validation/VillageFlow/20261009；编译、保存资产及Cook与双客户端人工行走验收分别记录，未取得后者证据前不宣称全链路完成。
+
+### 2026-10-11 世界PC操控与光标
+
+项目世界控制器优先消费原生世界轴：W/S前后，A/D转身，Q/E横移；右键按住时A/D改为横移，左右鼠标同时按住前进，空格跳跃。普通攻击与现有三主动输入保持数字1—4，被动不伪造激活键。默认采用GameAndUI可见自由光标，左键只调整本地观察镜头，右键同时调整角色水平朝向；首次拖动记录视口光标坐标，最后一个鼠标键释放恢复原位和可见状态。滚轮每格50厘米，镜头距离80—1800厘米，保留SpringArm原生碰撞检测。
+
+角色朝向继续使用ControlRotation及CharacterMovement原生移动复制，横移不按运动向量自动转身；独立SpringArm观察角度不进入权威玩法数据。前端预览使用独立GamePlatformCharacterPreviewStage（展示Actor），不由本世界Controller控制，也不改变其转台、镜头或动画。
+
+UI已处理的点击在GameAndUI阶段不会交给世界后备输入；未处理的按钮RMB、禁用按钮LMB也不能开始拖动。首次捕获使用当次Slate命中路径，忽略Enabled过滤以保留禁用控件，必须包含当前游戏实际SViewport且叶子也是该视口；任何UI叶子都保留光标。正式HUD非交互背景必须保持不拦截命中，实际按钮由UI处理点击，不按分辨率或固定HUD矩形猜测范围。已从世界开始的捕获允许第二个鼠标键组成前进，释放不受之后的命中变化阻挡。Slate依赖仅加入Game/Client/Editor目标，不加入Dedicated Server。
+
+菜单由客户端订阅`OnWorldEscapeRequested`，使用`SetWorldGameplayInputSuspended`暂停/恢复本地输入；共享DBAWorldsRuntime不依赖UIClient。菜单暂停、引擎失焦FlushPressedKeys、Pawn变更和EndPlay都清除鼠标按住、待消费移动、跳跃及ASC按住命令。暂停期间UI拥有UIOnly焦点，控制器清理不覆盖该输入模式。该暂停不修改服务器Active或玩家准入。世界控制器只申请/释放自身各一次Move/Look输入锁，幂等事实刷新不会累计；不调用ResetIgnore输入接口清零其他系统的锁，外部Look锁也禁止镜头和键盘转向。
+
+`Private/Gameplay/DivineBeastsWorldControlState.h`为当前Controller的纯鼠标组合策略；`Private/Tests/DivineBeastsWorldControlsTests.cpp`同时支持UE Automation逻辑用例`DivineBeasts.World.Controls.MouseAndMovement`与独立原生策略编译。`Tests/Integration/World/TestWorldControls.ps1`检查键位冲突、清理接线与双端隔离，可通过`-PolicyExecutable`运行当前源码的独立测试产物。已执行MSVC纯策略及静态检查；未由本子任务执行UE构建、视口操作、Cook或联机，输入手感、真实UI命中、焦点和角色网络朝向仍需要对应运行证据。
+
+官方按键参考：[基础移动说明](https://worldofwarcraft.blizzard.com/en-us/news/20151231/welcome-to-world-of-warcraft-basic-movement-and-combat)、[经典版官方手册](https://eu.media.blizzard.com/manuals/wow/eu/classic/wow-classic-manual-enGB.pdf)。鼠标原位恢复和滚轮范围为本项目明确策略，不冒充官方手册中的数值。

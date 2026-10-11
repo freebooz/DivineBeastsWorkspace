@@ -2,6 +2,7 @@
 #include "Framework/GamePlatformGameModeBase.h"
 #include "Types/GamePlatformWeatherTypes.h"
 #include "Types/GamePlatformDataLease.h"
+#include "TimerManager.h" // 开发期有限天气联机审查定时器；Shipping不编入其执行代码
 #include "DivineBeastsWorldGameMode.generated.h"
 
 /** 第三层共享世界装配：复用平台准入/出生门禁，仅选择项目控制器。
@@ -38,6 +39,21 @@ private:
     /** 原子世界天气定义租约：只在成功回执后读取资产；退出地图时按完整签发句柄释放。 */
     FGamePlatformDataLease InitialWeatherPresetLease;
     bool bWeatherShuttingDown = false;
+#if !UE_BUILD_SHIPPING
+    /**
+     * 仅非Shipping且在独立Dedicated Server、Village地图与显式命令行下启用的有限审查步骤。
+     * 通过已有GamePlatformWeatherWorldSubsystem提交天气，不持有第二份权威或自定义网络协议。
+     * 普通正式世界与Shipping无此测试行为；清理于EndPlay。
+     */
+    FTimerHandle VillageSnowReviewTimer;
+    /** 两个客户端通过正常PostLogin完成准入才开始固定审查，避免冷启动导致错过小雪。 */
+    bool bVillageSnowReviewArmed = false;
+    bool bVillageSnowReviewStarted = false;
+    int32 VillageSnowReviewJoinedPlayers = 0;
+    virtual void PostLogin(APlayerController* NewPlayer) override;
+    int32 VillageSnowReviewStep = 0;
+    void AdvanceVillageSnowReviewWeather();
+#endif
     void BeginLoadInitialWeatherPreset();
     void HandleInitialWeatherPresetCompleted(
         const FGamePlatformDataLease& CompletedLease,

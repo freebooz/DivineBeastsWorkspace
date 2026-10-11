@@ -1,10 +1,14 @@
 // 项目客户端技能HUD适配：消费当前Pawn的只读授权/冷却事件，不发送业务HTTP或授予技能。
 // Widget独占ViewModel与订阅句柄；每次构造恢复订阅、失活解绑，允许同一Widget跨显示周期复用。
+// 项目按键提示只读取当前玩家原生输入映射并更新已有HotkeyText；平台槽位不解释DBA动作名。
 #include "Panels/Combat/DivineBeastsAbilityBarPanel.h"
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "ViewModels/Combat/DivineBeastsAbilityBarViewModel.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerInput.h"
+#include "GameFramework/InputSettings.h"
+#include "Components/TextBlock.h"
 
 void UDivineBeastsAbilityBarPanel::NativeConstruct()
 {
@@ -88,27 +92,76 @@ void UDivineBeastsAbilityBarPanel::HandleViewModelSlotsChanged(
 }
 
 
+FText UDivineBeastsAbilityBarPanel::FormatHotkeyMappings(
+    const TArray<FInputActionKeyMapping>& Mappings, bool bPassive)
+{
+    if (bPassive) return FText::GetEmpty();
+    TArray<FString> Labels;
+    for (const FInputActionKeyMapping& Mapping : Mappings)
+    {
+        // 本提示属于PC键鼠技能栏，手柄/触摸的设备提示由其输入界面拥有，不能冒充键盘快捷键。
+        if (!Mapping.Key.IsValid() || Mapping.Key.IsGamepadKey() || Mapping.Key.IsTouch()) continue;
+        FString Label;
+        if (Mapping.bCtrl) Label += TEXT("Ctrl+");
+        if (Mapping.bAlt) Label += TEXT("Alt+");
+        if (Mapping.bShift) Label += TEXT("Shift+");
+        if (Mapping.bCmd) Label += TEXT("Cmd+");
+        Label += Mapping.Key.GetDisplayName().ToString();
+        Labels.AddUnique(Label);
+    }
+    return FText::FromString(FString::Join(Labels, TEXT(" / ")));
+}
+
+void UDivineBeastsAbilityBarPanel::RefreshSlotHotkey(
+    UGamePlatformSlotWidget* SlotWidget, FName ActionName, bool bPassive)
+{
+    if (!SlotWidget) return;
+    auto* Hotkey = Cast<UTextBlock>(SlotWidget->GetWidgetFromName(TEXT("HotkeyText")));
+    if (!Hotkey) return; // 旧资产缺少该可选显示原子时保持兼容；禁止动态补建控件树。
+    TArray<FInputActionKeyMapping> Mappings;
+    if (!bPassive && !ActionName.IsNone())
+    {
+        const APlayerController* Controller = GetOwningPlayer();
+        if (Controller && Controller->PlayerInput)
+            Mappings = Controller->PlayerInput->GetKeysForAction(ActionName);
+        else if (const UInputSettings* Settings = GetDefault<UInputSettings>())
+            Settings->GetActionMappingByName(ActionName, Mappings);
+    }
+    const FText Label = FormatHotkeyMappings(Mappings, bPassive);
+    Hotkey->SetText(Label);
+    // 仅固定已授权的提示字号与非命中策略；保留资产字体、颜色、位置、主题等视觉所有权。
+    FSlateFontInfo HotkeyFont = Hotkey->GetFont();
+    HotkeyFont.Size = 12;
+    Hotkey->SetFont(HotkeyFont);
+    Hotkey->SetVisibility(Label.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+}
+
 void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
 {
     // 当前项目只声明了普通攻击、被动、两个主动与终极技能槽，
     // 不允许用数组顺序或英雄名称隐式决定技能输入映射。
     struct FVisualBinding
     {
+        /** 作者资产中已经存在的槽控件；项目不创建或取得其资产所有权。 */
         UGamePlatformSlotWidget* Widget;
+        /** 授权快照中的精确技能输入标签；被动使用稳定前缀。 */
         FName ExpectedInputSlotId;
+        /** 引擎实际原生动作名，只用于只读查询；被动为空。 */
+        FName ActionName;
+        /** 被动不具有玩家激活快捷键，必须无条件隐藏按键提示。 */
         bool bPassive;
     };
     const FVisualBinding Bindings[] =
     {
         { PrimaryAbilitySlot.Get(),
-            FName(TEXT("Platform.Ability.Input.DivineBeasts.Primary")), false },
-        { PassiveAbilitySlot.Get(), FName(TEXT("Ability.Passive")), true },
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Primary")), TEXT("DBA.PrimaryAbility"), false },
+        { PassiveAbilitySlot.Get(), FName(TEXT("Ability.Passive")), NAME_None, true },
         { ActiveAbilitySlot1.Get(),
-            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot1")), false },
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot1")), TEXT("DBA.AbilityOne"), false },
         { ActiveAbilitySlot2.Get(),
-            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot2")), false },
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot2")), TEXT("DBA.AbilityTwo"), false },
         { UltimateAbilitySlot.Get(),
-            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot4")), false }
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot4")), TEXT("DBA.UltimateAbility"), false }
     };
 
     for (const FVisualBinding& Binding : Bindings)
@@ -152,6 +205,8 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
             VisualState.bPending = true;
         }
         Binding.Widget->ApplySlotState(VisualState);
+        // 在槽位蓝图状态事件之后刷新，不能让初始占位文字替代玩家当前生效按键。
+        RefreshSlotHotkey(Binding.Widget, Binding.ActionName, Binding.bPassive);
     }
 }
 
@@ -186,6 +241,8 @@ void UDivineBeastsAbilityBarPanel::ApplyAbilitySlots(
 
     if (!bChanged)
     {
+        // 换Pawn/构造/快照事件即使技能投影相同，也重新读取当前玩家输入映射；无轮询或按键写入。
+        RefreshVisualSlots();
         return;
     }
 

@@ -111,7 +111,8 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
     bool RequestPostMatchReturnToWorld();
 
-    /** 取消当前流程和异步工作，退出Online认证；LoggedOut事件到达后按原策略重新启动。 */
+    /** 撤销当前流程/加载/预览代次，复用Session.LeaveSession断开已连接世界并清绑定，
+     * 再退出Online认证清凭据；LoggedOut事件到达后重启人工登录。不以登录页遮挡网络连接。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|ApplicationFlow")
     void LogoutAndRestart();
     /** 游戏线程：只在无活动运行的可恢复失败状态受理；清理会话并注销后重启人工登录，不重发旧创建/消费操作。
@@ -133,6 +134,11 @@ public:
     }
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    /** 测试只注入已有Session边界，无Online/后端，验证注销的真实离开与旧传输栅栏。 */
+    friend class FDivineBeastsLogoutSessionLifetimeTest;
+    friend class FDivineBeastsLogoutSessionLifetimeCommand;
+#endif
     /** 只从本次已确认Session、真实受控Pawn和共享体验资源采集事实，旧世界事件忽略。 */
     void ObserveCurrentGameplayWorld();
     TWeakObjectPtr<class ADivineBeastsWorldPlayerController> ObservedWorldController;

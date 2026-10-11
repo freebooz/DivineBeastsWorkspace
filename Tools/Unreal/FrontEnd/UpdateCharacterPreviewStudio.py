@@ -38,17 +38,25 @@ for label, position, lumens in (
     component.set_editor_property('intensity', float(lumens))
     component.set_editor_property('attenuation_radius', 900.0)
 
-material = unreal.load_asset('/DBAFrontEndPack/Materials/M_DBA_PreviewBackdrop')
-assert material, '工作室背景材质尚未由Monolith保存'
-for label, mesh_path, location, scale in (
-    ('PreviewFloor', '/Engine/BasicShapes/Plane', (0, 0, -1), (12, 12, 1)),
-    ('PreviewBackdrop', '/Engine/BasicShapes/Cube', (-150, 0, 145), (0.1, 12, 8)),
-):
-    item = actor(label, unreal.StaticMeshActor, location, scale)
-    component = item.get_component_by_class(unreal.StaticMeshComponent)
-    component.set_editor_property('static_mesh', unreal.load_asset(mesh_path))
-    component.set_material(0, material)
-    component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+# 2026-10-11真实关卡采用Landscape（地形）。重跑旧工作室调整脚本不得重新放置
+# PreviewFloor和PreviewBackdrop，否则会遮挡已制作的地形与落地花瓣。
+has_natural_landscape = any(
+    item.get_class().get_name() == 'Landscape' for item in actors.values()
+)
+if has_natural_landscape:
+    print('PRESERVE_LANDSCAPE_SKIP_LEGACY_PREVIEW_FLOOR_AND_BACKDROP')
+else:
+    material = unreal.load_asset('/DBAFrontEndPack/Materials/M_DBA_PreviewBackdrop')
+    assert material, '工作室背景材质尚未由Monolith保存'
+    for label, mesh_path, location, scale in (
+        ('PreviewFloor', '/Engine/BasicShapes/Plane', (0, 0, -1), (12, 12, 1)),
+        ('PreviewBackdrop', '/Engine/BasicShapes/Cube', (-150, 0, 145), (0.1, 12, 8)),
+    ):
+        item = actor(label, unreal.StaticMeshActor, location, scale)
+        component = item.get_component_by_class(unreal.StaticMeshComponent)
+        component.set_editor_property('static_mesh', unreal.load_asset(mesh_path))
+        component.set_material(0, material)
+        component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
 
 volume = actor('PreviewExposure', unreal.PostProcessVolume, (0, 0, 0))
 volume.set_editor_property('unbound', True)

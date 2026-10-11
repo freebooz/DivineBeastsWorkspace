@@ -31,7 +31,9 @@ public class GamePlatformUIClient : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "Projects"
+            "Projects",
+            // 通用返回/确认资产回归实际使用FKey与EKeys，需要直接链接InputCore而不是依赖传递链接。
+            "InputCore"
         });
     }
 }

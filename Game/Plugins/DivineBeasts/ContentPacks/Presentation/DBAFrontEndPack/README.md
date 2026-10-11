@@ -11,7 +11,7 @@
 
 ## 角色工作室自然飘落
 
-`L_DBA_CharacterStudio（角色三维预览地图）` 新增 `BP_DBA_FoliageGroundAnchor（地面风吹锚点蓝图）` 实例，Actor Tag为 `DBA.Foliage.Ground`，该Actor的Z值代表可见地面高度，保持 `PreviewFloor` 原有无碰撞设置。
+`L_DBA_CharacterStudio（角色三维预览地图）` 新增 `BP_DBA_FoliageGroundAnchor（地面风吹锚点蓝图）` 实例，Actor Tag为 `DBA.Foliage.Ground`，该Actor的Z值为预览角色附近的落地表现参考高度。2026-10-11以UE5.8实际加载关卡核查，工作室现有 `Landscape（地形Actor）`，不存在旧脚本中的 `PreviewFloor（平面地板Actor）`；不因此增加玩法碰撞。角色预览子系统只使用当前舞台所属Level内的锚点，多个锚点时选择离舞台最近者；地形起伏更大的区域未来需要更精确的地表采样。
 
 `UDivineBeastsCharacterPreviewSubsystem::SetPreviewFoliageStyle` 可切换Peach（桃花，默认）、Maple（枫叶）、Bamboo（竹叶）、Ginkgo（银杏）。由GamePlatformPresentation统一目录/低层VFX播放，不在两个UI Widget中分别生成Niagara。切换界面共享工作室实例，退出时停止并释放。
 

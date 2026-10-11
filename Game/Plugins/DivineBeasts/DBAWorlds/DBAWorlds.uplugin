@@ -32,6 +32,10 @@
     {
       "Name": "GamePlatformGameplay",
       "Enabled": true
+    },
+    {
+      "Name": "GamePlatformAbilitySystem",
+      "Enabled": true
     }
   ],
   "Modules": [

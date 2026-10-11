@@ -1,6 +1,7 @@
 // Surface编辑器契约回归：只使用Transient对象验证参数合同，不写工程资产。
 #include "Materials/MaterialParameterCollection.h"
 #include "Misc/AutomationTest.h"
+#include "UObject/Package.h" // GetTransientPackage返回UPackage*，必须完整类型才能隐式转换到NewObject所需UObject*。
 #include "Validation/GamePlatformSurfaceAssetContract.h"
 
 #if WITH_DEV_AUTOMATION_TESTS

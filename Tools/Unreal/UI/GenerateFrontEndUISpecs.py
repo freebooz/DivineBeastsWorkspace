@@ -47,10 +47,13 @@ def document(name,parent,children):
 
 def login():
     """参考大型MMO的左上品牌、中央偏下登录表单；只借鉴布局，保留原创视觉与原生命令合同。"""
-    children=[node("Image","MythicBackground",slot=place("stretch_fill",0,0,0,0,z=0),style={"visibility":"HitTestInvisible"},
-        content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogin.DBA_MythicLogin"}),
-        # 用户确认的正式LOGO为正方形透明图，固定等比显示，禁止沿用此前横版比例拉伸。
-        node("Image","BrandLogo",slot=place("top_left",24,18,224,224),style={"visibility":"HitTestInvisible"},
+    # 仅封面图进入ScaleBox，保持原稿长宽比；字体、LOGO、输入与按钮仍是RootCanvas独立固定控件。
+    children=[node("ScaleBox","CoverBackgroundScale",[
+        node("Image","MythicBackground",style={"visibility":"HitTestInvisible"},
+             content={"brushPath":"/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop.T_DBA_NatureLoginBackdrop"})],
+        slot=place("stretch_fill",0,0,0,0,z=0),style={"visibility":"HitTestInvisible"}),
+        # 2026-10-11用户最新原稿为2172×724横版；固定3:1比例，沿用稳定资源身份。
+        node("Image","BrandLogo",slot=place("top_center",0,6,420,140,.5,0),style={"visibility":"HitTestInvisible"},
              content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogo.DBA_MythicLogo"}),
         text("WorldTagline","山海为界 · 万灵共生",13,WHITE,place("bottom_left",26,-24,280,22,0,1)),
         text("WorldCaption","神兽联盟",11,MUTED,place("bottom_right",-26,-24,150,22,1,1)),
@@ -110,7 +113,7 @@ def character(create):
                 # 540像素高度时也不覆盖右侧创建按钮；状态信息置于中央顶部。
                 item["slot"] = place("top_center",0,60,290,42,0.5,0)
         children += [
-            node("Image","BrandLogo",slot=place("top_left",26,8,160,160),style={"visibility":"HitTestInvisible"},content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogo.DBA_MythicLogo"}),
+            node("Image","BrandLogo",slot=place("top_left",26,8,240,80),style={"visibility":"HitTestInvisible"},content={"brushPath":"/DBAUIPack_Core/UI/Textures/DBA_MythicLogo.DBA_MythicLogo"}),
             panel("JourneyGuidePanel",place("top_left",24,184,224,284)),
             text("JourneyGuideTitle","山海之旅",18,GOLD,place("top_left",40,200,192,28)),
             text("JourneyGuideBody","选择你的角色\n\n在右侧选择角色，查看神兽形象。\n\n按住鼠标左键拖动，可旋转角色。\n\n点击「进入游戏」继续旅程。\n\n也可创建新的角色。",14,MUTED,place("top_left",40,246,192,190)),
@@ -153,3 +156,17 @@ preview_transparency_actions = [
 ]
 (OUTPUT / "PreviewTransparencyProperties.json").write_text(
     json.dumps(preview_transparency_actions, ensure_ascii=False, indent=2), encoding="utf-8")
+
+# 原生UISpec构建后须执行背景专用后置动作；不可把ScaleBox移到整页根部缩放字体。
+cover_actions = [
+    {"action": "set_widget_property", "params": {
+        "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+        "widget_name": "CoverBackgroundScale", "property_name": prop,
+        "value": value, "raw_mode": True}}
+    for prop, value in (("Stretch", "ScaleToFill"), ("Clipping", "ClipToBounds"))
+] + [{"action": "set_image", "params": {
+    "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login", "widget_name": "MythicBackground",
+    "texture_path": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop",
+    "size": {"x":1672,"y":941}, "tint_color":"#FFFFFFFF"}}]
+(OUTPUT / "CoverBackgroundProperties.json").write_text(
+    json.dumps(cover_actions, ensure_ascii=False, indent=2), encoding="utf-8")

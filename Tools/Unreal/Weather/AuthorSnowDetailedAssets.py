@@ -199,19 +199,26 @@ def author() -> None:
         height = sat(mat, binary(mat, unreal.MaterialExpressionDivide,
                                  biased, height_fade, -910, -1120), -690, -1100)
 
-        # 完全无雪时由阈值归零；全雪时近乎全覆盖，但坡面仍受到坡度约束。
+        # 雪面覆盖曲线：雪量0严格无雪；小雪斑驳薄覆；大雪接近连续厚雪。
+        # 2026-10-11实测旧1-SnowAmount阈值在小雪0.23时仅0.18%的像素越过噪声阈值。
+        # 新公式：SnowAmount × saturate((Noise-(0.5-SnowAmount*ShiftScale))/Edge) × Slope × Height。
         global_snow = mpc_scalar(mat, "GP_Surface_GlobalSnowAmount", -1530, -2650)
         global_wetness = mpc_scalar(mat, "GP_Surface_GlobalWetness", -1870, 1000)
-        inverse = binary(mat, unreal.MaterialExpressionSubtract, num(mat, 1.0, -1720, -2700),
-                         global_snow, -1280, -2580)
+        shift_scale = scalar(mat, "SnowCoverageShiftScale", 0.4, -1790, -3040)
+        scaled_snow = binary(mat, unreal.MaterialExpressionMultiply,
+                             global_snow, shift_scale, -1470, -2790)
+        threshold = binary(mat, unreal.MaterialExpressionSubtract,
+                           num(mat, 0.5, -1720, -2700), scaled_snow, -1280, -2580)
         noise_delta = binary(mat, unreal.MaterialExpressionSubtract,
-                             macro, inverse, -1010, -1820, out_a="R")
+                             macro, threshold, -1010, -1820, out_a="R")
         edge = scalar(mat, "SnowEdgeSoftness", 0.25, -1080, -1520)
         gated = sat(mat, binary(mat, unreal.MaterialExpressionDivide,
                                 noise_delta, edge, -760, -1760), -550, -1780)
         slope_height = binary(mat, unreal.MaterialExpressionMultiply, slope, height, -320, -1710)
+        gated_slope = binary(mat, unreal.MaterialExpressionMultiply,
+                             gated, slope_height, -100, -1570)
         coverage = sat(mat, binary(mat, unreal.MaterialExpressionMultiply,
-                                   gated, slope_height, -100, -1570), 120, -1530)
+                                   gated_slope, global_snow, 65, -1680), 120, -1530)
 
         dry = vector(mat, "BaseDryColor", (0.31, .31, .33), -1440, 1180)
         wet = vector(mat, "BaseWetColor", (.17, .18, .20), -1440, 1410)
@@ -239,10 +246,10 @@ def author() -> None:
         final_normal = lerp(mat, flat, normal, coverage, 425, 2510)
         if not lib.connect_material_property(final_normal, "", unreal.MaterialProperty.MP_NORMAL):
             raise RuntimeError("Snow PBR Normal未连接")
-        save_compiled(mat, 42)
+        save_compiled(mat, 56)
     else:
         material = assets.load_asset(MASTER)
-        if not isinstance(material, unreal.Material) or lib.get_num_material_expressions(material) < 42:
+        if not isinstance(material, unreal.Material) or lib.get_num_material_expressions(material) < 56:
             raise RuntimeError("已有同名雪母材质但类别或节点不符合本制作脚本，禁止覆盖")
         print("SNOW_MATERIAL_ALREADY_PRESENT", MASTER)
 

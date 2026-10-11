@@ -1,6 +1,13 @@
 // 项目客户端纯路由策略：消费只读流程与本地页面偏好，不生成角色、不登录、不推进权威节点。
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
 
+bool FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(const FDivineBeastsUIViewState& State)
+{
+    // 已认证并进入世界是唯一入口；传输、错误、注销及前端均不得抢占业务页面焦点。
+    return State.bAuthenticated && !State.bBusy && !State.Loading.bIsLoading &&
+        State.PageState != EDivineBeastsUIPageState::Error && State.CurrentStep == TEXT("DBA.Flow.InWorld");
+}
+
 bool FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(const FDivineBeastsUIViewState& State, FName ScreenId)
 {
     if (!State.bAuthenticated || State.bBusy || State.Loading.bIsLoading ||

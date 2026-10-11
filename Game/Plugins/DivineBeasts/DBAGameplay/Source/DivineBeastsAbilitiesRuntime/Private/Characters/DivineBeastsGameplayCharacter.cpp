@@ -24,8 +24,10 @@ ADivineBeastsGameplayCharacter::ADivineBeastsGameplayCharacter()
     CameraBoom->SocketOffset = FVector(0, 0, 80); CameraBoom->bUsePawnControlRotation = true;
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom); FollowCamera->bUsePawnControlRotation = false;
-    bUseControllerRotationYaw = false;
-    GetCharacterMovement()->bOrientRotationToMovement = true;
+    // WoW式角色朝向由Controller通过原生CharacterMovement传输；横移不自动转向，左键观察不改变ControlRotation。
+    // 前端预览只生成不受控的展示Actor，因此不会由Controller驱动朝向；不修改展示旋转或动画。
+    bUseControllerRotationYaw = true;
+    GetCharacterMovement()->bOrientRotationToMovement = false;
     GetCharacterMovement()->MaxWalkSpeed = 450.f; GetCharacterMovement()->JumpZVelocity = 500.f;
     // 基类已拥有唯一ASC/Combat/CharacterIdentity/GameplayEligibility；不能重建主线旧HeroIdentity或遮蔽继承成员。
     AbilityLoadout = CreateDefaultSubobject<UDivineBeastsAbilityLoadoutComponent>(TEXT("AbilityLoadout"));

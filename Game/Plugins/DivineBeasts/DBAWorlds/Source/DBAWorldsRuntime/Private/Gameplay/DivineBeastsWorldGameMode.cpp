@@ -8,6 +8,12 @@
 #include "Types/GamePlatformId.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#if !UE_BUILD_SHIPPING
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "TimerManager.h"
+#endif
+
 ADivineBeastsWorldGameMode::ADivineBeastsWorldGameMode()
 {
     PlayerControllerClass = ADivineBeastsWorldPlayerController::StaticClass();
@@ -26,6 +32,33 @@ void ADivineBeastsWorldGameMode::BeginPlay()
         UE_LOG(LogTemp, Warning, TEXT("神兽联盟世界天气初始化失败：服务器模式、初始天气或世界实例非法。"));
         return;
     }
+#if !UE_BUILD_SHIPPING
+    // 仅当测试操作者显式传入两个开发参数，并且真正运行Village Dedicated Server时，
+    // 才使用固定序列验证天气复制。不能让客户端、普通服务器或Shipping隐式启用。
+    if (FParse::Param(FCommandLine::Get(), TEXT("DBAVillageSnowReviewSchedule")))
+    {
+        const bool bDedicatedVillage =
+            World->GetNetMode() == NM_DedicatedServer &&
+            World->GetOutermost()->GetName() ==
+                TEXT("/DBAWorldPack_Village/Maps/L_Village_Start");
+        const bool bUnattendedReview =
+            FParse::Param(FCommandLine::Get(), TEXT("unattended"));
+        if (bDedicatedVillage && bUnattendedReview &&
+            !bEnableWeatherSchedule && InitialWeatherPresetId.IsNone())
+        {
+            VillageSnowReviewStep = 0;
+            VillageSnowReviewJoinedPlayers = 0;
+            bVillageSnowReviewArmed = true;
+            bVillageSnowReviewStarted = false;
+            UE_LOG(LogTemp, Display,
+                TEXT("VILLAGE_SNOW_REVIEW_ARMED：仅本次Village专服等待两名成功PostLogin客户端，之后执行固定小雪/大雪/晴/大雪序列。"));
+            return;
+        }
+        UE_LOG(LogTemp, Error,
+            TEXT("VILLAGE_SNOW_REVIEW_REFUSED：不是显式无人值守Village专服，或已有正式调度/预设。"));
+    }
+#endif
+
 
     // 自动调度与单份初始天气预设互斥：避免Data异步回调取消已启动的权威调度。
     if (bEnableWeatherSchedule)
@@ -123,9 +156,117 @@ void ADivineBeastsWorldGameMode::HandleInitialWeatherPresetCompleted(
     InitialWeatherPresetLease = {};
 }
 
+
+
+#if !UE_BUILD_SHIPPING
+void ADivineBeastsWorldGameMode::PostLogin(APlayerController* NewPlayer)
+{
+    Super::PostLogin(NewPlayer);
+    UWorld* World = GetWorld();
+    if (!bVillageSnowReviewArmed || bVillageSnowReviewStarted || !IsValid(World) ||
+        !IsValid(NewPlayer) || World->bIsTearingDown ||
+        World->GetNetMode() != NM_DedicatedServer)
+    {
+        return;
+    }
+    ++VillageSnowReviewJoinedPlayers;
+    UE_LOG(LogTemp, Display,
+        TEXT("VILLAGE_SNOW_REVIEW_CLIENT_READY：经过GameMode正常PostLogin的客户端计数=%d。"),
+        VillageSnowReviewJoinedPlayers);
+    if (VillageSnowReviewJoinedPlayers >= 2)
+    {
+        bVillageSnowReviewStarted = true;
+        // 接受两位客户端之后留3秒等待地图与Landscape实例进入Game世界。
+        // 单客户端、未授权环境或普通Production启动不会自动推进测试天气。
+        World->GetTimerManager().SetTimer(
+            VillageSnowReviewTimer, this,
+            &ADivineBeastsWorldGameMode::AdvanceVillageSnowReviewWeather,
+            3.f, false);
+        UE_LOG(LogTemp, Display,
+            TEXT("VILLAGE_SNOW_REVIEW_TWO_CLIENTS_READY：3秒后开始权威天气四阶段测试。"));
+    }
+}
+#endif
+
+#if !UE_BUILD_SHIPPING
+void ADivineBeastsWorldGameMode::AdvanceVillageSnowReviewWeather()
+{
+    UWorld* World = GetWorld();
+    if (bWeatherShuttingDown || !HasAuthority() || !IsValid(World) ||
+        World->bIsTearingDown || World->GetNetMode() != NM_DedicatedServer ||
+        World->GetOutermost()->GetName() !=
+            TEXT("/DBAWorldPack_Village/Maps/L_Village_Start"))
+    {
+        return;
+    }
+    // 审查步骤只在本次测试专服的有限生命期存在。
+    // 生产天气状态机、随机调度及网络复制全部使用原GamePlatformWeather实现。
+    if (VillageSnowReviewStep < 0 || VillageSnowReviewStep > 3) return;
+    UGamePlatformWeatherWorldSubsystem* Weather =
+        World->GetSubsystem<UGamePlatformWeatherWorldSubsystem>();
+    if (!Weather) return;
+
+    const int32 Step = VillageSnowReviewStep++;
+    FGamePlatformWeatherState Target;
+    switch (Step)
+    {
+    case 0: // 小雪：检测轻积雪可见且非零。
+        Target.Type = EGamePlatformWeatherType::LightSnow;
+        Target.SnowIntensity = .35f;
+        Target.SnowAmount = .23f;
+        Target.TemperatureCelsius = -2.f;
+        break;
+    case 1: // 大雪：检测两客户端雪量与特效意图。
+    case 3: // 再次大雪：检测天气结束后可重新触发。
+        Target.Type = EGamePlatformWeatherType::HeavySnow;
+        Target.SnowIntensity = .90f;
+        Target.SnowAmount = .85f;
+        Target.WindIntensity = .4f;
+        Target.TemperatureCelsius = -8.f;
+        break;
+    case 2: // 晴天：雪量归零，视觉层应取消降雪。
+        Target.Type = EGamePlatformWeatherType::Clear;
+        break;
+    default:
+        return;
+    }
+    const bool bApplied = Weather->SetWeather(Target, 1.5f);
+    const int32 Revision = Weather->GetCurrentSnapshot().Revision;
+    UE_LOG(LogTemp, Display,
+        TEXT("VILLAGE_SNOW_REVIEW_SERVER_STEP step=%d type=%d snow=%.3f revision=%d accepted=%d"),
+        Step, static_cast<int32>(Target.Type), Target.SnowAmount,
+        Revision, bApplied ? 1 : 0);
+    if (!bApplied)
+    {
+        UE_LOG(LogTemp, Error, TEXT("VILLAGE_SNOW_REVIEW_SERVER_REJECTED：权威天气子系统拒绝测试状态。"));
+    }
+
+    if (bApplied && VillageSnowReviewStep <= 3)
+    {
+        // 小雪阶段保持9秒；首次大雪保持26秒为断开/重连客户端留出冷启动时间；
+        // 晴天保持12秒，避免测试工具错误地在B客户端进入前结束权威天气。
+        const float NextDelaySeconds = Step == 1 ? 26.f : (Step == 2 ? 12.f : 9.f);
+        World->GetTimerManager().SetTimer(
+            VillageSnowReviewTimer, this,
+            &ADivineBeastsWorldGameMode::AdvanceVillageSnowReviewWeather,
+            NextDelaySeconds, false);
+    }
+}
+#endif
+
 void ADivineBeastsWorldGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     bWeatherShuttingDown = true;
+#if !UE_BUILD_SHIPPING
+    bVillageSnowReviewArmed = false;
+    bVillageSnowReviewStarted = false;
+#endif
+#if !UE_BUILD_SHIPPING
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(VillageSnowReviewTimer);
+    }
+#endif
     if (InitialWeatherPresetLease.IsValid())
     {
         UWorld* World = GetWorld();

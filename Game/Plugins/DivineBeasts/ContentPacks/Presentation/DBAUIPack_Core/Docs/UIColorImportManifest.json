@@ -1,0 +1,84 @@
+{
+  "SchemaVersion": 1,
+  "DescriptionZh": "第三层原稿颜色政策；8份彩色原稿与5份Alpha遮罩分别拥有sRGB/线性合同，登记源哈希和稳定资源身份。",
+  "Files": [
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureMenuReference.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReference",
+      "Role": "Color",
+      "SHA256": "bc89b2309c7e9cdcf963dad67de67285fdf7f8281c4eef8c94b00e70b390b35a"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureAbilityReference.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
+      "Role": "Color",
+      "SHA256": "e9554ba18f20b19b32427b645215daf3091fa3b623da302ab38f8821fddfe6f7"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureMinimapReference.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapReference",
+      "Role": "Color",
+      "SHA256": "41dd119502380bf0dd0af642eec3ab0fadfdbc343e935ece671a9cd51204a32f"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePlayerFrameReference.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
+      "Role": "Color",
+      "SHA256": "e8b2a2fe1bf3c9a082d9a7ba08098d38838706f8bd66adaad538a8b517899284"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureLoginPanelReference.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginPanelReference",
+      "Role": "Color",
+      "SHA256": "59433dd92346be6e7f7dc6bfde7e912e7c63857b3324d25b7cd74d6fcbf82ff8"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePanelReference.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReference",
+      "Role": "Color",
+      "SHA256": "ad8c904851a8dfba669fd498d9ee97f3f5d8c76bf8e3efb0d3970c4fd0961cb5"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureMenuReferenceMatte.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReferenceMatte",
+      "Role": "AlphaMask",
+      "SHA256": "af40a8025195fec064e591f4829b7b1fddac3a317c9e0c3611115486dbf6d12f"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureAbilityReferenceMatte.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReferenceMatte",
+      "Role": "AlphaMask",
+      "SHA256": "667b65ca3788877473020a3ba234df22c510aae5650cefa4394b88c7d144a2e7"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureMinimapReferenceMatte.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapReferenceMatte",
+      "Role": "AlphaMask",
+      "SHA256": "590c91f4095bb5568ea2cfb4bfcf717ae7b5e910f43018f63ee393683454250c"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePlayerFrameReferenceMatte.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReferenceMatte",
+      "Role": "AlphaMask",
+      "SHA256": "d3de7bfce3d8716658cdd2659b60472bbf61ce1e5d0add6ba8d8f4a5b75d7809"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePanelReferenceMatte.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReferenceMatte",
+      "Role": "AlphaMask",
+      "SHA256": "9d4833f3bc9e8bcd33c8765d68faffd1c0823b4e65c5095ce8ad6f923f456bac"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/DBA_MythicLogo.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/DBA_MythicLogo",
+      "Role": "Color",
+      "SHA256": "ca7704dd63b5580c8a255009e6b17a5366cc94a7ee88b18821b6084a30fef910"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureLoginBackdrop.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop",
+      "Role": "Color",
+      "SHA256": "87e6ac3803f3a0530eb8e05f4039f37b0171d42985f9dc52a16cad663d6bd227"
+    }
+  ]
+}

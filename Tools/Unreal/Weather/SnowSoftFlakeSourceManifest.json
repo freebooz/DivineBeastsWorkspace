@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "generator": "Tools/Unreal/Weather/GenerateSnowSoftFlake.py",
+  "sourcePath": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/SourceArt/Snow/T_GP_Snow_SoftFlake_Source.png",
+  "textureAsset": "/GamePlatformVFX/Weather/Textures/T_GP_Snow_SoftFlake",
+  "textureSize": [
+    512,
+    512
+  ],
+  "mode": "RGBA",
+  "sha256": "465b1dc80e5f6353afe56cb425652e83c0ea54602880930cd4b711f001053e09",
+  "sourceSRGB": true,
+  "descriptionZh": "平台通用自然柔边小雪粒，替代星芒卡片，不更改原雪晶Atlas",
+  "createdUEAsset": false
+}

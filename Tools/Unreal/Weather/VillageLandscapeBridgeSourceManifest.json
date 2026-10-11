@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "generator": "Tools/Unreal/Weather/GenerateVillageLandscapeBridgeSources.py",
+  "notesZh": "共享WorldPack自有的小尺寸基础纹理，不含任何平台纯客户端依赖",
+  "textures": [
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/LandscapeBridge/T_DBA_Village_SnowCoverageDefault_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_SnowCoverageDefault",
+      "size": [
+        64,
+        64
+      ],
+      "mode": "L",
+      "sourceSRGB": false,
+      "recommendedCompression": "Masks",
+      "sha256": "148afa957c278ea408ca4400742b759dc0c485ef1a7c10f423535101e0c1906e",
+      "descriptionZh": "用于服务器共享地形母材质的微型默认雪覆盖遮罩",
+      "serverBaselineSafe": true
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/LandscapeBridge/T_DBA_Village_SnowAlbedoDefault_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_SnowAlbedoDefault",
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGB",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "96b7186f4a52d542372c222a18086da69ccbff7aad3fdc809131a59b97efa8f5",
+      "descriptionZh": "共享地形母材质默认雪色；客户端异步替换为平台高清雪色",
+      "serverBaselineSafe": true
+    },
+    {
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/LandscapeBridge/T_DBA_Village_SnowNormalDefault_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_SnowNormalDefault",
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGB",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "4df8a2859362770c2ba295d35b3fe2f09230714b13e78b64ab0492c581f8ac25",
+      "descriptionZh": "默认平面雪法线；客户端异步替换为平台雪法线",
+      "serverBaselineSafe": true
+    }
+  ]
+}

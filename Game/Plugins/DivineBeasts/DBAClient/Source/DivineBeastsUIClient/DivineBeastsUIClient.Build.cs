@@ -23,6 +23,8 @@ public class DivineBeastsUIClient : ModuleRules
             "CommonUI",
             "CommonInput",
             "GamePlatformUIClient",
+            // 设置页公开快照合同来自现有平台设备设置服务；不另存一份设备配置。
+            "GamePlatformSettingsClient",
             // 当前公开战斗反馈映射直接暴露 FGamePlatformCombatEvent，
             // 背包和任务页面的公开头同样直接暴露平台客户端快照类型，
             // 因此这些模块都是调用方编译公开接口所需的真实 Public 依赖。
@@ -37,6 +39,8 @@ public class DivineBeastsUIClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsApplicationFlowClient",
+            // 私有ESC接线只消费项目世界控制器公开事件，不让双端世界依赖客户端UI。
+            "DBAWorldsRuntime",
             // 仅Private鼠标预览适配使用EKeys，不把输入按键依赖扩散给公开UI契约。
             "InputCore",
             // 玩家状态 ViewModel 只在 Private 实现中订阅平台 ASC/项目 Momentum AttributeSet；公开 UI 契约不泄漏 Gameplay 类型。
@@ -50,5 +54,10 @@ public class DivineBeastsUIClient : ModuleRules
             // 角色选择/创建页只通过项目表现子系统驱动三维预览，不直接加载Mesh或地图资产。
             "DivineBeastsPresentationClient"
         });
+        if (Target.bBuildEditor)
+        {
+            // 仅编辑器颜色回归读取真实原图像素和浮点GPU结果；不进入专用服务器或客户端发行闭包。
+            PrivateDependencyModuleNames.AddRange(new string[] { "ImageCore", "RenderCore", "RHI" });
+        }
     }
 }

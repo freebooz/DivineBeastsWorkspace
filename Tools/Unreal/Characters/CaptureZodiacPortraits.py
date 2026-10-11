@@ -36,13 +36,14 @@ def capture():
             component.set_editor_property('attenuation_radius', 1200)
             component.set_light_color(unreal.LinearColor(*color, 1))
         camera = subsystem.spawn_actor_from_class(unreal.SceneCapture2D,
-            origin + unreal.Vector(180, 0, 140), unreal.Rotator(pitch=0, yaw=180, roll=0), transient=True)
+            origin + unreal.Vector(100, 0, 158), unreal.Rotator(pitch=0, yaw=180, roll=0), transient=True)
         created.append(camera)
         component = camera.get_component_by_class(unreal.SceneCaptureComponent2D)
         target = unreal.TextureRenderTarget2D()
         target.set_editor_property('render_target_format', unreal.TextureRenderTargetFormat.RTF_RGBA8)
-        target.set_editor_property('size_x', 256)
-        target.set_editor_property('size_y', 256)
+        # 固定头肩构图；旧180厘米镜头距离拍成半身，放入小圆框后无法辨认角色面部。
+        target.set_editor_property('size_x', 512)
+        target.set_editor_property('size_y', 512)
         target.set_editor_property('clear_color', unreal.LinearColor(.025, .03, .03, 1))
         component.set_editor_property('texture_target', target)
         component.set_editor_property('fov_angle', 35)

@@ -64,18 +64,39 @@ void UDivineBeastsCharacterPreviewSubsystem::EnsurePreviewFoliage()
     if (!Presentation)
         return;
 
-    // 当前原型使用NoCollision平面。按场景可选Tag读取可见工作室地面，不启用玩法碰撞。
+    // 预览关卡可能使用Landscape或自定义地表，不能假定存在无碰撞PreviewFloor。
+    // 只读取当前角色舞台所属关卡中的锚点；绝不绑定旧流送实例或其他玩家的地面。
     const FVector Origin = PreviewStage->GetActorLocation();
-    float GroundZ = Origin.Z - 1.f;
-    ULevel* StudioLevel = PreviewStreamingLevel && PreviewStreamingLevel->IsLevelVisible()
-        ? PreviewStreamingLevel->GetLoadedLevel() : nullptr;
+    ULevel* const OwnedLevel = PreviewStage->GetLevel();
+    if (!OwnedLevel)
+    {
+        return;
+    }
+
+    float GroundZ = Origin.Z - 1.f; // 缺锚点时只为早期工作室保留明确的平面退化表现。
+    double NearestDistanceSquared = TNumericLimits<double>::Max();
+    bool bFoundGroundAnchor = false;
     for (TActorIterator<AActor> It(World); It; ++It)
     {
-        if ((StudioLevel && It->GetLevel() != StudioLevel) ||
+        if (It->GetLevel() != OwnedLevel ||
             !It->ActorHasTag(TEXT("DBA.Foliage.Ground")))
+        {
             continue;
-        GroundZ = It->GetActorLocation().Z;
-        break;
+        }
+        // 一个关卡内可有多个显式锚点时，选择离当前舞台最近的平面，避免迭代顺序决定结果。
+        const double DistanceSquared = FVector::DistSquared2D(
+            It->GetActorLocation(), Origin);
+        if (DistanceSquared < NearestDistanceSquared)
+        {
+            NearestDistanceSquared = DistanceSquared;
+            GroundZ = It->GetActorLocation().Z;
+            bFoundGroundAnchor = true;
+        }
+    }
+    if (!bFoundGroundAnchor)
+    {
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning,
+            TEXT("角色预览工作室缺少DBA.Foliage.Ground锚点，落叶暂使用舞台高度近似地面。"));
     }
 
     FString Error;

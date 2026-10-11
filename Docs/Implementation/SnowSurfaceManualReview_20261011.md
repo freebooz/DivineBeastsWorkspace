@@ -1,4 +1,13 @@
 # 神兽联盟写实积雪人工验收单（2026-10-11）
+## 2026-10-11 本轮人工前置条件更新
+
+- 所有正式材质改为最新56表达式遮罩曲线：SnowAmount=0时覆盖0；小雪0.23时水平平均遮罩约0.1085；大雪0.85时约0.8282。人工应分别拍摄薄雪/大雪表面与坡度对比，不能只看全雪。
+- 地表雪粉已调整为世界空间bLocalSpace=false，发射率绑定User.WeatherIntensity ×18粒/秒，风速/风向仍为固定美术向量而非真正的实时世界风场，人工应单独标记风向适配待优化。
+- Client/Server Build.bat正式目标检查退出0，最新UAT分别Cook+Stage+IoStore退出0，UnrealPak客户端10项资源/服务器禁入项0；截图及GPU实际视觉验收仍未通过。
+- 2026-10-11后续：正式`L_Village_Start`地图已通过UE5.8编辑器绑定WorldPack自身的48节点中性Landscape母材质，且开启动态MID；客户端雪资源在Village内通过GamePlatformData租约异步加载，真实运行时雪量、湿润及三张高清纹理已经取得`VILLAGE_SNOW_MID_VERIFY_SUCCESS`回读证据。共享地图仍**没有硬引用DBAPresentationPack_Core等客户端资源**。这证明材质装配，不表示用户已亲眼看到大雪。
+- 目前正确入口仍是`L_DBA_SnowReview`。已由UE真实Editor把审核Actor默认设置HeavySnow、0秒过渡。此前客户端独立运行虽然能加载关卡，却受到Login UI遮挡，不计可见效果通过。签收人仍应在UE可见窗口中手动确认并记录帧率。
+
+
 
 ## 验收入口
 
@@ -17,7 +26,7 @@
 
 ## 自动化证据的局限
 
-三张原创PNG已完成SHA256、尺寸、无缝性与透明通道检查。真实UE5.8已导入、保存并回读Texture2D、53节点雪母材质、6节点雪粉材质、第三层MI、Niagara与独立UMAP；Niagara复检0错误0警告、valid=true，雪VFX Definition与增强系统引用匹配。
+三张原创PNG已完成SHA256、尺寸、无缝性与透明通道检查。真实UE5.8已导入并回读Texture2D、56节点通用雪母材质、48节点新手村共享地形母材质、6节点雪粉材质、第三层MI、Niagara和正式Village/独立审核地图；Niagara复检0错误0警告、valid=true。新手村Landscape动态MID的标量与三张高清贴图已在实际客户端进程完成回读。
 
 自动化技术预览保存于Game/Saved/Screenshots/SnowReview，实际检查显示材质预览处于默认无雪灰色状态，离屏Niagara帧近乎全黑。因此**这些截图不是视觉验收通过的证明**。必须在PIE真实大雪状态重新捕获可辨识的雪层、粒子画面供人审查。
 

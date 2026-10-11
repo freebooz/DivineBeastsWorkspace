@@ -89,7 +89,8 @@ namespace
             // 两页由Monolith实际交付；跨图保留到流程显式关闭，连接失败时必须始终可见。
             MakeScreen(TEXT("UI.Screen.LoadingTravel"), TEXT("LoadingTravel"), EGamePlatformUILayer::Loading, EGamePlatformUIInputMode::UIOnly, NAME_None, true),
             MakeScreen(TEXT("UI.Screen.ErrorReconnect"), TEXT("ErrorReconnect"), EGamePlatformUILayer::Modal, EGamePlatformUIInputMode::UIOnly, TEXT("RetryButton"), true),
-            MakeScreen(TEXT("UI.Screen.SystemMenu"), TEXT("SystemMenu"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::GameAndUI, TEXT("ResumeButton")),
+            MakeScreen(TEXT("UI.Screen.SystemMenu"), TEXT("SystemMenu"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::UIOnly, TEXT("ResumeButton")),
+            MakeScreen(TEXT("UI.Screen.Settings"), TEXT("Settings"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::UIOnly, TEXT("ResolutionCombo")),
             MakeScreen(TEXT("UI.Screen.Inventory"), TEXT("Inventory"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("InventoryGrid")),
             MakeScreen(TEXT("UI.Screen.Quest"), TEXT("Quest"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("QuestList")),
             // 社交与运营是第三层公共项目页面，不属于MOBA竞技；软加载仍需提供可见失败结果。

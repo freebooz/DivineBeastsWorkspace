@@ -1,6 +1,6 @@
 using UnrealBuildTool;
 
-/// <summary>项目世界定义校验模块；只依赖项目目录与通用World契约，不执行地图分配或加载。</summary>
+/// <summary>第三层双端世界定义、服务器装配与本地操控策略；依赖平台公开契约，不执行全局实例分配，不依赖客户端UI。</summary>
 public class DBAWorldsRuntime : ModuleRules
 {
     public DBAWorldsRuntime(ReadOnlyTargetRules Target) : base(Target)
@@ -24,6 +24,16 @@ public class DBAWorldsRuntime : ModuleRules
             "GamePlatformGameplay"
         });
         // 项目本地准备必须读取角色定义Ready并订阅事件；不链接服务器私有准入或客户端表现模块。
-        PrivateDependencyModuleNames.Add("DivineBeastsCharactersRuntime");
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "DivineBeastsCharactersRuntime",
+            // 世界输入清理仅通过平台公开ASC撤销按住命令；不引入客户端UI、Niagara或网络权威替代。
+            "GamePlatformAbilitySystem"
+        });
+        // 鼠标命中检验只用于有视口的目标；Dedicated Server不链接Slate或任何项目UI客户端。
+        if (Target.Type != TargetType.Server)
+        {
+            PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+        }
     }
 }

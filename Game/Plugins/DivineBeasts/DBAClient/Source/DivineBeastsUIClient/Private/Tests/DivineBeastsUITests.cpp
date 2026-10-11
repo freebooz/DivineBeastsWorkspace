@@ -308,9 +308,9 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
     const TArray<FDivineBeastsUISurfaceDescriptor>& Surfaces =
         FDivineBeastsUIScreenCatalog::GetSurfaces();
 
-    // 十大业务域登记11个公共Screen、4个HUD与1个通知，共16个非竞技表面。
+    // 十大业务域登记12个公共Screen（含真实世界系统菜单）、4个HUD与1个通知，共17个非竞技表面。
     // 新登记的社交与运营软路径不表示对应蓝图已通过Monolith交付。
-    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 16);
+    TestEqual(TEXT("公共非竞技UI表面数量"), Surfaces.Num(), 17);
 
     TSet<FName> Unique;
     for (const FDivineBeastsUISurfaceDescriptor& Surface : Surfaces)
@@ -362,8 +362,8 @@ bool FDivineBeastsUIScreenInventoryTest::RunTest(const FString&)
             Boot->WidgetClassPath.StartsWith(TEXT("/DivineBeastsUI/")));
     }
 
-    TestNull(
-        TEXT("一期未批准Settings页面不应被擅自创建"),
+    TestNotNull(
+        TEXT("已批准的真实设备设置页必须登记"),
         FDivineBeastsUIScreenCatalog::Find(TEXT("UI.Screen.Settings")));
     TestNull(
         TEXT("角色列表必须作为CharacterSelect内部区域，不再维护独立页面"),

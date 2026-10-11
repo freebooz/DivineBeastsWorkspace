@@ -44,8 +44,15 @@ def run() -> None:
     master = found[base + "/Materials/M_GP_SnowCover_Detailed"]
     puff = found[vfx + "/Materials/M_GP_VFX_SnowGroundPuff"]
     instance = found[project + "/MI_DBA_Snow_Detailed"]
-    if material_lib.get_num_material_expressions(master) < 50:
-        raise RuntimeError("写实雪母材质节点数不足")
+    if material_lib.get_num_material_expressions(master) < 56:
+        raise RuntimeError("写实雪母材质缺少小雪薄覆/大雪连续的增强遮罩节点")
+    has_shift = any(
+        isinstance(expr, unreal.MaterialExpressionScalarParameter)
+        and str(expr.get_editor_property("parameter_name")) == "SnowCoverageShiftScale"
+        for expr in material_lib.get_material_expressions(master)
+    )
+    if not has_shift:
+        raise RuntimeError("雪母材质没有SnowCoverageShiftScale强度遮罩控制")
     if material_lib.get_num_material_expressions(puff) < 6:
         raise RuntimeError("贴地雪粉材质节点缺失")
     if not puff.get_editor_property("used_with_niagara_sprites"):

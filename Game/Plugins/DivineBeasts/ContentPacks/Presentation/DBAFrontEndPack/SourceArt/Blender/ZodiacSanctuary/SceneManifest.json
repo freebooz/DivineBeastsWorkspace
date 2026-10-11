@@ -1,0 +1,510 @@
+{
+  "schema_version": 1,
+  "scene": "ZodiacSanctuary",
+  "reference": "User provided 2026-10-11",
+  "blender_version": "5.2.1 LTS",
+  "units": "meters",
+  "source_axes": {
+    "right": "+X",
+    "background": "+Y",
+    "up": "+Z"
+  },
+  "character_foot_origin_meters": [
+    0,
+    0,
+    0
+  ],
+  "platform_radius_meters": 7,
+  "camera_meters": [
+    0,
+    -21,
+    9.8
+  ],
+  "camera_target_meters": [
+    0,
+    13,
+    8.1
+  ],
+  "objects": [
+    {
+      "name": "SM_DBA_Sanctuary_Architecture",
+      "fbx": "Exports/SM_DBA_Sanctuary_Architecture.fbx",
+      "vertices": 8180,
+      "polygons": 7244,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_ZodiacInlays",
+      "fbx": "Exports/SM_DBA_Sanctuary_ZodiacInlays.fbx",
+      "vertices": 14750,
+      "polygons": 14254,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_Trees",
+      "fbx": "Exports/SM_DBA_Sanctuary_Trees.fbx",
+      "vertices": 7756,
+      "polygons": 5164,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_Foliage",
+      "fbx": "Exports/SM_DBA_Sanctuary_Foliage.fbx",
+      "vertices": 1459180,
+      "polygons": 784590,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_Vines",
+      "fbx": "Exports/SM_DBA_Sanctuary_Vines.fbx",
+      "vertices": 5148,
+      "polygons": 4810,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_Terraces",
+      "fbx": "Exports/SM_DBA_Sanctuary_Terraces.fbx",
+      "vertices": 20952,
+      "polygons": 18624,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_Mountains",
+      "fbx": "Exports/SM_DBA_Sanctuary_Mountains.fbx",
+      "vertices": 4536,
+      "polygons": 4032,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_Waterfalls",
+      "fbx": "Exports/SM_DBA_Sanctuary_Waterfalls.fbx",
+      "vertices": 17514,
+      "polygons": 15120,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_WaterPlants",
+      "fbx": "Exports/SM_DBA_Sanctuary_WaterPlants.fbx",
+      "vertices": 6711,
+      "polygons": 5644,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_StatueDetails",
+      "fbx": "Exports/SM_DBA_Sanctuary_StatueDetails.fbx",
+      "vertices": 9990,
+      "polygons": 7574,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "SM_DBA_Sanctuary_Water",
+      "fbx": "Exports/SM_DBA_Sanctuary_Water.fbx",
+      "vertices": 8,
+      "polygons": 6,
+      "materials": [
+        "M_DBA_Sanctuary_Stone",
+        "M_DBA_Sanctuary_Jade",
+        "M_DBA_Sanctuary_AncientGold",
+        "M_DBA_Sanctuary_Moss",
+        "M_DBA_Sanctuary_Bark",
+        "M_DBA_Sanctuary_Leaf",
+        "M_DBA_Sanctuary_LeafLight",
+        "M_DBA_Sanctuary_CarvedStone",
+        "M_DBA_Sanctuary_DistantStone",
+        "M_DBA_Sanctuary_Waterfall",
+        "M_DBA_Sanctuary_Foam",
+        "M_DBA_Sanctuary_LanternGlow",
+        "M_DBA_Sanctuary_LotusPetal",
+        "M_DBA_Sanctuary_Water"
+      ]
+    },
+    {
+      "name": "Sculpt_DBA_Tiger",
+      "fbx": "Exports/Sculpt_DBA_Tiger.fbx",
+      "vertices": 4918,
+      "polygons": 4912,
+      "materials": [
+        "M_DBA_Sanctuary_CarvedStone"
+      ]
+    },
+    {
+      "name": "Sculpt_DBA_Dragon",
+      "fbx": "Exports/Sculpt_DBA_Dragon.fbx",
+      "vertices": 6904,
+      "polygons": 6902,
+      "materials": [
+        "M_DBA_Sanctuary_CarvedStone"
+      ]
+    },
+    {
+      "name": "Sculpt_DBA_Deer",
+      "fbx": "Exports/Sculpt_DBA_Deer.fbx",
+      "vertices": 3908,
+      "polygons": 3892,
+      "materials": [
+        "M_DBA_Sanctuary_CarvedStone"
+      ]
+    },
+    {
+      "name": "Sculpt_DBA_DragonTurtle",
+      "fbx": "Exports/Sculpt_DBA_DragonTurtle.fbx",
+      "vertices": 6568,
+      "polygons": 6566,
+      "materials": [
+        "M_DBA_Sanctuary_CarvedStone"
+      ]
+    },
+    {
+      "name": "Sculpt_DBA_Phoenix",
+      "fbx": "Exports/Sculpt_DBA_Phoenix.fbx",
+      "vertices": 3946,
+      "polygons": 3944,
+      "materials": [
+        "M_DBA_Sanctuary_CarvedStone"
+      ]
+    },
+    {
+      "name": "Sculpt_DBA_Qilin",
+      "fbx": "Exports/Sculpt_DBA_Qilin.fbx",
+      "vertices": 4876,
+      "polygons": 4868,
+      "materials": [
+        "M_DBA_Sanctuary_CarvedStone"
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "M_DBA_Sanctuary_Stone",
+      "base_color": [
+        0.5199999809265137,
+        0.5699999928474426,
+        0.4399999976158142
+      ],
+      "roughness": 0.699999988079071,
+      "metallic": 0.0,
+      "emission_strength": 0.0,
+      "texture": "Textures/T_DBA_Sanctuary_Stone.png",
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_Jade",
+      "base_color": [
+        0.10999999940395355,
+        0.27000001072883606,
+        0.2199999988079071
+      ],
+      "roughness": 0.4300000071525574,
+      "metallic": 0.11999999731779099,
+      "emission_strength": 0.0,
+      "texture": "Textures/T_DBA_Sanctuary_Jade.png",
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_AncientGold",
+      "base_color": [
+        0.4699999988079071,
+        0.3799999952316284,
+        0.1599999964237213
+      ],
+      "roughness": 0.3799999952316284,
+      "metallic": 0.6600000262260437,
+      "emission_strength": 0.0,
+      "texture": null,
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_Moss",
+      "base_color": [
+        0.10999999940395355,
+        0.23999999463558197,
+        0.03500000014901161
+      ],
+      "roughness": 0.9399999976158142,
+      "metallic": 0.0,
+      "emission_strength": 0.0,
+      "texture": "Textures/T_DBA_Sanctuary_Moss.png",
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_Bark",
+      "base_color": [
+        0.18000000715255737,
+        0.20000000298023224,
+        0.09000000357627869
+      ],
+      "roughness": 0.9200000166893005,
+      "metallic": 0.0,
+      "emission_strength": 0.0,
+      "texture": "Textures/T_DBA_Sanctuary_Bark.png",
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_Leaf",
+      "base_color": [
+        0.07000000029802322,
+        0.2199999988079071,
+        0.02500000037252903
+      ],
+      "roughness": 0.7200000286102295,
+      "metallic": 0.0,
+      "emission_strength": 0.0,
+      "texture": "Textures/T_DBA_Sanctuary_Leaf.png",
+      "two_sided": true
+    },
+    {
+      "name": "M_DBA_Sanctuary_LeafLight",
+      "base_color": [
+        0.23000000417232513,
+        0.38999998569488525,
+        0.06499999761581421
+      ],
+      "roughness": 0.6800000071525574,
+      "metallic": 0.0,
+      "emission_strength": 0.0,
+      "texture": null,
+      "two_sided": true
+    },
+    {
+      "name": "M_DBA_Sanctuary_CarvedStone",
+      "base_color": [
+        0.5699999928474426,
+        0.6100000143051147,
+        0.4699999988079071
+      ],
+      "roughness": 0.6499999761581421,
+      "metallic": 0.0,
+      "emission_strength": 0.0,
+      "texture": "Textures/T_DBA_Sanctuary_Stone.png",
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_DistantStone",
+      "base_color": [
+        0.25,
+        0.38999998569488525,
+        0.36000001430511475
+      ],
+      "roughness": 0.8500000238418579,
+      "metallic": 0.0,
+      "emission_strength": 0.0,
+      "texture": "Textures/T_DBA_Sanctuary_Stone.png",
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_Waterfall",
+      "base_color": [
+        0.5600000023841858,
+        0.7799999713897705,
+        0.7400000095367432
+      ],
+      "roughness": 0.23000000417232513,
+      "metallic": 0.10000000149011612,
+      "emission_strength": 0.18000000715255737,
+      "texture": null,
+      "two_sided": true
+    },
+    {
+      "name": "M_DBA_Sanctuary_Foam",
+      "base_color": [
+        0.7200000286102295,
+        0.8899999856948853,
+        0.8100000023841858
+      ],
+      "roughness": 0.4000000059604645,
+      "metallic": 0.0,
+      "emission_strength": 0.11999999731779099,
+      "texture": null,
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_LanternGlow",
+      "base_color": [
+        0.2800000011920929,
+        0.7599999904632568,
+        0.5799999833106995
+      ],
+      "roughness": 0.41999998688697815,
+      "metallic": 0.0,
+      "emission_strength": 2.0,
+      "texture": null,
+      "two_sided": false
+    },
+    {
+      "name": "M_DBA_Sanctuary_LotusPetal",
+      "base_color": [
+        0.8299999833106995,
+        0.8700000047683716,
+        0.7200000286102295
+      ],
+      "roughness": 0.41999998688697815,
+      "metallic": 0.0,
+      "emission_strength": 0.0,
+      "texture": null,
+      "two_sided": true
+    },
+    {
+      "name": "M_DBA_Sanctuary_Water",
+      "base_color": [
+        0.02500000037252903,
+        0.2199999988079071,
+        0.17000000178813934
+      ],
+      "roughness": 0.1599999964237213,
+      "metallic": 0.3199999928474426,
+      "emission_strength": 0.0,
+      "texture": null,
+      "two_sided": false
+    }
+  ]
+}

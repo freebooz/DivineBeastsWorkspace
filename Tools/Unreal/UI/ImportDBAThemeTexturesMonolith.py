@@ -1,69 +1,62 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Monolith Editor 实际导入《神兽联盟》主题源PNG为真正UTexture2D。
-
-必须由 Monolith MCP editor.run_python(mode="execute_file") 运行。
-禁止使用外部脚本独自生成或修改.uasset；此文件只是引擎操作指令。
+"""第三层UI原图导入请求生成器：只读源PNG、检查哈希并输出Monolith动作，不操作UE资产。
+所有实际导入、设置、保存必须逐条由Monolith执行并回读。
+Color表示sRGB设计图，AlphaMask表示线性遮罩；禁止凭文件名推断角色。
+默认读取原稿清单；旧Theme清单可由--manifest指定，其缺省角色为Color。
+输出归Saved；错误哈希、越界路径、非法角色抛出异常并返回非零码。
 """
 from __future__ import annotations
-
+import argparse
 import hashlib
 import json
 from pathlib import Path
-import unreal
 
-ROOT = Path(unreal.Paths.get_project_file_path()).resolve().parents[1]
-SOURCE = ROOT / "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Theme"
-MOUNT = "/DBAUIPack_Core/UI/Textures/Theme"
-MANIFEST = SOURCE / "UIThemeSourceArtManifest.json"
+ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_MANIFEST = ROOT / "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/UIColorImportManifest.json"
 
-def main():
-    if not MANIFEST.is_file():
-        print("ERROR: cannot find original UI theme art manifest")
-        return
-    spec = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    tasks = []
-    checked = []
-    for item in spec["Files"]:
-        path = ROOT / item["Source"]
-        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != item["SHA256"]:
-            print("ERROR SOURCE OR HASH",str(path))
-            return
+def prepare(manifest: dict, root: Path) -> list[dict]:
+    """完整预检后才返回动作；目标仅限第三层公共UI，稳定身份和源RGB不变。"""
+    requests = []
+    for item in manifest["Files"]:
+        source = (root / item["Source"]).resolve()
+        if not source.is_relative_to(root.resolve()):
+            raise ValueError("源文件越过工作空间边界")
+        if hashlib.sha256(source.read_bytes()).hexdigest().lower() != item["SHA256"].lower():
+            raise ValueError("原稿哈希不一致: " + str(source))
+        role = item.get("Role", "Color")
+        if role not in ("Color", "AlphaMask"):
+            raise ValueError("必须指定Color或AlphaMask")
         dest = item["Destination"]
-        if not dest.startswith(MOUNT+"/"):
-            print("ERROR DESTINATION IS OUTSIDE DBAUIPACK",dest)
-            return
-        checked.append((dest,item))
-        if unreal.EditorAssetLibrary.does_asset_exist(dest):
-            print("ALREADY_IMPORTED",dest)
-            continue
-        task = unreal.AssetImportTask()
-        task.set_editor_property("filename",str(path))
-        task.set_editor_property("destination_path",MOUNT)
-        task.set_editor_property("destination_name",dest.rsplit("/",1)[-1])
-        task.set_editor_property("automated",True)
-        task.set_editor_property("replace_existing",False)
-        task.set_editor_property("save",True)
-        tasks.append(task)
-    print("SOURCE_PNG_VERIFIED",len(checked))
-    print("NEED_TEXTURE_IMPORT",len(tasks))
-    if tasks:
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks(tasks)
-    verified = 0
-    for dest,item in checked:
-        texture = unreal.EditorAssetLibrary.load_asset(dest)
-        if texture is None or texture.get_class().get_name() != "Texture2D":
-            print("ERROR_TEXTURE_MISSING",dest)
-            continue
-        verified += 1
-        try:
-            texture.set_editor_property("lod_group",unreal.TextureGroup.TEXTUREGROUP_UI)
-            texture.set_editor_property("compression_settings",unreal.TextureCompressionSettings.TC_EDITOR_ICON)
-            unreal.EditorAssetLibrary.save_asset(dest,only_if_is_dirty=False)
-        except Exception as exc:
-            print("TEXTURE_SETTING_WARNING",dest,str(exc)[:260])
-        print("UE_TEXTURE2D",dest)
-    print("THEME_TEXTURE2D_COUNT",verified,"/",len(checked))
-    print("AUTOMATION_TESTS=NOT_RUN")
+        if not dest.startswith("/DBAUIPack_Core/UI/") or not dest.isascii():
+            raise ValueError("目标必须为第三层公共UI的ASCII稳定身份")
+        requests.append({"tool": "material.import_texture", "params": {
+            "source_file": str(source), "dest_path": dest, "compression": "Default",
+            "srgb": role == "Color", "lod_group": "UI", "replace_existing": True}})
+        # 导入动作不支持EditorIcon参数，后置设置后须回读实际B8G8R8A8，不把默认DXT当无损。
+        for prop, value in {"CompressionSettings": "TC_EditorIcon", "MipGenSettings": "TMGS_NoMipmaps",
+                            "SRGB": role == "Color", "AdjustBrightness": 1.0, "AdjustSaturation": 1.0,
+                            "AdjustRGBCurve": 1.0, "AdjustHue": 0.0}.items():
+            requests.append({"tool": "blueprint.set_cdo_property", "params": {
+                "asset_path": dest, "property_name": prop, "value": value, "strict": True}})
+        requests.append({"tool": "material.get_texture_properties", "params": {"asset_path": dest}})
+    # 保存不是验收；sRGB变更后须复核材质采样器类型，并重新加载执行GPU颜色回归。
+    requests.append({"tool": "editor.save_packages", "params": {"packages": [item["Destination"] for item in manifest["Files"]]}})
+    return requests
 
-main()
+def main() -> None:
+    """只生成可审核清单，无网络、图像编辑或UE二进制写入。"""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--output", type=Path, default=ROOT / "Saved/Monolith/UIColorImportRequests.json")
+    args = parser.parse_args()
+    spec = json.loads(args.manifest.read_text(encoding="utf-8-sig"))
+    result = {"SchemaVersion": 1, "ActualAssetsModified": False, "Requests": prepare(spec, ROOT),
+              "RequiredVerification": ["Monolith项目/版本身份", "保存重载后的纹理/材质/白色乘色",
+                                       "DivineBeasts.UI.Color.SourceToSlate真实RHI回归", "最终客户端人工核验"]}
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"request_count": len(result["Requests"]), "output": str(args.output)}))
+
+if __name__ == "__main__":
+    main()

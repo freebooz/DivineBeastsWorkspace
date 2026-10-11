@@ -14,6 +14,8 @@ public class DivineBeastsPresentationClient : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            // 公共配置头直接继承UDeveloperSettings，须公开声明模块依赖。
+            "DeveloperSettings",
             // 公开回执使用平台结果值；显式链接其实现，不能仅依赖Data头文件的传递可见性。
             "GamePlatformCore",
             "DivineBeastsRuntime",
@@ -34,5 +36,14 @@ public class DivineBeastsPresentationClient : ModuleRules
             "GamePlatformWeatherClient"
         });
 
+        // UE Landscape原生渲染材质MID桥接仅编入ClientOnly模块，Server目标完全不依赖。
+        PrivateDependencyModuleNames.Add("Landscape");
+
+        // 仅Editor中对项目真实Niagara资产执行自动化编译状态核验；
+        // Client正式目标仍通过平台中立表现请求访问VFX，不引入项目层直接播放器依赖。
+        if (Target.Type == TargetType.Editor)
+        {
+            PrivateDependencyModuleNames.Add("Niagara");
+        }
     }
 }

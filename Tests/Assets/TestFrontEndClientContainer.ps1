@@ -25,6 +25,9 @@ try {
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_Login.uasset',
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_CharacterCreate.uasset',
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_CharacterSelect.uasset',
+        # ESC系统层真实菜单与设备设置必须Cook，避免软目录解析成功而实际页面缺失。
+        'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_SystemMenu.uasset',
+        'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_Settings.uasset',
         # 加载与恢复是真实流程必要页面，缺少时连接失败会变成不可操作的黑屏。
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_LoadingTravel.uasset',
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_ErrorReconnect.uasset',
@@ -49,6 +52,20 @@ try {
         'DBAUIPack_Core/Content/UI/Styles/BP_DBA_ButtonStyle_LoginOverlay.uasset',
         # 原稿头像框与纯内容变体；两个肖像实例都由同一本地角色事件驱动，属性来自真实ASC。
         'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference.uasset',
+        # 独立轮廓仅控制外部Alpha，保持原稿石材/藤蔓暗部不透明。
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureAbilityReferenceMatte.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureMinimapReferenceMatte.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NaturePlayerFrameReferenceMatte.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureMenuReferenceMatte.uasset',
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NatureAbilityIconPalette.uasset',
+        # 统一面板及原生返回动作的实际运行闭包；样式跨页面共用，不以规划任务/背包空页冒充交付。
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NaturePanelReference.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NaturePanelReferenceMatte.uasset',
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePanelNineSlice.uasset',
+        'DBAUIPack_Core/Content/UI/Styles/BP_DBA_BorderStyle_Panel.uasset',
+        'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_StandardPanel.uasset',
+        'GamePlatformUI/Content/Input/DT_GP_UIActions.uasset',
+        'GamePlatformUI/Content/Input/BP_GP_UIInputData.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference.uasset',
@@ -88,6 +105,25 @@ try {
         'DBAWorldPack_Village/Content/Definitions/DA_DBA_Pawn_WorldCharacter.uasset',
         'DBAWorldPack_Village/Content/Definitions/DA_DBA_Experience_Village_Tutorial.uasset'
     )
+    # 角色选择和创建的四种自然飘落资源通过软Definition及Niagara引用装载，
+    # 不能只验证Editor本地文件。容器必须交付编译后Niagara系统、项目外观与工作室地面锚点。
+    # UE5.8 NiagaraScript.cpp::IsEditorOnly将独立模块脚本判为编辑器资产；
+    # 空中/地面模块编入系统执行数据，不能要求NM_GP_*源脚本单独进入运行容器。
+    $required += @(
+        'GamePlatformVFX/Content/Environment/FallingFoliage/Materials/M_GP_FallingFoliage_Master.uasset',
+        'GamePlatformVFX/Content/Environment/FallingFoliage/EffectTypes/NET_GP_FallingFoliage_Ambient.uasset',
+        'GamePlatformVFX/Content/Environment/FallingFoliage/Niagara/NS_GP_FallingFoliage_Base.uasset',
+        'DBAFrontEndPack/Content/CharacterPreview/Environment/Blueprints/BP_DBA_FoliageGroundAnchor.uasset',
+        'DBAFrontEndPack/Content/Maps/L_DBA_CharacterStudio.umap'
+    )
+    $foliageContentRoot='DBAPresentationPack_Core/Content/VFX/Environment/FallingFoliage'
+    foreach ($style in @('Peach','Maple','Bamboo','Ginkgo')) {
+        $required += "$foliageContentRoot/Definitions/DA_DBA_VFX_FallingFoliage_$style.uasset"
+        $required += "$foliageContentRoot/Niagara/NS_DBA_FallingFoliage_$style.uasset"
+        $required += "$foliageContentRoot/Materials/MI_DBA_Foliage_$style.uasset"
+        $required += "$foliageContentRoot/Textures/T_DBA_Foliage_${style}_Albedo.uasset"
+        $required += "$foliageContentRoot/Textures/T_DBA_Foliage_${style}_Normal.uasset"
+    }
     foreach ($hero in @('Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Boar')) {
         $required += "DBAHeroPack_$hero/Content/Characters/DA_Appearance_Zodiac_$hero.uasset"
         $required += "DBAGameplay/Content/Definitions/DA_Hero_Zodiac_$hero.uasset"

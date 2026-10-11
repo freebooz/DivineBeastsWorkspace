@@ -6,6 +6,14 @@
 #include "GameFramework/PlayerController.h"
 #include "Misc/ConfigCacheIni.h"
 #include "HAL/PlatformProperties.h"
+#include "Misc/CoreDelegates.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Input/CommonUIActionRouterBase.h"
+#include "Input/GamePlatformUIInputPolicy.h"
+#include "CommonInputModeTypes.h"
+#include "Widgets/CommonActivatableWidgetContainer.h"
+#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "ViewModels/System/DivineBeastsSystemSettingsViewModel.h"
 
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
@@ -38,6 +46,13 @@ namespace
 
 void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
 {
+    ObserveWorldInputRouter(GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>() : nullptr);
+    CloseSystemMenu();
+    if (auto* Previous = BoundMenuController.Get()) Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
+    WorldEscapeHandle.Reset();
+    BoundMenuController = Cast<ADivineBeastsWorldPlayerController>(NewPlayerController);
+    if (auto* Current = BoundMenuController.Get())
+        WorldEscapeHandle = Current->OnWorldEscapeRequested.AddUObject(this, &ThisClass::HandleWorldEscapeRequested);
     Super::PlayerControllerChanged(NewPlayerController);
     if (!IsValid(NewPlayerController))
     {
@@ -55,17 +70,20 @@ void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* 
         Root->RefreshForPlayerController(NewPlayerController);
     }
     PullInitialState();
+    SyncWorldInputBaseline();
 }
 
 void UDivineBeastsUIClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    bUIShuttingDown = false;
     Collection.InitializeDependency<UGamePlatformUIManagerSubsystem>();
 
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
     {
         PlatformUI = LocalPlayer->GetSubsystem<UGamePlatformUIManagerSubsystem>();
+        ObserveWorldInputRouter(LocalPlayer->GetSubsystem<UCommonUIActionRouterBase>());
     }
 
     if (PlatformUI)
@@ -83,6 +101,9 @@ void UDivineBeastsUIClientSubsystem::Initialize(
             this, &UDivineBeastsUIClientSubsystem::HandleThemeRequestFinished);
     }
 
+    ApplicationDeactivateHandle = FCoreDelegates::ApplicationWillDeactivateDelegate.AddUObject(this, &ThisClass::CloseSystemMenu);
+    if (FSlateApplication::IsInitialized())
+        SlateActivationHandle = FSlateApplication::Get().OnApplicationActivationStateChanged().AddUObject(this, &ThisClass::HandleApplicationActivationChanged);
     RegisterDefaultScreenDefinitions();
     EnsureDefaultRootLayout();
     EnsureConfiguredTheme();
@@ -107,10 +128,23 @@ void UDivineBeastsUIClientSubsystem::Initialize(
             ApplicationAdapter = nullptr;
         }
     }
+    // 子系统可能在本地控制器已存在后创建；仍通过同一事件接线路径完成一次绑定。
+    if (!BoundMenuController.IsValid() && GetLocalPlayer()) PlayerControllerChanged(GetLocalPlayer()->GetPlayerController(GetWorld()));
 }
 
 void UDivineBeastsUIClientSubsystem::Deinitialize()
 {
+    // 退出先撤输入交接资格与精确Router委托，后续关闭回调不能发布新的世界基线。
+    bUIShuttingDown = true;
+    ObserveWorldInputRouter(nullptr);
+    CloseSystemMenu();
+    if (auto* Previous = BoundMenuController.Get()) Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
+    BoundMenuController.Reset();
+    WorldEscapeHandle.Reset();
+    FCoreDelegates::ApplicationWillDeactivateDelegate.Remove(ApplicationDeactivateHandle);
+    if (FSlateApplication::IsInitialized()) FSlateApplication::Get().OnApplicationActivationStateChanged().Remove(SlateActivationHandle);
+    ApplicationDeactivateHandle.Reset();
+    SystemMenuVisibilityChanged.Clear();
     if (PlatformUI)
     {
         PlatformUI->OnThemeRequestFinished.RemoveDynamic(
@@ -349,7 +383,11 @@ UDivineBeastsUIClientSubsystem::CreateViewModel(FName ScreenId)
 
     // P0 页面使用类型明确的 ViewModel；其他现有页面继续复用兼容 ViewModel，
     // 保持增量迁移，不在本阶段一次性重写全部业务页面。
-    if (ScreenId == TEXT("UI.Screen.Login"))
+    if (ScreenId == TEXT("UI.Screen.Settings"))
+    {
+        ViewModel = NewObject<UDivineBeastsSystemSettingsViewModel>(this);
+    }
+    else if (ScreenId == TEXT("UI.Screen.Login"))
     {
         ViewModel = NewObject<UDivineBeastsLoginViewModel>(this);
     }
@@ -535,11 +573,13 @@ void UDivineBeastsUIClientSubsystem::HandleViewStateChanged(
         CharacterEntryScreenPreference = NAME_None;
     }
     ViewState = NewState;
+    if (!FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) CloseSystemMenu();
     StateChanged.Broadcast(ViewState);
     SyncLoadingService();
     EnsureDefaultRootLayout();
     SyncPrimaryScreen();
     SyncCharacterPreview();
+    SyncWorldInputBaseline();
 }
 
 void UDivineBeastsUIClientSubsystem::PullInitialState()
@@ -742,6 +782,18 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpened(
     FName ScreenId,
     UGamePlatformUIScreen* Screen)
 {
+    if (ScreenId == OpeningSystemScreenId &&
+        (!OpeningSystemRequestId.IsValid() || OpeningSystemRequestId == RequestId))
+    {
+        OpeningSystemScreenId = NAME_None;
+        OpeningSystemRequestId.Invalidate();
+        if (!FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState))
+        { if (PlatformUI) PlatformUI->CloseScreen(Screen); return; }
+        if (ScreenId == TEXT("UI.Screen.SystemMenu")) ActiveSystemMenu = Screen;
+        else ActiveSystemSettings = Screen;
+        SetSystemMenuVisible(true);
+        return;
+    }
     if (ScreenId != OpeningPrimaryScreenId ||
         (OpeningPrimaryRequestId.IsValid() &&
          RequestId != OpeningPrimaryRequestId))
@@ -767,6 +819,17 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed(
     FName ScreenId,
     FText Reason)
 {
+    if (ScreenId == OpeningSystemScreenId &&
+        (!OpeningSystemRequestId.IsValid() || OpeningSystemRequestId == RequestId))
+    {
+        OpeningSystemScreenId = NAME_None;
+        OpeningSystemRequestId.Invalidate();
+        if (!ActiveSystemMenu.IsValid()) SetSystemMenuVisible(false);
+        UE_LOG(LogTemp, Warning, TEXT("[DBA UI] System page open failed: %s"), *Reason.ToString());
+        if (auto* Menu = Cast<UDivineBeastsUIScreen>(ActiveSystemMenu.Get()))
+            Menu->ShowPageLoadError(FText::FromString(TEXT("设置页面暂时无法打开，请稍后重试。")));
+        return;
+    }
     // 内部资源错误只写诊断；用户文案不携带资源路径，也不污染业务快照。
     if (ScreenId != OpeningPrimaryScreenId ||
         (OpeningPrimaryRequestId.IsValid() &&
@@ -788,17 +851,21 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed(
 void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
     FName ScreenId)
 {
-    if (ScreenId != ActivePrimaryScreenId)
+    if (ScreenId == TEXT("UI.Screen.Settings")) ActiveSystemSettings.Reset();
+    if (ScreenId == TEXT("UI.Screen.SystemMenu") && bSystemMenuVisible)
+    { ActiveSystemMenu.Reset(); CloseSystemMenu(); }
+    if (ScreenId == ActivePrimaryScreenId)
     {
-        return;
+        ActivePrimaryScreen.Reset();
+        ActivePrimaryScreenId = NAME_None;
     }
-
-    ActivePrimaryScreen.Reset();
-    ActivePrimaryScreenId = NAME_None;
+    // 平台任何层的页面真正离栈都可能完成输入交接；实际活跃层/Router叶节点仍拥有优先权。
+    SyncWorldInputBaseline();
 }
 
 void UDivineBeastsUIClientSubsystem::DetachContract()
 {
+    CloseSystemMenu();
     if (QuerySourceObject.IsValid() && QueryStateHandle.IsValid())
     {
         if (IDivineBeastsUIQuerySource* Query =
@@ -824,4 +891,128 @@ void UDivineBeastsUIClientSubsystem::DetachContract()
     }
     ViewState = FDivineBeastsUIViewState();
     CharacterEntryScreenPreference = NAME_None;
+}
+
+// 世界菜单属于本地玩家UI层；CommonUI管理焦点/输入栈，项目世界控制器只撤销现有鼠标拖动。
+void UDivineBeastsUIClientSubsystem::HandleWorldEscapeRequested() { HandleEscapeAction(); }
+void UDivineBeastsUIClientSubsystem::HandleApplicationActivationChanged(bool bActive) { if (!bActive) CloseSystemMenu(); }
+
+bool UDivineBeastsUIClientSubsystem::HandleEscapeAction()
+{
+    if (ActiveSystemSettings.IsValid()) return CloseSystemSettings();
+    if (ActiveSystemMenu.IsValid() || !OpeningSystemScreenId.IsNone()) { CloseSystemMenu(); return true; }
+    return FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) && OpenSystemSurface(TEXT("UI.Screen.SystemMenu"));
+}
+
+bool UDivineBeastsUIClientSubsystem::OpenSystemSurface(FName ScreenId)
+{
+    if (!PlatformUI || !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) ||
+        !OpeningSystemScreenId.IsNone() || !PlatformUI->HasScreenDefinition(ScreenId)) return false;
+    OpeningSystemScreenId = ScreenId;
+    const uint64 Generation = ++SystemMenuGeneration;
+    // 必须先撤世界鼠标捕获，再入CommonUI栈；反过来会把新页UIOnly覆盖回世界输入模式。
+    if (auto* Controller = BoundMenuController.Get()) Controller->SetWorldGameplayInputSuspended(true);
+    const auto Request = PlatformUI->OpenScreenAsync(ScreenId, CreateViewModel(ScreenId));
+    // 同步失败/同步完成会在调用返回前清掉身份，不能把已终结请求重新写回。
+    if (SystemMenuGeneration == Generation && OpeningSystemScreenId == ScreenId) OpeningSystemRequestId = Request.RequestId;
+    return Request.IsValid();
+}
+
+bool UDivineBeastsUIClientSubsystem::OpenSystemSettings()
+{
+    return ActiveSystemMenu.IsValid() && !ActiveSystemSettings.IsValid() && OpenSystemSurface(TEXT("UI.Screen.Settings"));
+}
+
+bool UDivineBeastsUIClientSubsystem::CloseSystemSettings()
+{
+    auto* Settings = ActiveSystemSettings.Get();
+    if (!Settings || !PlatformUI) return false;
+    ActiveSystemSettings.Reset();
+    return PlatformUI->CloseScreen(Settings);
+}
+
+void UDivineBeastsUIClientSubsystem::SetSystemMenuVisible(bool bVisible)
+{
+    if (auto* Controller = BoundMenuController.Get()) Controller->SetWorldGameplayInputSuspended(bVisible);
+    if (bSystemMenuVisible == bVisible) { if (!bVisible) SyncWorldInputBaseline(); return; }
+    bSystemMenuVisible = bVisible;
+    SystemMenuVisibilityChanged.Broadcast(bVisible);
+    if (!bVisible) SyncWorldInputBaseline();
+}
+
+void UDivineBeastsUIClientSubsystem::CloseSystemMenu()
+{
+    const uint64 Generation = ++SystemMenuGeneration;
+    const FGuid Request = OpeningSystemRequestId;
+    OpeningSystemRequestId.Invalidate();
+    OpeningSystemScreenId = NAME_None;
+    auto* Settings = ActiveSystemSettings.Get();
+    auto* Menu = ActiveSystemMenu.Get();
+    ActiveSystemSettings.Reset();
+    ActiveSystemMenu.Reset();
+    if (PlatformUI)
+    {
+        if (Request.IsValid()) PlatformUI->CancelOpen(Request);
+        if (Settings) PlatformUI->CloseScreen(Settings);
+        if (Menu) PlatformUI->CloseScreen(Menu);
+    }
+    if (SystemMenuGeneration == Generation) SetSystemMenuVisible(false);
+}
+
+void UDivineBeastsUIClientSubsystem::ObserveWorldInputRouter(UCommonUIActionRouterBase* Router)
+{
+    // 只允许当前本地玩家的真实Router；跨玩家实例不能替本玩家发布输入配置。
+    if (Router && Router->GetLocalPlayer() != GetLocalPlayer()) Router = nullptr;
+    if (WorldInputRouter.Get() == Router) return;
+    if (auto* PreviousRouter = WorldInputRouter.Get())
+    {
+        PreviousRouter->OnBoundActionsUpdated().Remove(WorldInputTreeHandle);
+        PreviousRouter->OnActiveInputConfigChanged().Remove(WorldInputConfigHandle);
+    }
+    WorldInputTreeHandle.Reset();
+    WorldInputConfigHandle.Reset();
+    WorldInputRouter = Router;
+    if (Router && !bUIShuttingDown)
+    {
+        WorldInputTreeHandle = Router->OnBoundActionsUpdated().AddUObject(this, &ThisClass::HandleWorldInputTreeChanged);
+        WorldInputConfigHandle = Router->OnActiveInputConfigChanged().AddUObject(this, &ThisClass::HandleWorldInputConfigChanged);
+    }
+}
+
+void UDivineBeastsUIClientSubsystem::HandleWorldInputTreeChanged() { SyncWorldInputBaseline(); }
+void UDivineBeastsUIClientSubsystem::HandleWorldInputConfigChanged(FUIInputConfig Config)
+{
+    // CommonUI可在Slate延迟释放后继续持有旧Menu/默认Game配置；仅配置交接事件校正，不轮询。
+    if (Config.GetInputMode() != ECommonInputMode::All || Config.GetMouseCaptureMode() != EMouseCaptureMode::NoCapture)
+        SyncWorldInputBaseline();
+}
+
+void UDivineBeastsUIClientSubsystem::SyncWorldInputBaseline()
+{
+    auto* Router = WorldInputRouter.Get();
+    if (bUIShuttingDown || bPublishingWorldInputBaseline || !Router ||
+        !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) ||
+        !OpeningPrimaryScreenId.IsNone() || OpeningPrimaryRequestId.IsValid() || !ActivePrimaryScreenId.IsNone() ||
+        !OpeningSystemScreenId.IsNone() || OpeningSystemRequestId.IsValid() || bSystemMenuVisible ||
+        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid()) return;
+    if (auto* Primary = ActivePrimaryScreen.Get(); Primary && Primary->IsActivated()) return;
+    if (auto* Previous = ReplacingPrimaryScreen.Get(); Previous && Previous->IsActivated()) return;
+    if (auto* Root = PlatformUI ? PlatformUI->GetRootLayout() : nullptr)
+    {
+        for (const auto Layer : {EGamePlatformUILayer::Screen, EGamePlatformUILayer::Modal, EGamePlatformUILayer::System,
+            EGamePlatformUILayer::Loading, EGamePlatformUILayer::Debug})
+        {
+            if (auto* Stack = Root->GetActivatableStack(Layer))
+                for (auto* Widget : Stack->GetWidgetList()) if (IsValid(Widget) && Widget->IsActivated()) return;
+        }
+    }
+    // 其他组件/竞技扩展的CommonUI叶节点同样拥有输入，不能因本项目主页面为空而强制接管。
+    if (auto* Leaf = Router->GetLeafmostActivatableWidget(); Leaf && Leaf->IsActivated()) return;
+    TGuardValue<bool> PublishingGuard(bPublishingWorldInputBaseline, true);
+    const auto WorldConfig = UGamePlatformUIInputPolicy::BuildInputConfig(EGamePlatformUIInputMode::GameAndUI);
+    // 经Router公共API更新真实ActiveInputConfig及原生视口，不仅调用PC.SetInputMode。
+    // 引擎按新旧配置差量撤销Router自己的Ignore计数；本模块绝不Reset其他系统的锁。
+    const bool bWasStaleConfig = Router->GetActiveInputMode() != ECommonInputMode::All || Router->GetActiveMouseCaptureMode() != EMouseCaptureMode::NoCapture;
+    Router->SetActiveUIInputConfig(WorldConfig, this);
+    if (bWasStaleConfig) UE_LOG(LogTemp, Log, TEXT("[DBA UI] World input handoff published GameAndUI/NoCapture through CommonUI Router."));
 }

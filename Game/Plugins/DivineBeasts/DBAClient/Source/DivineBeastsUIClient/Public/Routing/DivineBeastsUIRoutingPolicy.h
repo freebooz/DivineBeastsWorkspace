@@ -7,6 +7,8 @@
 class DIVINEBEASTSUICLIENT_API FDivineBeastsUIRoutingPolicy
 {
 public:
+    /** 系统菜单仅已认证且空闲的InWorld可打开；不推导服务器角色或暂停世界。 */
+    static bool CanOpenSystemMenu(const FDivineBeastsUIViewState& State);
     /** 只投影当前流程与本地角色入口页面偏好；偏好不能越过认证、加载、错误或权威选择节点。 */
     static FName ResolvePrimaryScreen(
         const FDivineBeastsUIViewState& State,

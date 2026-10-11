@@ -507,62 +507,33 @@
     "RuntimeEvidence": "Saved/Validation/LoginVillageRelease/20261008/UIEditorModern.log；真实PIE认证后选择页显示当前角色及中央三维预览。"
   },
   "LatestLogoReplacement": {
-    "Date": "2026-10-08",
+    "Date": "2026-10-11",
     "Tool": "Monolith MCP",
-    "Version": "0.20.3",
-    "Project": "Game/DivineBeastsArena.uproject",
-    "SourceKind": "用户最新明确指定的青龙白虎正式LOGO，原图字节保持一致。",
+    "Version": "0.23.0",
+    "SourceKind": "用户最新横版自然神兽LOGO，原稿RGB和字节不改",
     "SourcePath": "SourceArt/UI/DBA_MythicLogo.png",
-    "SourceSHA256": "720EEB1E762DDBF4C7DA59FCE3B5EDE7B1B277A9BC3BC120CBF6576A9FF02942",
-    "SourceMatchesAttachment": true,
+    "SourceSHA256": "ca7704dd63b5580c8a255009e6b17a5366cc94a7ee88b18821b6084a30fef910",
     "TextureAsset": "/DBAUIPack_Core/UI/Textures/DBA_MythicLogo",
     "SourceDimensions": [
-      1254,
-      1254
+      2172,
+      724
     ],
-    "SourceAlphaRange": [
-      0,
-      255
-    ],
-    "Widget": "BrandLogo",
     "DisplaySizeLogicalPixels": [
-      224,
-      224
+      420,
+      140
     ],
-    "PositionLogicalPixels": [
-      24,
-      18
+    "CharacterSelectSizeLogicalPixels": [
+      240,
+      80
     ],
-    "WidgetCount": 15,
-    "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsLoginScreen",
-    "CompileErrors": 0,
-    "CompileWarnings": 0,
+    "Compression": "TC_EditorIcon",
+    "SRGB": true,
     "Saved": true,
     "EditorRestartReloadVerified": true,
-    "LoginPIEVerified": true,
-    "AccountAndPasswordInitiallyBlank": true,
-    "InitialErrorCode": "None",
-    "BackgroundOffsets": [
-      0,
-      0,
-      0,
-      0
-    ],
-    "LayerOwnership": "第三层DBAUIPack_Core持有图源与纹理；DBAClient交互；平台只提供中立基类，无新增MOBA依赖。",
-    "EvidenceDirectory": "Saved/Validation/LoginVillageRelease/20261008",
-    "Packaging": {
-      "RequiredAssetCount": 23,
-      "ContainerEvidence": "Saved/Validation/FoundationM0/be293776-9d44-47d9-a70f-e8a6b62c09d0/Cook-FrontEndClient/ClientContainer.json",
-      "Evidence": "Saved/Validation/FoundationM0/be293776-9d44-47d9-a70f-e8a6b62c09d0/Cook-FrontEndClient/result.json",
-      "Passed": true,
-      "MissingAssetCount": 0
-    },
-    "Scope": "本记录验证正式LOGO替换、首屏显示与资产依赖，不证明Village联机或角色动画验收。",
-    "ClientLaunchEvidence": "Saved/Validation/FrontEndClients/97c4aab8-0f51-44ed-bf3a-0664653f801f/Clients.json",
-    "ClientCount": 2,
-    "ClientInitialPage": "Login，均无自动认证参数，日志确认AccountInput焦点。",
-    "ClientVerification": "Saved/Validation/LoginVillageRelease/20261008/LatestLogo.ClientVerification.json",
-    "ExistingOptionalBootWarning": "当前Boot Widget未交付，初始化后真实登录页及焦点已加载；不是RootLayout缺失。"
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "ClientCookVerified": false,
+    "ManualAcceptance": "Pending"
   },
   "LatestInputFontsAndLoginWaitRepair": {
     "UpdatedAt": "2026-10-09",
@@ -1394,5 +1365,196 @@
       "Cook": "5b5ed331-d12a-4231-a65a-6a05ec9a5688",
       "Reason": "新增父类反射字段与旧编辑器Cook布局不一致，Bad import index；修正为无新增序列化字段的可选控件查询"
     }
+  },
+  "SystemMenuAndHUDRepair20261011": {
+    "CreationTool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Project": "DivineBeastsArena",
+    "MenuParent": "/Script/DivineBeastsUIClient.DivineBeastsSystemMenuScreen",
+    "SettingsParent": "/Script/DivineBeastsUIClient.DivineBeastsDeviceSettingsScreen",
+    "MenuWidgetCount": 15,
+    "SettingsWidgetCount": 21,
+    "MenuButtonPixels": [
+      280,
+      70
+    ],
+    "FontResize": "Disabled",
+    "Inputs": "System layer / UIOnly / NeverPause / no travel retention",
+    "Actions": [
+      "build_ui_from_spec",
+      "set_widget_navigation_bulk",
+      "configure_activatable",
+      "set_brush",
+      "compile_widget",
+      "save_packages",
+      "import_texture_from_bytes",
+      "material.import_texture",
+      "build_material_graph",
+      "blueprint.set_cdo_property"
+    ],
+    "MatteCount": 4,
+    "OriginalRGB": "Preserved in all five source references",
+    "Minimap": {
+      "SRGB": true,
+      "North": "+X",
+      "CompressionNoAlpha": true,
+      "RuntimeFormat": "DXT1",
+      "Source": "RealVillageBaseColor",
+      "East": "+Y",
+      "SourceRGBMinimum": 75,
+      "ExtentCentimeters": 50400,
+      "SourceRGBMaximum": 91
+    },
+    "Portraits": {
+      "Source": "Current actual hero appearance definitions",
+      "FormalHeroArtAcceptance": "Not claimed",
+      "Composition": "HeadAndShoulders",
+      "Count": 12,
+      "Resolution": [
+        512,
+        512
+      ]
+    },
+    "AbilityIconPalette": {
+      "RetainerPixels": [
+        52,
+        52
+      ],
+      "RenderOnInvalidation": true,
+      "RenderOnPhase": false,
+      "Scope": "Real granted icon shape only"
+    },
+    "Reload": "Editor restarted and assets read through Monolith",
+    "Limitations": [
+      "Manual client visual and mouse acceptance pending",
+      "Map is current real greybox",
+      "Monolith static widget preview is not runtime color proof"
+    ],
+    "Verification": {
+      "ServerCook": "26d44ad1-9076-46cd-b9ab-55f4ecc1cfda",
+      "PackagedClientAutomation": {
+        "Report": "Saved/Validation/AnimationHUD/SystemMenuPackagedAutomationGreen/index.json",
+        "Failed": 0,
+        "Succeeded": 17
+      },
+      "ServerContainerRows": 760,
+      "FullClientBuild": "785a8f50-693c-4665-80ab-96999a2c4a67",
+      "EditorAutomation": {
+        "Report": "Saved/Validation/AnimationHUD/SystemMenuInputAutomation/index.json",
+        "SucceededWithWarnings": 1,
+        "Failed": 0,
+        "Succeeded": 34
+      },
+      "BinaryHashIdentity": true,
+      "RequiredClientAssets": 344,
+      "ManualAcceptance": "Pending",
+      "ClientCook": "74e4e402-4383-4653-9e8e-5d8d5f1e739d",
+      "ForbiddenServerClientAssets": 0
+    }
+  },
+  "LogoReplacementHistory": [
+    {
+      "Date": "2026-10-08",
+      "Tool": "Monolith MCP",
+      "Version": "0.20.3",
+      "Project": "Game/DivineBeastsArena.uproject",
+      "SourceKind": "用户最新明确指定的青龙白虎正式LOGO，原图字节保持一致。",
+      "SourcePath": "SourceArt/UI/DBA_MythicLogo.png",
+      "SourceSHA256": "720EEB1E762DDBF4C7DA59FCE3B5EDE7B1B277A9BC3BC120CBF6576A9FF02942",
+      "SourceMatchesAttachment": true,
+      "TextureAsset": "/DBAUIPack_Core/UI/Textures/DBA_MythicLogo",
+      "SourceDimensions": [
+        1254,
+        1254
+      ],
+      "SourceAlphaRange": [
+        0,
+        255
+      ],
+      "Widget": "BrandLogo",
+      "DisplaySizeLogicalPixels": [
+        224,
+        224
+      ],
+      "PositionLogicalPixels": [
+        24,
+        18
+      ],
+      "WidgetCount": 15,
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsLoginScreen",
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "Saved": true,
+      "EditorRestartReloadVerified": true,
+      "LoginPIEVerified": true,
+      "AccountAndPasswordInitiallyBlank": true,
+      "InitialErrorCode": "None",
+      "BackgroundOffsets": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LayerOwnership": "第三层DBAUIPack_Core持有图源与纹理；DBAClient交互；平台只提供中立基类，无新增MOBA依赖。",
+      "EvidenceDirectory": "Saved/Validation/LoginVillageRelease/20261008",
+      "Packaging": {
+        "RequiredAssetCount": 23,
+        "ContainerEvidence": "Saved/Validation/FoundationM0/be293776-9d44-47d9-a70f-e8a6b62c09d0/Cook-FrontEndClient/ClientContainer.json",
+        "Evidence": "Saved/Validation/FoundationM0/be293776-9d44-47d9-a70f-e8a6b62c09d0/Cook-FrontEndClient/result.json",
+        "Passed": true,
+        "MissingAssetCount": 0
+      },
+      "Scope": "本记录验证正式LOGO替换、首屏显示与资产依赖，不证明Village联机或角色动画验收。",
+      "ClientLaunchEvidence": "Saved/Validation/FrontEndClients/97c4aab8-0f51-44ed-bf3a-0664653f801f/Clients.json",
+      "ClientCount": 2,
+      "ClientInitialPage": "Login，均无自动认证参数，日志确认AccountInput焦点。",
+      "ClientVerification": "Saved/Validation/LoginVillageRelease/20261008/LatestLogo.ClientVerification.json",
+      "ExistingOptionalBootWarning": "当前Boot Widget未交付，初始化后真实登录页及焦点已加载；不是RootLayout缺失。"
+    }
+  ],
+  "UIColorPipelineAudit20261011": {
+    "SourceManifest": "Docs/UIColorImportManifest.json",
+    "ImportSettingsAudit": "Saved/Validation/AnimationHUD/UIColorImportAudit.json",
+    "SettingsPassed": 12,
+    "SettingsCount": 12,
+    "SourcePolicyTestsPassed": 2,
+    "GPURegression": "DivineBeasts.UI.Color.SourceToSlate",
+    "GPURegressionResult": "Deferred by explicit user request to preserve SnowSoftParticleAuthoring editor; not run",
+    "PreviewCaveat": "Monolith 0.23.0 Widget PNG预览额外sRGB编码，布局证据不作为颜色基准",
+    "PanelFix": "SRGB开启，原生重导入，材质重建匹配采样器",
+    "ManualAcceptance": "User reported visual mismatch; pending new client validation",
+    "BuildEvidence": {
+      "InitialCompile": "Saved/Validation/FoundationM0/d4d33f20-8d80-44ca-8600-5cc4f56bff12/Build/result.json",
+      "CompileCorrectionAndLinkBlocked": "Saved/Validation/FoundationM0/4308a547-790f-4330-ae99-a6a363bafddb/Build/result.json",
+      "ClientAttemptFailedPrecompiledConfiguration": "Saved/Validation/FoundationM0/82b9dc7a-48ca-4d72-b26d-52cb966b4b01/Build/result.json",
+      "FullBuildVerified": false
+    }
+  },
+  "CoverBackgroundReplacement20261011": {
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Source": "SourceArt/UI/Nature/NatureLoginBackdrop.png",
+    "SHA256": "87e6ac3803f3a0530eb8e05f4039f37b0171d42985f9dc52a16cad663d6bd227",
+    "Dimensions": [
+      1672,
+      941
+    ],
+    "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop",
+    "Widget": "MythicBackground",
+    "ScaleWrapper": "CoverBackgroundScale",
+    "Stretch": "ScaleToFill",
+    "Clipping": "ClipToBounds",
+    "FontsAndControlsScaled": false,
+    "Tint": "White",
+    "SRGB": true,
+    "Compression": "TC_EditorIcon",
+    "PixelFormat": "B8G8R8A8",
+    "Compiled": true,
+    "Errors": 0,
+    "Warnings": 0,
+    "Saved": true,
+    "EditorRestartReloadVerified": false,
+    "ClientCookVerified": false,
+    "GPUVerification": "Deferred by user request to keep shared editor open"
   }
 }

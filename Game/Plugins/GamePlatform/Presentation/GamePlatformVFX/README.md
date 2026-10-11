@@ -63,7 +63,7 @@ Gameplay / Application Fact
 
 迁移说明见 `Docs/VFXLibMigration.md（VFX Lib迁移说明）`。
 
-当前仓库仍没有真实 `.uasset/.umap` VFX 二进制资产。UE5.8 `GamePlatformVFXClient + GamePlatformVFXEditor` 性能整改后的定向模块编译已真实通过；但真实 1v1/5v5/OpenWorld/Village、Android Niagara Insights、Cook/Stage 与 Review Map 性能证据仍未取得，因此不能把源码和 Editor 编译结果描述为 Production Ready（生产就绪）。
+当前仓库已包含UE5.8保存的真实自然飘落Niagara、材质、纹理与Definition `.uasset`。2026-10-11本轮UE5.8只读加载25项自然飘落资源、四套外观依赖及通用母材质均可解析；另有天气VFX资产。上述资产加载与此前的定向模块编译仍不等于Niagara GPU编译、客户端Cook/Stage、1v1/5v5/OpenWorld/Village或Android设备性能验证；人工视觉与发行验收尚未完成，不能认定Production Ready（生产就绪）。
 
 
 ## 2026-09-30 设计审查修复

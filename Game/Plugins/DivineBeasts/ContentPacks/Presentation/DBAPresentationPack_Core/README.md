@@ -11,4 +11,6 @@
 
 第三层资源不被平台插件硬引用。正式场景由DBAFrontEndPack拥有，角色选择和角色创建共享预览工作室的同一环境播放请求。
 
+四种`UGamePlatformVFXWorldDefinition（平台世界环境特效定义）`以`GamePlatformDefinition（平台主资产类型）`统一登记，`Game/Config/DefaultGame.ini`的主资产扫描目录必须包含本内容包的`VFX/Environment/FallingFoliage/Definitions`；FrontEndClient客户端专用Cook配置分别收录本内容包、通用GamePlatformVFX运动模板与前端地面锚点。缺任意一环只允许报告加载或目录失败，不得将编辑器中文件存在当成打包可用。
+
 专用服务器不得装配本纯表现内容包；目标构建、Cook与Stage都须单独验证。UE .uasset / .umap必须由UE工具生成并重新加载通过。

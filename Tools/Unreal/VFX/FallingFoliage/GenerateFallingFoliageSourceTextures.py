@@ -11,9 +11,10 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import struct
 
-import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+# --verify（源纹理校验）只依赖Python标准库，允许CI/UE内置Python不安装numpy和Pillow。
+# --apply（实际绘制PNG）才要求额外绘图库，并且禁止覆盖已存在的源资源。
 
 ROOT = Path(__file__).resolve().parents[4]
 DEST = ROOT / "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/SourceArt/FallingFoliage/Textures"
@@ -165,12 +166,18 @@ def verify_manifest() -> None:
         f=DEST/entry["name"]
         if not f.is_file() or hashlib.sha256(f.read_bytes()).hexdigest()!=entry["sha256"]:
             raise RuntimeError(f"素材缺失或内容已变化：{f}")
-        with Image.open(f) as image:
-            if image.size!=(EXPORT_SIZE,EXPORT_SIZE) or image.mode!="RGBA":
-                raise RuntimeError(f"尺寸或模式不符：{f}")
-            alpha=image.getchannel("A")
-            if alpha.getextrema()!=(0,255):
-                raise RuntimeError(f"Alpha通道无有效轮廓：{f}")
+        # PNG的IHDR声明了尺寸、位深和颜色类型；RGBA为颜色类型6。
+        # SHA-256匹配源清单保证数据内容未变，因此验证无需解码整幅图片。
+        with f.open("rb") as image:
+            png_header=image.read(29)
+        if len(png_header)!=29 or png_header[:8]!=bytes((137,80,78,71,13,10,26,10)):
+            raise RuntimeError(f"文件不是合法PNG签名：{f}")
+        length=struct.unpack(">I",png_header[8:12])[0]
+        width,height,bit_depth,color_type=struct.unpack(">IIBB",png_header[16:26])
+        if png_header[12:16]!=b"IHDR" or length!=13 or (width,height)!=(EXPORT_SIZE,EXPORT_SIZE):
+            raise RuntimeError(f"PNG头或尺寸不符：{f}")
+        if bit_depth!=8 or color_type!=6:
+            raise RuntimeError(f"PNG必须为8位RGBA（含Alpha通道）：{f}")
     print("FALLING_FOLIAGE_SOURCE_VERIFIED",len(data["textures"]),EXPORT_SIZE)
 
 
@@ -185,6 +192,13 @@ def main() -> None:
     if not args.apply:
         print("INSPECT_ONLY:",DEST,"四种叶片各一张Albedo+Normal纹理，2048x2048")
         return
+    # 仅实际绘制源纹理时加载第三方库，避免验证流程受到工作站依赖差异影响。
+    global np, Image, ImageDraw, ImageFilter
+    try:
+        import numpy as np
+        from PIL import Image, ImageDraw, ImageFilter
+    except ImportError as exc:
+        raise RuntimeError("--apply需要numpy与Pillow，--verify无需这些依赖") from exc
     DEST.mkdir(parents=True,exist_ok=True)
     targets=[f"T_DBA_Foliage_{kind}_{suffix}_Source.png"
              for kind,_,_,_ in KINDS for suffix in ("Albedo","Normal")]

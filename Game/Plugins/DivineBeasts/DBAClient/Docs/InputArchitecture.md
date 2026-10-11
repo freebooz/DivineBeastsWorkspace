@@ -53,3 +53,11 @@ PC键鼠、手柄和移动端最终全部进入同一 `GamePlatformInput Compact
 性能基线：项目层无业务Tick；稳定服务按LocalPlayer缓存；Profile只通过GamePlatformData准备一次；Context/Binding均使用平台租约/句柄；状态订阅不启动常驻维护Ticker，只有真实快照变化才通知；Pawn/ASC只在Controller变化或输入事件发现Pawn变化时刷新。
 
 尚未验收：正式 `InputAction / InputMappingContext / UDivineBeastsInputProfileDefinition` 资产、实际项目Pawn/PlayerState挂载并授权技能的完整链、目标选择系统订阅、Android/iOS真机设备桥、Client Cook/Stage。源码默认Profile身份保持为空，不伪造不存在的 `.uasset`。
+
+2026-10-11 PC世界原生输入策略由DBAWorldsRuntime的`ADivineBeastsWorldPlayerController`承接，Controller优先消费既有Pawn原生轴，W/S前后、A/D转身、Q/E横移、RMB+A/D横移、双鼠标键前进、Space跳跃。普通世界采用显示光标的GameAndUI；只有从视口开始的LMB/RMB拖动临时捕获，最后释放恢复原坐标。镜头观察角度与角色ControlRotation分离，RMB才同步朝向；滚轮调整SpringArm距离并保留原生碰撞。前端预览独立Actor不改动。
+
+项目默认Enhanced Profile仍未配置，当前PC路径不会同时激活第二套Move/Look消费。未来正式Profile启用时必须迁移PC移动/观察语义到同一世界策略，不能保留相同物理键的双重运动消费；Touch/Gamepad的正式映射仍需独立运行验收。UI客户端通过世界Controller的中立ESC委托与本地暂停接口协调焦点，菜单/失焦/旅行清空旧按住状态；不存在底层向UI或项目层的反向依赖。当前原生数字技能1—4与移动按键无冲突。
+
+世界拖动资格另检查当次Slate命中路径：只有当前游戏实际SViewport空白可首次捕获，禁用控件及未处理鼠标键的按钮同样阻止捕获，已捕获后第二个鼠标键可组合前进，释放始终清理。World控制器只增减自身Move/Look锁，不清零其他系统的Ignore输入计数；共享服务器目标不链接Slate和UIClient。
+
+2026-10-11 技能栏的快捷键文字由项目`UDivineBeastsAbilityBarPanel`在构造、换Pawn与技能快照事件中刷新。四个可激活槽分别查询现有`DBA.PrimaryAbility`、`DBA.AbilityOne`、`DBA.AbilityTwo`、`DBA.UltimateAbility`动作的当前`PlayerInput.GetKeysForAction`映射；暂无PlayerInput时只读当前UE InputSettings，未映射时留空。默认配置显示1—4，但显示代码不硬编码数字；实际修饰键与多个键均保留，被动槽不显示激活键。这里只更新已有`HotkeyText`，固定12号字且非命中，不创建控件、不改映射、不改变GAS可用资格，也不让平台认识项目动作。未来运行中重映射命令应在完成事件显式刷新技能栏，不能以Tick轮询。纯格式自动化覆盖空映射、普通键、修饰组合、多绑定去重、非PC键过滤与被动无键；测试不代替资产、Cook或人工显示验收。
