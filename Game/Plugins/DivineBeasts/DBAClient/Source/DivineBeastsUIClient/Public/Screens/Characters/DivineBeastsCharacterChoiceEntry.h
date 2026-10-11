@@ -6,6 +6,7 @@
 class UButton;
 class UTextBlock;
 class UBorder;
+class UImage;
 class UDivineBeastsCharacterChoiceEntry;
 
 /** 项目本地选择意图；页面必须重新核对ViewModel快照，不代表后端选择已生效。 */
@@ -48,6 +49,8 @@ protected:
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> ChoiceSubtitle;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> ChoiceEmblem;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UBorder> SelectedFrame;
+    /** 可选生肖图像；图集由第三层Monolith资产拥有，角色档案卡片可继续使用文字布局。 */
+    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UImage> ChoicePortrait;
 private:
     UFUNCTION() void HandleButtonClicked();
     /** 瞬态显示身份与输入栅栏；不序列化，也不替代业务权威状态。 */

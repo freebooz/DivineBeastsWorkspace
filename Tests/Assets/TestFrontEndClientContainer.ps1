@@ -32,6 +32,8 @@ try {
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_LoadingTravel.uasset',
         'DBAUIPack_Core/Content/UI/Screens/WBP_DBA_UI_ErrorReconnect.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_HeroChoice.uasset',
+        # 生肖图像按钮的正式图集是必要资源，缺失时不允许把文字回退冒充图像交付。
+        'DBAUIPack_Core/Content/UI/Textures/Zodiac/T_DBA_ZodiacChoiceAtlas_V1.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_CharacterChoice.uasset',
         'DBAClient/Content/Definitions/DA_DivineBeastsApplicationFlow.uasset',
         'DBAUIPack_Core/Content/UI/Textures/DBA_MythicLogin.uasset',

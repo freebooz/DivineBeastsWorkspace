@@ -138,10 +138,12 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
     // 离屏编辑器没有本地玩家子系统替我们加载CommonUI动作数据；真实设置页仍要使用正式输入定义。
     // 在模块实际持有的设置实例上初始化；不注入替代数据、不吞ensure、不依赖测试执行顺序。
     ICommonInputModule::GetSettings().LoadData();
-    for(const TCHAR* Name:{TEXT("Menu"),TEXT("Ability"),TEXT("Minimap"),TEXT("PlayerFrame"),TEXT("LoginPanel"),TEXT("Panel"),TEXT("Logo"),TEXT("Cover")})
+    for(const TCHAR* Name:{TEXT("Menu"),TEXT("Ability"),TEXT("Minimap"),TEXT("PlayerFrame"),TEXT("LoginPanel"),TEXT("Panel"),TEXT("Logo"),TEXT("Cover"),TEXT("Zodiac")})
     {
         const FString Path=FCString::Strcmp(Name,TEXT("Logo"))==0
             ? TEXT("/DBAUIPack_Core/UI/Textures/DBA_MythicLogo")
+            : FCString::Strcmp(Name,TEXT("Zodiac"))==0
+                ? TEXT("/DBAUIPack_Core/UI/Textures/Zodiac/T_DBA_ZodiacChoiceAtlas_V1")
             : FCString::Strcmp(Name,TEXT("Cover"))==0
                 ? TEXT("/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop")
                 : FString::Printf(TEXT("/DBAUIPack_Core/UI/Textures/Nature/T_DBA_Nature%sReference"),Name);
@@ -157,13 +159,23 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
         FImage Source;
         if(!TestTrue(TEXT("真实源像素可读"),Texture->Source.GetMipImage(Source,0)))continue;
         if(!TestEqual(TEXT("原稿源格式为BGRA8"),Source.Format,ERawImageFormat::BGRA8))continue;
-        const FVector2f UV(.5f,.5f);
-        FLinearColor Actual;
-        if(!TestTrue(TEXT("实际GPU纹理渲染回读成功"),DivineBeastsUIColorTests::RenderLinear(Texture,UV,Actual)))continue;
-        const auto Expected=DivineBeastsUIColorTests::SampleDesign(Source,UV);
-        // 允许8位导入/双线性采样/半浮点误差；大幅Gamma偏差必须失败，不能只比较资产标签。
-        TestTrue(*FString::Printf(TEXT("%s 原稿到Slate误差≤0.008，actual=%s expected=%s"),Name,*Actual.ToString(),*Expected.ToString()),
-            FMath::Abs(Actual.R-Expected.R)<=.008f&&FMath::Abs(Actual.G-Expected.G)<=.008f&&FMath::Abs(Actual.B-Expected.B)<=.008f);
+        TArray<FVector2f> Samples{FVector2f(.5f,.5f)};
+        if(FCString::Strcmp(Name,TEXT("Zodiac"))==0)
+        {
+            // 新图集必须覆盖十二格，而非仅核对整体中心；不以旧原稿测试报告放行新图。
+            Samples.Reset();
+            for(float V:{1.f/6.f,.5f,5.f/6.f})
+            for(float U:{.125f,.375f,.625f,.875f}) { Samples.Add(FVector2f(U,V)); }
+        }
+        for(const FVector2f UV:Samples)
+        {
+            FLinearColor Actual;
+            if(!TestTrue(TEXT("实际GPU纹理渲染回读成功"),DivineBeastsUIColorTests::RenderLinear(Texture,UV,Actual)))continue;
+            const auto Expected=DivineBeastsUIColorTests::SampleDesign(Source,UV);
+            // 允许8位导入/双线性采样/半浮点误差；大幅Gamma偏差必须失败，不能只比较资产标签。
+            TestTrue(*FString::Printf(TEXT("%s 原稿到Slate误差≤0.008，actual=%s expected=%s"),Name,*Actual.ToString(),*Expected.ToString()),
+                FMath::Abs(Actual.R-Expected.R)<=.008f&&FMath::Abs(Actual.G-Expected.G)<=.008f&&FMath::Abs(Actual.B-Expected.B)<=.008f);
+        }
     }
     // 原稿面板材质还经过自定义HLSL与九宫格UV裁切，单查纹理设置不能覆盖这一环节。
     auto* Texture=LoadObject<UTexture2D>(nullptr,TEXT("/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReference"));

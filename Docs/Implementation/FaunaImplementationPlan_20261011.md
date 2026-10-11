@@ -27,7 +27,7 @@
 - [x] 在 World 定义组合可选群落配置，保持原类型身份；静态资源沿 PreloadAssets/Data 租约。
 - [x] 执行器绑定批量局部位置/朝向/动画状态，实例停止同步清理。
 - [x] 世界范围按需更新，校验句柄/代次/参数白名单/容量；接入真实终态、暂停、EffectType 与原生池清理。
-- [x] 项目场景适配只提供中立配置，不公开私有 WorldSubsystem；原生池激活前清理新增真实 UE Automation 用例，编译/执行证据待完成。
+- [x] 项目场景适配只提供中立配置，不公开私有 WorldSubsystem；原生池激活前清理具备真实 UE Automation 用例，最终 ScopedCVar 夹具已编译和实际执行通过。
 
 ## 任务4 资源与项目集成
 - [x] 各一种真实蝶/鱼模型、可编辑 Blender 源、UV/权重、PBR 纹理与材质。
@@ -38,12 +38,15 @@
 
 ## 任务5 验证
 - [x] UHT/C++ 与 Editor 定向模块实际编译/链接，真实编辑器已加载并运行新链路；保留首次缺引擎导入库、DLL 占用失败记录及后续成功日志。
-- [ ] 最后新增 NativePoolPreActivationLifecycle 测试的重新编译和实际执行；并行全 Client/Server 构建按最终日志单独记录，不混同定向 Editor 构建。
+- [x] 最终 NativePoolPreActivationLifecycle 夹具定向重编译成功；独立 SessionId、实际 RTX 4090 / D3D12_SM6 运行 1/1 通过、0 warnings/errors、旧 CVar 诊断 0。最终 Build=f5063ac6-bd72-4d56-bd87-9411700e9bd7，Test=edc876ad-bb96-46da-a6c9-1db90b604758。
+- [x] 完整 Client 构建 d706fa7b-0d26-47f3-98de-0d6475b75194 的结构化结果通过；完整 Server 2dc35ef2-850a-4020-8b2c-0314f720fcc2 的底层 UBT 日志成功。Server 缺少外层汇总文件的边界见交付说明。
 - [x] 实际资源制作/保存、类型/参数/引用校验；LOD 后两物种 Niagara 编译均 0 错误、0 警告。
 - [x] 真实 Blueprint→项目服务→Data/VFX→GPU 两物种 0/1/32/128/512 共 10 组通过；停栖/惊扰、GPU 运动、非法输入保留、外部终态显式恢复、StopAll 和 PIE 清理通过。
 - [x] 原生 Niagara 暂停/恢复和游戏世界暂停/恢复四项通过，CPU 位置确实冻结/继续；算法长稳为 10 分钟模拟时间，不冒称硬件持续压测。
 - [x] 独立重新启动编辑器，保存后资产实际加载；PIE 总览/蝴蝶/鱼三张 1600×900 截图写出，VisualReviewLatest.json status=captured，四项暂停恢复同时通过。技术视觉检查未见网格爆裂或材质丢失；用户美术验收仍独立保留。
-- [ ] Client/Server Cook/Stage、容器收录/排除和目标硬件帧预算：不能用静态配置或 Editor 通过代替。
+- [x] WindowsClient 定向 Fauna 资源 Cook 与 VillageServer 正式地图 Cook 的真实日志均成功，0 errors/warnings；Cooked 分别为 568 和 644。官方 Cook Registry 包名审计通过：Client 20/20 必需包，Server Fauna 运行/开发根为 0，正式 Village 地图存在；报告为 RegistryDump_20261011T152830Z/CookRegistryAudit.json。
+- [x] 正式 FrontEndClient Cook/Stage f0e7c867-1d0f-4d56-98a8-8462b2c20fac 通过；读取真实主 IoStore CSV，字节哈希与项目副本完全一致，使用同一 Fauna 审计器离线验证 20/20 必需资源、missing/forbidden=0。详见 FormalClientStage_f0e7c867/FaunaContainer.json 和 ExecutionReceipt.json。
+- [ ] 最终 Server Stage、打包客户端内 Fauna 运行、global/.pak 内部展开、目标硬件帧预算和用户美术验收仍按各自实际证据处理，不能由主资源容器清单外推。
 - [x] FaunaDelivery_20261011.md、FaunaSimulationReport_20261011.md、BirdFlockAudit_20261011.md 与 FaunaCookValidationPlan_20261011.md 分别记录实现、证据、边界和后续验证入口。
 
 ## 执行记录

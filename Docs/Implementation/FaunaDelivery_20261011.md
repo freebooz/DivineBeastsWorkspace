@@ -209,7 +209,7 @@ Saved/Validation/Fauna/VisualReviewLatest.json 为 captured。通过独立重新
 
 审核图使用简化花床、透明水池和球形障碍，并保留开发用 Preview 阴影。鱼群个别高光较亮、停栖蝶翼内侧偏暗，仍可在正式场景近景中调整。技术可见性检查不替代用户的最终美术认可；原始自动报告 imageInspection/humanArtAcceptance 的 pending 历史字段不改写为人工认可。
 
-## 8. 构建与尚待收尾的证据
+## 8. 实际构建与原生池生命周期验证
 
 本轮确实运行过 UHT/C++ 编译和 Editor 模块链接，并在加载新接口的真实编辑器完成上述完整链路测试。第一次定向构建的最终失败来自引擎 Niagara/NiagaraEditor/Landscape 导入库缺失，另一次链接遇到并行 Editor 占用 DLL；两者均保留失败记录，没有修改引擎接口或伪造库。
 
@@ -217,9 +217,48 @@ Saved/Validation/Fauna/VisualReviewLatest.json 为 captured。通过独立重新
 
 - Saved/Validation/FoundationM0/70f94cfe-5846-4dfc-935d-27a80bf14b90/Build/Editor/UBT.log
 - Saved/Validation/FoundationM0/198bfe0a-7265-496d-a472-990e749ba266/Build/Editor/UBT.log
+- Saved/Validation/FoundationM0/f5063ac6-bd72-4d56-bd87-9411700e9bd7/Build/result.json：最后一次 GamePlatformVFXClient 定向 Editor 构建，实际编译/链接成功，退出 0。OnlyModules 非空、UsePrecompiled=true，不能称为完整 Editor 或引擎源码重建。
 
-新增 GamePlatform.VFX.Fauna.NativePoolPreActivationLifecycle 是真实 UE Automation 测试源码，不计入上面的 17 项原生算法测试。在获得当前构建与实际执行结果前，不声明该项通过。
+### 最终原生池回归：1 passed / 0 failed / 0 warnings
 
-完整 Client/Server Cook/Stage、最终容器收录/排除和目标硬件帧预算需要独立实际结果。FaunaCookValidationPlan_20261011.md 给出了既有正式入口及定向资产 Cook 的准确范围；静态 AlwaysCook/NeverCook 规则不是 Cook 通过的证据。
+Saved/Validation/FoundationM0/edc876ad-bb96-46da-a6c9-1db90b604758/Test-FaunaPool/result.json 与 Report/index.json，实际测试为 GamePlatform.VFX.Fauna.NativePoolPreActivationLifecycle。
+
+该用例使用真实平台 Niagara System、真实 EditorPreview World、Niagara NativePool 和生产 Registry，验证未激活 AutoRelease 的 FreeInPool 归还、同一真实对象复用、旧句柄隔离、重复 Stop 不产生重复空闲条目，以及关闭池或 None 模式时实际销毁组件。它不计入前面的 17 项纯算法测试。
+
+最终夹具使用引擎 FScopedCVar 的两个独立 Tag 作用域恢复值与原始优先级，Registry/World 先清理、外层临时值最后撤销。真实 RTX 4090 / D3D12_SM6 进程 PID 44100 在独立 SessionId 中运行一项用例，进程正常退出 0；自动化报告只有一个对应设备，TestLoops=1，旧 SetWithCurrentPriority 诊断为 0。进程总耗时 26.909 秒，用例实际 0.257 秒。
+
+Inputs.json 保存并确认测试前后四项输入 SHA-256 未变化：测试源、生产 Registry、基础 uasset 和真实加载的模块 DLL。最终测试源 SHA-256 为 0162949F3ABB8F95EBD4C80D085C1F1117B7A397D3BCB04485CAA12BB8A67BFF；模块 DLL 为 B69C4C4BA818D1A1BE004579E10C604966BF8F6FA57DEC39BAFDE535F0F71A07；Report/index.json 为 07C0183F4B6F11773077062B94B9245144D92C4675EF55ECA665386EBE3415FE。
+
+之前 a2949118-b6a9-4f19-b5c4-a3bde382370b 的旧夹具也实际通过，但仍有三条 ConsoleManager Display 诊断；保留历史报告，最终结论引用上述新运行。
+
+### 完整 Client / Server 构建证据
+
+完整 Client 最新记录为 Saved/Validation/FoundationM0/d706fa7b-0d26-47f3-98de-0d6475b75194/Build/result.json：DivineBeastsArenaClient，Win64 Development，OnlyModules 为空、UsePrecompiled=false，Status=Passed、ExitCode=0，实际 52.098 秒。对应 UBT.log 显示 Result: Succeeded。
+
+完整 Server 的实际 UBT 日志 Saved/Validation/FoundationM0/2dc35ef2-850a-4020-8b2c-0314f720fcc2/Build/Server/UBT.log，命令目标为 DivineBeastsArenaServer Win64 Development，未传 Module 或 UsePrecompiled；最终 Result: Succeeded，3221.90 秒。该运行没有可读的总 Build/result.json，因此这里严格引用底层 UBT 目标成功，不声称外层脚本所有后处理已完成。
+
+这些完整目标由共享工作区中的并行构建执行，本任务实际回读了日志及最新 Client 结构化结果。它们是各自构建时的证据；后续最后修改仅是 WITH_EDITOR 包围的原生池测试夹具，没有改变生产算法或物种资产。
+
+## 9. Cook 与发行验证范围
+
+已独立回读 WindowsClient 定向 Fauna 资源 Cook 和 VillageServer 正式地图 Cook 的真实完成日志：两者均 result 0、0 error、0 warning。分别位于 Saved/Validation/Fauna/AssetCook_20261011T2256/Cook.log 与 Saved/Validation/Fauna/VillageServerAssetCook_20261011/Cook.log。客户端实际 Cooked 568 / Skipped 8；服务器 Cooked 644 / Skipped 9。
+
+项目使用 Zen cooked output store；不能把普通目录下没有松散 uasset 当成资源遗漏，也不能只靠二进制字符串命中证明包级收录。
+
+官方 DumpAssetRegistry 已实际解析两份 Cook AssetRegistry.bin，报告为 Saved/Validation/Fauna/RegistryDump_20261011T152830Z/CookRegistryAudit.json，status=passed。Client 完整包数 568、资产对象 574，20/20 必需完整包名匹配，missingPackages=[]、forbiddenPackages=[]；Server 完整包数 644、资产对象 663，两个 Fauna 运行根及开发/ExternalActors/ExternalObjects 范围均为 0，正式 Village 地图存在。分页 Begin/End、声明包数、对象数和输入 SHA 均校验通过，报告 SHA-256 为 9b25bc501f14ca3dc5a6efb9d50f5e4f25e862c7ad7de4780eda07f34ea10488。
+
+两次 Dump 进程均实际退出 0，各有 0 error、1 条既有 GamePlatformSpawnEligibility Python 暴露重名 warning；不能把这两份 Dump 日志记为零警告。该报告证明本次 Cook Registry 包名收录/排除，不证明可变 Zen oplog 的当前 payload，也不覆盖原始 FBX/PNG 等松散文件。
+
+### 正式 FrontEndClient Cook/Stage 与主资源容器
+
+既有正式入口实际运行 f0e7c867-1d0f-4d56-98a8-8462b2c20fac，Saved/Validation/FoundationM0/<RunId>/Cook-FrontEndClient/result.json 为 Passed、ExitCode=0。该运行保留真实 UI RHI、前端和鸟群门禁，生成独立 Stage 下的 Client.exe 与 IoStore；其实际 UAT 阶段 33.591 秒。
+
+本次真实 UnrealPak 导出的 ContainerInspection/ClientContainer.csv 有 2761 行数据、1320 个唯一文件。使用项目原有 Tests/VFX/Fauna/ValidateFaunaContainer.py 执行后，20 个必需资源全齐，missing=[]、forbidden=[]，Fauna 文件共 26 个（包含运行包的附加数据）。报告位于 Saved/Validation/Fauna/FormalClientStage_f0e7c867/FaunaContainer.json。
+
+共享机器的执行槽被其他常驻任务占用，因此取消了两个尚未启动的只读排队任务，改为读取完整 CSV 和同一审计器，在本地 Python 3.12 离线执行。重建副本后先校验原始字节 SHA-256：CSV=60509026ee1cb4db34eb0ef2270ceb839de826c9262710a7882d7f73fbcc37c8（885900 字节），审计器=05a2d79c6af73e9c1f0d6af8adf8ce8908a31390a3cec22bcb5b1e4b87c6745f（7922 字节），均与项目端完全一致。ExecutionReceipt.json 记录真实离线执行环境、退出 0 及原始远端路径；没有把这次 Python 检查称为 Windows 原生运行。
+
+StageInventory.json 来自项目目录的完整只读分页，列出主 .utoc/.ucas/.pak 与 global.utoc/global.ucas。本次 Fauna 清单结论严格覆盖 DivineBeastsArena-WindowsClient 主资源容器；global 和 .pak 内部内容未另行展开为 Fauna CSV。它也不代替打包客户端内的蝴蝶/鱼群运行、美术验收或最终 Server Stage 检查。
+
+FaunaCookValidationPlan_20261011.md 保留既有正式入口和范围；实际结果同时记录于 FaunaContainerAuditValidation_20261011.md。服务器最终 Stage、目标硬件同屏帧预算和正式新手村场景布置仍需对应的实际验证。
 
 实际视口和暂停证据见上节。此前截图测试失败来自 UE 5.8 未暴露 PlayerController.console_command，已修正为实际 SystemLibrary.execute_console_command 入口并重新运行成功；失败的历史运行目录仍保留。

@@ -2,7 +2,7 @@
 
 ## 状态与证据边界
 
-本文件来自当前工作区和锁定 UE 5.8.0 源码的只读核对。本次没有执行 Build、Cook、Stage、UnrealPak 或游戏运行；下列命令均为后续执行计划，不能引用为通过证据。工作区 E:/work/2026/DivineBeastsWorkspace，引擎 D:/UnrealEngine-5.8.0-release。
+本文件最初来自当前工作区和锁定 UE 5.8.0 源码的只读核对，下面保留经核实的执行入口；命令本身不能引用为通过证据。后续实际构建、Cook、官方 Registry 包名审计与 Client Stage 结果分别见 FaunaDelivery_20261011.md 和 FaunaContainerAuditValidation_20261011.md。工作区 E:/work/2026/DivineBeastsWorkspace，引擎 D:/UnrealEngine-5.8.0-release。
 
 执行时由主任务确认当前 Editor/构建占用已经结束，串行使用同一引擎，保留独立 RunId、参数、退出码和完整日志。不要覆盖旧输出或沿用旧成功报告。
 

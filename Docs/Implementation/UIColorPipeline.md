@@ -60,3 +60,5 @@ Monolith导入动作不接受EditorIcon参数，必须原生导入后用严格�
 原先“错误Gamma预览仅作布局”的允许范围已撤销：Monolith 0.23.0 capture_scene_preview(widget)禁止用于神兽联盟界面预览及用户展示，避免布局图又被误当实际颜色。改用真实RHI线性浮点回读、单次PNG编码或原生客户端截图；禁止调暗、滤色或锐化原稿补偿截图错误。
 
 Build/Game/TestUIColorRHI.ps1读取实际Automation结果，要求SourceToSlate用例存在且成功，并核对五份截图和完整公共UI/源图指纹。CookFrontEndClient默认执行VerifyOnly，报告缺失、失败、未加载测试、NullRHI或资源变化均拒绝发布。缺失报告拒绝路径已真实执行，退出1；新C++回归正在构建，其成功结果另记，不沿用此前颜色未验证的包结论。
+
+角色选建增量：新增公共十二生肖图集独立登记于`DBAUIPack_Core/Docs/ZodiacChoiceAtlasImportManifest.json`，不改变原有13份原稿的登记身份。该图集经Monolith严格导入及设置/源哈希阻断审计；`96f535bc-c0a4-4dcb-aad5-b8d7c6eb2912`真实RHI SourceToSlate实际存在且Success，覆盖新增十二格取样，并生成五份原有页面线性截图。随后独占客户端Cook/IoStore门禁及启动结果见[角色选建修正](CharacterEntryRevision_20261011.md)。最终人工颜色与鼠标验收仍受Windows锁屏阻断，不以自动结果替代。

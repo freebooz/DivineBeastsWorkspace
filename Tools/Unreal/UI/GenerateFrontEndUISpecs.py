@@ -95,37 +95,34 @@ def login():
 
 def character(create):
     """透明中央预览区域接受鼠标拖动；面板和按钮位于更高层，保证正常选择与输入。"""
-    children=[text("BrandTitle","神兽联盟",26,GOLD,place("top_left",28,20,270,40)),
-        text("BrandSubtitle","DIVINE BEASTS",10,MUTED,place("top_left",30,60,250,20)),
-        text("PageTitle","创建英雄" if create else "选择角色",22,WHITE,place("top_right",-28,28,252,36,1,0)),
-        panel("TopRule",place("stretch_top",24,82,24,1,z=5),color("927953",170)),
-        node("Border","PreviewDragSurface",slot=place("top_center",0,90,400,296,0.5,0,z=1),style={"background":"#00000000","visibility":"Visible"}),
+    # 用户取消顶部中英文文字和横线；保留已批准的选择页LOGO图像，不在再次生成时恢复旧装饰。
+    children=[text("PageTitle","创建英雄" if create else "选择角色",22,WHITE,place("top_right",-28,28,252,36,1,0)),
+        node("Border","PreviewDragSurface",slot=place("stretch_vertical",0,70,800,142,0.5,0,z=1),style={"background":"#00000000","visibility":"Visible"}),
         text("PreviewHelp","按住鼠标左键拖动，旋转角色",11,MUTED,place("bottom_center",0,-88,290,20,0.5,1)),
         text("SelectedHeroName","",22,GOLD,place("bottom_center",0,-154,290,34,0.5,1)),
         button("LogoutButton","返回登录",place("bottom_left",28,-28,128,34,0,1)),
         text("StatusText","",12,MUTED,place("bottom_right",-28,-78,252,40,1,1)),
         text("ErrorText","",12,color("E69586"),place("bottom_right",-28,-20,252,42,1,1))]
     if create:
-        children += [panel("HeroPanel",place("top_left",24,96,268,322)),
-            text("HeroHeading","十二生肖",18,GOLD,place("top_left",40,108,240,28)),
-            text("HeroInstruction","选择守护你的神兽",12,MUTED,place("top_left",40,142,240,22)),
-            node("WrapBox","HeroChoices",slot=place("top_left",36,172,244,246)),
+        # 精确采用用户指定倍数；要求1920×1080逻辑工作区，文字/输入不通过整页ScaleBox缩放。
+        children += [panel("HeroPanel",place("top_left",24,96,536,805)),
+            node("TextBlock","HeroHeading",slot=place("top_left",84,128,416,28),style={"visibility":"Collapsed"},content={"text":"十二生肖","fontSize":18,"fontColor":GOLD}),
+            text("HeroInstruction","选择守护你的神兽",12,MUTED,place("top_left",84,174,416,24)),
+            node("WrapBox","HeroChoices",slot=place("top_left",74,220,446,600)),
             node("ComboBoxString","HeroOptions",slot=place("top_left",40,172,236,36)),
-            panel("CreationInfoPanel",place("top_right",-24,96,200,216,1,0)),
-            text("CreationInfoTitle","新的旅程",18,GOLD,place("top_right",-40,114,168,30,1,0)),
-            text("CreationInfoBody","选择英雄与角色名称，\n从新手村开始冒险。",14,MUTED,place("top_right",-40,164,168,105,1,0)),
+            panel("CreationInfoPanel",place("top_right",-24,96,500,540,1,0)),
+            text("CreationInfoTitle","新的旅程",18,GOLD,place("top_right",-84,174,380,30,1,0)),
+            text("CreationInfoBody","选择英雄与角色名称，\n从新手村开始冒险。",14,MUTED,place("top_right",-84,224,380,184,1,0)),
             node("EditableTextBox","CharacterNameInput",slot=place("bottom_center",-83,-28,220,38,0.5,1),content={"placeholder":"角色名称","fontSize":16,"fontColor":WHITE}),
             button("CreateButton","创建角色",place("bottom_center",155,-28,130,38,0.5,1)),
-            button("BackToCharacterSelectButton","返回角色选择",place("top_right",-40,330,168,38,1,0))]
+            button("BackToCharacterSelectButton","返回角色选择",place("top_right",-84,492,240,63,1,0))]
     else:
         # 参考角色选择页的三栏布局：品牌与引导在左，三维人物居中，档案及创建入口在右。
         # 仅移动固定像素控件，不通过ScaleBox缩小文字；拖动区随视口高度伸展并避开底部操作。
         for item in children:
             identity = item["id"]
-            if identity in ("BrandTitle", "BrandSubtitle", "TopRule"):
-                item.setdefault("style", {})["visibility"] = "Collapsed"
-            elif identity == "PreviewDragSurface":
-                item["slot"] = place("stretch_vertical",0,70,400,118,0.5,0,z=1)
+            if identity == "PreviewDragSurface":
+                item["slot"] = place("stretch_vertical",0,70,800,142,0.5,0,z=1)
             elif identity == "PreviewHelp":
                 item["slot"] = place("bottom_center",0,-12,290,20,0.5,1)
             elif identity == "SelectedHeroName":
@@ -172,6 +169,11 @@ input_font_actions = [
 # Border的透明background样式未写入UE实际BrushColor；后置属性动作由Monolith执行。
 # 保留Visible以接收拖动事件，仅将绘制透明，防止白色默认笔刷遮挡三维角色。
 preview_transparency_actions = [
+    {"action": "set_widget_is_variable", "params": {
+        "wbp_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_" + page,
+        "widget_name": "PreviewDragSurface", "is_variable": True}}
+    for page in ("CharacterCreate", "CharacterSelect")
+] + [
     {"action": "set_widget_property", "params": {
         "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_" + page,
         "widget_name": "PreviewDragSurface", "property_name": "BrushColor",

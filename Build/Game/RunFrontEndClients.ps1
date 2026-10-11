@@ -8,6 +8,10 @@
 输出Saved下独占运行证据和准确进程身份；启动成功不代表登录、角色选择或Village准入通过。
 #>
 param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2,
+    # 用户放大后的角色创建面板至少需要1920×1080工作区；仅调整窗口，不缩放文字/输入。
+    # 保留960×540可显式选择用于登录小窗口回归，但不代表大型角色页完整可见。
+    [ValidateRange(960,3840)][int]$WindowWidth=1920,
+    [ValidateRange(540,2160)][int]$WindowHeight=1080,
     # 同机双窗口验证默认每端60帧，避免无限制渲染争用显卡；0保留游戏设置，不修改持久化玩家偏好。
     [ValidateRange(0,240)][int]$FrameRateLimit=60,
     # 只记录运动/复制的事件采样，供人工移动后按三端时间戳定位延迟，不包含登录信息。
@@ -33,7 +37,7 @@ foreach($i in 1..$Count) {
     $info.Environment.Remove('DBA_DEV_LOGIN_SECRET')|Out-Null
     $info.Environment['DIVINEBEASTS_GATEWAY_BASE_URL']=$GatewayUrl
     $log=Join-Path $directory "Client$i.log"
-    foreach($argument in @('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-windowed','-ResX=960','-ResY=540',"-WinX=$((($i-1)*980)+20)",'-WinY=60','-nosplash',"-abslog=$log")) {
+    foreach($argument in @('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-windowed',"-ResX=$WindowWidth","-ResY=$WindowHeight","-WinX=$((($i-1)*40)+20)",'-WinY=40','-nosplash',"-abslog=$log")) {
         $info.ArgumentList.Add($argument)
     }
     if ($FrameRateLimit -gt 0) { $info.ArgumentList.Add("-ExecCmds=t.MaxFPS $FrameRateLimit") }
@@ -44,7 +48,7 @@ foreach($i in 1..$Count) {
         }
     }
     $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills}
+    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills}
 }
 $records|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $directory 'Clients.json') -Encoding utf8
 $records|Select-Object PID,InitialScreen,AutoLogin|ConvertTo-Json

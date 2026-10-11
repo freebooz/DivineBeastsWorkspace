@@ -6,9 +6,9 @@
 ## 当前结论
 
 已完成S0基线与计划、S1严格发布门禁和历史资源安全排除配置、S2真实资源/场景只读复核；S5文档和人工验收资料已准备。
-本次续接已解除原有源码/模块未对齐和UI颜色报告缺失两项阻塞：当前鸟群正式GPU15组及组件所有权9项回归通过，真实UI RHI门禁通过，最终Client构建通过。S4新包Cook/Stage及发布包内客户端自动化正在继续；P7仍待用户人工签审。
+本次续接已完成S3、S4技术收尾：当前鸟群正式GPU15组、组件所有权9项、真实UI RHI门禁、最终Client构建、新离线包Cook/Stage及包内原生3项测试均取得成功证据。新容器19项鸟群运行资源无缺失，旧模型/源美术/审核地图均为0。P7仍待人工签审，目标设备性能与正式地图生态布局不因技术门禁通过而自动验收。
 
-本轮没有重建Niagara/模型/材质，没有删除7个历史模型，没有改写并行任务C++，没有绕过UI发布门禁，也没有把上一轮Cook/长稳结果当作本轮新源码通过。
+本轮没有重建Niagara/模型/材质，没有删除7个历史源模型，没有改写Fauna生产C++，没有绕过UI发布门禁。唯一额外C++改动是修正UI颜色自动化对CommonInput运行设置的初始化；所有颜色容限和真实渲染要求保持不变。
 
 ## S1实际完成内容
 
@@ -53,7 +53,21 @@
 - 仅修正`DivineBeastsUIColorPipelineTests.cpp`，通过`ICommonInputModule::GetSettings().LoadData()`初始化正确实例。未修改任何UI资源、颜色、0.008色差容限、截图要求或错误处理；两次真实红灯保留，修复后RunId `4b4581bf-cfdc-4530-a213-4dbcfdfb09c5`真实D3D12颜色测试和VerifyOnly通过。
 - UI最终模块构建RunId `fa2f555a-2c9b-4818-a319-fc5b1f225fa5`通过；Client最终完整目标增量构建RunId `d706fa7b-0d26-47f3-98de-0d6475b75194`通过。`LatestBuildEvidence.json`保存此前对齐的Client/Server/Editor日志依据。
 - 直接从Game/Binaries运行客户端曾受共享开发`ue.projectstore`引导到不可用Zen流送服务，在测试启动前180秒超时。没有删改共享store，也没有把零测试写成通过；后续从新的离线Pak/IoStore发布目录执行客户端测试。
-- 发布策略18项、Cook连接3项和当前UI VerifyOnly再次通过。S4只有新的实际容器检查与离线客户端测试成功后才标记完成；此前7个历史源模型仍保留。
+- 发布策略18项、Cook连接3项和当前UI VerifyOnly再次通过；新Cook与离线客户端已取得后述真实成功证据，7个历史源模型仍保留。
+
+### 新离线发布包与原生验证
+
+最终Cook RunId：`f0e7c867-1d0f-4d56-98a8-8462b2c20fac`。
+产物根目录：`Saved/Validation/FoundationM0/f0e7c867-1d0f-4d56-98a8-8462b2c20fac/Cook-FrontEndClient`。
+程序：该目录下`Stage/WindowsClient/DivineBeastsArena/Binaries/Win64/DivineBeastsArenaClient.exe`。
+
+官方Cook/Stage退出0，前端134项门禁通过，`BirdFlockContainer.json`确认19项必需资产无缺失、历史模型0、源美术0、开发审核图0。CSV共1320项文件，鸟群相关22项包括运行资产附属数据，不能把22误报为缺失或多生成鸟种。`NewClientCookVerification.json`记录166项输入前后未变化和UI事后VerifyOnly退出0。
+
+随后直接运行该离线Stage程序，官方`StagedClientAutomation/Report/index.json`显示WindowsClient环境下目录映射、实例生命周期、数量/种子共3项Success、0失败、0未运行；进程63164退出0、无超时并清理。原先开发Zen流送依赖没有进入这次新包测试。
+
+临时PowerShell在用例执行与包一致性检查之后，因汇总字段将`$true`误写`true`报错。因此保留该包装错误，未修改原生报告；最终通过HWebCodex独立读回官方三项结果、Exit0进程报告及两份SHA元数据，写入`StagedClientReportReadback.json`作归档。冗余重复测试仍在队列且未启动，已取消；不声称重新执行成功。
+
+本次不重新烘焙服务器，也不更改服务器装配；服务器无鸟群资源结论仍引用此前实际容器复核，不把Client包当Server证据。
 
 ## 本轮证据目录
 

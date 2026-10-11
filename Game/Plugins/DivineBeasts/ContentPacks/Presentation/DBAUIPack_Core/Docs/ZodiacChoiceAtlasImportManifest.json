@@ -1,0 +1,21 @@
+{
+  "SchemaVersion": 1,
+  "GenerationMode": "built-in image_gen",
+  "用途": "角色创建页十二生肖图像选择；单张4列3行图集，白色乘色，原稿RGB不变。",
+  "RowMajorOrder": ["Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar"],
+  "字段说明": {
+    "Source": "原稿相对工作空间路径；1448×1086，每格362×362，不裁切或重绘源像素。",
+    "Destination": "第三层公共UI的唯一正式纹理身份，必须经Monolith导入。",
+    "Role": "Color为sRGB彩色原图；不作为线性Alpha遮罩使用。",
+    "SHA256": "源PNG原始字节指纹，导入阻断审计必须核对。",
+    "RowMajorOrder": "从左到右、从上到下的稳定美术映射，不按后端资格数组或ID字典序计算。"
+  },
+  "Files": [
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Zodiac/ZodiacChoiceAtlas_V1.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Zodiac/T_DBA_ZodiacChoiceAtlas_V1",
+      "Role": "Color",
+      "SHA256": "cc5bb48ff702d0c59ae877c8c668d161f161347483e8f45fadebb12ed44cab10"
+    }
+  ]
+}

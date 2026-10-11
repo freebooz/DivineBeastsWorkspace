@@ -153,7 +153,7 @@ Saved/Validation/FaunaNative/Verified_PerchOffset_20261011/Result.json 记录时
 
 本报告中 15 项和 17 项结果只证明标准 C++ CPU 行为机制。Niagara 数组传输、朝向、模型/材质、花点与水域场景编辑、质量档、既有 VFX 租约/取消清理、UE 编译、GPU 渲染、Cook、服务器资产剥离和人工美术审核应分别引用主任务对应的真实证据，不能由本套件外推。当前算法使用 CPU 空间网格；这里没有 GPU、移动设备或整机帧时测量，不据此承诺并发帧率。
 
-新增 Private/Tests/GamePlatformFaunaPoolLifecycleTests.cpp 属于独立 UE Automation 原生池生命周期回归，直接使用正式 Registry 和 Niagara NativePool。此次报告修订时该新测试尚未编译或执行，只进行了真实 UE 5.8 源码静态核对；它不计入上述 17 项，也未取得原生池运行通过结论。
+Private/Tests/GamePlatformFaunaPoolLifecycleTests.cpp 属于独立 UE Automation 原生池生命周期回归，直接使用正式 Registry 和 Niagara NativePool，不计入上述 17 项。后续主任务已完成最终 ScopedCVar 夹具的定向编译（FoundationM0/f5063ac6-bd72-4d56-bd87-9411700e9bd7/Build）和实际 RTX 4090 / D3D12_SM6 自动化运行（FoundationM0/edc876ad-bb96-46da-a6c9-1db90b604758/Test-FaunaPool）：一项通过、零失败/警告、独立 SessionId 对应实际进程 PID 44100，旧 CVar 诊断为零。该结果证明实际未激活组件归池、对象复用、旧句柄隔离及无池销毁；详细输入哈希和报告见 FaunaDelivery_20261011.md。
 
 水域为静态简单 XY 多边形加盒体深度，障碍是静态球体集合，没有动态水深、河流流速场、任意网格距离场或带洞多边形。蝴蝶不使用障碍全局寻路；不能直达的花槽预约会在接近超时后释放。鱼分离力是群游行为，不是逐个完整网格的刚体互碰撞求解。
 
