@@ -14,15 +14,28 @@
   ],
   "client_cook": {
     "status": "passed",
+    "scope": "most recent successful package; final republish after audit-only edits is pending",
     "run_id": "6a27b3ba-9d5d-44a6-aee9-a544839f4c71",
     "existing_gate_required_count": 134,
     "sanctuary_gate_required_count": 47,
     "missing": [],
     "evidence": "Saved/Validation/FoundationM0/6a27b3ba-9d5d-44a6-aee9-a544839f4c71/Cook-FrontEndClient"
   },
+  "final_republication": {
+    "status": "pending_shared_engine_build_lock",
+    "attempts_not_executed": [
+      "043017cd-d3a6-4210-b076-6ee35b07a1c6",
+      "74f23f16-a339-4bd6-bb01-41fe2fd112d5",
+      "c22a0fda-0b3b-4c58-9ed1-a1c7a7b268e2"
+    ],
+    "exit_code": 2,
+    "other_build_interrupted": false
+  },
   "saved_asset_validation": {
     "blender_reopened": true,
     "unreal_map_reloaded": true,
+    "editor_restart_revalidation": "passed",
+    "temporary_test_asset_residue_count": 0,
     "meshes": 17,
     "sculptures": 6,
     "materials": 14,

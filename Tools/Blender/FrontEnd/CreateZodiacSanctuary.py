@@ -122,7 +122,7 @@ def texture(name, color_a, color_b, kind='stone', size=2048):
     normal=np.stack((-dx*18,-dy*18,np.ones_like(n)),axis=2)
     normal/=np.linalg.norm(normal,axis=2,keepdims=True)
     normal_image=save_texture_image(name+'_Normal',normal*.5+.5,True)
-    # R=环境遮蔽，G=以0.5为中值的粗糙度控制，B=金属度倍率；材质参数拥有最终强度。
+    # R=环境遮蔽，G=以0.5为中值的粗糙度控制；B保留控制数据，本期金属度由参数拥有。
     orm=np.stack((.98-.025*n,.5+.06*(n-.5),np.ones_like(n)),axis=2)
     orm_image=save_texture_image(name+'_ORM',orm,True)
     image['normal_image']=normal_image.name;image['orm_image']=orm_image.name

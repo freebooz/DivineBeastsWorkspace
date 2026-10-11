@@ -1,3 +1,5 @@
+// 本文件属于后端契约验收层，只读Shared版本、兼容矩阵和协议真源，并对照生成的Go/C++绑定。
+// Go测试是唯一调用方；不连接服务、不修改契约或运行数据，失败只表示协议静态门禁未通过。
 package tests
 
 import (
@@ -98,7 +100,8 @@ func TestProtoEvolutionRules(t *testing.T) {
 // TestOpenAPIOperationIDsUnique（OpenAPI操作ID唯一测试）避免生成客户端方法冲突。
 func TestOpenAPIOperationIDsUnique(t *testing.T) {
 	root := filepath.Join("..", "..", "Shared", "Contracts")
-	pattern := regexp.MustCompile(`(?m)^\s*operationId:\s*([^\s#]+)`)
+	// 操作ID位于六空格的HTTP操作节点；八空格Schema同名字段不是接口身份，不能把其$ref误报为重复ID。
+	pattern := regexp.MustCompile(`(?m)^ {6}operationId:[ \t]*([A-Za-z][A-Za-z0-9_.-]*)[ \t]*$`)
 	seen := map[string]string{}
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 		if err != nil || entry.IsDir() || !(strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".yml")) {
@@ -108,7 +111,7 @@ func TestOpenAPIOperationIDsUnique(t *testing.T) {
 		if readErr != nil {
 			return readErr
 		}
-		for _, match := range pattern.FindAllStringSubmatch(string(content), -1) {
+		for _, match := range pattern.FindAllStringSubmatch(strings.ReplaceAll(string(content), "\r\n", "\n"), -1) {
 			id := match[1]
 			if previous, exists := seen[id]; exists {
 				t.Fatalf("重复operationId=%s: %s 与 %s", id, previous, path)

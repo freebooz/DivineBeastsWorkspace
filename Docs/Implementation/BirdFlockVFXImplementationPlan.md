@@ -64,3 +64,18 @@ P7：人工编辑器验收：鸟种切换、数量0/1/32/128/512、不同随机�
 ## 7. 风险
 
 已有 UE 编辑器和其他自动化任务处于活动状态。若无法安全地生成真实 Niagara/地图资产，不修改别人的场景或工作流；先保留已验证纹理/网格/算法/工具，并把未通过的里程碑明确列为阻塞，不声称完成。
+
+## 8. 实际执行记录（2026-10-11）
+
+- [x] P0：三层架构、GamePlatformVFX接口和并发状态审查。
+- [x] P1：3类鸟的低面数FBX/UV/顶点色、3张源纹理、Blender可编辑文件、SHA-256 Manifest及静态剪影预览。
+- [x] P2：真实UE资产：3个厘米尺寸UStaticMesh（`*_Cm`）、3个Texture2D、1个母材质、3个材质实例；已通过UE5.8重新加载和尺寸验证。早期尺寸100倍错误的3个原型网格仍保留但不再引用，需后续受控清理。
+- [x] P3（代码与无渲染设备实例生命周期测试）：通用鸟群Actor/预设、0–512数量、飞行轨迹、风扰动、ISM批量可视实例代码已完成Client编译；在真实客户端NullRHI进程中执行实际Actor实例创建、0/1/32/128/512切换、半画质256和释放成功。尚未进行GPU可见画面或人眼验收。
+- [ ] P4：已编写 `AuthorBirdFlockProfilesAndBlueprint.py`，但**未运行**；真实项目DataAsset/统一蓝图和Niagara发射器/系统/Definition尚未生成。
+- [ ] P5：已编写隔离审核地图作者脚本，但尚未创建.umap或修改正式Village/OpenWorld/选角地图。
+- [ ] P6：Client、Server Win64 Development编译均成功，10/10真实UE资产回读通过，英文命名门禁检查115517项、64插件、0违规。另通过独立客户端真实自动化2/2：CountAndSeed（数量与散列）、ActorInstanceLifecycle（实例生命周期）。Editor编译仍被其他UE Live Coding会话阻止；Editor测试、Niagara GPU编译、Cook和性能实测未完成。
+- [ ] P7：Blender静态预览已生成，UE场景人工验收未进行。
+
+证据：`Game/Saved/Logs/BirdFlockScaleCorrection.log`、`Game/Saved/Logs/BirdFlockScaledAssetsValidation.log`（海鸥半翼宽85.30cm、燕子53.24cm、雄鹰139.50cm，10项通过）；`Game/Binaries/Win64/DivineBeastsArenaClient.exe`、`DivineBeastsArenaServer.exe` 和 `DivineBeastsArenaServer.target`（Server不包含GamePlatformVFXClient）；`Game/Saved/Automation/BirdFlockClientActor/index.json`（自动化2项Success、0项Failed），`Game/Saved/Logs/BirdFlockClientActorAutomation.log`（真实客户端执行日志）；`SourceArt/BirdFlock/Previews/BirdFlockSpeciesContactSheet.png`（Blender静态预览，不是UE截图）。
+
+恢复条件：其他任务安全保存并结束当前UE编辑器的Live Coding会话后，重新编译 `DivineBeastsArenaEditor Win64 Development`；然后创建真实DataAsset/Blueprint/Niagara资源、审核地图与正式场景接入，执行自动化/Cook/性能与人工视觉检查。不可在编辑器锁未解除时伪造通过状态。

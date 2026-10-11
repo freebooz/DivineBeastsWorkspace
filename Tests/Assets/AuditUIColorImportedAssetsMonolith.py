@@ -39,7 +39,9 @@ def main():
                     "mips": str(texture.get_editor_property("mip_gen_settings")),
                     "group": str(texture.get_editor_property("lod_group")),
                     "adjustments": [texture.get_editor_property(k) for k in
-                                    ("adjust_brightness", "adjust_saturation", "adjust_rgb_curve", "adjust_hue")]}
+                                    ("adjust_brightness", "adjust_brightness_curve", "adjust_vibrance",
+                                     "adjust_saturation", "adjust_rgb_curve", "adjust_hue")],
+                    "legacy_gamma": texture.get_editor_property("use_legacy_gamma")}
                 errors.extend(policy.validate_import_settings(item.get("Role", "Color"), settings))
         if not source.is_relative_to(root) or not source.is_file():
             errors.append("原图源路径越界或缺失")

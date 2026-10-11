@@ -53,6 +53,12 @@ Gameplay / Application Fact
 
 引擎资产已由UE编辑器和Monolith保存；性能、Niagara GPU编译、Cook和人工视觉检查以最终验证结果为准，不能以文件存在冒充通过。
 
+## 通用鸟群视觉表现（2026-10-11，开发中）
+
+已在现有 `GamePlatformVFXClient` 中增加数据驱动的鸟群配置、0–512只数量限制、盘旋/掠过/八字轨迹、风扰动及批量实例渲染。海鸥、燕子、雄鹰的原始模型、材质和厘米单位网格分别归入 `DBAPresentationPack_Core`。Client与Server编译已通过；客户端真实自动化中数量合同与ISM Actor实例生命周期两项测试均成功（2/2，0失败）。详见 [鸟群VFX实现说明](Docs/BirdFlock.md) 和 `Docs/Implementation/BirdFlockVFXImplementationPlan.md`。
+
+当前交付是客户端ISM鸟群+GPU材质振翅的通用表现基础；真正的 Niagara 鸟群发射器、DataAsset、通用蓝图、审查地图及 Village/OpenWorld/选角接入仍待完成。编辑器目标编译受正在运行的Live Coding保护锁阻断，未进行实际鸟群场景/人工视觉验收，不能标记生产就绪。
+
 ## 边界
 
 平台层不得认识《神兽联盟》生肖、英雄、技能或 MOBA 规则。项目层只负责：

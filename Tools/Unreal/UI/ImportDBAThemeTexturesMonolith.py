@@ -28,8 +28,10 @@ def validate_import_settings(role: str, settings: dict) -> list[str]:
     for field, expected in (("compression", "tceditoricon"), ("mips", "tmgsnomipmaps"), ("group", "texturegroupui")):
         if enum_name(settings.get(field)) != expected:
             errors.append(field + "设置不符合无损UI合同")
-    if settings.get("adjustments") != [1.0, 1.0, 1.0, 0.0]:
+    if settings.get("adjustments") != [1.0, 1.0, 0.0, 1.0, 1.0, 0.0]:
         errors.append("存在额外颜色调整或未完整回读")
+    if settings.get("legacy_gamma") is not False:
+        errors.append("旧式Gamma未关闭或未回读")
     return errors
 
 def prepare(manifest: dict, root: Path) -> list[dict]:
@@ -52,8 +54,9 @@ def prepare(manifest: dict, root: Path) -> list[dict]:
             "srgb": role == "Color", "lod_group": "UI", "replace_existing": True}})
         # 导入动作不支持EditorIcon参数，后置设置后须回读实际B8G8R8A8，不把默认DXT当无损。
         for prop, value in {"CompressionSettings": "TC_EditorIcon", "MipGenSettings": "TMGS_NoMipmaps",
-                            "SRGB": role == "Color", "AdjustBrightness": 1.0, "AdjustSaturation": 1.0,
-                            "AdjustRGBCurve": 1.0, "AdjustHue": 0.0}.items():
+                            "SRGB": role == "Color", "AdjustBrightness": 1.0, "AdjustBrightnessCurve": 1.0,
+                            "AdjustVibrance": 0.0, "AdjustSaturation": 1.0, "AdjustRGBCurve": 1.0,
+                            "AdjustHue": 0.0, "bUseLegacyGamma": False}.items():
             requests.append({"tool": "blueprint.set_cdo_property", "params": {
                 "asset_path": dest, "property_name": prop, "value": value, "strict": True}})
         requests.append({"tool": "material.get_texture_properties", "params": {"asset_path": dest}})
@@ -74,7 +77,8 @@ def main() -> None:
     args = parser.parse_args()
     spec = json.loads(args.manifest.read_text(encoding="utf-8-sig"))
     result = {"SchemaVersion": 1, "ActualAssetsModified": False, "Requests": prepare(spec, ROOT),
-              "RequiredVerification": ["Monolith项目/版本身份", "保存重载后的纹理/材质/白色乘色",
+              "RequiredVerification": ["Monolith项目/版本身份", "逐条检查动作ok/success/bSuccess，错误立即阻断",
+                                       "保存重载后的纹理/材质/白色乘色",
                                        "DivineBeasts.UI.Color.SourceToSlate真实RHI回归", "最终客户端人工核验"]}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

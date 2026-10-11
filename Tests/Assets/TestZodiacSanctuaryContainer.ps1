@@ -27,7 +27,7 @@ try {
     if (!$rows.Count -or !$rows[0].ContainsKey('Filename') -or !$rows[0].ContainsKey('Size')) { throw '不是有效UE容器CSV。' }
     $missing=@($required | Where-Object {
         $suffix=$_
-        -not @($rows | Where-Object { $_.Filename.Replace('\','/').EndsWith($suffix) -and $_.ChunkType -eq 'ExportBundleData' -and [long]$_.Size -gt 0 }).Count
+        -not @($rows | Where-Object { $filename=$_.Filename.Replace('\','/'); ($filename -eq $suffix -or $filename.EndsWith('/'+$suffix,[StringComparison]::Ordinal)) -and $_.ChunkType -eq 'ExportBundleData' -and [long]$_.Size -gt 0 }).Count
     })
     $result=@{Passed=($missing.Count -eq 0);RequiredCount=$required.Count;Missing=$missing;ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv)}
     $result | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $ReportPath -Encoding utf8

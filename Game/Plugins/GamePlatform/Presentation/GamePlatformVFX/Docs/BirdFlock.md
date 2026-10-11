@@ -71,7 +71,7 @@
 - Editor Win64 Development：必须先让当前正在运行的Live Coding会话安全结束；不强行关闭其他开发任务的编辑器。
 - Server Win64 Development：检查没有带入ClientOnly鸟群代码或纯项目鸟类资源。
 - 资产重载：按正确厘米尺寸回读10件资产；不将脚本文件数量冒充uasset数。
-- 自动化测试：执行 `GamePlatform.VFX.BirdFlock.CountAndSeed`，覆盖0、1、32、512、异常输入/画质和种子。测试C++编译通过不等于测试执行通过。
+- 客户端自动化实测：已用Win64 Development Client的NullRHI模式运行 `GamePlatform.VFX.BirdFlock.CountAndSeed`（数量/种子）及 `GamePlatform.VFX.BirdFlock.ActorInstanceLifecycle`（真实Actor实例数量/销毁），`Game/Saved/Automation/BirdFlockClientActor/index.json` 报告 **2/2 Success，0 Failed**。此测试不覆盖真实物种资产实例化、Niagara GPU编译或UE人工视觉效果。
 - 功能验证：蓝图切换鸟种、数量0/1/32/128/512、切换风/路径、离开世界后无残留。
 - 人工视觉：审核Blender预览和UE真实关卡，确认羽色、层次、形变、翼尖频率、合理朝向、不穿地面/水面/建筑物、不会遮挡角色和UI；主观审美必须由人确认。
 

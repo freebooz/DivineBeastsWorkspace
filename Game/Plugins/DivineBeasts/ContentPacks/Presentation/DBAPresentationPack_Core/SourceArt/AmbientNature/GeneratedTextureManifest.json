@@ -1,0 +1,866 @@
+{
+  "schemaVersion": 1,
+  "generator": "GenerateAmbientNatureTextures.py",
+  "textures": [
+    {
+      "name": "T_DBA_Ambient_PearPetal_Albedo_Source.png",
+      "species": "PearPetal",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "92a13b661992b3fc4232b7437ca39b56f10f204556c74cf22672d99a637a7e8d",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PearPetal_Normal_Source.png",
+      "species": "PearPetal",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "76d0ffecabe80ce7b5a7336dc31fb0f154e5e5fb6550a1f1b9b1766dd8f7e35e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_CherryPetal_Albedo_Source.png",
+      "species": "CherryPetal",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "bd76592d309019d7cd9df8f4f2fc1475c740f97447232dbdfed6645147bbb33a",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_CherryPetal_Normal_Source.png",
+      "species": "CherryPetal",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "76d0ffecabe80ce7b5a7336dc31fb0f154e5e5fb6550a1f1b9b1766dd8f7e35e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PlumPetal_Albedo_Source.png",
+      "species": "PlumPetal",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "90977d64672b415639b75289e8e5c26ef99f9c661cae107e1901c4bac333cd88",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PlumPetal_Normal_Source.png",
+      "species": "PlumPetal",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "76d0ffecabe80ce7b5a7336dc31fb0f154e5e5fb6550a1f1b9b1766dd8f7e35e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_ApricotPetal_Albedo_Source.png",
+      "species": "ApricotPetal",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "ca3b5751f00eff685cbda2d80fd510d33c544716d44c3c60afa473476a195423",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_ApricotPetal_Normal_Source.png",
+      "species": "ApricotPetal",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "76d0ffecabe80ce7b5a7336dc31fb0f154e5e5fb6550a1f1b9b1766dd8f7e35e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_MagnoliaPetal_Albedo_Source.png",
+      "species": "MagnoliaPetal",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "d2de8c8a2c223138f81dec98f0c335785717872ea29676a2e6d2ac866bf1c3cf",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_MagnoliaPetal_Normal_Source.png",
+      "species": "MagnoliaPetal",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "79428ad07dbcd4217e6d70e4692362e64cd2906bcce8c8f82517e203982437d2",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_LotusPetal_Albedo_Source.png",
+      "species": "LotusPetal",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "fca1b088a11a89feb3671b72751268255b630f5c255d89ee83f0ca87b38d7bb2",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_LotusPetal_Normal_Source.png",
+      "species": "LotusPetal",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "79428ad07dbcd4217e6d70e4692362e64cd2906bcce8c8f82517e203982437d2",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_OsmanthusBlossom_Albedo_Source.png",
+      "species": "OsmanthusBlossom",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "e118f8b4ddbaa29f0ddbb837c90a3ac587ed7d4938492d2c9d82b16a9a8bf107",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_OsmanthusBlossom_Normal_Source.png",
+      "species": "OsmanthusBlossom",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "26d4cf49a3bc3ec3f7a9262dfbc239983d8448a56dd418c1f618ad618cd49fe8",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_RosePetal_Albedo_Source.png",
+      "species": "RosePetal",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "1ffa6b1f7df3188ec115d097bc3545ed7719cc3c93607d438ebffc7aab751222",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_RosePetal_Normal_Source.png",
+      "species": "RosePetal",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "a68465a9053c5fe4ac2641278dd3a6721984b92f0cc21b3fbbb315a41e578d65",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_GenericPetalPink_Albedo_Source.png",
+      "species": "GenericPetalPink",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "c713aa9d0fb003b9cb2d844fb8e1acf3855bde895da658c1abc7a9ccb3ec841a",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_GenericPetalPink_Normal_Source.png",
+      "species": "GenericPetalPink",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "76d0ffecabe80ce7b5a7336dc31fb0f154e5e5fb6550a1f1b9b1766dd8f7e35e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_GenericPetalWhite_Albedo_Source.png",
+      "species": "GenericPetalWhite",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "693aca16cd78b666785d8f73b65dbaa82e15c5c834c025d487306b99adb105b4",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_GenericPetalWhite_Normal_Source.png",
+      "species": "GenericPetalWhite",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "76d0ffecabe80ce7b5a7336dc31fb0f154e5e5fb6550a1f1b9b1766dd8f7e35e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_GenericPetalRed_Albedo_Source.png",
+      "species": "GenericPetalRed",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "0bfc38d16ba42b981339661990fa660fec5019790f890283023ecfb2b26ac755",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_GenericPetalRed_Normal_Source.png",
+      "species": "GenericPetalRed",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "76d0ffecabe80ce7b5a7336dc31fb0f154e5e5fb6550a1f1b9b1766dd8f7e35e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_RedSpiderLilyPetal_Albedo_Source.png",
+      "species": "RedSpiderLilyPetal",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "d59fd346fcb1e7d1a8359655b5f67e97b8457b692a7ab4cca112ff763d35bf5d",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_RedSpiderLilyPetal_Normal_Source.png",
+      "species": "RedSpiderLilyPetal",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "03e76be010d0424bca4c665bd10c755fe46beda009080e095c9e24eca5e4af2d",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PlaneLeaf_Albedo_Source.png",
+      "species": "PlaneLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "55c8e2f9f40b331a4ae47c6bfe3f693b12ec3150ba8236024bce1e3e351ae217",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PlaneLeaf_Normal_Source.png",
+      "species": "PlaneLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "77c17e1ff38c005098f11ad58487ff0fa3411376eb7135777ec3d8476eb0d76f",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_WillowLeaf_Albedo_Source.png",
+      "species": "WillowLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "71f9ecdb8e717da0645e27444861a16cc8d04a87dd4839d44726750306ea96fe",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_WillowLeaf_Normal_Source.png",
+      "species": "WillowLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "1d0afef6a1a512249b743631cf0d12d76f62400d8c0d0e821118b500b1fbcba3",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_WillowCatkin_Albedo_Source.png",
+      "species": "WillowCatkin",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "4751133891b3cf00e91c11121f8f4d8979e6e812d32b761e89e00b7d0f3655bf",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_WillowCatkin_Normal_Source.png",
+      "species": "WillowCatkin",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "15ace17a8b8ab71942aa4538e02d6ec3014753466133ac885bdbfc5528251f43",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PoplarLeaf_Albedo_Source.png",
+      "species": "PoplarLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "e17f46bd1673020777f41af04247cf4507216eb5ac43609961b95acb52d8b4e3",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PoplarLeaf_Normal_Source.png",
+      "species": "PoplarLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "824e4192f831d84da35e7e339ff176df0ddacb5a7d463a58df6293a153e4ec71",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_OakLeaf_Albedo_Source.png",
+      "species": "OakLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "3b7e90b398999c980a18b63e6eed1fef8b5af7b103619a098711737a2acece29",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_OakLeaf_Normal_Source.png",
+      "species": "OakLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "7c5ce9996ec618781713ae551232e83464562fac2844a140c812c9670b3a7189",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_BirchLeaf_Albedo_Source.png",
+      "species": "BirchLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "ac5ecc8d1299fa619c851388118012ea268307c99dc174d1849823c1dc0a923b",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_BirchLeaf_Normal_Source.png",
+      "species": "BirchLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "824e4192f831d84da35e7e339ff176df0ddacb5a7d463a58df6293a153e4ec71",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_YellowLeaf_Albedo_Source.png",
+      "species": "YellowLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "f5719bec06241534ab903b57af032be88fb3fedfd60bef337f0eb60e64220ee4",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_YellowLeaf_Normal_Source.png",
+      "species": "YellowLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "980c5e00224cf59aa012831ccbb579a17a2bce40f8462c25c633752ab2065031",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_RedLeaf_Albedo_Source.png",
+      "species": "RedLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "3292b720742c2cfd07778d6b7da55beb0557ba6dbb6f66a200eada0dc0bf10cd",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_RedLeaf_Normal_Source.png",
+      "species": "RedLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "980c5e00224cf59aa012831ccbb579a17a2bce40f8462c25c633752ab2065031",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_DryLeaf_Albedo_Source.png",
+      "species": "DryLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "b827206f84702244509f0b16636059ccd12599a16e7f8d14a80b7459358608ae",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_DryLeaf_Normal_Source.png",
+      "species": "DryLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "980c5e00224cf59aa012831ccbb579a17a2bce40f8462c25c633752ab2065031",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PineNeedle_Albedo_Source.png",
+      "species": "PineNeedle",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "8fa4e328caf6d11d386a0b8f6d43d696daa276f0dc2022fee77b7ea78f74a41b",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PineNeedle_Normal_Source.png",
+      "species": "PineNeedle",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "0348b539ca51614dbe72458f651eba659ee113525e13765e05673f1cb41cdcfc",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PalmLeaf_Albedo_Source.png",
+      "species": "PalmLeaf",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "7e620ed969e972b17eaa8a52b503b0c50436e33e1aa4d81d3cd430ba67f32838",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PalmLeaf_Normal_Source.png",
+      "species": "PalmLeaf",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "1d0afef6a1a512249b743631cf0d12d76f62400d8c0d0e821118b500b1fbcba3",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_DandelionSeed_Albedo_Source.png",
+      "species": "DandelionSeed",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "f1a4142e7eb742ea216847f867e7985e0da586c48819a2154056c93ebb8c67e0",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_DandelionSeed_Normal_Source.png",
+      "species": "DandelionSeed",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "15ace17a8b8ab71942aa4538e02d6ec3014753466133ac885bdbfc5528251f43",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Feather_Albedo_Source.png",
+      "species": "Feather",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "d25f561d786ea0e3a2ca4453e9111b0657c520fbc99df14d65950659a1052bdc",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Feather_Normal_Source.png",
+      "species": "Feather",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "eae6dba34408ada29aababc150ff724cdb53f522ddb67ad588ebf1c6c8973c29",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PaperFragment_Albedo_Source.png",
+      "species": "PaperFragment",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "1b2b705f38ff154427b6282753b99084a7657184f42673c95e324070ef66b11d",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_PaperFragment_Normal_Source.png",
+      "species": "PaperFragment",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "85c18788926ec61017858bca0fcf9aff5804a953868d6a0bd60d979464c9bfb5",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Confetti_Albedo_Source.png",
+      "species": "Confetti",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "26fd207f18c0e63e33c2de8ce3b90b302aa9b47fd950759c6753247d393110bc",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Confetti_Normal_Source.png",
+      "species": "Confetti",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "5d5519f80fb13edf6cdfeeffcb65d2777d19e2e621df410356fe4d3f741b06ba",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Ash_Albedo_Source.png",
+      "species": "Ash",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "ea49d18d0b759de6e9e171b6aa8db47f7259876db718028b7d7ccb59cd613504",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Ash_Normal_Source.png",
+      "species": "Ash",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "11b13513838b7381d01b66208a5f9c7ee5100d68d086c4df684ab985e4d45481",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Ember_Albedo_Source.png",
+      "species": "Ember",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "6cfc2bdb712004367165d77176a1bbee224869c0813921a546f3773da8c2237f",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Ember_Normal_Source.png",
+      "species": "Ember",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "40dcd578918baeba22ff0b4b5a4d7f2ebf21fac7864b7142997d32e97435dc9d",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_SandDust_Albedo_Source.png",
+      "species": "SandDust",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "8531fe46b83f3418309e4159b785fd480cf3195e79d90faf330caef025c2763e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_SandDust_Normal_Source.png",
+      "species": "SandDust",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "11b13513838b7381d01b66208a5f9c7ee5100d68d086c4df684ab985e4d45481",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_FloatingDust_Albedo_Source.png",
+      "species": "FloatingDust",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "1491b647a45783547dd472ee0a19153066fee3530511de4d6de9e4d913899b4f",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_FloatingDust_Normal_Source.png",
+      "species": "FloatingDust",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "11b13513838b7381d01b66208a5f9c7ee5100d68d086c4df684ab985e4d45481",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Spore_Albedo_Source.png",
+      "species": "Spore",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "d4fe24a184949c81826fd3c0e8855d11d70ec1d1d8dcbe7a864092144424013f",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Spore_Normal_Source.png",
+      "species": "Spore",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "5595f5ed340eeac4f91381a9f86d2a9ba06baf928d1a227d07de9c81363343c3",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Firefly_Albedo_Source.png",
+      "species": "Firefly",
+      "type": "Albedo",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "56ba77cdd9dc22a587dcaadd68da3cc0f668ccdfb310abaa140b207e879f3226",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    },
+    {
+      "name": "T_DBA_Ambient_Firefly_Normal_Source.png",
+      "species": "Firefly",
+      "type": "Normal",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "40dcd578918baeba22ff0b4b5a4d7f2ebf21fac7864b7142997d32e97435dc9d",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "origin": "确定性原创程序绘制；不冒充对话生成的原始图集"
+    }
+  ],
+  "count": 66,
+  "styles": 33
+}

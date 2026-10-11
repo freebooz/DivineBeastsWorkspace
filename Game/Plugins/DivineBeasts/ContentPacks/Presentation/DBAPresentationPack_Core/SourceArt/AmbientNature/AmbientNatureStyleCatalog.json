@@ -1,0 +1,687 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "DBA.AmbientNature.Library",
+  "descriptionZh": "神兽联盟可跨地图复用的花瓣、落叶与漂浮环境粒子资源清单；平台粒子机制与项目视觉资产分离。",
+  "assetOwner": "DBAPresentationPack_Core",
+  "serviceOwner": "GamePlatformVFX",
+  "climateOwner": "GamePlatformWeather",
+  "sourceImageTransferStatus": "generated_conversation_images_not_yet_transferred_into_runner",
+  "rules": {
+    "definitionLogicalVersion": 1,
+    "rawImageRoot": "SourceArt/AmbientNature",
+    "assetRoot": "VFX/Environment/AmbientNature",
+    "clientOnly": true,
+    "requireCompiledNiagaraBeforePublishing": true,
+    "avoidDuplicateRainSnow": true
+  },
+  "styles": [
+    {
+      "styleId": "Peach",
+      "displayNameZh": "桃花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#F5C0D2",
+      "assetStatus": "existing",
+      "definitionId": "presentation.dba.environment.fallingfoliage.peach@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Maple",
+      "displayNameZh": "枫叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#C85234",
+      "assetStatus": "existing",
+      "definitionId": "presentation.dba.environment.fallingfoliage.maple@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Bamboo",
+      "displayNameZh": "竹叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#4F975F",
+      "assetStatus": "existing",
+      "definitionId": "presentation.dba.environment.fallingfoliage.bamboo@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Ginkgo",
+      "displayNameZh": "银杏叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#EFC65A",
+      "assetStatus": "existing",
+      "definitionId": "presentation.dba.environment.fallingfoliage.ginkgo@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "PearPetal",
+      "displayNameZh": "梨花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#F8F7EE",
+      "sourceReference": "PearPetal_Original.png",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.pearpetal@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "CherryPetal",
+      "displayNameZh": "樱花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#F3B6CC",
+      "sourceReference": "CherryPetal_Original.png",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.cherrypetal@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "PlumPetal",
+      "displayNameZh": "梅花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#E7A4B9",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.plumpetal@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "ApricotPetal",
+      "displayNameZh": "杏花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#F4D7D5",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.apricotpetal@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "MagnoliaPetal",
+      "displayNameZh": "玉兰花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#F1E5EC",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.magnoliapetal@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "LotusPetal",
+      "displayNameZh": "荷花/莲花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#EEB6C2",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.lotuspetal@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "OsmanthusBlossom",
+      "displayNameZh": "桂花碎花",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#F2CE63",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.osmanthusblossom@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "RosePetal",
+      "displayNameZh": "玫瑰花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#C94365",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.rosepetal@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "GenericPetalPink",
+      "displayNameZh": "通用粉色落英",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#F4AAC6",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.genericpetalpink@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "GenericPetalWhite",
+      "displayNameZh": "通用白色落英",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#F7F5E9",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.genericpetalwhite@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "GenericPetalRed",
+      "displayNameZh": "通用红色落英",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#D9515C",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.genericpetalred@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "RedSpiderLilyPetal",
+      "displayNameZh": "彼岸花瓣",
+      "category": "petal",
+      "motionProfile": "FallingPetal",
+      "baseTint": "#D64145",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.redspiderlilypetal@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "PlaneLeaf",
+      "displayNameZh": "梧桐叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#B78F51",
+      "sourceReference": "PlaneLeaf_Original.png",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.planeleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "WillowLeaf",
+      "displayNameZh": "柳叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#6BA660",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.willowleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "WillowCatkin",
+      "displayNameZh": "柳絮",
+      "category": "floater",
+      "motionProfile": "FloatingFluff",
+      "baseTint": "#F2F1E7",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.willowcatkin@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "PoplarLeaf",
+      "displayNameZh": "杨树叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#D7BD60",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.poplarleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "OakLeaf",
+      "displayNameZh": "橡树叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#BA8A46",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.oakleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "BirchLeaf",
+      "displayNameZh": "白桦叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#E0C65A",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.birchleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "YellowLeaf",
+      "displayNameZh": "通用黄叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#D9B75A",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.yellowleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "RedLeaf",
+      "displayNameZh": "通用红叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#C35239",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.redleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "DryLeaf",
+      "displayNameZh": "枯叶/落叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#94704A",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.dryleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "PineNeedle",
+      "displayNameZh": "松针",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#65835B",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.pineneedle@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "PalmLeaf",
+      "displayNameZh": "棕榈叶",
+      "category": "leaf",
+      "motionProfile": "FallingLeaf",
+      "baseTint": "#588C63",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.palmleaf@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "DandelionSeed",
+      "displayNameZh": "蒲公英种子",
+      "category": "floater",
+      "motionProfile": "FloatingFluff",
+      "baseTint": "#E7E6D6",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.dandelionseed@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Feather",
+      "displayNameZh": "羽毛",
+      "category": "floater",
+      "motionProfile": "FloatingFeather",
+      "baseTint": "#EEEAE0",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.feather@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "PaperFragment",
+      "displayNameZh": "纸片/花纸",
+      "category": "debris",
+      "motionProfile": "FallingDebris",
+      "baseTint": "#EEE0C7",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.paperfragment@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Confetti",
+      "displayNameZh": "碎纸/庆典纸屑",
+      "category": "debris",
+      "motionProfile": "FallingDebris",
+      "baseTint": "#DF91B0",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.confetti@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Ash",
+      "displayNameZh": "灰烬",
+      "category": "floater",
+      "motionProfile": "FloatingDust",
+      "baseTint": "#9F9A92",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.ash@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Ember",
+      "displayNameZh": "余烬/火星",
+      "category": "floater",
+      "motionProfile": "FloatingGlow",
+      "baseTint": "#F4A052",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.ember@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "SandDust",
+      "displayNameZh": "沙尘",
+      "category": "floater",
+      "motionProfile": "FloatingDust",
+      "baseTint": "#C6B08C",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.sanddust@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "FloatingDust",
+      "displayNameZh": "尘埃",
+      "category": "floater",
+      "motionProfile": "FloatingDust",
+      "baseTint": "#C7B9A7",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.floatingdust@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Spore",
+      "displayNameZh": "孢子",
+      "category": "floater",
+      "motionProfile": "FloatingSpore",
+      "baseTint": "#97C4A0",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.spore@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Firefly",
+      "displayNameZh": "萤火虫",
+      "category": "floater",
+      "motionProfile": "FloatingGlow",
+      "baseTint": "#DCEB8A",
+      "assetStatus": "planned",
+      "definitionId": "presentation.dba.environment.ambient.firefly@1",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "Snowflake",
+      "displayNameZh": "雪花",
+      "category": "weather",
+      "motionProfile": "WeatherSnow",
+      "baseTint": "#EAF1F8",
+      "assetStatus": "delegated",
+      "definitionId": "platform.weather.snow@1",
+      "providerPlugin": "GamePlatformWeather",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    },
+    {
+      "styleId": "RainDrop",
+      "displayNameZh": "雨滴/细雨",
+      "category": "weather",
+      "motionProfile": "WeatherRain",
+      "baseTint": "#B5D7E6",
+      "assetStatus": "delegated",
+      "definitionId": "platform.weather.rain@1",
+      "providerPlugin": "GamePlatformWeather",
+      "clientOnly": true,
+      "serverAuthoritative": false,
+      "version": 1,
+      "visualVariants": [
+        "albedo",
+        "normal",
+        "material"
+      ]
+    }
+  ]
+}

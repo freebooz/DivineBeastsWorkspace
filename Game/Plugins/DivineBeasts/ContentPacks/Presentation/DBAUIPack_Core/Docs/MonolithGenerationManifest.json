@@ -1514,10 +1514,21 @@
   ],
   "UIColorPipelineAudit20261011": {
     "SourceManifest": "Docs/UIColorImportManifest.json",
-    "ImportSettingsAudit": "Saved/Validation/AnimationHUD/UIColorImportAudit.json",
-    "SettingsPassed": 12,
-    "SettingsCount": 12,
-    "SourcePolicyTestsPassed": 2,
+    "ImportSettingsAudit": "Saved/Validation/AnimationHUD/UIColorImportAuditCurrent.json",
+    "BlockingImportSettingsAudit": "Saved/Validation/AnimationHUD/UIColorImportBlockingAudit.json",
+    "ExpectedRejectionEvidence": "Saved/Validation/AnimationHUD/UIColorImportExpectedRejection.json",
+    "ExpectedRejection": "内存测试合同将彩色图改标AlphaMask，真实资源未修改；动作ok/success返回false，恢复正式清单重跑成功",
+    "SettingsPassed": 13,
+    "SettingsCount": 13,
+    "SourcePolicyTestsPassed": 3,
+    "PostImportGate": "Tests/Assets/AuditUIColorImportedAssetsMonolith.py，经Monolith执行只读真实资产审计；错误抛出异常",
+    "MaterialStructureAudit": "Saved/Validation/AnimationHUD/UIColorMaterialAuditCurrent.json",
+    "MaterialStructuresRead": 14,
+    "PanelSamplers": "Color原图、LinearColor遮罩",
+    "ColorAdjustments": "Brightness/BrightnessCurve/Saturation/RGBCurve为1，Vibrance/Hue为0，UseLegacyGamma为false",
+    "GPUTestLoadedCount": 0,
+    "GPUVerified": false,
+    "ClientCookVerified": false,
     "GPURegression": "DivineBeasts.UI.Color.SourceToSlate",
     "GPURegressionResult": "Deferred by explicit user request to preserve SnowSoftParticleAuthoring editor; not run",
     "PreviewCaveat": "Monolith 0.23.0 Widget PNG预览额外sRGB编码，布局证据不作为颜色基准",
@@ -1530,7 +1541,7 @@
       "FullBuildVerified": false
     },
     "AdditionalCoverNativePropertiesVerified": true,
-    "Expanded13ItemAudit": "Not run: Monolith became unavailable after cover assets saved"
+    "Expanded13ItemAudit": "Monolith重新连接正式工程，13项源文件哈希及实际纹理设置通过；不作为GPU或新客户端验收"
   },
   "CoverBackgroundReplacement20261011": {
     "Tool": "Monolith MCP",

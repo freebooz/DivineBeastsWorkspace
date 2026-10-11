@@ -16,6 +16,7 @@ public class GamePlatformSurfaceEditor : ModuleRules
             "CoreUObject",
             "Engine",
             "UnrealEd",
+            "Landscape", // 真实ULandscapeLayerInfoObject/SetLayerName/WeightBlend创建与验证
             "AssetRegistry",
             "Projects",
             "GamePlatformSurfaceClient"

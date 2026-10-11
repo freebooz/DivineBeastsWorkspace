@@ -1,0 +1,421 @@
+{
+  "schemaVersion": 1,
+  "owner": "DivineBeasts",
+  "descriptionZh": "区域效果配置草案；必须在具体地图/PCG生成锚点与世界生命周期实现后才能宣称已接入。",
+  "profileDefinitions": {
+    "GardenBreeze": {
+      "wind": 0.3,
+      "spawnHeightCm": [
+        350,
+        1200
+      ],
+      "budgetTier": "Ambient"
+    },
+    "AutumnWind": {
+      "wind": 0.7,
+      "spawnHeightCm": [
+        500,
+        1600
+      ],
+      "budgetTier": "Ambient"
+    },
+    "MountainWind": {
+      "wind": 0.8,
+      "spawnHeightCm": [
+        600,
+        1700
+      ],
+      "budgetTier": "Ambient"
+    },
+    "Wetland": {
+      "wind": 0.3,
+      "spawnHeightCm": [
+        200,
+        850
+      ],
+      "budgetTier": "Ambient"
+    },
+    "MeadowFloat": {
+      "wind": 0.4,
+      "spawnHeightCm": [
+        100,
+        500
+      ],
+      "budgetTier": "Ambient"
+    },
+    "MysticFloat": {
+      "wind": 0.3,
+      "spawnHeightCm": [
+        100,
+        750
+      ],
+      "budgetTier": "Ambient"
+    },
+    "Festival": {
+      "wind": 0.5,
+      "spawnHeightCm": [
+        300,
+        1200
+      ],
+      "budgetTier": "Ambient"
+    },
+    "Desert": {
+      "wind": 0.8,
+      "spawnHeightCm": [
+        50,
+        800
+      ],
+      "budgetTier": "Ambient"
+    },
+    "Ember": {
+      "wind": 0.5,
+      "spawnHeightCm": [
+        10,
+        600
+      ],
+      "budgetTier": "Ambient"
+    },
+    "Weather": {
+      "wind": 0.4,
+      "spawnHeightCm": [
+        400,
+        1500
+      ],
+      "budgetTier": "Weather"
+    }
+  },
+  "areas": [
+    {
+      "areaKey": "FrontEnd.CharacterStudio",
+      "labelZh": "角色选择与创建工作室",
+      "spawnProfile": "GardenBreeze",
+      "styles": [
+        {
+          "styleId": "Peach",
+          "weight": 0.75
+        },
+        {
+          "styleId": "CherryPetal",
+          "weight": 0.25
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "Village.PeachGrove",
+      "labelZh": "新手村桃林",
+      "spawnProfile": "GardenBreeze",
+      "styles": [
+        {
+          "styleId": "Peach",
+          "weight": 0.6
+        },
+        {
+          "styleId": "CherryPetal",
+          "weight": 0.4
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "Village.PearOrchard",
+      "labelZh": "梨树庭院",
+      "spawnProfile": "GardenBreeze",
+      "styles": [
+        {
+          "styleId": "PearPetal",
+          "weight": 0.7
+        },
+        {
+          "styleId": "ApricotPetal",
+          "weight": 0.3
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "Village.BambooValley",
+      "labelZh": "竹林幽谷",
+      "spawnProfile": "MountainWind",
+      "styles": [
+        {
+          "styleId": "Bamboo",
+          "weight": 0.85
+        },
+        {
+          "styleId": "WillowLeaf",
+          "weight": 0.15
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "Village.LotusPond",
+      "labelZh": "荷塘",
+      "spawnProfile": "Wetland",
+      "styles": [
+        {
+          "styleId": "LotusPetal",
+          "weight": 0.7
+        },
+        {
+          "styleId": "WillowCatkin",
+          "weight": 0.3
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "Village.OsmanthusCourtyard",
+      "labelZh": "桂花庭院",
+      "spawnProfile": "GardenBreeze",
+      "styles": [
+        {
+          "styleId": "OsmanthusBlossom",
+          "weight": 1
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.GinkgoCourt",
+      "labelZh": "银杏古院",
+      "spawnProfile": "AutumnWind",
+      "styles": [
+        {
+          "styleId": "Ginkgo",
+          "weight": 1
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.MapleSlope",
+      "labelZh": "红枫山坡",
+      "spawnProfile": "AutumnWind",
+      "styles": [
+        {
+          "styleId": "Maple",
+          "weight": 0.75
+        },
+        {
+          "styleId": "RedLeaf",
+          "weight": 0.25
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.PlaneBoulevard",
+      "labelZh": "梧桐林荫路",
+      "spawnProfile": "AutumnWind",
+      "styles": [
+        {
+          "styleId": "PlaneLeaf",
+          "weight": 0.7
+        },
+        {
+          "styleId": "DryLeaf",
+          "weight": 0.3
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.MixedForest",
+      "labelZh": "混交林",
+      "spawnProfile": "AutumnWind",
+      "styles": [
+        {
+          "styleId": "OakLeaf",
+          "weight": 0.35
+        },
+        {
+          "styleId": "BirchLeaf",
+          "weight": 0.2
+        },
+        {
+          "styleId": "PoplarLeaf",
+          "weight": 0.2
+        },
+        {
+          "styleId": "YellowLeaf",
+          "weight": 0.25
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.RiverWillow",
+      "labelZh": "水岸柳林",
+      "spawnProfile": "Wetland",
+      "styles": [
+        {
+          "styleId": "WillowLeaf",
+          "weight": 0.5
+        },
+        {
+          "styleId": "WillowCatkin",
+          "weight": 0.5
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.PineRidge",
+      "labelZh": "松林山脊",
+      "spawnProfile": "MountainWind",
+      "styles": [
+        {
+          "styleId": "PineNeedle",
+          "weight": 1
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.TropicalGrove",
+      "labelZh": "热带林地",
+      "spawnProfile": "MountainWind",
+      "styles": [
+        {
+          "styleId": "PalmLeaf",
+          "weight": 1
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.SpringGarden",
+      "labelZh": "春季繁花园",
+      "spawnProfile": "GardenBreeze",
+      "styles": [
+        {
+          "styleId": "PlumPetal",
+          "weight": 0.25
+        },
+        {
+          "styleId": "MagnoliaPetal",
+          "weight": 0.25
+        },
+        {
+          "styleId": "RosePetal",
+          "weight": 0.25
+        },
+        {
+          "styleId": "GenericPetalPink",
+          "weight": 0.25
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.MysticFlowerField",
+      "labelZh": "奇幻花田",
+      "spawnProfile": "MysticFloat",
+      "styles": [
+        {
+          "styleId": "RedSpiderLilyPetal",
+          "weight": 0.35
+        },
+        {
+          "styleId": "Spore",
+          "weight": 0.35
+        },
+        {
+          "styleId": "Firefly",
+          "weight": 0.3
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.DandelionField",
+      "labelZh": "蒲公英草地",
+      "spawnProfile": "MeadowFloat",
+      "styles": [
+        {
+          "styleId": "DandelionSeed",
+          "weight": 0.8
+        },
+        {
+          "styleId": "Feather",
+          "weight": 0.2
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.Festival",
+      "labelZh": "节日广场",
+      "spawnProfile": "Festival",
+      "styles": [
+        {
+          "styleId": "Confetti",
+          "weight": 0.7
+        },
+        {
+          "styleId": "PaperFragment",
+          "weight": 0.3
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.Ruins",
+      "labelZh": "遗迹与沙尘区",
+      "spawnProfile": "Desert",
+      "styles": [
+        {
+          "styleId": "SandDust",
+          "weight": 0.6
+        },
+        {
+          "styleId": "FloatingDust",
+          "weight": 0.4
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.AshField",
+      "labelZh": "篝火周边",
+      "spawnProfile": "Ember",
+      "styles": [
+        {
+          "styleId": "Ash",
+          "weight": 0.7
+        },
+        {
+          "styleId": "Ember",
+          "weight": 0.3
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.RainArea",
+      "labelZh": "细雨区域",
+      "spawnProfile": "Weather",
+      "styles": [
+        {
+          "styleId": "RainDrop",
+          "weight": 1
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    },
+    {
+      "areaKey": "OpenWorld.SnowArea",
+      "labelZh": "雪地区域",
+      "spawnProfile": "Weather",
+      "styles": [
+        {
+          "styleId": "Snowflake",
+          "weight": 1
+        }
+      ],
+      "validationStatus": "planned_not_baked"
+    }
+  ]
+}

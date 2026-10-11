@@ -1,3 +1,5 @@
+// 本文件属于业务后端测试层，只读Shared中的交易契约；不修改权威数据、不调用支付服务。
+// 调用方为Go测试门禁，Schema片段只在单次测试内存中存在；失败阻止发布，不能替代真实交易验收。
 package tests
 
 import (
@@ -16,7 +18,8 @@ func TestCommerceContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("读取Commerce唯一契约失败: %v", err)
 	}
-	contract := string(data)
+	// Windows与Linux读取相同契约应得到相同门禁结果，统一行结束符但不改变契约内容。
+	contract := strings.ReplaceAll(string(data), "\r\n", "\n")
 
 	for _, required := range []string{
 		"/v1/commerce/catalog:",
@@ -35,8 +38,20 @@ func TestCommerceContract(t *testing.T) {
 		}
 	}
 
-	requestSchemaPattern := regexp.MustCompile(`(?ms)^    (CreatePurchaseIntentRequest|CreateOrderRequest|SubmitReceiptRequest):.*?(?=^    [A-Z]|\z)`)
-	requestSchemas := requestSchemaPattern.FindAllString(contract, -1)
+	// Go的RE2不支持前瞻断言；用相邻同级Schema标题的位置确定片段边界，避免串入下一类型的playerId。
+	schemaHeaders := regexp.MustCompile(`(?m)^    ([A-Z][A-Za-z0-9]*):`).FindAllStringSubmatchIndex(contract, -1)
+	requestNames := map[string]bool{"CreatePurchaseIntentRequest": true, "CreateOrderRequest": true, "SubmitReceiptRequest": true}
+	var requestSchemas []string
+	for i, header := range schemaHeaders {
+		if !requestNames[contract[header[2]:header[3]]] {
+			continue
+		}
+		end := len(contract)
+		if i+1 < len(schemaHeaders) {
+			end = schemaHeaders[i+1][0]
+		}
+		requestSchemas = append(requestSchemas, contract[header[0]:end])
+	}
 	if len(requestSchemas) != 3 {
 		t.Fatalf("未找到三个交易写请求Schema，实际=%d", len(requestSchemas))
 	}

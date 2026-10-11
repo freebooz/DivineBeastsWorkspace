@@ -9,6 +9,44 @@ from pathlib import Path
 import unreal
 
 
+def validate_pbr_connections(material,attributes,record,root):
+    """核对真实输入闭包、引用和ORM通道，资源存在不能替代已接入着色输出。"""
+    lib=unreal.MaterialEditingLibrary
+    def inputs(node):
+        return dict(zip(lib.get_material_expression_input_names(node),lib.get_inputs_for_material_expression(material,node)))
+    def required(node,key):
+        value=inputs(node).get(key)
+        assert value, 'PBR '+key+' 输出断链：'+material.get_name()
+        return value
+    def parameter(node,name):
+        assert node.get_editor_property('parameter_name')==unreal.Name(name), '参数接错：'+name
+    def texture(node,key):
+        assert isinstance(node,unreal.MaterialExpressionTextureSample), '不是纹理采样：'+key
+        expected=root+'/Textures/'+Path(record[key]).stem
+        assert node.get_editor_property('texture').get_path_name().split('.')[0]==expected, 'PBR纹理接错：'+key
+    base=required(attributes,'BaseColor')
+    if record.get('texture'):
+        texture(required(base,'A'),'texture');parameter(required(base,'B'),'SurfaceTint')
+    else:
+        assert base, 'BaseColor缺失'
+    if record.get('normal_texture'):
+        texture(required(attributes,'Normal'),'normal_texture')
+    roughness=required(attributes,'Roughness')
+    if record.get('orm_texture'):
+        control=required(roughness,'A');parameter(required(roughness,'B'),'SurfaceRoughness')
+        orm=required(control,'A');texture(orm,'orm_texture')
+        assert lib.get_input_node_output_name_for_material_expression(control,orm)=='G', 'ORM粗糙度必须接G'
+        ao=required(attributes,'AmbientOcclusion');texture(ao,'orm_texture')
+        assert lib.get_input_node_output_name_for_material_expression(attributes,ao)=='R', 'ORM遮蔽必须接R'
+    else:
+        parameter(roughness,'SurfaceRoughness')
+    # 本期金属度由可审核参数拥有；B通道保留原始数据，不声称消费未接入通道。
+    parameter(required(attributes,'Metallic'),'MetallicStrength')
+    if record.get('coat_weight',0):
+        parameter(required(attributes,'ClearCoat'),'PolishCoatWeight')
+        parameter(required(attributes,'ClearCoatRoughness'),'PolishCoatRoughness')
+
+
 def main():
     """核对重新加载的保存件，而非只检查源 FBX 文件存在。"""
     source = Path(unreal.Paths.project_dir()).resolve() / 'Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/SourceArt/Blender/ZodiacSanctuary'
@@ -39,6 +77,7 @@ def main():
         nodes = unreal.MaterialEditingLibrary.get_material_expressions(material)
         attributes = [n for n in nodes if isinstance(n, unreal.MaterialExpressionMakeMaterialAttributes)]
         assert len(attributes) == 1 and unreal.MaterialEditingLibrary.get_material_property_input_node(material, unreal.MaterialProperty.MP_MATERIAL_ATTRIBUTES) == attributes[0], '真实 PBR 输出未连接'
+        validate_pbr_connections(material,attributes[0],record,root)
         for node in nodes:
             if isinstance(node, unreal.MaterialExpressionTextureSample):
                 assert node.get_editor_property('texture'), '材质存在空纹理采样'

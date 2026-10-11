@@ -9,6 +9,7 @@
 import hashlib
 import json
 import shutil
+import uuid
 from pathlib import Path
 
 import unreal
@@ -35,6 +36,57 @@ def require_editor():
 def save(asset):
     """只保存本调用所拥有的明确资产；保存失败直接终止。"""
     assert unreal.EditorAssetLibrary.save_loaded_asset(asset, only_if_is_dirty=False), '保存失败：' + asset.get_path_name()
+
+
+def require_saved_targets(paths):
+    """修改前检查真实目标脏包，拒绝覆盖未保存内容；不保存无关用户资源。"""
+    dirty={package.get_path_name() for package in unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()}
+    conflicts=sorted(set(paths).intersection(dirty))
+    assert not conflicts, '目标资产存在未保存修改，拒绝覆盖：'+', '.join(conflicts)
+
+
+def verify_complete_backup(backup):
+    """校验完整标记及每一份复制件；路径、大小、哈希错误都拒绝后续改图。"""
+    marker=backup/'BackupComplete.json'
+    assert marker.is_file(), '备份目录存在但没有完整标记，拒绝修改场景'
+    manifest=json.loads(marker.read_text(encoding='utf-8-sig'))
+    assert manifest.get('schema_version')==1 and manifest.get('files'), '备份清单无效'
+    assert any(entry['relative_path']=='L_DBA_CharacterStudio.umap' for entry in manifest['files']), '备份缺少工作室地图'
+    for entry in manifest['files']:
+        path=(backup/entry['relative_path']).resolve()
+        assert path.is_relative_to(backup.resolve()), '备份文件路径越界'
+        assert path.is_file() and path.stat().st_size==entry['size'], '备份资产缺失或大小错误'
+        assert hashlib.sha256(path.read_bytes()).hexdigest()==entry['sha256'], '备份资产哈希不符'
+
+
+def ensure_complete_backup(backup):
+    """同盘临时复制、逐项校验后原子发布完整备份；中断目录永不当成成功。
+
+    已有备份只读验证，失败不覆盖、不自动补写。临时失败目录留在Saved便于人工恢复。
+    """
+    backup=Path(backup).resolve()
+    saved=Path(unreal.Paths.project_saved_dir()).resolve()
+    assert backup.is_relative_to(saved), '回退目录必须位于当前项目Saved内'
+    if backup.exists():
+        verify_complete_backup(backup)
+        return
+    backup.parent.mkdir(parents=True,exist_ok=True)
+    pending=backup.with_name(backup.name+'.pending_'+uuid.uuid4().hex);pending.mkdir()
+    sources=[(PACK/'Content/Maps/L_DBA_CharacterStudio.umap','L_DBA_CharacterStudio.umap')]
+    for category in ('__ExternalActors__','__ExternalObjects__'):
+        external=PACK/'Content'/category/'Maps/L_DBA_CharacterStudio'
+        if external.exists():
+            sources.extend((path,str(Path(category)/path.relative_to(external))) for path in external.rglob('*') if path.is_file())
+    files=[]
+    for source,relative in sources:
+        sha=hashlib.sha256(source.read_bytes()).hexdigest()
+        destination=pending/relative;destination.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(source,destination)
+        assert sha==hashlib.sha256(destination.read_bytes()).hexdigest()==hashlib.sha256(source.read_bytes()).hexdigest(), '复制中源文件改变或备份不完整'
+        files.append({'relative_path':relative,'size':destination.stat().st_size,'sha256':sha})
+    (pending/'BackupComplete.json').write_text(json.dumps({'schema_version':1,'files':files},ensure_ascii=False,indent=2),encoding='utf-8')
+    verify_complete_backup(pending)
+    pending.rename(backup)
 
 
 def node(material, cls, **properties):
@@ -71,6 +123,7 @@ def create_material(record):
     重跑只清理本圣境拥有的同名材质节点，不修改其他项目材质。
     """
     path = ROOT + '/Materials/' + record['name']
+    require_saved_targets([path])
     mat = unreal.load_asset(path) if unreal.EditorAssetLibrary.does_asset_exist(path) else ASSETS.create_asset(record['name'], ROOT + '/Materials', unreal.Material, unreal.MaterialFactoryNew())
     assert isinstance(mat, unreal.Material), '材质身份冲突：' + path
     LIB.delete_all_material_expressions(mat)
@@ -113,7 +166,7 @@ def create_material(record):
     if record.get('orm_texture'):
         orm_asset = unreal.load_asset(ROOT + '/Textures/' + Path(record['orm_texture']).stem)
         assert orm_asset, '真实 ORM 控制纹理缺失'
-        orm = node(mat, unreal.MaterialExpressionTextureSampleParameter2D, parameter_name='SurfaceControlTexture', group='Surface', texture=orm_asset, sampler_type=unreal.MaterialSamplerType.SAMPLERTYPE_MASKS, desc='线性 R=AO、G=粗糙度控制(中值0.5)、B=金属度倍率')
+        orm = node(mat, unreal.MaterialExpressionTextureSampleParameter2D, parameter_name='SurfaceControlTexture', group='Surface', texture=orm_asset, sampler_type=unreal.MaterialSamplerType.SAMPLERTYPE_MASKS, desc='线性R=AO、G=粗糙度；B保留原图，本期金属度由MetallicStrength参数控制')
         link(orm, attributes, 'AmbientOcclusion', 'R')
         rough_control = node(mat, unreal.MaterialExpressionMultiply)
         link(orm, rough_control, 'A', 'G'); link(node(mat, unreal.MaterialExpressionConstant, r=record.get('orm_roughness_scale',2)), rough_control, 'B')
@@ -141,6 +194,7 @@ def create_material(record):
 
 def import_task(filename, folder, name, options=None):
     """自动导入唯一资产，失败返回空路径时立即终止，禁止固定成功。"""
+    require_saved_targets([folder+'/'+name])
     task = unreal.AssetImportTask()
     task.filename = str(filename); task.destination_path = folder; task.destination_name = name
     task.automated = True; task.replace_existing = True; task.save = True
@@ -160,6 +214,11 @@ def import_resources(start=0, count=4, prepare_materials=False):
     端侧纯表现，不生成碰撞；整体网格静态，原生 Nanite 只用于非水面/非树叶。
     """
     require_editor()
+    targets=[ROOT+'/Meshes/'+record['name'] for record in MANIFEST['objects'][start:start+count]]
+    if prepare_materials:
+        targets+=[ROOT+'/Materials/'+record['name'] for record in MANIFEST['materials']]
+        targets+=[ROOT+'/Textures/'+Path(record[key]).stem for record in MANIFEST['materials'] for key in ('texture','normal_texture','orm_texture') if record.get(key)]
+    require_saved_targets(targets)
     if prepare_materials:
         for texture in sorted({r[key] for r in MANIFEST['materials'] for key in ('texture', 'normal_texture', 'orm_texture') if r.get(key)}):
             image = import_task(SOURCE / texture, ROOT + '/Textures', Path(texture).stem)
@@ -205,13 +264,7 @@ def author_studio():
     assert world.get_path_name().split('.')[0] == STUDIO, '先用 Monolith 打开既定工作室'
     assert not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages(), '工作室存在未保存修改，拒绝覆盖'
     backup = Path(unreal.Paths.project_saved_dir()).resolve() / 'Validation/ZodiacSanctuary/BeforeSanctuary'
-    if not backup.exists():
-        backup.mkdir(parents=True)
-        shutil.copy2(PACK / 'Content/Maps/L_DBA_CharacterStudio.umap', backup / 'L_DBA_CharacterStudio.umap')
-        for category in ('__ExternalActors__', '__ExternalObjects__'):
-            external = PACK / 'Content' / category / 'Maps/L_DBA_CharacterStudio'
-            if external.exists():
-                shutil.copytree(external, backup / category)
+    ensure_complete_backup(backup)
     api = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     actors = {a.get_actor_label(): a for a in api.get_all_level_actors()}
     stage = actors['CharacterPreviewStage']

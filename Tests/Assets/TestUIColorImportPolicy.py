@@ -18,14 +18,17 @@ class ImportPolicyTests(unittest.TestCase):
         # 夹具模拟读回的错误设置，验证阻断真实历史故障及漏读字段，而不是验证固定成功。
         settings = {"srgb": True, "compression": "<TextureCompressionSettings.TC_EDITOR_ICON: 7>",
                     "mips": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
-                    "group": "<TextureGroup.TEXTUREGROUP_UI: 16>", "adjustments": [1,1,1,0]}
+                    "group": "<TextureGroup.TEXTUREGROUP_UI: 16>",
+                    "adjustments": [1,1,0,1,1,0], "legacy_gamma": False}
         self.assertEqual(policy.validate_import_settings("Color", settings), [])
         settings["srgb"] = False
         self.assertIn("sRGB与颜色角色不一致", policy.validate_import_settings("Color", settings))
         self.assertEqual(policy.validate_import_settings("AlphaMask", settings), [])
         settings["compression"] = "TC_Default"
-        settings["adjustments"] = [1.5,1,1,0]
+        settings["adjustments"] = [1.5,1,0,1,1,0]
         self.assertEqual(len(policy.validate_import_settings("AlphaMask", settings)), 2)
+        settings["legacy_gamma"] = True
+        self.assertIn("旧式Gamma未关闭或未回读", policy.validate_import_settings("AlphaMask", settings))
         self.assertGreater(len(policy.validate_import_settings("Color", {})), 0)
 
     def test_color_and_mask_have_separate_srgb_contracts(self):

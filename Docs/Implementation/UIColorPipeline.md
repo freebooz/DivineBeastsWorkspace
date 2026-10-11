@@ -24,16 +24,28 @@ DBAUIPack_Core/Docs/UIColorImportManifest.json登记当前13份源文件的角�
 
 Monolith导入动作不接受EditorIcon参数，必须原生导入后用严格属性动作设置TC_EditorIcon、NoMipmaps和sRGB，回读实际格式，再保存重载。错误必须停止该项交付。
 
+### 导入后的阻断门禁
+
+请求生成器的最后一步通过Monolith调用`Tests/Assets/AuditUIColorImportedAssetsMonolith.py`。该脚本只读真实编辑器纹理和原图，不修改图片或UE资产；检查工程身份、第三层ASCII资产目标、Color/AlphaMask的sRGB、UI组、无损压缩、无Mipmaps、六项额外颜色调整、旧式Gamma及原图文件SHA-256。缺字段、缺纹理、错误角色或任一设置不一致均抛出异常，不能将“导入动作成功”当作验收。已存在的资源也必须执行门禁；报告只写入Saved。
+
+此门禁检查保存资产的声明设置与磁盘源文件，不证明导入后的像素、全部材质计算或GPU最终颜色一致。后续必须继续执行采样器检查、真实GPU回归及新客户端验收；禁止根据预览PNG的亮暗修改原稿。
+
+真实编辑器拒绝路径也已执行：只在内存测试清单中将第一份彩色原稿改标为AlphaMask，真实资源未改动，审计发现sRGB不匹配并返回`ok=false`、`success=false`。工具传输层仍可能返回`isError=false`，因此调用方必须逐条解析动作自身的`ok`/`success`/`bSuccess`，不能把收到工具响应当作成功。失败证据保存在`Saved/Validation/AnimationHUD/UIColorImportExpectedRejection.json`；随后恢复正式清单重跑成功。
+
+2026-10-11本轮重新检查：正式工程中的13项纹理设置与原图哈希通过，报告为`Saved/Validation/AnimationHUD/UIColorImportBlockingAudit.json`；离线策略回归3项通过，包括错误sRGB、错误压缩/颜色调整、缺失字段、错误哈希及越层目标的拒绝路径。14个相关材质结构均已回读；通用面板彩色图采样器为Color、独立遮罩为LinearColor。6个材质初次查询因资产索引未刷新失败，原生加载后重读成功，未重建或删除这些资产。
+
 ## 验收顺序
 
 1. 源哈希一致，保留RGB，不靠重画或调亮/调暗补偿显示错误。
 2. 确认Monolith工程和版本，执行动作，回读纹理/材质采样器、白色乘色及Alpha，编译保存重载。
-3. 运行Tests/Assets/TestUIColorImportPolicy.py，验证颜色/遮罩分离、错误哈希和跨层目标拒绝。
+3. 经Monolith执行导入后阻断审计，并运行Tests/Assets/TestUIColorImportPolicy.py，验证实际回读设置、颜色/遮罩分离、错误哈希和跨层目标拒绝。
 4. 用真实RHI运行DivineBeasts.UI.Color.SourceToSlate；读取线性浮点GPU结果并与真实原稿像素解码值比较，不依赖有额外编码的预览PNG，不操作人工客户端。
 5. Cook后核验新产物和资产，再由用户验收最终显示。编辑器回归、布局PNG均不能代替最终客户端验收。
 
 最新LOGO原稿2172×724，SHA-256为ca7704dd63b5580c8a255009e6b17a5366cc94a7ee88b18821b6084a30fef910，沿用/DBAUIPack_Core/UI/Textures/DBA_MythicLogo。登录420×140，角色选择240×80。暂保留原稿深色背景，不以生成图改写RGB。
 
 不声称全部存量图像或最终客户端已经视觉验收。本轮GPU结果须以实际测试报告为准。
+
+本轮编辑器未加载新增`DivineBeasts.UI.Color.SourceToSlate`测试：实际测试目录查询返回0项。新编辑器DLL链接仍受用户明确要求保留的共享编辑器占用限制，因此GPU回归、新版客户端Cook及人工色彩验收继续标为未验证；此前客户端构建通过不覆盖本次颜色修改。
 
 封面增量：用户新图1672×941，哈希87e6ac3803f3a0530eb8e05f4039f37b0171d42985f9dc52a16cad663d6bd227；复用NatureLoginBackdrop稳定身份。仅背景在CoverBackgroundScale中等比铺满并裁切，LOGO、文字、账号密码和按钮是根布局的独立固定控件。纹理与登录WBP经Monolith编译保存；用户明确保留共享编辑器，重启/最终客户端验证延期。
