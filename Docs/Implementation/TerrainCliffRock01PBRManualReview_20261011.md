@@ -45,3 +45,11 @@ UE挂载目录：/DBAWorldPack_Village/Terrain/Realism/CliffRock01
 5. 本轮仅创建独立候选资产与验证脚本，不删除旧Rock01、不覆盖正式L_Village_Start、不擅自提交或推送。
 
 接续审核文档：Docs/Implementation/TerrainPBRMaterialsReviewLedger_20261011.md。下一张材质Grass等须按单张人工签收要求排队，不能把一张未签的Cliff源当作十类都完成。
+
+## 2026-10-11 20:32 实际GPU场景复审
+
+UE5.8独立地图 `/Game/Development/Terrain/Maps/L_DBA_CliffRock01Review` 已由新进程独立回读，含2块20米立面（世界三向投射与UV对照）、2米标定、4组照明/天空及相机。日志 `Game/Saved/Logs/CliffRockReviewMapIndependentReload20261011.log` 输出 `CLIFFROCK_REVIEW_20M_UWORLD_RELOAD_PASS`。
+
+D3D12实际SceneCapture2D证据：`Game/Saved/Validation/TerrainGaea/CliffRock01/CliffRock01_20m_BalancedLights_ActualGPU.png` 与 `CliffRock01_20m_SoftLights_ActualGPU.png`。指标 `CliffRock01_20m_GPU_VisualMetrics.json`：平衡光下世界三向投射20米平均亮度168.33、标准差47.17、过曝0；UV对照平均218.25。柔和光下三向投射平均98.79、标准差41.75、过曝0，UV平均168.42。实际图片可辨认岩石裂隙和表面起伏，旧预览近黑问题已由实际场景验证解决。
+
+**当前结论：** 真4K扫描、青灰色、无落叶、2套UMaterial与3份MI保存回读，以及独立20米实景可见效果均已完成技术审核；但裂缝宏观重复、UV版偏亮、正式Village场景/天气覆盖、客户端与服务器Cook、GPU预算及用户最终艺术批准仍待完成，生产发布字段为false。

@@ -52,7 +52,7 @@ def login():
     """参考大型MMO的左上品牌、中央偏下登录表单；只借鉴布局，保留原创视觉与原生命令合同。"""
     # 封面与品牌图分别等比缩放；输入与文字保持固定尺寸，不放入这两个ScaleBox。
     children=[node("ScaleBox","CoverBackgroundScale",[
-        node("Image","MythicBackground",style={"visibility":"HitTestInvisible"},
+        node("Image","MythicBackground",slot={"hAlign":"Center","vAlign":"Center"},style={"visibility":"HitTestInvisible"},
              content={"brushPath":"/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop.T_DBA_NatureLoginBackdrop"})],
         slot=place("stretch_fill",0,0,0,0,z=0),style={"visibility":"HitTestInvisible"}),
         # 后置动作将该容器锚点设为视口28%至72%；原稿画刷必须声明3:1，不能沿用旧方形LOGO尺寸。
@@ -183,16 +183,14 @@ preview_transparency_actions = [
 
 # 原生UISpec构建后须执行背景专用后置动作；不可把ScaleBox移到整页根部缩放字体。
 # 等比铺满采用max(窗口宽/1672,窗口高/941)，多余图像居中裁切；禁止Fill非等比拉伸。
-# 四边零偏移与子图居中也必须显式落盘，避免再次生成后继承旧容器的留边或偏移。
+# 四边零偏移必须显式落盘；ScaleBoxSlot的居中采用节点声明和原生默认值，并在重载时回读。
+# Monolith 0.23.0的set_slot_property尚不支持ScaleBoxSlot，不生成该工具无法执行的居中动作。
 cover_actions = [
     {"action": "set_slot_property", "params": {
         "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
         "widget_name": "CoverBackgroundScale",
         "anchors": {"min_x": 0, "min_y": 0, "max_x": 1, "max_y": 1},
         "offsets": {"left": 0, "top": 0, "right": 0, "bottom": 0}, "z_order": 0}},
-    {"action": "set_slot_property", "params": {
-        "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
-        "widget_name": "MythicBackground", "h_align": "Center", "v_align": "Center"}},
 ] + [
     {"action": "set_widget_property", "params": {
         "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
@@ -203,7 +201,13 @@ cover_actions = [
 ] + [{"action": "set_image", "params": {
     "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login", "widget_name": "MythicBackground",
     "texture_path": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop",
-    "size": {"x":1672,"y":941}, "tint_color":"#FFFFFFFF"}}]
+    "tint_color":"#FFFFFFFF"}},
+    # UE5.8画刷尺寸是DeprecateSlateVector2D；set_image的size并不写入该结构。
+    # 不显式声明原图尺寸会留下32×32，先把纹理压成正方形后再铺满窗口。
+    {"action": "set_widget_property", "params": {
+        "asset_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+        "widget_name": "MythicBackground", "property_name": "Brush.ImageSize",
+        "value": "(X=1672,Y=941)", "raw_mode": True}}]
 (OUTPUT / "CoverBackgroundProperties.json").write_text(
     json.dumps(cover_actions, ensure_ascii=False, indent=2), encoding="utf-8")
 

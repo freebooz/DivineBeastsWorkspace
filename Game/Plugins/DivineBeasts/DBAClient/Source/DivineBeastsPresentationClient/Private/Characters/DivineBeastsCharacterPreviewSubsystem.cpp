@@ -104,7 +104,9 @@ void UDivineBeastsCharacterPreviewSubsystem::EnsurePreviewFoliage()
     // 执行3x3次静态地面查询（只执行一次，不在Tick逐帧检测），取局部最高可见面作为
     // 贴地视觉参考，避免原有固定Z导致花瓣进入不平整地表。
     // 这些射线只允许命中当前工作室所属Level内的物体，且排除角色舞台自身。
-    constexpr float GroundClearanceCm = 5.0f; // 为双面Sprite旋转/边缘留出少量视觉安全间隙。
+    // 桃花已校准为约2至3厘米且触地贴平；沿用5厘米间隙会让花瓣明显悬浮。
+    // 0.25厘米仅防止表面深度冲突；地面模块另保留0.25厘米，不作为玩法碰撞高度。
+    constexpr float GroundClearanceCm = 0.25f;
     constexpr double SampleStepCm = 230.0;  // 限定近景角色周边，不让远山地形抬高全部花瓣。
     FCollisionQueryParams CollisionParams(SCENE_QUERY_STAT(DivineBeastsPreviewFoliageGround), false);
     CollisionParams.AddIgnoredActor(PreviewStage.Get());
