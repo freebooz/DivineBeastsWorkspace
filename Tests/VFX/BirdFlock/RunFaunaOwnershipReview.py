@@ -16,6 +16,14 @@ def accepted(result):
     return result if isinstance(result, bool) else result is not None
 
 
+def set_runtime_properties(obj, values):
+    """使用运行态赋值+显式Apply，避免编辑器Pre/PostEdit引发组件重注册/重建。
+    此测试不验证编辑器属性修改事务。
+    """
+    for name, value in values.items():
+        obj.set_editor_property(name, value, unreal.PropertyAccessChangeNotifyMode.NEVER)
+
+
 def run():
     if "-FaunaOwnedIntegrationReview" not in unreal.SystemLibrary.get_command_line():
         raise RuntimeError("仅允许独占的蝴蝶/鱼群PIE验证进程")
@@ -40,60 +48,67 @@ def run():
             raise AssertionError(name)
 
     try:
-        actor = unreal.GameplayStatics.begin_deferred_actor_spawn_from_class(
-            world, unreal.Actor, unreal.Transform(location=unreal.Vector(0, 0, 450)),
-            unreal.SpawnActorCollisionHandlingMethod.ALWAYS_SPAWN)
+        gs = unreal.get_default_object(unreal.GameplayStatics)
+        transform = unreal.Transform(location=unreal.Vector(0, 0, 450))
+        actor = gs.call_method('BeginDeferredActorSpawnFromClass', args=(
+            world, unreal.Actor, transform,
+            unreal.SpawnActorCollisionHandlingMethod.ALWAYS_SPAWN, None,
+            unreal.SpawnActorScaleMethod.MULTIPLY_WITH_ROOT))
         if actor is None:
             raise RuntimeError("无法创建本次瞬态Actor夹具")
-        first = actor.add_component_by_class(
-            unreal.DivineBeastsFaunaSceneComponent, False, unreal.Transform(), False)
-        second = actor.add_component_by_class(
-            unreal.DivineBeastsFaunaSceneComponent, False, unreal.Transform(), False)
-        first.set_editor_properties({"habitat_id": "None", "species_id": "ButterflyAzure", "count": 3, "seed": 137})
-        second.set_editor_properties({"habitat_id": "None", "species_id": "FishSilver", "count": 5, "seed": 137})
-        unreal.GameplayStatics.finish_spawning_actor(
-            actor, unreal.Transform(location=unreal.Vector(0, 0, 450)))
+        # 先完成Actor construction，防止稍后FinishSpawningActor把动态组件销毁为TRASH。
+        gs.call_method('FinishSpawningActor', args=(
+            actor, transform, unreal.SpawnActorScaleMethod.MULTIPLY_WITH_ROOT))
+        first = actor.call_method('AddComponentByClass', args=(
+            unreal.DivineBeastsFaunaSceneComponent, False, unreal.Transform(), True))
+        second = actor.call_method('AddComponentByClass', args=(
+            unreal.DivineBeastsFaunaSceneComponent, False, unreal.Transform(), True))
+        set_runtime_properties(first, {"habitat_id": "None", "species_id": "ButterflyAzure", "count": 3, "seed": 137})
+        set_runtime_properties(second, {"habitat_id": "None", "species_id": "FishSilver", "count": 5, "seed": 137})
+        # 两个组件均已设置配置，随后注册并执行真实BeginPlay。
+        actor.call_method('FinishAddComponent', args=(first, False, unreal.Transform()))
+        actor.call_method('FinishAddComponent', args=(second, False, unreal.Transform()))
         first_id, second_id = first.get_path_name(), second.get_path_name()
         require("同Actor双组件默认身份独立", first_id != second_id
                 and service.get_requested_fauna_count(first_id) == 3
                 and service.get_requested_fauna_count(second_id) == 5)
 
-        first.set_editor_properties({"habitat_id": prefix + ".Rejected", "count": 513})
+        set_runtime_properties(first, {"habitat_id": prefix + ".Rejected", "count": 513})
         require("换ID与非法数量的候选被拒绝", not accepted(first.apply_fauna()))
         require("拒绝候选保留合法旧绑定", service.get_requested_fauna_count(first_id) == 3
                 and service.get_requested_fauna_count(prefix + ".Rejected") == 0)
 
-        first.set_editor_properties({"habitat_id": prefix + ".BadSeed", "count": 3, "seed": 1000001})
+        set_runtime_properties(first, {"habitat_id": prefix + ".BadSeed", "count": 3, "seed": 1000001})
         require("超界种子拒绝且保留旧绑定", not accepted(first.apply_fauna())
                 and service.get_requested_fauna_count(first_id) == 3
                 and service.get_requested_fauna_count(prefix + ".BadSeed") == 0)
-        first.set_editor_properties({"seed": -1})
+        set_runtime_properties(first, {"seed": -1})
         require("负种子拒绝且保留旧绑定", not accepted(first.apply_fauna())
                 and service.get_requested_fauna_count(first_id) == 3)
 
         shared = prefix + ".Shared"
-        first.set_editor_properties({"habitat_id": shared, "count": 3, "seed": 137})
+        set_runtime_properties(first, {"habitat_id": shared, "count": 3, "seed": 137})
         require("有效候选可替换旧绑定", accepted(first.apply_fauna())
                 and service.get_requested_fauna_count(first_id) == 0
                 and service.get_requested_fauna_count(shared) == 3)
-        first.set_editor_properties({"count": 512, "seed": 1000000})
+        set_runtime_properties(first, {"count": 512, "seed": 1000000})
         require("数量和种子上界可受理", accepted(first.apply_fauna())
                 and service.get_requested_fauna_count(shared) == 512)
-        first.set_editor_properties({"count": 3, "seed": 0})
+        set_runtime_properties(first, {"count": 3, "seed": 0})
         require("种子零值可受理", accepted(first.apply_fauna())
                 and service.get_requested_fauna_count(shared) == 3)
-        second.set_editor_properties({"habitat_id": shared, "count": 8})
+        set_runtime_properties(second, {"habitat_id": shared, "count": 8})
         require("显式身份拒绝其他活跃Owner占用", not accepted(second.apply_fauna())
                 and service.get_requested_fauna_count(shared) == 3
                 and service.get_requested_fauna_count(second_id) == 5)
         second.stop_fauna()
         require("失败候选的Stop不影响其他Owner", service.get_requested_fauna_count(shared) == 3
                 and service.get_requested_fauna_count(second_id) == 0)
-        first.set_editor_property("count", 0)
+        set_runtime_properties(first, {"count": 0})
         require("零数量撤销自有绑定", accepted(first.apply_fauna())
                 and service.get_requested_fauna_count(shared) == 0)
         end_id = prefix + ".EndPlay"
-        second.set_editor_properties({"habitat_id": end_id, "count": 4})
+        set_runtime_properties(second, {"habitat_id": end_id, "count": 4})
         require("卸载前自有请求已受理", accepted(second.apply_fauna())
                 and service.get_requested_fauna_count(end_id) == 4)
         actor.destroy_actor()

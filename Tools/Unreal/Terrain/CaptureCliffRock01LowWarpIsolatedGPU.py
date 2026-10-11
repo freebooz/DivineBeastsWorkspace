@@ -25,6 +25,8 @@ CHOOSE={
                "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/MI_DBA_CliffRock01_WorldAligned"),
     "lowWarp":(PREFIX+"/L_DBA_CliffRock01LowWarpVariantReview",
                "/Game/Development/Terrain/Materials/MI_DBA_CliffRock01_WorldAlignedMacro_LowWarpReview"),
+    "fullWarp":(PREFIX+"/L_DBA_CliffRock01MacroReview",
+                "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/MI_DBA_CliffRock01_WorldAlignedMacro"),
 }
 UV="/Game/Development/Terrain/Materials/MI_DBA_CliffRock01_UVBalancedReview"
 LIGHTS={"CliffReview_Sun":2.2,"CliffReview_LeftSoftbox":13000.,
@@ -34,7 +36,7 @@ CHOSEN=os.getenv("CLIFF_ISOLATED_CAPTURE_VARIANT","")
 def main():
     import unreal
     if CHOSEN not in CHOOSE:
-        raise ValueError("必须明确选择baseline或lowWarp QA地图")
+        raise ValueError("必须选择baseline、lowWarp或fullWarp的独立已保存QA地图")
     path,material=CHOOSE[CHOSEN]
     if not unreal.Paths.get_project_file_path().replace("\\","/").endswith("/Game/DivineBeastsArena.uproject"):
         raise RuntimeError("只能在DivineBeastsArena正式工程进行孤立GPU测试")

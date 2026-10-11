@@ -22,6 +22,7 @@ VARIANT=os.environ.get("CLIFF_ISOLATED_CAPTURE_VARIANT","")
 WORLD={
  "baseline":"/Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview",
  "lowWarp":"/Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview",
+ "fullWarp":"/Game/Development/Terrain/Maps/L_DBA_CliffRock01MacroReview",
 }
 START_WAIT_SEC=7.0
 PREVIEW_WARMUP_SEC=48.0
@@ -31,7 +32,7 @@ def main():
     if not unreal.Paths.get_project_file_path().replace("\\","/").endswith("/Game/DivineBeastsArena.uproject"):
         raise RuntimeError("仅允许神兽联盟唯一项目的孤立图形审核")
     if VARIANT not in WORLD:
-        raise ValueError("需要指定baseline或lowWarp")
+        raise ValueError("必须指定baseline、lowWarp或fullWarp")
     if os.environ.get("CLIFF_TEXTURE_STREAMING_MODE")!="on" or os.environ.get("CLIFF_CAPTURE_RUN_TAG")!="GUIWarm":
         raise RuntimeError("GUIWarm采用固定Streaming On与独立输出目录")
     if not CAPTURE.is_file():

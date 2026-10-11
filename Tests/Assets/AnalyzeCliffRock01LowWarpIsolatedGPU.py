@@ -11,13 +11,19 @@
 from __future__ import annotations
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 import numpy as np
 from PIL import Image,ImageDraw,ImageFont
 
 ROOT=Path(__file__).resolve().parents[2]
-OUT=ROOT/"Game/Saved/Validation/TerrainGaea/CliffRock01LowWarpIsolated20261011"
+DATASET=os.getenv("CLIFF_GPU_AUDIT_DATASET","isolated").strip()
+if DATASET not in ("isolated","guiWarm"):
+    raise ValueError("只允许已登记的isolated与guiWarm真实D3D12图像批次")
+OUT=ROOT/("Game/Saved/Validation/TerrainGaea/CliffRock01LowWarpStreamingOnGUIWarm20261011"
+          if DATASET=="guiWarm" else
+          "Game/Saved/Validation/TerrainGaea/CliffRock01LowWarpIsolated20261011")
 NAMES={
     "base0":"CliffLowWarp_baseline_D3D12_0.png",
     "base1":"CliffLowWarp_baseline_D3D12_1.png",

@@ -44,13 +44,17 @@ class FaunaIntegrationReview:
     def accepted(self,result):
         # UE5.8会消去bool返回值：成功返回Out参数（可为''），失败返回None。
         return result if isinstance(result,bool) else result is not None
+    def set_runtime_properties(self,component,properties):
+        # 使用运行态赋值后显式Apply；不把编辑器Pre/PostEdit的组件重注册/重建混入该测试。
+        for name,value in properties.items():
+            component.set_editor_property(name,value,unreal.PropertyAccessChangeNotifyMode.NEVER)
     def begin_case(self):
         self.index+=1;self.cache=None;self.capture=None
         if self.index>=len(self.cases):
             self.service.stop_all_ambient_fauna()
             self.phase='final_clear';self.mark=time.monotonic();return
         species,count=self.cases[self.index]
-        self.component.set_editor_properties({'species_id':species,'count':count,'seed':137})
+        self.set_runtime_properties(self.component,{'species_id':species,'count':count,'seed':137})
         result=self.component.apply_fauna()
         if not self.accepted(result): raise RuntimeError('有效正式请求被拒绝：'+repr(result))
         self.phase='settle';self.mark=time.monotonic()
@@ -136,14 +140,19 @@ class FaunaIntegrationReview:
                 runpy.run_path(str(ROOT/'Tests/VFX/BirdFlock/RunBirdFlockOwnershipReview.py'))
                 runpy.run_path(str(ROOT/'Tests/VFX/BirdFlock/RunFaunaOwnershipReview.py'))
                 self.report['ownershipScripts']='passed'
-                self.actor=unreal.GameplayStatics.begin_deferred_actor_spawn_from_class(
-                    self.game,unreal.Actor,unreal.Transform(location=unreal.Vector(0,0,450)),
-                    unreal.SpawnActorCollisionHandlingMethod.ALWAYS_SPAWN)
+                # UE5.8未生成这几个Blueprint内部函数的Python胶水；使用引擎公开反射调用。
+                # 先结束Actor构造，再按AddComponent节点的延迟注册协议设置出生属性。
+                gs=unreal.get_default_object(unreal.GameplayStatics)
+                transform=unreal.Transform(location=unreal.Vector(0,0,450))
+                self.actor=gs.call_method('BeginDeferredActorSpawnFromClass',args=(
+                    self.game,unreal.Actor,transform,unreal.SpawnActorCollisionHandlingMethod.ALWAYS_SPAWN,
+                    None,unreal.SpawnActorScaleMethod.MULTIPLY_WITH_ROOT))
                 assert self.actor
-                self.component=self.actor.add_component_by_class(
-                    unreal.DivineBeastsFaunaSceneComponent,False,unreal.Transform(),False)
-                self.component.set_editor_properties({'habitat_id':'DBA.Review.Fauna.RuntimeProbe','count':0,'seed':137})
-                unreal.GameplayStatics.finish_spawning_actor(self.actor,unreal.Transform(location=unreal.Vector(0,0,450)))
+                gs.call_method('FinishSpawningActor',args=(self.actor,transform,unreal.SpawnActorScaleMethod.MULTIPLY_WITH_ROOT))
+                self.component=self.actor.call_method('AddComponentByClass',args=(
+                    unreal.DivineBeastsFaunaSceneComponent,False,unreal.Transform(),True))
+                self.set_runtime_properties(self.component,{'habitat_id':'DBA.Review.Fauna.RuntimeProbe','count':0,'seed':137})
+                self.actor.call_method('FinishAddComponent',args=(self.component,False,unreal.Transform()))
                 self.begin_case()
             elif self.phase=='settle' and elapsed>1.5:
                 species,count=self.cases[self.index];active=self.active()
@@ -172,11 +181,11 @@ class FaunaIntegrationReview:
                       'pass':len(positions)==count and finite and normalized and motion_valid and spatial_valid}
                 self.report['gpuCases'].append(item);self.persist()
                 if not item['pass']: raise RuntimeError('真实GPU缓存合同失败：'+repr(item))
-                self.component.set_editor_property('count',513)
+                self.set_runtime_properties(self.component,{'count':513})
                 if self.accepted(self.component.apply_fauna()): raise RuntimeError('513非法候选未被拒绝')
                 if self.service.get_requested_fauna_count('DBA.Review.Fauna.RuntimeProbe')!=count:
                     raise RuntimeError('非法候选破坏旧有效请求')
-                self.component.set_editor_property('count',count)
+                self.set_runtime_properties(self.component,{'count':count})
                 if species=='FishSilver' and count==128:
                     self.fish_before=[(p.x,p.y,p.z) for p in positions]
                     self.phase='fish_move';self.mark=now
@@ -190,8 +199,11 @@ class FaunaIntegrationReview:
                 moved=len(positions)==128 and any(sum((a-b)**2 for a,b in zip(old,(p.x,p.y,p.z)))>1 for old,p in zip(self.fish_before,positions))
                 self.report['cpuBehavior']['fishGpuMotion']={'gpuCount':len(positions),'moved':moved}
                 if not moved: raise RuntimeError('鱼群GPU位置没有持续推进')
-                # 真实组件结束通知检验项目终态投影；同参数显式Apply必须可恢复，不能自动循环。
-                self.active()[0].deactivate_immediate()
+                # 实际销毁当前Niagara组件，检验引擎清理通知到项目终态投影；不伪造完成广播。
+                # K2_DestroyComponent允许组件自身作为调用上下文；不修改物种资产或池参数。
+                finished_component=self.active()[0]
+                finished_component.destroy_component(finished_component)
+                self.report['terminalCause']='actual Niagara component destruction'
                 self.phase='terminal_wait';self.mark=now
             elif self.phase=='terminal_wait' and elapsed>1:
                 if self.active(): raise RuntimeError('外部终态后出现隐式自动重试或清理不全')

@@ -16,6 +16,14 @@ def accepted(result):
     return result if isinstance(result, bool) else result is not None
 
 
+def set_runtime_properties(obj, values):
+    """使用运行态赋值+显式Apply，避免编辑器Pre/PostEdit引发组件重注册/重建。
+    此测试不验证编辑器属性修改事务。
+    """
+    for name, value in values.items():
+        obj.set_editor_property(name, value, unreal.PropertyAccessChangeNotifyMode.NEVER)
+
+
 def run():
     if "-BirdOwnedIntegrationReview" not in unreal.SystemLibrary.get_command_line():
         raise RuntimeError("仅允许独占的鸟群PIE验证进程")
@@ -40,46 +48,53 @@ def run():
             raise AssertionError(name)
 
     try:
-        actor = unreal.GameplayStatics.begin_deferred_actor_spawn_from_class(
-            world, unreal.Actor, unreal.Transform(location=unreal.Vector(0, 0, 450)),
-            unreal.SpawnActorCollisionHandlingMethod.ALWAYS_SPAWN)
+        gs = unreal.get_default_object(unreal.GameplayStatics)
+        transform = unreal.Transform(location=unreal.Vector(0, 0, 450))
+        actor = gs.call_method('BeginDeferredActorSpawnFromClass', args=(
+            world, unreal.Actor, transform,
+            unreal.SpawnActorCollisionHandlingMethod.ALWAYS_SPAWN, None,
+            unreal.SpawnActorScaleMethod.MULTIPLY_WITH_ROOT))
         if actor is None:
             raise RuntimeError("无法创建本次瞬态Actor夹具")
-        first = actor.add_component_by_class(
-            unreal.DivineBeastsBirdFlockSceneComponent, False, unreal.Transform(), False)
-        second = actor.add_component_by_class(
-            unreal.DivineBeastsBirdFlockSceneComponent, False, unreal.Transform(), False)
-        first.set_editor_properties({"flock_id": "None", "species_id": "Seagull", "bird_count": 3})
-        second.set_editor_properties({"flock_id": "None", "species_id": "Eagle", "bird_count": 5})
-        unreal.GameplayStatics.finish_spawning_actor(
-            actor, unreal.Transform(location=unreal.Vector(0, 0, 450)))
+        # 先完成Actor construction，防止稍后FinishSpawningActor把动态组件销毁为TRASH。
+        gs.call_method('FinishSpawningActor', args=(
+            actor, transform, unreal.SpawnActorScaleMethod.MULTIPLY_WITH_ROOT))
+        first = actor.call_method('AddComponentByClass', args=(
+            unreal.DivineBeastsBirdFlockSceneComponent, False, unreal.Transform(), True))
+        second = actor.call_method('AddComponentByClass', args=(
+            unreal.DivineBeastsBirdFlockSceneComponent, False, unreal.Transform(), True))
+        set_runtime_properties(first, {"flock_id": "None", "species_id": "Seagull", "bird_count": 3})
+        set_runtime_properties(second, {"flock_id": "None", "species_id": "Eagle", "bird_count": 5})
+        # 两个组件均已设置配置，随后注册并执行真实BeginPlay。
+        actor.call_method('FinishAddComponent', args=(first, False, unreal.Transform()))
+        actor.call_method('FinishAddComponent', args=(second, False, unreal.Transform()))
         first_id, second_id = first.get_path_name(), second.get_path_name()
         require("同Actor双组件默认身份独立", first_id != second_id
                 and service.get_requested_bird_count(first_id) == 3
                 and service.get_requested_bird_count(second_id) == 5)
 
-        first.set_editor_properties({"flock_id": prefix + ".Rejected", "bird_count": 513})
+        set_runtime_properties(first, {"flock_id": prefix + ".Rejected", "bird_count": 513})
         require("换ID与非法数量的候选被拒绝", not accepted(first.apply_bird_flock()))
         require("拒绝候选保留合法旧绑定", service.get_requested_bird_count(first_id) == 3
                 and service.get_requested_bird_count(prefix + ".Rejected") == 0)
 
         shared = prefix + ".Shared"
-        first.set_editor_properties({"flock_id": shared, "bird_count": 3})
+        set_runtime_properties(first, {"flock_id": shared, "bird_count": 3})
         require("有效候选可替换旧绑定", accepted(first.apply_bird_flock())
                 and service.get_requested_bird_count(first_id) == 0
                 and service.get_requested_bird_count(shared) == 3)
-        second.set_editor_properties({"flock_id": shared, "bird_count": 8})
+        set_runtime_properties(second, {"flock_id": shared, "bird_count": 8})
         require("显式身份拒绝其他活跃Owner占用", not accepted(second.apply_bird_flock())
                 and service.get_requested_bird_count(shared) == 3
                 and service.get_requested_bird_count(second_id) == 5)
         second.stop_bird_flock()
         require("失败候选的Stop不影响其他Owner", service.get_requested_bird_count(shared) == 3
                 and service.get_requested_bird_count(second_id) == 0)
-        first.set_editor_property("bird_count", 0)
+        set_runtime_properties(first, {"bird_count": 0})
         require("零数量撤销自有绑定", accepted(first.apply_bird_flock())
                 and service.get_requested_bird_count(shared) == 0)
         end_id = prefix + ".EndPlay"
-        second.set_editor_properties({"flock_id": end_id, "bird_count": 4})
+        set_runtime_properties(second, {"flock_id": end_id, "bird_count": 4})
         require("卸载前自有请求已受理", accepted(second.apply_bird_flock())
                 and service.get_requested_bird_count(end_id) == 4)
         actor.destroy_actor()
