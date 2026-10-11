@@ -21,6 +21,12 @@ def main():
     assert len(stages) == 1, '共用平台舞台必须唯一'
     environment = [a for a in actors if unreal.Name('DBA.Preview.ZodiacSanctuary') in a.tags]
     assert len(environment) == len(manifest['objects']), '地图圣境网格实例不完整'
+    for actor in environment:
+        rotation=actor.get_actor_rotation()
+        assert abs(rotation.pitch)<.01 and abs(rotation.roll)<.01 and abs(rotation.yaw+90)<.01, '场景轴转换错误'
+    camera=stages[0].get_component_by_class(unreal.CameraComponent)
+    rotation=camera.get_world_rotation()
+    assert abs(rotation.roll)<.01 and abs(rotation.pitch+8)<.01, '预览镜头翻转或俯仰错误'
     assert any(unreal.Name('DBA.Foliage.Ground') in a.tags for a in actors), '自然飘落锚点被破坏'
     for record in manifest['objects']:
         mesh = unreal.load_asset(root + '/Meshes/' + record['name'])

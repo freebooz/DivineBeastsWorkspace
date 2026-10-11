@@ -2,10 +2,10 @@
   "map": "/DBAFrontEndPack/Maps/L_DBA_CharacterStudio",
   "environment_scale": 0.45,
   "mesh_actor_count": 17,
-  "source_blend_sha256": "0e4cb30beb6e3deaa1bf3cbe578d86c75ec27385ba034f85436acf9b01074866",
+  "source_blend_sha256": "2e021bbfae2c0d2192dec43095e5c07a4a2e76f0851cc8046eebd40735bef1ed",
   "backup": "E:\\work\\2026\\DivineBeastsWorkspace\\Game\\Saved\\Validation\\ZodiacSanctuary\\BeforeSanctuary",
   "stage_class": "GamePlatformCharacterPreviewStage",
-  "camera_location_cm": "<Struct 'Vector' (0x000001B580EF7620) {x: 650.000000, y: 0.000000, z: 340.000000}>",
+  "camera_location_cm": "<Struct 'Vector' (0x000001B58E649460) {x: 650.000000, y: 0.000000, z: 340.000000}>",
   "actions": [
     "FBX import",
     "PBR material graph",

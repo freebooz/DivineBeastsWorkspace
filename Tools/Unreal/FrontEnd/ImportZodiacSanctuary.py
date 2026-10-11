@@ -80,13 +80,16 @@ def create_material(record):
     MATERIAL_ATTRIBUTES[mat.get_path_name()] = attributes
     assert LIB.connect_material_property(attributes, '', unreal.MaterialProperty.MP_MATERIAL_ATTRIBUTES), 'PBR 属性节点连接失败'
     mat.set_editor_property('two_sided', record['two_sided'])
-    color = node(mat, unreal.MaterialExpressionVectorParameter, parameter_name='SurfaceTint', default_value=unreal.LinearColor(*record['base_color'], 1), group='Surface', desc='源 Blender 线性基色，不重复 Gamma 编码')
+    tint = (1.,1.,1.) if record['texture'] else record['base_color']
+    color = node(mat, unreal.MaterialExpressionVectorParameter, parameter_name='SurfaceTint', default_value=unreal.LinearColor(*tint, 1), group='Surface', desc='颜色图默认白色乘色，保留第三方原始RGB，不重复Gamma编码')
     base = color
     if record['texture']:
         texture_path = ROOT + '/Textures/' + Path(record['texture']).stem
         texture = unreal.load_asset(texture_path)
         assert texture, '源贴图尚未导入：' + texture_path
         base = node(mat, unreal.MaterialExpressionTextureSampleParameter2D, parameter_name='BaseColorTexture', group='Surface', texture=texture, sampler_type=unreal.MaterialSamplerType.SAMPLERTYPE_COLOR, desc='原创低对比 sRGB 基色贴图；不叠加颗粒或锐化')
+        multiply = node(mat, unreal.MaterialExpressionMultiply)
+        link(base, multiply, 'A');link(color, multiply, 'B');base=multiply
     if record['name'].endswith(('_Waterfall', '_Water')):
         coordinates = node(mat, unreal.MaterialExpressionTextureCoordinate, u_tiling=18 if record['name'].endswith('_Waterfall') else 4, v_tiling=2)
         panner = node(mat, unreal.MaterialExpressionPanner, speed_x=.01, speed_y=-.28 if record['name'].endswith('_Waterfall') else .035, desc='GPU 时间推进水纹；无业务状态轮询')
@@ -113,7 +116,7 @@ def create_material(record):
         orm = node(mat, unreal.MaterialExpressionTextureSampleParameter2D, parameter_name='SurfaceControlTexture', group='Surface', texture=orm_asset, sampler_type=unreal.MaterialSamplerType.SAMPLERTYPE_MASKS, desc='线性 R=AO、G=粗糙度控制(中值0.5)、B=金属度倍率')
         link(orm, attributes, 'AmbientOcclusion', 'R')
         rough_control = node(mat, unreal.MaterialExpressionMultiply)
-        link(orm, rough_control, 'A', 'G'); link(node(mat, unreal.MaterialExpressionConstant, r=2.), rough_control, 'B')
+        link(orm, rough_control, 'A', 'G'); link(node(mat, unreal.MaterialExpressionConstant, r=record.get('orm_roughness_scale',2)), rough_control, 'B')
         rough_multiply = node(mat, unreal.MaterialExpressionMultiply)
         link(rough_control, rough_multiply, 'A'); link(roughness, rough_multiply, 'B')
         roughness = rough_multiply
@@ -129,6 +132,9 @@ def create_material(record):
         link(node(mat, unreal.MaterialExpressionConstant, r=record['emission_strength']), emission, 'B')
         connect(emission, unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     LIB.recompile_material(mat)
+    # 引擎删除节点后可能暂留旧孤岛与同名参数；只保留本材质真实输出闭包再保存。
+    LIB.delete_unused_expressions(mat)
+    LIB.layout_material_expressions(mat)
     save(mat)
     return mat
 
@@ -220,7 +226,8 @@ def author_studio():
         assert isinstance(mesh, unreal.StaticMesh), '未完成网格导入：' + label
         actor = actors.get(label) or api.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
         actor.set_actor_label(label); actor.set_folder_path('ZodiacSanctuary')
-        actor.set_actor_rotation(unreal.Rotator(0, -90, 0), False)
+        # UE Python结构位置参数次序不等于C++惯例，必须使用命名字段防止翻转整座场景。
+        actor.set_actor_rotation(unreal.Rotator(pitch=0, yaw=-90, roll=0), False)
         actor.set_actor_scale3d(unreal.Vector(ENVIRONMENT_SCALE, ENVIRONMENT_SCALE, ENVIRONMENT_SCALE))
         actor.tags = [unreal.Name(TAG)]
         component = actor.get_component_by_class(unreal.StaticMeshComponent)
@@ -229,12 +236,13 @@ def author_studio():
     pivot = next(c for c in stage.get_components_by_class(unreal.SceneComponent) if c.get_name() == 'CameraPivot')
     pivot.set_editor_property('relative_location', unreal.Vector(330, 0, 340))
     camera = stage.get_component_by_class(unreal.CameraComponent)
-    camera.set_editor_property('relative_rotation', unreal.Rotator(-8, 180, 0))
+    camera.set_editor_property('relative_rotation', unreal.Rotator(pitch=-8, yaw=180, roll=0))
     camera.set_editor_property('field_of_view', 90.)
-    sun = actors['DirectionalLight']; sun.set_actor_rotation(unreal.Rotator(-34, -35, 0), False)
+    sun = actors['DirectionalLight']; sun.set_actor_rotation(unreal.Rotator(pitch=-34, yaw=-150, roll=0), False)
     light = sun.get_component_by_class(unreal.DirectionalLightComponent)
     light.set_mobility(unreal.ComponentMobility.MOVABLE)
-    light.set_editor_property('intensity', 3.)
+    # 户外日光按照度配置，不能复用旧室内工作室的数勒克斯与曝光1，否则整体近黑。
+    light.set_editor_property('intensity', 20000.)
     light.set_editor_property('atmosphere_sun_light', True)
     sky = actors['SkyLight'].get_component_by_class(unreal.SkyLightComponent)
     sky.set_mobility(unreal.ComponentMobility.MOVABLE)
@@ -248,8 +256,9 @@ def author_studio():
     volume = actors['PreviewExposure']; settings = volume.get_editor_property('settings')
     settings.set_editor_property('override_auto_exposure_min_brightness', True)
     settings.set_editor_property('override_auto_exposure_max_brightness', True)
-    settings.set_editor_property('auto_exposure_min_brightness', 1.)
-    settings.set_editor_property('auto_exposure_max_brightness', 1.)
+    assert unreal.SystemLibrary.get_console_variable_int_value('r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange') == 0, '曝光单位变化，必须重新校准'
+    settings.set_editor_property('auto_exposure_min_brightness', 512.)
+    settings.set_editor_property('auto_exposure_max_brightness', 512.)
     settings.set_editor_property('override_auto_exposure_bias', True)
     settings.set_editor_property('auto_exposure_bias', 0.)
     volume.set_editor_property('settings', settings)

@@ -139,8 +139,8 @@
     {
       "name": "SM_DBA_Sanctuary_Terraces",
       "fbx": "Exports/SM_DBA_Sanctuary_Terraces.fbx",
-      "vertices": 16416,
-      "polygons": 14592,
+      "vertices": 16740,
+      "polygons": 14880,
       "materials": [
         "M_DBA_Sanctuary_Stone",
         "M_DBA_Sanctuary_Jade",
@@ -331,16 +331,17 @@
         0.5699999928474426,
         0.4399999976158142
       ],
-      "roughness": 0.46000000834465027,
+      "roughness": 0.8999999761581421,
       "metallic": 0.0,
       "coat_weight": 0.0,
       "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
-      "texture": "Textures/T_DBA_Sanctuary_Stone.png",
-      "normal_texture": "Textures/T_DBA_Sanctuary_Stone_Normal.png",
-      "orm_texture": "Textures/T_DBA_Sanctuary_Stone_ORM.png",
+      "texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock.png",
+      "normal_texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock_Normal.png",
+      "orm_texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock_ORM.png",
+      "orm_roughness_scale": 1,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -358,8 +359,9 @@
       "texture": "Textures/T_DBA_Sanctuary_Jade.png",
       "normal_texture": "Textures/T_DBA_Sanctuary_Jade_Normal.png",
       "orm_texture": "Textures/T_DBA_Sanctuary_Jade_ORM.png",
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -377,8 +379,9 @@
       "texture": null,
       "normal_texture": null,
       "orm_texture": null,
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -396,8 +399,9 @@
       "texture": "Textures/T_DBA_Sanctuary_Moss.png",
       "normal_texture": "Textures/T_DBA_Sanctuary_Moss_Normal.png",
       "orm_texture": "Textures/T_DBA_Sanctuary_Moss_ORM.png",
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -415,8 +419,9 @@
       "texture": "Textures/T_DBA_Sanctuary_Bark.png",
       "normal_texture": "Textures/T_DBA_Sanctuary_Bark_Normal.png",
       "orm_texture": "Textures/T_DBA_Sanctuary_Bark_ORM.png",
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -434,8 +439,9 @@
       "texture": "Textures/T_DBA_Sanctuary_Leaf.png",
       "normal_texture": "Textures/T_DBA_Sanctuary_Leaf_Normal.png",
       "orm_texture": "Textures/T_DBA_Sanctuary_Leaf_ORM.png",
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": true
     },
     {
@@ -453,8 +459,9 @@
       "texture": null,
       "normal_texture": null,
       "orm_texture": null,
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": true
     },
     {
@@ -464,16 +471,17 @@
         0.6100000143051147,
         0.4699999988079071
       ],
-      "roughness": 0.3799999952316284,
+      "roughness": 0.6600000262260437,
       "metallic": 0.0,
       "coat_weight": 0.11999999731779099,
       "coat_roughness": 0.2199999988079071,
       "emission_strength": 0.0,
-      "texture": "Textures/T_DBA_Sanctuary_Stone.png",
-      "normal_texture": "Textures/T_DBA_Sanctuary_Stone_Normal.png",
-      "orm_texture": "Textures/T_DBA_Sanctuary_Stone_ORM.png",
+      "texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock.png",
+      "normal_texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock_Normal.png",
+      "orm_texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock_ORM.png",
+      "orm_roughness_scale": 1,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -483,16 +491,17 @@
         0.38999998569488525,
         0.36000001430511475
       ],
-      "roughness": 0.8500000238418579,
+      "roughness": 0.9800000190734863,
       "metallic": 0.0,
       "coat_weight": 0.0,
       "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
-      "texture": "Textures/T_DBA_Sanctuary_Stone.png",
-      "normal_texture": "Textures/T_DBA_Sanctuary_Stone_Normal.png",
-      "orm_texture": "Textures/T_DBA_Sanctuary_Stone_ORM.png",
+      "texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock.png",
+      "normal_texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock_Normal.png",
+      "orm_texture": "ThirdParty/PolyHaven/Rock3/T_DBA_Sanctuary_Rock_ORM.png",
+      "orm_roughness_scale": 1,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -510,8 +519,9 @@
       "texture": null,
       "normal_texture": null,
       "orm_texture": null,
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": true
     },
     {
@@ -529,8 +539,9 @@
       "texture": null,
       "normal_texture": null,
       "orm_texture": null,
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -548,8 +559,9 @@
       "texture": null,
       "normal_texture": null,
       "orm_texture": null,
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     },
     {
@@ -567,8 +579,9 @@
       "texture": null,
       "normal_texture": null,
       "orm_texture": null,
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": true
     },
     {
@@ -586,8 +599,9 @@
       "texture": null,
       "normal_texture": null,
       "orm_texture": null,
+      "orm_roughness_scale": 2,
       "normal_convention": "OpenGL",
-      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
+      "orm_channels": "R=AO,G=roughness,B=metallic; strength is material-owned",
       "two_sided": false
     }
   ]

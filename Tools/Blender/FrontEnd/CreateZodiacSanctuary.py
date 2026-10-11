@@ -60,7 +60,15 @@ class GeometryBatch:
             polygon.material_index = index
             polygon.use_smooth = self.name not in ('Architecture', 'ZodiacInlays')
             for loop_id in polygon.loop_indices:
-                uv.data[loop_id].uv = self.uvs[mesh.loops[loop_id].vertex_index]
+                vertex_id=mesh.loops[loop_id].vertex_index
+                if MATERIALS[index] in (STONE,SCULPT,DISTANT):
+                    # 岩壁不能只做XY俯视投影；按面主法线投影，避免立面真实石纹拉成竖条。
+                    v=mesh.vertices[vertex_id].co
+                    axis=max(range(3),key=lambda component:abs(polygon.normal[component]))
+                    uv.data[loop_id].uv=((v.y,v.z) if axis==0 else (v.x,v.z) if axis==1 else (v.x,v.y))
+                    uv.data[loop_id].uv/=1.5
+                else:
+                    uv.data[loop_id].uv = self.uvs[vertex_id]
         obj = bpy.data.objects.new('SM_DBA_Sanctuary_' + self.name, mesh)
         bpy.context.collection.objects.link(obj)
         obj['purpose_zh'] = '神兽联盟角色选择与创建三维圣境的' + self.name
@@ -121,6 +129,25 @@ def texture(name, color_a, color_b, kind='stone', size=2048):
     return image
 
 
+def source_rock_texture():
+    """加载未改像素的CC0真实岩石PBR；缺失则明确失败，不退回噪声冒充照片。
+
+    第三方来源、固定校验值及许可见同目录 LICENSE.md；此函数只设置色彩空间与节点。
+    """
+    directory=OUT/'ThirdParty'/'PolyHaven'/'Rock3'
+    images=[]
+    for suffix in ('','_Normal','_ORM'):
+        path=directory/('T_DBA_Sanctuary_Rock'+suffix+'.png')
+        assert path.is_file(), '须先下载经核验的真实岩石源图：'+str(path)
+        image=bpy.data.images.load(str(path),check_existing=False)
+        image.name=path.stem;image.colorspace_settings.name='sRGB' if not suffix else 'Non-Color'
+        image['relative_file']=str(path.relative_to(OUT)).replace('\\','/')
+        image.pack();images.append(image)
+    images[0]['normal_image']=images[1].name;images[0]['orm_image']=images[2].name
+    images[0]['orm_roughness_scale']=1
+    return images[0]
+
+
 def material(name, color, roughness=.7, metallic=0, image=None, emission=0):
     """创建 Principled PBR；英文稳定名称用于 FBX 与 UE 材质映射。"""
     mat = bpy.data.materials.new('M_DBA_Sanctuary_'+name)
@@ -146,7 +173,7 @@ def material(name, color, roughness=.7, metallic=0, image=None, emission=0):
         separate=mat.node_tree.nodes.new('ShaderNodeSeparateColor')
         mat.node_tree.links.new(orm_texture.outputs['Color'],separate.inputs['Color'])
         multiply=mat.node_tree.nodes.new('ShaderNodeMath');multiply.operation='MULTIPLY'
-        multiply.inputs[1].default_value=roughness*2
+        multiply.inputs[1].default_value=roughness*image.get('orm_roughness_scale',2)
         mat.node_tree.links.new(separate.outputs['Green'],multiply.inputs[0])
         mat.node_tree.links.new(multiply.outputs[0],shader.inputs['Roughness'])
     if name in ('Jade','CarvedStone','AncientGold'):
@@ -656,7 +683,8 @@ def creature(kind, origin, scale, facing):
     for poly in obj.data.polygons:
         for loop_id in poly.loop_indices:
             v=obj.data.vertices[obj.data.loops[loop_id].vertex_index].co
-            uv.data[loop_id].uv=(v.x/2,v.z/2)
+            axis=max(range(3),key=lambda component:abs(poly.normal[component]))
+            uv.data[loop_id].uv=((v.y/1.5,v.z/1.5) if axis==0 else (v.x/1.5,v.z/1.5) if axis==1 else (v.x/1.5,v.y/1.5))
     obj.select_set(False)
     return obj
 
@@ -745,20 +773,20 @@ def main():
     OUT=Path(args.output);OUT.mkdir(parents=True,exist_ok=True)
     for part in ('Textures','Exports','Previews'):(OUT/part).mkdir(exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    stone=texture('T_DBA_Sanctuary_Stone',(.22,.29,.23),(.67,.65,.49))
+    stone=source_rock_texture()
     jade=texture('T_DBA_Sanctuary_Jade',(.045,.14,.115),(.21,.36,.27))
     moss=texture('T_DBA_Sanctuary_Moss',(.045,.09,.018),(.23,.34,.065))
     bark=texture('T_DBA_Sanctuary_Bark',(.08,.105,.043),(.30,.26,.14),'bark')
     leaves=texture('T_DBA_Sanctuary_Leaf',(.03,.095,.018),(.21,.34,.046),'leaf',1024)
-    STONE=material('Stone',(.52,.57,.44),.46,image=stone)
+    STONE=material('Stone',(.52,.57,.44),.9,image=stone)
     JADE=material('Jade',(.11,.27,.22),.24,.045,jade)
     GOLD=material('AncientGold',(.47,.38,.16),.29,.72)
     MOSS=material('Moss',(.11,.24,.035),.94,image=moss)
     BARK=material('Bark',(.18,.20,.09),.65,image=bark)
     LEAF=material('Leaf',(.07,.22,.025),.48,image=leaves)
     LEAFLIGHT=material('LeafLight',(.23,.39,.065),.44)
-    SCULPT=material('CarvedStone',(.57,.61,.47),.38,image=stone)
-    DISTANT=material('DistantStone',(.25,.39,.36),.85,image=stone)
+    SCULPT=material('CarvedStone',(.57,.61,.47),.66,image=stone)
+    DISTANT=material('DistantStone',(.25,.39,.36),.98,image=stone)
     FALL=material('Waterfall',(.56,.78,.74),.23,.1,emission=.18)
     FOAM=material('Foam',(.72,.89,.81),.4,emission=.12)
     GLOW=material('LanternGlow',(.28,.76,.58),.42,emission=2)
@@ -786,7 +814,8 @@ def main():
     for mat in MATERIALS:
         shader=next(n for n in mat.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
         image=next((n.image for n in mat.node_tree.nodes if n.type=='TEX_IMAGE'),None)
-        manifest['materials'].append({'name':mat.name,'base_color':list(shader.inputs['Base Color'].default_value)[:3],'roughness':shader.inputs['Roughness'].default_value,'metallic':shader.inputs['Metallic'].default_value,'coat_weight':shader.inputs['Coat Weight'].default_value,'coat_roughness':shader.inputs['Coat Roughness'].default_value,'emission_strength':shader.inputs['Emission Strength'].default_value,'texture':('Textures/'+image.name+'.png') if image else None,'normal_texture':('Textures/'+image['normal_image']+'.png') if image else None,'orm_texture':('Textures/'+image['orm_image']+'.png') if image else None,'normal_convention':'OpenGL','orm_channels':'R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier','two_sided':mat in (LEAF,LEAFLIGHT,FALL,PETAL)})
+        image_path=lambda asset:asset.get('relative_file','Textures/'+asset.name+'.png')
+        manifest['materials'].append({'name':mat.name,'base_color':list(shader.inputs['Base Color'].default_value)[:3],'roughness':shader.inputs['Roughness'].default_value,'metallic':shader.inputs['Metallic'].default_value,'coat_weight':shader.inputs['Coat Weight'].default_value,'coat_roughness':shader.inputs['Coat Roughness'].default_value,'emission_strength':shader.inputs['Emission Strength'].default_value,'texture':image_path(image) if image else None,'normal_texture':image_path(bpy.data.images[image['normal_image']]) if image else None,'orm_texture':image_path(bpy.data.images[image['orm_image']]) if image else None,'orm_roughness_scale':image.get('orm_roughness_scale',2) if image else 2,'normal_convention':'OpenGL','orm_channels':'R=AO,G=roughness,B=metallic; strength is material-owned','two_sided':mat in (LEAF,LEAFLIGHT,FALL,PETAL)})
     bpy.ops.object.select_all(action='DESELECT')
     bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'DBA_ZodiacSanctuary.blend'),compress=True)
     (OUT/'SceneManifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
