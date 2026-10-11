@@ -837,6 +837,19 @@
     "Style": "上古原始自然：商代青铜、部落图腾、萨满元素",
     "ClientMissingAssets": 0,
     "Date": "2026-10-11",
-    "HumanAcceptance": "待人工验证两个新客户端"
+    "HumanAcceptance": "2026-10-11用户人工反馈：两个客户端均正常，动画和HUD可见；实际技能伤害与冷却专项未反馈",
+    "ApprovedTemporaryPortraitCleanup": {
+      "Date": "2026-10-11",
+      "UserAuthorized": true,
+      "Pattern": "DBAHeroPack_<Hero>/UI/Portraits/T_DBA_<Hero>_Portrait1",
+      "DeletedCount": 12,
+      "ForceDelete": false,
+      "ReferencersBefore": 0,
+      "FormalPortraitsReadableAfter": 12,
+      "TemporaryFilesRemainingAfter": 0,
+      "EditorReopenedValidation": "PORTRAIT_CLEANUP_RELOAD_PASS=12",
+      "BackupPath": "Saved/Validation/AnimationHUD/UnusedPortraitImportBackup",
+      "ValidationScope": "源资产清理；已发布运行包保留，未重烘焙"
+    }
   }
 }
