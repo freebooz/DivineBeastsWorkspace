@@ -33,6 +33,14 @@ try {
         'DBAClient/Content/Definitions/DA_DivineBeastsApplicationFlow.uasset',
         'DBAUIPack_Core/Content/UI/Textures/DBA_MythicLogin.uasset',
         'DBAUIPack_Core/Content/UI/Textures/DBA_MythicLogo.uasset',
+        # 定稿自然主题的真实贴图闭包；界面文字仍由控件渲染，旧资产仅保留兼容身份。
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureMenuButton.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NaturePanelFrame.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureLoginBackdrop.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureHUDFrame.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureAbilityDock.uasset',
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureMinimapFrame.uasset',
+        'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_MomentumBar.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/AS_DBA_PreviewIdle.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Animations/ABP_DBA_PreviewIdle.uasset',
         # 世界移动是独立速度驱动ABP，缺任一依赖会退化为静止或空模型；预览Idle不作为行走替代。

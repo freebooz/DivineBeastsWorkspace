@@ -1,3 +1,4 @@
+// 项目客户端属性HUD：按当前控制器/Pawn事件订阅真实复制属性；换代/失活解除实际旧来源，不轮询。
 #include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
 
 #include "ViewModels/Combat/DivineBeastsPlayerStatusViewModel.h"
@@ -48,11 +49,6 @@ void UDivineBeastsPlayerStatusPanel::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (APlayerController* Controller = GetOwningPlayer())
-    {
-        Controller->OnPossessedPawnChanged.AddUniqueDynamic(
-            this, &UDivineBeastsPlayerStatusPanel::HandlePossessedPawnChanged);
-    }
     if (IsValid(ShieldBar))
     {
         // ShieldBar只是旧控件蓝图兼容字段，不再绑定或展示任何盾容量数值。
@@ -63,11 +59,12 @@ void UDivineBeastsPlayerStatusPanel::NativeConstruct()
 
 void UDivineBeastsPlayerStatusPanel::NativeDestruct()
 {
-    if (APlayerController* Controller = GetOwningPlayer())
+    if (APlayerController* Controller = BoundPawnController.Get())
     {
         Controller->OnPossessedPawnChanged.RemoveDynamic(
             this, &UDivineBeastsPlayerStatusPanel::HandlePossessedPawnChanged);
     }
+    BoundPawnController.Reset();
     if (IsValid(OwnedStatusViewModel))
     {
         OwnedStatusViewModel->UnbindFromAbilitySystem();
@@ -85,6 +82,12 @@ void UDivineBeastsPlayerStatusPanel::HandlePossessedPawnChanged(
 
 void UDivineBeastsPlayerStatusPanel::RefreshStatusSourceFromOwningPawn()
 {
+    APlayerController* Controller = GetOwningPlayer();
+    if (APlayerController* Previous = BoundPawnController.Get(); Previous && Previous != Controller)
+    { Previous->OnPossessedPawnChanged.RemoveDynamic(this, &ThisClass::HandlePossessedPawnChanged); }
+    BoundPawnController = Controller;
+    if (IsValid(Controller))
+    { Controller->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::HandlePossessedPawnChanged); }
     if (!IsValid(OwnedStatusViewModel))
     {
         OwnedStatusViewModel = NewObject<UDivineBeastsPlayerStatusViewModel>(this);

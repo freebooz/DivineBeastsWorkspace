@@ -21,6 +21,8 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsPlayerStatusPanel
     GENERATED_BODY()
 
 public:
+    /** 根布局在控制器/Pawn换代事件中重绑当前ASC；空来源清空旧生命/气势，不执行玩法写入。 */
+    void RefreshStatusSourceFromOwningPawn();
     /** 绑定事件驱动状态 ViewModel；Panel 不直接读取 ASC。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Combat")
     void BindStatusViewModel(UDivineBeastsPlayerStatusViewModel* InViewModel);
@@ -68,8 +70,8 @@ private:
     UFUNCTION()
     void HandlePossessedPawnChanged(APawn* PreviousPawn, APawn* NewPawn);
 
-    /** 仅事件驱动重绑当前拥有者ASC，换角色/断开后解除所有旧委托。 */
-    void RefreshStatusSourceFromOwningPawn();
-
+    /** 当前控制器委托的真实来源；失活和换代解除旧监听，不用已更新的拥有者查找旧控制器。 */
+    TWeakObjectPtr<APlayerController> BoundPawnController;
+    /** 所拥有只读视图模型的属性事件句柄。 */
     FDelegateHandle StatusChangedHandle;
 };

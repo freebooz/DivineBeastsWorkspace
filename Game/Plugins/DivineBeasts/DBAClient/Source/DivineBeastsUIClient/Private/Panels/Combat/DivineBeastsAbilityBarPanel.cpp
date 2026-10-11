@@ -9,11 +9,6 @@
 void UDivineBeastsAbilityBarPanel::NativeConstruct()
 {
     Super::NativeConstruct();
-    if (APlayerController* Controller = GetOwningPlayer())
-    {
-        Controller->OnPossessedPawnChanged.AddUniqueDynamic(
-            this, &UDivineBeastsAbilityBarPanel::HandlePossessedPawnChanged);
-    }
     RefreshAbilitySourceFromOwningPawn();
     // 初始没有技能授权时，也应清空并禁用真实可见的五个子槽位。
     RefreshVisualSlots();
@@ -21,11 +16,12 @@ void UDivineBeastsAbilityBarPanel::NativeConstruct()
 
 void UDivineBeastsAbilityBarPanel::NativeDestruct()
 {
-    if (APlayerController* Controller = GetOwningPlayer())
+    if (APlayerController* Controller = BoundPawnController.Get())
     {
         Controller->OnPossessedPawnChanged.RemoveDynamic(
             this, &UDivineBeastsAbilityBarPanel::HandlePossessedPawnChanged);
     }
+    BoundPawnController.Reset();
     if (AbilityBarViewModel)
     {
         AbilityBarViewModel->OnSlotsChanged().Remove(ViewModelSlotsHandle);
@@ -44,6 +40,12 @@ void UDivineBeastsAbilityBarPanel::HandlePossessedPawnChanged(
 
 bool UDivineBeastsAbilityBarPanel::RefreshAbilitySourceFromOwningPawn()
 {
+    APlayerController* Controller = GetOwningPlayer();
+    if (APlayerController* Previous = BoundPawnController.Get(); Previous && Previous != Controller)
+    { Previous->OnPossessedPawnChanged.RemoveDynamic(this, &ThisClass::HandlePossessedPawnChanged); }
+    BoundPawnController = Controller;
+    if (IsValid(Controller))
+    { Controller->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::HandlePossessedPawnChanged); }
     if (!AbilityBarViewModel)
     {
         AbilityBarViewModel = NewObject<UDivineBeastsAbilityBarViewModel>(this);

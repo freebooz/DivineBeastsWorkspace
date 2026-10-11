@@ -1,3 +1,5 @@
+// 项目层本地玩家UI组合：消费应用只读状态，注册平台页面/主题并桥接真实控制器生命周期。
+// 不发送业务HTTP或持有玩法权威；退出撤销页面、适配器和委托，服务器目标不装配本模块。
 #include "DivineBeastsUIClientSubsystem.h"
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
@@ -11,6 +13,7 @@
 #include "Dialogs/GamePlatformToastWidget.h"
 #include "Engine/LocalPlayer.h"
 #include "Layers/GamePlatformUILayerStack.h"
+#include "Layers/DivineBeastsRootLayout.h"
 #include "Loading/GamePlatformLoadingScreenService.h"
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 #include "Screens/DivineBeastsUIScreenCatalog.h"
@@ -36,10 +39,21 @@ namespace
 void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
 {
     Super::PlayerControllerChanged(NewPlayerController);
-    if (!IsValid(NewPlayerController)) return;
+    if (!IsValid(NewPlayerController))
+    {
+        // 世界退出先撤销上一控制器的数据来源；没有控制器时不创建根布局、不拉取流程快照。
+        if (auto* Root = PlatformUI ? Cast<UDivineBeastsRootLayout>(PlatformUI->GetRootLayout()) : nullptr)
+        { Root->RefreshForPlayerController(nullptr); }
+        return;
+    }
     // 世界退出可以取消在途页面；新控制器是真实可创建Widget的生命周期通知，消费现有快照即可恢复。
     EnsureConfiguredTheme();
     EnsureDefaultRootLayout();
+    if (auto* Root = PlatformUI ? Cast<UDivineBeastsRootLayout>(PlatformUI->GetRootLayout()) : nullptr)
+    {
+        // Root跨Travel保留：真实控制器通知恢复作者HUD和Pawn订阅，不靠登录状态重复广播或Tick。
+        Root->RefreshForPlayerController(NewPlayerController);
+    }
     PullInitialState();
 }
 

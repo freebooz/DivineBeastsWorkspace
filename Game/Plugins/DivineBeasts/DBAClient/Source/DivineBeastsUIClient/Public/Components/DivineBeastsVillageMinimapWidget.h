@@ -18,6 +18,9 @@ public:
     void BindToPawn(APawn* Pawn);
     /** 世界厘米投影到[0,1]；+X为北/+Y为东，边界中心0、尺寸50400cm；非法输入返回false且不改OutUV。 */
     static bool ProjectVillagePosition(const FVector& PositionCentimeters, FVector2D& OutUV);
+    /** 本地显示裁剪：倍率1/2/4不改变世界坐标；围绕玩家且不越过底图边缘，圆外标记沿方位收敛到半径0.43。非法值不修改输出。 */
+    static bool ProjectMapViewport(const FVector2D& MapUV, float ZoomMultiplier,
+        FVector2D& OutMinimumUV, FVector2D& OutMaximumUV, FVector2D& OutMarkerUV);
 
 protected:
     virtual void NativeConstruct() override;
@@ -25,6 +28,16 @@ protected:
     virtual void BeginDestroy() override;
 
 private:
+    /** 三个按钮只改变本地地图视野，未绑定真实角色或底图时拒绝命令。 */
+    UFUNCTION() void HandleZoomIn();
+    UFUNCTION() void HandleZoomOut();
+    UFUNCTION() void HandleResetZoom();
+    /** 激活/失活配对订阅作者控件；所有权仍属于本Widget，不建立全局输入或网络命令。 */
+    void BindZoomButtons(bool bBind);
+    /** 根据真实加载状态与倍率边界更新按钮，保持字体及控件尺寸固定。 */
+    void RefreshZoomControls();
+    /** 游戏线程本地命令；重复值无副作用，无角色时不修改缓存。 */
+    void ChangeZoomLevel(uint8 NewZoomLevel);
     /** 移动组件完成位置更新后刷新；DeltaSeconds等仅描述事件，不决定权威位置。 */
     UFUNCTION()
     void HandleMovementUpdated(float DeltaSeconds, FVector OldLocation, FVector OldVelocity);
@@ -41,6 +54,10 @@ private:
     uint64 BindingGeneration = 0;
     /** 只增不减，避免同一Widget重绑相同MapId被平台版本门禁拒绝。 */
     int64 SnapshotRevision = 0;
+    /** 仅本Widget拥有的显示状态：0/1/2分别为1/2/4倍，解绑重置；不写业务ViewModel或持久化配置。 */
+    uint8 ZoomLevel = 0;
+    /** -1强制首次/变更后的绘制，避免静止玩家点击缩放被位置去重吞掉。 */
+    int32 LastRenderedZoomLevel = INDEX_NONE;
     /** 防止Super销毁重入NativeDestruct或取消请求期间的回调重新发布界面。 */
     bool bDestroyingNativeResources = false;
 };

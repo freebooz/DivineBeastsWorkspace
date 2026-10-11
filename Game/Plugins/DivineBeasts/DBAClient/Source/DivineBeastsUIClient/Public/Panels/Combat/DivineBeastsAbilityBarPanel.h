@@ -90,6 +90,8 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsAbilityBarViewModel> AbilityBarViewModel;
     FDelegateHandle ViewModelSlotsHandle;
+    /** 实际委托来源；控制器跨地图换代后从旧来源解绑，不能从新GetOwningPlayer移除旧订阅。 */
+    TWeakObjectPtr<APlayerController> BoundPawnController;
 
     UPROPERTY(Transient)
     TArray<FGamePlatformUISlotState> AbilitySlots;

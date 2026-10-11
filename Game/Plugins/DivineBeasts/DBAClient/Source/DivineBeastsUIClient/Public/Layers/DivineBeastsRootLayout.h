@@ -23,6 +23,11 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsRootLayout
 {
     GENERATED_BODY()
 
+public:
+    /** 本地玩家控制器换代时恢复作者HUD并更新拥有者上下文；仅游戏线程UI事件调用。
+     * 不恢复上一世界动态HUD、不授予技能；空控制器撤销订阅并隐藏当前展示。 */
+    void RefreshForPlayerController(APlayerController* Controller);
+
 protected:
     /** 战斗主HUD只应在拥有本地有效战斗Pawn时出现；登录、选角及切换世界时自动隐藏。 */
     virtual void NativeConstruct() override;
@@ -33,6 +38,9 @@ protected:
     TObjectPtr<UDivineBeastsCombatPanelBase> CombatHUD = nullptr;
 
 private:
+    friend class FDivineBeastsHUDTravelOwnershipTest;
+    /** 根布局跨地图存活，委托必须从实际绑定的旧控制器移除，不能用已更新的GetOwningPlayer查旧来源。 */
+    TWeakObjectPtr<APlayerController> BoundHUDController;
     UFUNCTION()
     void HandlePossessedPawnChanged(APawn* PreviousPawn, APawn* NewPawn);
 

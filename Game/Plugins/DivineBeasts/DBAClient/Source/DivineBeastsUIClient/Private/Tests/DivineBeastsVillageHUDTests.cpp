@@ -3,11 +3,174 @@
 #include "Components/DivineBeastsPlayerPortraitWidget.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/StrongObjectPtr.h"
+#include "UObject/Package.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Image.h"
+#include "Components/TextBlock.h"
+#include "Components/GamePlatformResourceBarWidget.h"
+#include "Layers/DivineBeastsRootLayout.h"
+#include "Panels/Combat/DivineBeastsCombatPanelBase.h"
+#include "Components/Overlay.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
+#include "Engine/LocalPlayer.h"
+#include "GameFramework/PlayerController.h"
+#include "Misc/ScopeExit.h"
 #include <limits>
 
 #if WITH_DEV_AUTOMATION_TESTS
+// 同一世界UV经过1/2/4倍显示后仍使用真实位置；验证边缘裁剪、圆形标记边界和拒绝非法值后的输出保持。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsMinimapViewportTest,
+    "DivineBeasts.UI.Village.MinimapViewport", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsMinimapViewportTest::RunTest(const FString&)
+{
+    FVector2D Minimum, Maximum, Marker;
+    TestTrue(TEXT("中心全图有效"), UDivineBeastsVillageMinimapWidget::ProjectMapViewport(FVector2D(0.5), 1, Minimum, Maximum, Marker));
+    TestEqual(TEXT("全图最小UV"), Minimum, FVector2D::ZeroVector);
+    TestEqual(TEXT("全图最大UV"), Maximum, FVector2D(1));
+    TestEqual(TEXT("中心标记"), Marker, FVector2D(0.5));
+    for (float Zoom : {2.f, 4.f})
+    {
+        UDivineBeastsVillageMinimapWidget::ProjectMapViewport(FVector2D(0.5), Zoom, Minimum, Maximum, Marker);
+        TestTrue(TEXT("裁剪宽度与倍率一致"), FMath::IsNearlyEqual(Maximum.X - Minimum.X, 1.0 / Zoom));
+        TestEqual(TEXT("居中玩家不漂移"), Marker, FVector2D(0.5));
+        UDivineBeastsVillageMinimapWidget::ProjectMapViewport(FVector2D(0, 1), Zoom, Minimum, Maximum, Marker);
+        TestTrue(TEXT("底图边缘不越界"), Minimum.X >= 0 && Minimum.Y >= 0 && Maximum.X <= 1 && Maximum.Y <= 1);
+        const FVector2D Offset = Marker - FVector2D(0.5);
+        TestTrue(TEXT("圆边标记完整可见"), Offset.Size() <= 0.430001);
+        TestTrue(TEXT("圆边保留西南方位"), Offset.X < 0 && Offset.Y > 0 && FMath::IsNearlyEqual(-Offset.X, Offset.Y));
+    }
+    const FVector2D PreviousMarker = Marker;
+    TestFalse(TEXT("NaN拒绝"), UDivineBeastsVillageMinimapWidget::ProjectMapViewport(FVector2D(std::numeric_limits<double>::quiet_NaN(), 0), 2, Minimum, Maximum, Marker));
+    TestFalse(TEXT("零倍率拒绝"), UDivineBeastsVillageMinimapWidget::ProjectMapViewport(FVector2D(0.5), 0, Minimum, Maximum, Marker));
+    TestFalse(TEXT("不支持倍率拒绝"), UDivineBeastsVillageMinimapWidget::ProjectMapViewport(FVector2D(0.5), 3, Minimum, Maximum, Marker));
+    TestEqual(TEXT("失败保留结果"), Marker, PreviousMarker);
+    return true;
+}
+
+// 真实资源条资产消费受控只读夹具，验证文字、隐藏和非法输入；不向GAS写值，不冒充联网角色。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsResourceValueDisplayTest,
+    "DivineBeasts.UI.Village.ResourceValueDisplay", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsResourceValueDisplayTest::RunTest(const FString&)
+{
+    for (const TCHAR* Asset : {TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_HealthBar.WBP_DBA_UI_HealthBar_C"),
+                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_MomentumBar.WBP_DBA_UI_MomentumBar_C")})
+    {
+        UClass* Class = LoadClass<UGamePlatformResourceBarWidget>(nullptr, Asset);
+        if (!TestNotNull(TEXT("真实资源条类"), Class)) return false;
+        TStrongObjectPtr<UGamePlatformResourceBarWidget> Bar(NewObject<UGamePlatformResourceBarWidget>(GetTransientPackage(), Class));
+        Bar->Initialize();
+        UTextBlock* ValueText = Cast<UTextBlock>(Bar->GetWidgetFromName(TEXT("ResourceValueText")));
+        if (!TestNotNull(TEXT("数值文本保留"), ValueText)) return false;
+        const auto FontSize = ValueText->GetFont().Size;
+        FGamePlatformUIResourceBarState Snapshot;
+        Snapshot.ResourceId = TEXT("Resource.TestFixture");
+        Snapshot.CurrentValue = 2580;
+        Snapshot.MaximumValue = 2580;
+        Bar->ApplyResourceState(Snapshot);
+        TestEqual(TEXT("数字来自快照"), ValueText->GetText().ToString(), FString(TEXT("2580 / 2580")));
+        TestEqual(TEXT("显示事件不缩放字体"), ValueText->GetFont().Size, FontSize);
+        Snapshot.CurrentValue = 1.49999;
+        Snapshot.MaximumValue = 100;
+        Bar->ApplyResourceState(Snapshot);
+        const FString PreviousNumber = ValueText->GetText().ToString();
+        Snapshot.CurrentValue = 1.50001;
+        Bar->ApplyResourceState(Snapshot);
+        TestNotEqual(TEXT("细小变化仍更新数值文字"), ValueText->GetText().ToString(), PreviousNumber);
+        Snapshot.MaximumValue = 0.00009;
+        Bar->ApplyResourceState(Snapshot);
+        TestTrue(TEXT("阈值下未知"), ValueText->GetText().IsEmpty());
+        Snapshot.MaximumValue = 0.00011;
+        Bar->ApplyResourceState(Snapshot);
+        TestFalse(TEXT("跨阈值后恢复显示"), ValueText->GetText().IsEmpty());
+        Snapshot.bShowValueText = false;
+        Bar->ApplyResourceState(Snapshot);
+        TestTrue(TEXT("隐藏立即清空"), ValueText->GetText().IsEmpty());
+        Snapshot.bShowValueText = true;
+        Snapshot.MaximumValue = 0;
+        Bar->ApplyResourceState(Snapshot);
+        TestTrue(TEXT("未知最大值不伪造0/0"), ValueText->GetText().IsEmpty());
+        Snapshot.MaximumValue = 2580;
+        Snapshot.CurrentValue = std::numeric_limits<double>::quiet_NaN();
+        Bar->ApplyResourceState(Snapshot);
+        TestTrue(TEXT("非法快照清空数字"), ValueText->GetText().IsEmpty());
+        TestEqual(TEXT("非法比例保持有限0"), Snapshot.GetNormalizedValue(), 0.0);
+    }
+    return true;
+}
+
+// 真实已保存根布局执行与Travel相同的ClearHUD：保留/恢复作者组合HUD，临时世界HUD不能复活。
+// 此用例不改资产、不连接业务后端；原实现刷新只改变Visibility，不能把已移除的组合重新挂回树。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsHUDTravelOwnershipTest,
+    "DivineBeasts.UI.Village.TravelRestoresAuthoredHUD", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsHUDTravelOwnershipTest::RunTest(const FString&)
+{
+    UClass* Class = LoadClass<UDivineBeastsRootLayout>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C"));
+    if (!TestNotNull(TEXT("真实根布局类"), Class)) return false;
+    TStrongObjectPtr<UDivineBeastsRootLayout> Root(NewObject<UDivineBeastsRootLayout>(GetTransientPackage(), Class));
+    Root->Initialize();
+    if (!TestNotNull(TEXT("预置组合HUD已实际绑定"), Root->CombatHUD.Get()) ||
+        !TestNotNull(TEXT("预置HUD层"), Root->HUDLayer.Get())) return false;
+    TestEqual(TEXT("旅行前组合属于根布局"), Root->CombatHUD->GetParent(), static_cast<UPanelWidget*>(Root->HUDLayer.Get()));
+    auto* Temporary = NewObject<UImage>(Root.Get());
+    TestTrue(TEXT("真实加入临时世界HUD"), Root->AddHUDWidget(Temporary));
+    Root->ClearHUD();
+    Root->HandlePossessedPawnChanged(nullptr, nullptr);
+    TestEqual(TEXT("旅行后刷新恢复作者组合"), Root->CombatHUD->GetParent(), static_cast<UPanelWidget*>(Root->HUDLayer.Get()));
+    TestNull(TEXT("临时世界HUD清理后不恢复"), Temporary->GetParent());
+    Root->HandlePossessedPawnChanged(nullptr, nullptr);
+    TestEqual(TEXT("重复事件不会重复添加作者HUD"), Root->HUDLayer->GetChildrenCount(), 1);
+    TestEqual(TEXT("无本地角色时恢复布局仍隐藏"), Root->CombatHUD->GetVisibility(), ESlateVisibility::Collapsed);
+    // 同一LocalPlayer经历控制器换代，实际根上下文和委托来源必须同步；空控制器与退出均撤销旧来源。
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("独立控制器回归世界"), World) || !TestNotNull(TEXT("Engine"), GEngine)) return false;
+    UWorld* DestinationWorld = UWorld::CreateWorld(EWorldType::Game, false);
+    ON_SCOPE_EXIT { Root->NativeDestruct(); if (DestinationWorld) DestinationWorld->DestroyWorld(false); World->DestroyWorld(false); };
+    if (!TestNotNull(TEXT("旅行目标独立世界"), DestinationWorld)) return false;
+    auto* LocalPlayer = NewObject<ULocalPlayer>(GEngine);
+    auto* PreviousController = World->SpawnActor<APlayerController>();
+    auto* CurrentController = DestinationWorld->SpawnActor<APlayerController>();
+    if (!TestNotNull(TEXT("旧控制器"), PreviousController) || !TestNotNull(TEXT("目标控制器"), CurrentController)) return false;
+    // 夹具不启动世界玩法；显式注册真实控制器，使LocalPlayer可按各自世界查找，退出配对移除。
+    World->AddController(PreviousController);
+    DestinationWorld->AddController(CurrentController);
+    ON_SCOPE_EXIT { World->RemoveController(PreviousController); DestinationWorld->RemoveController(CurrentController); };
+    PreviousController->SetPlayer(LocalPlayer);
+    TestEqual(TEXT("夹具旧世界控制器已注册"), LocalPlayer->GetPlayerController(World), PreviousController);
+    TestTrue(TEXT("夹具旧上下文有效"), FLocalPlayerContext(PreviousController).IsValid());
+    Root->SetPlayerContext(FLocalPlayerContext(PreviousController));
+    Root->NativeConstruct();
+    auto* AbilityPanel = Cast<UUserWidget>(Root->CombatHUD->GetWidgetFromName(TEXT("AbilityBar")));
+    auto* StatusPanel = Cast<UUserWidget>(Root->CombatHUD->GetWidgetFromName(TEXT("PlayerStatus")));
+    if (!TestNotNull(TEXT("真实技能面板"), AbilityPanel) || !TestNotNull(TEXT("真实属性面板"), StatusPanel)) return false;
+    // 先实际读取旧World固化缓存；同世界换Controller无法检测遗漏的上下文传播。
+    TestEqual(TEXT("根旧世界缓存"), Root->GetWorld(), World);
+    TestEqual(TEXT("组合旧世界缓存"), Root->CombatHUD->GetWorld(), World);
+    TestEqual(TEXT("技能旧世界缓存"), AbilityPanel->GetWorld(), World);
+    TestEqual(TEXT("状态旧世界缓存"), StatusPanel->GetWorld(), World);
+    Root->ClearHUD();
+    CurrentController->SetPlayer(LocalPlayer);
+    TestEqual(TEXT("夹具目标世界控制器已注册"), LocalPlayer->GetPlayerController(DestinationWorld), CurrentController);
+    TestTrue(TEXT("夹具目标上下文有效"), FLocalPlayerContext(CurrentController).IsValid());
+    Root->RefreshForPlayerController(CurrentController);
+    TestEqual(TEXT("组合继承当前控制器上下文"), Root->CombatHUD->GetOwningPlayer(), CurrentController);
+    TestEqual(TEXT("根世界缓存已换代"), Root->GetWorld(), DestinationWorld);
+    TestEqual(TEXT("拆下的组合世界缓存已换代"), Root->CombatHUD->GetWorld(), DestinationWorld);
+    TestEqual(TEXT("技能世界缓存已换代"), AbilityPanel->GetWorld(), DestinationWorld);
+    TestEqual(TEXT("属性世界缓存已换代"), StatusPanel->GetWorld(), DestinationWorld);
+    TestFalse(TEXT("旧控制器委托已撤销"), PreviousController->OnPossessedPawnChanged.IsAlreadyBound(Root.Get(), &UDivineBeastsRootLayout::HandlePossessedPawnChanged));
+    TestTrue(TEXT("新控制器有真实Pawn事件订阅"), CurrentController->OnPossessedPawnChanged.IsAlreadyBound(Root.Get(), &UDivineBeastsRootLayout::HandlePossessedPawnChanged));
+    Root->RefreshForPlayerController(CurrentController);
+    TestEqual(TEXT("换代不复制HUD实例"), Root->HUDLayer->GetChildrenCount(), 1);
+    Root->RefreshForPlayerController(nullptr);
+    TestFalse(TEXT("断开后解除当前Pawn订阅"), CurrentController->OnPossessedPawnChanged.IsAlreadyBound(Root.Get(), &UDivineBeastsRootLayout::HandlePossessedPawnChanged));
+    TestNull(TEXT("断开清空根控制器上下文"), Root->GetOwningPlayer());
+    TestNull(TEXT("断开清空组合控制器上下文"), Root->CombatHUD->GetOwningPlayer());
+    TestEqual(TEXT("断开隐藏组合HUD"), Root->CombatHUD->GetVisibility(), ESlateVisibility::Collapsed);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsVillageMapProjectionTest,
     "DivineBeasts.UI.Village.MinimapProjection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsVillageMapProjectionTest::RunTest(const FString&)

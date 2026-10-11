@@ -1,3 +1,5 @@
+// 项目客户端根布局：保存作者组合HUD，按本地控制器/Pawn事件重绑视图；平台Travel仍清理临时世界控件。
+// 只恢复本根布局拥有的既有资产实例，退出解除旧委托与展示来源，不持有玩法权威或轮询世界。
 #include "Layers/DivineBeastsRootLayout.h"
 
 #include "Components/GamePlatformAbilitySystemComponent.h"
@@ -7,11 +9,16 @@
 #include "Components/TextBlock.h"
 #include "Components/WrapBox.h"
 #include "Components/WrapBoxSlot.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffectTypes.h"
 #include "Tags/GamePlatformCombatTags.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/LocalPlayer.h"
+#include "Panels/Combat/DivineBeastsAbilityBarPanel.h"
+#include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
 #include "Panels/Combat/DivineBeastsCombatPanelBase.h"
 #include "Components/DivineBeastsPlayerPortraitWidget.h"
 #include "Components/DivineBeastsVillageMinimapWidget.h"
@@ -88,21 +95,36 @@ void UDivineBeastsRootLayout::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (APlayerController* Controller = GetOwningPlayer())
+    RefreshForPlayerController(GetOwningPlayer());
+}
+
+void UDivineBeastsRootLayout::RefreshForPlayerController(APlayerController* Controller)
+{
+    if (APlayerController* Previous = BoundHUDController.Get(); Previous && Previous != Controller)
     {
-        Controller->OnPossessedPawnChanged.AddUniqueDynamic(
-            this, &UDivineBeastsRootLayout::HandlePossessedPawnChanged);
+        Previous->OnPossessedPawnChanged.RemoveDynamic(this, &ThisClass::HandlePossessedPawnChanged);
+    }
+    BoundHUDController = Controller;
+    // 断开也必须传播空上下文，否则跨地图保留的控件仍可能读取上一控制器的Pawn。
+    const FLocalPlayerContext Context = IsValid(Controller)
+        ? FLocalPlayerContext(Controller) : FLocalPlayerContext();
+    SetPlayerContext(Context);
+    if (IsValid(CombatHUD)) { CombatHUD->SetPlayerContext(Context); }
+    if (IsValid(Controller))
+    {
+        Controller->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::HandlePossessedPawnChanged);
     }
     RefreshCombatHUDVisibility();
 }
 
 void UDivineBeastsRootLayout::NativeDestruct()
 {
-    if (APlayerController* Controller = GetOwningPlayer())
+    if (APlayerController* Controller = BoundHUDController.Get())
     {
         Controller->OnPossessedPawnChanged.RemoveDynamic(
             this, &UDivineBeastsRootLayout::HandlePossessedPawnChanged);
     }
+    BoundHUDController.Reset();
 
     UnbindCombatEffects();
     if (IsValid(CombatHUD))
@@ -131,9 +153,20 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
         return;
     }
 
+    // 平台PrepareForTravel会清空HUDLayer；作者组合由项目Root持有，不等同于上一世界临时HUD。
+    // 仅恢复自己的已保存实例，不偷取挂到其他面板的控件，也不复活被清理的动态控件。
+    if (!CombatHUD->GetParent() && IsValid(HUDLayer))
+    {
+        if (UOverlaySlot* HUDSlot = HUDLayer->AddChildToOverlay(CombatHUD))
+        {
+            HUDSlot->SetHorizontalAlignment(HAlign_Fill);
+            HUDSlot->SetVerticalAlignment(VAlign_Fill);
+        }
+    }
+
     const APawn* CurrentPawn = GetOwningPlayerPawn();
     const bool bHasGameplayAvatar =
-        IsValid(CurrentPawn) &&
+        IsValid(CurrentPawn) && CurrentPawn->IsLocallyControlled() &&
         IsValid(CurrentPawn->FindComponentByClass<UGamePlatformAbilitySystemComponent>()) &&
         IsValid(CurrentPawn->FindComponentByClass<UGamePlatformCombatComponent>());
 
@@ -157,6 +190,11 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
         Minimap->SetOwningPlayer(GetOwningPlayer());
         Minimap->BindToPawn(DisplayPawn);
     }
+    // 保留的根布局不一定再次NativeConstruct；当前Pawn事件统一重绑真实技能/属性来源。
+    if (auto* Abilities = Cast<UDivineBeastsAbilityBarPanel>(CombatHUD->GetWidgetFromName(TEXT("AbilityBar"))))
+    { Abilities->RefreshAbilitySourceFromOwningPawn(); }
+    if (auto* Status = Cast<UDivineBeastsPlayerStatusPanel>(CombatHUD->GetWidgetFromName(TEXT("PlayerStatus"))))
+    { Status->RefreshStatusSourceFromOwningPawn(); }
 }
 
 void UDivineBeastsRootLayout::BindCombatEffects(APawn* Pawn)
