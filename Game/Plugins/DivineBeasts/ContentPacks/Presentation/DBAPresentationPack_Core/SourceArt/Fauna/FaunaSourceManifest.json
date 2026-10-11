@@ -1,0 +1,552 @@
+{
+  "schemaVersion": 1,
+  "generator": "Tools/Blender/Fauna/GenerateFaunaModels.py",
+  "generatorSha256": "1844e3179091e39503d279bda5dc67f47ea68975311a9b041deb1c86703f30ea",
+  "blenderVersion": "5.2.1 LTS",
+  "sourceUnits": "meters",
+  "targetUnits": "centimeters",
+  "axes": {
+    "forward": "+X",
+    "lateral": "Y",
+    "up": "+Z"
+  },
+  "vertexColorLayer": "FaunaColorMotionWeight",
+  "fbx": {
+    "axisForward": "X",
+    "axisUp": "Z",
+    "applyUnitScale": true,
+    "applyScaleOptions": "FBX_SCALE_UNITS",
+    "colorsType": "LINEAR"
+  },
+  "ueImport": {
+    "factory": "FbxFactory",
+    "convertScene": true,
+    "convertSceneUnit": true,
+    "importUniformScale": 1.0,
+    "vertexColorImportOption": "REPLACE",
+    "normalImportMethod": "IMPORT_NORMALS",
+    "autoGenerateCollision": false,
+    "processConsoleVariable": "Interchange.FeatureFlags.Import.FBX 0"
+  },
+  "normalConvention": "OpenGL tangent normal (+Y); UE import should enable FlipGreenChannel",
+  "materialContract": "Two-sided; BaseColorTexture * VertexColor.rgb; VertexColor.a=motion weight; no opacity cutout",
+  "technicalValidation": "passed",
+  "humanArtAcceptance": "pending",
+  "species": [
+    {
+      "species": "ButterflyAzure",
+      "object": "SM_DBA_ButterflyAzure",
+      "mesh": "Meshes/SM_DBA_ButterflyAzure.fbx",
+      "geometry": {
+        "vertices": 2321,
+        "triangles": 4306,
+        "minTriangleAreaM2": 8.899139106081489e-09,
+        "boundsMinM": [
+          -0.05180000141263008,
+          -0.06300000101327896,
+          -0.007125372067093849
+        ],
+        "boundsMaxM": [
+          0.047200001776218414,
+          0.06300000101327896,
+          0.009523080661892891
+        ],
+        "dimensionsM": [
+          0.0990000031888485,
+          0.12600000202655792,
+          0.01664845272898674
+        ],
+        "maxExtentCm": 6.300000101327896,
+        "vertexColorLayer": "FaunaColorMotionWeight",
+        "alphaMin": 0.0,
+        "alphaMax": 1.0,
+        "colorVariants": 8,
+        "rgba8BitMultisetSha256": "dcc645073c0b066f4a5b2406dccac8f69ef4bea9623aa89d326f128a73b46591",
+        "zeroWeightCorners": 6306,
+        "fullWeightCorners": 5172,
+        "uvMin": [
+          0.0,
+          0.028750000521540642
+        ],
+        "uvMax": [
+          0.949999988079071,
+          0.9003451466560364
+        ],
+        "duplicateTriangles": 0,
+        "degenerateTriangles": 0
+      },
+      "fbxRoundtrip": {
+        "vertices": 2321,
+        "triangles": 4306,
+        "minTriangleAreaM2": 8.899139106081489e-09,
+        "boundsMinM": [
+          -0.05180000513792038,
+          -0.06300000846385956,
+          -0.007125372067093849
+        ],
+        "boundsMaxM": [
+          0.047200001776218414,
+          0.06299999356269836,
+          0.009523080661892891
+        ],
+        "dimensionsM": [
+          0.0990000069141388,
+          0.12600000202655792,
+          0.01664845272898674
+        ],
+        "maxExtentCm": 6.300000101327896,
+        "vertexColorLayer": "FaunaColorMotionWeight",
+        "alphaMin": 0.0,
+        "alphaMax": 1.0,
+        "colorVariants": 8,
+        "rgba8BitMultisetSha256": "dcc645073c0b066f4a5b2406dccac8f69ef4bea9623aa89d326f128a73b46591",
+        "zeroWeightCorners": 6306,
+        "fullWeightCorners": 5172,
+        "uvMin": [
+          0.0,
+          0.028750000521540642
+        ],
+        "uvMax": [
+          0.949999988079071,
+          0.9003451466560364
+        ],
+        "duplicateTriangles": 0,
+        "degenerateTriangles": 0
+      },
+      "parts": [
+        {
+          "name": "LeftForewing",
+          "firstVertex": 0,
+          "vertexCount": 316
+        },
+        {
+          "name": "LeftHindwing",
+          "firstVertex": 316,
+          "vertexCount": 281
+        },
+        {
+          "name": "RightForewing",
+          "firstVertex": 597,
+          "vertexCount": 316
+        },
+        {
+          "name": "RightHindwing",
+          "firstVertex": 913,
+          "vertexCount": 281
+        },
+        {
+          "name": "Abdomen",
+          "firstVertex": 1194,
+          "vertexCount": 211
+        },
+        {
+          "name": "Thorax",
+          "firstVertex": 1405,
+          "vertexCount": 191
+        },
+        {
+          "name": "Head",
+          "firstVertex": 1596,
+          "vertexCount": 135
+        },
+        {
+          "name": "LeftEye",
+          "firstVertex": 1731,
+          "vertexCount": 80
+        },
+        {
+          "name": "LeftAntenna",
+          "firstVertex": 1811,
+          "vertexCount": 92
+        },
+        {
+          "name": "LeftAntennaClub",
+          "firstVertex": 1903,
+          "vertexCount": 57
+        },
+        {
+          "name": "LeftLeg1",
+          "firstVertex": 1960,
+          "vertexCount": 22
+        },
+        {
+          "name": "LeftLeg2",
+          "firstVertex": 1982,
+          "vertexCount": 22
+        },
+        {
+          "name": "LeftLeg3",
+          "firstVertex": 2004,
+          "vertexCount": 22
+        },
+        {
+          "name": "RightEye",
+          "firstVertex": 2026,
+          "vertexCount": 80
+        },
+        {
+          "name": "RightAntenna",
+          "firstVertex": 2106,
+          "vertexCount": 92
+        },
+        {
+          "name": "RightAntennaClub",
+          "firstVertex": 2198,
+          "vertexCount": 57
+        },
+        {
+          "name": "RightLeg1",
+          "firstVertex": 2255,
+          "vertexCount": 22
+        },
+        {
+          "name": "RightLeg2",
+          "firstVertex": 2277,
+          "vertexCount": 22
+        },
+        {
+          "name": "RightLeg3",
+          "firstVertex": 2299,
+          "vertexCount": 22
+        }
+      ],
+      "textures": {
+        "BaseColor": {
+          "path": "Textures/T_DBA_ButterflyAzure_BaseColor_Source.png",
+          "size": [
+            1024,
+            1024
+          ],
+          "srgb": true,
+          "channelStdDev": [
+            0.1998542788316705,
+            0.20501077973152956,
+            0.27464661567471926
+          ]
+        },
+        "Roughness": {
+          "path": "Textures/T_DBA_ButterflyAzure_Roughness_Source.png",
+          "size": [
+            1024,
+            1024
+          ],
+          "srgb": false,
+          "channelStdDev": [
+            0.037370442533619666,
+            0.037370442533619666,
+            0.037370442533619666
+          ]
+        },
+        "Normal": {
+          "path": "Textures/T_DBA_ButterflyAzure_Normal_Source.png",
+          "size": [
+            1024,
+            1024
+          ],
+          "srgb": false,
+          "channelStdDev": [
+            0.06015776842832565,
+            0.06809768080711365,
+            0.009011584334075451
+          ]
+        }
+      },
+      "technicalValidation": "passed",
+      "humanArtAcceptance": "pending",
+      "motionContract": {
+        "hingeYM": 0.0025,
+        "hingeZM": 0.0012,
+        "forewingBaseZM": 0.0018,
+        "hindwingBaseZM": 0.0009,
+        "maxCamberM": 0.0012,
+        "defaultWingAngleDegrees": 0,
+        "alpha": "smoothstep(0.0025,0.018,abs(Y)) on wings; zero on body/antennae/legs",
+        "uv": "Wing U=abs(Y)/0.067; V=0.15+(X+0.055)/0.105*0.78. Body V=0.025..0.07."
+      }
+    },
+    {
+      "species": "FishSilver",
+      "object": "SM_DBA_FishSilver",
+      "mesh": "Meshes/SM_DBA_FishSilver.fbx",
+      "geometry": {
+        "vertices": 2750,
+        "triangles": 5138,
+        "minTriangleAreaM2": 8.898932863090658e-09,
+        "boundsMinM": [
+          -0.14199218153953552,
+          -0.04067187383770943,
+          -0.04839843884110451
+        ],
+        "boundsMaxM": [
+          0.09399999678134918,
+          0.04067187383770943,
+          0.053187500685453415
+        ],
+        "dimensionsM": [
+          0.2359921783208847,
+          0.08134374767541885,
+          0.10158593952655792
+        ],
+        "maxExtentCm": 11.799608916044235,
+        "vertexColorLayer": "FaunaColorMotionWeight",
+        "alphaMin": 0.0,
+        "alphaMax": 1.0,
+        "colorVariants": 16,
+        "rgba8BitMultisetSha256": "d685298dada5aac58025eb41cb569644b96bdbb8d94caefa4c5a2c731055496e",
+        "zeroWeightCorners": 7404,
+        "fullWeightCorners": 491,
+        "uvMin": [
+          0.0,
+          0.017999999225139618
+        ],
+        "uvMax": [
+          0.9800000190734863,
+          0.8799999952316284
+        ],
+        "duplicateTriangles": 0,
+        "degenerateTriangles": 0
+      },
+      "fbxRoundtrip": {
+        "vertices": 2750,
+        "triangles": 5138,
+        "minTriangleAreaM2": 8.898932863090658e-09,
+        "boundsMinM": [
+          -0.14199218153953552,
+          -0.04067187383770943,
+          -0.04839843884110451
+        ],
+        "boundsMaxM": [
+          0.09399999678134918,
+          0.04067187383770943,
+          0.053187500685453415
+        ],
+        "dimensionsM": [
+          0.2359921783208847,
+          0.08134374767541885,
+          0.10158593952655792
+        ],
+        "maxExtentCm": 11.799608916044235,
+        "vertexColorLayer": "FaunaColorMotionWeight",
+        "alphaMin": 0.0,
+        "alphaMax": 1.0,
+        "colorVariants": 16,
+        "rgba8BitMultisetSha256": "d685298dada5aac58025eb41cb569644b96bdbb8d94caefa4c5a2c731055496e",
+        "zeroWeightCorners": 7404,
+        "fullWeightCorners": 491,
+        "uvMin": [
+          0.0,
+          0.017999999225139618
+        ],
+        "uvMax": [
+          0.9800000190734863,
+          0.8799999952316284
+        ],
+        "duplicateTriangles": 0,
+        "degenerateTriangles": 0
+      },
+      "parts": [
+        {
+          "name": "StreamlinedBody",
+          "firstVertex": 0,
+          "vertexCount": 1046
+        },
+        {
+          "name": "ForkedCaudalFin",
+          "firstVertex": 1046,
+          "vertexCount": 181
+        },
+        {
+          "name": "DorsalFin",
+          "firstVertex": 1227,
+          "vertexCount": 101
+        },
+        {
+          "name": "AnalFin",
+          "firstVertex": 1328,
+          "vertexCount": 101
+        },
+        {
+          "name": "LeftPectoralFin",
+          "firstVertex": 1429,
+          "vertexCount": 101
+        },
+        {
+          "name": "LeftPelvicFin",
+          "firstVertex": 1530,
+          "vertexCount": 81
+        },
+        {
+          "name": "LeftIris",
+          "firstVertex": 1611,
+          "vertexCount": 173
+        },
+        {
+          "name": "LeftPupil",
+          "firstVertex": 1784,
+          "vertexCount": 138
+        },
+        {
+          "name": "LeftEyeGlint",
+          "firstVertex": 1922,
+          "vertexCount": 57
+        },
+        {
+          "name": "LeftGillCover",
+          "firstVertex": 1979,
+          "vertexCount": 62
+        },
+        {
+          "name": "RightPectoralFin",
+          "firstVertex": 2041,
+          "vertexCount": 101
+        },
+        {
+          "name": "RightPelvicFin",
+          "firstVertex": 2142,
+          "vertexCount": 81
+        },
+        {
+          "name": "RightIris",
+          "firstVertex": 2223,
+          "vertexCount": 173
+        },
+        {
+          "name": "RightPupil",
+          "firstVertex": 2396,
+          "vertexCount": 138
+        },
+        {
+          "name": "RightEyeGlint",
+          "firstVertex": 2534,
+          "vertexCount": 57
+        },
+        {
+          "name": "RightGillCover",
+          "firstVertex": 2591,
+          "vertexCount": 62
+        },
+        {
+          "name": "MouthRim",
+          "firstVertex": 2653,
+          "vertexCount": 97
+        }
+      ],
+      "textures": {
+        "BaseColor": {
+          "path": "Textures/T_DBA_FishSilver_BaseColor_Source.png",
+          "size": [
+            1024,
+            1024
+          ],
+          "srgb": true,
+          "channelStdDev": [
+            0.23137184861687674,
+            0.18309276860274792,
+            0.14794132977931568
+          ]
+        },
+        "Roughness": {
+          "path": "Textures/T_DBA_FishSilver_Roughness_Source.png",
+          "size": [
+            1024,
+            1024
+          ],
+          "srgb": false,
+          "channelStdDev": [
+            0.04489484429359436,
+            0.04489484429359436,
+            0.04489484429359436
+          ]
+        },
+        "Normal": {
+          "path": "Textures/T_DBA_FishSilver_Normal_Source.png",
+          "size": [
+            1024,
+            1024
+          ],
+          "srgb": false,
+          "channelStdDev": [
+            0.05980665236711502,
+            0.0393124558031559,
+            0.01095837727189064
+          ]
+        }
+      },
+      "technicalValidation": "passed",
+      "humanArtAcceptance": "pending",
+      "motionContract": {
+        "tailDirection": "negative X",
+        "swimDisplacementAxis": "local Y",
+        "alpha": "smoothstep(0,1,(0.035-X)/0.155); eyes/head X>=0.035 have zero weight",
+        "uv": "Body U=0.02+0.96*((X+0.080)/0.170); V=0.12+0.76*q, q=atan2(Z/rz,Y/ry)/(2*pi). Fins V=0.018..0.083."
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "Textures/T_DBA_ButterflyAzure_BaseColor_Source.png",
+      "bytes": 1339972,
+      "sha256": "0babdd6fdf164633b20b513d021e89a2815360b89665aa2ffb49cda41eaa16d4"
+    },
+    {
+      "path": "Textures/T_DBA_ButterflyAzure_Roughness_Source.png",
+      "bytes": 90233,
+      "sha256": "c35d1451b8a707360f32ca0753cb10840c926a0b31989f4e0831fa9fbedec2a0"
+    },
+    {
+      "path": "Textures/T_DBA_ButterflyAzure_Normal_Source.png",
+      "bytes": 748042,
+      "sha256": "43a6f07c6332b85083da08008a9fc6d1f9307f222eaca9074722b280cb57d5e1"
+    },
+    {
+      "path": "Meshes/SM_DBA_ButterflyAzure.fbx",
+      "bytes": 230156,
+      "sha256": "af6080780678cd55065d9755570576e5547e15a9940f094d68429634f5fe1c15"
+    },
+    {
+      "path": "Textures/T_DBA_FishSilver_BaseColor_Source.png",
+      "bytes": 216057,
+      "sha256": "eb340f244d63300d3e9ac73cd62112cfbc8c294c2055542520a36b1f94181903"
+    },
+    {
+      "path": "Textures/T_DBA_FishSilver_Roughness_Source.png",
+      "bytes": 174569,
+      "sha256": "ddf501cb886c7c3c0ded3280eea08d10c4d1daac8fc2a5f4599a6a7323fb2425"
+    },
+    {
+      "path": "Textures/T_DBA_FishSilver_Normal_Source.png",
+      "bytes": 932223,
+      "sha256": "bbe512a2d04267bda2c0d17c57cc12bf4e622cf40a537e6102c5831fc51fc508"
+    },
+    {
+      "path": "Meshes/SM_DBA_FishSilver.fbx",
+      "bytes": 258524,
+      "sha256": "d1aed094f6e6bd4774af77b033a8dbda18a92232404b996ea57ea38bad4e7cd8"
+    },
+    {
+      "path": "Previews/DBA_ButterflyAzure_Top.png",
+      "bytes": 1416543,
+      "sha256": "1a868424f35c62b8ddbaee25a286c83b723a827ef992907c54b48cad4c8c2e00"
+    },
+    {
+      "path": "Previews/DBA_ButterflyAzure_Oblique.png",
+      "bytes": 1389371,
+      "sha256": "8a7eaf16623754a6e54e29739077d02426856294336f9975c92722c5e1a1af3c"
+    },
+    {
+      "path": "Previews/DBA_FishSilver_Side.png",
+      "bytes": 1109397,
+      "sha256": "a3ac5f27f6d6abc2f6058b07767ba2df666971f4bb1f08ac876c99ac4d1ed56f"
+    },
+    {
+      "path": "Previews/DBA_FishSilver_Oblique.png",
+      "bytes": 1094797,
+      "sha256": "453041b8900d9f820d63b8d4f5a07d5abedc505ab45db60afeda8dd18ba0d860"
+    },
+    {
+      "path": "DBA_Fauna_Models.blend",
+      "bytes": 3981320,
+      "sha256": "c0826405fe7773c1fd7c7088403b81af85054c37531581c556e8f31bf58dbe00"
+    }
+  ]
+}

@@ -6,6 +6,7 @@
 #include "Types/GamePlatformVFXRegistrationHandle.h"
 #include "Types/GamePlatformVFXRequest.h"
 #include "Types/GamePlatformVFXResult.h"
+#include "Environment/GamePlatformFaunaConfig.h"
 
 class UGamePlatformVFXCatalog;
 class UWorld;
@@ -29,6 +30,13 @@ public:
     /** 资源/实例清理后游戏线程通知一次；订阅者不得保存服务裸指针越过世界生命周期。 */
     virtual FDelegateHandle AddCompletionHandler(const FGamePlatformVFXPlaybackCompleted::FDelegate& Handler) = 0;
     virtual void RemoveCompletionHandler(FDelegateHandle Handle) = 0;
+
+    /** 游戏线程提交局部环境惊扰；返回受影响群数，绝不改变捕获、奖励等服务器事实。 */
+    virtual int32 DisturbFauna(const FVector& WorldCenter,float Radius,float Strength,float DurationSeconds,FString& OutError)
+    { OutError=TEXT("当前VFX提供者未启用群落能力。"); return 0; }
+    /** 按本世界请求上下文查询CPU行为诊断，不能当作GPU可见数量。 */
+    virtual bool GetFaunaSnapshot(FName ContextId,FGamePlatformFaunaSnapshot& OutSnapshot) const
+    { OutSnapshot=FGamePlatformFaunaSnapshot(); return false; }
 
     virtual FGamePlatformVFXPreloadHandle Preload(const FGamePlatformVFXRequest& Request) = 0;
     virtual bool CancelPreload(const FGamePlatformVFXPreloadHandle& Handle) = 0;

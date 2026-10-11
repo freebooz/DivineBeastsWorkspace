@@ -86,6 +86,20 @@ try {
             $code=$LASTEXITCODE
         }
     }
+    if ($code -eq 0) {
+        # 鸟群19项依赖与旧原型禁入是发布门禁，不能只检查UI后放行。
+        # 使用锁定UE内置Python，避免PATH命中Windows商店占位解释器。
+        $birdPython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $birdGate=Join-Path $context.Workspace 'Tools/Unreal/VFX/BirdFlock/ValidateBirdFlockContainer.py'
+        Assert-FoundationFile $birdPython; Assert-FoundationFile $birdGate
+        $birdReport=Join-Path $context.Directory 'BirdFlockContainer.json'
+        # Foundation进程助手要求调用方提前创建输出目录，否则连stdout日志都无法打开。
+        $null=New-Item -ItemType Directory -Path (Join-Path $context.Directory 'BirdFlockGate')
+        $birdResult=Invoke-FoundationProcess -FilePath $birdPython -Arguments @($birdGate,'--csv',$csv,'--target','Client','--report',$birdReport) -WorkingDirectory $context.Workspace -OutputDirectory (Join-Path $context.Directory 'BirdFlockGate') -TimeoutSeconds 60
+        $details.BirdFlockContainerReport=$birdReport
+        $details.BirdFlockGateResult=$birdResult
+        $code=$birdResult.ExitCode
+    }
     $message='实际客户端Cook/Stage和IoStore资源门禁结束；仍须验证认证、UI交互与网络准入。'
 } catch [IO.FileNotFoundException] { $code=2; $message=$_.Exception.Message }
 catch { $code=1; $message=$_.Exception.Message }

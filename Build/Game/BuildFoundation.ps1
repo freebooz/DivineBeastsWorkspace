@@ -21,6 +21,8 @@ param([string]$EngineRoot, [switch]$Editor, [switch]$Client, [switch]$Server,
     [ValidatePattern("^[A-Za-z][A-Za-z0-9_]*$")][string[]]$AdditionalPlugins = @(),
     # 非空时构建所列模块及必要链接依赖；记录为模块构建，不能宣称整目标/Cook完成。
     [ValidatePattern("^[A-Za-z][A-Za-z0-9_]*$")][string[]]$OnlyModules = @(),
+    # 编辑器单模块可输出唯一后缀DLL，避免覆盖其他任务正在使用的旧模块；不强制热重载共享编辑器。
+    [ValidateRange(0,99999)][int]$ModuleSuffix=0,
     [ValidateRange(1,128)][int]$MaxParallelActions = 2,
     [ValidateRange(1,86400)][int]$TimeoutSeconds = 3600,
     [guid]$RunId = [guid]::NewGuid())
@@ -31,6 +33,10 @@ try {
     $context = New-FoundationContext Build $RunId
     $targets = @(); if ($Editor) { $targets += 'Editor' }; if ($Client) { $targets += 'Client' }; if ($Server) { $targets += 'Server' }
     if (-not $targets.Count) { throw [IO.FileNotFoundException]::new('需显式指定-Editor/-Client/-Server。') }
+    if ($ModuleSuffix -ne 0 -and (!$Editor -or $Client -or $Server -or $OnlyModules.Count -ne 1)) {
+        throw [IO.FileNotFoundException]::new('ModuleSuffix只允许Editor单模块构建，不能冒充完整目标。')
+    }
+    $details.ModuleSuffix=$ModuleSuffix
     $engine = Get-FoundationEngine $EngineRoot
     $details.EngineVersion = $engine.Version; $details.EngineRoot = $engine.Root
     Assert-FoundationFile $context.Project
@@ -46,6 +52,7 @@ try {
         $arguments = @($tool.Dll,"DivineBeastsArena$target",'Win64','Development',"-Project=$($context.Project)","-MaxParallelActions=$MaxParallelActions",'-NoHotReloadFromIDE','-WaitMutex',"-Log=$(Join-Path $directory 'UBT.log')")
         if ($AdditionalPlugins.Count) { $arguments += ('-EnablePlugin=' + (($AdditionalPlugins | Sort-Object -Unique) -join '+')) }
         if ($OnlyModules.Count) { $arguments += ('-Module=' + (($OnlyModules | Sort-Object -Unique) -join '+')) }
+        if ($ModuleSuffix -ne 0) { $arguments += "-ModuleWithSuffix=$($OnlyModules[0]),$ModuleSuffix" }
         if ($NoPCH) { $arguments += '-NoPCH' }
         if ($NoSharedPCH) { $arguments += '-NoSharedPCH' }
         if ($UsePrecompiled) { $arguments += '-UsePrecompiled' }

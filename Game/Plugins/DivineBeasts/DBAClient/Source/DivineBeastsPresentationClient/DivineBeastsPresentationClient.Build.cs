@@ -33,7 +33,9 @@ public class DivineBeastsPresentationClient : ModuleRules
             // 本地玩家表现编排按世界天气快照订阅，只有第三层依赖平台天气Runtime；不引入服务器私有或天气客户端执行器。
             "GamePlatformWeatherRuntime",
             // 第三层在真实内容包激活后，仅回调平台天气客户端重新发布当前视觉；不访问Niagara/SFX执行器私有实现。
-            "GamePlatformWeatherClient"
+            "GamePlatformWeatherClient",
+            // 环境群落仅通过公开服务提交本地惊扰；不访问Niagara或私有世界执行器。
+            "GamePlatformVFXClient"
         });
 
         // UE Landscape原生渲染材质MID桥接仅编入ClientOnly模块，Server目标完全不依赖。

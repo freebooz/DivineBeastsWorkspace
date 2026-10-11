@@ -19,6 +19,7 @@
 #include "Misc/Paths.h"
 #include "RHI.h"
 #include "ShaderCompiler.h"
+#include "CommonInputSettings.h"
 
 namespace DivineBeastsUIColorTests
 {
@@ -127,6 +128,9 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
         AddError(TEXT("颜色回归必须使用真实RHI；NullRHI不能作为渲染颜色证据。"));
         return false;
     }
+    // 离屏编辑器没有本地玩家子系统替我们加载CommonUI动作数据；真实设置页仍要使用正式输入定义。
+    // 明确完成前置初始化，不注入替代数据，不吞掉ensure，也不依赖别的测试恰好先运行。
+    GetMutableDefault<UCommonInputSettings>()->LoadData();
     for(const TCHAR* Name:{TEXT("Menu"),TEXT("Ability"),TEXT("Minimap"),TEXT("PlayerFrame"),TEXT("LoginPanel"),TEXT("Panel"),TEXT("Logo"),TEXT("Cover")})
     {
         const FString Path=FCString::Strcmp(Name,TEXT("Logo"))==0

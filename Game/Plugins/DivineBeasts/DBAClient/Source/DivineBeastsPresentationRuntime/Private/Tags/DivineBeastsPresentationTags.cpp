@@ -16,4 +16,6 @@ namespace DivineBeastsPresentationTags
     UE_DEFINE_GAMEPLAY_TAG(BirdFlock_Seagull, "DBA.Presentation.Environment.BirdFlock.Seagull");
     UE_DEFINE_GAMEPLAY_TAG(BirdFlock_Swallow, "DBA.Presentation.Environment.BirdFlock.Swallow");
     UE_DEFINE_GAMEPLAY_TAG(BirdFlock_Eagle, "DBA.Presentation.Environment.BirdFlock.Eagle");
+    UE_DEFINE_GAMEPLAY_TAG(Fauna_ButterflyAzure, "DBA.Presentation.Environment.Fauna.ButterflyAzure");
+    UE_DEFINE_GAMEPLAY_TAG(Fauna_FishSilver, "DBA.Presentation.Environment.Fauna.FishSilver");
 }

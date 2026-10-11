@@ -8,9 +8,11 @@
 #include "Resolution/GamePlatformVFXCatalogRegistry.h"
 #include "Types/GamePlatformDataLease.h"
 #include "TimerManager.h"
+#include "Engine/World.h"
 #include "GamePlatformVFXWorldSubsystem.generated.h"
 
 class UNiagaraComponent;
+class FGamePlatformFaunaRuntime;
 class UGamePlatformVFXDefinition;
 struct FStreamableHandle;
 
@@ -94,6 +96,9 @@ public:
     virtual FGamePlatformVFXPlaybackSnapshot GetPlaybackSnapshot(const FGamePlatformVFXHandle& Handle) const override;
     virtual FDelegateHandle AddCompletionHandler(const FGamePlatformVFXPlaybackCompleted::FDelegate& Handler) override;
     virtual void RemoveCompletionHandler(FDelegateHandle Handle) override;
+
+    virtual int32 DisturbFauna(const FVector& WorldCenter,float Radius,float Strength,float DurationSeconds,FString& OutError) override;
+    virtual bool GetFaunaSnapshot(FName ContextId,FGamePlatformFaunaSnapshot& OutSnapshot) const override;
 
     virtual FGamePlatformVFXPreloadHandle Preload(const FGamePlatformVFXRequest& Request) override;
     virtual bool CancelPreload(const FGamePlatformVFXPreloadHandle& Handle) override;
@@ -218,6 +223,18 @@ private:
     TMap<FName, FGamePlatformVFXCachedDefinitionEntry> DefinitionCache;
     /** 实例Handle -> DefinitionId，用于O(1)清理Pending/Active使用计数。 */
     TMap<FGuid, FName> DefinitionIdByHandle;
+
+    /** 世界实例附属状态；取消时先销毁计算器，再归还Niagara组件及Data租约。 */
+    struct FFaunaInstance
+    {
+        FGamePlatformVFXHandle Handle;
+        TSharedPtr<FGamePlatformFaunaRuntime> Runtime;
+    };
+    TMap<FGuid, FFaunaInstance> FaunaInstances;
+    FDelegateHandle FaunaWorldTickHandle;
+    double LastFaunaWorldTime=0.0;
+    void HandleFaunaWorldTick(UWorld* World,ELevelTick TickType,float DeltaSeconds);
+    void TickFaunaInstances();
 
     TMap<FGuid, FTimerHandle> LifetimeTimers;
     TMap<FGuid, TArray<FTimerHandle>> CompositeStepTimers;

@@ -22,5 +22,8 @@ public:
     static FGamePlatformPresentationCatalogFragment BuildBirdFlockFragment();
     /** 项目物种名称转语义；未知名称返回无效标签，平台层不认识这些鸟种。 */
     static FGameplayTag GetBirdFlockTag(FName SpeciesId);
+    /** 蝴蝶与鱼的项目配置；数据资产真实预载成功后才发布。 */
+    static FGamePlatformPresentationCatalogFragment BuildFaunaFragment();
+    static FGameplayTag GetFaunaTag(FName SpeciesId);
 
 };

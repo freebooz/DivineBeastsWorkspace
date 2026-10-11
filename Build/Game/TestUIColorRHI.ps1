@@ -56,6 +56,8 @@ $beforeHash=Get-UIColorInputsHash
 $nativeReport=Join-Path $context.Directory 'Report'
 $arguments=@($context.Project,'/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-unattended','-RenderOffscreen',
     '-nosound','-nosplash','-NoLiveCoding','-stdout','-FullStdOutLogOutput',
+    # 独占离屏编辑器仍须正常推进渲染，不采用后台3FPS节流；不降低颜色断言或使用NullRHI。
+    '-ini:EditorSettings:/Script/UnrealEd.EditorPerformanceSettings:bThrottleCPUWhenNotForeground=False',
     "-abslog=$(Join-Path $context.Directory 'Unreal.log')",'-ExecCmds=Automation RunTests DivineBeasts.UI.Color.SourceToSlate',
     '-TestExit=Automation Test Queue Empty',"-ReportExportPath=$nativeReport")
 $processParameters=@{FilePath=(Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe');

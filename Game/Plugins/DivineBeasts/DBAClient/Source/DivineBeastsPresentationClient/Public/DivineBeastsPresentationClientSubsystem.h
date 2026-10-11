@@ -53,9 +53,11 @@ public:
 
     FGamePlatformPresentationContextPatch BuildProjectContextPatch() const;
 
+    /** 可选Pending输出在预载广播前发布；调用方可在重入取消中识别本次申请，指针不跨调用保存。 */
     FDivineBeastsPresentationContentPackHandle ActivateContentPack(
         const FDivineBeastsPresentationContentPackFragment& Fragment,
-        FString& OutError);
+        FString& OutError,
+        FDivineBeastsPresentationContentPackHandle* OutPendingHandle = nullptr);
 
     /** 雨雪两套VFXDefinition完成真实资产预载后才注册项目天气目录，返回值只表示Loading已受理。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Weather")
@@ -77,7 +79,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|BirdFlock")
     bool StartAmbientBirdFlock(FName FlockId, FName SpeciesId, int32 BirdCount,
         const FVector& WorldOrigin, FString& OutError);
-    /** 先取消表现RequestId再释放共享内容租约；不会影响同世界其他鸟群。 */
+    /** 场景C++入口：Owner须属于当前世界，RegistrationToken隔离注册代次；他人占用同名ID时拒绝。 */
+    bool StartAmbientBirdFlockForOwner(FName FlockId, FName SpeciesId, int32 BirdCount,
+        const FVector& WorldOrigin, UObject* Owner, const FGuid& RegistrationToken, FString& OutError);
+    /** 只撤销token匹配的自有注册；未知或旧代token返回false且不影响后来占用者。 */
+    bool StopAmbientBirdFlockForOwner(FName FlockId, const FGuid& RegistrationToken);
+    /** 显式按ID停止接口；场景组件必须使用带注册token的所有权接口。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|BirdFlock")
     void StopAmbientBirdFlock(FName FlockId);
     /** 世界/账号退出时一次取消所有鸟群；重复调用安全，不会触发新加载。 */
@@ -86,6 +93,25 @@ public:
     /** 只报告请求配置数量，不冒充GPU当前实际可见数量。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Environment|BirdFlock")
     int32 GetRequestedBirdCount(FName FlockId) const;
+
+    /** 事件驱动的本地蝴蝶/鱼群；Count为0..512、Seed为0..1000000，0撤销。
+     * SpeciesId仅ButterflyAzure/FishSilver；true表示受理，真实Data资源Active后才提交。
+     */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|Fauna")
+    bool StartAmbientFauna(FName HabitatId, FName SpeciesId, int32 Count, int32 Seed,
+        const FVector& WorldOrigin, FString& OutError);
+    /** 场景Owner必须属于当前世界；注册token防止同名栖息地越权覆盖/停止。 */
+    bool StartAmbientFaunaForOwner(FName HabitatId, FName SpeciesId, int32 Count, int32 Seed,
+        const FVector& WorldOrigin, UObject* Owner, const FGuid& RegistrationToken, FString& OutError);
+    bool StopAmbientFaunaForOwner(FName HabitatId, const FGuid& RegistrationToken);
+    /** 显式服务入口按ID停止；组件必须走Owner/token入口。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|Fauna")
+    void StopAmbientFauna(FName HabitatId);
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|Fauna")
+    void StopAllAmbientFauna();
+    /** 只返回请求配置数量，不表示GPU当前可见粒子数量。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Environment|Fauna")
+    int32 GetRequestedFaunaCount(FName HabitatId) const;
 
     bool DeactivateContentPack(
         const FDivineBeastsPresentationContentPackHandle& Handle);
@@ -169,9 +195,26 @@ private:
 
     /** 真实内容包Active时调用；失败不得假装已播放。 */
     void SubmitFrontEndFoliage();
-    /** 仅在本代Data租约及共享目录Active后提交待播放鸟群。 */
-    void SubmitPendingBirdFlocks();
-    void CancelBirdFlockRequest(const FGuid& RequestId, FName SpeciesId, FName FlockId);
+    enum class EEnvironmentFlockKind : uint8 { Bird, Fauna };
+    struct FEnvironmentFlockState;
+    /** Bird/Fauna共用意图事务；只保存项目值和中立RequestId，不是另一个实例执行器。 */
+    bool StartEnvironmentFlock(FEnvironmentFlockState& Group, FName Id, FName SpeciesId,
+        int32 Count, int32 Seed, const FVector& WorldOrigin, UObject* Owner,
+        const FGuid& RegistrationToken, FString& OutError);
+    bool EnsureEnvironmentFlockPack(FEnvironmentFlockState& Group, FString& OutError);
+    void SubmitPendingEnvironmentFlocks(FEnvironmentFlockState& Group);
+    /** 每世界一个公共VFX终态订阅；只失效当前RequestId，不在通知内自动重放。 */
+    bool BindEnvironmentFlockCompletion(UWorld* World);
+    void UnbindEnvironmentFlockCompletion();
+    void CancelEnvironmentFlockRequest(const FEnvironmentFlockState& Group,
+        const FGuid& RequestId, FName SpeciesId, FName Id);
+    bool StopEnvironmentFlockForOwner(FEnvironmentFlockState& Group, FName Id, const FGuid& RegistrationToken);
+    void StopEnvironmentFlock(FEnvironmentFlockState& Group, FName Id);
+    void StopAllEnvironmentFlocks(FEnvironmentFlockState& Group);
+    static FGameplayTag GetEnvironmentFlockTag(const FEnvironmentFlockState& Group, FName SpeciesId);
+    /** 同世界Context变更先暂停全部环境群落；嵌套操作只在最外层恢复当前Desired。 */
+    void SuspendEnvironmentFlocksForContextChange();
+    void ResumeEnvironmentFlocksAfterContextChange();
     void StartDefaultWorldBirdFlock(UWorld* World);
 
     void RegisterProjectState();
@@ -199,6 +242,8 @@ private:
     UGamePlatformPresentationClientSubsystem* PlatformPresentation = nullptr;
 
     FDivineBeastsPresentationProjectContext ProjectContext;
+    /** Context更新跨同步通知后须仍匹配；账号/世界退出使旧操作失效。 */
+    FGuid ProjectContextUpdateToken;
     FGamePlatformPresentationRegistrationHandle ContextContributorHandle;
     FGamePlatformPresentationRegistrationHandle DefaultCatalogHandle;
     FGuid DefaultPreloadRequestId;
@@ -220,16 +265,37 @@ private:
     FDelegateHandle WorldCleanupHandle;
     FDelegateHandle PostLoadMapHandle;
 
-    /** 只保存中立请求值，没有Niagara指针/独立资产加载器；实例由平台VFX世界服务管理。 */
-    struct FBirdFlockRequestState
+    /** 同一份状态机供鸟群和蝴蝶/鱼群复用；平台VFX拥有实际Niagara实例及预算。 */
+    struct FEnvironmentFlockRequestState
     {
         FName SpeciesId = NAME_None;
         FVector Origin = FVector::ZeroVector;
         int32 Count = 0;
+        int32 Seed = 0;
         FGuid RequestId;
+        /** 真终态后等待本ID显式Apply或新的Context恢复；其他群落的提交不会顺带重试。 */
+        bool bAwaitingExplicitRetry = false;
+        /** 注册token有效表示场景拥有；无token条目属于显式服务请求。 */
+        TWeakObjectPtr<UObject> Owner;
+        FGuid RegistrationToken;
+        FGuid MutationToken;
     };
-    TMap<FName, FBirdFlockRequestState> AmbientBirdFlocks;
-    FDivineBeastsPresentationContentPackHandle BirdFlockPack;
+    struct FEnvironmentFlockState
+    {
+        EEnvironmentFlockKind Kind = EEnvironmentFlockKind::Bird;
+        TMap<FName, FEnvironmentFlockRequestState> Requests;
+        FDivineBeastsPresentationContentPackHandle Pack;
+        TWeakObjectPtr<UWorld> World;
+        bool bStopping = false;
+    };
+    FEnvironmentFlockState BirdFlocks;
+    FEnvironmentFlockState AmbientFauna{EEnvironmentFlockKind::Fauna};
+    /** 覆盖整个世界/账号清理；Context暂停期间仍允许合法Desired排队。 */
+    bool bStoppingEnvironmentFlocks = false;
+    int32 EnvironmentFlockContextSuspensions = 0;
+    TWeakObjectPtr<UWorld> EnvironmentCompletionWorld;
+    FDelegateHandle EnvironmentCompletionHandle;
+    FGuid EnvironmentCompletionToken;
 
     /** 角色预览工作室共享的单组自然飘落VFX，和天气/战斗独立。 */
     FDivineBeastsPresentationContentPackHandle FrontEndFoliagePack;

@@ -41,6 +41,12 @@
 `Automation/index.json`：三项客户端回归测试。
 完整Client/Server构建和最终Cook产物目录见 `BirdFlockP4P7Execution_20261011.md`。
 
+### 本轮交付收尾补充
+
+`Docs/Implementation/BirdFlockDeliveryExecutionResult_20261011.md`记录新发布门禁：旧原型、源美术和审核地图不得进入正式包，当前两个客户端仅收录正式鸟群子目录。新包必须再次取得19项齐全且旧模型0的实际容器报告，不能拿上轮含7个旧模型的包签署新门禁通过。
+
+本轮18项发布策略、3项Cook门禁连接和独立UE两图/三物种资产检查已通过；并行Fauna源码运行回归及有效UI颜色报告待完成，当前没有新的完整Cook包。人工仍须对实际游戏场景进行检查，以下签署信息保持待填。
+
 ## 五、人工结论
 
 审核人：待填写。

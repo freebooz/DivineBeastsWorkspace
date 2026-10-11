@@ -7,6 +7,8 @@
 #include "Definitions/GamePlatformPrimaryDataAsset.h"
 #include "Definitions/GamePlatformVFXCompositeDefinition.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
+#include "Definitions/GamePlatformVFXWorldDefinition.h"
+#include "Environment/Fauna/GamePlatformFaunaRuntime.h"
 #include "Diagnostics/GamePlatformVFXDiagnostics.h"
 #include "Engine/GameInstance.h"
 #include "Engine/StreamableManager.h"
@@ -129,6 +131,9 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
         }
     }
 
+    FWorldDelegates::OnWorldPostActorTick.Remove(FaunaWorldTickHandle);
+    FaunaWorldTickHandle.Reset();
+    FaunaInstances.Reset();
     LifetimeTimers.Reset();
     CompositeStepTimers.Reset();
 
@@ -946,6 +951,12 @@ void UGamePlatformVFXWorldSubsystem::CleanupInstance(
         RecordTerminalOccurrence(*Key, State == EGamePlatformVFXPlaybackState::Cancelled);
         if (auto* Terminal = TerminalOccurrences.Find(*Key)) if (!Terminal->bCancelled) Terminal->CompletionCode = Code;
     }
+    FaunaInstances.Remove(Handle.Id);
+    if (FaunaInstances.IsEmpty())
+    {
+        FWorldDelegates::OnWorldPostActorTick.Remove(FaunaWorldTickHandle);
+        FaunaWorldTickHandle.Reset();
+    }
     RemoveDedupeHandle(Handle);
     RemoveDefinitionUse(Handle);
     ReleaseInstanceResources(Handle);
@@ -1409,6 +1420,28 @@ bool UGamePlatformVFXWorldSubsystem::ExecuteLoadedDefinition(
             bUsePool))
     {
         return false;
+    }
+
+    // 群落只附加计算状态；组件仍由上方唯一Niagara执行器创建、由同一实例句柄回收。
+    if (const auto* WorldDefinition=Cast<UGamePlatformVFXWorldDefinition>(&Definition); WorldDefinition && WorldDefinition->bEnableFauna)
+    {
+        const auto Runtime=MakeShared<FGamePlatformFaunaRuntime>();
+        FString Error;
+        if (!Runtime->Initialize(Component,WorldDefinition->Fauna,Request.Parameters,Request.ContextId,Error))
+        {
+            CleanupInstance(ReservedHandle,true,EGamePlatformVFXPlaybackState::Failed,
+                EGamePlatformVFXResultCode::InvalidRequest,Error);
+            return false;
+        }
+        FFaunaInstance Entry; Entry.Handle=ReservedHandle; Entry.Runtime=Runtime;
+        FaunaInstances.Add(ReservedHandle.Id,MoveTemp(Entry));
+        if (!FaunaWorldTickHandle.IsValid())
+        {
+            LastFaunaWorldTime=World->GetTimeSeconds();
+            // 既有服务按所属World每渲染帧上传插值；行为内部保持30Hz，不为每只动物创建Tick对象。
+            FaunaWorldTickHandle=FWorldDelegates::OnWorldPostActorTick.AddUObject(this,
+                &UGamePlatformVFXWorldSubsystem::HandleFaunaWorldTick);
+        }
     }
 
     // Spawn阶段禁止自动激活；先建立平台生命周期监听，再允许Niagara开始运行。

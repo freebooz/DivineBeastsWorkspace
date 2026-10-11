@@ -53,3 +53,17 @@ UE5.8独立地图 `/Game/Development/Terrain/Maps/L_DBA_CliffRock01Review` 已�
 D3D12实际SceneCapture2D证据：`Game/Saved/Validation/TerrainGaea/CliffRock01/CliffRock01_20m_BalancedLights_ActualGPU.png` 与 `CliffRock01_20m_SoftLights_ActualGPU.png`。指标 `CliffRock01_20m_GPU_VisualMetrics.json`：平衡光下世界三向投射20米平均亮度168.33、标准差47.17、过曝0；UV对照平均218.25。柔和光下三向投射平均98.79、标准差41.75、过曝0，UV平均168.42。实际图片可辨认岩石裂隙和表面起伏，旧预览近黑问题已由实际场景验证解决。
 
 **当前结论：** 真4K扫描、青灰色、无落叶、2套UMaterial与3份MI保存回读，以及独立20米实景可见效果均已完成技术审核；但裂缝宏观重复、UV版偏亮、正式Village场景/天气覆盖、客户端与服务器Cook、GPU预算及用户最终艺术批准仍待完成，生产发布字段为false。
+## 2026-10-11 21:51 宏观去重复变体验收更新
+
+最新工程复查发现另一会话已先行创建了WorldAlignedMacro（宏观坐标扰动三向投射）材质与独立MacroReview测试地图，均是真实UE资产，独立地图重开日志包含CLIFF_MACRO_20M_REVIEW_MAP_UE_RELOAD_PASS。不要重复创建或覆盖并发资产。
+
+但GPU采样没有通过清晰度门禁：Game/Saved/Validation/TerrainGaea/CliffRock01Macro20261011/CliffRock01Macro_GPUSharpnessComparison.json记录同一真实D3D12场景WorldAligned20m的边缘梯度从29.857降低至3.409，清晰度保持率0.1142，低于要求0.65；亮度差从原来的偏大改善，但不能以亮度改善替代质感。实际CliffRock01Macro_20m_BalancedLights_ActualGPU_Review.jpg出现明显柔化/发白。
+
+工程处置：保留不经Warp的原WorldAligned20m材质作为当前更清晰的基线，WorldAlignedMacro及MacroReview只作为失败候选保存，不批准发布；优先调查材质样本Mip驻留、真实Shader采样、Warp振幅/频率与衍生UV，重新在可控光照下截取同一ROI对比，未通过前不替换正式Village。所有productionAssetApproved仍为false，人工最终验收仍待用户。
+## 2026-10-11 21:54 低振幅宏观变体
+
+原宏观世界坐标扰动材质虽具备真实UE Graph和独立关卡资产，GPU截屏清晰度回归指标仅0.1142（11.42%），低于0.65门槛，不能批准取代原无扰动三向投射材质。原始Macro材质和UV校准版本不改动。
+
+新增独立审核MI：/Game/Development/Terrain/Materials/MI_DBA_CliffRock01_WorldAlignedMacro_LowWarpReview，继承现有WorldAlignedMacro项目材质，WorldTextureSizeCm保持(2000,2000,2000)，仅将宏观Warp振幅降为(20,-15,12)厘米。Tools/Unreal/Terrain/AuthorCliffRock01MacroLowWarpQA.py在真实UE5.8 Editor命令行新建并保存，回读显示CLIFFROCK_LOW_WARP_NATIVE_UE_VERIFY_PASS，进程退出码0；证据为Game/Saved/Logs/CliffRock01MacroLowWarpReview20261011.log。
+
+下一门禁是使用同一D3D12场景和光照对低扰动新MI、无扰动三向投射进行同ROI像素清晰度与重复性比较，清晰度保持率至少0.65才继续评审。此MI为开发目录审核资源，未被正式Village引用、未做Cook，也未获真人美术签收。

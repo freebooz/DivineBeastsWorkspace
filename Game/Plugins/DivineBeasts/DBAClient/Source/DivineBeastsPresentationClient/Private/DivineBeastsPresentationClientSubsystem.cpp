@@ -17,12 +17,15 @@
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Tags/DivineBeastsPresentationTags.h"
 #include "UObject/UObjectGlobals.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Misc/ScopeExit.h"
 
 void UDivineBeastsPresentationClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
     ScopeId = FGuid::NewGuid(); bClosing = false;
+    ProjectContextUpdateToken = FGuid::NewGuid();
     Collection.InitializeDependency<UGamePlatformPresentationClientSubsystem>();
 
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
@@ -50,6 +53,10 @@ void UDivineBeastsPresentationClientSubsystem::Initialize(
 
 void UDivineBeastsPresentationClientSubsystem::Deinitialize()
 {
+    // 先关新请求门闩；取消通知仍能通过既有平台服务发送，但不能重入创建新鸟群。
+    bClosing = true;
+    ProjectContextUpdateToken = FGuid::NewGuid();
+    UnbindEnvironmentFlockCompletion();
     if (WorldCleanupHandle.IsValid())
     {
         FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupHandle);
@@ -64,7 +71,7 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
     // 先停止持久环境VFX，再撤销目录，防止纯视觉实例泄漏到退出后的世界。
     StopFrontEndFoliage();
     StopAllAmbientBirdFlocks();
-    bClosing = true;
+    StopAllAmbientFauna();
     UnregisterProjectState();
     UnbindWeatherWorld();
     WeatherVisualHandle = {};
@@ -248,73 +255,103 @@ void UDivineBeastsPresentationClientSubsystem::UnregisterProjectState()
 }
 
 bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
-    const FDivineBeastsPresentationProjectContext& Context,
-    FString& OutError)
+    const FDivineBeastsPresentationProjectContext& Context, FString& OutError)
 {
-    FDivineBeastsPresentationProjectContext Normalized = Context;
-    if (Normalized.ProjectId.IsNone())
+    check(IsInGameThread());
+    const TStrongObjectPtr<UDivineBeastsPresentationClientSubsystem> KeepService(this);
+    OutError.Reset();
+    if (bClosing)
     {
-        Normalized.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
-    }
-    if (!Normalized.IsValid(OutError))
-    {
+        OutError = TEXT("项目表现服务正在关闭，不能更新上下文。");
         return false;
     }
-
+    FDivineBeastsPresentationProjectContext Normalized = Context;
+    if (Normalized.ProjectId.IsNone()) Normalized.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
+    if (!Normalized.IsValid(OutError)) return false;
+    const FGuid UpdateToken = FGuid::NewGuid();
+    ProjectContextUpdateToken = UpdateToken;
+    const auto IsCurrentUpdate = [this, UpdateToken]()
+    {
+        return !bClosing && ProjectContextUpdateToken == UpdateToken;
+    };
     const bool bCharacterScopeChanged =
         ProjectContext.HeroDefinitionId != Normalized.HeroDefinitionId ||
         ProjectContext.SkinId != Normalized.SkinId ||
         ProjectContext.AvatarGeneration != Normalized.AvatarGeneration;
-
     const bool bWorldScopeChanged =
         ProjectContext.WorldId != Normalized.WorldId ||
         ProjectContext.ExperienceId != Normalized.ExperienceId ||
         ProjectContext.RegionId != Normalized.RegionId ||
         ProjectContext.WorldGeneration != Normalized.WorldGeneration;
 
+    bool bOwnsEnvironmentSuspension = false;
+    bool bPreserveDefaultBirdIntent = false;
+    ON_SCOPE_EXIT
+    {
+        if (bOwnsEnvironmentSuspension) ResumeEnvironmentFlocksAfterContextChange();
+    };
+    const auto WasSuperseded = [&]()
+    {
+        if (IsCurrentUpdate()) return false;
+        OutError = TEXT("上下文更新已被同步通知中的新操作或世界/账号退出取代。");
+        return true;
+    };
     if (bCharacterScopeChanged)
     {
-        DeactivatePacksByScope(
-            EGamePlatformPresentationContextScope::LocalPlayer);
+        DeactivatePacksByScope(EGamePlatformPresentationContextScope::LocalPlayer);
+        if (WasSuperseded()) return false;
     }
     if (bWorldScopeChanged)
     {
-        // 先取消鸟群，再撤销用于解析取消语义的目录。
-        StopAllAmbientBirdFlocks();
+        UWorld* LocalWorld = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
+        bPreserveDefaultBirdIntent = LocalWorld && BirdFlocks.World.Get() == LocalWorld && !LocalWorld->bIsTearingDown;
+        // 全部环境群落先挂起；跨类型取消回调产生的合法新意图只排队，旧世界意图由共享逻辑丢弃。
+        bOwnsEnvironmentSuspension = true;
+        SuspendEnvironmentFlocksForContextChange();
+        if (WasSuperseded()) return false;
         DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
-    }
-    if (bWorldScopeChanged)
+        if (WasSuperseded()) return false;
         StopFrontEndFoliage();
-    if (bWorldScopeChanged)
-    {
-        WeatherVisualHandle = {};
-        WeatherAudioHandle = {};
-        bWeatherVisualAttempted = false;
-        bWeatherAudioAttempted = false;
+        if (WasSuperseded()) return false;
+        WeatherVisualHandle = {}; WeatherAudioHandle = {};
+        bWeatherVisualAttempted = false; bWeatherAudioAttempted = false;
     }
 
     ProjectContext = MoveTemp(Normalized);
     if (bCharacterScopeChanged || bWorldScopeChanged)
     {
-        RequestStates.Reset();
-        RequestOrder.Reset();
+        RequestStates.Reset(); RequestOrder.Reset();
     }
     if (bWorldScopeChanged)
     {
-        StartDefaultWorldBirdFlock(GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr);
+        // 同世界恢复只更新仍存在的默认意图；取消通知删除默认群后不得由自动策略复活。
+        if (!bPreserveDefaultBirdIntent || BirdFlocks.Requests.Contains(TEXT("DBA.Environment.WorldBirds")))
+            StartDefaultWorldBirdFlock(GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr);
+        if (WasSuperseded()) return false;
         if (UWorld* WeatherWorld = WeatherBoundWorld.Get())
         {
             if (auto* Weather = WeatherWorld->GetSubsystem<UGamePlatformWeatherWorldSubsystem>())
                 HandleWeatherSnapshot(Weather->GetCurrentSnapshot());
         }
+        if (WasSuperseded()) return false;
     }
-    return true;
+    if (bOwnsEnvironmentSuspension)
+    {
+        bOwnsEnvironmentSuspension = false;
+        ResumeEnvironmentFlocksAfterContextChange();
+    }
+    return !WasSuperseded();
 }
 
 void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
 {
+    // 覆盖整段账号清理通知，不能只在StopAll局部防止同步重建。
+    TGuardValue<bool> EnvironmentStopGuard(bStoppingEnvironmentFlocks, true);
+    ProjectContextUpdateToken = FGuid::NewGuid();
+    UnbindEnvironmentFlockCompletion();
     StopFrontEndFoliage();
     StopAllAmbientBirdFlocks();
+    StopAllAmbientFauna();
     TArray<FDivineBeastsPresentationContentPackHandle> ActiveHandles;
     for (const auto& Pair : ActivePacks) ActiveHandles.Add(Pair.Value.Handle);
     for (const auto& Handle : ActiveHandles) DeactivateContentPack(Handle);
@@ -352,10 +389,12 @@ UDivineBeastsPresentationClientSubsystem::BuildProjectContextPatch() const
 
 FDivineBeastsPresentationContentPackHandle
 UDivineBeastsPresentationClientSubsystem::ActivateContentPack(
-    const FDivineBeastsPresentationContentPackFragment& Fragment, FString& OutError)
+    const FDivineBeastsPresentationContentPackFragment& Fragment, FString& OutError,
+    FDivineBeastsPresentationContentPackHandle* OutPendingHandle)
 {
     check(IsInGameThread());
     OutError.Reset();
+    if (OutPendingHandle) *OutPendingHandle = {};
     if (bClosing || !PlatformPresentation || !Fragment.IsValid(OutError))
     {
         if (OutError.IsEmpty()) OutError = TEXT("项目表现服务已关闭或平台目录不可用。");
@@ -373,6 +412,8 @@ UDivineBeastsPresentationClientSubsystem::ActivateContentPack(
     Pending.Fragment = Fragment;
     const auto Handle = Pending.Handle;
     PendingPacks.Add(Handle.Id, MoveTemp(Pending));
+    // 调用方在BeginLogicalPreload的同步诊断广播前即可取消这次真实Pending身份。
+    if (OutPendingHandle) *OutPendingHandle = Handle;
     TArray<FName> DefinitionIds = Fragment.LogicalPreloadDefinitionIds;
     for (const auto& Entry : Fragment.CatalogFragment.Entries) DefinitionIds.AddUnique(Entry.DefinitionId);
     const FGuid PreloadId = BeginLogicalPreload(Fragment.ContentPackId, DefinitionIds, true, Handle);
@@ -555,11 +596,15 @@ void UDivineBeastsPresentationClientSubsystem::HandleLogicalPreloadCompleted(con
             EDivineBeastsPresentationContentPackState::Active)
             SubmitFrontEndFoliage();
     }
-    // 共享鸟类目录只有本代Active后才可发射，迟到预载回调不会复活已取消实例。
+    // 两类环境目录都只认本代Active；迟到回调不能复活被Owner/上下文清理撤销的意图。
     if (!bClosing && Fragment.ContentPackId == TEXT("DBA.Environment.BirdFlock") &&
-        BirdFlockPack.IsValid() && BirdFlockPack.Id == PackHandle.Id &&
-        BirdFlockPack.Generation == PackHandle.Generation)
-        SubmitPendingBirdFlocks();
+        BirdFlocks.Pack.IsValid() && BirdFlocks.Pack.Id == PackHandle.Id &&
+        BirdFlocks.Pack.Generation == PackHandle.Generation)
+        SubmitPendingEnvironmentFlocks(BirdFlocks);
+    if (!bClosing && Fragment.ContentPackId == TEXT("DBA.Environment.Fauna") &&
+        AmbientFauna.Pack.IsValid() && AmbientFauna.Pack.Id == PackHandle.Id &&
+        AmbientFauna.Pack.Generation == PackHandle.Generation)
+        SubmitPendingEnvironmentFlocks(AmbientFauna);
     // 初次天气快照可能在真实VFX/SFX内容包异步加载完成之前到达。
     // Catalog已成功提交后按当前服务器时间重新发布本世界天气一次，
     // 避免“只有下一次切换天气后才能看到雨雪”。不添加Ticker/重复实例管理器。
@@ -772,13 +817,22 @@ void UDivineBeastsPresentationClientSubsystem::HandleWorldCleanup(
 {
     UWorld* LocalWorld =
         GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
-    if (!World || World != LocalWorld)
+    if (!World) return;
+    if (World != LocalWorld)
     {
+        // LocalPlayer可能已进入新世界；只撤销真正绑定旧世界的环境意图。
+        if (EnvironmentCompletionWorld.Get() == World) UnbindEnvironmentFlockCompletion();
+        if (BirdFlocks.World.Get() == World) StopAllAmbientBirdFlocks();
+        if (AmbientFauna.World.Get() == World) StopAllAmbientFauna();
         return;
     }
 
+    TGuardValue<bool> EnvironmentStopGuard(bStoppingEnvironmentFlocks, true);
+    ProjectContextUpdateToken = FGuid::NewGuid();
+    UnbindEnvironmentFlockCompletion();
     StopFrontEndFoliage();
     StopAllAmbientBirdFlocks();
+    StopAllAmbientFauna();
     UnbindWeatherWorld();
     DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
     WeatherVisualHandle = {};
@@ -801,6 +855,7 @@ void UDivineBeastsPresentationClientSubsystem::HandlePostLoadMap(UWorld* World)
         GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
     if (World && World == LocalWorld)
     {
+        ProjectContextUpdateToken = FGuid::NewGuid();
         ProjectContext.WorldGeneration = 0;
         RequestStates.Reset();
         RequestOrder.Reset();
