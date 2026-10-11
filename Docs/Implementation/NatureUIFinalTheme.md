@@ -14,9 +14,10 @@
 | `NaturePanelFrame.png` | `/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelFrame` | 中部透明的藤蔓叶片边框，围绕表单、信息与HUD显示区 |
 | `NatureLoginBackdrop.png` | `/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop` | 原始森林、石雕、碧绿水光和远古遗迹的登录背景 |
 | `NatureHUDFrame.png` | `/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureHUDFrame` | 轻量横向根系与玉石细边框，避免纵向装饰拉宽后遮挡状态栏 |
+| `NatureMinimapFrame.png` | `/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapFrame` | 圆形藤蔓、玉石、守护兽和鹿角图腾；图内与图外透明，地图与文字实时叠加 |
 | `NatureAbilityDock.png` | `/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityDock` | 后续技能栏参考图定稿的一体式石兽藤蔓底座；头像、数字和技能均实时叠加 |
 
-五份PNG由本次图像生成工具制作；引擎纹理导入、Widget调整、编译、保存与回读只能通过Monolith MCP执行。按钮底图不烘焙“开始”等文字，避免不同命令文案失真。用户已确认的神兽联盟LOGO继续使用。所有字体和用户名、密码控件的尺寸保持固定；仅画面背景铺满视口，装饰和主要按钮按固定尺寸布局。
+六份PNG由本次图像生成工具制作；引擎纹理导入、Widget调整、编译、保存与回读只能通过Monolith MCP执行。按钮底图不烘焙“开始”等文字，避免不同命令文案失真。用户已确认的神兽联盟LOGO继续使用。所有字体和用户名、密码控件的尺寸保持固定；仅画面背景铺满视口，装饰和主要按钮按固定尺寸布局。
 
 ## 技能栏参考图增量
 
@@ -25,6 +26,14 @@
 `WBP_DBA_UI_MomentumBar`是平台资源条基类的纯视觉实例，蓝色区分气势，保持既有字体11像素；不增加资源类型或玩法。平台资源条事件现在可显示`ResourceValueText`，只显示可信有限快照；未绑定、隐藏或非法数值时清空，不以资产文字伪造生命值。
 
 ## HUD旅行修复
+
+## 小地图参考图增量
+
+圆形地图窗采用引擎原生RoundedBox纹理裁剪，184×184地图画面叠加270×270透明装饰，N/W/E/S为独立固定14字号控件，标题保持16字号，玩家箭头保持18字号及24×24边界。标记中心限制为半径0.40，中心到圆边至少18.4像素，大于标记半对角线约17像素，因此完整标记留在圆内。缩放只裁剪真实底图UV，不缩放文本或整组Widget。
+
+加号、减号与复位是本地1/2/4倍视野命令：角色和底图未就绪时禁用；倍率边界禁用对应命令。地图朝北，玩家箭头随真实角色朝向旋转。位置仍来自新手村俯视底图的真实厘米投影；不使用参考图的虚构山川、建筑或兴趣点。绑定代次、同步蓝图回调后的复核、请求取消和按钮退订保证换世界不显示旧视野。公共平台只接收中立Zoom/位置快照，项目地图路径留在第三层。
+
+## HUD旅行实现
 
 平台`PrepareForTravel`通过`ClearHUD`清理上一世界控件，会将预置CombatHUD从HUDLayer中移除。原实现只改Visibility，因此旅行后真实头像、地图与技能组合无法重新显示。项目根布局现在通过本地PlayerController/Pawn事件恢复自己的已有CombatHUD实例，并明确传播当前或空的PlayerContext；不恢复上一世界临时HUD，不创建第二个HUD，不以Tick轮询状态。
 
@@ -35,3 +44,11 @@
 真实保存的RootLayout参与自动化回归：清空HUD后重新挂载、临时控件不复活、重复事件只保留一个组合、控制器换代解除旧委托、断开清空上下文。用户此前的笼统“HUD可见”反馈随后被“没有看到HUD”纠正，不能把旧反馈当成这次修复的旅行验收。
 
 编译、Monolith保存重载、包内资源检查与客户端人工验收分别记录在内容包`Docs/MonolithGenerationManifest.json`及本轮Saved证据中。编辑器界面预览只证明静态布局，不证明客户端已经登录、完成旅行或联机技能机制通过。游戏窗口按用户“仅检查代码与日志”的限制保留人工操作。
+
+## 原稿色彩一致性补充（最终约束）
+
+用户要求色彩与原稿一致，并明确本轮先校正全部界面。三份原稿按原字节保存为SourceArt/UI/Nature/NatureMenuReference.png、NatureAbilityReference.png、NatureMinimapReference.png，来源与保存副本哈希一致。对应T_DBA_Nature*Reference由Monolith导入为sRGB、TC_EditorIcon无损、NoMipmaps、TEXTUREGROUP_UI；不再用重新生成的装饰代替原稿颜色。
+
+UI/Materials/Nature/M_DBA_Nature{MenuReference,AbilityReference,MinimapReference,PanelReference,SkillFrameReference}由Monolith创建为UI/Translucent/Unlit。RGB只取样原稿，不做色调、亮度、饱和度或乘色变换；Alpha只移除深色底和固定生命/气势、肖像、技能、快捷键、地图及库存示意。菜单无字区域取样邻近原稿石板，面板边缘和技能框也复用原稿。HLSL、资源身份和边界见内容包Docs/NatureReferenceMaterials.json。
+
+当前英雄图标、肖像、地图仍由其真实资产决定。文字和输入尺寸固定；不同视口采样、透明边缘合成和显示器不能由资源哈希证明最终截图逐像素相同，最终客户端观感待人工核验。本轮不调整场景、角色材质或光照。

@@ -39,7 +39,7 @@ bool UDivineBeastsVillageMinimapWidget::ProjectMapViewport(const FVector2D& MapU
     OutMaximumUV = Center + FVector2D(Extent);
     FVector2D Offset = (BoundedUV - OutMinimumUV) * ZoomMultiplier - FVector2D(0.5);
     // 方形底图角落位于圆窗之外；保持方位，把完整24像素标记收敛到圆内，而非隐藏真实玩家。
-    if (Offset.SizeSquared() > 0.43 * 0.43) { Offset = Offset.GetSafeNormal() * 0.43; }
+    if (Offset.SizeSquared() > 0.40 * 0.40) { Offset = Offset.GetSafeNormal() * 0.40; }
     OutMarkerUV = FVector2D(0.5) + Offset;
     return true;
 }

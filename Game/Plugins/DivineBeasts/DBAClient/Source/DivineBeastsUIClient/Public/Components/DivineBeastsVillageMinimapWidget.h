@@ -18,7 +18,7 @@ public:
     void BindToPawn(APawn* Pawn);
     /** 世界厘米投影到[0,1]；+X为北/+Y为东，边界中心0、尺寸50400cm；非法输入返回false且不改OutUV。 */
     static bool ProjectVillagePosition(const FVector& PositionCentimeters, FVector2D& OutUV);
-    /** 本地显示裁剪：倍率1/2/4不改变世界坐标；围绕玩家且不越过底图边缘，圆外标记沿方位收敛到半径0.43。非法值不修改输出。 */
+    /** 本地显示裁剪：倍率1/2/4不改变世界坐标；围绕玩家且不越过底图边缘，圆外标记沿方位收敛到半径0.40。非法值不修改输出。 */
     static bool ProjectMapViewport(const FVector2D& MapUV, float ZoomMultiplier,
         FVector2D& OutMinimumUV, FVector2D& OutMaximumUV, FVector2D& OutMarkerUV);
 

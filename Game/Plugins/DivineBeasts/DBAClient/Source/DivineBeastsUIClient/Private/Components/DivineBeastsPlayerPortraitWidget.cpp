@@ -117,7 +117,12 @@ void UDivineBeastsPlayerPortraitWidget::RefreshPortrait()
     Snapshot.Level = INDEX_NONE; // 当前持久摘要与组件均没有等级字段，禁止以固定1冒充权威等级。
     Snapshot.StatusId = Identity->IsCharacterReady() ? FName(TEXT("Ready")) : FName(TEXT("Loading"));
     Snapshot.PortraitTexture = TSoftObjectPtr<UTexture2D>(Path);
+    const uint64 ExpectedIdentityGeneration = LoadGeneration;
     ApplyPortraitState(Snapshot);
+    // 同步蓝图通知可能解绑或切换角色；外层旧投影不得再申请原头像或覆盖新名称。
+    if (bDestroyingNativeResources || !IsValid(this) || IsUnreachable() ||
+        ExpectedIdentityGeneration != LoadGeneration || BoundIdentity.Get() != Identity ||
+        !IsValid(Identity) || Identity->GetHeroDefinitionId() != HeroId || BoundPawn.Get() != GetOwningPlayerPawn()) { return; }
     if (Path != RequestedPortraitPath)
     {
         ++LoadGeneration;
@@ -151,10 +156,22 @@ void UDivineBeastsPlayerPortraitWidget::RenderPortrait()
         Image->SetBrushFromTexture(Texture);
         Image->SetVisibility(IsValid(Texture) ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Hidden);
     }
+    // 图腾为英雄身份的装饰投影，复用真实肖像；不保留原稿白马，也不新增印记玩法或权威状态。
+    if (auto* Image = Cast<UImage>(GetWidgetFromName(TEXT("HeroTotemImage"))))
+    {
+        UTexture2D* Texture = State.PortraitTexture.Get();
+        Image->SetBrushFromTexture(Texture);
+        Image->SetVisibility(IsValid(Texture) ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
+    }
     if (auto* Name = Cast<UTextBlock>(GetWidgetFromName(TEXT("PlayerName")))) { Name->SetText(State.DisplayName); }
+    if (auto* HeroName = Cast<UTextBlock>(GetWidgetFromName(TEXT("HeroName"))))
+    { HeroName->SetText(State.DisplayId.IsNone() ? FText::GetEmpty() : FDivineBeastsUILocalization::HeroNameToText(State.DisplayId)); }
     if (auto* Level = Cast<UTextBlock>(GetWidgetFromName(TEXT("LevelText"))))
     {
         Level->SetText(State.Level >= 0 ? FText::AsNumber(State.Level) : FText::GetEmpty());
         Level->SetVisibility(State.Level >= 0 ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
     }
+    // 无可信等级时明确留空；原稿60不能成为默认值，也不把角色就绪当成1级。
+    if (auto* Unavailable = Cast<UTextBlock>(GetWidgetFromName(TEXT("LevelUnavailableText"))))
+    { Unavailable->SetVisibility(State.Level < 0 && !State.DisplayId.IsNone() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed); }
 }

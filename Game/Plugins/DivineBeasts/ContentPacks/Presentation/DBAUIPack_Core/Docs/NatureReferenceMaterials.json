@@ -1,0 +1,49 @@
+{
+  "SchemaVersion": 1,
+  "用途": "第三层客户端UI原稿取样材质说明；JSON不是引擎资产，材质由Monolith创建编译保存。",
+  "色彩合同": "原稿sRGB、TC_EditorIcon无损、NoMipmaps；输出RGB只取样原稿，不乘色/调色。Alpha仅移除底色和固定业务示意。",
+  "所有权": "DBAUIPack_Core；平台不引用项目纹理，材质不改变服务器/GAS状态。",
+  "材料": [
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMenuReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReference",
+      "Code": "// 原稿RGB只采样，不加乘色或色调变换；命令文案区域从邻近无字石板重新取样。\nfloat2 P = UV;\nif (UV.x > 0.345 && UV.x < 0.71 && UV.y > 0.255 && UV.y < 0.745) P.x = 0.30 + frac((UV.x-0.345)*9.0)*0.035;\nfloat3 C = Texture2DSample(Source, SourceSampler, P).rgb;\n// 原稿深色背景仅改透明度；不把它当贴图颜色染黑。\nAlpha = smoothstep(0.022, 0.038, max(C.r,max(C.g,C.b)));\nreturn C;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureAbilityReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
+      "Code": "// 原稿装饰RGB保持原采样；固定肖像、生命/气势填充、技能图标/快捷键、库存和菜单示意不属于实时数据。\nfloat3 C = Texture2DSample(Source, SourceSampler, UV).rgb;\nAlpha = smoothstep(0.014,0.03,max(C.r,max(C.g,C.b)));\nfloat2 Portrait = (UV-float2(0.183,0.485))/float2(0.082,0.245);\nif(dot(Portrait,Portrait)<1.0) Alpha=0;\nif(UV.x>0.274 && UV.x<0.735 && UV.y>0.277 && UV.y<0.31) Alpha=0;\nif(UV.x>0.274 && UV.x<0.735 && UV.y>0.338 && UV.y<0.366) Alpha=0;\nif(UV.x>0.275 && UV.x<0.737 && UV.y>0.399 && UV.y<0.686) Alpha=0;\nif(UV.x>0.737 && UV.x<0.879 && UV.y>0.399 && UV.y<0.73) Alpha=0;\nif(UV.x>0.168 && UV.x<0.203 && UV.y>0.633 && UV.y<0.718) Alpha=0;\nreturn C;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMinimapReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapReference",
+      "Code": "// 仅移除参考地图与固定交互标记；保留原稿外框的RGB，不改绿色、金色、石材或玉石颜色。\nfloat3 C = Texture2DSample(Source, SourceSampler, UV).rgb;\nAlpha=smoothstep(0.018,0.038,max(C.r,max(C.g,C.b)));\nif(distance(UV,float2(0.5,0.447))<0.335) Alpha=0;\n// 右侧原稿加减/叶子由真实按钮替换，避免同一按钮绘制两次。\nif(UV.x>0.807 && UV.x<0.884 && UV.y>0.512 && UV.y<0.718) Alpha=0;\nreturn C;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReference",
+      "Code": "// 四边复用原稿无字装饰取样；中央透明，由页面自己的背景承载，不以生成画稿代替原稿颜色。\nfloat2 P=UV;\nAlpha=1;\nif(UV.y<0.16) P=float2(UV.x,UV.y*1.375);\nelse if(UV.y>0.84) P=float2(UV.x,0.76+(UV.y-0.84)*1.5);\nelse if(UV.x<0.16) P=float2(UV.x*1.75,0.20+UV.y*0.58);\nelse if(UV.x>0.84) P=float2(0.72+(UV.x-0.84)*1.75,0.20+UV.y*0.58);\nelse Alpha=0;\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha*=smoothstep(0.022,0.038,max(C.r,max(C.g,C.b)));\nreturn C;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureSkillFrameReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
+      "Code": "// 原稿第一个技能石框；中心和固定快捷键区域透明，实际图标/快捷键来自授予技能快照。\nfloat2 P=float2(0.271+UV.x*0.088,0.39+UV.y*0.294);\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=1;\nif(UV.x>0.10 && UV.x<0.90 && UV.y>0.10 && UV.y<0.87) Alpha=0;\nif(UV.x>0.29 && UV.x<0.71 && UV.y>0.85) Alpha=0;\nreturn C;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureHealthFillReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
+      "Code": "// 生命填充直接采样原稿绿色晶纹；比例由ProgressBar裁剪，不以乘色代替原图。\nfloat2 P=float2(0.285+UV.x*0.428,0.277+UV.y*0.025);\n// 中央固定示例数字不参与填充；从原稿无字区域取样，仍不改变RGB。\nif(P.x>0.42 && P.x<0.61) P.x=0.30+frac(UV.x*4)*0.10;\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMomentumFillReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
+      "Code": "// 气势填充直接采样原稿蓝色晶纹；不假设为法力，不写GAS数值。\nfloat2 P=float2(0.285+UV.x*0.428,0.338+UV.y*0.018);\n// 中央固定示例数字不参与填充；从原稿无字区域取样，仍不改变RGB。\nif(P.x>0.42 && P.x<0.61) P.x=0.30+frac(UV.x*4)*0.10;\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureUltimateFrameReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
+      "Code": "// 原稿中央终极技能金色石框，中心与固化快捷键透明；图标和快捷键仍来自实时数据。\nfloat2 P=float2(0.447+UV.x*0.097,0.373+UV.y*0.326);\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=1;\nif(UV.x>0.15 && UV.x<0.85 && UV.y>0.14 && UV.y<0.87) Alpha=0;\nif(UV.x>0.29 && UV.x<0.71 && UV.y>0.85) Alpha=0;\nreturn C;"
+    }
+  ],
+  "限制": "视口过滤与透明合成不能由资源哈希证明最终截图逐像素一致；真实地图不可改为原稿虚构地形。"
+}

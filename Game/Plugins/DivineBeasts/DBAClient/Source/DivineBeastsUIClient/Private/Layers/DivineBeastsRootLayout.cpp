@@ -130,8 +130,12 @@ void UDivineBeastsRootLayout::NativeDestruct()
     if (IsValid(CombatHUD))
     {
         // 销毁根布局时明确撤销子组件的数据来源，避免旅行后旧Pawn委托仍访问上一界面。
-        if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(TEXT("PlayerPortrait"))))
-        { Portrait->BindToPawn(nullptr); }
+        // 顶部角色框与底部技能栏各自持有展示实例，失活时同时撤销，不能遗留其中一份旧角色。
+        for (FName PortraitName : {FName(TEXT("PlayerPortrait")), FName(TEXT("ActionBarPortrait"))})
+        {
+            if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(PortraitName)))
+            { Portrait->BindToPawn(nullptr); }
+        }
         if (auto* Minimap = Cast<UDivineBeastsVillageMinimapWidget>(CombatHUD->GetWidgetFromName(TEXT("Minimap"))))
         { Minimap->BindToPawn(nullptr); }
         CombatHUD->SetVisibility(ESlateVisibility::Collapsed);
@@ -180,10 +184,13 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
     BindCombatEffects(bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr);
     // 组合根只为真实本地Pawn注入展示来源；项目肖像/小地图各自持有事件与纹理句柄，无MOBA依赖。
     APawn* DisplayPawn = bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr;
-    if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(TEXT("PlayerPortrait"))))
+    for (FName PortraitName : {FName(TEXT("PlayerPortrait")), FName(TEXT("ActionBarPortrait"))})
     {
-        Portrait->SetOwningPlayer(GetOwningPlayer());
-        Portrait->BindToPawn(DisplayPawn);
+        if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(PortraitName)))
+        {
+            Portrait->SetOwningPlayer(GetOwningPlayer());
+            Portrait->BindToPawn(DisplayPawn);
+        }
     }
     if (auto* Minimap = Cast<UDivineBeastsVillageMinimapWidget>(CombatHUD->GetWidgetFromName(TEXT("Minimap"))))
     {
@@ -193,8 +200,12 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
     // 保留的根布局不一定再次NativeConstruct；当前Pawn事件统一重绑真实技能/属性来源。
     if (auto* Abilities = Cast<UDivineBeastsAbilityBarPanel>(CombatHUD->GetWidgetFromName(TEXT("AbilityBar"))))
     { Abilities->RefreshAbilitySourceFromOwningPawn(); }
-    if (auto* Status = Cast<UDivineBeastsPlayerStatusPanel>(CombatHUD->GetWidgetFromName(TEXT("PlayerStatus"))))
-    { Status->RefreshStatusSourceFromOwningPawn(); }
+    // 两处资源条都只读同一ASC事实；各自委托与异步句柄按实例配对释放，不复制游戏权威数据。
+    for (FName StatusName : {FName(TEXT("PlayerStatus")), FName(TEXT("ActionBarStatus"))})
+    {
+        if (auto* Status = Cast<UDivineBeastsPlayerStatusPanel>(CombatHUD->GetWidgetFromName(StatusName)))
+        { Status->RefreshStatusSourceFromOwningPawn(); }
+    }
 }
 
 void UDivineBeastsRootLayout::BindCombatEffects(APawn* Pawn)

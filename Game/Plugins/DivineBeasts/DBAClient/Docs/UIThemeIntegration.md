@@ -15,3 +15,9 @@
 ## 验收
 
 源合同Tests/Architecture/ValidateUIThemeIntegration.py；原生测试前缀GamePlatform.UI.Theme。先验证一套真实主题和样板页，再逐个领域接入。所有蓝图/主题/样式由Monolith创建、编译、保存、重载和记录；具体实现进度见Docs/Implementation/UIThemeImplementation_20261010.md，不能由本说明推导实际运行或发布通过。
+
+## 2026-10-11 自然远古定稿
+
+最终改为自然、藤蔓、树叶、碧绿、原始与远古，替代此前商代青铜。第三层DBAUIPack_Core拥有六份自然纹理、CommonUI样式和Widget；平台机制无项目路径，非竞技界面不新增竞技依赖。Monolith同时修改真实按钮状态画刷及项目样式CDO，避免ThemeBindings运行时覆写回旧视觉。bPreserveFontSize继续开启，无ScaleBox或字体缩放；固定尺寸的输入保持284×42。
+
+地图缩放命令仅改变本地UV视野，倍率1/2/4；圆形裁剪、坐标与按钮生命周期在项目Minimap适配。旅行重新挂载作者CombatHUD并传播当前PlayerContext，清理旧控制器委托；未恢复上一世界临时HUD。进度与人工验收边界见工作空间Docs/Implementation/NatureUIFinalTheme.md和内容包MonolithGenerationManifest.json。

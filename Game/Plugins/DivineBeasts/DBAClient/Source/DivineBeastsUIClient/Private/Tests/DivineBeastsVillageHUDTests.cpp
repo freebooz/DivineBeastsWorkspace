@@ -37,7 +37,7 @@ bool FDivineBeastsMinimapViewportTest::RunTest(const FString&)
         UDivineBeastsVillageMinimapWidget::ProjectMapViewport(FVector2D(0, 1), Zoom, Minimum, Maximum, Marker);
         TestTrue(TEXT("底图边缘不越界"), Minimum.X >= 0 && Minimum.Y >= 0 && Maximum.X <= 1 && Maximum.Y <= 1);
         const FVector2D Offset = Marker - FVector2D(0.5);
-        TestTrue(TEXT("圆边标记完整可见"), Offset.Size() <= 0.430001);
+        TestTrue(TEXT("圆边标记完整可见"), Offset.Size() <= 0.400001);
         TestTrue(TEXT("圆边保留西南方位"), Offset.X < 0 && Offset.Y > 0 && FMath::IsNearlyEqual(-Offset.X, Offset.Y));
     }
     const FVector2D PreviousMarker = Marker;
