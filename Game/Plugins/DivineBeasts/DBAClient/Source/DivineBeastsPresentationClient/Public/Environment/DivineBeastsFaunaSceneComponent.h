@@ -36,6 +36,13 @@ public:
     /** 纯本地惊扰：世界中心cm，Radius>0，Strength0..1，DurationSeconds0..60；返回受影响群数。 */
     UFUNCTION(BlueprintCallable,Category="DivineBeasts|Fauna")
     int32 DisturbFauna(const FVector& WorldCenter, float Radius, float Strength, float DurationSeconds, FString& OutError);
+    /** 当前有效注册的CPU行为快照：LocalPositions为群落局部厘米坐标；不表示GPU可见数量。
+     * 固定步快照可能领先渲染插值一个模拟步，不能用于捕获、碰撞、奖励或任何玩法权威。
+     * false时清空所有输出并提供错误；场景身份被替换、尚未建立实例或世界退出均不可查询。
+     */
+    UFUNCTION(BlueprintCallable,Category="DivineBeasts|Fauna",meta=(DisplayName="查询群落CPU状态"))
+    bool QueryFaunaState(int32& SimulatedCount, int32& PerchedCount, int32& ReservedFlowerSlots,
+        bool& bRenderingActive, TArray<FVector>& LocalPositions, FString& OutError) const;
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

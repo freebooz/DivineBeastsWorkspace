@@ -136,6 +136,8 @@ bool FGamePlatformFaunaSimulation::Validate(std::string& OutError) const
     if (!BoundedVector(Settings.HalfExtent) || !PositiveFinite(Settings.BodyRadius) || Settings.BodyRadius < 1.e-5 ||
         Settings.HalfExtent.X <= Settings.BodyRadius+1.e-5 || Settings.HalfExtent.Y <= Settings.BodyRadius+1.e-5 ||
         Settings.HalfExtent.Z <= Settings.BodyRadius+1.e-5) { return Fail("栖息半范围必须有限且大于个体半径。"); }
+    if (!std::isfinite(Settings.PerchOffset) || Settings.PerchOffset < 0.0 || Settings.PerchOffset > Settings.BodyRadius)
+        { return Fail("停栖脚底偏移必须为 0..BodyRadius 范围内的有限厘米值。"); }
     if (!PositiveFinite(Settings.CruiseSpeed,1.e7) || !PositiveFinite(Settings.NeighborRadius) ||
         !PositiveFinite(Settings.SeparationRadius) || Settings.SeparationRadius > Settings.NeighborRadius) { return Fail("速度与邻域参数必须为合法正有限数。"); }
     if (Settings.MaxNeighbors < 1 || Settings.MaxNeighbors > 32 ||
@@ -168,7 +170,7 @@ bool FGamePlatformFaunaSimulation::Validate(std::string& OutError) const
             Flower.Capacity < 0 || Flower.Capacity > 512) { return Fail("花点位置、法线或容量无效。"); }
         TotalCapacity += Flower.Capacity;
         if (TotalCapacity > 4096) { return Fail("花点总容量超过 4096。"); }
-        if (Flower.Capacity > 0 && !IsPositionLegal(Add(Flower.Position, Scale(Normalize(Flower.Normal), Settings.BodyRadius))))
+        if (Flower.Capacity > 0 && !IsPositionLegal(Add(Flower.Position, Scale(Normalize(Flower.Normal), Settings.PerchOffset))))
             { return Fail("花点停栖中心位于边界或障碍之外。"); }
     }
     return true;
@@ -349,7 +351,8 @@ FVector FGamePlatformFaunaSimulation::BoundarySteering(const FVector& Position) 
 FVector FGamePlatformFaunaSimulation::FlowerSlotPosition(int FlowerIndex, int Slot) const
 {
     const auto& Flower = Flowers[static_cast<std::size_t>(FlowerIndex)];
-    const FVector Base = Add(Flower.Position,Scale(Flower.Normal,Settings.BodyRadius));
+    // 模型接触高度独立于约束球；后续合法性与槽间距仍使用完整 BodyRadius。
+    const FVector Base = Add(Flower.Position,Scale(Flower.Normal,Settings.PerchOffset));
     if (Flower.Capacity <= 1) { return Base; }
     const int Columns = static_cast<int>(std::ceil(std::sqrt(static_cast<double>(Flower.Capacity))));
     const int Rows = (Flower.Capacity+Columns-1)/Columns;

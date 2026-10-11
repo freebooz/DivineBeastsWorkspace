@@ -49,7 +49,19 @@ UE 5.8 的 `PyWrapperObject.cpp:992–1022` 确认 `set_editor_properties` 在�
 | 嵌套 Context 更新 | 在旧目录取消通知中再次调用 UpdateProjectContext | 外层识别更新 token 被取代；仅最外层解除暂停；恢复依据最终 Context |
 | 世界与账号退出 | 在 WorldCleanup/ResetForAccountSwitch 取消通知中尝试 Start；随后等待迟到预载完成 | 清理段拒绝重建；Desired、Pending、请求均清空；不会在退出后的世界复活 |
 | 多组件/流送/分屏 | 两个 Level 实例含同名 Actor；每个 Actor 多组件；再增加第二 LocalPlayer | 自动组件路径不同；显式重复 ID 被拒绝；现行场景共享环境只归首个 LocalPlayer；其他 Owner 无权停止 |
-| 异步失败重试观察 | Data 已受理后让实际 VFX 播放失败，随后相同参数 Apply | 记录真实失败终态和项目 RequestId 行为；这是本轮仍需补齐的恢复策略，不预设“已修复” |
+| Owner 诊断身份隔离 | A/token1 停止后 B/token2 接管同名 Habitat；分别调用 ResolveAmbientFaunaContextForOwner，另测加载未提交、暂停、终态等待重试 | 旧 Owner/token 返回 false 且清空 ContextId；只有当前已提交 Owner/token 返回 HabitatId，查询仍需实际平台诊断 |
+| 异步失败后的显式重试 | Data 已受理后让真实顶层 VFX 播放失败；等终态广播完成后，再对该 ID 相同参数 Apply | 顶层终态清除当前 RequestId、保留配置；显式 Apply 生成一个新 RequestId；不能把 Count 查询当成恢复播放成功 |
+| 无隐式循环 | 上一失败之后只更新另一个群落、等候下一帧或发送重复目录通知；随后让一次显式重试仍失败 | 失败群保持等待，不被其他群落提交带起；第二次失败后仍等待，不产生后台循环 |
+| 父子终态隔离 | 用真实复合请求产生共享 RequestId 的子实例终态，随后产生父实例终态 | 有效 ParentHandle 的子终态不改项目请求；只有无父句柄的顶层终态可清除匹配 ID |
+| 旧代迟到与观察者重入 | 在真实 completion 广播前后分别注册观察者；观察者先 Stop 或替换该 ID，再处理旧 RequestId 通知 | 被删除的意图不存在；后来 RequestId/Mutation 保持；回调不重新提交或恢复旧状态 |
+| 世界订阅隔离 | 旧世界完成正在广播时清理该世界并进入新世界，随后观察旧句柄通知 | 旧绑定 token/World 的通知被忽略；新世界的订阅和当前请求保持 |
 | 视觉与预算 | 正式资产下检查远近摄像机、出生视距外、分屏、数量 0/1/32/512、两类各 16 个请求 | 检查可见数量/布局/变形/距离恢复和帧时；不要只看意图数量 |
 
 已有 C++ Automation `DivineBeasts.Presentation.Activation.FailureCancellationAndOldGeneration` 位于项目模块 `Private/Tests`，继续作为 ContentPack 失败/取消/迟到代次的独立回归入口。它的 Transient 账本夹具不证明真实资产成功，也不能替代上表的 PIE/VFX 回调验证。
+
+
+## 异步投影追加说明
+
+2026-10-11 已补入真实公共 VFX 完成订阅：`BindEnvironmentFlockCompletion` 在实际提交前绑定，按弱 World、绑定 token、顶层 ParentHandle 和当前 RequestId 过滤；`UnbindEnvironmentFlockCompletion` 先使代次失效再移除委托。观察者只清当前 RequestId 并标记等待显式重试，不在回调内触发任何外部调用或广播。
+
+上述新增异步用例仍需实际 UE 宿主验证。Python 所有权脚本不能触发或模拟这个 C++ 原生委托，不以它们的请求数量断言冒充终态/父子过滤已经运行通过。

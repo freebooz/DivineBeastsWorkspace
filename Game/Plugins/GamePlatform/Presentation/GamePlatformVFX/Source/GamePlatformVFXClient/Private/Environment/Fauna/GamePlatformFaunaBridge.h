@@ -18,6 +18,7 @@ inline bool Initialize(GamePlatformFauna::FGamePlatformFaunaSimulation& Simulati
     Settings.Count=Config.Count; Settings.Seed=Config.Seed;
     Settings.HalfExtent={Config.HalfExtent.X,Config.HalfExtent.Y,Config.HalfExtent.Z};
     Settings.CruiseSpeed=Config.CruiseSpeed; Settings.BodyRadius=Config.BodyRadius;
+    Settings.PerchOffset=Config.PerchOffsetCm;
     Settings.NeighborRadius=Config.NeighborRadius; Settings.SeparationRadius=Config.SeparationRadius;
     Settings.MaxNeighbors=Config.MaxNeighbors; Settings.FixedStepSeconds=1.0/30.0;
     std::vector<GamePlatformFauna::FFlower> Flowers;

@@ -62,6 +62,26 @@ class FaunaIntegrationReview:
         return (list(self.cache.read_position_attribute('Position','Fauna',False,0)),
                 list(self.cache.read_quat_attribute('MeshOrientation','Fauna',False,0)),
                 list(self.cache.read_vector4_attribute('DynamicMaterialParameter','Fauna',0)))
+    def spatial_contract(self,species,positions):
+        # 独立几何断言作用于真实GPU结果；不重用生产IsPositionLegal函数。
+        config=unreal.load_asset(ASSET+'/Definitions/DA_DBA_VFX_Fauna_'+species).get_editor_property('fauna')
+        half=config.get_editor_property('half_extent');radius=float(config.get_editor_property('body_radius'))
+        polygon=list(config.get_editor_property('water_polygon'))
+        obstacles=list(config.get_editor_property('obstacles'))
+        for p in positions:
+            if any(abs(v)>h-radius+.02 for v,h in zip((p.x,p.y,p.z),(half.x,half.y,half.z))): return False
+            for obstacle in obstacles:
+                center=obstacle.get_editor_property('center');minimum=radius+float(obstacle.get_editor_property('radius'))
+                if sum((v-c)**2 for v,c in zip((p.x,p.y,p.z),(center.x,center.y,center.z)))<(minimum-.02)**2: return False
+            if polygon:
+                inside=False
+                for a,b in zip(polygon,polygon[1:]+polygon[:1]):
+                    if (a.y>p.y)!=(b.y>p.y) and p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x: inside=not inside
+                    dx,dy=b.x-a.x,b.y-a.y
+                    t=max(0,min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy)))
+                    if (p.x-a.x-dx*t)**2+(p.y-a.y-dy*t)**2<(radius-.02)**2: return False
+                if not inside: return False
+        return True
     def tick(self,delta):
         try:
             now=time.monotonic();elapsed=now-self.mark
@@ -97,6 +117,17 @@ class FaunaIntegrationReview:
                 self.report['cpuBehavior']['butterflyPerch']={
                     'simulated':int(butterfly[1]),'perched':int(butterfly[2]),'reservedSlots':int(butterfly[3]),
                     'renderingActive':bool(butterfly[4]),'source':'production CPU snapshot'}
+                self.disturbed_component=next(c for c in comps if str(c.get_editor_property('species_id'))=='ButterflyAzure')
+                stimulus=self.disturbed_component.disturb_fauna(self.disturbed_component.get_world_location(),1000.0,1.0,3.0)
+                accepted_groups=stimulus[0] if isinstance(stimulus,tuple) else stimulus
+                if int(accepted_groups)<1: raise RuntimeError('正式惊扰接口没有命中蝶群：'+repr(stimulus))
+                self.phase='disturb';self.mark=now;self.persist()
+            elif self.phase=='disturb' and elapsed>0.8:
+                state=self.disturbed_component.query_fauna_state()
+                if not self.accepted(state) or int(state[2])!=0:
+                    raise RuntimeError('受惊后仍有蝴蝶占用停栖状态：'+repr(state))
+                self.report['cpuBehavior']['butterflyDisturbance']={'perchedAfter':int(state[2]),'pass':True}
+                self.disturbed_component=None
                 self.service.stop_all_ambient_fauna();self.phase='clear_automatic';self.mark=now;self.persist()
             elif self.phase=='clear_automatic' and elapsed>1:
                 if self.active(): raise RuntimeError('自动场景StopAll仍有活跃群落')
@@ -134,9 +165,10 @@ class FaunaIntegrationReview:
                 finite=all(math.isfinite(v) for p in positions for v in (p.x,p.y,p.z))
                 normalized=len(orientations)==count and all(abs(q.x*q.x+q.y*q.y+q.z*q.z+q.w*q.w-1)<0.01 for q in orientations)
                 motion_valid=len(motion)==count and all(0<=m.x<1.001 and -.001<=m.y<=1.001 for m in motion)
+                spatial_valid=self.spatial_contract(species,positions)
                 item={'species':species,'requested':count,'gpuObserved':len(positions),'finite':finite,
-                      'normalizedOrientations':normalized,'validMotionParameters':motion_valid,
-                      'pass':len(positions)==count and finite and normalized and motion_valid}
+                      'normalizedOrientations':normalized,'validMotionParameters':motion_valid,'insideHabitatAndObstacles':spatial_valid,
+                      'pass':len(positions)==count and finite and normalized and motion_valid and spatial_valid}
                 self.report['gpuCases'].append(item);self.persist()
                 if not item['pass']: raise RuntimeError('真实GPU缓存合同失败：'+repr(item))
                 self.component.set_editor_property('count',513)
@@ -157,6 +189,24 @@ class FaunaIntegrationReview:
                 moved=len(positions)==128 and any(sum((a-b)**2 for a,b in zip(old,(p.x,p.y,p.z)))>1 for old,p in zip(self.fish_before,positions))
                 self.report['cpuBehavior']['fishGpuMotion']={'gpuCount':len(positions),'moved':moved}
                 if not moved: raise RuntimeError('鱼群GPU位置没有持续推进')
+                # 真实组件结束通知检验项目终态投影；同参数显式Apply必须可恢复，不能自动循环。
+                self.active()[0].deactivate_immediate()
+                self.phase='terminal_wait';self.mark=now
+            elif self.phase=='terminal_wait' and elapsed>1:
+                if self.active(): raise RuntimeError('外部终态后出现隐式自动重试或清理不全')
+                if self.accepted(self.component.query_fauna_state()): raise RuntimeError('终态后旧请求仍被诊断为当前运行')
+                if not self.accepted(self.component.apply_fauna()): raise RuntimeError('同参数显式Apply不能从终态恢复')
+                self.phase='terminal_retry';self.mark=now
+            elif self.phase=='terminal_retry' and elapsed>1.5:
+                active=self.active()
+                if len(active)!=1:
+                    if elapsed<20: return
+                    raise RuntimeError('终态重试未建立唯一新实例')
+                self.capture_gpu(active[0]);self.phase='terminal_read';self.mark=now
+            elif self.phase=='terminal_read' and elapsed>0.5:
+                positions,_,_=self.read_gpu()
+                self.report['terminalExplicitRetry']={'gpuObserved':len(positions),'pass':len(positions)==128}
+                if len(positions)!=128: raise RuntimeError('终态显式重试GPU数量不符')
                 self.begin_case()
             elif self.phase=='final_clear' and elapsed>1:
                 if self.active(): raise RuntimeError('最终StopAll未回收群落')

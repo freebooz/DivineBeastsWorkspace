@@ -33,6 +33,7 @@ struct FSettings
     FVector HalfExtent = {600, 600, 300};  // 栖息盒半范围，各轴 > BodyRadius，且 <= 1e8 厘米。
     double CruiseSpeed = 120.0;           // 巡航速度，0 < 值 <= 1e7 厘米/秒。
     double BodyRadius = 3.0;              // 约束球半径，1e-5..1e8 厘米。
+    double PerchOffset = 0.72;            // 模型中心沿花面法线的脚底偏移，有限且 0..BodyRadius 厘米。
     double NeighborRadius = 160.0;        // 鱼邻域半径，0 < 值 <= 1e8 厘米。
     double SeparationRadius = 25.0;       // 鱼分离半径，0 < 值 <= NeighborRadius。
     int MaxNeighbors = 16;                // 每体每固定步接受邻居上限，1..32。

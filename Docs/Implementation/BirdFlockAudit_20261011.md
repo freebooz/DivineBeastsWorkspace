@@ -7,7 +7,7 @@
 
 ## 1. 结论与证据边界
 
-本轮确认四个项目编排缺陷：取消通知重入会覆盖较新的意图；组件默认身份碰撞及按 ID 误停；换 ID 的非法候选会先破坏合法旧绑定；同一 UWorld 的 Context 变化会丢弃自定义场景意图。已在项目层实现相应修正，并将修正后的同一套事务用于蝴蝶与鱼群。
+本轮确认五个项目编排缺陷：取消通知重入会覆盖较新的意图；组件默认身份碰撞及按 ID 误停；换 ID 的非法候选会先破坏合法旧绑定；同一 UWorld 的 Context 变化会丢弃自定义场景意图；实际异步播放终态未反馈到项目 RequestId，导致相同参数无法重试。已在项目层实现相应修正，并将修正后的同一套事务用于蝴蝶与鱼群。
 
 这是源码审查与实现记录。本轮子任务没有启动/关闭编辑器、构建 C++、执行 PIE、运行图形验证或提交 Git。真实 UE 编译、实际异步通知交错、资源登记及 GPU 效果须由统一验收阶段补齐。下文明确区分已观察的源码事实与尚待运行的用例，不沿用旧文档中的“通过”作为本轮证据。
 
@@ -26,7 +26,8 @@
 | ID | Bird 的 FlockId 或 Fauna 的 HabitatId；两个类型的目录分别命名，不相互占位 |
 | Owner + RegistrationToken | 场景拥有者与注册代次；空 token 条目属于显式服务请求 |
 | MutationToken | 每次配置变更的意图代次；外层操作在同步广播后必须仍匹配才能继续 |
-| RequestId | 当前提交到平台的中立请求身份；挂起/停止在广播取消前先撤销 |
+| RequestId | 当前提交到平台的中立请求身份；挂起/停止在广播取消前先撤销，真实顶层终态精确匹配后清除 |
+| bAwaitingExplicitRetry | 终态后保留意图但暂停隐式再提交；该 ID 显式 Apply 或新 Context 恢复重新准备一次 |
 | World | 该意图绑定的真实 UWorld；过期世界的意图不迁移到后来世界 |
 | Species/Count/Seed/Origin | 配置值；Count 是请求数量，不是可见粒子计数 |
 
@@ -39,11 +40,11 @@
 - `Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Environment/DivineBeastsBirdFlockPresentation.cpp:47–54`。
 - 原实现先复制旧状态并使 RequestId 失效，再调用 `CancelBirdFlockRequest`；返回后无条件 `AmbientBirdFlocks.Add(FlockId, Desired)`。
 
-平台停止最终通过 `GamePlatformVFXWorldSubsystem::Complete` 同步广播 `FGamePlatformVFXPlaybackCompleted`。它不是“稍后一定才回调”的接口。故回调可以在外层 Add 之前调用 Stop 或新的 Start。回调停止后外层写回会复活意图；回调建立另一请求后外层覆盖会丢失该较新请求的清理身份。
+平台停止最终通过 `UGamePlatformVFXWorldSubsystem::CompletePlayback` 同步广播 `FGamePlatformVFXPlaybackCompleted`。它不是“稍后一定才回调”的接口。故回调可以在外层 Add 之前调用 Stop 或新的 Start。回调停止后外层写回会复活意图；回调建立另一请求后外层覆盖会丢失该较新请求的清理身份。
 
 复现输入：已有 A/Seagull/3，等正式实例 Playing；外层改为 4；旧实例取消回调内对 A Stop，或改为 9。原码可最终留下 4，而不是回调要求的 0/9。此输入是从真实同步调用链推出的可复核用例，本轮尚未在 PIE 执行该交错。
 
-修正入口：`Private/Environment/DivineBeastsEnvironmentFlockPresentation.cpp:18` 的 `StartEnvironmentFlock`。先发布带新 MutationToken 的候选，再申请包与取消旧 RequestId；每个会广播的边界后重新查表并核对 token。Stop 先从映射删除再发取消。StopAll 先清空 Desired/Pack/World，并用门闩拒绝清理期间的新 Start。无跨广播的 TMap 元素引用，无无条件旧快照写回。
+修正入口：`Private/Environment/DivineBeastsEnvironmentFlockPresentation.cpp:19` 的 `StartEnvironmentFlock`。先发布带新 MutationToken 的候选，再申请包与取消旧 RequestId；每个会广播的边界后重新查表并核对 token。Stop 先从映射删除再发取消。StopAll 先清空 Desired/Pack/World，并用门闩拒绝清理期间的新 Start。无跨广播的 TMap 元素引用，无无条件旧快照写回。
 
 同时修正首次资源申请窗口：`ActivateContentPack` 新增可选 Pending 输出，在 `BeginLogicalPreload` 的诊断广播前发布句柄。回调内停止可以真正取消此次加载，而不是因调用方尚未取得返回值而遗漏租约。
 
@@ -82,18 +83,35 @@
 
 复现输入：保持 UWorld 相同，在已有自定义组件鸟群时，更新一个有效 ProjectContext 的 RegionId 或 ExperienceId。场景组件仍存活且无第二次 BeginPlay，其意图已被丢弃。此问题可通过公开 C++ API 触发；本轮项目源码检索没有证明已存在生产调用点，所以不把它描述成已观察的线上故障。
 
-修正：`UpdateProjectContext:256` 配对调用共用 `SuspendEnvironmentFlocksForContextChange:291` / `ResumeEnvironmentFlocksAfterContextChange:319`。先给 Bird/Fauna 同时设置暂停门闩，保留当前 Desired，先使旧 RequestId/Pack 身份失效再广播取消。挂起期的新合法意图只排队。最终 Context 提交且新包 Active 后恢复当前映射；取消回调删除的意图不从快照恢复。嵌套 Context 更新用更新 token 和暂停计数协调，仅最外层恢复。
+修正：`UpdateProjectContext:257` 配对调用共用 `SuspendEnvironmentFlocksForContextChange:365` / `ResumeEnvironmentFlocksAfterContextChange:394`。先给 Bird/Fauna 同时设置暂停门闩，保留当前 Desired，先使旧 RequestId/Pack 身份失效再广播取消。挂起期的新合法意图只排队。最终 Context 提交且新包 Active 后恢复当前映射；取消回调删除的意图不从快照恢复。嵌套 Context 更新用更新 token 和暂停计数协调，仅最外层恢复。
 
 真实 WorldCleanup、跨世界残留、账号退出与 Deinitialize 则清空意图。账号/世界清理的全程门闩覆盖后续目录撤销通知，防止 StopAll 返回后又在同一清理过程被回调重建。相同世界的默认鸟群仅更新仍存在的默认意图，停止回调不会被自动默认策略覆盖。
 
+### BIRD-05：真实异步播放终态未清理项目 RequestId，相同参数无法重试（P2）
+
+原始位置：`Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Environment/DivineBeastsBirdFlockPresentation.cpp:95、106–111`。旧实现只在同步 Submit 拒绝时清除 RequestId；平台已经受理后再异步失败，项目仍认为同一个 RequestId 已提交，相同配置 Apply 会跳过它。
+
+本轮追加修复读取了真实公共合同：`GamePlatformVFXClient/Public/Types/GamePlatformVFXResult.h:31–43` 的 PlaybackSnapshot 保留原中立 RequestId，并以 ParentHandle 标识复合子实例；`Private/Subsystems/GamePlatformVFXWorldSubsystem.cpp:588–600` 的 CompletePlayback 先保存终态快照，再同步广播。项目不需要访问平台私有容器或复制播放器状态。
+
+共用文件的 `BindEnvironmentFlockCompletion:244` 在真正 Submit 之前，通过 IGamePlatformVFXService 注册弱回调。每个项目 LocalPlayer 对当前世界至多保留一个订阅。只有绑定 token 仍当前、弱 World 仍有效、实例句柄属于该世界、ParentHandle 无效、状态为真实顶层终态且 RequestId 精确匹配当前条目时，才清除该 RequestId。由于每次 Submit 创建新的 GUID，旧 Mutation/旧播放的迟到回执不能命中后来请求。回调遍历时只修改当前条目的字段，不触发外部调用、日志、广播或 Apply，所以不会在持有 TMap 迭代器时同步重入。
+
+终态保留 Species/Count/Seed/Origin/Owner/token 意图，并设置 `bAwaitingExplicitRetry`。另一群落的 Apply、重复 Pending 遍历或目录通知不能顺带重试失败群；只有对该 ID 的显式 Apply、新合法配置或新 Context 的恢复才重新准备一次提交。回调本身没有自动重放路径，没有 Tick/计时器/无限重试。Count 查询依旧报告保留的配置数量。
+
+`UnbindEnvironmentFlockCompletion:300` 先清空弱世界、委托句柄和绑定 token，再向公共服务移除委托。Deinitialize、账号 Reset 与真实 WorldCleanup 都调用它；LocalPlayer 已进入新世界时，只撤销真正属于旧世界的订阅，不能解除后来新世界的绑定。
+
+本轮完成的是源码实现及真实合同复读，尚未执行实际失败注入或证明 GPU 恢复成功。运行验收必须覆盖顶层失败后相同参数重试、子实例终态过滤、旧 RequestId/旧 World 回执、其他观察者先 Stop/替换意图，以及一次显式重试仍失败后保持等待。
+
 ## 4. 蝴蝶/鱼群项目接入合同
 
-新公开入口在 `DivineBeastsPresentationClientSubsystem.h:101–114`：
+新公开入口在 `DivineBeastsPresentationClientSubsystem.h:101–117`：
 
 - `StartAmbientFauna(HabitatId, SpeciesId, Count, Seed, WorldOrigin, OutError)`
 - `StartAmbientFaunaForOwner(HabitatId, SpeciesId, Count, Seed, WorldOrigin, Owner, RegistrationToken, OutError)`
 - `StopAmbientFaunaForOwner(HabitatId, RegistrationToken)`
+- `ResolveAmbientFaunaContextForOwner(HabitatId, Owner, RegistrationToken, OutContextId, OutError) const`
 - `StopAmbientFauna(HabitatId)`、`StopAllAmbientFauna()`、`GetRequestedFaunaCount(HabitatId)`
+
+`ResolveAmbientFaunaContextForOwner` 仅在当前真实 World、未暂停/清理、Owner 存活且属于该 World、注册 token 精确匹配、Count>0 且当前 RequestId 有效时返回 HabitatId。失败先清空 OutContextId；旧 token 不能用于查询后来接管同名 ID 的群落。实现位于 `Private/Environment/DivineBeastsFaunaPresentation.cpp:33`。这个解析只证明项目当前注册已提交，平台 CPU/GPU 状态还需由公共诊断接口实际查询。
 
 `UDivineBeastsFaunaSceneComponent` 默认 SpeciesId=ButterflyAzure、Count=32、Seed=137，ID 为空时使用组件路径。允许 ButterflyAzure/FishSilver，Count=0..512，Seed=0..1000000，坐标必须有限。每个 LocalPlayer 世界中 Bird 目录最多 16 个请求，Fauna 目录最多 16 个请求。数量上限是意图防护，实际可见实例/粒子由统一平台预算、剔除和真实资产决定，不能据此声称满足帧时目标。
 
@@ -116,12 +134,6 @@
 
 因此不能把“出生时远于 35000 cm 会必然被 PreCull 永久丢失”当作该脚本配置下的已确认错误，更不应据此扩大修改唯一 VFX 执行器。实际 uasset 的 EffectType 是否仍与作者合同一致，以及远处出生后靠近的恢复效果，仍须由资产与 PIE 验收确认。
 
-### 异步实际播放失败的重试策略仍需补齐
-
-当前项目状态用 RequestId 表示已提交；同步 Submit 拒绝会清除该 ID。但平台已经受理后异步失败时，本轮没有接入平台终态回调来撤销该项目 RequestId。相同参数 Apply 可能仍因已有 RequestId 而不重新提交。它不等同于本轮已修正的“非法候选保旧”。
-
-后续应利用已有公共完成通知中的中立 RequestId，过滤复合子实例和旧代次后更新当前投影，并明确“显式重试”策略；不能把终态恢复做成无界每帧重试。本轮没有真实注入此失败，列为未完成的运行恢复验证/改进项。
-
 ### 首个 LocalPlayer 和旧原型需要资产/运行侧确认
 
 现行场景组件选 GameInstance 的首个 LocalPlayer；自动默认鸟群也只由首个 LocalPlayer 建立，保持世界环境共享。增加分屏玩家不会自动复制默认鸟群，但首个 LocalPlayer 移除/替换、BeginPlay 早于 LocalPlayer 建立时，目前没有新增自动重绑事件，须在真实模式下验收。
@@ -132,8 +144,9 @@
 
 | 检查 | 结果 | 能证明什么 |
 | --- | --- | --- |
-| 基线四处控制流复读 | 已执行 | 缺陷的输入、因果和原始位置可复核 |
+| 基线五处控制流复读 | 已执行 | 缺陷的输入、因果和原始位置可复核 |
 | 真实 UE Niagara 初始剔除源码复读 | 已执行 | DeactivateResume 与可 PreCull 模式的区别；不能证明 uasset 当前配置 |
+| 公共 VFX 终态/父子句柄与同步广播源码复读 | 已执行 | 原中立 RequestId 与 ParentHandle 的真实语义，以及不在投影回调内调用外部代码的必要性 |
 | 真实 UE Python 批量属性写入源码复读 | 已执行 | 集成脚本的“同时换 ID+非法参数”输入不会通过逐属性中间通知拆开 |
 | 项目 C++ 差异 `git diff --check` | exit 0 | 补丁没有 Git 空白错误；有工作区既有 LF/CRLF 转换提示 |
 | 旧鸟群专用状态标识残留检查 | 未发现旧字段/函数残留 | 抽取后没有遗留旧状态变量调用；不是编译通过证据 |

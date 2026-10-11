@@ -3,6 +3,8 @@
 #include "Instances/GamePlatformVFXInstanceRegistry.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
 #include "NiagaraComponent.h"
+#include "NiagaraComponentPool.h"
+#include "NiagaraWorldManager.h"
 // 把UWorld转为UObject弱引用需要完整继承定义，不能依赖Unity/PCH间接包含。
 #include "Engine/World.h"
 
@@ -82,17 +84,50 @@ bool FGamePlatformVFXInstanceRegistry::Stop(
     }
 
     FGamePlatformVFXInstanceRecord Record = *Existing;
-    Records.Remove(Handle.Id);
+    // 调用方可把Records中的Handle直接传入；删除后只读取已复制的完整身份。
+    Records.Remove(Record.Handle.Id);
 
     if (UNiagaraComponent* Component = Record.Component.Get())
     {
-        ComponentHandles.Remove(Component);
-        if (bStopComponent)
+        const FGamePlatformVFXHandle* OwnerBeforeStop = ComponentHandles.Find(Component);
+        if (OwnerBeforeStop && *OwnerBeforeStop == Record.Handle)
         {
-            Component->DeactivateImmediate();
-            if (!Record.bPooled)
+            // 暂留反向索引作为旧Owner凭证；同句柄重入已被上方Records删除阻断。
+            // 完成观察者可能同步新建/再停止另一Owner，不能先删索引后猜测组件仍归本次Stop。
+            if (bStopComponent) Component->DeactivateImmediate();
+
+            // Component在这里只作索引键；回调可能已销毁对象，后续解引用必须重新取弱引用。
+            const FGamePlatformVFXHandle* OwnerAfterStop = ComponentHandles.Find(Component);
+            if (OwnerAfterStop && *OwnerAfterStop == Record.Handle)
             {
-                Component->DestroyComponent();
+                ComponentHandles.Remove(Component);
+                if (UNiagaraComponent* Remaining = Record.Component.Get();
+                    bStopComponent && Remaining && !Remaining->IsActive())
+                {
+                    // AutoRelease的预激活失败不会触发OnSystemComplete；按真实池状态补归还。
+                    // 正常完成已变FreeInPool时必须跳过，池禁用时实际None也不能残留。
+                    if (Remaining->PoolingMethod == ENCPoolMethod::AutoRelease)
+                    {
+                        UWorld* ComponentWorld = Remaining->GetWorld();
+                        FNiagaraWorldManager* WorldManager = IsValid(ComponentWorld)
+                            ? FNiagaraWorldManager::Get(ComponentWorld) : nullptr;
+                        UNiagaraComponentPool* NativePool = WorldManager ? WorldManager->GetComponentPool() : nullptr;
+                        if (NativePool)
+                        {
+                            NativePool->ReclaimWorldParticleSystem(Remaining);
+                        }
+                        else
+                        {
+                            // 世界Niagara管理器已退出，没有可归还的原生池；终止仍存活的旧组件。
+                            Remaining->PoolingMethod = ENCPoolMethod::None;
+                            Remaining->DestroyComponent();
+                        }
+                    }
+                    else if (Remaining->PoolingMethod == ENCPoolMethod::None)
+                    {
+                        Remaining->DestroyComponent();
+                    }
+                }
             }
         }
     }

@@ -155,7 +155,7 @@ int main()
                 if (Agent.Behavior == EBehavior::Perched)
                 {
                     bPerched = true;
-                    Require(Near(Agent.Position.Z, -40.0 + Settings.BodyRadius, 1.e-4), "停栖须落在花面法线方向");
+                    Require(Near(Agent.Position.Z, -40.0 + Settings.PerchOffset, 1.e-4), "停栖须落在花面法线方向");
                     Require(DistanceSquared(Agent.Velocity, {}) < 1.e-12, "停栖须静止");
                 }
                 if (bPerched && Agent.Behavior == EBehavior::TakingOff) { bTookOff = true; }
@@ -279,6 +279,7 @@ int main()
     {
         auto Settings = MakeSettings(EKind::Fish, 1);
         Settings.HalfExtent = {0.0002,0.0002,0.0002}; Settings.BodyRadius = 0.00001;
+        Settings.PerchOffset = 0.0; // 此回归仅验证极小尺度几何，不让未使用的停栖配置提前拒绝。
         Settings.CruiseSpeed = 0.0001; Settings.NeighborRadius = 0.0001; Settings.SeparationRadius = 0.00002;
         FGamePlatformFaunaSimulation Simulation; std::string Error;
         Require(!Simulation.Initialize(Settings, {}, {{{0,0,0},0.0005}}, {}, Error), "绝对容差不能使小尺度全覆盖障碍失效");
@@ -312,13 +313,74 @@ int main()
                 {
                     bPerched = true;
                     Require(Near(Agent.UpVector.Y,std::sqrt(0.5)) && Near(Agent.UpVector.Z,std::sqrt(0.5)), "非单位花面法线应归一化输出");
-                    Require(Near(Agent.Position.Y,-30+Settings.BodyRadius*std::sqrt(0.5),1.e-5), "停栖中心须沿倾斜法线偏移");
+                    Require(Near(Agent.Position.Y,-30+Settings.PerchOffset*std::sqrt(0.5),1.e-5), "停栖中心须沿倾斜法线偏移");
                 }
             }
         }
         Require(bPerched && Simulation.GetStatistics().OccupiedFlowerSlots == 1, "需要真实占位后验证重置");
         Simulation.Reset();
         Require(Simulation.GetAgents().empty() && Simulation.GetStatistics().OccupiedFlowerSlots == 0, "重置必须释放已占花点");
+    });
+    Run("Butterfly_FootContactOffset", []
+    {
+        // 正式蝶模型的脚底位于局部-Z 0.72cm；BodyRadius=7cm仅用于约束，不能作为离花高度。
+        auto Settings = MakeSettings(EKind::Butterfly, 8);
+        Settings.BodyRadius = 7.0;
+        for (const FVector Normal : {FVector{0,0,1}, FVector{0,1,1}})
+        {
+            const double NormalLength = std::sqrt(DistanceSquared(Normal,{}));
+            const FVector UnitNormal = {Normal.X/NormalLength,Normal.Y/NormalLength,Normal.Z/NormalLength};
+            const FVector FlowerPosition = {50,-30,-40};
+            FGamePlatformFaunaSimulation Simulation;
+            Initialize(Simulation,Settings,{{FlowerPosition,Normal,1}});
+            bool bPerched = false;
+            for (int Step = 0; Step < 1950 && !bPerched; ++Step)
+            {
+                Simulation.Step(Settings.FixedStepSeconds);
+                for (const auto& Agent : Simulation.GetAgents())
+                {
+                    CheckAgent(Agent,Settings);
+                    if (Agent.Behavior != EBehavior::Perched) continue;
+                    bPerched = true;
+                    const FVector Foot = {Agent.Position.X-UnitNormal.X*0.72,
+                        Agent.Position.Y-UnitNormal.Y*0.72,Agent.Position.Z-UnitNormal.Z*0.72};
+                    Require(DistanceSquared(Foot,FlowerPosition) < 1.e-10,
+                        "停栖时真实模型脚底应贴花面，不能按7cm约束球半径悬空");
+                    Require(DistanceSquared(Agent.UpVector,UnitNormal) < 1.e-12,
+                        "脚底偏移与停栖姿态必须采用同一单位花面法线");
+                }
+            }
+            Require(bPerched,"必须经过生产状态机真实到达停栖，才能验证脚底接触");
+        }
+    });
+    Run("PerchOffset_Validation_AndBodyClearance", []
+    {
+        auto Settings = MakeSettings(EKind::Butterfly,8);
+        Settings.BodyRadius = 7.0;
+        FGamePlatformFaunaSimulation Simulation;
+        Initialize(Simulation,Settings);
+        const FVector PreviousPosition = Simulation.GetAgents()[0].Position;
+        std::string Error;
+        for (const double InvalidOffset : {-0.01, 7.01,
+            std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()})
+        {
+            auto Invalid = Settings; Invalid.PerchOffset = InvalidOffset;
+            Require(!Simulation.Initialize(Invalid,{}, {}, {},Error) && !Error.empty(),
+                "非有限、负数或超过完整约束球的停栖偏移必须拒绝");
+            Require(DistanceSquared(Simulation.GetAgents()[0].Position,PreviousPosition) == 0.0,
+                "拒绝脚底偏移时不得破坏当前合法群落");
+        }
+        for (const double ValidOffset : {0.0,0.25,Settings.BodyRadius})
+        {
+            auto Valid = Settings; Valid.PerchOffset = ValidOffset;
+            Initialize(Simulation,Valid,{{{0,0,0},{0,0,1},1}});
+        }
+        // 中心距离障碍仅10.72cm；半径7cm个体对半径10cm障碍仍需17cm净距。
+        Require(!Simulation.Initialize(Settings,{{{0,0,10},{0,0,1},1}},
+            {{{0,0,0},10}}, {}, Error),"减小脚底偏移不能缩小个体障碍净空");
+        // 地板上的花不能让7cm约束球以仅0.72cm中心高度越过栖息盒下边界。
+        Require(!Simulation.Initialize(Settings,{{{0,0,-160},{0,0,1},1}},
+            {}, {}, Error),"花站合法性必须继续包含完整BodyRadius盒边界余量");
     });
     std::cout << "FaunaNative: " << Passed << " passed, " << Failed << " failed\n";
     return Failed == 0 ? 0 : 1;

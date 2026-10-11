@@ -22,7 +22,7 @@ constexpr int32 FaunaMaximumSubsteps=8;
 bool IsPositiveUniformFaunaScale(const FVector& Scale)
 {
     return !Scale.ContainsNaN() && Scale.GetMin()>UE_SMALL_NUMBER &&
-        FMath::IsNearlyEqual(Scale.X,Scale.Y,1.e-4) && FMath::IsNearlyEqual(Scale.X,Scale.Z,1.e-4);
+        FMath::IsNearlyEqual(Scale.X/Scale.Y,1.0,1.e-4) && FMath::IsNearlyEqual(Scale.X/Scale.Z,1.0,1.e-4);
 }
 }
 

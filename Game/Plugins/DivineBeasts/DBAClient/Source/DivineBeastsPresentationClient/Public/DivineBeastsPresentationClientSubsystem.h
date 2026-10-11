@@ -104,6 +104,9 @@ public:
     bool StartAmbientFaunaForOwner(FName HabitatId, FName SpeciesId, int32 Count, int32 Seed,
         const FVector& WorldOrigin, UObject* Owner, const FGuid& RegistrationToken, FString& OutError);
     bool StopAmbientFaunaForOwner(FName HabitatId, const FGuid& RegistrationToken);
+    /** 仅解析当前Owner/token仍持有且已提交的群落；失败清空输出，防止旧注册读取后来同名请求。 */
+    bool ResolveAmbientFaunaContextForOwner(FName HabitatId, const UObject* Owner,
+        const FGuid& RegistrationToken, FName& OutContextId, FString& OutError) const;
     /** 显式服务入口按ID停止；组件必须走Owner/token入口。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Environment|Fauna")
     void StopAmbientFauna(FName HabitatId);

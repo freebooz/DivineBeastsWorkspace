@@ -40,6 +40,8 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformFaunaConfig
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fauna", meta=(Units="cm")) FVector HalfExtent = FVector(350.0,350.0,180.0);
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fauna", meta=(Units="cm/s",ClampMin="0.1")) float CruiseSpeed = 65.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fauna", meta=(Units="cm",ClampMin="0.1")) float BodyRadius = 7.0f;
+    /** 模型中心到脚底沿花面法线的距离；必须有限且处于0..BodyRadius，约束球大小不随之缩小。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fauna", meta=(Units="cm",ClampMin="0")) float PerchOffsetCm = 0.72f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fauna", meta=(Units="cm",ClampMin="0.1")) float NeighborRadius = 150.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fauna", meta=(Units="cm",ClampMin="0.1")) float SeparationRadius = 35.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fauna", meta=(ClampMin="1",ClampMax="32")) int32 MaxNeighbors = 16;

@@ -121,6 +121,61 @@ int32 UDivineBeastsFaunaSceneComponent::DisturbFauna(
     return 0;
 }
 
+bool UDivineBeastsFaunaSceneComponent::QueryFaunaState(
+    int32& SimulatedCount, int32& PerchedCount, int32& ReservedFlowerSlots,
+    bool& bRenderingActive, TArray<FVector>& LocalPositions, FString& OutError) const
+{
+    check(IsInGameThread());
+    SimulatedCount = 0;
+    PerchedCount = 0;
+    ReservedFlowerSlots = 0;
+    bRenderingActive = false;
+    LocalPositions.Reset();
+    OutError.Reset();
+
+    UWorld* World = GetWorld();
+    if (bEndingPlay || !World || World->bIsTearingDown || !World->IsGameWorld() ||
+        World->GetNetMode() == NM_DedicatedServer || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed())
+    {
+        OutError = TEXT("当前本地群落世界或场景Owner不可用。");
+        return false;
+    }
+
+    UGameInstance* GI = World->GetGameInstance();
+    ULocalPlayer* Player = GI ? GI->GetFirstGamePlayer() : nullptr;
+    auto* Presentation = Player ? Player->GetSubsystem<UDivineBeastsPresentationClientSubsystem>() : nullptr;
+    if (!Presentation || Player->GetWorld() != World || BoundPresentation.Get() != Presentation ||
+        BoundHabitatId.IsNone() || !BoundRegistrationToken.IsValid())
+    {
+        OutError = TEXT("本组件尚未持有当前本地玩家的有效群落注册。");
+        return false;
+    }
+
+    // 查询已接纳的绑定；编辑中的HabitatId可能是上次被拒绝的候选，不能据其猜测平台上下文。
+    FName ContextId = NAME_None;
+    if (!Presentation->ResolveAmbientFaunaContextForOwner(
+        BoundHabitatId, this, BoundRegistrationToken, ContextId, OutError)) return false;
+
+    auto* VFX = IGamePlatformVFXService::Get(World);
+    if (!VFX)
+    {
+        OutError = TEXT("当前世界尚未注册VFX群落服务。");
+        return false;
+    }
+    FGamePlatformFaunaSnapshot Snapshot;
+    if (!VFX->GetFaunaSnapshot(ContextId, Snapshot))
+    {
+        OutError = TEXT("当前注册尚未建立CPU群落实例，或该实例已结束。");
+        return false;
+    }
+    SimulatedCount = Snapshot.SimulatedCount;
+    PerchedCount = Snapshot.PerchedCount;
+    ReservedFlowerSlots = Snapshot.ReservedFlowerSlots;
+    bRenderingActive = Snapshot.bRenderingActive;
+    LocalPositions = MoveTemp(Snapshot.LocalPositions);
+    return true;
+}
+
 void UDivineBeastsFaunaSceneComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
     bEndingPlay = true;
