@@ -171,6 +171,11 @@
       ]
     },
     {
+      "Name": "DBAPresentationPack_Core",
+      "Enabled": true,
+      "TargetAllowList": ["Game", "Client", "Editor"]
+    },
+    {
       "Name": "DBAUIPack_Core",
       "Enabled": true,
       "TargetAllowList": [

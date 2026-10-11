@@ -20,6 +20,11 @@
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "UObject/UnrealType.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Components/Button.h"
+#include "Components/EditableTextBox.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Misc/ScopeExit.h"
 
 /**
  * 验证神兽联盟项目 UI 基类和首批页面/HUD 均沿平台基础类单向继承。
@@ -125,6 +130,50 @@ bool FDivineBeastsLoginWidgetContractTest::RunTest(const FString& Parameters)
                 *PropertyName.ToString()),
             FindFProperty<FObjectProperty>(LoginClass, PropertyName));
     }
+    return true;
+}
+
+// 真实保存的登录蓝图不连后端；只用测试口令验证按住揭示、松开/移出/离页遮蔽及清空，不记录口令值。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsLoginPasswordRevealTest,
+    "DivineBeasts.UI.Login.PasswordRevealLifecycle", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsLoginPasswordRevealTest::RunTest(const FString&)
+{
+    UClass* Class = LoadClass<UDivineBeastsLoginScreen>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login.WBP_DBA_UI_Login_C"));
+    if (!TestNotNull(TEXT("真实登录蓝图类"), Class)) return false;
+    TStrongObjectPtr<UDivineBeastsLoginScreen> Screen(NewObject<UDivineBeastsLoginScreen>(GetTransientPackage(), Class));
+    Screen->Initialize();
+    auto* Password = Cast<UEditableTextBox>(Screen->GetWidgetFromName(TEXT("PasswordInput")));
+    auto* Account = Cast<UEditableTextBox>(Screen->GetWidgetFromName(TEXT("AccountInput")));
+    auto* Reveal = Cast<UButton>(Screen->GetWidgetFromName(TEXT("PasswordRevealButton")));
+    if (!TestNotNull(TEXT("密码输入"), Password) || !TestNotNull(TEXT("账号输入"), Account) || !TestNotNull(TEXT("眼睛按钮"), Reveal)) return false;
+    const auto PasswordFont = Password->GetFont().Size;
+    const auto AccountFont = Account->GetFont().Size;
+    for (auto* Input : {Password, Account})
+    {
+        auto* Slot = Cast<UCanvasPanelSlot>(Input->Slot);
+        if (!TestNotNull(TEXT("输入Canvas槽"), Slot)) return false;
+        TestEqual(TEXT("输入固定284×42"), Slot->GetSize(), FVector2D(284, 42));
+    }
+    Screen->ActivateWidget();
+    ON_SCOPE_EXIT { Screen->DeactivateWidget(); };
+    Password->SetText(FText::FromString(TEXT("fixture-only-secret")));
+    TestTrue(TEXT("默认遮蔽"), Password->GetIsPassword());
+    Reveal->OnPressed.Broadcast();
+    TestFalse(TEXT("按住时显示当前输入"), Password->GetIsPassword());
+    Reveal->OnReleased.Broadcast();
+    TestTrue(TEXT("松开立即遮蔽"), Password->GetIsPassword());
+    Reveal->OnPressed.Broadcast();
+    Reveal->OnUnhovered.Broadcast();
+    TestTrue(TEXT("移出按钮立即遮蔽"), Password->GetIsPassword());
+    Reveal->OnPressed.Broadcast();
+    Screen->DeactivateWidget();
+    TestTrue(TEXT("离页遮蔽"), Password->GetIsPassword());
+    TestTrue(TEXT("离页清空瞬时口令"), Password->GetText().IsEmpty());
+    Reveal->OnPressed.Broadcast();
+    TestTrue(TEXT("失活按钮无残留揭示订阅"), Password->GetIsPassword());
+    TestEqual(TEXT("密码字体未缩放"), Password->GetFont().Size, PasswordFont);
+    TestEqual(TEXT("账号字体未缩放"), Account->GetFont().Size, AccountFont);
     return true;
 }
 

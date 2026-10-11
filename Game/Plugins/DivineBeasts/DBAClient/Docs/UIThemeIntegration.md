@@ -21,3 +21,7 @@
 最终改为自然、藤蔓、树叶、碧绿、原始与远古，替代此前商代青铜。第三层DBAUIPack_Core拥有六份自然纹理、CommonUI样式和Widget；平台机制无项目路径，非竞技界面不新增竞技依赖。Monolith同时修改真实按钮状态画刷及项目样式CDO，避免ThemeBindings运行时覆写回旧视觉。bPreserveFontSize继续开启，无ScaleBox或字体缩放；固定尺寸的输入保持284×42。
 
 地图缩放命令仅改变本地UV视野，倍率1/2/4；圆形裁剪、坐标与按钮生命周期在项目Minimap适配。旅行重新挂载作者CombatHUD并传播当前PlayerContext，清理旧控制器委托；未恢复上一世界临时HUD。进度与人工验收边界见工作空间Docs/Implementation/NatureUIFinalTheme.md和内容包MonolithGenerationManifest.json。
+
+随后“色彩与原稿一致”要求将当前菜单、技能栏、地图框和左上头像框改为四张原稿的无损纹理及十一份UI取样材质，生成素材只保留兼容与制作记录。主题新增UI.Style.Text.Menu的原稿碧绿文案；页面绑定保留字号。DefaultThemeDefinitionId仍保持空值，当前外观由已保存控件画刷和样式提供，不宣称默认主题异步服务已在客户端启用。
+
+本轮追加主题回归发现两处Buttons.Add(Buttons[index])容器别名会在UE5.8触发断言，测试现先复制独立值再Add，确保歧义/重复校验路径真实执行；不改变生产解析规则。此项与真实Widget重载、Cook及人工视觉验收分别留证。

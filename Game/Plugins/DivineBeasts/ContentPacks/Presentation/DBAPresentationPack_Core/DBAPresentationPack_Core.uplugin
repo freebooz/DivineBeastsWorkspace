@@ -1,0 +1,15 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DBAPresentationPack_Core",
+  "Description": "神兽联盟项目级可复用视觉内容包。持有桃花、枫叶、竹叶、银杏的自然飘落特效模型、纹理、材质、Niagara变体和Definition，不实现平台播放器。",
+  "Category": "DivineBeasts.Content.Presentation",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    {"Name":"GamePlatformVFX","Enabled":true,"TargetAllowList":["Client","Editor"]},
+    {"Name":"GamePlatformData","Enabled":true,"TargetAllowList":["Client","Editor"]}
+  ]
+}

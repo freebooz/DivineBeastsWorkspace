@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "seed": 20261011,
+  "resolution": [
+    2048,
+    2048
+  ],
+  "origin": "本项目确定性程序原创素材",
+  "textures": [
+    {
+      "name": "T_DBA_Foliage_Peach_Albedo_Source.png",
+      "type": "Albedo",
+      "species": "Peach",
+      "descriptionZh": "桃花花瓣",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "21f4e992c6c42953cd16845f1ac6f8205152939a961009f606d044f2c0d558e5"
+    },
+    {
+      "name": "T_DBA_Foliage_Peach_Normal_Source.png",
+      "type": "Normal",
+      "species": "Peach",
+      "descriptionZh": "桃花花瓣",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "573f69579f9f33c50b016852c4048965d90adbafe8572bce2cc464e571df40f7"
+    },
+    {
+      "name": "T_DBA_Foliage_Maple_Albedo_Source.png",
+      "type": "Albedo",
+      "species": "Maple",
+      "descriptionZh": "秋季枫叶",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "4f2d92c8d60b6a461a3832be3c8116c521a7f0216ea6c73cbe6fe816e78b2ce7"
+    },
+    {
+      "name": "T_DBA_Foliage_Maple_Normal_Source.png",
+      "type": "Normal",
+      "species": "Maple",
+      "descriptionZh": "秋季枫叶",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "0f99705186a367066eb5782e0628a35b0a0b637ea76620ed7fc54fb67062a08d"
+    },
+    {
+      "name": "T_DBA_Foliage_Bamboo_Albedo_Source.png",
+      "type": "Albedo",
+      "species": "Bamboo",
+      "descriptionZh": "青翠竹叶",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "6d98c1f0ccea8ebf1975ffcaa6f24b7a0afaffc18290b0b5efb3f5802f7d3810"
+    },
+    {
+      "name": "T_DBA_Foliage_Bamboo_Normal_Source.png",
+      "type": "Normal",
+      "species": "Bamboo",
+      "descriptionZh": "青翠竹叶",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "75f36c1b775e64585ffa09c574456fb34d31545678038c926400e5f16070219d"
+    },
+    {
+      "name": "T_DBA_Foliage_Ginkgo_Albedo_Source.png",
+      "type": "Albedo",
+      "species": "Ginkgo",
+      "descriptionZh": "金色银杏叶",
+      "sourceSRGB": true,
+      "recommendedCompression": "Default",
+      "sha256": "d89e63675054d20336a11ba5d44a889b0fe0eb4cbfce5c2c6f72f926fffd7de6"
+    },
+    {
+      "name": "T_DBA_Foliage_Ginkgo_Normal_Source.png",
+      "type": "Normal",
+      "species": "Ginkgo",
+      "descriptionZh": "金色银杏叶",
+      "sourceSRGB": false,
+      "recommendedCompression": "Normalmap",
+      "sha256": "10326fdea8ccc02c29508618d29b44a91a767016368f6c6a7d12a5bbe00258d5"
+    }
+  ]
+}

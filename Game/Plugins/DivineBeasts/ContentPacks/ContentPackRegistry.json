@@ -16,6 +16,7 @@
     { "Name": "DBAHeroPack_Boar", "RelativePath": "Heroes/DBAHeroPack_Boar" },
     { "Name": "DBAUIPack_Core", "RelativePath": "Presentation/DBAUIPack_Core" },
     { "Name": "DBAFrontEndPack", "RelativePath": "Presentation/DBAFrontEndPack" },
+    { "Name": "DBAPresentationPack_Core", "RelativePath": "Presentation/DBAPresentationPack_Core" },
     { "Name": "DBAWorldPack_Village", "RelativePath": "Worlds/DBAWorldPack_Village" }
   ]
 }

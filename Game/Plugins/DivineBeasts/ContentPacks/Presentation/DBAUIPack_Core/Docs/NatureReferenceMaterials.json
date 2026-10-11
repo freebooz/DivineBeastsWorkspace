@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "用途": "第三层客户端UI原稿取样材质说明；JSON不是引擎资产，材质由Monolith创建编译保存。",
+  "用途": "第三层客户端UI原稿取样材质说明；JSON不是引擎资产，全部材质由Monolith创建编译保存。",
   "色彩合同": "原稿sRGB、TC_EditorIcon无损、NoMipmaps；输出RGB只取样原稿，不乘色/调色。Alpha仅移除底色和固定业务示意。",
   "所有权": "DBAUIPack_Core；平台不引用项目纹理，材质不改变服务器/GAS状态。",
   "材料": [
@@ -12,7 +12,7 @@
     {
       "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureAbilityReference",
       "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
-      "Code": "// 原稿装饰RGB保持原采样；固定肖像、生命/气势填充、技能图标/快捷键、库存和菜单示意不属于实时数据。\nfloat3 C = Texture2DSample(Source, SourceSampler, UV).rgb;\nAlpha = smoothstep(0.014,0.03,max(C.r,max(C.g,C.b)));\nfloat2 Portrait = (UV-float2(0.183,0.485))/float2(0.082,0.245);\nif(dot(Portrait,Portrait)<1.0) Alpha=0;\nif(UV.x>0.274 && UV.x<0.735 && UV.y>0.277 && UV.y<0.31) Alpha=0;\nif(UV.x>0.274 && UV.x<0.735 && UV.y>0.338 && UV.y<0.366) Alpha=0;\nif(UV.x>0.275 && UV.x<0.737 && UV.y>0.399 && UV.y<0.686) Alpha=0;\nif(UV.x>0.737 && UV.x<0.879 && UV.y>0.399 && UV.y<0.73) Alpha=0;\nif(UV.x>0.168 && UV.x<0.203 && UV.y>0.633 && UV.y<0.718) Alpha=0;\nreturn C;"
+      "Code": "// 原稿装饰RGB保持原采样；固定肖像、生命/气势填充、技能图标/快捷键、库存和菜单示意不属于实时数据。\nfloat3 C = Texture2DSample(Source, SourceSampler, UV).rgb;\nAlpha = smoothstep(0.014,0.03,max(C.r,max(C.g,C.b)));\nfloat2 Portrait = (UV-float2(0.184,0.488))/float2(0.061,0.183);\nif(dot(Portrait,Portrait)<1.0) Alpha=0;\nif(UV.x>0.274 && UV.x<0.735 && UV.y>0.277 && UV.y<0.31) Alpha=0;\nif(UV.x>0.274 && UV.x<0.735 && UV.y>0.338 && UV.y<0.366) Alpha=0;\nif(UV.x>0.275 && UV.x<0.737 && UV.y>0.399 && UV.y<0.686) Alpha=0;\nif(UV.x>0.737 && UV.x<0.879 && UV.y>0.399 && UV.y<0.73) Alpha=0;\nif(UV.x>0.168 && UV.x<0.203 && UV.y>0.633 && UV.y<0.718) Alpha=0;\nreturn C;"
     },
     {
       "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMinimapReference",
@@ -43,7 +43,21 @@
       "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureUltimateFrameReference",
       "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
       "Code": "// 原稿中央终极技能金色石框，中心与固化快捷键透明；图标和快捷键仍来自实时数据。\nfloat2 P=float2(0.447+UV.x*0.097,0.373+UV.y*0.326);\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=1;\nif(UV.x>0.15 && UV.x<0.85 && UV.y>0.14 && UV.y<0.87) Alpha=0;\nif(UV.x>0.29 && UV.x<0.71 && UV.y>0.85) Alpha=0;\nreturn C;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
+      "Code": "// 原稿框架的RGB直接取样；示意角色、名称、属性数字和图腾由真实只读状态覆盖。\nfloat3 C=Texture2DSample(Source,SourceSampler,UV).rgb;\nAlpha=smoothstep(0.006,0.018,max(C.r,max(C.g,C.b)));\nfloat2 Portrait=(UV-float2(0.231,0.461))/float2(0.141,0.25);\nif(dot(Portrait,Portrait)<1) Alpha=0;\n// 玩家名称区域只用原稿无字绿色石板，不保留“玩家名称”示例。\nif(UV.x>0.552 && UV.x<0.727 && UV.y>0.228 && UV.y<0.298){\n float2 P=float2(0.535+frac(UV.x*5)*0.012,UV.y);\n C=Texture2DSample(Source,SourceSampler,P).rgb;\n}\nif(UV.x>0.471 && UV.x<0.886 && UV.y>0.383 && UV.y<0.438) Alpha=0;\nif(UV.x>0.471 && UV.x<0.886 && UV.y>0.496 && UV.y<0.55) Alpha=0;\n// 等级来源尚未接入，清除60示例；原生控件显示未知标记。\nif(UV.x>0.508 && UV.x<0.574 && UV.y>0.677 && UV.y<0.755) Alpha=0;\nfloat2 Totem=(UV-float2(0.736,0.68))/float2(0.047,0.086);\nif(dot(Totem,Totem)<1) Alpha=0;\n// 图腾只是当前英雄肖像装饰，不恢复已取消的印记玩法。\nif(UV.x>0.695 && UV.x<0.794 && UV.y>0.775 && UV.y<0.818) Alpha=0;\nreturn C;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
+      "Code": "// 直接复用原稿生命条的无字碧绿晶纹；数值、裁剪比例来自GAS只读快照。\nfloat2 P=float2(0.559+frac(UV.x*3)*0.063,0.388+UV.y*0.043);\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
+      "Code": "// 直接复用原稿蓝色晶纹；显示项目真实气势，不假定为法力或图片中的1280。\nfloat2 P=float2(0.559+frac(UV.x*3)*0.063,0.5+UV.y*0.043);\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
     }
-  ],
-  "限制": "视口过滤与透明合成不能由资源哈希证明最终截图逐像素一致；真实地图不可改为原稿虚构地形。"
+  ]
 }

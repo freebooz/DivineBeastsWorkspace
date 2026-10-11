@@ -50,7 +50,9 @@ bool FGamePlatformUIThemeResolutionTest::RunTest(const FString&)
     Theme->Buttons.Add(MakeButton(TEXT("UI.Style.Button.Primary"), EGamePlatformUIStyleScope::Project, TEXT("Windows")));
     TestEqual(TEXT("同作用域更具体的上下文优先"),
         Theme->ResolveButtonStyle(TEXT("UI.Style.Button.Primary"), Context, false, Error), 4);
-    Theme->Buttons.Add(Theme->Buttons[4]);
+    // Add可能重分配数组，不能将同一数组的元素引用作为输入，否则引擎先断言而不是验证歧义。
+    const FGamePlatformUIButtonThemeEntry AmbiguousEntry = Theme->Buttons[4];
+    Theme->Buttons.Add(AmbiguousEntry);
     TestEqual(TEXT("完全同级歧义必须拒绝，不能靠数组顺序决胜"),
         Theme->ResolveButtonStyle(TEXT("UI.Style.Button.Primary"), Context, true, Error), INDEX_NONE);
     TestFalse(TEXT("歧义给出可审阅诊断"), Error.IsEmpty());
@@ -71,7 +73,9 @@ bool FGamePlatformUIThemeDefinitionValidationTest::RunTest(const FString&)
     Theme->DataVersion.ContentRevision = 1;
     Theme->Buttons.Add(MakeButton(TEXT("UI.Style.Button.Primary"), EGamePlatformUIStyleScope::Platform));
     TestTrue(TEXT("单条合法只读规则通过静态校验"), Theme->ValidateDefinition().IsSuccess());
-    Theme->Buttons.Add(Theme->Buttons[0]);
+    // 独立值复制避免容器别名断言，使重复条件能进入真实Definition校验路径。
+    const FGamePlatformUIButtonThemeEntry DuplicateEntry = Theme->Buttons[0];
+    Theme->Buttons.Add(DuplicateEntry);
     TestFalse(TEXT("同一条件重复规则在注册前拒绝"), Theme->ValidateDefinition().IsSuccess());
     Theme->Buttons.Pop();
     Theme->Buttons[0].Rule.Priority = 1001;

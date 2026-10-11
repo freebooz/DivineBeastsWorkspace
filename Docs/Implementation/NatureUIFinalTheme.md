@@ -25,8 +25,6 @@
 
 `WBP_DBA_UI_MomentumBar`是平台资源条基类的纯视觉实例，蓝色区分气势，保持既有字体11像素；不增加资源类型或玩法。平台资源条事件现在可显示`ResourceValueText`，只显示可信有限快照；未绑定、隐藏或非法数值时清空，不以资产文字伪造生命值。
 
-## HUD旅行修复
-
 ## 小地图参考图增量
 
 圆形地图窗采用引擎原生RoundedBox纹理裁剪，184×184地图画面叠加270×270透明装饰，N/W/E/S为独立固定14字号控件，标题保持16字号，玩家箭头保持18字号及24×24边界。标记中心限制为半径0.40，中心到圆边至少18.4像素，大于标记半对角线约17像素，因此完整标记留在圆内。缩放只裁剪真实底图UV，不缩放文本或整组Widget。
@@ -47,8 +45,18 @@
 
 ## 原稿色彩一致性补充（最终约束）
 
-用户要求色彩与原稿一致，并明确本轮先校正全部界面。三份原稿按原字节保存为SourceArt/UI/Nature/NatureMenuReference.png、NatureAbilityReference.png、NatureMinimapReference.png，来源与保存副本哈希一致。对应T_DBA_Nature*Reference由Monolith导入为sRGB、TC_EditorIcon无损、NoMipmaps、TEXTUREGROUP_UI；不再用重新生成的装饰代替原稿颜色。
+用户要求色彩与原稿一致，并明确本轮先校正全部界面。四份原稿按原字节保存为SourceArt/UI/Nature/NatureMenuReference.png、NatureAbilityReference.png、NatureMinimapReference.png、NaturePlayerFrameReference.png，来源与保存副本哈希一致。对应T_DBA_Nature*Reference由Monolith导入为sRGB、TC_EditorIcon无损、NoMipmaps、TEXTUREGROUP_UI；不再用重新生成的装饰代替原稿颜色。
 
 UI/Materials/Nature/M_DBA_Nature{MenuReference,AbilityReference,MinimapReference,PanelReference,SkillFrameReference}由Monolith创建为UI/Translucent/Unlit。RGB只取样原稿，不做色调、亮度、饱和度或乘色变换；Alpha只移除深色底和固定生命/气势、肖像、技能、快捷键、地图及库存示意。菜单无字区域取样邻近原稿石板，面板边缘和技能框也复用原稿。HLSL、资源身份和边界见内容包Docs/NatureReferenceMaterials.json。
 
 当前英雄图标、肖像、地图仍由其真实资产决定。文字和输入尺寸固定；不同视口采样、透明边缘合成和显示器不能由资源哈希证明最终截图逐像素相同，最终客户端观感待人工核验。本轮不调整场景、角色材质或光照。
+
+## 玩家头像框定稿增量
+
+左上角采用第四张原稿的固定380×214布局：圆形当前角色头像、玩家名、绿色生命、蓝色气势、等级和英雄图腾。`WBP_DBA_UI_PlayerFramePortrait`与`WBP_DBA_UI_PlayerFrameStatus`是原有项目父类的纯内容变体；两份PlayerFrame资源条仍继承平台中立资源条，全部由Monolith复制、布局、编译、保存和重载。`M_DBA_NaturePlayerFrameReference`直接保留原稿RGB，去除示意白马、固定数字及“图腾印记”文字；两份PlayerFrame填充材质复用原稿无字晶纹。
+
+CombatHUD中的PlayerPortrait/PlayerStatus显示左上卡片，ActionBarPortrait/ActionBarStatus保留底部技能栏读数。两个位置各自拥有显示订阅和纹理请求，共用同一本地Pawn/ASC事实，不重复创建角色或维护权威状态。十二个英雄肖像由所属英雄包提供，英雄图腾复用同一角色肖像，仅为身份装饰，不恢复已取消的印记玩法。
+
+名字仅在当前CharacterId与HeroId都匹配已选角色摘要时采用玩家输入名，否则显示英雄本地化名称。角色组件和持久摘要当前没有可信等级字段，等级数字清空并显示“—”，不使用图片60或固定1。换绑、取消、销毁清理主肖像和图腾；同步蓝图通知后核对代次，避免旧调用隐藏或覆盖新绑定。所有文字字号保持固定，底部技能槽按原稿位置改为72像素石框，不以窗口比例缩放字体。
+
+原六份生成素材保留兼容和制作记录；当前装饰使用四张原稿和十一份取样材质。主题资产新增UI.Style.Text.Menu的绿色文案规则；DefaultThemeDefinitionId保持既有空值，当前运行外观由已保存控件及样式直接提供，不将未启用主题服务冒充运行验证。

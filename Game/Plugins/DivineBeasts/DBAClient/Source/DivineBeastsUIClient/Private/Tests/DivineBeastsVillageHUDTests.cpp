@@ -13,6 +13,7 @@
 #include "Components/Overlay.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Engine/Texture2D.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/PlayerController.h"
 #include "Misc/ScopeExit.h"
@@ -54,7 +55,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsResourceValueDisplayTest,
 bool FDivineBeastsResourceValueDisplayTest::RunTest(const FString&)
 {
     for (const TCHAR* Asset : {TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_HealthBar.WBP_DBA_UI_HealthBar_C"),
-                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_MomentumBar.WBP_DBA_UI_MomentumBar_C")})
+                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_MomentumBar.WBP_DBA_UI_MomentumBar_C"),
+                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameHealthBar.WBP_DBA_UI_PlayerFrameHealthBar_C"),
+                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar.WBP_DBA_UI_PlayerFrameMomentumBar_C")})
     {
         UClass* Class = LoadClass<UGamePlatformResourceBarWidget>(nullptr, Asset);
         if (!TestNotNull(TEXT("真实资源条类"), Class)) return false;
@@ -194,6 +197,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPortraitIdentityTest,
     "DivineBeasts.UI.Village.PortraitIdentity", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsPortraitIdentityTest::RunTest(const FString&)
 {
+    // 十二个真实英雄资产必须各自存在；不把路径拼接成功误认为头像已交付，也不以白马作全角色默认。
+    for (const TCHAR* Hero : {TEXT("Rat"), TEXT("Ox"), TEXT("Tiger"), TEXT("Rabbit"), TEXT("Dragon"), TEXT("Snake"),
+                             TEXT("Horse"), TEXT("Goat"), TEXT("Monkey"), TEXT("Rooster"), TEXT("Dog"), TEXT("Boar")})
+    {
+        const FName HeroId(*FString::Printf(TEXT("Hero.Zodiac.%s"), Hero));
+        const FSoftObjectPath Path = UDivineBeastsPlayerPortraitWidget::ResolvePortraitPath(HeroId);
+        TestNotNull(TEXT("每个受信英雄均有真实头像纹理"), LoadObject<UTexture2D>(nullptr, *Path.ToString()));
+    }
     TestEqual(TEXT("可信Rat肖像唯一归属英雄包"),
         UDivineBeastsPlayerPortraitWidget::ResolvePortraitPath(TEXT("Hero.Zodiac.Rat")).ToString(),
         FString(TEXT("/DBAHeroPack_Rat/UI/Portraits/T_DBA_Rat_Portrait.T_DBA_Rat_Portrait")));
@@ -211,6 +222,25 @@ bool FDivineBeastsPortraitIdentityTest::RunTest(const FString&)
     Portrait->BindToPawn(nullptr);
     TestTrue(TEXT("解绑撤销旧角色软纹理"), Portrait->GetPortraitState().PortraitTexture.IsNull());
     TestTrue(TEXT("解绑清空旧角色名"), Portrait->GetPortraitState().DisplayName.IsEmpty());
+    // 实际保存的头像框包含两个肖像显示，解绑必须同时清理主头像与装饰图腾，并移除旧等级。
+    UClass* FrameClass = LoadClass<UDivineBeastsPlayerPortraitWidget>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFramePortrait.WBP_DBA_UI_PlayerFramePortrait_C"));
+    if (!TestNotNull(TEXT("原稿头像框真实生成类"), FrameClass)) return false;
+    TStrongObjectPtr<UDivineBeastsPlayerPortraitWidget> Frame(NewObject<UDivineBeastsPlayerPortraitWidget>(GetTransientPackage(), FrameClass));
+    Frame->Initialize();
+    auto* MainImage = Cast<UImage>(Frame->GetWidgetFromName(TEXT("PortraitImage")));
+    auto* TotemImage = Cast<UImage>(Frame->GetWidgetFromName(TEXT("HeroTotemImage")));
+    auto* UnknownLevel = Cast<UTextBlock>(Frame->GetWidgetFromName(TEXT("LevelUnavailableText")));
+    if (!TestNotNull(TEXT("主肖像控件"), MainImage) || !TestNotNull(TEXT("英雄图腾控件"), TotemImage) ||
+        !TestNotNull(TEXT("未知等级控件"), UnknownLevel)) return false;
+    UTexture2D* OldTexture = LoadObject<UTexture2D>(nullptr, *Previous.PortraitTexture.ToSoftObjectPath().ToString());
+    MainImage->SetBrushFromTexture(OldTexture);
+    TotemImage->SetBrushFromTexture(OldTexture);
+    Frame->ApplyPortraitState(Previous);
+    Frame->BindToPawn(nullptr);
+    TestNull(TEXT("解绑清除原角色主肖像"), MainImage->GetBrush().GetResourceObject());
+    TestNull(TEXT("解绑清除原角色图腾"), TotemImage->GetBrush().GetResourceObject());
+    TestEqual(TEXT("无角色时不留等级标记"), UnknownLevel->GetVisibility(), ESlateVisibility::Collapsed);
     TStrongObjectPtr<UDivineBeastsVillageMinimapWidget> Minimap(NewObject<UDivineBeastsVillageMinimapWidget>());
     FGamePlatformUIMinimapState OldMap;
     OldMap.MapId = TEXT("Village.Start");

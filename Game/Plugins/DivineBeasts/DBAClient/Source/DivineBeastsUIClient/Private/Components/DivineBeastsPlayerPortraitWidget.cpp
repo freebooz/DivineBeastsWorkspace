@@ -70,7 +70,10 @@ void UDivineBeastsPlayerPortraitWidget::ClearPawnBinding(bool bPublishEmptySnaps
     // 不可达对象的反射事件会触发引擎断言；必须在资源已释放之后退出，而不是把整个清理路径跳过。
     if (!bPublishEmptySnapshot || bDestroyingNativeResources || !IsValid(this) || IsUnreachable() ||
         HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed)) { return; }
+    const uint64 ExpectedClearGeneration = LoadGeneration;
     ApplyPortraitState(FGamePlatformUIPortraitState());
+    // 空快照通知也允许同步重入；新绑定已取得所有权时，旧清理不得再次隐藏它。
+    if (ExpectedClearGeneration != LoadGeneration || bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     RenderPortrait();
     SetVisibility(ESlateVisibility::Collapsed);
 }
@@ -79,7 +82,10 @@ void UDivineBeastsPlayerPortraitWidget::BindToPawn(APawn* Pawn)
 {
     if (bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     if (BoundPawn.Get() == Pawn && IsValid(Pawn)) { RefreshPortrait(); return; }
+    const uint64 ExpectedClearGeneration = LoadGeneration + 1;
     ClearPawnBinding();
+    // 清空旧显示期间可能由蓝图重新绑定；继续旧调用会覆盖新身份和订阅，故必须放弃旧请求。
+    if (ExpectedClearGeneration != LoadGeneration || bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     if (!IsValid(Pawn) || !Pawn->IsLocallyControlled()) { return; }
     UDivineBeastsCharacterComponent* Identity = Pawn->FindComponentByClass<UDivineBeastsCharacterComponent>();
     if (!IsValid(Identity)) { return; }
@@ -164,14 +170,12 @@ void UDivineBeastsPlayerPortraitWidget::RenderPortrait()
         Image->SetVisibility(IsValid(Texture) ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
     }
     if (auto* Name = Cast<UTextBlock>(GetWidgetFromName(TEXT("PlayerName")))) { Name->SetText(State.DisplayName); }
-    if (auto* HeroName = Cast<UTextBlock>(GetWidgetFromName(TEXT("HeroName"))))
-    { HeroName->SetText(State.DisplayId.IsNone() ? FText::GetEmpty() : FDivineBeastsUILocalization::HeroNameToText(State.DisplayId)); }
     if (auto* Level = Cast<UTextBlock>(GetWidgetFromName(TEXT("LevelText"))))
     {
         Level->SetText(State.Level >= 0 ? FText::AsNumber(State.Level) : FText::GetEmpty());
         Level->SetVisibility(State.Level >= 0 ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
     }
-    // 无可信等级时明确留空；原稿60不能成为默认值，也不把角色就绪当成1级。
+    // 无可信等级时数字留空、可选控件显示未知标记；原稿60不能成为默认值，也不把就绪当成1级。
     if (auto* Unavailable = Cast<UTextBlock>(GetWidgetFromName(TEXT("LevelUnavailableText"))))
     { Unavailable->SetVisibility(State.Level < 0 && !State.DisplayId.IsNone() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed); }
 }

@@ -1,7 +1,7 @@
 {
   "SchemaVersion": 1,
-  "Status": "PendingMonolithEditor",
-  "DescriptionZh": "《神兽联盟》公共界面主题真实资产制作输入合同。仅用于Monolith操作，未经引擎实际写盘、编译、保存、重读不得记为已交付。",
+  "Status": "HistoricalInputSupersededByNatureFinalTheme",
+  "DescriptionZh": "历史制作输入合同，当前自然原稿主题以NatureUIFinalTheme.md和MonolithGenerationManifest.json本轮补充为准；此文件不证明运行交付。",
   "Workspace": "DivineBeastsWorkspace",
   "UEVersion": "5.8",
   "Project": "Game/DivineBeastsArena.uproject",
@@ -24,7 +24,8 @@
       "UI.Style.Button.Secondary",
       "UI.Style.Text.Body",
       "UI.Style.Text.Title",
-      "UI.Style.Border.Panel"
+      "UI.Style.Border.Panel",
+      "UI.Style.Text.Menu"
     ]
   },
   "SharedPaletteZh": {
@@ -132,10 +133,26 @@
       "AssetPath": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StandardPanel",
       "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsPanelWidget",
       "RequiredWidgetTree": [
-        {"Name": "PanelBackground", "Type": "Border", "StyleId": "UI.Style.Border.Panel"},
-        {"Name": "PanelTitle", "Type": "TextBlock", "StyleId": "UI.Style.Text.Title"},
-        {"Name": "CloseButton", "Type": "Button", "StyleId": "UI.Style.Button.Secondary"},
-        {"Name": "ContentSlot", "Type": "NamedSlot", "StyleId": null}
+        {
+          "Name": "PanelBackground",
+          "Type": "Border",
+          "StyleId": "UI.Style.Border.Panel"
+        },
+        {
+          "Name": "PanelTitle",
+          "Type": "TextBlock",
+          "StyleId": "UI.Style.Text.Title"
+        },
+        {
+          "Name": "CloseButton",
+          "Type": "Button",
+          "StyleId": "UI.Style.Button.Secondary"
+        },
+        {
+          "Name": "ContentSlot",
+          "Type": "NamedSlot",
+          "StyleId": null
+        }
       ],
       "NotesZh": "新建复用组件，不重命名原有窗口或现有HUD；命名控件满足项目PanelWidget的可选主题绑定。控制层处理关闭命令，蓝图本身不得直接修改业务状态。"
     }

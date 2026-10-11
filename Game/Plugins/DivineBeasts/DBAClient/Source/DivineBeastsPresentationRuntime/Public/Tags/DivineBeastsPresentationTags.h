@@ -11,4 +11,7 @@ namespace DivineBeastsPresentationTags
     /** Village Tutorial/Training：进入可展示引导反馈状态。 */
     DIVINEBEASTSPRESENTATIONRUNTIME_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(
         Village_Guidance_Ready);
+    /** 角色选择/创建三维场景共用的环境飘落物语义。 */
+    DIVINEBEASTSPRESENTATIONRUNTIME_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(
+        FrontEnd_FallingFoliage);
 }

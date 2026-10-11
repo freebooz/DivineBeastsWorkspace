@@ -6,6 +6,44 @@
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Tags/DivineBeastsPresentationTags.h"
 
+/** 只映射一种项目外观到同一平台VFX语义，避免多个变体同键目录冲突。 */
+FGamePlatformPresentationCatalogFragment
+FDivineBeastsPresentationProjectCatalog::BuildFrontEndFoliageFragment(const FName StyleId)
+{
+    FGamePlatformPresentationCatalogFragment Fragment;
+    Fragment.FragmentId = TEXT("DBA.Presentation.FrontEnd.FallingFoliage");
+    Fragment.Revision = CatalogRevision;
+    Fragment.Scope = EGamePlatformPresentationCatalogScope::Project;
+    Fragment.OwnerScopeId = FDivineBeastsProjectCatalog::GetProjectId();
+    Fragment.LifecycleScope = EGamePlatformPresentationContextScope::World;
+
+    FName LogicalId = NAME_None;
+    if (StyleId == TEXT("Peach"))
+        LogicalId = TEXT("presentation.dba.environment.fallingfoliage.peach@1");
+    else if (StyleId == TEXT("Maple"))
+        LogicalId = TEXT("presentation.dba.environment.fallingfoliage.maple@1");
+    else if (StyleId == TEXT("Bamboo"))
+        LogicalId = TEXT("presentation.dba.environment.fallingfoliage.bamboo@1");
+    else if (StyleId == TEXT("Ginkgo"))
+        LogicalId = TEXT("presentation.dba.environment.fallingfoliage.ginkgo@1");
+
+    if (LogicalId.IsNone())
+        return Fragment; // 非法Style不能获得可发布的目录条目。
+
+    FGamePlatformPresentationCatalogEntry Entry;
+    Entry.EntryId = TEXT("DBA.FrontEnd.FallingFoliage.Visual");
+    Entry.SemanticTag = DivineBeastsPresentationTags::FrontEnd_FallingFoliage;
+    Entry.ContextQuery.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
+    Entry.ProviderChannel = TEXT("VFX");
+    Entry.DefinitionId = LogicalId;
+    Entry.Scope = EGamePlatformPresentationCatalogScope::Project;
+    Entry.Specificity = 1;
+    Entry.Priority = 0;
+    Entry.ContentRevision = TEXT("1");
+    Fragment.Entries.Add(Entry);
+    return Fragment;
+}
+
 FGamePlatformPresentationCatalogFragment
 FDivineBeastsPresentationProjectCatalog::BuildDefaultFragment()
 {
