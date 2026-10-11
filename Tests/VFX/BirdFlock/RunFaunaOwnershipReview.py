@@ -12,8 +12,8 @@ import unreal
 
 
 def accepted(result):
-    """兼容UE Python含OutError的返回元组；读取真实UFUNCTION布尔返回值。"""
-    return bool(result[0]) if isinstance(result, tuple) else bool(result)
+    """UE Python bool+OutError成功返回字符串（可为空），失败返回None。"""
+    return result if isinstance(result, bool) else result is not None
 
 
 def run():

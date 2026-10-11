@@ -48,6 +48,11 @@ namespace DivineBeastsUIColorTests
         Target->InitCustomFormat(Size.X,Size.Y,PF_FloatRGBA,true);
         Target->UpdateResourceImmediate(true);
         auto* Renderer=new FWidgetRenderer(false,true);
+        // 蓝图加载/Initialize可能重新装载输入设置；在构造真正Slate树的边界完成正式数据加载。
+        // 回读真实Back行同时验证本次初始化生效，避免之前的页面加载让前置状态失效。
+        auto* InputSettings=GetMutableDefault<UCommonInputSettings>();
+        InputSettings->LoadData();
+        Test.TestNotNull(TEXT("颜色页渲染前已加载真实返回动作表"),InputSettings->GetDefaultBackAction().DataTable.Get());
         const auto SlateWidget=Widget->TakeWidget();
         Renderer->DrawWidget(Target.Get(),SlateWidget,FVector2D(Size),0.f);
         FlushRenderingCommands();

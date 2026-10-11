@@ -28,14 +28,21 @@ def main():
         verts=[api.get_number_verts(mesh,i) for i in range(3)]
         assert verts[0]>verts[1]>verts[2]>0
         # 只修改该系统所拥有的MeshRenderer；不触碰引擎模板或其他系统。
-        renderers=[r for r in unreal.ObjectIterator(unreal.NiagaraMeshRendererProperties)
-                   if r.get_path_name().startswith(system.get_path_name()+':')]
-        assert len(renderers)==1,repr([r.get_path_name() for r in renderers])
-        renderer=renderers[0];meshes=list(renderer.get_editor_property('meshes'))
+        renderer_class=unreal.load_class(None,'/Script/Niagara.NiagaraMeshRendererProperties')
+        assert renderer_class is not None
+        owned={}
+        for candidate in unreal.ObjectIterator(renderer_class):
+            outer=candidate
+            while outer is not None and outer!=system: outer=outer.get_outer()
+            if outer==system: owned[candidate.get_path_name()]=candidate
+        renderers=list(owned.values())
+        assert len(renderers)==1,repr(list(owned))
+        renderer=renderers[0];meshes=list(renderer.get_editor_property('Meshes'))
         assert len(meshes)==1
         meshes[0].set_editor_property('lod_mode',unreal.NiagaraMeshLODMode.PER_PARTICLE)
         meshes[0].set_editor_property('lod_distance_factor',1.0)
-        renderer.set_editor_property('meshes',meshes)
+        renderer.set_editor_property('Meshes',meshes)
+        assert renderer.get_editor_property('Meshes')[0].get_editor_property('lod_mode')==unreal.NiagaraMeshLODMode.PER_PARTICLE
         assert assets.save_loaded_asset(mesh,only_if_is_dirty=False)
         assert assets.save_loaded_asset(system,only_if_is_dirty=False)
         report.append({'species':species,'lodVertexCounts':verts,'niagaraLODMode':'PerParticle',

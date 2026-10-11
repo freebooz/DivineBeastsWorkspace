@@ -42,7 +42,8 @@ class FaunaIntegrationReview:
         return [c for actor in unreal.GameplayStatics.get_all_actors_of_class(self.game,unreal.Actor)
                 for c in actor.get_components_by_class(unreal.DivineBeastsFaunaSceneComponent)]
     def accepted(self,result):
-        return bool(result[0]) if isinstance(result,tuple) else bool(result)
+        # UE5.8会消去bool返回值：成功返回Out参数（可为''），失败返回None。
+        return result if isinstance(result,bool) else result is not None
     def begin_case(self):
         self.index+=1;self.cache=None;self.capture=None
         if self.index>=len(self.cases):
@@ -111,12 +112,12 @@ class FaunaIntegrationReview:
                     result=c.query_fauna_state()
                     if self.accepted(result): snapshots[str(c.get_editor_property('species_id'))]=result
                 butterfly=snapshots.get('ButterflyAzure')
-                if not butterfly or int(butterfly[2])<1:
+                if butterfly is None or int(butterfly[1])<1:
                     if elapsed>65: raise RuntimeError('真实运行未观察到蝴蝶停栖：'+repr(snapshots))
                     return
                 self.report['cpuBehavior']['butterflyPerch']={
-                    'simulated':int(butterfly[1]),'perched':int(butterfly[2]),'reservedSlots':int(butterfly[3]),
-                    'renderingActive':bool(butterfly[4]),'source':'production CPU snapshot'}
+                    'simulated':int(butterfly[0]),'perched':int(butterfly[1]),'reservedSlots':int(butterfly[2]),
+                    'renderingActive':bool(butterfly[3]),'source':'production CPU snapshot'}
                 self.disturbed_component=next(c for c in comps if str(c.get_editor_property('species_id'))=='ButterflyAzure')
                 stimulus=self.disturbed_component.disturb_fauna(self.disturbed_component.get_world_location(),1000.0,1.0,3.0)
                 accepted_groups=stimulus[0] if isinstance(stimulus,tuple) else stimulus
@@ -124,9 +125,9 @@ class FaunaIntegrationReview:
                 self.phase='disturb';self.mark=now;self.persist()
             elif self.phase=='disturb' and elapsed>0.8:
                 state=self.disturbed_component.query_fauna_state()
-                if not self.accepted(state) or int(state[2])!=0:
+                if not self.accepted(state) or int(state[1])!=0:
                     raise RuntimeError('受惊后仍有蝴蝶占用停栖状态：'+repr(state))
-                self.report['cpuBehavior']['butterflyDisturbance']={'perchedAfter':int(state[2]),'pass':True}
+                self.report['cpuBehavior']['butterflyDisturbance']={'perchedAfter':int(state[1]),'pass':True}
                 self.disturbed_component=None
                 self.service.stop_all_ambient_fauna();self.phase='clear_automatic';self.mark=now;self.persist()
             elif self.phase=='clear_automatic' and elapsed>1:
@@ -155,7 +156,7 @@ class FaunaIntegrationReview:
                     if elapsed<20: return
                     raise RuntimeError('正式链路未创建唯一目标物种：'+repr([c.get_asset().get_name() for c in active]))
                 state=self.component.query_fauna_state()
-                if not self.accepted(state) or int(state[1])!=count or not bool(state[4]):
+                if not self.accepted(state) or int(state[0])!=count or not bool(state[3]):
                     if elapsed<20: return
                     raise RuntimeError('生产CPU运行态不符：'+repr(state))
                 self.capture_gpu(selected[0]);self.phase='gpu';self.mark=now

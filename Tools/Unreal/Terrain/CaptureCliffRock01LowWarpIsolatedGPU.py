@@ -10,7 +10,15 @@ from pathlib import Path
 import os
 
 ROOT=Path(__file__).resolve().parents[3]
-OUT=ROOT/"Game/Saved/Validation/TerrainGaea/CliffRock01LowWarpIsolated20261011"
+STREAM_MODE=os.getenv("CLIFF_TEXTURE_STREAMING_MODE","off").strip().lower()
+if STREAM_MODE not in ("on","off"):
+    raise ValueError("纹理流送校准模式只能on或off")
+RUN_TAG=os.getenv("CLIFF_CAPTURE_RUN_TAG","").strip()
+if RUN_TAG not in ("","FullPlugins","GUIWarm"):
+    raise ValueError("仅允许已登记的FullPlugins或GUIWarm审核批次，拒绝路径注入")
+OUT=ROOT/("Game/Saved/Validation/TerrainGaea/CliffRock01LowWarpStreamingOn"+RUN_TAG+"20261011"
+          if STREAM_MODE=="on" else
+          "Game/Saved/Validation/TerrainGaea/CliffRock01LowWarpIsolated20261011")
 PREFIX="/Game/Development/Terrain/Maps"
 CHOOSE={
     "baseline":(PREFIX+"/L_DBA_CliffRock01LowWarpBaselineReview",
@@ -67,9 +75,15 @@ def main():
     prior_stream=unreal.SystemLibrary.get_console_variable_int_value("r.TextureStreaming")
     actor=None
     try:
-        unreal.SystemLibrary.execute_console_command(world,"r.TextureStreaming 0")
-        if unreal.SystemLibrary.get_console_variable_int_value("r.TextureStreaming")!=0:
-            raise RuntimeError("当前进程未固定4K纹理流送状态")
+        if STREAM_MODE=="off":
+            unreal.SystemLibrary.execute_console_command(world,"r.TextureStreaming 0")
+            if unreal.SystemLibrary.get_console_variable_int_value("r.TextureStreaming")!=0:
+                raise RuntimeError("此模式要求纹理Streaming关闭")
+        else:
+            if prior_stream!=1:
+                raise RuntimeError("Streaming On对照进程起始CVar不是1，拒绝污染实验")
+        print("CLIFF_LOW_ISOLATED_GPU_STREAMING",CHOSEN,STREAM_MODE,
+              "current",unreal.SystemLibrary.get_console_variable_int_value("r.TextureStreaming"))
         for name,level in LIGHTS.items():
             comp=lights[name]
             setter=getattr(comp,"set_intensity",None)
@@ -114,8 +128,9 @@ def main():
             else:comp.set_editor_property("intensity",initial[key])
         if actor is not None:
             unreal.EditorLevelLibrary.destroy_actor(actor)
-        unreal.SystemLibrary.execute_console_command(world,
-            "r.TextureStreaming "+str(prior_stream))
+        if STREAM_MODE=="off":
+            unreal.SystemLibrary.execute_console_command(world,
+                "r.TextureStreaming "+str(prior_stream))
         print("CLIFF_LOW_ISOLATED_GPU_LIGHTING_AND_TEMP_ACTOR_RESTORED",CHOSEN)
     print("CLIFF_LOW_ISOLATED_GPU_TWO_FRAMES_PASS",CHOSEN,
           "manual_approval_pending=True")

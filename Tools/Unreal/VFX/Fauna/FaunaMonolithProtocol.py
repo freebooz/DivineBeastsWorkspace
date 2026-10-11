@@ -3,15 +3,20 @@
 """群落编辑器制作协议。只连接显式拥有的Monolith编辑器，记录请求/响应，失败不自动重放。"""
 import argparse
 import json
+import os
 from pathlib import Path
 from urllib.request import Request,urlopen
 from datetime import datetime,timezone
 ROOT=Path(__file__).resolve().parents[4]
 EVIDENCE=ROOT/'Saved/Validation/Fauna/Authoring'
+# 可用单进程INI覆盖启动独占端口，避免并行工作区操作到另一轮编辑器。
+PORT=int(os.environ.get('FAUNA_MONOLITH_PORT','9316'))
+if not 1024<=PORT<=65535: raise ValueError('FAUNA_MONOLITH_PORT必须在1024..65535')
+ENDPOINT=f'http://127.0.0.1:{PORT}/mcp'
 def call(tool,arguments):
     EVIDENCE.mkdir(parents=True,exist_ok=True)
     request={'jsonrpc':'2.0','id':1,'method':'tools/call','params':{'name':tool,'arguments':arguments}}
-    with urlopen(Request('http://127.0.0.1:9316/mcp',json.dumps(request,ensure_ascii=False).encode('utf-8'),
+    with urlopen(Request(ENDPOINT,json.dumps(request,ensure_ascii=False).encode('utf-8'),
                          {'Content-Type':'application/json'}),timeout=120) as stream:
         response=json.load(stream)
     stamp=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')

@@ -289,13 +289,14 @@ def validate_definition(species, asset):
 def blueprint_templates(blueprint):
     subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
     library = unreal.SubobjectDataBlueprintFunctionLibrary
-    results = []
+    results = {}
     for handle in subsystem.k2_gather_subobject_data_for_blueprint(blueprint):
         data = library.get_data(handle)
         obj = library.get_object_for_blueprint(data, blueprint)
         if isinstance(obj, unreal.DivineBeastsFaunaSceneComponent):
-            results.append(obj)
-    return results
+            # UE5.8可能为同一个SCS模板返回多个Handle；仅合并完全相同的对象路径。
+            results[obj.get_path_name()] = obj
+    return list(results.values())
 
 
 def author_blueprint(species):
