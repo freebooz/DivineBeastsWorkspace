@@ -1,0 +1,53 @@
+{
+    "schemaVersion":  1,
+    "kind":  "third_party_pbr_scan_candidate",
+    "sourceId":  "rock_face_04",
+    "sourceResolution":  "4k",
+    "assetUrl":  "https://polyhaven.com/a/rock_face_04",
+    "sourceFilesApi":  "https://api.polyhaven.com/files/rock_face_04",
+    "license":  "CC0 1.0",
+    "licenseUrl":  "https://polyhaven.com/license",
+    "creator":  "Dimitrios Savva",
+    "referenceWidthMeters":  2,
+    "physicallyMatchedMaps":  true,
+    "productionAssetApproved":  false,
+    "noteZh":  "神兽联盟项目世界层岩石贴图第一版，美术候选待人工审核，不作为已签收正式地形资源",
+    "maps":  [
+                 {
+                     "localPath":  "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RockRealism01/T_DBA_RockRealism01_BaseColor_4K_Source.png",
+                     "upstreamMd5":  "24663830e3fae79e9efc9776cca7fd4b",
+                     "sourceUrl":  "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/rock_face_04/rock_face_04_diff_4k.png",
+                     "upstreamMap":  "Diffuse",
+                     "sha256":  "21e63283ff397bb45d83b4999b82182f722795f2399d817661796ef291ad318d",
+                     "role":  "BaseColor",
+                     "expectedBytes":  91297810
+                 },
+                 {
+                     "localPath":  "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RockRealism01/T_DBA_RockRealism01_NormalDX_4K_Source.png",
+                     "upstreamMd5":  "4c6f18113492e434aebefbbf3d85bcf5",
+                     "sourceUrl":  "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/rock_face_04/rock_face_04_nor_dx_4k.png",
+                     "upstreamMap":  "nor_dx",
+                     "sha256":  "48b4dc61f5f619ebb9ef6cf7451bf5da7f71564e82de23ff75e5ace0dcf925f7",
+                     "role":  "NormalDX",
+                     "expectedBytes":  91222794
+                 },
+                 {
+                     "localPath":  "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RockRealism01/T_DBA_RockRealism01_ORM_4K_Source.png",
+                     "upstreamMd5":  "366404265febe00d47fbe55ea6be6376",
+                     "sourceUrl":  "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/rock_face_04/rock_face_04_arm_4k.png",
+                     "upstreamMap":  "arm",
+                     "sha256":  "0651be832a7b0be61f036bf4e5cac604c3930682c33ccf605a25cf6c5b851a75",
+                     "role":  "ORM",
+                     "expectedBytes":  63825329
+                 },
+                 {
+                     "localPath":  "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RockRealism01/T_DBA_RockRealism01_Height_4K_Source.png",
+                     "upstreamMd5":  "3ce92db325add3b5e54193f9a511aea0",
+                     "sourceUrl":  "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/rock_face_04/rock_face_04_disp_4k.png",
+                     "upstreamMap":  "Displacement",
+                     "sha256":  "cfea6b89eb7e0a6b6950506d1b6247dfbceb624462f1a712683b3b55a565f7bf",
+                     "role":  "Height",
+                     "expectedBytes":  20541687
+                 }
+             ]
+}

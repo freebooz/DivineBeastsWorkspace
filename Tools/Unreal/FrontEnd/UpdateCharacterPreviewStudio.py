@@ -74,7 +74,15 @@ volume.set_editor_property('settings', settings)
 
 stage = actors['CharacterPreviewStage']
 pivot = next(c for c in stage.get_components_by_class(unreal.SceneComponent) if c.get_name() == 'CameraPivot')
-# 现代角色页把主体放在中央，两侧固定宽度面板展示选项；高度仍为平台默认95cm。
+# 用户指定的正面完整角色构图；环境修复重跑时同样保留该镜头，不恢复高处广角远景。
+# 角色网格比例、鼠标旋转和待机动画沿用平台舞台，不参与服务器世界控制。
 pivot.set_editor_property('relative_location', unreal.Vector(0, 0, 95))
+camera = stage.get_component_by_class(unreal.CameraComponent)
+stage.set_camera_distance(430.)
+camera.set_editor_property('relative_rotation', unreal.Rotator(pitch=0, yaw=180, roll=0))
+camera.set_editor_property('field_of_view', 55.)
+camera.set_editor_property('aspect_ratio', 16./9.)
+camera.set_editor_property('override_aspect_ratio_axis_constraint', True)
+camera.set_editor_property('aspect_ratio_axis_constraint', unreal.AspectRatioAxisConstraint.ASPECT_RATIO_MAINTAIN_YFOV)
 assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level(), '保存工作室失败'
 print(json.dumps({'map': PATH, 'lightUnits': 'Lumens', 'fixedExposureLinearBrightness': 1, 'actors': list(actors.keys())}, ensure_ascii=False))

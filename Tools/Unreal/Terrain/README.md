@@ -11,7 +11,7 @@
 5. TerrainMaskRules.py、ValidateAndProjectGaeaExports.py：默认强制实际Gaea 2.3来源和坐标/源哈希；--calibration允许本项目技术样本，--verify-only无副作用，输出10张归一化Weight PNG及PCG Schema v1点样本，并不假装UE生成。输出位于WorldPack/SourceArt/Terrain/CalibrationDerived。
 6. ExportTerrainLandscapeRaw.py：输出1009平方little-endian R16及10张R8权重原始数据和manifest，供原生UE Landscape::Import读取。--verify只读检查。
 7. 真实Blueprint和PCG：AuthorTerrainPCGReviewBlueprints.py（TERRAIN_PCG_BLUEPRINT_MODE=apply）复用现有GamePlatformPCG放置器，生成四份项目级真实蓝图；AuthorTerrainPCGLandscapeSampler.py（TERRAIN_PCG_GRAPH_MODE=apply）生成官方Get Landscape Data→SurfaceSampler真实4边PCG图，并显式读取地形层权重。独立重开验证VerifyTerrainPCGReviewAssets.py。未执行网格Spawner/Production Bake，不能作为完整PCG已实现报告。
-8. LayerInfo：原生Commandlet为GamePlatformSurfaceTerrainLayers，需先独立构建并成功装载GamePlatformSurfaceEditor模块，然后通过-LayerRoot=/DBAWorldPack_Village/Terrain/LayerInfos -LayerIds=Grass,ForestSoil,Dirt,Rock,Scree,Sand,Gravel,RoadDirt,FarmSoil,ShoreMud -AssetPrefix=LI_DBA_Terrain_ -LayerNamePrefix=LS_生成真实十份ULandscapeLayerInfoObject。-ValidateOnly只读验证；LayerName为UE只读反射字段，不得通过普通UE Python冒充创建成功。
+8. LayerInfo：**十份已全部真实创建并由独立UE5.8进程反射验证**，资产位于/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_*，对应LS_*，均为FinalWeightBlending。原生GamePlatformSurfaceTerrainLayers命令已修复逗号CSV解析截断；Tools/Unreal/Terrain/VerifyLandscapeLayerInfos.py为只读独立验证工具。此次使用隔离后缀Editor DLL，未覆盖在用的原插件DLL；正常生产模块仍需待并发编辑器释放后正式重编。执行日志见Docs/Implementation/Terrain10LayerInfosCreation_20261011.md。
 9. 审查地图：GamePlatformSurfaceTerrainReviewMap原生Commandlet在可用Editor模块下读取Raw/Height_1009_LE.r16与10×R8，使用ALandscape::Import创建真正1009平方、64组件、10层Landscape的独立/Game/Development/Terrain审查地图。不得覆盖正式L_Village_Start。地图保存、重开、DataValidation和人工截图必须额外验收。
 
 10. GamePlatformPCGEditor的GamePlatformPCGTerrainBiomeGraphs通用Commandlet已形成源码，按LS_权重层阈值创建四张Graph；仍待UHT编译及真实PCG资产验证。
@@ -26,7 +26,7 @@
 - Gaea兼容Calibration输入转换：10张Weight PNG，1024个合法PCG Schema v1候选点、10张R8权重及16位R16，确定性与非法输入回归通过。实际Gaea文件尚不存在。
 - 四份项目级PCG Blueprint资源与一份两节点四边的真实官方PCG采样Graph由UE Editor生成、独立进程重载验证通过；未证明真正的地形层权重可运行、更未验证网格实例化。
 - GamePlatformSurfaceTerrainLayers与GamePlatformSurfaceTerrainReviewMap两份Commandlet均通过真实MSVC C++目标文件编译，退出码0；但Editor DLL被另一会话编辑器锁住，正式链接与执行仍未完成。禁止主动结束别人的UE编辑器。
-- 完整UE三目标构建、真实Landscape LayerInfo、地形测试地图/PCG生成、Client/Server新Cook及用户人工签收仍不能标记完成。
+- 十份真实Landscape LayerInfo均已保存及反射回读；完整UE三目标常规构建、独立地形测试地图/PCG实际生成、Client/Server新Cook及用户人工签收仍不能标记完成。
 
 ## 回退与安全
 

@@ -5,7 +5,20 @@
   "source_blend_sha256": "2e021bbfae2c0d2192dec43095e5c07a4a2e76f0851cc8046eebd40735bef1ed",
   "backup": "E:\\work\\2026\\DivineBeastsWorkspace\\Game\\Saved\\Validation\\ZodiacSanctuary\\BeforeSanctuary",
   "stage_class": "GamePlatformCharacterPreviewStage",
-  "camera_location_cm": [650, 0, 340],
+  "camera_location_cm": [430, 0, 95],
+  "character_camera_reference": {
+    "pitch_degrees": 0,
+    "horizontal_fov_degrees": 55,
+    "base_aspect_ratio": "16:9",
+    "axis_constraint": "MaintainYFOV",
+    "saved_and_reloaded": true,
+    "runtime_profile_count": 12,
+    "idle_instance_count": 12,
+    "full_body_height_ratio": "0.7604-0.7671",
+    "client_cook_run_id": "4ad45f59-3588-499d-8b2a-d714aed13a11",
+    "render_evidence": "Saved/Validation/CharacterCamera/20261011-ReferenceView/ReferenceCameraPIE.png",
+    "manual_visual_acceptance": false
+  },
   "actions": [
     "FBX import",
     "PBR material graph",
@@ -14,21 +27,25 @@
   ],
   "client_cook": {
     "status": "passed",
-    "scope": "most recent successful package; final republish after audit-only edits is pending",
-    "run_id": "6a27b3ba-9d5d-44a6-aee9-a544839f4c71",
+    "scope": "current saved resources republished with the approved transparent logo; sanctuary container checked separately",
+    "run_id": "3cd1ac21-99cf-46be-a39c-d17d5c3de69d",
+    "previous_successful_run_id": "6a27b3ba-9d5d-44a6-aee9-a544839f4c71",
     "existing_gate_required_count": 134,
     "sanctuary_gate_required_count": 47,
     "missing": [],
-    "evidence": "Saved/Validation/FoundationM0/6a27b3ba-9d5d-44a6-aee9-a544839f4c71/Cook-FrontEndClient"
+    "evidence": "Saved/Validation/FoundationM0/3cd1ac21-99cf-46be-a39c-d17d5c3de69d/Cook-FrontEndClient",
+    "sanctuary_gate_evidence": "Saved/Validation/UIBrandLogo/20261011-TransparentOriginal/ZodiacSanctuaryContainer.json"
   },
   "final_republication": {
-    "status": "pending_shared_engine_build_lock",
+    "status": "passed",
+    "successful_run_id": "3cd1ac21-99cf-46be-a39c-d17d5c3de69d",
     "attempts_not_executed": [
       "043017cd-d3a6-4210-b076-6ee35b07a1c6",
       "74f23f16-a339-4bd6-bb01-41fe2fd112d5",
       "c22a0fda-0b3b-4c58-9ed1-a1c7a7b268e2"
     ],
-    "exit_code": 2,
+    "previous_not_executed_exit_code": 2,
+    "exit_code": 0,
     "other_build_interrupted": false
   },
   "saved_asset_validation": {

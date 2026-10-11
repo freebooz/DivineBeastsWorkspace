@@ -3,6 +3,8 @@
 
 #include "Misc/AutomationTest.h"
 #include "Ambient/DivineBeastsAmbientRegionProfile.h"
+// 非Unity编译必须包含UPackage完整定义，才能将GetTransientPackage转换为NewObject的Outer。
+#include "UObject/Package.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsAmbientRegionProfileSelectionTest,

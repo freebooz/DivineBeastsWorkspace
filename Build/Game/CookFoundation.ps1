@@ -12,11 +12,13 @@ param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][strin
     # 保留Foundation默认行为；新手村开发验证必须显式选配置，不在发行默认中启用候选技能。
     [ValidateSet('FoundationStandalone','VillageServer','VillageDevelopmentServer')][string]$CustomConfig='FoundationStandalone',
     [switch]$Pak,
+    # 可选仅省略Stage中的PDB等调试符号，缓解磁盘不足；不改变构建模式、Cook内容或测试门禁。
+    [switch]$SkipDebugSymbols,
     [string[]]$Maps = @('/Game/Development/Foundation/Maps/L_FoundationBootstrap','/Game/Development/Foundation/Maps/L_FoundationSandbox'),
     [ValidateRange(1,86400)][int]$TimeoutSeconds = 1800, [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps; Configuration='Development'; Platform='Win64'; CustomConfig=$CustomConfig; Pak=[bool]$Pak }
+$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps; Configuration='Development'; Platform='Win64'; CustomConfig=$CustomConfig; Pak=[bool]$Pak; SkipDebugSymbols=[bool]$SkipDebugSymbols }
 try {
     $context = New-FoundationContext "Cook-$Target" $RunId
     if (-not $Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }
@@ -60,6 +62,8 @@ try {
         $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
     }
     if ($Pak) { $arguments += '-pak' }
+    # UE5.8 AutomationTool官方nodebuginfo仅控制Stage调试文件复制，运行二进制和资源仍完整校验。
+    if ($SkipDebugSymbols) { $arguments += '-nodebuginfo' }
     if ($Target -eq 'Server') { $arguments += @('-server','-noclient','-serverplatform=Win64') } else { $arguments += '-client' }
     $tool.Environment.uebp_LogFolder = Join-Path $context.Directory 'UATLogs'
     $tool.Environment.uebp_EngineSavedFolder = Join-Path $context.Directory 'EngineSaved'

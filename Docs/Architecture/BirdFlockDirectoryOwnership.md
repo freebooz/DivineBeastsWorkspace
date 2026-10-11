@@ -7,4 +7,6 @@
 - DivineBeasts（项目层）：`Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/{SourceArt/BirdFlock,Content/VFX/Environment/BirdFlock}`；保存三鸟物种模型、纹理、材质，策划预设/共用蓝图属于该内容包；历史错误尺寸测试网格不允许使用。
 - 开发工具：`Tools/Blender/BirdFlock` 生成与预览源模型，`Tools/Unreal/VFX/BirdFlock` 导入、回读与可选蓝图/地图生成；`Docs/Implementation/BirdFlockVFXImplementationPlan.md` 是执行及证据清单，`GamePlatformVFX/Docs/BirdFlock.md` 是最终功能接口规范。
 
-本次确已创建Client通用代码和十件可正确回读的真实UE基础资产。编辑器因已有Live Coding会话锁定，真实蓝图/Niagara/审核地图/正式游戏场景接入仍待实现；不能以脚本存在声称资源已经生成。
+P4–P7续接已实装真实平台Niagara模块/系统/EffectType、三个项目Niagara系统与WorldDefinition、统一场景蓝图和两张审核地图。正式运行通过项目场景组件→Presentation→Data租约→VFX执行器，不使用旧ISM原型。当前项目飞行网格位于`Content/VFX/Environment/BirdFlock/Meshes/Flight`，修正源位于`SourceArt/BirdFlock/RefinedMeshes`。GPU15组及正式PIE链路15组数量、取消/世界清理验证通过，3项客户端回归通过；P6全量构建/Cook与P7人工验收状态见`Docs/Implementation/BirdFlockP4P7Execution_20261011.md`。
+
+新增工具均位于`Tools/Unreal/VFX/BirdFlock`：正式资产门禁、模板地图作者、真实GPU视口与PIE链路、10分钟稳定性审核；`Tools/Blender/BirdFlock/RepairBirdFlockFlightMeshes.py`修正源几何。证据位于`Saved/Validation/BirdFlockP4P7`，不把生成的临时日志逐件注册为正式资源。

@@ -64,7 +64,15 @@ def main():
         assert abs(rotation.pitch)<.01 and abs(rotation.roll)<.01 and abs(rotation.yaw+90)<.01, '场景轴转换错误'
     camera=stages[0].get_component_by_class(unreal.CameraComponent)
     rotation=camera.get_world_rotation()
-    assert abs(rotation.roll)<.01 and abs(rotation.pitch+8)<.01, '预览镜头翻转或俯仰错误'
+    # 参考角色创建/选择的完整正面构图：镜头水平、躯干中部高度、较窄透视。
+    # 必须读取保存舞台的真实组件，防止环境重导入又恢复高处广角镜头。
+    assert abs(rotation.roll)<.01 and abs(rotation.pitch)<.01, '预览镜头不是参考图的水平正面视角'
+    assert abs(camera.field_of_view-55.)<.01, '预览仍使用场景广角，主体占比与参考图不符'
+    assert camera.override_aspect_ratio_axis_constraint and camera.aspect_ratio_axis_constraint==unreal.AspectRatioAxisConstraint.ASPECT_RATIO_MAINTAIN_YFOV, '窗口宽高比改变时不得截断角色或缩小全身占比'
+    pivot=camera.get_attach_parent().get_editor_property('relative_location')
+    offset=camera.get_editor_property('relative_location')
+    assert abs(pivot.x)<.01 and abs(pivot.y)<.01 and abs(pivot.z-95)<.01, '预览仍是高处远景构图'
+    assert abs(offset.x-430)<.01 and abs(offset.y)<.01 and abs(offset.z)<.01, '预览相机距离不符合完整角色构图'
     assert any(unreal.Name('DBA.Foliage.Ground') in a.tags for a in actors), '自然飘落锚点被破坏'
     for record in manifest['objects']:
         mesh = unreal.load_asset(root + '/Meshes/' + record['name'])

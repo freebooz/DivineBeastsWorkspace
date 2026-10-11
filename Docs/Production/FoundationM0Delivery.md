@@ -113,3 +113,16 @@ pwsh -NoProfile -File Build/Game/RunFoundation.ps1 -Start -FoundationStandalone 
 ## 剩余风险
 
 两张地图的保存、重新加载与最小结构已经验收；UE正式工程全量目标/UHT仍被现有项目源码错误阻断，Cook/Stage、客户端/服务器运行、三维画面和多PIE尚未验收。即使离线测试通过仍可能存在其他反射/API/配置集成问题。Data审查修复和测试覆盖明细以`FoundationM0Verification.md`为准。已释放租约签发历史暂保留至GI结束，常驻实例长期内存增长需后续量测与不破坏幂等的保留策略。生产密钥、联网准入、三服务器角色业务不在本批范围。
+
+## 2026-10-11 本地开发发布补证
+
+本节记录后续真实发布结果，替代上段关于Client/Server编译与Cook仍未执行的历史状态；不扩大为完整M0、Editor重链接、生产部署或人工画面验收通过。
+
+- 完整Client与Server编译通过：`Saved/Validation/FoundationM0/e35d75a3-f8d5-4cd0-a241-afb7234cba8d/Build/result.json`。随后客户端测试前置条件修正后的完整Client重链接通过：`7afc6d14-3e0b-4c94-b86d-c3c55e05d5b7/Build/result.json`。两次均保持UE5.8和既定MSVC版本，未关闭模块或降低优化等级。
+- 后端完整`go test ./...`与`go vet ./...`通过，五个本地服务重新发布并通过就绪检查；未执行数据库迁移与生产发布。证据归`Saved/Validation/LoginVillageRelease/20261011-823e8e17/BackendChecks.json`及`BackendPublish.json`。
+- 最新Client发布包编号`4ad45f59-3588-499d-8b2a-d714aed13a11`，追加用户要求的创建/选择全身正面镜头后重新发布，真实IoStore中351项必需资产与47项圣境闭包全部通过；Server发布包编号`e5b2287d-f6cb-46d2-b783-6688d91115eb`，实际容器821行资源记录，项目纯界面与表现禁入项为0，新手村地图存在。
+- 真实Client发布包无窗口回归19项全部通过。`DivineBeasts.UI.Style.PanelNineSliceAsset`显式调用引擎`UCommonInputSettings::LoadData()`，弥补无本地玩家输入子系统的测试前置条件，再读取真实项目输入数据与Back行；未注入替代数据、跳过断言或更改产品输入行为。无窗口回归不证明GPU颜色、鼠标操作或人工登录通过。
+- 本轮链接曾因调试文件写入失败而停止。备份并校验本轮生成PDB后，以相同参数重链接成功；调试备份与哈希归本轮`DebugSymbolBackup.json`和`ValidatedClientDebugSymbolBackup.json`。未清空共享引擎或历史包，也未关闭另一个任务的编辑器。
+- 新Village专服已运行并注册新Boot身份；两个可见Client从空白登录页启动，无自动登录。后续人工登录、角色创建/选择、共同实例准入和画面结论以本轮`ReleaseState.json`及`ClientFlowEvidence.json`为准，未获人工确认前不得将其标记通过。
+
+中文说明审核范围包含本轮契约测试、构建入口和UI资产回归前置条件；历史源码中文注释的全量合规仍未完成审计。

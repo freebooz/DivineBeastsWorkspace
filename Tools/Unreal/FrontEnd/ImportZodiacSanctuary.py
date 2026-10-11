@@ -287,10 +287,17 @@ def author_studio():
         component.set_editor_property('static_mesh', mesh)
         component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
     pivot = next(c for c in stage.get_components_by_class(unreal.SceneComponent) if c.get_name() == 'CameraPivot')
-    pivot.set_editor_property('relative_location', unreal.Vector(330, 0, 340))
+    # 角色创建/选择以完整主体为画面重点：正面水平镜头位于躯干中部，收窄广角透视。
+    # 只改变本地展示相机，不缩放英雄网格、不移动舞台或更改权威角色碰撞。
+    pivot.set_editor_property('relative_location', unreal.Vector(0, 0, 95))
     camera = stage.get_component_by_class(unreal.CameraComponent)
-    camera.set_editor_property('relative_rotation', unreal.Rotator(pitch=-8, yaw=180, roll=0))
-    camera.set_editor_property('field_of_view', 90.)
+    stage.set_camera_distance(430.)
+    camera.set_editor_property('relative_rotation', unreal.Rotator(pitch=0, yaw=180, roll=0))
+    camera.set_editor_property('field_of_view', 55.)
+    # 保持纵向构图，窗口宽高比变化只扩展/收拢背景，不牵连固定字号的界面。
+    camera.set_editor_property('aspect_ratio', 16./9.)
+    camera.set_editor_property('override_aspect_ratio_axis_constraint', True)
+    camera.set_editor_property('aspect_ratio_axis_constraint', unreal.AspectRatioAxisConstraint.ASPECT_RATIO_MAINTAIN_YFOV)
     sun = actors['DirectionalLight']; sun.set_actor_rotation(unreal.Rotator(pitch=-34, yaw=-150, roll=0), False)
     light = sun.get_component_by_class(unreal.DirectionalLightComponent)
     light.set_mobility(unreal.ComponentMobility.MOVABLE)

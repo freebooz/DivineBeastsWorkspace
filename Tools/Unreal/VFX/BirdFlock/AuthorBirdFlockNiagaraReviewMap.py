@@ -20,7 +20,19 @@ def main():
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     if assets.does_asset_exist(MAP):
         assert isinstance(assets.load_asset(MAP),unreal.World)
-        print('BIRD_GPU_REVIEW_MAP_ALREADY_EXISTS',MAP)
+        if os.getenv('BIRD_ISOLATED_REVIEW_AUTHOR')!='1':
+            raise RuntimeError('只允许独立作者进程修正本工具自有审核地图')
+        assert levels.load_level(MAP)
+        targets={'BirdReview_Camera':(-22,90,0),'BirdReview_PlayerStart':(-20,90,0),'BirdReview_Sun':(-45,30,0)}
+        fixed=[]
+        for item in actors.get_all_level_actors():
+            if item.get_actor_label() in targets:
+                p,y,r=targets[item.get_actor_label()]
+                item.set_actor_rotation(unreal.Rotator(pitch=p,yaw=y,roll=r),False)
+                fixed.append(item.get_actor_label())
+        assert set(fixed)==set(targets),'审核相机/太阳/出生点缺失，拒绝误改普通关卡'
+        assert levels.save_current_level()
+        print('BIRD_GPU_REVIEW_MAP_CALIBRATED',MAP)
         return
     # 脚本只准独立命令行作者进程写入新地图，不通过Monolith切走其他任务的编辑状态。
     if os.getenv('BIRD_ISOLATED_REVIEW_AUTHOR')!='1':

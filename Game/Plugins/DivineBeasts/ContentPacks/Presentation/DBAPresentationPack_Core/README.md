@@ -25,3 +25,11 @@
 - 39种风格不为每个资产新增代码插件或Niagara播放器。原有`FallingFoliage（飘落物）`系统/定义保持身份；雨雪依旧归原`GamePlatformWeather（平台天气）`与`GamePlatformVFX（统一执行）`。
 - 来自当前对话的梨花、樱花、银杏、梧桐、枫叶高清参考图集导出为可人工导入的源包；远程连接器未能接受ImageGen原图文件引用，当前工程内33套新源图是独立程序绘制版本。待原图可信传入`SourceArt/AmbientNature/ExternalReferences`后，使用`ImportApprovedAmbientReferenceArtUE58.py（原图SHA校验与UE导入工具）`做可回滚的手工批准替换；任何未知来源图片不得冒充已交付原图。
 - 实施细节、未完成门禁和证据见`Docs/Implementation/AmbientNatureAssetLibrary_20261011.md（自然环境资源库实施文档）`。正式验收仍需地图区域动态接入、Editor目标反射注册、区域DataAsset落盘、Cook/Stage、D3D12及移动端实际性能与人工视觉测试。
+
+## Niagara PBR 落叶外观母版（2026-10-11）
+
+平台 `GamePlatformVFX（游戏平台视觉特效插件）` 已通过 UE5.8 实际保存 `M_GP_AmbientNature_PBR_Foliage（通用双面植被PBR母材质）`，包含基础颜色、法线、粗糙度、独立OpacityMask（透明裁剪）、镜面反射与Subsurface（次表面透光），不硬引用本项目纹理。项目 `AmbientNature（自然环境内容）` 已登记33套 `MI_DBA_Ambient_*（项目材质实例）`和原 Niagara 变体，不另建播放框架。
+
+本轮用户生成6张展示图集已拆分为33类/132张独立PBR参考贴图，带SHA-256与半自动质量门禁。**只有15类单体边缘完整的花瓣/叶片进入分批UE导入候选，截断花瓣和混合FX图不自动替换。** 由于Windows Runner尚未收到原图ZIP，当前项目材质实例仍使用此前纹理，不能声称参考图已经完整导入或在角色界面显示成功。
+
+待用户把 `DivineBeasts_NiagaraPBR_AtlasAssets_20261011.zip（六图集独立贴图包）` 复制到 `SourceArt/AmbientNature/Incoming（待导入素材目录）`，使用 `Tools/Unreal/VFX/FallingFoliage/RunPBRAtlasImport.ps1（分批预检与UE导入入口）` 验证全部哈希、备份旧资产，并更新原材质实例路径；正式流程与运行验收见 `Docs/Implementation/AmbientPBRAtlasImport_20261011.md（PBR图集工程导入说明）`。

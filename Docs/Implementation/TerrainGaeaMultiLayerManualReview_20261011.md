@@ -20,4 +20,4 @@
 - 性能：对目标PC高/中/低三档记录真实材质Shader指令、纹理采样数、GPU ms/FPS、CPU PCG Bake ms、实例数、客户端/服务器内存峰值及Cook大小；没有批准预算前禁止编造“低于X ms”的达标结论。
 - 人工签收人、设备型号、日期、UE版本、Gaea版本、正式图片编号、缺陷追踪及最终同意/拒绝必须由真实审核者填写。
 
-当前所生成SourceArt及4份Blueprint/1份Graph仅用于技术QA，尚无LayerInfo/真实Landscape/PCG Bake，故**现在不能安排最终人工审美签收**。
+十份Landscape LayerInfo已全部创建并经过独立UE5.8进程反射验收。SourceArt、4份Blueprint及1份Graph仍属于技术QA；尚无真实十层Landscape审核地图、PCG Bake或人工可见验证画面，因此**仍不能宣称最终人工审美验收通过**。

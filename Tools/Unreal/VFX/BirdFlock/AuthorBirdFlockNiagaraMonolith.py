@@ -57,6 +57,10 @@ def configure_base():
     print('BOUNDS',niagara('set_fixed_bounds',asset_path=BASE,min=[-24000,-16000,-1000],max=[24000,16000,12000],enabled=True))
     print('EMITTER_BOUNDS',niagara('set_fixed_bounds',asset_path=BASE,emitter=EMITTER,min=[-24000,-16000,-1000],max=[24000,16000,12000],enabled=True))
     print('NEUTRAL_MESH',niagara('set_renderer_mesh',asset_path=BASE,emitter=EMITTER,renderer_index=0,mesh='/Engine/BasicShapes/Plane'))
+    # Minimal模板默认由System控制生命周期，隐藏的Loop Once配置不会生效。
+    # 必须先改为Self，再配置单轮；否则System每5秒回环会再次Burst并无限增长。
+    print('SELF_LIFECYCLE',niagara('set_static_switch_value',asset_path=BASE,emitter=EMITTER,
+          module_node='EmitterState',input='Life Cycle Mode',value='Self'))
     print('ONE_LOOP',niagara('set_emitter_loop_profile',asset_path=BASE,emitter=EMITTER,loop_behavior='Once',loop_duration=86400.0))
     print('COMPILER',json.dumps(niagara('get_system_diagnostics',asset_path=BASE,compile_first=True),ensure_ascii=False))
     print('SAVE_BASE',niagara('save_system',asset_path=BASE))

@@ -44,6 +44,9 @@ Monolith导入动作不接受EditorIcon参数，必须原生导入后用严格�
 
 最新正式LOGO为用户2026-10-11指定的透明原图2172×724，SHA-256为938b069367543456ec463da94c0df15651750fed0f20d4187b5eb95b77b637f6；Alpha范围0—255，完全透明像素649341个。沿用/DBAUIPack_Core/UI/Textures/DBA_MythicLogo，登录420×140、角色选择240×80，白色乘色与原生Alpha显示；没有抠图、滤色、重绘或缩放源像素。替代此前同尺寸但不透明的ca7704dd原稿；旧图和三个受影响引擎资产已逐件哈希备份至Saved/Validation/UIBrandLogo/20261011-TransparentOriginal/Before。Monolith已重新导入无损sRGB纹理、编译两页并仅保存重载三个指定包；未覆盖其他脏地图或鸟群资产。最终Cook及客户端视觉验收另计，不沿用旧包验收结论。
 
+本次透明LOGO已重新Cook/Stage，运行ID`3cd1ac21-99cf-46be-a39c-d17d5c3de69d`退出0；134项容器门禁无缺失，新LOGO与登录／角色选择三项包另行查到非空ExportBundleData。重新打开正式编辑器后，13项原稿设置审计及3项离线策略回归通过，两页父类、BrandLogo身份、位置、尺寸、透明度和白色乘色回读正确，编译均0错误／0警告。引擎从真实已导入纹理导出的源PNG与用户附件逐像素RGBA哈希一致（`OX0wcL5SZFYKEKoNJYtL6FrupzlhQ2I4xPO4pH4liMc=`）；这证明导入源未改色或Alpha，不代替RHI最终合成颜色验收。
+布局预览为`Saved/Validation/UIBrandLogo/20261011-TransparentOriginal/LoginLayoutPreview.png`，仅核对透明叠加与位置，仍受本文已记录的Widget截图额外Gamma限制。验证编辑器曾由工作区运行器3600秒时限退出，随后重新启动并回读；未通过自动保存覆盖其他任务未保存资产。当前使用既有客户端二进制发布资源，未执行新的C++构建、真实认证或人工客户端色彩签收。
+
 不声称全部存量图像或最终客户端已经视觉验收。本轮GPU结果须以实际测试报告为准。
 
 本轮编辑器未加载新增`DivineBeasts.UI.Color.SourceToSlate`测试：实际测试目录查询返回0项。新编辑器DLL链接仍受用户明确要求保留的共享编辑器占用限制，因此GPU回归、新版客户端Cook及人工色彩验收继续标为未验证；此前客户端构建通过不覆盖本次颜色修改。

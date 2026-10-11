@@ -22,11 +22,17 @@ def systems():
         print('EFFECT',niagara('create_effect_type',save_path=EFFECT,cull_reaction='DeactivateResume',update_frequency='Low',max_distance=35000.0))
     for species,settings in SPECIES.items():
         path=DBA+'/Niagara/NS_DBA_BirdFlock_'+species
-        print('SPECIES_MESH',species,niagara('set_renderer_mesh',asset_path=path,emitter=EMITTER,renderer_index=0,mesh=DBA+'/Meshes/SM_DBA_Bird_'+species+'_Cm'))
+        print('SPECIES_MESH',species,niagara('set_renderer_mesh',asset_path=path,emitter=EMITTER,renderer_index=0,mesh=DBA+'/Meshes/Flight/SM_DBA_Bird_'+species))
         niagara('set_renderer_material',asset_path=path,emitter=EMITTER,renderer_index=0,material=DBA+'/Materials/MI_DBA_Bird_'+species)
         niagara('set_renderer_property',asset_path=path,emitter=EMITTER,renderer_index=0,property='MeshBoundsScale',value='(X=1.0,Y=1.0,Z=3.0)')
         for parameter,value in zip(('BirdCount','FlockRadius','FlockHeight','FlightSpeed','FlightMode'),settings):
             niagara('set_parameter_default',asset_path=path,parameter='User.'+parameter,value=str(value))
+        # 项目变体可能在平台修复前已复制，不会自动继承新Loop配置；逐一显式校准。
+        # Self使Once真正生效，防止继承System默认循环而每5秒再次生成BirdCount只。
+        niagara('set_static_switch_value',asset_path=path,emitter=EMITTER,
+                module_node='EmitterState',input='Life Cycle Mode',value='Self')
+        niagara('set_emitter_loop_profile',asset_path=path,emitter=EMITTER,
+                loop_behavior='Once',loop_duration=86400.0)
         niagara('set_effect_type',asset_path=path,effect_type=EFFECT)
         diagnostic=niagara('get_system_diagnostics',asset_path=path,compile_first=True)
         print('SPECIES_COMPILE',species,diagnostic.get('error_count'),diagnostic.get('warning_count'))
@@ -38,6 +44,10 @@ def systems():
         if not disk.is_file() or disk.stat().st_size < 1024:
             raise RuntimeError('Niagara复制资产未真实写盘：'+str(disk))
         print('SPECIES_SAVE',saved,'BYTES',disk.stat().st_size)
+    niagara('set_static_switch_value',asset_path=BASE,emitter=EMITTER,
+            module_node='EmitterState',input='Life Cycle Mode',value='Self')
+    niagara('set_emitter_loop_profile',asset_path=BASE,emitter=EMITTER,
+            loop_behavior='Once',loop_duration=86400.0)
     niagara('set_effect_type',asset_path=BASE,effect_type=EFFECT)
     niagara('save_system',asset_path=BASE)
     print('BIRD_SPECIES_SYSTEMS_CREATED',len(SPECIES))

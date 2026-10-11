@@ -1,35 +1,25 @@
 # BirdFlock（通用鸟群VFX）
 
 版本：2026-10-11｜位置：GamePlatformVFX（平台层，唯一视觉特效插件）  
-状态：客户端原生代码和鸟类模型/纹理/材质已创建并经定向检查；完整编辑器蓝图、Niagara与关卡验收尚未完成，不得宣告可发布。
+状态：真实GPU Niagara、三种WorldDefinition、统一场景蓝图与正式Presentation/Data链路已实装并通过独立运行验证。P6完整构建/烘焙的最终结果见 `Docs/Implementation/BirdFlockP4P7Execution_20261011.md`；人工视觉验收尚待用户确认，不得据自动化宣告生产就绪。
 
 ## 一、系统定位与可复用边界
 
 本功能复用现有 `GamePlatformVFXClient（VFX客户端模块）`，不新建同领域插件、不在 MobaCommon（MOBA通用层）建立环境鸟群实现。平台公共源码不得了解任何具体项目的海鸥、燕子、雄鹰身份。项目实际物种资源归属 `DBAPresentationPack_Core（神兽联盟公共表现内容包）`。
 
-现阶段客户端环境布景使用一套 `AGamePlatformBirdFlockActor（批量鸟群可视演员）` + `UInstancedStaticMeshComponent（实例化静态网格组件）` + `UGamePlatformBirdFlockProfile（鸟群配置DataAsset）`。全部鸟类共享通用飞行数学，鸟种只改变预设持有的网格、材质、速度、数量上限等数据。材质以顶点色 Alpha 决定翼尖权重，经世界位置偏移 WPO 完成 GPU 振翅。各个鸟只用实例矩阵更新位置/方向，不创建每鸟Actor，不注册动态碰撞，不做网络复制。
+正式场景使用 `BP_DBA_BirdFlockAmbient（统一鸟群场景蓝图）`，内部仅一个 `UDivineBeastsBirdFlockSceneComponent（项目场景配置组件）`。组件不逐帧运行、不渲染鸟模型，只向项目表现服务提交物种、数量和锚点，进入既有 `GamePlatformPresentation → GamePlatformData资源租约 → GamePlatformVFX → Niagara` 链路。一个粒子对应一只鸟，GPU模块计算局部飞行轨迹，Mesh Renderer批量渲染，统一母材质按顶点RGB显示羽色、按Alpha控制翼尖振翅。
 
-**重要边界**：本次完成的批量网格方案是可运行的客户端通用鸟群表现机制，但**不是已实现的 Niagara GPU 粒子鸟群资产**，亦未接入正式 `GamePlatformPresentation → GamePlatformVFX DefinitionId → Niagara Executor` 请求/租约链。项目需求如要求真实 Niagara 发射器和动态表现事件驱动，仍须完成对应编辑器模块与真实资产制作。不得将 ISM 原型或空 NiagaraSystem 冒充正式 GPU Niagara 实现。
+旧 `AGamePlatformBirdFlockActor / UGamePlatformBirdFlockProfile（ISM原型）` 仅保留为历史客户端原型和回归夹具，**不用于正式场景蓝图**，不建立第二个资源加载器或特效提供者。平台模板只引用引擎中立模型；项目鸟类网格/材质/身份全部在第三层。自然环境鸟群不进入MobaCommon，不复制每鸟位置，不改变服务器碰撞、伤害或导航。
 
 ## 二、配置接口
 
-| 参数 | 类型与默认 | 功能与约束 |
-| --- | --- | --- |
-| BirdProfile（物种预设） | UGamePlatformBirdFlockProfile | 指定项目模型、材质以及飞行参数；更换即切换鸟种 |
-| BirdCountOverride（数量覆盖） | int32，-1 | -1采用预设数量；0关闭；1..512合法，超过硬上限返回失败 |
-| QualityFraction（画质数量比例） | float，1.0 | 0..1，0直接不生成可视实例 |
-| FlockSeed（随机种子） | int32 | 分布可复现；不用于服务器玩法随机 |
-| FlightMode（飞行模式） | Orbit/Traverse/FigureEight | 环绕/直飞掠过/八字盘旋；不修改服务器导航 |
-| RadiusCm（飞行半径） | float，1500 | 半径范围200..100000cm |
-| FlightHeightCm（相对高度） | float，800 | 相对Actor锚点高度，按cm配置，需人为布置避免穿模 |
-| CruiseSpeedCmPerSecond（巡航速度） | float，240 | 10..5000cm/s |
-| WindInfluenceCm（风力最大扰动） | float，95 | 外观扰动强度0..2000cm，风向来自实例；不进行无限积分 |
-| UpdateRateHz（位姿刷新Hz） | float，20 | 5..60Hz，GPU材质振翅频率独立 |
-| Min/MaxDrawDistanceCm（渲染裁剪距离） | int32，0/25000 | 限制实例渲染距离，需要实际GPU验证 |
+在统一蓝图的 BirdFlock 场景组件详情中设置 `SpeciesId（鸟种标识）`：Seagull（海鸥）、Swallow（燕子）、Eagle（雄鹰）；设置 `BirdCount（数量）` 为0–512，0发送正式取消请求而非保留隐形模拟。`FlockId（场景鸟群身份）` 应在本地玩家作用域内唯一，空值使用所属Actor身份。同一FlockId更换类型/数量会先取消旧实例，再以新参数启动。
 
-实际实例数量公式：`floor(min(RequestedCount, SpeciesMaxCount) * QualityFraction)`，请求负数（-1默认哨兵除外）、超过512、非有限质量值均被拒绝。预设非法时清除旧群，不会继续渲染过期鸟类。
+蓝图接口为 `ApplyBirdFlock（应用当前配置）`、`StopBirdFlock（停止本群）` 和 `GetBirdSpeciesOptions（查询鸟种选项）`。服务接口为 `StartAmbientBirdFlock（提交鸟群请求）`、`StopAmbientBirdFlock（停止指定群）`、`StopAllAmbientBirdFlocks（停止全部）`、`GetRequestedBirdCount（读取已受理请求数量）`。最后一个是请求数，不得用它冒充实际GPU粒子数。
 
-蓝图可直接调用通用Actor接口：`SetBirdProfile（切换预设）`、`SetBirdCount（更改鸟数）`、`SetQualityFraction（改变质量档）`、`SetWindDirection（设置局部风向）`、`RefreshFlock（立即刷新）`、`GetEffectiveBirdCount（读取当前实例数）`。
+正式WorldDefinition参数白名单最多7项：`User.BirdCount`整数0–512；`User.FlockRadius`半径200–10000cm；`User.FlockHeight`相对高度200–10000cm；`User.FlightSpeed`速度10–5000cm/s；`User.FlockSeed`整数0–1000000；`User.FlightMode`整数0盘旋/1拉长闭合掠过/2八字；`User.WindInfluence`扰动幅度0–2000cm。振翅频率和振幅由物种材质实例持有，不伪称已开放User.WingBeatHz。
+
+初始物种默认数量为海鸥32、燕子72、雄鹰5。场景组件覆盖优先于物种默认；每个本地玩家最多16群，所有实例仍进入现有环境预算/距离裁剪。未知鸟种、非法数量及非有限位置明确拒绝，已运行的合法请求保持不变。GPU实测覆盖三物种各0/1/32/128/512，共15组；有预算裁剪时实际可见数可能低于请求数。
 
 ## 三、资源规范和目录
 
@@ -37,20 +27,26 @@
 - `DBAPresentationPack_Core/SourceArt/BirdFlock/DBA_BirdFlock_Models.blend`：Blender 5.2可编辑源，带3个UV低面数鸟类，顶点色RGB区分表面，Alpha为翼尖变形权重。
 - `SourceArt/BirdFlock/Meshes/SM_DBA_Bird_{Seagull,Swallow,Eagle}.fbx`：原始米制3D网格。模型 X 为前向、Y 为翼向、Z 为上。
 - `SourceArt/BirdFlock/Textures/T_DBA_Bird_*_Albedo_Source.png`：512²柔和低对比羽色原图，无刻意砂砾/颗粒纹。
-- `Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_*_Cm.uasset`：UE5.8正确厘米尺寸网格，需使用此后缀资源。早期无后缀的3个测试网格因导入时重复放大100倍，仅保留为历史失败证据，不得引用/用于运行；待确认无引用和编辑器空闲后受控清理。
+- `Content/VFX/Environment/BirdFlock/Meshes/Flight/SM_DBA_Bird_*.uasset`：当前正式飞行网格，559顶点/1022三角面，修正共面反向翼面并保留源RGBA羽色/动画权重，FBX导入显式开启米到厘米转换。原始无后缀100倍大模型、旧`*_Cm`缺色模型和早期`*_Flight`微型导入测试资源均不是正式Niagara的引用目标，不可再次用于新场景。
+- `SourceArt/BirdFlock/RefinedMeshes`：当前可重建飞行网格FBX、修正后的Blender源文件及SHA-256清单。
 - `Content/VFX/Environment/BirdFlock/{Materials,Textures}`：三套实际材质实例和三套正式导入纹理。
-- `Content/VFX/Environment/BirdFlock/{Profiles,Blueprints}`：计划中真实物种DataAsset与统一鸟群蓝图；待编辑器目标编译解锁后创建，不得将生成脚本误称作已生成资产。
+- `Content/VFX/Environment/BirdFlock/Definitions/DA_DBA_VFX_BirdFlock_*`：三种真实`UGamePlatformVFXWorldDefinition`，统一Data逻辑ID归`presentation.dba.environment.birdflock.*@1`。
+- `Content/VFX/Environment/BirdFlock/Blueprints/BP_DBA_BirdFlockAmbient`：真实蓝图、一个正式项目场景组件，可编辑鸟种/数量。
+- `Content/VFX/Environment/BirdFlock/Niagara/NS_DBA_BirdFlock_*`：三种真实GPU粒子系统，均引用平台通用模块和环境EffectType，无逐鸟Actor。
 - `Tools/Blender/BirdFlock` 与 `Tools/Unreal/VFX/BirdFlock`：源资产生成、正式UE导入/回读、鸟种预设、统一蓝图、隔离审核场景工具。
-- `/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockReview`：隔离人工审核关卡目标；当前**未生成**，不能引用虚构的.umap。
+- `/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockReview`：已保存的直接Niagara视觉审核关卡。
+- `/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview`：已保存的正式表现链路审核关卡，三个统一蓝图实例通过真实LocalPlayer服务自动加载/播放。
 
 ## 四、资源生产操作
 
-1. 调用锁定 Blender 5.2 的 `GenerateBirdFlockModels.py（鸟类模型源生成脚本）`，从源生成FBX、PNG、blend和源资源SHA-256清单。重新生成前必须先确认不覆盖人工修改过的Blender源资源。
-2. 使用锁定 UE5.8 `UnrealEditor-Cmd.exe（编辑器命令行）` 的 `-ExecutePythonScript` 参数执行 `AuthorBirdFlockAssets.py（实际资源导入与材质创建脚本）`，明确设置 `BIRD_FLOCK_AUTHOR_MODE=apply`。
-3. 运行 `ValidateBirdFlockAssets.py（只读资产回读校验）`。三个鸟种的最大网格半宽须在30..300cm，资源类型分别为真实UStaticMesh/Texture2D/MaterialInstanceConstant，材质父类统一。
-4. 在 UE 编辑器源模块允许编译后执行 `AuthorBirdFlockProfilesAndBlueprint.py（鸟群预设和蓝图作者）`，环境变量 `BIRD_FLOCK_PROFILE_MODE=apply`，应生成3个DataAsset和1个Blueprint。
-5. 之后执行 `AuthorBirdFlockReviewMap.py（隔离关卡作者）`，环境变量 `BIRD_FLOCK_REVIEW_MODE=apply`，应新建独立关卡，三个鸟群Actor分别使用海鸥32、燕子72、雄鹰5的默认演示值，不改动新手村及角色选择创建地图。
-6. 单独完成真实 Niagara GPU 发射器、物种Mesh Renderer以及与统一 VFX Definition/Presentation 注册连接，验证后方可将正式场景连接为事件驱动链路。
+当前作者链路按以下顺序维护，不再运行旧ISM预设/地图作者脚本覆盖正式资源。
+
+1. `RepairBirdFlockFlightMeshes.py（飞行网格修正）` 读取已有Blender源，删除反向重复面/退化面，保留UV/RGBA，输出独立RefinedMeshes。
+2. `ImportBirdFlockFlightMeshes.py（正式飞行网格导入）` 使用UE内置FBX导入器、Replace源顶点色、ConvertSceneUnit厘米转换，保存Flight子目录真实StaticMesh。
+3. `AuthorBirdFlockSpeciesMonolith.py --systems（项目Niagara变体作者）` 在已核实工程身份的Monolith中绑定三种新网格/材质、编译并保存；每种系统0错误/0警告。WorldDefinition首次创建使用`AuthorBirdFlockDefinitions.py`，已有定义不覆盖。
+4. `AuthorBirdFlockSceneBlueprint.py（正式场景蓝图作者）` 创建并保存一个包含项目场景组件的蓝图。
+5. `AuthorBirdFlockIntegrationReview.py（正式链路审核地图作者）` 在独立UE进程使用LevelEditor模板地图API创建新地图，不用普通AssetTools复制World。组件多字段必须原子设置，防止SCS重建后写入失效组件。
+6. `ValidateBirdFlockP4Assets.py（真实资产门禁）` 在独立UE5.8进程回读平台引用、三种定义/系统/新网格、材质父类及蓝图实例，报告位于Saved/Validation/BirdFlockP4P7。
 
 所有Python UE命令行的退出码0只说明进程结束；脚本异常有可能仍为0。必须同时检查 `LogPython: Error`、`LogEditorPythonExecuter: Error` 和输出的 `*_OK` 成功标记。
 
@@ -64,21 +60,22 @@
 
 ## 六、性能与验收
 
-使用 Niagara Debugger/Unreal Insights/RenderDoc（粒子分析/性能分析/渲染采样工具）结合实际目标设备。现阶段仅有ISM + GPU WPO，无法把它的CPU实例循环结果当作Niagara GPU模拟预算。单批不超过512，默认20Hz低频更新、相机最近渲染标记跳过非可见矩阵更新、ISM实例裁剪和World EndPlay清理；这些是实现逻辑，尚无真机帧耗实测。
+正式实现使用GPU粒子、网格渲染、材质顶点振翅以及既有Niagara EffectType/平台环境预算。目标设备的绝对GPU/CPU帧耗仍需独占硬件条件下测量；本轮工作站同时进行编译与Cook，不能把它的帧率当成产品性能基线。
+
+`RunBirdFlockGPUReview.py` 在独立真实图形编辑器输出五张1920×1080视口截图，并按三物种×五种数量读取实际Niagara GPU缓存；最终15/15匹配且位置有限。`RunBirdFlockIntegrationReview.py` 在真实PIE中验证蓝图自动启动、正式Data/Presentation请求链路、15组GPU数量、非法输入不污染、StopAll和世界清理。两类测试都不等于用户人工审美确认。
 
 验证顺序：
 - Client Win64 Development：检查UHT + C++ + 链接。
-- Editor Win64 Development：必须先让当前正在运行的Live Coding会话安全结束；不强行关闭其他开发任务的编辑器。
+- Editor Win64 Development：已安全关闭本轮开始时无未保存资产的空闲编辑器并成功构建六个受影响模块；全Editor受NoEngineChanges保护拒绝改写引擎输出的记录单独保留，不以定向模块编译冒充全引擎重建。
 - Server Win64 Development：检查没有带入ClientOnly鸟群代码或纯项目鸟类资源。
-- 资产重载：按正确厘米尺寸回读10件资产；不将脚本文件数量冒充uasset数。
-- 客户端自动化实测：已用Win64 Development Client的NullRHI模式运行 `GamePlatform.VFX.BirdFlock.CountAndSeed`（数量/种子）及 `GamePlatform.VFX.BirdFlock.ActorInstanceLifecycle`（真实Actor实例数量/销毁），`Game/Saved/Automation/BirdFlockClientActor/index.json` 报告 **2/2 Success，0 Failed**。此测试不覆盖真实物种资产实例化、Niagara GPU编译或UE人工视觉效果。
+- 资产重载：独立进程验证平台四项资产、三物种定义/系统/网格/材质和真实蓝图父类/组件/选项，平台没有反向引用项目资源。
+- 客户端自动化实测：最新Win64 Client执行`BirdFlock`过滤器，数量/散列、ISM原型回归和正式三物种目录映射共3项通过、0失败；报告`Saved/Validation/BirdFlockP4P7/Automation/index.json`。真实GPU数量由上述两套独立图形验证覆盖，不能只引用原型单测。
 - 功能验证：蓝图切换鸟种、数量0/1/32/128/512、切换风/路径、离开世界后无残留。
 - 人工视觉：审核Blender预览和UE真实关卡，确认羽色、层次、形变、翼尖频率、合理朝向、不穿地面/水面/建筑物、不会遮挡角色和UI；主观审美必须由人确认。
 
 ## 七、未完成与限制
 
-- Editor目标编译受到运行中的其他 UE5.8 Editor Live Coding 会话保护锁阻断，不能在其他任务仍编辑ZodiacSanctuary时强制退出进程。
-- 未创建真实鸟群Blueprint/DataAsset/测试地图、未执行编辑器自动化、尚未制作专用 Niagara GPU 鸟群 Emitter/System/EffectType，亦未建立正式 Presentation Definition 映射。
-- 未完成 Village/OpenWorld/CharacterSelect/CharacterCreate 正式场景接入和人工UE画面验收。
-- 扩大近景质量仍需更精细的鸟类网格/羽毛贴图和姿态动画，当前低面数方案仅适合远景与中远景环境。
-- 后续编辑器解锁后继续：编译 Editor → UE资产作者脚本 → 自动化测试 → Niagara GPU与正式表现分发 → 审核关卡 → 场景接入 → Cook/性能 → 人工验收。
+- 当前三种鸟类为中远景低面数资源，不是近景影视级羽毛角色；本轮修正羽色丢失、反向重复翼面和单位错误，不宣称已达到最终3A美术验收。
+- 轨迹是有界盘旋/拉长闭合掠过/八字，不是完整Boids邻居避让；安全飞行空间由场景配置负责，不自动躲避所有地形/建筑物。
+- 村庄/开放世界及角色选择/创建的生命周期代码已接入；完整登录准入/跨服网络链路不属于本鸟群隔离测试的通过范围。
+- P6构建/烘焙/长稳运行最终结论以续执行记录和真实日志为准。P7始终等待人工检查实际场景的密度、轮廓、遮挡、飞行高度与流畅度后签署，未由人确认前不标记全部完成。

@@ -49,7 +49,11 @@ bool FDivineBeastsPanelStyleAssetTest::RunTest(const FString&)
         TestEqual(TEXT("背景纵向居中锚点"),Slot->GetAnchors().Minimum.Y,.5);
         TestEqual(TEXT("背景居中对齐"),Slot->GetAlignment(),FVector2D(.5,.5));
     }
-    const auto Back=GetDefault<UCommonInputSettings>()->GetDefaultBackAction();
+    // 无窗口资产回归没有本地玩家输入子系统，不能假定其启动路径已加载CommonInput配置。
+    // 显式执行引擎公开加载入口，再验证真实配置与保存的返回行；不注入测试替代输入数据。
+    auto* InputSettings=GetMutableDefault<UCommonInputSettings>();
+    InputSettings->LoadData();
+    const auto Back=InputSettings->GetDefaultBackAction();
     TestNotNull(TEXT("项目配置必须真实装载默认返回表"),Back.DataTable.Get());
     TestEqual(TEXT("项目配置返回行"),Back.RowName,FName(TEXT("Back")));
     return true;

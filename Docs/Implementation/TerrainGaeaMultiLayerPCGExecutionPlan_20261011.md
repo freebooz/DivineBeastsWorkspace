@@ -7,11 +7,11 @@
 
 - P0完成：审查三层插件与PCG Schema v1/金标准资产；保留正式Village桥接材质，真实Gaea 2.3源工程/出口暂未找到。
 - P1技术校准完成：50份PNG源图（30 PBR+1份1009平方16位高程+9掩码+10权重），SHA和纹理质量检查通过，全部1,018,081像素的十层权重总和为255。不是最终3A扫描贴图，不是Gaea真实输出。
-- P2部分完成：49个UE Texture2D、146节点十层UMaterial及MI在UE5.8真实保存和独立回读；AssetRegistry确认新母材质无直接Surface/VFX客户端硬依赖。10个ULandscapeLayerInfoObject尚未制作。通用SurfaceEditor LayerInfo/地图导入Commandlet已成功由MSVC编译为目标文件，Editor DLL链接受并发编辑器锁阻断。
+- P2技术资产完成：49个UE Texture2D、146节点十层UMaterial及MI在UE5.8真实保存和独立回读；AssetRegistry确认母材质无直接Surface/VFX客户端硬依赖。**十份真实ULandscapeLayerInfoObject已全部创建并通过独立UE5.8反射验证**，LS_名称和FinalWeightBlending均正确。本工单通过隔离后缀Editor DLL执行、原DLL及模块清单已恢复且核验未改变；普通Editor模块正式重链接仍须待并发环境释放。详见Docs/Implementation/Terrain10LayerInfosCreation_20261011.md。
 - P3校准投影完成，正式Gaea导入阻断：Gaea版本/坐标/SHA验证器、10张R8/1张little endian R16、1024条PCG Schema v1候选点及非法输入拒绝已完成。无真实Gaea 2.3出口，不能宣称生产导入。ALandscape::Import尚未在更新Editor DLL下执行。
 - P4部分完成：原有PCG放置器复用生成4份真实项目Blueprint；2节点4边的GetLandscape→SurfaceSampler PCG输入Graph已保存并跨进程回读。新增GamePlatformPCGEditor地形权重过滤Graph通用Commandlet源码；UHT编译、真实Biome图、PCG Spawn/Bake均待完成。
 - P5尚未完成：1009原生高程/权重清单已备好；独立L_DBA_TerrainMaskReview.umap尚未创建；正式Village不受校准高程影响。
-- P6部分测试：源图QA、7组非法输入、Shader/UE资产类型/依赖检查与Surface C++编译通过；完整Editor链接、QA地图、PCG运行、Client/Server新Cook均未取得本工单成功证据。受控RunTerrainGaeaFullReview.ps1已通过DryRun，并在并发UE Editor/UBT存在时按预期拒绝-Apply，不会写入地图。
+- P6部分测试：源图QA、7组非法输入、Shader/UE资产类型/依赖检查与Surface C++编译通过；本轮增加十份真实LayerInfo的原生命令创建、隔离模块链接和独立UE反射回读成功证据。常规Editor目标完整重链接、QA地图、PCG运行、Client/Server新Cook均未取得本工单完整成功证据。受控RunTerrainGaeaFullReview.ps1已通过DryRun及并发安全拒绝，尚未运行其完整Apply流程。
 - P7待人工签收：无十层Landscape/PCG实际融合画面与本工单GPU Profile，不得宣布最终完成。
 
 证据位于Game/Saved/Logs/TerrainTextureImport20261011.log、TerrainMultiLayerAuthor20261011.log、TerrainMultiLayerUEAssetAudit20261011.log、TerrainPCGReviewBlueprints20261011.log、TerrainPCGLandscapeSampling20261011.log、TerrainPCGBlueprintGraphAudit20261011.log，及Saved/Validation/TerrainGaea。接续顺序：共享编辑器锁解除→Editor DLL正式链接→10 LayerInfo→4张权重过滤Graph→独立Landscape地图→PCG运行/Bake→三目标构建与双Cook→GPU与人工审核。

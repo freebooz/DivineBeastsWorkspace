@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "meshes": [
+    {
+      "species": "Seagull",
+      "sourceFaces": 1320,
+      "faces": 1022,
+      "removedReverseFaces": 194,
+      "vertices": 559,
+      "wingAlphaMin": 0.0,
+      "wingAlphaMax": 0.9200000166893005,
+      "colorVariants": 10,
+      "file": "SM_DBA_Bird_Seagull_Flight.fbx",
+      "bytes": 37340,
+      "sha256": "ec0c3a375d322b9c06329fa6647466a7d110cae888f5e8342b6265476a126948"
+    },
+    {
+      "species": "Swallow",
+      "sourceFaces": 1320,
+      "faces": 1022,
+      "removedReverseFaces": 194,
+      "vertices": 559,
+      "wingAlphaMin": 0.0,
+      "wingAlphaMax": 0.9200000166893005,
+      "colorVariants": 10,
+      "file": "SM_DBA_Bird_Swallow_Flight.fbx",
+      "bytes": 37420,
+      "sha256": "30bb13b34b3fe0213869424fa906e71adf473006f991361b08ad5299c2cb12bf"
+    },
+    {
+      "species": "Eagle",
+      "sourceFaces": 1320,
+      "faces": 1022,
+      "removedReverseFaces": 194,
+      "vertices": 559,
+      "wingAlphaMin": 0.0,
+      "wingAlphaMax": 0.9200000166893005,
+      "colorVariants": 10,
+      "file": "SM_DBA_Bird_Eagle_Flight.fbx",
+      "bytes": 37340,
+      "sha256": "433d83591dfd899b1ea5145650ffd0296f02ff9a3470174da1af3fe77501d7f6"
+    }
+  ]
+}
