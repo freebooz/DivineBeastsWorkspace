@@ -6,12 +6,10 @@
 
 执行时由主任务确认当前 Editor/构建占用已经结束，串行使用同一引擎，保留独立 RunId、参数、退出码和完整日志。不要覆盖旧输出或沿用旧成功报告。
 
-| 层级 | 最小入口 | 通过后可陈述 | 仍不能陈述 |
-| --- | --- | --- | --- |
-| 静态配置/依赖 | 本次审查 | Client AlwaysCook、Server NeverCook/Pak 规则、模块目标门闩已登记 | Cook 通过、资源已交付、Server 二进制完全不含模块 |
-| WindowsClient 定向资源 Cook | 第 1 节真实 commandlet、两个 Fauna 根 | 当前 Editor 类实现可为 WindowsClient 烘焙这些资源及依赖，结果以本次 cooked 数据和 shader 日志为准 | 完整客户端发布、三张正式地图 Cook/Stage、Client 可执行文件已重建、视觉通过 |
-| 正式 FrontEndClient Cook/Stage | 现有 CookFrontEndClient.ps1 | 三张入口地图和配置指定软资源完成真实 Cook/Stage，且通过脚本现有 UI/鸟群门禁 | Fauna 门禁已自动存在、Fauna 运行/视觉/联网通过 |
-| Village DedicatedServer Cook/Stage + 排除 | 现有 CookFoundation.ps1 的 Server/VillageServer 单地图入口 | 该 Server 目标/该地图组合的本次 cooked 和 staged 内容检查结果 | 所有服务器角色/地图的全局保证，或仅凭 Pak 剔除声称未 Cook |
+- **静态配置/依赖**：最小入口：本次审查；通过后可陈述：Client AlwaysCook、Server NeverCook/Pak 规则、模块目标门闩已登记；仍不能陈述：Cook 通过、资源已交付、Server 二进制完全不含模块。
+- **WindowsClient 定向资源 Cook**：最小入口：第 1 节真实 commandlet、两个 Fauna 根；通过后可陈述：当前 Editor 类实现可为 WindowsClient 烘焙这些资源及依赖，结果以本次 cooked 数据和 shader 日志为准；仍不能陈述：完整客户端发布、三张正式地图 Cook/Stage、Client 可执行文件已重建、视觉通过。
+- **正式 FrontEndClient Cook/Stage**：最小入口：现有 CookFrontEndClient.ps1；通过后可陈述：三张入口地图和配置指定软资源完成真实 Cook/Stage，且通过脚本现有 UI/鸟群门禁；仍不能陈述：Fauna 门禁已自动存在、Fauna 运行/视觉/联网通过。
+- **Village DedicatedServer Cook/Stage + 排除**：最小入口：现有 CookFoundation.ps1 的 Server/VillageServer 单地图入口；通过后可陈述：该 Server 目标/该地图组合的本次 cooked 和 staged 内容检查结果；仍不能陈述：所有服务器角色/地图的全局保证，或仅凭 Pak 剔除声称未 Cook。
 
 “完整客户端 Cook”仅指既有 FrontEndClient 三图和配置闭包，不是 CookAll。定向 Cook 保留硬、软依赖，只缩减主动请求根，输出可能超过 Fauna 自身资产数。
 
@@ -153,26 +151,37 @@ FaunaContainer.json 应保存每个清单路径/SHA-256、Platform=WindowsServer
 平台包根 /GamePlatformVFX/Environment/Fauna；容器完整后缀根：
 /Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/Fauna。
 
-| 相对路径 | 数量 |
-| --- | --- |
-| EffectTypes/NET_GP_Fauna_Ambient.uasset | 1 |
-| Materials/M_GP_Fauna_Master.uasset | 1 |
-| Materials/T_GP_Fauna_NeutralRoughness.uasset | 1 |
-| Niagara/NS_GP_Fauna_Base.uasset | 1 |
+- `EffectTypes/NET_GP_Fauna_Ambient.uasset`：1 个运行包。
+- `Materials/M_GP_Fauna_Master.uasset`：1 个运行包。
+- `Materials/T_GP_Fauna_NeutralRoughness.uasset`：1 个运行包。
+- `Niagara/NS_GP_Fauna_Base.uasset`：1 个运行包。
 
 项目包根 /DBAPresentationPack_Core/VFX/Environment/Fauna；容器完整后缀根：
 /Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/Fauna。
 
-| 每物种 S=ButterflyAzure / FishSilver 的相对路径 | 两种合计 |
-| --- | --- |
-| Blueprints/BP_DBA_<S>Habitat.uasset | 2 |
-| Definitions/DA_DBA_VFX_Fauna_<S>.uasset | 2 |
-| Materials/MI_DBA_<S>.uasset | 2 |
-| Meshes/SM_DBA_<S>.uasset | 2 |
-| Niagara/NS_DBA_<S>.uasset | 2 |
-| Textures/T_DBA_<S>_BaseColor.uasset | 2 |
-| Textures/T_DBA_<S>_Normal.uasset | 2 |
-| Textures/T_DBA_<S>_Roughness.uasset | 2 |
+### ButterflyAzure：8 个运行包
+
+- `Blueprints/BP_DBA_ButterflyAzureHabitat.uasset`：1 个运行包。
+- `Definitions/DA_DBA_VFX_Fauna_ButterflyAzure.uasset`：1 个运行包。
+- `Materials/MI_DBA_ButterflyAzure.uasset`：1 个运行包。
+- `Meshes/SM_DBA_ButterflyAzure.uasset`：1 个运行包。
+- `Niagara/NS_DBA_ButterflyAzure.uasset`：1 个运行包。
+- `Textures/T_DBA_ButterflyAzure_BaseColor.uasset`：1 个运行包。
+- `Textures/T_DBA_ButterflyAzure_Normal.uasset`：1 个运行包。
+- `Textures/T_DBA_ButterflyAzure_Roughness.uasset`：1 个运行包。
+
+### FishSilver：8 个运行包
+
+- `Blueprints/BP_DBA_FishSilverHabitat.uasset`：1 个运行包。
+- `Definitions/DA_DBA_VFX_Fauna_FishSilver.uasset`：1 个运行包。
+- `Materials/MI_DBA_FishSilver.uasset`：1 个运行包。
+- `Meshes/SM_DBA_FishSilver.uasset`：1 个运行包。
+- `Niagara/NS_DBA_FishSilver.uasset`：1 个运行包。
+- `Textures/T_DBA_FishSilver_BaseColor.uasset`：1 个运行包。
+- `Textures/T_DBA_FishSilver_Normal.uasset`：1 个运行包。
+- `Textures/T_DBA_FishSilver_Roughness.uasset`：1 个运行包。
+
+两个物种每类路径各 1 个，即每类合计 2 个、项目合计 16 个；加平台 4 个，客户端必需运行包共 20 个。
 
 第 21 个源资产是平台 Niagara/NM_GP_FaunaArrayMotion.uasset。与已有鸟群门禁原则一致，Niagara 模块编辑器图不要求作为独立运行包出现，其编译结果由 System/Emitter 持有；正常裁剪不能误报漏包，模块源文件存在也不能代替 System/GPU 编译成功。
 
@@ -184,11 +193,9 @@ CSV 应严格解析唯一 Filename/Platform 列，规范化斜杠/大小写，�
 
 本次检索 Game/Plugins 下全部 .Build.cs/.uplugin，GamePlatformVFXClient 的外部直接模块依赖只发现于项目客户端模块和 VFXEditor：
 
-| 引用位置 | 目标门闩 | 结论 |
-| --- | --- | --- |
-| DivineBeastsPresentationClient.Build.cs:30–39，PrivateDependencyModuleNames | DBAClient.uplugin:157–167，ClientOnly，Game/Client/Editor 白名单 | 新增本地惊扰/诊断依赖不构成 Server 入口 |
-| GamePlatformVFXEditor.Build.cs:18 | GamePlatformVFX.uplugin:19–23，Editor only | 不进入 Server |
-| GamePlatformVFXClient 自身模块 | GamePlatformVFX.uplugin:12–16，ClientOnly，Client/Editor 白名单 | 执行器没有 Server 模块 |
+- **DivineBeastsPresentationClient.Build.cs:30–39，PrivateDependencyModuleNames**：目标门闩：DBAClient.uplugin:157–167，ClientOnly，Game/Client/Editor 白名单；结论：新增本地惊扰/诊断依赖不构成 Server 入口。
+- **GamePlatformVFXEditor.Build.cs:18**：目标门闩：GamePlatformVFX.uplugin:19–23，Editor only；结论：不进入 Server。
+- **GamePlatformVFXClient 自身模块**：目标门闩：GamePlatformVFX.uplugin:12–16，ClientOnly，Client/Editor 白名单；结论：执行器没有 Server 模块。
 
 Server.Target.cs 启用 DBAServer、GamePlatformWeather、DBAArena、Village 包。DBAArena.uplugin:40–47 的 DBAClient 依赖限 Client/Editor；DBAServer.uplugin 不依赖 DBAClient/VFX。主模块 DivineBeastsArena.Build.cs:9–20 无 VFXClient。DBAPresentationPack_Core 在 DivineBeastsArena.uproject:174–176 限 Game/Client/Editor，其 VFX 插件依赖也限 Client/Editor。
 
@@ -198,8 +205,6 @@ Server.Target.cs 启用 DBAServer、GamePlatformWeather、DBAArena、Village 包
 
 由主任务统一登记；本文作者不改混合换行总目录计划：
 
-| 路径 | 职责 | 状态 |
-| --- | --- | --- |
-| Docs/Implementation/FaunaCookValidationPlan_20261011.md | 既有 Client/Server Cook 入口、Fauna 定向 Cook、容器验收清单与静态规则证据边界 | 计划已写；Cook/Stage 未执行 |
+- **Docs/Implementation/FaunaCookValidationPlan_20261011.md**：职责：既有 Client/Server Cook 入口、Fauna 定向 Cook、容器验收清单与静态规则证据边界；状态：计划已写；Cook/Stage 未执行。
 
-本文作者本轮没有修改生产源码、配置、构建脚本、引擎文件或源资产；主任务补齐的两份 Server Cook 配置已在上文只读核对。另外仅按授权修改 Tests/VFX/BirdFlock 下两份所有权脚本的 accepted helper。真实 UE Python 的 bool+FString& 包装成功可返回空字符串，失败返回 None，故布尔对象直接返回、其他对象按 result is not None 判断。本次 AST 解析和 git diff --check 通过；未运行 PIE，真实运行结果由主任务宿主单独生成。
+本文作者本轮没有修改生产源码、配置、构建脚本、引擎文件或源资产；主任务补齐的两份 Server Cook 配置已在上文只读核对。另外按授权修正 Tests/VFX/BirdFlock 下两份 Owner 脚本的 Python 返回值判定、真实反射调用及 NEVER 运行态赋值桥接。本子任务 AST 和 git diff --check 通过；主任务生成的最终真实 PIE 报告已在 BirdFlockAudit_20261011.md 中单独登记，但不构成本文 Client/Server Cook 已执行的证据。

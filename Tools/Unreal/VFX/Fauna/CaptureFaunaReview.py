@@ -98,7 +98,8 @@ class FaunaVisualReview:
                 self.pending=self.out/(self.views[self.index]+'.png')
                 assert not self.pending.exists()
                 # 通过实际PIE PlayerController向游戏视口发出截图命令，避免截到静止编辑器世界。
-                self.pc.console_command('HighResShot 1600x900 filename='+self.pending.as_posix(),True)
+                unreal.SystemLibrary.execute_console_command(self.world,
+                    'HighResShot 1600x900 filename='+self.pending.as_posix(),self.pc)
                 self.phase='screenshot';self.mark=now
             elif self.phase=='screenshot' and elapsed>1:
                 if not self.pending.exists():
@@ -124,4 +125,7 @@ class FaunaVisualReview:
         self.persist()
         print('FAUNA_VISUAL_REVIEW',self.report['status'],str(self.out))
         if self.report.get('error'):unreal.log_error(self.report['error'])
+        # 有限验收进程可自动退出；已有制作宿主默认保留，不操作其他编辑器。
+        if '-FaunaExitAfterVisual' in unreal.SystemLibrary.get_command_line():
+            unreal.SystemLibrary.quit_editor()
 unreal._fauna_visual_review=FaunaVisualReview()

@@ -9,7 +9,7 @@
 
 本轮确认五个项目编排缺陷：取消通知重入会覆盖较新的意图；组件默认身份碰撞及按 ID 误停；换 ID 的非法候选会先破坏合法旧绑定；同一 UWorld 的 Context 变化会丢弃自定义场景意图；实际异步播放终态未反馈到项目 RequestId，导致相同参数无法重试。已在项目层实现相应修正，并将修正后的同一套事务用于蝴蝶与鱼群。
 
-这是源码审查与实现记录。本轮子任务没有启动/关闭编辑器、构建 C++、执行 PIE、运行图形验证或提交 Git。真实 UE 编译、实际异步通知交错、资源登记及 GPU 效果须由统一验收阶段补齐。下文明确区分已观察的源码事实与尚待运行的用例，不沿用旧文档中的“通过”作为本轮证据。
+这是源码审查、实现及最终验收证据补充记录。子任务本人没有启动/关闭编辑器、构建 C++、执行 PIE、运行图形验证或提交 Git；现已直接回读主任务生成的最终真实 PIE 报告：鸟群 Owner 9/9、Fauna Owner 13/13、Fauna 两物种 10 个 GPU 数量用例及终态显式恢复通过。具体范围和未覆盖交错见第 6 节；飞鸟旧 15 组 GPU 矩阵未在本轮重跑，不沿用历史“通过”作为本轮 GPU 证据。
 
 正文中“原始行”指上述 Git 基线；“当前行”指本轮项目编排交回时的源码快照，后续合并可按函数名定位。
 
@@ -21,15 +21,13 @@
 
 每个当前意图包含：
 
-| 字段 | 含义 |
-| --- | --- |
-| ID | Bird 的 FlockId 或 Fauna 的 HabitatId；两个类型的目录分别命名，不相互占位 |
-| Owner + RegistrationToken | 场景拥有者与注册代次；空 token 条目属于显式服务请求 |
-| MutationToken | 每次配置变更的意图代次；外层操作在同步广播后必须仍匹配才能继续 |
-| RequestId | 当前提交到平台的中立请求身份；挂起/停止在广播取消前先撤销，真实顶层终态精确匹配后清除 |
-| bAwaitingExplicitRetry | 终态后保留意图但暂停隐式再提交；该 ID 显式 Apply 或新 Context 恢复重新准备一次 |
-| World | 该意图绑定的真实 UWorld；过期世界的意图不迁移到后来世界 |
-| Species/Count/Seed/Origin | 配置值；Count 是请求数量，不是可见粒子计数 |
+- **ID**：含义：Bird 的 FlockId 或 Fauna 的 HabitatId；两个类型的目录分别命名，不相互占位。
+- **Owner + RegistrationToken**：含义：场景拥有者与注册代次；空 token 条目属于显式服务请求。
+- **MutationToken**：含义：每次配置变更的意图代次；外层操作在同步广播后必须仍匹配才能继续。
+- **RequestId**：含义：当前提交到平台的中立请求身份；挂起/停止在广播取消前先撤销，真实顶层终态精确匹配后清除。
+- **bAwaitingExplicitRetry**：含义：终态后保留意图但暂停隐式再提交；该 ID 显式 Apply 或新 Context 恢复重新准备一次。
+- **World**：含义：该意图绑定的真实 UWorld；过期世界的意图不迁移到后来世界。
+- **Species/Count/Seed/Origin**：含义：配置值；Count 是请求数量，不是可见粒子计数。
 
 ## 3. 已确认的问题
 
@@ -59,7 +57,7 @@
 
 修正：空 ID 使用组件 `GetPathName()`，隔离 Actor 内多组件与 Level 实例；每次新绑定使用注册 token。显式重复 ID 对其他活跃 Owner 或显式服务请求返回错误。组件 Stop 只能停止 token 匹配的条目；失效旧 Owner 的条目可以在新注册时回收。现行无 Owner 的按 ID 停止 API 保留为显式控制接口，场景组件不使用它。
 
-真实组件回归准备于 `Tests/VFX/BirdFlock/RunBirdFlockOwnershipReview.py`，包括两个同 Actor 组件、显式冲突及失败候选 Stop 不影响他人。脚本尚未执行 PIE。
+`Tests/VFX/BirdFlock/RunBirdFlockOwnershipReview.py` 已由主任务在真实 PIE 执行，最终 `Saved/Validation/BirdFlockAudit/OwnershipReview.json` 为 passed、9/9，包含两个同 Actor 组件、显式冲突及失败候选 Stop 不影响他人。该报告明确不执行 GPU 验证，也不覆盖分屏玩家更换或流送同名 Actor。
 
 ### BIRD-03：换 ID 与非法参数同时发生时，会先删除合法旧群（P2）
 
@@ -72,7 +70,7 @@
 
 修正：当前 `ApplyBirdFlock:31` 和 `ApplyFauna` 先提交合法候选；拒绝时保留旧绑定。成功后先发布新组件绑定，再停止旧 token。Apply/Stop 自身也使用 MutationToken，防止旧实例取消回调内重新 Apply 后，外层又覆盖组件绑定。候选 Count 在调用前取值，不从回调可能修改的属性重新判断本次绑定。
 
-这保证同步校验/受理失败保留旧配置；“受理”依旧不代表异步加载或 GPU 播放已经成功。
+最终真实 Bird/Fauna Owner 报告均验证了“同时换 ID+Count=513”拒绝且保留旧绑定；Fauna 另外验证了越界种子。这证明对应同步校验/受理失败用例的保旧行为；“受理”依旧不代表异步加载或 GPU 播放已经成功，无效物种及重入交错不得由这些用例外推。
 
 ### BIRD-04：同一真实世界的 Context 改变会丢失自定义场景意图（P2）
 
@@ -99,7 +97,7 @@
 
 `UnbindEnvironmentFlockCompletion:300` 先清空弱世界、委托句柄和绑定 token，再向公共服务移除委托。Deinitialize、账号 Reset 与真实 WorldCleanup 都调用它；LocalPlayer 已进入新世界时，只撤销真正属于旧世界的订阅，不能解除后来新世界的绑定。
 
-本轮完成的是源码实现及真实合同复读，尚未执行实际失败注入或证明 GPU 恢复成功。运行验收必须覆盖顶层失败后相同参数重试、子实例终态过滤、旧 RequestId/旧 World 回执、其他观察者先 Stop/替换意图，以及一次显式重试仍失败后保持等待。
+最终真实 Fauna 集成运行已通过销毁 Niagara 组件触发终态，检查无隐式自动重试，并以同参数显式 Apply 恢复到 128 个 GPU 粒子；证据为 `Saved/Validation/Fauna/IntegrationReview.json` 的 terminalCause、terminalExplicitRetry 及主 harness 断言。此结果覆盖共用投影的真实组件销毁通道，不代替异步 Data 加载失败、子实例终态过滤、旧 RequestId/旧 World 回执、其他观察者先 Stop/替换，以及显式重试再次失败等用例。
 
 ## 4. 蝴蝶/鱼群项目接入合同
 
@@ -115,12 +113,10 @@
 
 `UDivineBeastsFaunaSceneComponent` 默认 SpeciesId=ButterflyAzure、Count=32、Seed=137，ID 为空时使用组件路径。允许 ButterflyAzure/FishSilver，Count=0..512，Seed=0..1000000，坐标必须有限。每个 LocalPlayer 世界中 Bird 目录最多 16 个请求，Fauna 目录最多 16 个请求。数量上限是意图防护，实际可见实例/粒子由统一平台预算、剔除和真实资产决定，不能据此声称满足帧时目标。
 
-| 物种 | 逻辑 Definition ID | 正式资产约定 |
-| --- | --- | --- |
-| ButterflyAzure | `presentation.dba.environment.fauna.butterflyazure@1` | `/DBAPresentationPack_Core/VFX/Environment/Fauna/Definitions/DA_DBA_VFX_ButterflyAzure` |
-| FishSilver | `presentation.dba.environment.fauna.fishsilver@1` | `/DBAPresentationPack_Core/VFX/Environment/Fauna/Definitions/DA_DBA_VFX_FishSilver` |
+- **ButterflyAzure**：逻辑 Definition ID：`presentation.dba.environment.fauna.butterflyazure@1`；正式资产约定：`/DBAPresentationPack_Core/VFX/Environment/Fauna/Definitions/DA_DBA_VFX_Fauna_ButterflyAzure`。
+- **FishSilver**：逻辑 Definition ID：`presentation.dba.environment.fauna.fishsilver@1`；正式资产约定：`/DBAPresentationPack_Core/VFX/Environment/Fauna/Definitions/DA_DBA_VFX_Fauna_FishSilver`。
 
-资产的实际创建、Data 扫描/PrimaryAssetId 登记和运行资源验收属于统一资产工作。本轮项目编排不新建另一份路径→定义加载器。
+上述资产路径已按实际源资产名修正（Definition 文件名包含 Fauna 前缀，逻辑 ID 不变）。统一资产工作已在真实审核世界通过两种蓝图到 DataLease/平台 VFX/GPU 的自动场景链路；这是运行证据，不代表 Client/Server Cook、发布包或人工美术验收完成。项目编排没有新建另一份路径→定义加载器。
 
 项目中立请求维持 Low、Persistent、Confirmed 的 World 环境表达；提交 `User.FaunaCount` 与 `User.FaunaSeed`。鸟群仍提交 `User.BirdCount`。Fauna ContentPack ID 为 `DBA.Environment.Fauna`，只在本代 Data 预载成功、目录 Active 后从 `HandleLogicalPreloadCompleted` 提交当前意图。两类共用一个私有状态机文件，各自公开入口只做参数类型和目录选择。
 
@@ -142,19 +138,56 @@
 
 ## 6. 本轮完成的验证
 
-| 检查 | 结果 | 能证明什么 |
-| --- | --- | --- |
-| 基线五处控制流复读 | 已执行 | 缺陷的输入、因果和原始位置可复核 |
-| 真实 UE Niagara 初始剔除源码复读 | 已执行 | DeactivateResume 与可 PreCull 模式的区别；不能证明 uasset 当前配置 |
-| 公共 VFX 终态/父子句柄与同步广播源码复读 | 已执行 | 原中立 RequestId 与 ParentHandle 的真实语义，以及不在投影回调内调用外部代码的必要性 |
-| 真实 UE Python 批量属性写入源码复读 | 已执行 | 集成脚本的“同时换 ID+非法参数”输入不会通过逐属性中间通知拆开 |
-| 项目 C++ 差异 `git diff --check` | exit 0 | 补丁没有 Git 空白错误；有工作区既有 LF/CRLF 转换提示 |
-| 旧鸟群专用状态标识残留检查 | 未发现旧字段/函数残留 | 抽取后没有遗留旧状态变量调用；不是编译通过证据 |
-| 两个真实组件集成脚本 AST | 通过 | Python 语法有效，使用实际 UE 附带解释器；没有执行 import unreal/PIE |
-| C++ Editor 构建及已有 Automation | 本子任务未执行 | 必须由统一阶段实际构建、运行 |
-| 取消/Context 回调交错、资源加载、GPU/预算画面 | 本子任务未执行 | 完整输入矩阵见 Tests/VFX/BirdFlock/README.md |
+本节已直接回读主任务生成的最终报告。子任务本人只读报告并更新文档，没有启动/关闭 Editor、构建或再次执行 PIE。报告中的实际 GPU 观测与 Owner 请求断言分别列出，不将 CPU 意图数量当作 GPU 计数。
 
-不得用伪造 UE 头、独立复制的状态机、静态字段存在检查或 CPU 意图数量替代真实 UE 编译、实际资源和 GPU 运行证据。现有 `DivineBeasts.Presentation.Activation.FailureCancellationAndOldGeneration` 自动化继续作为 ContentPack 账本取消/旧代回归，不能代替真实播放取消的重入用例。
+### 6.1 最终实际 PIE 报告
+
+- **`Saved/Validation/BirdFlockAudit/OwnershipReview.json`**：最终结果：`status=passed`，9/9；本次实际覆盖：同 Actor 两组件默认路径独立；换 ID+Count=513 拒绝并保留旧绑定；合法替换；其他 Owner 同名冲突；失败候选 Stop 不影响他人；Count=0；Actor 销毁后的 EndPlay 清理。
+- **`Saved/Validation/BirdFlockAudit/FaunaOwnershipReview.json`**：最终结果：`status=passed`，13/13；本次实际覆盖：上述 Owner 生命周期，加 Seed=-1/1000001 拒绝、Seed=0/1000000 和 Count=512 合法边界。
+- **`Saved/Validation/Fauna/IntegrationReview.json`**：最终结果：`status=passed`，`errors=[]`；本次实际覆盖：真实 SceneComponent→项目 Presentation→DataLease→平台 VFX→GPU 链路、下列 10 个 Fauna GPU 数量用例、行为与终态恢复检查。
+
+本次回读报告的 SHA-256，用于区分后续同名报告覆盖：
+
+- OwnershipReview.json：`3CA49251D7DFED9186AA1B4424FB4917639DEC3E7543374FD04F6ED37F5C57EB`。
+- FaunaOwnershipReview.json：`2BF2BD78B158C7BDD94FC22611C2F271D84804FADBFC432E2F9B60CE7F6D3855`。
+- Fauna/IntegrationReview.json：`B82EA9531EB399309C5ED6492E96EBE55F5953192AB9E3BC50DFD199905B083C`。
+
+两个 Owner 报告都明确 `gpuValidation=not_performed`。它们只证明真实组件/请求生命周期；Fauna 的 GPU 证据来自独立 IntegrationReview。
+
+- **ButterflyAzure**：请求数量：0 / 1 / 32 / 128 / 512；实际 GPU 观测：0 / 1 / 32 / 128 / 512；结果：5/5。
+- **FishSilver**：请求数量：0 / 1 / 32 / 128 / 512；实际 GPU 观测：0 / 1 / 32 / 128 / 512；结果：5/5。
+
+8 个非零用例的 `finite`、`normalizedOrientations`、`validMotionParameters`、`insideHabitatAndObstacles` 均为 true。零数量用例证明 GPU 观测为 0，不额外套用不存在的非零属性检查字段。
+
+同一 IntegrationReview 还记录：
+
+- 自动场景在真实 `UEDPIE_0_L_DBA_FaunaReview` 加载两种项目 Niagara System，`automaticScene.pass=true`。
+- 蝴蝶 CPU 生产快照为 simulated=32、perched=1、reservedSlots=8、renderingActive=true；受惊后 perchedAfter=0，检查通过。鱼群 GPU 运动观测为 gpuCount=128、moved=true。
+- 实际销毁 Niagara 组件触发终态（`terminalCause=actual Niagara component destruction`）；主 harness `Tools/Unreal/VFX/Fauna/RunFaunaIntegrationReview.py:205–222` 在终态后超过 1 秒的观察窗检查无隐式自动重试、旧请求诊断失效，随后同参数显式 Apply 恢复，报告 `terminalExplicitRetry.gpuObserved=128`、pass=true。
+- StopAll 后 `stopAllActiveNiagara=0`，报告 `worldCleanup=true`。这不等同于所有账号退出、跨世界和异常卸载交错都已验证。
+- `humanArtAcceptance=pending`；没有从功能检查推导美术验收、性能目标、Client/Server Cook 或最终发布包已通过。
+
+### 6.2 历史失败属于测试桥接/API修正记录
+
+同名 JSON 已由最终成功运行覆盖；以下保留此前实际观察到的失败阶段，不抹去测试迭代，也不把它们计为新增生产缺陷：
+
+1. UE Python 的 bool+FString& 包装成功可以返回空字符串、失败返回 None。旧 accepted 使用 bool('')，把成功误判为失败；现按布尔对象本值、其他对象 result is not None 判断。
+2. BeginDeferredActorSpawnFromClass、FinishSpawningActor、AddComponentByClass 等未生成预期 Python 方法名。夹具改用真实 UObject.call_method；先完成 Actor construction，再创建未注册组件、设置初始配置、FinishAddComponent。提前加组件会受到 construction 重建影响。
+3. 第二轮曾通过默认 ID 和非法候选拒绝，随后“保留旧绑定”断言失败。锁定引擎 `PyWrapperObject.cpp:992–1048` 的批量 setter 实际统一 PreEditChange/PostEditChange，不是逐字段自动 Apply；不能把“中间有效请求”猜测写成已确认根因。引擎 `ActorComponent.cpp:1311–1327、1432–1444` 存在编辑重注册和 Owner construction 重建路径。
+4. 现两份脚本统一使用 `set_runtime_properties`，逐个调用 `set_editor_property(..., PropertyAccessChangeNotifyMode.NEVER)`，再显式 Apply。测试模拟运行态候选赋值，不验证编辑器属性修改事务。所有原有业务断言保留，最终 9/9 与 13/13 通过。
+
+### 6.3 静态证据及尚未覆盖的运行矩阵
+
+- **基线五处控制流、真实 VFX 终态/父子句柄合同复读**：当前证据状态：已执行；边界：可复核原始缺陷因果；不是所有异步交错的运行证明。
+- **UE Niagara 初始剔除与 Python 编辑通知源码复读**：当前证据状态：已执行；边界：缩小 PreCull 和属性事务推断；不代替当前 uasset/编辑器事务验收。
+- **项目差异 git diff --check、两份 Owner 脚本 AST**：当前证据状态：已通过；边界：静态语法/空白检查；实际 PIE 结果以上述三份报告为准。
+- **C++ Editor 构建及已有 Automation**：当前证据状态：主任务独立管理；边界：本节三份运行报告不替代构建日志或 Automation 结果，不由子任务补造证据。
+- **取消回调内 Stop/再次 Start、嵌套 Context 更新、暂停期新意图排队**：当前证据状态：尚未由本节报告覆盖；边界：BIRD-01/BIRD-04 的精确交错仍需 Tests/VFX/BirdFlock/README.md 对应用例。
+- **复合子实例终态、旧 RequestId/旧 World 回执、其他观察者先替换、显式重试再次失败**：当前证据状态：尚未由本节报告覆盖；边界：BIRD-05 已有真实组件销毁终态及同参恢复证据，但不等于所有失败通道通过。
+- **飞鸟旧 15 组 GPU 矩阵**：当前证据状态：本轮未重跑；边界：不把 Fauna 两物种 10 组 GPU 结果或鸟群 Owner 9 项算成飞鸟 GPU 回归。
+- **分屏首玩家更换、流送同名 Actor、PreCull 远近恢复、Client/Server Cook 与人工美术验收**：当前证据状态：本节未提供通过证据；边界：继续按对应真实场景和产物验收。
+
+不得用伪造 UE 头、独立复制的状态机、字段存在或 CPU 配置数量替代真实证据。现有 `DivineBeasts.Presentation.Activation.FailureCancellationAndOldGeneration` 自动化属于 ContentPack 账本取消/旧代回归，不代替真实播放取消的重入用例。
 
 ## 7. 变更范围与后续衔接
 

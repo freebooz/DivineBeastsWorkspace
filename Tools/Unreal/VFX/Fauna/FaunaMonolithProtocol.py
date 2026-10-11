@@ -9,7 +9,7 @@ from urllib.request import Request,urlopen
 from datetime import datetime,timezone
 ROOT=Path(__file__).resolve().parents[4]
 EVIDENCE=ROOT/'Saved/Validation/Fauna/Authoring'
-# 可用单进程INI覆盖启动独占端口，避免并行工作区操作到另一轮编辑器。
+# 对已确认所有权、实际监听该端口的编辑器设置连接端口；环境变量只选择端点，不修改或验证服务端端口。
 PORT=int(os.environ.get('FAUNA_MONOLITH_PORT','9316'))
 if not 1024<=PORT<=65535: raise ValueError('FAUNA_MONOLITH_PORT必须在1024..65535')
 ENDPOINT=f'http://127.0.0.1:{PORT}/mcp'
