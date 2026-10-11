@@ -17,20 +17,20 @@
   "platform_radius_meters": 7,
   "camera_meters": [
     0,
-    -21,
-    9.8
+    -23,
+    11
   ],
   "camera_target_meters": [
     0,
-    13,
-    8.1
+    11,
+    4.8
   ],
   "objects": [
     {
       "name": "SM_DBA_Sanctuary_Architecture",
       "fbx": "Exports/SM_DBA_Sanctuary_Architecture.fbx",
-      "vertices": 8180,
-      "polygons": 7244,
+      "vertices": 8308,
+      "polygons": 7340,
       "materials": [
         "M_DBA_Sanctuary_Stone",
         "M_DBA_Sanctuary_Jade",
@@ -73,8 +73,8 @@
     {
       "name": "SM_DBA_Sanctuary_Trees",
       "fbx": "Exports/SM_DBA_Sanctuary_Trees.fbx",
-      "vertices": 7756,
-      "polygons": 5164,
+      "vertices": 5996,
+      "polygons": 4012,
       "materials": [
         "M_DBA_Sanctuary_Stone",
         "M_DBA_Sanctuary_Jade",
@@ -95,8 +95,8 @@
     {
       "name": "SM_DBA_Sanctuary_Foliage",
       "fbx": "Exports/SM_DBA_Sanctuary_Foliage.fbx",
-      "vertices": 1459180,
-      "polygons": 784590,
+      "vertices": 1147180,
+      "polygons": 618190,
       "materials": [
         "M_DBA_Sanctuary_Stone",
         "M_DBA_Sanctuary_Jade",
@@ -139,8 +139,8 @@
     {
       "name": "SM_DBA_Sanctuary_Terraces",
       "fbx": "Exports/SM_DBA_Sanctuary_Terraces.fbx",
-      "vertices": 20952,
-      "polygons": 18624,
+      "vertices": 16416,
+      "polygons": 14592,
       "materials": [
         "M_DBA_Sanctuary_Stone",
         "M_DBA_Sanctuary_Jade",
@@ -161,8 +161,8 @@
     {
       "name": "SM_DBA_Sanctuary_Mountains",
       "fbx": "Exports/SM_DBA_Sanctuary_Mountains.fbx",
-      "vertices": 4536,
-      "polygons": 4032,
+      "vertices": 4644,
+      "polygons": 4128,
       "materials": [
         "M_DBA_Sanctuary_Stone",
         "M_DBA_Sanctuary_Jade",
@@ -205,8 +205,8 @@
     {
       "name": "SM_DBA_Sanctuary_WaterPlants",
       "fbx": "Exports/SM_DBA_Sanctuary_WaterPlants.fbx",
-      "vertices": 6711,
-      "polygons": 5644,
+      "vertices": 7215,
+      "polygons": 6136,
       "materials": [
         "M_DBA_Sanctuary_Stone",
         "M_DBA_Sanctuary_Jade",
@@ -331,10 +331,16 @@
         0.5699999928474426,
         0.4399999976158142
       ],
-      "roughness": 0.699999988079071,
+      "roughness": 0.46000000834465027,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
       "texture": "Textures/T_DBA_Sanctuary_Stone.png",
+      "normal_texture": "Textures/T_DBA_Sanctuary_Stone_Normal.png",
+      "orm_texture": "Textures/T_DBA_Sanctuary_Stone_ORM.png",
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -344,10 +350,16 @@
         0.27000001072883606,
         0.2199999988079071
       ],
-      "roughness": 0.4300000071525574,
-      "metallic": 0.11999999731779099,
+      "roughness": 0.23999999463558197,
+      "metallic": 0.04500000178813934,
+      "coat_weight": 0.2800000011920929,
+      "coat_roughness": 0.2199999988079071,
       "emission_strength": 0.0,
       "texture": "Textures/T_DBA_Sanctuary_Jade.png",
+      "normal_texture": "Textures/T_DBA_Sanctuary_Jade_Normal.png",
+      "orm_texture": "Textures/T_DBA_Sanctuary_Jade_ORM.png",
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -357,10 +369,16 @@
         0.3799999952316284,
         0.1599999964237213
       ],
-      "roughness": 0.3799999952316284,
-      "metallic": 0.6600000262260437,
+      "roughness": 0.28999999165534973,
+      "metallic": 0.7200000286102295,
+      "coat_weight": 0.11999999731779099,
+      "coat_roughness": 0.2199999988079071,
       "emission_strength": 0.0,
       "texture": null,
+      "normal_texture": null,
+      "orm_texture": null,
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -372,8 +390,14 @@
       ],
       "roughness": 0.9399999976158142,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
       "texture": "Textures/T_DBA_Sanctuary_Moss.png",
+      "normal_texture": "Textures/T_DBA_Sanctuary_Moss_Normal.png",
+      "orm_texture": "Textures/T_DBA_Sanctuary_Moss_ORM.png",
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -383,10 +407,16 @@
         0.20000000298023224,
         0.09000000357627869
       ],
-      "roughness": 0.9200000166893005,
+      "roughness": 0.6499999761581421,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
       "texture": "Textures/T_DBA_Sanctuary_Bark.png",
+      "normal_texture": "Textures/T_DBA_Sanctuary_Bark_Normal.png",
+      "orm_texture": "Textures/T_DBA_Sanctuary_Bark_ORM.png",
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -396,10 +426,16 @@
         0.2199999988079071,
         0.02500000037252903
       ],
-      "roughness": 0.7200000286102295,
+      "roughness": 0.47999998927116394,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
       "texture": "Textures/T_DBA_Sanctuary_Leaf.png",
+      "normal_texture": "Textures/T_DBA_Sanctuary_Leaf_Normal.png",
+      "orm_texture": "Textures/T_DBA_Sanctuary_Leaf_ORM.png",
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": true
     },
     {
@@ -409,10 +445,16 @@
         0.38999998569488525,
         0.06499999761581421
       ],
-      "roughness": 0.6800000071525574,
+      "roughness": 0.4399999976158142,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
       "texture": null,
+      "normal_texture": null,
+      "orm_texture": null,
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": true
     },
     {
@@ -422,10 +464,16 @@
         0.6100000143051147,
         0.4699999988079071
       ],
-      "roughness": 0.6499999761581421,
+      "roughness": 0.3799999952316284,
       "metallic": 0.0,
+      "coat_weight": 0.11999999731779099,
+      "coat_roughness": 0.2199999988079071,
       "emission_strength": 0.0,
       "texture": "Textures/T_DBA_Sanctuary_Stone.png",
+      "normal_texture": "Textures/T_DBA_Sanctuary_Stone_Normal.png",
+      "orm_texture": "Textures/T_DBA_Sanctuary_Stone_ORM.png",
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -437,8 +485,14 @@
       ],
       "roughness": 0.8500000238418579,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
       "texture": "Textures/T_DBA_Sanctuary_Stone.png",
+      "normal_texture": "Textures/T_DBA_Sanctuary_Stone_Normal.png",
+      "orm_texture": "Textures/T_DBA_Sanctuary_Stone_ORM.png",
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -450,8 +504,14 @@
       ],
       "roughness": 0.23000000417232513,
       "metallic": 0.10000000149011612,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.18000000715255737,
       "texture": null,
+      "normal_texture": null,
+      "orm_texture": null,
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": true
     },
     {
@@ -463,8 +523,14 @@
       ],
       "roughness": 0.4000000059604645,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.11999999731779099,
       "texture": null,
+      "normal_texture": null,
+      "orm_texture": null,
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -476,8 +542,14 @@
       ],
       "roughness": 0.41999998688697815,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 2.0,
       "texture": null,
+      "normal_texture": null,
+      "orm_texture": null,
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     },
     {
@@ -489,8 +561,14 @@
       ],
       "roughness": 0.41999998688697815,
       "metallic": 0.0,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
       "texture": null,
+      "normal_texture": null,
+      "orm_texture": null,
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": true
     },
     {
@@ -500,10 +578,16 @@
         0.2199999988079071,
         0.17000000178813934
       ],
-      "roughness": 0.1599999964237213,
-      "metallic": 0.3199999928474426,
+      "roughness": 0.10000000149011612,
+      "metallic": 0.11999999731779099,
+      "coat_weight": 0.0,
+      "coat_roughness": 0.029999999329447746,
       "emission_strength": 0.0,
       "texture": null,
+      "normal_texture": null,
+      "orm_texture": null,
+      "normal_convention": "OpenGL",
+      "orm_channels": "R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier",
       "two_sided": false
     }
   ]

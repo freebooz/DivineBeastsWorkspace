@@ -1528,7 +1528,9 @@
       "CompileCorrectionAndLinkBlocked": "Saved/Validation/FoundationM0/4308a547-790f-4330-ae99-a6a363bafddb/Build/result.json",
       "ClientAttemptFailedPrecompiledConfiguration": "Saved/Validation/FoundationM0/82b9dc7a-48ca-4d72-b26d-52cb966b4b01/Build/result.json",
       "FullBuildVerified": false
-    }
+    },
+    "AdditionalCoverNativePropertiesVerified": true,
+    "Expanded13ItemAudit": "Not run: Monolith became unavailable after cover assets saved"
   },
   "CoverBackgroundReplacement20261011": {
     "Tool": "Monolith MCP",

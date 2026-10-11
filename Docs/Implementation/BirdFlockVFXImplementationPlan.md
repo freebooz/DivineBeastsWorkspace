@@ -1,0 +1,66 @@
+# BirdFlock VFX（通用鸟群视觉特效）实施执行计划
+
+版本：V1.0｜2026-10-11｜工程：DivineBeastsWorkspace（神兽联盟工作空间）｜状态：执行中
+
+## 1. 目标和非目标
+
+- 统一鸟群环境视觉特效：鸟类类型（物种资源引用）与数量（整数）在数据资产/蓝图实例中可设置，编辑器可修改并运行验证。
+- 初始物种：Seagull（海鸥）、Swallow（燕子）、Eagle（雄鹰）。鸟群数量配置合法范围 0–512，物种可以使用独立配置进行更低上限；0 必须关闭实例，不能保留隐形模拟。
+- 飞行表现：环绕、定向航行、聚散、风场扰动、滑翔、随机相位振翅、过度倾斜保护。行为和外观解耦，同一机制复用。
+- 纯环境表现是客户端本地视觉，无服务器权威移动、碰撞、伤害或额外网络复制；不为每只鸟生成独立 Actor 或 SkeletalMeshComponent。
+- **边界**：平台层不包含项目鸟种贴图/模型/ID；MobaCommon 不承载普通自然环境；不创建新 VFX 同领域插件/播放器；不绕过 GamePlatformPresentation（表现分发）与 GamePlatformData（资源租约）的正式定义链。
+- 首期优先基于最小可验证网格与共享材质完成飞行样机；需要真实飞行动画的近景资产可以后续替换 VAT（顶点动画纹理）/骨骼烘焙资源。不能把待替换的低面数原型宣称为3A最终美术。
+
+## 2. 目录与分层
+
+平台层现有 Game/Plugins/GamePlatform/Presentation/GamePlatformVFX：
+- Content/Environment/BirdFlock/{Materials,Niagara,EffectTypes}：中立母材质、Niagara 基础模块、特效类型。
+- Source/GamePlatformVFXClient/{Public,Private}：通用鸟群配置校验、飞行控制及现有 VFX 执行器扩展（仅必要时）。
+- Source/GamePlatformVFXEditor：资产及参数校验复用现有 Editor，不新增空模块。
+- Docs/BirdFlock.md：参数、效果实现、制作与验证说明。
+
+项目层现有 Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core：
+- SourceArt/BirdFlock/{Meshes,Textures}：可再生成的 Blender 源、FBX 模型及 PNG 原始纹理。
+- Content/VFX/Environment/BirdFlock/{Meshes,Textures,Materials,Niagara,Definitions,Profiles}：真实 UE 资产，只能由 UE 工具创建。
+- 不向 MobaCommon 增加自然环境行为与硬依赖。后续项目世界场景通过 DefinitionId（特效定义身份）引用相关项目资产。
+
+## 3. 参数协议
+
+- Species（鸟类类型）：优先使用类型无关的资源配置 DataAsset/软引用，通过平台定义逻辑 ID 选择项目物种；不在平台层写死 Seagull/Swallow/Eagle。
+- BirdCount（鸟类数量）：int32，用户配置优先，最小0、硬限制512，资源类型与画质可继续限制；请求错误时不截断为意外的大群，不允许负数。
+- RadiusCm（盘旋半径）、AltitudeCm（相对飞行高度）、CruiseSpeedCmPerSec（巡航速度）、WingBeatHz（振翅频率）、WindInfluence（风力影响强度）、Seed（随机种子）、FlightMode（飞行模式）。
+- Niagara 可识别 User.BirdCount / User.FlockRadius / User.FlockHeight / User.FlightSpeed / User.WingBeatHz / User.WindInfluence 等稳定参数；参数类型、范围、初始化与取消遵循现有 VFX Definition Schema。
+- 配置持有初始值；实例覆盖优先级高于预设，随后经场景距离/画质预算门禁得到 EffectiveCount（实际可视数量），与 RequestedCount（原始请求数量）分开统计。
+
+## 4. 资源生产顺序（必须）
+
+P0：只读审查实际依赖、用户改动和编辑器，形成本计划。完成标准：定位插件/脚本/引擎和受影响路径。
+P1：先生成 Blender 参数化三鸟低面数网格与 UV、顶点色翼部权重，纹理原图和清单（包含哈希）；生成图不作为已有 .uasset 的替代。完成标准：FBX/PNG 能被读取，网格轮廓合理且不同物种可辨。
+P2：以锁定 UE5.8 官方编辑器导入 FBX/PNG，创建平台级母材质（无项目资源硬引用），项目材质实例。完成标准：真实 .uasset 保存并重新加载。
+P3：实现通用飞行行为/数量边界和材质相位等算法；优先用现有 Niagara 管线和参数，不创建第二套 VFX 服务。
+P4：创建并保存 Niagara System/Emitter、Niagara EffectType、项目鸟种 DataAsset/Definition、复用的蓝图入口或编辑器演示 Actor；无实装则如实标为缺口。
+P5：单独生成鸟群视觉审核关卡，完成后再以不覆盖并发修改为前提接入新手村、开放世界和角色选择/创建的表现配置。
+P6：用已安装 UE5.8 编译模块/工程，执行资源回读、单元测试、Niagara 编译和客户端 Cook／服务器排除核查；不可执行项留日志并说明。
+P7：人工编辑器验收：鸟种切换、数量0/1/32/128/512、不同随机种子、10分钟运行、世界退出清理、过渡平滑、无穿模/闪烁/异常锯齿。人工未操作不得标记通过。
+
+## 5. 门禁与并发保护
+
+- 修改前记录 git status，保护既有 dirty 文件；新增独立 BirdFlock 子树，禁止覆盖正在修改的 FallingFoliage 资源、UI、角色选择地图。
+- UE资源必须通过真实 UE AssetTools / 编辑器创建，失败时不创建伪 .uasset。
+- Blender/原始 PNG/FBX 属 SourceArt；引擎二进制资产属于 Content；暂存日志与生成报告属于 Saved。
+- 中文注释、ASCII源码和资产文件名、对外字段单位、客户端专属目标规则必须遵守 AGENTS.md 和 Game/Plugins/插件开发规范.md。
+- 编译、自动化检查、Cook、运行截图及人工验收分别留下证据，不得将局部成功上推为全功能完成。
+
+## 6. 人工验收检查清单
+
+- [ ] 海鸥、燕子、雄鹰分别在编辑器可选择、可保存/重载。
+- [ ] 数量0、1、32、128、512下系统稳定，0无可见实例，无无限制生成。
+- [ ] 盘旋、定向飞行、随机振翅与风场变化可观察，单鸟不发生突然反向或大幅翻转。
+- [ ] 鸟群与相机/地形空间关系正常，无穿过地面、水面或建筑物的严重问题。
+- [ ] 新手村、开放世界及选角/创建界面接入内容合理、不干扰交互。
+- [ ] Client/Editor 构建通过；Dedicated Server 不加载纯视觉资产；Cook 和性能预算通过。
+- [ ] 真机近远景性能以及 Niagara Debugger 统计由人工检查并存档。
+
+## 7. 风险
+
+已有 UE 编辑器和其他自动化任务处于活动状态。若无法安全地生成真实 Niagara/地图资产，不修改别人的场景或工作流；先保留已验证纹理/网格/算法/工具，并把未通过的里程碑明确列为阻塞，不声称完成。

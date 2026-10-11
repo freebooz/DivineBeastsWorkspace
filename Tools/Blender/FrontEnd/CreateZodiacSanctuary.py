@@ -11,6 +11,7 @@ import json
 import math
 import random
 import sys
+import tempfile
 from pathlib import Path
 
 import bpy
@@ -73,35 +74,50 @@ def batch(name):
     return BATCHES[name]
 
 
-def texture(name, color_a, color_b, kind='stone', size=1024):
+def save_texture_image(name, rgb, is_data=False):
+    """Blender 原生保存并打包真实 PNG；颜色图为 sRGB，法线与控制图为线性。
+
+    不将线性数据当颜色，不锐化或增加胶片颗粒；透明度恒为一，不混入业务信息。
+    """
+    height,width=rgb.shape[:2]
+    rgba=np.concatenate((rgb.astype(np.float32),np.ones((height,width,1),np.float32)),axis=2)
+    image=bpy.data.images.new(name,width=width,height=height,is_data=is_data)
+    image.colorspace_settings.name='Non-Color' if is_data else 'sRGB'
+    image.pixels.foreach_set(rgba.ravel())
+    image.filepath_raw=str(OUT/'Textures'/(name+'.png'));image.file_format='PNG'
+    image.save();image.pack()
+    return image
+
+
+def texture(name, color_a, color_b, kind='stone', size=2048):
     """产生原创可导入的 PBR 基色纹理，浮点噪声在 CPU 上确定性计算。
 
     图像由 Blender 原生保存为 PNG；纹理不含用户原图投影或伪造三维内容。
-    石纹包含细颗粒、粗色斑与裂缝，树皮包含纵向纤维，叶片包含叶脉。
+    玉石/石材采用低对比连续纹理，树皮包含柔和纵向纤维，叶片包含低密度叶脉。
+    同时生成 OpenGL 切线法线及 ORM 控制图；UE 显式翻转法线绿通道。
     """
     y, x = np.mgrid[0:size, 0:size].astype(np.float32) / size
     n = np.zeros_like(x)
-    for freq, amount in ((4, .24), (13, .12), (37, .07), (113, .035)):
+    for freq, amount in ((2, .12), (5, .045), (13, .012)):
         phase = random.random() * TAU
         n += amount * np.sin(x * TAU * freq + phase + 2*np.sin(y*freq*2)) * np.cos(y*TAU*freq*.73)
-    n = np.clip(.52 + n + np.random.default_rng(42).normal(0,.03,x.shape), 0, 1)
+    n = np.clip(.5 + n, 0, 1)
     if kind == 'bark':
-        n = np.clip(n - .25 * (np.sin(x*TAU*37 + .7*np.sin(y*12)) > .73),0,1)
+        n = np.clip(n + .055*np.sin(x*TAU*12+.35*np.sin(y*8)),0,1)
     if kind == 'leaf':
-        n = np.clip(.45+.3*np.sin(x*math.pi)+.1*np.sin(y*55),0,1)
+        n = np.clip(.48+.08*np.sin(x*TAU)+.025*np.sin(y*TAU*6),0,1)
     a, b = np.asarray(color_a), np.asarray(color_b)
-    rgb = a[None,None,:] * (1-n[:,:,None]) + b[None,None,:] * n[:,:,None]
-    if kind == 'stone':
-        crack = np.minimum(np.abs(np.sin(x*TAU*3+np.sin(y*TAU*4))),np.abs(np.sin(y*TAU*3+np.sin(x*TAU*2)))) < .018
-        rgb[crack] *= .56
-    rgba = np.concatenate((rgb.astype(np.float32), np.ones((size,size,1),np.float32)),axis=2)
-    image = bpy.data.images.new(name, width=size,height=size)
-    image.colorspace_settings.name = 'sRGB'
-    image.pixels.foreach_set(rgba.ravel())
-    image.filepath_raw = str(OUT / 'Textures' / (name+'.png'))
-    image.file_format = 'PNG'
-    image.save()
-    image.pack()
+    blend=.5+(n-.5)*.45
+    rgb = a[None,None,:] * (1-blend[:,:,None]) + b[None,None,:] * blend[:,:,None]
+    image=save_texture_image(name,rgb)
+    dy,dx=np.gradient(n)
+    normal=np.stack((-dx*18,-dy*18,np.ones_like(n)),axis=2)
+    normal/=np.linalg.norm(normal,axis=2,keepdims=True)
+    normal_image=save_texture_image(name+'_Normal',normal*.5+.5,True)
+    # R=环境遮蔽，G=以0.5为中值的粗糙度控制，B=金属度倍率；材质参数拥有最终强度。
+    orm=np.stack((.98-.025*n,.5+.06*(n-.5),np.ones_like(n)),axis=2)
+    orm_image=save_texture_image(name+'_ORM',orm,True)
+    image['normal_image']=normal_image.name;image['orm_image']=orm_image.name
     return image
 
 
@@ -118,12 +134,33 @@ def material(name, color, roughness=.7, metallic=0, image=None, emission=0):
         node = mat.node_tree.nodes.new('ShaderNodeTexImage')
         node.image = image
         mat.node_tree.links.new(node.outputs['Color'],shader.inputs['Base Color'])
-        # 真实纹理驱动细微凹凸；UE 导入脚本重建对应纹理材质，不依赖 FBX 携带节点。
-        bump = mat.node_tree.nodes.new('ShaderNodeBump')
-        bump.inputs['Strength'].default_value = .18
-        bump.inputs['Distance'].default_value = .035
-        mat.node_tree.links.new(node.outputs['Color'], bump.inputs['Height'])
-        mat.node_tree.links.new(bump.outputs['Normal'], shader.inputs['Normal'])
+        # 同一份真实切线法线在两个软件消费，不在 UE 另造强凹凸掩盖制作不足。
+        normal_texture=mat.node_tree.nodes.new('ShaderNodeTexImage')
+        normal_texture.image=bpy.data.images[image['normal_image']]
+        normal_map=mat.node_tree.nodes.new('ShaderNodeNormalMap')
+        normal_map.inputs['Strength'].default_value=.45
+        mat.node_tree.links.new(normal_texture.outputs['Color'],normal_map.inputs['Color'])
+        mat.node_tree.links.new(normal_map.outputs['Normal'],shader.inputs['Normal'])
+        orm_texture=mat.node_tree.nodes.new('ShaderNodeTexImage')
+        orm_texture.image=bpy.data.images[image['orm_image']]
+        separate=mat.node_tree.nodes.new('ShaderNodeSeparateColor')
+        mat.node_tree.links.new(orm_texture.outputs['Color'],separate.inputs['Color'])
+        multiply=mat.node_tree.nodes.new('ShaderNodeMath');multiply.operation='MULTIPLY'
+        multiply.inputs[1].default_value=roughness*2
+        mat.node_tree.links.new(separate.outputs['Green'],multiply.inputs[0])
+        mat.node_tree.links.new(multiply.outputs[0],shader.inputs['Roughness'])
+    if name in ('Jade','CarvedStone','AncientGold'):
+        shader.inputs['Coat Weight'].default_value=.28 if name=='Jade' else .12
+        shader.inputs['Coat Roughness'].default_value=.22
+    if name=='Jade':
+        shader.inputs['Subsurface Weight'].default_value=.06
+    if name=='Water':
+        wave=mat.node_tree.nodes.new('ShaderNodeTexNoise');wave.inputs['Scale'].default_value=.9
+        wave.inputs['Detail'].default_value=1
+        bump=mat.node_tree.nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.12
+        bump.inputs['Distance'].default_value=.035
+        mat.node_tree.links.new(wave.outputs['Fac'],bump.inputs['Height'])
+        mat.node_tree.links.new(bump.outputs['Normal'],shader.inputs['Normal'])
     if emission:
         shader.inputs['Emission Color'].default_value=(*color,1)
         shader.inputs['Emission Strength'].default_value=emission
@@ -640,8 +677,11 @@ def lighting():
     scene=bpy.context.scene
     world=bpy.data.worlds.new('SanctuarySky');scene.world=world;world.use_nodes=True
     world.node_tree.nodes['Background'].inputs['Color'].default_value=(.4,.61,.68,1)
-    world.node_tree.nodes['Background'].inputs['Strength'].default_value=.6
-    sky=world.node_tree.nodes.new('ShaderNodeTexSky');sky.sky_type='NISHITA'
+    world.node_tree.nodes['Background'].inputs['Strength'].default_value=.12
+    sky=world.node_tree.nodes.new('ShaderNodeTexSky')
+    # 以本机 RNA 枚举选择天空模型；5.2 将旧 Nishita 标识改成散射模型，不能沿用旧枚举。
+    sky_models={item.identifier for item in sky.bl_rna.properties['sky_type'].enum_items}
+    sky.sky_type='MULTIPLE_SCATTERING' if 'MULTIPLE_SCATTERING' in sky_models else 'NISHITA'
     sky.sun_elevation=math.radians(35);sky.sun_rotation=math.radians(125)
     world.node_tree.links.new(sky.outputs['Color'],world.node_tree.nodes['Background'].inputs['Color'])
     sun=bpy.data.lights.new('SanctuaryMorningSun','SUN');sun.energy=2.4;sun.angle=.09
@@ -669,7 +709,7 @@ def lighting():
     fogmat=bpy.data.materials.new('AuthoringAtmosphere');fogmat.use_nodes=True
     fogmat.node_tree.nodes.clear()
     volume=fogmat.node_tree.nodes.new('ShaderNodeVolumeScatter')
-    volume.inputs['Density'].default_value=.008;volume.inputs['Anisotropy'].default_value=.25
+    volume.inputs['Density'].default_value=.0012;volume.inputs['Anisotropy'].default_value=.25
     volume.inputs['Color'].default_value=(.6,.76,.79,1)
     output=fogmat.node_tree.nodes.new('ShaderNodeOutputMaterial')
     fogmat.node_tree.links.new(volume.outputs['Volume'],output.inputs['Volume'])
@@ -678,9 +718,21 @@ def lighting():
     scene.world.color=(.4,.6,.7)
     scene.view_settings.view_transform='AgX'
     scene.view_settings.look='AgX - Medium High Contrast'
-    scene.view_settings.exposure=.7
+    scene.view_settings.exposure=-.65
     scene.render.image_settings.file_format='PNG'
     scene.render.filepath=str(OUT/'Previews'/'ZodiacSanctuary.png')
+
+
+def render_preview():
+    """先在同盘短路径渲染，再原子发布 PNG，避免写入失败留下旧图冒充新结果。"""
+    staging_root=Path(__file__).resolve().parents[3]/'Saved'/'Validation'/'ZodiacSanctuary'/'Staging'
+    staging_root.mkdir(parents=True,exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='Render_',dir=staging_root) as staging:
+        pending=Path(staging)/'Sanctuary.png'
+        bpy.context.scene.render.filepath=str(pending)
+        bpy.ops.render.render(write_still=True)
+        assert pending.is_file(), 'Blender 没有保存新渲染图'
+        pending.replace(OUT/'Previews'/'ZodiacSanctuary.png')
 
 
 def main():
@@ -697,21 +749,21 @@ def main():
     jade=texture('T_DBA_Sanctuary_Jade',(.045,.14,.115),(.21,.36,.27))
     moss=texture('T_DBA_Sanctuary_Moss',(.045,.09,.018),(.23,.34,.065))
     bark=texture('T_DBA_Sanctuary_Bark',(.08,.105,.043),(.30,.26,.14),'bark')
-    leaves=texture('T_DBA_Sanctuary_Leaf',(.03,.095,.018),(.21,.34,.046),'leaf',512)
-    STONE=material('Stone',(.52,.57,.44),image=stone)
-    JADE=material('Jade',(.11,.27,.22),.43,.12,jade)
-    GOLD=material('AncientGold',(.47,.38,.16),.38,.66)
+    leaves=texture('T_DBA_Sanctuary_Leaf',(.03,.095,.018),(.21,.34,.046),'leaf',1024)
+    STONE=material('Stone',(.52,.57,.44),.46,image=stone)
+    JADE=material('Jade',(.11,.27,.22),.24,.045,jade)
+    GOLD=material('AncientGold',(.47,.38,.16),.29,.72)
     MOSS=material('Moss',(.11,.24,.035),.94,image=moss)
-    BARK=material('Bark',(.18,.20,.09),.92,image=bark)
-    LEAF=material('Leaf',(.07,.22,.025),.72,image=leaves)
-    LEAFLIGHT=material('LeafLight',(.23,.39,.065),.68)
-    SCULPT=material('CarvedStone',(.57,.61,.47),.65,image=stone)
+    BARK=material('Bark',(.18,.20,.09),.65,image=bark)
+    LEAF=material('Leaf',(.07,.22,.025),.48,image=leaves)
+    LEAFLIGHT=material('LeafLight',(.23,.39,.065),.44)
+    SCULPT=material('CarvedStone',(.57,.61,.47),.38,image=stone)
     DISTANT=material('DistantStone',(.25,.39,.36),.85,image=stone)
     FALL=material('Waterfall',(.56,.78,.74),.23,.1,emission=.18)
     FOAM=material('Foam',(.72,.89,.81),.4,emission=.12)
     GLOW=material('LanternGlow',(.28,.76,.58),.42,emission=2)
     PETAL=material('LotusPetal',(.83,.87,.72),.42)
-    water=material('Water',(.025,.22,.17),.16,.32)
+    water=material('Water',(.025,.22,.17),.10,.12)
     platform();moon_gate();terrain();flowers();statues=sculptures()
     box('Water',(0,12,-.6),(28,28,.035),water)
     objects=[b.object() for b in BATCHES.values()]+statues
@@ -722,16 +774,23 @@ def main():
     for obj in objects:
         bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
         file=OUT/'Exports'/(obj.name+'.fbx')
-        bpy.ops.export_scene.fbx(filepath=str(file),use_selection=True,object_types={'MESH'},axis_forward='-Y',axis_up='Z',apply_unit_scale=True,global_scale=1,path_mode='COPY',embed_textures=False,use_mesh_modifiers=True,add_leaf_bones=False,bake_anim=False)
+        # UE 从独立 Textures 清单重建材质，不为每个 FBX 再复制一套同名贴图。
+        # Windows 上先写短临时路径再原子发布，防止长路径或监控器打开旧文件造成半份导出。
+        staging_root=Path(__file__).resolve().parents[3]/'Saved'/'Validation'/'ZodiacSanctuary'/'Staging'
+        staging_root.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='FBX_',dir=staging_root) as staging:
+            pending=Path(staging)/(obj.name+'.fbx')
+            bpy.ops.export_scene.fbx(filepath=str(pending),use_selection=True,object_types={'MESH'},axis_forward='-Y',axis_up='Z',apply_unit_scale=True,global_scale=1,path_mode='STRIP',embed_textures=False,use_mesh_modifiers=True,add_leaf_bones=False,bake_anim=False)
+            pending.replace(file)
         manifest['objects'].append({'name':obj.name,'fbx':str(file.relative_to(OUT)).replace('\\','/'),'vertices':len(obj.data.vertices),'polygons':len(obj.data.polygons),'materials':[m.name for m in obj.data.materials]})
     for mat in MATERIALS:
         shader=next(n for n in mat.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
         image=next((n.image for n in mat.node_tree.nodes if n.type=='TEX_IMAGE'),None)
-        manifest['materials'].append({'name':mat.name,'base_color':list(shader.inputs['Base Color'].default_value)[:3],'roughness':shader.inputs['Roughness'].default_value,'metallic':shader.inputs['Metallic'].default_value,'emission_strength':shader.inputs['Emission Strength'].default_value,'texture':('Textures/'+image.name+'.png') if image else None,'two_sided':mat in (LEAF,LEAFLIGHT,FALL,PETAL)})
+        manifest['materials'].append({'name':mat.name,'base_color':list(shader.inputs['Base Color'].default_value)[:3],'roughness':shader.inputs['Roughness'].default_value,'metallic':shader.inputs['Metallic'].default_value,'coat_weight':shader.inputs['Coat Weight'].default_value,'coat_roughness':shader.inputs['Coat Roughness'].default_value,'emission_strength':shader.inputs['Emission Strength'].default_value,'texture':('Textures/'+image.name+'.png') if image else None,'normal_texture':('Textures/'+image['normal_image']+'.png') if image else None,'orm_texture':('Textures/'+image['orm_image']+'.png') if image else None,'normal_convention':'OpenGL','orm_channels':'R=AO,G=roughness_control(mean 0.5),B=metallic_multiplier','two_sided':mat in (LEAF,LEAFLIGHT,FALL,PETAL)})
     bpy.ops.object.select_all(action='DESELECT')
-    bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'DBA_ZodiacSanctuary.blend'))
+    bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'DBA_ZodiacSanctuary.blend'),compress=True)
     (OUT/'SceneManifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
-    if not args.skip_render:bpy.ops.render.render(write_still=True)
+    if not args.skip_render:render_preview()
     print('DBA_SANCTUARY_GENERATED '+json.dumps({'objects':len(objects),'vertices':sum(len(o.data.vertices) for o in objects),'blend':str(OUT/'DBA_ZodiacSanctuary.blend')},ensure_ascii=False))
 
 

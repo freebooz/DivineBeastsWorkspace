@@ -16,6 +16,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/SkeletalMesh.h" // 本文件读取Profile软网格引用，资产类型也必须直接完整包含。
 #include "Engine/World.h"
+#include "CollisionQueryParams.h" // 仅本地可见地形采样，绝不用于权威Gameplay碰撞与网络同步。
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/DefaultPawn.h"
@@ -98,6 +99,41 @@ void UDivineBeastsCharacterPreviewSubsystem::EnsurePreviewFoliage()
         UE_LOG(LogDivineBeastsCharacterPreview, Warning,
             TEXT("角色预览工作室缺少DBA.Foliage.Ground锚点，落叶暂使用舞台高度近似地面。"));
     }
+
+    // Landscape（地形）表面可能高于锚点的固定Z值。进入预览时针对角色脚下与周边
+    // 执行3x3次静态地面查询（只执行一次，不在Tick逐帧检测），取局部最高可见面作为
+    // 贴地视觉参考，避免原有固定Z导致花瓣进入不平整地表。
+    // 这些射线只允许命中当前工作室所属Level内的物体，且排除角色舞台自身。
+    constexpr float GroundClearanceCm = 5.0f; // 为双面Sprite旋转/边缘留出少量视觉安全间隙。
+    constexpr double SampleStepCm = 230.0;  // 限定近景角色周边，不让远山地形抬高全部花瓣。
+    FCollisionQueryParams CollisionParams(SCENE_QUERY_STAT(DivineBeastsPreviewFoliageGround), false);
+    CollisionParams.AddIgnoredActor(PreviewStage.Get());
+    int32 ValidLandscapeHits = 0;
+    double LocalMaxZ = GroundZ;
+    for (int32 X = -1; X <= 1; ++X)
+    {
+        for (int32 Y = -1; Y <= 1; ++Y)
+        {
+            const FVector Start(Origin.X + X * SampleStepCm,
+                Origin.Y + Y * SampleStepCm, Origin.Z + 2200.0);
+            const FVector End(Start.X, Start.Y, Origin.Z - 2200.0);
+            FHitResult Hit;
+            if (!World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, CollisionParams))
+                continue;
+            const AActor* SurfaceActor = Hit.GetActor();
+            if (!IsValid(SurfaceActor) || SurfaceActor->GetLevel() != OwnedLevel ||
+                Hit.ImpactPoint.ContainsNaN())
+                continue;
+            LocalMaxZ = FMath::Max(LocalMaxZ, Hit.ImpactPoint.Z);
+            ++ValidLandscapeHits;
+        }
+    }
+    // 即使Landscape没有开启Visibility碰撞，也保留锚点退化路径。
+    // 仅增加视觉高度；不会移动角色、改变地形或产生服务器物理事实。
+    GroundZ = static_cast<float>(LocalMaxZ + GroundClearanceCm);
+    UE_LOG(LogDivineBeastsCharacterPreview, Verbose,
+        TEXT("预览自然飘落地表：采样=%d，落地安全高度=%.2fcm，锚点=%s"),
+        ValidLandscapeHits, GroundZ, bFoundGroundAnchor ? TEXT("有效") : TEXT("退化"));
 
     FString Error;
     if (!Presentation->StartFrontEndFoliage(

@@ -77,6 +77,8 @@ Go保留五薄入口：统一接入、身份认证、玩家数据、比赛、服
 
 ### 神兽联盟用户界面与 Monolith MCP 全局策略
 
+UI纹理遵循[视觉策略](Docs/Implementation/UITextureVisualPolicy.md)：电影级3A、温润抛光、自然碧绿玉石；禁颗粒、砂砾、过纹理和锐化。
+
 1. **所有神兽联盟用户界面视觉资产必须通过 Monolith MCP 实现。** `DBAClient`、`DBAArena`及神兽联盟内容包中的 Widget Blueprint（控件蓝图）、RootLayout（根布局）、页面、HUD、面板、对话框、通知、样式和主题资产，其创建、布局调整、控件增删、样式修改、动画修改、编译、保存与结构复核统一使用 Monolith MCP 的用户界面能力。普通文件工具只用于人工维护的 C++、配置、契约、测试与中文文档，不得写文本占位、改扩展名或用其他脚本伪造 `.uasset`／`.umap`。
 2. **操作前必须核对真实编辑器与服务身份。** 每次用户界面资产任务先确认当前 Unreal Editor（虚幻编辑器）打开的是 `Game/DivineBeastsArena.uproject`，再检查 Monolith MCP 状态、版本和用户界面动作目录。服务不可用时先启动或修复锁定的 UE5.8 编辑器连接；仍不可用则明确报告阻塞，不得默默改用其他资产生成工具或手工二进制替代。
 3. **界面资产遵守插件与三层边界。** `GamePlatformUI`只提供跨游戏基础类、层栈、服务和中立定义；`MobaCommon`只提供可跨MOBA复用的界面语义或类型；`DivineBeasts`只向下继承和组合。神兽联盟公共界面资产归第三层真实内容插件 `DBAUIPack_Core`，公共客户端 C++ 类型、ViewModel（视图模型）、路由和适配仍归 `DBAClient/DivineBeastsUIClient`；竞技专属界面归 `DBAArena`或经登记的竞技内容包。不得让基础层反向引用项目资产，不得让非竞技登录依赖MOBA或竞技插件。

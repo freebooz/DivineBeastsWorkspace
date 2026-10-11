@@ -42,6 +42,11 @@ def main():
         assert any(n.type=='BSDF_PRINCIPLED' for n in mat.node_tree.nodes), '材质没有 Principled 着色器'
         if record['texture']:
             assert (root/record['texture']).is_file(), '材质源纹理未交付'
+            for key in ('normal_texture','orm_texture'):
+                assert record.get(key) and (root/record[key]).is_file(), '增强 PBR 数据纹理未交付：'+key
+                data_image=bpy.data.images.get(Path(record[key]).stem)
+                assert data_image and data_image.colorspace_settings.name=='Non-Color', '法线/ORM不能采用sRGB'
+            assert any(n.type=='NORMAL_MAP' for n in mat.node_tree.nodes), '真实法线未连接到Blender材质'
     # 中央两米高角色占用区只应命中脚下平台，不应被石兽、枝干等遮住。
     deps=bpy.context.evaluated_depsgraph_get()
     hit,point,normal,face,obj,matrix=bpy.context.scene.ray_cast(deps,Vector((0,0,2.2)),Vector((0,0,-1)),distance=4)

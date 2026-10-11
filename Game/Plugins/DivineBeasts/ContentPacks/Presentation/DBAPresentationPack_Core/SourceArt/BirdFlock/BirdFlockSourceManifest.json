@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "generator": "Tools/Blender/BirdFlock/GenerateBirdFlockModels.py",
+  "blenderVersion": "5.2.1 LTS",
+  "note": "环境远景鸟类低面数资源。顶点RGB=颜色，A=振翅权重；未经人工视觉验收。",
+  "species": [
+    {
+      "name": "Seagull",
+      "mesh": "SM_DBA_Bird_Seagull.fbx",
+      "texture": "T_DBA_Bird_Seagull_Albedo_Source.png",
+      "birdLengthM": 0.45,
+      "wingspanM": 1.55
+    },
+    {
+      "name": "Swallow",
+      "mesh": "SM_DBA_Bird_Swallow.fbx",
+      "texture": "T_DBA_Bird_Swallow_Albedo_Source.png",
+      "birdLengthM": 0.31,
+      "wingspanM": 0.97
+    },
+    {
+      "name": "Eagle",
+      "mesh": "SM_DBA_Bird_Eagle.fbx",
+      "texture": "T_DBA_Bird_Eagle_Albedo_Source.png",
+      "birdLengthM": 0.62,
+      "wingspanM": 2.55
+    }
+  ],
+  "files": [
+    {
+      "path": "Meshes/SM_DBA_Bird_Seagull.fbx",
+      "bytes": 42172,
+      "sha256": "97202a4f3cb1b8d00c68a276d65a9f295154760b99db50c277609018eb515bc7"
+    },
+    {
+      "path": "Textures/T_DBA_Bird_Seagull_Albedo_Source.png",
+      "bytes": 23230,
+      "sha256": "2a29a1954acfcb29b65381a2d26d9f3631747d1f8382e755595c0b0380e7c2b8"
+    },
+    {
+      "path": "Meshes/SM_DBA_Bird_Swallow.fbx",
+      "bytes": 42092,
+      "sha256": "d0632993a9bf099f998449c9f89c62479f9e751b87a2a22ee9681d8425dde2ad"
+    },
+    {
+      "path": "Textures/T_DBA_Bird_Swallow_Albedo_Source.png",
+      "bytes": 23452,
+      "sha256": "ee4ecb2fc783ed648b780a9d70e6df3793747086f14fc327eeb7f88013479d59"
+    },
+    {
+      "path": "Meshes/SM_DBA_Bird_Eagle.fbx",
+      "bytes": 42092,
+      "sha256": "4bbe03891926b3ae41ee15a36a4ff7cb4c42d7806deb273c6120210329444204"
+    },
+    {
+      "path": "Textures/T_DBA_Bird_Eagle_Albedo_Source.png",
+      "bytes": 23885,
+      "sha256": "d7ec2824856e5209aad84677ab09fab0c159ffa040675a4e781428aabf3ed716"
+    },
+    {
+      "path": "DBA_BirdFlock_Models.blend",
+      "bytes": 127788,
+      "sha256": "1738e4911a4144453c1be7fc26c828d7d3886e845d0beb15f81309b2943c6ed3"
+    }
+  ]
+}
