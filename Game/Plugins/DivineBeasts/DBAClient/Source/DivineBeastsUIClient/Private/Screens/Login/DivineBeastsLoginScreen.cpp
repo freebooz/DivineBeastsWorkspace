@@ -1,3 +1,4 @@
+// 第三层客户端登录适配：控件瞬时持有凭据，事件提交ViewModel命令；不发HTTP、不持久化密码或显示偏好。
 #include "Screens/Login/DivineBeastsLoginScreen.h"
 #include "Styling/DivineBeastsUIStyleBindings.h"
 
@@ -109,6 +110,12 @@ void UDivineBeastsLoginScreen::BindLoginEvents()
             this,
             &UDivineBeastsLoginScreen::HandleCredentialTextChanged);
     }
+    if (UButton* PasswordRevealButton = GetPasswordRevealButton())
+    {
+        PasswordRevealButton->OnPressed.AddUniqueDynamic(this, &ThisClass::HandlePasswordRevealPressed);
+        PasswordRevealButton->OnReleased.AddUniqueDynamic(this, &ThisClass::HandlePasswordRevealReleased);
+        PasswordRevealButton->OnUnhovered.AddUniqueDynamic(this, &ThisClass::HandlePasswordRevealReleased);
+    }
     if (UDivineBeastsLoginViewModel* LoginViewModel = GetLoginViewModel())
     {
         LoginViewModel->OnViewStateChanged.AddUniqueDynamic(
@@ -146,6 +153,12 @@ void UDivineBeastsLoginScreen::UnbindLoginEvents()
             this,
             &UDivineBeastsLoginScreen::HandleCredentialTextChanged);
     }
+    if (UButton* PasswordRevealButton = GetPasswordRevealButton())
+    {
+        PasswordRevealButton->OnPressed.RemoveDynamic(this, &ThisClass::HandlePasswordRevealPressed);
+        PasswordRevealButton->OnReleased.RemoveDynamic(this, &ThisClass::HandlePasswordRevealReleased);
+        PasswordRevealButton->OnUnhovered.RemoveDynamic(this, &ThisClass::HandlePasswordRevealReleased);
+    }
     if (UDivineBeastsLoginViewModel* LoginViewModel = GetLoginViewModel())
     {
         LoginViewModel->OnViewStateChanged.RemoveDynamic(
@@ -182,6 +195,12 @@ void UDivineBeastsLoginScreen::RefreshLoginPresentation()
     const bool bBusy =
         ActiveLoginRequestId.IsValid() ||
         (State && State->bBusy);
+    if (UButton* PasswordRevealButton = GetPasswordRevealButton())
+    {
+        PasswordRevealButton->SetIsEnabled(IsActivated() && !bBusy && PasswordInput && !PasswordInput->GetText().IsEmpty());
+        // 同步提交/忙碌事件也必须关闭正在按住的揭示，不能依赖鼠标松开一定送达。
+        if (bBusy || !PasswordInput || PasswordInput->GetText().IsEmpty()) { HandlePasswordRevealReleased(); }
+    }
     if (BusyIndicator)
     {
         BusyIndicator->SetVisibility(
@@ -227,8 +246,15 @@ void UDivineBeastsLoginScreen::RefreshLoginPresentation()
 #endif
 }
 
+UButton* UDivineBeastsLoginScreen::GetPasswordRevealButton() const
+{
+    // 命名可选控件不参与父类反射字段布局；查询成本仅发生在输入/激活事件中，不逐帧轮询。
+    return Cast<UButton>(GetWidgetFromName(TEXT("PasswordRevealButton")));
+}
+
 void UDivineBeastsLoginScreen::ClearSensitiveInput()
 {
+    HandlePasswordRevealReleased();
     if (PasswordInput)
     {
         // 密码只允许作为一次命令参数存在；提交或离开页面后立即从Widget内存清空。
@@ -274,6 +300,19 @@ void UDivineBeastsLoginScreen::HandleLoginClicked()
 void UDivineBeastsLoginScreen::HandleCredentialTextChanged(const FText&)
 {
     RefreshLoginPresentation();
+}
+
+void UDivineBeastsLoginScreen::HandlePasswordRevealPressed()
+{
+    const auto* LoginViewModel = GetLoginViewModel();
+    if (IsActivated() && PasswordInput && !PasswordInput->GetText().IsEmpty() &&
+        !ActiveLoginRequestId.IsValid() && (!LoginViewModel || !LoginViewModel->GetStateRef().bBusy))
+    { PasswordInput->SetIsPassword(false); }
+}
+
+void UDivineBeastsLoginScreen::HandlePasswordRevealReleased()
+{
+    if (PasswordInput) { PasswordInput->SetIsPassword(true); }
 }
 
 void UDivineBeastsLoginScreen::HandleViewStateChanged(int32, int32)

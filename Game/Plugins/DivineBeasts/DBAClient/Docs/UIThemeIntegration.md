@@ -25,3 +25,5 @@
 随后“色彩与原稿一致”要求将当前菜单、技能栏、地图框和左上头像框改为四张原稿的无损纹理及十一份UI取样材质，生成素材只保留兼容与制作记录。主题新增UI.Style.Text.Menu的原稿碧绿文案；页面绑定保留字号。DefaultThemeDefinitionId仍保持空值，当前外观由已保存控件画刷和样式提供，不宣称默认主题异步服务已在客户端启用。
 
 本轮追加主题回归发现两处Buttons.Add(Buttons[index])容器别名会在UE5.8触发断言，测试现先复制独立值再Add，确保歧义/重复校验路径真实执行；不改变生产解析规则。此项与真实Widget重载、Cook及人工视觉验收分别留证。
+
+本轮登录面板新增UI.Style.Button.LoginOverlay透明按钮规则，资源归DBAUIPack_Core。原稿RGB不再加蓝色/透明乘色，属性以#FFFFFFFF回读验证；600×315面板与284×42输入框为固定尺寸。第五张原稿和第十二份取样材质的证据见NatureUIFinalTheme.md及内容包清单。DefaultThemeDefinitionId保持原值，不能宣称主题服务已启用。密码按住显隐只读输入控件，释放/失活恢复遮罩与清空，不进入统一视图状态。

@@ -43,6 +43,10 @@ try {
         'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureMenuReference.uasset',
         'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureAbilityReference.uasset',
         'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureMinimapReference.uasset',
+        # 登录原稿面板、取样材质与透明点击样式必须进入实际发布包；哈希一致不替代此检查。
+        'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NatureLoginPanelReference.uasset',
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NatureLoginPanelReference.uasset',
+        'DBAUIPack_Core/Content/UI/Styles/BP_DBA_ButtonStyle_LoginOverlay.uasset',
         # 原稿头像框与纯内容变体；两个肖像实例都由同一本地角色事件驱动，属性来自真实ASC。
         'DBAUIPack_Core/Content/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference.uasset',

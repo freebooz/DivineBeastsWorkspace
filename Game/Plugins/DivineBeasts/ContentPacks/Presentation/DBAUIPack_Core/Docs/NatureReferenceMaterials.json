@@ -58,6 +58,12 @@
       "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference",
       "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
       "Code": "// 直接复用原稿蓝色晶纹；显示项目真实气势，不假定为法力或图片中的1280。\nfloat2 P=float2(0.559+frac(UV.x*3)*0.063,0.5+UV.y*0.043);\nAlpha=1;return Texture2DSample(Source,SourceSampler,P).rgb;"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureLoginPanelReference",
+      "SourceTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginPanelReference",
+      "Code": "// RGB只采样原稿；透明键仅去除外部黑底，输入与圆形装饰内部保持不透明。\nfloat2 O=float2(UV.x,0.145+UV.y*0.70);\nfloat2 P=O;\nif(P.x>0.399 && P.x<0.621 && P.y>0.348 && P.y<0.405) P.x=0.63+frac(UV.x*5)*0.018;\nif(P.x>0.400 && P.x<0.574 && P.y>0.504 && P.y<0.56) P.x=0.594+frac(UV.x*5)*0.018;\nfloat3 C=Texture2DSample(Source,SourceSampler,P).rgb;\nAlpha=smoothstep(0.002,0.006,max(C.r,max(C.g,C.b)));\nfloat2 A=float2(max(abs(O.x-0.529)-0.179,0.0)/0.045,(O.y-0.371)/0.059);\nfloat2 B=float2(max(abs(O.x-0.529)-0.179,0.0)/0.045,(O.y-0.530)/0.060);\nfloat2 L=(O-float2(0.166,0.451))/float2(0.117,0.155);\nfloat2 R=(O-float2(0.865,0.450))/float2(0.080,0.107);\nif(dot(A,A)<1 || dot(B,B)<1 || dot(L,L)<1 || dot(R,R)<1) Alpha=1;\n// 登录字样属于固定尺寸原稿；不覆盖其RGB，按钮无底色叠加承接点击。\nreturn C;"
     }
-  ]
+  ],
+  "工具颜色赋值": "ColorAndOpacity与FillColorAndOpacity使用#FFFFFFFF并回读；CSV不能作为赋值成功证据。"
 }

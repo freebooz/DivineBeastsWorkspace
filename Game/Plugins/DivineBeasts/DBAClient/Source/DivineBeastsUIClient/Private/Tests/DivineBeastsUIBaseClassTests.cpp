@@ -1,3 +1,4 @@
+// 项目客户端UI继承、命名控件及密码生命周期回归；由UE自动化调用，只消费真实蓝图和瞬态夹具，不连后端。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "HUD/DivineBeastsHUDWidget.h"
@@ -21,6 +22,7 @@
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "UObject/UnrealType.h"
 #include "UObject/StrongObjectPtr.h"
+#include "UObject/Package.h"
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
 #include "Components/CanvasPanelSlot.h"
@@ -135,7 +137,7 @@ bool FDivineBeastsLoginWidgetContractTest::RunTest(const FString& Parameters)
 
 // 真实保存的登录蓝图不连后端；只用测试口令验证按住揭示、松开/移出/离页遮蔽及清空，不记录口令值。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsLoginPasswordRevealTest,
-    "DivineBeasts.UI.Login.PasswordRevealLifecycle", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+    "DivineBeasts.UI.Login.PasswordRevealLifecycle", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsLoginPasswordRevealTest::RunTest(const FString&)
 {
     UClass* Class = LoadClass<UDivineBeastsLoginScreen>(nullptr,
@@ -147,8 +149,8 @@ bool FDivineBeastsLoginPasswordRevealTest::RunTest(const FString&)
     auto* Account = Cast<UEditableTextBox>(Screen->GetWidgetFromName(TEXT("AccountInput")));
     auto* Reveal = Cast<UButton>(Screen->GetWidgetFromName(TEXT("PasswordRevealButton")));
     if (!TestNotNull(TEXT("密码输入"), Password) || !TestNotNull(TEXT("账号输入"), Account) || !TestNotNull(TEXT("眼睛按钮"), Reveal)) return false;
-    const auto PasswordFont = Password->GetFont().Size;
-    const auto AccountFont = Account->GetFont().Size;
+    const auto PasswordFont = Password->GetWidgetStyle().TextStyle.Font.Size;
+    const auto AccountFont = Account->GetWidgetStyle().TextStyle.Font.Size;
     for (auto* Input : {Password, Account})
     {
         auto* Slot = Cast<UCanvasPanelSlot>(Input->Slot);
@@ -172,8 +174,8 @@ bool FDivineBeastsLoginPasswordRevealTest::RunTest(const FString&)
     TestTrue(TEXT("离页清空瞬时口令"), Password->GetText().IsEmpty());
     Reveal->OnPressed.Broadcast();
     TestTrue(TEXT("失活按钮无残留揭示订阅"), Password->GetIsPassword());
-    TestEqual(TEXT("密码字体未缩放"), Password->GetFont().Size, PasswordFont);
-    TestEqual(TEXT("账号字体未缩放"), Account->GetFont().Size, AccountFont);
+    TestEqual(TEXT("密码字体未缩放"), Password->GetWidgetStyle().TextStyle.Font.Size, PasswordFont);
+    TestEqual(TEXT("账号字体未缩放"), Account->GetWidgetStyle().TextStyle.Font.Size, AccountFont);
     return true;
 }
 

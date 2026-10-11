@@ -3,7 +3,7 @@
   "CreationTool": "Monolith MCP",
   "MonolithVersion": "0.23.0",
   "ProjectName": "DivineBeastsArena",
-  "GeneratedAt": "2026-10-11T10:53:28.5000551+08:00",
+  "GeneratedAt": "2026-10-11T11:48:43.8513717+08:00",
   "字段说明": {
     "SchemaVersion": "清单结构版本；升级字段结构时递增。",
     "CreationTool": "创建或修改界面二进制资产的唯一工具。",
@@ -1108,5 +1108,291 @@
       "Existing optional Boot screen asset missing; runtime opens Login successfully.",
       "No scene, character material or lighting change; server package unchanged."
     ]
+  },
+  "NatureColorCorrection20261011": {
+    "Date": "2026-10-11",
+    "MonolithVersion": "0.23.0",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Changes": [
+      "原稿RGB直采，删除技能蓝色乘色和透明乘色",
+      "登录600×315与输入284×42固定，字号不随窗口缩放",
+      "外缘透明去黑底；输入和圆盘内部不透明；登录字样保留原稿金色",
+      "密码眼睛采用事件查询，保持序列化布局兼容"
+    ],
+    "ClientBuild": "bbff4c02-ed65-4bfc-b858-6e7f047c2d9b",
+    "ClientCook": "15072c79-68ad-4472-8d68-d187276ec36d",
+    "ContainerRequired": 312,
+    "ContainerMissing": 0,
+    "ClientAutomation": {
+      "Passed": 2,
+      "Failed": 0,
+      "Report": "Saved/Validation/AnimationHUD/LoginRevealClientReportFinal/index.json",
+      "HTMLTemplateMissing": true
+    },
+    "SavedColorAudit": [
+      {
+        "path": "Screens/WBP_DBA_UI_Login",
+        "widget": "LoginBronzeFrame",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "Screens/WBP_DBA_UI_CharacterSelect",
+        "widget": "NatureRosterFrame",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "Screens/WBP_DBA_UI_CharacterCreate",
+        "widget": "NatureHeroFrame",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "Combat/WBP_DBA_UI_AbilitySlot",
+        "widget": "AbilityIcon",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "Combat/WBP_DBA_UI_AbilitySlot",
+        "widget": "NatureAbilityFrame",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "Combat/WBP_DBA_UI_CombatHUD",
+        "widget": "NatureAbilityDock",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "Combat/WBP_DBA_UI_Minimap",
+        "widget": "NatureMinimapFrame",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_HealthBar",
+        "widget": "ProgressBar",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_MomentumBar",
+        "widget": "ProgressBar",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameHealthBar",
+        "widget": "ProgressBar",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar",
+        "widget": "ProgressBar",
+        "color": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+      }
+    ],
+    "ReloadedWidgetCompileAudit": [
+      {
+        "path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerPortrait",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerStatus",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_Minimap",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_HealthBar",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StatusEffects",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_ErrorReconnect",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LoadingTravel",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_MomentumBar",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFramePortrait",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameStatus",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameHealthBar",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar",
+        "status": "up_to_date",
+        "errors": 0,
+        "warnings": 0
+      }
+    ],
+    "Materials": [
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMenuReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureAbilityReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMinimapReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureSkillFrameReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureHealthFillReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMomentumFillReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureUltimateFrameReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      },
+      {
+        "asset_path": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureLoginPanelReference",
+        "issues": [],
+        "issue_count": 0,
+        "fixed_count": 0
+      }
+    ],
+    "RunningClients": {
+      "RunId": "c9b7ef60-c87f-455d-9e47-24105ae7a11c",
+      "PIDs": [
+        8652,
+        5864
+      ],
+      "InitialScreen": "Login",
+      "AutoLogin": false
+    },
+    "Limitations": [
+      "客户端人工色彩与进入新手村旅行核验待用户完成",
+      "离屏PNG有Gamma转换差异，不能据此声称逐像素一致",
+      "新编辑器DLL构建受其他编辑器占用而失败；发布客户端回归已真实执行"
+    ],
+    "RejectedArtifact": {
+      "Cook": "5b5ed331-d12a-4231-a65a-6a05ec9a5688",
+      "Reason": "新增父类反射字段与旧编辑器Cook布局不一致，Bad import index；修正为无新增序列化字段的可选控件查询"
+    }
   }
 }

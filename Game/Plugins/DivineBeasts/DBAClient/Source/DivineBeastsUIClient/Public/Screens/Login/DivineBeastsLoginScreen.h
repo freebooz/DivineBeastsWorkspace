@@ -71,6 +71,14 @@ private:
     UFUNCTION()
     void HandleCredentialTextChanged(const FText& NewText);
 
+    /** 仅在激活、非忙碌且密码非空时按住查看；不复制密码，不向ViewModel发布敏感内容。 */
+    UFUNCTION()
+    void HandlePasswordRevealPressed();
+
+    /** 松开、移出、提交或离页均恢复遮蔽；没有持久化的“显示密码”偏好。 */
+    UFUNCTION()
+    void HandlePasswordRevealReleased();
+
     /** ViewModel状态事件；修订号和页面代次由ViewModel保证单调与隔离。 */
     UFUNCTION()
     void HandleViewStateChanged(int32 Revision, int32 PageGeneration);
@@ -90,6 +98,9 @@ private:
     /** 登录提交按钮；可用性由输入有效性和ViewModel状态共同决定。 */
     UPROPERTY(meta=(BindWidget))
     TObjectPtr<UButton> LoginButton = nullptr;
+
+    /** 从当前Widget树查询可选眼睛按钮；由树持有生命周期，不新增序列化字段，旧Cook蓝图保持兼容。 */
+    UButton* GetPasswordRevealButton() const;
 
     /** 登录错误文本；只显示已本地化的只读错误，不显示技术堆栈。 */
     UPROPERTY(meta=(BindWidget))
