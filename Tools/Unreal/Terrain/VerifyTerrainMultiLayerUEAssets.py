@@ -15,6 +15,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[3]
 SOURCE=Path(__file__).with_name("TerrainSourceManifest_v1.json")
+PRODUCTION=Path(__file__).with_name("TerrainProductionPBRManifest_v1.json")
 MASTER="/DBAWorldPack_Village/Terrain/Materials/M_DBA_Terrain_MultiLayer10"
 INSTANCE="/DBAWorldPack_Village/Terrain/Materials/MI_DBA_Terrain_Calibration"
 
@@ -22,6 +23,8 @@ def packages() -> list[str]:
     spec=json.loads(SOURCE.read_text(encoding="utf-8"))
     targets=[]
     for item in spec["files"]:
+        if PRODUCTION.exists() and item["category"]=="PBR_TECHNICAL":
+            continue  # V1地形校准投影清单继续保持旧SHA，真实PBR使用新独立真源。
         kind=item["category"]
         if kind=="HEIGHT_R16_CALIBRATION":
             continue
@@ -36,8 +39,14 @@ def packages() -> list[str]:
         if not path.startswith("/DBAWorldPack_Village/Terrain/"):
             raise ValueError("平台目录不得硬持有具体神兽联盟贴图："+path)
         targets.append(path)
-    if len(targets)!=49 or len(set(targets))!=49:
-        raise RuntimeError("真实Texture2D目录必须49项且无重复")
+    if PRODUCTION.exists():
+        scanned=json.loads(PRODUCTION.read_text(encoding="utf-8"))
+        if scanned.get("sourceKind")!="official_polyhaven_CC0_matched_scan_maps":
+            raise RuntimeError("PBR真实来源类型非法")
+        targets.extend(i["assetPath"] for i in scanned["files"])
+    expected=59 if PRODUCTION.exists() else 49
+    if len(targets)!=expected or len(set(targets))!=expected:
+        raise RuntimeError("真实Texture2D目录项数不符或重复："+str(len(targets)))
     return targets
 
 def run()->None:
@@ -74,7 +83,7 @@ def run()->None:
     forbidden=[x for x in deps if x.startswith(("/GamePlatformSurface/","/GamePlatformVFX/","/DBAPresentationPack_Core/"))]
     if forbidden:
         raise RuntimeError("项目共享母材质非法硬引用纯客户端平台资源："+str(forbidden))
-    print("TERRAIN_UE_ASSET_INVENTORY_PASS textures=49 material=1 material_instance=1",
+    print("TERRAIN_UE_ASSET_INVENTORY_PASS textures="+str(len(packages()))+" material=1 material_instance=1",
           "expression_count",count)
     print("TERRAIN_UE_ASSET_SERVER_SAFE_MATERIAL_DEPENDENCIES_PASS",
           "dependencies",len(deps),"forbidden_client_only",len(forbidden))

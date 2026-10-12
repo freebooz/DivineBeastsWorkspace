@@ -1,6 +1,7 @@
 // 项目层本地玩家UI组合：消费应用只读状态，注册平台页面/主题并桥接真实控制器生命周期。
 // 不发送业务HTTP或持有玩法权威；退出撤销页面、适配器和委托，服务器目标不装配本模块。
 #include "DivineBeastsUIClientSubsystem.h"
+#include "Development/DivineBeastsPluginDemoMode.h"
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -49,6 +50,12 @@ namespace
 
 void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
 {
+    // 演示UI拥有独立根界面，不恢复正式登录RootLayout及业务页面。
+    if (FDivineBeastsPluginDemoMode::IsEnabled())
+    {
+        Super::PlayerControllerChanged(NewPlayerController);
+        return;
+    }
     if (bUIShuttingDown) { Super::PlayerControllerChanged(NewPlayerController); return; }
     // 拒绝来自其他本地玩家的控制器，后续HUD/输入接线同样只消费本玩家作用域。
     if (NewPlayerController && NewPlayerController->GetLocalPlayer() != GetLocalPlayer()) NewPlayerController = nullptr;
@@ -84,6 +91,11 @@ void UDivineBeastsUIClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    // 在注册生产页面/主题和应用适配器前旁路；正式客户端默认行为不变。
+    if (FDivineBeastsPluginDemoMode::IsEnabled())
+    {
+        return;
+    }
     bUIShuttingDown = false;
     ResetDefaultRootLayoutLoad(false);
     RootLayoutPlayer.Reset();

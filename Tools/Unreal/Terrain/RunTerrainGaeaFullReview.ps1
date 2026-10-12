@@ -11,7 +11,8 @@
 param(
     [Parameter(ParameterSetName='Apply')][switch]$Apply,
     [Parameter(ParameterSetName='Verify')][switch]$ValidateOnly,
-    [string]$EngineRoot='D:\UnrealEngine-5.8.0-release'
+    [switch]$ProductionPBR, # 仅独立开发审核地图启用正式高精客户端材质，不覆盖共享Village。
+    [string]$EngineRoot='F:\UnrealEngine-5.8.0-release'
 )
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
@@ -25,6 +26,13 @@ $layerRoot='/DBAWorldPack_Village/Terrain/LayerInfos'
 $graphRoot='/DBAWorldPack_Village/Terrain/PCG/Graphs'
 $map='/Game/Development/Terrain/Maps/L_DBA_TerrainMaskReview'
 $material='/DBAWorldPack_Village/Terrain/Materials/M_DBA_Terrain_MultiLayer10'
+if($ProductionPBR){
+    $material='/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_Review'
+    $scannedManifest=Join-Path $PSScriptRoot 'TerrainProductionPBRManifest_v1.json'
+    if(!(Test-Path -LiteralPath $scannedManifest -PathType Leaf)){
+        throw '正式扫描PBR素材尚未提交/校验，禁止用技术校准源伪造正式审核地图'
+    }
+}
 $manifest=Join-Path $rawRoot 'TerrainUEImportRaw_v1.json'
 foreach($path in @($uproject,$editor,$build,$manifest)){
     if(!(Test-Path -LiteralPath $path -PathType Leaf)){
@@ -43,6 +51,7 @@ Write-Host (" 技术样本："+$rawRoot)
 Write-Host (" LayerInfo："+$layerRoot)
 Write-Host (" PCG Graph："+$graphRoot)
 Write-Host (" 独立地图："+$map)
+Write-Host (" 材质："+$material+" 生产PBR="+$ProductionPBR)
 Write-Host ' 正式Gaea源：尚未提供；本入口仅技术校准，不会迁入正式Village'
 if(!$Apply -and !$ValidateOnly){
     Write-Host 'TERRAIN_GAEA_REVIEW_INSPECT_ONLY：没有创建地图、图层或PCGGraph'
@@ -93,6 +102,21 @@ if($Apply){
     & $build @buildArgs
     if($LASTEXITCODE -ne 0){throw '正式UE Editor完整构建失败，拒绝创建半成品资产'}
 }
+if($ProductionPBR){
+    # 仅在独占编辑器窗口按官方清单替换10层原Texture2D；必须保留回退Zip。
+    $oldMode=$env:TERRAIN_PBR_UE_MODE
+    $oldMaterial=$env:TERRAIN_PRODUCTION_MATERIAL_MODE
+    try {
+        $env:TERRAIN_PBR_UE_MODE=if($Apply){'apply'}else{'verify'}
+        Run-UePython 'TerrainProductionPBRTextures' 'ReimportTerrainProductionPBR.py' 'TERRAIN_PBR_UE_40_TEXTURES_VERIFIED'
+        $env:TERRAIN_PRODUCTION_MATERIAL_MODE=if($Apply){'apply'}else{'verify'}
+        Run-UePython 'TerrainProductionMaterial' 'AuthorTerrainProductionMaterial.py' 'TERRAIN_PRODUCTION_MATERIAL_UE_VERIFIED'
+    }
+    finally {
+        $env:TERRAIN_PBR_UE_MODE=$oldMode
+        $env:TERRAIN_PRODUCTION_MATERIAL_MODE=$oldMaterial
+    }
+}
 Run-UeCommandlet 'GamePlatformSurfaceTerrainLayers' @(
     ('-LayerRoot='+$layerRoot),('-LayerIds='+$layers),
     '-AssetPrefix=LI_DBA_Terrain_','-LayerNamePrefix=LS_'
@@ -110,4 +134,4 @@ Run-UeCommandlet 'GamePlatformSurfaceTerrainReviewMap' @(
 ) $mapMarker
 Run-UePython 'TerrainUEAssets' 'VerifyTerrainMultiLayerUEAssets.py' 'TERRAIN_UE_ASSET_INVENTORY_PASS'
 Run-UePython 'TerrainPCGAssets' 'VerifyTerrainPCGReviewAssets.py' 'TERRAIN_PCG_LANDSCAPE_GRAPH_RELOAD_PASS'
-Write-Host 'TERRAIN_GAEA_REVIEW_EDITOR_TARGETS_PASS (NOT_COOK_OR_MANUAL_REVIEW)'
+Write-Host ('TERRAIN_GAEA_REVIEW_EDITOR_TARGETS_PASS productionPBR='+$ProductionPBR+' (NOT_COOK_OR_MANUAL_REVIEW)')

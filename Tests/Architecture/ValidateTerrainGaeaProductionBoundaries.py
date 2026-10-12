@@ -77,13 +77,24 @@ def main() -> None:
             source_manifest.get("sourceKind")=="procedural_calibration_not_gaea",
             "50张技术源图和来源声明不一致")
     for spec in source_manifest["files"]:
+        if (SRC/"TerrainProductionPBRManifest_v1.json").exists() and spec["category"]=="PBR_TECHNICAL":
+            continue  # 已覆盖同名源纹理；旧Manifest维持Gaea历史投影的SHA身份。
         file=(ROOT/spec["sourcePath"]).resolve()
         require(file.is_relative_to(ROOT) and file.is_file(),"SourceArt不存在："+str(file))
         require(hashlib.sha256(file.read_bytes()).hexdigest()==spec["sha256"],
                 "SourceArt已变化，拒绝继续："+str(file))
+    production_file=SRC/"TerrainProductionPBRManifest_v1.json"
+    if production_file.exists():
+        production=json.loads(production_file.read_text(encoding="utf-8"))
+        require(len(production.get("files",[]))==40,"正式CC0扫描地表必须是40张同源PBR")
+        for spec in production["files"]:
+            scanned=ROOT/spec["sourcePath"]
+            require(scanned.is_file() and hashlib.sha256(scanned.read_bytes()).hexdigest()==spec["sha256"],
+                    "正式扫描源SHA不符："+spec["sourcePath"])
     tex=tuple(TERRAIN.rglob("*.uasset"))
     textures=[f for f in tex if "Textures" in f.parts or "Calibration" in f.parts]
-    require(len(textures)>=49,"UE Texture2D实际文件少于49")
+    expected_count=59 if production_file.exists() else 49
+    require(len(textures)>=expected_count,"UE Texture2D实际文件少于"+str(expected_count))
     require((TERRAIN/"Materials/M_DBA_Terrain_MultiLayer10.uasset").stat().st_size>30000,
             "真实多层UMaterial未生成")
     require((TERRAIN/"Materials/MI_DBA_Terrain_Calibration.uasset").stat().st_size>1000,

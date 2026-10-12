@@ -173,6 +173,13 @@
         "Client",
         "Editor"
       ]
+    },
+    {
+      "Name": "DivineBeastsDemoClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [ "Game", "Client", "Editor" ],
+      "TargetConfigurationAllowList": [ "Debug", "DebugGame", "Development" ]
     }
   ]
 }

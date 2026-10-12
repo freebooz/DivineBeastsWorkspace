@@ -188,6 +188,28 @@ def main():
     parser=argparse.ArgumentParser(description="神兽联盟十地表纹理与Gaea兼容测试掩码")
     parser.add_argument("--verify",action="store_true",help="只校验确定性源，不修改")
     args=parser.parse_args()
+    # 正式PBR另行声明且已替换同名原图后，本历史技术生成器不再拥有PBR覆盖权限。
+    prod=Path(__file__).with_name("TerrainProductionPBRManifest_v1.json")
+    if prod.exists():
+        if not args.verify:
+            raise RuntimeError("正式CC0扫描PBR已经发布：禁止用技术校准工具覆盖正式纹理")
+        history=json.loads(MANIFEST.read_text(encoding="utf-8"))
+        official=json.loads(prod.read_text(encoding="utf-8"))
+        if history.get("sourceKind")!="procedural_calibration_not_gaea" or len(official.get("files",[]))!=40:
+            raise RuntimeError("技术地貌或正式扫描合同不完整")
+        for item in history["files"]:
+            if item["category"]=="PBR_TECHNICAL":
+                continue  # 技术PBR是历史签名，迁移后不再与同名正式源图比较。
+            path=ROOT/item["sourcePath"]
+            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=item["sha256"]:
+                raise RuntimeError("地貌校准图签名发生变化："+str(path))
+        for item in official["files"]:
+            path=ROOT/item["sourcePath"]
+            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=item["sha256"]:
+                raise RuntimeError("正式扫描源图签名发生变化："+str(path))
+        print("TERRAIN_SOURCE_QA_PASS historical_geodata=20 production_pbr=40 mode=verify")
+        return
+
     files=[]
     metadata=[]
     for i,(layer,rgb,rough,micro,description) in enumerate(SURFACES):

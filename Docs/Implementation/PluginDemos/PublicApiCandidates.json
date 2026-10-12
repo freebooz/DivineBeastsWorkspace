@@ -1,0 +1,1963 @@
+{
+  "git_head": "bad8db3a63c7a24f2fee8257387153d41c376b0e",
+  "counts": {
+    "plugins": 64,
+    "public_headers": 508,
+    "public_ufunction_candidates": 592
+  },
+  "items": [
+    {
+      "plugin_id": "DBAContentPack_Common",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Boar",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Dog",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Dragon",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Goat",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Horse",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Monkey",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Ox",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Rabbit",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Rat",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Rooster",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Snake",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Tiger",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAFrontEndPack",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAPresentationPack_Core",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAUIPack_Core",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAWorldPack_Village",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAArena",
+      "public_header_files": 14,
+      "ufunction_candidates": 12,
+      "sample": [
+        {
+          "name": "GetProjectArenaModeIds",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "RequestPostMatchReturnToWorld",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaClientSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetArenaViewModel",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "RefreshArenaViewFromWorld",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ResolvePrimaryArenaSurfaceId",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "SetObservedArenaClientFlowState",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleArenaScreenOpened",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleArenaScreenOpenFailed",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleArenaScreenClosed",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/Client/DivineBeastsArenaUIClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetHUDSurfaceId",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/UI/HUD/DivineBeastsArenaHUD.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetExpectedSurfaceId",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/UI/Screens/DivineBeastsArenaScreenBase.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetExpectedSurfaceId",
+          "header": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Public/UI/Screens/DivineBeastsMatchFoundReadyScreen.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAClient",
+      "public_header_files": 87,
+      "ufunction_candidates": 217,
+      "sample": [
+        {
+          "name": "StartFlow",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "TryAutoLogin",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "LoginWithCredentials",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SubmitCharacterCreateDraft",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SelectPersistentCharacter",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RequestWorldAssignment",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "NotifyWorldObserved",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "NotifyCharacterBindingReady",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "NotifyGameplayDataReady",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "NotifyProjectReadiness",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RequestPostMatchReturnToWorld",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "LogoutAndRestart",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetViewState",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Public/DivineBeastsApplicationFlowSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "ActivatePreviewScene",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterPreviewSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "DeactivatePreviewScene",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterPreviewSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "PreviewHero",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterPreviewSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ClearPreview",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterPreviewSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RotatePreview",
+          "header": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Characters/DivineBeastsCharacterPreviewSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAGameplay",
+      "public_header_files": 19,
+      "ufunction_candidates": 20,
+      "sample": [
+        {
+          "name": "TryReadConfiguredBalance",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Abilities/DivineBeastsConfiguredGameplayAbility.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "AuthorityTraceForwardAndApplyDamage",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Abilities/DivineBeastsConfiguredGameplayAbility.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "AuthorityApplyConfiguredDamage",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Abilities/DivineBeastsConfiguredGameplayAbility.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleMovementDiagnosticUpdate",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Characters/DivineBeastsGameplayCharacter.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetLoadoutState",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Components/DivineBeastsAbilityLoadoutComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "OnRep_LoadoutState",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Components/DivineBeastsAbilityLoadoutComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_Momentum",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Attributes/DivineBeastsMomentumAttributeSet.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_MaxMomentum",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Attributes/DivineBeastsMomentumAttributeSet.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleCombatEvent",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Characters/DivineBeastsCharacter.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RefreshInitialization",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetHeroDefinitionId",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCharacterId",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetZodiacIdentity",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetSpawnGeneration",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetAvatarGeneration",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetDefinitionVersion",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetDefinitionContentRevision",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "IsCharacterReady",
+          "header": "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Public/Components/DivineBeastsCharacterComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAServer",
+      "public_header_files": 2,
+      "ufunction_candidates": 2,
+      "sample": [
+        {
+          "name": "GetBootstrapState",
+          "header": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Public/Server/DivineBeastsServerBootstrapSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetLastErrorCode",
+          "header": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Public/Server/DivineBeastsServerBootstrapSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "DBAWorlds",
+      "public_header_files": 4,
+      "ufunction_candidates": 2,
+      "sample": [
+        {
+          "name": "ReadCurrentWeather",
+          "header": "Game/Plugins/DivineBeasts/DBAWorlds/Source/DBAWorldsRuntime/Public/Weather/DivineBeastsWeatherReviewController.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyReviewWeather",
+          "header": "Game/Plugins/DivineBeasts/DBAWorlds/Source/DBAWorldsRuntime/Public/Weather/DivineBeastsWeatherReviewController.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformApplicationFlow",
+      "public_header_files": 6,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformInput",
+      "public_header_files": 5,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformLoading",
+      "public_header_files": 3,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformLocalization",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformSave",
+      "public_header_files": 3,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformSettings",
+      "public_header_files": 10,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformDebug",
+      "public_header_files": 3,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformDeveloperTools",
+      "public_header_files": 10,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformTelemetry",
+      "public_header_files": 11,
+      "ufunction_candidates": 1,
+      "sample": [
+        {
+          "name": "GetDiagnostics",
+          "header": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Public/Subsystems/GamePlatformTelemetrySubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformCore",
+      "public_header_files": 6,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformData",
+      "public_header_files": 9,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformLobby",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformVillage",
+      "public_header_files": 0,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformAI",
+      "public_header_files": 12,
+      "ufunction_candidates": 13,
+      "sample": [
+        {
+          "name": "GetSnapshot",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAI/Public/Components/GamePlatformAIStateComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetDefinitionAsset",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAI/Public/Components/GamePlatformAIStateComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "SetDefinitionAsset",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAI/Public/Components/GamePlatformAIStateComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "AdvanceServerGeneration",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAI/Public/Components/GamePlatformAIStateComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_Snapshot",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAI/Public/Components/GamePlatformAIStateComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetAITargetEnabled",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAI/Public/Components/GamePlatformAITargetComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "AdvanceTargetGeneration",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAI/Public/Components/GamePlatformAITargetComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetLastAIError",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAIServer/Public/Controllers/GamePlatformAIController.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "TryAttackCurrentTarget",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAIServer/Public/Controllers/GamePlatformAIController.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ForceDecisionUpdate",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAIServer/Public/Controllers/GamePlatformAIController.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleTargetPerceptionUpdated",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAIServer/Public/Controllers/GamePlatformAIController.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleCandidateDestroyed",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAIServer/Public/Controllers/GamePlatformAIController.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleCombatEvent",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAIServer/Public/Controllers/GamePlatformAIController.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformAbilitySystem",
+      "public_header_files": 12,
+      "ufunction_candidates": 2,
+      "sample": [
+        {
+          "name": "BindAbilityActorInfo",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/Source/GamePlatformAbilitySystem/Public/Components/GamePlatformAbilitySystemComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ClearAbilityAvatar",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/Source/GamePlatformAbilitySystem/Public/Components/GamePlatformAbilitySystemComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformAnimation",
+      "public_header_files": 3,
+      "ufunction_candidates": 6,
+      "sample": [
+        {
+          "name": "PlayHitFlash",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/Public/Feedback/GamePlatformHitFlashWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "CancelAllHitFlashes",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/Public/Feedback/GamePlatformHitFlashWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetActiveFlashCount",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/Public/Feedback/GamePlatformHitFlashWorldSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "ApplyVisualHitstop",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/Public/Feedback/GamePlatformLocalHitstopSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "IsVisualHitstopActive",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/Public/Feedback/GamePlatformLocalHitstopSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "CancelAllVisualHitstops",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/Public/Feedback/GamePlatformLocalHitstopSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformCharacter",
+      "public_header_files": 6,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformCombat",
+      "public_header_files": 18,
+      "ufunction_candidates": 18,
+      "sample": [
+        {
+          "name": "OnRep_Health",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Attributes/GamePlatformCombatAttributeSet.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_MaxHealth",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Attributes/GamePlatformCombatAttributeSet.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_DamageBonus",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Attributes/GamePlatformCombatAttributeSet.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_DamageReduction",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Attributes/GamePlatformCombatAttributeSet.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetAbilitySystemComponent",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCombatAttributeSet",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCombatHealth",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCombatMaxHealth",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "IsCombatDead",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCombatAvatarGeneration",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "ApplyDamage",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyHealing",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyShield",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyControl",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RemoveControl",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ResetForNewAvatar",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "MulticastConfirmedCombatFeedback",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_Dead",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformGameplay",
+      "public_header_files": 22,
+      "ufunction_candidates": 11,
+      "sample": [
+        {
+          "name": "ServerSubmitAdmissionProof",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Components/GamePlatformAdmissionHandshakeComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ClientAdmissionAccepted",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Components/GamePlatformAdmissionHandshakeComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ClientAdmissionRejected",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Components/GamePlatformAdmissionHandshakeComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_Snapshot",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Components/GamePlatformExperienceComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetServerPlayerActive",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Components/GamePlatformGameplayEligibilityComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "AdvanceAvatarGeneration",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Components/GamePlatformGameplayEligibilityComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_ServerPlayerActive",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Components/GamePlatformGameplayEligibilityComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_AvatarGeneration",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Components/GamePlatformGameplayEligibilityComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_PreparationToken",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Framework/GamePlatformPlayerControllerBase.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ServerReportPrepared",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Framework/GamePlatformPlayerControllerBase.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_Snapshot",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Public/Framework/GamePlatformPlayerStateBase.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformQuest",
+      "public_header_files": 9,
+      "ufunction_candidates": 4,
+      "sample": [
+        {
+          "name": "GetQuestSnapshots",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/Source/GamePlatformQuest/Public/Components/GamePlatformQuestStateComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "SetServerQuestSnapshots",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/Source/GamePlatformQuest/Public/Components/GamePlatformQuestStateComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_QuestSnapshots",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/Source/GamePlatformQuest/Public/Components/GamePlatformQuestStateComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "IsPlayerReady",
+          "header": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/Source/GamePlatformQuestServer/Public/Subsystems/GamePlatformQuestServerSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformOnline",
+      "public_header_files": 8,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformServer",
+      "public_header_files": 2,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformSession",
+      "public_header_files": 2,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformCommerceUI",
+      "public_header_files": 6,
+      "ufunction_candidates": 8,
+      "sample": [
+        {
+          "name": "RefreshCatalog",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Services/GamePlatformCommerceClientSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetState",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Services/GamePlatformCommerceClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCatalogRevision",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Services/GamePlatformCommerceClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCommerceViewModel",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/Services/GamePlatformCommerceClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetProducts",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/ViewModels/GamePlatformCommerceViewModel.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetOffers",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/ViewModels/GamePlatformCommerceViewModel.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCurrentIntent",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/ViewModels/GamePlatformCommerceViewModel.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCurrentOrder",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/Public/ViewModels/GamePlatformCommerceViewModel.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformEntitlement",
+      "public_header_files": 7,
+      "ufunction_candidates": 6,
+      "sample": [
+        {
+          "name": "GetState",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Services/GamePlatformEntitlementClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetSnapshotRevision",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Services/GamePlatformEntitlementClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "HasEntitlement",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Services/GamePlatformEntitlementClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetViewModels",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Services/GamePlatformEntitlementClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "IsHeroUnlocked",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Services/GamePlatformEntitlementClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "IsSkinUnlocked",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/Public/Services/GamePlatformEntitlementClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformEquipment",
+      "public_header_files": 8,
+      "ufunction_candidates": 5,
+      "sample": [
+        {
+          "name": "GetEquipmentRuntimeGeneration",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/Public/Components/GamePlatformEquipmentComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "OnRep_OwnerSnapshot",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/Public/Components/GamePlatformEquipmentComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_PublicSnapshot",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/Public/Components/GamePlatformEquipmentComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "IsEquipmentGameplayReady",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Components/GamePlatformEquipmentServerComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetLastError",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/Public/Components/GamePlatformEquipmentServerComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformInventory",
+      "public_header_files": 4,
+      "ufunction_candidates": 5,
+      "sample": [
+        {
+          "name": "GetState",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Services/GamePlatformInventoryClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetLastError",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Services/GamePlatformInventoryClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetInventoryRevision",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Services/GamePlatformInventoryClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "HasPendingOperation",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Services/GamePlatformInventoryClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetPendingOperationId",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/Public/Services/GamePlatformInventoryClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformLiveOps",
+      "public_header_files": 5,
+      "ufunction_candidates": 10,
+      "sample": [
+        {
+          "name": "RefreshAll",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RefreshCatalog",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RefreshPlayerState",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetState",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetEstimatedServerNowUtc",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetActiveSeasonIds",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetEventViewModels",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetSignInViewModels",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCatalogRevision",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetPlayerStateRevision",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Public/Services/GamePlatformLiveOpsClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformProgression",
+      "public_header_files": 7,
+      "ufunction_candidates": 5,
+      "sample": [
+        {
+          "name": "GetState",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Services/GamePlatformProgressionClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetProgressionRevision",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Services/GamePlatformProgressionClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetLevel",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Services/GamePlatformProgressionClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetTotalXP",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Services/GamePlatformProgressionClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetViewModels",
+          "header": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/Public/Services/GamePlatformProgressionClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformCamera",
+      "public_header_files": 1,
+      "ufunction_candidates": 3,
+      "sample": [
+        {
+          "name": "PlayHitCameraShake",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/Source/GamePlatformCameraClient/Public/Feedback/GamePlatformCameraHitFeedbackSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetUserCameraShakeScale",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/Source/GamePlatformCameraClient/Public/Feedback/GamePlatformCameraHitFeedbackSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetUserCameraShakeScale",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/Source/GamePlatformCameraClient/Public/Feedback/GamePlatformCameraHitFeedbackSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformPresentation",
+      "public_header_files": 6,
+      "ufunction_candidates": 7,
+      "sample": [
+        {
+          "name": "ApplyPreviewAppearance",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/Preview/GamePlatformCharacterPreviewStage.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ClearPreviewAppearance",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/Preview/GamePlatformCharacterPreviewStage.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetPreviewYaw",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/Preview/GamePlatformCharacterPreviewStage.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "AddPreviewYaw",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/Preview/GamePlatformCharacterPreviewStage.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetCameraDistance",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/Preview/GamePlatformCharacterPreviewStage.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetPreviewMeshComponent",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/Preview/GamePlatformCharacterPreviewStage.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetPreviewCamera",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/Public/Preview/GamePlatformCharacterPreviewStage.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformSFX",
+      "public_header_files": 3,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformSurface",
+      "public_header_files": 6,
+      "ufunction_candidates": 3,
+      "sample": [
+        {
+          "name": "ApplyEnvironmentState",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Source/GamePlatformSurfaceClient/Public/Blueprint/GamePlatformSurfaceBlueprintLibrary.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetEnvironmentState",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Source/GamePlatformSurfaceClient/Public/Blueprint/GamePlatformSurfaceBlueprintLibrary.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "RefreshMaterialBinding",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Source/GamePlatformSurfaceClient/Public/Blueprint/GamePlatformSurfaceBlueprintLibrary.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformUI",
+      "public_header_files": 58,
+      "ufunction_candidates": 154,
+      "sample": [
+        {
+          "name": "GetAdaptiveContext",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Adaptive/GamePlatformUIAdaptiveSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "RefreshAdaptiveContext",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Adaptive/GamePlatformUIAdaptiveSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "BindCastSource",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCastProgressWidget.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyCastSnapshot",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCastProgressWidget.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ClearCastSource",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCastProgressWidget.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetCastSnapshot",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCastProgressWidget.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetNormalizedCastProgress",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCastProgressWidget.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "BP_OnCastStateChanged",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCastProgressWidget.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "BindAlertSource",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCombatAlertWidget.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyAlertSnapshot",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCombatAlertWidget.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ClearAlertSource",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCombatAlertWidget.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetAlertSnapshot",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCombatAlertWidget.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "BP_OnCombatAlertChanged",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCombatAlertWidget.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyCountdownState",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCountdownWidget.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetCountdownState",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCountdownWidget.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetCountdownText",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCountdownWidget.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "BP_OnCountdownChanged",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformCountdownWidget.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyInteractionPrompt",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformInteractionPromptWidget.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformVFX",
+      "public_header_files": 28,
+      "ufunction_candidates": 6,
+      "sample": [
+        {
+          "name": "SetBirdProfile",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Public/Environment/GamePlatformBirdFlockActor.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetBirdCount",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Public/Environment/GamePlatformBirdFlockActor.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetQualityFraction",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Public/Environment/GamePlatformBirdFlockActor.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetWindDirection",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Public/Environment/GamePlatformBirdFlockActor.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RefreshFlock",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Public/Environment/GamePlatformBirdFlockActor.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetEffectiveBirdCount",
+          "header": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Public/Environment/GamePlatformBirdFlockActor.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformInteraction",
+      "public_header_files": 13,
+      "ufunction_candidates": 27,
+      "sample": [
+        {
+          "name": "GetTargetInstanceId",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetTargetGeneration",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetTargetRevision",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "IsInteractionEnabled",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "IsConsumed",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetToggleState",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetRemainingCharges",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetOccupancyCount",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetInteractionPoint",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "SetOptions",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetInteractionEnabled",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetRemainingCharges",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "AdvanceTargetGeneration",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_State",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractableComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RefreshLocalFocus",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractorComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "BeginFocusedInteraction",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractorComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "CancelCurrentInteraction",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractorComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetCurrentFocus",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Public/Components/GamePlatformInteractorComponent.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformNavigation",
+      "public_header_files": 9,
+      "ufunction_candidates": 6,
+      "sample": [
+        {
+          "name": "SetPlatformArea",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/Source/GamePlatformNavigationServer/Public/Components/GamePlatformNavigationModifierComponent.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetPlatformLinkEnabled",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/Source/GamePlatformNavigationServer/Public/Links/GamePlatformNavigationSmartLinkProxy.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "NotifyTraversalRequested",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/Source/GamePlatformNavigationServer/Public/Links/GamePlatformNavigationSmartLinkProxy.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "CompleteTraversal",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/Source/GamePlatformNavigationServer/Public/Links/GamePlatformNavigationSmartLinkProxy.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "RegisterAgentProfile",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/Source/GamePlatformNavigationServer/Public/Subsystems/GamePlatformNavigationWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "HandleInvokerDestroyed",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/Source/GamePlatformNavigationServer/Public/Subsystems/GamePlatformNavigationWorldSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformPCG",
+      "public_header_files": 20,
+      "ufunction_candidates": 9,
+      "sample": [
+        {
+          "name": "RegisterParticipant",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Actors/GamePlatformPCGActors.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "UnregisterParticipant",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Actors/GamePlatformPCGActors.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetParticipantsForStage",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Actors/GamePlatformPCGActors.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "ValidateParticipantSet",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Actors/GamePlatformPCGActors.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "CollectSpatialMasks",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Actors/GamePlatformPCGActors.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "BuildStaticExecutionPlan",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Actors/GamePlatformPCGActors.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "CollectGameplayAnchorCandidates",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Actors/GamePlatformPCGActors.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SampleHeight",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Interfaces/IGamePlatformPCGFieldProvider.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SampleScalarField",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Public/Interfaces/IGamePlatformPCGFieldProvider.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformWeather",
+      "public_header_files": 6,
+      "ufunction_candidates": 12,
+      "sample": [
+        {
+          "name": "GetVisualWeather",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherClient/Public/Subsystems/GamePlatformWeatherClientWorldSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "OnRep_WeatherSnapshot",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Actors/GamePlatformWeatherReplicator.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ReadWeather",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Blueprint/GamePlatformWeatherBlueprintLibrary.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetWeatherOnAuthority",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Blueprint/GamePlatformWeatherBlueprintLibrary.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyWeatherPresetOnAuthority",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Blueprint/GamePlatformWeatherBlueprintLibrary.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ActivateWeather",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Subsystems/GamePlatformWeatherWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetWeather",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Subsystems/GamePlatformWeatherWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ApplyPreset",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Subsystems/GamePlatformWeatherWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ConfigureSchedule",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Subsystems/GamePlatformWeatherWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "StartSchedule",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Subsystems/GamePlatformWeatherWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "StopSchedule",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Subsystems/GamePlatformWeatherWorldSubsystem.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetCurrentSnapshot",
+          "header": "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/Public/Subsystems/GamePlatformWeatherWorldSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformWorld",
+      "public_header_files": 8,
+      "ufunction_candidates": 0,
+      "sample": [],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "GamePlatformArena",
+      "public_header_files": 19,
+      "ufunction_candidates": 17,
+      "sample": [
+        {
+          "name": "GetPhaseRemainingSeconds",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaGameState.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "OnRep_MatchPhase",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaGameState.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_TeamStates",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaGameState.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_ObjectiveStates",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaGameState.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_ResultSummary",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaGameState.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ServerRequestHeroSelection",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaPlayerController.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ServerRequestReady",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaPlayerController.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ServerRequestForfeit",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaPlayerController.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ClientArenaRequestRejected",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaPlayerController.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "OnRep_StatsRevision",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/Public/Framework/GamePlatformArenaPlayerState.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        },
+        {
+          "name": "InitializeArenaViewModel",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArenaClient/Public/UI/GamePlatformMobaArenaHUDBase.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "GetArenaViewModel",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArenaClient/Public/UI/GamePlatformMobaArenaHUDBase.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetArenaViewModel",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArenaClient/Public/UI/GamePlatformMobaArenaModalScreenBase.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "GetArenaViewModel",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArenaClient/Public/UI/GamePlatformMobaArenaScreenBase.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        },
+        {
+          "name": "RefreshFromReplicatedState",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArenaClient/Public/ViewModels/GamePlatformArenaViewModel.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "SetObservedClientFlowState",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArenaClient/Public/ViewModels/GamePlatformArenaViewModel.h",
+          "blueprint_callable": true,
+          "blueprint_pure": false
+        },
+        {
+          "name": "ToSpec",
+          "header": "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformMobaData/Public/Definitions/GamePlatformArenaModeDefinition.h",
+          "blueprint_callable": false,
+          "blueprint_pure": true
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    },
+    {
+      "plugin_id": "MobaPresentation",
+      "public_header_files": 8,
+      "ufunction_candidates": 1,
+      "sample": [
+        {
+          "name": "HandleCombatEvent",
+          "header": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/Public/MobaPresentationClientSubsystem.h",
+          "blueprint_callable": false,
+          "blueprint_pure": false
+        }
+      ],
+      "note": "仅反射标记及声明层面的可见性线索，未验证运行调用路径、资产及人工体验。"
+    }
+  ]
+}

@@ -16,7 +16,8 @@ bool FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(const FDivineBeasts
         return false;
     }
     if (ScreenId == TEXT("UI.Screen.CharacterCreate")) { return State.AllowedCommands.Contains(TEXT("CreateCharacter")); }
-    if (ScreenId == TEXT("UI.Screen.CharacterSelect")) { return !State.Characters.IsEmpty() && State.AllowedCommands.Contains(TEXT("SelectPersistentCharacter")); }
+    // 返回选择页只是本地显示/取消草稿，不是提交角色选择；即使列表为空且无提交权限也必须允许。
+    if (ScreenId == TEXT("UI.Screen.CharacterSelect")) { return true; }
     return false;
 }
 
@@ -59,11 +60,11 @@ FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
         if (State.CurrentStep == TEXT("DBA.Flow.CharacterEntry") && State.bAuthenticated)
         {
             if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterCreate")) { return CharacterEntryScreenPreference; }
-            if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterSelect") && !State.Characters.IsEmpty()) { return CharacterEntryScreenPreference; }
+            if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterSelect")) { return CharacterEntryScreenPreference; }
         }
-        return State.Characters.IsEmpty()
-            ? FName(TEXT("UI.Screen.CharacterCreate"))
-            : FName(TEXT("UI.Screen.CharacterSelect"));
+        // 无角色不代表已经获得创建授权；默认先显示空角色选择页，创建由用户显式点击。
+        // 这条显示路由不调用后端、不伪造SelectPersistentCharacter业务命令。
+        return TEXT("UI.Screen.CharacterSelect");
     }
 
     return NAME_None;

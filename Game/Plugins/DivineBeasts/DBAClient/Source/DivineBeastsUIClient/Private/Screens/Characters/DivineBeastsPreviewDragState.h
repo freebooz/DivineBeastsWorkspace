@@ -10,9 +10,9 @@ struct FDivineBeastsPreviewDragState
     void Begin(uint32 User, uint32 Pointer) { UserIndex=User; PointerIndex=Pointer; bDragging=true; }
     void Cancel() { bDragging=false; UserIndex=0; PointerIndex=0; }
     bool Owns(uint32 User, uint32 Pointer) const { return bDragging && UserIndex==User && PointerIndex==Pointer; }
-    /** Slate逻辑像素转角度；异常数值不传播，单个输入事件最多90度，避免重新捕获时跳转。 */
+    /** Slate逻辑像素转模型反向Yaw：鼠标向右拖动为负角度；异常值不传播，每次至多90度。 */
     float YawForMove(uint32 User, uint32 Pointer, float DeltaX) const
     {
-        return Owns(User,Pointer) && FMath::IsFinite(DeltaX) ? FMath::Clamp(DeltaX * 0.35f, -90.0f, 90.0f) : 0.0f;
+        return Owns(User,Pointer) && FMath::IsFinite(DeltaX) ? FMath::Clamp(-DeltaX * 0.35f, -90.0f, 90.0f) : 0.0f;
     }
 };

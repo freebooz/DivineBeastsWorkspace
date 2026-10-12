@@ -4,6 +4,7 @@
  * 回调在游戏线程核对作用域及代次，注销和世界退出取消请求并释放本实例资源。
  */
 #include "DivineBeastsApplicationFlowSubsystem.h"
+#include "Development/DivineBeastsPluginDemoMode.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
 #include "Interfaces/IGamePlatformWorldService.h"
 #include "Engine/World.h"
@@ -399,6 +400,12 @@ void UDivineBeastsApplicationFlowSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    // 插件演示模式不配置生产认证、会话和正式流程节点；本次初始化无后端副作用。
+    if (FDivineBeastsPluginDemoMode::IsEnabled())
+    {
+        return;
+    }
+
 
     // 显式初始化顺序避免首帧依赖时序竞争；这些依赖均为同一GameInstance作用域。
     Collection.InitializeDependency<UGamePlatformApplicationFlowSubsystem>();
@@ -1110,6 +1117,12 @@ void UDivineBeastsApplicationFlowSubsystem::ReleasePendingFlowDefinitionLease()
 
 bool UDivineBeastsApplicationFlowSubsystem::StartFlow(bool bTryAutoLogin)
 {
+    // 防御性门禁：调用方即使误触发，也不允许演示模式进入正式应用流程。
+    if (FDivineBeastsPluginDemoMode::IsEnabled())
+    {
+        return false;
+    }
+
     if (!PlatformFlow || !Online || !Session || !Loading || !Data ||
         FactoryHandles.IsEmpty())
     {

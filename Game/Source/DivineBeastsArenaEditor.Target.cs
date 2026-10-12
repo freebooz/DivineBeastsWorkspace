@@ -21,6 +21,8 @@ public class DivineBeastsArenaEditorTarget : TargetRules
         // GamePlatformPCG（游戏平台PCG）的模板生成、Commandlet（命令行工具）和DataValidation（数据校验）
         // 需要在Editor Target（编辑器目标）显式装配；不会改变Client/Server目标插件闭包。
         EnablePlugins.Add("GamePlatformPCG");
+        // 通用平台Editor菜单新增插件演示总览入口；只装配Editor，不改变Client/Server插件闭包。
+        EnablePlugins.Add("GamePlatformDeveloperTools");
         // Monolith在编辑器中创建和复核公共UI资产时必须加载真实内容插件挂载点。
         EnablePlugins.Add("DBAUIPack_Core");
         // 编辑器需要挂载前端内容包，生成/验证角色选择与创建三维预览地图。

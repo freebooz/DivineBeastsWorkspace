@@ -5,6 +5,7 @@
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
 
 #include "DivineBeastsApplicationFlowSubsystem.h"
+#include "Development/DivineBeastsPluginDemoMode.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Flow/DivineBeastsFlowNodes.h"
@@ -80,6 +81,12 @@ bool UDivineBeastsApplicationUIAdapter::Initialize(ULocalPlayer& LocalPlayer)
 
     UGameInstance* GameInstance = LocalPlayer.GetGameInstance();
     if (!GameInstance)
+    {
+        return false;
+    }
+
+    // 开发演示不得订阅正式流程或触发首次StartFlow(false)。
+    if (FDivineBeastsPluginDemoMode::IsEnabled())
     {
         return false;
     }

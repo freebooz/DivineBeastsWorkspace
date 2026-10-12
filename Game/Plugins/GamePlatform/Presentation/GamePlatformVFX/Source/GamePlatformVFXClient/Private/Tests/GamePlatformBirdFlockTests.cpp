@@ -1,5 +1,5 @@
-// 编辑器自动化：鸟群可配置数量、非法输入、防止超过512和确定性随机散布边界。
-// 这是纯数学合同测试；不等价于真实Niagara、客户端Cook或GPU性能验收。
+// 平台鸟群自动化：数量及种子执行纯算法断言；Actor生命周期使用真实GameWorld与ISM组件。
+// 在没有PIE的编辑器测试宿主中创建独立瞬态游戏世界，退出时回收，不替代真实Niagara/视觉/Cook性能验收。
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
@@ -12,6 +12,8 @@
 #include "UObject/UObjectGlobals.h"
 // NewObject的Outer转换需要UPackage完整定义，不能依赖其他模块的传递包含。
 #include "UObject/Package.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Misc/ScopeExit.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGamePlatformBirdFlockParametersTest,
@@ -84,7 +86,27 @@ bool FGamePlatformBirdFlockActorRuntimeTest::RunTest(const FString& Parameters)
             }
         }
     }
-    if (!TestNotNull(TEXT("必须在客户端实际游戏世界运行"), World))
+    // 编辑器命令行自动化通常不存在PIE World。只在没有可用游戏世界时建立隔离的真实GameWorld，
+    // 仍通过真实SpawnActor/ISM和销毁入口验收，不注入模拟Actor或伪造实例计数。
+    TStrongObjectPtr<UWorld> OwnedWorld;
+    if (!World)
+    {
+        OwnedWorld.Reset(UWorld::CreateWorld(EWorldType::Game, false));
+        World = OwnedWorld.Get();
+        // 引擎销毁Actor会查WorldContext；测试世界也必须完整登记，不能留下无上下文警告。
+        if (World) GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+    }
+    ON_SCOPE_EXIT
+    {
+        if (OwnedWorld.IsValid())
+        {
+            UWorld* Owned = OwnedWorld.Get();
+            OwnedWorld->DestroyWorld(false);
+            GEngine->DestroyWorldContext(Owned);
+        }
+    };
+    if (!TestNotNull(TEXT("必须有真实游戏世界"), World) ||
+        !TestTrue(TEXT("世界类型必须支持游戏Actor"), World->IsGameWorld()))
     {
         return false;
     }
