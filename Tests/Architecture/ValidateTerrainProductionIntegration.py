@@ -91,6 +91,12 @@ def run():
  ensure('TEXT("LayerIds="),LayerIds,' in landscape_cmd and
         "/*bShouldStopOnSeparator=*/false" in landscape_cmd,
         "Landscape十层CSV参数不能被默认分隔符截断")
+ scene=(BUILD/"AuthorTerrainProductionPCGReview.py").read_text(encoding="utf-8")
+ for term in ("GamePlatformPCGVolumeActor","generation_bounds","set_box_extent",
+              "pcg_component","20261012+index"):
+  ensure(term in scene,"PCG独立审核关卡未复用平台放置器/真实生成边界："+term)
+ for term in ("SAMPLERTYPE_LINEAR_GRAYSCALE","SAMPLERTYPE_NORMAL","SAMPLERTYPE_MASKS"):
+  ensure(term in script,"UE5.8 PBR Shader采样器物理类型不完整："+term)
  print("TERRAIN_PRODUCTION_PBR_PROVENANCE_AND_3TIER_STATIC_PASS","scan_layers=10","maps=40",
        "calibration_geo=20","rollback_members=61","client_mpc_contract=3")
  actual=[x for x in p["files"] if

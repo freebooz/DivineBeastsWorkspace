@@ -91,4 +91,6 @@
 - 共享引擎恢复准备b34b20fc-6554-464e-b585-dbffec8e9123已ReadyForReview：正式三处.patch、默认PlanOnly的.ps1和审查提案齐备；Saved镜像真实五步结果为1/1/0/0/0（前两项预期拒绝，随后计划、执行、回退），应用后旧applier CheckOnly为AlreadyApplied，回退恢复原始两文件精确字节。真实共享引擎和注册材料未修改，恢复代码SHA81766F8919F4370B63981748321C4E674AF9455E5A48DEC00759F110A185418B。
 - 主代理另对真实original/共享引擎运行恢复入口默认PlanOnly，返回TargetsWritten=false及预期四个SHA；工具未暴露独立数字原生码，不据此虚写0。独立记录FinalDeliveryChecks/77fd4f80-066c-48a0-b28c-4998663bf74b/SharedEnginePlanOnly/tool-observation.json。提案最后两段仅补正共享影响/AGENTS授权理由和这条只读观察，未称用户禁止引擎修改，恢复代码未变；准备阶段delivery快照保留，最终文档身份另由交付复核记录。
 - 最终汇总为FinalImplementationReport_20261012.md；交付静态复核使用77fd4f80-066c-48a0-b28c-4998663bf74b，实际命令、退出码、交付文件摘要及剩余场景状态写入独立FinalDeliveryChecks/result.json。该复核不新运行UE/UBT/Cook。
+- 首次最终复核77fd4f80-066c-48a0-b28c-4998663bf74b实际Failed/exit1，唯一失败为DBAClient模块登记与.uplugin不一致；原工作区与v的git diff --check均实际exit0。08:20 UTC只读确认并行新增DivineBeastsDemoClient真实11文件，original为64插件/86插件模块，固定v为64插件/85插件模块；本轮只补中央清单SourcePresent，未将新增模块纳入Editor16证明范围，未改v。
+- 登记补正后的独立交付复核使用843ca051-bf48-4d80-a0b4-302f21bbe0b2，实际清单/两份差异检查退出码、模块范围、最终文件摘要及原生资产身份写入对应FinalDeliveryChecks/result.json；旧失败目录及真实引擎PlanOnly观察保持原样，未新执行UE/UBT/Cook。
 - 上一轮只读基线检查、只编译部分模块、资产清单、开发内容批准均不计作本轮完整构建、真实Cook、视觉或正式业务内容验收。

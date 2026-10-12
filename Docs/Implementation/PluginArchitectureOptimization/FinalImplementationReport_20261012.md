@@ -18,7 +18,7 @@
 | 2 | 定义唯一性索引 | 唯一源查询反复扫描，资产变更与退出需要保持一致性 | 私有双向索引、一次冷建、按注册表事件增量维护；保留证据不足时的拒绝行为、候选覆盖与解绑 | Data16项真实UE回归，含6项新增索引/Registry测试 |
 | 3 | UI租约与异步根布局 | Profile/图标资源所有权分散，同步根加载及迟到回调存在生命周期风险 | 通过Data分别持有Profile和图标租约；根布局使用Idle/Pending/Failed/Ready状态及上下文代次；补齐Description验证 | 11项指定UI回归、完整UI前缀、12份Profile/60项条目与图标真实回读 |
 | 4 | Arena接口与VFX诊断 | 服务器内部实现暴露为公共依赖，多世界诊断相互干扰 | 内部头转Private，HTTP/JSON依赖收口；按世界注册/更新/注销计数，集中处理Pending变化 | 公共/竞技声明装配、Editor目标内Server模块编译及VFX24项UE回归；独立Server目标未通过 |
-| 5 | 平台路径和交付登记 | 平台Gold作者含项目默认根，内容包职责和模块成熟度缺少统一记录 | BlueprintRoot显式参数化；项目入口提供默认；补齐13包README及64插件/85模块清单，8个保留模块不计作生产能力 | PCG3项参数回归、原并行改动保护、结构及清单验证、正式内容门禁 |
+| 5 | 平台路径和交付登记 | 平台Gold作者含项目默认根，内容包职责和模块成熟度缺少统一记录 | BlueprintRoot显式参数化；项目入口提供默认；补齐13包README及固定快照的64插件/85模块清单；原工作区新增模块另作SourcePresent登记，8个保留模块不计作生产能力 | PCG3项参数回归、原并行改动保护、结构及清单验证、正式内容门禁 |
 | 6 | 独立审查与统一验证 | 零测试、模糊名称、过期DLL或仅路径存在容易被误判为成功 | 完整Editor构建凭据、源输入/产物前后校验、精确测试身份、额外失败拒绝及独占RunId证据目录 | 脚本合同/反例回归、完整目标构建、真实UE执行、独立复核及最终清单 |
 
 ### 2.1 服务器规则
@@ -53,7 +53,7 @@ VFX按世界记录实例计数，关闭一个世界不会清零其他世界，�
 
 Gold的BlueprintRoot在Map/RepairMap副作用之前校验，平台层没有项目默认挂载点，项目工具层提供现有默认值。保留既有并行PCG的空间探针、生成和确定性工作，不把保护或兼容这些改动记成本轮新增功能。
 
-成熟度清单明确分开SourcePresent与Reserved。64个插件和85个模块是登记事实，8个保留模块仍须有实际消费者、独立职责和生命周期证据才能升级为生产能力。
+成熟度清单明确分开SourcePresent与Reserved。固定v快照登记64个插件、85个插件模块；原工作区随后新增Demo模块，最终只读复核为64个插件、86个插件模块，详见第3节。计数均不含主工程模块。8个保留模块仍须有实际消费者、独立职责和生命周期证据才能升级为生产能力。
 
 ### 2.6 验收入口与发现后的修补
 
@@ -66,6 +66,8 @@ Gold的BlueprintRoot在Map/RepairMap副作用之前校验，平台层没有项�
 正式工作区为 `E:/poject/feebooz/DivineBeastsWorkspace`；运行验证检出为同一授权根内的 `E:/poject/feebooz/DivineBeastsWorkspace/.worktrees/v`。起始HEAD为 `7d44194333cda24f8a14495695e1d478deef5a97`，验证检出的Git基点为 `f2cf1b6fcdcaa68ecb9c96e7cabef62fa4d0d740`。本轮没有执行提交、推送或全树重置；外部提交和并行改动均保留。
 
 原工作区曾取得完整Editor成功结果，包括 `b813c0ed-9d98-47a5-94b8-20c3a3684458`，但后续PluginDemo增量使新的源码门禁失效。因此后续验证固定在v的Editor16，而不继续将持续变化的原目录与旧DLL混用。原工作区后续未纳入该快照的功能仍需其自身验证。
+
+08:20 UTC最终只读复核确认，original的DBAClient已新增DivineBeastsDemoClient：描述、Build.cs与实际11个模块文件均存在，允许Game/Client/Editor的Debug、DebugGame、Development配置，未允许Server、Shipping或Test。它由并行任务新增，不属于本轮固定v Editor16；v仍为85个插件模块，original现为86个。首次交付静态复核77fd4f80-066c-48a0-b28c-4998663bf74b仅因中央清单尚缺这一模块而返回exit1，两份git diff --check均exit0。本轮只补上SourcePresent登记，未改其源码、端侧限制或场景验收状态，也未同步进v。新增模块的编译与运行须由其实际工作流另行取证。
 
 最终Editor16：
 
@@ -221,7 +223,8 @@ Probe/Flow的原生类、共同基类、身份与序列化相关十份源码在o
 | Flow无覆盖传回 | `E:/poject/feebooz/DivineBeastsWorkspace/Saved/Validation/PluginArchitectureOptimization/20261012/FoundationDefinitionTransferFinal/332418fd-b826-49f7-9a3e-856e5a198b96/result.json` | 真实4516字节、目标不存在前置及20次源码身份比较；无original UE执行 |
 | 正常Server失败日志 | `E:/poject/feebooz/DivineBeastsWorkspace/.worktrees/v/Saved/Validation/FoundationM0/4f4fb9ee-acab-4a74-98dd-e4681068a478/Build/Server/UBT.log` | 5条HTTP编译诊断；整体Job取消另在修复证据记录，无Build/result.json |
 | 共享引擎修复准备 | `E:/poject/feebooz/DivineBeastsWorkspace/Saved/Validation/PluginArchitectureOptimization/20261012/SharedEngineHttpTestRepair/b34b20fc-6554-464e-b585-dbffec8e9123/result.json` | 实际字节捕获、隔离应用与回退演练；真实共享引擎未修改 |
-| 交付静态复核 | `E:/poject/feebooz/DivineBeastsWorkspace/Saved/Validation/PluginArchitectureOptimization/20261012/FinalDeliveryChecks/77fd4f80-066c-48a0-b28c-4998663bf74b/result.json` | 清单合同、差异与交付文件状态的实际结果，未重新执行UE/UBT/Cook |
+| 首次交付静态复核 | `E:/poject/feebooz/DivineBeastsWorkspace/Saved/Validation/PluginArchitectureOptimization/20261012/FinalDeliveryChecks/77fd4f80-066c-48a0-b28c-4998663bf74b/result.json` | Failed/exit1：并行新增Demo模块尚未登记；两份git diff --check均exit0；历史失败保留 |
+| 登记补正后交付复核 | `E:/poject/feebooz/DivineBeastsWorkspace/Saved/Validation/PluginArchitectureOptimization/20261012/FinalDeliveryChecks/843ca051-bf48-4d80-a0b4-302f21bbe0b2/result.json` | 独立RunId记录实际清单/差异退出码、86/85模块范围及交付文件摘要；未重新执行UE/UBT/Cook |
 
 ### 8.3 复现原则与命令
 

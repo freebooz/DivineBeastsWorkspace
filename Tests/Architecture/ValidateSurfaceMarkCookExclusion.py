@@ -46,6 +46,21 @@ class SurfaceMarkCookBoundaryTest(unittest.TestCase):
         pak=PAK.read_text(encoding="utf-8-sig")
         self.assertIn("GamePlatformSurface/Content/Marks/",pak)
 
+    def test_visual_review_map_excluded_once_created(self):
+        # 专业审查地图放在/Maps而非/Marks；生成后必须单独纳入三套服务器排除。
+        review=ROOT/"Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Maps/L_GP_SurfaceMarks_Review.umap"
+        if not review.is_file():
+            self.skipTest("真实UE独立痕迹Review地图尚未生成，不声称该目录已被服务器排除")
+        package="/GamePlatformSurface/Maps"
+        doc=json.loads(POLICY.read_text(encoding="utf-8"))
+        rules=[rule for rule in doc["CookDirectories"] if rule["PackagePath"]==package]
+        self.assertEqual(len(rules),1,"演示地图完成后必须添加单源服务器排除")
+        self.assertEqual(rules[0]["Profiles"],"AllServers")
+        self.assertEqual(rules[0]["Availability"],"Present")
+        for config in CONFIGS.values():
+            self.assertIn('DirectoriesToNeverCook=(Path="'+package+'")',config.read_text(encoding="utf-8-sig"))
+        self.assertIn("GamePlatformSurface/Content/Maps/",PAK.read_text(encoding="utf-8-sig"))
+
     def test_server_module_remains_client_only(self):
         path=ROOT/"Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/GamePlatformSurface.uplugin"
         modules={m["Name"]:m for m in json.loads(path.read_text(encoding="utf-8"))["Modules"]}

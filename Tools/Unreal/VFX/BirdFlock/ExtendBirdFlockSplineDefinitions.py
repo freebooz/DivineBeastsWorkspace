@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""正式鸟群WorldDefinition兼容扩展：只追加4种可选GPU参数及旧FlightMode值3—5。
-仅在锁定UE5.8编辑器内执行；保留三种Definition原身份、Niagara系统和旧七字段默认值。
-执行前须已有真实项目已编译反射类型；脚本不创建/仿造.uasset，未满足条件即失败。
+"""项目鸟群高级WorldDefinition（世界特效定义）真实UE编辑器作者。
+
+只复制三种已发布@1定义，制作独立_Spline变体并分配明确的@2逻辑身份。
+原Definition@1、原Niagara、原七项参数及现有材质保持原位，不允许扩展失败污染旧版本。
+必须等真实Niagara _Spline系统完成GPU模块图/样条DI回读后执行。
+脚本仅允许UE5.8独占编辑器真实写入，不把JSON/源文件改名为uasset。
 """
 from __future__ import annotations
 
-from pathlib import Path
+import hashlib
 import json
-import unreal
+from pathlib import Path
+import unreal  # 只有在UE5.8的PythonScriptPlugin（编辑器Python插件）中可导入
 
 PROJECT = "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Definitions"
+NIAGARA = "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Niagara"
 SPECIES = ("Seagull", "Swallow", "Eagle")
 NEW_FIELDS = (
     ("User.SeparationWeight", "Float", 0.0, 4.0),
@@ -23,76 +28,114 @@ OLD_NAMES = {
     "User.FlightSpeed", "User.FlockSeed", "User.FlightMode", "User.WindInfluence"
 }
 
+
 def validate_environment():
     project = str(unreal.Paths.get_project_file_path()).replace("\\", "/")
     if not project.endswith("/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject"):
-        raise RuntimeError("当前UE编辑器不是授权的神兽联盟主工程")
+        raise RuntimeError("不是已授权的神兽联盟主工程，拒绝编辑定义。")
     if not str(unreal.SystemLibrary.get_engine_version()).startswith("5.8."):
-        raise RuntimeError("本编辑器不是锁定的UE5.8版本")
+        raise RuntimeError("必须使用锁定UE5.8版本。")
+    return Path(project).resolve().parent.parent
 
-def field_rule(name, typ, low, high):
+
+def new_parameter(name, value_type, minimum, maximum):
     rule = unreal.GamePlatformVFXParameterRule()
-    # 类型枚举在旧Definition源码中已经对Integer/Float单独映射。
     rule.set_editor_property("name", unreal.Name(name))
-    rule.set_editor_property(
-        "type", getattr(unreal.GamePlatformVFXParameterType, typ.upper()))
+    rule.set_editor_property("type", getattr(unreal.GamePlatformVFXParameterType, value_type.upper()))
     rule.set_editor_property("required", False)
-    rule.set_editor_property("min_value", float(low))
-    rule.set_editor_property("max_value", float(high))
+    rule.set_editor_property("min_value", float(minimum))
+    rule.set_editor_property("max_value", float(maximum))
     return rule
 
+
+def ensure_v2_definition(assets, species, evidence):
+    source = PROJECT + "/DA_DBA_VFX_BirdFlock_" + species
+    destination = source + "_Spline"
+    niagara_path = NIAGARA + "/NS_DBA_BirdFlock_" + species + "_Spline"
+    original = assets.load_asset(source)
+    target_system = assets.load_asset(niagara_path)
+    if not isinstance(original, unreal.GamePlatformVFXWorldDefinition):
+        raise RuntimeError("旧@1正式WorldDefinition丢失：" + source)
+    if not isinstance(target_system, unreal.NiagaraSystem):
+        raise RuntimeError("新Spline Niagara变体未实际生成/保存：" + niagara_path)
+
+    if assets.does_asset_exist(destination):
+        target = assets.load_asset(destination)
+        if not isinstance(target, unreal.GamePlatformVFXWorldDefinition):
+            raise RuntimeError("新@2定义路径被其他类型占用：" + destination)
+    else:
+        target = assets.duplicate_asset(source, destination)
+        if not isinstance(target, unreal.GamePlatformVFXWorldDefinition):
+            raise RuntimeError("UE复制真实DataAsset失败：" + destination)
+
+    # 绝不在原@1上改变FlightMode白名单；本@2专门指向独立Spline变体。
+    schema = target.get_editor_property("parameter_schema")
+    rules = list(schema.get_editor_property("rules"))
+    names = {str(rule.get_editor_property("name")): rule for rule in rules}
+    if len(names) != len(rules) or not OLD_NAMES.issubset(names):
+        raise RuntimeError("原参数合同缺失或重复，不能制作新变体：" + destination)
+    mode = names["User.FlightMode"]
+    mode.set_editor_property("max_value", 5.0)
+    for name, value_type, low, high in NEW_FIELDS:
+        if name not in names:
+            rules.append(new_parameter(name, value_type, low, high))
+    schema.set_editor_property("rules", rules)
+    schema.set_editor_property("max_override_count", max(11, len(rules)))
+    target.set_editor_property("parameter_schema", schema)
+    target.set_editor_property("niagara_system", target_system)
+
+    identity = unreal.GamePlatformId()
+    identity.set_editor_property("namespace", "presentation.dba.environment.birdflock")
+    identity.set_editor_property("name", species.lower())
+    identity.set_editor_property("logical_version", 2)
+    target.set_editor_property("logical_id", identity)
+
+    # 维持SchemaVersion（表结构版本），只更新内容修订避免与旧@1产物混淆。
+    content_version = target.get_editor_property("data_version")
+    content_version.set_editor_property("content_revision", 2)
+    target.set_editor_property("data_version", content_version)
+
+    if not assets.save_loaded_asset(target, only_if_is_dirty=False):
+        raise RuntimeError("新@2真实定义保存失败：" + destination)
+    verify = assets.load_asset(destination)
+    if not isinstance(verify, unreal.GamePlatformVFXWorldDefinition):
+        raise RuntimeError("新@2定义重新加载失败：" + destination)
+    verify_names = {str(rule.get_editor_property("name"))
+                    for rule in verify.get_editor_property("parameter_schema").get_editor_property("rules")}
+    if not OLD_NAMES.issubset(verify_names) or not {x[0] for x in NEW_FIELDS}.issubset(verify_names):
+        raise RuntimeError("新@2定义Schema回读失败：" + destination)
+    evidence.append({"species": species, "definition": destination,
+                     "niagara": niagara_path, "logical_version": 2,
+                     "schema_names": sorted(verify_names),
+                     "niagara_gpu_live": "not_yet_validated"})
+
+
 def main():
-    validate_environment()
+    root = validate_environment()
     assets = unreal.EditorAssetLibrary
-    prepared = []
-    # 所有资源先只读预检，防止创建缺一半的物种目录。
+    evidence = []
+    originals = [
+        root / "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/"
+               "Content/VFX/Environment/BirdFlock/Definitions" / ("DA_DBA_VFX_BirdFlock_" + name + ".uasset")
+        for name in SPECIES
+    ]
+    hashes_before = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in originals}
     for species in SPECIES:
-        name = PROJECT + "/DA_DBA_VFX_BirdFlock_" + species
-        obj = assets.load_asset(name)
-        if not isinstance(obj, unreal.GamePlatformVFXWorldDefinition):
-            raise RuntimeError("正式WorldDefinition缺失或类型不正确：" + name)
-        schema = obj.get_editor_property("parameter_schema")
-        existing = list(schema.get_editor_property("rules"))
-        by_name = {str(x.get_editor_property("name")): x for x in existing}
-        if len(by_name) != len(existing) or not OLD_NAMES.issubset(by_name.keys()):
-            raise RuntimeError("旧七参数合同丢失或重复：" + name)
-        for field_name, _, _, _ in NEW_FIELDS:
-            if field_name in by_name:
-                # 增量脚本只给未存在的字段新增合法Rule，不任意覆盖策划已经调整的值。
-                print("BIRD_RULE_PRESENT", species, field_name)
-        prepared.append((species, name, obj, schema, existing, by_name))
+        ensure_v2_definition(assets, species, evidence)
+    hashes_after = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in originals}
+    if hashes_before != hashes_after:
+        raise RuntimeError("旧@1鸟群定义文件在高级版本制作时发生改动，必须人工审查恢复。")
 
-    changed = []
-    for species, name, obj, schema, existing, by_name in prepared:
-        rules = list(existing)
-        # FlightMode旧0/1/2保留，增加3=SplineOnce,4=SplineLoop,5=SplinePingPong。
-        old_mode = by_name["User.FlightMode"]
-        old_mode.set_editor_property("max_value", 5.0)
-        for field_name, typ, low, high in NEW_FIELDS:
-            if field_name not in by_name:
-                rules.append(field_rule(field_name, typ, low, high))
-        schema.set_editor_property("rules", rules)
-        schema.set_editor_property("max_override_count", max(11, len(rules)))
-        obj.set_editor_property("parameter_schema", schema)
-        if not assets.save_loaded_asset(obj, only_if_is_dirty=False):
-            raise RuntimeError("真实Niagara鸟群Definition保存失败：" + name)
-        check = obj.get_editor_property("parameter_schema")
-        names = {str(x.get_editor_property("name")) for x in check.get_editor_property("rules")}
-        if not OLD_NAMES.issubset(names) or not {f[0] for f in NEW_FIELDS}.issubset(names):
-            raise RuntimeError("保存后参数校验失败：" + name)
-        changed.append({"species": species, "path": name,
-            "schema_fields": sorted(names), "schema_count": len(names)})
-        print("BIRD_SPLINE_DEFINITION_SAVED", name, len(names))
+    output = root / "Saved/Validation/BirdFlockSplineFlight/WorldDefinitionsAuthoring.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps({"status": "new_v2_definitions_saved_pending_runtime",
+                    "old_definition_hashes_unchanged": True, "definitions": evidence,
+                    "schema_only_cannot_prove_gpu": True, "manual_visual_approval": "pending"},
+                   ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print("BIRD_SPLINE_V2_DEFINITIONS_SAVED", len(evidence))
 
-    workspace = Path(unreal.Paths.get_project_file_path()).resolve().parent.parent
-    evidence = workspace/"Saved/Validation/BirdFlockSplineFlight"
-    evidence.mkdir(parents=True, exist_ok=True)
-    (evidence/"WorldDefinitionsAuthoring.json").write_text(
-        json.dumps({"status":"assets_saved","definitions":changed,
-                    "manual_visual_approval":"pending",
-                    "niagara_execution":"not_proven_by_schema_alone"},
-                   ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    print("BIRD_SPLINE_DEFINITION_ASSETS_READY", len(changed))
 
 if __name__ == "__main__":
     main()
+

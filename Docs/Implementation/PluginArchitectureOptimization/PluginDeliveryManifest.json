@@ -275,6 +275,11 @@
           "Name": "DivineBeastsUIClient",
           "HostType": "ClientOnly",
           "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsDemoClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
         }
       ],
       "Scenarios": [

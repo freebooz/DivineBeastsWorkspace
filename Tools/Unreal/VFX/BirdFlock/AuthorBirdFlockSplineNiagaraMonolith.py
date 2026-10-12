@@ -56,7 +56,8 @@ MODULES=[
         "description":"逐鸟相位/滑翔输出至Dynamic Material Parameter；RGB羽色和Alpha旧权重不变。"
     }
 ]
-SYSTEMS=[PROJECT+"/NS_DBA_BirdFlock_"+name for name in ("Seagull","Swallow","Eagle")]
+SOURCE_SYSTEMS=[PROJECT+"/NS_DBA_BirdFlock_"+name for name in ("Seagull","Swallow","Eagle")]
+SYSTEMS=[source+"_Spline" for source in SOURCE_SYSTEMS]
 LEGACY_SYSTEM=PLATFORM+"/NS_GP_BirdFlock_Base"
 MATERIAL="/GamePlatformVFX/Environment/BirdFlock/Materials/M_GP_BirdFlock_Master"
 ADVANCED_RULES={
@@ -139,45 +140,84 @@ def author_modules(niagara, editor_python):
     return out
 
 
+def prepare_variants(editor_python):
+    """通过真实UE编辑器复制三套鸟群系统至独立_Spline变体；不改变旧系统资产或身份。"""
+    script = (
+        "import unreal\n"
+        "a=unreal.EditorAssetLibrary\n"
+        "p='/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Niagara/'\n"
+        "for n in ('Seagull','Swallow','Eagle'):\n"
+        " old=p+'NS_DBA_BirdFlock_'+n\n"
+        " new=old+'_Spline'\n"
+        " original=a.load_asset(old)\n"
+        " assert isinstance(original,unreal.NiagaraSystem),old\n"
+        " if a.does_asset_exist(new):\n"
+        "  clone=a.load_asset(new)\n"
+        "  assert isinstance(clone,unreal.NiagaraSystem),new\n"
+        " else:\n"
+        "  clone=a.duplicate_asset(old,new)\n"
+        "  assert isinstance(clone,unreal.NiagaraSystem),new\n"
+        "  assert a.save_loaded_asset(clone,only_if_is_dirty=False),new\n"
+        " print('BIRD_SPLINE_VARIANT',new)\n"
+    )
+    return editor_python(script)
+
+
+def require_spline_di(niagara,target):
+    """Niagara变体真正绑定Spline数据接口前不允许修改模块图或标记成功。
+
+    目前以Editor手动绑定/Monolith真实工具设置AttachParentOnly后再继续；离线HLSL源码
+    无法替代USplineComponent到GPU数据接口的实际连接。
+    """
+    info=niagara("list_system_data_interfaces",asset_path=target)
+    raw=json.dumps(info,ensure_ascii=False)
+    if "Spline" not in raw or "AttachParentOnly" not in raw:
+        raise RuntimeError("变体尚未实际绑定Spline DI/AttachParentOnly，拒绝写入粒子模块："+target)
+    return info
+
+
 def integrate_species(niagara, editor_python):
-    # 先检查三个项目资产都能被UE独立加载；不修改旧DefinitionId。
+    """只修改经UE真实复制并绑定Spline DI的_Spline变体，避免破坏已发布三物种系统。"""
     editor_python(
         "import unreal\n"
         "a=unreal.EditorAssetLibrary\n"
         "prefix='/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Niagara/'\n"
         "for n in ('Seagull','Swallow','Eagle'):\n"
-        " p=prefix+'NS_DBA_BirdFlock_'+n\n"
-        " x=a.load_asset(p)\n"
-        " assert isinstance(x,unreal.NiagaraSystem),p\n"
-        "print('BIRD_SPLINE_SPECIES_PRECHECK_OK')")
-    # 通过GetOrderedModules读取真实粒子更新模块，防止重复加入相同脚本；不破坏Emitter Self/Once。
+        " old=prefix+'NS_DBA_BirdFlock_'+n\n"
+        " target=old+'_Spline'\n"
+        " assert isinstance(a.load_asset(old),unreal.NiagaraSystem),old\n"
+        " assert isinstance(a.load_asset(target),unreal.NiagaraSystem),target\n"
+        "print('BIRD_SPLINE_VARIANTS_PRECHECK_OK')"
+    )
+    # 在写入任何系统之前检查三个变体的Spline DI真实绑定。
+    di_snapshots={target:require_spline_di(niagara,target) for target in SYSTEMS}
     results=[]
     for target in SYSTEMS:
         before=niagara("get_ordered_modules",asset_path=target,emitter=EMITTER)
         before_json=json.dumps(before,ensure_ascii=False)
         for module in MODULES:
             if module["path"].split("/")[-1] in before_json:
-            # 只有满足真实Niagara模块图资源与Spline DI前提才允许连接到既有三物种系统。
                 print("BIRD_SPLINE_MODULE_ALREADY_PRESENT",target,module["name"])
                 continue
-            # Niagara编辑器动作把模块加入现有Emitter，不创建平行Particle System。
             niagara("add_module",asset_path=target,emitter=EMITTER,
                 stage="particle_update",script=module["path"])
+        listed=niagara("get_user_parameters",asset_path=target)
+        existing_json=json.dumps(listed,ensure_ascii=False)
         for key,(typ,default) in ADVANCED_RULES.items():
-            # 参数只能经过同一真实Niagara UserParameter协议创建；
-            # Definitions参数Schema必须先由独立UE编辑器脚本扩展。
+            if key in existing_json:
+                continue
             niagara("add_user_parameter",asset_path=target,
                 parameter=key,type=typ,default=str(default))
         diag=niagara("get_system_diagnostics",asset_path=target,compile_first=True)
         error_count=diag.get("error_count",None)
         if error_count is None or error_count!=0:
-            raise RuntimeError("正式Niagara新模块编译未通过，不能保存/标完成："+target+
+            raise RuntimeError("Spline变体Niagara编译失败，禁止切换正式目录："+target+
                                ",errors="+str(diag.get("errors")))
         niagara("save_system",asset_path=target,only_if_dirty=False)
         after=niagara("get_ordered_modules",asset_path=target,emitter=EMITTER)
         results.append({"system":target,"modules_before":before,"modules_after":after,
-                        "diagnostics":diag,"gpu_runtime":"not_proven",
-                        "spline_data_interface":"requires_real_editor_binding"})
+                        "di_binding":di_snapshots[target],"diagnostics":diag,
+                        "gpu_runtime":"pending_independent_gpu_review"})
     return results
 
 
@@ -185,13 +225,14 @@ def main():
     parser=argparse.ArgumentParser(description="鸟群Spline Niagara资产作者")
     parser.add_argument("--inspect",action="store_true",help="仅审计源码/原资产，不改UE")
     parser.add_argument("--author-modules",action="store_true",help="需独占Monolith编辑器")
-    parser.add_argument("--integrate-species",action="store_true",help="需NIagara图/DI与白名单已准备")
+    parser.add_argument("--prepare-variants",action="store_true",help="先复制3种正式Niagara系统，原资产保持不变")
+    parser.add_argument("--integrate-species",action="store_true",help="仅在真实Spline DI绑定后修改独立_Spline变体")
     args=parser.parse_args()
     audit=check_local_sources()
     if args.inspect:
         print(json.dumps(audit,ensure_ascii=False,indent=2))
         return
-    if not args.author_modules and not args.integrate_species:
+    if not args.author_modules and not args.prepare_variants and not args.integrate_species:
         raise RuntimeError("必须显式选择--inspect、--author-modules或--integrate-species")
     niagara, editor_python=guard_monolith()
     REPORT.mkdir(parents=True,exist_ok=True)
@@ -199,6 +240,8 @@ def main():
     try:
         if args.author_modules:
             output["actions"]=author_modules(niagara,editor_python)
+        if args.prepare_variants:
+            output["actions"]=prepare_variants(editor_python)
         if args.integrate_species:
             output["actions"]=integrate_species(niagara,editor_python)
         output["result"]="author_actions_submitted"

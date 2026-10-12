@@ -86,6 +86,13 @@ MobaCommon（通用竞技层）无地形特殊行为，不增加空模块。正�
 - 已制作10类源图2×2平铺预审，位置`Game/Saved/Validation/TerrainPBR_20261012/TerrainPBR_10Materials_2x2TilingQA.png`；土路颜色接缝、岩面/碎石法线接缝风险列为美术待处理项。该图由离线PNG拼接，不是UE场景GPU截图。
 - 本次等待`.worktrees/v`的`DivineBeastsArenaServer`工程构建释放，但原UBT任务截至末次观察仍存在且有真实cl.exe编译子进程，独占构建等待窗口结束未强占。新增资源仍未进入真实UE Editor，因此图片/性能/打包门禁保持“未通过或未执行”，不能算已经完成。
 
+### 2026-10-12 进一步执行：UE5.8采样器与PCG插件化边界
+
+- 按实际UE5.8引擎`MaterialExpressionUtils::GetSamplerTypeForTexture`（由材质贴图物理格式映射采样类型的引擎真源）复核`AuthorTerrainProductionMaterial.py`，已补全`TC_DEFAULT`、`TC_NORMALMAP`、`TC_MASKS`和`TC_GRAYSCALE`四类来源的SamplerType；尤其禁止把关闭sRGB的高度图错误作为普通Grayscale采样，实际应使用`SAMPLERTYPE_LINEAR_GRAYSCALE`（线性灰度），并维持Shared Wrap采样器。Python源码解析及项目三层静态门禁需单独验证，不能冒充UE Shader通过。
+- `AuthorTerrainProductionPCGReview.py`不再依赖可能没有预设Brush包围盒的裸`PCGVolume`，改为已有`GamePlatformPCGVolumeActor`（平台非碰撞PCG体积放置器），显式设置`Bounds`与`GenerationBounds`为1008米见方、300米高的校准Landscape空间范围；四类森林/岩坡/湖岸/道路分别设置固定Seed，Graph绑定到组件但不主动Generate/Bake。
+- `Tests/Architecture/ValidateTerrainProductionIntegration.py`增加正式UE纹理Sampler类型、平台PCG Actor、显式Box范围、四图层映射检查。上一轮静态检查曾因该测试文件缩进异常失败，本轮已修复并重新执行合同检查，后续保留真实退出码为准。
+- 截至本轮检查，仍有其他会话的`DivineBeastsArenaEditor`模块编译进程占用同一主工程。已启动受控流水线，只有连续三个时间窗口确认无UE/UBT后才调用`RunTerrainGaeaFullReview.ps1 -Apply -ProductionPBR`（正式扫描PBR十层UE原生导入、材质、PCG图及独立地图），不得杀掉编译进程或虚构成功。
+
 ## 六、可复现的只读检查
 
 ```powershell

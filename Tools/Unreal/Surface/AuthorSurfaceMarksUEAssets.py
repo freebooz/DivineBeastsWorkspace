@@ -219,11 +219,32 @@ def ensure_catalog(unreal,assets,tools,instances):
         if not assets.save_loaded_asset(catalog,only_if_is_dirty=False):
             raise RuntimeError("UE目录数据资产保存失败")
     styles=list(catalog.get_editor_property("styles"))
-    if len(styles)<5:raise RuntimeError("真实目录样式不足五类")
+    if len(styles)!=len(KINDS):
+        raise RuntimeError("真实目录必须恰好有五种默认痕迹，不接受部分或重复数据")
+    for field,minimum,maximum in (("max_active_marks",1,512),
+                                  ("max_pending_marks",1,128),
+                                  ("max_recent_event_ids",1,2048)):
+        value=catalog.get_editor_property(field)
+        if not (minimum<=value<=maximum):
+            raise RuntimeError("现存目录越界预算："+field)
     for kind in KINDS:
         expect=getattr(unreal.GamePlatformSurfaceMarkKind,kind.upper())
-        matched=[x for x in styles if x.get_editor_property("kind")==expect]
-        if len(matched)!=1: raise RuntimeError("真实目录缺失或重复类别："+kind)
+        matched=[entry for entry in styles if entry.get_editor_property("kind")==expect]
+        if len(matched)!=1:
+            raise RuntimeError("真实目录缺失或重复类别："+kind)
+        entry=matched[0]
+        # 检查真实软引用是否仍指向这个类别的实例，而非仅有同数量的任意资源。
+        expected=instances[kind].get_path_name()
+        material=str(entry.get_editor_property("material"))
+        if expected not in material:
+            raise RuntimeError("目录贴花材质身份不匹配："+kind+" "+material)
+        dimensions=entry.get_editor_property("size_cm")
+        if not all(0.01 < getattr(dimensions,axis) <= 10000.0 for axis in ("x","y","z")):
+            raise RuntimeError("目录真实尺寸超出安全边界："+kind)
+        lifetime=entry.get_editor_property("lifetime_seconds")
+        fade=entry.get_editor_property("fade_seconds")
+        if not (0.0 < lifetime <= 3600.0 and 0.0 <= fade <= lifetime):
+            raise RuntimeError("目录淡出和生命周期不一致："+kind)
     print("SURFACE_MARK_CATALOG_VERIFIED",CATALOG,"styles",len(styles),flush=True)
 
 def main():
