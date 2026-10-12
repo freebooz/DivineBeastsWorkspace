@@ -3,6 +3,7 @@
 
 #include "Components/SplineComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/Actor.h"
 
 bool FDivineBeastsBirdFlockFlightSettings::ValidateForWorld(const UWorld* World, FString& OutReason) const
 {

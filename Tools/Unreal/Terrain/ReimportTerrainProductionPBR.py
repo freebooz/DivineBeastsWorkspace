@@ -86,8 +86,8 @@ def run():
    to_import.append((spec,task))
   tool.import_asset_tasks([task for _,task in to_import])
   for spec,task in to_import:
-   if not task.get_editor_property("imported_object_paths"):
-    raise RuntimeError("Unreal资产替换失败："+spec["assetPath"])
+   if not task.get_editor_property("imported_object_paths") and not assets.does_asset_exist(spec["assetPath"]):
+    raise RuntimeError("UE导入任务既无目标路径也无已保存纹理资产："+spec["assetPath"])
    obj=assets.load_asset(spec["assetPath"])
    if not isinstance(obj,unreal.Texture2D):
     raise TypeError("Unreal实际Texture2D丢失："+spec["assetPath"])
@@ -107,9 +107,11 @@ def run():
    raise RuntimeError("sRGB设置错误："+spec["assetPath"])
   get_width=getattr(obj,"blueprint_get_size_x",None)
   get_height=getattr(obj,"blueprint_get_size_y",None)
-  if callable(get_width) and callable(get_height):
-   if (get_width(),get_height())!=(2048,2048):
-    raise RuntimeError("UE纹理像素尺寸并非2048："+spec["assetPath"])
+  # 分辨率检查必须强制执行：原校准资产仅1024，阻止导入任务假成功。
+  if not callable(get_width) or not callable(get_height):
+   raise RuntimeError("UE5.8纹理不支持原生像素大小反射："+spec["assetPath"])
+  if (get_width(),get_height())!=(2048,2048):
+   raise RuntimeError("UE纹理不是已替换的2048扫描版本："+spec["assetPath"])
  print("TERRAIN_PBR_UE_40_TEXTURES_VERIFIED mode="+MODE+" count=40",flush=True)
 
 if __name__=="__main__":run()

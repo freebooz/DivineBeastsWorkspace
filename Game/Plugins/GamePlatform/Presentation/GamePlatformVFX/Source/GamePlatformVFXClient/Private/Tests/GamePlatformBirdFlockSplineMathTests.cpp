@@ -1,5 +1,6 @@
 // 纯路径数学回归：全域边界、重入与非有限值检查，不将本单测当作真实GPU/视觉验收。
 #include "Environment/BirdFlock/GamePlatformBirdFlockSplineMath.h"
+#include <limits>
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformBirdSplineMathTest,
@@ -29,7 +30,7 @@ bool FGamePlatformBirdSplineMathTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("非法个体相位拒绝"),FGamePlatformBirdFlockSplineMath::EvaluateProgress(
         1,100,1000,1,Mode::Once,Progress,bEnd));
     TestFalse(TEXT("NaN拒绝"),FGamePlatformBirdFlockSplineMath::EvaluateProgress(
-        TNumericLimits<double>::QuietNaN(),100,1000,0,Mode::Once,Progress,bEnd));
+        std::numeric_limits<double>::quiet_NaN(),100,1000,0,Mode::Once,Progress,bEnd));
     TestTrue(TEXT("Boids权重有效"),FGamePlatformBirdFlockSplineMath::ValidateFlockingWeights(1,1,1));
     TestFalse(TEXT("Boids权重过量拒绝"),FGamePlatformBirdFlockSplineMath::ValidateFlockingWeights(2,2,2));
     TestEqual(TEXT("合理预算数量"),FGamePlatformBirdFlockSplineMath::ResolveVisibleCount(128,0.5f),64);

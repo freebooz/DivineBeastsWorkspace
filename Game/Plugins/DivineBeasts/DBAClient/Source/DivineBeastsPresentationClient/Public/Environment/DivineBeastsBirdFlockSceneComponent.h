@@ -34,7 +34,7 @@ public:
 
     /** 编辑器内同世界可选路线Actor，应带已注册USplineComponent；为空尝试自身Owner。 */
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category="BirdFlock|Advanced",
-        meta=(EditCondition="bEnableAdvancedFlight && AdvancedFlight.bUseSpline",DisplayName="样条路径Actor"))
+        meta=(EditCondition="bEnableAdvancedFlight",DisplayName="样条路径Actor"))
     TObjectPtr<AActor> RouteActor = nullptr;
 
     /** 只读返回同World中稳定群身份，运行期修改FlockId后仍须显式Apply。 */

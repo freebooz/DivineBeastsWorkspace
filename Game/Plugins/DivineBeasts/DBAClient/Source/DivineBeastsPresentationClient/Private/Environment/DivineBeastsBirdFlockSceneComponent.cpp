@@ -61,6 +61,13 @@ bool UDivineBeastsBirdFlockSceneComponent::ApplyBirdFlock(FString& OutError)
     const FGuid NewToken = OldService.Get() == Service && OldId == NewId && OldToken.IsValid()
         ? OldToken : FGuid::NewGuid();
 
+    // 0只鸟的语义始终是撤销本Owner持有的请求，不得因为旧Spline已被关卡卸载而无法停播。
+    if (BirdCount == 0)
+    {
+        StopBirdFlock();
+        return true;
+    }
+
     int32 DesiredCount = BirdCount;
     FDivineBeastsBirdFlockFlightSettings Flight = AdvancedFlight;
     if (bEnableAdvancedFlight)

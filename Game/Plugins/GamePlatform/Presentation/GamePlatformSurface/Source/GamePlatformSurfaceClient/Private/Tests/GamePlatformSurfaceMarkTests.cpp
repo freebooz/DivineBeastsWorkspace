@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 #include "Marks/GamePlatformSurfaceMarkTypes.h"
 #include "Marks/GamePlatformSurfaceMarkCatalog.h"
+#include "Marks/GamePlatformSurfaceMarkBlueprintLibrary.h"
 #include "UObject/StrongObjectPtr.h"
 #include <limits>
 
@@ -30,6 +31,12 @@ bool FGamePlatformSurfaceMarkRequestTest::RunTest(const FString&)
     Request.SizeScale = 1.0f;
     Request.Location.X = std::numeric_limits<double>::quiet_NaN();
     TestFalse(TEXT("非有限命中位置拒绝"), FGamePlatformSurfaceMarkPolicy::IsValidRequest(Request));
+    const FHitResult Miss;
+    const auto MissResult = UGamePlatformSurfaceMarkBlueprintLibrary::SubmitSurfaceMarkFromHit(
+        nullptr, EGamePlatformSurfaceMarkKind::Bullet, Miss, FVector::ForwardVector, FGuid::NewGuid());
+    TestEqual(TEXT("未命中不得在世界原点生成Decal"), MissResult.Status, EGamePlatformSurfaceMarkStatus::InvalidRequest);
+    const auto WrongWorld = UGamePlatformSurfaceMarkBlueprintLibrary::SubmitSurfaceMark(nullptr, FGamePlatformSurfaceMarkRequest());
+    TestEqual(TEXT("空世界必须报告InvalidWorld"), WrongWorld.Status, EGamePlatformSurfaceMarkStatus::InvalidWorld);
     return true;
 }
 

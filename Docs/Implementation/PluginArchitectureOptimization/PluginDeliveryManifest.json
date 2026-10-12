@@ -1360,7 +1360,8 @@
         ".worktrees/v/Saved/Validation/FoundationM0/20261012-0400-4000-8000-000000000008/PluginArchitectureTests/result.json",
         ".worktrees/v/Saved/Validation/FoundationM0/20261012-0400-4000-8000-000000000008/PluginArchitectureTests/PCG/Automation/index.json",
         ".worktrees/v/Saved/Validation/PluginArchitectureOptimization/20261012/ModuleEvidenceCorrespondence/bcd70aca-1760-4730-ad0b-3320ebbadc3e/result.json",
-        "Docs/Implementation/PluginArchitectureOptimization/task-5-pcg-report.md"
+        "Docs/Implementation/PluginArchitectureOptimization/task-5-pcg-report.md",
+        ".worktrees/v/Saved/Validation/PluginArchitectureOptimization/20261012/Task5VEntryRestore/b09252ef-b75d-449e-a1a2-b3eae0577a88/result.json"
       ]
     },
     {
@@ -1380,9 +1381,12 @@
         "列出本次Pak/IoStore及松散资源，拒绝空/损坏证据，并验证纯表现目录禁入。"
       ],
       "Expected": "项目UI/VFX纯表现目录不能泄入服务器；地图和权威定义仍存在，工具退出0不替代容器解析。",
-      "Status": "NotRun",
+      "Status": "Blocked",
+      "BlockerZh": "正常Server前置构建4f4fb9ee-acab-4a74-98dd-e4681068a478在共享引擎旧版HttpRedirectPolicyTests.cpp出现确定的C2248及C2838/C2065；保留原生日志后主动停止自有Job（exit -1，Cancelled），未生成成功构建收据。本场景实际Cook/Stage未执行，RunId保持null；待共享引擎测试文件同步和正常Server/Editor重建后再运行。",
       "RunId": null,
-      "Evidence": []
+      "Evidence": [
+        ".worktrees/v/Saved/Validation/FoundationM0/4f4fb9ee-acab-4a74-98dd-e4681068a478/Build/Server/UBT.log"
+      ]
     },
     {
       "Id": "arena",

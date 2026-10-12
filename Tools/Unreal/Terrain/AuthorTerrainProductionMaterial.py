@@ -108,6 +108,11 @@ def execute():
   e=node(unreal.MaterialExpressionTextureSampleParameter2D,x,y)
   e.set_editor_property("parameter_name",unreal.Name(name))
   e.set_editor_property("texture",tex)
+  # UE5.8 Shared Wrap（共享环绕采样器）避免10层40张PBR独占超过采样器槽预算。
+  shared=getattr(unreal.SamplerSourceMode,"SSM_WRAP_WORLD_GROUP_SETTINGS",None)
+  if shared is None:
+   raise RuntimeError("UE未提供共享采样器，不允许按默认采样器创建超预算地形材质")
+  e.set_editor_property("sampler_source",shared)
   wire(uv,e,"Coordinates")
   return e
  def add(a,b,x,y,oa="",ob=""):return op(unreal.MaterialExpressionAdd,a,b,x,y,oa,ob)
@@ -205,7 +210,7 @@ def execute():
   "ORM":platform_texture("Moss/T_GP_Moss_Orm"),
   "Coverage":platform_texture("Moss/T_GP_Moss_Coverage")}
  moss=mul(scalar("TerrainMossAmount",0,2810,-2250),
-          global_scalar("GlobalMossInfluence",2610,-2570),2790,-2510)
+          global_scalar("GP_Surface_GlobalMossInfluence",2610,-2570),2790,-2510)
  moss_weight=sat(add(masks_by_layer["Rock"],masks_by_layer["ForestSoil"],2820,-2070),3010,-2070)
  moss_uv=mul(uv,scalar("TerrainMossMacroTiling",2,3090,-2640),3240,-2670)
  moss_noise=sample(moss_texture["Coverage"],"TerrainMossCoverage",moss_uv,3180,-2400)
@@ -220,7 +225,7 @@ def execute():
  ao=lerp(ao,moss_orm,moss_mask,3750,2680,outb="R")
  # 局部湿润只调整颜色和粗糙度，绝不改变服务器权威碰撞或玩法事实。
  wet=sat(maximum(scalar("VillageWetness",0,3300,3200),
-                 global_scalar("GlobalWetness",3000,3350),3500,3400),3700,3360)
+                 global_scalar("GP_Surface_GlobalWetness",3000,3350),3500,3400),3700,3360)
  shade=sub(one,mul(wet,value(.23,3460,3200),3700,3140),3960,3050)
  col=mul(col,shade,4180,-900)
  rough=lerp(rough,value(.36,4100,1620),wet,4390,1550)
@@ -230,7 +235,7 @@ def execute():
  snow_nrm=platform_texture("Weather/T_GP_Weather_SnowNormal")
  # 三张纹理可由客户端MID按软资源租约覆盖；审核地图只读默认纹理可见性。
  snow_amount=sat(maximum(scalar("VillageSnowAmount",0,3610,-2580),
-                     global_scalar("GlobalSnowAmount",3370,-3130),3830,-3160),4030,-3190)
+                     global_scalar("GP_Surface_GlobalSnowAmount",3370,-3130),3830,-3160),4030,-3190)
  vn=node(unreal.MaterialExpressionVertexNormalWS,3590,-2950)
  dz=node(unreal.MaterialExpressionDotProduct,3830,-2850)
  wire(vn,dz,"A");wire(vec(0,0,1,3610,-2750),dz,"B")
@@ -263,7 +268,7 @@ def execute():
   raise RuntimeError("Material Instance创建失败")
  matlib.set_material_instance_parent(inst,mat)
  matlib.set_material_instance_scalar_parameter_value(inst,"VillageSnowAmount",0)
- matlib.set_material_instance_scalar_parameter_value(inst,"TerrainMossAmount",0)
+ matlib.set_material_instance_scalar_parameter_value(inst,"TerrainMossAmount",0.48)
  if not lib.save_loaded_asset(inst,only_if_is_dirty=False):
   raise RuntimeError("Material Instance保存失败")
  inspect()

@@ -74,7 +74,9 @@ int32 UGamePlatformSurfaceTerrainReviewMapCommandlet::Main(const FString& Params
     if (!FParse::Value(*Params,TEXT("MapPackage="),MapPackage) ||
         !FParse::Value(*Params,TEXT("RawRoot="),RawRoot) ||
         !FParse::Value(*Params,TEXT("LayerRoot="),LayerRoot) ||
-        !FParse::Value(*Params,TEXT("LayerIds="),LayerIds) ||
+        // 地形10层CSV必须保留全部逗号，拒绝FParse默认截断行为。
+        !FParse::Value(*Params,TEXT("LayerIds="),LayerIds,
+                       /*bShouldStopOnSeparator=*/false) ||
         !FParse::Value(*Params,TEXT("MaterialPath="),MaterialPath))
     {
         UE_LOG(LogSurfaceTerrainImport,Error,

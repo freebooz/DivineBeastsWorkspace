@@ -1,9 +1,11 @@
 // 神兽联盟正式鸟群入口；所有权/异步资源/取消重入与Fauna复用项目内部环境群落事务。
 // 仅提交中立请求，无Niagara实例或Tick；原有Blueprint API保持兼容。
 #include "DivineBeastsPresentationClientSubsystem.h"
+#include "Environment/DivineBeastsBirdFlockRouteActor.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
+#include "Misc/ConfigCacheIni.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
 
@@ -37,6 +39,16 @@ bool UDivineBeastsPresentationClientSubsystem::StartAmbientBirdFlockForOwnerAdva
     if (!IsValid(Owner) || !RegistrationToken.IsValid())
     {
         OutError = TEXT("高级鸟群要求存活Owner和有效注册代次。");
+        return false;
+    }
+    // 真实GPU样条、Niagara参数白名单和项目物种系统尚需同版本生成、回读和验收。
+    // 未打开明确的项目发布资格门禁时绝不让模式3..5误回退为现有FigureEight视觉假成功。
+    bool bAuthorizedAdvancedBirdFlock = false;
+    if (!GConfig || !GConfig->GetBool(TEXT("DivineBeasts.BirdFlock.Advanced"),
+            TEXT("bEnableVerifiedGPUFlight"), bAuthorizedAdvancedBirdFlock, GGameIni) ||
+        !bAuthorizedAdvancedBirdFlock)
+    {
+        OutError = TEXT("高级鸟群Niagara资源未完成同版本验收，正式路径暂不受理；旧0/1/2模式不受影响。");
         return false;
     }
     return StartEnvironmentFlock(BirdFlocks, FlockId, SpeciesId, BirdCount, FlightSettings.Seed,
@@ -75,6 +87,20 @@ void UDivineBeastsPresentationClientSubsystem::StartDefaultWorldBirdFlock(UWorld
     if (!bVillage && !bOpenWorld) return;
     // 分屏共享环境，只由首个本地玩家自动建立默认群。
     if (!World->GetGameInstance() || World->GetGameInstance()->GetFirstGamePlayer() != GetLocalPlayer()) return;
+    // 项目内容地图如已明确放置真实ClientOnly样条群组，则先由其自身Owner/Token启动。
+    // 无路线Actor或新GPU内容尚未验收时，原有单群环境鸟作为安全可见回退。
+    bool bHavePlayableSplineRoute = false;
+    for (TActorIterator<ADivineBeastsBirdFlockRouteActor> It(World); It; ++It)
+    {
+        if (ADivineBeastsBirdFlockRouteActor* Route = *It)
+        {
+            FString RouteError;
+            if (Route->StartRouteBirds(RouteError)) bHavePlayableSplineRoute = true;
+            else UE_LOG(LogTemp, Warning, TEXT("[BirdFlock] 项目生态样条不可用，保留旧路径回退：%s"),
+                *RouteError);
+        }
+    }
+    if (bHavePlayableSplineRoute) return;
     FVector Origin(0, 0, 1800);
     for (TActorIterator<APlayerStart> It(World); It; ++It)
     {

@@ -176,6 +176,13 @@
       "Reason": "客户端表面材质、纹理或MPC，不承担服务器碰撞和导航。"
     },
     {
+      "PackagePath": "/GamePlatformSurface/Marks",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Marks",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "弹孔、焦痕、刀砍、液体及裂痕的贴花/材质/纹理/演示只属于客户端表现，不提供服务器权威碰撞或破坏。"
+    },
+    {
       "PackagePath": "/GamePlatformSurface/Textures/Weather",
       "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Textures/Weather",
       "Profiles": "AllServers",

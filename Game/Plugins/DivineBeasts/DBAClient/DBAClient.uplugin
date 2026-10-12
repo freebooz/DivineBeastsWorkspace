@@ -115,6 +115,11 @@
       ]
     },
     {
+      "Name": "GamePlatformSurface",
+      "Enabled": true,
+      "TargetAllowList": ["Client", "Editor", "Game"]
+    },
+    {
       "Name": "GamePlatformWeather",
       "Enabled": true,
       "TargetAllowList": [

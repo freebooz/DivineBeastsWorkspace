@@ -1,0 +1,882 @@
+{
+  "version": 1,
+  "name": "WBP_DBA_PluginDemoBirdFlock",
+  "parentClass": "/Script/DivineBeastsDemoClient.DivineBeastsBirdFlockDemoWidget",
+  "metadata": {
+    "authoringTool": "Monolith MCP（真实UE UI资产制作）",
+    "assetDirectory": "/Game/Development/PluginDemos/UI",
+    "category": "Development/BirdFlock",
+    "description": "独立鸟群真实Niagara实验室：海鸥/燕子/雄鹰、Spline/Boids/WPO、批次/重置、请求与真实GPU区分",
+    "status": "仅UI声明式作者规格；必须经UE5.8 Monolith创建/编译/保存/回读；未签署人工验收",
+    "language": "zh-CN",
+    "defaultViewport": "1920x1080",
+    "uiTheme": "项目自然翡翠与青铜金色"
+  },
+  "rootWidget": {
+    "type": "CanvasPanel",
+    "id": "RootCanvas",
+    "style": {
+      "visibility": "SelfHitTestInvisible"
+    },
+    "children": [
+      {
+        "type": "Border",
+        "id": "BirdControlPanel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -560,
+            "y": 45
+          },
+          "size": {
+            "x": 536,
+            "y": 955
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 2
+        },
+        "style": {
+          "background": "#142626EB",
+          "visibility": "HitTestInvisible"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "BirdDemoTitle",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 63
+          },
+          "size": {
+            "x": 495,
+            "y": 42
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "鸟群群飞 · Niagara真实演示",
+          "fontSize": 24,
+          "fontColor": "#D8C18CFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "BirdDemoSubtitle",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 112
+          },
+          "size": {
+            "x": 495,
+            "y": 28
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "仅开发模式。请求受理≠GPU实际渲染",
+          "fontSize": 13,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "SpeciesLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 163
+          },
+          "size": {
+            "x": 75,
+            "y": 26
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "鸟种",
+          "fontSize": 16,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "ComboBoxString",
+        "id": "SpeciesCombo",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -455,
+            "y": 158
+          },
+          "size": {
+            "x": 185,
+            "y": 36
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        }
+      },
+      {
+        "type": "Button",
+        "id": "ApplySpeciesButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -253,
+            "y": 155
+          },
+          "size": {
+            "x": 195,
+            "y": 39
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "ApplySpeciesButtonText",
+            "content": {
+              "text": "切换鸟种",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "CountLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 221
+          },
+          "size": {
+            "x": 210,
+            "y": 28
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "请求数量 0—512",
+          "fontSize": 16,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "EditableTextBox",
+        "id": "BirdCountInput",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -307,
+            "y": 216
+          },
+          "size": {
+            "x": 100,
+            "y": 36
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "32"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "ApplyBirdCountButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -190,
+            "y": 213
+          },
+          "size": {
+            "x": 132,
+            "y": 40
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "ApplyBirdCountButtonText",
+            "content": {
+              "text": "应用数量",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "ModeLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 281
+          },
+          "size": {
+            "x": 160,
+            "y": 25
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "飞行轨迹",
+          "fontSize": 16,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "ComboBoxString",
+        "id": "FlightModeCombo",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -422,
+            "y": 274
+          },
+          "size": {
+            "x": 198,
+            "y": 36
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        }
+      },
+      {
+        "type": "Button",
+        "id": "ApplyFlightModeButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -206,
+            "y": 272
+          },
+          "size": {
+            "x": 148,
+            "y": 40
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "ApplyFlightModeButtonText",
+            "content": {
+              "text": "应用轨迹",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "Separator1",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 338
+          },
+          "size": {
+            "x": 482,
+            "y": 25
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "──────────────────────────────────────",
+          "fontSize": 14,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "BoidsLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 376
+          },
+          "size": {
+            "x": 425,
+            "y": 27
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "Boids 群体权重（总和 ≤ 4）",
+          "fontSize": 18,
+          "fontColor": "#D8C18CFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "SeparationLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 428
+          },
+          "size": {
+            "x": 70,
+            "y": 24
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "分离",
+          "fontSize": 16,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "EditableTextBox",
+        "id": "SeparationInput",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -462,
+            "y": 420
+          },
+          "size": {
+            "x": 104,
+            "y": 36
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "1.4"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "AlignmentLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -344,
+            "y": 428
+          },
+          "size": {
+            "x": 65,
+            "y": 24
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "对齐",
+          "fontSize": 16,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "EditableTextBox",
+        "id": "AlignmentInput",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -275,
+            "y": 420
+          },
+          "size": {
+            "x": 100,
+            "y": 36
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "0.7"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "CohesionLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -173,
+            "y": 428
+          },
+          "size": {
+            "x": 60,
+            "y": 24
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "聚合",
+          "fontSize": 16,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "EditableTextBox",
+        "id": "CohesionInput",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -112,
+            "y": 420
+          },
+          "size": {
+            "x": 84,
+            "y": 36
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "0.6"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "ApplyFlockingButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 475
+          },
+          "size": {
+            "x": 475,
+            "y": 45
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "ApplyFlockingButtonText",
+            "content": {
+              "text": "应用群体聚散",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "GlideLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 549
+          },
+          "size": {
+            "x": 215,
+            "y": 25
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "滑翔比例 0—1",
+          "fontSize": 16,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "EditableTextBox",
+        "id": "GlideBlendInput",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -310,
+            "y": 544
+          },
+          "size": {
+            "x": 110,
+            "y": 36
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "0.25"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "ApplyGlideButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -184,
+            "y": 539
+          },
+          "size": {
+            "x": 130,
+            "y": 43
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "ApplyGlideButtonText",
+            "content": {
+              "text": "应用滑翔",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "Separator2",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 605
+          },
+          "size": {
+            "x": 482,
+            "y": 24
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "──────────────────────────────────────",
+          "fontSize": 14,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "BatchLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 645
+          },
+          "size": {
+            "x": 440,
+            "y": 26
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "分批生成 / 停止 / 重置",
+          "fontSize": 18,
+          "fontColor": "#D8C18CFF"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "StartBatchButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 695
+          },
+          "size": {
+            "x": 151,
+            "y": 44
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "StartBatchButtonText",
+            "content": {
+              "text": "启动批次",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "StopBatchButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -365,
+            "y": 695
+          },
+          "size": {
+            "x": 151,
+            "y": 44
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "StopBatchButtonText",
+            "content": {
+              "text": "停止批次",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "ResetButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -193,
+            "y": 695
+          },
+          "size": {
+            "x": 139,
+            "y": 44
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "ResetButtonText",
+            "content": {
+              "text": "重置参数",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "GpuStatusLabel",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 776
+          },
+          "size": {
+            "x": 350,
+            "y": 28
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "实际GPU状态",
+          "fontSize": 17,
+          "fontColor": "#D8C18CFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "RealGpuCountText",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 813
+          },
+          "size": {
+            "x": 474,
+            "y": 31
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "真实GPU鸟数：待GPU读回",
+          "fontSize": 15,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "FeedbackText",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 852
+          },
+          "size": {
+            "x": 474,
+            "y": 68
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "content": {
+          "text": "等待场景与正式Niagara表现服务",
+          "fontSize": 15,
+          "fontColor": "#DEE7DDFF"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "BackButton",
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -537,
+            "y": 945
+          },
+          "size": {
+            "x": 476,
+            "y": 42
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "BackButtonText",
+            "content": {
+              "text": "返回插件总览",
+              "fontSize": 15,
+              "fontColor": "#E9E2CFFF"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -76,6 +76,16 @@ MobaCommon（通用竞技层）无地形特殊行为，不增加空模块。正�
 
 验收必须从正式Shader编译/图层UClass/PCG已生成/实际GPU图/客户端Cook/服务器Cook容器中分别取得证据，不能用源PNG对照图代替GPU画面。最终填写人工签收人、时间、截图、RHI模式、目标GPU和人工同意结论，再考虑影响正式新手村。
 
+### 2026-10-12 续执行补充：着色器契约和真实GPU验收工具
+
+- 修复`AuthorTerrainProductionMaterial.py`（客户端十层正式PBR母材质脚本）中MPC名称的前缀错误：雪、湿润、苔藓分别严格引用`GP_Surface_GlobalSnowAmount`、`GP_Surface_GlobalWetness`、`GP_Surface_GlobalMossInfluence`，不再错误使用去前缀的同义名称。
+- 十层多PBR纹理的TextureSample改为`SSM_WRAP_WORLD_GROUP_SETTINGS`（虚幻引擎共享环绕采样器），避免默认每张纹理独占硬件采样器槽位。项目审核MI默认`TerrainMossAmount=0.48`以让独立场景可见；天气仍只由既有平台MPC发出。
+- 修复`GamePlatformSurfaceTerrainReviewMapCommandlet.cpp`原生`LayerIds`十层逗号CSV解析，显式`bShouldStopOnSeparator=false`，与此前PCG BiomeMap和LayerInfo修复保持一致。静态回归`ValidateTerrainProductionIntegration.py`已同时覆盖两处映射和MPC的真实C++字符串。
+- 新增`Tools/Unreal/Terrain/CaptureTerrainProductionGPUReview.py`（真正UE5.8 D3D12场景六态RHI捕获）：Dry（无雪干燥）、Moss（苔藓）、Wet（湿润）、LightSnow（小雪）、HeavySnow（大雪）、AfterSnow（融雪）；仅临时SceneCapture2D，不保存用户地图。输出`Game/Saved/Validation/TerrainPBR_GPU_20261012`，默认inspect不写入。
+- 新增`Tests/Assets/ValidateTerrainProductionGPUFrames.py`（真实GPU帧像素有效性审核），拒绝空文件、全黑、近乎常量和天气组间无变化；即使六态像素通过，也不替代人工视觉签字、GPU计时和Cook。
+- 已制作10类源图2×2平铺预审，位置`Game/Saved/Validation/TerrainPBR_20261012/TerrainPBR_10Materials_2x2TilingQA.png`；土路颜色接缝、岩面/碎石法线接缝风险列为美术待处理项。该图由离线PNG拼接，不是UE场景GPU截图。
+- 本次等待`.worktrees/v`的`DivineBeastsArenaServer`工程构建释放，但原UBT任务截至末次观察仍存在且有真实cl.exe编译子进程，独占构建等待窗口结束未强占。新增资源仍未进入真实UE Editor，因此图片/性能/打包门禁保持“未通过或未执行”，不能算已经完成。
+
 ## 六、可复现的只读检查
 
 ```powershell

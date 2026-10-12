@@ -2,6 +2,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimerManager.h"
 #include "GamePlatformSurfaceMarkDemoActor.generated.h"
 
 /** 放在平台独立演示地图中，PIE或-game时向五块测试板提交五种痕迹。 */

@@ -10,12 +10,15 @@ public class DivineBeastsDemoClient : ModuleRules
     public DivineBeastsDemoClient(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new[] { "Core","CoreUObject","Engine","UMG" });
+        // 公共UI/演示World头公开持有项目飞行配置及平台数据租约/天气类型，不能依赖私有传递。
+        PublicDependencyModuleNames.AddRange(new[] {
+            "Core","CoreUObject","Engine","UMG",
+            "DivineBeastsPresentationClient","GamePlatformWeatherRuntime","GamePlatformData"
+        });
         PrivateDependencyModuleNames.AddRange(new[] {
             "Projects", "AssetRegistry", "DivineBeastsApplicationFlowClient",
             // 演示控制器必须调用已有VFX/天气/世界公开服务，绝不重建执行器。
-            "GamePlatformVFXClient", "DBAWorldsRuntime", "GamePlatformWeatherRuntime",
-            "GamePlatformData", "UMG", "SlateCore"
+            "GamePlatformVFXClient", "DBAWorldsRuntime", "SlateCore"
         });
     }
 }

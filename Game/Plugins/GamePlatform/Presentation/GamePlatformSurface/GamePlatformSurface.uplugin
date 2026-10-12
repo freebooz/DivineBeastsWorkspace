@@ -15,7 +15,8 @@
       "LoadingPhase": "Default",
       "TargetAllowList": [
         "Client",
-        "Editor"
+        "Editor",
+        "Game"
       ]
     },
     {

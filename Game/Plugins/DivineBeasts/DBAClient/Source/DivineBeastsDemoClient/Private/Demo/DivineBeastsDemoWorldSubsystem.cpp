@@ -19,6 +19,8 @@ namespace DivineBeastsDemo
     /** 只在明确的项目开发地图自动挂载演示界面，不覆盖正式游戏关卡。 */
     const TCHAR* HubWidgetClass = TEXT("/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub.WBP_DBA_PluginDemoHub_C");
     const TCHAR* OverlayWidgetClass = TEXT("/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoOverlay.WBP_DBA_PluginDemoOverlay_C");
+    /** 鸟群审核地图使用对应专题Monolith UI，而不是旧ISM原型操作面板。 */
+    const TCHAR* BirdFlockWidgetClass = TEXT("/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoBirdFlock.WBP_DBA_PluginDemoBirdFlock_C");
 }
 
 bool UDivineBeastsDemoWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
@@ -82,7 +84,9 @@ void UDivineBeastsDemoWorldSubsystem::RequestDemoOverlay(UWorld& World)
     }
     const FString CurrentPackage = UWorld::RemovePIEPrefix(World.GetOutermost()->GetName());
     const FString ClassPath = CurrentPackage == FDivineBeastsPluginDemoMode::GetHubMapPackage()
-        ? DivineBeastsDemo::HubWidgetClass : DivineBeastsDemo::OverlayWidgetClass;
+        ? DivineBeastsDemo::HubWidgetClass
+        : (CurrentPackage.StartsWith(TEXT("/Game/Development/BirdFlock/"))
+            ? DivineBeastsDemo::BirdFlockWidgetClass : DivineBeastsDemo::OverlayWidgetClass);
     const FSoftObjectPath WidgetClassPath(ClassPath);
     FGamePlatformResult Requested;
     TWeakObjectPtr<UDivineBeastsDemoWorldSubsystem> WeakThis(this);

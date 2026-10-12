@@ -22,7 +22,9 @@ public class DivineBeastsPresentationClient : ModuleRules
             "DivineBeastsPresentationRuntime",
             "GamePlatformPresentationCore",
             "GamePlatformPresentationClient",
-            "GamePlatformData"
+            "GamePlatformData",
+            // 项目公开蓝图表面命中回执直接依赖平台Marks公共值类型；同时支持既有Game开发目标。
+            "GamePlatformSurfaceClient"
         });
 
         // 角色外观Profile只在客户端软加载普通表现资源；GamePlatformData提供统一加载入口。

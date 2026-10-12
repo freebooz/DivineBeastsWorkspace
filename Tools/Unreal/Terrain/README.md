@@ -11,6 +11,9 @@
 - `Tests/Assets/ValidateTerrainProductionPBR.py`（40图官方纹理质量与指纹）、`Tests/Architecture/ValidateTerrainProductionIntegration.py`（三层、历史校准与回退合同）。服务器已排除独立开发审核关卡，25项策略回归通过；高精WorldPack纹理的Server Cook剥离及用户本人GPU美术签收尚待。
 - 全部实际证据、断线恢复与受阻项：`Docs/Implementation/TerrainProductionPBRIntegration_20261012.md`。原历史README以下步骤仍记录2026-10-11技术校准基线，不代表正式PBR图已在UE客户端生效。
 
+- `CaptureTerrainProductionGPUReview.py`（独立Landscape审核图六态真实D3D12 SceneCapture），需完成正式Shader/PCG地图且不是NullRHI后运行；`Tests/Assets/ValidateTerrainProductionGPUFrames.py`对黑帧、像素重复和天气变化严格失败。当前均只有源码与DryRun，未真实捕获或通过人工审核。
+- 2026-10-12续审已纠正全局MPC参数前缀、采用Shared Wrap公用采样器，并修复审核地图十层LayerIds命令参数逗号截断风险；具体见`Docs/Implementation/TerrainProductionPBRIntegration_20261012.md`。
+
 ## 执行次序与边界
 
 1. GenerateTerrainCalibrationPBR.py（生成10×3种技术PBR源纹理、16位高程、9个地貌Mask及10图层Weight）。所有生成图片及SHA256清单位于WorldPack/SourceArt/Terrain，仅属技术校准，绝非真实Gaea 2.3导出或最终3A扫描纹理。

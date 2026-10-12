@@ -1,0 +1,27 @@
+diff --git a/Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp b/Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp
+--- a/Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp
++++ b/Engine/Source/Runtime/Online/HTTP/Private/Tests/HttpRedirectPolicyTests.cpp
+@@ -14,12 +14,13 @@
+ class FRedirectPolicyLifecycleRequest final : public FCurlHttpRequest
+ {
+ public:
++	using FHttpRequestCommon::CleanupRequest; // 仅测试类公开基类虚函数，调用仍分派至Curl私有覆盖。
+ 	bool SetupForTest() { return SetupRequest(); }
+ 	void CleanupForTest() { CleanupRequest(); }
+ };
+ 
+ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHttpRedirectPolicyContractTest,
+-	"System.HTTP.RedirectPolicy.Contract", EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
++	"System.HTTP.RedirectPolicy.Contract", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+ 
+ bool FHttpRedirectPolicyContractTest::RunTest(const FString& Parameters)
+ {
+@@ -152,7 +153,7 @@
+ }
+ 
+ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHttpRedirectPolicyNetworkTest,
+-	"System.HTTP.RedirectPolicy.LoopbackNetwork", EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
++	"System.HTTP.RedirectPolicy.LoopbackNetwork", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+ 
+ bool FHttpRedirectPolicyNetworkTest::RunTest(const FString& Parameters)
+ {

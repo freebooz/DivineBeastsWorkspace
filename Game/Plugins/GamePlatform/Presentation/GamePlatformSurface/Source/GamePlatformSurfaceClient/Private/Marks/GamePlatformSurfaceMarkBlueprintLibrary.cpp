@@ -17,15 +17,29 @@ FGamePlatformSurfaceMarkResult UGamePlatformSurfaceMarkBlueprintLibrary::SubmitS
     const UObject* WorldContextObject, const FGamePlatformSurfaceMarkRequest& Request)
 {
     UWorld* World = ResolveMarkWorld(WorldContextObject);
-    if (!IsValid(World)) return {};
+    if (!IsValid(World))
+    {
+        FGamePlatformSurfaceMarkResult Result;
+        Result.Status = EGamePlatformSurfaceMarkStatus::InvalidWorld;
+        return Result;
+    }
     auto* Service = IGamePlatformSurfaceMarkService::Get(*World);
-    return Service ? Service->Submit(Request) : FGamePlatformSurfaceMarkResult();
+    if (Service) return Service->Submit(Request);
+    FGamePlatformSurfaceMarkResult Result;
+    Result.Status = EGamePlatformSurfaceMarkStatus::InvalidWorld;
+    return Result;
 }
 
 FGamePlatformSurfaceMarkResult UGamePlatformSurfaceMarkBlueprintLibrary::SubmitSurfaceMarkFromHit(
     const UObject* WorldContextObject, EGamePlatformSurfaceMarkKind Kind,
     const FHitResult& Hit, FVector AttackDirection, FGuid EventId, float SizeScale)
 {
+    if (!Hit.bBlockingHit || !IsValid(Hit.GetComponent()))
+    {
+        FGamePlatformSurfaceMarkResult Result;
+        Result.Status = EGamePlatformSurfaceMarkStatus::InvalidRequest;
+        return Result;
+    }
     FGamePlatformSurfaceMarkRequest Request;
     Request.Kind = Kind;
     Request.EventId = EventId;

@@ -70,10 +70,14 @@ def run():
  ensure(all(m["Type"] in ("ClientOnly","Editor") for m in surf["Modules"]),
         "平台表面表现模块不能进入专服目标")
  script=(BUILD/"AuthorTerrainProductionMaterial.py").read_text(encoding="utf8")
- for term in ("MPC_GP_SurfaceGlobal","GlobalSnowAmount","GlobalWetness","GlobalMossInfluence",
-              "TerrainEnableHeightBlend","MP_AMBIENT_OCCLUSION","MF"):
-  if term=="MF":continue
-  ensure(term in script,"项目客户端材质没有正确使用平台表面合同："+term)
+ # 从平台C++唯一真源读取MPC真实名称，禁止遗漏GP_Surface_前缀。
+ native=(PLATFORM/"Source/GamePlatformSurfaceClient/Private/Types/GamePlatformSurfaceParameterNames.cpp").read_text(encoding="utf-8")
+ for term in ("GP_Surface_GlobalSnowAmount","GP_Surface_GlobalWetness","GP_Surface_GlobalMossInfluence"):
+  ensure(term in native and ('global_scalar("'+term+'"') in script,
+         "项目PBR未引用真实MPC参数："+term)
+ for term in ("MPC_GP_SurfaceGlobal","TerrainEnableHeightBlend",
+              "MP_AMBIENT_OCCLUSION","SSM_WRAP_WORLD_GROUP_SETTINGS"):
+  ensure(term in script,"地形PBR缺少平台参数或共用采样器合同："+term)
  workflow=(BUILD/"RunTerrainGaeaFullReview.ps1").read_text(encoding="utf-8-sig")
  for term in ("ProductionPBR","AuthorTerrainProductionPCGReview.py",
               "GamePlatformPCGTerrainBiomeGraphs","GamePlatformSurfaceTerrainReviewMap"):
@@ -83,6 +87,10 @@ def run():
         "PCG四类Biome逗号串可能被FParse截断，禁止只生成第一张Graph")
  ensure("Forest:LS_Grass,Rock:LS_Rock,Shore:LS_ShoreMud,Road:LS_RoadDirt" in workflow,
         "项目四类PCG Graph到地形层的映射不完整")
+ landscape_cmd=(ROOT/"Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Source/GamePlatformSurfaceEditor/Private/Commands/GamePlatformSurfaceTerrainReviewMapCommandlet.cpp").read_text(encoding="utf-8")
+ ensure('TEXT("LayerIds="),LayerIds,' in landscape_cmd and
+        "/*bShouldStopOnSeparator=*/false" in landscape_cmd,
+        "Landscape十层CSV参数不能被默认分隔符截断")
  print("TERRAIN_PRODUCTION_PBR_PROVENANCE_AND_3TIER_STATIC_PASS","scan_layers=10","maps=40",
        "calibration_geo=20","rollback_members=61","client_mpc_contract=3")
  actual=[x for x in p["files"] if

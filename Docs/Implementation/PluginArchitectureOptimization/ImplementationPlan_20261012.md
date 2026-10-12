@@ -42,4 +42,5 @@ Brief：task-3-brief.md。能力栏配置与图标通过Data资源租约获得�
 - Data11与PCG8实际绑定Build5，源码与四个对应DLL在Build16仍逐字节一致；保留原RunId，不改写成新测试。VFX18绑定Editor16并通过，UI20绑定Editor16且全前缀保留一项既有HeroIntroduction契约失败。
 - 实际Server/Client使用正常完整构建，不传UsePrecompiled或OnlyModules。显式SDK发现跳过只用于限定的Editor开发资产作者/已记录UI会话，不扩展到正常构建或Cook。Cook保留FoundationStandalone开发许可、DedicatedServer收据剥离规则，并检查真实容器及权威Probe/Flow。
 - 真实作者失败由保留错误门禁、限定脚本修补、离线RED/GREEN和新RunId原生重验闭合；不修改C++节点Schema或手写资产。正式内容批准、完整Gold生成、VFX人工/性能和竞技后端联调仍独立登记。
+- 正常Server实际编译揭示共享引擎现有HTTP测试文件与登记补丁不一致。保留原始编译诊断并停止本次已确定失败的自有Job；Client因相同测试前置未执行，Cook仍需正常成功收据。先完成独立资产工作和具体三处测试修正/前后SHA审查材料，再就共享引擎同步与相关目标重建取得具体授权；不放宽现有补丁哈希门禁或关闭测试。
 
