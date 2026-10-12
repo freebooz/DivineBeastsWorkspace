@@ -15,6 +15,9 @@ New-Item -ItemType Directory -Path $evidence -Force | Out-Null
 $records = [Collections.Generic.List[object]]::new()
 $foundation = Join-Path $root 'Game/Content/Development/Foundation/PCG'
 $village = Join-Path $root 'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/PCG'
+# 本项目入口负责Village内容与盘点，平台命令不持有此默认挂载点。
+# 基础蓝图与Gold地图共用同一显式输入；跨项目调用方自行提供其已注册蓝图目录。
+$blueprintRoot = '/DBAWorldPack_Village/PCG/Blueprints/'
 $definitions = Join-Path $PSScriptRoot 'AuthorGoldLevelDefinitions.py'
 $realizedScript = Join-Path $PSScriptRoot 'AuthorGoldRealizedGraphs.py'
 $mapScript = Join-Path $PSScriptRoot 'AuthorGoldLevelMap.py'
@@ -138,7 +141,7 @@ try {
         }
         if (!$ResumeApprovedPCGAssets -and !$RepairGeneratedFoundations) {
             Invoke-UE '02-VillageBlueprints' (@('-run=GamePlatformPCGFoundationTemplates',
-                '-BlueprintRoot=/DBAWorldPack_Village/PCG/Blueprints/') + $villageArgs)
+                ('-BlueprintRoot=' + $blueprintRoot)) + $villageArgs)
         }
         # 默认采用原生UE C++命令行，跳过无关的PythonScriptPlugin启动/工具注册；
         # 显式UsePythonGoldCreation才保留原有Python Editor创作链供独立比对。
@@ -158,7 +161,8 @@ try {
             Invoke-UE '06-FreshEditorReopen' (@("-ExecutePythonScript=$reopenScript") + $villagePythonArgs)
         } else {
             # 使用原生UE5.8命令在独立进程中保存.umap并重新加载核验，保持正式Village地图不变。
-            Invoke-UE '05-GoldLevelMap' (@('-run=GamePlatformPCGGoldAssets', '-Stage=Map') + $villageArgs)
+            Invoke-UE '05-GoldLevelMap' (@('-run=GamePlatformPCGGoldAssets', '-Stage=Map',
+                ('-BlueprintRoot=' + $blueprintRoot)) + $villageArgs)
             Invoke-UE '06-FreshEditorReopen' (@('-run=GamePlatformPCGGoldAssets', '-Stage=Verify') + $villageArgs)
         }
     } finally {

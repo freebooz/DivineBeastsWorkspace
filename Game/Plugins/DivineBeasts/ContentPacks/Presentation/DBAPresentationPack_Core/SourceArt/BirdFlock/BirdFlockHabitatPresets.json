@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "description_zh": "神兽联盟鸟群生态样条：项目层客户端表现预设。点坐标相对场景锚点，不能当作已批准的真实世界落点。绝不嵌入服务器共享关卡。",
+  "world_owner": "DBAWorlds / DBAPresentationPack_Core",
+  "platform_owner": "GamePlatformVFXClient",
+  "effects": "Presentation -> GamePlatformData -> Niagara",
+  "default_simulation": "GPU",
+  "requires_client_only_level": true,
+  "authoring_status": "source_preset_only",
+  "habitats": [
+    {
+      "id": "dba.bird.village.lake.seagull",
+      "title_zh": "新手村湖面海鸥",
+      "world_id": "World.Village",
+      "world_asset": "/DBAWorldPack_Village/Maps/L_Village_Start",
+      "world_asset_present_in_git": true,
+      "client_only_review_level": "/DBAPresentationPack_Core/Worlds/Village/BirdFlock/Maps/L_DBA_BirdHabitat_VillageLake",
+      "species": "Seagull",
+      "birds_per_group": 24,
+      "max_active_groups": 2,
+      "max_batches": 4,
+      "interval_seconds": 9,
+      "flight_mode": "SplineLoop",
+      "glide_blend": 0.55,
+      "boids": {
+        "separation": 1.3,
+        "alignment": 0.8,
+        "cohesion": 0.65
+      },
+      "route_points_local_cm": [
+        [
+          -2300,
+          -1200,
+          900
+        ],
+        [
+          -1550,
+          -2200,
+          1200
+        ],
+        [
+          0,
+          -3100,
+          1300
+        ],
+        [
+          1800,
+          -1900,
+          1450
+        ],
+        [
+          2800,
+          200,
+          1250
+        ],
+        [
+          1450,
+          2150,
+          1100
+        ],
+        [
+          -550,
+          2700,
+          950
+        ]
+      ],
+      "approval": "human_scene_anchor_pending"
+    },
+    {
+      "id": "dba.bird.village.orchard.swallow",
+      "title_zh": "桃林古树燕子",
+      "world_id": "World.Village",
+      "world_asset": "/DBAWorldPack_Village/Maps/L_Village_Start",
+      "world_asset_present_in_git": true,
+      "client_only_review_level": "/DBAPresentationPack_Core/Worlds/Village/BirdFlock/Maps/L_DBA_BirdHabitat_VillageOrchard",
+      "species": "Swallow",
+      "birds_per_group": 48,
+      "max_active_groups": 3,
+      "max_batches": 5,
+      "interval_seconds": 6,
+      "flight_mode": "SplinePingPong",
+      "glide_blend": 0.18,
+      "boids": {
+        "separation": 1.5,
+        "alignment": 0.65,
+        "cohesion": 0.55
+      },
+      "route_points_local_cm": [
+        [
+          -1700,
+          -1000,
+          650
+        ],
+        [
+          -900,
+          -850,
+          1050
+        ],
+        [
+          150,
+          -500,
+          850
+        ],
+        [
+          1250,
+          0,
+          1150
+        ],
+        [
+          1950,
+          1050,
+          750
+        ]
+      ],
+      "approval": "human_scene_anchor_pending"
+    },
+    {
+      "id": "dba.bird.openworld.cliff.eagle",
+      "title_zh": "开放世界高崖雄鹰",
+      "world_id": "World.OpenWorld",
+      "world_asset": null,
+      "world_asset_present_in_git": false,
+      "client_only_review_level": "/DBAPresentationPack_Core/Worlds/OpenWorld/BirdFlock/Maps/L_DBA_BirdHabitat_OpenWorldCliff",
+      "species": "Eagle",
+      "birds_per_group": 5,
+      "max_active_groups": 1,
+      "max_batches": 2,
+      "interval_seconds": 19,
+      "flight_mode": "SplineLoop",
+      "glide_blend": 0.88,
+      "boids": {
+        "separation": 0.7,
+        "alignment": 0.5,
+        "cohesion": 0.35
+      },
+      "route_points_local_cm": [
+        [
+          -3200,
+          -1400,
+          2900
+        ],
+        [
+          -1900,
+          -3200,
+          3450
+        ],
+        [
+          900,
+          -4100,
+          4100
+        ],
+        [
+          3400,
+          -1000,
+          4200
+        ],
+        [
+          2200,
+          2100,
+          3600
+        ],
+        [
+          -850,
+          2800,
+          3200
+        ]
+      ],
+      "approval": "openworld_real_map_and_scene_anchor_pending"
+    }
+  ]
+}

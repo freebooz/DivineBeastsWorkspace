@@ -10,4 +10,7 @@ UDivineBeastsVillageSnowSettings::UDivineBeastsVillageSnowSettings()
         "/GamePlatformSurface/Textures/Weather/T_GP_Weather_SnowAlbedo.T_GP_Weather_SnowAlbedo"));
     SnowNormalTexture = FSoftObjectPath(TEXT(
         "/GamePlatformSurface/Textures/Weather/T_GP_Weather_SnowNormal.T_GP_Weather_SnowNormal"));
+    // 项目层只保存稳定的纯客户端MaterialInstance路径，真实加载交给平台Data的世界租约。
+    MossSnowRockMaterial = FSoftObjectPath(TEXT(
+        "/DBAPresentationPack_Core/Materials/Environment/MI_DBA_MossSnow_Cliff.MI_DBA_MossSnow_Cliff"));
 }

@@ -17,6 +17,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "Tools/Unreal/Terrain/TerrainSourceManifest_v1.json"
+PRODUCTION = ROOT / "Tools/Unreal/Terrain/TerrainProductionPBRManifest_v1.json"
 REQUIRED_LAYERS = ("Grass","ForestSoil","Dirt","Rock","Scree","Sand",
                    "Gravel","RoadDirt","FarmSoil","ShoreMud")
 REQUIRED_MASKS = ("Slope","Erosion","Deposition","RockExposure","Flow",
@@ -33,8 +34,12 @@ def main() -> None:
         manifest.get("maskNames") != list(REQUIRED_MASKS) or
         len(manifest.get("files", [])) != 50):
         raise RuntimeError("地表技术纹理清单版本、权重层或来源身份非法")
+    production = PRODUCTION.exists()
+    # 历史V1清单仍是现有Gaea V1/V2数据投影的SHA真源；正式PBR独立从新清单签名。
     output = {}
     for record in manifest["files"]:
+        if production and record["category"] == "PBR_TECHNICAL":
+            continue  # 用户已授权同路径替换；旧校准PBR记录仅供回退比对。
         path = (ROOT / record["sourcePath"]).resolve()
         if not path.is_relative_to(ROOT) or not path.is_file():
             raise FileNotFoundError("非法/缺失源纹理："+str(path))
@@ -74,13 +79,21 @@ def main() -> None:
     masks=[output[("GAEA_COMPATIBLE_SAMPLE_MASK",name,None)] for name in REQUIRED_MASKS]
     if any(np.unique(layer).size<4 for layer in masks):
         raise RuntimeError("部分校准掩码为常量图，不具备完整技术审查价值")
-    for layer in REQUIRED_LAYERS:
-        for role in ("BaseColor","Normal","ORM"):
-            if ("PBR_TECHNICAL",layer,role) not in output:
-                raise RuntimeError("地表PBR三通道缺失："+layer+"/"+role)
+    if not production:
+        for layer in REQUIRED_LAYERS:
+            for role in ("BaseColor","Normal","ORM"):
+                if ("PBR_TECHNICAL",layer,role) not in output:
+                    raise RuntimeError("地表技术PBR三通道缺失："+layer+"/"+role)
+    else:
+        # 真正扫描源由 ValidateTerrainProductionPBR.py 严格核验40张原图及官方哈希。
+        data=json.loads(PRODUCTION.read_text(encoding="utf-8"))
+        if len(data.get("files",[])) != 40 or data.get("sourceKind") != "official_polyhaven_CC0_matched_scan_maps":
+            raise RuntimeError("正式PBR来源清单不完整")
     if not manifest.get("worldConvention",{}).get("flipY",None) is True:
         raise RuntimeError("高度图行方向与世界方向没有明确映射")
-    print("TERRAIN_SOURCE_QA_PASS count=50 pbr=30 heightR16=1 semantics=9 layerWeights=10")
+    print("TERRAIN_SOURCE_QA_PASS historical_manifest=50 calibration_geo=20 pbr_kind="+
+          ("production_scan_40" if production else "technical_30")+
+          " heightR16=1 semantics=9 layerWeights=10")
     print("TERRAIN_WEIGHT_SUM_VERIFIED min=255 max=255 pixels=1018081")
     for i,name in enumerate(REQUIRED_LAYERS):
         print("TERRAIN_WEIGHT_LAYER",name,"min",int(weights[i].min()),"max",int(weights[i].max()))

@@ -1,0 +1,826 @@
+{
+  "schemaVersion": 1,
+  "sourceKind": "official_polyhaven_CC0_matched_scan_maps",
+  "license": "CC0 1.0",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "historicalCalibrationManifest": "Tools/Unreal/Terrain/TerrainSourceManifest_v1.json",
+  "historicalCalibrationManifestSHA256": "1f8b31f4fc085316de7a9e98cdfcde64455706fd3701d5e0ff967d0a3f2843d5",
+  "historicalCalibrationPBRRowsSuperseded": true,
+  "artApproval": "pending_UE_real_render_and_user_review",
+  "rollbackArchive": "Game/Saved/Validation/TerrainPBR_20261012/Rollback_TerrainCalibration_SourceAndUEAssets.zip",
+  "files": [
+    {
+      "layer": "Grass",
+      "role": "BaseColor",
+      "slug": "leafy_grass",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/leafy_grass/leafy_grass_diff_2k.png",
+      "upstreamMd5": "91c82271318a5bbe69182404c6dff730",
+      "expectedBytes": 23606854,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Grass/T_DBA_Terrain_Grass_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Grass/T_DBA_Terrain_Grass_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/leafy_grass",
+      "license": "CC0 1.0",
+      "sha256": "9ae7994a36a7aedf5fe65dac49d5e096e9a8ff1d8a8e8ccb28df0c9c3a7a2d34"
+    },
+    {
+      "layer": "Grass",
+      "role": "Normal",
+      "slug": "leafy_grass",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/leafy_grass/leafy_grass_nor_dx_2k.png",
+      "upstreamMd5": "47eec13603149d9cbbe7aeaf824a117c",
+      "expectedBytes": 24429834,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Grass/T_DBA_Terrain_Grass_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Grass/T_DBA_Terrain_Grass_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/leafy_grass",
+      "license": "CC0 1.0",
+      "sha256": "dec96db6a12360e6bd87c69524a236bbc7bf3fe6950886b4bf2d49f362832468"
+    },
+    {
+      "layer": "Grass",
+      "role": "ORM",
+      "slug": "leafy_grass",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/leafy_grass/leafy_grass_arm_2k.png",
+      "upstreamMd5": "1ea54cc3044070188a5b524cec83dac2",
+      "expectedBytes": 18216000,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Grass/T_DBA_Terrain_Grass_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Grass/T_DBA_Terrain_Grass_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/leafy_grass",
+      "license": "CC0 1.0",
+      "sha256": "ae94a44475b5793ca72cc8f9ad26f0ccd03bc5f72b0992e5070a38f923ea0bf9"
+    },
+    {
+      "layer": "Grass",
+      "role": "Height",
+      "slug": "leafy_grass",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/leafy_grass/leafy_grass_disp_2k.png",
+      "upstreamMd5": "540555d31b8bf2d674b818a7e2e61125",
+      "expectedBytes": 7311977,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Grass/T_DBA_Terrain_Grass_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Grass/T_DBA_Terrain_Grass_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/leafy_grass",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 16,
+      "sha256": "506ed7d425d9a73f6881e17f03e2a0d2fa57893bb0555a4b86ad905d2cabe510"
+    },
+    {
+      "layer": "ForestSoil",
+      "role": "BaseColor",
+      "slug": "forest_ground_05",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/forest_ground_05/forest_ground_05_diff_2k.png",
+      "upstreamMd5": "2d80251d15738b4456622860daa0bd17",
+      "expectedBytes": 21732010,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/ForestSoil/T_DBA_Terrain_ForestSoil_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ForestSoil/T_DBA_Terrain_ForestSoil_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/forest_ground_05",
+      "license": "CC0 1.0",
+      "sha256": "b07e2944c368570366ad32a8e3a0edfd4fa448e796189a5eff5dd019d300f808"
+    },
+    {
+      "layer": "ForestSoil",
+      "role": "Normal",
+      "slug": "forest_ground_05",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/forest_ground_05/forest_ground_05_nor_dx_2k.png",
+      "upstreamMd5": "64920dfe9ac3b4d0e8b9fba4283f2d06",
+      "expectedBytes": 23439752,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/ForestSoil/T_DBA_Terrain_ForestSoil_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ForestSoil/T_DBA_Terrain_ForestSoil_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/forest_ground_05",
+      "license": "CC0 1.0",
+      "sha256": "5d260b9b8a04767b38dda8d1f139cfec5722a6bf016ccf89bddf6ddf9a7cf1a6"
+    },
+    {
+      "layer": "ForestSoil",
+      "role": "ORM",
+      "slug": "forest_ground_05",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/forest_ground_05/forest_ground_05_arm_2k.png",
+      "upstreamMd5": "bda07ab79c8e63cbb5e58d18a1e455b4",
+      "expectedBytes": 16893688,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/ForestSoil/T_DBA_Terrain_ForestSoil_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ForestSoil/T_DBA_Terrain_ForestSoil_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/forest_ground_05",
+      "license": "CC0 1.0",
+      "sha256": "c58eb8d4ec7040569249d2a5a206675f78e9e90b143fc112e8bba0065c8af039"
+    },
+    {
+      "layer": "ForestSoil",
+      "role": "Height",
+      "slug": "forest_ground_05",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/forest_ground_05/forest_ground_05_disp_2k.png",
+      "upstreamMd5": "3886431b1c37eba11d07d8ff7c6e1968",
+      "expectedBytes": 6604851,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/ForestSoil/T_DBA_Terrain_ForestSoil_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ForestSoil/T_DBA_Terrain_ForestSoil_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/forest_ground_05",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 16,
+      "sha256": "0e9bb68ff5d12d6cbed876bcf2fb1c531e43d248e1fbee7d0d266cb3d49b4f8b"
+    },
+    {
+      "layer": "Dirt",
+      "role": "BaseColor",
+      "slug": "park_dirt",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/park_dirt/park_dirt_diff_2k.png",
+      "upstreamMd5": "57075c6f5b1f0cfbe8b85b5bd3fd7453",
+      "expectedBytes": 23760972,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Dirt/T_DBA_Terrain_Dirt_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Dirt/T_DBA_Terrain_Dirt_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/park_dirt",
+      "license": "CC0 1.0",
+      "sha256": "95eae526c56096c2efb1cc443e3e4ea4af4a0790f61301ec209b15eb25779918"
+    },
+    {
+      "layer": "Dirt",
+      "role": "Normal",
+      "slug": "park_dirt",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/park_dirt/park_dirt_nor_dx_2k.png",
+      "upstreamMd5": "3f8c238f8c80dd5bd3ecc39f4f001669",
+      "expectedBytes": 23954712,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Dirt/T_DBA_Terrain_Dirt_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Dirt/T_DBA_Terrain_Dirt_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/park_dirt",
+      "license": "CC0 1.0",
+      "sha256": "884436f75247ee6763b40c38b0a05c5ae849fe01994f5e7cbea536f305a1a850"
+    },
+    {
+      "layer": "Dirt",
+      "role": "ORM",
+      "slug": "park_dirt",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/park_dirt/park_dirt_arm_2k.png",
+      "upstreamMd5": "80974c646713a27f25ce28f5e5e02a59",
+      "expectedBytes": 18976423,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Dirt/T_DBA_Terrain_Dirt_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Dirt/T_DBA_Terrain_Dirt_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/park_dirt",
+      "license": "CC0 1.0",
+      "sha256": "b2b086567f2005fdd6bfaf0593fe8030fdfddbd1b2441702133b16d818a909c1"
+    },
+    {
+      "layer": "Dirt",
+      "role": "Height",
+      "slug": "park_dirt",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/park_dirt/park_dirt_disp_2k.png",
+      "upstreamMd5": "4a420d493a7dfa5e17f9c814e3167c14",
+      "expectedBytes": 7239865,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Dirt/T_DBA_Terrain_Dirt_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Dirt/T_DBA_Terrain_Dirt_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/park_dirt",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 16,
+      "sha256": "748c3143a1458d40c375c37254c613a718cf5e4c1eaec00f4eef3171f41c7a83"
+    },
+    {
+      "layer": "Rock",
+      "role": "BaseColor",
+      "slug": "gray_rocks",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/gray_rocks/gray_rocks_diff_2k.png",
+      "upstreamMd5": "14fd5528df32b8c502b11696fd49e6df",
+      "expectedBytes": 23432611,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Rock/T_DBA_Terrain_Rock_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Rock/T_DBA_Terrain_Rock_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/gray_rocks",
+      "license": "CC0 1.0",
+      "sha256": "3cd64260db2a1797e683cd9eacc2c5568e1706e07fbe43488294e3241de83e4e"
+    },
+    {
+      "layer": "Rock",
+      "role": "Normal",
+      "slug": "gray_rocks",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/gray_rocks/gray_rocks_nor_dx_2k.png",
+      "upstreamMd5": "077464466301887f42315ad5a2acc57f",
+      "expectedBytes": 23820067,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Rock/T_DBA_Terrain_Rock_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Rock/T_DBA_Terrain_Rock_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/gray_rocks",
+      "license": "CC0 1.0",
+      "sha256": "37fc20e364d0197601fb03ae085dd5cac6329cd128ce754be573ed6e54db20f6"
+    },
+    {
+      "layer": "Rock",
+      "role": "ORM",
+      "slug": "gray_rocks",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/gray_rocks/gray_rocks_arm_2k.png",
+      "upstreamMd5": "5cbe4e8eabe2c726a93e50f4b159ce8e",
+      "expectedBytes": 17546370,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Rock/T_DBA_Terrain_Rock_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Rock/T_DBA_Terrain_Rock_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/gray_rocks",
+      "license": "CC0 1.0",
+      "sha256": "252280ac8232cd8737e39d007f52e5e7c2b08909edd6032fd14018e228d413f0"
+    },
+    {
+      "layer": "Rock",
+      "role": "Height",
+      "slug": "gray_rocks",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/gray_rocks/gray_rocks_disp_2k.png",
+      "upstreamMd5": "897a1a65c97871e04e42b3910606bb1e",
+      "expectedBytes": 6379763,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Rock/T_DBA_Terrain_Rock_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Rock/T_DBA_Terrain_Rock_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/gray_rocks",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 16,
+      "sha256": "ddb30285cf411f4840d46d5c0040e23085bded545108c1d80101343be3c69def"
+    },
+    {
+      "layer": "Scree",
+      "role": "BaseColor",
+      "slug": "rocky_terrain_03",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/rocky_terrain_03/rocky_terrain_03_diff_2k.png",
+      "upstreamMd5": "687ee3f743104e087dc063713bbfff44",
+      "expectedBytes": 22531281,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Scree/T_DBA_Terrain_Scree_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Scree/T_DBA_Terrain_Scree_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/rocky_terrain_03",
+      "license": "CC0 1.0",
+      "sha256": "0ac3df29d432cafe7bbccd9ea83846efee019cc4503ed9be28555c7922620c3f"
+    },
+    {
+      "layer": "Scree",
+      "role": "Normal",
+      "slug": "rocky_terrain_03",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/rocky_terrain_03/rocky_terrain_03_nor_dx_2k.png",
+      "upstreamMd5": "a1deb8d72598c9e9c9d1bd48415645bd",
+      "expectedBytes": 23416164,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Scree/T_DBA_Terrain_Scree_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Scree/T_DBA_Terrain_Scree_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/rocky_terrain_03",
+      "license": "CC0 1.0",
+      "sha256": "75de8b6c073d5e0c0da7262b00e5d4f4f0e64d079dcb7bbceee6bc95b45e3377"
+    },
+    {
+      "layer": "Scree",
+      "role": "ORM",
+      "slug": "rocky_terrain_03",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/rocky_terrain_03/rocky_terrain_03_arm_2k.png",
+      "upstreamMd5": "0d78fc3045689569e648b4d74de81181",
+      "expectedBytes": 14000224,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Scree/T_DBA_Terrain_Scree_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Scree/T_DBA_Terrain_Scree_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/rocky_terrain_03",
+      "license": "CC0 1.0",
+      "sha256": "f3f9291acae04d678c13bd951624ed29c022ba7b3feae49e216bba6e0e4479db"
+    },
+    {
+      "layer": "Scree",
+      "role": "Height",
+      "slug": "rocky_terrain_03",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/rocky_terrain_03/rocky_terrain_03_disp_2k.png",
+      "upstreamMd5": "5080de7bcc2e49e676bd9aa9bf907307",
+      "expectedBytes": 6219201,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Scree/T_DBA_Terrain_Scree_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Scree/T_DBA_Terrain_Scree_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/rocky_terrain_03",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 16,
+      "sha256": "c6d112b6d5ea0d2d168dd2e1b240e80667abf94d881921ae37c5ab022f874ebb"
+    },
+    {
+      "layer": "Sand",
+      "role": "BaseColor",
+      "slug": "damp_beach_sand",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/damp_beach_sand/damp_beach_sand_diff_2k.png",
+      "upstreamMd5": "ce5301bff8d364392f7e47e097aaec43",
+      "expectedBytes": 22664485,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Sand/T_DBA_Terrain_Sand_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Sand/T_DBA_Terrain_Sand_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/damp_beach_sand",
+      "license": "CC0 1.0",
+      "sha256": "59cc7611a6882230253d57d8f6f1bc2e4104e02b310418447eb0c0461b26c48c"
+    },
+    {
+      "layer": "Sand",
+      "role": "Normal",
+      "slug": "damp_beach_sand",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/damp_beach_sand/damp_beach_sand_nor_dx_2k.png",
+      "upstreamMd5": "8df20bd2f5e6e53df3b62a203c85377c",
+      "expectedBytes": 22351543,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Sand/T_DBA_Terrain_Sand_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Sand/T_DBA_Terrain_Sand_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/damp_beach_sand",
+      "license": "CC0 1.0",
+      "sha256": "3c28cfdea2de766c4830af44ae0b31df3abd7d37f6f33ebfd53ff168d72408c3"
+    },
+    {
+      "layer": "Sand",
+      "role": "ORM",
+      "slug": "damp_beach_sand",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/damp_beach_sand/damp_beach_sand_arm_2k.png",
+      "upstreamMd5": "339d0c04100b5801947a996afb0c0a4d",
+      "expectedBytes": 18172587,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Sand/T_DBA_Terrain_Sand_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Sand/T_DBA_Terrain_Sand_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/damp_beach_sand",
+      "license": "CC0 1.0",
+      "sha256": "b6ba162e3f55c38979509ecf5e4eb645cf0ee2b1094ed18fa9d59e4d75bec426"
+    },
+    {
+      "layer": "Sand",
+      "role": "Height",
+      "slug": "damp_beach_sand",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/damp_beach_sand/damp_beach_sand_disp_2k.png",
+      "upstreamMd5": "77c54df3998df410006571c0ff281f7c",
+      "expectedBytes": 6371118,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Sand/T_DBA_Terrain_Sand_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Sand/T_DBA_Terrain_Sand_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/damp_beach_sand",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 16,
+      "sha256": "661a14d6e5537b9db42757a095acb003dd23d3809ba3ba0a775ddd57afe159e0"
+    },
+    {
+      "layer": "Gravel",
+      "role": "BaseColor",
+      "slug": "gravel_ground_01",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/gravel_ground_01/gravel_ground_01_diff_2k.png",
+      "upstreamMd5": "0821237a54f4b6ca9272515dc4ed992d",
+      "expectedBytes": 10090834,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Gravel/T_DBA_Terrain_Gravel_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Gravel/T_DBA_Terrain_Gravel_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/gravel_ground_01",
+      "license": "CC0 1.0",
+      "sha256": "b5ba2a265b4412366dfeba09427a0bf351b49d14a3dcb5c3f7fc5fd4404c8b41"
+    },
+    {
+      "layer": "Gravel",
+      "role": "Normal",
+      "slug": "gravel_ground_01",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/gravel_ground_01/gravel_ground_01_nor_dx_2k.png",
+      "upstreamMd5": "dc311b06e00c68cca33bc4c989248eb5",
+      "expectedBytes": 9681918,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Gravel/T_DBA_Terrain_Gravel_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Gravel/T_DBA_Terrain_Gravel_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/gravel_ground_01",
+      "license": "CC0 1.0",
+      "sha256": "75d60591c44ef079d76dd9b020048577c49154a512d6de7c83fc75e7d8f0cbc3"
+    },
+    {
+      "layer": "Gravel",
+      "role": "ORM",
+      "slug": "gravel_ground_01",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/gravel_ground_01/gravel_ground_01_arm_2k.png",
+      "upstreamMd5": "b57bef46dbf9cb5f241ae54b1ec812bc",
+      "expectedBytes": 6300464,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Gravel/T_DBA_Terrain_Gravel_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Gravel/T_DBA_Terrain_Gravel_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/gravel_ground_01",
+      "license": "CC0 1.0",
+      "sha256": "70ff8cf81cdda24e40ed80f818bdf50f599a8e03ec67e339f4966ff845dfa33e"
+    },
+    {
+      "layer": "Gravel",
+      "role": "Height",
+      "slug": "gravel_ground_01",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/gravel_ground_01/gravel_ground_01_disp_2k.png",
+      "upstreamMd5": "546208ea6e11d34ff3843e07da60d946",
+      "expectedBytes": 8252404,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/Gravel/T_DBA_Terrain_Gravel_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/Gravel/T_DBA_Terrain_Gravel_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/gravel_ground_01",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 8,
+      "sha256": "6da9f9c002857ee2ebe8c31f15356a1de367d5bc93b1d1a40d6862bdd86488af"
+    },
+    {
+      "layer": "RoadDirt",
+      "role": "BaseColor",
+      "slug": "stony_dirt_path",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/stony_dirt_path/stony_dirt_path_diff_2k.png",
+      "upstreamMd5": "5a8127ca9bc726ec943c6fc153c06407",
+      "expectedBytes": 23678114,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/RoadDirt/T_DBA_Terrain_RoadDirt_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RoadDirt/T_DBA_Terrain_RoadDirt_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/stony_dirt_path",
+      "license": "CC0 1.0",
+      "sha256": "5bfa9e35204e47517bb40367a281144b9568fd334f49c71de74e54db7c047996"
+    },
+    {
+      "layer": "RoadDirt",
+      "role": "Normal",
+      "slug": "stony_dirt_path",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/stony_dirt_path/stony_dirt_path_nor_dx_2k.png",
+      "upstreamMd5": "2cadeaa9e65f1b149bf90eb23febeca3",
+      "expectedBytes": 24323211,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/RoadDirt/T_DBA_Terrain_RoadDirt_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RoadDirt/T_DBA_Terrain_RoadDirt_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/stony_dirt_path",
+      "license": "CC0 1.0",
+      "sha256": "93f5cb15037e7241c8e62451985a5d50ec6431981072d9f5857701a1fdc367c3"
+    },
+    {
+      "layer": "RoadDirt",
+      "role": "ORM",
+      "slug": "stony_dirt_path",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/stony_dirt_path/stony_dirt_path_arm_2k.png",
+      "upstreamMd5": "c1b1e6996cc6d06360fb43bed9cdd4ac",
+      "expectedBytes": 17415787,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/RoadDirt/T_DBA_Terrain_RoadDirt_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RoadDirt/T_DBA_Terrain_RoadDirt_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/stony_dirt_path",
+      "license": "CC0 1.0",
+      "sha256": "31a583cdf7f1194f31e9edd5a6c777447053e8f495e9ac846730dbcf27b7fd58"
+    },
+    {
+      "layer": "RoadDirt",
+      "role": "Height",
+      "slug": "stony_dirt_path",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/stony_dirt_path/stony_dirt_path_disp_2k.png",
+      "upstreamMd5": "aeeb4f3fcc70b136485299a70042f2f9",
+      "expectedBytes": 9759062,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/RoadDirt/T_DBA_Terrain_RoadDirt_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/RoadDirt/T_DBA_Terrain_RoadDirt_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/stony_dirt_path",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 8,
+      "sha256": "2cd5ce3501247b4e775ee1b23233156dc1ccb8366269cdc95d8e50aafb442b90"
+    },
+    {
+      "layer": "FarmSoil",
+      "role": "BaseColor",
+      "slug": "farm_furrows",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/farm_furrows/farm_furrows_diff_2k.png",
+      "upstreamMd5": "8b110598c1e859789e9b11116eaf81c1",
+      "expectedBytes": 21984177,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/FarmSoil/T_DBA_Terrain_FarmSoil_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/FarmSoil/T_DBA_Terrain_FarmSoil_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/farm_furrows",
+      "license": "CC0 1.0",
+      "sha256": "041a2ce1f1f99cf5cce10863324fd477ba606c6c8e5ea989fb3835f52b7ed7c4"
+    },
+    {
+      "layer": "FarmSoil",
+      "role": "Normal",
+      "slug": "farm_furrows",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/farm_furrows/farm_furrows_nor_dx_2k.png",
+      "upstreamMd5": "852825f74e6b37097485c378b74a324a",
+      "expectedBytes": 23603143,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/FarmSoil/T_DBA_Terrain_FarmSoil_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/FarmSoil/T_DBA_Terrain_FarmSoil_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/farm_furrows",
+      "license": "CC0 1.0",
+      "sha256": "0615b2bbf8a80558ea2fbdd4a6df48994022a66e7925086c97965b1074a45c1d"
+    },
+    {
+      "layer": "FarmSoil",
+      "role": "ORM",
+      "slug": "farm_furrows",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/farm_furrows/farm_furrows_arm_2k.png",
+      "upstreamMd5": "f6b794fed70c3b913e29af3b6fb51a75",
+      "expectedBytes": 14604766,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/FarmSoil/T_DBA_Terrain_FarmSoil_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/FarmSoil/T_DBA_Terrain_FarmSoil_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/farm_furrows",
+      "license": "CC0 1.0",
+      "sha256": "ed7969f2ef09100b29f598d39b6dcf7bf8a0997957ec028c234ff5c918208017"
+    },
+    {
+      "layer": "FarmSoil",
+      "role": "Height",
+      "slug": "farm_furrows",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/farm_furrows/farm_furrows_disp_2k.png",
+      "upstreamMd5": "da6fd11a9a4495d4f0438d0d4ee1dceb",
+      "expectedBytes": 6315246,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/FarmSoil/T_DBA_Terrain_FarmSoil_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/FarmSoil/T_DBA_Terrain_FarmSoil_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/farm_furrows",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 16,
+      "sha256": "70897ba245c7b47f1b491582551d37f95afebccc13a626f0350b7f2034c86418"
+    },
+    {
+      "layer": "ShoreMud",
+      "role": "BaseColor",
+      "slug": "brown_mud_03",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/brown_mud_03/brown_mud_03_diff_2k.png",
+      "upstreamMd5": "17715ddf1687eb647dc7e539c2aa10d4",
+      "expectedBytes": 7265305,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/ShoreMud/T_DBA_Terrain_ShoreMud_BaseColor_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ShoreMud/T_DBA_Terrain_ShoreMud_BaseColor_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_BaseColor",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Default",
+      "sRGB": true,
+      "originUrl": "https://polyhaven.com/a/brown_mud_03",
+      "license": "CC0 1.0",
+      "sha256": "ae08382a69e1e3186e08fbf53d467d8a4e1ca7b700db2e6981e563e2109d1e16"
+    },
+    {
+      "layer": "ShoreMud",
+      "role": "Normal",
+      "slug": "brown_mud_03",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/brown_mud_03/brown_mud_03_nor_dx_2k.png",
+      "upstreamMd5": "9c4c2ed80579abc61b44da78be54de0f",
+      "expectedBytes": 8369290,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/ShoreMud/T_DBA_Terrain_ShoreMud_Normal_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ShoreMud/T_DBA_Terrain_ShoreMud_Normal_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_Normal",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Normalmap",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/brown_mud_03",
+      "license": "CC0 1.0",
+      "sha256": "149a8905ec713678c11f7b7078e4c4b905e40a158e9d5aaf1e8a2b57b833eb8f"
+    },
+    {
+      "layer": "ShoreMud",
+      "role": "ORM",
+      "slug": "brown_mud_03",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/brown_mud_03/brown_mud_03_arm_2k.png",
+      "upstreamMd5": "b57f48605002ab3b48c2562fb172b24e",
+      "expectedBytes": 6465940,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/ShoreMud/T_DBA_Terrain_ShoreMud_ORM_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ShoreMud/T_DBA_Terrain_ShoreMud_ORM_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_ORM",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Masks",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/brown_mud_03",
+      "license": "CC0 1.0",
+      "sha256": "c6aa7d52ff09236e1c2b4b4707bb7deb5fe51cd71251765a57b1cec05cc62e16"
+    },
+    {
+      "layer": "ShoreMud",
+      "role": "Height",
+      "slug": "brown_mud_03",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/brown_mud_03/brown_mud_03_disp_2k.png",
+      "upstreamMd5": "ef05a5db35177d86b6579d51d67a485f",
+      "expectedBytes": 8370805,
+      "stagePath": "Game/Saved/Validation/TerrainPBR_20261012/Stage/ShoreMud/T_DBA_Terrain_ShoreMud_Height_Source.png",
+      "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/PBR/ShoreMud/T_DBA_Terrain_ShoreMud_Height_Source.png",
+      "assetPath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_Height",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "compression": "Grayscale",
+      "sRGB": false,
+      "originUrl": "https://polyhaven.com/a/brown_mud_03",
+      "license": "CC0 1.0",
+      "heightPrecisionBits": 8,
+      "sha256": "fac05fffc977b0b2c522660532aac6cbb541471936caa216e03b409073c6977d"
+    }
+  ]
+}

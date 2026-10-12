@@ -336,6 +336,61 @@ class EditorBoundaryTests(unittest.TestCase):
             ASSETS.UnrealMapEditor(unreal, execution_mode="unknown")
         unreal.get_editor_subsystem.assert_not_called()
 
+    def assert_definition_entrypoint_failure(self, phase, command_line, expected, via_mcp=False):
+        """运行真实main和派生构造器；只替换不可离线访问的UE边界，不写任何资产。"""
+        unreal = Mock()
+        unreal.SystemLibrary.get_command_line.return_value = command_line
+        unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages.return_value = []
+        unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages.return_value = []
+        unreal.Paths.project_content_dir.return_value = str(SCRIPT.resolve().parents[2] / "Game/Content")
+        unreal.Paths.convert_relative_path_to_full.side_effect = lambda value: value
+        # 让合法宿主条件走到真实反射预检，再以缺失基类安全停止，不绕过模式门禁。
+        unreal.load_class.return_value = None
+        output = io.StringIO()
+        entrypoint = ASSETS.main_from_mcp if via_mcp else ASSETS.main
+        with patch.dict("sys.modules", {"unreal": unreal}), redirect_stdout(output), self.assertRaises(RuntimeError):
+            entrypoint(["--phase", phase])
+        report = json.loads(output.getvalue().removeprefix("FOUNDATION_ASSETS_REPORT "))
+        self.assertEqual(report["phase"], phase)
+        self.assertEqual(report["exit_code"], 1)
+        self.assertEqual(report["errors"], [expected])
+        self.assertEqual(report["assets"][0]["package"],
+                         "/Game/Development/Foundation/Definitions/DA_Foundation" + phase)
+        self.assertEqual(report["assets"][0]["state"], "FAILED")
+        unreal.AssetToolsHelpers.get_asset_tools.assert_not_called()
+        return unreal
+
+    def test_definition_script_main_reaches_real_reflection_preflight(self):
+        """脚本入口必须接纳默认execution_mode并进入真实定义构造器。"""
+        for phase in ("Probe", "Flow"):
+            with self.subTest(phase=phase):
+                self.assert_definition_entrypoint_failure(
+                    phase, '-unattended -ScriptErrorsAreFatal -ExecutePythonScript="fixture.py"',
+                    "Data 基类反射缺失，必须先编译加载 GamePlatformData")
+
+    def test_definition_mcp_main_forwards_mode_to_real_preflight(self):
+        """MCP模式必须原样传给基类，不能退回要求ExecutePythonScript的脚本模式。"""
+        for phase in ("Probe", "Flow"):
+            with self.subTest(phase=phase):
+                self.assert_definition_entrypoint_failure(
+                    phase, '-unattended -ScriptErrorsAreFatal -FoundationAssetGenerationViaMcp '
+                           '-ModelContextProtocolStartServer',
+                    "Data 基类反射缺失，必须先编译加载 GamePlatformData", via_mcp=True)
+
+    def test_definition_mcp_main_rejects_missing_dedicated_flags(self):
+        """真实main_from_mcp仍逐项拒绝缺失专用标志，不由参数转发修复放宽宿主门禁。"""
+        cases = (
+            ("-ModelContextProtocolStartServer", "FoundationAssetGenerationViaMcp"),
+            ("-FoundationAssetGenerationViaMcp", "ModelContextProtocolStartServer"),
+        )
+        for phase in ("Probe", "Flow"):
+            for supplied, missing in cases:
+                with self.subTest(phase=phase, missing=missing):
+                    unreal = self.assert_definition_entrypoint_failure(
+                        phase, '-unattended -ScriptErrorsAreFatal -ExecutePythonScript="fixture.py" ' + supplied,
+                        "MCP模式必须提供 -" + missing, via_mcp=True)
+                    unreal.get_editor_subsystem.assert_not_called()
+
     def test_main_emits_failed_report_then_raises_on_unsupported_phase(self):
         output = io.StringIO()
         with redirect_stdout(output), self.assertRaises(RuntimeError):
@@ -604,9 +659,15 @@ class FlowTests(unittest.TestCase):
             def set_editor_property(self, name, value):
                 self.fields[name] = value
 
+        class DefaultsOnlyNode(ReflectedFields):
+            """模拟 UE 独立节点的 EditDefaultsOnly：构造可赋值，实例 setter 拒绝。"""
+            def set_editor_property(self, name, value):
+                raise RuntimeError(
+                    f"GamePlatformFlowNodeDefinition: '{name}' cannot be edited on instances")
+
         adapter = ASSETS.UnrealFlowEditor.__new__(ASSETS.UnrealFlowEditor)
         adapter.unreal = Mock()
-        adapter.unreal.GamePlatformFlowNodeDefinition.side_effect = ReflectedFields
+        adapter.unreal.GamePlatformFlowNodeDefinition.side_effect = DefaultsOnlyNode
         adapter.unreal.PrimaryAssetType.side_effect = lambda: ReflectedFields(name="None")
         adapter.unreal.PrimaryAssetId.side_effect = lambda: ReflectedFields(
             primary_asset_type=ReflectedFields(name="None"), primary_asset_name="None")

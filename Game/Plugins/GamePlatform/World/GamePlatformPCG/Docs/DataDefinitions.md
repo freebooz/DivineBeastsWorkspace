@@ -10,7 +10,7 @@
 | UGamePlatformPCGProfileDefinition | PCG兼容配置定义 | 现有并扩展 | 0.1.0运行请求兼容入口、Template Contract头 |
 
 > Profile（配置）兼容规则：`TemplateId（模板ID）`为空的 0.1.0 Legacy（旧四节点）Profile 仍要求单一 `OutputMesh（输出网格）`；1.0 Template Profile 可以不填写 `OutputMesh`，由后续受控 MeshSet/Spawner（网格集合/生成器）合同完成 Realize（实例化）。
-| UGamePlatformPCGExecPresetDefinition | 执行预设 | M0已实现 | Grid、预算、Runtime/HiGen/Net策略；M0/M1拒绝HiGen与ServerAuth |
+| UGamePlatformPCGExecPresetDefinition | 执行预设 | M0/M1静态合同已实现 | Grid、预算、Runtime/HiGen/Net策略；拒绝尚未验收的分区、Runtime、HiGen和ServerAuth；单批不超过256组件、1,048,576点 |
 | UGamePlatformPCGMeshSetDefinition | 网格集合 | M0已实现 | 网格、权重、碰撞意图、阴影、剔除距离 |
 | UGamePlatformPCGSpawnPolicyDefinition | 生成策略 | M0已实现 | 密度、缩放、坡度、高度、KeepVertical、自修剪 |
 | UGamePlatformPCGLayerDefinition | 生成层 | M0已实现 | Layer、MeshSet、SpawnPolicy与Children |

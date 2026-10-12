@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/GamePlatformSlotWidget.h"
 #include "ViewModels/DivineBeastsViewModelBase.h"
+#include "Types/GamePlatformDataLease.h"
 #include "DivineBeastsAbilityBarViewModel.generated.h"
 
 class UDivineBeastsAbilityLoadoutComponent;
@@ -18,7 +19,8 @@ struct FGameplayEffectSpec;
 struct FGameplayAbilitySpec;
 struct FGamePlatformAbilityAvatarBindingSnapshot;
 struct FDivineBeastsAbilityLoadoutState;
-struct FStreamableHandle;
+class UGameInstance;
+class IGamePlatformDataService;
 
 /** FDivineBeastsAbilitySlotDetails（神兽联盟技能栏单格提示信息）。
  * 纯客户端只读投影，不提供技能授予、伤害或资源成本写入权限。 */
@@ -86,7 +88,19 @@ public:
 
 private:
     void HandleLoadoutChanged(const FDivineBeastsAbilityLoadoutState& Snapshot);
-    void HandleProfileLoaded(int32 ExpectedLoadGeneration, FName ExpectedHero);
+    /** Data只在游戏线程延后完成；代次、英雄、原Loadout与完整租约必须仍属当前请求。 */
+    void HandleProfileLoaded(uint64 ExpectedLoadGeneration, FName ExpectedHero,
+        const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
+    void HandleIconsLoaded(uint64 ExpectedLoadGeneration, FName ExpectedHero,
+        const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
+    /** 仅解析当前Loadout所属实例的数据门面；不创建资产管理器或全局缓存。 */
+    IGamePlatformDataService* ResolveProfileDataService(UGameInstance* Instance) const;
+#if WITH_DEV_AUTOMATION_TESTS
+    /** 私有测试注入只控制Data延后通知和主资产查询，不替换生产状态机或游戏资格判断。 */
+    friend struct FDivineBeastsUIResourceLeaseTestAccess;
+    IGamePlatformDataService* DataServiceForTests = nullptr;
+    TFunction<FSoftObjectPath(FName)> ProfilePathForTests;
+#endif
     void RefreshSlots(const FDivineBeastsAbilityLoadoutState& Snapshot);
     void ResetProfileLease();
 
@@ -127,9 +141,15 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsAbilityUIProfile> LoadedProfile = nullptr;
 
-    TSharedPtr<FStreamableHandle> ProfileHandle;
-    int32 LoadGeneration = 0;
+    /** 两阶段普通资源租约：Profile不是平台Definition，图标批次共享当前英雄代次。 */
+    FGamePlatformDataLease ProfileLease;
+    FGamePlatformDataLease IconLease;
+    TWeakObjectPtr<UGameInstance> ProfileLeaseInstance;
+    FSoftObjectPath ProfilePath;
+    uint64 LoadGeneration = 0;
     FName LoadedHeroId = NAME_None;
+    /** 仅成功图标租约允许向槽位发布软图标，失败保持中性缺图标视觉。 */
+    bool bIconsReady = false;
 
     UPROPERTY(Transient)
     TArray<FGamePlatformUISlotState> Slots;

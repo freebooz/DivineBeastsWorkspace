@@ -5,7 +5,8 @@ function Assert-FoundationAutomationReport {
        Cases由调用方从本次独占目录读取，函数不访问旧日志；RequiredPaths不能为空。 #>
     param([AllowEmptyCollection()][object[]]$Cases, [string[]]$RequiredPaths, [string]$Prefix)
     if (-not $RequiredPaths.Count -or [string]::IsNullOrWhiteSpace($Prefix)) { throw '测试门禁必须指定非空必需身份集合与组前缀' }
-    $seen=@{}
+    # 完整身份与前缀同用Ordinal；大小写不同的成功项不能替代必需身份。
+    $seen=[System.Collections.Generic.Dictionary[string,bool]]::new([StringComparer]::Ordinal)
     foreach ($case in $Cases) {
         if (-not ([string]$case.fullTestPath).StartsWith($Prefix,[StringComparison]::Ordinal)) { continue }
         if ($seen.ContainsKey($case.fullTestPath)) { throw "本次报告存在重复测试身份：$($case.fullTestPath)" }

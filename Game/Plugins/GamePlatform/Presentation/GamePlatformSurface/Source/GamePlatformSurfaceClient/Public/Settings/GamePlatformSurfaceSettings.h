@@ -5,6 +5,7 @@
 #include "GamePlatformSurfaceSettings.generated.h"
 
 class UMaterialParameterCollection;
+class UGamePlatformSurfaceMarkCatalog;
 
 /**
  * GamePlatformSurface（游戏平台环境表面）客户端配置。
@@ -26,6 +27,14 @@ public:
      */
     UPROPERTY(Config, EditAnywhere, Category="Surface", meta=(AllowedClasses="/Script/Engine.MaterialParameterCollection"))
     TSoftObjectPtr<UMaterialParameterCollection> GlobalParameterCollection;
+
+    /** 局部痕迹可选目录；仅普通客户端软资源，由Data租约异步加载，服务器完全忽略。 */
+    UPROPERTY(Config, EditAnywhere, Category="Surface|Marks")
+    TSoftObjectPtr<UGamePlatformSurfaceMarkCatalog> MarkCatalog;
+
+    /** 允许项目关闭所有局部痕迹，避免移动端过量Decal；不会改变命中判定。 */
+    UPROPERTY(Config, EditAnywhere, Category="Surface|Marks")
+    bool bEnableSurfaceMarks = true;
 
     /** MPC缺失或参数契约不完整时是否记录一次客户端警告；不影响服务器。 */
     UPROPERTY(Config, EditAnywhere, Category="Diagnostics")

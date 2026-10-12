@@ -5,6 +5,7 @@
 #include "Contracts/DivineBeastsUIContracts.h"
 #include "GamePlatformUITypes.h"
 #include "Loading/GamePlatformLoadingScreenService.h"
+#include "Types/GamePlatformDataLease.h"
 #include "DivineBeastsUIClientSubsystem.generated.h"
 
 class UDivineBeastsApplicationUIAdapter;
@@ -18,6 +19,8 @@ class UGamePlatformUIScreen;
 class UGamePlatformUIScreenDefinition;
 class ADivineBeastsWorldPlayerController;
 class UCommonUIActionRouterBase;
+class UGameInstance;
+class IGamePlatformDataService;
 struct FUIInputConfig;
 
 /** 本地系统菜单整体可见性；设置子页切换不重复广播，世界控制器据此撤销鼠标拖动。 */
@@ -174,11 +177,35 @@ private:
     FGuid PendingThemeRequestId;
     bool bDefaultThemeRequested = false;
 
-    /**
-     * 从DBAUIPack_Core稳定软路径安装项目默认RootLayout。
-     * 只在初始化或真实状态事件到达时重试，不使用Tick；成功后由平台层持有实例。
-     */
+    /** 本地玩家所属Instance租约异步装根；同代次Pending合并、Failed不自动重试，无同步读盘。 */
     bool EnsureDefaultRootLayout();
+    void HandleDefaultRootLayoutLoaded(uint64 ExpectedGeneration,
+        const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
+    /** 撤销请求代次，按需保留同LocalPlayer跨Travel的成功根租约；释放前摘下所有权。 */
+    void ResetDefaultRootLayoutLoad(bool bKeepInstalledLease);
+    void UpdateDefaultRootLayoutContext(ULocalPlayer* Player, APlayerController* Controller);
+    bool IsRootLayoutContextCurrent(uint64 ExpectedGeneration) const;
+    IGamePlatformDataService* ResolveRootLayoutDataService(UGameInstance* Instance) const;
+
+    /** Idle等候控制器，Pending在途，Failed等待新上下文，Ready由平台持有根实例。 */
+    enum class ERootLayoutLoadState : uint8 { Idle, Pending, Failed, Ready };
+    ERootLayoutLoadState RootLayoutLoadState = ERootLayoutLoadState::Idle;
+    FGamePlatformDataLease DefaultRootLayoutLease;
+    TWeakObjectPtr<UGameInstance> RootLayoutLeaseInstance;
+    TWeakObjectPtr<ULocalPlayer> RootLayoutPlayer;
+    TWeakObjectPtr<APlayerController> RootLayoutController;
+    TWeakObjectPtr<UGamePlatformUILayerStack> LeasedRootLayout;
+    FSoftObjectPath RootLayoutRequestPath;
+    uint64 RootLayoutLoadGeneration = 0;
+    /** 原生/蓝图Construct及平台关闭通知可能同步重入；安装返回前不再请求或同步主页面。 */
+    bool bInstallingRootLayout = false;
+#if WITH_DEV_AUTOMATION_TESTS
+    /** 仅测试Data延后完成与最终Viewport边界；生产生命周期方法、代次和释放路径保持原样。 */
+    friend struct FDivineBeastsUIResourceLeaseTestAccess;
+    IGamePlatformDataService* RootDataServiceForTests = nullptr;
+    FSoftObjectPath RootLayoutPathForTests;
+    TFunction<bool(TSubclassOf<UGamePlatformUILayerStack>)> RootInstallerForTests;
+#endif
 
     void RegisterDefaultScreenDefinitions();
     void UnregisterDefaultScreenDefinitions();

@@ -6,6 +6,7 @@
 Target为Client或Server，默认Client。Maps默认两张Foundation开发地图。
 仅使用UE5.8真实BuildCookRun参数：-target、-client或-server -noclient、-CookOutputDir、-stagingdirectory。
 独立新目录代替清理旧Cook；默认不迭代。不包含-build/-run/-clean。
+Server先验证单源排除规则及受管INI漂移，UAT成功后逐个读取实际Stage/Pak/IoStore并拒绝纯表现泄漏。
 返回0成功，1脚本失败，2未执行；外部非零退出码原样保留。
 #>
 param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][string]$Target = 'Client',
@@ -27,6 +28,17 @@ try {
     }
     $engine = Get-FoundationEngine $EngineRoot
     $details.EngineVersion = $engine.Version; $details.EngineRoot = $engine.Root
+    # 在UAT/引擎锁之前验证全部受管配置；配置漂移时不开始本次Cook，也不修改旧产物。
+    $serverPresentationPolicy = $null
+    if ($Target -eq 'Server') {
+        $serverPolicyPython = Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $serverPolicyTool = Join-Path $PSScriptRoot 'ServerPresentationPolicy.py'
+        Assert-FoundationFile $serverPolicyPython; Assert-FoundationFile $serverPolicyTool
+        $policyOutput = & $serverPolicyPython $serverPolicyTool check --custom-config $CustomConfig
+        if ($LASTEXITCODE -ne 0) { throw '服务器排除配置漂移或真源无效；本次Cook未开始。' }
+        $serverPresentationPolicy = ($policyOutput -join "\n") | ConvertFrom-Json
+        $details.ServerPresentationPolicy = $serverPresentationPolicy
+    }
     Assert-FoundationFile $context.Project
     Assert-FoundationFile (Join-Path $context.Workspace "Game/Source/DivineBeastsArena$Target.Target.cs")
     # Foundation地图白名单不能隐式扩大；只有Village专服配置可显式发布这一张已存在的正式村庄地图。
@@ -46,7 +58,13 @@ try {
     $details.CookDirectory = $cookDirectory; $details.StageDirectory = $stageDirectory
     # Cook只由AdditionalCookerOptions选择角色/开发配置；不向UAT顶层传CustomConfig。
     # UBT ConfigCache仍会读取全局CustomConfig并改变Stage配置层；专服必须保留收据DedicatedServer剥离规则。
-    $arguments = @($tool.Dll,'BuildCookRun',"-project=$($context.Project)","-target=DivineBeastsArena$Target",'-nop4','-unattended','-utf8output','-cook','-stage','-skipbuild','-skipbuildeditor','-platform=Win64','-clientconfig=Development','-serverconfig=Development',"-AdditionalCookerOptions=-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback",'-ddc=NoZenLocalFallback',('-map=' + ($Maps -join '+')),"-CookOutputDir=$cookDirectory", "-stagingdirectory=$stageDirectory")
+    $additionalCookerOptions = "-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
+    if ($Target -eq 'Server' -and @($serverPresentationPolicy.CookerArguments).Count -gt 0) {
+        # FoundationStandalone仍保留原开发许可；只给Server Cooker追加逐目录+Key。
+        # UE5.8 ConfigCacheIni按ArrayAdd处理独立token；不用同名Set、清数组或逗号拼接。
+        $additionalCookerOptions += (' ' + ($serverPresentationPolicy.CookerArguments -join ' '))
+    }
+    $arguments = @($tool.Dll,'BuildCookRun',"-project=$($context.Project)","-target=DivineBeastsArena$Target",'-nop4','-unattended','-utf8output','-cook','-stage','-skipbuild','-skipbuildeditor','-platform=Win64','-clientconfig=Development','-serverconfig=Development',"-AdditionalCookerOptions=$additionalCookerOptions",'-ddc=NoZenLocalFallback',('-map=' + ($Maps -join '+')),"-CookOutputDir=$cookDirectory", "-stagingdirectory=$stageDirectory")
     if ($CustomConfig -eq 'VillageDevelopmentServer') {
         # Stage的AllowedConfigFiles先于收据CustomConfig目录过滤；只为显式开发发布加入两份运行INI。
         # 不改变正式Target、DedicatedServer的Pak规则或默认发行关闭状态；其他配置没有这些白名单。
@@ -74,8 +92,22 @@ try {
         $executables = @(Get-ChildItem -LiteralPath $stageDirectory -Recurse -File -Filter "DivineBeastsArena$Target.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Directory.Name -eq 'Win64' })
         if ($executables.Count -ne 1) { throw "Stage目标程序数量应为1，实际$($executables.Count)。" }
         $details.Executable = $executables[0].FullName
+        if ($Target -eq 'Server') {
+            # 真实Stage文件枚举与每个发现的Pak/IoStore清单同时审计；不复用历史CSV。
+            # 策略工具检查必需容器存在、清单/工具错误及所请求地图；不证明全部载荷块完整性。
+            $auditDirectory = Join-Path $context.Directory 'ServerPresentationAudit'
+            $auditArguments = @($serverPolicyTool,'audit-stage','--profile',$serverPresentationPolicy.Profile,
+                '--stage',$stageDirectory,'--unreal-pak',(Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealPak.exe'),
+                '--evidence',$auditDirectory)
+            foreach ($map in $Maps) { $auditArguments += @('--required-map',$map) }
+            $auditOutput = & $serverPolicyPython @auditArguments
+            $code = $LASTEXITCODE
+            $details.ServerPresentationAuditReport = Join-Path $auditDirectory 'ServerPresentationAudit.json'
+            if ($code -eq 0) { $details.ServerPresentationAudit = ($auditOutput -join "\n") | ConvertFrom-Json }
+        }
     }
-    $message = '实际UAT开发地图Cook/Stage结束；不代表运行或服务器资源剥离审计通过。'
+    $message = if ($Target -eq 'Server') { '实际UAT Cook/Stage及服务器表现产物门禁结束；结果见独立容器证据，不代表运行或联机通过。' }
+        else { '实际UAT客户端开发地图Cook/Stage结束；不代表运行通过。' }
 } catch [IO.FileNotFoundException] { $code = 2; $message = $_.Exception.Message }
 catch { $code = 1; $message = $_.Exception.Message }
 finally { if ($null -ne $lock) { $lock.ReleaseMutex(); $lock.Dispose() } }

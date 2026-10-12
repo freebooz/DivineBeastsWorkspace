@@ -17,7 +17,9 @@ public class GamePlatformSurfaceClient : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
-            "DeveloperSettings"
+            "DeveloperSettings",
+            // 公共SurfaceMark请求直接暴露EPhysicalSurface（物理表面枚举）；必须明确公开声明依赖。
+            "PhysicsCore",
         });
         // MPC普通软资源的持有/取消统一由Data管理；不自建AssetManager或同步加载备用链。
         PrivateDependencyModuleNames.Add("GamePlatformData");

@@ -36,6 +36,14 @@ World Position Offset（世界位置偏移）、三平面投射、复杂程序�
 
 2026-10-10已有五张Surface源纹理（WetnessNoise、PuddleMask、SnowAlbedo、SnowNormal、SnowORM）位于`GamePlatformSurface/SourceArt/Weather`，由`Tools/Unreal/Weather/GenerateWeatherSourceTextures.py`及其Manifest校验。**源PNG不是Texture2D.uasset**：必须通过正式UE导入脚本、材质节点连接与Shader编译，配合MPC真实创建和Server Cook剥离后才可转为P5通过。
 
+## 苔藓与雪的通用PBR组合（2026-10-12）
+
+平台可选母材质 `M_GP_Surface_SnowMoss_PBR`（通用苔藓—积雪PBR母材质）通过 `Tools/Unreal/Surface/AuthorMossSnowPBRAssets.py`（UE5.8真实资产制作脚本）创作。新增五张通用苔藓源PNG及哈希清单由 `GenerateMossPBRSourceArt.py`（确定性源图工具）生成；不能用源图代替 Texture2D（纹理资产）。
+
+材质覆盖顺序为基础岩石→宏观斑驳苔藓→湿润→积雪，统一混合基础色、切线空间法线、粗糙度、AO（环境遮蔽），金属度保持0。宏观覆盖采用世界空间坐标，坡度采用 VertexNormalWS（世界顶点法线）避免着色器反馈循环，`GlobalMossInfluence`、`GlobalSnowAmount`、`GlobalWetness` 均复用已有MPC稳定参数。第三层项目实例 `MI_DBA_MossSnow_Cliff`（神兽联盟岩壁场景风格）仅通过参数覆盖；正式Village服务器共享基础地形材质保持不变。
+
+原有 `MF_GP_MossLayer`（简单苔藓覆盖函数）继续兼容旧材质；新写实组合方案独立发布，待真实UE编辑器着色器验证、Cook资产隔离和视觉签收后才可推广到全部世界。
+
 ## 人工验收
 
 真实材质至少验证 Shader 编译、坡度／高度边界、湿润粗糙度变化、积水合理分布、远近景稳定、Material Stats（材质统计）和 ProfileGPU；Client Cook 应包含使用资产，Server Cook 应剥离纯表现资产。

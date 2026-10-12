@@ -76,7 +76,7 @@ void UGamePlatformVFXWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
     bClosing = false;
     ++WorldLifecycleGeneration;
     PendingInstanceCount = 0;
-    PeakTrackedInstances = 0;
+    DiagnosticsWorldId = FGamePlatformVFXDiagnostics::RegisterWorld();
     DefinitionCacheSerial = 0;
     UpdateRuntimeDiagnostics();
 
@@ -112,6 +112,8 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
     if (bClosing) return; // 终态观察者可以重入关闭，第一次清理栈仍负责全部自有账本。
     bClosing = true;
     ++WorldLifecycleGeneration;
+    FGamePlatformVFXDiagnostics::UnregisterWorld(DiagnosticsWorldId);
+    DiagnosticsWorldId.Invalidate();
 
     FGamePlatformAssetLoader::Cancel(StartupCatalogLoadLease);
     StartupCatalogLoadLease.Reset();
@@ -153,7 +155,7 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
     DedupeHandles.Reset();
     DedupeKeysByHandle.Reset();
     TerminalOccurrences.Reset();
-    PendingInstanceCount = 0;
+    PendingInstanceCount = 0; // 世界已在关闭入口注销，终止清理只复位本地计数，不重新发布。
 
     ReleaseAllCachedDefinitions();
 
@@ -161,7 +163,6 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
     StartupCatalogHandles.Reset();
     RegisteredCatalogObjects.Reset();
 
-    UpdateRuntimeDiagnostics();
     Super::Deinitialize();
 }
 
@@ -250,8 +251,7 @@ UGamePlatformVFXWorldSubsystem::QueueDefinitionLoad(
             Pending.Request = Request;
             Existing->PendingRequests.Add(ReservedHandle.Id, MoveTemp(Pending));
             DefinitionIdByHandle.Add(ReservedHandle.Id, DefinitionId);
-            ++PendingInstanceCount;
-            UpdateRuntimeDiagnostics();
+            AdjustPendingInstanceCount(1);
             return EGamePlatformVFXDefinitionQueueResult::Queued;
         }
 
@@ -309,9 +309,8 @@ UGamePlatformVFXWorldSubsystem::QueueDefinitionLoad(
 
     DefinitionCache.Add(DefinitionId, MoveTemp(NewEntry));
     DefinitionIdByHandle.Add(ReservedHandle.Id, DefinitionId);
-    ++PendingInstanceCount;
+    AdjustPendingInstanceCount(1);
     FGamePlatformVFXDiagnostics::DefinitionCacheMiss();
-    UpdateRuntimeDiagnostics();
 
     const TWeakObjectPtr<UGamePlatformVFXWorldSubsystem> WeakThis(this);
     FGamePlatformResult Accepted;
@@ -339,8 +338,7 @@ UGamePlatformVFXWorldSubsystem::QueueDefinitionLoad(
     {
         DefinitionCache.Remove(DefinitionId);
         DefinitionIdByHandle.Remove(ReservedHandle.Id);
-        PendingInstanceCount = FMath::Max(0, PendingInstanceCount - 1);
-        UpdateRuntimeDiagnostics();
+        AdjustPendingInstanceCount(-1);
         return EGamePlatformVFXDefinitionQueueResult::Failed;
     }
 
@@ -400,9 +398,7 @@ void UGamePlatformVFXWorldSubsystem::HandleCachedDefinitionLoaded(
             MoveTemp(Entry->PendingRequests);
         const FGamePlatformDataLease FailedLease = Entry->Lease;
 
-        PendingInstanceCount = FMath::Max(
-            0,
-            PendingInstanceCount - FailedPending.Num());
+        AdjustPendingInstanceCount(-FailedPending.Num());
         DefinitionCache.Remove(DefinitionId);
 
         ReleaseLease(FailedLease);
@@ -423,10 +419,7 @@ void UGamePlatformVFXWorldSubsystem::HandleCachedDefinitionLoaded(
     TMap<FGuid, FGamePlatformVFXPendingDefinitionRequest> ReadyPending =
         MoveTemp(Entry->PendingRequests);
     Entry->PendingRequests.Reset();
-    PendingInstanceCount = FMath::Max(
-        0,
-        PendingInstanceCount - ReadyPending.Num());
-    UpdateRuntimeDiagnostics();
+    AdjustPendingInstanceCount(-ReadyPending.Num());
 
     for (const TPair<FGuid, FGamePlatformVFXPendingDefinitionRequest>& Pair : ReadyPending)
     {
@@ -471,7 +464,7 @@ EGamePlatformVFXDefinitionQueueResult UGamePlatformVFXWorldSubsystem::QueueSelec
     if (Paths.IsEmpty()) return ExecuteLoadedDefinition(Definition, Request, Handle) ? EGamePlatformVFXDefinitionQueueResult::Executed : EGamePlatformVFXDefinitionQueueResult::Failed;
     if (PendingInstanceCount >= GetDefault<UGamePlatformVFXSettings>()->MaxPendingInstancePreloads) return EGamePlatformVFXDefinitionQueueResult::Failed;
     FInstanceResourceRequest Pending; Pending.Handle = Handle; Pending.Request = Request; Pending.bLoading = true;
-    InstanceResources.Add(Handle.Id, Pending); ++PendingInstanceCount;
+    InstanceResources.Add(Handle.Id, Pending); AdjustPendingInstanceCount(1);
     const TWeakObjectPtr<UGamePlatformVFXWorldSubsystem> WeakThis(this);
     FGamePlatformResult Accepted;
     const auto Lease = Data->AcquireResources(Paths, EGamePlatformDataLifetime::World, this,
@@ -492,7 +485,7 @@ void UGamePlatformVFXWorldSubsystem::HandleSelectedResourcesLoaded(const FGamePl
     if (bClosing || !World || World->bIsTearingDown || !InstanceRegistry.IsActive(Handle) || !Stored || !Stored->bLoading ||
         Stored->Handle.Generation != Handle.Generation || Stored->Lease.LeaseId != Lease.LeaseId || Stored->Lease.Generation != Lease.Generation ||
         Stored->Lease.ScopeId != Lease.ScopeId || Stored->Lease.IssuerProof != Lease.IssuerProof || Stored->Lease.ResourcePaths != Lease.ResourcePaths) return;
-    Stored->bLoading = false; PendingInstanceCount = FMath::Max(0, PendingInstanceCount - 1);
+    Stored->bLoading = false; AdjustPendingInstanceCount(-1);
     const auto Pending = *Stored;
     if (Pending.bFallbackMetadata)
     {
@@ -549,7 +542,7 @@ bool UGamePlatformVFXWorldSubsystem::TryDefinitionFallback(const FGamePlatformVF
     if (!Data || PendingInstanceCount >= GetDefault<UGamePlatformVFXSettings>()->MaxPendingInstancePreloads) return false;
     FInstanceResourceRequest Pending; Pending.Handle = Handle; Pending.Request = Request;
     Pending.bFallbackMetadata = true; Pending.bLoading = true;
-    InstanceResources.Add(Handle.Id, Pending); ++PendingInstanceCount;
+    InstanceResources.Add(Handle.Id, Pending); AdjustPendingInstanceCount(1);
     const TWeakObjectPtr<UGamePlatformVFXWorldSubsystem> WeakThis(this); FGamePlatformResult Accepted;
     const auto Lease = Data->AcquireResources({Path}, EGamePlatformDataLifetime::World, this,
         [WeakThis, Handle](const FGamePlatformDataLease& CompletedLease, const FGamePlatformResult& Result)
@@ -564,7 +557,7 @@ void UGamePlatformVFXWorldSubsystem::ReleaseInstanceResources(const FGamePlatfor
 {
     FInstanceResourceRequest Removed;
     if (!InstanceResources.RemoveAndCopyValue(Handle.Id, Removed)) return;
-    if (Removed.bLoading) PendingInstanceCount = FMath::Max(0, PendingInstanceCount - 1);
+    if (Removed.bLoading) AdjustPendingInstanceCount(-1);
     auto* World = GetWorld(); auto* GameInstance = World ? World->GetGameInstance() : nullptr;
     if (auto* Data = GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr)
         if (Removed.Lease.IsValid()) Data->ReleaseResources(Removed.Lease);
@@ -677,7 +670,7 @@ void UGamePlatformVFXWorldSubsystem::RemoveDefinitionUse(
 
     if (Entry->PendingRequests.Remove(Handle.Id) > 0)
     {
-        PendingInstanceCount = FMath::Max(0, PendingInstanceCount - 1);
+        AdjustPendingInstanceCount(-1);
     }
     else if (Entry->ActiveUsers > 0)
     {
@@ -839,7 +832,6 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
     Snapshot.State = EGamePlatformVFXPlaybackState::Loading; Snapshot.Code = EGamePlatformVFXResultCode::Queued;
     Snapshot.DefinitionId = DefinitionId; Snapshot.RequestId = Request.RequestId; PlaybackSnapshots.Add(Result.Handle.Id, Snapshot);
     FallbackVisitedDefinitions.FindOrAdd(Result.Handle.Id).Add(DefinitionId);
-    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, InstanceRegistry.Num());
     UpdateRuntimeDiagnostics();
 
     if (DedupeKey.IsValid())
@@ -1115,14 +1107,21 @@ void UGamePlatformVFXWorldSubsystem::ClearCompositeTimers(
     }
 }
 
+void UGamePlatformVFXWorldSubsystem::AdjustPendingInstanceCount(const int32 Delta)
+{
+    check(IsInGameThread());
+    // 先修改对应等待账本，再统一更新计数并发布；不依赖下一次Play、Tick或实例结束补报。
+    const int64 UpdatedCount = static_cast<int64>(PendingInstanceCount) + Delta;
+    PendingInstanceCount = static_cast<int32>(FMath::Clamp<int64>(UpdatedCount, 0, MAX_int32));
+    UpdateRuntimeDiagnostics();
+}
+
 void UGamePlatformVFXWorldSubsystem::UpdateRuntimeDiagnostics()
 {
-    const int32 TrackedInstances = InstanceRegistry.Num();
-    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, TrackedInstances);
+    check(IsInGameThread());
+    if (bClosing || !DiagnosticsWorldId.IsValid()) return;
     FGamePlatformVFXDiagnostics::UpdateRuntimeCounts(
-        TrackedInstances,
-        PendingInstanceCount,
-        PeakTrackedInstances);
+        DiagnosticsWorldId, InstanceRegistry.Num(), PendingInstanceCount);
 }
 
 FGamePlatformVFXPreloadHandle UGamePlatformVFXWorldSubsystem::Preload(const FGamePlatformVFXRequest& Request)
@@ -1511,7 +1510,6 @@ bool UGamePlatformVFXWorldSubsystem::PlayDefinitionId(
     Snapshot.RequestId = ChildRequest.RequestId; Snapshot.ParentHandle = ParentHandle;
     Snapshot.State = EGamePlatformVFXPlaybackState::Loading; Snapshot.Code = EGamePlatformVFXResultCode::Queued;
     PlaybackSnapshots.Add(ChildHandle.Id, Snapshot); FallbackVisitedDefinitions.FindOrAdd(ChildHandle.Id).Add(DefinitionId);
-    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, InstanceRegistry.Num());
     UpdateRuntimeDiagnostics();
 
     if (!InstanceRegistry.AddChild(

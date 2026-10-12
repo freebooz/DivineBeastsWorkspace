@@ -17,6 +17,7 @@ struct FDivineBeastsPreviewDragState
     void Cancel() { bDragging=false; UserIndex=0; PointerIndex=0; }
     /** 仅已捕获的同一用户和指针可驱动预览；其他输入与取消后的旧事件返回false。 */
     bool Owns(uint32 User, uint32 Pointer) const { return bDragging && UserIndex==User && PointerIndex==Pointer; }
+<<<<<<< HEAD
     /**
      * DeltaX为Slate横向逻辑像素位移，返回本次预览Yaw增量（度），每像素0.35度。
      * 向右拖动（正DeltaX）产生负Yaw，向左拖动产生正Yaw；零位移、非有限值或非捕获指针返回0。
@@ -25,5 +26,11 @@ struct FDivineBeastsPreviewDragState
     float YawForMove(uint32 User, uint32 Pointer, float DeltaX) const
     {
         return Owns(User,Pointer) && FMath::IsFinite(DeltaX) ? FMath::Clamp(DeltaX * -0.35f, -90.0f, 90.0f) : 0.0f;
+=======
+    /** Slate逻辑像素转模型反向Yaw：鼠标向右拖动为负角度；异常值不传播，每次至多90度。 */
+    float YawForMove(uint32 User, uint32 Pointer, float DeltaX) const
+    {
+        return Owns(User,Pointer) && FMath::IsFinite(DeltaX) ? FMath::Clamp(-DeltaX * 0.35f, -90.0f, 90.0f) : 0.0f;
+>>>>>>> 0963476cd210192af4c0e11459fa707dd95bff99
     }
 };

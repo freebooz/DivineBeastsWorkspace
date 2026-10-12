@@ -1,6 +1,6 @@
 # GamePlatformData（平台数据插件）
 
-更新日期：2026-09-27。GamePlatformData 已完成本轮 Definition 元数据、依赖安全上限、租约诊断与 UE5.8 兼容性补强；原生需求账本 Debug/Release 通过，Runtime／Editor／Client／Server 模块编译通过。UE Automation、真实资产、Cook／Chunk／Server-safe 仍按下文边界单独验收，不宣称生产就绪。
+更新日期：2026-10-12。本次新增模块私有唯一源索引：就绪后冷建、普通查询复用、资产事件增量、发现/类变化失效、显式关闭及六项Automation回归源码。保持全部Data公开签名、稳定主资产身份和外部AssetManager加载基线。本次UE编译/Automation由主代理统一执行，尚未计为通过；历史2026-09-27构建记录及本次精确清单分节见测试证据。
 
 设计文档入口：[插件设计](Docs/Architecture.md)｜[Public API说明](Docs/API.md)｜[测试与验证证据](Docs/TestingAndEvidence.md)。
 
@@ -60,11 +60,13 @@ Instance租约允许切图，但调用者本身仍须存活；建议跨图调用
 
 ## 源验证与测试
 
-`ResolveUniqueGamePlatformDefinitionSource` 通过 AssetRegistry `GetAssetsByClass(..., true)` 扫描平台主资产及派生类，按源标签独立查重，不依赖已经去重的主资产字典。编辑器候选对象以未保存的当前逻辑身份替换同路径旧标签。运行期还核对唯一源路径与引擎主资产映射一致。
+`ResolveUniqueGamePlatformDefinitionSource` 现查询模块私有 `FDefinitionSourceIndex`，以LogicalId映射唯一路径集合。只在注册表首次/后续发现完成后的冷建或明确失效重建时调用 `GetAssetsByClass(..., true)`；普通查询不全扫描，普通资产增删改名/标签更新增量维护。按真实类继承过滤平台主资产及派生类，不把其他资产同名标签纳入索引。编辑器候选以当前身份替换自身同路径旧标签，仅作用于本次查询。原运行期唯一源与AssetManager映射核对及外部加载兼容基线不变。
+
+索引仅GameThread，模块启动只绑定八个注册表事件，不加载业务资产。发现/类拓扑变化先清除旧快照再延迟重建；Shutdown取消尚未发布的快照、解绑并清空。私有计数分别记录查询、实际源枚举和成功发布次数，没有世界/PIE对象或第二套加载器。详细算法、错误与取消边界见 [Architecture第7节](Docs/Architecture.md)。
 
 原生 `UEditorValidatorBase` 派生类由编辑器验证子系统发现，使用UE5.8的 `CanValidateAsset_Implementation(const FAssetData&, UObject*, FDataValidationContext&) const` 与对应 `ValidateLoadedAsset_Implementation` 签名。真实验证入口返回Valid/Invalid，并加入错误诊断。编辑器只为验证同步取得依赖源对象，不登记运行期长期租约。
 
-已写入以下9个完整身份的UE自动化测试，均 **未执行**；集成门禁须逐项存在且Success，不能仅按最低通过数量替代。门禁脚本由父任务维护，本插件未修改其文件：
+以下为历史阶段登记的9个完整Automation身份；历史“未执行”与后续中央执行证据分别保留。本次另新增六项索引测试，完整名称、参数和待执行命令见 [TestingAndEvidence第9节](Docs/TestingAndEvidence.md)。集成门禁必须逐项发现并核对结果，不能以最低数量代替；本任务未改共享门禁脚本。
 
 - `GamePlatform.Data.Definition.IdentityAndVersion`：稳定身份、结构范围、修订与非法依赖ID。
 - `GamePlatform.Data.Editor.SourceDuplicate`：隔离内存包中的不同真实资产对象登记到真实注册表，验证重复身份双方失败。
@@ -93,7 +95,7 @@ UE5.8 锁定路径为 `D:/UnrealEngine-5.8.0-release`。通过引擎 `Build.bat`
 
 主工程当前 `GamePlatformDefinition` 仍扫描 `/Game/Development/Foundation/Definitions`，`CookRule=Unknown`、`ChunkId=-1`；这只是开发验证配置，不代表正式生产 Cook／Chunk 已完成。Server-safe 也必须由真实 AssetRegistry 依赖审计、Server Cook/Stage 证明，而不能由 Data 插件自报。
 
-当前限制：已释放租约的完整签发记录仍保留至游戏实例销毁，以保证严格幂等释放；长寿命实例的记录会线性增长，本轮新增 `ReleasedLeaseRecords` 诊断字段显式观测该风险，但未擅自改变既有幂等合同。源查重仍可能扫描 AssetRegistry 类型，尚未做带失效通知的索引缓存和性能量化。Owner弱引用存活检查仍使用 CoreTicker，待真实规模性能数据决定是否调整检查频率。
+当前限制：已释放租约的完整签发记录仍保留至游戏实例销毁，以保证严格幂等释放；长寿命实例的记录会线性增长，本轮新增 `ReleasedLeaseRecords` 诊断字段显式观测该风险，但未擅自改变既有幂等合同。源查重现已有模块私有增量索引，冷建及发现/类变化后的重建仍需枚举定义；实际时间、内存与Cooked运行收益尚未量化。Owner弱引用存活检查仍使用 CoreTicker，待真实规模性能数据决定是否调整检查频率。
 
 详细证据见 [Docs/TestingAndEvidence.md](Docs/TestingAndEvidence.md)。
 
@@ -115,7 +117,10 @@ UE5.8 锁定路径为 `D:/UnrealEngine-5.8.0-release`。通过引擎 `Build.bat`
 - `Source/GamePlatformData/Private/Loading/GamePlatformAssetManager.cpp`：进程需求聚合、基线保留与引擎加载。
 - `Source/GamePlatformData/Private/Ownership/DataDemandLedger.h`：父任务已有生产账本，原文件保留并实际复用。
 - `Source/GamePlatformData/Private/Subsystems/GamePlatformDataSubsystem.h` / `.cpp`：实例租约、依赖图与生命周期。
-- `Source/GamePlatformData/Private/Validation/GamePlatformDefinitionValidation.cpp`：独立源资产扫描。
+- `Source/GamePlatformData/Private/Validation/GamePlatformDefinitionValidation.cpp`：稳定公开唯一源函数到模块私有索引的转发。
+- `Source/GamePlatformData/Private/Validation/GamePlatformDefinitionSourceIndex.h` / `.cpp`：唯一源集合、反向路径表、注册表事件、按需冷建、私有计数与关闭。
+- `Source/GamePlatformData/Private/Tests/GamePlatformDefinitionSourceIndexTests.cpp`：四项独立生产索引行为回归。
+- `Source/GamePlatformData/Private/Tests/GamePlatformDefinitionSourceRegistryTests.cpp`：两项真实AssetRegistry编辑器事件/解绑与临时源清理回归。
 - `Source/GamePlatformData/Private/Tests/GamePlatformDefinitionTests.cpp`：定义行为自动化测试。
 - `Source/GamePlatformData/Private/Tests/GamePlatformDataServiceTests.cpp`：真实服务潜伏集成测试。
 - `Source/GamePlatformData/Private/Tests/GamePlatformDataSchedulingTests.cpp`：真实FTSTicker零Delta与嵌套调度回归。

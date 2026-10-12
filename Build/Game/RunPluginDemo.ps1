@@ -1,0 +1,59 @@
+#requires -Version 7.0
+<#
+.SYNOPSIS
+仅在人工显式同意后启动插件演示开发客户端，不进入生产登录。
+.DESCRIPTION
+固定总览地图与两项开发模式参数；不会写入玩家账号、连接参数或密钥。
+只创建本次RunId独占证据目录，不停止其它UE进程。若未制作真实地图立即拒绝启动。
+不代表演示UI或正式地图Cook已完成；通过独立测试再核验。
+#>
+param(
+    [switch]$Start,
+    [ValidateSet('EditorGame','Client')][string]$Target='EditorGame',
+    [string]$EngineRoot,
+    [string]$ClientExe,
+    [ValidateRange(960,3840)][int]$WindowWidth=1920,
+    [ValidateRange(540,2160)][int]$WindowHeight=1080,
+    [guid]$RunId=[guid]::NewGuid()
+)
+$ErrorActionPreference='Stop'
+Set-StrictMode -Version Latest
+Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
+$workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+$project=Join-Path $workspace 'Game/DivineBeastsArena.uproject'
+$map='/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub'
+$mapFile=Join-Path $workspace 'Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap'
+if (-not $Start) { throw '必须显式传入-Start以允许新建插件演示进程。' }
+if (-not (Test-Path -LiteralPath $mapFile -PathType Leaf)) {
+    throw "开发总览地图尚未通过UE制作，拒绝启动虚假演示：$mapFile"
+}
+if (-not (Test-Path -LiteralPath $project -PathType Leaf)) { throw '找不到正式主工程。' }
+if ($Target -eq 'EditorGame') {
+    $engine=Get-FoundationEngine $EngineRoot
+    $exe=Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe'
+    $args=@($project,$map,'-game')
+} else {
+    if (-not $ClientExe) { throw 'Client模式需要显式提供已验证的开发客户端exe。' }
+    $exe=(Resolve-Path -LiteralPath $ClientExe -ErrorAction Stop).Path
+    if ([IO.Path]::GetFileName($exe) -ne 'DivineBeastsArenaClient.exe') { throw '拒绝使用非本项目Client Target。' }
+    $args=@($map,'-CustomConfig=PluginDemoClient')
+}
+if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "可执行文件不存在：$exe" }
+$dir=Join-Path $workspace "Saved/Validation/PluginDemos/Launch/$RunId"
+if (Test-Path -LiteralPath $dir) { throw "拒绝覆盖已有运行证据：$dir" }
+$null=New-Item -ItemType Directory -Path $dir -Force
+$log=Join-Path $dir 'PluginDemo.log'
+$args+=@('-DBAPluginDemo',"-DBAPluginDemoMap=$map",'-windowed',"-ResX=$WindowWidth", "-ResY=$WindowHeight",'-nosplash','-NoLiveCoding','-NoHotReload',"-abslog=$log")
+$info=[Diagnostics.ProcessStartInfo]::new()
+$info.FileName=$exe
+$info.WorkingDirectory=Split-Path $exe
+$info.UseShellExecute=$false
+$info.CreateNoWindow=$false
+foreach($arg in $args) { $info.ArgumentList.Add([string]$arg) }
+# 演示模式不传递本地开发密码、令牌及生产网关地址。
+foreach($key in @('DBA_DEV_LOGIN_SECRET','DIVINEBEASTS_GATEWAY_BASE_URL')) { $null=$info.Environment.Remove($key) }
+$process=[Diagnostics.Process]::Start($info)
+if (-not $process) { throw '启动插件演示子进程失败。' }
+$record=[ordered]@{RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=[DateTime]::UtcNow.ToString('o')}
+$record|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $dir 'Launch.json') -Encoding utf8
+$record|ConvertTo-Json -Depth 5

@@ -7,8 +7,9 @@ public class GamePlatformArenaServer : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         // 实现只读消费平台已验证连接事件；不引入客户端Online/HTTP认证替代品。
-        PrivateDependencyModuleNames.Add("GamePlatformServer");
+        // HTTP/JSON仅供Private后端适配器使用，不沿公共竞技契约传递；未使用的JsonUtilities已移除。
+        PrivateDependencyModuleNames.AddRange(new string[] { "GamePlatformServer", "HTTP", "Json" });
         // 服务端竞技适配依赖双端竞技契约，不引用客户端表现模块。
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "HTTP", "Json", "JsonUtilities", "GamePlatformMobaCore", "GamePlatformMobaData", "GamePlatformArena" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "GamePlatformMobaCore", "GamePlatformMobaData", "GamePlatformArena" });
     }
 }

@@ -137,3 +137,42 @@ G3 Integration（集成）         Partial：真实服务测试源码存在，�
 G4 Content & Manual Review     Not Passed：无真实Definition资产
 G5 Production（生产）          Not Passed：无正式Cook/Chunk/Server-safe/长稳
 ```
+
+## 9. 2026-10-12：模块私有唯一源索引增量
+
+本节对应 `Docs/Implementation/PluginArchitectureOptimization/task-2-report.md`。前八节保留2026-09-27阶段记录，不是本次增量的构建/运行结果。当前实际锁定引擎源码位于 `F:/UnrealEngine-5.8.0-release`；本任务只读核对其接口，不启动编辑器或停止其他任务。新增源码已写入；本子任务没有运行UE构建/Automation，结果待主代理统一登记。
+
+### 新增的精确测试清单
+
+六项都在 `GamePlatformData/Private/Tests`，独立索引行为使用生产 `FDefinitionSourceIndex` 配可控源输入，真实注册表回归额外受 `WITH_EDITOR` 保护。不修改运行模块依赖、反射或Public接口。
+
+| 完整Automation名称 | 输入、断言及边界 |
+|---|---|
+| `GamePlatform.Data.Index.ColdWarmRepeatedQueries` | 未就绪不扫描；首次建一次；128次暖查询及缺失/非法查询不新增枚举；同路径重复记录不误报两个源 |
+| `GamePlatform.Data.Index.IncrementalAssetChanges` | 增删、重复修复、LogicalId变化、重命名、非法标签、非定义同名标签；普通事件保持枚举次数；明确失效按需重建 |
+| `GamePlatform.Data.Index.EditorCandidateReplacement` | 同路径候选替换、候选换ID、与别源冲突、非法候选；覆盖只作用于本次查询 |
+| `GamePlatform.Data.Index.DiscoveryCancellationAndShutdown` | 后续发现拒绝旧快照；扫描中失效/关闭取消发布；关闭后事件不能复活，显式重启冷建 |
+| `GamePlatform.Data.Editor.SourceIndexRegistryEvents` | GUID隔离真实内存定义；AssetCreated/AssetDeleted/AssetUpdateTags/AssetRenamed；公开入口和本地生产实例；64次暖查计数；清理后重建不复活源 |
+| `GamePlatform.Data.Editor.SourceIndexRegistryShutdown` | 真实Registry八个委托的所有者检查；取消未发布重建并实际解绑；关闭后真实资产变化不影响旧实例；重启和最终清理 |
+
+真实Registry夹具沿用既有未保存内存包方案，不写 `.uasset`，不改项目资产或AssetManager扫描配置。标签更新调用UE5.8 `AssetUpdateTags(..., FullUpdate)`；完整清理调用 `AssetDeleted`、清除Public/Standalone标记、标记垃圾，并验证测试根无可见资产。非定义及未知类同名标签负例只直接投递给独立索引实例，不广播伪造全局事件。未知类负例只验证拒绝路径，不代表已经验收真实未加载蓝图派生定义或Cooked发现。
+
+### 主代理统一执行入口
+
+新增六项无需外部Definition参数。现有Data完整回归仍需保留 `-GamePlatformDataTestDefinition=GamePlatformDefinition:foundation.probe@1`；参数缺失或资产不可用不得算通过。现有ResourceLeases、RealAssetLeases、RecursiveFailureRollback、PIE/多实例及调度回归均保留。
+
+以下是待执行命令模板，不是已运行结果；工程路径与现有入口已经核对：
+
+```powershell
+& 'F:/UnrealEngine-5.8.0-release/Engine/Build/BatchFiles/Build.bat' DivineBeastsArenaEditor Win64 Development '-Project=E:/poject/feebooz/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject' -Module=GamePlatformData -WaitMutex
+& 'F:/UnrealEngine-5.8.0-release/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' 'E:/poject/feebooz/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject' -unattended -nop4 -NullRHI -nosplash -stdout -FullStdOutLogOutput '-GamePlatformDataTestDefinition=GamePlatformDefinition:foundation.probe@1' '-ExecCmds=Automation RunTests GamePlatform.Data' '-TestExit=Automation Test Queue Empty' '-ReportExportPath=E:/poject/feebooz/DivineBeastsWorkspace/Game/Saved/Automation/PluginArchitectureOptimization/DataIndex'
+```
+
+主代理还需按实际目标构建策略确认Client/Server的Data模块，并在导出中逐项核对六个新测试被发现、完成且Success。现有 `Build/Validation/TestFoundationUnreal.ps1` 可运行Data前缀，但其历史必需名单未包含这六项，不能仅凭旧名单或通过数量视为新索引已验收。
+
+### 本次已执行的轻量核对与剩余边界
+
+- `git diff --check -- Game/Plugins/GamePlatform/Foundation/GamePlatformData` 已实际执行，工具返回成功，无空白错误输出。
+- 只读核对锁定UE5.8源码中的八个事件、GameThread广播约束、`IsLoadingAssets / IsGathering`、递归类过滤、真实内存资产更新/重命名与委托所有者查询接口。发现并修正本增量错误的GuardValue包含路径为实际 `Templates/UnrealTemplate.h`。
+- 精确修改/接口边界与最终轻量结果见Task 2报告。上面的128/64是测试输入和预期，不是已执行通过数量；不填虚构性能收益。
+- 本子任务未运行UE构建、Automation、Cook/Stage、图形、联机或PIE会话。实际未加载蓝图派生定义、运行Cooked注册表及长时间真实异步发现仍需由主代理/后续对应环境补证。

@@ -25,6 +25,60 @@ def assert_equal(actual, expected, name: str) -> None:
         raise AssertionError(f"{name}：实际={actual!r}，期望={expected!r}")
 
 
+
+def check_blueprint_root_contracts(pipeline: str) -> None:
+    """只读检查平台输入链与项目默认注入；真实规范化行为由Editor Automation覆盖。"""
+    commands = PCG / "Source/GamePlatformPCGEditor/Private/Commands"
+    authoring = text(commands / "GamePlatformPCGGoldMapAuthoring.cpp")
+    header = text(commands / "GamePlatformPCGGoldMapAuthoring.h")
+    command = text(commands / "GamePlatformPCGGoldAssetsCommandlet.cpp")
+    for source in (PCG / "Source").rglob("*"):
+        if source.suffix in {".cpp", ".h", ".cs"}:
+            assert not re.search(r'"/DBA[A-Za-z0-9_]+/', text(source)), \
+                f"平台PCG源码不可持有项目挂载点默认值：{source.relative_to(PCG)}"
+
+    for name in ("Create", "Repair"):
+        assert f"bool {name}(const FString& BlueprintRoot, FString& Error);" in header, \
+            f"{name}必须显式接收蓝图根，不提供平台项目默认值"
+        assert f"GamePlatformPCGGoldMap::{name}(BlueprintRoot, Error)" in command, \
+            f"Commandlet必须传递已校验根到{name}"
+    preflight = authoring.split("bool Preflight(", 1)[1].split("template<typename TActor>", 1)[0]
+    assert "NormalizeBlueprintRoot(BlueprintRoot, NormalizedBlueprintRoot, Error)" in preflight, \
+        "直接平台创作调用也必须校验输入，不能只依赖命令行调用者"
+    assert preflight.index("NormalizeBlueprintRoot(") < preflight.index("TargetFilename"), \
+        "蓝图根必须在资产检查及写入前完整校验"
+    assert "*NormalizedBlueprintRoot, Item.Blueprint, Item.Blueprint" in preflight, \
+        "真实ClassPath必须使用规范化后的显式根"
+    normalizer = authoring.split("bool GamePlatformPCGGoldMap::NormalizeBlueprintRoot(", 1)[1].split(
+        "bool GamePlatformPCGGoldMap::Create(", 1)[0]
+    assert "TrimStartAndEnd()" in normalizer and "FPaths::NormalizeDirectoryName(Normalized)" in normalizer, \
+        "目录规范化必须复用真实UE路径入口"
+    assert 'FPackageName::IsValidLongPackageName(' in normalizer and \
+        'Normalized + TEXT("/BP_PCG_Path"), false, &Reason' in normalizer, \
+        "实际蓝图包名必须经UE已注册挂载点和合法包名校验，不能自制正则冒充引擎合同"
+
+    stage_guard = command.split("const bool bRequiresBlueprintRoot =", 1)[1].split("FString BlueprintRoot;", 1)[0]
+    assert 'Stage.Equals(TEXT("Map")' in stage_guard and 'Stage.Equals(TEXT("RepairMap")' in stage_guard
+    assert not any(f'TEXT("{stage}")' in stage_guard for stage in
+                   ("Definitions", "Realized", "Verify", "SpatialProbe", "GeneratePreview")), \
+        "仅真正加载蓝图的Map/RepairMap阶段要求BlueprintRoot"
+    assert command.index('FParse::Value(*Params, TEXT("BlueprintRoot="), BlueprintRootInput)') < \
+        command.index("bool bSuccess = false"), "写入路由前必须解析并校验BlueprintRoot"
+    assert "NormalizeBlueprintRoot(BlueprintRootInput, BlueprintRoot, Error)" in command
+    for name in ("Verify", "ProbeSpatial", "PreviewGenerated"):
+        assert f"GamePlatformPCGGoldMap::{name}(Error)" in command, \
+            f"{name}不应引入无用的项目目录输入"
+
+    default_root = re.search(r"(?m)^\$blueprintRoot = '([^']+)'", pipeline)
+    assert default_root, "项目入口必须持有明确的蓝图根默认值"
+    assert_equal(default_root.group(1), "/DBAWorldPack_Village/PCG/Blueprints/", "原Village蓝图根兼容")
+    assert_equal(pipeline.count("('-BlueprintRoot=' + $blueprintRoot)"), 2,
+                 "基础蓝图与Gold地图两个实际调用共用项目根")
+    assert 'const FString GoldRoot = TEXT("/Game/Development/Foundation/PCG/");' in authoring
+    assert 'const FString MapPackage = TEXT("/Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1");' in authoring
+    print("PCG_GOLD_BLUEPRINT_ROOT_STATIC_CONTRACTS_PASS")
+
+
 def check() -> None:
     for file in TOOLS.glob("*.py"):
         ast.parse(text(file), filename=str(file))
@@ -91,11 +145,13 @@ def check() -> None:
     for stage in ("01-FoundationGraphs", "02-VillageBlueprints", "03-GoldDefinitions",
                   "04-RealizedSpawnerGraphs", "05-GoldLevelMap", "06-FreshEditorReopen"):
         assert stage in pipeline, "真实UE资产生成/回读缺少阶段：" + stage
-    assert "'-EnablePlugins=PythonScriptPlugin'" in pipeline, \
-        "必须使用锁定UE引擎认可的复数EnablePlugins命令行参数"
+    assert ('-EnablePlugins=PythonScriptPlugin,CommonUI,DBAGameplay' in pipeline and
+            '-EnablePlugins=CommonUI,DBAGameplay,DBAWorlds,DBAWorldPack_Village' in pipeline), \
+        "UE5.8 Python/Gold地图阶段必须使用实际依赖闭包的复数EnablePlugins参数，不得退回旧单插件约束"
     assert "'-Apply'" not in pipeline or "if (!$Apply)" in pipeline, \
         "默认模式必须只读，真实创建须明确Apply"
 
+    check_blueprint_root_contracts(pipeline)
     print("PCG_GOLD_AUTHORING_STATIC_CONTRACTS_PASS")
     print("TEMPLATES=12 SUBGRAPHS=7 BLUEPRINTS=11 DEFINITIONS=17 REALIZED=3 PROFILES=3")
 

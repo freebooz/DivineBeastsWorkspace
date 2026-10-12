@@ -155,9 +155,11 @@ Runtime 与 Editor 必须使用同一常量，禁止分别硬编码。
 
 头文件：`Validation/GamePlatformDefinitionValidation.h`。
 
-用于从 AssetRegistry 扫描并确认某个逻辑 Definition 只有一个真实源路径。
+用于确认某个逻辑 Definition 只有一个真实源路径。签名不变，内部查询模块私有源索引；冷建在资产发现完成后进行，普通查询复用快照，资产增删改名和标签更新按真实Registry事件增量维护。
 
-运行时 Registry 未就绪时显式返回失败，调用方按异步流程重试；编辑器验证可以等待注册表完成。
+非法ID、缺失、重复分别保持 `InvalidDefinitionId / MissingDefinition / DuplicateLogicalId`。运行时首次或后续发现未完成时仍返回 `AssetRegistryNotReady`，原调用方继续异步重试及取消。编辑器候选替换自己同路径的注册身份，仅作用于本次查询。返回唯一源后，原AssetManager仍独立核对映射一致性。
+
+索引、计数、注册表委托和关闭入口均留在Private，不新增公开缓存API，不改变主资产身份、加载/租约签名或外部AssetManager加载兼容基线。
 ## 2026-09-30 新增普通资源API与句柄兼容说明
 
 AcquireResources(ResourcePaths, Lifetime, WeakCaller, Completion, OutResult)返回FGamePlatformDataLease；ReleaseResources(Lease)只接受ResourcePaths非空的普通资源租约。DefinitionId与ResourcePaths互斥。所有方法仅游戏线程；成功回调后可ResolveObject，并持有租约到用途结束。原始输入最多MaxDefinitionsPerRequest个有效路径，重复路径规范化。异步接纳、失败与取消沿用定义租约协议，OutResult给出同步校验；有效弱调用者上的拒绝通知同样延后一次，因此调用方即使同步失败也应使本请求代次失效。

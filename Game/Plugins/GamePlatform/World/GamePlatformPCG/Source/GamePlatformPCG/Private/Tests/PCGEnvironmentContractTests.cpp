@@ -16,6 +16,33 @@
 #include "Types/GamePlatformPCGEnvironmentTypes.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformPCGStaticExecPresetSafetyTest,
+    "GamePlatform.PCG.Definition.StaticExecFailClosed",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformPCGStaticExecPresetSafetyTest::RunTest(const FString&)
+{
+    UGamePlatformPCGExecPresetDefinition* Preset = NewObject<UGamePlatformPCGExecPresetDefinition>();
+    FGamePlatformId::TryParse(TEXT("test.pcg.static_exec@1"), Preset->LogicalId);
+    TestTrue(TEXT("M0/M1编辑器静态执行预设有效"), Preset->ValidateDefinition().IsSuccess());
+    Preset->bPartitioned = true;
+    TestFalse(TEXT("WorldPartition未验收前不准仅靠开关开启分区生成"), Preset->ValidateDefinition().IsSuccess());
+    Preset->bPartitioned = false;
+    Preset->bRuntimeGeneration = true;
+    TestFalse(TEXT("客户端/服务器Cook未验收前不准开启运行时生成"), Preset->ValidateDefinition().IsSuccess());
+    Preset->bRuntimeGeneration = false;
+    TestTrue(TEXT("关闭未验收模式后恢复合法静态执行"), Preset->ValidateDefinition().IsSuccess());
+    Preset->MaxPointsPerExecution = 1048577;
+    TestFalse(TEXT("超出百万点级安全上限不得直接创建大规模PCG批次"), Preset->ValidateDefinition().IsSuccess());
+    Preset->MaxPointsPerExecution = 65536;
+    Preset->MaxComponentsPerBatch = 257;
+    TestFalse(TEXT("一次创建过量PCG组件必须由配置门禁拒绝"), Preset->ValidateDefinition().IsSuccess());
+    Preset->MaxComponentsPerBatch = 64;
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGamePlatformPCGSchemaContractTest,
     "GamePlatform.PCG.Schema.V1Contract",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

@@ -444,8 +444,8 @@ class UnrealDefinitionEditor(UnrealAssetEditor):
     PrimaryAssetType／PrimaryAssetName 标签由引擎调用该虚函数产生，读取标签验证身份。
     """
 
-    def __init__(self, unreal):
-        super().__init__(unreal)
+    def __init__(self, unreal, execution_mode="script"):
+        super().__init__(unreal, execution_mode=execution_mode)
         # load_class 的 type 参数要求继承关系；类缺失或错误均在创建工厂之前失败。
         definition_class = unreal.load_class(None, DEFINITION_CLASS_PATH)
         require(definition_class is not None, "Data 基类反射缺失，必须先编译加载 GamePlatformData")
@@ -675,7 +675,7 @@ class UnrealFlowEditor(UnrealDefinitionEditor):
         values = self.default_values()
         nodes = []
         for node_values in values["nodes"]:
-            node = self.unreal.GamePlatformFlowNodeDefinition()
+            node_fields = {}
             for field, value in node_values.items():
                 if field == "input_definition_id":
                     identity = self.unreal.PrimaryAssetId()
@@ -686,8 +686,9 @@ class UnrealFlowEditor(UnrealDefinitionEditor):
                         identity.set_editor_property("primary_asset_type", primary_type)
                         identity.set_editor_property("primary_asset_name", asset_name)
                     value = identity
-                node.set_editor_property(field, value)
-            nodes.append(node)
+                node_fields[field] = value
+            # 独立节点的 EditDefaultsOnly 禁止实例赋值；由原生构造器初始化并检查字段类型。
+            nodes.append(self.unreal.GamePlatformFlowNodeDefinition(**node_fields))
         for field, value in values.items():
             asset.set_editor_property(field, nodes if field == "nodes" else value)
 

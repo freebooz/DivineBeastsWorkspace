@@ -67,12 +67,32 @@ bool FGamePlatformPCGAdvancedSpatialRules::FindBridgeCandidates(
                 return false;
             }
 
+            // 斜交时桥长必须沿道路方向覆盖整条河道，不能用法向河宽冒充桥跨。
+            // 交叉角过小（<约14.5度）不可靠，先交人工调整道路/桥位；本规则绝不自动放桥。
+            const FVector2D RoadDirection = Road.Vertices[I + 1] - Road.Vertices[I];
+            const FVector2D WaterDirection = Water.Vertices[J + 1] - Water.Vertices[J];
+            const double ProductLength = RoadDirection.Size() * WaterDirection.Size();
+            const double Cross = FMath::Abs(RoadDirection.X * WaterDirection.Y -
+                RoadDirection.Y * WaterDirection.X);
+            const double SinAngle = ProductLength > UE_DOUBLE_SMALL_NUMBER
+                ? Cross / ProductLength : 0.0;
+            if (!FMath::IsFinite(SinAngle) || SinAngle < 0.25)
+            {
+                OutCandidates.Reset();
+                return false;
+            }
+            const double RequiredSpan = (2.0 * Water.HalfWidthCm +
+                2.0 * AdditionalMarginCm) / SinAngle;
+            if (!FMath::IsFinite(RequiredSpan) || RequiredSpan > 100000.0)
+            {
+                OutCandidates.Reset();
+                return false;
+            }
             FGamePlatformPCGBridgeCandidate& Candidate = OutCandidates.AddDefaulted_GetRef();
             Candidate.IntersectionXY = Intersection;
             Candidate.RoadSegmentIndex = I;
             Candidate.WaterSegmentIndex = J;
-            Candidate.RequiredSpanCm = FMath::Max(1.0f,
-                2.0f * Water.HalfWidthCm + 2.0f * AdditionalMarginCm);
+            Candidate.RequiredSpanCm = static_cast<float>(FMath::Max(1.0, RequiredSpan));
             Candidate.bRequiresHumanApproval = true;
         }
     }
@@ -84,7 +104,7 @@ bool FGamePlatformPCGAdvancedSpatialRules::IsInsideCavity(
 {
     bOutInside = false;
     if (!FGamePlatformPCGSpatialRules::ValidateMask(Cavity.Footprint) ||
-        !Cavity.Footprint.bClosed ||
+        !Cavity.Footprint.bClosed || !Cavity.Footprint.bFillInterior ||
         !FMath::IsFinite(Cavity.MinZCm) || !FMath::IsFinite(Cavity.MaxZCm) ||
         Cavity.MinZCm >= Cavity.MaxZCm || !FMath::IsFinite(Position.X) ||
         !FMath::IsFinite(Position.Y) || !FMath::IsFinite(Position.Z))

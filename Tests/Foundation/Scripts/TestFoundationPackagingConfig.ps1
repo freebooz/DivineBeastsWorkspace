@@ -8,23 +8,27 @@ EngineRoot或UE_ROOT指定UE5.8；PowerShell的.NET运行时须能加载该引�
 测试仅求值参数及配置，不调用Cook脚本主流程、不运行构建、编辑器或发布游戏。
 返回0检查通过，1行为失败，2引擎/程序集环境不可用；实际Stage和运行时读取仍须独立验证。
 #>
-param([string]$EngineRoot = $env:UE_ROOT)
+param([string]$EngineRoot = $env:UE_ROOT,
+    # 只检查真实命令装配时不加载UBT；输出明确不包含引擎配置解析证据。
+    [switch]$ArgumentsOnly)
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot '../../../Build/Game/FoundationTools.psm1') -Force
 $context = New-FoundationContext PackagingConfig ([guid]::NewGuid())
 try {
     $engine = Get-FoundationEngine $EngineRoot
     $toolRoot = Join-Path $engine.Root 'Engine/Binaries/DotNET/UnrealBuildTool'
+    if (-not $ArgumentsOnly) {
     Add-Type -Path (Join-Path $toolRoot 'EpicGames.Core.dll')
     Add-Type -Path (Join-Path $toolRoot 'EpicGames.Build.dll')
     Add-Type -Path (Join-Path $toolRoot 'UnrealBuildTool.dll')
     # 该公开入口专供引擎目录外的托管宿主；仅影响当前测试进程的目录解析。
     [UnrealBuildBase.Unreal+LocationOverride]::RootDirectory = [EpicGames.Core.DirectoryReference]::new($engine.Root)
+    }
 } catch { Write-FoundationResult $context 2 $_.Exception.Message; exit 2 }
 
 function Get-DevelopmentStageArgumentProbe([string]$ScriptPath, [string]$Target, [string]$CustomConfig) {
-    # 解析真实脚本而非复制一份期望参数；只求值构造数组和开发白名单if，不调用外部进程或获取引擎锁。
-    # 删除白名单、取消条件或添加顶层CustomConfig将改变实际结果，回归应因此失败。
+    # 只求值真实脚本的参数表达式；不运行Cook主流程、不加锁、不启动UE。
+    # 真源预检由锁定引擎Python只读执行；移除服务器追加或注入客户端都会改变返回参数。
     $parseTokens = $null; $parseErrors = $null
     $tree = [Management.Automation.Language.Parser]::ParseFile($ScriptPath,[ref]$parseTokens,[ref]$parseErrors)
     if ($parseErrors.Count -gt 0) { throw "Cook脚本语法错误：$ScriptPath" }
@@ -40,17 +44,79 @@ function Get-DevelopmentStageArgumentProbe([string]$ScriptPath, [string]$Target,
         $node.Extent.Text.Contains('AllowedConfigFiles=')
     }, $true)
     if (!$assignment -or !$developmentIf) { throw '未找到真实UAT参数数组或条件开发Stage白名单。' }
-    # 夹具仅提供参数表达式所需的普通字符串；真实配置文件仍由既有Assert-FoundationFile做只读核对。
     $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
     $context = @{ Workspace=$workspace; Project=(Join-Path $workspace 'Game/DivineBeastsArena.uproject') }
     $tool = @{ Dll='AutomationTool.dll' }; $details = @{}
     $maps = @('/DBAWorldPack_Village/Maps/L_Village_Start')
     $cookDirectory = 'Probe/Cooked'; $stageDirectory = 'Probe/Stage'
+    $serverPresentationPolicy = $null
+    if ((Split-Path $ScriptPath -Leaf) -eq 'CookFoundation.ps1') {
+        if ($Target -eq 'Server') {
+            $python = Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+            $policyTool = Join-Path $workspace 'Build/Game/ServerPresentationPolicy.py'
+            $policyOutput = & $python $policyTool check --custom-config $CustomConfig
+            if ($LASTEXITCODE -ne 0) { throw '真实服务器策略check失败。' }
+            $serverPresentationPolicy = ($policyOutput -join "\n") | ConvertFrom-Json
+        }
+        $optionAssignment = $tree.Find({
+            param($node)
+            $node -is [Management.Automation.Language.AssignmentStatementAst] -and
+            $node.Left -is [Management.Automation.Language.VariableExpressionAst] -and
+            $node.Left.VariablePath.UserPath -eq 'additionalCookerOptions'
+        }, $true)
+        $optionIf = $tree.Find({
+            param($node)
+            $node -is [Management.Automation.Language.IfStatementAst] -and
+            $node.Extent.Text.Contains('$serverPresentationPolicy.CookerArguments')
+        }, $true)
+        if (!$optionAssignment -or !$optionIf) { throw '真实CookFoundation缺少服务器策略参数装配。' }
+        $additionalCookerOptions = & ([scriptblock]::Create($optionAssignment.Right.Extent.Text))
+        . ([scriptblock]::Create($optionIf.Extent.Text))
+    }
     $arguments = @(& ([scriptblock]::Create($assignment.Right.Extent.Text)))
-    # 与源脚本相同作用域求值+=；创建子作用域会从空局部变量开始，不能据此误判源脚本参数。
     . ([scriptblock]::Create($developmentIf.Extent.Text))
-    $arguments
+    [pscustomobject]@{ Arguments=$arguments; ServerPolicy=$serverPresentationPolicy }
 }
+
+function Assert-ServerCookPolicyArguments($Probe, [string]$Target, [string]$CustomConfig) {
+    # 同一真实AdditionalCookerOptions拆为独立token，不能把数组合并为一次Set或逗号串。
+    $prefix = '-AdditionalCookerOptions='
+    $options = @($Probe.Arguments | Where-Object { $_.StartsWith($prefix) })
+    if ($options.Count -ne 1) { throw 'AdditionalCookerOptions必须唯一。' }
+    $tokens = @($options[0].Substring($prefix.Length).Split(' ',[StringSplitOptions]::RemoveEmptyEntries))
+    $actual = @($tokens | Where-Object { $_.StartsWith('-ini:Game:') })
+    $expected = if ($Target -eq 'Server') { @($Probe.ServerPolicy.CookerArguments) } else { @() }
+    if ($actual.Count -ne $expected.Count -or
+        ($actual.Count -gt 0 -and @(Compare-Object $actual $expected -CaseSensitive).Count -gt 0)) {
+        throw "真实Cooker数组追加丢项或泄入客户端：$Target/$CustomConfig"
+    }
+    if (@($actual | Select-Object -Unique).Count -ne $actual.Count) { throw 'Cooker出现重复追加token。' }
+    foreach ($token in $actual) {
+        if ($token -cnotmatch '^-ini:Game:\[/Script/UnrealEd.ProjectPackagingSettings\]:\+DirectoriesToNeverCook=\(Path=/[A-Za-z0-9_/]+\)$') {
+            throw "非法数组追加token：$token"
+        }
+    }
+    [pscustomobject]@{ Target=$Target; CustomConfig=$CustomConfig; AddedDirectoryCount=$actual.Count; CookerIniArguments=$actual }
+}
+$argumentCases = @(
+    @{ Entry='CookFrontEndClient.ps1'; Target='Client'; Config='FrontEndClient'; Development=$false },
+    @{ Entry='CookFrontEndClient.ps1'; Target='Client'; Config='VillageDevelopmentClient'; Development=$true },
+    @{ Entry='CookFoundation.ps1'; Target='Client'; Config='FoundationStandalone'; Development=$false },
+    @{ Entry='CookFoundation.ps1'; Target='Server'; Config='FoundationStandalone'; Development=$false },
+    @{ Entry='CookFoundation.ps1'; Target='Server'; Config='VillageServer'; Development=$false },
+    @{ Entry='CookFoundation.ps1'; Target='Server'; Config='VillageDevelopmentServer'; Development=$true }
+)
+if ($ArgumentsOnly) {
+    try {
+        $results = foreach ($case in $argumentCases) {
+            $probe = Get-DevelopmentStageArgumentProbe (Join-Path $context.Workspace ("Build/Game/" + $case.Entry)) $case.Target $case.Config
+            Assert-ServerCookPolicyArguments $probe $case.Target $case.Config
+        }
+        Write-FoundationResult $context 0 '6组真实脚本参数装配通过；仅ArgumentsOnly，未执行UBT配置解析、Cook或Stage。' @{ ArgumentCases=@($results) }
+        exit 0
+    } catch { Write-FoundationResult $context 1 $_.Exception.Message; exit 1 }
+}
+
 try {
     $baselinePath = Join-Path $context.Workspace 'Game/Config/DefaultGame.ini'
     $customPath = Join-Path $context.Workspace 'Game/Config/Custom/FoundationStandalone/DefaultGame.ini'
@@ -81,15 +147,12 @@ try {
     if ($foundation -in $devExcluded -or $foundation -notin $devIncluded) { throw '开发配置没有精确解除排除并加入开发内容。' }
     if ($other -notin $sentinelExcluded) { throw '不相关排除项被清空。' }
     $developmentStageCases = @()
-    foreach ($case in @(
-        @{ Entry='CookFrontEndClient.ps1'; Target='Client'; Config='FrontEndClient'; Development=$false },
-        @{ Entry='CookFrontEndClient.ps1'; Target='Client'; Config='VillageDevelopmentClient'; Development=$true },
-        @{ Entry='CookFoundation.ps1'; Target='Server'; Config='FoundationStandalone'; Development=$false },
-        @{ Entry='CookFoundation.ps1'; Target='Server'; Config='VillageServer'; Development=$false },
-        @{ Entry='CookFoundation.ps1'; Target='Server'; Config='VillageDevelopmentServer'; Development=$true }
-    )) {
+    $serverCookCases = @()
+    foreach ($case in $argumentCases) {
         $entryPath = Join-Path $context.Workspace ("Build/Game/" + $case.Entry)
-        $probeArguments = @(Get-DevelopmentStageArgumentProbe $entryPath $case.Target $case.Config)
+        $probe = Get-DevelopmentStageArgumentProbe $entryPath $case.Target $case.Config
+        $probeArguments = @($probe.Arguments)
+        $cookArgumentCheck = Assert-ServerCookPolicyArguments $probe $case.Target $case.Config
         if (@($probeArguments | Where-Object { $_ -like '-CustomConfig=*' }).Count -ne 0) {
             throw "UAT顶层CustomConfig会改变专服Stage配置层：$($case.Entry)"
         }
@@ -120,6 +183,25 @@ try {
         $null = $stageHierarchy.GetBool('DivineBeasts.Abilities','bAllowDevelopmentAbilitySets',[ref]$developmentEnabled)
         if ($developmentEnabled) { throw 'Stage白名单改变了正式默认开发技能关闭状态。' }
         if ($case.Target -eq 'Server') {
+            # 使用真实UBT合并全部独立+Key；只检查参数文本不能证明同名数组未覆盖。
+            $cookHierarchy = [UnrealBuildTool.ConfigCache]::ReadHierarchy(
+                [UnrealBuildTool.ConfigHierarchyType]::Game,$project,[UnrealBuildTool.UnrealTargetPlatform]::Win64,
+                $case.Config,[string[]]$cookArgumentCheck.CookerIniArguments,$null,$null)
+            $cookedExclusions = [Collections.Generic.List[string]]::new()
+            $cookedIncluded = [Collections.Generic.List[string]]::new()
+            $null = $cookHierarchy.GetArray($section,'DirectoriesToNeverCook',[ref]$cookedExclusions)
+            $null = $cookHierarchy.GetArray($section,'DirectoriesToAlwaysCook',[ref]$cookedIncluded)
+            $normalizedExclusions = @($cookedExclusions | ForEach-Object { $_.Replace('"','') })
+            $expectedPaths = @(Get-Content -LiteralPath (Join-Path $context.Workspace ("Game/Config/Custom/" + $probe.ServerPolicy.Profile + "/DefaultGame.ini")) |
+                Where-Object { $_ -cmatch '^\+DirectoriesToNeverCook=' } |
+                ForEach-Object { $_.Substring('+DirectoriesToNeverCook='.Length).Replace('"','') })
+            foreach ($path in $expectedPaths) {
+                if ($path -cnotin $normalizedExclusions) { throw "UBT未保留服务器排除数组项：$($case.Config)/$path" }
+            }
+            if ($case.Config -eq 'FoundationStandalone' -and ($foundation -in $cookedExclusions -or $foundation -notin $cookedIncluded)) {
+                throw '服务器追加破坏了Foundation开发资源许可。'
+            }
+            $serverCookCases += @{ CustomConfig=$case.Config; Profile=$probe.ServerPolicy.Profile; ExpectedDirectories=$expectedPaths.Count; ActualExcludedCount=$cookedExclusions.Count }
             $pakHierarchy = [UnrealBuildTool.ConfigCache]::ReadHierarchy(
                 [UnrealBuildTool.ConfigHierarchyType]::PakFileRules,$project,[UnrealBuildTool.UnrealTargetPlatform]::Win64,
                 'DedicatedServer',$iniArguments,$null,$null)
@@ -130,9 +212,9 @@ try {
         }
         $developmentStageCases += @{ Entry=$case.Entry; Target=$case.Target; CustomConfig=$case.Config; AllowedDevelopmentFiles=$stagedDevelopmentFiles; DefaultDevelopmentEnabled=$developmentEnabled }
     }
-    Write-FoundationResult $context 0 '3项既有数组合并及5组真实脚本参数/UBT开发Stage白名单回归通过；未执行Cook、Stage或游戏启动。' @{
+    Write-FoundationResult $context 0 '3项既有数组合并、6组真实脚本参数/Stage白名单及3组服务器排除数组UBT回归通过；未执行Cook、Stage或游戏启动。' @{
         StandardExcluded=@($normalExcluded); DevelopmentExcluded=@($devExcluded); DevelopmentIncluded=@($devIncluded)
-        SentinelExcluded=@($sentinelExcluded); DevelopmentStageCases=$developmentStageCases
+        SentinelExcluded=@($sentinelExcluded); DevelopmentStageCases=$developmentStageCases; ServerCookCases=$serverCookCases
     }
     exit 0
 } catch { Write-FoundationResult $context 1 $_.Exception.Message; exit 1 }

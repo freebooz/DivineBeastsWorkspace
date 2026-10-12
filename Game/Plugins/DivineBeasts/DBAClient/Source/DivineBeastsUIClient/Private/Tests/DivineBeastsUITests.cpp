@@ -551,22 +551,22 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
     return true;
 }
 
-// 登录成功的CharacterEntry默认显示选择页，角色数量和创建资格不能隐式打开创建表单。
+// 登录完成且权威档案已加载：无角色直接创建，有角色选择；LoadRoster不把未知列表当作新玩家。
 // 仅使用手工给定的只读快照；路由不得修改业务角色、选择标识或允许命令。
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterEntryDefaultSelectionTest,
-    "DivineBeasts.UI.RoutingPolicy.CharacterEntryDefaultsToSelect",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterEntryRosterRoutingTest,
+    "DivineBeasts.UI.RoutingPolicy.CharacterEntryRoutesByRoster",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FDivineBeastsCharacterEntryDefaultSelectionTest::RunTest(const FString&)
+bool FDivineBeastsCharacterEntryRosterRoutingTest::RunTest(const FString&)
 {
     FDivineBeastsUIViewState State;
     State.CurrentStep = TEXT("DBA.Flow.CharacterEntry");
     State.PageState = EDivineBeastsUIPageState::Empty;
     State.bAuthenticated = true;
     State.AllowedCommands = {TEXT("CreateCharacter")};
-    TestEqual(TEXT("已认证空角色入口默认选择页"),
-        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.CharacterSelect")));
-    TestEqual(TEXT("无效本地偏好回退选择页"),
-        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.Inventory")), FName(TEXT("UI.Screen.CharacterSelect")));
+    TestEqual(TEXT("已认证且档案加载完成的空角色直接创建"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.CharacterCreate")));
+    TestEqual(TEXT("无效本地偏好仍按空档案创建入口回退"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.Inventory")), FName(TEXT("UI.Screen.CharacterCreate")));
     TestTrue(TEXT("用户可显式打开已允许的创建表单"),
         FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
     TestEqual(TEXT("显式创建偏好才显示创建表单"),

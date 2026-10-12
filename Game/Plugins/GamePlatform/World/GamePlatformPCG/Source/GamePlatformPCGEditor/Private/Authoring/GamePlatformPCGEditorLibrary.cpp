@@ -534,6 +534,8 @@ bool UGamePlatformPCGEditorLibrary::BindPlacedActorGraph(
     Actor->Modify();
     Actor->PCGComponent->Modify();
     Actor->Graph = ApprovedGraph;
+    // Editor放置器刚创建时还可能没再次触发OnConstruction，显式锁定相同的PCG随机种子。
+    Actor->PCGComponent->Seed = Actor->Seed;
     // 官方NetMulticast SetGraph会触发网络RPC；这里仅设置Editor本地GraphInstance。
     Actor->PCGComponent->SetGraphLocal(ApprovedGraph);
     if (Actor->PCGComponent->GetGraph() != ApprovedGraph)

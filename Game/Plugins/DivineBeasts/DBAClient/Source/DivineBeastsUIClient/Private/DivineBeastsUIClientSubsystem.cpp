@@ -1,7 +1,11 @@
 // 项目层本地玩家UI组合：消费应用只读状态，注册平台页面/主题并桥接真实控制器生命周期。
 // 不发送业务HTTP或持有玩法权威；退出撤销页面、适配器和委托，服务器目标不装配本模块。
 #include "DivineBeastsUIClientSubsystem.h"
+<<<<<<< HEAD
 #include "Development/DivineBeastsDevelopmentLaunchMode.h"
+=======
+#include "Development/DivineBeastsPluginDemoMode.h"
+>>>>>>> 0963476cd210192af4c0e11459fa707dd95bff99
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -21,6 +25,9 @@
 #include "Definitions/GamePlatformUIScreenDefinition.h"
 #include "Dialogs/GamePlatformToastWidget.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
+#include "Interfaces/IGamePlatformDataService.h"
 #include "Layers/GamePlatformUILayerStack.h"
 #include "Layers/DivineBeastsRootLayout.h"
 #include "Loading/GamePlatformLoadingScreenService.h"
@@ -47,6 +54,16 @@ namespace
 
 void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
 {
+    // 演示UI拥有独立根界面，不恢复正式登录RootLayout及业务页面。
+    if (FDivineBeastsPluginDemoMode::IsEnabled())
+    {
+        Super::PlayerControllerChanged(NewPlayerController);
+        return;
+    }
+    if (bUIShuttingDown) { Super::PlayerControllerChanged(NewPlayerController); return; }
+    // 拒绝来自其他本地玩家的控制器，后续HUD/输入接线同样只消费本玩家作用域。
+    if (NewPlayerController && NewPlayerController->GetLocalPlayer() != GetLocalPlayer()) NewPlayerController = nullptr;
+    UpdateDefaultRootLayoutContext(GetLocalPlayer(), NewPlayerController);
     ObserveWorldInputRouter(GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>() : nullptr);
     CloseSystemMenu();
     if (auto* Previous = BoundMenuController.Get()) Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
@@ -78,7 +95,15 @@ void UDivineBeastsUIClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    // 在注册生产页面/主题和应用适配器前旁路；正式客户端默认行为不变。
+    if (FDivineBeastsPluginDemoMode::IsEnabled())
+    {
+        return;
+    }
     bUIShuttingDown = false;
+    ResetDefaultRootLayoutLoad(false);
+    RootLayoutPlayer.Reset();
+    RootLayoutController.Reset();
     Collection.InitializeDependency<UGamePlatformUIManagerSubsystem>();
 
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
@@ -140,6 +165,9 @@ void UDivineBeastsUIClientSubsystem::Deinitialize()
 {
     // 退出先撤输入交接资格与精确Router委托，后续关闭回调不能发布新的世界基线。
     bUIShuttingDown = true;
+    ResetDefaultRootLayoutLoad(false);
+    RootLayoutPlayer.Reset();
+    RootLayoutController.Reset();
     ObserveWorldInputRouter(nullptr);
     CloseSystemMenu();
     if (auto* Previous = BoundMenuController.Get()) Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
@@ -328,38 +356,215 @@ bool UDivineBeastsUIClientSubsystem::CloseScreen(
     return PlatformUI && PlatformUI->CloseScreen(Screen);
 }
 
+IGamePlatformDataService* UDivineBeastsUIClientSubsystem::ResolveRootLayoutDataService(UGameInstance* Instance) const
+{
+#if WITH_DEV_AUTOMATION_TESTS
+    if (RootDataServiceForTests) return RootDataServiceForTests;
+#endif
+    return IsValid(Instance) ? IGamePlatformDataService::Get(*Instance) : nullptr;
+}
+
+void UDivineBeastsUIClientSubsystem::ResetDefaultRootLayoutLoad(bool bKeepInstalledLease)
+{
+    check(IsInGameThread());
+    ++RootLayoutLoadGeneration;
+    // 根实例跨Travel保留时，其成功的Instance租约继续属于同一LocalPlayer。
+    // Pending永不保留，控制器/玩家更换后的迟到完成不能安装旧根。
+    if (bKeepInstalledLease && RootLayoutLoadState == ERootLayoutLoadState::Ready &&
+        LeasedRootLayout.IsValid() && PlatformUI && PlatformUI->GetRootLayout() == LeasedRootLayout.Get())
+        return;
+    const FGamePlatformDataLease OldLease = DefaultRootLayoutLease;
+    UGameInstance* Instance = RootLayoutLeaseInstance.Get();
+    DefaultRootLayoutLease = {};
+    RootLayoutLeaseInstance.Reset();
+    RootLayoutRequestPath.Reset();
+    LeasedRootLayout.Reset();
+    RootLayoutLoadState = ERootLayoutLoadState::Idle;
+    if (OldLease.IsValid())
+        if (IGamePlatformDataService* Data = ResolveRootLayoutDataService(Instance))
+            Data->ReleaseResources(OldLease);
+}
+
+void UDivineBeastsUIClientSubsystem::UpdateDefaultRootLayoutContext(
+    ULocalPlayer* Player, APlayerController* Controller)
+{
+    // 控制器必须真正归当前玩家；不能用第零号玩家或其他分屏玩家替代空作用域。
+    if (!IsValid(Controller) || Controller->GetLocalPlayer() != Player) Controller = nullptr;
+    if (RootLayoutPlayer.Get() == Player && RootLayoutController.Get() == Controller) return;
+    const bool bKeepInstalledLease = RootLayoutPlayer.Get() == Player &&
+        (!Controller || RootLayoutLeaseInstance.Get() == Controller->GetGameInstance());
+    ResetDefaultRootLayoutLoad(bKeepInstalledLease);
+    RootLayoutPlayer = Player;
+    RootLayoutController = Controller;
+}
+
+bool UDivineBeastsUIClientSubsystem::IsRootLayoutContextCurrent(uint64 ExpectedGeneration) const
+{
+    ULocalPlayer* Player = GetLocalPlayer();
+    APlayerController* Controller = RootLayoutController.Get();
+    UWorld* World = GetWorld();
+    return !bUIShuttingDown && ExpectedGeneration == RootLayoutLoadGeneration &&
+        IsValid(Player) && RootLayoutPlayer.Get() == Player && PlatformUI &&
+        PlatformUI->GetLocalPlayer() == Player && IsValid(Controller) &&
+        Controller->GetLocalPlayer() == Player && World && !World->bIsTearingDown &&
+        Player->GetPlayerController(World) == Controller &&
+        RootLayoutLeaseInstance.Get() == World->GetGameInstance();
+}
+
 bool UDivineBeastsUIClientSubsystem::InstallRootLayoutClass(
     TSubclassOf<UGamePlatformUILayerStack> RootLayoutClass)
 {
-    const bool bInstalled =
-        PlatformUI &&
-        PlatformUI->InstallRootLayoutClass(RootLayoutClass);
+    check(IsInGameThread());
+    ULocalPlayer* Player = GetLocalPlayer();
+    APlayerController* Controller = Player ? Player->GetPlayerController(GetWorld()) : nullptr;
+    if (bUIShuttingDown || bInstallingRootLayout || !PlatformUI ||
+        PlatformUI->GetLocalPlayer() != Player || !IsValid(Controller) ||
+        Controller->GetLocalPlayer() != Player || !RootLayoutClass ||
+        RootLayoutClass->HasAnyClassFlags(CLASS_Abstract))
+        return false;
+    UpdateDefaultRootLayoutContext(Player, Controller);
+    // 外部安装夺取当前请求资格；旧根仍显示时保留其成功租约，直到替换真正成功。
+    ResetDefaultRootLayoutLoad(true);
+    const uint64 Serial = RootLayoutLoadGeneration;
+    bool bInstalled = false;
+    {
+        TGuardValue<bool> Installing(bInstallingRootLayout, true);
+#if WITH_DEV_AUTOMATION_TESTS
+        if (RootInstallerForTests) bInstalled = RootInstallerForTests(RootLayoutClass);
+        else
+#endif
+        bInstalled = PlatformUI->InstallRootLayoutClass(RootLayoutClass);
+    }
+    if (bUIShuttingDown || Serial != RootLayoutLoadGeneration) return false;
     if (bInstalled)
     {
-        // RootLayout 是页面真正可打开的前置条件。安装成功后立即消费此前已到达的流程状态，
-        // 不要求业务层再发送一次伪状态事件。
+        ResetDefaultRootLayoutLoad(false);
+        RootLayoutLoadState = ERootLayoutLoadState::Ready;
+        // 仅在安装边界退出、Ready发布后恢复一次主路由；同步Construct不能递归申请或打开页面。
         SyncPrimaryScreen();
+    }
+    else if (!PlatformUI->GetRootLayout())
+    {
+        ResetDefaultRootLayoutLoad(false);
+        RootLayoutLoadState = ERootLayoutLoadState::Failed;
     }
     return bInstalled;
 }
 
 bool UDivineBeastsUIClientSubsystem::EnsureDefaultRootLayout()
 {
-    if (!PlatformUI)
-    {
+    check(IsInGameThread());
+    ULocalPlayer* Player = GetLocalPlayer();
+    if (bUIShuttingDown || !Player || !PlatformUI || PlatformUI->GetLocalPlayer() != Player)
         return false;
+    if (bInstallingRootLayout) return PlatformUI->GetRootLayout() != nullptr;
+    APlayerController* Controller = Player->GetPlayerController(GetWorld());
+    UpdateDefaultRootLayoutContext(Player, Controller);
+    if (PlatformUI->GetRootLayout())
+    {
+        if (DefaultRootLayoutLease.IsValid() && PlatformUI->GetRootLayout() != LeasedRootLayout.Get())
+            ResetDefaultRootLayoutLoad(false); // 其他合法调用方已装根；撤销本调用者在途/旧根需求。
+        RootLayoutLoadState = ERootLayoutLoadState::Ready;
+        return true;
+    }
+    if (!RootLayoutController.IsValid()) return false;
+    if (RootLayoutLoadState == ERootLayoutLoadState::Pending ||
+        RootLayoutLoadState == ERootLayoutLoadState::Failed)
+        return false; // 同一上下文合并在途请求；失败只等待控制器切换或显式外部安装。
+    if (RootLayoutLoadState == ERootLayoutLoadState::Ready) ResetDefaultRootLayoutLoad(false);
+
+    UWorld* World = GetWorld();
+    UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
+    IGamePlatformDataService* Data = ResolveRootLayoutDataService(Instance);
+    RootLayoutRequestPath = DefaultRootLayoutClass.ToSoftObjectPath();
+#if WITH_DEV_AUTOMATION_TESTS
+    if (RootLayoutPathForTests.IsValid()) RootLayoutRequestPath = RootLayoutPathForTests;
+#endif
+    if (!Data || !IsValid(Instance) || !World || World->bIsTearingDown || !RootLayoutRequestPath.IsValid())
+    {
+        RootLayoutLoadState = ERootLayoutLoadState::Failed;
+        return false;
+    }
+    RootLayoutLeaseInstance = Instance;
+    RootLayoutLoadState = ERootLayoutLoadState::Pending;
+    const uint64 Serial = RootLayoutLoadGeneration;
+    const TWeakObjectPtr<UDivineBeastsUIClientSubsystem> WeakThis(this);
+    FGamePlatformResult Accepted;
+    const FGamePlatformDataLease Lease = Data->AcquireResources(
+        { RootLayoutRequestPath }, EGamePlatformDataLifetime::Instance, Player,
+        [WeakThis, Serial](const FGamePlatformDataLease& Completed, const FGamePlatformResult& Result)
+        {
+            if (auto* Self = WeakThis.Get()) Self->HandleDefaultRootLayoutLoaded(Serial, Completed, Result);
+        }, Accepted);
+    if (!IsRootLayoutContextCurrent(Serial))
+    {
+        if (Lease.IsValid()) Data->ReleaseResources(Lease);
+        return false;
+    }
+    if (!Accepted.IsSuccess() || !Lease.IsValid())
+    {
+        if (Lease.IsValid()) Data->ReleaseResources(Lease);
+        RootLayoutLoadState = ERootLayoutLoadState::Failed;
+        return false;
+    }
+    DefaultRootLayoutLease = Lease;
+    return false; // 受理是Pending；只能由延后完成发布Ready。
+}
+
+void UDivineBeastsUIClientSubsystem::HandleDefaultRootLayoutLoaded(uint64 ExpectedGeneration,
+    const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result)
+{
+    check(IsInGameThread());
+    if (ExpectedGeneration != RootLayoutLoadGeneration ||
+        RootLayoutLoadState != ERootLayoutLoadState::Pending || !DefaultRootLayoutLease.IsValid() ||
+        Lease.ScopeId != DefaultRootLayoutLease.ScopeId || Lease.LeaseId != DefaultRootLayoutLease.LeaseId ||
+        Lease.Generation != DefaultRootLayoutLease.Generation || Lease.IssuerProof != DefaultRootLayoutLease.IssuerProof ||
+        Lease.ResourcePaths != DefaultRootLayoutLease.ResourcePaths ||
+        Lease.DefinitionId != DefaultRootLayoutLease.DefinitionId || Lease.Bundles != DefaultRootLayoutLease.Bundles)
+        return;
+    if (!IsRootLayoutContextCurrent(ExpectedGeneration))
+    {
+        ResetDefaultRootLayoutLoad(false);
+        return;
     }
     if (PlatformUI->GetRootLayout())
     {
-        return true;
+        EnsureDefaultRootLayout();
+        SyncPrimaryScreen();
+        return;
     }
-
-    // 内容插件由Client/Editor Target显式启用；这里仅在初始化或状态事件上同步解析一次小型根布局类，
-    // 不建立第二套资产注册表，也不通过Tick轮询。安装失败会等待下一次真实状态事件重试。
-    UClass* LoadedClass = DefaultRootLayoutClass.LoadSynchronous();
-    return LoadedClass &&
-        InstallRootLayoutClass(
-            TSubclassOf<UGamePlatformUILayerStack>(LoadedClass));
+    IGamePlatformDataService* Data = ResolveRootLayoutDataService(RootLayoutLeaseInstance.Get());
+    UClass* LoadedClass = Result.IsSuccess() && Data &&
+        Data->GetLeaseState(DefaultRootLayoutLease) == EGamePlatformDataRequestState::Succeeded
+        ? Cast<UClass>(RootLayoutRequestPath.ResolveObject()) : nullptr;
+    if (!LoadedClass || !LoadedClass->IsChildOf(UGamePlatformUILayerStack::StaticClass()) ||
+        LoadedClass->HasAnyClassFlags(CLASS_Abstract))
+    {
+        ResetDefaultRootLayoutLoad(false);
+        RootLayoutLoadState = ERootLayoutLoadState::Failed;
+        return;
+    }
+    bool bInstalled = false;
+    {
+        TGuardValue<bool> Installing(bInstallingRootLayout, true);
+#if WITH_DEV_AUTOMATION_TESTS
+        if (RootInstallerForTests) bInstalled = RootInstallerForTests(LoadedClass);
+        else
+#endif
+        bInstalled = PlatformUI->InstallRootLayoutClass(LoadedClass);
+    }
+    if (!IsRootLayoutContextCurrent(ExpectedGeneration)) return;
+    if (!bInstalled || !PlatformUI->GetRootLayout())
+    {
+        ResetDefaultRootLayoutLoad(false);
+        RootLayoutLoadState = ERootLayoutLoadState::Failed;
+        return;
+    }
+    LeasedRootLayout = PlatformUI->GetRootLayout();
+    RootLayoutLoadState = ERootLayoutLoadState::Ready;
+    if (auto* Root = Cast<UDivineBeastsRootLayout>(LeasedRootLayout.Get()))
+        Root->RefreshForPlayerController(RootLayoutController.Get());
+    if (IsRootLayoutContextCurrent(ExpectedGeneration)) SyncPrimaryScreen();
 }
 
 UGamePlatformLoadingScreenService*
@@ -704,7 +909,7 @@ void UDivineBeastsUIClientSubsystem::SyncCharacterPreview()
 
 void UDivineBeastsUIClientSubsystem::SyncPrimaryScreen()
 {
-    if (bSynchronizingPrimaryScreen ||
+    if (bUIShuttingDown || bInstallingRootLayout || bSynchronizingPrimaryScreen ||
         !PlatformUI ||
         !PlatformUI->GetRootLayout())
     {

@@ -7,6 +7,7 @@
 #include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Interfaces/GamePlatformVFXService.h"
+#include "Components/SplineComponent.h"
 
 FGameplayTag UDivineBeastsPresentationClientSubsystem::GetEnvironmentFlockTag(
     const FEnvironmentFlockState& Group, FName SpeciesId)
@@ -19,7 +20,8 @@ FGameplayTag UDivineBeastsPresentationClientSubsystem::GetEnvironmentFlockTag(
 bool UDivineBeastsPresentationClientSubsystem::StartEnvironmentFlock(
     FEnvironmentFlockState& Group, FName Id, FName SpeciesId, int32 Count, int32 Seed,
     const FVector& WorldOrigin,
-    UObject* Owner, const FGuid& RegistrationToken, FString& OutError)
+    UObject* Owner, const FGuid& RegistrationToken, FString& OutError,
+    const FDivineBeastsBirdFlockFlightSettings* BirdFlight)
 {
     check(IsInGameThread());
     const TStrongObjectPtr<UDivineBeastsPresentationClientSubsystem> KeepService(this);
@@ -38,6 +40,13 @@ bool UDivineBeastsPresentationClientSubsystem::StartEnvironmentFlock(
         return false;
     }
     const TStrongObjectPtr<UWorld> KeepWorld(World);
+    // 所有候选校验发生于原有合法群落被替换之前；Fauna继续走原始接口。
+    if (BirdFlight && (Group.Kind != EEnvironmentFlockKind::Bird ||
+        !BirdFlight->ValidateForWorld(World, OutError)))
+    {
+        if (OutError.IsEmpty()) OutError = TEXT("群落类型不支持鸟类路径配置。");
+        return false;
+    }
     // LocalPlayer跨图仍复用同一子系统；旧世界意图不能遮挡新世界同名请求。
     if ((!Group.Requests.IsEmpty() || Group.Pack.IsValid()) && Group.World.Get() != World)
     {
@@ -76,7 +85,8 @@ bool UDivineBeastsPresentationClientSubsystem::StartEnvironmentFlock(
 
     if (Existing && Existing->SpeciesId == SpeciesId && Existing->Count == Count && Existing->Seed == Seed &&
         Existing->Origin.Equals(WorldOrigin) && Existing->RegistrationToken == RegistrationToken &&
-        Existing->Owner.Get() == Owner)
+        Existing->Owner.Get() == Owner && Existing->bExplicitBirdFlight == (BirdFlight != nullptr) &&
+        (!BirdFlight || Existing->BirdFlight.EquivalentTo(*BirdFlight)))
     {
         const FGuid MutationToken = Existing->MutationToken;
         Existing->bAwaitingExplicitRetry = false; // 本ID的显式Apply重新武装一次，不启动循环。
@@ -92,6 +102,11 @@ bool UDivineBeastsPresentationClientSubsystem::StartEnvironmentFlock(
     const FEnvironmentFlockRequestState Previous = Existing ? *Existing : FEnvironmentFlockRequestState();
     FEnvironmentFlockRequestState Desired;
     Desired.SpeciesId = SpeciesId; Desired.Count = Count; Desired.Seed = Seed; Desired.Origin = WorldOrigin;
+    if (BirdFlight)
+    {
+        Desired.BirdFlight = *BirdFlight;
+        Desired.bExplicitBirdFlight = true;
+    }
     Desired.Owner = Owner; Desired.RegistrationToken = RegistrationToken;
     Desired.MutationToken = FGuid::NewGuid();
     const FGuid MutationToken = Desired.MutationToken;
@@ -223,7 +238,38 @@ void UDivineBeastsPresentationClientSubsystem::SubmitPendingEnvironmentFlocks(FE
         Request.Lifetime = EGamePlatformPresentationLifetime::Persistent;
         Request.PredictionState = EGamePlatformPresentationPredictionState::Confirmed;
         if (Group.Kind == EEnvironmentFlockKind::Bird)
+        {
             Request.IntegerParameters.Add(TEXT("User.BirdCount"), Snapshot.Count);
+            if (Snapshot.bExplicitBirdFlight)
+            {
+                FString FlightError;
+                if (!Snapshot.BirdFlight.ValidateForWorld(World, FlightError))
+                {
+                    State->bAwaitingExplicitRetry = true;
+                    UE_LOG(LogTemp, Warning, TEXT("[BirdFlock] 提交前路径失效：%s"), *FlightError);
+                    continue;
+                }
+                const auto& Flight = Snapshot.BirdFlight;
+                Request.IntegerParameters.Add(TEXT("User.FlightMode"), static_cast<int32>(Flight.FlightMode));
+                Request.IntegerParameters.Add(TEXT("User.FlockSeed"), Flight.Seed);
+                if (Flight.bUseSpline)
+                {
+                    // 利用既有中立附着通道接入已注册世界Spline。
+                    // Niagara DI的AttachParentOnly只读取当前附着父组件，不能保存跨世界Actor。
+                    Request.AttachComponent = Flight.Spline.Get();
+                }
+                if (Flight.bEnableFlocking)
+                {
+                    Request.FloatParameters.Add(TEXT("User.SeparationWeight"), Flight.SeparationWeight);
+                    Request.FloatParameters.Add(TEXT("User.AlignmentWeight"), Flight.AlignmentWeight);
+                    Request.FloatParameters.Add(TEXT("User.CohesionWeight"), Flight.CohesionWeight);
+                }
+                if (Flight.GlideBlend > 0.f)
+                {
+                    Request.FloatParameters.Add(TEXT("User.GlideBlend"), Flight.GlideBlend);
+                }
+            }
+        }
         else
         {
             Request.IntegerParameters.Add(TEXT("User.FaunaCount"), Snapshot.Count);

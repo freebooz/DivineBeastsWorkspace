@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Diagnostics/GamePlatformVFXRuntimeCountRegistry.h"
 #include "GameplayTagContainer.h"
 #include "Stats/Stats.h"
 
@@ -30,5 +31,11 @@ public:
     static void DefinitionCacheHit();
     static void DefinitionCacheMiss();
     static void CompositeChild();
-    static void UpdateRuntimeCounts(int32 TrackedInstances, int32 PendingInstances, int32 PeakTrackedInstances);
+    /** 游戏线程显式注册/注销；统计进程内所有存活世界，不持有UWorld引用。 */
+    static FGuid RegisterWorld();
+    static void UpdateRuntimeCounts(const FGuid& WorldId, int32 TrackedInstances, int32 PendingInstances);
+    static void UnregisterWorld(const FGuid& WorldId);
+    static FGamePlatformVFXRuntimeCountSnapshot GetRuntimeCounts();
+    /** 模块生命周期边界重置，普通世界退出保留历史同时在场峰值。 */
+    static void ResetRuntimeCounts();
 };

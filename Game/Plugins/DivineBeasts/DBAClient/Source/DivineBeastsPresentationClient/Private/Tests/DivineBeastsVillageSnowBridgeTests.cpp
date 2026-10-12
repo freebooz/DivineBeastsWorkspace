@@ -57,6 +57,12 @@ bool FDivineBeastsVillageSnowBridgeContractTest::RunTest(const FString& Paramete
         TestTrue(TEXT("宏观雪纹理使用合法软对象路径"), Config->SnowCoverageTexture.IsValid());
         TestTrue(TEXT("雪色贴图只存软引用"), Config->SnowAlbedoTexture.IsValid());
         TestTrue(TEXT("雪法线贴图只存软引用"), Config->SnowNormalTexture.IsValid());
+        TestTrue(TEXT("Village苔藓材质通过项目第三层软引用配置"),
+            Config->MossSnowRockMaterial.IsValid());
+        TestTrue(TEXT("苔藓组件标记不为空"),
+            !Config->MossSnowComponentTag.IsNone());
+        TestTrue(TEXT("标签式岩石覆盖默认开启，但未标记网格保持原材质"),
+            Config->bEnableTaggedMossSnowRocks);
     }
     return true;
 }

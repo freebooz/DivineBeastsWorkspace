@@ -10,12 +10,18 @@
 #include "ContentBrowserModule.h"
 #include "DataValidationModule.h"
 #include "Editor.h"
+#include "Editor/EditorEngine.h"
+#include "FileHelpers.h"
 #include "HAL/FileManager.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
 #include "IContentBrowserSingleton.h"
 #include "Misc/App.h"
+#include "Misc/CommandLine.h"
+#include "Misc/ConfigCacheIni.h"
+#include "Misc/PackageName.h"
+#include "Misc/Parse.h"
 #include "Misc/DataValidation.h"
 #include "Misc/EngineVersion.h"
 #include "Performance/GamePlatformPerformanceTestRunner.h"
@@ -105,6 +111,27 @@ private:
             LOCTEXT("MenuLabel", "Game Platform Validation（游戏平台验证）"),
             LOCTEXT("MenuTooltip", "资产验证、架构门禁、端侧泄漏、人工验收与性能证据入口。"));
         PopulateValidationMenu(ValidationMenu);
+
+        // 仅注册跨项目可复用的开发演示入口：所有项目配置从DefaultEditor.ini读取。
+        // 若项目没有指定地图和启动标志，按钮仅显示失败日志，不会跳过登录。
+        UToolMenu* PluginDemoMenu = ToolsMenu->AddSubMenu(
+            this, "GamePlatformPluginDemos", "GamePlatformPluginDemos",
+            LOCTEXT("PluginDemoMenu", "Plugin Demos（插件演示中心）"),
+            LOCTEXT("PluginDemoHelp", "打开经授权的项目演示关卡并进入编辑器内演示。"));
+        if (PluginDemoMenu)
+        {
+            FToolMenuSection& DemoSection = PluginDemoMenu->AddSection(
+                "GamePlatformPluginDemoActions",
+                LOCTEXT("PluginDemoActions", "Development Demos（开发插件演示）"));
+            DemoSection.AddMenuEntry(
+                "OpenPluginDemoHub",
+                LOCTEXT("PluginDemoHub", "打开插件演示总览并运行"),
+                LOCTEXT("PluginDemoHubHelp", "仅在显式演示模式下打开已制作的总览地图并开始PIE；不接正式登录。"),
+                FSlateIcon(),
+                FUIAction(FExecuteAction::CreateRaw(
+                    this, &FGamePlatformDeveloperToolsModule::ExecuteMenuAction,
+                    FString(TEXT("OpenPluginDemoHub")))));
+        }
     }
 
     void PopulateValidationMenu(UToolMenu* Menu)
@@ -596,8 +623,57 @@ private:
         FPlatformProcess::ExploreFolder(*Latest);
     }
 
+    /** 中立编辑器演示入口：配置由主项目提供，平台插件不认识具体项目地图或登录类型。 */
+    static void OpenPluginDemoHub()
+    {
+        FString MapLongPath;
+        FString DevelopmentSwitch;
+        FString MapArgumentName;
+        if (!GConfig ||
+            !GConfig->GetString(TEXT("GamePlatform.PluginDemo"), TEXT("HubMap"), MapLongPath, GEditorIni) ||
+            !GConfig->GetString(TEXT("GamePlatform.PluginDemo"), TEXT("OptInSwitch"), DevelopmentSwitch, GEditorIni) ||
+            !GConfig->GetString(TEXT("GamePlatform.PluginDemo"), TEXT("MapArgumentKey"), MapArgumentName, GEditorIni) ||
+            MapLongPath.IsEmpty() || DevelopmentSwitch.IsEmpty() || MapArgumentName.IsEmpty())
+        {
+            UE_LOG(LogTemp, Error, TEXT("当前项目未配置完整插件演示入口；保持原编辑器与登录行为。"));
+            return;
+        }
+
+        // 编辑器快捷入口必须和开发客户端共享双重显式资格，不能在普通编辑器误启动免登录流程。
+        FString RequestedMap;
+        const FString MapArgument = MapArgumentName + TEXT("=");
+        if (!FParse::Param(FCommandLine::Get(), *DevelopmentSwitch) ||
+            !FParse::Value(FCommandLine::Get(), *MapArgument, RequestedMap) ||
+            RequestedMap != MapLongPath)
+        {
+            UE_LOG(LogTemp, Error, TEXT("未以开发演示专用启动参数打开Editor，拒绝自动PIE：%s"), *MapLongPath);
+            return;
+        }
+        FString MapFilename;
+        if (!FPackageName::IsValidLongPackageName(MapLongPath) ||
+            !FPackageName::TryConvertLongPackageNameToFilename(
+                MapLongPath, MapFilename, FPackageName::GetMapPackageExtension()) ||
+            !FPaths::FileExists(MapFilename))
+        {
+            UE_LOG(LogTemp, Error, TEXT("演示总览地图未由UE生成或路径无效：%s"), *MapLongPath);
+            return;
+        }
+        if (!GEditor || !FEditorFileUtils::LoadMap(MapFilename, false, true))
+        {
+            UE_LOG(LogTemp, Error, TEXT("UE编辑器无法打开演示总览地图：%s"), *MapLongPath);
+            return;
+        }
+        // 仅用户主动点击菜单后提交PIE请求，不在模块启动时加载地图、自动登录或抢占现有Editor。
+        GEditor->RequestPlaySession(FRequestPlaySessionParams());
+    }
+
     void ExecuteMenuAction(FString ActionName)
     {
+        if (ActionName == TEXT("OpenPluginDemoHub"))
+        {
+            OpenPluginDemoHub();
+            return;
+        }
         if (ActionName == TEXT("ValidateSelected"))
         {
             RunDataValidation(GetSelectedAssets(), false);

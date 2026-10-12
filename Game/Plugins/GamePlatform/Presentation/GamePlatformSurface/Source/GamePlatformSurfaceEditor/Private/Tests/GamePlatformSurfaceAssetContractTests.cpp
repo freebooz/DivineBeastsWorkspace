@@ -46,6 +46,9 @@ bool FGamePlatformSurfaceMPCContractTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("写实积雪位于平台可选材质合同中"),
         FGamePlatformSurfaceAssetContract::GetOptionalMaterialAuthoringPackages().Contains(
             TEXT("/GamePlatformSurface/Materials/M_GP_SnowCover_Detailed")));
+    TestTrue(TEXT("苔藓与积雪PBR组合材质属于平台可选合同"),
+        FGamePlatformSurfaceAssetContract::GetOptionalMaterialAuthoringPackages().Contains(
+            TEXT("/GamePlatformSurface/Materials/M_GP_Surface_SnowMoss_PBR")));
 
     return true;
 }

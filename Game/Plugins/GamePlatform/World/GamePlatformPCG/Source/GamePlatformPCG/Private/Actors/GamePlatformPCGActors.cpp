@@ -46,6 +46,12 @@ void AGamePlatformPCGActorBase::OnConstruction(const FTransform& Transform)
     // 服务器Cook/运行期仍只消费已验收的静态成果，避免未授权的运行时装饰生成。
     if (!HasAnyFlags(RF_ClassDefaultObject) && IsValid(PCGComponent))
     {
+        // Actor公开Seed必须与官方PCG组件使用的随机种子一致，才能核验G09同Seed输出稳定。
+        // 仅同步本地Editor配置，不触发网络广播、生成或服务器Gameplay写入。
+        if (PCGComponent->Seed != Seed)
+        {
+            PCGComponent->Seed = Seed;
+        }
         UPCGGraph* LoadedGraph = Graph.Get();
         if (LoadedGraph && PCGComponent->GetGraph() != LoadedGraph)
         {

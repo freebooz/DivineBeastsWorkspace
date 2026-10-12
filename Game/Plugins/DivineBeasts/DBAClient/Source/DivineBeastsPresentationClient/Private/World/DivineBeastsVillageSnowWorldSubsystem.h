@@ -9,6 +9,9 @@
 #include "DivineBeastsVillageSnowWorldSubsystem.generated.h"
 
 class ALandscapeProxy;
+class AActor;
+class UMeshComponent;
+class UMaterialInterface;
 class UGamePlatformWeatherClientWorldSubsystem;
 struct FGamePlatformWeatherState;
 struct FGamePlatformResult;
@@ -55,6 +58,13 @@ private:
     /** 只有真实Landscape MID已应用数值及高清贴图且回读一致，才返回成功。 */
     bool ApplyToLandscape(ALandscapeProxy* Landscape);
 
+    /** 平台Data世界租约异步加载第三层雪苔MI；失败保留原始岩石材质而不阻断世界。 */
+    void TryRequestMossMaterial();
+    void HandleMossMaterialLoaded(int64 ExpectedGeneration,
+        const FGamePlatformDataLease& CompletedLease, const FGamePlatformResult& Result);
+
+    /** 仅替换明确带MossSnowComponentTag的网格；保存旧材质以在世界关闭时还原。 */
+    void ApplyMossMaterialToActor(AActor* Actor);
     /** 原世界退出后先移除委托、释放租约，防止跨地图晚回调和动态材质泄漏。 */
 #if !UE_BUILD_SHIPPING
     /**
@@ -70,6 +80,24 @@ private:
 #endif
 
     void ReleaseResources();
+
+    /** 一次材质替换的恢复位置；只保存弱组件，不延长世界Actor生命周期。 */
+    struct FMossMaterialSlotBinding
+    {
+        TWeakObjectPtr<UMeshComponent> Component;
+        int32 MaterialSlot = INDEX_NONE;
+        int32 RetainedMaterialIndex = INDEX_NONE;
+    };
+
+    /** 保存旧材质强引用直至本世界结束，避免GC后无法安全回退。 */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UMaterialInterface>> RetainedMossOriginalMaterials;
+
+    TArray<FMossMaterialSlotBinding> MossMaterialSlotBindings;
+    FGamePlatformDataLease MossMaterialLease;
+    TWeakObjectPtr<UMaterialInterface> LoadedMossMaterial;
+    int64 MossRequestGeneration = 0;
+    bool bMossMaterialReady = false;
 
     TWeakObjectPtr<UGamePlatformWeatherClientWorldSubsystem> WeatherClient;
     FDelegateHandle WeatherChangedHandle;

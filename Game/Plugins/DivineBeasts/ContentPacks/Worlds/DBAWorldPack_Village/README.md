@@ -17,6 +17,13 @@
 - 本包不创建C++模块，不复制平台世界逻辑；Client、Dedicated Server、Editor均需挂载本包以读取同一权威地图身份。
 - 纯客户端VFX/Surface表现资源不得成为服务器就绪的硬依赖；碰撞、导航、权威PCG结果可随地图进入Server Cook（服务器烘焙）。
 
+## 2026-10-12 十层正式地形扫描PBR源的保存与UE验收边界
+
+- 十种地表原`SourceArt/Terrain/PBR/*`技术纹理已按用户明确授权由同名正式CC0扫描2K BaseColor、DirectX Normal、ORM替换，另为每类增补微Height；原30张旧PNG与30个旧Texture2D UE二进制已保存到独立61项回退包。正式来源见`Tools/Unreal/Terrain/TerrainProductionPBRManifest_v1.json`；原`TerrainSourceManifest_v1.json`只作历史地貌校准证据。
+- 源图成功不意味着本包的真实UE Texture2D已重导入。独立审核用高精多层母材质与表现实例归`DBAPresentationPack_Core/Materials/Terrain`（客户端纯表现），不直接写正式`L_Village_Start`、`M_DBA_Village_LandscapeBridge`或服务器权威世界定义。
+- 需等主工程Editor完成新的DivineBeastsDemoClient模块编译及并行UBT释放，再运行`RunTerrainGaeaFullReview.ps1 -Apply -ProductionPBR`，验证40个正式UE Texture2D、10层Landscape/PCGGraph、雪苔湿润及客户端/专服容器。因共享本包仍可能被Server AlwaysCook扫描，禁止在没有独立专服Cook/UnrealPak审查前宣称高清扫描Texture2D已从服务器剥离。
+- 实施记录：`Docs/Implementation/TerrainProductionPBRIntegration_20261012.md`。2026-10-11已验证的正式Village雪层桥接/联机不因本次源图替换失效，也不代表新正式十层已生效。
+
 ## 2026-10-11 正式Village写实积雪接入（共享地图与客户端隔离）
 
 - 真正通过UE5.8编辑器制作并绑定了 `/DBAWorldPack_Village/Materials/Landscape/M_DBA_Village_LandscapeBridge`（新手村共享地形母材质，48个有效表达式）和三张本内容包持有的低容量中性默认Texture2D。正式 `L_Village_Start` 的唯一Landscape已保存该材质并开启 `bUseDynamicMaterialInstance`（动态材质实例），不使用EditorOnly的运行时换材质接口。

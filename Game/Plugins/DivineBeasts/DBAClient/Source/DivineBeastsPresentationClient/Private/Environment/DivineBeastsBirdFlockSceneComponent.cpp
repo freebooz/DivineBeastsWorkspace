@@ -1,6 +1,8 @@
 // 神兽联盟客户端场景组件：Begin/EndPlay事件建立/撤销自有注册，不启动独立渲染器。
 // 身份替换先验证候选再撤销旧绑定；同步完成通知可重入，必须核对本组件变更token。
 #include "Environment/DivineBeastsBirdFlockSceneComponent.h"
+#include "Environment/BirdFlock/GamePlatformBirdFlockSplineMath.h"
+#include "Components/SplineComponent.h"
 #include "DivineBeastsPresentationClientSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
@@ -12,6 +14,11 @@ UDivineBeastsBirdFlockSceneComponent::UDivineBeastsBirdFlockSceneComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
     SetIsReplicatedByDefault(false);
+}
+
+FName UDivineBeastsBirdFlockSceneComponent::GetConfiguredFlockId() const
+{
+    return FlockId.IsNone() ? FName(*GetPathName()) : FlockId;
 }
 
 TArray<FString> UDivineBeastsBirdFlockSceneComponent::GetBirdSpeciesOptions() const
@@ -50,14 +57,43 @@ bool UDivineBeastsBirdFlockSceneComponent::ApplyBirdFlock(FString& OutError)
     const auto OldService = BoundPresentation;
     const FName OldId = BoundFlockId;
     const FGuid OldToken = BoundRegistrationToken;
-    const FName NewId = FlockId.IsNone() ? FName(*GetPathName()) : FlockId;
+    const FName NewId = GetConfiguredFlockId();
     const FGuid NewToken = OldService.Get() == Service && OldId == NewId && OldToken.IsValid()
         ? OldToken : FGuid::NewGuid();
 
-    const int32 DesiredCount = BirdCount;
-    // 不先Stop旧绑定：改ID与非法数量/物种同时发生时，失败必须留下原来的合法鸟群。
-    if (!Service->StartAmbientBirdFlockForOwner(
-        NewId, SpeciesId, DesiredCount, GetComponentLocation(), this, NewToken, OutError)) return false;
+    // 0只鸟的语义始终是撤销本Owner持有的请求，不得因为旧Spline已被关卡卸载而无法停播。
+    if (BirdCount == 0)
+    {
+        StopBirdFlock();
+        return true;
+    }
+
+    int32 DesiredCount = BirdCount;
+    FDivineBeastsBirdFlockFlightSettings Flight = AdvancedFlight;
+    if (bEnableAdvancedFlight)
+    {
+        // 优先在项目层查明路径Actor的所属世界，不把Actor指针放到跨插件公开数值协议。
+        if (Flight.bUseSpline)
+        {
+            AActor* SourceActor = IsValid(RouteActor) ? RouteActor.Get() : GetOwner();
+            Flight.Spline = IsValid(SourceActor) ? SourceActor->FindComponentByClass<USplineComponent>() : nullptr;
+        }
+        if (!Flight.ValidateForWorld(World, OutError)) return false;
+        DesiredCount = FGamePlatformBirdFlockSplineMath::ResolveVisibleCount(
+            BirdCount, Flight.QualityFraction);
+        if (DesiredCount == INDEX_NONE)
+        {
+            OutError = TEXT("鸟群质量比例非法；旧播放未更改。");
+            return false;
+        }
+    }
+    // 不先Stop旧绑定：非法参数、跨世界Spline或重复身份不能污染合法旧请求。
+    const bool bAccepted = bEnableAdvancedFlight
+        ? Service->StartAmbientBirdFlockForOwnerAdvanced(NewId, SpeciesId, DesiredCount,
+            GetComponentLocation(), this, NewToken, Flight, OutError)
+        : Service->StartAmbientBirdFlockForOwner(NewId, SpeciesId, DesiredCount,
+            GetComponentLocation(), this, NewToken, OutError);
+    if (!bAccepted) return false;
     if (ApplyMutationToken != Operation || bEndingPlay)
     {
         // 重入操作已接管绑定。只清理无人认领的本次候选，不能撤销内层已经接纳的同一注册。

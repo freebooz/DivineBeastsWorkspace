@@ -102,6 +102,21 @@ bool FGamePlatformPCGAdvancedSpatialGeometryTest::RunTest(const FString&)
         TestTrue(TEXT("桥梁候选必须等待人工审查"), Bridges[0].bRequiresHumanApproval);
         TestEqual(TEXT("水域宽度和退界确定桥跨需求"), Bridges[0].RequiredSpanCm, 700.0f);
     }
+    // P7斜交桥跨沿道路方向增加；几乎平行的桥位应失败并清空部分候选。
+    Road.Vertices = {FVector2D(-500, -500), FVector2D(500, 500)};
+    TestTrue(TEXT("45度水道交叉仍可生成只供审批的桥候选"),
+        FGamePlatformPCGAdvancedSpatialRules::FindBridgeCandidates(Road, River, 100.0f, Bridges));
+    TestEqual(TEXT("斜交一个明确候选"), Bridges.Num(), 1);
+    if (Bridges.Num() == 1)
+    {
+        TestTrue(TEXT("斜交道路桥跨按正弦角扩大，避免桥头落水"),
+            FMath::IsNearlyEqual(Bridges[0].RequiredSpanCm, 700.0f * FMath::Sqrt(2.0f), 1.0f));
+    }
+    Road.Vertices = {FVector2D(-1000, -100), FVector2D(1000, 100)};
+    River.Vertices = {FVector2D(-1000, 100), FVector2D(1000, -100)};
+    TestFalse(TEXT("近乎平行的桥位必须人工调整，禁止给出低估桥跨"),
+        FGamePlatformPCGAdvancedSpatialRules::FindBridgeCandidates(Road, River, 100.0f, Bridges));
+    TestTrue(TEXT("非法桥位不能遗留半批候选"), Bridges.IsEmpty());
 
     FGamePlatformPCGCavityExclusion Cavity;
     Cavity.Footprint = MakeBoxFootprint();
@@ -111,6 +126,10 @@ bool FGamePlatformPCGAdvancedSpatialGeometryTest::RunTest(const FString&)
     TestTrue(TEXT("3D体腔只做不破坏地形的空间判断"),
         FGamePlatformPCGAdvancedSpatialRules::IsInsideCavity(Cavity, FVector(50, 50, 0), bInside));
     TestTrue(TEXT("体腔内明确命中"), bInside);
+    Cavity.Footprint.bFillInterior = false;
+    TestFalse(TEXT("3D体腔不得复用仅沿围栏线的非实心Footprint"),
+        FGamePlatformPCGAdvancedSpatialRules::IsInsideCavity(Cavity, FVector(50, 50, 0), bInside));
+    Cavity.Footprint.bFillInterior = true;
 
     UGamePlatformPCGCavityDefinition* CavityDefinition = NewObject<UGamePlatformPCGCavityDefinition>();
     AssignId(*CavityDefinition, TEXT("test.pcg_cavity@1"));

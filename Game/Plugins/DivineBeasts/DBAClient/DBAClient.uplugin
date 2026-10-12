@@ -115,6 +115,11 @@
       ]
     },
     {
+      "Name": "GamePlatformSurface",
+      "Enabled": true,
+      "TargetAllowList": ["Client", "Editor", "Game"]
+    },
+    {
       "Name": "GamePlatformWeather",
       "Enabled": true,
       "TargetAllowList": [
@@ -173,6 +178,13 @@
         "Client",
         "Editor"
       ]
+    },
+    {
+      "Name": "DivineBeastsDemoClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [ "Game", "Client", "Editor" ],
+      "TargetConfigurationAllowList": [ "Debug", "DebugGame", "Development" ]
     }
   ]
 }

@@ -18,6 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 MANIFEST = Path(__file__).with_name("TerrainSourceManifest_v1.json")
+PRODUCTION = Path(__file__).with_name("TerrainProductionPBRManifest_v1.json")
 MODE = os.getenv("TERRAIN_TEXTURE_IMPORT_MODE","inspect").strip().lower()
 PREFIX = "/DBAWorldPack_Village/Terrain"
 
@@ -28,7 +29,10 @@ def read_targets() -> list[dict]:
         raise ValueError("地形源资源身份/版本不正确")
     targets=[]
     names=set()
+    production=PRODUCTION.exists()  # 正式扫描PBR只能由独立ReimportTerrainProductionPBR导入。
     for spec in doc["files"]:
+        if production and spec["category"]=="PBR_TECHNICAL":
+            continue  # 保留历史V1来源指纹，不尝试从已替换的PNG按旧签名导入。
         src=(ROOT / spec["sourcePath"]).resolve()
         if not src.is_relative_to(ROOT) or not src.is_file():
             raise FileNotFoundError("项目外或不存在的地形原图："+str(src))
@@ -55,8 +59,9 @@ def read_targets() -> list[dict]:
         names.add(package)
         targets.append({"source":src,"target":package,"srgb":srgb,"compression":compression,
                         "kind":kind})
-    if len(targets)!=49:
-        raise RuntimeError("地形UE Texture2D候选必须为49："+str(len(targets)))
+    expected=19 if production else 49
+    if len(targets)!=expected:
+        raise RuntimeError("地形校准Texture2D清单数量错误："+str(len(targets))+" expected="+str(expected))
     return targets
 
 
