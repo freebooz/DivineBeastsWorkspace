@@ -113,6 +113,7 @@ private:
     friend class FGamePlatformVFXResourceOwnershipTest;
     friend class FGamePlatformVFXDataIntegrationTest;
     friend class FGamePlatformVFXDiagnosticsWorldLifecycleTest;
+    friend class FGamePlatformVFXDiagnosticsResourcePendingTest;
     void HandleStartupCatalogsLoaded();
     FGamePlatformVFXDedupeKey MakeDedupeKey(const FGamePlatformVFXRequest& Request) const;
     FName ResolveDefinitionId(const FGamePlatformVFXRequest& Request, bool& bOutAmbiguous) const;
@@ -205,6 +206,8 @@ private:
         const FTimerHandle& TimerHandle);
     void ClearCompositeTimers(const FGamePlatformVFXHandle& ParentHandle);
 
+    /** 游戏线程；Delta为等待实例数量差额，全部生产增减均经此入口即时发布世界快照。 */
+    void AdjustPendingInstanceCount(int32 Delta);
     void UpdateRuntimeDiagnostics();
 
     bool ExecuteLoadedDefinition(

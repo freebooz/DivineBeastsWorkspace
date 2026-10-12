@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "projectionVersion": 2,
+  "sourceKind": "calibration_only_not_gaea",
+  "roadOverlaySHA256": null,
+  "heightSamples": [
+    1009,
+    1009
+  ],
+  "terrainWorld": {
+    "worldOriginXcm": 0.0,
+    "worldOriginYcm": 0.0,
+    "worldSizeXcm": 100800.0,
+    "worldSizeYcm": 100800.0,
+    "minHeightCm": -10000.0,
+    "maxHeightCm": 20000.0
+  },
+  "layers": [
+    "Grass",
+    "ForestSoil",
+    "Dirt",
+    "Rock",
+    "Scree",
+    "Sand",
+    "Gravel",
+    "RoadDirt",
+    "FarmSoil",
+    "ShoreMud"
+  ],
+  "pcgSchemaVersion": "1.0",
+  "sourceSHA256": "1f8b31f4fc085316de7a9e98cdfcde64455706fd3701d5e0ff967d0a3f2843d5",
+  "generatedFiles": [
+    {
+      "relativePath": "Weights/LS_Grass_Import.png",
+      "sha256": "52f6efa1d5ba2befec526a41ae68da9de803ec55d3faa045d4ef2a783535ae4e"
+    },
+    {
+      "relativePath": "Weights/LS_ForestSoil_Import.png",
+      "sha256": "24e73c77c05eb788070f0f3ead9cb98cc87726ee820d9abe5be9746002260464"
+    },
+    {
+      "relativePath": "Weights/LS_Dirt_Import.png",
+      "sha256": "dbc65d1e3042efaf93ff670c742c2b9646a07be8d0780fbbbcca9e74453ad660"
+    },
+    {
+      "relativePath": "Weights/LS_Rock_Import.png",
+      "sha256": "d06afa40cfe3745a94a2b4fe6cf325e101a2c3bc60b5d52ceb507dc984a8a818"
+    },
+    {
+      "relativePath": "Weights/LS_Scree_Import.png",
+      "sha256": "f9e3ee3d927f0dcc622ad24cbcb7d0a92935ec1d8006f4e07875d80d5a1deddf"
+    },
+    {
+      "relativePath": "Weights/LS_Sand_Import.png",
+      "sha256": "4676c9572ea3bace3f3c866a6c1e70ad0cc78bfc143aacc0688c624cdc4a101f"
+    },
+    {
+      "relativePath": "Weights/LS_Gravel_Import.png",
+      "sha256": "9c4f8aeca09df26d153e7dbb39d73d76207df5b167d1e98670ee1a56e1747ffb"
+    },
+    {
+      "relativePath": "Weights/LS_RoadDirt_Import.png",
+      "sha256": "f0a9341287689cf34558dd011aa79eacd001bc0fc627d11064cee6a9657a27c7"
+    },
+    {
+      "relativePath": "Weights/LS_FarmSoil_Import.png",
+      "sha256": "37e2f80e8fa2245eaa238efff41a75e3b10d9d415240d759afcdf057b221c18a"
+    },
+    {
+      "relativePath": "Weights/LS_ShoreMud_Import.png",
+      "sha256": "33ff24e5e2029c323fc26f65fc64bb35f418108901e07b4050ffdf8bd1d42ecf"
+    },
+    {
+      "relativePath": "PCG/PCG_SchemaV1_TerrainCandidates.json",
+      "sha256": "faaa2b8328330707bf6ca239e91f8d6b2e50922e336b007c5f8090cacfc1311e"
+    }
+  ],
+  "warningZh": "PNG/候选点不是已执行的UE Landscape/PCGGraph导入，不具备专服世界生成权威"
+}

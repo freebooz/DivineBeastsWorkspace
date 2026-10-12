@@ -1,3 +1,4 @@
+// 平台PCG Editor金标准资产命令：阶段决定固定读写范围，项目放置器根仅由显式参数提供。
 #include "Commands/GamePlatformPCGGoldAssetsCommandlet.h"
 #include "Commands/GamePlatformPCGGoldMapAuthoring.h"
 
@@ -235,8 +236,22 @@ int32 UGamePlatformPCGGoldAssetsCommandlet::Main(const FString& Params)
     if (!FParse::Value(*Params, TEXT("Stage="), Stage))
     {
         UE_LOG(LogGamePlatformPCG, Error,
-            TEXT("必须显式使用-Stage=Definitions或-Stage=Realized；禁止不明确的开发资产写入。"));
+            TEXT("必须显式指定-Stage=Definitions/Realized/Map/RepairMap/Verify/SpatialProbe/GeneratePreview。"));
         return 1;
+    }
+    // 只有Map/RepairMap预检会加载放置器蓝图；其余阶段不依赖项目目录。
+    const bool bRequiresBlueprintRoot = Stage.Equals(TEXT("Map"), ESearchCase::IgnoreCase) ||
+        Stage.Equals(TEXT("RepairMap"), ESearchCase::IgnoreCase);
+    FString BlueprintRoot;
+    if (bRequiresBlueprintRoot)
+    {
+        FString BlueprintRootInput;
+        FParse::Value(*Params, TEXT("BlueprintRoot="), BlueprintRootInput);
+        if (!GamePlatformPCGGoldMap::NormalizeBlueprintRoot(BlueprintRootInput, BlueprintRoot, Error))
+        {
+            UE_LOG(LogGamePlatformPCG, Error, TEXT("PCG Gold地图蓝图目录参数无效：%s"), *Error);
+            return 1;
+        }
     }
     bool bSuccess = false;
     if (Stage.Equals(TEXT("Definitions"), ESearchCase::IgnoreCase))
@@ -249,11 +264,11 @@ int32 UGamePlatformPCGGoldAssetsCommandlet::Main(const FString& Params)
     }
     else if (Stage.Equals(TEXT("Map"), ESearchCase::IgnoreCase))
     {
-        bSuccess = GamePlatformPCGGoldMap::Create(Error);
+        bSuccess = GamePlatformPCGGoldMap::Create(BlueprintRoot, Error);
     }
     else if (Stage.Equals(TEXT("RepairMap"), ESearchCase::IgnoreCase))
     {
-        bSuccess = GamePlatformPCGGoldMap::Repair(Error);
+        bSuccess = GamePlatformPCGGoldMap::Repair(BlueprintRoot, Error);
     }
     else if (Stage.Equals(TEXT("Verify"), ESearchCase::IgnoreCase))
     {

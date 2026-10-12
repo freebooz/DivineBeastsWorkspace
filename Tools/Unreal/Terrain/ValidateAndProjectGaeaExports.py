@@ -101,6 +101,8 @@ def main():
     parser=argparse.ArgumentParser(description="Gaea源包到Landscape十权重与PCG候选点共同投影")
     parser.add_argument("--input-manifest",type=Path,default=CALIBRATION)
     parser.add_argument("--calibration",action="store_true")
+    parser.add_argument("--projection-version",type=int,choices=(1,2),default=None,
+                        help="1=旧校准兼容；2=道路和通用排除分离，正式Gaea默认2")
     parser.add_argument("--verify-only",action="store_true")
     parser.add_argument("--output-dir",type=Path)
     args=parser.parse_args()
@@ -109,9 +111,15 @@ def main():
         raise FileNotFoundError("Gaea Manifest不存在于项目内："+str(source))
     doc=json.loads(source.read_text(encoding="utf-8"))
     height,masks,geo,origin=parse_source(doc,args.calibration)
-    weights=project_landscape_weights(masks)
-    pcg_points=sample_pcg_schema_v1(masks,weights,height,geo,grid_step=32)
+    version=args.projection_version if args.projection_version is not None else (1 if args.calibration else 2)
+    # Gaea九Mask没有Road源；道路只能来自项目显式RoadOverlay或后续Spline，不能把Exclusion伪装为道路。
+    road=None
+    if version==2 and not args.calibration and doc.get("roadOverlay") is not None:
+        road=read_path(doc["roadOverlay"],8,(height.shape[1],height.shape[0])).astype(np.float32)/255.0
+    weights=project_landscape_weights(masks,projection_version=version,road_overlay=road)
+    pcg_points=sample_pcg_schema_v1(masks,weights,height,geo,grid_step=32,projection_version=version)
     print("TERRAIN_GAEA_MASK_PROJECTOR_VALID",origin,
+          "projectionVersion",version,"roadOverlay",road is not None,
           "resolution",height.shape,"weights",len(weights),"pcg_candidates",len(pcg_points))
     if args.verify_only:
         print("TERRAIN_GAEA_VALIDATED_NO_UE_WRITE")
@@ -126,12 +134,16 @@ def main():
         buf=io.BytesIO()
         Image.fromarray(img.astype(np.uint8),"L").save(buf,"PNG",compress_level=6)
         outputs.append((Path("Weights")/("LS_"+name+"_Import.png"),buf.getvalue()))
-    point_json={"schemaVersion":1,"sourceKind":origin,"pointCount":len(pcg_points),"points":pcg_points}
+    point_json={"schemaVersion":1,"projectionVersion":version,
+                "sourceKind":origin,"pointCount":len(pcg_points),"points":pcg_points}
     outputs.append((Path("PCG")/"PCG_SchemaV1_TerrainCandidates.json",
                     (json.dumps(point_json,ensure_ascii=False)+"\n").encode("utf-8")))
-    receipt={"schemaVersion":1,"sourceKind":origin,"heightSamples":[height.shape[1],height.shape[0]],
+    receipt={"schemaVersion":1,"projectionVersion":version,"sourceKind":origin,
+             "roadOverlaySHA256":(hashlib.sha256(road.tobytes()).hexdigest() if road is not None else None),
+             "heightSamples":[height.shape[1],height.shape[0]],
              "terrainWorld":geo,"layers":list(LAYERS),"pcgSchemaVersion":"1.0",
              "sourceSHA256":hashlib.sha256(source.read_bytes()).hexdigest(),
+              "sourceManifestPath":str(source.relative_to(ROOT)).replace("\\","/"),
              "generatedFiles":[{"relativePath":str(path).replace("\\","/"),
                                "sha256":hashlib.sha256(raw).hexdigest()}
                               for path,raw in outputs],

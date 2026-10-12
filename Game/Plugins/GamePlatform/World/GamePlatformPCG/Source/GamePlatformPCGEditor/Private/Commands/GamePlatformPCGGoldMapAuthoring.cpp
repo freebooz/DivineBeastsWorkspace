@@ -1,3 +1,5 @@
+// 平台PCG Editor内部Gold地图创作与验收；放置器目录由调用方显式提供。
+// 创作/修复只处理固定开发资源；空间探针及预览保持各自验证与临时资源清理边界。
 #include "Commands/GamePlatformPCGGoldMapAuthoring.h"
 
 #include "Actors/GamePlatformPCGActors.h"
@@ -36,7 +38,6 @@ namespace
 {
 const FString GoldRoot = TEXT("/Game/Development/Foundation/PCG/");
 const FString MapPackage = TEXT("/Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1");
-const FString BlueprintRoot = TEXT("/DBAWorldPack_Village/PCG/Blueprints/");
 
 struct FPlacement
 {
@@ -54,7 +55,7 @@ struct FPlacement
     float HalfWidth = -1.0f;
 };
 
-/** 与GoldLevel验收矩阵对应，清单在平台Editor集中定义；项目资源留在Village内容包。 */
+/** 与GoldLevel验收矩阵对应的11项中立领域/形状清单；具体放置器资源由调用方目录提供。 */
 TArray<FPlacement> GetPlacements()
 {
     return {
@@ -155,9 +156,15 @@ bool ApplyGenerationBounds(AGamePlatformPCGActorBase& Actor, const FPlacement& S
     Bounds->SetCanEverAffectNavigation(false);
     return true;
 }
-bool Preflight(const TArray<FPlacement>& Specs, TArray<UClass*>& Classes,
+/** 在加载蓝图或修改开发资产前校验调用方目录、资源和不覆盖约束；失败时不写任何资产。 */
+bool Preflight(const FString& BlueprintRoot, const TArray<FPlacement>& Specs, TArray<UClass*>& Classes,
     TArray<UPCGGraph*>& Graphs, FString& Error, bool bRequiresNewMap = true)
 {
+    FString NormalizedBlueprintRoot;
+    if (!GamePlatformPCGGoldMap::NormalizeBlueprintRoot(BlueprintRoot, NormalizedBlueprintRoot, Error))
+    {
+        return false;
+    }
     const FString TargetFilename = FPackageName::LongPackageNameToFilename(
         MapPackage, FPackageName::GetMapPackageExtension());
     if (bRequiresNewMap && (FPackageName::DoesPackageExist(MapPackage) ||
@@ -172,7 +179,7 @@ bool Preflight(const TArray<FPlacement>& Specs, TArray<UClass*>& Classes,
     for (const FPlacement& Item : Specs)
     {
         const FString ClassPath = FString::Printf(TEXT("%s%s.%s_C"),
-            *BlueprintRoot, Item.Blueprint, Item.Blueprint);
+            *NormalizedBlueprintRoot, Item.Blueprint, Item.Blueprint);
         UClass* Class = LoadClass<AGamePlatformPCGActorBase>(nullptr, *ClassPath);
         UPCGGraph* Graph = LoadObject<UPCGGraph>(nullptr, *GetGraphPath(Item));
         if (!IsValid(Class) || !Class->IsChildOf(AGamePlatformPCGActorBase::StaticClass()) ||
@@ -224,14 +231,41 @@ bool SaveGoldGraph(UPCGGraph* Graph, const TCHAR* Name, FString& Error)
 }
 }
 
-bool GamePlatformPCGGoldMap::Create(FString& Error)
+bool GamePlatformPCGGoldMap::NormalizeBlueprintRoot(
+    const FString& BlueprintRoot, FString& OutBlueprintRoot, FString& Error)
+{
+    // 先复制输入，允许调用者复用输出变量；校验失败不能保留上次调用的有效根。
+    FString Normalized = BlueprintRoot.TrimStartAndEnd();
+    OutBlueprintRoot.Reset();
+    Error.Reset();
+    if (Normalized.IsEmpty())
+    {
+        Error = TEXT("Map/RepairMap阶段必须显式提供非空-BlueprintRoot=已注册包目录。");
+        return false;
+    }
+    FPaths::NormalizeDirectoryName(Normalized);
+    // 校验目录内的真实包名形状，沿用Foundation蓝图创作入口的探测名；
+    // 挂载点、非法字符和重复斜杠规则均由锁定UE判定，不自行宽松修复非法包路径。
+    FText Reason;
+    if (!FPackageName::IsValidLongPackageName(
+        Normalized + TEXT("/BP_PCG_Path"), false, &Reason))
+    {
+        Error = FString::Printf(TEXT("BlueprintRoot不是合法的已注册包目录：%s（%s）。"),
+            *Normalized, *Reason.ToString());
+        return false;
+    }
+    OutBlueprintRoot = Normalized + TEXT("/");
+    return true;
+}
+
+bool GamePlatformPCGGoldMap::Create(const FString& BlueprintRoot, FString& Error)
 {
     check(IsInGameThread());
     Error.Reset();
     const TArray<FPlacement> Specs = GetPlacements();
     TArray<UClass*> Classes;
     TArray<UPCGGraph*> Graphs;
-    if (!Preflight(Specs, Classes, Graphs, Error)) { return false; }
+    if (!Preflight(BlueprintRoot, Specs, Classes, Graphs, Error)) { return false; }
     if (!GEditor)
     {
         Error = TEXT("缺少真正Editor上下文，禁止伪造测试地图。");
@@ -415,7 +449,7 @@ bool GamePlatformPCGGoldMap::Create(FString& Error)
     return true;
 }
 
-bool GamePlatformPCGGoldMap::Repair(FString& Error)
+bool GamePlatformPCGGoldMap::Repair(const FString& BlueprintRoot, FString& Error)
 {
     check(IsInGameThread());
     Error.Reset();
@@ -430,7 +464,7 @@ bool GamePlatformPCGGoldMap::Repair(FString& Error)
     TArray<UClass*> Classes;
     TArray<UPCGGraph*> Graphs;
     const TArray<FPlacement> Specs = GetPlacements();
-    if (!Preflight(Specs, Classes, Graphs, Error, /*bRequiresNewMap=*/false))
+    if (!Preflight(BlueprintRoot, Specs, Classes, Graphs, Error, /*bRequiresNewMap=*/false))
     {
         return false;
     }

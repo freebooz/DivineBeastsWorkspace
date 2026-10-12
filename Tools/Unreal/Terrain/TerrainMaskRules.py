@@ -48,9 +48,21 @@ def coerce_masks(masks: Mapping[str,np.ndarray]) -> dict[str,np.ndarray]:
         out[name]=v
     return out
 
-def project_landscape_weights(masks:Mapping[str,np.ndarray]) -> dict[str,np.ndarray]:
-    """10层非负权重，按每像素精确规范到255，空权重兜底Dirt。"""
+def project_landscape_weights(masks:Mapping[str,np.ndarray], *,
+                              projection_version:int=1,
+                              road_overlay:np.ndarray|None=None) -> dict[str,np.ndarray]:
+    """十层非负权重归一化为255；V1维持历史校准，V2分离人工排除与道路。"""
     m=coerce_masks(masks)
+    if projection_version not in (1,2):
+        raise ValueError("未发布的地貌投影版本，不得静默改变正式资源")
+    if projection_version==1 and road_overlay is not None:
+        raise ValueError("V1不支持独立道路层，请使用V2")
+    if road_overlay is not None:
+        road=np.asarray(road_overlay,dtype=np.float32)
+        if road.shape!=m["Slope"].shape or not np.isfinite(road).all() or np.any(road<0) or np.any(road>1):
+            raise ValueError("道路覆盖图尺寸、有限值或0~1取值非法")
+    else:
+        road=np.zeros_like(m["Slope"],dtype=np.float32)
     slope,rock,shore,forest,exc,flow,dep,build=(
         m["Slope"],m["RockExposure"],m["Shore"],m["Forest"],
         m["Exclusion"],m["Flow"],m["Deposition"],m["Buildable"]
@@ -65,7 +77,7 @@ def project_landscape_weights(masks:Mapping[str,np.ndarray]) -> dict[str,np.ndar
         clip(slope*.75+m["Erosion"]*.55)*(1-shore),
         shore*.68*(1-flow*.4),
         dep*.36+flow*.45,
-        exc*2.0,
+        exc*2.0 if projection_version==1 else road*2.0,
         build*.56*(1-exc),
         shore*.4+flow*.33,
     )
@@ -94,9 +106,12 @@ def sample_pcg_schema_v1(
     world:Mapping[str,float],
     *,
     grid_step:int=24,
-    seed:int=20261011
+    seed:int=20261011,
+    projection_version:int=1
 )->list[dict]:
-    """从与Landscape相同的掩码、权重和高度输出PCG调试点，不执行生成或网络权威。"""
+    """从同源地形得到PCG调试点；V2通用排除不再伪装成道路网络。"""
+    if projection_version not in (1,2):
+        raise ValueError("不支持的地貌投影版本")
     m=coerce_masks(masks)
     h=np.asarray(height_u16)
     if h.dtype!=np.uint16 or h.shape!=m["Slope"].shape:
@@ -140,7 +155,9 @@ def sample_pcg_schema_v1(
                 "Pcg.Rule.Height":minz+(maxz-minz)*int(h[y,x])/65535,
                 "Pcg.Rule.Wetness":min(1.0,float((m["Shore"][y,x]+m["Flow"][y,x])*.5)),
                 "Pcg.Exclude.Mask":exc,
-                "Pcg.Exclude.Source":"Road.Network" if exc>=.5 else "None",
+                "Pcg.Exclude.Source":(
+                    ("Road.Network" if projection_version==1 else "Gameplay.Exclusion")
+                    if exc>=.5 else "None"),
                 "Pcg.Exec.Seed":int(((seed ^ (x*73856093) ^ (y*19349663)) & 0x7fffffff))
             }
             points.append(entry)

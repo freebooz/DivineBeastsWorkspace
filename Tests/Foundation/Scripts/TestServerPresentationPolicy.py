@@ -244,11 +244,13 @@ class PolicyBehaviorTests(unittest.TestCase):
                 with self.assertRaises(self.api.PolicyError):
                     self.api.read_pak_listing(path)
 
-    def test_empty_stage_and_unlisted_container_evidence_fail_closed(self):
+    def test_empty_stage_is_rejected_before_container_tool(self):
         with tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
             root = Path(folder)
-            with self.assertRaises(self.api.PolicyError):
-                self.api.audit_stage(self.policy, "DedicatedServer", root, root / "missing-UnrealPak.exe", root / "evidence")
+            stage = root / "Stage"
+            stage.mkdir()
+            with self.assertRaisesRegex(self.api.PolicyError, "为空"):
+                self.api.audit_stage(self.policy, "DedicatedServer", stage, root / "missing-UnrealPak.exe", root / "evidence")
 
 
 if __name__ == "__main__":

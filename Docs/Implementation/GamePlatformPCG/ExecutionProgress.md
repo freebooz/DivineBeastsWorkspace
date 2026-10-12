@@ -181,3 +181,11 @@
 - **离线编译实证与边界**：以上桥候选/几何回归、执行配置/配置回归、最新生成预览源码分别使用UE5.8原生宏/包含参数与clang-cl兼容编译参数执行C++20`/Zs（仅语法）`，共5份新增变更编译单元退出0。静态编译不等于正式UBT链接或真实地图/G01～G16通过。现有其他任务`UnrealEditor.exe`仍在使用主工程，继续保护其进程，不热重载、不自行Cook、不动既有Gold资源或Village正式地图。
 
 **剩余生产缺口**：Village内容包目前只有11个已落盘放置器蓝图，没有配套正式项目网格资产；Foundation的`/Engine/BasicShapes`网格仅为金标准占位。P0～P7真实完工仍取决于完整正式资源、最新UE Editor构建、Spawner生成/G01～G16、导航/碰撞和双端Cook的实际证据。
+
+## 2026-10-12｜P2地形Field来源语义V2（项目层源资源）
+
+- 检查已有`DBAWorldPack_Village（新手村世界包）`Gaea/Landscape源链，定位V1技术校准把`Exclusion（排除区）`错误映射为`RoadDirt（道路土层）`及`Road.Network（道路来源）`。此风险与平台PCG空间优先级独立：禁止把人工排除区伪造成道路。
+- 增量修改项目工具`TerrainMaskRules.py`与`ValidateAndProjectGaeaExports.py`：保留旧版V1校准默认合同，正式Gaea 2.3导出默认`projectionVersion=2`。V2将高排除点标为已注册的`Gameplay.Exclusion`；只有存在独立`RoadOverlay（道路覆盖源）`及真实来源SHA-256时，才按道路绘制RoadDirt，无道路源时该层权重全0，等待项目Spline正确接线。
+- 已在新的`DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2`物理创建**10张8位权重PNG、1份含1,024个实际PCG候选点的JSON和1份Manifest**（12个源文件），明确`sourceKind=calibration_only_not_gaea`，绝非Gaea发布产物或UE .uasset；拒绝覆盖旧`CalibrationDerived`、正式Landscape、Material和村庄地图。
+- 新增`Tests/Architecture/ValidateTerrainMaskPCGProjectionV2.py`核对全部11项生成文件SHA、十层总权重255、无显式道路时RoadDirt全0、42个高排除样本保留Gameplay.Exclusion、人工RoadOverlay独立优先级、非法值/尺寸失败关闭；退出码0。旧版`ValidateTerrainMaskPCGProjection.py`重跑也退出0，证明旧技术校准没有被静默修改。当前仍需正式Gaea真实导出、UE数据导入及金标准实际PCG生成/G01～G16/双Cook，不得把技术来源当真实地图。
+- **正式PCG资源准入门禁**：新增`Tools/Unreal/PCG/VerifyVillagePCGProductionSources.py`，真实Gaea 2.3和投影V2、道路来源，以及六类项目静态网格及SHA/用途必须齐备，才有机会进入后续真实UE验证。当前技术校准不冒充正式地形，Village无已审核的PCG静态网格映射；首次执行安全拒绝并返回2，证据为`Saved/Validation/GamePlatformPCG/VillageProductionSourceReadiness_20261012.json`。仅只读源文件和现有资产；不以通过此门禁取代UE AssetRegistry、G01～G16、导航和双端Cook。

@@ -39,5 +39,24 @@
 - 十份真实Landscape LayerInfo均已保存及反射回读；完整UE三目标常规构建、独立地形测试地图/PCG实际生成、Client/Server新Cook及用户人工签收仍不能标记完成。
 
 ## 回退与安全
+### 2026-10-12 PCG地貌语义V2（道路与排除区来源分离）
+
+原`TerrainMaskRules.py（地形掩码投影）`的V1校准逻辑把`Exclusion（通用排除）`直接赋给`RoadDirt（道路土层）`，并将所有高排除区域的`Pcg.Exclude.Source`标记成`Road.Network（道路网络）`。这在测试时制造虚假的道路区域，也会让人工锁、禁建区误被当成道路。**不能把这种历史校准映射用于正式Gaea或Village生产。**
+
+保留V1作为已经生成的技术校准数据（`CalibrationDerived`）的确定性兼容合同；新V2显式采用`projectionVersion=2`，`Gameplay.Exclusion（通用玩法排除）`独立于道路。V2仅在用户提供带SHA-256的独立`roadOverlay（道路覆盖源）`时生成`RoadDirt`。否则十层中的`RoadDirt`权重为0，道路由项目已批准Spline（样条）与WorldDirector（世界编排器）后续烘焙；不凭空绘路。正式Gaea 2.3来源投影默认V2，仍严格验证高度及9张原始掩码；技术校准必须显式`--calibration`且仍不能冒充真实Gaea。
+
+已独立生成`DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2（新手村第二版技术校准源）`下10张真正PNG、1,024条PCG候选点JSON、1份带源SHA-256及`projectionVersion=2`的投影清单，**不覆写V1导出或UE已保存的地形权重/材质/地图**。
+
+```powershell
+# 保留旧版技术校准资源完整性
+python Tests/Architecture/ValidateTerrainMaskPCGProjection.py
+# 验证V2道路/排除语义、新版源图、PCG Schema和来源完整性
+python Tests/Architecture/ValidateTerrainMaskPCGProjectionV2.py
+# 未来正式Gaea导出，需要实际2.3 Manifest和全套源SHA，指定未占用的全新输出目录：
+python Tools/Unreal/Terrain/ValidateAndProjectGaeaExports.py --input-manifest <真实Gaea清单路径> --projection-version 2 --output-dir <全新源输出目录>
+```
+
+V2技术数据不经UE Editor导入、真实Landscape/PCG重开及双端Cook之前，不能认为正式Village世界地形/道路/林木已迁移。已有V1校准审查图不因新版本而自动被更新。
+
 
 保留现有GamePlatformPCG Gold模板、原PCG蓝图、GamePlatformSurface原素材、正式Village雪MID及地图。该任务只创建独立的技术测试内容和通用Editor作者入口，禁用项目客户端外部目录写入，不删除、覆盖或推送其他人的资源。正式Gaea源导出、Cook及人工验收未通过不得上线。

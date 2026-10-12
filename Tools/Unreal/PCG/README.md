@@ -16,6 +16,14 @@ AuthorGoldRealizedGraphs.py（实际网格生成图创建工具）：在Foundati
 
 GamePlatformPCGGoldAssetsCommandlet（平台PCG原生金标准资产命令）：编译在既有`GamePlatformPCGEditor（平台PCG编辑器模块）`中，阶段为`-Stage=Definitions（17项定义）`、`-Stage=Realized（3份实际网格图及配置）`、`-Stage=Map（独立测试地图及空间规则）`、`-Stage=Verify（全新编辑器进程只读回读）`。默认创作入口使用C++原生命令绕开Python插件初始化；需显式`-UsePythonGoldCreation`才用Python兼容方案。所有地图与资源使用UE真实资产格式、不接受任意保存目录。能编译不等于已执行和通过全部阶段。
 
+
+
+`Map（首次创建地图）`与`RepairMap（受控修复已有地图）`阶段必须显式传入`-BlueprintRoot=已注册包目录`。平台命令没有项目目录默认值，参数缺失、空值、对象路径、非法包名或未挂载根会在创作前失败；目录允许首尾空白、Windows反斜杠和单个可选尾斜杠，经UE5.8的`FPaths::NormalizeDirectoryName`与`FPackageName::IsValidLongPackageName`规范化和校验后用于加载放置器类。`Definitions`、`Realized`、`Verify`、`SpatialProbe`、`GeneratePreview`不要求该参数；中立Gold输出目录、11项领域/形状清单、资源身份与不覆盖规则保持不变。
+
+本项目`RunGoldLevelAuthoring.ps1`仍编排Village固定资产清单，其项目侧`$blueprintRoot`统一提供原`/DBAWorldPack_Village/PCG/Blueprints/`默认值，并同时传给基础蓝图创建和Gold地图阶段。跨项目调用者向平台命令传入自己的已挂载目录；本项目入口没有开放与Village盘点/插件装配不一致的通用覆盖参数。使用原生命令直接创建或修复时需补充该参数，例如`-run=GamePlatformPCGGoldAssets -Stage=Map -BlueprintRoot=/DBAWorldPack_Village/PCG/Blueprints/`。目录存在与包名合法仍不保证所需蓝图存在、父类正确或图资源有效，后续Preflight继续逐项检查真实资源。
+
+路径输入回归位于`GamePlatform.PCG.Editor.GoldAuthoring.BlueprintRoot.Normalization`、`InvalidInputs`与`RequiredStages`三个Editor Automation用例；它们需要真实UE运行证据。`python Tests/Architecture/VerifyPCGGoldAuthoring.py`新增平台无项目挂载点、显式输入链、项目默认注入与阶段范围的静态合同检查，不代替UE编译、资产加载或地图保存重开。
+
 RunGoldSpatialProbe.ps1（PCG金标准空间规则只读探针）：新版编辑器命令新增`-Stage=SpatialProbe`，独立加载真实`PCG_GoldLevel_M1.umap`后读取11个来源Actor和3份已保存的Realized Graph（实例化图），核对道路/小径/作物/门桥/排除区的Mask（空间掩码）优先级、强度、顶点与图节点快照一致性，**不执行PCG Generate（实际生成）或修改地图**。入口先检验UE5.8版本、地图与DLL存在、DLL构建时间晚于源码，并拒绝任何正在运行的UE编辑器或UBT构建；验证退出码和独有成功日志才记录探针成功。
 
     ./Tools/Unreal/PCG/RunGoldSpatialProbe.ps1 -EngineRoot $env:UE_ROOT
@@ -41,3 +49,14 @@ InventoryFoundationAssets.py（已有基础资产完整性工具）：核对12�
     ./Tools/Unreal/PCG/RunGoldLevelAuthoring.ps1 -EngineRoot $env:UE_ROOT -Apply
 
 成功创建资产仍不等于Gold Level实际PCG生成/导航/碰撞/G01～G16/专用服务器和Client/Server Cook（双端资源烘焙）验收通过。以上验证必须在真实编辑器独立重开后单独执行，且只能对本脚本自己创建的资产进行受控修改。
+### Village PCG正式资源准入
+
+`VerifyVillagePCGProductionSources.py（新手村PCG生产来源审查）`仅只读检查：正式`gaea_2_3_export（Gaea 2.3真实导出）`、`projectionVersion=2（投影第二版）`、显式道路来源，以及六类正式静态网格映射。通过也不替代UE资产注册、G01～G16或双端Cook。
+
+六个必需领域：`Forest.Canopy（森林乔木）`、`Rock.Scatter（岩石散布）`、`Agri.Crop（作物）`、`Encl.FieldFence（农田围栏）`、`Connector.Gate（门）`、`Connector.Bridge（桥梁）`。前三者允许`ClientCosmetic（客户端纯装饰）`；后三者必须`StaticWorld（静态世界碰撞）`并接受服务器权威与导航审查。
+
+项目美术批准的清单路径：`DBAWorldPack_Village/SourceArt/PCG/VillagePCGMeshBindings_v1.json`，每项须包含`domainId（领域ID）`、`meshAssetPath（真实Village挂载路径）`、`sha256（来源校验值）`、`usage（用途）`。必须指向真实、非空、已批准的UE静态网格资产，不得用Foundation或Engine BasicShapes占位、空清单或假uasset绕过。
+
+运行命令：`python Tools/Unreal/PCG/VerifyVillagePCGProductionSources.py --report Saved/Validation/GamePlatformPCG/VillageProductionSourceReadiness_20261012.json`。
+
+2026-10-12实际执行返回退出码2，按预期拦截技术校准来源、尚无已审定道路来源和缺少六类项目网格。门禁失败意味着**正式PCG生产资源尚未满足最低条件**，不应进入Shipping或Server Cook；报告不是UE实际生成验收。
