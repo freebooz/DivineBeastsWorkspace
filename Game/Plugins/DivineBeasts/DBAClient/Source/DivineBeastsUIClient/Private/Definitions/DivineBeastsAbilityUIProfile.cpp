@@ -1,3 +1,5 @@
+// 项目客户端Profile只提供英雄/技能显示资料，保留既有PrimaryAsset身份，不承载玩法权威。
+// 校验只读作者字段并返回中文错误，不加载图标、不修补或代填作者内容；由Data完成后的UI消费方调用。
 #include "Definitions/DivineBeastsAbilityUIProfile.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Types/GamePlatformId.h"
@@ -32,6 +34,12 @@ bool UDivineBeastsAbilityUIProfile::ValidateProfile(FString& OutError) const
             return false;
         }
         Unique.Add(Entry.AbilityId);
+        // 名称/图标存在不能替代可读技能说明；空白文本同样无法形成玩家可见介绍。
+        if (Entry.Description.ToString().TrimStartAndEnd().IsEmpty())
+        {
+            OutError = TEXT("正式技能条目必须配置非空白的本地化技能说明。");
+            return false;
+        }
         if (Entry.DisplayName.IsEmpty() || Entry.Icon.IsNull())
         {
             OutError = TEXT("正式技能条目必须配置本地化名称及真实图标软引用。");

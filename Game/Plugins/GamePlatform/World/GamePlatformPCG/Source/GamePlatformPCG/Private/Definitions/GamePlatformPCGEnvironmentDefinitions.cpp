@@ -53,7 +53,10 @@ FGamePlatformResult UGamePlatformPCGExecPresetDefinition::ValidateDefinition() c
         return FGamePlatformResult::Failure(TEXT("PCGSchemaVersionMismatch"), TEXT("ExecPreset要求的PCG Schema主版本与运行时代码不一致。"));
     }
 
-    if (!FMath::IsFinite(GridSizeCm) || GridSizeCm < 100.0f || MaxComponentsPerBatch <= 0 || MaxPointsPerExecution <= 0 ||
+    // PCG源数据即使有限也不能任意扩大批量：超出首批安全预算须以专项性能/Cook证据升级合同。
+    if (!FMath::IsFinite(GridSizeCm) || GridSizeCm < 100.0f ||
+        MaxComponentsPerBatch <= 0 || MaxComponentsPerBatch > 256 ||
+        MaxPointsPerExecution <= 0 || MaxPointsPerExecution > 1048576 ||
         !FMath::IsFinite(FrameBudgetMs) || FrameBudgetMs <= 0.0f)
     {
         return FGamePlatformResult::Failure(TEXT("PCGInvalidExecutionBudget"), TEXT("PCG执行预设存在非法Grid或预算参数。"));
@@ -62,6 +65,13 @@ FGamePlatformResult UGamePlatformPCGExecPresetDefinition::ValidateDefinition() c
     if (bHierarchicalGeneration)
     {
         return FGamePlatformResult::Unsupported(TEXT("PCGHiGenDeferred"), TEXT("HiGen属于M2能力，M0/M1不得提前启用。"));
+    }
+    // M0/M1静态Cook尚未完成之前，不允许配置先打开分区/运行时生成造成客户端与服务器世界分歧。
+    // 后续M2必须具备WorldPartition/HiGen/Cook实证并升级本合同才能放行，不能仅改变DataAsset开关。
+    if (bPartitioned || bRuntimeGeneration)
+    {
+        return FGamePlatformResult::Unsupported(TEXT("PCGGenerationModeDeferred"),
+            TEXT("当前只批准M0/M1非分区编辑器静态生成，分区/运行时生成尚未验收。"));
     }
 
     if (NetPolicy != EGamePlatformPCGNetPolicy::ClientGen)

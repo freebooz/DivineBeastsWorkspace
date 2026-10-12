@@ -1,3 +1,5 @@
+// 项目客户端技能栏：只读授权快照，Profile与图标由当前Loadout世界的Data租约持有。
+// UObject/资源访问仅游戏线程；换英雄、解绑及销毁先撤代次再释放本VM的两份租约，不全局卸载。
 #include "ViewModels/Combat/DivineBeastsAbilityBarViewModel.h"
 
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
@@ -14,7 +16,20 @@
 #include "GameFramework/Actor.h"
 #include "Definitions/DivineBeastsAbilityUIProfile.h"
 #include "Engine/AssetManager.h"
-#include "Engine/StreamableManager.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
+#include "Interfaces/IGamePlatformDataService.h"
+
+namespace
+{
+/** 完成快照可改变RequestState，其余完整签发身份必须等于当前持有租约。 */
+bool IsSameUIResourceLease(const FGamePlatformDataLease& A, const FGamePlatformDataLease& B)
+{
+    return A.IsValid() && B.IsValid() && A.ScopeId == B.ScopeId && A.LeaseId == B.LeaseId &&
+        A.Generation == B.Generation && A.IssuerProof == B.IssuerProof &&
+        A.ResourcePaths == B.ResourcePaths && A.DefinitionId == B.DefinitionId && A.Bundles == B.Bundles;
+}
+}
 
 bool UDivineBeastsAbilityBarViewModel::BindToLoadout(
     UDivineBeastsAbilityLoadoutComponent* InLoadout)
@@ -44,7 +59,6 @@ void UDivineBeastsAbilityBarViewModel::UnbindFromLoadout()
     }
     LoadoutHandle.Reset();
     Loadout.Reset();
-    ++LoadGeneration;
     ResetProfileLease();
     if (!Slots.IsEmpty() || !SlotDetails.IsEmpty())
     {
@@ -61,15 +75,37 @@ void UDivineBeastsAbilityBarViewModel::BeginDestroy()
     Super::BeginDestroy();
 }
 
+IGamePlatformDataService* UDivineBeastsAbilityBarViewModel::ResolveProfileDataService(UGameInstance* Instance) const
+{
+#if WITH_DEV_AUTOMATION_TESTS
+    if (DataServiceForTests) return DataServiceForTests;
+#endif
+    return IsValid(Instance) ? IGamePlatformDataService::Get(*Instance) : nullptr;
+}
+
 void UDivineBeastsAbilityBarViewModel::ResetProfileLease()
 {
-    if (ProfileHandle.IsValid())
-    {
-        ProfileHandle->CancelHandle();
-        ProfileHandle.Reset();
-    }
+    check(IsInGameThread());
+    ++LoadGeneration;
+    const FGamePlatformDataLease OldProfile = ProfileLease;
+    const FGamePlatformDataLease OldIcons = IconLease;
+    UGameInstance* Instance = ProfileLeaseInstance.Get();
+    // 先摘除本地所有权，释放通知或后续状态事件只能观察新代次，不能扣除后继租约。
+    ProfileLease = {};
+    IconLease = {};
+    ProfileLeaseInstance.Reset();
+    ProfilePath.Reset();
     LoadedProfile = nullptr;
     LoadedHeroId = NAME_None;
+    bIconsReady = false;
+    if (OldProfile.IsValid() || OldIcons.IsValid())
+    {
+        if (IGamePlatformDataService* Data = ResolveProfileDataService(Instance))
+        {
+            if (OldIcons.IsValid()) Data->ReleaseResources(OldIcons);
+            if (OldProfile.IsValid()) Data->ReleaseResources(OldProfile);
+        }
+    }
 }
 
 void UDivineBeastsAbilityBarViewModel::BindToNativeAbilityEvents()
@@ -234,55 +270,121 @@ bool UDivineBeastsAbilityBarViewModel::TryResolveGrantedSpec(
 void UDivineBeastsAbilityBarViewModel::HandleLoadoutChanged(
     const FDivineBeastsAbilityLoadoutState& Snapshot)
 {
-    if (!Loadout.IsValid())
-    {
-        return;
-    }
+    check(IsInGameThread());
+    UDivineBeastsAbilityLoadoutComponent* Source = Loadout.Get();
+    if (!Source) return;
     if (Snapshot.HeroDefinitionId != LoadedHeroId)
     {
-        ++LoadGeneration;
         ResetProfileLease();
         LoadedHeroId = Snapshot.HeroDefinitionId;
         if (!LoadedHeroId.IsNone())
         {
             const FPrimaryAssetId ProfileId(
                 FPrimaryAssetType(TEXT("DivineBeastsAbilityUIProfile")), LoadedHeroId);
-            const int32 Serial = LoadGeneration;
-            const FName Hero = LoadedHeroId;
-            const FStreamableDelegate Completion = FStreamableDelegate::CreateUObject(
-                this, &UDivineBeastsAbilityBarViewModel::HandleProfileLoaded, Serial, Hero);
-            // 使用引擎统一 AssetManager（资产管理器）的已注册主资产，而不是猜测文件路径。
-            // 缺失 Profile 时仍以真实服务器授权列表显示中性缺图标槽位。
-            ProfileHandle = UAssetManager::Get().LoadPrimaryAsset(
-                ProfileId, { FName(TEXT("UI")) }, Completion);
+            // AssetManager只读查询已登记主资产路径；保留原身份，不把普通Profile冒充平台Definition。
+            if (UAssetManager* Assets = UAssetManager::GetIfInitialized())
+                ProfilePath = Assets->GetPrimaryAssetPath(ProfileId);
+#if WITH_DEV_AUTOMATION_TESTS
+            if (ProfilePathForTests) ProfilePath = ProfilePathForTests(LoadedHeroId);
+#endif
+            UWorld* World = Source->GetWorld();
+            UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
+            IGamePlatformDataService* Data = ResolveProfileDataService(Instance);
+            if (Data && IsValid(Instance) && World && !World->bIsTearingDown && ProfilePath.IsValid())
+            {
+                ProfileLeaseInstance = Instance;
+                const uint64 Serial = LoadGeneration;
+                const FName Hero = LoadedHeroId;
+                const TWeakObjectPtr<UDivineBeastsAbilityBarViewModel> WeakThis(this);
+                const TWeakObjectPtr<UDivineBeastsAbilityLoadoutComponent> WeakSource(Source);
+                FGamePlatformResult Accepted;
+                // Loadout拥有真实World/GI，VM由Widget持有可能没有GetWorld；分别校验弱来源和弱VM。
+                const FGamePlatformDataLease Lease = Data->AcquireResources(
+                    { ProfilePath }, EGamePlatformDataLifetime::World, Source,
+                    [WeakThis, WeakSource, Serial, Hero](const FGamePlatformDataLease& Completed, const FGamePlatformResult& Result)
+                    {
+                        if (auto* Self = WeakThis.Get(); Self && WeakSource.IsValid() && Self->Loadout == WeakSource)
+                            Self->HandleProfileLoaded(Serial, Hero, Completed, Result);
+                    }, Accepted);
+                if (Serial == LoadGeneration && Loadout.Get() == Source && Accepted.IsSuccess() && Lease.IsValid())
+                    ProfileLease = Lease;
+                else if (Lease.IsValid())
+                    Data->ReleaseResources(Lease);
+            }
         }
     }
     RefreshSlots(Snapshot);
 }
 
 void UDivineBeastsAbilityBarViewModel::HandleProfileLoaded(
-    int32 ExpectedLoadGeneration, FName ExpectedHero)
+    uint64 ExpectedLoadGeneration, FName ExpectedHero,
+    const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result)
 {
-    if (ExpectedLoadGeneration != LoadGeneration ||
-        ExpectedHero != LoadedHeroId || !Loadout.IsValid())
+    check(IsInGameThread());
+    if (ExpectedLoadGeneration != LoadGeneration || ExpectedHero != LoadedHeroId ||
+        !Loadout.IsValid() || !IsSameUIResourceLease(ProfileLease, Lease))
+        return; // 旧请求已由换英雄/解绑路径释放；不能触碰后继的租约。
+    IGamePlatformDataService* Data = ResolveProfileDataService(ProfileLeaseInstance.Get());
+    UDivineBeastsAbilityUIProfile* Profile = Result.IsSuccess() && Data &&
+        Data->GetLeaseState(ProfileLease) == EGamePlatformDataRequestState::Succeeded
+        ? Cast<UDivineBeastsAbilityUIProfile>(ProfilePath.ResolveObject()) : nullptr;
+    FString Error;
+    if (!Profile || Profile->HeroDefinitionId != ExpectedHero || !Profile->ValidateProfile(Error))
     {
+        const FGamePlatformDataLease FailedLease = ProfileLease;
+        ProfileLease = {};
+        if (Data) Data->ReleaseResources(FailedLease);
+        RefreshCurrentLoadout();
         return;
     }
-    const FPrimaryAssetId Id(
-        FPrimaryAssetType(TEXT("DivineBeastsAbilityUIProfile")), ExpectedHero);
-    UDivineBeastsAbilityUIProfile* Profile = Cast<UDivineBeastsAbilityUIProfile>(
-        UAssetManager::Get().GetPrimaryAssetObject(Id));
-    FString Error;
-    if (Profile && Profile->HeroDefinitionId == ExpectedHero &&
-        Profile->ValidateProfile(Error))
+
+    LoadedProfile = Profile;
+    TArray<FSoftObjectPath> IconPaths;
+    for (const FDivineBeastsAbilityUIEntry& Entry : Profile->Entries)
+        if (!Entry.Icon.IsNull()) IconPaths.AddUnique(Entry.Icon.ToSoftObjectPath());
+    if (!IconPaths.IsEmpty())
     {
-        LoadedProfile = Profile;
+        FGamePlatformResult Accepted;
+        const TWeakObjectPtr<UDivineBeastsAbilityBarViewModel> WeakThis(this);
+        const TWeakObjectPtr<UDivineBeastsAbilityLoadoutComponent> WeakSource(Loadout);
+        const FGamePlatformDataLease NewIcons = Data->AcquireResources(
+            IconPaths, EGamePlatformDataLifetime::World, Loadout.Get(),
+            [WeakThis, WeakSource, ExpectedLoadGeneration, ExpectedHero](
+                const FGamePlatformDataLease& Completed, const FGamePlatformResult& IconResult)
+            {
+                if (auto* Self = WeakThis.Get(); Self && WeakSource.IsValid() && Self->Loadout == WeakSource)
+                    Self->HandleIconsLoaded(ExpectedLoadGeneration, ExpectedHero, Completed, IconResult);
+            }, Accepted);
+        if (ExpectedLoadGeneration != LoadGeneration || !Loadout.IsValid())
+        {
+            if (NewIcons.IsValid()) Data->ReleaseResources(NewIcons);
+            return;
+        }
+        if (Accepted.IsSuccess() && NewIcons.IsValid()) IconLease = NewIcons;
+        else if (NewIcons.IsValid()) Data->ReleaseResources(NewIcons);
     }
-    else
+    RefreshCurrentLoadout();
+}
+
+void UDivineBeastsAbilityBarViewModel::HandleIconsLoaded(
+    uint64 ExpectedLoadGeneration, FName ExpectedHero,
+    const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result)
+{
+    check(IsInGameThread());
+    if (ExpectedLoadGeneration != LoadGeneration || ExpectedHero != LoadedHeroId ||
+        !Loadout.IsValid() || !IsSameUIResourceLease(IconLease, Lease))
+        return;
+    IGamePlatformDataService* Data = ResolveProfileDataService(ProfileLeaseInstance.Get());
+    bIconsReady = Result.IsSuccess() && Data &&
+        Data->GetLeaseState(IconLease) == EGamePlatformDataRequestState::Succeeded;
+    if (!bIconsReady)
     {
-        LoadedProfile = nullptr;
+        const FGamePlatformDataLease FailedLease = IconLease;
+        IconLease = {};
+        if (Data) Data->ReleaseResources(FailedLease);
     }
-    RefreshSlots(Loadout->GetLoadoutStateRef());
+    // 图标失败保留已验证的本地化文本，图标为空；资源失败不会改写GAS授权或就绪资格。
+    RefreshCurrentLoadout();
 }
 
 void UDivineBeastsAbilityBarViewModel::RefreshSlots(
@@ -430,7 +532,7 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
         {
             if (const FDivineBeastsAbilityUIEntry* UI = LoadedProfile->FindEntry(Grant.AbilityId))
             {
-                Slot.Icon = UI->Icon;
+                if (bIconsReady && UI->Icon.IsValid()) Slot.Icon = UI->Icon;
                 Detail.DisplayName = UI->DisplayName;
                 Detail.Description = UI->Description;
             }

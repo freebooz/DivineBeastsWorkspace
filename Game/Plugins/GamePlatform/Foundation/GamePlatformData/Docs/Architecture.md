@@ -151,15 +151,28 @@ GetMaximumReadableSchemaVersion()
 
 ## 7. AssetRegistry（资产注册表）与唯一源
 
-`ResolveUniqueGamePlatformDefinitionSource` 不依赖 AssetManager 已经去重后的主资产字典，而是从源 AssetRegistry 扫描真实资产标签。
+`ResolveUniqueGamePlatformDefinitionSource` 保持稳定公开签名，内部转发到模块私有 `FDefinitionSourceIndex`。唯一性依据仍是平台主资产源元数据，不使用 AssetManager 已去重的字典。
 
-这样可以发现：
+索引维护 `LogicalId → TSet<FSoftObjectPath>`，另有 `FSoftObjectPath → 原LogicalId` 反向表。前者允许明确报告多个物理源占用同一身份；后者在标签改变、删除或重命名时撤销旧身份，不会因事件携带的新ID而遗漏旧源。这里只存值类型与引擎注册表的非拥有引用，没有资产、世界、PIE对象或加载租约。
 
-- 同一 LogicalId 被两个物理资产占用。
-- 主资产映射与真实唯一源不一致。
-- 编辑器未保存对象与旧标签之间的冲突。
+模块启动仅绑定事件。首次查询必须确认 `IsLoadingAssets()==false` 且 `IsGathering()==false`，之后才调用一次 `GetAssetsByClass(UGamePlatformPrimaryDataAsset,...,true)` 冷建。UE5.8的前者只代表首次扫描，后者还覆盖后续挂载；Cooked运行在注册表已经发现完成时同样按此路径首次建索引，不要求再次收到 `OnFilesLoaded`。生产入口不调用 `SearchAllAssets`、同步等待、资产加载或第二个加载器。
 
-运行时如果 AssetRegistry 尚未完成发现，不会同步阻塞；请求保持 Loading 并在后续调度轮重试。
+| 变化 | 私有索引处理 |
+|---|---|
+| `OnAssetAdded / OnAssetUpdated / OnAssetUpdatedOnDisk` | 同路径先撤销旧ID，再按真实定义类资格及合法标签增量加入 |
+| `OnAssetRemoved` | 按路径撤销，删除后空的身份集合也移除 |
+| `OnAssetRenamed` | 先撤销旧路径，再登记新路径及当前ID |
+| `OnScanStarted / OnFilesLoaded / OnKnownGathersComplete` | 清除旧快照，只在下一次发现完成后的查询重建 |
+| 带生成类标签的蓝图类资产变化 | 类继承关系可能影响其他源，明确失效后重新取完整快照 |
+| `Shutdown` | 取消尚未发布的快照、解除八个委托、清空索引和访问回调；关闭后不自动重启 |
+
+普通资产事件增量处理。连续普通查询只做逻辑身份哈希查询，不重新枚举全部定义。已加载类通过 `GetClass(EResolveClass::No)->IsChildOf` 判定；未加载类通过Registry的递归类过滤筛选单条元数据，不为查重同步加载蓝图类。其他资产即使具有同名LogicalId标签也不具备定义资格。
+
+解析结果继续保持：非法ID为 `InvalidDefinitionId`、未发现为 `MissingDefinition`、多个物理源为 `DuplicateLogicalId`；发现未完成或索引关闭为 `AssetRegistryNotReady`。所有失败清空输出路径。编辑器候选总是先替换自己同路径的注册记录，再按当前身份参与本次查询；覆盖不写回共享索引，候选与其他路径仍可冲突。运行期 `AddDemand` 原有 `PrimaryAssetMappingMismatch` 检查不变，唯一源与AssetManager映射不一致仍拒绝。
+
+所有入口与修改仅GameThread。快照先在局部构建，资产事件、重新发现或同步关闭推进内部代次；代次变化后整批取消，不发布部分或过期结果。索引没有后台任务、Ticker、世界指针和跨PIE请求状态，租约取消仍由原Data服务负责。独立回归直接验证枚举期间失效/Shutdown不会发布旧源；实际编辑器回归另外核对委托已解除及临时资产源已撤销。
+
+`QueryCount / FullScanCount / RebuildCount` 是模块私有观测值，分别表示查询、实际源枚举和完整快照发布次数。测试用这些计数证明重复查询不重扫；本次未实测耗时、CPU、内存或性能百分比。
 
 ## 8. Lease（租约）模型
 
@@ -302,7 +315,7 @@ Data 插件只提供统一 Definition 身份、AssetRegistry 元数据和加载�
 ## 15. 当前已知限制
 
 1. 活跃及未显式释放的失败终态仍需调用方结束用途后释放；移除已释放历史并不取消调用方的清理责任。
-2. 源身份唯一性检查当前仍可能扫描 AssetRegistry 类型，尚未做带失效通知的缓存索引和性能量化。
+2. 源身份唯一性现由模块私有索引维护；首次发现/后续挂载/蓝图类变化后的冷建仍需枚举定义元数据。普通查询与普通资产事件避免全扫描，但真实耗时、内存及Cooked发现仍待实测。
 3. Owner（所有者）弱引用存活检查当前使用 CoreTicker（核心Ticker）；尚未基于实测调整检查频率。
 4. 资源与内容验收依赖正式主工程实际资产；本轮源码修复没有新建或修改资产，也不能替代干净Cook/Chunk/Server产物审计。
 5. 本轮已找到锁定UE5.8.0的编辑器可执行文件；历史Automation未运行记录保持为历史证据，本轮动态结果统一见修复执行记录。

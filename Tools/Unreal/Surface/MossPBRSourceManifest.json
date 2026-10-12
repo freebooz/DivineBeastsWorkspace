@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "seed": 20261012,
+  "owner": "GamePlatformSurface",
+  "maps": [
+    {
+      "role": "albedo",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Moss/T_GP_Moss_Albedo_Source.png",
+      "sha256": "dfc429ac08dd035fac7d60e086d8db60d2c4a18ee8892b13167c6ceed23f66d0",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "colorSpace": "sRGB"
+    },
+    {
+      "role": "normal",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Moss/T_GP_Moss_Normal_Source.png",
+      "sha256": "52110a002bbdbcb4b827df1af40572e4ef43d0a6182bcbfb4f1aa7ba57197a05",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "role": "orm",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Moss/T_GP_Moss_Orm_Source.png",
+      "sha256": "6ba560e1072d4707a631691f1eca5785c855ab205f7336b9829d3c27b6e04dc0",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "role": "height",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Moss/T_GP_Moss_Height_Source.png",
+      "sha256": "2ea2bcc7dbfaa1bae9772c484ce2948fc7ed0ee9e1d324c8bfc57935d99057ea",
+      "resolution": [
+        2048,
+        2048
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "role": "coverage",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Moss/T_GP_Moss_Coverage_Source.png",
+      "sha256": "3a09f90e6e1f7e68def5542bc7ed955d304883f326142e54370fd6cb80928061",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "colorSpace": "linear"
+    }
+  ]
+}

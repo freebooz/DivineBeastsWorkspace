@@ -91,8 +91,9 @@ def check() -> None:
     for stage in ("01-FoundationGraphs", "02-VillageBlueprints", "03-GoldDefinitions",
                   "04-RealizedSpawnerGraphs", "05-GoldLevelMap", "06-FreshEditorReopen"):
         assert stage in pipeline, "真实UE资产生成/回读缺少阶段：" + stage
-    assert "'-EnablePlugins=PythonScriptPlugin'" in pipeline, \
-        "必须使用锁定UE引擎认可的复数EnablePlugins命令行参数"
+    assert ('-EnablePlugins=PythonScriptPlugin,CommonUI,DBAGameplay' in pipeline and
+            '-EnablePlugins=CommonUI,DBAGameplay,DBAWorlds,DBAWorldPack_Village' in pipeline), \
+        "UE5.8 Python/Gold地图阶段必须使用实际依赖闭包的复数EnablePlugins参数，不得退回旧单插件约束"
     assert "'-Apply'" not in pipeline or "if (!$Apply)" in pipeline, \
         "默认模式必须只读，真实创建须明确Apply"
 

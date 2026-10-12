@@ -10,7 +10,7 @@ class IGamePlatformArenaServerProjectExtension;
 /** FGamePlatformArenaServerCoordinator（MainArena服务器编排适配）。
  *  负责把Assignment/Ticket/Result后端事实接到GameMode，不复制GameServer Registry职责。
  */
-class GAMEPLATFORMARENASERVER_API FGamePlatformArenaServerCoordinator
+class FGamePlatformArenaServerCoordinator
     : public TSharedFromThis<FGamePlatformArenaServerCoordinator>
 {
 public:

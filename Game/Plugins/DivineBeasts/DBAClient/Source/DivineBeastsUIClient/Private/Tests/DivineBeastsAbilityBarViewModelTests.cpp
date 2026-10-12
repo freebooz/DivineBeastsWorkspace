@@ -25,6 +25,7 @@ bool FDivineBeastsAbilityUIProfileValidationTest::RunTest(const FString&)
     FDivineBeastsAbilityUIEntry Entry;
     Entry.AbilityId = TEXT("dba.ability.rat_example@1");
     Entry.DisplayName = FText::FromString(TEXT("测试技能，不是正式生产名称"));
+    Entry.Description = FText::FromString(TEXT("测试说明，使缺图标/重复编号断言分别保持单一失败原因。"));
     Profile->Entries.Add(Entry);
     TestFalse(TEXT("正式条目缺失图标须拒绝"), Profile->ValidateProfile(Error));
     // 仅测试用非空软路径，用于先通过缺图标门禁再单独验证重复 ID；不生成虚假 .uasset。
@@ -104,7 +105,7 @@ bool FDivineBeastsHeroIntroductionDataAssetsTest::RunTest(const FString&)
 
 /**
  * 技能介绍缺失回归：先用完整作者文本证明配置本身合法，再只清空Description。
- * 当前ValidateProfile遗漏说明校验会错误接受，从而在UE中产生RED；不能用图标或名称存在替代说明。
+ * 回归曾遗漏的说明校验；先保持其他字段合法，再证明缺失说明被拒绝，不能用图标或名称替代说明。
  * 软图标路径仅用于静态字段验证，不进行加载，不把测试图标声明为真实交付资源。
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsHeroOverviewAbilityDescriptionRequiredTest,
@@ -135,7 +136,7 @@ bool FDivineBeastsHeroOverviewAbilityDescriptionRequiredTest::RunTest(const FStr
 
 /**
  * 空白说明回归：内容非空不等于玩家能看到介绍，空格/换行/制表符必须按缺失处理。
- * 先验证同一身份的可读说明，再替换为纯空白，避免把其他字段错误当作本用例的RED。
+ * 先验证同一身份的可读说明，再替换为纯空白，避免把其他字段错误当作此回归通过的原因。
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsHeroOverviewAbilityDescriptionWhitespaceTest,
     "DivineBeasts.UI.Characters.HeroOverview.AbilityDescriptionWhitespaceRejected",

@@ -23,6 +23,8 @@ public class DivineBeastsUIClient : ModuleRules
             "CommonUI",
             "CommonInput",
             "GamePlatformUIClient",
+            // 公开UI类持有Data值租约，调用方编译这些头需要平台Data公开合同。
+            "GamePlatformData",
             // 设置页公开快照合同来自现有平台设备设置服务；不另存一份设备配置。
             "GamePlatformSettingsClient",
             // 当前公开战斗反馈映射直接暴露 FGamePlatformCombatEvent，
@@ -50,7 +52,6 @@ public class DivineBeastsUIClient : ModuleRules
             // 技能栏仅读取项目双端已授权技能快照和本地表现主资产，不取得 GAS 权威写权限。
             "DivineBeastsAbilitiesRuntime",
             "GamePlatformCore",
-            "GamePlatformData",
             // 角色选择/创建页只通过项目表现子系统驱动三维预览，不直接加载Mesh或地图资产。
             "DivineBeastsPresentationClient"
         });

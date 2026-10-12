@@ -63,12 +63,43 @@ void FGamePlatformVFXDiagnostics::CompositeChild()
     INC_DWORD_STAT(STAT_GPVFX_CompositeChildren);
 }
 
-void FGamePlatformVFXDiagnostics::UpdateRuntimeCounts(
-    const int32 TrackedInstances,
-    const int32 PendingInstances,
-    const int32 PeakTrackedInstances)
+namespace
 {
-    SET_DWORD_STAT(STAT_GPVFX_TrackedInstances, FMath::Max(0, TrackedInstances));
-    SET_DWORD_STAT(STAT_GPVFX_PendingInstances, FMath::Max(0, PendingInstances));
-    SET_DWORD_STAT(STAT_GPVFX_PeakTrackedInstances, FMath::Max(0, PeakTrackedInstances));
+FGamePlatformVFXRuntimeCountRegistry RuntimeCounts;
+
+void PublishRuntimeCounts()
+{
+    const auto Counts = RuntimeCounts.GetSnapshot();
+    SET_DWORD_STAT(STAT_GPVFX_TrackedInstances, Counts.TrackedInstances);
+    SET_DWORD_STAT(STAT_GPVFX_PendingInstances, Counts.PendingInstances);
+    SET_DWORD_STAT(STAT_GPVFX_PeakTrackedInstances, Counts.PeakTrackedInstances);
+}
+}
+
+FGuid FGamePlatformVFXDiagnostics::RegisterWorld()
+{
+    const FGuid Id = RuntimeCounts.RegisterWorld();
+    PublishRuntimeCounts();
+    return Id;
+}
+
+void FGamePlatformVFXDiagnostics::UpdateRuntimeCounts(const FGuid& WorldId, int32 TrackedInstances, int32 PendingInstances)
+{
+    if (RuntimeCounts.UpdateWorld(WorldId, TrackedInstances, PendingInstances)) PublishRuntimeCounts();
+}
+
+void FGamePlatformVFXDiagnostics::UnregisterWorld(const FGuid& WorldId)
+{
+    if (RuntimeCounts.UnregisterWorld(WorldId)) PublishRuntimeCounts();
+}
+
+FGamePlatformVFXRuntimeCountSnapshot FGamePlatformVFXDiagnostics::GetRuntimeCounts()
+{
+    return RuntimeCounts.GetSnapshot();
+}
+
+void FGamePlatformVFXDiagnostics::ResetRuntimeCounts()
+{
+    RuntimeCounts.Reset();
+    PublishRuntimeCounts();
 }

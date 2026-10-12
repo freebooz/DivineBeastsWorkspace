@@ -1,0 +1,1400 @@
+{
+  "SchemaVersion": 1,
+  "ObservedAt": "2026-10-12",
+  "SourceCommit": "7d44194333cda24f8a14495695e1d478deef5a97",
+  "WorkspaceState": "UncommittedImplementation",
+  "ScopeZh": "插件身份、模块成熟度和验收入口；SourcePresent只说明存在源码，不等于生产功能或G1-G5通过。",
+  "MainProject": "Game/DivineBeastsArena.uproject",
+  "ContentRegistry": "Game/Plugins/DivineBeasts/ContentPacks/ContentPackRegistry.json",
+  "ReservedModulePolicy": {
+    "State": "Reserved",
+    "ProductionCapability": false,
+    "ReviewConditionZh": "形成跨游戏独立职责、实际消费者和生命周期回归后才实施；否则在明确身份/引用迁移后退休。当前保留身份，不能计入已交付功能。"
+  },
+  "Plugins": [
+    {
+      "Id": "DBAContentPack_Common",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/DBAContentPack_Common.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Boar",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/DBAHeroPack_Boar.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Dog",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/DBAHeroPack_Dog.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Dragon",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/DBAHeroPack_Dragon.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Goat",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/DBAHeroPack_Goat.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Horse",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/DBAHeroPack_Horse.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Monkey",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/DBAHeroPack_Monkey.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Ox",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/DBAHeroPack_Ox.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Rabbit",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/DBAHeroPack_Rabbit.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Rat",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/DBAHeroPack_Rat.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Rooster",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/DBAHeroPack_Rooster.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Snake",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/DBAHeroPack_Snake.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAHeroPack_Tiger",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/DBAHeroPack_Tiger.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAFrontEndPack",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/DBAFrontEndPack.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAPresentationPack_Core",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/DBAPresentationPack_Core.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAUIPack_Core",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/DBAUIPack_Core.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAWorldPack_Village",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/DBAWorldPack_Village.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAArena",
+      "Descriptor": "Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/DivineBeasts/DBAArena/README.md",
+      "Modules": [
+        {
+          "Name": "DivineBeastsArenaRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsArenaClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsArenaServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "arena"
+      ]
+    },
+    {
+      "Id": "DBAClient",
+      "Descriptor": "Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/DivineBeasts/DBAClient/README.md",
+      "Modules": [
+        {
+          "Name": "DivineBeastsApplicationFlowClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsInputClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsPresentationRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsPresentationClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsUIClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "ui-lifecycle"
+      ]
+    },
+    {
+      "Id": "DBAGameplay",
+      "Descriptor": "Game/Plugins/DivineBeasts/DBAGameplay/DBAGameplay.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/DivineBeasts/DBAGameplay/README.md",
+      "Modules": [
+        {
+          "Name": "DivineBeastsRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsCharactersRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "DivineBeastsAbilitiesRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAServer",
+      "Descriptor": "Game/Plugins/DivineBeasts/DBAServer/DBAServer.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/DivineBeasts/DBAServer/README.md",
+      "Modules": [
+        {
+          "Name": "DBAServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "server-cook"
+      ]
+    },
+    {
+      "Id": "DBAWorlds",
+      "Descriptor": "Game/Plugins/DivineBeasts/DBAWorlds/DBAWorlds.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/DivineBeasts/DBAWorlds/README.md",
+      "Modules": [
+        {
+          "Name": "DBAWorldsRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "server-cook"
+      ]
+    },
+    {
+      "Id": "GamePlatformApplicationFlow",
+      "Descriptor": "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/GamePlatformApplicationFlow.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformApplicationFlow",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformInput",
+      "Descriptor": "Game/Plugins/GamePlatform/Application/GamePlatformInput/GamePlatformInput.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Application/GamePlatformInput/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformInputClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformLoading",
+      "Descriptor": "Game/Plugins/GamePlatform/Application/GamePlatformLoading/GamePlatformLoading.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Application/GamePlatformLoading/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformLoading",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformLocalization",
+      "Descriptor": "Game/Plugins/GamePlatform/Application/GamePlatformLocalization/GamePlatformLocalization.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Application/GamePlatformLocalization/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformLocalizationClient",
+          "HostType": "ClientOnly",
+          "Maturity": "Reserved"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformSave",
+      "Descriptor": "Game/Plugins/GamePlatform/Application/GamePlatformSave/GamePlatformSave.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Application/GamePlatformSave/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformSaveClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformSettings",
+      "Descriptor": "Game/Plugins/GamePlatform/Application/GamePlatformSettings/GamePlatformSettings.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Application/GamePlatformSettings/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformSettingsRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformSettingsClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformSettingsServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformSettingsEditor",
+          "HostType": "Editor",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformDebug",
+      "Descriptor": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/GamePlatformDebug.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformDebug",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformDebugClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformDeveloperTools",
+      "Descriptor": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/GamePlatformDeveloperTools.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformDeveloperTools",
+          "HostType": "Editor",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformTelemetry",
+      "Descriptor": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/GamePlatformTelemetry.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformTelemetry",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformCore",
+      "Descriptor": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/GamePlatformCore.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformCore",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformData",
+      "Descriptor": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/GamePlatformData.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformData",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformDataEditor",
+          "HostType": "Editor",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "foundation-data"
+      ]
+    },
+    {
+      "Id": "GamePlatformLobby",
+      "Descriptor": "Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/GamePlatformLobby.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformLobby",
+          "HostType": "Runtime",
+          "Maturity": "Reserved"
+        },
+        {
+          "Name": "GamePlatformLobbyClient",
+          "HostType": "ClientOnly",
+          "Maturity": "Reserved"
+        },
+        {
+          "Name": "GamePlatformLobbyServer",
+          "HostType": "ServerOnly",
+          "Maturity": "Reserved"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformVillage",
+      "Descriptor": "Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/GamePlatformVillage.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformVillage",
+          "HostType": "Runtime",
+          "Maturity": "Reserved"
+        },
+        {
+          "Name": "GamePlatformVillageClient",
+          "HostType": "ClientOnly",
+          "Maturity": "Reserved"
+        },
+        {
+          "Name": "GamePlatformVillageServer",
+          "HostType": "ServerOnly",
+          "Maturity": "Reserved"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformAbilitySystem",
+      "Descriptor": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/GamePlatformAbilitySystem.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformAbilitySystem",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformAI",
+      "Descriptor": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/GamePlatformAI.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformAI",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformAIServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformAnimation",
+      "Descriptor": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/GamePlatformAnimation.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformAnimation",
+          "HostType": "Runtime",
+          "Maturity": "Reserved"
+        },
+        {
+          "Name": "GamePlatformAnimationClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformCharacter",
+      "Descriptor": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/GamePlatformCharacter.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformCharacter",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformCombat",
+      "Descriptor": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/GamePlatformCombat.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformCombat",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformGameplay",
+      "Descriptor": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/GamePlatformGameplay.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformGameplay",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformQuest",
+      "Descriptor": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/GamePlatformQuest.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformQuest",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformQuestClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformQuestServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformOnline",
+      "Descriptor": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/GamePlatformOnline.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformOnline",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformOnlineClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformServer",
+      "Descriptor": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/GamePlatformServer.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "server-cook"
+      ]
+    },
+    {
+      "Id": "GamePlatformSession",
+      "Descriptor": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/GamePlatformSession.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformSession",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformCommerceUI",
+      "Descriptor": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/GamePlatformCommerceUI.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformCommerceUIClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformEntitlement",
+      "Descriptor": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/GamePlatformEntitlement.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformEntitlement",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformEntitlementClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformEquipment",
+      "Descriptor": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/GamePlatformEquipment.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformEquipment",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformEquipmentClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformEquipmentServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformInventory",
+      "Descriptor": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/GamePlatformInventory.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformInventoryClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformLiveOps",
+      "Descriptor": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/GamePlatformLiveOps.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformLiveOpsClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformProgression",
+      "Descriptor": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/GamePlatformProgression.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformProgression",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformProgressionClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformCamera",
+      "Descriptor": "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/GamePlatformCamera.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformCameraClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformPresentation",
+      "Descriptor": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/GamePlatformPresentation.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformPresentationCore",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformPresentationClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformSFX",
+      "Descriptor": "Game/Plugins/GamePlatform/Presentation/GamePlatformSFX/GamePlatformSFX.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Presentation/GamePlatformSFX/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformSFXClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformSurface",
+      "Descriptor": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/GamePlatformSurface.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformSurfaceClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformSurfaceEditor",
+          "HostType": "Editor",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "vfx-review"
+      ]
+    },
+    {
+      "Id": "GamePlatformUI",
+      "Descriptor": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/GamePlatformUI.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformUIClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "ui-lifecycle"
+      ]
+    },
+    {
+      "Id": "GamePlatformVFX",
+      "Descriptor": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/GamePlatformVFX.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformVFXClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformVFXEditor",
+          "HostType": "Editor",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "vfx-diagnostics",
+        "vfx-review"
+      ]
+    },
+    {
+      "Id": "GamePlatformInteraction",
+      "Descriptor": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/GamePlatformInteraction.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformInteraction",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformNavigation",
+      "Descriptor": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/GamePlatformNavigation.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformNavigation",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformNavigationServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture"
+      ]
+    },
+    {
+      "Id": "GamePlatformPCG",
+      "Descriptor": "Game/Plugins/GamePlatform/World/GamePlatformPCG/GamePlatformPCG.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/World/GamePlatformPCG/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformPCG",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformPCGEditor",
+          "HostType": "Editor",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "pcg-gold"
+      ]
+    },
+    {
+      "Id": "GamePlatformWeather",
+      "Descriptor": "Game/Plugins/GamePlatform/World/GamePlatformWeather/GamePlatformWeather.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/World/GamePlatformWeather/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformWeatherRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformWeatherClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "vfx-review"
+      ]
+    },
+    {
+      "Id": "GamePlatformWorld",
+      "Descriptor": "Game/Plugins/GamePlatform/World/GamePlatformWorld/GamePlatformWorld.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/World/GamePlatformWorld/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformWorld",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformWorldEditor",
+          "HostType": "Editor",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "server-cook"
+      ]
+    },
+    {
+      "Id": "GamePlatformArena",
+      "Descriptor": "Game/Plugins/MobaCommon/GamePlatformArena/GamePlatformArena.uplugin",
+      "Layer": "MobaCommon",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/MobaCommon/GamePlatformArena/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformMobaCore",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformMobaData",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformArena",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformArenaClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformArenaServer",
+          "HostType": "ServerOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "arena"
+      ]
+    },
+    {
+      "Id": "MobaPresentation",
+      "Descriptor": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin",
+      "Layer": "MobaCommon",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/README.md",
+      "Modules": [
+        {
+          "Name": "MobaPresentationRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "MobaPresentationClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "arena",
+        "vfx-review"
+      ]
+    }
+  ],
+  "Scenarios": [
+    {
+      "Id": "architecture",
+      "NameZh": "单工程三层装配与内容登记",
+      "Entry": "Tests/Architecture/ValidateDesignBaseline.ps1",
+      "Profiles": [
+        "Client",
+        "Server",
+        "Editor"
+      ],
+      "Map": null,
+      "Steps": [
+        "运行现有架构门禁，核对当前描述、模块与内容登记。",
+        "分别计算公共项目与竞技项目的Client/Server/Editor依赖闭包。"
+      ],
+      "Expected": "当前64个描述与47代码/17内容登记一致；无层级反向依赖、身份重复或端侧泄漏。",
+      "Status": "NotRun",
+      "RunId": null,
+      "Evidence": []
+    },
+    {
+      "Id": "foundation-data",
+      "NameZh": "定义身份、唯一性索引及资源租约",
+      "Entry": "Build/Validation/TestFoundationUnreal.ps1",
+      "Profiles": [
+        "FoundationStandalone"
+      ],
+      "Map": "/Game/Development/Foundation/Maps/L_FoundationBootstrap",
+      "Steps": [
+        "构建包含当前测试源码的Editor目标。",
+        "使用-Execute运行GamePlatform.Data等既有基础套件，导出本次index.json。",
+        "核对新增索引用例名称，重复查找不重新扫描，重复ID/编辑器候选/资源退出仍关闭式失败。"
+      ],
+      "Expected": "当前用例实际发现且Success；所有权和迟到回调边界保持。",
+      "Status": "NotRun",
+      "RunId": null,
+      "Evidence": []
+    },
+    {
+      "Id": "ui-lifecycle",
+      "NameZh": "异步根布局与能力栏资源生命周期",
+      "Entry": "Game/Plugins/DivineBeasts/DBAClient/Docs/UIThemeIntegration.md",
+      "Profiles": [
+        "FrontEndClient",
+        "VillageDevelopmentClient"
+      ],
+      "Map": "/DBAFrontEndPack/Maps/L_DBA_FrontEnd",
+      "Steps": [
+        "当前Editor DLL加载后运行DivineBeasts.UI相关生命周期用例。",
+        "冷启动界面，快速切换英雄、关闭重开技能栏、切换本地控制器并退出世界。",
+        "核对过期完成被忽略、旧租约释放、缺失资源回退与输入焦点；真人视觉签审另行记录。"
+      ],
+      "Expected": "根布局不阻塞同步加载，异步完成只作用于当前本地玩家和当前代次。",
+      "Status": "NotRun",
+      "RunId": null,
+      "Evidence": []
+    },
+    {
+      "Id": "vfx-diagnostics",
+      "NameZh": "两个世界的VFX诊断",
+      "Entry": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Tests/GamePlatformVFXDiagnosticsTests.cpp",
+      "Profiles": [
+        "FoundationStandalone"
+      ],
+      "Map": null,
+      "Steps": [
+        "运行GamePlatform.VFX.Diagnostics.MultiWorldCounts与WorldSubsystemLifecycle。",
+        "登记两个世界并更新计数，关闭其中一个，再送达旧更新。",
+        "核对剩余世界计数、模块同时在场历史峰值及模块Reset。"
+      ],
+      "Expected": "统计为全部存活世界之和；退出世界不能清零其他世界或被旧更新复活。",
+      "Status": "NotRun",
+      "RunId": null,
+      "Evidence": []
+    },
+    {
+      "Id": "vfx-review",
+      "NameZh": "VFX内容与性能代表性审查",
+      "Entry": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Docs/ReviewWorkflow.md",
+      "Profiles": [
+        "FoundationStandalone",
+        "VillageDevelopmentClient"
+      ],
+      "Map": null,
+      "PlannedMap": "/Game/Development/VFX/Maps/L_VFXReview",
+      "Steps": [
+        "在当前主工程通过真实UE工具制作或确认统一Review Map。",
+        "为10种Behavior和17类ContentCategory选代表性组合，检查Attach/LWC/Bounds/Pooling/Quality。",
+        "保存真实画面、Niagara Debugger与Insights证据，按设备记录预算。"
+      ],
+      "Expected": "代表场景有逐项人工和性能签审；库存和源码编译不代替此结果。",
+      "Status": "Blocked",
+      "BlockerZh": "标准L_VFXReview尚未存在，人工视觉与目标设备性能未执行。",
+      "RunId": null,
+      "Evidence": []
+    },
+    {
+      "Id": "pcg-gold",
+      "NameZh": "PCG Gold生成与空间一致性",
+      "Entry": "Tools/Unreal/PCG/RunGoldSpatialProbe.ps1",
+      "Profiles": [
+        "FoundationStandalone"
+      ],
+      "Map": "/Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1",
+      "Steps": [
+        "协调现有PCG任务，在其允许的编辑器窗口执行既有工具。",
+        "项目入口显式提供项目蓝图根；平台不硬编码项目挂载点。",
+        "保存真实生成、SpatialProbe与确定性报告，禁止用静态蓝图数量替代空间结果。"
+      ],
+      "Expected": "明确配置的项目资源被加载；平台源码保持项目无关；空间/确定性验收以现有PCG任务报告为准。",
+      "Status": "NotRun",
+      "RunId": null,
+      "Evidence": []
+    },
+    {
+      "Id": "server-cook",
+      "NameZh": "服务器资源规则与实际容器",
+      "Entry": "Build/Game/CookFoundation.ps1",
+      "Profiles": [
+        "DedicatedServer",
+        "VillageServer",
+        "VillageDevelopmentServer",
+        "FoundationStandalone"
+      ],
+      "Map": "/DBAWorldPack_Village/Maps/L_Village_Start",
+      "Steps": [
+        "先运行单源规则与生成配置一致性检查。",
+        "使用Server目标和合法地图/配置执行实际Cook/Stage；FoundationStandalone使用Foundation地图白名单。",
+        "列出本次Pak/IoStore及松散资源，拒绝空/损坏证据，并验证纯表现目录禁入。"
+      ],
+      "Expected": "项目UI/VFX纯表现目录不能泄入服务器；地图和权威定义仍存在，工具退出0不替代容器解析。",
+      "Status": "NotRun",
+      "RunId": null,
+      "Evidence": []
+    },
+    {
+      "Id": "arena",
+      "NameZh": "竞技公共扩展与实际五模式准入",
+      "Entry": "Game/Plugins/MobaCommon/GamePlatformArena/Docs/API.md",
+      "Profiles": [
+        "MainArena"
+      ],
+      "Map": null,
+      "Steps": [
+        "构建Editor和Server，检查外部模块仅依赖公开竞技契约。",
+        "获得批准的竞技地图/胜利规则/五模式配置后，再执行Assignment、Ticket、Result真实联调。"
+      ],
+      "Expected": "当前内部后端实现不成为公共依赖；正式运行验收必须有批准配置和后端证据。",
+      "Status": "Blocked",
+      "BlockerZh": "本轮仅验证接口边界；正式竞技内容与后端联调不以结构配置代替。",
+      "RunId": null,
+      "Evidence": []
+    },
+    {
+      "Id": "content-delivery",
+      "NameZh": "真实内容包与正式技能门禁",
+      "Entry": "Tests/Assets/ValidateZodiacAbilityDelivery.py",
+      "Profiles": [
+        "FrontEndClient",
+        "VillageDevelopmentClient",
+        "VillageDevelopmentServer"
+      ],
+      "Map": null,
+      "Steps": [
+        "执行--inventory核对已登记真实资源。",
+        "执行--release核对正式批准与默认技能集前置，缺项须报告退出2。",
+        "检查各包README、生成证据和权威/表现归属，业务批准后才创建正式UIProfile及身份。"
+      ],
+      "Expected": "开发资源不升级为正式批准；包存在、资产加载、联网运行和视觉签审分别记录。",
+      "Status": "NotRun",
+      "RunId": null,
+      "Evidence": []
+    }
+  ]
+}

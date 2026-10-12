@@ -22,7 +22,7 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsAbilityUIEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
     FText Description;
 
-    /** 真实 Texture2D 由所属 Hero ContentPack（英雄内容包）管理；异步加载 UI Bundle。 */
+    /** 真实Texture2D由所属英雄包拥有；保留UI Bundle作者元数据，运行时由Data普通资源租约异步持有。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|AbilityUI",
         meta=(AssetBundles="UI"))
     TSoftObjectPtr<UTexture2D> Icon;
@@ -47,7 +47,7 @@ public:
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
-    /** 验证英雄身份、技能 ID 和条目唯一性；只读不加载软图标。 */
+    /** 只读验证英雄/技能身份、条目唯一性、名称、非空白说明与图标路径；失败返回中文原因，不加载或修补资源。 */
     bool ValidateProfile(FString& OutError) const;
 
     /** 输入完整稳定技能 ID；不存在时返回空，由界面显示明确缺省图标。 */

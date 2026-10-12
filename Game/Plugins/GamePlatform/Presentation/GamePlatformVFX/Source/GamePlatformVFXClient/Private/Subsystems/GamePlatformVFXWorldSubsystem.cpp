@@ -76,7 +76,7 @@ void UGamePlatformVFXWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
     bClosing = false;
     ++WorldLifecycleGeneration;
     PendingInstanceCount = 0;
-    PeakTrackedInstances = 0;
+    DiagnosticsWorldId = FGamePlatformVFXDiagnostics::RegisterWorld();
     DefinitionCacheSerial = 0;
     UpdateRuntimeDiagnostics();
 
@@ -112,6 +112,8 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
     if (bClosing) return; // 终态观察者可以重入关闭，第一次清理栈仍负责全部自有账本。
     bClosing = true;
     ++WorldLifecycleGeneration;
+    FGamePlatformVFXDiagnostics::UnregisterWorld(DiagnosticsWorldId);
+    DiagnosticsWorldId.Invalidate();
 
     FGamePlatformAssetLoader::Cancel(StartupCatalogLoadLease);
     StartupCatalogLoadLease.Reset();
@@ -161,7 +163,6 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
     StartupCatalogHandles.Reset();
     RegisteredCatalogObjects.Reset();
 
-    UpdateRuntimeDiagnostics();
     Super::Deinitialize();
 }
 
@@ -839,7 +840,6 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
     Snapshot.State = EGamePlatformVFXPlaybackState::Loading; Snapshot.Code = EGamePlatformVFXResultCode::Queued;
     Snapshot.DefinitionId = DefinitionId; Snapshot.RequestId = Request.RequestId; PlaybackSnapshots.Add(Result.Handle.Id, Snapshot);
     FallbackVisitedDefinitions.FindOrAdd(Result.Handle.Id).Add(DefinitionId);
-    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, InstanceRegistry.Num());
     UpdateRuntimeDiagnostics();
 
     if (DedupeKey.IsValid())
@@ -1117,12 +1117,10 @@ void UGamePlatformVFXWorldSubsystem::ClearCompositeTimers(
 
 void UGamePlatformVFXWorldSubsystem::UpdateRuntimeDiagnostics()
 {
-    const int32 TrackedInstances = InstanceRegistry.Num();
-    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, TrackedInstances);
+    check(IsInGameThread());
+    if (bClosing || !DiagnosticsWorldId.IsValid()) return;
     FGamePlatformVFXDiagnostics::UpdateRuntimeCounts(
-        TrackedInstances,
-        PendingInstanceCount,
-        PeakTrackedInstances);
+        DiagnosticsWorldId, InstanceRegistry.Num(), PendingInstanceCount);
 }
 
 FGamePlatformVFXPreloadHandle UGamePlatformVFXWorldSubsystem::Preload(const FGamePlatformVFXRequest& Request)
@@ -1511,7 +1509,6 @@ bool UGamePlatformVFXWorldSubsystem::PlayDefinitionId(
     Snapshot.RequestId = ChildRequest.RequestId; Snapshot.ParentHandle = ParentHandle;
     Snapshot.State = EGamePlatformVFXPlaybackState::Loading; Snapshot.Code = EGamePlatformVFXResultCode::Queued;
     PlaybackSnapshots.Add(ChildHandle.Id, Snapshot); FallbackVisitedDefinitions.FindOrAdd(ChildHandle.Id).Add(DefinitionId);
-    PeakTrackedInstances = FMath::Max(PeakTrackedInstances, InstanceRegistry.Num());
     UpdateRuntimeDiagnostics();
 
     if (!InstanceRegistry.AddChild(

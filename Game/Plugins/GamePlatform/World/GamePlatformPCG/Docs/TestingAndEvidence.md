@@ -103,3 +103,18 @@
 - `GamePlatformPCGGoldAssetsCommandlet（PCG金标准命令）`新增`-Stage=SpatialProbe（空间探针阶段）`。从真实`PCG_GoldLevel_M1.umap`重开读取唯一WorldDirector（世界编排器）、11个注册放置器及道路/小径/农田/桥梁/锁定遮罩，并核对3份持久化Realized Graph（实例化图）的SpatialCarve（空间裁剪）节点来源ID、领域、优先级、强度和顶点是否与真实地图一致。只检查来源数值，不生成网格、不写地图，不称作G01～G16完整验收。Gold命令与金标准创作C++的UE5.8实际编译响应文件MSVC `/Zs`检查退出0；**尚未完成新的正式UBT链接和实际Editor运行**。
 - `Tools/Unreal/PCG/RunGoldSpatialProbe.ps1（空间探针脚本）`先检查已锁定UE5.8、独占Editor进程、共享UBT构建锁及PCGEditor DLL是否比本次源代码新；旧DLL与其它编辑器占用会拒绝执行，禁止把旧运行状态认作新探针通过。该脚本PowerShell AST解析退出0。
 - `UGamePlatformPCGWorldValidator（PCG世界校验器）`的`CanValidateAsset（可校验条件）`从所有UWorld缩小到有真实PCG放置器/编排器或WorldPartition未加载PCG描述符的地图，以修复天气审查世界的`did not return a validation result`日志。其单独MSVC语法检查因编译器长时间资源等待已停止，**本次不得标记为编译通过**。官方UE Editor构建及运行时验证仍待执行。
+## 2026-10-12｜PCG实际生成预览源码与风险审计
+
+- 真实基础文件盘点继续通过：`FoundationInventory_20261012.json（30个基础资源）`与`GoldAssetsInventory_20261012.json（17Definition/3图/3Profile/1地图）`位于`Saved/Validation/GamePlatformPCG`，报告为文件名/长度/SHA-256完整性，不代表UE AssetRegistry、网格实例或G01～G16执行。
+- 平台Actor的公开`Seed`与官方`UPCGComponent.Seed`在Editor OnConstruction及金标准Graph绑定时同步；这是G09确定性成立所需的源码修复，尚未取得真实UE重生成证据。
+- `PreviewGenerated`先运行只读`ProbeSpatial`，再用一次性Prepared Mask检查每个真实ISM的碰撞、导航、复制、Owner、重复资源和输出预算；记录网格路径/量化变换排序的`sha1-ism-mm-v1`指纹。三份真实Graph的日志输出固定ASCII机器键，避免Windows终端编码不一致导致误判通过。
+- `RunGoldSpatialProbe.ps1`已允许显式选择SpatialProbe或GeneratePreview，两者都验证最新二进制/并行编辑器，并对地图与3份Graph进行生成前后SHA-256完整性对比；新增`RunGoldDeterminism.ps1`拟以两个新UE进程输出相同实例数量和指纹判定G09局部一致。**脚本与C++源码已编写，尚未正式Editor编译与执行。**
+- 静态合同门禁`VerifyPCGGoldAuthoring.py`曾因历史旧单插件参数条件退出1，已修正为当前项目实际多插件UE参数并复验退出0；`VerifyPCGGoldSpatialProbe.py`退出0、PowerShell AST检查通过、`git diff --check`通过。MSVC响应文件`/Zs`检查遇环境等待，clang-cl对UBT特有MSVC参数解析失败；均不能作为最新C++编译完成凭证。
+- 本轮未触碰现有外部UE编辑器、测试地图、客户/服务端打包或远程仓库；G01～G16、真实PCG Generate、Cook与专服权威/性能仍为未完成。
+- **C++语法补证（5/5）**：使用`Saved/Validation/GamePlatformPCG/ClangCompat/`下从UE5.8实际模块参数派生的临时兼容响应文件进行clang-cl C++20仅语法编译；Gold地图/命令行/图绑定/世界校验器/PCG放置器五个真实源码文件均返回0。保留严格结论：这不是官方UnrealBuildTool（虚幻构建工具）正式编译链接，更不是Editor运行验证。`RunGoldSpatialProbe.ps1`真实预检正确拒绝了早于最新源码的旧GamePlatformPCGEditor DLL，避免虚假成功。
+### 2026-10-12｜补充M0/M1预算及P7桥位候选实证范围
+
+- 斜交桥候选现在按道路/水道夹角计算道路方向跨度，`sinθ<0.25`或跨度超过100000厘米均拒绝并清空候选；非破坏性的体腔脚印必须是`bFillInterior=true（内部填充）`。该逻辑和新增UE Automation源码经UE5.8兼容C++语法编译通过，但**UE测试尚未执行**。
+- M0/M1执行预设拒绝尚未验证的WorldPartition/Runtime/HiGen开关，批次限256 PCG组件及1,048,576点；相应UE自动化源码已添加，兼容C++20语法检查通过；项目实际性能、客户端和服务器Cook仍未验证。
+- `GeneratePreview`等待官方任务`bGenerated`完成而非仅依赖`IsGenerating`，范围内取消再等最多2秒，未排空不强制拆毁仍活跃的PCG组件。安全脚本增加对运行/Editor全源码的模块新鲜度校验和仅针对自己的命令行进程的420秒超时。
+- 当前安装的UnrealEditor正由其它会话占用，最新PCG Runtime/Editor DLL仍早于本次源码；因此只报告已完成的**语法级检查**和已有资源盘点，不报告UE自动化/G01～G16或Cook运行通过。

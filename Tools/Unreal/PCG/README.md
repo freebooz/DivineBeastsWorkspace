@@ -19,6 +19,14 @@ GamePlatformPCGGoldAssetsCommandlet（平台PCG原生金标准资产命令）：
 RunGoldSpatialProbe.ps1（PCG金标准空间规则只读探针）：新版编辑器命令新增`-Stage=SpatialProbe`，独立加载真实`PCG_GoldLevel_M1.umap`后读取11个来源Actor和3份已保存的Realized Graph（实例化图），核对道路/小径/作物/门桥/排除区的Mask（空间掩码）优先级、强度、顶点与图节点快照一致性，**不执行PCG Generate（实际生成）或修改地图**。入口先检验UE5.8版本、地图与DLL存在、DLL构建时间晚于源码，并拒绝任何正在运行的UE编辑器或UBT构建；验证退出码和独有成功日志才记录探针成功。
 
     ./Tools/Unreal/PCG/RunGoldSpatialProbe.ps1 -EngineRoot $env:UE_ROOT
+    # 全部Editor C++源码经正式UE5.8编译链接且没有其它编辑器实例时，执行生成预览：
+    ./Tools/Unreal/PCG/RunGoldSpatialProbe.ps1 -EngineRoot $env:UE_ROOT -Stage GeneratePreview
+
+`GeneratePreview（实际生成预览）`只对已批准的森林、岩石和作物三份图调用官方PCG，逐组件等待上限60秒，检查已生成ISM（实例化静态网格）的数量上限、碰撞/导航/复制隔离以及空间掩码。执行后必须取消未结束的请求并清理本次拥有的临时生成资源，不保存Gold地图；它也不代替G01～G16完整场景、Server/Client双端Cook或人工画面审核。
+
+`RunGoldDeterminism.ps1（G09双进程确定性验证）`使用上述安全预览入口，在两次独立的UE5.8编辑器进程中读取相同场景与Seed（随机种子），生成并清理森林、岩石、作物，再对三类真实ISM实例数量和网格路径、位置、旋转、缩放的稳定量化指纹做严格对比；不修改/保存地图。它只报告G09在这三份测试图上的结果，不替代其余金标准场景、性能或双端Cook。**必须等最新C++正式Editor DLL编译成功且没有其它编辑器运行后执行**。
+
+    ./Tools/Unreal/PCG/RunGoldDeterminism.ps1 -EngineRoot $env:UE_ROOT
 
 空间数学探针通过不等于G01～G16实际网格生成、Cook（资源烘焙）或专用服务器权威验证通过。
 

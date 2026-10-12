@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "服务器纯表现资源排除真源",
+  "description": "Schema v1：配置映射封闭，目录规则精确；具体目录内容只维护在ServerPresentationExclusions.json。执行器还执行真实目录/插件/权威边界校验。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "SchemaVersion",
+    "Description",
+    "Profiles",
+    "CookConfigProfiles",
+    "CookDirectories",
+    "StageOnlyDirectories"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./ServerPresentationExclusions.schema.json"
+    },
+    "SchemaVersion": {
+      "const": 1,
+      "description": "规则结构版本；未知版本拒绝生成或Cook。"
+    },
+    "Description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "DedicatedServer",
+        "VillageServer",
+        "VillageDevelopmentServer"
+      ],
+      "properties": {
+        "DedicatedServer": {
+          "type": "string",
+          "description": "受管DefaultGame.ini项目相对路径；执行器限制为该profile固定路径。"
+        },
+        "VillageServer": {
+          "type": "string",
+          "description": "受管DefaultGame.ini项目相对路径；执行器限制为该profile固定路径。"
+        },
+        "VillageDevelopmentServer": {
+          "type": "string",
+          "description": "受管DefaultGame.ini项目相对路径；执行器限制为该profile固定路径。"
+        }
+      }
+    },
+    "CookConfigProfiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "DedicatedServer",
+        "VillageServer",
+        "VillageDevelopmentServer",
+        "FoundationStandalone"
+      ],
+      "properties": {
+        "DedicatedServer": {
+          "enum": [
+            "DedicatedServer",
+            "VillageServer",
+            "VillageDevelopmentServer"
+          ],
+          "description": "实际Cook配置到服务器策略映射；FoundationStandalone仅在Server目标按独立数组token补规则。"
+        },
+        "VillageServer": {
+          "enum": [
+            "DedicatedServer",
+            "VillageServer",
+            "VillageDevelopmentServer"
+          ],
+          "description": "实际Cook配置到服务器策略映射；FoundationStandalone仅在Server目标按独立数组token补规则。"
+        },
+        "VillageDevelopmentServer": {
+          "enum": [
+            "DedicatedServer",
+            "VillageServer",
+            "VillageDevelopmentServer"
+          ],
+          "description": "实际Cook配置到服务器策略映射；FoundationStandalone仅在Server目标按独立数组token补规则。"
+        },
+        "FoundationStandalone": {
+          "enum": [
+            "DedicatedServer",
+            "VillageServer",
+            "VillageDevelopmentServer"
+          ],
+          "description": "实际Cook配置到服务器策略映射；FoundationStandalone仅在Server目标按独立数组token补规则。"
+        }
+      }
+    },
+    "CookDirectories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "PackagePath",
+          "SourceDirectory",
+          "Availability",
+          "Reason",
+          "Profiles"
+        ],
+        "properties": {
+          "PackagePath": {
+            "type": "string",
+            "pattern": "^/[A-Za-z0-9_]+(/[A-Za-z0-9_]+)*$",
+            "description": "完整长包目录；禁止通配符、上级逃逸和权威/泛化根。"
+          },
+          "SourceDirectory": {
+            "type": "string",
+            "pattern": "^Game/(Content|Plugins)/([A-Za-z0-9_]+/)*[A-Za-z0-9_]+$",
+            "description": "对应的精确项目相对资源/插件目录；执行器还校验实际挂载身份。"
+          },
+          "Availability": {
+            "enum": [
+              "Present",
+              "LegacyAbsent"
+            ],
+            "description": "Present要求真实目录存在；LegacyAbsent仅兼容明确的历史排除，不能创建或宣称该包存在。"
+          },
+          "Reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "中文说明纯表现所有权、排除理由及兼容边界。"
+          },
+          "Profiles": {
+            "enum": [
+              "AllServers",
+              "VillageDevelopmentServer"
+            ],
+            "description": "AllServers为三profile共同排除；开发UI只在开发profile排除。"
+          }
+        }
+      }
+    },
+    "StageOnlyDirectories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "PackagePath",
+          "SourceDirectory",
+          "Availability",
+          "Reason"
+        ],
+        "properties": {
+          "PackagePath": {
+            "type": "string",
+            "pattern": "^/[A-Za-z0-9_]+(/[A-Za-z0-9_]+)*$",
+            "description": "完整长包目录；禁止通配符、上级逃逸和权威/泛化根。"
+          },
+          "SourceDirectory": {
+            "type": "string",
+            "pattern": "^Game/(Content|Plugins)/([A-Za-z0-9_]+/)*[A-Za-z0-9_]+$",
+            "description": "对应的精确项目相对资源/插件目录；执行器还校验实际挂载身份。"
+          },
+          "Availability": {
+            "enum": [
+              "Present",
+              "LegacyAbsent"
+            ],
+            "description": "Present要求真实目录存在；LegacyAbsent仅兼容明确的历史排除，不能创建或宣称该包存在。"
+          },
+          "Reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "中文说明纯表现所有权、排除理由及兼容边界。"
+          }
+        }
+      }
+    }
+  }
+}

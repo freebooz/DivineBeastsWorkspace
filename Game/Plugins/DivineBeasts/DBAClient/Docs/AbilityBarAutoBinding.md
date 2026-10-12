@@ -12,10 +12,10 @@ DBAClient 只读 DBAGameplay/DivineBeastsAbilitiesRuntime（项目权威授权�
 1. HUD（战斗信息界面）构造后，UDivineBeastsAbilityBarPanel（技能栏面板）绑定 owning PlayerController（拥有者控制器）变更 Pawn（玩家实体）事件。
 2. 控制器当前 Pawn 存在 UDivineBeastsAbilityLoadoutComponent（技能装配组件）时，创建 UDivineBeastsAbilityBarViewModel（技能栏视图模型）并订阅 OnLoadoutChanged（技能授权状态变化）。
 3. ViewModel 只使用服务器 OwnerOnly（拥有者定向）复制的 bReady/Slots/AbilityId/InputTag（是否已授予、槽位、技能身份、输入语义），构造现有 FGamePlatformUISlotState（平台通用槽位状态）。
-4. 通过 HeroDefinitionId（英雄定义身份）定位 UDivineBeastsAbilityUIProfile（英雄技能界面表现主资产），异步加载本地化名称/软引用图标；每次回调检查 LoadGeneration（加载代次）和 HeroDefinitionId，不覆盖已切换的角色。
+4. 通过 HeroDefinitionId 只读查询已登记 Profile 主资产软路径，使用 GamePlatformData 的世界租约异步加载 Profile，再批量去重加载图标；回调验证原 Loadout、弱 ViewModel、英雄、代次及租约身份。
 5. 将只读槽位状态提交既有 UDivineBeastsAbilityBarPanel::ApplyAbilitySlots；项目技能栏不执行 GiveAbility/伤害/服务器数据修改。
 6. 未配置或加载失败的图标保持空软引用，使用正式 Widget 的缺省视觉；图标缺失不得将未获授权的技能伪装为可用。被动技能可以没有输入 Tag，但不允许点击后私自调用技能。
-7. Widget 销毁或换 Pawn 时解绑 Controller / Loadout 委托，并取消当前图标配置资产异步句柄。多 LocalPlayer（本地玩家）使用各自控件和 ViewModel，禁止进程全局缓存玩家技能栏。
+7. Widget 销毁或换 Pawn 时解绑 Controller / Loadout 委托，撤销当前代次并仅释放本 ViewModel 的 Profile 与图标两份 Data 租约。多 LocalPlayer 使用各自控件和租约，不全局卸载其他调用者资源。
 
 ## 当前实现的准确功能边界
 
@@ -39,3 +39,24 @@ DBAClient 只读 DBAGameplay/DivineBeastsAbilitiesRuntime（项目权威授权�
 自然藤蔓一体底座配真实英雄肖像/等级、绿色生命和蓝色气势。槽位显示顺序为普攻、主动一、终极、主动二、被动，中央终极高亮；快捷键、图标、冷却、资格和数值均从真实复制/属性事件读取，未绑定保持空。所有文字字号固定，不把参考图的Q/W/R/E/D、2580/2580或药水数量写进默认资产。技能栏换控制器及销毁时解除实际订阅来源，旅行后从当前Pawn重新绑定。
 
 第四张原稿增加左上PlayerPortrait/PlayerStatus头像框，底部显示改名为ActionBarPortrait/ActionBarStatus，仅是同一本地玩家数据的两处显示实例。图腾复用当前英雄肖像；未知角色等级显示“—”，技能Spec等级不等于角色等级。四份原稿与十一份UI材质直接采样原图RGB，只有动态内容区和背景透明度被遮罩。技能石框固定72像素、底座固定880×293，均不按窗口比例缩放字体；最终客户端观感仍需人工核验。
+
+## 2026-10-12 UI资源租约与默认根布局异步化
+
+同轮补齐 Profile 已有说明契约：`ValidateProfile` 拒绝缺失或纯空白 `Description`，保留两条既有说明回归全部断言；不代填名称、介绍或修改作者资产。`AuthorZodiacDevelopmentAbilities.py` 的现行作者路径为主动和非主动候选分别填写非空开发说明，尚须主代理用已保存 Profile 的引擎回读确认当前资产值。此收紧会让缺说明 Profile 走现有安全缺省，而不会改变 GAS 授权。
+
+技能栏现在通过 `UAssetManager::GetPrimaryAssetPath` 只读查询原有 `DivineBeastsAbilityUIProfile:HeroDefinitionId`，随后用现有 `IGamePlatformDataService::AcquireResources` 申请普通资源租约。Profile 仍继承 `UPrimaryDataAsset`，不改为平台 Definition，也不改主资产、反射或图标软引用身份。Profile 成功并通过当前校验后，按条目图标路径去重申请第二份资源租约；所有对象都从已加载软路径解析，无同步读盘。未登记/失败 Profile 保持缺省文本；图标批次失败保留已验证文本，向槽位保留空图标，即便该纹理恰由其他调用者驻留也不会掩盖本次失败。
+
+每个 ViewModel 的两份租约以真实 Loadout 为弱调用者，期限为该来源所属 World；回调另行校验弱 ViewModel、原 Loadout、英雄、加载代次及完整签发身份。Widget 创建的 ViewModel 不一定自行提供 GetWorld，因此不把无世界的 VM 误作 Data 的世界调用者。换英雄、重新绑定、解绑与 BeginDestroy 先撤本地代次及状态，再分别释放本 VM 的 Profile/图标租约；另一个本地玩家或控件的需求保持独立，不调用全局 UnloadPrimaryAsset。
+
+默认根布局保留 `/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C`。当前源码真值是匿名 namespace 内的软类常量，未曾存在可配置反射字段；本轮保留此结构和所有原有反射字段，不新增配置来源。申请人为所属 LocalPlayer，使用 Instance 期限及 Idle / Pending / Failed / Ready 四态：同一控制器合并在途请求；失败在同一上下文不自动重试；控制器真实更换才允许新代次。已安装根与成功租约跨同一玩家的 Travel 保留。控制器撤销、外部安装抢占和 Deinitialize 会撤销相应在途请求；外部安装成功后才释放旧已显示根的自有租约。完成只用 ResolveObject 取得已加载 UClass，类型检查后安装；同步安装边界内禁止递归请求或主页面同步，Ready 发布后再恢复主路由。
+
+新增原生行为回归位于 `Source/DivineBeastsUIClient/Private/Tests/DivineBeastsUIResourceLeaseTests.cpp`：
+
+- `DivineBeasts.UI.Resources.AbilityProfileAndIcons.HeroSwitchReleasesBoth`
+- `DivineBeasts.UI.Resources.AbilityProfileAndIcons.StaleCompletionAndDestroy`
+- `DivineBeasts.UI.Resources.AbilityProfileAndIcons.MissingResourceFallback`
+- `DivineBeasts.UI.Resources.RootLayout.PendingFailureAndControllerChange`
+- `DivineBeasts.UI.Resources.RootLayout.ReadyExternalInstallAndReentry`
+- `DivineBeasts.UI.Resources.RootLayout.LocalPlayerIsolationAndInvalidClass`
+
+测试直接驱动真实组件事件、ViewModel 绑定/销毁以及本地玩家子系统的控制器/安装/退出入口；Data 替身仅控制资源终态及记录释放，根布局最后的视口挂载是显式测试边界。测试不伪造真实角色 Ready 或 GAS 授权；因此缺资源行为验证不能替代已授权技能栏的最终视觉验收。源码、Automation、真实 UI 资产、Cook/Stage、多人/多PIE画面分别留证。新增用例当前已写入，实际构建/运行结果以 `Docs/Implementation/PluginArchitectureOptimization/task-3-report.md` 及主代理统一验证记录为准。

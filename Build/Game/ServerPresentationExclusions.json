@@ -1,0 +1,434 @@
+{
+  "$schema": "./ServerPresentationExclusions.schema.json",
+  "SchemaVersion": 1,
+  "Description": "三服务器配置的纯表现排除真源。CookDirectories生成NeverCook及对应外置Actor/对象路径；StageOnlyDirectories保持既有专服收据剥离范围。规则不证明Cook或运行通过。",
+  "Profiles": {
+    "DedicatedServer": "Game/Config/Custom/DedicatedServer/DefaultGame.ini",
+    "VillageServer": "Game/Config/Custom/VillageServer/DefaultGame.ini",
+    "VillageDevelopmentServer": "Game/Config/Custom/VillageDevelopmentServer/DefaultGame.ini"
+  },
+  "CookConfigProfiles": {
+    "DedicatedServer": "DedicatedServer",
+    "VillageServer": "VillageServer",
+    "VillageDevelopmentServer": "VillageDevelopmentServer",
+    "FoundationStandalone": "DedicatedServer"
+  },
+  "CookDirectories": [
+    {
+      "PackagePath": "/DBAUIPack_Core",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
+    },
+    {
+      "PackagePath": "/DBAFrontEndPack",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/Content",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rat/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Ox/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Tiger/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rabbit/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Dragon/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Snake/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Horse/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Goat/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Monkey/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rooster/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Dog/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Boar/UI/Abilities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/Content/UI/Abilities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Weather",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/BirdFlock",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/BirdFlock",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/Fauna",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/Fauna",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/Fauna",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna",
+      "SourceDirectory": "Game/Content/Development/Fauna",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已独立的纯表现开发审核目录；不排除其他开发资源。"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Materials",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Materials",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "客户端表面材质、纹理或MPC，不承担服务器碰撞和导航。"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/MaterialFunctions",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "客户端表面材质、纹理或MPC，不承担服务器碰撞和导航。"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/ParameterCollections",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/ParameterCollections",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "客户端表面材质、纹理或MPC，不承担服务器碰撞和导航。"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Weather",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Textures/Weather",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "客户端表面材质、纹理或MPC，不承担服务器碰撞和导航。"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Snow",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Textures/Snow",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "客户端表面材质、纹理或MPC，不承担服务器碰撞和导航。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/Materials/Snow",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Snow",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
+    },
+    {
+      "PackagePath": "/Game/Development/Snow",
+      "SourceDirectory": "Game/Content/Development/Snow",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已独立的纯表现开发审核目录；不排除其他开发资源。"
+    },
+    {
+      "PackagePath": "/DBASFXPack_Core/Weather",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/Content/Weather",
+      "Profiles": "AllServers",
+      "Availability": "LegacyAbsent",
+      "Reason": "保留既有天气声音历史排除；当前未登记、未创建该内容包。"
+    },
+    {
+      "PackagePath": "/Game/Development/Weather",
+      "SourceDirectory": "Game/Content/Development/Weather",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "已独立的纯表现开发审核目录；不排除其他开发资源。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rat/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Ox/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Tiger/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rabbit/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Dragon/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Snake/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Horse/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Goat/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Monkey/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rooster/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Dog/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Boar/UI/Portraits",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/Content/UI/Portraits",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端英雄图标或肖像；权威HeroDefinition归DBAGameplay。"
+    },
+    {
+      "PackagePath": "/Game/Development/DivineBeasts/Abilities/UI",
+      "SourceDirectory": "Game/Content/Development/DivineBeasts/Abilities/UI",
+      "Profiles": "VillageDevelopmentServer",
+      "Availability": "Present",
+      "Reason": "开发技能的客户端UIProfile；只排除UI子目录，保留开发技能权威定义、AlwaysCook与显式启用开关。"
+    }
+  ],
+  "StageOnlyDirectories": [
+    {
+      "PackagePath": "/DBAClient",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/DBAClient",
+      "Availability": "Present",
+      "Reason": "延续现有仅客户端插件目录的Stage剥离，包含内容与插件侧发布文件。"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core",
+      "Availability": "Present",
+      "Reason": "延续现有仅客户端插件目录的Stage剥离，包含内容与插件侧发布文件。"
+    },
+    {
+      "PackagePath": "/DBAFrontEndPack",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack",
+      "Availability": "Present",
+      "Reason": "延续现有仅客户端插件目录的Stage剥离，包含内容与插件侧发布文件。"
+    },
+    {
+      "PackagePath": "/DBAContentPack_Common",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rat",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Ox",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Tiger",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rabbit",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Dragon",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Snake",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Horse",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Goat",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Monkey",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Rooster",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Dog",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/DBAHeroPack_Boar",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar",
+      "Availability": "Present",
+      "Reason": "延续既有Common/十二英雄纯表现包Stage边界；权威定义归DBAGameplay，必要权威动画未来加入前须重新评审所有权。"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX",
+      "Availability": "Present",
+      "Reason": "延续现有仅客户端插件目录的Stage剥离，包含内容与插件侧发布文件。"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface",
+      "Availability": "Present",
+      "Reason": "延续现有仅客户端插件目录的Stage剥离，包含内容与插件侧发布文件。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core",
+      "Availability": "Present",
+      "Reason": "延续现有仅客户端插件目录的Stage剥离，包含内容与插件侧发布文件。"
+    },
+    {
+      "PackagePath": "/DBASFXPack_Core",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core",
+      "Availability": "LegacyAbsent",
+      "Reason": "兼容既有声音包排除；当前没有实际内容包，禁止据此虚构包。"
+    }
+  ]
+}

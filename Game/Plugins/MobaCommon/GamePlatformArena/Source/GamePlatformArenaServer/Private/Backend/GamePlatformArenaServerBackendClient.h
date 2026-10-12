@@ -14,7 +14,7 @@ enum class EGamePlatformArenaSubmitStatus : uint8
 };
 
 /** FGamePlatformArenaServerBackendConfig（MainArena服务器后端连接配置）。 */
-struct GAMEPLATFORMARENASERVER_API FGamePlatformArenaServerBackendConfig
+struct FGamePlatformArenaServerBackendConfig
 {
     FString BaseUrl;
     FString InternalToken;
@@ -29,7 +29,7 @@ struct GAMEPLATFORMARENASERVER_API FGamePlatformArenaServerBackendConfig
 /** FGamePlatformArenaServerBackendClient（竞技服务器后端HTTP适配器）。
  *  只调用既有GameServerControlService内部接口，不保存/打印票据和内部Token。
  */
-class GAMEPLATFORMARENASERVER_API FGamePlatformArenaServerBackendClient
+class FGamePlatformArenaServerBackendClient
     : public TSharedFromThis<FGamePlatformArenaServerBackendClient>
 {
 public:

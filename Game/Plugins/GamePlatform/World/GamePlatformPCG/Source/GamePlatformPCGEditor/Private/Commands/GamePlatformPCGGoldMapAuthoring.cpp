@@ -20,6 +20,7 @@
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
+#include "Misc/SecureHash.h"
 #include "PCGComponent.h"
 #include "PCGGraph.h"
 #include "PCGManagedResource.h"
@@ -799,6 +800,8 @@ bool GamePlatformPCGGoldMap::ProbeSpatial(FString& Error)
         TEXT("GoldLevel只读空间探针已核验：1编排器、11真实放置器、%d排除来源及10项数值取样。"
              "尚未执行PCG Generate、Spawner实例、G01～G16正式验收、导航或Cook。"),
         AllMasks.Num());
+    // 机器可解析状态码固定ASCII，避免Windows OEM/UTF-8终端转码导致误判。
+    UE_LOG(LogGamePlatformPCG, Display, TEXT("GP_PCG_SPATIAL_PROBE_PASS"));
     return true;
 }
 
@@ -815,6 +818,13 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
         !IFileManager::Get().FileExists(*Filename))
     {
         Error = TEXT("真实GoldLevel地图或UE编辑器上下文缺失，拒绝伪造静态实例生成结果。");
+        return false;
+    }
+    // 必须先验证真实地图与3份已保存Graph的空间掩码，才允许本次官方PCG生成。
+    // SpatialProbe只读且失败即拒绝，防止地图道路/农田修改后沿用过期空间快照。
+    if (!ProbeSpatial(Error))
+    {
+        Error = TEXT("PCG实际生成前置空间规则/图快照不一致：") + Error;
         return false;
     }
     UWorld* World = UEditorLoadingAndSavingUtils::LoadMap(Filename);
@@ -874,17 +884,27 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
             Mask.DomainId == FGamePlatformPCGDomainIds::AgriCrop;
     });
 
+    // 每轮预览只预处理一次空间掩码，避免逐实例重复检查多边形顶点和面积。
+    // Prepared指向本函数保持不变的AllMasks/CropMasks；不得跨请求或存盘使用。
+    TArray<FGamePlatformPCGPreparedSpatialMask> AllPrepared;
+    TArray<FGamePlatformPCGPreparedSpatialMask> CropPrepared;
+    if (!FGamePlatformPCGSpatialRules::PrepareMasks(AllMasks, AllPrepared) ||
+        !FGamePlatformPCGSpatialRules::PrepareMasks(CropMasks, CropPrepared))
+    {
+        Error = TEXT("真实GoldLevel空间掩码预处理失败，拒绝运行PCG生成预览。");
+        return false;
+    }
     struct FPreview
     {
         const TCHAR* Label;
         const TCHAR* GraphName;
         int32 Priority;
-        const TArray<FGamePlatformPCGSpatialMask>* Masks;
+        const TArray<FGamePlatformPCGPreparedSpatialMask>* Prepared;
     };
     const TArray<FPreview> Previews = {
-        {TEXT("PCG_Canopy"), TEXT("Canopy"), 30, &AllMasks},
-        {TEXT("PCG_Rock"), TEXT("Rock"), 15, &AllMasks},
-        {TEXT("PCG_Crops"), TEXT("Crop"), 20, &CropMasks}
+        {TEXT("PCG_Canopy"), TEXT("Canopy"), 30, &AllPrepared},
+        {TEXT("PCG_Rock"), TEXT("Rock"), 15, &AllPrepared},
+        {TEXT("PCG_Crops"), TEXT("Crop"), 20, &CropPrepared}
     };
     TArray<TWeakObjectPtr<UPCGComponent>> ThisRunComponents;
     ThisRunComponents.Reserve(Previews.Num());
@@ -899,9 +919,25 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
                 if (Component->IsGenerating())
                 {
                     Component->CancelGeneration();
+                    const double CancelStarted = FPlatformTime::Seconds();
+                    // 已取消任务仍可能在官方调度队列中，最多驱动2秒清空回调；不能在任务运行中拆毁资源。
+                    while (Component->IsGenerating() && FPlatformTime::Seconds() - CancelStarted < 2.0)
+                    {
+                        FWorldPartitionHelpers::FakeEngineTick(World);
+                        FPlatformProcess::Sleep(0.005f);
+                    }
                 }
-                Component->CleanupLocalImmediate(/*bRemoveComponents=*/true,
-                    /*bCleanupLocalComponents=*/true);
+                if (!Component->IsGenerating() && !Component->IsCleaningUp())
+                {
+                    Component->CleanupLocalImmediate(/*bRemoveComponents=*/true,
+                        /*bCleanupLocalComponents=*/true);
+                }
+                else
+                {
+                    // 本次UE Editor进程不会保存测试地图。失败关闭，不在未结束的PCG任务上强制销毁组件。
+                    UE_LOG(LogGamePlatformPCG, Warning,
+                        TEXT("GoldLevel预览取消未排空，保留当前进程中的临时组件至编辑器退出。"));
+                }
             }
         }
     };
@@ -952,12 +988,16 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
         ThisRunComponents.Add(Component);
 
         const double Start = FPlatformTime::Seconds();
-        while (Component->IsGenerating() && FPlatformTime::Seconds() - Start < 60.0)
+        // 官方GenerateLocalGetTaskId可能先返回已排队Task，而IsGenerating尚未变为true。
+        // 必须等待bGenerated明确完成，不能因刚提交任务时IsGenerating=false就误报空生成。
+        while ((!Component->bGenerated || Component->IsGenerating()) &&
+               !Component->GetGeneratedGraphOutput().bCancelExecution &&
+               FPlatformTime::Seconds() - Start < 60.0)
         {
             FWorldPartitionHelpers::FakeEngineTick(World);
             FPlatformProcess::Sleep(0.005f);
         }
-        if (Component->IsGenerating() || Component->IsCleaningUp() ||
+        if (!Component->bGenerated || Component->IsGenerating() || Component->IsCleaningUp() ||
             Component->GetGeneratedGraphOutput().bCancelExecution ||
             !Component->AreManagedResourcesAccessible())
         {
@@ -967,27 +1007,31 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
 
         int64 TotalInstances = 0;
         bool bValid = true;
+        // 可复现的网格路径+位置/旋转/缩放指纹按世界坐标量化、排序，与ISM内部迭代顺序无关。
+        TArray<FString> CanonicalInstances;
+        TSet<const UInstancedStaticMeshComponent*> SeenComponents;
         Component->ForEachConstManagedResource(
-            [&bValid, &TotalInstances, &Spec, World, Component](const UPCGManagedResource* Resource)
+            [&bValid, &TotalInstances, &CanonicalInstances, &SeenComponents, &Spec, World, Component](const UPCGManagedResource* Resource)
             {
                 const UPCGManagedISMComponent* Managed = Cast<UPCGManagedISMComponent>(Resource);
-                if (!Managed)
+                if (!Managed || Resource->GetOuter() != Component)
                 {
                     bValid = false;
                     return;
                 }
                 const UInstancedStaticMeshComponent* ISM = Managed->GetComponent();
-                if (!IsValid(ISM) || !ISM->IsRegistered() ||
+                if (!IsValid(ISM) || !ISM->IsRegistered() || SeenComponents.Contains(ISM) ||
                     ISM->GetWorld() != World || ISM->GetOwner() != Component->GetOwner() ||
                     !IsValid(ISM->GetStaticMesh()) ||
                     ISM->GetCollisionEnabled() != ECollisionEnabled::NoCollision ||
                     ISM->GetGenerateOverlapEvents() || ISM->CanEverAffectNavigation() ||
-                    ISM->GetIsReplicated())
+                    ISM->GetIsReplicated() || ISM->GetOwner()->GetIsReplicated())
                 {
                     bValid = false;
                     return;
                 }
                 const int32 N = ISM->GetInstanceCount();
+                SeenComponents.Add(ISM);
                 if (N < 0 || N > 20000 || TotalInstances + N > 20000)
                 {
                     bValid = false;
@@ -996,7 +1040,8 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
                 for (int32 I = 0; I < N; ++I)
                 {
                     FTransform Transform;
-                    if (!ISM->GetInstanceTransform(I, Transform, /*bWorldSpace=*/true))
+                    if (!ISM->GetInstanceTransform(I, Transform, /*bWorldSpace=*/true) ||
+                        Transform.ContainsNaN())
                     {
                         bValid = false;
                         return;
@@ -1004,13 +1049,25 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
                     const FVector Point = Transform.GetLocation();
                     float Strength = 0.0f;
                     FGuid Source;
-                    if (!FGamePlatformPCGSpatialRules::Evaluate(
+                    if (!FGamePlatformPCGSpatialRules::EvaluatePrepared(
                             FVector2D(Point.X, Point.Y), Spec.Priority, 0.5f,
-                            *Spec.Masks, Strength, Source) || Source.IsValid())
+                            *Spec.Prepared, Strength, Source) || Source.IsValid())
                     {
                         bValid = false;
                         return;
                     }
+                    const FRotator Rotation = Transform.Rotator();
+                    const FVector Scale = Transform.GetScale3D();
+                    const auto Quantize = [](double Value, double Factor)
+                    {
+                        return FMath::RoundToInt64(Value * Factor);
+                    };
+                    CanonicalInstances.Add(FString::Printf(
+                        TEXT("%s|%lld,%lld,%lld|%lld,%lld,%lld|%lld,%lld,%lld"),
+                        *ISM->GetStaticMesh()->GetPathName(),
+                        Quantize(Point.X, 10), Quantize(Point.Y, 10), Quantize(Point.Z, 10),
+                        Quantize(Rotation.Pitch, 10000), Quantize(Rotation.Yaw, 10000), Quantize(Rotation.Roll, 10000),
+                        Quantize(Scale.X, 10000), Quantize(Scale.Y, 10000), Quantize(Scale.Z, 10000)));
                 }
                 TotalInstances += N;
             });
@@ -1020,15 +1077,30 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
                 Spec.Label + TEXT("，实例数=") + FString::Printf(TEXT("%lld"), TotalInstances);
             return false;
         }
+        if (CanonicalInstances.Num() != TotalInstances)
+        {
+            Error = FString(TEXT("GoldLevel实例总量与可审查的位置数据不一致：")) + Spec.Label;
+            return false;
+        }
+        CanonicalInstances.Sort();
+        const FString CanonicalText = FString::Join(CanonicalInstances, TEXT("\n"));
+        FTCHARToUTF8 Bytes(*CanonicalText);
+        uint8 Digest[FSHA1::DigestSize];
+        FSHA1::HashBuffer(Bytes.Get(), Bytes.Length(), Digest);
+        const FString Fingerprint = TEXT("sha1-ism-mm-v1:") + BytesToHex(Digest, UE_ARRAY_COUNT(Digest));
         UE_LOG(LogGamePlatformPCG, Display,
             TEXT("GoldLevel官方PCG实例生成预览：%s，实际ISM实例=%lld，耗时=%.3fs；"
-                 "范围内排除Mask与非碰撞/导航/复制隔离已复核。"),
-            Spec.Label, TotalInstances, FPlatformTime::Seconds() - Start);
+                 "稳定输出指纹=%s；排除Mask与非碰撞/导航/复制隔离已复核。"),
+            Spec.Label, TotalInstances, FPlatformTime::Seconds() - Start, *Fingerprint);
+        UE_LOG(LogGamePlatformPCG, Display,
+            TEXT("GP_PCG_PREVIEW_RESULT Label=%s Instances=%lld Fingerprint=%s"),
+            Spec.Label, TotalInstances, *Fingerprint);
     }
 
     UE_LOG(LogGamePlatformPCG, Display,
         TEXT("GoldLevel三份已批准Graph真实生成预览完成：全部有非碰撞网格实例且无禁区实例。"
              "已注册自动清理，不保存地图；尚非G01-G16完整验收或客户端/服务器Cook。"));
+    UE_LOG(LogGamePlatformPCG, Display, TEXT("GP_PCG_GENERATE_PREVIEW_PASS"));
     return true;
 }
 
