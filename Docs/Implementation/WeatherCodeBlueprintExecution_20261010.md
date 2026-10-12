@@ -61,6 +61,14 @@
 - 剩余：重新启动正确UE5.8编辑器并连接Monolith，检查Rain/Snow Near/Far发射率及本地空间运动与Niagara User参数绑定，完成Splash真实Renderer材质/Flipbook，运行`request_compile/get_system_diagnostics/validate_system`并再次保存重载；之后审核材质和八个预设与蓝图、游戏内场景、Client/Server Cook、双客户端和性能。
 
 上述本轮改动只涉及三份`GamePlatformVFX/Content/Weather/Niagara/*.uasset`天气资产及本文档，不覆盖并行PCG/UI资产，不进行Git提交或推送。
+### 16:14后真实蓝图、Niagara材质和发射器接线验收
+
+- 通过Monolith在锁定的真实UE5.8工程创建并保存`/Game/Development/Weather/Blueprints/BP_DBA_WeatherReviewGameMode`，父类是`DivineBeastsWorldGameMode`；`compile_blueprint`确认`success=true,status=UpToDate,errors=[],warnings=[]`，磁盘真实文件21160字节。至此统一静态清单九个关键天气包物理存在，但“包存在”不等于真实场景运行验收。
+- 三张VFX雨雪材质`M_GP_VFX_Weather_Rain/Snow/Splash`通过Monolith批量启用`used_with_niagara_sprites=true`，三个材质已通过`save_material`命令回执。
+- 两套降水Niagara的近景/远景`SpawnRate`输入通过`set_module_input_binding`分别绑定到`User.WeatherNearSpawnRate`与`User.WeatherFarSpawnRate`，飞溅绑定到`User.WeatherNearSpawnRate`。每个雨雪Emitter已移除重复的默认Sprite Renderer，只保留自有天气材质渲染器；Splash已将默认Renderer材质更换为`M_GP_VFX_Weather_Splash`。
+- 对`NS_GP_Weather_Rain`、`NS_GP_Weather_Snow`、`NS_GP_Weather_RainSplash`逐一执行Monolith`get_system_diagnostics(compile_first=true)`、`validate_system`和`save_system`。全部返回`error_count=0,warning_count=0,has_issues=false,valid=true`，近景/远景雨雪和单一Splash所有Particle Spawn/Update Script的`compile_status=UpToDate`，三套真实Niagara在本轮再次保存，返回`saved=true`。
+- 这次验证只证明Niagara脚本结构、编译诊断与资产保存通过；实际降水区域布局、4×4飞溅序列帧、局部碰撞、头顶室内遮挡、渲染性能、长稳与双客户端仍需在PIE/Standalone/Cook中验证。默认Emitter CPU计算还未做GPU成本分档，不能将其冒充已经通过的3A大场景质量指标。
+
 
 
 ## 2026-10-10 14:17后继续执行事实
