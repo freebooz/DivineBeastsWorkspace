@@ -208,7 +208,13 @@ void UGamePlatformSurfaceMarkWorldSubsystem::PruneActive()
     const double Now = IsValid(World) ? World->GetTimeSeconds() : 0.0;
     ActiveMarks.RemoveAll([Now](const FActiveMark& Mark)
     {
-        return !Mark.Component.IsValid() || (Mark.ExpireTimeSeconds > 0.0 && Now >= Mark.ExpireTimeSeconds);
+        if (!Mark.Component.IsValid()) return true;
+        if (Mark.ExpireTimeSeconds > 0.0 && Now >= Mark.ExpireTimeSeconds)
+        {
+            if (UDecalComponent* Expired = Mark.Component.Get()) Expired->DestroyComponent();
+            return true;
+        }
+        return false;
     });
 }
 
@@ -313,7 +319,8 @@ FGamePlatformSurfaceMarkResult UGamePlatformSurfaceMarkWorldSubsystem::Submit(
         return MakeResult(SpawnLoadedMark(Request));
     if (bLoadAttempted && !CatalogLease.IsValid())
         return MakeResult(EGamePlatformSurfaceMarkStatus::MissingAssets);
-    if (PendingRequests.Num() >= 32)
+    const int32 PendingBudget = LoadedCatalog ? FMath::Min(32, LoadedCatalog->MaxPendingMarks) : 32;
+    if (PendingRequests.Num() >= PendingBudget)
         return MakeResult(EGamePlatformSurfaceMarkStatus::BudgetExceeded);
     PendingRequests.Add(Request);
     if (!bLoadAttempted && !BeginAssetLoad())
@@ -340,6 +347,11 @@ void UGamePlatformSurfaceMarkWorldSubsystem::RemoveSpawnedHandler(FDelegateHandl
 
 void UGamePlatformSurfaceMarkWorldSubsystem::GetCounts(int32& OutActive, int32& OutPending) const
 {
-    OutActive = ActiveMarks.Num();
+    const UWorld* World = GetWorld();
+    const double Now = IsValid(World) ? World->GetTimeSeconds() : 0.0;
+    OutActive = 0;
+    for (const auto& Mark : ActiveMarks)
+        if (Mark.Component.IsValid() && (Mark.ExpireTimeSeconds <= 0.0 || Mark.ExpireTimeSeconds > Now))
+            ++OutActive;
     OutPending = PendingRequests.Num();
 }

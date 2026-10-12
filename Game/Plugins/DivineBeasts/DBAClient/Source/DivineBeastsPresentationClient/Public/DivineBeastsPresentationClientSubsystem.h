@@ -8,6 +8,7 @@
 #include "ContentPacks/DivineBeastsPresentationContentPack.h"
 #include "Context/DivineBeastsPresentationContext.h"
 #include "Facts/DivineBeastsPresentationFacts.h"
+#include "Environment/DivineBeastsBirdFlockFlightSettings.h"
 #include "GamePlatformPresentationCatalog.h"
 #include "GamePlatformPresentationTypes.h"
 #include "Types/GamePlatformDataLease.h"
@@ -82,6 +83,10 @@ public:
     /** 场景C++入口：Owner须属于当前世界，RegistrationToken隔离注册代次；他人占用同名ID时拒绝。 */
     bool StartAmbientBirdFlockForOwner(FName FlockId, FName SpeciesId, int32 BirdCount,
         const FVector& WorldOrigin, UObject* Owner, const FGuid& RegistrationToken, FString& OutError);
+    /** 高级路线、Boids与滑翔选择仍通过正式中立表现服务，失效Owner不能停止他人旧绑定。 */
+    bool StartAmbientBirdFlockForOwnerAdvanced(FName FlockId, FName SpeciesId, int32 BirdCount,
+        const FVector& WorldOrigin, UObject* Owner, const FGuid& RegistrationToken,
+        const FDivineBeastsBirdFlockFlightSettings& FlightSettings, FString& OutError);
     /** 只撤销token匹配的自有注册；未知或旧代token返回false且不影响后来占用者。 */
     bool StopAmbientBirdFlockForOwner(FName FlockId, const FGuid& RegistrationToken);
     /** 显式按ID停止接口；场景组件必须使用带注册token的所有权接口。 */
@@ -203,7 +208,8 @@ private:
     /** Bird/Fauna共用意图事务；只保存项目值和中立RequestId，不是另一个实例执行器。 */
     bool StartEnvironmentFlock(FEnvironmentFlockState& Group, FName Id, FName SpeciesId,
         int32 Count, int32 Seed, const FVector& WorldOrigin, UObject* Owner,
-        const FGuid& RegistrationToken, FString& OutError);
+        const FGuid& RegistrationToken, FString& OutError,
+        const FDivineBeastsBirdFlockFlightSettings* BirdFlight = nullptr);
     bool EnsureEnvironmentFlockPack(FEnvironmentFlockState& Group, FString& OutError);
     void SubmitPendingEnvironmentFlocks(FEnvironmentFlockState& Group);
     /** 每世界一个公共VFX终态订阅；只失效当前RequestId，不在通知内自动重放。 */
@@ -276,6 +282,9 @@ private:
         int32 Count = 0;
         int32 Seed = 0;
         FGuid RequestId;
+        /** 只存储弱Spline与标量；Fauna维持默认未启用状态。 */
+        FDivineBeastsBirdFlockFlightSettings BirdFlight;
+        bool bExplicitBirdFlight = false;
         /** 真终态后等待本ID显式Apply或新的Context恢复；其他群落的提交不会顺带重试。 */
         bool bAwaitingExplicitRetry = false;
         /** 注册token有效表示场景拥有；无token条目属于显式服务请求。 */

@@ -27,6 +27,22 @@ bool UDivineBeastsPresentationClientSubsystem::StartAmbientBirdFlockForOwner(
         Owner, RegistrationToken, OutError);
 }
 
+/** 神兽联盟项目鸟群高级配置仅扩展原Owner安全意图，底层仍使用Presentation/Data/VFX。 */
+bool UDivineBeastsPresentationClientSubsystem::StartAmbientBirdFlockForOwnerAdvanced(
+    FName FlockId, FName SpeciesId, int32 BirdCount, const FVector& WorldOrigin,
+    UObject* Owner, const FGuid& RegistrationToken,
+    const FDivineBeastsBirdFlockFlightSettings& FlightSettings, FString& OutError)
+{
+    check(IsInGameThread());
+    if (!IsValid(Owner) || !RegistrationToken.IsValid())
+    {
+        OutError = TEXT("高级鸟群要求存活Owner和有效注册代次。");
+        return false;
+    }
+    return StartEnvironmentFlock(BirdFlocks, FlockId, SpeciesId, BirdCount, FlightSettings.Seed,
+        WorldOrigin, Owner, RegistrationToken, OutError, &FlightSettings);
+}
+
 bool UDivineBeastsPresentationClientSubsystem::StopAmbientBirdFlockForOwner(FName FlockId, const FGuid& RegistrationToken)
 {
     return StopEnvironmentFlockForOwner(BirdFlocks, FlockId, RegistrationToken);

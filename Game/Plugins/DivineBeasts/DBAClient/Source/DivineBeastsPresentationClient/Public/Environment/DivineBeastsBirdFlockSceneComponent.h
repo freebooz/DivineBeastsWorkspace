@@ -3,8 +3,10 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
+#include "Environment/DivineBeastsBirdFlockFlightSettings.h"
 #include "DivineBeastsBirdFlockSceneComponent.generated.h"
 class UDivineBeastsPresentationClientSubsystem;
+class AActor;
 
 /** 场景鸟群配置组件：无Tick、无复制、无玩法碰撞，执行仍归唯一平台VFX。 */
 UCLASS(ClassGroup=(DivineBeasts),meta=(BlueprintSpawnableComponent))
@@ -22,6 +24,22 @@ public:
     /** 0撤销本组件注册；1..512为请求数量，实际可见数量仍受平台预算约束。 */
     UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="BirdFlock",meta=(ClampMin="0",ClampMax="512",DisplayName="鸟类数量"))
     int32 BirdCount = 32;
+    /** 默认关闭高级路径，保留原有Definition@1七参数及已审核群飞行为。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="BirdFlock|Advanced", meta=(DisplayName="启用高级群飞"))
+    bool bEnableAdvancedFlight = false;
+
+    /** 样条/群聚/滑翔参数全部从项目层配置发起；不引用Niagara资产。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="BirdFlock|Advanced", meta=(EditCondition="bEnableAdvancedFlight"))
+    FDivineBeastsBirdFlockFlightSettings AdvancedFlight;
+
+    /** 编辑器内同世界可选路线Actor，应带已注册USplineComponent；为空尝试自身Owner。 */
+    UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category="BirdFlock|Advanced",
+        meta=(EditCondition="bEnableAdvancedFlight && AdvancedFlight.bUseSpline",DisplayName="样条路径Actor"))
+    TObjectPtr<AActor> RouteActor = nullptr;
+
+    /** 只读返回同World中稳定群身份，运行期修改FlockId后仍须显式Apply。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|BirdFlock")
+    FName GetConfiguredFlockId() const;
     UFUNCTION(BlueprintPure,Category="DivineBeasts|BirdFlock")
     TArray<FString> GetBirdSpeciesOptions() const;
     /** 显式应用配置；候选被拒绝时保留旧绑定。true仅表示受理，不代表GPU已播放。 */
