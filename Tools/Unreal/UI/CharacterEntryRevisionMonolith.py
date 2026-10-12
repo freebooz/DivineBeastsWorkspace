@@ -18,6 +18,7 @@ PACK = ROOT / "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Cor
 MOUNT = "/DBAUIPack_Core/UI/"
 CREATE = MOUNT + "Screens/WBP_DBA_UI_CharacterCreate"
 SELECT = MOUNT + "Screens/WBP_DBA_UI_CharacterSelect"
+LOGIN = MOUNT + "Screens/WBP_DBA_UI_Login"
 CHOICE = MOUNT + "Components/WBP_DBA_HeroChoice"
 ATLAS = MOUNT + "Textures/Zodiac/T_DBA_ZodiacChoiceAtlas_V1"
 SOURCE = PACK / "SourceArt/UI/Zodiac/ZodiacChoiceAtlas_V1.png"
@@ -154,6 +155,49 @@ def apply_introductions(endpoint, resume=False):
         print(index, item["Arguments"]["action"], flush=True)
 
 
+def apply_entry_usability(endpoint):
+    """仅本轮列表和登录位置增量；固定绝对基线，拒绝重复上移或覆盖既有备份。"""
+    evidence = ROOT / "Saved/Validation/EnterGameRepair20261012/Assets"
+    dirty = rpc(endpoint, "editor_query", {"action": "list_dirty_packages", "params": {}})
+    if dirty.get("count") != 0:
+        raise RuntimeError("编辑器含未保存修改，先保护用户资产，不能继续")
+    # 位置来自已读取的真实底部锚定布局；整组上移60逻辑像素，不改变大小、字号、颜色或RGB。
+    positions = {
+        "AccountInput": (-122, -338, 284, 42, 0, 0, 10),
+        "PasswordInput": (-122, -267, 284, 42, 0, 0, 10),
+        "LoginButton": (172, -332, 104, 104, 0, 0, 11),
+        "BusyIndicator": (-122, -209, 284, 20, 0, 0, 10),
+        "MaintenanceText": (-122, -179, 284, 26, 0, 0, 10),
+        "ErrorText": (-122, -179, 284, 34, 0, 0, 10),
+        "LoginBronzeFrame": (0, -260, 600, 315, .5, .5, 5),
+        "PasswordRevealButton": (106, -263, 42, 36, 0, 0, 12),
+    }
+    ops = [operation("ui", "remove_widget", asset_path=SELECT, widget_name="CharacterList", compile=False),
+           operation("ui", "set_widget_is_variable", wbp_path=SELECT, widget_name="SelectButtonLabel", is_variable=True),
+           operation("ui", "set_widget_is_variable", wbp_path=SELECT, widget_name="CharacterChoices", is_variable=True)]
+    for name, (left, top, width, height, ax, ay, z) in positions.items():
+        ops.append(operation("ui", "set_slot_property", asset_path=LOGIN, widget_name=name,
+            anchors={"min_x": .5, "min_y": 1, "max_x": .5, "max_y": 1},
+            offsets={"left": left, "top": top, "right": width, "bottom": height},
+            alignment={"x": ax, "y": ay}, z_order=z))
+    for path in (SELECT, LOGIN):
+        ops += [operation("ui", "dump_blueprint_compile_log", asset_path=path), operation("blueprint", "save_asset", asset_path=path)]
+    backup = evidence / "Before"
+    backup.mkdir(parents=True, exist_ok=False)
+    records = []
+    for path in (SELECT, LOGIN):
+        source = PACK / "Content" / (path[len('/DBAUIPack_Core/'):] + ".uasset")
+        shutil.copy2(source, backup / source.name)
+        records.append({"Source": str(source), "SHA256": hashlib.sha256(source.read_bytes()).hexdigest()})
+    (evidence / "Before.json").write_text(json.dumps(records, indent=2), encoding="utf-8")
+    log = []
+    for item in ops:
+        result = rpc(endpoint, item["Tool"], item["Arguments"])
+        log.append({"Request": item, "Result": result})
+        (evidence / "Actions.json").write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(item["Arguments"]["action"], flush=True)
+
+
 def main():
     """锁定正确工程及版本后逐条执行；证据保存动作原始返回而非人工写通过数字。"""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -161,6 +205,7 @@ def main():
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--introductions", action="store_true", help="仅增量添加创建角色介绍滚动区，不重放旧图集/面板修复")
     parser.add_argument("--resume-introductions", action="store_true", help="仅恢复同一编辑器中已留证的部分介绍动作，拒绝盲目重放")
+    parser.add_argument("--entry-usability", action="store_true", help="仅纯角色列表与登录组上移；须独立备份、编译、保存")
     args = parser.parse_args()
     if not args.apply:
         print(json.dumps(introduction_requests() if args.introductions else requests(), ensure_ascii=False, indent=2))
@@ -170,6 +215,9 @@ def main():
         raise RuntimeError("当前Monolith工程或锁定版本不符")
     if args.introductions:
         apply_introductions(args.endpoint, args.resume_introductions)
+        return
+    if args.entry_usability:
+        apply_entry_usability(args.endpoint)
         return
     evidence = ROOT / "Saved/Validation/CharacterEntryRevision20261011"
     backup = evidence / "Before"
