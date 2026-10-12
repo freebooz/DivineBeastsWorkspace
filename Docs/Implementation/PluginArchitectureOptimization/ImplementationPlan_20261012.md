@@ -36,3 +36,10 @@ Brief：task-3-brief.md。能力栏配置与图标通过Data资源租约获得�
 
 ## 回退与证据
 逐文件审查差异；失败仅回退本轮精确变更，不使用全树reset/clean。旧产物/其他任务进程保留。每个任务报告包含新增/移动文件、实际命令、退出码、证据路径。ExecutionProgress.md实时记录完成、修复和阻塞；运行输出使用既有Saved/Validation隔离目录。只有实际通过的检查记为通过。
+
+## 执行中的依据与调整
+- 原工作区存在持续并行的PCG/Surface/PluginDemo工作。正式实现仍在原工作区维护，UE验证使用同一授权根内的固定Git检出`.worktrees/v`；后续停止追逐无关Demo增量，以实际完整Editor16的2533项输入指纹固定验证对象。原工作区b813完整Editor真实通过后发生的新改动，不沿用旧proof冒称已复验。
+- Data11与PCG8实际绑定Build5，源码与四个对应DLL在Build16仍逐字节一致；保留原RunId，不改写成新测试。VFX18绑定Editor16并通过，UI20绑定Editor16且全前缀保留一项既有HeroIntroduction契约失败。
+- 实际Server/Client使用正常完整构建，不传UsePrecompiled或OnlyModules。显式SDK发现跳过只用于限定的Editor开发资产作者/已记录UI会话，不扩展到正常构建或Cook。Cook保留FoundationStandalone开发许可、DedicatedServer收据剥离规则，并检查真实容器及权威Probe/Flow。
+- 真实作者失败由保留错误门禁、限定脚本修补、离线RED/GREEN和新RunId原生重验闭合；不修改C++节点Schema或手写资产。正式内容批准、完整Gold生成、VFX人工/性能和竞技后端联调仍独立登记。
+

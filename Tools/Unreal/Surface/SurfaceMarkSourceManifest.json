@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "purpose": "StylizedPreviewTextures",
+  "formalAAAApproved": false,
+  "assetAuthoringRequired": true,
+  "engine": "UE5.8",
+  "records": [
+    {
+      "kind": "Bullet",
+      "role": "Albedo",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Bullet_Albedo_Source.png",
+      "sha256": "b1828676b267b2c61876508b417620937b6fee3ae07ef20db64604e4d7771c3f",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Bullet",
+      "role": "Normal",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Bullet_Normal_Source.png",
+      "sha256": "b1ee7656e0e5a2a06138941bfa35f8562dbf5c07f184cec8a092abcfd51b16be",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Bullet",
+      "role": "ORM",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Bullet_ORM_Source.png",
+      "sha256": "3dc3b79ea82c970f9728a8d2fceaaee68a0ddc2435bfcaec35ed6e65dc624653",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Scorch",
+      "role": "Albedo",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Scorch_Albedo_Source.png",
+      "sha256": "59f76ec412be261184d568ad7fd8e8ecd16e134ce5c100e711e9c4009b113efb",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Scorch",
+      "role": "Normal",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Scorch_Normal_Source.png",
+      "sha256": "4d73c423d3b3ac674271ad80779ecc1e6bd4128c7c5135c7c5a62cd543efddf4",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Scorch",
+      "role": "ORM",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Scorch_ORM_Source.png",
+      "sha256": "cc70bcbb763131986c2350ab1ca058a09326f117d88c650eea5fe0d5f0dae1f5",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Slash",
+      "role": "Albedo",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Slash_Albedo_Source.png",
+      "sha256": "69c156f7154fc624d45b88680ab1b8ff25d6e6a1adb73dbbc579aab98560dee0",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Slash",
+      "role": "Normal",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Slash_Normal_Source.png",
+      "sha256": "de20ccff0294643d44c3a40a0a0664c4d088c8fc509308476c5789c8146c8516",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Slash",
+      "role": "ORM",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Slash_ORM_Source.png",
+      "sha256": "5537f0f70322aec13e8cfb397a8070ff13de52f041feeb9bb0af6d550655162e",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Fluid",
+      "role": "Albedo",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Fluid_Albedo_Source.png",
+      "sha256": "c987d30aa13cdcc909711ac22ba7d00a6c53ba7a4af792214cbfc61b20bffcaf",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Fluid",
+      "role": "Normal",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Fluid_Normal_Source.png",
+      "sha256": "e770751c4e0cabb418bdb9cdef84012da104edfdfddd69334cecd8e248176f7d",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Fluid",
+      "role": "ORM",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Fluid_ORM_Source.png",
+      "sha256": "19c8e31b9c52c963c5e08570f23521370af800db7b5a9e0df69f3cc78a9f0f00",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Crack",
+      "role": "Albedo",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Crack_Albedo_Source.png",
+      "sha256": "2efb23d92f1d697359502bc89fc70f21e5ac34ee23993fdc7e374da52b0e42b7",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Crack",
+      "role": "Normal",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Crack_Normal_Source.png",
+      "sha256": "18f4b1a0e119d7f1336ee9c19ea3790bebb158ee9de24405288df50d9aae0be4",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "kind": "Crack",
+      "role": "ORM",
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/SourceArt/Marks/T_GP_Mark_Crack_ORM_Source.png",
+      "sha256": "756e0a0eb1a33925274222771e655e556a82dcf698c6e70d7594c927cd4e58ab",
+      "width": 1024,
+      "height": 1024
+    }
+  ]
+}

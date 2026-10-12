@@ -93,8 +93,14 @@ def main() -> None:
                     "正式扫描源SHA不符："+spec["sourcePath"])
     tex=tuple(TERRAIN.rglob("*.uasset"))
     textures=[f for f in tex if "Textures" in f.parts or "Calibration" in f.parts]
-    expected_count=59 if production_file.exists() else 49
-    require(len(textures)>=expected_count,"UE Texture2D实际文件少于"+str(expected_count))
+    # 本脚本审查原技术校准资产及三层源码边界；新扫描纹理在UE导入前
+    # 不能因源PNG已覆盖就冒充新增Texture2D已保存。独立UE反射门禁负责40/40。
+    require(len(textures)>=49,"历史UE校准Texture2D资源少于49")
+    if production_file.exists():
+        imported_height=sum((TERRAIN/"Textures"/layer/("T_DBA_Terrain_"+layer+"_Height.uasset")).is_file()
+                            for layer in LAYERS)
+        print("TERRAIN_PBR_PRODUCTION_NEW_UE_HEIGHT_IMPORTS",imported_height,
+              "expected=10","status",("present_unverified" if imported_height==10 else "pending"))
     require((TERRAIN/"Materials/M_DBA_Terrain_MultiLayer10.uasset").stat().st_size>30000,
             "真实多层UMaterial未生成")
     require((TERRAIN/"Materials/MI_DBA_Terrain_Calibration.uasset").stat().st_size>1000,

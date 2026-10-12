@@ -134,4 +134,15 @@ Run-UeCommandlet 'GamePlatformSurfaceTerrainReviewMap' @(
 ) $mapMarker
 Run-UePython 'TerrainUEAssets' 'VerifyTerrainMultiLayerUEAssets.py' 'TERRAIN_UE_ASSET_INVENTORY_PASS'
 Run-UePython 'TerrainPCGAssets' 'VerifyTerrainPCGReviewAssets.py' 'TERRAIN_PCG_LANDSCAPE_GRAPH_RELOAD_PASS'
+if($ProductionPBR){
+    # 只在独立审核关卡绑定四张真实Landscape层权重PCG图，正式Village根地图不受影响。
+    $previousSceneMode=$env:TERRAIN_PCG_SCENE_MODE
+    try {
+        $env:TERRAIN_PCG_SCENE_MODE=if($Apply){'apply'}else{'verify'}
+        Run-UePython 'TerrainProductionPCGScene' 'AuthorTerrainProductionPCGReview.py' 'TERRAIN_PBR_LANDSCAPE_PCG_FOUR_GRAPHS_BOUND'
+    }
+    finally {
+        $env:TERRAIN_PCG_SCENE_MODE=$previousSceneMode
+    }
+}
 Write-Host ('TERRAIN_GAEA_REVIEW_EDITOR_TARGETS_PASS productionPBR='+$ProductionPBR+' (NOT_COOK_OR_MANUAL_REVIEW)')

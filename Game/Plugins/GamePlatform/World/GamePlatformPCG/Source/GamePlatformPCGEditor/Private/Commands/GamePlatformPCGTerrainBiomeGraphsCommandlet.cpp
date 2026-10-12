@@ -113,7 +113,9 @@ int32 UGamePlatformPCGTerrainBiomeGraphsCommandlet::Main(const FString& Params)
     check(IsInGameThread());
     FString Root,Prefix,Map;
     if (!FParse::Value(*Params,TEXT("GraphRoot="),Root) ||
-        !FParse::Value(*Params,TEXT("BiomeMap="),Map))
+        // 逗号分隔的多Biome映射必须完整解析；默认FParse会截断为首项。
+        !FParse::Value(*Params,TEXT("BiomeMap="),Map,
+                       /*bShouldStopOnSeparator=*/false))
     {
         UE_LOG(LogTerrainPCGBiome, Error,
                TEXT("必须显式指定GraphRoot与BiomeMap，例如Forest:LS_Grass,Rock:LS_Rock。"));

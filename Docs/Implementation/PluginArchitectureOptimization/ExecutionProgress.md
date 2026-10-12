@@ -20,10 +20,10 @@
 - P0计划与边界：已保存并实施。
 - Task 1服务器规则：源码及独立复核修复完成，25项Python回归、PS7.6下完整UBT配置回归通过；真实Cook/Stage待执行。
 - Task 2索引：生产代码、6项Automation及文档完成。Data首次全组16项14通过/2失败，规范开发Probe缺失；现按原UE作者白名单真实生成探针并保持无覆盖，Run11完整复验16/16 Success、入口exit0，6项新增索引均通过。正式开发资产身份未变；不计入Cook或网络验收。
-- Task 3UI：资源租约/异步根布局、6项Automation与Description校验代码已实施，12份真实Profile/60条记录及图标经完整Editor/Monolith只读通过。首次UI全前缀53项42通过/11失败；3项RootLayout已修正World中控制器登记夹具，3项拖拽方向与3项选择/取消路由已按既有测试修复，真实RHI入口已调整；Run12已包含更新代码并完成UBT编译。HeroIntroduction仍缺正式作者字段与12份批准内容，不冒充通过；等待真实UI再测报告。
-- Task 4接口与诊断：Arena接口收口完成；VFX多世界诊断等3项真实UE均通过。首次VFX全组24项23通过/1失败，原因是Editor自动化没有GameWorld；已让BirdFlock.ActorInstanceLifecycle在无现成GameWorld时构造带RAII清理的真实瞬态GameWorld，继续执行原Actor/ISM/实例数断言。Run12包含此修正且UBT编译成功，Run13全VFX复验中；此瞬态环境不替代独立客户端/PIE/视觉。
+- Task 3UI：资源租约/异步根布局、6项资源Automation与Description校验已实施，12份真实Profile/60条记录及图标经完整Editor/Monolith只读通过。最终v UI20以Editor16前置proof和真实D3D12离屏执行53项：52 Success（1项有警告）、1 Fail；资源、RootLayout、拖拽、选择/取消、Color.SourceToSlate均通过。唯一HeroIntroduction原生字段/十二份介绍契约仍失败；runner按完整报告判Failed，未执行后置proof，不计全UI通过。
+- Task 4接口与诊断：Arena公共接口已收口；VFX按世界诊断、Pending即时更新及鸟群真实瞬态GameWorld/WorldContext夹具已实施。最终v VFX18使用Editor16，完整24项均Success，3项Diagnostics均通过，runner exit0且测试后完整构建凭据复核通过。瞬态世界结果不替代BeginPlay/独立客户端/人工视觉或目标设备性能。
 - Task 5交付证据：13包README、64插件/85模块台账、PCG BlueprintRoot参数化完成；静态回归及共享文件字节保护复核通过。root复核参数在Map/RepairMap副作用前校验、平台无项目默认值，其余阶段保持独立。
-- Task 6统一验证：六项入口问题及独立Source范围缺口均已修复。清单/报告回归通过；完整Editor构建证据v2合同回归38/38、独立复跑38/38与13项针对性反例全部通过，四文件Delivery-v2冻结。见task-6-entry-review.md、task-6-build-evidence-report.md及独立review；最终builder的独立完整Editor构建5已实际通过并签发Eligible证据；旧混合失败批次不补证。实际UE发现的问题继续按原始报告修复/归因。
+- Task 6统一验证：入口与完整Editor构建证据v2范围问题已修复；38项合同回归、独立38项复跑及13项针对性反例全部通过，UI真实RHI入口另经38项回归。完整v Editor16为最终冻结编译快照，VFX18通过、UI20如实Failed，Data11/PCG8保留各自Build5证据，不补写为Editor16运行。Server正常全目标构建已启动，真实Cook/Stage和Client构建尚未完成。
 ## 决策记录
 - 原工作区增量修改，文件独占分工，保护已有PCG改动；不用隔离副本冒充当前项目。错误代价：共享文件协调遗漏可能冲突，使用版本栅栏与原始差异复核控制。
 - 保留插件/资源身份，不删空壳或扩展第二工程。错误代价：暂时保留少量维护开销，后续以能力与使用证据决定去留。
@@ -72,4 +72,9 @@
 - 真实UI渲染复验Run14：`20261012-0400-4000-8000-000000000014`，真D3D12/SM6离屏，53项50 Success、1 SuccessWithWarnings、2 Fail，runner实际exit1。三项RootLayout、新增资源生命周期、拖拽方向、默认空角色选择与Color.SourceToSlate均通过；失败一为未批准作者内容的`HeroIntroductionDataAssets`（Introduction原生字段和12个英雄文本），失败二为创建页取消按钮仍借用业务提交资格。后者已改用同一`FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry`门禁，且在Eligible Editor16编译成功，待UI全组新RunId复验。RHI警告来自既有GAS GameplayCue扫描路径配置，独立登记未擅自修改。
 - Editor16：隔离检出`20261012-0400-4000-8000-000000000016`、job `wc_job_s_HabJobdPioApQh`已实际exit0，`Build/result.json`为Passed且EditorBuildEvidenceStatus=Eligible，含最终取消按钮与鸟群WorldContext清理的完整编译输入/产物证据。随后VFX尝试Run17在UE启动前因另一Session的原工程BuildFoundation持有引擎锁返回NotExecuted/exit2，不计新VFX结果；不会终止其他工作流。
 - 原工程另一Session Editor构建`c3a7237f-6230-42f6-95e3-97f7b16a6b51`：UBT C++/链接退出0，但构建期存在并发源码修改，proof检查拒绝签发合格成功记录，builder最终exit1；另一会话后续RunId `b813c0ed-9d98-47a5-94b8-20c3a3684458`正在独立构建/校验并占用引擎锁。仅报告已核实结果，不将原工程或隔离检出的编译成功等同所有三目标/Cook通过。
+- 最终验证快照决定（06:31 UTC后）：original的b813c0ed-9d98-47a5-94b8-20c3a3684458确已Passed/Eligible（06:25:37Z，2537输入），但后续并行PluginDemo修改使新的资产作者前置proof再次失败。保留原工作区全部外部变化；后续固定v Editor16，InputSHA256=E1AE7CD47BEFFC102C369264E98405F5CD08D96E6999B978CCCF7B85CAE6F67A（2533项），不再同步新Demo。不能把此固定快照结果冒称变化中的original已经复验。
+- 最终VFX18：RunId=20261012-0400-4000-8000-000000000018，job wc_job_lxf5261z_VNeH8FH，06:29:04Z Passed/exit0，24/24 Success、BuildEvidenceRecheckedAfterTests=true，绑定Editor16。UI19被请求停止exit-1，未导出Automation报告；本任务未把它计作测试结果。UI20：RunId=20261012-0400-4000-8000-000000000020，job wc_job_Y60ZjmXzyyPHe1TB，53项52 Success/1 Fail，UE exit0、runner exit1；唯一HeroIntroductionDataAssets在FText字段反射前置失败。Invocation记录子进程UE_SKIP_UBT_SDK_SETUP=1；这是编辑器测试的SDK发现限制，不证明SDK、Cook或运行。
+- 固定v结构复验：ca0faf13-ff77-471f-b9e2-956a44627e27，06:52:05Z开始，ValidateDesignBaseline.ps1实际exit0/4.55秒；64描述、47代码/17内容、三目标公共/竞技装配、508公共头/1109类型/195继承边通过。四个审计脚本前后SHA不变；仅静态证据。
+- 真实开发定义作者：v RunId=864e37b3-5de2-4712-96d8-2a8bb6d2b65a，Probe真实UE验证成功且原SHA不变；Flow赋值NodeId触发cannot be edited on instances，报告FAILED且未产生Flow原生文件，ScriptErrorsAreFatal令UE实际exit3，runner保留该原生码。作者仅显式对本次UE子进程跳过SDK发现，完整Build16前置proof、原生保存/重载/标签/nooverwrite审计保留；SDKValidationPerformed=false，未修改系统环境或构建/Cook入口。失败原因正在限定排查。
+- Server正常构建：v RunId=4f4fb9ee-acab-4a74-98dd-e4681068a478，job wc_job_2Yuz3OEh7aEmYk5c；实际BuildFoundation -Server -NoUBA -NoSharedPCH:$false -MaxParallelActions 2，不传UsePrecompiled、不设置SDK跳过。UBT已启动1111个动作；未完成时不登记成功收据或Cook结果。
 - 上一轮只读基线检查、只编译部分模块、资产清单、开发内容批准均不计作本轮完整构建、真实Cook、视觉或正式业务内容验收。

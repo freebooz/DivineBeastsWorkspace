@@ -2,6 +2,15 @@
 
 所属：DivineBeastsWorkspace/Tools/Unreal/Terrain。唯一工程：Game/DivineBeastsArena.uproject（UE5.8），项目实际内容归DBAWorldPack_Village；平台底层机制使用GamePlatformSurfaceEditor与GamePlatformPCGEditor。
 
+## 2026-10-12 十种正式扫描PBR（实际进度）
+
+- `AcquireTerrainProductionPBR.py`（官方CC0纹理获取、哈希检验、61项回退备份及同名源图受控替换）；10×4张2K源PNG已替换，历史Gaea V1地貌清单不改写；另有`TerrainProductionPBRManifest_v1.json`（正式扫描图来源合同）。
+- `ReimportTerrainProductionPBR.py`（UE5.8原生重导入30个同路径Texture2D并新增10项微高度）；`AuthorTerrainProductionMaterial.py`（DBAPresentationPack_Core客户端10层正式PBR+雪/苔藓/湿润MPC混合）；均为真实引擎作者工具，当前尚未完成UE执行。
+- `AuthorTerrainProductionPCGReview.py`（在独立L_DBA_TerrainMaskReview中绑定Forest/Rock/Shore/Road四类PCGVolume和权重过滤Graph）；真实Map/Graph因现有Editor模块缺失、其他会话UBT占用尚未保存。
+- `RunTerrainGaeaFullReview.ps1 -ProductionPBR`：默认只读规划，`-Apply`需独占UE Editor，`-ValidateOnly`需另一UE进程反射回读；不覆盖正式`L_Village_Start`。
+- `Tests/Assets/ValidateTerrainProductionPBR.py`（40图官方纹理质量与指纹）、`Tests/Architecture/ValidateTerrainProductionIntegration.py`（三层、历史校准与回退合同）。服务器已排除独立开发审核关卡，25项策略回归通过；高精WorldPack纹理的Server Cook剥离及用户本人GPU美术签收尚待。
+- 全部实际证据、断线恢复与受阻项：`Docs/Implementation/TerrainProductionPBRIntegration_20261012.md`。原历史README以下步骤仍记录2026-10-11技术校准基线，不代表正式PBR图已在UE客户端生效。
+
 ## 执行次序与边界
 
 1. GenerateTerrainCalibrationPBR.py（生成10×3种技术PBR源纹理、16位高程、9个地貌Mask及10图层Weight）。所有生成图片及SHA256清单位于WorldPack/SourceArt/Terrain，仅属技术校准，绝非真实Gaea 2.3导出或最终3A扫描纹理。

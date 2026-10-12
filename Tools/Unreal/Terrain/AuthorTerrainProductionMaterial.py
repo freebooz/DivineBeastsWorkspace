@@ -162,50 +162,75 @@ def execute():
  sum_n=fold(normals,250,30)
  sum_r=fold(roughs,250,1200)
  sum_ao=fold(occlusions,250,2600)
+ # 可选HeightBlend会改变权重和，应避免多层过曝/法线长度错误。
+ # 权重合计通常为1；高度增强导致>1时统一除以总和，小于1时仍由Dirt兜底。
+ sum_norm=node(unreal.MaterialExpressionMax,1700,-2540)
+ wire(sum_w,sum_norm,"A")
+ wire(one,sum_norm,"B")
+ def normalize_weighted(expr,x,y):
+  return op(unreal.MaterialExpressionDivide,expr,sum_norm,x,y)
+ sum_c=normalize_weighted(sum_c,1920,-1130)
+ sum_n=normalize_weighted(sum_n,1930,10)
+ sum_r=normalize_weighted(sum_r,1930,1240)
+ sum_ao=normalize_weighted(sum_ao,1950,2650)
  missing=sat(sub(one,sum_w,1830,-2200),2050,-2200)
  dirt=sample(texture[("Dirt","BaseColor")],"TerrainFallbackDirt",txuv,1850,-1250)
  col=add(sum_c,mul(dirt,missing,2150,-1250,"RGB"),2550,-1080)
  flat=vec(0,0,1,1830,130)
  n=norm(add(sum_n,mul(flat,missing,2060,250),2560,250),2780,500)
  rough=add(sum_r,mul(value(.82,1780,1200),missing,2140,1350),2600,1300)
- ao=add(sum_ao,missing,2600,2700)
-  # 本材质仅属于项目ClientOnly表现包，可引用平台Surface真实雪苔PBR纹理。
-  # 共享Village地图仍使用中性基础材质，不能硬引用本高精纯表现母材质。
-  def platform_texture(relative):
-   path="/GamePlatformSurface/Textures/"+relative
-   obj=lib.load_asset(path)
-   if not isinstance(obj,unreal.Texture2D):
-    raise RuntimeError("平台通用PBR缺失："+path)
-   return obj
-  moss_texture={
-   "BaseColor":platform_texture("Moss/T_GP_Moss_Albedo"),
-   "Normal":platform_texture("Moss/T_GP_Moss_Normal"),
-   "ORM":platform_texture("Moss/T_GP_Moss_Orm"),
-   "Coverage":platform_texture("Moss/T_GP_Moss_Coverage")}
-  moss=scalar("TerrainMossAmount",0,2810,-2250)
-  moss_weight=sat(add(masks_by_layer["Rock"],masks_by_layer["ForestSoil"],2820,-2070),3010,-2070)
-  moss_uv=mul(uv,scalar("TerrainMossMacroTiling",2,3090,-2640),3240,-2670)
-  moss_noise=sample(moss_texture["Coverage"],"TerrainMossCoverage",moss_uv,3180,-2400)
-  moss_strength=mul(moss,moss_weight,3250,-2040)
-  moss_mask=sat(mul(moss_strength,moss_noise,3470,-2070,ob="R"),3650,-2070)
-  moss_c=sample(moss_texture["BaseColor"],"TerrainMossAlbedo",txuv,2830,-1410)
-  moss_n=sample(moss_texture["Normal"],"TerrainMossNormal",txuv,2830,370)
-  moss_orm=sample(moss_texture["ORM"],"TerrainMossORM",txuv,2830,1720)
-  col=lerp(col,moss_c,moss_mask,3700,-1050,outb="RGB")
-  n=norm(lerp(n,moss_n,moss_mask,3700,550,outb="RGB"),3900,750)
-  rough=lerp(rough,moss_orm,moss_mask,3750,1500,outb="G")
-  ao=lerp(ao,moss_orm,moss_mask,3750,2680,outb="R")
- # 局部地表湿润为视觉光学变化：略暗、降低Roughness，不决定玩法权威碰撞。
- wet=scalar("VillageWetness",0,3300,3200)
+ ao=sat(add(sum_ao,missing,2600,2700),2760,2790)
+ # 本母材质归纯客户端表现包，可直接使用平台GamePlatformSurface真实PBR贴图。
+ # 正式Village共享地图继续使用中性基础材质，绝不硬引用本高精母材质。
+ def platform_texture(relative):
+  path="/GamePlatformSurface/Textures/"+relative
+  obj=lib.load_asset(path)
+  if not isinstance(obj,unreal.Texture2D):
+   raise RuntimeError("平台通用PBR纹理缺失："+path)
+  return obj
+ # 直接消费已有平台MPC（材质参数集合），不建立第二套天气权威。
+ collection=lib.load_asset("/GamePlatformSurface/ParameterCollections/MPC_GP_SurfaceGlobal")
+ if not isinstance(collection,unreal.MaterialParameterCollection):
+  raise RuntimeError("GamePlatformSurface全局参数集合未加载，禁止创建重复状态机制")
+ def global_scalar(name,x,y):
+  expr=node(unreal.MaterialExpressionCollectionParameter,x,y)
+  expr.set_editor_property("collection",collection)
+  expr.set_editor_property("parameter_name",unreal.Name(name))
+  return expr
+ def maximum(a,b,x,y):
+  return op(unreal.MaterialExpressionMax,a,b,x,y)
+ moss_texture={
+  "BaseColor":platform_texture("Moss/T_GP_Moss_Albedo"),
+  "Normal":platform_texture("Moss/T_GP_Moss_Normal"),
+  "ORM":platform_texture("Moss/T_GP_Moss_Orm"),
+  "Coverage":platform_texture("Moss/T_GP_Moss_Coverage")}
+ moss=mul(scalar("TerrainMossAmount",0,2810,-2250),
+          global_scalar("GlobalMossInfluence",2610,-2570),2790,-2510)
+ moss_weight=sat(add(masks_by_layer["Rock"],masks_by_layer["ForestSoil"],2820,-2070),3010,-2070)
+ moss_uv=mul(uv,scalar("TerrainMossMacroTiling",2,3090,-2640),3240,-2670)
+ moss_noise=sample(moss_texture["Coverage"],"TerrainMossCoverage",moss_uv,3180,-2400)
+ moss_strength=mul(moss,moss_weight,3250,-2040)
+ moss_mask=sat(mul(moss_strength,moss_noise,3470,-2070,ob="R"),3650,-2070)
+ moss_c=sample(moss_texture["BaseColor"],"TerrainMossAlbedo",txuv,2830,-1410)
+ moss_n=sample(moss_texture["Normal"],"TerrainMossNormal",txuv,2830,370)
+ moss_orm=sample(moss_texture["ORM"],"TerrainMossORM",txuv,2830,1720)
+ col=lerp(col,moss_c,moss_mask,3700,-1050,outb="RGB")
+ n=norm(lerp(n,moss_n,moss_mask,3700,550,outb="RGB"),3900,750)
+ rough=lerp(rough,moss_orm,moss_mask,3750,1500,outb="G")
+ ao=lerp(ao,moss_orm,moss_mask,3750,2680,outb="R")
+ # 局部湿润只调整颜色和粗糙度，绝不改变服务器权威碰撞或玩法事实。
+ wet=sat(maximum(scalar("VillageWetness",0,3300,3200),
+                 global_scalar("GlobalWetness",3000,3350),3500,3400),3700,3360)
  shade=sub(one,mul(wet,value(.23,3460,3200),3700,3140),3960,3050)
  col=mul(col,shade,4180,-900)
  rough=lerp(rough,value(.36,4100,1620),wet,4390,1550)
- # 保留VillageSnow的参数名，便于客户端世界MID用同一权威天气快照。
-  snow_cov=platform_texture("Snow/T_GP_Snow_CoverageNoise")
-  snow_col=platform_texture("Weather/T_GP_Weather_SnowAlbedo")
-  snow_nrm=platform_texture("Weather/T_GP_Weather_SnowNormal")
-  # 独立纯客户端审核场景默认取平台真实雪纹理；运行时可覆盖同名参数。
- snow_amount=scalar("VillageSnowAmount",0,3610,-2580)
+ # 与既有VillageSnow世界桥接字段保持一致，默认使用平台正式雪纹理。
+ snow_cov=platform_texture("Snow/T_GP_Snow_CoverageNoise")
+ snow_col=platform_texture("Weather/T_GP_Weather_SnowAlbedo")
+ snow_nrm=platform_texture("Weather/T_GP_Weather_SnowNormal")
+ # 三张纹理可由客户端MID按软资源租约覆盖；审核地图只读默认纹理可见性。
+ snow_amount=sat(maximum(scalar("VillageSnowAmount",0,3610,-2580),
+                     global_scalar("GlobalSnowAmount",3370,-3130),3830,-3160),4030,-3190)
  vn=node(unreal.MaterialExpressionVertexNormalWS,3590,-2950)
  dz=node(unreal.MaterialExpressionDotProduct,3830,-2850)
  wire(vn,dz,"A");wire(vec(0,0,1,3610,-2750),dz,"B")

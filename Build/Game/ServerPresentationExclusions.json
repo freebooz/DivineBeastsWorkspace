@@ -225,6 +225,13 @@
       "Reason": "独立雪苔视觉审核地图仅供客户端和编辑器，不作为正式新手村服务器地图。"
     },
     {
+      "PackagePath": "/Game/Development/Terrain",
+      "SourceDirectory": "Game/Content/Development/Terrain",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "十层Landscape、PCG权重过滤图及PBR雪苔湿润人工审核关卡仅供编辑器/开发客户端，不允许进入三类专用服务器Cook。"
+    },
+    {
       "PackagePath": "/DBASFXPack_Core/Weather",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/Content/Weather",
       "Profiles": "AllServers",

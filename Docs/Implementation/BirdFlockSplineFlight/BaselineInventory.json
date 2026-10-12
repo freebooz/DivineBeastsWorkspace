@@ -1,0 +1,314 @@
+{
+  "as_of": "2026-10-12",
+  "source_commit": "91f134c2822ee959299a68acb061e4064353e25d",
+  "purpose": "BF-P0 正式鸟群扩展前资产与源码证据；不等于运行验收。",
+  "existing_presentation_chain": "DivineBeastsBirdFlockSceneComponent -> DivineBeastsPresentationClientSubsystem -> GamePlatformPresentation -> GamePlatformData -> GamePlatformVFX Niagara",
+  "existing_niagara_parameters": [
+    "User.BirdCount",
+    "User.FlockRadius",
+    "User.FlockHeight",
+    "User.FlightSpeed",
+    "User.FlockSeed",
+    "User.FlightMode",
+    "User.WindInfluence"
+  ],
+  "known_legacy_ism": "AGamePlatformBirdFlockActor仅历史原型，不能作为正式演示及新增Spline路径执行器。",
+  "existing_flight_modes": {
+    "0": "Orbit",
+    "1": "Traverse",
+    "2": "FigureEight"
+  },
+  "new_flight_modes_proposed": {
+    "3": "SplineOneWay",
+    "4": "SplineLoop",
+    "5": "SplinePingPong"
+  },
+  "registered_species": [
+    "Seagull",
+    "Swallow",
+    "Eagle"
+  ],
+  "asset_counts": {
+    ".umap": 2,
+    ".uasset": 27,
+    ".cpp": 7,
+    ".h": 3
+  },
+  "entries": [
+    {
+      "path": "Game/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview.umap",
+      "owner": "project",
+      "kind": "world_review_map",
+      "bytes": 30261,
+      "sha256": "384ed17bd2ae3b691aa4736ccf9e6acb9d23fb3562e4cac96f355edae4409812"
+    },
+    {
+      "path": "Game/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockReview.umap",
+      "owner": "project",
+      "kind": "world_review_map",
+      "bytes": 40371,
+      "sha256": "cfc4d7d2ced278cc1685317fbc13731ccd1fbc1291875eb1790aca0310fed828"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Blueprints/BP_DBA_BirdFlockAmbient.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 25309,
+      "sha256": "bee104c368fd75de2258c9d8f4d412402bbbc2055b1f0c689d8463c7dcaa13a8"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Definitions/DA_DBA_VFX_BirdFlock_Eagle.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 6232,
+      "sha256": "2bde31df37c2e3c74c565397286f5bd459ca81add3713faf98c30321783597ef"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Definitions/DA_DBA_VFX_BirdFlock_Seagull.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 6256,
+      "sha256": "dd8e17a30da15abd97886afab3e19cde4371ed9de4fd1e2905738a672e18a9fb"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Definitions/DA_DBA_VFX_BirdFlock_Swallow.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 6256,
+      "sha256": "a04d4f6b736290e1da39abee8924b8a5941745579593bc5f1ae7791aeb6bfff7"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Materials/MI_DBA_Bird_Eagle.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 4832,
+      "sha256": "654a00050d8fd6148304d2e8df866f3f8b26fd0541ffcd126eeb98703dca421d"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Materials/MI_DBA_Bird_Seagull.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 4848,
+      "sha256": "8950ec64d0f651e15ad31a5842d7f333367765a4271ddbf05a6add8cd9af41b6"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Materials/MI_DBA_Bird_Swallow.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 4848,
+      "sha256": "b8181533264524acefe3456ecb630c5cb52dcec75756c48b38983cf180a2edef"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/Flight/SM_DBA_Bird_Eagle.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 39378,
+      "sha256": "71402bd9a89a0b05a6639982c556c0ba7cfa293958f0dbff441b088f266de6c5"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/Flight/SM_DBA_Bird_Seagull.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 39381,
+      "sha256": "3c483c069f5ee51c77f198e6d5c644104c3cbec3d93481acc5db9f514dc3b041"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/Flight/SM_DBA_Bird_Swallow.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 39087,
+      "sha256": "dce80b1e38993c52890fb3201730bd322782777fd0a7972f72d3a89ef5a511fa"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Eagle.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 97761,
+      "sha256": "0734dcc5193c5862c9a48989071fef5f9bf7f4200f0ffda4e6dc5a066edc201e"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Eagle_Cm.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 100473,
+      "sha256": "ca94313ed77ddc2a7bbd53259946d8caa84b339c9703c0e467109d972d88f8a4"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 98188,
+      "sha256": "d553752580f1d9b1d96be00f9932723726b1e7041af5228b415a3c8073b041de"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull_Cm.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 100699,
+      "sha256": "03698cc86c9b2bb29cbe73a737ff49b8bb09a79d54ceedc3bc2edbcdb445ddec"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull_Flight.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 37464,
+      "sha256": "8fdf510f6c1029b9caac359b2164f838f42fde401dc9fd8bc77f23d6a8c6b3c1"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Swallow.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 98188,
+      "sha256": "b9cba700ae174c3dcf79cfda344e955369c6eb63226fe1dfdf56959f62956208"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Swallow_Cm.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 100504,
+      "sha256": "65493504191435386cfddaf1e252344c2f0b38e43de698d5077253a3db9b4363"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Niagara/NS_DBA_BirdFlock_Eagle.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 303735,
+      "sha256": "833eee3bf1fc9295cab974d440578b3a6b609e1f6531f293986862e8b7353cd1"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Niagara/NS_DBA_BirdFlock_Seagull.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 303757,
+      "sha256": "22e5f5731c692a0fe89d6c9451e4cb1e6a0f3852d5613d9af2eaf13f09fca2b0"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Niagara/NS_DBA_BirdFlock_Swallow.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 303757,
+      "sha256": "2d6330dbb696d27212eaa1a736f86201286730fedead8caf6c18bf66ab8c5359"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Textures/T_DBA_Bird_Eagle_Albedo.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 42009,
+      "sha256": "658a91c9f403fce020d1a314007b56665aa3c8697f83b896a565422908a4b358"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Textures/T_DBA_Bird_Seagull_Albedo.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 42499,
+      "sha256": "0e30b598f398ccdc5b08278e637a798b992f0e00f8462acd2f58efc24be94dd3"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Textures/T_DBA_Bird_Swallow_Albedo.uasset",
+      "owner": "project",
+      "kind": "runtime_asset",
+      "bytes": 39135,
+      "sha256": "e2ce8ca27eb417cb42dfd1a19d4c1596d76e1efdd06885dcf2ce11b266ce2fb3"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Environment/DivineBeastsBirdFlockPresentation.cpp",
+      "owner": "project",
+      "kind": "source_code",
+      "bytes": 3327,
+      "sha256": "030c20d5af47f79644cd88d8ad621bea31a132d5c1e89dbbf89574cc5885974a"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Private/Environment/DivineBeastsBirdFlockSceneComponent.cpp",
+      "owner": "project",
+      "kind": "source_code",
+      "bytes": 5096,
+      "sha256": "40304a506f6e77d9816a1c37c9a9ee83524b0f5df7d9ee4667dc893a2eef8d0c"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/Public/Environment/DivineBeastsBirdFlockSceneComponent.h",
+      "owner": "project",
+      "kind": "source_code",
+      "bytes": 2717,
+      "sha256": "82a8decf412915d4dd0fb571cf5a583875dcf9afda948109ab0e5dcacea4a59e"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationRuntime/Private/Catalog/DivineBeastsBirdFlockCatalog.cpp",
+      "owner": "project",
+      "kind": "source_code",
+      "bytes": 1999,
+      "sha256": "67fa8ab8e7f111d82d2c721f6dd37705c405a9c7594c52cf6ef0d32e8bfcdde5"
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationRuntime/Private/Tests/DivineBeastsBirdFlockCatalogTests.cpp",
+      "owner": "project",
+      "kind": "source_code",
+      "bytes": 2610,
+      "sha256": "de86425181cf55180152bb7325c03aa00bd2a923424d96b9e6fac69324133c42"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/BirdFlock/EffectTypes/NET_GP_BirdFlock_Ambient.uasset",
+      "owner": "platform",
+      "kind": "runtime_asset",
+      "bytes": 1504,
+      "sha256": "8183e18fe706fe08d154c3e394bb15b8f90f24f40987f819588af69027f05c39"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/BirdFlock/Materials/M_GP_BirdFlock_Master.uasset",
+      "owner": "platform",
+      "kind": "runtime_asset",
+      "bytes": 21546,
+      "sha256": "c5c5847e705086a3a9a9bfd10a586e95fc47f7d6717c61216000285caaa0ead9"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/BirdFlock/Niagara/NM_GP_BirdFlockMotion.uasset",
+      "owner": "platform",
+      "kind": "runtime_asset",
+      "bytes": 31440,
+      "sha256": "b6491b9f22e6700795b267cdf11159856b02ff0ff61a2d9fadff2ad3a7cf6a63"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/BirdFlock/Niagara/NS_GP_BirdFlock_Base.uasset",
+      "owner": "platform",
+      "kind": "runtime_asset",
+      "bytes": 303494,
+      "sha256": "d53c90e2c090e06d35d152d2c318cbd270780224c85ebecbc95a9b90b7ed339f"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Environment/GamePlatformBirdFlockActor.cpp",
+      "owner": "platform",
+      "kind": "source_code",
+      "bytes": 9909,
+      "sha256": "5a3d92d357d48bcdfe1695d2de19ef4fc2be3627f29fcbbd8ded59d55fa513f1"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Environment/GamePlatformBirdFlockProfile.cpp",
+      "owner": "platform",
+      "kind": "source_code",
+      "bytes": 3073,
+      "sha256": "c129004ce3292ea9db0f05e27fa5cc9bbfd4f3470a0204f2cd72395a2df5fd5a"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Tests/GamePlatformBirdFlockTests.cpp",
+      "owner": "platform",
+      "kind": "source_code",
+      "bytes": 7607,
+      "sha256": "03c71f0de94a97abe560b98971960d3c24e86d359311818d914658f086934fc5"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Public/Environment/GamePlatformBirdFlockActor.h",
+      "owner": "platform",
+      "kind": "source_code",
+      "bytes": 4822,
+      "sha256": "7fe5c5071e34f3e25a52ff7f153bbd12ec733c326e814f0841b85531b89c60cf"
+    },
+    {
+      "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Public/Environment/GamePlatformBirdFlockProfile.h",
+      "owner": "platform",
+      "kind": "source_code",
+      "bytes": 5268,
+      "sha256": "d0cfa171a25d6a66e23284183ad5f1356ca33cf3d384a972e1eefeab04fca06f"
+    }
+  ],
+  "manual_approval": "pending",
+  "unreal_reload": "not_yet_run"
+}

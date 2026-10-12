@@ -659,9 +659,15 @@ class FlowTests(unittest.TestCase):
             def set_editor_property(self, name, value):
                 self.fields[name] = value
 
+        class DefaultsOnlyNode(ReflectedFields):
+            """模拟 UE 独立节点的 EditDefaultsOnly：构造可赋值，实例 setter 拒绝。"""
+            def set_editor_property(self, name, value):
+                raise RuntimeError(
+                    f"GamePlatformFlowNodeDefinition: '{name}' cannot be edited on instances")
+
         adapter = ASSETS.UnrealFlowEditor.__new__(ASSETS.UnrealFlowEditor)
         adapter.unreal = Mock()
-        adapter.unreal.GamePlatformFlowNodeDefinition.side_effect = ReflectedFields
+        adapter.unreal.GamePlatformFlowNodeDefinition.side_effect = DefaultsOnlyNode
         adapter.unreal.PrimaryAssetType.side_effect = lambda: ReflectedFields(name="None")
         adapter.unreal.PrimaryAssetId.side_effect = lambda: ReflectedFields(
             primary_asset_type=ReflectedFields(name="None"), primary_asset_name="None")
