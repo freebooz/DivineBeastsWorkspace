@@ -190,6 +190,13 @@
       "Reason": "客户端表面材质、纹理或MPC，不承担服务器碰撞和导航。"
     },
     {
+      "PackagePath": "/GamePlatformSurface/Textures/Moss",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Textures/Moss",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "平台苔藓PBR高清纹理仅属于客户端Shader表现，不参与服务器地形、导航或碰撞。"
+    },
+    {
       "PackagePath": "/DBAPresentationPack_Core/Materials/Snow",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Snow",
       "Profiles": "AllServers",
@@ -197,11 +204,25 @@
       "Reason": "已确认纯客户端界面或VFX资源，不承担服务器玩法权威。"
     },
     {
+      "PackagePath": "/DBAPresentationPack_Core/Materials/Environment",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Environment",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "神兽联盟环境雪苔项目材质实例为客户端纯表现，不属于服务器必要资源。"
+    },
+    {
       "PackagePath": "/Game/Development/Snow",
       "SourceDirectory": "Game/Content/Development/Snow",
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "已独立的纯表现开发审核目录；不排除其他开发资源。"
+    },
+    {
+      "PackagePath": "/Game/Development/MossSnow",
+      "SourceDirectory": "Game/Content/Development/MossSnow",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "独立雪苔视觉审核地图仅供客户端和编辑器，不作为正式新手村服务器地图。"
     },
     {
       "PackagePath": "/DBASFXPack_Core/Weather",

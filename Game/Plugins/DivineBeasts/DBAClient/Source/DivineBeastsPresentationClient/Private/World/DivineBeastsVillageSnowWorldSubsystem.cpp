@@ -13,6 +13,8 @@
 #include "EngineUtils.h"
 #include "LandscapeProxy.h"
 #include "LandscapeComponent.h"
+#include "Components/MeshComponent.h"
+#include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/Package.h"
 #if !UE_BUILD_SHIPPING
@@ -72,6 +74,11 @@ void UDivineBeastsVillageSnowWorldSubsystem::Initialize(FSubsystemCollectionBase
     TexturesAppliedLandscapes.Reset();
     bLoggedMissingMaterial = false;
     RequestGeneration = 0;
+    MossRequestGeneration = 0;
+    bMossMaterialReady = false;
+    LoadedMossMaterial.Reset();
+    MossMaterialSlotBindings.Reset();
+    RetainedMossOriginalMaterials.Reset();
 #if !UE_BUILD_SHIPPING
     // 仅显式开发参数开启，避免普通天气插值在日志写入端形成性能开销。
     bReviewWeatherTrace = FParse::Param(FCommandLine::Get(), TEXT("DBAVillageSnowTraceWeather"));
@@ -89,6 +96,8 @@ void UDivineBeastsVillageSnowWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     bVillageWorld = Config && Config->bEnableVillageSnowPresentation &&
         IsVillageWorldPackage(InWorld.GetOutermost()->GetName());
     if (!bVillageWorld || InWorld.GetNetMode() == NM_DedicatedServer) return;
+    // 苔藓材质的软租约独立于天气桥：即使WeatherClient失败也可保持静态苔藓。
+    TryRequestMossMaterial();
 
     WeatherClient = InWorld.GetSubsystem<UGamePlatformWeatherClientWorldSubsystem>();
     if (!WeatherClient.IsValid())
@@ -241,6 +250,8 @@ void UDivineBeastsVillageSnowWorldSubsystem::OnLandscapeActorSpawned(AActor* Act
         {
             ApplyToLandscape(Proxy);
         }
+        // 只处理标记过的项目岩石组件；其余Actor绝不覆盖材质。
+        ApplyMossMaterialToActor(Actor);
     }
 }
 
@@ -431,6 +442,26 @@ void UDivineBeastsVillageSnowWorldSubsystem::ReleaseResources()
 {
     ++RequestGeneration;
     bTexturesReady = false;
+    // 释放异步材质资源前撤销本次世界的显式网格覆盖，避免资源卸载留下悬空MID。
+    ++MossRequestGeneration;
+    for (const FMossMaterialSlotBinding& Binding : MossMaterialSlotBindings)
+    {
+        UMeshComponent* Component = Binding.Component.Get();
+        if (!IsValid(Component) || !RetainedMossOriginalMaterials.IsValidIndex(Binding.RetainedMaterialIndex) ||
+            Binding.MaterialSlot < 0 || Binding.MaterialSlot >= Component->GetNumMaterials())
+        {
+            continue;
+        }
+        if (Component->GetMaterial(Binding.MaterialSlot) == LoadedMossMaterial.Get())
+        {
+            Component->SetMaterial(Binding.MaterialSlot,
+                RetainedMossOriginalMaterials[Binding.RetainedMaterialIndex].Get());
+        }
+    }
+    MossMaterialSlotBindings.Reset();
+    RetainedMossOriginalMaterials.Reset();
+    LoadedMossMaterial.Reset();
+    bMossMaterialReady = false;
     TexturesAppliedLandscapes.Reset();
 #if !UE_BUILD_SHIPPING
     if (UWorld* World = GetWorld())
@@ -441,12 +472,19 @@ void UDivineBeastsVillageSnowWorldSubsystem::ReleaseResources()
 #endif
     const FGamePlatformDataLease OldLease = TextureLease;
     TextureLease = {};
+    const FGamePlatformDataLease OldMossLease = MossMaterialLease;
+    MossMaterialLease = {};
     UWorld* World = GetWorld();
     UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
     if (OldLease.IsValid() && GameInstance)
     {
         if (IGamePlatformDataService* Data = IGamePlatformDataService::Get(*GameInstance))
             Data->ReleaseResources(OldLease);
+    }
+    if (OldMossLease.IsValid() && GameInstance)
+    {
+        if (IGamePlatformDataService* Data = IGamePlatformDataService::Get(*GameInstance))
+            Data->ReleaseResources(OldMossLease);
     }
 }
 

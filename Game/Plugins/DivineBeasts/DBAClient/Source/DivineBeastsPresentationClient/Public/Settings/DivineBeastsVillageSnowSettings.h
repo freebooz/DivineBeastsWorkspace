@@ -35,4 +35,16 @@ public:
     /** 纯客户端切线空间积雪法线贴图。 */
     UPROPERTY(Config, EditAnywhere, Category="Village Snow")
     FSoftObjectPath SnowNormalTexture;
+
+    /** 是否在Village客户端对明确打标签的岩石网格应用雪苔材质；不会扫描并覆盖未授权的场景表面。 */
+    UPROPERTY(Config, EditAnywhere, Category="Village Moss")
+    bool bEnableTaggedMossSnowRocks = true;
+
+    /** 只有带此ComponentTag（组件标记）的网格材质才允许被替换，避免破坏其他插件的表现资源。 */
+    UPROPERTY(Config, EditAnywhere, Category="Village Moss")
+    FName MossSnowComponentTag = TEXT("DBA.Surface.MossSnow");
+
+    /** 世界期异步加载的项目层材质实例软路径；不允许共享服务器地图硬引用客户端纹理。 */
+    UPROPERTY(Config, EditAnywhere, Category="Village Moss")
+    FSoftObjectPath MossSnowRockMaterial;
 };

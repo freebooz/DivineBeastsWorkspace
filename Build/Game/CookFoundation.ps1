@@ -94,7 +94,7 @@ try {
         $details.Executable = $executables[0].FullName
         if ($Target -eq 'Server') {
             # 真实Stage文件枚举与每个发现的Pak/IoStore清单同时审计；不复用历史CSV。
-            # 策略工具检查空/损坏容器、工具错误及所请求地图，且只终止自己启动的UnrealPak。
+            # 策略工具检查必需容器存在、清单/工具错误及所请求地图；不证明全部载荷块完整性。
             $auditDirectory = Join-Path $context.Directory 'ServerPresentationAudit'
             $auditArguments = @($serverPolicyTool,'audit-stage','--profile',$serverPresentationPolicy.Profile,
                 '--stage',$stageDirectory,'--unreal-pak',(Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealPak.exe'),

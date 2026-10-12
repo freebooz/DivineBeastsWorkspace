@@ -60,3 +60,40 @@ InventoryFoundationAssets.py（已有基础资产完整性工具）：核对12�
 运行命令：`python Tools/Unreal/PCG/VerifyVillagePCGProductionSources.py --report Saved/Validation/GamePlatformPCG/VillageProductionSourceReadiness_20261012.json`。
 
 2026-10-12实际执行返回退出码2，按预期拦截技术校准来源、尚无已审定道路来源和缺少六类项目网格。门禁失败意味着**正式PCG生产资源尚未满足最低条件**，不应进入Shipping或Server Cook；报告不是UE实际生成验收。
+### 不需要Gaea的Village PCG技术网格源与UE编辑器导入
+
+项目技术模型生成器：`GenerateVillagePrototypeMeshes.py（技术三维模型源生成）`，首次`--apply`只允许新目录，后续`--verify`严格复核6份厘米制OBJ、1份MTL和1份JSON来源清单SHA-256。模型包含乔木、岩石、作物、田篱、农门和木桥，只有技术样板质量，不能当作3A正式美术或Gaea输入。
+
+```
+python Tools/Unreal/PCG/GenerateVillagePrototypeMeshes.py --verify
+# 以下默认只读检查，不启动编辑器：
+./Tools/Unreal/PCG/RunVillagePrototypeImport.ps1 -Mode Inspect
+```
+
+`ImportVillageTechnicalPrototypes.py（真实StaticMesh导入和回读）`只能在真正UE5.8 Editor运行，`VILLAGE_PCG_MESH_IMPORT_MODE=apply/verify`，仅指向项目挂载点`/DBAWorldPack_Village/Development/PCG/Meshes`。命名采用`SM_DBA_PCG_<Role>_Tech（项目PCG技术网格）`，拒绝已有资产覆盖、未知类型、尺度异常及缺少LOD0；`AuthorVillagePrototypeReviewMap.py（技术模型审查地图）`提供独立非正式地图`/DBAWorldPack_Village/Development/PCG/Maps/L_DBA_PCG_TechMeshReview`的真实UE创建/回读代码。需要共享Editor/UBT完全空闲方可执行，不从普通Python写假uasset/umap。
+
+正式Cook在`DefaultGame.ini`明确排除`/DBAWorldPack_Village/Development/PCG`，生产来源审查拒绝`Development/`和`_Tech`网格，即使技术源文件存在并哈希正确也不得标记已获美术批准。正式Village仍需真实高品质模型、地形来源、服务器碰撞/导航、人工审查和双端Cook。
+
+技术导入器将通过UE5.8 `StaticMeshEditorSubsystem（静态网格编辑器子系统）`核对/清除OBJ导入器可能自动产生的简单碰撞；独立审查地图中的六个技术Actor统一设置`NoCollision（无碰撞）`。尤其是门洞和木桥禁止被一个完整包围盒阻挡。源定义中的`StaticWorld（未来静态世界用途）`**不表示**已完成服务端碰撞、NavMesh（导航网格）、分段围栏和桥面权威验证；这些必须用正式Gameplay碰撞资源单独验收。
+
+同一个受控脚本还提供`-Mode ReviewApply（创建真实技术审查地图）`和`-Mode ReviewVerify（全新UE进程回读独立地图）`，仅在六项技术StaticMesh均已导入、没有编辑器/UBT占用时运行。前者拒绝已存在目标地图，后者拒绝缺失目标地图，不触碰正式新手村地图或既有GoldLevel。
+
+```powershell
+# UE5.8独占环境下顺序执行，任一步失败即停止
+./Tools/Unreal/PCG/RunVillagePrototypeImport.ps1 -EngineRoot $env:UE_ROOT -Mode Apply
+./Tools/Unreal/PCG/RunVillagePrototypeImport.ps1 -EngineRoot $env:UE_ROOT -Mode Verify
+./Tools/Unreal/PCG/RunVillagePrototypeImport.ps1 -EngineRoot $env:UE_ROOT -Mode ReviewApply
+./Tools/Unreal/PCG/RunVillagePrototypeImport.ps1 -EngineRoot $env:UE_ROOT -Mode ReviewVerify
+```
+### 一键无Gaea开发验证顺序（只执行已有资源，不修改正式Village）
+
+`RunNoGaeaPCGDevelopment.ps1（无Gaea PCG开发入口）`默认只读：先核对六份真实OBJ源、12份基础模板/7份子图/11份蓝图和17份Gold定义/3图/3配置/1地图。`-Apply`仅在锁定UE5.8、没有其他编辑器/UBT时按**资源优先、验收最后**的顺序执行：六网格OBJ→真实StaticMesh导入与回读→独立技术地图创建/重开→Gold SpatialProbe（空间探针）→GeneratePreview（官方真实PCG生成）→G09两独立进程确定性；最后可选`-NativeTests（原生PCG测试）`。
+
+```powershell
+# 默认只读审核，退出码0仅表示技术源/Gold文件准备
+./Tools/Unreal/PCG/RunNoGaeaPCGDevelopment.ps1
+# 无其他Editor/UBT占用时执行真正UE创建和验证
+./Tools/Unreal/PCG/RunNoGaeaPCGDevelopment.ps1 -EngineRoot $env:UE_ROOT -Apply
+```
+
+每项都有独立退出码和日志，综合报告写入`Saved/Validation/GamePlatformPCG/NoGaeaDevelopment/<新运行ID>/result.json`。安全门禁、资源导入、空间探针或实际生成任一失败均停止后续步骤。**即使全部技术步骤通过仍退出2**，明确G01～G16完整矩阵、正式Client/Server Cook、性能/导航和Gaea/3A美术尚需独立验收，不可用技术开发完成代替生产完成。

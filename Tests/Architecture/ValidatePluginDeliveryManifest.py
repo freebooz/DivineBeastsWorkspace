@@ -1,25 +1,38 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """只读核对插件交付台账与真实描述、模块、内容登记及文档入口；不执行UE或宣称资产验收。
+Passed只检查RunId格式及证据路径存在，不解析证据内容、不证明运行成功或证据归属于该RunId。
 用法：python Tests/Architecture/ValidatePluginDeliveryManifest.py；0=一致，1=台账缺漏/漂移。
 """
 from __future__ import annotations
 import json
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
+from uuid import UUID
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "Docs/Implementation/PluginArchitectureOptimization/PluginDeliveryManifest.json"
 
 
 def validate(root: Path, manifest: dict) -> list[str]:
+    """只读核对给定工作区；返回全部合同错误，不把登记状态升级为运行证明。"""
+    root = root.resolve()
     errors: list[str] = []
-    def file_at(value: object, label: str) -> Path | None:
-        if not isinstance(value, str) or not value or "\\\\" in value:
+
+    def file_at(value: object, label: str, *, allow_directory: bool = False) -> Path | None:
+        """描述/入口必须为文件，证据也可指向已有目录；规范路径与解析后根边界同时校验。"""
+        if not isinstance(value, str) or not value or "\\" in value:
             errors.append(f"{label}必须是正斜杠项目相对路径")
             return None
+        relative = PurePosixPath(value)
+        # 不先折叠..或重复分隔符；也拒绝Windows盘符相对路径，避免不同宿主产生不同解释。
+        if (not relative.parts or relative.is_absolute() or PureWindowsPath(value).drive
+                or ".." in relative.parts or relative.as_posix() != value):
+            errors.append(f"{label}必须是规范项目相对路径，禁止绝对路径、盘符、.或..分量: {value}")
+            return None
         candidate = (root / value).resolve()
-        if Path(value).is_absolute() or not candidate.is_relative_to(root.resolve()) or not candidate.is_file():
+        if (not candidate.is_relative_to(root)
+                or not (candidate.is_file() or (allow_directory and candidate.is_dir()))):
             errors.append(f"{label}缺失或越界: {value}")
             return None
         return candidate
@@ -44,11 +57,34 @@ def validate(root: Path, manifest: dict) -> list[str]:
         state = scenario.get("Status")
         if state not in ("NotRun", "Blocked", "Passed", "Failed", "HistoricalOnly"):
             errors.append(f"场景{sid}状态无效")
-        if state == "Passed" and (not scenario.get("RunId") or not scenario.get("Evidence")):
-            errors.append(f"场景{sid}声明通过但无本次运行/证据")
+        if state == "Passed":
+            run_id = scenario.get("RunId")
+            try:
+                if not isinstance(run_id, str):
+                    raise ValueError("RunId不是字符串")
+                UUID(run_id)
+            except ValueError:
+                errors.append(f"场景{sid} Passed的RunId必须是合法GUID字符串")
+            evidence = scenario.get("Evidence")
+            if not isinstance(evidence, list) or not evidence:
+                errors.append(f"场景{sid} Passed的Evidence必须是非空字符串列表")
+            else:
+                # 此处只证明每个路径在工作区内存在；运行状态和RunId关联由执行入口/人工复核负责。
+                for index, value in enumerate(evidence):
+                    file_at(value, f"场景{sid} Evidence[{index}]", allow_directory=True)
         if state == "Blocked" and not scenario.get("BlockerZh"):
             errors.append(f"场景{sid}未说明阻塞")
-    actual = {p.stem: p for p in (root / "Game/Plugins").rglob("*.uplugin")}
+    # 先保留全部物理描述再建身份索引；Windows不区分大小写，不能让字典覆盖隐藏副本。
+    descriptor_groups: dict[str, list[Path]] = {}
+    for path in (root / "Game/Plugins").rglob("*.uplugin"):
+        descriptor_groups.setdefault(path.stem.casefold(), []).append(path)
+    actual = {}
+    for paths in descriptor_groups.values():
+        if len(paths) != 1:
+            errors.append("物理插件描述重名（忽略大小写）: " + ", ".join(
+                sorted(path.relative_to(root).as_posix() for path in paths)))
+            continue
+        actual[paths[0].stem] = paths[0]
     seen = set()
     content = set()
     for record in records:
@@ -105,7 +141,7 @@ def main() -> int:
         return 1
     plugins = manifest["Plugins"]
     reserved = sum(m["Maturity"] == "Reserved" for p in plugins for m in p["Modules"])
-    print(f"PLUGIN_DELIVERY_MANIFEST_PASS: plugins={len(plugins)} code={sum(p['Kind']=='Code' for p in plugins)} content={sum(p['Kind']=='Content' for p in plugins)} reserved_modules={reserved}; 文档/登记一致，不代表UE或生产验收")
+    print(f"PLUGIN_DELIVERY_MANIFEST_PASS: plugins={len(plugins)} code={sum(p['Kind']=='Code' for p in plugins)} content={sum(p['Kind']=='Content' for p in plugins)} reserved_modules={reserved}; 文档/登记及证据存在性一致，不证明运行成功、RunId关联或UE/生产验收")
     return 0
 
 if __name__ == "__main__":

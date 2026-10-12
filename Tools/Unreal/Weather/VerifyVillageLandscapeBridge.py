@@ -29,6 +29,10 @@ def run() -> None:
         raise RuntimeError("拒绝检查其他项目：" + project)
 
     lib = unreal.EditorAssetLibrary
+    # UE命令行PythonScriptCommandlet初始AssetRegistry未必已扫描Content-only插件；
+    # 同步扫描已挂载WorldPack路径只更新内存发现索引，不创建、覆盖或保存任何资产。
+    registry = unreal.AssetRegistryHelpers.get_asset_registry()
+    registry.scan_paths_synchronous(["/DBAWorldPack_Village"], force_rescan=True)
     for path in (MAP, MATERIAL):
         if not lib.does_asset_exist(path):
             raise FileNotFoundError("工程正式资产缺失：" + path)

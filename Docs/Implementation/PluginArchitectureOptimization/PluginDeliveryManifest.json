@@ -1246,17 +1246,17 @@
     {
       "Id": "foundation-data",
       "NameZh": "定义身份、唯一性索引及资源租约",
-      "Entry": "Build/Validation/TestFoundationUnreal.ps1",
+      "Entry": "Build/Validation/TestPluginArchitectureUnreal.ps1",
       "Profiles": [
         "FoundationStandalone"
       ],
       "Map": "/Game/Development/Foundation/Maps/L_FoundationBootstrap",
       "Steps": [
-        "构建包含当前测试源码的Editor目标。",
-        "使用-Execute运行GamePlatform.Data等既有基础套件，导出本次index.json。",
-        "核对新增索引用例名称，重复查找不重新扫描，重复ID/编辑器候选/资源退出仍关闭式失败。"
+        "通过Build/Game/BuildFoundation.ps1 -Editor -EngineRoot <锁定UE根> -RunId <BuildRunId>完成当前工作区完整Editor构建，不带-OnlyModules；保留Saved/Validation/FoundationM0/<BuildRunId>/Build/result.json。",
+        "使用Build/Validation/TestPluginArchitectureUnreal.ps1 -Execute -Suites Data -EngineRoot <同一UE根> -BuildResultPath Saved/Validation/FoundationM0/<BuildRunId>/Build/result.json运行Data套件；构建证据校验通过后导出本次独占目录的index.json。",
+        "核对Data组16个必需完整身份逐一唯一且Success，包含资源租约、4个Index和2个SourceIndexRegistry用例；重复查找不重新扫描，重复ID/编辑器候选/资源退出仍关闭式失败。"
       ],
-      "Expected": "当前用例实际发现且Success；所有权和迟到回调边界保持。",
+      "Expected": "当前源码与完整Editor构建证据相符，Data组16个必需测试身份实际发现且逐一唯一Success；所有权和迟到回调边界保持。",
       "Status": "NotRun",
       "RunId": null,
       "Evidence": []

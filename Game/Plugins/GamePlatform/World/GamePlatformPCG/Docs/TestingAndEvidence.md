@@ -118,3 +118,12 @@
 - M0/M1执行预设拒绝尚未验证的WorldPartition/Runtime/HiGen开关，批次限256 PCG组件及1,048,576点；相应UE自动化源码已添加，兼容C++20语法检查通过；项目实际性能、客户端和服务器Cook仍未验证。
 - `GeneratePreview`等待官方任务`bGenerated`完成而非仅依赖`IsGenerating`，范围内取消再等最多2秒，未排空不强制拆毁仍活跃的PCG组件。安全脚本增加对运行/Editor全源码的模块新鲜度校验和仅针对自己的命令行进程的420秒超时。
 - 当前安装的UnrealEditor正由其它会话占用，最新PCG Runtime/Editor DLL仍早于本次源码；因此只报告已完成的**语法级检查**和已有资源盘点，不报告UE自动化/G01～G16或Cook运行通过。
+## 2026-10-12｜无Gaea条件下真实编译、独立资源与安全执行记录（最新）
+
+- **UE Editor正式模块编译**：使用锁定UE5.8 UnrealBuildTool（虚幻构建工具）执行`DivineBeastsArenaEditor Win64 Development -Module=GamePlatformPCG+GamePlatformPCGEditor`，编译与DLL链接14项动作均完成，UBT结果`Succeeded`退出0。证据`Saved/Validation/GamePlatformPCG/PCG_Runtime_Editor_Rebuild_20261012.log`。早期写“Editor DLL仍早于源码”的段落是当时历史状态，不能作为本轮最新编译结论。
+- **实际Editor执行的边界**：12:12有其他两个共享UBT进程仍在运行（其中一个独立Worktree，另一个主工程Client）。`RunGoldSpatialProbe.ps1 -Stage SpatialProbe`曾被共享构建锁阻挡退出1；随后进行了最多8次间隔7秒的有界只读检查，仍有1～2个UBT，故没有启动竞争的UnrealEditor-Cmd，也没有强制结束他人的构建。**空间探针、真实GeneratePreview、G09双进程、G01～G16仍未实际执行。**
+- **新的非Gaea技术三维几何**：项目Village SourceArt添加6份真正OBJ源（三维模型）、1份MTL技术颜色表、1份SHA-256 JSON，生成器`GenerateVillagePrototypeMeshes.py --apply`和`--verify`均退出0。六种领域覆盖林木、岩石、农作物、围栏、农门和木桥，共5934个三角面。来源类别明确`procedural_technical_prototype_not_approved`，不是AAA美术批准资源，也不是已导入的UE StaticMesh（静态网格）。
+- **受控UE导入与审查地图脚本**：`ImportVillageTechnicalPrototypes.py`、`RunVillagePrototypeImport.ps1`和`AuthorVillagePrototypeReviewMap.py`已写入并通过源码语法/只读入口检查。其未来目标是只向`/DBAWorldPack_Village/Development/PCG（项目PCG开发资源）`导入真正StaticMesh并创建独立技术审查地图，保存后重开。由于其它任务仍持有UBT构建进程，**本轮尚未实际产生上述技术`.uasset/.umap`**。
+- **端侧及生产隔离**：`Game/Config/DefaultGame.ini`已明确默认`DirectoriesToNeverCook=(Path="/DBAWorldPack_Village/Development/PCG")`；生产门禁`VerifyVillagePCGProductionSources.py`拒绝所有`Development`和`_Tech`网格，不能因为技术原型源通过SHA就当正式可上架的3A模型或权威碰撞。
+- **最小验证证据**：`ValidateVillagePCGTechnicalMeshes.py（技术几何和生产隔离合同）`执行返回0，核对六份几何三角、面法向、厘米坐标、来源字节、Cook默认排除和生产映射禁止；两份导入相关Python脚本与技术地图脚本AST检查通过，PowerShell作者入口解析与只读`Inspect`通过。正式客户端/服务器目标编译、Cook、DataValidation和实际Gameplay/导航性能仍需独立验收。
+- **无Gaea资源阶段统一入口（本轮）**：`RunNoGaeaPCGDevelopment.ps1`新增默认只读合同、独占UE安全门禁、6项OBJ导入/Editor回读、独立技术地图创作与二次重开、Gold空间/生成预览/G09、逐阶段日志。Plan实测前3项退出0，Apply被共享UBT阻断退出1；此结果是正确安全拒绝，不是UE功能失败。18次有界并发窗口检测仍无独占环境，不停止其他任务。碰撞安全合同和源完整性测试退出0；新技术网格并未变成已导入UStaticMesh，G01～G16和双Cook未执行。

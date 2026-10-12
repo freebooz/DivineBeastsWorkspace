@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "sourceKind": "procedural_technical_prototype_not_approved",
+  "engineTarget": "UE5.8",
+  "units": "centimeters_Z_up",
+  "outputUsage": "Editor technical samples only; not final artistic assets or Server authority",
+  "galeaRequired": false,
+  "meshSources": [
+    {
+      "role": "ForestCanopy",
+      "domainId": "Forest.Canopy",
+      "usage": "ClientCosmetic",
+      "relativePath": "TP_DBA_PCG_ForestCanopy.obj",
+      "triangles": 2944,
+      "boundsCm": [
+        [
+          -271.3,
+          254.758
+        ],
+        [
+          -240.496,
+          243.732
+        ],
+        [
+          0.0,
+          510.0
+        ]
+      ],
+      "sha256": "3d5e40c9cb1ac05a1bc1abeb90d9ac17934271b9687a4444f7b1317ebc161d57"
+    },
+    {
+      "role": "RockScatter",
+      "domainId": "Rock.Scatter",
+      "usage": "ClientCosmetic",
+      "relativePath": "TP_DBA_PCG_RockScatter.obj",
+      "triangles": 510,
+      "boundsCm": [
+        [
+          -149.093,
+          176.214
+        ],
+        [
+          -123.245,
+          125.655
+        ],
+        [
+          14.718,
+          205.089
+        ]
+      ],
+      "sha256": "7743f0ec601483db324cc0cb6224feb1d52dddf2e6e51b42dfa9579332aaad90"
+    },
+    {
+      "role": "AgriCrop",
+      "domainId": "Agri.Crop",
+      "usage": "ClientCosmetic",
+      "relativePath": "TP_DBA_PCG_AgriCrop.obj",
+      "triangles": 968,
+      "boundsCm": [
+        [
+          -84.623,
+          73.873
+        ],
+        [
+          -36.076,
+          47.927
+        ],
+        [
+          3.784,
+          176.0
+        ]
+      ],
+      "sha256": "45ff27349b351d6f5d745d9740316dec46a0543064da05842f7a73e3c9d96fa8"
+    },
+    {
+      "role": "FieldFence",
+      "domainId": "Encl.FieldFence",
+      "usage": "StaticWorld",
+      "relativePath": "TP_DBA_PCG_FieldFence.obj",
+      "triangles": 96,
+      "boundsCm": [
+        [
+          -156.5,
+          156.5
+        ],
+        [
+          -11.5,
+          11.5
+        ],
+        [
+          0.0,
+          163.5
+        ]
+      ],
+      "sha256": "08fb5f6fb6a18d2936b47efc8c485b16e3d25bdf2761b7158913bef1ce78788c"
+    },
+    {
+      "role": "FarmGate",
+      "domainId": "Connector.Gate",
+      "usage": "StaticWorld",
+      "relativePath": "TP_DBA_PCG_FarmGate.obj",
+      "triangles": 96,
+      "boundsCm": [
+        [
+          -207.5,
+          207.5
+        ],
+        [
+          -25.0,
+          25.0
+        ],
+        [
+          0.0,
+          294.0
+        ]
+      ],
+      "sha256": "3645c682ff7740b3f44bf10c098956005130973d1470672f6fdb74df71094794"
+    },
+    {
+      "role": "WoodBridge",
+      "domainId": "Connector.Bridge",
+      "usage": "StaticWorld",
+      "relativePath": "TP_DBA_PCG_WoodBridge.obj",
+      "triangles": 1320,
+      "boundsCm": [
+        [
+          -399.0,
+          399.0
+        ],
+        [
+          -127.5,
+          127.5
+        ],
+        [
+          0.0,
+          230.971
+        ]
+      ],
+      "sha256": "2ada27aa403107bfb136782aa635231a4d7b69d1b35e2ba886243fe1f1079552"
+    }
+  ],
+  "material": {
+    "relativePath": "VillagePCGPrototypeMaterials.mtl",
+    "sha256": "d3016afb4af30184d68311de270f4fcb97d180166b6f6d24903cf5e61d4e69e3"
+  },
+  "humanArtApproval": "pending",
+  "unrealAssetCreated": false
+}

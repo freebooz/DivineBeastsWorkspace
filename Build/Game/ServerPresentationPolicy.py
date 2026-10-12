@@ -173,6 +173,33 @@ def _unmanaged_ini_lines(text: str, begin: str, end: str):
             yield section, stripped
 
 
+def _ini_directive(line: str, *, native: bool) -> tuple[str, str, str] | None:
+    """按锁定UE5.8消费者识别指令，不把未知前缀反复剥离成受管键。
+
+    ConfigCacheIni要求等号，先跳过一个~，再消费一个+-!.@*^命令；命令后不去前导空白。
+    UBT ConfigFile仅消费+-!，随后跳过空格/Tab；! RemoveKey允许没有等号和值。
+    Game配置按两种消费者的识别结果预检，Pak按实际UBT语义；不声称两者完全等价。
+    """
+    key, separator, value = line.partition("=")
+    command = ""
+    if native:
+        if not separator:
+            return None
+        key = key.lstrip()
+        if key.startswith("~"):
+            key = key[1:]
+        if key[:1] in ("+", "-", ".", "!", "@", "*", "^"):
+            command, key = key[0], key[1:]
+        key = key.rstrip()
+    else:
+        if key[:1] in ("+", "-", "!"):
+            command, key = key[0], key[1:].lstrip(" \t")
+        if not separator and command != "!":
+            return None
+        key = key.rstrip(" \t") if separator else key.strip()
+    return (key.casefold(), command, value.strip()) if key else None
+
+
 class ServerPresentationPolicy:
     """持有经校验的只读规则快照；不存在全局动态扫描或默认未知profile回退。"""
 
@@ -224,16 +251,19 @@ class ServerPresentationPolicy:
         for section, line in _unmanaged_ini_lines(text, BEGIN_COOK, END_COOK):
             if section != PACKAGING_SECTION[1:-1].casefold():
                 continue
-            directive = re.fullmatch(r"([!+.-]?)DirectoriesToNeverCook\s*=\s*(.*)", line, re.I)
-            if not directive:
-                continue
-            if directive.group(1) in ("", "!"):
-                raise PolicyError(f"{profile}段外重置NeverCook数组")
-            value = re.fullmatch(r'\(\s*Path\s*=\s*"?([A-Za-z0-9_/]+)"?\s*\)\s*(?:;.*)?', directive.group(2), re.I)
-            if not value:
-                raise PolicyError(f"{profile}段外NeverCook目录值无效")
-            if value.group(1).casefold() in governed:
-                raise PolicyError(f"{profile}段外重复/撤销受管目录: {value.group(1)}")
+            for native in (True, False):
+                directive = _ini_directive(line, native=native)
+                if directive is None or directive[0] != "directoriestonevercook":
+                    continue
+                _, command, raw_value = directive
+                # Set/!/^(清空)和@/*(改变结构数组合并)均不能在真源段外影响受管数组。
+                if command not in ("+", "-", "."):
+                    raise PolicyError(f"{profile}段外重置或改变NeverCook数组语义")
+                value = re.fullmatch(r'\(\s*Path\s*=\s*"?([A-Za-z0-9_/]+)"?\s*\)\s*(?:;.*)?', raw_value, re.I)
+                if not value:
+                    raise PolicyError(f"{profile}段外NeverCook目录值无效")
+                if value.group(1).casefold() in governed:
+                    raise PolicyError(f"{profile}段外重复/撤销受管目录: {value.group(1)}")
         return rendered
 
     def render_pak(self, text: str) -> str:
@@ -246,8 +276,9 @@ class ServerPresentationPolicy:
                  *[f'+Files=".../{path}/..."' for path in sorted(directories)]]
         rendered, _ = _replace_managed(text, BEGIN_PAK, END_PAK, lines)
         for section, line in _unmanaged_ini_lines(text, BEGIN_PAK, END_PAK):
-            if section == PAK_SECTION[1:-1].casefold() and re.match(
-                    r"^[!+.-]?(?:Files|bExcludeFromPaks|bOverrideChunkManifest)\s*=", line, re.I):
+            directive = _ini_directive(line, native=False)
+            if section == PAK_SECTION[1:-1].casefold() and directive is not None and directive[0] in (
+                    "files", "bexcludefrompaks", "boverridechunkmanifest"):
                 raise PolicyError("段外覆盖DedicatedServer受管Pak规则")
         return rendered
 
@@ -348,8 +379,11 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
                     _under(package.casefold(), root.casefold()) or _under(root.casefold(), package.casefold())
                     for root in AUTHORITY_ROOTS):
                 raise PolicyError(f"不允许排除权威或泛化根目录: {package}")
-            if _under(package, "/Game/Development/DivineBeasts/Abilities") and not _under(
-                    package, "/Game/Development/DivineBeasts/Abilities/UI"):
+            # Windows包路径按大小写无关的目录段保护祖先/后代，仅UI子树可作为表现排除。
+            development_abilities = "/game/development/divinebeasts/abilities"
+            normalized_package = package.casefold()
+            if (_under(normalized_package, development_abilities) or _under(development_abilities, normalized_package)) and not _under(
+                    normalized_package, development_abilities + "/ui"):
                 raise PolicyError("只能排除开发技能UI子目录，不能剥离其权威技能定义")
             if not isinstance(source, str) or not re.fullmatch(r"Game/(?:Content|Plugins)/(?:[A-Za-z0-9_]+/)*[A-Za-z0-9_]+", source):
                 raise PolicyError(f"危险或泛化源目录: {source}")
@@ -465,6 +499,7 @@ def audit_stage(policy: ServerPresentationPolicy, profile: str, stage: Path, unr
 
     全局IoStore元数据可以没有命名资产，但CSV仍须有真实非空Chunk；整体仍须有实际包及
     选定地图。审计目录必须新建且位于Stage之外，不能复用历史CSV冒充本次产物。
+    本门禁验证资源禁入清单及必需容器存在，不验证全部UCAS/Pak载荷块完整性。
     """
     policy.cook_paths(profile)
     if not stage.is_dir():
@@ -482,7 +517,9 @@ def audit_stage(policy: ServerPresentationPolicy, profile: str, stage: Path, unr
         raise PolicyError(f"缺少锁定UnrealPak: {unreal_pak}")
     evidence.mkdir(parents=True, exist_ok=False)
     report = {"Status": "Failed", "Profile": profile, "Stage": str(stage),
-              "EvidenceKind": "ActualStageAndFreshUnrealPakListings", "Containers": [], "RuntimeVerified": False}
+              "EvidenceKind": "ActualStageAndFreshUnrealPakListings", "Containers": [], "RuntimeVerified": False,
+              "ValidationScope": "ServerPresentationExclusionsAndRequiredContainerInventory",
+              "PayloadIntegrityVerified": False}
     try:
         entries = []
         snapshot = []

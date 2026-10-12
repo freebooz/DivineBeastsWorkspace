@@ -38,6 +38,9 @@ def normalize(asset: str) -> Path | None:
     if not isinstance(asset, str) or not asset.startswith("/DBAWorldPack_Village/"):
         return None
     relative = asset.removeprefix("/DBAWorldPack_Village/")
+    # 研发原型即使通过了文件SHA，也不能被人为换到正式MeshSet映射里冒充3A美术。
+    if relative.startswith("Development/") or relative.endswith("_Tech") or ".Technical" in relative:
+        return None
     if "." in relative:
         basename, object_name = relative.rsplit(".", 1)
         if object_name != basename.rsplit("/", 1)[-1]:

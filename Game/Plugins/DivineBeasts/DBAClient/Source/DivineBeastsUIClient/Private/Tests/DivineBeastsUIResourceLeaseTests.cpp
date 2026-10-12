@@ -241,13 +241,19 @@ struct FRootLeaseFixture
         Player->ViewportClient = Viewport.Get();
         ReplaceController();
         FLeaseAccess::Configure(*UI.Get(), *Platform.Get(), Data);
-        bValid = Controller.IsValid() && UI->GetWorld() == World.Get();
+        bValid = Controller.IsValid() && UI->GetWorld() == World.Get() &&
+            Platform->GetLocalPlayer() == Player.Get() && Controller->GetLocalPlayer() == Player.Get() &&
+            Player->GetPlayerController(World.Get()) == Controller.Get();
     }
     APlayerController* ReplaceController()
     {
         auto* NewController = World->SpawnActor<APlayerController>();
         if (NewController)
         {
+            // 本夹具不启动世界玩法，未执行Controller的PostInitializeComponents；
+            // UPlayer::GetPlayerController(World)只查World列表，必须显式注册并配对撤销。
+            if (auto* Previous = Controller.Get()) World->RemoveController(Previous);
+            World->AddController(NewController);
             NewController->SetPlayer(Player.Get());
             Player->PlayerController = NewController;
             Controller = NewController;
@@ -264,6 +270,7 @@ struct FRootLeaseFixture
     ~FRootLeaseFixture()
     {
         FLeaseAccess::Clear(*UI.Get());
+        if (auto* RegisteredController = Controller.Get()) World->RemoveController(RegisteredController);
         Player->PlayerController = nullptr;
         Player->ViewportClient = nullptr;
         World->SetGameInstance(nullptr);

@@ -189,3 +189,19 @@
 - 已在新的`DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2`物理创建**10张8位权重PNG、1份含1,024个实际PCG候选点的JSON和1份Manifest**（12个源文件），明确`sourceKind=calibration_only_not_gaea`，绝非Gaea发布产物或UE .uasset；拒绝覆盖旧`CalibrationDerived`、正式Landscape、Material和村庄地图。
 - 新增`Tests/Architecture/ValidateTerrainMaskPCGProjectionV2.py`核对全部11项生成文件SHA、十层总权重255、无显式道路时RoadDirt全0、42个高排除样本保留Gameplay.Exclusion、人工RoadOverlay独立优先级、非法值/尺寸失败关闭；退出码0。旧版`ValidateTerrainMaskPCGProjection.py`重跑也退出0，证明旧技术校准没有被静默修改。当前仍需正式Gaea真实导出、UE数据导入及金标准实际PCG生成/G01～G16/双Cook，不得把技术来源当真实地图。
 - **正式PCG资源准入门禁**：新增`Tools/Unreal/PCG/VerifyVillagePCGProductionSources.py`，真实Gaea 2.3和投影V2、道路来源，以及六类项目静态网格及SHA/用途必须齐备，才有机会进入后续真实UE验证。当前技术校准不冒充正式地形，Village无已审核的PCG静态网格映射；首次执行安全拒绝并返回2，证据为`Saved/Validation/GamePlatformPCG/VillageProductionSourceReadiness_20261012.json`。仅只读源文件和现有资产；不以通过此门禁取代UE AssetRegistry、G01～G16、导航和双端Cook。
+## 2026-10-12｜无Gaea输入条件下继续完成PCG独立开发链
+
+1. **去除不合理的前置阻断**：当前确实没有真实Gaea 2.3输入，不要求真实Gaea才能完成GamePlatformPCG运行/Editor代码、已保存GoldLevel、Forest/Rock/Crop三份生成图、测试图与Project WorldDirector。Village地形可继续使用V2技术校准，但严禁将它当作正式地貌/Gaea源。真实Gaea、最终地形、正式3A美术与权威Cook单独作为生产签收门槛。
+2. **正式UBT实际通过**：`DivineBeastsArenaEditor Win64 Development -Module=GamePlatformPCG+GamePlatformPCGEditor -UsePrecompiled -NoEngineChanges -NoUBA`于11:56:28完成14个UE编译/链接动作，返回`Result: Succeeded`、退出0，PCG运行DLL与编辑器DLL均有2026-10-12 11:56日期。证据`Saved/Validation/GamePlatformPCG/PCG_Runtime_Editor_Rebuild_20261012.log`；这不代表GoldLevel实际运行或G01～G16全项通过。
+3. **真实GoldLevel执行仍在等待独立引擎占用解除**：尝试`RunGoldSpatialProbe.ps1 -Stage SpatialProbe`时另一会话在`.worktrees/v`启动UBT，脚本按设计退出1拒绝争用，未损坏资源。其后又有主工程Client UBT PID29912在共享引擎编译，故没有抢占、关闭或热重载其它构建。待UBT退出后使用**已重新编译**的Editor DLL继续独立空间探针、实际Spawner预览和G09双进程对比。
+4. **Village项目层六类技术网格源已生成并独立复核**：在`DBAWorldPack_Village/SourceArt/PCG/TechnicalPrototype_v1`创建六份完整厘米制Z向上OBJ真实三角模型、1份技术材料MTL与1份SHA-256/来源JSON，分别为森林乔木2944面、岩石510面、作物968面、田篱96面、农门96面、木桥1320面；`GenerateVillagePrototypeMeshes.py --apply`和`--verify`分别退出0。它们仅是Editor测试用非发行技术几何源，不是最终AAA美术，也尚不是`.uasset`。
+5. **真正UE5.8导入和审查地图源码**：新增`ImportVillageTechnicalPrototypes.py`与`RunVillagePrototypeImport.ps1`，显式导入6种OBJ至`/DBAWorldPack_Village/Development/PCG/Meshes`，严格先做SHA-256/同名占用/厘米真实Bounds/StaticMesh反射回读与真实保存，且拒绝其它UE Editor/UBT同时运行；`AuthorVillagePrototypeReviewMap.py`为单独技术关卡作者与回读入口，只接受这六份批准模型，不覆盖正式Village或原GoldLevel。以上是编辑器工具脚本，不等于实际UE资源已经创建；独立真实Editor执行仍待共享构建锁释放。
+6. **资源隔离和生产准入**：`Game/Config/DefaultGame.ini`新增`DirectoriesToNeverCook=(Path="/DBAWorldPack_Village/Development/PCG")`，技术目录不进入正式Client/Server Cook；`VerifyVillagePCGProductionSources.py`明确拒绝`Development`或`_Tech`资产进入正式六类MeshSet来源清单。新增`ValidateVillagePCGTechnicalMeshes.py`核验六真实源几何三角面、法向、厘米高度、来源字节哈希及Cook隔离，运行退出0；普通Python AST、PowerShell语法、导入Inspect只读检查也通过。
+
+**当前不能宣称完成的部分**：实际UE StaticMesh导入与重开、独立演示地图保存、GoldLayer PCG Generation/ISM、G01～G16、Client/Server干净Cook、导航/Gameplay权威与正式Gaea/AAA美术审核。没有替用户结束其它构建，没有重写已保存的30基础资源或GoldLevel，也未擅自提交/推送。
+## 2026-10-12｜无Gaea独立执行链与旧模块之外的Editor排他验证（补充）
+
+- `RunVillagePrototypeImport.ps1（技术导入工具）`已扩展为`Inspect/Apply/Verify/ReviewApply/ReviewVerify`五个受控阶段，增设技术审查地图及六网格存在性前检；底层脚本清除OBJ导入器可能自动生成的简单碰撞，Review地图Actor全部无碰撞，避免一个包围盒堵住农门和桥面。六模型真正服务器碰撞、NavMesh和Gameplay仍须另外制作，不允许复用此技术网格发布。
+- 新增`RunNoGaeaPCGDevelopment.ps1`整合开发无Gaea阶段，默认只读；`-Apply`先导入/验证6 StaticMesh再创建/独立回读技术审查地图，然后才执行Gold的空间探针、Spawner与G09，且按阶段保存日志/退出码。它不会改动`L_Village_Start`正式地图、原GoldLevel或基础图文件；技术成功仍退出2，因为G01～G16/双Cook尚未完成。
+- 本轮实际执行该入口Plan，`TechSource（六技术网格源）`、`Foundation（30基础资源）`、`Gold（17+3+3+1金标准资产）`文件核验全部退出0，独立运行目录`Saved/Validation/GamePlatformPCG/NoGaeaDevelopment/f8897afb-7173-4783-9904-b9baa21fc366`。`-Apply`实际预检因另外任务UBT占用返回1，证据`NoGaeaDevelopment/1725eb94-522f-4a98-9653-638d47cfecf4`；没有启动Editor或修改资源。随后额外18次有界空闲窗口检测全部观察到其他UBT或编辑器活跃，按设计返回3，没有抢占。
+- 导入脚本碰撞合同、完整OBJ字节/顶点/法线/三角面、禁止Cook、五阶段路由的静态审查`ValidateVillagePCGTechnicalMeshes.py`退出0；PowerShell及Python语法、PCG工具`git diff --check`退出0。**本轮仅代码与本地资源源文件完成，已编译的PCG DLL可用，但最新技术UObject和Gold运行场景仍未在真正Editor验证。**

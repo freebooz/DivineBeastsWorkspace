@@ -94,6 +94,38 @@ class PolicyBehaviorTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.rejected_policy(lambda raw: raw["CookDirectories"][0].update(PackagePath=path))
 
+    def test_development_authority_overlap_is_case_insensitive(self):
+        # 根和祖先使用实际Windows目录；子目录/UI同名前缀必须在查盘前按权威边界拒绝。
+        for tail in ("DivineBeasts/Abilities", "DivineBeasts/abilities",
+                     "DivineBeasts", "divinebeasts",
+                     "DivineBeasts/abilities/Definitions", "DivineBeasts/Abilities/UIProfiles"):
+            raw = copy.deepcopy(self.raw)
+            raw["CookDirectories"].append({
+                "PackagePath": "/Game/Development/" + tail,
+                "SourceDirectory": "Game/Content/Development/" + tail,
+                "Profiles": "AllServers", "Availability": "Present", "Reason": "权威边界回归夹具"})
+            with self.subTest(tail=tail), tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
+                path = Path(folder) / "policy.json"
+                path.write_text(json.dumps(raw), encoding="utf-8")
+                with self.assertRaisesRegex(self.api.PolicyError, "权威技能定义"):
+                    self.api.load_policy(path, ROOT)
+
+    def test_development_ui_exception_remains_narrow_after_case_normalization(self):
+        for tail in ("DivineBeasts/Abilities/UI", "DivineBeasts/abilities/ui"):
+            raw = copy.deepcopy(self.raw)
+            rule = next(rule for rule in raw["CookDirectories"]
+                        if rule["PackagePath"] == "/Game/Development/DivineBeasts/Abilities/UI")
+            rule.update(PackagePath="/Game/Development/" + tail,
+                        SourceDirectory="Game/Content/Development/" + tail)
+            with self.subTest(tail=tail), tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
+                path = Path(folder) / "policy.json"
+                path.write_text(json.dumps(raw), encoding="utf-8")
+                accepted = self.api.load_policy(path, ROOT)
+                self.assertTrue(accepted.is_forbidden(
+                    "/Game/Development/DivineBeasts/Abilities/UI/Profile.uasset", "VillageDevelopmentServer"))
+                self.assertFalse(accepted.is_forbidden(
+                    "/Game/Development/DivineBeasts/Abilities/DA_Dev.uasset", "VillageDevelopmentServer"))
+
     def test_duplicate_and_inconsistent_source_paths_are_rejected(self):
         self.rejected_policy(lambda raw: raw["CookDirectories"].append(copy.deepcopy(raw["CookDirectories"][0])))
         self.rejected_policy(lambda raw: raw["CookDirectories"][0].update(SourceDirectory="Game/Plugins"))
@@ -150,10 +182,47 @@ class PolicyBehaviorTests(unittest.TestCase):
             with self.subTest(suffix=suffix), self.assertRaises(self.api.PolicyError):
                 self.policy.render_pak(original + suffix)
 
+    def test_native_ini_symbols_and_tilde_cannot_override_managed_array(self):
+        # UE5.8先跳过一个~，再识别命令；^清空既有条目，@/*会改变结构数组语义。
+        original = (ROOT / "Game/Config/Custom/VillageServer/DefaultGame.ini").read_text(encoding="utf-8-sig")
+        operations = ("", "+", "-", ".", "!", "@", "*", "^")
+        for wrapper in ("", "~"):
+            for operation in operations:
+                directive = wrapper + operation + 'DirectoriesToNeverCook=(Path="/DBAUIPack_Core")'
+                for section in ("", "[/script/unrealed.projectpackagingsettings]\n"):
+                    with self.subTest(directive=directive, section=section), self.assertRaises(self.api.PolicyError):
+                        self.policy.render_config("VillageServer", original + "\n" + section + directive + "\n")
+
+    def test_ubt_operator_whitespace_and_valueless_clear_are_rejected(self):
+        original_pak = (ROOT / self.api.PAK_CONFIG).read_text(encoding="utf-8-sig")
+        original_game = (ROOT / "Game/Config/Custom/VillageServer/DefaultGame.ini").read_text(encoding="utf-8-sig")
+        for whitespace in ("", " ", "\t"):
+            for suffix in ("", "=ClearArray"):
+                for key in ("Files", "bExcludeFromPaks", "bOverrideChunkManifest"):
+                    directive = "!" + whitespace + key + suffix
+                    for section in ("", "[excludeprojectclientpresentationfromdedicatedserver]\n"):
+                        with self.subTest(directive=directive, section=section), self.assertRaises(self.api.PolicyError):
+                            self.policy.render_pak(original_pak + "\n" + section + directive + "\n")
+                directive = "!" + whitespace + "DirectoriesToNeverCook" + suffix
+                with self.subTest(directive=directive), self.assertRaises(self.api.PolicyError):
+                    self.policy.render_config("VillageServer", original_game + "\n" + directive + "\n")
+            for operation in ("+", "-"):
+                directive = operation + whitespace + 'Files=".../Unreviewed/..."'
+                with self.subTest(directive=directive), self.assertRaises(self.api.PolicyError):
+                    self.policy.render_pak(original_pak + "\n" + directive + "\n")
+
     def test_unrelated_section_with_similar_key_is_preserved(self):
         original = (ROOT / "Game/Config/Custom/VillageServer/DefaultGame.ini").read_text(encoding="utf-8-sig")
-        suffix = "\n[Unrelated.Test]\n!DirectoriesToNeverCook=UnrelatedValue\n"
+        for directive in ("!DirectoriesToNeverCook=UnrelatedValue", "~!DirectoriesToNeverCook=ClearArray",
+                          "^DirectoriesToNeverCook=", "@DirectoriesToNeverCook=Path", "! DirectoriesToNeverCook"):
+            suffix = "\n[Unrelated.Test]\n" + directive + "\n"
+            self.assertEqual(self.policy.render_config("VillageServer", original + suffix), original + suffix)
+        # 未被消费者识别的前缀属于不同字面键；不能无限剥离前缀而误伤无关配置。
+        suffix = "\n?DirectoriesToNeverCook=LiteralKey\n~~!DirectoriesToNeverCook=LiteralKey\n"
         self.assertEqual(self.policy.render_config("VillageServer", original + suffix), original + suffix)
+        pak = (ROOT / self.api.PAK_CONFIG).read_text(encoding="utf-8-sig")
+        suffix = "\n[Unrelated.Test]\n! Files\n!bExcludeFromPaks\n"
+        self.assertEqual(self.policy.render_pak(pak + suffix), pak + suffix)
 
     def test_stage_receipt_forbids_development_ui_for_every_profile(self):
         # 三profile共用DedicatedServer的Pak收据，最终产物禁入集合必须一致。

@@ -444,8 +444,8 @@ class UnrealDefinitionEditor(UnrealAssetEditor):
     PrimaryAssetType／PrimaryAssetName 标签由引擎调用该虚函数产生，读取标签验证身份。
     """
 
-    def __init__(self, unreal):
-        super().__init__(unreal)
+    def __init__(self, unreal, execution_mode="script"):
+        super().__init__(unreal, execution_mode=execution_mode)
         # load_class 的 type 参数要求继承关系；类缺失或错误均在创建工厂之前失败。
         definition_class = unreal.load_class(None, DEFINITION_CLASS_PATH)
         require(definition_class is not None, "Data 基类反射缺失，必须先编译加载 GamePlatformData")
