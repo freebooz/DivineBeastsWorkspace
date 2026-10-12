@@ -32,10 +32,9 @@ UDivineBeastsCharacterSelectScreen::GetCharacterSelectViewModel() const
     return Cast<UDivineBeastsCharacterSelectViewModel>(GetViewModel());
 }
 
-// 项目客户端选择适配：只呈现档案快照，输入索引不代表后端正式选择。
+// 项目客户端选择适配：只呈现档案快照，本地浏览ID不代表后端正式选择。
 // 激活订阅、失活解绑；角色归属和下一步流程仍由统一命令端口决定。
 #include "Components/Button.h"
-#include "Components/ComboBoxString.h"
 #include "Components/TextBlock.h"
 #include "Localization/DivineBeastsUILocalization.h"
 #include "Components/VerticalBox.h"
@@ -45,28 +44,22 @@ UDivineBeastsCharacterSelectScreen::GetCharacterSelectViewModel() const
 void UDivineBeastsCharacterSelectScreen::NativeOnActivated()
 {
     Super::NativeOnActivated();
+    if (!IsActivated()) { return; }
     SelectButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleSelect);
     LogoutButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleLogout);
     if (OpenCharacterCreateButton) { OpenCharacterCreateButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleOpenCharacterCreate); }
-    CharacterList->OnSelectionChanged.AddUniqueDynamic(this, &ThisClass::HandleCharacterChanged);
     if (auto* VM = GetCharacterSelectViewModel())
     {
         VM->OnViewStateChanged.AddUniqueDynamic(this, &ThisClass::HandleStateChanged);
         VM->OnCommandCompleted.AddUniqueDynamic(this, &ThisClass::HandleCommandCompleted);
     }
     RefreshPresentation();
-    const int32 Index = CharacterList->GetSelectedIndex();
-    if (auto* VM = GetCharacterSelectViewModel(); VM && VM->GetStateRef().Characters.IsValidIndex(Index))
-    {
-        VM->PreviewCharacterHero(VM->GetStateRef().Characters[Index].HeroDefinitionId);
-    }
 }
 void UDivineBeastsCharacterSelectScreen::NativeOnDeactivated()
 {
     SelectButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleSelect);
     LogoutButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleLogout);
     if (OpenCharacterCreateButton) { OpenCharacterCreateButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleOpenCharacterCreate); }
-    CharacterList->OnSelectionChanged.RemoveDynamic(this, &ThisClass::HandleCharacterChanged);
     if (auto* VM = GetCharacterSelectViewModel())
     {
         VM->OnViewStateChanged.RemoveDynamic(this, &ThisClass::HandleStateChanged);
@@ -74,6 +67,7 @@ void UDivineBeastsCharacterSelectScreen::NativeOnDeactivated()
     }
     ClearCharacterChoices();
     PresentedCharacterIds.Reset();
+    PreviewedCharacterId.Reset();
     Super::NativeOnDeactivated();
 }
 void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
@@ -81,30 +75,30 @@ void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
     auto* VM = GetCharacterSelectViewModel();
     if (!VM || bRefreshing) { return; }
     TGuardValue<bool> Guard(bRefreshing, true);
-    const auto& State = VM->GetStateRef();
-    const int32 OldIndex = CharacterList->GetSelectedIndex();
-    const FString OldId = PresentedCharacterIds.IsValidIndex(OldIndex) ? PresentedCharacterIds[OldIndex] : FString();
+    // 独立值快照避免预览完成/页面切换的同步通知使数组引用失效；本地ID只投影当前快照。
+    const auto State = VM->GetStateRef();
+    const FString OldId = PreviewedCharacterId;
     const TArray<FString> PreviousIds = PresentedCharacterIds;
     PresentedCharacterIds.Reset();
-    CharacterList->ClearOptions();
-    int32 SelectedIndex = 0;
     for (const auto& Item : State.Characters)
     {
-        const int32 Index = PresentedCharacterIds.Add(Item.CharacterId);
-        // 序号区分重名档案，用户文案不暴露内部CharacterId。
-        CharacterList->AddOption(FString::Printf(TEXT("%d. %s · %s"), Index + 1,
-            *Item.DisplayName.ToString(), *FDivineBeastsUILocalization::HeroNameToText(Item.HeroDefinitionId).ToString()));
-        if (Item.CharacterId == OldId || (OldId.IsEmpty() && Item.bSelected)) { SelectedIndex = Index; }
+        PresentedCharacterIds.Add(Item.CharacterId);
     }
-    if (PresentedCharacterIds.IsValidIndex(SelectedIndex)) { CharacterList->SetSelectedIndex(SelectedIndex); }
+    if (!PresentedCharacterIds.Contains(PreviewedCharacterId))
+    {
+        const auto* Default = State.Characters.FindByPredicate([](const auto& Item) { return Item.bSelected && Item.bEnabled; });
+        if (!Default) { Default = State.Characters.FindByPredicate([](const auto& Item) { return Item.bEnabled; }); }
+        if (!Default && !State.Characters.IsEmpty()) { Default = &State.Characters[0]; }
+        PreviewedCharacterId = Default ? Default->CharacterId : FString();
+    }
     if (PreviousIds != PresentedCharacterIds || ChoiceEntries.Num() != PresentedCharacterIds.Num()) { RebuildCharacterChoices(); }
-    const int32 Index = CharacterList->GetSelectedIndex();
-    const bool bEnabled = State.Characters.IsValidIndex(Index) && State.Characters[Index].bEnabled;
-    SelectButton->SetIsEnabled(VM->CanSubmitSelection() && bEnabled);
-    if (OpenCharacterCreateButton) { OpenCharacterCreateButton->SetIsEnabled(State.bAuthenticated && !State.bBusy && State.AllowedCommands.Contains(TEXT("CreateCharacter"))); }
-    CharacterList->SetIsEnabled(!State.bBusy);
-    // 空档案只引导用户显式创建；忙碌提示和已有档案的禁用原因保持原有优先级。
-    StatusText->SetText(State.Characters.IsValidIndex(Index) && !bEnabled ? State.Characters[Index].DisabledReason
+    const auto* Selected = State.Characters.FindByPredicate([this](const auto& Item) { return Item.CharacterId == PreviewedCharacterId; });
+    const bool bEnabled = Selected && Selected->bEnabled;
+    SelectButton->SetIsEnabled(State.Characters.IsEmpty() ? VM->CanOpenCharacterCreation() : VM->CanSubmitSelection() && bEnabled);
+    if (SelectButtonLabel) { SelectButtonLabel->SetText(FText::FromString(State.Characters.IsEmpty() ? TEXT("创建角色") : TEXT("进入游戏"))); }
+    if (OpenCharacterCreateButton) { OpenCharacterCreateButton->SetIsEnabled(VM->CanOpenCharacterCreation()); }
+    // 主按钮空态明确引导创建；忙碌提示和已有档案禁用原因保持原有优先级。
+    StatusText->SetText(Selected && !bEnabled ? Selected->DisabledReason
         : FText::FromString(State.bBusy ? TEXT("正在确认角色，请稍候…")
             : (State.Characters.IsEmpty() ? TEXT("尚未创建角色，请点击创建角色开始。") : TEXT("选择角色后点击确认。"))));
     FText Error = GetPageLoadError();
@@ -113,6 +107,11 @@ void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
     ErrorText->SetText(Error);
     ErrorText->SetVisibility(Error.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
     RefreshCharacterChoices();
+    if (OldId != PreviewedCharacterId)
+    {
+        if (Selected) { VM->PreviewCharacterHero(Selected->HeroDefinitionId); }
+        else { VM->ClearCharacterPreview(); }
+    }
 }
 void UDivineBeastsCharacterSelectScreen::ClearCharacterChoices()
 {
@@ -140,10 +139,7 @@ void UDivineBeastsCharacterSelectScreen::RefreshCharacterChoices()
     auto* VM = GetCharacterSelectViewModel();
     if (!VM) { return; }
     const auto& State = VM->GetStateRef();
-    const int32 SelectedIndex = CharacterList->GetSelectedIndex();
-    const FString SelectedId = PresentedCharacterIds.IsValidIndex(SelectedIndex) ? PresentedCharacterIds[SelectedIndex] : FString();
-    const bool bHasChoices = !ChoiceEntries.IsEmpty() && ChoiceEntries.Num() == PresentedCharacterIds.Num();
-    CharacterList->SetVisibility(bHasChoices ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    const FString SelectedId = PreviewedCharacterId;
     for (UDivineBeastsCharacterChoiceEntry* Entry : ChoiceEntries)
     {
         const FString& Id = Entry->GetChoiceIdentity();
@@ -153,7 +149,7 @@ void UDivineBeastsCharacterSelectScreen::RefreshCharacterChoices()
         FString Family, Epithet;
         Hero.ToString().Split(TEXT(" · "), &Family, &Epithet);
         Entry->ConfigureChoice(Id, Item->DisplayName, Hero, FText::FromString(Family.Right(1)));
-        Entry->SetChoiceEnabled(Item->bEnabled && !State.bBusy);
+        Entry->SetChoiceEnabled(Item->bEnabled && VM->CanSubmitSelection());
         Entry->SetChoiceSelected(Id == SelectedId);
         Entry->SetToolTipText(Item->bEnabled ? FText::GetEmpty() : Item->DisabledReason);
     }
@@ -164,55 +160,50 @@ void UDivineBeastsCharacterSelectScreen::RefreshCharacterChoices()
 void UDivineBeastsCharacterSelectScreen::HandleChoiceRequested(UDivineBeastsCharacterChoiceEntry* Entry)
 {
     auto* VM = GetCharacterSelectViewModel();
-    if (!Entry || !VM || VM->GetStateRef().bBusy) { return; }
+    if (!Entry || !VM || !VM->CanSubmitSelection() || !ChoiceEntries.Contains(Entry)) { return; }
     const FString Id = Entry->GetChoiceIdentity();
     const auto* Item = VM->GetStateRef().Characters.FindByPredicate([&Id](const auto& Candidate) { return Candidate.CharacterId == Id; });
     if (!Item || !Item->bEnabled) { return; }
-    const int32 Index = PresentedCharacterIds.IndexOfByKey(Id);
-    if (Index != INDEX_NONE) { CharacterList->SetSelectedIndex(Index); }
+    PreviewedCharacterId = Id;
+    VM->PreviewCharacterHero(Item->HeroDefinitionId);
+    if (IsActivated()) { RefreshPresentation(); }
 }
 UWidget* UDivineBeastsCharacterSelectScreen::NativeGetDesiredFocusTarget() const
 {
-    // 空列表没有可选档案；创建入口可见、启用且允许键盘焦点时，优先返回它并绕过旧下拉框。
+    // 空列表没有可选档案；创建入口可见、启用且允许键盘焦点时，优先返回它。
     if (const auto* VM = GetCharacterSelectViewModel(); VM && VM->GetStateRef().Characters.IsEmpty() &&
         OpenCharacterCreateButton && OpenCharacterCreateButton->GetIsEnabled() &&
         OpenCharacterCreateButton->IsVisible() && OpenCharacterCreateButton->GetIsFocusable())
     {
         return OpenCharacterCreateButton;
     }
-    const int32 Index = CharacterList ? CharacterList->GetSelectedIndex() : INDEX_NONE;
-    if (ChoiceEntries.IsValidIndex(Index) && ChoiceEntries[Index]) { return ChoiceEntries[Index]->GetChoiceFocusTarget(); }
-    return Super::NativeGetDesiredFocusTarget();
-}
-void UDivineBeastsCharacterSelectScreen::HandleCharacterChanged(FString, ESelectInfo::Type)
-{
-    if (bRefreshing) { return; }
-    const int32 Index = CharacterList->GetSelectedIndex();
-    if (auto* VM = GetCharacterSelectViewModel(); VM && PresentedCharacterIds.IsValidIndex(Index))
+    for (const UDivineBeastsCharacterChoiceEntry* Entry : ChoiceEntries)
     {
-        const FString Id = PresentedCharacterIds[Index];
-        if (const auto* Item = VM->GetStateRef().Characters.FindByPredicate([&Id](const auto& Candidate) { return Candidate.CharacterId == Id; }))
-        {
-            VM->PreviewCharacterHero(Item->HeroDefinitionId);
-        }
+        if (Entry && Entry->GetChoiceIdentity() == PreviewedCharacterId) { return Entry->GetChoiceFocusTarget(); }
     }
-    RefreshPresentation();
+    return Super::NativeGetDesiredFocusTarget();
 }
 void UDivineBeastsCharacterSelectScreen::HandleSelect()
 {
     auto* VM = GetCharacterSelectViewModel();
-    const int32 Index = CharacterList->GetSelectedIndex();
-    if (!VM || !VM->CanSubmitSelection() || !PresentedCharacterIds.IsValidIndex(Index)) { return; }
-    const FString Id = PresentedCharacterIds[Index];
+    if (!VM) { return; }
+    if (VM->GetStateRef().Characters.IsEmpty())
+    {
+        // 显式取消创建后仍可从空列表重新创建；不提交虚构的角色ID，不调用世界传输。
+        if (VM->CanOpenCharacterCreation()) { VM->ShowCharacterEntryScreen(TEXT("UI.Screen.CharacterCreate")); }
+        return;
+    }
+    if (!VM->CanSubmitSelection() || !PresentedCharacterIds.Contains(PreviewedCharacterId)) { return; }
+    const FString Id = PreviewedCharacterId;
     const auto* Item = VM->GetStateRef().Characters.FindByPredicate([&Id](const auto& Candidate) { return Candidate.CharacterId == Id; });
     // 提交前重查资格，拒绝已被禁用或从当前快照移除的档案。
     if (Item && Item->bEnabled) { VM->SelectPersistentCharacter(Id); }
-    RefreshPresentation();
+    if (IsActivated()) { RefreshPresentation(); }
 }
 void UDivineBeastsCharacterSelectScreen::HandleStateChanged(int32, int32) { RefreshPresentation(); }
 void UDivineBeastsCharacterSelectScreen::HandleCommandCompleted(FGuid, FName) { RefreshPresentation(); }
 // 转动只修改预览舞台；注销结束统一会话，不在页面中直接改变业务状态。
-void UDivineBeastsCharacterSelectScreen::HandleOpenCharacterCreate() { if (auto* VM = GetCharacterSelectViewModel()) { VM->ShowCharacterEntryScreen(TEXT("UI.Screen.CharacterCreate")); } }
+void UDivineBeastsCharacterSelectScreen::HandleOpenCharacterCreate() { if (auto* VM = GetCharacterSelectViewModel(); VM && VM->CanOpenCharacterCreation()) { VM->ShowCharacterEntryScreen(TEXT("UI.Screen.CharacterCreate")); } }
 void UDivineBeastsCharacterSelectScreen::HandleLogout() { if (auto* VM = GetCharacterSelectViewModel()) { VM->Logout(); } }
 
 // 鼠标拖动重用现有本地预览命令，忙碌时不接受交互。

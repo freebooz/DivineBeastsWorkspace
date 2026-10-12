@@ -13,7 +13,8 @@ public:
     static bool CanOpenSystemMenu(const FDivineBeastsUIViewState& State);
     /**
      * 读取State只读流程快照与CharacterEntryScreenPreference本地页面偏好，返回应显示的页面ID。
-     * CharacterEntry及LoadRoster默认显示选择页，空角色不会隐式打开创建页；未知节点返回NAME_None。
+     * 已认证CharacterEntry按已加载档案分流：无角色且允许创建时直接显示创建页，有角色显示选择页。
+     * LoadRoster保持加载中的选择页，不以暂时空列表推定新玩家；未知节点返回NAME_None。
      * 偏好只在已认证角色入口保持，包括忙碌快照；错误、加载和权威节点优先，不授予业务命令资格。
      */
     static FName ResolvePrimaryScreen(

@@ -252,7 +252,9 @@ Boot
 → InWorld / Playing
 ~~~
 
-`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。登录成功进入角色入口后默认显示 `CharacterSelect（角色选择页）`，空角色也保留选择页，由用户显式点击创建；`LoadRoster（刷新档案）`同样默认投影选择页。角色创建成功后刷新档案并返回角色入口。只有已有真实角色且允许提交选择命令时，用户点击「进入游戏」才进入 `ValidateSelection（角色选择验证）`；客户端不能绕过后端权威选择结果。
+`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。按2026-10-12最新要求，认证且档案加载完成后，无角色并允许创建时直接显示 `CharacterCreate（角色创建页）`；有角色显示 `CharacterSelect（角色选择页）`。`LoadRoster（刷新档案）`阶段不把尚未加载的空列表当作新玩家。默认分流不写本地页面偏好，创建成功后刷新档案，非空入口自然回到选择页；显式取消可停在空选择页，其主按钮显示「创建角色」。打开表单不自动创建业务角色。
+
+选择页仅维护 `ScrollBox（滚动容器）` / `VerticalBox（列表宿主）` 的真实档案卡片，不维护旧下拉框或其隐藏索引。`PreviewedCharacterId（当前浏览档案ID）`仅控制本地高亮和三维预览，不修改后端 `SelectedCharacterId（正式选择角色ID）`；按钮点击前重查当前快照中的角色存在、可用、认证、空闲及允许命令。满足后提交同一稳定ID，经唯一VM命令端口进入 `ValidateSelection（角色选择验证）`，继续真实准入和切服链路；不能直接Travel或因按钮可点击绕过后端。
 
 ### 8.3 前台三维场景与正式世界边界
 

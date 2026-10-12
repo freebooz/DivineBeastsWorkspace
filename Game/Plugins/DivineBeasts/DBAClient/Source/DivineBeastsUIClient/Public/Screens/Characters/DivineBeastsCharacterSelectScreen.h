@@ -1,12 +1,10 @@
 #pragma once
 
 #include "Screens/Characters/DivineBeastsCharacterPreviewScreen.h"
-#include "Types/SlateEnums.h"
 #include "DivineBeastsCharacterSelectScreen.generated.h"
 
 class UDivineBeastsCharacterSelectViewModel;
 class UButton;
-class UComboBoxString;
 class UTextBlock;
 class UVerticalBox;
 class UDivineBeastsCharacterChoiceEntry;
@@ -34,15 +32,16 @@ protected:
     virtual void NativeOnDeactivated() override;
     /** 空档案优先聚焦可见、启用且允许键盘焦点的创建入口；非空档案沿用当前卡片及原有回退。 */
     virtual UWidget* NativeGetDesiredFocusTarget() const override;
-    UPROPERTY(meta=(BindWidget)) TObjectPtr<UComboBoxString> CharacterList;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> SelectButton;
+    /** 主按钮空档案显示创建、有档案显示进入游戏；旧内容过渡兼容，正式资产门禁要求真实绑定。 */
+    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UTextBlock> SelectButtonLabel;
     /** 创建入口由Monolith公共页面提供；旧资产可暂缺，正式资产门禁检查它必须存在。 */
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UButton> OpenCharacterCreateButton;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> LogoutButton;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> StatusText;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> ErrorText;
-    /** 只读角色列表的现代布局宿主；缺少时保留旧页面合同。 */
-    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UVerticalBox> CharacterChoices;
+    /** 真实滚动列表的必需宿主；不再维护隐藏下拉框或旧选项索引。 */
+    UPROPERTY(meta=(BindWidget)) TObjectPtr<UVerticalBox> CharacterChoices;
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UTextBlock> SelectedHeroName;
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UTextBlock> SelectedCharacterName;
     /** Monolith角色卡片资产类型，由项目内容包持有样式与布局。 */
@@ -60,12 +59,13 @@ private:
     /** 平台事件参数为修订号与页面代次；只刷新档案投影，不持有第二份权威选择。 */
     UFUNCTION() void HandleStateChanged(int32 Revision, int32 PageGeneration);
     UFUNCTION() void HandleCommandCompleted(FGuid RequestId, FName ErrorCode);
-    UFUNCTION() void HandleCharacterChanged(FString Item, ESelectInfo::Type SelectionType);
     UFUNCTION() void HandleSelect();
     /** 只打开创建表单，提交创建仍由创建页经统一命令端口执行。 */
     UFUNCTION() void HandleOpenCharacterCreate();
     UFUNCTION() void HandleLogout();
     /** 仅缓存显示项对应ID；提交和预览前重新查询当前只读快照，拒绝失效项。 */
     TArray<FString> PresentedCharacterIds;
+    /** 页面内当前浏览档案的稳定ID，失活清空；只决定高亮和预览，不改写后端SelectedCharacterId。 */
+    UPROPERTY(Transient) FString PreviewedCharacterId;
     bool bRefreshing = false;
 };

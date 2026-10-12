@@ -207,6 +207,8 @@ def main():
     parser.add_argument("--resume-introductions", action="store_true", help="仅恢复同一编辑器中已留证的部分介绍动作，拒绝盲目重放")
     parser.add_argument("--entry-usability", action="store_true", help="仅纯角色列表与登录组上移；须独立备份、编译、保存")
     args = parser.parse_args()
+    if args.entry_usability and not args.apply:
+        raise RuntimeError("--entry-usability须与--apply同时使用；此模式不输出其他历史修改动作")
     if not args.apply:
         print(json.dumps(introduction_requests() if args.introductions else requests(), ensure_ascii=False, indent=2))
         return

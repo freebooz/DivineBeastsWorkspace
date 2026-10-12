@@ -3,13 +3,9 @@
 #include "Routing/DivineBeastsUIRoutingPolicy.h"
 
 #include "ViewModels/Characters/DivineBeastsCharacterCreateViewModel.h"
-<<<<<<< HEAD
 #include "Components/TextBlock.h"
 #include "Async/Async.h"
 #include "UObject/StrongObjectPtr.h"
-=======
-#include "Routing/DivineBeastsUIRoutingPolicy.h"
->>>>>>> 0963476cd210192af4c0e11459fa707dd95bff99
 
 // 默认主题语义只保存在项目层CDO：当项目主题ID为空时平台兼容绑定保持旧Widget样式。
 // 不修改已有Widget树、命名控件、焦点、登录输入/命令或加载任何项目纹理。
@@ -255,16 +251,12 @@ void UDivineBeastsCharacterCreateScreen::RefreshPresentationPass(
     const bool bValidInput = PresentedHeroIds.IsValidIndex(HeroOptions->GetSelectedIndex())
         && !CharacterNameInput->GetText().ToString().TrimStartAndEnd().IsEmpty();
     CreateButton->SetIsEnabled(VM->CanSubmitCreation() && bValidInput);
-<<<<<<< HEAD
-    if (BackToCharacterSelectButton) { BackToCharacterSelectButton->SetIsEnabled(FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect"))); }
-=======
     // 取消草稿仅导航回空/非空角色选择页，不借用业务角色提交资格；同时保留认证/忙碌/错误门禁。
     if (BackToCharacterSelectButton)
     {
         BackToCharacterSelectButton->SetIsEnabled(FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(
             State, TEXT("UI.Screen.CharacterSelect")));
     }
->>>>>>> 0963476cd210192af4c0e11459fa707dd95bff99
     HeroOptions->SetIsEnabled(!State.bBusy);
     CharacterNameInput->SetIsEnabled(!State.bBusy);
     StatusText->SetText(FText::FromString(State.bBusy ? TEXT("正在创建角色，请稍候…")

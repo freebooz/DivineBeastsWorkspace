@@ -1,11 +1,8 @@
 // 项目层本地玩家UI组合：消费应用只读状态，注册平台页面/主题并桥接真实控制器生命周期。
 // 不发送业务HTTP或持有玩法权威；退出撤销页面、适配器和委托，服务器目标不装配本模块。
 #include "DivineBeastsUIClientSubsystem.h"
-<<<<<<< HEAD
 #include "Development/DivineBeastsDevelopmentLaunchMode.h"
-=======
 #include "Development/DivineBeastsPluginDemoMode.h"
->>>>>>> 0963476cd210192af4c0e11459fa707dd95bff99
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"

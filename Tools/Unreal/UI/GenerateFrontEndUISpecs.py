@@ -72,14 +72,14 @@ def login():
         text("BusyIndicator","正在登录…",12,GOLD,place("center",0,130,284,20,0.5,0)),
         text("MaintenanceText","服务器维护中，请稍后再试",12,GOLD,place("center",0,224,284,26,0.5,0)),
         text("ErrorText","",12,color("E69586"),place("center",0,224,284,34,0.5,0))]
-    # 当前原稿圆形登录区域与两个输入框采用独立固定控件；底部参考线距窗口240像素。
+    # 登录组在原底部锚定基线上整体上移60逻辑像素；保留相对位置、输入字号与真实命中尺寸。
     # 名称与密码只存在原生瞬态输入控件，布局生成器不写认证默认值。
-    active_positions = {"AccountInput": (-122, -278, 284, 42),
-                        "PasswordInput": (-122, -207, 284, 42),
-                        "LoginButton": (172, -272, 104, 104),
-                        "BusyIndicator": (-122, -149, 284, 20),
-                        "MaintenanceText": (-122, -119, 284, 26),
-                        "ErrorText": (-122, -119, 284, 34)}
+    active_positions = {"AccountInput": (-122, -338, 284, 42),
+                        "PasswordInput": (-122, -267, 284, 42),
+                        "LoginButton": (172, -332, 104, 104),
+                        "BusyIndicator": (-122, -209, 284, 20),
+                        "MaintenanceText": (-122, -179, 284, 26),
+                        "ErrorText": (-122, -179, 284, 34)}
     for item in children:
         if item["id"] in active_positions:
             item["slot"] = place("bottom_center", *active_positions[item["id"]])
@@ -87,10 +87,10 @@ def login():
             item.setdefault("style", {})["visibility"] = "Collapsed"
         if item["id"] == "LoginButton":
             item["children"][0].setdefault("style", {})["visibility"] = "Collapsed"
-    children += [node("Image", "LoginBronzeFrame", slot=place("bottom_center",0,-200,600,315,.5,.5,z=5),
+    children += [node("Image", "LoginBronzeFrame", slot=place("bottom_center",0,-260,600,315,.5,.5,z=5),
                       style={"visibility":"HitTestInvisible"},
                       content={"brushPath":"/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureLoginPanelReference.M_DBA_NatureLoginPanelReference"}),
-                 node("Button", "PasswordRevealButton", slot=place("bottom_center",106,-203,42,36,z=12))]
+                 node("Button", "PasswordRevealButton", slot=place("bottom_center",106,-263,42,36,z=12))]
     return document("WBP_DBA_UI_Login","DivineBeastsLoginScreen",children)
 
 def character(create):
@@ -150,9 +150,8 @@ def character(create):
             panel("RosterPanel",place("top_right",-24,96,252,380,1,0)),
             text("RosterHeading","你的角色",18,GOLD,place("top_right",-40,111,220,32,1,0)),
             node("ScrollBox","CharacterScroll",[node("VerticalBox","CharacterChoices")],slot=place("top_right",-40,157,220,246,1,0)),
-            node("ComboBoxString","CharacterList",slot=place("top_right",-40,157,220,36,1,0)),
             text("SelectedCharacterName","",26,WHITE,place("bottom_center",0,-112,290,32,0.5,1)),
-            button("SelectButton","进入游戏",place("bottom_center",0,-38,200,42,0.5,1)),
+            button("SelectButton","进入游戏",place("bottom_center",0,-38,200,76,0.5,1)),
             button("OpenCharacterCreateButton","创建角色",place("top_right",-40,422,220,38,1,0))]
     suffix="CharacterCreate" if create else "CharacterSelect"
     return document("WBP_DBA_UI_"+suffix,"DivineBeasts"+suffix+"Screen",children)
@@ -161,6 +160,17 @@ OUTPUT.mkdir(parents=True,exist_ok=True)
 for name,spec in {"Login":login(),"CharacterCreate":character(True),"CharacterSelect":character(False)}.items():
     (OUTPUT/(name+".json")).write_text(json.dumps(spec,ensure_ascii=False,indent=2),encoding="utf-8")
     print(name)
+
+# 声明式控件树之外，显式生成本轮原生绑定后置动作；不得在下次生成时重新出现旧下拉框。
+# 当前Monolith构建器的变量默认值并不保证TextBlock可绑定，实际资产仍须执行并复核这些动作。
+entry_binding_actions = [
+    {"action": "set_widget_is_variable", "params": {
+        "wbp_path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect",
+        "widget_name": name, "is_variable": True}}
+    for name in ("CharacterChoices", "SelectButtonLabel")
+]
+(OUTPUT / "CharacterEntryBindings.json").write_text(
+    json.dumps(entry_binding_actions, ensure_ascii=False, indent=2), encoding="utf-8")
 
 # 工具构建器尚未将EditableTextBox的fontSize写入UE5.8有效样式字段；后置动作仍由Monolith执行。
 input_font_actions = [
