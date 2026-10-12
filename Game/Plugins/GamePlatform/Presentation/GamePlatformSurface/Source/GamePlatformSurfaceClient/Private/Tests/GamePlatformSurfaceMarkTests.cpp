@@ -5,6 +5,9 @@
 #include "Marks/GamePlatformSurfaceMarkCatalog.h"
 #include "Marks/GamePlatformSurfaceMarkBlueprintLibrary.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInterface.h"
+#include "Engine/Texture2D.h"
 #include <limits>
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformSurfaceMarkRequestTest,
@@ -72,6 +75,47 @@ bool FGamePlatformSurfaceMarkCatalogTest::RunTest(const FString&)
     Catalog->MaxActiveMarks = 128;
     Catalog->Styles[0].Material.Reset();
     TestFalse(TEXT("无软材质不能充当可渲染目录"), Catalog->IsValidCatalog(Error));
+    return true;
+}
+// 真实Editor资产验收：不允许仅靠15张PNG或临时DataAsset替代已保存的UE资源。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformSurfaceMarkNativeAssetsTest,
+    "GamePlatform.Surface.Marks.Assets.NativeCatalogAndDecalMaterials",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformSurfaceMarkNativeAssetsTest::RunTest(const FString&)
+{
+    const TStrongObjectPtr<UGamePlatformSurfaceMarkCatalog> Catalog(
+        LoadObject<UGamePlatformSurfaceMarkCatalog>(nullptr,
+            TEXT("/GamePlatformSurface/Marks/DA_GP_SurfaceMarkCatalog.DA_GP_SurfaceMarkCatalog")));
+    if (!TestNotNull(TEXT("真实UE表面痕迹Catalog必须存在"), Catalog.Get())) return false;
+    FString Error;
+    if (!TestTrue(TEXT("五类真实Catalog满足唯一性、默认资源和预算"), Catalog->IsValidCatalog(Error))) return false;
+
+    const TCHAR* Names[] = {TEXT("Bullet"), TEXT("Scorch"), TEXT("Slash"), TEXT("Fluid"), TEXT("Crack")};
+    const TCHAR* Channels[] = {TEXT("Albedo"), TEXT("Normal"), TEXT("ORM")};
+    for (uint8 Index = 0; Index < UE_ARRAY_COUNT(Names); ++Index)
+    {
+        const auto Kind = static_cast<EGamePlatformSurfaceMarkKind>(Index);
+        const auto* Style = Catalog->FindStyle(Kind, SurfaceType_Default);
+        if (!TestTrue(FString::Printf(TEXT("类别%s必须有默认贴花"), Names[Index]), Style != nullptr)) continue;
+        const TStrongObjectPtr<UMaterialInterface> Material(
+            LoadObject<UMaterialInterface>(nullptr, *Style->Material.ToSoftObjectPath().ToString()));
+        if (!TestNotNull(FString::Printf(TEXT("%s真实材质实例已导入"), Names[Index]), Material.Get())) continue;
+        const UMaterial* RootMaterial = Material->GetMaterial();
+        TestTrue(TEXT("五类贴花均属于DeferredDecal材质域"),
+            RootMaterial && RootMaterial->MaterialDomain == MD_DeferredDecal);
+
+        for (const TCHAR* Channel : Channels)
+        {
+            const FString Path = FString::Printf(
+                TEXT("/GamePlatformSurface/Marks/Textures/T_GP_Mark_%s_%s.T_GP_Mark_%s_%s"),
+                Names[Index], Channel, Names[Index], Channel);
+            const TStrongObjectPtr<UTexture2D> Texture(LoadObject<UTexture2D>(nullptr, *Path));
+            if (!TestNotNull(FString::Printf(TEXT("%s %s真实UE纹理"), Names[Index], Channel), Texture.Get()))
+                continue;
+            TestEqual(TEXT("导入纹理宽1024"), Texture->GetSizeX(), 1024);
+            TestEqual(TEXT("导入纹理高1024"), Texture->GetSizeY(), 1024);
+        }
+    }
     return true;
 }
 #endif

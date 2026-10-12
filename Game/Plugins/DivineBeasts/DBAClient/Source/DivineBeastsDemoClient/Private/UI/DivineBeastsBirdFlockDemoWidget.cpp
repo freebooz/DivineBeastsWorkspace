@@ -7,7 +7,7 @@
 #include "Components/EditableTextBox.h"
 #include "Components/TextBlock.h"
 #include "Engine/World.h"
-#include "Misc/LexFromString.h"
+#include "Misc/DefaultValueHelper.h"
 
 void UDivineBeastsBirdFlockDemoWidget::NativeOnInitialized()
 {
@@ -45,12 +45,12 @@ UDivineBeastsDemoWorldSubsystem* UDivineBeastsBirdFlockDemoWidget::GetBirdWorldD
 
 bool UDivineBeastsBirdFlockDemoWidget::ReadInt(const UEditableTextBox* Input,int32& OutValue)
 {
-    return Input && LexTryParseString(OutValue,*Input->GetText().ToString());
+    return Input && FDefaultValueHelper::ParseInt(Input->GetText().ToString(), OutValue);
 }
 
 bool UDivineBeastsBirdFlockDemoWidget::ReadFloat(const UEditableTextBox* Input,float& OutValue)
 {
-    return Input && LexTryParseString(OutValue,*Input->GetText().ToString()) &&
+    return Input && FDefaultValueHelper::ParseFloat(Input->GetText().ToString(), OutValue) &&
         FMath::IsFinite(OutValue);
 }
 

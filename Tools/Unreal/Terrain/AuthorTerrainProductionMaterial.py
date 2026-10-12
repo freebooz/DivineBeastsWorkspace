@@ -108,10 +108,27 @@ def execute():
   e=node(unreal.MaterialExpressionTextureSampleParameter2D,x,y)
   e.set_editor_property("parameter_name",unreal.Name(name))
   e.set_editor_property("texture",tex)
-  # UE5.8 Shared Wrap（共享环绕采样器）避免10层40张PBR独占超过采样器槽预算。
+  compression=tex.get_editor_property("compression_settings")
+  is_srgb=bool(tex.get_editor_property("srgb"))
+  # UE5.8 MaterialExpressionUtils::GetSamplerTypeForTexture官方规则：
+  # 非sRGB的TC_Grayscale为LinearGrayscale；缺少Linear将导致Shader失败。
+  sampler_types={
+   unreal.TextureCompressionSettings.TC_DEFAULT:(
+    unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if is_srgb else
+    unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR),
+   unreal.TextureCompressionSettings.TC_NORMALMAP:unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL,
+   unreal.TextureCompressionSettings.TC_MASKS:unreal.MaterialSamplerType.SAMPLERTYPE_MASKS,
+   unreal.TextureCompressionSettings.TC_GRAYSCALE:(
+    unreal.MaterialSamplerType.SAMPLERTYPE_GRAYSCALE if is_srgb else
+    unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_GRAYSCALE)
+  }
+  if compression not in sampler_types:
+   raise RuntimeError("不支持的PBR采样压缩类型："+name+" "+str(compression))
+  e.set_editor_property("sampler_type",sampler_types[compression])
+  # UE5.8 Shared Wrap共用采样器，避免10层纹理超过硬件独立槽预算。
   shared=getattr(unreal.SamplerSourceMode,"SSM_WRAP_WORLD_GROUP_SETTINGS",None)
   if shared is None:
-   raise RuntimeError("UE未提供共享采样器，不允许按默认采样器创建超预算地形材质")
+   raise RuntimeError("UE未提供共享Wrap采样器，禁止创建超预算材质")
   e.set_editor_property("sampler_source",shared)
   wire(uv,e,"Coordinates")
   return e

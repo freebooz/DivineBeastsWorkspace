@@ -1385,7 +1385,12 @@
       "BlockerZh": "正常Server前置构建4f4fb9ee-acab-4a74-98dd-e4681068a478在共享引擎旧版HttpRedirectPolicyTests.cpp出现确定的C2248及C2838/C2065；保留原生日志后主动停止自有Job（exit -1，Cancelled），未生成成功构建收据。本场景实际Cook/Stage未执行，RunId保持null；待共享引擎测试文件同步和正常Server/Editor重建后再运行。",
       "RunId": null,
       "Evidence": [
-        ".worktrees/v/Saved/Validation/FoundationM0/4f4fb9ee-acab-4a74-98dd-e4681068a478/Build/Server/UBT.log"
+        ".worktrees/v/Saved/Validation/FoundationM0/4f4fb9ee-acab-4a74-98dd-e4681068a478/Build/Server/UBT.log",
+        "Docs/Implementation/PluginArchitectureOptimization/SharedEngineHttpTestRepairProposal_20261012.md",
+        "Saved/Validation/PluginArchitectureOptimization/20261012/SharedEngineHttpTestRepair/b34b20fc-6554-464e-b585-dbffec8e9123/result.json",
+        ".worktrees/v/Saved/Validation/FoundationM0/f9f74a78-5044-47a5-916f-18368b6f0656/FoundationDefinitions/result.json",
+        "Saved/Validation/PluginArchitectureOptimization/20261012/FoundationDefinitionTransferFinal/332418fd-b826-49f7-9a3e-856e5a198b96/result.json",
+        "Saved/Validation/PluginArchitectureOptimization/20261012/FinalDeliveryChecks/77fd4f80-066c-48a0-b28c-4998663bf74b/SharedEnginePlanOnly/tool-observation.json"
       ]
     },
     {
