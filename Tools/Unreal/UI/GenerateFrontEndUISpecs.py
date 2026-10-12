@@ -111,8 +111,17 @@ def character(create):
             node("WrapBox","HeroChoices",slot=place("top_left",74,220,446,600)),
             node("ComboBoxString","HeroOptions",slot=place("top_left",40,172,236,36)),
             panel("CreationInfoPanel",place("top_right",-24,96,500,540,1,0)),
-            text("CreationInfoTitle","新的旅程",18,GOLD,place("top_right",-84,174,380,30,1,0)),
-            text("CreationInfoBody","选择英雄与角色名称，\n从新手村开始冒险。",14,MUTED,place("top_right",-84,224,380,184,1,0)),
+            text("CreationInfoTitle","角色与技能介绍",18,GOLD,place("top_right",-84,174,380,30,1,0)),
+            # 默认动态文案为空；VM读取真实DataAsset并通过选择/完成/失活事件更新。
+            # 独立滚动区适配长说明，不缩放文字、不扩张至中央旋转区或覆盖返回按钮。
+            node("ScrollBox","HeroOverviewScroll",[
+                node("VerticalBox","HeroOverviewBody",[
+                    text("HeroOverviewStatusText","",12,MUTED),
+                    text("HeroIntroductionHeading","角色介绍",16,GOLD),
+                    text("HeroIntroductionText","",14,WHITE),
+                    text("SkillIntroductionHeading","技能介绍",16,GOLD),
+                    text("SkillIntroductionText","",14,WHITE)], slot={"hAlign":"Fill","vAlign":"Top"})],
+                slot=place("top_right",-70,214,410,260,1,0)),
             node("EditableTextBox","CharacterNameInput",slot=place("bottom_center",-83,-28,220,38,0.5,1),content={"placeholder":"角色名称","fontSize":16,"fontColor":WHITE}),
             button("CreateButton","创建角色",place("bottom_center",155,-28,130,38,0.5,1)),
             button("BackToCharacterSelectButton","返回角色选择",place("top_right",-84,492,240,63,1,0))]

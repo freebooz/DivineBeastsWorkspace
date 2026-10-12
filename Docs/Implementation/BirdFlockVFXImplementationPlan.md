@@ -75,6 +75,8 @@ P7已准备真实UE图形预览、五张截图及人工验收单，但仍等待�
 
 ## 9. P0–P3历史执行记录（已由第8节续执行结论更新）
 
+> 2026-10-12清理注记：下列历史记录中出现的旧ISM作者 `AuthorBirdFlockProfilesAndBlueprint.py` 已退役清理，不是现行可执行入口。当前定义/场景蓝图使用 `AuthorBirdFlockDefinitions.py` 与 `AuthorBirdFlockSceneBlueprint.py`，地图使用 `AuthorBirdFlockNiagaraReviewMap.py`／`AuthorBirdFlockIntegrationReview.py`；已弃用的旧捕获与探针清单、备份和恢复依据见 `ScriptCleanup_20261012.md`。历史测试结论保留，勿按旧记录重新生成过期资产。
+
 - [x] P0：三层架构、GamePlatformVFX接口和并发状态审查。
 - [x] P1：3类鸟的低面数FBX/UV/顶点色、3张源纹理、Blender可编辑文件、SHA-256 Manifest及静态剪影预览。
 - [x] P2：真实UE资产：3个厘米尺寸UStaticMesh（`*_Cm`）、3个Texture2D、1个母材质、3个材质实例；已通过UE5.8重新加载和尺寸验证。早期尺寸100倍错误的3个原型网格仍保留但不再引用，需后续受控清理。

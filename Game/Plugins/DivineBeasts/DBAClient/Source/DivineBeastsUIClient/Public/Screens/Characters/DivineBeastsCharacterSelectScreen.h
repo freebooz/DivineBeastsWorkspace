@@ -32,7 +32,7 @@ protected:
     virtual void NativeOnActivated() override;
     virtual void RotatePreviewFromDrag(float DeltaYawDegrees) override;
     virtual void NativeOnDeactivated() override;
-    /** 可见卡片按钮优先获得焦点，旧页面回退到原有下拉控件。 */
+    /** 空档案优先聚焦可见、启用且允许键盘焦点的创建入口；非空档案沿用当前卡片及原有回退。 */
     virtual UWidget* NativeGetDesiredFocusTarget() const override;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UComboBoxString> CharacterList;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> SelectButton;

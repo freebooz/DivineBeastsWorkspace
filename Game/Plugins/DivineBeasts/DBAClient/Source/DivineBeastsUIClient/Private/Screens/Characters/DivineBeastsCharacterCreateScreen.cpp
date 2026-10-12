@@ -1,7 +1,11 @@
 #include "Screens/Characters/DivineBeastsCharacterCreateScreen.h"
 #include "Styling/DivineBeastsUIStyleBindings.h"
+#include "Routing/DivineBeastsUIRoutingPolicy.h"
 
 #include "ViewModels/Characters/DivineBeastsCharacterCreateViewModel.h"
+#include "Components/TextBlock.h"
+#include "Async/Async.h"
+#include "UObject/StrongObjectPtr.h"
 
 // 默认主题语义只保存在项目层CDO：当项目主题ID为空时平台兼容绑定保持旧Widget样式。
 // 不修改已有Widget树、命名控件、焦点、登录输入/命令或加载任何项目纹理。
@@ -30,6 +34,90 @@ UDivineBeastsCharacterCreateScreen::GetCharacterCreateViewModel() const
     return Cast<UDivineBeastsCharacterCreateViewModel>(GetViewModel());
 }
 
+void UDivineBeastsCharacterCreateScreen::BindUIEvents()
+{
+    Super::BindUIEvents();
+    if (!IsActivated()) return;
+    ++PresentationRefreshGeneration;
+    bPresentationRefreshPending = false;
+    bPresentationRefreshQueued = false;
+    bHeroOverviewEventsBound = true;
+    ReconcileHeroOverviewBinding();
+}
+
+void UDivineBeastsCharacterCreateScreen::ReleaseHeroOverviewBinding()
+{
+    UDivineBeastsCharacterCreateViewModel* Previous = BoundHeroOverviewViewModel;
+    const FDelegateHandle PreviousHandle = HeroOverviewHandle;
+    BoundHeroOverviewViewModel = nullptr;
+    BoundHeroOverviewPageGeneration = 0;
+    HeroOverviewHandle.Reset();
+    if (Previous && PreviousHandle.IsValid()) Previous->OnHeroOverviewChanged().Remove(PreviousHandle);
+}
+
+void UDivineBeastsCharacterCreateScreen::UnbindUIEvents()
+{
+    // 先使已排队的弱任务失效，避免旧页补刷在失活/重新激活后误操作新页。
+    ++PresentationRefreshGeneration;
+    bPresentationRefreshPending = false;
+    bPresentationRefreshQueued = false;
+    bHeroOverviewEventsBound = false;
+    ReleaseHeroOverviewBinding();
+    ApplyHeroOverviewText({});
+    Super::UnbindUIEvents();
+}
+
+bool UDivineBeastsCharacterCreateScreen::ReconcileHeroOverviewBinding()
+{
+    if (!IsActivated() || !bHeroOverviewEventsBound) return false;
+    auto* Current = GetCharacterCreateViewModel();
+    if (!Current || !Current->IsPageActive())
+    {
+        ReleaseHeroOverviewBinding();
+        ApplyHeroOverviewText({});
+        return false;
+    }
+    if (BoundHeroOverviewViewModel != Current || BoundHeroOverviewPageGeneration != Current->GetPageGeneration())
+    {
+        ReleaseHeroOverviewBinding();
+        BoundHeroOverviewViewModel = Current;
+        BoundHeroOverviewPageGeneration = Current->GetPageGeneration();
+        HeroOverviewHandle = Current->OnHeroOverviewChanged().AddUObject(this, &ThisClass::HandleHeroOverviewChanged);
+    }
+    return true;
+}
+
+void UDivineBeastsCharacterCreateScreen::RefreshInitialState()
+{
+    Super::RefreshInitialState();
+    if (ReconcileHeroOverviewBinding()) RefreshPresentation();
+}
+
+void UDivineBeastsCharacterCreateScreen::OnViewModelStateChanged(int32 Revision, int32 PageGeneration)
+{
+    Super::OnViewModelStateChanged(Revision, PageGeneration);
+    if (ReconcileHeroOverviewBinding()) RefreshPresentation();
+}
+
+void UDivineBeastsCharacterCreateScreen::HandleHeroOverviewChanged(const FDivineBeastsHeroOverview& Overview)
+{
+    const auto* VM = BoundHeroOverviewViewModel.Get();
+    if (!IsActivated() || !bHeroOverviewEventsBound || !VM || VM != GetCharacterCreateViewModel() || !VM->IsPageActive() ||
+        BoundHeroOverviewPageGeneration != VM->GetPageGeneration() || Overview.PageGeneration != VM->GetPageGeneration()) return;
+    // 更早的事件观察者可同步切英雄；该旧事件即使仍在当前广播栈，也不得覆盖后继文本。
+    const auto Current = VM->GetHeroOverview();
+    if (Overview.RequestGeneration != Current.RequestGeneration || Overview.HeroDefinitionId != Current.HeroDefinitionId) return;
+    ApplyHeroOverviewText(Overview);
+}
+
+void UDivineBeastsCharacterCreateScreen::ApplyHeroOverviewText(const FDivineBeastsHeroOverview& Overview)
+{
+    // 所有正文/草案状态来自VM值快照；控件固定字体、滚动布局和标题由Monolith资产管理。
+    if (HeroOverviewStatusText) HeroOverviewStatusText->SetText(Overview.StatusText);
+    if (HeroIntroductionText) HeroIntroductionText->SetText(Overview.Introduction);
+    if (SkillIntroductionText) SkillIntroductionText->SetText(Overview.SkillIntroductionText);
+}
+
 // 项目客户端角色创建适配：只保留未提交输入，资格和创建结果归应用流程/后端。
 // 激活订阅、失活解绑；无业务Tick，不直接访问HTTP，不持有权威档案。
 #include "Components/Button.h"
@@ -43,6 +131,7 @@ UDivineBeastsCharacterCreateScreen::GetCharacterCreateViewModel() const
 void UDivineBeastsCharacterCreateScreen::NativeOnActivated()
 {
     Super::NativeOnActivated();
+    if (!IsActivated()) return;
     CreateButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleCreate);
     LogoutButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleLogout);
     if (BackToCharacterSelectButton) { BackToCharacterSelectButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleBackToCharacterSelect); }
@@ -75,10 +164,69 @@ void UDivineBeastsCharacterCreateScreen::NativeOnDeactivated()
 
 void UDivineBeastsCharacterCreateScreen::RefreshPresentation()
 {
-    auto* VM = GetCharacterCreateViewModel();
-    if (!VM || bRefreshing) { return; }
-    TGuardValue<bool> Guard(bRefreshing, true);
-    const auto& State = VM->GetStateRef();
+    if (!IsActivated() || !bHeroOverviewEventsBound) return;
+    if (bRefreshing)
+    {
+        // Loading/BeginPage的同步观察者可能换VM；保存意图而非吞掉新VM的初刷。
+        bPresentationRefreshPending = true;
+        return;
+    }
+    const TStrongObjectPtr<UDivineBeastsCharacterCreateScreen> KeepScreen(this);
+    {
+        TGuardValue<bool> Guard(bRefreshing, true);
+        // 最多两轮保证普通同步换VM立即可见；更多外部重入必须让出调用栈，不形成无限递归。
+        for (int32 Pass = 0; Pass < 2 && IsActivated() && bHeroOverviewEventsBound; ++Pass)
+        {
+            bPresentationRefreshPending = false;
+            const TStrongObjectPtr<UDivineBeastsCharacterCreateViewModel> Current(GetCharacterCreateViewModel());
+            if (!Current.IsValid() || !Current->IsPageActive()) break;
+            const int32 ExpectedPageGeneration = Current->GetPageGeneration();
+            const uint64 ExpectedRefreshGeneration = PresentationRefreshGeneration;
+            RefreshPresentationPass(Current.Get(), ExpectedPageGeneration);
+            if (IsActivated() && bHeroOverviewEventsBound &&
+                (GetCharacterCreateViewModel() != Current.Get() || !Current->IsPageActive() ||
+                    Current->GetPageGeneration() != ExpectedPageGeneration || PresentationRefreshGeneration != ExpectedRefreshGeneration))
+                bPresentationRefreshPending = true;
+            if (!bPresentationRefreshPending) break;
+        }
+    }
+    // 退出旧guard后再排队；仅存在真实重入意图才调度，不轮询业务状态。
+    QueuePendingPresentationRefresh();
+}
+
+void UDivineBeastsCharacterCreateScreen::QueuePendingPresentationRefresh()
+{
+    if (!bPresentationRefreshPending || bPresentationRefreshQueued || !IsActivated() || !bHeroOverviewEventsBound) return;
+    bPresentationRefreshQueued = true;
+    const uint64 ExpectedRefreshGeneration = PresentationRefreshGeneration;
+    const TWeakObjectPtr<UDivineBeastsCharacterCreateScreen> WeakThis(this);
+    AsyncTask(ENamedThreads::GameThread, [WeakThis, ExpectedRefreshGeneration]()
+    {
+        auto* Self = WeakThis.Get();
+        if (!Self || Self->PresentationRefreshGeneration != ExpectedRefreshGeneration) return;
+        Self->bPresentationRefreshQueued = false;
+        if (!Self->IsActivated() || !Self->bHeroOverviewEventsBound)
+        {
+            Self->bPresentationRefreshPending = false;
+            return;
+        }
+        // 不捕获旧VM或正文；始终重新读取当前选择/页面代次，已被同步补刷消费则不再执行。
+        if (Self->bPresentationRefreshPending) Self->RefreshPresentation();
+    });
+}
+
+void UDivineBeastsCharacterCreateScreen::RefreshPresentationPass(
+    UDivineBeastsCharacterCreateViewModel* VM, int32 ExpectedPageGeneration)
+{
+    const uint64 ExpectedRefreshGeneration = PresentationRefreshGeneration;
+    const auto IsCurrent = [this, VM, ExpectedPageGeneration, ExpectedRefreshGeneration]()
+    {
+        return IsActivated() && bHeroOverviewEventsBound && PresentationRefreshGeneration == ExpectedRefreshGeneration &&
+            GetCharacterCreateViewModel() == VM && VM->IsPageActive() && VM->GetPageGeneration() == ExpectedPageGeneration;
+    };
+    if (!IsCurrent()) return;
+    // 当前业务值快照属于本轮，不能持有会被同步新状态原地改写的引用。
+    const auto State = VM->GetState();
     TArray<FName> HeroIds;
     for (const auto& Item : State.CreateHeroOptions) { HeroIds.Add(Item.HeroDefinitionId); }
     // 只有资格列表变化才重建下拉框，避免状态刷新覆盖用户未提交的选择。
@@ -93,14 +241,17 @@ void UDivineBeastsCharacterCreateScreen::RefreshPresentation()
         if (PresentedHeroIds.IsValidIndex(Index))
         {
             HeroOptions->SetSelectedIndex(Index);
+            if (!IsCurrent()) return;
             VM->PreviewCharacterHero(PresentedHeroIds[Index]);
+            if (!IsCurrent()) return;
         }
         RebuildHeroChoices();
+        if (!IsCurrent()) return;
     }
     const bool bValidInput = PresentedHeroIds.IsValidIndex(HeroOptions->GetSelectedIndex())
         && !CharacterNameInput->GetText().ToString().TrimStartAndEnd().IsEmpty();
     CreateButton->SetIsEnabled(VM->CanSubmitCreation() && bValidInput);
-    if (BackToCharacterSelectButton) { BackToCharacterSelectButton->SetIsEnabled(State.bAuthenticated && !State.bBusy && !State.Characters.IsEmpty() && State.AllowedCommands.Contains(TEXT("SelectPersistentCharacter"))); }
+    if (BackToCharacterSelectButton) { BackToCharacterSelectButton->SetIsEnabled(FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect"))); }
     HeroOptions->SetIsEnabled(!State.bBusy);
     CharacterNameInput->SetIsEnabled(!State.bBusy);
     StatusText->SetText(FText::FromString(State.bBusy ? TEXT("正在创建角色，请稍候…")
@@ -111,6 +262,17 @@ void UDivineBeastsCharacterCreateScreen::RefreshPresentation()
     ErrorText->SetText(Error);
     ErrorText->SetVisibility(Error.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
     RefreshHeroChoices();
+    if (!IsCurrent()) return;
+    if (ReconcileHeroOverviewBinding() && IsCurrent())
+    {
+        const int32 Index = HeroOptions->GetSelectedIndex();
+        const FName HeroId = PresentedHeroIds.IsValidIndex(Index) ? PresentedHeroIds[Index] : NAME_None;
+        // 本地浏览命令由VM拥有租约；Widget从不读取DataAsset或直接调用Data/HTTP。
+        if (!HeroId.IsNone()) VM->SelectHeroOverview(HeroId);
+        else if (!VM->GetHeroOverview().HeroDefinitionId.IsNone()) VM->ClearHeroOverview();
+        // 活动页换VM且同英雄已Ready时可能无需新事件，补一次当前快照投影。
+        if (IsCurrent()) HandleHeroOverviewChanged(VM->GetHeroOverview());
+    }
 }
 
 void UDivineBeastsCharacterCreateScreen::ClearHeroChoices()

@@ -16,7 +16,9 @@ bool FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(const FDivineBeasts
         return false;
     }
     if (ScreenId == TEXT("UI.Screen.CharacterCreate")) { return State.AllowedCommands.Contains(TEXT("CreateCharacter")); }
-    if (ScreenId == TEXT("UI.Screen.CharacterSelect")) { return !State.Characters.IsEmpty() && State.AllowedCommands.Contains(TEXT("SelectPersistentCharacter")); }
+    // 返回选择页只取消本地创建草稿；空列表或缺少选择提交权限不能把用户困在创建表单。
+    // 真实选择与世界准入仍由ViewModel、应用流程和后端核对角色及允许命令。
+    if (ScreenId == TEXT("UI.Screen.CharacterSelect")) { return true; }
     return false;
 }
 
@@ -59,11 +61,10 @@ FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
         if (State.CurrentStep == TEXT("DBA.Flow.CharacterEntry") && State.bAuthenticated)
         {
             if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterCreate")) { return CharacterEntryScreenPreference; }
-            if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterSelect") && !State.Characters.IsEmpty()) { return CharacterEntryScreenPreference; }
+            if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterSelect")) { return CharacterEntryScreenPreference; }
         }
-        return State.Characters.IsEmpty()
-            ? FName(TEXT("UI.Screen.CharacterCreate"))
-            : FName(TEXT("UI.Screen.CharacterSelect"));
+        // 登录后的角色入口与档案刷新均先展示选择页；空列表也须显式点击创建，不隐式提交或换页。
+        return TEXT("UI.Screen.CharacterSelect");
     }
 
     return NAME_None;

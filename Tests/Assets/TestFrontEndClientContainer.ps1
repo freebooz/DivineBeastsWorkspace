@@ -129,6 +129,8 @@ try {
     foreach ($hero in @('Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Boar')) {
         $required += "DBAHeroPack_$hero/Content/Characters/DA_Appearance_Zodiac_$hero.uasset"
         $required += "DBAGameplay/Content/Definitions/DA_Hero_Zodiac_$hero.uasset"
+        # 前端创建介绍是独立只读显示资产；不等于引入开发Gameplay、批准或授予候选技能。
+        $required += "DBAUIPack_Core/Content/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_$hero.uasset"
         $required += "DBAHeroPack_$hero/Content/UI/Portraits/T_DBA_${hero}_Portrait.uasset"
         if ($DevelopmentSkills) {
             # 开发候选只核对用户批准的真实资产闭包；不将数据交付等同于全部机制实现。

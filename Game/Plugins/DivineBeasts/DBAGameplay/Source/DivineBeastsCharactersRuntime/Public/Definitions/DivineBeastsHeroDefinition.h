@@ -49,6 +49,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Hero")
     FName DisplayNameKey = NAME_None;
 
+    /** 创建页可本地化的角色介绍，由每份真实DataAsset的作者源IntroductionZh填写。
+     * 属于项目双端安全文本，不引用客户端资源、不授予技能、不描述服务器权威数值。
+     * 默认空值兼容旧资产；创建介绍VM会明确报告未配置，不以CDO固定文案补造作者数据。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Hero|Introduction", meta=(MultiLine=true))
+    FText Introduction;
+
     /** 逻辑Content Pack（内容包）ID，不直接引用视觉资产。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Hero")
     FName ContentPackId = NAME_None;

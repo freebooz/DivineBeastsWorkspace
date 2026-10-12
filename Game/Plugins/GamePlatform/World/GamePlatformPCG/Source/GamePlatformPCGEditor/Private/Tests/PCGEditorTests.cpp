@@ -170,9 +170,11 @@ bool FPCGFoundationSubgraphTest::RunTest(const FString& Parameters)
     (void)Parameters;
     for (const FName SubgraphId : FGamePlatformPCGSubgraphIds::All())
     {
-        UObject* Outer = NewObject<UObject>(GetTransientPackage());
+        // UE5.8的UObject根类不能被直接实例化；使用TransientPackage与唯一Graph名隔离测试。
+        UObject* Outer = GetTransientPackage();
+        const FName UniqueGraphName = MakeUniqueObjectName(Outer, UPCGGraph::StaticClass(), SubgraphId);
         FString Error;
-        UPCGGraph* Graph = GamePlatformPCGEditor::CreateFoundationSubgraphGraph(Outer, SubgraphId, SubgraphId, Error);
+        UPCGGraph* Graph = GamePlatformPCGEditor::CreateFoundationSubgraphGraph(Outer, UniqueGraphName, SubgraphId, Error);
         if (!TestNotNull(*FString::Printf(TEXT("%s子图创建：%s"), *SubgraphId.ToString(), *Error), Graph))
         {
             return false;

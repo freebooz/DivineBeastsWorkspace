@@ -20,6 +20,20 @@ public class DivineBeastsArenaClientTarget : TargetRules
         EnablePlugins.Add("GamePlatformSurface");
         // 世界天气事实和表现模块由正式客户端装配，不能放入单纯的前端登录流程。
         EnablePlugins.Add("GamePlatformWeather");
+        // 第二批P5可玩演示依赖的平台AI、导航、交互和任务模块；不拷贝同领域执行器。
+        // Client只装配Runtime/ClientOnly，ServerOnly模块仍按宿主类型排除。
+        EnablePlugins.Add("GamePlatformAI");
+        EnablePlugins.Add("GamePlatformNavigation");
+        EnablePlugins.Add("GamePlatformInteraction");
+        EnablePlugins.Add("GamePlatformQuest");
+        // 第三批：公共声音及玩家服务真实装配；客户端只接收服务快照，不写权威余额/奖励。
+        EnablePlugins.Add("DBASFXPack_Core");
+        EnablePlugins.Add("GamePlatformCommerceUI");
+        EnablePlugins.Add("GamePlatformEntitlement");
+        EnablePlugins.Add("GamePlatformEquipment");
+        EnablePlugins.Add("GamePlatformLiveOps");
+        EnablePlugins.Add("GamePlatformProgression");
+
         // 公共UI二进制资产由第三层纯内容插件拥有；客户端显式启用，服务器目标不携带。
         EnablePlugins.Add("DBAUIPack_Core");
         // 登录后角色选择/创建的三维前端地图只进入客户端，不属于DBAWorlds服务器世界。

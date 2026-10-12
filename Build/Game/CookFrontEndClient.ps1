@@ -100,6 +100,20 @@ try {
         $details.BirdFlockGateResult=$birdResult
         $code=$birdResult.ExitCode
     }
+    if ($code -eq 0) {
+        # P7–P9：源音频导入及普通Cook退出0不证明声音已入包；检查真实IoStore四项正式依赖。
+        # 与原UI颜色和鸟群门禁串联，任一失败均不得放行；开发审核对象及声音SourceArt禁止入包。
+        $contentPython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $contentGate=Join-Path $context.Workspace 'Build/Validation/PluginDeliveryEvidence.py'
+        Assert-FoundationFile $contentPython; Assert-FoundationFile $contentGate
+        $contentOutput=Join-Path $context.Directory 'P7ContentGate'
+        $null=New-Item -ItemType Directory -Path $contentOutput
+        $contentReport=Join-Path $contentOutput 'ClientContent.json'
+        $contentResult=Invoke-FoundationProcess -FilePath $contentPython -Arguments @($contentGate,'--container-csv',$csv,'--target','Client','--report',$contentReport) -WorkingDirectory $context.Workspace -OutputDirectory $contentOutput -TimeoutSeconds 60
+        $details.P7ContentContainerReport=$contentReport
+        $details.P7ContentGateResult=$contentResult
+        $code=$contentResult.ExitCode
+    }
     $message='实际客户端Cook/Stage和IoStore资源门禁结束；仍须验证认证、UI交互与网络准入。'
 } catch [IO.FileNotFoundException] { $code=2; $message=$_.Exception.Message }
 catch { $code=1; $message=$_.Exception.Message }

@@ -16,6 +16,18 @@ public class DivineBeastsArenaServerTarget : TargetRules
         EnablePlugins.Add("DBAServer");
         // 仅装配天气共享权威模块；ClientOnly模块不进入Dedicated Server目标。
         EnablePlugins.Add("GamePlatformWeather");
+        // 第二批P5可玩演示依赖的平台AI、导航、交互和任务模块；不拷贝同领域执行器。
+        // Server只装配Runtime/ServerOnly，客户端表现模块不可进入Dedicated Server。
+        EnablePlugins.Add("GamePlatformAI");
+        EnablePlugins.Add("GamePlatformNavigation");
+        EnablePlugins.Add("GamePlatformInteraction");
+        EnablePlugins.Add("GamePlatformQuest");
+        // 第三批：服务端仅启用双端/ServerOnly的玩家状态机制，声音内容必须明确剥离。
+        EnablePlugins.Add("GamePlatformEntitlement");
+        EnablePlugins.Add("GamePlatformEquipment");
+        EnablePlugins.Add("GamePlatformProgression");
+        DisablePlugins.Add("DBASFXPack_Core");
+
         // MainArena与OpenWorld/Village共用同一Server Target；竞技插件的ServerOnly模块在MainArena配置下提供项目竞技适配，
         // 其DBAClient依赖带Client/Editor目标白名单，不会进入Dedicated Server产物。
         EnablePlugins.Add("DBAArena");

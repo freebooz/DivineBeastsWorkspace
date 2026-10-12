@@ -64,6 +64,14 @@ TConstArrayView<FGamePlatformPCGAttributeDescriptor> FGamePlatformPCGSchema::Get
     return GetSchemaDescriptors();
 }
 
+FName FGamePlatformPCGSchema::GetMetadataAttributeName(FName LogicalAttributeName)
+{
+    // 不改变Schema v1、已发布字段名或数据资产合同；只在UE Metadata读写边界转换存储表示。
+    // 输入限定为唯一注册表的20个字段，避免任意字符串转换造成点号/下划线别名碰撞。
+    if (!IsKnownAttribute(LogicalAttributeName)) return NAME_None;
+    return FName(*LogicalAttributeName.ToString().Replace(TEXT("."), TEXT("_")));
+}
+
 bool FGamePlatformPCGSchema::IsKnownAttribute(FName AttributeName)
 {
     return GetSchemaDescriptors().ContainsByPredicate(

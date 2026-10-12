@@ -84,6 +84,8 @@ class GAMEPLATFORMPCG_API FGamePlatformPCGSchema
 public:
     static FGamePlatformPCGSchemaVersion CurrentVersion();
     static TConstArrayView<FGamePlatformPCGAttributeDescriptor> GetAttributes();
+    /** Pcg.*保持公开逻辑协议；UE5.8 Metadata禁止点号，存储键编码为Pcg_*。未知逻辑字段返回None。 */
+    static FName GetMetadataAttributeName(FName LogicalAttributeName);
     static bool IsKnownAttribute(FName AttributeName);
     static bool IsCoreRequiredAttribute(FName AttributeName);
     static FGamePlatformResult ValidateAttributeName(FName AttributeName);

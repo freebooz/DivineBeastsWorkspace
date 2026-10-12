@@ -1,3 +1,5 @@
+// 项目客户端技能显示主资产校验：只验证作者字段，不加载图标、不授予技能或解释权威数值。
+// 创建介绍派生资产复用同一条目合同，但使用自己的主资产类型；错误输出供VM/作者工具诊断。
 #include "Definitions/DivineBeastsAbilityUIProfile.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Types/GamePlatformId.h"
@@ -32,9 +34,10 @@ bool UDivineBeastsAbilityUIProfile::ValidateProfile(FString& OutError) const
             return false;
         }
         Unique.Add(Entry.AbilityId);
-        if (Entry.DisplayName.IsEmpty() || Entry.Icon.IsNull())
+        if (Entry.DisplayName.ToString().TrimStartAndEnd().IsEmpty() ||
+            Entry.Description.ToString().TrimStartAndEnd().IsEmpty() || Entry.Icon.IsNull())
         {
-            OutError = TEXT("正式技能条目必须配置本地化名称及真实图标软引用。");
+            OutError = TEXT("技能显示条目必须配置非空白本地化名称、说明及图标软引用；内容存在不表示正式技能获批。");
             return false;
         }
     }

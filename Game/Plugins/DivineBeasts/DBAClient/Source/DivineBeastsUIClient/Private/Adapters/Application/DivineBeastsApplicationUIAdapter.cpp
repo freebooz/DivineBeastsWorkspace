@@ -3,6 +3,7 @@
  * 认证、档案与准入仍归既有流程和后端；适配器只订阅事件，关闭时解绑，不保存密码或令牌。
  */
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
+#include "Development/DivineBeastsDevelopmentLaunchMode.h"
 
 #include "DivineBeastsApplicationFlowSubsystem.h"
 #include "Engine/GameInstance.h"
@@ -79,6 +80,11 @@ bool UDivineBeastsApplicationUIAdapter::Initialize(ULocalPlayer& LocalPlayer)
     Shutdown();
 
     UGameInstance* GameInstance = LocalPlayer.GetGameInstance();
+    // 这道防线阻止意外直接初始化Adapter时在PluginDev开始正式身份认证。
+    if (FDBADevelopmentLaunchMode::ResolveCurrent() == EDBADevelopmentLaunchMode::PluginDev)
+    {
+        return false;
+    }
     if (!GameInstance)
     {
         return false;

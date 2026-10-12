@@ -76,7 +76,11 @@ def author():
         component = leaf.static_mesh_component
         component.set_static_mesh(plane)
         component.set_material(0, materials[index % 2])
+        # 只调用运行时SetCollisionEnabled会在关卡重载时被BlockAll配置还原；
+        # 同时持久化NoCollision配置和Actor碰撞开关，保证装饰不会改变地表查询。
+        component.set_collision_profile_name("NoCollision")
         component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        leaf.set_actor_enable_collision(False)
         component.set_editor_property("cast_shadow", False)
         leaf.set_replicates(False)
         evidence["Leaves"].append({"Name": leaf.get_actor_label(), "LocationCm": [position.x, position.y, position.z], "SizeCm": 100 * size})

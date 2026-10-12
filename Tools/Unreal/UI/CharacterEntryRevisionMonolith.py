@@ -113,8 +113,8 @@ def introduction_requests():
            operation("ui", "set_text", asset_path=CREATE, widget_name="CreationInfoTitle", text="角色与技能介绍", font_size=18),
            operation("ui", "add_widget", asset_path=CREATE, widget_class="ScrollBox", widget_name="HeroOverviewScroll", parent_name="RootCanvas", compile=False),
            slot(CREATE, "HeroOverviewScroll", -70, 214, 410, 260, right=True),
-           operation("ui", "add_widget", asset_path=CREATE, widget_class="VerticalBox", widget_name="HeroOverviewBody", parent_name="HeroOverviewScroll", compile=False),
-           operation("ui", "set_slot_property", asset_path=CREATE, widget_name="HeroOverviewBody", h_align="Fill", v_align="Top")]
+           # ScrollBoxSlot默认横向Fill/纵向Top；锁定Monolith版本不支持该slot的便捷写入。
+           operation("ui", "add_widget", asset_path=CREATE, widget_class="VerticalBox", widget_name="HeroOverviewBody", parent_name="HeroOverviewScroll", compile=False)]
     for name, value, size in (("HeroOverviewStatusText", "", 12), ("HeroIntroductionHeading", "角色介绍", 16),
                               ("HeroIntroductionText", "", 14), ("SkillIntroductionHeading", "技能介绍", 16),
                               ("SkillIntroductionText", "", 14)):
@@ -128,16 +128,26 @@ def introduction_requests():
     return ops + [operation("ui", "dump_blueprint_compile_log", asset_path=CREATE), operation("blueprint", "save_asset", asset_path=CREATE)]
 
 
-def apply_introductions(endpoint):
+def apply_introductions(endpoint, resume=False):
     """与旧图集修改分开留证，不重导入已批准RGB、不重放旧面板倍率动作。"""
     evidence = ROOT / "Saved/Validation/CharacterEntryFollowUp20261012/Introductions"
     backup = evidence / "Before"
-    backup.mkdir(parents=True, exist_ok=False)
     source = PACK / "Content/UI/Screens/WBP_DBA_UI_CharacterCreate.uasset"
-    shutil.copy2(source, backup / source.name)
-    (evidence / "Before.json").write_text(json.dumps({"Source": str(source), "SHA256": hashlib.sha256(source.read_bytes()).hexdigest()}, indent=2), encoding="utf-8")
-    log = []
-    for index, item in enumerate(introduction_requests()):
+    ops = introduction_requests()
+    if resume:
+        log = json.loads((evidence / "Actions.json").read_text(encoding="utf-8"))
+        if [item["Request"] for item in log] != ops[:len(log)]:
+            raise RuntimeError("已执行动作与恢复前缀不符，拒绝重放")
+        tree = rpc(endpoint, "ui_query", {"action": "get_widget_tree", "params": {"asset_path": CREATE}})
+        if "HeroOverviewBody" not in json.dumps(tree):
+            raise RuntimeError("编辑器未保留本轮部分修改，拒绝跳过已执行动作")
+    else:
+        backup.mkdir(parents=True, exist_ok=False)
+        shutil.copy2(source, backup / source.name)
+        (evidence / "Before.json").write_text(json.dumps({"Source": str(source), "SHA256": hashlib.sha256(source.read_bytes()).hexdigest()}, indent=2), encoding="utf-8")
+        log = []
+    for index in range(len(log), len(ops)):
+        item = ops[index]
         result = rpc(endpoint, item["Tool"], item["Arguments"])
         log.append({"Request": item, "Result": result})
         (evidence / "Actions.json").write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -150,6 +160,7 @@ def main():
     parser.add_argument("--endpoint", default="http://127.0.0.1:9316/mcp")
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--introductions", action="store_true", help="仅增量添加创建角色介绍滚动区，不重放旧图集/面板修复")
+    parser.add_argument("--resume-introductions", action="store_true", help="仅恢复同一编辑器中已留证的部分介绍动作，拒绝盲目重放")
     args = parser.parse_args()
     if not args.apply:
         print(json.dumps(introduction_requests() if args.introductions else requests(), ensure_ascii=False, indent=2))
@@ -158,7 +169,7 @@ def main():
     if status.get("project_name") != "DivineBeastsArena" or status.get("version") != "0.23.0":
         raise RuntimeError("当前Monolith工程或锁定版本不符")
     if args.introductions:
-        apply_introductions(args.endpoint)
+        apply_introductions(args.endpoint, args.resume_introductions)
         return
     evidence = ROOT / "Saved/Validation/CharacterEntryRevision20261011"
     backup = evidence / "Before"

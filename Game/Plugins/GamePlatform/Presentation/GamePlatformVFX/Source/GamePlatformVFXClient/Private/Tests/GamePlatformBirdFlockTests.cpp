@@ -63,8 +63,9 @@ bool FGamePlatformBirdFlockParametersTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGamePlatformBirdFlockActorRuntimeTest,
     "GamePlatform.VFX.BirdFlock.ActorInstanceLifecycle",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext |
-        EAutomationTestFlags::EngineFilter)
+    // 此用例必须验证真实GameWorld中的Actor，普通EditorContext没有游戏世界。
+    // 注册为ClientContext，在-game或实际客户端执行；不删除IsGameWorld断言、不伪造世界。
+    EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
 
 bool FGamePlatformBirdFlockActorRuntimeTest::RunTest(const FString& Parameters)
 {

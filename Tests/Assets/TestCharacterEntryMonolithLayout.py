@@ -60,6 +60,14 @@ def audit(endpoint):
             errors.append(name + "未达到用户要求的放大尺寸")
         if not panel["visibility"].endswith("HitTestInvisible"):
             errors.append(name + "装饰背景截获中央鼠标")
+    # 用户要求选择档案只使用真实滚动列表；空列表也不能恢复旧下拉框或虚构档案。
+    select_tree = trees["CharacterSelect"]
+    if any(widget.get("class") == "ComboBoxString" for widget in select_tree.values()):
+        errors.append("选择角色仍含下拉框，而不是纯列表")
+    if select_tree.get("CharacterScroll", {}).get("class") != "ScrollBox" or select_tree.get("CharacterChoices", {}).get("class") != "VerticalBox":
+        errors.append("选择角色缺少真实滚动列表宿主")
+    if not select_tree.get("SelectButtonLabel", {}).get("is_variable"):
+        errors.append("主按钮缺少空档案创建引导的真实文字绑定")
     # 介绍来自只读VM事件；真实命名控件不可由一段写死的旅行提示代替。
     for name in ("HeroIntroductionText", "SkillIntroductionText", "HeroOverviewStatusText"):
         widget = trees["CharacterCreate"].get(name, {})

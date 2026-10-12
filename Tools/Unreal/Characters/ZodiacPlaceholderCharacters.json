@@ -1,5 +1,5 @@
 {
-  "_description": "十二生肖原型角色视觉清单。HeroDefinitionId唯一真源仍为Shared/Contracts；本清单只描述占位Mesh选择、颜色和内容包，不作为协议真源。",
+  "_description": "十二生肖原型角色视觉与介绍作者清单。HeroDefinitionId唯一真源仍为Shared/Contracts；IntroductionZh只投影到Hero.Introduction，其他字段描述占位Mesh、颜色和内容包，不作为协议、技能批准或服务器授权真源。",
   "schemaVersion": 1,
   "source": {
     "engineTemplate": "TemplateResources/High/Characters/Content/Mannequins",
@@ -8,17 +8,17 @@
     "baseMaterial": "/DBAContentPack_Common/Materials/M_DBA_PrototypeCharacterColor.M_DBA_PrototypeCharacterColor"
   },
   "heroes": [
-    { "heroId": "Hero.Zodiac.Rat", "zodiacCn": "子鼠", "displayNameCn": "影牙", "pack": "DBAHeroPack_Rat", "mesh": "Manny", "colorHex": "#607D8B" },
-    { "heroId": "Hero.Zodiac.Ox", "zodiacCn": "丑牛", "displayNameCn": "玄角", "pack": "DBAHeroPack_Ox", "mesh": "Quinn", "colorHex": "#795548" },
-    { "heroId": "Hero.Zodiac.Tiger", "zodiacCn": "寅虎", "displayNameCn": "白君", "pack": "DBAHeroPack_Tiger", "mesh": "Manny", "colorHex": "#FF8C00" },
-    { "heroId": "Hero.Zodiac.Rabbit", "zodiacCn": "卯兔", "displayNameCn": "玉灵", "pack": "DBAHeroPack_Rabbit", "mesh": "Quinn", "colorHex": "#F48FB1" },
-    { "heroId": "Hero.Zodiac.Dragon", "zodiacCn": "辰龙", "displayNameCn": "苍龙", "pack": "DBAHeroPack_Dragon", "mesh": "Manny", "colorHex": "#00ACC1" },
-    { "heroId": "Hero.Zodiac.Snake", "zodiacCn": "巳蛇", "displayNameCn": "幽鳞", "pack": "DBAHeroPack_Snake", "mesh": "Quinn", "colorHex": "#2E7D32" },
-    { "heroId": "Hero.Zodiac.Horse", "zodiacCn": "午马", "displayNameCn": "雷蹄", "pack": "DBAHeroPack_Horse", "mesh": "Manny", "colorHex": "#D32F2F" },
-    { "heroId": "Hero.Zodiac.Goat", "zodiacCn": "未羊", "displayNameCn": "玉角", "pack": "DBAHeroPack_Goat", "mesh": "Quinn", "colorHex": "#D4AF37" },
-    { "heroId": "Hero.Zodiac.Monkey", "zodiacCn": "申猴", "displayNameCn": "灵猴", "pack": "DBAHeroPack_Monkey", "mesh": "Manny", "colorHex": "#7E57C2" },
-    { "heroId": "Hero.Zodiac.Rooster", "zodiacCn": "酉鸡", "displayNameCn": "金鸣", "pack": "DBAHeroPack_Rooster", "mesh": "Quinn", "colorHex": "#FDD835" },
-    { "heroId": "Hero.Zodiac.Dog", "zodiacCn": "戌狗", "displayNameCn": "天犬", "pack": "DBAHeroPack_Dog", "mesh": "Manny", "colorHex": "#3949AB" },
-    { "heroId": "Hero.Zodiac.Boar", "zodiacCn": "亥猪", "displayNameCn": "玄鬃", "pack": "DBAHeroPack_Boar", "mesh": "Quinn", "colorHex": "#AD1457" }
+    { "heroId": "Hero.Zodiac.Rat", "zodiacCn": "子鼠", "displayNameCn": "影牙", "IntroductionZh": "子鼠·影牙是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Rat", "mesh": "Manny", "colorHex": "#607D8B" },
+    { "heroId": "Hero.Zodiac.Ox", "zodiacCn": "丑牛", "displayNameCn": "玄角", "IntroductionZh": "丑牛·玄角是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Ox", "mesh": "Quinn", "colorHex": "#795548" },
+    { "heroId": "Hero.Zodiac.Tiger", "zodiacCn": "寅虎", "displayNameCn": "白君", "IntroductionZh": "寅虎·白君是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Tiger", "mesh": "Manny", "colorHex": "#FF8C00" },
+    { "heroId": "Hero.Zodiac.Rabbit", "zodiacCn": "卯兔", "displayNameCn": "玉灵", "IntroductionZh": "卯兔·玉灵是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Rabbit", "mesh": "Quinn", "colorHex": "#F48FB1" },
+    { "heroId": "Hero.Zodiac.Dragon", "zodiacCn": "辰龙", "displayNameCn": "苍龙", "IntroductionZh": "辰龙·苍龙是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Dragon", "mesh": "Manny", "colorHex": "#00ACC1" },
+    { "heroId": "Hero.Zodiac.Snake", "zodiacCn": "巳蛇", "displayNameCn": "幽鳞", "IntroductionZh": "巳蛇·幽鳞是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Snake", "mesh": "Quinn", "colorHex": "#2E7D32" },
+    { "heroId": "Hero.Zodiac.Horse", "zodiacCn": "午马", "displayNameCn": "雷蹄", "IntroductionZh": "午马·雷蹄是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Horse", "mesh": "Manny", "colorHex": "#D32F2F" },
+    { "heroId": "Hero.Zodiac.Goat", "zodiacCn": "未羊", "displayNameCn": "玉角", "IntroductionZh": "未羊·玉角是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Goat", "mesh": "Quinn", "colorHex": "#D4AF37" },
+    { "heroId": "Hero.Zodiac.Monkey", "zodiacCn": "申猴", "displayNameCn": "灵猴", "IntroductionZh": "申猴·灵猴是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Monkey", "mesh": "Manny", "colorHex": "#7E57C2" },
+    { "heroId": "Hero.Zodiac.Rooster", "zodiacCn": "酉鸡", "displayNameCn": "金鸣", "IntroductionZh": "酉鸡·金鸣是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Rooster", "mesh": "Quinn", "colorHex": "#FDD835" },
+    { "heroId": "Hero.Zodiac.Dog", "zodiacCn": "戌狗", "displayNameCn": "天犬", "IntroductionZh": "戌狗·天犬是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Dog", "mesh": "Manny", "colorHex": "#3949AB" },
+    { "heroId": "Hero.Zodiac.Boar", "zodiacCn": "亥猪", "displayNameCn": "玄鬃", "IntroductionZh": "亥猪·玄鬃是神兽联盟十二生肖角色之一，当前使用开发期原型外观。角色与技能内容仍在开发验证阶段；技能列表仅展示开发候选，未作为正式技能批准。", "pack": "DBAHeroPack_Boar", "mesh": "Quinn", "colorHex": "#AD1457" }
   ]
 }

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 神兽联盟十二生肖原型角色资产生成器。
-仅用于开发期资产生成，不在运行时执行。
+仅用于开发期资产生成，不在运行时执行；真实资产操作仍由授权Monolith/编辑器流程调用。
+Hero.Introduction来自相邻JSON的IntroductionZh；缺失正文必须先阻断，禁止重建时清空作者介绍。
 """
 
 import json
@@ -278,7 +279,11 @@ def set_appearance_schema(definition):
 
 
 def ensure_hero_definition(hero):
+    """更新现有项目定义及作者介绍；正文不是服务器技能授权，缺失时在资产创建/修改前拒绝。"""
     suffix = hero["heroId"].split(".")[-1]
+    introduction = hero.get("IntroductionZh")
+    if not isinstance(introduction, str) or not introduction.strip():
+        fail("IntroductionZh缺失或纯空白，拒绝清空现有英雄介绍: " + hero["heroId"])
     asset_name = "DA_Hero_Zodiac_" + suffix
 
     factory = unreal.DataAssetFactory()
@@ -299,6 +304,8 @@ def ensure_hero_definition(hero):
     definition.set_editor_property("zodiac_identity", enum_value(unreal.DivineBeastsZodiacIdentity, suffix))
     definition.set_editor_property("zodiac_tag", make_gameplay_tag("DBA.Character.Zodiac." + suffix))
     definition.set_editor_property("display_name_key", unreal.Name(hero["heroId"] + ".Name"))
+    # 正文只取作者源，保留完整本地化文本；不从技能数值草案推导角色规则或授予DefaultAbilitySet。
+    definition.set_editor_property("introduction", unreal.Text(introduction))
     definition.set_editor_property("content_pack_id", unreal.Name("ContentPack.Hero.Zodiac." + suffix))
     set_appearance_schema(definition)
 
@@ -324,6 +331,9 @@ def validate_generated_assets(manifest):
     # 文件存在不能证明迁移引用完整；禁止再次把断骨架或旋转错误标记为生成成功。
     for hero in manifest["heroes"]:
         suffix = hero["heroId"].split(".")[-1]
+        definition = unreal.load_asset(HERO_DEFINITION_ROOT + "/DA_Hero_Zodiac_" + suffix)
+        if not definition or str(definition.get_editor_property("introduction")) != hero["IntroductionZh"]:
+            fail("重建英雄Introduction与作者源不一致: " + suffix)
         profile = unreal.load_asset("/" + hero["pack"] + "/Characters/DA_Appearance_Zodiac_" + suffix)
         rotation = profile.get_editor_property("mesh_relative_rotation")
         mesh = profile.get_editor_property("skeletal_mesh")
@@ -335,6 +345,10 @@ def main():
     manifest = load_manifest()
     if len(manifest.get("heroes", [])) != 12:
         fail("清单必须恰好包含12个生肖。")
+    # 批量操作前核对全部正文，避免后半英雄缺字段时前半已修改；函数入口另保留逐项防线。
+    for hero in manifest["heroes"]:
+        if not isinstance(hero.get("IntroductionZh"), str) or not hero["IntroductionZh"].strip():
+            fail("IntroductionZh缺失或纯空白: " + str(hero.get("heroId")))
 
     ensure_mannequin_mount()
     master = ensure_master_material()

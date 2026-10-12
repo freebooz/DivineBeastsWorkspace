@@ -64,7 +64,10 @@ bool FGamePlatformPCGWorldFeatureDefinitionTest::RunTest(const FString&)
     {
         TestEqual(TEXT("Root变换正确传递"), WorldSlots[0].GetLocation(), FVector(100.0, 200.0, 300.0));
     }
-    Assembly->Slots.Add(Slot);
+    // Slot是Slots内的引用；TArray::Add禁止以自身元素引用扩容，会在UE5.8中直接断言。
+    // 先复制值再构造重复身份，仍然验证正式规则会拒绝重复SlotId，不削弱原断言。
+    const FGamePlatformPCGAssemblySlot DuplicateSlot = Slot;
+    Assembly->Slots.Add(DuplicateSlot);
     TestFalse(TEXT("组合件插槽身份不允许重复"), Assembly->ValidateDefinition().IsSuccess());
 
     UGamePlatformPCGAnchorPolicyDefinition* Anchor = NewObject<UGamePlatformPCGAnchorPolicyDefinition>();

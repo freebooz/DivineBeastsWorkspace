@@ -103,8 +103,10 @@ void UDivineBeastsCharacterSelectScreen::RefreshPresentation()
     SelectButton->SetIsEnabled(VM->CanSubmitSelection() && bEnabled);
     if (OpenCharacterCreateButton) { OpenCharacterCreateButton->SetIsEnabled(State.bAuthenticated && !State.bBusy && State.AllowedCommands.Contains(TEXT("CreateCharacter"))); }
     CharacterList->SetIsEnabled(!State.bBusy);
+    // 空档案只引导用户显式创建；忙碌提示和已有档案的禁用原因保持原有优先级。
     StatusText->SetText(State.Characters.IsValidIndex(Index) && !bEnabled ? State.Characters[Index].DisabledReason
-        : FText::FromString(State.bBusy ? TEXT("正在确认角色，请稍候…") : TEXT("选择角色后点击确认。")));
+        : FText::FromString(State.bBusy ? TEXT("正在确认角色，请稍候…")
+            : (State.Characters.IsEmpty() ? TEXT("尚未创建角色，请点击创建角色开始。") : TEXT("选择角色后点击确认。"))));
     FText Error = GetPageLoadError();
     if (Error.IsEmpty()) { Error = State.ErrorText; }
     if (Error.IsEmpty()) { Error = FDivineBeastsUILocalization::ErrorCodeToText(VM->GetLastCommandErrorCode()); }
@@ -171,6 +173,13 @@ void UDivineBeastsCharacterSelectScreen::HandleChoiceRequested(UDivineBeastsChar
 }
 UWidget* UDivineBeastsCharacterSelectScreen::NativeGetDesiredFocusTarget() const
 {
+    // 空列表没有可选档案；创建入口可见、启用且允许键盘焦点时，优先返回它并绕过旧下拉框。
+    if (const auto* VM = GetCharacterSelectViewModel(); VM && VM->GetStateRef().Characters.IsEmpty() &&
+        OpenCharacterCreateButton && OpenCharacterCreateButton->GetIsEnabled() &&
+        OpenCharacterCreateButton->IsVisible() && OpenCharacterCreateButton->GetIsFocusable())
+    {
+        return OpenCharacterCreateButton;
+    }
     const int32 Index = CharacterList ? CharacterList->GetSelectedIndex() : INDEX_NONE;
     if (ChoiceEntries.IsValidIndex(Index) && ChoiceEntries[Index]) { return ChoiceEntries[Index]->GetChoiceFocusTarget(); }
     return Super::NativeGetDesiredFocusTarget();

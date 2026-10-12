@@ -47,7 +47,8 @@ public:
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
-    /** 验证英雄身份、技能 ID 和条目唯一性；只读不加载软图标。 */
+    /** 验证英雄身份、技能ID、条目唯一性及非空白名称/说明；只读不加载软图标。
+     * 成功清空OutError，失败给出中文原因；此门禁不证明资源已加载或技能已正式批准。 */
     bool ValidateProfile(FString& OutError) const;
 
     /** 输入完整稳定技能 ID；不存在时返回空，由界面显示明确缺省图标。 */

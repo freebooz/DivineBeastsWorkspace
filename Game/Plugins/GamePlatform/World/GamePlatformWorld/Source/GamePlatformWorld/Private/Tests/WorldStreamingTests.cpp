@@ -1,9 +1,10 @@
-// UE自动化测试：先于流送实现编写。本轮禁止启动UE，以下用例尚未编译/执行。
-// 临时World和已登记的空关卡只验证协调行为，不伪装真实地图加载或WP完成。
+// UE5.8自动化测试：在真实Editor执行。临时World与已登记的空关卡只校验流送合同，
+// 不冒充实际流送地图加载、WorldPartition（世界分区）生成或人工视觉验收。
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Streaming/GamePlatformWorldStreaming.h"
 #include "Engine/LevelStreamingDynamic.h"
+#include "Curves/CurveFloat.h"
 #include "Engine/World.h"
 #include <limits>
 
@@ -133,7 +134,9 @@ bool FWorldStreamingFailureTest::RunTest(const FString& Parameters)
     FGamePlatformWorldStreaming Streaming(*Fixture.World, Generation);
     auto* Level = Fixture.AddLevel(TEXT("/Game/WorldStreamingTests/ExistingLevel"));
     auto Request = Fixture.Request(Generation);
-    UObject* Owner = NewObject<UObject>(Fixture.World);
+    // 原生UObject和UDataAsset在UE5.8均标记Abstract；构造这些基类会触发handled ensure。
+    // 使用Engine已有的具体UCurveFloat（数值曲线）作弱引用Owner，仍检验失效事件。
+    UCurveFloat* Owner = NewObject<UCurveFloat>(Fixture.World);
     Request.Owner = Owner;
     FGamePlatformResult Result;
     const auto Owned = Streaming.Request(Request, Result);

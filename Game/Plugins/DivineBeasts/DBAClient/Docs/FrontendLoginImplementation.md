@@ -252,7 +252,7 @@ Boot
 → InWorld / Playing
 ~~~
 
-`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。角色创建成功后流程进入 `LoadRoster（刷新档案）`，随后返回 `CharacterEntry（角色入口）` 显示角色选择页。只有用户点击「进入游戏」才进入 `ValidateSelection（角色选择验证）`；客户端不能绕过后端权威选择结果。
+`CharacterEntry（角色入口）` 的创建/选择分流由项目 `ApplicationFlow（应用流程）` 与 `RoutingPolicy（界面路由策略）` 共同投影，不新建第二套 UI 状态机。登录成功进入角色入口后默认显示 `CharacterSelect（角色选择页）`，空角色也保留选择页，由用户显式点击创建；`LoadRoster（刷新档案）`同样默认投影选择页。角色创建成功后刷新档案并返回角色入口。只有已有真实角色且允许提交选择命令时，用户点击「进入游戏」才进入 `ValidateSelection（角色选择验证）`；客户端不能绕过后端权威选择结果。
 
 ### 8.3 前台三维场景与正式世界边界
 
@@ -287,11 +287,17 @@ divinebeasts.application.main@1
 
 此前模型不可见在独立PIE中复现：外观Profile、网格、动画和舞台存在，但骨骼检查拒绝装配。2026-10-09改用`IsCompatibleMesh(Mesh, false)`使模型可显示；2026-10-10真实骨树复核发现这未解决根因：89骨UE5 Manny/Quinn及Idle被绑定到68骨UE4骨架，而IsCompatibleMesh(Mesh, false)允许缺少子骨时沿祖先查找匹配，并不要求逐骨覆盖或检查父链。本次改为检查网格所需骨骼及最近有效父链，允许真正的简化骨树，拒绝缺骨骼/错误父链；公共网格、Idle序列与动画蓝图均改为完整UE5骨架。预览和世界外观共用已加载资源门禁，保持异步代次/取消检查，不仅依据兼容身份标签或骨架指针。日志只含项目资源身份、失败原因和生命周期代次，不含账号、密码或票据。
 
-角色创建和选择页均移除左右转动按钮，使用既有透明预览区接收左键拖动，沿用本地用户/指针身份、捕获取消、异常位移保护和忙碌禁用，不引入Tick轮询。选择页新增`OpenCharacterCreateButton（创建角色入口）`，创建页新增`BackToCharacterSelectButton（返回角色选择）`，由Monolith生成、编译、保存与重载；固定字号和逻辑尺寸，不改变登录输入控件字体。
+角色创建和选择页均移除左右转动按钮，使用既有透明预览区接收左键拖动，沿用本地用户/指针身份、捕获取消、异常位移保护和忙碌禁用，不引入Tick轮询。2026-10-12共享手势修正为右拖产生负Yaw、左拖产生正Yaw，每Slate逻辑像素0.35度、单事件限幅到[-90,90]度；非有限位移和非捕获指针不产生旋转。选择页新增`OpenCharacterCreateButton（创建角色入口）`，创建页新增`BackToCharacterSelectButton（返回角色选择）`，由Monolith生成、编译、保存与重载；固定字号和逻辑尺寸，不改变登录输入控件字体。
 
-页面通过`UIViewModel::ShowCharacterEntryScreen`向当前LocalPlayer的UI协调器提交换页意图。协调器在已认证、空闲的`DBA.Flow.CharacterEntry`节点按真实AllowedCommands授权，既有角色仍可创建；无角色时拒绝返回空选择页，提交中拒绝新换页，未知页面身份拒绝。偏好只是当前本地玩家的页面投影，不改变角色列表或服务器选择；新运行、注销、离开角色入口时清除，创建提交中的忙碌快照保留当前表单。实际创建仍经原有ApplicationFlow命令和后端校验执行，不能用打开表单代替创建成功。
+页面通过`UIViewModel::ShowCharacterEntryScreen`向当前LocalPlayer的UI协调器提交换页意图。协调器只在已认证、空闲、无加载或错误的`DBA.Flow.CharacterEntry`节点允许换页；打开创建页仍须真实AllowedCommands允许`CreateCharacter`，已有角色也可创建。2026-10-12起，取消创建可返回空选择页，不借用`SelectPersistentCharacter`业务提交资格；返回按钮复用相同路由门禁。提交中、注销、加载、错误及权威创建/验证节点拒绝新换页，未知页面身份拒绝。偏好只是当前本地玩家的页面投影，不改变角色列表或服务器选择；新运行、注销、离开角色入口时清除，忙碌快照保留当前创建页或空选择页。真实选择仍须持久角色和允许命令，创建、选择及世界准入继续由原有ApplicationFlow与后端校验执行，打开或取消表单不会授予权威结果。
 
 验证证据位于`Saved/Validation/VillageFlow/20261009`；原完整世界流程仍存在WorldReady超时，角色预览修复和客户端Cook通过不等于可玩新手村已通过。扩大UI测试时既有`PlayerStatusViewModel`测试因AttributeSet宿主无效导致编辑器崩溃，保留`PreviewRepair.Editor.log`，本轮不冒充整个UI套件通过；新增角色入口路由和既有拖动生命周期测试分别执行并记录独立结果。
+
+2026-10-12本次回归使用`DivineBeasts.UI.RoutingPolicy`（6项）及`DivineBeasts.UI.Characters.PreviewDrag`（3项）精确前缀：覆盖空列表默认选择、显式创建/取消、返回按钮事件刷新、业务选择资格、忙碌/错误/加载/注销/权威节点，以及双向拖动、90度限幅、NaN/无穷和捕获身份。主代理执行的真实RED保存在工作空间根`Saved/Validation/CharacterEntryFollowUp20261012/NativeRed.json`：路由4失败2通过，拖动3失败0通过，失败与缺陷一致。本次生产修复不新增测试、不运行构建或编辑器；修改后的GREEN、实际客户端操作与视觉验收待主代理独立执行，未认证后端/世界闭环、Cook或设备验收。
+
+空档案选择页的空闲提示为「尚未创建角色，请点击创建角色开始。」，默认焦点优先交给可见、启用且允许键盘焦点的`OpenCharacterCreateButton`；缺少、隐藏或禁用该入口时沿用原有焦点回退。非空档案仍优先当前卡片按钮，忙碌提示及档案禁用原因保持原有优先级。对应`DivineBeasts.UI.Characters.CharacterSelect`三项真实原生回归的RED证据为工作空间根`Saved/Validation/CharacterEntryFollowUp20261012/EmptyRosterRed.json`：空态提示与创建焦点两项失败，非空档案卡片焦点通过；修改后GREEN及实际客户端焦点操作仍待主代理运行。
+
+补充完整UI原生运行的历史结果为53项中52通过、1失败，保留工作空间根`Saved/Validation/CharacterEntryFollowUp20261012/Native-fac4b24b-9b01-4d36-99ca-c331d9e147f7/Report/index.json`。唯一失败为`EmptyRosterCreateFocus`的两个正向焦点断言；锁定UE5.8源码中`UButton`默认允许焦点，但`UWidget::IsVisible()`要求缓存Slate控件存在。旧夹具只创建UMG控件树，未构建按钮Slate，因此不满足生产可见性门禁。夹具现于Slate创建前显式设置真实`IsFocusable`反射属性，再经`TakeWidget`构建按钮，并增加可聚焦/可见前提及不可聚焦反例；保留禁用、忙碌和隐藏断言，生产门禁不降低。该修订未重新构建或运行，最终复测待主代理执行；真实Monolith选择页创建按钮的焦点配置仍须独立核对，夹具不能代替资产验收。
 
 1. C++ / UHT / Client Module 构建；
 2. 核对 DBAUIPack_Core 内容插件登记与挂载；
