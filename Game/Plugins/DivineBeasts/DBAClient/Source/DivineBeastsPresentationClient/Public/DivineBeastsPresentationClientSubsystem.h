@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/EngineTypes.h" // OnEndPlay的公开参数类型，不依赖宿主PCH间接提供枚举。
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "Catalog/DivineBeastsPresentationProjectCatalog.h"
 #include "ContentPacks/DivineBeastsPresentationContentPack.h"
@@ -162,6 +163,7 @@ public:
 
 private:
     friend class FDivineBeastsPresentationActivationRegressionTest;
+    friend class FDivineBeastsDevelopmentMagicLifecycleTest;
     struct FActivePack
     {
         FDivineBeastsPresentationContentPackHandle Handle;
@@ -340,12 +342,16 @@ private:
         bool bFlightEnded = false;
     };
     TWeakObjectPtr<UWorld> DevelopmentMagicWorld;
+    /** 跨同步Submit/预载通知后核对本世界绑定所有权；解绑先换代，旧调用不能尾写新账本。 */
+    FGuid DevelopmentMagicBindingToken;
     FDelegateHandle DevelopmentMagicSpawnHandle, DevelopmentMagicPackHandle;
     FDivineBeastsPresentationContentPackHandle DevelopmentMagicPack;
     TMap<TWeakObjectPtr<AGamePlatformCombatProjectile>, FDevelopmentMagicFlight> DevelopmentMagicFlights;
     void BindDevelopmentMagicWorld(UWorld* World);
     void UnbindDevelopmentMagicWorld();
     void HandleDevelopmentMagicSpawn(AActor* Actor);
+    /** EndPlay与内容包状态无关，缺资源/未初始化弹体也必须立即撤销订阅与账本。 */
+    UFUNCTION() void HandleDevelopmentMagicEndPlay(AActor* Actor, EEndPlayReason::Type Reason);
     void HandleDevelopmentMagicFacts(AGamePlatformCombatProjectile* Actor, const FGamePlatformCombatProjectileFacts& Facts);
     void HandleDevelopmentMagicPack(const FDivineBeastsPresentationContentPackHandle& Handle,
         EDivineBeastsPresentationContentPackState State, const FString& Error);

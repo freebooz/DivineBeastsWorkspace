@@ -9,7 +9,7 @@ WORKSPACE = Path(__file__).resolve().parents[3]
 
 
 def audit():
-    """用真实资产核对60身份、12集合、依赖、成本/冷却与正式英雄隔离；失败逐项输出中文定位。"""
+    """核对60项保留候选及当前12集合；三个槽按2026-10-12已批准开发魔法覆盖，正式英雄仍隔离。"""
     entries = json.loads((WORKSPACE / "Docs/Implementation/ZodiacAbilityDevelopmentDraft_20261009.json").read_text(encoding="utf-8-sig"))["Entries"]
     errors, seen_heroes = [], set()
 
@@ -44,7 +44,11 @@ def audit():
                 check(identifier(ability_set.get_editor_property("LogicalId")) == "dba.abilityset." + hero.lower() + "_dev@1", hero + ":集合ID与运行覆盖配置不一致")
                 grants = ability_set.get_editor_property("Abilities")
                 required = ability_set.get_editor_property("RequiredDefinitions")
-                expected_ids = {item["DevelopmentAbilityId"] for item in entries if item["HeroDefinitionId"] == entry["HeroDefinitionId"]}
+                # 旧候选资产继续审计，但现行授权明确为三个魔法；不根据资源存在性静默切换期望。
+                magic_slots={'Active01':'fireball','Active02':'frostbolt','Ultimate':'arcanemissiles'}
+                expected_ids = {('dba.ability.'+hero.lower()+'_dev_'+magic_slots[item['Slot']]+'@1')
+                    if item['Slot'] in magic_slots else item['DevelopmentAbilityId']
+                    for item in entries if item['HeroDefinitionId']==entry['HeroDefinitionId']}
                 check(len(grants) == 5 and {identifier(item.get_editor_property("AbilityId")) for item in grants} == expected_ids, hero + ":五项真实授权与草案ID不一致")
                 check(len(required) == 5 and {str(item.get_editor_property("PrimaryAssetName")) for item in required} == expected_ids, hero + ":五定义依赖闭包缺失")
             formal = unreal.EditorAssetLibrary.load_asset("/DBAGameplay/Definitions/DA_Hero_Zodiac_" + hero)

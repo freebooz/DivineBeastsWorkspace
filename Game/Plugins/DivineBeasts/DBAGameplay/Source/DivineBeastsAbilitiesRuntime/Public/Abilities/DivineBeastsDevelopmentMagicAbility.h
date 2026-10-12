@@ -26,6 +26,8 @@ private:
     int32 RemainingProjectiles = 0, ReleasedProjectiles = 0;
     float IntervalSeconds = 0;
     FTimerHandle BurstTimer;
+    /** 每次激活唯一令牌；Commit/Spawn同步回调取消并重新激活后，旧调用不得污染后继施法。 */
+    FGuid CastActivationToken;
     /** 游戏线程连发；每枚重新核对激活/权威/来源存活，延期回调不会继承下一次施法资格。 */
     void ReleaseNextProjectile();
 };

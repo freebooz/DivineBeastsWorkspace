@@ -34,9 +34,9 @@
 
 文件：现有 `DivineBeastsPlayerPortraitWidget.h/.cpp`、`DivineBeastsAbilityBarPanel.cpp`、`Private/Tests/DivineBeastsVillageHUDTests.cpp`及`DivineBeastsCombatUIFeedbackTests.cpp`；真实Widget仍在DBAUIPack_Core。
 
-- [ ] 先补 `DivineBeasts.UI.Village.PortraitFaceCrop` 与技能图标实际画刷回归，完整Editor编译并观察RED。
-- [ ] 项目头像画刷裁取头脸；技能Panel把真实SlotState图标/冷却写入已有控件，不改平台权威及资产所有权。
-- [ ] Monolith复核真实命名控件、编译保存重载；原生测试GREEN及真实RHI检查。
+- [x] 先补 `DivineBeasts.UI.Village.PortraitFaceCrop` 与技能图标实际画刷回归，完整Editor编译并观察RED。
+- [x] 项目头像画刷裁取头脸；技能Panel把真实SlotState图标/冷却写入已有控件，不改平台权威及资产所有权。
+- [x] Monolith复核真实命名控件与图标保存重载；原生UI64项GREEN及12图标真实RHI检查。原有Widget身份不改。
 
 ## 任务2 开发投射物权威及客户端表现
 
@@ -44,25 +44,27 @@
 
 接口：Ability只在合法Commit后生成服务器投射物；投射物发布类型、唯一事件身份、出生/命中/结束与代次事实，不携带纯表现资产引用。客户端适配根据复制事实消费项目内容目录。
 
-- [ ] 先写资产/类缺失及真实世界碰撞、一次结算、无权威/过期来源/结束清理回归，观察RED。
-- [ ] 实现共用权威投射物，服务器沿真实直线/螺旋路径做有界细分球体Sweep；仅必要运动开启服务器Tick。伤害交给GamePlatformCombat，不另造公式。
-- [ ] 增量接入中立表现，覆盖独立请求身份、取消及异步失败；原生正常/异常用例GREEN。
+- [x] 先写资产/类缺失及真实世界碰撞、一次结算、过期来源/结束清理回归，观察RED。无权威端的真实联机拒绝仍待网络验证。
+- [x] 实现共用权威投射物，服务器沿真实直线/螺旋路径做有界细分球体Sweep；仅必要运动开启服务器Tick。伤害交给GamePlatformCombat，不另造公式。
+- [x] 增量接入中立表现，覆盖独立请求身份及取消重入；原生Combat24项、Presentation18项、生命周期1项及真实魔法GAS9项GREEN。联网异步丢失／取消仍需补证。
 
 ## 任务3 作者资源与开发装配
 
 文件：`Tools/Unreal/Abilities/AuthorDevelopmentMagicTests.py`、对应资产门禁；两个开发CustomConfig及现有开发集合/Profile。公共视觉放DBAPresentationPack_Core，公共图标放DBAUIPack_Core，不新增插件。
 
-- [ ] 先运行实际资产缺失与装配门禁，记录RED。
-- [ ] 通过Monolith制作三种技能及飞行/命中VFX，为12英雄增量替换两个开发主动槽及开发终极槽，保存并独立重载。
-- [ ] 检查身份、数值、成本/冷却、图标及VFX编译；旧开发候选及正式英雄资源不删除。
+- [x] 先运行实际资产缺失与装配门禁，记录RED。
+- [x] 通过Monolith制作三种技能及飞行/命中VFX，为12英雄增量替换两个开发主动槽及开发终极槽，保存并独立重载。
+- [x] 检查身份、数值、成本/冷却、图标及VFX编译；旧开发候选及正式英雄资源不删除。当前进一步精修资产需再次重载检查。
 
 ## 任务4 构建发布及人工入口
 
-- [ ] 执行完整UI/技能/表现原生回归及Tests/Architecture，逐项报告失败，不能只跑新增用例。
-- [ ] 实际Editor/Client/Server构建、开发Client/Server干净Cook与容器/颜色/端侧门禁。
+- [x] 执行UI64项、既有技能7项、表现18项及新增真实魔法9项回归；Architecture80项中79成功、既有模块计数门禁1失败，未放宽。不能宣称全工程通过。
+- [x] 实际Editor/Client/Server构建、开发Client/Server独占非迭代Cook与容器/颜色/端侧门禁。Client为6bfc330a，Server为aab68dd8；纯表现禁止目录检查通过，不等同完整payload、联机或人工视觉验收。
 - [ ] 运行明确隔离的开发新手村专服及两个新版空白登录客户端，不自动提交账号密码，不中断现有验证进程。
 - [ ] 记录实际进程、登录首屏、伤害与两端VFX检查；人工网络施法/视觉未确认前不记完成。
 
 ## 执行记录
 
-初始main为226d4802；既有未提交文档及FileOpenOrder生成日志保留。Monolith0.23.0已重新启动并核对正式uproject、脏包0。实际AbilitySlot蓝图EventGraph只有未连接的PreConstruct/Construct/Tick，无SlotState到AbilityIcon的显示接线；普通发布配置未启用开发技能。源头像目视确认仍含胸肩，是本轮裁图输入。
+初始main为226d4802；既有未提交文档及FileOpenOrder生成日志保留。Monolith0.23.0已重新启动并核对正式uproject、脏包0。蓝图图表读取未显示连接，但保存的生成类仍可能保留软图标绑定，不能据图表单独断言运行时完全没有显示链路；真实RED明确复现的是空状态保留旧画刷，现由原生投影及代次令牌闭环。普通发布配置未启用开发技能。源头像目视确认仍含胸肩，是本轮裁图输入。
+
+本轮期间外部提交将main推进至12290c4c，保留该提交，没有自行提交或推送。最新完整Editor为36c5de19（Passed／Eligible），新增真实魔法九项GREEN为483d64af；详细阶段证据与剩余边界见 `Docs/Implementation/DevelopmentMagicAndHUD_20261012.md`。

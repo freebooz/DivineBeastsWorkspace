@@ -2,7 +2,7 @@
 """通过Monolith在正式UE编辑器增量制作开发魔法；不会直接写uasset或重做正式英雄。
 三种参数为可替换的测试平衡。只替换12个已有开发集合/Profile的Active01/Active02/Ultimate，
 保留原普攻、被动和旧技能资产。现有开发集合仍经非发行+配置+命令行三重启用。
-调用前编辑器必须完成原生构建；备份旧25份实际资产到Saved，不删除源或原PlayerStart。
+调用前编辑器必须完成原生构建并加载VillageDevelopmentClient标签；备份旧24份实际资产到Saved，不删除源或原PlayerStart。
 失败立即抛出，调用者需停止发布、保留证据；最后保存与独立重载/联机验证分开。
 """
 import importlib.util
@@ -47,6 +47,12 @@ def author():
     for name in SPELLS:
         if not isinstance(unreal.load_asset("/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev" + name), unreal.Texture2D):
             raise RuntimeError("原创魔法图标必须先通过Monolith导入: " + name)
+    # 完整预检放在任何资产写入前，普通编辑器没有开发冷却字典时必须停止，而非制作半套授权。
+    for hero in heroes:
+        for slot in ("Active01", "Active02", "Ultimate"):
+            tag = unreal.GameplayTag(); tag.import_text("DivineBeasts.Development.Cooldown." + hero + "." + slot)
+            if not unreal.GameplayTagLibrary.is_gameplay_tag_valid(tag):
+                raise RuntimeError("请使用-CustomConfig=VillageDevelopmentClient启动作者编辑器：" + hero + "." + slot)
     evidence = WORKSPACE / "Saved/Validation/MagicHUD20261012" / ("Author-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S"))
     backup = evidence / "Backup"; backup.mkdir(parents=True)
     for hero in heroes:
@@ -149,7 +155,21 @@ def author():
             cost.set_editor_property("Modifiers", [modifier]); unreal.BlueprintEditorLibrary.compile_blueprint(cost_bp); save(cost_bp)
             cool_bp, cool_cls, cool = blueprint(MAGIC + "/GE" + prefix + "Cooldown", unreal.GameplayEffect)
             cool.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.HAS_DURATION)
-            cool.set_editor_property("DurationMagnitude", magnitude(data["Cooldown"])); unreal.BlueprintEditorLibrary.compile_blueprint(cool_bp); save(cool_bp)
+            cool.set_editor_property("DurationMagnitude", magnitude(data["Cooldown"]))
+            # 动态Spec标签负责实际GAS独立冷却，同时在GE CDO明确声明同标签，满足引擎数据验证。
+            # 该MinimalAPI类型未生成Python具名包装，使用真实UClass和原始反射字段，不改引擎标志。
+            tag_class=unreal.load_class(None,'/Script/GameplayAbilities.TargetTagsGameplayEffectComponent')
+            components=list(cool.get_editor_property('GEComponents'))
+            component=next((v for v in components if v.get_class()==tag_class),None)
+            if component is None: component=unreal.new_object(tag_class,outer=cool); components.append(component)
+            inherited=component.get_editor_property('InheritableGrantedTagsContainer')
+            tag_name='DivineBeasts.Development.Cooldown.'+hero+'.'+data['Slot']
+            if not inherited.import_text('(Added='+tags([tag_name]).export_text()+')'): raise RuntimeError('GE冷却声明导入失败')
+            component.set_editor_property('InheritableGrantedTagsContainer',inherited); cool.set_editor_property('GEComponents',components)
+            unreal.BlueprintEditorLibrary.compile_blueprint(cool_bp); save(cool_bp)
+            # Blueprint编译可能reinstance生成类；成本/冷却引用必须重新取保存后的正式生成类。
+            cost_cls = unreal.EditorAssetLibrary.load_blueprint_class(MAGIC + "/GE" + prefix + "Cost")
+            cool_cls = unreal.EditorAssetLibrary.load_blueprint_class(MAGIC + "/GE" + prefix + "Cooldown")
             bp, cls, cdo = blueprint(MAGIC + "/GA" + prefix, unreal.DivineBeastsDevelopmentMagicAbility)
             cdo.set_editor_property("AbilityDefinitionId", primary(identifier)); cdo.set_editor_property("CostGameplayEffectClass", cost_cls)
             cdo.set_editor_property("CooldownGameplayEffectClass", cool_cls); cdo.set_editor_property("bDevelopmentDamageSampleSupported", True)

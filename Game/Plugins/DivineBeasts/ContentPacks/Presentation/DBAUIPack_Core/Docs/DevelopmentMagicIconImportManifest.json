@@ -1,0 +1,30 @@
+{
+  "SchemaVersion": 1,
+  "Description": "神兽联盟开发伤害测试三魔法原创图标；源RGB保持不变，真实资产仅由Monolith导入。并非正式生肖技能美术。",
+  "Provenance": "2026-10-12 imagegen 原创生成，无外部游戏资源；深色背景，光洁温润的能量材质，无颗粒、锐化、文字和边框。",
+  "PromptStyle": "Single central magical symbol filling 75% of square, readable at 64 pixels, deep near-black background, no border, no UI, no letters, no numbers. Premium cinematic 3D polished translucent surfaces and broad continuous soft highlights. Smooth graceful curves, subtle low-contrast microscopic texture only. Absolutely no grain, noise, gravel, sharpening halos, dirty surfaces, dense sparkles or clutter.",
+  "Files": [
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Abilities/MagicTests/Fireball.png",
+      "Destination": "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFireball",
+      "SHA256": "4DBFF9F6C48A336A1166B6CF84CC4D1B611111A34B0CDF8D581C930CD0DA734B",
+      "Role": "Color",
+      "Subject": "原创橙金火球：明亮能量核、优美连续火焰尾迹，非真实燃烧噪点。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Abilities/MagicTests/Frostbolt.png",
+      "Destination": "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFrostbolt",
+      "SHA256": "8F8C762E74FC8543C6499DAB7DAC97BFA24633D02BBF66F8AE6837179B4E8612",
+      "Role": "Color",
+      "Subject": "原创寒冰箭：抛光蓝色晶体箭、流畅冰曲线及稀薄寒气尾迹。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Abilities/MagicTests/ArcaneMissiles.png",
+      "Destination": "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevArcaneMissiles",
+      "SHA256": "067343D1F3E4F2A1B1327716D99A2E845ED0700B93FD77B24DC4616F38D8BEEC",
+      "Role": "Color",
+      "Subject": "原创奥术飞弹：紫蓝晶体能量核、连续螺旋光带和三条稀疏能量弧。"
+    }
+  ],
+  "ImportContract": "Color使用sRGB、TC_EditorIcon、NoMipmaps、UI组、白色乘色、无附加颜色调整、LegacyGamma=false。禁止widget截图的重复Gamma链路。导入设置与哈希审计不替代真实RHI及客户端验收。"
+}
