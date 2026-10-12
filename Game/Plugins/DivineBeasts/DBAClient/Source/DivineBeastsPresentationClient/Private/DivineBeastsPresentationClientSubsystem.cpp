@@ -47,6 +47,7 @@ void UDivineBeastsPresentationClientSubsystem::Initialize(
     if (ULocalPlayer* Player = GetLocalPlayer())
     {
         BindWeatherWorld(Player->GetWorld());
+        BindDevelopmentMagicWorld(Player->GetWorld());
         StartDefaultWorldBirdFlock(Player->GetWorld());
     }
 }
@@ -70,6 +71,7 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
 
     // 先停止持久环境VFX，再撤销目录，防止纯视觉实例泄漏到退出后的世界。
     StopFrontEndFoliage();
+    UnbindDevelopmentMagicWorld();
     StopAllAmbientBirdFlocks();
     StopAllAmbientFauna();
     UnregisterProjectState();
@@ -818,6 +820,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleWorldCleanup(
     UWorld* LocalWorld =
         GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
     if (!World) return;
+    if (DevelopmentMagicWorld.Get() == World) UnbindDevelopmentMagicWorld();
     if (World != LocalWorld)
     {
         // LocalPlayer可能已进入新世界；只撤销真正绑定旧世界的环境意图。
@@ -860,6 +863,7 @@ void UDivineBeastsPresentationClientSubsystem::HandlePostLoadMap(UWorld* World)
         RequestStates.Reset();
         RequestOrder.Reset();
         BindWeatherWorld(World);
+        BindDevelopmentMagicWorld(World);
         StartDefaultWorldBirdFlock(World);
     }
 }

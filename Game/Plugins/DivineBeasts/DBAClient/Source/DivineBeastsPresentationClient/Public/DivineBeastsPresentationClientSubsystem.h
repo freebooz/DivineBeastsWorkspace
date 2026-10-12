@@ -16,6 +16,8 @@
 
 class UGamePlatformPresentationClientSubsystem;
 class UWorld;struct FGamePlatformWeatherSnapshot;
+class AGamePlatformCombatProjectile;
+struct FGamePlatformCombatProjectileFacts;
 
 DECLARE_MULTICAST_DELEGATE_FourParams(
     FDivineBeastsPresentationLogicalPreloadRequested,
@@ -327,4 +329,24 @@ private:
     FDivineBeastsPresentationLogicalPreloadRequested LogicalPreloadRequested;
     FDivineBeastsPresentationLogicalPreloadCancelled LogicalPreloadCancelled;
     FDivineBeastsPresentationContentPackChanged ContentPackChanged;
+
+    /** 本地玩家独占开发法术表现适配，不持有伤害/运动权威；全部句柄在旅行/退出撤销。 */
+    struct FDevelopmentMagicFlight
+    {
+        FDelegateHandle FactsHandle;
+        FGuid FlightRequestId;
+        FName StyleId = NAME_None;
+        bool bImpactSubmitted = false;
+        bool bFlightEnded = false;
+    };
+    TWeakObjectPtr<UWorld> DevelopmentMagicWorld;
+    FDelegateHandle DevelopmentMagicSpawnHandle, DevelopmentMagicPackHandle;
+    FDivineBeastsPresentationContentPackHandle DevelopmentMagicPack;
+    TMap<TWeakObjectPtr<AGamePlatformCombatProjectile>, FDevelopmentMagicFlight> DevelopmentMagicFlights;
+    void BindDevelopmentMagicWorld(UWorld* World);
+    void UnbindDevelopmentMagicWorld();
+    void HandleDevelopmentMagicSpawn(AActor* Actor);
+    void HandleDevelopmentMagicFacts(AGamePlatformCombatProjectile* Actor, const FGamePlatformCombatProjectileFacts& Facts);
+    void HandleDevelopmentMagicPack(const FDivineBeastsPresentationContentPackHandle& Handle,
+        EDivineBeastsPresentationContentPackState State, const FString& Error);
 };

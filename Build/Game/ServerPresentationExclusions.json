@@ -15,6 +15,13 @@
   },
   "CookDirectories": [
     {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/DevelopmentMagic",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "开发火焰/冰箭/奥术纯Niagara、材质及定义；碰撞/伤害由平台权威投射物，不进任何专服。"
+    },
+    {
       "PackagePath": "/DBAUIPack_Core",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content",
       "Profiles": "AllServers",

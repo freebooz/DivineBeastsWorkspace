@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/InputSettings.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "Components/ProgressBar.h"
 
 void UDivineBeastsAbilityBarPanel::NativeConstruct()
 {
@@ -205,6 +207,18 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
             VisualState.bPending = true;
         }
         Binding.Widget->ApplySlotState(VisualState);
+        // UIProfile/图标已经由ViewModel的中央Data租约预热。这里只取驻留对象，不同步加载，
+        // 并取消旧蓝图SetBrushFromSoftTexture的自有在途请求；空引用必须主动清画刷，不能只隐藏。
+        // 这样换Pawn/缺图标后的迟到旧纹理不再复活，也不把未授权槽补成固定魔法图标。
+        if (auto* Icon = Cast<UImage>(Binding.Widget->GetWidgetFromName(TEXT("AbilityIcon"))))
+        {
+            UTexture2D* Texture = VisualState.Icon.Get();
+            Icon->SetBrushFromTexture(Texture);
+            Icon->SetVisibility(IsValid(Texture) ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
+            Icon->SetIsEnabled(VisualState.bEnabled && !VisualState.bPending);
+        }
+        if (auto* Cooldown = Cast<UProgressBar>(Binding.Widget->GetWidgetFromName(TEXT("CooldownFill"))))
+            Cooldown->SetPercent(VisualState.OverlayProgress);
         // 在槽位蓝图状态事件之后刷新，不能让初始占位文字替代玩家当前生效按键。
         RefreshSlotHotkey(Binding.Widget, Binding.ActionName, Binding.bPassive);
     }
