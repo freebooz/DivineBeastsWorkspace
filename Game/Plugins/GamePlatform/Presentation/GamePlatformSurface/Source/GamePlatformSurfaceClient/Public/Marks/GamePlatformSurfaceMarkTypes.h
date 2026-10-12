@@ -2,6 +2,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Engine/EngineTypes.h"
+#include "Chaos/ChaosEngineInterface.h" // EPhysicalSurface（物理表面类型）在PhysicsCore内声明，公共合同不得依赖间接包含。
 #include "GamePlatformSurfaceMarkTypes.generated.h"
 
 class UPrimitiveComponent;

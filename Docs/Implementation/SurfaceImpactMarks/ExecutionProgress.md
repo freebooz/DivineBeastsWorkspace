@@ -36,6 +36,13 @@
 - `Build/Game/ServerPresentationExclusions.json`已将现实存在的`/GamePlatformSurface/Marks`登记为AllServers纯表现排除，官方受管工具`generate`精确更新三套Server NeverCook和DedicatedServer Pak规则；`check`通过，策略25/25测试通过。同时FrontEndClient、VillageDevelopmentClient、PluginDemoClient各加入一次Marks `DirectoriesToAlwaysCook`，不写入共享默认Game；7项架构/路径测试通过。**配置和脚本回归不等于真实Server Cook或完整Client资产打包成功**。
 - 最新C++ UHT/UBT、Catalog `.uasset`和独立演示 `.umap`仍未完成；并发original Editor构建由其他会话掌握，其编译证据需独立核对，不能将旧DLL、源图检查代替本次编译。
 
+## 续执行记录：当前编译阻塞与隔离回退
+- 最新复核提交 `8d2bfe2738b25c72640475840348a885e0628e05`，其后存在其他任务的少量未提交文件；没有回滚／清理／覆盖原有资产，也没有本任务主动提交或推送。21个Marks原生包仍在原工作区。
+- 本次新增的 `Tests/Architecture/ValidateSurfaceMarkCookExclusion.py` 运行3/3成功：Marks物理包UE头、三类Server NeverCook、Pak精确目录、客户端模块不进Server均校验。此后补充一项 **只在真实Review Map生成后强制运行的边界测试**；未制作地图前按测试跳过，不能记地图已剔除。生成地图后还必须把 `/GamePlatformSurface/Maps` 写入单源并重新generate、check、跑真实Cook。
+- Python作者 `AuthorSurfaceMarksUEAssets.py` 将真实Catalog验证升级为：五类恰好各1项、预算合法、每个Kind的材质软引用必须指向对应的已导入MI、尺寸/持续时间/淡出参数合理；不因资产存在就默认判通过。更新已精确同步到隔离验证检出 `.worktrees/v`，无材质或贴图覆盖。
+- Module构建第一次PS7参数边界测试：把两个模块误传为逗号分隔单字符串，被 `OnlyModules` 正则在执行前拒绝，exit1；没有启动UBT或改源。第二次按PS7数组调用、RunId=`eeb9e75b-f428-46d2-9bb1-d60dfd38ca5c`，Job=`wc_job_kXPCzb7E1-IP7nSG`，真正产生UBT日志；当前停在读取配置后的共享引擎UBT互斥等待，**尚无C++成功或失败编译证据**。其它Session同时有完整Editor构建及运行Editor，未干涉；已在Session板对相关会话发出协调信息。
+- 为不覆盖或重编译原项目当前DLL，已将13个新增SurfaceClient C++源文件按新增-only同步至 `.worktrees/v`，其SurfaceSettings头和实现采用精确补丁加入Marks软目录设置。回退选项是在引擎锁释放后隔离编译并真实制作Catalog/Map，但不能将v验证编译冒充原工作区全目标成功。
+
 ## 未完成门禁
 - 正式新增代码的Editor/Client/Server UBT构建；目录`DA_GP_SurfaceMarkCatalog.uasset`、演示`L_GP_SurfaceMarks_Review.umap`、D3D12实际视觉；自动化/PIE、正式技能表绑定、真实Cook/Stage及容器资源清单验收。
 - 已交付21个真实纹理/材质UE资产且具物理字节证据，但目录与演示需要新UCLASS完成Editor编译后才能真正创作。Shader脚本执行过材质图重编译，尚未获得实际独立GPU可见性及正式AAA美术批准。

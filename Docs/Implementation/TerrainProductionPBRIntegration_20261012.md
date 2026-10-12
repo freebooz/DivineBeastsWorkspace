@@ -93,6 +93,13 @@ MobaCommon（通用竞技层）无地形特殊行为，不增加空模块。正�
 - `Tests/Architecture/ValidateTerrainProductionIntegration.py`增加正式UE纹理Sampler类型、平台PCG Actor、显式Box范围、四图层映射检查。上一轮静态检查曾因该测试文件缩进异常失败，本轮已修复并重新执行合同检查，后续保留真实退出码为准。
 - 截至本轮检查，仍有其他会话的`DivineBeastsArenaEditor`模块编译进程占用同一主工程。已启动受控流水线，只有连续三个时间窗口确认无UE/UBT后才调用`RunTerrainGaeaFullReview.ps1 -Apply -ProductionPBR`（正式扫描PBR十层UE原生导入、材质、PCG图及独立地图），不得杀掉编译进程或虚构成功。
 
+### 2026-10-12 本轮UE5.8实际构建失败与限定模块恢复
+
+- 受控流水线确实检测到短暂独占窗口并进入正式`Build.bat DivineBeastsArenaEditor Win64 Development`；UnrealBuildTool产生`3993`个全引擎编译/链接动作，随后`UnrealEditor-Core.dll`被另一个`UnrealEditor.exe`进程占用，UBA与无UBA模式均失败（`LNK1104`）。仅属于引擎进程DLL锁冲突，尚未开始纹理重导入，更未验证生产地形Shader。
+- 发生确定性致命Link错误后，只对本会话所启动的`wc_job_oAXHQZWgl6ainLwa`提出停止请求并核实状态`stopped`，未终止其它会话的编辑器或UBT。失败日志保存于`Game/Saved/Validation/TerrainPBR_20261012/ProductionUEPipeline_20261012.log`（PowerShell UTF-16），可检索`LNK1104`和`UnrealEditor-Core.dll`。
+- 已修正`RunTerrainGaeaFullReview.ps1`：当指定`-ProductionPBR -Apply`时，`Build.bat`仅构建`GamePlatformSurfaceEditor+GamePlatformPCGEditor`（对应本轮通用平台地形与PCG编辑器模块），采用`-NoUBA -MaxParallelActions=3`，避免重复启动3993项全引擎重编。插件演示客户端`DivineBeastsDemoClient`模块的编译、联编及DLL继续由其原工作会话负责，不在此代码任务中覆盖。
+- 修改后的只读DryRun和Git diff空白检查已通过；重新执行`-Apply`的条件是同一工作区UE/UBT进程完全释放且新的演示模块DLL可加载。当前真正的UE Texture2D、UMaterial、PCGGraph和UMAP均仍待创建或回读。
+
 ## 六、可复现的只读检查
 
 ```powershell

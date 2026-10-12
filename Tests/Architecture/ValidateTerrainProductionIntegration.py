@@ -82,6 +82,9 @@ def run():
  for term in ("ProductionPBR","AuthorTerrainProductionPCGReview.py",
               "GamePlatformPCGTerrainBiomeGraphs","GamePlatformSurfaceTerrainReviewMap"):
   ensure(term in workflow,"缺少原生UE/PCG集成步骤："+term)
+ ensure("-Module=GamePlatformSurfaceEditor+GamePlatformPCGEditor" in workflow and
+        "'-NoUBA'" in workflow,
+        "地形任务构建必须限Surface/PCG编辑器模块，避免再次重链整个UE引擎")
  graph_cmd=(ROOT/"Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCGEditor/Private/Commands/GamePlatformPCGTerrainBiomeGraphsCommandlet.cpp").read_text(encoding="utf-8")
  ensure("/*bShouldStopOnSeparator=*/false" in graph_cmd and "BiomeMap=" in graph_cmd,
         "PCG四类Biome逗号串可能被FParse截断，禁止只生成第一张Graph")

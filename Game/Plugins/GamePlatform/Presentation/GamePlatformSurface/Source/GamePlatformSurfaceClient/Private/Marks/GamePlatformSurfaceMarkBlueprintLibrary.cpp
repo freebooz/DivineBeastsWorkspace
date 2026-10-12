@@ -1,7 +1,8 @@
 #include "Marks/GamePlatformSurfaceMarkBlueprintLibrary.h"
 #include "Marks/IGamePlatformSurfaceMarkService.h"
 #include "Engine/Engine.h"
-#include "Engine/World.h"
+#include "Engine/World.h"// IsValid(PrimitiveComponent*)转换到UObject*必须已知该组件的完整继承类型。
+#include "Components/PrimitiveComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
 namespace

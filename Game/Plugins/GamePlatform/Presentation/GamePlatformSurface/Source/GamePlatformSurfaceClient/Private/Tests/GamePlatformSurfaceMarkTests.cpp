@@ -5,7 +5,7 @@
 #include "Marks/GamePlatformSurfaceMarkCatalog.h"
 #include "Marks/GamePlatformSurfaceMarkBlueprintLibrary.h"
 #include "UObject/StrongObjectPtr.h"
-#include "Materials/Material.h"
+#include "Materials/Material.h"#include "MaterialDomain.h"
 #include "Materials/MaterialInterface.h"
 #include "Engine/Texture2D.h"
 #include <limits>

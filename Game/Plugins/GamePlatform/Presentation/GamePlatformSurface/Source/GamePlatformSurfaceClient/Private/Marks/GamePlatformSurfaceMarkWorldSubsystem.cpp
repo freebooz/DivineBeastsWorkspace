@@ -8,7 +8,8 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
-#include "Materials/Material.h"
+#include "Materials/Material.h"// UE5.8 Material.h仅声明EMaterialDomain，枚举值必须显式包含MaterialDomain.h。
+#include "MaterialDomain.h"
 #include "Materials/MaterialInterface.h"
 #include "Math/RotationMatrix.h"
 #include "Misc/App.h"

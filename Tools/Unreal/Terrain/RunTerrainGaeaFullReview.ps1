@@ -96,11 +96,17 @@ function Run-UePython([string]$name,[string]$scriptName,[string]$marker){
     }
 }
 if($Apply){
-    $buildArgs=@('DivineBeastsArenaEditor','Win64','Development',
-                 ('-Project='+$uproject),'-MaxParallelActions=8',
-                 '-WaitMutex','-NoHotReloadFromIDE')
+    # 正式PBR仅编译本轮更改的Terrain作者模块；全量Editor会触发源码版UE的上千引擎
+    # Action并重链正在被其它开发者Editor使用的UnrealEditor-Core.dll（LNK1104）。
+    # 已有插件演示客户端模块由其独立开发会话负责，本站不改写他人模块或二进制。
+    $buildArgs=@('DivineBeastsArenaEditor','Win64','Development',('-Project='+$uproject),
+                 '-MaxParallelActions=3','-WaitMutex','-NoHotReloadFromIDE','-NoUBA')
+    if($ProductionPBR){
+        $buildArgs+='-Module=GamePlatformSurfaceEditor+GamePlatformPCGEditor'
+        Write-Host 'TERRAIN_NATIVE_BUILD_SCOPED_TO_SURFACE_AND_PCG_EDITOR_MODULES'
+    }
     & $build @buildArgs
-    if($LASTEXITCODE -ne 0){throw '正式UE Editor完整构建失败，拒绝创建半成品资产'}
+    if($LASTEXITCODE -ne 0){throw '地形本轮UE编辑器模块构建失败；无原生资产创建，查看UBT真实日志'}
 }
 if($ProductionPBR){
     # 仅在独占编辑器窗口按官方清单替换10层原Texture2D；必须保留回退Zip。
