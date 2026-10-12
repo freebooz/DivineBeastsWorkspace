@@ -6,9 +6,11 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "Types/GamePlatformWeatherTypes.h"
 #include "Types/GamePlatformDataLease.h"
+#include "Environment/DivineBeastsBirdFlockFlightSettings.h"
 #include "DivineBeastsDemoWorldSubsystem.generated.h"
 
-class AGamePlatformBirdFlockActor;
+class UDivineBeastsBirdFlockSceneComponent;
+class UDivineBeastsBirdFlockBatchComponent;
 class ADivineBeastsWeatherReviewController;
 class UDivineBeastsDemoHubWidget;
 
@@ -25,13 +27,35 @@ public:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
     virtual void Deinitialize() override;
 
-    /** 真实鸟群Actor的数量调整；找到并成功更新至少一个对象才返回true。 */
+    /** 仅修改正式BirdFlockSceneComponent并触发Presentation/Data/VFX链路，不再调用旧ISM。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|VFX")
     bool ApplyBirdCount(int32 Count);
 
-    /** 对有真实鸟群的世界调整画质比例；范围0..1，拒绝超出或无Actor的调用。 */
+    /** 调整正式鸟群场景配置的质量比例，实际GPU可见数仍由Niagara EffectType决定。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|VFX")
     bool ApplyBirdQuality(float Fraction);
+    /** 切换正式鸟群物种配置，未知物种由项目表现目录拒绝，失败回退当前配置。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|VFX")
+    bool ApplyBirdSpecies(FName SpeciesId);
+
+    /** 可选路径模式；仅Spline模式需同世界有效Spline组件与完成相应Niagara资源。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|VFX")
+    bool ApplyBirdFlightMode(EDivineBeastsBirdFlockFlightMode Mode);
+
+    /** 标准Boids三权重，若实际资源Schema/邻域模块未就绪则明确失败。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|VFX")
+    bool ApplyBirdFlocking(float SeparationWeight, float AlignmentWeight, float CohesionWeight);
+
+    /** 动态切换滑翔混合；0保留原材质WPO，不代表VAT资产存在。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|VFX")
+    bool ApplyBirdGlide(float GlideBlend);
+
+    /** 批次控制只持本组件Owner/Token，不会清除其它插件演示群。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|VFX")
+    bool StartBirdBatches();
+
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|VFX")
+    void StopBirdBatches();
 
     /** 真实天气审核Actor仅在世界权威上下文允许；不能以本函数绕过专服。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|Weather")
@@ -41,11 +65,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo")
     bool ResetDemoChanges();
 
-    /** 已实际被鸟群Actor绘制的数量；无Actor时为0，不等同已成功生成。 */
+    /** -1表示当前未做真实Niagara GPU读回；绝不返回旧ISM计数冒充真实鸟数。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo|VFX")
     int32 GetActualBirdCount() const;
+    /** 已受理的项目正式服务鸟数（请求数），不代表GPU现存粒子数。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo|VFX")
+    int32 GetRequestedBirdCount() const;
 
-    /** 当前世界真实Actor数量，不含静态贴图和其它实例。 */
+    /** 当前世界正式鸟群场景组件数量，不是逐鸟Actor数量。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo|VFX")
     int32 GetBirdActorCount() const;
 
@@ -54,9 +81,23 @@ public:
     FText GetLastFeedback() const { return LastFeedback; }
 
 private:
-    /** 只存储本世界实际操作过的Actor原值；其它插件若在外部改变它不由本控制器撤销。 */
-    TMap<TWeakObjectPtr<AGamePlatformBirdFlockActor>, int32> OriginalCounts;
-    TMap<TWeakObjectPtr<AGamePlatformBirdFlockActor>, float> OriginalQuality;
+    /** 演示修改前的正式组件快照；失败时原位回滚，离开世界不访问已失效组件。 */
+    struct FOriginalBirdState
+    {
+        int32 Count = 0;
+        FName Species = NAME_None;
+        bool bAdvanced = false;
+        FDivineBeastsBirdFlockFlightSettings Flight;
+    };
+    TMap<TWeakObjectPtr<UDivineBeastsBirdFlockSceneComponent>, FOriginalBirdState> OriginalBirds;
+    /** 首次可写操作前记录原状态，离开世界只恢复本演示改变的组件。 */
+    void CaptureOriginalBird(UDivineBeastsBirdFlockSceneComponent& Bird);
+    /** 执行正式Apply并在失败时还原用户可编辑字段。 */
+    bool CommitBirdChange(UDivineBeastsBirdFlockSceneComponent& Bird,
+        const FOriginalBirdState& Before, FString& OutError);
+    /** 有界同步演示操作：保存原值、实际调用正式VFX链路、失败恢复本地可编辑字段。 */
+    bool ApplyBirdEdits(const TCHAR* Description,
+        TFunctionRef<void(UDivineBeastsBirdFlockSceneComponent&)> Edit);
     TWeakObjectPtr<ADivineBeastsWeatherReviewController> OriginalWeatherActor;
     EGamePlatformWeatherType OriginalWeatherType = EGamePlatformWeatherType::Clear;
     bool bHasOriginalWeather = false;

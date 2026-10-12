@@ -30,7 +30,7 @@ PALETTE = {
 def smooth_noise(rng, cells):
     """稳定的宏/微随机场，无外部在线纹理依赖。"""
     values = rng.integers(0, 256, size=(cells, cells), dtype=np.uint8)
-    image = Image.fromarray(values, mode="L").resize((SIZE, SIZE), Image.Resampling.BICUBIC)
+    image = Image.fromarray(values).resize((SIZE, SIZE), Image.Resampling.BICUBIC)
     return np.asarray(image, dtype=np.float32) / 255.0
 
 def make_masks(kind, index):
@@ -121,8 +121,8 @@ def encode(kind, masks):
     ao = np.clip(1-alpha*.30,0,1)*255
     rough = np.clip(roughness + detail * .095,0,1)*255
     orm = np.stack((ao,rough,np.zeros_like(ao)),axis=-1).clip(0,255).astype(np.uint8)
-    return {"Albedo": Image.fromarray(albedo, "RGBA"), "Normal": Image.fromarray(normal,"RGB"),
-            "ORM": Image.fromarray(orm,"RGB")}
+    return {"Albedo": Image.fromarray(albedo), "Normal": Image.fromarray(normal),
+            "ORM": Image.fromarray(orm)}
 
 def run():
     SOURCE.mkdir(parents=True,exist_ok=True)

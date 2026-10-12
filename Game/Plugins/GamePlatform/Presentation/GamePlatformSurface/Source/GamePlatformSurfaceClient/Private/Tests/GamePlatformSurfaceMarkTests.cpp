@@ -4,7 +4,7 @@
 #include "Marks/GamePlatformSurfaceMarkTypes.h"
 #include "Marks/GamePlatformSurfaceMarkCatalog.h"
 #include "UObject/StrongObjectPtr.h"
-#include "Math/NumericLimits.h"
+#include <limits>
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformSurfaceMarkRequestTest,
     "GamePlatform.Surface.Marks.Request.FiveKindsAndInvalidValues",
@@ -28,7 +28,7 @@ bool FGamePlatformSurfaceMarkRequestTest::RunTest(const FString&)
     Request.SizeScale = 9.0f;
     TestFalse(TEXT("超限尺寸拒绝"), FGamePlatformSurfaceMarkPolicy::IsValidRequest(Request));
     Request.SizeScale = 1.0f;
-    Request.Location.X = TNumericLimits<double>::QuietNaN();
+    Request.Location.X = std::numeric_limits<double>::quiet_NaN();
     TestFalse(TEXT("非有限命中位置拒绝"), FGamePlatformSurfaceMarkPolicy::IsValidRequest(Request));
     return true;
 }

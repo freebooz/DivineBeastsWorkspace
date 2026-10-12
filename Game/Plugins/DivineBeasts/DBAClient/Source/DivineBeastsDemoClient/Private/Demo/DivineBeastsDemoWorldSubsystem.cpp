@@ -4,7 +4,7 @@
 #include "Demo/DivineBeastsDemoCatalogSubsystem.h"
 #include "Development/DivineBeastsPluginDemoMode.h"
 #include "UI/DivineBeastsDemoHubWidget.h"
-#include "Environment/GamePlatformBirdFlockActor.h"
+#include "Environment/DivineBeastsBirdFlockSceneComponent.h"
 #include "Weather/DivineBeastsWeatherReviewController.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Engine/GameInstance.h"
@@ -65,8 +65,7 @@ void UDivineBeastsDemoWorldSubsystem::Deinitialize()
 {
     ResetDemoChanges();
     ReleaseDemoOverlay();
-    OriginalCounts.Reset();
-    OriginalQuality.Reset();
+    OriginalBirds.Reset();
     OriginalWeatherActor.Reset();
     SourceWorld.Reset();
     Super::Deinitialize();
@@ -156,70 +155,6 @@ void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
     UILease = {};
 }
 
-int32 UDivineBeastsDemoWorldSubsystem::GetBirdActorCount() const
-{
-    UWorld* World = GetWorld();
-    if (!World) return 0;
-    int32 Count = 0;
-    for (TActorIterator<AGamePlatformBirdFlockActor> It(World); It; ++It) ++Count;
-    return Count;
-}
-
-int32 UDivineBeastsDemoWorldSubsystem::GetActualBirdCount() const
-{
-    UWorld* World = GetWorld();
-    if (!World) return 0;
-    int32 Count = 0;
-    for (TActorIterator<AGamePlatformBirdFlockActor> It(World); It; ++It)
-    {
-        Count += It->GetEffectiveBirdCount();
-    }
-    return Count;
-}
-
-bool UDivineBeastsDemoWorldSubsystem::ApplyBirdCount(int32 Count)
-{
-    if (!FDivineBeastsPluginDemoMode::IsEnabled() || Count < 0 || Count > 512)
-    {
-        LastFeedback = FText::FromString(TEXT("鸟群数量非法，范围为0至512。"));
-        return false;
-    }
-    UWorld* World = GetWorld();
-    if (!World) return false;
-    int32 Changed = 0;
-    for (TActorIterator<AGamePlatformBirdFlockActor> It(World); It; ++It)
-    {
-        AGamePlatformBirdFlockActor* Bird = *It;
-        if (!OriginalCounts.Contains(Bird)) OriginalCounts.Add(Bird, Bird->BirdCountOverride);
-        if (Bird->SetBirdCount(Count)) ++Changed;
-    }
-    LastFeedback = FText::FromString(
-        Changed > 0 ? FString::Printf(TEXT("已修改%d个真实鸟群Actor，当前可见鸟数%d。"), Changed, GetActualBirdCount())
-                    : TEXT("当前地图没有可调整的真实鸟群Actor，或请求被VFX插件拒绝。"));
-    return Changed > 0;
-}
-
-bool UDivineBeastsDemoWorldSubsystem::ApplyBirdQuality(float Fraction)
-{
-    if (!FDivineBeastsPluginDemoMode::IsEnabled() || !FMath::IsFinite(Fraction) || Fraction < 0.f || Fraction > 1.f)
-    {
-        LastFeedback = FText::FromString(TEXT("鸟群画质参数非法，范围为0至1。"));
-        return false;
-    }
-    UWorld* World = GetWorld();
-    if (!World) return false;
-    int32 Changed = 0;
-    for (TActorIterator<AGamePlatformBirdFlockActor> It(World); It; ++It)
-    {
-        AGamePlatformBirdFlockActor* Bird = *It;
-        if (!OriginalQuality.Contains(Bird)) OriginalQuality.Add(Bird, Bird->QualityFraction);
-        if (Bird->SetQualityFraction(Fraction)) ++Changed;
-    }
-    LastFeedback = FText::FromString(Changed > 0
-        ? FString::Printf(TEXT("已更新%d个鸟群Actor画质比例，当前可见%d只鸟。"), Changed, GetActualBirdCount())
-        : TEXT("当前地图没有可调整的真实鸟群Actor或操作被拒绝。"));
-    return Changed > 0;
-}
 
 bool UDivineBeastsDemoWorldSubsystem::ApplyWeather(EGamePlatformWeatherType Weather, float TransitionSeconds)
 {
@@ -261,22 +196,22 @@ bool UDivineBeastsDemoWorldSubsystem::ApplyWeather(EGamePlatformWeatherType Weat
 bool UDivineBeastsDemoWorldSubsystem::ResetDemoChanges()
 {
     bool bAllSucceeded = true;
-    for (const auto& Entry : OriginalCounts)
+    StopBirdBatches();
+    for (const auto& Entry : OriginalBirds)
     {
-        if (AGamePlatformBirdFlockActor* Bird = Entry.Key.Get())
+        if (UDivineBeastsBirdFlockSceneComponent* Bird = Entry.Key.Get())
         {
-            bAllSucceeded &= Bird->SetBirdCount(Entry.Value);
+            const FOriginalBirdState& Original = Entry.Value;
+            Bird->BirdCount = Original.Count;
+            Bird->SpeciesId = Original.Species;
+            Bird->bEnableAdvancedFlight = Original.bAdvanced;
+            Bird->AdvancedFlight = Original.Flight;
+            FString Error;
+            bAllSucceeded &= Bird->ApplyBirdFlock(Error);
         }
+        else bAllSucceeded = false;
     }
-    for (const auto& Entry : OriginalQuality)
-    {
-        if (AGamePlatformBirdFlockActor* Bird = Entry.Key.Get())
-        {
-            bAllSucceeded &= Bird->SetQualityFraction(Entry.Value);
-        }
-    }
-    OriginalCounts.Reset();
-    OriginalQuality.Reset();
+    OriginalBirds.Reset();
     if (bHasOriginalWeather)
     {
         if (ADivineBeastsWeatherReviewController* WeatherActor = OriginalWeatherActor.Get())

@@ -39,7 +39,8 @@ void UGamePlatformSurfaceMarkWorldSubsystem::Initialize(FSubsystemCollectionBase
 void UGamePlatformSurfaceMarkWorldSubsystem::Deinitialize()
 {
     bClosing = true;
-    ++LoadGeneration;    MarkSpawned.Clear();
+    ++LoadGeneration;
+    MarkSpawned.Clear();
     PendingRequests.Reset();
     for (const auto& Mark : ActiveMarks)
     {
@@ -285,7 +286,8 @@ EGamePlatformSurfaceMarkStatus UGamePlatformSurfaceMarkWorldSubsystem::SpawnLoad
     Active.ExpireTimeSeconds = Style->LifetimeSeconds > 0.0f
         ? World->GetTimeSeconds() + Style->LifetimeSeconds : 0.0;
     ActiveMarks.Add(Active);
-    RememberEvent(Request.EventId);    // 仅真实生成后通知现有Niagara/音效桥，外部失败不能改变命中权威。
+    RememberEvent(Request.EventId);
+    // 仅真实生成后通知现有Niagara/音效桥，外部失败不能改变命中权威。
     MarkSpawned.Broadcast(Request);
     return EGamePlatformSurfaceMarkStatus::Spawned;
 }
@@ -295,8 +297,10 @@ FGamePlatformSurfaceMarkResult UGamePlatformSurfaceMarkWorldSubsystem::MakeResul
 {
     FGamePlatformSurfaceMarkResult Result;
     Result.Status = Status;
-    Result.ActiveCount = ActiveMarks.Num();
-    Result.PendingCount = PendingRequests.Num();
+    int32 Active = 0, Pending = 0;
+    GetCounts(Active, Pending);
+    Result.ActiveCount = Active;
+    Result.PendingCount = Pending;
     return Result;
 }
 
