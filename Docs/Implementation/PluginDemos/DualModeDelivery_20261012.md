@@ -39,3 +39,26 @@
 5. 人工视觉/键鼠/焦点及音效签审，自动化不能替代。
 
 **本记录中的开发资源阶段未完成项必须据真实Job与Monolith连接继续更新，不能仅凭作者脚本存在宣布完成。**
+
+## 2026-10-12 续做记录：门户蓝图接线能力与引擎资产制作
+
+- 复用已有 `DivineBeastsDemoClient`，仅在其 `UDivineBeastsDemoHubWidget` 增加按插件名称、稳定ID、说明、三层分类及已发现地图的只读筛选API；不在输入变化时扫描资产、访问后端或创建重复目录。
+- `UDivineBeastsDemoWorldSubsystem` 在真实Widget成功加载后设置 GameAndUI（游戏与界面共享输入）、焦点与鼠标可见；离开本世界撤销自身输入设置并恢复鼠标原状态。代码已落盘，编译及实测待验证。
+- 新增 `TestDBAPluginDevDualMode.py` 的门户筛选和输入生命周期静态回归检查；此检查不证明Widget蓝图存在或UE运行成功。
+- 本次开始核对时，正式地图 `L_DBA_PluginDemoHub.umap` 及 `WBP_DBA_PluginDemoHub.uasset` 均不存在；Monolith服务路由可解析，但无正在运行的UE编辑器实例，因此没有声称已创建蓝图。
+- 首次尝试通过锁定 UE5.8 的 `UnrealEditor-Cmd.exe` 执行真实地图作者脚本，子进程退出码1，地图**未获生成确认**；需要基于项目编辑器日志排查后重试。不能以启动进程或作者脚本存在代替真实资源证据。
+- 当前Cwebcodex Runner拥有其他会话持续执行的作业，禁止清理、停止或覆盖他人的资源与构建工件。本次新增代码需等待无冲突构建窗口统一验收。
+- 已实际执行 `python Tests/Architecture/TestDBAPluginDevDualMode.py`：`Ran 10 tests in 0.003s / OK`，属于源码静态回归，不代表运行构建或视觉验收。
+- 真实UE5.8日志 `Game/Saved/Logs/DivineBeastsArena.log` 在本次启动的第1726行明确记录：`无法找到模块“DivineBeastsDemoClient”，因此插件“DBAClient”加载失败`。编辑器在执行地图作者脚本前退出；直接障碍为新增客户端模块缺少当前Editor Target可加载的动态库，**不是**Monolith缺少UI动作。必须完成模块或编辑器目标构建并重启，再执行真实地图制作、Monolith Widget和回读。
+- 本Runner未发现 `pwsh.exe`（PowerShell 7），统一启动脚本保留原来的PS7版本声明和拒绝静默降级原则；实际运行需补齐正式脚本环境后再测。
+
+## 二进制阻塞排查与定向编译（同日后续）
+
+- 初次定向构建 `DivineBeastsDemoClient` 报LNK2019（`FGamePlatformResult`），确认定义在 `GamePlatformCore/Private/Types/GamePlatformResult.cpp`，在模块 `PrivateDependencyModuleNames` 增加 `GamePlatformCore` 后重新构建，UBT Win64 Editor Development **Succeeded**。
+- `-Module=DivineBeastsDemoClient` 仅输出DLL但不自动登记旧 `UnrealEditor.modules`，通过UE5.8原生 `UnrealBuildTool -Mode=WriteMetadata` 与已有 `TargetMetadata.json` 更新官方清单；核查 `DivineBeastsDemoClient` 已在清单内且BuildId为 `cf41249f-44dc-4956-bd09-4a42f079e86b`，不是人工伪造模块文件。
+- 真实Editor装载随后报127（缺少导出函数）。使用VS `dumpbin` 将DemoClient导入符号与现有依赖DLL导出逐项对照，定位平台VFX新 `ValidateFlockingWeights` 和项目表现层6项鸟群接口；`GamePlatformVFXClient` 定向构建完成27动作 **Succeeded**，`DivineBeastsPresentationClient` 定向构建完成26动作 **Succeeded**，均没有为绕过错误改动业务算法。
+- 地图作者命令仅在本进程尝试 `-DisablePlugins=DBAArena`（隔离不相关竞技插件，不变更正式Target或默认配置）；UE仍有未就绪编辑器模块，最近一次失败日志指出 `GamePlatformDeveloperTools` 找不到模块。已发起其Editor模块定向构建，最终状态须通过实际作业终态核定。
+- **验收状态**：门户地图 `.umap` 与Widget `.uasset` 暂无生成证据、Monolith没有存活编辑器连接、统一编辑器全目标构建与Debug/PluginDev两模式人工运行未通过。保留已成功的分模块构建结论，绝不据此宣称端到端完成。
+
+
+

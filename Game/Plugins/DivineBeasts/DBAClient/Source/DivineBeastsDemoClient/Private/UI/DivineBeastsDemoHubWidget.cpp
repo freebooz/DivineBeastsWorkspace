@@ -14,6 +14,25 @@ TArray<FDivineBeastsDemoPlugin> UDivineBeastsDemoHubWidget::GetDiscoveredPlugins
     return Catalog ? Catalog->GetPlugins() : TArray<FDivineBeastsDemoPlugin>();
 }
 
+TArray<FDivineBeastsDemoPlugin> UDivineBeastsDemoHubWidget::FilterDiscoveredPlugins(
+    const FString& SearchText, bool bFilterLayer, EDivineBeastsDemoLayer Layer, bool bOnlyWithMaps) const
+{
+    // 仅对初始化/人工刷新时产生的目录快照筛选，输入变化不触发资产扫描或网络请求。
+    const FString Query = SearchText.TrimStartAndEnd();
+    TArray<FDivineBeastsDemoPlugin> Results;
+    for (const FDivineBeastsDemoPlugin& Plugin : GetDiscoveredPlugins())
+    {
+        if (bFilterLayer && Plugin.Layer != Layer) continue;
+        if (bOnlyWithMaps && Plugin.DiscoveredMapCount == 0) continue;
+        if (!Query.IsEmpty() &&
+            !Plugin.PluginId.ToString().Contains(Query, ESearchCase::IgnoreCase) &&
+            !Plugin.DisplayName.ToString().Contains(Query, ESearchCase::IgnoreCase) &&
+            !Plugin.Description.Contains(Query, ESearchCase::IgnoreCase)) continue;
+        Results.Add(Plugin);
+    }
+    return Results;
+}
+
 TArray<FDivineBeastsDemoScenario> UDivineBeastsDemoHubWidget::GetPluginScenarios(FName PluginId) const
 {
     const auto* Catalog = GetCatalog();

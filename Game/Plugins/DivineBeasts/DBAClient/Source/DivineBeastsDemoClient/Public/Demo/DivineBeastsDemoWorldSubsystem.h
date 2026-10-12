@@ -13,6 +13,7 @@ class UDivineBeastsBirdFlockSceneComponent;
 class UDivineBeastsBirdFlockBatchComponent;
 class ADivineBeastsWeatherReviewController;
 class UDivineBeastsDemoHubWidget;
+class APlayerController;
 
 /**
  * 神兽联盟插件演示世界运行上下文。DevClient/Editor且显式DBAPluginDemo时才创建。
@@ -105,6 +106,9 @@ private:
     /** GamePlatformData（平台数据）颁发的普通资源租约，退出只释放本世界所持身份。 */
     FGamePlatformDataLease UILease;
     TWeakObjectPtr<UDivineBeastsDemoHubWidget> ActiveWidget;
+    /** 只在本世界演示UI存在期间接管输入；释放时恢复默认游戏输入和原鼠标显示状态。 */
+    TWeakObjectPtr<APlayerController> DemoInputController;
+    bool bOriginalMouseCursorVisible = false;
     TWeakObjectPtr<UWorld> SourceWorld;
     FText LastFeedback;
 

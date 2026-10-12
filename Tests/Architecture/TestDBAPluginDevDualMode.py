@@ -75,6 +75,18 @@ class DualModePolicyTests(unittest.TestCase):
             with self.subTest(api=api):
                 self.assertIn(api+"(",header)
 
+    def test_portal_filter_and_input_lifecycle_code_is_present(self):
+        """静态回归：蓝图可筛选发现列表；真实Widget到位后应能获得鼠标焦点并释放输入。"""
+        widget_header=read("Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Public/UI/DivineBeastsDemoHubWidget.h")
+        widget_cpp=read("Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/UI/DivineBeastsDemoHubWidget.cpp")
+        world_cpp=read("Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Demo/DivineBeastsDemoWorldSubsystem.cpp")
+        self.assertIn("FilterDiscoveredPlugins(",widget_header)
+        for contract in ("Plugin.Layer != Layer", "Plugin.DiscoveredMapCount == 0", "ESearchCase::IgnoreCase"):
+            self.assertIn(contract,widget_cpp)
+        for contract in ("FInputModeGameAndUI", "SetWidgetToFocus", "SetInputMode(InputMode)",
+                         "bShowMouseCursor = true", "DemoInputController.Reset()"):
+            self.assertIn(contract,world_cpp)
+
     def test_development_entry_has_no_password_parameter(self):
         source=read("Build/Game/LaunchDBADevelopment.ps1")
         self.assertNotRegex(source,r"(?i)-DBADevAutoLogin")

@@ -17,6 +17,8 @@ public class DivineBeastsDemoClient : ModuleRules
         });
         PrivateDependencyModuleNames.AddRange(new[] {
             "Projects", "AssetRegistry", "DivineBeastsApplicationFlowClient",
+            // 世界演示实现直接构造/检查FGamePlatformResult，必须链接其真正的Core实现模块。
+            "GamePlatformCore",
             // 演示控制器必须调用已有VFX/天气/世界公开服务，绝不重建执行器。
             "GamePlatformVFXClient", "DBAWorldsRuntime", "SlateCore"
         });

@@ -5,9 +5,11 @@
 #include "Marks/GamePlatformSurfaceMarkCatalog.h"
 #include "Marks/GamePlatformSurfaceMarkBlueprintLibrary.h"
 #include "UObject/StrongObjectPtr.h"
-#include "Materials/Material.h"#include "MaterialDomain.h"
+#include "Materials/Material.h"
+#include "MaterialDomain.h"
 #include "Materials/MaterialInterface.h"
 #include "Engine/Texture2D.h"
+#include "Engine/HitResult.h" // FHitResult（命中结果）必须有完整定义，不能依赖蓝图生成头的前向声明。
 #include <limits>
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformSurfaceMarkRequestTest,

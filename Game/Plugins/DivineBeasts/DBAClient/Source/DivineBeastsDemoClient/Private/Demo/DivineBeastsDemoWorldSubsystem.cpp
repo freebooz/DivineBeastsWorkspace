@@ -138,7 +138,17 @@ void UDivineBeastsDemoWorldSubsystem::OnOverlayAssetReady(
     }
     ActiveWidget = Widget;
     Widget->AddToViewport(100);
-    LastFeedback = FText::FromString(TEXT("真实演示UI已加载，功能仍需逐项人工验收。"));
+    // GameMode默认为游戏输入；必须显式开放UI焦点和鼠标，插件卡片才可交互。
+    // 同时保留三维场景输入，鸟群和天气样板能够使用鼠标/键盘进行审核。
+    FInputModeGameAndUI InputMode;
+    InputMode.SetWidgetToFocus(Widget->TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    InputMode.SetHideCursorDuringCapture(false);
+    Controller->SetInputMode(InputMode);
+    bOriginalMouseCursorVisible = Controller->bShowMouseCursor;
+    Controller->bShowMouseCursor = true;
+    DemoInputController = Controller;
+    LastFeedback = FText::FromString(TEXT("真实演示UI已加载并启用交互输入，功能仍需逐项人工验收。"));
 }
 
 void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
@@ -148,6 +158,16 @@ void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
         Widget->RemoveFromParent();
     }
     ActiveWidget.Reset();
+    if (APlayerController* Controller = DemoInputController.Get())
+    {
+        if (Controller->GetWorld() == GetWorld())
+        {
+            // 仅撤销本演示世界安装的输入设置，不访问下一地图的控制器。
+            Controller->SetInputMode(FInputModeGameOnly());
+            Controller->bShowMouseCursor = bOriginalMouseCursorVisible;
+        }
+    }
+    DemoInputController.Reset();
     if (FGamePlatformDataLease Lease = UILease; Lease.IsValid())
     {
         UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;

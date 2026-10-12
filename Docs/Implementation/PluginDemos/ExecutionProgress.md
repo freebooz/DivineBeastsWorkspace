@@ -35,4 +35,13 @@
 ## 变更与风险控制
 
 - 未修改正式默认GameDefaultMap（登录前端）；不清理其他任务未提交修改，不自动提交/推送。
+- 2026-10-12本次Cwebcodex续做：在演示Widget C++基类增加只读分类/搜索接口，在演示World源码中增加真实Widget到位后的鼠标焦点和离开时的输入清理；6个文件增量修改（4份C++、1份测试、1份交付说明），不创建虚假UI。
+- 双模式静态回归已运行10项，全部通过（Python unittest）；真正UE编译及游戏运行未因此获得通过。
+- 尝试执行 `UnrealEditor-Cmd.exe -ExecutePythonScript=.../AuthorDBAPluginDemoHubMap.py` 创建真正地图，退出码1；UE日志证实无法找到新模块 `DivineBeastsDemoClient` 导致整个DBAClient插件加载失败。必须先补齐模块Editor构建才可生成地图及连接Monolith。总览地图与Widget资产均仍未证明存在。
+- Runner默认PowerShell 5.1，`pwsh.exe`（PowerShell7）未发现，双模式统一启动脚本的实际运行尚受执行环境阻塞。
+- 后续已补充 `DivineBeastsDemoClient.Build.cs` 对 `GamePlatformCore` 的直接链接依赖并通过Editor Development定向模块构建；经官方UnrealBuildTool WriteMetadata检查后，DemoClient已登记到Editor modules清单。
+- 已以UBT定向成功编译 `GamePlatformVFXClient`（27动作）和 `DivineBeastsPresentationClient`（26动作），排除至少7项编译DLL与最新导出符号不匹配。无虚假编译通过声明。
+- UE编辑器当前仍因开发工具 `GamePlatformDeveloperTools` 新模块缺失而在进入地图作者脚本前退出，其定向构建仍需读取实际终态。独立试验的 `-DisablePlugins=DBAArena` 不写任何正式项目默认配置。`L_DBA_PluginDemoHub.umap` 与 `WBP_DBA_PluginDemoHub.uasset` 仍待真实UE与Monolith完成。
+
+
 - 实际编译通过后再确认真实UE Editor和Monolith身份、制作地图及UI，不能将P0清单或UFUNCTION数量当成验收证明。

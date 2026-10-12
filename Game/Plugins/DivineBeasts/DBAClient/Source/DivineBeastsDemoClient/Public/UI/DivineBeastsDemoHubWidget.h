@@ -15,6 +15,11 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
     TArray<FDivineBeastsDemoPlugin> GetDiscoveredPlugins() const;
 
+    /** 中文/英文ID模糊搜索与架构分层筛选；只过滤已发现目录，不猜测未安装插件。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
+    TArray<FDivineBeastsDemoPlugin> FilterDiscoveredPlugins(const FString& SearchText,
+        bool bFilterLayer, EDivineBeastsDemoLayer Layer, bool bOnlyWithMaps) const;
+
     /** 按已选插件返回真实关卡候选。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
     TArray<FDivineBeastsDemoScenario> GetPluginScenarios(FName PluginId) const;

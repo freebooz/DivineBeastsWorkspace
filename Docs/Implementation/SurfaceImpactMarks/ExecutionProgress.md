@@ -46,3 +46,16 @@
 ## 未完成门禁
 - 正式新增代码的Editor/Client/Server UBT构建；目录`DA_GP_SurfaceMarkCatalog.uasset`、演示`L_GP_SurfaceMarks_Review.umap`、D3D12实际视觉；自动化/PIE、正式技能表绑定、真实Cook/Stage及容器资源清单验收。
 - 已交付21个真实纹理/材质UE资产且具物理字节证据，但目录与演示需要新UCLASS完成Editor编译后才能真正创作。Shader脚本执行过材质图重编译，尚未获得实际独立GPU可见性及正式AAA美术批准。
+## 续执行：2026-10-12后续UE5.8实编修复
+- 原工作区仍保有21个UE原生纹理/贴花材质。复核`DivineBeastsDemoClient`真实Editor DLL已存在；标记目录`DA_GP_SurfaceMarkCatalog.uasset`和演示地图`L_GP_SurfaceMarks_Review.umap`均未生成，禁止记为完成。
+- RunId=`d664fc3b-75b1-408d-bf1e-2f732f4f1e88`真实UBT模块编译exit6：历史`MD_DeferredDecal`材质域符号问题已不存在，当前仅`GamePlatformSurfaceMarkTests.cpp`的`FHitResult`实例缺完整引擎头导致C2079/C2664，其他Surface编译动作已执行。原始日志保留。
+- 首次补`Engine/HitResult.h`时编辑器工具意外把两个include写在同一行，RunId=`45df46db-e73d-4cb0-86a5-5409f43fb51e`编译exit6精确报告C4067；已根据真实日志把两个include拆分并回读确认，当前源码不再拼接。
+- 已排队RunId=`a3473a49-a3bf-48eb-9bb7-3ec90a4281f8`重新执行`GamePlatformSurfaceClient`定向Editor编译，**尚未观察到终态，不计通过**。本次不清理UBT缓存或中断其他任务编辑器。目录、演示及真UE自动化都以该目标通过为前置。
+## 实际编译与原生资产恢复证据（后续新增）
+- RunId=`a3473a49-a3bf-48eb-9bb7-3ec90a4281f8`已结束为exit6；真实UBT 8个动作中新增Surface C++和测试编译、静态库生成均通过，但最后DLL链接报`LNK1181`，原因是引擎缺少`UnrealEditor-PhysicsCore.lib`，不再有新增源码编译错误。保留该批原始失败。
+- 使用现有UE引擎`PhysicsCore`的UBT`.lib.rsp`、两个现成目标文件和MSVC`lib.exe`恢复该此前缺失导入库（236010字节），记录`Saved/Validation/SurfaceImpactMarks/PhysicsCoreLibraryRecovery_20261012/result.json`，exit0且引擎`UnrealEditor-PhysicsCore.dll`前后SHA256一致；本操作只恢复缺失开发链接产物，不改引擎DLL、源代码或项目资源。
+- RunId=`fa4a5550-9681-44d1-8eb9-96640fbb7858`：现有`Build/Game/BuildFoundation.ps1`以`-Editor -OnlyModules GamePlatformSurfaceClient -UsePrecompiled -NoUBA`真实执行，**ExitCode=0、Passed**。新的`UnrealEditor-GamePlatformSurfaceClient.dll`存在且已记录SHA256；该证据仅为**Surface单模块编译链接**，不能冒充完整Editor或其他Client/Server构建。
+- 原项目真实编辑器Catalog作者尝试1 `CatalogAuthor_20261012_Run1`：进程exit1，执行Python前`DivineBeastsDemoClient` DLL因Win32 127无法加载，Catalog未生成；尝试2 `CatalogAuthor_20261012_Run2`仅本进程禁用`DBAClient,DBAArena`后继续到下一插件，但`GamePlatformDeveloperTools`编辑器模块缺失，exit1且Catalog仍不存在。两批保留原始失败并确认21个原资产字节不被覆盖。
+- 第3次作者进程`CatalogAuthor_20261012_Run3`仅本进程追加禁用不相关开发工具插件，**正在排队或执行，尚未验收，不计Catalog创建成功**。成功后必须验证真实目录五个材质引用、UE原生包、Editor回读和对应批次日志，再制作Review地图。
+
+
