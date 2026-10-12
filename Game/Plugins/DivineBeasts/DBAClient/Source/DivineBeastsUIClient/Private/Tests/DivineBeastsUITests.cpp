@@ -1,3 +1,5 @@
+// 项目客户端UI回归：验证只读快照、页面路由、命令资格及事件生命周期；仅自动化测试使用。
+// 瞬态原生控件和测试快照不写资产、不登录、不连接后端，不代表世界准入或客户端视觉验收。
 #include "Tests/DivineBeastsUIReentryObserver.h"
 
 #if WITH_EDITORONLY_DATA
@@ -24,6 +26,8 @@ void UDivineBeastsUIReentryObserver::HandleCommandCompleted(FGuid RequestId, FNa
 #include "Misc/AutomationTest.h"
 #include "DivineBeastsUIClientSubsystem.h"
 #include "Components/Button.h"
+#include "Components/ComboBoxString.h"
+#include "Components/EditableTextBox.h"
 #include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Contracts/DivineBeastsUIContracts.h"
@@ -33,6 +37,9 @@ void UDivineBeastsUIReentryObserver::HandleCommandCompleted(FGuid RequestId, FNa
 #include "ViewModels/DivineBeastsUIViewModel.h"
 #include "Screens/Loading/DivineBeastsLoadingTravelScreen.h"
 #include "Screens/Connection/DivineBeastsErrorReconnectScreen.h"
+#include "Screens/Characters/DivineBeastsCharacterCreateScreen.h"
+#include "ViewModels/Characters/DivineBeastsCharacterCreateViewModel.h"
+#include "ViewModels/Characters/DivineBeastsCharacterSelectViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "Loading/GamePlatformLoadingScreenService.h"
 #include "Components/TextBlock.h"
@@ -498,9 +505,9 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
     State.CurrentStep = TEXT("DBA.Flow.LoadRoster");
     State.Characters.Reset();
     TestEqual(
-        TEXT("无持久角色时进入角色创建页"),
+        TEXT("空角色列表仍进入选择页，创建必须由用户显式打开"),
         FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
-        FName(TEXT("UI.Screen.CharacterCreate")));
+        FName(TEXT("UI.Screen.CharacterSelect")));
 
     FDivineBeastsUICharacterItem Character;
     Character.CharacterId = TEXT("character-test-001");
@@ -522,7 +529,7 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
     TestEqual(TEXT("忙碌事件不把已打开的创建页切回选择页"), FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.CharacterCreate")));
     State.bBusy = false;
     State.Characters.Reset();
-    TestFalse(TEXT("无角色时拒绝返回空选择页"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect")));
+    TestTrue(TEXT("无角色也允许取消创建并返回空选择页"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect")));
     TestFalse(TEXT("拒绝借角色换页入口打开任意页面"), FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.Inventory")));
     State.Characters.Add(Character);
     State.bAuthenticated = false;
@@ -537,6 +544,217 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
         FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State),
         FName(TEXT("UI.Screen.CharacterSelect")));
 
+    return true;
+}
+
+// 登录成功的CharacterEntry默认显示选择页，角色数量和创建资格不能隐式打开创建表单。
+// 仅使用手工给定的只读快照；路由不得修改业务角色、选择标识或允许命令。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterEntryDefaultSelectionTest,
+    "DivineBeasts.UI.RoutingPolicy.CharacterEntryDefaultsToSelect",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterEntryDefaultSelectionTest::RunTest(const FString&)
+{
+    FDivineBeastsUIViewState State;
+    State.CurrentStep = TEXT("DBA.Flow.CharacterEntry");
+    State.PageState = EDivineBeastsUIPageState::Empty;
+    State.bAuthenticated = true;
+    State.AllowedCommands = {TEXT("CreateCharacter")};
+    TestEqual(TEXT("已认证空角色入口默认选择页"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.CharacterSelect")));
+    TestEqual(TEXT("无效本地偏好回退选择页"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.Inventory")), FName(TEXT("UI.Screen.CharacterSelect")));
+    TestTrue(TEXT("用户可显式打开已允许的创建表单"),
+        FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
+    TestEqual(TEXT("显式创建偏好才显示创建表单"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.CharacterCreate")));
+    TestTrue(TEXT("显示页面不生成角色"), State.Characters.IsEmpty());
+    TestTrue(TEXT("显示页面不生成业务选择"), State.SelectedCharacterId.IsEmpty());
+    TestEqual(TEXT("显示页面不追加选择或世界命令"), State.AllowedCommands.Num(), 1);
+
+    FDivineBeastsUICharacterItem Character;
+    Character.CharacterId = TEXT("character-routing-fixture-001");
+    State.Characters.Add(Character);
+    State.PageState = EDivineBeastsUIPageState::Ready;
+    TestEqual(TEXT("已有角色入口也默认选择页"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.CharacterSelect")));
+    return true;
+}
+
+// 取消草稿属于本地换页，不等同于提交角色选择；无角色、无选择命令仍应可返回。
+// 忙碌快照保持已经选择的页面，新的换页意图仍须由独立资格门禁拒绝。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsEmptyRosterCreationCancelTest,
+    "DivineBeasts.UI.RoutingPolicy.EmptyRosterCreationCancel",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsEmptyRosterCreationCancelTest::RunTest(const FString&)
+{
+    FDivineBeastsUIViewState State;
+    State.CurrentStep = TEXT("DBA.Flow.CharacterEntry");
+    State.PageState = EDivineBeastsUIPageState::Empty;
+    State.bAuthenticated = true;
+    State.AllowedCommands = {TEXT("CreateCharacter")};
+    TestTrue(TEXT("无选择提交权限也允许取消空角色创建"),
+        FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect")));
+    TestEqual(TEXT("取消后的空选择页偏好不会再次打开创建表单"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.CharacterSelect")), FName(TEXT("UI.Screen.CharacterSelect")));
+    State.AllowedCommands.Reset();
+    TestTrue(TEXT("仅显示选择页不需要业务提交命令"),
+        FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect")));
+    TestFalse(TEXT("缺少创建命令时仍不能打开创建表单"),
+        FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
+    State.bBusy = true;
+    TestEqual(TEXT("忙碌事件保持空选择页"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.CharacterSelect")), FName(TEXT("UI.Screen.CharacterSelect")));
+    TestEqual(TEXT("忙碌事件保持已显式打开的创建页"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.CharacterCreate")));
+    TestFalse(TEXT("忙碌期间不能通过取消换页"),
+        FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect")));
+    return true;
+}
+
+// 放开空角色取消后，认证、忙碌、加载、错误和权威节点仍逐项隔离；不允许任意页面ID。
+// 每个反例都从合法空角色入口独立复制，避免上一个拒绝条件掩盖下一个条件的缺失。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterEntryNavigationGuardrailsTest,
+    "DivineBeasts.UI.RoutingPolicy.CharacterEntryNavigationGuardrails",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterEntryNavigationGuardrailsTest::RunTest(const FString&)
+{
+    FDivineBeastsUIViewState Entry;
+    Entry.CurrentStep = TEXT("DBA.Flow.CharacterEntry");
+    Entry.PageState = EDivineBeastsUIPageState::Ready;
+    Entry.bAuthenticated = true;
+    Entry.AllowedCommands = {TEXT("CreateCharacter"), TEXT("SelectPersistentCharacter")};
+    FDivineBeastsUIViewState Busy = Entry; Busy.bBusy = true;
+    FDivineBeastsUIViewState Loading = Entry; Loading.Loading.bIsLoading = true;
+    FDivineBeastsUIViewState Error = Entry; Error.PageState = EDivineBeastsUIPageState::Error;
+    FDivineBeastsUIViewState LoggedOut = Entry; LoggedOut.bAuthenticated = false;
+    FDivineBeastsUIViewState Validating = Entry; Validating.CurrentStep = TEXT("DBA.Flow.ValidateSelection");
+    FDivineBeastsUIViewState Creating = Entry; Creating.CurrentStep = TEXT("DBA.Flow.CreateCharacter");
+    for (const auto& State : {Busy, Loading, Error, LoggedOut, Validating, Creating})
+    {
+        TestFalse(TEXT("受保护快照拒绝返回选择页"),
+            FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterSelect")));
+        TestFalse(TEXT("受保护快照拒绝打开创建页"),
+            FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
+    }
+    TestEqual(TEXT("加载覆盖本地选择偏好"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(Loading, TEXT("UI.Screen.CharacterSelect")), FName(TEXT("UI.Screen.LoadingTravel")));
+    Error.Loading.bIsLoading = true;
+    TestEqual(TEXT("错误覆盖残留加载与创建偏好"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(Error, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.ErrorReconnect")));
+    LoggedOut.CurrentStep = TEXT("DBA.Flow.Authentication");
+    TestEqual(TEXT("注销后的认证节点覆盖创建偏好"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(LoggedOut, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.Login")));
+    TestEqual(TEXT("权威选择验证节点覆盖创建偏好"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(Validating, TEXT("UI.Screen.CharacterCreate")), FName(TEXT("UI.Screen.CharacterSelect")));
+    TestEqual(TEXT("权威创建节点不被选择偏好打断"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(Creating, TEXT("UI.Screen.CharacterSelect")), FName(TEXT("UI.Screen.CharacterCreate")));
+    TestFalse(TEXT("角色入口不允许跳转其他业务页"),
+        FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(Entry, TEXT("UI.Screen.Inventory")));
+    TestFalse(TEXT("角色入口不允许直接跳转世界"),
+        FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(Entry, TEXT("DBA.Flow.InWorld")));
+    return true;
+}
+
+// 显示空选择页不会授予选择提交资格：调用真实VM门禁，测试快照只注入Transient反射字段。
+// 测试不提交网络命令；真实角色、允许命令、忙碌和页面生命周期缺一即禁止选择。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterSelectionSubmissionGuardrailsTest,
+    "DivineBeasts.UI.RoutingPolicy.SelectionSubmissionRequiresRosterAndCommand",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterSelectionSubmissionGuardrailsTest::RunTest(const FString&)
+{
+    const TStrongObjectPtr<UDivineBeastsCharacterSelectViewModel> ViewModel(NewObject<UDivineBeastsCharacterSelectViewModel>());
+    auto* StateProperty = FindFProperty<FStructProperty>(ViewModel->GetClass(), TEXT("State"));
+    if (!TestNotNull(TEXT("真实选择VM快照字段存在"), StateProperty)) return false;
+    auto* State = StateProperty->ContainerPtrToValuePtr<FDivineBeastsUIViewState>(ViewModel.Get());
+    State->CurrentStep = TEXT("DBA.Flow.CharacterEntry");
+    State->PageState = EDivineBeastsUIPageState::Empty;
+    State->bAuthenticated = true;
+    State->AllowedCommands = {TEXT("SelectPersistentCharacter")};
+    ViewModel->BeginPage();
+    ON_SCOPE_EXIT { ViewModel->EndPage(); };
+    TestFalse(TEXT("空角色即使有选择命令也不得提交"), ViewModel->CanSubmitSelection());
+    FDivineBeastsUICharacterItem Character;
+    Character.CharacterId = TEXT("character-selection-fixture-001");
+    State->Characters.Add(Character);
+    TestTrue(TEXT("有角色且允许命令时可提交选择意图"), ViewModel->CanSubmitSelection());
+    State->AllowedCommands = {TEXT("CreateCharacter")};
+    TestFalse(TEXT("有角色但仅允许创建时不得提交选择"), ViewModel->CanSubmitSelection());
+    State->AllowedCommands = {TEXT("SelectPersistentCharacter")};
+    State->bBusy = true;
+    TestFalse(TEXT("忙碌期间不得重复提交选择"), ViewModel->CanSubmitSelection());
+    State->bBusy = false;
+    ViewModel->EndPage();
+    TestFalse(TEXT("失活页面不得提交选择"), ViewModel->CanSubmitSelection());
+    return true;
+}
+
+// 真实原生创建页从快照事件刷新返回按钮；无需已有角色或选择提交命令即可取消草稿。
+// 仅在Transient页面实例绑定必需控件，走CommonUI真实激活/失活；不创建资产或伪造后端。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterCreateCancelButtonTest,
+    "DivineBeasts.UI.RoutingPolicy.CharacterCreateCancelButton",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterCreateCancelButtonTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    const TStrongObjectPtr<UDivineBeastsCharacterCreateScreen> Screen(NewObject<UDivineBeastsCharacterCreateScreen>());
+    const TStrongObjectPtr<UDivineBeastsCharacterCreateViewModel> ViewModel(NewObject<UDivineBeastsCharacterCreateViewModel>());
+    ON_SCOPE_EXIT
+    {
+        Screen->DeactivateWidget();
+        Screen->InitializeActivatableViewModel(nullptr);
+    };
+    const auto BindControl = [this, Page = Screen.Get()](FName FieldName, UObject* Control)
+    {
+        auto* Property = FindFProperty<FObjectPropertyBase>(Page->GetClass(), FieldName);
+        if (!TestNotNull(*FString::Printf(TEXT("创建页真实控件字段存在：%s"), *FieldName.ToString()), Property)) return false;
+        Property->SetObjectPropertyValue_InContainer(Page, Control);
+        return true;
+    };
+    auto* BackButton = NewObject<UButton>(Screen.Get());
+    auto* ErrorText = NewObject<UTextBlock>(Screen.Get());
+    if (!BindControl(TEXT("BackToCharacterSelectButton"), BackButton) ||
+        !BindControl(TEXT("CreateButton"), NewObject<UButton>(Screen.Get())) ||
+        !BindControl(TEXT("LogoutButton"), NewObject<UButton>(Screen.Get())) ||
+        !BindControl(TEXT("HeroOptions"), NewObject<UComboBoxString>(Screen.Get())) ||
+        !BindControl(TEXT("CharacterNameInput"), NewObject<UEditableTextBox>(Screen.Get())) ||
+        !BindControl(TEXT("StatusText"), NewObject<UTextBlock>(Screen.Get())) ||
+        !BindControl(TEXT("ErrorText"), ErrorText)) return false;
+    auto* StateProperty = FindFProperty<FStructProperty>(ViewModel->GetClass(), TEXT("State"));
+    if (!TestNotNull(TEXT("真实创建VM快照字段存在"), StateProperty)) return false;
+    auto* State = StateProperty->ContainerPtrToValuePtr<FDivineBeastsUIViewState>(ViewModel.Get());
+    FDivineBeastsUIViewState Entry;
+    Entry.CurrentStep = TEXT("DBA.Flow.CharacterEntry");
+    Entry.PageState = EDivineBeastsUIPageState::Empty;
+    Entry.bAuthenticated = true;
+    Entry.AllowedCommands = {TEXT("CreateCharacter")};
+    *State = Entry;
+    Screen->InitializeActivatableViewModel(ViewModel.Get());
+    Screen->ActivateWidget();
+    TestTrue(TEXT("空角色创建页可返回选择页"), BackButton->GetIsEnabled());
+    State->AllowedCommands.Reset();
+    ViewModel->MarkStateChanged();
+    TestTrue(TEXT("取消按钮不借用业务选择提交权限"), BackButton->GetIsEnabled());
+
+    // 各拒绝条件单独刷新，确保放开空角色取消不放宽其他状态门禁。
+    for (int32 GuardIndex = 0; GuardIndex < 5; ++GuardIndex)
+    {
+        *State = Entry;
+        if (GuardIndex == 0) State->bBusy = true;
+        if (GuardIndex == 1) State->Loading.bIsLoading = true;
+        if (GuardIndex == 2)
+        {
+            State->PageState = EDivineBeastsUIPageState::Error;
+            State->ErrorText = FText::FromString(TEXT("创建失败仍由权威快照报告"));
+        }
+        if (GuardIndex == 3) State->bAuthenticated = false;
+        if (GuardIndex == 4) State->CurrentStep = TEXT("DBA.Flow.ValidateSelection");
+        ViewModel->MarkStateChanged();
+        TestFalse(*FString::Printf(TEXT("返回按钮遵守状态门禁%d"), GuardIndex), BackButton->GetIsEnabled());
+        if (GuardIndex == 2) TestTrue(TEXT("取消资格刷新不吞掉原错误"), ErrorText->GetText().EqualTo(State->ErrorText));
+    }
+    *State = Entry;
+    ViewModel->MarkStateChanged();
+    TestTrue(TEXT("恢复空闲角色入口后事件重新启用取消"), BackButton->GetIsEnabled());
     return true;
 }
 

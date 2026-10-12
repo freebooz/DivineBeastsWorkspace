@@ -107,18 +107,59 @@ def requests():
     return ops
 
 
+def introduction_requests():
+    """右面板独立滚动介绍；动态文本默认空，只由原生VM的事件快照填写。"""
+    ops = [operation("ui", "remove_widget", asset_path=CREATE, widget_name="CreationInfoBody", compile=False),
+           operation("ui", "set_text", asset_path=CREATE, widget_name="CreationInfoTitle", text="角色与技能介绍", font_size=18),
+           operation("ui", "add_widget", asset_path=CREATE, widget_class="ScrollBox", widget_name="HeroOverviewScroll", parent_name="RootCanvas", compile=False),
+           slot(CREATE, "HeroOverviewScroll", -70, 214, 410, 260, right=True),
+           operation("ui", "add_widget", asset_path=CREATE, widget_class="VerticalBox", widget_name="HeroOverviewBody", parent_name="HeroOverviewScroll", compile=False),
+           operation("ui", "set_slot_property", asset_path=CREATE, widget_name="HeroOverviewBody", h_align="Fill", v_align="Top")]
+    for name, value, size in (("HeroOverviewStatusText", "", 12), ("HeroIntroductionHeading", "角色介绍", 16),
+                              ("HeroIntroductionText", "", 14), ("SkillIntroductionHeading", "技能介绍", 16),
+                              ("SkillIntroductionText", "", 14)):
+        ops += [operation("ui", "add_widget", asset_path=CREATE, widget_class="TextBlock", widget_name=name, parent_name="HeroOverviewBody", compile=False),
+                operation("ui", "set_text", asset_path=CREATE, widget_name=name, text=value, font_size=size, text_color="#D6DCE3FF"),
+                property_write(CREATE, name, "AutoWrapText", True),
+                property_write(CREATE, name, "WrapTextAt", 390),
+                operation("ui", "set_slot_property", asset_path=CREATE, widget_name=name, h_align="Fill", v_align="Top", padding={"left": 0, "top": 2, "right": 6, "bottom": 8})]
+        if name not in ("HeroIntroductionHeading", "SkillIntroductionHeading"):
+            ops.append(operation("ui", "set_widget_is_variable", wbp_path=CREATE, widget_name=name, is_variable=True))
+    return ops + [operation("ui", "dump_blueprint_compile_log", asset_path=CREATE), operation("blueprint", "save_asset", asset_path=CREATE)]
+
+
+def apply_introductions(endpoint):
+    """与旧图集修改分开留证，不重导入已批准RGB、不重放旧面板倍率动作。"""
+    evidence = ROOT / "Saved/Validation/CharacterEntryFollowUp20261012/Introductions"
+    backup = evidence / "Before"
+    backup.mkdir(parents=True, exist_ok=False)
+    source = PACK / "Content/UI/Screens/WBP_DBA_UI_CharacterCreate.uasset"
+    shutil.copy2(source, backup / source.name)
+    (evidence / "Before.json").write_text(json.dumps({"Source": str(source), "SHA256": hashlib.sha256(source.read_bytes()).hexdigest()}, indent=2), encoding="utf-8")
+    log = []
+    for index, item in enumerate(introduction_requests()):
+        result = rpc(endpoint, item["Tool"], item["Arguments"])
+        log.append({"Request": item, "Result": result})
+        (evidence / "Actions.json").write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(index, item["Arguments"]["action"], flush=True)
+
+
 def main():
     """锁定正确工程及版本后逐条执行；证据保存动作原始返回而非人工写通过数字。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--endpoint", default="http://127.0.0.1:9316/mcp")
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--introductions", action="store_true", help="仅增量添加创建角色介绍滚动区，不重放旧图集/面板修复")
     args = parser.parse_args()
     if not args.apply:
-        print(json.dumps(requests(), ensure_ascii=False, indent=2))
+        print(json.dumps(introduction_requests() if args.introductions else requests(), ensure_ascii=False, indent=2))
         return
     status = rpc(args.endpoint, "monolith_status", {})
     if status.get("project_name") != "DivineBeastsArena" or status.get("version") != "0.23.0":
         raise RuntimeError("当前Monolith工程或锁定版本不符")
+    if args.introductions:
+        apply_introductions(args.endpoint)
+        return
     evidence = ROOT / "Saved/Validation/CharacterEntryRevision20261011"
     backup = evidence / "Before"
     backup.mkdir(parents=True, exist_ok=False)

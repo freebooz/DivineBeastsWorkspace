@@ -60,6 +60,13 @@ def audit(endpoint):
             errors.append(name + "未达到用户要求的放大尺寸")
         if not panel["visibility"].endswith("HitTestInvisible"):
             errors.append(name + "装饰背景截获中央鼠标")
+    # 介绍来自只读VM事件；真实命名控件不可由一段写死的旅行提示代替。
+    for name in ("HeroIntroductionText", "SkillIntroductionText", "HeroOverviewStatusText"):
+        widget = trees["CharacterCreate"].get(name, {})
+        if widget.get("class") != "TextBlock" or not widget.get("is_variable"):
+            errors.append("创建页缺少介绍投影绑定：" + name)
+    if trees["CharacterCreate"].get("HeroOverviewScroll", {}).get("class") != "ScrollBox":
+        errors.append("介绍缺少独立滚动区，长说明会遮挡返回按钮")
     tree = call(endpoint, "ui_query", {"action": "get_widget_tree", "params": {
         "asset_path": mount + "Components/WBP_DBA_HeroChoice"}})
     choice = widgets(tree["root"])
