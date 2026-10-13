@@ -16,6 +16,7 @@
 #include "Widgets/CommonActivatableWidgetContainer.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
 #include "ViewModels/System/DivineBeastsSystemSettingsViewModel.h"
+#include "ViewModels/World/DivineBeastsWorldJournalViewModel.h"
 
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
@@ -69,9 +70,11 @@ void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* 
     {
         Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
         Previous->OnWorldInventoryRequested.Remove(WorldInventoryHandle);
+        Previous->OnWorldJournalRequested.Remove(WorldJournalHandle);
     }
     WorldEscapeHandle.Reset();
     WorldInventoryHandle.Reset();
+    WorldJournalHandle.Reset();
     BoundMenuController = Cast<ADivineBeastsWorldPlayerController>(NewPlayerController);
     if (auto* Current = BoundMenuController.Get())
     {
@@ -79,6 +82,7 @@ void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* 
             this, &ThisClass::HandleWorldEscapeRequested);
         WorldInventoryHandle = Current->OnWorldInventoryRequested.AddUObject(
             this, &ThisClass::HandleWorldInventoryRequested);
+        WorldJournalHandle = Current->OnWorldJournalRequested.AddUObject(this, &ThisClass::HandleWorldJournalRequested);
     }
     Super::PlayerControllerChanged(NewPlayerController);
     if (!IsValid(NewPlayerController))
@@ -366,7 +370,7 @@ bool UDivineBeastsUIClientSubsystem::OpenInventoryScreen()
     const FName ScreenId(TEXT("UI.Screen.Inventory"));
     if (bUIShuttingDown || !PlatformUI ||
         !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) ||
-        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() ||
+        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() || ActiveWorldJournal.IsValid() ||
         !OpeningSystemScreenId.IsNone() || bInventoryOpening ||
         ActiveInventoryScreen.IsValid() || !PlatformUI->HasScreenDefinition(ScreenId))
     {
@@ -656,7 +660,16 @@ UDivineBeastsUIClientSubsystem::CreateViewModel(FName ScreenId)
 
     // P0 页面使用类型明确的 ViewModel；其他现有页面继续复用兼容 ViewModel，
     // 保持增量迁移，不在本阶段一次性重写全部业务页面。
-    if (ScreenId == TEXT("UI.Screen.Settings"))
+    if (ScreenId == TEXT("UI.Screen.WorldJournal"))
+    {
+        auto* Journal = NewObject<UDivineBeastsWorldJournalViewModel>(this);
+        const auto Section = PendingJournalSection == TEXT("MapQuest") ? EDivineBeastsWorldJournalSection::MapQuest
+            : PendingJournalSection == TEXT("Spellbook") ? EDivineBeastsWorldJournalSection::Spellbook
+            : PendingJournalSection == TEXT("Party") ? EDivineBeastsWorldJournalSection::Party : EDivineBeastsWorldJournalSection::Character;
+        Journal->SelectSection(Section);
+        ViewModel = Journal;
+    }
+    else if (ScreenId == TEXT("UI.Screen.Settings"))
     {
         ViewModel = NewObject<UDivineBeastsSystemSettingsViewModel>(this);
     }
@@ -1085,6 +1098,7 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpened(
         if (!FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState))
         { if (PlatformUI) PlatformUI->CloseScreen(Screen); return; }
         if (ScreenId == TEXT("UI.Screen.SystemMenu")) ActiveSystemMenu = Screen;
+        else if (ScreenId == TEXT("UI.Screen.WorldJournal")) ActiveWorldJournal = Screen;
         else ActiveSystemSettings = Screen;
         SetSystemMenuVisible(true);
         return;
@@ -1171,6 +1185,7 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
         }
     }
     if (ScreenId == TEXT("UI.Screen.Settings")) ActiveSystemSettings.Reset();
+    if (ScreenId == TEXT("UI.Screen.WorldJournal")) { ActiveWorldJournal.Reset(); if (!ActiveSystemMenu.IsValid()) SetSystemMenuVisible(false); }
     if (ScreenId == TEXT("UI.Screen.SystemMenu") && bSystemMenuVisible)
     { ActiveSystemMenu.Reset(); CloseSystemMenu(); }
     if (ScreenId == ActivePrimaryScreenId)
@@ -1215,6 +1230,26 @@ void UDivineBeastsUIClientSubsystem::DetachContract()
 
 // 世界菜单属于本地玩家UI层；CommonUI管理焦点/输入栈，项目世界控制器只撤销现有鼠标拖动。
 void UDivineBeastsUIClientSubsystem::HandleWorldEscapeRequested() { HandleEscapeAction(); }
+void UDivineBeastsUIClientSubsystem::HandleWorldJournalRequested(FName Section) { OpenWorldJournal(Section); }
+
+bool UDivineBeastsUIClientSubsystem::OpenWorldJournal(FName Section)
+{
+    const bool bKnownSection = Section == TEXT("Character") || Section == TEXT("MapQuest") ||
+        Section == TEXT("Spellbook") || Section == TEXT("Party");
+    if (!bKnownSection || bUIShuttingDown || !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) return false;
+    const auto Selection = Section == TEXT("MapQuest") ? EDivineBeastsWorldJournalSection::MapQuest
+        : Section == TEXT("Spellbook") ? EDivineBeastsWorldJournalSection::Spellbook
+        : Section == TEXT("Party") ? EDivineBeastsWorldJournalSection::Party : EDivineBeastsWorldJournalSection::Character;
+    if (auto* Existing = ActiveWorldJournal.Get())
+    {
+        auto* Journal = Cast<UDivineBeastsWorldJournalViewModel>(Existing->GetViewModel());
+        return Journal && Journal->SelectSection(Selection);
+    }
+    if (ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() || ActiveInventoryScreen.IsValid() || bInventoryOpening) return false;
+    PendingJournalSection = Section;
+    return OpenSystemSurface(TEXT("UI.Screen.WorldJournal"));
+}
+
 void UDivineBeastsUIClientSubsystem::HandleWorldInventoryRequested()
 {
     // 若背包已打开或仍在异步加载则优先关闭；其他游戏菜单与非世界状态继续由既有门禁处理。
@@ -1236,6 +1271,7 @@ void UDivineBeastsUIClientSubsystem::HandleApplicationActivationChanged(bool bAc
 
 bool UDivineBeastsUIClientSubsystem::HandleEscapeAction()
 {
+    if (ActiveWorldJournal.IsValid()) { CloseSystemMenu(); return true; }
     if (ActiveSystemSettings.IsValid()) return CloseSystemSettings();
     // ESC优先关闭背包临时页面，不能把背包压到系统菜单后仍保持可操作。
     if (ActiveInventoryScreen.IsValid() || bInventoryOpening) return CloseInventoryScreen();
@@ -1287,6 +1323,8 @@ void UDivineBeastsUIClientSubsystem::CloseSystemMenu()
     OpeningSystemScreenId = NAME_None;
     auto* Settings = ActiveSystemSettings.Get();
     auto* Menu = ActiveSystemMenu.Get();
+    auto* Journal = ActiveWorldJournal.Get();
+    ActiveWorldJournal.Reset();
     ActiveSystemSettings.Reset();
     ActiveSystemMenu.Reset();
     if (PlatformUI)
@@ -1294,6 +1332,7 @@ void UDivineBeastsUIClientSubsystem::CloseSystemMenu()
         if (Request.IsValid()) PlatformUI->CancelOpen(Request);
         if (Settings) PlatformUI->CloseScreen(Settings);
         if (Menu) PlatformUI->CloseScreen(Menu);
+        if (Journal) PlatformUI->CloseScreen(Journal);
     }
     if (SystemMenuGeneration == Generation) SetSystemMenuVisible(false);
 }

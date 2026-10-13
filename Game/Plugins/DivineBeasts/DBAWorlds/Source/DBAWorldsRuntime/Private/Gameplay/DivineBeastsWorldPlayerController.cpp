@@ -23,6 +23,8 @@
 #include "Widgets/SViewport.h"
 #endif
 
+DECLARE_DELEGATE_OneParam(FDivineBeastsJournalInputDelegate, FName);
+
 ADivineBeastsWorldPlayerController::ADivineBeastsWorldPlayerController()
 {
     auto* Interactor = CreateDefaultSubobject<UGamePlatformInteractorComponent>(TEXT("WorldInteractor"));
@@ -50,6 +52,10 @@ void ADivineBeastsWorldPlayerController::SetupInputComponent()
     InputComponent->BindAction(TEXT("DBA.Inventory"), IE_Pressed, this, &ThisClass::RequestWorldInventory);
     InputComponent->BindAction(TEXT("DBA.Interact"), IE_Pressed, this, &ThisClass::BeginWorldInteraction);
     InputComponent->BindAction(TEXT("DBA.Interact"), IE_Released, this, &ThisClass::EndWorldInteraction);
+    InputComponent->BindAction<FDivineBeastsJournalInputDelegate>(TEXT("DBA.CharacterInfo"), IE_Pressed, this, &ThisClass::RequestWorldJournal, FName(TEXT("Character")));
+    InputComponent->BindAction<FDivineBeastsJournalInputDelegate>(TEXT("DBA.MapQuest"), IE_Pressed, this, &ThisClass::RequestWorldJournal, FName(TEXT("MapQuest")));
+    InputComponent->BindAction<FDivineBeastsJournalInputDelegate>(TEXT("DBA.Spellbook"), IE_Pressed, this, &ThisClass::RequestWorldJournal, FName(TEXT("Spellbook")));
+    InputComponent->BindAction<FDivineBeastsJournalInputDelegate>(TEXT("DBA.Party"), IE_Pressed, this, &ThisClass::RequestWorldJournal, FName(TEXT("Party")));
 }
 
 bool ADivineBeastsWorldPlayerController::CanProcessWorldInput() const
@@ -272,6 +278,11 @@ void ADivineBeastsWorldPlayerController::RequestWorldInventory()
     }
 }
 
+void ADivineBeastsWorldPlayerController::RequestWorldJournal(FName Section)
+{
+    if (IsLocalController() && IsWorldGameplayActive()) OnWorldJournalRequested.Broadcast(Section);
+}
+
 void ADivineBeastsWorldPlayerController::PostProcessInput(float DeltaTime, bool bGamePaused)
 {
     Super::PostProcessInput(DeltaTime, bGamePaused);
@@ -385,6 +396,7 @@ void ADivineBeastsWorldPlayerController::EndPlay(const EEndPlayReason::Type Reas
     ResetWorldInput(); InputPawn.Reset(); bWorldInputActive = false;
     OnWorldEscapeRequested.Clear();
     OnWorldInventoryRequested.Clear();
+    OnWorldJournalRequested.Clear();
     UpdateWorldInputLocks(false);
     OnPreparationChanged.RemoveAll(this); GetWorld()->GameStateSetEvent.RemoveAll(this);
     if(ObservedPlayer.IsValid()) ObservedPlayer->OnLifecycleChanged.RemoveAll(this);

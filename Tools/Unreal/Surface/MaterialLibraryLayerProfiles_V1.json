@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "descriptionZH": "12类MaterialLayer材质层PBR预设，统一复用同一个遮罩Blend，不复制天气、PCG和项目权威逻辑",
+  "ownerPlugin": "GamePlatformSurface",
+  "items": [
+    {
+      "capabilityId": "MAT-02-12",
+      "name": "RainMud",
+      "nameZH": "雨水泥泞",
+      "baseColor": [
+        0.16,
+        0.12,
+        0.09
+      ],
+      "roughness": 0.9,
+      "coverage": 0.65,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_RainMud",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-02-13",
+      "name": "DustAccumulation",
+      "nameZH": "灰尘堆积",
+      "baseColor": [
+        0.54,
+        0.51,
+        0.46
+      ],
+      "roughness": 0.86,
+      "coverage": 0.45,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_DustAccumulation",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-02-14",
+      "name": "SandAccumulation",
+      "nameZH": "风沙覆盖",
+      "baseColor": [
+        0.66,
+        0.57,
+        0.39
+      ],
+      "roughness": 0.86,
+      "coverage": 0.58,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_SandAccumulation",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-02-15",
+      "name": "AshAccumulation",
+      "nameZH": "火山灰覆盖",
+      "baseColor": [
+        0.27,
+        0.28,
+        0.3
+      ],
+      "roughness": 0.96,
+      "coverage": 0.54,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_AshAccumulation",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-03-02",
+      "name": "LichenCoverage",
+      "nameZH": "地衣覆盖",
+      "baseColor": [
+        0.35,
+        0.41,
+        0.23
+      ],
+      "roughness": 0.94,
+      "coverage": 0.37,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_LichenCoverage",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-03-03",
+      "name": "AlgaeGrowth",
+      "nameZH": "藻类生长",
+      "baseColor": [
+        0.12,
+        0.32,
+        0.2
+      ],
+      "roughness": 0.72,
+      "coverage": 0.48,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_AlgaeGrowth",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-03-04",
+      "name": "MudAdhesion",
+      "nameZH": "泥土附着",
+      "baseColor": [
+        0.27,
+        0.23,
+        0.16
+      ],
+      "roughness": 0.9,
+      "coverage": 0.38,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_MudAdhesion",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-03-09",
+      "name": "BarkEpiphytes",
+      "nameZH": "树皮附生物",
+      "baseColor": [
+        0.27,
+        0.36,
+        0.2
+      ],
+      "roughness": 0.91,
+      "coverage": 0.45,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_BarkEpiphytes",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-03-11",
+      "name": "MoistMicrobialLayer",
+      "nameZH": "潮湿区域微生物覆盖",
+      "baseColor": [
+        0.15,
+        0.27,
+        0.22
+      ],
+      "roughness": 0.81,
+      "coverage": 0.42,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_MoistMicrobialLayer",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-03-12",
+      "name": "NaturalDeposition",
+      "nameZH": "自然沉积层",
+      "baseColor": [
+        0.37,
+        0.36,
+        0.28
+      ],
+      "roughness": 0.92,
+      "coverage": 0.54,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_NaturalDeposition",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-05-12",
+      "name": "WaterFreezing",
+      "nameZH": "水面结冰过渡",
+      "baseColor": [
+        0.54,
+        0.75,
+        0.83
+      ],
+      "roughness": 0.23,
+      "coverage": 0.61,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_WaterFreezing",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    },
+    {
+      "capabilityId": "MAT-07-06",
+      "name": "DirtStains",
+      "nameZH": "灰尘污渍",
+      "baseColor": [
+        0.21,
+        0.2,
+        0.17
+      ],
+      "roughness": 0.9,
+      "coverage": 0.35,
+      "metallic": 0,
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "materialLayerAssetPath": "/GamePlatformSurface/MaterialLayers/ML_GP_DirtStains",
+      "layerBlendAssetPath": "/GamePlatformSurface/MaterialLayers/MLB_GP_CoverageBlend",
+      "visualOnly": true,
+      "productionStatus": "仅定义配方，UE5.8原生资源尚未制作"
+    }
+  ]
+}

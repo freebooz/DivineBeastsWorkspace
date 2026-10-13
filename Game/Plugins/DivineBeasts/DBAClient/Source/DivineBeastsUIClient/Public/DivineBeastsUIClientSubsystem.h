@@ -132,6 +132,9 @@ public:
      * 对象 Outer 为当前 LocalPlayer 子系统，生命周期随本地玩家结束而清理。
      */
     UDivineBeastsUIViewModel* CreateViewModel(FName ScreenId);
+    /** 打开公共世界手册；Section只接受Character/MapQuest/Spellbook/Party，未入世界或其他菜单占用时拒绝。
+     * 已打开时只切页签。资源缺失走原平台异步失败路径，绝不在运行时造占位Widget。 */
+    bool OpenWorldJournal(FName Section);
 
     void SubmitCommand(
         FDivineBeastsUICommand Command,
@@ -166,16 +169,21 @@ private:
     void HandleWorldEscapeRequested();
     /** I键背包意图：只在当前本地世界中切换页面，不影响服务器权威库存。 */
     void HandleWorldInventoryRequested();
+    void HandleWorldJournalRequested(FName Section);
     void SetSystemMenuVisible(bool bVisible);
     TWeakObjectPtr<ADivineBeastsWorldPlayerController> BoundMenuController;
     FDelegateHandle WorldEscapeHandle;
     /** 仅本地当前控制器的I键委托句柄，换控制器及退出时精确解除。 */
     FDelegateHandle WorldInventoryHandle;
+    FDelegateHandle WorldJournalHandle;
     FDelegateHandle ApplicationDeactivateHandle;
     FDelegateHandle SlateActivationHandle;
     void HandleApplicationActivationChanged(bool bActive);
     TWeakObjectPtr<UGamePlatformUIScreen> ActiveSystemMenu;
     TWeakObjectPtr<UGamePlatformUIScreen> ActiveSystemSettings;
+    /** 手册复用同一可取消覆盖页加载生命周期；不是第二套主流程执行器。 */
+    TWeakObjectPtr<UGamePlatformUIScreen> ActiveWorldJournal;
+    FName PendingJournalSection = TEXT("Character");
     FName OpeningSystemScreenId;
     FGuid OpeningSystemRequestId;
     bool bSystemMenuVisible = false;

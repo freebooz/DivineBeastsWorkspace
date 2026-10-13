@@ -5,6 +5,8 @@ class AGamePlatformPlayerStateBase;
 class UGamePlatformExperienceComponent;
 class AGameStateBase;
 class UDivineBeastsCharacterComponent;
+/** 本地手册页签意图；中立FName仅用于项目客户端路由，不暴露UI模块类型。 */
+DECLARE_MULTICAST_DELEGATE_OneParam(FDivineBeastsWorldJournalRequested, FName);
 
 /** 第三层双端控制器：事件驱动读取真实体验、Pawn及准备令牌；客户端不提交认证结论。
  * 输入在服务器Active后开放，本地观察镜头与角色网络朝向分离；EndPlay解除本世界订阅与鼠标捕获。
@@ -21,6 +23,7 @@ public:
     FSimpleMulticastDelegate OnWorldEscapeRequested;
     /** I键只发出本地背包开关意图；世界双端控制器不依赖UI实现，不授予或消耗道具。 */
     FSimpleMulticastDelegate OnWorldInventoryRequested;
+    FDivineBeastsWorldJournalRequested OnWorldJournalRequested;
     /** 当前本地选中目标变化；只读展示意图，技能与交互必须另经服务器资格校验。 */
     FSimpleMulticastDelegate OnWorldTargetChanged;
     /** 当前世界内的弱选中引用；目标结束、换Pawn和旅行立即清空，不跨网络复制。 */
@@ -132,4 +135,6 @@ private:
     void RequestWorldMenu();
     /** 仅真实本地且世界Active时发布背包页面意图；实际显示/关闭由客户端UI自行判断。 */
     void RequestWorldInventory();
+    /** C/M/L/K/P发出角色、地图任务、技能书及小队意图；不直接创建页面或读取业务服务。 */
+    void RequestWorldJournal(FName Section);
 };

@@ -42,6 +42,16 @@ namespace DivineBeasts::Demo
         if (PackagePath.StartsWith(TEXT("/Game/Development/MossSnow/")) ||
             PackagePath.StartsWith(TEXT("/Game/Development/Snow/"))) return TEXT("GamePlatformSurface");
         if (PackagePath.StartsWith(TEXT("/Game/Development/Terrain/"))) return TEXT("GamePlatformSurface");
+        // 通用材质函数库采用现有插件总览，按审核地图职责映射真实所有者。
+        // 三类开发地图均由项目内容层组合，平台插件不得反向引用这些项目地图。
+        if (PackagePath.StartsWith(TEXT("/Game/Development/MaterialLibrary/Surface/")))
+            return TEXT("GamePlatformSurface");
+        if (PackagePath.StartsWith(TEXT("/Game/Development/MaterialLibrary/VFX/")))
+            return TEXT("GamePlatformVFX");
+        if (PackagePath.StartsWith(TEXT("/Game/Development/MaterialLibrary/UI/")))
+            return TEXT("GamePlatformUI");
+        if (PackagePath.StartsWith(TEXT("/Game/Development/MaterialLibrary/Project/")))
+            return TEXT("DBAPresentationPack_Core");
         if (PackagePath.StartsWith(TEXT("/Game/Development/BirdFlock/")) ||
             PackagePath.StartsWith(TEXT("/Game/Development/FallingFoliage/")) ||
             PackagePath.StartsWith(TEXT("/Game/Development/Fauna/"))) return TEXT("GamePlatformVFX");

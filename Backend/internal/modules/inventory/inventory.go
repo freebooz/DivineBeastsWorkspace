@@ -121,6 +121,8 @@ type Repository interface {
 	ClearQuickbar(context.Context, string, QuickbarCommand) (MutationResult, error)
 	// Consume（消耗）只由可信服务已完成授权后访问，不注册普通客户端HTTP路由。
 	Consume(context.Context, string, ConsumeCommand) (MutationResult, error)
+	// Grant（可信授予）必须由GrantTrusted验证游戏服与奖励事件来源，不允许公网绕过。
+	Grant(context.Context, string, GrantCommand, GrantRule) (MutationResult, error)
 	Probe(context.Context) error
 }
 
@@ -128,6 +130,7 @@ type Repository interface {
 type Service struct {
 	repo Repository
 	trustedConsumeAuthorizer TrustedConsumeAuthorizer
+	trustedGrantAuthorizer TrustedGrantAuthorizer
 }
 
 // NewService（普通背包服务）默认拒绝所有可信服务器专有消耗请求。

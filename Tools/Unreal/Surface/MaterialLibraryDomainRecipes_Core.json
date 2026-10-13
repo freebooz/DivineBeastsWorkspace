@@ -1,0 +1,1286 @@
+{
+  "schemaVersion": 1,
+  "group": "CoreWeatherLandscape",
+  "descriptionZH": "基础、雨滴与地形函数，19个具备独立输入与真实数学表达式",
+  "functions": [
+    {
+      "id": "MAT-01-02",
+      "name": "Triplanar",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "世界法线三平面采样结果加权混合；实际贴图采样由母版负责",
+      "pins": [
+        {
+          "name": "AxisXColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "AxisYColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "AxisZColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "WorldNormal",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "BlendSharpness",
+          "type": "S",
+          "preview": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "div",
+            [
+              "add",
+              [
+                "add",
+                [
+                  "mul",
+                  "AxisXColor",
+                  [
+                    "power",
+                    [
+                      "abs",
+                      [
+                        "channel",
+                        "WorldNormal",
+                        "R"
+                      ]
+                    ],
+                    "BlendSharpness"
+                  ]
+                ],
+                [
+                  "mul",
+                  "AxisYColor",
+                  [
+                    "power",
+                    [
+                      "abs",
+                      [
+                        "channel",
+                        "WorldNormal",
+                        "G"
+                      ]
+                    ],
+                    "BlendSharpness"
+                  ]
+                ]
+              ],
+              [
+                "mul",
+                "AxisZColor",
+                [
+                  "power",
+                  [
+                    "abs",
+                    [
+                      "channel",
+                      "WorldNormal",
+                      "B"
+                    ]
+                  ],
+                  "BlendSharpness"
+                ]
+              ]
+            ],
+            [
+              "add",
+              [
+                "add",
+                [
+                  "power",
+                  [
+                    "abs",
+                    [
+                      "channel",
+                      "WorldNormal",
+                      "R"
+                    ]
+                  ],
+                  "BlendSharpness"
+                ],
+                [
+                  "power",
+                  [
+                    "abs",
+                    [
+                      "channel",
+                      "WorldNormal",
+                      "G"
+                    ]
+                  ],
+                  "BlendSharpness"
+                ]
+              ],
+              [
+                "power",
+                [
+                  "abs",
+                  [
+                    "channel",
+                    "WorldNormal",
+                    "B"
+                  ]
+                ],
+                "BlendSharpness"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-01-04",
+      "name": "NearFarTextureBlend",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "在近景颜色采样与远景颜色采样之间按厘米距离过渡",
+      "pins": [
+        {
+          "name": "NearColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "FarColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "DistanceCm",
+          "type": "S",
+          "preview": 2200
+        },
+        {
+          "name": "NearDistanceCm",
+          "type": "S",
+          "preview": 300
+        },
+        {
+          "name": "FarDistanceCm",
+          "type": "S",
+          "preview": 6000
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "NearColor",
+            "FarColor",
+            [
+              "sat",
+              [
+                "div",
+                [
+                  "sub",
+                  "DistanceCm",
+                  "NearDistanceCm"
+                ],
+                [
+                  "sub",
+                  "FarDistanceCm",
+                  "NearDistanceCm"
+                ]
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-01-05",
+      "name": "TextureAntiTiling",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "为错位采样的两份同纹理颜色提供低频噪声混合，减少重复格纹",
+      "pins": [
+        {
+          "name": "PrimaryColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "ShiftedColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "BlendNoise",
+          "type": "S",
+          "preview": 0.52
+        },
+        {
+          "name": "VariationStrength",
+          "type": "S",
+          "preview": 0.72
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "PrimaryColor",
+            "ShiftedColor",
+            [
+              "sat",
+              [
+                "mul",
+                "BlendNoise",
+                "VariationStrength"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-01-06",
+      "name": "RandomUVOffset",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "以单元坐标及随机种子生成稳定的二维纹理扰动",
+      "pins": [
+        {
+          "name": "UV",
+          "type": "V2",
+          "preview": [
+            0.5,
+            0.5
+          ]
+        },
+        {
+          "name": "CellUV",
+          "type": "V2",
+          "preview": [
+            0.5,
+            0.5
+          ]
+        },
+        {
+          "name": "Seed",
+          "type": "S",
+          "preview": 13
+        },
+        {
+          "name": "OffsetScale",
+          "type": "S",
+          "preview": 0.03
+        }
+      ],
+      "outputs": [
+        {
+          "name": "UV",
+          "expression": [
+            "add",
+            "UV",
+            [
+              "mul",
+              [
+                "append",
+                [
+                  "frac",
+                  [
+                    "mul",
+                    [
+                      "sin",
+                      [
+                        "add",
+                        [
+                          "dot",
+                          "CellUV",
+                          [
+                            "v2",
+                            12.9898,
+                            78.233
+                          ]
+                        ],
+                        "Seed"
+                      ]
+                    ],
+                    43758.5453
+                  ]
+                ],
+                [
+                  "frac",
+                  [
+                    "mul",
+                    [
+                      "sin",
+                      [
+                        "add",
+                        [
+                          "dot",
+                          "CellUV",
+                          [
+                            "v2",
+                            39.346,
+                            11.135
+                          ]
+                        ],
+                        "Seed"
+                      ]
+                    ],
+                    24634.6345
+                  ]
+                ]
+              ],
+              "OffsetScale"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-01-12",
+      "name": "DirectionMask",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "归一化法线与目标向量夹角形成定向权重",
+      "pins": [
+        {
+          "name": "SurfaceNormal",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "TargetDirection",
+          "type": "V3",
+          "preview": [
+            0,
+            1,
+            0
+          ]
+        },
+        {
+          "name": "Contrast",
+          "type": "S",
+          "preview": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "sat",
+            [
+              "power",
+              [
+                "sat",
+                [
+                  "dot",
+                  [
+                    "normalize",
+                    "SurfaceNormal"
+                  ],
+                  [
+                    "normalize",
+                    "TargetDirection"
+                  ]
+                ]
+              ],
+              "Contrast"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-01-16",
+      "name": "DistanceFadeMask",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "从起点到终点厘米距离计算透明度衰减",
+      "pins": [
+        {
+          "name": "DistanceCm",
+          "type": "S",
+          "preview": 1300
+        },
+        {
+          "name": "StartCm",
+          "type": "S",
+          "preview": 100
+        },
+        {
+          "name": "EndCm",
+          "type": "S",
+          "preview": 5500
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "one_minus",
+            [
+              "sat",
+              [
+                "div",
+                [
+                  "sub",
+                  "DistanceCm",
+                  "StartCm"
+                ],
+                [
+                  "sub",
+                  "EndCm",
+                  "StartCm"
+                ]
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-01-18",
+      "name": "EdgeSoftHardBlend",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "以柔边和平方硬边两种算法混合遮罩",
+      "pins": [
+        {
+          "name": "SourceMask",
+          "type": "S",
+          "preview": 0.65
+        },
+        {
+          "name": "Threshold",
+          "type": "S",
+          "preview": 0.4
+        },
+        {
+          "name": "Softness",
+          "type": "S",
+          "preview": 0.22
+        },
+        {
+          "name": "Hardness",
+          "type": "S",
+          "preview": 0.65
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "lerp",
+            [
+              "sat",
+              [
+                "div",
+                [
+                  "sub",
+                  "SourceMask",
+                  "Threshold"
+                ],
+                "Softness"
+              ]
+            ],
+            [
+              "sat",
+              [
+                "mul",
+                [
+                  "sat",
+                  [
+                    "div",
+                    [
+                      "sub",
+                      "SourceMask",
+                      "Threshold"
+                    ],
+                    "Softness"
+                  ]
+                ],
+                [
+                  "sat",
+                  [
+                    "div",
+                    [
+                      "sub",
+                      "SourceMask",
+                      "Threshold"
+                    ],
+                    "Softness"
+                  ]
+                ]
+              ]
+            ],
+            [
+              "sat",
+              "Hardness"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-01-20",
+      "name": "DetailNormal",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "将局部细节法线增量加入基底法线再归一化",
+      "pins": [
+        {
+          "name": "BaseNormal",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "DetailNormal",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "DetailStrength",
+          "type": "S",
+          "preview": 0.55
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Normal",
+          "expression": [
+            "normalize",
+            [
+              "add",
+              "BaseNormal",
+              [
+                "mul",
+                [
+                  "sub",
+                  "DetailNormal",
+                  [
+                    "v3",
+                    0,
+                    0,
+                    1
+                  ]
+                ],
+                "DetailStrength"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-01-24",
+      "name": "PackedPBRUnpack",
+      "owner": "Surface",
+      "folder": "Core",
+      "zh": "ORM打包贴图分离环境遮蔽AO、粗糙度Roughness和金属度Metallic",
+      "pins": [
+        {
+          "name": "PackedORM",
+          "type": "V3",
+          "preview": [
+            1,
+            0.65,
+            0
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "AO",
+          "expression": [
+            "channel",
+            "PackedORM",
+            "R"
+          ]
+        },
+        {
+          "name": "Roughness",
+          "expression": [
+            "channel",
+            "PackedORM",
+            "G"
+          ]
+        },
+        {
+          "name": "Metallic",
+          "expression": [
+            "channel",
+            "PackedORM",
+            "B"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-02-08",
+      "name": "RaindropAdhesion",
+      "owner": "Surface",
+      "folder": "Layers",
+      "zh": "按雨强、暴露、亲水性和纹理噪声生成雨滴附着遮罩",
+      "pins": [
+        {
+          "name": "RainIntensity",
+          "type": "S",
+          "preview": 0.8
+        },
+        {
+          "name": "SurfaceAffinity",
+          "type": "S",
+          "preview": 0.75
+        },
+        {
+          "name": "Exposure",
+          "type": "S",
+          "preview": 0.9
+        },
+        {
+          "name": "DropNoise",
+          "type": "S",
+          "preview": 0.65
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "sat",
+            [
+              "mul",
+              [
+                "mul",
+                "RainIntensity",
+                "SurfaceAffinity"
+              ],
+              [
+                "mul",
+                "Exposure",
+                "DropNoise"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-02",
+      "name": "LandscapeSlopeLayers",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "坡度区间内的自动岩石层权重",
+      "pins": [
+        {
+          "name": "SlopeNormalized",
+          "type": "S",
+          "preview": 0.7
+        },
+        {
+          "name": "SlopeStart",
+          "type": "S",
+          "preview": 0.35
+        },
+        {
+          "name": "SlopeEnd",
+          "type": "S",
+          "preview": 0.75
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "sat",
+            [
+              "div",
+              [
+                "sub",
+                "SlopeNormalized",
+                "SlopeStart"
+              ],
+              [
+                "sub",
+                "SlopeEnd",
+                "SlopeStart"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-03",
+      "name": "LandscapeAltitudeLayers",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "高程带厘米范围内计算地形覆盖层权重",
+      "pins": [
+        {
+          "name": "HeightCm",
+          "type": "S",
+          "preview": 1350
+        },
+        {
+          "name": "LowerHeightCm",
+          "type": "S",
+          "preview": 350
+        },
+        {
+          "name": "UpperHeightCm",
+          "type": "S",
+          "preview": 2300
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "sat",
+            [
+              "div",
+              [
+                "sub",
+                "HeightCm",
+                "LowerHeightCm"
+              ],
+              [
+                "sub",
+                "UpperHeightCm",
+                "LowerHeightCm"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-04",
+      "name": "CliffTriplanar",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "面向悬崖的岩石三平面已采样颜色加权，不复制TextureObject资产",
+      "pins": [
+        {
+          "name": "AxisXRock",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "AxisYRock",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "AxisZRock",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "WorldNormal",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "Sharpness",
+          "type": "S",
+          "preview": 6
+        },
+        {
+          "name": "RockExposure",
+          "type": "S",
+          "preview": 0.95
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "mul",
+            [
+              "div",
+              [
+                "add",
+                [
+                  "add",
+                  [
+                    "mul",
+                    "AxisXRock",
+                    [
+                      "power",
+                      [
+                        "abs",
+                        [
+                          "channel",
+                          "WorldNormal",
+                          "R"
+                        ]
+                      ],
+                      "Sharpness"
+                    ]
+                  ],
+                  [
+                    "mul",
+                    "AxisYRock",
+                    [
+                      "power",
+                      [
+                        "abs",
+                        [
+                          "channel",
+                          "WorldNormal",
+                          "G"
+                        ]
+                      ],
+                      "Sharpness"
+                    ]
+                  ]
+                ],
+                [
+                  "mul",
+                  "AxisZRock",
+                  [
+                    "power",
+                    [
+                      "abs",
+                      [
+                        "channel",
+                        "WorldNormal",
+                        "B"
+                      ]
+                    ],
+                    "Sharpness"
+                  ]
+                ]
+              ],
+              [
+                "add",
+                [
+                  "add",
+                  [
+                    "power",
+                    [
+                      "abs",
+                      [
+                        "channel",
+                        "WorldNormal",
+                        "R"
+                      ]
+                    ],
+                    "Sharpness"
+                  ],
+                  [
+                    "power",
+                    [
+                      "abs",
+                      [
+                        "channel",
+                        "WorldNormal",
+                        "G"
+                      ]
+                    ],
+                    "Sharpness"
+                  ]
+                ],
+                [
+                  "power",
+                  [
+                    "abs",
+                    [
+                      "channel",
+                      "WorldNormal",
+                      "B"
+                    ]
+                  ],
+                  "Sharpness"
+                ]
+              ]
+            ],
+            "RockExposure"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-05",
+      "name": "LandscapeMacroColor",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "宏观区域颜色变化权重，减少大型地形重复纹路",
+      "pins": [
+        {
+          "name": "BaseColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "MacroTint",
+          "type": "V3",
+          "preview": [
+            0.22,
+            0.36,
+            0.29
+          ]
+        },
+        {
+          "name": "MacroNoise",
+          "type": "S",
+          "preview": 0.5
+        },
+        {
+          "name": "Strength",
+          "type": "S",
+          "preview": 0.4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "BaseColor",
+            "MacroTint",
+            [
+              "sat",
+              [
+                "mul",
+                "MacroNoise",
+                "Strength"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-07",
+      "name": "LandscapeMeshBlend",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "将静态网格底色与地形采样底色按接触遮罩过渡",
+      "pins": [
+        {
+          "name": "MeshColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "LandscapeColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "ContactMask",
+          "type": "S",
+          "preview": 0.8
+        },
+        {
+          "name": "Strength",
+          "type": "S",
+          "preview": 0.9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "MeshColor",
+            "LandscapeColor",
+            [
+              "sat",
+              [
+                "mul",
+                "ContactMask",
+                "Strength"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-08",
+      "name": "RoadLandscapeBlend",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "道路与地表颜色按噪声边缘和路权重融合",
+      "pins": [
+        {
+          "name": "TerrainColor",
+          "type": "V3",
+          "preview": [
+            0.4,
+            0.5,
+            0.6
+          ]
+        },
+        {
+          "name": "RoadColor",
+          "type": "V3",
+          "preview": [
+            0.35,
+            0.33,
+            0.31
+          ]
+        },
+        {
+          "name": "RoadMask",
+          "type": "S",
+          "preview": 0.8
+        },
+        {
+          "name": "EdgeNoise",
+          "type": "S",
+          "preview": 0.7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "TerrainColor",
+            "RoadColor",
+            [
+              "sat",
+              [
+                "mul",
+                "RoadMask",
+                "EdgeNoise"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-09",
+      "name": "ShoreWetnessTransition",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "河岸湿润环带宽度由岸边距离和曝光控制",
+      "pins": [
+        {
+          "name": "DistanceFromShoreCm",
+          "type": "S",
+          "preview": 35
+        },
+        {
+          "name": "WetBandWidthCm",
+          "type": "S",
+          "preview": 125
+        },
+        {
+          "name": "WaterExposure",
+          "type": "S",
+          "preview": 0.9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "sat",
+            [
+              "mul",
+              [
+                "one_minus",
+                [
+                  "sat",
+                  [
+                    "div",
+                    "DistanceFromShoreCm",
+                    "WetBandWidthCm"
+                  ]
+                ]
+              ],
+              "WaterExposure"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-11",
+      "name": "LandscapeErosionMask",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "地形高程侵蚀、坡度、流向权重与强度组合",
+      "pins": [
+        {
+          "name": "ErosionHeightMask",
+          "type": "S",
+          "preview": 0.65
+        },
+        {
+          "name": "SlopeMask",
+          "type": "S",
+          "preview": 0.82
+        },
+        {
+          "name": "FlowMask",
+          "type": "S",
+          "preview": 0.75
+        },
+        {
+          "name": "Strength",
+          "type": "S",
+          "preview": 0.8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "sat",
+            [
+              "mul",
+              [
+                "mul",
+                "ErosionHeightMask",
+                "SlopeMask"
+              ],
+              [
+                "mul",
+                "FlowMask",
+                "Strength"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-04-14",
+      "name": "LandscapeRVTAdapter",
+      "owner": "Surface",
+      "folder": "Landscape",
+      "zh": "融合地形运行时虚拟纹理采样法线和网格法线，不自行读取或复制RVT",
+      "pins": [
+        {
+          "name": "MeshNormal",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "SampledRVTNormal",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "BlendMask",
+          "type": "S",
+          "preview": 0.85
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Normal",
+          "expression": [
+            "normalize",
+            [
+              "lerp",
+              "MeshNormal",
+              "SampledRVTNormal",
+              [
+                "sat",
+                "BlendMask"
+              ]
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

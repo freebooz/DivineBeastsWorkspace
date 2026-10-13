@@ -303,6 +303,17 @@ func (r *InventoryRepository) Consume(ctx context.Context, playerID string, comm
 			if err != nil {
 				return 0, item.Quantity, inventoryPGError(err)
 			}
+			// 消耗事件与库存删除/修订同一提交；此事件是已扣库存事实，
+			// 外部物品效果消费方还须依据OperationId确保自身幂等，不得先广播再扣除。
+			if err = enqueueInventoryOutboxTx(ctx, tx, "Inventory.Consumed",
+				playerID, command.OperationID, inventoryOutboxEvent{
+					SchemaVersion: 1, OperationID: command.OperationID,
+					PlayerID: playerID, ItemDefinitionID: item.ItemDefinitionID,
+					Quantity: command.Quantity, RemainingQuantity: remaining,
+					ReasonCode: command.ReasonCode,
+				}); err != nil {
+				return 0, item.Quantity, err
+			}
 			return command.Quantity, remaining, nil
 		})
 }
