@@ -72,7 +72,7 @@ static FSoftObjectPath MagicPath(const TCHAR* Prefix, const FExpectedMagic& Expe
 enum class EScenario : uint8
 {
     AssetContracts, GameplayEffects, Burst, Cancel, StaleSource, CommitAvatarSwap,
-    SpawnSuccessor, SpawnStaleSource, InsufficientMomentum
+    SpawnSuccessor, SpawnStaleSource, InsufficientMomentum, FreshSpawnInput
 };
 
 /** 来自真实 Actor 事件的只读证据；弱引用不延长弹体寿命，终态快照允许销毁后继续审计。 */
@@ -153,6 +153,7 @@ public:
             if (!Identity || !Identity->IsCharacterReady())
             { Test->AddError(TEXT("真实Hero初始化未Ready，拒绝伪造服务器GAS夹具")); return true; }
             if (Scenario == EScenario::GameplayEffects) { CheckGameplayEffects(); return true; }
+            if (Scenario == EScenario::FreshSpawnInput) { CheckFreshSpawnInput(); return true; }
             if (!BeginRealActivation()) { return true; }
             bCastStarted = true;
             if (Scenario == EScenario::InsufficientMomentum) { return true; }
@@ -309,7 +310,42 @@ private:
             Identity->IsCharacterReady() && Pawn->HasAuthority() && ASC->GetAvatarActor() == Pawn.Get());
     }
 
-    /** 初始化测试起始资源只走真实ASC属性入口；实际扣费只能由待测GE/Commit产生。 */
+    /**
+     * 真实Hero出生后直接通过平台输入释放三种魔法，不调用FillMomentum。
+     * 漏改英雄资产的初始气势、输入未进入GAS或成本重复扣除都会使本用例失败。
+     * 50→40→32→20来自用户批准的初始值和既有10/8/12成本，不由待测代码反算。
+     */
+    void CheckFreshSpawnInput()
+    {
+        const float SpawnMomentum = ASC->GetNumericAttribute(
+            UDivineBeastsMomentumAttributeSet::GetMomentumAttribute());
+        if (!Test->TestEqual(TEXT("真实英雄数据初始化50气势，不靠测试补满"), SpawnMomentum, 50.f)) { return; }
+        auto* Eligibility = Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();
+        if (!Test->TestNotNull(TEXT("服务器准入资格组件存在"), Eligibility)) { return; }
+        Eligibility->SetServerPlayerActive(true);
+        const TCHAR* InputNames[] = {
+            TEXT("Platform.Ability.Input.DivineBeasts.Slot1"),
+            TEXT("Platform.Ability.Input.DivineBeasts.Slot2"),
+            TEXT("Platform.Ability.Input.DivineBeasts.Slot4") };
+        const float ExpectedMomentum[] = {40.f, 32.f, 20.f};
+        for (int32 Index = 0; Index < UE_ARRAY_COUNT(ExpectedMagic); ++Index)
+        {
+            const FGameplayTag InputTag = FGameplayTag::RequestGameplayTag(FName(InputNames[Index]));
+            FGameplayAbilitySpec Spec(AbilityClasses[Index], 1);
+            Spec.GetDynamicSpecSourceTags().AddTag(InputTag);
+            const FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
+            if (!Test->TestTrue(TEXT("真实GAS授予魔法"), Handle.IsValid()) ||
+                !Test->TestTrue(TEXT("出生资源允许接纳平台输入"),
+                    ASC->AbilityInputPressed(InputTag, ASC->GetInputToken()).IsSuccess())) { return; }
+            ASC->ProcessAbilityInput();
+            ASC->AbilityInputReleased(InputTag, ASC->GetInputToken());
+            Test->TestEqual(FString::Printf(TEXT("%s通过真实输入仅扣一次成本"), ExpectedMagic[Index].Name),
+                ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()),
+                ExpectedMomentum[Index]);
+        }
+    }
+
+    /** 初始化其他隔离场景的测试资源；真实出生回归不得调用本方法掩盖初始数据缺陷。 */
     bool FillMomentum()
     {
         const auto* Momentum = ASC->GetSet<UDivineBeastsMomentumAttributeSet>();
@@ -646,6 +682,16 @@ bool FDivineBeastsDevelopmentMagicSpawnStaleSourceTest::RunTest(const FString&)
 {
     ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
         DivineBeastsDevelopmentMagicTests::EScenario::SpawnStaleSource)); return true;
+}
+
+// 真实出生初始资源为零、平台输入无效或施法成本未执行时失败，不在测试中注入初始气势。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMagicFreshSpawnInputTest,
+    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.FreshSpawnCanCastAllThreeWithoutTestRefill",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsDevelopmentMagicFreshSpawnInputTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::FreshSpawnInput)); return true;
 }
 
 #endif // WITH_DEV_AUTOMATION_TESTS
