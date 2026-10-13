@@ -11,7 +11,7 @@ Server先验证单源排除规则及受管INI漂移，UAT成功后逐个读取�
 #>
 param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][string]$Target = 'Client',
     # 保留Foundation默认行为；新手村开发验证必须显式选配置，不在发行默认中启用候选技能。
-    [ValidateSet('FoundationStandalone','VillageServer','VillageDevelopmentServer')][string]$CustomConfig='FoundationStandalone',
+    [ValidateSet('FoundationStandalone','VillageServer','VillageDevelopmentServer','PluginDemoClient')][string]$CustomConfig='FoundationStandalone',
     [switch]$Pak,
     # 可选仅省略Stage中的PDB等调试符号，缓解磁盘不足；不改变构建模式、Cook内容或测试门禁。
     [switch]$SkipDebugSymbols,
@@ -23,6 +23,7 @@ $context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=
 try {
     $context = New-FoundationContext "Cook-$Target" $RunId
     if (-not $Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }
+    if ($CustomConfig -eq 'PluginDemoClient' -and $Target -ne 'Client') { throw 'PluginDemoClient只允许开发Client，不能用于任何服务器角色。' }
     if ($CustomConfig -eq 'VillageDevelopmentServer' -and $Target -ne 'Server') {
         throw 'VillageDevelopmentServer只允许专用服务器目标；客户端开发验证使用CookFrontEndClient。'
     }
@@ -43,7 +44,16 @@ try {
     Assert-FoundationFile (Join-Path $context.Workspace "Game/Source/DivineBeastsArena$Target.Target.cs")
     # Foundation地图白名单不能隐式扩大；只有Village专服配置可显式发布这一张已存在的正式村庄地图。
     # 不接受任意插件路径或组合地图，防止测试入口变成无边界CookAll；其余配置沿用原Foundation门禁。
-    if ($Target -eq 'Server' -and $CustomConfig -in @('VillageServer','VillageDevelopmentServer') -and
+    if ($CustomConfig -eq 'PluginDemoClient') {
+        # 仅消费经过真实身份/关系校验的作者源地图集合，未知路径拒绝；不CookAll，不创建地图。
+        $demoPython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        Assert-FoundationFile $demoPython
+        $output=& $demoPython (Join-Path $context.Workspace 'Tests/Architecture/ValidatePluginDemoManifest.py') --workspace $context.Workspace --manifest (Join-Path $context.Workspace 'Docs/Implementation/PluginDemos/PluginDemoManifest.json') --print-cook-maps
+        if ($LASTEXITCODE -ne 0) { throw '演示编目未通过地图白名单检查，拒绝启动Cook。' }
+        $allowed=@(($output -join "`n") | ConvertFrom-Json)
+        if (-not $PSBoundParameters.ContainsKey('Maps')) { $Maps=$allowed; $details.Maps=$Maps }
+        if (-not $Maps.Count -or @($Maps | Where-Object { $_ -cnotin $allowed }).Count) { throw '演示Cook只允许作者源的精确地图集合。' }
+    } elseif ($Target -eq 'Server' -and $CustomConfig -in @('VillageServer','VillageDevelopmentServer') -and
         $Maps.Count -eq 1 -and $Maps[0] -ceq '/DBAWorldPack_Village/Maps/L_Village_Start') {
         Assert-FoundationFile (Join-Path $context.Workspace 'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Maps/L_Village_Start.umap')
     } else {

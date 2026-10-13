@@ -48,9 +48,12 @@ GROUPS={
 
 def require_project(unreal):
     """正确主工程是唯一允许创建项目审核场景的容器。"""
-    current=str(unreal.Paths.get_project_file_path()).replace("\\","/")
-    if not current.endswith("/Game/DivineBeastsArena.uproject"):
-        raise RuntimeError("无法在其它工程制作材质库演示地图："+current)
+    current=str(unreal.Paths.get_project_file_path())
+    expected=str(ROOT/"Game/DivineBeastsArena.uproject")
+    if os.path.normcase(os.path.realpath(current)) != os.path.normcase(os.path.realpath(expected)):
+        raise RuntimeError("拒绝在非锁定DivineBeastsWorkspace工程制作材质库演示地图："+current)
+    if not str(unreal.SystemLibrary.get_engine_version()).startswith("5.8."):
+        raise RuntimeError("审核地图只允许在UE5.8原生编辑器创建与保存")
 
 
 def manifest(group):
@@ -176,13 +179,37 @@ def main():
         raise RuntimeError("UI必须通过Monolith创建真实WBP并在UI域测试；此脚本不能生成UI替身")
     map_matches(unreal,GROUPS[group]["map"])
     review_materials=[material_path_for(unreal,entry) for entry in entries]
-    existing=[a for a in unreal.EditorLevelLibrary.get_all_level_actors()
-              if str(a.get_actor_label()).startswith("MLReview_")]
-    if existing:
+    # 先完整检查审核专属标签：旧版本仅凭一个MLReview_标签就将不完整地图视为已制作。
+    # apply遇到任何已有审核对象均拒绝重叠；verify必须核对灯光、地面、每个展示架和中文标牌。
+    actors=unreal.EditorLevelLibrary.get_all_level_actors()
+    labels=[str(a.get_actor_label()) for a in actors]
+    review_labels=[name for name in labels
+                   if name.startswith("MLReview_") or name.startswith("MLReviewLabel_")]
+    if review_labels:
         if opts.mode=="verify":
-            print("REVIEW_MAP_PREVIOUS_STANDS",len(existing))
+            expected_labels={"MLReview_KeyLight","MLReview_FillLight","MLReview_NeutralFloor"}
+            for entry in entries:
+                suffix=entry["CapabilityId"].replace("-","_")
+                expected_labels.add("MLReview_"+suffix)
+                expected_labels.add("MLReviewLabel_"+suffix)
+            missing=expected_labels-set(review_labels)
+            extra=set(review_labels)-expected_labels
+            repeated=[name for name in expected_labels if labels.count(name)!=1]
+            if missing or extra or repeated:
+                raise RuntimeError("独立审核地图内容不完整或重复；不能伪称已完成："
+                                   +repr({"missing":sorted(missing),"extra":sorted(extra),"duplicate":sorted(repeated)}))
+            for entry,material in zip(entries,review_materials):
+                name="MLReview_"+entry["CapabilityId"].replace("-","_")
+                actor=next(a for a in actors if str(a.get_actor_label())==name)
+                preview=next((c for c in actor.get_components_by_class(unreal.StaticMeshComponent)
+                              if c.get_name().startswith("PreviewMesh")),None)
+                if preview is None or preview.get_material(0) is None or (
+                    preview.get_material(0).get_path_name()!=material.get_path_name()
+                ):
+                    raise RuntimeError("审核展示架的真实材质绑定不符："+name)
+            print("REVIEW_MAP_CONTENT_VERIFIED",GROUPS[group]["map"],"stand_count",len(entries))
             return
-        raise RuntimeError("已存在审核内容，禁止在同一地图叠加重复演示物")
+        raise RuntimeError("已存在审核内容，禁止在同一地图叠加重复演示物；需先核对半成品")
     if opts.mode=="verify":
         raise RuntimeError("当前审核地图尚无真正展示架，不可称已完成")
     blueprint_class=unreal.load_class(None,BP_CLASS)

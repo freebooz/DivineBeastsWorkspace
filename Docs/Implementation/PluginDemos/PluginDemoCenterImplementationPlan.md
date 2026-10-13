@@ -117,14 +117,14 @@
 
 ### T00：冻结可追溯基线与文件责任
 
-**Files:** 读取上述已有源码、根/局部规则、现行构建入口；创建 `DEMODOCS/ExecutionProgress.md`、`FeatureCoverage.md`、`AssetReuseMap.md`，修改总体目录规划。后二者是编目的中文导出/审计材料，不是第二套作者源。
+**Files:** 读取上述已有源码、根/局部规则、现行构建入口；增量更新已存在的 `DEMODOCS/ExecutionProgress.md`、`FeatureCoverage.md`、`AssetReuseMap.md`，修改总体目录规划。后二者是编目的中文导出/审计材料，不是第二套作者源。
 
 **Interfaces:** 输入真实 `.uplugin`、内容登记、地图文件和当前差异；输出 `BaselineRevision`、文件责任表及 `Unreviewed` 功能范围。规划参考为47代码/18内容/37地图，变化必须解释，不能硬凑数量。
 
-- [ ] 记录分支/HEAD/未提交文件和当前编辑器/编译进程来源，不停止他人进程。
-- [ ] 对照真实描述与内容登记，生成身份和地图候选表；全部运行/人工列初始为未验证。
-- [ ] 在进度表区分已存在源码、待改代码、待生成资产与待运行检查；保留材质/背包任务的接线。
-- [ ] 用V0检查本任务文档差异，保存基线证据，不改正式默认地图。
+- [x] 记录分支/HEAD/未提交文件和当前编辑器/编译进程来源，不停止他人进程。
+- [x] 对照真实描述与内容登记，生成身份和地图候选表；全部运行/人工列初始为未验证。
+- [x] 在进度表区分已存在源码、待改代码、待生成资产与待运行检查；保留材质/背包任务的接线。
+- [x] 用V0检查本任务文档差异，保存基线证据，不改正式默认地图。实际全局门禁退出1（既有Saved辅助工程被计入），此勾选只表示执行和记录，不表示通过。
 
 ### T01：v2 功能编目与无引擎验证器
 
@@ -132,10 +132,10 @@
 
 **Interfaces:** `validate_manifest(document: dict, workspace: Path) -> list[dict]`，问题含 `code`、`location`、中文 `message`；不修改文档。v2 必含 `schema_version=2`、`plugins`、`features`、`scenarios`、`review_cases`、`legacy_map_routes`；四维状态按规格5节独立保存。功能字段采用规格4.3，不以普通文件存在标记资源可加载。
 
-- [ ] 写 `test_duplicate_feature_rejected`、`test_two_scenarios_share_map`、`test_unreviewed_is_not_complete`、`test_missing_plugin_visible`、`test_legacy_map_ambiguity`：分别断言重复拒绝、共享允许、未知分母不算100%、缺口保留、一对多不得自动选取。
-- [ ] 执行V1单测，记录缺验证实现时的失败；失败必须是合同断言而非解释器缺失。
-- [ ] 实现结构、引用、身份和目标检查；升级真实插件清单，尚未审计的功能不虚构，保留v1来源和迁移说明。
-- [ ] 再执行V1，使用变异输入证明重复/错端/缺用例会失败；生成中文覆盖导出，更新目录登记。
+- [x] 写 `test_duplicate_feature_rejected`、`test_two_scenarios_share_map`、`test_unreviewed_is_not_complete`、`test_missing_plugin_visible`、`test_legacy_map_ambiguity`：分别断言重复拒绝、共享允许、未知分母不算100%、缺口保留、一对多不得自动选取。
+- [x] 执行V1单测，记录缺验证实现时的失败；失败必须是合同断言而非解释器缺失。
+- [x] 实现结构、引用、身份和目标检查；升级真实插件清单，尚未审计的功能不虚构，保留v1来源和迁移说明。
+- [x] 再执行V1，使用变异输入证明重复/错端/缺用例会失败；生成中文覆盖导出，更新目录登记。当前27项离线回归通过，详见ExecutionProgress.md。
 
 ### T02：可加载的目录定义及版本校验
 
@@ -145,9 +145,9 @@
 
 `CatalogTypes.h` 统一声明 `FDivineBeastsDemoFeatureEntry`、`FDivineBeastsDemoScenarioDefinition`、`FDivineBeastsDemoParameterValue` 与 `FDivineBeastsDemoPreflightResult`。前两者字段逐项映射规格4.3的功能/案例记录；参数由 `ParameterId:FName`、显式类型枚举和对应的布尔/整数/实数/标识值组成，仅允许与声明类型匹配的有效载荷，不接受脚本字符串；预检结果含 `bCanStart:bool`、`Result:FGamePlatformResult` 和逐项阻塞原因。未启用插件、缺资源与尚未就绪分别保留，不压成同一个“不可用”。枚举/字段中文语义与JSON Schema在同一任务完成。
 
-- [ ] 写 `DivineBeasts.PluginDemos.Definition`：Schema1/3拒绝、重复Feature/Scenario拒绝、两案例同地图允许、NaN/负超时拒绝、空操作能力不冒充支持。
-- [ ] 登记C++红测预期；无当前构建证据时标记RuntimeNotRun，不运行旧测试结果。
-- [ ] 定义稳定值类型及私有校验；公开头直接使用Core/UI类型时补真实Public依赖，避免仅靠传递头可见；不公开解析缓存。
+- [x] 写 `DivineBeasts.PluginDemos.Definition`：Schema1/3拒绝、重复Feature/Scenario拒绝、两案例同地图允许、NaN/负超时拒绝、空操作能力不冒充支持。
+- [x] 登记C++红测预期；无当前构建证据时标记RuntimeNotRun，不运行旧测试结果。
+- [x] 定义稳定值类型及私有校验；公开头直接使用Core/UI类型时补真实Public依赖，避免仅靠传递头可见；不公开解析缓存。
 - [ ] 执行V0/V1；授权构建后的V2须覆盖本测试，再标记运行验证。
 
 ### T03：目录服务、兼容映射及请求查询

@@ -89,7 +89,7 @@ bool FDivineBeastsDemoDefinitionTest::RunTest(const FString&)
     Parameter.ParameterId = TEXT("Count");
     Parameter.Unit = TEXT("个");
     Parameter.DefaultSource = TEXT("仅测试夹具");
-    Parameter.DefaultValue.Type = TEXT("integer");
+    Parameter.DefaultValue.Type = EDivineBeastsDemoParameterType::Integer;
     Parameter.DefaultValue.IntegerValue = 50;
     Parameter.Minimum = 0;
     Parameter.Maximum = 100;
@@ -99,7 +99,31 @@ bool FDivineBeastsDemoDefinitionTest::RunTest(const FString&)
     Parameter.Maximum = 9007199254740992.0;
     Parameter.DefaultValue.IntegerValue = 9007199254740992LL;
     TestFalse(TEXT("整数精度边界拒绝"), Catalog->ValidateDefinition().IsSuccess());
+    Parameter.DefaultValue.Type = static_cast<EDivineBeastsDemoParameterType>(255);
+    TestFalse(TEXT("非法参数枚举拒绝，不落入默认成功分支"), Catalog->ValidateDefinition().IsSuccess());
+    Parameter.DefaultValue.Type = EDivineBeastsDemoParameterType::Boolean;
+    TestTrue(TEXT("布尔类型只解释布尔载荷"), Catalog->ValidateDefinition().IsSuccess());
+    Parameter.DefaultValue.Type = EDivineBeastsDemoParameterType::Identifier;
+    Parameter.DefaultValue.IdentifierValue = FName(TEXT("None"));
+    TestFalse(TEXT("标识默认值拒绝UE空名"), Catalog->ValidateDefinition().IsSuccess());
+    Parameter.DefaultValue.IdentifierValue = TEXT("ValidChoice");
+    TestTrue(TEXT("合法标识参数"), Catalog->ValidateDefinition().IsSuccess());
     Catalog->Scenarios[0].Parameters.Reset();
+
+    Catalog->Scenarios[0].RequiredPlugins.Add(TEXT("gameplatformui"));
+    TestFalse(TEXT("插件引用按FName大小写去重"), Catalog->ValidateDefinition().IsSuccess());
+    Catalog->Scenarios[0].RequiredPlugins.Pop();
+    Catalog->Features[0].ScenarioIds.Add(TEXT("gameplatformui.resourcebar.normal"));
+    TestFalse(TEXT("案例引用按FName大小写去重"), Catalog->ValidateDefinition().IsSuccess());
+    Catalog->Features[0].ScenarioIds.Pop();
+    Catalog->Scenarios[0].AdapterId = FName(TEXT("NONE"));
+    TestFalse(TEXT("适配器拒绝空FName"), Catalog->ValidateDefinition().IsSuccess());
+    Catalog->Scenarios[0].AdapterId = TEXT("ResourceBar");
+    Catalog->ReviewCases[0].Version = MAX_int32;
+    TestTrue(TEXT("用例最大int32版本合法"), Catalog->ValidateDefinition().IsSuccess());
+    Catalog->ReviewCases[0].Version = 0;
+    TestFalse(TEXT("用例版本从1开始"), Catalog->ValidateDefinition().IsSuccess());
+    Catalog->ReviewCases[0].Version = 1;
 
     auto Second = Catalog->Scenarios[0];
     Second.ScenarioId = TEXT("GamePlatformUI.ResourceBar.InvalidMaximum");

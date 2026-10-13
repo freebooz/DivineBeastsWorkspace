@@ -140,8 +140,8 @@ FGuid UDivineBeastsTrustedInventoryEventSubsystem::SubmitConfirmedEvent(
         !SourceEventId.IsValid() || DefinitionId.IsNone() ||
         Quantity < 1 || Quantity > 1000000 || ExpectedInventoryRevision < 0 ||
         static_cast<uint64>(ExpectedInventoryRevision) > MaxExactJsonInteger ||
-        !Controller.HasAuthority() ||
-        !IsValid(&Controller) || !Controller.GetWorld() ||
+        !IsValid(&Controller) || !Controller.HasAuthority() ||
+        !Controller.GetWorld() ||
         Controller.GetWorld()->GetGameInstance() != GetGameInstance() ||
         (FCString::Strcmp(EventKind, TEXT("consume")) == 0 && InstanceId.IsEmpty()) ||
         (FCString::Strcmp(EventKind, TEXT("grant")) == 0 && !InstanceId.IsEmpty()))
@@ -221,7 +221,7 @@ FGuid UDivineBeastsTrustedInventoryEventSubsystem::SubmitConfirmedEvent(
     constexpr int32 MaxInventoryResponseBytes = 256 * 1024;
     const auto ResponseBuffer = MakeShared<FDivineBeastsInventoryResponseBuffer, ESPMode::ThreadSafe>();
     FHttpRequestStreamDelegateV2 Receive = FHttpRequestStreamDelegateV2::CreateLambda(
-        [ResponseBuffer](void* Data, int64& InOutLength)
+        [ResponseBuffer, MaxInventoryResponseBytes](void* Data, int64& InOutLength)
         {
             if (!Data || InOutLength <= 0) return;
             FScopeLock Lock(&ResponseBuffer->Mutex);

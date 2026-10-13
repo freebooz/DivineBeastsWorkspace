@@ -125,10 +125,7 @@
       ],
       "properties": {
         "plugin_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "descriptor_path": {
           "type": "string",
@@ -203,16 +200,10 @@
       ],
       "properties": {
         "feature_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "plugin_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "title": {
           "type": "string",
@@ -277,10 +268,7 @@
           "type": "array",
           "description": "本功能的独立案例",
           "items": {
-            "type": "string",
-            "minLength": 1,
-            "description": "稳定英文身份；按UE FName大小写不敏感比较",
-            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+            "$ref": "#/$defs/identity"
           },
           "minItems": 0,
           "uniqueItems": true
@@ -302,10 +290,7 @@
       ],
       "properties": {
         "parameter_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "type": {
           "type": "string",
@@ -384,16 +369,10 @@
       ],
       "properties": {
         "scenario_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "feature_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "title": {
           "type": "string",
@@ -404,19 +383,13 @@
           "type": "array",
           "description": "关联功能分别核验",
           "items": {
-            "type": "string",
-            "minLength": 1,
-            "description": "稳定英文身份；按UE FName大小写不敏感比较",
-            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+            "$ref": "#/$defs/identity"
           },
           "minItems": 0,
           "uniqueItems": true
         },
         "adapter_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "template": {
           "type": "string",
@@ -458,10 +431,7 @@
           "type": "array",
           "description": "必需插件",
           "items": {
-            "type": "string",
-            "minLength": 1,
-            "description": "稳定英文身份；按UE FName大小写不敏感比较",
-            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+            "$ref": "#/$defs/identity"
           },
           "minItems": 1,
           "uniqueItems": true
@@ -536,10 +506,7 @@
           "type": "array",
           "description": "适用独立检查合同",
           "items": {
-            "type": "string",
-            "minLength": 1,
-            "description": "稳定英文身份；按UE FName大小写不敏感比较",
-            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+            "$ref": "#/$defs/identity"
           },
           "minItems": 1,
           "uniqueItems": true
@@ -561,27 +528,19 @@
       ],
       "properties": {
         "review_case_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "version": {
           "type": "integer",
           "minimum": 1,
-          "description": "用例版本，从1开始"
+          "description": "用例版本，范围1至2147483647，与UE int32无损对应",
+          "maximum": 2147483647
         },
         "scenario_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "feature_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "稳定英文身份；按UE FName大小写不敏感比较",
-          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          "$ref": "#/$defs/identity"
         },
         "steps": {
           "type": "array",
@@ -638,10 +597,7 @@
           "type": "array",
           "description": "显式候选案例",
           "items": {
-            "type": "string",
-            "minLength": 1,
-            "description": "稳定英文身份；按UE FName大小写不敏感比较",
-            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+            "$ref": "#/$defs/identity"
           },
           "minItems": 1,
           "uniqueItems": true
@@ -707,6 +663,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1023,
+      "description": "稳定英文身份；按UE FName大小写不敏感比较；None任意大小写保留为空名",
+      "pattern": "^(?![Nn][Oo][Nn][Ee]$)[A-Za-z][A-Za-z0-9_.-]*$"
     }
   }
 }

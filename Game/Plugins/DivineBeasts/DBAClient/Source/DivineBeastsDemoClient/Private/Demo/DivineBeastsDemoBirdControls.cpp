@@ -100,6 +100,8 @@ bool UDivineBeastsDemoWorldSubsystem::CommitBirdChange(
 bool UDivineBeastsDemoWorldSubsystem::ApplyBirdEdits(
     const TCHAR* Description, TFunctionRef<void(UDivineBeastsBirdFlockSceneComponent&)> Edit)
 {
+    if (HasActiveScenario() && !bExecutingScenarioAdapter)
+    { LastFeedback = FText::FromString(TEXT("活动案例占用世界写入，请使用案例命令。")); return false; }
     if (!FDivineBeastsPluginDemoMode::IsEnabled())
     {
         LastFeedback = FText::FromString(TEXT("只有明确启动的插件演示模式可以修改鸟群。"));
@@ -217,6 +219,7 @@ bool UDivineBeastsDemoWorldSubsystem::ApplyBirdGlide(float GlideBlend)
 
 bool UDivineBeastsDemoWorldSubsystem::StartBirdBatches()
 {
+    if (HasActiveScenario() && !bExecutingScenarioAdapter) return false;
     if (!FDivineBeastsPluginDemoMode::IsEnabled()) return false;
     int32 Accepted=0,Failed=0;
     FString Error;
@@ -233,6 +236,7 @@ bool UDivineBeastsDemoWorldSubsystem::StartBirdBatches()
 
 void UDivineBeastsDemoWorldSubsystem::StopBirdBatches()
 {
+    if (HasActiveScenario() && !bExecutingScenarioAdapter) return;
     if (!FDivineBeastsPluginDemoMode::IsEnabled()) return;
     ForEachFormalBatch(GetWorld(), [](UDivineBeastsBirdFlockBatchComponent& Batch)
     {

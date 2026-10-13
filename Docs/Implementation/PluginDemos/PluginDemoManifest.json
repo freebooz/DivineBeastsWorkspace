@@ -48,7 +48,7 @@
       "descriptor_path": "Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin",
       "architecture_layer": "Project",
       "plugin_kind": "code",
-      "feature_audit_status": "unreviewed"
+      "feature_audit_status": "partial"
     },
     {
       "plugin_id": "DBAContentPack_Common",
@@ -223,7 +223,7 @@
       "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/GamePlatformUI.uplugin",
       "architecture_layer": "Platform",
       "plugin_kind": "code",
-      "feature_audit_status": "unreviewed"
+      "feature_audit_status": "partial"
     },
     {
       "plugin_id": "DBAHeroPack_Monkey",
@@ -335,7 +335,7 @@
       "descriptor_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/GamePlatformData.uplugin",
       "architecture_layer": "Platform",
       "plugin_kind": "code",
-      "feature_audit_status": "unreviewed"
+      "feature_audit_status": "partial"
     },
     {
       "plugin_id": "GamePlatformDebug",
@@ -464,15 +464,510 @@
       "feature_audit_status": "unreviewed"
     }
   ],
-  "features": [],
-  "scenarios": [],
-  "review_cases": [],
-  "legacy_map_routes": [],
+  "features": [
+    {
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "plugin_id": "DBAClient",
+      "title": "正式鸟群场景参数与局部恢复",
+      "purpose": "经正式SceneComponent/Presentation/Data/VFX链路提交鸟数；请求数与GPU实存数分开，只恢复本案例捕获的场景组件，不停止其他Batch。",
+      "implementation_status": "implemented",
+      "integration_status": "wired",
+      "run_status": "idle",
+      "review_status": "not_reviewed",
+      "owner_path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient",
+      "implementation_evidence": [
+        {
+          "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Demo/DivineBeastsDemoBirdControls.cpp",
+          "symbol": "UDivineBeastsDemoWorldSubsystem::ApplyBirdCount(int32)"
+        },
+        {
+          "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Demo/DivineBeastsDemoWorldSubsystem.cpp",
+          "symbol": "UDivineBeastsDemoWorldSubsystem::RestoreBirdEdits()"
+        }
+      ],
+      "scenario_ids": [
+        "DBAClient.BirdFlock.Count",
+        "DBAClient.BirdFlock.Reset"
+      ]
+    },
+    {
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "plugin_id": "GamePlatformUI",
+      "title": "事件驱动资源条",
+      "purpose": "真实平台资源条展示只读夹具数值；验证50/100比例、最大值0不除零/清空文本，失活与停止只恢复样板控件，不改玩家属性。",
+      "implementation_status": "implemented",
+      "integration_status": "wired",
+      "run_status": "idle",
+      "review_status": "not_reviewed",
+      "owner_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI",
+      "implementation_evidence": [
+        {
+          "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformResourceBarWidget.h",
+          "symbol": "UGamePlatformResourceBarWidget::ApplyResourceState/GetResourceState"
+        },
+        {
+          "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Components/GamePlatformResourceBarWidget.cpp",
+          "symbol": "RefreshResourceValueText()"
+        }
+      ],
+      "scenario_ids": [
+        "GamePlatformUI.ResourceBar.Normal",
+        "GamePlatformUI.ResourceBar.InvalidMaximum"
+      ]
+    },
+    {
+      "feature_id": "GamePlatformData.Resources",
+      "plugin_id": "GamePlatformData",
+      "title": "中央资源共享租约与取消",
+      "purpose": "通过正式Data门面加载Engine Cube，验证两份独立需求共享、释放A后B仍可用和取消至多一次；停止只撤销本案例完整租约。",
+      "implementation_status": "implemented",
+      "integration_status": "wired",
+      "run_status": "idle",
+      "review_status": "not_reviewed",
+      "owner_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformData",
+      "implementation_evidence": [
+        {
+          "path": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformData/Public/Interfaces/IGamePlatformDataService.h",
+          "symbol": "AcquireResources/GetLeaseState/ReleaseResources"
+        },
+        {
+          "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Scenarios/DivineBeastsDemoDataLeaseScenario.cpp",
+          "symbol": "FDataLeaseScenario::Execute/Stop"
+        }
+      ],
+      "scenario_ids": [
+        "GamePlatformData.Resources.SharedLease",
+        "GamePlatformData.Resources.Cancel"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "DBAClient.BirdFlock.Count",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "title": "鸟群：数量提交",
+      "related_feature_ids": [],
+      "adapter_id": "BirdFlock",
+      "template": "PresentationLab",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformData",
+        "GamePlatformPresentation",
+        "GamePlatformVFX"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "真实IntegrationReview地图具备已注册鸟群组件与正式VFX目录资源，旧兼容修改已恢复"
+      ],
+      "map_asset": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Count",
+          "type": "integer",
+          "unit": "只（请求数，不是GPU存活数）",
+          "minimum": 0,
+          "maximum": 512,
+          "default_value": 32,
+          "default_source": "正式SceneComponent公开范围0..512；32为本案例开发夹具默认值，不是生产预算",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "DBAClient.BirdFlock.Count.Review"
+      ]
+    },
+    {
+      "scenario_id": "DBAClient.BirdFlock.Reset",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "title": "鸟群：局部恢复",
+      "related_feature_ids": [],
+      "adapter_id": "BirdFlock",
+      "template": "PresentationLab",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformData",
+        "GamePlatformPresentation",
+        "GamePlatformVFX"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "真实IntegrationReview地图具备已注册鸟群组件与正式VFX目录资源，旧兼容修改已恢复"
+      ],
+      "map_asset": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Count",
+          "type": "integer",
+          "unit": "只（请求数，不是GPU存活数）",
+          "minimum": 0,
+          "maximum": 512,
+          "default_value": 32,
+          "default_source": "正式SceneComponent公开范围0..512；32为本案例开发夹具默认值，不是生产预算",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "DBAClient.BirdFlock.Reset.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformUI.ResourceBar.Normal",
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "title": "资源条：50/100",
+      "related_feature_ids": [],
+      "adapter_id": "ResourceBar",
+      "template": "UIWidgetGallery",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformUI",
+        "GamePlatformData"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "资源条WBP及新页面已通过Monolith真实制作、编译、保存和重载；数值为开发夹具"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoResourceBar.WBP_DBA_PluginDemoResourceBar_C",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Current",
+          "type": "number",
+          "unit": "开发夹具数值",
+          "minimum": 0,
+          "maximum": 100,
+          "default_value": 50,
+          "default_source": "50/100明确开发夹具，不是平台业务上限",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Maximum",
+          "type": "number",
+          "unit": "开发夹具数值",
+          "minimum": 0,
+          "maximum": 100,
+          "default_value": 100,
+          "default_source": "最大值0拒绝除零；0..100仅本样板编辑区间",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GamePlatformUI.ResourceBar.Normal.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformUI.ResourceBar.InvalidMaximum",
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "title": "资源条：最大值0",
+      "related_feature_ids": [],
+      "adapter_id": "ResourceBar",
+      "template": "UIWidgetGallery",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformUI",
+        "GamePlatformData"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "资源条WBP及新页面已通过Monolith真实制作、编译、保存和重载；数值为开发夹具"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoResourceBar.WBP_DBA_PluginDemoResourceBar_C",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Current",
+          "type": "number",
+          "unit": "开发夹具数值",
+          "minimum": 0,
+          "maximum": 100,
+          "default_value": 50,
+          "default_source": "50/100明确开发夹具，不是平台业务上限",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Maximum",
+          "type": "number",
+          "unit": "开发夹具数值",
+          "minimum": 0,
+          "maximum": 100,
+          "default_value": 0,
+          "default_source": "最大值0拒绝除零；0..100仅本样板编辑区间",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GamePlatformUI.ResourceBar.InvalidMaximum.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformData.Resources.SharedLease",
+      "feature_id": "GamePlatformData.Resources",
+      "title": "Data：共享租约",
+      "related_feature_ids": [],
+      "adapter_id": "DataLease",
+      "template": "ServiceDiagnostics",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformData"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "本世界实际GamePlatformData服务可用，Engine Cube真实资源存在"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [],
+      "review_case_ids": [
+        "GamePlatformData.Resources.SharedLease.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformData.Resources.Cancel",
+      "feature_id": "GamePlatformData.Resources",
+      "title": "Data：真实取消",
+      "related_feature_ids": [],
+      "adapter_id": "DataLease",
+      "template": "ServiceDiagnostics",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformData"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "本世界实际GamePlatformData服务可用，Engine Cube真实资源存在"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [],
+      "review_case_ids": [
+        "GamePlatformData.Resources.Cancel.Review"
+      ]
+    }
+  ],
+  "review_cases": [
+    {
+      "review_case_id": "DBAClient.BirdFlock.Count.Review",
+      "version": 1,
+      "scenario_id": "DBAClient.BirdFlock.Count",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "steps": [
+        "进入鸟群场景案例，将Count设为32并提交Execute",
+        "观察请求结果与画面；GPU数量未读回必须显示未知",
+        "提交Stop，再检查原场景参数和已有Batch仍保持"
+      ],
+      "expected_result": "正式请求真实受理；GPU数量不伪造；Stop只恢复被捕获组件，其他Batch/天气不变。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "DBAClient.BirdFlock.Reset.Review",
+      "version": 1,
+      "scenario_id": "DBAClient.BirdFlock.Reset",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "steps": [
+        "进入鸟群复位案例，Execute修改Count",
+        "提交Reset后比较原场景参数",
+        "再次Stop；恢复失败必须保留记录并阻止正常返程"
+      ],
+      "expected_result": "仅本案例场景组件被恢复；恢复失败不得清空原值或改判成功，重复恢复不覆盖其他所有权。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformUI.ResourceBar.Normal.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformUI.ResourceBar.Normal",
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "steps": [
+        "进入资源条样板，提交Current=50和Maximum=100",
+        "观察真实进度与文本",
+        "Reset/Stop后检查控件原状态"
+      ],
+      "expected_result": "真实进度条比例0.5并显示开发夹具值；Reset/Stop恢复该控件，不修改任何角色属性。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformUI.ResourceBar.InvalidMaximum.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformUI.ResourceBar.InvalidMaximum",
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "steps": [
+        "进入资源条非法上限案例，保持Current=50、Maximum=0并提交",
+        "观察真实进度和文字",
+        "提交Stop"
+      ],
+      "expected_result": "比例0、数值文字清空、不除零；真实资源条状态仍可只读，停止恢复原值。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformData.Resources.SharedLease.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformData.Resources.SharedLease",
+      "feature_id": "GamePlatformData.Resources",
+      "steps": [
+        "提交Execute取得两份真实Cube租约A/B",
+        "等待实际完成并释放A",
+        "确认B仍Succeeded、Cube仍驻留；Stop后仅本次租约Released"
+      ],
+      "expected_result": "A/B真实共享，释放A不撤销B；完整租约身份被核验，清理不卸载其他实例仍使用的资源。",
+      "required_evidence": [
+        "log",
+        "state_dump"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformData.Resources.Cancel.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformData.Resources.Cancel",
+      "feature_id": "GamePlatformData.Resources",
+      "steps": [
+        "提交Execute取得真实Cube租约并立即释放取消",
+        "等待正式取消通知",
+        "提交Stop并检查没有重复终态或遗留本次需求"
+      ],
+      "expected_result": "原始操作保存Cancelled而非成功；取消完成至多一次，已释放需求不影响其他调用者。",
+      "required_evidence": [
+        "log",
+        "state_dump"
+      ]
+    }
+  ],
+  "legacy_map_routes": [
+    {
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "scenario_ids": [
+        "GamePlatformUI.ResourceBar.Normal",
+        "GamePlatformUI.ResourceBar.InvalidMaximum",
+        "GamePlatformData.Resources.SharedLease",
+        "GamePlatformData.Resources.Cancel"
+      ],
+      "requires_selection": true
+    },
+    {
+      "map_asset": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
+      "scenario_ids": [
+        "DBAClient.BirdFlock.Count",
+        "DBAClient.BirdFlock.Reset"
+      ],
+      "requires_selection": true
+    }
+  ],
   "discovered_maps": [
     {
       "repository_path": "Game/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview.umap",
       "asset_package": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
-      "kind": "unclassified",
+      "kind": "review_candidate",
       "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
@@ -712,7 +1207,7 @@
     {
       "repository_path": "Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap",
       "asset_package": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
-      "kind": "unclassified",
+      "kind": "review_candidate",
       "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"

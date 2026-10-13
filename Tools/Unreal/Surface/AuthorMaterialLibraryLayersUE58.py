@@ -51,9 +51,12 @@ def identities():
 
 def require_editor(unreal):
     """禁止普通系统Python写入虚幻二进制资源。"""
-    active=str(unreal.Paths.get_project_file_path()).replace("\\","/")
-    if not active.endswith("/Game/DivineBeastsArena.uproject"):
-        raise RuntimeError("当前不是正式UE5.8神兽联盟项目："+active)
+    active=str(unreal.Paths.get_project_file_path())
+    expected=str(ROOT/"Game/DivineBeastsArena.uproject")
+    if os.path.normcase(os.path.realpath(active)) != os.path.normcase(os.path.realpath(expected)):
+        raise RuntimeError("当前不是锁定的DivineBeastsWorkspace正式主工程："+active)
+    if not str(unreal.SystemLibrary.get_engine_version()).startswith("5.8."):
+        raise RuntimeError("材质层作者要求UE5.8，拒绝跨引擎版本保存资源")
 
 
 def file_is_occupied(path):
@@ -68,6 +71,15 @@ def expect_type(unreal,path,cls,allow_missing):
     obj=lib.load_asset(path) if lib.does_asset_exist(path) else None
     if obj is not None and not isinstance(obj,cls):
         raise TypeError("已有平台层材质Layer路径被其它类型占用："+path)
+    if obj is not None:
+        # 半成品即使存在于资产注册表也不能被误判为已保存/可复用。
+        native_file=DISK/(path.rsplit("/",1)[-1]+".uasset")
+        if not native_file.is_file():
+            raise RuntimeError("Layer只在内存中注册但尚未真实落盘，拒绝跳过半成品："+path)
+        node_count=unreal.MaterialEditingLibrary.get_num_material_expressions_in_function(obj)
+        minimum=5 if path==BLEND else 7
+        if node_count<minimum:
+            raise RuntimeError("已保存Layer/Blend原生节点不完整，禁止盲目跳过："+path)
     if obj is None:
         if file_is_occupied(path):
             raise RuntimeError("磁盘包存在但未注册，禁止重建覆盖："+path)

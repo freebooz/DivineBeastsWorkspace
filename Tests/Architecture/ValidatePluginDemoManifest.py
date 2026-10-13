@@ -73,9 +73,15 @@ def _validate_shape(value: object, rule: dict, schema: dict, location: str, issu
             identities = [json.dumps(item, sort_keys=True, ensure_ascii=False) for item in value]
             if len(set(identities)) != len(identities):
                 _issue(issues, "duplicate_value", location, "列表包含重复项。")
+            elif rule.get("items", {}).get("$ref") == "#/$defs/identity" and all(isinstance(item, str) for item in value):
+                # JSON字符串本身区分大小写；只有映射到FName的身份集合增加引擎语义约束。
+                if len({item.casefold() for item in value}) != len(value):
+                    _issue(issues, "duplicate_value", location, "身份列表按UE FName语义包含大小写重复项。")
         for index, item in enumerate(value):
             _validate_shape(item, rule.get("items", {}), schema, f"{location}[{index}]", issues)
     elif isinstance(value, str):
+        if len(value) > rule.get("maxLength", len(value)):
+            _issue(issues, "invalid_value", location, "字符串超出引擎身份长度边界。")
         if len(value.strip()) < rule.get("minLength", 0):
             _issue(issues, "required_value", location, "内容不能为空白。")
         if "pattern" in rule and not re.fullmatch(rule["pattern"], value):
@@ -83,6 +89,8 @@ def _validate_shape(value: object, rule: dict, schema: dict, location: str, issu
     elif type(value) in (int, float):
         if "minimum" in rule and value < rule["minimum"]:
             _issue(issues, "invalid_value", location, "数值小于允许下界。")
+        if "maximum" in rule and value > rule["maximum"]:
+            _issue(issues, "invalid_value", location, "数值大于允许上界。")
         if "exclusiveMinimum" in rule and value <= rule["exclusiveMinimum"]:
             _issue(issues, "invalid_value", location, "数值必须严格大于允许下界。")
 
@@ -90,7 +98,8 @@ def _validate_shape(value: object, rule: dict, schema: dict, location: str, issu
 def _repository_path(root: Path, value: str, location: str, issues: list) -> Path | None:
     """解析仓库内相对路径并拒绝越界/符号链接逃逸；不读取外部内容。"""
     parts = PurePosixPath(value)
-    if parts.is_absolute() or ".." in parts.parts or "\\" in value or ":" in value:
+    # PurePosixPath会消除空段和当前目录段，必须在归一化之前拒绝，保持与UE合同一致。
+    if parts.is_absolute() or any(part in ("", ".", "..") for part in value.split("/")) or "\\" in value or ":" in value:
         _issue(issues, "unsafe_path", location, "路径必须是仓库内使用正斜杠的相对路径。")
         return None
     try:
@@ -235,8 +244,9 @@ def validate_manifest(document: dict, workspace: Path) -> list[dict]:
                     _issue(issues, "invalid_value", name, "数值参数必须声明有序范围且默认值位于范围内。")
                 if kind == "integer" and abs(default) > 9007199254740991:
                     _issue(issues, "invalid_value", name, "整数参数超出JSON/UE范围比较可精确表达的区间。")
-            elif kind == "identifier" and not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]*", default):
-                _issue(issues, "invalid_value", name, "参数标识不得为脚本或任意命令。")
+            elif kind == "identifier":
+                # 参数值与记录身份共享一个Schema规则，避免允许脚本或UE保留空名。
+                _validate_shape(default, {"$ref": "#/$defs/identity"}, schema, name + ".default_value", issues)
         covered = set()
         for review_id in scenario["review_case_ids"]:
             review = _reference(review_id, reviews, identity, issues)
@@ -332,6 +342,7 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--print-document", choices=("coverage", "assets"), help="打印派生Markdown；不写文件")
     parser.add_argument("--check-docs", action="store_true", help="只读比较同目录覆盖表/地图表是否与源一致")
+    parser.add_argument("--print-cook-maps", action="store_true", help="打印已验证案例的精确开发地图白名单；不执行Cook")
     args = parser.parse_args()
     try:
         document = json.loads(args.manifest.read_text(encoding="utf-8-sig"))
@@ -339,6 +350,13 @@ def main() -> int:
         print(json.dumps({"error": "输入不可读", "detail": str(error)}, ensure_ascii=False))
         return 2
     issues = validate_manifest(document, args.workspace)
+    if not issues and args.print_cook_maps:
+        maps = sorted({item["map_asset"].split(".", 1)[0] for item in document["scenarios"] if item["map_asset"]})
+        if not maps:
+            _issue(issues, "no_cook_maps", "scenarios", "未登记真实案例地图，不能扩大Cook集合。")
+        else:
+            print(json.dumps(maps, ensure_ascii=False))
+            return 0
     if not issues and args.check_docs:
         for name, rendered in (("FeatureCoverage.md", render_coverage(document)), ("AssetReuseMap.md", render_asset_reuse(document))):
             try:

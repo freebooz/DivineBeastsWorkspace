@@ -15,6 +15,20 @@
   },
   "CookDirectories": [
     {
+      "PackagePath": "/Game/Development/PluginDemos",
+      "SourceDirectory": "Game/Content/Development/PluginDemos",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "SSLM开发演示门户、旧兼容Widget及诊断资源；不含服务器权威，不进入三角色专服Cook。新UI内容包已由DBAUIPack_Core整包排除。"
+    },
+    {
+      "PackagePath": "/Game/Development/BirdFlock",
+      "SourceDirectory": "Game/Content/Development/BirdFlock",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "鸟群GPU/场景样板地图与开发夹具，不参与专服权威；演示接线不改变正式服务器世界内容。"
+    },
+    {
       "PackagePath": "/Game/Development/MaterialLibrary",
       "SourceDirectory": "Game/Content/Development/MaterialLibrary",
       "Profiles": "AllServers",

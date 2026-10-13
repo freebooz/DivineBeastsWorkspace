@@ -148,9 +148,12 @@ def assert_valid_recipe(item):
 
 def require_engine(unreal):
     """只有锁定的虚幻主工程可产生真实二进制资产。"""
-    file=str(unreal.Paths.get_project_file_path()).replace("\\","/")
-    if not file.endswith("/Game/DivineBeastsArena.uproject"):
-        raise RuntimeError("非神兽联盟锁定工程，禁止写资产："+file)
+    file=str(unreal.Paths.get_project_file_path())
+    expected=str(ROOT/"Game/DivineBeastsArena.uproject")
+    if os.path.normcase(os.path.realpath(file)) != os.path.normcase(os.path.realpath(expected)):
+        raise RuntimeError("仅允许在已锁定的DivineBeastsWorkspace正式工程生成资源："+file)
+    if not str(unreal.SystemLibrary.get_engine_version()).startswith("5.8."):
+        raise RuntimeError("材质函数作者要求UE5.8，禁止用其他引擎版本保存资产")
 
 
 def safe_target(unreal,item,writable):

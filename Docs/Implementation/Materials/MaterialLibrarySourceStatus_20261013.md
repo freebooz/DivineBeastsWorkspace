@@ -65,6 +65,7 @@
 - 用户要求**先代码、蓝图、资源，最后统一编译验证**，因此本轮新增的60MF、12ML、7UI和所有新地图/蓝图不提前报告编译成功。若编辑器无法在不构建的情况下启动，将需要解决最小必需Editor启动构建阻断后才能继续制作二进制资产；此启动必需构建不能代替最后的Editor/Client/Server统一门禁。
 - 所有已存在的.uasset/.umap禁止盲目覆盖、删除、重命名或移动；旧开发和其它会话未提交修改必须保留。
 - 最终统一检查包括Python静态测试、完整UE Editor/Client/Server编译、功能QA Material编译、Niagara及UI域视觉、Development与Dedicated Server干净Cook/Stage、GPU实测以及人工明确签收。只有真实证据可改变生产可用状态。
+- **2026-10-13编辑器恢复专项续建**：已新增 `Build/Game/InspectUE58EditorModuleState.ps1`（引擎及项目模块BuildId、DLL、进程和启动日志只读诊断），增量增强 `Build/Game/RecoverUE58EditorForMaterialLibrary.ps1/.cmd`（双击默认不主动构建、支持指定Editor模块最小构建、同步传递错误码和真实报告）；四个资源作者及串行调度入口均补齐正式工程真实路径与UE5.8版本校验。`AuthorMaterialLibraryDemoUE58.py`（演示地图作者）修复只要存在一个`MLReview_`对象就误报地图已完成的问题：逐一检查展架/标牌/灯光/地面与材质；半成品仅拒绝自动重叠、不擅自删除重建。相关静态测试源码已更新。以上是**源码与安全门禁已写入**，远端Runner仍由四个材质会话遗留作业占满，四项stop_job均确认已接受但随后仍显示running，Windows诊断作业仍queued；本轮尚没有新的Editor构建成功、Monolith正式连接、原生资产落盘或人工视觉验收证据。不修改201项资产状态。
 
 ## 当前范围总数和闭环要求
 - 阶段工单的机器化执行顺序、未授权提前编译边界及每项实证要求归档于`MaterialLibraryResourceWorkQueue_20261013.json`（资源制作队列）。

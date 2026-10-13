@@ -76,14 +76,28 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoFeatureEntry
     TArray<FName> ScenarioIds;
 };
 
-/** 自包含类型化参数；Type仅选择一个有效载荷，不允许执行脚本字符串。 */
+/** 参数有效载荷的封闭类型；作者JSON通过显式映射转换，未知值不可默认成功。 */
+UENUM(BlueprintType)
+enum class EDivineBeastsDemoParameterType : uint8
+{
+    /** 作者boolean，仅读取bBooleanValue。 */
+    Boolean UMETA(DisplayName="布尔"),
+    /** 作者integer，仅读取IntegerValue并校验精度/范围。 */
+    Integer UMETA(DisplayName="整数"),
+    /** 作者number，仅读取有限NumberValue。 */
+    Number UMETA(DisplayName="实数"),
+    /** 作者identifier，仅读取非空稳定IdentifierValue。 */
+    Identifier UMETA(DisplayName="标识")
+};
+
+/** 自包含类型化参数；Type仅选择一个有效载荷，其余字段不解释，不允许执行脚本字符串。 */
 USTRUCT(BlueprintType)
 struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoParameterValue
 {
     GENERATED_BODY()
-    /** boolean/integer/number/identifier；其余类型明确拒绝。 */
+    /** 显式参数类型；JSON四种类型一对一映射，非法枚举值明确拒绝。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
-    FName Type = TEXT("number");
+    EDivineBeastsDemoParameterType Type = EDivineBeastsDemoParameterType::Number;
     /** boolean载荷。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
     bool bBooleanValue = false;

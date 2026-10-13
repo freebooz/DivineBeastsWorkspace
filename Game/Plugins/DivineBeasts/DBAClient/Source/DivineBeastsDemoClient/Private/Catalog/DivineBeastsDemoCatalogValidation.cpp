@@ -99,12 +99,12 @@ bool IsParameterValid(const FDivineBeastsDemoParameterDefinition& Parameter)
         Parameter.DefaultSource.TrimStartAndEnd().IsEmpty() ||
         !IsOneOf(Parameter.ApplyWhen, {TEXT("prepare"), TEXT("execute")})) return false;
     const auto& Value = Parameter.DefaultValue;
-    if (Value.Type == TEXT("boolean")) return true;
-    if (Value.Type == TEXT("identifier")) return IsIdentity(Value.IdentifierValue);
-    if (!IsOneOf(Value.Type, {TEXT("integer"), TEXT("number")})) return false;
+    if (Value.Type == EDivineBeastsDemoParameterType::Boolean) return true;
+    if (Value.Type == EDivineBeastsDemoParameterType::Identifier) return IsIdentity(Value.IdentifierValue);
+    if (Value.Type != EDivineBeastsDemoParameterType::Integer && Value.Type != EDivineBeastsDemoParameterType::Number) return false;
     constexpr int64 MaximumExactInteger = 9007199254740991LL;
-    if (Value.Type == TEXT("integer") && (Value.IntegerValue < -MaximumExactInteger || Value.IntegerValue > MaximumExactInteger)) return false;
-    const double Number = Value.Type == TEXT("integer") ? static_cast<double>(Value.IntegerValue) : Value.NumberValue;
+    if (Value.Type == EDivineBeastsDemoParameterType::Integer && (Value.IntegerValue < -MaximumExactInteger || Value.IntegerValue > MaximumExactInteger)) return false;
+    const double Number = Value.Type == EDivineBeastsDemoParameterType::Integer ? static_cast<double>(Value.IntegerValue) : Value.NumberValue;
     return FMath::IsFinite(Number) && FMath::IsFinite(Parameter.Minimum) && FMath::IsFinite(Parameter.Maximum) &&
         Parameter.Minimum <= Number && Number <= Parameter.Maximum;
 }

@@ -15,12 +15,12 @@ public class DivineBeastsDemoClient : ModuleRules
             "Core","CoreUObject","Engine","UMG",
             "DivineBeastsPresentationClient","GamePlatformWeatherRuntime","GamePlatformData",
             // 开发目录公开参数/结果使用Core稳定契约，必须直接声明Public依赖。
-            "GamePlatformCore"
+            "GamePlatformCore", "DivineBeastsUIClient", "GamePlatformUIClient", "SlateCore"
         });
         PrivateDependencyModuleNames.AddRange(new[] {
             "Projects", "AssetRegistry", "DivineBeastsApplicationFlowClient",
             // 演示控制器必须调用已有VFX/天气/世界公开服务，绝不重建执行器。
-            "GamePlatformVFXClient", "DBAWorldsRuntime", "SlateCore"
+            "GamePlatformVFXClient", "DBAWorldsRuntime", "Json", "JsonUtilities"
         });
     }
 }

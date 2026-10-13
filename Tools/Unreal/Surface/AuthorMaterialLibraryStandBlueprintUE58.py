@@ -22,9 +22,12 @@ MESH="/Engine/BasicShapes/Sphere"
 
 def check_owner(unreal) -> None:
     """防止在另一工程意外修改同名资源。"""
-    project=str(unreal.Paths.get_project_file_path()).replace("\\","/")
-    if not project.endswith("/Game/DivineBeastsArena.uproject"):
-        raise RuntimeError("仅允许在DivineBeastsWorkspace正式工程制作材质审核蓝图：" + project)
+    project=str(unreal.Paths.get_project_file_path())
+    expected=str(ROOT/"Game/DivineBeastsArena.uproject")
+    if os.path.normcase(os.path.realpath(project)) != os.path.normcase(os.path.realpath(expected)):
+        raise RuntimeError("仅允许在锁定的DivineBeastsWorkspace正式工程制作材质审核蓝图：" + project)
+    if not str(unreal.SystemLibrary.get_engine_version()).startswith("5.8."):
+        raise RuntimeError("审核蓝图必须由UE5.8原生编辑器保存，拒绝跨版本")
 
 
 def physical_collides() -> bool:

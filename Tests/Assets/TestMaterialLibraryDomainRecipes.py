@@ -134,6 +134,9 @@ class MaterialLibraryDomainRecipes(unittest.TestCase):
                          "混合层与材质层不得调用通用MF工厂")
         self.assertIn("MaterialFunctionMaterialLayerBlend",author)
         self.assertIn("MaterialFunctionMaterialLayer",author)
+        self.assertIn("native_file.is_file()",author)
+        self.assertIn("get_num_material_expressions_in_function(obj)",author)
+        self.assertIn("minimum=5 if path==BLEND else 7",author)
 
     def test_review_stand_blueprint_has_real_member_contract_and_final_compile_gate(self):
         """审查展示Actor应暴露可编辑材质软引用和中文标题；只有finalize才编译。"""
@@ -245,12 +248,49 @@ class MaterialLibraryDomainRecipes(unittest.TestCase):
         self.assertIn('does_asset_exist',author)
         self.assertNotIn('"action":"compile_widget"',author)
 
+    def test_native_asset_authors_lock_exact_project_and_detect_incomplete_review_maps(self):
+        """审查四类原生作者：完整路径+引擎版门禁，半成品地图不能被报告为完成。"""
+        authors=(
+            "AuthorMaterialLibraryDomainUE58.py",
+            "AuthorMaterialLibraryLayersUE58.py",
+            "AuthorMaterialLibraryStandBlueprintUE58.py",
+            "AuthorMaterialLibraryDemoUE58.py",
+        )
+        for filename in authors:
+            with self.subTest(source=filename):
+                text=(ROOT/"Tools/Unreal/Surface"/filename).read_text(encoding="utf-8")
+                self.assertIn("os.path.normcase(os.path.realpath(",text)
+                self.assertIn("get_engine_version()",text)
+                self.assertIn("5.8.",text)
+        demo=(ROOT/"Tools/Unreal/Surface/AuthorMaterialLibraryDemoUE58.py").read_text(encoding="utf-8")
+        self.assertIn("REVIEW_MAP_CONTENT_VERIFIED",demo)
+        self.assertIn("expected_labels-set(review_labels)",demo)
+        self.assertIn("preview.get_material(0).get_path_name()",demo)
+        self.assertIn("禁止在同一地图叠加重复演示物",demo)
+
+    def test_editor_recovery_keeps_build_scope_explicit_and_uses_readonly_inspection(self):
+        """恢复入口不得悄悄扩大为服务器/客户端构建，诊断入口不启动或篡改UE产物。"""
+        recovery=(ROOT/"Build/Game/RecoverUE58EditorForMaterialLibrary.ps1").read_text(encoding="utf-8")
+        launcher=(ROOT/"Build/Game/RecoverUE58EditorForMaterialLibrary.cmd").read_text(encoding="utf-8")
+        inspection=(ROOT/"Build/Game/InspectUE58EditorModuleState.ps1").read_text(encoding="utf-8")
+        self.assertIn("OnlyModules",recovery)
+        self.assertIn("if ($SkipBuild -and $OnlyModules.Count)",recovery)
+        self.assertIn("NoUBA",recovery)
+        self.assertIn("-NoCompile",recovery)
+        self.assertIn('-File "%~dp0RecoverUE58EditorForMaterialLibrary.ps1" -SkipBuild',launcher)
+        self.assertIn("exit /b %RESULT%",launcher)
+        for key in ("BuildIdMismatches","PluginModuleCandidates","ProjectEditorManifest",
+                    "UnrealProcesses","WriteReport"):
+            self.assertIn(key,inspection)
+        self.assertNotIn("Build.bat",inspection)
+        self.assertNotIn("Start-Process",inspection)
+
     def test_source_phase_strict_editor_identity_and_no_premature_build(self):
         """真实资产制作前应锁定UE5.8和工作空间，禁止PIE及不完整AssetRegistry。"""
         path = ROOT/"Tools/Unreal/Surface/AuthorMaterialLibrarySourcePhaseUE58.py"
         text = path.read_text(encoding="utf-8")
         for invariant in (
-            "/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject",
+            "os.path.normcase(os.path.realpath(project))",
             "get_engine_version", "5.8.", "get_game_world()",
             "is_loading_assets()", "inspect_only()", "resume-from",
             "MaterialLayers", "ReviewStandBlueprint"):

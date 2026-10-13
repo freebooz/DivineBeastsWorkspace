@@ -256,6 +256,52 @@ class PluginDemoManifestTests(unittest.TestCase):
         document["scenarios"][0]["related_feature_ids"] = [document["features"][0]["feature_id"]]
         self.assert_issue(document, "duplicate_id")
 
+    def test_identity_reference_arrays_are_case_insensitive(self):
+        """FName引用集合必须按引擎语义去重，普通人工步骤文字不套用该规则。"""
+        for collection, field in (("features", "scenario_ids"), ("scenarios", "required_plugins"),
+                                  ("scenarios", "review_case_ids"), ("legacy_map_routes", "scenario_ids")):
+            with self.subTest(collection=collection, field=field):
+                document = make_manifest()
+                document["legacy_map_routes"] = [{"map_asset": document["scenarios"][0]["map_asset"],
+                                                 "scenario_ids": [document["scenarios"][0]["scenario_id"]],
+                                                 "requires_selection": True}]
+                values = document[collection][0][field]
+                values.append(values[0].lower())
+                self.assert_issue(document, "duplicate_value")
+        document = make_manifest()
+        document["review_cases"][0]["steps"] = ["检查UI", "检查ui"]
+        self.assertEqual([], self.validate(document))
+
+    def test_reserved_none_identity_is_rejected(self):
+        """引擎空FName不是可用身份；适配器、参数名及参数标识值均须拒绝大小写变体。"""
+        for value in ("None", "NONE", "none", "nOnE"):
+            for field in ("adapter_id", "parameter_id", "default_value"):
+                with self.subTest(value=value, field=field):
+                    document = make_manifest()
+                    scenario = document["scenarios"][0]
+                    parameter = {"parameter_id": "Choice", "type": "identifier", "unit": "无单位",
+                                 "default_value": "ValidChoice", "default_source": "开发测试夹具",
+                                 "writable": True, "apply_when": "execute"}
+                    scenario["parameters"] = [parameter]
+                    (scenario if field == "adapter_id" else parameter)[field] = value
+                    self.assert_issue(document, "invalid_value")
+
+    def test_review_version_fits_ue_int32(self):
+        """作者版本必须可无损写入UE int32，最大合法值通过、溢出明确拒绝。"""
+        document = make_manifest()
+        document["review_cases"][0]["version"] = 2147483647
+        self.assertEqual([], self.validate(document))
+        document["review_cases"][0]["version"] = 2147483648
+        self.assert_issue(document, "invalid_value")
+
+    def test_noncanonical_repository_path_is_rejected(self):
+        """作者路径与UE定义统一拒绝空段、当前目录段和尾斜杠，不默默归一化。"""
+        for value in ("Game//Plugins", "Game/./Plugins", "Game/Plugins/"):
+            with self.subTest(value=value):
+                document = make_manifest()
+                document["features"][0]["owner_path"] = value
+                self.assert_issue(document, "unsafe_path")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

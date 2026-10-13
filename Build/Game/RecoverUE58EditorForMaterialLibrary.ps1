@@ -10,6 +10,8 @@ param(
     [string]$EngineRoot = 'F:\UnrealEngine-5.8.0-release',
     [ValidateRange(1,8)][int]$MaxParallelActions = 2,
     [ValidateRange(300,86400)][int]$BuildTimeoutSeconds = 7200,
+    # 可选：仅构建需要修复的Editor模块；不代表完整Editor构建验收。
+    [ValidatePattern('^[A-Za-z][A-Za-z0-9_]*$')][string[]]$OnlyModules = @(),
     [switch]$SkipBuild
 )
 Set-StrictMode -Version Latest
@@ -18,6 +20,9 @@ $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $project = Join-Path $workspace 'Game/DivineBeastsArena.uproject'
 $editor = Join-Path $EngineRoot 'Engine/Binaries/Win64/UnrealEditor.exe'
 $build = Join-Path $PSScriptRoot 'BuildFoundation.ps1'
+if ($SkipBuild -and $OnlyModules.Count) {
+    throw 'SkipBuild（跳过编译）与OnlyModules（指定编译模块）不可同时使用'
+}
 $expectedRootName = [IO.Path]::GetFileName($workspace.TrimEnd('\','/'))
 if ($expectedRootName -ne 'DivineBeastsWorkspace') {
     throw '正式工作空间名称不符；拒绝启动其他工程'
@@ -52,6 +57,8 @@ $state = [ordered]@{
     EditorExe = $editor
     MinimalEditorBuild = (-not $SkipBuild)
     Scope = 'Only DivineBeastsArenaEditor Development Win64; never Client/Server/Cook'
+    BuildMode = $(if ($SkipBuild) { 'SkipBuild' } elseif ($OnlyModules.Count) { 'EditorOnlyModules' } else { 'EditorTarget' })
+    OnlyModules = @($OnlyModules)
     State = 'Started'
     BuildExitCode = $null
     EditorPid = $null
@@ -64,7 +71,16 @@ try {
         $state | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $report -Encoding utf8
         Write-Host ('[SSLM] 构建Editor目标，记录目录：' + $reportDir)
         # 复用已审查的Foundation锁、UBT互斥、只拥有本次PID、完整日志和退出码记录。
-        & $build -EngineRoot $EngineRoot -Editor -MaxParallelActions $MaxParallelActions -TimeoutSeconds $BuildTimeoutSeconds -NoUBA
+        # 仅装配Editor目标；可显式限定缺失模块以缩小启动修复的构建范围。
+        $buildOptions = @{
+            EngineRoot = $EngineRoot
+            Editor = $true
+            MaxParallelActions = $MaxParallelActions
+            TimeoutSeconds = $BuildTimeoutSeconds
+            NoUBA = $true
+        }
+        if ($OnlyModules.Count) { $buildOptions.OnlyModules = @($OnlyModules) }
+        & $build @buildOptions
         $state.BuildExitCode = $LASTEXITCODE
         if ($LASTEXITCODE -ne 0) {
             throw ('真实Editor最小必要构建失败，退出码：' + $LASTEXITCODE)
@@ -76,7 +92,7 @@ try {
     if ($existing.Count) { throw '构建期间已有其他Editor实例启动；拒绝重复启动' }
     $state.State = 'LaunchingEditor'
     $state | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $report -Encoding utf8
-    $p = Start-Process -FilePath $editor -ArgumentList @((('"' + $project + '"')), '-log', '-NoSplash', '-NoLiveCoding') -PassThru
+    $p = Start-Process -FilePath $editor -ArgumentList @((('"' + $project + '"')), '-log', '-NoSplash', '-NoCompile', '-NoLiveCoding') -PassThru
     $state.EditorPid = $p.Id
     Write-Host ('[SSLM] 启动Editor，进程PID：' + $p.Id)
     Start-Sleep -Seconds 18

@@ -3,13 +3,27 @@
 ## 2026-10-13 方案A Native增量执行（当前）
 
 - 用户已通过规格、要求继续，并明确允许当前main原地修改、不创建工作树。开始HEAD为`eb1fe0e932967ce97078df12c8080cf5121c99b4`，开始时无未提交改动；后续其他任务的材质/背包改动独立保留。
+- 执行期间共享main出现外部提交`6bed78c42b80ccce07cda1cbdae515c318051f26`，已包含本批早期编目/定义快照；本代理未执行提交或推送，也未回退该提交。复核修复与文档更新仍以实际工作区为准；v2中的git_head继续表示原始发现时点，不伪改为二进制版本。
 - 当前限制：不构建、不启动Live Coding、不Cook/Stage、不提交或推送；未启动或停止编辑器/编译进程。以下旧P0—P8和历史构建段落只描述2026-10-12当时状态，不代表当前仍在构建或已验收。
 - T00已重新扫描47代码、18内容和37张开发地图文件；现有进度/覆盖/复用文档增量维护。功能数保持待审计，不沿用旧API数量作为功能完成数。
-- T01已实现Schema2、只读验证器及中文导出；完整v1内容保留History。当前23项Python回归已运行通过；作者源、真实身份集合和派生文档一致。重复、错端、缺用例、路径越界、超时/参数非法和歧义路由均有回归。
+- T01已实现Schema2、只读验证器及中文导出；完整v1内容保留History。当前27项Python回归已运行通过；作者源、真实身份集合和派生文档一致。重复、错端、缺用例、路径越界、超时/参数非法和歧义路由均有回归。
 - T02已写入项目只读Data目录定义、公开值合同、Private结构校验及`DivineBeasts.PluginDemos.Definition`原生测试；公开Core依赖已补齐。**尚未构建/运行，所以只记CodeWritten，不记RuntimeVerified或HumanReviewed。**
 - T03—T14及R01—R06尚未完成：没有把v2接到实际菜单、没有新DataAsset/Widget/关卡、没有逐插件功能接线或人工签收。
 - 全局基线门禁失败1项：`Game/Saved/BirdFlockAuthorHost/BirdFlockAuthorHost.uproject`被计入正式工程数，结果为2；三端声明装配与三层继承通过。不删除该工程、不修改门禁，不宣称全项目检查通过。
 - 中文说明及迁移合同见[Schema2接入说明](PluginDemoManifestContract.md)。本轮说明审查范围限新改的编目/校验/定义/测试/文档，不声称历史全工程已合规。
+
+### 本批独立复核与实际检查
+
+- 独立只读审查发现FName引用大小写重复、保留空名、int32版本上限，以及非规范相对路径差异。先新增回归，实际复现20个失败子案例；修复后27个测试方法全部通过。审查者重跑27项及真实清单/文档一致性通过，未发现上述修复范围新增明确缺陷。
+- UE参数类型按已批准T02合同采用`EDivineBeastsDemoParameterType`封闭枚举，非法枚举拒绝。新增C++回归仍未编译/运行，不把Python通过扩大解释为C++通过。
+- `python -X utf8 Tests/Architecture/TestPluginDemoManifest.py`：退出0，27项通过。
+- `python -X utf8 Tests/Architecture/ValidatePluginDemoManifest.py --workspace . --manifest Docs/Implementation/PluginDemos/PluginDemoManifest.json --check-docs`：退出0、无问题；65个插件待完整功能审计，0个正式登记功能，覆盖率为null。
+- `pwsh -NoProfile -File Tests/Architecture/ValidateProjectHeaders.ps1 -WorkspaceRoot .`：退出0，1027处自有头引用、0缺失；只验证引用可定位。
+- `pwsh -NoProfile -File Tests/Architecture/ValidateInheritanceBoundaries.ps1 -WorkspaceRoot .`：退出0，三层公开类型边界通过；不替代Blueprint/资产审计。
+- `pwsh -NoProfile -File Tests/Architecture/TestEnglishProjectNames.ps1 -WorkspaceRoot .`：退出0，检查100417项、65插件，0项命名违规；这是命名检查，不是中文说明内容验收。
+- `git diff --check`：退出0；没有为了消除LF/CRLF提示而批量转换其他任务文件。
+- 全局`ValidateDesignBaseline.ps1`退出1的既有工程数量问题保留；本批无Editor/Client/Server构建、原生自动化、PIE、Monolith资产变更、Cook或人工签收。
+- 历史v1与Git原文件一致性已由独立审查另行核对；自动验证器尚不核验history的哈希/提交真伪，此追溯强化项保留，不影响本次已核实的迁移。
 
 ## 2026-10-12历史阶段记录（保留追溯）
 

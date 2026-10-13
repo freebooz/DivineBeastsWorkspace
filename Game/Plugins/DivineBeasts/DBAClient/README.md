@@ -1,4 +1,10 @@
-# DBAClient（神兽联盟客户端组合插件）
+# DBAClient（SSLM客户端组合插件）
+
+## 插件演示中心目录合同（2026-10-13）
+
+既有`DivineBeastsDemoClient`新增Schema2只读目录定义、稳定功能/案例身份、封闭参数类型及完整结构校验。代码与测试归本插件开发模块；索引留在Private，不向平台反向引用项目。插件清单、覆盖表、迁移与验证边界见[演示编目接入说明](../../../../Docs/Implementation/PluginDemos/PluginDemoManifestContract.md)。
+
+当前仅完成编目离线门禁与定义源码，**新目录尚未接入运行菜单，UE测试未构建或运行**。没有创建DataAsset、Widget或地图；后续目录租约、案例生命周期和Monolith界面按已批准计划增量执行。目录未审计不表示插件没有功能，离线27项回归通过不表示功能验收通过。
 
 ## 天气视觉内容包编排（2026-10-10）
 
@@ -17,6 +23,7 @@
 | `DivineBeastsPresentationRuntime` | 双端 | 项目表现上下文、目录和内容包稳定语义 |
 | `DivineBeastsPresentationClient` | 客户端 | 项目表现适配与平台注册 |
 | `DivineBeastsUIClient` | 客户端 | 项目界面契约、路由和ViewModel |
+| `DivineBeastsDemoClient` | ClientOnly；仅Game/Client/Editor的Debug、DebugGame、Development | 开发演示发现/路由及新只读目录合同；新合同未接入运行，不用于生产权威 |
 
 插件直接声明模块所需的`DBAGameplay`与平台插件依赖，不依赖DBAArena、GamePlatformArena或MobaPresentation。竞技客户端模块已迁入DBAArena；它单向消费本插件的公开流程扩展，注册与注销仍按GameInstance作用域处理。通用流程执行器、平台UI与VFX播放实现不归本插件。
 

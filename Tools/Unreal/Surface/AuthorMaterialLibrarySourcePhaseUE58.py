@@ -56,9 +56,10 @@ def require_unreal() -> None:
         import unreal  # type: ignore[import-not-found]
     except ImportError as error:
         raise RuntimeError("本阶段必须在实际UE5.8 Editor执行") from error
-    project = str(unreal.Paths.get_project_file_path()).replace("\\", "/")
-    if not project.endswith("/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject"):
-        raise RuntimeError("拒绝在其它工作区或工程制作原生材质：" + project)
+    project = str(unreal.Paths.get_project_file_path())
+    expected = str(ROOT / "Game" / "DivineBeastsArena.uproject")
+    if os.path.normcase(os.path.realpath(project)) != os.path.normcase(os.path.realpath(expected)):
+        raise RuntimeError("只允许在锁定的DivineBeastsWorkspace主工程制作原生材质：" + project)
     version = str(unreal.SystemLibrary.get_engine_version())
     if not version.startswith("5.8."):
         raise RuntimeError("必须使用工程锁定的虚幻引擎5.8版本，禁止跨版本保存.uasset：" + version)

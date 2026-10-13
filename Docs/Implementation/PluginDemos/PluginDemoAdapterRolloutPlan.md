@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> 用户已选择Native；按 `superpowers:executing-plans` 执行。当前为计划文档，所有实施步骤未执行。
+> 用户已选择Native并要求继续；按 `superpowers:executing-plans` 执行。核心T01/T02已有源码增量；本文件R01—R06逐插件接入尚未执行，不能按身份登记计为功能完成。
 
 **Goal:** 将每个真实插件已审计的功能接入独立菜单、可复用场景及人工核验，不把目录登记当功能交付。
 
@@ -10,7 +10,7 @@
 
 **Tech Stack:** UE5.8、项目既有C++与定义资产、Monolith、现有服务器测试配置、核心计划的Python/PowerShell门禁。
 
-**Spec:** [已通过规格](PluginDemoCenterSpecification.md)；依赖[核心闭环计划](PluginDemoCenterImplementationPlan.md)的T01—T13。日期2026-10-13；计划待审阅。
+**Spec:** [已通过规格](PluginDemoCenterSpecification.md)；依赖[核心闭环计划](PluginDemoCenterImplementationPlan.md)的T01—T13。日期2026-10-13；当前先执行核心基础，接入进度见ExecutionProgress.md。
 
 ## Global Constraints（全局约束）
 

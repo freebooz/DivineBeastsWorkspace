@@ -13,6 +13,7 @@
 #include "GameFramework/PlayerController.h"
 #include "EngineUtils.h"
 #include "UObject/SoftObjectPath.h"
+#include "Manager/GamePlatformUIManagerSubsystem.h"
 
 namespace DivineBeastsDemo
 {
@@ -40,7 +41,9 @@ void UDivineBeastsDemoWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     // 开发模式也可能预览正式资产：只允许在专用总览或显式已登记关卡中加载控制台。
     if (UGameInstance* Instance = InWorld.GetGameInstance())
     {
-        const auto* Catalog = Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>();
+        auto* Catalog = Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>();
+        // 初始化顺序不假设Data先创建；世界就绪事件再申请一次目录，不以Tick轮询服务。
+        if (Catalog) Catalog->RefreshCatalog();
         const FName CurrentMap(*UWorld::RemovePIEPrefix(InWorld.GetOutermost()->GetName()));
         const FName Hub(FDivineBeastsPluginDemoMode::GetHubMapPackage());
         bool bRegisteredMap = CurrentMap == Hub;
@@ -50,7 +53,7 @@ void UDivineBeastsDemoWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
             {
                 for (const FDivineBeastsDemoScenario& Scenario : Catalog->GetScenarios(Plugin.PluginId))
                 {
-                    if (Scenario.ScenarioId == CurrentMap && Scenario.bAvailable)
+                    if (FName(*Scenario.MapAsset.GetLongPackageName()) == CurrentMap)
                     {
                         bRegisteredMap = true;
                         break;
@@ -68,7 +71,9 @@ void UDivineBeastsDemoWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void UDivineBeastsDemoWorldSubsystem::Deinitialize()
 {
-    ResetDemoChanges();
+    bOverlayClosing = true;
+    ShutdownScenario();
+    if (GetWorld() && !GetWorld()->bIsTearingDown) ResetDemoChanges();
     ReleaseDemoOverlay();
     OriginalBirds.Reset();
     OriginalWeatherActor.Reset();
@@ -86,6 +91,12 @@ void UDivineBeastsDemoWorldSubsystem::RequestDemoOverlay(UWorld& World)
         return;
     }
     const FString CurrentPackage = UWorld::RemovePIEPrefix(World.GetOutermost()->GetName());
+    bool bFormalMap = CurrentPackage == FDivineBeastsPluginDemoMode::GetHubMapPackage();
+    if (auto* Catalog = Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>())
+        for (const auto& Plugin : Catalog->GetPlugins())
+            for (const auto& Scenario : Catalog->GetScenarios(Plugin.PluginId))
+                if (Scenario.MapAsset.GetLongPackageName() == CurrentPackage && Catalog->FindScenarioDefinition(Scenario.ScenarioId)) bFormalMap = true;
+    if (bFormalMap) { RequestScenarioOverlay(World); return; }
     const FString ClassPath = CurrentPackage == FDivineBeastsPluginDemoMode::GetHubMapPackage()
         ? DivineBeastsDemo::HubWidgetClass
         : (CurrentPackage.StartsWith(TEXT("/Game/Development/BirdFlock/"))
@@ -116,7 +127,8 @@ void UDivineBeastsDemoWorldSubsystem::OnOverlayAssetReady(
 {
     UWorld* World = GetWorld();
     if (!bSucceeded || !World || World != SourceWorld.Get() || World->bIsTearingDown ||
-        Lease.LeaseId != UILease.LeaseId)
+        bOverlayClosing || Lease.ScopeId != UILease.ScopeId || Lease.LeaseId != UILease.LeaseId || Lease.Generation != UILease.Generation ||
+        Lease.IssuerProof != UILease.IssuerProof || Lease.DefinitionId != UILease.DefinitionId || Lease.Bundles != UILease.Bundles || Lease.ResourcePaths != UILease.ResourcePaths)
     {
         LastFeedback = FText::FromString(TEXT("演示UI资源加载失败、已取消或所在世界已退出。"));
         return;
@@ -155,10 +167,21 @@ void UDivineBeastsDemoWorldSubsystem::OnOverlayAssetReady(
     Controller->bShowMouseCursor = true;
     DemoInputController = Controller;
     LastFeedback = FText::FromString(TEXT("真实演示UI已加载并启用交互输入，功能仍需逐项人工验收。"));
+    if (auto* Catalog = Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>()) Catalog->StartPendingScenario(*World);
 }
 
 void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
 {
+    ++OverlayGeneration;
+    if (auto* Manager = DemoUIManager.Get())
+    {
+        Manager->OnScreenOpened.RemoveDynamic(this, &ThisClass::OnDemoScreenOpened);
+        Manager->OnScreenOpenFailed.RemoveDynamic(this, &ThisClass::OnDemoScreenFailed);
+        if (PendingScreenRequestId.IsValid()) Manager->CancelOpen(PendingScreenRequestId);
+        if (auto* Screen = ActiveScreen.Get()) Manager->CloseScreen(Screen);
+        if (bRegisteredDemoScreen) Manager->UnregisterScreenDefinition(TEXT("DivineBeasts.Demo.Hub"));
+    }
+    DemoUIManager.Reset(); ActiveScreen.Reset(); PendingScreenRequestId.Invalidate(); bRegisteredDemoScreen = false;
     if (UDivineBeastsDemoHubWidget* Widget = ActiveWidget.Get())
     {
         Widget->RemoveFromParent();
@@ -188,6 +211,8 @@ void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
 
 bool UDivineBeastsDemoWorldSubsystem::ApplyWeather(EGamePlatformWeatherType Weather, float TransitionSeconds)
 {
+    if (HasActiveScenario() && !bExecutingScenarioAdapter)
+    { LastFeedback = FText::FromString(TEXT("活动案例占用世界写入，请先停止案例再使用旧天气控制。")); return false; }
     if (!FDivineBeastsPluginDemoMode::IsEnabled() || !FMath::IsFinite(TransitionSeconds) ||
         TransitionSeconds < 0.f || TransitionSeconds > 60.f)
     {
@@ -225,35 +250,47 @@ bool UDivineBeastsDemoWorldSubsystem::ApplyWeather(EGamePlatformWeatherType Weat
 
 bool UDivineBeastsDemoWorldSubsystem::ResetDemoChanges()
 {
-    bool bAllSucceeded = true;
+    if (HasActiveScenario() && !bExecutingScenarioAdapter)
+    { LastFeedback = FText::FromString(TEXT("活动案例占用复位，请通过案例Reset命令执行。")); return false; }
     StopBirdBatches();
-    for (const auto& Entry : OriginalBirds)
+    bool bAllSucceeded = RestoreBirdEdits();
+    if (bHasOriginalWeather)
     {
-        if (UDivineBeastsBirdFlockSceneComponent* Bird = Entry.Key.Get())
+        if (ADivineBeastsWeatherReviewController* WeatherActor = OriginalWeatherActor.Get();
+            WeatherActor && WeatherActor->ApplyReviewWeather(OriginalWeatherType, 0.f))
         {
-            const FOriginalBirdState& Original = Entry.Value;
+            bHasOriginalWeather = false; OriginalWeatherActor.Reset();
+        }
+        else bAllSucceeded = false;
+    }
+    LastFeedback = FText::FromString(bAllSucceeded
+        ? TEXT("演示参数已向真实组件提交复原。")
+        : TEXT("部分世界资源已失效或拒绝复原，原状态记录保留，不能确认清理成功。"));
+    return bAllSucceeded;
+}
+
+bool UDivineBeastsDemoWorldSubsystem::RestoreBirdEdits()
+{
+    if (HasActiveScenario() && !bExecutingScenarioAdapter) return false;
+    bool bAllSucceeded = true;
+    // 不遍历/停止Batch，场景组件样板不拥有原生分批生成的请求或定时器。
+    for (auto It = OriginalBirds.CreateIterator(); It; ++It)
+    {
+        if (UDivineBeastsBirdFlockSceneComponent* Bird = It.Key().Get())
+        {
+            const FOriginalBirdState& Original = It.Value();
             Bird->BirdCount = Original.Count;
             Bird->SpeciesId = Original.Species;
             Bird->bEnableAdvancedFlight = Original.bAdvanced;
             Bird->AdvancedFlight = Original.Flight;
             FString Error;
-            bAllSucceeded &= Bird->ApplyBirdFlock(Error);
+            if (Bird->ApplyBirdFlock(Error)) It.RemoveCurrent();
+            else bAllSucceeded = false;
         }
         else bAllSucceeded = false;
     }
-    OriginalBirds.Reset();
-    if (bHasOriginalWeather)
-    {
-        if (ADivineBeastsWeatherReviewController* WeatherActor = OriginalWeatherActor.Get())
-        {
-            bAllSucceeded &= WeatherActor->ApplyReviewWeather(OriginalWeatherType, 0.f);
-        }
-        else bAllSucceeded = false;
-    }
-    bHasOriginalWeather = false;
-    OriginalWeatherActor.Reset();
     LastFeedback = FText::FromString(bAllSucceeded
-        ? TEXT("演示参数已向真实组件提交复原。")
-        : TEXT("部分世界资源已失效或拒绝复原，请重新进入审核关卡。"));
+        ? TEXT("本演示捕获的场景鸟群已复原，未改变Batch/天气。")
+        : TEXT("场景鸟群拒绝恢复，失败原值保留，不能将重试判为成功。"));
     return bAllSucceeded;
 }

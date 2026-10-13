@@ -47,6 +47,7 @@ void UGamePlatformServerLifecycleSubsystem::Deinitialize()
     bHeartbeatInFlight = false;
     bControlOperationInFlight = false;
     LifecycleChanged.Clear();
+    PlayerCountSampled.Clear();
     ActiveInstance = FGamePlatformServerInstanceInfo();
     Snapshot = FGamePlatformServerLifecycleSnapshot();
     Super::Deinitialize();
@@ -76,6 +77,14 @@ bool UGamePlatformServerLifecycleSubsystem::SendHeartbeat(int32 CurrentPlayers)
         Snapshot.State == EGamePlatformServerLifecycleState::Draining;
     if (bIsClosing || !bCanSend || bHeartbeatInFlight || CurrentPlayers < 0 ||
         CurrentPlayers > ActiveInstance.Capacity)
+    {
+        return false;
+    }
+    // 与控制面上报共用同一次权威人数采样，避免 Agones 容量适配器自行枚举玩家。
+    PlayerCountSampled.Broadcast(CurrentPlayers, ActiveInstance.Capacity);
+    // 订阅回调可能导致排空或退出；必须重新检查才允许开始本次网络心跳。
+    if (bIsClosing || Snapshot.State == EGamePlatformServerLifecycleState::Stopped ||
+        Snapshot.State == EGamePlatformServerLifecycleState::Failed)
     {
         return false;
     }

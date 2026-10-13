@@ -16,6 +16,8 @@
 **材质层工厂修复**：AuthorMaterialLibraryLayersUE58.py已改用MaterialFunctionMaterialLayerFactory和MaterialFunctionMaterialLayerBlendFactory，真实12个Layer及共享Blend仍待编辑器创建。
 **资源制作门禁**：AuthorMaterialLibrarySourcePhaseUE58.py现强制锁定UE5.8、DivineBeastsWorkspace主工程、PIE未运行和资产注册表加载完成。Tests/Assets/TestMaterialLibraryDomainRecipes.py已追加检查这些接口、UI样板规格和MaterialLayer正确工厂的用例；统一测试尚未执行。
 
+**UE5.8 编辑器安全恢复入口（2026-10-13续建）**：先运行 `Build/Game/InspectUE58EditorModuleState.ps1`（只读检查Engine/项目/指定插件`.modules`、DLL、BuildId、编辑器相关进程与历史失败日志；指定`-WriteReport`才写审计JSON）。`Build/Game/RecoverUE58EditorForMaterialLibrary.cmd`（双击入口）默认使用 `-SkipBuild`（恢复脚本自身不调用构建，且同步返回真实退出码）；`Build/Game/RecoverUE58EditorForMaterialLibrary.ps1` 在诊断需要时允许显式 `-OnlyModules`（最小Editor模块构建），不指定则使用完整Editor目标，均通过既有 `BuildFoundation.ps1` 持锁并记录真实UBT日志。启动使用 `-NoCompile`（请求编辑器不自动编译）及 `-NoLiveCoding`；注意历史启动日志即使含 `-NoCompile` 仍可能出现UE触发的UBT尝试，不能视该开关为强制无编译保证。进程PID存活不代表Monolith连接、资源创建或最终编译验收通过。
+
 
 ## 首批真实UE材质作者脚本（2026-10-13）
 
