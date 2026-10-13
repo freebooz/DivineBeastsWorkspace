@@ -22,5 +22,10 @@ public class DivineBeastsDemoClient : ModuleRules
             // 演示控制器必须调用已有VFX/天气/世界公开服务，绝不重建执行器。
             "GamePlatformVFXClient", "DBAWorldsRuntime", "Json", "JsonUtilities"
         });
+        if (Target.Type == TargetType.Editor)
+        {
+            // 仅Editor私有桥生成待审对象；Client公共头不含Editor/Review类型，更不执行人工决定。
+            PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformDeveloperTools", "UnrealEd" });
+        }
     }
 }

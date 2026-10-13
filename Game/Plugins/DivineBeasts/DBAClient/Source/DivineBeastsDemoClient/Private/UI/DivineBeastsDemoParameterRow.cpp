@@ -5,6 +5,7 @@
 #include "Components/TextBlock.h"
 #include "String/LexFromString.h"
 #include "Containers/UnrealString.h"
+#include "Catalog/DivineBeastsDemoCatalogValidation.h"
 
 namespace
 {
@@ -42,10 +43,7 @@ bool UDivineBeastsDemoParameterItem::SetTextValue(const FString& Text)
     case EDivineBeastsDemoParameterType::Identifier:
     {
         // 构造FName之前限制长度与ASCII格式，避免非法编辑文本触发引擎空名/超长名断言。
-        if (Text.Len() >= NAME_SIZE || Text.Equals(TEXT("None"), ESearchCase::IgnoreCase)) return false;
-        const auto IsLetter = [](TCHAR C) { return (C >= TEXT('A') && C <= TEXT('Z')) || (C >= TEXT('a') && C <= TEXT('z')); };
-        if (!IsLetter(Text[0])) return false;
-        for (TCHAR C : Text) if (!IsLetter(C) && !(C >= TEXT('0') && C <= TEXT('9')) && C != TEXT('_') && C != TEXT('.') && C != TEXT('-')) return false;
+        if (!DivineBeasts::Demo::IsStableIdentityText(Text)) return false;
         Candidate.IdentifierValue = FName(*Text); break;
     }
     default: return false;

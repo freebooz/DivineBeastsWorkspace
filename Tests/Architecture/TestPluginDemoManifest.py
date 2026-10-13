@@ -302,6 +302,12 @@ class PluginDemoManifestTests(unittest.TestCase):
                 document["features"][0]["owner_path"] = value
                 self.assert_issue(document, "unsafe_path")
 
+    def test_identity_length_matches_fname_boundary(self):
+        """作者身份在FName构造前受1023字符边界限制，避免资产作者写入可触发断言的长名。"""
+        document = make_manifest()
+        document["scenarios"][0]["adapter_id"] = "A" * 1024
+        self.assert_issue(document, "invalid_value")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

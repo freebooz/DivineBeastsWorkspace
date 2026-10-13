@@ -2,6 +2,12 @@
 
 `DBAUIPack_Core`是 DivineBeasts（神兽联盟项目层）内部的纯内容插件，负责公共用户界面二进制资产的唯一所有权。它不是第四架构层，也不重新实现 `GamePlatformUI` 或 `DBAClient` 的运行机制。
 
+## 2026-10-13 SSLM开发演示UI待制作范围
+
+方案A的新演示RootLayout、HubScreen、菜单条目、类型化参数条目和ResourceBar样板规划归`/DBAUIPack_Core/Development/PluginDemos`；目录及页面定义也归开发范围，正式默认/Server排除不变。`Tools/Unreal/PluginDemos/PluginDemoUIMonolithRecipes.json`是父类/命名控件/平台层栈的待执行合同，不是生成证据；作者脚本不制作Widget。
+
+本批尚无当前源码匹配完整Editor证据，Monolith无Editor连接，**未新建、编译、保存或重载这些资产**；不向MonolithGenerationManifest写入虚假资产成功条目。后续统一构建后须在正式UE5.8工程用Monolith完成，按电影级3A温润抛光自然碧绿玉石策略、实际视口/焦点/导航/可访问性及颜色链路检查留证。已知错误的widget截图Gamma路径禁止使用。全部实施后再集中人工核验，当前不表示用户验收或完整插件覆盖。
+
 ## 2026-10-10 项目统一主题资产归属与待制作清单
 
 - 项目公共Theme（主题）/Styles（样式）仍全部归本内容包：正式目标路径为 `/DBAUIPack_Core/UI/Themes/DA_DBA_UITheme_Default`（默认主题）与 `/DBAUIPack_Core/UI/Styles/BP_DBA_*`（统一CommonUI样式蓝图）。不同游戏项目替换内容资产，不改GamePlatformUI平台机制，竞技公共规则也不复制另一套主题服务。

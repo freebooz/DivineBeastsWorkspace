@@ -18,6 +18,14 @@ namespace DivineBeasts::Demo
 {
 namespace
 {
+/** 源指纹必须是作者原始字节的规范小写SHA256；只满足长度不能冒充可追溯身份。 */
+bool IsSourceFingerprint(const FString& Fingerprint)
+{
+    if (Fingerprint.Len() != 64) return false;
+    for (TCHAR C : Fingerprint)
+        if (!(C >= TEXT('0') && C <= TEXT('9')) && !(C >= TEXT('a') && C <= TEXT('f'))) return false;
+    return true;
+}
 /** 不写外部诊断正文，避免服务错误中的账号/URL/令牌进入持久证据；原始状态与码保留。 */
 TSharedRef<FJsonObject> ResultObject(const FGamePlatformResult& Result)
 {
@@ -55,7 +63,9 @@ FString FileHash(const FString& Path)
 bool WriteRunEvidence(const FDivineBeastsDemoRunEvidence& Input, FString& OutIndex, FString& OutError)
 {
     check(IsInGameThread()); OutIndex.Reset(); OutError.Reset();
-    if (!Input.Run.Token.IsValid() || Input.Run.ScenarioId != Input.Scenario.ScenarioId || Input.SourceFingerprint.Len() != 64 || Input.ReviewCases.IsEmpty())
+    if (!Input.Run.Token.IsValid() || Input.Run.ScenarioId != Input.Scenario.ScenarioId ||
+        !IsSourceFingerprint(Input.SourceFingerprint) || Input.ReviewCases.IsEmpty() ||
+        Input.Run.CompletedOperations < 0 || Input.Run.CompletedOperations > 9007199254740991LL)
     { OutError = TEXT("运行身份、源指纹或独立用例合同缺失，不能写待审证据。"); return false; }
     auto& Files = FPlatformFileManager::Get().GetPlatformFile();
     const FString Root = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("GamePlatformValidation"), Input.Run.Token.RunId.ToString(EGuidFormats::DigitsWithHyphens), TEXT("Review")));

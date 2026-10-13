@@ -47,7 +47,9 @@ USTRUCT(BlueprintType)
 struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoScenarioMenuEntry
 {
     GENERATED_BODY()
+    /** 完整发布的独立案例值副本，刷新不改变活动运行合同。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FDivineBeastsDemoScenarioDefinition Scenario;
+    /** 当前目标/真实插件/资源/适配注册的预检结果；不是执行成功。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FDivineBeastsDemoPreflightResult Preflight;
 };
 
@@ -60,17 +62,21 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoMenuSnapshot
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") TArray<FDivineBeastsDemoPlugin> Plugins;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") TArray<FDivineBeastsDemoFeatureMenuEntry> Features;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") TArray<FDivineBeastsDemoScenarioMenuEntry> Scenarios;
-    /** 选中身份不依赖中文文本；刷新后不存在或被筛掉时明确清空。 */
+    /** 选中身份不依赖中文文本；优先保持ID，不存在时只显示首项或空，不自动启动案例。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName SelectedPluginId;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName SelectedFeatureId;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName SelectedScenarioId;
     /** 完整编目分母，不受筛选影响。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 TotalPlugins = 0;
+    /** 功能范围尚未完整审计的插件数，包括unreviewed/partial，不受搜索影响。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 UnreviewedPlugins = 0;
+    /** 实际登记的功能数，不代表全项目功能分母。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 KnownFeatures = 0;
+    /** wired/launchable的源码接线数；运行预检可因真实资源缺失阻塞。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 WiredFeatures = 0;
-    /** 当前版本实际运行/人工统计只来自独立报告，不从源编目推断。 */
+    /** 当前版本运行统计应来自独立有效报告；当前消费者尚未接历史报告，保持0，不冒充已验证。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 RuntimeVerifiedFeatures = 0;
+    /** 当前未导入有效人工修订，保持0；待审对象或自动测试不得增加该数。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 HumanApprovedFeatures = 0;
     /** false时界面显示功能分母未知，不显示百分比。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") bool bHasKnownDenominator = false;

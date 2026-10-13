@@ -13,6 +13,7 @@
 #include "TimerManager.h"
 #include "Async/Async.h"
 #include "Evidence/DivineBeastsDemoEvidenceWriter.h"
+#include "Catalog/DivineBeastsDemoCatalogValidation.h"
 
 /** 世界私有执行所有权；适配持共享引用保障同步完成重入时本次调用栈不悬空。 */
 struct FDivineBeastsDemoWorldRunPrivateState
@@ -55,7 +56,7 @@ bool ValidateScenarioParameters(const FDivineBeastsDemoScenarioDefinition& Scena
         {
         case EDivineBeastsDemoParameterType::Boolean: bSame = Value.bBooleanValue == Definition.DefaultValue.bBooleanValue; break;
         case EDivineBeastsDemoParameterType::Identifier:
-            if (Value.IdentifierValue.IsNone()) return false;
+            if (!DivineBeasts::Demo::IsStableIdentityText(Value.IdentifierValue.ToString())) return false;
             bSame = Value.IdentifierValue == Definition.DefaultValue.IdentifierValue; break;
         case EDivineBeastsDemoParameterType::Integer:
             if (Value.IntegerValue < -9007199254740991LL || Value.IntegerValue > 9007199254740991LL ||
@@ -87,10 +88,16 @@ FName UDivineBeastsDemoWorldSubsystem::GetActiveAdapterId() const
 void UDivineBeastsDemoWorldSubsystem::PublishRunSnapshot()
 {
     const auto Snapshot = GetRunSnapshot();
+    LastFeedback = FText::FromString(Snapshot.TerminalResult.Status != EGamePlatformResultStatus::NotExecuted
+        ? Snapshot.TerminalResult.Message : Snapshot.OperationResult.Message);
     if (RunPrivateState && Snapshot.Token.IsValid())
     {
-        // 这是诊断记录的内存上限，不是游戏性能预算。达到上限保留标记，不无限累计命令历史。
-        if (RunPrivateState->EventRecords.Num() >= 4096) RunPrivateState->EventRecords.RemoveAt(1);
+        // 这是诊断记录的内存上限，不是游戏性能预算；截断历史必须显式留痕，不能当完整事件日志。
+        if (RunPrivateState->EventRecords.Num() >= 4096)
+        {
+            RunPrivateState->EventRecords.RemoveAt(1);
+            RunPrivateState->EventRecords[0] = TEXT("history_truncated=true; earlier_events_omitted; recent_events_follow");
+        }
         RunPrivateState->EventRecords.Add(FString::Printf(TEXT("state=%d operation_status=%d operation_code=%s cleanup_status=%d"),
         static_cast<uint8>(Snapshot.State), static_cast<uint8>(Snapshot.OperationResult.Status), *Snapshot.OperationResult.Code.ToString(), static_cast<uint8>(Snapshot.CleanupResult.Status)));
         const bool bTerminal = Snapshot.State == EDivineBeastsDemoRunState::Completed || Snapshot.State == EDivineBeastsDemoRunState::Failed || Snapshot.State == EDivineBeastsDemoRunState::Cancelled;
@@ -102,8 +109,6 @@ void UDivineBeastsDemoWorldSubsystem::PublishRunSnapshot()
             if (!WriteCurrentEvidence(Path, Error)) LastFeedback = FText::FromString(TEXT("运行终态已记录在内存，但证据保存失败：") + Error);
         }
     }
-    LastFeedback = FText::FromString(Snapshot.TerminalResult.Status != EGamePlatformResultStatus::NotExecuted
-        ? Snapshot.TerminalResult.Message : Snapshot.OperationResult.Message);
     OnRunChanged.Broadcast(Snapshot);
 }
 bool UDivineBeastsDemoWorldSubsystem::BeginScenario(const FDivineBeastsDemoScenarioDefinition& Scenario)
@@ -185,11 +190,12 @@ void UDivineBeastsDemoWorldSubsystem::PrepareScenarioAdapter()
 void UDivineBeastsDemoWorldSubsystem::OnScenarioPrepared(const FDivineBeastsDemoRunToken& Token, const FGamePlatformResult& Result)
 {
     if (!RunPrivateState || !(RunPrivateState->State.GetSnapshot().Token == Token)) return;
+    const double Now = FPlatformTime::Seconds();
     // 计时器与完成可在同帧以任意次序投递；以单调截止裁决，不靠先收到谁决定逾期成功。
     if (RunPrivateState->State.GetSnapshot().State == EDivineBeastsDemoRunState::Preparing &&
-        RunPrivateState->State.GetDeadlineSeconds() > 0.0 && RunPrivateState->State.GetDeadlineSeconds() <= FPlatformTime::Seconds())
+        RunPrivateState->State.GetDeadlineSeconds() > 0.0 && RunPrivateState->State.GetDeadlineSeconds() <= Now)
     { OnScenarioDeadline(); return; }
-    if (!RunPrivateState || RunPrivateState->bClosing || !RunPrivateState->State.CompletePreparation(Token, Result)) return;
+    if (!RunPrivateState || RunPrivateState->bClosing || !RunPrivateState->State.CompletePreparation(Token, Result, Now)) return;
     PublishRunSnapshot();
     if (!RunPrivateState || !(RunPrivateState->State.GetSnapshot().Token == Token)) return;
     if (!Result.IsSuccess()) RequestScenarioStop(Result);
@@ -248,7 +254,9 @@ void UDivineBeastsDemoWorldSubsystem::OnScenarioStopCompleted(const FDivineBeast
     if (RunPrivateState->State.GetDeadlineSeconds() <= FPlatformTime::Seconds()) { OnScenarioDeadline(); return; }
     const auto KeepAlive = RunPrivateState->Adapter;
     const auto Released = ReleaseScenarioResources();
-    if (!RunPrivateState->State.CompleteStop(Token, Result.IsSuccess() ? Released : Result)) return;
+    const double Now = FPlatformTime::Seconds();
+    if (RunPrivateState->State.GetDeadlineSeconds() <= Now) { OnScenarioDeadline(); return; }
+    if (!RunPrivateState->State.CompleteStop(Token, Result.IsSuccess() ? Released : Result, Now)) return;
     const auto Completed = GetRunSnapshot();
     RunPrivateState->Adapter.Reset(); ArmScenarioDeadline(); PublishRunSnapshot();
     if (auto* Catalog = GetWorld()->GetGameInstance()->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>())

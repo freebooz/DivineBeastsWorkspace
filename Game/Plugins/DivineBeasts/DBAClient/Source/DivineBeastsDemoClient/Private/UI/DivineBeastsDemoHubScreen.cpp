@@ -10,6 +10,8 @@
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
 #include "Components/ComboBoxString.h"
+#include "Review/DivineBeastsDemoReviewBridge.h"
+#include "UObject/StrongObjectPtr.h"
 
 void UDivineBeastsDemoHubScreen::NativeOnInitialized()
 {
@@ -44,8 +46,15 @@ void UDivineBeastsDemoHubScreen::RefreshInitialState()
     if (!IsActivated()) return;
     DemoModel = Cast<UDivineBeastsDemoHubViewModel>(GetViewModel());
     if (!DemoModel) { if (OperationStatusText) OperationStatusText->SetText(FText::FromString(TEXT("页面缺少演示ViewModel。"))); return; }
-    auto* Instance = GetGameInstance(); DemoModel->BindCatalog(Instance ? Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>() : nullptr);
-    if (IsActivated() && DemoModel == GetViewModel() && DemoModel->IsPageActive()) ApplySnapshot();
+    // BindCatalog会同步广播并进入蓝图；观察者可以清空/替换VM、关闭页面或重开同一VM。
+    // 保活本次模型并冻结页代次，返回后只更新原绑定；两个空指针相等不能代表绑定仍有效。
+    const TStrongObjectPtr<UDivineBeastsDemoHubViewModel> SelectedModel(DemoModel);
+    const int32 SelectedPageGeneration = SelectedModel->GetPageGeneration();
+    auto* Instance = GetGameInstance();
+    SelectedModel->BindCatalog(Instance ? Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>() : nullptr);
+    if (IsActivated() && DemoModel && DemoModel == SelectedModel.Get() &&
+        GetViewModel() == SelectedModel.Get() && SelectedModel->IsPageActive() &&
+        SelectedModel->GetPageGeneration() == SelectedPageGeneration) ApplySnapshot();
 }
 void UDivineBeastsDemoHubScreen::DetachViewModel()
 {
@@ -149,6 +158,14 @@ void UDivineBeastsDemoHubScreen::OnEvidenceClicked()
 {
     if (!DemoModel) return;
     FString Error; const FString Path = DemoModel->RequestEvidence(Error);
+    #if WITH_EDITOR
+    if (!Path.IsEmpty())
+    {
+        const auto Snapshot = DemoModel->GetMenuSnapshot();
+        if (auto* Instance = GetGameInstance()) if (auto* Catalog = Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>())
+            DivineBeasts::Demo::CreatePendingReviews(*Catalog, Snapshot.Run.ScenarioId, Snapshot.Run.Token.RunId, Path, PendingEditorReports, Error);
+    }
+    #endif
     if (!Path.IsEmpty()) BP_OnEvidenceRequested(Path);
-    else if (OperationStatusText) OperationStatusText->SetText(FText::FromString(Error));
+    if (!Error.IsEmpty() && OperationStatusText) OperationStatusText->SetText(FText::FromString(Error));
 }

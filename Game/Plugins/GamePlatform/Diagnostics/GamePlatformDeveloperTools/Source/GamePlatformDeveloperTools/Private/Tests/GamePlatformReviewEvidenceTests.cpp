@@ -4,6 +4,7 @@
 #include "Review/GamePlatformReviewTypes.h"
 #include "Review/GamePlatformReviewEvidenceValidation.h"
 #include "Misc/AutomationTest.h"
+#include "Dom/JsonObject.h"
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformReviewEvidenceTest, "GamePlatform.DeveloperTools.ReviewEvidence",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FGamePlatformReviewEvidenceTest::RunTest(const FString&)
@@ -23,6 +24,35 @@ bool FGamePlatformReviewEvidenceTest::RunTest(const FString&)
     TestFalse(TEXT("旧版本报告不计当前通过"), Service->ValidateReviewEvidence(*Case, *Report, Error));
     auto* Legacy = NewObject<UGamePlatformReviewReport>();
     TestFalse(TEXT("旧无绑定报告拒绝人工Passed"), Service->ApplyHumanDecision(Legacy, EGamePlatformReviewStatus::Passed, TEXT("仅测试审核者"), TEXT(""), {}, true, Error));
+    // 只在内存构造证据字段，绝不落盘假运行。覆盖FName长名、旧运行后改预期再建新报告的路径。
+    TestFalse(TEXT("超长外部JSON身份在FName前拒绝"), GamePlatform::Review::IsEvidenceIdentity(FString::ChrN(NAME_SIZE, TEXT('A'))));
+    TestFalse(TEXT("保留空名在FName前拒绝"), GamePlatform::Review::IsEvidenceIdentity(TEXT("nOnE")));
+    Case->FeatureId = TEXT("Related.Feature"); Case->ScenarioId = TEXT("Main.Scenario");
+    auto Frozen = MakeShared<FJsonObject>();
+    Frozen->SetStringField(TEXT("review_case_id"), Case->CaseId.ToString()); Frozen->SetNumberField(TEXT("version"), Case->CaseVersion);
+    Frozen->SetStringField(TEXT("feature_id"), Case->FeatureId.ToString()); Frozen->SetStringField(TEXT("scenario_id"), Case->ScenarioId.ToString());
+    Frozen->SetStringField(TEXT("category"), Case->Category.ToString()); Frozen->SetStringField(TEXT("description"), Case->Description);
+    Frozen->SetStringField(TEXT("expected_result"), Case->ExpectedResult);
+    TArray<TSharedPtr<FJsonValue>> Steps, Required;
+    for (const auto& Step : Case->Steps) Steps.Add(MakeShared<FJsonValueString>(Step));
+    for (const auto& Type : Case->RequiredEvidence) Required.Add(MakeShared<FJsonValueString>(Type));
+    Frozen->SetArrayField(TEXT("steps"), Steps); Frozen->SetArrayField(TEXT("required_evidence"), Required); Frozen->SetArrayField(TEXT("preconditions"), {});
+    TestTrue(TEXT("关联功能独立合同合法，不要求等于主功能"), GamePlatform::Review::IsFrozenCaseCurrent(Frozen, *Case));
+    Case->ExpectedResult += TEXT("新的预期");
+    TestFalse(TEXT("旧运行后改预期即使未递增版本也拒绝"), GamePlatform::Review::IsFrozenCaseCurrent(Frozen, *Case));
+    auto State = MakeShared<FJsonObject>();
+    State->SetStringField(TEXT("run_id"), RunId); State->SetStringField(TEXT("scenario_id"), TEXT("Main.Scenario")); State->SetStringField(TEXT("feature_id"), TEXT("Main.Feature"));
+    State->SetNumberField(TEXT("run_state"), 4); State->SetNumberField(TEXT("completed_operations"), 1);
+    auto Cleanup = MakeShared<FJsonObject>(); Cleanup->SetNumberField(TEXT("status"), 1); Cleanup->SetStringField(TEXT("code"), TEXT("None"));
+    auto Terminal = MakeShared<FJsonObject>(); Terminal->SetNumberField(TEXT("status"), 1);
+    State->SetObjectField(TEXT("cleanup_result"), Cleanup); State->SetObjectField(TEXT("terminal_result"), Terminal);
+    TestTrue(TEXT("本Run完整终态字段接受"), GamePlatform::Review::IsRunStateCompleted(State, RunId, TEXT("Main.Scenario"), TEXT("Main.Feature")));
+    State->SetNumberField(TEXT("run_state"), 2);
+    TestFalse(TEXT("Running不能声称runtime_completed"), GamePlatform::Review::IsRunStateCompleted(State, RunId, TEXT("Main.Scenario"), TEXT("Main.Feature")));
+    State->SetNumberField(TEXT("run_state"), 4); State->SetNumberField(TEXT("completed_operations"), 0);
+    TestFalse(TEXT("仅准备/停止零操作不能冒充执行"), GamePlatform::Review::IsRunStateCompleted(State, RunId, TEXT("Main.Scenario"), TEXT("Main.Feature")));
+    State->SetNumberField(TEXT("completed_operations"), 1);
+    TestFalse(TEXT("其他Run状态拒绝"), GamePlatform::Review::IsRunStateCompleted(State, FGuid::NewGuid().ToString(), TEXT("Main.Scenario"), TEXT("Main.Feature")));
     return true;
 }
 #endif

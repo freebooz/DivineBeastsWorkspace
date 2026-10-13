@@ -67,6 +67,8 @@
 - 最终统一检查包括Python静态测试、完整UE Editor/Client/Server编译、功能QA Material编译、Niagara及UI域视觉、Development与Dedicated Server干净Cook/Stage、GPU实测以及人工明确签收。只有真实证据可改变生产可用状态。
 - **2026-10-13编辑器恢复专项续建**：已新增 `Build/Game/InspectUE58EditorModuleState.ps1`（引擎及项目模块BuildId、DLL、进程和启动日志只读诊断），增量增强 `Build/Game/RecoverUE58EditorForMaterialLibrary.ps1/.cmd`（双击默认不主动构建、支持指定Editor模块最小构建、同步传递错误码和真实报告）；四个资源作者及串行调度入口均补齐正式工程真实路径与UE5.8版本校验。`AuthorMaterialLibraryDemoUE58.py`（演示地图作者）修复只要存在一个`MLReview_`对象就误报地图已完成的问题：逐一检查展架/标牌/灯光/地面与材质；半成品仅拒绝自动重叠、不擅自删除重建。相关静态测试源码已更新。以上是**源码与安全门禁已写入**，远端Runner仍由四个材质会话遗留作业占满，四项stop_job均确认已接受但随后仍显示running，Windows诊断作业仍queued；本轮尚没有新的Editor构建成功、Monolith正式连接、原生资产落盘或人工视觉验收证据。不修改201项资产状态。
 
+- **2026-10-13剩余九阶段制作入口补齐**：新增统一资源调度 RunMaterialLibraryCompleteResourcesUE58.py、三层领域/材质层/审核材质分批原生入口 RunMaterialLibraryNativeBatchesMonolith.py、UI七函数Monolith队列执行器 RunMaterialLibraryUIProductionMonolith.py、四图安全创建/回读与逐图布局入口 RunMaterialLibraryReviewMapsMonolith.py、十二份UI审核材质的真正Widget Image Brush绑定入口 BindMaterialLibraryUIReviewBrushesMonolith.py，全部在既有 Tools/Unreal 子目录；既有通用函数、材质层、UI审核母版及Widget作者增加批次切片、UE5.8正式工程路径门禁、半成品拒绝跳过、物理包验证和重复执行保护。测试源码新增原生产阶段数量/顺序和资产归属校验。该批仅为可执行源码与创建入口，尚未获得Editor成功重启及Monolith返回真正项目会话的证据，故不可把60MF、12ML与共享Blend、7UI、12份UI QA、BP/WBP、四图标成已生成、已编译或已人工通过；完整Client/Server及Cook按用户要求后置。
+
 ## 当前范围总数和闭环要求
 - 阶段工单的机器化执行顺序、未授权提前编译边界及每项实证要求归档于`MaterialLibraryResourceWorkQueue_20261013.json`（资源制作队列）。
 - `MaterialCapabilityRegistry_V1.json`（201项索引）的60个领域MF配方、12个MaterialLayer与7个UI配方已逐项更新`SourceStatus`（源码状态），不会把仅有配方的资源标成已生成；`MaterialFunctionLibraryIndex.md`（201项中文台账）也已与当前真实状态同步。

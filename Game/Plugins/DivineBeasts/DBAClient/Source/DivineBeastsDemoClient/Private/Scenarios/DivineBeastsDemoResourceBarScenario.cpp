@@ -8,6 +8,11 @@ namespace DivineBeasts::Demo
 class FResourceBarScenario final : public IDivineBeastsDemoScenarioAdapter
 {
 public:
+    ~FResourceBarScenario() override
+    {
+        // 仅恢复仍存在的指定样板控件；析构清理没有回执，不覆盖已发布失败或取消结果。
+        if (bHasOriginal && Context.World.IsValid() && !Context.World->bIsTearingDown && Widget.IsValid()) Widget->ApplyResourceState(Original);
+    }
     void Prepare(const FDivineBeastsDemoScenarioContext& Input, FDivineBeastsDemoOperationCompletion Completion) override
     {
         Context = Input; Widget = Cast<UGamePlatformResourceBarWidget>(Input.SampleWidget.Get());

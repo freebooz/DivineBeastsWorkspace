@@ -3,14 +3,14 @@
 来源：PluginDemoManifest.json；由ValidatePluginDemoManifest.py导出，不独立维护状态。
 历史线索保留于History/PluginDemoManifest.v1.json，不能视为实际功能验收。
 
-登记插件 65；范围未完整审计 65；已登记功能 0；已接线 0。
+登记插件 65；范围未完整审计 65；已登记功能 3；已接线 3。
 覆盖率：分母未知，不显示百分比。
 当前作者源不携带运行/人工签收，真实结果必须查独立版本化报告。
 
 | 插件 | 三层归属 | 类别 | 功能审计 | 已登记功能数 |
 | --- | --- | --- | --- | ---: |
 | DBAArena | 项目层 | 代码 | 待审计 | 0 |
-| DBAClient | 项目层 | 代码 | 待审计 | 0 |
+| DBAClient | 项目层 | 代码 | 部分审计 | 1 |
 | DBAContentPack_Common | 项目层 | 内容包 | 待审计 | 0 |
 | DBAFrontEndPack | 项目层 | 内容包 | 待审计 | 0 |
 | DBAGameplay | 项目层 | 代码 | 待审计 | 0 |
@@ -42,7 +42,7 @@
 | GamePlatformCombat | 平台层 | 代码 | 待审计 | 0 |
 | GamePlatformCommerceUI | 平台层 | 代码 | 待审计 | 0 |
 | GamePlatformCore | 平台层 | 代码 | 待审计 | 0 |
-| GamePlatformData | 平台层 | 代码 | 待审计 | 0 |
+| GamePlatformData | 平台层 | 代码 | 部分审计 | 1 |
 | GamePlatformDebug | 平台层 | 代码 | 待审计 | 0 |
 | GamePlatformDeveloperTools | 平台层 | 代码 | 待审计 | 0 |
 | GamePlatformEntitlement | 平台层 | 代码 | 待审计 | 0 |
@@ -68,7 +68,7 @@
 | GamePlatformSettings | 平台层 | 代码 | 待审计 | 0 |
 | GamePlatformSurface | 平台层 | 代码 | 待审计 | 0 |
 | GamePlatformTelemetry | 平台层 | 代码 | 待审计 | 0 |
-| GamePlatformUI | 平台层 | 代码 | 待审计 | 0 |
+| GamePlatformUI | 平台层 | 代码 | 部分审计 | 1 |
 | GamePlatformVFX | 平台层 | 代码 | 待审计 | 0 |
 | GamePlatformVillage | 平台层 | 代码 | 待审计 | 0 |
 | GamePlatformWeather | 平台层 | 代码 | 待审计 | 0 |
@@ -79,5 +79,6 @@
 
 | 身份 | 中文目的 | 实现 | 接入 | 案例数 |
 | --- | --- | --- | --- | ---: |
-
-尚未完成独立功能审计；不把Public API数量或地图数量换算成功能完成数。
+| DBAClient.BirdFlock.Count | 经正式SceneComponent/Presentation/Data/VFX链路提交鸟数；请求数与GPU实存数分开，只恢复本案例捕获的场景组件，不停止其他Batch。 | implemented | wired | 2 |
+| GamePlatformUI.ResourceBar | 真实平台资源条展示只读夹具数值；验证50/100比例、最大值0不除零/清空文本，失活与停止只恢复样板控件，不改玩家属性。 | implemented | wired | 2 |
+| GamePlatformData.Resources | 通过正式Data门面加载Engine Cube，验证两份独立需求共享、释放A后B仍可用和取消至多一次；停止只撤销本案例完整租约。 | implemented | wired | 2 |

@@ -30,6 +30,15 @@
 
 注：SDK 状态变化异步生效。REST 2xx 只能表示 SDK 接受请求，真实 Ready/Allocated/Shutdown 仍需由 Kubernetes GameServer 状态观察确认。
 
+调度公平性：健康检查由每实例 CoreTicker（核心计时器）按秒调度、最大 HTTP 请求时长为 2 秒；`AGONES_HEALTH_INTERVAL_SECONDS` 支持 1～8 秒。为避免 1 秒配置时持续发送 Health 而无法执行 Ready、Allocate、Counter，空闲调度先推进一次性操作和待更新容量；Health 如比原约定时间逾期超过 2 秒则抢占，Shutdown 永远具有最高优先级。这个策略并不承诺网络失联时按时收到 Sidecar 健康心跳，集群健康容忍窗口仍需真实压测。
+
+安全身份：正式启动器拒绝空、非法或不适合客户端连接的 GameServer 端点（包括回环、未指定、组播、链路本地地址）、非法端口、异常 GameServer 名称，以及启动角色与只读服务器 Profile 不一致。避免通过固定容器端口或过期 Profile 继续发布可连接实例。
+本机 SDK 发现请求不采用容器通用代理，禁止 HTTP 3xx 自动重定向；响应的 GameServer 身份、状态和 UDP 端口列表必须为预期 JSON 对象/列表。离线部署合同同时检查 Fleet 标签与启动环境、服务器角色 Profile 的一致性，防止 Go 分配选择器错误匹配到其他角色服务器。
+
+后端原子分配保护：Go 适配器只允许通过 HTTPS Kubernetes CRD 发起 GameServerAllocation，拒绝令牌请求重定向、非 `game` 端口、重复游戏端口和不可路由端点；IPv6 使用方括号规范输出，避免客户端连接到错误服务器。由于 Agones 分配先于 Registry 绑定，若后者失败，仍须通过实际控制面/SDK 编排补齐孤儿 Allocated 实例回收方案。
+
+**当前未闭环的结束事件：** `DBAServer` 的 `CompleteDrain` 已实现调用入口，但尚未核验竞技结果已持久提交、结算信息发送、跨服返回票据处理、连接清空后有生产调用方触发它。没有该调用就不会触发 SDK `/shutdown`。因此不能认为 MainArena 的赛后自动销毁已经可用；正式部署前必须由第三层服务器组合根接入权威比赛结束/失败通知，并通过端到端验证。不可用简单的赛程计时器代替玩家安全迁移。
+
 ## 4. 生产部署前置
 
 此处 YAML 故意保留未解析的镜像占位符及 example-region、example.invalid 地址，不代表已发布或经过集群验收。执行者应在受控发布流程中：
@@ -58,6 +67,12 @@
 静态合同测试（需 Python 3；使用 PyYAML 时还检查 YAML 语义）：
 
     python Tests/Architecture/TestAgonesDeployment.py
+
+UE 原生回归入口（需要已装载平台服务器模块的编辑器自动化测试上下文）：
+
+    GamePlatform.Server.Agones.BridgeScheduling
+
+新测试只验证本地无网络副作用的调度选择；实际 Sidecar 状态收敛、Linux Dedicated Server 运行和 Kubernetes 扩缩仍须独立验证。
 
 真实验收还包括 UE5.8 Dedicated Server 编译、Linux 服务器打包、Pod 状态、Agones Sidecar SDK 真实网络请求、Go ControlPlane 分配、容量阈值扩缩和 P95 排空耗时。未执行的项目必须标记为「待验证」，不能把脚本存在等同于通过。
 

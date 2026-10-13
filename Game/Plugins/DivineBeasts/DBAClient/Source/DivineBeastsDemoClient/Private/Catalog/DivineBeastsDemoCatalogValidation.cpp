@@ -7,20 +7,21 @@
 
 namespace DivineBeasts::Demo
 {
+bool IsStableIdentityText(const FString& Text)
+{
+    if (Text.IsEmpty() || Text.Len() >= NAME_SIZE || Text.Equals(TEXT("None"), ESearchCase::IgnoreCase)) return false;
+    const auto IsLetter = [](TCHAR C) { return (C >= TEXT('a') && C <= TEXT('z')) || (C >= TEXT('A') && C <= TEXT('Z')); };
+    if (!IsLetter(Text[0])) return false;
+    for (TCHAR C : Text)
+        if (!IsLetter(C) && !(C >= TEXT('0') && C <= TEXT('9')) && C != TEXT('_') && C != TEXT('.') && C != TEXT('-')) return false;
+    return true;
+}
 namespace
 {
 /** 稳定身份限制为ASCII标识，避免路径、空白或脚本文本混入命令身份。 */
 bool IsIdentity(FName Identity)
 {
-    const FString Text = Identity.ToString();
-    if (Identity.IsNone() || Text.IsEmpty()) return false;
-    const auto IsLetter = [](TCHAR C) { return (C >= TEXT('a') && C <= TEXT('z')) || (C >= TEXT('A') && C <= TEXT('Z')); };
-    if (!IsLetter(Text[0])) return false;
-    for (TCHAR C : Text)
-    {
-        if (!IsLetter(C) && !(C >= TEXT('0') && C <= TEXT('9')) && C != TEXT('_') && C != TEXT('.') && C != TEXT('-')) return false;
-    }
-    return true;
+    return !Identity.IsNone() && IsStableIdentityText(Identity.ToString());
 }
 
 /** 明确枚举值而非隐式默认分支；未知名称必须拒绝。 */

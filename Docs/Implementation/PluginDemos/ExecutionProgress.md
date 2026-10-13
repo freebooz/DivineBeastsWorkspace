@@ -3,14 +3,43 @@
 ## 2026-10-13 方案A Native增量执行（当前）
 
 - 用户已通过规格、要求继续，并明确允许当前main原地修改、不创建工作树。开始HEAD为`eb1fe0e932967ce97078df12c8080cf5121c99b4`，开始时无未提交改动；后续其他任务的材质/背包改动独立保留。
-- 执行期间共享main出现外部提交`6bed78c42b80ccce07cda1cbdae515c318051f26`，已包含本批早期编目/定义快照；本代理未执行提交或推送，也未回退该提交。复核修复与文档更新仍以实际工作区为准；v2中的git_head继续表示原始发现时点，不伪改为二进制版本。
+- 执行期间共享main先出现外部提交`6bed78c42b80ccce07cda1cbdae515c318051f26`，后推进至`ec6a8c67afcb2f36a603905bd165e9e7a87ecaf6`，已包含本批部分源码；本代理未执行提交或推送，也未回退这些提交。复核修复与文档更新仍以实际工作区为准；v2中的git_head继续表示原始发现时点，不伪改为二进制版本。
 - 当前限制：不构建、不启动Live Coding、不Cook/Stage、不提交或推送；未启动或停止编辑器/编译进程。以下旧P0—P8和历史构建段落只描述2026-10-12当时状态，不代表当前仍在构建或已验收。
 - T00已重新扫描47代码、18内容和37张开发地图文件；现有进度/覆盖/复用文档增量维护。功能数保持待审计，不沿用旧API数量作为功能完成数。
-- T01已实现Schema2、只读验证器及中文导出；完整v1内容保留History。当前27项Python回归已运行通过；作者源、真实身份集合和派生文档一致。重复、错端、缺用例、路径越界、超时/参数非法和歧义路由均有回归。
+- T01已实现Schema2、只读验证器及中文导出；完整v1内容保留History。早批27项Python回归已运行通过；本次追加FName长度边界，最终复跑结果见下方最新检查，不沿用旧数量。
 - T02已写入项目只读Data目录定义、公开值合同、Private结构校验及`DivineBeasts.PluginDemos.Definition`原生测试；公开Core依赖已补齐。**尚未构建/运行，所以只记CodeWritten，不记RuntimeVerified或HumanReviewed。**
-- T03—T14及R01—R06尚未完成：没有把v2接到实际菜单、没有新DataAsset/Widget/关卡、没有逐插件功能接线或人工签收。
+- T03—T07已写目录加载/原子发布、案例状态机、事件驱动菜单和三类真实适配源码；T08已写原始证据/独立用例冻结及Editor待审桥；T09—T12已有作者规范、平台UIManager接线、无自动构建运行器及发行静态策略。**这些不是完整任务完成：新原生测试未运行、新UI资产未生成、版本证明提升及Client产物门禁未闭合。**
+- 编目已登记3项独立功能、6个案例、6个核验用例：鸟群数量/复位、资源条正常/非法最大值、Data共享租约/取消。DBAClient、GamePlatformUI、GamePlatformData均为`partial`，65插件的完整功能分母仍未知；其余插件不靠API数量或地图卡片虚构完成。
+- T13/T14及R01—R06全量接入未完成。用户要求全部实施后集中人工核验，本批未邀请人工验收、未代签，也没有执行任何人工Passed。
+- 当前真实阻塞：Monolith状态两次返回Editor未运行；只读进程检查无UnrealEditor。`TestPluginDemo.ps1 -VerifyOnly`使用既有完整Editor结果时退出1，明确拒绝“当前源码输入与完整Editor构建不一致”。没有启动UE、触发构建或退回旧DLL制作新资产。
 - 全局基线门禁失败1项：`Game/Saved/BirdFlockAuthorHost/BirdFlockAuthorHost.uproject`被计入正式工程数，结果为2；三端声明装配与三层继承通过。不删除该工程、不修改门禁，不宣称全项目检查通过。
 - 中文说明及迁移合同见[Schema2接入说明](PluginDemoManifestContract.md)。本轮说明审查范围限新改的编目/校验/定义/测试/文档，不声称历史全工程已合规。
+
+源码接口、资产合同、已解决审查项和逐任务剩余范围见[本批源码实施与验证边界](SourceImplementationStatus_20261013.md)。以下“本批独立复核与实际检查”保留T01/T02早批时点，不能用其0功能/旧数量覆盖上述最新事实。
+
+### 最新静态复跑（2026-10-13）
+
+以下均为真实只读或离线测试，没有执行UE/构建/Cook。并行工作区仍在变化，计数仅描述本次扫描时点。
+
+| 实际命令/检查 | 退出码与结果 | 验证边界 |
+| --- | --- | --- |
+| `python -B -X utf8 Tests/Architecture/TestPluginDemoManifest.py` | 0；28项通过 | 作者合同，不是UE测试 |
+| `python -B -X utf8 Tests/Architecture/ValidatePluginDemoManifest.py --workspace . --manifest Docs/Implementation/PluginDemos/PluginDemoManifest.json --check-docs` | 0；0问题，65插件/3功能/3接线，人工0、比例null | 作者源/派生文档一致，功能分母未知 |
+| `pwsh -NoProfile -File Tests/Foundation/Scripts/TestPluginDemoRunner.ps1` | 0；12项，失败0 | 纯内存合同及脚本静态门禁，无UE/构建 |
+| `pwsh -NoProfile -File Tests/Foundation/Scripts/TestPluginDemoPackaging.ps1` | 0；14项，失败0 | 配置/脚本静态检查，无Cook |
+| Pester 3.4.0执行`PluginCompositionAudit.Tests.ps1` | 0；15通过、0失败、0跳过 | 三端声明闭包及限定目标条件，不求值完整C#/UBT |
+| `pwsh -NoProfile -File Tests/Architecture/ValidateProjectHeaders.ps1 -WorkspaceRoot .` | 0；1107处、0缺失 | 头文件可定位，不证明API/UHT/链接 |
+| `pwsh -NoProfile -File Tests/Architecture/ValidateInheritanceBoundaries.ps1 -WorkspaceRoot .` | 0；545公开头/1185类型/204继承边 | C++公开边界，不证明真实Blueprint/DataAsset |
+| `pwsh -NoProfile -File Tests/Architecture/TestEnglishProjectNames.ps1 -WorkspaceRoot .` | 0；100486项/65插件/0违规 | 英文命名，不是中文注释人工内容审查 |
+| `python -B -X utf8 Build/Game/ServerPresentationPolicy.py check` | 0；4份受管配置无漂移 | 实际静态策略，不是服务器产物剥离 |
+| 两份新增Python作者/导出门禁AST语法检查 | 0；2份可解析 | 未执行UE作者或导入真实Monolith导出 |
+| 本任务路径限定`git diff --check` | 0；仅LF/CRLF提示 | 未做全库换行转换；未跟踪文件另作内容审查 |
+| 全工作区`git diff --check` | 1；`Backend/internal/platform/agones/allocator_test.go:195`新增末尾空行 | 并行后端范围，未擅自修改 |
+| `pwsh -NoProfile -File Tests/Architecture/ValidateDesignBaseline.ps1 -WorkspaceRoot .`最终复跑 | 1；Client/Server/Editor公共及竞技声明装配通过，剩1项正式工程计数2 | 既有额外uproject未删除、不降低门禁 |
+
+新增Editor私有依赖使旧装配正则把Editor块无条件计入Client，首轮全局5项失败（额外工程1、重复公共/竞技Client诊断4）。先新增回归并真实得到11通过/3失败，再修正审计器只对可确定的单`Target.Type ==/!= TargetType`无else块求值；未知条件/else仍保守保留全部字面量依赖。不按本模块名称做豁免，不放宽Editor缺插件声明或Client真实泄漏。首修14通过后，独立复核发现合法插值字符串嵌套字面量可能误吞块外依赖；新增回归真实14通过/1失败，再增加插值/原始字符串/预处理整源不剪枝的保守路径，最终15通过。审查者用同一样例确认ClientLeak保留且输出与原文相同，最终全局仍保留额外工程失败。
+
+独立晚批复核确认空VM/页代次、统一身份检查、证据SHA256/精确计数及截断/失败诊断的源码修正，未发现这些指定增量新的确定缺陷；不是原生运行通过。原生C++、UE资产、PIE、Client/Server Cook、网络、颜色和人工签收均未执行。
 
 ### 本批独立复核与实际检查
 

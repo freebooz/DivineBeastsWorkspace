@@ -285,6 +285,55 @@ class MaterialLibraryDomainRecipes(unittest.TestCase):
         self.assertNotIn("Build.bat",inspection)
         self.assertNotIn("Start-Process",inspection)
 
+    def test_p0_p10_native_production_routes_are_complete_and_resumable(self):
+        """核对真正制作入口的数量、归属、断点及Monolith调用顺序；离线不造二进制。"""
+        def load(filename, key):
+            spec=importlib.util.spec_from_file_location(key, filename)
+            self.assertIsNotNone(spec)
+            self.assertIsNotNone(spec.loader)
+            module=importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+        src=ROOT/"Tools/Unreal/Surface"
+        ui=ROOT/"Tools/Unreal/UI"
+        runner=load(src/"RunMaterialLibraryNativeBatchesMonolith.py", "sslm_native_runner")
+        tasks=runner.plan(3)
+        self.assertEqual(sum(t[3] for t in tasks if t[0]=="functions"),60)
+        self.assertEqual(sum(t[3] for t in tasks if t[0]=="layers"),12)
+        self.assertEqual(sum(t[3] for t in tasks if t[0]=="blueprint"),1)
+        self.assertEqual(sum(t[3] for t in tasks if t[0]=="domain_reviews"),60)
+        self.assertEqual(sum(t[3] for t in tasks if t[0]=="ui_reviews"),12)
+        self.assertEqual({t[1] for t in tasks if t[0]=="functions"},
+                         {"Surface","VFX","Project"})
+        self.assertTrue(all(t[4].is_file() for t in tasks))
+        ui_author=load(ui/"RunMaterialLibraryUIProductionMonolith.py","sslm_ui_runner")
+        self.assertEqual(len(ui_author.load_queue()),7)
+        maps=load(src/"RunMaterialLibraryReviewMapsMonolith.py","sslm_map_runner")
+        self.assertEqual({x["area"] for x in maps.load_rows()},
+                         {"Surface","VFX","Project","UI"})
+        brushes=load(ui/"BindMaterialLibraryUIReviewBrushesMonolith.py","sslm_brush_runner")
+        self.assertEqual(len(brushes.entries()),12)
+        full=load(src/"RunMaterialLibraryCompleteResourcesUE58.py","sslm_full_runner")
+        full.preflight_source()
+        self.assertEqual([name for name,_,_ in full.PHASES],
+                         ["domain_functions","material_layers","review_stand_blueprint",
+                          "domain_review_materials","ui_seven_functions",
+                          "ui_twelve_review_materials","ui_widget",
+                          "ui_widget_material_brushes","review_maps_four"])
+        for target in (
+            src/"RunMaterialLibraryNativeBatchesMonolith.py",
+            src/"RunMaterialLibraryReviewMapsMonolith.py",
+            ui/"RunMaterialLibraryUIProductionMonolith.py",
+            ui/"BindMaterialLibraryUIReviewBrushesMonolith.py",
+        ):
+            content=target.read_text(encoding="utf-8")
+            self.assertIn("BirdFlockMonolithProtocol",content)
+            self.assertIn("UE",content)
+        widget=(ui/"AuthorMaterialLibraryWidgetMonolith.py").read_text(encoding="utf-8")
+        self.assertIn("UI_WIDGET_12_CARD_EXISTING_NATIVE_PRESERVED",widget)
+        self.assertIn("SSLM_WBP_STATE",widget)
+        self.assertNotIn('("compile_widget"',full.__dict__["__doc__"] or "")
+
     def test_source_phase_strict_editor_identity_and_no_premature_build(self):
         """真实资产制作前应锁定UE5.8和工作空间，禁止PIE及不完整AssetRegistry。"""
         path = ROOT/"Tools/Unreal/Surface/AuthorMaterialLibrarySourcePhaseUE58.py"

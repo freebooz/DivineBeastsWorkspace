@@ -41,7 +41,7 @@ foreach ($relative in @('UI/WBP_DBA_PluginDemoRoot.uasset','UI/WBP_DBA_PluginDem
 if (-not (Test-Path -LiteralPath $project -PathType Leaf)) { throw '找不到正式主工程。' }
 if ($Target -eq 'EditorGame') {
     $engine=Get-FoundationEngine $EngineRoot
-    $buildProof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules @('DivineBeastsDemoClient','DivineBeastsFlowRuntime','GamePlatformUIClient','GamePlatformData')
+    $buildProof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules @('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformUIClient','GamePlatformData')
     $exe=Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe'
     $args=@($project,$map,'-game')
 } else {

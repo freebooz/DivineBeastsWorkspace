@@ -18,6 +18,8 @@
 
 报告统一写入 Game/Saved/GamePlatformValidation/<RunId>/，不写 Source/Content，不自动删除、重命名或移动资产。
 
+2026-10-13开发演示证据增强（源码未构建/运行）：公开ReviewCase/Report增加独立功能/案例、完整用例合同冻结及版本化证据绑定。Private校验在构造FName前检查外部身份，拒绝路径链接/越界，核验真实state_dump与运行身份/终态/完成操作/清理结果；签收前重读原始索引、独立二进制证明及必需文件摘要。相关功能用例按自己的身份绑定，不借主功能自动通过。人工作出Passed须显式审核人及确认、当前版本/全部证据有效，决策追加写入；AI不能代签。项目Editor桥仅创建NotRun待审报告，平台无项目资源反向依赖。原生ReviewEvidence等回归只有源码，静态检查不证明通过；项目目前的unverified原始索引不能签收Passed。
+
 三层继承源码门禁另有可复现 PowerShell 入口 `Tests/Architecture/ValidateInheritanceBoundaries.ps1`，并已接入 `ValidateDesignBaseline.ps1`；Blueprint/DataAsset真实父类仍须由UE AssetRegistry/DataValidation验证。
 
 验证状态只能依据真实证据。源码静态检查通过不等于 UE5.8 编译、DataValidation Commandlet、Cook、Shipping 或性能基线已经通过。

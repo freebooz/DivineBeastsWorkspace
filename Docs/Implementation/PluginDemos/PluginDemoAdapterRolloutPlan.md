@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> 用户已选择Native并要求继续；按 `superpowers:executing-plans` 执行。核心T01/T02已有源码增量；本文件R01—R06逐插件接入尚未执行，不能按身份登记计为功能完成。
+> 用户已选择Native并要求继续；按 `superpowers:executing-plans` 执行。核心T02—T12已有源码增量但未完整闭合；三类样板只代表部分功能接线，R01—R06全插件接入尚未完成，不能按身份登记计为功能完成。
 
 **Goal:** 将每个真实插件已审计的功能接入独立菜单、可复用场景及人工核验，不把目录登记当功能交付。
 
@@ -19,6 +19,7 @@
 - 所有项目UI资产必须经Monolith；新增资源归真实所有者；内容包不是第四逻辑层。
 - 禁止 Monolith 0.23.0 的 `capture_scene_preview` 的 `widget` 路径；按规格验证原稿到RHI链路。
 - 自动化不能代签人工通过；原始失败/取消、历史结论、版本和证据不得被覆盖。
+- 用户2026-10-13明确要求全部执行完成后再人工核验：各批先完成实现、自动/静态检查和证据准备，不要求中途逐批人工签收来继续源码任务；人工列保持未核验，待全范围实施后集中验证，不因此免除发布门禁。
 - 不引入生产账号/密钥/支付，不直接修改权威背包余额；复位仅限案例所有权或业务合法补偿。
 - 不重建缺失业务功能来让演示成功；缺能力登记到所属插件整改项，菜单持续显示阻塞。
 - Native串行修改共享目录、适配注册、Build.cs、Config和Monolith资产；保留并行任务修改，不自动提交或推送。
@@ -35,7 +36,7 @@
 
 ## 1. 接入前提与功能级工作单
 
-核心T01—T08代码合同稳定后可进行只读审计与源码接线；核心T09—T13真实样板闭环之前，不标记任一批“可运行交付”。缺新构建时允许提交源码级成果说明，但不运行旧DLL代验。
+核心T01—T08代码合同稳定后可进行只读审计与源码接线；核心T09—T13真实资产/自动运行证据闭环之前，不标记任一批“可运行交付”。T13的人工部分按最新用户要求后置到全范围实施之后，不作为继续只读审计/源码接线的前置签收。缺新构建时允许交付源码级成果说明（不自动git提交），但不运行旧DLL代验。
 
 每项独立功能必须在现有 `Docs/Implementation/PluginDemos/PluginDemoManifest.json` 的v2源中形成工作单，包含：稳定Feature/Scenario/ReviewCase ID、真实源码路径与公开方法签名、所属插件和端侧、资产身份/消费者、正常/失败/取消/清理输入与预期、参数范围来源、文件责任、复位边界和证据类型。`FeatureCoverage.md`、`AssetReuseMap.md`只从其导出。
 

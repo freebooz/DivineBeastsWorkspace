@@ -4,10 +4,10 @@
 
 ## 当前交付边界
 
-- 当前编目登记47个代码插件、18个内容包和37张开发地图文件候选。65个插件范围均保持`unreviewed`；功能/案例/用例暂为空，不能显示100%或据此认为插件没有功能。
+- 当前编目登记47个代码插件、18个内容包和37张开发地图文件候选。三种样板登记3项功能、6个案例及6个核验用例；DBAClient、GamePlatformUI、GamePlatformData为`partial`，其余待审计。65个插件均未完成全范围审计，覆盖率分母未知，不能显示100%或据此认为未登记插件没有功能。
 - Schema2验证器、中文派生文档导出和测试已经实现。验证器只证明结构、身份集合、路径和关系，不验证源码符号语义、资产可加载性或人工签收。
-- `UDivineBeastsDemoCatalogDefinition`及其Private校验代码已经写入。**尚未构建或运行UE测试；尚未创建DataAsset，既有运行菜单尚未切换到此定义。**
-- 未修改旧Widget父类、资产、默认地图、正式启动策略或业务权威。T03之后的Data加载、运行状态机、VM及Monolith界面仍是后续实施项。
+- `UDivineBeastsDemoCatalogDefinition`及其Private校验、Data加载/原子快照、案例运行状态机、VM、平台页面和三类适配源码已经写入。**尚未构建或运行UE测试；新DataAsset、RootLayout、HubScreen及样板Widget均尚未通过Monolith生成，新路径不能宣称可运行。**
+- 保留旧Widget父类和历史资产，不修改正式默认地图或业务权威。新增开发路径经平台UIManager层栈装配，缺真实资源时明确拒绝。详细接口及未完成边界见[本批源码实施与验证边界](SourceImplementationStatus_20261013.md)。
 
 ## 作者源、历史与迁移
 
@@ -15,7 +15,7 @@ v1完整字段值保存在`History/PluginDemoManifest.v1.json`，保留其旧日
 
 v2采用真实描述文件和内容登记更新身份。内容包的层级由旧`Content`转为`Project`，`plugin_kind=content_pack`仍可单独筛选；这不迁移任何稳定插件名。地图候选根据`Game/Content/Development/*.umap`映射为`/Game/Development/...`，不按路径猜正式功能所有者，也不将发现地图直接转为可运行案例。
 
-旧调用方仍使用原地图发现目录。本文不声称已经切换运行目录；后续T03/T10必须用显式旧路径兼容表处理一对多选择，并同步WorldSubsystem及启动预检，不直接复制或改名UE二进制文件。
+旧地图发现结果仅供诊断。新目录通过显式旧路径兼容表处理一对多选择，WorldSubsystem比较真实MapAsset包身份；启动预检同步要求新内容包资产。源码迁移已写，真实资产重载/引用迁移仍未执行，不直接复制或改名UE二进制文件。
 
 ## 静态门禁与中文导出
 
@@ -30,9 +30,9 @@ python -X utf8 Tests/Architecture/ValidatePluginDemoManifest.py --workspace . --
 
 门禁拒绝重复身份（按FName大小写不敏感）、缺实际插件、错层/错类别、错目标、未知引用、缺用例/证据、非法参数与超时、越界责任路径和歧义旧路由。只读检查保留原错误与输入对象，不自动修正数据、不调用任意文本命令。
 
-Schema使用标准JSON Schema关键字的限定子集，由无第三方依赖的离线验证器消费：`$ref`仅引用本地`$defs`，以及`type/const/enum/required/properties/additionalProperties/items/minItems/uniqueItems/minLength/pattern/minimum/maximum/exclusiveMinimum`。新增关键字必须同时扩展真实执行器及回归，不能只改Schema宣称门禁已生效。
+Schema使用标准JSON Schema关键字的限定子集，由无第三方依赖的离线验证器消费：`$ref`仅引用本地`$defs`，以及`type/const/enum/required/properties/additionalProperties/items/minItems/uniqueItems/minLength/maxLength/pattern/minimum/maximum/exclusiveMinimum`。新增关键字必须同时扩展真实执行器及回归，不能只改Schema宣称门禁已生效。
 
-稳定身份统一引用`$defs.identity`，排除UE保留空名`None`的所有大小写变体；只有身份集合追加FName大小写折叠唯一性，普通人工步骤文字仍保留大小写区别。仓库相对路径拒绝空段、`.`、`..`及尾斜杠，不依赖路径库静默归一化；审核用例版本限制为`1..2147483647`，与UE的`int32`一致。
+稳定身份统一引用`$defs.identity`，最大1023个ASCII字符，排除UE保留空名`None`的所有大小写变体；只有身份集合追加FName大小写折叠唯一性，普通人工步骤文字仍保留大小写区别。仓库相对路径拒绝空段、`.`、`..`及尾斜杠，不依赖路径库静默归一化；审核用例版本限制为`1..2147483647`，与UE的`int32`一致。UI原文、定义及直接C++参数入口共用Private稳定身份检查。
 
 ## UE派生合同与所有权
 
@@ -51,7 +51,7 @@ Schema使用标准JSON Schema关键字的限定子集，由无第三方依赖的
 
 整数参数只允许绝对值不超过`9007199254740991`的默认载荷，这是JSON数字/UE double范围比较的精度边界，不是游戏性能或内容数量预算。范围数值、布尔值、无穷和NaN必须明确区分，非法输入不截断、不夹紧为假成功。
 
-定义不拥有Actor、输入状态、网络权威或Data租约。调用方仅在游戏线程检查/使用UObject；内容共享后只读，新的版本先完整检查再发布。完整运行租约与回调取消由后续现有目录子系统增量接入，不新增资产管理器。
+定义不拥有Actor、输入状态、网络权威或Data租约。调用方仅在游戏线程检查/使用UObject；内容共享后只读，新的版本先完整检查再发布。现有目录/世界子系统增量持有中央Data租约、完整Token和取消回调，不新增资产管理器。
 
 ## 未执行的验证与回退
 
@@ -59,4 +59,4 @@ Schema使用标准JSON Schema关键字的限定子集，由无第三方依赖的
 
 既有`ValidateDesignBaseline.ps1`因`Game/Saved/BirdFlockAuthorHost/BirdFlockAuthorHost.uproject`被递归计入而失败；没有删除该工程，也没有放宽门禁。实际日期与检查记录见`ExecutionProgress.md`。
 
-回退仅撤销本次新增类型/测试及Build.cs公开依赖调整，使用历史记录恢复作者源与派生文档；当前没有激活新目录或修改二进制资源，不需要伪造资产回退。不得撤销其他并行任务代码或用清空工作树操作回退。
+回退需要按本批实际文件责任逐项检查源码、Build.cs、Editor专用依赖、开发配置与启动入口，使用历史记录恢复作者源及派生文档；旧反射父类/资产未删除，正式默认地图未改。新内容包开发资产尚未制作，不伪造资产回退；已有共享提交必须另作增量回退评审，不回退整个提交或清空工作树。

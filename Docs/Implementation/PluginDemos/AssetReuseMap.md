@@ -5,7 +5,7 @@
 
 | 地图包路径 | 分类 | 文件验证 | 运行/人工 |
 | --- | --- | --- | --- |
-| /Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview | review_candidate | file_only | 未运行/未核验 |
 | /Game/Development/BirdFlock/Maps/L_DBA_BirdFlockReview | unclassified | file_only | 未运行/未核验 |
 | /Game/Development/FallingFoliage/Maps/L_DBA_FallingFoliageReview | unclassified | file_only | 未运行/未核验 |
 | /Game/Development/FallingFoliage/Probes/L_DBA_AgeSafeFoliageGameReview | diagnostic_probe | file_only | 未运行/未核验 |
@@ -35,7 +35,7 @@
 | /Game/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview | unclassified | file_only | 未运行/未核验 |
 | /Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview | unclassified | file_only | 未运行/未核验 |
 | /Game/Development/MossSnow/Maps/L_DBA_MossSnowReview | unclassified | file_only | 未运行/未核验 |
-| /Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub | review_candidate | file_only | 未运行/未核验 |
 | /Game/Development/Snow/Maps/L_DBA_SnowReview | unclassified | file_only | 未运行/未核验 |
 | /Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview | unclassified | file_only | 未运行/未核验 |
 | /Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview | unclassified | file_only | 未运行/未核验 |

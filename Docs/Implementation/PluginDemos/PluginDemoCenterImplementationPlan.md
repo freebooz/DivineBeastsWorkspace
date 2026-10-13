@@ -10,7 +10,7 @@
 
 **Tech Stack:** 锁定 UE5.8、UE C++/GAS/UMG、Monolith MCP、PowerShell 7、Python 标准库；不新增第三方运行依赖。
 
-**Spec:** [已通过的方案 A 设计规格](PluginDemoCenterSpecification.md)。日期：2026-10-13（Asia/Shanghai）；**计划已进入实施；T01离线检查已执行，T02源码已写，UE构建/运行/人工验证未执行**。
+**Spec:** [已通过的方案 A 设计规格](PluginDemoCenterSpecification.md)。日期：2026-10-13（Asia/Shanghai）；**计划已进入实施；T01离线检查已执行，T02—T12存在源码增量但未全部闭合，UE构建/运行/人工验证未执行**。逐任务源码与剩余项见[当前实施边界](SourceImplementationStatus_20261013.md)，用户要求全部实施后集中人工核验。
 
 ## Global Constraints（全局约束）
 
@@ -22,6 +22,7 @@
 - 不创建新工程、空插件或每插件一张空地图；内容包不是第四逻辑层；禁止平台/MOBA 引用项目资产。
 - 不以业务 Tick 刷新 UI，不新增资产管理器、VFX 执行器、审核框架或服务器权威捷径。
 - 自动化不能代签人工通过；当前源码、实际二进制、内容版本与用例版本分别记录。
+- 用户2026-10-13要求全部执行完成后再人工核验：T13及各接入批的人工签收统一后置到全范围实施、自动验证和证据准备之后；当前不要求逐批人工确认，人工状态保持未核验，不因此将Runtime或Human未执行项勾为通过。
 - 所有新改源码、脚本、配置、测试及合同提供完整中文说明；每次新增文件同步总体目录规划，不覆盖并行任务改动。
 - 运行证据根为 `Game/Saved/GamePlatformValidation/<RunId>/Review/`；历史 `Saved/Validation/PluginDemos/` 只保留诊断/索引，不成为另一签收真源。
 
@@ -111,7 +112,7 @@
 | V4（现有，须人工允许启动） | `pwsh -NoProfile -File Build/Game/RunPluginDemo.ps1 -Start -Target EditorGame -EngineRoot <锁定引擎绝对路径>` | 新进程仅进入开发门户，无认证副作用；资产/二进制预检失败不得触发构建 |
 | V5（T09/T10后） | 正确工程上的Monolith资产检查及独立重载；新测试只调用已发现的工具动作 | 控件树、父类、引用、编译/保存/重载证据有效；颜色另经真实RHI |
 
-占位的路径参数必须由当次发现结果替换，不将示例当作现存报告。V2/V3 的脚本和新增测试尚不存在，不能提前宣称已运行。构建命令仅在 T14 后续授权时使用既有 `BuildFoundation.ps1`；本计划任何脚本均不得自发调用它。
+占位的路径参数必须由当次发现结果替换，不将示例当作现存报告。V2/V3 的运行器及新增原生测试源码现已存在，但原生测试尚未构建/运行；只读VerifyOnly已真实拒绝不匹配的旧完整Editor证据，未启动UE。构建命令仅在后续明确授权时使用既有 `BuildFoundation.ps1`；本计划任何脚本均不得自发调用它。
 
 ## 4. 核心任务
 

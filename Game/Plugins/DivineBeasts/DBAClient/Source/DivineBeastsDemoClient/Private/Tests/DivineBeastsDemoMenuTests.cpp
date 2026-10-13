@@ -2,6 +2,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "UI/DivineBeastsDemoHubViewModel.h"
 #include "UI/DivineBeastsDemoParameterRow.h"
+#include "Catalog/DivineBeastsDemoCatalogValidation.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/StrongObjectPtr.h"
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDemoMenuTest, "DivineBeasts.PluginDemos.Menu",
@@ -34,6 +35,9 @@ bool FDivineBeastsDemoMenuTest::RunTest(const FString&)
     Parameter->Definition.DefaultValue.Type = EDivineBeastsDemoParameterType::Identifier; Parameter->Value = Parameter->Definition.DefaultValue;
     TestFalse(TEXT("长身份在构造FName前拒绝"), Parameter->SetTextValue(FString::ChrN(NAME_SIZE, TEXT('A'))));
     TestFalse(TEXT("保留空名拒绝"), Parameter->SetTextValue(TEXT("NONE")));
+    TestTrue(TEXT("直接命令和控件共用稳定身份规则"), DivineBeasts::Demo::IsStableIdentityText(TEXT("Sample.Choice-A_1")));
+    for (const TCHAR* Text : {TEXT(""), TEXT("None"), TEXT("中文"), TEXT("/Game/Choice"), TEXT("1Choice"), TEXT("Choice Value")})
+        TestFalse(TEXT("无UI直接身份入口同样拒绝非法文本"), DivineBeasts::Demo::IsStableIdentityText(Text));
     return true;
 }
 #endif

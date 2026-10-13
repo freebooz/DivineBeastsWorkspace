@@ -50,6 +50,8 @@ private:
     UPROPERTY(Transient) TObjectPtr<UDivineBeastsDemoHubViewModel> DemoModel;
     UPROPERTY(Transient) TArray<TObjectPtr<UDivineBeastsDemoMenuItem>> MenuItems;
     UPROPERTY(Transient) TArray<TObjectPtr<UDivineBeastsDemoParameterItem>> ParameterItems;
+    /** 仅Editor私有桥创建的待审对象；客户端为空，公开类型只为UObject，不传播Editor依赖。 */
+    UPROPERTY(Transient) TArray<TObjectPtr<UObject>> PendingEditorReports;
     FName ParametersForScenario;
     bool bSynchronizing = false;
     FDivineBeastsDemoFilter Filter;

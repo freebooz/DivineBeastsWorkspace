@@ -164,6 +164,8 @@ def safe_target(unreal,item,writable):
     if existing is not None and not isinstance(existing,unreal.MaterialFunction):
         raise TypeError("同名路径是不同的原生资源类型："+path)
     disk=disk_path(item)
+    if existing is not None and not disk.is_file():
+        raise RuntimeError("原生MF已在注册表中但uasset尚未落盘，拒绝误认成已完成："+path)
     if existing is None and any(disk.with_suffix(ext).exists() for ext in (".uasset",".uexp",".ubulk",".umap")):
         raise RuntimeError("该包磁盘已存在但不在资产注册表，拒绝覆盖："+str(disk))
     return existing
@@ -282,6 +284,9 @@ def make_review(unreal,item):
     if old is not None:
         if not isinstance(old,unreal.Material):
             raise TypeError("QA路径存在非Material资产："+target)
+        qa_disk=ROOT/"Game/Content/Development/MaterialLibrary/Materials"/(target.rsplit("/",1)[-1]+".uasset")
+        if not qa_disk.is_file():
+            raise RuntimeError("QA审核材质仅在内存存在，磁盘没有.uasset："+target)
         if edit.get_num_material_expressions(old)<len(item["pins"])+1:
             raise RuntimeError("已有QA材质图不足，拒绝清图覆盖："+target)
         print("QA_PRESERVED",item["id"],target)
@@ -340,10 +345,17 @@ def main():
     parser.add_argument("--mode",choices=("inspect","apply","review","verify","compile"),
                         default=os.getenv("MATERIAL_DOMAIN_MODE","inspect"))
     parser.add_argument("--owner",choices=("all","Surface","VFX","Project"),default="all")
+    # Monolith单次run_python限定少量原生节点，避免长任务超时后重复写入。
+    parser.add_argument("--start-index",type=int,default=0)
+    parser.add_argument("--limit",type=int,default=0,help="0为全部；非零为本次最多处理数")
     ns,_=parser.parse_known_args()
     catalog=load_catalog()
-    target=[x for x in catalog if ns.owner=="all" or x["owner"]==ns.owner]
-    print("CATALOG_COUNT",len(catalog),"SELECTED",len(target),ns.mode,ns.owner)
+    full=[x for x in catalog if ns.owner=="all" or x["owner"]==ns.owner]
+    if ns.start_index<0 or ns.start_index>len(full) or ns.limit<0:
+        raise ValueError("非法函数批次范围")
+    target=full[ns.start_index:ns.start_index+ns.limit] if ns.limit else full[ns.start_index:]
+    print("CATALOG_COUNT",len(catalog),"SELECTED",len(target),ns.mode,ns.owner,
+          "OFFSET",ns.start_index,"LIMIT",ns.limit)
     for x in target:
         print("DOMAIN_FUNCTION_TARGET",x["id"],asset_path(x),x["zh"])
     if ns.mode=="inspect":

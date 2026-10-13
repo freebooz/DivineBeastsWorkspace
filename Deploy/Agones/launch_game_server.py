@@ -13,10 +13,21 @@ from pathlib import Path
 import sys
 import time
 from urllib.error import HTTPError, URLError
-from urllib.request import urlopen
+from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
 
 ROLES = {"OpenWorld", "Village", "MainArena"}
 GAME_PORT_NAME = "game"
+
+class RejectSidecarRedirect(HTTPRedirectHandler):
+    """禁止 Sidecar 的 /gameserver 响应把启动器重定向到其他内外网地址。"""
+
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
+# 显式关闭进程继承的 HTTP(S)_PROXY，SDK 请求只能发往本地 127.0.0.1。
+SDK_HTTP_OPENER = build_opener(ProxyHandler({}), RejectSidecarRedirect())
+
 
 
 def positive_int(value: str, field: str, maximum: int = 65535) -> int:
@@ -30,33 +41,61 @@ def positive_int(value: str, field: str, maximum: int = 65535) -> int:
 
 
 def canonical_endpoint(host: str, port: int) -> str:
-    """仅构造客户端连接的主机和端口；拒绝用户信息、URL、路径及控制字符。"""
-    if not host or len(host) > 253 or any(c.isspace() for c in host):
+    """从可信 Sidecar 构造客户端公网端点；拒绝未指定、回环、组播和不合法 DNS 地址。"""
+    if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
+        raise ValueError("Agones 游戏端口无效")
+    if not isinstance(host, str) or not host or len(host) > 253 or any(c.isspace() for c in host):
         raise ValueError("Agones 返回的主机地址无效")
-    if "://" in host or "/" in host or "@" in host or "?" in host or "#" in host:
+    if "://" in host or "/" in host or "@" in host or "?" in host or "#" in host or "%" in host:
         raise ValueError("Agones 返回的主机地址不是主机标识")
     try:
         parsed = ipaddress.ip_address(host)
     except ValueError:
-        # Kubernetes 节点 DNS 名称：保留 ASCII 字母、数字、点和连字符。
-        if not host.isascii() or any(not (c.isalnum() or c in ".-") for c in host):
+        # Kubernetes 节点 DNS 标签必须非空、以字母/数字开头和结束；仅允许 ASCII。
+        labels = host.split(".")
+        if (
+            not host.isascii()
+            or host.lower() == "localhost"
+            or host.lower().endswith(".localhost")
+            or all(label.isdecimal() for label in labels)
+            or any(
+                not label or len(label) > 63 or
+                not label[0].isalnum() or not label[-1].isalnum() or
+                any(not (char.isalnum() or char == "-") for char in label)
+                for label in labels
+            )
+        ):
             raise ValueError("Agones 返回的节点主机名无效")
         return f"{host}:{port}"
+    if parsed.is_unspecified or parsed.is_loopback or parsed.is_multicast or parsed.is_link_local:
+        raise ValueError("Agones 返回了不能作为客户端连接地址的 IP")
     return f"[{parsed}]:{port}" if parsed.version == 6 else f"{parsed}:{port}"
 
 
 def game_server_identity(payload: dict, fallback_host: str) -> tuple[str, str]:
     """从 Agones SDK 的权威 GameServer 视图取唯一名称及 UDP 动态端点。"""
+    if not isinstance(payload, dict):
+        raise ValueError("GameServer SDK 响应不是对象")
     metadata = payload.get("object_meta") or {}
     status = payload.get("status") or {}
+    if not isinstance(metadata, dict) or not isinstance(status, dict):
+        raise ValueError("GameServer SDK 身份或状态结构非法")
     server_id = metadata.get("name")
     if not isinstance(server_id, str) or not server_id or len(server_id) > 63:
         raise ValueError("GameServer 名称缺失")
-    if any(not (ch.isascii() and (ch.isalnum() or ch in "-.")) for ch in server_id):
+    # GameServer 名称须符合 Kubernetes DNS-1123 身份规则，防止空标签和异常符号进入注册表。
+    if (server_id.lower() != server_id or
+        any(not label or len(label) > 63 or not label[0].isalnum() or
+            not label[-1].isalnum() or
+            any(not (ch.isascii() and (ch.isalnum() or ch == "-")) for ch in label)
+            for label in server_id.split("."))):
         raise ValueError("GameServer 名称非法")
+    raw_ports = status.get("ports", [])
+    if not isinstance(raw_ports, list):
+        raise ValueError("Agones 端口列表结构非法")
     ports = [
         entry.get("port")
-        for entry in status.get("ports", [])
+        for entry in raw_ports
         if isinstance(entry, dict) and entry.get("name") == GAME_PORT_NAME
     ]
     if len(ports) != 1:
@@ -74,7 +113,7 @@ def discover_game_server(http_port: int, fallback_host: str, timeout_seconds: fl
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
         try:
-            with urlopen(f"http://127.0.0.1:{http_port}/gameserver", timeout=2) as response:
+            with SDK_HTTP_OPENER.open(f"http://127.0.0.1:{http_port}/gameserver", timeout=2) as response:
                 if not 200 <= response.status < 300:
                     raise ValueError("Agones SDK 返回非成功状态")
                 document = json.loads(response.read(65536))
@@ -95,8 +134,13 @@ def build_launch_environment(source: dict, server_id: str, endpoint: str) -> tup
     profile_path = base / "Deploy" / "Server" / role / "server-profile.json"
     with profile_path.open(encoding="utf-8") as profile_file:
         profile = json.load(profile_file)
+    # 环境指定角色与只读 Profile 必须完全一致，禁止同一镜像误装载另一服务器角色。
+    if profile.get("serverRoleId") != f"GameServer.Role.{role}":
+        raise ValueError("启动角色与服务器 Profile 不一致")
     world_package = profile.get("worldPackage")
-    if not isinstance(world_package, str) or not world_package.startswith("/"):
+    if (not isinstance(world_package, str) or not world_package.startswith("/") or
+        any(char.isspace() for char in world_package) or ".." in world_package or
+        "?" in world_package or "#" in world_package):
         raise ValueError("角色 Profile 缺少合法的 worldPackage")
     capacity = positive_int(source.get("GAME_SERVER_CAPACITY", ""), "GAME_SERVER_CAPACITY", 10000)
     protocol = positive_int(source.get("GAME_SERVER_PROTOCOL_VERSION", ""), "GAME_SERVER_PROTOCOL_VERSION", 100000)

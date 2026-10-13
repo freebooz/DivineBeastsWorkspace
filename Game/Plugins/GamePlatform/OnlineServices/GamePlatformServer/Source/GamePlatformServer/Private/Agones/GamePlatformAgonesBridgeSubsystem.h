@@ -28,8 +28,11 @@ public:
 
 private:
     /** SDK 操作种类。只允许 loopback HTTP，禁止把 Agones SDK API 暴露给游戏客户端。 */
+    friend class FGamePlatformAgonesBridgeSchedulingTest;
+
     enum class EAgonesSdkOperation : uint8
     {
+        None, // 本周期无待执行操作，不产生网络请求。
         Health,
         Ready,
         Allocate,
@@ -43,6 +46,8 @@ private:
     void HandlePlayerCountSampled(int32 CurrentPlayers, int32 Capacity);
     /** 每秒一次的轻量调度，只允许一个 HTTP 请求在途；Shutdown 优先，健康独立，世界首次有玩家先保护实例再报告 Counter。 */
     bool TickSdk(float DeltaSeconds);
+    /** 无网络副作用的调度选择；Shutdown 优先，Health 最多让出两个调度周期避免请求饥饿。 */
+    EAgonesSdkOperation SelectNextSdkOperation(double Now) const;
     /** 启动有限超时 HTTP 请求；Counter 只在显式启用时调用 Beta 接口。 */
     void StartSdkRequest(EAgonesSdkOperation Operation);
     /** GameThread 单次终态；对停止/旧代次返回的结果不产生任何状态修改。 */

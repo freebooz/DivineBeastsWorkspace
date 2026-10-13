@@ -184,6 +184,42 @@ void UGamePlatformAgonesBridgeSubsystem::HandlePlayerCountSampled(int32 CurrentP
     }
 }
 
+UGamePlatformAgonesBridgeSubsystem::EAgonesSdkOperation
+UGamePlatformAgonesBridgeSubsystem::SelectNextSdkOperation(double Now) const
+{
+    // Shutdown 是不可逆终态，任何 Health/Ready/Counter 都不得抢占它。
+    if (bShutdownRequested)
+    {
+        return !bShutdownAcknowledged && Now >= NextRetryAtSeconds
+            ? EAgonesSdkOperation::Shutdown : EAgonesSdkOperation::None;
+    }
+
+    // 心跳超期超过两个调度周期时优先补报，避免高频容量变更饿死健康检查。
+    // 平时优先推进一次性的 Ready/Allocate 和有脏数据的 Counter，
+    // 否则当 HealthIntervalSeconds 为 1 秒时，Health 会占满每次空闲调度。
+    if (Now >= NextHealthAtSeconds + 2.0)
+    {
+        return EAgonesSdkOperation::Health;
+    }
+    if (bReadyRequested && !bReadyAcknowledged && !bDraining &&
+        Now >= NextRetryAtSeconds)
+    {
+        return EAgonesSdkOperation::Ready;
+    }
+    if (bReadyAcknowledged && bNeedsSelfAllocation && !bSelfAllocated &&
+        !bDraining && Now >= NextRetryAtSeconds)
+    {
+        return EAgonesSdkOperation::Allocate;
+    }
+    if (bReadyAcknowledged && bCounterDirty && !CounterKey.IsEmpty() &&
+        LatestPlayers >= 0 && LatestCapacity > 0 && Now >= NextRetryAtSeconds)
+    {
+        return EAgonesSdkOperation::Counter;
+    }
+    return Now >= NextHealthAtSeconds
+        ? EAgonesSdkOperation::Health : EAgonesSdkOperation::None;
+}
+
 bool UGamePlatformAgonesBridgeSubsystem::TickSdk(float)
 {
     if (bClosing || !bEnabled)
@@ -196,37 +232,14 @@ bool UGamePlatformAgonesBridgeSubsystem::TickSdk(float)
     }
 
     const double Now = FPlatformTime::Seconds();
-    if (bShutdownRequested)
+    const EAgonesSdkOperation Operation = SelectNextSdkOperation(Now);
+    if (Operation != EAgonesSdkOperation::None)
     {
-        if (!bShutdownAcknowledged && Now >= NextRetryAtSeconds)
+        if (Operation == EAgonesSdkOperation::Health)
         {
-            StartSdkRequest(EAgonesSdkOperation::Shutdown);
+            NextHealthAtSeconds = Now + HealthIntervalSeconds;
         }
-        return true;
-    }
-
-    // Sidecar 健康与业务 Ready 是独立含义；加载世界期间也要真实报告进程存活。
-    if (Now >= NextHealthAtSeconds)
-    {
-        NextHealthAtSeconds = Now + HealthIntervalSeconds;
-        StartSdkRequest(EAgonesSdkOperation::Health);
-        return true;
-    }
-    if (bReadyRequested && !bReadyAcknowledged && Now >= NextRetryAtSeconds)
-    {
-        StartSdkRequest(EAgonesSdkOperation::Ready);
-        return true;
-    }
-    if (bReadyAcknowledged && bNeedsSelfAllocation && !bSelfAllocated &&
-        !bDraining && Now >= NextRetryAtSeconds)
-    {
-        StartSdkRequest(EAgonesSdkOperation::Allocate);
-        return true;
-    }
-    if (bReadyAcknowledged && bCounterDirty && !CounterKey.IsEmpty() &&
-        LatestPlayers >= 0 && LatestCapacity > 0 && Now >= NextRetryAtSeconds)
-    {
-        StartSdkRequest(EAgonesSdkOperation::Counter);
+        StartSdkRequest(Operation);
     }
     return true;
 }

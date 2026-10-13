@@ -8,6 +8,12 @@ namespace DivineBeasts::Demo
 class FBirdFlockScenario final : public IDivineBeastsDemoScenarioAdapter
 {
 public:
+    ~FBirdFlockScenario() override
+    {
+        // 世界仍有效而适配因注销/超时析构时，尽力恢复自己的记录；世界退出不解引用旧Actor。
+        // 析构没有成功回执，不能把已有Cleanup失败改判成功。
+        if (bNeedsRestore && Context.World.IsValid() && !Context.World->bIsTearingDown && Controller.IsValid()) Controller->RestoreBirdEdits();
+    }
     void Prepare(const FDivineBeastsDemoScenarioContext& Input, FDivineBeastsDemoOperationCompletion Completion) override
     {
         Context = Input; Controller = Context.World.IsValid() ? Context.World->GetSubsystem<UDivineBeastsDemoWorldSubsystem>() : nullptr;

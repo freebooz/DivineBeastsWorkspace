@@ -19,6 +19,26 @@
 **UE5.8 编辑器安全恢复入口（2026-10-13续建）**：先运行 `Build/Game/InspectUE58EditorModuleState.ps1`（只读检查Engine/项目/指定插件`.modules`、DLL、BuildId、编辑器相关进程与历史失败日志；指定`-WriteReport`才写审计JSON）。`Build/Game/RecoverUE58EditorForMaterialLibrary.cmd`（双击入口）默认使用 `-SkipBuild`（恢复脚本自身不调用构建，且同步返回真实退出码）；`Build/Game/RecoverUE58EditorForMaterialLibrary.ps1` 在诊断需要时允许显式 `-OnlyModules`（最小Editor模块构建），不指定则使用完整Editor目标，均通过既有 `BuildFoundation.ps1` 持锁并记录真实UBT日志。启动使用 `-NoCompile`（请求编辑器不自动编译）及 `-NoLiveCoding`；注意历史启动日志即使含 `-NoCompile` 仍可能出现UE触发的UBT尝试，不能视该开关为强制无编译保证。进程PID存活不代表Monolith连接、资源创建或最终编译验收通过。
 
 
+### 原生资源剩余九阶段安全执行入口（2026-10-13）
+
+新增 Tools/Unreal/Surface/RunMaterialLibraryCompleteResourcesUE58.py（总调度；默认inspect只读，apply真实制作），严格复用201项能力注册表、已有60种领域算法和原Monolith协议，依次执行：领域60 MF、12 MaterialLayer与共享Blend、审核Actor蓝图、60领域QA材质、7项UI函数、12 UI域审核材质、项目Widget、12个Image Brush材质绑定、四张开发审核地图。
+
+分批执行入口 Tools/Unreal/Surface/RunMaterialLibraryNativeBatchesMonolith.py 每批默认3项，包含可复核断点；Tools/Unreal/UI/RunMaterialLibraryUIProductionMonolith.py 严格复用既有42条动作队列；Tools/Unreal/Surface/RunMaterialLibraryReviewMapsMonolith.py 只创建未存在的UMAP且绝不自动覆盖或切换未保存地图。UI Widget作者新加83控件完整性及物理.uasset回读，Tools/Unreal/UI/BindMaterialLibraryUIReviewBrushesMonolith.py 为12份真实MD_UI审核材质与Image Brush建立绑定。复用现有平台/项目三层资产归属，不重复建插件，不动既有26个已编译MF、5个已存在的UI MF及正式关卡。
+
+正式Windows工作空间在UE5.8 Editor与Monolith恢复后，先运行：
+    python Tools/Unreal/Surface/RunMaterialLibraryCompleteResourcesUE58.py --mode inspect
+然后显式授权实际制作：
+    $env:MATERIAL_LIBRARY_PRODUCTION = "1"
+    python Tools/Unreal/Surface/RunMaterialLibraryCompleteResourcesUE58.py --mode apply --batch-size 3
+三张非UI开发审核地图需分别安全打开后再执行（不能自动切换未保存地图）：
+    $env:MATERIAL_LIBRARY_MAP_AUTHOR = "1"
+    python Tools/Unreal/Surface/RunMaterialLibraryReviewMapsMonolith.py --mode populate --area Surface
+    python Tools/Unreal/Surface/RunMaterialLibraryReviewMapsMonolith.py --mode populate --area VFX
+    python Tools/Unreal/Surface/RunMaterialLibraryReviewMapsMonolith.py --mode populate --area Project
+
+每个制作动作都有独立保存/回读或失败证据，记录于 Saved/Validation/MaterialLibrary 与 Saved/Validation/MaterialLibraryUI。若返回超时或未知状态，先核对资产注册表及物理包，禁止直接重放可能已执行的写操作。以上新增代码不等于原生资产已落盘；必须取得真实UE记录才能变更201项完成状态。统一Editor/Client/Server编译、Shader、Cook、GPU与人工签收继续后置。
+
+
 ## 首批真实UE材质作者脚本（2026-10-13）
 
 - `MaterialAuthoringBatch_20261013.json`（八项制作批次机器台账）及`MaterialAuthoringBatch_20261013.md`（中文实施与验收说明）。

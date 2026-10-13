@@ -108,6 +108,9 @@ def make_asset(unreal):
     tools=unreal.AssetToolsHelpers.get_asset_tools()
     if lib.does_asset_exist(ASSET):
         bp=lib.load_asset(ASSET)
+        physical=CONTENT/(ASSET.rsplit("/",1)[-1]+".uasset")
+        if not physical.is_file():
+            raise RuntimeError("审核蓝图已经注册但未真实保存.uasset，禁止跳过半成品")
         if not isinstance(bp,unreal.Blueprint):
             raise TypeError("审核蓝图路径被其它原生类型占用：" + ASSET)
         components=find_preview(unreal,bp)

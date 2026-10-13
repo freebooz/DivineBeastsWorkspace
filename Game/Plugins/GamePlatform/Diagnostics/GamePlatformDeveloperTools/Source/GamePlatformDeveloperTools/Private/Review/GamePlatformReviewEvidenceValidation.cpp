@@ -90,7 +90,7 @@ bool SameTexts(const TSharedPtr<FJsonObject>& Object, const TCHAR* Field, const 
 /** 运行事实必须来自实际状态转储，不接受索引单一布尔。终态允许预期失败/取消，清理必须确认。 */
 bool IsCompletedState(const TSharedPtr<FJsonObject>& State, const FString& RunId, const FString& Scenario, const FString& MainFeature)
 {
-    FString Id, ScenarioId, FeatureId;
+    FString Id, ScenarioId, FeatureId, CleanupCode;
     double Phase = 0, Commands = 0, CleanupStatus = 0, TerminalStatus = 0;
     const TSharedPtr<FJsonObject>* Cleanup = nullptr; const TSharedPtr<FJsonObject>* Terminal = nullptr;
     return ReadText(State, TEXT("run_id"), Id) && Id == RunId &&
@@ -99,8 +99,26 @@ bool IsCompletedState(const TSharedPtr<FJsonObject>& State, const FString& RunId
         State->TryGetNumberField(TEXT("run_state"), Phase) && (Phase == 4 || Phase == 5 || Phase == 6) &&
         State->TryGetNumberField(TEXT("completed_operations"), Commands) && FMath::IsFinite(Commands) && Commands > 0 && Commands <= 9007199254740991.0 && FMath::FloorToDouble(Commands) == Commands &&
         State->TryGetObjectField(TEXT("cleanup_result"), Cleanup) && (*Cleanup)->TryGetNumberField(TEXT("status"), CleanupStatus) && CleanupStatus == 1 &&
-        State->TryGetObjectField(TEXT("terminal_result"), Terminal) && (*Terminal)->TryGetNumberField(TEXT("status"), TerminalStatus) && TerminalStatus >= 1 && TerminalStatus <= 3;
+        (*Cleanup)->TryGetStringField(TEXT("code"), CleanupCode) && CleanupCode == TEXT("None") &&
+        State->TryGetObjectField(TEXT("terminal_result"), Terminal) && (*Terminal)->TryGetNumberField(TEXT("status"), TerminalStatus) &&
+        ((Phase == 4 && TerminalStatus == 1) || (Phase == 5 && (TerminalStatus == 2 || TerminalStatus == 4)) || (Phase == 6 && TerminalStatus == 3));
 }
+}
+bool IsEvidenceIdentity(const FString& Text) { return IsIdentity(Text); }
+bool IsRunStateCompleted(const TSharedPtr<FJsonObject>& State, const FString& RunId, const FString& Scenario, const FString& MainFeature)
+{ return IsCompletedState(State, RunId, Scenario, MainFeature); }
+bool IsFrozenCaseCurrent(const TSharedPtr<FJsonObject>& Frozen, const UGamePlatformReviewCase& Current)
+{
+    FString Id, Feature, Scenario, Category, Description, Expected; double Version = 0;
+    return ReadText(Frozen, TEXT("review_case_id"), Id) && IsIdentity(Id) && FName(*Id) == Current.CaseId &&
+        Frozen->TryGetNumberField(TEXT("version"), Version) && Version == Current.CaseVersion &&
+        ReadText(Frozen, TEXT("feature_id"), Feature) && IsIdentity(Feature) && FName(*Feature) == Current.FeatureId &&
+        ReadText(Frozen, TEXT("scenario_id"), Scenario) && IsIdentity(Scenario) && FName(*Scenario) == Current.ScenarioId &&
+        ReadText(Frozen, TEXT("category"), Category) && Category == Current.Category.ToString() &&
+        ReadText(Frozen, TEXT("description"), Description) && Description == Current.Description &&
+        ReadText(Frozen, TEXT("expected_result"), Expected) && Expected == Current.ExpectedResult &&
+        SameTexts(Frozen, TEXT("steps"), Current.Steps) && SameTexts(Frozen, TEXT("preconditions"), Current.Preconditions) &&
+        SameTexts(Frozen, TEXT("required_evidence"), Current.RequiredEvidence, true);
 }
 bool ResolveEvidencePath(const FString& RunId, const FString& Relative, FString& Out, FString& Error)
 {
@@ -224,20 +242,13 @@ bool UGamePlatformReviewSubsystem::BindRunEvidence(UGamePlatformReviewReport* Re
     for (const auto& Value : *Cases)
     {
         const auto Case = Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
-        FString Id, CaseFeature, CaseScenario, Category, Description, Expected; double Version = 0;
+        FString Id;
         if (!Case || !GamePlatform::Review::ReadText(Case, TEXT("review_case_id"), Id) || !GamePlatform::Review::IsIdentity(Id))
         { Error = TEXT("运行用例身份非法。"); return false; }
         if (FName(*Id) != Report->CaseId) continue;
         // 核对该独立用例的功能，而不是强制关联功能等于主功能；拒绝重复匹配或未递增版本的合同变化。
-        const auto& Current = *Report->BoundCase;
-        if (bCaseMatched || !Case->TryGetNumberField(TEXT("version"), Version) || Version != Report->CaseVersion ||
-            !GamePlatform::Review::ReadText(Case, TEXT("feature_id"), CaseFeature) || !GamePlatform::Review::IsIdentity(CaseFeature) || FName(*CaseFeature) != Current.FeatureId ||
-            !GamePlatform::Review::ReadText(Case, TEXT("scenario_id"), CaseScenario) || CaseScenario != Scenario ||
-            !GamePlatform::Review::ReadText(Case, TEXT("category"), Category) || Category != Current.Category.ToString() ||
-            !GamePlatform::Review::ReadText(Case, TEXT("description"), Description) || Description != Current.Description ||
-            !GamePlatform::Review::ReadText(Case, TEXT("expected_result"), Expected) || Expected != Current.ExpectedResult ||
-            !GamePlatform::Review::SameTexts(Case, TEXT("steps"), Current.Steps) || !GamePlatform::Review::SameTexts(Case, TEXT("preconditions"), Current.Preconditions) ||
-            !GamePlatform::Review::SameTexts(Case, TEXT("required_evidence"), Current.RequiredEvidence, true))
+        if (bCaseMatched || Report->CaseVersion != Report->BoundCase->CaseVersion ||
+            !GamePlatform::Review::IsFrozenCaseCurrent(Case, *Report->BoundCase))
         { Error = TEXT("独立用例的运行冻结合同与当前合同不匹配或重复。"); return false; }
         bCaseMatched = true;
     }

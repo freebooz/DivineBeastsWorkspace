@@ -2,11 +2,13 @@
 # 跨系统部署合同测试：只读检查 Agones 模板与启动器纯函数。
 # 无 Agones/UE/Kubernetes 环境时只证明语法及输入校验，不能冒充真实 Fleet 扩缩验收。
 import importlib.util
+from io import BytesIO
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
+from urllib.request import ProxyHandler
 
 ROOT = Path(__file__).resolve().parents[2]
 LAUNCHER = ROOT / "Deploy" / "Agones" / "launch_game_server.py"
@@ -57,6 +59,70 @@ class AgonesBootstrapContractTests(unittest.TestCase):
             "[2001:db8::1]:30000",
         )
 
+    def test_reject_unroutable_and_malformed_public_endpoints(self):
+        """控制面绝不能发布回环、未指定、组播或非法 DNS/端口作为对外连接端点。"""
+        for host in ("127.0.0.1", "::1", "0.0.0.0", "224.0.0.1",
+                     "a..b", "-bad.example", "bad-.example",
+                     "localhost", "a.localhost", "999.999.999.999"):
+            with self.subTest(host=host), self.assertRaises(ValueError):
+                launcher.canonical_endpoint(host, 31000)
+        for port in (0, 65536, -1, True, "31000"):
+            with self.subTest(port=port), self.assertRaises(ValueError):
+                launcher.canonical_endpoint("gameserver-1.internal.example", port)
+        self.assertEqual(
+            launcher.canonical_endpoint("gameserver-1.internal.example", 31000),
+            "gameserver-1.internal.example:31000",
+        )
+
+    def test_reject_invalid_gameserver_resource_names(self):
+        """无效 Kubernetes 名称不能进入 Go 注册表或作为运行实例 ID。"""
+        for name in ("BadUpper", "-bad", "bad-", "a..b", "name_", "."):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                launcher.game_server_identity({
+                    "object_meta": {"name": name},
+                    "status": {"address": "192.0.2.2",
+                               "ports": [{"name": "game", "port": 31000}]},
+                }, "")
+
+    def test_reject_malformed_sdk_response_shapes(self):
+        """Sidecar 返回非对象或伪造状态结构时以 ValueError 失败关闭。"""
+        for payload in (None, [], {"object_meta": "wrong", "status": {}},
+                        {"object_meta": {"name": "server-1"}, "status": "wrong"},
+                        {"object_meta": {"name": "server-1"},
+                         "status": {"ports": "wrong", "address": "192.0.2.12"}}):
+            with self.subTest(payload=payload), self.assertRaises(ValueError):
+                launcher.game_server_identity(payload, "")
+
+    def test_local_sdk_request_ignores_proxies_and_redirects(self):
+        """启动前获取身份只允许走 loopback，拒绝环境代理与重定向。"""
+        proxy_handlers = [
+            h for h in launcher.SDK_HTTP_OPENER.handlers if isinstance(h, ProxyHandler)
+        ]
+        self.assertEqual(len(proxy_handlers), 1)
+        self.assertEqual(proxy_handlers[0].proxies, {})
+        redirect_handlers = [
+            h for h in launcher.SDK_HTTP_OPENER.handlers
+            if isinstance(h, launcher.RejectSidecarRedirect)
+        ]
+        self.assertEqual(len(redirect_handlers), 1)
+        self.assertIsNone(redirect_handlers[0].redirect_request(
+            None, None, 302, "Found", {}, "http://not-a-sidecar.invalid/"
+        ))
+
+        payload = {
+            "object_meta": {"name": "server-1"},
+            "status": {"address": "192.0.2.12",
+                       "ports": [{"name": "game", "port": 31234}]},
+        }
+        result = BytesIO(json.dumps(payload).encode("utf-8"))
+        result.status = 200
+        with patch.object(launcher.SDK_HTTP_OPENER, "open", return_value=result) as opener:
+            self.assertEqual(
+                launcher.discover_game_server(9358, "", timeout_seconds=5),
+                ("server-1", "192.0.2.12:31234"),
+            )
+            opener.assert_called_once_with("http://127.0.0.1:9358/gameserver", timeout=2)
+
     def test_valid_profile_constructs_only_one_server_target(self):
         """三角色共享同一 Server 程序；地图和启动身份来自受控 Profile 与 Agones。"""
         with TemporaryDirectory() as tmp:
@@ -64,7 +130,10 @@ class AgonesBootstrapContractTests(unittest.TestCase):
             profile_dir = base / "Deploy" / "Server" / "MainArena"
             profile_dir.mkdir(parents=True)
             (profile_dir / "server-profile.json").write_text(
-                json.dumps({"worldPackage": "/Game/Test/L_Arena"}), encoding="utf-8"
+                json.dumps({
+                    "serverRoleId": "GameServer.Role.MainArena",
+                    "worldPackage": "/Game/Test/L_Arena",
+                }), encoding="utf-8"
             )
             binary = base / "ServerBin"
             binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
@@ -99,6 +168,16 @@ class AgonesBootstrapContractTests(unittest.TestCase):
             env["GAMESERVERCONTROL_BASE_URL"] = "http://insecure.example.invalid"
             with self.assertRaises(ValueError):
                 launcher.build_launch_environment(env, "bad", "192.0.2.21:31111")
+            # 即使角色字段合法，Profile 内容被错误映射也必须失败关闭。
+            env["GAMESERVERCONTROL_BASE_URL"] = "https://control.example.invalid"
+            (profile_dir / "server-profile.json").write_text(
+                json.dumps({
+                    "serverRoleId": "GameServer.Role.Village",
+                    "worldPackage": "/Game/Test/L_Arena",
+                }), encoding="utf-8"
+            )
+            with self.assertRaises(ValueError):
+                launcher.build_launch_environment(env, "arena-123", "192.0.2.21:31111")
 
 
 class AgonesManifestTests(unittest.TestCase):
@@ -134,20 +213,41 @@ class AgonesManifestTests(unittest.TestCase):
                 ) as source:
                     fleet = self.yaml.safe_load(source)
                 self.assertEqual(fleet["kind"], "Fleet")
-                self.assertEqual(fleet["spec"]["template"]["metadata"]["labels"]["server-role"], label)
-                self.assertEqual(fleet["spec"]["template"]["metadata"]["labels"]["experience"], experience)
-                self.assertEqual(fleet["spec"]["template"]["spec"]["ports"][0]["portPolicy"], "Dynamic")
-                self.assertEqual(fleet["spec"]["template"]["spec"]["ports"][0]["containerPort"], 7777)
-                self.assertEqual(
-                    fleet["spec"]["template"]["spec"]["template"]["spec"]["containers"][0]["env"][1]["value"],
-                    str(capacity),
-                )
+                labels = fleet["spec"]["template"]["metadata"]["labels"]
+                self.assertEqual(labels["server-role"], label)
+                self.assertEqual(labels["experience"], experience)
+                ports = fleet["spec"]["template"]["spec"]["ports"]
+                self.assertEqual(ports[0]["portPolicy"], "Dynamic")
+                self.assertEqual(ports[0]["containerPort"], 7777)
+                self.assertEqual(ports[0]["protocol"], "UDP")
+
+                # 标签决定 Go 原子分配目标；进程变量、Profile 必须使用完全一致的身份。
+                server_role = {"main-arena": "MainArena",
+                               "open-world": "OpenWorld", "village": "Village"}[filename]
+                profile_path = ROOT / "Deploy" / "Server" / server_role / "server-profile.json"
+                profile = json.loads(profile_path.read_text(encoding="utf-8"))
+                self.assertEqual(profile["serverRoleId"], f"GameServer.Role.{server_role}")
+                self.assertEqual(profile["defaultExperienceId"], labels["experience"])
+                container = fleet["spec"]["template"]["spec"]["template"]["spec"]["containers"][0]
+                envs = {entry["name"]: entry for entry in container["env"]}
+                self.assertEqual(envs["GAME_SERVER_ROLE"]["value"], server_role)
+                self.assertEqual(envs["GAME_SERVER_CAPACITY"]["value"], str(capacity))
+                self.assertEqual(envs["GAME_SERVER_REGION_ID"]["value"], labels["region"])
+                self.assertEqual(envs["GAME_SERVER_BUILD_VERSION"]["value"], labels["build-version"])
+                self.assertGreater(int(envs["GAME_SERVER_PROTOCOL_VERSION"]["value"]), 0)
+                self.assertEqual(envs["GAMESERVERCONTROL_INTERNAL_TOKEN"]["valueFrom"]
+                                 ["secretKeyRef"]["name"], "sslm-server-control")
+                self.assertNotIn("value", envs["GAMESERVERCONTROL_INTERNAL_TOKEN"])
+
                 autoscaler = scalers[f"sslm-{filename}"]
                 self.assertEqual(autoscaler["spec"]["policy"]["type"], mode)
                 if mode == "Counter":
+                    self.assertEqual(envs["AGONES_PLAYER_COUNTER_KEY"]["value"], "players")
                     self.assertEqual(
                         fleet["spec"]["template"]["spec"]["counters"]["players"]["capacity"], capacity
                     )
+                else:
+                    self.assertNotIn("AGONES_PLAYER_COUNTER_KEY", envs)
 
     def test_allocator_rbac_is_create_only(self):
         """后端只能创建 Allocation，不能取得修改 Fleet 或读取任意 Secret 的权限。"""

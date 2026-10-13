@@ -95,7 +95,10 @@ void UDivineBeastsDemoWorldSubsystem::RequestDemoOverlay(UWorld& World)
     if (auto* Catalog = Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>())
         for (const auto& Plugin : Catalog->GetPlugins())
             for (const auto& Scenario : Catalog->GetScenarios(Plugin.PluginId))
-                if (Scenario.MapAsset.GetLongPackageName() == CurrentPackage && Catalog->FindScenarioDefinition(Scenario.ScenarioId)) bFormalMap = true;
+            {
+                FDivineBeastsDemoScenarioDefinition Formal;
+                if (Scenario.MapAsset.GetLongPackageName() == CurrentPackage && Catalog->FindScenarioDefinition(Scenario.ScenarioId, Formal)) bFormalMap = true;
+            }
     if (bFormalMap) { RequestScenarioOverlay(World); return; }
     const FString ClassPath = CurrentPackage == FDivineBeastsPluginDemoMode::GetHubMapPackage()
         ? DivineBeastsDemo::HubWidgetClass
@@ -252,7 +255,7 @@ bool UDivineBeastsDemoWorldSubsystem::ResetDemoChanges()
 {
     if (HasActiveScenario() && !bExecutingScenarioAdapter)
     { LastFeedback = FText::FromString(TEXT("活动案例占用复位，请通过案例Reset命令执行。")); return false; }
-    StopBirdBatches();
+    // 场景参数/天气快照不拥有分批生成请求；复位不能附带停止世界中的原生Batch。
     bool bAllSucceeded = RestoreBirdEdits();
     if (bHasOriginalWeather)
     {

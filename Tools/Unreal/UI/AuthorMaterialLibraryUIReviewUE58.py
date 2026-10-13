@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -104,9 +105,12 @@ def qa_path(name: str) -> str:
 
 def require_editor(unreal) -> None:
     """不能在普通Python假造UMaterial，也不能误操作其他用户UE工程。"""
-    project = str(unreal.Paths.get_project_file_path()).replace("\\", "/")
-    if not project.endswith("/Game/DivineBeastsArena.uproject"):
-        raise RuntimeError("非授权神兽联盟正式工程：" + project)
+    project = str(unreal.Paths.get_project_file_path())
+    expected = str(ROOT / "Game/DivineBeastsArena.uproject")
+    if os.path.normcase(os.path.realpath(project)) != os.path.normcase(os.path.realpath(expected)):
+        raise RuntimeError("非锁定DivineBeastsWorkspace正式工程：" + project)
+    if not str(unreal.SystemLibrary.get_engine_version()).startswith("5.8."):
+        raise RuntimeError("必须由UE5.8原生编辑器创建12份UI审核材质")
 
 
 def check_asset(unreal, spec: dict, require_review: bool) -> tuple:
@@ -139,6 +143,9 @@ def check_asset(unreal, spec: dict, require_review: bool) -> tuple:
         return fn, None
     if not isinstance(mat, unreal.Material):
         raise TypeError("已有审核包不是UMaterial：" + path)
+    physical = QA_DISK / (path.rsplit("/", 1)[-1] + ".uasset")
+    if not physical.is_file():
+        raise RuntimeError("审核材质仅在内存中注册且未真实落盘，禁止跳过：" + path)
     if mat.get_editor_property("material_domain") != unreal.MaterialDomain.MD_UI:
         raise RuntimeError("现有审核材质不是MD_UI界面材质域：" + path)
     call_nodes = [node for node in edit.get_material_expressions(mat)
@@ -280,8 +287,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SSLM 12项UE原生MD_UI开发审核材质作者")
     parser.add_argument("--mode", choices=("inspect", "apply", "verify"),
                         default="inspect")
+    parser.add_argument("--start-index",type=int,default=0)
+    parser.add_argument("--limit",type=int,default=0,help="0表示12项全部；非零为单次审查母版批次")
     options, _ = parser.parse_known_args()
-    specs = load_specs()
+    complete = load_specs()
+    if options.start_index<0 or options.start_index>len(complete) or options.limit<0:
+        raise ValueError("UI审核材质批次范围非法")
+    specs=complete[options.start_index:options.start_index+options.limit] if options.limit else complete[options.start_index:]
     for spec in specs:
         print("UI_REVIEW_AUTHOR_TARGET", spec["name"], qa_path(spec["name"]))
     if options.mode == "inspect":

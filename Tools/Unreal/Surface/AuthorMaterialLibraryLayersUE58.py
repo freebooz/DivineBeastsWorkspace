@@ -194,8 +194,13 @@ def main():
     """先资源后统一编译，不在apply中调用全量编译或修改正式场景。"""
     p=argparse.ArgumentParser(description="12个PBR覆盖材质层及共享属性混合UE5.8制作")
     p.add_argument("--mode",choices=("inspect","apply","verify"),default=os.getenv("MATERIAL_LAYER_MODE","inspect"))
+    p.add_argument("--start-index",type=int,default=0)
+    p.add_argument("--limit",type=int,default=0,help="0表示12项全部；否则仅处理指定批次")
     opt,_=p.parse_known_args()
-    items=identities()
+    complete=identities()
+    if opt.start_index<0 or opt.start_index>len(complete) or opt.limit<0:
+        raise ValueError("非法材质层批次范围")
+    items=complete[opt.start_index:opt.start_index+opt.limit] if opt.limit else complete[opt.start_index:]
     for item in items:
         print("LAYER_PLAN",item["capabilityId"],item["materialLayerAssetPath"],item["nameZH"])
     print("LAYER_BLEND_PLAN",BLEND)

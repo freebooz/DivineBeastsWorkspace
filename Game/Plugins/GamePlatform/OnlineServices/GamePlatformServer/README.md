@@ -73,3 +73,5 @@ HTTP准入提供者停止接纳后先解绑全部完成委托并取消自有请�
 `OnPlayerCountSampled`（已校验在线人数事件）向 Counter（Beta容量计数）提供既有 10 秒周期采样；`AGONES_PLAYER_COUNTER_KEY` 为空时不执行 Counter。只在 Go 控制面和项目地图资源门禁确认后发送 `/ready`，只有调用 `CompleteDrain` 真正到 `Stopped` 才发送 `/shutdown`。Sidecar HTTP 2xx 并非 Kubernetes 状态最终一致性证据，不能将静态源码检查冒充真实 Sidecar 交互与 UE 编译。
 
 完整示例、RBAC、角色配置、Linux 容器启动、生产值替换和验收限制见 `Deploy/Agones/README.md`；测试脚本见 `Tests/Architecture/TestAgonesDeployment.py`。
+
+2026-10-13 续修：Agones SDK 每秒调度采用 Shutdown 最高优先级；Health 延迟超过两个调度周期时优先恢复，其余空闲周期推进 Ready／Allocate／Counter，避免健康间隔为 1 秒时状态和容量请求长期饥饿。新增 `Private/Tests/GamePlatformAgonesBridgeSchedulingTests.cpp`（只读的离线调度行为测试）；源码未通过 UE5.8 编译前不得标记为构建验证完成。

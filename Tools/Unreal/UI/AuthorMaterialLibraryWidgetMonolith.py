@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -55,6 +56,20 @@ def source_spec():
     return data,ids
 
 
+def read_ue_widget_state(result):
+    """只有编辑器打印的真实状态能决定复用/创建；不能把MCP健康当作资产。"""
+    def all_strings(obj):
+        if isinstance(obj,str):yield obj
+        elif isinstance(obj,dict):
+            for value in obj.values():yield from all_strings(value)
+        elif isinstance(obj,(list,tuple)):
+            for value in obj:yield from all_strings(value)
+    for source in all_strings(result):
+        found=re.search(r"SSLM_WBP_STATE:(EXISTS|MISSING)",source)
+        if found:return found.group(1)
+    raise RuntimeError("Monolith没有返回正式UE5.8 Widget原生状态，拒绝创建")
+
+
 def main():
     """只生成本项目新WBP；有同名蓝图直接拒绝覆盖，留待只读核验。"""
     parser=argparse.ArgumentParser(description="材质库十二UI样板真实Monolith Widget蓝图作者")
@@ -73,17 +88,33 @@ def main():
     sys.path.insert(0,str(BIRD_PROTOCOL))
     from BirdFlockMonolithProtocol import call,editor_python
     # 共享项目Monolith原生协议已有响应留证和失败中止规则，此处不新建MCP网关。
+    physical=ROOT/"Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/Development/MaterialLibrary/UI/WBP_DBA_MaterialLibraryReview.uasset"
     preflight=(
-        "import unreal\n"
-        "p=unreal.Paths.get_project_file_path().replace('\\\\','/')\n"
-        "assert p.endswith('/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject'),p\n"
-        "assert unreal.SystemLibrary.get_engine_version().startswith('5.8.')\n"
-        "parent=unreal.load_class(None,'"+PARENT+"')\n"
-        "assert parent is not None,'必须先加载正式DivineBeastsDemoClient C++父类'\n"
-        "assert not unreal.EditorAssetLibrary.does_asset_exist('"+ASSET+"'),'已有同名WBP，严禁覆盖'\n"
-        "print('MATERIAL_LIBRARY_UI_AUTHOR_PREFLIGHT_READY')\n"
+        "import unreal,os\n"
+        "project=str(unreal.Paths.get_project_file_path())\n"
+        "expected="+repr(str(ROOT/"Game/DivineBeastsArena.uproject"))+"\n"
+        "assert os.path.normcase(os.path.realpath(project))==os.path.normcase(os.path.realpath(expected)),project\n"
+        "assert str(unreal.SystemLibrary.get_engine_version()).startswith('5.8.'),'必须UE5.8'\n"
+        "assert unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world() is None,'PIE未退出'\n"
+        "parent=unreal.load_class(None,"+repr(PARENT)+")\n"
+        "assert parent is not None,'必须加载正式DivineBeastsDemoClient C++父类'\n"
+        "asset="+repr(ASSET)+"\n"
+        "disk="+repr(str(physical))+"\n"
+        "exists=unreal.EditorAssetLibrary.does_asset_exist(asset)\n"
+        "assert exists==os.path.isfile(disk),'WBP注册与原生磁盘包不一致，拒绝覆盖半成品'\n"
+        "if exists:\n"
+        " w=unreal.EditorAssetLibrary.load_asset(asset)\n"
+        " assert isinstance(w,unreal.WidgetBlueprint),'同名包非Widget Blueprint'\n"
+        " tree=w.get_editor_property('widget_tree')\n"
+        " assert tree is not None,'已存在Widget但无原生控件树'\n"
+        " required="+repr(ids)+"\n"
+        " assert all(tree.find_widget(name) is not None for name in required),'WBP控件树不完整，拒绝覆盖'\n"
+        "print('SSLM_WBP_STATE:'+('EXISTS' if exists else 'MISSING'))\n"
     )
-    editor_python(preflight)
+    preflight_state=read_ue_widget_state(editor_python(preflight))
+    if preflight_state=="EXISTS":
+        print("UI_WIDGET_12_CARD_EXISTING_NATIVE_PRESERVED",ASSET)
+        return
     REPORT.parent.mkdir(parents=True,exist_ok=True)
     evidence={"status":"pending","assetPath":ASSET,"parentClass":PARENT,
               "sourceSpec":str(SPEC.relative_to(ROOT)).replace("\\","/"),
@@ -108,6 +139,8 @@ def main():
             "print('MATERIAL_LIBRARY_WIDGET_SAVED_PENDING_FINAL_COMPILE')\n"
         )
         evidence["status"]="widget_asset_saved_pending_final_compile_and_visual_review"
+        if read_ue_widget_state(editor_python(preflight))!="EXISTS":
+            raise RuntimeError("WBP创建后未取得物理包及83个原生控件回读证据")
     except Exception as exc:
         evidence["status"]="failed_do_not_auto_retry_mutation"
         evidence["error"]=str(exc)

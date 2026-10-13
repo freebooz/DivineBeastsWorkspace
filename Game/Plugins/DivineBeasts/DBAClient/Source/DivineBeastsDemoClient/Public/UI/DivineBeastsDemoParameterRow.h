@@ -11,8 +11,11 @@ class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoParameterItem : public UObject
 {
     GENERATED_BODY()
 public:
+    /** 该参数唯一身份、单位、范围、默认值及应用阶段的只读合同副本。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FDivineBeastsDemoParameterDefinition Definition;
+    /** 当前合法编辑值，类型由Definition约束；解析失败不覆盖，显式提交前无世界副作用。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FDivineBeastsDemoParameterValue Value;
+    /** 编辑内容是否可提交；默认值已由目录预检验证，任何解析失败设为false。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") bool bValidInput = true;
     /** 解析严格类型并校验范围/只读；失败不覆盖上一合法值，bValidInput为false。 */
     bool SetTextValue(const FString& Text);

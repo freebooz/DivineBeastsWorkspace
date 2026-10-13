@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
+	"strconv"
 	"net/http"
 	"net/url"
 	"strings"
@@ -138,6 +140,48 @@ func roleLabelValue(roleID string) (string, error) {
 	}
 }
 
+// formatGameServerEndpoint（连接端点规范化）只接受可路由地址和正式游戏 UDP 端口。
+// IPv6 必须通过 net.JoinHostPort 加方括号；非法端口、DNS 和控制字符失败关闭。
+func formatGameServerEndpoint(address string, port int) (string, error) {
+	if port < 1 || port > 65535 || address == "" || len(address) > 253 ||
+		strings.ContainsAny(address, " \t\r\n/?#@%") {
+		return "", errors.New("Agones分配结果的连接地址或端口非法")
+	}
+	if ip := net.ParseIP(address); ip != nil {
+		if ip.IsUnspecified() || ip.IsLoopback() || ip.IsMulticast() || ip.IsLinkLocalUnicast() {
+			return "", errors.New("Agones分配结果的地址不能作为外部连接端点")
+		}
+	} else {
+		if strings.Contains(address, ":") || strings.EqualFold(address, "localhost") ||
+			strings.HasSuffix(strings.ToLower(address), ".localhost") {
+			return "", errors.New("Agones分配结果的域名非法")
+		}
+		// 全数字点分形式不是可路由 DNS，避免 999.999.999.999 等伪 IP 越过 net.ParseIP。
+		allNumeric := true
+		for _, char := range address {
+			if char != '.' && (char < '0' || char > '9') {
+				allNumeric = false
+				break
+			}
+		}
+		if allNumeric {
+			return "", errors.New("Agones分配结果的数字主机地址非法")
+		}
+		for _, label := range strings.Split(address, ".") {
+			if len(label) == 0 || len(label) > 63 || label[0] == '-' || label[len(label)-1] == '-' {
+				return "", errors.New("Agones分配结果的域名标签非法")
+			}
+			for _, char := range label {
+				if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
+					(char >= '0' && char <= '9') || char == '-') {
+					return "", errors.New("Agones分配结果的域名字符非法")
+				}
+			}
+		}
+	}
+	return net.JoinHostPort(address, strconv.Itoa(port)), nil
+}
+
 // ClientConfig（Agones分配客户端配置）描述Kubernetes API访问方式。
 type ClientConfig struct {
 	BaseURL     string       // BaseURL（Kubernetes API地址，例如https://kubernetes.default.svc）。
@@ -158,7 +202,12 @@ func NewClient(config ClientConfig) *Client {
 	if client == nil {
 		client = &http.Client{Timeout: 5 * time.Second}
 	}
-	return &Client{baseURL: strings.TrimRight(config.BaseURL, "/"), bearerToken: config.BearerToken, httpClient: client}
+	// 复制注入客户端而不修改共享实例；禁止 Bearer 凭据被 HTTP 3xx 重定向给未知主机。
+	clientCopy := *client
+	clientCopy.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	return &Client{baseURL: strings.TrimRight(config.BaseURL, "/"), bearerToken: config.BearerToken, httpClient: &clientCopy}
 }
 
 // Allocate（原子分配GameServer）向Agones创建临时GameServerAllocation资源并解析Allocated结果。
@@ -171,8 +220,11 @@ func (c *Client) Allocate(ctx context.Context, input AllocationInput) (Allocatio
 	if err != nil {
 		return AllocationResult{}, fmt.Errorf("序列化Agones分配请求失败: %w", err)
 	}
-	if c.baseURL == "" {
-		return AllocationResult{}, errors.New("Agones Kubernetes API BaseURL不能为空")
+	parsedURL, err := url.Parse(c.baseURL)
+	if err != nil || parsedURL.Scheme != "https" || parsedURL.Host == "" ||
+		parsedURL.User != nil || parsedURL.RawQuery != "" || parsedURL.Fragment != "" ||
+		(parsedURL.Path != "" && parsedURL.Path != "/") {
+		return AllocationResult{}, errors.New("Agones Kubernetes API必须是无凭据、无路径的HTTPS端点")
 	}
 	endpoint := c.baseURL + "/apis/allocation.agones.dev/v1/namespaces/" + url.PathEscape(input.Namespace) + "/gameserverallocations"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
@@ -193,7 +245,8 @@ func (c *Client) Allocate(ctx context.Context, input AllocationInput) (Allocatio
 		return AllocationResult{}, fmt.Errorf("读取Agones分配响应失败: %w", err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return AllocationResult{}, fmt.Errorf("Agones分配API返回HTTP %d: %s", resp.StatusCode, string(responseBody))
+		// 控制面异常响应可能携带凭据或内部对象，不在错误中回显服务器返回的正文。
+		return AllocationResult{}, fmt.Errorf("Agones分配API返回HTTP %d", resp.StatusCode)
 	}
 	var result GameServerAllocation
 	if err := json.Unmarshal(responseBody, &result); err != nil {
@@ -203,17 +256,23 @@ func (c *Client) Allocate(ctx context.Context, input AllocationInput) (Allocatio
 		return AllocationResult{}, fmt.Errorf("AGONES_NO_SERVER_ALLOCATED: state=%s", result.Status.State)
 	}
 	port := 0
+	foundGamePort := false
 	for _, candidate := range result.Status.Ports {
-		if candidate.Name == "game" {
-			port = candidate.Port
-			break
+		if candidate.Name != "game" {
+			continue
 		}
-		if port == 0 {
-			port = candidate.Port
+		if foundGamePort {
+			return AllocationResult{}, errors.New("Agones分配结果包含重复game端口")
 		}
+		foundGamePort = true
+		port = candidate.Port
 	}
-	if port <= 0 {
-		return AllocationResult{}, errors.New("Agones分配结果缺少可用GameServer端口")
+	// 不得回退到其他服务的 UDP/TCP 端口；连接端点必须能用于对局客户端。
+	if !foundGamePort {
+		return AllocationResult{}, errors.New("Agones分配结果缺少命名为game的端口")
+	}
+	if _, err := formatGameServerEndpoint(result.Status.Address, port); err != nil {
+		return AllocationResult{}, err
 	}
 	return AllocationResult{GameServerName: result.Status.GameServerName, Address: result.Status.Address, Port: port}, nil
 }
@@ -244,12 +303,17 @@ func (a *RegistryBackedAllocator) Allocate(ctx context.Context, req gameserver.A
 	if err != nil {
 		return gameserver.Instance{}, err
 	}
+	// 在更新 Registry 前先校验端点，避免把畸形 IPv6 或非游戏端口写入控制面。
+	publicEndpoint, err := formatGameServerEndpoint(result.Address, result.Port)
+	if err != nil {
+		return gameserver.Instance{}, err
+	}
 	allocated, err := a.registry.AllocateSpecific(result.GameServerName, req)
 	if err != nil {
 		return gameserver.Instance{}, err
 	}
-	// Agones返回的公网地址是分配时最可信连接地址，覆盖注册阶段可能仍是Pod内地址的Endpoint。
-	allocated.PublicEndpoint = fmt.Sprintf("%s:%d", result.Address, result.Port)
+	// Agones分配结果优先于注册时尚未就绪的连接端点；IPv6 必须附带方括号。
+	allocated.PublicEndpoint = publicEndpoint
 	a.registry.Register(allocated)
 	return allocated, nil
 }

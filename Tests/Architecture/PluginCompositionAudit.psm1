@@ -1,11 +1,48 @@
 ﻿Set-StrictMode -Version Latest
 
+function Get-CompositionTargetRuleSource {
+    <# 对字面量依赖的只读目标预处理：只求值完整的Target.Type ==/!= TargetType枚举if块。
+       不执行C#或UBT；未知表达式/else仍保守保留全部依赖。插值/原始字符串或预处理指令整源保留，
+       防止有限词法掩码误吞块外依赖。结构扫描忽略普通注释/字符串中的花括号，
+       保持字符位置后仅擦除确定不属于当前目标的块，不按模块名称或期望通过结果做特殊白名单。 #>
+    param([string]$Source, [string]$Target)
+    # 插值表达式允许嵌套字符串/花括号；原始字符串及预处理可能改变词法/结构，不能用普通字符串正则猜。
+    # 即使该语法只在注释中出现也保守不剪枝；代价仅为可能误报，不得漏掉真实客户端泄漏。
+    if ($Source -match '(?:\$+@?|@\$+)"|"{3}' -or $Source -match '(?m)^\s*#') { return $Source }
+    # C#普通/逐字字符串和字符常量均可能含花括号；它们只用于结构掩码，不参与条件识别。
+    $literalPattern = '(?s)//[^\r\n]*|/\*.*?\*/|@"(?:[^"]|"")*"|"(?:\\.|[^"\\])*"|''(?:\\.|[^''\\])*'''
+    $structure = [regex]::Replace($Source, $literalPattern, [Text.RegularExpressions.MatchEvaluator]{
+        param($literal) return (' ' * $literal.Length)
+    })
+    $characters = $Source.ToCharArray()
+    $conditionPattern = '\bif\s*\(\s*Target\.Type\s*(?<operator>==|!=)\s*TargetType\.(?<type>Editor|Client|Server|Game|Program)\s*\)\s*\{'
+    foreach ($condition in [regex]::Matches($structure, $conditionPattern)) {
+        $open = $condition.Index + $condition.Length - 1
+        $depth = 1; $end = $open + 1
+        while ($end -lt $structure.Length -and $depth -gt 0) {
+            if ($structure[$end] -eq '{') { $depth++ }
+            elseif ($structure[$end] -eq '}') { $depth-- }
+            $end++
+        }
+        # 非平衡或else语法不属于此限定求值器，仍让原审计发现全部字面量依赖而非猜测。
+        if ($depth -ne 0 -or $structure.Substring($end) -match '^\s*else\b') { continue }
+        $isActive = $Target -eq $condition.Groups['type'].Value
+        if ($condition.Groups['operator'].Value -eq '!=') { $isActive = -not $isActive }
+        if ($isActive) { continue }
+        for ($index = $condition.Index; $index -lt $end; $index++) {
+            if ($characters[$index] -ne "`r" -and $characters[$index] -ne "`n") { $characters[$index] = ' ' }
+        }
+    }
+    return (-join $characters)
+}
+
 function Test-PluginComposition {
     <#
     .SYNOPSIS
     只读计算指定目标的插件／模块声明闭包，验证可选竞技与端侧边界。
     .DESCRIPTION
-    读取.uplugin及Build.cs中的字面量依赖；不执行UBT、不分析资产或运行时加载。
+    读取.uplugin及Build.cs中的字面量依赖；仅过滤明确单Target.Type条件块，未知条件保守检查。
+    不执行UBT、不分析资产或运行时加载，不等价于完整C#规则求值。
     返回Passed、Errors、ReachablePlugins和ReachableModules；缺失、禁用、循环、反向或未声明依赖均失败。
     #>
     [CmdletBinding()]
@@ -99,6 +136,7 @@ function Test-PluginComposition {
         $rulePath = Join-Path $plugins[$owner].Directory "Source/$moduleName/$moduleName.Build.cs"
         if (-not (Test-Path -LiteralPath $rulePath -PathType Leaf)) { $errors.Add("缺少模块构建规则：$moduleName"); continue }
         $source = Get-Content -LiteralPath $rulePath -Raw -Encoding UTF8
+        $source = Get-CompositionTargetRuleSource -Source $source -Target $Target
         $pattern = '(?:Public|Private|DynamicallyLoaded)DependencyModuleNames\.Add(?:Range)?\s*\((?<body>.*?)\)\s*;'
         $declaredPlugins = @()
         $descriptor = $plugins[$owner].Descriptor

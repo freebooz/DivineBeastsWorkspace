@@ -7,9 +7,9 @@ function Get-PluginDemoSuitePolicy {
     <# 返回当前必需完整测试身份和模块；不得以旧二进制仅含的子集覆盖新清单。 #>
     param([ValidateSet('Demo','Review','LaunchPolicy')][string]$Suite='Demo')
     switch ($Suite) {
-        Demo { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.';Modules=@('DivineBeastsDemoClient','DivineBeastsFlowRuntime','GamePlatformData','GamePlatformUIClient');Tests=@('Definition','Catalog','Lifecycle','Menu','BirdScenario','Samples','Evidence','LaunchPolicy') | ForEach-Object { 'DivineBeasts.PluginDemos.'+$_ }} }
+        Demo { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient');Tests=@('Definition','Catalog','Lifecycle','Menu','BirdScenario','Samples','Evidence','LaunchPolicy') | ForEach-Object { 'DivineBeasts.PluginDemos.'+$_ }} }
         Review { [pscustomobject]@{Prefix='GamePlatform.DeveloperTools.';Modules=@('GamePlatformDeveloperTools');Tests=@('ReviewEvidence','Rules','Allowlist','ReportPath','ManualReview','PerformanceBaseline','Naming.BlueprintParentPrefixes','DefinitionIdentityContract') | ForEach-Object { 'GamePlatform.DeveloperTools.'+$_ }} }
-        LaunchPolicy { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.';Modules=@('DivineBeastsFlowRuntime');Tests=@('DivineBeasts.PluginDemos.LaunchPolicy')} }
+        LaunchPolicy { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.';Modules=@('DivineBeastsApplicationFlowClient');Tests=@('DivineBeasts.PluginDemos.LaunchPolicy')} }
     }
 }
 function Assert-PluginDemoRunResult {

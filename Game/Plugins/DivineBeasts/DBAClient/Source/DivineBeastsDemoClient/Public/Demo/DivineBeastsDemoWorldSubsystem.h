@@ -65,7 +65,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo|Weather")
     bool ApplyWeather(EGamePlatformWeatherType Weather, float TransitionSeconds);
 
-    /** 恢复本世界自演示进入后修改过的鸟群数值与天气，不影响其他实例。 */
+    /** 只恢复本控制器捕获的场景鸟群数值/天气；不停止Batch，失败保留记录，不影响其他实例。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo")
     bool ResetDemoChanges();
 
