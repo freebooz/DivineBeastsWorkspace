@@ -1,0 +1,122 @@
+# -*- coding: utf-8 -*-
+"""SSLM十二生肖占位技能资产UE5.8独立只读冷启动检查；不代表联机、Cook或人工视觉通过。"""
+import json
+from pathlib import Path
+import unreal
+
+HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
+          "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar")
+MODES = ("Primary", "Passive", "Fireball", "Frostbolt", "ArcaneMissiles")
+ROOT = "/DBAGameplay/Abilities/Placeholders"
+
+
+def inspect():
+    errors = []
+    def check(ok, message):
+        if not ok:
+            errors.append(message)
+    totals = {"heroes": 0, "definitions": 0, "sets": 0, "blueprints": 0,
+              "ui_profiles": 0, "grant_ids_verified": 0, "ui_entries_verified": 0,
+              "ga_definition_ids_verified": 0, "effects_verified": 0}
+    table = unreal.load_asset(ROOT + "/DT_DBA_PlaceholderBalance")
+    check(isinstance(table, unreal.DataTable), "占位数值表不存在")
+    if isinstance(table, unreal.DataTable):
+        rows = unreal.DataTableFunctionLibrary.get_data_table_row_names(table)
+        check(len(rows) == 60, "占位数值表不含实际60行")
+    def logical(obj):
+        return (str(obj.get_editor_property("Namespace")) + "." +
+                str(obj.get_editor_property("Name")) + "@" +
+                str(obj.get_editor_property("LogicalVersion")))
+    for hero in HEROES:
+        hero_id = "Hero.Zodiac." + hero
+        set_id = "dba.abilityset." + hero.lower() + "_placeholder@1"
+        identity = unreal.load_asset("/DBAGameplay/Definitions/DA_Hero_Zodiac_" + hero)
+        ability_set = unreal.load_asset(ROOT + "/DA_DBA_" + hero + "_PlaceholderAbilitySet")
+        ui = unreal.load_asset("/DBAHeroPack_" + hero + "/UI/Abilities/DA_DBA_" +
+                               hero + "_PlaceholderUIProfile")
+        check(isinstance(identity, unreal.DivineBeastsHeroDefinition), hero + ":英雄资产不存在")
+        if identity:
+            check(str(identity.get_editor_property("DefaultAbilitySetId")) == set_id,
+                  hero + ":默认技能未接入")
+            totals["heroes"] += 1
+        check(isinstance(ability_set, unreal.GamePlatformAbilitySetDefinition), hero + ":技能集合不存在")
+        if ability_set:
+            totals["sets"] += 1
+            check(not ability_set.get_editor_property("bDevelopmentOnly"),
+                  hero + ":仍被开发门禁限制")
+            grants = list(ability_set.get_editor_property("Abilities"))
+            required = list(ability_set.get_editor_property("RequiredDefinitions"))
+            check(len(grants) == 5 and len(required) == 5, hero + ":五槽不完整")
+            expected_ids = {"dba.ability." + hero.lower() + "_placeholder_" + mode.lower() + "@1"
+                            for mode in MODES}
+            grant_ids = {logical(g.get_editor_property("AbilityId")) for g in grants}
+            depend_ids = {str(r.get_editor_property("PrimaryAssetName")) for r in required}
+            check(grant_ids == expected_ids, hero + ":授予技能身份不完整或出现重复")
+            check(depend_ids == expected_ids, hero + ":技能定义预热依赖缺失")
+            totals["grant_ids_verified"] += len(grant_ids & expected_ids)
+            for mode, grant in zip(MODES, grants):
+                class_ref = str(grant.get_editor_property("AbilityClass"))
+                check("GA_DBA_" + hero + "_Placeholder" + mode in class_ref,
+                      hero + "/" + mode + ":授权的真实GA类与技能身份不匹配")
+        check(isinstance(ui, unreal.DivineBeastsAbilityUIProfile), hero + ":UIProfile不存在")
+        if ui:
+            totals["ui_profiles"] += 1
+            entries = list(ui.get_editor_property("Entries"))
+            check(len(entries) == 5, hero + ":客户端图标配置不完整")
+            expected_ui_ids = {"dba.ability." + hero.lower() + "_placeholder_" + mode.lower() + "@1"
+                               for mode in MODES}
+            entry_ids = {str(entry.get_editor_property("AbilityId")) for entry in entries}
+            check(entry_ids == expected_ui_ids, hero + ":UI技能身份无法与GAS授权匹配")
+            for entry in entries:
+                check(bool(str(entry.get_editor_property("DisplayName")).strip()) and
+                      bool(str(entry.get_editor_property("Description")).strip()),
+                      hero + ":占位技能缺少真实中文名称和说明")
+                check("None" not in str(entry.get_editor_property("Icon")),
+                      hero + ":软引用图标尚未指向真实素材")
+            totals["ui_entries_verified"] += len(entry_ids & expected_ui_ids)
+        for mode in MODES:
+            path = ROOT + "/_DBA_" + hero + "_Placeholder" + mode
+            definition = unreal.load_asset(ROOT + "/DA" + path.rsplit("/", 1)[-1])
+            check(isinstance(definition, unreal.DivineBeastsAbilityDefinition),
+                  hero + "/" + mode + ":定义不存在")
+            totals["definitions"] += int(isinstance(definition, unreal.DivineBeastsAbilityDefinition))
+            ability_id = "dba.ability." + hero.lower() + "_placeholder_" + mode.lower() + "@1"
+            if isinstance(definition, unreal.DivineBeastsAbilityDefinition):
+                check(logical(definition.get_editor_property("LogicalId")) == ability_id,
+                      ability_id + ":真实技能逻辑ID不匹配")
+                check(str(definition.get_editor_property("HeroDefinitionId")) == hero_id,
+                      ability_id + ":实际技能归属生肖不一致")
+                check(len(definition.get_editor_property("LevelRowNames")) == 1,
+                      ability_id + ":缺少一级占位数值")
+            cls = unreal.EditorAssetLibrary.load_blueprint_class(
+                ROOT + "/GA" + path.rsplit("/", 1)[-1])
+            ok = cls is not None and isinstance(unreal.get_default_object(cls),
+                                                   unreal.DivineBeastsPlaceholderGameplayAbility)
+            check(ok, hero + "/" + mode + ":技能执行蓝图父类非法")
+            totals["blueprints"] += int(ok)
+            if ok:
+                cdo = unreal.get_default_object(cls)
+                pid = cdo.get_editor_property("AbilityDefinitionId")
+                check(str(pid.get_editor_property("PrimaryAssetName")) == ability_id,
+                      ability_id + ":真实GAS执行器主资产引用不匹配")
+                totals["ga_definition_ids_verified"] += 1
+                cost = cdo.get_editor_property("CostGameplayEffectClass")
+                cooldown = cdo.get_editor_property("CooldownGameplayEffectClass")
+                requires_effects = mode not in ("Primary", "Passive")
+                check(bool(cost) == requires_effects and bool(cooldown) == requires_effects,
+                      ability_id + ":成本或冷却GE与占位类别不一致")
+                totals["effects_verified"] += int(bool(cost) and bool(cooldown))
+    result = {"Status": "PASS" if not errors else "FAIL", "Counts": totals,
+              "Errors": errors, "NetworkVerified": False, "CookVerified": False}
+    report = Path(unreal.Paths.project_saved_dir()) / "Validation" / "VillageSkillPlaceholder20261013" / "ColdReadback.json"
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    unreal.log("SSLM_PLACEHOLDER_READBACK=" +
+               json.dumps({"Status": result["Status"], "Counts": totals,
+                           "Errors": errors[:12]}, ensure_ascii=False))
+    if errors:
+        raise RuntimeError("占位技能UE资产冷读失败: " + str(len(errors)))
+
+
+if __name__ == "__main__":
+    inspect()

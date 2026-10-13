@@ -88,7 +88,8 @@ def check_ownership() -> None:
            "AcquireDefinition(" in runtime and "ReleaseDefinition(DefinitionLease)" in runtime
            and "GetLeaseState(" in runtime)
     verify("UI只读取复制快照而不授予技能",
-           "GetLoadoutStateRef()" in ui and "LoadPrimaryAsset(" in ui
+           "GetLoadoutStateRef()" in ui and "AcquireResources(" in ui
+           and "ReleaseResources(" in ui
            and not any(x in ui for x in ("GiveAbility(", "ApplyGameplayEffectToTarget(",
                                        "ApplyGameplayEffectToSelf(", "CalculateDamageMagnitude(")))
     verify("图标只在客户端表现主资产中引用",
@@ -100,14 +101,19 @@ def check_wiring() -> None:
     arena = read(ARENA / "Private/Server/DivineBeastsArenaGameplayLifecycleAdapter.cpp")
     build = read(ARENA / "DivineBeastsArenaServer.Build.cs")
     pawn = read(ABILITIES / "Private/Characters/DivineBeastsGameplayCharacter.cpp")
+    base_pawn = read(GAMEPLAY / "Source/DivineBeastsCharactersRuntime/Private/Characters/DivineBeastsCharacter.cpp")
+    pawn_header = read(ABILITIES / "Public/Characters/DivineBeastsGameplayCharacter.h")
     panel = read(CLIENT_UI / "Private/Panels/Combat/DivineBeastsAbilityBarPanel.cpp")
     verify("竞技服务器真实出生路径装配项目可玩角色",
            "ADivineBeastsGameplayCharacter::StaticClass()" in arena
            and "DivineBeastsAbilitiesRuntime" in build)
-    verify("同一角色只组合平台ASC、身份及技能装配组件",
-           "CreateDefaultSubobject<UGamePlatformAbilitySystemComponent>" in pawn
+    verify("同一角色继承唯一平台ASC和身份，仅追加技能装配组件",
+           "CreateDefaultSubobject<UGamePlatformAbilitySystemComponent>" in base_pawn
+           and "CreateDefaultSubobject<UDivineBeastsCharacterComponent>" in base_pawn
+           and ": public ADivineBeastsCharacter" in pawn_header
            and "CreateDefaultSubobject<UDivineBeastsAbilityLoadoutComponent>" in pawn
-           and "CreateDefaultSubobject<UDivineBeastsCharacterComponent>" in pawn)
+           and "CreateDefaultSubobject<UGamePlatformAbilitySystemComponent>" not in pawn
+           and "CreateDefaultSubobject<UDivineBeastsCharacterComponent>" not in pawn)
     verify("技能栏订阅持有者Pawn改变且释放旧委托",
            "OnPossessedPawnChanged.AddUniqueDynamic" in panel
            and "OnPossessedPawnChanged.RemoveDynamic" in panel
@@ -149,12 +155,14 @@ def check_runtime_safety() -> None:
     platform_cpp = read(ROOT /
         "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/Source/GamePlatformAbilitySystem/Private/Components/GamePlatformAbilitySystemComponent.cpp")
 
-    # 必须在旧角色状态被重置之前通知授权组件，否则会漏掉 Ready -> NotReady 边沿。
+    # 清空服务器Ready后先撤旧技能，最后发布新身份，避免换角色期间保留上一身份的GAS授权。
     binding = source.split("bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext", 1)[-1]
-    notification = binding.find("ReadinessChanged.Broadcast(false)")
     invalidation = binding.find("bServerReady = false")
-    verify("可信角色重绑先广播旧技能失效再清空Ready",
-           notification >= 0 and invalidation > notification)
+    notification = binding.find("ReadinessChanged.Broadcast(false)")
+    identity_changed = binding.find("IdentityChanged.Broadcast()")
+    verify("可信角色重绑先撤销旧技能再发布新身份",
+           0 <= invalidation < notification < identity_changed
+           and "IsOriginalOperationCurrent()" in binding[notification:identity_changed])
 
     verify("平台GAS在原生技能列表复制完成后发布事件",
            "OnRep_ActivateAbilities() override" in platform_h
@@ -278,6 +286,27 @@ def check_assets_and_policy() -> None:
     cfg = read(ROOT / "Game/Config/DefaultGame.ini")
     verify("GamePlatformDefinition 扫描项目技能逻辑目录",
            '(Path="/DBAGameplay/Abilities")' in cfg)
+    # 仅在第三层扩展临时魔法的视觉回放；开发技能本身仍不能进入正式准入。
+    visual = read(BASE / "DBAClient/Source/DivineBeastsPresentationClient/Private/"
+                  "Adapters/DivineBeastsDevelopmentMagicPresentation.cpp")
+    placeholder = read(ABILITIES / "Private/Abilities/DivineBeastsPlaceholderGameplayAbility.cpp")
+    verify("正式Village占位冰火奥术仅以明确12生肖技能身份触发客户端Niagara",
+           "IsApprovedPlaceholderSpell(" in visual
+           and "DBAWorldPack_Village/Maps/L_Village_Start" in visual
+           and "Snapshot.AbilityId" in visual
+           and "bPlaceholderVillage" in visual
+           and 'TEXT("_placeholder_")' in visual
+           and 'CastStyle = TEXT("DBA.Development.Fireball")' in placeholder)
+    client_cook = read(ROOT / "Game/Config/Custom/FrontEndClient/DefaultGame.ini")
+    server_cook = read(ROOT / "Game/Config/Custom/VillageServer/DefaultGame.ini")
+    verify("临时法术Niagara和图标仅客户端显式Cook，Village服务器仍排除视觉资源",
+           '+DirectoriesToAlwaysCook=(Path="/DBAPresentationPack_Core/VFX/DevelopmentMagic")' in client_cook
+           and '+DirectoriesToAlwaysCook=(Path="/DBAUIPack_Core/UI/Abilities/MagicTests")' in client_cook
+           and '+DirectoriesToNeverCook=(Path="/DBAPresentationPack_Core/VFX/DevelopmentMagic")' in server_cook)
+    verify("开发魔法授权开关未因正式占位技能而删除",
+           "UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess()" in visual
+           and "!IsApprovedPlaceholderSpell(Snapshot.AbilityId, Name)" in visual
+           and "bDevelopment" in visual)
     old_rules = read(ROOT / "AGENTS.md")
     verify("尊重现行已取消玩法禁令",
            "禁止恢复" in old_rules and "Element" in old_rules and "共鸣" in old_rules)

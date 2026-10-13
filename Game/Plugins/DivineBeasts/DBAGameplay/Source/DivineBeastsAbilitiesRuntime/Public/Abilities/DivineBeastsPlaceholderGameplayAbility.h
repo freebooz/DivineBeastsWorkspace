@@ -1,0 +1,84 @@
+#pragma once
+
+#include "Abilities/DivineBeastsConfiguredGameplayAbility.h"
+#include "Types/GamePlatformCombatSpec.h"
+#include "Types/GamePlatformCombatProjectileMotion.h"
+#include "TimerManager.h"
+#include "DivineBeastsPlaceholderGameplayAbility.generated.h"
+
+/** EDivineBeastsPlaceholderAbilityMode（临时技能执行类型），后期由正式技能类取代。 */
+UENUM(BlueprintType)
+enum class EDivineBeastsPlaceholderAbilityMode : uint8
+{
+    Primary,       // 普通攻击：权威前向单体伤害
+    Passive,       // 被动：暂不实现，禁止主动释放
+    Fireball,      // 火焰弹：单枚直线弹体
+    Frostbolt,     // 寒冰箭：单枚直线弹体
+    ArcaneMissiles // 奥术飞弹：三枚螺旋连射弹体
+};
+
+/**
+ * 临时生肖技能执行器：只使用项目统一Definition、GAS成本/冷却及平台Combat/Projectile权威结果。
+ * 这是获得用户明确批准的可替换占位技能，不依赖开发技能开关，不冒充十二生肖最终技能设计。
+ * 行为类型由各英雄自己的蓝图CDO配置；各英雄独立AbilityId，不在这里推导生肖数值。
+ * 无Niagara或UI依赖；客户端只显示服务器复制的Cast和Projectile事实。
+ */
+UCLASS(Blueprintable)
+class DIVINEBEASTSABILITIESRUNTIME_API UDivineBeastsPlaceholderGameplayAbility
+    : public UDivineBeastsConfiguredGameplayAbility
+{
+    GENERATED_BODY()
+
+public:
+    UDivineBeastsPlaceholderGameplayAbility();
+
+    /** 普攻/被动/三类法术的临时行为；正式技能只需要在AbilitySet替换授权类。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
+    EDivineBeastsPlaceholderAbilityMode PlaceholderMode =
+        EDivineBeastsPlaceholderAbilityMode::Passive;
+
+    /** 客户端仅用于展示，投射物实际运动在服务器生成。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
+    FGamePlatformCombatProjectileMotion ProjectileMotion;
+
+    /** 单次激活生成数量，火球/冰箭为1，奥术为3。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder",
+        meta=(ClampMin="1", ClampMax="3"))
+    int32 ProjectileCount = 1;
+
+    /** 连射间隔，单发为0；不放宽平台投射物结算规则。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder",
+        meta=(ClampMin="0", Units="s"))
+    float ProjectileIntervalSeconds = 0.0f;
+
+    /** 使用既有能力GAS授予的冷却标签，禁止自行在客户端计时。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
+    FGameplayTagContainer PlaceholderCooldownTags;
+
+    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+        const FGameplayAbilityActorInfo* ActorInfo,
+        const FGameplayAbilityActivationInfo ActivationInfo,
+        const FGameplayEventData* TriggerEventData) override;
+
+    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
+        const FGameplayAbilityActorInfo* ActorInfo,
+        const FGameplayAbilityActivationInfo ActivationInfo,
+        bool bReplicateEndAbility, bool bWasCancelled) override;
+
+    virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle,
+        const FGameplayAbilityActorInfo* ActorInfo,
+        FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+
+    virtual const FGameplayTagContainer* GetCooldownTags() const override;
+
+private:
+    /** 本次激活的所有权代次，取消、死亡和重新激活时拒绝迟到弹体。 */
+    FGuid ActivationToken;
+    FGamePlatformCombatSpec CastSpec;
+    FName CastStyle = NAME_None;
+    int32 RemainingShots = 0;
+    int32 ReleasedShots = 0;
+    FTimerHandle BurstTimer;
+
+    void ReleaseNextProjectile();
+};

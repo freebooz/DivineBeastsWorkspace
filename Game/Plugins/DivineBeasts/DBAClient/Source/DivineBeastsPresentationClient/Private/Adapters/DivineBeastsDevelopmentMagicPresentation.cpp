@@ -19,6 +19,25 @@ FName MagicName(FName Style)
     if (Style == TEXT("DBA.Development.ArcaneMissiles")) return TEXT("ArcaneMissiles");
     return NAME_None;
 }
+
+/** 正式占位技能在Village可复用纯表现资源，但不能把开发技能授权门禁一并放开。 */
+bool IsApprovedPlaceholderSpell(FName AbilityId, FName Magic)
+{
+    if (Magic.IsNone() || AbilityId.IsNone()) return false;
+    const FString Id = AbilityId.ToString();
+    // 不根据任意网络样式推导资源路径；服务器只允许12名生肖自身的临时AbilityId。
+    const TCHAR* Heroes[] = {
+        TEXT("rat"), TEXT("ox"), TEXT("tiger"), TEXT("rabbit"),
+        TEXT("dragon"), TEXT("snake"), TEXT("horse"), TEXT("goat"),
+        TEXT("monkey"), TEXT("rooster"), TEXT("dog"), TEXT("boar")
+    };
+    const FString Suffix = FString(TEXT("_placeholder_")) + Magic.ToString().ToLower() + TEXT("@1");
+    for (const TCHAR* Hero : Heroes)
+    {
+        if (Id == FString(TEXT("dba.ability.")) + Hero + Suffix) return true;
+    }
+    return false;
+}
 FGameplayTag MagicSemantic(FName Name, bool bImpact)
 {
     return FGameplayTag::RequestGameplayTag(FName(*(TEXT("Presentation.DivineBeasts.Development.Magic.") +
@@ -30,9 +49,14 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
 {
     if (DevelopmentMagicWorld.Get() == World && DevelopmentMagicPack.IsValid()) return;
     UnbindDevelopmentMagicWorld();
+    // 开发魔法仍受原有双重显式开关限制。仅Village正式地图可以对批准的临时技能启用视觉回放；
+    // 非Village正式世界不会因用户拥有占位Definition而无条件预加载Niagara。
+    const bool bDevelopment = UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess();
+    const bool bPlaceholderVillage =
+        World && World->GetOutermost()->GetName() == TEXT("/DBAWorldPack_Village/Maps/L_Village_Start");
     if (bClosing || !World || World->bIsTearingDown || !World->IsGameWorld() || World->GetNetMode() == NM_DedicatedServer ||
         !GetLocalPlayer() || GetLocalPlayer()->GetWorld() != World ||
-        !UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess()) return;
+        (!bDevelopment && !bPlaceholderVillage)) return;
     DevelopmentMagicWorld = World;
     const FGuid BindingToken = FGuid::NewGuid(); DevelopmentMagicBindingToken = BindingToken;
     DevelopmentMagicSpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &ThisClass::HandleDevelopmentMagicSpawn));
@@ -123,6 +147,10 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
     if (Actor->IsActorBeingDestroyed()) { HandleDevelopmentMagicEndPlay(Actor,EEndPlayReason::Destroyed); return; }
     const FName Name = MagicName(Snapshot.PresentationStyleId);
     if (Name.IsNone()) return;
+    // 正式Village只接受十二生肖自身明确批准的_placeholder法术；否则仍须走原有开发许可。
+    // 仅放行客户端Niagara视觉，不影响GAS授予、技能成本/冷却、服务器命中或开发资产授权。
+    if (!UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess() &&
+        !IsApprovedPlaceholderSpell(Snapshot.AbilityId, Name)) return;
     Flight->StyleId = Snapshot.PresentationStyleId;
     if (Snapshot.bFinished)
     {
