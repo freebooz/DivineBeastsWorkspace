@@ -1,4 +1,4 @@
-# 《神兽联盟》天气真实资源P5实施证据（2026-10-10）
+# 《SSLM》天气真实资源P5实施证据（2026-10-10）
 
 项目：`DivineBeastsWorkspace`，主工程`Game/DivineBeastsArena.uproject`，引擎`F:\UnrealEngine-5.8.0-release`。
 范围：天气SourceArt技术美术纹理、原创天气基础音频、只读与将来UE导入流程；无新代码插件、无服务器玩法更改。

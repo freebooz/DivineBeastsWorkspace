@@ -1,13 +1,13 @@
-# 《神兽联盟》飞鸟、蝴蝶和鱼群正式打包与验收记录
+# 《SSLM》飞鸟、蝴蝶和鱼群正式打包与验收记录
 
 日期：2026-10-11  
-工作区：DivineBeastsWorkspace（神兽联盟工作空间）  
+工作区：DivineBeastsWorkspace（SSLM工作空间）  
 引擎：Unreal Engine 5.8（虚幻引擎5.8）  
 本次验证基线：main，3230708a（本轮读取时）。
 
 ## 已验证的工程与架构
 
-- GamePlatformVFX（游戏平台视觉特效插件）承载通用群落行为、Niagara（粒子特效系统）实例与资源生命周期；神兽联盟项目层配置物种及内容，纯表现不向DedicatedServer（专用服务器）复制。
+- GamePlatformVFX（游戏平台视觉特效插件）承载通用群落行为、Niagara（粒子特效系统）实例与资源生命周期；SSLM项目层配置物种及内容，纯表现不向DedicatedServer（专用服务器）复制。
 - UBT（虚幻构建工具）完整 Client/Server 目标日志均出现 `Result: Succeeded`。Client日志位于 `Saved/Validation/FoundationM0/d0e0d75f-1563-4132-9e30-1b3245ff6682/Build/Client/UBT.log`，Server日志位于 `Saved/Validation/FoundationM0/2dc35ef2-850a-4020-8b2c-0314f720fcc2/Build/Server/UBT.log`。与当时实际二进制及收据时间对应，服务器收据 `CustomConfig=DedicatedServer`。
 - 模拟算法原生回归17项通过，三层依赖和插件组合21项通过，容器审计器11项单元测试通过。
 - `Saved/Validation/Fauna/IntegrationReview.json`：蝶与鱼两物种各5种数量，共10组实际PIE GPU回读通过；停栖、惊扰、移动、显式重试、世界清理均有独立证据。

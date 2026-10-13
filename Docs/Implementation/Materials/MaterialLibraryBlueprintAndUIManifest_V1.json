@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-13",
+  "workspace": "DivineBeastsWorkspace",
+  "descriptionZH": "通用材质库插件演示与蓝图实际制作资产契约",
+  "maps": [
+    {
+      "area": "Surface",
+      "owner": "GamePlatformSurface",
+      "map": "/Game/Development/MaterialLibrary/Surface/Maps/L_DBA_MaterialLibrary_Surface_Review",
+      "reason": "雪苔藓、地形、道具和水面PBR函数对比"
+    },
+    {
+      "area": "VFX",
+      "owner": "GamePlatformVFX",
+      "map": "/Game/Development/MaterialLibrary/VFX/Maps/L_DBA_MaterialLibrary_VFX_Review",
+      "reason": "Niagara视觉材质函数，UV、能量、扭曲和溶解"
+    },
+    {
+      "area": "Project",
+      "owner": "DBAPresentationPack_Core",
+      "map": "/Game/Development/MaterialLibrary/Project/Maps/L_DBA_MaterialLibrary_Project_Review",
+      "reason": "十二生肖角色表现局部湿润、结冰、受击和魔纹"
+    },
+    {
+      "area": "UI",
+      "owner": "GamePlatformUI",
+      "map": "/Game/Development/MaterialLibrary/UI/Maps/L_DBA_MaterialLibrary_UI_Review",
+      "reason": "UserInterface材质域与主题统一性"
+    }
+  ],
+  "standBlueprint": {
+    "assetPath": "/Game/Development/MaterialLibrary/Blueprints/BP_DBA_MaterialLibraryReviewStand",
+    "assetClass": "Blueprint（蓝图）",
+    "parentClass": "/Script/Engine.Actor（原生Actor）",
+    "constructionBehaviorZH": "配置真实StaticMesh和材质属性，不连接后端，不计算游戏权威数据；实例由演示地图按审核材质赋值",
+    "components": [
+      {
+        "name": "PreviewMesh",
+        "class": "StaticMeshComponent（静态网格组件）",
+        "mesh": "/Engine/BasicShapes/Sphere",
+        "collision": "NoCollision",
+        "mobility": "Movable"
+      }
+    ],
+    "properties": [
+      {
+        "name": "ReviewMaterial",
+        "type": "MaterialInterface（材质接口软引用/可编辑）",
+        "editable": true
+      },
+      {
+        "name": "ReviewTitle",
+        "type": "Text（中文审查标题）",
+        "editable": true
+      }
+    ],
+    "tickEnabled": false,
+    "replicated": false,
+    "assetStatus": "待在UE5.8 Monolith中真实创建"
+  },
+  "uiWidget": {
+    "assetPath": "/DBAUIPack_Core/Development/MaterialLibrary/UI/WBP_DBA_MaterialLibraryReview",
+    "parentClass": "/Script/DivineBeastsDemoClient.DivineBeastsDemoHubWidget（项目开发演示Widget基类）",
+    "root": "CanvasPanel（界面画布）",
+    "hierarchy": [
+      "HeaderText（顶部标题）",
+      "ReturnButton（返回总览）",
+      "StatusText（检查状态）",
+      "ScrollBox（可滚动浏览）",
+      "UniformGridPanel（自适应网格容器）",
+      "UIReviewImageCards（12个含Image与中文说明的材质样板卡片）"
+    ],
+    "usesPlatformUITheme": true,
+    "domain": "UserInterface（界面专用材质域）",
+    "uiWidgetSpec": "Docs/Implementation/Materials/MaterialLibraryUIWidgetSpec_V1.json（83个独立控件标识与12种审核样板声明式树）",
+    "uiWidgetAuthor": "Tools/Unreal/UI/AuthorMaterialLibraryWidgetMonolith.py（真实UE5.8 Monolith作者，默认只读）",
+    "uiMaterialReviewAuthor": "Tools/Unreal/UI/AuthorMaterialLibraryUIReviewUE58.py（12份原生MD_UI独立审核UMaterial制作脚本，未运行）",
+    "requiredNativeBindings": ["ReturnButton（返回现有插件演示门户）", "OverlayFeedbackText（原生操作反馈）"],
+    "defaultReviewViewport": "1920x1080（PC开发预览；移动端适配仍待人工验收）",
+    "previewBrushAssetStatus": "仅声明12项审核材质目标，不提前绑定或加载尚未创建的UMaterial",
+    "forbidden": "不得由普通Python伪造WBP；须Monolith创建控件树、设置材质、编译保存和审查",
+    "assetStatus": "待Monolith UI资产接口真实创建"
+  },
+  "codeIntegration": [
+    "DivineBeastsDemoCatalogSubsystem::GuessOwningPlugin（映射开发材质地图到真实插件）",
+    "DivineBeastsDemoWorldSubsystem::RequestDemoOverlay（材质UI地图加载专属真实Widget）"
+  ],
+  "editingPhase": "先资源/蓝图制作；最后统一编译、Cook、GPU与人工验收"
+}

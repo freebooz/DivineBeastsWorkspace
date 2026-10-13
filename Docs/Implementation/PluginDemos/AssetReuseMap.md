@@ -1,37 +1,44 @@
-# 31张现有开发关卡复用映射（P0初查）
+# SSLM开发地图复用候选（Schema2派生）
 
-仅依据真实受版本控制的地图路径判断用途，**尚未执行UE地图打开和完整交互验收**。
+来源：PluginDemoManifest.json；只证实文件路径，不代表UE加载、交互或人工通过。
+历史/Content前缀已按Game/Content真实文件改为/Game；功能所有权留待逐场景审计。
 
-| 地图长包路径 | 候选归属 | 分类 | 当前验证 |
+| 地图包路径 | 分类 | 文件验证 | 运行/人工 |
 | --- | --- | --- | --- |
-| /Content/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview | GamePlatformVFX, DBAPresentationPack_Core | review_candidate | 未运行、未人工审核 |
-| /Content/Development/BirdFlock/Maps/L_DBA_BirdFlockReview | GamePlatformVFX, DBAPresentationPack_Core | review_candidate | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Maps/L_DBA_FallingFoliageReview | GamePlatformVFX, DBAPresentationPack_Core | review_candidate | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_AgeSafeFoliageGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoAgeCompilerGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoHlslCompilerGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_BothMotionFoliageGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_FoliageShaderIsolationReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_FoliageShaderMeshControlReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_NoOpMotionFoliageGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherBaselineGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherDerivedPBRGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSSSPBRGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSoftLightPBRGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherNoTintPBRGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherPearMasksCorrectGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherScaledDensityPBRGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRGameReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRNearReview | GamePlatformVFX, DBAPresentationPack_Core | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/Fauna/Maps/L_DBA_FaunaReview | GamePlatformVFX, DBAPresentationPack_Core | review_candidate | 未运行、未人工审核 |
-| /Content/Development/Foundation/Maps/L_AnimationHUD_CaptureBackup | GamePlatformApplicationFlow, GamePlatformData | diagnostic_probe | 未运行、未人工审核 |
-| /Content/Development/Foundation/Maps/L_FoundationBootstrap | GamePlatformApplicationFlow, GamePlatformData | foundation_development | 未运行、未人工审核 |
-| /Content/Development/Foundation/Maps/L_FoundationSandbox | GamePlatformApplicationFlow, GamePlatformData | foundation_development | 未运行、未人工审核 |
-| /Content/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1 | GamePlatformApplicationFlow, GamePlatformData | editor_validation | 未运行、未人工审核 |
-| /Content/Development/MossSnow/Maps/L_DBA_MossSnowReview | GamePlatformSurface, GamePlatformWeather | review_candidate | 未运行、未人工审核 |
-| /Content/Development/Snow/Maps/L_DBA_SnowReview | GamePlatformSurface, GamePlatformWeather | review_candidate | 未运行、未人工审核 |
-| /Content/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview | GamePlatformSurface, GamePlatformPCG | review_candidate | 未运行、未人工审核 |
-| /Content/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview | GamePlatformSurface, GamePlatformPCG | review_candidate | 未运行、未人工审核 |
-| /Content/Development/Terrain/Maps/L_DBA_CliffRock01MacroReview | GamePlatformSurface, GamePlatformPCG | review_candidate | 未运行、未人工审核 |
-| /Content/Development/Terrain/Maps/L_DBA_CliffRock01Review | GamePlatformSurface, GamePlatformPCG | review_candidate | 未运行、未人工审核 |
-| /Content/Development/Weather/Maps/L_DBA_WeatherReview | GamePlatformWeather, DBAWorlds | review_candidate | 未运行、未人工审核 |
+| /Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview | review_candidate | file_only | 未运行/未核验 |
+| /Game/Development/BirdFlock/Maps/L_DBA_BirdFlockReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Maps/L_DBA_FallingFoliageReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_AgeSafeFoliageGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoAgeCompilerGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoHlslCompilerGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_BothMotionFoliageGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_FoliageShaderIsolationReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_FoliageShaderMeshControlReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_NoOpMotionFoliageGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherBaselineGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherDerivedPBRGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSoftLightPBRGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSSSPBRGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherNoTintPBRGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherPearMasksCorrectGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherScaledDensityPBRGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRGameReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRNearReview | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/Fauna/Maps/L_DBA_FaunaReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/Maps/L_AnimationHUD_CaptureBackup | diagnostic_probe | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/Maps/L_FoundationBootstrap | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/Maps/L_FoundationSandbox | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1 | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/PluginReviews/Maps/L_GP_CombatReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/MossSnow/Maps/L_DBA_MossSnowReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub | review_candidate | file_only | 未运行/未核验 |
+| /Game/Development/Snow/Maps/L_DBA_SnowReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Terrain/Maps/L_DBA_CliffRock01MacroReview | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Terrain/Maps/L_DBA_CliffRock01Review | unclassified | file_only | 未运行/未核验 |
+| /Game/Development/Weather/Maps/L_DBA_WeatherReview | unclassified | file_only | 未运行/未核验 |

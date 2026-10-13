@@ -18,16 +18,16 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformFeedbackWidget
 
 public:
     /** 应用一条新的反馈请求，并通知 Blueprint 刷新视觉。 */
-    void ApplyFeedbackRequest(const FGamePlatformUIFeedbackRequest& InRequest);
+    virtual void ApplyFeedbackRequest(const FGamePlatformUIFeedbackRequest& InRequest);
 
     /**
      * 尝试与当前请求合并。
      * 平台只实现“同 MergeKey + 双方均允许 + 数值型”的安全合并，不猜测业务语义。
      */
-    bool MergeFeedbackRequest(const FGamePlatformUIFeedbackRequest& InRequest);
+    virtual bool MergeFeedbackRequest(const FGamePlatformUIFeedbackRequest& InRequest);
 
     /** 回收到对象池前清理瞬态请求。 */
-    void ResetFeedbackState();
+    virtual void ResetFeedbackState();
 
     UFUNCTION(BlueprintPure, Category="UI|Feedback")
     const FGamePlatformUIFeedbackRequest& GetFeedbackRequest() const

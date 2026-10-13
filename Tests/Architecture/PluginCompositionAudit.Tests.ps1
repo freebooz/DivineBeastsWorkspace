@@ -129,4 +129,64 @@ Describe '插件按目标装配及非竞技闭包审计' {
         $result.Passed | Should Be $false
         ($result.Errors -join "`n") | Should Match '模块不可用.*DBAOther'
     }
+
+    It 'Editor单目标条件依赖不误计入Client但Editor仍核查声明' {
+        # 只有可确定求值的完整Target.Type条件才能排除；声明夹具不启动UBT或生成UE资产。
+        $root = Join-Path $TestDrive 'editorCondition'
+        New-CompositionPlugin $root DBATest @(@{Name='GamePlatformReview';Enabled=$true;TargetAllowList=@('Editor')})
+        New-CompositionPlugin $root GamePlatformReview
+        $path = Join-Path $root 'Game/Plugins/GamePlatform/GamePlatformReview/GamePlatformReview.uplugin'
+        $descriptor = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        $descriptor.Modules[0].Type = 'Editor'
+        $descriptor | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path -Encoding UTF8
+        $rulePath = Join-Path $root 'Game/Plugins/DivineBeasts/DBATest/Source/DBATest/DBATest.Build.cs'
+        Set-Content -LiteralPath $rulePath -Encoding UTF8 -Value 'if (Target.Type == TargetType.Editor) { PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformReview" }); }'
+        (Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Client).Passed | Should Be $true
+        (Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Editor).Passed | Should Be $true
+        # Editor缺真实插件声明仍失败，不能把所有Editor引用一律忽略。
+        $pluginPath = Join-Path $root 'Game/Plugins/DivineBeasts/DBATest/DBATest.uplugin'
+        $definition = Get-Content -LiteralPath $pluginPath -Raw | ConvertFrom-Json
+        $definition.Plugins = @()
+        $definition | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $pluginPath -Encoding UTF8
+        (Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Editor).Passed | Should Be $false
+    }
+
+    It '注释伪条件及未知复合条件不能遮盖Client的Editor泄漏' {
+        # 注释、字符串不是条件；未实现的条件语法保持保守检查，不静默排除真实字面量依赖。
+        $root = Join-Path $TestDrive 'unknownCondition'
+        New-CompositionPlugin $root DBATest
+        New-CompositionPlugin $root GamePlatformReview
+        $path = Join-Path $root 'Game/Plugins/GamePlatform/GamePlatformReview/GamePlatformReview.uplugin'
+        $descriptor = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        $descriptor.Modules[0].Type = 'Editor'
+        $descriptor | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path -Encoding UTF8
+        $rulePath = Join-Path $root 'Game/Plugins/DivineBeasts/DBATest/Source/DBATest/DBATest.Build.cs'
+        foreach ($source in @(
+            '// if (Target.Type == TargetType.Editor) {',
+            'if (Target.Type == TargetType.Editor || Target.bBuildEditor) {',
+            'if (Target.Type == TargetType.Editor) {} else {'
+        )) {
+            Set-Content -LiteralPath $rulePath -Encoding UTF8 -Value ($source + "`n" + 'PrivateDependencyModuleNames.Add("GamePlatformReview"); }')
+            (Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Client).Passed | Should Be $false
+        }
+    }
+
+    It '插值及原始字符串不能让条件扫描吞掉块外客户端依赖' {
+        # 合法C#插值表达式内的嵌套字符串包含花括号；有限正则不能当完整词法器使用。
+        $root = Join-Path $TestDrive 'interpolatedString'
+        New-CompositionPlugin $root DBATest
+        New-CompositionPlugin $root GamePlatformReview
+        $path = Join-Path $root 'Game/Plugins/GamePlatform/GamePlatformReview/GamePlatformReview.uplugin'
+        $descriptor = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        $descriptor.Modules[0].Type = 'Editor'
+        $descriptor | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path -Encoding UTF8
+        $rulePath = Join-Path $root 'Game/Plugins/DivineBeasts/DBATest/Source/DBATest/DBATest.Build.cs'
+        foreach ($literal in @('$"{System.String.Concat("{", "x")}"', '"""{raw}"""', '$@"{System.String.Concat("{", "x")}"', '@$"{System.String.Concat("{", "x")}"')) {
+            $source = 'class Rules { void Setup() { if (Target.Type == TargetType.Editor) { var text = ' + $literal + '; } PrivateDependencyModuleNames.Add("GamePlatformReview"); } }'
+            Set-Content -LiteralPath $rulePath -Encoding UTF8 -Value $source
+            $result = Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Client
+            $result.Passed | Should Be $false
+            ($result.Errors -join "`n") | Should Match '模块不可用.*GamePlatformReview'
+        }
+    }
 }

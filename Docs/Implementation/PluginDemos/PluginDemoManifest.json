@@ -1,1707 +1,1262 @@
 {
-  "schema_version": 1,
-  "snapshot_date": "2026-10-12",
-  "git_head": "bad8db3a63c7a24f2fee8257387153d41c376b0e",
-  "provenance": [
-    "git ls-files",
-    "tracked .uplugin JSON",
-    "Docs/Architecture/游戏端插件清单设计.md"
-  ],
-  "warning": "发现性基线快照，不代表逐功能接口审计、UE运行验证或人工验收已通过。",
-  "counts": {
-    "code_plugins": 47,
-    "content_packs": 17,
-    "platform": 40,
-    "moba": 2,
-    "project": 5,
-    "existing_review_maps": 31
+  "schema_version": 2,
+  "snapshot_date": "2026-10-13",
+  "git_head": "eb1fe0e932967ce97078df12c8080cf5121c99b4",
+  "history": {
+    "path": "Docs/Implementation/PluginDemos/History/PluginDemoManifest.v1.json",
+    "git_revision": "eb1fe0e932967ce97078df12c8080cf5121c99b4",
+    "sha256": "b312fcf0e94fb2ac3d41e36c8b6c7ee12671053fecca2728e3a50df4c4f7749c"
   },
   "plugins": [
     {
-      "plugin_id": "DBAContentPack_Common",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/DBAContentPack_Common.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Boar",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/DBAHeroPack_Boar.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Dog",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/DBAHeroPack_Dog.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Dragon",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/DBAHeroPack_Dragon.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Goat",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/DBAHeroPack_Goat.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Horse",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/DBAHeroPack_Horse.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Monkey",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/DBAHeroPack_Monkey.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Ox",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/DBAHeroPack_Ox.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Rabbit",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/DBAHeroPack_Rabbit.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Rat",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/DBAHeroPack_Rat.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Rooster",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/DBAHeroPack_Rooster.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Snake",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/DBAHeroPack_Snake.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAHeroPack_Tiger",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/DBAHeroPack_Tiger.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAFrontEndPack",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/DBAFrontEndPack.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAPresentationPack_Core",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/DBAPresentationPack_Core.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAUIPack_Core",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/DBAUIPack_Core.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAWorldPack_Village",
-      "plugin_kind": "content_pack",
-      "architecture_layer": "Content",
-      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/DBAWorldPack_Village.uplugin",
-      "modules": [],
-      "can_contain_content": true,
-      "suggested_template": "AssetGallery",
-      "documented_feature_hint": "文档未覆盖，待功能级审计",
-      "documented_maturity": "待核查",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAArena",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Project",
-      "descriptor_path": "Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin",
-      "modules": [
-        {
-          "name": "DivineBeastsArenaRuntime",
-          "type": "Runtime"
-        },
-        {
-          "name": "DivineBeastsArenaClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "DivineBeastsArenaServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "项目竞技 Definition、项目 Eligibility（资格）、客户端竞技流程扩展和 MainArena 项目服务器适配；默认可选，关闭后公共项目闭包不依赖竞技。",
-      "documented_maturity": "项目实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAClient",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Project",
-      "descriptor_path": "Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin",
-      "modules": [
-        {
-          "name": "DivineBeastsApplicationFlowClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "DivineBeastsInputClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "DivineBeastsPresentationRuntime",
-          "type": "Runtime"
-        },
-        {
-          "name": "DivineBeastsPresentationClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "DivineBeastsUIClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "UIWidgetGallery",
-      "documented_feature_hint": "项目应用流程装配、`DivineBeasts.Input.*` 输入语义/Profile/事件桥、项目表现上下文／映射、UI 路由和 ViewModel；公共客户端不强制依赖竞技。",
-      "documented_maturity": "项目客户端核心部分实装／外部链路仍有阻断",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAGameplay",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Project",
-      "descriptor_path": "Game/Plugins/DivineBeasts/DBAGameplay/DBAGameplay.uplugin",
-      "modules": [
-        {
-          "name": "DivineBeastsRuntime",
-          "type": "Runtime"
-        },
-        {
-          "name": "DivineBeastsCharactersRuntime",
-          "type": "Runtime"
-        },
-        {
-          "name": "DivineBeastsAbilitiesRuntime",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "项目稳定身份、Shared（共享契约）目录、十二生肖 Hero Definition、Hero Catalog（英雄目录）、角色组件、创建 Provider 和出生初始化；不强制依赖竞技。",
-      "documented_maturity": "项目实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAServer",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Project",
-      "descriptor_path": "Game/Plugins/DivineBeasts/DBAServer/DBAServer.uplugin",
-      "modules": [
-        {
-          "name": "DBAServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "读取并校验三 ServerRole Profile（服务器角色配置）、Experience、地图与必需资源；调用 GamePlatformServer 完成 Register/Heartbeat/Ready/Drain。",
-      "documented_maturity": "项目实装／真实世界未就绪",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "DBAWorlds",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Project",
-      "descriptor_path": "Game/Plugins/DivineBeasts/DBAWorlds/DBAWorlds.uplugin",
-      "modules": [
-        {
-          "name": "DBAWorldsRuntime",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "`UDivineBeastsWorldDefinition（神兽联盟世界定义）`，约束 ServerRole（服务器角色）、Experience（体验）和可选 ArenaMode（竞技模式）一致性。",
-      "documented_maturity": "项目定义实装／内容未交付",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformApplicationFlow",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/GamePlatformApplicationFlow.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformApplicationFlow",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "GameInstance（游戏实例）作用域流程执行器；Definition、节点、分支、异步完成、有限重试、超时、取消、代次和跨地图生命周期。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformInput",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformInput/GamePlatformInput.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformInputClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "UIWidgetGallery",
-      "documented_feature_hint": "LocalPlayer作用域 Enhanced Input 服务；可扩展 SemanticId/Descriptor、平台 Built-in 公共语义、ProfileCompiler→CompactSlot、Context/Block/Binding租约、PC键鼠/手柄重绑定、移动Touch、设备族/DeviceRevision、跨端无障碍偏好、O(1)阻断缓存、Slot动作门禁、输入诊断和UI/Gameplay仲裁。旧Attack/AbilitySlot/TargetLock枚举仅兼容。",
-      "documented_maturity": "核心机制实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformLoading",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformLoading/GamePlatformLoading.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformLoading",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "UIWidgetGallery",
-      "documented_feature_hint": "冻结 DAG Loading Task（加载任务）图、Required/Optional/Degradable策略、Data Lease（数据租约）、WorldPresence屏障、按需低开销Ticker、运行诊断、订阅与可扩展任务工厂。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformLocalization",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformLocalization/GamePlatformLocalization.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformLocalizationClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "UIWidgetGallery",
-      "documented_feature_hint": "当前仅模块入口，尚无完整本地化运行体系。",
-      "documented_maturity": "预留",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformSave",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformSave/GamePlatformSave.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformSaveClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "GameInstance 级非权威本地存档服务；稳定逻辑 Key、Namespace Provider、双层版本、Schema 迁移、SHA-1 文件身份、CRC32 损坏检测、线程池异步 IO、同槽并发门禁、临时文件 Full Flush、主档替换、`.bak` 备份恢复和生命周期取消；禁止保存任何服务器权威或敏感数据。",
-      "documented_maturity": "核心机制实装／运行验收待补",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformSettings",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformSettings/GamePlatformSettings.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformSettingsRuntime",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformSettingsClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "GamePlatformSettingsServer",
-          "type": "ServerOnly"
-        },
-        {
-          "name": "GamePlatformSettingsEditor",
-          "type": "Editor"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "UIWidgetGallery",
-      "documented_feature_hint": "Runtime 已实现类型安全 Descriptor／Provider／Registry／分层解析／Snapshot／ChangeSet／Migration／异步持久化编排；Client 已实现 `UGameUserSettings` 设备设置事务与本地 User Profile；Server 已实现 INI／Environment／CommandLine 只读覆盖；Editor 已实现 Provider/Descriptor 校验。当前没有非测试 `IGamePlatformSettingsProvider`，因此 Runtime/Server 仍属框架能力，尚未成为项目设置唯一真源。",
-      "documented_maturity": "Client核心机制实装；Runtime/Server/Editor框架实装／生产接入待补",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformDebug",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/GamePlatformDebug.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformDebug",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformDebugClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "Development/Test（开发／测试）诊断、Debug Command（调试命令）、Gameplay Debugger（玩法调试器）、Provider Registry（提供者注册表）和客户端调试面板；Shipping（正式发行）裁剪。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformDeveloperTools",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/GamePlatformDeveloperTools.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformDeveloperTools",
-          "type": "Editor"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "EditorAuthoring",
-      "documented_feature_hint": "Data Validation（数据校验）、资产审计、命名／依赖／继承边界门禁、Commandlet（命令行工具）、CI（持续集成）规则、性能基线和统一 Review Harness（审核宿主）。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformTelemetry",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/GamePlatformTelemetry.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformTelemetry",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "Event/Metric（事件／指标）、Schema Registry（模式注册）、Sampling（采样）、Privacy Filter（隐私过滤）、Bounded Buffer（有界缓冲）、Network Sink（网络输出）、Trace（追踪）和传输接口。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformCore",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/GamePlatformCore.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformCore",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "平台中立 ID（标识）、结构化 ErrorCode（错误码）、Result（结果）、Version（版本）、VersionRange（兼容区间）、基础算法和日志契约；保持 Core/CoreUObject 最小依赖。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformData",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/GamePlatformData.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformData",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformDataEditor",
-          "type": "Editor"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "`UGamePlatformDefinitionBase（平台定义基类）`、稳定 Primary Asset（主资产）身份、统一 Asset Manager（资产管理器）、异步依赖加载、Demand Ledger（需求账本）、作用域 Lease（租约）、AssetRegistry 版本/依赖元数据、统一安全上限和实例级 Diagnostics（诊断）。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformLobby",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/GamePlatformLobby.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformLobby",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformLobbyClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "GamePlatformLobbyServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "当前只有三个模块入口；不代表独立 Lobby（大厅）服务器。",
-      "documented_maturity": "预留／条件保留",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformVillage",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/GamePlatformVillage.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformVillage",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformVillageClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "GamePlatformVillageServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "当前只有三个模块入口。",
-      "documented_maturity": "候选收敛",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformAI",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/GamePlatformAI.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformAI",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformAIServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "AI Definition、状态／目标组件、感知、稳定目标选择、BehaviorTree/Blackboard（行为树／黑板）、Patrol/Chase/Attack/ReturnHome（巡逻／追击／攻击／返回）和服务器权威执行。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformAbilitySystem",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/GamePlatformAbilitySystem.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformAbilitySystem",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "基于原生 GAS（Gameplay Ability System，游戏能力系统）的 ASC、Ability Set（能力集）、Grant Ledger（授权账本）、标签、输入桥接、Activation Gate（激活门禁）和 AvatarGeneration（化身代次）。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformAnimation",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/GamePlatformAnimation.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformAnimation",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformAnimationClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "当前运行代码仍为模块壳；已形成 3A 动画实施规格。",
-      "documented_maturity": "规格待实现",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformCharacter",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/GamePlatformCharacter.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformCharacter",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "Hero Definition（英雄定义）、Definition Loader（定义加载）、Character Creation Provider（角色创建提供者）、模块化角色初始化器契约和跨层只读角色状态接口；空 `GamePlatformCharacterClient` 已移除。",
-      "documented_maturity": "核心基础已实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformCombat",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/GamePlatformCombat.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformCombat",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "Combat AttributeSet（战斗属性集）、Combat Component、Damage/Healing Execution（伤害／治疗执行）、GameplayEffect、护盾、控制、死亡、命中验证和 Combat Event。最终结果仅服务器 Authority（权威）产生。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformGameplay",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/GamePlatformGameplay.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformGameplay",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "Experience（体验）、Eligibility（资格）、Pawn Definition、GameMode/GameState/PlayerController 基类、可信加入、出生、玩家生命周期和复制快照。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformQuest",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/GamePlatformQuest.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformQuest",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformQuestClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "GamePlatformQuestServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "Quest/Objective Definition（任务／目标定义）、状态机、OwnerOnly Snapshot（仅拥有者快照）、客户端追踪、服务器事件索引、幂等、完成与持久化边界。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformOnline",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/GamePlatformOnline.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformOnline",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformOnlineClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "在线公开契约、认证 Provider（提供者）生命周期、配置、认证状态机、Profile（资料）、请求／结果和诊断基础。",
-      "documented_maturity": "部分实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformServer",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/GamePlatformServer.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "Dedicated Server（专用服务器）Register（注册）、Heartbeat（心跳）、Ready（就绪）、Drain（排空）、HTTP 控制 Provider 和 GameInstance 生命周期子系统。",
-      "documented_maturity": "核心基础已实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_id": "MobaPresentation",
+      "descriptor_path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin",
+      "architecture_layer": "Moba",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
       "plugin_id": "GamePlatformSession",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
       "descriptor_path": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/GamePlatformSession.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformSession",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "Private（私有）连接状态内核，包含 Join/Transfer/Reconnect（加入／迁移／重连）意图、代次、Deadline（截止）、Assignment（分配）和取消／失败规则。",
-      "documented_maturity": "未完成／最高优先级阻断",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
       "plugin_id": "GamePlatformCommerceUI",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
       "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/GamePlatformCommerceUI.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformCommerceUIClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "UIWidgetGallery",
-      "documented_feature_hint": "商业客户端子系统、Gateway HTTP Transport（网关HTTP传输）、ViewModel（视图模型）、页面和商业 UI 类型。",
-      "documented_maturity": "核心基础已实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformEntitlement",
-      "plugin_kind": "code_plugin",
+      "plugin_id": "GamePlatformServer",
+      "descriptor_path": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/GamePlatformServer.uplugin",
       "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/GamePlatformEntitlement.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformEntitlement",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformEntitlementClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "Entitlement Definition（权益定义）、查询、客户端子系统、Gateway 传输和客户端缓存类型。",
-      "documented_maturity": "核心基础已实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformEquipment",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/GamePlatformEquipment.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformEquipment",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformEquipmentClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "GamePlatformEquipmentServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "装备组件／定义、视觉定义／组件、服务器装备组件、GAS Grant Port（能力授予端口）和端侧拆分。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_id": "DBAArena",
+      "descriptor_path": "Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformInventory",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/GamePlatformInventory.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformInventoryClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "背包客户端子系统、Item Definition（物品定义）、Gateway 传输、筛选／投影所需类型；不拥有权威库存。",
-      "documented_maturity": "核心基础已实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_id": "DBAClient",
+      "descriptor_path": "Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "code",
+      "feature_audit_status": "partial"
     },
     {
-      "plugin_id": "GamePlatformLiveOps",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/GamePlatformLiveOps.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformLiveOpsClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "LiveOps 客户端子系统、Server Time Estimator（服务器时间估算）和 Gateway 传输基础。",
-      "documented_maturity": "部分实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_id": "DBAContentPack_Common",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/DBAContentPack_Common.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformProgression",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/GamePlatformProgression.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformProgression",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformProgressionClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "Progression Track Definition（成长轨道定义）、Snapshot Provider（快照提供者）、客户端子系统和 Gateway 传输。",
-      "documented_maturity": "核心基础已实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_id": "DBASFXPack_Core",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/DBASFXPack_Core.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformCamera",
-      "plugin_kind": "code_plugin",
+      "plugin_id": "GamePlatformAnimation",
+      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/GamePlatformAnimation.uplugin",
       "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/GamePlatformCamera.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformCameraClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "当前运行代码为模块壳；已形成 LocalPlayer 作用域 3A 相机实施规格。",
-      "documented_maturity": "规格待实现",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformPresentation",
-      "plugin_kind": "code_plugin",
+      "plugin_id": "GamePlatformOnline",
+      "descriptor_path": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/GamePlatformOnline.uplugin",
       "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/GamePlatformPresentation.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformPresentationCore",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformPresentationClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "中立 Presentation Request（表现请求）、Context（上下文）、Catalog（目录）、Provider 注册和客户端表现子系统。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformSFX",
-      "plugin_kind": "code_plugin",
+      "plugin_id": "GamePlatformAI",
+      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/GamePlatformAI.uplugin",
       "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSFX/GamePlatformSFX.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformSFXClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "当前运行代码为模块壳；已形成基于 UE Audio/MetaSounds（虚幻音频／MetaSounds）的完整实施规格。",
-      "documented_maturity": "规格待实现",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformSurface",
-      "plugin_kind": "code_plugin",
+      "plugin_id": "GamePlatformAbilitySystem",
+      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/GamePlatformAbilitySystem.uplugin",
       "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/GamePlatformSurface.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformSurfaceClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "GamePlatformSurfaceEditor",
-          "type": "Editor"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "环境表面状态、每世界MPC桥接、Blueprint/C++入口、八个稳定全局参数、真实MPC生成/校验Commandlet，以及雪／苔藓／湿润／积水／坡度／高度／世界噪声的通用材质资产合同。",
-      "documented_maturity": "核心机制实装／真实材质图待制作与验收",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAUIPack_Core",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/DBAUIPack_Core.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Tiger",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/DBAHeroPack_Tiger.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformGameplay",
+      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/GamePlatformGameplay.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformQuest",
+      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/GamePlatformQuest.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAFrontEndPack",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/DBAFrontEndPack.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAWorldPack_Village",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/DBAWorldPack_Village.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Snake",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/DBAHeroPack_Snake.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformCharacter",
+      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/GamePlatformCharacter.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformCombat",
+      "descriptor_path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/GamePlatformCombat.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAPresentationPack_Core",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/DBAPresentationPack_Core.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Ox",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/DBAHeroPack_Ox.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Dog",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/DBAHeroPack_Dog.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Dragon",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/DBAHeroPack_Dragon.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Boar",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/DBAHeroPack_Boar.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Rooster",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/DBAHeroPack_Rooster.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Horse",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/DBAHeroPack_Horse.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Goat",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/DBAHeroPack_Goat.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Rat",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/DBAHeroPack_Rat.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
     },
     {
       "plugin_id": "GamePlatformUI",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
       "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/GamePlatformUI.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformUIClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "UIWidgetGallery",
-      "documented_feature_hint": "Screen Definition（页面定义）、Route（路由）、Layer Stack（层栈）、Dialog（对话框）、Loading Screen（加载界面）、ViewModel 基类和 UI Manager Subsystem。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "partial"
     },
     {
-      "plugin_id": "GamePlatformVFX",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/GamePlatformVFX.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformVFXClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "GamePlatformVFXEditor",
-          "type": "Editor"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "统一 VFX 运行框架；10种行为 Definition、17类内容分类、Catalog/Resolver、GamePlatformData Lease、Niagara Executor（Niagara执行器）、实例句柄、池化、Scalability（伸缩）、复合效果和编辑器验证。",
-      "documented_maturity": "核心实装／内容未交付",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_id": "DBAHeroPack_Monkey",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/DBAHeroPack_Monkey.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "GamePlatformInteraction",
-      "plugin_kind": "code_plugin",
+      "plugin_id": "GamePlatformEquipment",
+      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/GamePlatformEquipment.uplugin",
       "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/GamePlatformInteraction.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformInteraction",
-          "type": "Runtime"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "Interactable/Interactor（可交互对象／交互者）组件、Focus Rule（焦点规则）、Eligibility Provider（资格提供者）和 Interaction Event（交互事件）。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
       "plugin_id": "GamePlatformNavigation",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
       "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/GamePlatformNavigation.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformNavigation",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformNavigationServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "Agent Profile（代理配置）、导航服务、Nav Area（导航区域）、Modifier（修改器）、Query Filter（查询过滤器）、Smart Link（智能链接）和世界子系统。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformPCG",
-      "plugin_kind": "code_plugin",
       "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformPCG/GamePlatformPCG.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformPCG",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformPCGEditor",
-          "type": "Editor"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "EditorAuthoring",
-      "documented_feature_hint": "当前已实装 PCG Profile（配置）、Bake Manifest（烘焙清单）、Graph Inspection（图检查）、Policy（策略）、World Subsystem（世界子系统）和 Editor Library（编辑器工具库）；1.0 已规划升级为 Schema（属性协议）+ Primitive（原语）+ Definition（定义）+ Template（模板）+ Priority（优先级）+ WorldDirector（世界编排）+ Validator（校验）统一底座。",
-      "documented_maturity": "核心基础已实装／1.0改造方案已形成／UE生产资产未验收",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformWeather",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformWeather/GamePlatformWeather.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformWeatherRuntime",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformWeatherClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "数据化天气预设、单世界服务器权威调度、量化过渡快照网络复制；客户端Surface桥接和VFX/SFX中立表现请求。",
-      "documented_maturity": "核心源码实施中／真实雨雪资源未交付",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "plugin_id": "GamePlatformWorld",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Platform",
-      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformWorld/GamePlatformWorld.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformWorld",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformWorldEditor",
-          "type": "Editor"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "ServiceDiagnostics",
-      "documented_feature_hint": "World/Region Definition（世界／区域定义）、World Context、区域注册、Streaming（流送）、Readiness（就绪）和 World Subsystem；不承担全局服务器分配。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
       "plugin_id": "GamePlatformArena",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Moba",
       "descriptor_path": "Game/Plugins/MobaCommon/GamePlatformArena/GamePlatformArena.uplugin",
-      "modules": [
-        {
-          "name": "GamePlatformMobaCore",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformMobaData",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformArena",
-          "type": "Runtime"
-        },
-        {
-          "name": "GamePlatformArenaClient",
-          "type": "ClientOnly"
-        },
-        {
-          "name": "GamePlatformArenaServer",
-          "type": "ServerOnly"
-        }
-      ],
-      "can_contain_content": true,
-      "suggested_template": "GameplaySandbox",
-      "documented_feature_hint": "MOBA通用竞技唯一插件；统一 1v1～5v5 MainArena（主竞技场）模式、竞技 Definition、Roster（名单）、阶段状态、比分/KDA、断线重连、弃权、结果构建和 Client/Server 适配。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "architecture_layer": "Moba",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
     },
     {
-      "plugin_id": "MobaPresentation",
-      "plugin_kind": "code_plugin",
-      "architecture_layer": "Moba",
-      "descriptor_path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin",
-      "modules": [
-        {
-          "name": "MobaPresentationRuntime",
-          "type": "Runtime"
-        },
-        {
-          "name": "MobaPresentationClient",
-          "type": "ClientOnly"
-        }
-      ],
-      "can_contain_content": false,
-      "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "将 Arena/Combat/Ability/Status/Character（竞技／战斗／技能／状态／角色）已确认事实转换成平台中立表现请求；不直接播放 Niagara、Sound（音效）或创建 Widget（界面）。",
-      "documented_maturity": "核心实装",
-      "feature_audit_status": "pending_detailed_audit",
-      "demo_implementation": "not_verified",
-      "manual_acceptance": "not_reviewed"
+      "plugin_id": "DBAWorlds",
+      "descriptor_path": "Game/Plugins/DivineBeasts/DBAWorlds/DBAWorlds.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformVillage",
+      "descriptor_path": "Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/GamePlatformVillage.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformLocalization",
+      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformLocalization/GamePlatformLocalization.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformLobby",
+      "descriptor_path": "Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/GamePlatformLobby.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAServer",
+      "descriptor_path": "Game/Plugins/DivineBeasts/DBAServer/DBAServer.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformWorld",
+      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformWorld/GamePlatformWorld.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformDeveloperTools",
+      "descriptor_path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/GamePlatformDeveloperTools.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformTelemetry",
+      "descriptor_path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/GamePlatformTelemetry.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformSettings",
+      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformSettings/GamePlatformSettings.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformInteraction",
+      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/GamePlatformInteraction.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformInput",
+      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformInput/GamePlatformInput.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformData",
+      "descriptor_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/GamePlatformData.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "partial"
+    },
+    {
+      "plugin_id": "GamePlatformDebug",
+      "descriptor_path": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/GamePlatformDebug.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformCore",
+      "descriptor_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/GamePlatformCore.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformLoading",
+      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformLoading/GamePlatformLoading.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformSave",
+      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformSave/GamePlatformSave.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformSurface",
+      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/GamePlatformSurface.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformWeather",
+      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformWeather/GamePlatformWeather.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformApplicationFlow",
+      "descriptor_path": "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/GamePlatformApplicationFlow.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformSFX",
+      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformSFX/GamePlatformSFX.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformProgression",
+      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/GamePlatformProgression.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformVFX",
+      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/GamePlatformVFX.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformPresentation",
+      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/GamePlatformPresentation.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformLiveOps",
+      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/GamePlatformLiveOps.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformCamera",
+      "descriptor_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/GamePlatformCamera.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAGameplay",
+      "descriptor_path": "Game/Plugins/DivineBeasts/DBAGameplay/DBAGameplay.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformPCG",
+      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformPCG/GamePlatformPCG.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformEntitlement",
+      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/GamePlatformEntitlement.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "GamePlatformInventory",
+      "descriptor_path": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/GamePlatformInventory.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAHeroPack_Rabbit",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/DBAHeroPack_Rabbit.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
     }
   ],
-  "existing_review_maps": [
+  "features": [
     {
-      "scenario_id": "map.l_dba_birdflockintegrationreview",
-      "asset_package": "/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "plugin_id": "DBAClient",
+      "title": "正式鸟群场景参数与局部恢复",
+      "purpose": "经正式SceneComponent/Presentation/Data/VFX链路提交鸟数；请求数与GPU实存数分开，只恢复本案例捕获的场景组件，不停止其他Batch。",
+      "implementation_status": "implemented",
+      "integration_status": "wired",
+      "run_status": "idle",
+      "review_status": "not_reviewed",
+      "owner_path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient",
+      "implementation_evidence": [
+        {
+          "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Demo/DivineBeastsDemoBirdControls.cpp",
+          "symbol": "UDivineBeastsDemoWorldSubsystem::ApplyBirdCount(int32)"
+        },
+        {
+          "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Demo/DivineBeastsDemoWorldSubsystem.cpp",
+          "symbol": "UDivineBeastsDemoWorldSubsystem::RestoreBirdEdits()"
+        }
+      ],
+      "scenario_ids": [
+        "DBAClient.BirdFlock.Count",
+        "DBAClient.BirdFlock.Reset"
+      ]
+    },
+    {
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "plugin_id": "GamePlatformUI",
+      "title": "事件驱动资源条",
+      "purpose": "真实平台资源条展示只读夹具数值；验证50/100比例、最大值0不除零/清空文本，失活与停止只恢复样板控件，不改玩家属性。",
+      "implementation_status": "implemented",
+      "integration_status": "wired",
+      "run_status": "idle",
+      "review_status": "not_reviewed",
+      "owner_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI",
+      "implementation_evidence": [
+        {
+          "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Public/Components/GamePlatformResourceBarWidget.h",
+          "symbol": "UGamePlatformResourceBarWidget::ApplyResourceState/GetResourceState"
+        },
+        {
+          "path": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Components/GamePlatformResourceBarWidget.cpp",
+          "symbol": "RefreshResourceValueText()"
+        }
+      ],
+      "scenario_ids": [
+        "GamePlatformUI.ResourceBar.Normal",
+        "GamePlatformUI.ResourceBar.InvalidMaximum"
+      ]
+    },
+    {
+      "feature_id": "GamePlatformData.Resources",
+      "plugin_id": "GamePlatformData",
+      "title": "中央资源共享租约与取消",
+      "purpose": "通过正式Data门面加载Engine Cube，验证两份独立需求共享、释放A后B仍可用和取消至多一次；停止只撤销本案例完整租约。",
+      "implementation_status": "implemented",
+      "integration_status": "wired",
+      "run_status": "idle",
+      "review_status": "not_reviewed",
+      "owner_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformData",
+      "implementation_evidence": [
+        {
+          "path": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformData/Public/Interfaces/IGamePlatformDataService.h",
+          "symbol": "AcquireResources/GetLeaseState/ReleaseResources"
+        },
+        {
+          "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Scenarios/DivineBeastsDemoDataLeaseScenario.cpp",
+          "symbol": "FDataLeaseScenario::Execute/Stop"
+        }
+      ],
+      "scenario_ids": [
+        "GamePlatformData.Resources.SharedLease",
+        "GamePlatformData.Resources.Cancel"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "DBAClient.BirdFlock.Count",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "title": "鸟群：数量提交",
+      "related_feature_ids": [],
+      "adapter_id": "BirdFlock",
+      "template": "PresentationLab",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformData",
+        "GamePlatformPresentation",
+        "GamePlatformVFX"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "真实IntegrationReview地图具备已注册鸟群组件与正式VFX目录资源，旧兼容修改已恢复"
+      ],
+      "map_asset": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Count",
+          "type": "integer",
+          "unit": "只（请求数，不是GPU存活数）",
+          "minimum": 0,
+          "maximum": 512,
+          "default_value": 32,
+          "default_source": "正式SceneComponent公开范围0..512；32为本案例开发夹具默认值，不是生产预算",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "DBAClient.BirdFlock.Count.Review"
+      ]
+    },
+    {
+      "scenario_id": "DBAClient.BirdFlock.Reset",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "title": "鸟群：局部恢复",
+      "related_feature_ids": [],
+      "adapter_id": "BirdFlock",
+      "template": "PresentationLab",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformData",
+        "GamePlatformPresentation",
+        "GamePlatformVFX"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "真实IntegrationReview地图具备已注册鸟群组件与正式VFX目录资源，旧兼容修改已恢复"
+      ],
+      "map_asset": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Count",
+          "type": "integer",
+          "unit": "只（请求数，不是GPU存活数）",
+          "minimum": 0,
+          "maximum": 512,
+          "default_value": 32,
+          "default_source": "正式SceneComponent公开范围0..512；32为本案例开发夹具默认值，不是生产预算",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "DBAClient.BirdFlock.Reset.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformUI.ResourceBar.Normal",
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "title": "资源条：50/100",
+      "related_feature_ids": [],
+      "adapter_id": "ResourceBar",
+      "template": "UIWidgetGallery",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformUI",
+        "GamePlatformData"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "资源条WBP及新页面已通过Monolith真实制作、编译、保存和重载；数值为开发夹具"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoResourceBar.WBP_DBA_PluginDemoResourceBar_C",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Current",
+          "type": "number",
+          "unit": "开发夹具数值",
+          "minimum": 0,
+          "maximum": 100,
+          "default_value": 50,
+          "default_source": "50/100明确开发夹具，不是平台业务上限",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Maximum",
+          "type": "number",
+          "unit": "开发夹具数值",
+          "minimum": 0,
+          "maximum": 100,
+          "default_value": 100,
+          "default_source": "最大值0拒绝除零；0..100仅本样板编辑区间",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GamePlatformUI.ResourceBar.Normal.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformUI.ResourceBar.InvalidMaximum",
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "title": "资源条：最大值0",
+      "related_feature_ids": [],
+      "adapter_id": "ResourceBar",
+      "template": "UIWidgetGallery",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformUI",
+        "GamePlatformData"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "资源条WBP及新页面已通过Monolith真实制作、编译、保存和重载；数值为开发夹具"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoResourceBar.WBP_DBA_PluginDemoResourceBar_C",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Current",
+          "type": "number",
+          "unit": "开发夹具数值",
+          "minimum": 0,
+          "maximum": 100,
+          "default_value": 50,
+          "default_source": "50/100明确开发夹具，不是平台业务上限",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Maximum",
+          "type": "number",
+          "unit": "开发夹具数值",
+          "minimum": 0,
+          "maximum": 100,
+          "default_value": 0,
+          "default_source": "最大值0拒绝除零；0..100仅本样板编辑区间",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GamePlatformUI.ResourceBar.InvalidMaximum.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformData.Resources.SharedLease",
+      "feature_id": "GamePlatformData.Resources",
+      "title": "Data：共享租约",
+      "related_feature_ids": [],
+      "adapter_id": "DataLease",
+      "template": "ServiceDiagnostics",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformData"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "本世界实际GamePlatformData服务可用，Engine Cube真实资源存在"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [],
+      "review_case_ids": [
+        "GamePlatformData.Resources.SharedLease.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformData.Resources.Cancel",
+      "feature_id": "GamePlatformData.Resources",
+      "title": "Data：真实取消",
+      "related_feature_ids": [],
+      "adapter_id": "DataLease",
+      "template": "ServiceDiagnostics",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformData"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式；正式登录与权威玩家数据不参与",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录已由UE生成并加载",
+        "本世界实际GamePlatformData服务可用，Engine Cube真实资源存在"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop",
+        "Reset"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [],
+      "review_case_ids": [
+        "GamePlatformData.Resources.Cancel.Review"
+      ]
+    }
+  ],
+  "review_cases": [
+    {
+      "review_case_id": "DBAClient.BirdFlock.Count.Review",
+      "version": 1,
+      "scenario_id": "DBAClient.BirdFlock.Count",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "steps": [
+        "进入鸟群场景案例，将Count设为32并提交Execute",
+        "观察请求结果与画面；GPU数量未读回必须显示未知",
+        "提交Stop，再检查原场景参数和已有Batch仍保持"
+      ],
+      "expected_result": "正式请求真实受理；GPU数量不伪造；Stop只恢复被捕获组件，其他Batch/天气不变。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "DBAClient.BirdFlock.Reset.Review",
+      "version": 1,
+      "scenario_id": "DBAClient.BirdFlock.Reset",
+      "feature_id": "DBAClient.BirdFlock.Count",
+      "steps": [
+        "进入鸟群复位案例，Execute修改Count",
+        "提交Reset后比较原场景参数",
+        "再次Stop；恢复失败必须保留记录并阻止正常返程"
+      ],
+      "expected_result": "仅本案例场景组件被恢复；恢复失败不得清空原值或改判成功，重复恢复不覆盖其他所有权。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformUI.ResourceBar.Normal.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformUI.ResourceBar.Normal",
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "steps": [
+        "进入资源条样板，提交Current=50和Maximum=100",
+        "观察真实进度与文本",
+        "Reset/Stop后检查控件原状态"
+      ],
+      "expected_result": "真实进度条比例0.5并显示开发夹具值；Reset/Stop恢复该控件，不修改任何角色属性。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformUI.ResourceBar.InvalidMaximum.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformUI.ResourceBar.InvalidMaximum",
+      "feature_id": "GamePlatformUI.ResourceBar",
+      "steps": [
+        "进入资源条非法上限案例，保持Current=50、Maximum=0并提交",
+        "观察真实进度和文字",
+        "提交Stop"
+      ],
+      "expected_result": "比例0、数值文字清空、不除零；真实资源条状态仍可只读，停止恢复原值。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformData.Resources.SharedLease.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformData.Resources.SharedLease",
+      "feature_id": "GamePlatformData.Resources",
+      "steps": [
+        "提交Execute取得两份真实Cube租约A/B",
+        "等待实际完成并释放A",
+        "确认B仍Succeeded、Cube仍驻留；Stop后仅本次租约Released"
+      ],
+      "expected_result": "A/B真实共享，释放A不撤销B；完整租约身份被核验，清理不卸载其他实例仍使用的资源。",
+      "required_evidence": [
+        "log",
+        "state_dump"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformData.Resources.Cancel.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformData.Resources.Cancel",
+      "feature_id": "GamePlatformData.Resources",
+      "steps": [
+        "提交Execute取得真实Cube租约并立即释放取消",
+        "等待正式取消通知",
+        "提交Stop并检查没有重复终态或遗留本次需求"
+      ],
+      "expected_result": "原始操作保存Cancelled而非成功；取消完成至多一次，已释放需求不影响其他调用者。",
+      "required_evidence": [
+        "log",
+        "state_dump"
+      ]
+    }
+  ],
+  "legacy_map_routes": [
+    {
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "scenario_ids": [
+        "GamePlatformUI.ResourceBar.Normal",
+        "GamePlatformUI.ResourceBar.InvalidMaximum",
+        "GamePlatformData.Resources.SharedLease",
+        "GamePlatformData.Resources.Cancel"
+      ],
+      "requires_selection": true
+    },
+    {
+      "map_asset": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
+      "scenario_ids": [
+        "DBAClient.BirdFlock.Count",
+        "DBAClient.BirdFlock.Reset"
+      ],
+      "requires_selection": true
+    }
+  ],
+  "discovered_maps": [
+    {
       "repository_path": "Game/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
       "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_birdflockreview",
-      "asset_package": "/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockReview",
       "repository_path": "Game/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_fallingfoliagereview",
-      "asset_package": "/Content/Development/FallingFoliage/Maps/L_DBA_FallingFoliageReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Maps/L_DBA_FallingFoliageReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/FallingFoliage/Maps/L_DBA_FallingFoliageReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_agesafefoliagegamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_AgeSafeFoliageGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_AgeSafeFoliageGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_AgeSafeFoliageGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_ambientpbr_noagecompilergamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoAgeCompilerGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoAgeCompilerGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoAgeCompilerGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_ambientpbr_nohlslcompilergamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoHlslCompilerGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoHlslCompilerGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoHlslCompilerGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_bothmotionfoliagegamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_BothMotionFoliageGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_BothMotionFoliageGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_BothMotionFoliageGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_foliageshaderisolationreview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_FoliageShaderIsolationReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_FoliageShaderIsolationReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_FoliageShaderIsolationReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_foliageshadermeshcontrolreview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_FoliageShaderMeshControlReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_FoliageShaderMeshControlReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_FoliageShaderMeshControlReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_noopmotionfoliagegamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_NoOpMotionFoliageGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_NoOpMotionFoliageGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_NoOpMotionFoliageGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weatherbaselinegamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherBaselineGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherBaselineGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherBaselineGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weatherderivedpbrgamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherDerivedPBRGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherDerivedPBRGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherDerivedPBRGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weatherneutralssspbrgamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSSSPBRGameReview",
-      "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSSSPBRGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
-      "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
-      "interactive_validation": "not_run",
-      "manual_acceptance": "not_reviewed"
-    },
-    {
-      "scenario_id": "map.l_dba_weatherneutralsoftlightpbrgamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSoftLightPBRGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSoftLightPBRGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSoftLightPBRGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weathernotintpbrgamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNoTintPBRGameReview",
+      "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSSSPBRGameReview.umap",
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSSSPBRGameReview",
+      "kind": "diagnostic_probe",
+      "asset_validation": "file_only",
+      "interactive_validation": "not_run",
+      "manual_acceptance": "not_reviewed"
+    },
+    {
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNoTintPBRGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherNoTintPBRGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weatherpearmaskscorrectgamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherPearMasksCorrectGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherPearMasksCorrectGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherPearMasksCorrectGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weatherscaleddensitypbrgamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherScaledDensityPBRGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherScaledDensityPBRGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherScaledDensityPBRGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weathertruepearpbrgamereview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRGameReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRGameReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRGameReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weathertruepearpbrnearreview",
-      "asset_package": "/Content/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRNearReview",
       "repository_path": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRNearReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
+      "asset_package": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRNearReview",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_faunareview",
-      "asset_package": "/Content/Development/Fauna/Maps/L_DBA_FaunaReview",
       "repository_path": "Game/Content/Development/Fauna/Maps/L_DBA_FaunaReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformVFX",
-        "DBAPresentationPack_Core"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Fauna/Maps/L_DBA_FaunaReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_animationhud_capturebackup",
-      "asset_package": "/Content/Development/Foundation/Maps/L_AnimationHUD_CaptureBackup",
       "repository_path": "Game/Content/Development/Foundation/Maps/L_AnimationHUD_CaptureBackup.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformApplicationFlow",
-        "GamePlatformData"
-      ],
+      "asset_package": "/Game/Development/Foundation/Maps/L_AnimationHUD_CaptureBackup",
       "kind": "diagnostic_probe",
-      "asset_validation": "git_path_only",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_foundationbootstrap",
-      "asset_package": "/Content/Development/Foundation/Maps/L_FoundationBootstrap",
       "repository_path": "Game/Content/Development/Foundation/Maps/L_FoundationBootstrap.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformApplicationFlow",
-        "GamePlatformData"
-      ],
-      "kind": "foundation_development",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Foundation/Maps/L_FoundationBootstrap",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_foundationsandbox",
-      "asset_package": "/Content/Development/Foundation/Maps/L_FoundationSandbox",
       "repository_path": "Game/Content/Development/Foundation/Maps/L_FoundationSandbox.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformApplicationFlow",
-        "GamePlatformData"
-      ],
-      "kind": "foundation_development",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Foundation/Maps/L_FoundationSandbox",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.pcg_goldlevel_m1",
-      "asset_package": "/Content/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1",
       "repository_path": "Game/Content/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformApplicationFlow",
-        "GamePlatformData"
-      ],
-      "kind": "editor_validation",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_mosssnowreview",
-      "asset_package": "/Content/Development/MossSnow/Maps/L_DBA_MossSnowReview",
+      "repository_path": "Game/Content/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase.umap",
+      "asset_package": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
+      "interactive_validation": "not_run",
+      "manual_acceptance": "not_reviewed"
+    },
+    {
+      "repository_path": "Game/Content/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview.umap",
+      "asset_package": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
+      "interactive_validation": "not_run",
+      "manual_acceptance": "not_reviewed"
+    },
+    {
+      "repository_path": "Game/Content/Development/Foundation/PluginReviews/Maps/L_GP_CombatReview.umap",
+      "asset_package": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_CombatReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
+      "interactive_validation": "not_run",
+      "manual_acceptance": "not_reviewed"
+    },
+    {
+      "repository_path": "Game/Content/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview.umap",
+      "asset_package": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
+      "interactive_validation": "not_run",
+      "manual_acceptance": "not_reviewed"
+    },
+    {
+      "repository_path": "Game/Content/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview.umap",
+      "asset_package": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
+      "interactive_validation": "not_run",
+      "manual_acceptance": "not_reviewed"
+    },
+    {
       "repository_path": "Game/Content/Development/MossSnow/Maps/L_DBA_MossSnowReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformSurface",
-        "GamePlatformWeather"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/MossSnow/Maps/L_DBA_MossSnowReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_snowreview",
-      "asset_package": "/Content/Development/Snow/Maps/L_DBA_SnowReview",
+      "repository_path": "Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap",
+      "asset_package": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "kind": "review_candidate",
+      "asset_validation": "file_only",
+      "interactive_validation": "not_run",
+      "manual_acceptance": "not_reviewed"
+    },
+    {
       "repository_path": "Game/Content/Development/Snow/Maps/L_DBA_SnowReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformSurface",
-        "GamePlatformWeather"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Snow/Maps/L_DBA_SnowReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_cliffrock01lowwarpbaselinereview",
-      "asset_package": "/Content/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview",
       "repository_path": "Game/Content/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformSurface",
-        "GamePlatformPCG"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_cliffrock01lowwarpvariantreview",
-      "asset_package": "/Content/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview",
       "repository_path": "Game/Content/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformSurface",
-        "GamePlatformPCG"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_cliffrock01macroreview",
-      "asset_package": "/Content/Development/Terrain/Maps/L_DBA_CliffRock01MacroReview",
       "repository_path": "Game/Content/Development/Terrain/Maps/L_DBA_CliffRock01MacroReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformSurface",
-        "GamePlatformPCG"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Terrain/Maps/L_DBA_CliffRock01MacroReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_cliffrock01review",
-      "asset_package": "/Content/Development/Terrain/Maps/L_DBA_CliffRock01Review",
       "repository_path": "Game/Content/Development/Terrain/Maps/L_DBA_CliffRock01Review.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformSurface",
-        "GamePlatformPCG"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Terrain/Maps/L_DBA_CliffRock01Review",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     },
     {
-      "scenario_id": "map.l_dba_weatherreview",
-      "asset_package": "/Content/Development/Weather/Maps/L_DBA_WeatherReview",
       "repository_path": "Game/Content/Development/Weather/Maps/L_DBA_WeatherReview.umap",
-      "linked_plugin_candidates": [
-        "GamePlatformWeather",
-        "DBAWorlds"
-      ],
-      "kind": "review_candidate",
-      "asset_validation": "git_path_only",
+      "asset_package": "/Game/Development/Weather/Maps/L_DBA_WeatherReview",
+      "kind": "unclassified",
+      "asset_validation": "file_only",
       "interactive_validation": "not_run",
       "manual_acceptance": "not_reviewed"
     }

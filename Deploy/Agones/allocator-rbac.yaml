@@ -1,0 +1,36 @@
+# Kubernetes 最小权限边界：Go 控制面才可创建 GameServerAllocation。
+# 此文件不部署或授予 UE 游戏进程 Kubernetes 凭据；实际 Go Deployment 另绑定 ServiceAccount。
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sslm-game-servers
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sslm-game-allocator
+  namespace: sslm-game-servers
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sslm-game-allocator
+  namespace: sslm-game-servers
+rules:
+  - apiGroups: ["allocation.agones.dev"]
+    resources: ["gameserverallocations"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sslm-game-allocator
+  namespace: sslm-game-servers
+subjects:
+  - kind: ServiceAccount
+    name: sslm-game-allocator
+    namespace: sslm-game-servers
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sslm-game-allocator

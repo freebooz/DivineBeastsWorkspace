@@ -1,0 +1,615 @@
+{
+  "schemaVersion": 1,
+  "group": "DivineBeastsCharacter",
+  "descriptionZH": "第三层十种角色材质特效，保留服务器权威与皮肤表现边界",
+  "functions": [
+    {
+      "id": "MAT-08-02",
+      "name": "ScalePatternBlend",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "生肖神兽鳞片双色纹理按鳞片遮罩混合，母版按英雄项目纹理赋值",
+      "pins": [
+        {
+          "name": "ScaleBaseColor",
+          "type": "V3",
+          "preview": [
+            0.27,
+            0.46,
+            0.38
+          ]
+        },
+        {
+          "name": "ScaleHighlight",
+          "type": "V3",
+          "preview": [
+            0.49,
+            0.64,
+            0.56
+          ]
+        },
+        {
+          "name": "ScalePatternMask",
+          "type": "S",
+          "preview": 0.7
+        },
+        {
+          "name": "Strength",
+          "type": "S",
+          "preview": 0.8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "ScaleBaseColor",
+            "ScaleHighlight",
+            [
+              "sat",
+              [
+                "mul",
+                "ScalePatternMask",
+                "Strength"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-04",
+      "name": "LeatherWear",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "兽皮甲护具的局部磨损色与环境污痕混合",
+      "pins": [
+        {
+          "name": "LeatherColor",
+          "type": "V3",
+          "preview": [
+            0.33,
+            0.2,
+            0.13
+          ]
+        },
+        {
+          "name": "WornColor",
+          "type": "V3",
+          "preview": [
+            0.44,
+            0.33,
+            0.22
+          ]
+        },
+        {
+          "name": "WearMask",
+          "type": "S",
+          "preview": 0.6
+        },
+        {
+          "name": "WearIntensity",
+          "type": "S",
+          "preview": 0.75
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "LeatherColor",
+            "WornColor",
+            [
+              "sat",
+              [
+                "mul",
+                "WearMask",
+                "WearIntensity"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-05",
+      "name": "FabricFiberDetail",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "角色服装细纤维颜色表现不复制骨骼动画或LOD机制",
+      "pins": [
+        {
+          "name": "FabricBaseColor",
+          "type": "V3",
+          "preview": [
+            0.33,
+            0.26,
+            0.4
+          ]
+        },
+        {
+          "name": "FiberTint",
+          "type": "V3",
+          "preview": [
+            0.42,
+            0.32,
+            0.47
+          ]
+        },
+        {
+          "name": "FiberNoise",
+          "type": "S",
+          "preview": 0.65
+        },
+        {
+          "name": "FiberStrength",
+          "type": "S",
+          "preview": 0.35
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "FabricBaseColor",
+            "FiberTint",
+            [
+              "sat",
+              [
+                "mul",
+                "FiberNoise",
+                "FiberStrength"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-06",
+      "name": "ClothingDirt",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "角色服装泥污局部遮罩随项目表现命令变化，无服务器权威影响",
+      "pins": [
+        {
+          "name": "CleanColor",
+          "type": "V3",
+          "preview": [
+            0.46,
+            0.39,
+            0.34
+          ]
+        },
+        {
+          "name": "DirtColor",
+          "type": "V3",
+          "preview": [
+            0.28,
+            0.22,
+            0.17
+          ]
+        },
+        {
+          "name": "DirtMask",
+          "type": "S",
+          "preview": 0.65
+        },
+        {
+          "name": "DirtIntensity",
+          "type": "S",
+          "preview": 0.7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "CleanColor",
+            "DirtColor",
+            [
+              "sat",
+              [
+                "mul",
+                "DirtMask",
+                "DirtIntensity"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-07",
+      "name": "CharacterWetness",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "角色局部湿润同时影响底色和粗糙度，防止只改底色无真实PBR反馈",
+      "pins": [
+        {
+          "name": "DryColor",
+          "type": "V3",
+          "preview": [
+            0.36,
+            0.37,
+            0.4
+          ]
+        },
+        {
+          "name": "WetTint",
+          "type": "V3",
+          "preview": [
+            0.23,
+            0.27,
+            0.3
+          ]
+        },
+        {
+          "name": "BaseRoughness",
+          "type": "S",
+          "preview": 0.72
+        },
+        {
+          "name": "GlobalWetness",
+          "type": "S",
+          "preview": 0.55
+        },
+        {
+          "name": "LocalExposure",
+          "type": "S",
+          "preview": 0.8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "DryColor",
+            "WetTint",
+            [
+              "sat",
+              [
+                "mul",
+                "GlobalWetness",
+                "LocalExposure"
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Roughness",
+          "expression": [
+            "sat",
+            [
+              "sub",
+              "BaseRoughness",
+              [
+                "mul",
+                0.4,
+                [
+                  "mul",
+                  "GlobalWetness",
+                  "LocalExposure"
+                ]
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-08",
+      "name": "CharacterSnow",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "英雄头肩积雪按向上朝向及真实雪环境可视值混色",
+      "pins": [
+        {
+          "name": "CharacterBaseColor",
+          "type": "V3",
+          "preview": [
+            0.34,
+            0.4,
+            0.39
+          ]
+        },
+        {
+          "name": "SnowColor",
+          "type": "V3",
+          "preview": [
+            0.91,
+            0.94,
+            0.97
+          ]
+        },
+        {
+          "name": "SnowAmount",
+          "type": "S",
+          "preview": 0.65
+        },
+        {
+          "name": "TopFacingMask",
+          "type": "S",
+          "preview": 0.82
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "CharacterBaseColor",
+            "SnowColor",
+            [
+              "sat",
+              [
+                "mul",
+                "SnowAmount",
+                "TopFacingMask"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-09",
+      "name": "CharacterIce",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "局部结冰对角色色彩和粗糙度同时作用，独立于权威减速效果",
+      "pins": [
+        {
+          "name": "BaseColor",
+          "type": "V3",
+          "preview": [
+            0.31,
+            0.34,
+            0.36
+          ]
+        },
+        {
+          "name": "IceColor",
+          "type": "V3",
+          "preview": [
+            0.47,
+            0.7,
+            0.78
+          ]
+        },
+        {
+          "name": "BaseRoughness",
+          "type": "S",
+          "preview": 0.73
+        },
+        {
+          "name": "FreezeAmount",
+          "type": "S",
+          "preview": 0.75
+        },
+        {
+          "name": "WetnessMask",
+          "type": "S",
+          "preview": 0.7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "BaseColor",
+            "IceColor",
+            [
+              "sat",
+              [
+                "mul",
+                "FreezeAmount",
+                "WetnessMask"
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Roughness",
+          "expression": [
+            "sat",
+            [
+              "sub",
+              "BaseRoughness",
+              [
+                "mul",
+                0.25,
+                [
+                  "mul",
+                  "FreezeAmount",
+                  "WetnessMask"
+                ]
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-10",
+      "name": "CharacterHitFlash",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "角色受击短促闪光只输出可视Emissive，与战斗数值无依赖",
+      "pins": [
+        {
+          "name": "HitTint",
+          "type": "V3",
+          "preview": [
+            0.89,
+            0.82,
+            0.57
+          ]
+        },
+        {
+          "name": "HitPulse",
+          "type": "S",
+          "preview": 0.75
+        },
+        {
+          "name": "Intensity",
+          "type": "S",
+          "preview": 2.4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Emissive",
+          "expression": [
+            "mul",
+            "HitTint",
+            [
+              "mul",
+              "HitPulse",
+              "Intensity"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-11",
+      "name": "CharacterMagicEmissive",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "十二生肖英雄项目专属魔法纹理发光颜色，权威技能仍归服务器",
+      "pins": [
+        {
+          "name": "MagicTint",
+          "type": "V3",
+          "preview": [
+            0.21,
+            0.77,
+            0.7
+          ]
+        },
+        {
+          "name": "RuneMask",
+          "type": "S",
+          "preview": 0.6
+        },
+        {
+          "name": "Intensity",
+          "type": "S",
+          "preview": 3.2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Emissive",
+          "expression": [
+            "mul",
+            "MagicTint",
+            [
+              "mul",
+              "RuneMask",
+              "Intensity"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-08-12",
+      "name": "CharacterDissolve",
+      "owner": "Project",
+      "folder": "Character",
+      "zh": "英雄视觉消散输出遮罩及边缘能量，Niagara负责粒子生命周期",
+      "pins": [
+        {
+          "name": "NoiseMask",
+          "type": "S",
+          "preview": 0.7
+        },
+        {
+          "name": "DissolveProgress",
+          "type": "S",
+          "preview": 0.4
+        },
+        {
+          "name": "EdgeWidth",
+          "type": "S",
+          "preview": 0.12
+        },
+        {
+          "name": "EdgeColor",
+          "type": "V3",
+          "preview": [
+            0.26,
+            0.79,
+            0.9
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Mask",
+          "expression": [
+            "sat",
+            [
+              "div",
+              [
+                "sub",
+                "NoiseMask",
+                "DissolveProgress"
+              ],
+              "EdgeWidth"
+            ]
+          ]
+        },
+        {
+          "name": "Emissive",
+          "expression": [
+            "mul",
+            "EdgeColor",
+            [
+              "sat",
+              [
+                "sub",
+                [
+                  "sat",
+                  [
+                    "div",
+                    [
+                      "sub",
+                      "NoiseMask",
+                      "DissolveProgress"
+                    ],
+                    "EdgeWidth"
+                  ]
+                ],
+                [
+                  "sat",
+                  [
+                    "div",
+                    [
+                      "sub",
+                      "NoiseMask",
+                      [
+                        "add",
+                        "DissolveProgress",
+                        "EdgeWidth"
+                      ]
+                    ],
+                    "EdgeWidth"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

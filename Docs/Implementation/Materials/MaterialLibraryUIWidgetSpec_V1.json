@@ -1,0 +1,948 @@
+{
+  "version": 1,
+  "name": "WBP_DBA_MaterialLibraryReview",
+  "parentClass": "/Script/DivineBeastsDemoClient.DivineBeastsDemoHubWidget",
+  "metadata": {
+    "authoringTool": "Monolith MCP（虚幻编辑器原生Widget蓝图制作）",
+    "assetDirectory": "/DBAUIPack_Core/Development/MaterialLibrary/UI",
+    "category": "Development/MaterialLibrary/UI（通用界面材质审核）",
+    "description": "12种平台UI材质效果的项目层开发审核页面；返回动作复用原UDivineBeastsDemoHubWidget。",
+    "language": "zh-CN",
+    "defaultViewport": "1920x1080",
+    "uiTheme": "翡翠绿、青玉、青铜金；深色中性审核背景",
+    "status": "仅规格，未创建Widget Blueprint、未编译或人工审核",
+    "previewMaterialPolicy": "各卡片Image的Brush仅在实际QA MD_UI材质创建后才绑定，不提前硬引用不存在的材质",
+    "pendingWidgetMaterialPaths": [
+      {
+        "nameZH": "圆角矩形",
+        "nameEN": "SDFRoundRect",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_SDFRoundRect_Review"
+      },
+      {
+        "nameZH": "渐变背景",
+        "nameEN": "GradientBackground",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_GradientBackground_Review"
+      },
+      {
+        "nameZH": "边框生成",
+        "nameEN": "BorderShape",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_BorderShape_Review"
+      },
+      {
+        "nameZH": "描边发光",
+        "nameEN": "OutlineGlow",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_OutlineGlow_Review"
+      },
+      {
+        "nameZH": "按钮扫光",
+        "nameEN": "ButtonShimmer",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_ButtonShimmer_Review"
+      },
+      {
+        "nameZH": "图标遮罩",
+        "nameEN": "IconMask",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_IconMask_Review"
+      },
+      {
+        "nameZH": "径向冷却",
+        "nameEN": "RadialCooldown",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_RadialCooldown_Review"
+      },
+      {
+        "nameZH": "血条渐变",
+        "nameEN": "HealthGradient",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_HealthGradient_Review"
+      },
+      {
+        "nameZH": "能量条流动",
+        "nameEN": "EnergyBarFlow",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_EnergyBarFlow_Review"
+      },
+      {
+        "nameZH": "选中发光",
+        "nameEN": "SelectionGlow",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_SelectionGlow_Review"
+      },
+      {
+        "nameZH": "按钮波纹",
+        "nameEN": "UIRipple",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_UIRipple_Review"
+      },
+      {
+        "nameZH": "界面溶解",
+        "nameEN": "UITransitionDissolve",
+        "reviewMaterial": "/Game/Development/MaterialLibrary/UI/Materials/M_DBA_UI_UITransitionDissolve_Review"
+      }
+    ]
+  },
+  "rootWidget": {
+    "type": "CanvasPanel",
+    "id": "RootCanvas",
+    "children": [
+      {
+        "type": "Border",
+        "id": "FullBackdrop",
+        "style": {
+          "background": "#101F2BF5",
+          "visibility": "HitTestInvisible"
+        },
+        "slot": {
+          "anchorPreset": "fill",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "x": 0,
+            "y": 0
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 0
+        }
+      },
+      {
+        "type": "Border",
+        "id": "TopHeaderFrame",
+        "style": {
+          "background": "#18303CFA",
+          "visibility": "HitTestInvisible"
+        },
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 24,
+            "y": 22
+          },
+          "size": {
+            "x": 1872,
+            "y": 112
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 2
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "HeaderText",
+        "content": {
+          "text": "神兽联盟 · 通用界面材质函数审核",
+          "fontSize": 27,
+          "fontColor": "#E6D6A5FF"
+        },
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 55,
+            "y": 43
+          },
+          "size": {
+            "x": 1250,
+            "y": 48
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "StatusText",
+        "content": {
+          "text": "12项平台UI函数  ·  本页面仅作开发审核，完成情况以真实资源和运行验证为准",
+          "fontSize": 15,
+          "fontColor": "#A9BAC3FF"
+        },
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 55,
+            "y": 91
+          },
+          "size": {
+            "x": 1260,
+            "y": 30
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 9
+        }
+      },
+      {
+        "type": "Button",
+        "id": "ReturnButton",
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "ReturnButtonText",
+            "content": {
+              "text": "返回插件演示总览",
+              "fontSize": 16,
+              "fontColor": "#E4E8E9FF"
+            }
+          }
+        ],
+        "style": {
+          "background": "#3F6864FF"
+        },
+        "slot": {
+          "anchorPreset": "top_right",
+          "position": {
+            "x": -247,
+            "y": 43
+          },
+          "size": {
+            "x": 218,
+            "y": 50
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 15
+        }
+      },
+      {
+        "type": "ScrollBox",
+        "id": "ReviewScroll",
+        "children": [
+          {
+            "type": "UniformGridPanel",
+            "id": "UIReviewImageCards",
+            "children": [
+              {
+                "type": "Border",
+                "id": "UIReviewCard_SDFRoundRect",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_SDFRoundRect",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_SDFRoundRect",
+                        "content": {
+                          "text": "圆角矩形",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_SDFRoundRect",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_SDFRoundRect",
+                        "content": {
+                          "text": "SDFRoundRect（平台几何遮罩）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_SDFRoundRect",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 0,
+                  "column": 0
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_GradientBackground",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_GradientBackground",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_GradientBackground",
+                        "content": {
+                          "text": "渐变背景",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_GradientBackground",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_GradientBackground",
+                        "content": {
+                          "text": "GradientBackground（线性颜色过渡）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_GradientBackground",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 0,
+                  "column": 1
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_BorderShape",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_BorderShape",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_BorderShape",
+                        "content": {
+                          "text": "边框生成",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_BorderShape",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_BorderShape",
+                        "content": {
+                          "text": "BorderShape（边线厚度遮罩）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_BorderShape",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 0,
+                  "column": 2
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_OutlineGlow",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_OutlineGlow",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_OutlineGlow",
+                        "content": {
+                          "text": "描边发光",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_OutlineGlow",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_OutlineGlow",
+                        "content": {
+                          "text": "OutlineGlow（边缘能量遮罩）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_OutlineGlow",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 0,
+                  "column": 3
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_ButtonShimmer",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_ButtonShimmer",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_ButtonShimmer",
+                        "content": {
+                          "text": "按钮扫光",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_ButtonShimmer",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_ButtonShimmer",
+                        "content": {
+                          "text": "ButtonShimmer（高光动态扫过）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_ButtonShimmer",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 1,
+                  "column": 0
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_IconMask",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_IconMask",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_IconMask",
+                        "content": {
+                          "text": "图标遮罩",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_IconMask",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_IconMask",
+                        "content": {
+                          "text": "IconMask（通用不透明度）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_IconMask",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 1,
+                  "column": 1
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_RadialCooldown",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_RadialCooldown",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_RadialCooldown",
+                        "content": {
+                          "text": "径向冷却",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_RadialCooldown",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_RadialCooldown",
+                        "content": {
+                          "text": "RadialCooldown（技能计时与进度）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_RadialCooldown",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 1,
+                  "column": 2
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_HealthGradient",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_HealthGradient",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_HealthGradient",
+                        "content": {
+                          "text": "血条渐变",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_HealthGradient",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_HealthGradient",
+                        "content": {
+                          "text": "HealthGradient（危险状态颜色）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_HealthGradient",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 1,
+                  "column": 3
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_EnergyBarFlow",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_EnergyBarFlow",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_EnergyBarFlow",
+                        "content": {
+                          "text": "能量条流动",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_EnergyBarFlow",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_EnergyBarFlow",
+                        "content": {
+                          "text": "EnergyBarFlow（流动条纹遮罩）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_EnergyBarFlow",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 2,
+                  "column": 0
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_SelectionGlow",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_SelectionGlow",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_SelectionGlow",
+                        "content": {
+                          "text": "选中发光",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_SelectionGlow",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_SelectionGlow",
+                        "content": {
+                          "text": "SelectionGlow（呼吸边缘强调）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_SelectionGlow",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 2,
+                  "column": 1
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_UIRipple",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_UIRipple",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_UIRipple",
+                        "content": {
+                          "text": "按钮波纹",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_UIRipple",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_UIRipple",
+                        "content": {
+                          "text": "UIRipple（交互扩散遮罩）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_UIRipple",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 2,
+                  "column": 2
+                }
+              },
+              {
+                "type": "Border",
+                "id": "UIReviewCard_UITransitionDissolve",
+                "children": [
+                  {
+                    "type": "VerticalBox",
+                    "id": "UIReviewContent_UITransitionDissolve",
+                    "children": [
+                      {
+                        "type": "TextBlock",
+                        "id": "Title_UITransitionDissolve",
+                        "content": {
+                          "text": "界面溶解",
+                          "fontSize": 19,
+                          "fontColor": "#E6D6A5FF"
+                        }
+                      },
+                      {
+                        "type": "Image",
+                        "id": "Preview_UITransitionDissolve",
+                        "style": {
+                          "brushTint": "#64BCA7FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Technical_UITransitionDissolve",
+                        "content": {
+                          "text": "UITransitionDissolve（透明过渡和边缘）",
+                          "fontSize": 12,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      },
+                      {
+                        "type": "TextBlock",
+                        "id": "Pending_UITransitionDissolve",
+                        "content": {
+                          "text": "待真实材质绑定与人工验收",
+                          "fontSize": 11,
+                          "fontColor": "#A9BAC3FF"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "style": {
+                  "background": "#1B343FFD",
+                  "border": "#3F6864FF"
+                },
+                "slot": {
+                  "row": 2,
+                  "column": 3
+                }
+              }
+            ]
+          }
+        ],
+        "style": {
+          "scrollBarVisibility": "Visible"
+        },
+        "slot": {
+          "anchorPreset": "fill",
+          "position": {
+            "x": 34,
+            "y": 162
+          },
+          "size": {
+            "x": 1852,
+            "y": 795
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 7
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "OverlayFeedbackText",
+        "content": {
+          "text": "操作状态：审核环境初始化中",
+          "fontSize": 14,
+          "fontColor": "#64BCA7FF"
+        },
+        "slot": {
+          "anchorPreset": "bottom_left",
+          "position": {
+            "x": 45,
+            "y": -100
+          },
+          "size": {
+            "x": 1150,
+            "y": 32
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 10
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "HelpText",
+        "content": {
+          "text": "提示：右上角可返回。所有材质均为开发审核资源，不参与专用服务器或正式玩法结算。",
+          "fontSize": 12,
+          "fontColor": "#A9BAC3FF"
+        },
+        "slot": {
+          "anchorPreset": "bottom_left",
+          "position": {
+            "x": 45,
+            "y": -61
+          },
+          "size": {
+            "x": 1660,
+            "y": 28
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "zOrder": 10
+        }
+      }
+    ],
+    "style": {
+      "visibility": "SelfHitTestInvisible"
+    }
+  }
+}

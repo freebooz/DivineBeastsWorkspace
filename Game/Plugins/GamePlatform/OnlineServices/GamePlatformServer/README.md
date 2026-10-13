@@ -65,3 +65,13 @@ Shared/Contracts/GamePlatform/OpenAPI/game-server-control.openapi.yaml（共享O
 HTTP准入提供者停止接纳后先解绑全部完成委托并取消自有请求，再在游戏线程以ServerAdmissionCancelled完成各操作；取消和关闭共享原一次终态门禁，完成回调不在锁内执行。模块卸载显式Shutdown，析构幂等兜底，启动失败也解绑委托。
 
 响应体在接收阶段累计进独立共享缓冲，沿用原32KiB上限，超限停止接收并明确失败；不等全量GetContent后才做限制。接收回调不捕获Provider，完成回调显式CompleteOnGameThread。Private/Tests/AdmissionShutdownTests.cpp验证未发送HTTP请求的关闭/取消，Native接收预算验证增量边界；这些不替代真实慢响应、重定向、模块卸载与网络端到端测试。最终本轮证据见Docs/Implementation/GamePlatformDesignRemediation/ExecutionProgress.md（工作空间根）。
+
+## 2026-10-13 Agones Sidecar 可选桥接
+
+现有 `GamePlatformServer`（平台服务器插件）在 `Private/Agones/GamePlatformAgonesBridgeSubsystem.*` 增加专服容器内的 Agones SDK REST 客户端。非 Agones 环境没有 `AGONES_SDK_HTTP_PORT` 时不创建子系统；平台不认识项目角色值，只订阅既有 `Ready`／`Draining`／`Stopped` 状态与权威人数采样，保持平台复用边界。SDK 仅访问 `127.0.0.1`，使用无重定向、限时、单飞请求，MainArena 分配仅由 Go 控制面原子创建 GameServerAllocation；可共享世界的首位真实玩家进入后调用本地 `/allocate` 保护活跃实例，不允许替代后端玩家分配。
+
+`OnPlayerCountSampled`（已校验在线人数事件）向 Counter（Beta容量计数）提供既有 10 秒周期采样；`AGONES_PLAYER_COUNTER_KEY` 为空时不执行 Counter。只在 Go 控制面和项目地图资源门禁确认后发送 `/ready`，只有调用 `CompleteDrain` 真正到 `Stopped` 才发送 `/shutdown`。Sidecar HTTP 2xx 并非 Kubernetes 状态最终一致性证据，不能将静态源码检查冒充真实 Sidecar 交互与 UE 编译。
+
+完整示例、RBAC、角色配置、Linux 容器启动、生产值替换和验收限制见 `Deploy/Agones/README.md`；测试脚本见 `Tests/Architecture/TestAgonesDeployment.py`。
+
+2026-10-13 续修：Agones SDK 每秒调度采用 Shutdown 最高优先级；Health 延迟超过两个调度周期时优先恢复，其余空闲周期推进 Ready／Allocate／Counter，避免健康间隔为 1 秒时状态和容量请求长期饥饿。新增 `Private/Tests/GamePlatformAgonesBridgeSchedulingTests.cpp`（只读的离线调度行为测试）；源码未通过 UE5.8 编译前不得标记为构建验证完成。

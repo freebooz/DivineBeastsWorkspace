@@ -2,6 +2,9 @@
 
 正式位置：`Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/`。
 
+2026-10-13通用材质能力台账：`../../../../../Docs/Implementation/Materials/MaterialFunctionLibraryIndex.md`（201项中文索引）；相邻`MaterialCapabilityRegistry_V1.json`（机器台账）、`MaterialOwnershipAndContracts.md`（三层合同）、`MaterialLayerCompositionPolicy.md`（雪、苔藓、湿润、冰层互斥规则）及`MaterialValidationEvidence.md`（验收证据）。七MF、两母版、八项MPC参数为既有稳定合同，实际Shader、UE资产保存回读须单独验证。
+
+
 本插件提供跨游戏复用的环境表面材质基础能力：统一客户端环境表面状态、每世界 MPC（Material Parameter Collection，材质参数集合）桥接，以及雪、苔藓、湿润、积水等通用材质资产合同。它不负责《神兽联盟》专属纹理、天气权威、PCG 生成、Niagara 特效、水体模拟、角色材质或服务器玩法判定。
 
 ## 模块

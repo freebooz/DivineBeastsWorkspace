@@ -94,6 +94,31 @@ type QuickbarCommand struct {
 	ItemInstanceID   string
 }
 
+// ConsumeCommand（可信消耗指令）由已验证的游戏服事件创建，普通客户端无法请求该路径。
+// ReasonCode使用服务端稳定事由（如item_use），操作号必须和此事件绑定以便幂等重放。
+type ConsumeCommand struct {
+	OperationID      string
+	ExpectedRevision int64
+	ItemInstanceID   string
+	Quantity         int32
+	ReasonCode       string
+	// 以下四项仅供可信GameServer事件消耗验证器使用，不能当作自行认证证据。
+	SourceEventID    string
+	GameServerID     string
+	ServerBootID     string
+	// 当前已准入的游戏、玩家连接世代与真实连接号，用于跨地图和重登栅栏。
+	GameID          string
+	SessionEpoch    int64
+	ConnectionID    string
+	ItemDefinitionID string
+}
+
+// TrustedConsumeAuthorizer（可信消耗授权端口）必须检查来源游戏服身份与玩家绑定及操作事由。
+// 生产未注入验证实现时拒绝消费；此端口绝不能由普通Gateway请求参数实现信任。
+type TrustedConsumeAuthorizer interface {
+	AuthorizeInventoryConsume(context.Context, string, ConsumeCommand) error
+}
+
 // Repository（背包仓储端口）保证每个Mutation在单一事务/写锁内完成并持久化Operation结果。
 type Repository interface {
 	GetSnapshot(context.Context, string) (Snapshot, error)
@@ -103,13 +128,28 @@ type Repository interface {
 	Merge(context.Context, string, MergeCommand) (MutationResult, error)
 	SetQuickbar(context.Context, string, QuickbarCommand) (MutationResult, error)
 	ClearQuickbar(context.Context, string, QuickbarCommand) (MutationResult, error)
+	// Consume（消耗）只由可信服务已完成授权后访问，不注册普通客户端HTTP路由。
+	Consume(context.Context, string, ConsumeCommand) (MutationResult, error)
+	// Grant（可信授予）必须由GrantTrusted验证游戏服与奖励事件来源，不允许公网绕过。
+	Grant(context.Context, string, GrantCommand, GrantRule) (MutationResult, error)
 	Probe(context.Context) error
 }
 
 // Service（背包领域服务）只负责输入约束与仓储编排；身份归属由上游Gateway/PlayerData可信链确定。
-type Service struct{ repo Repository }
+type Service struct {
+	repo                     Repository
+	trustedConsumeAuthorizer TrustedConsumeAuthorizer
+	trustedGrantAuthorizer   TrustedGrantAuthorizer
+}
 
+// NewService（普通背包服务）默认拒绝所有可信服务器专有消耗请求。
 func NewService(repo Repository) *Service { return &Service{repo: repo} }
+
+// NewTrustedService（可信背包服务）仅在经过正式服务器身份装配时使用，不能在公网Gateway创建。
+// Authorizer未实现时保持失败关闭，不因本地调试环境自动放行。
+func NewTrustedService(repo Repository, authorizer TrustedConsumeAuthorizer) *Service {
+	return &Service{repo: repo, trustedConsumeAuthorizer: authorizer}
+}
 
 func (s *Service) GetSnapshot(ctx context.Context, playerID string) (Snapshot, error) {
 	if err := validatePlayer(playerID); err != nil {
@@ -200,6 +240,27 @@ func (s *Service) ClearQuickbar(ctx context.Context, playerID string, cmd Quickb
 	return s.repo.ClearQuickbar(ctx, playerID, cmd)
 }
 
+// ConsumeTrusted（可信消耗）需要外部可信GameServer/Session绑定证明验证通过。
+// 本方法不对公网开放，只有获得已配置Authorizer认可的服务器事件才能进入事务写入。
+func (s *Service) ConsumeTrusted(ctx context.Context, playerID string, cmd ConsumeCommand) (MutationResult, error) {
+	if err := validateMutationBase(playerID, cmd.OperationID, cmd.ExpectedRevision); err != nil {
+		return MutationResult{}, err
+	}
+	if !validID(cmd.ItemInstanceID) || !validID(cmd.ReasonCode) || cmd.Quantity <= 0 {
+		return MutationResult{}, invalidQuantity()
+	}
+	if s == nil || s.repo == nil {
+		return MutationResult{}, unavailable()
+	}
+	if s.trustedConsumeAuthorizer == nil {
+		return MutationResult{}, consumeNotAllowed()
+	}
+	if err := s.trustedConsumeAuthorizer.AuthorizeInventoryConsume(ctx, playerID, cmd); err != nil {
+		return MutationResult{}, err
+	}
+	return s.repo.Consume(ctx, playerID, cmd)
+}
+
 func (s *Service) Probe(ctx context.Context) error {
 	if s == nil || s.repo == nil {
 		return unavailable()
@@ -274,6 +335,9 @@ func insufficientQuantity() error {
 }
 func idempotencyConflict() error {
 	return apperror.New("IDEMPOTENCY_CONFLICT", "OperationId已绑定不同背包请求", false)
+}
+func consumeNotAllowed() error {
+	return apperror.New("INVENTORY_CONSUME_NOT_ALLOWED", "未经可信服务器授权，不允许消耗物品", false)
 }
 func unavailable() error {
 	return apperror.New("SERVICE_UNAVAILABLE", "背包持久服务暂不可用", true)
@@ -478,6 +542,40 @@ func (r *MemoryRepository) ClearQuickbar(ctx context.Context, playerID string, c
 		})
 }
 
+// Consume（内存事务消耗）仅供可信服务端流程测试与本地联调；全量消耗同步撤销快捷栏引用。
+func (r *MemoryRepository) Consume(ctx context.Context, playerID string, cmd ConsumeCommand) (MutationResult, error) {
+	return r.mutate(ctx, playerID, cmd.OperationID, signature("consume", CanonicalConsumeCommand(cmd)), cmd.ExpectedRevision,
+		func(state *memoryState) (int32, int32, error) {
+			item, ok := state.items[cmd.ItemInstanceID]
+			if !ok {
+				return 0, 0, itemNotFound()
+			}
+			if item.InstanceState != "active" {
+				return 0, item.Quantity, consumeNotAllowed()
+			}
+			if cmd.ItemDefinitionID != "" && item.ItemDefinitionID != cmd.ItemDefinitionID {
+				return 0, item.Quantity, consumeNotAllowed()
+			}
+			if cmd.Quantity <= 0 || cmd.Quantity > item.Quantity {
+				return 0, item.Quantity, insufficientQuantity()
+			}
+			remaining := item.Quantity - cmd.Quantity
+			if remaining == 0 {
+				delete(state.items, cmd.ItemInstanceID)
+				for slot, entry := range state.quickbar {
+					if entry.ItemInstanceID == cmd.ItemInstanceID {
+						delete(state.quickbar, slot)
+					}
+				}
+			} else {
+				item.Quantity = remaining
+				item.Revision++
+				state.items[cmd.ItemInstanceID] = item
+			}
+			return cmd.Quantity, remaining, nil
+		})
+}
+
 func (r *MemoryRepository) Probe(ctx context.Context) error {
 	return ctx.Err()
 }
@@ -532,16 +630,14 @@ func (r *MemoryRepository) mutate(
 		result.Duplicate = true
 		return result, nil
 	}
-	if state.revision != expectedRevision {
+	if state.revision != expectedRevision || state.revision == math.MaxInt64 {
+		// 内存联调仓储必须在任何扣除/交换副作用之前拒绝不可递增的修订号。
 		return MutationResult{}, revisionConflict()
 	}
 
 	moved, remaining, err := apply(state)
 	if err != nil {
 		return MutationResult{}, err
-	}
-	if state.revision == math.MaxInt64 {
-		return MutationResult{}, revisionConflict()
 	}
 	state.revision++
 	result := MutationResult{

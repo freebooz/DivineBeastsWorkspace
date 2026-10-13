@@ -1,9 +1,17 @@
-# 《神兽联盟》统一插件演示中心实施执行计划（V1.0）
+# 《SSLM》统一插件演示中心实施执行计划（V1.0）
 
 > 编制日期：2026-10-12  
-> 工程：DivineBeastsWorkspace（神兽联盟工作空间），Game/DivineBeastsArena.uproject（正式主工程）  
+> 工程：DivineBeastsWorkspace（SSLM工作空间），Game/DivineBeastsArena.uproject（正式主工程）  
 > 引擎：Unreal Engine 5.8（虚幻引擎5.8）  
-> 状态：**待实施**。本文件是实施计划，并不代表其中代码、蓝图、地图或测试已完成。
+> 状态：**历史执行计划，实施以2026-10-13两份增量计划为准**。已有部分目录、入口和资源文件，不能继续把全部内容视为未创建，也不能据此认定功能已验收。
+
+## 2026-10-13 方案 A 衔接说明
+
+用户已确认“统一中心＋插件独立功能菜单＋按需共享关卡＋逐功能独立核验”，并于2026-10-13明确“规格通过”。正式设计见[插件演示中心设计规格](PluginDemos/PluginDemoCenterSpecification.md)；后续工作拆为[核心闭环实施计划](PluginDemos/PluginDemoCenterImplementationPlan.md)与[逐插件接入计划](PluginDemos/PluginDemoAdapterRolloutPlan.md)。执行计划待审阅，仍不包含构建或全量功能验收通过的授权/结论。
+
+本轮重新扫描为47个代码插件、18个内容包及37张开发地图文件；旧文中的47/17、31张地图属于2026-10-12基线，不作为当前覆盖率。新增的公共音效包DBASFXPack_Core必须纳入菜单；功能数仍需逐插件源码审计，不能由地图数量推算。
+
+原P0—P8保留历史追溯，不再作为并行的活动任务清单；增量计划已经明确已存在代码、待改接口与待生成资源，执行时仍需重新检查差异。第6节旧UI路径属于存量位置：新增项目演示UI归DBAUIPack_Core开发专用范围，旧资产按引用审计与Monolith迁移合同处理，不直接搬动二进制文件。P8构建/Cook仍为待授权门禁，当前“不构建”要求继续生效。
 
 ## 1. 目标与完成口径
 
@@ -24,7 +32,7 @@
 - DivineBeastsApplicationUIAdapter::Initialize（应用界面适配器初始化）有首次调用 StartFlow(false)（正式应用流程启动）的路径；单独变更启动地图不能确保绕过登录。
 - /Game/Development（开发目录）下已有31张受版本控制的关卡，涉及BirdFlock（鸟群）、Weather（天气）、Fauna（蝴蝶鱼群）、FallingFoliage（花瓣叶片）、MossSnow（苔藓积雪）、Terrain（地形）等，部分为技术探针，必须逐个审查复用资格。
 - GamePlatformDeveloperTools（平台开发者工具）是Editor模块；GamePlatformUI（平台UI）提供客户端控件基类；GamePlatformData（平台数据）负责唯一资产身份、异步加载与租约；DBAClient（项目客户端）拥有现有项目UI与应用流程组合。
-- 所有神兽联盟UI蓝图/页面/主题/RootLayout（根布局）必须使用锁定编辑器的 Monolith MCP（编辑器操作连接）生成、修改、编译、保存、回读；.uasset/.umap禁止通过脚本伪造。
+- 所有SSLMUI蓝图/页面/主题/RootLayout（根布局）必须使用锁定编辑器的 Monolith MCP（编辑器操作连接）生成、修改、编译、保存、回读；.uasset/.umap禁止通过脚本伪造。
 - 当前主工作树含其他会话未提交修改及活跃作业；开始前先检查git和进程/编辑器身份，文件责任明确后实施，绝不重置/清理他人改动。
 
 ## 3. 架构与技术决策
@@ -35,7 +43,7 @@
 
 **模式隔离**：演示模式必须在应用流程任何副作用前被解析、冻结并校验非Shipping、非Server、非Commandlet（命令工具）、显式允许配置和正确开发地图。除已知 UIAdapter::Initialize 外，审计 DBAGameInstance（游戏实例）、Foundation启动协调器、其他在线/会话自动初始化，确保不会暗中发起认证、角色或正式世界流程。普通客户端无标志时流程保持原样。
 
-**代码归属**：优先在 DBAClient 内规划 DivineBeastsDemoClient（神兽联盟开发演示客户端模块），但在P0首先验证 UE5.8 模块 TargetConfigurationAllowList（目标构建配置白名单）等真实能力，仅允许开发配置；不满足安全隔离则转为现有项目模块的受控条件编译/编辑器扩展。Editor工具保持平台中立，项目适配器只依赖被演示插件已公开的真实能力，不复制VFX、天气、动画、战斗、Data资产管理器。
+**代码归属**：优先在 DBAClient 内规划 DivineBeastsDemoClient（SSLM开发演示客户端模块），但在P0首先验证 UE5.8 模块 TargetConfigurationAllowList（目标构建配置白名单）等真实能力，仅允许开发配置；不满足安全隔离则转为现有项目模块的受控条件编译/编辑器扩展。Editor工具保持平台中立，项目适配器只依赖被演示插件已公开的真实能力，不复制VFX、天气、动画、战斗、Data资产管理器。
 
 **核心数据**：PluginDescriptor（插件条目）→DemoScenario（功能演示定义）→DemoSession（演示会话）→DemoEvidence（验收证据）。场景定义至少记录 PluginId、FeatureId、ScenarioId、所属层级、类型、地图/Widget/资产软引用、前置条件、参数类型与范围、操作/重置接口、错误与取消、网络/权威要求、人工验收标准。唯一性和有效性由真实.uplugin与AssetRegistry（资产注册表）检查，不维护互相矛盾的双清单。
 

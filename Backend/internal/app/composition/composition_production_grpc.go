@@ -6,6 +6,7 @@ import (
 	"context"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -82,7 +83,19 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	defer pool.Close()
 	service := playerdata.NewService(postgres.NewOnlinePlayerRepository(pool))
 	service.AttachInventory(inventory.NewService(postgres.NewInventoryRepository(pool)))
-	return runGRPCHost(ctx, cfg, func(server *grpc.Server) { grpcadapter.RegisterPlayerDataServer(server, service) })
+	processor, secret, err := configureTrustedInventory(service, pool)
+	if err != nil { return err }
+	// gRPC部署下保留最小HTTP运维监听器，额外只加受保护的可信GameServer事件路由。
+	// 不把普通PlayerData HTTP整理/查询接口额外暴露于gRPC部署中。
+	var trustedHTTP http.Handler
+	if processor != nil {
+		mux := http.NewServeMux()
+		mux.Handle("POST /internal/v1/playerdata/inventory/trusted-events",
+			httpadapter.NewTrustedInventoryEventHandler(processor, secret))
+		trustedHTTP = mux
+	}
+	return runGRPCHost(ctx, cfg,
+		func(server *grpc.Server) { grpcadapter.RegisterPlayerDataServer(server, service) }, trustedHTTP)
 }
 
 func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {
@@ -130,7 +143,7 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	})
 }
 
-func runGRPCHost(ctx context.Context, cfg config.ServiceConfig, register func(*grpc.Server)) error {
+func runGRPCHost(ctx context.Context, cfg config.ServiceConfig, register func(*grpc.Server), optionalHTTP ...http.Handler) error {
 	listener, err := net.Listen("tcp", net.JoinHostPort(cfg.BindAddress, strconv.Itoa(cfg.GRPCPort)))
 	if err != nil {
 		return err
@@ -143,7 +156,10 @@ func runGRPCHost(ctx context.Context, cfg config.ServiceConfig, register func(*g
 		grpcErr <- server.Serve(listener)
 	}()
 	httpErr := make(chan error, 1)
-	go func() { httpErr <- servicehost.Run(ctx, cfg, nil) }()
+	// 未选择可信事件HTTP端点时仍只暴露健康探针；其他gRPC服务行为不变。
+	var serviceHTTP http.Handler
+	if len(optionalHTTP) > 0 { serviceHTTP = optionalHTTP[0] }
+	go func() { httpErr <- servicehost.Run(ctx, cfg, serviceHTTP) }()
 	select {
 	case <-ctx.Done():
 		server.GracefulStop()

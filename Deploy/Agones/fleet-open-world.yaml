@@ -1,0 +1,86 @@
+# Agones Fleet（游戏服务器舰队）；演示模板，实际部署前须替换镜像、区域、版本和内部控制面地址。
+# 三种服务器角色共用 DivineBeastsArenaServer（SSLM 专服目标），仅启动 Profile 和地图不同。
+apiVersion: agones.dev/v1
+kind: Fleet
+metadata:
+  name: sslm-open-world
+  namespace: sslm-game-servers
+spec:
+  replicas: 0 # 初始空池，副本数由下方独立 FleetAutoscaler 接管。
+  scheduling: Packed
+  template:
+    metadata:
+      labels:
+        server-role: open-world
+        experience: Experience.OpenWorld.Hub
+        region: example-region
+        build-version: 1.0.0
+    spec:
+      container: sslm-dedicated-server
+      ports:
+        - name: game
+          portPolicy: Dynamic # Agones 分配宿主 UDP 端口，容器内部仍监听 7777。
+          containerPort: 7777
+          protocol: UDP
+      health:
+        disabled: false
+        initialDelaySeconds: 120 # 给启动器与真实 UE 世界加载留启动窗口；真实启动性能需要实测调整。
+        periodSeconds: 10
+        failureThreshold: 3
+      eviction:
+        safe: Never # 默认不允许节点缩容主动驱逐活跃玩家；Fleet 自身缩容仍需业务排空门禁。
+      counters:
+        players:
+          count: 0
+          capacity: 40 # 和 GAME_SERVER_CAPACITY 一致，否则容量策略会失真。
+      template:
+        spec:
+          terminationGracePeriodSeconds: 120 # 完整排空必须早于此期限，K8s 强制终止仍可能发生。
+          containers:
+            - name: sslm-dedicated-server
+              image: registry.example.invalid/sslm/dedicated-server:REPLACE_WITH_SIGNED_BUILD
+              imagePullPolicy: IfNotPresent
+              command: ["python3", "/opt/sslm/Deploy/Agones/launch_game_server.py"]
+              env:
+                - name: GAME_SERVER_ROLE
+                  value: "OpenWorld"
+                - name: GAME_SERVER_CAPACITY
+                  value: "40"
+                - name: GAME_SERVER_BUILD_VERSION
+                  value: "1.0.0"
+                - name: GAME_SERVER_PROTOCOL_VERSION
+                  value: "1" # 须与 UE/Go 协议实测发布版本一致。
+                - name: GAME_SERVER_REGION_ID
+                  value: "example-region"
+                - name: GAME_SERVER_WORKDIR
+                  value: "/opt/sslm"
+                - name: GAME_SERVER_EXECUTABLE
+                  value: "/opt/sslm/Game/Binaries/Linux/DivineBeastsArenaServer"
+                - name: GAME_SERVER_NODE_IP
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.hostIP
+                - name: AGONES_HEALTH_INTERVAL_SECONDS
+                  value: "4"
+                - name: AGONES_PLAYER_COUNTER_KEY
+                  value: "players"
+                - name: GAMESERVERCONTROL_BASE_URL
+                  value: "https://control.example.invalid" # 必须替换为可达的生产控制面。
+                - name: GAMESERVERCONTROL_INTERNAL_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: sslm-server-control
+                      key: token
+                - name: PLAYERDATA_BASE_URL
+                  value: "https://playerdata.example.invalid" # 新手村必需；不暴露公网接口。
+              ports:
+                - name: game
+                  containerPort: 7777
+                  protocol: UDP
+              resources:
+                requests:
+                  cpu: "1"
+                  memory: 2Gi
+                limits:
+                  cpu: "4"
+                  memory: 8Gi # 示例上限；需依据真实地图/人数负载复核。

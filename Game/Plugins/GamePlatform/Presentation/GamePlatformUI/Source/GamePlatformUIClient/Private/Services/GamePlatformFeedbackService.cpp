@@ -1,6 +1,8 @@
 #include "Services/GamePlatformFeedbackService.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/OverlaySlot.h"
 #include "Feedback/GamePlatformFeedbackWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "Layers/GamePlatformUILayerStack.h"
@@ -92,6 +94,12 @@ FGuid UGamePlatformFeedbackService::SubmitFeedback(
     {
         RecycleWidget(Widget);
         return FGuid();
+    }
+    // 根反馈层为Overlay：原点固定在本地玩家视口左上，不能让默认Fill拉伸浮字后再偏移。
+    if (UOverlaySlot* Slot = Cast<UOverlaySlot>(Widget->Slot))
+    {
+        Slot->SetHorizontalAlignment(HAlign_Left);
+        Slot->SetVerticalAlignment(VAlign_Top);
     }
 
     FActiveFeedback Entry;
@@ -254,7 +262,8 @@ bool UGamePlatformFeedbackService::ResolveInitialScreenPosition(
             ? LocalPlayer->GetPlayerController(GetServiceWorld())
             : nullptr;
     return IsValid(PlayerController) &&
-        PlayerController->ProjectWorldLocationToScreen(
+        UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(
+            PlayerController,
             Request.WorldLocation,
             Request.ScreenPosition,
             true);

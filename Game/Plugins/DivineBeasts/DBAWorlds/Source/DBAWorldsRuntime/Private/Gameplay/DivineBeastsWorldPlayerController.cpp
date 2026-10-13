@@ -10,6 +10,9 @@
 #include "Gameplay/DivineBeastsWorldControlState.h"
 #include "Components/InputComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/GamePlatformInteractableComponent.h"
+#include "Components/GamePlatformInteractorComponent.h"
+#include "HAL/PlatformTime.h"
 #include "Engine/GameViewportClient.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -19,6 +22,14 @@
 #include "Layout/WidgetPath.h"
 #include "Widgets/SViewport.h"
 #endif
+
+DECLARE_DELEGATE_OneParam(FDivineBeastsJournalInputDelegate, FName);
+
+ADivineBeastsWorldPlayerController::ADivineBeastsWorldPlayerController()
+{
+    auto* Interactor = CreateDefaultSubobject<UGamePlatformInteractorComponent>(TEXT("WorldInteractor"));
+    Interactor->SetLocalFocusPolicy(false, true);
+}
 
 void ADivineBeastsWorldPlayerController::SetupInputComponent()
 {
@@ -37,6 +48,14 @@ void ADivineBeastsWorldPlayerController::SetupInputComponent()
     InputComponent->BindAction(TEXT("DBA.Jump"), IE_Pressed, this, &ThisClass::BeginWorldJump);
     InputComponent->BindAction(TEXT("DBA.Jump"), IE_Released, this, &ThisClass::EndWorldJump);
     InputComponent->BindAction(TEXT("DBA.SystemMenu"), IE_Pressed, this, &ThisClass::RequestWorldMenu);
+    // 原生I键只作为世界UI意图；不在双端World模块实例化或操纵任何Widget。
+    InputComponent->BindAction(TEXT("DBA.Inventory"), IE_Pressed, this, &ThisClass::RequestWorldInventory);
+    InputComponent->BindAction(TEXT("DBA.Interact"), IE_Pressed, this, &ThisClass::BeginWorldInteraction);
+    InputComponent->BindAction(TEXT("DBA.Interact"), IE_Released, this, &ThisClass::EndWorldInteraction);
+    InputComponent->BindAction<FDivineBeastsJournalInputDelegate>(TEXT("DBA.CharacterInfo"), IE_Pressed, this, &ThisClass::RequestWorldJournal, FName(TEXT("Character")));
+    InputComponent->BindAction<FDivineBeastsJournalInputDelegate>(TEXT("DBA.MapQuest"), IE_Pressed, this, &ThisClass::RequestWorldJournal, FName(TEXT("MapQuest")));
+    InputComponent->BindAction<FDivineBeastsJournalInputDelegate>(TEXT("DBA.Spellbook"), IE_Pressed, this, &ThisClass::RequestWorldJournal, FName(TEXT("Spellbook")));
+    InputComponent->BindAction<FDivineBeastsJournalInputDelegate>(TEXT("DBA.Party"), IE_Pressed, this, &ThisClass::RequestWorldJournal, FName(TEXT("Party")));
 }
 
 bool ADivineBeastsWorldPlayerController::CanProcessWorldInput() const
@@ -102,6 +121,10 @@ void ADivineBeastsWorldPlayerController::ResetWorldInput()
     if (bResettingWorldInput) return;
     TGuardValue<bool> Guard(bResettingWorldInput, true);
     MouseButtonMask = 0;
+    bPointerClickPending = false;
+    PointerPressedTarget.Reset();
+    PointerTravelPixels = 0.f;
+    CurrentMouseCursor = EMouseCursor::Default;
     ForwardAxis = StrafeAxis = KeyboardTurnAxis = 0.f;
     RotationInput = FRotator::ZeroRotator;
     if (APawn* ControlledPawn = InputPawn.Get())
@@ -110,6 +133,7 @@ void ADivineBeastsWorldPlayerController::ResetWorldInput()
         if (auto* ControlledCharacter = Cast<ACharacter>(ControlledPawn)) ControlledCharacter->StopJumping();
         if (auto* ASC = ControlledPawn->FindComponentByClass<UGamePlatformAbilitySystemComponent>()) ASC->ClearAbilityInput();
     }
+    EndWorldInteraction();
     // 调基类避免Flush覆盖递归；释放也必须清空技能，丢失keyup不能留下WhileHeld请求。
     Super::FlushPressedKeys();
     ApplyVisibleCursorMode();
@@ -135,6 +159,7 @@ void ADivineBeastsWorldPlayerController::RefreshWorldInputPolicy()
     const bool bPawnChanged = InputPawn.Get() != GetPawn();
     if (bPawnChanged || bWorldInputActive != bActive)
     {
+        if (bPawnChanged || !bActive) SetSelectedWorldTarget(nullptr);
         ResetWorldInput();
         InputPawn = GetPawn();
         bWorldInputActive = bActive;
@@ -153,6 +178,8 @@ void ADivineBeastsWorldPlayerController::RefreshWorldInputPolicy()
     }
     // 引擎Ignore输入由多个系统共同计数；本世界只增减自身一次锁，不能清零别人的禁用请求。
     UpdateWorldInputLocks(!bActive);
+    if (auto* Interactor = FindComponentByClass<UGamePlatformInteractorComponent>())
+        Interactor->SetLocalFocusPolicy(bActive, true);
 }
 
 void ADivineBeastsWorldPlayerController::SetCameraMouseButton(bool bRight, bool bPressed)
@@ -160,6 +187,17 @@ void ADivineBeastsWorldPlayerController::SetCameraMouseButton(bool bRight, bool 
     // GameAndUI的未处理事件也可能来自按钮RMB或禁用按钮LMB。仅首次捕获查真实路径，
     // 已从世界开始的高精度拖动可接收第二个鼠标键；释放永远处理，不受命中/锁定变化阻挡。
     if (bPressed && (!CanProcessWorldLookInput() || (MouseButtonMask == 0 && !IsPointerOverWorldViewport()))) return;
+    if (bPressed && !bRight && MouseButtonMask == 0)
+    {
+        PointerPressedTarget = FindPointerTarget();
+        PointerPressedAtSeconds = FPlatformTime::Seconds();
+        PointerTravelPixels = 0.f;
+        bPointerClickPending = true; // 空白短按可清除目标；不是强制找到Actor才允许取消选择。
+    }
+    if (bRight) bPointerClickPending = false;
+    const bool bSelectOnRelease = !bPressed && !bRight && CanProcessWorldInput() &&
+        FDivineBeastsWorldControlState::IsSelectionClick(bPointerClickPending,
+            FPlatformTime::Seconds() - PointerPressedAtSeconds, PointerTravelPixels);
     FDivineBeastsWorldControlState State(MouseButtonMask);
     const bool bWasDragging = State.IsDragging();
     State.SetMouseButton(bRight, bPressed);
@@ -179,6 +217,14 @@ void ADivineBeastsWorldPlayerController::SetCameraMouseButton(bool bRight, bool 
         SetControlRotation(Facing);
     }
     if (bWasDragging && !State.IsDragging()) ApplyVisibleCursorMode();
+    if (!bPressed && !bRight)
+    {
+        bPointerClickPending = false;
+        // 恢复光标后再次验证UI遮挡和同一命中，避免按住期间目标移开/菜单出现导致误选。
+        if (bSelectOnRelease && IsPointerOverWorldViewport() && FindPointerTarget() == PointerPressedTarget.Get())
+            SetSelectedWorldTarget(PointerPressedTarget.Get());
+        PointerPressedTarget.Reset();
+    }
 }
 void ADivineBeastsWorldPlayerController::BeginLeftCameraDrag() { SetCameraMouseButton(false, true); }
 void ADivineBeastsWorldPlayerController::EndLeftCameraDrag() { SetCameraMouseButton(false, false); }
@@ -223,9 +269,24 @@ void ADivineBeastsWorldPlayerController::RequestWorldMenu()
     if (IsLocalController() && IsWorldGameplayActive()) OnWorldEscapeRequested.Broadcast();
 }
 
+void ADivineBeastsWorldPlayerController::RequestWorldInventory()
+{
+    // 不能在登录、角色入口、服务器角色或世界准备未完成时打开背包。
+    if (IsLocalController() && IsWorldGameplayActive())
+    {
+        OnWorldInventoryRequested.Broadcast();
+    }
+}
+
+void ADivineBeastsWorldPlayerController::RequestWorldJournal(FName Section)
+{
+    if (IsLocalController() && IsWorldGameplayActive()) OnWorldJournalRequested.Broadcast(Section);
+}
+
 void ADivineBeastsWorldPlayerController::PostProcessInput(float DeltaTime, bool bGamePaused)
 {
     Super::PostProcessInput(DeltaTime, bGamePaused);
+    RefreshPointerFeedback();
     if (!CanProcessWorldInput() || bGamePaused || !GetPawn()) return;
     const FDivineBeastsWorldControlState State(MouseButtonMask);
     const float TurnDegrees = IsLookInputIgnored() ? 0.f : State.ResolveTurn(KeyboardTurnAxis) * KeyboardTurnDegreesPerSecond * DeltaTime;
@@ -330,11 +391,76 @@ void ADivineBeastsWorldPlayerController::OnUnPossess()
 }
 void ADivineBeastsWorldPlayerController::EndPlay(const EEndPlayReason::Type Reason)
 {
-    ResetWorldInput(); InputPawn.Reset(); bWorldInputActive = false; OnWorldEscapeRequested.Clear();
+    SetSelectedWorldTarget(nullptr);
+    OnWorldTargetChanged.Clear();
+    ResetWorldInput(); InputPawn.Reset(); bWorldInputActive = false;
+    OnWorldEscapeRequested.Clear();
+    OnWorldInventoryRequested.Clear();
+    OnWorldJournalRequested.Clear();
     UpdateWorldInputLocks(false);
     OnPreparationChanged.RemoveAll(this); GetWorld()->GameStateSetEvent.RemoveAll(this);
     if(ObservedPlayer.IsValid()) ObservedPlayer->OnLifecycleChanged.RemoveAll(this);
     if(ObservedExperience.IsValid()) ObservedExperience->OnLocalResourcesPrepared.RemoveAll(this);
     if(ObservedCharacter.IsValid()) ObservedCharacter->OnReadinessChanged().RemoveAll(this);
     OnLocalWorldFactsChanged.Clear(); Super::EndPlay(Reason);
+}
+
+AActor* ADivineBeastsWorldPlayerController::FindPointerTarget() const
+{
+    if (!CanProcessWorldInput() || !GetWorld()) return nullptr;
+    FVector Origin, Direction;
+    if (!DeprojectMousePositionToWorld(Origin, Direction)) return nullptr;
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(DivineBeastsPointerTarget), false, GetPawn());
+    FHitResult Hit;
+    // 最大显示选择距离为100米；交互仍由平台按实际交互距离二次校验，不能使用该距离执行动作。
+    if (!GetWorld()->LineTraceSingleByChannel(Hit, Origin, Origin + Direction * 10000.f, ECC_Visibility, Params)) return nullptr;
+    AActor* Actor = Hit.GetActor();
+    return IsValid(Actor) && (Cast<APawn>(Actor) || Actor->FindComponentByClass<UGamePlatformInteractableComponent>()) ? Actor : nullptr;
+}
+
+void ADivineBeastsWorldPlayerController::SetSelectedWorldTarget(AActor* Target)
+{
+    if (Target && (!IsValid(Target) || Target->GetWorld() != GetWorld())) Target = nullptr;
+    if (SelectedWorldTarget.Get() == Target) return;
+    if (AActor* Previous = SelectedWorldTarget.Get()) Previous->OnEndPlay.RemoveDynamic(this, &ThisClass::HandleSelectedTargetEndPlay);
+    SelectedWorldTarget = Target;
+    if (Target) Target->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleSelectedTargetEndPlay);
+    OnWorldTargetChanged.Broadcast();
+}
+
+void ADivineBeastsWorldPlayerController::HandleSelectedTargetEndPlay(AActor* Actor, EEndPlayReason::Type /*Reason*/)
+{
+    if (SelectedWorldTarget.Get() == Actor) SetSelectedWorldTarget(nullptr);
+}
+
+void ADivineBeastsWorldPlayerController::RefreshPointerFeedback()
+{
+    if (!IsLocalController()) return;
+    if (MouseButtonMask != 0)
+    {
+        float X = 0.f, Y = 0.f;
+        GetInputMouseDelta(X, Y);
+        PointerTravelPixels += FMath::Abs(X) + FMath::Abs(Y);
+        if (!FMath::IsFinite(PointerTravelPixels) || PointerTravelPixels > 6.f) bPointerClickPending = false;
+        return;
+    }
+    CurrentMouseCursor = EMouseCursor::Default;
+    if (!CanProcessWorldInput() || !bShowMouseCursor || !IsPointerOverWorldViewport()) return;
+    AActor* Target = FindPointerTarget();
+    if (!Target) return;
+    if (const auto* Interactable = Target->FindComponentByClass<UGamePlatformInteractableComponent>())
+        CurrentMouseCursor = Interactable->IsInteractionEnabled() ? EMouseCursor::Hand : EMouseCursor::SlashedCircle;
+    else CurrentMouseCursor = EMouseCursor::Crosshairs; // 只代表可选目标，不推断敌我或授权攻击。
+}
+
+void ADivineBeastsWorldPlayerController::BeginWorldInteraction()
+{
+    if (!CanProcessWorldInput() || MouseButtonMask != 0 || !IsPointerOverWorldViewport()) return;
+    if (auto* Interactor = FindComponentByClass<UGamePlatformInteractorComponent>()) Interactor->BeginFocusedInteraction();
+}
+
+void ADivineBeastsWorldPlayerController::EndWorldInteraction()
+{
+    // 释放/暂停即使世界不再Active也应取消已受理的长按；组件负责节流、所有权及服务器终态校验。
+    if (auto* Interactor = FindComponentByClass<UGamePlatformInteractorComponent>()) Interactor->CancelCurrentInteraction();
 }

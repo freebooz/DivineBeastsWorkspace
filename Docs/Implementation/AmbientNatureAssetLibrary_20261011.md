@@ -1,14 +1,14 @@
-# 神兽联盟多区域自然飘落与漂浮粒子资产库：交付与验证记录
+# SSLM多区域自然飘落与漂浮粒子资产库：交付与验证记录
 
-版本：2026-10-11。工作区：DivineBeastsWorkspace（神兽联盟工作空间），UE5.8。
+版本：2026-10-11。工作区：DivineBeastsWorkspace（SSLM工作空间），UE5.8。
 
 ## 一、资产所有权与三层架构
 
 - GamePlatform（平台基础层）：`GamePlatformVFX（游戏平台视觉特效插件）`拥有统一的Niagara执行、限额、组件生命周期和平台通用母材质及漂浮模板；`GamePlatformWeather（游戏平台天气插件）`继续拥有雨、雪及风场事实；`GamePlatformPCG（游戏平台程序化生成）`可提供地表/树冠区域锚点，但不直接播放装饰粒子。
 - MobaCommon（MOBA通用层）：纯装饰环境不创建重复实现，竞技地图按平台表现接口复用。
-- DivineBeasts（神兽联盟项目层）：`DBAPresentationPack_Core（公共视觉内容包）`拥有专用纹理、材质实例、Niagara外观变体、Definition（特效定义）与区域Profile（数据资产）；`DBAClient（项目客户端代码插件）`只做目录、区域选择和调用协调，不重新建立Niagara播放器。服务端不同步装饰粒子。
+- DivineBeasts（SSLM项目层）：`DBAPresentationPack_Core（公共视觉内容包）`拥有专用纹理、材质实例、Niagara外观变体、Definition（特效定义）与区域Profile（数据资产）；`DBAClient（项目客户端代码插件）`只做目录、区域选择和调用协调，不重新建立Niagara播放器。服务端不同步装饰粒子。
 
-跨层依赖只允许项目 → 平台；平台材质的默认纹理属于引擎或平台，不硬引用神兽联盟专属Texture2D。
+跨层依赖只允许项目 → 平台；平台材质的默认纹理属于引擎或平台，不硬引用SSLM专属Texture2D。
 
 ## 二、分类、资产与完成范围
 

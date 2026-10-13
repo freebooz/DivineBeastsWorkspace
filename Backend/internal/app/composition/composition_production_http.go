@@ -76,7 +76,14 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	defer pool.Close()
 	service := playerdata.NewService(postgres.NewOnlinePlayerRepository(pool))
 	service.AttachInventory(inventory.NewService(postgres.NewInventoryRepository(pool)))
-	return servicehost.Run(ctx, cfg, httpadapter.NewPlayerDataHandler(service))
+	// 未配置独立强令牌时不注册可信事件路由，普通玩家背包查询/整理保持可用。
+	processor, secret, err := configureTrustedInventory(service, pool)
+	if err != nil { return err }
+	handler := httpadapter.NewPlayerDataHandler(service)
+	if processor != nil {
+		handler = httpadapter.NewPlayerDataHandlerWithTrustedEvents(service, processor, secret)
+	}
+	return servicehost.Run(ctx, cfg, handler)
 }
 
 func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {

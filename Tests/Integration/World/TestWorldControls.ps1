@@ -1,4 +1,4 @@
-# 世界PC操控静态门禁：检查真实键位冲突、双端隔离和生命周期接线；可运行已编译纯策略测试。
+﻿# 世界PC操控静态门禁：检查真实键位冲突、双端隔离和生命周期接线；可运行已编译纯策略测试。
 # 输入PolicyExecutable是当前源码编译产物，空值仅执行静态检查；不启动编辑器/客户端，不修改资源或用户配置。
 # 失败抛异常或传播测试进程退出码；通过不代表Slate、Cook、网络朝向或人工视觉验收。
 param([string]$PolicyExecutable)
@@ -22,13 +22,20 @@ foreach ($Binding in @(
     'AxisName="DBA.MoveRight",Scale=-1.000000,Key=Q',
     'AxisName="DBA.CameraZoom",Scale=1.000000,Key=MouseWheelAxis',
     'ActionName="DBA.CameraObserve"', 'ActionName="DBA.CameraSteer"', 'Key=Escape',
+    'ActionName="DBA.Inventory"', 'Key=I',
     'DefaultViewportMouseCaptureMode=NoCapture', 'bShouldFlushPressedKeysOnViewportFocusLost=True')) {
     if (-not $Input.Contains($Binding)) { throw "World input configuration is missing: $Binding" }
 }
 foreach ($Hook in @('::FlushPressedKeys()', '::EndPlay(', '::PreClientTravel(', '::OnUnPossess()', '::SetWorldGameplayInputSuspended(',
     'OnWorldEscapeRequested.Broadcast()', 'ConsumeMovementInputVector()', 'StopJumping()',
+    'OnWorldInventoryRequested.Broadcast()',
     'ClearAbilityInput()', 'SetMouseLocation(', 'bDoCollisionTest = true')) {
     if (-not $Controller.Contains($Hook)) { throw "World controls cleanup/integration is missing: $Hook" }
+}
+# 背包按键由世界控制器只发布中立本地委托，快捷键不能复制为二套权威库存请求。
+$InventoryBindings = [regex]::Matches($Input, '(?m)^\+ActionMappings=\(ActionName="DBA\.Inventory"[^\r\n]*Key=I\)')
+if ($InventoryBindings.Count -ne 1) {
+    throw '背包I键必须有且只有一个准确原生ActionMapping。'
 }
 if ($Build.Contains('DivineBeastsUIClient') -or $Controller.Contains('DivineBeastsUIClientSubsystem')) {
     throw 'Shared world runtime must not depend on client UI implementation.'

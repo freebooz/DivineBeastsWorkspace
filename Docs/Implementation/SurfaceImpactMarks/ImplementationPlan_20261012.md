@@ -1,7 +1,7 @@
 # GamePlatformSurface 命中痕迹系统实施计划（2026-10-12）
 
 ## 目标与基线
-在现有 `GamePlatformSurface`（平台通用表面插件）中新增客户端局部命中痕迹，不复制第二套插件，也不修改既有雪／苔藓／湿润 MPC 契约。五类为 Bullet（弹孔）、Scorch（焦痕）、Slash（刀砍痕）、Fluid（液体／可替换能量飞溅）、Crack（裂痕）。项目层《神兽联盟》默认用能量／墨迹替代写实血液；绝不将表现结果用作服务器伤害、碰撞或正式可破坏地形判定。
+在现有 `GamePlatformSurface`（平台通用表面插件）中新增客户端局部命中痕迹，不复制第二套插件，也不修改既有雪／苔藓／湿润 MPC 契约。五类为 Bullet（弹孔）、Scorch（焦痕）、Slash（刀砍痕）、Fluid（液体／可替换能量飞溅）、Crack（裂痕）。项目层《SSLM》默认用能量／墨迹替代写实血液；绝不将表现结果用作服务器伤害、碰撞或正式可破坏地形判定。
 
 ## P0 审查与边界
 - 工作区 `DivineBeastsWorkspace` 唯一正式工程 `Game/DivineBeastsArena.uproject`；保留动态 HEAD 与其他开发任务的脏文件，禁止 reset／clean／提交／推送。

@@ -1,6 +1,6 @@
 # BirdFlock VFX（通用鸟群视觉特效）实施执行计划
 
-版本：V1.0｜2026-10-11｜工程：DivineBeastsWorkspace（神兽联盟工作空间）｜状态：执行中
+版本：V1.0｜2026-10-11｜工程：DivineBeastsWorkspace（SSLM工作空间）｜状态：执行中
 
 ## 1. 目标和非目标
 

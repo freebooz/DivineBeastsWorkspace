@@ -2,6 +2,9 @@
 
 版本：0.2.0｜2026-09-30
 
+2026-10-13通用特效材质索引：`../../../../../Docs/Implementation/Materials/MaterialFunctionLibraryIndex.md`（14类201项中文索引，含VFX20项及视觉技能14项），`MaterialCapabilityRegistry_V1.json`（机器分类清单）按VFX通用材质和项目专用Niagara外观分别归属。现有Niagara运行机制保持唯一，分类索引不代表已完成Shader或人工视觉验收。
+
+
 `GamePlatformVFX` 是 GamePlatform（游戏平台层）的跨游戏客户端 VFX 执行基础设施。它消费 `GamePlatformPresentation` 已解析的中立表现请求，不拥有 Gameplay 事实，也不维护第二套项目语义真源。
 
 ## 当前正式架构

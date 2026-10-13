@@ -1,0 +1,675 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SSLM插件演示编目Schema2",
+  "description": "唯一活动作者源；历史快照另存，只供追溯",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "plugins",
+    "features",
+    "scenarios",
+    "review_cases",
+    "legacy_map_routes"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2,
+      "description": "本合同只接受版本2"
+    },
+    "snapshot_date": {
+      "type": "string",
+      "minLength": 1,
+      "description": "本次身份发现日期，不是运行验收日期"
+    },
+    "git_head": {
+      "type": "string",
+      "minLength": 1,
+      "description": "发现时源码HEAD，不等于已加载DLL",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "history": {
+      "type": "object",
+      "description": "旧快照的追溯位置与Git来源",
+      "required": [
+        "path",
+        "git_revision",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "历史只读JSON相对路径"
+        },
+        "git_revision": {
+          "type": "string",
+          "minLength": 1,
+          "description": "原文件所属提交"
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 1,
+          "description": "历史文件原始字节SHA256",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "plugins": {
+      "type": "array",
+      "description": "全部真实一方插件，禁用仍保留",
+      "items": {
+        "$ref": "#/$defs/plugin"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "features": {
+      "type": "array",
+      "description": "已审计独立功能；空集合表示尚未审计，不表示无功能",
+      "items": {
+        "$ref": "#/$defs/feature"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "scenarios": {
+      "type": "array",
+      "description": "独立案例，地图允许复用",
+      "items": {
+        "$ref": "#/$defs/scenario"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "review_cases": {
+      "type": "array",
+      "description": "独立检查合同，不包含人工结果",
+      "items": {
+        "$ref": "#/$defs/review"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "legacy_map_routes": {
+      "type": "array",
+      "description": "旧路径兼容；一对多必须显式选择",
+      "items": {
+        "$ref": "#/$defs/legacy"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "discovered_maps": {
+      "type": "array",
+      "description": "文件级候选，不是可运行目录",
+      "items": {
+        "$ref": "#/$defs/map"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "plugin": {
+      "type": "object",
+      "description": "真实插件及审计范围",
+      "required": [
+        "plugin_id",
+        "descriptor_path",
+        "architecture_layer",
+        "plugin_kind",
+        "feature_audit_status"
+      ],
+      "properties": {
+        "plugin_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "descriptor_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "仓库内真实uplugin路径"
+        },
+        "architecture_layer": {
+          "type": "string",
+          "description": "三层归属；内容包也是Project",
+          "enum": [
+            "Platform",
+            "Moba",
+            "Project"
+          ]
+        },
+        "plugin_kind": {
+          "type": "string",
+          "description": "代码/内容分别计数",
+          "enum": [
+            "code",
+            "content_pack"
+          ]
+        },
+        "feature_audit_status": {
+          "type": "string",
+          "description": "全插件功能范围审计程度",
+          "enum": [
+            "unreviewed",
+            "partial",
+            "complete"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "description": "人工核读的源码/合同定位；不等于自动证明功能",
+      "required": [
+        "path",
+        "symbol"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "仓库内文件"
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1,
+          "description": "真实类型/方法签名或合同定位"
+        }
+      },
+      "additionalProperties": false
+    },
+    "feature": {
+      "type": "object",
+      "description": "独立功能身份及实现依据",
+      "required": [
+        "feature_id",
+        "plugin_id",
+        "title",
+        "purpose",
+        "implementation_status",
+        "integration_status",
+        "run_status",
+        "review_status",
+        "owner_path",
+        "implementation_evidence",
+        "scenario_ids"
+      ],
+      "properties": {
+        "feature_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "plugin_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "中文名称"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "功能目的"
+        },
+        "implementation_status": {
+          "type": "string",
+          "description": "实际功能源码实现状态，不由文件存在推断",
+          "enum": [
+            "unreviewed",
+            "unimplemented",
+            "partial",
+            "implemented"
+          ]
+        },
+        "integration_status": {
+          "type": "string",
+          "description": "演示接入状态，与实现及人工结果独立",
+          "enum": [
+            "unregistered",
+            "registered",
+            "blocked",
+            "wired",
+            "launchable"
+          ]
+        },
+        "run_status": {
+          "type": "string",
+          "description": "作者源仅保留初始idle；动态结果由独立运行报告负责",
+          "enum": [
+            "idle"
+          ]
+        },
+        "review_status": {
+          "type": "string",
+          "description": "作者源不签收；真实人工结论由独立报告负责",
+          "enum": [
+            "not_reviewed"
+          ]
+        },
+        "owner_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "真实责任目录或文件"
+        },
+        "implementation_evidence": {
+          "type": "array",
+          "description": "实现依据",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "scenario_ids": {
+          "type": "array",
+          "description": "本功能的独立案例",
+          "items": {
+            "$ref": "#/$defs/identity"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "parameter": {
+      "type": "object",
+      "description": "类型化输入，禁止任意脚本/控制台字符串",
+      "required": [
+        "parameter_id",
+        "type",
+        "unit",
+        "default_value",
+        "default_source",
+        "writable",
+        "apply_when"
+      ],
+      "properties": {
+        "parameter_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "type": {
+          "type": "string",
+          "description": "输入类型",
+          "enum": [
+            "boolean",
+            "integer",
+            "number",
+            "identifier"
+          ]
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "description": "单位；无单位填none"
+        },
+        "minimum": {
+          "type": "number",
+          "description": "数值下界"
+        },
+        "maximum": {
+          "type": "number",
+          "description": "数值上界"
+        },
+        "default_value": {
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ],
+          "description": "必须匹配声明类型及范围"
+        },
+        "default_source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "默认值来源"
+        },
+        "writable": {
+          "type": "boolean",
+          "description": "是否允许用户更改"
+        },
+        "apply_when": {
+          "type": "string",
+          "description": "显式应用时机",
+          "enum": [
+            "prepare",
+            "execute"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "description": "可执行前须由运行端再次预检",
+      "required": [
+        "scenario_id",
+        "feature_id",
+        "title",
+        "related_feature_ids",
+        "adapter_id",
+        "template",
+        "run_mode",
+        "targets",
+        "required_plugins",
+        "preconditions",
+        "map_asset",
+        "widget_asset",
+        "definition_assets",
+        "operations",
+        "prepare_timeout_seconds",
+        "stop_timeout_seconds",
+        "parameters",
+        "review_case_ids"
+      ],
+      "properties": {
+        "scenario_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "feature_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "中文标题"
+        },
+        "related_feature_ids": {
+          "type": "array",
+          "description": "关联功能分别核验",
+          "items": {
+            "$ref": "#/$defs/identity"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "adapter_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "template": {
+          "type": "string",
+          "description": "展示模板",
+          "enum": [
+            "UIWidgetGallery",
+            "PresentationLab",
+            "GameplaySandbox",
+            "ServiceDiagnostics",
+            "AssetGallery"
+          ]
+        },
+        "run_mode": {
+          "type": "string",
+          "description": "界面必须显示的运行方式",
+          "enum": [
+            "local",
+            "fixture",
+            "network",
+            "editor"
+          ]
+        },
+        "targets": {
+          "type": "array",
+          "description": "启动演示的端；服务器作为受控外部依赖",
+          "items": {
+            "type": "string",
+            "description": "允许目标",
+            "enum": [
+              "Editor",
+              "Client",
+              "Game"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "required_plugins": {
+          "type": "array",
+          "description": "必需插件",
+          "items": {
+            "$ref": "#/$defs/identity"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "preconditions": {
+          "type": "array",
+          "description": "执行前置条件",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "可核查前提"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "map_asset": {
+          "type": "string",
+          "description": "可空地图包路径，不以此判断已加载"
+        },
+        "widget_asset": {
+          "type": "string",
+          "description": "可空控件软引用"
+        },
+        "definition_assets": {
+          "type": "array",
+          "description": "定义软引用",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "资产身份"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "operations": {
+          "type": "array",
+          "description": "实际支持的操作；未知操作禁止执行",
+          "items": {
+            "type": "string",
+            "description": "操作能力",
+            "enum": [
+              "Execute",
+              "Pause",
+              "Resume",
+              "Stop",
+              "Reset"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "prepare_timeout_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "准备超时秒数；有限正数"
+        },
+        "stop_timeout_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "清理超时秒数；有限正数"
+        },
+        "parameters": {
+          "type": "array",
+          "description": "按身份明确参数",
+          "items": {
+            "$ref": "#/$defs/parameter"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "review_case_ids": {
+          "type": "array",
+          "description": "适用独立检查合同",
+          "items": {
+            "$ref": "#/$defs/identity"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "description": "每个关联功能独立检查，自动结果不代人工",
+      "required": [
+        "review_case_id",
+        "version",
+        "scenario_id",
+        "feature_id",
+        "steps",
+        "expected_result",
+        "required_evidence"
+      ],
+      "properties": {
+        "review_case_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "用例版本，范围1至2147483647，与UE int32无损对应",
+          "maximum": 2147483647
+        },
+        "scenario_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "feature_id": {
+          "$ref": "#/$defs/identity"
+        },
+        "steps": {
+          "type": "array",
+          "description": "人工步骤",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "操作说明"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "expected_result": {
+          "type": "string",
+          "minLength": 1,
+          "description": "预期观察；可以是明确拒绝"
+        },
+        "required_evidence": {
+          "type": "array",
+          "description": "每项必须有真实证据",
+          "items": {
+            "type": "string",
+            "description": "证据类型",
+            "enum": [
+              "log",
+              "screenshot",
+              "state_dump",
+              "performance",
+              "asset_manifest",
+              "network_trace"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "legacy": {
+      "type": "object",
+      "description": "兼容旧地图身份，不允许默认首选",
+      "required": [
+        "map_asset",
+        "scenario_ids",
+        "requires_selection"
+      ],
+      "properties": {
+        "map_asset": {
+          "type": "string",
+          "minLength": 1,
+          "description": "旧地图长包路径"
+        },
+        "scenario_ids": {
+          "type": "array",
+          "description": "显式候选案例",
+          "items": {
+            "$ref": "#/$defs/identity"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "requires_selection": {
+          "type": "boolean",
+          "description": "多候选必须true"
+        }
+      },
+      "additionalProperties": false
+    },
+    "map": {
+      "type": "object",
+      "description": "只读发现候选，无归属推断",
+      "required": [
+        "repository_path",
+        "asset_package",
+        "kind",
+        "asset_validation",
+        "interactive_validation",
+        "manual_acceptance"
+      ],
+      "properties": {
+        "repository_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "真实umap路径"
+        },
+        "asset_package": {
+          "type": "string",
+          "minLength": 1,
+          "description": "由Game/Content映射的/Game包路径"
+        },
+        "kind": {
+          "type": "string",
+          "description": "候选类别，不表示已可运行",
+          "enum": [
+            "review_candidate",
+            "diagnostic_probe",
+            "unclassified"
+          ]
+        },
+        "asset_validation": {
+          "type": "string",
+          "description": "本轮验证仅到文件存在",
+          "enum": [
+            "file_only"
+          ]
+        },
+        "interactive_validation": {
+          "type": "string",
+          "description": "未实跑",
+          "enum": [
+            "not_run"
+          ]
+        },
+        "manual_acceptance": {
+          "type": "string",
+          "description": "未签收",
+          "enum": [
+            "not_reviewed"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1023,
+      "description": "稳定英文身份；按UE FName大小写不敏感比较；None任意大小写保留为空名",
+      "pattern": "^(?![Nn][Oo][Nn][Ee]$)[A-Za-z][A-Za-z0-9_.-]*$"
+    }
+  }
+}

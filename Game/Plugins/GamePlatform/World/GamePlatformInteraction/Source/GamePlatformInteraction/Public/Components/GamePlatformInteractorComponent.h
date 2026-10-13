@@ -48,6 +48,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Interaction")
     void RefreshLocalFocus();
+    /** 游戏线程本地显示策略：Enabled=false撤销焦点采样，UsePointer=true使用鼠标射线。
+     * 只影响提示/候选，不复制、不修改服务器资格；UI激活/失活时调用，不需要Widget Tick。 */
+    void SetLocalFocusPolicy(bool bEnabled, bool bUsePointer);
     /** 当前本地集中采样是否运行，仅供只读诊断；所有权事件控制启停，不代表服务器交互资格。 */
     bool IsLocalFocusSamplingActive() const;
 
@@ -128,6 +131,9 @@ private:
     FGamePlatformInteractionResult LastResult;
 
     FTimerHandle FocusTimer;
+    /** 默认保留平台既有中心射线策略；项目可按自身输入方式显式选择鼠标焦点。 */
+    bool bLocalFocusEnabled = true;
+    bool bUsePointerFocus = false;
     FTimerHandle HoldValidationTimer;
 
     TMap<FGuid, FCachedRequestResult> RecentRequestResults;

@@ -1,6 +1,6 @@
 # 第三批 P7–P9：表现、玩家服务、生肖内容与交付门禁
 
-项目：DivineBeastsWorkspace（神兽联盟工作空间）；UE5.8；2026-10-12；状态：执行中。
+项目：DivineBeastsWorkspace（SSLM工作空间）；UE5.8；2026-10-12；状态：执行中。
 
 ## 执行范围及并发边界
 

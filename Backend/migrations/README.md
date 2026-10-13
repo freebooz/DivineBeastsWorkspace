@@ -11,7 +11,14 @@
 - `000006_online_profile_idempotency.sql`：Profile 更新幂等记录；
 - `000007_player_characters.sql`：玩家角色与角色选择幂等记录；
 - `000008_player_inventory.sql`：Inventory 聚合根、容器、物品实例、快捷栏和 OperationId 持久幂等结果。
+- `000009_player_inventory_trusted_consume.sql`：仅扩展背包幂等操作表允许`Consume`（可信物品消耗），原表、旧版本请求和历史操作均保留；新增功能未暴露公网。
+- `000010_player_inventory_trusted_grant.sql`：继续扩展幂等操作类型允许`Grant`（可信授予），需在000009之后执行，保留既有操作和数据。
+- `000011_player_inventory_trusted_events.sql`：可信游戏服确认事件持久日志、连接世代绑定与事件不可变性审计。依赖000003准入、000010库存操作和000002事务发件箱。
 
 禁止在 `internal/platform/database`、`configs` 或其他目录复制第二套建表脚本；数据库适配器只能消费本目录迁移后的结构。
 
 `000008_player_inventory.sql`与 `internal/platform/database/postgres/inventory_repository.go`配套。生产启用 Inventory HTTP 链前必须确保该迁移已应用；当前 Runner 没有 psql/PostgreSQL 运行工具链，因此本轮只完成迁移源码与事务仓储实现，未冒充真实数据库迁移已执行。
+
+启用可信授予与消耗必须先应用`000009`、`000010`迁移，并在PlayerData可信组合根注入实际的ServerPlayerVerifier（服务器及玩家归属验证器）、GrantEvidenceSource/ConsumeEvidenceSource（服务端已确认奖励及使用事件）与ItemPolicyCatalog（后端权威物品策略）。缺少任何可信来源默认拒绝，不能从普通Gateway参数获得发奖权限。当前生产事务已将Inventory.Granted/Inventory.Consumed事件同事务写入000002既有Outbox，但游戏服证据源、使用效果消费者、真实生产联调仍未闭环。**尚未有真实PostgreSQL迁移执行成功记录**。详见`Backend/internal/modules/inventory/TrustedGrantAndConsume_20261013.md`。
+
+2026-10-13增量：已经新增真实PostgreSQL会话租约验证器、不可变可信事件仓储和独立内部HTTP事件入口。`INVENTORY_TRUSTED_EVENTS_TOKEN`（至少32字节的独立内部强令牌）、`INVENTORY_GAME_ID`（实际后端GameID，例如divine-beasts）和`INVENTORY_POLICY_FILE`（只读规则文件）必须同时配置且相匹配，否则默认不开启可信事件路由。推荐mTLS/服务网格网络白名单进一步限制仅Dedicated Server可访问；普通`NewPlayerDataHandler`和Gateway不注册该路由。相关设计见`Game/Plugins/DivineBeasts/DBAServer/Docs/InventoryTrustedEventIntegration_20261013.md`；未执行真实PostgreSQL迁移和联机验收前不得宣称生产已启用。

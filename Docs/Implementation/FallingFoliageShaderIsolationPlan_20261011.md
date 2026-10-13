@@ -1,6 +1,6 @@
-# 《神兽联盟》Niagara方块粒子 Shader 隔离诊断与回归计划
+# 《SSLM》Niagara方块粒子 Shader 隔离诊断与回归计划
 
-更新：2026-10-11。工作空间：DivineBeastsWorkspace（神兽联盟工作空间），引擎：UE5.8，执行工具：HWebCodex。
+更新：2026-10-11。工作空间：DivineBeastsWorkspace（SSLM工作空间），引擎：UE5.8，执行工具：HWebCodex。
 
 ## 1. 核实的问题
 

@@ -15,6 +15,41 @@
   },
   "CookDirectories": [
     {
+      "PackagePath": "/Game/Development/PluginDemos",
+      "SourceDirectory": "Game/Content/Development/PluginDemos",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "SSLM开发演示门户、旧兼容Widget及诊断资源；不含服务器权威，不进入三角色专服Cook。新UI内容包已由DBAUIPack_Core整包排除。"
+    },
+    {
+      "PackagePath": "/Game/Development/BirdFlock",
+      "SourceDirectory": "Game/Content/Development/BirdFlock",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "鸟群GPU/场景样板地图与开发夹具，不参与专服权威；演示接线不改变正式服务器世界内容。"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary",
+      "SourceDirectory": "Game/Content/Development/MaterialLibrary",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "材质函数开发审核蓝图、母材质与四类演示地图；必须从正式客户端和三种专用服务器Cook排除，正式Game/Development目录无权威逻辑。"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Materials/Functions",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Materials/Functions",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "新增VFX共用MaterialFunction纯视觉资产，仅客户端Niagara与表现材质消费，不参与服务端权威行为。"
+    },
+    {
+      "PackagePath": "/GamePlatformUI/Materials/Functions",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Content/Materials/Functions",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "UI专用材质函数属于客户端UserInterface材质域，不应被Server Cook并入。"
+    },
+    {
       "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/DevelopmentMagic",
       "Profiles": "AllServers",

@@ -78,6 +78,15 @@ public:
     /** 本地角色入口换页命令；仅空闲且已认证时接受，注销或流程离开入口后撤销偏好。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Characters")
     bool RequestCharacterEntryScreen(FName ScreenId);
+    
+    /** 只允许已进入世界的本地玩家打开背包；同一时刻至多一页和一个在途打开请求。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Inventory")
+    bool OpenInventoryScreen();
+
+    /** 关闭本协调器拥有的背包页/取消其在途打开；不关闭其他UI或更改权威库存。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Inventory")
+    bool CloseInventoryScreen();
+
 
     /** 仅处理已进入真实世界的ESC；前端返回false，保留原页面取消语义。游戏线程。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
@@ -123,6 +132,9 @@ public:
      * 对象 Outer 为当前 LocalPlayer 子系统，生命周期随本地玩家结束而清理。
      */
     UDivineBeastsUIViewModel* CreateViewModel(FName ScreenId);
+    /** 打开公共世界手册；Section只接受Character/MapQuest/Spellbook/Party，未入世界或其他菜单占用时拒绝。
+     * 已打开时只切页签。资源缺失走原平台异步失败路径，绝不在运行时造占位Widget。 */
+    bool OpenWorldJournal(FName Section);
 
     void SubmitCommand(
         FDivineBeastsUICommand Command,
@@ -155,19 +167,34 @@ private:
     /** 系统页与主流程页使用不同请求身份，迟到加载不能复活已关闭菜单。 */
     bool OpenSystemSurface(FName ScreenId);
     void HandleWorldEscapeRequested();
+    /** I键背包意图：只在当前本地世界中切换页面，不影响服务器权威库存。 */
+    void HandleWorldInventoryRequested();
+    void HandleWorldJournalRequested(FName Section);
     void SetSystemMenuVisible(bool bVisible);
     TWeakObjectPtr<ADivineBeastsWorldPlayerController> BoundMenuController;
     FDelegateHandle WorldEscapeHandle;
+    /** 仅本地当前控制器的I键委托句柄，换控制器及退出时精确解除。 */
+    FDelegateHandle WorldInventoryHandle;
+    FDelegateHandle WorldJournalHandle;
     FDelegateHandle ApplicationDeactivateHandle;
     FDelegateHandle SlateActivationHandle;
     void HandleApplicationActivationChanged(bool bActive);
     TWeakObjectPtr<UGamePlatformUIScreen> ActiveSystemMenu;
     TWeakObjectPtr<UGamePlatformUIScreen> ActiveSystemSettings;
+    /** 手册复用同一可取消覆盖页加载生命周期；不是第二套主流程执行器。 */
+    TWeakObjectPtr<UGamePlatformUIScreen> ActiveWorldJournal;
+    FName PendingJournalSection = TEXT("Character");
     FName OpeningSystemScreenId;
     FGuid OpeningSystemRequestId;
     bool bSystemMenuVisible = false;
     /** 关闭/换页重入资格；外部层栈通知若开启后继请求，旧关闭不得恢复后继的世界输入。 */
     uint64 SystemMenuGeneration = 0;
+    /** 背包和系统菜单/主流程各自拥有请求代次与弱引用，禁止异步过期页重生。 */
+    TWeakObjectPtr<UGamePlatformUIScreen> ActiveInventoryScreen;
+    FGuid OpeningInventoryRequestId;
+    uint64 InventoryScreenGeneration = 0;
+    bool bInventoryOpening = false;
+
     FDivineBeastsSystemMenuVisibilityChangedNative SystemMenuVisibilityChanged;
     /** 读取项目默认主题编号并交给平台UI服务；空配置兼容旧页面，失败不阻断登录。 */
     void EnsureConfiguredTheme();

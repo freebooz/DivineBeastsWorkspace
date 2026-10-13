@@ -6,7 +6,7 @@
 
 ### 第二轮性能收敛执行计划与完成情况
 
-### 第三轮语义分层与神兽联盟项目输入执行计划/完成情况
+### 第三轮语义分层与SSLM项目输入执行计划/完成情况
 
 1. 平台语义解耦：新增 `FGamePlatformInputSemanticId / Descriptor`，旧固定枚举保留兼容，不继续增加项目技能。
 2. Profile编译：新增 `InputProfileCompiler`，Profile准备时一次生成 `CompiledActions[CompactSlot]`、Tag→Slot低频索引和LegacyEnum→Slot兼容索引。

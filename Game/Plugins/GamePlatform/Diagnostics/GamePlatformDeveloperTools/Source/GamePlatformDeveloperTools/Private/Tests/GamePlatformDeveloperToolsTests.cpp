@@ -115,7 +115,8 @@ bool FGamePlatformDeveloperToolsReviewTest::RunTest(const FString& Parameters)
 
     UGamePlatformReviewSubsystem* Subsystem = NewObject<UGamePlatformReviewSubsystem>();
     UGamePlatformReviewReport* Report =
-        Subsystem->CreatePendingReport(ReviewCase, TEXT("Run-1"), TEXT("Build-1"), TEXT("Content-1"));
+        // 新签收真源要求规范运行GUID；旧任意Run-1不能进入实际证据目录。
+        Subsystem->CreatePendingReport(ReviewCase, FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens), TEXT("Build-1"), TEXT("Content-1"));
 
     TestNotNull(TEXT("Pending report created"), Report);
     TestEqual(

@@ -15,6 +15,7 @@
 #include "Widgets/CommonActivatableWidgetContainer.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
 #include "ViewModels/System/DivineBeastsSystemSettingsViewModel.h"
+#include "ViewModels/World/DivineBeastsWorldJournalViewModel.h"
 
 #include "Adapters/Application/DivineBeastsApplicationUIAdapter.h"
 #include "Characters/DivineBeastsCharacterPreviewSubsystem.h"
@@ -62,11 +63,26 @@ void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* 
     UpdateDefaultRootLayoutContext(GetLocalPlayer(), NewPlayerController);
     ObserveWorldInputRouter(GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>() : nullptr);
     CloseSystemMenu();
-    if (auto* Previous = BoundMenuController.Get()) Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
+    CloseInventoryScreen();
+    // 两个本地UI输入意图共享控制器生命周期，分别精确撤销，跨地图不保留旧委托。
+    if (auto* Previous = BoundMenuController.Get())
+    {
+        Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
+        Previous->OnWorldInventoryRequested.Remove(WorldInventoryHandle);
+        Previous->OnWorldJournalRequested.Remove(WorldJournalHandle);
+    }
     WorldEscapeHandle.Reset();
+    WorldInventoryHandle.Reset();
+    WorldJournalHandle.Reset();
     BoundMenuController = Cast<ADivineBeastsWorldPlayerController>(NewPlayerController);
     if (auto* Current = BoundMenuController.Get())
-        WorldEscapeHandle = Current->OnWorldEscapeRequested.AddUObject(this, &ThisClass::HandleWorldEscapeRequested);
+    {
+        WorldEscapeHandle = Current->OnWorldEscapeRequested.AddUObject(
+            this, &ThisClass::HandleWorldEscapeRequested);
+        WorldInventoryHandle = Current->OnWorldInventoryRequested.AddUObject(
+            this, &ThisClass::HandleWorldInventoryRequested);
+        WorldJournalHandle = Current->OnWorldJournalRequested.AddUObject(this, &ThisClass::HandleWorldJournalRequested);
+    }
     Super::PlayerControllerChanged(NewPlayerController);
     if (!IsValid(NewPlayerController))
     {
@@ -163,9 +179,15 @@ void UDivineBeastsUIClientSubsystem::Deinitialize()
     RootLayoutController.Reset();
     ObserveWorldInputRouter(nullptr);
     CloseSystemMenu();
-    if (auto* Previous = BoundMenuController.Get()) Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
+    CloseInventoryScreen();
+    if (auto* Previous = BoundMenuController.Get())
+    {
+        Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
+        Previous->OnWorldInventoryRequested.Remove(WorldInventoryHandle);
+    }
     BoundMenuController.Reset();
     WorldEscapeHandle.Reset();
+    WorldInventoryHandle.Reset();
     FCoreDelegates::ApplicationWillDeactivateDelegate.Remove(ApplicationDeactivateHandle);
     if (FSlateApplication::IsInitialized()) FSlateApplication::Get().OnApplicationActivationStateChanged().Remove(SlateActivationHandle);
     ApplicationDeactivateHandle.Reset();
@@ -336,6 +358,55 @@ UDivineBeastsUIClientSubsystem::OpenScreen(
     return PlatformUI
         ? PlatformUI->OpenScreenAsync(ScreenId, ViewModel)
         : FGamePlatformUIAsyncRequest();
+}
+
+bool UDivineBeastsUIClientSubsystem::OpenInventoryScreen()
+{
+    // 仅已进入真实世界的本地玩家可以打开背包，页面不直接拥有物品写权限。
+    const FName ScreenId(TEXT("UI.Screen.Inventory"));
+    if (bUIShuttingDown || !PlatformUI ||
+        !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) ||
+        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() || ActiveWorldJournal.IsValid() ||
+        !OpeningSystemScreenId.IsNone() || bInventoryOpening ||
+        ActiveInventoryScreen.IsValid() || !PlatformUI->HasScreenDefinition(ScreenId))
+    {
+        return false;
+    }
+
+    bInventoryOpening = true;
+    const uint64 Generation = ++InventoryScreenGeneration;
+    const FGamePlatformUIAsyncRequest Request =
+        PlatformUI->OpenScreenAsync(ScreenId, CreateViewModel(ScreenId));
+    // 同步回调可能已撤销/接管资格；外层不得复活已结束的请求。
+    if (InventoryScreenGeneration == Generation && bInventoryOpening)
+    {
+        if (Request.IsValid()) OpeningInventoryRequestId = Request.RequestId;
+        else
+        {
+            bInventoryOpening = false;
+            OpeningInventoryRequestId.Invalidate();
+        }
+    }
+    return Request.IsValid();
+}
+
+bool UDivineBeastsUIClientSubsystem::CloseInventoryScreen()
+{
+    const bool bHadInventory =
+        bInventoryOpening || OpeningInventoryRequestId.IsValid() ||
+        ActiveInventoryScreen.IsValid();
+    ++InventoryScreenGeneration;
+    bInventoryOpening = false;
+    const FGuid PreviousRequest = OpeningInventoryRequestId;
+    OpeningInventoryRequestId.Invalidate();
+    UGamePlatformUIScreen* Existing = ActiveInventoryScreen.Get();
+    ActiveInventoryScreen.Reset();
+    if (PlatformUI)
+    {
+        if (PreviousRequest.IsValid()) PlatformUI->CancelOpen(PreviousRequest);
+        if (IsValid(Existing)) PlatformUI->CloseScreen(Existing);
+    }
+    return bHadInventory;
 }
 
 bool UDivineBeastsUIClientSubsystem::CancelScreenOpen(FGuid RequestId)
@@ -585,7 +656,16 @@ UDivineBeastsUIClientSubsystem::CreateViewModel(FName ScreenId)
 
     // P0 页面使用类型明确的 ViewModel；其他现有页面继续复用兼容 ViewModel，
     // 保持增量迁移，不在本阶段一次性重写全部业务页面。
-    if (ScreenId == TEXT("UI.Screen.Settings"))
+    if (ScreenId == TEXT("UI.Screen.WorldJournal"))
+    {
+        auto* Journal = NewObject<UDivineBeastsWorldJournalViewModel>(this);
+        const auto Section = PendingJournalSection == TEXT("MapQuest") ? EDivineBeastsWorldJournalSection::MapQuest
+            : PendingJournalSection == TEXT("Spellbook") ? EDivineBeastsWorldJournalSection::Spellbook
+            : PendingJournalSection == TEXT("Party") ? EDivineBeastsWorldJournalSection::Party : EDivineBeastsWorldJournalSection::Character;
+        Journal->SelectSection(Section);
+        ViewModel = Journal;
+    }
+    else if (ScreenId == TEXT("UI.Screen.Settings"))
     {
         ViewModel = NewObject<UDivineBeastsSystemSettingsViewModel>(this);
     }
@@ -775,6 +855,7 @@ void UDivineBeastsUIClientSubsystem::HandleViewStateChanged(
         CharacterEntryScreenPreference = NAME_None;
     }
     ViewState = NewState;
+    if (!FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) CloseInventoryScreen();
     if (!FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) CloseSystemMenu();
     StateChanged.Broadcast(ViewState);
     SyncLoadingService();
@@ -984,6 +1065,27 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpened(
     FName ScreenId,
     UGamePlatformUIScreen* Screen)
 {
+    if (ScreenId == TEXT("UI.Screen.Inventory") && bInventoryOpening &&
+        (!OpeningInventoryRequestId.IsValid() || OpeningInventoryRequestId == RequestId))
+    {
+        // 页面可能在OpenScreenAsync返回前同步打开，先撤旧资格防外层重写请求号。
+        bInventoryOpening = false;
+        OpeningInventoryRequestId.Invalidate();
+        if (bUIShuttingDown || !IsValid(Screen) ||
+            !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState))
+        {
+            if (PlatformUI && IsValid(Screen)) PlatformUI->CloseScreen(Screen);
+            return;
+        }
+        ActiveInventoryScreen = Screen;
+        return;
+    }
+    // 取消后迟到的背包页面必须由平台关闭，避免失效异步资源仍显示。
+    if (ScreenId == TEXT("UI.Screen.Inventory"))
+    {
+        if (PlatformUI && IsValid(Screen)) PlatformUI->CloseScreen(Screen);
+        return;
+    }
     if (ScreenId == OpeningSystemScreenId &&
         (!OpeningSystemRequestId.IsValid() || OpeningSystemRequestId == RequestId))
     {
@@ -992,6 +1094,7 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpened(
         if (!FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState))
         { if (PlatformUI) PlatformUI->CloseScreen(Screen); return; }
         if (ScreenId == TEXT("UI.Screen.SystemMenu")) ActiveSystemMenu = Screen;
+        else if (ScreenId == TEXT("UI.Screen.WorldJournal")) ActiveWorldJournal = Screen;
         else ActiveSystemSettings = Screen;
         SetSystemMenuVisible(true);
         return;
@@ -1021,6 +1124,20 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed(
     FName ScreenId,
     FText Reason)
 {
+    if (ScreenId == TEXT("UI.Screen.Inventory") && bInventoryOpening &&
+        (!OpeningInventoryRequestId.IsValid() || OpeningInventoryRequestId == RequestId))
+    {
+        bInventoryOpening = false;
+        OpeningInventoryRequestId.Invalidate();
+        // 不在界面层构造假数据，也不泄露资产绝对路径给玩家。
+        UE_LOG(LogTemp, Warning, TEXT("[DBA UI] Inventory page could not open: %s"), *Reason.ToString());
+        if (UDivineBeastsUIScreen* Primary =
+                Cast<UDivineBeastsUIScreen>(ActivePrimaryScreen.Get()))
+        {
+            Primary->ShowPageLoadError(FText::FromString(TEXT("背包界面资源暂不可用，请稍后重试。")));
+        }
+        return;
+    }
     if (ScreenId == OpeningSystemScreenId &&
         (!OpeningSystemRequestId.IsValid() || OpeningSystemRequestId == RequestId))
     {
@@ -1053,7 +1170,18 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenOpenFailed(
 void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
     FName ScreenId)
 {
+    if (ScreenId == TEXT("UI.Screen.Inventory"))
+    {
+        // 旧页面关闭的同名通知不得清除正在打开的新请求或仍激活的新页面。
+        UGamePlatformUIScreen* Current = ActiveInventoryScreen.Get();
+        if (!bInventoryOpening && (!IsValid(Current) || !Current->IsActivated()))
+        {
+            OpeningInventoryRequestId.Invalidate();
+            ActiveInventoryScreen.Reset();
+        }
+    }
     if (ScreenId == TEXT("UI.Screen.Settings")) ActiveSystemSettings.Reset();
+    if (ScreenId == TEXT("UI.Screen.WorldJournal")) { ActiveWorldJournal.Reset(); if (!ActiveSystemMenu.IsValid()) SetSystemMenuVisible(false); }
     if (ScreenId == TEXT("UI.Screen.SystemMenu") && bSystemMenuVisible)
     { ActiveSystemMenu.Reset(); CloseSystemMenu(); }
     if (ScreenId == ActivePrimaryScreenId)
@@ -1068,6 +1196,7 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
 void UDivineBeastsUIClientSubsystem::DetachContract()
 {
     CloseSystemMenu();
+    CloseInventoryScreen();
     if (QuerySourceObject.IsValid() && QueryStateHandle.IsValid())
     {
         if (IDivineBeastsUIQuerySource* Query =
@@ -1097,11 +1226,51 @@ void UDivineBeastsUIClientSubsystem::DetachContract()
 
 // 世界菜单属于本地玩家UI层；CommonUI管理焦点/输入栈，项目世界控制器只撤销现有鼠标拖动。
 void UDivineBeastsUIClientSubsystem::HandleWorldEscapeRequested() { HandleEscapeAction(); }
+void UDivineBeastsUIClientSubsystem::HandleWorldJournalRequested(FName Section) { OpenWorldJournal(Section); }
+
+bool UDivineBeastsUIClientSubsystem::OpenWorldJournal(FName Section)
+{
+    const bool bKnownSection = Section == TEXT("Character") || Section == TEXT("MapQuest") ||
+        Section == TEXT("Spellbook") || Section == TEXT("Party");
+    if (!bKnownSection || bUIShuttingDown || !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) return false;
+    const auto Selection = Section == TEXT("MapQuest") ? EDivineBeastsWorldJournalSection::MapQuest
+        : Section == TEXT("Spellbook") ? EDivineBeastsWorldJournalSection::Spellbook
+        : Section == TEXT("Party") ? EDivineBeastsWorldJournalSection::Party : EDivineBeastsWorldJournalSection::Character;
+    if (auto* Existing = ActiveWorldJournal.Get())
+    {
+        auto* Journal = Cast<UDivineBeastsWorldJournalViewModel>(Existing->GetViewModel());
+        return Journal && Journal->SelectSection(Selection);
+    }
+    if (ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() || ActiveInventoryScreen.IsValid() || bInventoryOpening) return false;
+    PendingJournalSection = Section;
+    return OpenSystemSurface(TEXT("UI.Screen.WorldJournal"));
+}
+
+void UDivineBeastsUIClientSubsystem::HandleWorldInventoryRequested()
+{
+    // 若背包已打开或仍在异步加载则优先关闭；其他游戏菜单与非世界状态继续由既有门禁处理。
+    if (bUIShuttingDown || !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState))
+    {
+        return;
+    }
+    if (bInventoryOpening || ActiveInventoryScreen.IsValid())
+    {
+        CloseInventoryScreen();
+    }
+    else
+    {
+        OpenInventoryScreen();
+    }
+}
+
 void UDivineBeastsUIClientSubsystem::HandleApplicationActivationChanged(bool bActive) { if (!bActive) CloseSystemMenu(); }
 
 bool UDivineBeastsUIClientSubsystem::HandleEscapeAction()
 {
+    if (ActiveWorldJournal.IsValid()) { CloseSystemMenu(); return true; }
     if (ActiveSystemSettings.IsValid()) return CloseSystemSettings();
+    // ESC优先关闭背包临时页面，不能把背包压到系统菜单后仍保持可操作。
+    if (ActiveInventoryScreen.IsValid() || bInventoryOpening) return CloseInventoryScreen();
     if (ActiveSystemMenu.IsValid() || !OpeningSystemScreenId.IsNone()) { CloseSystemMenu(); return true; }
     return FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) && OpenSystemSurface(TEXT("UI.Screen.SystemMenu"));
 }
@@ -1150,6 +1319,8 @@ void UDivineBeastsUIClientSubsystem::CloseSystemMenu()
     OpeningSystemScreenId = NAME_None;
     auto* Settings = ActiveSystemSettings.Get();
     auto* Menu = ActiveSystemMenu.Get();
+    auto* Journal = ActiveWorldJournal.Get();
+    ActiveWorldJournal.Reset();
     ActiveSystemSettings.Reset();
     ActiveSystemMenu.Reset();
     if (PlatformUI)
@@ -1157,6 +1328,7 @@ void UDivineBeastsUIClientSubsystem::CloseSystemMenu()
         if (Request.IsValid()) PlatformUI->CancelOpen(Request);
         if (Settings) PlatformUI->CloseScreen(Settings);
         if (Menu) PlatformUI->CloseScreen(Menu);
+        if (Journal) PlatformUI->CloseScreen(Journal);
     }
     if (SystemMenuGeneration == Generation) SetSystemMenuVisible(false);
 }
@@ -1196,7 +1368,8 @@ void UDivineBeastsUIClientSubsystem::SyncWorldInputBaseline()
         !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) ||
         !OpeningPrimaryScreenId.IsNone() || OpeningPrimaryRequestId.IsValid() || !ActivePrimaryScreenId.IsNone() ||
         !OpeningSystemScreenId.IsNone() || OpeningSystemRequestId.IsValid() || bSystemMenuVisible ||
-        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid()) return;
+        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() ||
+        bInventoryOpening || ActiveInventoryScreen.IsValid()) return;
     if (auto* Primary = ActivePrimaryScreen.Get(); Primary && Primary->IsActivated()) return;
     if (auto* Previous = ReplacingPrimaryScreen.Get(); Previous && Previous->IsActivated()) return;
     if (auto* Root = PlatformUI ? PlatformUI->GetRootLayout() : nullptr)

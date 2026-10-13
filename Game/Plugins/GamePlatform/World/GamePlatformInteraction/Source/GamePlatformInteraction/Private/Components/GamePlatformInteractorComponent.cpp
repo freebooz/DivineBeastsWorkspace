@@ -237,6 +237,15 @@ void UGamePlatformInteractorComponent::BeginPlay()
 bool UGamePlatformInteractorComponent::IsLocalFocusSamplingActive() const
 { return GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(FocusTimer); }
 
+void UGamePlatformInteractorComponent::SetLocalFocusPolicy(bool bEnabled, bool bUsePointer)
+{
+    check(IsInGameThread());
+    if (bLocalFocusEnabled == bEnabled && bUsePointerFocus == bUsePointer) return;
+    bLocalFocusEnabled = bEnabled;
+    bUsePointerFocus = bUsePointer;
+    if (HasBegunPlay()) ReconcileLocalFocusSampling();
+}
+
 void UGamePlatformInteractorComponent::HandleOwnerControllerChanged(APawn*, AController*, AController*)
 { ReconcileLocalFocusSampling(); }
 void UGamePlatformInteractorComponent::HandleOwnerPawnChanged(APawn*, APawn*)
@@ -245,7 +254,7 @@ void UGamePlatformInteractorComponent::HandleOwnerPawnChanged(APawn*, APawn*)
 void UGamePlatformInteractorComponent::ReconcileLocalFocusSampling()
 {
     check(IsInGameThread());
-    if (IsLocallyControlledOwner() && ResolveControlledPawn(GetOwner()) &&
+    if (bLocalFocusEnabled && IsLocallyControlledOwner() && ResolveControlledPawn(GetOwner()) &&
         GetWorld() &&
         !GetWorld()->bIsTearingDown &&
         (GetWorld()->WorldType == EWorldType::Game || GetWorld()->WorldType == EWorldType::PIE) &&
@@ -318,7 +327,7 @@ void UGamePlatformInteractorComponent::GetLifetimeReplicatedProps(
 
 void UGamePlatformInteractorComponent::RefreshLocalFocus()
 {
-    if (!IsLocallyControlledOwner() || !GetWorld())
+    if (!bLocalFocusEnabled || !IsLocallyControlledOwner() || !GetWorld())
     {
         return;
     }
@@ -339,12 +348,19 @@ void UGamePlatformInteractorComponent::RefreshLocalFocus()
     FVector ViewLocation;
     FRotator ViewRotation;
     Controller->GetPlayerViewPoint(ViewLocation, ViewRotation);
+    FVector ViewDirection = ViewRotation.Vector();
+    if (bUsePointerFocus && (!Controller->bShowMouseCursor ||
+        !Controller->DeprojectMousePositionToWorld(ViewLocation, ViewDirection)))
+    {
+        if (CurrentFocus.IsValid()) { CurrentFocus = {}; OnFocusChanged.Broadcast(CurrentFocus); }
+        return; // 捕获镜头或鼠标离开视口时没有可信的指针候选，不退回中心误交互。
+    }
 
     const UGamePlatformInteractionSettings* Settings =
         GetDefault<UGamePlatformInteractionSettings>();
     const FVector TraceEnd =
         ViewLocation +
-        ViewRotation.Vector() * Settings->MaxConfiguredInteractionDistance;
+        ViewDirection * Settings->MaxConfiguredInteractionDistance;
 
     FCollisionQueryParams Params(
         SCENE_QUERY_STAT(GamePlatformInteractionFocus),

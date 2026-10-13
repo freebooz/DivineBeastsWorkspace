@@ -46,6 +46,9 @@ PCG（程序化内容生成）归属遵循“机制在平台、内容在世界�
 
 Surface（环境表面材质）同样遵循“机制在平台、项目内容在世界包”：`GamePlatformSurface（游戏平台通用环境表面材质插件）`拥有环境状态、MPC桥接、雪／苔藓／湿润／积水等通用Material Function合同和编辑器生成／校验入口；神兽联盟实际雪、苔藓、岩石、泥土、桃林、建筑纹理及`MI_DBA_*`材质实例归对应`DBAWorldPack_*`。`DBAWorlds`不复制平台材质算法，PCG只选择／放置世界内容，VFX只负责雨雪粒子、水雾和飞溅。
 
+**2026-10-13 环境资源接入规划**：树木、岩石、房屋等素材后续再导入；分层、目录、MeshSet（网格集合）、SpawnPolicy（生成策略）、建筑组合件、专用服务器Cook（烘焙）隔离及P0—P7计划参见 `Docs/Implementation/EnvironmentAssetArchitecturePlan_20261013.md`（环境场景资源架构与实施计划）。本次不创建空插件、资产、目录或运行时代码；当前内容包登记文件实际包含18个插件身份。
+
+
 ## 登记格式与交付门槛
 
 `ContentPackRegistry.json`使用`SchemaVersion: 1`及`ContentPacks`数组。每项含`Name`（稳定插件身份）和`RelativePath`（相对此目录的路径，如`Heroes/DBAHeroPack_Rat`）。规划中的包不进入实际清单；不得重复既有插件身份、使用绝对路径或`..`越界。
@@ -64,4 +67,4 @@ Surface（环境表面材质）同样遵循“机制在平台、项目内容在�
 - 十二生肖技能 VFX 统一遵循 DBAClient/Docs/ZodiacSkillVFXArchitecture.md：代码层只维护 Hero VFX Profile（英雄视觉特效配置）与项目 Catalog（表现目录）规则，具体英雄 VFX 美术归对应 DBAHeroPack_*。真实资产交付时，英雄包内部建议按 VFX/Common、VFX/BasicAttack、VFX/Passive、VFX/Abilities、VFX/Ultimate、VFX/Status、VFX/Movement、VFX/Definitions、VFX/Catalogs 以及 Niagara/Materials/Textures/Meshes/Decals 分类；未交付资源不得创建空资产占位。
 - `F:\\VFX Lib` 第一批复用规划见 `DBAClient/Docs/ZodiacReuseMatrix.md`：平台只迁移去主题化运动/源素材，Rabbit/Horse/Goat/Rooster/Boar 等项目视觉仍归对应 HeroPack；当前 HeroPack 尚无真实技能 Ability，因此不得提前创建空 VFX `.uasset`。
 - 未来按模块拆出的代码能力必须先修改正式代码插件清单，不能伪装为内容插件绕过46个基线。
-- 内容浏览器根目录的显示名来自插件`FriendlyName`。按2026-10-08用户要求，16个内容包均使用自身英文插件身份作为FriendlyName，例如`DBAHeroPack_Tiger`；中文说明与游戏内英雄名称继续保留。只改显示元数据，不迁移挂载点、骨骼、材质或序列化资源身份。
+- 内容浏览器根目录的显示名来自插件`FriendlyName`。按2026-10-08用户要求，当前已登记的18个内容包均使用自身英文插件身份作为FriendlyName，例如`DBAHeroPack_Tiger`；中文说明与游戏内英雄名称继续保留。只改显示元数据，不迁移挂载点、骨骼、材质或序列化资源身份。

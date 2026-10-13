@@ -1,0 +1,628 @@
+{
+  "schemaVersion": 1,
+  "group": "WaterFoliage",
+  "descriptionZH": "水体与植被生态系统12项函数",
+  "functions": [
+    {
+      "id": "MAT-05-01",
+      "name": "WaterNormalDistortion",
+      "owner": "Surface",
+      "folder": "Water",
+      "zh": "两层水面扰动法线按水流相位及强度融合归一化",
+      "pins": [
+        {
+          "name": "NormalA",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "NormalB",
+          "type": "V3",
+          "preview": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "FlowPhase",
+          "type": "S",
+          "preview": 0.45
+        },
+        {
+          "name": "DistortionStrength",
+          "type": "S",
+          "preview": 0.8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Normal",
+          "expression": [
+            "normalize",
+            [
+              "lerp",
+              "NormalA",
+              "NormalB",
+              [
+                "sat",
+                [
+                  "mul",
+                  "FlowPhase",
+                  "DistortionStrength"
+                ]
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-05-02",
+      "name": "FlowDirectionMap",
+      "owner": "Surface",
+      "folder": "Water",
+      "zh": "二维流向和流速决定水纹坐标随时间平移",
+      "pins": [
+        {
+          "name": "UV",
+          "type": "V2",
+          "preview": [
+            0.5,
+            0.5
+          ]
+        },
+        {
+          "name": "FlowDirectionUV",
+          "type": "V2",
+          "preview": [
+            0.14,
+            0.06
+          ]
+        },
+        {
+          "name": "TimeSeconds",
+          "type": "S",
+          "preview": 2.5
+        },
+        {
+          "name": "FlowSpeed",
+          "type": "S",
+          "preview": 0.4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "UV",
+          "expression": [
+            "add",
+            "UV",
+            [
+              "mul",
+              "FlowDirectionUV",
+              [
+                "mul",
+                "TimeSeconds",
+                "FlowSpeed"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-05-03",
+      "name": "WaterDepthColor",
+      "owner": "Surface",
+      "folder": "Water",
+      "zh": "水深厘米在浅水与深水颜色之间计算渐变",
+      "pins": [
+        {
+          "name": "ShallowColor",
+          "type": "V3",
+          "preview": [
+            0.16,
+            0.53,
+            0.57
+          ]
+        },
+        {
+          "name": "DeepColor",
+          "type": "V3",
+          "preview": [
+            0.03,
+            0.14,
+            0.24
+          ]
+        },
+        {
+          "name": "DepthCm",
+          "type": "S",
+          "preview": 220
+        },
+        {
+          "name": "DeepWaterDepthCm",
+          "type": "S",
+          "preview": 1600
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "ShallowColor",
+            "DeepColor",
+            [
+              "sat",
+              [
+                "div",
+                "DepthCm",
+                "DeepWaterDepthCm"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-05-06",
+      "name": "UnderwaterLightAttenuation",
+      "owner": "Surface",
+      "folder": "Water",
+      "zh": "水下光照有界单调衰减近似，按深度和吸收率递减",
+      "pins": [
+        {
+          "name": "DepthCm",
+          "type": "S",
+          "preview": 180
+        },
+        {
+          "name": "AbsorptionPerCm",
+          "type": "S",
+          "preview": 0.004
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Attenuation",
+          "expression": [
+            "div",
+            1,
+            [
+              "add",
+              1,
+              [
+                "mul",
+                "DepthCm",
+                "AbsorptionPerCm"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-05-07",
+      "name": "WaterTurbidity",
+      "owner": "Surface",
+      "folder": "Water",
+      "zh": "水体悬浮颗粒与噪声决定清澈色、浑浊色的混合",
+      "pins": [
+        {
+          "name": "ClearWaterColor",
+          "type": "V3",
+          "preview": [
+            0.15,
+            0.46,
+            0.55
+          ]
+        },
+        {
+          "name": "MurkyWaterColor",
+          "type": "V3",
+          "preview": [
+            0.21,
+            0.3,
+            0.25
+          ]
+        },
+        {
+          "name": "Turbidity",
+          "type": "S",
+          "preview": 0.55
+        },
+        {
+          "name": "SedimentNoise",
+          "type": "S",
+          "preview": 0.82
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "ClearWaterColor",
+            "MurkyWaterColor",
+            [
+              "sat",
+              [
+                "mul",
+                "Turbidity",
+                "SedimentNoise"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-05-10",
+      "name": "WaterfallScrollingUV",
+      "owner": "Surface",
+      "folder": "Water",
+      "zh": "瀑布沿流向滚动纹理坐标，可调速度和时间",
+      "pins": [
+        {
+          "name": "UV",
+          "type": "V2",
+          "preview": [
+            0.5,
+            0.5
+          ]
+        },
+        {
+          "name": "FlowDirectionUV",
+          "type": "V2",
+          "preview": [
+            0,
+            -0.18
+          ]
+        },
+        {
+          "name": "TimeSeconds",
+          "type": "S",
+          "preview": 3
+        },
+        {
+          "name": "FlowSpeed",
+          "type": "S",
+          "preview": 1.2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "UV",
+          "expression": [
+            "add",
+            "UV",
+            [
+              "mul",
+              "FlowDirectionUV",
+              [
+                "mul",
+                "TimeSeconds",
+                "FlowSpeed"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-05-11",
+      "name": "WaterOpacity",
+      "owner": "Surface",
+      "folder": "Water",
+      "zh": "透明权重由水厚度与泡沫贡献组合，材质混合模式由母版负责",
+      "pins": [
+        {
+          "name": "WaterThicknessCm",
+          "type": "S",
+          "preview": 100
+        },
+        {
+          "name": "VisibleDepthCm",
+          "type": "S",
+          "preview": 320
+        },
+        {
+          "name": "FoamMask",
+          "type": "S",
+          "preview": 0.3
+        },
+        {
+          "name": "FoamBoost",
+          "type": "S",
+          "preview": 0.22
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Opacity",
+          "expression": [
+            "sat",
+            [
+              "add",
+              [
+                "sat",
+                [
+                  "div",
+                  "WaterThicknessCm",
+                  "VisibleDepthCm"
+                ]
+              ],
+              [
+                "mul",
+                "FoamMask",
+                "FoamBoost"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-06-04",
+      "name": "FoliageColorVariation",
+      "owner": "Surface",
+      "folder": "Foliage",
+      "zh": "每株植物随机因子驱动植被底色差异，无项目贴图硬引用",
+      "pins": [
+        {
+          "name": "BaseColor",
+          "type": "V3",
+          "preview": [
+            0.21,
+            0.46,
+            0.24
+          ]
+        },
+        {
+          "name": "VariantColor",
+          "type": "V3",
+          "preview": [
+            0.34,
+            0.55,
+            0.28
+          ]
+        },
+        {
+          "name": "InstanceRandom",
+          "type": "S",
+          "preview": 0.36
+        },
+        {
+          "name": "VariationStrength",
+          "type": "S",
+          "preview": 0.6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "BaseColor",
+            "VariantColor",
+            [
+              "sat",
+              [
+                "mul",
+                "InstanceRandom",
+                "VariationStrength"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-06-06",
+      "name": "FoliageSeasonColor",
+      "owner": "Surface",
+      "folder": "Foliage",
+      "zh": "随客户端季节进度从春夏绿色过渡到秋叶颜色",
+      "pins": [
+        {
+          "name": "SummerColor",
+          "type": "V3",
+          "preview": [
+            0.19,
+            0.48,
+            0.23
+          ]
+        },
+        {
+          "name": "AutumnColor",
+          "type": "V3",
+          "preview": [
+            0.62,
+            0.38,
+            0.16
+          ]
+        },
+        {
+          "name": "SeasonProgress",
+          "type": "S",
+          "preview": 0.5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "SummerColor",
+            "AutumnColor",
+            [
+              "sat",
+              "SeasonProgress"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-06-09",
+      "name": "LeafFrost",
+      "owner": "Surface",
+      "folder": "Foliage",
+      "zh": "霜雪对叶片颜色的覆盖受局部向上暴露遮罩约束",
+      "pins": [
+        {
+          "name": "LeafColor",
+          "type": "V3",
+          "preview": [
+            0.27,
+            0.43,
+            0.23
+          ]
+        },
+        {
+          "name": "FrostColor",
+          "type": "V3",
+          "preview": [
+            0.9,
+            0.93,
+            0.98
+          ]
+        },
+        {
+          "name": "FrostAmount",
+          "type": "S",
+          "preview": 0.74
+        },
+        {
+          "name": "UpFacingExposure",
+          "type": "S",
+          "preview": 0.83
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "LeafColor",
+            "FrostColor",
+            [
+              "sat",
+              [
+                "mul",
+                "FrostAmount",
+                "UpFacingExposure"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-06-10",
+      "name": "BarkMoss",
+      "owner": "Surface",
+      "folder": "Foliage",
+      "zh": "树皮纹理按湿度与孔洞遮罩表现苔藓附着",
+      "pins": [
+        {
+          "name": "BarkColor",
+          "type": "V3",
+          "preview": [
+            0.37,
+            0.25,
+            0.17
+          ]
+        },
+        {
+          "name": "MossColor",
+          "type": "V3",
+          "preview": [
+            0.14,
+            0.32,
+            0.19
+          ]
+        },
+        {
+          "name": "Humidity",
+          "type": "S",
+          "preview": 0.82
+        },
+        {
+          "name": "CavityMask",
+          "type": "S",
+          "preview": 0.69
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "BarkColor",
+            "MossColor",
+            [
+              "sat",
+              [
+                "mul",
+                "Humidity",
+                "CavityMask"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAT-06-12",
+      "name": "FoliageWithering",
+      "owner": "Surface",
+      "folder": "Foliage",
+      "zh": "客户端可视化枯萎因子改变植被健康色到枯黄",
+      "pins": [
+        {
+          "name": "HealthyColor",
+          "type": "V3",
+          "preview": [
+            0.21,
+            0.5,
+            0.25
+          ]
+        },
+        {
+          "name": "DryColor",
+          "type": "V3",
+          "preview": [
+            0.58,
+            0.45,
+            0.18
+          ]
+        },
+        {
+          "name": "DroughtFactor",
+          "type": "S",
+          "preview": 0.62
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Color",
+          "expression": [
+            "lerp",
+            "HealthyColor",
+            "DryColor",
+            [
+              "sat",
+              "DroughtFactor"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

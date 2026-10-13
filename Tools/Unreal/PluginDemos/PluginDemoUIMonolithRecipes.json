@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "purpose": "SSLM开发目录UI制作合同；不是已生成资产或自动通过记录",
+  "project": "Game/DivineBeastsArena.uproject",
+  "engine": "5.8",
+  "tool": "Monolith MCP",
+  "prerequisites": ["当前正式Editor完整构建证据与源码匹配", "Monolith真实工程身份与版本回读", "新父类已加载；禁止自动构建", "制作前读取ui动作实际参数Schema"],
+  "assets": [
+    {"name": "WBP_DBA_PluginDemoRoot", "folder": "UI", "parent": "/Script/GamePlatformUIClient.GamePlatformRootLayout", "controls": {"HUDLayer": "Overlay", "WorldProjectionLayer": "Overlay", "FeedbackLayer": "Overlay", "ScreenLayer": "CommonActivatableWidgetStack", "ModalLayer": "CommonActivatableWidgetStack", "SystemLayer": "CommonActivatableWidgetStack", "NotificationLayer": "Overlay", "LoadingLayer": "CommonActivatableWidgetStack", "DebugLayer": "CommonActivatableWidgetStack"}},
+    {"name": "WBP_DBA_PluginDemoHub", "folder": "UI", "parent": "/Script/DivineBeastsDemoClient.DivineBeastsDemoHubScreen", "controls": {"PluginSearchInput": "EditableTextBox", "LayerFilterCombo": "ComboBoxString", "PluginList": "ListView", "FeatureList": "ListView", "ScenarioList": "ListView", "ParameterList": "ListView", "SampleWidgetSlot": "NamedSlot", "FeatureDetailsText": "TextBlock", "OperationStatusText": "TextBlock", "CoverageText": "TextBlock", "RefreshButton": "Button", "LaunchScenarioButton": "Button", "ExecuteScenarioButton": "Button", "PauseScenarioButton": "Button", "ResumeScenarioButton": "Button", "StopScenarioButton": "Button", "ResetDemoButton": "Button", "ReturnButton": "Button", "EvidenceButton": "Button"}, "list_entry": "WBP_DBA_PluginDemoMenuRow", "parameter_entry": "WBP_DBA_PluginDemoParameterRow"},
+    {"name": "WBP_DBA_PluginDemoMenuRow", "folder": "UI", "parent": "/Script/DivineBeastsDemoClient.DivineBeastsDemoMenuEntryWidget", "controls": {"LabelText": "TextBlock", "StatusText": "TextBlock"}},
+    {"name": "WBP_DBA_PluginDemoParameterRow", "folder": "UI", "parent": "/Script/DivineBeastsDemoClient.DivineBeastsDemoParameterRow", "controls": {"ParameterLabelText": "TextBlock", "ParameterValueInput": "EditableTextBox", "ParameterBooleanInput": "CheckBox", "ParameterErrorText": "TextBlock"}},
+    {"name": "WBP_DBA_PluginDemoResourceBar", "folder": "UI", "parent": "/Script/GamePlatformUIClient.GamePlatformResourceBarWidget", "controls": {"ProgressBar": "ProgressBar", "ResourceValueText": "TextBlock"}}
+  ],
+  "screen_definition": {"path": "/DBAUIPack_Core/Development/PluginDemos/Definitions/DA_DBA_PluginDemoHubScreen", "class": "/Script/GamePlatformUIClient.GamePlatformUIScreenDefinition", "screen_id": "DivineBeasts.Demo.Hub", "widget": "WBP_DBA_PluginDemoHub", "layer": "Screen", "input": "GameAndUI", "pause": "Never", "focus": "PluginSearchInput", "survives_travel": false},
+  "asset_root": "/DBAUIPack_Core/Development/PluginDemos",
+  "layout": "三列虚拟化列表+可滚动详情/参数/样板；窄屏折叠，固定18/20/28字号，不缩放正文；安全区内保留返回与停止",
+  "visual": "复用现有温润自然碧绿玉石主题；禁颗粒/砂砾/过锐化；不为截图问题改变原稿RGB",
+  "focus_order": ["PluginSearchInput", "LayerFilterCombo", "PluginList", "FeatureList", "ScenarioList", "ParameterList", "LaunchScenarioButton", "ExecuteScenarioButton", "StopScenarioButton", "ResetDemoButton", "ReturnButton", "EvidenceButton"],
+  "required_validation": ["父类/命名控件/实际类型回读", "层栈与列表entry class回读", "焦点可达性与键鼠/手柄导航", "可访问性中文正文及非颜色状态", "1920x1080/2560x1440/3840x2160/小安全区", "编译日志零错误", "保存关闭重开回读", "新彩色资产源像素与RHI单次编码比较"],
+  "forbidden_preview": "capture_scene_preview widget",
+  "execution_status": "BlockedByEditorBinary；本清单未执行任何资产动作"
+}

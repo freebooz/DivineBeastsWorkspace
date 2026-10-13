@@ -1,6 +1,6 @@
-# 《神兽联盟》十种正式PBR地形材质实施与验收记录
+# 《SSLM》十种正式PBR地形材质实施与验收记录
 
-版本：2026-10-12；工作空间：DivineBeastsWorkspace（神兽联盟工作空间）；引擎：UE5.8；本次连接器：Cwebcodex；会话：wc_sess_ZPzXyb7oTYXIY1JR。
+版本：2026-10-12；工作空间：DivineBeastsWorkspace（SSLM工作空间）；引擎：UE5.8；本次连接器：Cwebcodex；会话：wc_sess_ZPzXyb7oTYXIY1JR。
 
 ## 一、范围与不可破坏边界
 

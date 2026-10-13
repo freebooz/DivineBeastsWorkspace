@@ -35,4 +35,11 @@ struct FDivineBeastsWorldControlState
         return Value < -1.f ? -1.f : (Value > 1.f ? 1.f : Value);
     }
     void Reset() { MouseButtons = 0; }
+    /** 左键短按且累计原始鼠标路程不超过6像素才算选择；长按/往返拖动/非有限输入均拒绝。
+     * 使用累计路程而不是末点距离，避免拖回原点后被误判为单击。时间单位秒，最大0.35秒。 */
+    static bool IsSelectionClick(bool bPending, double HeldSeconds, float TravelPixels)
+    {
+        return bPending && HeldSeconds >= 0.0 && HeldSeconds <= 0.35 &&
+            TravelPixels >= 0.f && TravelPixels <= 6.f;
+    }
 };

@@ -1,6 +1,6 @@
 # 通用鸟群P4–P7续执行记录
 
-工程：DivineBeastsWorkspace（神兽联盟工作空间）。依据：BirdFlockVFXImplementationPlan.md（鸟群总计划）；本记录保存本轮新增证据，不把历史计划状态当作当前工程事实。
+工程：DivineBeastsWorkspace（SSLM工作空间）。依据：BirdFlockVFXImplementationPlan.md（鸟群总计划）；本记录保存本轮新增证据，不把历史计划状态当作当前工程事实。
 
 ## 核验基线
 

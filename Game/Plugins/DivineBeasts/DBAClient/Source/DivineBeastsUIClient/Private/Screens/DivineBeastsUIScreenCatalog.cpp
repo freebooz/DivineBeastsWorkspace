@@ -91,8 +91,11 @@ namespace
             MakeScreen(TEXT("UI.Screen.ErrorReconnect"), TEXT("ErrorReconnect"), EGamePlatformUILayer::Modal, EGamePlatformUIInputMode::UIOnly, TEXT("RetryButton"), true),
             MakeScreen(TEXT("UI.Screen.SystemMenu"), TEXT("SystemMenu"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::UIOnly, TEXT("ResumeButton")),
             MakeScreen(TEXT("UI.Screen.Settings"), TEXT("Settings"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::UIOnly, TEXT("ResolutionCombo")),
-            MakeScreen(TEXT("UI.Screen.Inventory"), TEXT("Inventory"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("InventoryGrid")),
+            // InventoryGrid为不可聚焦WrapBox（自动换行容器）；使用始终可见的CloseButton作为初始手柄/键盘焦点。
+            MakeScreen(TEXT("UI.Screen.Inventory"), TEXT("Inventory"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("CloseButton")),
             MakeScreen(TEXT("UI.Screen.Quest"), TEXT("Quest"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("QuestList")),
+            // 新手册C++命名合同已实现；真实WBP必须经Monolith交付后才可打开，软加载失败不得冒充成功。
+            MakeScreen(TEXT("UI.Screen.WorldJournal"), TEXT("WorldJournal"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::UIOnly, TEXT("CloseButton")),
             // 社交与运营是第三层公共项目页面，不属于MOBA竞技；软加载仍需提供可见失败结果。
             MakeScreen(TEXT("UI.Screen.Social"), TEXT("Social"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("FriendsButton")),
             MakeScreen(TEXT("UI.Screen.LiveOps"), TEXT("LiveOps"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("NoticesButton")),

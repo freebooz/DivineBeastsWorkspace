@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """神兽联盟双开发模式的静态入口/端侧/配置防回归测试。
 
-本测试不启动UE、不认定UMG资产已创建；原生C++与实际世界进退另执行。
+本测试不启动UE；资源存在性与源码合同不代表原生C++已编译、UE世界进退或人工验收通过。
 验证目标：Debug沿用登录，PluginDev需要双重显式开发标志，不能污染发行或专服。
 """
 from __future__ import annotations
@@ -47,6 +47,12 @@ class DualModePolicyTests(unittest.TestCase):
         self.assertIn("!bConflictingDevelopmentMode",policy)
         self.assertIn("#if UE_BUILD_SHIPPING || UE_BUILD_TEST",policy)
 
+    def test_plugin_launcher_requires_real_hub_widget(self):
+        """演示启动必须具备实际Monolith界面资产，不能只打开空白关卡。"""
+        launcher=read("Build/Game/RunPluginDemo.ps1")
+        self.assertIn("WBP_DBA_PluginDemoHub.uasset",launcher)
+        self.assertIn("Test-Path -LiteralPath $hubWidgetFile -PathType Leaf",launcher)
+
     def test_editor_client_server_are_isolated_by_module_type(self):
         plugin=json.loads(read("Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin"))
         modules=[x for x in plugin["Modules"] if x["Name"]=="DivineBeastsDemoClient"]
@@ -90,6 +96,36 @@ class DualModePolicyTests(unittest.TestCase):
         for contract in ("FInputModeGameAndUI", "SetWidgetToFocus", "SetInputMode(InputMode)",
                          "bShowMouseCursor = true", "DemoInputController.Reset()"):
             self.assertIn(contract,world_cpp)
+
+    def test_real_plugin_demo_assets_exist(self):
+        """仅验证UE/Monolith产物在工程中落盘；不将存在性冒充运行或人工验收。"""
+        for asset in (
+            "Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap",
+            "Game/Content/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub.uasset",
+            "Game/Content/Development/PluginDemos/UI/WBP_DBA_PluginDemoOverlay.uasset",
+            "Game/Content/Development/PluginDemos/UI/WBP_DBA_PluginDemoBirdFlock.uasset",
+        ):
+            with self.subTest(asset=asset):
+                path=ROOT/asset
+                self.assertTrue(path.is_file())
+                self.assertGreater(path.stat().st_size,1024)
+
+    def test_named_widgets_have_native_interaction_bridge(self):
+        """搜索、分类、场景导航与返回桥接到真实项目目录，拒绝在C++伪造可视控件树。"""
+        header=read("Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Public/UI/DivineBeastsDemoHubWidget.h")
+        source=read("Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/UI/DivineBeastsDemoHubWidget.cpp")
+        for widget in ("PluginSearchInput", "LayerFilterCombo", "PluginSelectorCombo",
+                       "ScenarioSelectorCombo", "RefreshButton", "LaunchScenarioButton",
+                       "ReturnButton", "OverlayFeedbackText"):
+            with self.subTest(widget=widget):
+                self.assertIn(widget,header)
+        for handler in ("OnSearchChanged", "OnLayerChanged", "OnPluginChanged",
+                        "OnScenarioChanged", "OnScenarioLaunchClicked",
+                        "OnHubReturnClicked", "OnDemoResetClicked"):
+            with self.subTest(handler=handler):
+                self.assertIn(handler+"(",source)
+        self.assertIn("GetWidgetFromName(TEXT(\"BackButton\"))",source)
+        self.assertNotIn("TObjectPtr<class UButton> BackButton;",header)
 
     def test_development_entry_has_no_password_parameter(self):
         source=read("Build/Game/LaunchDBADevelopment.ps1")

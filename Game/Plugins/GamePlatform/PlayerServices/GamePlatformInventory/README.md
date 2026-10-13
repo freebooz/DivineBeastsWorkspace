@@ -1,5 +1,8 @@
 # GamePlatformInventory（游戏平台背包插件）
 
+> 2026-10-13 本轮补充客户端按槽查询、最多128格显示分页和12格快捷栏投影，神兽联盟页面已暴露相应只读/快捷栏操作蓝图接口，同时添加SlotProjection（槽位投影）自动化测试源码。**尚未执行UE编译、蓝图资源制作、可信服务器授予/消耗或联机验收**；详见Docs/ClientCacheAndViewModel.md（客户端缓存与视图模型说明）。
+
+
 正式稳定路径：`Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory`。该插件属于 GamePlatform（平台层）PlayerServices（玩家服务适配），UE 侧只保留 `GamePlatformInventoryClient（背包客户端模块）`，Type=`ClientOnly（仅客户端）`；长期背包权威位于 `PlayerDataService（玩家数据服务） + PostgreSQL（关系数据库）`。不创建第二套 UE Server 背包真源。
 
 当前已实现的客户端能力包括 Snapshot/Revision（快照/修订号）、Container/Slot（容器/槽位）、ItemInstance（物品实例）、Move/Swap、Split/Merge、Quickbar、Pending Operation、OperationId、ExpectedRevision、RevisionConflict 全量对账、AccountGeneration 与 SnapshotRequestGeneration 迟到响应隔离、派生排序/索引缓存和中立 ViewModel。默认 Transport 已改为复用 `GamePlatformOnlineClient（平台在线客户端）`的认证请求通道，不保存 AccessToken，也不自行实现 Token 刷新。

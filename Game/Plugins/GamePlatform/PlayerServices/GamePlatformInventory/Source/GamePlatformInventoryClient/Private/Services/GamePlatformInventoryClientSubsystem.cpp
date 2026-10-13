@@ -215,6 +215,8 @@ void UGamePlatformInventoryClientSubsystem::ResetAccount()
 
     CachedSortedItems.Reset();
     CachedItemIndexByInstanceId.Reset();
+    // 退出当前账号时同步清除槽位索引。
+    CachedSlotIndexByContainer.Reset();
     CachedViewModels.Reset();
     CachedSnapshotGeneration = ~uint64(0);
     CachedViewSnapshotGeneration = ~uint64(0);
@@ -342,6 +344,14 @@ EnsureSnapshotDerivedCache() const
     CachedItemIndexByInstanceId.Reserve(
         Snapshot.Items.Num());
 
+    // 排序视图与索引一起缓存，避免64格网格每次事件更新重复扫描整个背包。
+    CachedSlotIndexByContainer.Reset();
+    for (int32 SortedIndex = 0; SortedIndex < CachedSortedItems.Num(); ++SortedIndex)
+    {
+        const FGamePlatformInventoryItemInstance& Item = CachedSortedItems[SortedIndex];
+        CachedSlotIndexByContainer.FindOrAdd(Item.ContainerId).Add(Item.SlotIndex, SortedIndex);
+    }
+
     for (int32 Index = 0;
          Index < Snapshot.Items.Num();
          ++Index)
@@ -468,6 +478,121 @@ UGamePlatformInventoryClientSubsystem::FindItem(
     return Index && Snapshot.Items.IsValidIndex(*Index)
         ? &Snapshot.Items[*Index]
         : nullptr;
+}
+
+
+int32 UGamePlatformInventoryClientSubsystem::GetContainerCapacity(FName ContainerId) const
+{
+    if (Snapshot.InventoryRevision <= 0 || ContainerId.IsNone())
+    {
+        return 0;
+    }
+
+    for (const FGamePlatformInventoryContainerSnapshot& Container : Snapshot.Containers)
+    {
+        if (Container.ContainerId == ContainerId)
+        {
+            return Container.Capacity;
+        }
+    }
+    return 0;
+}
+
+bool UGamePlatformInventoryClientSubsystem::TryGetContainerSlot(
+    FName ContainerId, int32 SlotIndex,
+    FGamePlatformInventorySlotViewModel& OutSlot) const
+{
+    OutSlot = FGamePlatformInventorySlotViewModel();
+    const int32 Capacity = GetContainerCapacity(ContainerId);
+    if (SlotIndex < 0 || SlotIndex >= Capacity)
+    {
+        return false;
+    }
+
+    OutSlot.ContainerId = ContainerId;
+    OutSlot.SlotIndex = SlotIndex;
+    // 此索引与快照排序视图同代次；Pending变化时仅更新其派生视图。
+    const TArray<FGamePlatformInventoryItemViewModel>& Views = GetViewModelsView();
+    const TMap<int32, int32>* Slots = CachedSlotIndexByContainer.Find(ContainerId);
+    const int32* SortedIndex = Slots ? Slots->Find(SlotIndex) : nullptr;
+    if (SortedIndex && Views.IsValidIndex(*SortedIndex))
+    {
+        OutSlot.Item = Views[*SortedIndex];
+        OutSlot.bOccupied = true;
+    }
+    return true;
+}
+
+TArray<FGamePlatformInventorySlotViewModel>
+UGamePlatformInventoryClientSubsystem::GetContainerSlotPage(
+    FName ContainerId, int32 StartSlotIndex, int32 MaxSlotCount) const
+{
+    TArray<FGamePlatformInventorySlotViewModel> Result;
+    const int32 Capacity = GetContainerCapacity(ContainerId);
+    if (StartSlotIndex < 0 || StartSlotIndex >= Capacity || MaxSlotCount <= 0)
+    {
+        return Result;
+    }
+
+    constexpr int32 MaxPageSlots = 128;
+    const int32 Count = FMath::Min(FMath::Min(MaxSlotCount, MaxPageSlots),
+                                   Capacity - StartSlotIndex);
+    // 一次获取视图和容器索引，分页渲染时不为每个空格重复查找。
+    const TArray<FGamePlatformInventoryItemViewModel>& Views = GetViewModelsView();
+    const TMap<int32, int32>* Slots = CachedSlotIndexByContainer.Find(ContainerId);
+    Result.Reserve(Count);
+    for (int32 Offset = 0; Offset < Count; ++Offset)
+    {
+        FGamePlatformInventorySlotViewModel Slot;
+        Slot.ContainerId = ContainerId;
+        Slot.SlotIndex = StartSlotIndex + Offset;
+        const int32* SortedIndex = Slots ? Slots->Find(Slot.SlotIndex) : nullptr;
+        if (SortedIndex && Views.IsValidIndex(*SortedIndex))
+        {
+            Slot.Item = Views[*SortedIndex];
+            Slot.bOccupied = true;
+        }
+        Result.Add(MoveTemp(Slot));
+    }
+    return Result;
+}
+
+TArray<FGamePlatformInventoryQuickbarViewModel>
+UGamePlatformInventoryClientSubsystem::GetQuickbarSlots() const
+{
+    TArray<FGamePlatformInventoryQuickbarViewModel> Result;
+    Result.SetNum(MaxInventoryQuickbarSlots);
+    for (int32 Index = 0; Index < MaxInventoryQuickbarSlots; ++Index)
+    {
+        Result[Index].SlotIndex = Index;
+    }
+
+    const TArray<FGamePlatformInventoryItemViewModel>& Views = GetViewModelsView();
+    for (const FGamePlatformInventoryQuickbarSlot& QuickSlot : Snapshot.Quickbar)
+    {
+        if (!Result.IsValidIndex(QuickSlot.SlotIndex))
+        {
+            continue;
+        }
+        // 快捷栏只读取实例投影；真实物品不会复制到快捷栏，也不会在客户端创建。
+        const FGamePlatformInventoryItemInstance* Item = FindItem(QuickSlot.ItemInstanceId);
+        const TMap<int32, int32>* Slots = Item
+            ? CachedSlotIndexByContainer.Find(Item->ContainerId) : nullptr;
+        const int32* SortedIndex = Slots ? Slots->Find(Item->SlotIndex) : nullptr;
+        if (SortedIndex && Views.IsValidIndex(*SortedIndex))
+        {
+            Result[QuickSlot.SlotIndex].Item = Views[*SortedIndex];
+            Result[QuickSlot.SlotIndex].bAssigned = true;
+        }
+    }
+
+    if ((Pending.Type == EGamePlatformInventoryOperationType::SetQuickbar ||
+         Pending.Type == EGamePlatformInventoryOperationType::ClearQuickbar) &&
+        Result.IsValidIndex(Pending.Quickbar.SlotIndex))
+    {
+        Result[Pending.Quickbar.SlotIndex].bPending = true;
+    }
+    return Result;
 }
 
 FGuid UGamePlatformInventoryClientSubsystem::RequestMove(

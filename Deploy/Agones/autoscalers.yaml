@@ -1,0 +1,48 @@
+# FleetAutoscaler（舰队自动扩缩）只配置 Agones 的 Fleet 副本策略。
+# MainArena 每局独占实例：Buffer 保留 2 个 Ready 实例；Go 控制面负责 GameServerAllocation。
+apiVersion: autoscaling.agones.dev/v1
+kind: FleetAutoscaler
+metadata:
+  name: sslm-main-arena-autoscaler
+  namespace: sslm-game-servers
+spec:
+  fleetName: sslm-main-arena
+  policy:
+    type: Buffer
+    buffer:
+      bufferSize: 2
+      minReplicas: 2
+      maxReplicas: 30 # 示例容量门槛，不是实测生产预算。
+---
+# OpenWorld 常驻服务器：Counter 按空闲玩家容量扩容；不代表可任意缩容在服玩家。
+# CountsAndLists 为 Agones Beta 功能，必须先验收特性开关、平滑迁移和缩容安全门禁。
+apiVersion: autoscaling.agones.dev/v1
+kind: FleetAutoscaler
+metadata:
+  name: sslm-open-world-autoscaler
+  namespace: sslm-game-servers
+spec:
+  fleetName: sslm-open-world
+  policy:
+    type: Counter
+    counter:
+      key: players
+      bufferSize: 20
+      minCapacity: 40
+      maxCapacity: 400 # 示例总容量；发布前以权威人数与负载测试重定。
+---
+# Village 新手村教学与训练仍属于单一 Village 服务器角色，按照真实空闲容量扩缩。
+apiVersion: autoscaling.agones.dev/v1
+kind: FleetAutoscaler
+metadata:
+  name: sslm-village-autoscaler
+  namespace: sslm-game-servers
+spec:
+  fleetName: sslm-village
+  policy:
+    type: Counter
+    counter:
+      key: players
+      bufferSize: 10
+      minCapacity: 20
+      maxCapacity: 200

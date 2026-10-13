@@ -1,6 +1,6 @@
-# 《神兽联盟》P5–P6 战斗、AI、交互与竞技演示实施计划（2026-10-12）
+# 《SSLM》P5–P6 战斗、AI、交互与竞技演示实施计划（2026-10-12）
 
-工程：DivineBeastsWorkspace（神兽联盟工作空间），UE5.8；Git基线：ecb9d85617947b83996dafd8914fab15e8c252e2；状态：已完成阶段性实施与专项验证；真实可玩战斗/AI交互及生产竞技闭环仍阻塞。详见同目录PluginP5P6ExecutionResult_20261012.md。
+工程：DivineBeastsWorkspace（SSLM工作空间），UE5.8；Git基线：ecb9d85617947b83996dafd8914fab15e8c252e2；状态：已完成阶段性实施与专项验证；真实可玩战斗/AI交互及生产竞技闭环仍阻塞。详见同目录PluginP5P6ExecutionResult_20261012.md。
 
 ## 一、范围与不可越过的权限门禁
 

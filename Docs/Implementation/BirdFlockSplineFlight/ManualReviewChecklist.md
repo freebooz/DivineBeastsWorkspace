@@ -1,4 +1,4 @@
-# 《神兽联盟》Spline鸟群 BF-P8 人工视觉与交互验收单
+# 《SSLM》Spline鸟群 BF-P8 人工视觉与交互验收单
 
 > 范围：UE5.8 正式 GamePlatformPresentation → GamePlatformData → GamePlatformVFX Niagara 鸟群。
 > 状态：**待审核**。本单不能因代码存在、资产保存或旧版本截图自动标记通过。

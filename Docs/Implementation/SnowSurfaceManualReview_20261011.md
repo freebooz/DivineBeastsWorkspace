@@ -1,4 +1,4 @@
-# 神兽联盟写实积雪人工验收单（2026-10-11）
+# SSLM写实积雪人工验收单（2026-10-11）
 ## 2026-10-11 本轮人工前置条件更新
 
 - 所有正式材质改为最新56表达式遮罩曲线：SnowAmount=0时覆盖0；小雪0.23时水平平均遮罩约0.1085；大雪0.85时约0.8282。人工应分别拍摄薄雪/大雪表面与坡度对比，不能只看全雪。
@@ -11,7 +11,7 @@
 
 ## 验收入口
 
-正式工程：DivineBeastsWorkspace/Game/DivineBeastsArena.uproject；引擎UE5.8。独立审核关卡：/Game/Development/Snow/Maps/L_DBA_SnowReview。平台母材质为M_GP_SnowCover_Detailed，神兽联盟实例为MI_DBA_Snow_Detailed，增强降雪Niagara为NS_GP_Weather_Snow_Detailed。
+正式工程：DivineBeastsWorkspace/Game/DivineBeastsArena.uproject；引擎UE5.8。独立审核关卡：/Game/Development/Snow/Maps/L_DBA_SnowReview。平台母材质为M_GP_SnowCover_Detailed，SSLM实例为MI_DBA_Snow_Detailed，增强降雪Niagara为NS_GP_Weather_Snow_Detailed。
 
 ## 人工验收步骤
 

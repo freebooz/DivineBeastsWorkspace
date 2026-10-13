@@ -88,6 +88,11 @@ bool FDivineBeastsUIDomainHierarchyTest::RunTest(const FString&)
         EDivineBeastsUIDomain::Account);
     TestEqual(TEXT("背包页面领域身份"), InventoryCDO->GetBusinessDomain(),
         EDivineBeastsUIDomain::Inventory);
+    // 未绑定真实LocalPlayer的默认页面不具备操作资格，禁止单靠视觉按钮创建背包写入。
+    TestFalse(TEXT("未认证背包页面不可修改物品"), InventoryCDO->CanModifyInventory());
+    TestEqual(TEXT("未认证背包页面不暴露背包修订"), InventoryCDO->GetInventoryRevision(), int64(0));
+    TestTrue(TEXT("无异常时页面错误提示应为空"), InventoryCDO->GetInventoryErrorText().IsEmpty());
+    TestFalse(TEXT("空页面不能虚构未决背包操作"), InventoryCDO->HasPendingInventoryOperation());
     return true;
 }
 

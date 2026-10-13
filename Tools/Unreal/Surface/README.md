@@ -1,6 +1,18 @@
 # 通用环境表面制作工具
+## 2026-10-13材质库源码优先制作入口（最新）
+
+- `AuthorMaterialLibraryDomainUE58.py`（60项跨环境表面、VFX和项目角色的真实运算材质函数作者）：`MaterialLibraryDomainRecipes_{Core,World,Surface,Project}.json`（四分领域算法合同）。`--mode inspect`（仅核对路径）／`--mode apply`（实际UE创建）／`--mode review`（创建独立开发QA）／`--mode compile`（最后统一Shader编译），全部有安全拒绝和三层所有权约束。
+- `MaterialLibraryLayerProfiles_V1.json`（12种独立PBR覆盖层参数）和`AuthorMaterialLibraryLayersUE58.py`（原生材质Layer与共享Blend作者），不得直接用单色节点伪造MaterialAttributes。
+- `AuthorMaterialLibraryStandBlueprintUE58.py`（真正的UE5.8 Actor蓝图PreviewMesh组件作者，full compile延后）；`AuthorMaterialLibraryDemoUE58.py`（四类审核地图中非UI三类的中性几何、环境照明和中文标牌作者）；`AuditMaterialCapabilityUE58.py`（201项实际UE资产扫描和中文台账生成）。
+- `Tools/Unreal/UI/MaterialLibraryUIMonolithRecipes_V1.json`（UI函数配方），WBP及界面素材只能经Monolith MCP建立、布局与保存。当前编辑器存在`FailedDueToEngineChange`启动阻断，新增60函数/12材质层/7UI/蓝图及地图**尚未生成真实UE资产**。用户要求最后统一编译/Cook测试。
+
 
 本目录用于平台层苔藓、积雪和湿润相关源纹理与真实虚幻编辑器资产制作脚本，不承担网络天气权威。
+
+## 通用材质函数首批UE编辑器作者脚本（2026-10-13）
+
+`AuthorMaterialCoreFunctionsUE58.py`（真实UE5.8五函数作者）包含高度混合、宏微观混合、地形生物群落遮罩、距离细节与结霜PBR；默认`--mode inspect`（仅规划），必须在确认的正式UE编辑器内显式选择`--mode apply`（真实创建）或`--mode verify`（已保存资产只读验证）。已存在资产保持原状，绝不为了重排函数而覆盖旧包。`Tools/Unreal/VFX/AuthorVFXMaterialFunctionsUE58.py`（平台VFX三函数作者）采用相同原则；`Tests/Assets/TestMaterialFunctionAuthoringScripts.py`（离线节点拓扑测试）不是UE Shader验收。完整身份、三层归属与实际阻断见`Docs/Implementation/Materials/MaterialAuthoringBatch_20261013.md`（首批八函数实施记录）。
+
 
 ## 苔藓—积雪PBR材质制作流程
 

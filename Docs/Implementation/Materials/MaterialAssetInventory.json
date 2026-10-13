@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-13",
+  "project": "DivineBeastsWorkspace",
+  "discoveryMode": "只读项目源码合同；非UE编辑器资产注册表实测",
+  "nativeUERegistryScanCompleted": false,
+  "verifiedUEAssetCount": null,
+  "contractEntries": [
+    {
+      "AssetClass": "MaterialParameterCollection",
+      "PackagePath": "/GamePlatformSurface/ParameterCollections/MPC_GP_SurfaceGlobal",
+      "NameZH": "8个稳定环境标量参数",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "Material",
+      "PackagePath": "/GamePlatformSurface/Materials/M_GP_Surface_Master",
+      "NameZH": "完整通用表面母材质",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "Material",
+      "PackagePath": "/GamePlatformSurface/Materials/M_GP_Surface_Lite",
+      "NameZH": "轻量通用表面母材质",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "MaterialFunction",
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Masks/MF_GP_SlopeMask",
+      "NameZH": "坡度遮罩",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "MaterialFunction",
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Masks/MF_GP_HeightMask",
+      "NameZH": "海拔遮罩",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "MaterialFunction",
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Utility/MF_GP_WorldNoise",
+      "NameZH": "噪声遮罩",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "MaterialFunction",
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_SnowLayer",
+      "NameZH": "积雪覆盖",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "MaterialFunction",
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_WetnessLayer",
+      "NameZH": "表面湿润",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "MaterialFunction",
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_PuddleLayer",
+      "NameZH": "积水形成",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    },
+    {
+      "AssetClass": "MaterialFunction",
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_MossLayer",
+      "NameZH": "苔藓生长",
+      "Source": "GamePlatformSurfaceAssetContract.cpp（稳定合同）",
+      "AssetExistence": "尚未在本轮UE实测",
+      "NativeAssetClassCheck": "未验证",
+      "GraphCheck": "未验证",
+      "ShaderCheck": "未验证",
+      "AssetReloadCheck": "未验证",
+      "ClientCook": "未验证",
+      "ServerCookStrip": "未验证"
+    }
+  ],
+  "otherDomains": {
+    "VFX": "GamePlatformVFX已有真实Niagara/材质的文档记录，未在本轮复验",
+    "UI": "GamePlatformUI主题资源完整交付未在本轮复验",
+    "PCG": "仅着色数据契约，不重复制作PCG算法"
+  },
+  "limitations": [
+    "现有Runner存在其他长时间运行任务，不应并发打开并修改同一个UE工程",
+    "必须等待安全窗口进行UE资产注册表扫描并写入实际包状态"
+  ]
+}

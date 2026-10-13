@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UObject/SoftObjectPath.h"
+#include "Contracts/DivineBeastsDemoCatalogTypes.h"
+#include "Types/GamePlatformDataLease.h"
+#include "API/IDivineBeastsDemoScenarioAdapter.h"
 #include "DivineBeastsDemoCatalogSubsystem.generated.h"
 
 /** 插件架构层级；内容包仅属于项目内容的资产展示，不增加第四业务层。 */
@@ -13,7 +16,7 @@ enum class EDivineBeastsDemoLayer : uint8
 {
     Platform UMETA(DisplayName="平台层"),
     Moba UMETA(DisplayName="MOBA通用层"),
-    Project UMETA(DisplayName="神兽联盟项目层"),
+    Project UMETA(DisplayName="SSLM项目层"),
     Content UMETA(DisplayName="项目内容包")
 };
 
@@ -34,6 +37,8 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoPlugin
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") bool bEnabled = false;
     /** 当前真实资产注册表中关联的审核/诊断地图数；不代表功能总数。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 DiscoveredMapCount = 0;
+    /** 作者范围审计状态；未加载完整定义时unreviewed，不表示功能已经实现。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName FeatureAuditStatus = TEXT("unreviewed");
 };
 
 /** 从实际开发地图发现的演示候选，未完成视觉验收不能标记“通过”。 */
@@ -41,9 +46,15 @@ USTRUCT(BlueprintType)
 struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoScenario
 {
     GENERATED_BODY()
+<<<<<<< HEAD
     /** 插件身份+真实地图长包路径组合成唯一入口；同一审核图可供多个插件复用。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName ScenarioId;
     /** 从真实插件描述中校验过的身份，未知插件不能获得可用演示入口。 */
+=======
+    /** 正式案例使用稳定ID；未编目诊断兼容入口仍使用长包路径，不计正式功能覆盖。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName ScenarioId;
+    /** 正式功能所有者；未编目地图显示于开发工具诊断分组，该分组不宣称资产所有权。 */
+>>>>>>> 88d8f1093720a2e01ed32e71ab0637c5778b892a
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName PluginId;
     /** UI显示名称，可进一步由真实Definition覆盖。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FText Title;
@@ -56,6 +67,10 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoScenario
     /** 未验证状态给人工审核明确提示。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FText VerificationStatus;
 };
+
+/** 游戏线程目录/预检状态变化；订阅者在失活时解绑，不轮询资产或登录状态。 */
+DECLARE_MULTICAST_DELEGATE(FDivineBeastsDemoCatalogChanged);
+struct FDivineBeastsDemoCatalogPrivateState;
 
 /**
  * UDivineBeastsDemoCatalogSubsystem（项目开发演示目录）。
@@ -83,6 +98,39 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
     TArray<FDivineBeastsDemoScenario> GetScenarios(FName PluginId) const;
 
+    /** 获取插件全部已审计功能，包括禁用/阻塞项；空集合表示范围仍待审计。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
+    TArray<FDivineBeastsDemoFeatureEntry> GetFeatures(FName PluginId) const;
+    /** 获取主/关联此功能的独立案例，不按地图或中文名称去重。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
+    TArray<FDivineBeastsDemoScenarioDefinition> GetFeatureScenarios(FName FeatureId) const;
+    /** 游戏线程预检实际目标、插件、资产和适配器；不生成对象或发送业务请求。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
+    FDivineBeastsDemoPreflightResult PreflightScenario(FName ScenarioId) const;
+    /** 目录发布或失败诊断的真实结果；未执行保持NotExecuted。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
+    FGamePlatformResult GetCatalogResult() const;
+    /** C++稳定案例读取；输出值副本，刷新后仍可安全用于本次运行的合同。 */
+    bool FindScenarioDefinition(FName ScenarioId, FDivineBeastsDemoScenarioDefinition& OutScenario) const;
+    /** 完整检查用例合同值副本，运行证据和签收不在此处修改。 */
+    TArray<FDivineBeastsDemoReviewCaseDefinition> GetReviewCases() const;
+    /** 当前完整目录作者源指纹，不冒充实际加载模块指纹。 */
+    FString GetSourceFingerprint() const;
+    /** 事件所有者为本游戏实例；调用者持委托句柄并在失活/退出解绑。 */
+    FDivineBeastsDemoCatalogChanged OnCatalogChanged;
+    /** 游戏线程开发组合根注册真实工厂；重复/关闭返回无效完整句柄。 */
+    FDivineBeastsDemoAdapterRegistrationHandle RegisterScenarioAdapter(FName AdapterId, FDivineBeastsDemoAdapterFactory Factory);
+    /** 完整实例句柄撤销；活跃关联案例先停止，新预检立即失效。 */
+    FGamePlatformResult UnregisterScenarioAdapter(FDivineBeastsDemoAdapterRegistrationHandle Handle);
+    /** 为本实例所属世界创建独立适配器；未注册/错世界返回空。 */
+    TUniquePtr<IDivineBeastsDemoScenarioAdapter> CreateScenarioAdapter(FName AdapterId, UWorld& World) const;
+    /** 目标世界和UI资源就绪事件调用；仅消费本目录明确保存的待进入身份。 */
+    void StartPendingScenario(UWorld& World);
+    /** 活跃世界清理终态通知；只有清理成功才执行已受理的返程/切换请求。 */
+    void OnScenarioStopped(UWorld& World, const FDivineBeastsDemoRunSnapshot& Snapshot);
+    /** 读取待进入案例ID，供目标世界判断SampleWidget合同，未请求为空。 */
+    FName GetPendingScenarioId() const;
+
     /**
      * 根据已登记场景请求切图。返回true只代表引擎已接受OpenLevel请求，
      * 并非地图装载、资源加载、功能运行或人工验收已成功。
@@ -99,6 +147,15 @@ public:
     FText GetLastOperationMessage() const { return LastOperationMessage; }
 
 private:
+    /** 私有快照、Data完整租约和请求代次；无进程全局缓存。 */
+    TSharedPtr<FDivineBeastsDemoCatalogPrivateState> PrivateState;
+    /** 在完整Data回调中验证候选后发布；旧代次只撤销自己的租约。 */
+    void OnCatalogDefinitionReady(uint64 Generation, const FGamePlatformDataLease& Lease,
+        const FGamePlatformResult& Result);
+    /** 只刷新兼容投影，不猜正式归属；查询正式预检结果生成可用状态。 */
+    void RebuildScenarioProjection();
+    /** 在有效当前世界执行待导航；不把OpenLevel受理当成案例运行完成。 */
+    bool ContinuePendingNavigation();
     UPROPERTY(Transient) TArray<FDivineBeastsDemoPlugin> Plugins;
     UPROPERTY(Transient) TArray<FDivineBeastsDemoScenario> Scenarios;
     UPROPERTY(Transient) FText LastOperationMessage;

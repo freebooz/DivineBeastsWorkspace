@@ -1,4 +1,4 @@
-# 《神兽联盟》十份地形LayerInfo创建与验收记录
+# 《SSLM》十份地形LayerInfo创建与验收记录
 
 日期：2026-10-11；工程：DivineBeastsWorkspace/Game/DivineBeastsArena.uproject（UE5.8）。
 归属：第三层DBAWorldPack_Village；正式资产目录：/DBAWorldPack_Village/Terrain/LayerInfos。

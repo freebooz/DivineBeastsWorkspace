@@ -1,4 +1,4 @@
-# 跨项目UI主题与神兽联盟统一样式实施记录
+# 跨项目UI主题与SSLM统一样式实施记录
 
 计划：Docs/superpowers/plans/2026-10-10-ui-theme-and-shared-styles.md（T0—T6）。
 本次用户授权为主题设计落地，不续做之前生肖技能任务；保持固定工作空间，保留其他Weather/PCG修改，不主动提交、推送或重置。
@@ -54,7 +54,7 @@ Game/Config/DefaultGame.ini已将/DBAUIPack_Core/UI/Themes加入既有GamePlatfo
 
 ### 2026-10-10 本次代码与蓝图优先实施（正式引擎故障及可执行制作队列）
 
-- 已保持固定工作空间 `DivineBeastsWorkspace`（神兽联盟工作空间），执行前主分支 `4a3afe2`、工作树有 Weather/PCG（天气/程序化内容）及本次UI未提交修改；未做 reset/clean、提交或推送。
+- 已保持固定工作空间 `DivineBeastsWorkspace`（SSLM工作空间），执行前主分支 `4a3afe2`、工作树有 Weather/PCG（天气/程序化内容）及本次UI未提交修改；未做 reset/clean、提交或推送。
 - 已真实尝试通过锁定 `F:/UnrealEngine-5.8.0-release/Engine/Binaries/Win64/UnrealEditor.exe`（虚幻编辑器）启动 `Game/DivineBeastsArena.uproject`（正式主工程），包括PowerShell进程启动和Runner托管启动。最新托管启动返回退出码1。工程 `Game/Saved/Logs/DivineBeastsArena.log`（虚幻启动日志）列出 `GamePlatformUIClient`（平台UI客户端）、`GamePlatformArena`（MOBA竞技）、`GamePlatformDataEditor`（数据编辑器）、`GamePlatformCombat`（平台战斗）等多个不兼容／缺失模块；Monolith实际调用返回 `Unreal Editor not running`（编辑器未运行）。因此不能生成、编译、保存或回读任何新增主题 `.uasset`；本轮不冒充真实资产制作完成。
 - 外部两个旧引擎编译任务已结束（被其原任务请求停止，不是本会话主动终止）。为解锁编辑器蓝图生产，本会话单独发起 `Build.bat DivineBeastsArenaEditor Win64 Development -Module=GamePlatformUIClient -UsePrecompiled -NoUBA -MaxParallelActions=4`（平台主题模块尝试增量编译）；当前结果必须等构建任务真实退出后记录，编译前不先修改项目默认ThemeId，更不触碰其他插件源码。
 - 本轮新增 `Tools/Unreal/UI/PrepareUIThemeMonolithRequests.py`（主题Monolith制作请求生成器），按照已批准的 `DBAUIPack_Core/Docs/UIThemeMonolithAuthoringSpec_20261010.json`（主题设计合同）生成 `Saved/Monolith/UITheme20261010/AuthoringRequests.json`（28步待执行Monolith请求）。程序输出 `STYLE_DEFINITIONS=5 REQUEST_ACTIONS=28 EXECUTED=NO ASSETS_CREATED=NO AUTOMATION_RUN=NO`，只准备五类CommonUI样式蓝图、标准项目主题DataAsset、编译与磁盘状态回读等实操步骤；真实 FSlateBrush/字体CDO设置仍须在Monolith可用时先发现引擎字段再安全写入，防止伪造或覆盖资源。
@@ -87,14 +87,14 @@ Game/Config/DefaultGame.ini已将/DBAUIPack_Core/UI/Themes加入既有GamePlatfo
 
 ### 2026-10-10 14:02 后续资源制作队列增量（按用户“先代码蓝图最后测试”顺序）
 
-- 持续只读核对正式 `Game/DivineBeastsArena.uproject`（神兽联盟唯一游戏工程）、锁定UE5.8工具和 Monolith 连接。本轮 Monolith `monolith_status`（编辑器工具状态）仍提示 `Unreal Editor not running`（编辑器未运行），同时多项其他会话构建任务占用同一工程；本会话未终止其他构建、重写二进制或伪造蓝图。
+- 持续只读核对正式 `Game/DivineBeastsArena.uproject`（SSLM唯一游戏工程）、锁定UE5.8工具和 Monolith 连接。本轮 Monolith `monolith_status`（编辑器工具状态）仍提示 `Unreal Editor not running`（编辑器未运行），同时多项其他会话构建任务占用同一工程；本会话未终止其他构建、重写二进制或伪造蓝图。
 - 更新 `Tools/Unreal/UI/PrepareUIThemeMonolithRequests.py`（Monolith主题资产制作请求编排），除原5个正式按钮/文本/边框样式与主题外，新增2个 `/Game/Development/UITheme/Styles/` 中性对照样式和 `DA_DBA_UITheme_NeutralDev`（开发对照主题）的创建、CDO字段审查、编译、保存及回读操作。中性开发主题复用正式文本类，按钮和边框引用开发样式，`ShippingAllowed=false` 且整个目录受NeverCook配置排除，不修改项目生产默认主题。
 - 实际执行生成器输出 `Saved/Monolith/UITheme20261010/AuthoringRequests.json`（请求队列），结果 `STYLE_DEFINITIONS=5 REQUEST_ACTIONS=41 EXECUTED=NO ASSETS_CREATED=NO AUTOMATION_RUN=NO`；这41项为**待由Monolith真实执行的编辑器操作**，并非已保存的41件资产。原样式蓝图、正式主题、标准面板WBP与项目页面主题CDO都要在编辑器真实加载后处理。
 - 按用户明确顺序，本轮没有执行原生主题自动化、统一静态测试、Cook或Stage发布验证。完成资产前保持 `DefaultThemeDefinitionId` 为空以维持既有登录、角色页面原样式与焦点。
 
 ### 2026-10-10 15:52 后续实施：真实主题资产回读与标准面板待接入
 
-- 本轮主工程 `DivineBeastsWorkspace`（神兽联盟工作空间）主分支检查点为 `cc4607a`，执行前工作树包含PCG、天气和真实主题资源的其他协作改动；未清理、重置、提交或推送任何修改。
+- 本轮主工程 `DivineBeastsWorkspace`（SSLM工作空间）主分支检查点为 `cc4607a`，执行前工作树包含PCG、天气和真实主题资源的其他协作改动；未清理、重置、提交或推送任何修改。
 - 实际文件系统确认 `/DBAUIPack_Core/UI/Styles/`（项目公共主题样式）已存在5个真实非空UE资产：`BP_DBA_ButtonStyle_Primary`（主要按钮）、`BP_DBA_ButtonStyle_Secondary`（次要按钮）、`BP_DBA_TextStyle_Body`（正文）、`BP_DBA_TextStyle_Title`（标题）、`BP_DBA_BorderStyle_Panel`（面板）。`/DBAUIPack_Core/UI/Themes/DA_DBA_UITheme_Default`（项目默认主题）也真实存在；`/Game/Development/UITheme/`（开发主题目录）包含中性按钮/边框样式及`DA_DBA_UITheme_NeutralDev`（开发对照主题）。
 - Monolith MCP（引擎内部资产工具）一度成功通过`blueprint.get_cdo_properties`（资产默认属性回读）实读`DA_DBA_UITheme_Default`：Buttons两项、Texts两项、Borders一项以及RequiredStyles五项，语义键分别为`UI.Style.Button.Primary/Secondary`（主要/次要按钮）、`UI.Style.Text.Body/Title`（正文/标题）、`UI.Style.Border.Panel`（面板边框），Scope均为Project且GeneratedClass软路径非空；这证明主题主资产映射真实写入，但不代替每种按钮Brush、文字字体或客户端显示验收。
 - 标准面板 `WBP_DBA_UI_StandardPanel`（项目统一面板控件蓝图）本轮仍未找到真实交付文件。后续编辑器/Monolith请求暂时报`Provider request was not started; no downstream effect was dispatched`（未调度），同期另一会话正通过Runner启动锁定UE5.8的`UnrealEditor.exe`（正式编辑器）。本轮不争用、杀停其进程、不使用普通文件工具代造.uasset。

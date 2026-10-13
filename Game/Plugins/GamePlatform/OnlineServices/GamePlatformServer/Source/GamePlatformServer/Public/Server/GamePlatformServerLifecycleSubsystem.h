@@ -92,6 +92,8 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerInstanceInfo
 using FGamePlatformServerControlCompletion = TFunction<void(bool, FName)>;
 /** FGamePlatformServerPlayerCountProvider（服务器在线人数提供函数）；仅在游戏线程低频调用。 */
 using FGamePlatformServerPlayerCountProvider = TFunction<int32()>;
+/** FGamePlatformServerPlayerCountSampledNative（权威在线人数采样事件）；只在游戏线程广播，供通用容量适配器订阅，不授予玩家准入。 */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FGamePlatformServerPlayerCountSampledNative, int32 /* 当前玩家数 */, int32 /* 实例容量 */);
 
 /**
  * IGamePlatformServerControlProvider（游戏平台服务器控制面提供者）。
@@ -214,6 +216,11 @@ public:
     {
         return LifecycleChanged;
     }
+    /** 供 Agones 等基础层调度适配器订阅已校验的权威在线人数；订阅者不得反向影响准入结果。 */
+    FGamePlatformServerPlayerCountSampledNative& OnPlayerCountSampled()
+    {
+        return PlayerCountSampled;
+    }
 
 private:
     friend class FGamePlatformServerControlReentrancyTest;
@@ -246,6 +253,7 @@ private:
     FGamePlatformServerInstanceInfo ActiveInstance;
     FGamePlatformServerLifecycleSnapshot Snapshot;
     FGamePlatformServerLifecycleChangedNative LifecycleChanged;
+    FGamePlatformServerPlayerCountSampledNative PlayerCountSampled;
     FGamePlatformServerPlayerCountProvider HeartbeatPlayerCountProvider;
     FTSTicker::FDelegateHandle HeartbeatTickerHandle;
     FTSTicker::FDelegateHandle ControlRetryTickerHandle;
