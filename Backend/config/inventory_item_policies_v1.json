@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gameId": "DivineBeastsArena",
+  "gameId": "divine-beasts",
   "notes": "仅服务端物品数量、堆叠、可消耗属性与授予事由；不含客户端贴图和显示资源，不可通过公网或客户端覆盖。",
   "items": [
     {

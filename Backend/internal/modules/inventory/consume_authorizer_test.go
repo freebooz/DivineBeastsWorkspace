@@ -37,9 +37,11 @@ func TestVerifiedConsumeTrustAndIdempotentEffectRecord(t *testing.T) {
 		ItemInstanceID: itemID, ItemDefinitionID: "item.consumable.herbal_potion",
 		Quantity: 2, ReasonCode: "item_use", GameServerID: "world-village-1",
 		ServerBootID: "boot-20261013",
+		GameID: "divine-beasts", SessionEpoch: 3, ConnectionID: "server-connection-3",
 	}
 	evidence := ConsumeEvidence{
 		SourceEventID: cmd.SourceEventID, GameServerID: cmd.GameServerID,
+		GameID: cmd.GameID, SessionEpoch: cmd.SessionEpoch, ConnectionID: cmd.ConnectionID,
 		ServerBootID: cmd.ServerBootID, PlayerID: playerID,
 		ItemDefinitionID: cmd.ItemDefinitionID, ItemInstanceID: itemID,
 		Quantity: cmd.Quantity, ReasonCode: cmd.ReasonCode,
@@ -63,6 +65,8 @@ func TestVerifiedConsumeTrustAndIdempotentEffectRecord(t *testing.T) {
 		func() ConsumeCommand { x := cmd; x.ServerBootID = "old-boot"; return x }(),
 		func() ConsumeCommand { x := cmd; x.OperationID = "random"; return x }(),
 		func() ConsumeCommand { x := cmd; x.ItemDefinitionID = "item.malicious"; return x }(),
+		func() ConsumeCommand { x := cmd; x.SessionEpoch = 4; return x }(),
+		func() ConsumeCommand { x := cmd; x.ConnectionID = "another-connection"; return x }(),
 	} {
 		if _, err := service.ConsumeTrusted(ctx, playerID, tampered); err == nil {
 			t.Fatalf("伪造消耗必须拒绝: %+v", tampered)

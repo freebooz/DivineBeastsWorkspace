@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "titleZH": "SSLM P8材质函数库四张开发审核关卡原生制作动作清单",
+  "source": "Docs/Implementation/Materials/MaterialLibraryBlueprintAndUIManifest_V1.json",
+  "workspace": "DivineBeastsWorkspace",
+  "project": "Game/DivineBeastsArena.uproject",
+  "count": 4,
+  "preconditionsZH": [
+    "UE5.8真正运行并可通过Monolith直接验证当前正式工程",
+    "现有同名关卡不覆盖，不移动、删除、不清理地图对象",
+    "首次创建前检查磁盘.umap物理资源不存在未注册冲突",
+    "此时仅制作资源；Editor/Client/Server编译与Cook最后统一执行"
+  ],
+  "items": [
+    {
+      "area": "Surface",
+      "owner": "GamePlatformSurface",
+      "path": "/Game/Development/MaterialLibrary/Surface/Maps/L_DBA_MaterialLibrary_Surface_Review",
+      "status": "not_executed",
+      "steps": [
+        {
+          "action": "preflight_asset_registry",
+          "namespace": "editor",
+          "tool": "run_python",
+          "params": {
+            "command": "__import__('unreal').EditorAssetLibrary.does_asset_exist(\"/Game/Development/MaterialLibrary/Surface/Maps/L_DBA_MaterialLibrary_Surface_Review\")",
+            "mode": "evaluate_statement",
+            "unattended": true
+          }
+        },
+        {
+          "action": "create_if_missing",
+          "namespace": "editor",
+          "tool": "create_empty_map",
+          "params": {
+            "path": "/Game/Development/MaterialLibrary/Surface/Maps/L_DBA_MaterialLibrary_Surface_Review",
+            "map_template": "blank",
+            "open": false,
+            "dirty_policy": "refuse"
+          }
+        }
+      ],
+      "afterCreation": "仅在Monolith确认真实UMAP后，将审核材质和展示蓝图放入 Surface 场景。UI需由Monolith创建真实Widget。"
+    },
+    {
+      "area": "VFX",
+      "owner": "GamePlatformVFX",
+      "path": "/Game/Development/MaterialLibrary/VFX/Maps/L_DBA_MaterialLibrary_VFX_Review",
+      "status": "not_executed",
+      "steps": [
+        {
+          "action": "preflight_asset_registry",
+          "namespace": "editor",
+          "tool": "run_python",
+          "params": {
+            "command": "__import__('unreal').EditorAssetLibrary.does_asset_exist(\"/Game/Development/MaterialLibrary/VFX/Maps/L_DBA_MaterialLibrary_VFX_Review\")",
+            "mode": "evaluate_statement",
+            "unattended": true
+          }
+        },
+        {
+          "action": "create_if_missing",
+          "namespace": "editor",
+          "tool": "create_empty_map",
+          "params": {
+            "path": "/Game/Development/MaterialLibrary/VFX/Maps/L_DBA_MaterialLibrary_VFX_Review",
+            "map_template": "blank",
+            "open": false,
+            "dirty_policy": "refuse"
+          }
+        }
+      ],
+      "afterCreation": "仅在Monolith确认真实UMAP后，将审核材质和展示蓝图放入 VFX 场景。UI需由Monolith创建真实Widget。"
+    },
+    {
+      "area": "Project",
+      "owner": "DBAPresentationPack_Core",
+      "path": "/Game/Development/MaterialLibrary/Project/Maps/L_DBA_MaterialLibrary_Project_Review",
+      "status": "not_executed",
+      "steps": [
+        {
+          "action": "preflight_asset_registry",
+          "namespace": "editor",
+          "tool": "run_python",
+          "params": {
+            "command": "__import__('unreal').EditorAssetLibrary.does_asset_exist(\"/Game/Development/MaterialLibrary/Project/Maps/L_DBA_MaterialLibrary_Project_Review\")",
+            "mode": "evaluate_statement",
+            "unattended": true
+          }
+        },
+        {
+          "action": "create_if_missing",
+          "namespace": "editor",
+          "tool": "create_empty_map",
+          "params": {
+            "path": "/Game/Development/MaterialLibrary/Project/Maps/L_DBA_MaterialLibrary_Project_Review",
+            "map_template": "blank",
+            "open": false,
+            "dirty_policy": "refuse"
+          }
+        }
+      ],
+      "afterCreation": "仅在Monolith确认真实UMAP后，将审核材质和展示蓝图放入 Project 场景。UI需由Monolith创建真实Widget。"
+    },
+    {
+      "area": "UI",
+      "owner": "GamePlatformUI",
+      "path": "/Game/Development/MaterialLibrary/UI/Maps/L_DBA_MaterialLibrary_UI_Review",
+      "status": "not_executed",
+      "steps": [
+        {
+          "action": "preflight_asset_registry",
+          "namespace": "editor",
+          "tool": "run_python",
+          "params": {
+            "command": "__import__('unreal').EditorAssetLibrary.does_asset_exist(\"/Game/Development/MaterialLibrary/UI/Maps/L_DBA_MaterialLibrary_UI_Review\")",
+            "mode": "evaluate_statement",
+            "unattended": true
+          }
+        },
+        {
+          "action": "create_if_missing",
+          "namespace": "editor",
+          "tool": "create_empty_map",
+          "params": {
+            "path": "/Game/Development/MaterialLibrary/UI/Maps/L_DBA_MaterialLibrary_UI_Review",
+            "map_template": "blank",
+            "open": false,
+            "dirty_policy": "refuse"
+          }
+        }
+      ],
+      "afterCreation": "仅在Monolith确认真实UMAP后，将审核材质和展示蓝图放入 UI 场景。UI需由Monolith创建真实Widget。"
+    }
+  ]
+}

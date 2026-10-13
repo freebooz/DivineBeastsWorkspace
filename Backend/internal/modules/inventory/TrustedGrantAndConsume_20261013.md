@@ -16,3 +16,9 @@
 迁移应按`000002`、`000008`、`000009`、`000010`顺序应用。操作幂等记录与Outbox必须使用同一PG事务；跨服务NATS订阅方也需自行按消息ID去重。未取得数据库实际执行证据前，不能宣布生产环境已迁移。
 
 新增`grant_test.go`、`grant_authorizer_test.go`和`consume_authorizer_test.go`（Go领域自动化测试）覆盖可信授予、服务器身份拒绝、确定性操作号、原子满包拒绝、跨容器分配和消耗幂等；实际测试结果单独记录。
+## 2026-10-13 增量：背包授权容器限制与图标异步加载
+
+- `GrantRule.AllowedContainerIDs`（奖励允许容器清单）属于服务器策略，不允许客户端指定。未配置时仅授权 `main`（随身背包），主背包满则原子拒绝，不得把掉落奖励自动转存仓库。`ItemPolicy.AllowedGrantContainers`（权威规则目录的可选容器清单）可以显式授权其他容器，最多8个且不允许重复/无效标识；授权清单参与可信授予幂等指纹。
+- `DivineBeastsInventoryScreen`（神兽联盟背包页面）新增 `RenderInventoryIcon`（按槽位显示图标）、`RequestInventoryIcon`（异步图标加载）和 `CancelInventoryIconLoads`（退出页面时取消），继续使用已存在的 `FGamePlatformAssetLoader`（平台软资源加载器）与资产软路径。仅检测到真实 `SlotIcon_0..31`（32格图标）或 `QuickIcon_0..11`（12快捷格图标）才请求纹理，缺少控件/纹理时只显示中文物品名与数量。页面解绑清理句柄，异步完成验证页面代次，不使用 Tick（逐帧轮询）或同步读取纹理。
+- 8张正式 Texture2D（图标纹理）、8个 DataAsset（显示定义数据资产）及Widget树内图标控件依旧需要 Monolith 在真正的虚幻编辑器中制作。此文档不表示图标资产已经存在或当前源码通过新的UE编译。
+

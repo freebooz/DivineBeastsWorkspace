@@ -20,7 +20,8 @@ type PolicyDocument struct {
 
 // LoadItemPolicyCatalog（读取只读服务器物品规则目录）拒绝未知字段、坏版本、重复定义和超长文件。
 // 调用方必须从只读部署路径打开文件；本函数不接受游戏客户端上传。
-func LoadItemPolicyCatalog(reader io.Reader) (*StaticItemPolicyCatalog, error) {
+// expectedGameID（预期游戏ID）可选；生产必须提供，防止载入另一个游戏的物品规则。
+func LoadItemPolicyCatalog(reader io.Reader, expectedGameID ...string) (*StaticItemPolicyCatalog, error) {
 	if reader == nil {
 		return nil, errors.New("后端物品规则文件读取器不能为空")
 	}
@@ -40,6 +41,11 @@ func LoadItemPolicyCatalog(reader io.Reader) (*StaticItemPolicyCatalog, error) {
 	}
 	if document.SchemaVersion != 1 || !validID(document.GameID) {
 		return nil, errors.New("后端物品规则目录版本或GameID不合法")
+	}
+	if len(expectedGameID) > 1 ||
+		(len(expectedGameID) == 1 &&
+			(!validID(expectedGameID[0]) || expectedGameID[0] != document.GameID)) {
+		return nil, errors.New("后端物品目录GameID与当前运行的游戏不一致")
 	}
 	return NewStaticItemPolicyCatalog(document.Items)
 }

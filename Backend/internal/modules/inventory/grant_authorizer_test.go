@@ -12,8 +12,10 @@ import (
 
 type fakeVerifiedServerPlayer struct{ playerID, serverID, bootID string }
 
-func (s fakeVerifiedServerPlayer) VerifyServerPlayer(_ context.Context, serverID, bootID, playerID string) error {
-	if s.playerID != playerID || s.serverID != serverID || s.bootID != bootID {
+func (s fakeVerifiedServerPlayer) VerifyServerPlayer(_ context.Context, lease TrustedPlayerLease) error {
+	if s.playerID != lease.PlayerID || s.serverID != lease.GameServerID ||
+		s.bootID != lease.ServerBootID || lease.GameID != "divine-beasts" ||
+		lease.SessionEpoch != 3 || lease.ConnectionID != "server-connection-3" {
 		return errors.New("玩家或服务器会话不属于此实例")
 	}
 	return nil
@@ -34,6 +36,7 @@ func TestVerifiedGrantAuthorizerChecksAllEvidence(t *testing.T) {
 	cmd := trustedGrant(playerID, "drop-real-1", 1, 7)
 	evidence := GrantEvidence{
 		SourceEventID: cmd.SourceEventID, GameServerID: cmd.GameServerID,
+		GameID: cmd.GameID, SessionEpoch: cmd.SessionEpoch, ConnectionID: cmd.ConnectionID,
 		ServerBootID: cmd.ServerBootID, PlayerID: playerID,
 		ReasonCode: "pickup", ItemDefinitionID: cmd.ItemDefinitionID, Quantity: cmd.Quantity,
 	}
@@ -61,6 +64,8 @@ func TestVerifiedGrantAuthorizerChecksAllEvidence(t *testing.T) {
 		func() GrantCommand { x := cmd; x.ServerBootID = "boot-stale"; return x }(),
 		func() GrantCommand { x := cmd; x.SourceEventID = "event-forged"; return x }(),
 		func() GrantCommand { x := cmd; x.ReasonCode = "quest_reward"; return x }(),
+		func() GrantCommand { x := cmd; x.SessionEpoch = 4; return x }(),
+		func() GrantCommand { x := cmd; x.ConnectionID = "another-connection"; return x }(),
 	} {
 		if _, err := base.AuthorizeInventoryGrant(ctx, playerID, changed); err == nil {
 			t.Fatalf("来源事件逐字段比对失败: %+v", changed)
@@ -121,24 +126,27 @@ func TestItemPolicyCatalogRejectsMalformedOrForgedFiles(t *testing.T) {
 		`{"schemaVersion":1,"gameId":"divine","items":[{"itemDefinitionId":"x","maxStackSize":0,"allowedGrantReasons":["pickup"]}]}`,
 		`{"schemaVersion":1,"gameId":"divine","items":[{"itemDefinitionId":"x","maxStackSize":1,"allowedGrantReasons":["admin_backdoor"]}]}`,
 		`{"schemaVersion":1,"gameId":"divine","items":[{"itemDefinitionId":"x","maxStackSize":1,"allowedGrantReasons":["pickup"]},{"itemDefinitionId":"x","maxStackSize":1,"allowedGrantReasons":["pickup"]}]}`,
+		`{"schemaVersion":1,"gameId":"divine","items":[{"itemDefinitionId":"x","maxStackSize":5,"allowedGrantReasons":["pickup"],"allowedGrantContainers":["store","store"]}]}`,
 	}
 	for _, raw := range invalid {
 		if _, err := LoadItemPolicyCatalog(strings.NewReader(raw)); err == nil {
 			t.Fatalf("非法规则目录不得加载: %.120s", raw)
 		}
 	}
-	valid := `{"schemaVersion":1,"gameId":"DivineBeastsArena","items":[{"itemDefinitionId":"item.herb.peach","maxStackSize":20,"allowedGrantReasons":["pickup","quest_reward"]}]}`
+	valid := `{"schemaVersion":1,"gameId":"divine-beasts","items":[{"itemDefinitionId":"item.herb.peach","maxStackSize":20,"allowedGrantReasons":["pickup","quest_reward"],"allowedGrantContainers":["main","store"]}]}`
 	catalog, err := LoadItemPolicyCatalog(strings.NewReader(valid))
 	if err != nil {
 		t.Fatal(err)
 	}
 	policy, err := catalog.FindItemPolicy(context.Background(), "item.herb.peach")
-	if err != nil || policy.MaxStackSize != 20 {
+	if err != nil || policy.MaxStackSize != 20 || len(policy.AllowedGrantContainers) != 2 {
 		t.Fatalf("有效后端物品定义未加载: %+v %v", policy, err)
 	}
 	policy.AllowedGrantReasons[0] = "client_forged"
+	policy.AllowedGrantContainers[0] = "unapproved-storage"
 	reloaded, err := catalog.FindItemPolicy(context.Background(), "item.herb.peach")
-	if err != nil || reloaded.AllowedGrantReasons[0] != "pickup" {
+	if err != nil || reloaded.AllowedGrantReasons[0] != "pickup" ||
+		reloaded.AllowedGrantContainers[0] != "main" {
 		t.Fatal("不可变后端策略不得被调用方借返回切片覆盖")
 	}
 }

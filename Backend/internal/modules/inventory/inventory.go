@@ -106,6 +106,10 @@ type ConsumeCommand struct {
 	SourceEventID    string
 	GameServerID     string
 	ServerBootID     string
+	// 当前已准入的游戏、玩家连接世代与真实连接号，用于跨地图和重登栅栏。
+	GameID          string
+	SessionEpoch    int64
+	ConnectionID    string
 	ItemDefinitionID string
 }
 
@@ -540,7 +544,7 @@ func (r *MemoryRepository) ClearQuickbar(ctx context.Context, playerID string, c
 
 // Consume（内存事务消耗）仅供可信服务端流程测试与本地联调；全量消耗同步撤销快捷栏引用。
 func (r *MemoryRepository) Consume(ctx context.Context, playerID string, cmd ConsumeCommand) (MutationResult, error) {
-	return r.mutate(ctx, playerID, cmd.OperationID, signature("consume", cmd), cmd.ExpectedRevision,
+	return r.mutate(ctx, playerID, cmd.OperationID, signature("consume", CanonicalConsumeCommand(cmd)), cmd.ExpectedRevision,
 		func(state *memoryState) (int32, int32, error) {
 			item, ok := state.items[cmd.ItemInstanceID]
 			if !ok {

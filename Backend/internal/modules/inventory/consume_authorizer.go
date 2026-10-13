@@ -13,6 +13,9 @@ import (
 // 消耗命令与事件每个字段必须相同，确保幂等重试不会误扣不同物品。
 type ConsumeEvidence struct {
 	SourceEventID    string
+	GameID           string
+	SessionEpoch     int64
+	ConnectionID     string
 	GameServerID     string
 	ServerBootID     string
 	PlayerID         string
@@ -52,17 +55,25 @@ func (a *VerifiedConsumeAuthorizer) AuthorizeInventoryConsume(
 		!validID(command.SourceEventID) ||
 		!validID(command.GameServerID) ||
 		!validID(command.ServerBootID) ||
-		!validID(command.ItemDefinitionID) ||
+		!validID(command.ItemDefinitionID) || !validID(command.GameID) ||
+		command.SessionEpoch < 1 || !validID(command.ConnectionID) ||
 		command.ReasonCode != "item_use" ||
 		command.OperationID != ConsumeOperationID(playerID, command.SourceEventID) {
 		return consumeNotAllowed()
 	}
-	if err := a.Servers.VerifyServerPlayer(ctx, command.GameServerID, command.ServerBootID, playerID); err != nil {
+	if err := a.Servers.VerifyServerPlayer(ctx, TrustedPlayerLease{
+		GameID: command.GameID, GameServerID: command.GameServerID,
+		ServerBootID: command.ServerBootID, PlayerID: playerID,
+		SessionEpoch: command.SessionEpoch, ConnectionID: command.ConnectionID,
+	}); err != nil {
 		return consumeNotAllowed()
 	}
 	evidence, err := a.Evidence.FindConsumeEvidence(ctx, command.SourceEventID)
 	if err != nil ||
 		evidence.SourceEventID != command.SourceEventID ||
+		evidence.GameID != command.GameID ||
+		evidence.SessionEpoch != command.SessionEpoch ||
+		evidence.ConnectionID != command.ConnectionID ||
 		evidence.GameServerID != command.GameServerID ||
 		evidence.ServerBootID != command.ServerBootID ||
 		evidence.PlayerID != playerID ||

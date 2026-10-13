@@ -23,11 +23,15 @@
 | MaterialLibraryLayerProfiles_V1.json | 12种Material Layer（材质层）不同PBR表面参数 | 配方完成；ML原生资产未制作 |
 | Tools/Unreal/Surface/AuthorMaterialLibraryLayersUE58.py | 12个原生MaterialLayer（材质层）+1个共享MaterialLayerBlend（混合层）作者 | 源码完成；UE apply未执行 |
 | Tools/Unreal/UI/MaterialLibraryUIMonolithRecipes_V1.json | 尚缺7种GamePlatformUI界面函数的输入、Custom HLSL和连线图 | Monolith配方完成；UE二进制未制作 |
+| Tools/Unreal/UI/PrepareMaterialLibraryMonolithActions.py | 将P6剩余7个UI MF配方转成Monolith逐条制作/保存/回读步骤，支持双输出UITransitionDissolve（转场溶解） | 源代码已在工作区创建；没有启动引擎或编译UI材质 |
+| Docs/Implementation/Materials/MaterialLibraryUIActionQueue_V1.json | 7个UI函数共42条Monolith制作/回读动作；已声明检测存在、仅新增、不覆盖和中止策略 | 机器动作队列已落盘，全部标记未执行；不存在新生成的7个UE材质资产证据 |
+| Docs/Implementation/Materials/MaterialLibraryMapActionQueue_V1.json | 从正式Blueprint/UI资源Manifest生成Surface、VFX、Project、UI四张独立审核地图的Monolith原生创建前置检查和建图动作 | 4张.umap执行队列已写入项目，UE地图实际制作仍未执行 |
 | Tools/Unreal/Surface/AuthorMaterialLibraryDemoUE58.py | 三类非UI隔离关卡：Blueprint展示架、球体、灯光、中文标牌及真实材质绑定 | 源码完成；地图及展示架未由UE创建 |
 | Docs/Implementation/Materials/MaterialLibraryBlueprintAndUIManifest_V1.json | 4张独立审核地图、Actor蓝图和项目UI Widget蓝图的清单、职责与路径 | 合同完成；真实蓝图和地图未创建 |
 | Tools/Unreal/Surface/AuditMaterialCapabilityUE58.py | 真正UE AssetRegistry逐项检查201项原生资产，生成JSON+中文索引，不伪造Shader或人工签收 | 审计源码完成；scan未执行 |
 | Tests/Assets/TestMaterialLibraryDomainRecipes.py | 60函数、12材质层、7UI、冻结合同与演示路由源码测试 | 测试源码完成，按用户要求最终统一执行 |
-| Tools/Unreal/Surface/AuthorMaterialLibraryStandBlueprintUE58.py | 真实UE Actor蓝图PreviewMesh组件作者、保存与只读回读；最终统一编译 | 作者源码完成，未生成BP .uasset |
+| Tools/Unreal/Surface/AuthorMaterialLibraryStandBlueprintUE58.py | 真实UE Actor蓝图PreviewMesh组件与ReviewMaterial软引用、ReviewTitle中文文本字段作者；存在时只读验证，最终统一编译 | 蓝图成员字段的原生创建逻辑已补齐，尚未在UE实际执行并保存BP .uasset |
+| Tools/Unreal/Surface/AuthorMaterialLibrarySourcePhaseUE58.py | 顺序调度60项领域MF、12项材质层、混合层、Actor蓝图及审核材质，并允许resume-from断点续建；不触发统一编译 | 已写入真实工作区，待UE5.8编辑器恢复后运行 |
 | Build/Game/ServerPresentationExclusions.json、Game/Config/DefaultGame.ini | 开发材质审核目录不进入正式Client/Server，增加VFX及UI函数服务器排除 | 策略真源与默认配置已更新，生产Cook未执行 |
 
 
@@ -38,6 +42,14 @@
 - 已增量修改 DivineBeastsDemoCatalogSubsystem.cpp（项目演示目录）中GuessOwningPlugin（审核场景所有者识别），将 /Game/Development/MaterialLibrary/{Surface,VFX,UI,Project}/（四类材质演示开发目录）分别归属原插件/内容包，不用新的插件注册器。
 - 已增量修改 DivineBeastsDemoWorldSubsystem.cpp（演示世界子系统），UI审核地图走 /DBAUIPack_Core/Development/MaterialLibrary/UI/WBP_DBA_MaterialLibraryReview（Monolith应创建的专属项目UI Widget），其父类仍需为项目现行UDivineBeastsDemoHubWidget（演示基类）。
 - 真正BP_DBA_MaterialLibraryReviewStand（材质审核展示蓝图）、WBP_DBA_MaterialLibraryReview（UI审查蓝图）及4张L_DBA_*_Review（审核地图）必须由真实UE5.8/Monolith创建；当前只提供完整配方与编辑器制作入口，不会将源码或配置伪称已生成.uasset/.umap。
+
+### 本轮源码补齐与目录规划冲突说明
+
+- 材质审核Actor Blueprint源码新增实际的 `ReviewMaterial`（材质软引用）与 `ReviewTitle`（中文可本地化文字）成员定义；有原生API不可用则明确失败，不在缺乏引擎时伪造成功。
+- 为P6剩余7个UI函数准备42条按资产分组的Monolith实际动作，含单输出和`UITransitionDissolve`（有VisibilityMask与EdgeMask双输出）；每条操作只能在真实UE/Monolith成功后改变资产状态。
+- `Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md`（全局目录规划）当前含其他会话留下的未解决Git冲突分隔符，**本轮没有修改该共享冲突文件**；这两项新增文件已经在本专项目录记录，待冲突由负责会话解决后再回填总体规划，不擅自覆盖其它业务文档。
+- UI新材质、审核蓝图、四张开发地图、12项材质层仍处于真实UE待制作状态；尚未执行新增源代码的最终统一测试、Shader、Cook和人工视觉签收。
+- 当前远程图形桌面只观察到WPS、Chrome、Codex及资源管理器窗口，没有正在显示的Unreal Editor；Monolith明确返回“Unreal Editor not running”。已对本会话三个陈旧编辑器作业发送终止请求，但Runner仍将旧作业计为running，未取得真正终止证明，不擅自结束其它会话任务。
 
 ## 关键启动阻断及统一编译安排
 

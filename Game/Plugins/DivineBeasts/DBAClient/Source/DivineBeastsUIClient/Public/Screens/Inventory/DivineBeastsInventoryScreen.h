@@ -6,6 +6,9 @@
 
 
 class UButton;
+class UImage;
+class UTexture2D;
+struct FStreamableHandle;
 class UDivineBeastsInventoryScreen;
 
 /**
@@ -185,6 +188,12 @@ private:
     void BindInventoryVisualControls();
     void UnbindInventoryVisualControls();
     void RefreshInventoryVisuals();
+    /** 仅显示资产中已存在的命名图标控件；文字仍作为缺失图标时的可靠回退。 */
+    void RenderInventoryIcon(const FString& WidgetName, FName DefinitionId);
+    /** 通过平台异步软资源加载器按物品定义去重发起请求。 */
+    void RequestInventoryIcon(FName DefinitionId);
+    /** 页面解绑和销毁时撤销加载；回调不得再触碰已换账号或失活页面。 */
+    void CancelInventoryIconLoads();
     void HandleInventoryCellClicked(int32 LocalIndex, bool bQuickbar);
     void SetInventoryHint(const FText& Hint);
     void BindNamedActionButtons();
@@ -212,6 +221,11 @@ private:
     static constexpr int32 SlotsPerPage = 32;
     bool bVisualControlsBound = false;
     bool bRefreshingVisuals = false;
+
+    /** 平台异步资源句柄由页面持有，避免取消后迟到图标覆盖新玩家或新世界的格子。 */
+    TMap<FName, TSharedPtr<FStreamableHandle>> PendingIconLoads;
+    TSet<FName> AttemptedIconDefinitions;
+    uint64 IconLoadGeneration = 0;
 
     /** 每次激活持有32格+12快捷格的按钮代理；失活解绑、取消代理引用。 */
     UPROPERTY(Transient)

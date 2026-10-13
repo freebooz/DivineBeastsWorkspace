@@ -15,6 +15,9 @@ import (
 // SourceEventID是事件唯一号；事件重试永远复用相同值，跨账号由GrantOperationID隔离。
 type GrantEvidence struct {
 	SourceEventID    string
+	GameID           string
+	SessionEpoch     int64
+	ConnectionID     string
 	GameServerID     string
 	ServerBootID     string
 	PlayerID         string
@@ -23,11 +26,23 @@ type GrantEvidence struct {
 	Quantity         int32
 }
 
-// ServerPlayerVerifier（游戏服玩家归属验证端口）必须检查当前正式GameServer的Boot，
-// 玩家经服务端准入后仍处于该世界/实例，且可信调用凭据有效。
-// 生产接口未装配或网络故障必须返回错误，不能降级仅比较传入的GameServerID。
+// TrustedPlayerLease（可信玩家当前连接租约）必须与数据库的准入绑定完全相同。
+// GameID（游戏ID）、SessionEpoch（连接世代）和ConnectionID（服务端连接ID）
+// 防止离开世界后用同服务器旧事件为新的登录/连接发放物品。
+type TrustedPlayerLease struct {
+	GameID       string
+	GameServerID string
+	ServerBootID string
+	PlayerID     string
+	SessionEpoch int64
+	ConnectionID string
+}
+
+// ServerPlayerVerifier（游戏服玩家归属验证端口）必须查询真实的权威会话租约，
+// 同时检查ServerBoot、SessionEpoch、ConnectionID、租约有效时间和实例健康状态。
+// 不能只比较调用方请求里的GameServerID等未认证文本。
 type ServerPlayerVerifier interface {
-	VerifyServerPlayer(context.Context, string, string, string) error
+	VerifyServerPlayer(context.Context, TrustedPlayerLease) error
 }
 
 // GrantEvidenceSource（可信事件资料端口）读取已确认的掉落、任务或剧情奖励。
@@ -42,6 +57,9 @@ type ItemPolicy struct {
 	MaxStackSize        int32    `json:"maxStackSize"`
 	CanConsume          bool     `json:"canConsume"`
 	AllowedGrantReasons []string `json:"allowedGrantReasons"`
+	// AllowedGrantContainers（允许获得奖励的容器）为空时只使用随身主背包。
+	// 远程仓库只有服务器正式目录显式授权才允许自动入格。
+	AllowedGrantContainers []string `json:"allowedGrantContainers,omitempty"`
 }
 
 // ItemPolicyCatalog（后端物品权威策略目录）不依赖任何项目美术、贴图或UE客户端类型。
@@ -76,11 +94,19 @@ func (a *VerifiedGrantAuthorizer) AuthorizeInventoryGrant(
 	if a == nil || a.Servers == nil || a.Evidence == nil || a.Catalog == nil {
 		return GrantRule{}, grantNotAllowed()
 	}
-	if err := a.Servers.VerifyServerPlayer(ctx, cmd.GameServerID, cmd.ServerBootID, playerID); err != nil {
+	lease := TrustedPlayerLease{
+		GameID: cmd.GameID, GameServerID: cmd.GameServerID,
+		ServerBootID: cmd.ServerBootID, PlayerID: playerID,
+		SessionEpoch: cmd.SessionEpoch, ConnectionID: cmd.ConnectionID,
+	}
+	if err := a.Servers.VerifyServerPlayer(ctx, lease); err != nil {
 		return GrantRule{}, grantNotAllowed()
 	}
 	evidence, err := a.Evidence.FindGrantEvidence(ctx, cmd.SourceEventID)
 	if err != nil || evidence.SourceEventID != cmd.SourceEventID ||
+		evidence.GameID != cmd.GameID ||
+		evidence.SessionEpoch != cmd.SessionEpoch ||
+		evidence.ConnectionID != cmd.ConnectionID ||
 		evidence.PlayerID != playerID ||
 		evidence.GameServerID != cmd.GameServerID ||
 		evidence.ServerBootID != cmd.ServerBootID ||
@@ -104,7 +130,10 @@ func (a *VerifiedGrantAuthorizer) AuthorizeInventoryGrant(
 	if !allowReason {
 		return GrantRule{}, grantNotAllowed()
 	}
-	return GrantRule{MaxStackSize: policy.MaxStackSize}, nil
+	return GrantRule{
+		MaxStackSize: policy.MaxStackSize,
+		AllowedContainerIDs: append([]string(nil), policy.AllowedGrantContainers...),
+	}, nil
 }
 
 // StaticItemPolicyCatalog（不可变物品目录）适用于版本锁定后端部署。
@@ -134,10 +163,19 @@ func NewStaticItemPolicyCatalog(policies []ItemPolicy) (*StaticItemPolicyCatalog
 			}
 			seen[reason] = true
 		}
+		if len(entry.AllowedGrantContainers) > 8 { return nil, errors.New("允许奖励容器数量超出上限") }
+		approvedContainers := make(map[string]bool, len(entry.AllowedGrantContainers))
+		for _, containerID := range entry.AllowedGrantContainers {
+			if !validID(containerID) || approvedContainers[containerID] {
+				return nil, errors.New("奖励容器编号非法或重复")
+			}
+			approvedContainers[containerID] = true
+		}
 		if _, exists := result.items[entry.ItemDefinitionID]; exists {
 			return nil, errors.New("物品规则目录ItemDefinitionId重复")
 		}
 		entry.AllowedGrantReasons = append([]string(nil), entry.AllowedGrantReasons...)
+		entry.AllowedGrantContainers = append([]string(nil), entry.AllowedGrantContainers...)
 		result.items[entry.ItemDefinitionID] = entry
 	}
 	if len(result.items) == 0 {
@@ -158,5 +196,6 @@ func (c *StaticItemPolicyCatalog) FindItemPolicy(ctx context.Context, definition
 		return ItemPolicy{}, grantNotAllowed()
 	}
 	policy.AllowedGrantReasons = append([]string(nil), policy.AllowedGrantReasons...)
+	policy.AllowedGrantContainers = append([]string(nil), policy.AllowedGrantContainers...)
 	return policy, nil
 }

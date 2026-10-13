@@ -1,0 +1,1369 @@
+{
+  "schemaVersion": 1,
+  "purposeZH": "SSLM通用材质库P6剩余7项UI函数Monolith原生制作与回读队列",
+  "project": "DivineBeastsWorkspace",
+  "ueProject": "Game/DivineBeastsArena.uproject",
+  "owner": "GamePlatformUI",
+  "source": "Tools/Unreal/UI/MaterialLibraryUIMonolithRecipes_V1.json",
+  "expectedFunctions": 7,
+  "enginePreconditionsZH": [
+    "必须先确认Monolith返回已运行UE5.8和正式DivineBeastsArena工程",
+    "已有同名函数只允许只读核对，不覆盖或清空旧图",
+    "仅成功完成原生保存与回读后更新RuntimeAssetStatus",
+    "当前阶段只制作资源，Shader/UI Widget编译和Cook统一后置"
+  ],
+  "existingAssetPolicy": "skip_and_verify（同名已存在则仅核对）",
+  "abortPolicy": "fail_closed（任一失败停止，不清图、不删除、不覆盖）",
+  "items": [
+    {
+      "capabilityId": "MAT-11-03",
+      "name": "BorderShape",
+      "nameZH": "基于四周UV的可调厚度内描边遮罩",
+      "packagePath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_BorderShape",
+      "state": "source_recipe_ready_native_asset_unverified",
+      "operations": [
+        {
+          "sequenceId": "P6-UI-MAT-11-03-01",
+          "capabilityId": "MAT-11-03",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_BorderShape"
+          },
+          "gate": "preflight",
+          "status": "not_executed",
+          "meaningZH": "检查同名资源是否存在；已存在时停止任何写入"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-03-02",
+          "capabilityId": "MAT-11-03",
+          "namespace": "material",
+          "action": "create_material_function",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_BorderShape",
+            "description": "基于四周UV的可调厚度内描边遮罩",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ],
+            "type": "MaterialFunction"
+          },
+          "gate": "create_if_missing",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建真实UE材质函数"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-03-03",
+          "capabilityId": "MAT-11-03",
+          "namespace": "material",
+          "action": "build_function_graph",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_BorderShape",
+            "graph_spec": {
+              "inputs": [
+                {
+                  "id": "in_UV",
+                  "name": "UV",
+                  "type": "vector2",
+                  "description": "UI纹理坐标0～1",
+                  "pos": [
+                    -1050,
+                    -750
+                  ]
+                },
+                {
+                  "id": "in_BorderWidth",
+                  "name": "BorderWidth",
+                  "type": "scalar",
+                  "description": "边框宽度UV",
+                  "pos": [
+                    -1050,
+                    -565
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "out",
+                  "name": "BorderMask",
+                  "description": "基于四周UV的可调厚度内描边遮罩"
+                }
+              ],
+              "custom_hlsl_nodes": [
+                {
+                  "id": "algorithm",
+                  "pos": [
+                    -180,
+                    -180
+                  ],
+                  "output_type": "Float1",
+                  "code": "float2 p = min(UV,1.0-UV); return 1.0-saturate(min(p.x,p.y)/max(BorderWidth,0.0001));",
+                  "description": "基于四周UV的可调厚度内描边遮罩",
+                  "inputs": [
+                    {
+                      "name": "UV"
+                    },
+                    {
+                      "name": "BorderWidth"
+                    }
+                  ]
+                }
+              ],
+              "connections": [
+                {
+                  "from": "in_UV",
+                  "to": "algorithm",
+                  "to_pin": "UV"
+                },
+                {
+                  "from": "in_BorderWidth",
+                  "to": "algorithm",
+                  "to_pin": "BorderWidth"
+                },
+                {
+                  "from": "algorithm",
+                  "to": "out",
+                  "to_pin": "Input"
+                }
+              ]
+            },
+            "clear_existing": false
+          },
+          "gate": "author_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建时连接真实表达式图"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-03-04",
+          "capabilityId": "MAT-11-03",
+          "namespace": "material",
+          "action": "set_function_metadata",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_BorderShape",
+            "description": "基于四周UV的可调厚度内描边遮罩",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ]
+          },
+          "gate": "metadata_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅新函数配置平台归属与中文说明"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-03-05",
+          "capabilityId": "MAT-11-03",
+          "namespace": "material",
+          "action": "save_material",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_BorderShape",
+            "only_if_dirty": true
+          },
+          "gate": "save_if_created",
+          "status": "not_executed",
+          "meaningZH": "保存UE原生函数资源"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-03-06",
+          "capabilityId": "MAT-11-03",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_BorderShape"
+          },
+          "gate": "readback",
+          "status": "not_executed",
+          "meaningZH": "重新读取函数输入输出和节点；不代表Shader通过"
+        }
+      ]
+    },
+    {
+      "capabilityId": "MAT-11-08",
+      "name": "IconMask",
+      "nameZH": "技能图标透明度与主题蒙版组合",
+      "packagePath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_IconMask",
+      "state": "source_recipe_ready_native_asset_unverified",
+      "operations": [
+        {
+          "sequenceId": "P6-UI-MAT-11-08-01",
+          "capabilityId": "MAT-11-08",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_IconMask"
+          },
+          "gate": "preflight",
+          "status": "not_executed",
+          "meaningZH": "检查同名资源是否存在；已存在时停止任何写入"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-08-02",
+          "capabilityId": "MAT-11-08",
+          "namespace": "material",
+          "action": "create_material_function",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_IconMask",
+            "description": "技能图标透明度与主题蒙版组合",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ],
+            "type": "MaterialFunction"
+          },
+          "gate": "create_if_missing",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建真实UE材质函数"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-08-03",
+          "capabilityId": "MAT-11-08",
+          "namespace": "material",
+          "action": "build_function_graph",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_IconMask",
+            "graph_spec": {
+              "inputs": [
+                {
+                  "id": "in_IconAlpha",
+                  "name": "IconAlpha",
+                  "type": "scalar",
+                  "description": "原图标Alpha",
+                  "pos": [
+                    -1050,
+                    -750
+                  ]
+                },
+                {
+                  "id": "in_ThemeMask",
+                  "name": "ThemeMask",
+                  "type": "scalar",
+                  "description": "主题遮罩",
+                  "pos": [
+                    -1050,
+                    -565
+                  ]
+                },
+                {
+                  "id": "in_Opacity",
+                  "name": "Opacity",
+                  "type": "scalar",
+                  "description": "整体透明度0～1",
+                  "pos": [
+                    -1050,
+                    -380
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "out",
+                  "name": "Mask",
+                  "description": "技能图标透明度与主题蒙版组合"
+                }
+              ],
+              "custom_hlsl_nodes": [
+                {
+                  "id": "algorithm",
+                  "pos": [
+                    -180,
+                    -180
+                  ],
+                  "output_type": "Float1",
+                  "code": "return saturate(IconAlpha * ThemeMask * Opacity);",
+                  "description": "技能图标透明度与主题蒙版组合",
+                  "inputs": [
+                    {
+                      "name": "IconAlpha"
+                    },
+                    {
+                      "name": "ThemeMask"
+                    },
+                    {
+                      "name": "Opacity"
+                    }
+                  ]
+                }
+              ],
+              "connections": [
+                {
+                  "from": "in_IconAlpha",
+                  "to": "algorithm",
+                  "to_pin": "IconAlpha"
+                },
+                {
+                  "from": "in_ThemeMask",
+                  "to": "algorithm",
+                  "to_pin": "ThemeMask"
+                },
+                {
+                  "from": "in_Opacity",
+                  "to": "algorithm",
+                  "to_pin": "Opacity"
+                },
+                {
+                  "from": "algorithm",
+                  "to": "out",
+                  "to_pin": "Input"
+                }
+              ]
+            },
+            "clear_existing": false
+          },
+          "gate": "author_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建时连接真实表达式图"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-08-04",
+          "capabilityId": "MAT-11-08",
+          "namespace": "material",
+          "action": "set_function_metadata",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_IconMask",
+            "description": "技能图标透明度与主题蒙版组合",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ]
+          },
+          "gate": "metadata_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅新函数配置平台归属与中文说明"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-08-05",
+          "capabilityId": "MAT-11-08",
+          "namespace": "material",
+          "action": "save_material",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_IconMask",
+            "only_if_dirty": true
+          },
+          "gate": "save_if_created",
+          "status": "not_executed",
+          "meaningZH": "保存UE原生函数资源"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-08-06",
+          "capabilityId": "MAT-11-08",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_IconMask"
+          },
+          "gate": "readback",
+          "status": "not_executed",
+          "meaningZH": "重新读取函数输入输出和节点；不代表Shader通过"
+        }
+      ]
+    },
+    {
+      "capabilityId": "MAT-11-12",
+      "name": "HealthGradient",
+      "nameZH": "生命值比例驱动健康绿色至危险红色渐变",
+      "packagePath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_HealthGradient",
+      "state": "source_recipe_ready_native_asset_unverified",
+      "operations": [
+        {
+          "sequenceId": "P6-UI-MAT-11-12-01",
+          "capabilityId": "MAT-11-12",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_HealthGradient"
+          },
+          "gate": "preflight",
+          "status": "not_executed",
+          "meaningZH": "检查同名资源是否存在；已存在时停止任何写入"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-12-02",
+          "capabilityId": "MAT-11-12",
+          "namespace": "material",
+          "action": "create_material_function",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_HealthGradient",
+            "description": "生命值比例驱动健康绿色至危险红色渐变",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ],
+            "type": "MaterialFunction"
+          },
+          "gate": "create_if_missing",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建真实UE材质函数"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-12-03",
+          "capabilityId": "MAT-11-12",
+          "namespace": "material",
+          "action": "build_function_graph",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_HealthGradient",
+            "graph_spec": {
+              "inputs": [
+                {
+                  "id": "in_HealthRatio",
+                  "name": "HealthRatio",
+                  "type": "scalar",
+                  "description": "生命比例0～1",
+                  "pos": [
+                    -1050,
+                    -750
+                  ]
+                },
+                {
+                  "id": "in_HealthyColor",
+                  "name": "HealthyColor",
+                  "type": "vector3",
+                  "description": "高血量绿色",
+                  "pos": [
+                    -1050,
+                    -565
+                  ]
+                },
+                {
+                  "id": "in_CriticalColor",
+                  "name": "CriticalColor",
+                  "type": "vector3",
+                  "description": "低血量警告红色",
+                  "pos": [
+                    -1050,
+                    -380
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "out",
+                  "name": "Color",
+                  "description": "生命值比例驱动健康绿色至危险红色渐变"
+                }
+              ],
+              "custom_hlsl_nodes": [
+                {
+                  "id": "algorithm",
+                  "pos": [
+                    -180,
+                    -180
+                  ],
+                  "output_type": "Float3",
+                  "code": "return lerp(CriticalColor,HealthyColor,saturate(HealthRatio));",
+                  "description": "生命值比例驱动健康绿色至危险红色渐变",
+                  "inputs": [
+                    {
+                      "name": "HealthRatio"
+                    },
+                    {
+                      "name": "HealthyColor"
+                    },
+                    {
+                      "name": "CriticalColor"
+                    }
+                  ]
+                }
+              ],
+              "connections": [
+                {
+                  "from": "in_HealthRatio",
+                  "to": "algorithm",
+                  "to_pin": "HealthRatio"
+                },
+                {
+                  "from": "in_HealthyColor",
+                  "to": "algorithm",
+                  "to_pin": "HealthyColor"
+                },
+                {
+                  "from": "in_CriticalColor",
+                  "to": "algorithm",
+                  "to_pin": "CriticalColor"
+                },
+                {
+                  "from": "algorithm",
+                  "to": "out",
+                  "to_pin": "Input"
+                }
+              ]
+            },
+            "clear_existing": false
+          },
+          "gate": "author_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建时连接真实表达式图"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-12-04",
+          "capabilityId": "MAT-11-12",
+          "namespace": "material",
+          "action": "set_function_metadata",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_HealthGradient",
+            "description": "生命值比例驱动健康绿色至危险红色渐变",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ]
+          },
+          "gate": "metadata_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅新函数配置平台归属与中文说明"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-12-05",
+          "capabilityId": "MAT-11-12",
+          "namespace": "material",
+          "action": "save_material",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_HealthGradient",
+            "only_if_dirty": true
+          },
+          "gate": "save_if_created",
+          "status": "not_executed",
+          "meaningZH": "保存UE原生函数资源"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-12-06",
+          "capabilityId": "MAT-11-12",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_HealthGradient"
+          },
+          "gate": "readback",
+          "status": "not_executed",
+          "meaningZH": "重新读取函数输入输出和节点；不代表Shader通过"
+        }
+      ]
+    },
+    {
+      "capabilityId": "MAT-11-13",
+      "name": "EnergyBarFlow",
+      "nameZH": "能量进度条内部可调滚动纹理带",
+      "packagePath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_EnergyBarFlow",
+      "state": "source_recipe_ready_native_asset_unverified",
+      "operations": [
+        {
+          "sequenceId": "P6-UI-MAT-11-13-01",
+          "capabilityId": "MAT-11-13",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_EnergyBarFlow"
+          },
+          "gate": "preflight",
+          "status": "not_executed",
+          "meaningZH": "检查同名资源是否存在；已存在时停止任何写入"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-13-02",
+          "capabilityId": "MAT-11-13",
+          "namespace": "material",
+          "action": "create_material_function",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_EnergyBarFlow",
+            "description": "能量进度条内部可调滚动纹理带",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ],
+            "type": "MaterialFunction"
+          },
+          "gate": "create_if_missing",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建真实UE材质函数"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-13-03",
+          "capabilityId": "MAT-11-13",
+          "namespace": "material",
+          "action": "build_function_graph",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_EnergyBarFlow",
+            "graph_spec": {
+              "inputs": [
+                {
+                  "id": "in_UV",
+                  "name": "UV",
+                  "type": "vector2",
+                  "description": "UI纹理坐标",
+                  "pos": [
+                    -1050,
+                    -750
+                  ]
+                },
+                {
+                  "id": "in_TimeSeconds",
+                  "name": "TimeSeconds",
+                  "type": "scalar",
+                  "description": "动画时间秒",
+                  "pos": [
+                    -1050,
+                    -565
+                  ]
+                },
+                {
+                  "id": "in_FlowSpeed",
+                  "name": "FlowSpeed",
+                  "type": "scalar",
+                  "description": "流速",
+                  "pos": [
+                    -1050,
+                    -380
+                  ]
+                },
+                {
+                  "id": "in_StripeDensity",
+                  "name": "StripeDensity",
+                  "type": "scalar",
+                  "description": "条纹密度",
+                  "pos": [
+                    -1050,
+                    -195
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "out",
+                  "name": "FlowMask",
+                  "description": "能量进度条内部可调滚动纹理带"
+                }
+              ],
+              "custom_hlsl_nodes": [
+                {
+                  "id": "algorithm",
+                  "pos": [
+                    -180,
+                    -180
+                  ],
+                  "output_type": "Float1",
+                  "code": "float phase = frac(UV.x * StripeDensity - TimeSeconds * FlowSpeed); return saturate(1.0 - abs(phase - 0.5) * 2.0);",
+                  "description": "能量进度条内部可调滚动纹理带",
+                  "inputs": [
+                    {
+                      "name": "UV"
+                    },
+                    {
+                      "name": "TimeSeconds"
+                    },
+                    {
+                      "name": "FlowSpeed"
+                    },
+                    {
+                      "name": "StripeDensity"
+                    }
+                  ]
+                }
+              ],
+              "connections": [
+                {
+                  "from": "in_UV",
+                  "to": "algorithm",
+                  "to_pin": "UV"
+                },
+                {
+                  "from": "in_TimeSeconds",
+                  "to": "algorithm",
+                  "to_pin": "TimeSeconds"
+                },
+                {
+                  "from": "in_FlowSpeed",
+                  "to": "algorithm",
+                  "to_pin": "FlowSpeed"
+                },
+                {
+                  "from": "in_StripeDensity",
+                  "to": "algorithm",
+                  "to_pin": "StripeDensity"
+                },
+                {
+                  "from": "algorithm",
+                  "to": "out",
+                  "to_pin": "Input"
+                }
+              ]
+            },
+            "clear_existing": false
+          },
+          "gate": "author_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建时连接真实表达式图"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-13-04",
+          "capabilityId": "MAT-11-13",
+          "namespace": "material",
+          "action": "set_function_metadata",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_EnergyBarFlow",
+            "description": "能量进度条内部可调滚动纹理带",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ]
+          },
+          "gate": "metadata_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅新函数配置平台归属与中文说明"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-13-05",
+          "capabilityId": "MAT-11-13",
+          "namespace": "material",
+          "action": "save_material",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_EnergyBarFlow",
+            "only_if_dirty": true
+          },
+          "gate": "save_if_created",
+          "status": "not_executed",
+          "meaningZH": "保存UE原生函数资源"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-13-06",
+          "capabilityId": "MAT-11-13",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_EnergyBarFlow"
+          },
+          "gate": "readback",
+          "status": "not_executed",
+          "meaningZH": "重新读取函数输入输出和节点；不代表Shader通过"
+        }
+      ]
+    },
+    {
+      "capabilityId": "MAT-11-14",
+      "name": "SelectionGlow",
+      "nameZH": "选中边框叠加随时间呼吸的局部边缘发光",
+      "packagePath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_SelectionGlow",
+      "state": "source_recipe_ready_native_asset_unverified",
+      "operations": [
+        {
+          "sequenceId": "P6-UI-MAT-11-14-01",
+          "capabilityId": "MAT-11-14",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_SelectionGlow"
+          },
+          "gate": "preflight",
+          "status": "not_executed",
+          "meaningZH": "检查同名资源是否存在；已存在时停止任何写入"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-14-02",
+          "capabilityId": "MAT-11-14",
+          "namespace": "material",
+          "action": "create_material_function",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_SelectionGlow",
+            "description": "选中边框叠加随时间呼吸的局部边缘发光",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ],
+            "type": "MaterialFunction"
+          },
+          "gate": "create_if_missing",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建真实UE材质函数"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-14-03",
+          "capabilityId": "MAT-11-14",
+          "namespace": "material",
+          "action": "build_function_graph",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_SelectionGlow",
+            "graph_spec": {
+              "inputs": [
+                {
+                  "id": "in_SelectionMask",
+                  "name": "SelectionMask",
+                  "type": "scalar",
+                  "description": "选中区域蒙版",
+                  "pos": [
+                    -1050,
+                    -750
+                  ]
+                },
+                {
+                  "id": "in_EdgeMask",
+                  "name": "EdgeMask",
+                  "type": "scalar",
+                  "description": "边缘蒙版",
+                  "pos": [
+                    -1050,
+                    -565
+                  ]
+                },
+                {
+                  "id": "in_GlowStrength",
+                  "name": "GlowStrength",
+                  "type": "scalar",
+                  "description": "边缘亮度",
+                  "pos": [
+                    -1050,
+                    -380
+                  ]
+                },
+                {
+                  "id": "in_TimeSeconds",
+                  "name": "TimeSeconds",
+                  "type": "scalar",
+                  "description": "时间秒",
+                  "pos": [
+                    -1050,
+                    -195
+                  ]
+                },
+                {
+                  "id": "in_PulseSpeed",
+                  "name": "PulseSpeed",
+                  "type": "scalar",
+                  "description": "呼吸速度",
+                  "pos": [
+                    -1050,
+                    -10
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "out",
+                  "name": "GlowMask",
+                  "description": "选中边框叠加随时间呼吸的局部边缘发光"
+                }
+              ],
+              "custom_hlsl_nodes": [
+                {
+                  "id": "algorithm",
+                  "pos": [
+                    -180,
+                    -180
+                  ],
+                  "output_type": "Float1",
+                  "code": "float pulse = 0.5 + 0.5 * sin(TimeSeconds * PulseSpeed); return saturate(SelectionMask + EdgeMask * GlowStrength * pulse);",
+                  "description": "选中边框叠加随时间呼吸的局部边缘发光",
+                  "inputs": [
+                    {
+                      "name": "SelectionMask"
+                    },
+                    {
+                      "name": "EdgeMask"
+                    },
+                    {
+                      "name": "GlowStrength"
+                    },
+                    {
+                      "name": "TimeSeconds"
+                    },
+                    {
+                      "name": "PulseSpeed"
+                    }
+                  ]
+                }
+              ],
+              "connections": [
+                {
+                  "from": "in_SelectionMask",
+                  "to": "algorithm",
+                  "to_pin": "SelectionMask"
+                },
+                {
+                  "from": "in_EdgeMask",
+                  "to": "algorithm",
+                  "to_pin": "EdgeMask"
+                },
+                {
+                  "from": "in_GlowStrength",
+                  "to": "algorithm",
+                  "to_pin": "GlowStrength"
+                },
+                {
+                  "from": "in_TimeSeconds",
+                  "to": "algorithm",
+                  "to_pin": "TimeSeconds"
+                },
+                {
+                  "from": "in_PulseSpeed",
+                  "to": "algorithm",
+                  "to_pin": "PulseSpeed"
+                },
+                {
+                  "from": "algorithm",
+                  "to": "out",
+                  "to_pin": "Input"
+                }
+              ]
+            },
+            "clear_existing": false
+          },
+          "gate": "author_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建时连接真实表达式图"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-14-04",
+          "capabilityId": "MAT-11-14",
+          "namespace": "material",
+          "action": "set_function_metadata",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_SelectionGlow",
+            "description": "选中边框叠加随时间呼吸的局部边缘发光",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ]
+          },
+          "gate": "metadata_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅新函数配置平台归属与中文说明"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-14-05",
+          "capabilityId": "MAT-11-14",
+          "namespace": "material",
+          "action": "save_material",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_SelectionGlow",
+            "only_if_dirty": true
+          },
+          "gate": "save_if_created",
+          "status": "not_executed",
+          "meaningZH": "保存UE原生函数资源"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-14-06",
+          "capabilityId": "MAT-11-14",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_SelectionGlow"
+          },
+          "gate": "readback",
+          "status": "not_executed",
+          "meaningZH": "重新读取函数输入输出和节点；不代表Shader通过"
+        }
+      ]
+    },
+    {
+      "capabilityId": "MAT-11-15",
+      "name": "UIRipple",
+      "nameZH": "按钮点击位置的局部径向涟漪遮罩",
+      "packagePath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UIRipple",
+      "state": "source_recipe_ready_native_asset_unverified",
+      "operations": [
+        {
+          "sequenceId": "P6-UI-MAT-11-15-01",
+          "capabilityId": "MAT-11-15",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UIRipple"
+          },
+          "gate": "preflight",
+          "status": "not_executed",
+          "meaningZH": "检查同名资源是否存在；已存在时停止任何写入"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-15-02",
+          "capabilityId": "MAT-11-15",
+          "namespace": "material",
+          "action": "create_material_function",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UIRipple",
+            "description": "按钮点击位置的局部径向涟漪遮罩",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ],
+            "type": "MaterialFunction"
+          },
+          "gate": "create_if_missing",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建真实UE材质函数"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-15-03",
+          "capabilityId": "MAT-11-15",
+          "namespace": "material",
+          "action": "build_function_graph",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UIRipple",
+            "graph_spec": {
+              "inputs": [
+                {
+                  "id": "in_UV",
+                  "name": "UV",
+                  "type": "vector2",
+                  "description": "按钮UI局部UV",
+                  "pos": [
+                    -1050,
+                    -750
+                  ]
+                },
+                {
+                  "id": "in_CenterUV",
+                  "name": "CenterUV",
+                  "type": "vector2",
+                  "description": "点击中心UV",
+                  "pos": [
+                    -1050,
+                    -565
+                  ]
+                },
+                {
+                  "id": "in_TimeSeconds",
+                  "name": "TimeSeconds",
+                  "type": "scalar",
+                  "description": "涟漪生命周期秒",
+                  "pos": [
+                    -1050,
+                    -380
+                  ]
+                },
+                {
+                  "id": "in_RadiusSpeed",
+                  "name": "RadiusSpeed",
+                  "type": "scalar",
+                  "description": "半径增长速度",
+                  "pos": [
+                    -1050,
+                    -195
+                  ]
+                },
+                {
+                  "id": "in_WaveWidth",
+                  "name": "WaveWidth",
+                  "type": "scalar",
+                  "description": "环形波前宽度",
+                  "pos": [
+                    -1050,
+                    -10
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "out",
+                  "name": "RippleMask",
+                  "description": "按钮点击位置的局部径向涟漪遮罩"
+                }
+              ],
+              "custom_hlsl_nodes": [
+                {
+                  "id": "algorithm",
+                  "pos": [
+                    -180,
+                    -180
+                  ],
+                  "output_type": "Float1",
+                  "code": "float r = length(UV - CenterUV); float travel = TimeSeconds * RadiusSpeed; return saturate(1.0 - abs(r-travel)/max(WaveWidth,0.0001));",
+                  "description": "按钮点击位置的局部径向涟漪遮罩",
+                  "inputs": [
+                    {
+                      "name": "UV"
+                    },
+                    {
+                      "name": "CenterUV"
+                    },
+                    {
+                      "name": "TimeSeconds"
+                    },
+                    {
+                      "name": "RadiusSpeed"
+                    },
+                    {
+                      "name": "WaveWidth"
+                    }
+                  ]
+                }
+              ],
+              "connections": [
+                {
+                  "from": "in_UV",
+                  "to": "algorithm",
+                  "to_pin": "UV"
+                },
+                {
+                  "from": "in_CenterUV",
+                  "to": "algorithm",
+                  "to_pin": "CenterUV"
+                },
+                {
+                  "from": "in_TimeSeconds",
+                  "to": "algorithm",
+                  "to_pin": "TimeSeconds"
+                },
+                {
+                  "from": "in_RadiusSpeed",
+                  "to": "algorithm",
+                  "to_pin": "RadiusSpeed"
+                },
+                {
+                  "from": "in_WaveWidth",
+                  "to": "algorithm",
+                  "to_pin": "WaveWidth"
+                },
+                {
+                  "from": "algorithm",
+                  "to": "out",
+                  "to_pin": "Input"
+                }
+              ]
+            },
+            "clear_existing": false
+          },
+          "gate": "author_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建时连接真实表达式图"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-15-04",
+          "capabilityId": "MAT-11-15",
+          "namespace": "material",
+          "action": "set_function_metadata",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UIRipple",
+            "description": "按钮点击位置的局部径向涟漪遮罩",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ]
+          },
+          "gate": "metadata_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅新函数配置平台归属与中文说明"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-15-05",
+          "capabilityId": "MAT-11-15",
+          "namespace": "material",
+          "action": "save_material",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UIRipple",
+            "only_if_dirty": true
+          },
+          "gate": "save_if_created",
+          "status": "not_executed",
+          "meaningZH": "保存UE原生函数资源"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-15-06",
+          "capabilityId": "MAT-11-15",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UIRipple"
+          },
+          "gate": "readback",
+          "status": "not_executed",
+          "meaningZH": "重新读取函数输入输出和节点；不代表Shader通过"
+        }
+      ]
+    },
+    {
+      "capabilityId": "MAT-11-18",
+      "name": "UITransitionDissolve",
+      "nameZH": "基于噪声的界面溶解遮罩与渐变边缘",
+      "packagePath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UITransitionDissolve",
+      "state": "source_recipe_ready_native_asset_unverified",
+      "operations": [
+        {
+          "sequenceId": "P6-UI-MAT-11-18-01",
+          "capabilityId": "MAT-11-18",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UITransitionDissolve"
+          },
+          "gate": "preflight",
+          "status": "not_executed",
+          "meaningZH": "检查同名资源是否存在；已存在时停止任何写入"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-18-02",
+          "capabilityId": "MAT-11-18",
+          "namespace": "material",
+          "action": "create_material_function",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UITransitionDissolve",
+            "description": "基于噪声的界面溶解遮罩与渐变边缘",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ],
+            "type": "MaterialFunction"
+          },
+          "gate": "create_if_missing",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建真实UE材质函数"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-18-03",
+          "capabilityId": "MAT-11-18",
+          "namespace": "material",
+          "action": "build_function_graph",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UITransitionDissolve",
+            "graph_spec": {
+              "inputs": [
+                {
+                  "id": "in_NoiseMask",
+                  "name": "NoiseMask",
+                  "type": "scalar",
+                  "description": "UI噪声蒙版",
+                  "pos": [
+                    -1050,
+                    -750
+                  ]
+                },
+                {
+                  "id": "in_Progress",
+                  "name": "Progress",
+                  "type": "scalar",
+                  "description": "溶解进度0～1",
+                  "pos": [
+                    -1050,
+                    -565
+                  ]
+                },
+                {
+                  "id": "in_EdgeWidth",
+                  "name": "EdgeWidth",
+                  "type": "scalar",
+                  "description": "溶解边缘宽度",
+                  "pos": [
+                    -1050,
+                    -380
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "out",
+                  "name": "VisibilityMask",
+                  "description": "基于噪声的界面溶解遮罩与渐变边缘"
+                },
+                {
+                  "id": "output_EdgeMask",
+                  "name": "EdgeMask",
+                  "description": "溶解边缘发光权重"
+                }
+              ],
+              "custom_hlsl_nodes": [
+                {
+                  "id": "algorithm",
+                  "pos": [
+                    -180,
+                    -180
+                  ],
+                  "output_type": "Float1",
+                  "code": "float w=max(EdgeWidth,0.0001); float inner=saturate((NoiseMask-Progress)/w); EdgeMask=saturate((NoiseMask-(Progress-w))/w)-inner; return inner;",
+                  "description": "基于噪声的界面溶解遮罩与渐变边缘",
+                  "inputs": [
+                    {
+                      "name": "NoiseMask"
+                    },
+                    {
+                      "name": "Progress"
+                    },
+                    {
+                      "name": "EdgeWidth"
+                    }
+                  ],
+                  "additional_outputs": [
+                    {
+                      "name": "EdgeMask",
+                      "type": "Float1"
+                    }
+                  ]
+                }
+              ],
+              "connections": [
+                {
+                  "from": "in_NoiseMask",
+                  "to": "algorithm",
+                  "to_pin": "NoiseMask"
+                },
+                {
+                  "from": "in_Progress",
+                  "to": "algorithm",
+                  "to_pin": "Progress"
+                },
+                {
+                  "from": "in_EdgeWidth",
+                  "to": "algorithm",
+                  "to_pin": "EdgeWidth"
+                },
+                {
+                  "from": "algorithm",
+                  "to": "out",
+                  "to_pin": "Input"
+                },
+                {
+                  "from": "algorithm",
+                  "from_pin": "EdgeMask",
+                  "to": "output_EdgeMask",
+                  "to_pin": "Input"
+                }
+              ]
+            },
+            "clear_existing": false
+          },
+          "gate": "author_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅首次创建时连接真实表达式图"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-18-04",
+          "capabilityId": "MAT-11-18",
+          "namespace": "material",
+          "action": "set_function_metadata",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UITransitionDissolve",
+            "description": "基于噪声的界面溶解遮罩与渐变边缘",
+            "expose_to_library": true,
+            "library_categories": [
+              "GamePlatform|UI|Reusable"
+            ]
+          },
+          "gate": "metadata_if_created",
+          "status": "not_executed",
+          "meaningZH": "仅新函数配置平台归属与中文说明"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-18-05",
+          "capabilityId": "MAT-11-18",
+          "namespace": "material",
+          "action": "save_material",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UITransitionDissolve",
+            "only_if_dirty": true
+          },
+          "gate": "save_if_created",
+          "status": "not_executed",
+          "meaningZH": "保存UE原生函数资源"
+        },
+        {
+          "sequenceId": "P6-UI-MAT-11-18-06",
+          "capabilityId": "MAT-11-18",
+          "namespace": "material",
+          "action": "get_function_info",
+          "parameters": {
+            "asset_path": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UITransitionDissolve"
+          },
+          "gate": "readback",
+          "status": "not_executed",
+          "meaningZH": "重新读取函数输入输出和节点；不代表Shader通过"
+        }
+      ]
+    }
+  ],
+  "deferredZH": "MD_UI真实材质域着色器、Widget和正式Cook留到统一验收阶段"
+}

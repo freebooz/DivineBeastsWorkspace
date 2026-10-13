@@ -25,9 +25,15 @@ func (r *InventoryRepository) Grant(
 	canonical := struct {
 		Command inventory.GrantCommand
 		Rule    inventory.GrantRule
-	}{Command: command, Rule: rule}
+	}{Command: inventory.CanonicalGrantCommand(command), Rule: rule}
 	return r.mutate(ctx, playerID, command.OperationID, "Grant", command.ExpectedRevision, canonical,
 		func(ctx context.Context, tx pgx.Tx) (int32, int32, error) {
+			// 将租约栅栏与背包/Outbox提交放在同一事务，玩家切图或退出不能中途更换授权身份。
+			if err := verifyInventoryLeaseTx(ctx, tx, inventory.TrustedPlayerLease{
+				GameID: command.GameID, GameServerID: command.GameServerID,
+				ServerBootID: command.ServerBootID, PlayerID: playerID,
+				SessionEpoch: command.SessionEpoch, ConnectionID: command.ConnectionID,
+			}); err != nil { return 0, command.Quantity, err }
 			// mutate已经以FOR UPDATE锁定玩家聚合根，其他写操作不能插队占用计划槽位。
 			before, err := readInventorySnapshotTx(ctx, tx, playerID)
 			if err != nil {

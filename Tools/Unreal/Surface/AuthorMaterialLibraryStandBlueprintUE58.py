@@ -47,6 +47,58 @@ def find_preview(unreal, blueprint):
     return list(templates.values())
 
 
+
+def blueprint_variable_names(blueprint) -> set[str]:
+    """调用UE5.8官方BlueprintEditorLibrary获取当前蓝图声明的真实成员名。"""
+    import unreal  # type: ignore[import-not-found]
+    try:
+        return set(unreal.BlueprintEditorLibrary.list_member_variable_names(
+            blueprint, include_inherited_members=False))
+    except (AttributeError, RuntimeError, TypeError) as error:
+        raise RuntimeError("UE5.8蓝图变量列表接口不可用，拒绝假定字段已创建") from error
+
+
+def add_review_variables(unreal, blueprint) -> None:
+    """在真实Actor Blueprint中定义两个与演示Manifest一致的项目层成员字段。
+
+    ReviewMaterial为MaterialInterface（材质接口）的软引用，避免加载全部PBR纹理；
+    ReviewTitle为FText（可本地化文本），用于独立演示审查说明。
+    本阶段只创建字段；蓝图Construction Script联动和最终编译统一后置。
+    """
+    editor = getattr(unreal, "BlueprintEditorLibrary", None)
+    if editor is None or not hasattr(editor, "add_member_variable"):
+        raise RuntimeError("UE5.8缺少BlueprintEditorLibrary.add_member_variable，禁止以占位字段冒充真实蓝图")
+
+    declared = blueprint_variable_names(blueprint)
+    specification = (
+        ("ReviewMaterial", "softobject", unreal.MaterialInterface.static_class()),
+        ("ReviewTitle", "text", None),
+    )
+    for name, category, reference_class in specification:
+        if name in declared:
+            continue
+        if category == "text":
+            pin = editor.get_basic_type_by_name(unreal.Name("text"))
+        else:
+            pin = editor.get_object_reference_type(reference_class)
+            # 保留MaterialInterface的子类型信息，将默认硬引用显式转换为软对象引用。
+            pin.set_editor_property("pin_category", unreal.Name("softobject"))
+        var_name = unreal.Name(name)
+        if not editor.add_member_variable(blueprint, var_name, pin):
+            raise RuntimeError("UE5.8成员变量创建API返回失败：" + name)
+        editor.set_blueprint_variable_instance_editable(blueprint, var_name, True)
+        editor.set_blueprint_variable_expose_on_spawn(blueprint, var_name, True)
+        editor.set_blueprint_variable_category(blueprint, var_name, unreal.Text("材质审核"))
+        declared = blueprint_variable_names(blueprint)
+        if name not in declared:
+            raise RuntimeError("UE5.8未真正创建蓝图成员变量：" + name)
+        actual_pin = editor.get_member_variable_type(blueprint, name)
+        if actual_pin is None or str(actual_pin.get_editor_property("pin_category")).lower() != category:
+            raise RuntimeError("UE5.8蓝图字段原生类型不符合正式合同：" + name)
+
+    print("MATERIAL_LIBRARY_BP_FIELDS", sorted(declared.intersection({"ReviewMaterial", "ReviewTitle"})))
+
+
 def make_asset(unreal):
     """新建Actor蓝图，在真实SCS里添加PreviewMesh并绑定引擎中性网格。"""
     lib=unreal.EditorAssetLibrary
@@ -59,6 +111,8 @@ def make_asset(unreal):
         if len(components)!=1 or components[0].get_name().split("_")[0]!="PreviewMesh":
             raise RuntimeError("既有审核蓝图组件身份不匹配，拒绝自动修改：" + ASSET)
         print("MATERIAL_LIBRARY_STAND_BLUEPRINT_PRESERVED",ASSET)
+        if not {"ReviewMaterial", "ReviewTitle"}.issubset(blueprint_variable_names(bp)):
+            raise RuntimeError("既有审核蓝图缺少正式材质/标题变量；不擅自编辑已保存资产")
         return bp
     if physical_collides():
         raise RuntimeError("磁盘已有同名未注册UE蓝图包，拒绝覆盖")
@@ -92,7 +146,10 @@ def make_asset(unreal):
     preview.set_static_mesh(sphere)
     preview.set_editor_property("cast_shadow",True)
     preview.set_editor_property("mobility",unreal.ComponentMobility.MOVABLE)
-    preview.set_editor_property("collision_enabled",unreal.CollisionEnabled.NO_COLLISION)
+    # 沿用项目已有的UE组件API设置碰撞；不是一个可直接写的UPROPERTY。
+    preview.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    # 项目层仅新建蓝图时增加可配置成员，不修改任何已有人工作品。
+    add_review_variables(unreal,bp)
     if not lib.save_loaded_asset(bp,only_if_is_dirty=False):
         raise RuntimeError("UE没有保存真实Blueprint二进制资源")
     print("MATERIAL_LIBRARY_STAND_BLUEPRINT_SAVED",ASSET)
@@ -120,6 +177,9 @@ def main():
     components=find_preview(unreal,bp)
     if len(components)!=1:
         raise RuntimeError("真实蓝图SCS组件数量异常："+str(len(components)))
+    missing = {"ReviewMaterial", "ReviewTitle"} - blueprint_variable_names(bp)
+    if missing:
+        raise RuntimeError("蓝图审查字段未真实存在：" + ",".join(sorted(missing)))
     preview=components[0]
     mesh=preview.get_editor_property("static_mesh")
     if not isinstance(mesh,unreal.StaticMesh):

@@ -277,8 +277,14 @@ func (r *InventoryRepository) ClearQuickbar(ctx context.Context, playerID string
 // Consume（PostgreSQL可信消耗）复用既有单事务幂等入口，提交库存与Operation结果原子一致。
 // 授权必须已在Service的TrustedConsumeAuthorizer通过；此仓储不接收客户端HTTP请求。
 func (r *InventoryRepository) Consume(ctx context.Context, playerID string, command inventory.ConsumeCommand) (inventory.MutationResult, error) {
-	return r.mutate(ctx, playerID, command.OperationID, "Consume", command.ExpectedRevision, command,
+	return r.mutate(ctx, playerID, command.OperationID, "Consume", command.ExpectedRevision, inventory.CanonicalConsumeCommand(command),
 		func(ctx context.Context, tx pgx.Tx) (int32, int32, error) {
+			// 最终扣除前再次锁定玩家当前准入租约，防止跨连接迟到的使用事件。
+			if err := verifyInventoryLeaseTx(ctx, tx, inventory.TrustedPlayerLease{
+				GameID: command.GameID, GameServerID: command.GameServerID,
+				ServerBootID: command.ServerBootID, PlayerID: playerID,
+				SessionEpoch: command.SessionEpoch, ConnectionID: command.ConnectionID,
+			}); err != nil { return 0, command.Quantity, err }
 			item, err := inventoryItemForUpdate(ctx, tx, playerID, command.ItemInstanceID)
 			if err != nil {
 				return 0, 0, err

@@ -33,6 +33,9 @@ func trustedGrant(playerID, eventID string, revision int64, quantity int32) Gran
 		OperationID:      GrantOperationID(playerID, eventID),
 		ExpectedRevision: revision,
 		GameServerID:     "world-village-1",
+		GameID:           "divine-beasts",
+		SessionEpoch:     3,
+		ConnectionID:     "server-connection-3",
 		ServerBootID:     "boot-20261013",
 		SourceEventID:    eventID,
 		ReasonCode:       "pickup",
@@ -158,7 +161,13 @@ func TestTrustedGrantAcrossContainersAndRevision(t *testing.T) {
 			Revision: 1, InstanceState: "active", MaxStackSize: 1,
 		}},
 	}
-	plan, err := PlanTrustedGrant(playerID, before, command, GrantRule{MaxStackSize: 3})
+	// 默认策略只能发入main：主背包满时不得绕过容量限制进入远程仓库。
+	if _, err := PlanTrustedGrant(playerID, before, command, GrantRule{MaxStackSize: 3}); err == nil {
+		t.Fatal("默认奖励不能绕过主背包容量自动进入仓库")
+	}
+	plan, err := PlanTrustedGrant(playerID, before, command, GrantRule{
+		MaxStackSize: 3, AllowedContainerIDs: []string{"store"},
+	})
 	if err != nil || len(plan.Creates) != 2 || len(plan.Updates) != 0 {
 		t.Fatalf("多容器首次放置计划错误: %+v %v", plan, err)
 	}
@@ -166,6 +175,13 @@ func TestTrustedGrantAcrossContainersAndRevision(t *testing.T) {
 		plan.Creates[1].SlotIndex != 1 || plan.Creates[1].Quantity != 1 {
 		t.Fatalf("容器和槽位稳定排序或分堆错误: %+v", plan)
 	}
+	// 客户端/配置重复容器或不存在容器不能成为可写奖励目标。
+	if _, err := PlanTrustedGrant(playerID, before, command, GrantRule{
+		MaxStackSize: 3, AllowedContainerIDs: []string{"store", "store"},
+	}); err == nil { t.Fatal("重复奖励容器ID必须拒绝") }
+	if _, err := PlanTrustedGrant(playerID, before, command, GrantRule{
+		MaxStackSize: 3, AllowedContainerIDs: []string{"unknown-storage"},
+	}); err == nil { t.Fatal("未提供的奖励容器必须拒绝") }
 	if len(before.Items) != 1 {
 		t.Fatal("纯计划不能修改入参Snapshot")
 	}

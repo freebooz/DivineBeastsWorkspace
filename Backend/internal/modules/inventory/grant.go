@@ -27,6 +27,10 @@ const (
 type GrantCommand struct {
 	OperationID      string
 	ExpectedRevision int64
+	// 当前游戏ID、玩家准入世代及真实连接号，必须对应数据库内同一有效租约。
+	GameID           string
+	SessionEpoch     int64
+	ConnectionID     string
 	GameServerID     string
 	ServerBootID     string
 	SourceEventID    string
@@ -38,6 +42,9 @@ type GrantCommand struct {
 // GrantRule（可信物品规则）只由服务端正式目录/授权器返回，不得由HTTP客户端传入。
 type GrantRule struct {
 	MaxStackSize int32
+	// AllowedContainerIDs（授予允许的容器ID）由后端规则目录指定；
+	// 缺省只允许main随身背包，防止采集/任务发奖绕过背包容量进入远程仓库。
+	AllowedContainerIDs []string
 }
 
 // TrustedGrantAuthorizer（可信授予授权器）必须先证明服务器身份/启动代次、
@@ -77,7 +84,8 @@ func (s *Service) GrantTrusted(ctx context.Context, playerID string, cmd GrantCo
 	if err := validateMutationBase(playerID, cmd.OperationID, cmd.ExpectedRevision); err != nil {
 		return MutationResult{}, err
 	}
-	if !validID(cmd.GameServerID) || !validID(cmd.ServerBootID) ||
+	if !validID(cmd.GameID) || cmd.SessionEpoch < 1 || !validID(cmd.ConnectionID) ||
+		!validID(cmd.GameServerID) || !validID(cmd.ServerBootID) ||
 		!validID(cmd.SourceEventID) || !validID(cmd.ItemDefinitionID) ||
 		!validID(cmd.ReasonCode) || cmd.Quantity < 1 || cmd.Quantity > MaxGrantQuantity ||
 		cmd.OperationID != GrantOperationID(playerID, cmd.SourceEventID) {
@@ -119,6 +127,18 @@ func PlanTrustedGrant(playerID string, before Snapshot, cmd GrantCommand, rule G
 	}
 
 	items := append([]ItemInstance(nil), before.Items...)
+	// 容器策略不是客户端可改变的目标槽位参数；默认只落随身背包。
+	allowedContainers := map[string]bool{}
+	if len(rule.AllowedContainerIDs) == 0 {
+		allowedContainers[DefaultContainerID] = true
+	} else {
+		if len(rule.AllowedContainerIDs) > 8 { return GrantPlan{}, invalidRequest() }
+		for _, id := range rule.AllowedContainerIDs {
+			if !validID(id) || allowedContainers[id] { return GrantPlan{}, invalidRequest() }
+			allowedContainers[id] = true
+		}
+	}
+
 	sort.Slice(items, func(i, j int) bool {
 		if items[i].ContainerID != items[j].ContainerID {
 			return items[i].ContainerID < items[j].ContainerID
@@ -163,6 +183,7 @@ func PlanTrustedGrant(playerID string, before Snapshot, cmd GrantCommand, rule G
 			break
 		}
 		if item.ItemDefinitionID != cmd.ItemDefinitionID ||
+			!allowedContainers[item.ContainerID] ||
 			item.InstanceState != "active" ||
 			item.MaxStackSize != rule.MaxStackSize ||
 			item.Quantity >= item.MaxStackSize {
@@ -183,6 +204,7 @@ func PlanTrustedGrant(playerID string, before Snapshot, cmd GrantCommand, rule G
 
 	// 直到确保全部数量都有可用位置才返回计划；内存仓储与PG均不会半发奖励。
 	for _, container := range containers {
+		if !allowedContainers[container.ContainerID] { continue }
 		for slot := int32(0); slot < container.Capacity && remaining > 0; slot++ {
 			if occupied[container.ContainerID][slot] {
 				continue
@@ -245,7 +267,7 @@ func (r *MemoryRepository) Grant(ctx context.Context, playerID string, cmd Grant
 		signature("grant", struct {
 			Command GrantCommand
 			Rule    GrantRule
-		}{cmd, rule}), cmd.ExpectedRevision,
+		}{CanonicalGrantCommand(cmd), rule}), cmd.ExpectedRevision,
 		func(state *memoryState) (int32, int32, error) {
 			plan, err := PlanTrustedGrant(playerID, snapshotOf(state), cmd, rule)
 			if err != nil {

@@ -4,6 +4,10 @@
 #include "Engine/LocalPlayer.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/Texture2D.h"
+#include "Loading/GamePlatformAssetLoader.h"
 #include "UObject/StrongObjectPtr.h"
 
 // 背包领域中文提示的稳定本地化命名空间，仅供项目视觉层使用。
@@ -401,6 +405,81 @@ void UDivineBeastsInventoryScreen::UnbindNamedActionButtons()
 #undef DBA_UNBIND_INVENTORY_BUTTON
 }
 
+
+void UDivineBeastsInventoryScreen::CancelInventoryIconLoads()
+{
+    ++IconLoadGeneration;
+    for (auto& Pair : PendingIconLoads)
+    {
+        FGamePlatformAssetLoader::Cancel(Pair.Value);
+    }
+    PendingIconLoads.Reset();
+    AttemptedIconDefinitions.Reset();
+}
+
+void UDivineBeastsInventoryScreen::RequestInventoryIcon(FName DefinitionId)
+{
+    if (!bVisualControlsBound || !IsActivated() || DefinitionId.IsNone() ||
+        AttemptedIconDefinitions.Contains(DefinitionId))
+    {
+        return;
+    }
+    const FSoftObjectPath Path =
+        FDivineBeastsInventoryPresentationCatalog::Find(DefinitionId).IconAssetPath;
+    if (!Path.IsValid())
+    {
+        return;
+    }
+
+    AttemptedIconDefinitions.Add(DefinitionId);
+    const uint64 ExpectedGeneration = IconLoadGeneration;
+    const TWeakObjectPtr<UDivineBeastsInventoryScreen> WeakThis(this);
+    // 与头像/小地图共用平台AssetLoader（资源加载器），不使用LoadSynchronous或逐帧查找。
+    PendingIconLoads.Add(DefinitionId, FGamePlatformAssetLoader::RequestAsyncLoad(
+        {Path}, FStreamableDelegate::CreateLambda(
+            [WeakThis, ExpectedGeneration]()
+            {
+                if (UDivineBeastsInventoryScreen* Screen = WeakThis.Get();
+                    IsValid(Screen) && !Screen->IsUnreachable() &&
+                    Screen->IconLoadGeneration == ExpectedGeneration &&
+                    Screen->bVisualControlsBound && Screen->IsActivated())
+                {
+                    Screen->RefreshInventoryVisuals();
+                }
+            })));
+}
+
+void UDivineBeastsInventoryScreen::RenderInventoryIcon(
+    const FString& WidgetName, FName DefinitionId)
+{
+    // 只有Monolith真正制作SlotIcon/QuickIcon时才异步请求资源；
+    // 原始172控件背包蓝图没有这些控件时只显示中文文字，不增加空白纹理或同步磁盘查询。
+    UImage* IconWidget = Cast<UImage>(GetWidgetFromName(FName(*WidgetName)));
+    if (!IsValid(IconWidget))
+    {
+        return;
+    }
+
+    const FSoftObjectPath Path = !DefinitionId.IsNone()
+        ? FDivineBeastsInventoryPresentationCatalog::Find(DefinitionId).IconAssetPath
+        : FSoftObjectPath();
+    UTexture2D* Texture = Path.IsValid()
+        ? Cast<UTexture2D>(Path.ResolveObject())
+        : nullptr;
+    if (IsValid(Texture))
+    {
+        IconWidget->SetBrushFromTexture(Texture);
+        IconWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+        return;
+    }
+    IconWidget->SetBrushFromTexture(nullptr);
+    IconWidget->SetVisibility(ESlateVisibility::Hidden);
+    if (Path.IsValid())
+    {
+        RequestInventoryIcon(DefinitionId);
+    }
+}
+
 void UDivineBeastsInventoryScreen::BindInventoryVisualControls()
 {
     if (bVisualControlsBound || !IsActivated())
@@ -431,6 +510,7 @@ void UDivineBeastsInventoryScreen::BindInventoryVisualControls()
 
 void UDivineBeastsInventoryScreen::UnbindInventoryVisualControls()
 {
+    CancelInventoryIconLoads();
     if (!bVisualControlsBound)
     {
         return;
@@ -536,6 +616,8 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
             if (ProjectedSlot->Item.bPending) { LabelText += TEXT("…"); }
         }
         SetText(FString::Printf(TEXT("SlotText_%d"), Index), FText::FromString(LabelText));
+        RenderInventoryIcon(FString::Printf(TEXT("SlotIcon_%d"), Index),
+            bOccupied ? ProjectedSlot->Item.ItemDefinitionId : NAME_None);
         const FString ButtonName = FString::Printf(TEXT("SlotButton_%d"), Index);
         if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*ButtonName))))
         {
@@ -564,6 +646,8 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
         }
         if (Quick && Quick->bPending) { LabelText += TEXT("…"); }
         SetText(FString::Printf(TEXT("QuickText_%d"), Index), FText::FromString(LabelText));
+        RenderInventoryIcon(FString::Printf(TEXT("QuickIcon_%d"), Index),
+            Quick && Quick->bAssigned ? Quick->Item.ItemDefinitionId : NAME_None);
         const FString ButtonName = FString::Printf(TEXT("QuickButton_%d"), Index);
         if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*ButtonName))))
         {
