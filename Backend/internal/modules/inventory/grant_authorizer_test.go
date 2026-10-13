@@ -89,7 +89,7 @@ func TestVerifiedGrantAuthorizerChecksAllEvidence(t *testing.T) {
 
 func TestDeployedSSLMItemPolicyCatalog(t *testing.T) {
 	// 用真实仓库的受控后端配置进行测试；配置不存在时失败，不自行创造默认奖励。
-	file, err := os.Open("../../../config/inventory_item_policies_v1.json")
+	file, err := os.Open("../../../configs/inventory_item_policies_v1.json")
 	if err != nil {
 		t.Fatal(err)
 	}

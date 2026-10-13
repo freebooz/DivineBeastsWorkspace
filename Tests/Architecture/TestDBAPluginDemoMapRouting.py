@@ -1,51 +1,76 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""插件开发门户的真实地图归属和路由安全静态回归。
+"""插件演示目录的稳定身份、资源路由和失败关闭回归（纯源码/登记数据审查）。
 
-这是源码契约检查，不代替Editor C++自动化、AssetRegistry加载或实际进入/返回地图。
-防止所有Foundation审核场景被错误归入DeveloperTools，或多插件共享图因复用ScenarioId被混淆。
+真实项目的正式演示已迁移到中央Data定义、快照发布、适配器预检；开发地图只能作为
+未编目诊断候选，不得通过名称推测形成已完成的插件功能。只检查合同文本和真实清单，
+不代替C++链接、UE AssetRegistry真实加载、场景导航或人工视觉验收。
 """
 from pathlib import Path
+import json
 import unittest
 
-ROOT=Path(__file__).resolve().parents[2]
-CATALOG=ROOT/"Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Demo/DivineBeastsDemoCatalogSubsystem.cpp"
-WORLD=ROOT/"Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Demo/DivineBeastsDemoWorldSubsystem.cpp"
+ROOT = Path(__file__).resolve().parents[2]
+BASE = ROOT / "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient"
+CATALOG = BASE / "Private/Demo/DivineBeastsDemoCatalogSubsystem.cpp"
+WORLD = BASE / "Private/Demo/DivineBeastsDemoWorldSubsystem.cpp"
+MANIFEST = ROOT / "Docs/Implementation/PluginDemos/PluginDemoManifest.json"
 
 
 class PluginDemoRoutingPolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.catalog=CATALOG.read_text(encoding="utf-8-sig")
-        cls.world=WORLD.read_text(encoding="utf-8-sig")
+        cls.catalog = CATALOG.read_text(encoding="utf-8-sig")
+        cls.world = WORLD.read_text(encoding="utf-8-sig")
+        cls.manifest = json.loads(MANIFEST.read_text(encoding="utf-8-sig"))
 
-    def test_core_review_categories_not_all_misassigned_to_developer_tools(self):
-        for identity in ("GamePlatformCombat","GamePlatformAI","GamePlatformInteraction",
-                         "GamePlatformNavigation","GamePlatformSFX","GamePlatformPCG",
-                         "DBAArena","GamePlatformArena","DBAGameplay"):
-            with self.subTest(plugin=identity):
-                self.assertIn(f'TEXT("{identity}")',self.catalog)
+    def test_discovery_uses_real_plugin_descriptors_not_hardcoded_ownership(self):
+        # 只能列出实际项目插件，不允许基于开发地图路径伪造正式功能归属。
+        self.assertIn("IPluginManager::Get().GetDiscoveredPlugins()", self.catalog)
+        self.assertIn("Plugin->IsEnabled()", self.catalog)
+        self.assertIn("ResolveLayer(", self.catalog)
+        self.assertNotIn("GuessOwningPlugin(", self.catalog)
+        self.assertNotIn("ResolveScenarioPluginIds(", self.catalog)
 
-    def test_hero_showcase_reusable_for_twelve_content_packs(self):
-        self.assertIn("L_DBA_HeroShowcase",self.catalog)
-        for name in ("Rat","Ox","Tiger","Rabbit","Dragon","Snake",
-                     "Horse","Goat","Monkey","Rooster","Dog","Boar"):
-            self.assertIn(f'TEXT("DBAHeroPack_{name}")',self.catalog)
+    def test_unreviewed_hero_packs_are_not_automatically_counted_complete(self):
+        # 12生肖内容包可以显示为未审查，不能因为有共享地图便推定12个英雄功能均完成。
+        actual = {item["plugin_id"]: item for item in self.manifest["plugins"]}
+        for name in ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
+                     "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar"):
+            with self.subTest(hero=name):
+                record = actual["DBAHeroPack_" + name]
+                self.assertEqual(record["feature_audit_status"], "unreviewed")
+                self.assertTrue((ROOT / record["descriptor_path"]).is_file())
 
-    def test_multiple_plugins_get_unique_scenario_identity_without_dup_map(self):
-        self.assertIn("ResolveScenarioPluginIds",self.catalog)
-        self.assertIn("PluginId.ToString()",self.catalog)
-        self.assertIn("Item.MapAsset = Asset.ToSoftObjectPath()",self.catalog)
-        self.assertIn("Scenarios.Add(MoveTemp(Item))",self.catalog)
-        self.assertIn("Item->MapAsset.GetLongPackageName()",self.catalog)
+    def test_formal_scenario_uses_stable_definition_id_and_asset(self):
+        # 正式身份来自定义，而不是同名地图或字符串拼接。
+        self.assertIn("PrivateState->Snapshot.Publish(*Definition, Plugins)", self.catalog)
+        self.assertIn("Item.ScenarioId = Definition.ScenarioId", self.catalog)
+        self.assertIn("Item.MapAsset = Definition.MapAsset", self.catalog)
+        self.assertIn("PrivateState->DiagnosticMaps.Add(MoveTemp(Item))", self.catalog)
+        self.assertIn("RegisteredMaps.Contains(", self.catalog)
+        self.assertIn("PreflightScenario(Item.ScenarioId)", self.catalog)
 
-    def test_portal_itself_is_not_selectable_as_gameplay_demo(self):
-        self.assertIn("FDivineBeastsPluginDemoMode::GetHubMapPackage()",self.catalog)
-        self.assertIn("if (PackagePath == FDivineBeastsPluginDemoMode::GetHubMapPackage())",self.catalog)
+    def test_hub_map_never_presented_as_selectable_diagnostic_scenario(self):
+        # 门户自身被排除；其余仅允许开发目录内真实World资产。
+        self.assertIn('Registry.GetAssetsByPath(FName(TEXT("/Game/Development"))', self.catalog)
+        self.assertIn("Package == FDivineBeastsPluginDemoMode::GetHubMapPackage()", self.catalog)
+        self.assertIn('Package.StartsWith(TEXT("/Game/Development/"))', self.catalog)
+        self.assertIn("Asset.AssetClassPath != UWorld::StaticClass()->GetClassPathName()", self.catalog)
 
-    def test_world_switch_uses_real_asset_path_not_alias_id(self):
-        self.assertIn("Scenario.MapAsset.GetLongPackageName()",self.world)
-        self.assertIn("Scenario.bAvailable",self.world)
+    def test_formal_open_requires_identity_resolution_and_preflight(self):
+        # 地图资源只通过已登记软路径切换，先作真正适配器/目标/插件/资产检查。
+        self.assertIn("PrivateState->Snapshot.ResolveIdentity(InputId, Resolved)", self.catalog)
+        self.assertIn("PreflightScenario(Item->ScenarioId)", self.catalog)
+        self.assertIn("!FPackageName::DoesPackageExist(", self.catalog)
+        self.assertIn("PrivateState->PendingMap = ", self.catalog)
+        self.assertIn("UGameplayStatics::OpenLevel(GetWorld(), Map);", self.catalog)
+
+    def test_world_switch_checks_actual_asset_path(self):
+        self.assertIn("FName(*Scenario.MapAsset.GetLongPackageName()) == CurrentMap", self.world)
+        self.assertNotIn("Scenario.ScenarioId == CurrentMap", self.world)
+        self.assertIn("RequestDemoOverlay(InWorld)", self.world)
+
 
 
 if __name__=="__main__":

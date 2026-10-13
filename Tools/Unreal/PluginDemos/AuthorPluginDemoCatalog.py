@@ -46,11 +46,16 @@ def build_catalog(manifest_path: str) -> dict:
         raise RuntimeError("BlockedByEditorBinary：新目录反射类未加载；本脚本不会触发编译。")
 
     def value(kind: str, **fields):
-        """反射字段逐个显式设置；未知字段/枚举由引擎拒绝，不能静默丢失合同。"""
-        result = getattr(unreal, kind)()
-        for field, field_value in fields.items():
-            result.set_editor_property(field, field_value)
-        return result
+        """通过USTRUCT（原生反射结构）构造器一次传入已审查字段。
+
+        UE5.8部分字段的EditDefaultsOnly（仅默认值可编辑）会拒绝对临时结构实例
+        逐个set_editor_property，导致真实作者中途失败；构造器仍由反射严格检查
+        未知字段、类型和枚举。禁止catch后跳过字段或以默认值冒充真实目录。
+        """
+        struct_class = getattr(unreal, kind, None)
+        if struct_class is None:
+            raise RuntimeError("缺少真实编辑器反射类型：" + kind)
+        return struct_class(**fields)
 
     def parameter(record: dict):
         """封闭四类型一对一转换；不用浮点保存整数或任意脚本字符串。"""

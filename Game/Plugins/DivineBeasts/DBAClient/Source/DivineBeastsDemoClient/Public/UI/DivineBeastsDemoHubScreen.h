@@ -24,8 +24,8 @@ protected:
     virtual void NativeDestruct() override;
     /** Monolith可以按小屏/安全区调整已制作的布局，状态仍来自只读快照。 */
     UFUNCTION(BlueprintImplementableEvent, Category="DivineBeasts|Demo") void BP_OnMenuSnapshotChanged(FDivineBeastsDemoMenuSnapshot Snapshot);
-    /** 显示待审证据索引，不提供自动人工签收。 */
-    UFUNCTION(BlueprintImplementableEvent, Category="DivineBeasts|Demo") void BP_OnEvidenceRequested(FString IndexPath);
+    /** 显示待审证据索引，不提供自动人工签收；索引是只读输入，使用UHT要求的字符串常量引用，不能作为输出参数修改。 */
+    UFUNCTION(BlueprintImplementableEvent, Category="DivineBeasts|Demo") void BP_OnEvidenceRequested(const FString& IndexPath);
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<class UEditableTextBox> PluginSearchInput;
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<class UComboBoxString> LayerFilterCombo;
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<class UListView> PluginList;

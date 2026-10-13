@@ -1770,5 +1770,26 @@
     "FreshRHI": "05613996-fb08-4dec-a4f1-445a1f144120：SourceToSlate真实RHI通过，包含新三图标及旧九原稿；五页面截图按单次PNG编码。",
     "FreshClientCook": "6bfc330a-f7a8-4444-b4cf-d6814445233b：独占开发客户端Cook/Stage与IoStore门禁Passed，524项必需资产齐全，包含36份开发魔法及三图标、六系统、六定义。不代表联网/人工视觉。",
     "ManualAcceptance": false
+  },
+  "PluginDemoResourceBar20261013": {
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoResourceBar",
+    "ParentClass": "/Script/GamePlatformUIClient.GamePlatformResourceBarWidget",
+    "PurposeZh": "修复已有Samples原生测试缺失的真实开发资源条；不改变正式登录/HUD、不替代权威数值。",
+    "AssetActions": ["ui.create_widget_blueprint", "ui.add_widget: ProgressBar/ResourceValueText", "ui.set_font: 18", "ui.set_widget_property: FillColorAndOpacity", "ui.compile_widget", "editor.save_packages: exact package", "editor.run_python: EditorLoadingAndSavingUtils.reload_packages", "ui.get_widget_tree: reloaded", "ui.audit_focus_chain", "ui.audit_accessibility", "project.get_saved_asset_state"],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "Saved": true,
+    "Reloaded": true,
+    "WidgetCount": 3,
+    "DiskFileSize": 25215,
+    "AccessibilityIssues": 0,
+    "FocusZh": "纯展示样板无交互控件、不抢焦点；无DesiredFocusTarget，不声称已验证键鼠/手柄导航。",
+    "EventUpdateZh": "复用平台资源条事件入口ApplyResourceState；最大值未知时清空文本，不绑定Tick/HTTP/GAS权威。",
+    "RemainingValidationZh": "Samples与完整102项回归须走原生Automation入口；Cook、分辨率与人工视觉不由Monolith结构门禁推导。",
+    "MonolithAutomationLimitationZh": "0.23.0的run_automation_tests同步入口在latent Samples用例触发LatentCommands.IsEmpty引擎断言；资产已保存/重载且崩溃前脏包为0。保留AssetEditor.log，不用该入口重试latent测试、不修改第三方引擎或降低断言。",
+    "ManualVisualAccepted": false
   }
 }

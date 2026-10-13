@@ -42,7 +42,7 @@ class DemoCatalogMergeGate(unittest.TestCase):
     def test_contract_stable_identity_not_hardcoded_paired_map(self):
         text=self.sources[HEADER]
         self.assertEqual(len(re.findall(r'UPROPERTY\(BlueprintReadOnly, Category="DivineBeasts\|Demo"\) FName ScenarioId;',text)),1)
-        self.assertIn("正式案例使用稳定ID",text)
+        self.assertIn("正式功能案例使用稳定ScenarioId",text)
 
     def test_world_lookup_by_actual_soft_map(self):
         world=self.sources[WORLD]

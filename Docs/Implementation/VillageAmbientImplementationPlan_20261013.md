@@ -95,3 +95,22 @@
 ### 用户最新执行选择
 
 2026-10-13用户对工具切换询问明确回复“保持HWebCodex，暂不发布”。本次不切连接器，不由本机终端替代执行编译/测试/发布，不进行新Cook/Stage或替换当前运行包；不会将此回复误解为允许跳过验证或提前提交。现有工作树改动及当前运行包保留，自动提交和远程整合授权继续以任务实际完成为前提。后续恢复发布须有用户新的明确要求。
+
+2026-10-13后续用户明确要求重新编译、部署业务后端和游戏双端，并启动两个客户端；又明确“本对话不使用HWebCodex”。因此本次恢复本机终端执行，原连接器限制和暂不发布选择不再适用于后续步骤。真实UI资产制作仍使用Monolith，不改变主分支、插件三层或发布门禁。森林/农田尚未实现，不在本轮重新编译部署中宣称完成。
+
+本轮预检主分支为`main`、工作树干净，锁定UE5.8.0。实际首轮全量Go测试发现新物品策略错误放入`Backend/config/`；迁入正式`configs/`并同步原读取测试和目录文档，原结构门禁不放宽。实际完整Editor首轮因演示页字符串反射签名与引擎`LogPath`名称遮蔽失败，按编译错误做最小修正；后续必须以新的完整Editor、Client/Server、原生、颜色与Cook证据更新结果，失败日志保留。另有演示目录源码在构建期间被外部修改，保留该改动，不覆盖或混入本任务提交。
+
+### 本机重新构建与开发部署证据（持续更新，非人工签收）
+
+- 业务后端：锁定Docker Go1.23.12，挂载完整工作空间包含Shared契约；`go test -mod=readonly -json ./...`实际186个命名通过事件（含子测试），`go vet -mod=readonly ./...`与`go test -mod=readonly -race -json ./...`退出0。五个服务镜像重新构建，独立项目`sslm-validation-8238653a`运行；五个ready端点及Swagger均HTTP200。证据为`Saved/Validation/Deployment20261013/8238653a-bd05-4558-96d4-4a351caad4a0/BackendDeployment.json`。
+- 后端仍为本地内存开发适配，不是生产数据库/Agones验收。新验证网关`127.0.0.1:28181`，Identity/PlayerData/Match/ServerControl端口为18181/18182/18183/18184；旧28081环境保留，不重建旧容器或丢弃旧角色资料。新验证环境有独立玩家资料，不宣称自动迁入旧角色。
+- 完整Editor+DBAServer：`c07959f3-5cf2-4c36-8ab1-3dce8bda01b4`实际构建退出0、完整构建凭证Eligible。首次后续链接失败按CommonUI公开基类与Slate直接使用增加真实模块依赖，不禁用模块。资产中文生成清单更新后还须刷新完整凭证，不能沿用指纹过期的报告。
+- 原生首轮：`bd192995-e9a3-4368-8bf1-55ab8bcc7c04`实际102项，101成功、1失败，失败为`DivineBeasts.PluginDemos.Samples`缺真实资源条WBP。原先预估演示7项不准确，实际已编译8项；后续要求102项全部成功，不减少筛选或删除失败用例。
+- 该缺失资产按已有`PluginDemoUIMonolithRecipes.json`合同，通过Monolith0.23.0创建`/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoResourceBar`，继承平台ResourceBar；3个控件、固定18字号、事件驱动，只用于开发样板。真实编译错误/警告0，精确保存、磁盘包重载与控件树回读成功，可访问性静态审计问题0；公共内容包生成清单已同步。不改正式登录/HUD，不生成新界面纹理，不抢交互焦点。
+- Monolith同步测试入口对latent Samples触发`LatentCommands.IsEmpty`引擎断言；本轮编辑器崩溃前脏包0，真实资产已保存重载，没有地图丢失。保留`AssetEditor.log`；不在第三方/引擎中静默改测试，不再次使用该同步入口，后续走原生Automation调度异步步骤。
+- 草地增强门禁真实通过：三张2K贴图、55节点、UV比例、ORM通道、递归共享硬依赖及两PlayerStart均核实。首次加载短暂读到异步纹理编译占位32尺寸，待实际编译完成后重新检查2048且全部通过；没有调低2K断言或重新加工原稿。
+- 正式Village单玩家PIE真实通过：64个Landscape MID的6张草地/雪纹理全部按合同绑定；干地白色乘色，双鸟群意图32/24且两个Niagara组件实际活跃。证据`Saved/Validation/VillageAmbient20261013/GrassAssets.json`与`PIE.json`。GPU鸟粒子数量和人工美术尚未签收；两PlayerStart原位置/朝向/比例保留，地图未保存改动。
+- 本轮真实RHI颜色：`a8699706-0b45-4f16-a78d-372aee51e9eb`SourceToSlate唯一测试成功，5张单次编码截图；`Game/Saved/Validation/UIColorRHI/Latest.json`Passed。后续Cook仍复核指纹，不使用已知错误Gamma的Monolith widget预览。
+- Client/Server首轮单并行构建需927动作，核对64GB主机及空闲内存后仅停止自己精确身份的构建树，保留产物和中止证据，改四并行重试`c69d4c22-7bb4-46ba-b762-4268e740d32d`；不按进程名停止其他任务。双端、新原生、Cook及人工端启动以最终报告更新，当前不计通过。
+
+本轮尚未自动提交或推送。原草地/鸟群/PCG任务的自动交付授权仍以该任务实际完成为前提，不能将此次重新部署等同森林/农田已经实现；并行演示目录修改、测试和作者脚本继续保留，不混入本任务暂存。
