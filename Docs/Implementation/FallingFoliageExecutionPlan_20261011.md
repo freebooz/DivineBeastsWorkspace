@@ -1,7 +1,7 @@
 # 自然飘落物视觉特效系统分步执行计划（2026-10-11）
 
 ## 任务边界
-- 目标：为《神兽联盟》统一制作桃花、枫叶、竹叶、银杏叶的持续飘落、落地、静置、风吹滑动、翻滚、打旋及再扬起效果；角色选择／创建共同使用同一预览工作室中的桃花预设。
+- 目标：为《SSLM》统一制作桃花、枫叶、竹叶、银杏叶的持续飘落、落地、静置、风吹滑动、翻滚、打旋及再扬起效果；角色选择／创建共同使用同一预览工作室中的桃花预设。
 - 工程：DivineBeastsWorkspace/Game/DivineBeastsArena.uproject（正式主工程），UE5.8；所有实现增量进行，不覆盖现有未提交界面修改。
 - 三层依赖：DivineBeasts（第三层）→（按需跳过MOBA）→GamePlatform（第一层）。MobaCommon（第二层）本任务不新增逻辑。
 - 固定插件：GamePlatformVFX、GamePlatformPresentation、GamePlatformData；可选接入 GamePlatformWeather、GamePlatformPCG；项目组合使用 DBAClient/DBAFrontEndPack/按现行规范注册的项目公共表现内容包。

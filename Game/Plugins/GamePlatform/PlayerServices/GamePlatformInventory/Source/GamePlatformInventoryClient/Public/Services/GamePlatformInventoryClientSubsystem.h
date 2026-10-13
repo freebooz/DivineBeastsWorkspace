@@ -69,6 +69,25 @@ public:
     /** 游戏线程只读借用；空/未知身份返回nullptr，指针仅有效到下一次快照变化/重置，调用方不得保存跨事件引用。 */
     const FGamePlatformInventoryItemInstance* FindItem(const FString& ItemInstanceId) const;
 
+    /** 从已验签快照获取容器容量；未加载或未知容器为0，UI不可擅自假定64格。 */
+    UFUNCTION(BlueprintPure, Category="Inventory")
+    int32 GetContainerCapacity(FName ContainerId) const;
+
+    /** 查询单个合法容器槽位。返回true但bOccupied=false表示真实空槽；false表示无效索引。 */
+    UFUNCTION(BlueprintPure, Category="Inventory")
+    bool TryGetContainerSlot(
+        FName ContainerId, int32 SlotIndex,
+        FGamePlatformInventorySlotViewModel& OutSlot) const;
+
+    /** 每次只投影最多128格，供界面虚拟化网格按事件刷新；不启动请求、不修改背包。 */
+    UFUNCTION(BlueprintPure, Category="Inventory")
+    TArray<FGamePlatformInventorySlotViewModel> GetContainerSlotPage(
+        FName ContainerId, int32 StartSlotIndex, int32 MaxSlotCount) const;
+
+    /** 始终返回12个快捷格，空格也有稳定索引；实例只读引用权威Snapshot。 */
+    UFUNCTION(BlueprintPure, Category="Inventory")
+    TArray<FGamePlatformInventoryQuickbarViewModel> GetQuickbarSlots() const;
+
     /**
      * 请求完整快照。存在未决写操作时，只有 RevisionConflict（修订冲突）触发的内部对账
      * 可以刷新，避免普通刷新误清理结果未知的 OperationId。
@@ -162,6 +181,8 @@ private:
     mutable uint64 CachedSnapshotGeneration = ~uint64(0);
     mutable TArray<FGamePlatformInventoryItemInstance> CachedSortedItems;
     mutable TMap<FString, int32> CachedItemIndexByInstanceId;
+    /** 同一SnapshotGeneration中按容器/槽位索引排序ViewModel，禁止UI重复线性查找。 */
+    mutable TMap<FName, TMap<int32, int32>> CachedSlotIndexByContainer;
 
     mutable uint64 CachedViewSnapshotGeneration = ~uint64(0);
     mutable FGuid CachedViewPendingOperationId;

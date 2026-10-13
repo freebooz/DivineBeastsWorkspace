@@ -1,6 +1,6 @@
-# 《神兽联盟》蝴蝶鱼群容器审计工具与验证记录
+# 《SSLM》蝴蝶鱼群容器审计工具与验证记录
 
-日期：2026-10-11；工程：DivineBeastsWorkspace（神兽联盟工作空间）。
+日期：2026-10-11；工程：DivineBeastsWorkspace（SSLM工作空间）。
 
 ## 实现归属
 平台层 GamePlatformVFX（游戏平台视觉特效插件）负责通用运行；DBAPresentationPack_Core（项目公共表现内容包）负责物种视觉。审计工具不属于玩法权威模块。

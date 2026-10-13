@@ -7,7 +7,7 @@
 
 ## 1. 已实现的结果
 
-现有飞鸟的五项项目编排缺陷已修复。蝴蝶与鱼群已经接入神兽联盟现有的项目物种目录、ContentPack、资源租约、表现请求与平台 VFX 世界实例。
+现有飞鸟的五项项目编排缺陷已修复。蝴蝶与鱼群已经接入SSLM现有的项目物种目录、ContentPack、资源租约、表现请求与平台 VFX 世界实例。
 
 实际交付包含蓝紫蝴蝶 ButterflyAzure、银蓝鱼 FishSilver 各一套可编辑源模型、FBX、纹理、PBR 材质、三档静态网格 LOD、Niagara System、WorldDefinition 和场景 Habitat 蓝图，以及可直接运行的审核关卡。所有 uasset/umap 均由真实 Unreal Editor 创建、导入、编译和保存。
 
@@ -49,7 +49,7 @@ GamePlatformVFXClient 提供不含项目物种名和项目资源路径的行为�
 
 GamePlatformData 继续负责逻辑资源身份、加载及租约；GamePlatformPresentation 继续解析中立表现请求。没有增加第二资源加载器、第二 VFX 播放器、第二预算管理器或公开私有 WorldSubsystem。
 
-通用平台资产位于 /GamePlatformVFX/Environment/Fauna，默认资源不反向引用神兽联盟物种包。
+通用平台资产位于 /GamePlatformVFX/Environment/Fauna，默认资源不反向引用SSLM物种包。
 
 ### MobaCommon 玩法公共层
 
@@ -83,7 +83,7 @@ PerchOffsetCm 默认 0.72 cm，用于本轮模型脚底接触。它与 BodyRadiu
 
 每群当前数量上限为 512，这只是输入容量合同，不是任意平台和任意同屏群落数的性能保证。网格有三个 LOD，Niagara 使用 PerParticle 模式按个体屏幕尺寸选择，避免生成 LOD 后仍固定使用第 0 档。
 
-## 5. 直接在神兽联盟中使用
+## 5. 直接在SSLM中使用
 
 ### 打开审核关卡
 

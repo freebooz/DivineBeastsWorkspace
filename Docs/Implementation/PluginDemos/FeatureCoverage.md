@@ -57,7 +57,7 @@
 | GamePlatformArena | GameplaySandbox | MOBA通用竞技唯一插件；统一 1v1～5v5 MainArena（主竞技场）模式、竞技 Definition、Roster（名单）、阶段状态、比分/KDA、断线重连、弃权、结果构建和 Client/Server 适配。 | 待功能核验、待演示及人工验收 |
 | MobaPresentation | WorldVisualStage | 将 Arena/Combat/Ability/Status/Character（竞技／战斗／技能／状态／角色）已确认事实转换成平台中立表现请求；不直接播放 Niagara、Sound（音效）或创建 Widget（界面）。 | 待功能核验、待演示及人工验收 |
 
-## 神兽联盟项目代码插件（5）
+## SSLM项目代码插件（5）
 
 | 插件 | 推荐演示模板 | 文档能力线索（未实测） | 当前状态 |
 | --- | --- | --- | --- |
@@ -65,7 +65,7 @@
 | DBAClient | UIWidgetGallery | 项目应用流程装配、`DivineBeasts.Input.*` 输入语义/Profile/事件桥、项目表现上下文／映射、UI 路由和 ViewModel；公共客户端不强制依赖竞技。 | 待功能核验、待演示及人工验收 |
 | DBAGameplay | GameplaySandbox | 项目稳定身份、Shared（共享契约）目录、十二生肖 Hero Definition、Hero Catalog（英雄目录）、角色组件、创建 Provider 和出生初始化；不强制依赖竞技。 | 待功能核验、待演示及人工验收 |
 | DBAServer | ServiceDiagnostics | 读取并校验三 ServerRole Profile（服务器角色配置）、Experience、地图与必需资源；调用 GamePlatformServer 完成 Register/Heartbeat/Ready/Drain。 | 待功能核验、待演示及人工验收 |
-| DBAWorlds | WorldVisualStage | `UDivineBeastsWorldDefinition（神兽联盟世界定义）`，约束 ServerRole（服务器角色）、Experience（体验）和可选 ArenaMode（竞技模式）一致性。 | 待功能核验、待演示及人工验收 |
+| DBAWorlds | WorldVisualStage | `UDivineBeastsWorldDefinition（SSLM世界定义）`，约束 ServerRole（服务器角色）、Experience（体验）和可选 ArenaMode（竞技模式）一致性。 | 待功能核验、待演示及人工验收 |
 
 ## 项目内容包（17）
 

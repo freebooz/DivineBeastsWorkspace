@@ -78,6 +78,15 @@ public:
     /** 本地角色入口换页命令；仅空闲且已认证时接受，注销或流程离开入口后撤销偏好。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Characters")
     bool RequestCharacterEntryScreen(FName ScreenId);
+    
+    /** 只允许已进入世界的本地玩家打开背包；同一时刻至多一页和一个在途打开请求。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Inventory")
+    bool OpenInventoryScreen();
+
+    /** 关闭本协调器拥有的背包页/取消其在途打开；不关闭其他UI或更改权威库存。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Inventory")
+    bool CloseInventoryScreen();
+
 
     /** 仅处理已进入真实世界的ESC；前端返回false，保留原页面取消语义。游戏线程。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
@@ -168,6 +177,12 @@ private:
     bool bSystemMenuVisible = false;
     /** 关闭/换页重入资格；外部层栈通知若开启后继请求，旧关闭不得恢复后继的世界输入。 */
     uint64 SystemMenuGeneration = 0;
+    /** 背包和系统菜单/主流程各自拥有请求代次与弱引用，禁止异步过期页重生。 */
+    TWeakObjectPtr<UGamePlatformUIScreen> ActiveInventoryScreen;
+    FGuid OpeningInventoryRequestId;
+    uint64 InventoryScreenGeneration = 0;
+    bool bInventoryOpening = false;
+
     FDivineBeastsSystemMenuVisibilityChangedNative SystemMenuVisibilityChanged;
     /** 读取项目默认主题编号并交给平台UI服务；空配置兼容旧页面，失败不阻断登录。 */
     void EnsureConfiguredTheme();

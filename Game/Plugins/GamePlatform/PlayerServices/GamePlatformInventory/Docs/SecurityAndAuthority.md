@@ -9,3 +9,9 @@ PlayerData 的现有内部 HTTP 通道属于 Backend 服务间边界，本轮没
 所有长期写操作由 PlayerData Inventory Domain + PostgreSQL Repository 权威执行。客户端只提交 OperationId、ExpectedRevision 和操作参数；客户端 Definition、UI 数量和 Slot 均不具有权威性。OperationId 同键异内容会拒绝，RevisionConflict 会触发客户端全量对账。
 
 普通客户端没有 Grant/Consume。可信 Dedicated Server 的 Grant/Consume、Quest Reward、External Pickup 仍待后续在真实 GameServerControl/Session 服务器实例—玩家绑定校验基础上实现；当前文档不得将其写成已完成。货币属于 Economy（经济钱包），装备槽位/能力应用属于 Equipment（装备），永久权益属于 Entitlement（权益），均不并入 Inventory。
+
+## 2026-10-13 可信Consume（消耗）领域落地边界
+
+- `inventory.Service.ConsumeTrusted（可信消耗入口）`、`TrustedConsumeAuthorizer（可信消耗授权器）`及内存/生产事务仓储`Consume（消耗）`源码已添加；未装配授权器时始终返回禁止，普通Gateway/UE API没有新增消费路由。
+- 数据库迁移`000009_player_inventory_trusted_consume.sql（可信消耗类型迁移）`仅允许在原Operation表保存Consume，保持玩家、修订号、操作身份和结果同一PostgreSQL事务；全量消耗删除实例时利用外键删除快捷栏引用。
+- **尚未提供正式GameServerControl/Session验证器**（必须核对真实服务器实例、玩家角色绑定、事件来源与权限）、权威物品定义策略、使用效果与事务Outbox、真实PostgreSQL迁移验证。因此不可把此领域服务视为可直接给玩家使用物品的完整功能，更不能将测试授权器投入生产。

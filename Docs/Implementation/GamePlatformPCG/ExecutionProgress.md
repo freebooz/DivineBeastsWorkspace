@@ -84,7 +84,7 @@
 > 最新指令：先完成代码与蓝图创作工具，再统一执行自动化测试；本段只记录已落盘的源码改动，不等于UE编译、实际地图、AssetRegistry、Cook或人工验收通过。未改变旧PCG插件双模块身份/原语编号/服务器角色。
 
 1. **P2（空间互斥与阶段编排）代码**：增加`GamePlatformPCGSpatialRules（通用空间算法）`、`UGamePlatformPCGSpatialCarveSettings（空间挖洞节点）`和`WorldDirector::CollectSpatialMasks / BuildStaticExecutionPlan（编排器空间快照/有序阶段）`。支持道路样条、地块多边形、连接件、人工排除；最多256来源/每来源1024采样点，提前校验范围，逐点使用预计算包围盒。未知输入/高风险阶段失败关闭，未执行TerrainWrite（地形写入）。
-2. **P3（项目接线）代码**：项目`UDivineBeastsWorldDefinition（神兽联盟世界定义）`增加PCG Profile与Bake Manifest主资产引用并强制RequiredDefinitions（统一依赖）登记；Editor Validator增加实际空间快照与阶段入口检查；首版GameplayAnchors只返回候选，不替代服务器出生/导航。蓝图实际资产仍由下面编辑器工具产出。
+2. **P3（项目接线）代码**：项目`UDivineBeastsWorldDefinition（SSLM世界定义）`增加PCG Profile与Bake Manifest主资产引用并强制RequiredDefinitions（统一依赖）登记；Editor Validator增加实际空间快照与阶段入口检查；首版GameplayAnchors只返回候选，不替代服务器出生/导航。蓝图实际资产仍由下面编辑器工具产出。
 3. **P4（生态/分区）代码**：`UGamePlatformPCGWorldFeatureDefinition（统一环境特征定义）`覆盖水岸、林缘、岩组、果园、护栏等领域，编辑器静态生成约束和MeshSet定义依赖；`WorldPartition（世界分区）`验证器调用UE5.8 ActorDesc接口检查未加载PCG放置器/编排器，发现未加载对象则要求加载相关分区后重验。真实水体、水流、湿润、VFX机制仍归原有系统。
 4. **P5（聚落/锚点）代码**：`UGamePlatformPCGAssemblyDefinition（组合件定义）`与`UGamePlatformPCGAnchorPolicyDefinition（玩法锚点策略）`用于建筑/院落及资源、掩体、攀爬、出生候选。世界编排器在显式参与者中收集并生成稳定AnchorId（锚点ID）；Gameplay和Navigation需另行审批。
 5. **P6（权威状态边界）代码**：`FGamePlatformPCGAnchorRules（稳定锚点规则）`使用世界、区域、来源、修订和槽位派生稳定标识，`FGamePlatformPCGObjectStateSnapshot（权威状态快照）`验证唯一ID、内容版本和服务器序列。现有GamePlatformSave仅具客户端接入合同；**专服状态存储、双端复制与断线恢复尚未接入实现**，不得报告存档闭环完成。
@@ -121,7 +121,7 @@
 
 > **2026-10-10 资源最新核验补充**：当前主工程已实际存在12 Foundation模板、7公共子图、11 Village蓝图、17 Gold Definition、3 Realized Graph、3 Profile及1张`PCG_GoldLevel_M1.umap`。新增`Tools/Unreal/PCG/InventoryGoldAssets.py`（金标准资源文件审计），对后24份资源的名称、数量、文件长度和SHA-256检查返回0；证据`Saved/Validation/GamePlatformPCG/GoldAssetsInventory_20261010.json`。此前本文提到“资源数量0”的段落均为当时历史状态，不再代表当前资源数量。UE编辑器独立重开、金标准G01～G16、PCG真实生成与权威碰撞/导航、Server/Client Cook仍待真实验收。此工作区有其他进程正在运行UnrealEditor.exe（虚幻编辑器），本次未争用写入。
 
-**审查范围**：本次在唯一正式`DivineBeastsWorkspace/Game/DivineBeastsArena.uproject（神兽联盟主工程）`内继续；未更名插件、创建平行PCG模块、删除/覆盖他人资产，也未提交/推送代码。
+**审查范围**：本次在唯一正式`DivineBeastsWorkspace/Game/DivineBeastsArena.uproject（SSLM主工程）`内继续；未更名插件、创建平行PCG模块、删除/覆盖他人资产，也未提交/推送代码。
 
 1. **PCG正式编译一次通过（截至当时源码）**：`DivineBeastsArenaEditor Win64 Development`针对`GamePlatformCore、GamePlatformData、GamePlatformWorld、GamePlatformPCG、GamePlatformPCGEditor（平台核心、数据、世界、PCG运行、PCG编辑器模块）`的UBT构建退出码0；`Saved/Validation/GamePlatformPCG/PCG_P0_P7_ModuleBuild_Retry_20261010.log`显示PCG两个DLL真实编译、链接成功。但本轮随后又修改闭合围栏掩码及回归测试，这份日志不能作为**最新源码**的完整UE编译凭证。
 2. **引擎中间链接依赖的追溯性恢复**：锁定UE5.8目录存在真实Engine/PCG/UnrealEd/AssetRegistry/Projects等DLL，但部分`.lib（导入库）`缺失。使用MSVC官方`dumpbin/lib（导出符号检查/导入库生成）`按现存DLL导出表恢复缺失中间导入库，不覆盖已有文件；来源SHA-256、目标路径、导出数记录在`Saved/Validation/GamePlatformPCG/RecoveredImportLibs/restore_manifest.json`。**这是受限开发环境的诊断性中间产物恢复，不代表官方引擎编译产物闭包全部完成或可随工程分发。**

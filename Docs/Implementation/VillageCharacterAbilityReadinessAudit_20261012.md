@@ -1,4 +1,4 @@
-# 《神兽联盟》登录到Village及角色技能装载逻辑审查（2026-10-12）
+# 《SSLM》登录到Village及角色技能装载逻辑审查（2026-10-12）
 
 > 范围：DivineBeastsWorkspace／Game/DivineBeastsArena.uproject，源码与现有配置只读审查。新一轮双客户端、专用服务器、真实引擎资产的联机验收尚未执行。当前不修改正式Hero资产、不把开发技能自动切入发行环境。
 

@@ -274,6 +274,39 @@ func (r *InventoryRepository) ClearQuickbar(ctx context.Context, playerID string
 		})
 }
 
+// Consume（PostgreSQL可信消耗）复用既有单事务幂等入口，提交库存与Operation结果原子一致。
+// 授权必须已在Service的TrustedConsumeAuthorizer通过；此仓储不接收客户端HTTP请求。
+func (r *InventoryRepository) Consume(ctx context.Context, playerID string, command inventory.ConsumeCommand) (inventory.MutationResult, error) {
+	return r.mutate(ctx, playerID, command.OperationID, "Consume", command.ExpectedRevision, command,
+		func(ctx context.Context, tx pgx.Tx) (int32, int32, error) {
+			item, err := inventoryItemForUpdate(ctx, tx, playerID, command.ItemInstanceID)
+			if err != nil {
+				return 0, 0, err
+			}
+			if item.InstanceState != "active" {
+				return 0, item.Quantity, apperror.New("INVENTORY_CONSUME_NOT_ALLOWED", "物品状态不允许消耗", false)
+			}
+			if command.Quantity <= 0 || command.Quantity > item.Quantity {
+				return 0, item.Quantity, apperror.New("INVENTORY_INSUFFICIENT_QUANTITY", "物品数量不足", false)
+			}
+			remaining := item.Quantity - command.Quantity
+			if remaining == 0 {
+				// 外键ON DELETE CASCADE同时移除指向此实例的快捷栏，不会留下悬空引用。
+				_, err = tx.Exec(ctx, `DELETE FROM player_inventory_items
+					WHERE player_id=$1 AND item_instance_id=$2`, playerID, command.ItemInstanceID)
+			} else {
+				_, err = tx.Exec(ctx, `UPDATE player_inventory_items
+					SET quantity=$3,revision=revision+1
+					WHERE player_id=$1 AND item_instance_id=$2`,
+					playerID, command.ItemInstanceID, remaining)
+			}
+			if err != nil {
+				return 0, item.Quantity, inventoryPGError(err)
+			}
+			return command.Quantity, remaining, nil
+		})
+}
+
 func (r *InventoryRepository) mutate(
 	ctx context.Context,
 	playerID, operationID, operationType string,

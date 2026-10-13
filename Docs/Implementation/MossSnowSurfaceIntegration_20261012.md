@@ -6,7 +6,7 @@
 
 第一层 `GamePlatformWeather`（平台天气插件）继续产生并复制权威天气快照；`GamePlatformVFX`（平台视觉特效插件）继续负责近景、远景和地面雪粉Niagara（粒子系统），不重复实现VFX播放器或世界状态。
 
-第二层 `MobaCommon`（MOBA通用层）无本任务独立规则，不机械新增模块。第三层 `DBAPresentationPack_Core`（项目通用纯表现包）仅允许 `MI_DBA_MossSnow_Cliff`（神兽联盟项目材质实例）调整覆盖密度与坡度参数，不保存平台算法。共享 `DBAWorldPack_Village`（新手村世界包）保持服务器安全基础材质，不向专用服务器Cook（资源烘焙）直接添加客户端Surface/VFX硬引用。
+第二层 `MobaCommon`（MOBA通用层）无本任务独立规则，不机械新增模块。第三层 `DBAPresentationPack_Core`（项目通用纯表现包）仅允许 `MI_DBA_MossSnow_Cliff`（SSLM项目材质实例）调整覆盖密度与坡度参数，不保存平台算法。共享 `DBAWorldPack_Village`（新手村世界包）保持服务器安全基础材质，不向专用服务器Cook（资源烘焙）直接添加客户端Surface/VFX硬引用。
 
 ## 源资源和实现
 

@@ -1,4 +1,4 @@
-# 神兽联盟 CliffRock01：青灰裸露绝壁PBR制作与视觉审核（2026-10-11）
+# SSLM CliffRock01：青灰裸露绝壁PBR制作与视觉审核（2026-10-11）
 
 项目：DivineBeastsWorkspace / UE5.8。归属：第三层 DBAWorldPack_Village（新手村内容包）。
 **结论：同源4K PBR技术制作和UE真实资产保存、独立加载验证已完成；最终AAA真实悬崖画面、GPU性能和用户本人签收尚未通过，因此不得发布/替换正式Village。**

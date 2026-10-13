@@ -206,6 +206,7 @@ Backend/                                                            # Go业务�
 │   ├── 000006_online_profile_idempotency.sql                       # 在线Profile更新幂等记录
 │   ├── 000007_player_characters.sql                                # 玩家角色与角色选择幂等记录
 │   ├── 000008_player_inventory.sql                                 # 长期背包、容器、物品、快捷栏与OperationId幂等结果
+│   ├── 000009_player_inventory_trusted_consume.sql                 # 允许仅可信服务的物品消耗Operation类型；不开放公网写入
 │   └── README.md                                                   # 当前目录职责、使用方法和工程约束说明
 ├── pkg/                                                            # 真正跨模块复用且API稳定的公共Go包；当前保持极小
 │   └── README.md                                                   # 当前目录职责、使用方法和工程约束说明
@@ -232,6 +233,8 @@ Backend/                                                            # Go业务�
 ## Inventory增量实现补充（2026-09-29）
 
 `internal/modules/inventory/inventory.go` 已从占位包升级为真实背包领域与内存仓储；生产 PostgreSQL 适配位于 `internal/platform/database/postgres/inventory_repository.go`，SQL 真源为 `migrations/000008_player_inventory.sql`。Gateway 公网路由位于 `internal/app/gateway/inventory.go`，HTTP 内部链路由 `gateway_clients_inventory.go` 与 `playerdata_server_inventory.go` 连接。`internal/contracts/proto/player-data-service.proto` 已补 Inventory RPC 协议源，但当前 Runner 缺少 `go/protoc/protoc-gen-go/protoc-gen-go-grpc`，对应生成代码与生产 gRPC Inventory 适配尚未生成/接通，禁止把协议源更新写成“gRPC 已验证”。
+
+2026-10-13新增`000009_player_inventory_trusted_consume.sql`（可信消耗动作迁移），只扩展Operation类型，不改变已发布Gateway客户端契约。`inventory.Service.ConsumeTrusted`（受控消耗入口）默认无可信授权器时拒绝调用；`MemoryRepository.Consume`及`postgres.InventoryRepository.Consume`以同OperationId、版本和事务处理扣除，并原子维护快捷栏引用。此处仍**没有**可信GameServer-玩家绑定的正式Authorizer装配，也没有物品使用效果的Outbox闭环或物品授予；不得将内部消费能力误称生产联机功能。
 
 ## 维护规则
 

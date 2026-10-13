@@ -256,6 +256,58 @@ struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryItemViewModel
     FName DisplayDefinitionHandle = NAME_None;
 };
 
+/**
+ * FGamePlatformInventorySlotViewModel（背包单格显示模型）由权威快照派生；
+ * 空槽不伪造物品实例，所有字段只供UI阅读而非作为写入权限凭证。
+ */
+USTRUCT(BlueprintType)
+struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventorySlotViewModel
+{
+    GENERATED_BODY()
+
+    /** 容器稳定身份（如main）；未加载为None。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    FName ContainerId = NAME_None;
+
+    /** 容器内从0开始的真实槽位，不是快捷栏编号。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    int32 SlotIndex = INDEX_NONE;
+
+    /** 已解锁的真实空槽返回false；不表示请求失败。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    bool bOccupied = false;
+
+    /** bOccupied为true时的显示数据，不具有物品所有权。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    FGamePlatformInventoryItemViewModel Item;
+};
+
+/**
+ * FGamePlatformInventoryQuickbarViewModel（快捷栏显示模型）只引用背包实例，
+ * 未分配的槽位仍存在；清理和写入由后端权威快照决定。
+ */
+USTRUCT(BlueprintType)
+struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryQuickbarViewModel
+{
+    GENERATED_BODY()
+
+    /** 快捷栏从0开始的槽位编号，范围[0,12)。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    int32 SlotIndex = INDEX_NONE;
+
+    /** 是否引用了当前权威背包快照中的有效物品。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    bool bAssigned = false;
+
+    /** 快捷格正在等待Set/Clear操作完成，只控制按钮忙碌态。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    bool bPending = false;
+
+    /** bAssigned为true时的只读物品投影。 */
+    UPROPERTY(BlueprintReadOnly, Category="Inventory")
+    FGamePlatformInventoryItemViewModel Item;
+};
+
 USTRUCT()
 struct GAMEPLATFORMINVENTORYCLIENT_API FGamePlatformInventoryMoveRequest
 {

@@ -1,6 +1,6 @@
 # Foundation M0 源码与脚本交付（两张共用开发地图已生成）
 
-日期：2026-09-27。当前**不是M0可运行交付，也不是完整《神兽联盟》游戏**。唯一工作空间`DivineBeastsWorkspace`；唯一工程`Game/DivineBeastsArena.uproject`。本轮已经由UE 5.8完整编辑器生成并复核两张共用开发地图，但定义资产、正式工程全量编译、Cook、客户端和服务器运行仍须分别验收。
+日期：2026-09-27。当前**不是M0可运行交付，也不是完整《SSLM》游戏**。唯一工作空间`DivineBeastsWorkspace`；唯一工程`Game/DivineBeastsArena.uproject`。本轮已经由UE 5.8完整编辑器生成并复核两张共用开发地图，但定义资产、正式工程全量编译、Cook、客户端和服务器运行仍须分别验收。
 
 2026-10-09构建入口补充：BuildFoundation取得自身引擎锁后，传入UBT的-WaitMutex，等待同一锁定引擎上由编辑器或其他合法入口占用的全局互斥锁。等待计入TimeoutSeconds，超时仅清理本调用拥有的进程；原目标、模块集合、版本和构建失败语义均不改变。本补充不改写下文历史验收结果。
 

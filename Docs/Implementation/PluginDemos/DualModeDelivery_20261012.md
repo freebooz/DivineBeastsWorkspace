@@ -1,4 +1,4 @@
-# 《神兽联盟》双模式插件开发入口 P0—P5 分步执行与验收（2026-10-12）
+# 《SSLM》双模式插件开发入口 P0—P5 分步执行与验收（2026-10-12）
 
 > **工作区**：本轮严格使用用户指定 **Cwebcodex** 所连接的 `E:\poject\feebooz\DivineBeastsWorkspace`，不是此前 HWebCodex 指向的 `E:\work\2026\DivineBeastsWorkspace`。本轮起始主分支HEAD为 `8d2bfe2738b25c72640475840348a885e0628e05`，开始时有9项其他任务未提交修改；不得覆盖、重置或声称前一工作区代码已经同步。
 >

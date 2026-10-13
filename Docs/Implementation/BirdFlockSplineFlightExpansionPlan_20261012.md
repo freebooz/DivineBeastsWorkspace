@@ -1,7 +1,7 @@
-# 《神兽联盟》正式鸟群群飞扩展实施方案与执行计划 V2.0
+# 《SSLM》正式鸟群群飞扩展实施方案与执行计划 V2.0
 
 > 日期：2026-10-12
-> 项目：DivineBeastsWorkspace（神兽联盟工作空间）／Game/DivineBeastsArena.uproject（正式游戏工程）
+> 项目：DivineBeastsWorkspace（SSLM工作空间）／Game/DivineBeastsArena.uproject（正式游戏工程）
 > 技术基线：UE5.8／Niagara GPU／三层单向插件架构
 > 状态：规划待执行。本次仅编写计划文档，不代表代码、蓝图、材质、Niagara和实际编译已完成。
 > 变更边界：不提交/推送，不碰其它任务当前未提交修改，不替换既有生产定义身份或重建VFX执行框架。
@@ -40,7 +40,7 @@ UE5.8官方Niagara已有UNiagaraDataInterfaceSpline，可从世界SplineComponen
 MOBA通用层：
 - 不新增鸟群机制、不默认加入MainArena竞技场、无赛事权威复制。若特殊竞技场需要演出，在MobaPresentation中提交已有中立表现请求，不引入鸟类资产或独立执行器。
 
-神兽联盟项目层：
+SSLM项目层：
 - DBAClient/DivineBeastsPresentationClient（项目客户端表现）：扩展既有UDivineBeastsBirdFlockSceneComponent与环境群落事务，增加可选Path/Spawn/Animation/Behavior配置的快照、校验和运行期更新；维持Owner和token、上下文代次、停止/回滚语义。
 - DBAClient/DivineBeastsPresentationRuntime（项目表现运行语义）：保留项目鸟种到现有目录及Definition的映射，新增配置时保留稳定ID并评估必要的Definition版本迁移。
 - DBAPresentationPack_Core（项目公共表现内容包）：三鸟种正式Flight网格、WPO材质实例及可选VAT纹理、Niagara系统变体、蓝图/数据资产；禁止平台硬引用项目资源。

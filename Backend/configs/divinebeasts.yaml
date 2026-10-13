@@ -1,4 +1,4 @@
-# divinebeasts.yaml（神兽联盟业务配置）：大厅已并入OpenWorld.Hub，不存在独立Lobby Server。
+# divinebeasts.yaml（SSLM业务配置）：大厅已并入OpenWorld.Hub，不存在独立Lobby Server。
 gameId: divine-beasts
 serverRoles:
   - GameServer.Role.OpenWorld

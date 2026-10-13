@@ -1,6 +1,6 @@
 # 通用鸟群VFX交付收尾：分步执行结果
 
-工程：DivineBeastsWorkspace（神兽联盟工作空间）；引擎：UE5.8；工具：HWebCodex。
+工程：DivineBeastsWorkspace（SSLM工作空间）；引擎：UE5.8；工具：HWebCodex。
 依据：BirdFlockDeliveryExecutionPlan_20261011.md。初始主分支提交bd106b3259c1a1917c0ece46d3ec2a8edd227fd4。
 
 ## 当前结论

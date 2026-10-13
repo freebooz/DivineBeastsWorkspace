@@ -1,4 +1,4 @@
-# 神兽联盟写实积雪三层架构与插件归属
+# SSLM写实积雪三层架构与插件归属
 ## 2026-10-11 补充：真实运行边界与资产审计
 
 - 第一层原生资产`M_GP_SnowCover_Detailed`不复制为项目实现，实际56节点遮罩由`GamePlatformSurface`拥有，参数`SnowCoverageShiftScale=0.4`只用于可配置积雪视觉。Niagara`NS_GP_Weather_Snow_Detailed`由`GamePlatformVFX`拥有，近/远景速度、数量及世界空间贴地雪粉依天气表现语义驱动；不进入服务器玩法权威。
@@ -13,6 +13,6 @@
 
 第二层 MobaCommon：不具有本通用表面雪材质的业务规则，不新增模块。
 
-第三层 DBAPresentationPack_Core：跨地图可复用的神兽联盟积雪材质实例MI_DBA_Snow_Detailed。项目开发审核地图L_DBA_SnowReview位于Game/Development/Snow，不修改正式Village地图。
+第三层 DBAPresentationPack_Core：跨地图可复用的SSLM积雪材质实例MI_DBA_Snow_Detailed。项目开发审核地图L_DBA_SnowReview位于Game/Development/Snow，不修改正式Village地图。
 
 客户端FrontEndClient Cook显式收录雪源Texture2D和项目MI；DedicatedServer配置排除所有纯客户端雪表面纹理、材质、Niagara和开发审核地图。有关实际资产、工具、测试及人工验收状态见Docs/Implementation/SnowSurfaceAndVFXImplementationPlan_20261011.md。

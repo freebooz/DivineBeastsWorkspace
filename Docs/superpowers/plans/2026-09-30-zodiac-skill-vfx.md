@@ -2,7 +2,7 @@
 
 版本：1.0
 日期：2026-09-30
-适用工程：DivineBeastsWorkspace（神兽联盟工作空间）
+适用工程：DivineBeastsWorkspace（SSLM工作空间）
 
 ## 1. 目标
 
@@ -10,7 +10,7 @@
 
 - GamePlatformVFX（游戏平台视觉特效）只负责通用执行能力，不认识生肖、技能名、皮肤或 MOBA 私有规则。
 - MobaPresentation（MOBA 表现语义）只负责施法、释放、命中、暴击、治疗、控制、区域预警等中立表现语义，不直接播放 Niagara（粒子特效系统）。
-- DivineBeasts（神兽联盟项目层）负责 HeroId（英雄编号）、AbilityId（技能编号）、SkinId（皮肤编号）、项目表现上下文、十二生肖 Hero VFX Profile（英雄视觉特效配置）、Catalog（表现目录）映射和内容包资产。
+- DivineBeasts（SSLM项目层）负责 HeroId（英雄编号）、AbilityId（技能编号）、SkinId（皮肤编号）、项目表现上下文、十二生肖 Hero VFX Profile（英雄视觉特效配置）、Catalog（表现目录）映射和内容包资产。
 - Dedicated Server（专用服务器）不得依赖或 Cook（烘焙）纯客户端 VFX 美术资产。
 
 ## 2. 已确认现状

@@ -1,5 +1,8 @@
 # GamePlatformUI（游戏平台UI插件）
 
+2026-10-13通用UI材质能力索引：`../../../../../Docs/Implementation/Materials/MaterialFunctionLibraryIndex.md`（201项总索引，其中UI18项）；材质域模板归平台，项目翡翠/青玉外观实例归`DBAUIPack_Core`（神兽联盟界面内容包），继续复用`UGamePlatformUIThemeDefinition`（界面主题定义）。本轮尚未通过Monolith创建或验收新的Widget、UI母材质。
+
+
 2026-10-10新增通用主题机制：`UGamePlatformUIThemeDefinition`（原生CommonUI样式的类型化映射）、UIManager内部的LocalPlayer主题事务服务，以及两类控件基类的可选`ThemeBindings`（语义绑定）。沿用GamePlatformData租约，不新增插件、不修改共享CDO或重建业务页面。实现/资源边界见[StylingAndContent（样式与内容）](Docs/StylingAndContent.md)；完整DLL、Monolith主题资产及Cook是否通过以专项实施记录为准。
 
 

@@ -376,7 +376,7 @@
       ],
       "can_contain_content": true,
       "suggested_template": "WorldVisualStage",
-      "documented_feature_hint": "`UDivineBeastsWorldDefinition（神兽联盟世界定义）`，约束 ServerRole（服务器角色）、Experience（体验）和可选 ArenaMode（竞技模式）一致性。",
+      "documented_feature_hint": "`UDivineBeastsWorldDefinition（SSLM世界定义）`，约束 ServerRole（服务器角色）、Experience（体验）和可选 ArenaMode（竞技模式）一致性。",
       "documented_maturity": "项目定义实装／内容未交付",
       "feature_audit_status": "pending_detailed_audit",
       "demo_implementation": "not_verified",

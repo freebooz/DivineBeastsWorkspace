@@ -1,6 +1,6 @@
-# 神兽联盟 PBR 自然飘落材质覆盖验收记录（2026-10-11）
+# SSLM PBR 自然飘落材质覆盖验收记录（2026-10-11）
 
-执行工程：DivineBeastsWorkspace（神兽联盟工作空间）；UE5.8；HWebCodex（远程代码工作区连接器）。
+执行工程：DivineBeastsWorkspace（SSLM工作空间）；UE5.8；HWebCodex（远程代码工作区连接器）。
 
 ## 真实完成结果
 
@@ -16,7 +16,7 @@
 
 1. 第一层GamePlatformVFX（平台通用视觉特效）仅提供共用PBR Materiel与原Niagara运动模块/生命周期/预算控制。
 2. 第二层MobaCommon（MOBA共用逻辑）不新增装饰粒子逻辑。
-3. 第三层DBAPresentationPack_Core（神兽联盟公共表现资源）保存15套项目级PBR实例/实际四通道Texture2D/原Niagara变体和Definition；专用服务器排除纯视觉资源不变。
+3. 第三层DBAPresentationPack_Core（SSLM公共表现资源）保存15套项目级PBR实例/实际四通道Texture2D/原Niagara变体和Definition；专用服务器排除纯视觉资源不变。
 
 ## 后续未通过项
 

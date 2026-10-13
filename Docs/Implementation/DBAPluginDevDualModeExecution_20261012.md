@@ -1,4 +1,4 @@
-# 《神兽联盟》双开发启动模式及插件门户 P0–P5 执行记录
+# 《SSLM》双开发启动模式及插件门户 P0–P5 执行记录
 
 基线：DivineBeastsWorkspace／UE5.8／main `ecb9d85617947b83996dafd8914fab15e8c252e2`。
 目标：`Debug（完整流程调试）`从原有 `L_DBA_FrontEnd` 登录开始；`PluginDev（插件开发）`不进行登录，进入统一门户，再选择插件演示并返回。仅为非Shipping且非Dedicated Server提供。

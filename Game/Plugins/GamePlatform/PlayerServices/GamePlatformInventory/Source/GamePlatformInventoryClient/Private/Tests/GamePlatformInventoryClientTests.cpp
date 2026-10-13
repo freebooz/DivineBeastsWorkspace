@@ -711,4 +711,136 @@ bool FInventoryConflictListenerTakeoverTest::RunTest(const FString&)
     Client->Deinitialize(); return true;
 }
 
+/**
+ * 背包显示投影回归：带空格的64格设计不能凭本地常量补位，必须按后端3格容量展示。
+ * 使用人工控制的测试Transport，仅检验只读索引、分页、快捷栏引用和Pending事件，
+ * 不模拟掉落、消费、登录或正式服务授予。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformInventorySlotProjectionTest,
+    "GamePlatform.Inventory.Client.SlotProjection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformInventorySlotProjectionTest::RunTest(const FString&)
+{
+    FInventoryLocalPlayerFixture Fixture;
+    if (!Fixture.Initialize(*this))
+    {
+        return false;
+    }
+
+    UGamePlatformInventoryClientSubsystem* Client = Fixture.Client.Get();
+    auto Transport = MakeShared<FInventoryMockTransport, ESPMode::ThreadSafe>();
+    TestTrue(TEXT("身份绑定发起快照请求"),
+        Client->ConfigureAuthenticatedAccount(TEXT("Fixture-SlotProjection"), Transport));
+
+    FGamePlatformInventorySnapshot Snapshot;
+    Snapshot.InventoryRevision = 2;
+    FGamePlatformInventoryContainerSnapshot Container;
+    Container.ContainerId = TEXT("main");
+    Container.Capacity = 3;
+    Snapshot.Containers.Add(Container);
+
+    FGamePlatformInventoryItemInstance Item;
+    Item.ItemInstanceId = TEXT("test-potion-instance");
+    Item.ItemDefinitionId = TEXT("test.potion");
+    Item.ContainerId = TEXT("main");
+    Item.SlotIndex = 1;
+    Item.Quantity = 3;
+    Item.MaxStackSize = 10;
+    Item.Revision = 1;
+    Snapshot.Items.Add(Item);
+
+    FGamePlatformInventoryQuickbarSlot Quick;
+    Quick.SlotIndex = 4;
+    Quick.ItemInstanceId = Item.ItemInstanceId;
+    Quick.Revision = 1;
+    Snapshot.Quickbar.Add(Quick);
+
+    auto Completion = MoveTemp(Transport->SnapshotCompletion);
+    TestTrue(TEXT("存在单次快照完成回调"), static_cast<bool>(Completion));
+    if (!Completion)
+    {
+        return false;
+    }
+    Completion(MoveTemp(Snapshot), EGamePlatformInventoryError::None);
+    TestEqual(TEXT("有效快照加载为Ready"), Client->GetState(),
+        EGamePlatformInventoryClientState::Ready);
+    TestEqual(TEXT("容量严格等于服务端3格"), Client->GetContainerCapacity(TEXT("main")), 3);
+    TestEqual(TEXT("未知容器不能自行构造槽位"),
+        Client->GetContainerCapacity(TEXT("warehouse")), 0);
+
+    FGamePlatformInventorySlotViewModel Slot;
+    TestTrue(TEXT("索引0是有效已解锁槽"), Client->TryGetContainerSlot(TEXT("main"), 0, Slot));
+    TestFalse(TEXT("索引0空槽不得伪造物品"), Slot.bOccupied);
+    TestTrue(TEXT("索引1有效"), Client->TryGetContainerSlot(TEXT("main"), 1, Slot));
+    TestTrue(TEXT("索引1存在真实物品"), Slot.bOccupied);
+    TestEqual(TEXT("实例身份保持一致"), Slot.Item.ItemInstanceId, FString(TEXT("test-potion-instance")));
+    TestFalse(TEXT("容量外索引拒绝"), Client->TryGetContainerSlot(TEXT("main"), 3, Slot));
+    TestFalse(TEXT("失败时清空旧物品投影"), Slot.bOccupied);
+    TestFalse(TEXT("负索引拒绝"), Client->TryGetContainerSlot(TEXT("main"), -1, Slot));
+
+    auto Page = Client->GetContainerSlotPage(TEXT("main"), 0, 512);
+    TestEqual(TEXT("超过128的请求仍只返回实际容量"), Page.Num(), 3);
+    if (Page.Num() == 3)
+    {
+        TestFalse(TEXT("前槽为空"), Page[0].bOccupied);
+        TestTrue(TEXT("中槽有物品"), Page[1].bOccupied);
+        TestFalse(TEXT("尾槽为空"), Page[2].bOccupied);
+    }
+    TestEqual(TEXT("负页大小不生成格"), Client->GetContainerSlotPage(TEXT("main"), 0, -1).Num(), 0);
+    TestEqual(TEXT("起始槽越界不生成格"), Client->GetContainerSlotPage(TEXT("main"), 3, 32).Num(), 0);
+
+    auto Quickbar = Client->GetQuickbarSlots();
+    TestEqual(TEXT("快捷栏应始终返回12格"), Quickbar.Num(), 12);
+    if (Quickbar.Num() == 12)
+    {
+        TestFalse(TEXT("未分配槽不拥有实例"), Quickbar[0].bAssigned);
+        TestTrue(TEXT("已分配格引用快照实例"), Quickbar[4].bAssigned);
+        TestEqual(TEXT("快捷栏引用的实例身份与背包一致"),
+            Quickbar[4].Item.ItemInstanceId, FString(TEXT("test-potion-instance")));
+    }
+
+    const FGuid OperationId = Client->RequestClearQuickbar(4);
+    TestTrue(TEXT("快捷栏清空操作已受理"), OperationId.IsValid());
+    Quickbar = Client->GetQuickbarSlots();
+    if (Quickbar.Num() == 12)
+    {
+        TestTrue(TEXT("在途清空保留原物品引用和忙碌状态"), Quickbar[4].bPending);
+        TestTrue(TEXT("未知完成前不乐观清空"), Quickbar[4].bAssigned);
+    }
+    Transport->CompleteMutation(OperationId, 3, EGamePlatformInventoryError::None);
+    Quickbar = Client->GetQuickbarSlots();
+    if (Quickbar.Num() == 12)
+    {
+        TestFalse(TEXT("权威结果已提交后清除忙碌态"), Quickbar[4].bPending);
+        TestFalse(TEXT("新快照不再分配原引用"), Quickbar[4].bAssigned);
+    }
+
+
+    // 新快照扩大真实容器容量后仍保持每次最多128格的渲染分页限制。
+    TestTrue(TEXT("Ready时允许读取更新后的权威快照"), Client->RefreshSnapshot());
+    FGamePlatformInventorySnapshot LargerSnapshot;
+    LargerSnapshot.InventoryRevision = 4;
+    FGamePlatformInventoryContainerSnapshot LargerContainer;
+    LargerContainer.ContainerId = TEXT("main");
+    LargerContainer.Capacity = 256;
+    LargerSnapshot.Containers.Add(LargerContainer);
+    auto RefreshCompletion = MoveTemp(Transport->SnapshotCompletion);
+    TestTrue(TEXT("正式刷新必须提供回调"), static_cast<bool>(RefreshCompletion));
+    if (!RefreshCompletion)
+    {
+        return false;
+    }
+    RefreshCompletion(MoveTemp(LargerSnapshot), EGamePlatformInventoryError::None);
+    TestEqual(TEXT("前页最大128格"), Client->GetContainerSlotPage(TEXT("main"), 0, 512).Num(), 128);
+    TestEqual(TEXT("第二页最多128格"), Client->GetContainerSlotPage(TEXT("main"), 128, 512).Num(), 128);
+    TestEqual(TEXT("第三页不得越界"), Client->GetContainerSlotPage(TEXT("main"), 256, 512).Num(), 0);
+
+    Client->ResetAccount();
+    TestEqual(TEXT("注销后原背包容量不可见"), Client->GetContainerCapacity(TEXT("main")), 0);
+    TestEqual(TEXT("注销后物品投影被清空"), Client->GetViewModelsView().Num(), 0);
+    return true;
+}
+
 #endif

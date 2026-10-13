@@ -167,6 +167,7 @@ void UDivineBeastsUIClientSubsystem::Deinitialize()
     RootLayoutController.Reset();
     ObserveWorldInputRouter(nullptr);
     CloseSystemMenu();
+    CloseInventoryScreen();
     if (auto* Previous = BoundMenuController.Get()) Previous->OnWorldEscapeRequested.Remove(WorldEscapeHandle);
     BoundMenuController.Reset();
     WorldEscapeHandle.Reset();
@@ -340,6 +341,55 @@ UDivineBeastsUIClientSubsystem::OpenScreen(
     return PlatformUI
         ? PlatformUI->OpenScreenAsync(ScreenId, ViewModel)
         : FGamePlatformUIAsyncRequest();
+}
+
+bool UDivineBeastsUIClientSubsystem::OpenInventoryScreen()
+{
+    // 仅已进入真实世界的本地玩家可以打开背包，页面不直接拥有物品写权限。
+    const FName ScreenId(TEXT("UI.Screen.Inventory"));
+    if (bUIShuttingDown || !PlatformUI ||
+        !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) ||
+        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() ||
+        !OpeningSystemScreenId.IsNone() || bInventoryOpening ||
+        ActiveInventoryScreen.IsValid() || !PlatformUI->HasScreenDefinition(ScreenId))
+    {
+        return false;
+    }
+
+    bInventoryOpening = true;
+    const uint64 Generation = ++InventoryScreenGeneration;
+    const FGamePlatformUIAsyncRequest Request =
+        PlatformUI->OpenScreenAsync(ScreenId, CreateViewModel(ScreenId));
+    // 同步回调可能已撤销/接管资格；外层不得复活已结束的请求。
+    if (InventoryScreenGeneration == Generation && bInventoryOpening)
+    {
+        if (Request.IsValid()) OpeningInventoryRequestId = Request.RequestId;
+        else
+        {
+            bInventoryOpening = false;
+            OpeningInventoryRequestId.Invalidate();
+        }
+    }
+    return Request.IsValid();
+}
+
+bool UDivineBeastsUIClientSubsystem::CloseInventoryScreen()
+{
+    const bool bHadInventory =
+        bInventoryOpening || OpeningInventoryRequestId.IsValid() ||
+        ActiveInventoryScreen.IsValid();
+    ++InventoryScreenGeneration;
+    bInventoryOpening = false;
+    const FGuid PreviousRequest = OpeningInventoryRequestId;
+    OpeningInventoryRequestId.Invalidate();
+    UGamePlatformUIScreen* Existing = ActiveInventoryScreen.Get();
+    ActiveInventoryScreen.Reset();
+    if (PlatformUI)
+    {
+        if (PreviousRequest.IsValid()) PlatformUI->CancelOpen(PreviousRequest);
+        if (IsValid(Existing)) PlatformUI->CloseScreen(Existing);
+    }
+    return bHadInventory;
 }
 
 bool UDivineBeastsUIClientSubsystem::CancelScreenOpen(FGuid RequestId)
@@ -779,6 +829,7 @@ void UDivineBeastsUIClientSubsystem::HandleViewStateChanged(
         CharacterEntryScreenPreference = NAME_None;
     }
     ViewState = NewState;
+    if (!FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) CloseInventoryScreen();
     if (!FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) CloseSystemMenu();
     StateChanged.Broadcast(ViewState);
     SyncLoadingService();
@@ -1072,6 +1123,7 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
 void UDivineBeastsUIClientSubsystem::DetachContract()
 {
     CloseSystemMenu();
+    CloseInventoryScreen();
     if (QuerySourceObject.IsValid() && QueryStateHandle.IsValid())
     {
         if (IDivineBeastsUIQuerySource* Query =
@@ -1200,7 +1252,8 @@ void UDivineBeastsUIClientSubsystem::SyncWorldInputBaseline()
         !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState) ||
         !OpeningPrimaryScreenId.IsNone() || OpeningPrimaryRequestId.IsValid() || !ActivePrimaryScreenId.IsNone() ||
         !OpeningSystemScreenId.IsNone() || OpeningSystemRequestId.IsValid() || bSystemMenuVisible ||
-        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid()) return;
+        ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() ||
+        bInventoryOpening || ActiveInventoryScreen.IsValid()) return;
     if (auto* Primary = ActivePrimaryScreen.Get(); Primary && Primary->IsActivated()) return;
     if (auto* Previous = ReplacingPrimaryScreen.Get(); Previous && Previous->IsActivated()) return;
     if (auto* Root = PlatformUI ? PlatformUI->GetRootLayout() : nullptr)

@@ -1,6 +1,6 @@
 # 战斗反馈 UE5.8 构建恢复、定向验证与资产门禁
 
-日期：2026-10-10。工作空间：`DivineBeastsWorkspace（神兽联盟工作空间）`。引擎：`F:/UnrealEngine-5.8.0-release`（UE5.8 源码引擎）。
+日期：2026-10-10。工作空间：`DivineBeastsWorkspace（SSLM工作空间）`。引擎：`F:/UnrealEngine-5.8.0-release`（UE5.8 源码引擎）。
 
 本文仅记录实际工具返回的退出码、文件及其限制。详细架构、P0—P8状态见 `Docs/Implementation/CombatFeedbackWorkOrders_20261009.md`。除自动构建生成中间产物外，不修改引擎源码、插件身份或其它任务资源。
 

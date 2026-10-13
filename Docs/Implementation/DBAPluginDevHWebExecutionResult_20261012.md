@@ -1,4 +1,4 @@
-# 神兽联盟双开发模式 HWebCodex 分步实施验收记录（2026-10-12）
+# SSLM双开发模式 HWebCodex 分步实施验收记录（2026-10-12）
 
 **项目工作区**：`E:\\work\\2026\\DivineBeastsWorkspace`（用户本轮明确要求 HWebCodex；不得与 Cwebcodex 的另一工作区互相替代）。  
 **任务范围**：P0—P5；Debug（完整流程调试）从既有前端登录，PluginDev（插件开发）跳过登录直接打开开发门户并跳转独立场景。  

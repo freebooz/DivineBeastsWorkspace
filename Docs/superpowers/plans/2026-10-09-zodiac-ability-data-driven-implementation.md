@@ -1,8 +1,8 @@
-# 《神兽联盟》十二生肖技能数据资产、服务端授权与技能栏自动初始化实施计划
+# 《SSLM》十二生肖技能数据资产、服务端授权与技能栏自动初始化实施计划
 
 版本：V1.0（分阶段实施中；未完成 UE 与内容资产验收）
 编制日期：2026-10-09
-适用工作空间：DivineBeastsWorkspace（神兽联盟工作空间）
+适用工作空间：DivineBeastsWorkspace（SSLM工作空间）
 唯一正式工程：Game/DivineBeastsArena.uproject（虚幻引擎主工程，UE5.8）
 依据：AGENTS.md V1.4.3、Docs/Architecture/解决方案总体规划.md、Docs/Architecture/游戏端插件三层架构实施规划.md、Game/Plugins/插件开发规范.md、现有技能/角色/UI源码与2026-09-30技能VFX和战斗公式计划。
 范围：**执行计划与验收设计**；本文件创建不等于已创建 C++ 功能、DataAsset（数据资产）、Widget Blueprint（界面蓝图）或通过引擎构建。
@@ -15,7 +15,7 @@
 3. 复用 GamePlatformData（数据基础）、GamePlatformAbilitySystem（平台 GAS 基础）、GamePlatformCombat（平台战斗）、GamePlatformInput（平台输入）、GamePlatformUI（平台 UI 槽位）；不创建第二套资产管理器、ASC（技能系统组件）、战斗结算器或输入系统。
 4. 严格保持 DivineBeasts（项目层）→ MobaCommon（可选 MOBA 层）→ GamePlatform（基础层）的单向依赖。非竞技 OpenWorld（常驻世界）与 Village（新手村）不得强制依赖 DBAArena（项目竞技）或 MobaPresentation（MOBA 表现）。
 5. **禁止恢复**已取消的 Element（旧五行玩法）、克制、破元、共鸣、阵营或王印规则。气势 Momentum（允许保留的项目 GAS 属性）继续作为合法技能成本/收益。未来若另有经批准的玩法变更，必须单独进行设计审批、兼容及回归，不能以本任务名义恢复旧规则。
-6. 保留五个项目代码插件 DBAGameplay、DBAWorlds、DBAClient、DBAServer、DBAArena；不新增 `DivineBeastsAbilities.uplugin` 或无职责空插件。若技能代码隔离确有必要，**仅在现有 DBAGameplay 插件内**新增 `DivineBeastsAbilitiesRuntime`（神兽联盟技能运行模块），须先完成构建、依赖、宿主及长期维护影响审核；不是自动建空模块。
+6. 保留五个项目代码插件 DBAGameplay、DBAWorlds、DBAClient、DBAServer、DBAArena；不新增 `DivineBeastsAbilities.uplugin` 或无职责空插件。若技能代码隔离确有必要，**仅在现有 DBAGameplay 插件内**新增 `DivineBeastsAbilitiesRuntime`（SSLM技能运行模块），须先完成构建、依赖、宿主及长期维护影响审核；不是自动建空模块。
 7. 专用服务器不引入 Texture（纹理图标）、Widget（界面控件）、Niagara（粒子视觉特效）、SFX（纯客户端音效）资源或 ClientOnly（仅客户端）模块；客户端不得独立决定伤害、命中、成本、解锁或技能授权。
 8. 项目全部新增/修改源码、结构体、类、公开函数、字段、路径、配置、测试与文档均提供具体中文说明，遵循稳定身份、完整错误路径、有限资源生命周期与真实构建验收。
 9. 本计划不为 12 英雄预先虚构正式 AbilityId（技能编号）、技能名称、伤害数值或二进制 `.uasset`；每个真实技能必须由策划确认并由 UE 编辑器生成资产。
@@ -29,7 +29,7 @@
 - `UGamePlatformSlotWidget`（通用槽位）与 `UGamePlatformSlotBarWidget`（通用槽位条）已存在；`UDivineBeastsAbilityBarPanel::ApplyAbilitySlots`（技能槽状态提交）已存在；当前没有审实的一条从英雄技能集到技能栏自动装配的完整链。
 - 静态目录中未发现命名为生产十二生肖技能、技能图标的真实二进制资产，也未发现批量正式技能平衡数据表。目录和文件名核查不代替编辑器 AssetRegistry（资产注册表）扫描及资产内容值验证。
 - `WBP_DBA_UI_AbilityBar`（技能栏蓝图）、`WBP_DBA_UI_AbilitySlot`（技能单格蓝图）等仍列为待 Monolith MCP（虚幻界面工具连接器）制作，不将 JSON 规格视作真实蓝图。
-- 当前工作树存在其他任务的未提交修改，特别是 DBAClient/DivineBeastsUIClient（神兽联盟客户端 UI 代码）及相关文档；开始改动前必须对目标文件逐项检查 `git status`（版本状态）与 `git diff`（差异），保留其他任务成果，不进行重置、覆盖、自动提交或推送。
+- 当前工作树存在其他任务的未提交修改，特别是 DBAClient/DivineBeastsUIClient（SSLM客户端 UI 代码）及相关文档；开始改动前必须对目标文件逐项检查 `git status`（版本状态）与 `git diff`（差异），保留其他任务成果，不进行重置、覆盖、自动提交或推送。
 
 ## 三、数据资产模型（设计先行，防止双重真源）
 
@@ -139,7 +139,7 @@ P3 验收：不用为每个生肖编写固定技能栏；同一技能槽 UI 在�
 1. 使用现有 `GamePlatformSlotWidget`（通用槽位控件）、`GamePlatformSlotBarWidget`（通用槽位条）与 `DivineBeastsAbilityBarPanel`（技能面板）的继承及组合，不重复编写另一套技能栏基类。
 2. 由 **Monolith MCP**（界面资产工具连接器）在确认已经打开 `Game/DivineBeastsArena.uproject`（正式 UE5.8 编辑器工程）且工具可用后，创建/完善 `WBP_DBA_UI_AbilitySlot`（技能单格）、`WBP_DBA_UI_AbilityBar`（技能栏）以及需要的公共 SlotBar（通用槽位条）真实蓝图。
 3. 子鼠视觉资产只在批准技能后生产：中文技能名称、单格图标、冷却遮罩、快捷键提示、等级与气势不足状态；图标归 DBAHeroPack_Rat（子鼠内容包），公共框架/主题归 DBAUIPack_Core（公共界面包）。
-4. UI 图标源文件可以按资产制作流程维护可溯源素材，真正引用的 `UTexture2D`（引擎纹理）必须经正式 UE 工具导入，不能通过文件复制/改后缀冒充二进制引擎资产；神兽联盟 UI 视觉资产创建/调整统一走 Monolith 相关 UI 能力。
+4. UI 图标源文件可以按资产制作流程维护可溯源素材，真正引用的 `UTexture2D`（引擎纹理）必须经正式 UE 工具导入，不能通过文件复制/改后缀冒充二进制引擎资产；SSLM UI 视觉资产创建/调整统一走 Monolith 相关 UI 能力。
 5. 单次 Monolith 操作必须记录工具状态、原生父类、Widget Tree（控件树）、控件绑定、编译、保存、Editor 重载回读、显示结果；同步 `MonolithGenerationManifest.json`（界面生成审计清单）与 UI 中文清单。
 6. 验证键鼠、手柄及触屏视觉模式、焦点导航、不同宽高比、安全区、缩放、无障碍对比与技能提示；UI 命令通过现有输入服务，不直接触发无授权的 GAS 指令。
 

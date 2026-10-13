@@ -1,6 +1,6 @@
 # 插件演示中心实际实施进度
 
-> 2026-10-12｜开始时HEAD：bad8db3a63c7a24f2fee8257387153d41c376b0e｜工作区：DivineBeastsWorkspace（神兽联盟工作空间）。
+> 2026-10-12｜开始时HEAD：bad8db3a63c7a24f2fee8257387153d41c376b0e｜工作区：DivineBeastsWorkspace（SSLM工作空间）。
 > 以下仅记录**真实创建的文件和已运行检查**，未做的Editor编译、地图/视觉验收不得标为通过。
 
 ## P0 插件审查（进行中）

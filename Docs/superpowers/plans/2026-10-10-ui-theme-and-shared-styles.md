@@ -1,4 +1,4 @@
-# 神兽联盟界面主题与统一样式实施计划
+# SSLM界面主题与统一样式实施计划
 
 > 执行方式（按用户2026-10-10最新指令调整）：先完成主题代码、项目样式、真实主题数据资产和Widget蓝图接入，最后统一执行自动化测试。实现期间允许为新反射类可用进行必要UE模块编译及Monolith资产编译/保存/回读，但不提前重复运行整套自动化。此前已执行测试仅作为历史基线；最终必须以代码和资产冻结后的统一测试结果为准。
 
@@ -15,7 +15,7 @@
 - 主题及CommonUI样式只在ClientOnly模块或客户端内容内；Server Cook排除纯表现。不得把Blueprint/C++编译成功当成Cook与联机通过。
 - 所有资源加载走GamePlatformData；没有LoadSynchronous、自建StreamableManager或全局可变主题CDO。主题状态属于LocalPlayer；每次切换完整成功后才替换旧主题。
 - 语义键使用FName且限定UI.Style.*命名空间，不需要动态创建GameplayTag。上下文只允许PlatformId/SkinId/QualityTier明确等值约束；解析遵循资格过滤、精确语义优先、ContentPack>Project>Moba>Platform、等值约束具体度、显式优先级，同键同优先级歧义拒绝。
-- 纯视觉差异使用UGamePlatformUIThemeDefinition实例；神兽联盟没有新结构时不增加空的项目派生主题类。
+- 纯视觉差异使用UGamePlatformUIThemeDefinition实例；SSLM没有新结构时不增加空的项目派生主题类。
 - 所有项目主题、样式、控件蓝图由Monolith在核对后的正式UE5.8编辑器生成、编译、保存和回读；连接/构建失败则保留阻断，不写伪.uasset。
 - 界面事件驱动，无主题Tick轮询；当前控件销毁或失活时注销回调，新页面/重新激活时使用当前主题。隐藏页保留其已应用样式强引用，避免释放切换前主题后悬空。
 

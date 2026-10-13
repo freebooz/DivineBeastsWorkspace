@@ -1,4 +1,4 @@
-# 神兽联盟真实积雪材质与风吹雪粉实施计划（2026-10-11）
+# SSLM真实积雪材质与风吹雪粉实施计划（2026-10-11）
 ## 2026-10-11 最新正式Village技术收口（优先于12时阶段性记录）
 
 - **正式Village地形接入：已完成并实际加载**。共享新手村根地图`L_Village_Start`唯一Landscape已由真实UE Editor保存`/DBAWorldPack_Village/Materials/Landscape/M_DBA_Village_LandscapeBridge`（48节点中性母材质）与动态材质实例开关。共享材质持有WorldPack自有三张小尺寸默认贴图，AssetRegistry原生依赖检查Server禁用的Surface/VFX/DBAPresentation硬引用0项。
@@ -62,7 +62,7 @@
 
 - P0完成：核查正式工作区、既有Surface/Weather/VFX资产和用户未提交的UI、落叶工作；没有清理原文件。
 - P1完成：2048x2048雪微高度、2048x2048宏观遮罩、512x512 RGBA雪粉3张原创源PNG，以及SHA256 Manifest，确定性--verify通过。
-- P2完成：真实UE5.8导入3张Texture2D，生成53节点平台写实母材质、6节点Niagara雪粉材质、第三层神兽联盟MI，并在真实Editor内编译、保存、回读。
+- P2完成：真实UE5.8导入3张Texture2D，生成53节点平台写实母材质、6节点Niagara雪粉材质、第三层SSLMMI，并在真实Editor内编译、保存、回读。
 - P3完成：基于原NS_GP_Weather_Snow复制创建NS_GP_Weather_Snow_Detailed，追加NE_GP_Snow_GroundDrift；18粒/秒、生命周期0.55-1.55秒、局部空间发射和水平风漂移。修复Sprite用途后Niagara验证0错误0警告、valid=true，三个Emitter脚本均UpToDate。
 - P4完成开发审核接入：独立L_DBA_SnowReview关卡真实保存，包含地面/坡面/直立墙体/光照、PlayerStart和既有BP_DBA_WeatherReviewController蓝图。补齐平台实际雨雪VFX Definition，并将platform.weather.snow@1绑定增强NS，保留旧NS回退；正式Village地图尚未改动。
 - P5资产门禁完成：VerifySnowDetailedAssets.py在真实UE Editor检查了8类资源、父子材质、Niagara标志及天气Definition，结果SNOW_UE_ASSET_VALIDATION_PASS。完整编辑器编译、客户端与Dedicated Server Cook、平台原生自动化测试以单独执行结果记入验收，不凭资源存在假定通过。
