@@ -35,6 +35,8 @@ type Repository interface {
 type Service struct {
 	repo      Repository
 	inventory InventoryService
+	// trustedInventory（可信背包服务）单独装配，普通Gateway背包服务不能隐式开启奖励权限。
+	trustedInventory TrustedInventoryService
 }
 
 // NewService（创建玩家资料服务）创建领域服务；背包能力由Composition Root按部署需要显式AttachInventory。

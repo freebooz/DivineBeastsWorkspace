@@ -61,15 +61,15 @@ func (r *InventoryRepository) Grant(
 			// Outbox与背包操作处于同一个tx；消费者必须按message_id去重，
 			// 事件表示库存授予事实，不代表用户已看到提示或完成视觉播放。
 			event := inventoryOutboxEvent{
-				SchemaVersion: 1,
-				OperationID: command.OperationID,
-				SourceEventID: command.SourceEventID,
-				GameServerID: command.GameServerID,
-				ServerBootID: command.ServerBootID,
-				PlayerID: playerID,
+				SchemaVersion:    1,
+				OperationID:      command.OperationID,
+				SourceEventID:    command.SourceEventID,
+				GameServerID:     command.GameServerID,
+				ServerBootID:     command.ServerBootID,
+				PlayerID:         playerID,
 				ItemDefinitionID: command.ItemDefinitionID,
-				Quantity: command.Quantity,
-				ReasonCode: command.ReasonCode,
+				Quantity:         command.Quantity,
+				ReasonCode:       command.ReasonCode,
 			}
 			if err := enqueueInventoryOutboxTx(ctx, tx, "Inventory.Granted",
 				playerID, command.OperationID, event); err != nil {

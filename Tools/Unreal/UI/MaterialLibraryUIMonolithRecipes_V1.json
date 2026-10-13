@@ -1,0 +1,749 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-13",
+  "ownerPlugin": "GamePlatformUI（平台UI材质）",
+  "descriptionZH": "7项尚未由UE创建的独立UserInterface（界面材质域）通用函数Monolith制作配方",
+  "executionPolicyZH": "只由Monolith material.create_material_function/build_function_graph/update_material_function/save_material执行，QA必须为MD_UI，禁止普通Python伪造WBP和UI二进制资产。",
+  "items": [
+    {
+      "capabilityId": "MAT-11-03",
+      "name": "BorderShape",
+      "descriptionZH": "基于四周UV的可调厚度内描边遮罩",
+      "assetPath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_BorderShape",
+      "graphSpec": {
+        "inputs": [
+          {
+            "id": "in_UV",
+            "name": "UV",
+            "type": "vector2",
+            "description": "UI纹理坐标0～1",
+            "pos": [
+              -1050,
+              -750
+            ]
+          },
+          {
+            "id": "in_BorderWidth",
+            "name": "BorderWidth",
+            "type": "scalar",
+            "description": "边框宽度UV",
+            "pos": [
+              -1050,
+              -565
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out",
+            "name": "BorderMask",
+            "description": "基于四周UV的可调厚度内描边遮罩"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "algorithm",
+            "pos": [
+              -180,
+              -180
+            ],
+            "output_type": "Float1",
+            "code": "float2 p = min(UV,1.0-UV); return 1.0-saturate(min(p.x,p.y)/max(BorderWidth,0.0001));",
+            "description": "基于四周UV的可调厚度内描边遮罩",
+            "inputs": [
+              {
+                "name": "UV"
+              },
+              {
+                "name": "BorderWidth"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "in_UV",
+            "to": "algorithm",
+            "to_pin": "UV"
+          },
+          {
+            "from": "in_BorderWidth",
+            "to": "algorithm",
+            "to_pin": "BorderWidth"
+          },
+          {
+            "from": "algorithm",
+            "to": "out",
+            "to_pin": "Input"
+          }
+        ]
+      },
+      "sourceStatus": "代码节点与HLSL定义完成；待Monolith真正创建UI函数和材质域预览"
+    },
+    {
+      "capabilityId": "MAT-11-08",
+      "name": "IconMask",
+      "descriptionZH": "技能图标透明度与主题蒙版组合",
+      "assetPath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_IconMask",
+      "graphSpec": {
+        "inputs": [
+          {
+            "id": "in_IconAlpha",
+            "name": "IconAlpha",
+            "type": "scalar",
+            "description": "原图标Alpha",
+            "pos": [
+              -1050,
+              -750
+            ]
+          },
+          {
+            "id": "in_ThemeMask",
+            "name": "ThemeMask",
+            "type": "scalar",
+            "description": "主题遮罩",
+            "pos": [
+              -1050,
+              -565
+            ]
+          },
+          {
+            "id": "in_Opacity",
+            "name": "Opacity",
+            "type": "scalar",
+            "description": "整体透明度0～1",
+            "pos": [
+              -1050,
+              -380
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out",
+            "name": "Mask",
+            "description": "技能图标透明度与主题蒙版组合"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "algorithm",
+            "pos": [
+              -180,
+              -180
+            ],
+            "output_type": "Float1",
+            "code": "return saturate(IconAlpha * ThemeMask * Opacity);",
+            "description": "技能图标透明度与主题蒙版组合",
+            "inputs": [
+              {
+                "name": "IconAlpha"
+              },
+              {
+                "name": "ThemeMask"
+              },
+              {
+                "name": "Opacity"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "in_IconAlpha",
+            "to": "algorithm",
+            "to_pin": "IconAlpha"
+          },
+          {
+            "from": "in_ThemeMask",
+            "to": "algorithm",
+            "to_pin": "ThemeMask"
+          },
+          {
+            "from": "in_Opacity",
+            "to": "algorithm",
+            "to_pin": "Opacity"
+          },
+          {
+            "from": "algorithm",
+            "to": "out",
+            "to_pin": "Input"
+          }
+        ]
+      },
+      "sourceStatus": "代码节点与HLSL定义完成；待Monolith真正创建UI函数和材质域预览"
+    },
+    {
+      "capabilityId": "MAT-11-12",
+      "name": "HealthGradient",
+      "descriptionZH": "生命值比例驱动健康绿色至危险红色渐变",
+      "assetPath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_HealthGradient",
+      "graphSpec": {
+        "inputs": [
+          {
+            "id": "in_HealthRatio",
+            "name": "HealthRatio",
+            "type": "scalar",
+            "description": "生命比例0～1",
+            "pos": [
+              -1050,
+              -750
+            ]
+          },
+          {
+            "id": "in_HealthyColor",
+            "name": "HealthyColor",
+            "type": "vector3",
+            "description": "高血量绿色",
+            "pos": [
+              -1050,
+              -565
+            ]
+          },
+          {
+            "id": "in_CriticalColor",
+            "name": "CriticalColor",
+            "type": "vector3",
+            "description": "低血量警告红色",
+            "pos": [
+              -1050,
+              -380
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out",
+            "name": "Color",
+            "description": "生命值比例驱动健康绿色至危险红色渐变"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "algorithm",
+            "pos": [
+              -180,
+              -180
+            ],
+            "output_type": "Float3",
+            "code": "return lerp(CriticalColor,HealthyColor,saturate(HealthRatio));",
+            "description": "生命值比例驱动健康绿色至危险红色渐变",
+            "inputs": [
+              {
+                "name": "HealthRatio"
+              },
+              {
+                "name": "HealthyColor"
+              },
+              {
+                "name": "CriticalColor"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "in_HealthRatio",
+            "to": "algorithm",
+            "to_pin": "HealthRatio"
+          },
+          {
+            "from": "in_HealthyColor",
+            "to": "algorithm",
+            "to_pin": "HealthyColor"
+          },
+          {
+            "from": "in_CriticalColor",
+            "to": "algorithm",
+            "to_pin": "CriticalColor"
+          },
+          {
+            "from": "algorithm",
+            "to": "out",
+            "to_pin": "Input"
+          }
+        ]
+      },
+      "sourceStatus": "代码节点与HLSL定义完成；待Monolith真正创建UI函数和材质域预览"
+    },
+    {
+      "capabilityId": "MAT-11-13",
+      "name": "EnergyBarFlow",
+      "descriptionZH": "能量进度条内部可调滚动纹理带",
+      "assetPath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_EnergyBarFlow",
+      "graphSpec": {
+        "inputs": [
+          {
+            "id": "in_UV",
+            "name": "UV",
+            "type": "vector2",
+            "description": "UI纹理坐标",
+            "pos": [
+              -1050,
+              -750
+            ]
+          },
+          {
+            "id": "in_TimeSeconds",
+            "name": "TimeSeconds",
+            "type": "scalar",
+            "description": "动画时间秒",
+            "pos": [
+              -1050,
+              -565
+            ]
+          },
+          {
+            "id": "in_FlowSpeed",
+            "name": "FlowSpeed",
+            "type": "scalar",
+            "description": "流速",
+            "pos": [
+              -1050,
+              -380
+            ]
+          },
+          {
+            "id": "in_StripeDensity",
+            "name": "StripeDensity",
+            "type": "scalar",
+            "description": "条纹密度",
+            "pos": [
+              -1050,
+              -195
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out",
+            "name": "FlowMask",
+            "description": "能量进度条内部可调滚动纹理带"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "algorithm",
+            "pos": [
+              -180,
+              -180
+            ],
+            "output_type": "Float1",
+            "code": "float phase = frac(UV.x * StripeDensity - TimeSeconds * FlowSpeed); return saturate(1.0 - abs(phase - 0.5) * 2.0);",
+            "description": "能量进度条内部可调滚动纹理带",
+            "inputs": [
+              {
+                "name": "UV"
+              },
+              {
+                "name": "TimeSeconds"
+              },
+              {
+                "name": "FlowSpeed"
+              },
+              {
+                "name": "StripeDensity"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "in_UV",
+            "to": "algorithm",
+            "to_pin": "UV"
+          },
+          {
+            "from": "in_TimeSeconds",
+            "to": "algorithm",
+            "to_pin": "TimeSeconds"
+          },
+          {
+            "from": "in_FlowSpeed",
+            "to": "algorithm",
+            "to_pin": "FlowSpeed"
+          },
+          {
+            "from": "in_StripeDensity",
+            "to": "algorithm",
+            "to_pin": "StripeDensity"
+          },
+          {
+            "from": "algorithm",
+            "to": "out",
+            "to_pin": "Input"
+          }
+        ]
+      },
+      "sourceStatus": "代码节点与HLSL定义完成；待Monolith真正创建UI函数和材质域预览"
+    },
+    {
+      "capabilityId": "MAT-11-14",
+      "name": "SelectionGlow",
+      "descriptionZH": "选中边框叠加随时间呼吸的局部边缘发光",
+      "assetPath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_SelectionGlow",
+      "graphSpec": {
+        "inputs": [
+          {
+            "id": "in_SelectionMask",
+            "name": "SelectionMask",
+            "type": "scalar",
+            "description": "选中区域蒙版",
+            "pos": [
+              -1050,
+              -750
+            ]
+          },
+          {
+            "id": "in_EdgeMask",
+            "name": "EdgeMask",
+            "type": "scalar",
+            "description": "边缘蒙版",
+            "pos": [
+              -1050,
+              -565
+            ]
+          },
+          {
+            "id": "in_GlowStrength",
+            "name": "GlowStrength",
+            "type": "scalar",
+            "description": "边缘亮度",
+            "pos": [
+              -1050,
+              -380
+            ]
+          },
+          {
+            "id": "in_TimeSeconds",
+            "name": "TimeSeconds",
+            "type": "scalar",
+            "description": "时间秒",
+            "pos": [
+              -1050,
+              -195
+            ]
+          },
+          {
+            "id": "in_PulseSpeed",
+            "name": "PulseSpeed",
+            "type": "scalar",
+            "description": "呼吸速度",
+            "pos": [
+              -1050,
+              -10
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out",
+            "name": "GlowMask",
+            "description": "选中边框叠加随时间呼吸的局部边缘发光"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "algorithm",
+            "pos": [
+              -180,
+              -180
+            ],
+            "output_type": "Float1",
+            "code": "float pulse = 0.5 + 0.5 * sin(TimeSeconds * PulseSpeed); return saturate(SelectionMask + EdgeMask * GlowStrength * pulse);",
+            "description": "选中边框叠加随时间呼吸的局部边缘发光",
+            "inputs": [
+              {
+                "name": "SelectionMask"
+              },
+              {
+                "name": "EdgeMask"
+              },
+              {
+                "name": "GlowStrength"
+              },
+              {
+                "name": "TimeSeconds"
+              },
+              {
+                "name": "PulseSpeed"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "in_SelectionMask",
+            "to": "algorithm",
+            "to_pin": "SelectionMask"
+          },
+          {
+            "from": "in_EdgeMask",
+            "to": "algorithm",
+            "to_pin": "EdgeMask"
+          },
+          {
+            "from": "in_GlowStrength",
+            "to": "algorithm",
+            "to_pin": "GlowStrength"
+          },
+          {
+            "from": "in_TimeSeconds",
+            "to": "algorithm",
+            "to_pin": "TimeSeconds"
+          },
+          {
+            "from": "in_PulseSpeed",
+            "to": "algorithm",
+            "to_pin": "PulseSpeed"
+          },
+          {
+            "from": "algorithm",
+            "to": "out",
+            "to_pin": "Input"
+          }
+        ]
+      },
+      "sourceStatus": "代码节点与HLSL定义完成；待Monolith真正创建UI函数和材质域预览"
+    },
+    {
+      "capabilityId": "MAT-11-15",
+      "name": "UIRipple",
+      "descriptionZH": "按钮点击位置的局部径向涟漪遮罩",
+      "assetPath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UIRipple",
+      "graphSpec": {
+        "inputs": [
+          {
+            "id": "in_UV",
+            "name": "UV",
+            "type": "vector2",
+            "description": "按钮UI局部UV",
+            "pos": [
+              -1050,
+              -750
+            ]
+          },
+          {
+            "id": "in_CenterUV",
+            "name": "CenterUV",
+            "type": "vector2",
+            "description": "点击中心UV",
+            "pos": [
+              -1050,
+              -565
+            ]
+          },
+          {
+            "id": "in_TimeSeconds",
+            "name": "TimeSeconds",
+            "type": "scalar",
+            "description": "涟漪生命周期秒",
+            "pos": [
+              -1050,
+              -380
+            ]
+          },
+          {
+            "id": "in_RadiusSpeed",
+            "name": "RadiusSpeed",
+            "type": "scalar",
+            "description": "半径增长速度",
+            "pos": [
+              -1050,
+              -195
+            ]
+          },
+          {
+            "id": "in_WaveWidth",
+            "name": "WaveWidth",
+            "type": "scalar",
+            "description": "环形波前宽度",
+            "pos": [
+              -1050,
+              -10
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out",
+            "name": "RippleMask",
+            "description": "按钮点击位置的局部径向涟漪遮罩"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "algorithm",
+            "pos": [
+              -180,
+              -180
+            ],
+            "output_type": "Float1",
+            "code": "float r = length(UV - CenterUV); float travel = TimeSeconds * RadiusSpeed; return saturate(1.0 - abs(r-travel)/max(WaveWidth,0.0001));",
+            "description": "按钮点击位置的局部径向涟漪遮罩",
+            "inputs": [
+              {
+                "name": "UV"
+              },
+              {
+                "name": "CenterUV"
+              },
+              {
+                "name": "TimeSeconds"
+              },
+              {
+                "name": "RadiusSpeed"
+              },
+              {
+                "name": "WaveWidth"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "in_UV",
+            "to": "algorithm",
+            "to_pin": "UV"
+          },
+          {
+            "from": "in_CenterUV",
+            "to": "algorithm",
+            "to_pin": "CenterUV"
+          },
+          {
+            "from": "in_TimeSeconds",
+            "to": "algorithm",
+            "to_pin": "TimeSeconds"
+          },
+          {
+            "from": "in_RadiusSpeed",
+            "to": "algorithm",
+            "to_pin": "RadiusSpeed"
+          },
+          {
+            "from": "in_WaveWidth",
+            "to": "algorithm",
+            "to_pin": "WaveWidth"
+          },
+          {
+            "from": "algorithm",
+            "to": "out",
+            "to_pin": "Input"
+          }
+        ]
+      },
+      "sourceStatus": "代码节点与HLSL定义完成；待Monolith真正创建UI函数和材质域预览"
+    },
+    {
+      "capabilityId": "MAT-11-18",
+      "name": "UITransitionDissolve",
+      "descriptionZH": "基于噪声的界面溶解遮罩与渐变边缘",
+      "assetPath": "/GamePlatformUI/Materials/Functions/MF_GP_UI_UITransitionDissolve",
+      "graphSpec": {
+        "inputs": [
+          {
+            "id": "in_NoiseMask",
+            "name": "NoiseMask",
+            "type": "scalar",
+            "description": "UI噪声蒙版",
+            "pos": [
+              -1050,
+              -750
+            ]
+          },
+          {
+            "id": "in_Progress",
+            "name": "Progress",
+            "type": "scalar",
+            "description": "溶解进度0～1",
+            "pos": [
+              -1050,
+              -565
+            ]
+          },
+          {
+            "id": "in_EdgeWidth",
+            "name": "EdgeWidth",
+            "type": "scalar",
+            "description": "溶解边缘宽度",
+            "pos": [
+              -1050,
+              -380
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out",
+            "name": "VisibilityMask",
+            "description": "基于噪声的界面溶解遮罩与渐变边缘"
+          },
+          {
+            "id": "output_EdgeMask",
+            "name": "EdgeMask",
+            "description": "溶解边缘发光权重"
+          }
+        ],
+        "custom_hlsl_nodes": [
+          {
+            "id": "algorithm",
+            "pos": [
+              -180,
+              -180
+            ],
+            "output_type": "Float1",
+            "code": "float w=max(EdgeWidth,0.0001); float inner=saturate((NoiseMask-Progress)/w); EdgeMask=saturate((NoiseMask-(Progress-w))/w)-inner; return inner;",
+            "description": "基于噪声的界面溶解遮罩与渐变边缘",
+            "inputs": [
+              {
+                "name": "NoiseMask"
+              },
+              {
+                "name": "Progress"
+              },
+              {
+                "name": "EdgeWidth"
+              }
+            ],
+            "additional_outputs": [
+              {
+                "name": "EdgeMask",
+                "type": "Float1"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "in_NoiseMask",
+            "to": "algorithm",
+            "to_pin": "NoiseMask"
+          },
+          {
+            "from": "in_Progress",
+            "to": "algorithm",
+            "to_pin": "Progress"
+          },
+          {
+            "from": "in_EdgeWidth",
+            "to": "algorithm",
+            "to_pin": "EdgeWidth"
+          },
+          {
+            "from": "algorithm",
+            "to": "out",
+            "to_pin": "Input"
+          },
+          {
+            "from": "algorithm",
+            "from_pin": "EdgeMask",
+            "to": "output_EdgeMask",
+            "to_pin": "Input"
+          }
+        ]
+      },
+      "sourceStatus": "代码节点与HLSL定义完成；待Monolith真正创建UI函数和材质域预览"
+    }
+  ]
+}

@@ -1,4 +1,6 @@
 # 通用材质函数库 P0—P10 验证证据及阻断记录
+> **本页保留早期阻断历史，当前事实见**`MaterialLibrarySourceStatus_20261013.md`（源码/UE制作真实状态），`MaterialReviewShaderEvidence_UE58_20261013.json`（首批8项UE Shader），`MaterialBatch2ShaderAndUIEvidence_UE58_20261013.json`（第二批18项Shader及UI阶段）。用户明确指定先制作代码、蓝图和资源，最后再执行统一编译验证；当前编辑器启动构建`FailedDueToEngineChange`，不可把Monolith网关healthy当作Editor运行。
+
 
 **日期：** 2026-10-13。以下仅记录本次真实工具反馈与已有源码可直接证实的静态合同，不继承旧验证结论作为新通过。
 

@@ -1,4 +1,8 @@
 # 神兽联盟通用材质函数库建设（2026-10-13）
+> **最新制作进度与真实验收边界**：`MaterialLibrarySourceStatus_20261013.md`（源码、蓝图资源优先制作清单）。首批8个MF及第二批18个MF已由UE真实生成、隔离Shader验证；另5个UI函数已保存但UI Shader未验。剩余60个独立MF、12个材质层、7个UI函数配方及独立演示蓝图/地图已完成制作代码，但**真实二进制资产尚未生成**。最终全目标编译、双Cook、GPU与人工签收均推迟到资源制作完成后，不能以作者脚本当作交付。
+> **执行任务索引**：`MaterialLibraryResourceWorkQueue_20261013.json`（先源码/蓝图/资源，最后统一测试的16项阶段任务）；`MaterialFunctionLibraryIndex.md`（201项逐条实时实施状态），机器真源`MaterialCapabilityRegistry_V1.json`（归属、完成度及建议UE路径）。Cook排除已写入受管政策真源及DefaultGame.ini，尚未生成最终Server Profile或实际执行Cook。
+
+
 
 本目录承担材质能力归类、UE资产实际审计、三层插件所有权、参数合同、表现组合、质量与验收证据。真实材质（.uasset）只能由锁定的UE5.8编辑器创建；本目录的计划与清单不代表资源已经实现、编译或通过美术人工验收。
 

@@ -45,6 +45,7 @@
 - 所有物品“使用”“丢弃”“拾取”“领取任务奖励”按钮在可信服务器规则/接口/Outbox未完成前必须保持禁用或隐藏，不能直接调用背包移动、拆分接口伪造效果。
 - 表现：项目DataAsset（数据资产）按DisplayDefinitionHandle（显示定义身份）异步解析图标与说明；缺失时显示“未识别物品”，不伪造正式物品。
 - 静态证据：`Saved/Monolith/InventoryUI20261013/`保存制作前规格、Monolith制作/回读结果、可访问性修改前备份、119项操作记录，以及复审的`AccessibilityAuditAfter.json`、`CommonUIAuditAfter.json`、`FocusAuditAfter.json`、`CompileAfter.json`。修改后真实资产SHA-256为`972336e5383fa0c45513014b92270fe4c20f9bee85b53c3adacd3448eac53356`；备份仅作回退，不代表新资源版本可以跳过UE Editor重载。
+- **本轮资源进度（2026-10-13）**：已增加8类桃源村物品的后端权威规则和项目中文显示代码；512×512透明RGBA图标、8个显示定义DataAsset的精确软路径与Monolith制作规范见`InventoryVisualAssets_20261013.json`。**真实图标、控件图标绑定和Cook仍待制作**，原172控件WBP保持不覆盖。
 - 验收：确认UE5.8正式编辑器和Monolith身份，创建/编译/保存/重载回读控件树，更新MonolithGenerationManifest.json（生成证据）；之后在PC及移动端核验容量、状态提示、焦点、快捷栏和注销重登。真实服务权限和联机联动须单独测试；未完成时一律标为**待验收**。
 
 ## 三、跨业务域通用组件（待制作12个神兽视觉蓝图）

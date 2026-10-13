@@ -286,6 +286,9 @@ func (r *InventoryRepository) Consume(ctx context.Context, playerID string, comm
 			if item.InstanceState != "active" {
 				return 0, item.Quantity, apperror.New("INVENTORY_CONSUME_NOT_ALLOWED", "物品状态不允许消耗", false)
 			}
+			if command.ItemDefinitionID != "" && item.ItemDefinitionID != command.ItemDefinitionID {
+				return 0, item.Quantity, apperror.New("INVENTORY_CONSUME_NOT_ALLOWED", "物品定义身份与消耗事件不匹配", false)
+			}
 			if command.Quantity <= 0 || command.Quantity > item.Quantity {
 				return 0, item.Quantity, apperror.New("INVENTORY_INSUFFICIENT_QUANTITY", "物品数量不足", false)
 			}
@@ -308,7 +311,9 @@ func (r *InventoryRepository) Consume(ctx context.Context, playerID string, comm
 			if err = enqueueInventoryOutboxTx(ctx, tx, "Inventory.Consumed",
 				playerID, command.OperationID, inventoryOutboxEvent{
 					SchemaVersion: 1, OperationID: command.OperationID,
-					PlayerID: playerID, ItemDefinitionID: item.ItemDefinitionID,
+					SourceEventID: command.SourceEventID, GameServerID: command.GameServerID,
+					ServerBootID: command.ServerBootID,
+					PlayerID:     playerID, ItemDefinitionID: item.ItemDefinitionID,
 					Quantity: command.Quantity, RemainingQuantity: remaining,
 					ReasonCode: command.ReasonCode,
 				}); err != nil {

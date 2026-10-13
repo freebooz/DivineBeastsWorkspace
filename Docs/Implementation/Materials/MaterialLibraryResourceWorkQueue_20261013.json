@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-13",
+  "title": "SSLM通用材质函数库先资源后统一编译任务队列",
+  "project": "DivineBeastsWorkspace",
+  "runtimeConstraint": "本轮UE5.8自检因FailedDueToEngineChange无法开启；除必须恢复启动的预编译外，全部正式编译、Cook、GPU测试列入FINAL",
+  "principles": [
+    "不覆盖已有.uasset和未提交并行修改",
+    "UI WBP必须Monolith MCP",
+    "现有平台插件为唯一资源所有者",
+    "不把代码配方等同真实UE资产",
+    "所有状态与201项能力台账保持一致"
+  ],
+  "steps": [
+    {
+      "id": "SRC-01",
+      "phase": "P2-P7",
+      "labelZH": "已有26个已编译MF与5个UI已保存MF的无覆盖基线保护",
+      "status": "completed_previous_run",
+      "execution": "只读AssetRegistry与已有截图记录；不重新生成既有资源",
+      "required": [
+        "已有二进制文件没有被其他代理覆盖"
+      ],
+      "evidence": "Docs/Implementation/Materials/MaterialReviewShaderEvidence_UE58_20261013.json"
+    },
+    {
+      "id": "SRC-02",
+      "phase": "P2-P7",
+      "labelZH": "剩余60项跨域材质函数真实表达式算法与C++展示路由",
+      "status": "source_authored",
+      "execution": "Tools/Unreal/Surface/AuthorMaterialLibraryDomainUE58.py --mode inspect",
+      "required": [
+        "201项机器真源及四类配方文件"
+      ],
+      "evidence": "Tools/Unreal/Surface/MaterialLibraryDomainRecipes_Core.json"
+    },
+    {
+      "id": "SRC-03",
+      "phase": "P3-P7",
+      "labelZH": "12类PBR材质层和共享材质属性混合算法及作者",
+      "status": "source_authored",
+      "execution": "Tools/Unreal/Surface/AuthorMaterialLibraryLayersUE58.py --mode inspect",
+      "required": [
+        "MaterialLibraryLayerProfiles_V1.json"
+      ],
+      "evidence": "Tools/Unreal/Surface/MaterialLibraryLayerProfiles_V1.json"
+    },
+    {
+      "id": "SRC-04",
+      "phase": "P6",
+      "labelZH": "余7个UI材质函数的Monolith真实图协议",
+      "status": "source_authored",
+      "execution": "Monolith: material.create_material_function/build_function_graph/update_material_function/save_material; each based on Tools/Unreal/UI/MaterialLibraryUIMonolithRecipes_V1.json",
+      "required": [
+        "Monolith连接正式UE5.8工程"
+      ],
+      "evidence": "Tools/Unreal/UI/MaterialLibraryUIMonolithRecipes_V1.json"
+    },
+    {
+      "id": "SRC-05",
+      "phase": "P8",
+      "labelZH": "展示架Actor蓝图SCS组件、UI审核蓝图及四地图制作入口",
+      "status": "source_authored_only",
+      "execution": "Tools/Unreal/Surface/AuthorMaterialLibraryStandBlueprintUE58.py --mode inspect; Monolith: UI WBP plus editor create_empty_map; Tools/Unreal/Surface/AuthorMaterialLibraryDemoUE58.py --mode inspect --group Surface",
+      "required": [
+        "正确插件DemoCatalog分域归属和Widget软引用",
+        "仅开发审核目录可写"
+      ],
+      "evidence": "Docs/Implementation/Materials/MaterialLibraryBlueprintAndUIManifest_V1.json"
+    },
+    {
+      "id": "RESOURCE-00",
+      "phase": "P0",
+      "labelZH": "解除唯一UE5.8编辑器启动阻断",
+      "status": "blocked_engine_startup",
+      "execution": "只允许已授权的锁定引擎/工程预编译入口恢复Editor所需模块，然后检查UE PID、Monolith当前主工程身份；不得把启动预编译记作最终统一构建",
+      "required": [
+        "UE最后日志提示FailedDueToEngineChange",
+        "保留其他会话并行源码与二进制"
+      ],
+      "evidence": "Game/Saved/Logs/DivineBeastsArena.log"
+    },
+    {
+      "id": "RESOURCE-01",
+      "phase": "P2-P7",
+      "labelZH": "生成60份真正UE材质函数",
+      "status": "waiting_editor",
+      "execution": "UE editor Python: Tools/Unreal/Surface/AuthorMaterialLibraryDomainUE58.py --mode apply --owner Surface; --owner VFX; --owner Project",
+      "required": [
+        "RESOURCE-00",
+        "SRC-02"
+      ],
+      "evidence": "UE Editor AssetRegistry + 保存回读"
+    },
+    {
+      "id": "RESOURCE-02",
+      "phase": "P3-P7",
+      "labelZH": "生成12层PBR材质及共享Blend",
+      "status": "waiting_editor",
+      "execution": "UE editor Python: Tools/Unreal/Surface/AuthorMaterialLibraryLayersUE58.py --mode apply",
+      "required": [
+        "RESOURCE-00",
+        "SRC-03"
+      ],
+      "evidence": "真实MaterialLayer/MaterialLayerBlend子类与图节点"
+    },
+    {
+      "id": "RESOURCE-03",
+      "phase": "P6",
+      "labelZH": "通过Monolith生成剩余7项UI材质函数",
+      "status": "waiting_editor",
+      "execution": "Monolith逐函数创建、build_function_graph、更新、保存并回读；脚本不代替UI MCP",
+      "required": [
+        "RESOURCE-00",
+        "SRC-04"
+      ],
+      "evidence": "Monolith get_function_info；仅资源审核，不宣告Shader通过"
+    },
+    {
+      "id": "RESOURCE-04",
+      "phase": "P8",
+      "labelZH": "真正创建且保存BP_DBA_MaterialLibraryReviewStand",
+      "status": "waiting_editor",
+      "execution": "UE editor Python: Tools/Unreal/Surface/AuthorMaterialLibraryStandBlueprintUE58.py --mode apply",
+      "required": [
+        "RESOURCE-00",
+        "SRC-05"
+      ],
+      "evidence": "UE SubobjectData真实PreviewMesh、原生Blueprint"
+    },
+    {
+      "id": "RESOURCE-05",
+      "phase": "P8",
+      "labelZH": "创建四类独立审核关卡UWorld",
+      "status": "waiting_editor",
+      "execution": "Monolith editor.create_empty_map(path,open=false) for Surface,VFX,UI,Project; verify AssetRegistry",
+      "required": [
+        "RESOURCE-00",
+        "SRC-05"
+      ],
+      "evidence": "四份真实UMAP而非文本空图"
+    },
+    {
+      "id": "RESOURCE-06",
+      "phase": "P8",
+      "labelZH": "创建真正的UI审查WBP及控件树",
+      "status": "waiting_editor",
+      "execution": "Monolith UI Widget Blueprint必须绑定项目演示UI主题和真实UI Material；不以TextRender代替",
+      "required": [
+        "RESOURCE-00",
+        "RESOURCE-03"
+      ],
+      "evidence": "Monolith UI树及后续蓝图编译证据"
+    },
+    {
+      "id": "RESOURCE-07",
+      "phase": "P8",
+      "labelZH": "开发材质审核母版、球体展示架、中文标牌和灯光资源",
+      "status": "waiting_editor",
+      "execution": "UE editor Python: Tools/Unreal/Surface/AuthorMaterialLibraryDomainUE58.py --mode review; Monolith加载所需地图后AuthorMaterialLibraryDemoUE58.py --mode apply --group Surface/VFX/Project",
+      "required": [
+        "RESOURCE-01",
+        "RESOURCE-04",
+        "RESOURCE-05"
+      ],
+      "evidence": "真实材质函数引用、母材质图、开发地图场景资源"
+    },
+    {
+      "id": "AUDIT-00",
+      "phase": "P10",
+      "labelZH": "按201项生成真实资产清单与中文索引",
+      "status": "waiting_resources",
+      "execution": "UE editor Python: Tools/Unreal/Surface/AuditMaterialCapabilityUE58.py --mode scan",
+      "required": [
+        "RESOURCE-01",
+        "RESOURCE-02",
+        "RESOURCE-03",
+        "RESOURCE-07"
+      ],
+      "evidence": "Docs/Implementation/Materials/MaterialCapabilityAssetAudit_UE58.json + MaterialCapabilityStatus_UE58.md"
+    },
+    {
+      "id": "FINAL-01",
+      "phase": "P9-P10",
+      "labelZH": "一次性统一源码与UE全目标编译验证",
+      "status": "deferred_per_user",
+      "execution": "运行已有工程既定Editor/Client/Server完整构建入口和各项Python静态门禁；运行UE Domain author --mode compile；Monolith UI/Blueprint编译并验证",
+      "required": [
+        "全部RESOURCE任务实物已完成",
+        "先审查仓库冲突、未提交修改及平台Shader预算"
+      ],
+      "evidence": "真实退出码与每目标构建日志"
+    },
+    {
+      "id": "FINAL-02",
+      "phase": "P9-P10",
+      "labelZH": "客户端及三服务器干净Cook与GPU人工验收",
+      "status": "deferred_per_user",
+      "execution": "按既有Build/Game/ServerPresentationExclusions.json真源生成受管Profile并检查客户端/服务器Stage，执行Monolith真实视觉、GPU及手工签收；单独保留具体条件不通过",
+      "required": [
+        "FINAL-01",
+        "所有已创建BP/UMAP和UI资产完整保存"
+      ],
+      "evidence": "Cook/Stage文件清单、渲染截图、ProfileGPU及人工签收"
+    }
+  ]
+}

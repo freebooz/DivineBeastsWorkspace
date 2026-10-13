@@ -46,7 +46,7 @@ func TestTrustedGrantAtomicStackPlacementAndReplay(t *testing.T) {
 	const playerID = "player-gatherer"
 	repo := NewMemoryRepository()
 	if err := repo.SeedForTest(playerID, []ItemInstance{{
-		ItemInstanceID: "existing-herb",
+		ItemInstanceID:   "existing-herb",
 		ItemDefinitionID: "item.herb.peach", Quantity: 3,
 		ContainerID: DefaultContainerID, SlotIndex: 3,
 		Revision: 1, InstanceState: "active", MaxStackSize: 5,
@@ -115,11 +115,11 @@ func TestTrustedGrantFullInventoryDoesNotPartiallyFill(t *testing.T) {
 	seed := make([]ItemInstance, 0, DefaultContainerCapacity)
 	for i := int32(0); i < DefaultContainerCapacity; i++ {
 		seed = append(seed, ItemInstance{
-			ItemInstanceID: deterministicGrantID(playerID, "seed", i),
+			ItemInstanceID:   deterministicGrantID(playerID, "seed", i),
 			ItemDefinitionID: "item.herb.peach",
-			Quantity: 4,
-			ContainerID: DefaultContainerID,
-			SlotIndex: i, Revision: 1, InstanceState: "active", MaxStackSize: 5,
+			Quantity:         4,
+			ContainerID:      DefaultContainerID,
+			SlotIndex:        i, Revision: 1, InstanceState: "active", MaxStackSize: 5,
 		})
 	}
 	if err := repo.SeedForTest(playerID, seed); err != nil {

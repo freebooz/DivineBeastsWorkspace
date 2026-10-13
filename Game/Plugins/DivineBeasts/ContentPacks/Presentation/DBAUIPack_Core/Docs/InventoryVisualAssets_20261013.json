@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "项目": "SSLM",
+  "用途": "神兽联盟世界背包首批8个正式物品图标与显示定义制作合同，尚未生成图标.uasset。只允许Monolith在正确UE5.8编辑器中创建、导入、编译和保存。",
+  "工具": "Monolith MCP 0.23.0",
+  "视觉规范": {
+    "纹理": "512x512像素 RGBA透明底，源图可高于此分辨率",
+    "构图": "单物品占画幅75%~85%，四周透明安全区，清晰的大轮廓，可在64~72px按钮中辨认",
+    "材质": "电影级写实3A道具绘制，饱满柔和光照，材质PBR可信",
+    "风格": "东方上古神话、温润翠玉、桃源森林、青铜金丝线，禁止噪点、颗粒、过度锐化及过暖大红",
+    "读图": "不绘制字母、数值、等级、按钮、底板或文字",
+    "导入": "Texture2D UI组，含Alpha，sRGB按真实原稿，保留单次Gamma，不使用已知错误的widget预览截图"
+  },
+  "items": [
+    {
+      "ItemDefinitionId": "item.herb.peach",
+      "中文名称": "桃灵草",
+      "Category": "药草",
+      "画面主体": "桃林中带露的青翠药草，嫩桃叶和淡粉花点缀",
+      "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_PeachHerb",
+      "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_PeachHerb",
+      "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
+      "IconStatus": "待由Monolith制作/导入并实际检查",
+      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
+      "资产已生成": false
+    },
+    {
+      "ItemDefinitionId": "item.herb.mugwort",
+      "中文名称": "艾叶",
+      "Category": "药草",
+      "画面主体": "深绿色艾草束，轮廓清楚、草叶自然",
+      "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_Mugwort",
+      "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_Mugwort",
+      "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
+      "IconStatus": "待由Monolith制作/导入并实际检查",
+      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
+      "资产已生成": false
+    },
+    {
+      "ItemDefinitionId": "item.material.lotus",
+      "中文名称": "湖心莲",
+      "Category": "采集",
+      "画面主体": "粉白色半开莲花与翠绿荷叶",
+      "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_Lotus",
+      "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_Lotus",
+      "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
+      "IconStatus": "待由Monolith制作/导入并实际检查",
+      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
+      "资产已生成": false
+    },
+    {
+      "ItemDefinitionId": "item.material.stone",
+      "中文名称": "青岩矿石",
+      "Category": "矿石",
+      "画面主体": "青灰山岩晶面与自然断裂块",
+      "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_GreenStone",
+      "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_GreenStone",
+      "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
+      "IconStatus": "待由Monolith制作/导入并实际检查",
+      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
+      "资产已生成": false
+    },
+    {
+      "ItemDefinitionId": "item.material.peachwood",
+      "中文名称": "桃木",
+      "Category": "木材",
+      "画面主体": "温润桃木短枝原木，浅褐木纹和少量绿叶",
+      "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_Peachwood",
+      "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_Peachwood",
+      "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
+      "IconStatus": "待由Monolith制作/导入并实际检查",
+      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
+      "资产已生成": false
+    },
+    {
+      "ItemDefinitionId": "item.consumable.herbal_potion",
+      "中文名称": "草本药露",
+      "Category": "消耗品",
+      "画面主体": "玉白瓷瓶中淡绿色药露、金属细工瓶塞",
+      "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_HerbalPotion",
+      "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_HerbalPotion",
+      "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
+      "IconStatus": "待由Monolith制作/导入并实际检查",
+      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
+      "资产已生成": false
+    },
+    {
+      "ItemDefinitionId": "item.quest.village_badge",
+      "中文名称": "桃源村徽",
+      "Category": "任务物品",
+      "画面主体": "古青铜与浅绿玉石工艺村徽，温和云纹",
+      "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_VillageBadge",
+      "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_VillageBadge",
+      "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
+      "IconStatus": "待由Monolith制作/导入并实际检查",
+      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
+      "资产已生成": false
+    },
+    {
+      "ItemDefinitionId": "item.material.silkworm_silk",
+      "中文名称": "桑蚕丝",
+      "Category": "材料",
+      "画面主体": "丝绸小绞，银白色丝线与桑叶",
+      "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_SilkwormSilk",
+      "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_SilkwormSilk",
+      "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
+      "IconStatus": "待由Monolith制作/导入并实际检查",
+      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
+      "资产已生成": false
+    }
+  ],
+  "已有资源": {
+    "WBP": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Inventory",
+    "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsInventoryScreen",
+    "现有控件": 172,
+    "状态": "上一轮Monolith已创建、保存、编译并回读；本轮不覆盖此资产"
+  },
+  "本轮代码": {
+    "游戏项目显示表": "DivineBeastsInventoryPresentationCatalog.cpp（项目中文名称、说明与图标软路径，缺失图标不会阻断背包）",
+    "权威规则": "Backend/config/inventory_item_policies_v1.json（8类物品权威策略，仅Go后端使用）"
+  },
+  "未完成验收": [
+    "正式图标Texture2D与DisplayDefinition DataAsset",
+    "图标异步加载绑定到背包槽位",
+    "PC与移动端截图视觉检查",
+    "客户端Cook"
+  ]
+}

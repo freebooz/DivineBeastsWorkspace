@@ -1,4 +1,5 @@
 #include "Screens/Inventory/DivineBeastsInventoryScreen.h"
+#include "Screens/Inventory/DivineBeastsInventoryPresentationCatalog.h"
 
 #include "Engine/LocalPlayer.h"
 #include "Components/Button.h"
@@ -528,7 +529,8 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
         else
         {
             // 图标目录尚未完成时仅展示权威物品定义短标识，完整标识放入工具提示。
-            const FString DefinitionName = ProjectedSlot->Item.ItemDefinitionId.ToString();
+            const FString DefinitionName = FDivineBeastsInventoryPresentationCatalog::Find(
+                ProjectedSlot->Item.ItemDefinitionId).DisplayName.ToString();
             LabelText = DefinitionName.Left(7) +
                 FString::Printf(TEXT("\n×%d"), ProjectedSlot->Item.Quantity);
             if (ProjectedSlot->Item.bPending) { LabelText += TEXT("…"); }
@@ -544,7 +546,7 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
                 : FLinearColor(0.12f, 0.24f, 0.22f, 1.0f));
             Button->SetToolTipText(
                 bOccupied
-                ? FText::FromString(ProjectedSlot->Item.ItemDefinitionId.ToString())
+                ? FDivineBeastsInventoryPresentationCatalog::Find(ProjectedSlot->Item.ItemDefinitionId).DisplayName
                 : LOCTEXT("InventoryEmptySlot", "空背包格"));
         }
     }
@@ -556,7 +558,8 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
         FString LabelText = FString::FromInt(Index + 1);
         if (Quick && Quick->bAssigned)
         {
-            LabelText = Quick->Item.ItemDefinitionId.ToString().Left(9) +
+            LabelText = FDivineBeastsInventoryPresentationCatalog::Find(
+                Quick->Item.ItemDefinitionId).DisplayName.ToString().Left(7) +
                 FString::Printf(TEXT("\n×%d"), Quick->Item.Quantity);
         }
         if (Quick && Quick->bPending) { LabelText += TEXT("…"); }
@@ -574,14 +577,14 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
     const FGamePlatformInventoryItemInstance* Selected = IsValid(Service) &&
         !SelectedItemInstanceId.IsEmpty() ? Service->FindItem(SelectedItemInstanceId) : nullptr;
     SetText(TEXT("SelectedItemName"), Selected
-        ? FText::FromName(Selected->ItemDefinitionId)
+        ? FDivineBeastsInventoryPresentationCatalog::Find(Selected->ItemDefinitionId).DisplayName
         : LOCTEXT("InventorySelectItem", "请选择物品"));
     SetText(TEXT("SelectedItemCount"), Selected
         ? FText::Format(LOCTEXT("InventorySelectedQuantity", "数量 {0} · 堆叠上限 {1}"),
             FText::AsNumber(Selected->Quantity), FText::AsNumber(Selected->MaxStackSize))
         : FText::GetEmpty());
     SetText(TEXT("SelectedItemDescription"), Selected
-        ? LOCTEXT("InventoryDefinitionPending", "正式物品名称和说明未加载，当前显示服务器物品标识。")
+        ? FDivineBeastsInventoryPresentationCatalog::Find(Selected->ItemDefinitionId).Description
         : LOCTEXT("InventorySelectHint", "选择物品格，可查看数量并进行整理操作。"));
     SetButtonEnabled(TEXT("MoveButton"), bReady && Selected);
     SetButtonEnabled(TEXT("SplitButton"), bReady && Selected && Selected->Quantity > 1);

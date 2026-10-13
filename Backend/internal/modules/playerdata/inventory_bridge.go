@@ -18,6 +18,37 @@ type InventoryService interface {
 	Probe(context.Context) error
 }
 
+// TrustedInventoryService（可信长期背包授权写端口）与普通InventoryService分开。
+// 对外HTTP Gateway不得通过普通AttachInventory暴露Grant/Consume。
+type TrustedInventoryService interface {
+	GrantTrusted(context.Context, string, inventory.GrantCommand) (inventory.MutationResult, error)
+	ConsumeTrusted(context.Context, string, inventory.ConsumeCommand) (inventory.MutationResult, error)
+}
+
+// AttachTrustedInventory（显式装配可信端口）只能由完成服务端身份验证的组合根调用。
+// nil默认关闭，不由普通登录/查询接口自动启用。
+func (s *Service) AttachTrustedInventory(service TrustedInventoryService) {
+	if s != nil {
+		s.trustedInventory = service
+	}
+}
+
+// GrantTrustedInventory（权威服务器奖励入口）不对公网友好Gateway暴露。
+func (s *Service) GrantTrustedInventory(ctx context.Context, playerID string, cmd inventory.GrantCommand) (inventory.MutationResult, error) {
+	if s == nil || s.trustedInventory == nil {
+		return inventory.MutationResult{}, unavailable()
+	}
+	return s.trustedInventory.GrantTrusted(ctx, playerID, cmd)
+}
+
+// ConsumeTrustedInventory（权威使用消耗入口）不经过客户端原生Move/Merge/Quickbar通道。
+func (s *Service) ConsumeTrustedInventory(ctx context.Context, playerID string, cmd inventory.ConsumeCommand) (inventory.MutationResult, error) {
+	if s == nil || s.trustedInventory == nil {
+		return inventory.MutationResult{}, unavailable()
+	}
+	return s.trustedInventory.ConsumeTrusted(ctx, playerID, cmd)
+}
+
 // AttachInventory（装配背包服务）只允许Composition Root显式调用；nil表示当前部署未启用背包。
 func (s *Service) AttachInventory(service InventoryService) {
 	if s != nil {

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "gameId": "DivineBeastsArena",
+  "notes": "仅服务端物品数量、堆叠、可消耗属性与授予事由；不含客户端贴图和显示资源，不可通过公网或客户端覆盖。",
+  "items": [
+    {
+      "itemDefinitionId": "item.herb.peach",
+      "maxStackSize": 20,
+      "canConsume": false,
+      "allowedGrantReasons": [
+        "pickup",
+        "quest_reward"
+      ]
+    },
+    {
+      "itemDefinitionId": "item.herb.mugwort",
+      "maxStackSize": 30,
+      "canConsume": false,
+      "allowedGrantReasons": [
+        "pickup",
+        "quest_reward"
+      ]
+    },
+    {
+      "itemDefinitionId": "item.material.lotus",
+      "maxStackSize": 20,
+      "canConsume": false,
+      "allowedGrantReasons": [
+        "pickup",
+        "quest_reward"
+      ]
+    },
+    {
+      "itemDefinitionId": "item.material.stone",
+      "maxStackSize": 50,
+      "canConsume": false,
+      "allowedGrantReasons": [
+        "pickup",
+        "quest_reward"
+      ]
+    },
+    {
+      "itemDefinitionId": "item.material.peachwood",
+      "maxStackSize": 40,
+      "canConsume": false,
+      "allowedGrantReasons": [
+        "pickup",
+        "quest_reward"
+      ]
+    },
+    {
+      "itemDefinitionId": "item.consumable.herbal_potion",
+      "maxStackSize": 10,
+      "canConsume": true,
+      "allowedGrantReasons": [
+        "quest_reward",
+        "scripted_reward"
+      ]
+    },
+    {
+      "itemDefinitionId": "item.quest.village_badge",
+      "maxStackSize": 1,
+      "canConsume": false,
+      "allowedGrantReasons": [
+        "quest_reward"
+      ]
+    },
+    {
+      "itemDefinitionId": "item.material.silkworm_silk",
+      "maxStackSize": 50,
+      "canConsume": false,
+      "allowedGrantReasons": [
+        "pickup",
+        "quest_reward"
+      ]
+    }
+  ]
+}

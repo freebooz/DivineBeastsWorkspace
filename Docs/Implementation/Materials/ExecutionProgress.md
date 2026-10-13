@@ -1,4 +1,6 @@
 # 通用材质函数库 P0—P10 执行进度（真实证据）
+> **最新状态入口（2026-10-13继续执行）**：请以`MaterialLibrarySourceStatus_20261013.md`（源码优先交付与实际阻断）为准。下文“Editor未启动、8函数仅作者脚本”的记录属于当时的历史快照；之后已在真实UE5.8内完成首批8项和第二批18项函数及独立Shader验证、额外5项UI函数真实保存。**最新增加60项MF源码/配方、12层PBR配方/作者、7项UI的Monolith配方、四地图和蓝图制作方案，原生资产尚待制作且最终统一构建待做**。原始历史快照留作追溯，不得误读为当前验收状态。
+
 
 日期：2026-10-13。固定主工程`DivineBeastsWorkspace/Game/DivineBeastsArena.uproject`（神兽联盟主工程）。本次Cwebcodex会话`wc_sess_pmv6pY2Ody5CFtMf`（执行记录身份）。初始Git：main / 0a0cf10（工作区初始clean）。
 

@@ -58,8 +58,8 @@ type GrantPlan struct {
 // 不提供外部HTTP路由。未注入authorizer时Service.GrantTrusted始终拒绝。
 func NewTrustedGrantService(repo Repository, grantAuthorizer TrustedGrantAuthorizer, consumeAuthorizer TrustedConsumeAuthorizer) *Service {
 	return &Service{
-		repo: repo,
-		trustedGrantAuthorizer: grantAuthorizer,
+		repo:                     repo,
+		trustedGrantAuthorizer:   grantAuthorizer,
 		trustedConsumeAuthorizer: consumeAuthorizer,
 	}
 }
@@ -200,14 +200,14 @@ func PlanTrustedGrant(playerID string, before Snapshot, cmd GrantCommand, rule G
 			}
 			knownIDs[id] = true
 			plan.Creates = append(plan.Creates, ItemInstance{
-				ItemInstanceID: id,
+				ItemInstanceID:   id,
 				ItemDefinitionID: cmd.ItemDefinitionID,
-				Quantity: int32(quantity),
-				ContainerID: container.ContainerID,
-				SlotIndex: slot,
-				Revision: 1,
-				InstanceState: "active",
-				MaxStackSize: rule.MaxStackSize,
+				Quantity:         int32(quantity),
+				ContainerID:      container.ContainerID,
+				SlotIndex:        slot,
+				Revision:         1,
+				InstanceState:    "active",
+				MaxStackSize:     rule.MaxStackSize,
 			})
 			remaining -= quantity
 		}

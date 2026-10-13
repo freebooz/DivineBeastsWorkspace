@@ -21,6 +21,9 @@ namespace DivineBeastsDemo
     const TCHAR* OverlayWidgetClass = TEXT("/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoOverlay.WBP_DBA_PluginDemoOverlay_C");
     /** 鸟群审核地图使用对应专题Monolith UI，而不是旧ISM原型操作面板。 */
     const TCHAR* BirdFlockWidgetClass = TEXT("/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoBirdFlock.WBP_DBA_PluginDemoBirdFlock_C");
+    /** 通用材质UI示例属于项目UI内容包，必须由Monolith制作真实UserWidget蓝图。 */
+    const TCHAR* MaterialLibraryWidgetClass = TEXT(
+        "/DBAUIPack_Core/Development/MaterialLibrary/UI/WBP_DBA_MaterialLibraryReview.WBP_DBA_MaterialLibraryReview_C");
 }
 
 bool UDivineBeastsDemoWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
@@ -86,7 +89,10 @@ void UDivineBeastsDemoWorldSubsystem::RequestDemoOverlay(UWorld& World)
     const FString ClassPath = CurrentPackage == FDivineBeastsPluginDemoMode::GetHubMapPackage()
         ? DivineBeastsDemo::HubWidgetClass
         : (CurrentPackage.StartsWith(TEXT("/Game/Development/BirdFlock/"))
-            ? DivineBeastsDemo::BirdFlockWidgetClass : DivineBeastsDemo::OverlayWidgetClass);
+            ? DivineBeastsDemo::BirdFlockWidgetClass
+            : (CurrentPackage.StartsWith(TEXT("/Game/Development/MaterialLibrary/UI/"))
+                ? DivineBeastsDemo::MaterialLibraryWidgetClass
+                : DivineBeastsDemo::OverlayWidgetClass));
     const FSoftObjectPath WidgetClassPath(ClassPath);
     FGamePlatformResult Requested;
     TWeakObjectPtr<UDivineBeastsDemoWorldSubsystem> WeakThis(this);

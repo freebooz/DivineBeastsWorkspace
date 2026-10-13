@@ -102,6 +102,11 @@ type ConsumeCommand struct {
 	ItemInstanceID   string
 	Quantity         int32
 	ReasonCode       string
+	// 以下四项仅供可信GameServer事件消耗验证器使用，不能当作自行认证证据。
+	SourceEventID    string
+	GameServerID     string
+	ServerBootID     string
+	ItemDefinitionID string
 }
 
 // TrustedConsumeAuthorizer（可信消耗授权端口）必须检查来源游戏服身份与玩家绑定及操作事由。
@@ -128,9 +133,9 @@ type Repository interface {
 
 // Service（背包领域服务）只负责输入约束与仓储编排；身份归属由上游Gateway/PlayerData可信链确定。
 type Service struct {
-	repo Repository
+	repo                     Repository
 	trustedConsumeAuthorizer TrustedConsumeAuthorizer
-	trustedGrantAuthorizer TrustedGrantAuthorizer
+	trustedGrantAuthorizer   TrustedGrantAuthorizer
 }
 
 // NewService（普通背包服务）默认拒绝所有可信服务器专有消耗请求。
@@ -542,6 +547,9 @@ func (r *MemoryRepository) Consume(ctx context.Context, playerID string, cmd Con
 				return 0, 0, itemNotFound()
 			}
 			if item.InstanceState != "active" {
+				return 0, item.Quantity, consumeNotAllowed()
+			}
+			if cmd.ItemDefinitionID != "" && item.ItemDefinitionID != cmd.ItemDefinitionID {
 				return 0, item.Quantity, consumeNotAllowed()
 			}
 			if cmd.Quantity <= 0 || cmd.Quantity > item.Quantity {
