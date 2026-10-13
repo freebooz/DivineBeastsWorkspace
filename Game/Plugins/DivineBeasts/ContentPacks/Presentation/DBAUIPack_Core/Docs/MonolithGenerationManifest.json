@@ -104,6 +104,33 @@
       "AccessibilityErrors": 0,
       "AccessibilityWarnings": 0,
       "FocusNavigation": "RetryButton作为唯一焦点，六向Wrap，中文Tooltip；目录默认焦点为RetryButton。"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Inventory",
+      "用途": "SSLM公共背包页面，显示32格分页、12格快捷栏、物品详情及操作提示。长期库存仍由后端权威持有。",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsInventoryScreen",
+      "GeneratedDate": "2026-10-13",
+      "CreationTool": "Monolith MCP 0.23.0",
+      "WidgetCount": 172,
+      "CompileErrors": 0,
+      "CompileWarnings": 0,
+      "Saved": true,
+      "WidgetTreeReadback": true,
+      "ArtifactBytes": 364316,
+      "ArtifactSha256": "972336e5383fa0c45513014b92270fe4c20f9bee85b53c3adacd3448eac53356",
+      "AccessibilityWarnings": 0,
+      "CommonUIWarnings": 1,
+      "KeyboardGamepadNavigationRules": 216,
+      "AccessibilityReaudit": "widget_count=172, issue_count=0",
+      "FocusReaudit": "unreachable=[], dead_ends=[]; cycles为显式键盘/手柄回绕导航",
+      "RestoreBackup": "Saved/Monolith/InventoryUI20261013/BeforeAccessibility_WBP_DBA_UI_Inventory.uasset",
+      "DefaultFocus": "CloseButton",
+      "EditorIndependentReload": "pending",
+      "ModuleCompilation": "C++源码及静态库已通过；编辑器占用DLL导致LNK1104，尚未完成DLL链接",
+      "RuntimeInputBindings": "源码已实现32格和12格操作接线，待Editor重启后运行验证",
+      "PIE": "pending",
+      "ClientCook": "pending",
+      "ManualVisualAcceptance": "pending"
     }
   ],
   "LatestCombatHUDWidgetDelivery": {

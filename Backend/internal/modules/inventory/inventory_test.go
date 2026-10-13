@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"context"
+	"math"
 	"testing"
 )
 
@@ -241,3 +242,37 @@ func TestTrustedConsumeAuthorityAndIdempotency(t *testing.T) {
 		t.Fatal("物品已删除或修订过期时不能再消耗")
 	}
 }
+
+// 内存仓储达到修订号上限时不能先扣除物品再报告失败；与PG事务回滚语义对齐。
+func TestConsumeAtRevisionLimitIsAtomic(t *testing.T) {
+	ctx := context.Background()
+	const playerID = "player-overflow"
+	repo := NewMemoryRepository()
+	if err := repo.SeedForTest(playerID, []ItemInstance{{
+		ItemInstanceID: "max-revision-item", ItemDefinitionID: "game.item.test",
+		Quantity: 2, ContainerID: DefaultContainerID, SlotIndex: 0,
+		Revision: 1, InstanceState: "active", MaxStackSize: 10,
+	}}); err != nil {
+		t.Fatal(err)
+	}
+
+	repo.mu.Lock()
+	repo.stateLocked(playerID).revision = math.MaxInt64
+	repo.mu.Unlock()
+	_, err := repo.Consume(ctx, playerID, ConsumeCommand{
+		OperationID: "max-revision-consume",
+		ExpectedRevision: math.MaxInt64,
+		ItemInstanceID: "max-revision-item",
+		Quantity: 1,
+		ReasonCode: "item_use",
+	})
+	if err == nil {
+		t.Fatal("修订号不能递增时，消费必须失败")
+	}
+	snapshot, err := repo.GetSnapshot(ctx, playerID)
+	if err != nil || snapshot.InventoryRevision != math.MaxInt64 ||
+		len(snapshot.Items) != 1 || snapshot.Items[0].Quantity != 2 {
+		t.Fatalf("失败事务不得改动库存和修订号: %+v %v", snapshot, err)
+	}
+}
+

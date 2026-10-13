@@ -2,6 +2,11 @@
 
 本目录用于平台层苔藓、积雪和湿润相关源纹理与真实虚幻编辑器资产制作脚本，不承担网络天气权威。
 
+## 通用材质函数首批UE编辑器作者脚本（2026-10-13）
+
+`AuthorMaterialCoreFunctionsUE58.py`（真实UE5.8五函数作者）包含高度混合、宏微观混合、地形生物群落遮罩、距离细节与结霜PBR；默认`--mode inspect`（仅规划），必须在确认的正式UE编辑器内显式选择`--mode apply`（真实创建）或`--mode verify`（已保存资产只读验证）。已存在资产保持原状，绝不为了重排函数而覆盖旧包。`Tools/Unreal/VFX/AuthorVFXMaterialFunctionsUE58.py`（平台VFX三函数作者）采用相同原则；`Tests/Assets/TestMaterialFunctionAuthoringScripts.py`（离线节点拓扑测试）不是UE Shader验收。完整身份、三层归属与实际阻断见`Docs/Implementation/Materials/MaterialAuthoringBatch_20261013.md`（首批八函数实施记录）。
+
+
 ## 苔藓—积雪PBR材质制作流程
 
 1. 运行 `python Tools/Unreal/Surface/GenerateMossPBRSourceArt.py --create` 生成五张可平铺源图（平台SourceArt）；后续运行 `--verify` 只读验收源图哈希、尺寸和拼接边界。

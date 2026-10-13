@@ -1,6 +1,10 @@
 #include "Screens/Inventory/DivineBeastsInventoryScreen.h"
 
 #include "Engine/LocalPlayer.h"
+#include "Components/Button.h"
+#include "Components/TextBlock.h"
+#include "UObject/StrongObjectPtr.h"
+
 // 背包领域中文提示的稳定本地化命名空间，仅供项目视觉层使用。
 #define LOCTEXT_NAMESPACE "DivineBeastsInventoryScreen"
 
@@ -12,6 +16,43 @@ const TArray<FGamePlatformInventoryItemViewModel>& EmptyInventoryItems()
     static const TArray<FGamePlatformInventoryItemViewModel> Empty;
     return Empty;
 }
+}
+
+// 每个可见格拥有专用的无参数Button点击回调转接；弱引用确保跨世界退出无悬挂页面。
+void UDivineBeastsInventoryButtonProxy::Bind(
+    UDivineBeastsInventoryScreen* Screen, UButton* Button, int32 Index, bool bQuickbar)
+{
+    Unbind();
+    if (!IsValid(Screen) || !IsValid(Button) || Index < 0)
+    {
+        return;
+    }
+    ScreenOwner = Screen;
+    ButtonOwner = Button;
+    LocalIndex = Index;
+    bIsQuickbar = bQuickbar;
+    Button->OnClicked.AddUniqueDynamic(this, &UDivineBeastsInventoryButtonProxy::HandleButtonClicked);
+}
+
+void UDivineBeastsInventoryButtonProxy::Unbind()
+{
+    if (UButton* Button = ButtonOwner.Get())
+    {
+        Button->OnClicked.RemoveDynamic(this, &UDivineBeastsInventoryButtonProxy::HandleButtonClicked);
+    }
+    ScreenOwner.Reset();
+    ButtonOwner.Reset();
+    LocalIndex = INDEX_NONE;
+    bIsQuickbar = false;
+}
+
+void UDivineBeastsInventoryButtonProxy::HandleButtonClicked()
+{
+    if (UDivineBeastsInventoryScreen* Screen = ScreenOwner.Get();
+        IsValid(Screen) && Screen->IsActivated())
+    {
+        Screen->HandleInventoryCellClicked(LocalIndex, bIsQuickbar);
+    }
 }
 
 EGamePlatformInventoryClientState
@@ -320,9 +361,418 @@ FGuid UDivineBeastsInventoryScreen::RequestClearInventoryQuickbar(int32 SlotInde
         : FGuid();
 }
 
+
+void UDivineBeastsInventoryScreen::BindNamedActionButtons()
+{
+    // 命名按钮均由Monolith真实资产拥有；仅为其添加业务请求代理，不动态构造界面树。
+#define DBA_BIND_INVENTORY_BUTTON(Name, Method) \
+    if (UButton* Button = Cast<UButton>(GetWidgetFromName(TEXT(Name)))) \
+    { Button->OnClicked.AddUniqueDynamic(this, &UDivineBeastsInventoryScreen::Method); }
+    DBA_BIND_INVENTORY_BUTTON("CloseButton", HandleCloseButtonClicked)
+    DBA_BIND_INVENTORY_BUTTON("PrevPageButton", HandlePrevPageClicked)
+    DBA_BIND_INVENTORY_BUTTON("NextPageButton", HandleNextPageClicked)
+    DBA_BIND_INVENTORY_BUTTON("RefreshButton", HandleRefreshClicked)
+    DBA_BIND_INVENTORY_BUTTON("RetryButton", HandleRetryClicked)
+    DBA_BIND_INVENTORY_BUTTON("MoveButton", HandleMoveClicked)
+    DBA_BIND_INVENTORY_BUTTON("SplitButton", HandleSplitClicked)
+    DBA_BIND_INVENTORY_BUTTON("MergeButton", HandleMergeClicked)
+    DBA_BIND_INVENTORY_BUTTON("BindQuickbarButton", HandleBindQuickbarClicked)
+    DBA_BIND_INVENTORY_BUTTON("ClearQuickbarButton", HandleClearQuickbarClicked)
+#undef DBA_BIND_INVENTORY_BUTTON
+}
+
+void UDivineBeastsInventoryScreen::UnbindNamedActionButtons()
+{
+    // 不清除他人持有的监听器：只撤本页面注册的准确目标函数。
+#define DBA_UNBIND_INVENTORY_BUTTON(Name, Method) \
+    if (UButton* Button = Cast<UButton>(GetWidgetFromName(TEXT(Name)))) \
+    { Button->OnClicked.RemoveDynamic(this, &UDivineBeastsInventoryScreen::Method); }
+    DBA_UNBIND_INVENTORY_BUTTON("CloseButton", HandleCloseButtonClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("PrevPageButton", HandlePrevPageClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("NextPageButton", HandleNextPageClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("RefreshButton", HandleRefreshClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("RetryButton", HandleRetryClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("MoveButton", HandleMoveClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("SplitButton", HandleSplitClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("MergeButton", HandleMergeClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("BindQuickbarButton", HandleBindQuickbarClicked)
+    DBA_UNBIND_INVENTORY_BUTTON("ClearQuickbarButton", HandleClearQuickbarClicked)
+#undef DBA_UNBIND_INVENTORY_BUTTON
+}
+
+void UDivineBeastsInventoryScreen::BindInventoryVisualControls()
+{
+    if (bVisualControlsBound || !IsActivated())
+    {
+        return;
+    }
+
+    bVisualControlsBound = true;
+    SlotButtonProxies.Reserve(SlotsPerPage + 12);
+    for (int32 Index = 0; Index < SlotsPerPage + 12; ++Index)
+    {
+        const bool bQuickbar = Index >= SlotsPerPage;
+        const int32 LocalIndex = bQuickbar ? Index - SlotsPerPage : Index;
+        // UE的Printf格式必须使用静态格式字面量，避免动态格式与错误归属。
+        const FString Name = bQuickbar
+            ? FString::Printf(TEXT("QuickButton_%d"), LocalIndex)
+            : FString::Printf(TEXT("SlotButton_%d"), LocalIndex);
+        if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*Name))))
+        {
+            UDivineBeastsInventoryButtonProxy* Proxy =
+                NewObject<UDivineBeastsInventoryButtonProxy>(this);
+            Proxy->Bind(this, Button, LocalIndex, bQuickbar);
+            SlotButtonProxies.Add(Proxy);
+        }
+    }
+    BindNamedActionButtons();
+}
+
+void UDivineBeastsInventoryScreen::UnbindInventoryVisualControls()
+{
+    if (!bVisualControlsBound)
+    {
+        return;
+    }
+    bVisualControlsBound = false;
+    UnbindNamedActionButtons();
+    for (UDivineBeastsInventoryButtonProxy* Proxy : SlotButtonProxies)
+    {
+        if (IsValid(Proxy)) { Proxy->Unbind(); }
+    }
+    SlotButtonProxies.Reset();
+    // 页面重新激活或玩家切号都需要重新选择来源；不得保留旧账号物品身份。
+    SelectedItemInstanceId.Reset();
+    SelectedQuickbarIndex = 0;
+    TargetAction = ETargetAction::None;
+    ActionHint = FText::GetEmpty();
+    PageIndex = 0;
+}
+
+void UDivineBeastsInventoryScreen::SetInventoryHint(const FText& Hint)
+{
+    ActionHint = Hint;
+    RefreshInventoryVisuals();
+}
+
+void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
+{
+    if (!bVisualControlsBound || bRefreshingVisuals)
+    {
+        return;
+    }
+    TGuardValue<bool> RefreshGuard(bRefreshingVisuals, true);
+    const UGamePlatformInventoryClientSubsystem* Service = ResolveInventorySubsystem();
+    const int32 Capacity = IsValid(Service)
+        ? Service->GetContainerCapacity(SelectedContainerId) : 0;
+    PageIndex = Capacity > 0 ? FMath::Clamp(PageIndex, 0, (Capacity - 1) / SlotsPerPage) : 0;
+    const bool bReady = CanModifyInventory();
+    const int32 PageStart = PageIndex * SlotsPerPage;
+
+    const TArray<FGamePlatformInventorySlotViewModel> Slots = IsValid(Service)
+        ? Service->GetContainerSlotPage(SelectedContainerId, PageStart, SlotsPerPage)
+        : TArray<FGamePlatformInventorySlotViewModel>();
+    const TArray<FGamePlatformInventoryQuickbarViewModel> Quickbar = IsValid(Service)
+        ? Service->GetQuickbarSlots()
+        : TArray<FGamePlatformInventoryQuickbarViewModel>();
+
+    const auto SetText = [this](const FString& WidgetName, const FText& Value)
+    {
+        if (UTextBlock* Label = Cast<UTextBlock>(GetWidgetFromName(FName(*WidgetName))))
+        {
+            Label->SetText(Value);
+        }
+    };
+    const auto SetButtonEnabled = [this](const TCHAR* Name, bool bEnabled)
+    {
+        if (UButton* Button = Cast<UButton>(GetWidgetFromName(Name)))
+        {
+            Button->SetIsEnabled(bEnabled);
+        }
+    };
+    // 仅遍历服务器快照一次求已占用格数，不构造整份物品副本。
+    int32 OccupiedCount = 0;
+    if (IsValid(Service) && Capacity > 0)
+    {
+        for (const FGamePlatformInventoryItemInstance& Item : Service->GetSnapshot().Items)
+        {
+            if (Item.ContainerId == SelectedContainerId) { ++OccupiedCount; }
+        }
+    }
+    SetText(TEXT("CapacityText"), FText::Format(
+        LOCTEXT("InventoryCapacity", "已占用 {0} / {1} 格"),
+        FText::AsNumber(OccupiedCount), FText::AsNumber(Capacity)));
+    SetText(TEXT("StatusText"), ActionHint.IsEmpty()
+        ? GetInventoryStateText()
+        : FText::Format(LOCTEXT("InventoryStatusAndHint", "{0} · {1}"),
+                        GetInventoryStateText(), ActionHint));
+    SetText(TEXT("ErrorText"), GetInventoryErrorText());
+    SetText(TEXT("PageIndicator"), FText::Format(
+        LOCTEXT("InventoryPage", "第 {0} / {1} 页"),
+        FText::AsNumber(PageIndex + 1),
+        FText::AsNumber(FMath::Max(1, (Capacity + SlotsPerPage - 1) / SlotsPerPage))));
+    SetButtonEnabled(TEXT("PrevPageButton"), PageIndex > 0);
+    SetButtonEnabled(TEXT("NextPageButton"), PageStart + SlotsPerPage < Capacity);
+
+    for (int32 Index = 0; Index < SlotsPerPage; ++Index)
+    {
+        const FGamePlatformInventorySlotViewModel* ProjectedSlot =
+            Slots.IsValidIndex(Index) ? &Slots[Index] : nullptr;
+        const bool bOccupied = ProjectedSlot && ProjectedSlot->bOccupied;
+        FString LabelText;
+        if (!ProjectedSlot) { LabelText = TEXT(""); }
+        else if (!bOccupied)
+        {
+            LabelText = FString::Printf(TEXT("%02d"), ProjectedSlot->SlotIndex + 1);
+        }
+        else
+        {
+            // 图标目录尚未完成时仅展示权威物品定义短标识，完整标识放入工具提示。
+            const FString DefinitionName = ProjectedSlot->Item.ItemDefinitionId.ToString();
+            LabelText = DefinitionName.Left(7) +
+                FString::Printf(TEXT("\n×%d"), ProjectedSlot->Item.Quantity);
+            if (ProjectedSlot->Item.bPending) { LabelText += TEXT("…"); }
+        }
+        SetText(FString::Printf(TEXT("SlotText_%d"), Index), FText::FromString(LabelText));
+        const FString ButtonName = FString::Printf(TEXT("SlotButton_%d"), Index);
+        if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*ButtonName))))
+        {
+            Button->SetIsEnabled(ProjectedSlot && bReady);
+            Button->SetBackgroundColor(
+                bOccupied && ProjectedSlot->Item.ItemInstanceId == SelectedItemInstanceId
+                ? FLinearColor(0.34f, 0.55f, 0.40f, 1.0f)
+                : FLinearColor(0.12f, 0.24f, 0.22f, 1.0f));
+            Button->SetToolTipText(
+                bOccupied
+                ? FText::FromString(ProjectedSlot->Item.ItemDefinitionId.ToString())
+                : LOCTEXT("InventoryEmptySlot", "空背包格"));
+        }
+    }
+
+    for (int32 Index = 0; Index < 12; ++Index)
+    {
+        const FGamePlatformInventoryQuickbarViewModel* Quick =
+            Quickbar.IsValidIndex(Index) ? &Quickbar[Index] : nullptr;
+        FString LabelText = FString::FromInt(Index + 1);
+        if (Quick && Quick->bAssigned)
+        {
+            LabelText = Quick->Item.ItemDefinitionId.ToString().Left(9) +
+                FString::Printf(TEXT("\n×%d"), Quick->Item.Quantity);
+        }
+        if (Quick && Quick->bPending) { LabelText += TEXT("…"); }
+        SetText(FString::Printf(TEXT("QuickText_%d"), Index), FText::FromString(LabelText));
+        const FString ButtonName = FString::Printf(TEXT("QuickButton_%d"), Index);
+        if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*ButtonName))))
+        {
+            Button->SetIsEnabled(bReady);
+            Button->SetBackgroundColor(Index == SelectedQuickbarIndex
+                ? FLinearColor(0.38f, 0.48f, 0.28f, 1.0f)
+                : FLinearColor(0.14f, 0.24f, 0.23f, 1.0f));
+        }
+    }
+
+    const FGamePlatformInventoryItemInstance* Selected = IsValid(Service) &&
+        !SelectedItemInstanceId.IsEmpty() ? Service->FindItem(SelectedItemInstanceId) : nullptr;
+    SetText(TEXT("SelectedItemName"), Selected
+        ? FText::FromName(Selected->ItemDefinitionId)
+        : LOCTEXT("InventorySelectItem", "请选择物品"));
+    SetText(TEXT("SelectedItemCount"), Selected
+        ? FText::Format(LOCTEXT("InventorySelectedQuantity", "数量 {0} · 堆叠上限 {1}"),
+            FText::AsNumber(Selected->Quantity), FText::AsNumber(Selected->MaxStackSize))
+        : FText::GetEmpty());
+    SetText(TEXT("SelectedItemDescription"), Selected
+        ? LOCTEXT("InventoryDefinitionPending", "正式物品名称和说明未加载，当前显示服务器物品标识。")
+        : LOCTEXT("InventorySelectHint", "选择物品格，可查看数量并进行整理操作。"));
+    SetButtonEnabled(TEXT("MoveButton"), bReady && Selected);
+    SetButtonEnabled(TEXT("SplitButton"), bReady && Selected && Selected->Quantity > 1);
+    SetButtonEnabled(TEXT("MergeButton"), bReady && Selected && Selected->MaxStackSize > 1);
+    SetButtonEnabled(TEXT("BindQuickbarButton"), bReady && Selected);
+    SetButtonEnabled(TEXT("ClearQuickbarButton"), bReady &&
+        Quickbar.IsValidIndex(SelectedQuickbarIndex) &&
+        Quickbar[SelectedQuickbarIndex].bAssigned);
+    SetButtonEnabled(TEXT("RefreshButton"), IsValid(Service) &&
+        !Service->HasPendingOperation() &&
+        (Service->GetState() == EGamePlatformInventoryClientState::Ready ||
+         Service->GetState() == EGamePlatformInventoryClientState::Error));
+    SetButtonEnabled(TEXT("RetryButton"), IsValid(Service) &&
+        Service->HasPendingOperation() &&
+        Service->GetState() == EGamePlatformInventoryClientState::Error);
+}
+
+
+void UDivineBeastsInventoryScreen::HandleInventoryCellClicked(int32 LocalIndex, bool bQuickbar)
+{
+    if (!IsActivated() || !CanModifyInventory())
+    {
+        return;
+    }
+    UGamePlatformInventoryClientSubsystem* Service = ResolveInventorySubsystem();
+    if (!IsValid(Service))
+    {
+        return;
+    }
+
+    if (bQuickbar)
+    {
+        if (LocalIndex < 0 || LocalIndex >= 12) { return; }
+        SelectedQuickbarIndex = LocalIndex;
+        TargetAction = ETargetAction::None;
+        const TArray<FGamePlatformInventoryQuickbarViewModel> Quickbar = Service->GetQuickbarSlots();
+        if (SelectedItemInstanceId.IsEmpty() &&
+            Quickbar.IsValidIndex(LocalIndex) && Quickbar[LocalIndex].bAssigned)
+        {
+            SelectedItemInstanceId = Quickbar[LocalIndex].Item.ItemInstanceId;
+        }
+        SetInventoryHint(FText::Format(
+            LOCTEXT("InventoryQuickbarSelected", "已选择快捷栏第 {0} 格"),
+            FText::AsNumber(LocalIndex + 1)));
+        return;
+    }
+
+    if (LocalIndex < 0 || LocalIndex >= SlotsPerPage) { return; }
+    const int32 AbsoluteSlot = PageIndex * SlotsPerPage + LocalIndex;
+    FGamePlatformInventorySlotViewModel Target;
+    if (!Service->TryGetContainerSlot(SelectedContainerId, AbsoluteSlot, Target))
+    {
+        return;
+    }
+
+    if (TargetAction != ETargetAction::None &&
+        !SelectedItemInstanceId.IsEmpty())
+    {
+        const FGamePlatformInventoryItemInstance* Source = Service->FindItem(SelectedItemInstanceId);
+        if (!Source)
+        {
+            SelectedItemInstanceId.Reset();
+            TargetAction = ETargetAction::None;
+            SetInventoryHint(LOCTEXT("InventorySourceGone", "物品已变化，请重新选择。"));
+            return;
+        }
+        FGuid Accepted;
+        switch (TargetAction)
+        {
+        case ETargetAction::Move:
+            Accepted = RequestDropInventoryItem(
+                SelectedItemInstanceId, SelectedContainerId, AbsoluteSlot, false);
+            break;
+        case ETargetAction::Merge:
+            if (Target.bOccupied && Target.Item.ItemInstanceId != SelectedItemInstanceId &&
+                Target.Item.ItemDefinitionId == Source->ItemDefinitionId)
+            {
+                Accepted = RequestMergeItem(SelectedItemInstanceId, Target.Item.ItemInstanceId);
+            }
+            break;
+        case ETargetAction::Split:
+            // 常用整理快捷操作：拆出半堆到空格；精确数量仍可走已有Blueprint命令参数接口。
+            if (!Target.bOccupied && Source->Quantity > 1)
+            {
+                Accepted = RequestSplitItem(
+                    SelectedItemInstanceId, FMath::Max(1, Source->Quantity / 2),
+                    SelectedContainerId, AbsoluteSlot);
+            }
+            break;
+        default: break;
+        }
+        if (Accepted.IsValid())
+        {
+            TargetAction = ETargetAction::None;
+            SetInventoryHint(LOCTEXT("InventoryCommandAccepted", "已提交操作，等待服务器确认。"));
+        }
+        else
+        {
+            SetInventoryHint(LOCTEXT("InventoryInvalidTarget", "目标格不满足操作条件，请重新选择。"));
+        }
+        return;
+    }
+
+    SelectedItemInstanceId = Target.bOccupied ? Target.Item.ItemInstanceId : FString();
+    SetInventoryHint(Target.bOccupied
+        ? LOCTEXT("InventoryItemSelected", "已选中物品，可选择移动、拆分、合并或快捷栏。")
+        : LOCTEXT("InventorySlotEmpty", "这是空背包格。"));
+}
+
+void UDivineBeastsInventoryScreen::HandleCloseButtonClicked()
+{
+    // 平台层统一关闭页面，不能直接RemoveFromParent绕过CommonUI层栈。
+    CloseScreen();
+}
+
+void UDivineBeastsInventoryScreen::HandlePrevPageClicked()
+{
+    if (PageIndex > 0) { --PageIndex; RefreshInventoryVisuals(); }
+}
+
+void UDivineBeastsInventoryScreen::HandleNextPageClicked()
+{
+    const int32 Capacity = GetInventoryContainerCapacity(SelectedContainerId);
+    if ((PageIndex + 1) * SlotsPerPage < Capacity)
+    {
+        ++PageIndex;
+        RefreshInventoryVisuals();
+    }
+}
+
+void UDivineBeastsInventoryScreen::HandleRefreshClicked()
+{
+    if (RefreshInventory()) { SetInventoryHint(LOCTEXT("InventoryRefreshing", "正在向服务器读取完整背包快照。")); }
+}
+
+void UDivineBeastsInventoryScreen::HandleRetryClicked()
+{
+    if (HasPendingInventoryOperation() && RetryPendingInventoryOperation())
+    {
+        SetInventoryHint(LOCTEXT("InventoryRetryOriginal", "已按原操作编号查询服务器结果。"));
+    }
+}
+
+void UDivineBeastsInventoryScreen::HandleMoveClicked()
+{
+    if (!CanModifyInventory() || SelectedItemInstanceId.IsEmpty()) { return; }
+    TargetAction = ETargetAction::Move;
+    SetInventoryHint(LOCTEXT("InventoryMoveTarget", "请选择目标物品格（目标已有物品时交换位置）。"));
+}
+
+void UDivineBeastsInventoryScreen::HandleSplitClicked()
+{
+    const UGamePlatformInventoryClientSubsystem* Service = ResolveInventorySubsystem();
+    const FGamePlatformInventoryItemInstance* Source =
+        IsValid(Service) ? Service->FindItem(SelectedItemInstanceId) : nullptr;
+    if (!CanModifyInventory() || !Source || Source->Quantity <= 1) { return; }
+    TargetAction = ETargetAction::Split;
+    SetInventoryHint(FText::Format(
+        LOCTEXT("InventorySplitTarget", "请选择空格，将当前堆叠的一半（{0}个）拆出。"),
+        FText::AsNumber(FMath::Max(1, Source->Quantity / 2))));
+}
+
+void UDivineBeastsInventoryScreen::HandleMergeClicked()
+{
+    if (!CanModifyInventory() || SelectedItemInstanceId.IsEmpty()) { return; }
+    TargetAction = ETargetAction::Merge;
+    SetInventoryHint(LOCTEXT("InventoryMergeTarget", "请选择相同物品的另一堆，数量不能超过上限。"));
+}
+
+void UDivineBeastsInventoryScreen::HandleBindQuickbarClicked()
+{
+    if (!CanModifyInventory() || SelectedItemInstanceId.IsEmpty()) { return; }
+    const FGuid Accepted = RequestSetInventoryQuickbar(SelectedQuickbarIndex, SelectedItemInstanceId);
+    SetInventoryHint(Accepted.IsValid()
+        ? LOCTEXT("InventoryBindRequested", "已提交快捷栏绑定，等待服务器确认。")
+        : LOCTEXT("InventoryBindRejected", "暂时无法将此物品放入快捷栏。"));
+}
+
+void UDivineBeastsInventoryScreen::HandleClearQuickbarClicked()
+{
+    if (!CanModifyInventory()) { return; }
+    const FGuid Accepted = RequestClearInventoryQuickbar(SelectedQuickbarIndex);
+    SetInventoryHint(Accepted.IsValid()
+        ? LOCTEXT("InventoryUnbindRequested", "已请求清除快捷栏引用，物品仍保留在背包。")
+        : LOCTEXT("InventoryUnbindRejected", "清除快捷栏请求未被受理。"));
+}
+
 void UDivineBeastsInventoryScreen::BindUIEvents()
 {
     Super::BindUIEvents();
+    BindInventoryVisualControls();
 
     InventorySubsystem = ResolveInventorySubsystem();
     if (IsValid(InventorySubsystem) &&
@@ -337,6 +787,7 @@ void UDivineBeastsInventoryScreen::BindUIEvents()
 
 void UDivineBeastsInventoryScreen::UnbindUIEvents()
 {
+    UnbindInventoryVisualControls();
     if (IsValid(InventorySubsystem) &&
         InventoryChangedHandle.IsValid())
     {
@@ -346,6 +797,12 @@ void UDivineBeastsInventoryScreen::UnbindUIEvents()
     InventorySubsystem = nullptr;
 
     Super::UnbindUIEvents();
+}
+
+void UDivineBeastsInventoryScreen::NativeDestruct()
+{
+    UnbindInventoryVisualControls();
+    Super::NativeDestruct();
 }
 
 void UDivineBeastsInventoryScreen::RefreshInitialState()
@@ -360,12 +817,25 @@ void UDivineBeastsInventoryScreen::HandleInventoryChanged()
         ResolveInventorySubsystem();
     if (!IsValid(Subsystem))
     {
+        // 无所属账号时必须同时清除前一个玩家的选择及视觉投影。
+        SelectedItemInstanceId.Reset();
+        TargetAction = ETargetAction::None;
+        ActionHint = FText::GetEmpty();
+        RefreshInventoryVisuals();
         BP_OnInventoryViewChanged(
-            0,
-            EGamePlatformInventoryClientState::Uninitialized,
-            false);
+            0, EGamePlatformInventoryClientState::Uninitialized, false);
         return;
     }
+
+    if (Subsystem->GetInventoryRevision() <= 0 ||
+        (!SelectedItemInstanceId.IsEmpty() &&
+         !Subsystem->FindItem(SelectedItemInstanceId)))
+    {
+        SelectedItemInstanceId.Reset();
+        TargetAction = ETargetAction::None;
+        ActionHint = FText::GetEmpty();
+    }
+    RefreshInventoryVisuals();
 
     BP_OnInventoryViewChanged(
         Subsystem->GetInventoryRevision(),

@@ -218,8 +218,9 @@ def main() -> None:
         asset = lib.load_asset(package) if lib.does_asset_exist(package) else None
         if asset is not None and not isinstance(asset, unreal.MaterialFunction):
             raise TypeError("已有同名包但不是MaterialFunction：" + package)
-        if asset is None and on_disk_package(package).exists():
-            raise RuntimeError("磁盘资源未注册但物理包已占用，禁止创建覆盖：" + package)
+        physical = on_disk_package(package)
+        if asset is None and any(physical.with_suffix(suffix).exists() for suffix in (".uasset", ".uexp", ".ubulk", ".umap")):
+            raise RuntimeError("磁盘资源或侧车文件未注册但物理包已占用，禁止创建覆盖：" + package)
         if options.mode == "verify" and asset is None:
             raise FileNotFoundError("UE尚未制作目标函数：" + package)
 

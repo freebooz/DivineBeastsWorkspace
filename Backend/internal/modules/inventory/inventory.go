@@ -615,16 +615,14 @@ func (r *MemoryRepository) mutate(
 		result.Duplicate = true
 		return result, nil
 	}
-	if state.revision != expectedRevision {
+	if state.revision != expectedRevision || state.revision == math.MaxInt64 {
+		// 内存联调仓储必须在任何扣除/交换副作用之前拒绝不可递增的修订号。
 		return MutationResult{}, revisionConflict()
 	}
 
 	moved, remaining, err := apply(state)
 	if err != nil {
 		return MutationResult{}, err
-	}
-	if state.revision == math.MaxInt64 {
-		return MutationResult{}, revisionConflict()
 	}
 	state.revision++
 	result := MutationResult{

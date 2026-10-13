@@ -37,6 +37,8 @@ void ADivineBeastsWorldPlayerController::SetupInputComponent()
     InputComponent->BindAction(TEXT("DBA.Jump"), IE_Pressed, this, &ThisClass::BeginWorldJump);
     InputComponent->BindAction(TEXT("DBA.Jump"), IE_Released, this, &ThisClass::EndWorldJump);
     InputComponent->BindAction(TEXT("DBA.SystemMenu"), IE_Pressed, this, &ThisClass::RequestWorldMenu);
+    // 原生I键只作为世界UI意图；不在双端World模块实例化或操纵任何Widget。
+    InputComponent->BindAction(TEXT("DBA.Inventory"), IE_Pressed, this, &ThisClass::RequestWorldInventory);
 }
 
 bool ADivineBeastsWorldPlayerController::CanProcessWorldInput() const
@@ -223,6 +225,15 @@ void ADivineBeastsWorldPlayerController::RequestWorldMenu()
     if (IsLocalController() && IsWorldGameplayActive()) OnWorldEscapeRequested.Broadcast();
 }
 
+void ADivineBeastsWorldPlayerController::RequestWorldInventory()
+{
+    // 不能在登录、角色入口、服务器角色或世界准备未完成时打开背包。
+    if (IsLocalController() && IsWorldGameplayActive())
+    {
+        OnWorldInventoryRequested.Broadcast();
+    }
+}
+
 void ADivineBeastsWorldPlayerController::PostProcessInput(float DeltaTime, bool bGamePaused)
 {
     Super::PostProcessInput(DeltaTime, bGamePaused);
@@ -330,7 +341,9 @@ void ADivineBeastsWorldPlayerController::OnUnPossess()
 }
 void ADivineBeastsWorldPlayerController::EndPlay(const EEndPlayReason::Type Reason)
 {
-    ResetWorldInput(); InputPawn.Reset(); bWorldInputActive = false; OnWorldEscapeRequested.Clear();
+    ResetWorldInput(); InputPawn.Reset(); bWorldInputActive = false;
+    OnWorldEscapeRequested.Clear();
+    OnWorldInventoryRequested.Clear();
     UpdateWorldInputLocks(false);
     OnPreparationChanged.RemoveAll(this); GetWorld()->GameStateSetEvent.RemoveAll(this);
     if(ObservedPlayer.IsValid()) ObservedPlayer->OnLifecycleChanged.RemoveAll(this);

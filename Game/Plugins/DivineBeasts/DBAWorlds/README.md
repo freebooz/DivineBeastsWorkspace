@@ -40,6 +40,8 @@ UI已处理的点击在GameAndUI阶段不会交给世界后备输入；未处理
 
 菜单由客户端订阅`OnWorldEscapeRequested`，使用`SetWorldGameplayInputSuspended`暂停/恢复本地输入；共享DBAWorldsRuntime不依赖UIClient。菜单暂停、引擎失焦FlushPressedKeys、Pawn变更和EndPlay都清除鼠标按住、待消费移动、跳跃及ASC按住命令。暂停期间UI拥有UIOnly焦点，控制器清理不覆盖该输入模式。该暂停不修改服务器Active或玩家准入。世界控制器只申请/释放自身各一次Move/Look输入锁，幂等事实刷新不会累计；不调用ResetIgnore输入接口清零其他系统的锁，外部Look锁也禁止镜头和键盘转向。
 
+2026-10-13背包输入：`Game/Config/DefaultInput.ini`（项目默认输入映射）登记`DBA.Inventory`（背包输入语义）为`I`键。`ADivineBeastsWorldPlayerController`（双端世界控制器）只在本地且世界游戏态Active时广播`OnWorldInventoryRequested`（本地背包意图），不持有UI或背包权威数据；`DBAClient`（项目客户端）负责订阅、切换页面，换控制器和EndPlay精确撤销。移动端仍需项目HUD正式背包按钮适配。已添加`TestWorldControls.ps1`（世界控制静态门禁）的键位及委托检查；独立UE目标编译、输入焦点和设备运行仍待验证。
+
 `Private/Gameplay/DivineBeastsWorldControlState.h`为当前Controller的纯鼠标组合策略；`Private/Tests/DivineBeastsWorldControlsTests.cpp`同时支持UE Automation逻辑用例`DivineBeasts.World.Controls.MouseAndMovement`与独立原生策略编译。`Tests/Integration/World/TestWorldControls.ps1`检查键位冲突、清理接线与双端隔离，可通过`-PolicyExecutable`运行当前源码的独立测试产物。已执行MSVC纯策略及静态检查；未由本子任务执行UE构建、视口操作、Cook或联机，输入手感、真实UI命中、焦点和角色网络朝向仍需要对应运行证据。
 
 官方按键参考：[基础移动说明](https://worldofwarcraft.blizzard.com/en-us/news/20151231/welcome-to-world-of-warcraft-basic-movement-and-combat)、[经典版官方手册](https://eu.media.blizzard.com/manuals/wow/eu/classic/wow-classic-manual-enGB.pdf)。鼠标原位恢复和滚轮范围为本项目明确策略，不冒充官方手册中的数值。

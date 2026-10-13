@@ -17,6 +17,8 @@ public:
     FSimpleMulticastDelegate OnLocalWorldFactsChanged;
     /** 本地ESC意图；UI客户端拥有订阅和菜单，共享世界模块不依赖客户端UI实现。 */
     FSimpleMulticastDelegate OnWorldEscapeRequested;
+    /** I键只发出本地背包开关意图；世界双端控制器不依赖UI实现，不授予或消耗道具。 */
+    FSimpleMulticastDelegate OnWorldInventoryRequested;
     /** 游戏线程设置本地界面暂停；true清除拖动/按键/技能并恢复光标，false仅在服务器Active时恢复世界输入。 */
     void SetWorldGameplayInputSuspended(bool bSuspended);
     /** 游戏线程幂等重算，只提交完整准备事实；缺组件/旧令牌时保持输入关闭。 */
@@ -106,4 +108,6 @@ private:
     void EndWorldJump();
     /** 只广播本地ESC请求，菜单创建、退出命令与界面焦点由客户端所有。 */
     void RequestWorldMenu();
+    /** 仅真实本地且世界Active时发布背包页面意图；实际显示/关闭由客户端UI自行判断。 */
+    void RequestWorldInventory();
 };

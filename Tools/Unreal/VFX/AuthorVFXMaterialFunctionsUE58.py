@@ -158,8 +158,8 @@ def main() -> None:
         found = assets.load_asset(path) if assets.does_asset_exist(path) else None
         if found is not None and not isinstance(found, unreal.MaterialFunction):
             raise TypeError("原有资产类别冲突：" + path)
-        if found is None and package.exists():
-            raise RuntimeError("现有物理包未被注册，拒绝同名写入：" + str(package))
+        if found is None and any(package.with_suffix(suffix).exists() for suffix in (".uasset", ".uexp", ".ubulk", ".umap")):
+            raise RuntimeError("现有物理包或侧车文件未被注册，拒绝同名写入：" + str(package))
         if opts.mode == "verify" and found is None:
             raise FileNotFoundError("尚未创建UE材质函数：" + path)
 

@@ -135,3 +135,23 @@ func TestInventoryMoveParsesStringRevisionAndRejectsUnauthenticated(t *testing.T
 		t.Fatalf("无效Token必须返回401，实际=%d", unauthorizedRecorder.Code)
 	}
 }
+
+
+// 公网不得提供Grant/Consume写入；即使持有效玩家令牌也不等于拥有游戏服授予/使用权。
+func TestInventoryConsumeIsNotPublicGatewayRoute(t *testing.T) {
+	playerData := &inventoryPlayerFake{}
+	handler := NewAPI(Config{}, fakeIdentity{}, playerData, fakeParty{}, fakeMatchmaking{})
+	for _, route := range []string{"/v1/inventory/consume", "/v1/inventory/grant"} {
+		request := httptest.NewRequest(http.MethodPost, route, strings.NewReader(`{"operationId":"untrusted-1","itemInstanceId":"item-1","quantity":1}`))
+		request.Header.Set("Authorization", "Bearer access-1")
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusNotFound && response.Code != http.StatusMethodNotAllowed {
+			t.Fatalf("普通Gateway不允许%q修改库存，实际HTTP=%d", route, response.Code)
+		}
+	}
+	if playerData.lastPlayerID != "" {
+		t.Fatalf("拒绝的非公开路由不得调用PlayerData库存端口: %s", playerData.lastPlayerID)
+	}
+}

@@ -11,7 +11,7 @@
 5. Monolith（引擎编辑器连接服务）状态接口报告server healthy（服务进程正常）；实际调用返回“Unreal Editor not running”（虚幻编辑器未运行），因此**本轮没有执行引擎图形资产创建、Shader编译或保存回读**。
 6. 已检测同工作区仍有另一个会话的长寿命Runner进程与排队任务；不终止他人进程，不在未知资产状态下强制启动共享Editor。
 7. 已通过Cwebcodex导出项目机器台账和中文索引，独立用Python读取导出副本核对：201条记录、201个唯一能力ID、29个P2核心候选、7个稳定MF合同；机器分类数量为MF 98、Other 60、NativeReuse 24、ML 12、ExistingContract 7。Markdown索引中的201个编号无重复。此为**导出文件的结构检查**，不是Runner中的全套静态验证，也不是UE资源验收。
-8. 正式Runner发起了`python Tests/Architecture/ValidateMaterialCapabilityRegistry.py`（能力台账验证），但截至本次记录该作业仍为agent_queued（等待执行），没有退出码和测试输出；不能称其通过。
+8. 正式Runner曾提交`python Tests/Architecture/ValidateMaterialCapabilityRegistry.py`（能力台账验证），因队列长期占满、命令从未启动，后续已停止该排队作业，没有退出码或测试输出；不能称其通过。
 
 
 ## 2026-10-13 编辑器启动专项执行（用户本轮指令）
@@ -22,6 +22,22 @@
 - 执行系统已接收请求，但作业状态`agent_queued`（Runner队列中），`command_started=false`（未执行启动命令），没有PID、编辑器窗口、进程退出码或日志。因此本次**未实际启动虚幻编辑器**。
 - 经任务清单核查，同一Runner有4个其它会话的长期运行作业占满执行槽位；为优先处理本次启动，已停止本会话旧的台账验证排队作业`wc_job_I6NysfNZ657osMxr`及先前由本对话创建的排队诊断`wc_job_N8BBHO_8Zq25IE3L`（两者均未开始执行）。没有取消其它会话的长期运行任务。
 - 待编辑器真正启动且Monolith证实已连接、主工程身份正确后，才能运行`InventoryMaterialLibraryUE58.py`（UE只读材质盘点）、增量材质作者、Shader编译与验收；当前这些门禁均未通过。
+
+## 本次补充：八项函数作者代码与离线验证（2026-10-13）
+
+- 经Cwebcodex编辑接口真实新增`Tools/Unreal/Surface/AuthorMaterialCoreFunctionsUE58.py`（五项平台表面函数作者）和`Tools/Unreal/VFX/AuthorVFXMaterialFunctionsUE58.py`（三项平台VFX函数作者）。脚本使用UE原生MaterialEditingLibrary（材质节点编辑库）声明创建、输入、运算、输出、更新、保存、回读流程；默认inspect，显式apply才有资产写入。
+- 通过独立工作容器镜像执行`python -m py_compile`（Python语法检查）与两个作者脚本的`--mode inspect`（只读计划检查），均通过。脚本源安装在与项目相同相对目录结构下，以匹配其Root（项目根）解析；这不是Runner/UE执行。
+- 已新增`Tests/Assets/TestMaterialFunctionAuthoringScripts.py`（4组无引擎材质图拓扑测试）；镜像执行4项测试全部成功。测试覆盖8个配方的表达式节点最低数量、输出接线、与已有七MF/两母版/MPC稳定合同不重名，以及未知配方拒绝。
+- 已写入`MaterialAuthoringBatch_20261013.json`（八项机器批次台账）、`MaterialAuthoringBatch_20261013.md`（中文批次记录）并更新`MaterialCapabilityRegistry_V1.json`（201项总台账）其中8项的源码状态。**没有新建或编译UE.uasset；没有将离线测试当作Shader、Cook或人工视觉验收**。
+- 引擎启动请求作业`detached_0TgmAmK0jtV4sUQoeomvfrtArpA6eVC4bmZMMXXtrJE`最后为`agent_queued`；4个其它长期运行作业仍占执行槽位，Monolith尚未确认有效UE编辑器会话。
+
+## 导出副本的总台账静态门禁实测补充
+
+2026-10-13在独立本地Python环境将项目导出的`MaterialCapabilityRegistry_V1.json`（201项台账）、`MaterialFunctionLibraryIndex.md`（中文索引）、`MaterialAssetInventory.json`（十资产合同）与`ValidateMaterialCapabilityRegistry.py`（门禁脚本）恢复成相同相对路径，并实跑：
+- 普通静态门禁退出0，输出`MATERIAL_LIBRARY_STATIC_PASS`（201条、29核心候选、7MF+2M+1MPC身份一致）。
+- 严格`--require-ue-evidence`（要求真实UE扫描）退出1，明确报告未找到`MaterialAssetInventory_UE58.json`（引擎盘点实证）。该负例正确拒绝伪通过。
+- `TestMaterialFunctionAuthoringScripts.py`（八函数内存拓扑）四组全部通过；只验证Python构造图、非UE原生材质Graph/Shader。
+- 以上命令在**模型独立工作环境的项目文件镜像**运行，非远端Runner和UE5.8 Editor；仅作为源文件静态测试证据。正式项目UE验证门禁继续未通过。
 
 ## 尚未取得证据（不得标记通过）
 

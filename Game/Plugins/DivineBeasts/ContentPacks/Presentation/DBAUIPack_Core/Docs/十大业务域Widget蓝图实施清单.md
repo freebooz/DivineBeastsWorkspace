@@ -26,7 +26,7 @@
 2. Account（账号）：复用现有`WBP_DBA_UI_Login`，不重复制作或保存密码默认值。
 3. World（世界）：`WBP_DBA_UI_OpenWorldHUD`、`WBP_DBA_UI_VillageMainHUD`、`WBP_DBA_UI_TutorialGuidance`、`WBP_DBA_UI_TrainingControls`、`WBP_DBA_UI_Quest`，父类复用世界HUD和Quest领域原生类。
 4. Character（角色）：复用现有`WBP_DBA_UI_CharacterCreate`、`WBP_DBA_UI_CharacterSelect`，不重建重复角色数据库。
-5. Inventory（背包）：`WBP_DBA_UI_Inventory`（尚未交付真实蓝图），必须包含`InventoryGrid`焦点控件；父类是`DivineBeastsInventoryScreen`，只消费`GamePlatformInventoryClient`的服务端快照派生数据。C++已提供容器/单槽/分页/快捷栏显示、移动/拆分/合并及快捷栏操作；不代表UE资产已经创建。
+5. Inventory（背包）：`WBP_DBA_UI_Inventory`（**Monolith 0.23.0 已实际创建、保存、编译及回读：172控件，0编译错误、0警告**），父类为`DivineBeastsInventoryScreen`。中央`InventoryGrid`为不可聚焦WrapBox，页面初始焦点改为`CloseButton`；采用8列×4行分页视图和12格快捷栏。C++交互代码已编译成目标文件和静态库，但编辑器占用DLL导致LNK1104，**尚未进入运行/PIE/联机验收**。
 6. Combat（战斗）：`WBP_DBA_UI_PlayerStatus`（生命/护盾/气势面板）与`WBP_DBA_UI_AbilityBar`（技能快捷栏），分别继承项目战斗状态与技能面板。
 7. Social（社交）：`WBP_DBA_UI_Social`，使用`DivineBeastsSocialScreenBase`，实际社交数据未接入时不得展示假队友/好友。
 8. Arena（竞技）：竞技视觉资产统一归`DBAArena`，不得放入本公共内容包；见`DBAArena/Docs/用户界面设计.md`。
@@ -36,12 +36,15 @@
 
 ## 背包面板蓝图制作与验收要求（2026-10-13）
 
-此处是待执行的Monolith MCP真实蓝图制作规格，并非资产已交付清单。编辑器未就绪时不生成伪`.uasset`（虚幻资产）。
+**2026-10-13已完成实际Monolith制作及可访问性静态修正**：正式UE5.8编辑器生成并保存`WBP_DBA_UI_Inventory.uasset`，Widget树回读172项、编译0错误0警告；补充216条键盘/手柄方向导航，复审可访问性问题0项、导航不可达0项、死端0项。CommonUI仍有1项缺少CDO焦点属性的建议，项目使用页面目录`CloseButton`焦点策略。下文的运行联动、独立重载、Cook和人工视觉验收**仍待执行**。
 
 - 目标资产：`/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Inventory`（背包页面蓝图），父类`/Script/DivineBeastsUIClient.DivineBeastsInventoryScreen`（项目背包C++基类），仅由项目UI内容包持有。
-- 布局：顶部标题/容量/错误状态，中央可聚焦`InventoryGrid`（背包槽位网格），每行8格、按容器真实容量滚动/分页绘制；底部12格快捷栏和操作按钮。空槽保留布局及键鼠/手柄导航，不展示假物品。
+- 布局：顶部标题/容量/错误状态，中央`InventoryGrid`（不可聚焦的自动换行背包槽位网格；初始焦点为`CloseButton`），每行8格、按容器真实容量滚动/分页绘制；底部12格快捷栏和操作按钮。空槽保留布局及键鼠/手柄导航，不展示假物品。
 - 交互：选中真实物品允许移动/交换、拆分、合并、绑定/清除快捷栏；存在未决操作禁用重复写入，结果未知时以原OperationId恢复。Guid仅表示命令受理，收到OnChanged后才能确认操作效果。
+- C++已提供OpenInventoryScreen/CloseInventoryScreen（世界页面开关）和RequestDropInventoryItem（物品拖放自动选择移动/交换或合法堆叠合并）；正式蓝图应将背包按钮连接前者，关闭按钮调用CloseScreen，拖放事件提交后者。按钮启用依据CanModifyInventory；StatusText/ErrorText读取GetInventoryStateText/GetInventoryErrorText，不使用Tick绑定。
+- 所有物品“使用”“丢弃”“拾取”“领取任务奖励”按钮在可信服务器规则/接口/Outbox未完成前必须保持禁用或隐藏，不能直接调用背包移动、拆分接口伪造效果。
 - 表现：项目DataAsset（数据资产）按DisplayDefinitionHandle（显示定义身份）异步解析图标与说明；缺失时显示“未识别物品”，不伪造正式物品。
+- 静态证据：`Saved/Monolith/InventoryUI20261013/`保存制作前规格、Monolith制作/回读结果、可访问性修改前备份、119项操作记录，以及复审的`AccessibilityAuditAfter.json`、`CommonUIAuditAfter.json`、`FocusAuditAfter.json`、`CompileAfter.json`。修改后真实资产SHA-256为`972336e5383fa0c45513014b92270fe4c20f9bee85b53c3adacd3448eac53356`；备份仅作回退，不代表新资源版本可以跳过UE Editor重载。
 - 验收：确认UE5.8正式编辑器和Monolith身份，创建/编译/保存/重载回读控件树，更新MonolithGenerationManifest.json（生成证据）；之后在PC及移动端核验容量、状态提示、焦点、快捷栏和注销重登。真实服务权限和联机联动须单独测试；未完成时一律标为**待验收**。
 
 ## 三、跨业务域通用组件（待制作12个神兽视觉蓝图）

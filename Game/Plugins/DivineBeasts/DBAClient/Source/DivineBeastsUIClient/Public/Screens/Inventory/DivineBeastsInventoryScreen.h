@@ -4,6 +4,35 @@
 #include "Services/GamePlatformInventoryClientSubsystem.h"
 #include "DivineBeastsInventoryScreen.generated.h"
 
+
+class UButton;
+class UDivineBeastsInventoryScreen;
+
+/**
+ * UDivineBeastsInventoryButtonProxy（背包格点击转接对象）。
+ * 一格一实例，避免在UMG无参数OnClicked回调中猜测当前焦点/鼠标控件。
+ * 只负责把稳定格序号传回当前页面，不存储账号、物品或库存快照。
+ */
+UCLASS()
+class DIVINEBEASTSUICLIENT_API UDivineBeastsInventoryButtonProxy final : public UObject
+{
+    GENERATED_BODY()
+
+public:
+    /** 绑定一个Monolith创建的命名按钮，页面失活时必须精确Unbind。 */
+    void Bind(UDivineBeastsInventoryScreen* Screen, UButton* Button, int32 Index, bool bQuickbar);
+    void Unbind();
+
+    UFUNCTION()
+    void HandleButtonClicked();
+
+private:
+    TWeakObjectPtr<UDivineBeastsInventoryScreen> ScreenOwner;
+    TWeakObjectPtr<UButton> ButtonOwner;
+    int32 LocalIndex = INDEX_NONE;
+    bool bIsQuickbar = false;
+};
+
 /**
  * UDivineBeastsInventoryScreen（神兽联盟背包页面基类）。
  *
@@ -136,6 +165,8 @@ protected:
     virtual void BindUIEvents() override;
     virtual void UnbindUIEvents() override;
     virtual void RefreshInitialState() override;
+    /** Widget被销毁时再次精确释放点击委托，避免跨世界残留旧事件。 */
+    virtual void NativeDestruct() override;
 
     /** 背包平台状态变化后通知视觉层执行局部刷新。 */
     UFUNCTION(BlueprintImplementableEvent, Category="DivineBeasts|UI|Inventory", meta=(DisplayName="背包视图已变化"))
@@ -147,6 +178,45 @@ protected:
 private:
     void HandleInventoryChanged();
     UGamePlatformInventoryClientSubsystem* ResolveInventorySubsystem() const;
+
+
+    // 下面的函数只消费Monolith Widget资产中真实存在的命名控件；
+    // 不通过C++构建另一棵视觉树，也不在Tick查询背包网络状态。
+    void BindInventoryVisualControls();
+    void UnbindInventoryVisualControls();
+    void RefreshInventoryVisuals();
+    void HandleInventoryCellClicked(int32 LocalIndex, bool bQuickbar);
+    void SetInventoryHint(const FText& Hint);
+    void BindNamedActionButtons();
+    void UnbindNamedActionButtons();
+
+    UFUNCTION() void HandleCloseButtonClicked();
+    UFUNCTION() void HandlePrevPageClicked();
+    UFUNCTION() void HandleNextPageClicked();
+    UFUNCTION() void HandleRefreshClicked();
+    UFUNCTION() void HandleRetryClicked();
+    UFUNCTION() void HandleMoveClicked();
+    UFUNCTION() void HandleSplitClicked();
+    UFUNCTION() void HandleMergeClicked();
+    UFUNCTION() void HandleBindQuickbarClicked();
+    UFUNCTION() void HandleClearQuickbarClicked();
+
+    /** 操作意图是UI局部选择状态；下一次有效服务器操作结果仍以Snapshot为准。 */
+    enum class ETargetAction : uint8 { None, Move, Split, Merge };
+    ETargetAction TargetAction = ETargetAction::None;
+    FName SelectedContainerId = TEXT("main");
+    FString SelectedItemInstanceId;
+    FText ActionHint;
+    int32 PageIndex = 0;
+    int32 SelectedQuickbarIndex = 0;
+    static constexpr int32 SlotsPerPage = 32;
+    bool bVisualControlsBound = false;
+    bool bRefreshingVisuals = false;
+
+    /** 每次激活持有32格+12快捷格的按钮代理；失活解绑、取消代理引用。 */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UDivineBeastsInventoryButtonProxy>> SlotButtonProxies;
+    friend class UDivineBeastsInventoryButtonProxy;
 
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformInventoryClientSubsystem> InventorySubsystem = nullptr;

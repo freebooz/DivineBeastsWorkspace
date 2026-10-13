@@ -1,0 +1,3798 @@
+{
+  "schemaVersion": 1,
+  "mode": "UEAssetRegistryReadOnly",
+  "dateUTC": "2026-10-13T03:36:15.112139+00:00",
+  "editorProject": "E:/poject/feebooz/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject",
+  "scopes": [
+    "/GamePlatformSurface",
+    "/GamePlatformVFX",
+    "/GamePlatformUI",
+    "/DBAPresentationPack_Core",
+    "/DBAUIPack_Core",
+    "/DBAWorldPack_Village",
+    "/Game"
+  ],
+  "trackedClassNames": [
+    "Material",
+    "MaterialFunction",
+    "MaterialFunctionInstance",
+    "MaterialInstance",
+    "MaterialInstanceConstant",
+    "MaterialLayer",
+    "MaterialLayerBlend",
+    "MaterialParameterCollection",
+    "NiagaraEmitter",
+    "NiagaraSystem",
+    "RuntimeVirtualTexture",
+    "Texture2D"
+  ],
+  "totalMatchingAssets": 453,
+  "assets": [
+    {
+      "PackagePath": "/DBAPresentationPack_Core/Materials/Environment/MI_DBA_MossSnow_Cliff",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/Materials/Snow/MI_DBA_Snow_Detailed",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Materials/M_DBA_DevMagicCrystal",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Materials/M_DBA_DevMagicGlow",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevArcaneMissilesFlight",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevArcaneMissilesImpact",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFireballFlight",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFireballImpact",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFrostboltFlight",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFrostboltImpact",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_ApricotPetal",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_Ash",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_BirchLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_CherryPetal",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_Confetti",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_DandelionSeed",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_DryLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_Ember",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_Feather",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_Firefly",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_FloatingDust",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_GenericPetalPink",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_GenericPetalRed",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_GenericPetalWhite",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_LotusPetal",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_MagnoliaPetal",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_OakLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_OsmanthusBlossom",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_PalmLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_PaperFragment",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_PearPetal",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_PineNeedle",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_PlaneLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_PlumPetal",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_PoplarLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_RedLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_RedSpiderLilyPetal",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_RosePetal",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_SandDust",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_Spore",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_WillowCatkin",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_WillowLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Materials/MI_DBA_Ambient_YellowLeaf",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_ApricotPetal",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_Ash",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_BirchLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_CherryPetal",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_Confetti",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_DandelionSeed",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_DryLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_Ember",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_Feather",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_Firefly",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_FloatingDust",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_GenericPetalPink",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_GenericPetalRed",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_GenericPetalWhite",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_LotusPetal",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_MagnoliaPetal",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_OakLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_OsmanthusBlossom",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_PalmLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_PaperFragment",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_PearPetal",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_PineNeedle",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_PlaneLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_PlumPetal",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_PoplarLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_RedLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_RedSpiderLilyPetal",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_RosePetal",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_SandDust",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_Spore",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_WillowCatkin",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_WillowLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Niagara/NS_DBA_Ambient_YellowLeaf",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_ApricotPetal_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_ApricotPetal_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Ash_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Ash_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_BirchLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_BirchLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_BirchLeaf_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_BirchLeaf_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_CherryPetal_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_CherryPetal_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_CherryPetal_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_CherryPetal_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Confetti_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Confetti_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_DandelionSeed_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_DandelionSeed_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_DryLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_DryLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Ember_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Ember_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Feather_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Feather_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Firefly_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Firefly_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_FloatingDust_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_FloatingDust_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalPink_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalPink_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalPink_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalPink_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalRed_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalRed_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalRed_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalRed_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalWhite_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalWhite_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalWhite_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_GenericPetalWhite_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_LotusPetal_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_LotusPetal_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_MagnoliaPetal_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_MagnoliaPetal_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_OakLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_OakLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_OakLeaf_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_OakLeaf_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_OsmanthusBlossom_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_OsmanthusBlossom_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_OsmanthusBlossom_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_OsmanthusBlossom_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PalmLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PalmLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PaperFragment_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PaperFragment_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PearPetal_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PearPetal_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PearPetal_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PearPetal_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PineNeedle_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PineNeedle_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PlaneLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PlaneLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PlaneLeaf_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PlaneLeaf_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PlumPetal_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PlumPetal_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PlumPetal_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PlumPetal_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PoplarLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PoplarLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PoplarLeaf_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_PoplarLeaf_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RedLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RedLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RedSpiderLilyPetal_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RedSpiderLilyPetal_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RedSpiderLilyPetal_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RedSpiderLilyPetal_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RosePetal_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RosePetal_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RosePetal_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_RosePetal_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_SandDust_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_SandDust_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Spore_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_Spore_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_WillowCatkin_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_WillowCatkin_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_WillowLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_WillowLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_WillowLeaf_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_WillowLeaf_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_YellowLeaf_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_YellowLeaf_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_YellowLeaf_Opacity",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/AmbientNature/Textures/T_DBA_Ambient_YellowLeaf_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Materials/MI_DBA_Bird_Eagle",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Materials/MI_DBA_Bird_Seagull",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Materials/MI_DBA_Bird_Swallow",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Niagara/NS_DBA_BirdFlock_Eagle",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Niagara/NS_DBA_BirdFlock_Seagull",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Niagara/NS_DBA_BirdFlock_Swallow",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Textures/T_DBA_Bird_Eagle_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Textures/T_DBA_Bird_Seagull_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Textures/T_DBA_Bird_Swallow_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Materials/MI_DBA_Foliage_Bamboo",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Materials/MI_DBA_Foliage_Ginkgo",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Materials/MI_DBA_Foliage_Maple",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Materials/MI_DBA_Foliage_Peach",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Niagara/NS_DBA_FallingFoliage_Bamboo",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Niagara/NS_DBA_FallingFoliage_Ginkgo",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Niagara/NS_DBA_FallingFoliage_Maple",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Niagara/NS_DBA_FallingFoliage_Peach",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Bamboo_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Bamboo_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Ginkgo_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Ginkgo_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Maple_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Maple_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Peach_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Peach_Albedo_Refined",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/FallingFoliage/Textures/T_DBA_Foliage_Peach_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Materials/MI_DBA_ButterflyAzure",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Materials/MI_DBA_FishSilver",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Niagara/NS_DBA_ButterflyAzure",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Niagara/NS_DBA_FishSilver",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Textures/T_DBA_ButterflyAzure_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Textures/T_DBA_ButterflyAzure_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Textures/T_DBA_ButterflyAzure_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Textures/T_DBA_FishSilver_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Textures/T_DBA_FishSilver_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/Environment/Fauna/Textures/T_DBA_FishSilver_Roughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAPresentationPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevArcaneMissiles",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFireball",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFrostbolt",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Maps/T_DBA_Village_Minimap",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureAbilityIconPalette",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureAbilityReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureHealthFillReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureLoginPanelReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMenuReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMinimapReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureMomentumFillReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelNineSlice",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureSkillFrameReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureUltimateFrameReference",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/DBA_MythicLogin",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/DBA_MythicLogo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityDock",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReference",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureAbilityReferenceMatte",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureHUDFrame",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginPanelReference",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuButton",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReference",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMenuReferenceMatte",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapFrame",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapReference",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureMinimapReferenceMatte",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelFrame",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReference",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReferenceMatte",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReferenceMatte",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Primal/T_DBA_PrimalLoginBackdrop",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Primal/T_DBA_ShangBronzePanel",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Primary_Disabled",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Primary_Hovered",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Primary_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Primary_Pressed",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Secondary_Disabled",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Secondary_Hovered",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Secondary_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_Button_Secondary_Pressed",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Theme/T_DBA_UI_PanelFrame_BronzeCloud",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAUIPack_Core/UI/Textures/Zodiac/T_DBA_ZodiacChoiceAtlas_V1",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAUIPack_Core",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_SnowAlbedoDefault",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_SnowCoverageDefault",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_SnowNormalDefault",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Materials/Landscape/M_DBA_Village_LandscapeBridge",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_Buildable",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_Deposition",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_Erosion",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_Exclusion",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_Flow",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_Forest",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_RockExposure",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_Shore",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Masks/T_DBA_GaeaCalib_Slope",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_Dirt",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_FarmSoil",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_ForestSoil",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_Grass",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_Gravel",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_RoadDirt",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_Rock",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_Sand",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_Scree",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Calibration/Weights/T_DBA_LayerWeight_ShoreMud",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Materials/MI_DBA_Terrain_Calibration",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Materials/M_DBA_Terrain_MultiLayer10",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/MI_DBA_CliffRock01_PBRReview",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/MI_DBA_CliffRock01_WorldAligned",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/MI_DBA_CliffRock01_WorldAlignedMacro",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/MI_DBA_Terrain_CliffRock01",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/M_DBA_CliffRock01_PBRReview",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/M_DBA_CliffRock01_WorldAligned",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Materials/M_DBA_CliffRock01_WorldAlignedMacro",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Textures/T_DBA_CliffRock01_BaseColor_BlueGray",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Textures/T_DBA_CliffRock01_Height",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Textures/T_DBA_CliffRock01_NormalDX",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/CliffRock01/Textures/T_DBA_CliffRock01_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/Rock01/Materials/MI_DBA_RockRealism01_PBRReview",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/Rock01/Materials/MI_DBA_Terrain_RockRealism01",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/Rock01/Materials/M_DBA_RockRealism01_PBRReview",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/Rock01/Textures/T_DBA_RockRealism01_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/Rock01/Textures/T_DBA_RockRealism01_Height",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/Rock01/Textures/T_DBA_RockRealism01_NormalDX",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Realism/Rock01/Textures/T_DBA_RockRealism01_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Dirt/T_DBA_Terrain_Dirt_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/FarmSoil/T_DBA_Terrain_FarmSoil_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/ForestSoil/T_DBA_Terrain_ForestSoil_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Gravel/T_DBA_Terrain_Gravel_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/RoadDirt/T_DBA_Terrain_RoadDirt_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Rock/T_DBA_Terrain_Rock_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Sand/T_DBA_Terrain_Sand_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/Scree/T_DBA_Terrain_Scree_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_BaseColor",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud/T_DBA_Terrain_ShoreMud_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/DBAWorldPack_Village",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/MI_DBA_Ambient_PearPetal_KeepAlbedoProbe",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/MI_DBA_Ambient_PearPetal_NeutralSSSProbe",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/MI_DBA_PearPetal_MaskSamplerProbe",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/M_DBA_FoliageShaderIsolation_Opacity",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/M_DBA_FoliageShaderIsolation_Solid",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/M_DBA_FoliageShaderIsolation_UV0",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/M_DBA_PBRMaskSamplerProbe",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/M_GP_AmbientNature_PBR_KeepAlbedoProbe",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/M_GP_AmbientNature_PBR_NeutralAlbedoSSSProbe",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_BothMotionProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_HlslProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_NoAgePBRProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_NoHlslPBRProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_NoOpBothProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_WeatherDerivedProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_WeatherNeutralSSSProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_WeatherNoTintProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_Ambient_PearPetal_WeatherPBRVerifiedTrial",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_FoliageShaderIsolation_Opacity",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_FoliageShaderIsolation_Solid",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_FoliageShaderIsolation_UV0",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/NS_DBA_PearPetal_WeatherMaskSamplerProbe",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/FallingFoliage/Probes/T_DBA_PBRMaskWhiteSamplerProbe",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna/Materials/M_DBA_FaunaReview_Frame",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna/Materials/M_DBA_FaunaReview_Glass",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna/Materials/M_DBA_FaunaReview_Leaf",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna/Materials/M_DBA_FaunaReview_Petal",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna/Materials/M_DBA_FaunaReview_Pollen",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna/Materials/M_DBA_FaunaReview_Rock",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna/Materials/M_DBA_FaunaReview_Soil",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Fauna/Materials/M_DBA_FaunaReview_Water",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary/Materials/M_DBA_MaterialLibrary_FrostSurface_Review",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary/Materials/M_DBA_MaterialLibrary_HeightBlendMask_Review",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary/Materials/M_DBA_MaterialLibrary_LandscapeBiomeMask_Review",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary/Materials/M_DBA_MaterialLibrary_LandscapeDistanceDetail_Review",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary/Materials/M_DBA_MaterialLibrary_MacroMicroBlend_Review",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary/Materials/M_DBA_MaterialLibrary_VFXDissolve_Review",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary/Materials/M_DBA_MaterialLibrary_VFXFlowUV_Review",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/MaterialLibrary/Materials/M_DBA_MaterialLibrary_VFXRadialEnergy_Review",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Snow/Materials/M_DBA_SnowMaskExperiment",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Snow/Niagara/NS_DBA_SnowRateExperiment",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Terrain/Materials/MI_DBA_CliffRock01_UVBalancedReview",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Terrain/Materials/MI_DBA_CliffRock01_WorldAlignedMacro_LowWarpReview",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/Game/Development/Terrain/Materials/MI_DBA_CliffRock01_WorldAligned_Review2m",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/Game",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Materials/MI_GP_SurfaceMark_Bullet",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Materials/MI_GP_SurfaceMark_Crack",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Materials/MI_GP_SurfaceMark_Fluid",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Materials/MI_GP_SurfaceMark_Scorch",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Materials/MI_GP_SurfaceMark_Slash",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Materials/M_GP_SurfaceMark_Master",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Bullet_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Bullet_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Bullet_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Crack_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Crack_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Crack_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Fluid_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Fluid_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Fluid_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Scorch_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Scorch_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Scorch_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Slash_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Slash_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Marks/Textures/T_GP_Mark_Slash_ORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Core/MF_GP_HeightBlendMask",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Core/MF_GP_MacroMicroBlend",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Landscape/MF_GP_LandscapeBiomeMask",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Landscape/MF_GP_LandscapeDistanceDetail",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_FrostSurface",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_MossLayer",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_PuddleLayer",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_SnowLayer",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_WetnessLayer",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Masks/MF_GP_HeightMask",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Masks/MF_GP_SlopeMask",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Utility/MF_GP_WorldNoise",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Materials/M_GP_SnowCover_Detailed",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Materials/M_GP_Surface_Lite",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Materials/M_GP_Surface_Master",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Materials/M_GP_Surface_SnowMoss_PBR",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/ParameterCollections/MPC_GP_SurfaceGlobal",
+      "NativeClass": "MaterialParameterCollection",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Moss/T_GP_Moss_Albedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Moss/T_GP_Moss_Coverage",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Moss/T_GP_Moss_Height",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Moss/T_GP_Moss_Normal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Moss/T_GP_Moss_Orm",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Snow/T_GP_Snow_CoverageNoise",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Snow/T_GP_Snow_MicroHeight",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Weather/T_GP_Weather_PuddleMask",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Weather/T_GP_Weather_SnowAlbedo",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Weather/T_GP_Weather_SnowNormal",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Weather/T_GP_Weather_SnowORM",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Textures/Weather/T_GP_Weather_WetnessNoise",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformSurface",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/AmbientNature/Materials/M_GP_AmbientNature_Glow",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/AmbientNature/Materials/M_GP_AmbientNature_PBR_Foliage",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/AmbientNature/Materials/M_GP_AmbientNature_Soft",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/AmbientNature/Niagara/NS_GP_AmbientFloat_Base",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/BirdFlock/Materials/M_GP_BirdFlock_Master",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/BirdFlock/Niagara/NS_GP_BirdFlock_Base",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/FallingFoliage/Materials/M_GP_FallingFoliage_Master",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/FallingFoliage/Niagara/NS_GP_FallingFoliage_Base",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/Fauna/Materials/M_GP_Fauna_Master",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/Fauna/Materials/T_GP_Fauna_NeutralRoughness",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Environment/Fauna/Niagara/NS_GP_Fauna_Base",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Materials/Functions/MF_GP_VFX_Dissolve",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Materials/Functions/MF_GP_VFX_FlowUV",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Materials/Functions/MF_GP_VFX_RadialEnergyGradient",
+      "NativeClass": "MaterialFunction",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Materials/MI_GP_VFX_Weather_SnowSoft",
+      "NativeClass": "MaterialInstanceConstant",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_SnowGroundPuff",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_Weather_Rain",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_Weather_Snow",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Materials/M_GP_VFX_Weather_Splash",
+      "NativeClass": "Material",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_Rain",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_RainSplash",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_Snow",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_Snow_Detailed",
+      "NativeClass": "NiagaraSystem",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Textures/T_GP_Snow_GroundPuff",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Textures/T_GP_Snow_SoftFlake",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Textures/T_GP_Weather_RainRipple",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Textures/T_GP_Weather_RainSplashFlipbook",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Textures/T_GP_Weather_RainStreak",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Weather/Textures/T_GP_Weather_SnowflakeAtlas",
+      "NativeClass": "Texture2D",
+      "PrimaryOwnerScope": "/GamePlatformVFX",
+      "AssetRegistryPresent": true,
+      "ShaderCompileStatus": "未验证",
+      "VisualReviewStatus": "待人工验收"
+    }
+  ],
+  "contracts": [
+    {
+      "PackagePath": "/GamePlatformSurface/ParameterCollections/MPC_GP_SurfaceGlobal",
+      "NameZH": "8个稳定环境标量参数",
+      "ExpectedClass": "MaterialParameterCollection",
+      "AssetExists": true,
+      "ObservedClass": "MaterialParameterCollection",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": null,
+      "ReferencersSample": [
+        "/GamePlatformSurface/Materials/M_GP_SnowCover_Detailed",
+        "/GamePlatformSurface/Materials/M_GP_Surface_Lite",
+        "/GamePlatformSurface/Materials/M_GP_Surface_Master",
+        "/GamePlatformSurface/Materials/M_GP_Surface_SnowMoss_PBR",
+        "/Game/Development/Snow/Materials/M_DBA_SnowMaskExperiment"
+      ],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Materials/M_GP_Surface_Master",
+      "NameZH": "完整通用表面母材质",
+      "ExpectedClass": "Material",
+      "AssetExists": true,
+      "ObservedClass": "Material",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 23,
+      "ReferencersSample": [
+        "/Game/Development/Weather/Maps/L_DBA_WeatherReview"
+      ],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/Materials/M_GP_Surface_Lite",
+      "NameZH": "轻量通用表面母材质",
+      "ExpectedClass": "Material",
+      "AssetExists": true,
+      "ObservedClass": "Material",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 16,
+      "ReferencersSample": [],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Masks/MF_GP_SlopeMask",
+      "NameZH": "坡度遮罩",
+      "ExpectedClass": "MaterialFunction",
+      "AssetExists": true,
+      "ObservedClass": "MaterialFunction",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 5,
+      "ReferencersSample": [],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Masks/MF_GP_HeightMask",
+      "NameZH": "海拔遮罩",
+      "ExpectedClass": "MaterialFunction",
+      "AssetExists": true,
+      "ObservedClass": "MaterialFunction",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 9,
+      "ReferencersSample": [],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Utility/MF_GP_WorldNoise",
+      "NameZH": "噪声遮罩",
+      "ExpectedClass": "MaterialFunction",
+      "AssetExists": true,
+      "ObservedClass": "MaterialFunction",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 5,
+      "ReferencersSample": [],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_SnowLayer",
+      "NameZH": "积雪覆盖",
+      "ExpectedClass": "MaterialFunction",
+      "AssetExists": true,
+      "ObservedClass": "MaterialFunction",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 13,
+      "ReferencersSample": [],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_WetnessLayer",
+      "NameZH": "表面湿润",
+      "ExpectedClass": "MaterialFunction",
+      "AssetExists": true,
+      "ObservedClass": "MaterialFunction",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 15,
+      "ReferencersSample": [],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_PuddleLayer",
+      "NameZH": "积水形成",
+      "ExpectedClass": "MaterialFunction",
+      "AssetExists": true,
+      "ObservedClass": "MaterialFunction",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 13,
+      "ReferencersSample": [],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    },
+    {
+      "PackagePath": "/GamePlatformSurface/MaterialFunctions/Layers/MF_GP_MossLayer",
+      "NameZH": "苔藓生长",
+      "ExpectedClass": "MaterialFunction",
+      "AssetExists": true,
+      "ObservedClass": "MaterialFunction",
+      "ClassMatches": true,
+      "MaterialGraphNodeCount": 11,
+      "ReferencersSample": [],
+      "ShaderCompileStatus": "未执行，不能由节点统计推断通过",
+      "SavedAndReloaded": "未执行，当前为只读扫描",
+      "VisualReviewStatus": "待人工验收"
+    }
+  ],
+  "shaderAndCookNotInferred": true,
+  "noteZH": "本报告仅证明实际编辑器资产注册信息、少量真实类型和材质节点数量，不代表Shader、打包或视觉验收。"
+}

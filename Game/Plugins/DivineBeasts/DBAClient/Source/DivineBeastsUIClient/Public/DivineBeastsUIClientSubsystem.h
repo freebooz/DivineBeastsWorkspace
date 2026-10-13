@@ -164,9 +164,13 @@ private:
     /** 系统页与主流程页使用不同请求身份，迟到加载不能复活已关闭菜单。 */
     bool OpenSystemSurface(FName ScreenId);
     void HandleWorldEscapeRequested();
+    /** I键背包意图：只在当前本地世界中切换页面，不影响服务器权威库存。 */
+    void HandleWorldInventoryRequested();
     void SetSystemMenuVisible(bool bVisible);
     TWeakObjectPtr<ADivineBeastsWorldPlayerController> BoundMenuController;
     FDelegateHandle WorldEscapeHandle;
+    /** 仅本地当前控制器的I键委托句柄，换控制器及退出时精确解除。 */
+    FDelegateHandle WorldInventoryHandle;
     FDelegateHandle ApplicationDeactivateHandle;
     FDelegateHandle SlateActivationHandle;
     void HandleApplicationActivationChanged(bool bActive);

@@ -22,13 +22,20 @@ foreach ($Binding in @(
     'AxisName="DBA.MoveRight",Scale=-1.000000,Key=Q',
     'AxisName="DBA.CameraZoom",Scale=1.000000,Key=MouseWheelAxis',
     'ActionName="DBA.CameraObserve"', 'ActionName="DBA.CameraSteer"', 'Key=Escape',
+    'ActionName="DBA.Inventory"', 'Key=I',
     'DefaultViewportMouseCaptureMode=NoCapture', 'bShouldFlushPressedKeysOnViewportFocusLost=True')) {
     if (-not $Input.Contains($Binding)) { throw "World input configuration is missing: $Binding" }
 }
 foreach ($Hook in @('::FlushPressedKeys()', '::EndPlay(', '::PreClientTravel(', '::OnUnPossess()', '::SetWorldGameplayInputSuspended(',
     'OnWorldEscapeRequested.Broadcast()', 'ConsumeMovementInputVector()', 'StopJumping()',
+    'OnWorldInventoryRequested.Broadcast()',
     'ClearAbilityInput()', 'SetMouseLocation(', 'bDoCollisionTest = true')) {
     if (-not $Controller.Contains($Hook)) { throw "World controls cleanup/integration is missing: $Hook" }
+}
+# 背包按键由世界控制器只发布中立本地委托，快捷键不能复制为二套权威库存请求。
+$InventoryBindings = [regex]::Matches($Input, '(?m)^\+ActionMappings=\(ActionName="DBA\.Inventory"[^\r\n]*Key=I\)')
+if ($InventoryBindings.Count -ne 1) {
+    throw '背包I键必须有且只有一个准确原生ActionMapping。'
 }
 if ($Build.Contains('DivineBeastsUIClient') -or $Controller.Contains('DivineBeastsUIClientSubsystem')) {
     throw 'Shared world runtime must not depend on client UI implementation.'
