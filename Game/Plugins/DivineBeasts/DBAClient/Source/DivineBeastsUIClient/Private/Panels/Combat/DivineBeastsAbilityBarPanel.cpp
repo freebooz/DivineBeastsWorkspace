@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/InputSettings.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "Components/ProgressBar.h"
 
 void UDivineBeastsAbilityBarPanel::NativeConstruct()
 {
@@ -20,6 +22,7 @@ void UDivineBeastsAbilityBarPanel::NativeConstruct()
 
 void UDivineBeastsAbilityBarPanel::NativeDestruct()
 {
+    VisualProjectionToken=FGuid::NewGuid();
     if (APlayerController* Controller = BoundPawnController.Get())
     {
         Controller->OnPossessedPawnChanged.RemoveDynamic(
@@ -138,6 +141,7 @@ void UDivineBeastsAbilityBarPanel::RefreshSlotHotkey(
 
 void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
 {
+    const FGuid ProjectionToken=FGuid::NewGuid(); VisualProjectionToken=ProjectionToken;
     // 当前项目只声明了普通攻击、被动、两个主动与终极技能槽，
     // 不允许用数组顺序或英雄名称隐式决定技能输入映射。
     struct FVisualBinding
@@ -205,6 +209,20 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
             VisualState.bPending = true;
         }
         Binding.Widget->ApplySlotState(VisualState);
+        // BP_OnSlotStateChanged同步重入刷新或失活时，旧栈停止，不覆盖新只读快照的图标/冷却。
+        if (VisualProjectionToken!=ProjectionToken || !IsValid(Binding.Widget)) return;
+        // UIProfile/图标已经由ViewModel的中央Data租约预热。这里只取驻留对象，不同步加载，
+        // 并取消旧蓝图SetBrushFromSoftTexture的自有在途请求；空引用必须主动清画刷，不能只隐藏。
+        // 这样换Pawn/缺图标后的迟到旧纹理不再复活，也不把未授权槽补成固定魔法图标。
+        if (auto* Icon = Cast<UImage>(Binding.Widget->GetWidgetFromName(TEXT("AbilityIcon"))))
+        {
+            UTexture2D* Texture = VisualState.Icon.Get();
+            Icon->SetBrushFromTexture(Texture);
+            Icon->SetVisibility(IsValid(Texture) ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
+            Icon->SetIsEnabled(VisualState.bEnabled && !VisualState.bPending);
+        }
+        if (auto* Cooldown = Cast<UProgressBar>(Binding.Widget->GetWidgetFromName(TEXT("CooldownFill"))))
+            Cooldown->SetPercent(VisualState.OverlayProgress);
         // 在槽位蓝图状态事件之后刷新，不能让初始占位文字替代玩家当前生效按键。
         RefreshSlotHotkey(Binding.Widget, Binding.ActionName, Binding.bPassive);
     }

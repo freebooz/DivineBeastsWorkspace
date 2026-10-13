@@ -189,7 +189,7 @@ bool FGamePlatformPCGAssignMeshSetMetadataTest::RunTest(const FString&)
     }
 
     FPCGMetadataAttribute<FName>* Existing = Metadata->FindOrCreateAttribute<FName>(
-        FGamePlatformPCGAttr::SpawnMeshSetId, NAME_None, false, true, true);
+        FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::SpawnMeshSetId), NAME_None, false, true, true);
     if (!TestNotNull(TEXT("模拟WriteSchemaDefaults先创建空网格集合属性"), Existing))
     {
         return false;
@@ -234,34 +234,55 @@ bool FGamePlatformPCGMetadataTypeValidationTest::RunTest(const FString&)
     {
         return false;
     }
-    Metadata->FindOrCreateAttribute<FName>(FGamePlatformPCGAttr::LayerName, FName(TEXT("Test")), false, true, true);
-    Metadata->FindOrCreateAttribute<float>(FGamePlatformPCGAttr::ExcludeMask, 0.0f, false, true, true);
-    Metadata->FindOrCreateAttribute<int32>(FGamePlatformPCGAttr::ExecSeed, 1, false, true, true);
+    Metadata->FindOrCreateAttribute<FName>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::LayerName), FName(TEXT("Test")), false, true, true);
+    Metadata->FindOrCreateAttribute<float>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExcludeMask), 0.0f, false, true, true);
+    Metadata->FindOrCreateAttribute<int32>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExecSeed), 1, false, true, true);
 
     TestTrue(TEXT("核心字段类型正确时通过"), GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(*Metadata, {}));
     TestFalse(TEXT("显式字段清单不能要求不存在的字段"),
         GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(*Metadata, {FGamePlatformPCGAttr::SpawnMeshSetId}));
-    Metadata->FindOrCreateAttribute<FName>(FGamePlatformPCGAttr::SpawnMeshSetId, FName(TEXT("Test.MeshSet")), false, true, true);
+    Metadata->FindOrCreateAttribute<FName>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::SpawnMeshSetId), FName(TEXT("Test.MeshSet")), false, true, true);
     TestTrue(TEXT("声明的已存在字段通过"),
         GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(*Metadata, {FGamePlatformPCGAttr::SpawnMeshSetId}));
 
     UPCGPointArrayData* InvalidType = NewObject<UPCGPointArrayData>();
     UPCGMetadata* Typed = InvalidType->MutableMetadata();
-    Typed->FindOrCreateAttribute<int32>(FGamePlatformPCGAttr::LayerName, 1, false, true, true);
-    Typed->FindOrCreateAttribute<float>(FGamePlatformPCGAttr::ExcludeMask, 0.0f, false, true, true);
-    Typed->FindOrCreateAttribute<int32>(FGamePlatformPCGAttr::ExecSeed, 1, false, true, true);
+    Typed->FindOrCreateAttribute<int32>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::LayerName), 1, false, true, true);
+    Typed->FindOrCreateAttribute<float>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExcludeMask), 0.0f, false, true, true);
+    Typed->FindOrCreateAttribute<int32>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExecSeed), 1, false, true, true);
     TestFalse(TEXT("错误的Layer.Name存储类型必须拒绝"),
         GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(*Typed, {}));
 
     UPCGPointArrayData* MissingCore = NewObject<UPCGPointArrayData>();
     UPCGMetadata* Partial = MissingCore->MutableMetadata();
-    Partial->FindOrCreateAttribute<FName>(FGamePlatformPCGAttr::SpawnMeshSetId, FName(TEXT("Test.MeshSet")), false, true, true);
+    Partial->FindOrCreateAttribute<FName>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::SpawnMeshSetId), FName(TEXT("Test.MeshSet")), false, true, true);
     TestFalse(TEXT("显式字段不能绕过缺失的核心Schema字段"),
         GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(*Partial, {FGamePlatformPCGAttr::SpawnMeshSetId}));
 
-    Metadata->FindOrCreateAttribute<FName>(TEXT("Pcg.Unknown.Unregistered"), FName(TEXT("Bad")), false, true, true);
+    Metadata->FindOrCreateAttribute<FName>(TEXT("Pcg_Unknown_Unregistered"), FName(TEXT("Bad")), false, true, true);
     TestFalse(TEXT("未知Pcg.*字段被拒绝"),
         GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(*Metadata, {}));
+    return true;
+}
+
+// UE5.8存储编码不能改变已发布逻辑字段，也不能产生字段碰撞或接受未登记的自定义字段。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformPCGMetadataStorageEncodingTest,
+    "GamePlatform.PCG.Schema.MetadataStorageEncoding",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformPCGMetadataStorageEncodingTest::RunTest(const FString&)
+{
+    TSet<FName> StoredNames;
+    for (const auto& Field : FGamePlatformPCGSchema::GetAttributes())
+    {
+        const FName Stored = FGamePlatformPCGSchema::GetMetadataAttributeName(Field.Name);
+        TestFalse(TEXT("已登记字段应有真实存储键"), Stored.IsNone());
+        TestFalse(TEXT("UE元数据存储不含点号"), Stored.ToString().Contains(TEXT(".")));
+        TestFalse(TEXT("每个逻辑字段拥有唯一存储键"), StoredNames.Contains(Stored));
+        StoredNames.Add(Stored);
+    }
+    TestEqual(TEXT("Schema v1对外逻辑字段保持不变"), FGamePlatformPCGAttr::LayerName.ToString(), FString(TEXT("Pcg.Layer.Name")));
+    TestEqual(TEXT("UE存储键明确编码"), FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::LayerName), FName(TEXT("Pcg_Layer_Name")));
+    TestTrue(TEXT("未知逻辑字段不生成存储别名"), FGamePlatformPCGSchema::GetMetadataAttributeName(TEXT("Pcg.Unregistered.Name")).IsNone());
     return true;
 }
 

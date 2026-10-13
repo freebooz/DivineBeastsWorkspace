@@ -16,7 +16,8 @@ bool FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(const FDivineBeasts
         return false;
     }
     if (ScreenId == TEXT("UI.Screen.CharacterCreate")) { return State.AllowedCommands.Contains(TEXT("CreateCharacter")); }
-    // 返回选择页只是本地显示/取消草稿，不是提交角色选择；即使列表为空且无提交权限也必须允许。
+    // 返回选择页只取消本地创建草稿；空列表或缺少选择提交权限不能把用户困在创建表单。
+    // 真实选择与世界准入仍由ViewModel、应用流程和后端核对角色及允许命令。
     if (ScreenId == TEXT("UI.Screen.CharacterSelect")) { return true; }
     return false;
 }
@@ -61,9 +62,14 @@ FName FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(
         {
             if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterCreate")) { return CharacterEntryScreenPreference; }
             if (CharacterEntryScreenPreference == TEXT("UI.Screen.CharacterSelect")) { return CharacterEntryScreenPreference; }
+            // 只有档案加载完成后的角色入口才可判定新玩家；显示表单不提交创建或世界准入命令。
+            // 默认分流不写本地偏好，创建成功后非空档案自然回到选择页；显式取消仍可停在空选择页。
+            if (State.Characters.IsEmpty() && State.AllowedCommands.Contains(TEXT("CreateCharacter")))
+            {
+                return TEXT("UI.Screen.CharacterCreate");
+            }
         }
-        // 无角色不代表已经获得创建授权；默认先显示空角色选择页，创建由用户显式点击。
-        // 这条显示路由不调用后端、不伪造SelectPersistentCharacter业务命令。
+        // 加载中的档案不能当作新玩家；有角色或没有创建能力时保持选择页及明确状态反馈。
         return TEXT("UI.Screen.CharacterSelect");
     }
 

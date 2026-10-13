@@ -138,9 +138,12 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
     // 离屏编辑器没有本地玩家子系统替我们加载CommonUI动作数据；真实设置页仍要使用正式输入定义。
     // 在模块实际持有的设置实例上初始化；不注入替代数据、不吞ensure、不依赖测试执行顺序。
     ICommonInputModule::GetSettings().LoadData();
-    for(const TCHAR* Name:{TEXT("Menu"),TEXT("Ability"),TEXT("Minimap"),TEXT("PlayerFrame"),TEXT("LoginPanel"),TEXT("Panel"),TEXT("Logo"),TEXT("Cover"),TEXT("Zodiac")})
+    // 本轮三个真实魔法图标必须加入发布用同一RHI门禁，不沿用只覆盖旧九张纹理的报告。
+    for(const TCHAR* Name:{TEXT("Menu"),TEXT("Ability"),TEXT("Minimap"),TEXT("PlayerFrame"),TEXT("LoginPanel"),TEXT("Panel"),TEXT("Logo"),TEXT("Cover"),TEXT("Zodiac"),TEXT("Fireball"),TEXT("Frostbolt"),TEXT("ArcaneMissiles")})
     {
-        const FString Path=FCString::Strcmp(Name,TEXT("Logo"))==0
+        const bool bMagicIcon=FCString::Strcmp(Name,TEXT("Fireball"))==0||FCString::Strcmp(Name,TEXT("Frostbolt"))==0||FCString::Strcmp(Name,TEXT("ArcaneMissiles"))==0;
+        const FString Path=bMagicIcon ? FString::Printf(TEXT("/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev%s"),Name)
+            : FCString::Strcmp(Name,TEXT("Logo"))==0
             ? TEXT("/DBAUIPack_Core/UI/Textures/DBA_MythicLogo")
             : FCString::Strcmp(Name,TEXT("Zodiac"))==0
                 ? TEXT("/DBAUIPack_Core/UI/Textures/Zodiac/T_DBA_ZodiacChoiceAtlas_V1")
@@ -160,6 +163,11 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
         if(!TestTrue(TEXT("真实源像素可读"),Texture->Source.GetMipImage(Source,0)))continue;
         if(!TestEqual(TEXT("原稿源格式为BGRA8"),Source.Format,ERawImageFormat::BGRA8))continue;
         TArray<FVector2f> Samples{FVector2f(.5f,.5f)};
+        if(bMagicIcon)
+        {
+            // 中心能量核与两侧有色过渡均核对，不能以近黑背景像素掩盖重复Gamma编码。
+            Samples.Add(FVector2f(.4f,.45f)); Samples.Add(FVector2f(.6f,.55f));
+        }
         if(FCString::Strcmp(Name,TEXT("Zodiac"))==0)
         {
             // 新图集必须覆盖十二格，而非仅核对整体中心；不以旧原稿测试报告放行新图。

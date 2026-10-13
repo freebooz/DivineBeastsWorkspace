@@ -32,6 +32,11 @@ public class DivineBeastsPresentationClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsCharactersRuntime",
+            // 只读项目开发资格和平台复制投射物事实，不链接服务器私有或项目伤害执行器。
+            "DivineBeastsAbilitiesRuntime",
+            "GamePlatformCombat",
+            // 新开发法术适配直接请求已登记语义标签，须链接实现，不靠公共头的传递可见性。
+            "GameplayTags",
             // 本地玩家表现编排按世界天气快照订阅，只有第三层依赖平台天气Runtime；不引入服务器私有或天气客户端执行器。
             "GamePlatformWeatherRuntime",
             // 第三层在真实内容包激活后，仅回调平台天气客户端重新发布当前视觉；不访问Niagara/SFX执行器私有实现。

@@ -440,7 +440,15 @@ def read_iostore_csv(path: Path) -> list[ArtifactEntry]:
             raise PolicyError(f"IoStore CSV第{index}行尺寸无效: {path}")
         if not chunk:
             raise PolicyError(f"IoStore CSV第{index}行缺少ChunkType")
-        if not filename or filename == "-":
+        if (filename,chunk) in (("<ContainerHeader>","ContainerHeader"),("<ScriptObjects>","ScriptObjects")):
+            # UE5.8真实ListContainer将容器头写成精确占位标记，并非文件路径。
+            # global.utoc的ScriptObjects没有目标平台，真实CSV为Unknown；仅精确global容器例外。
+            # 其余元数据仍须专服目标；不允许实际资产借Unknown或改块类型绕过路径审计。
+            global_script_objects = chunk == "ScriptObjects" and platform == "Unknown" and row.get("ContainerName") == "global"
+            if platform != "WindowsServer" and not global_script_objects:
+                raise PolicyError(f"IoStore容器头目标不是WindowsServer: {platform}")
+            filename = ""
+        elif not filename or filename == "-":
             if chunk not in METADATA_CHUNKS:
                 raise PolicyError(f"IoStore CSV第{index}行资源名称丢失")
             filename = ""  # 明确元数据不能计为资产存在，也不解释成任意文件名。

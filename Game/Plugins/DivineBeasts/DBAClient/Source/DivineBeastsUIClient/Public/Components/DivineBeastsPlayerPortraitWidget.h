@@ -27,6 +27,7 @@ protected:
     virtual void BeginDestroy() override;
 
 private:
+    friend class FDivineBeastsPortraitFaceCropTest;
     void HandleReadinessChanged(bool bReady);
     void HandleIdentityChanged();
     void HandleFlowChanged(const FDivineBeastsFlowViewState& State);

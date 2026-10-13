@@ -18,6 +18,20 @@ public class DivineBeastsArenaEditorTarget : TargetRules
         EnablePlugins.Add("GamePlatformSurface");
         // 编辑器需要天气定义的反射、地图组合和客户端表面表现来验证资产与运行行为。
         EnablePlugins.Add("GamePlatformWeather");
+        // 第二批P5可玩演示依赖的平台AI、导航、交互和任务模块；不拷贝同领域执行器。
+        // Editor加载Runtime/Editor及反射需求，运行权限仍由实际NetMode决定。
+        EnablePlugins.Add("GamePlatformAI");
+        EnablePlugins.Add("GamePlatformNavigation");
+        EnablePlugins.Add("GamePlatformInteraction");
+        EnablePlugins.Add("GamePlatformQuest");
+        // 第三批：真实客户端声音内容与玩家服务审核，沿用现有模块宿主隔离。
+        EnablePlugins.Add("DBASFXPack_Core");
+        EnablePlugins.Add("GamePlatformCommerceUI");
+        EnablePlugins.Add("GamePlatformEntitlement");
+        EnablePlugins.Add("GamePlatformEquipment");
+        EnablePlugins.Add("GamePlatformLiveOps");
+        EnablePlugins.Add("GamePlatformProgression");
+
         // GamePlatformPCG（游戏平台PCG）的模板生成、Commandlet（命令行工具）和DataValidation（数据校验）
         // 需要在Editor Target（编辑器目标）显式装配；不会改变Client/Server目标插件闭包。
         EnablePlugins.Add("GamePlatformPCG");

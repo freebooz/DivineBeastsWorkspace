@@ -1,0 +1,31 @@
+{
+  "SchemaVersion": 1,
+  "CreationTool": "Monolith MCP",
+  "MonolithVersion": "0.23.0",
+  "Project": "Game/DivineBeastsArena.uproject",
+  "ScopeZh": "本清单只记录2026-10-12开发三魔法的增量，不冒充整个表现包的全量验收。",
+  "OwnerDirectory": "/DBAPresentationPack_Core/VFX/DevelopmentMagic",
+  "Spells": ["Fireball", "Frostbolt", "ArcaneMissiles"],
+  "AssetNaming": {
+    "Systems": "Niagara/NS_DBA_Dev{Spell}{Flight|Impact}：六系统",
+    "Modules": "Niagara/NM_DBA_Dev{Spell}Visual：三纯GPU外观模块，编入系统，不要求EditorOnly脚本进入Cook",
+    "Materials": "Materials/M_DBA_DevMagicGlow、M_DBA_DevMagicCrystal：两材质",
+    "Definitions": "Definitions/DA_DBA_VFX_Dev{Spell}{Flight|Impact}：六平台派生定义"
+  },
+  "Author": "Tools/Unreal/VFX/DevelopmentMagic/AuthorDevelopmentMagicVFXMonolith.py",
+  "ActionsZh": "核对专属编辑器和正式工程；Monolith创建材质/模块/系统/定义，编译零错误零警告，保存、关闭重开并重新编译六系统。",
+  "ReloadCompile": {"Systems": 6, "Errors": 0, "Warnings": 0},
+  "AppearanceZh": "火焰橙金低频流动能量核和24粒子宽柔火尾；冰箭沿本地X轴的蓝白晶体与24粒子寒雾；奥术紫蓝核心及28粒子连续螺旋光带。世界空间尾迹120粒子/秒、寿命0.5秒；命中独立闪光/32粒子扩展环/8枚少量晶体；没有伤害或运动权威。",
+  "RefinementEvidence": "Saved/Validation/MagicHUD20261012/VFXReloadRefined.json",
+  "RefinementRollback": "Saved/Validation/MagicHUD20261012/VFXBackup-20261012T154309966832",
+  "FlightBoundsExtentCm": 950,
+  "FlightBoundsReasonZh": "1600厘米/秒×0.5秒世界空间拖尾，加螺旋和宽柔光带余量；系统与Trail发射器采用全轴保守范围，避免核心小盒提前裁剪尾迹。只是客户端表现，不改变射程或权威碰撞。",
+  "RefinementRecoveryZh": "已有但未完整加载的模块重建会触发UE保存断言；作者已先显式加载专用目录全部旧资源，重建后独立重载编译六系统并保存，最后脏包0。失败没有记为完成。",
+  "PrototypeCleanupZh": "无引用的单一调试模块NM_DBA_DevFireballVisualV2已通过Monolith移除，原始备份在Saved/Validation/MagicHUD20261012/VFXPrototypeRollback。六正式新系统保持原包身份重建，旧项目VFX与场景没有删除。",
+  "VerificationBoundariesZh": "独立编辑器Niagara预览不等于客户端实战视觉，真实螺旋/伤害由服务器投射物测试与联网验收证明。纯表现服务器剥离必须检查实际容器。",
+  "ClientCookVerified": true,
+  "ClientCookEvidence": "Saved/Validation/FoundationM0/6bfc330a-f7a8-4444-b4cf-d6814445233b/Cook-FrontEndClient/result.json",
+  "ServerCookVerified": true,
+  "ServerCookEvidence": "Saved/Validation/FoundationM0/aab68dd8-9f31-4fea-be57-f1b2ee198c15/Cook-Server/ServerPresentationAudit/ServerPresentationAudit.json",
+  "ManualVisualAccepted": false
+}

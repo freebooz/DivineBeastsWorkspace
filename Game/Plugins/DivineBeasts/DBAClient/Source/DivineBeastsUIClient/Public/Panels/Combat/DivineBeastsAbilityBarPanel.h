@@ -106,4 +106,6 @@ private:
 
     UPROPERTY(Transient)
     TArray<FGamePlatformUISlotState> AbilitySlots;
+    /** 槽事件可同步换Pawn/解绑；每次刷新换代，旧状态事件返回后不得尾写新图标。 */
+    FGuid VisualProjectionToken;
 };

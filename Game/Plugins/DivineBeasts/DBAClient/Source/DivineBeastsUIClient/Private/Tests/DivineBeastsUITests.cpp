@@ -28,6 +28,8 @@ void UDivineBeastsUIReentryObserver::HandleCommandCompleted(FGuid RequestId, FNa
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/EditableTextBox.h"
+#include "Components/VerticalBox.h"
+#include "Blueprint/WidgetTree.h"
 #include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Contracts/DivineBeastsUIContracts.h"
@@ -38,6 +40,8 @@ void UDivineBeastsUIReentryObserver::HandleCommandCompleted(FGuid RequestId, FNa
 #include "Screens/Loading/DivineBeastsLoadingTravelScreen.h"
 #include "Screens/Connection/DivineBeastsErrorReconnectScreen.h"
 #include "Screens/Characters/DivineBeastsCharacterCreateScreen.h"
+#include "Screens/Characters/DivineBeastsCharacterSelectScreen.h"
+#include "Screens/Characters/DivineBeastsCharacterChoiceEntry.h"
 #include "ViewModels/Characters/DivineBeastsCharacterCreateViewModel.h"
 #include "ViewModels/Characters/DivineBeastsCharacterSelectViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
@@ -547,22 +551,22 @@ bool FDivineBeastsUIRoutingPolicyTest::RunTest(const FString&)
     return true;
 }
 
-// 登录成功的CharacterEntry默认显示选择页，角色数量和创建资格不能隐式打开创建表单。
+// 登录完成且权威档案已加载：无角色直接创建，有角色选择；LoadRoster不把未知列表当作新玩家。
 // 仅使用手工给定的只读快照；路由不得修改业务角色、选择标识或允许命令。
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterEntryDefaultSelectionTest,
-    "DivineBeasts.UI.RoutingPolicy.CharacterEntryDefaultsToSelect",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterEntryRosterRoutingTest,
+    "DivineBeasts.UI.RoutingPolicy.CharacterEntryRoutesByRoster",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FDivineBeastsCharacterEntryDefaultSelectionTest::RunTest(const FString&)
+bool FDivineBeastsCharacterEntryRosterRoutingTest::RunTest(const FString&)
 {
     FDivineBeastsUIViewState State;
     State.CurrentStep = TEXT("DBA.Flow.CharacterEntry");
     State.PageState = EDivineBeastsUIPageState::Empty;
     State.bAuthenticated = true;
     State.AllowedCommands = {TEXT("CreateCharacter")};
-    TestEqual(TEXT("已认证空角色入口默认选择页"),
-        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.CharacterSelect")));
-    TestEqual(TEXT("无效本地偏好回退选择页"),
-        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.Inventory")), FName(TEXT("UI.Screen.CharacterSelect")));
+    TestEqual(TEXT("已认证且档案加载完成的空角色直接创建"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.CharacterCreate")));
+    TestEqual(TEXT("无效本地偏好仍按空档案创建入口回退"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State, TEXT("UI.Screen.Inventory")), FName(TEXT("UI.Screen.CharacterCreate")));
     TestTrue(TEXT("用户可显式打开已允许的创建表单"),
         FDivineBeastsUIRoutingPolicy::CanNavigateCharacterEntry(State, TEXT("UI.Screen.CharacterCreate")));
     TestEqual(TEXT("显式创建偏好才显示创建表单"),
@@ -570,6 +574,18 @@ bool FDivineBeastsCharacterEntryDefaultSelectionTest::RunTest(const FString&)
     TestTrue(TEXT("显示页面不生成角色"), State.Characters.IsEmpty());
     TestTrue(TEXT("显示页面不生成业务选择"), State.SelectedCharacterId.IsEmpty());
     TestEqual(TEXT("显示页面不追加选择或世界命令"), State.AllowedCommands.Num(), 1);
+    State.CurrentStep = TEXT("DBA.Flow.LoadRoster");
+    TestEqual(TEXT("档案尚在加载时不把空快照当成新玩家"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.CharacterSelect")));
+    State.CurrentStep = TEXT("DBA.Flow.CharacterEntry");
+    State.AllowedCommands.Reset();
+    TestEqual(TEXT("缺少创建能力时不会直接打开创建表单"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.CharacterSelect")));
+    State.AllowedCommands = {TEXT("CreateCharacter")};
+    State.Loading.bIsLoading = true;
+    TestEqual(TEXT("真实加载遮罩优先于空档案分流"),
+        FDivineBeastsUIRoutingPolicy::ResolvePrimaryScreen(State), FName(TEXT("UI.Screen.LoadingTravel")));
+    State.Loading.bIsLoading = false;
 
     FDivineBeastsUICharacterItem Character;
     Character.CharacterId = TEXT("character-routing-fixture-001");
@@ -755,6 +771,297 @@ bool FDivineBeastsCharacterCreateCancelButtonTest::RunTest(const FString&)
     *State = Entry;
     ViewModel->MarkStateChanged();
     TestTrue(TEXT("恢复空闲角色入口后事件重新启用取消"), BackButton->GetIsEnabled());
+    return true;
+}
+
+namespace
+{
+/**
+ * 角色选择页原生回归夹具：创建Transient页面、真实命名控件树和VM，复用生产激活、状态及焦点入口。
+ * 手工快照仅为UI输入，不取得后端授权；不写资产、不创建世界，不以模拟函数返回值代替页面行为。
+ * 析构结束激活和VM订阅；控件由WidgetTree及页面反射字段持有，生命周期限于本条自动化测试。
+ */
+struct FDivineBeastsCharacterSelectNativeFixture
+{
+    TStrongObjectPtr<UDivineBeastsCharacterSelectScreen> Screen;
+    TStrongObjectPtr<UDivineBeastsCharacterSelectViewModel> ViewModel;
+    TStrongObjectPtr<ULocalPlayer> Player;
+    TStrongObjectPtr<UDivineBeastsUIClientSubsystem> Owner;
+    UButton* CreateButton = nullptr;
+    UButton* SelectButton = nullptr;
+    UTextBlock* SelectButtonLabel = nullptr;
+    UVerticalBox* CharacterChoices = nullptr;
+    UTextBlock* ErrorText = nullptr;
+    UTextBlock* StatusText = nullptr;
+    FDivineBeastsUIViewState* State = nullptr;
+
+    /** 在游戏线程绑定真实字段并激活空角色入口；可聚焦参数仅控制测试按钮前提，false用于负向用例。 */
+    bool Initialize(FAutomationTestBase& Test, bool bCreateButtonFocusable = true, bool bWithRealOwner = false)
+    {
+        Screen.Reset(NewObject<UDivineBeastsCharacterSelectScreen>());
+        ViewModel.Reset(NewObject<UDivineBeastsCharacterSelectViewModel>());
+        Screen->WidgetTree = NewObject<UWidgetTree>(Screen.Get());
+        auto* Root = Screen->WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("RegressionRoot"));
+        Screen->WidgetTree->RootWidget = Root;
+        CharacterChoices = Screen->WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("CharacterChoices"));
+        CreateButton = Screen->WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("OpenCharacterCreateButton"));
+        // UE5.8的UButton没有公开SetIsFocusable，InitIsFocusable受保护；仅为Transient夹具设置真实反射配置。
+        // 必须在TakeWidget前明确焦点属性；IsVisible查询缓存Slate，只有UMG控件树会误报“不可见”。
+        auto* FocusableProperty = FindFProperty<FBoolProperty>(CreateButton->GetClass(), TEXT("IsFocusable"));
+        if (!Test.TestNotNull(TEXT("真实按钮可聚焦配置字段存在"), FocusableProperty)) return false;
+        FocusableProperty->SetPropertyValue_InContainer(CreateButton, bCreateButtonFocusable);
+        CreateButton->TakeWidget();
+        if (!Test.TestTrue(TEXT("创建按钮已构建真实Slate控件"), CreateButton->GetCachedWidget().IsValid())) return false;
+        SelectButton = Screen->WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("SelectButton"));
+        SelectButtonLabel = Screen->WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SelectButtonLabel"));
+        SelectButtonLabel->SetText(FText::FromString(TEXT("进入游戏")));
+        SelectButton->AddChild(SelectButtonLabel);
+        auto* LabelProperty = FindFProperty<FObjectPropertyBase>(Screen->GetClass(), TEXT("SelectButtonLabel"));
+        if (!Test.TestNotNull(TEXT("主按钮真实动态文案绑定存在"), LabelProperty)) return false;
+        LabelProperty->SetObjectPropertyValue_InContainer(Screen.Get(), SelectButtonLabel);
+        auto* LogoutButton = Screen->WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("LogoutButton"));
+        StatusText = Screen->WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("StatusText"));
+        ErrorText = Screen->WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("ErrorText"));
+        const auto BindControl = [&Test, Page = Screen.Get(), Root](FName Name, UWidget* Control)
+        {
+            auto* Property = FindFProperty<FObjectPropertyBase>(Page->GetClass(), Name);
+            if (!Test.TestNotNull(*FString::Printf(TEXT("角色选择页真实字段存在：%s"), *Name.ToString()), Property)) return false;
+            Property->SetObjectPropertyValue_InContainer(Page, Control);
+            Root->AddChildToVerticalBox(Control);
+            return true;
+        };
+        if (!BindControl(TEXT("CharacterChoices"), CharacterChoices) ||
+            !BindControl(TEXT("OpenCharacterCreateButton"), CreateButton) ||
+            !BindControl(TEXT("SelectButton"), SelectButton) ||
+            !BindControl(TEXT("LogoutButton"), LogoutButton) ||
+            !BindControl(TEXT("StatusText"), StatusText) ||
+            !BindControl(TEXT("ErrorText"), ErrorText)) return false;
+        auto* StateProperty = FindFProperty<FStructProperty>(ViewModel->GetClass(), TEXT("State"));
+        if (!Test.TestNotNull(TEXT("真实选择VM快照字段存在"), StateProperty)) return false;
+        State = StateProperty->ContainerPtrToValuePtr<FDivineBeastsUIViewState>(ViewModel.Get());
+        State->CurrentStep = TEXT("DBA.Flow.CharacterEntry");
+        State->PageState = EDivineBeastsUIPageState::Empty;
+        State->bAuthenticated = true;
+        State->AllowedCommands = {TEXT("CreateCharacter")};
+        const FDivineBeastsUIViewState FixtureInput = *State;
+        if (bWithRealOwner)
+        {
+            // 真实Owner故意不初始化Contract：点击必须得到真实同步拒绝，不能伪造后端成功。
+            if (!Test.TestNotNull(TEXT("命令夹具需要Engine Outer"), GEngine)) return false;
+            Player.Reset(NewObject<ULocalPlayer>(GEngine));
+            Owner.Reset(NewObject<UDivineBeastsUIClientSubsystem>(Player.Get()));
+            ViewModel->InitializeForScreen(Owner.Get(), TEXT("UI.Screen.CharacterSelect"));
+        }
+        Screen->InitializeScreen(TEXT("UI.Screen.CharacterSelect"), ViewModel.Get(), TEXT("SelectButton"),
+            EGamePlatformUIInputMode::UIOnly, EGamePlatformUIPausePolicy::Never);
+        Screen->ActivateWidget();
+        if (bWithRealOwner)
+        {
+            // Owner的业务ViewState不是反射字段，不修改它。生产激活完成后仅给Transient VM注入UI输入。
+            // Owner仍无Contract，后面的真实按钮点击只能得到真实拒绝，不代表后端授权。
+            *State = FixtureInput;
+            ViewModel->MarkStateChanged();
+        }
+        return Test.TestTrue(TEXT("真实选择页已激活"), Screen->IsActivated()) &&
+            Test.TestTrue(TEXT("真实选择VM页面生命周期已开始"), ViewModel->IsPageActive());
+    }
+
+    ~FDivineBeastsCharacterSelectNativeFixture()
+    {
+        if (Screen.IsValid())
+        {
+            if (Screen->IsActivated()) Screen->DeactivateWidget();
+            Screen->InitializeActivatableViewModel(nullptr);
+        }
+        if (Owner.IsValid()) Owner->Deinitialize();
+    }
+};
+}
+
+// 空列表提示必须引导显式创建；恢复档案、忙碌和禁用原因仍从真实状态事件投影，不能被空态文案覆盖。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterSelectEmptyRosterPresentationTest,
+    "DivineBeasts.UI.Characters.CharacterSelect.EmptyRosterPresentation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterSelectEmptyRosterPresentationTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    FDivineBeastsCharacterSelectNativeFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    const FText EmptyPrompt = FText::FromString(TEXT("尚未创建角色，请点击创建角色开始。"));
+    TestTrue(TEXT("空角色入口提示创建而非确认选择"), Fixture.StatusText->GetText().EqualTo(EmptyPrompt));
+    TestFalse(TEXT("空列表提示不会授予选择提交资格"), Fixture.ViewModel->CanSubmitSelection());
+    Fixture.State->bBusy = true;
+    Fixture.ViewModel->MarkStateChanged();
+    TestTrue(TEXT("忙碌快照仍显示原有提交提示"),
+        Fixture.StatusText->GetText().EqualTo(FText::FromString(TEXT("正在确认角色，请稍候…"))));
+    Fixture.State->bBusy = false;
+    FDivineBeastsUICharacterItem Character;
+    Character.CharacterId = TEXT("character-empty-state-fixture-001");
+    Character.HeroDefinitionId = TEXT("Hero.Zodiac.Rat");
+    Character.DisplayName = FText::FromString(TEXT("回归档案"));
+    Fixture.State->Characters.Add(Character);
+    Fixture.State->PageState = EDivineBeastsUIPageState::Ready;
+    Fixture.ViewModel->MarkStateChanged();
+    TestTrue(TEXT("非空档案保留原有确认提示"),
+        Fixture.StatusText->GetText().EqualTo(FText::FromString(TEXT("选择角色后点击确认。"))));
+    Fixture.State->Characters[0].bEnabled = false;
+    Fixture.State->Characters[0].DisabledReason = FText::FromString(TEXT("档案当前不可用"));
+    Fixture.ViewModel->MarkStateChanged();
+    TestTrue(TEXT("非空禁用档案保留真实禁用原因"),
+        Fixture.StatusText->GetText().EqualTo(Fixture.State->Characters[0].DisabledReason));
+    Fixture.State->Characters.Reset();
+    Fixture.State->PageState = EDivineBeastsUIPageState::Empty;
+    Fixture.ViewModel->MarkStateChanged();
+    TestTrue(TEXT("档案移除后的事件重新显示创建提示"), Fixture.StatusText->GetText().EqualTo(EmptyPrompt));
+    return true;
+}
+
+// 空列表应把焦点交给可用创建按钮；通过CommonUI公开焦点入口读取生产Native路由，不手工调用保护函数。
+// 夹具也只装配真实列表；禁用、忙碌或隐藏的创建按钮不得成为优先目标。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterSelectEmptyRosterFocusTest,
+    "DivineBeasts.UI.Characters.CharacterSelect.EmptyRosterCreateFocus",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterSelectEmptyRosterFocusTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    FDivineBeastsCharacterSelectNativeFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    if (!TestTrue(TEXT("创建入口已获快照授权且启用"), Fixture.CreateButton->GetIsEnabled()) ||
+        !TestTrue(TEXT("正向创建入口明确允许键盘焦点"), Fixture.CreateButton->GetIsFocusable()) ||
+        !TestTrue(TEXT("正向创建入口的真实Slate可见"), Fixture.CreateButton->IsVisible())) return false;
+    TestEqual(TEXT("空列表优先聚焦可用创建入口"), Fixture.Screen->GetDesiredFocusTarget(), static_cast<UWidget*>(Fixture.CreateButton));
+    Fixture.State->AllowedCommands.Reset();
+    Fixture.ViewModel->MarkStateChanged();
+    TestFalse(TEXT("创建权限撤销后不再优先聚焦禁用按钮"), Fixture.Screen->GetDesiredFocusTarget() == Fixture.CreateButton);
+    Fixture.State->AllowedCommands = {TEXT("CreateCharacter")};
+    Fixture.State->bBusy = true;
+    Fixture.ViewModel->MarkStateChanged();
+    TestFalse(TEXT("忙碌时不再优先聚焦创建按钮"), Fixture.Screen->GetDesiredFocusTarget() == Fixture.CreateButton);
+    Fixture.State->bBusy = false;
+    Fixture.ViewModel->MarkStateChanged();
+    Fixture.CreateButton->SetVisibility(ESlateVisibility::Collapsed);
+    TestFalse(TEXT("隐藏创建入口不得作为优先焦点"), Fixture.Screen->GetDesiredFocusTarget() == Fixture.CreateButton);
+    Fixture.CreateButton->SetVisibility(ESlateVisibility::Visible);
+    TestEqual(TEXT("恢复可用创建入口后焦点路由恢复"), Fixture.Screen->GetDesiredFocusTarget(), static_cast<UWidget*>(Fixture.CreateButton));
+    // 同一生产门禁必须拒绝“可见且启用但不允许键盘焦点”的入口，不能靠放宽门禁使正向用例通过。
+    FDivineBeastsCharacterSelectNativeFixture NonFocusableFixture;
+    if (!NonFocusableFixture.Initialize(*this, false)) return false;
+    TestTrue(TEXT("非聚焦反例仍有可见且启用的创建按钮"),
+        NonFocusableFixture.CreateButton->IsVisible() && NonFocusableFixture.CreateButton->GetIsEnabled());
+    TestFalse(TEXT("非聚焦反例明确不允许键盘焦点"), NonFocusableFixture.CreateButton->GetIsFocusable());
+    TestFalse(TEXT("不可聚焦按钮不得成为优先焦点"),
+        NonFocusableFixture.Screen->GetDesiredFocusTarget() == NonFocusableFixture.CreateButton);
+    return true;
+}
+
+// 非空档案仍优先当前卡片按钮，创建入口不能抢占；手工装配真实条目按钮以隔离资产和世界环境。
+// 反射只设置测试页面的Transient条目与本地浏览ID，焦点查询使用生产入口；不代表后端选择成功。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterSelectNonEmptyRosterFocusTest,
+    "DivineBeasts.UI.Characters.CharacterSelect.NonEmptyRosterCardFocus",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterSelectNonEmptyRosterFocusTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    FDivineBeastsCharacterSelectNativeFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    for (int32 Index = 0; Index < 2; ++Index)
+    {
+        FDivineBeastsUICharacterItem Character;
+        Character.CharacterId = FString::Printf(TEXT("character-focus-fixture-%d"), Index);
+        Character.HeroDefinitionId = TEXT("Hero.Zodiac.Rat");
+        Character.DisplayName = FText::FromString(FString::Printf(TEXT("焦点档案%d"), Index));
+        Fixture.State->Characters.Add(Character);
+    }
+    Fixture.State->PageState = EDivineBeastsUIPageState::Ready;
+    Fixture.ViewModel->MarkStateChanged();
+    auto* ChoicesProperty = FindFProperty<FArrayProperty>(Fixture.Screen->GetClass(), TEXT("ChoiceEntries"));
+    auto* ButtonProperty = FindFProperty<FObjectPropertyBase>(UDivineBeastsCharacterChoiceEntry::StaticClass(), TEXT("ChoiceButton"));
+    if (!TestNotNull(TEXT("真实页面Transient卡片集合存在"), ChoicesProperty) ||
+        !TestNotNull(TEXT("真实卡片焦点按钮字段存在"), ButtonProperty)) return false;
+    auto* Choices = ChoicesProperty->ContainerPtrToValuePtr<TArray<TObjectPtr<UDivineBeastsCharacterChoiceEntry>>>(Fixture.Screen.Get());
+    UButton* CardButtons[2] = {};
+    for (int32 Index = 0; Index < 2; ++Index)
+    {
+        auto* Entry = NewObject<UDivineBeastsCharacterChoiceEntry>(Fixture.Screen.Get());
+        CardButtons[Index] = NewObject<UButton>(Entry);
+        ButtonProperty->SetObjectPropertyValue_InContainer(Entry, CardButtons[Index]);
+        Entry->ConfigureChoice(Fixture.State->Characters[Index].CharacterId, {}, {}, {});
+        Choices->Add(Entry);
+    }
+    TestEqual(TEXT("第一个档案仍优先卡片按钮"), Fixture.Screen->GetDesiredFocusTarget(), static_cast<UWidget*>(CardButtons[0]));
+    auto* PreviewId = FindFProperty<FStrProperty>(Fixture.Screen->GetClass(), TEXT("PreviewedCharacterId"));
+    if (!TestNotNull(TEXT("真实本地浏览ID存在，不再依赖下拉框索引"), PreviewId)) return false;
+    PreviewId->SetPropertyValue_InContainer(Fixture.Screen.Get(), Fixture.State->Characters[1].CharacterId);
+    TestEqual(TEXT("选择变化后焦点仍跟随对应档案卡片"), Fixture.Screen->GetDesiredFocusTarget(), static_cast<UWidget*>(CardButtons[1]));
+    TestFalse(TEXT("非空档案的创建入口不抢占卡片焦点"), Fixture.Screen->GetDesiredFocusTarget() == Fixture.CreateButton);
+    return true;
+}
+
+// 主入口不能对无档案的新玩家表现为失效按钮；仅引导创建，真实角色选择资格仍为false。
+// 有角色、忙碌、未认证和缺命令分别使用真实快照事件，防止以UI可点击偷渡业务授权。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterEntryPrimaryActionTest,
+    "DivineBeasts.UI.Characters.CharacterSelect.PrimaryActionFeedback",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterEntryPrimaryActionTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    FDivineBeastsCharacterSelectNativeFixture Fixture;
+    if (!Fixture.Initialize(*this)) return false;
+    TestTrue(TEXT("空档案主按钮可引导创建而非静默禁用"), Fixture.SelectButton->GetIsEnabled());
+    TestTrue(TEXT("空档案主按钮明确表达创建而非进入已有角色"),
+        Fixture.SelectButtonLabel->GetText().EqualTo(FText::FromString(TEXT("创建角色"))));
+    TestFalse(TEXT("可打开创建页不等于可提交角色选择"), Fixture.ViewModel->CanSubmitSelection());
+    Fixture.State->bBusy = true;
+    Fixture.ViewModel->MarkStateChanged();
+    TestFalse(TEXT("忙碌期间不能重复导航或进入"), Fixture.SelectButton->GetIsEnabled());
+    Fixture.State->bBusy = false;
+    Fixture.State->bAuthenticated = false;
+    Fixture.ViewModel->MarkStateChanged();
+    TestFalse(TEXT("未认证不得通过创建引导绕过入口"), Fixture.SelectButton->GetIsEnabled());
+    Fixture.State->bAuthenticated = true;
+    Fixture.State->AllowedCommands.Reset();
+    Fixture.ViewModel->MarkStateChanged();
+    TestFalse(TEXT("没有创建能力时主按钮仍禁止执行"), Fixture.SelectButton->GetIsEnabled());
+    Fixture.State->AllowedCommands = {TEXT("SelectPersistentCharacter")};
+    Fixture.State->PageState = EDivineBeastsUIPageState::Ready;
+    FDivineBeastsUICharacterItem Character;
+    Character.CharacterId = TEXT("primary-action-real-roster-fixture");
+    Character.HeroDefinitionId = TEXT("Hero.Zodiac.Rat");
+    Character.bEnabled = true;
+    Fixture.State->Characters.Add(Character);
+    Fixture.ViewModel->MarkStateChanged();
+    TestTrue(TEXT("可用档案与后端选择能力才启用进入游戏"), Fixture.SelectButton->GetIsEnabled());
+    TestTrue(TEXT("已有档案主按钮恢复进入游戏语义"),
+        Fixture.SelectButtonLabel->GetText().EqualTo(FText::FromString(TEXT("进入游戏"))));
+    Fixture.State->Characters[0].bEnabled = false;
+    Fixture.ViewModel->MarkStateChanged();
+    TestFalse(TEXT("不可用档案不能提交进入"), Fixture.SelectButton->GetIsEnabled());
+    return true;
+}
+
+// 使用真实按钮委托、VM和Owner命令拒绝路径；收到同步错误且页面可读才证明点击已传递。
+// 不初始化后端Contract、不Travel；本例只验证UI到命令入口，不能作为登录/准入成功证据。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCharacterSelectClickCommandTest,
+    "DivineBeasts.UI.Characters.CharacterSelect.ClickReachesCommandPort",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCharacterSelectClickCommandTest::RunTest(const FString&)
+{
+    FScopedAllowAbstractClassAllocation AllowAbstract;
+    FDivineBeastsCharacterSelectNativeFixture Fixture;
+    if (!Fixture.Initialize(*this, true, true)) return false;
+    FDivineBeastsUICharacterItem Character;
+    Character.CharacterId = TEXT("native-click-character-fixture");
+    Character.HeroDefinitionId = TEXT("Hero.Zodiac.Rat");
+    Character.bEnabled = true;
+    Fixture.State->Characters.Add(Character);
+    Fixture.State->AllowedCommands = {TEXT("SelectPersistentCharacter")};
+    Fixture.State->PageState = EDivineBeastsUIPageState::Ready;
+    Fixture.ViewModel->MarkStateChanged();
+    TestTrue(TEXT("有效角色入口按钮由真实快照启用"), Fixture.SelectButton->GetIsEnabled());
+    Fixture.SelectButton->OnClicked.Broadcast();
+    TestEqual(TEXT("真实点击进入Owner并返回缺少Contract的错误"),
+        Fixture.ViewModel->GetLastCommandErrorCode(), FName(TEXT("UI.Command.Invalid")));
+    TestFalse(TEXT("点击失败必须显示可读错误而不是静默无反应"), Fixture.ErrorText->GetText().IsEmpty());
     return true;
 }
 

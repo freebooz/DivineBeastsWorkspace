@@ -15,6 +15,13 @@
   },
   "CookDirectories": [
     {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/DevelopmentMagic",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "开发火焰/冰箭/奥术纯Niagara、材质及定义；碰撞/伤害由平台权威投射物，不进任何专服。"
+    },
+    {
       "PackagePath": "/DBAUIPack_Core",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content",
       "Profiles": "AllServers",
@@ -242,8 +249,8 @@
       "PackagePath": "/DBASFXPack_Core/Weather",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/Content/Weather",
       "Profiles": "AllServers",
-      "Availability": "LegacyAbsent",
-      "Reason": "保留既有天气声音历史排除；当前未登记、未创建该内容包。"
+      "Availability": "Present",
+      "Reason": "实际Weather声音目录已存在；三类专用服务器均排除其纯客户端音频和定义，不以历史缺失标记跳过审计。"
     },
     {
       "PackagePath": "/Game/Development/Weather",
@@ -462,8 +469,8 @@
     {
       "PackagePath": "/DBASFXPack_Core",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core",
-      "Availability": "LegacyAbsent",
-      "Reason": "兼容既有声音包排除；当前没有实际内容包，禁止据此虚构包。"
+      "Availability": "Present",
+      "Reason": "实际公共声音包已经存在；继续仅客户端Stage剥离，包含音频、定义和插件发布文件。"
     }
   ]
 }

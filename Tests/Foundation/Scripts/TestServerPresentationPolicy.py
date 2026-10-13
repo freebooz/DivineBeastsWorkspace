@@ -301,6 +301,57 @@ class PolicyBehaviorTests(unittest.TestCase):
             with self.assertRaises(self.api.PolicyError):
                 self.policy.validate_entries(self.api.read_iostore_csv(path), "DedicatedServer")
 
+    def test_container_header_marker_is_typed_metadata_not_asset_path(self):
+        # 真实UE5.8 ListContainer使用此精确标记；保留块尺寸/种类，但不能把它计作地图或资产存在。
+        with tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
+            rows=[["/DBAGameplay/Definitions/A.uasset","ExportBundleData","80","WindowsServer"],
+                  ["<ContainerHeader>","ContainerHeader","29704","WindowsServer"]]
+            entries=self.api.read_iostore_csv(self.write_csv(folder,rows))
+            self.assertEqual(entries[1].filename,"")
+            self.assertEqual(entries[1].chunk_type,"ContainerHeader")
+            self.assertEqual(entries[1].size,29704)
+            self.assertEqual(self.policy.validate_entries(entries,"DedicatedServer")["AssetEntries"],1)
+
+    def test_container_header_marker_cannot_hide_invalid_asset_or_wrong_target(self):
+        # 类型错配、路径变形及客户端目标不能借元数据标记绕过完整路径与端侧检查。
+        for filename,chunk,platform in [("<ContainerHeader>","ExportBundleData","WindowsServer"),
+                                        ("../<ContainerHeader>","ContainerHeader","WindowsServer"),
+                                        ("<UnknownHeader>","ContainerHeader","WindowsServer"),
+                                        ("<ContainerHeader>","ContainerHeader","WindowsClient")]:
+            with self.subTest(filename=filename,chunk=chunk,platform=platform), tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
+                with self.assertRaises(self.api.PolicyError):
+                    self.api.read_iostore_csv(self.write_csv(folder,[[filename,chunk,"80",platform]]))
+
+    def test_script_objects_marker_is_typed_global_metadata(self):
+        # 独立global.utoc使用ScriptObjects标记；不能通过修正主容器而遗漏全局容器。
+        with tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
+            entries=self.api.read_iostore_csv(self.write_csv(folder,[["<ScriptObjects>","ScriptObjects","80","WindowsServer"]]))
+            self.assertEqual(entries[0].filename,"")
+            self.assertEqual(entries[0].chunk_type,"ScriptObjects")
+            with self.assertRaises(self.api.PolicyError):
+                self.api.read_iostore_csv(self.write_csv(folder,[["<ContainerHeader>","ScriptObjects","80","WindowsServer"]]))
+
+    def test_unknown_platform_only_for_exact_global_script_objects(self):
+        # 真实global.utoc的目标列为Unknown，只放行已识别global元数据，不放行WindowsClient或项目容器。
+        header=("Filename","ChunkType","Size","Platform","ContainerName")
+        with tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
+            entries=self.api.read_iostore_csv(self.write_csv(folder,[["<ScriptObjects>","ScriptObjects","80","Unknown","global"]],header))
+            self.assertEqual(entries[0].filename,"")
+            for filename,chunk,platform,container in [("<ScriptObjects>","ScriptObjects","Unknown","project"),
+                                                     ("<ScriptObjects>","ScriptObjects","WindowsClient","global"),
+                                                     ("<ContainerHeader>","ContainerHeader","Unknown","global"),
+                                                     ("/DBAGameplay/Definitions/A.uasset","ExportBundleData","Unknown","global")]:
+                with self.subTest(filename=filename,chunk=chunk,platform=platform,container=container), self.assertRaises(self.api.PolicyError):
+                    self.api.read_iostore_csv(self.write_csv(folder,[[filename,chunk,"80",platform,container]],header))
+
+    def test_real_forbidden_path_with_metadata_chunk_remains_forbidden(self):
+        # 仅精确无文件名标记可归一为空；真实UI路径即使伪装块类型，仍必须通过禁止目录审计。
+        with tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
+            rows=[["/DBAGameplay/Definitions/A.uasset","ExportBundleData","80","WindowsServer"],
+                  ["/DBAUIPack_Core/UI/Login.uasset","ContainerHeader","40","WindowsServer"]]
+            with self.assertRaises(self.api.PolicyError):
+                self.policy.validate_entries(self.api.read_iostore_csv(self.write_csv(folder,rows)),"DedicatedServer")
+
     def test_pak_listing_requires_complete_count_and_valid_entries(self):
         with tempfile.TemporaryDirectory(prefix="server-policy-test-") as folder:
             path = Path(folder) / "fixture.log"

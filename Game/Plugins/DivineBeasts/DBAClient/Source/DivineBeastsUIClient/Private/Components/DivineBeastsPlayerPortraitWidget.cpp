@@ -156,17 +156,27 @@ void UDivineBeastsPlayerPortraitWidget::RenderPortrait()
 {
     if (bDestroyingNativeResources || !IsValid(this) || IsUnreachable()) { return; }
     const auto State = GetPortraitState();
+    // 当前12份开发肖像同用512×512头肩构图。裁取原RGB中的头脸，不缩放页面或重着色；
+    // 未加载/解绑必须撤销UV，否则之后使用不同纹理可能沿用上一角色裁剪。
+    const FBox2f FaceUV(FVector2f(0.25f, 0.08f), FVector2f(0.75f, 0.58f));
+    const auto ApplyFaceBrush = [&FaceUV](UImage* Image, UTexture2D* Texture)
+    {
+        Image->SetBrushFromTexture(Texture);
+        FSlateBrush Brush = Image->GetBrush();
+        Brush.SetUVRegion(IsValid(Texture) ? FaceUV : FBox2f(ForceInit));
+        Image->SetBrush(Brush);
+    };
     if (auto* Image = Cast<UImage>(GetWidgetFromName(TEXT("PortraitImage"))))
     {
         UTexture2D* Texture = State.PortraitTexture.Get();
-        Image->SetBrushFromTexture(Texture);
+        ApplyFaceBrush(Image, Texture);
         Image->SetVisibility(IsValid(Texture) ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Hidden);
     }
     // 图腾为英雄身份的装饰投影，复用真实肖像；不保留原稿白马，也不新增印记玩法或权威状态。
     if (auto* Image = Cast<UImage>(GetWidgetFromName(TEXT("HeroTotemImage"))))
     {
         UTexture2D* Texture = State.PortraitTexture.Get();
-        Image->SetBrushFromTexture(Texture);
+        ApplyFaceBrush(Image, Texture);
         Image->SetVisibility(IsValid(Texture) ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
     }
     if (auto* Name = Cast<UTextBlock>(GetWidgetFromName(TEXT("PlayerName")))) { Name->SetText(State.DisplayName); }

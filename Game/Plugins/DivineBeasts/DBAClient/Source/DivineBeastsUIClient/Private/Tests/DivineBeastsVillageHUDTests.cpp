@@ -292,6 +292,81 @@ bool FDivineBeastsPortraitIdentityTest::RunTest(const FString&)
     return true;
 }
 
+// 头脸裁剪显示契约：项目层客户端在游戏线程加载已保存的头像框蓝图与Rat/Ox英雄纹理，
+// 通过公开只读快照入口及既有RenderPortrait消费真实Widget树；不创建替身资产、不启动世界或连接后端。
+// 独立期望来自已审阅512×512原图的头脸范围：归一化UV(0.25,0.08)..(0.75,0.58)。
+// 遗漏/错设UV、只处理一个图像、换英雄残留旧资源、解绑遗留裁剪均应失败；不以资产/框架存在判定成功。
+// 本测试只验证画刷契约，不证明RHI像素、人工视觉、异步加载或联网准入；实际RED须由主任务编译运行观察。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPortraitFaceCropTest,
+    "DivineBeasts.UI.Village.PortraitFaceCrop", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPortraitFaceCropTest::RunTest(const FString&)
+{
+    // 路径为独立夹具字面量，不调用生产映射求期望；强引用只覆盖本次测试，退出由局部所有者释放。
+    UClass* FrameClass = LoadClass<UDivineBeastsPlayerPortraitWidget>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFramePortrait.WBP_DBA_UI_PlayerFramePortrait_C"));
+    TStrongObjectPtr<UTexture2D> RatTexture(LoadObject<UTexture2D>(nullptr,
+        TEXT("/DBAHeroPack_Rat/UI/Portraits/T_DBA_Rat_Portrait.T_DBA_Rat_Portrait")));
+    TStrongObjectPtr<UTexture2D> OxTexture(LoadObject<UTexture2D>(nullptr,
+        TEXT("/DBAHeroPack_Ox/UI/Portraits/T_DBA_Ox_Portrait.T_DBA_Ox_Portrait")));
+    if (!TestNotNull(TEXT("已保存头像框的真实生成类"), FrameClass) ||
+        !TestNotNull(TEXT("已保存Rat英雄纹理"), RatTexture.Get()) ||
+        !TestNotNull(TEXT("已保存Ox英雄纹理"), OxTexture.Get())) { return false; }
+    if (!TestNotEqual(TEXT("两英雄拥有不同的真实纹理对象，能够检测串用"), RatTexture.Get(), OxTexture.Get())) { return false; }
+
+    // Initialize沿用同文件真实资产模式，复制作者控件树；不手造PortraitImage或写入预期画刷。
+    TStrongObjectPtr<UDivineBeastsPlayerPortraitWidget> Frame(
+        NewObject<UDivineBeastsPlayerPortraitWidget>(GetTransientPackage(), FrameClass));
+    if (!TestTrue(TEXT("真实头像框实例初始化成功"), Frame->Initialize())) { return false; }
+    ON_SCOPE_EXIT { Frame->BindToPawn(nullptr); };
+    auto* PortraitImage = Cast<UImage>(Frame->GetWidgetFromName(TEXT("PortraitImage")));
+    auto* TotemImage = Cast<UImage>(Frame->GetWidgetFromName(TEXT("HeroTotemImage")));
+    if (!TestNotNull(TEXT("真实主头像图像"), PortraitImage) ||
+        !TestNotNull(TEXT("真实英雄图腾图像"), TotemImage)) { return false; }
+
+    // 检查消费者可见画刷：纹理指针须保持本英雄原资源，UV须有效且等于独立字面量。
+    // 无效UV先报契约失败，不读取其未定义边界；聚合断言结果，同时继续检查另一控件及后续生命周期。
+    const auto CheckFaceBrush = [this](UImage* Image, UTexture2D* ExpectedTexture, const TCHAR* Phase)
+    {
+        bool bPassed = TestEqual(FString::Printf(TEXT("%s：画刷保留本英雄原纹理对象"), Phase),
+            Image->GetBrush().GetResourceObject(), static_cast<UObject*>(ExpectedTexture));
+        const FBox2f UV = Image->GetBrush().GetUVRegion();
+        bPassed &= TestTrue(FString::Printf(TEXT("%s：画刷启用有效头脸裁剪"), Phase), UV.bIsValid != 0);
+        if (UV.bIsValid)
+        {
+            bPassed &= TestEqual(FString::Printf(TEXT("%s：头脸裁剪最小UV"), Phase), UV.Min, FVector2f(0.25f, 0.08f));
+            bPassed &= TestEqual(FString::Printf(TEXT("%s：头脸裁剪最大UV"), Phase), UV.Max, FVector2f(0.75f, 0.58f));
+        }
+        return bPassed;
+    };
+
+    FGamePlatformUIPortraitState RatState;
+    RatState.DisplayId = TEXT("Hero.Zodiac.Rat");
+    RatState.PortraitTexture = TSoftObjectPtr<UTexture2D>(RatTexture.Get());
+    Frame->ApplyPortraitState(RatState);
+    Frame->RenderPortrait();
+    bool bPassed = CheckFaceBrush(PortraitImage, RatTexture.Get(), TEXT("Rat主头像"));
+    bPassed &= CheckFaceBrush(TotemImage, RatTexture.Get(), TEXT("Rat英雄图腾"));
+
+    // 同一实例切到第二英雄，覆盖已渲染的第一英雄；不能靠新建空控件规避旧画刷残留。
+    FGamePlatformUIPortraitState OxState;
+    OxState.DisplayId = TEXT("Hero.Zodiac.Ox");
+    OxState.PortraitTexture = TSoftObjectPtr<UTexture2D>(OxTexture.Get());
+    Frame->ApplyPortraitState(OxState);
+    Frame->RenderPortrait();
+    bPassed &= CheckFaceBrush(PortraitImage, OxTexture.Get(), TEXT("切换Ox主头像"));
+    bPassed &= CheckFaceBrush(TotemImage, OxTexture.Get(), TEXT("切换Ox英雄图腾"));
+
+    // 使用真实解绑入口，让生产清理发布空快照并渲染；同时撤销资源和UV，隐藏控件本身不足以通过。
+    Frame->BindToPawn(nullptr);
+    bPassed &= TestNull(TEXT("解绑清空主头像真实画刷资源"), PortraitImage->GetBrush().GetResourceObject());
+    bPassed &= TestNull(TEXT("解绑清空图腾真实画刷资源"), TotemImage->GetBrush().GetResourceObject());
+    const FBox2f ClearedPortraitUV = PortraitImage->GetBrush().GetUVRegion();
+    const FBox2f ClearedTotemUV = TotemImage->GetBrush().GetUVRegion();
+    bPassed &= TestFalse(TEXT("解绑撤销主头像旧UV区域"), ClearedPortraitUV.bIsValid != 0);
+    bPassed &= TestFalse(TEXT("解绑撤销图腾旧UV区域"), ClearedTotemUV.bIsValid != 0);
+    return bPassed;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsVillageHUDGarbageCollectionTest,
     "DivineBeasts.UI.Village.GarbageCollectionCleanup", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsVillageHUDGarbageCollectionTest::RunTest(const FString&)

@@ -34,7 +34,8 @@ void WarnInvalidInput(const TCHAR* NodeName)
 template<typename T>
 void EnsureAttribute(UPCGMetadata& Metadata, FName Name, const T& DefaultValue)
 {
-    Metadata.FindOrCreateAttribute<T>(Name, DefaultValue, true, true, true);
+    const FName StorageName = FGamePlatformPCGSchema::GetMetadataAttributeName(Name);
+    if (!StorageName.IsNone()) Metadata.FindOrCreateAttribute<T>(StorageName, DefaultValue, true, true, true);
 }
 
 bool IsSchemaTypeCompatible(EGamePlatformPCGAttributeValueType Expected, EPCGMetadataTypes Actual)
@@ -80,7 +81,7 @@ bool GamePlatformPCGNodeMetadata::AssignMeshSetId(UPCGBasePointData& PointData, 
     }
 
     FPCGMetadataAttribute<FName>* Attribute = PointData.Metadata->FindOrCreateAttribute<FName>(
-        FGamePlatformPCGAttr::SpawnMeshSetId, MeshSetId, false, true, true);
+        FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::SpawnMeshSetId), MeshSetId, false, true, true);
     if (!Attribute)
     {
         return false;
@@ -116,7 +117,7 @@ bool GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(
         const FGamePlatformPCGAttributeDescriptor* Descriptor = nullptr;
         for (const FGamePlatformPCGAttributeDescriptor& Candidate : Descriptors)
         {
-            if (Candidate.Name == Name)
+            if (FGamePlatformPCGSchema::GetMetadataAttributeName(Candidate.Name) == Name)
             {
                 Descriptor = &Candidate;
                 break;
@@ -126,7 +127,7 @@ bool GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(
         if (!Descriptor)
         {
             // 引擎或其他插件的普通元数据不受本Schema约束，但禁止注入未知Pcg.*字段。
-            if (Name.ToString().StartsWith(TEXT("Pcg.")))
+            if (Name.ToString().StartsWith(TEXT("Pcg.")) || Name.ToString().StartsWith(TEXT("Pcg_")))
             {
                 return false;
             }
@@ -136,7 +137,7 @@ bool GamePlatformPCGNodeMetadata::HasAllRequiredAttributes(
         {
             return false;
         }
-        Available.Add(Name);
+        Available.Add(Descriptor->Name); // 校验集合保持公开逻辑字段，存储编码不泄漏到Schema合同。
     }
 
     // 显式必需清单只能在核心字段基础上增加约束，不能绕过Layer/Exclude/Seed的强制要求。
@@ -229,9 +230,9 @@ bool FGamePlatformPCGWriteExcludeElement::ExecuteInternal(FPCGContext* Context) 
         }
 
         FPCGMetadataAttribute<float>* Mask = OutputData->Metadata->FindOrCreateAttribute<float>(
-            FGamePlatformPCGAttr::ExcludeMask, Strength, false, true, true);
+            FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExcludeMask), Strength, false, true, true);
         FPCGMetadataAttribute<FName>* Source = OutputData->Metadata->FindOrCreateAttribute<FName>(
-            FGamePlatformPCGAttr::ExcludeSource, Settings->ExcludeSource, false, true, true);
+            FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExcludeSource), Settings->ExcludeSource, false, true, true);
         if (!Mask || !Source)
         {
             continue;
@@ -265,7 +266,7 @@ bool FGamePlatformPCGPriorityCarveElement::ExecuteInternal(FPCGContext* Context)
             continue;
         }
 
-        const FPCGMetadataAttribute<float>* Mask = OutputData->Metadata->GetConstTypedAttribute<float>(FGamePlatformPCGAttr::ExcludeMask);
+        const FPCGMetadataAttribute<float>* Mask = OutputData->Metadata->GetConstTypedAttribute<float>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExcludeMask));
         if (!Mask)
         {
             UE_LOG(LogGamePlatformPCG, Warning, TEXT("PriorityCarve：缺少Pcg.Exclude.Mask，按Fail-Safe输出空结果。"));
@@ -320,9 +321,9 @@ bool FGamePlatformPCGSpatialCarveElement::ExecuteInternal(FPCGContext* Context) 
 
         // 上游默认协议字段可能已经存在；必须为每个点写入值，不能仅修改Metadata的默认值。
         FPCGMetadataAttribute<float>* Mask = OutputData->Metadata->FindOrCreateAttribute<float>(
-            FGamePlatformPCGAttr::ExcludeMask, 0.0f, false, true, true);
+            FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExcludeMask), 0.0f, false, true, true);
         FPCGMetadataAttribute<FName>* Source = OutputData->Metadata->FindOrCreateAttribute<FName>(
-            FGamePlatformPCGAttr::ExcludeSource, FName(), false, true, true);
+            FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::ExcludeSource), FName(), false, true, true);
         if (!Mask || !Source)
         {
             UE_LOG(LogGamePlatformPCG, Warning, TEXT("SpatialCarve：排除元数据类型不正确或不可写，拒绝输出。"));
@@ -605,7 +606,7 @@ bool FGamePlatformPCGSelectSpanMeshByLengthElement::ExecuteInternal(FPCGContext*
             continue;
         }
 
-        const FPCGMetadataAttribute<float>* SpanLength = OutputData->Metadata->GetConstTypedAttribute<float>(FGamePlatformPCGAttr::RuleSpanLength);
+        const FPCGMetadataAttribute<float>* SpanLength = OutputData->Metadata->GetConstTypedAttribute<float>(FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::RuleSpanLength));
         if (!SpanLength)
         {
             UE_LOG(LogGamePlatformPCG, Warning, TEXT("SelectSpanMeshByLength：缺少Pcg.Rule.SpanLength，按Fail-Safe输出空结果。"));
@@ -613,7 +614,7 @@ bool FGamePlatformPCGSelectSpanMeshByLengthElement::ExecuteInternal(FPCGContext*
         }
 
         FPCGMetadataAttribute<FName>* MeshSetId = OutputData->Metadata->FindOrCreateAttribute<FName>(
-            FGamePlatformPCGAttr::SpawnMeshSetId, Settings->FallbackMeshSetId, false, true, true);
+            FGamePlatformPCGSchema::GetMetadataAttributeName(FGamePlatformPCGAttr::SpawnMeshSetId), Settings->FallbackMeshSetId, false, true, true);
         if (!MeshSetId)
         {
             continue;

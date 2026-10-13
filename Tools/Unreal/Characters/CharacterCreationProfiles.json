@@ -1,0 +1,514 @@
+{
+  "_description": "创建页纯介绍作者输入，只保存中文名称、现实开发限制和本英雄图标软路径；不保存数值、授权集合或开发Gameplay资源引用。",
+  "SchemaVersion": 1,
+  "ProfileClassPath": "/Script/DivineBeastsUIClient.DivineBeastsCharacterCreationProfile",
+  "PrimaryAssetType": "DivineBeastsCharacterCreationProfile",
+  "DraftNoticeZh": "开发候选，未作为正式技能批准",
+  "SourceSkillDraft": "Docs/Implementation/ZodiacAbilityDevelopmentDraft_20261009.json",
+  "Profiles": [
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Rat",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Rat",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.rat_dev_primary@1",
+          "DisplayNameZh": "利牙斩",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_BasicAttack_FangSlash_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.rat_dev_passive@1",
+          "DisplayNameZh": "影遁本能",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_Passive_ShadowInstinct_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.rat_dev_active01@1",
+          "DisplayNameZh": "疾影突进",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_Active01_ShadowDash_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.rat_dev_active02@1",
+          "DisplayNameZh": "十字獠牙",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_Active02_CrossFangs_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.rat_dev_ultimate@1",
+          "DisplayNameZh": "暗影伏击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rat/UI/Abilities/T_DBA_Rat_Ultimate_ShadowAmbush_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Ox",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Ox",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.ox_dev_basicattack@1",
+          "DisplayNameZh": "玄角重击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_BasicAttack_HornStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.ox_dev_passive@1",
+          "DisplayNameZh": "磐石之躯",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_Passive_Stonehide_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.ox_dev_active01@1",
+          "DisplayNameZh": "玄角冲锋",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_Active01_HornCharge_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.ox_dev_active02@1",
+          "DisplayNameZh": "地脉震荡",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_Active02_EarthPulse_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.ox_dev_ultimate@1",
+          "DisplayNameZh": "裂山冲击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Ox/UI/Abilities/T_DBA_Ox_Ultimate_MountainRupture_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Tiger",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Tiger",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.tiger_dev_basicattack@1",
+          "DisplayNameZh": "虎爪猛击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_BasicAttack_ClawStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.tiger_dev_passive@1",
+          "DisplayNameZh": "白君威仪",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_Passive_RegalSpirit_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.tiger_dev_active01@1",
+          "DisplayNameZh": "猛虎扑袭",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_Active01_Pounce_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.tiger_dev_active02@1",
+          "DisplayNameZh": "月牙爪袭",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_Active02_CrescentRake_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.tiger_dev_ultimate@1",
+          "DisplayNameZh": "虎啸风暴",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_Ultimate_RoarStorm_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Rabbit",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Rabbit",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.rabbit_dev_basicattack@1",
+          "DisplayNameZh": "月华轻击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_BasicAttack_MoonStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.rabbit_dev_passive@1",
+          "DisplayNameZh": "玉灵生息",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Passive_JadeSpirit_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.rabbit_dev_active01@1",
+          "DisplayNameZh": "月影跃迁",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Active01_MoonLeap_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.rabbit_dev_active02@1",
+          "DisplayNameZh": "玉辉护佑",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Active02_JadeWard_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.rabbit_dev_ultimate@1",
+          "DisplayNameZh": "月华绽放",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_Ultimate_LunarBloom_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Dragon",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Dragon",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.dragon_dev_basicattack@1",
+          "DisplayNameZh": "苍龙爪击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_BasicAttack_DragonClaw_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.dragon_dev_passive@1",
+          "DisplayNameZh": "云海龙心",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_Passive_CloudHeart_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.dragon_dev_active01@1",
+          "DisplayNameZh": "苍龙盘旋",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_Active01_DragonSpiral_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.dragon_dev_active02@1",
+          "DisplayNameZh": "云霄龙光",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_Active02_CloudBeam_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.dragon_dev_ultimate@1",
+          "DisplayNameZh": "苍龙升天",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Dragon/UI/Abilities/T_DBA_Dragon_Ultimate_DragonAscension_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Snake",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Snake",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.snake_dev_basicattack@1",
+          "DisplayNameZh": "幽鳞利牙",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_BasicAttack_FangStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.snake_dev_passive@1",
+          "DisplayNameZh": "幽鳞护体",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Passive_ScaleShroud_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.snake_dev_active01@1",
+          "DisplayNameZh": "灵蛇飞矢",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Active01_SerpentBolt_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.snake_dev_active02@1",
+          "DisplayNameZh": "蛇影缠缚",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Active02_CoilBind_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.snake_dev_ultimate@1",
+          "DisplayNameZh": "灵蛇旋涡",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Snake/UI/Abilities/T_DBA_Snake_Ultimate_SerpentVortex_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Horse",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Horse",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.horse_dev_basicattack@1",
+          "DisplayNameZh": "雷蹄踏击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_BasicAttack_HoofStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.horse_dev_passive@1",
+          "DisplayNameZh": "雷霆之心",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Passive_ThunderHeart_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.horse_dev_active01@1",
+          "DisplayNameZh": "霹雳冲驰",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Active01_LightningDash_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.horse_dev_active02@1",
+          "DisplayNameZh": "雷蹄震荡",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Active02_HoofPulse_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.horse_dev_ultimate@1",
+          "DisplayNameZh": "万马奔雷",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Horse/UI/Abilities/T_DBA_Horse_Ultimate_ThunderStampede_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Goat",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Goat",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.goat_dev_basicattack@1",
+          "DisplayNameZh": "玉角轻击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_BasicAttack_HornStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.goat_dev_passive@1",
+          "DisplayNameZh": "玉露恩泽",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Passive_JadeBlessing_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.goat_dev_active01@1",
+          "DisplayNameZh": "玉盾守护",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Active01_GuardianWard_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.goat_dev_active02@1",
+          "DisplayNameZh": "灵环治愈",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Active02_HaloPulse_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.goat_dev_ultimate@1",
+          "DisplayNameZh": "玉境庇护",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Goat/UI/Abilities/T_DBA_Goat_Ultimate_SanctuaryDome_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Monkey",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Monkey",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.monkey_dev_basicattack@1",
+          "DisplayNameZh": "灵棍直击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_BasicAttack_StaffStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.monkey_dev_passive@1",
+          "DisplayNameZh": "灵猴机敏",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_Passive_TricksterSpirit_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.monkey_dev_active01@1",
+          "DisplayNameZh": "筋斗云跃",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_Active01_CloudFlip_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.monkey_dev_active02@1",
+          "DisplayNameZh": "如意横扫",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_Active02_StaffSweep_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.monkey_dev_ultimate@1",
+          "DisplayNameZh": "金身万影",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Monkey/UI/Abilities/T_DBA_Monkey_Ultimate_GoldenAfterimages_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Rooster",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Rooster",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.rooster_dev_basicattack@1",
+          "DisplayNameZh": "金羽斩",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_BasicAttack_FeatherStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.rooster_dev_passive@1",
+          "DisplayNameZh": "晨曦灵意",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Passive_DawnSpirit_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.rooster_dev_active01@1",
+          "DisplayNameZh": "金羽扇",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Active01_FeatherFan_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.rooster_dev_active02@1",
+          "DisplayNameZh": "清鸣音浪",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Active02_SonicRing_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.rooster_dev_ultimate@1",
+          "DisplayNameZh": "破晓光辉",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Ultimate_DawnRadiance_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Dog",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Dog",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.dog_dev_basicattack@1",
+          "DisplayNameZh": "天犬撕咬",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_BasicAttack_BiteStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.dog_dev_passive@1",
+          "DisplayNameZh": "守护本能",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_Passive_GuardianInstinct_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.dog_dev_active01@1",
+          "DisplayNameZh": "天犬追踪",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_Active01_TrackingMark_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.dog_dev_active02@1",
+          "DisplayNameZh": "忠勇跃击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_Active02_GuardianLeap_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.dog_dev_ultimate@1",
+          "DisplayNameZh": "天犬巡猎",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_Ultimate_CelestialHunt_V1"
+        }
+      ]
+    },
+    {
+      "HeroDefinitionId": "Hero.Zodiac.Boar",
+      "AssetPath": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Boar",
+      "bDescriptionsAreDraft": true,
+      "Entries": [
+        {
+          "Slot": "BasicAttack",
+          "AbilityId": "dba.ability.boar_dev_basicattack@1",
+          "DisplayNameZh": "玄鬃獠击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_BasicAttack_TuskStrike_V1"
+        },
+        {
+          "Slot": "Passive",
+          "AbilityId": "dba.ability.boar_dev_passive@1",
+          "DisplayNameZh": "铁鬃铠甲",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：此候选的被动/辅助/位移机制尚未实现，GAS激活检查拒绝释放。",
+          "IconAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Passive_IronMane_V1"
+        },
+        {
+          "Slot": "Active01",
+          "AbilityId": "dba.ability.boar_dev_active01@1",
+          "DisplayNameZh": "玄鬃重撞",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Active01_HeavyRam_V1"
+        },
+        {
+          "Slot": "Active02",
+          "AbilityId": "dba.ability.boar_dev_active02@1",
+          "DisplayNameZh": "地动冲击",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Active02_PressureWave_V1"
+        },
+        {
+          "Slot": "Ultimate",
+          "AbilityId": "dba.ability.boar_dev_ultimate@1",
+          "DisplayNameZh": "玄鬃震山",
+          "DescriptionZh": "开发候选，未作为正式技能批准。开发验证：服务器前向单目标基础伤害；图示特殊机制、范围、伤害系数及暴击尚未实现。",
+          "IconAssetPath": "/DBAHeroPack_Boar/UI/Abilities/T_DBA_Boar_Ultimate_ManeShockwave_V1"
+        }
+      ]
+    }
+  ]
+}

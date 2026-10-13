@@ -1,5 +1,5 @@
-// 项目客户端Profile只提供英雄/技能显示资料，保留既有PrimaryAsset身份，不承载玩法权威。
-// 校验只读作者字段并返回中文错误，不加载图标、不修补或代填作者内容；由Data完成后的UI消费方调用。
+// 项目客户端技能显示主资产校验：只验证作者字段，不加载图标、不授予技能或解释权威数值。
+// 创建介绍派生资产复用同一条目合同，但使用自己的主资产类型；错误输出供VM/作者工具诊断。
 #include "Definitions/DivineBeastsAbilityUIProfile.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Types/GamePlatformId.h"
@@ -34,15 +34,11 @@ bool UDivineBeastsAbilityUIProfile::ValidateProfile(FString& OutError) const
             return false;
         }
         Unique.Add(Entry.AbilityId);
-        // 名称/图标存在不能替代可读技能说明；空白文本同样无法形成玩家可见介绍。
-        if (Entry.Description.ToString().TrimStartAndEnd().IsEmpty())
+        // 保留名称、说明均拒绝纯空白的校验；合并不能削弱已有作者数据门禁。
+        if (Entry.DisplayName.ToString().TrimStartAndEnd().IsEmpty() ||
+            Entry.Description.ToString().TrimStartAndEnd().IsEmpty() || Entry.Icon.IsNull())
         {
-            OutError = TEXT("正式技能条目必须配置非空白的本地化技能说明。");
-            return false;
-        }
-        if (Entry.DisplayName.IsEmpty() || Entry.Icon.IsNull())
-        {
-            OutError = TEXT("正式技能条目必须配置本地化名称及真实图标软引用。");
+            OutError = TEXT("技能显示条目必须配置非空白本地化名称、说明及图标软引用；内容存在不表示正式技能获批。");
             return false;
         }
     }

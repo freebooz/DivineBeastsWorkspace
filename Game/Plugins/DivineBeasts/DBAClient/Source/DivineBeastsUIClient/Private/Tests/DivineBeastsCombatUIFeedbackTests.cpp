@@ -5,12 +5,14 @@
 #include "Requests/GamePlatformUIFeedbackRequest.h"
 #include "Panels/Combat/DivineBeastsAbilityBarPanel.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Components/Image.h"
+#include "Engine/Texture2D.h"
 
 #include <limits>
 
 /**
- * 只验证项目客户端浮字DTO转换为平台UI请求的纯数据逻辑；
- * 不生成Widget、不模拟服务端命中，也不将测试源码冒充可视化验收。
+ * 首个用例验证项目浮字DTO到中立UI请求；后续用例加载真实已保存技能条验证事件投影。
+ * 全部输入为明确的开发测试夹具，不授予真实技能、不模拟服务端命中，不代替客户端视觉验收。
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FDivineBeastsCombatUIFeedbackTest,
@@ -79,6 +81,50 @@ bool FDivineBeastsCombatUIFeedbackTest::RunTest(const FString&)
         UDivineBeastsCombatUIFeedbackLibrary::BuildFloatingTextRequest(
             Input, InvalidRequest));
 
+    return true;
+}
+
+/**
+ * 捕获“授权快照更新但真实AbilityIcon仍为空/上一角色图标”的回归。
+ * 加载已保存Widget与两张真实纹理，直接消费只读槽位事件；不靠源码字符串或蓝图占位图判断成功。
+ * 同时覆盖待确认、换角色及解绑；权限/冷却/成本/伤害仍由既有ViewModel与GAS拥有。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilityIconProjectionTest,
+    "DivineBeasts.UI.Combat.AbilityIconProjection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsAbilityIconProjectionTest::RunTest(const FString&)
+{
+    UClass* Class = LoadClass<UDivineBeastsAbilityBarPanel>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar.WBP_DBA_UI_AbilityBar_C"));
+    if (!TestNotNull(TEXT("实际技能条类"), Class)) return false;
+    TStrongObjectPtr<UDivineBeastsAbilityBarPanel> Bar(NewObject<UDivineBeastsAbilityBarPanel>(GetTransientPackage(), Class));
+    Bar->Initialize();
+    auto* Slot = Cast<UGamePlatformSlotWidget>(Bar->GetWidgetFromName(TEXT("ActiveAbilitySlot1")));
+    if (!TestNotNull(TEXT("真实主动槽1"), Slot)) return false;
+    Slot->Initialize();
+    auto* Icon = Cast<UImage>(Slot->GetWidgetFromName(TEXT("AbilityIcon")));
+    if (!TestNotNull(TEXT("实际图标控件"), Icon)) return false;
+    auto* Rat = LoadObject<UTexture2D>(nullptr,
+        TEXT("/DBAHeroPack_Rat/UI/Portraits/T_DBA_Rat_Portrait.T_DBA_Rat_Portrait"));
+    auto* Ox = LoadObject<UTexture2D>(nullptr,
+        TEXT("/DBAHeroPack_Ox/UI/Portraits/T_DBA_Ox_Portrait.T_DBA_Ox_Portrait"));
+    if (!TestNotNull(TEXT("已保存Rat纹理夹具"), Rat) || !TestNotNull(TEXT("已保存Ox纹理夹具"), Ox)) return false;
+    FGamePlatformUISlotState State;
+    State.SlotId = TEXT("Platform.Ability.Input.DivineBeasts.Slot1");
+    State.ContentId = TEXT("Ability.Test.Fire");
+    State.Icon = Rat;
+    State.bPending = true;
+    State.bEnabled = false;
+    State.OverlayProgress = 0.25f;
+    Bar->ApplyAbilitySlots({State});
+    TestEqual(TEXT("待确认也显示该授权技能图标"), Icon->GetBrush().GetResourceObject(), static_cast<UObject*>(Rat));
+    TestFalse(TEXT("投影不擅自启用待确认技能"), Slot->GetSlotState().bEnabled);
+    State.Icon = Ox;
+    State.OverlayProgress = 2.0f;
+    Bar->ApplyAbilitySlots({State});
+    TestEqual(TEXT("换角色不沿用旧图标"), Icon->GetBrush().GetResourceObject(), static_cast<UObject*>(Ox));
+    Bar->ApplyAbilitySlots({});
+    TestNull(TEXT("解绑清除实际画刷"), Icon->GetBrush().GetResourceObject());
     return true;
 }
 // 真实已保存技能条Widget的生命周期回归；控制UI事件输入，不授予或激活网络技能。

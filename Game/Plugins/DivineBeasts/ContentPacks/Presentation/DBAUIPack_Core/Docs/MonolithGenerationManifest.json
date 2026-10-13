@@ -1632,6 +1632,67 @@
     "ManualMouseAndVisualAcceptance": false,
     "Limitations": "1920×1080工作区；资产、原生测试、Editor/Client构建、RHI及Cook已通过。两客户端准确身份存活并从登录首屏启动；Windows锁屏阻断实际鼠标拖动与最终视觉验收，未声称完成认证或Village准入"
   },
+  "CharacterEntryFollowUp20261012": {
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Documentation": "Docs/Implementation/CharacterEntryRevision_20261011.md",
+    "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate",
+    "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterCreateScreen",
+    "Changes": ["Replace static journey copy with independently scrolling hero and skill introductions", "Bind HeroIntroductionText, SkillIntroductionText, HeroOverviewStatusText", "Author 12 independently identified CharacterCreationProfile assets via Monolith"],
+    "DataAssetDirectory": "/DBAUIPack_Core/UI/Profiles/CharacterCreation",
+    "PrimaryAssetType": "DivineBeastsCharacterCreationProfile",
+    "SkillDescriptionsAreDraft": true,
+    "SkillAuthorizationChanged": false,
+    "PageCompileErrors": 0,
+    "PageCompileWarnings": 0,
+    "Saved": true,
+    "IndependentReloadAndNativeTests": "Passed: fresh editor PID48512; both pages compile 0 errors/0 warnings; 12 hero introductions and 60 profile descriptions match author sources",
+    "ReloadEvidence": "Saved/Validation/CharacterEntryFollowUp20261012/ReloadAudit.json",
+    "NativeTestEvidence": "Saved/Validation/CharacterEntryFollowUp20261012/Native-83e4ba6e-4408-41bc-8617-5cc3eccf21bf/Report/index.json",
+    "NativeTests": {"Total": 54, "PassedWithoutWarnings": 53, "PassedWithWarnings": 1, "Failed": 0},
+    "NativeTestWarning": "Combat.PlayerStatusSnapshot: GameplayCue scan-path fallback; not a failed test and not a zero-warning log",
+    "EditorBuildRunId": "30207b8f-1d8a-42d4-8373-617acfd13dcb",
+    "ClientBuildRunId": "c554ecb0-f711-44fd-b190-6643bb5d69be",
+    "RHIColorVerified": true,
+    "RHIColorRunId": "25289496-e5fd-479c-9c22-ced922f676b5",
+    "ClientCookVerified": true,
+    "ClientCookRunId": "1f547f9b-9aff-4148-96f0-21a637c5e7a7",
+    "ClientContainerRequiredCount": 147,
+    "ClientContainerMissingCount": 0,
+    "ClientLaunchRunId": "bce54148-c10c-447c-a3bb-5cd04364249c",
+    "ClientPIDs": [26812, 1248],
+    "ClientAutoLogin": false,
+    "ClientInitialScreen": "Login",
+    "ClientLoginInputLeafVerified": true,
+    "ClientStartupEvidence": "Saved/Validation/FrontEndClients/bce54148-c10c-447c-a3bb-5cd04364249c/StartupVerified.json",
+    "ClientStartupWarning": "Existing UI.Screen.Boot load warning; both new clients subsequently opened Login successfully",
+    "ManualVisualAcceptance": false,
+    "Evidence": "Saved/Validation/CharacterEntryFollowUp20261012/Introductions/Actions.json"
+  },
+  "EnterGameRepair20261012": {
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Documentation": "Docs/Implementation/CharacterEntryRevision_20261011.md",
+    "Assets": [
+      "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect",
+      "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login"
+    ],
+    "Changes": [
+      "选择角色删除CharacterList下拉框，仅保留真实ScrollBox/VerticalBox列表",
+      "SelectButtonLabel和CharacterChoices形成原生命名绑定，保留项目父类与角色卡片类型",
+      "登录背景框、输入、按钮、密码显示及反馈整组上移60逻辑像素，保留大小、字号、RGB"
+    ],
+    "PageCompileErrors": 0,
+    "PageCompileWarnings": 0,
+    "Saved": true,
+    "IndependentEditorReloadVerified": true,
+    "ReloadEditorPID": 48084,
+    "ActionsEvidence": "Saved/Validation/EnterGameRepair20261012/Assets/Actions.json",
+    "BeforeAssetBackups": "Saved/Validation/EnterGameRepair20261012/Assets/Before",
+    "ReloadEvidence": "Saved/Validation/EnterGameRepair20261012/Reload-363db08c-06c8-4e77-a719-63099d2693cb/Assets.json",
+    "ReloadLayoutEvidence": "Saved/Validation/EnterGameRepair20261012/Reload-363db08c-06c8-4e77-a719-63099d2693cb/LayoutGate/stdout.log",
+    "AcceptanceBoundary": "仅证明Monolith编译、保存、独立重载和真实树检查；本轮原生、RHI、Cook及客户端结果另记录在Documentation，不以此清单代替联机准入或人工视觉验收"
+  },
   "FrontEndVisualRepair20261011": {
     "Tool": "Monolith MCP",
     "Version": "0.23.0",
@@ -1650,5 +1711,20 @@
     "EditorAssetWorkDeferredByUser": true,
     "FinalClientVisualAcceptance": "Pending editor resume and manual validation",
     "ClientPackageSelectionChanged": false
+  },
+  "MagicHUD20261012": {
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Documentation": "Docs/Implementation/MagicHUDImplementationPlan_20261012.md",
+    "IconImportManifest": "Docs/DevelopmentMagicIconImportManifest.json",
+    "Icons": ["/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFireball", "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFrostbolt", "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevArcaneMissiles"],
+    "AssetActions": "Monolith导入三纹理、无损UI/sRGB/NoMip设置与保存；现有AbilitySlot/AbilityBar编译保存重载。没有新增Widget或修改业务流程。",
+    "ImportBlockingAudit": "3/3真实纹理设置与源哈希通过，不代表GPU颜色已通过。",
+    "Portrait": "项目原生画刷UV裁头脸，源RGB和生肖资源身份不变。",
+    "SavedReloadAssetAudit": "2026-10-12真实重载魔法/授权/Profile/图标门禁通过。",
+    "FreshRHI": "05613996-fb08-4dec-a4f1-445a1f144120：SourceToSlate真实RHI通过，包含新三图标及旧九原稿；五页面截图按单次PNG编码。",
+    "FreshClientCook": "6bfc330a-f7a8-4444-b4cf-d6814445233b：独占开发客户端Cook/Stage与IoStore门禁Passed，524项必需资产齐全，包含36份开发魔法及三图标、六系统、六定义。不代表联网/人工视觉。",
+    "ManualAcceptance": false
   }
 }

@@ -1,0 +1,15 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DBASFXPack_Core",
+  "Description": "神兽联盟客户端公共音效内容包：拥有实际天气SoundWave与SFX定义，不实现音频播放器、不持有服务器状态。原创合成原型音频仍须人工试听。",
+  "Category": "DivineBeasts.Content.Audio",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    {"Name":"GamePlatformSFX","Enabled":true,"TargetAllowList":["Client","Editor"]},
+    {"Name":"GamePlatformData","Enabled":true,"TargetAllowList":["Client","Editor"]}
+  ]
+}

@@ -60,6 +60,25 @@ def audit(endpoint):
             errors.append(name + "未达到用户要求的放大尺寸")
         if not panel["visibility"].endswith("HitTestInvisible"):
             errors.append(name + "装饰背景截获中央鼠标")
+    # 用户要求选择档案只使用真实滚动列表；空列表也不能恢复旧下拉框或虚构档案。
+    select_tree = trees["CharacterSelect"]
+    if any(widget.get("class") == "ComboBoxString" for widget in select_tree.values()):
+        errors.append("选择角色仍含下拉框，而不是纯列表")
+    if select_tree.get("CharacterScroll", {}).get("class") != "ScrollBox" or select_tree.get("CharacterChoices", {}).get("class") != "VerticalBox":
+        errors.append("选择角色缺少真实滚动列表宿主")
+    if not select_tree.get("SelectButtonLabel", {}).get("is_variable"):
+        errors.append("主按钮缺少空档案创建引导的真实文字绑定")
+    login = call(endpoint, "ui_query", {"action": "get_widget_tree", "params": {"asset_path": mount + "Screens/WBP_DBA_UI_Login"}})
+    login_tree = widgets(login["root"])
+    # 已核对整组上移60逻辑像素；按钮、输入和装饰保持同一相对位置，不能只搬背景留下旧命中区。
+    expected_login = {"AccountInput": (-338, 284, 42), "PasswordInput": (-267, 284, 42),
+        "LoginButton": (-332, 104, 104), "LoginBronzeFrame": (-260, 600, 315),
+        "PasswordRevealButton": (-263, 42, 36)}
+    for name, (top, width, height) in expected_login.items():
+        value = login_tree.get(name, {}).get("slot", {})
+        offsets = value.get("offsets", {})
+        if (offsets.get("top"), offsets.get("right"), offsets.get("bottom")) != (top, width, height) or value.get("anchors", {}).get("min_y") != 1:
+            errors.append("登录组未保持固定大小整体上移：" + name)
     # 介绍来自只读VM事件；真实命名控件不可由一段写死的旅行提示代替。
     for name in ("HeroIntroductionText", "SkillIntroductionText", "HeroOverviewStatusText"):
         widget = trees["CharacterCreate"].get(name, {})

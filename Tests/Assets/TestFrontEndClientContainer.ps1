@@ -129,6 +129,8 @@ try {
     foreach ($hero in @('Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Boar')) {
         $required += "DBAHeroPack_$hero/Content/Characters/DA_Appearance_Zodiac_$hero.uasset"
         $required += "DBAGameplay/Content/Definitions/DA_Hero_Zodiac_$hero.uasset"
+        # 前端创建介绍是独立只读显示资产；不等于引入开发Gameplay、批准或授予候选技能。
+        $required += "DBAUIPack_Core/Content/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_$hero.uasset"
         $required += "DBAHeroPack_$hero/Content/UI/Portraits/T_DBA_${hero}_Portrait.uasset"
         if ($DevelopmentSkills) {
             # 开发候选只核对用户批准的真实资产闭包；不将数据交付等同于全部机制实现。
@@ -147,7 +149,25 @@ try {
             }
         }
     }
-    if ($DevelopmentSkills) { $required += 'DivineBeastsArena/Content/Development/DivineBeasts/Abilities/DT_DBA_Zodiac_DevBalance.uasset' }
+    if ($DevelopmentSkills) {
+        # 魔法定义/GA/成本/冷却与三图标、六VFX都必须在实际容器，不能以本机Editor存在放行。
+        $required += 'DivineBeastsArena/Content/Development/DivineBeasts/Abilities/DT_DBA_Zodiac_DevBalance.uasset'
+        $magic='DivineBeastsArena/Content/Development/DivineBeasts/Abilities/MagicTests'
+        $required += "$magic/DT_DBA_DevMagicBalance.uasset"
+        foreach($hero in @('Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Boar')) {
+            foreach($spell in @('Fireball','Frostbolt','ArcaneMissiles')) {
+                foreach($prefix in @('DA','GA')) { $required += "$magic/${prefix}_DBA_${hero}_Dev$spell.uasset" }
+                foreach($suffix in @('Cost','Cooldown')) { $required += "$magic/GE_DBA_${hero}_Dev${spell}$suffix.uasset" }
+            }
+        }
+        foreach($spell in @('Fireball','Frostbolt','ArcaneMissiles')) {
+            $required += "DBAUIPack_Core/Content/UI/Abilities/MagicTests/T_DBA_Dev$spell.uasset"
+            foreach($stage in @('Flight','Impact')) {
+                $required += "DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Niagara/NS_DBA_Dev${spell}$stage.uasset"
+                $required += "DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_Dev${spell}$stage.uasset"
+            }
+        }
+    }
     # 软路径在C++目录中构造，地图引用扫描不能发现；要求实际导出数据而非配置或仅包名。
     $missing = @($required | Where-Object {
         $suffix = '/' + $_
