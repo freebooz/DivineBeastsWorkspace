@@ -61,6 +61,8 @@ try {
         }
         # 此记录是发布后启动要求，不代表脚本已经运行游戏；textconfig绕过错误层级的BinaryConfig缓存。
         $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
+        # 仅人工训练敌人验证显式追加，正式运行和仅技能验证不自动生成怪物。
+        $details.OptionalDevelopmentMonsterRuntimeArgument = '-DBADevelopmentMonsters'
     }
     $tool.Environment.uebp_LogFolder=Join-Path $context.Directory 'UATLogs'
     $tool.Environment.uebp_EngineSavedFolder=Join-Path $context.Directory 'EngineSaved'
@@ -113,6 +115,30 @@ try {
         $details.P7ContentContainerReport=$contentReport
         $details.P7ContentGateResult=$contentResult
         $code=$contentResult.ExitCode
+    }
+    if ($code -eq 0 -and $CustomConfig -eq 'VillageDevelopmentClient') {
+        # 本轮新增软引用不能靠旧六系统门禁漏检；实际读取同一最终容器的19项动作/起手/石灵/中文字体闭包。
+        $castingPython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $castingGate=Join-Path $context.Workspace 'Tests/Assets/ValidateDevelopmentCastingContainer.py'
+        Assert-FoundationFile $castingPython; Assert-FoundationFile $castingGate
+        $castingDirectory=Join-Path $context.Directory 'CastingContainerGate'
+        $null=New-Item -ItemType Directory -Path $castingDirectory
+        $castingReport=Join-Path $castingDirectory 'CastingContainer.json'
+        $castingResult=Invoke-FoundationProcess -FilePath $castingPython -Arguments @($castingGate,'--csv',$csv,'--report',$castingReport) -WorkingDirectory $context.Workspace -OutputDirectory $castingDirectory -TimeoutSeconds 60
+        $details.CastingContainerReport=$castingReport; $details.CastingContainerResult=$castingResult
+        $code=$castingResult.ExitCode
+    }
+    if ($code -eq 0) {
+        # 草地由客户端C++软路径加载：要求三张真实ExportBundleData，不能只凭编辑器保存或BulkData放行。
+        $grassPython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $grassGate=Join-Path $context.Workspace 'Tests/Assets/ValidateVillageGrassContainer.py'
+        Assert-FoundationFile $grassPython; Assert-FoundationFile $grassGate
+        $grassDirectory=Join-Path $context.Directory 'GrassContainerGate'
+        $null=New-Item -ItemType Directory -Path $grassDirectory
+        $grassReport=Join-Path $grassDirectory 'GrassContainer.json'
+        $grassResult=Invoke-FoundationProcess -FilePath $grassPython -Arguments @($grassGate,'--csv',$csv,'--report',$grassReport) -WorkingDirectory $context.Workspace -OutputDirectory $grassDirectory -TimeoutSeconds 60
+        $details.GrassContainerReport=$grassReport; $details.GrassContainerResult=$grassResult
+        $code=$grassResult.ExitCode
     }
     $message='实际客户端Cook/Stage和IoStore资源门禁结束；仍须验证认证、UI交互与网络准入。'
 } catch [IO.FileNotFoundException] { $code=2; $message=$_.Exception.Message }

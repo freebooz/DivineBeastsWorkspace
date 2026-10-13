@@ -164,6 +164,8 @@ public:
 private:
     friend class FDivineBeastsPresentationActivationRegressionTest;
     friend class FDivineBeastsDevelopmentMagicLifecycleTest;
+    // 默认村庄鸟群回归只核验本地意图与世界清理；不绕过真实内容资格或假定GPU播放。
+    friend class FDivineBeastsVillageDefaultBirdsTest;
     struct FActivePack
     {
         FDivineBeastsPresentationContentPackHandle Handle;

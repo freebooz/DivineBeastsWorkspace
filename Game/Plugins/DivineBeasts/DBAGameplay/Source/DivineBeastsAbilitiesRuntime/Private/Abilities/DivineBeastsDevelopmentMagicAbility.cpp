@@ -4,6 +4,7 @@
 #include "Development/DivineBeastsDevelopmentAbilityPolicy.h"
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Components/GamePlatformAbilityCastComponent.h"
 #include "Engine/AssetManager.h"
 #include "Engine/World.h"
 
@@ -38,6 +39,12 @@ void UDivineBeastsDevelopmentMagicAbility::ActivateAbility(FGameplayAbilitySpecH
     Motion = Definition->ProjectileMotion; StyleId = Definition->GetPresentationStyleId();
     RemainingProjectiles = Definition->ProjectileCount; ReleasedProjectiles = 0;
     IntervalSeconds = Definition->ProjectileIntervalSeconds;
+    // 表现窗口与弹体时序解耦：原有瞬发/连发不变，可选动画失败不能影响权威伤害。
+    if (auto* CastFacts=Avatar->FindComponentByClass<UGamePlatformAbilityCastComponent>())
+        CastFacts->PublishConfirmedCast(ActivationToken,Balance.AbilityId,StyleId,SourceGeneration,
+            RemainingProjectiles>1 ? 1.0f : 0.7f);
+    // 发布委托可能同步取消并重新激活；旧发布栈不得释放后继激活的弹体。
+    if (CastActivationToken!=ActivationToken || !IsActive()) return;
     ReleaseNextProjectile();
 }
 
@@ -86,9 +93,14 @@ void UDivineBeastsDevelopmentMagicAbility::ReleaseNextProjectile()
 void UDivineBeastsDevelopmentMagicAbility::EndAbility(FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+    const FGuid EndedToken=CastActivationToken;
     CastActivationToken.Invalidate();
     if (AActor* Source = CastSpec.Source.Get(); IsValid(Source) && Source->GetWorld())
         Source->GetWorld()->GetTimerManager().ClearTimer(BurstTimer);
     BurstTimer.Invalidate(); RemainingProjectiles = 0; CastSpec = {}; StyleId = NAME_None;
+    // 正常结束保留短回收动作到窗口自然过期；取消仅停止该次动作，不取消后继事实。
+    if (bWasCancelled && ActorInfo && ActorInfo->AvatarActor.IsValid())
+        if (auto* CastFacts=ActorInfo->AvatarActor->FindComponentByClass<UGamePlatformAbilityCastComponent>())
+            CastFacts->CancelConfirmedCast(EndedToken);
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

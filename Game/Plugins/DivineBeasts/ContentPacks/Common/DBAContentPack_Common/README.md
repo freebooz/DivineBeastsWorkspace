@@ -7,7 +7,9 @@
 ## 已有内容与入口
 
 `Content/Mannequins/DBA/` 包含项目使用的网格、ABP_DBA_PreviewIdle、ABP_DBA_WorldLocomotion、BS_DBA_WorldLocomotion及实际移动序列；`Content/Mannequins/Standard/` 与 `UE5/` 保留既有依赖。
-本轮文件系统观察为49份.uasset；数量只表明库存，不证明每份资源当前已加载、Cook或视觉通过。具体运行证据见项目 `Docs/Implementation/AnimationHUDDevelopmentValidation.md` 与 `Docs/Architecture/新手村玩家可见性与移动动画修复记录.md`。
+2026-10-13文件系统观察为59份.uasset；数量只表明库存，不证明每份资源当前已加载、Cook或视觉通过。原移动运行证据见项目 `Docs/Implementation/AnimationHUDDevelopmentValidation.md` 与 `Docs/Architecture/新手村玩家可见性与移动动画修复记录.md`。
+
+开发增量包含三份施法序列、三份Montage、石灵纯装饰蓝图和三材质。`Docs/MonolithGenerationManifest.json`只记录此次作者与验证边界；完整设计和运行证据见 `Docs/Implementation/CastingAnimationsAndMonster_20261013.md`。石灵的中文字形资产归DBAUIPack_Core，由DBAClient经Data事件组合；本包文字槽不硬引UI包，不拥有伤害/重生逻辑。
 
 ## 加载、服务器与变更边界
 

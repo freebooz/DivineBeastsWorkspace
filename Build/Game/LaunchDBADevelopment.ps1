@@ -31,11 +31,18 @@ Assert-FoundationFile $project
 
 if($Mode -eq 'PluginDev'){
     # 使用唯一已有的免登录开关/地图门禁，禁止第二套绕过规则。
-    $arguments=@('-Start','-Target',$Target,'-WindowWidth',$WindowWidth.ToString(),
-        '-WindowHeight',$WindowHeight.ToString(),'-RunId',$RunId.ToString('D'))
-    if($EngineRoot){$arguments+=@('-EngineRoot',$EngineRoot)}
-    if($ClientExe){$arguments+=@('-ClientExe',$ClientExe)}
-    & (Join-Path $PSScriptRoot 'RunPluginDemo.ps1') @arguments
+    # PowerShell脚本参数必须具名Splat（散列参数），不能用字符串数组展开当原生命令行参数。
+    # 原写法会把'-Start'误解析为Target参数，导致实际双模式启动被拒绝。
+    $delegate=@{
+        Start=$true
+        Target=$Target
+        WindowWidth=$WindowWidth
+        WindowHeight=$WindowHeight
+        RunId=$RunId
+    }
+    if($EngineRoot){$delegate['EngineRoot']=$EngineRoot}
+    if($ClientExe){$delegate['ClientExe']=$ClientExe}
+    & (Join-Path $PSScriptRoot 'RunPluginDemo.ps1') @delegate
     return
 }
 

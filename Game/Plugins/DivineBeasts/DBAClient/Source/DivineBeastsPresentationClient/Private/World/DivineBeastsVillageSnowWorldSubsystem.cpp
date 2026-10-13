@@ -1,4 +1,4 @@
-// 神兽联盟客户端Village地形雪层装配实现。
+// 神兽联盟客户端Village地形草地/雪层装配；历史Snow类型及配置身份保持兼容。
 // 仅在经检验的新手村客户端World中运行，复用平台WeatherClient值事件和GamePlatformData资源租约。
 // DedicatedServer继续仅复制天气事实；客户端的Snow/Normal/Albedo软资源不进入共享地图硬引用。
 #include "World/DivineBeastsVillageSnowWorldSubsystem.h"
@@ -37,6 +37,9 @@ namespace
     const FName CoverageName(TEXT("VillageSnowCoverageTexture"));
     const FName AlbedoName(TEXT("VillageSnowAlbedoTexture"));
     const FName NormalName(TEXT("VillageSnowNormalTexture"));
+    const FName GroundAlbedoName(TEXT("VillageGroundAlbedoTexture"));
+    const FName GroundNormalName(TEXT("VillageGroundNormalTexture"));
+    const FName GroundORMName(TEXT("VillageGroundORMTexture"));
     const FString ExpectedBridgePath(TEXT(
         "/DBAWorldPack_Village/Materials/Landscape/M_DBA_Village_LandscapeBridge"));
 }
@@ -98,6 +101,11 @@ void UDivineBeastsVillageSnowWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     if (!bVillageWorld || InWorld.GetNetMode() == NM_DedicatedServer) return;
     // 苔藓材质的软租约独立于天气桥：即使WeatherClient失败也可保持静态苔藓。
     TryRequestMossMaterial();
+    // 草地是村庄基础表面，不应依赖天气通知是否到达；已流送地形也由同一事件处理。
+    ActorSpawnedHandle = InWorld.AddOnActorSpawnedHandler(
+        FOnActorSpawned::FDelegate::CreateUObject(
+            this, &UDivineBeastsVillageSnowWorldSubsystem::OnLandscapeActorSpawned));
+    TryRequestSnowTextures();
 
     WeatherClient = InWorld.GetSubsystem<UGamePlatformWeatherClientWorldSubsystem>();
     if (!WeatherClient.IsValid())
@@ -108,10 +116,6 @@ void UDivineBeastsVillageSnowWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     WeatherChangedHandle = WeatherClient->AddVisualChangedHandler(
         FGamePlatformWeatherVisualChanged::FDelegate::CreateUObject(
             this, &UDivineBeastsVillageSnowWorldSubsystem::OnVisualWeatherChanged));
-
-    ActorSpawnedHandle = InWorld.AddOnActorSpawnedHandler(
-        FOnActorSpawned::FDelegate::CreateUObject(
-            this, &UDivineBeastsVillageSnowWorldSubsystem::OnLandscapeActorSpawned));
 
     OnVisualWeatherChanged(WeatherClient->GetVisualWeather());
 }
@@ -159,12 +163,14 @@ void UDivineBeastsVillageSnowWorldSubsystem::TryRequestSnowTextures()
     if (!Data || bClosing || !Config || TextureLease.IsValid() || !bVillageWorld) return;
 
     const TArray<FSoftObjectPath> Paths = {
-        Config->SnowCoverageTexture, Config->SnowAlbedoTexture, Config->SnowNormalTexture
+        Config->SnowCoverageTexture, Config->SnowAlbedoTexture, Config->SnowNormalTexture,
+        Config->GroundAlbedoTexture, Config->GroundNormalTexture, Config->GroundORMTexture
     };
-    if (Paths.Contains(FSoftObjectPath()) || Paths[0] == Paths[1] ||
-        Paths[0] == Paths[2] || Paths[1] == Paths[2])
+    TSet<FSoftObjectPath> UniquePaths;
+    for (const FSoftObjectPath& Path : Paths) if (Path.IsValid()) UniquePaths.Add(Path);
+    if (UniquePaths.Num() != 6)
     {
-        UE_LOG(LogDBAVillageSnow, Error, TEXT("Village客户端雪纹理配置为空或重复，拒绝异步加载。"));
+        UE_LOG(LogDBAVillageSnow, Error, TEXT("Village客户端六张草地/雪纹理配置为空、非法或重复，拒绝异步加载。"));
         return;
     }
 
@@ -200,15 +206,15 @@ void UDivineBeastsVillageSnowWorldSubsystem::HandleTexturesReady(
 
     UGameInstance* GameInstance = World->GetGameInstance();
     IGamePlatformDataService* Data = GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
+    bool bAllTexturesLoaded = CompletedLease.ResourcePaths.Num() == 6;
+    for (const FSoftObjectPath& Path : CompletedLease.ResourcePaths)
+        bAllTexturesLoaded = bAllTexturesLoaded && IsValid(Cast<UTexture2D>(Path.ResolveObject()));
     if (!Data || !Result.IsSuccess() ||
         Data->GetLeaseState(CompletedLease) != EGamePlatformDataRequestState::Succeeded ||
-        CompletedLease.ResourcePaths.Num() != 3 ||
-        !Cast<UTexture2D>(CompletedLease.ResourcePaths[0].ResolveObject()) ||
-        !Cast<UTexture2D>(CompletedLease.ResourcePaths[1].ResolveObject()) ||
-        !Cast<UTexture2D>(CompletedLease.ResourcePaths[2].ResolveObject()))
+        !bAllTexturesLoaded)
     {
         UE_LOG(LogDBAVillageSnow, Warning,
-            TEXT("Village雪Texture2D异步租约失败或类别错误，维持共享地形材质默认外观。"));
+            TEXT("Village草地/雪Texture2D异步租约失败或类别错误，维持共享地形材质默认外观。"));
         if (Data) Data->ReleaseResources(CompletedLease);
         TextureLease = {};
         ++RequestGeneration; // 只允许下一次有变化的天气事件重新发起，杜绝同步重试循环。
@@ -226,7 +232,7 @@ void UDivineBeastsVillageSnowWorldSubsystem::HandleTexturesReady(
     if (BoundLandscapeCount > 0)
     {
         UE_LOG(LogDBAVillageSnow, Log,
-            TEXT("VILLAGE_SNOW_MID_VERIFY_SUCCESS：%d处Landscape的雪量、湿润、三张高清雪纹理已写入并回读一致。"),
+            TEXT("VILLAGE_GROUND_MID_VERIFY_SUCCESS VILLAGE_SNOW_MID_VERIFY_SUCCESS：%d处Landscape的草地/雪六纹理、雪量及湿润已写入并回读一致。"),
             BoundLandscapeCount);
     }
     else
@@ -304,20 +310,38 @@ bool UDivineBeastsVillageSnowWorldSubsystem::ApplyToLandscape(ALandscapeProxy* L
 
     Landscape->SetLandscapeMaterialScalarParameterValue(SnowAmountName, CurrentSnowAmount);
     Landscape->SetLandscapeMaterialScalarParameterValue(WetnessName, CurrentWetness);
-    if (!bTexturesReady || TextureLease.ResourcePaths.Num() != 3) return true;
+    if (!bTexturesReady) return true; // 仅标量基础模式，不记入纹理验证成功集合。
+    if (TextureLease.ResourcePaths.Num() != 6) return false;
     // 雪量插值频繁变化，只需更新标量；已回读成功的贴图应由当前世界长期租约持有。
     if (TexturesAppliedLandscapes.Contains(TWeakObjectPtr<ALandscapeProxy>(Landscape))) return true;
 
-    UTexture2D* Coverage = Cast<UTexture2D>(TextureLease.ResourcePaths[0].ResolveObject());
-    UTexture2D* Albedo = Cast<UTexture2D>(TextureLease.ResourcePaths[1].ResolveObject());
-    UTexture2D* Normal = Cast<UTexture2D>(TextureLease.ResourcePaths[2].ResolveObject());
-    if (!IsValid(Coverage) || !IsValid(Albedo) || !IsValid(Normal)) return false;
+    const auto* Config = GetDefault<UDivineBeastsVillageSnowSettings>();
+    if (!Config) return false;
+    // Data对资源路径排序；按语义配置路径查找且要求当前租约持有，不能按输入顺序/数组下标猜用途。
+    const auto ResolveOwnedTexture = [this](const FSoftObjectPath& Path) -> UTexture2D*
+    {
+        return TextureLease.ResourcePaths.Contains(Path) ? Cast<UTexture2D>(Path.ResolveObject()) : nullptr;
+    };
+    UTexture2D* Coverage = ResolveOwnedTexture(Config->SnowCoverageTexture);
+    UTexture2D* Albedo = ResolveOwnedTexture(Config->SnowAlbedoTexture);
+    UTexture2D* Normal = ResolveOwnedTexture(Config->SnowNormalTexture);
+    UTexture2D* GroundAlbedo = ResolveOwnedTexture(Config->GroundAlbedoTexture);
+    UTexture2D* GroundNormal = ResolveOwnedTexture(Config->GroundNormalTexture);
+    UTexture2D* GroundORM = ResolveOwnedTexture(Config->GroundORMTexture);
+    if (!IsValid(Coverage) || !IsValid(Albedo) || !IsValid(Normal) ||
+        !IsValid(GroundAlbedo) || !IsValid(GroundNormal) || !IsValid(GroundORM)) return false;
     Landscape->SetLandscapeMaterialTextureParameterValue(CoverageName, Coverage);
     Landscape->SetLandscapeMaterialTextureParameterValue(AlbedoName, Albedo);
     Landscape->SetLandscapeMaterialTextureParameterValue(NormalName, Normal);
+    Landscape->SetLandscapeMaterialTextureParameterValue(GroundAlbedoName, GroundAlbedo);
+    Landscape->SetLandscapeMaterialTextureParameterValue(GroundNormalName, GroundNormal);
+    Landscape->SetLandscapeMaterialTextureParameterValue(GroundORMName, GroundORM);
+    // 旧纯色地面Tint不能再次将扫描草地变成深灰褐色；晴天保留源色，雨湿仅自然降低反射底色。
+    Landscape->SetLandscapeMaterialVectorParameterValue(TEXT("VillageDryColor"), FLinearColor::White);
+    Landscape->SetLandscapeMaterialVectorParameterValue(TEXT("VillageWetColor"), FLinearColor(.55f, .60f, .52f, 1.f));
 
     // 不能以Setter调用或Data租约返回成功代替真正的运行时表现绑定。
-    // 在每个已有MID上重新读取三个Texture参数与两个数值参数；少一个都视为未通过。
+    // 每个已有MID回读六个Texture、两个天气数值及干燥白色乘色；少一个都视为未通过。
     int32 MidCount = 0;
     int32 VerifiedMidCount = 0;
     for (ULandscapeComponent* Component : Landscape->LandscapeComponents)
@@ -330,6 +354,10 @@ bool UDivineBeastsVillageSnowWorldSubsystem::ApplyToLandscape(ALandscapeProxy* L
             if (Mid->K2_GetTextureParameterValue(CoverageName) == Coverage &&
                 Mid->K2_GetTextureParameterValue(AlbedoName) == Albedo &&
                 Mid->K2_GetTextureParameterValue(NormalName) == Normal &&
+                Mid->K2_GetTextureParameterValue(GroundAlbedoName) == GroundAlbedo &&
+                Mid->K2_GetTextureParameterValue(GroundNormalName) == GroundNormal &&
+                Mid->K2_GetTextureParameterValue(GroundORMName) == GroundORM &&
+                Mid->K2_GetVectorParameterValue(TEXT("VillageDryColor")).Equals(FLinearColor::White, .002f) &&
                 FMath::IsNearlyEqual(Mid->K2_GetScalarParameterValue(SnowAmountName), CurrentSnowAmount, .002f) &&
                 FMath::IsNearlyEqual(Mid->K2_GetScalarParameterValue(WetnessName), CurrentWetness, .002f))
             {

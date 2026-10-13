@@ -44,13 +44,15 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
     Catalog.FragmentId = Pack.ContentPackId; Catalog.OwnerScopeId = Pack.ContentPackId;
     Catalog.Revision = 1; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
     for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles")})
-        for (bool bImpact : {false, true})
+        for (const TCHAR* Stage : {TEXT("Flight"),TEXT("Impact"),TEXT("Cast")})
         {
             FGamePlatformPresentationCatalogEntry Entry;
-            Entry.EntryId = FName(*(FString(TEXT("DBA.Development.Magic.")) + Name + (bImpact ? TEXT(".Impact") : TEXT(".Flight"))));
-            Entry.SemanticTag = MagicSemantic(Name, bImpact); Entry.ProviderChannel = TEXT("VFX");
+            Entry.EntryId = FName(*(FString(TEXT("DBA.Development.Magic.")) + Name + TEXT(".") + Stage));
+            Entry.ProviderChannel = TEXT("VFX");
+            // 目录身份使用DBA短名；已注册语义保留DivineBeasts稳定身份，不能由EntryId拼出不存在的标签。
+            Entry.SemanticTag = FGameplayTag::RequestGameplayTag(FName(*(FString(TEXT("Presentation.DivineBeasts.Development.Magic."))+Name+TEXT(".")+Stage)),false);
             Entry.DefinitionId = FName(*(FString(TEXT("presentation.dba.development.magic.")) + FString(Name).ToLower() +
-                (bImpact ? TEXT(".impact@1") : TEXT(".flight@1"))));
+                TEXT(".") + FString(Stage).ToLower() + TEXT("@1")));
             Entry.ContextQuery.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
             Entry.Scope = Catalog.Scope; Entry.Specificity = 1; Entry.ContentRevision = TEXT("1");
             Catalog.Entries.Add(Entry);

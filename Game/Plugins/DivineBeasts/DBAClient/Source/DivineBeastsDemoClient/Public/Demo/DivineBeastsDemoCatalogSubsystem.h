@@ -41,9 +41,9 @@ USTRUCT(BlueprintType)
 struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoScenario
 {
     GENERATED_BODY()
-    /** 地图长包路径同时充当候选唯一身份，避免相同文件名冲突。 */
+    /** 插件身份+真实地图长包路径组合成唯一入口；同一审核图可供多个插件复用。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName ScenarioId;
-    /** 关联的真实插件，未归属地图挂载在开发工具项下。 */
+    /** 从真实插件描述中校验过的身份，未知插件不能获得可用演示入口。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName PluginId;
     /** UI显示名称，可进一步由真实Definition覆盖。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FText Title;

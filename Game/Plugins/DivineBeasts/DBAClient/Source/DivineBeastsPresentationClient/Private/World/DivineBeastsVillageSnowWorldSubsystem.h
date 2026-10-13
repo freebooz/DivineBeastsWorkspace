@@ -17,7 +17,7 @@ struct FGamePlatformWeatherState;
 struct FGamePlatformResult;
 
 /**
- * 新手村客户端雪纹理桥：不拥有天气事实、不生成地形、不改变服务器材质或碰撞。
+ * 新手村客户端草地/雪纹理桥：保留历史类型名，不拥有天气事实、不生成地形或碰撞。
  * 地图唯一真源仍在DBAWorldPack_Village，地图持有不引用VFX/Surface的中性Landscape母材质；
  * 本类仅客户端在实际世界BeginPlay时订阅WeatherClient，并通过GamePlatformData异步租约
  * 加载平台纹理，按天气变化写入该地图已有的Landscape动态材质实例（MID）。
@@ -43,6 +43,9 @@ public:
         float& OutSnowAmount, float& OutWetness);
 
 private:
+    // 原生测试仅可访问真实绑定和取消路径；不提供生产可调用的绕过租约接口。
+    friend class FDivineBeastsVillageGroundMIDTest;
+    friend class FDivineBeastsVillageGroundLeaseCommand;
     /** 客户端一次世界生命周期内最多持有一个异步资源租约；无服务时等待下一次天气事件再尝试。 */
     void TryRequestSnowTextures();
 
@@ -103,7 +106,7 @@ private:
     FDelegateHandle WeatherChangedHandle;
     FDelegateHandle ActorSpawnedHandle;
     FGamePlatformDataLease TextureLease;
-    /** 已真正写入并回读过高清雪纹理的Landscape弱标识；天气过渡不重复设置Texture参数。 */
+    /** 已写入并回读六张草地/雪纹理的Landscape弱标识；天气过渡不重复设置Texture参数。 */
     TSet<TWeakObjectPtr<ALandscapeProxy>> TexturesAppliedLandscapes;
     int64 RequestGeneration = 0;
     float CurrentSnowAmount = 0.f;

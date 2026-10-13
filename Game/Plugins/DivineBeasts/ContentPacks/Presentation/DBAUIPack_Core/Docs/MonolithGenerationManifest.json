@@ -3,6 +3,23 @@
   "CreationTool": "Monolith MCP",
   "MonolithVersion": "0.23.0",
   "ProjectName": "DivineBeastsArena",
+  "DevelopmentMonsterFont20261013": {
+    "Asset": "/DBAUIPack_Core/UI/Fonts/Development/F_DBA_DevelopmentMonsterLabel",
+    "SourceZh": "锁定UE的Engine/Content/Slate/Fonts/DroidSansFallback.ttf，家族Droid Sans Fallback；未安装/分发Windows系统字体。",
+    "Author": "Tools/Unreal/Characters/AuthorDevelopmentMonsterFontMonolith.py",
+    "ActionsZh": "Monolith创建Offline距离场字体、保存；仅本编辑器私有注册来源字体并在finally撤销。",
+    "GlyphContractZh": "ASCII256加16种所需中文字形，共272；SFNT cmap和实际字形数组非空尺寸核验通过。",
+    "GlyphEvidence": "Saved/Validation/CastingMonster20261013/Authoring-6709faaa-d2a3-472b-9d4e-f5d582ec758c/MonsterFontGlyphs.json",
+    "OwnershipZh": "字体归项目UI包，Common模型只保留空文字槽；DBAClient经Data租约和只读生命事件组合，不引入内容包硬引用环。",
+    "ColdReloadVerified": true,
+    "ColdReloadEvidence": "Saved/Validation/CastingMonster20261013/ColdReload-bd38a87c.json",
+    "ClientCookVerified": true,
+    "ClientCookEvidence": "Saved/Validation/FoundationM0/65a7bd44-e272-4fb9-9198-3a2b3b36b80a/Cook-FrontEndClient/CastingContainerGate/CastingContainer.json",
+    "FreshRHIRequired": true,
+    "FreshRHIVerified": true,
+    "FreshRHIRunId": "c0ee922a-c01d-4b27-a0b4-ad06d7b13ee7",
+    "ManualVisualAccepted": false
+  },
   "GeneratedAt": "2026-10-11T11:48:43.8513717+08:00",
   "字段说明": {
     "SchemaVersion": "清单结构版本；升级字段结构时递增。",

@@ -1,5 +1,5 @@
-// 神兽联盟第三层客户端新手村雪地桥接配置。
-// 本配置仅保存跨游戏Surface Texture2D的软路径；服务器、共享地图均不硬引用客户端表现资源。
+// 神兽联盟第三层客户端新手村草地/雪地桥接配置；保留既有Snow反射名以兼容配置。
+// 只保存平台雪纹理及项目草地软路径；服务器、共享地图不硬引用客户端高清表现资源。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,9 +8,9 @@
 #include "DivineBeastsVillageSnowSettings.generated.h"
 
 /**
- * 新手村地形雪层客户端资源入口。
+ * 新手村地形草地与雪层客户端资源入口（历史Snow类型身份不改名）。
  * 默认开启，独立关卡不受影响；加载失败保持地图共享中性材质，不伪造成功。
- * 四张资源只在客户端当前世界以GamePlatformData租约异步加载，地图切换时释放。
+ * 六张地形贴图共用世界租约；岩石材质单独租约。地图切换时仅释放自身需求。
  */
 UCLASS(Config=Game, DefaultConfig, meta=(DisplayName="Divine Beasts Village Snow"))
 class DIVINEBEASTSPRESENTATIONCLIENT_API UDivineBeastsVillageSnowSettings final : public UDeveloperSettings
@@ -35,6 +35,18 @@ public:
     /** 纯客户端切线空间积雪法线贴图。 */
     UPROPERTY(Config, EditAnywhere, Category="Village Snow")
     FSoftObjectPath SnowNormalTexture;
+
+    /** 项目公共扫描草地基础色，sRGB；保持原图颜色，运行时采用白色乘色。 */
+    UPROPERTY(Config, EditAnywhere, Category="Village Ground")
+    FSoftObjectPath GroundAlbedoTexture;
+
+    /** 草地切线空间法线，线性NormalMap；不改变地形高度、碰撞或导航。 */
+    UPROPERTY(Config, EditAnywhere, Category="Village Ground")
+    FSoftObjectPath GroundNormalTexture;
+
+    /** 草地线性ORM：R环境遮蔽、G粗糙度、B金属度（草地固定非金属）。 */
+    UPROPERTY(Config, EditAnywhere, Category="Village Ground")
+    FSoftObjectPath GroundORMTexture;
 
     /** 是否在Village客户端对明确打标签的岩石网格应用雪苔材质；不会扫描并覆盖未授权的场景表面。 */
     UPROPERTY(Config, EditAnywhere, Category="Village Moss")

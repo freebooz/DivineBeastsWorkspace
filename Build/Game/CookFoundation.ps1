@@ -78,6 +78,8 @@ try {
         }
         # 发布后启动还须指定这组参数；textconfig令实际进程重新读取已Stage的自定义INI层。
         $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
+        # 仅本轮训练敌人验收显式追加；Cook不运行怪物，正式专服默认不开启。
+        $details.OptionalDevelopmentMonsterRuntimeArgument = '-DBADevelopmentMonsters'
     }
     if ($Pak) { $arguments += '-pak' }
     # UE5.8 AutomationTool官方nodebuginfo仅控制Stage调试文件复制，运行二进制和资源仍完整校验。

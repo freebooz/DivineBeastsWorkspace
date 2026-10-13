@@ -23,6 +23,8 @@ public class DBAServer : ModuleRules
             "Json",
             // 可信PlayerData只读查询及项目角色初始化均在服务器私有适配中，不引入客户端Mesh/动画依赖。
             "HTTP", "DivineBeastsCharactersRuntime", "GamePlatformCharacter",
+            // 开发怪物装配直接读取权威Combat及内部回归的ASC合同；不依赖客户端表现或项目技能实现。
+            "GamePlatformCombat", "GamePlatformAbilitySystem",
             // 世界准入桥直接构造/解析Core身份与结果，DLL链接必须声明真实库，不能借Data的头可见性。
             "GamePlatformCore",
             // 第三层可信组合根把真实Server准入投影桥接到共享玩法门禁，不复制认证和出生状态机。

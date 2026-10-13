@@ -47,7 +47,7 @@ void UDivineBeastsDemoWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
             {
                 for (const FDivineBeastsDemoScenario& Scenario : Catalog->GetScenarios(Plugin.PluginId))
                 {
-                    if (Scenario.ScenarioId == CurrentMap && Scenario.bAvailable)
+                    if (Scenario.bAvailable && Scenario.MapAsset.GetLongPackageName() == CurrentMap.ToString())
                     {
                         bRegisteredMap = true;
                         break;

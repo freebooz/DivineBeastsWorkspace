@@ -1,7 +1,6 @@
 // 项目层本地玩家UI组合：消费应用只读状态，注册平台页面/主题并桥接真实控制器生命周期。
 // 不发送业务HTTP或持有玩法权威；退出撤销页面、适配器和委托，服务器目标不装配本模块。
 #include "DivineBeastsUIClientSubsystem.h"
-#include "Development/DivineBeastsDevelopmentLaunchMode.h"
 #include "Development/DivineBeastsPluginDemoMode.h"
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
@@ -133,9 +132,6 @@ void UDivineBeastsUIClientSubsystem::Initialize(
 
     // DBAClient 内部由项目 UI 层单向依赖项目 ApplicationFlow，
     // 不要求流程模块反向认识任何 Widget/ViewModel 类型。
-    // 插件开发模式只使用本地UI基础设施，不创建会触发登录流程的应用Adapter。
-    // 后续由Monolith制作的门户页面消费独立插件目录；不能伪造已认证ViewState。
-    if (FDBADevelopmentLaunchMode::ResolveCurrent() != EDBADevelopmentLaunchMode::PluginDev)
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
     {
         ApplicationAdapter =

@@ -32,6 +32,10 @@ class DualModePolicyTests(unittest.TestCase):
         self.assertIn("'PluginDev'",source)
         self.assertIn("'RunPluginDemo.ps1'",source)
         self.assertIn("if($Mode -eq 'PluginDev')",source)
+        # 真实PowerShell脚本调用必须按参数名传值，避免'-Start'误充当Target值。
+        self.assertIn("$delegate=@{",source)
+        self.assertIn("'RunPluginDemo.ps1') @delegate",source)
+        self.assertNotIn("'RunPluginDemo.ps1') @arguments",source)
 
     def test_real_demo_requires_explicit_optin_and_correct_map(self):
         script=read("Build/Game/RunPluginDemo.ps1")

@@ -35,18 +35,44 @@ namespace DivineBeasts::Demo
         return false;
     }
 
-    /** 这是开发地图的所有权候选分类，而非已经验收的单项业务功能身份。 */
-    FName GuessOwningPlugin(const FString& PackagePath)
+    /** 现有开发地图可由多个插件复用；关联身份不是各项功能已通过验收。
+     * 这里只承认真实地图路径，不创建新的空关卡或虚假插件身份。
+     */
+    TArray<FName> ResolveScenarioPluginIds(const FString& PackagePath)
     {
-        if (PackagePath.StartsWith(TEXT("/Game/Development/Weather/"))) return TEXT("GamePlatformWeather");
+        if (PackagePath == FDivineBeastsPluginDemoMode::GetHubMapPackage()) return {};
+        if (PackagePath.EndsWith(TEXT("/L_GP_CombatReview")))
+            return {FName(TEXT("GamePlatformCombat")), FName(TEXT("GamePlatformAbilitySystem")), FName(TEXT("DBAGameplay"))};
+        if (PackagePath.EndsWith(TEXT("/L_GP_InteractionAIReview")))
+            return {FName(TEXT("GamePlatformAI")), FName(TEXT("GamePlatformInteraction")),
+                    FName(TEXT("GamePlatformNavigation")), FName(TEXT("GamePlatformQuest"))};
+        if (PackagePath.EndsWith(TEXT("/L_DBA_MainArenaReview")))
+            return {FName(TEXT("GamePlatformArena")), FName(TEXT("DBAArena")), FName(TEXT("MobaPresentation"))};
+        if (PackagePath.EndsWith(TEXT("/L_GP_SFXReview")))
+            return {FName(TEXT("GamePlatformSFX")), FName(TEXT("DBASFXPack_Core"))};
+        if (PackagePath.EndsWith(TEXT("/L_DBA_HeroShowcase")))
+            return {FName(TEXT("GamePlatformCharacter")), FName(TEXT("DBAGameplay")),
+                    FName(TEXT("DBAContentPack_Common")), FName(TEXT("DBAHeroPack_Rat")),
+                    FName(TEXT("DBAHeroPack_Ox")), FName(TEXT("DBAHeroPack_Tiger")),
+                    FName(TEXT("DBAHeroPack_Rabbit")), FName(TEXT("DBAHeroPack_Dragon")),
+                    FName(TEXT("DBAHeroPack_Snake")), FName(TEXT("DBAHeroPack_Horse")),
+                    FName(TEXT("DBAHeroPack_Goat")), FName(TEXT("DBAHeroPack_Monkey")),
+                    FName(TEXT("DBAHeroPack_Rooster")), FName(TEXT("DBAHeroPack_Dog")),
+                    FName(TEXT("DBAHeroPack_Boar"))};
+        if (PackagePath.StartsWith(TEXT("/Game/Development/Weather/")))
+            return {FName(TEXT("GamePlatformWeather"))};
         if (PackagePath.StartsWith(TEXT("/Game/Development/MossSnow/")) ||
-            PackagePath.StartsWith(TEXT("/Game/Development/Snow/"))) return TEXT("GamePlatformSurface");
-        if (PackagePath.StartsWith(TEXT("/Game/Development/Terrain/"))) return TEXT("GamePlatformSurface");
+            PackagePath.StartsWith(TEXT("/Game/Development/Snow/")))
+            return {FName(TEXT("GamePlatformSurface")), FName(TEXT("GamePlatformWeather"))};
+        if (PackagePath.StartsWith(TEXT("/Game/Development/Terrain/")))
+            return {FName(TEXT("GamePlatformSurface"))};
         if (PackagePath.StartsWith(TEXT("/Game/Development/BirdFlock/")) ||
             PackagePath.StartsWith(TEXT("/Game/Development/FallingFoliage/")) ||
-            PackagePath.StartsWith(TEXT("/Game/Development/Fauna/"))) return TEXT("GamePlatformVFX");
-        if (PackagePath.Contains(TEXT("/PCG/"))) return TEXT("GamePlatformPCG");
-        return TEXT("GamePlatformDeveloperTools");
+            PackagePath.StartsWith(TEXT("/Game/Development/Fauna/")))
+            return {FName(TEXT("GamePlatformVFX"))};
+        if (PackagePath.Contains(TEXT("/PCG/")))
+            return {FName(TEXT("GamePlatformPCG"))};
+        return {FName(TEXT("GamePlatformDeveloperTools"))};
     }
 }
 
@@ -126,32 +152,38 @@ void UDivineBeastsDemoCatalogSubsystem::RefreshCatalog()
         if (!Package.StartsWith(TEXT("/Game/Development/"))) continue;
         if (KnownScenarios.Contains(Asset.PackageName)) continue;
         KnownScenarios.Add(Asset.PackageName);
-        FDivineBeastsDemoScenario Item;
-        Item.ScenarioId = Asset.PackageName;
-        Item.PluginId = DivineBeasts::Demo::GuessOwningPlugin(Package);
-        Item.Title = FText::FromString(Asset.AssetName.ToString());
-        Item.MapAsset = Asset.ToSoftObjectPath();
-        Item.bDiagnosticOnly = Package.Contains(TEXT("/Probes/")) ||
-            Package.Contains(TEXT("CaptureBackup")) ||
-            Package.Contains(TEXT("/Foundation/"));
-        Item.VerificationStatus = FText::FromString(
-            Item.bDiagnosticOnly ? TEXT("技术诊断关卡，非正式展示") : TEXT("已发现真实关卡；实际运行和人工审核待验证"));
-        for (FDivineBeastsDemoPlugin& Plugin : Plugins)
+        const TArray<FName> Owners = DivineBeasts::Demo::ResolveScenarioPluginIds(Package);
+        const bool bSpecializedReview = Package.StartsWith(
+            TEXT("/Game/Development/Foundation/PluginReviews/Maps/"));
+        for (const FName PluginId : Owners)
         {
-            if (Plugin.PluginId == Item.PluginId)
-            {
-                Plugin.DiscoveredMapCount++;
-                Item.bAvailable = Plugin.bEnabled;
-                break;
-            }
+            FDivineBeastsDemoPlugin* PluginEntry = Plugins.FindByPredicate(
+                [PluginId](const FDivineBeastsDemoPlugin& Candidate)
+                { return Candidate.PluginId == PluginId; });
+            // 插件发现必须来自真实.uplugin；未知归属不能制造假的可选入口。
+            if (!PluginEntry) continue;
+            FDivineBeastsDemoScenario Item;
+            // 同图多插件分别登记，避免相同ScenarioId导致其他插件的错误启用状态。
+            Item.ScenarioId = FName(*(PluginId.ToString() + TEXT("::") + Package));
+            Item.PluginId = PluginId;
+            Item.Title = FText::FromString(Asset.AssetName.ToString());
+            Item.MapAsset = Asset.ToSoftObjectPath();
+            Item.bDiagnosticOnly = Package.Contains(TEXT("/Probes/")) ||
+                Package.Contains(TEXT("CaptureBackup")) ||
+                (Package.Contains(TEXT("/Foundation/")) && !bSpecializedReview);
+            Item.VerificationStatus = FText::FromString(
+                Item.bDiagnosticOnly ? TEXT("技术诊断关卡，非正式展示") :
+                TEXT("已发现真实关卡；实际运行和人工审核待验证"));
+            PluginEntry->DiscoveredMapCount++;
+            Item.bAvailable = PluginEntry->bEnabled;
+            Scenarios.Add(MoveTemp(Item));
         }
-        Scenarios.Add(MoveTemp(Item));
     }
     Scenarios.Sort([](const FDivineBeastsDemoScenario& A, const FDivineBeastsDemoScenario& B)
     {
         return A.ScenarioId.ToString() < B.ScenarioId.ToString();
     });
-    UE_LOG(LogTemp, Display, TEXT("神兽联盟演示目录发现插件=%d，开发关卡=%d；均待实际运行验收。"),
+    UE_LOG(LogTemp, Display, TEXT("神兽联盟演示目录发现插件=%d，演示入口=%d；均待实际运行验收。"),
         Plugins.Num(), Scenarios.Num());
 }
 
@@ -175,13 +207,17 @@ bool UDivineBeastsDemoCatalogSubsystem::OpenScenario(FName ScenarioId)
         LastOperationMessage = FText::FromString(TEXT("演示项目未登记、对应插件未启用或资源不可用。"));
         return false;
     }
-    if (!FPackageName::DoesPackageExist(Item->ScenarioId.ToString()) || !GetWorld())
+    // SceneId是插件+地图唯一入口，真正切换只允许已登记且存在的开发地图。
+    const FString MapPackage = Item->MapAsset.GetLongPackageName();
+    if (!MapPackage.StartsWith(TEXT("/Game/Development/")) ||
+        MapPackage == FDivineBeastsPluginDemoMode::GetHubMapPackage() ||
+        !FPackageName::DoesPackageExist(MapPackage) || !GetWorld())
     {
         LastOperationMessage = FText::FromString(TEXT("地图没有可加载的真实资产，拒绝进入。"));
         return false;
     }
     LastOperationMessage = FText::FromString(TEXT("已提交地图跳转请求，尚待UE运行和人工验收。"));
-    UGameplayStatics::OpenLevel(GetWorld(), Item->ScenarioId);
+    UGameplayStatics::OpenLevel(GetWorld(), FName(*MapPackage));
     return true;
 }
 
