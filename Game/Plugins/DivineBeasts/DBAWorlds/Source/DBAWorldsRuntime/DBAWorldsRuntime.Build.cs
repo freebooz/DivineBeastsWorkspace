@@ -28,7 +28,9 @@ public class DBAWorldsRuntime : ModuleRules
         {
             "DivineBeastsCharactersRuntime",
             // 世界输入清理仅通过平台公开ASC撤销按住命令；不引入客户端UI、Niagara或网络权威替代。
-            "GamePlatformAbilitySystem"
+            "GamePlatformAbilitySystem",
+            // 本地焦点及服务器交互RPC由平台唯一组件承载，项目只选择输入方式。
+            "GamePlatformInteraction"
         });
         // 鼠标命中检验只用于有视口的目标；Dedicated Server不链接Slate或任何项目UI客户端。
         if (Target.Type != TargetType.Server)

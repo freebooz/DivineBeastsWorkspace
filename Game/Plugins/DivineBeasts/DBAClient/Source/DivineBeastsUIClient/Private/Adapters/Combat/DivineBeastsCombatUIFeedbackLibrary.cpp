@@ -46,14 +46,17 @@ bool UDivineBeastsCombatUIFeedbackLibrary::BuildFloatingTextRequest(
     {
     case EDivineBeastsCombatFeedbackKind::Damage:
         OutRequest.StyleId = TEXT("DBA.UI.Feedback.Damage");
+        OutRequest.TextColor = FLinearColor(1.0f, 0.82f, 0.48f);
         break;
 
     case EDivineBeastsCombatFeedbackKind::ShieldDamage:
         OutRequest.StyleId = TEXT("DBA.UI.Feedback.ShieldDamage");
+        OutRequest.TextColor = FLinearColor(0.48f, 0.80f, 1.0f);
         break;
 
     case EDivineBeastsCombatFeedbackKind::Healing:
         OutRequest.StyleId = TEXT("DBA.UI.Feedback.Healing");
+        OutRequest.TextColor = FLinearColor(0.44f, 1.0f, 0.65f);
         break;
 
     case EDivineBeastsCombatFeedbackKind::Death:

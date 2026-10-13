@@ -35,6 +35,10 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformUIFeedbackRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|Feedback")
     FText Text;
 
+    /** 上层样式解析出的线性文字颜色；平台不根据项目StyleId猜测伤害/治疗，默认白色保持旧请求兼容。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|Feedback")
+    FLinearColor TextColor = FLinearColor::White;
+
     /** 可选数值；仅在 bHasNumericValue=true 时参与通用数值合并。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|Feedback")
     double NumericValue = 0.0;
@@ -69,6 +73,11 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformUIFeedbackRequest
 
     bool IsValid() const
     {
-        return !Channel.IsNone() && LifetimeSeconds > 0.0f;
+        // 所有进入UMG布局、计时器及数值格式化的值必须有限；拒绝输入而不是把异常值钳成假事实。
+        return !Channel.IsNone() && FMath::IsFinite(LifetimeSeconds) && LifetimeSeconds > 0.0f &&
+            (!bHasNumericValue || FMath::IsFinite(NumericValue)) &&
+            !WorldLocation.ContainsNaN() && !ScreenPosition.ContainsNaN() &&
+            FMath::IsFinite(TextColor.R) && FMath::IsFinite(TextColor.G) &&
+            FMath::IsFinite(TextColor.B) && FMath::IsFinite(TextColor.A);
     }
 };

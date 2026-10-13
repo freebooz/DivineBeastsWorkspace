@@ -14,11 +14,17 @@ class DBAWORLDSRUNTIME_API ADivineBeastsWorldPlayerController : public AGamePlat
 {
     GENERATED_BODY()
 public:
+    /** 双端控制器拥有一个平台交互发起组件；不创建第二份交互RPC或Pawn权威状态。 */
+    ADivineBeastsWorldPlayerController();
     FSimpleMulticastDelegate OnLocalWorldFactsChanged;
     /** 本地ESC意图；UI客户端拥有订阅和菜单，共享世界模块不依赖客户端UI实现。 */
     FSimpleMulticastDelegate OnWorldEscapeRequested;
     /** I键只发出本地背包开关意图；世界双端控制器不依赖UI实现，不授予或消耗道具。 */
     FSimpleMulticastDelegate OnWorldInventoryRequested;
+    /** 当前本地选中目标变化；只读展示意图，技能与交互必须另经服务器资格校验。 */
+    FSimpleMulticastDelegate OnWorldTargetChanged;
+    /** 当前世界内的弱选中引用；目标结束、换Pawn和旅行立即清空，不跨网络复制。 */
+    AActor* GetSelectedWorldTarget() const { return SelectedWorldTarget.Get(); }
     /** 游戏线程设置本地界面暂停；true清除拖动/按键/技能并恢复光标，false仅在服务器Active时恢复世界输入。 */
     void SetWorldGameplayInputSuspended(bool bSuspended);
     /** 游戏线程幂等重算，只提交完整准备事实；缺组件/旧令牌时保持输入关闭。 */
@@ -66,6 +72,22 @@ private:
     FIntPoint SavedCursorPosition = FIntPoint::ZeroValue;
     FRotator ObservationRotation = FRotator::ZeroRotator;
     TWeakObjectPtr<APawn> InputPawn;
+    /** 单击候选只保存按下时的可见命中；拖动、组合键、失焦和菜单切换均取消。 */
+    TWeakObjectPtr<AActor> PointerPressedTarget;
+    TWeakObjectPtr<AActor> SelectedWorldTarget;
+    bool bPointerClickPending = false;
+    double PointerPressedAtSeconds = 0.0;
+    float PointerTravelPixels = 0.f;
+    /** 游戏线程可见射线命中；忽略自身，不透过遮挡或界面，不扫描世界Actor。 */
+    AActor* FindPointerTarget() const;
+    void SetSelectedWorldTarget(AActor* Target);
+    /** 必须由目标EndPlay撤销，不能依赖Widget逐帧检查无效弱指针。 */
+    UFUNCTION()
+    void HandleSelectedTargetEndPlay(AActor* Actor, EEndPlayReason::Type Reason);
+    /** 仅采样鼠标输入/悬停；不轮询任务、网络或角色业务状态。 */
+    void RefreshPointerFeedback();
+    void BeginWorldInteraction();
+    void EndWorldInteraction();
     float ForwardAxis = 0.f;
     float StrafeAxis = 0.f;
     float KeyboardTurnAxis = 0.f;
