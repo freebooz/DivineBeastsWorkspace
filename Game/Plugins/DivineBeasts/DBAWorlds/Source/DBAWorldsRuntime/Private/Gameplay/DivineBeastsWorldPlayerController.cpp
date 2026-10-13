@@ -35,11 +35,12 @@ void ADivineBeastsWorldPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
     // Controller先于Pawn消费同名原生轴，避免旧Pawn镜头/移动同时执行。UI已消费的按键不会进入GameAndUI后备。
-    InputComponent->BindAxis(TEXT("DBA.MoveForward"), this, &ThisClass::SetForwardAxis);
-    InputComponent->BindAxis(TEXT("DBA.MoveRight"), this, &ThisClass::SetStrafeAxis);
-    InputComponent->BindAxis(TEXT("DBA.KeyboardTurn"), this, &ThisClass::SetKeyboardTurnAxis);
-    InputComponent->BindAxis(TEXT("DBA.Turn"), this, &ThisClass::TurnObservationCamera);
-    InputComponent->BindAxis(TEXT("DBA.Look"), this, &ThisClass::LookObservationCamera);
+    // 这些轴也被通用Pawn注册，显式消费可保证世界控制器拥有当前语义，同时保留竞技控制器的Pawn默认输入。
+    InputComponent->BindAxis(TEXT("DBA.MoveForward"), this, &ThisClass::SetForwardAxis).bConsumeInput = true;
+    InputComponent->BindAxis(TEXT("DBA.MoveRight"), this, &ThisClass::SetStrafeAxis).bConsumeInput = true;
+    InputComponent->BindAxis(TEXT("DBA.KeyboardTurn"), this, &ThisClass::SetKeyboardTurnAxis).bConsumeInput = true;
+    InputComponent->BindAxis(TEXT("DBA.Turn"), this, &ThisClass::TurnObservationCamera).bConsumeInput = true;
+    InputComponent->BindAxis(TEXT("DBA.Look"), this, &ThisClass::LookObservationCamera).bConsumeInput = true;
     InputComponent->BindAxis(TEXT("DBA.CameraZoom"), this, &ThisClass::ZoomObservationCamera);
     InputComponent->BindAction(TEXT("DBA.CameraObserve"), IE_Pressed, this, &ThisClass::BeginLeftCameraDrag);
     InputComponent->BindAction(TEXT("DBA.CameraObserve"), IE_Released, this, &ThisClass::EndLeftCameraDrag);
@@ -237,16 +238,20 @@ void ADivineBeastsWorldPlayerController::SetKeyboardTurnAxis(float Value) { Keyb
 void ADivineBeastsWorldPlayerController::TurnObservationCamera(float Value)
 {
     if (!CanProcessWorldLookInput() || MouseButtonMask == 0) return;
-    ObservationRotation.Yaw = FRotator::NormalizeAxis(ObservationRotation.Yaw + Value);
-    if (FDivineBeastsWorldControlState(MouseButtonMask).IsFacingCamera())
+    const FDivineBeastsWorldMouseLookDelta Look =
+        FDivineBeastsWorldControlState(MouseButtonMask).ResolveMouseLook(Value, 0.f);
+    ObservationRotation.Yaw = FRotator::NormalizeAxis(ObservationRotation.Yaw + Look.CameraYawInput);
+    if (!FMath::IsNearlyZero(Look.CharacterYawInput))
     {
         FRotator Facing = GetControlRotation(); Facing.Yaw = ObservationRotation.Yaw; SetControlRotation(Facing);
     }
 }
 void ADivineBeastsWorldPlayerController::LookObservationCamera(float Value)
 {
-    if (CanProcessWorldLookInput() && MouseButtonMask != 0)
-        ObservationRotation.Pitch = FMath::Clamp(ObservationRotation.Pitch + Value, -80.f, 60.f);
+    if (!CanProcessWorldLookInput() || MouseButtonMask == 0) return;
+    const FDivineBeastsWorldMouseLookDelta Look =
+        FDivineBeastsWorldControlState(MouseButtonMask).ResolveMouseLook(0.f, Value);
+    ObservationRotation.Pitch = FMath::Clamp(ObservationRotation.Pitch + Look.CameraPitchInput, -80.f, 60.f);
 }
 void ADivineBeastsWorldPlayerController::ZoomObservationCamera(float Value)
 {

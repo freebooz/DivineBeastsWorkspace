@@ -18,6 +18,8 @@ foreach ($Line in ($Input -split "`r?`n")) {
 foreach ($Binding in @(
     'AxisName="DBA.KeyboardTurn",Scale=1.000000,Key=D',
     'AxisName="DBA.KeyboardTurn",Scale=-1.000000,Key=A',
+    'AxisName="DBA.Turn",Scale=1.000000,Key=MouseX',
+    'AxisName="DBA.Look",Scale=-1.000000,Key=MouseY',
     'AxisName="DBA.MoveRight",Scale=1.000000,Key=E',
     'AxisName="DBA.MoveRight",Scale=-1.000000,Key=Q',
     'AxisName="DBA.CameraZoom",Scale=1.000000,Key=MouseWheelAxis',
@@ -25,6 +27,17 @@ foreach ($Binding in @(
     'ActionName="DBA.Inventory"', 'Key=I',
     'DefaultViewportMouseCaptureMode=NoCapture', 'bShouldFlushPressedKeysOnViewportFocusLost=True')) {
     if (-not $Input.Contains($Binding)) { throw "World input configuration is missing: $Binding" }
+}
+# 同名轴虽由通用Pawn保留作竞技回退，世界控制器必须明确消费自己的绑定，避免一帧内重复转镜头或移动。
+foreach ($Binding in @(
+    'BindAxis(TEXT("DBA.MoveForward")', 'BindAxis(TEXT("DBA.MoveRight")',
+    'BindAxis(TEXT("DBA.KeyboardTurn")', 'BindAxis(TEXT("DBA.Turn")', 'BindAxis(TEXT("DBA.Look")')) {
+    $BindingIndex = $Controller.IndexOf($Binding, [System.StringComparison]::Ordinal)
+    if ($BindingIndex -lt 0) { throw "World controller is missing its owned input binding: $Binding" }
+    $StatementEnd = $Controller.IndexOf(';', $BindingIndex)
+    if ($StatementEnd -lt 0 -or -not $Controller.Substring($BindingIndex, $StatementEnd - $BindingIndex).Contains('.bConsumeInput = true')) {
+        throw "World controller must consume its own input binding: $Binding"
+    }
 }
 foreach ($Hook in @('::FlushPressedKeys()', '::EndPlay(', '::PreClientTravel(', '::OnUnPossess()', '::SetWorldGameplayInputSuspended(',
     'OnWorldEscapeRequested.Broadcast()', 'ConsumeMovementInputVector()', 'StopJumping()',
