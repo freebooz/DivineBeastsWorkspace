@@ -33,47 +33,6 @@ struct FDivineBeastsDemoCatalogPrivateState
     FName PendingMap;
 };
 
-<<<<<<< HEAD
-    /** 现有开发地图可由多个插件复用；关联身份不是各项功能已通过验收。
-     * 这里只承认真实地图路径，不创建新的空关卡或虚假插件身份。
-     */
-    TArray<FName> ResolveScenarioPluginIds(const FString& PackagePath)
-    {
-        if (PackagePath == FDivineBeastsPluginDemoMode::GetHubMapPackage()) return {};
-        if (PackagePath.EndsWith(TEXT("/L_GP_CombatReview")))
-            return {FName(TEXT("GamePlatformCombat")), FName(TEXT("GamePlatformAbilitySystem")), FName(TEXT("DBAGameplay"))};
-        if (PackagePath.EndsWith(TEXT("/L_GP_InteractionAIReview")))
-            return {FName(TEXT("GamePlatformAI")), FName(TEXT("GamePlatformInteraction")),
-                    FName(TEXT("GamePlatformNavigation")), FName(TEXT("GamePlatformQuest"))};
-        if (PackagePath.EndsWith(TEXT("/L_DBA_MainArenaReview")))
-            return {FName(TEXT("GamePlatformArena")), FName(TEXT("DBAArena")), FName(TEXT("MobaPresentation"))};
-        if (PackagePath.EndsWith(TEXT("/L_GP_SFXReview")))
-            return {FName(TEXT("GamePlatformSFX")), FName(TEXT("DBASFXPack_Core"))};
-        if (PackagePath.EndsWith(TEXT("/L_DBA_HeroShowcase")))
-            return {FName(TEXT("GamePlatformCharacter")), FName(TEXT("DBAGameplay")),
-                    FName(TEXT("DBAContentPack_Common")), FName(TEXT("DBAHeroPack_Rat")),
-                    FName(TEXT("DBAHeroPack_Ox")), FName(TEXT("DBAHeroPack_Tiger")),
-                    FName(TEXT("DBAHeroPack_Rabbit")), FName(TEXT("DBAHeroPack_Dragon")),
-                    FName(TEXT("DBAHeroPack_Snake")), FName(TEXT("DBAHeroPack_Horse")),
-                    FName(TEXT("DBAHeroPack_Goat")), FName(TEXT("DBAHeroPack_Monkey")),
-                    FName(TEXT("DBAHeroPack_Rooster")), FName(TEXT("DBAHeroPack_Dog")),
-                    FName(TEXT("DBAHeroPack_Boar"))};
-        if (PackagePath.StartsWith(TEXT("/Game/Development/Weather/")))
-            return {FName(TEXT("GamePlatformWeather"))};
-        if (PackagePath.StartsWith(TEXT("/Game/Development/MossSnow/")) ||
-            PackagePath.StartsWith(TEXT("/Game/Development/Snow/")))
-            return {FName(TEXT("GamePlatformSurface")), FName(TEXT("GamePlatformWeather"))};
-        if (PackagePath.StartsWith(TEXT("/Game/Development/Terrain/")))
-            return {FName(TEXT("GamePlatformSurface"))};
-        if (PackagePath.StartsWith(TEXT("/Game/Development/BirdFlock/")) ||
-            PackagePath.StartsWith(TEXT("/Game/Development/FallingFoliage/")) ||
-            PackagePath.StartsWith(TEXT("/Game/Development/Fauna/")))
-            return {FName(TEXT("GamePlatformVFX"))};
-        if (PackagePath.Contains(TEXT("/PCG/")))
-            return {FName(TEXT("GamePlatformPCG"))};
-        return {FName(TEXT("GamePlatformDeveloperTools"))};
-    }
-=======
 namespace
 {
 /** 分类只读取真实插件根；Content旧枚举保留序列化兼容，实际架构仍属Project。 */
@@ -181,39 +140,6 @@ void UDivineBeastsDemoCatalogSubsystem::RefreshCatalog()
     TSet<FName> Maps;
     for (const auto& Asset : Assets)
     {
-<<<<<<< HEAD
-        if (Asset.AssetClassPath != UWorld::StaticClass()->GetClassPathName()) continue;
-        const FString Package = Asset.PackageName.ToString();
-        if (!Package.StartsWith(TEXT("/Game/Development/"))) continue;
-        if (KnownScenarios.Contains(Asset.PackageName)) continue;
-        KnownScenarios.Add(Asset.PackageName);
-        const TArray<FName> Owners = DivineBeasts::Demo::ResolveScenarioPluginIds(Package);
-        const bool bSpecializedReview = Package.StartsWith(
-            TEXT("/Game/Development/Foundation/PluginReviews/Maps/"));
-        for (const FName PluginId : Owners)
-        {
-            FDivineBeastsDemoPlugin* PluginEntry = Plugins.FindByPredicate(
-                [PluginId](const FDivineBeastsDemoPlugin& Candidate)
-                { return Candidate.PluginId == PluginId; });
-            // 插件发现必须来自真实.uplugin；未知归属不能制造假的可选入口。
-            if (!PluginEntry) continue;
-            FDivineBeastsDemoScenario Item;
-            // 同图多插件分别登记，避免相同ScenarioId导致其他插件的错误启用状态。
-            Item.ScenarioId = FName(*(PluginId.ToString() + TEXT("::") + Package));
-            Item.PluginId = PluginId;
-            Item.Title = FText::FromString(Asset.AssetName.ToString());
-            Item.MapAsset = Asset.ToSoftObjectPath();
-            Item.bDiagnosticOnly = Package.Contains(TEXT("/Probes/")) ||
-                Package.Contains(TEXT("CaptureBackup")) ||
-                (Package.Contains(TEXT("/Foundation/")) && !bSpecializedReview);
-            Item.VerificationStatus = FText::FromString(
-                Item.bDiagnosticOnly ? TEXT("技术诊断关卡，非正式展示") :
-                TEXT("已发现真实关卡；实际运行和人工审核待验证"));
-            PluginEntry->DiscoveredMapCount++;
-            Item.bAvailable = PluginEntry->bEnabled;
-            Scenarios.Add(MoveTemp(Item));
-        }
-=======
         if (Asset.AssetClassPath != UWorld::StaticClass()->GetClassPathName() || Maps.Contains(Asset.PackageName)) continue;
         Maps.Add(Asset.PackageName);
         FDivineBeastsDemoScenario Item;
@@ -300,24 +226,16 @@ void UDivineBeastsDemoCatalogSubsystem::RebuildScenarioProjection()
         Item.VerificationStatus = FText::FromString(Check.bCanStart ? TEXT("预检通过，尚未运行/人工核验。") : Check.Result.Message);
         RegisteredMaps.Add(FName(*Item.MapAsset.GetLongPackageName()));
         Scenarios.Add(MoveTemp(Item));
->>>>>>> 88d8f1093720a2e01ed32e71ab0637c5778b892a
     }
     for (const auto& Diagnostic : PrivateState->DiagnosticMaps)
         if (!RegisteredMaps.Contains(FName(*Diagnostic.MapAsset.GetLongPackageName()))) Scenarios.Add(Diagnostic);
     for (auto& Plugin : Plugins)
     {
-<<<<<<< HEAD
-        return A.ScenarioId.ToString() < B.ScenarioId.ToString();
-    });
-    UE_LOG(LogTemp, Display, TEXT("神兽联盟演示目录发现插件=%d，演示入口=%d；均待实际运行验收。"),
-        Plugins.Num(), Scenarios.Num());
-=======
         TSet<FName> UniqueMaps;
         for (const auto& Scenario : Scenarios)
             if (Scenario.PluginId == Plugin.PluginId) UniqueMaps.Add(FName(*Scenario.MapAsset.GetLongPackageName()));
         Plugin.DiscoveredMapCount = UniqueMaps.Num();
     }
->>>>>>> 88d8f1093720a2e01ed32e71ab0637c5778b892a
 }
 TArray<FDivineBeastsDemoScenario> UDivineBeastsDemoCatalogSubsystem::GetScenarios(FName PluginId) const
 {
@@ -359,13 +277,6 @@ FDivineBeastsDemoPreflightResult UDivineBeastsDemoCatalogSubsystem::PreflightSce
     {
         Block(Out, TEXT("Demo.ScenarioNotRegistered"), TEXT("案例未登记或目录尚未完整就绪。")); return Out;
     }
-<<<<<<< HEAD
-    // SceneId是插件+地图唯一入口，真正切换只允许已登记且存在的开发地图。
-    const FString MapPackage = Item->MapAsset.GetLongPackageName();
-    if (!MapPackage.StartsWith(TEXT("/Game/Development/")) ||
-        MapPackage == FDivineBeastsPluginDemoMode::GetHubMapPackage() ||
-        !FPackageName::DoesPackageExist(MapPackage) || !GetWorld())
-=======
     if (!FDivineBeastsPluginDemoMode::IsEnabled()) Block(Out, TEXT("Demo.ModeDisabled"), TEXT("未启用受控开发演示入口。"));
 #if UE_EDITOR
     const FName Target(TEXT("Editor"));
@@ -376,16 +287,10 @@ FDivineBeastsDemoPreflightResult UDivineBeastsDemoCatalogSubsystem::PreflightSce
 #endif
     if (!Scenario.Targets.Contains(Target)) Block(Out, TEXT("Demo.TargetNotAllowed"), TEXT("当前目标不在案例允许列表。"));
     for (FName Required : Scenario.RequiredPlugins)
->>>>>>> 88d8f1093720a2e01ed32e71ab0637c5778b892a
     {
         const auto* Plugin = Plugins.FindByPredicate([Required](const auto& Item) { return Item.PluginId == Required; });
         if (!Plugin || !Plugin->bEnabled) Block(Out, TEXT("Demo.PluginDisabled"), TEXT("必需插件未启用：") + Required.ToString());
     }
-<<<<<<< HEAD
-    LastOperationMessage = FText::FromString(TEXT("已提交地图跳转请求，尚待UE运行和人工验收。"));
-    UGameplayStatics::OpenLevel(GetWorld(), FName(*MapPackage));
-    return true;
-=======
     if (!GetGameInstance() || !IGamePlatformDataService::Get(*GetGameInstance()))
         Block(Out, TEXT("Demo.DataUnavailable"), TEXT("中央Data服务不可用。"));
     TArray<FSoftObjectPath> Assets = Scenario.DefinitionAssets;
@@ -423,7 +328,6 @@ bool UDivineBeastsDemoCatalogSubsystem::OpenScenario(FName InputId)
     if (auto* Runner = GetWorld()->GetSubsystem<UDivineBeastsDemoWorldSubsystem>(); Runner && Runner->HasActiveScenario())
         return Runner->RequestScenarioStop(FGamePlatformResult::Cancelled(TEXT("切换案例，先清理当前运行。")));
     return ContinuePendingNavigation();
->>>>>>> 88d8f1093720a2e01ed32e71ab0637c5778b892a
 }
 bool UDivineBeastsDemoCatalogSubsystem::ReturnToHub()
 {

@@ -53,11 +53,8 @@ void UDivineBeastsDemoWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
             {
                 for (const FDivineBeastsDemoScenario& Scenario : Catalog->GetScenarios(Plugin.PluginId))
                 {
-<<<<<<< HEAD
-                    if (Scenario.bAvailable && Scenario.MapAsset.GetLongPackageName() == CurrentMap.ToString())
-=======
+                    // 依据真实World资源包判断，不能把逻辑案例ID当成地图包路径。
                     if (FName(*Scenario.MapAsset.GetLongPackageName()) == CurrentMap)
->>>>>>> 88d8f1093720a2e01ed32e71ab0637c5778b892a
                     {
                         bRegisteredMap = true;
                         break;
