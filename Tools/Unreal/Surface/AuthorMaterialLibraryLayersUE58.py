@@ -100,7 +100,9 @@ def connect(unreal,left,right,pin):
 def create_blend(unreal):
     """单一MaterialLayerBlend混合：底层属性 + 顶层属性 + 独立0~1覆盖遮罩。"""
     assets=unreal.EditorAssetLibrary
-    factory=unreal.MaterialFunctionFactoryNew()
+    # UE5.8专用MaterialLayerBlendFactory才能确保得到MaterialFunctionMaterialLayerBlend原生子类；
+    # 通用MaterialFunctionFactoryNew可能创建基础MaterialFunction，造成错误的同名.uasset占用。
+    factory=unreal.MaterialFunctionMaterialLayerBlendFactory()
     blend=unreal.AssetToolsHelpers.get_asset_tools().create_asset(
         BLEND.rsplit("/",1)[-1],FOLDER,unreal.MaterialFunctionMaterialLayerBlend,factory)
     if not isinstance(blend,unreal.MaterialFunctionMaterialLayerBlend):
@@ -134,8 +136,9 @@ def create_layer(unreal,info):
     """真正PBR覆盖层：独立颜色、粗糙度、金属度与AO属性，不复用单纯颜色遮罩。"""
     path=info["materialLayerAssetPath"]
     tools=unreal.AssetToolsHelpers.get_asset_tools()
+    # 只有专用MaterialLayerFactory创建正确原生类型；不允许普通MF工厂伪装层资产。
     layer=tools.create_asset(path.rsplit("/",1)[-1],FOLDER,
-                             unreal.MaterialFunctionMaterialLayer,unreal.MaterialFunctionFactoryNew())
+                             unreal.MaterialFunctionMaterialLayer,unreal.MaterialFunctionMaterialLayerFactory())
     if not isinstance(layer,unreal.MaterialFunctionMaterialLayer):
         raise TypeError("UE无法创建原生MaterialFunctionMaterialLayer："+path)
     def vec_param(name,color,x,y):
@@ -194,8 +197,10 @@ def main():
     require_editor(unreal)
     reg=unreal.AssetRegistryHelpers.get_asset_registry()
     reg.scan_paths_synchronous(["/GamePlatformSurface"],force_rescan=True)
-    if not hasattr(unreal,"MaterialFunctionMaterialLayer") or not hasattr(unreal,"MaterialFunctionMaterialLayerBlend"):
-        raise RuntimeError("锁定UE5.8未暴露MaterialLayer/MaterialLayerBlend原生类")
+    if any(not hasattr(unreal,name) for name in (
+        "MaterialFunctionMaterialLayer", "MaterialFunctionMaterialLayerBlend",
+        "MaterialFunctionMaterialLayerFactory", "MaterialFunctionMaterialLayerBlendFactory")):
+        raise RuntimeError("锁定UE5.8缺少MaterialLayer/Blend专用类或工厂，拒绝生成错误类型同名资产")
     missing=(opt.mode=="apply")
     main_blend=expect_type(unreal,BLEND,unreal.MaterialFunctionMaterialLayerBlend,missing)
     for item in items:

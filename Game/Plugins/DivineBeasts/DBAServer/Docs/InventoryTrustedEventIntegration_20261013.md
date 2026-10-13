@@ -10,7 +10,7 @@
 
 传输入口`POST /internal/v1/playerdata/inventory/trusted-events`（仅游戏服的受控内网HTTP接口）使用**独立强Bearer令牌**、与事件完全匹配的X-Game-Server-Id/X-Game-Server-Boot-Id（实例与Boot标头）、严格JSON和请求大小限制，再进入会话数据库核验。普通PlayerData Handler与公网Gateway均没有此路由。生产HTTP模式及productiondeps+grpcdeps（生产gRPC模式）按部署配置分别装配HTTP内部事件入口，不将普通玩家HTTP库存接口额外暴露给gRPC模式。
 
-`DBAServer/Source/DBAServer/Public/Inventory/DivineBeastsTrustedInventoryEventSubsystem.h`（SSLM专用服务器事件出口）和对应Private C++实现只在Dedicated Server创建，读取平台服务器当前`FGamePlatformServerVerifiedAdmission`（已验证玩家准入投影），核对Boot、连接号、世代、有效期，调用方须传入已从PlayerData取得的实际库存Revision，不使用占位版本。`SubmitWorldPickup`（采集）、`SubmitQuestReward`（任务奖励）和`SubmitItemUse`（使用）均需稳定世界事件GUID、真实服务器玩法判定；它们不是可由玩家提交的RPC/蓝图授权入口。响应显式区分首次成功、重复成功及结果未知；超时不得用新事件号重试。服务器退出取消自有HTTP任务和令牌副本。
+`DBAServer/Source/DBAServer/Public/Inventory/DivineBeastsTrustedInventoryEventSubsystem.h`（SSLM专用服务器事件出口）和对应Private C++实现只在Dedicated Server创建，读取平台服务器当前`FGamePlatformServerVerifiedAdmission`（已验证玩家准入投影），核对Boot、连接号、世代、有效期；调用方可省略库存版本（协议0表示由PlayerData在授权后自行获取权威Revision并执行乐观锁），或提供Dedicated Server实际读取的Revision，但绝不可接受客户端自报版本。`SubmitWorldPickup`（采集）、`SubmitQuestReward`（任务奖励）和`SubmitItemUse`（使用）均需稳定世界事件GUID、真实服务器玩法判定；它们不是可由玩家提交的RPC/蓝图授权入口。响应显式区分首次成功、重复成功及结果未知；超时不得用新事件号重试。服务器退出取消自有HTTP任务和令牌副本。
 
 ## 生产配置及权限边界
 
@@ -35,6 +35,15 @@
 3. 当前没有在实际PostgreSQL服务应用000011及前序迁移的成功证据，没有真实SessionEpoch跨连接联机数据与并发压测，也没有从游戏新手村输入到可靠入包/消费的两客户端结果。
 4. 物品显示蓝图`WBP_DBA_UI_Inventory`（背包页面，172控件）已在前轮真实交付；本轮8张物品Icon Texture2D（图标纹理）及对应DataAsset（显示定义）受Monolith连接状态限制，仍未通过引擎制作。详见`DBAUIPack_Core/Docs/InventoryVisualAssets_20261013.json`（物品图标资产制作清单）。
 5. 本轮新代码必须完成Go默认与productiondeps/grpcdeps变体测试、UE Editor和DedicatedServer模块编译、数据库迁移及一站式人工测试后才可标记“完成”。
+
+
+## 2026-10-13 补强：可信事件响应与消息信封 V2
+
+本次新增的 `inventoryOutboxEvent`（可信库存事务发件箱信封）采用 `schemaVersion=2`（消息版本2），为 `Inventory.Granted`（授予事实）和 `Inventory.Consumed`（扣除事实）增加 `gameId`（游戏标识）、`sessionEpoch`（准入会话世代）、`connectionId`（真实连接号）；消耗事件另包含 `itemInstanceId`（实际消耗的物品实例标识），`remainingQuantity`（剩余数量）即使是0也显式输出。事件仍保留稳定 `operationId`（幂等操作编号）、`sourceEventId`（玩法来源事件）以及服务器Boot（启动代次）。这些内容仅用于下游可靠消费的身份核对，**不是新颁发的服务器权限或一次性通行证**。
+
+`playerdata_server_trusted_events.go`（可信事件HTTP处理器）新增严格POST方法、RFC媒体类型校验、最大8KiB请求体限制，复用 `DecodeOnlineJSON`（严格JSON解码）拒绝重复键、未知字段和null必填；独立Bearer验证始终先于解析正文。项目专服 `DivineBeastsTrustedInventoryEventSubsystem.cpp`（项目事件发送子系统）设置拒绝HTTP重定向，环境缺少该引擎能力时拒绝发请求；通过FHttpRequestStreamDelegateV2（HTTP流式响应处理委托）接收，硬限制256KiB，并核验回执操作号格式、数量和版本。玩家界面关闭/切换时卸载物品图标画刷和异步句柄，不显示前一账号数据。
+
+新测试源文件：`Backend/internal/platform/database/postgres/inventory_trusted_outbox_test.go`（Outbox V2字段契约测试）、`Backend/internal/transport/httpadapter/playerdata_trusted_events_hardening_test.go`（HTTP拒绝非POST及伪造媒体类型测试）、`Backend/internal/app/gateway/inventory_trust_error_test.go`（可信事件错误码映射测试）。这些**尚需统一Go测试与真实UE编译确认**；目前不能据此声称消息被NATS实际发布、物品效果已运行或两客户端联机通过。
 
 ## 统一验收建议
 

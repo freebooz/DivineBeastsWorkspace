@@ -12,7 +12,7 @@ CREATE TABLE player_inventory_trusted_events (
     server_boot_id TEXT NOT NULL,
     session_epoch BIGINT NOT NULL CHECK (session_epoch >= 1),
     connection_id TEXT NOT NULL CHECK (char_length(connection_id) BETWEEN 1 AND 256),
-    expected_revision BIGINT NOT NULL CHECK (expected_revision >= 1),
+    expected_revision BIGINT NOT NULL CHECK (expected_revision >= 0),
     item_definition_id TEXT NOT NULL CHECK (char_length(item_definition_id) BETWEEN 1 AND 256),
     item_instance_id TEXT NOT NULL DEFAULT '',
     quantity INTEGER NOT NULL CHECK (quantity >= 1 AND quantity <= 1000000),

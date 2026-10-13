@@ -12,6 +12,9 @@
 **制作阶段调度（2026-10-13）**：`Tools/Unreal/Surface/AuthorMaterialLibrarySourcePhaseUE58.py`（领域材质函数、12项PBR材质层、Actor审核蓝图与中性QA审核母材质的串行制作入口）。默认inspect；真正UE编辑器才可apply；不执行最终编译、Cook。UI仍必须由Monolith制作。当前编辑器启动尚未解除阻断，脚本存在不等于对应二进制资产已生成。
 **P6 UI函数真实制作前置清单**：`Tools/Unreal/UI/PrepareMaterialLibraryMonolithActions.py`（逐项转换7个UI函数配方的动作生成器），`Docs/Implementation/Materials/MaterialLibraryUIActionQueue_V1.json`（7项×6步＝42条可执行Monolith资源制作动作，未执行，不等于UE资产）。`AuthorMaterialLibraryStandBlueprintUE58.py`（Actor审核展示架蓝图作者）已补上ReviewMaterial和ReviewTitle字段制作逻辑，仍须真实UE资源制作。
 **P8独立审核地图资源队列**：`MaterialLibraryMapActionQueue_V1.json`（Surface/VFX/Project/UI共4张开发审核地图的Monolith原生创建请求，包含存在性检查及防覆盖策略）。**注意：JSON动作清单不是.umap资源，也不证明任何蓝图编译通过。**
+**UI资源制作新入口**：Tools/Unreal/UI/AuthorMaterialLibraryUIReviewUE58.py（12份真实MD_UI审核材质作者）和Tools/Unreal/UI/AuthorMaterialLibraryWidgetMonolith.py（既有C++ DemoHub父类的UI审查Widget作者）；MaterialLibraryUIWidgetSpec_V1.json（83个唯一控件、12个材质样板卡的声明式树）。当前仅新增源码，未创建实际UI母版及WBP。
+**材质层工厂修复**：AuthorMaterialLibraryLayersUE58.py已改用MaterialFunctionMaterialLayerFactory和MaterialFunctionMaterialLayerBlendFactory，真实12个Layer及共享Blend仍待编辑器创建。
+**资源制作门禁**：AuthorMaterialLibrarySourcePhaseUE58.py现强制锁定UE5.8、DivineBeastsWorkspace主工程、PIE未运行和资产注册表加载完成。Tests/Assets/TestMaterialLibraryDomainRecipes.py已追加检查这些接口、UI样板规格和MaterialLayer正确工厂的用例；统一测试尚未执行。
 
 
 ## 首批真实UE材质作者脚本（2026-10-13）

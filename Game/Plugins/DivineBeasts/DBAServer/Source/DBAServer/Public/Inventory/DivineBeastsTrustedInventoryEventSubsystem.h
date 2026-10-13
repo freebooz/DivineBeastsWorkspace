@@ -38,20 +38,21 @@ public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
 
-    /** ExpectedInventoryRevision（权威背包版本）须由服务端读取PlayerData快照，严禁客户端自报或使用固定占位值。 */
+    /** ExpectedInventoryRevision（背包版本提示）可为0：要求后端PlayerData自行读取权威Revision并执行乐观锁；
+     * 或由服务器从PlayerData快照取得正数。绝不能直接从客户端自报背包版本。 */
     /** 权威资源点采集成功后提交：SourceEventId必须是该次世界掉落的稳定事件GUID。 */
     FGuid SubmitWorldPickup(const APlayerController& Controller, FGuid SourceEventId,
-        FName ItemDefinitionId, int32 Quantity, int64 ExpectedInventoryRevision,
+        FName ItemDefinitionId, int32 Quantity, int64 ExpectedInventoryRevision = 0,
         TFunction<void(EDivineBeastsInventoryEventOutcome)> Completion = {});
 
     /** 服务器确认任务完成后提交，客户端自报任务完成不得调用此函数。 */
     FGuid SubmitQuestReward(const APlayerController& Controller, FGuid SourceEventId,
-        FName ItemDefinitionId, int32 Quantity, int64 ExpectedInventoryRevision,
+        FName ItemDefinitionId, int32 Quantity, int64 ExpectedInventoryRevision = 0,
         TFunction<void(EDivineBeastsInventoryEventOutcome)> Completion = {});
 
     /** 服务器验证使用资格后提交扣除；玩法效果须等后端确认后由可信Gameplay消费。 */
     FGuid SubmitItemUse(const APlayerController& Controller, FGuid SourceEventId,
-        FString ItemInstanceId, FName ItemDefinitionId, int32 Quantity, int64 ExpectedInventoryRevision,
+        FString ItemInstanceId, FName ItemDefinitionId, int32 Quantity, int64 ExpectedInventoryRevision = 0,
         TFunction<void(EDivineBeastsInventoryEventOutcome)> Completion = {});
     /** 取消本地等待，不能回滚服务端已提交的OperationId；结果未知需同事件ID对账。 */
     bool CancelLocalWait(FGuid RequestId);

@@ -17,6 +17,16 @@
 #include "Serialization/JsonSerializer.h"
 #include "HAL/PlatformMisc.h"
 #include "Misc/Guid.h"
+#include "Misc/ScopeLock.h"
+#include "Containers/StringConv.h"
+
+// 可信库存响应最大256KiB；HTTP的接收线程只写入此限界缓存，不访问任何UObject。
+struct FDivineBeastsInventoryResponseBuffer
+{
+    FCriticalSection Mutex;
+    TArray<uint8> Bytes;
+    bool bOverflow = false;
+};
 
 // 每个HTTP事务只在该GameInstance内存活；没有持有APlayerController强引用。
 // OperationId由后端根据真实来源事件计算，服务器不会自行用随机请求号代替幂等事件。
@@ -56,8 +66,10 @@ void UDivineBeastsTrustedInventoryEventSubsystem::Initialize(
           PlayerDataBaseUrl.StartsWith(TEXT("https://"))) ||
         PlayerDataBaseUrl.Contains(TEXT("\r")) || PlayerDataBaseUrl.Contains(TEXT("\n")) ||
         GameID.IsEmpty() || GameServerID.IsEmpty() || ServerBootID.IsEmpty() ||
-        InternalBearer.Len() < 32 || InternalBearer.Contains(TEXT("\r")) ||
-        InternalBearer.Contains(TEXT("\n")))
+        InternalBearer.Len() < 32 || InternalBearer.Len() > 4096 ||
+        InternalBearer.Contains(TEXT("\r")) || InternalBearer.Contains(TEXT("\n")) ||
+        PlayerDataBaseUrl.Len() > 2048 ||
+        PlayerDataBaseUrl.Contains(TEXT("?")) || PlayerDataBaseUrl.Contains(TEXT("#")))
     {
         PlayerDataBaseUrl.Reset();
     }
@@ -126,7 +138,7 @@ FGuid UDivineBeastsTrustedInventoryEventSubsystem::SubmitConfirmedEvent(
     constexpr uint64 MaxExactJsonInteger = 9007199254740991ULL;
     if (bShuttingDown || PlayerDataBaseUrl.IsEmpty() || InternalBearer.Len() < 32 ||
         !SourceEventId.IsValid() || DefinitionId.IsNone() ||
-        Quantity < 1 || Quantity > 1000000 || ExpectedInventoryRevision < 1 ||
+        Quantity < 1 || Quantity > 1000000 || ExpectedInventoryRevision < 0 ||
         static_cast<uint64>(ExpectedInventoryRevision) > MaxExactJsonInteger ||
         !Controller.HasAuthority() ||
         !IsValid(&Controller) || !Controller.GetWorld() ||
@@ -162,7 +174,8 @@ FGuid UDivineBeastsTrustedInventoryEventSubsystem::SubmitConfirmedEvent(
     Body->SetNumberField(TEXT("sessionEpoch"), static_cast<double>(Verified.SessionEpoch));
     Body->SetStringField(TEXT("connectionId"), Connection);
     Body->SetStringField(TEXT("sourceEventId"), SourceId);
-    // 只传入Dedicated Server从PlayerData已读取的有效权威版本，禁止猜测或固定占位。
+    // 0明确要求PlayerData在可信事件验证后重新读取最新背包Revision并执行乐观锁；
+    // 非0版本仅能来自专服读取的权威PlayerData快照，绝不使用客户端自报值。
     Body->SetNumberField(TEXT("expectedRevision"), static_cast<double>(ExpectedInventoryRevision));
     Body->SetStringField(TEXT("itemDefinitionId"), DefinitionId.ToString());
     Body->SetStringField(TEXT("itemInstanceId"), InstanceId);
@@ -184,6 +197,16 @@ FGuid UDivineBeastsTrustedInventoryEventSubsystem::SubmitConfirmedEvent(
     Entry->Completion = MoveTemp(Completion);
 
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+    // 内网专用Bearer令牌绝不能跟随302重定向传到另一服务器。
+    // 若本引擎编译配置无法拒绝重定向，则失败关闭可信发奖请求。
+#if defined(UE_HTTP_HAS_REQUEST_REDIRECT_POLICY) && UE_HTTP_HAS_REQUEST_REDIRECT_POLICY
+    if (!Request->SetRedirectPolicy(EHttpRequestRedirectPolicy::Reject))
+    {
+        return FGuid();
+    }
+#else
+    return FGuid();
+#endif
     Entry->Http = Request;
     Request->SetURL(PlayerDataBaseUrl + TEXT("/internal/v1/playerdata/inventory/trusted-events"));
     Request->SetVerb(TEXT("POST"));
@@ -195,9 +218,30 @@ FGuid UDivineBeastsTrustedInventoryEventSubsystem::SubmitConfirmedEvent(
     Request->SetTimeout(8.0f);
     Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
 
+    constexpr int32 MaxInventoryResponseBytes = 256 * 1024;
+    const auto ResponseBuffer = MakeShared<FDivineBeastsInventoryResponseBuffer, ESPMode::ThreadSafe>();
+    FHttpRequestStreamDelegateV2 Receive = FHttpRequestStreamDelegateV2::CreateLambda(
+        [ResponseBuffer](void* Data, int64& InOutLength)
+        {
+            if (!Data || InOutLength <= 0) return;
+            FScopeLock Lock(&ResponseBuffer->Mutex);
+            if (ResponseBuffer->bOverflow || InOutLength > MaxInventoryResponseBytes - ResponseBuffer->Bytes.Num())
+            {
+                ResponseBuffer->bOverflow = true;
+                InOutLength = 0;
+                return;
+            }
+            ResponseBuffer->Bytes.Append(static_cast<const uint8*>(Data), static_cast<int32>(InOutLength));
+        });
+    // 必须在接收前配置硬上限，不能先下载无限响应再检查GetContent().Num()。
+    if (!Request->SetResponseBodyReceiveStreamDelegateV2(MoveTemp(Receive)))
+    {
+        return FGuid();
+    }
+
     const TWeakObjectPtr<UDivineBeastsTrustedInventoryEventSubsystem> WeakSelf(this);
     Request->OnProcessRequestComplete().BindLambda(
-        [WeakSelf, RequestId, CapturedGeneration, EventKindCopy = FString(EventKind)](
+        [WeakSelf, RequestId, CapturedGeneration, EventKindCopy = FString(EventKind), RequestedQuantity = Quantity, ResponseBuffer](
             FHttpRequestPtr Finished, FHttpResponsePtr Response, bool bTransportOK)
     {
         UDivineBeastsTrustedInventoryEventSubsystem* Self = WeakSelf.Get();
@@ -225,23 +269,62 @@ FGuid UDivineBeastsTrustedInventoryEventSubsystem::SubmitConfirmedEvent(
 
         EDivineBeastsInventoryEventOutcome Outcome =
             EDivineBeastsInventoryEventOutcome::Unknown;
-        if (bTransportOK && Response && Response->GetResponseCode() == 200 &&
-            Response->GetContent().Num() <= 256 * 1024)
+        TArray<uint8> BodyBytes;
+        bool bOverflow = false;
         {
+            FScopeLock Lock(&ResponseBuffer->Mutex);
+            bOverflow = ResponseBuffer->bOverflow;
+            BodyBytes = MoveTemp(ResponseBuffer->Bytes);
+        }
+        if (bTransportOK && Response && Response->GetResponseCode() == 200 &&
+            !bOverflow && !BodyBytes.IsEmpty() && BodyBytes.Num() <= 256 * 1024)
+        {
+            const FUTF8ToTCHAR Decoded(reinterpret_cast<const ANSICHAR*>(BodyBytes.GetData()), BodyBytes.Num());
+            const FString ResponseText(Decoded.Length(), Decoded.Get());
             TSharedPtr<FJsonObject> Parsed;
             if (FJsonSerializer::Deserialize(
-                    TJsonReaderFactory<>::Create(Response->GetContentAsString()), Parsed) &&
+                    TJsonReaderFactory<>::Create(ResponseText), Parsed) &&
                 Parsed.IsValid())
             {
                 FString OperationId;
                 bool bDuplicate = false;
                 const TSharedPtr<FJsonObject>* Snapshot = nullptr;
                 const FString Prefix = EventKindCopy == TEXT("grant") ? TEXT("grant-") : TEXT("consume-");
-                if (Parsed->TryGetStringField(TEXT("operationId"), OperationId) &&
-                    OperationId.StartsWith(Prefix) &&
+                const bool bHasOperationId =
+                    Parsed->TryGetStringField(TEXT("operationId"), OperationId);
+                bool bValidOperationId = bHasOperationId &&
+                    OperationId.Len() == Prefix.Len() + 32 &&
+                    OperationId.StartsWith(Prefix, ESearchCase::CaseSensitive);
+                if (bValidOperationId)
+                {
+                    // 后端操作号为16字节摘要的32个小写十六进制字符；
+                    // 其他前缀或任意“成功”字样不得触发实际消耗后玩法反馈。
+                    for (int32 Index = Prefix.Len(); Index < OperationId.Len(); ++Index)
+                    {
+                        const TCHAR Character = OperationId[Index];
+                        if (!((Character >= TEXT('0') && Character <= TEXT('9')) ||
+                              (Character >= TEXT('a') && Character <= TEXT('f'))))
+                        {
+                            bValidOperationId = false;
+                            break;
+                        }
+                    }
+                }
+                double MovedQuantity = -1.0;
+                double RemainingQuantity = -1.0;
+                double InventoryRevision = 0.0;
+                if (bValidOperationId &&
                     Parsed->TryGetBoolField(TEXT("duplicate"), bDuplicate) &&
+                    Parsed->TryGetNumberField(TEXT("movedQuantity"), MovedQuantity) &&
+                    Parsed->TryGetNumberField(TEXT("remainingQuantity"), RemainingQuantity) &&
                     Parsed->TryGetObjectField(TEXT("snapshot"), Snapshot) &&
-                    Snapshot && Snapshot->IsValid())
+                    Snapshot && Snapshot->IsValid() &&
+                    (*Snapshot)->TryGetNumberField(TEXT("inventoryRevision"), InventoryRevision) &&
+                    InventoryRevision >= 1.0 &&
+                    InventoryRevision <= 9007199254740991.0 &&
+                    MovedQuantity == static_cast<double>(RequestedQuantity) &&
+                    RemainingQuantity >= 0.0 &&
+                    (EventKindCopy == TEXT("consume") || RemainingQuantity == 0.0))
                 {
                     Outcome = bDuplicate ? EDivineBeastsInventoryEventOutcome::AlreadyCommitted
                                          : EDivineBeastsInventoryEventOutcome::FirstCommitted;

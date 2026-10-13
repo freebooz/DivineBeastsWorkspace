@@ -186,7 +186,8 @@ def main():
         raise RuntimeError("审查用蓝图没有真实中性网格")
     if opts.mode=="finalize":
         # finalize属于用户指定的统一蓝图编译阶段，默认apply不执行。
-        unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+        if not unreal.BlueprintEditorLibrary.compile_blueprint(bp):
+            raise RuntimeError("最终Actor审查蓝图编译失败，禁止报告完成：" + ASSET)
         if not lib.save_loaded_asset(bp,only_if_is_dirty=False):
             raise RuntimeError("最终蓝图编译后保存失败")
         klass=lib.load_blueprint_class(ASSET)

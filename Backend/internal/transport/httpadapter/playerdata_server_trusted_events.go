@@ -7,11 +7,11 @@ package httpadapter
 
 import (
 	"crypto/subtle"
-	"encoding/json"
-	"errors"
-	"io"
+
+	"mime"
 	"net/http"
 	"strings"
+	"divinebeasts/backend/internal/app/gateway"
 
 	"divinebeasts/backend/internal/modules/inventory"
 	"divinebeasts/backend/internal/modules/playerdata"
@@ -40,6 +40,11 @@ func NewTrustedInventoryEventHandler(processor *inventory.TrustedEventProcessor,
 		panic("可信事件处理器或独立凭据不存在")
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
+		if r.Method != http.MethodPost {
+			w.Header().Set("Allow", http.MethodPost)
+			writeError(w,http.StatusMethodNotAllowed,"METHOD_NOT_ALLOWED",nil)
+			return
+		}
 		// 鉴权必须早于读取任意请求体，且不能将凭据原文写入日志。
 		pieces:=strings.Fields(r.Header.Get("Authorization"))
 		if len(pieces)!=2 || !strings.EqualFold(pieces[0],"Bearer") ||
@@ -48,20 +53,23 @@ func NewTrustedInventoryEventHandler(processor *inventory.TrustedEventProcessor,
 			writeError(w,http.StatusUnauthorized,"INVENTORY_TRUST_AUTH_REQUIRED",nil)
 			return
 		}
-		if !strings.HasPrefix(strings.ToLower(r.Header.Get("Content-Type")),"application/json") {
+		// 必须解析实际MediaType（媒体类型），拒绝application/json-malformed之类伪前缀。
+		mediaType, _, mediaErr := mime.ParseMediaType(r.Header.Get("Content-Type"))
+		if mediaErr != nil || !strings.EqualFold(mediaType,"application/json") {
 			writeError(w,http.StatusUnsupportedMediaType,"INVALID_REQUEST",nil)
 			return
 		}
 		r.Body=http.MaxBytesReader(w,r.Body,8192)
-		decoder:=json.NewDecoder(r.Body)
-		decoder.DisallowUnknownFields()
 		var event inventory.ConfirmedInventoryEvent
-		if err:=decoder.Decode(&event);err!=nil {
-			writeError(w,http.StatusBadRequest,"INVALID_REQUEST",nil)
-			return
-		}
-		var remainder any
-		if err:=decoder.Decode(&remainder);!errors.Is(err,io.EOF) {
+		// 复用平台已有严格JSON解码：禁止重复key、未知字段、null必填和尾随数据。
+		// 避免Go标准Decoder默认后值覆盖前值造成服务器身份审计歧义。
+		allowed := []string{"eventKind","gameId","gameServerId","serverBootId",
+			"playerId","sessionEpoch","connectionId","sourceEventId","expectedRevision",
+			"itemDefinitionId","itemInstanceId","quantity","reasonCode"}
+		required := []string{"eventKind","gameId","gameServerId","serverBootId",
+			"playerId","sessionEpoch","connectionId","sourceEventId","expectedRevision",
+			"itemDefinitionId","quantity","reasonCode"}
+		if err:=gateway.DecodeOnlineJSON(r,&event,allowed,required);err!=nil {
 			writeError(w,http.StatusBadRequest,"INVALID_REQUEST",nil)
 			return
 		}

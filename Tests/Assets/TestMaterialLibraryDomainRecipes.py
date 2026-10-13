@@ -124,6 +124,141 @@ class MaterialLibraryDomainRecipes(unittest.TestCase):
         self.assertTrue(demo["uiWidget"]["assetPath"].startswith("/DBAUIPack_Core/"))
         self.assertTrue(demo["standBlueprint"]["assetPath"].startswith("/Game/Development/MaterialLibrary/"))
 
+    def test_native_material_layer_factories_are_class_specific(self):
+        """先制作资产时必须用UE原生层/混合层工厂，防止错误类的二进制资产占用包名。"""
+        author = (ROOT/"Tools/Unreal/Surface/AuthorMaterialLibraryLayersUE58.py"
+                 ).read_text(encoding="utf-8")
+        self.assertIn("unreal.MaterialFunctionMaterialLayerFactory()",author)
+        self.assertIn("unreal.MaterialFunctionMaterialLayerBlendFactory()",author)
+        self.assertNotIn("unreal.MaterialFunctionFactoryNew()",author,
+                         "混合层与材质层不得调用通用MF工厂")
+        self.assertIn("MaterialFunctionMaterialLayerBlend",author)
+        self.assertIn("MaterialFunctionMaterialLayer",author)
+
+    def test_review_stand_blueprint_has_real_member_contract_and_final_compile_gate(self):
+        """审查展示Actor应暴露可编辑材质软引用和中文标题；只有finalize才编译。"""
+        author = (ROOT/"Tools/Unreal/Surface/AuthorMaterialLibraryStandBlueprintUE58.py"
+                 ).read_text(encoding="utf-8")
+        for token in ("ReviewMaterial","ReviewTitle","BlueprintEditorLibrary",
+                      "list_member_variable_names", "add_member_variable",
+                      "set_blueprint_variable_instance_editable",
+                      "set_blueprint_variable_expose_on_spawn",
+                      "if not unreal.BlueprintEditorLibrary.compile_blueprint(bp)"):
+            self.assertIn(token,author)
+        self.assertIn('if opts.mode=="finalize":',author)
+        self.assertIn('preview.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)',author)
+
+    def test_ui_action_queue_is_create_only_and_has_all_seven_functions(self):
+        """UI功能必须通过Monolith创建而不能通过脚本假装已有UMaterialFunction。"""
+        queue = read_json(ROOT/"Docs/Implementation/Materials/MaterialLibraryUIActionQueue_V1.json")
+        self.assertEqual(queue.get("expectedFunctions"),7)
+        self.assertEqual(len(queue.get("items",[])),7)
+        for item in queue["items"]:
+            self.assertEqual(len(item["operations"]),6)
+            # 测试在首次制作后还需继续有效；动作被真实执行时必须附带证据。
+            for action in item["operations"]:
+                self.assertIn("status",action)
+                if action["status"] != "not_executed":
+                    self.assertTrue(action.get("evidence"),"执行状态变更必须带真实UE证据")
+            calls = [x["action"] for x in item["operations"]]
+            self.assertEqual(calls,["get_function_info","create_material_function",
+                                    "build_function_graph","set_function_metadata",
+                                    "save_material","get_function_info"])
+            graph = item["operations"][2]["parameters"]["graph_spec"]
+            self.assertFalse(item["operations"][2]["parameters"]["clear_existing"])
+            self.assertGreaterEqual(len(graph["outputs"]),1)
+            self.assertLessEqual(len(graph["outputs"]),2)
+        self.assertEqual(len({item["capabilityId"] for item in queue["items"]}),7)
+
+    def test_four_review_maps_are_development_only_and_not_claimed_created(self):
+        """四张开发地图必须以UE World身份新建，绝不打开并覆盖正式游戏世界。"""
+        queue = read_json(ROOT/"Docs/Implementation/Materials/MaterialLibraryMapActionQueue_V1.json")
+        self.assertEqual(queue["count"],4)
+        self.assertEqual({x["area"] for x in queue["items"]},
+                         {"Surface","VFX","Project","UI"})
+        for item in queue["items"]:
+            self.assertTrue(item["path"].startswith("/Game/Development/MaterialLibrary/"))
+            self.assertIn("status",item)
+            if item["status"] != "not_executed":
+                self.assertTrue(item.get("evidence"),"地图交付状态只能由真实UE注册表证据提升")
+            self.assertEqual(item["steps"][1]["tool"],"create_empty_map")
+            self.assertFalse(item["steps"][1]["params"]["open"])
+            self.assertEqual(item["steps"][1]["params"]["dirty_policy"],"refuse")
+
+    def test_twelve_ui_material_review_author_stays_development_only(self):
+        """用户界面真实母材质作者仅生成MD_UI开发审核资产，不绕开平台主题或提前编译。"""
+        path = ROOT/"Tools/Unreal/UI/AuthorMaterialLibraryUIReviewUE58.py"
+        spec=importlib.util.spec_from_file_location("ui_material_review_author",path)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        items=module.load_specs()
+        self.assertEqual(len(items),12)
+        self.assertEqual(len({x["name"] for x in items}),12)
+        self.assertEqual(set(module.EXISTING),{
+            "SDFRoundRect","GradientBackground","RadialCooldown","OutlineGlow","ButtonShimmer"})
+        for item in items:
+            self.assertTrue(module.qa_path(item["name"]).startswith(
+                "/Game/Development/MaterialLibrary/UI/Materials/"))
+            self.assertTrue(any(row["NameEN"] == item["name"] and
+                                row["OwnerPlugin"] == "GamePlatformUI"
+                                for row in self.registry["items"]))
+        content=path.read_text(encoding="utf-8")
+        for native_api in ("get_material_function_expressions", "set_material_function(fn)",
+                           "MaterialDomain.MD_UI", "BLEND_TRANSLUCENT",
+                           "MP_EMISSIVE_COLOR", "MP_OPACITY","save_loaded_asset"):
+            self.assertIn(native_api,content)
+        self.assertNotIn("recompile_material",content,
+                         "用户要求全部资源制作后再统一执行Shader编译")
+
+    def test_material_library_ui_widget_spec_has_twelve_cards_and_real_demo_parent(self):
+        """12个UI审查卡片应使用既有项目DemoHub基类；真实WBP仅通过Monolith制作。"""
+        spec_path = ROOT/"Docs/Implementation/Materials/MaterialLibraryUIWidgetSpec_V1.json"
+        data = read_json(spec_path)
+        self.assertEqual(data["name"],"WBP_DBA_MaterialLibraryReview")
+        self.assertEqual(data["parentClass"],
+                         "/Script/DivineBeastsDemoClient.DivineBeastsDemoHubWidget")
+        ids=[]
+        def walk(node):
+            ids.append(node["id"])
+            for child in node.get("children",[]):
+                walk(child)
+        walk(data["rootWidget"])
+        self.assertEqual(len(ids),len(set(ids)))
+        self.assertGreaterEqual(len(ids),80)
+        for required in ("ReturnButton","OverlayFeedbackText",
+                         "StatusText","ReviewScroll","UIReviewImageCards"):
+            self.assertIn(required,ids)
+        info=data["metadata"]["pendingWidgetMaterialPaths"]
+        self.assertEqual(len(info),12)
+        self.assertEqual(len({entry["nameEN"] for entry in info}),12)
+        for entry in info:
+            self.assertIn("Preview_"+entry["nameEN"],ids)
+            self.assertTrue(entry["reviewMaterial"].startswith(
+                "/Game/Development/MaterialLibrary/UI/Materials/"))
+        author = (ROOT/"Tools/Unreal/UI/AuthorMaterialLibraryWidgetMonolith.py"
+                 ).read_text(encoding="utf-8")
+        self.assertIn('from BirdFlockMonolithProtocol import call,editor_python',author)
+        self.assertIn('"action":"build_ui_from_spec"',author)
+        self.assertIn('"action":"get_widget_tree"',author)
+        self.assertIn('does_asset_exist',author)
+        self.assertNotIn('"action":"compile_widget"',author)
+
+    def test_source_phase_strict_editor_identity_and_no_premature_build(self):
+        """真实资产制作前应锁定UE5.8和工作空间，禁止PIE及不完整AssetRegistry。"""
+        path = ROOT/"Tools/Unreal/Surface/AuthorMaterialLibrarySourcePhaseUE58.py"
+        text = path.read_text(encoding="utf-8")
+        for invariant in (
+            "/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject",
+            "get_engine_version", "5.8.", "get_game_world()",
+            "is_loading_assets()", "inspect_only()", "resume-from",
+            "MaterialLayers", "ReviewStandBlueprint"):
+            self.assertIn(invariant,text)
+        # 脚本只调度制作；最终Editor/Client/Server编译、Cook由另一个门禁调用。
+        self.assertNotIn('("--mode", "compile")',text)
+        self.assertNotIn('("--mode", "finalize")',text)
+
 
 if __name__=="__main__":
     unittest.main(verbosity=2)

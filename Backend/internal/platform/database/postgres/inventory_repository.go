@@ -316,10 +316,13 @@ func (r *InventoryRepository) Consume(ctx context.Context, playerID string, comm
 			// 外部物品效果消费方还须依据OperationId确保自身幂等，不得先广播再扣除。
 			if err = enqueueInventoryOutboxTx(ctx, tx, "Inventory.Consumed",
 				playerID, command.OperationID, inventoryOutboxEvent{
-					SchemaVersion: 1, OperationID: command.OperationID,
+					SchemaVersion: 2, GameID: command.GameID,
+					SessionEpoch: command.SessionEpoch, ConnectionID: command.ConnectionID,
+					OperationID: command.OperationID,
 					SourceEventID: command.SourceEventID, GameServerID: command.GameServerID,
 					ServerBootID: command.ServerBootID,
-					PlayerID:     playerID, ItemDefinitionID: item.ItemDefinitionID,
+					PlayerID: playerID, ItemDefinitionID: item.ItemDefinitionID,
+					ItemInstanceID: command.ItemInstanceID,
 					Quantity: command.Quantity, RemainingQuantity: remaining,
 					ReasonCode: command.ReasonCode,
 				}); err != nil {

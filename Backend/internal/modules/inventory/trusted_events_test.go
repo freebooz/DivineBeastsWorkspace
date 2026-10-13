@@ -56,6 +56,8 @@ func TestTrustedEventProcessorGrantAndLeaseFence(t *testing.T){
 		}
 	}
 	if len(journal.items)!=0{t.Fatal("未认证事件不能被持久接受")}
+	// UE Dedicated Server不允许自行推测版本；零值由PlayerData快照覆盖。
+	e.ExpectedRevision=0
 	first,err:=processor.Process(ctx,e)
 	if err!=nil || first.Duplicate || len(first.Snapshot.Items)!=1 ||
 		first.Snapshot.Items[0].Quantity!=3 {

@@ -67,7 +67,10 @@ func (r *InventoryRepository) Grant(
 			// Outbox与背包操作处于同一个tx；消费者必须按message_id去重，
 			// 事件表示库存授予事实，不代表用户已看到提示或完成视觉播放。
 			event := inventoryOutboxEvent{
-				SchemaVersion:    1,
+				SchemaVersion:    2,
+				GameID:           command.GameID,
+				SessionEpoch:     command.SessionEpoch,
+				ConnectionID:     command.ConnectionID,
 				OperationID:      command.OperationID,
 				SourceEventID:    command.SourceEventID,
 				GameServerID:     command.GameServerID,
@@ -89,14 +92,18 @@ func (r *InventoryRepository) Grant(
 // 不把游戏服身份文本当认证凭据，也不包含客户端可自行提出的奖励指令。
 type inventoryOutboxEvent struct {
 	SchemaVersion     int    `json:"schemaVersion"`
+	GameID            string `json:"gameId"`
+	SessionEpoch      int64  `json:"sessionEpoch"`
+	ConnectionID      string `json:"connectionId"`
 	OperationID       string `json:"operationId"`
 	SourceEventID     string `json:"sourceEventId,omitempty"`
 	GameServerID      string `json:"gameServerId,omitempty"`
 	ServerBootID      string `json:"serverBootId,omitempty"`
 	PlayerID          string `json:"playerId"`
 	ItemDefinitionID  string `json:"itemDefinitionId"`
+	ItemInstanceID    string `json:"itemInstanceId,omitempty"`
 	Quantity          int32  `json:"quantity"`
-	RemainingQuantity int32  `json:"remainingQuantity,omitempty"`
+	RemainingQuantity int32  `json:"remainingQuantity"`
 	ReasonCode        string `json:"reasonCode"`
 }
 

@@ -415,6 +415,23 @@ void UDivineBeastsInventoryScreen::CancelInventoryIconLoads()
     }
     PendingIconLoads.Reset();
     AttemptedIconDefinitions.Reset();
+    // 关闭/换账号时卸下图标画刷强引用，避免复用Widget时短暂显示上一玩家的物品。
+    if (bVisualControlsBound && IsValid(this) && !IsUnreachable())
+    {
+        for (int32 Index = 0; Index < SlotsPerPage + 12; ++Index)
+        {
+            const bool bQuickbar = Index >= SlotsPerPage;
+            const int32 LocalIndex = bQuickbar ? Index - SlotsPerPage : Index;
+            const FString IconName = bQuickbar
+                ? FString::Printf(TEXT("QuickIcon_%d"), LocalIndex)
+                : FString::Printf(TEXT("SlotIcon_%d"), LocalIndex);
+            if (UImage* Image = Cast<UImage>(GetWidgetFromName(FName(*IconName))))
+            {
+                Image->SetBrushFromTexture(nullptr);
+                Image->SetVisibility(ESlateVisibility::Hidden);
+            }
+        }
+    }
 }
 
 void UDivineBeastsInventoryScreen::RequestInventoryIcon(FName DefinitionId)

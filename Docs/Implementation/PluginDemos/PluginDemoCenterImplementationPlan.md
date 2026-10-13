@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> 本任务沿用用户已选择的 **Native**，实施时使用 `superpowers:executing-plans`；本文件待用户审阅，不启动实施或派生代理。
+> 本任务沿用用户已选择的 **Native**，使用 `superpowers:executing-plans`；用户已确认继续，并明确允许当前main原地修改、不创建工作树。实施进度见`ExecutionProgress.md`，不因源码写入标记运行通过。
 
 **Goal:** 在现有正式工程中实现逐插件功能菜单、真实案例运行、三种样板及独立人工核验闭环。
 
@@ -10,7 +10,7 @@
 
 **Tech Stack:** 锁定 UE5.8、UE C++/GAS/UMG、Monolith MCP、PowerShell 7、Python 标准库；不新增第三方运行依赖。
 
-**Spec:** [已通过的方案 A 设计规格](PluginDemoCenterSpecification.md)。日期：2026-10-13（Asia/Shanghai）；**规格通过，执行计划待审阅，所有下列实施步骤均未执行**。
+**Spec:** [已通过的方案 A 设计规格](PluginDemoCenterSpecification.md)。日期：2026-10-13（Asia/Shanghai）；**计划已进入实施；T01离线检查已执行，T02源码已写，UE构建/运行/人工验证未执行**。
 
 ## Global Constraints（全局约束）
 
@@ -311,6 +311,6 @@
 
 回退以任务为单位撤销本人变更：编目保留旧Schema来源与ID映射；旧目录读取兼容维持到新资产重载验证；UI迁移仅通过引擎和受管副本恢复；构建/配置故障不删除旧可用产物。禁止清空工作树、批量删除开发地图或直接改二进制引用。
 
-当前完成的是本计划文档，不是T00—T14。计划自审检查合同名称、依赖顺序、测试遗漏、已存在/待新增文件、规范门禁映射；用户审阅本计划与接入计划后，继续沿用Native，不重新请求执行方式。实际构建限制保持不变。
+当前已开始Native实施，逐任务证据以`ExecutionProgress.md`为准，不代表T00—T14整体完成。任务需区分源码、静态、运行与人工维度；未执行项保持未勾选。实际构建限制保持不变。
 
 2026-10-13文档级复核：核心15任务、接入6批和D01—D14追踪完整；接入身份与本轮真实描述文件扫描的47代码插件、18内容包集合一致；规格/两份计划/旧计划的本地Markdown链接有效。该检查只验证计划与身份集合，不验证任何插件功能、UE资源或运行结果。

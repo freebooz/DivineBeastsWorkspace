@@ -73,6 +73,12 @@
     ],
     "usesPlatformUITheme": true,
     "domain": "UserInterface（界面专用材质域）",
+    "uiWidgetSpec": "Docs/Implementation/Materials/MaterialLibraryUIWidgetSpec_V1.json（83个独立控件标识与12种审核样板声明式树）",
+    "uiWidgetAuthor": "Tools/Unreal/UI/AuthorMaterialLibraryWidgetMonolith.py（真实UE5.8 Monolith作者，默认只读）",
+    "uiMaterialReviewAuthor": "Tools/Unreal/UI/AuthorMaterialLibraryUIReviewUE58.py（12份原生MD_UI独立审核UMaterial制作脚本，未运行）",
+    "requiredNativeBindings": ["ReturnButton（返回现有插件演示门户）", "OverlayFeedbackText（原生操作反馈）"],
+    "defaultReviewViewport": "1920x1080（PC开发预览；移动端适配仍待人工验收）",
+    "previewBrushAssetStatus": "仅声明12项审核材质目标，不提前绑定或加载尚未创建的UMaterial",
     "forbidden": "不得由普通Python伪造WBP；须Monolith创建控件树、设置材质、编译保存和审查",
     "assetStatus": "待Monolith UI资产接口真实创建"
   },

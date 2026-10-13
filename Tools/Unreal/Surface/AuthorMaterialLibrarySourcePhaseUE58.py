@@ -57,8 +57,17 @@ def require_unreal() -> None:
     except ImportError as error:
         raise RuntimeError("本阶段必须在实际UE5.8 Editor执行") from error
     project = str(unreal.Paths.get_project_file_path()).replace("\\", "/")
-    if not project.endswith("/Game/DivineBeastsArena.uproject"):
-        raise RuntimeError("拒绝在其它工程制作原生材质：" + project)
+    if not project.endswith("/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject"):
+        raise RuntimeError("拒绝在其它工作区或工程制作原生材质：" + project)
+    version = str(unreal.SystemLibrary.get_engine_version())
+    if not version.startswith("5.8."):
+        raise RuntimeError("必须使用工程锁定的虚幻引擎5.8版本，禁止跨版本保存.uasset：" + version)
+    editor = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    if editor is None or editor.get_game_world() is not None:
+        raise RuntimeError("材质批次制作前必须关闭PIE/Simulate，避免修改运行中的世界")
+    registry = unreal.AssetRegistryHelpers.get_asset_registry()
+    if registry.is_loading_assets():
+        raise RuntimeError("UE资产注册表仍在加载，禁止在不完整索引下批量创建材质")
 
 
 def inspect_only() -> None:

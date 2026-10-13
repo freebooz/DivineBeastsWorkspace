@@ -45,7 +45,7 @@ func (e ConfirmedInventoryEvent) Lease() TrustedPlayerLease {
 func (e ConfirmedInventoryEvent) Validate() error {
 	if !validID(e.GameID) || !validID(e.GameServerID) || !validID(e.ServerBootID) ||
 		!validID(e.PlayerID) || !validID(e.ConnectionID) || !validID(e.SourceEventID) ||
-		!validID(e.ItemDefinitionID) || e.SessionEpoch < 1 || e.ExpectedRevision < 1 ||
+		!validID(e.ItemDefinitionID) || e.SessionEpoch < 1 || e.ExpectedRevision < 0 ||
 		e.Quantity < 1 || e.Quantity > MaxGrantQuantity {
 		return invalidRequest()
 	}

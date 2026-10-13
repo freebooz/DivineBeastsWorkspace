@@ -21,9 +21,12 @@
 | MaterialLibraryDomainRecipes_Surface.json | 建筑道具、石材、木纹、VFX、贴花：19个函数 | 配方代码完成；UE二进制未制作 |
 | MaterialLibraryDomainRecipes_Project.json | 十二生肖角色项目层：10个独立表现函数 | 配方代码完成；UE二进制未制作 |
 | MaterialLibraryLayerProfiles_V1.json | 12种Material Layer（材质层）不同PBR表面参数 | 配方完成；ML原生资产未制作 |
-| Tools/Unreal/Surface/AuthorMaterialLibraryLayersUE58.py | 12个原生MaterialLayer（材质层）+1个共享MaterialLayerBlend（混合层）作者 | 源码完成；UE apply未执行 |
+| Tools/Unreal/Surface/AuthorMaterialLibraryLayersUE58.py | 12个原生MaterialLayer（材质层）+1个共享MaterialLayerBlend（混合层）作者；已改用UE5.8专用Factory，避免错误原生资源类型 | 源码及工厂修复已写入；UE apply未执行 |
 | Tools/Unreal/UI/MaterialLibraryUIMonolithRecipes_V1.json | 尚缺7种GamePlatformUI界面函数的输入、Custom HLSL和连线图 | Monolith配方完成；UE二进制未制作 |
 | Tools/Unreal/UI/PrepareMaterialLibraryMonolithActions.py | 将P6剩余7个UI MF配方转成Monolith逐条制作/保存/回读步骤，支持双输出UITransitionDissolve（转场溶解） | 源代码已在工作区创建；没有启动引擎或编译UI材质 |
+| Tools/Unreal/UI/AuthorMaterialLibraryUIReviewUE58.py | 12项UI通用函数的独立UserInterface域测试母版制作：原生FunctionCall、UV/时间、颜色与透明输出，禁止覆盖正式UI | 源码完成；12个真实UMaterial审核资产尚未制作或编译 |
+| Docs/Implementation/Materials/MaterialLibraryUIWidgetSpec_V1.json | 真实WBP_DBA_MaterialLibraryReview的声明式控件树：83个唯一控件ID、12个Image样板、返回按钮和操作反馈 | 规格已完成；不等于WBP已生成 |
+| Tools/Unreal/UI/AuthorMaterialLibraryWidgetMonolith.py | 复用既有Monolith协议和DivineBeastsDemoHubWidget父类创建项目第三层真实Widget蓝图，先检查资产存在性 | 作者源码完成；UE未运行，未生成WBP |
 | Docs/Implementation/Materials/MaterialLibraryUIActionQueue_V1.json | 7个UI函数共42条Monolith制作/回读动作；已声明检测存在、仅新增、不覆盖和中止策略 | 机器动作队列已落盘，全部标记未执行；不存在新生成的7个UE材质资产证据 |
 | Docs/Implementation/Materials/MaterialLibraryMapActionQueue_V1.json | 从正式Blueprint/UI资源Manifest生成Surface、VFX、Project、UI四张独立审核地图的Monolith原生创建前置检查和建图动作 | 4张.umap执行队列已写入项目，UE地图实际制作仍未执行 |
 | Tools/Unreal/Surface/AuthorMaterialLibraryDemoUE58.py | 三类非UI隔离关卡：Blueprint展示架、球体、灯光、中文标牌及真实材质绑定 | 源码完成；地图及展示架未由UE创建 |
@@ -50,6 +53,10 @@
 - `Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md`（全局目录规划）当前含其他会话留下的未解决Git冲突分隔符，**本轮没有修改该共享冲突文件**；这两项新增文件已经在本专项目录记录，待冲突由负责会话解决后再回填总体规划，不擅自覆盖其它业务文档。
 - UI新材质、审核蓝图、四张开发地图、12项材质层仍处于真实UE待制作状态；尚未执行新增源代码的最终统一测试、Shader、Cook和人工视觉签收。
 - 当前远程图形桌面只观察到WPS、Chrome、Codex及资源管理器窗口，没有正在显示的Unreal Editor；Monolith明确返回“Unreal Editor not running”。已对本会话三个陈旧编辑器作业发送终止请求，但Runner仍将旧作业计为running，未取得真正终止证明，不擅自结束其它会话任务。
+- 此次依据UE5.8原生Factory接口修复12项材质层作者，变更仅为源码，尚未执行MaterialLayer及LayerBlend创建。
+- 新增12份UI审核UMaterial作者、83控件的Widget蓝图声明式规格和Monolith作者；全部属于可执行源码，真实资源、UI主题绑定及视觉审批仍待制作和验收。
+- 已补强AuthorMaterialLibrarySourcePhaseUE58.py资源阶段入口：仅允许锁定DivineBeastsWorkspace、UE5.8、没有PIE/Simulate且Asset Registry加载完成时制作；不会提前触发FINAL测试。
+- 已扩展Tests/Assets/TestMaterialLibraryDomainRecipes.py源代码门禁：覆盖原生ML/MLB专用工厂、UI 12份审核母版源码、83控件与12个样板、真实C++ DemoHub绑定及错误状态必须带证据。按照用户要求本轮仅编写测试，不运行最终统一测试。
 
 ## 关键启动阻断及统一编译安排
 
