@@ -23,9 +23,14 @@ $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $project=Join-Path $workspace 'Game/DivineBeastsArena.uproject'
 $map='/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub'
 $mapFile=Join-Path $workspace 'Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap'
+# 演示门户必须同时拥有真实UE地图与Monolith制作的Widget蓝图，禁止启动无交互空白关卡。
+$hubWidgetFile=Join-Path $workspace 'Game/Content/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub.uasset'
 if (-not $Start) { throw '必须显式传入-Start以允许新建插件演示进程。' }
 if (-not (Test-Path -LiteralPath $mapFile -PathType Leaf)) {
     throw "开发总览地图尚未通过UE制作，拒绝启动虚假演示：$mapFile"
+}
+if (-not (Test-Path -LiteralPath $hubWidgetFile -PathType Leaf)) {
+    throw "开发总览界面尚未通过Monolith制作，拒绝启动无交互演示：$hubWidgetFile"
 }
 if (-not (Test-Path -LiteralPath $project -PathType Leaf)) { throw '找不到正式主工程。' }
 if ($Target -eq 'EditorGame') {

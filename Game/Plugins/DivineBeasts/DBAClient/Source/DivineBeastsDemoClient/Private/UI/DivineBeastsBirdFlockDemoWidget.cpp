@@ -33,7 +33,6 @@ void UDivineBeastsBirdFlockDemoWidget::NativeOnInitialized()
     if (StartBatchButton) StartBatchButton->OnClicked.AddUniqueDynamic(this,&ThisClass::HandleStartBatch);
     if (StopBatchButton) StopBatchButton->OnClicked.AddUniqueDynamic(this,&ThisClass::HandleStopBatch);
     if (ResetButton) ResetButton->OnClicked.AddUniqueDynamic(this,&ThisClass::HandleReset);
-    if (BackButton) BackButton->OnClicked.AddUniqueDynamic(this,&ThisClass::HandleBack);
     RefreshBirdFlockStatus();
 }
 

@@ -60,5 +60,22 @@
 - 地图作者命令仅在本进程尝试 `-DisablePlugins=DBAArena`（隔离不相关竞技插件，不变更正式Target或默认配置）；UE仍有未就绪编辑器模块，最近一次失败日志指出 `GamePlatformDeveloperTools` 找不到模块。已发起其Editor模块定向构建，最终状态须通过实际作业终态核定。
 - **验收状态**：门户地图 `.umap` 与Widget `.uasset` 暂无生成证据、Monolith没有存活编辑器连接、统一编辑器全目标构建与Debug/PluginDev两模式人工运行未通过。保留已成功的分模块构建结论，绝不据此宣称端到端完成。
 
+## 2026-10-12 本会话续做：真实门户资产、Monolith与交互接线
+
+- 固定 Cwebcodex 项目为 `agent:freebooz-4b15fc0c7cf14418:divinebeastsworkspace-888d2615`，仍在 `E:\\poject\\feebooz\\DivineBeastsWorkspace`，保留别的会话现有作业及工作树。
+- 使用锁定 UE5.8 的 UnrealBuildTool 定向重建 `GamePlatformDeveloperTools`，Editor Development 返回 `Succeeded`（作业 `wc_job_o5iv5x_X-cRBUzbe`），修复此前缺失模块导致的编辑器启动阻塞。
+- 使用 **真实 UnrealEditor-Cmd** 执行 `Tools/Unreal/PluginDemos/AuthorDBAPluginDemoHubMap.py`，日志明确 `DBA_PORTAL_MAP_CREATED`，保存 `Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap`（21961字节）；6个真实地图Actor已列入 `Saved/Validation/PluginDemos/Portal/AuthorPortalMap.json`。
+- 由本人专属 UnrealEditor 会话连接 **Monolith 0.23.0**，身份 `DivineBeastsArena`、1355个动作。通过 `ui_query.build_ui_from_spec` 执行先 dry_run 再 patch 写入，生成三个真实 WidgetBlueprint：
+  - `/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub`（总览，29节点，父类 `UDivineBeastsDemoHubWidget`）；
+  - `/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoOverlay`（通用场景覆盖层，9节点，父类同上）；
+  - `/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoBirdFlock`（鸟群专题，43节点，父类 `UDivineBeastsBirdFlockDemoWidget`，复用原有 `BirdFlockDemoUISpec.json`）。
+- 逐件执行 `dump_blueprint_compile_log`，三份均 `up_to_date`，错误0、警告0；通过 `get_parent_class`、`get_widget_tree` 与 `get_saved_asset_state` 反查生成类、父类、实名控件与磁盘文件（最初保存分别约75KB、37KB、102KB）。随后将C++ `BindWidgetOptional` 所需文本控件标记为 `bIsVariable=true` 并再次使用Monolith `save_asset`，每件返回 `saved=true`。
+- 只修改项目层 `UDivineBeastsDemoHubWidget` 的数据/事件接线：输入变化不扫描磁盘，从真实目录缓存进行三层/内容包筛选；两个选择框提供真实已发现插件与真实候选场景；刷新、清空筛选、打开场景、返回总览、复位世界状态均调用已有服务。避免使用C++直接创建视觉树；鸟群子类沿用已有专题控制，统一后退按钮事件只注册一次，不产生反射同名属性。
+- `Build/Game/RunPluginDemo.ps1` 增加门户Widget资产缺失时拒绝启动；保留双标志、开发地图和发布资源排除。默认Debug仍使用正式前端与人工登录，无账号认证旁路。
+- 静态防回归先执行11项通过；后续增加真实地图/蓝图存在性和原生命名桥接检查。**新增原生C++交互接线的编译作业 `wc_job_A03bWp4WtbKL48ck` 已提交，但截至本文追加时仍在等待Runner调度，不得记为编译成功。**
+- 编辑器专属作业 `detached_yvt0M05TweEFF4TEGgyaM_EuPg6HOAvFSA1ULPr4IuA` 已在Monolith保存后请求停止，以允许新模块链接；未关闭其他会话进程。
+- **未验收**：新C++桥接模块重编及重启蓝图绑定检查、UE真实PIE/游戏场景交互、跨场景10次重入、完整Editor/Client/Server构建、两类Cook验证、真实Debug/PluginDev双进程端到端、PowerShell7（Runner当前无`pwsh`）、人工键鼠/焦点与视觉验收。演示目录会显示缺失和待人工验证，不将代码/地图资产存在视为功能已通过。
+
+
 
 
