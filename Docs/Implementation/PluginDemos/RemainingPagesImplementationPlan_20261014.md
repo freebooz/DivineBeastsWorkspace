@@ -108,4 +108,9 @@
 - Task 4原生收口补充：`MaterialReviewContract`加载真实审核页，逐项核验12个Image的UMaterialInterface与稳定路径及ReturnButton实际委托；无目录返回拒绝必须把目录错误送到该页的OverlayFeedbackText，不能被旧世界状态覆盖。源码与回归先写，仍待集中新DLL实跑。
 - 目录/资产交叉核对额外定位到两个真实焦点缺陷：竞技目录仍指向新两页不存在的HeroList/ScoreboardList。已先补实际目录→真实控件的回归断言，并将两页初始焦点定为始终可用CloseButton，不启用缺授权按钮。该重要集成修正发生在完整构建RunId`5f671846-1f0d-4ae3-9540-264047de34e4`期间；即使UBT返回0也须因输入变化拒绝本次资格，后续再形成同源完整Editor闭合证据，不掩盖变化。
 - 同一焦点检查补充任务页正常空态：QuestList在服务未就绪/无任务时会禁用，故默认焦点改为始终可用CloseButton；真实任务页在无服务下激活，并从实际目录读取焦点验证其可用。其余页面没有为缺失能力启用伪按钮。
+- 最终源码冻结后完整Editor构建RunId`f204fe11-fdcd-429b-ae38-e5a4f7220220`：UBT退出0，正式包装入口退出0，`EditorBuildEvidenceStatus=Eligible`；2748项构建输入前后完全一致。此前5f671846的编译/链接虽退出0，其源码变化门禁仍保持Failed，未沿用。当前新DLL机器测试已分别由既有Demo入口与UI真实RHI入口启动前置核验，结果尚未签通过。
+- 最终继承门禁再次实跑：560公开头、1218类型、206继承边，Passed=true、Findings为空；不是资产、网络、Cook或全存量注释验收。
+- 第一轮真实机器验证保留失败：Demo原始13例中HubClearedModel因测试夹具NewObject<UObject>实例化抽象类而报ensure；UI全组在既存AbilitySlotPointer.Invocation的InitializeStandalone触发Package→Engine致命转换，后续新增RemainingSurfaces未执行。已依据锁定引擎与实际栈修正为具体测试条目、UGameInstance外层GEngine，不删断言、不伪造通过；SourceToSlate在该轮确有Success，但不是新源码/全集/新九页通过证明。
+- Ruling: 实际Demo报告设备为另一UI进程56940，且无人值守Monolith占用了9316与索引库。运行器统一增加本轮唯一SessionId，并仅在无人值守原生验收中DisablePlugins=Monolith；生产模块/资产父类不禁用，GUI制作/冷重载仍只经Monolith。纯运行器合同实际RED→GREEN，14项通过。成本为不认证工具插件在无人值守下的工作，避免跨进程串测、抢端口/SQLite及影响交互Editor。
+- 并行交互Editor在17:40正常关闭，本实现者未强制结束、代存或通过替代工具改UI；此前连接失效时暂停资产写入。上述测试源码修复使f204fe11构建证据不再覆盖当前源码，须重新完整Editor构建与集中测试，原始失败不提升。
 - 本轮最新离线检查：`ValidateProjectHeaders.ps1`退出0，1278引用/0缺失；`TestUIDeliveryInventory.ps1`退出0，22目录页面/22磁盘存在/0缺失；`ValidateGameUIComponentInventory.py`静态退出0，但其独立32组件规划仍有9项未交付，不把本轮15页补全说成全插件全部功能完成；作者源与FeatureCoverage派生同步后`ValidatePluginDemoManifest.py --check-docs`退出0、issues为空，28项Manifest合同回归通过。

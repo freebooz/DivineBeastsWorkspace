@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerInput.h"
 #include "InputCoreTypes.h"
 #include "Engine/GameInstance.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Misc/ScopeExit.h"
 #include "Widgets/SWidget.h"
@@ -50,9 +52,22 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilitySlotPointerTest,
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsAbilitySlotPointerTest::RunTest(const FString&)
 {
-    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>());
+    // InitializeStandalone要求外层为实际Engine；默认Transient Package会触发CastChecked致命错误。
+    // 仍使用独立实例与唯一世界身份，不初始化/替换正在运行玩家的GameInstance。
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
     Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
-    ON_SCOPE_EXIT { Instance->Shutdown(); };
+    UWorld* FixtureWorld = Instance->GetWorld();
+    ON_SCOPE_EXIT
+    {
+        // Shutdown只清实例的WorldContext指针，不删除Engine中该上下文或InitializeStandalone创建的根世界。
+        // 先解绑本夹具子系统，再精确销毁自己的上下文/世界，不留下后续UI测试可见的游戏世界。
+        Instance->Shutdown();
+        if (FixtureWorld)
+        {
+            GEngine->DestroyWorldContext(FixtureWorld);
+            FixtureWorld->DestroyWorld(false);
+        }
+    };
     UClass* SlotClass = LoadClass<UGamePlatformSlotWidget>(nullptr,
         TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot.WBP_DBA_UI_AbilitySlot_C"));
     if (!TestNotNull(TEXT("真实公共技能槽资产存在"), SlotClass)) { return false; }

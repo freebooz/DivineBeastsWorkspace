@@ -5,6 +5,7 @@
 #include "UI/DivineBeastsDemoHubWidget.h"
 #include "UI/DivineBeastsDemoHubViewModel.h"
 #include "UI/DivineBeastsDemoHubScreen.h"
+#include "UI/DivineBeastsDemoMenuItem.h"
 #include "Components/Button.h"
 #include "Components/ListView.h"
 #include "Components/NamedSlot.h"
@@ -63,8 +64,9 @@ bool FDivineBeastsDemoHubClearedModelTest::RunTest(const FString&)
     auto* Plugins=Cast<UListView>(Hub->GetWidgetFromName(TEXT("PluginList")));
     if(!TestNotNull(TEXT("详情文本"),Details)||!TestNotNull(TEXT("报告文本"),ReportText)||!TestNotNull(TEXT("参数列表"),Parameters)||!TestNotNull(TEXT("样板槽"),Sample)||!TestNotNull(TEXT("执行按钮"),Execute)||!TestNotNull(TEXT("插件列表"),Plugins))return false;
     Details->SetText(FText::FromString(TEXT("旧模型详情夹具")));ReportText->SetText(FText::FromString(TEXT("旧模型报告夹具")));
-    Parameters->SetListItems(TArray<UObject*>{NewObject<UObject>(Hub.Get())});
-    Plugins->SetListItems(TArray<UObject*>{NewObject<UObject>(Hub.Get())});
+    // UE5.8的UObject本身为抽象反射类；用真实列表项承载测试值，不能实例化抽象根类作占位。
+    Parameters->SetListItems(TArray<UObject*>{NewObject<UDivineBeastsDemoMenuItem>(Hub.Get())});
+    Plugins->SetListItems(TArray<UObject*>{NewObject<UDivineBeastsDemoMenuItem>(Hub.Get())});
     Sample->SetContent(NewObject<UDivineBeastsDemoHubWidget>(Hub.Get()));Execute->SetIsEnabled(true);
     Hub->InitializeScreen(TEXT("DivineBeasts.Demo.Hub"),nullptr,TEXT("PluginSearchInput"),EGamePlatformUIInputMode::GameAndUI,EGamePlatformUIPausePolicy::Never);
     TestFalse(TEXT("清空宿主模型立即撤下旧详情"),Details->GetText().ToString().Contains(TEXT("旧模型")));

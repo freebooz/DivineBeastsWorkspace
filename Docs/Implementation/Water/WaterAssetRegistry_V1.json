@@ -64,7 +64,7 @@
       "/Game/Development/Water/Maps/L_GP_WaterReview"
     ],
     "项目层水体预设": [
-      "/DBAWorldPack_Village/Water/Definitions/DA_DBA_Village_WaterPresentation"
+      "/DBAPresentationPack_Core/Water/Definitions/DA_DBA_Village_WaterPresentation"
     ],
     "前端角色预览FluidFlux": "可选，用户暂不启用，未安装，不应生成硬引用"
   },

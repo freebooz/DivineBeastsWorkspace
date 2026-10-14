@@ -35,6 +35,8 @@ try {
         $null=New-Item -ItemType Directory -Path $directory
         $automation=Join-Path $directory 'Automation'
         $arguments=@($context.Project,'-unattended','-nop4','-nullrhi','-nosplash','-stdout','-FullStdOutLogOutput',
+            # 原生自动化只消费已制作资产；隔离工具插件的单端口/SQLite，不接管交互Editor的Monolith服务。
+            '-DisablePlugins=Monolith',"-SessionId=$($context.RunId)",
             '-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-FoundationRunId=$($context.RunId)",
             "-abslog=$(Join-Path $directory 'Unreal.log')",("-ExecCmds=Automation RunTests "+$policy.Prefix.TrimEnd('.')),
             '-TestExit=Automation Test Queue Empty',"-ReportExportPath=$automation")
