@@ -11,6 +11,8 @@
 #include "Misc/Parse.h"
 #include "HAL/PlatformMisc.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
+#include "Development/DivineBeastsPluginDemoLauncher.h"
+#include "Engine/GameInstance.h"
 
 // 默认主题语义只保存在项目层CDO：当项目主题ID为空时平台兼容绑定保持旧Widget样式。
 // 不修改已有Widget树、命名控件、焦点、登录输入/命令或加载任何项目纹理。
@@ -98,6 +100,13 @@ void UDivineBeastsLoginScreen::BindLoginEvents()
             this,
             &UDivineBeastsLoginScreen::HandleLoginClicked);
     }
+    if (UButton* DevelopmentButton = Cast<UButton>(GetWidgetFromName(TEXT("PluginDevelopmentButton"))))
+    { DevelopmentButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandlePluginDevelopmentClicked); }
+    if (UGameInstance* Instance = GetGameInstance())
+    {
+        if (auto* Launcher = Instance->GetSubsystem<UDivineBeastsPluginDemoLauncher>())
+        { PluginDevelopmentStatusHandle = Launcher->OnStatusChanged.AddUObject(this, &ThisClass::RefreshPluginDevelopmentEntry); }
+    }
     if (AccountInput)
     {
         AccountInput->OnTextChanged.AddUniqueDynamic(
@@ -134,6 +143,15 @@ void UDivineBeastsLoginScreen::UnbindLoginEvents()
     {
         return;
     }
+
+    if (UButton* DevelopmentButton = Cast<UButton>(GetWidgetFromName(TEXT("PluginDevelopmentButton"))))
+    { DevelopmentButton->OnClicked.RemoveDynamic(this, &ThisClass::HandlePluginDevelopmentClicked); }
+    if (UGameInstance* Instance = GetGameInstance())
+    {
+        if (auto* Launcher = Instance->GetSubsystem<UDivineBeastsPluginDemoLauncher>())
+        { Launcher->OnStatusChanged.Remove(PluginDevelopmentStatusHandle); }
+    }
+    PluginDevelopmentStatusHandle.Reset();
 
     if (LoginButton)
     {
@@ -173,6 +191,7 @@ void UDivineBeastsLoginScreen::UnbindLoginEvents()
 
 void UDivineBeastsLoginScreen::RefreshLoginPresentation()
 {
+    RefreshPluginDevelopmentEntry();
     UDivineBeastsLoginViewModel* LoginViewModel = GetLoginViewModel();
     const bool bHasCredentials =
         AccountInput &&
@@ -244,6 +263,36 @@ void UDivineBeastsLoginScreen::RefreshLoginPresentation()
         HandleLoginClicked();
     }
 #endif
+}
+
+void UDivineBeastsLoginScreen::RefreshPluginDevelopmentEntry()
+{
+    auto* Launcher = GetGameInstance() ? GetGameInstance()->GetSubsystem<UDivineBeastsPluginDemoLauncher>() : nullptr;
+    const bool bAvailable = Launcher && Launcher->IsEntryAvailable();
+    const auto* Model = GetLoginViewModel();
+    const bool bBusy = ActiveLoginRequestId.IsValid() || bSubmittingLogin || (Model && Model->GetStateRef().bBusy);
+    if (UButton* Button = Cast<UButton>(GetWidgetFromName(TEXT("PluginDevelopmentButton"))))
+    {
+        Button->SetVisibility(bAvailable ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+        Button->SetIsEnabled(IsActivated() && bAvailable && !bBusy && !Launcher->IsBusy());
+    }
+    if (UTextBlock* Status = Cast<UTextBlock>(GetWidgetFromName(TEXT("PluginDevelopmentStatus"))))
+    {
+        Status->SetText(bAvailable ? Launcher->GetStatusText() : FText::GetEmpty());
+        Status->SetVisibility(bAvailable && !Launcher->GetStatusText().IsEmpty() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+    }
+}
+
+void UDivineBeastsLoginScreen::HandlePluginDevelopmentClicked()
+{
+    const auto* Model = GetLoginViewModel();
+    if (!IsActivated() || bSubmittingLogin || ActiveLoginRequestId.IsValid() || (Model && Model->GetStateRef().bBusy)) { return; }
+    auto* Launcher = GetGameInstance() ? GetGameInstance()->GetSubsystem<UDivineBeastsPluginDemoLauncher>() : nullptr;
+    if (!Launcher || !Launcher->IsEntryAvailable() || Launcher->IsBusy()) { return; }
+    // 不复制输入给子进程；退出登录意图之前取消本页自动提交并立即清空密码。
+    bDevelopmentAutoLoginRequested = false;
+    ClearSensitiveInput();
+    Launcher->RequestLaunch();
 }
 
 UButton* UDivineBeastsLoginScreen::GetPasswordRevealButton() const

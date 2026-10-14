@@ -64,7 +64,7 @@ $dir=Join-Path $workspace ("Saved/Validation/PluginDemos/Launch/"+$RunId.ToStrin
 if(Test-Path -LiteralPath $dir){throw ('RunId已存在，禁止覆盖证据：'+$dir)}
 $null=New-Item -ItemType Directory -Path $dir -Force
 $log=Join-Path $dir 'DebugLogin.log'
-$arguments+=@('-windowed',("-ResX="+$WindowWidth),("-ResY="+$WindowHeight),
+$arguments+=@("-DBADevelopmentPowerShell=$(Join-Path $PSHOME 'pwsh.exe')",'-windowed',("-ResX="+$WindowWidth),("-ResY="+$WindowHeight),
     '-NoLiveCoding','-NoHotReload','-nosplash',("-abslog="+$log))
 $start=[Diagnostics.ProcessStartInfo]::new()
 $start.FileName=$exe
