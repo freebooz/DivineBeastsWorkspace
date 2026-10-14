@@ -3,6 +3,9 @@ package matchapi
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"sort"
 	"sync"
@@ -51,6 +54,13 @@ func (s *Service) CreateParty(ctx context.Context, playerID, displayName string)
 	if playerID == "" {
 		return nil, errors.New("PlayerID不能为空")
 	}
+	if atomic, ok := s.parties.(AtomicPartyRepository); ok {
+		if current, err := atomic.GetByPlayerID(ctx, playerID); err == nil {
+			return current, nil
+		} else if !errors.Is(err, ErrPartyNotFound) {
+			return nil, err
+		}
+	}
 	value := party.New(s.nextID("party"), party.Member{PlayerID: playerID, DisplayName: displayName, Online: true})
 	if err := s.parties.Save(ctx, value); err != nil {
 		return nil, err
@@ -63,15 +73,22 @@ func (s *Service) CreateMatchmakingTicket(ctx context.Context, actorPlayerID str
 	if actorPlayerID == "" || input.ClientRequestID == "" || input.RegionID == "" {
 		return matchmaking.Ticket{}, errors.New("PlayerID、ClientRequestID和RegionID不能为空")
 	}
-	if current, found, err := s.tickets.GetByClientRequestID(ctx, input.ClientRequestID); err != nil {
+	// 请求ID只在主体域内唯一；摘要分开存储，异参重试明确冲突，而不是创建另一票据或返回他人资料。
+	requestKey := scopedOperationKey(actorPlayerID, "matchmaking", input.ClientRequestID)
+	fingerprint := fingerprintOf(input)
+	if current, found, err := s.tickets.GetByClientRequestID(ctx, requestKey); err != nil {
 		return matchmaking.Ticket{}, err
 	} else if found {
+		if current.RequestFingerprint != fingerprint {
+			return matchmaking.Ticket{}, errors.New("MATCH_IDEMPOTENCY_CONFLICT: 同一请求标识对应不同参数")
+		}
 		return current, nil
 	}
 
 	partyID := input.PartyID
 	memberIDs := []string{actorPlayerID}
 	var currentParty *party.Party
+	var originalPartyRevision int64
 	if partyID != "" {
 		value, err := s.parties.Get(ctx, partyID)
 		if err != nil {
@@ -83,6 +100,7 @@ func (s *Service) CreateMatchmakingTicket(ctx context.Context, actorPlayerID str
 		if value.RosterLocked {
 			return matchmaking.Ticket{}, errors.New("PARTY_ROSTER_LOCKED: Party已经进入匹配")
 		}
+		originalPartyRevision = value.Revision
 		if err := value.SelectArenaMode(actorPlayerID, input.ArenaModeID); err != nil {
 			return matchmaking.Ticket{}, err
 		}
@@ -110,14 +128,22 @@ func (s *Service) CreateMatchmakingTicket(ctx context.Context, actorPlayerID str
 		return matchmaking.Ticket{}, err
 	}
 	if currentParty != nil {
-		if err := s.parties.Save(ctx, currentParty); err != nil {
+		atomic, ok := s.parties.(AtomicPartyRepository)
+		if !ok {
+			return matchmaking.Ticket{}, errors.New("PARTY_ATOMIC_STORE_REQUIRED: 匹配必须使用条件事务仓储")
+		}
+		if _, err := atomic.Update(ctx, currentParty.ID, originalPartyRevision, "", "", func(value *party.Party) error { *value = *currentParty.Clone(); return nil }); err != nil {
 			return matchmaking.Ticket{}, err
 		}
 	}
-	if err := s.tickets.Save(ctx, input.ClientRequestID, ticket); err != nil {
+	ticket.RequestFingerprint = fingerprint
+	if err := s.tickets.Save(ctx, requestKey, ticket); err != nil {
 		if currentParty != nil {
-			currentParty.UnlockRoster()
-			_ = s.parties.Save(ctx, currentParty)
+			if atomic, ok := s.parties.(AtomicPartyRepository); ok {
+				if _, rollbackErr := atomic.Update(ctx, currentParty.ID, currentParty.Revision, "", "", func(value *party.Party) error { value.UnlockRoster(); return nil }); rollbackErr != nil {
+					return matchmaking.Ticket{}, errors.Join(err, fmtPartyRollback(rollbackErr))
+				}
+			}
 		}
 		return matchmaking.Ticket{}, err
 	}
@@ -126,13 +152,15 @@ func (s *Service) CreateMatchmakingTicket(ctx context.Context, actorPlayerID str
 
 // MemoryPartyRepository（内存Party仓储）用于单元测试与本地联调。
 type MemoryPartyRepository struct {
-	mu    sync.RWMutex
-	items map[string]*party.Party
+	mu       sync.RWMutex
+	items    map[string]*party.Party
+	players  map[string]string
+	receipts map[string]PartyOperationReceipt
 }
 
 // NewMemoryPartyRepository（创建内存Party仓储）创建线程安全Party存储。
 func NewMemoryPartyRepository() *MemoryPartyRepository {
-	return &MemoryPartyRepository{items: map[string]*party.Party{}}
+	return &MemoryPartyRepository{items: map[string]*party.Party{}, players: map[string]string{}, receipts: map[string]PartyOperationReceipt{}}
 }
 
 // Get（读取Party）返回独立副本，避免调用方绕过Save直接修改仓储状态。
@@ -141,7 +169,7 @@ func (r *MemoryPartyRepository) Get(_ context.Context, partyID string) (*party.P
 	defer r.mu.RUnlock()
 	value, found := r.items[partyID]
 	if !found {
-		return nil, errors.New("PARTY_NOT_FOUND: Party不存在")
+		return nil, ErrPartyNotFound
 	}
 	return cloneParty(value), nil
 }
@@ -153,7 +181,18 @@ func (r *MemoryPartyRepository) Save(_ context.Context, value *party.Party) erro
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if _, exists := r.items[value.ID]; exists {
+		return errors.New("PARTY_CONDITIONAL_UPDATE_REQUIRED: 已有队伍必须条件更新")
+	}
+	for id := range value.Members {
+		if owner := r.players[id]; owner != "" && owner != value.ID {
+			return errors.New("PARTY_ALREADY_MEMBER: 玩家已在其他队伍")
+		}
+	}
 	r.items[value.ID] = cloneParty(value)
+	for id := range value.Members {
+		r.players[id] = value.ID
+	}
 	return nil
 }
 
@@ -196,16 +235,23 @@ func (r *MemoryTicketRepository) Save(_ context.Context, clientRequestID string,
 }
 
 func cloneParty(value *party.Party) *party.Party {
-	cloned := &party.Party{
-		ID:                  value.ID,
-		LeaderPlayerID:      value.LeaderPlayerID,
-		Members:             make(map[string]party.Member, len(value.Members)),
-		SelectedArenaModeID: value.SelectedArenaModeID,
-		RosterLocked:        value.RosterLocked,
-		Revision:            value.Revision,
-	}
-	for playerID, member := range value.Members {
-		cloned.Members[playerID] = member
-	}
-	return cloned
+	return value.Clone()
 }
+
+// scopedOperationKey（主体域幂等键）使用长度无歧义JSON摘要，避免分隔符碰撞和跨主体读取。
+func scopedOperationKey(playerID, operation, requestID string) string {
+	return fingerprintOf([]string{playerID, operation, requestID})
+}
+
+// fingerprintOf（标准化内容摘要）输入均为固定字段结构，不接收用户提供的任意map或敏感认证材料。
+func fingerprintOf(value any) string {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		panic("固定组队契约序列化失败")
+	}
+	digest := sha256.Sum256(payload)
+	return hex.EncodeToString(digest[:])
+}
+
+// fmtPartyRollback（保留补偿失败）避免只返回票据错误而隐藏仍待解锁的业务状态。
+func fmtPartyRollback(err error) error { return errors.New("PARTY_ROLLBACK_PENDING: " + err.Error()) }

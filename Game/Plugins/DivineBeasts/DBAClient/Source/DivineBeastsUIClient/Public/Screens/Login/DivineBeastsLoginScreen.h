@@ -67,6 +67,13 @@ private:
     UFUNCTION()
     void HandleLoginClicked();
 
+    /** SSLM开发专用按钮：只提交隔离进程启动意图，忙碌登录期间拒绝，不改变认证状态。 */
+    UFUNCTION()
+    void HandlePluginDevelopmentClicked();
+
+    /** 启动器状态事件更新可选控件；不在Widget Tick轮询进程或业务状态。 */
+    void RefreshPluginDevelopmentEntry();
+
     /** 输入文本变化只更新按钮可用状态，不提交网络请求。 */
     UFUNCTION()
     void HandleCredentialTextChanged(const FText& NewText);
@@ -127,4 +134,6 @@ private:
     bool bLoginCompletedDuringSubmit = false;
     /** 仅开发回归的一次性提交意图；Shipping不会读取启动参数或环境密码。 */
     bool bDevelopmentAutoLoginRequested = false;
+    /** 对GameInstance开发启动器的精确订阅；页面失活撤销，不停止演示进程。 */
+    FDelegateHandle PluginDevelopmentStatusHandle;
 };

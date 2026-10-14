@@ -21,4 +21,14 @@ public:
     {
         return TEXT("UI.HUD.Arena");
     }
+protected:
+    /** 复制统计和阶段时间；生命/气势、技能、Buff/施法继续由公共RootLayout已有组件拥有。 */
+    virtual void RefreshInitialState() override;
+    virtual void OnViewModelStateChanged(int32 Revision,int32 PageGeneration) override;
+    virtual void NativeDestruct() override;
+private:
+    /** 仅显示服务器阶段截止，不轮询网络，不在归零时决定权威阶段。 */
+    void UpdatePhaseClock();
+    FTimerHandle PhaseClock;
+    double PhaseDeadlineMonotonicSeconds=0.0;
 };

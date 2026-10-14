@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
+#include "Water/DivineBeastsCharacterStudioWaterPolicy.h"
 #include "DivineBeastsCharacterPreviewSubsystem.generated.h"
 
 class AGamePlatformCharacterPreviewStage;
@@ -54,6 +55,13 @@ public:
     /** 场景风格切换仅替换VFX Definition，不重新流送工作室或改变角色。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|CharacterPreview")
     void SetPreviewFoliageStyle(FName StyleId);
+
+    /** 返回当前已流送角色工作室的水效合资格状态；默认Native。
+     * FluidFluxEligible只代表可选插件可用，不代表已经启动GPU水面求解。
+     */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|CharacterPreview|Water")
+    EDivineBeastsCharacterStudioWaterMode GetCharacterStudioWaterMode(
+        bool bPreferFluidFlux, bool bHighQuality) const;
 
     UFUNCTION(BlueprintPure, Category="DivineBeasts|CharacterPreview")
     FName GetPreviewHeroDefinitionId() const { return RequestedHeroDefinitionId; }

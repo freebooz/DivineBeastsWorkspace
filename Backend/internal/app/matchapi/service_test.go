@@ -22,7 +22,7 @@ func TestCreatePartyAndMatchmakingTicketLocksRoster(t *testing.T) {
 	if err := created.AddMember(party.Member{PlayerID: "member-2", DisplayName: "队友", Online: true}); err != nil {
 		t.Fatal(err)
 	}
-	if err := parties.Save(context.Background(), created); err != nil {
+	if _, err := parties.Update(context.Background(), created.ID, 1, "", "", func(value *party.Party) error { *value = *created.Clone(); return nil }); err != nil {
 		t.Fatal(err)
 	}
 

@@ -240,9 +240,12 @@ void UDivineBeastsDemoHubWidget::OnScenarioLaunchClicked()
 }
 void UDivineBeastsDemoHubWidget::OnHubReturnClicked()
 {
-    RequestReturnToHub();
+    const bool bAccepted = RequestReturnToHub();
     if (OperationStatusText) OperationStatusText->SetText(GetDemoOperationMessage());
-    UpdateOverlayStatus();
+    // 材质审核页只有OverlayFeedbackText；拒绝返回时必须显示目录错误，不能被旧世界反馈覆盖。
+    // true只代表目录受理，是否已完成旅行仍由实际世界事件说明。
+    if (!bAccepted && OverlayFeedbackText) OverlayFeedbackText->SetText(GetDemoOperationMessage());
+    else UpdateOverlayStatus();
 }
 void UDivineBeastsDemoHubWidget::OnDemoResetClicked()
 {

@@ -30,6 +30,12 @@ public class DivineBeastsArenaClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsApplicationFlowClient",
+            // 私有UListView模板接线实际引用Slate表格/属性描述符，必须直接链接其定义模块。
+            "Slate",
+            "SlateCore",
+            // 私有命令桥只读取平台认证主体；仍由既有Online持有令牌和网络请求。
+            "GamePlatformOnline",
+            "GamePlatformOnlineClient",
             // 只在客户端组合根接入已授权角色身份、数据资产租约和MOBA中立反馈回调。
             "DivineBeastsCharactersRuntime",
             "DivineBeastsAbilitiesRuntime", // 只读取拥有者已授予技能快照，绝不授予/激活技能。

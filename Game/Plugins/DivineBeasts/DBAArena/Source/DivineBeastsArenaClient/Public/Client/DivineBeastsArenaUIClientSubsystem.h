@@ -16,6 +16,8 @@ class UGamePlatformUIScreen;
 class UGamePlatformMobaArenaHUDBase;
 class UGameInstance;
 class UCommonActivatableWidgetStack;
+class IGamePlatformArenaMatchmakingAdapter;
+class UGamePlatformOnlineClientSubsystem;
 
 /**
  * UDivineBeastsArenaUIClientSubsystem（神兽联盟竞技UI本地玩家子系统）。
@@ -63,12 +65,57 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Arena|UI")
     FName ResolvePrimaryArenaSurfaceId() const;
 
+    /** 打开模式选择，只发布本地页面需求，不代表已创建队列票据。公共小队通过可撤销提供者调用。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Arena|UI")
+    bool OpenMatchmakingMenu(const FString& PartyId=FString());
+
+    /** 竞技组合根注入真实匹配适配器，返回精确撤销句柄。仅游戏线程；不接受覆盖已有提供者。
+     * 平台/公共UI不认识此接口；未注入或后端合同不完整时所有副作用命令明确失败。
+     */
+    FGuid RegisterMatchmakingAdapter(TSharedPtr<IGamePlatformArenaMatchmakingAdapter> Adapter);
+    /** 只撤销匹配注册句柄；令在途旧回调失效，不把本地撤销当作远端取消排队。 */
+    void UnregisterMatchmakingAdapter(FGuid Registration);
+    /** 本地玩家命令入口；成功返回仅指已交给适配器，业务成功由完成事件确认。 */
+    bool RequestMatchmaking(FName ModeId);
+    bool CancelMatchmaking();
+    bool RespondToMatchOffer(bool bAccept);
+    /** 查询真实适配器能力/在途状态，不根据按钮、页面开关或Flow枚举授予权限。 */
+    bool CanRequestMatchmaking() const;
+    bool CanCancelMatchmaking() const;
+    bool CanRespondToMatchOffer() const;
+    FText GetMatchmakingCommandFeedback() const { return MatchmakingCommandFeedback; }
+    /** 只读命令反馈事件；页面激活订阅、失活解绑，无Tick。 */
+    FSimpleMulticastDelegate OnMatchmakingCommandChanged;
+
     /** 写入匹配/传输适配器观测到的非权威客户端流程状态。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Arena|UI")
     void SetObservedArenaClientFlowState(
         EGamePlatformArenaClientFlowState InFlowState);
 
 private:
+    friend class FDivineBeastsArenaConfirmedOfferRegressionTest;
+    /** 每LocalPlayer只保留一个提供者和一个在途意图；不持有HTTP、队列权威或准入凭据。 */
+    TSharedPtr<IGamePlatformArenaMatchmakingAdapter> MatchmakingAdapter;
+    FGuid MatchmakingRegistration;
+    uint64 MatchmakingCommandGeneration = 0;
+    bool bMatchmakingCommandPending = false;
+    FString MatchmakingLogicalRequestId;
+    FString MatchmakingPlayerId;
+    /** 账号认证代次隔离同一公开PlayerId的退出重登；空身份不授予权限。 */
+    FGuid MatchmakingAuthGeneration;
+    TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> MatchmakingAuthenticationSource;
+    FDelegateHandle MatchmakingAuthenticationHandle;
+    FString MatchmakingPartyId;
+    bool IsMatchmakingAuthenticationCurrent() const;
+    /** 生命周期内订阅平台认证事件，退出/重登先撤销旧提供者和候选，不等待页面刷新。 */
+    void ConnectMatchmakingAuthentication();
+    void DisconnectMatchmakingAuthentication();
+    FText MatchmakingCommandFeedback;
+    /** 重新读取平台认证，不缓存会话令牌；完成时还须核对公开主体和世界。 */
+    FString GetAuthenticatedMatchmakingPlayerId() const;
+    void ResetMatchmakingBridge();
+    /** 仅真实确认的Idle终态可释放对应报名身份；旧身份、Failed和未知结果必须保留。 */
+    void CompleteConfirmedTicketState(const FString& ExpectedLogicalRequestId,EGamePlatformArenaClientFlowState ConfirmedState);
     friend class FDivineBeastsArenaUIScreenInstanceOwnershipRegressionTest;
     /** 当前LocalPlayer世界的GameState可迟到，订阅引擎设置事件；退出解绑并清空投影，无Tick重试。 */
     void BindWorldReadinessEvents(UWorld* World);
@@ -134,6 +181,8 @@ private:
     TWeakObjectPtr<UWorld> BoundWorld;
     TWeakObjectPtr<UWorld> RetiredWorld;
     bool bDeinitializing = false;
+    /** 注册到同LocalPlayer公共小队UI的可选活动句柄；退出精确撤销，不使公共模块引用竞技。 */
+    FGuid PartyActivityHandle;
     /** 外部VM/页面/控件通知可同步接管流程；旧栈不能重新发布请求或覆盖后继状态。 */
     uint64 SurfaceOperationGeneration = 1;
     /** 同一表面的重复复制通知不取消在途打开；只有需求/World/Controller换代才接管旧栈。 */

@@ -1,6 +1,7 @@
 // 项目层本地玩家UI组合：消费应用只读状态，注册平台页面/主题并桥接真实控制器生命周期。
 // 不发送业务HTTP或持有玩法权威；退出撤销页面、适配器和委托，服务器目标不装配本模块。
 #include "DivineBeastsUIClientSubsystem.h"
+#include "Social/DivineBeastsPartyUIClientSubsystem.h"
 #include "Development/DivineBeastsPluginDemoMode.h"
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
@@ -40,6 +41,8 @@
 #include "ViewModels/DivineBeastsUIViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
+#include "ViewModels/Social/DivineBeastsSocialViewModel.h"
+#include "ViewModels/LiveOps/DivineBeastsLiveOpsViewModel.h"
 
 namespace
 {
@@ -1233,6 +1236,12 @@ bool UDivineBeastsUIClientSubsystem::OpenWorldJournal(FName Section)
     const bool bKnownSection = Section == TEXT("Character") || Section == TEXT("MapQuest") ||
         Section == TEXT("Spellbook") || Section == TEXT("Party");
     if (!bKnownSection || bUIShuttingDown || !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) return false;
+    // P键/手册小队入口复用新的公共组队页面；不替换既有Social好友入口或引入竞技依赖。
+    if (Section==TEXT("Party"))
+    {
+        auto* PartyUI=GetLocalPlayer()?GetLocalPlayer()->GetSubsystem<UDivineBeastsPartyUIClientSubsystem>():nullptr;
+        return PartyUI&&PartyUI->OpenPartyPage();
+    }
     const auto Selection = Section == TEXT("MapQuest") ? EDivineBeastsWorldJournalSection::MapQuest
         : Section == TEXT("Spellbook") ? EDivineBeastsWorldJournalSection::Spellbook
         : Section == TEXT("Party") ? EDivineBeastsWorldJournalSection::Party : EDivineBeastsWorldJournalSection::Character;
@@ -1244,6 +1253,19 @@ bool UDivineBeastsUIClientSubsystem::OpenWorldJournal(FName Section)
     if (ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() || ActiveInventoryScreen.IsValid() || bInventoryOpening) return false;
     PendingJournalSection = Section;
     return OpenSystemSurface(TEXT("UI.Screen.WorldJournal"));
+}
+
+FGamePlatformUIAsyncRequest UDivineBeastsUIClientSubsystem::OpenWorldUtilityScreen(FName ScreenId)
+{
+    if(bUIShuttingDown||!PlatformUI||!PlatformUI->GetRootLayout()||
+        !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)||!PlatformUI->HasScreenDefinition(ScreenId))return {};
+    UGamePlatformViewModelBase* Model=nullptr;
+    if(ScreenId==TEXT("UI.Screen.Social"))Model=NewObject<UDivineBeastsSocialViewModel>(this);
+    else if(ScreenId==TEXT("UI.Screen.LiveOps"))Model=NewObject<UDivineBeastsLiveOpsViewModel>(this);
+    else if(ScreenId==TEXT("UI.Screen.Quest"))Model=CreateViewModel(ScreenId);
+    else return {};
+    // 平台拥有请求期间和活动页面中的模型；没有授权服务的领域模型不自行BeginSourceScope。
+    return PlatformUI->OpenScreenAsync(ScreenId,Model);
 }
 
 void UDivineBeastsUIClientSubsystem::HandleWorldInventoryRequested()

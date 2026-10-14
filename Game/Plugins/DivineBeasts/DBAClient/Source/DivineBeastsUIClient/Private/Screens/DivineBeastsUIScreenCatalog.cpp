@@ -1,10 +1,12 @@
+// SSLM公共客户端页面/世界HUD/通知目录；供本地UI装配消费平台中立定义，不依赖竞技或MOBA。
+// 本文件只持稳定软身份、层栈与输入/焦点合同，视觉资源归DBAUIPack_Core，加载租约归平台Data。
 #include "Screens/DivineBeastsUIScreenCatalog.h"
 
 namespace
 {
     // DBAUIPack_Core（神兽联盟核心UI内容包）是项目公共前台美术的唯一所有者。
-    // 根布局、登录、角色创建/选择、切服加载及连接失败页已交付真实资产；其余项仍是分期稳定软路径，
-    // 调用方必须保留软加载失败路径，不能把规划项误认为均已交付。
+    // 页面按分期制作真实资产，但磁盘存在、运行、设备和Cook分别核验；
+    // 调用方始终保留软加载失败路径，不能因目录路径已登记就推断运行或发行验收通过。
     constexpr const TCHAR* ProjectUIContentRoot = TEXT("/DBAUIPack_Core/UI");
 
     FDivineBeastsUISurfaceDescriptor MakeScreen(
@@ -93,7 +95,8 @@ namespace
             MakeScreen(TEXT("UI.Screen.Settings"), TEXT("Settings"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::UIOnly, TEXT("ResolutionCombo")),
             // InventoryGrid为不可聚焦WrapBox（自动换行容器）；使用始终可见的CloseButton作为初始手柄/键盘焦点。
             MakeScreen(TEXT("UI.Screen.Inventory"), TEXT("Inventory"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("CloseButton")),
-            MakeScreen(TEXT("UI.Screen.Quest"), TEXT("Quest"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("QuestList")),
+            // 列表在无任务/服务未就绪时合法禁用；关闭按钮始终可用，避免正常空态丢失初始焦点。
+            MakeScreen(TEXT("UI.Screen.Quest"), TEXT("Quest"), EGamePlatformUILayer::Screen, EGamePlatformUIInputMode::GameAndUI, TEXT("CloseButton")),
             // 新手册C++命名合同已实现；真实WBP必须经Monolith交付后才可打开，软加载失败不得冒充成功。
             MakeScreen(TEXT("UI.Screen.WorldJournal"), TEXT("WorldJournal"), EGamePlatformUILayer::System, EGamePlatformUIInputMode::UIOnly, TEXT("CloseButton")),
             // 社交与运营是第三层公共项目页面，不属于MOBA竞技；软加载仍需提供可见失败结果。

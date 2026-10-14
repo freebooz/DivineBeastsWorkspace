@@ -79,6 +79,7 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
     WeatherVisualHandle = {};
     WeatherAudioHandle = {};
     bWeatherVisualAttempted = false;
+    WaterVisualHandle = {};
     bWeatherAudioAttempted = false;
     CancelAllLogicalPreloads();
     ActivePacks.Reset(); PendingPacks.Reset();
@@ -373,6 +374,7 @@ void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
     WeatherVisualHandle = {};
     WeatherAudioHandle = {};
     bWeatherVisualAttempted = false;
+    WaterVisualHandle = {};
     bWeatherAudioAttempted = false;
     if (UWorld* WeatherWorld = WeatherBoundWorld.Get())
     {
@@ -907,6 +909,48 @@ UDivineBeastsPresentationClientSubsystem::ActivateWeatherPack(
     }
 
     return ActivateContentPack(Fragment, OutError);
+}
+
+// 水体Ripple/Splash只通过GamePlatformData内容包事务发布正式VFX目录。
+FDivineBeastsPresentationContentPackHandle
+UDivineBeastsPresentationClientSubsystem::ActivateWaterVisuals(FString& OutError)
+{
+    check(IsInGameThread());
+    OutError.Reset();
+    if (bClosing || !IsValid(PlatformPresentation) || !IsValid(GetLocalPlayer()))
+    {
+        OutError = TEXT("水体表现服务未就绪或本地玩家正在退出。");
+        return {};
+    }
+    if (WaterVisualHandle.IsValid())
+    {
+        FString ExistingError;
+        const auto State = GetContentPackState(WaterVisualHandle, ExistingError);
+        if (State == EDivineBeastsPresentationContentPackState::Loading ||
+            State == EDivineBeastsPresentationContentPackState::Active)
+            return WaterVisualHandle; // 同一世界重复调用幂等，不重复申请VFX实例。
+    }
+    const auto Catalog = FDivineBeastsPresentationProjectCatalog::BuildWaterVFXFragment();
+    if (Catalog.Entries.Num() != 2)
+    {
+        OutError = TEXT("水体VFX语义GameplayTag尚未注册，拒绝发布半套目录。");
+        return {};
+    }
+    FDivineBeastsPresentationContentPackFragment Pack;
+    Pack.ContentPackId = TEXT("DBA.Water.VFX");
+    Pack.Revision = 1;
+    Pack.LifecycleScope = EGamePlatformPresentationContextScope::World;
+    Pack.bRequiredPreload = true;
+    Pack.CatalogFragment = Catalog;
+    Pack.CatalogFragment.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
+    Pack.CatalogFragment.OwnerScopeId = Pack.ContentPackId;
+    Pack.CatalogFragment.LifecycleScope = Pack.LifecycleScope;
+    for (auto& Entry : Pack.CatalogFragment.Entries)
+        Entry.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
+    const auto Handle = ActivateContentPack(Pack, OutError);
+    if (Handle.IsValid())
+        WaterVisualHandle = Handle;
+    return Handle; // 只表示异步受理，不等于涟漪已经出现在屏幕上。
 }
 
 FDivineBeastsPresentationContentPackHandle

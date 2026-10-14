@@ -6,8 +6,11 @@
 #include "Components/ComboBoxString.h"
 
 #include "DivineBeastsDemoHubWidget.generated.h"
+class UDivineBeastsDemoHubViewModel;
+class UDivineBeastsDemoParameterItem;
 
-/** WBP_DBA_PluginDemoHub等真实UI蓝图的父类；不在C++构建另一套可视控件树。 */
+/** 既有兼容开发界面与Detail/Controls/Report子页的父类；主Hub已派生HubScreen。
+ * 子页借用主Hub模型，不能拥有其页面代次；此类型不在C++构建另一套可视控件树。 */
 UCLASS(BlueprintType, Blueprintable)
 class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoHubWidget : public UUserWidget
 {
@@ -41,7 +44,39 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo")
     FText GetDemoOperationMessage() const;
 
+    /** 详情/控制/报告子页借用Hub拥有的唯一模型；不BeginPage、不绑定目录或拥有执行器，空值精确解绑。 */
+    void BindPresentationModel(UDivineBeastsDemoHubViewModel* InModel);
+
+protected:
+    /** 子页在真实构造期间接按钮，销毁时撤销模型事件与样板挂载；兼容旧演示覆盖页。 */
+    virtual void NativeConstruct() override;
+    virtual void NativeDestruct() override;
+
 private:
+    /** 页面模型为弱借用；参数是本页的开发输入副本，待审对象只在Editor桥创建且不自动签收。 */
+    TWeakObjectPtr<UDivineBeastsDemoHubViewModel> PresentationModel;
+    int32 PresentationPageGeneration = 0;
+    UPROPERTY(Transient) TArray<TObjectPtr<UDivineBeastsDemoParameterItem>> PanelParameterItems;
+    UPROPERTY(Transient) TArray<TObjectPtr<UObject>> PanelPendingReports;
+    FName PanelParameterScenario;
+    /** 同案例目录更新后也需重建参数合同，不能只用ID沿用旧范围或默认值。 */
+    FString PanelParameterFingerprint;
+    FString PanelEvidencePath;
+    FGuid PanelEvidenceRunId;
+    FText PanelCommandFeedback;
+    /** 控制页防止同步广播时的按钮重入；参数列表只在合同切换时重建。 */
+    bool bPanelCommandDispatching = false;
+    void RefreshPanelPresentation();
+    bool HasCurrentPresentationModel() const;
+    void SubmitPanelOperation(FName OperationId);
+    UFUNCTION() void PanelModelChanged(int32 Revision, int32 PageGeneration);
+    UFUNCTION() void PanelLaunch();
+    UFUNCTION() void PanelExecute();
+    UFUNCTION() void PanelPause();
+    UFUNCTION() void PanelResume();
+    UFUNCTION() void PanelStop();
+    UFUNCTION() void PanelReset();
+    UFUNCTION() void PanelEvidence();
     /** Monolith WBP中的可选命名控件，BirdFlock/Overlay派生界面未包含时保持空值。 */
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<class UEditableTextBox> PluginSearchInput;
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UComboBoxString> LayerFilterCombo;

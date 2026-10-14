@@ -281,7 +281,7 @@ paths:
       tags: [客户端业务]
       operationId: createGatewayParty
       summary: 为当前玩家创建赛前队伍
-      description: 创建后将已认证玩家设为队长。当前实现不接收请求体，后续成员邀请、准备和名单锁定不是本地运行路由。
+      description: 为尚未入队的已认证玩家创建普通队伍；已有队伍返回其当前队伍。不接收请求体。本人快照、邀请收件箱和命令的新增公网契约见party-interaction.openapi.yaml，源码接线不代表生产已部署或UE交互已接通。
       security:
         - bearerAuth: []
       responses:

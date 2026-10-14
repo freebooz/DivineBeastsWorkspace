@@ -1,7 +1,7 @@
 {
   "version": 1,
   "项目": "SSLM",
-  "用途": "神兽联盟世界背包首批8个正式物品图标与显示定义制作合同，尚未生成图标.uasset。只允许Monolith在正确UE5.8编辑器中创建、导入、编译和保存。",
+  "用途": "SSLM背包首批8类项目物品，Monolith已经生成原生512x512 UI纹理及8份显示数据资产，并为背包蓝图新增44个图标控件；仍待真实游戏联机视觉与正式Cook验收。",
   "工具": "Monolith MCP 0.23.0",
   "视觉规范": {
     "纹理": "512x512像素 RGBA透明底，源图可高于此分辨率",
@@ -20,9 +20,9 @@
       "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_PeachHerb",
       "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_PeachHerb",
       "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
-      "IconStatus": "待由Monolith制作/导入并实际检查",
-      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
-      "资产已生成": false
+      "IconStatus": "已通过Monolith导入512x512 RGBA Texture2D，TEXTUREGROUP_UI，sRGB=true；实际美术质量待人工审核",
+      "DefinitionStatus": "已通过Monolith seed_data_asset创建、逐字段回读并保存为原生UPrimaryDataAsset；后端仍为数量和权限唯一真源",
+      "资产已生成": true
     },
     {
       "ItemDefinitionId": "item.herb.mugwort",
@@ -32,9 +32,9 @@
       "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_Mugwort",
       "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_Mugwort",
       "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
-      "IconStatus": "待由Monolith制作/导入并实际检查",
-      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
-      "资产已生成": false
+      "IconStatus": "已通过Monolith导入512x512 RGBA Texture2D，TEXTUREGROUP_UI，sRGB=true；实际美术质量待人工审核",
+      "DefinitionStatus": "已通过Monolith seed_data_asset创建、逐字段回读并保存为原生UPrimaryDataAsset；后端仍为数量和权限唯一真源",
+      "资产已生成": true
     },
     {
       "ItemDefinitionId": "item.material.lotus",
@@ -44,9 +44,9 @@
       "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_Lotus",
       "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_Lotus",
       "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
-      "IconStatus": "待由Monolith制作/导入并实际检查",
-      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
-      "资产已生成": false
+      "IconStatus": "已通过Monolith导入512x512 RGBA Texture2D，TEXTUREGROUP_UI，sRGB=true；实际美术质量待人工审核",
+      "DefinitionStatus": "已通过Monolith seed_data_asset创建、逐字段回读并保存为原生UPrimaryDataAsset；后端仍为数量和权限唯一真源",
+      "资产已生成": true
     },
     {
       "ItemDefinitionId": "item.material.stone",
@@ -56,9 +56,9 @@
       "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_GreenStone",
       "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_GreenStone",
       "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
-      "IconStatus": "待由Monolith制作/导入并实际检查",
-      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
-      "资产已生成": false
+      "IconStatus": "已通过Monolith导入512x512 RGBA Texture2D，TEXTUREGROUP_UI，sRGB=true；实际美术质量待人工审核",
+      "DefinitionStatus": "已通过Monolith seed_data_asset创建、逐字段回读并保存为原生UPrimaryDataAsset；后端仍为数量和权限唯一真源",
+      "资产已生成": true
     },
     {
       "ItemDefinitionId": "item.material.peachwood",
@@ -68,9 +68,9 @@
       "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_Peachwood",
       "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_Peachwood",
       "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
-      "IconStatus": "待由Monolith制作/导入并实际检查",
-      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
-      "资产已生成": false
+      "IconStatus": "已通过Monolith导入512x512 RGBA Texture2D，TEXTUREGROUP_UI，sRGB=true；实际美术质量待人工审核",
+      "DefinitionStatus": "已通过Monolith seed_data_asset创建、逐字段回读并保存为原生UPrimaryDataAsset；后端仍为数量和权限唯一真源",
+      "资产已生成": true
     },
     {
       "ItemDefinitionId": "item.consumable.herbal_potion",
@@ -80,9 +80,9 @@
       "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_HerbalPotion",
       "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_HerbalPotion",
       "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
-      "IconStatus": "待由Monolith制作/导入并实际检查",
-      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
-      "资产已生成": false
+      "IconStatus": "已通过Monolith导入512x512 RGBA Texture2D，TEXTUREGROUP_UI，sRGB=true；实际美术质量待人工审核",
+      "DefinitionStatus": "已通过Monolith seed_data_asset创建、逐字段回读并保存为原生UPrimaryDataAsset；后端仍为数量和权限唯一真源",
+      "资产已生成": true
     },
     {
       "ItemDefinitionId": "item.quest.village_badge",
@@ -92,9 +92,9 @@
       "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_VillageBadge",
       "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_VillageBadge",
       "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
-      "IconStatus": "待由Monolith制作/导入并实际检查",
-      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
-      "资产已生成": false
+      "IconStatus": "已通过Monolith导入512x512 RGBA Texture2D，TEXTUREGROUP_UI，sRGB=true；实际美术质量待人工审核",
+      "DefinitionStatus": "已通过Monolith seed_data_asset创建、逐字段回读并保存为原生UPrimaryDataAsset；后端仍为数量和权限唯一真源",
+      "资产已生成": true
     },
     {
       "ItemDefinitionId": "item.material.silkworm_silk",
@@ -104,9 +104,9 @@
       "IconAssetPath": "/DBAUIPack_Core/UI/Inventory/Icons/T_DBA_Item_SilkwormSilk",
       "ItemDefinitionAssetPath": "/DBAUIPack_Core/UI/Inventory/Definitions/DA_DBA_Item_SilkwormSilk",
       "ItemDefinitionParentClass": "/Script/GamePlatformInventoryClient.GamePlatformInventoryItemDefinition",
-      "IconStatus": "待由Monolith制作/导入并实际检查",
-      "DefinitionStatus": "待Monolith创建并赋值，后端同名ItemDefinitionId只作为关联标识，不取客户端堆叠值",
-      "资产已生成": false
+      "IconStatus": "已通过Monolith导入512x512 RGBA Texture2D，TEXTUREGROUP_UI，sRGB=true；实际美术质量待人工审核",
+      "DefinitionStatus": "已通过Monolith seed_data_asset创建、逐字段回读并保存为原生UPrimaryDataAsset；后端仍为数量和权限唯一真源",
+      "资产已生成": true
     }
   ],
   "已有资源": {
@@ -124,5 +124,21 @@
     "图标异步加载绑定到背包槽位",
     "PC与移动端截图视觉检查",
     "客户端Cook"
-  ]
+  ],
+  "本轮资产验收": {
+    "日期": "2026-10-14",
+    "真实纹理": 8,
+    "真实显示数据资产": 8,
+    "背包新增图标控件": 44,
+    "背包控件总数": 216,
+    "Monolith蓝图编译错误": 0,
+    "Monolith蓝图编译警告": 0,
+    "可访问性问题": 0,
+    "说明": "全部资产实际保存于DBAUIPack_Core内容包；源图来自视觉概念素材裁切与放大，需进一步3A美术精度审查；非真实PC客户端或多人实机验收",
+    "遗留": [
+      "客户端启动进入新手村的物品视觉验证",
+      "Dedicated Server最小Cook和双客户端同步",
+      "原生图标人工视觉质量审查"
+    ]
+  }
 }

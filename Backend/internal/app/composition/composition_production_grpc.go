@@ -31,6 +31,8 @@ import (
 	"divinebeasts/backend/internal/platform/database/postgres"
 	"divinebeasts/backend/internal/platform/messaging/natsjs"
 	"divinebeasts/backend/internal/platform/outbox"
+	// 可信库存事件在gRPC部署下仍使用受保护的内部HTTP控制入口。
+	"divinebeasts/backend/internal/transport/httpadapter"
 	"divinebeasts/backend/internal/transport/grpcadapter"
 	"divinebeasts/backend/internal/transport/grpcclient"
 )
@@ -84,7 +86,9 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	service := playerdata.NewService(postgres.NewOnlinePlayerRepository(pool))
 	service.AttachInventory(inventory.NewService(postgres.NewInventoryRepository(pool)))
 	processor, secret, err := configureTrustedInventory(service, pool)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	// gRPC部署下保留最小HTTP运维监听器，额外只加受保护的可信GameServer事件路由。
 	// 不把普通PlayerData HTTP整理/查询接口额外暴露于gRPC部署中。
 	var trustedHTTP http.Handler
@@ -92,6 +96,10 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 		mux := http.NewServeMux()
 		mux.Handle("POST /internal/v1/playerdata/inventory/trusted-events",
 			httpadapter.NewTrustedInventoryEventHandler(processor, secret))
+		if renewer, ok := processor.Verifier.(inventory.ServerLeaseRenewer); ok {
+			mux.Handle("POST /internal/v1/playerdata/inventory/session-renew",
+				httpadapter.NewTrustedInventorySessionRenewHandler(renewer, secret))
+		}
 		trustedHTTP = mux
 	}
 	return runGRPCHost(ctx, cfg,
@@ -103,7 +111,12 @@ func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {
 	defer redisClient.Close()
 	partyTTL, _ := config.GetenvDuration("PARTY_TTL", 24*time.Hour)
 	ticketTTL, _ := config.GetenvDuration("MATCHMAKING_TICKET_TTL", 15*time.Minute)
-	service := matchapi.NewService(redisstore.NewPartyRepository(redisClient, partyTTL), redisstore.NewTicketRepository(redisClient, ticketTTL), productionIDGRPC)
+	parties := redisstore.NewPartyRepository(redisClient, partyTTL)
+	// 与HTTP装配采用相同显式维护门禁；不因切换传输绕过成员唯一索引迁移。
+	if err := parties.ConfigureMembershipIndex(ctx, os.Getenv("PARTY_MEMBERSHIP_INDEX_MODE")); err != nil {
+		return err
+	}
+	service := matchapi.NewService(parties, redisstore.NewTicketRepository(redisClient, ticketTTL), productionIDGRPC)
 	return runGRPCHost(ctx, cfg, func(server *grpc.Server) { grpcadapter.RegisterMatchAPIServer(server, service) })
 }
 
@@ -158,7 +171,9 @@ func runGRPCHost(ctx context.Context, cfg config.ServiceConfig, register func(*g
 	httpErr := make(chan error, 1)
 	// 未选择可信事件HTTP端点时仍只暴露健康探针；其他gRPC服务行为不变。
 	var serviceHTTP http.Handler
-	if len(optionalHTTP) > 0 { serviceHTTP = optionalHTTP[0] }
+	if len(optionalHTTP) > 0 {
+		serviceHTTP = optionalHTTP[0]
+	}
 	go func() { httpErr <- servicehost.Run(ctx, cfg, serviceHTTP) }()
 	select {
 	case <-ctx.Done():

@@ -32,4 +32,12 @@ foreach ($field in @('InputSHA256','ArtifactSHA256','BuildResultSHA256')) {
 $source=Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../../Build/Game/TestPluginDemo.ps1') -Raw
 if ($source.IndexOf('$before=Assert-FoundationEditorBuildResult') -ge $source.IndexOf('$result=Invoke-FoundationProcess') -or
     $source -match 'BuildFoundation|UnrealBuildTool|live_compile|trigger_build') { throw '启动门禁顺序/无构建合同被破坏。' }; $passed++
+# 无人值守原生测试不承担Monolith资产制作，必须独立SessionId并排除其单端口/单SQLite编辑器服务。
+# 此处只检查明确CLI合同，不把源码扫描当作真实进程隔离通过；真实结果仍由本次process/index证明。
+foreach($runnerPath in @('Build/Game/TestPluginDemo.ps1','Build/Validation/TestPluginArchitectureUnreal.ps1')) {
+    $runnerSource=Get-Content -LiteralPath (Join-Path $PSScriptRoot ('../../../'+$runnerPath)) -Raw
+    if(!$runnerSource.Contains('-SessionId=$($context.RunId)') -or !$runnerSource.Contains("'-DisablePlugins=Monolith'")) {
+        throw "无人值守测试缺少独立会话/Monolith工具服务隔离：$runnerPath"
+    }; $passed++
+}
 Write-Output "PluginDemoRunnerContractCases=$passed Failed=0 UEExecuted=False BuildExecuted=False"

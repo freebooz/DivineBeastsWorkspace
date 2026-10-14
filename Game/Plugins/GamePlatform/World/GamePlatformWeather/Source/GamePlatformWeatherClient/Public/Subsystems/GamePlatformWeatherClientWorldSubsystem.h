@@ -42,7 +42,8 @@ private:
     float GetEstimatedServerTimeSeconds() const;
     /** ChannelFilter: -1全部，0仅VFX，1仅SFX；保持独立请求身份，禁止跨通道误取消。 */
     void SendPresentationEvent(const FGamePlatformWeatherState& State,
-        bool bCancellation, int32 ChannelFilter = -1);
+        bool bCancellation, int32 ChannelFilter = -1,
+        FGuid CancellationRequestId = FGuid(), FName CancellationTag = NAME_None);
     void CancelPreviousPresentation(int32 ChannelFilter = -1);
 
     FGamePlatformWeatherSnapshot ActiveSnapshot;
@@ -57,5 +58,7 @@ private:
     FName ActiveSfxTag;
     /** 已提交的VFX/SFX天气强度；仅在过渡节点或完成时有限次重新发布，不按0.1s重建粒子。 */
     float LastPresentedIntensity = -1.f;
+    // 每次真实快照切换/清空递增；外部表现Provider同步回调不能让旧快照重设Timer或标识。
+    uint64 SnapshotApplyGeneration = 0;
     bool bClosing = false;
 };

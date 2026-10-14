@@ -21,6 +21,9 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	MatchService_CreateParty_FullMethodName             = "/divinebeasts.backend.match.v1.MatchService/CreateParty"
 	MatchService_CreateMatchmakingTicket_FullMethodName = "/divinebeasts.backend.match.v1.MatchService/CreateMatchmakingTicket"
+	MatchService_ReadPartyState_FullMethodName          = "/divinebeasts.backend.match.v1.MatchService/ReadPartyState"
+	MatchService_CommandParty_FullMethodName            = "/divinebeasts.backend.match.v1.MatchService/CommandParty"
+	MatchService_GetPartyInvitations_FullMethodName     = "/divinebeasts.backend.match.v1.MatchService/GetPartyInvitations"
 )
 
 // MatchServiceClient is the client API for MatchService service.
@@ -31,6 +34,10 @@ const (
 type MatchServiceClient interface {
 	CreateParty(ctx context.Context, in *CreatePartyRequest, opts ...grpc.CallOption) (*CreatePartyResponse, error)
 	CreateMatchmakingTicket(ctx context.Context, in *CreateMatchmakingTicketRequest, opts ...grpc.CallOption) (*CreateMatchmakingTicketResponse, error)
+	// 普通组队交互复用Shared定义的JSON对象，内部Envelope不再维护第二套字段编号映射。
+	ReadPartyState(ctx context.Context, in *PartyReadRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
+	CommandParty(ctx context.Context, in *PartyCommandRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
+	GetPartyInvitations(ctx context.Context, in *PartyReadRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
 }
 
 type matchServiceClient struct {
@@ -61,6 +68,36 @@ func (c *matchServiceClient) CreateMatchmakingTicket(ctx context.Context, in *Cr
 	return out, nil
 }
 
+func (c *matchServiceClient) ReadPartyState(ctx context.Context, in *PartyReadRequest, opts ...grpc.CallOption) (*PartyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartyDataResponse)
+	err := c.cc.Invoke(ctx, MatchService_ReadPartyState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *matchServiceClient) CommandParty(ctx context.Context, in *PartyCommandRequest, opts ...grpc.CallOption) (*PartyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartyDataResponse)
+	err := c.cc.Invoke(ctx, MatchService_CommandParty_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *matchServiceClient) GetPartyInvitations(ctx context.Context, in *PartyReadRequest, opts ...grpc.CallOption) (*PartyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartyDataResponse)
+	err := c.cc.Invoke(ctx, MatchService_GetPartyInvitations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MatchServiceServer is the server API for MatchService service.
 // All implementations must embed UnimplementedMatchServiceServer
 // for forward compatibility.
@@ -69,6 +106,10 @@ func (c *matchServiceClient) CreateMatchmakingTicket(ctx context.Context, in *Cr
 type MatchServiceServer interface {
 	CreateParty(context.Context, *CreatePartyRequest) (*CreatePartyResponse, error)
 	CreateMatchmakingTicket(context.Context, *CreateMatchmakingTicketRequest) (*CreateMatchmakingTicketResponse, error)
+	// 普通组队交互复用Shared定义的JSON对象，内部Envelope不再维护第二套字段编号映射。
+	ReadPartyState(context.Context, *PartyReadRequest) (*PartyDataResponse, error)
+	CommandParty(context.Context, *PartyCommandRequest) (*PartyDataResponse, error)
+	GetPartyInvitations(context.Context, *PartyReadRequest) (*PartyDataResponse, error)
 	mustEmbedUnimplementedMatchServiceServer()
 }
 
@@ -84,6 +125,15 @@ func (UnimplementedMatchServiceServer) CreateParty(context.Context, *CreateParty
 }
 func (UnimplementedMatchServiceServer) CreateMatchmakingTicket(context.Context, *CreateMatchmakingTicketRequest) (*CreateMatchmakingTicketResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateMatchmakingTicket not implemented")
+}
+func (UnimplementedMatchServiceServer) ReadPartyState(context.Context, *PartyReadRequest) (*PartyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadPartyState not implemented")
+}
+func (UnimplementedMatchServiceServer) CommandParty(context.Context, *PartyCommandRequest) (*PartyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CommandParty not implemented")
+}
+func (UnimplementedMatchServiceServer) GetPartyInvitations(context.Context, *PartyReadRequest) (*PartyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPartyInvitations not implemented")
 }
 func (UnimplementedMatchServiceServer) mustEmbedUnimplementedMatchServiceServer() {}
 func (UnimplementedMatchServiceServer) testEmbeddedByValue()                      {}
@@ -142,6 +192,60 @@ func _MatchService_CreateMatchmakingTicket_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MatchService_ReadPartyState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PartyReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchServiceServer).ReadPartyState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchService_ReadPartyState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchServiceServer).ReadPartyState(ctx, req.(*PartyReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MatchService_CommandParty_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PartyCommandRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchServiceServer).CommandParty(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchService_CommandParty_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchServiceServer).CommandParty(ctx, req.(*PartyCommandRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MatchService_GetPartyInvitations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PartyReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchServiceServer).GetPartyInvitations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchService_GetPartyInvitations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchServiceServer).GetPartyInvitations(ctx, req.(*PartyReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MatchService_ServiceDesc is the grpc.ServiceDesc for MatchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -156,6 +260,18 @@ var MatchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateMatchmakingTicket",
 			Handler:    _MatchService_CreateMatchmakingTicket_Handler,
+		},
+		{
+			MethodName: "ReadPartyState",
+			Handler:    _MatchService_ReadPartyState_Handler,
+		},
+		{
+			MethodName: "CommandParty",
+			Handler:    _MatchService_CommandParty_Handler,
+		},
+		{
+			MethodName: "GetPartyInvitations",
+			Handler:    _MatchService_GetPartyInvitations_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

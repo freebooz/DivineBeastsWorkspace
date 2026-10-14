@@ -14,4 +14,7 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsNotificationWidget
     : public UGamePlatformNotificationWidget
 {
     GENERATED_BODY()
+public:
+    /** 消费通知服务已经验证的值；仅更新真实命名文本，不持有队列、不创建计时器或改变奖励。 */
+    virtual void ApplyNotificationRequest(const FGamePlatformUINotificationRequest& InRequest) override;
 };

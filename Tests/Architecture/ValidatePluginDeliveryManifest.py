@@ -6,6 +6,7 @@ Passed只检查RunId格式及证据路径存在，不解析证据内容、不证
 """
 from __future__ import annotations
 import json
+import re
 import sys
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from uuid import UUID
@@ -99,7 +100,35 @@ def validate(root: Path, manifest: dict) -> list[str]:
             errors.append(f"{ident}描述身份/路径错配")
             continue
         descriptor = json.loads(descriptor_path.read_text(encoding="utf-8-sig"))
-        actual_modules = {m["Name"]: m["Type"] for m in descriptor.get("Modules", [])}
+        # 对清单内每个真实插件均执行命名与依赖去重，不只检查项目主入口闭包。
+        plugin_dependencies = [
+            entry.get("Name") for entry in descriptor.get("Plugins", [])
+        ]
+        if (any(not isinstance(name, str) or not name for name in plugin_dependencies)
+                or len({name.casefold() for name in plugin_dependencies}) != len(plugin_dependencies)):
+            errors.append(f"{ident}插件依赖缺名或重复")
+        friendly_name = descriptor.get("FriendlyName")
+        if not isinstance(friendly_name, str) or not friendly_name or not friendly_name.isascii():
+            errors.append(f"{ident}FriendlyName必须是非空ASCII英文标识")
+        if descriptor_path.parent.name != ident:
+            errors.append(f"{ident}插件目录与描述身份不一致")
+        module_entries = descriptor.get("Modules", [])
+        module_names = [m.get("Name") for m in module_entries]
+        if (any(not isinstance(name, str) or not name for name in module_names)
+                or len({name.casefold() for name in module_names}) != len(module_names)):
+            errors.append(f"{ident}重复或无效的模块身份")
+        for module_name in module_names:
+            if not isinstance(module_name, str) or not module_name:
+                continue
+            rule_path = descriptor_path.parent / "Source" / module_name / f"{module_name}.Build.cs"
+            if not rule_path.is_file():
+                errors.append(f"{ident}/{module_name}缺少同名Build.cs模块构建规则")
+                continue
+            # UE模块注册、目录和ModuleRules类名应一致；不对C#源码执行动态求值。
+            rule_source = rule_path.read_text(encoding="utf-8-sig")
+            if not re.search(r"\bclass\s+" + re.escape(module_name) + r"\s*:\s*ModuleRules\b", rule_source):
+                errors.append(f"{ident}/{module_name}构建规则类名不符合模块身份")
+        actual_modules = {m["Name"]: m["Type"] for m in module_entries}
         registered = record.get("Modules", [])
         names = [m.get("Name") for m in registered]
         if len(names) != len(set(names)) or {m.get("Name"): m.get("HostType") for m in registered} != actual_modules:

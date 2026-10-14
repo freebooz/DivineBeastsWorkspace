@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-13",
+  "workspace": "DivineBeastsWorkspace",
+  "branch": "main",
+  "observationSource": [
+    "Cwebcodex.list_project_files(远端真实目录列表)",
+    "Cwebcodex.project_artifact.metadata(逐个文件存在性样本)"
+  ],
+  "nonAtomicDirectorySurvey": true,
+  "evidenceType": "project_filesystem_only_not_UE_asset_registry",
+  "requestedRemainingNativeAssets": {
+    "domainMF": {
+      "expected": 60,
+      "physicalFound": 0,
+      "physicalMissing": 60,
+      "byOwner": {
+        "GamePlatformSurface": 46,
+        "GamePlatformVFX": 4,
+        "DBAPresentationPack_Core": 10
+      }
+    },
+    "materialLayers": {
+      "expected": 12,
+      "physicalFound": 0,
+      "physicalMissing": 12
+    },
+    "sharedLayerBlend": {
+      "expected": 1,
+      "physicalFound": 0,
+      "physicalMissing": 1
+    },
+    "uiMaterialFunctions": {
+      "expected": 7,
+      "physicalFound": 0,
+      "physicalMissing": 7
+    },
+    "uiReviewMaterials": {
+      "expected": 12,
+      "physicalFound": 0,
+      "physicalMissing": 12
+    },
+    "actorReviewBlueprint": {
+      "expected": 1,
+      "physicalFound": 0,
+      "physicalMissing": 1
+    },
+    "widgetReviewBlueprint": {
+      "expected": 1,
+      "physicalFound": 0,
+      "physicalMissing": 1
+    },
+    "reviewMaps": {
+      "expected": 4,
+      "physicalFound": 0,
+      "physicalMissing": 4
+    }
+  },
+  "additionalReviewDependencies": {
+    "domainReviewMaterials": {
+      "expected": 60,
+      "physicalFound": 0,
+      "physicalMissing": 60
+    }
+  },
+  "totals": {
+    "userRequestedNativeAssets": 98,
+    "physicalFound": 0,
+    "physicalMissing": 98,
+    "additionalDomainReviewMaterials": 60,
+    "fullProductionPhysicalTargets": 158
+  },
+  "actualDirectories": {
+    "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/MaterialFunctions": {
+      "sevenSubfolders": [
+        "Core",
+        "Foliage",
+        "Landscape",
+        "Layers",
+        "Masks",
+        "Utility",
+        "Water"
+      ],
+      "existingFilesAcrossSubfolders": 27,
+      "newRequestedFunctionsFound": 0
+    },
+    "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Materials/Functions": {
+      "existingFiles": 6,
+      "newRequestedFunctionsFound": 0
+    },
+    "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/MaterialFunctions/Character": {
+      "directoryExists": false
+    },
+    "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Content/Materials/Functions": {
+      "existingFiles": 5,
+      "newRequestedFunctionsFound": 0
+    },
+    "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/MaterialLayers": {
+      "directoryExists": false
+    },
+    "Game/Content/Development/MaterialLibrary/Materials": {
+      "existingOldReviewMaterials": 26,
+      "newDomainReviewSuffix": "_DomainReview",
+      "newDomainReviewFound": 0
+    },
+    "Game/Content/Development/MaterialLibrary/UI": {
+      "existingOldUIReviewFile": "M_DBA_UI_GradientBackground_Review.uasset",
+      "newUIDevelopmentMaterialsSubdirectoryExists": false,
+      "uiMapsSubdirectoryExists": false
+    },
+    "Game/Content/Development/MaterialLibrary/Blueprints": {
+      "directoryExists": false
+    },
+    "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/Development/MaterialLibrary/UI": {
+      "directoryExists": false
+    },
+    "Game/Content/Development/MaterialLibrary/Surface": {
+      "directoryExists": false
+    },
+    "Game/Content/Development/MaterialLibrary/VFX": {
+      "directoryExists": false
+    },
+    "Game/Content/Development/MaterialLibrary/Project": {
+      "directoryExists": false
+    }
+  },
+  "runnerState": {
+    "limit": 4,
+    "running": 4,
+    "queuedAtLastCheck": 5,
+    "monolithRealCall": "Unreal Editor not running"
+  },
+  "validation": {
+    "offlineIsolatedPythonCompilation": 13,
+    "offlineUnittestPassed": 16,
+    "remoteRunnerPythonNotRun": true,
+    "ue58NativeCreationNotRun": true,
+    "finalShaderCompileNotRun": true,
+    "manualVisualReviewNotRun": true
+  },
+  "safeguards": [
+    "只记录本轮实际读取到的物理目录状态",
+    "不同子目录中既有资产绝不按新配方覆盖",
+    "物理目录可被其它并行任务改变，非原子快照需复查",
+    "不将文件存在性推断为AssetRegistry注册、UE可加载、Shader编译成功或人工验收"
+  ]
+}

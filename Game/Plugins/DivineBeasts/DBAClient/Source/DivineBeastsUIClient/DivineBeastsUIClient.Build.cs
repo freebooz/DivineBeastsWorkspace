@@ -25,6 +25,8 @@ public class DivineBeastsUIClient : ModuleRules
             "GamePlatformUIClient",
             // 公开UI类持有Data值租约，调用方编译这些头需要平台Data公开合同。
             "GamePlatformData",
+            // 公共小队视图只暴露平台普通队伍/请求值合同，不包含竞技语义或传输实现。
+            "GamePlatformOnline",
             // 设置页公开快照合同来自现有平台设备设置服务；不另存一份设备配置。
             "GamePlatformSettingsClient",
             // 当前公开战斗反馈映射直接暴露 FGamePlatformCombatEvent，
@@ -41,8 +43,12 @@ public class DivineBeastsUIClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsApplicationFlowClient",
+            // 私有命令桥复用唯一认证、同源传输、预算与取消，不另建HTTP执行器。
+            "GamePlatformOnlineClient",
             // 私有ESC接线只消费项目世界控制器公开事件，不让双端世界依赖客户端UI。
             "DBAWorldsRuntime",
+            // 世界HUD按项目唯一体验/服务器角色目录选择；不依赖竞技或在UI重复维护角色身份。
+            "DivineBeastsRuntime",
             // 仅Private鼠标预览适配使用EKeys，不把输入按键依赖扩散给公开UI契约。
             "InputCore",
             // 玩家状态 ViewModel 只在 Private 实现中订阅平台 ASC/项目 Momentum AttributeSet；公开 UI 契约不泄漏 Gameplay 类型。

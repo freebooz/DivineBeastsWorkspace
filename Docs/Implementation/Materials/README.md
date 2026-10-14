@@ -39,6 +39,8 @@
 每个制作动作都有独立保存/回读或失败证据，记录于 Saved/Validation/MaterialLibrary 与 Saved/Validation/MaterialLibraryUI。若返回超时或未知状态，先核对资产注册表及物理包，禁止直接重放可能已执行的写操作。以上新增代码不等于原生资产已落盘；必须取得真实UE记录才能变更201项完成状态。统一Editor/Client/Server编译、Shader、Cook、GPU与人工签收继续后置。
 
 
+**2026-10-13原生物理资源核查**：已直接使用CwebCodex远端目录接口审查正式工作空间；本轮目标60个MF、12个ML、1个Blend、7个UI MF、12份UI QA、Actor BP、Widget及4张地图，合计98份请求目标原生资产，已发现真实文件0份；额外60份领域QA审核材质同样未发现对应目标文件。已有26份旧审核材质、5个旧UI函数及旧单份UI QA保留在不同目标路径，不得覆盖。机器可追溯证据：`MaterialLibraryFilesystemAudit_20261013.json`（文件系统盘点，非原生UE资产注册表证明）。离线隔离镜像中实测Python语法检查13项、项目静态/契约测试16项通过；实际UE、Monolith、Shader和Cook全部尚未验收。新增原生分批作者已要求逐项检查.uasset物理保存、原生类型与表达式数量后才向下执行。
+
 ## 首批真实UE材质作者脚本（2026-10-13）
 
 - `MaterialAuthoringBatch_20261013.json`（八项制作批次机器台账）及`MaterialAuthoringBatch_20261013.md`（中文实施与验收说明）。

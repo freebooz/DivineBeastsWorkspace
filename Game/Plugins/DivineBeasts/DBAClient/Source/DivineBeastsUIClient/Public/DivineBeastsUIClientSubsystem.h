@@ -135,6 +135,9 @@ public:
     /** 打开公共世界手册；Section只接受Character/MapQuest/Spellbook/Party，未入世界或其他菜单占用时拒绝。
      * 已打开时只切页签。资源缺失走原平台异步失败路径，绝不在运行时造占位Widget。 */
     bool OpenWorldJournal(FName Section);
+    /** 打开任务/社交/公告公共世界页；仅世界门禁允许时受理，使用领域模型而非错误的通用模型。
+     * 返回异步请求身份，不代表显示成功；未接业务适配的领域模型保持不可用，不伪造账号数据。 */
+    FGamePlatformUIAsyncRequest OpenWorldUtilityScreen(FName ScreenId);
 
     void SubmitCommand(
         FDivineBeastsUICommand Command,

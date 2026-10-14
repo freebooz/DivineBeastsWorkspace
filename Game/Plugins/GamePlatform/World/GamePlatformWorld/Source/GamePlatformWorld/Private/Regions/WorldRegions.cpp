@@ -65,8 +65,9 @@ void UGamePlatformWorldSubsystem::UpdateRegions()
     Regions.RemoveAll([this](const auto& V){return !Owns(V.Value.Provider);});
     Observers.RemoveAll([this](const auto& V){return !Owns(V.Owner);});
     for(auto It=Subscriptions.CreateIterator();It;++It)if(!Owns(It.Value()->Owner))It.RemoveCurrent();
-    const auto Copy=Observers;
-    for(const auto& Observer:Copy)
+    // 本轮已先移除失效Owner；UpdateObserver对已有Owner仅原位更新，不改变数组容量。
+    // 直接遍历自身可避免每次世界状态采样复制整个观察者列表。
+    for(const auto& Observer:Observers)
     {
         auto Result=UpdateObserver(Observer.Owner,Observer.Position,Snapshot.Context.ContextGeneration);
         if(!Result.IsSuccess())Fail(Result.Code,Result.Message);

@@ -93,3 +93,7 @@ Game/Plugins/GamePlatform/World/GamePlatformPCG
 本轮已经完成第一批 M0/M1 源码落地，包括 Schema v1、P0～P9 原语与世界阶段、Domain ID、环境 Definition、PriorityCarve（优先级挖洞）规则、基础放置器/WorldDirector（世界编排器）、Template Contract（模板合同）、首批节点、SelectSpanMeshByLength（按跨度选择栏片），以及使用真实 UE5.8 `UPCGGraph` API 的 M0/M1 Foundation Template Generator（基础模板生成器）和 Commandlet（命令行工具），并保留旧四节点兼容路径。架构静态门禁与原生策略测试已通过；Foundation模板尚未实际执行落盘，Gold Level、UE Automation、Client/Server Cook、HiGen/World Partition 与性能验收仍未完成，未执行项目不得写成“已通过”。
 
 本次设计审查整改的真实行为、线程/所有权/失败合同及验证边界见 [2026-09-30专属说明](Docs/DesignRemediation-2026-09-30.md)。其中原生规则测试与UE实际运行分别记录，不混写交付状态。
+
+## 2026-10-14 空闲运行成本整改（待 UE5.8 复验）
+
+`UGamePlatformPCGWorldSubsystem`（PCG 世界子系统）初始化仅创建当前世界作用域账本，不再无条件注册每 50 毫秒运行的 `FTSTicker`（引擎周期回调）。`RequestGeneration`（请求生成）完成权限、身份、区域和资源租约校验后首次启动轮询；最后一笔请求完成清理及终态派发后停止，下一笔请求能够重新注册。处理期间仅在快照需要发布时才生成订阅者身份快照，保留取消、世界退出、专用服务器禁止装饰生成的既有边界。实际 CPU、内存、原生 PCG 生成取消和客户端循环重启性能仍须通过 Editor/Client/Server（编辑器、客户端、专用服务器）编译及真实 UE 自动化确认，本轮没有实测提升数值。

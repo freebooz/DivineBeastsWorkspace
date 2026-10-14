@@ -23,11 +23,11 @@ void UGamePlatformWidgetBase::InitializeWidgetViewModel(
 
     ViewModel = InViewModel;
 
-    if (bPlatformEventsBound && IsValid(ViewModel))
+    if (bPlatformEventsBound)
     {
-        ViewModel->OnViewStateChanged.AddUniqueDynamic(
-            this,
-            &UGamePlatformWidgetBase::HandleViewModelStateChanged);
+        if (IsValid(ViewModel)) ViewModel->OnViewStateChanged.AddUniqueDynamic(
+            this, &UGamePlatformWidgetBase::HandleViewModelStateChanged);
+        // 清空模型同样是状态变化；派生必须撤旧来源并显示未知，而非保留上个世界/账号的文本。
         RefreshInitialState();
     }
 }

@@ -69,6 +69,7 @@
 
 - **2026-10-13剩余九阶段制作入口补齐**：新增统一资源调度 RunMaterialLibraryCompleteResourcesUE58.py、三层领域/材质层/审核材质分批原生入口 RunMaterialLibraryNativeBatchesMonolith.py、UI七函数Monolith队列执行器 RunMaterialLibraryUIProductionMonolith.py、四图安全创建/回读与逐图布局入口 RunMaterialLibraryReviewMapsMonolith.py、十二份UI审核材质的真正Widget Image Brush绑定入口 BindMaterialLibraryUIReviewBrushesMonolith.py，全部在既有 Tools/Unreal 子目录；既有通用函数、材质层、UI审核母版及Widget作者增加批次切片、UE5.8正式工程路径门禁、半成品拒绝跳过、物理包验证和重复执行保护。测试源码新增原生产阶段数量/顺序和资产归属校验。该批仅为可执行源码与创建入口，尚未获得Editor成功重启及Monolith返回真正项目会话的证据，故不可把60MF、12ML与共享Blend、7UI、12份UI QA、BP/WBP、四图标成已生成、已编译或已人工通过；完整Client/Server及Cook按用户要求后置。
 
+- **2026-10-13物理目录盘点**：使用真实CwebCodex目录列表核对全部60个领域函数（Surface46、VFX4、项目10）、12材质层+Blend、7 UI函数、12份UI审核材质、BP、WBP及4地图目标路径，**98份目标新增原生文件均未在项目物理目录发现**，另60份待创建领域QA也未发现；已有不同路径的26份旧审核材质与5份UI函数予以保护。盘点详见`MaterialLibraryFilesystemAudit_20261013.json`，属于非原子远端文件系统证据，不能代替UE AssetRegistry或Shader验证。已在隔离镜像实际执行16/16静态契约测试，通过不等于UE原生资产制作完成。本轮原生分批入口另已增加对每批目标类、物理.uasset和基础表达式数量的UE内执行后检查。
 ## 当前范围总数和闭环要求
 - 阶段工单的机器化执行顺序、未授权提前编译边界及每项实证要求归档于`MaterialLibraryResourceWorkQueue_20261013.json`（资源制作队列）。
 - `MaterialCapabilityRegistry_V1.json`（201项索引）的60个领域MF配方、12个MaterialLayer与7个UI配方已逐项更新`SourceStatus`（源码状态），不会把仅有配方的资源标成已生成；`MaterialFunctionLibraryIndex.md`（201项中文台账）也已与当前真实状态同步。

@@ -26,6 +26,8 @@ UCLASS()
 class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoWorldSubsystem final : public UWorldSubsystem
 {
     GENERATED_BODY()
+    /** 回归验证平台同步打开回调的真实所有权，不向生产暴露测试入口。 */
+    friend class FDivineBeastsDemoSynchronousScreenTest;
 public:
     virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
@@ -140,6 +142,9 @@ private:
     uint64 OverlayGeneration = 0;
     bool bRegisteredDemoScreen = false;
     bool bOpeningScreen = false;
+    /** 平台可能同步完成；返回前以模型身份识别本次页面，返回后以请求GUID核对终态。 */
+    TWeakObjectPtr<class UDivineBeastsDemoHubViewModel> OpeningScreenModel;
+    FGuid SynchronouslyOpenedScreenRequestId;
     bool bSynchronousScreenFailure = false;
     bool bOverlayClosing = false;
     /** 只在本世界演示UI存在期间接管输入；释放时恢复默认游戏输入和原鼠标显示状态。 */

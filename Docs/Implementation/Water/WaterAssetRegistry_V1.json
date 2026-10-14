@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "project": "SSLM",
+  "recordedOn": "2026-10-14",
+  "descriptionChinese": "水体原生资产审核台账。仅已实测磁盘存在的资产列为已生成；地图和Fluid Flux尚未完成，不得虚构。",
+  "mounts": {
+    "GamePlatformSurface": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content",
+    "GamePlatformVFX": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content",
+    "DBAWorldPack_Village": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content",
+    "Game": "Game/Content"
+  },
+  "requiredAssets": {
+    "水体材质函数": [
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterDepthColor",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterFlow",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterNormalBlend",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterImpactFoam",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterRipple",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterWetness",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterCaustics",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterUnderwater",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_WaterDistanceLOD",
+      "/GamePlatformSurface/MaterialFunctions/Water/MF_GP_ShoreFoam"
+    ],
+    "水体母材质": [
+      "/GamePlatformSurface/Materials/Water/M_GP_Water_Master",
+      "/GamePlatformSurface/Materials/Water/M_GP_Waterfall_Master",
+      "/GamePlatformSurface/Materials/Water/M_GP_WaterFoam_Master",
+      "/GamePlatformSurface/Materials/Water/M_GP_WaterRipple_Master",
+      "/GamePlatformSurface/Materials/Water/M_GP_WaterMist_Master"
+    ],
+    "材质实例": [
+      "/GamePlatformSurface/Materials/Water/MI_GP_Lake_Native",
+      "/GamePlatformSurface/Materials/Water/MI_GP_River_Native",
+      "/GamePlatformSurface/Materials/Water/MI_GP_Lake_Calm",
+      "/GamePlatformSurface/Materials/Water/MI_GP_Waterfall_Light",
+      "/GamePlatformSurface/Materials/Water/MI_GP_Foam_Shore",
+      "/GamePlatformSurface/Materials/Water/MI_GP_Ripple_Clear",
+      "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Lake",
+      "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_River",
+      "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Waterfall",
+      "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Foam"
+    ],
+    "Niagara特效": [
+      "/GamePlatformVFX/Water/Niagara/NS_GP_WaterRipple",
+      "/GamePlatformVFX/Water/Niagara/NS_GP_WaterfallMist",
+      "/GamePlatformVFX/Water/Niagara/NS_GP_WaterfallSplash",
+      "/GamePlatformVFX/Water/Niagara/NS_GP_WaterFoam"
+    ],
+    "通用瀑布蓝图": [
+      "/GamePlatformVFX/Water/Blueprints/BP_GP_WaterfallVisual"
+    ]
+  },
+  "sourceTextureManifest": "Docs/Implementation/Water/SourceTextures/WaterTextureSourceManifest.json",
+  "sourceTextureStatusChinese": "4张1024x1024平铺PNG源图已实际生成；材质Texture2D资产尚未通过UE编辑器导入，不纳入原生uasset数量。",
+  "reviewSceneManifest": "Docs/Implementation/Water/WaterReviewSceneManifest_V1.json",
+  "waterVisualDefinitionManifest": "Docs/Implementation/Water/WaterVFXDefinitionAuthoring_V1.json",
+  "pendingAssets": {
+    "水体特效逻辑Definition数据资产": [
+      "/GamePlatformVFX/Water/Definitions/D_GP_WaterRipple",
+      "/GamePlatformVFX/Water/Definitions/D_GP_WaterSplash"
+    ],
+    "水体独立审核地图": [
+      "/Game/Development/Water/Maps/L_GP_WaterReview"
+    ],
+    "项目层水体预设": [
+      "/DBAPresentationPack_Core/Water/Definitions/DA_DBA_Village_WaterPresentation"
+    ],
+    "前端角色预览FluidFlux": "可选，用户暂不启用，未安装，不应生成硬引用"
+  },
+  "architecture": {
+    "serverModule": "GamePlatformWaterRuntime（水域几何权威查询及低频状态复制）",
+    "clientModule": "GamePlatformWaterClient（客户端水面和平台中立表现请求）",
+    "editorModule": "GamePlatformWaterEditor（编辑器只读水域审查）",
+    "authoritativePlacement": "正式地形审核后按权威地图签入，不从GPU渲染水波求服务端深度",
+    "fluidFlux": "仅角色选择/创建客户端可选；当前不启用"
+  },
+  "validation": {
+    "assetExistence": "2026-10-14远程工作区目录实查10+5+10+4+1=30个原生资产均存在",
+    "nativeMaterialCompiles": "未完成全量Shader编译、性能测试与Cook",
+    "editorBootstrap": "wc_job_Kq4Nngusr6eMLoCB，最小水体编译超时，尚无P4审核地图",
+    "visualReview": "未进行客户端实机视觉审核"
+  }
+}

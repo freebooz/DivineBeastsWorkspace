@@ -72,6 +72,9 @@ try {
         $rendering = if ($suite -eq 'UI') { 'RealRHIOffscreen' } else { 'NullRHI' }
         $renderArguments = if ($suite -eq 'UI') { @('-RenderOffscreen') } else { @('-nullrhi') }
         $arguments = @($context.Project,'-unattended','-nop4','-nosplash','-stdout','-FullStdOutLogOutput',
+            # 验证已保存资产，不创建UI；避免工具插件单端口/SQLite与交互Editor冲突，并隔离自动化会话。
+            '-DisablePlugins=Monolith',"-SessionId=$($context.RunId)",
+            '-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',
             "-FoundationRunId=$($context.RunId)","-abslog=$(Join-Path $directory 'Unreal.log')",
             '-GamePlatformDataTestDefinition=GamePlatformDefinition:foundation.probe@1',
             "-ExecCmds=Automation RunTests $($prefix.TrimEnd('.'))",

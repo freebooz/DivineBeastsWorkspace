@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "project": "SSLM",
+  "asOf": "2026-10-14",
+  "description": "平台通用水波VFX经项目目录逻辑预载后才能在客户端播放。当前仅存在Niagara系统资产；主DataAsset定义尚待UE Monolith创建和保存，不能宣称预载成功。",
+  "lifecycle": "World（世界作用域），本地玩家对应内容包必须在切图/退出时撤销",
+  "waterPresentation": [
+    {
+      "semanticTag": "Presentation.Water.Ripple.VFX",
+      "logicalDefinitionId": "platform.water.ripple@1",
+      "expectedDefinitionAsset": "/GamePlatformVFX/Water/Definitions/D_GP_WaterRipple",
+      "niagaraSystem": "/GamePlatformVFX/Water/Niagara/NS_GP_WaterRipple",
+      "definitionSourceStatus": "未通过引擎创建及预载测试",
+      "intendedVisual": "角色涉水及脚步涟漪"
+    },
+    {
+      "semanticTag": "Presentation.Water.Splash.VFX",
+      "logicalDefinitionId": "platform.water.splash@1",
+      "expectedDefinitionAsset": "/GamePlatformVFX/Water/Definitions/D_GP_WaterSplash",
+      "niagaraSystem": "/GamePlatformVFX/Water/Niagara/NS_GP_WaterfallSplash",
+      "definitionSourceStatus": "未通过引擎创建及预载测试",
+      "intendedVisual": "进入浅水与落水时瞬时水花"
+    }
+  ],
+  "activation": "项目本地玩家调用 UDivineBeastsPresentationClientSubsystem::ActivateWaterVisuals；仅Active后目录发布，具体涟漪请求由GamePlatformWaterClient向平台中立表现服务提交",
+  "constraints": [
+    "服务端禁止引用Niagara",
+    "无真实Definition/失败预载不得发布",
+    "新手村的水域动态配置不由Shader决定",
+    "Fluid Flux仅可选角色工作室适配而非项目核心依赖"
+  ]
+}

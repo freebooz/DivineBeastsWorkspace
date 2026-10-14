@@ -17,6 +17,7 @@ import argparse
 import json
 import os
 import re
+import runpy
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -88,8 +89,50 @@ def require_marker(response, marker, identity):
     raise RuntimeError("UE未回传批次完成标志："+identity+"；必须人工核实后续建")
 
 
-def call_ue_script(editor_python, path, args, identity):
-    """在UE进程内按指定argv运行现有作者脚本；绝不把Python文件当作二进制资源。"""
+def asset_contracts(stage, owner, offset, count):
+    """从冻结配方计算本批应真正保存的资产；作者返回成功不等于资源落盘。"""
+    author = runpy.run_path(str(SCRIPTS[stage]), run_name="_sslm_readonly_asset_contract")
+    rows = []
+    if stage in ("functions", "domain_reviews"):
+        entries = [r for r in author["load_catalog"]() if r["owner"] == owner]
+        for entry in entries[offset:offset + count]:
+            if stage == "functions":
+                target = author["asset_path"](entry)
+                disk = str(author["disk_path"](entry))
+                cls = "MaterialFunction"
+                minimum = len(entry["pins"]) + len(entry["outputs"]) + 1
+            else:
+                target = author["REVIEW_ROOT"] + "/M_DBA_MaterialLibrary_" + entry["name"] + "_DomainReview"
+                disk = str(ROOT / "Game/Content/Development/MaterialLibrary/Materials" / (target.rsplit("/", 1)[-1] + ".uasset"))
+                cls = "Material"
+                minimum = len(entry["pins"]) + 2
+            rows.append((target, disk, cls, minimum))
+    elif stage == "layers":
+        entries = author["identities"]()[offset:offset + count]
+        blend = author["BLEND"]
+        rows.append((blend, str(author["DISK"] / (blend.rsplit("/", 1)[-1] + ".uasset")),
+                     "MaterialFunctionMaterialLayerBlend", 5))
+        for entry in entries:
+            target = entry["materialLayerAssetPath"]
+            rows.append((target, str(author["DISK"] / (target.rsplit("/", 1)[-1] + ".uasset")),
+                         "MaterialFunctionMaterialLayer", 7))
+    elif stage == "blueprint":
+        target = author["ASSET"]
+        rows.append((target, str(author["CONTENT"] / (target.rsplit("/", 1)[-1] + ".uasset")),
+                     "Blueprint", 0))
+    elif stage == "ui_reviews":
+        for entry in author["load_specs"]()[offset:offset + count]:
+            target = author["qa_path"](entry["name"])
+            rows.append((target, str(author["QA_DISK"] / (target.rsplit("/", 1)[-1] + ".uasset")),
+                         "Material", len(entry["inputs"]) + 2))
+    if not rows or len(rows) != count + (1 if stage == "layers" else 0):
+        raise RuntimeError("原生资产合同数量与批次不符：" + stage)
+    return rows
+
+
+def call_ue_script(editor_python, path, args, identity, stage, owner, offset, count):
+    """在真实UE进程运行既有作者后，逐份核对原生类型、表达式与物理文件。"""
+    contracts = asset_contracts(stage, owner, offset, count)
     script = (
         "import unreal,os,sys,runpy\n"
         "project=str(unreal.Paths.get_project_file_path())\n"
@@ -104,9 +147,20 @@ def call_ue_script(editor_python, path, args, identity):
         " runpy.run_path(" + repr(str(path)) + ",run_name='__main__')\n"
         "finally:\n"
         " sys.argv=previous\n"
-        "print(" + repr("SSLM_NATIVE_BATCH_DONE:" + identity) + ")\n"
+        "contracts=" + repr(contracts) + "\n"
+        "for asset,disk,cls,min_nodes in contracts:\n"
+        " obj=unreal.EditorAssetLibrary.load_asset(asset)\n"
+        " assert isinstance(obj,getattr(unreal,cls)),('原生类型不符',asset,cls)\n"
+        " assert os.path.isfile(disk),('未保存真实uasset',disk)\n"
+        " if min_nodes:\n"
+        "  num=(unreal.MaterialEditingLibrary.get_num_material_expressions(obj) if cls=='Material'\n"
+        "       else unreal.MaterialEditingLibrary.get_num_material_expressions_in_function(obj))\n"
+        "  assert num>=min_nodes,('原生表达式数量不足',asset,num,min_nodes)\n"
+        " if " + repr(stage) + "=='ui_reviews':\n"
+        "  assert obj.get_editor_property('material_domain')==unreal.MaterialDomain.MD_UI,'UI审核材质域错误'\n"
+        "print(" + repr("SSLM_NATIVE_BATCH_SAVED:" + identity + ":" + str(len(contracts))) + ")\n"
     )
-    require_marker(editor_python(script), "SSLM_NATIVE_BATCH_DONE", identity)
+    require_marker(editor_python(script), "SSLM_NATIVE_BATCH_SAVED", identity)
 
 
 def main():
@@ -170,8 +224,8 @@ def main():
                    "author": str(script.relative_to(ROOT)), "status": "in_progress"}
             evidence["batches"].append(row)
             checkpoint()
-            call_ue_script(editor_python, script, args, identity)
-            row["status"] = "ue_author_returned_finished_requires_registry_audit"
+            call_ue_script(editor_python, script, args, identity, stage, owner, offset, count)
+            row["status"] = "ue_native_assets_saved_and_type_checked_shader_pending"
             checkpoint()
         evidence["status"] = "batches_completed_not_final_verified"
     except Exception as error:

@@ -24,9 +24,14 @@
 
 ## 会话准入数据闭环审查（真实源码定位）
 
-已核对UE`GamePlatformHttpAdmissionProvider.cpp`（平台服务器准入HTTP提供者）：当前实际请求路径是`/internal/v1/gameservers/validate-transfer`（游戏服迁移票据校验），响应被映射为`FGamePlatformServerVerifiedAdmission`（客户端/服务器的准入投影）；该函数本身并不写入`session_bindings`（玩家会话绑定表）。Go`Backend/migrations/000003_session_admission.sql`（会话准入数据库脚本）则以`session_commit`写入`session_bindings`，并要求当前绑定`authority_until`未过期；`Backend/internal/platform/database/postgresadmission/store.go`（准入存储）声明单次提交租约不超过30秒。当前尚未看到已装配的自动续租器或与上述UE票据验证路径一致的持久绑定写入证据。因此PG可信库存授权在缺少真实绑定时将安全拒绝，**不能标记联机发奖已可用**。
+已核对UE`GamePlatformHttpAdmissionProvider.cpp`（平台服务器准入HTTP提供者）：当前实际请求路径是`/internal/v1/gameservers/validate-transfer`（游戏服迁移票据校验），响应被映射为`FGamePlatformServerVerifiedAdmission`（客户端/服务器的准入投影）；该函数本身并不写入`session_bindings`（玩家会话绑定表）。Go`Backend/migrations/000003_session_admission.sql`（会话准入数据库脚本）则以`session_commit`写入`session_bindings`，并要求当前绑定`authority_until`未过期；`Backend/internal/platform/database/postgresadmission/store.go`（准入存储）声明单次提交租约不超过30秒。此前未发现自动续租器；目前已补入专用服务器定时续租源码，但它与上述UE票据验证路径一致的**首次持久绑定写入**仍未得到实际运行证据。因此PG可信库存授权在缺少真实绑定时将安全拒绝，**不能标记联机发奖已可用**。
 
 下一轮必须在现有控制面明确补齐会话提交/续租/退出的权威来源，再让库存与世界准入共用同一连接、Boot、SessionEpoch。避免仅向`session_bindings`写测试数据或延长租约常量以伪造有效绑定，必须用真实登录和进入Village的专服数据核验。
+
+## 已追加的受控会话续租实现（待统一验收）
+
+
+2026-10-13会话续租增量：新增 `000012_player_inventory_session_lease_renewal.sql`（已提交真实准入绑定的30秒续租数据库函数），要求在线身份会话未撤销、账号未禁用、服务器保持Ready/健康、当前连接与Boot及SessionEpoch一致。它不创建绑定、不绕过原始 `session_reserve→session_claim→session_commit`（预留→领取→提交）链路，也不复活已经过期的租约。PlayerData生产适配器 `inventory_session_lease_repository.go`（续租仓储）及内部 `POST /internal/v1/playerdata/inventory/session-renew`（服务器会话续租接口）与已有独立Bearer保护共用；公共Gateway不注册。项目Dedicated Server（专用服务器）订阅平台真实准入变更并每10秒尝试续租当前玩家，退出/撤销时精确取消本实例续租。由于现有 `validate-transfer`（迁移票据校验）尚未被核实与 `session_commit` 实际联通，续租只改善**已经正确绑定的会话**，不代表首个进入新手村的玩家已经可以领取物品。上述迁移、Go生产适配和UE代码均待正式编译及实际PostgreSQL验证，严禁将源码存在记录为运行完成。
 
 ## 尚未交付的功能和风险
 

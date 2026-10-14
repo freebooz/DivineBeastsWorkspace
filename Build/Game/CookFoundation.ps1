@@ -91,6 +91,16 @@ try {
         # 仅本轮训练敌人验收显式追加；Cook不运行怪物，正式专服默认不开启。
         $details.OptionalDevelopmentMonsterRuntimeArgument = '-DBADevelopmentMonsters'
     }
+    if ($CustomConfig -eq 'PluginDemoClient') {
+        # Stage需保留显式开发INI层；只白名单本任务实际存在的文件，不启用发行默认或把全部Config搬入包。
+        $configFile='DefaultGame.ini'
+        Assert-FoundationFile (Join-Path $context.Workspace "Game/Config/Custom/PluginDemoClient/$configFile")
+        $stageConfigPath="DivineBeastsArena/Config/Custom/PluginDemoClient/$configFile"
+        $arguments += "-ini:Game:[Staging]:+AllowedConfigFiles=$stageConfigPath"
+        $details.StagedDevelopmentConfigFiles=@($stageConfigPath)
+        $details.RequiredDevelopmentRuntimeArguments='-CustomConfig=PluginDemoClient -DBAPluginDemo -DBAPluginDemoMap=/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub -textconfig'
+        # 这里只描述所需运行参数，不启动Client；Client完整产物/源码证明与实际Cook仍须独立核验。
+    }
     if ($Pak) { $arguments += '-pak' }
     # UE5.8 AutomationTool官方nodebuginfo仅控制Stage调试文件复制，运行二进制和资源仍完整校验。
     if ($SkipDebugSymbols) { $arguments += '-nodebuginfo' }

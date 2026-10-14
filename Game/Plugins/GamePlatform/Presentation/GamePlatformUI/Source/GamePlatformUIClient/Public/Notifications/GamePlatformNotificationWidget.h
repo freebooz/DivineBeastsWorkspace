@@ -18,7 +18,7 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformNotificationWidget
 
 public:
     /** 由 NotificationService 统一应用请求；业务Widget不自行拥有通知队列。 */
-    void ApplyNotificationRequest(
+    virtual void ApplyNotificationRequest(
         const FGamePlatformUINotificationRequest& InRequest);
 
     const FGamePlatformUINotificationRequest& GetNotificationRequest() const

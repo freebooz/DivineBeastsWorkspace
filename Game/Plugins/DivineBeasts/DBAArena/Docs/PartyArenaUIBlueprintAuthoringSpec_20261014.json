@@ -1,0 +1,621 @@
+{
+  "SchemaVersion": 1,
+  "Project": "Game/DivineBeastsArena.uproject",
+  "ProjectDisplayName": "SSLM",
+  "EngineVersion": "5.8",
+  "CreationToolRequired": "Monolith MCP ui",
+  "Status": "NativeAndBlueprintVerified_BackendIntegrationPending",
+  "StatusZh": "真实Monolith界面已创建/编译/保存/冷重载，源码接线及集中原生回归通过；真实后端联机与人工视觉未验收，不能标整体完成。",
+  "MonolithActionSchemaVerified": true,
+  "MonolithDocumentTranslationValidated": true,
+  "EditorBuildRunId": "c80c3bf0-6d27-4950-9836-cd62657c359e",
+  "BlueprintAssetsCreated": 4,
+  "SourceImagesAreWidgetAssets": false,
+  "DependencyPolicyZh": "公共UI只依赖GamePlatform与DBAClient；竞技UI归DBAArena，经MobaCommon向下复用，不反向引用项目，不建立新插件。",
+  "VisualPolicy": "Docs/Implementation/UITextureVisualPolicy.md",
+  "AuthoringRequirementsZh": [
+    "核对正式工程绝对路径、Monolith实时版本及动作schema",
+    "先验证父类可加载和既有资产是否存在，已有资产只增量修改且保存前备份",
+    "每个蓝图创建／改动后编译、保存、关闭／重开、回读父类与WidgetTree",
+    "校验命名控件、层栈、焦点、导航、中文字体与可访问性",
+    "业务状态和输入由事件更新，取消本地等待不等于撤销后端事务",
+    "导入资源必须执行当前源指纹审计及SourceToSlate RHI验证，不使用widget截图Gamma路径",
+    "只有真实成功才更新MonolithGenerationManifest，编译／保存／重载未知不得写true"
+  ],
+  "Blueprints": [
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Matchmaking",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsMatchmakingScreen",
+      "Layer": "Screen",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "ModeList",
+      "DesignSizeLogicalPixels": [
+        760,
+        520
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "PanelBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "Root",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "PanelBackground",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "BodyScroll",
+                    "Class": "ScrollBox",
+                    "Children": [
+                      {
+                        "Name": "ContentRoot",
+                        "Class": "VerticalBox",
+                        "Children": [
+                          {
+                            "Name": "PanelTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ModeList_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "ModeList",
+                                "Class": "ListView"
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "RulesText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "PartySummaryText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "SelectedModeText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "StartMatchmakingButton_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "StartMatchmakingButton",
+                                "Class": "Button",
+                                "Children": [
+                                  {
+                                    "Name": "StartMatchmakingButton_Label",
+                                    "Class": "TextBlock"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "SearchState",
+                            "Class": "VerticalBox",
+                            "Children": [
+                              {
+                                "Name": "ElapsedTimeText",
+                                "Class": "TextBlock"
+                              },
+                              {
+                                "Name": "SearchStatusText",
+                                "Class": "TextBlock"
+                              },
+                              {
+                                "Name": "CancelMatchmakingButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "CancelMatchmakingButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "CancelMatchmakingButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "CommandErrorText",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Name": "CloseButton_Bounds",
+                    "Class": "SizeBox",
+                    "Children": [
+                      {
+                        "Name": "CloseButton",
+                        "Class": "Button",
+                        "Children": [
+                          {
+                            "Name": "CloseButton_Label",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SurfaceId": "UI.Screen.Matchmaking",
+      "SourceImage": "SourceArt/UI/Design/SSLM_ArenaMatchmaking_Concept_v1.png",
+      "CompatibilityZh": "复用既有目录的ModeList焦点和软类路径；排队是同页状态，非第二套匹配执行器。",
+      "NativeCommandBindingReady": false,
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true
+    },
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_MatchFoundReady",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsMatchFoundReadyScreen",
+      "Layer": "Modal",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "CloseButton",
+      "DesignSizeLogicalPixels": [
+        620,
+        420
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "PanelBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "Root",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "PanelBackground",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "BodyScroll",
+                    "Class": "ScrollBox",
+                    "Children": [
+                      {
+                        "Name": "ContentRoot",
+                        "Class": "VerticalBox",
+                        "Children": [
+                          {
+                            "Name": "PanelTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ConfirmationSlots",
+                            "Class": "HorizontalBox"
+                          },
+                          {
+                            "Name": "RemainingSecondsText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "RemainingProgress",
+                            "Class": "ProgressBar"
+                          },
+                          {
+                            "Name": "Actions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "ReadyButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "ReadyButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "ReadyButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "DeclineButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "DeclineButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "DeclineButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "EntryStatusText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "CommandErrorText",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Name": "CloseButton_Bounds",
+                    "Class": "SizeBox",
+                    "Children": [
+                      {
+                        "Name": "CloseButton",
+                        "Class": "Button",
+                        "Children": [
+                          {
+                            "Name": "CloseButton_Label",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SurfaceId": "UI.Screen.MatchFoundReady",
+      "AuthorityTimeoutSeconds": 30,
+      "NativeBindingWarningZh": "ReadyButton为既有目录焦点名；接受匹配候选不得绑定到局内SetArenaReady，二者阶段与权威端口不同。",
+      "NativeCommandBindingReady": false,
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true
+    },
+    {
+      "AssetPath": "/DBAArena/UI/HUD/WBP_DBA_UI_ArenaHUD",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsArenaHUD",
+      "Layer": "HUD",
+      "InputMode": "GameOnly",
+      "DefaultFocus": "",
+      "DesignSizeLogicalPixels": [
+        1920,
+        1080
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "ArenaHeaderBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "ArenaHeader",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "ArenaHeaderJade",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "ArenaHeaderContent",
+                    "Class": "VerticalBox",
+                    "Children": [
+                      {
+                        "Name": "ModeText",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "MatchTimeText",
+                        "Class": "TextBlock"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Name": "AlliedFramesBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "AlliedFrames",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "AlliedFramesJade",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "AlliedFramesContent",
+                    "Class": "VerticalBox",
+                    "Children": [
+                      {
+                        "Name": "AlliedTitle",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "AllyRow1",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "AllyRow2",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "AllyRow3",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "AllyRow4",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "AllyRow5",
+                        "Class": "TextBlock"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Name": "EnemyFramesBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "EnemyFrames",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "EnemyFramesJade",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "EnemyFramesContent",
+                    "Class": "VerticalBox",
+                    "Children": [
+                      {
+                        "Name": "EnemyTitle",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "EnemyRow1",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "EnemyRow2",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "EnemyRow3",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "EnemyRow4",
+                        "Class": "TextBlock"
+                      },
+                      {
+                        "Name": "EnemyRow5",
+                        "Class": "TextBlock"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Name": "EliminationStateText",
+            "Class": "TextBlock"
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SurfaceId": "UI.HUD.Arena",
+      "LayoutPolicyZh": "友敌两侧各预留5行，显示当前N行；中心保留战斗视野，HUD不抢焦点。",
+      "RespawnCountdownAllowed": false,
+      "NativeCommandBindingReady": false,
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true
+    },
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_PostMatch",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsPostMatchResultScreen",
+      "Layer": "Screen",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "CloseButton",
+      "DesignSizeLogicalPixels": [
+        760,
+        620
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "PanelBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "Root",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "PanelBackground",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "BodyScroll",
+                    "Class": "ScrollBox",
+                    "Children": [
+                      {
+                        "Name": "ContentRoot",
+                        "Class": "VerticalBox",
+                        "Children": [
+                          {
+                            "Name": "PanelTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ResultTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ModeText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ScoreboardList_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "ResultsList",
+                                "Class": "ListView"
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "ResultCommitStateText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ReturnStatusText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ReturnWorldButton_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "ReturnWorldButton",
+                                "Class": "Button",
+                                "Children": [
+                                  {
+                                    "Name": "ReturnWorldButton_Label",
+                                    "Class": "TextBlock"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "RetryReturnButton_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "RetryReturnButton",
+                                "Class": "Button",
+                                "Children": [
+                                  {
+                                    "Name": "RetryReturnButton_Label",
+                                    "Class": "TextBlock"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "CommandErrorText",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Name": "CloseButton_Bounds",
+                    "Class": "SizeBox",
+                    "Children": [
+                      {
+                        "Name": "CloseButton",
+                        "Class": "Button",
+                        "Children": [
+                          {
+                            "Name": "CloseButton_Label",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SurfaceId": "UI.Screen.PostMatchResult",
+      "SourceImage": "Docs/Implementation/VillagePartyArena/Design/SSLM_ReadyAndResult_Concept_v1.png",
+      "ReturnPolicyZh": "后端新分配与新票据；不得直接OpenLevel或重用旧地址。",
+      "NativeCommandBindingReady": false,
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true
+    }
+  ],
+  "OwnerPlugin": "DBAArena",
+  "SourceBridgeImplemented": true,
+  "ProductionMatchmakingAvailable": false,
+  "ColdReloadVerified": true,
+  "ColdReloadEditorPid": 11536,
+  "ColdReadbackEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalColdReadback.json",
+  "NativeAutomationEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalNativeAutomation.json",
+  "RelatedNativeTestsPassed": 9,
+  "RuntimeInteractionVerified": false,
+  "ManualVisualAccepted": false,
+  "FocusPolicyZh": "DefaultFocus是C++ ScreenDefinition在InitializeScreen注入的运行时合同；已核目标控件和导航。Transient CDO写值不作为持久化焦点证明，实际设备焦点待联调。",
+  "NativeBindingReadyMeaningZh": "NativeCommandBindingReady保留为完整业务可用性标志；源码/结构核验单独记录，缺后端或未联调不将旧字段写true。"
+}

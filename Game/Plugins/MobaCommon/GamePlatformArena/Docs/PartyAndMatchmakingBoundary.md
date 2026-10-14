@@ -1,5 +1,11 @@
 # PartyAndMatchmakingBoundary（组队与匹配边界）
 
-Party（组队）在进入Arena前由Go MatchService（匹配服务）处理。队伍分配算法保证Party原子性，不在Arena服务器中拆分、重组或重新匹配。
+Party（组队）在进入Arena前由Go MatchService（匹配服务）处理。正式实现必须保证Party原子性，不在Arena服务器中拆分、重组或重新匹配；这是职责约束，不表示事务仓储、生产队列或联机验收已经通过。
 
 客户端匹配请求仅允许ArenaModeId、PartyId、PreferredRegion和ClientRequestId；MMR、HiddenRating、TrustScore、Penalty等隐藏权威值不属于客户端请求模型。
+
+2026-10-14客户端端口扩展：`IGamePlatformArenaMatchmakingAdapter`增加完整票据生命周期能力声明、授权候选只读值和逐人回复入口。只有真实创建/观察/取消/候选回复均可用才允许报告`SupportsTicketLifecycle=true`；默认false，旧实现收到逐人回复返回明确的合同不可用，不把局内Ready当作候选接受。
+
+候选只含公开CandidateId、非负Revision、UTC截止和本人的可回复投影，不含地址、签名或隐藏分。接口在游戏线程调用，完成回调恰好一次且在游戏线程；认证、传输、取消及观察由提供者按作用域管理，权威队列和新准入仍归后端与唯一应用流程。取消本地等待、关页或撤销提供者均不能宣称远端已退队。
+
+跨DLL生命周期及默认方法由本模块`Private/Client/GamePlatformArenaMatchmakingAdapter.cpp`真实编译导出。此扩展保留旧实现的源级默认失败兼容，不声明旧客户端二进制ABI兼容；消费者须重新编译。正式Editor全目标已统一编译验证，Client/Server发行目标与多人联机未在本轮执行，不把端口存在当作生产适配器已实现。

@@ -1,13 +1,20 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-10-13",
-  "git_head": "eb1fe0e932967ce97078df12c8080cf5121c99b4",
+  "snapshot_date": "2026-10-14",
+  "git_head": "57edb579103ebabd344988b2e532e22a83b93163",
   "history": {
     "path": "Docs/Implementation/PluginDemos/History/PluginDemoManifest.v1.json",
     "git_revision": "eb1fe0e932967ce97078df12c8080cf5121c99b4",
     "sha256": "b312fcf0e94fb2ac3d41e36c8b6c7ee12671053fecca2728e3a50df4c4f7749c"
   },
   "plugins": [
+    {
+      "plugin_id": "GamePlatformWater",
+      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformWater/GamePlatformWater.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
     {
       "plugin_id": "MobaPresentation",
       "descriptor_path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin",
@@ -349,7 +356,7 @@
       "descriptor_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/GamePlatformCore.uplugin",
       "architecture_layer": "Platform",
       "plugin_kind": "code",
-      "feature_audit_status": "unreviewed"
+      "feature_audit_status": "partial"
     },
     {
       "plugin_id": "GamePlatformLoading",
@@ -538,6 +545,32 @@
       "scenario_ids": [
         "GamePlatformData.Resources.SharedLease",
         "GamePlatformData.Resources.Cancel"
+      ]
+    },
+    {
+      "feature_id": "GamePlatformCore.Identity",
+      "plugin_id": "GamePlatformCore",
+      "title": "平台逻辑身份创建与规范回环",
+      "purpose": "调用真实平台Core的TryCreate/ToString/TryParse/相等与容器哈希；验证合法回环、单段名称拒绝及版本0拒绝，不生成资产身份或网络权威。",
+      "implementation_status": "implemented",
+      "integration_status": "wired",
+      "run_status": "idle",
+      "review_status": "not_reviewed",
+      "owner_path": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore",
+      "implementation_evidence": [
+        {
+          "path": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Source/GamePlatformCore/Public/Types/GamePlatformId.h",
+          "symbol": "FGamePlatformId::TryCreate/TryParse/ToString/operator==/GetTypeHash"
+        },
+        {
+          "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/Private/Scenarios/DivineBeastsDemoCoreIdentityScenario.cpp",
+          "symbol": "EvaluateCoreIdentity/CreateCoreIdentityScenario"
+        }
+      ],
+      "scenario_ids": [
+        "GamePlatformCore.Identity.Normal",
+        "GamePlatformCore.Identity.InvalidName",
+        "GamePlatformCore.Identity.InvalidVersion"
       ]
     }
   ],
@@ -839,6 +872,204 @@
       "review_case_ids": [
         "GamePlatformData.Resources.Cancel.Review"
       ]
+    },
+    {
+      "scenario_id": "GamePlatformCore.Identity.Normal",
+      "feature_id": "GamePlatformCore.Identity",
+      "title": "Core：合法身份回环",
+      "related_feature_ids": [],
+      "adapter_id": "CoreIdentity",
+      "template": "ServiceDiagnostics",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformCore"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式，参数是无账号/资源/网络权威的自包含值",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录及HubScreen真实生成并加载",
+        "本案例不持有持久状态或异步资源；不适用业务补偿和网络取消，人工最终核查此边界"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Namespace",
+          "type": "identifier",
+          "unit": "逻辑命名空间",
+          "default_value": "Sample.Catalog",
+          "default_source": "明确的开发值夹具，不是资源包或账号",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Name",
+          "type": "identifier",
+          "unit": "单段逻辑名称",
+          "default_value": "Item",
+          "default_source": "明确的开发值夹具，不是资产名称",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "LogicalVersion",
+          "type": "integer",
+          "unit": "逻辑代次",
+          "default_value": 1,
+          "minimum": 0,
+          "maximum": 2147483647,
+          "default_source": "平台合法值1..INT32_MAX；本案例允许输入0以核验真实拒绝，不夹紧",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GamePlatformCore.Identity.Normal.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformCore.Identity.InvalidName",
+      "feature_id": "GamePlatformCore.Identity",
+      "title": "Core：非法单段名称",
+      "related_feature_ids": [],
+      "adapter_id": "CoreIdentity",
+      "template": "ServiceDiagnostics",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformCore"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式，参数是无账号/资源/网络权威的自包含值",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录及HubScreen真实生成并加载",
+        "本案例不持有持久状态或异步资源；不适用业务补偿和网络取消，人工最终核查此边界"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Namespace",
+          "type": "identifier",
+          "unit": "逻辑命名空间",
+          "default_value": "Sample.Catalog",
+          "default_source": "明确的开发值夹具，不是资源包或账号",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Name",
+          "type": "identifier",
+          "unit": "单段逻辑名称",
+          "default_value": "Invalid.Name",
+          "default_source": "故意含点的拒绝夹具，不是生产默认",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "LogicalVersion",
+          "type": "integer",
+          "unit": "逻辑代次",
+          "default_value": 1,
+          "minimum": 0,
+          "maximum": 2147483647,
+          "default_source": "平台合法值1..INT32_MAX；本案例允许输入0以核验真实拒绝，不夹紧",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GamePlatformCore.Identity.InvalidName.Review"
+      ]
+    },
+    {
+      "scenario_id": "GamePlatformCore.Identity.InvalidVersion",
+      "feature_id": "GamePlatformCore.Identity",
+      "title": "Core：非法版本零",
+      "related_feature_ids": [],
+      "adapter_id": "CoreIdentity",
+      "template": "ServiceDiagnostics",
+      "run_mode": "fixture",
+      "targets": [
+        "Editor",
+        "Client",
+        "Game"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GamePlatformCore"
+      ],
+      "preconditions": [
+        "仅显式开发演示模式，参数是无账号/资源/网络权威的自包含值",
+        "当前完整Editor/开发Client二进制与源码匹配，新目录及HubScreen真实生成并加载",
+        "本案例不持有持久状态或异步资源；不适用业务补偿和网络取消，人工最终核查此边界"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "",
+      "definition_assets": [],
+      "operations": [
+        "Execute",
+        "Stop"
+      ],
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 10,
+      "parameters": [
+        {
+          "parameter_id": "Namespace",
+          "type": "identifier",
+          "unit": "逻辑命名空间",
+          "default_value": "Sample.Catalog",
+          "default_source": "明确的开发值夹具，不是资源包或账号",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Name",
+          "type": "identifier",
+          "unit": "单段逻辑名称",
+          "default_value": "Item",
+          "default_source": "明确的开发值夹具，不是资产名称",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "LogicalVersion",
+          "type": "integer",
+          "unit": "逻辑代次",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 2147483647,
+          "default_source": "平台合法值1..INT32_MAX；本案例允许输入0以核验真实拒绝，不夹紧",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GamePlatformCore.Identity.InvalidVersion.Review"
+      ]
     }
   ],
   "review_cases": [
@@ -941,6 +1172,54 @@
         "log",
         "state_dump"
       ]
+    },
+    {
+      "review_case_id": "GamePlatformCore.Identity.Normal.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformCore.Identity.Normal",
+      "feature_id": "GamePlatformCore.Identity",
+      "steps": [
+        "进入该独立案例，检查Namespace/Name/LogicalVersion夹具值",
+        "提交Execute，检查原始操作结果和中文诊断",
+        "提交Stop，检查本案例失活；原始拒绝不得因清理成功改成成功"
+      ],
+      "expected_result": "得到sample.catalog.item@1，真实平台创建/解析/相等及容器哈希一致；停止不改变其他案例。",
+      "required_evidence": [
+        "state_dump",
+        "log"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformCore.Identity.InvalidName.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformCore.Identity.InvalidName",
+      "feature_id": "GamePlatformCore.Identity",
+      "steps": [
+        "进入该独立案例，检查Namespace/Name/LogicalVersion夹具值",
+        "提交Execute，检查原始操作结果和中文诊断",
+        "提交Stop，检查本案例失活；原始拒绝不得因清理成功改成成功"
+      ],
+      "expected_result": "平台因Name含点拒绝，原始操作Failed及Demo.CoreIdentityRejected；清理成功仍保留原始失败。",
+      "required_evidence": [
+        "state_dump",
+        "log"
+      ]
+    },
+    {
+      "review_case_id": "GamePlatformCore.Identity.InvalidVersion.Review",
+      "version": 1,
+      "scenario_id": "GamePlatformCore.Identity.InvalidVersion",
+      "feature_id": "GamePlatformCore.Identity",
+      "steps": [
+        "进入该独立案例，检查Namespace/Name/LogicalVersion夹具值",
+        "提交Execute，检查原始操作结果和中文诊断",
+        "提交Stop，检查本案例失活；原始拒绝不得因清理成功改成成功"
+      ],
+      "expected_result": "平台因版本0拒绝，不夹紧到1；原始Failed及拒绝码保留，停止不写持久状态。",
+      "required_evidence": [
+        "state_dump",
+        "log"
+      ]
     }
   ],
   "legacy_map_routes": [
@@ -950,7 +1229,10 @@
         "GamePlatformUI.ResourceBar.Normal",
         "GamePlatformUI.ResourceBar.InvalidMaximum",
         "GamePlatformData.Resources.SharedLease",
-        "GamePlatformData.Resources.Cancel"
+        "GamePlatformData.Resources.Cancel",
+        "GamePlatformCore.Identity.Normal",
+        "GamePlatformCore.Identity.InvalidName",
+        "GamePlatformCore.Identity.InvalidVersion"
       ],
       "requires_selection": true
     },

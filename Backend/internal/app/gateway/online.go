@@ -49,6 +49,18 @@ func OnlineErrorStatus(err error) (int, string) {
 		return 503, "SERVICE_UNAVAILABLE"
 	}
 	switch code {
+	case "PARTY_NOT_LEADER", "PARTY_NOT_MEMBER", "PARTY_REQUEST_FORBIDDEN":
+		return 403, string(code)
+	case "PARTY_NOT_FOUND", "PARTY_REQUEST_NOT_FOUND":
+		return 404, string(code)
+	case "PARTY_COMMAND_INVALID", "PARTY_REQUEST_INVALID":
+		return 400, string(code)
+	case "PARTY_REQUEST_LIMIT":
+		return 429, string(code)
+	case "PARTY_REVISION_CONFLICT", "PARTY_IDEMPOTENCY_CONFLICT", "PARTY_ROSTER_LOCKED", "PARTY_FULL",
+		"PARTY_ALREADY_MEMBER", "PARTY_MEMBER_UNAVAILABLE", "PARTY_REQUEST_EXPIRED", "PARTY_REQUEST_TERMINAL",
+		"PARTY_REQUEST_CONFLICT", "PARTY_REQUEST_PENDING":
+		return 409, string(code)
 	case "AUTH_SESSION_INVALID", "AUTH_INVALID_CREDENTIALS", "AUTH_TOKEN_EXPIRED", "AUTH_REFRESH_REPLAY":
 		return 401, string(code)
 	// 背包可信来源校验失败属于明确的禁止操作，不应伪装成503可用性故障。

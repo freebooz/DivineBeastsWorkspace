@@ -11,6 +11,8 @@ UCLASS(BlueprintType)
 class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoHubViewModel : public UDivineBeastsViewModelBase
 {
     GENERATED_BODY()
+    /** 回归仅注入只读菜单值夹具，不连接后端、不改变目录或世界权威。 */
+    friend class FDivineBeastsDemoKeyboardSelectionTest;
 public:
     /** 绑定实际GI目录；活动页面立即订阅/抓取一次，空值返回false并清理旧绑定。 */
     bool BindCatalog(UDivineBeastsDemoCatalogSubsystem* InCatalog);

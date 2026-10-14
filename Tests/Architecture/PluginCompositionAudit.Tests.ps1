@@ -171,6 +171,30 @@ Describe '插件按目标装配及非竞技闭包审计' {
         }
     }
 
+    It '同一插件身份重复声明即使按Target拆分也必须失败' {
+        # 目标过滤前检查重复声明，避免Editor/Client间出现相同插件不同启用规则。
+        $root = Join-Path $TestDrive 'duplicatePlugin'
+        New-CompositionPlugin $root DBATest @(
+            @{Name='GamePlatformCore';Enabled=$true;TargetAllowList=@('Editor')},
+            @{Name='GamePlatformCore';Enabled=$true;TargetAllowList=@('Client')}
+        )
+        New-CompositionPlugin $root GamePlatformCore
+        $result = Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Client
+        $result.Passed | Should Be $false
+        ($result.Errors -join "`n") | Should Match '重复插件依赖.*GamePlatformCore'
+    }
+
+    It '同一目标下公开和私有重复模块依赖必须失败' {
+        # 核查Public/Private边界，重复声明既包括内部项目模块也包括引擎模块。
+        $root = Join-Path $TestDrive 'duplicateModule'
+        New-CompositionPlugin $root DBATest
+        $rulePath = Join-Path $root 'Game/Plugins/DivineBeasts/DBATest/Source/DBATest/DBATest.Build.cs'
+        Set-Content -LiteralPath $rulePath -Encoding UTF8 -Value 'PublicDependencyModuleNames.Add("Core"); PrivateDependencyModuleNames.Add("Core");'
+        $result = Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Client
+        $result.Passed | Should Be $false
+        ($result.Errors -join "`n") | Should Match '重复模块依赖.*Core'
+    }
+
     It '插值及原始字符串不能让条件扫描吞掉块外客户端依赖' {
         # 合法C#插值表达式内的嵌套字符串包含花括号；有限正则不能当完整词法器使用。
         $root = Join-Path $TestDrive 'interpolatedString'

@@ -39,17 +39,18 @@ type CreateTicketRequest struct {
 
 // Ticket（匹配票据）是进入Matchmaking Queue（匹配队列）的原子单元。
 type Ticket struct {
-	TicketID       string    // TicketID（匹配票据ID）。
-	GameID         string    // GameID（游戏ID）。
-	ArenaModeID    string    // ArenaModeID（竞技模式ID）。
-	PartyID        string    // PartyID（组队ID，单排可为空）。
-	PartyMemberIDs []string  // PartyMemberIDs（不可拆分的组队成员ID列表）。
-	PartySize      int       // PartySize（当前组队人数）。
-	TeamSize       int       // TeamSize（竞技模式每队人数）。
-	AllowFill      bool      // AllowFill（是否允许系统补充队友）。
-	Region         string    // Region（匹配区域）。
-	State          string    // State（匹配票据状态）。
-	CreatedAt      time.Time // CreatedAt（匹配票据创建时间）。
+	RequestFingerprint string    // RequestFingerprint（认证主体和请求内容的摘要），仅后端幂等使用，不向客户端传输。
+	TicketID           string    // TicketID（匹配票据ID）。
+	GameID             string    // GameID（游戏ID）。
+	ArenaModeID        string    // ArenaModeID（竞技模式ID）。
+	PartyID            string    // PartyID（组队ID，单排可为空）。
+	PartyMemberIDs     []string  // PartyMemberIDs（不可拆分的组队成员ID列表）。
+	PartySize          int       // PartySize（当前组队人数）。
+	TeamSize           int       // TeamSize（竞技模式每队人数）。
+	AllowFill          bool      // AllowFill（是否允许系统补充队友）。
+	Region             string    // Region（匹配区域）。
+	State              string    // State（匹配票据状态）。
+	CreatedAt          time.Time // CreatedAt（匹配票据创建时间）。
 }
 
 // NewTicket（创建匹配票据）校验Party大小、成员唯一性和模式容量。

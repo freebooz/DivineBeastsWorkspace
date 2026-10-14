@@ -48,6 +48,7 @@ void UGamePlatformWeatherClientWorldSubsystem::Initialize(FSubsystemCollectionBa
 {
     Super::Initialize(Collection);
     bClosing = false;
+    SnapshotApplyGeneration = 0;
     ActiveSnapshot = FGamePlatformWeatherSnapshot();
     LastVisualState = FGamePlatformWeatherState();
 }
@@ -94,24 +95,33 @@ void UGamePlatformWeatherClientWorldSubsystem::OnSnapshotReceived(
 {
     check(IsInGameThread());
     if (bClosing || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
+    if (Snapshot.Revision > 0 && Snapshot.Revision <= ActiveSnapshot.Revision) return;
+    const uint64 ApplyGeneration = ++SnapshotApplyGeneration;
     if (Snapshot.Revision == 0)
     {
-        // 当前复制Actor退出；先撤销持久特效，再清理过渡，允许同一世界新的Actor从Revision=1重新绑定。
+        // 复制Actor退出时先撤销旧请求；重入的新Actor快照不能被旧清空操作覆盖。
         CancelPreviousPresentation();
+        if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+            !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
         GetWorld()->GetTimerManager().ClearTimer(TransitionTimer);
         ActiveSnapshot = FGamePlatformWeatherSnapshot();
         ApplyVisualState(FGamePlatformWeatherState());
         return;
     }
-    if (Snapshot.Revision <= ActiveSnapshot.Revision) return;
+    const int32 ReceivedRevision = Snapshot.Revision;
     ActiveSnapshot = Snapshot;
     CancelPreviousPresentation();
-    if (bClosing || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
-    const int32 ReceivedRevision = Snapshot.Revision;
-    // 首次收到快照时先采样服务器当前过渡进度，不能立即用未来目标天气播放满量粒子。
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+        ActiveSnapshot.Revision != ReceivedRevision || !IsValid(GetWorld()) ||
+        GetWorld()->bIsTearingDown) return;
+    // 首帧按照服务器实际时间采样；取消/表现同步回调可能递归送来更新的快照。
     SampleAndApplyTransition(false);
-    if (bClosing || ActiveSnapshot.Revision != ReceivedRevision) return;
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+        ActiveSnapshot.Revision != ReceivedRevision) return;
     SendPresentationEvent(LastVisualState, false);
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+        ActiveSnapshot.Revision != ReceivedRevision || !IsValid(GetWorld()) ||
+        GetWorld()->bIsTearingDown) return;
     if (UWorld* World = GetWorld())
     {
         const float Remaining = Snapshot.StartedAtServerSeconds + Snapshot.TransitionSeconds - GetEstimatedServerTimeSeconds();
@@ -131,13 +141,15 @@ void UGamePlatformWeatherClientWorldSubsystem::SampleAndApplyTransition(
 {
     if (bClosing || ActiveSnapshot.Revision <= 0) return;
     const int32 Revision = ActiveSnapshot.Revision;
+    const uint64 ApplyGeneration = SnapshotApplyGeneration;
     const float ServerNow = GetEstimatedServerTimeSeconds();
     const FGamePlatformWeatherState Sampled = ActiveSnapshot.Sample(ServerNow);
     const EGamePlatformWeatherType PreviousType = LastVisualState.Type;
     const bool bFinished = ServerNow >=
         ActiveSnapshot.StartedAtServerSeconds + ActiveSnapshot.TransitionSeconds;
     ApplyVisualState(Sampled);
-    if (bClosing || ActiveSnapshot.Revision != Revision) return; // 允许观察者同步切换天气重入。
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+        ActiveSnapshot.Revision != Revision) return; // 允许观察者同步切换天气重入。
 
     const float CurrentIntensity =
         FMath::Max(Sampled.RainIntensity, Sampled.SnowIntensity);
@@ -148,7 +160,11 @@ void UGamePlatformWeatherClientWorldSubsystem::SampleAndApplyTransition(
     if (bRefreshPresentation && (PreviousType != Sampled.Type || bIntensityCorrection))
     {
         CancelPreviousPresentation();
+        if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+            ActiveSnapshot.Revision != Revision) return;
         SendPresentationEvent(Sampled, false);
+        if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+            ActiveSnapshot.Revision != Revision) return;
     }
 
     if (bFinished)
@@ -168,9 +184,12 @@ void UGamePlatformWeatherClientWorldSubsystem::RefreshPresentationAfterContentAc
     // 内容包迟于OnRep加载时只刷新所属领域；不能因为SFX定义晚到
     // 就撤销、重建已经在播放的Niagara雨雪实例（反之亦然）。
     const int32 Channel = bVisual ? 0 : 1;
+    const uint64 ApplyGeneration = SnapshotApplyGeneration;
     const FGamePlatformWeatherState Current =
         ActiveSnapshot.Sample(GetEstimatedServerTimeSeconds());
     CancelPreviousPresentation(Channel);
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+        !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
     SendPresentationEvent(Current, false, Channel);
 }
 
@@ -213,10 +232,12 @@ void UGamePlatformWeatherClientWorldSubsystem::RemoveVisualChangedHandler(FDeleg
 
 void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
     const FGamePlatformWeatherState& State, const bool bCancellation,
-    const int32 ChannelFilter)
+    const int32 ChannelFilter, const FGuid CancellationRequestId,
+    const FName CancellationTag)
 {
     UWorld* World = GetWorld();
-    if (!World || !World->GetGameInstance()) return;
+    if (!World || !World->GetGameInstance() || (bClosing && !bCancellation)) return;
+    const uint64 DispatchGeneration = SnapshotApplyGeneration;
     // P0只有雨与雪对应可加载的持续VFX/SFX目录。晴、阴、风、雾等仅由
     // Surface/未来Sky适配处理；此处不提交尚无Definition的虚假表现请求。
     // 取消请求必须保留原请求ID，不受此过滤影响。
@@ -245,17 +266,28 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
             ActiveSfxTag = FName(*(Base + TEXT(".SFX")));
         }
     }
+    // 保留本次待提交身份：同步Provider回调可能发起新快照，不允许旧提交读取新请求ID。
+    const FGuid SubmissionVfxId = ActiveVfxRequestId;
+    const FGuid SubmissionSfxId = ActiveSfxRequestId;
+    const FName SubmissionVfxTag = ActiveVfxTag;
+    const FName SubmissionSfxTag = ActiveSfxTag;
     for (ULocalPlayer* LocalPlayer : World->GetGameInstance()->GetLocalPlayers())
     {
+        if (!bCancellation && (bClosing || SnapshotApplyGeneration != DispatchGeneration)) return;
         if (!IsValid(LocalPlayer) || LocalPlayer->GetWorld() != World) continue;
         auto* Presentation = LocalPlayer->GetSubsystem<UGamePlatformPresentationClientSubsystem>();
         if (!Presentation) continue;
         for (int32 Channel = 0; Channel < 2; ++Channel)
         {
             if (ChannelFilter >= 0 && ChannelFilter != Channel) continue;
-            const FGuid ChannelId = Channel == 0 ? ActiveVfxRequestId : ActiveSfxRequestId;
+            const FGuid ChannelId = bCancellation ? CancellationRequestId :
+                (Channel == 0 ? SubmissionVfxId : SubmissionSfxId);
             if (!ChannelId.IsValid()) continue;
-            const FName TagName = Channel == 0 ? ActiveVfxTag : ActiveSfxTag;
+            const FName TagName = bCancellation ? CancellationTag :
+                (Channel == 0 ? SubmissionVfxTag : SubmissionSfxTag);
+            if (!bCancellation && (bClosing || SnapshotApplyGeneration != DispatchGeneration ||
+                (Channel == 0 && ActiveVfxRequestId != ChannelId) ||
+                (Channel == 1 && ActiveSfxRequestId != ChannelId))) return;
             const FGameplayTag SemanticTag = UGameplayTagsManager::Get().RequestGameplayTag(TagName, false);
             if (!SemanticTag.IsValid()) continue; // 配置无标签时静默降级，不私建Native Tag。
             FGamePlatformPresentationRequest Request;
@@ -315,18 +347,20 @@ void UGamePlatformWeatherClientWorldSubsystem::SendPresentationEvent(
 void UGamePlatformWeatherClientWorldSubsystem::CancelPreviousPresentation(
     const int32 ChannelFilter)
 {
-    if ((ChannelFilter < 0 || ChannelFilter == 0) && ActiveVfxRequestId.IsValid())
-    {
-        SendPresentationEvent(LastVisualState, true, 0);
-        ActiveVfxRequestId.Invalidate();
-        ActiveVfxTag = NAME_None;
-    }
-    if ((ChannelFilter < 0 || ChannelFilter == 1) && ActiveSfxRequestId.IsValid())
-    {
-        SendPresentationEvent(LastVisualState, true, 1);
-        ActiveSfxRequestId.Invalidate();
-        ActiveSfxTag = NAME_None;
-    }
+    const bool bCancelVfx = ChannelFilter < 0 || ChannelFilter == 0;
+    const bool bCancelSfx = ChannelFilter < 0 || ChannelFilter == 1;
+    const FGuid OldVfxId = ActiveVfxRequestId;
+    const FGuid OldSfxId = ActiveSfxRequestId;
+    const FName OldVfxTag = ActiveVfxTag;
+    const FName OldSfxTag = ActiveSfxTag;
+    const FGamePlatformWeatherState OldState = LastVisualState;
+    // 先取走旧身份并失效，再同步提交取消。重入创建的新请求绝不可由旧取消栈清空。
+    if (bCancelVfx) { ActiveVfxRequestId.Invalidate(); ActiveVfxTag = NAME_None; }
+    if (bCancelSfx) { ActiveSfxRequestId.Invalidate(); ActiveSfxTag = NAME_None; }
     if (!ActiveVfxRequestId.IsValid() && !ActiveSfxRequestId.IsValid())
         LastPresentedIntensity = -1.f;
+    if (bCancelVfx && OldVfxId.IsValid())
+        SendPresentationEvent(OldState, true, 0, OldVfxId, OldVfxTag);
+    if (bCancelSfx && OldSfxId.IsValid())
+        SendPresentationEvent(OldState, true, 1, OldSfxId, OldSfxTag);
 }

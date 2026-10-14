@@ -31,5 +31,10 @@ public class DivineBeastsDemoClient : ModuleRules
             // 仅Editor私有桥生成待审对象；Client公共头不含Editor/Review类型，更不执行人工决定。
             PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformDeveloperTools", "UnrealEd" });
         }
+        if (Target.bWithLiveCoding)
+        {
+            // 仅用引擎公开接口观察已加载会话状态，不加载/开启/编译；关闭该引擎能力的目标不引入头依赖。
+            PrivateIncludePathModuleNames.Add("LiveCoding");
+        }
     }
 }

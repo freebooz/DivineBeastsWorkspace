@@ -32,4 +32,11 @@ public:
     /** 返回类型安全的启动 ViewModel；类型不匹配时返回 nullptr。 */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Boot")
     UDivineBeastsBootViewModel* GetBootViewModel() const;
+protected:
+    /** 只消费平台已筛选的当前页面事件；未知进度保持不确定动画，不启动计时器。 */
+    virtual void RefreshInitialState() override;
+    virtual void OnViewModelStateChanged(int32 Revision, int32 PageGeneration) override;
+private:
+    /** 更新Monolith提供的StageText/ProgressText/LoadingProgress；游戏线程，不拥有加载事务。 */
+    void RefreshBootPresentation();
 };

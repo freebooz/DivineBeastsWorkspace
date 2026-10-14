@@ -136,6 +136,14 @@ function Case([string]$Name, [scriptblock]$Body, [switch]$Reject) {
 try {
     Import-Module (Join-Path $root 'Build/Game/FoundationBuildEvidence.psm1') -Force
     Case 'FullEditorReceiptContractAccepted' { param($f) $verified=Assert-Fixture $f; Assert-Contract ($verified.BuildRunId -eq $f.Context.RunId) 'Build RunId未关联' }
+    Case 'RequiredModuleProofBindsActualDllPathAndHash' { param($f)
+        # 运行来源不得只核对模块名；同名DLL必须能与receipt真实路径和摘要逐一对照。
+        $verified=Assert-Fixture $f
+        Assert-Contract ($verified.PSObject.Properties.Name -contains 'VerifiedModuleFiles') '缺必需模块实际文件证明'
+        $record=$verified.VerifiedModuleFiles['FixtureRuntime']
+        Assert-Contract ($record.Path -ceq 'Game/Plugins/Fixture/Binaries/Win64/UnrealEditor-FixtureRuntime.dll') '模块证明未绑定receipt路径'
+        Assert-Contract ($record.SHA256 -ceq (Get-FileHash -LiteralPath $f.PluginDll -Algorithm SHA256).Hash) '模块证明未绑定实际DLL摘要'
+    }
     Case 'WorkspaceRelativePathIgnoresCallerDirectory' { param($f)
         $relative=[IO.Path]::GetRelativePath($f.Workspace,$f.ResultPath)
         Push-Location ([IO.Path]::GetTempPath())

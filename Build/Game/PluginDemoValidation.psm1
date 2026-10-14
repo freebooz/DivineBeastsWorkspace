@@ -3,6 +3,7 @@
    调用方为TestPluginDemo及隔离脚本测试；原始报告/源码指纹由调用者负责真实获取。 #>
 Set-StrictMode -Version Latest
 Import-Module (Join-Path $PSScriptRoot '../Validation/FoundationAutomationReport.psm1')
+Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1')
 function Get-PluginDemoSuitePolicy {
     <# 返回当前必需完整测试身份和模块；不得以旧二进制仅含的子集覆盖新清单。 #>
     param([ValidateSet('Demo','Review','LaunchPolicy')][string]$Suite='Demo')
@@ -23,4 +24,25 @@ function Assert-PluginDemoRunResult {
     $policy=Get-PluginDemoSuitePolicy $Suite
     Assert-FoundationAutomationReport -Cases @($Cases) -RequiredPaths $policy.Tests -Prefix $policy.Prefix
 }
-Export-ModuleMember -Function Get-PluginDemoSuitePolicy,Assert-PluginDemoRunResult
+function Write-PluginDemoTestOutput {
+    <# 工具层最终收口：先完成调用者明确请求的追加摘要，再发布唯一canonical结果。
+       摘要冲突/写失败令最终结果Failed，旧摘要不覆盖；不启动进程、不构建，不改真实原生用例状态。
+       Context仅允许调用者本次独占Foundation上下文；空Context用于未执行/VerifyOnly信息，不伪造canonical。 #>
+    param($Context,[int]$ExitCode,[string]$Message,[hashtable]$Details,[guid]$RunId,[string]$ReportPath)
+    $finalCode=$ExitCode; $finalMessage=$Message
+    if ($ReportPath) {
+        try {
+            $full=[IO.Path]::GetFullPath($ReportPath)
+            if ($Context -and $full -ieq [IO.Path]::GetFullPath((Join-Path $Context.Directory 'result.json'))) { throw '追加摘要不能占用本次canonical结果路径。' }
+            $stream=[IO.File]::Open($full,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+            try {
+                $bytes=[Text.UTF8Encoding]::new($false).GetBytes((@{RunId=$RunId.ToString('D');ExitCode=$finalCode;Message=$finalMessage;Details=$Details} | ConvertTo-Json -Depth 12))
+                $stream.Write($bytes,0,$bytes.Length)
+            } finally { $stream.Dispose() }
+        } catch { $finalCode=1; $finalMessage="请求摘要未写入；本次工具结果失败：$($_.Exception.Message)" }
+    }
+    if ($Context) { Write-FoundationResult $Context $finalCode $finalMessage $Details }
+    else { Write-Host $finalMessage }
+    [pscustomobject]@{ExitCode=$finalCode;Message=$finalMessage}
+}
+Export-ModuleMember -Function Get-PluginDemoSuitePolicy,Assert-PluginDemoRunResult,Write-PluginDemoTestOutput

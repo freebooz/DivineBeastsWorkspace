@@ -239,6 +239,7 @@ func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, par
 	handler.mux.HandleFunc("POST /v1/matchmaking/tickets", handler.requireAuth(handler.createMatchmakingTicket))
 	handler.mux.HandleFunc("POST /v1/divinebeasts/world-entry", handler.requireAuth(handler.enterDivineBeastsWorld))
 	handler.registerInventoryRoutes()
+	handler.registerPartyRoutes()
 	handler.registerSwaggerDocumentation(os.Getenv(swaggerContractsRootEnvironment))
 	return handler.tracing(handler.mux)
 }

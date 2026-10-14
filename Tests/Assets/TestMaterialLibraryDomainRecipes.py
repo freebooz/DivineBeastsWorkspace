@@ -332,7 +332,44 @@ class MaterialLibraryDomainRecipes(unittest.TestCase):
         widget=(ui/"AuthorMaterialLibraryWidgetMonolith.py").read_text(encoding="utf-8")
         self.assertIn("UI_WIDGET_12_CARD_EXISTING_NATIVE_PRESERVED",widget)
         self.assertIn("SSLM_WBP_STATE",widget)
+        # Monolith实际创建前必须拒绝未注册侧车，禁止误盖其他UE原生包。
+        for protected in (ui/"RunMaterialLibraryUIProductionMonolith.py",
+                          src/"RunMaterialLibraryReviewMapsMonolith.py",
+                          ui/"AuthorMaterialLibraryWidgetMonolith.py"):
+            self.assertIn("stale=[os.path.splitext(disk)[0]+ext",
+                          protected.read_text(encoding="utf-8"))
         self.assertNotIn('("compile_widget"',full.__dict__["__doc__"] or "")
+
+    def test_native_batch_requires_actual_ue_files_and_generated_script_parses(self):
+        """模拟Monolith响应，只校验生成的UE Python可解析及逐资产落盘门禁。"""
+        path=ROOT/"Tools/Unreal/Surface/RunMaterialLibraryNativeBatchesMonolith.py"
+        spec=importlib.util.spec_from_file_location("sslm_native_batch_probe",path)
+        runner=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(runner)
+        examples=(("functions","Surface",0,3),("functions","VFX",0,3),
+                  ("functions","Project",0,3),("layers","Surface",0,3),
+                  ("blueprint","Project",0,1),("domain_reviews","Surface",0,3),
+                  ("ui_reviews","UI",0,3))
+        for stage,owner,start,count in examples:
+            with self.subTest(stage=stage,owner=owner):
+                contracts=runner.asset_contracts(stage,owner,start,count)
+                self.assertEqual(len(contracts),count + (stage=="layers"))
+                self.assertTrue(all(p.endswith(".uasset") for _,p,_,_ in contracts))
+                identity="offline_"+stage+"_"+owner
+                seen=[]
+                def mock_engine(source):
+                    compile(source,"<UE5.8 generated Monolith source>","exec")
+                    seen.append(source)
+                    return {"text":"SSLM_NATIVE_BATCH_SAVED:"+identity+":"+str(len(contracts))}
+                runner.call_ue_script(mock_engine,runner.SCRIPTS[stage],
+                                      ("--mode","apply"),identity,stage,owner,start,count)
+                self.assertEqual(len(seen),1)
+                self.assertIn("os.path.isfile(disk)",seen[0])
+                self.assertIn("getattr(unreal,cls)",seen[0])
+                with self.assertRaises(RuntimeError):
+                    runner.call_ue_script(lambda _: {"text":"gateway_online_only"},
+                                          runner.SCRIPTS[stage],("--mode","apply"),
+                                          identity,stage,owner,start,count)
 
     def test_source_phase_strict_editor_identity_and_no_premature_build(self):
         """真实资产制作前应锁定UE5.8和工作空间，禁止PIE及不完整AssetRegistry。"""

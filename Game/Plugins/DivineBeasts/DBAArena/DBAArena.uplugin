@@ -38,6 +38,14 @@
       ]
     },
     {
+      "Name": "GamePlatformOnline",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
       "Name": "DBAClient",
       "Enabled": true,
       "TargetAllowList": [

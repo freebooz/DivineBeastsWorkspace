@@ -20,4 +20,12 @@ public:
     {
         return TEXT("UI.Screen.MatchFoundReady");
     }
+protected:
+    /** 候选逐人确认与局内Ready完全分开；后端缺失候选合同则失败关闭。 */
+    virtual void BindUIEvents() override;
+    virtual void UnbindUIEvents() override;
+    virtual void RefreshInitialState() override;
+    UFUNCTION() void AcceptOffer();
+    UFUNCTION() void DeclineOffer();
+    UFUNCTION() void CloseOfferPage();
 };

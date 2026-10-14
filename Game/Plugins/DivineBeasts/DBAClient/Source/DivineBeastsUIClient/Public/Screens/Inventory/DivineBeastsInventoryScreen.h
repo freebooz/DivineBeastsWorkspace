@@ -189,7 +189,8 @@ private:
     void UnbindInventoryVisualControls();
     void RefreshInventoryVisuals();
     /** 仅显示资产中已存在的命名图标控件；文字仍作为缺失图标时的可靠回退。 */
-    void RenderInventoryIcon(const FString& WidgetName, FName DefinitionId);
+    /** 返回true表示该格已显示正式纹理，可将数量排到图标下沿。 */
+    bool RenderInventoryIcon(const FString& WidgetName, FName DefinitionId);
     /** 通过平台异步软资源加载器按物品定义去重发起请求。 */
     void RequestInventoryIcon(FName DefinitionId);
     /** 页面解绑和销毁时撤销加载；回调不得再触碰已换账号或失活页面。 */

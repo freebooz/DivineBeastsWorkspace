@@ -29,6 +29,10 @@ func NewPlayerDataHandlerWithTrustedEvents(
 	}
 	mux:=http.NewServeMux()
 	mux.Handle(trustedInventoryEventPath,NewTrustedInventoryEventHandler(processor,secret))
+	// 已实现真实平台会话续租端口时才能暴露此额外内部接口；默认普通Handler不注册。
+	if renewer,ok:=processor.Verifier.(inventory.ServerLeaseRenewer);ok {
+		mux.Handle(trustedInventoryRenewPath,NewTrustedInventorySessionRenewHandler(renewer,secret))
+	}
 	mux.Handle("/",NewPlayerDataHandler(service))
 	return mux
 }

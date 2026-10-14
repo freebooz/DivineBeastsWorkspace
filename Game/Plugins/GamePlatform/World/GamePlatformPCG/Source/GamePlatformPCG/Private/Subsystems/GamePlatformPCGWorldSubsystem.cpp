@@ -66,7 +66,7 @@ bool UGamePlatformPCGWorldSubsystem::DoesSupportWorldType(EWorldType::Type Type)
 void UGamePlatformPCGWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection); Scope = MakeUnique<FGamePlatformPCGWorldScope>();
-    TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this,&ThisClass::Tick),0.05f);
+    // 仅建立World作用域账本；无装饰请求时不注册50ms轮询，专用服务器无需空转。
 }
 FGamePlatformResult UGamePlatformPCGWorldSubsystem::ValidateProfile(const UGamePlatformPCGProfileDefinition& Profile) const
 {
@@ -118,6 +118,12 @@ FGamePlatformPCGHandle UGamePlatformPCGWorldSubsystem::RequestGeneration(const F
         },OutResult);
     if (!OutResult.IsSuccess())
     { if (Request->Lease.IsValid()) { Data->ReleaseDefinition(Request->Lease); } Scope->Requests.Remove(Request->Snapshot.Handle.OperationId); return {}; }
+    // 首个已接受的运行时装饰请求才需要推进状态机；之后同一世界共用一个Ticker。
+    if (!TickerHandle.IsValid())
+    {
+        TickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+            FTickerDelegate::CreateUObject(this, &ThisClass::Tick), 0.05f);
+    }
     return Request->Snapshot.Handle;
 }
 FGamePlatformResult UGamePlatformPCGWorldSubsystem::CancelGeneration(const FGamePlatformPCGHandle& Handle)
@@ -326,12 +332,19 @@ bool UGamePlatformPCGWorldSubsystem::Tick(float)
         for (const auto Id : Ids) { ProcessRequest(Id); }
     }
     const FGuid DispatchScopeId = Scope->Id;
-    TArray<FGuid> Subscribers; Scope->Subscribers.GenerateKeyArray(Subscribers);
+    TArray<FGuid> Subscribers;
+    bool bSubscriberSnapshotCreated = false;
     for (const auto Id : Ids)
     {
         if (!Scope || Scope->Id != DispatchScopeId) { return false; }
         auto* Current = Scope->Requests.Find(Id); if (!Current) { continue; }
         auto Request = *Current; if (!Request->bDirty) { continue; } Request->bDirty = false;
+        // 无状态变化的50ms周期不枚举订阅表；真正派发时只拍一次快照以允许安全解绑。
+        if (!bSubscriberSnapshotCreated)
+        {
+            Scope->Subscribers.GenerateKeyArray(Subscribers);
+            bSubscriberSnapshotCreated = true;
+        }
         const auto Snapshot = GetGenerationSnapshot(Request->Snapshot.Handle);
         for (const auto Subscription : Subscribers)
         {
@@ -355,6 +368,12 @@ bool UGamePlatformPCGWorldSubsystem::Tick(float)
                 Scope->TerminalOrder.RemoveAt(0, 1, EAllowShrinking::No);
             }
         }
+    }
+    if (Scope->Requests.IsEmpty())
+    {
+        // 最后一项已完成清理后交由FTSTicker返回false自行注销，后续新请求可重新注册。
+        TickerHandle.Reset();
+        return false;
     }
     return true;
 }

@@ -194,14 +194,26 @@ bool UGamePlatformWorldSubsystem::Tick(float)
 {
     if(bClosing)return false;
     if(!GetWorld()||GetWorld()->bIsTearingDown){Stop();return false;}
-    if(Streaming)Streaming->Tick();
+    // Refresh负责唯一一次流送状态采样；旧实现此处重复Tick，造成每周期两次状态遍历。
     UpdateRegions();Refresh();
-    // 复制待发布事件及订阅，发布期间拒绝修改，避免用户回调导致容器迭代失效。
+    // 更新过程中可能因世界失效而同步Stop；不可继续分发旧世界事件。
+    if(bClosing)return false;
+    // 大多数周期没有区域事件，不必每0.1秒复制所有订阅者。
+    if(PendingEvents.IsEmpty())return true;
     auto Events=MoveTemp(PendingEvents);PendingEvents.Reset();auto List=Subscriptions;
     TGuardValue<bool> Guard(bDispatching,true);
-    for(const auto& Event:Events)for(const auto& Pair:List)
-        if(Owns(Pair.Value->Owner)&&Event.Observer.IsValid())Pair.Value->Callback(Event);
-    return true;
+    for(const auto& Event:Events)
+    {
+        if(bClosing)break;
+        if(!Event.Observer.IsValid())continue;
+        for(const auto& Pair:List)
+        {
+            if(bClosing)break;
+            if(Owns(Pair.Value->Owner))Pair.Value->Callback(Event);
+        }
+    }
+    // 回调允许关闭世界，但关闭后不得继续通知后续订阅者或保持Ticker运行。
+    return !bClosing;
 }
 void UGamePlatformWorldSubsystem::Stop()
 {

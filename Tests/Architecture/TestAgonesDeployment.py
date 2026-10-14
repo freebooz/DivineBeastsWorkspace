@@ -98,8 +98,9 @@ class AgonesBootstrapContractTests(unittest.TestCase):
         proxy_handlers = [
             h for h in launcher.SDK_HTTP_OPENER.handlers if isinstance(h, ProxyHandler)
         ]
-        self.assertEqual(len(proxy_handlers), 1)
-        self.assertEqual(proxy_handlers[0].proxies, {})
+        # urllib 的 build_opener 会忽略空 ProxyHandler；没有任何代理处理器才表明
+        # 请求不继承 HTTP_PROXY/HTTPS_PROXY，此处不应断言保留空处理器实例。
+        self.assertEqual(proxy_handlers, [])
         redirect_handlers = [
             h for h in launcher.SDK_HTTP_OPENER.handlers
             if isinstance(h, launcher.RejectSidecarRedirect)

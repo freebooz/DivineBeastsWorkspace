@@ -36,11 +36,38 @@
 - `Backend/internal/platform/agones/allocator_test.go`（Go 回归）新增 IPv4/IPv6、DNS/伪数字地址、端口错选和越界、HTTPS 强制及重定向目标保护测试；Go 测试仍以实际运行结果为准。
 - 核查生命周期生产调用发现：`DBAServer` 暴露 `BeginDrain`、`CompleteDrain`，但本轮源码搜索没有找到 MainArena 完成结算、迁移和清理后的 `CompleteDrain` 实际调用方。**该运行闭环仍未完成**，不得把存在 SDK `/shutdown` 实现等同于比赛结束能自动回收实例。
 
+## 2026-10-14 实际测试与编译收据
+
+- **Python 部署合同测试通过**：`python Tests/Architecture/TestAgonesDeployment.py -v`，10 项运行、0 失败、0 跳过。首轮因 Python `build_opener` 不保留空 `ProxyHandler` 的错误测试断言失败，已精准修正并复测退出码 0；PyYAML 存在，Fleet/Autoscaler YAML、角色配置及 RBAC 检查均执行。
+- **Go 控制面测试通过**：在 `Backend` 下运行 `go test ./internal/platform/agones ./internal/modules/gameserver ./internal/app/gameservercontrol -count=1`，三个包均返回 `ok`；同范围 `go vet` 退出码 0。这些结果不代替生产集群验证。
+- **平台静态架构门禁通过**：`pwsh -NoProfile -NonInteractive -File Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/Tests/Scripts/TestServerArchitecture.ps1`，含服务器插件依赖、HTTP 加固、准入生命周期检查；不属于 UE 编译或网络联调。
+- **UE5.8 Win64 Development Server 首次构建失败**：锁定源码引擎 `F:\UnrealEngine-5.8.0-release`（5.8.0），执行 `Build/Game/BuildFoundation.ps1 -Server -UsePrecompiled -NoUBA` 时 UBT 退出码 6，原因是源码引擎缺少 `ImageCore.precompiled`，并非已证实的 Agones C++ 编译问题。证据：`Saved/Validation/FoundationM0/b1b387e0-a26f-44ab-9b3b-f526f8c4a6bf/Build/Server`。
+- **正确参数的 Server 重编译已发起**：移除 `-UsePrecompiled`，保留 `-NoUBA -MaxParallelActions 2`，目标仍为 `DivineBeastsArenaServer Win64 Development`，UBT 构建计划 1086 个动作。Job：`wc_job_BumbRVjhkpfXfnCS`；日志目录：`Saved/Validation/FoundationM0/994e1860-9f53-4688-9aa1-be71f9c6b77d/Build/Server`。**未收到终态前不得标记编译通过**。
+- **工作区保护**：`main` 仍有 1 个无关目录规划文档 Git 合并冲突以及并行资产改动；托管 worktree 创建返回 `managed_worktree_root_unavailable`。本轮只修改了 Agones Python 测试与本记录，未处理冲突、清理或覆盖其他文件。
+- **仍未验证**：UE 编辑器原生测试 `GamePlatform.Server.Agones.BridgeScheduling`、当前 Server 编译终态、Linux Server Cook/打包、实际 Agones/Kubernetes Sidecar 状态收敛与自动扩缩。
+
+### 2026-10-14 后续补丁与实测复验
+
+- **前轮完整 Server 编译失败根因已定位**：Job `wc_job_BumbRVjhkpfXfnCS` 退出码 1，日志 `Saved/Validation/FoundationM0/994e1860-9f53-4688-9aa1-be71f9c6b77d/Build/Server/UBT.log` 显示 `DBAServer` 可信背包事件子系统的 Ticker 句柄类型不匹配（C2679、C2664），以及源 UE5.8 HTTP 重定向开发测试使用 private CleanupRequest（C2248）和失效枚举 ApplicationContextMask（C2838、C2065）。
+- **项目端修复完成**：`Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Public/Inventory/DivineBeastsTrustedInventoryEventSubsystem.h` 改用 `FTSTicker::FDelegateHandle`、包含 `Containers/Ticker.h`。相关 `DBAServer` 模块定向构建使用 `Build/Game/BuildFoundation.ps1 -Server -OnlyModules DBAServer -NoUBA -MaxParallelActions 2`，Job `wc_job_Cr0jJg5x8BZJyLiu`，退出码 0，UBT `Result: Succeeded`；证据：`Saved/Validation/FoundationM0/82443518-640d-4dd2-9167-4862dbc9b496/Build/Server`。
+- **引擎测试兼容补丁已受控应用**：UE5.8 锁定路径 `F:\UnrealEngine-5.8.0-release` 的 `HttpRedirectPolicyTests.cpp`（自动化测试源码）把两个过时标志换为 `EAutomationTestFlags_ApplicationContextMask`；`CurlHttp.h`（HTTP Curl 私有头文件）仅在 `WITH_DEV_AUTOMATION_TESTS` 下为现有 HTTP 生命周期测试夹具声明友元以允许调用 CleanupRequest。没有修改正式 HTTP 请求的行为代码。原文件完整备份位于 `Saved/Validation/AgonesUE58EngineCompatibility/20261014-110113-fed9ddc1`，写入前/后的 SHA-256 已核对；UE 引擎不是当前 Game 仓库的 Git 文件，升级引擎时必须单独迁移/复核此补丁。
+- **新的完整 Server 目标构建已提交**：`DivineBeastsArenaServer Win64 Development`，仍使用 UE5.8、`-NoUBA`、`-MaxParallelActions 2`，不复用缺失的引擎预编译清单。Job `wc_job_D4uLP3yLmmmtClOK`，**必须等终态为 completed 且 UBT 退出码 0 才能记作通过**。
+- **本次继续复验**：Python 部署合同 10/10 通过（不跳过），Go 的 Agones 分配、GameServer Registry 和控制面三个包 `go test -count=1` 通过，Go `vet` 通过，GamePlatformServer 静态架构门禁通过。均仅证明各自验证范围。
+- **仍未完成**：UE 原生测试 `GamePlatform.Server.Agones.BridgeScheduling`、完整 Server 目标最终链接/产物证据、Linux Dedicated Server 构建/Cook、Kubernetes 实际扩缩和 MainArena 赛后 `CompleteDrain` 实际回收闭环。
+
+### 2026-10-14 完整 Server 构建最终验收结果
+
+- **正式 Windows Dedicated Server 编译通过**：`wc_job_D4uLP3yLmmmtClOK`（2026-10-14）已在 CwebCodex 返回 `status=completed`、`outcome=passed`、退出码 `0`。UBT `Saved/Validation/FoundationM0/8d38292b-c5d7-4ece-a22d-64596534cd8f/Build/Server/UBT.log` 第 618 行明确 `Result: Succeeded`，总耗时 `2269.64` 秒。
+- **实际服务器产物**：`Game/Binaries/Win64/DivineBeastsArenaServer.exe`（326725632 字节）、`DivineBeastsArenaServer.pdb`（2552786944 字节）、`DivineBeastsArenaServer.target`（117904 字节）均已存在并核验写入时间。本次目标为 UE5.8.0 `DivineBeastsArenaServer Win64 Development`，完整编译链接已完成。该证明仅覆盖 Windows 开发构建，不包含 Linux Cook、容器部署、实时联机或实际 Agones 集群测试。
+- **后续 UE 原生测试门禁**：`GamePlatformServer` 的编辑器 DLL 仍早于新增 `GamePlatform.Server.Agones.BridgeScheduling` 测试源码；尝试 `BuildFoundation.ps1 -Editor -OnlyModules GamePlatformServer` 被已有 Foundation 引擎互斥锁拒绝，返回 `NotExecuted`（退出码 2），不是编译失败；当前锁由另一条独立 `BuildFoundation.ps1 -Editor` 任务占用，其正在通过 UBT 构建。已遵守并行安全原则，未绕过锁、未停止该任务。**原生自动化测试仍未通过验证**。
+- **版本与残留风险**：构建期间主工作区有并行 Git HEAD/源码活动，应独立核对最终运行版本的构建输入一致性。Agones 赛后 `CompleteDrain` 生产调用链、Linux Dedicated Server 最小 Cook、真实 Sidecar/CRD 状态以及三类 Fleet 自动扩缩仍为未验收，不能据 Windows Server 编译成功宣称完整上线。
+- **编辑器模块安全续行任务**：另一个不在 CwebCodex Job 队列内的 `BuildFoundation.ps1 -Editor` 进程正占用 UE5.8 Foundation 引擎互斥锁。当前模块调用返回 `NotExecuted`（退出码 2），不是编译失败。已启动 Runner Job `wc_job_PQRPJD-nVBQEbI8W`，有上限地等待该锁释放，核对 `GamePlatformServer` Agones 原生测试/目标源码哈希后才尝试 `BuildFoundation.ps1 -Editor -OnlyModules GamePlatformServer`；超过等待期限或源码变化则明确失败关闭。**该 Job 仍在运行，UE Agones 原生自动化测试尚未执行，不得将此处的等待任务算作测试通过。**
+
 ## 验证状态与欠账
 
-所有未实际执行的验证均标记「待验证」，特别是：
-1. Python 启动器纯函数与 YAML 语义测试（已发起验证任务；以 Job 终态和日志为准）。
-2. UE5.8 Server Target 原生编译（避免把任意静态门禁冒充编译）。
+以下是当前尚未完整验收的项目；2026-10-14 已通过的 Python/Go/静态门禁证据以上方实际测试收据为准：
+1. Python 启动器纯函数与 YAML 语义测试已通过（10/10），该项静态合同门禁已完成。
+2. **UE5.8 Windows Server Target 完整编译已通过（2026-10-14；UBT 退出码 0）**；仍须补做 Linux Server/Cook、运行时启动和 Native Agones 测试。
 3. Linux Server 包、地图最小 Cook、UE 进程启动与 PID1 信号。
 4. Kubernetes/Agones 实际 Sidecar Health → Go Ready → SDK Ready → GameServerAllocation → Drain → Shutdown。
 5. OpenWorld/Village 玩家容量 Counter Beta 开关、长生命周期安全缩容、Go 迁移/票据回收。

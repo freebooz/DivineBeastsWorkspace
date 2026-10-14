@@ -1,0 +1,1091 @@
+{
+  "SchemaVersion": 1,
+  "Project": "Game/DivineBeastsArena.uproject",
+  "ProjectDisplayName": "SSLM",
+  "EngineVersion": "5.8",
+  "CreationToolRequired": "Monolith MCP ui",
+  "Status": "NativeAndBlueprintVerified_BackendIntegrationPending",
+  "StatusZh": "真实Monolith界面已创建/编译/保存/冷重载，源码接线及集中原生回归通过；真实后端联机与人工视觉未验收，不能标整体完成。",
+  "MonolithActionSchemaVerified": true,
+  "MonolithDocumentTranslationValidated": true,
+  "EditorBuildRunId": "c80c3bf0-6d27-4950-9836-cd62657c359e",
+  "BlueprintAssetsCreated": 5,
+  "SourceImagesAreWidgetAssets": false,
+  "DependencyPolicyZh": "公共UI只依赖GamePlatform与DBAClient；竞技UI归DBAArena，经MobaCommon向下复用，不反向引用项目，不建立新插件。",
+  "VisualPolicy": "Docs/Implementation/UITextureVisualPolicy.md",
+  "AuthoringRequirementsZh": [
+    "核对正式工程绝对路径、Monolith实时版本及动作schema",
+    "先验证父类可加载和既有资产是否存在，已有资产只增量修改且保存前备份",
+    "每个蓝图创建／改动后编译、保存、关闭／重开、回读父类与WidgetTree",
+    "校验命名控件、层栈、焦点、导航、中文字体与可访问性",
+    "业务状态和输入由事件更新，取消本地等待不等于撤销后端事务",
+    "导入资源必须执行当前源指纹审计及SourceToSlate RHI验证，不使用widget截图Gamma路径",
+    "只有真实成功才更新MonolithGenerationManifest，编译／保存／重载未知不得写true"
+  ],
+  "Blueprints": [
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyPanel",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsSocialScreenBase",
+      "Layer": "Screen",
+      "InputMode": "GameAndUI",
+      "DefaultFocus": "TargetPlayerInput",
+      "DesignSizeLogicalPixels": [
+        680,
+        620
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "PanelBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "Root",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "PanelBackground",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "BodyScroll",
+                    "Class": "ScrollBox",
+                    "Children": [
+                      {
+                        "Name": "ContentRoot",
+                        "Class": "VerticalBox",
+                        "Children": [
+                          {
+                            "Name": "PanelTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "MemberCountText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "TargetPlayerInput",
+                            "Class": "EditableTextBox"
+                          },
+                          {
+                            "Name": "PartyMemberList_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "PartyMemberList",
+                                "Class": "ListView"
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "ActivityText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "CommandErrorText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "PartyActions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "InviteButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "InviteButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "InviteButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "ReadyCheckButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "ReadyCheckButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "ReadyCheckButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "LeavePartyButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "LeavePartyButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "LeavePartyButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "PartyManagementActions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "TransferLeaderButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "TransferLeaderButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "TransferLeaderButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "KickMemberButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "KickMemberButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "KickMemberButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "DisbandButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "DisbandButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "DisbandButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "ConfirmDisbandCheckBox",
+                            "Class": "CheckBox",
+                            "Children": [
+                              {
+                                "Name": "DisbandConfirmationLabel",
+                                "Class": "TextBlock"
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "PartyNavigationActions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "ApplicationsButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "ApplicationsButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "ApplicationsButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "InvitationsButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "InvitationsButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "InvitationsButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "ArenaButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "ArenaButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "ArenaButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "ToggleReadyButton_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "ToggleReadyButton",
+                                "Class": "Button",
+                                "Children": [
+                                  {
+                                    "Name": "ToggleReadyButton_Label",
+                                    "Class": "TextBlock"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "ReadStateActions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "RefreshButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RefreshButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RefreshButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "RetryCommandButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RetryCommandButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RetryCommandButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Name": "CloseButton_Bounds",
+                    "Class": "SizeBox",
+                    "Children": [
+                      {
+                        "Name": "CloseButton",
+                        "Class": "Button",
+                        "Children": [
+                          {
+                            "Name": "CloseButton_Label",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SourceImage": "SourceArt/UI/Social/Design/SSLM_PartyInteractions_Concept_v1.png",
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations",
+      "NativeCommandBindingReady": false,
+      "RoutePolicyZh": "不得替换既有UI.Screen.Social或FriendsButton焦点；新入口经公开UI路由在资产核验后注册。",
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyInviteModal",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsModalScreen",
+      "Layer": "Modal",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "InvitationsList",
+      "DesignSizeLogicalPixels": [
+        560,
+        360
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "PanelBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "Root",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "PanelBackground",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "BodyScroll",
+                    "Class": "ScrollBox",
+                    "Children": [
+                      {
+                        "Name": "ContentRoot",
+                        "Class": "VerticalBox",
+                        "Children": [
+                          {
+                            "Name": "PanelTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "InvitationsList_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "InvitationsList",
+                                "Class": "ListView"
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "InviterPortrait",
+                            "Class": "Image"
+                          },
+                          {
+                            "Name": "InviterNameText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "MemberCountText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "RemainingSecondsText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "RemainingProgress",
+                            "Class": "ProgressBar"
+                          },
+                          {
+                            "Name": "Actions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "AcceptButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "AcceptButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "AcceptButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "DeclineButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "DeclineButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "DeclineButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "CommandErrorText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ReadStateActions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "RefreshButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RefreshButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RefreshButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "RetryCommandButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RetryCommandButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RetryCommandButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Name": "CloseButton_Bounds",
+                    "Class": "SizeBox",
+                    "Children": [
+                      {
+                        "Name": "CloseButton",
+                        "Class": "Button",
+                        "Children": [
+                          {
+                            "Name": "CloseButton_Label",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "DismissPolicyZh": "ESC仅关闭展示，不等同拒绝；命令处理中禁用两个动作，到期只显示到期并等待服务器终态。",
+      "AuthorityTimeoutSeconds": 60,
+      "NativeCommandBindingReady": false,
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true,
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyApplications",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsSocialScreenBase",
+      "Layer": "Screen",
+      "InputMode": "GameAndUI",
+      "DefaultFocus": "ApplicationsList",
+      "DesignSizeLogicalPixels": [
+        680,
+        520
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "PanelBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "Root",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "PanelBackground",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "BodyScroll",
+                    "Class": "ScrollBox",
+                    "Children": [
+                      {
+                        "Name": "ContentRoot",
+                        "Class": "VerticalBox",
+                        "Children": [
+                          {
+                            "Name": "PanelTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ApplicationsList_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "ApplicationsList",
+                                "Class": "ListView"
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "EmptyStateText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "PermissionText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "CommandErrorText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ApplicationActions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "ApproveButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "ApproveButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "ApproveButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "RejectButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RejectButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RejectButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "ReadStateActions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "RefreshButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RefreshButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RefreshButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "RetryCommandButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RetryCommandButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RetryCommandButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Name": "CloseButton_Bounds",
+                    "Class": "SizeBox",
+                    "Children": [
+                      {
+                        "Name": "CloseButton",
+                        "Class": "Button",
+                        "Children": [
+                          {
+                            "Name": "CloseButton_Label",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "RowIntents": [
+        "Party.ApproveApplication",
+        "Party.RejectApplication"
+      ],
+      "AuthorityTimeoutSeconds": 120,
+      "NativeCommandBindingReady": false,
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true,
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PlayerContextMenu",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsMenuScreen",
+      "Layer": "System",
+      "InputMode": "GameAndUI",
+      "DefaultFocus": "CloseButton",
+      "DesignSizeLogicalPixels": [
+        300,
+        320
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "PanelBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "Root",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "PanelBackground",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "BodyScroll",
+                    "Class": "ScrollBox",
+                    "Children": [
+                      {
+                        "Name": "ContentRoot",
+                        "Class": "VerticalBox",
+                        "Children": [
+                          {
+                            "Name": "PanelTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "TargetPortrait",
+                            "Class": "Image"
+                          },
+                          {
+                            "Name": "TargetNameText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "InviteTargetButton_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "InviteTargetButton",
+                                "Class": "Button",
+                                "Children": [
+                                  {
+                                    "Name": "InviteTargetButton_Label",
+                                    "Class": "TextBlock"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "RequestJoinButton_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "RequestJoinButton",
+                                "Class": "Button",
+                                "Children": [
+                                  {
+                                    "Name": "RequestJoinButton_Label",
+                                    "Class": "TextBlock"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "InspectCharacterButton_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "InspectCharacterButton",
+                                "Class": "Button",
+                                "Children": [
+                                  {
+                                    "Name": "InspectCharacterButton_Label",
+                                    "Class": "TextBlock"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "DisabledReasonText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ReadStateActions",
+                            "Class": "VerticalBox",
+                            "Children": [
+                              {
+                                "Name": "RefreshButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RefreshButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RefreshButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "RetryCommandButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RetryCommandButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RetryCommandButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Name": "CloseButton_Bounds",
+                    "Class": "SizeBox",
+                    "Children": [
+                      {
+                        "Name": "CloseButton",
+                        "Class": "Button",
+                        "Children": [
+                          {
+                            "Name": "CloseButton_Label",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "PositionPolicyZh": "只响应合法可见玩家；按目标位置定位并限制在当前视口安全区，不抢占其他LocalPlayer。",
+      "NativeCommandBindingReady": false,
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true,
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyReadyCheckModal",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsModalScreen",
+      "Layer": "Modal",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "CloseButton",
+      "DesignSizeLogicalPixels": [
+        580,
+        460
+      ],
+      "WidgetTree": {
+        "Name": "RootCanvas",
+        "Class": "CanvasPanel",
+        "Children": [
+          {
+            "Name": "PanelBounds",
+            "Class": "SizeBox",
+            "Children": [
+              {
+                "Name": "Root",
+                "Class": "Overlay",
+                "Children": [
+                  {
+                    "Name": "PanelBackground",
+                    "Class": "Image"
+                  },
+                  {
+                    "Name": "BodyScroll",
+                    "Class": "ScrollBox",
+                    "Children": [
+                      {
+                        "Name": "ContentRoot",
+                        "Class": "VerticalBox",
+                        "Children": [
+                          {
+                            "Name": "PanelTitle",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ActivityText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ReadyMembersList_Bounds",
+                            "Class": "SizeBox",
+                            "Children": [
+                              {
+                                "Name": "ReadyRosterList",
+                                "Class": "ListView"
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "RemainingSecondsText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "Actions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "ConfirmReadyButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "ConfirmReadyButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "ConfirmReadyButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "DeclineReadyButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "DeclineReadyButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "DeclineReadyButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "CommandErrorText",
+                            "Class": "TextBlock"
+                          },
+                          {
+                            "Name": "ReadStateActions",
+                            "Class": "HorizontalBox",
+                            "Children": [
+                              {
+                                "Name": "RefreshButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RefreshButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RefreshButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Name": "RetryCommandButton_Bounds",
+                                "Class": "SizeBox",
+                                "Children": [
+                                  {
+                                    "Name": "RetryCommandButton",
+                                    "Class": "Button",
+                                    "Children": [
+                                      {
+                                        "Name": "RetryCommandButton_Label",
+                                        "Class": "TextBlock"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Name": "ReadyStatusText",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Name": "CloseButton_Bounds",
+                    "Class": "SizeBox",
+                    "Children": [
+                      {
+                        "Name": "CloseButton",
+                        "Class": "Button",
+                        "Children": [
+                          {
+                            "Name": "CloseButton_Label",
+                            "Class": "TextBlock"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
+      "BlueprintCreated": true,
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "AuthorityTimeoutSeconds": 20,
+      "SourceImage": "Docs/Implementation/VillagePartyArena/Design/SSLM_ReadyAndResult_Concept_v1.png",
+      "NativeCommandBindingReady": false,
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true,
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations"
+    }
+  ],
+  "OwnerPlugin": "DBAUIPack_Core",
+  "SourceBridgeImplemented": true,
+  "ProductionMatchmakingAvailable": false,
+  "ColdReloadVerified": true,
+  "ColdReloadEditorPid": 11536,
+  "ColdReadbackEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalColdReadback.json",
+  "NativeAutomationEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalNativeAutomation.json",
+  "RelatedNativeTestsPassed": 9,
+  "RuntimeInteractionVerified": false,
+  "ManualVisualAccepted": false,
+  "FocusPolicyZh": "DefaultFocus是C++ ScreenDefinition在InitializeScreen注入的运行时合同；已核目标控件和导航。Transient CDO写值不作为持久化焦点证明，实际设备焦点待联调。",
+  "NativeBindingReadyMeaningZh": "NativeCommandBindingReady保留为完整业务可用性标志；源码/结构核验单独记录，缺后端或未联调不将旧字段写true。"
+}

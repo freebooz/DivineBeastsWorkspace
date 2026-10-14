@@ -1,0 +1,143 @@
+openapi: 3.1.0
+info:
+  title: 平台普通队伍交互
+  version: 1.0.0
+  description: 普通队伍的本人快照、邀请收件箱和命令。主体来自Gateway认证；本文件不代表源码已编译或生产部署已通过。
+security:
+  - bearerAuth: []
+paths:
+  /v1/party/current:
+    get:
+      operationId: getCurrentPartyState
+      summary: 读取本人授权普通队伍快照
+      responses:
+        '200':
+          description: 真实快照，无队伍时hasParty为false；网络或仓储故障不得返回空成功。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PartySnapshot' }
+        '401': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /v1/party/invitations:
+    get:
+      operationId: getCurrentPartyInvitations
+      summary: 读取本人未到期邀请，不接受其他玩家ID查询参数
+      responses:
+        '200':
+          description: 授权邀请列表；最多20项。
+          content:
+            application/json:
+              schema: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/Invitation' } }
+        '401': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /v1/party/commands:
+    post:
+      operationId: commandCurrentParty
+      summary: 以本人身份提交有修订与幂等约束的普通组队命令
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PartyCommand' }
+      responses:
+        '200':
+          description: 命令已在后端事务提交；本人已离队或仍是申请人时不返回目标完整名单。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandResult' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, description: 平台已有访问令牌，不进入控件资产、日志或视图状态。 }
+  responses:
+    Error:
+      description: 认证、权限、版本、容量、到期、限额或存储失败；只有明确错误码可透传。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [errorCode, message]
+            properties:
+              errorCode: { type: string, description: 稳定错误码，未知故障映射SERVICE_UNAVAILABLE。 }
+              message: { type: string, description: 安全说明，不包含Redis地址、原始记录或认证信息。 }
+              retryable: { type: boolean, description: 是否允许依原请求键重试；取消本地等待不等于后端回滚。 }
+  schemas:
+    Identifier: { type: string, minLength: 1, maxLength: 128, description: 稳定逻辑身份，不得包含控制字符、前后空白或被用作授权令牌。 }
+    Revision: { type: string, pattern: '^(0|[1-9][0-9]*)$', description: 非负int64的十进制字符串，避免JSON双精度截断。 }
+    PartyCommand:
+      type: object
+      additionalProperties: false
+      required: [partyId, action, clientRequestId, expectedRevision]
+      properties:
+        partyId: { $ref: '#/components/schemas/Identifier' }
+        action:
+          type: string
+          enum: [invite, requestJoin, acceptRequest, declineRequest, cancelRequest, ready, transferLeader, leave, kick, disband]
+          description: 操作白名单；不包含竞技准备或匹配接受，避免不同阶段共用含混命令。
+        targetPlayerId: { type: string, maxLength: 128, description: 邀请、移除或转让目标；操作需要时必须非空。 }
+        membershipRequestId: { type: string, maxLength: 128, description: 邀请或申请ID，相关操作必须非空。 }
+        clientRequestId: { $ref: '#/components/schemas/Identifier' }
+        expectedRevision: { $ref: '#/components/schemas/Revision' }
+        ready: { type: boolean, default: false, description: 仅ready命令修改当前认证玩家。 }
+    PartySnapshot:
+      type: object
+      additionalProperties: false
+      required: [hasParty, partyId, leaderPlayerId, revision, rosterLocked, members, requests, serverTimeUtc]
+      properties:
+        hasParty: { type: boolean, description: 本人是否真实属于普通队伍。 }
+        partyId: { type: string, description: 无队伍时为空字符串。 }
+        leaderPlayerId: { type: string, description: 无队伍时为空，不用于客户端授予管理权。 }
+        revision: { $ref: '#/components/schemas/Revision' }
+        rosterLocked: { type: boolean, description: 真实后端名单锁，客户端不得直接解锁。 }
+        members:
+          type: array
+          maxItems: 5
+          description: 仅本人作为成员时可见的真实名单；无队伍为空数组。
+          items:
+            type: object
+            required: [playerId, displayName, ready, online]
+            properties:
+              playerId: { $ref: '#/components/schemas/Identifier' }
+              displayName: { type: string, description: 服务端提供的展示昵称，不用于授权；渲染端必须按纯文本显示。 }
+              ready: { type: boolean, description: 对当前名单和活动版本的准备状态。 }
+              online: { type: boolean, description: 可信在线状态；UI不通过事件缺失猜测。 }
+        requests:
+          type: array
+          maxItems: 64
+          description: 经队长／参与者权限过滤的请求；Pending还须校验服务器到期时间。
+          items:
+            type: object
+            required: [requestId, kind, playerId, state, expiresAtUtc]
+            properties:
+              requestId: { $ref: '#/components/schemas/Identifier' }
+              kind: { type: string, enum: [invitation, application], description: 邀请或申请。 }
+              playerId: { $ref: '#/components/schemas/Identifier' }
+              state: { type: string, enum: [pending, accepted, declined, cancelled], description: 请求提交状态，终态不可反转。 }
+              expiresAtUtc: { type: string, format: date-time, description: UTC绝对截止时刻，等于服务器当前时刻即到期。 }
+        serverTimeUtc: { type: string, format: date-time, description: 显示倒计时的校时基准，客户端不得决定权威终态。 }
+    CommandResult:
+      type: object
+      additionalProperties: false
+      required: [clientRequestId, affectedPartyId, affectedRevision, snapshot]
+      properties:
+        clientRequestId: { $ref: '#/components/schemas/Identifier' }
+        affectedPartyId: { $ref: '#/components/schemas/Identifier' }
+        affectedRevision: { $ref: '#/components/schemas/Revision' }
+        snapshot: { $ref: '#/components/schemas/PartySnapshot' }
+    Invitation:
+      type: object
+      additionalProperties: false
+      required: [partyId, requestId, inviterPlayerId, memberCount, revision, expiresAtUtc]
+      properties:
+        partyId: { $ref: '#/components/schemas/Identifier' }
+        requestId: { $ref: '#/components/schemas/Identifier' }
+        inviterPlayerId: { $ref: '#/components/schemas/Identifier' }
+        memberCount: { type: integer, minimum: 1, maximum: 5, description: 当前真实成员数量，不含待接受邀请。 }
+        revision: { $ref: '#/components/schemas/Revision' }
+        expiresAtUtc: { type: string, format: date-time, description: 服务器UTC到期时间。 }
