@@ -8,6 +8,13 @@
 #include "Engine/AssetManager.h"
 #include "Engine/World.h"
 
+UGameplayEffect* UDivineBeastsDevelopmentMagicAbility::GetCostGameplayEffect() const
+{
+    // 使用原生GAS无成本合同；不是跳过Commit，也不在施法后退款或补气势。
+    // 即使蓝图遗留费用引用，服务器与客户端的资源资格检查均不会扣除或要求气势。
+    return nullptr;
+}
+
 void UDivineBeastsDevelopmentMagicAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {

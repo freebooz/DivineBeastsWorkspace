@@ -15,13 +15,96 @@ WORKSPACE = Path(__file__).resolve().parents[3]
 ROOT = "/Game/Development/DivineBeasts/Abilities"
 MAGIC = ROOT + "/MagicTests"
 SPELLS = {
-    "Fireball": {"Slot": "Active01", "NameZh": "火焰弹（开发测试）", "Damage": 40, "Cost": 10, "Cooldown": 2,
+    "Fireball": {"Slot": "Active01", "NameZh": "火焰弹（开发测试）", "Damage": 40, "Cost": 0, "Cooldown": 2,
                  "Speed": 1200, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
-    "Frostbolt": {"Slot": "Active02", "NameZh": "寒冰箭（开发测试）", "Damage": 30, "Cost": 8, "Cooldown": 1.5,
+    "Frostbolt": {"Slot": "Active02", "NameZh": "寒冰箭（开发测试）", "Damage": 30, "Cost": 0, "Cooldown": 1.5,
                   "Speed": 1600, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
-    "ArcaneMissiles": {"Slot": "Ultimate", "NameZh": "螺旋奥术飞弹（开发测试）", "Damage": 12, "Cost": 12, "Cooldown": 3,
+    "ArcaneMissiles": {"Slot": "Ultimate", "NameZh": "螺旋奥术飞弹（开发测试）", "Damage": 12, "Cost": 0, "Cooldown": 3,
                        "Speed": 1400, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
 }
+
+
+def repair_momentum_costs():
+    """Monolith独占编辑器执行的窄迁移：先备份85份实际包，再归零36条费用及成本引用。
+
+    仅操作已存在的表、36份GA、36份GE和12份UIProfile；不重制图标、技能动作、英雄或地图。
+    旧成本GE保留稳定身份但清空修改项，避免未迁移软引用继续扣气势。逐包保存非原子，
+    任一步失败须停止Cook并保留整组备份；不自动覆盖用户未保存资产。
+    """
+    import unreal
+    if '-SpellMomentumRepairOwned' not in unreal.SystemLibrary.get_command_line():
+        raise RuntimeError('只能在本轮独占Monolith编辑器迁移法术费用')
+    if Path(unreal.Paths.get_project_file_path()).resolve() != WORKSPACE / 'Game/DivineBeastsArena.uproject':
+        raise RuntimeError('正式工程身份不符')
+    if unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages() or unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages():
+        raise RuntimeError('存在未保存包，拒绝覆盖人工修改')
+    heroes = ('Rat', 'Ox', 'Tiger', 'Rabbit', 'Dragon', 'Snake', 'Horse', 'Goat', 'Monkey', 'Rooster', 'Dog', 'Boar')
+    table = unreal.load_asset(MAGIC + '/DT_DBA_DevMagicBalance')
+    rows = json.loads(unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table))
+    expected = {hero + '_' + spell + '_L1' for hero in heroes for spell in SPELLS}
+    if len(rows) != 36 or {row['Name'] for row in rows} != expected:
+        raise RuntimeError('真实表行身份不符，拒绝覆盖其他技能')
+    assets = [table]
+    spells, profiles = [], []
+    for hero in heroes:
+        profile = unreal.load_asset(ROOT + '/UI/Profiles/DA_DBA_' + hero + '_DevUIProfile')
+        entries = list(profile.get_editor_property('Entries'))
+        if len(entries) != 5:
+            raise RuntimeError('真实Profile五槽合同不符：' + hero)
+        profiles.append((profile, entries)); assets.append(profile)
+        for spell in SPELLS:
+            prefix = '_DBA_' + hero + '_Dev' + spell
+            ability = unreal.load_asset(MAGIC + '/GA' + prefix)
+            cost = unreal.load_asset(MAGIC + '/GE' + prefix + 'Cost')
+            ability_class = unreal.EditorAssetLibrary.load_blueprint_class(MAGIC + '/GA' + prefix)
+            cost_class = unreal.EditorAssetLibrary.load_blueprint_class(MAGIC + '/GE' + prefix + 'Cost')
+            if not ability or not cost or not ability_class or not cost_class or not isinstance(unreal.get_default_object(ability_class), unreal.DivineBeastsDevelopmentMagicAbility):
+                raise RuntimeError('真实法术或成本包缺失：' + prefix)
+            spells.append((ability, cost)); assets.extend([ability, cost])
+    evidence = WORKSPACE / 'Saved/Validation/Rebuild20261014' / ('SpellCosts-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S'))
+    backup = evidence / 'Backup'; backup.mkdir(parents=True)
+    for obj in assets:
+        relative = obj.get_path_name().split('.')[0].removeprefix('/Game/') + '.uasset'
+        original = WORKSPACE / 'Game/Content' / relative
+        if not original.is_file():
+            raise RuntimeError('缺少磁盘回退包：' + relative)
+        target = backup / relative; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(original, target)
+    saved = []
+
+    def save_exact(obj):
+        """只保存本次明确所有的包；保存失败立即抛出，不保存地图或其他dirty包。"""
+        if not unreal.EditorAssetLibrary.save_loaded_asset(obj, only_if_is_dirty=False):
+            raise RuntimeError('法术费用保存失败：' + obj.get_path_name())
+        saved.append(obj.get_path_name())
+
+    for row in rows:
+        row['MomentumCost'] = 0.0
+    if not unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(table, json.dumps(rows)):
+        raise RuntimeError('法术数值表导入失败')
+    save_exact(table)
+    for ability, cost in spells:
+        for bp in (cost, ability):
+            bp.modify()
+        cost_cdo = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(cost.get_path_name().split('.')[0]))
+        cost_cdo.set_editor_property('Modifiers', [])
+        unreal.BlueprintEditorLibrary.compile_blueprint(cost); save_exact(cost)
+        ability_cdo = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(ability.get_path_name().split('.')[0]))
+        ability_cdo.set_editor_property('CostGameplayEffectClass', None)
+        unreal.BlueprintEditorLibrary.compile_blueprint(ability); save_exact(ability)
+    for profile, entries in profiles:
+        profile.modify()
+        for index in (2, 3, 4):
+            text = str(entries[index].get_editor_property('Description'))
+            for old_cost in ('10', '8', '12'):
+                text = text.replace('气势' + old_cost + '，', '不消耗气势，')
+            if '不消耗气势' not in text:
+                raise RuntimeError('界面说明未能精确迁移：' + profile.get_path_name())
+            entries[index].set_editor_property('Description', unreal.Text(text))
+        profile.set_editor_property('Entries', entries); save_exact(profile)
+    report = {'Saved': saved, 'SavedCount': len(saved), 'Backup': str(backup), 'FreshProcessVerified': False}
+    (evidence / 'Report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+    print(json.dumps({'SavedCount': len(saved), 'Report': str(evidence / 'Report.json')}, ensure_ascii=False))
+    return report
 
 
 def author():
@@ -149,10 +232,8 @@ def author():
             definition.set_editor_property("ProjectileIntervalSeconds", data["Interval"]); save(definition)
             cost_bp, cost_cls, cost = blueprint(MAGIC + "/GE" + prefix + "Cost", unreal.GameplayEffect)
             cost.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.INSTANT)
-            modifier = unreal.GameplayModifierInfo()
-            attr = '(Attribute="/Script/DivineBeastsCharactersRuntime.DivineBeastsMomentumAttributeSet:Momentum",AttributeOwner="/Script/DivineBeastsCharactersRuntime.DivineBeastsMomentumAttributeSet",AttributeName="Momentum")'
-            if not modifier.import_text('(Attribute=' + attr + ',ModifierOp=AddBase,ModifierMagnitude=' + magnitude(-data["Cost"]).export_text() + ')'): raise RuntimeError("成本导入失败")
-            cost.set_editor_property("Modifiers", [modifier]); unreal.BlueprintEditorLibrary.compile_blueprint(cost_bp); save(cost_bp)
+            # 保留已发布成本包身份，但不创建任何资源修改；法术GA使用原生无成本合同。
+            cost.set_editor_property("Modifiers", []); unreal.BlueprintEditorLibrary.compile_blueprint(cost_bp); save(cost_bp)
             cool_bp, cool_cls, cool = blueprint(MAGIC + "/GE" + prefix + "Cooldown", unreal.GameplayEffect)
             cool.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.HAS_DURATION)
             cool.set_editor_property("DurationMagnitude", magnitude(data["Cooldown"]))
@@ -171,7 +252,7 @@ def author():
             cost_cls = unreal.EditorAssetLibrary.load_blueprint_class(MAGIC + "/GE" + prefix + "Cost")
             cool_cls = unreal.EditorAssetLibrary.load_blueprint_class(MAGIC + "/GE" + prefix + "Cooldown")
             bp, cls, cdo = blueprint(MAGIC + "/GA" + prefix, unreal.DivineBeastsDevelopmentMagicAbility)
-            cdo.set_editor_property("AbilityDefinitionId", primary(identifier)); cdo.set_editor_property("CostGameplayEffectClass", cost_cls)
+            cdo.set_editor_property("AbilityDefinitionId", primary(identifier)); cdo.set_editor_property("CostGameplayEffectClass", None)
             cdo.set_editor_property("CooldownGameplayEffectClass", cool_cls); cdo.set_editor_property("bDevelopmentDamageSampleSupported", True)
             cdo.set_editor_property("DevelopmentCooldownTags", tags(["DivineBeasts.Development.Cooldown." + hero + "." + data["Slot"]]))
             cdo.set_editor_property("AbilityTags", tags(["Ability.Active", "Ability.Spell"]))
@@ -181,7 +262,7 @@ def author():
             grants[index] = grant
             dependencies = [d for d in dependencies if str(d.get_editor_property("PrimaryAssetName")) not in (old_id, identifier)] + [primary(identifier)]
             item = unreal.DivineBeastsAbilityUIEntry(); item.set_editor_property("AbilityId", identifier); item.set_editor_property("DisplayName", unreal.Text(data["NameZh"]))
-            item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，气势" + str(data["Cost"]) + "，冷却" + str(data["Cooldown"]) + "秒。" + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器直线投射；未实现燃烧、冰冻或减速。") + "后续替换正式技能。"))
+            item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，不消耗气势" + "，冷却" + str(data["Cooldown"]) + "秒。" + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器直线投射；未实现燃烧、冰冻或减速。") + "后续替换正式技能。"))
             item.set_editor_property("Icon", unreal.load_asset("/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev" + name)); ui[index] = item
         ability_set.set_editor_property("Abilities", grants); ability_set.set_editor_property("RequiredDefinitions", dependencies)
         profile.set_editor_property("Entries", ui); save(ability_set); save(profile)

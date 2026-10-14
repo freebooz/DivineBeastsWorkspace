@@ -52,6 +52,9 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsAbilitySlotDetails
     float CooldownRemainingSeconds = 0.0f;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
     float CooldownTotalSeconds = 0.0f;
+    /** 在GAS事件快照时计算的本进程Slate实时时钟截止秒；仅用于材质动画，不是网络权威。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    float CooldownEndsAtAppSeconds = 0.0f;
     /** 当前 UI 不能交互的原因；服务端 GAS 仍决定最终是否激活。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
     FText DisabledReason;

@@ -38,3 +38,11 @@
 **剩余执行顺序：** 恢复正确的UE5.8编辑器及Monolith → 正式导入Texture2D和两个VFXDefinition → 修复瀑布蓝图 → 创建独立水体审核地图并保存回读 → 视觉审核及性能基线 → 拓展Village正式水体 → 最后统一Editor/Client/Server编译、Cook和联机验收。
 
 仅在获得对应工具的真实成功日志后，才把任务状态从“源码/资源已存在”更新为“已运行/已验证”。
+
+## 五、本地前后端重新编译时的水体Cook修复
+
+2026-10-14本轮正式Editor、Client、Server的Win64 Development全目标已实际退出0；Editor使用锁定UE5.8预编译引擎依赖，项目模块仍由UBT编译链接。Editor证据为`c1257527-9652-4360-af35-fb99f25304de`，Client/Server证据为`fa6eace4-ce07-4709-9af6-dda5e2bb62fa`。这些结果更新当前构建状态，不代表水体P1—P10的资源、联机或性能整体验收。
+
+服务器Cook `14a79ea4-1667-4136-84ab-19d9178a2267`实际退出25：新手村水体材质实例和通用瀑布表现蓝图仍被Cook，引用了已NeverCook的Surface材质。Stage阶段整包剥离不足以修复Cook的依赖错误，原失败日志保留。
+
+在既有服务器表现排除真源中增加`/GamePlatformVFX/Water`、`/DBAWorldPack_Village/Water/Materials`与`/DBAWorldPack_Village/Water/Blueprints`。第二次实际Cook进一步发现三项项目视觉预设硬引用已排除的材质/VFX，日志的SourceInstigator均为整个内容目录强制Cook。水面视觉预设不承担`GamePlatformWaterRuntime`的权威Region与深度查询，当前地图也未通过这些待迁入预设提供权威几何，因此仅允许这两个已核验叶子；Village包根、Water父目录、地图、权威水域定义与权威技能仍禁止剥离。权威Region不能新增在该视觉Blueprints目录。通过既有生成器同步三份服务器Game配置和专服Pak规则，未修改二进制资产、客户端水材质或权威水域运行代码。新增回归先观察到真实漏项失败，修复后完整策略测试31/31通过，漂移检查通过；这些静态结果不替代下一轮真实Cook/Stage。

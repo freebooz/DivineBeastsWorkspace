@@ -601,6 +601,9 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                             {
                                 Detail.CooldownRemainingSeconds = Pair.Key;
                                 Detail.CooldownTotalSeconds = Pair.Value;
+                                // 匹配SlateRHIRenderer的RealTime=PlatformTime-GStartTime；
+                                // 只在权威效果事件更新，渲染材质自行插值，不增加UI Tick。
+                                Detail.CooldownEndsAtAppSeconds = static_cast<float>(FPlatformTime::Seconds() - GStartTime) + Pair.Key;
                             }
                         }
                     }

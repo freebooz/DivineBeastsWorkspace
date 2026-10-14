@@ -242,10 +242,24 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
             UTexture2D* Texture = VisualState.Icon.Get();
             Icon->SetBrushFromTexture(Texture);
             Icon->SetVisibility(IsValid(Texture) ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
-            Icon->SetIsEnabled(VisualState.bEnabled && !VisualState.bPending);
+            // 可用资格由槽位命令门禁负责；冷却期间图标保持可见原色，不以禁用Shader隐藏内容。
+            Icon->SetIsEnabled(true);
+            Icon->SetRenderOpacity(1.f);
         }
         if (auto* Cooldown = Cast<UProgressBar>(Binding.Widget->GetWidgetFromName(TEXT("CooldownFill"))))
             Cooldown->SetPercent(VisualState.OverlayProgress);
+        float EndsAtAppSeconds = 0.f, DurationSeconds = 0.f;
+        for (const FDivineBeastsAbilitySlotDetails& Detail : GetAbilitySlotDetails())
+        {
+            if (Detail.AbilityId == VisualState.ContentId && !Detail.AbilityId.IsNone())
+            {
+                EndsAtAppSeconds = Detail.CooldownEndsAtAppSeconds;
+                DurationSeconds = Detail.CooldownTotalSeconds;
+                break;
+            }
+        }
+        // 快照截止时间不会因其他刷新而重启动画；只更新材质参数，结束事件清除覆盖。
+        Binding.Widget->ApplyOverlayTiming(EndsAtAppSeconds, DurationSeconds);
         // 在槽位蓝图状态事件之后刷新，不能让初始占位文字替代玩家当前生效按键。
         RefreshSlotHotkey(Binding.Widget, Binding.ActionName, Binding.bPassive);
     }

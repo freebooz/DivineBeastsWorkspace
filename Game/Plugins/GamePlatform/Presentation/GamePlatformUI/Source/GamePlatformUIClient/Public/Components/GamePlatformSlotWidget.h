@@ -59,6 +59,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="UI|Slot")
     void ApplySlotState(const FGamePlatformUISlotState& InState);
 
+    /** 事件驱动的纯视觉覆盖时序：截止时间为Slate实时时钟秒，Duration为总秒数。
+     * 无有效时序时清除遮罩。只设置本实例材质参数；不Tick、不查询业务、不提前恢复交互资格。 */
+    void ApplyOverlayTiming(float EndsAtAppSeconds, float DurationSeconds);
+
     /** 返回本Widget当前只读显示快照的值拷贝；空内容不代表拥有任何业务授权。 */
     UFUNCTION(BlueprintPure, Category="UI|Slot")
     FGamePlatformUISlotState GetSlotState() const { return SlotState; }

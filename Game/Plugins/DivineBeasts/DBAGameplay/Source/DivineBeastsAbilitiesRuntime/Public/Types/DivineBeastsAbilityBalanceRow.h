@@ -32,10 +32,11 @@ struct DIVINEBEASTSABILITIESRUNTIME_API FDivineBeastsAbilityBalanceRow : public 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Ability|Damage")
     EGamePlatformDamageType DamageType = EGamePlatformDamageType::Untyped;
 
-    /** 技能冷却及气势成本；运行态分别由 GAS Effect 和 Momentum 属性集持有。 */
+    /** 技能冷却秒数；运行态由GAS冷却效果持有，零表示无冷却。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Ability|Cost", meta=(ClampMin="0"))
     float CooldownSeconds = 0.0f;
 
+    /** 非法术技能可声明气势费用；Magic法术必须为零，不替法术引入其他资源。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Ability|Cost", meta=(ClampMin="0"))
     float MomentumCost = 0.0f;
 
