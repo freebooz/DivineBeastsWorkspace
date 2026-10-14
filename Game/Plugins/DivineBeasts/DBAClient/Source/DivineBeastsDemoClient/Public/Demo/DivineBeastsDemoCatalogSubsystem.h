@@ -46,9 +46,9 @@ USTRUCT(BlueprintType)
 struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoScenario
 {
     GENERATED_BODY()
-    /** 正式案例使用稳定ID；未编目诊断兼容入口仍使用长包路径，不计正式功能覆盖。 */
+    /** 正式功能案例使用稳定ScenarioId（案例标识）；未编目诊断地图按真实包路径登记且不计正式覆盖。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName ScenarioId;
-    /** 正式功能所有者；未编目地图显示于开发工具诊断分组，该分组不宣称资产所有权。 */
+    /** PluginId（插件身份）明确关联真实插件；诊断地图仅分组，不宣称业务功能所有权。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName PluginId;
     /** UI显示名称，可进一步由真实Definition覆盖。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FText Title;

@@ -1,6 +1,17 @@
 #pragma once
 // 第三层本地世界操控策略；仅保存当前鼠标按键，不拥有Pawn、资源、授权或跨世界状态。
 // 控制器在游戏线程调用；失焦、界面暂停、旅行及换Pawn必须Reset，不能从物理按住状态重建旧拖动。
+/** 单帧鼠标观察结果；角色只接收水平朝向，不接收相机俯仰。 */
+struct FDivineBeastsWorldMouseLookDelta
+{
+    /** 当前拖动提交给本地观察相机的水平输入增量，沿用已配置的输入轴方向。 */
+    float CameraYawInput = 0.f;
+    /** 当前拖动提交给本地观察相机的俯仰输入增量，沿用已配置的输入轴方向。 */
+    float CameraPitchInput = 0.f;
+    /** 右键拖动时同步给角色的水平输入增量；左键拖动及俯仰始终为零。 */
+    float CharacterYawInput = 0.f;
+};
+
 struct FDivineBeastsWorldControlState
 {
     unsigned char MouseButtons = 0;
@@ -25,6 +36,13 @@ struct FDivineBeastsWorldControlState
     }
     bool IsDragging() const { return MouseButtons != 0; }
     bool IsFacingCamera() const { return (MouseButtons & 2) != 0; }
+    /** 按WoW式左右键语义分流鼠标轴：左键仅观察，右键观察并同步角色水平朝向。
+     * 未拖动时返回零；纵向增量绝不进入角色朝向，输入符号由DefaultInput映射统一负责。 */
+    FDivineBeastsWorldMouseLookDelta ResolveMouseLook(float HorizontalInput, float VerticalInput) const
+    {
+        if (!IsDragging()) { return {}; }
+        return { HorizontalInput, VerticalInput, IsFacingCamera() ? HorizontalInput : 0.f };
+    }
     /** 两键前进优先于W/S，输出保持[-1,1]；无自动奔跑的隐式锁定状态。 */
     float ResolveForward(float KeyboardAxis) const { return MouseButtons == 3 ? 1.f : KeyboardAxis; }
     /** RMB将A/D从转身改为横移；Q/E始终横移，相加后钳制到归一化轴范围。 */

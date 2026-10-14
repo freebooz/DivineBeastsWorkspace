@@ -73,7 +73,8 @@ bool WriteRunEvidence(const FDivineBeastsDemoRunEvidence& Input, FString& OutInd
     if (!IsPlainPath(Root) || !Files.CreateDirectoryTree(*Root)) { OutError = TEXT("证据目录含链接、不能审计或创建失败。"); return false; }
     const FString Revision = FGuid::NewGuid().ToString(EGuidFormats::Digits);
     const FString StateName = TEXT("RunState.") + Revision + TEXT(".json"), LogName = TEXT("RunEvents.") + Revision + TEXT(".log");
-    const FString StatePath = FPaths::Combine(Root, StateName), LogPath = FPaths::Combine(Root, LogName);
+    // 日志文件路径必须与引擎的全局LogPath日志类别区分；文件身份和追加语义保持原合同。
+    const FString StatePath = FPaths::Combine(Root, StateName), EventLogPath = FPaths::Combine(Root, LogName);
     auto State = MakeShared<FJsonObject>();
     State->SetStringField(TEXT("run_id"), Input.Run.Token.RunId.ToString(EGuidFormats::DigitsWithHyphens));
     State->SetStringField(TEXT("world_id"), Input.Run.Token.WorldId.ToString(EGuidFormats::DigitsWithHyphens));
@@ -85,7 +86,7 @@ bool WriteRunEvidence(const FDivineBeastsDemoRunEvidence& Input, FString& OutInd
     if (!SaveJson(State, StatePath)) { OutError = TEXT("状态证据追加失败；已有文件未覆盖。"); return false; }
     FString Events = TEXT("SSLM实际演示事件；不含用户输入、外部诊断正文或人工结论。\n");
     for (const auto& Event : Input.EventRecords) Events += Event + TEXT("\n");
-    if (!FFileHelper::SaveStringToFile(Events, *LogPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM, &IFileManager::Get(), FILEWRITE_NoReplaceExisting))
+    if (!FFileHelper::SaveStringToFile(Events, *EventLogPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM, &IFileManager::Get(), FILEWRITE_NoReplaceExisting))
     { OutError = TEXT("事件日志追加失败，状态文件保留用于诊断，本次索引未发布。"); return false; }
     auto Index = MakeShared<FJsonObject>(); Index->SetNumberField(TEXT("schema_version"), 1);
     Index->SetStringField(TEXT("run_id"), Input.Run.Token.RunId.ToString(EGuidFormats::DigitsWithHyphens));

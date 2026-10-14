@@ -137,6 +137,12 @@ bool FDivineBeastsVillageDeliveredDefinitionTest::RunTest(const FString&)
     TestTrue(*FString::Printf(TEXT("体验必须通过运行期验证，实际错误=%s"), *ExperienceResult.Code.ToString()), ExperienceResult.IsSuccess());
     TestTrue(TEXT("真实Pawn定义必须通过运行期验证"), Pawn->ValidateDefinition().IsSuccess());
     TestEqual(TEXT("体验指向同一真实Pawn身份"), Experience->DefaultPawnDefinitionId, Pawn->GetPrimaryAssetId());
+    // 除主资产ID外，还要真实加载Pawn软类，防止改为没有技能Loadout的旧角色仍使该测试通过。
+    const UClass* SpawnClass = Pawn->PawnClass.LoadSynchronous();
+    TestNotNull(TEXT("Village Pawn软类可加载"), SpawnClass);
+    TestEqual(TEXT("Village实际出生类应为正式技能玩法角色"),
+        SpawnClass ? SpawnClass->GetPathName() : FString(),
+        FString(TEXT("/Script/DivineBeastsAbilitiesRuntime.DivineBeastsGameplayCharacter")));
     return true;
 }
 

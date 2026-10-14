@@ -14,10 +14,10 @@ enum class EDBADevelopmentLaunchMode : uint8
     PluginDev UMETA(DisplayName="插件开发")
 };
 
-/** 启动参数纯解析器：拒绝伪装认证、禁止Shipping/服务器/Commandlet进入开发门户。 */
+/** 兼容开发模式枚举的只读适配层：真正权限始终委托FDivineBeastsPluginDemoMode（唯一门禁）。 */
 struct FDBADevelopmentLaunchMode
 {
-    /** 参数为完整UE启动命令行；后面3个布尔是调用宿主事实，便于无UE世界单测。 */
+    /** 模拟唯一许可规则，需成对的-DBAPluginDemo与-DBAPluginDemoMap，不能再接受另一套独立开关。 */
     static EDBADevelopmentLaunchMode Resolve(
         const TCHAR* CommandLine, bool bIsShipping, bool bDedicatedServer, bool bCommandlet);
 

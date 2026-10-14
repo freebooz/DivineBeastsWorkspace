@@ -88,7 +88,7 @@ void UDivineBeastsPresentationClientSubsystem::StartDefaultWorldBirdFlock(UWorld
     // 分屏共享环境，只由首个本地玩家自动建立默认群。
     if (!World->GetGameInstance() || World->GetGameInstance()->GetFirstGamePlayer() != GetLocalPlayer()) return;
     // 项目内容地图如已明确放置真实ClientOnly样条群组，则先由其自身Owner/Token启动。
-    // 无路线Actor或新GPU内容尚未验收时，原有单群环境鸟作为安全可见回退。
+    // 无路线Actor或新GPU内容尚未验收时，使用既有已交付物种；Village双群、OpenWorld旧单群。
     bool bHavePlayableSplineRoute = false;
     for (TActorIterator<ADivineBeastsBirdFlockRouteActor> It(World); It; ++It)
     {
@@ -101,14 +101,39 @@ void UDivineBeastsPresentationClientSubsystem::StartDefaultWorldBirdFlock(UWorld
         }
     }
     if (bHavePlayableSplineRoute) return;
-    FVector Origin(0, 0, 1800);
+    FVector SpawnOrigin = FVector::ZeroVector;
+    FVector SpawnForward = FVector::ForwardVector;
+    APlayerStart* SelectedStart = nullptr;
     for (TActorIterator<APlayerStart> It(World); It; ++It)
     {
-        Origin = It->GetActorLocation() + FVector(0, 0, 1800);
-        break;
+        // 只读现有出生点；按稳定对象名选择，避免Actor迭代顺序影响客户端环境布局。
+        if (!SelectedStart || It->GetName() < SelectedStart->GetName()) SelectedStart = *It;
     }
+    if (SelectedStart)
+    {
+        SpawnOrigin = SelectedStart->GetActorLocation();
+        SpawnForward = SelectedStart->GetActorForwardVector().GetSafeNormal2D();
+        if (SpawnForward.IsNearlyZero()) SpawnForward = FVector::ForwardVector;
+    }
+    if (SpawnOrigin.ContainsNaN() || SpawnForward.ContainsNaN()) return;
+    if (bVillage)
+    {
+        // Niagara物种自身再加850/570厘米飞行高度，因此意图Z只加350/250厘米，不能叠加旧1800。
+        // 两组位于出生区前方不同位置，既有radius1700/1150厘米，沿用模式0/2而非未获资格的样条。
+        const FVector SpawnRight = FVector::CrossProduct(FVector::UpVector, SpawnForward);
+        FString Error;
+        if (!StartAmbientBirdFlock(TEXT("DBA.Environment.WorldBirds"), TEXT("Seagull"), 32,
+            SpawnOrigin + SpawnForward * 600.f + FVector(0, 0, 350.f), Error))
+            UE_LOG(LogTemp, Warning, TEXT("[BirdFlock] Village海鸥群尚未受理：%s"), *Error);
+        Error.Reset();
+        if (!StartAmbientBirdFlock(TEXT("DBA.Environment.VillageSwallows"), TEXT("Swallow"), 24,
+            SpawnOrigin + SpawnForward * 1400.f - SpawnRight * 650.f + FVector(0, 0, 250.f), Error))
+            UE_LOG(LogTemp, Warning, TEXT("[BirdFlock] Village燕群尚未受理：%s"), *Error);
+        return;
+    }
+    // OpenWorld原鹰群数量与高度保持不变，不借本次新手村装饰改变其他世界。
     FString Error;
-    if (!StartAmbientBirdFlock(TEXT("DBA.Environment.WorldBirds"), bVillage ? FName(TEXT("Seagull")) : FName(TEXT("Eagle")),
-        bVillage ? 24 : 5, Origin, Error))
+    if (!StartAmbientBirdFlock(TEXT("DBA.Environment.WorldBirds"), TEXT("Eagle"),
+        5, SpawnOrigin + FVector(0, 0, 1800), Error))
         UE_LOG(LogTemp, Warning, TEXT("[BirdFlock] 默认世界鸟群尚未受理：%s"), *Error);
 }

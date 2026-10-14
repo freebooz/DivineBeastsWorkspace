@@ -131,12 +131,13 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     bPersistentCharacterIdRequired =
         TrustedContext.bPersistentCharacterIdRequired;
 
-    IdentityChanged.Broadcast();
-    if (!IsOriginalOperationCurrent()) { OutError = TEXT("身份通知已撤销原可信绑定。"); return false; }
-
-    // 两分支都要求撤销旧资格/技能。统一为一次通知，先发布未Ready的新身份；返回后不得覆盖监听者的更高代次绑定。
+    // 先通知旧技能与资格失效，再公开新身份；此时服务器Ready已清空，禁止在新身份通知期间保留旧技能。
+    // 广播可能同步触发再次绑定，通知前后均用本次操作代次阻止迟到回调覆盖新角色。
     ReadinessChanged.Broadcast(false);
     if (!IsOriginalOperationCurrent()) { OutError = TEXT("未就绪通知已使原可信绑定被后继操作或退出撤销。"); return false; }
+
+    IdentityChanged.Broadcast();
+    if (!IsOriginalOperationCurrent()) { OutError = TEXT("身份通知已撤销原可信绑定。"); return false; }
     RefreshInitialization();
     if (!IsOriginalOperationCurrent()) { OutError = TEXT("初始化通知已撤销原可信绑定。"); return false; }
     Owner->ForceNetUpdate();

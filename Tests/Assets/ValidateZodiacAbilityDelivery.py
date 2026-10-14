@@ -96,7 +96,8 @@ def unmet_release_requirements(inventory: dict) -> list[str]:
         ids = hero.get("ApprovedAbilityIds", [])
         names = hero.get("ApprovedSkillNamesZh", [])
         ability_set_id = hero.get("DefaultAbilitySetId")
-        if not isinstance(ability_set_id, str) or not DEFAULT_ID_RE.fullmatch(ability_set_id):
+        if (not isinstance(ability_set_id, str) or not DEFAULT_ID_RE.fullmatch(ability_set_id)
+                or "_placeholder@" in ability_set_id):
             missing.append(f"{hero_id}: 真实DefaultAbilitySetId尚未批准、设置或格式非法。")
         if len(ids) != 5 or len(names) != 5:
             missing.append(f"{hero_id}: 五个正式技能身份及中文技能名称尚未获批准。")

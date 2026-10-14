@@ -15,12 +15,16 @@ public class DivineBeastsDemoClient : ModuleRules
             "Core","CoreUObject","Engine","UMG",
             "DivineBeastsPresentationClient","GamePlatformWeatherRuntime","GamePlatformData",
             // 开发目录公开参数/结果使用Core稳定契约，必须直接声明Public依赖。
-            "GamePlatformCore", "DivineBeastsUIClient", "GamePlatformUIClient", "SlateCore"
+            "GamePlatformCore", "DivineBeastsUIClient", "GamePlatformUIClient", "SlateCore",
+            // 公开演示Screen继承CommonUI基类，虚表链接必须直接声明所属模块。
+            "CommonUI"
         });
         PrivateDependencyModuleNames.AddRange(new[] {
             "Projects", "AssetRegistry", "DivineBeastsApplicationFlowClient",
             // 演示控制器必须调用已有VFX/天气/世界公开服务，绝不重建执行器。
-            "GamePlatformVFXClient", "DBAWorldsRuntime", "Json", "JsonUtilities"
+            "GamePlatformVFXClient", "DBAWorldsRuntime", "Json", "JsonUtilities",
+            // 私有ListView桥实例化STableViewBase模板，头可见不能替代实际Slate链接依赖。
+            "Slate"
         });
         if (Target.Type == TargetType.Editor)
         {

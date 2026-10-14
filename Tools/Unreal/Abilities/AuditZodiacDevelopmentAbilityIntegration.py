@@ -52,7 +52,9 @@ def audit():
                 check(len(grants) == 5 and {identifier(item.get_editor_property("AbilityId")) for item in grants} == expected_ids, hero + ":五项真实授权与草案ID不一致")
                 check(len(required) == 5 and {str(item.get_editor_property("PrimaryAssetName")) for item in required} == expected_ids, hero + ":五定义依赖闭包缺失")
             formal = unreal.EditorAssetLibrary.load_asset("/DBAGameplay/Definitions/DA_Hero_Zodiac_" + hero)
-            check(formal is not None and str(formal.get_editor_property("DefaultAbilitySetId")) == "None", hero + ":正式英雄默认集合被污染")
+            allowed = ("None", "dba.abilityset." + hero.lower() + "_placeholder@1")
+            check(formal is not None and str(formal.get_editor_property("DefaultAbilitySetId")) in allowed,
+                  hero + ":正式英雄默认集合被开发技能或未知身份污染")
             profile = unreal.EditorAssetLibrary.load_asset(ROOT + "/UI/Profiles/DA_DBA_" + hero + "_DevUIProfile")
             check(isinstance(profile, unreal.DivineBeastsAbilityUIProfile), hero + ":客户端UI配置未隔离")
             if profile is not None:

@@ -41,8 +41,18 @@ int main()
     DBA_CHECK(!State.IsDragging());
     State.SetMouseButton(false, true);
     DBA_CHECK(State.IsDragging() && !State.IsFacingCamera() && State.ResolveForward(0.f) == 0.f);
+    // 左键拖动只改变观察镜头的水平/俯仰；不能把轴输入写入角色朝向。
+    const FDivineBeastsWorldMouseLookDelta LeftMouseLook = State.ResolveMouseLook(6.f, -4.f);
+    DBA_CHECK(LeftMouseLook.CameraYawInput == 6.f);
+    DBA_CHECK(LeftMouseLook.CameraPitchInput == -4.f);
+    DBA_CHECK(LeftMouseLook.CharacterYawInput == 0.f);
     State.SetMouseButton(true, true);
     DBA_CHECK(State.IsFacingCamera() && State.ResolveForward(0.f) == 1.f);
+    // 右键沿用相同镜头轴输入，并只把水平转角同步到角色，不把俯仰传给角色。
+    const FDivineBeastsWorldMouseLookDelta RightMouseLook = State.ResolveMouseLook(6.f, -4.f);
+    DBA_CHECK(RightMouseLook.CameraYawInput == 6.f);
+    DBA_CHECK(RightMouseLook.CameraPitchInput == -4.f);
+    DBA_CHECK(RightMouseLook.CharacterYawInput == 6.f);
     // 后退和双键同时输入采用显式前进，避免相加后抵消或超过归一化输入范围。
     DBA_CHECK(State.ResolveForward(-1.f) == 1.f);
     DBA_CHECK(State.ResolveTurn(1.f) == 0.f && State.ResolveStrafe(0.f, 1.f) == 1.f);

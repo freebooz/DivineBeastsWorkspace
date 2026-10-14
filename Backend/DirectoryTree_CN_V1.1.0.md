@@ -26,6 +26,7 @@ Backend/                                                            # Go业务�
 │   └── playerdataservice/                                          # PlayerDataService（玩家长期数据服务）应用入口
 │       └── main.go                                                 # PlayerDataService主入口；加载配置并启动玩家数据服务
 ├── configs/                                                        # 后端可提交的非敏感配置目录
+│   ├── inventory_item_policies_v1.json                              # 物品权威堆叠、消费资格与可信授予原因；不含客户端资源或秘密
 │   ├── defaults.yaml                                               # 后端通用默认配置，包括端口、超时及基础运行参数
 │   ├── divinebeasts.yaml                                           # 《神兽联盟》项目配置，包括ServerRole、Experience、ArenaMode及功能开关
 │   └── production.env.example                                      # 生产环境变量模板；只保存键名/示例，不保存真实Secret

@@ -1,4 +1,4 @@
-# 神兽联盟新手村雪层客户端装配规范（UE5.8）
+# 神兽联盟新手村草地与雪层客户端装配规范（UE5.8）
 
 ## 归属和边界
 
@@ -6,15 +6,16 @@
 - 第一层 `GamePlatformSurface`（通用表面材质插件）：拥有2048雪层覆盖、雪面法线等高清纹理，以及通用MPC和雪材质函数。
 - 第一层 `GamePlatformVFX`（通用特效插件）：拥有近景、远景降雪及地面风吹雪粉Niagara。
 - 第二层 `MobaCommon`：本功能无额外MOBA规则，不增加空模块。
-- 第三层 `DBAWorldPack_Village`（新手村纯内容包）：共享Server/Client地图、48节点中性Landscape母材质和三张极小默认Texture2D，地图和共享母材质禁止硬引用平台纯客户端资源。
+- 第三层 `DBAWorldPack_Village`（新手村纯内容包）：共享Server/Client地图、55节点中性Landscape母材质（原48节点加7个草地输入节点）和三张极小默认Texture2D，地图和共享母材质禁止硬引用纯客户端资源。
+- 第三层 `DBAPresentationPack_Core`（公共表现内容包）：三张2K草地扫描PBR。来源是WorldPack既有SourceArt的CC0 Grass真源，不复制另一套机制。
 - 第三层 `DBAClient/DivineBeastsPresentationClient`（仅客户端）：`UDivineBeastsVillageSnowSettings`（雪层客户端软配置）及`UDivineBeastsVillageSnowWorldSubsystem`（世界生命周期与异步绑定器）。
 
 ## 运行时具体实现
 
 1. 仅当World拥有 `/DBAWorldPack_Village/Maps/L_Village_Start` 身份、为Game/PIE且不处于Dedicated Server时启用。世界重建与后加入均按本世界WeatherClient快照同步，其他地图完全不生效。
-2. `GamePlatformWeatherClient` 通过已存在的事件通知雪量与湿润度；客户端调用Data唯一服务 `AcquireResources`（获取普通软对象租约）异步加载覆盖、基础色、法线三张纹理；租约寿命严格为World，结束释放。
+2. 世界开始即调用Data唯一服务 `AcquireResources`（获取普通软对象租约）异步加载草地BaseColor/Normal/ORM和积雪覆盖/基础色/法线六张纹理；租约寿命严格为World，结束释放。草地加载不等待天气事件，WeatherClient通过原事件更新雪量与湿润度。
 3. Landscape必须由共享地图事先保存 `M_DBA_Village_LandscapeBridge` 和 `bUseDynamicMaterialInstance=true`；客户端不使用 `EditorSetLandscapeMaterial`（仅编辑器换材质）或同步 `LoadObject`（同步资源装载）。
-4. 异步成功后匹配真实材质路径，更新MID雪量、湿润度、三张高清纹理。每一MID使用 `K2_GetScalarParameterValue` 和 `K2_GetTextureParameterValue` 回读一致才记录 `VILLAGE_SNOW_MID_VERIFY_SUCCESS`（真实MID参数回读通过）；若无有效MID、材质错误或任一纹理不一致，记录具体失败，禁止假报成功。
+4. 异步成功后匹配真实材质路径，按配置语义路径而非Data规范化排序下标写入六个Texture参数。草地250厘米一重复；干燥白色乘色保留扫描源色，湿润按既有天气过渡，雪量覆盖原雪分支。每一MID六张贴图、天气标量及干燥乘色回读一致，才记录 `VILLAGE_GROUND_MID_VERIFY_SUCCESS` 和兼容的 `VILLAGE_SNOW_MID_VERIFY_SUCCESS`；无MID、材质错误或任一纹理不一致不能假报成功。
 5. 只在首次绑定或新出现的Landscape上设置纹理；后续天气过渡仅更新数值参数，避免每0.1秒反复调用Texture Setter；不增Tick，按世界结束回收弱对象标识。大型动态Landscape组件再生应复核相同代理下的MID刷新语义，当前Village单Landscape已通过运行时验证。
 6. 视觉天气字段不参与服务器碰撞、移动、导航和伤害结算。实时风速/风向联动、真正看见下雪、GPU透明叠加等仍需独立测试。
 
@@ -35,3 +36,11 @@
 资源：`Tools/Unreal/Weather/GenerateVillageLandscapeBridgeSources.py`（三张中性PNG生成及SHA），`AuthorVillageLandscapeBridge.py`（真实材质/地图制作），`VerifyVillageLandscapeBridge.py`（真实UE地图及依赖回读）。静态测试为`Tests/Architecture/ValidateVillageSnowBridgeIntegration.py`，真实IoStore验收为`Tests/Assets/ValidateVillageSnowCookedContainer.py`；`DivineBeastsVillageSnowBridgeTests.cpp`为原生UE自动化测试源码。
 
 只有完成客户端和专用服务器的真实Build+Cook+Stage+UnrealPak容器验证，以及独立的实际大雪天气画面/GPU性能与用户签收，才能声明完整交付。
+
+## 2026-10-13 本轮范围与证据边界
+
+草地作者及只读资产检查均经Monolith，三张真实Texture2D和55节点母材质已保存；材质实际 `is_compiled=true`。两个PlayerStart、地图、地形高度、碰撞和导航未修改。默认Village鸟群由项目客户端既有入口增加为32只Seagull与24只Swallow，Niagara自身再加850/570厘米飞行高度，意图中心仅增加350/250厘米，避免旧高空鸟难以观察。
+
+已观察旧DLL真实PIE的RED：草地Albedo仍为共享默认、鸟群请求为24+0。新C++尚需真实构建和运行，不能把资产保存或代码差异当客户端功能通过。HWebCodex四个长驻任务占满执行名额；新构建排队后已取消（没有启动编译）。当前人工客户端与服务器仍为上一发布包。完整状态见 `Docs/Implementation/VillageAmbientImplementationPlan_20261013.md`，本轮未完成发布不提升此前雪桥验收结论。
+
+新原生回归包括真实MID语义绑定、缺纹理/关闭、真实Data异步租约取消/错误类型、双群布局与切图清理。静态门禁和临时CSV单元测试不代替这些尚待运行的原生用例。

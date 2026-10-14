@@ -19,6 +19,8 @@
 
 ## 2026-10-12 十层正式地形扫描PBR源的保存与UE验收边界
 
+2026-10-13增量：用户要求新手村草地，已通过Monolith将共享Landscape母材质增补为55节点，增加250厘米重复的地面Albedo/Normal/ORM参数；默认纹理仍只引用本包三张中性Texture2D。对应高清扫描草地三贴图由第三层`DBAPresentationPack_Core/Textures/Terrain/Grass`持有，客户端Data世界租约写入MID，不给地图硬引用纯表现包。本轮不写地图、不修改两个PlayerStart、地形高度/碰撞/导航，也不表示十层地形全面接入。新C++构建、真实PIE绿色回归与新Cook发布仍待完成，不能以材质保存替代运行验收。
+
 - 十种地表原`SourceArt/Terrain/PBR/*`技术纹理已按用户明确授权由同名正式CC0扫描2K BaseColor、DirectX Normal、ORM替换，另为每类增补微Height；原30张旧PNG与30个旧Texture2D UE二进制已保存到独立61项回退包。正式来源见`Tools/Unreal/Terrain/TerrainProductionPBRManifest_v1.json`；原`TerrainSourceManifest_v1.json`只作历史地貌校准证据。
 - 源图成功不意味着本包的真实UE Texture2D已重导入。独立审核用高精多层母材质与表现实例归`DBAPresentationPack_Core/Materials/Terrain`（客户端纯表现），不直接写正式`L_Village_Start`、`M_DBA_Village_LandscapeBridge`或服务器权威世界定义。
 - 需等主工程Editor完成新的DivineBeastsDemoClient模块编译及并行UBT释放，再运行`RunTerrainGaeaFullReview.ps1 -Apply -ProductionPBR`，验证40个正式UE Texture2D、10层Landscape/PCGGraph、雪苔湿润及客户端/专服容器。因共享本包仍可能被Server AlwaysCook扫描，禁止在没有独立专服Cook/UnrealPak审查前宣称高清扫描Texture2D已从服务器剥离。

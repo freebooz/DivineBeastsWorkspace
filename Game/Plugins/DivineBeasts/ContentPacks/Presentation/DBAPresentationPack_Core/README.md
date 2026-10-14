@@ -2,6 +2,10 @@
 
 本内容包属于DivineBeasts项目第三层，只包含可复用的视觉资产和Definitions，不重复实现VFX播放、数据加载或缓存。
 
+## 新手村基础草地（2026-10-13）
+
+`Content/Textures/Terrain/Grass/T_DBA_Village_Grass_{BaseColor,Normal,ORM}`：三张Monolith真实导入的2K扫描PBR，来自既有CC0 `leafy_grass`源图。基础色sRGB、法线线性NormalMap、ORM线性Masks；不改原稿像素、不用滤色补偿导入。WorldPack共享材质只保存中性参数默认，DBAClient以Data世界租约绑定高清贴图，地图切换时释放自身需求。作者和资产证据在`Saved/Validation/VillageAmbient20261013`；新编译、运行与Cook尚未通过，不能宣称此目录已在当前人工客户端生效。当前32海鸥+24燕群设计沿用既有本包鸟类外观及平台GPU模板，不新增鸟Actor/播放器。
+
 ## 自然飘落物
 - `SourceArt/FallingFoliage/Textures`：桃花、枫叶、竹叶、银杏叶的原创透明颜色和法线PNG，另附SHA-256清单。
 - `Content/VFX/Environment/FallingFoliage/Textures`：实际导入的Texture2D资产。

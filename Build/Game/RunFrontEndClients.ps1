@@ -19,13 +19,20 @@ param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2
     # 仅显式开发验证加载已批准候选技能；三个参数共同选择文本INI、开发配置及运行开关。
     # 首屏仍为人工登录，不向进程传账号或密码；默认false保持正式前端流程。
     [switch]$DevelopmentSkills,
-    [string]$GatewayUrl='http://127.0.0.1:28081',[guid]$RunId=[guid]::NewGuid())
+    # 怪物仅在已启用开发技能的人工验证配置内创建，仍须独立运行开关，默认禁止正式流程生成。
+    [switch]$DevelopmentMonsters,
+    # 历史28081与28181拥有独立身份和玩家资料；当前本地保留28181，调用方仍须明确选择目标网关。
+    [string]$GatewayUrl,
+    [guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference='Stop'
+if ($DevelopmentMonsters -and !$DevelopmentSkills) { throw '开发怪物验证必须同时显式启用DevelopmentSkills。' }
+$gatewayModulePath=Join-Path $PSScriptRoot 'FrontEndClientGateway.psm1'
+Import-Module $gatewayModulePath -Force
+# 在创建任何证据目录或启动客户端前拒绝缺失/非法网关，防止把用户引导到错误的角色档案环境。
+$GatewayUrl=Resolve-FrontEndClientGatewayUrl -GatewayUrl $GatewayUrl
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $exe=(Resolve-Path -LiteralPath $ClientExe).Path
 if ([IO.Path]::GetFileName($exe)-ne'DivineBeastsArenaClient.exe') { throw '必须指定正式Client Target产物。' }
-$url=[uri]$GatewayUrl
-if (!$url.IsAbsoluteUri -or $url.Scheme -notin @('http','https') -or $url.UserInfo -or $url.Query -or $url.Fragment) { throw '后端地址必须为不含凭据的HTTP(S)服务地址。' }
 $directory=Join-Path $workspace "Saved/Validation/FrontEndClients/$RunId"
 if (Test-Path -LiteralPath $directory) { throw '拒绝复用本次启动证据目录。' }
 $null=New-Item -ItemType Directory -Path $directory
@@ -47,8 +54,9 @@ foreach($i in 1..$Count) {
             $info.ArgumentList.Add($argument)
         }
     }
+    if ($DevelopmentMonsters) { $info.ArgumentList.Add('-DBADevelopmentMonsters') }
     $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills}
+    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters}
 }
 $records|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $directory 'Clients.json') -Encoding utf8
 $records|Select-Object PID,InitialScreen,AutoLogin|ConvertTo-Json

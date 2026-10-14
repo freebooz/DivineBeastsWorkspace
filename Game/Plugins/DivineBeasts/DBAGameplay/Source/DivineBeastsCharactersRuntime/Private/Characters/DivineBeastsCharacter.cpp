@@ -2,6 +2,7 @@
 #include "Characters/DivineBeastsCharacter.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Types/GamePlatformCombatEvent.h"
@@ -9,6 +10,7 @@
 ADivineBeastsCharacter::ADivineBeastsCharacter()
 {
     AbilitySystem = CreateDefaultSubobject<UGamePlatformAbilitySystemComponent>(TEXT("AbilitySystem"));
+    AbilityCast = CreateDefaultSubobject<UGamePlatformAbilityCastComponent>(TEXT("AbilityCast"));
     Combat = CreateDefaultSubobject<UGamePlatformCombatComponent>(TEXT("Combat"));
     GameplayEligibility = CreateDefaultSubobject<UGamePlatformGameplayEligibilityComponent>(TEXT("GameplayEligibility"));
     CharacterIdentity = CreateDefaultSubobject<UDivineBeastsCharacterComponent>(TEXT("CharacterIdentity"));
@@ -25,7 +27,8 @@ void ADivineBeastsCharacter::BeginPlay()
     Super::BeginPlay();
     Combat->OnCombatEvent.AddDynamic(this, &ADivineBeastsCharacter::HandleCombatEvent);
     CharacterIdentity->OnReadinessChanged().AddWeakLambda(this, [this](bool bReady)
-    { if (!bReady) { GameplayEligibility->SetServerPlayerActive(false); } });
+    { if (!bReady) { GameplayEligibility->SetServerPlayerActive(false);
+        AbilityCast->CancelConfirmedCast(AbilityCast->GetCastFacts().ActivationId); } });
     RefreshAbilityActorInfo();
 }
 void ADivineBeastsCharacter::PossessedBy(AController* NewController)
@@ -35,6 +38,7 @@ void ADivineBeastsCharacter::OnRep_Controller()
 void ADivineBeastsCharacter::UnPossessed()
 {
     GameplayEligibility->SetServerPlayerActive(false);
+    AbilityCast->CancelConfirmedCast(AbilityCast->GetCastFacts().ActivationId);
     AbilitySystem->ClearAbilityAvatar();
     Super::UnPossessed();
 }
@@ -51,6 +55,7 @@ void ADivineBeastsCharacter::HandleCombatEvent(const FGamePlatformCombatEvent& E
         Event.TargetAvatarGeneration != Combat->GetCombatAvatarGeneration() || !Combat->IsCombatDead()) { return; }
     GameplayEligibility->SetServerPlayerActive(false);
     if (PublishedDeathGeneration == Event.TargetAvatarGeneration) { return; }
+    AbilityCast->CancelConfirmedCast(AbilityCast->GetCastFacts().ActivationId);
     PublishedDeathGeneration = Event.TargetAvatarGeneration;
     // 值拷贝隔离同步消费者；击杀方收到转发的同一Combat事件时，Target检查禁止误报自己死亡。
     const FGamePlatformCombatEvent Death = Event;

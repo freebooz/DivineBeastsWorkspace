@@ -117,7 +117,8 @@ void UDivineBeastsDemoCatalogSubsystem::RefreshCatalog()
     {
         FString Directory = FPaths::ConvertRelativePathToFull(Plugin->GetBaseDir());
         FPaths::MakeStandardFilename(Directory);
-        EDivineBeastsDemoLayer Layer;
+        // ResolveLayer（所属层解析）虽在成功时写入，仍初始化明确默认值，避免跨编译器未初始化告警。
+        EDivineBeastsDemoLayer Layer = EDivineBeastsDemoLayer::Platform;
         if (!Directory.StartsWith(Prefix, ESearchCase::IgnoreCase) || !ResolveLayer(Directory.RightChop(Prefix.Len()), Layer)) continue;
         const FName Id(*Plugin->GetName());
         if (Seen.Contains(Id))
@@ -142,6 +143,10 @@ void UDivineBeastsDemoCatalogSubsystem::RefreshCatalog()
     for (const auto& Asset : Assets)
     {
         if (Asset.AssetClassPath != UWorld::StaticClass()->GetClassPathName() || Maps.Contains(Asset.PackageName)) continue;
+        // 门户不是可选择的业务示例；不把开发目录外或同名资产作为诊断场景。
+        const FString Package = Asset.PackageName.ToString();
+        if (!Package.StartsWith(TEXT("/Game/Development/")) ||
+            Package == FDivineBeastsPluginDemoMode::GetHubMapPackage()) continue;
         Maps.Add(Asset.PackageName);
         FDivineBeastsDemoScenario Item;
         Item.ScenarioId = Asset.PackageName;

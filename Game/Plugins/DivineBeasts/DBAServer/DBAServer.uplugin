@@ -10,6 +10,14 @@
   "EnabledByDefault": false,
   "Plugins": [
     {
+      "Name": "GamePlatformCombat",
+      "Enabled": true
+    },
+    {
+      "Name": "GamePlatformAbilitySystem",
+      "Enabled": true
+    },
+    {
       "Name": "GamePlatformCharacter",
       "Enabled": true
     },

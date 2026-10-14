@@ -29,7 +29,9 @@ def main():
         ability_set=unreal.load_asset(base+'/DA_DBA_'+hero+'_DevAbilitySet')
         profile=unreal.load_asset(base+'/UI/Profiles/DA_DBA_'+hero+'_DevUIProfile')
         formal=unreal.load_asset('/DBAGameplay/Definitions/DA_Hero_Zodiac_'+hero)
-        if not formal or str(formal.get_editor_property('DefaultAbilitySetId'))!='None': errors.append('正式英雄集合不再为空: '+hero)
+        allowed = ('None', 'dba.abilityset.' + hero.lower() + '_placeholder@1')
+        if not formal or str(formal.get_editor_property('DefaultAbilitySetId')) not in allowed:
+            errors.append('正式英雄默认集合被开发技能或未知定义污染: ' + hero)
         if not isinstance(ability_set,unreal.GamePlatformAbilitySetDefinition) or not isinstance(profile,unreal.DivineBeastsAbilityUIProfile):
             errors.append('真实开发集合/Profile缺失: '+hero); continue
         grants=list(ability_set.get_editor_property('Abilities')); ui=list(profile.get_editor_property('Entries'))

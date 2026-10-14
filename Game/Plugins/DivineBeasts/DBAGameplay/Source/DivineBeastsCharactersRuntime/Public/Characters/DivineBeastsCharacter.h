@@ -7,6 +7,7 @@
 
 class UDivineBeastsCharacterComponent;
 class UGamePlatformAbilitySystemComponent;
+class UGamePlatformAbilityCastComponent;
 class UGamePlatformCombatComponent;
 class UGamePlatformGameplayEligibilityComponent;
 struct FGamePlatformCombatEvent;
@@ -47,6 +48,8 @@ private:
     UFUNCTION() void HandleCombatEvent(const FGamePlatformCombatEvent& Event);
     /** Pawn拥有的唯一技能系统，GAS负责属性/能力复制；ActorInfo按真实拥有事件绑定。 */
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystem;
+    /** 中立服务器确认施法事实；只复制有限表现窗口，不拥有角色动作资源或伤害时序。 */
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UGamePlatformAbilityCastComponent> AbilityCast;
     /** Pawn拥有的服务器战斗规则/复制状态，禁止客户端任意伤害RPC。 */
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGamePlatformCombatComponent> Combat;
     /** 独立竞技生命周期的最小权威资格；默认Inactive，不能由Widget/客户端写入。 */

@@ -32,7 +32,7 @@ Village 内容包新增共享Pawn及Tutorial体验定义。原有PlayerStart位�
 
 ### 2026-10-11 世界PC操控与光标
 
-项目世界控制器优先消费原生世界轴：W/S前后，A/D转身，Q/E横移；右键按住时A/D改为横移，左右鼠标同时按住前进，空格跳跃。普通攻击与现有三主动输入保持数字1—4，被动不伪造激活键。默认采用GameAndUI可见自由光标，左键只调整本地观察镜头，右键同时调整角色水平朝向；首次拖动记录视口光标坐标，最后一个鼠标键释放恢复原位和可见状态。滚轮每格50厘米，镜头距离80—1800厘米，保留SpringArm原生碰撞检测。
+项目世界控制器优先消费原生世界轴：W/S前后，A/D转身，Q/E横移；右键按住时A/D改为横移，左右鼠标同时按住前进，空格跳跃。普通攻击与现有三主动输入保持数字1—4，被动不伪造激活键。默认采用GameAndUI可见自由光标：左键拖动只旋转本地观察镜头，右键拖动旋转镜头并以同一水平增量驱动角色左右转向；鼠标上下移动只改变镜头俯仰，绝不改变角色俯仰。鼠标X正向映射、鼠标Y负向映射由`DefaultInput.ini`统一定义，避免控制器代码再次反转轴向。首次拖动记录视口光标坐标，最后一个鼠标键释放恢复原位和可见状态。滚轮每格50厘米，镜头距离80—1800厘米，保留SpringArm原生碰撞检测。
 
 角色朝向继续使用ControlRotation及CharacterMovement原生移动复制，横移不按运动向量自动转身；独立SpringArm观察角度不进入权威玩法数据。前端预览使用独立GamePlatformCharacterPreviewStage（展示Actor），不由本世界Controller控制，也不改变其转台、镜头或动画。
 
@@ -42,6 +42,6 @@ UI已处理的点击在GameAndUI阶段不会交给世界后备输入；未处理
 
 2026-10-13背包输入：`Game/Config/DefaultInput.ini`（项目默认输入映射）登记`DBA.Inventory`（背包输入语义）为`I`键。`ADivineBeastsWorldPlayerController`（双端世界控制器）只在本地且世界游戏态Active时广播`OnWorldInventoryRequested`（本地背包意图），不持有UI或背包权威数据；`DBAClient`（项目客户端）负责订阅、切换页面，换控制器和EndPlay精确撤销。移动端仍需项目HUD正式背包按钮适配。已添加`TestWorldControls.ps1`（世界控制静态门禁）的键位及委托检查；独立UE目标编译、输入焦点和设备运行仍待验证。
 
-`Private/Gameplay/DivineBeastsWorldControlState.h`为当前Controller的纯鼠标组合策略；`Private/Tests/DivineBeastsWorldControlsTests.cpp`同时支持UE Automation逻辑用例`DivineBeasts.World.Controls.MouseAndMovement`与独立原生策略编译。`Tests/Integration/World/TestWorldControls.ps1`检查键位冲突、清理接线与双端隔离，可通过`-PolicyExecutable`运行当前源码的独立测试产物。已执行MSVC纯策略及静态检查；未由本子任务执行UE构建、视口操作、Cook或联机，输入手感、真实UI命中、焦点和角色网络朝向仍需要对应运行证据。
+`Private/Gameplay/DivineBeastsWorldControlState.h`为当前Controller的纯鼠标组合策略；`Private/Tests/DivineBeastsWorldControlsTests.cpp`同时支持UE Automation逻辑用例`DivineBeasts.World.Controls.MouseAndMovement`与独立原生策略编译，覆盖左键仅观察、右键同步角色水平朝向、俯仰不传给角色等规则。`Tests/Integration/World/TestWorldControls.ps1`检查键位冲突、世界控制器对同名轴的显式消费、鼠标轴方向、清理接线与双端隔离，可通过`-PolicyExecutable`运行当前源码的独立测试产物。独立MSVC策略测试和该静态集成门禁通过；本轮尝试UE5.8编辑器目标定向构建`DBAWorldsRuntime`，但`Build.bat`预检时沙箱拒绝切换到引擎源码目录，尚未进入UBT；直接启动UBT的诊断又发现当前系统仅有.NET 8，低于该引擎工具要求的.NET 10，因此未生成新的UE模块DLL。这些源码检查不等同于UE模块构建、视口操作、Cook或联机验收，输入手感、真实UI命中、焦点和角色网络朝向仍需对应运行证据。
 
 官方按键参考：[基础移动说明](https://worldofwarcraft.blizzard.com/en-us/news/20151231/welcome-to-world-of-warcraft-basic-movement-and-combat)、[经典版官方手册](https://eu.media.blizzard.com/manuals/wow/eu/classic/wow-classic-manual-enGB.pdf)。鼠标原位恢复和滚轮范围为本项目明确策略，不冒充官方手册中的数值。

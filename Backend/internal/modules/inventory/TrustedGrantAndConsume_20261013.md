@@ -5,7 +5,7 @@
 - `inventory/grant.go`（可信授予）：`GrantOperationID`由玩家和已确认来源事件确定性派生，`GrantTrusted`默认拒绝未授权来源。`PlanTrustedGrant`先填充同物品定义和同权威堆叠上限的活跃实例，后按容器与槽位升序分配；背包放不下时全部拒绝，不部分发奖。
 - `grant_authorizer.go`（可信奖励授权器）：必须同时确认`ServerPlayerVerifier`（当前游戏服启动代次及玩家归属）、`GrantEvidenceSource`（服务端已确认奖励事实）与`ItemPolicyCatalog`（后端权威物品规则）。单靠请求填入的服务器/玩家身份不能授权。
 - `consume_authorizer.go`（可信消耗验证器）：验证已确认的使用事件、玩家、物品实例、数量、服务器Boot及物品可消费性，同事件操作号固定，不能二次扣除。
-- `policy_file.go`及`Backend/config/inventory_item_policies_v1.json`：严格JSON导入，首批8类桃源村物品、权威堆叠上限、可消费属性和允许的授予来源。客户端图标/中文说明不参与权限。
+- `policy_file.go`及`Backend/configs/inventory_item_policies_v1.json`：严格JSON导入，首批8类桃源村物品、权威堆叠上限、可消费属性和允许的授予来源。配置归现有正式 `configs/`，不另建平行配置根；客户端图标/中文说明不参与权限。
 - `postgres/inventory_grant_repository.go`（PostgreSQL可信授予事务）：同事务提交堆叠、新物品实例、修订号、OperationId幂等记录和`Inventory.Granted` Outbox。`inventory_repository.go`的可信消耗也在同事务写入`Inventory.Consumed`事件；完全消耗时依外键级联清除快捷栏。
 - `000010_player_inventory_trusted_grant.sql`：在`000009`之上扩大Operation类型以容纳Grant；没有新增客户端发奖API。
 
