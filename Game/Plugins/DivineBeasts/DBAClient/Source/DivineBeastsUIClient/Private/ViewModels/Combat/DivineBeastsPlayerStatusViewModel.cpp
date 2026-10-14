@@ -12,6 +12,8 @@ bool IsEquivalentStatus(
 {
     return FMath::IsNearlyEqual(A.Health, B.Health, 0.0001) &&
         FMath::IsNearlyEqual(A.MaxHealth, B.MaxHealth, 0.0001) &&
+        FMath::IsNearlyEqual(A.Energy, B.Energy, 0.0001) &&
+        FMath::IsNearlyEqual(A.MaxEnergy, B.MaxEnergy, 0.0001) &&
         FMath::IsNearlyEqual(A.Momentum, B.Momentum, 0.0001) &&
         FMath::IsNearlyEqual(A.MaxMomentum, B.MaxMomentum, 0.0001) &&
         A.bDead == B.bDead;
@@ -32,6 +34,12 @@ bool UDivineBeastsPlayerStatusViewModel::BindToAbilitySystem(UAbilitySystemCompo
             this, &UDivineBeastsPlayerStatusViewModel::HandleAttributeChanged);
     MaxHealthHandle = InAbilitySystem->GetGameplayAttributeValueChangeDelegate(
         UGamePlatformCombatAttributeSet::GetMaxHealthAttribute()).AddUObject(
+            this, &UDivineBeastsPlayerStatusViewModel::HandleAttributeChanged);
+    EnergyHandle = InAbilitySystem->GetGameplayAttributeValueChangeDelegate(
+        UGamePlatformCombatAttributeSet::GetEnergyAttribute()).AddUObject(
+            this, &UDivineBeastsPlayerStatusViewModel::HandleAttributeChanged);
+    MaxEnergyHandle = InAbilitySystem->GetGameplayAttributeValueChangeDelegate(
+        UGamePlatformCombatAttributeSet::GetMaxEnergyAttribute()).AddUObject(
             this, &UDivineBeastsPlayerStatusViewModel::HandleAttributeChanged);
     MomentumHandle = InAbilitySystem->GetGameplayAttributeValueChangeDelegate(
         UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()).AddUObject(
@@ -56,6 +64,14 @@ void UDivineBeastsPlayerStatusViewModel::UnbindFromAbilitySystem()
         {
             ASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetMaxHealthAttribute()).Remove(MaxHealthHandle);
         }
+        if (EnergyHandle.IsValid())
+        {
+            ASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetEnergyAttribute()).Remove(EnergyHandle);
+        }
+        if (MaxEnergyHandle.IsValid())
+        {
+            ASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetMaxEnergyAttribute()).Remove(MaxEnergyHandle);
+        }
         if (MomentumHandle.IsValid())
         {
             ASC->GetGameplayAttributeValueChangeDelegate(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()).Remove(MomentumHandle);
@@ -69,6 +85,8 @@ void UDivineBeastsPlayerStatusViewModel::UnbindFromAbilitySystem()
     AbilitySystem.Reset();
     HealthHandle.Reset();
     MaxHealthHandle.Reset();
+    EnergyHandle.Reset();
+    MaxEnergyHandle.Reset();
     MomentumHandle.Reset();
     MaxMomentumHandle.Reset();
 }
@@ -97,6 +115,9 @@ void UDivineBeastsPlayerStatusViewModel::RefreshSnapshot(bool bForceBroadcast)
     {
         NewStatus.Health = Combat->GetHealth();
         NewStatus.MaxHealth = Combat->GetMaxHealth();
+        // 蓝条读取通用独立能量；金色气势从另一项目属性集读取。
+        NewStatus.Energy = Combat->GetEnergy();
+        NewStatus.MaxEnergy = Combat->GetMaxEnergy();
         NewStatus.bDead = Combat->GetMaxHealth() > 0.0f && Combat->GetHealth() <= 0.0f;
     }
     if (const UDivineBeastsMomentumAttributeSet* Momentum = ASC->GetSet<UDivineBeastsMomentumAttributeSet>())

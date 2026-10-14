@@ -8,12 +8,12 @@
 
 /**
  * UGamePlatformCombatAttributeSet（平台统一战斗属性集）。
- * 唯一基础战斗数值：Health/MaxHealth（生命及上限），DamageBonus（伤害增减）
- * 与DamageReduction（伤害减免）；后两项支持GAS增减益效果使用加法聚合。
+ * 唯一具体平台战斗属性集：Health/MaxHealth（生命及上限）、Energy/MaxEnergy（独立能量及上限），
+ * DamageBonus（伤害增减）与DamageReduction（伤害减免）；后两项支持GAS增减益效果的加法聚合。
  * Shield/MaxShield（旧护盾字段）已删除：护盾改由限时GameplayEffect（玩法效果）
  * 与战斗组件持有的临时吸收池结算，不再维护或复制护盾永久属性。
  * IncomingDamage/IncomingHealing（伤害/治疗元属性）不复制、消费后清零。
- * 生命值按Actor网络相关性公开；伤害修正仅拥有者可见。
+ * 生命值按Actor网络相关性公开；能量及伤害修正只向拥有者复制；气势另由SSLM项目层提供。
  */
 UCLASS()
 class GAMEPLATFORMCOMBAT_API UGamePlatformCombatAttributeSet : public UGamePlatformAttributeSet
@@ -41,6 +41,16 @@ public:
     FGameplayAttributeData MaxHealth;
     GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, MaxHealth)
 
+    /** 通用能量（蓝条资源），与项目气势Momentum严格分离；默认100/100，技能消耗待正式GE配置。 */
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Energy, Category="Combat|Resources")
+    FGameplayAttributeData Energy;
+    GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, Energy)
+
+    /** 通用能量上限，拥有者可读取，服务端是唯一写入方。 */
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxEnergy, Category="Combat|Resources")
+    FGameplayAttributeData MaxEnergy;
+    GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, MaxEnergy)
+
     /** 技能基础伤害的有符号加法修正；正数Buff增强，负数Debuff削弱。 */
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_DamageBonus, Category="Combat|Modifiers")
     FGameplayAttributeData DamageBonus;
@@ -65,6 +75,12 @@ protected:
 
     UFUNCTION()
     void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
+
+    UFUNCTION()
+    void OnRep_Energy(const FGameplayAttributeData& OldValue);
+
+    UFUNCTION()
+    void OnRep_MaxEnergy(const FGameplayAttributeData& OldValue);
 
     UFUNCTION()
     void OnRep_DamageBonus(const FGameplayAttributeData& OldValue);

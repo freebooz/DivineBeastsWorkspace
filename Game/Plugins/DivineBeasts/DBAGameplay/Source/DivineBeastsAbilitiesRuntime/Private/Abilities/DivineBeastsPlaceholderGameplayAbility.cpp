@@ -3,6 +3,7 @@
 
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
@@ -83,7 +84,19 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
     {
         FGamePlatformCombatResult Result;
         const bool bHit = AuthorityTraceForwardAndApplyDamage(Result, Error);
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, !bHit);
+        // 仅成功命中、已扣血或耗盾的占位普攻触发气势奖励，平台Combat负责伤害结算。
+        if (bHit && ActivationToken == Token && IsActive() && IsValid(Avatar) &&
+            GetAvatarActorFromActorInfo() == Avatar && IsValid(Combat) &&
+            Combat->GetCombatAvatarGeneration() == AvatarGeneration)
+        {
+            if (UDivineBeastsCharacterComponent* Identity =
+                    Avatar->FindComponentByClass<UDivineBeastsCharacterComponent>())
+            {
+                Identity->AuthorityAwardMomentumForConfirmedBasicHit(Result, AvatarGeneration);
+            }
+        }
+        if (ActivationToken == Token && IsActive())
+            EndAbility(Handle, ActorInfo, ActivationInfo, true, !bHit);
         return;
     }
 

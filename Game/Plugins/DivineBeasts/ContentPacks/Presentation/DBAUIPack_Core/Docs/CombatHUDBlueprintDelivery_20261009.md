@@ -3,6 +3,8 @@
 > 2026-10-09；固定工程 DivineBeastsWorkspace（神兽联盟工作空间）/ Game/DivineBeastsArena.uproject（神兽联盟虚幻工程）。
 > 所有真实.uasset（虚幻资产）均由已连接该项目的 Monolith MCP 0.23.0（虚幻编辑器资产操作服务）创建/调整；本记录只保留当前可核对事实，**未把蓝图编译通过冒充完整UE C++编译或实际联机成功**。
 
+> **2026-10-14增量修订提醒：** 本文以下“只保留HealthBar/MomentumBar”的陈述是2026-10-09历史快照，不再是现行HUD规范。按新需求，玩家状态面板必须显示三条独立资源：Health（生命，红）、Energy（能量，蓝）、Momentum（气势，金）。最新Monolith（蓝图编辑服务）创建、编译、保存及未完成重连情况见 `Docs/Implementation/EnergyMomentumHUD_20261014.md`（三资源HUD实施记录）。新增蓝条使用正式Energy/MaxEnergy GAS属性，而非改变原气势条文字。
+
 ## 一、已创建及更新的实际蓝图
 
 | 三层逻辑归属 | Widget Blueprint（控件蓝图） | 父类、真实Widget树与更新 | 当前编辑器编译 |

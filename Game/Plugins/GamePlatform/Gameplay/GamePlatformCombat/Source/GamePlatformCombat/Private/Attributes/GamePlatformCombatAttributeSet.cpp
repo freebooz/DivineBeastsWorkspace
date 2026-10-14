@@ -9,6 +9,8 @@ UGamePlatformCombatAttributeSet::UGamePlatformCombatAttributeSet()
 {
     InitMaxHealth(100.0f);
     InitHealth(100.0f);
+    InitMaxEnergy(100.0f);
+    InitEnergy(100.0f);
     InitDamageBonus(0.0f);
     InitDamageReduction(0.0f);
     InitIncomingDamage(0.0f);
@@ -33,6 +35,12 @@ void UGamePlatformCombatAttributeSet::GetLifetimeReplicatedProps(
         MaxHealth,
         COND_None,
         REPNOTIFY_Always);
+
+    // 能量为独立资源，只向拥有者复制，避免泄露敌方私有资源。
+    DOREPLIFETIME_CONDITION_NOTIFY(
+        UGamePlatformCombatAttributeSet, Energy, COND_OwnerOnly, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(
+        UGamePlatformCombatAttributeSet, MaxEnergy, COND_OwnerOnly, REPNOTIFY_Always);
 
     DOREPLIFETIME_CONDITION_NOTIFY(
         UGamePlatformCombatAttributeSet,
@@ -65,6 +73,14 @@ void UGamePlatformCombatAttributeSet::PreAttributeChange(
     else if (Attribute == GetHealthAttribute())
     {
         NewValue = FMath::Clamp(NewValue, 0.0f, FMath::Max(0.0f, GetMaxHealth()));
+    }
+    else if (Attribute == GetMaxEnergyAttribute())
+    {
+        NewValue = FMath::Max(0.0f, NewValue);
+    }
+    else if (Attribute == GetEnergyAttribute())
+    {
+        NewValue = FMath::Clamp(NewValue, 0.0f, FMath::Max(0.0f, GetMaxEnergy()));
     }
     else if (Attribute == GetDamageBonusAttribute() ||
              Attribute == GetDamageReductionAttribute())
@@ -114,6 +130,8 @@ void UGamePlatformCombatAttributeSet::PostGameplayEffectExecute(
 
     SetMaxHealth(FMath::Max(0.0f, GetMaxHealth()));
     SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
+    SetMaxEnergy(FMath::Max(0.0f, GetMaxEnergy()));
+    SetEnergy(FMath::Clamp(GetEnergy(), 0.0f, GetMaxEnergy()));
     const float Limit = FMath::Max(
         0.0f, GetDefault<UGamePlatformCombatSettings>()->MaxDamageMagnitude);
     SetDamageBonus(FMath::Clamp(GetDamageBonus(), -Limit, Limit));
@@ -130,6 +148,18 @@ void UGamePlatformCombatAttributeSet::OnRep_MaxHealth(
     const FGameplayAttributeData& OldValue)
 {
     GAMEPLAYATTRIBUTE_REPNOTIFY(UGamePlatformCombatAttributeSet, MaxHealth, OldValue);
+}
+
+void UGamePlatformCombatAttributeSet::OnRep_Energy(
+    const FGameplayAttributeData& OldValue)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UGamePlatformCombatAttributeSet, Energy, OldValue);
+}
+
+void UGamePlatformCombatAttributeSet::OnRep_MaxEnergy(
+    const FGameplayAttributeData& OldValue)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UGamePlatformCombatAttributeSet, MaxEnergy, OldValue);
 }
 
 void UGamePlatformCombatAttributeSet::OnRep_DamageBonus(

@@ -21,7 +21,7 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformUIResourceBarState
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|ResourceBar")
     double MaximumValue = 0.0;
 
-    /** 可选语义身份，例如 Health、Shield、Energy；平台只用于样式映射。 */
+    /** 可选语义身份，例如 Health（生命）、Energy（能量）、Momentum（气势）、Shield（护盾）；平台只用于样式映射。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|ResourceBar")
     FName ResourceId = NAME_None;
 
@@ -53,6 +53,10 @@ public:
     /** 仅在状态真实变化时更新底层ProgressBar并通知Blueprint。 */
     UFUNCTION(BlueprintCallable, Category="UI|ResourceBar")
     void ApplyResourceState(const FGamePlatformUIResourceBarState& InState);
+
+    /** 可配置资源填充色：能量蓝色与气势金色由项目决定，平台仅应用视觉表现。 */
+    UFUNCTION(BlueprintCallable, Category="UI|ResourceBar")
+    void SetResourceFillColor(const FLinearColor& InColor);
 
     UFUNCTION(BlueprintPure, Category="UI|ResourceBar")
     FGamePlatformUIResourceBarState GetResourceState() const

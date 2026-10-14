@@ -3,6 +3,9 @@
 
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
+#include "Effects/DivineBeastsMomentumGainGameplayEffect.h"
+#include "GameplayEffect.h"
+#include "Types/GamePlatformCombatResult.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -35,6 +38,8 @@ void UDivineBeastsCharacterComponent::EndPlay(
     const EEndPlayReason::Type EndPlayReason)
 {
     bEndingPlay = true;
+    AwardedMomentumHitIds.Reset();
+    AwardedMomentumHitOrder.Reset();
     DetachActivationGate();
     CancelDefinitionLease();
     LoadedDefinition = nullptr;
@@ -107,6 +112,9 @@ bool UDivineBeastsCharacterComponent::AuthorityBindTrustedContext(
     }
 
     const FGuid OperationId = FGuid::NewGuid(); TrustedContextOperationId = OperationId;
+    // 可信身份（含同Avatar新操作）改变时必须丢弃旧命中去重账本。
+    AwardedMomentumHitIds.Reset();
+    AwardedMomentumHitOrder.Reset();
     const TWeakObjectPtr<AActor> ExpectedOwner(Owner); const TWeakObjectPtr<UWorld> ExpectedWorld(World);
     const auto IsOriginalOperationCurrent = [this, OperationId, ExpectedOwner, ExpectedWorld]()
     {
@@ -160,6 +168,84 @@ bool UDivineBeastsCharacterComponent::IsCharacterReady() const
     if (bEndingPlay || !IsRegistered() || !HasBegunPlay() || !HasReadableDefinitionResources()) { return false; }
     return GetOwner() && GetOwner()->HasAuthority() ? bServerReady : bServerReady && bLocalReady;
 }
+bool UDivineBeastsCharacterComponent::AuthorityAwardMomentumForConfirmedBasicHit(
+    const FGamePlatformCombatResult& ConfirmedHit, const int32 ExpectedAvatarGeneration)
+{
+    check(IsInGameThread());
+    AActor* Owner = GetOwner();
+    UWorld* World = GetWorld();
+    if (bEndingPlay || !IsValid(Owner) || !Owner->HasAuthority() ||
+        !World || World->bIsTearingDown || !IsCharacterReady() ||
+        !IsValid(LoadedDefinition) || !ConfirmedHit.IsSuccess() ||
+        !ConfirmedHit.EventId.IsValid() || ExpectedAvatarGeneration <= 0 ||
+        GetAvatarGeneration() != ExpectedAvatarGeneration ||
+        !FMath::IsFinite(ConfirmedHit.AppliedToHealth) ||
+        !FMath::IsFinite(ConfirmedHit.AppliedToShield) ||
+        (ConfirmedHit.AppliedToHealth <= 0.0f &&
+         ConfirmedHit.AppliedToShield <= 0.0f) ||
+        AwardedMomentumHitIds.Contains(ConfirmedHit.EventId))
+    {
+        return false;
+    }
+
+    const UGamePlatformCombatComponent* Combat =
+        Owner->FindComponentByClass<UGamePlatformCombatComponent>();
+    UGamePlatformAbilitySystemComponent* ASC =
+        Owner->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
+    const UDivineBeastsMomentumAttributeSet* Attributes = ASC
+        ? ASC->GetSet<UDivineBeastsMomentumAttributeSet>() : nullptr;
+    if (!IsValid(Combat) || Combat->IsCombatDead() ||
+        Combat->GetCombatAvatarGeneration() != ExpectedAvatarGeneration ||
+        !IsValid(ASC) || ASC->GetAvatarActor() != Owner || !IsValid(Attributes))
+    {
+        return false;
+    }
+
+    // 气势增长由当前服务器已加载英雄定义确定，而不是由客户端技能名或VFX结果决定。
+    const float Delta = LoadedDefinition->Momentum.CalculateBasicAttackHitGain(
+        Attributes->GetMomentum(), Attributes->GetMaxMomentum());
+    if (!FMath::IsFinite(Delta) || Delta <= 0.0f) return false;
+
+    const FGuid OperationId = TrustedContextOperationId;
+    FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+    EffectContext.AddInstigator(Owner, Owner);
+    FGameplayEffectSpecHandle Effect = ASC->MakeOutgoingSpec(
+        UDivineBeastsMomentumGainGameplayEffect::StaticClass(), 1.0f, EffectContext);
+    if (!Effect.IsValid() || !Effect.Data.IsValid() ||
+        TrustedContextOperationId != OperationId || !IsCharacterReady())
+    {
+        return false;
+    }
+    Effect.Data->SetSetByCallerMagnitude(
+        UDivineBeastsMomentumGainGameplayEffect::GetMagnitudeDataName(), Delta);
+
+    // 先占用事件ID防止GE同步委托重入重复发奖；失败时释放占位以便原事件修复后重试。
+    AwardedMomentumHitIds.Add(ConfirmedHit.EventId);
+    AwardedMomentumHitOrder.Add(ConfirmedHit.EventId);
+    const FActiveGameplayEffectHandle Applied =
+        ASC->ApplyGameplayEffectSpecToSelf(*Effect.Data.Get());
+    if (!Applied.WasSuccessfullyApplied())
+    {
+        // 原身份还有效才回滚旧事件占位，不可误删后继身份同ID记录。
+        if (TrustedContextOperationId == OperationId)
+        {
+            AwardedMomentumHitIds.Remove(ConfirmedHit.EventId);
+            AwardedMomentumHitOrder.RemoveSingle(ConfirmedHit.EventId);
+        }
+        return false;
+    }
+
+    // GAS可能同步触发下一次可信身份绑定；不能在后继身份上做旧账本修剪。
+    if (TrustedContextOperationId != OperationId) return true;
+    while (AwardedMomentumHitOrder.Num() > 128)
+    {
+        const FGuid Expired = AwardedMomentumHitOrder[0];
+        AwardedMomentumHitOrder.RemoveAt(0, 1, EAllowShrinking::No);
+        AwardedMomentumHitIds.Remove(Expired);
+    }
+    return true;
+}
+
 bool UDivineBeastsCharacterComponent::TryUsePreloadedDefinition(const FGamePlatformDataLease& WarmupLease,
     UObject& WarmupOwner, FString& OutError)
 {

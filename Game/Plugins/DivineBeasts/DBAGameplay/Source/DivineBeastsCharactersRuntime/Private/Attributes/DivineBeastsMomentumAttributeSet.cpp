@@ -39,18 +39,18 @@ void UDivineBeastsMomentumAttributeSet::PreAttributeChange(const FGameplayAttrib
 
     if (Attribute == GetMomentumAttribute())
     {
-        NewValue = FMath::Clamp(NewValue, 0.0f, FMath::Max(0.0f, GetMaxMomentum()));
+        NewValue = FMath::Clamp(NewValue, 0.0f, FMath::Clamp(GetMaxMomentum(), 0.0f, 100.0f));
     }
     else if (Attribute == GetMaxMomentumAttribute())
     {
-        NewValue = FMath::Max(0.0f, NewValue);
+        NewValue = FMath::Clamp(NewValue, 0.0f, 100.0f);
     }
 }
 
 void UDivineBeastsMomentumAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
     Super::PostGameplayEffectExecute(Data);
-    SetMaxMomentum(FMath::Max(0.0f, GetMaxMomentum()));
+    SetMaxMomentum(FMath::Clamp(GetMaxMomentum(), 0.0f, 100.0f));
     SetMomentum(FMath::Clamp(GetMomentum(), 0.0f, GetMaxMomentum()));
 }
 

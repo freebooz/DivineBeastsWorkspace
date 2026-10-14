@@ -558,6 +558,10 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
         UGamePlatformCombatAttributeSet::GetHealthAttribute(),
         Attributes->GetMaxHealth() * ClampedHealthFraction);
     if (!IsCurrent()) return false;
+    // 新化身补满能量，不继承旧化身消耗；气势由项目英雄定义另外初始化。
+    ASC->SetNumericAttributeBase(
+        UGamePlatformCombatAttributeSet::GetEnergyAttribute(), Attributes->GetMaxEnergy());
+    if (!IsCurrent()) return false;
 
     // 这些生成的setter也会调用ASC并广播元属性变化，必须逐个复查而非只检查健康setter。
     Attributes->SetIncomingDamage(0.0f);
