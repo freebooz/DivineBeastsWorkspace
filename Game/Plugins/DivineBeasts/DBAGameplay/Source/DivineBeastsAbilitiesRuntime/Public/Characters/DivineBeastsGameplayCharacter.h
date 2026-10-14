@@ -5,6 +5,7 @@
 #include "DivineBeastsGameplayCharacter.generated.h"
 
 class UDivineBeastsAbilityLoadoutComponent;
+class UGamePlatformWaterInteractorComponent;
 class USpringArmComponent;
 class UCameraComponent;
 struct FGameplayTag;
@@ -50,6 +51,10 @@ private:
     /** Pawn拥有唯一技能装配组件；只在可信身份Ready后授予，换身份/退出由组件撤销自有租约与授权。 */
     UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Gameplay")
     TObjectPtr<UDivineBeastsAbilityLoadoutComponent> AbilityLoadout;
+    /** 统一平台水域交互组件：服务器低频查询并复制离散涉水状态，
+     * 不在角色类保存材质、Niagara、WaterBody或客户端纹理引用。 */
+    UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Water")
+    TObjectPtr<UGamePlatformWaterInteractorComponent> WaterInteractor;
     /** GT幂等绑定继承ASC；服务器无Controller时只撤销，客户端无Controller只观察GAS，资格仍由Gate拒绝。 */
     void BindAbilityActorInfo();
     /** 复用引擎运动完成委托，采样本机/服务器运动和帧耗时；不新增Tick或RPC。 */

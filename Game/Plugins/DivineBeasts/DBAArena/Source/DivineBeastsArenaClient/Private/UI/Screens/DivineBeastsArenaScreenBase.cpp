@@ -69,13 +69,26 @@ void UDivineBeastsArenaScreenBase::RefreshInitialState()
     for(const TCHAR* Name:{TEXT("ReturnWorldButton"),TEXT("RetryReturnButton")})if(auto* B=Cast<UButton>(GetWidgetFromName(Name)))B->SetIsEnabled(bCanReturn);
     Text(TEXT("ResultTitle"),FText::FromString(!VM||VM->ResultSummary.EndRevision<=0?TEXT("尚无已确认比赛结果"):VM->ResultSummary.WinningTeamId.IsNone()?TEXT("比赛结束 · 平局"):TEXT("比赛结束")));
     Text(TEXT("ReturnStatusText"),CommandFeedback);
+    // 英雄选择与记分板共享服务器公开名单；选人许可不是持久角色列表，也不能由客户端补造。
+    Text(TEXT("ArenaStateText"),FText::FromString(VM&&!VM->MatchId.IsEmpty()
+        ? FString::Printf(TEXT("比赛 %s · 模式 %s"),*VM->MatchId,*VM->ArenaModeId.ToString())
+        : TEXT("尚未收到服务器确认的竞技状态")));
+    FString Roster;
+    if(VM)for(const auto& Row:VM->Scoreboard)
+        Roster+=FString::Printf(TEXT("%s · 队伍 %s · 英雄 %s · %s\n"),*Row.PlayerId,*Row.TeamId.ToString(),
+            *Row.HeroDefinitionId,Row.bReady?TEXT("已准备"):TEXT("未准备"));
+    Text(TEXT("RosterText"),FText::FromString(Roster.IsEmpty()?TEXT("尚无已复制的公开阵容"):Roster));
+    Text(TEXT("HeroSelectionStatusText"),FText::FromString(TEXT("当前服务未提供赛前授权英雄候选与选择/准备命令合同；确认与准备不可用，未提交任何权威变更。")));
+    // 在真实选人适配器注册之前失败关闭；不能把点击或本地选中当作服务端确认。
+    for(const TCHAR* Name:{TEXT("ConfirmHeroButton"),TEXT("ReadyButton")})
+        if(auto* B=Cast<UButton>(GetWidgetFromName(Name)))B->SetIsEnabled(false);
     if(auto* List=Cast<UListView>(GetWidgetFromName(TEXT("ResultsList"))))
     {
         List->ClearListItems();
         if(VM)for(const auto& Row:VM->Scoreboard)
         {
             auto* Item=NewObject<UDivineBeastsPartyListItem>(this);Item->Key=Row.PlayerId;Item->Title=FText::FromString(Row.PlayerId);
-            Item->Detail=FText::FromString(FString::Printf(TEXT("击杀 %d · 死亡 %d · 助攻 %d"),Row.Kills,Row.Deaths,Row.Assists));List->AddItem(Item);
+            Item->Detail=FText::FromString(FString::Printf(TEXT("队伍 %s · 击杀 %d · 死亡 %d · 助攻 %d · 得分 %d"),*Row.TeamId.ToString(),Row.Kills,Row.Deaths,Row.Assists,Row.Score));List->AddItem(Item);
         }
     }
 }

@@ -32,6 +32,10 @@
     {
       "Name": "GamePlatformGameplay",
       "Enabled": true
+    },
+    {
+      "Name": "GamePlatformWater",
+      "Enabled": true
     }
   ],
   "Modules": [

@@ -11,6 +11,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
@@ -58,22 +59,33 @@ void UDivineBeastsDemoWorldSubsystem::OnScenarioOverlayReady(uint64 Generation, 
     DemoUIManager = Manager; bRegisteredDemoScreen = true;
     Manager->OnScreenOpened.AddUniqueDynamic(this, &ThisClass::OnDemoScreenOpened);
     Manager->OnScreenOpenFailed.AddUniqueDynamic(this, &ThisClass::OnDemoScreenFailed);
-    auto* Model = NewObject<UDivineBeastsDemoHubViewModel>(this);
+    const TStrongObjectPtr<UDivineBeastsDemoHubViewModel> Model(NewObject<UDivineBeastsDemoHubViewModel>(this));
     Model->BindCatalog(World->GetGameInstance()->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>());
-    bOpeningScreen = true; bSynchronousScreenFailure = false;
-    const auto Request = Manager->OpenScreenAsync(DemoScreenId, Model);
+    bOpeningScreen = true; bSynchronousScreenFailure = false; OpeningScreenModel=Model.Get();
+    SynchronouslyOpenedScreenRequestId.Invalidate();
+    const auto Request = Manager->OpenScreenAsync(DemoScreenId, Model.Get());
     bOpeningScreen = false;
-    if (!bSynchronousScreenFailure && !bOverlayClosing && Generation == OverlayGeneration) PendingScreenRequestId = Request.RequestId;
+    OpeningScreenModel.Reset();
+    if (!bSynchronousScreenFailure && !bOverlayClosing && Generation == OverlayGeneration)
+    { if(SynchronouslyOpenedScreenRequestId!=Request.RequestId)PendingScreenRequestId = Request.RequestId; }
     else if (Request.RequestId.IsValid()) Manager->CancelOpen(Request.RequestId);
 }
 void UDivineBeastsDemoWorldSubsystem::OnDemoScreenOpened(FGuid RequestId, FName ScreenId, UGamePlatformUIScreen* Screen)
 {
-    if (bOverlayClosing || ScreenId != DemoScreenId || RequestId != PendingScreenRequestId) return;
+    if (bOverlayClosing || ScreenId != DemoScreenId || !RequestId.IsValid()) return;
+    if (bOpeningScreen)
+    {
+        // 不能将同步成功遗失，也不能接管同ID但属于其他模型的页面。
+        if(!OpeningScreenModel.IsValid()||!Screen||Screen->GetViewModel()!=OpeningScreenModel.Get())return;
+        SynchronouslyOpenedScreenRequestId=RequestId;
+    }
+    else if(RequestId!=PendingScreenRequestId)return;
     PendingScreenRequestId.Invalidate();
     if (!Cast<UDivineBeastsDemoHubScreen>(Screen))
     { LastFeedback = FText::FromString(TEXT("Monolith新页面父类不匹配。")); if (auto* Manager = DemoUIManager.Get()) Manager->CloseScreen(Screen); return; }
     ActiveScreen = Screen; LastFeedback = FText::FromString(TEXT("开发目录页面已入平台层栈，未进行人工核验。"));
-    if (auto* Catalog = GetWorld()->GetGameInstance()->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>()) Catalog->StartPendingScenario(*GetWorld());
+    if(auto* World=GetWorld())if(auto* Instance=World->GetGameInstance())
+        if(auto* Catalog=Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>())Catalog->StartPendingScenario(*World);
 }
 void UDivineBeastsDemoWorldSubsystem::OnDemoScreenFailed(FGuid RequestId, FName ScreenId, FText Reason)
 {

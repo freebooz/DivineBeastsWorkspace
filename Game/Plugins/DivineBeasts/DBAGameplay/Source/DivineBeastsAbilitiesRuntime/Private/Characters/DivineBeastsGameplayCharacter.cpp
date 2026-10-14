@@ -4,6 +4,7 @@
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
+#include "Components/GamePlatformWaterInteractorComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -31,6 +32,8 @@ ADivineBeastsGameplayCharacter::ADivineBeastsGameplayCharacter()
     GetCharacterMovement()->MaxWalkSpeed = 450.f; GetCharacterMovement()->JumpZVelocity = 500.f;
     // 基类已拥有唯一ASC/Combat/CharacterIdentity/GameplayEligibility；不能重建主线旧HeroIdentity或遮蔽继承成员。
     AbilityLoadout = CreateDefaultSubobject<UDivineBeastsAbilityLoadoutComponent>(TEXT("AbilityLoadout"));
+    // 服务器只复制水域进入/离开和深浅状态；普通竞技地图无水区域时保持干态。
+    WaterInteractor = CreateDefaultSubobject<UGamePlatformWaterInteractorComponent>(TEXT("WaterInteractor"));
 }
 void ADivineBeastsGameplayCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 {

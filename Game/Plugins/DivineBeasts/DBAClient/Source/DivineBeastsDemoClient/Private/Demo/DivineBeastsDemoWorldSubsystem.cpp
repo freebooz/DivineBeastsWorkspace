@@ -186,6 +186,7 @@ void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
         if (bRegisteredDemoScreen) Manager->UnregisterScreenDefinition(TEXT("DivineBeasts.Demo.Hub"));
     }
     DemoUIManager.Reset(); ActiveScreen.Reset(); PendingScreenRequestId.Invalidate(); bRegisteredDemoScreen = false;
+    OpeningScreenModel.Reset(); SynchronouslyOpenedScreenRequestId.Invalidate();
     if (UDivineBeastsDemoHubWidget* Widget = ActiveWidget.Get())
     {
         Widget->RemoveFromParent();

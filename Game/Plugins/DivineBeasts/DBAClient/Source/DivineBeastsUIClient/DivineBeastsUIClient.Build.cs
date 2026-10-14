@@ -47,6 +47,8 @@ public class DivineBeastsUIClient : ModuleRules
             "GamePlatformOnlineClient",
             // 私有ESC接线只消费项目世界控制器公开事件，不让双端世界依赖客户端UI。
             "DBAWorldsRuntime",
+            // 世界HUD按项目唯一体验/服务器角色目录选择；不依赖竞技或在UI重复维护角色身份。
+            "DivineBeastsRuntime",
             // 仅Private鼠标预览适配使用EKeys，不把输入按键依赖扩散给公开UI契约。
             "InputCore",
             // 玩家状态 ViewModel 只在 Private 实现中订阅平台 ASC/项目 Momentum AttributeSet；公开 UI 契约不泄漏 Gameplay 类型。

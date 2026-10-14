@@ -19,5 +19,7 @@
   "focus_order": ["PluginSearchInput", "LayerFilterCombo", "PluginList", "FeatureList", "ScenarioList", "ParameterList", "LaunchScenarioButton", "ExecuteScenarioButton", "StopScenarioButton", "ResetDemoButton", "ReturnButton", "EvidenceButton"],
   "required_validation": ["父类/命名控件/实际类型回读", "层栈与列表entry class回读", "焦点可达性与键鼠/手柄导航", "可访问性中文正文及非颜色状态", "1920x1080/2560x1440/3840x2160/小安全区", "编译日志零错误", "保存关闭重开回读", "新彩色资产源像素与RHI单次编码比较"],
   "forbidden_preview": "capture_scene_preview widget",
-  "execution_status": "BlockedByEditorBinary；本清单未执行任何资产动作"
+  "navigation_policy": "focus_order仅记录可读顺序，不建立指向可能禁用/折叠控件的固定Explicit环；Hub与参数行采用Escape交给Slate自然遍历，设备行为仍需实际验证",
+  "execution_evidence": "Saved/Validation/PluginBlueprintAudit/20261014/FinalAssetReadbackAfterReview.json",
+  "execution_status": "PartiallyAuthored_CombinedVerificationPending；Root/Hub/MenuRow/ParameterRow/ResourceBar及HubScreen定义已保存编译；目录DA被66/65身份差异阻断；新键盘接线待Editor组合编译；独立重载/运行/人工未验"
 }

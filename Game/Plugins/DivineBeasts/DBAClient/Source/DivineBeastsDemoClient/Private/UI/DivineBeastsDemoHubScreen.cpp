@@ -2,6 +2,7 @@
 #include "UI/DivineBeastsDemoHubScreen.h"
 #include "UI/DivineBeastsDemoMenuItem.h"
 #include "UI/DivineBeastsDemoParameterRow.h"
+#include "UI/DivineBeastsDemoHubWidget.h"
 #include "Demo/DivineBeastsDemoCatalogSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Components/ListView.h"
@@ -10,6 +11,7 @@
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
 #include "Components/ComboBoxString.h"
+#include "Components/WidgetSwitcher.h"
 #include "Review/DivineBeastsDemoReviewBridge.h"
 #include "UObject/StrongObjectPtr.h"
 
@@ -23,9 +25,10 @@ void UDivineBeastsDemoHubScreen::NativeOnInitialized()
         LayerFilterCombo->OnSelectionChanged.AddUniqueDynamic(this, &ThisClass::OnLayerChanged);
         LayerFilterCombo->SetSelectedIndex(0);
     }
-    if (PluginList) PluginList->OnItemClicked().AddUObject(this, &ThisClass::OnPluginClicked);
-    if (FeatureList) FeatureList->OnItemClicked().AddUObject(this, &ThisClass::OnFeatureClicked);
-    if (ScenarioList) ScenarioList->OnItemClicked().AddUObject(this, &ThisClass::OnScenarioClicked);
+    // 键盘/手柄导航只保证选择事件，不能依赖鼠标Clicked；鼠标也走同一路径，避免一次选择提交两次。
+    if (PluginList) PluginList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnPluginSelectionChanged);
+    if (FeatureList) FeatureList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnFeatureSelectionChanged);
+    if (ScenarioList) ScenarioList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnScenarioSelectionChanged);
     if (RefreshButton) RefreshButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnRefreshClicked);
     if (LaunchScenarioButton) LaunchScenarioButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnLaunchClicked);
     if (ExecuteScenarioButton) ExecuteScenarioButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnExecuteClicked);
@@ -35,6 +38,9 @@ void UDivineBeastsDemoHubScreen::NativeOnInitialized()
     if (ResetDemoButton) ResetDemoButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnResetClicked);
     if (ReturnButton) ReturnButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnReturnClicked);
     if (EvidenceButton) EvidenceButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnEvidenceClicked);
+    if (auto* Button=Cast<UButton>(GetWidgetFromName(TEXT("DetailTabButton")))) Button->OnClicked.AddUniqueDynamic(this,&ThisClass::ShowDetailPanel);
+    if (auto* Button=Cast<UButton>(GetWidgetFromName(TEXT("ControlsTabButton")))) Button->OnClicked.AddUniqueDynamic(this,&ThisClass::ShowControlsPanel);
+    if (auto* Button=Cast<UButton>(GetWidgetFromName(TEXT("ReportTabButton")))) Button->OnClicked.AddUniqueDynamic(this,&ThisClass::ShowReportPanel);
 }
 void UDivineBeastsDemoHubScreen::BindUIEvents()
 {
@@ -58,6 +64,8 @@ void UDivineBeastsDemoHubScreen::RefreshInitialState()
 }
 void UDivineBeastsDemoHubScreen::DetachViewModel()
 {
+    for (const TCHAR* Name:{TEXT("DemoDetailPage"),TEXT("DemoControlsPage"),TEXT("DemoReportPage")})
+        if (auto* Panel=Cast<UDivineBeastsDemoHubWidget>(GetWidgetFromName(Name))) Panel->BindPresentationModel(nullptr);
     DemoModel = nullptr;
     if (SampleWidgetSlot) SampleWidgetSlot->SetContent(nullptr);
 }
@@ -86,15 +94,26 @@ void UDivineBeastsDemoHubScreen::OnLayerChanged(FString, ESelectInfo::Type)
     }
     DemoModel->SetFilter(Filter);
 }
-void UDivineBeastsDemoHubScreen::OnPluginClicked(UObject* Object)
-{ if (!bSynchronizing && DemoModel) if (auto* Item = Cast<UDivineBeastsDemoMenuItem>(Object)) DemoModel->SelectPlugin(Item->Identity); }
-void UDivineBeastsDemoHubScreen::OnFeatureClicked(UObject* Object)
-{ if (!bSynchronizing && DemoModel) if (auto* Item = Cast<UDivineBeastsDemoMenuItem>(Object)) DemoModel->SelectFeature(Item->Identity); }
-void UDivineBeastsDemoHubScreen::OnScenarioClicked(UObject* Object)
-{ if (!bSynchronizing && DemoModel) if (auto* Item = Cast<UDivineBeastsDemoMenuItem>(Object)) DemoModel->SelectScenario(Item->Identity); }
+void UDivineBeastsDemoHubScreen::OnPluginSelectionChanged(UObject* Object)
+{
+    if (!bSynchronizing && DemoModel && DemoModel == GetViewModel() && DemoModel->IsPageActive())
+        if (auto* Item = Cast<UDivineBeastsDemoMenuItem>(Object)) DemoModel->SelectPlugin(Item->Identity);
+}
+void UDivineBeastsDemoHubScreen::OnFeatureSelectionChanged(UObject* Object)
+{
+    if (!bSynchronizing && DemoModel && DemoModel == GetViewModel() && DemoModel->IsPageActive())
+        if (auto* Item = Cast<UDivineBeastsDemoMenuItem>(Object)) DemoModel->SelectFeature(Item->Identity);
+}
+void UDivineBeastsDemoHubScreen::OnScenarioSelectionChanged(UObject* Object)
+{
+    if (!bSynchronizing && DemoModel && DemoModel == GetViewModel() && DemoModel->IsPageActive())
+        if (auto* Item = Cast<UDivineBeastsDemoMenuItem>(Object)) DemoModel->SelectScenario(Item->Identity);
+}
 void UDivineBeastsDemoHubScreen::ApplySnapshot()
 {
     if (!DemoModel || !IsActivated() || DemoModel != GetViewModel() || !DemoModel->IsPageActive()) return;
+    for (const TCHAR* Name:{TEXT("DemoDetailPage"),TEXT("DemoControlsPage"),TEXT("DemoReportPage")})
+        if (auto* Panel=Cast<UDivineBeastsDemoHubWidget>(GetWidgetFromName(Name))) Panel->BindPresentationModel(DemoModel);
     TGuardValue<bool> Guard(bSynchronizing, true);
     const auto Snapshot = DemoModel->GetMenuSnapshot(); MenuItems.Reset();
     const auto Populate = [this](UListView* List, const auto& Values, auto Read, FName Selected)
@@ -169,3 +188,9 @@ void UDivineBeastsDemoHubScreen::OnEvidenceClicked()
     if (!Path.IsEmpty()) BP_OnEvidenceRequested(Path);
     if (!Error.IsEmpty() && OperationStatusText) OperationStatusText->SetText(FText::FromString(Error));
 }
+void UDivineBeastsDemoHubScreen::ShowDetailPanel()
+{ if(IsActivated())if(auto* Switcher=Cast<UWidgetSwitcher>(GetWidgetFromName(TEXT("DemoPageSwitcher")))) Switcher->SetActiveWidgetIndex(0); }
+void UDivineBeastsDemoHubScreen::ShowControlsPanel()
+{ if(IsActivated())if(auto* Switcher=Cast<UWidgetSwitcher>(GetWidgetFromName(TEXT("DemoPageSwitcher")))) Switcher->SetActiveWidgetIndex(1); }
+void UDivineBeastsDemoHubScreen::ShowReportPanel()
+{ if(IsActivated())if(auto* Switcher=Cast<UWidgetSwitcher>(GetWidgetFromName(TEXT("DemoPageSwitcher")))) Switcher->SetActiveWidgetIndex(2); }

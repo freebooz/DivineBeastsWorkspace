@@ -41,6 +41,8 @@
 #include "ViewModels/DivineBeastsUIViewModel.h"
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "ViewModels/Login/DivineBeastsLoginViewModel.h"
+#include "ViewModels/Social/DivineBeastsSocialViewModel.h"
+#include "ViewModels/LiveOps/DivineBeastsLiveOpsViewModel.h"
 
 namespace
 {
@@ -1251,6 +1253,19 @@ bool UDivineBeastsUIClientSubsystem::OpenWorldJournal(FName Section)
     if (ActiveSystemMenu.IsValid() || ActiveSystemSettings.IsValid() || ActiveInventoryScreen.IsValid() || bInventoryOpening) return false;
     PendingJournalSection = Section;
     return OpenSystemSurface(TEXT("UI.Screen.WorldJournal"));
+}
+
+FGamePlatformUIAsyncRequest UDivineBeastsUIClientSubsystem::OpenWorldUtilityScreen(FName ScreenId)
+{
+    if(bUIShuttingDown||!PlatformUI||!PlatformUI->GetRootLayout()||
+        !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)||!PlatformUI->HasScreenDefinition(ScreenId))return {};
+    UGamePlatformViewModelBase* Model=nullptr;
+    if(ScreenId==TEXT("UI.Screen.Social"))Model=NewObject<UDivineBeastsSocialViewModel>(this);
+    else if(ScreenId==TEXT("UI.Screen.LiveOps"))Model=NewObject<UDivineBeastsLiveOpsViewModel>(this);
+    else if(ScreenId==TEXT("UI.Screen.Quest"))Model=CreateViewModel(ScreenId);
+    else return {};
+    // 平台拥有请求期间和活动页面中的模型；没有授权服务的领域模型不自行BeginSourceScope。
+    return PlatformUI->OpenScreenAsync(ScreenId,Model);
 }
 
 void UDivineBeastsUIClientSubsystem::HandleWorldInventoryRequested()

@@ -44,7 +44,9 @@ public class DivineBeastsPresentationClient : ModuleRules
             // 第三层在真实内容包激活后，仅回调平台天气客户端重新发布当前视觉；不访问Niagara/SFX执行器私有实现。
             "GamePlatformWeatherClient",
             // 环境群落仅通过公开服务提交本地惊扰；不访问Niagara或私有世界执行器。
-            "GamePlatformVFXClient"
+            "GamePlatformVFXClient",
+            // 仅查询FluidFlux插件是否存在，绝不硬依赖其源码或客户端资源。
+            "Projects"
         });
 
         // UE Landscape原生渲染材质MID桥接仅编入ClientOnly模块，Server目标完全不依赖。

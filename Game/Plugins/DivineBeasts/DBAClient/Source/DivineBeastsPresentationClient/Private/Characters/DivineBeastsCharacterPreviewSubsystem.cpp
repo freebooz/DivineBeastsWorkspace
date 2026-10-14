@@ -38,6 +38,14 @@ namespace
 }
 
 
+EDivineBeastsCharacterStudioWaterMode
+UDivineBeastsCharacterPreviewSubsystem::GetCharacterStudioWaterMode(
+    bool bPreferFluidFlux, bool bHighQuality) const
+{
+    return UDivineBeastsCharacterStudioWaterPolicy::ResolveWaterMode(
+        PreviewStage.Get(), bPreferFluidFlux, bHighQuality);
+}
+
 void UDivineBeastsCharacterPreviewSubsystem::SetPreviewFoliageStyle(FName StyleId)
 {
     // 蓝图可按项目内容选择外观；只允许现有已登记且具有真实Definition的种类。

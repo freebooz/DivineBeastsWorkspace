@@ -22,6 +22,11 @@
 #include "Panels/Combat/DivineBeastsCombatPanelBase.h"
 #include "Components/DivineBeastsPlayerPortraitWidget.h"
 #include "Components/DivineBeastsVillageMinimapWidget.h"
+#include "DivineBeastsUIClientSubsystem.h"
+#include "HUD/World/DivineBeastsWorldHUDBase.h"
+#include "ViewModels/DivineBeastsUIViewModel.h"
+#include "Identity/DivineBeastsProjectCatalog.h"
+#include "Components/WidgetSwitcher.h"
 
 
 namespace
@@ -115,10 +120,14 @@ void UDivineBeastsRootLayout::RefreshForPlayerController(APlayerController* Cont
         Controller->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::HandlePossessedPawnChanged);
     }
     RefreshCombatHUDVisibility();
+    ObserveWorldUIOwner();
+    RefreshWorldContextHUD();
 }
 
 void UDivineBeastsRootLayout::NativeDestruct()
 {
+    if (auto* Owner=WorldUIOwner.Get()) Owner->OnStateChanged().Remove(WorldUIStateHandle);
+    WorldUIStateHandle.Reset(); WorldUIOwner.Reset(); ReleaseWorldContextHUD();
     if (APlayerController* Controller = BoundHUDController.Get())
     {
         Controller->OnPossessedPawnChanged.RemoveDynamic(
@@ -148,6 +157,57 @@ void UDivineBeastsRootLayout::HandlePossessedPawnChanged(
 {
     // 切换/断开角色立即撤销旧HUD投影；子面板自行解绑旧Pawn的GAS事件。
     RefreshCombatHUDVisibility();
+    RefreshWorldContextHUD();
+}
+
+void UDivineBeastsRootLayout::ObserveWorldUIOwner()
+{
+    auto* Owner=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsUIClientSubsystem>():nullptr;
+    if(WorldUIOwner.Get()==Owner)return;
+    if(auto* Previous=WorldUIOwner.Get())Previous->OnStateChanged().Remove(WorldUIStateHandle);
+    WorldUIStateHandle.Reset(); ReleaseWorldContextHUD(); WorldUIOwner=Owner;
+    if(Owner)WorldUIStateHandle=Owner->OnStateChanged().AddUObject(this,&ThisClass::HandleWorldUIState);
+}
+void UDivineBeastsRootLayout::HandleWorldUIState(const FDivineBeastsUIViewState&)
+{ RefreshWorldContextHUD(); }
+void UDivineBeastsRootLayout::ReleaseWorldContextHUD()
+{
+    // 先撤销根拥有的引用，再调用可同步取消命令的模型清理，后继选择不会被旧引用误清除。
+    auto* Previous=ActiveWorldContextHUD.Get();ActiveWorldContextHUD.Reset();
+    auto* Model=WorldHUDModel.Get();WorldHUDModel=nullptr;
+    if(Previous){Previous->InitializeWidgetViewModel(nullptr);Previous->SetVisibility(ESlateVisibility::Collapsed);}
+    if(Model){Model->OnScreenDeactivated();Model->EndPage();}
+}
+void UDivineBeastsRootLayout::RefreshWorldContextHUD()
+{
+    if(bSynchronizingWorldHUD)return;
+    TGuardValue<bool> Guard(bSynchronizingWorldHUD,true);
+    auto* Switcher=Cast<UWidgetSwitcher>(GetWidgetFromName(TEXT("WorldContextSwitcher")));
+    // Travel清理HUDLayer后只恢复本根布局拥有的既有Switcher实例，不构造新视觉树或复活旧世界动态HUD。
+    if(Switcher&&!Switcher->GetParent()&&HUDLayer)
+        if(auto* Slot=HUDLayer->AddChildToOverlay(Switcher)){Slot->SetHorizontalAlignment(HAlign_Left);Slot->SetVerticalAlignment(VAlign_Center);}
+    auto* Owner=WorldUIOwner.Get();
+    const auto State=Owner?Owner->GetViewState():FDivineBeastsUIViewState();
+    FName Role;
+    const APawn* Pawn=GetOwningPlayerPawn();
+    const bool bWorldVisible=Owner&&State.CurrentStep==TEXT("DBA.Flow.InWorld")&&!State.World.WorldId.IsNone()&&
+        IsValid(Pawn)&&Pawn->IsLocallyControlled()&&FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(State.World.ExperienceId,Role)&&
+        (Role==FDivineBeastsProjectCatalog::GetOpenWorldServerRole()||Role==FDivineBeastsProjectCatalog::GetVillageServerRole());
+    if(!Switcher||!bWorldVisible){ReleaseWorldContextHUD();if(Switcher)Switcher->SetVisibility(ESlateVisibility::Collapsed);return;}
+    int32 Index=Role==FDivineBeastsProjectCatalog::GetOpenWorldServerRole()?0:1;
+    if(State.World.ExperienceId==FDivineBeastsProjectCatalog::GetVillageTutorialExperience())Index=2;
+    if(State.World.ExperienceId==FDivineBeastsProjectCatalog::GetVillageTrainingExperience())Index=3;
+    auto* Selected=Cast<UDivineBeastsWorldHUDBase>(Switcher->GetWidgetAtIndex(Index));
+    if(!Selected){ReleaseWorldContextHUD();Switcher->SetVisibility(ESlateVisibility::Collapsed);return;}
+    if(Selected!=ActiveWorldContextHUD.Get())
+    {
+        ReleaseWorldContextHUD();ActiveWorldContextHUD=Selected;
+        Selected->SetPlayerContext(FLocalPlayerContext(GetOwningPlayer()));
+        WorldHUDModel=Owner->CreateViewModel(Selected->GetHUDSurfaceId());
+        if(WorldHUDModel){WorldHUDModel->BeginPage();Selected->InitializeWidgetViewModel(WorldHUDModel);}
+    }
+    Switcher->SetActiveWidgetIndex(Index);Switcher->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+    Selected->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 }
 
 void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()

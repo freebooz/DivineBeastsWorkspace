@@ -1,4 +1,99 @@
 {
+  "PluginBlueprintAudit20261014": {
+    "ProjectDisplayName": "SSLM",
+    "Status": "SavedCompiled_IndependentReloadAndRuntimePending",
+    "EditorPidAtAuthoring": 11536,
+    "EngineVersion": "5.8.0-0+UE5",
+    "MonolithVersion": "0.23.0",
+    "EvidenceDirectory": "Saved/Validation/PluginBlueprintAudit/20261014",
+    "InitialSourceHead": "199ff38de91f4edf4a328c0277ea3ff98c97fdc4",
+    "ObservedExternalHead": "b70c28f4dfae20ad1b9b84b80497457a0b2506f3",
+    "ExistingBlueprintsRecompiled": 213,
+    "ExistingBlueprintCompileErrors": 0,
+    "ExistingBlueprintCompileWarnings": 0,
+    "CurrentObservedPluginCount": 66,
+    "ApprovedManifestPluginCount": 65,
+    "CatalogGenerationStatus": "BlockedByUnregisteredConcurrentGamePlatformWater",
+    "NewWidgetAssets": [
+      {
+        "Path": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoRoot",
+        "Parent": "/Script/GamePlatformUIClient.GamePlatformRootLayout",
+        "WidgetCount": 10
+      },
+      {
+        "Path": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub",
+        "Parent": "/Script/DivineBeastsDemoClient.DivineBeastsDemoHubScreen",
+        "WidgetCount": 57
+      },
+      {
+        "Path": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoMenuRow",
+        "Parent": "/Script/DivineBeastsDemoClient.DivineBeastsDemoMenuEntryWidget",
+        "WidgetCount": 5
+      },
+      {
+        "Path": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoParameterRow",
+        "Parent": "/Script/DivineBeastsDemoClient.DivineBeastsDemoParameterRow",
+        "WidgetCount": 7
+      },
+      {
+        "Path": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_WorldJournal",
+        "Parent": "/Script/DivineBeastsUIClient.DivineBeastsWorldJournalScreen",
+        "WidgetCount": 30
+      }
+    ],
+    "NewScreenDefinition": {
+      "Path": "/DBAUIPack_Core/Development/PluginDemos/Definitions/DA_DBA_PluginDemoHubScreen",
+      "ScreenId": "DivineBeasts.Demo.Hub",
+      "Layer": "Screen",
+      "InputMode": "GameAndUI",
+      "PausePolicy": "Never",
+      "DefaultFocus": "PluginSearchInput",
+      "SurvivesTravel": false,
+      "Saved": true,
+      "PropertyReadback": true
+    },
+    "UpdatedExistingWidgetAssets": [
+      "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoResourceBar",
+      "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+      "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_ErrorReconnect",
+      "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect",
+      "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate"
+    ],
+    "TargetWidgetCount": 193,
+    "TargetCompileErrors": 0,
+    "TargetCompileWarnings": 0,
+    "TargetAccessibilityErrors": 0,
+    "TargetAccessibilityWarnings": 50,
+    "AccessibilityWarningBreakdown": {
+      "ExistingSmallFontRecommendations": 29,
+      "NaturalNavigationRequiresDeviceValidation": 21
+    },
+    "ReviewNavigationStructuralRegression": {
+      "UnsafeExplicitTargetsBefore": 48,
+      "UnsafeExplicitTargetsAfter": 0,
+      "ActualKeyboardInputVerified": false
+    },
+    "DemoKeyboardSelectionSourceFix": {
+      "Status": "SourceWritten_NotBuiltOrRun",
+      "TestName": "DivineBeasts.PluginDemos.KeyboardSelectionBinding",
+      "ObservedRedGreen": false
+    },
+    "NativeRegressionPassed": 12,
+    "NativeRegressionFailed": 0,
+    "SavedAssetStateReadback": true,
+    "IndependentReloadVerified": false,
+    "CurrentFullEditorBuildVerified": false,
+    "RuntimeCommandIntegrationVerified": false,
+    "ViewportAndDeviceVerified": false,
+    "NewBitmapImported": false,
+    "SourceRGBModified": false,
+    "ForbiddenWidgetPreviewUsed": false,
+    "RHIColorVerified": false,
+    "ClientServerCookVerified": false,
+    "HumanReviewed": false,
+    "RemainingNativeSurfaceBlueprints": 11,
+    "Notes": "只记录本批真实Monolith操作；65插件首次盘点不覆盖后来新增Water。Hub/WorldJournal/参数行使用自然导航避开禁用或折叠目标，保留21条静态建议；另有29条旧字体建议。12条Native结果属于接线源码修改前的已加载二进制，新KeyboardSelectionBinding未编译或运行。独立冷重载不能代存或关闭并行Water脏资产。Hover/Pressed仅完成结构修正，最终原生渲染未验。新蓝图不代表生产后端、全部插件或完整方案A完成。"
+  },
   "SchemaVersion": 1,
   "CreationTool": "Monolith MCP",
   "MonolithVersion": "0.23.0",

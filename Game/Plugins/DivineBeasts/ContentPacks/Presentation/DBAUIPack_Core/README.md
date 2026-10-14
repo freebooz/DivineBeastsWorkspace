@@ -64,6 +64,8 @@
 
 ## 前端客户端打包必需资源
 
+2026-10-14全插件蓝图续审：Monolith补齐开发演示Root／Hub／MenuRow／ParameterRow与页面定义，并补齐正式`UI/Screens/WBP_DBA_UI_WorldJournal`（角色信息、地图任务、法术书共用手册）。四个旧页面的九个按钮增加透明悬停／按下描边，未修改原稿RGB。10份本批控件已保存、编译、回读，193节点、0编译错误／警告；独立冷重载、真实业务／设备／人工核验仍未完成，静态可访问性保留的建议见生成清单。全范围缺项及并行Water插件导致的目录阻断见[全插件蓝图审查记录](../../../../../../Docs/Implementation/PluginDemos/BlueprintCoverageAudit_20261014.md)，生成清单不能解读为全部插件蓝图已实现。
+
 2026-10-14公共小队界面增量：`UI/Social`真实新增小队面板、邀请、申请、玩家菜单和准备页五个Widget Blueprint，以及公共列表条目；`UI/Materials/Social`新增无噪声玉石UI材质。所有资产经Monolith创建/布局/样式/导航/编译/保存，不把SourceArt概念图当作运行蓝图。公共C++与ViewModel仍归DBAClient且不依赖竞技；最新状态见[五页制作规范](Docs/PartyUIBlueprintAuthoringSpec_20261014.json)和生成清单。真实后端能力缺口、集中自动化和人工视觉待验状态必须分别阅读，不因资产存在宣称全部业务上线。
 
 2026-10-08最新地图限定包虽然Cook/Stage退出0，但漏掉通过原生软路径加载的RootLayout、登录页、角色页和卡片；两个运行客户端因根布局缺失显示黑屏。后续该流程使用`Build/Game/CookFrontEndClient.ps1 -EngineRoot <锁定UE5.8目录> -Cook`，它加载`FrontEndClient`专用配置并检查最终IoStore，而不以源码资产存在或编辑器可运行代替包内容交付。正式UI资产仍由Monolith拥有，修复不改Widget树或角色业务权威。

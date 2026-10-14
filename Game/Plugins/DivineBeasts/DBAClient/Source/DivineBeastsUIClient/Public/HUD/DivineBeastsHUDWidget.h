@@ -2,6 +2,7 @@
 
 #include "Screens/GamePlatformHUDWidget.h"
 #include "DivineBeastsHUDWidget.generated.h"
+class UDivineBeastsUIViewModel;
 
 /** EDivineBeastsHUDKind（神兽联盟 HUD 类型）。 */
 UENUM(BlueprintType)
@@ -52,6 +53,8 @@ protected:
 
     /** HUD 销毁前解绑项目 ViewModel，避免不可见 HUD 持续接收状态事件。 */
     virtual void UnbindUIEvents() override;
+    /** 活动中更换模型也须撤销旧所有者状态订阅，不能只替换平台显示委托。 */
+    virtual void RefreshInitialState() override;
 
     /** 由具体 HUD 子类在构造函数中设置，不在运行时频繁修改。 */
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|UI|HUD")
@@ -60,4 +63,11 @@ protected:
     /** 与项目 UI Catalog / Definition 对齐的稳定界面标识。 */
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|UI|HUD")
     FName HUDSurfaceId = NAME_None;
+private:
+    /** 实际建立项目状态订阅的模型；仅借用，不拥有其BeginPage/EndPage。 */
+    TWeakObjectPtr<UDivineBeastsUIViewModel> BoundHUDModel;
+    int32 BoundHUDPageGeneration = 0;
+    uint64 HUDBindingGeneration = 0;
+    bool bHUDEventsBound = false;
+    void ReconcileHUDModel();
 };

@@ -4,6 +4,7 @@
 
 #include "Definitions/GamePlatformWaterPresentationPreset.h"
 #include "Subsystems/GamePlatformWaterWorldSubsystem.h"
+#include "Components/GamePlatformWaterInteractorComponent.h"
 #include "Loading/GamePlatformAssetLoader.h"
 
 #include "Engine/World.h"
@@ -15,7 +16,62 @@
 #include "NiagaraSystem.h"
 #include "WaterBodyActor.h"
 #include "EngineUtils.h"
+#include "GameFramework/Pawn.h"
 
+
+void UGamePlatformWaterClientWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+    UWorld* World = GetWorld();
+    if (!IsValid(World) || World->GetNetMode() == NM_DedicatedServer)
+        return;
+    // 不轮询世界Actor：只订阅真实Spawn事件，并一次性接线已存在的角色Pawn。
+    ActorSpawnedHandle = World->AddOnActorSpawnedHandler(
+        FOnActorSpawned::FDelegate::CreateUObject(this,
+            &UGamePlatformWaterClientWorldSubsystem::ObserveSpawnedActor));
+    for (TActorIterator<APawn> It(World); It; ++It)
+        ObserveSpawnedActor(*It);
+}
+
+void UGamePlatformWaterClientWorldSubsystem::ObserveSpawnedActor(AActor* Actor)
+{
+    if (!IsValid(Actor) || Actor->GetWorld() != GetWorld() ||
+        !Cast<APawn>(Actor))
+        return;
+    UGamePlatformWaterInteractorComponent* WaterInteractor =
+        Actor->FindComponentByClass<UGamePlatformWaterInteractorComponent>();
+    if (!IsValid(WaterInteractor) || WaterPresenceBindings.Contains(WaterInteractor))
+        return;
+    const FDelegateHandle Handle = WaterInteractor->OnWaterStateChangedNative.AddUObject(
+        this, &UGamePlatformWaterClientWorldSubsystem::HandleWaterPresenceChanged);
+    WaterPresenceBindings.Add(WaterInteractor, Handle);
+}
+
+void UGamePlatformWaterClientWorldSubsystem::HandleWaterPresenceChanged(
+    const AActor* Actor, const FGamePlatformWaterPresence& State)
+{
+    if (!State.bInWater || !IsValid(Actor) || Actor->GetWorld() != GetWorld())
+        return;
+    const APawn* Pawn = Cast<APawn>(Actor);
+    if (!IsValid(Pawn) || !Pawn->IsLocallyControlled())
+        return;
+    // 水域刚进入时产生一次本地涟漪与轻量飞溅。脚步AnimNotify可独立调用本服务，
+    // 但它不改变这里的服务器权威Presence，也不创建新的网络状态。
+    const FVector FootContact = Pawn->GetActorLocation() + FVector(0.,0.,-85.);
+    RequestLocalRipple(FootContact, State.bDeepWater ? 1.6f : 0.7f, true);
+}
+
+void UGamePlatformWaterClientWorldSubsystem::UnbindWaterPresence()
+{
+    if (UWorld* World = GetWorld())
+        if (ActorSpawnedHandle.IsValid())
+            World->RemoveOnActorSpawnedHandler(ActorSpawnedHandle);
+    ActorSpawnedHandle.Reset();
+    for (const auto& Pair : WaterPresenceBindings)
+        if (UGamePlatformWaterInteractorComponent* Component = Pair.Key.Get())
+            Component->OnWaterStateChangedNative.Remove(Pair.Value);
+    WaterPresenceBindings.Reset();
+}
 bool UGamePlatformWaterClientWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
     const UWorld* World = Cast<UWorld>(Outer);
@@ -26,6 +82,7 @@ bool UGamePlatformWaterClientWorldSubsystem::ShouldCreateSubsystem(UObject* Oute
 
 void UGamePlatformWaterClientWorldSubsystem::Deinitialize()
 {
+    UnbindWaterPresence();
     ClearPresentation();
     Super::Deinitialize();
 }
@@ -39,6 +96,23 @@ void UGamePlatformWaterClientWorldSubsystem::ClearPresentation()
     PresetLease.Reset();
     RecentRippleTimes.Reset();
     LastRippleTime = -100.;
+}
+
+bool UGamePlatformWaterClientWorldSubsystem::SetWaterQualityTier(
+    EGamePlatformWaterQualityTier NewTier)
+{
+    switch (NewTier)
+    {
+    case EGamePlatformWaterQualityTier::Low:
+    case EGamePlatformWaterQualityTier::Medium:
+    case EGamePlatformWaterQualityTier::High:
+    case EGamePlatformWaterQualityTier::Cinematic:
+        QualityTier = NewTier;
+        RecentRippleTimes.Reset(); // 档位切换不继承原档位的频率预算。
+        return true;
+    default:
+        return false;
+    }
 }
 
 bool UGamePlatformWaterClientWorldSubsystem::ConfigurePresentation(
@@ -101,6 +175,23 @@ bool UGamePlatformWaterClientWorldSubsystem::RequestLocalRipple(
         Preset->MaxRippleSpawnsPerSecond == 0)
         return false;
 
+    // 先按档位收紧请求预算，再进入任何UObject资源访问；无轮询和任何GPU模拟。
+    int32 TierMaxPerSecond = 18;
+    float TierMaxDistanceCm = 6000.f;
+    switch (QualityTier)
+    {
+    case EGamePlatformWaterQualityTier::Low:
+        TierMaxPerSecond = 3; TierMaxDistanceCm = 2000.f; break;
+    case EGamePlatformWaterQualityTier::Medium:
+        TierMaxPerSecond = 8; TierMaxDistanceCm = 4000.f; break;
+    case EGamePlatformWaterQualityTier::High:
+        TierMaxPerSecond = 18; TierMaxDistanceCm = 6000.f; break;
+    case EGamePlatformWaterQualityTier::Cinematic:
+        TierMaxPerSecond = 32; TierMaxDistanceCm = 12000.f; break;
+    }
+    const int32 EffectiveMaxSpawns = FMath::Min(Preset->MaxRippleSpawnsPerSecond, TierMaxPerSecond);
+    const float EffectiveMaxViewDistanceCm = FMath::Min(Preset->MaxViewDistanceCm, TierMaxDistanceCm);
+    if (EffectiveMaxSpawns <= 0) return false;
     const UGamePlatformWaterWorldSubsystem* Geometry = World->GetSubsystem<UGamePlatformWaterWorldSubsystem>();
     FGamePlatformWaterSample Sample;
     if (!Geometry || !Geometry->QueryWaterAtLocation(WorldPosition, Sample) ||
@@ -110,7 +201,7 @@ bool UGamePlatformWaterClientWorldSubsystem::RequestLocalRipple(
     const APlayerController* Controller = World->GetFirstPlayerController();
     const APlayerCameraManager* Camera = Controller ? Controller->PlayerCameraManager : nullptr;
     if (!IsValid(Camera) || FVector::DistSquared(Camera->GetCameraLocation(), WorldPosition) >
-        FMath::Square(Preset->MaxViewDistanceCm))
+        FMath::Square(EffectiveMaxViewDistanceCm))
         return false;
 
     const double Now = World->GetTimeSeconds();
@@ -118,7 +209,7 @@ bool UGamePlatformWaterClientWorldSubsystem::RequestLocalRipple(
         FVector::DistSquared2D(WorldPosition, LastRippleLocation) < FMath::Square(65.f))
         return false;
     RecentRippleTimes.RemoveAll([Now](double Time) { return Now - Time >= 1.0; });
-    if (RecentRippleTimes.Num() >= Preset->MaxRippleSpawnsPerSecond)
+    if (RecentRippleTimes.Num() >= EffectiveMaxSpawns)
         return false;
 
     UNiagaraSystem* Ripple = Preset->RippleSystem.Get();
@@ -131,7 +222,8 @@ bool UGamePlatformWaterClientWorldSubsystem::RequestLocalRipple(
         return false;
 
     RippleComponent->SetVariableFloat(TEXT("User.RippleStrength"), Strength);
-    if (bSplash && Preset->bEnableSplash)
+    if (bSplash && Preset->bEnableSplash &&
+        QualityTier != EGamePlatformWaterQualityTier::Low)
     {
         if (UNiagaraSystem* Splash = Preset->SplashSystem.Get())
         {

@@ -2,6 +2,7 @@
 
 #include "Screens/World/DivineBeastsWorldScreenBase.h"
 #include "Services/GamePlatformQuestClientSubsystem.h"
+#include "Components/ComboBoxString.h"
 #include "DivineBeastsQuestScreen.generated.h"
 
 /**
@@ -43,6 +44,16 @@ protected:
     void BP_OnQuestViewChanged();
 
 private:
+    /** 将授权缓存投影至QuestList/QuestDetailText；选择按独立任务身份，不依赖重复标题。 */
+    void RefreshQuestPresentation();
+    UFUNCTION() void QuestSelected(FString Option, ESelectInfo::Type SelectionType);
+    UFUNCTION() void TrackSelectedQuest();
+    UFUNCTION() void UntrackSelectedQuest();
+    UFUNCTION() void CloseQuestPage();
+    /** 当前列表索引到稳定任务ID；刷新期间抑制程序性选择事件。 */
+    TArray<FName> QuestIds;
+    FName SelectedQuestId;
+    bool bRefreshingQuestList = false;
     void HandleQuestChanged();
     UGamePlatformQuestClientSubsystem* ResolveQuestSubsystem() const;
 
