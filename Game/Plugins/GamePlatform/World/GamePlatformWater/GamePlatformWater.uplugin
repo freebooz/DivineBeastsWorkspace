@@ -1,0 +1,60 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "GamePlatformWater 通用水体",
+  "Description": "平台水域权威查询、客户端水体与波纹表现、编辑器审查；项目层控制具体关卡及视觉素材。",
+  "Category": "GamePlatform/World",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Modules": [
+    {
+      "Name": "GamePlatformWaterRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "GamePlatformWaterClient",
+      "Type": "ClientOnly",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Client",
+        "Editor",
+        "Game"
+      ]
+    },
+    {
+      "Name": "GamePlatformWaterEditor",
+      "Type": "Editor",
+      "LoadingPhase": "Default",
+      "TargetAllowList": [
+        "Editor"
+      ]
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "GamePlatformCore",
+      "Enabled": true
+    },
+    {
+      "Name": "Water",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor",
+        "Game"
+      ]
+    },
+    {
+      "Name": "Niagara",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor",
+        "Game"
+      ]
+    }
+  ]
+}

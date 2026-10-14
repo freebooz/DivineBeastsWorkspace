@@ -18,18 +18,35 @@
       "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyListEntry"
     ],
     "MaterialAsset": "/DBAUIPack_Core/UI/Materials/Social/M_DBA_PartyJade_V1",
-    "Actions": ["ui.build_ui_from_spec", "ui.add_widget", "ui.setup_common_list_view", "ui.set_widget_property", "ui.set_widget_navigation_bulk", "blueprint.set_property_at_path", "ui.compile_widget", "ui.audit_accessibility", "blueprint.save_asset", "material.create_material", "material.build_material_graph"],
+    "Actions": [
+      "ui.build_ui_from_spec",
+      "ui.add_widget",
+      "ui.setup_common_list_view",
+      "ui.set_widget_property",
+      "ui.set_widget_navigation_bulk",
+      "blueprint.set_property_at_path",
+      "ui.compile_widget",
+      "ui.audit_accessibility",
+      "blueprint.save_asset",
+      "material.create_material",
+      "material.build_material_graph"
+    ],
     "CompiledAndSaved": true,
     "WidgetCompileErrors": 0,
     "WidgetCompileWarnings": 0,
     "StaticAccessibilityIssues": 0,
-    "ColdReloadVerified": false,
-    "NativeCombinedVerification": false,
+    "ColdReloadVerified": true,
+    "NativeCombinedVerification": true,
     "RuntimeInteractionVerified": false,
     "ManualVisualAccepted": false,
     "NewBitmapImported": false,
     "SourceToSlateRHIExecutedForThisChange": false,
-    "StatusZh": "六个Widget和UI域材质均为真实Monolith资产；等待集中原生构建、冷读与自动化。编译/可访问性零问题不等于后端联调或人工视觉通过。"
+    "StatusZh": "六个Widget及UI域材质真实保存并在新Editor进程冷读；九项相关原生回归通过。完整后端联机、运行性能、设备/颜色和人工视觉未验收。",
+    "ColdReloadEditorPid": 11536,
+    "RelatedNativeTestsPassed": 9,
+    "EditorBuildRunId": "c80c3bf0-6d27-4950-9836-cd62657c359e",
+    "ColdReadbackEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalColdReadback.json",
+    "NativeAutomationEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalNativeAutomation.json"
   },
   "DevelopmentMonsterFont20261013": {
     "Asset": "/DBAUIPack_Core/UI/Fonts/Development/F_DBA_DevelopmentMonsterLabel",
@@ -592,7 +609,10 @@
     "SourcePath": "SourceArt/UI/DBA_MythicLogo.png",
     "SourceSHA256": "938b069367543456ec463da94c0df15651750fed0f20d4187b5eb95b77b637f6",
     "SourceMatchesAttachment": true,
-    "SourceAlphaRange": [0, 255],
+    "SourceAlphaRange": [
+      0,
+      255
+    ],
     "TransparentPixelCount": 649341,
     "PreviousSourceSHA256": "ca7704dd63b5580c8a255009e6b17a5366cc94a7ee88b18821b6084a30fef910",
     "RollbackDirectory": "Saved/Validation/UIBrandLogo/20261011-TransparentOriginal/Before",
@@ -689,8 +709,8 @@
       "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect"
     ],
     "Property": "PreviewDragSurface.BrushColor",
-    "BeforeAlpha": 1.0,
-    "AfterAlpha": 0.0,
+    "BeforeAlpha": 1,
+    "AfterAlpha": 0,
     "Visibility": "Visible",
     "Compiled": true,
     "Saved": true,
@@ -1692,7 +1712,12 @@
       "Total": 4,
       "Passed": 4,
       "Failed": 0,
-      "Cases": ["PreviewDragLifetime", "ChoiceIdentityLifetime", "ZodiacImageChoice", "PreviewSurfaceBinding"]
+      "Cases": [
+        "PreviewDragLifetime",
+        "ChoiceIdentityLifetime",
+        "ZodiacImageChoice",
+        "PreviewSurfaceBinding"
+      ]
     },
     "RHIColorVerified": true,
     "RHIColorRunId": "96f535bc-c0a4-4dcb-aad5-b8d7c6eb2912",
@@ -1704,7 +1729,10 @@
     "ClientContainerRequiredCount": 135,
     "ClientContainerMissingCount": 0,
     "ClientLaunchRunId": "668d0ba4-e3bc-4dc6-bdb4-e02fa9a46077",
-    "ClientPIDs": [17700, 31188],
+    "ClientPIDs": [
+      17700,
+      31188
+    ],
     "ClientInitialScreen": "Login",
     "ClientAutoLogin": false,
     "ManualMouseAndVisualAcceptance": false,
@@ -1716,7 +1744,11 @@
     "Documentation": "Docs/Implementation/CharacterEntryRevision_20261011.md",
     "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate",
     "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsCharacterCreateScreen",
-    "Changes": ["Replace static journey copy with independently scrolling hero and skill introductions", "Bind HeroIntroductionText, SkillIntroductionText, HeroOverviewStatusText", "Author 12 independently identified CharacterCreationProfile assets via Monolith"],
+    "Changes": [
+      "Replace static journey copy with independently scrolling hero and skill introductions",
+      "Bind HeroIntroductionText, SkillIntroductionText, HeroOverviewStatusText",
+      "Author 12 independently identified CharacterCreationProfile assets via Monolith"
+    ],
     "DataAssetDirectory": "/DBAUIPack_Core/UI/Profiles/CharacterCreation",
     "PrimaryAssetType": "DivineBeastsCharacterCreationProfile",
     "SkillDescriptionsAreDraft": true,
@@ -1727,7 +1759,12 @@
     "IndependentReloadAndNativeTests": "Passed: fresh editor PID48512; both pages compile 0 errors/0 warnings; 12 hero introductions and 60 profile descriptions match author sources",
     "ReloadEvidence": "Saved/Validation/CharacterEntryFollowUp20261012/ReloadAudit.json",
     "NativeTestEvidence": "Saved/Validation/CharacterEntryFollowUp20261012/Native-83e4ba6e-4408-41bc-8617-5cc3eccf21bf/Report/index.json",
-    "NativeTests": {"Total": 54, "PassedWithoutWarnings": 53, "PassedWithWarnings": 1, "Failed": 0},
+    "NativeTests": {
+      "Total": 54,
+      "PassedWithoutWarnings": 53,
+      "PassedWithWarnings": 1,
+      "Failed": 0
+    },
     "NativeTestWarning": "Combat.PlayerStatusSnapshot: GameplayCue scan-path fallback; not a failed test and not a zero-warning log",
     "EditorBuildRunId": "30207b8f-1d8a-42d4-8373-617acfd13dcb",
     "ClientBuildRunId": "c554ecb0-f711-44fd-b190-6643bb5d69be",
@@ -1738,7 +1775,10 @@
     "ClientContainerRequiredCount": 147,
     "ClientContainerMissingCount": 0,
     "ClientLaunchRunId": "bce54148-c10c-447c-a3bb-5cd04364249c",
-    "ClientPIDs": [26812, 1248],
+    "ClientPIDs": [
+      26812,
+      1248
+    ],
     "ClientAutoLogin": false,
     "ClientInitialScreen": "Login",
     "ClientLoginInputLeafVerified": true,
@@ -1796,7 +1836,11 @@
     "Project": "Game/DivineBeastsArena.uproject",
     "Documentation": "Docs/Implementation/MagicHUDImplementationPlan_20261012.md",
     "IconImportManifest": "Docs/DevelopmentMagicIconImportManifest.json",
-    "Icons": ["/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFireball", "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFrostbolt", "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevArcaneMissiles"],
+    "Icons": [
+      "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFireball",
+      "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevFrostbolt",
+      "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_DevArcaneMissiles"
+    ],
     "AssetActions": "Monolith导入三纹理、无损UI/sRGB/NoMip设置与保存；现有AbilitySlot/AbilityBar编译保存重载。没有新增Widget或修改业务流程。",
     "ImportBlockingAudit": "3/3真实纹理设置与源哈希通过，不代表GPU颜色已通过。",
     "Portrait": "项目原生画刷UV裁头脸，源RGB和生肖资源身份不变。",
@@ -1812,7 +1856,19 @@
     "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoResourceBar",
     "ParentClass": "/Script/GamePlatformUIClient.GamePlatformResourceBarWidget",
     "PurposeZh": "修复已有Samples原生测试缺失的真实开发资源条；不改变正式登录/HUD、不替代权威数值。",
-    "AssetActions": ["ui.create_widget_blueprint", "ui.add_widget: ProgressBar/ResourceValueText", "ui.set_font: 18", "ui.set_widget_property: FillColorAndOpacity", "ui.compile_widget", "editor.save_packages: exact package", "editor.run_python: EditorLoadingAndSavingUtils.reload_packages", "ui.get_widget_tree: reloaded", "ui.audit_focus_chain", "ui.audit_accessibility", "project.get_saved_asset_state"],
+    "AssetActions": [
+      "ui.create_widget_blueprint",
+      "ui.add_widget: ProgressBar/ResourceValueText",
+      "ui.set_font: 18",
+      "ui.set_widget_property: FillColorAndOpacity",
+      "ui.compile_widget",
+      "editor.save_packages: exact package",
+      "editor.run_python: EditorLoadingAndSavingUtils.reload_packages",
+      "ui.get_widget_tree: reloaded",
+      "ui.audit_focus_chain",
+      "ui.audit_accessibility",
+      "project.get_saved_asset_state"
+    ],
     "CompileErrors": 0,
     "CompileWarnings": 0,
     "Saved": true,

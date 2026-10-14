@@ -8,6 +8,8 @@
  */
 struct GAMEPLATFORMARENACLIENT_API FGamePlatformArenaMatchOffer
 {
+    /** 跨DLL默认构造由所属MOBA模块导出，字段默认表示未知候选。 */
+    FGamePlatformArenaMatchOffer();
     FString CandidateId;
     int64 Revision = -1;
     FDateTime DeadlineUtc;
@@ -20,7 +22,9 @@ struct GAMEPLATFORMARENACLIENT_API FGamePlatformArenaMatchOffer
 class GAMEPLATFORMARENACLIENT_API IGamePlatformArenaMatchmakingAdapter
 {
 public:
-    virtual ~IGamePlatformArenaMatchmakingAdapter() = default;
+    /** 接口生命周期符号由所属模块提供，不要求消费者生成dllimport类的构造/析构。 */
+    IGamePlatformArenaMatchmakingAdapter();
+    virtual ~IGamePlatformArenaMatchmakingAdapter();
 
     /** 提交模式/原子队伍与逻辑幂等身份；仅游戏线程。回调true代表远端受理，不代表已分配竞技实例。
      * 适配器拥有认证、请求及观察的生命周期；必须核主体、服务端模式人数和名单版本，不接受隐藏分。
@@ -40,17 +44,14 @@ public:
     /** 只有创建、观察、取消和逐人确认都由真实后端支持才允许生成队列副作用。
      * 默认false保持旧适配器兼容；只有创建端点不能宣称完整生命周期可用。
      */
-    virtual bool SupportsTicketLifecycle() const { return false; }
+    virtual bool SupportsTicketLifecycle() const;
 
     /** 读取适配器最近收到的授权候选；未知/撤销返回空身份，不从本地流程枚举合成。 */
-    virtual FGamePlatformArenaMatchOffer GetObservedOffer() const { return {}; }
+    virtual FGamePlatformArenaMatchOffer GetObservedOffer() const;
 
     /** 每个玩家显式接受/拒绝指定候选版本；回调必须在游戏线程且恰好一次。
      * 不支持的旧适配器明确失败，绝不转调局内Ready或生成假成功。
      */
     virtual void RespondToMatchOffer(const FGamePlatformArenaMatchOffer& Offer, bool bAccept,
-        const FString& ClientRequestId, TFunction<void(bool, const FString&)> Completion)
-    {
-        if (Completion) Completion(false, TEXT("Matchmaking.OfferContractUnavailable"));
-    }
+        const FString& ClientRequestId, TFunction<void(bool, const FString&)> Completion);
 };

@@ -40,6 +40,10 @@
       "Enabled": true
     },
     {
+      "Name": "GamePlatformWater",
+      "Enabled": true
+    },
+    {
       "Name": "Monolith",
       "Enabled": true,
       "TargetAllowList": [

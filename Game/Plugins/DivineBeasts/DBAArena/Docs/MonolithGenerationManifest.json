@@ -7,21 +7,67 @@
   "EngineVersion": "5.8.0-0+UE5",
   "EvidenceDirectory": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014",
   "Assets": [
-    { "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Matchmaking", "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsMatchmakingScreen", "Focus": "ModeList" },
-    { "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_MatchFoundReady", "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsMatchFoundReadyScreen", "Focus": "CloseButton" },
-    { "AssetPath": "/DBAArena/UI/HUD/WBP_DBA_UI_ArenaHUD", "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsArenaHUD", "Focus": "" },
-    { "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_PostMatch", "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsPostMatchResultScreen", "Focus": "CloseButton" }
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Matchmaking",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsMatchmakingScreen",
+      "Focus": "ModeList",
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "WidgetCount": 25
+    },
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_MatchFoundReady",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsMatchFoundReadyScreen",
+      "Focus": "CloseButton",
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "WidgetCount": 22
+    },
+    {
+      "AssetPath": "/DBAArena/UI/HUD/WBP_DBA_UI_ArenaHUD",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsArenaHUD",
+      "Focus": "",
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "WidgetCount": 28
+    },
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_PostMatch",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsPostMatchResultScreen",
+      "Focus": "CloseButton",
+      "Compiled": true,
+      "Saved": true,
+      "Reloaded": true,
+      "WidgetCount": 23
+    }
   ],
-  "Actions": ["ui.build_ui_from_spec", "ui.setup_common_list_view", "ui.set_widget_property", "ui.set_widget_navigation_bulk", "blueprint.set_property_at_path", "ui.compile_widget", "ui.audit_accessibility", "blueprint.save_asset"],
+  "Actions": [
+    "ui.build_ui_from_spec",
+    "ui.setup_common_list_view",
+    "ui.set_widget_property",
+    "ui.set_widget_navigation_bulk",
+    "blueprint.set_property_at_path",
+    "ui.compile_widget",
+    "ui.audit_accessibility",
+    "blueprint.save_asset"
+  ],
   "CompiledAndSaved": true,
   "CompileErrors": 0,
   "CompileWarnings": 0,
   "StaticAccessibilityIssues": 0,
-  "ColdReloadVerified": false,
-  "NativeCombinedVerification": false,
+  "ColdReloadVerified": true,
+  "NativeCombinedVerification": true,
   "ProductionMatchmakingAvailable": false,
   "RuntimeInteractionVerified": false,
   "ClientServerCookVerified": false,
   "ManualVisualAccepted": false,
-  "StatusZh": "四页真实蓝图已制作、命名控件接线及编译保存；集中原生构建/冷读/自动化待实际结果。真实后端缺观察/取消/候选确认及生产适配器，五模式未配置，不宣称联机闭环完成。"
+  "StatusZh": "四页真实蓝图编译保存、AssetRegistry父类核对和新Editor冷读通过；命令源代码集中构建及相关原生回归通过。完整后端生命周期和正式模式仍缺失，不宣称联机闭环可发布。",
+  "ColdReloadEditorPid": 11536,
+  "RelatedNativeTestsPassed": 9,
+  "EditorBuildRunId": "c80c3bf0-6d27-4950-9836-cd62657c359e",
+  "ColdReadbackEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalColdReadback.json",
+  "NativeAutomationEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalNativeAutomation.json"
 }

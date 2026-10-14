@@ -4,11 +4,11 @@
   "ProjectDisplayName": "SSLM",
   "EngineVersion": "5.8",
   "CreationToolRequired": "Monolith MCP ui",
-  "Status": "BlueprintsAuthored_PendingCombinedVerification",
-  "StatusZh": "真实Monolith创建、命名控件列表装配、样式、导航、焦点及静态可访问性修改已执行；等待集中原生构建、自动化和冷读；真实匹配后端仍不具备完整生命周期。",
+  "Status": "NativeAndBlueprintVerified_BackendIntegrationPending",
+  "StatusZh": "真实Monolith界面已创建/编译/保存/冷重载，源码接线及集中原生回归通过；真实后端联机与人工视觉未验收，不能标整体完成。",
   "MonolithActionSchemaVerified": true,
   "MonolithDocumentTranslationValidated": true,
-  "EditorBuildRunId": "b53105cd-af0f-468d-92a6-804a99b0c202",
+  "EditorBuildRunId": "c80c3bf0-6d27-4950-9836-cd62657c359e",
   "BlueprintAssetsCreated": 5,
   "SourceImagesAreWidgetAssets": false,
   "DependencyPolicyZh": "公共UI只依赖GamePlatform与DBAClient；竞技UI归DBAArena，经MobaCommon向下复用，不反向引用项目，不建立新插件。",
@@ -339,17 +339,19 @@
           }
         ]
       },
-      "Status": "CreatedCompiledSaved_PendingColdReload",
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
       "BlueprintCreated": true,
       "Compiled": true,
       "Saved": true,
-      "Reloaded": false,
+      "Reloaded": true,
       "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
       "SourceImage": "SourceArt/UI/Social/Design/SSLM_PartyInteractions_Concept_v1.png",
-      "ReadModel": "UDivineBeastsSocialViewModel.GetSocialSnapshot",
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations",
       "NativeCommandBindingReady": false,
       "RoutePolicyZh": "不得替换既有UI.Screen.Social或FriendsButton焦点；新入口经公开UI路由在资产核验后注册。",
-      "NativeBindingStatusZh": "源码接线已实现；集中构建和运行验证未完成，不等于后端能力已上线"
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true
     },
     {
       "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyInviteModal",
@@ -525,16 +527,19 @@
           }
         ]
       },
-      "Status": "CreatedCompiledSaved_PendingColdReload",
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
       "BlueprintCreated": true,
       "Compiled": true,
       "Saved": true,
-      "Reloaded": false,
+      "Reloaded": true,
       "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
       "DismissPolicyZh": "ESC仅关闭展示，不等同拒绝；命令处理中禁用两个动作，到期只显示到期并等待服务器终态。",
       "AuthorityTimeoutSeconds": 60,
       "NativeCommandBindingReady": false,
-      "NativeBindingStatusZh": "源码接线已实现；集中构建和运行验证未完成，不等于后端能力已上线"
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true,
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations"
     },
     {
       "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyApplications",
@@ -698,11 +703,11 @@
           }
         ]
       },
-      "Status": "CreatedCompiledSaved_PendingColdReload",
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
       "BlueprintCreated": true,
       "Compiled": true,
       "Saved": true,
-      "Reloaded": false,
+      "Reloaded": true,
       "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
       "RowIntents": [
         "Party.ApproveApplication",
@@ -710,7 +715,10 @@
       ],
       "AuthorityTimeoutSeconds": 120,
       "NativeCommandBindingReady": false,
-      "NativeBindingStatusZh": "源码接线已实现；集中构建和运行验证未完成，不等于后端能力已上线"
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true,
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations"
     },
     {
       "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PlayerContextMenu",
@@ -874,15 +882,18 @@
           }
         ]
       },
-      "Status": "CreatedCompiledSaved_PendingColdReload",
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
       "BlueprintCreated": true,
       "Compiled": true,
       "Saved": true,
-      "Reloaded": false,
+      "Reloaded": true,
       "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
       "PositionPolicyZh": "只响应合法可见玩家；按目标位置定位并限制在当前视口安全区，不抢占其他LocalPlayer。",
       "NativeCommandBindingReady": false,
-      "NativeBindingStatusZh": "源码接线已实现；集中构建和运行验证未完成，不等于后端能力已上线"
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true,
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations"
     },
     {
       "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyReadyCheckModal",
@@ -1050,19 +1061,31 @@
           }
         ]
       },
-      "Status": "CreatedCompiledSaved_PendingColdReload",
+      "Status": "CreatedCompiledSavedColdReloaded_BackendIntegrationPending",
       "BlueprintCreated": true,
       "Compiled": true,
       "Saved": true,
-      "Reloaded": false,
+      "Reloaded": true,
       "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
       "AuthorityTimeoutSeconds": 20,
       "SourceImage": "Docs/Implementation/VillagePartyArena/Design/SSLM_ReadyAndResult_Concept_v1.png",
       "NativeCommandBindingReady": false,
-      "NativeBindingStatusZh": "源码接线已实现；集中构建和运行验证未完成，不等于后端能力已上线"
+      "NativeBindingStatusZh": "真实原生源码已编译；命名控件、父类、列表引用和作用域/命令门禁回归已核；实际认证后端交互未联调。",
+      "NativeCommandBindingSourceImplemented": true,
+      "NativeCommandBindingContractVerified": true,
+      "ReadModel": "UDivineBeastsPartyViewModel.Party / Invitations"
     }
   ],
   "OwnerPlugin": "DBAUIPack_Core",
   "SourceBridgeImplemented": true,
-  "ProductionMatchmakingAvailable": false
+  "ProductionMatchmakingAvailable": false,
+  "ColdReloadVerified": true,
+  "ColdReloadEditorPid": 11536,
+  "ColdReadbackEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalColdReadback.json",
+  "NativeAutomationEvidence": "Saved/Validation/VillagePartyArena/NativeAndBlueprints_20261014/FinalNativeAutomation.json",
+  "RelatedNativeTestsPassed": 9,
+  "RuntimeInteractionVerified": false,
+  "ManualVisualAccepted": false,
+  "FocusPolicyZh": "DefaultFocus是C++ ScreenDefinition在InitializeScreen注入的运行时合同；已核目标控件和导航。Transient CDO写值不作为持久化焦点证明，实际设备焦点待联调。",
+  "NativeBindingReadyMeaningZh": "NativeCommandBindingReady保留为完整业务可用性标志；源码/结构核验单独记录，缺后端或未联调不将旧字段写true。"
 }

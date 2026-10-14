@@ -20,6 +20,8 @@ public class DBAWorldsRuntime : ModuleRules
             "GamePlatformWorld",
             // 第三层世界服务器组合使用平台天气权威入口，不携带客户端表面/音效实现。
             "GamePlatformWeatherRuntime",
+            // 客户端和专服共用的权威水域查询，仅有CPU体积及流速规则。
+            "GamePlatformWaterRuntime",
             // 共享项目GameMode/Controller继承平台公开门禁，不链接服务器私有准入实现。
             "GamePlatformGameplay"
         });

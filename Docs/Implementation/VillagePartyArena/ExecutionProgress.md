@@ -162,3 +162,25 @@ Final Ruling: 审查未重新核验的后端并发归属/主体幂等、队列�
 依赖根因进一步实证：UBT仍复用旧预编译Makefile，OnlyModules无法找到CommonInput/GameplayAbilities输出；NoUBTMakefiles及ForceRulesCompile两次只改变参数仍未重建模块表，均失败，未作为通过。停止同类参数重试，核对无其他UBT/Editor后，只将本工程Editor的`Game/Intermediate/Build/Win64/x64/DivineBeastsArenaEditor/Development/Makefile.bin`移到本轮证据目录备份，不删除源码、资产或其他目标缓存。必要引擎模块真实构建`09001470-5977-4a09-974b-e419a263f898`完成105动作、622.71秒、退出0；这是模块依赖修复而非正式全目标验收。切回预编译正式目标前同样保留该模块构建缓存备份，防止旧模块表误用于全目标。
 
 一次审查修复已写入：真正离栈按精确实例/原栈退休，池化换模型拒绝旧绑定；SelectionChanged同步键盘目标、重建防递归并在命令前核选中对象；已确认Idle终态按原逻辑身份清理。三个行为回归及收件箱/回执关联补充已写，尚未实际执行。静态英文命名检查105584项、65插件、零违规；最新继承门禁仍通过。正式Editor集中重跑`8ee11227-61c8-4d56-95a7-c22372d334cd`已启动，等待真实结果。
+
+该重跑已完成C++编译但于53.40秒退出6：首次在跨DLL消费者实例化既有未使用MOBA匹配接口时，暴露接口构造/析构及默认虚方法未由所属模块导出的7项LNK错误。已将跨DLL生命周期和默认实现放回MOBA模块Private/Client的真实编译单元，不移除导出宏或测试、不降低链接要求。尚未记自动化或冷读通过。
+
+最新正式Editor全目标`c80c3bf0-6d27-4950-9836-cd62657c359e`完成15动作、UBT41.46秒Succeeded，包装脚本与输入/产物证据核对后退出0。审查修正、扩展回归和MOBA端口真实实现均已进入此轮编译链接；未运行其他端目标。后续仍须真实自动化、Monolith结构复读与冷重载，不能从该构建结果推断全部业务完成。
+
+重启PID28916后正式工程路径、UE5.8.0与Monolith0.23.0均实际核对。Monolith执行同步原生回归：StrictContract 1/1、公共Party 2/2、竞技UI 6/6，共9/9通过、零错误/警告；另GamePlatform.DeveloperTools.Rules 1/1通过，证明包括继承规则在内的内建规则注册存在。`GP.InheritanceBoundary`是规则ID不是自动化测试前缀，误用该前缀返回0项/false，未计为通过；不能把Rules注册检查当作实际继承资产全审计。
+
+九页及条目再次集中编译保存、可访问性检查均零错误/警告，共281个Widget节点、300项显式导航；实际AssetRegistry ParentClass/NativeParentClass标签与九页规范一致。六个ListView均实际引用公共PartyListEntry蓝图类且DesignerPreviewEntries=0。首次用Python反射读取非公开ParentClass属性失败，随后改为真实AssetRegistry标签回读成功，失败保留在原始证据，不冒充成功。
+
+根据既有CombatHUD真实锚点发现竞技框架重叠，已通过Monolith调整竞技HUD到参考1080布局的独立区域：队友框架避开左上角色/Buff/公共Roster，对手框架避开右上地图，模式/计时避开目标及技能区；只读框架不拦截世界鼠标，长身份文字省略显示。该修改已编译保存，但不是设备/人工视觉验收。PID28916零未保存包后正常退出，最终冷读另开EditorFinalColdReload日志。
+
+并发Git状态实证：外部操作把HEAD推进为`199ff38de91f4edf4a328c0277ea3ff98c97fdc4`并包含本轮部分文件及Inventory等并行工作，本任务没有执行该提交、不撤销或重写。当前后续修改继续原位保留，不能把外部提交算成本代理完成的提交。
+
+最终冷读实证：新Editor PID11536，正式工程/UE5.8.0/Monolith0.23.0均核实；十个Widget的父类、281节点、300导航及零可访问性问题冷读一致，六个列表真实条目引用和DesignerPreviewEntries=0保持。公共玉石材质冷读图包含TextureCoordinate+CustomHLSL及Emissive/Opacity真实连线，材质域MD_UI、混合Translucent。最终零未保存包，未调用有Gamma问题的widget截图。
+
+该新进程再次执行相关原生9/9通过、另规则注册1/1通过；没有跳过项或错误/警告。证据聚合`FinalColdReadback.json`、`FinalNativeAutomation.json`均实际写入Saved/Validation本轮目录，原始请求/回执同目录。两份制作规范和生成清单已同步ColdReload与Native验证true；完整业务/客户端运行/生产匹配/人工视觉仍false。文档状态更新后将只读核对最终差异，并补正式目标输入清单收口，不将元数据更新误称新增代码编译。
+
+Final: fixed 池化旧绑定退休 — SelectionAndRecycledBinding及既有SameIdInstanceOwnership通过；fixed 键盘选择与真实命令目标一致 — SelectionAndRecycledBinding、KeyboardModeSelection通过；fixed 确认终态释放逻辑报名身份 — ConfirmedOfferTerminal通过。上述是实际集中GREEN；用户覆盖逐项执行顺序，未观察修改前RED，不记虚构RED→GREEN。审查没有提出Minor延期项，完整后端/网络/设备验收缺口按前述Final Ruling保留，不是“全部任务完成”。
+
+文档/清单状态收口后正式Editor全目标复核`65f8fb2d-813a-49f1-80ab-8d21280aa4e7`退出0、EditorBuildEvidenceStatus=Eligible；UBT明确Target is up to date、1.74秒，没有新增编译动作，不冒充另一次代码重建。当前编译源代码仍由c80构建和PID11536实际回归验证。11项真实资产另写`FinalAssetHashes.json`完整性记录，总974914字节；哈希只证明当前文件完整性，不是运行或网络验收。最终Editor保持打开且零未保存包。
+
+最终只读门禁`Assert-FoundationEditorBuildResult`实际验证当前输入、完整Editor结果及GamePlatformOnlineClient、GamePlatformArenaClient、DivineBeastsUIClient、DivineBeastsArenaClient四模块身份通过；最新继承扫描553头/1208类型/206边仍通过，git diff --check退出0（仅Git行尾转换提示）。最终真实Monolith健康PID11536、0.23.0、1355动作，未保存包0。没有本任务提交/推送、生产发布或人工验收，整体联机任务继续保留未完成项。
