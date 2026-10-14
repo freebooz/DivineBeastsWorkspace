@@ -13,16 +13,36 @@
     "NewPageCompileWarningsBeforeNativeBuild": 0,
     "AccessibilityErrors": 0,
     "AccessibilityWarningsBeforeNativeBuild": 45,
-    "PublicCatalogPages": ["Boot", "Quest", "Social", "LiveOps", "OpenWorldHUD", "VillageMainHUD", "TutorialGuidance", "TrainingControls", "Toast"],
-    "ArenaCatalogPages": ["HeroSelection", "Scoreboard"],
-    "DemoChildPages": ["WBP_DBA_PluginDemoDetail", "WBP_DBA_PluginDemoControls", "WBP_DBA_PluginDemoReport"],
+    "PublicCatalogPages": [
+      "Boot",
+      "Quest",
+      "Social",
+      "LiveOps",
+      "OpenWorldHUD",
+      "VillageMainHUD",
+      "TutorialGuidance",
+      "TrainingControls",
+      "Toast"
+    ],
+    "ArenaCatalogPages": [
+      "HeroSelection",
+      "Scoreboard"
+    ],
+    "DemoChildPages": [
+      "WBP_DBA_PluginDemoDetail",
+      "WBP_DBA_PluginDemoControls",
+      "WBP_DBA_PluginDemoReport"
+    ],
     "MaterialReviewPage": "WBP_DBA_MaterialLibraryReview",
     "MaterialReviewWidgetCount": 95,
     "RetainedOriginalMaterialWidgetNames": 83,
     "NewPlatformUIFunctions": 7,
     "UIReviewMaterials": 12,
     "MaterialCallsAndFinalOutputsReadBack": true,
-    "UpdatedExistingAssets": ["/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub", "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout"],
+    "UpdatedExistingAssets": [
+      "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub",
+      "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout"
+    ],
     "BitmapImportedOrReimported": false,
     "WidgetCapturePreviewUsed": false,
     "NativeTestsExecutedForNewSource": false,
@@ -30,7 +50,10 @@
     "FullEditorBuildMatchesCurrentSource": false,
     "RuntimeInteractionVerified": false,
     "FinalReadOnlyReview": "TwoImportantLifecycleFindingsFixedInSource_NativeRegressionPending",
-    "LifecycleRegressions": ["DivineBeasts.PluginDemos.HubClearedModel", "DivineBeasts.UI.RemainingSurfaces.JournalClearedModel"],
+    "LifecycleRegressions": [
+      "DivineBeasts.PluginDemos.HubClearedModel",
+      "DivineBeasts.UI.RemainingSurfaces.JournalClearedModel"
+    ],
     "RequiredNewNativeTestIdentities": [
       "DivineBeasts.UI.RemainingSurfaces.NativeAssets",
       "DivineBeasts.UI.RemainingSurfaces.ClearHUDModel",
@@ -2026,5 +2049,41 @@
     "RemainingValidationZh": "Samples与完整102项回归须走原生Automation入口；Cook、分辨率与人工视觉不由Monolith结构门禁推导。",
     "MonolithAutomationLimitationZh": "0.23.0的run_automation_tests同步入口在latent Samples用例触发LatentCommands.IsEmpty引擎断言；资产已保存/重载且崩溃前脏包为0。保留AssetEditor.log，不用该入口重试latent测试、不修改第三方引擎或降低断言。",
     "ManualVisualAccepted": false
+  },
+  "WorldHealthAndCooldown20261014": {
+    "Tool": "Monolith MCP",
+    "Version": "0.23.0",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Assets": [
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+        "Parent": "GamePlatformSlotWidget",
+        "Action": "添加CooldownSweep Image，旧CooldownOverlay禁用，Icon保留"
+      },
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Materials/Combat/M_DBA_CooldownSweep",
+        "Parent": "Material MD_UI",
+        "Action": "引用平台RadialCooldown；Slate实时时钟；12点起顺时针清除50%半透明遮罩"
+      },
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/World/WBP_DBA_WorldHealthBar",
+        "Parent": "GamePlatformWorldNameplateWidget",
+        "Action": "SizeBox、Canvas、NameText、ResourceFill、ValueText"
+      },
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD",
+        "Parent": "DivineBeastsCombatPanelBase",
+        "Action": "添加本地血条显示/隐藏按钮及V键说明"
+      }
+    ],
+    "CompiledAndSaved": true,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "ColdReloadVerified": false,
+    "NativeTestsPassed": false,
+    "CookPassed": false,
+    "ManualVisualAccepted": false,
+    "Evidence": "Saved/Validation/Rebuild20261014/d2d4518f-080b-47ca-8c39-c2d608646485/CooldownEditor.log",
+    "Note": "运行装配与冷重载待后续证据，不以资产保存替代联机验收"
   }
 }

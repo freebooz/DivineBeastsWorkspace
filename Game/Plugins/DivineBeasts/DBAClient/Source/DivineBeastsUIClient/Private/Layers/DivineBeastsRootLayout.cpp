@@ -27,6 +27,10 @@
 #include "ViewModels/DivineBeastsUIViewModel.h"
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Components/WidgetSwitcher.h"
+#include "Components/Button.h"
+#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "WorldUI/DivineBeastsWorldHealthBarPresenter.h"
+#include "WorldUI/GamePlatformWorldWidgetBase.h"
 #include "UObject/StrongObjectPtr.h"
 
 
@@ -128,6 +132,7 @@ void UDivineBeastsRootLayout::RefreshForPlayerController(APlayerController* Cont
 void UDivineBeastsRootLayout::NativeDestruct()
 {
     bWorldHUDHostConstructed=false;bWorldHUDRefreshQueued=false;
+    BindWorldHealthBars(nullptr);
     if (auto* Owner=WorldUIOwner.Get()) Owner->OnStateChanged().Remove(WorldUIStateHandle);
     WorldUIStateHandle.Reset(); WorldUIOwner.Reset(); ReleaseWorldContextHUD();
     if (APlayerController* Controller = BoundHUDController.Get())
@@ -252,6 +257,7 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
     BindCombatEffects(bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr);
     // 组合根只为真实本地Pawn注入展示来源；项目肖像/小地图各自持有事件与纹理句柄，无MOBA依赖。
     APawn* DisplayPawn = bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr;
+    BindWorldHealthBars(DisplayPawn);
     for (FName PortraitName : {FName(TEXT("PlayerPortrait")), FName(TEXT("ActionBarPortrait"))})
     {
         if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(PortraitName)))
@@ -521,3 +527,59 @@ void UDivineBeastsRootLayout::RenderCombatEffects()
 }
 
 
+
+
+void UDivineBeastsRootLayout::BindWorldHealthBars(APawn* DisplayPawn)
+{
+    auto* Controller = DisplayPawn ? Cast<ADivineBeastsWorldPlayerController>(GetOwningPlayer()) : nullptr;
+    if (auto* Previous = Cast<ADivineBeastsWorldPlayerController>(WorldHealthController.Get()); Previous != Controller)
+    {
+        if (Previous)
+        {
+            Previous->OnFinalCameraViewChanged.RemoveAll(this);
+            Previous->OnWorldHealthBarsToggleRequested.RemoveAll(this);
+        }
+        WorldHealthController = Controller;
+        if (Controller)
+        {
+            Controller->OnFinalCameraViewChanged.AddUObject(this, &ThisClass::HandleFinalCameraViewChanged);
+            Controller->OnWorldHealthBarsToggleRequested.AddUObject(this, &ThisClass::ToggleWorldHealthBars);
+        }
+    }
+    if (DisplayPawn && WorldHealthBarClass)
+    {
+        if (!WorldHealthBars) WorldHealthBars = NewObject<UDivineBeastsWorldHealthBarPresenter>(this);
+        WorldHealthBars->Initialize(GetOwningLocalPlayer(), DisplayPawn->GetWorld(), WorldHealthBarClass);
+        WorldHealthBars->SetVisible(bWorldHealthBarsVisible);
+    }
+    else if (WorldHealthBars) WorldHealthBars->Clear();
+    if (CombatHUD)
+    {
+        if (auto* Toggle = Cast<UButton>(CombatHUD->GetWidgetFromName(TEXT("WorldHealthBarsToggle"))))
+        {
+            Toggle->OnClicked.RemoveDynamic(this, &ThisClass::ToggleWorldHealthBars);
+            if (DisplayPawn) Toggle->OnClicked.AddUniqueDynamic(this, &ThisClass::ToggleWorldHealthBars);
+        }
+    }
+    RefreshWorldHealthBarToggleText();
+}
+
+void UDivineBeastsRootLayout::ToggleWorldHealthBars()
+{
+    if (!GetOwningPlayerPawn() || !WorldHealthBars) return;
+    bWorldHealthBarsVisible = !bWorldHealthBarsVisible;
+    WorldHealthBars->SetVisible(bWorldHealthBarsVisible);
+    RefreshWorldHealthBarToggleText();
+}
+
+void UDivineBeastsRootLayout::HandleFinalCameraViewChanged()
+{
+    if (WorldHealthBars) WorldHealthBars->RefreshProjection();
+}
+
+void UDivineBeastsRootLayout::RefreshWorldHealthBarToggleText()
+{
+    if (!CombatHUD) return;
+    if (auto* Text = Cast<UTextBlock>(CombatHUD->GetWidgetFromName(TEXT("WorldHealthBarsToggleText"))))
+        Text->SetText(FText::FromString(bWorldHealthBarsVisible ? TEXT("血条：显示 [V]") : TEXT("血条：隐藏 [V]")));
+}

@@ -8,6 +8,8 @@ class UAbilitySystemComponent;
 class UDivineBeastsUIClientSubsystem;
 class UDivineBeastsUIViewModel;
 class UDivineBeastsWorldHUDBase;
+class UDivineBeastsWorldHealthBarPresenter;
+class UGamePlatformWorldWidgetBase;
 struct FDivineBeastsUIViewState;
 class UGamePlatformStatusEffectTrayWidget;
 struct FGameplayTag;
@@ -31,6 +33,9 @@ public:
     /** 本地玩家控制器换代时恢复作者HUD并更新拥有者上下文；仅游戏线程UI事件调用。
      * 不恢复上一世界动态HUD、不授予技能；空控制器撤销订阅并隐藏当前展示。 */
     void RefreshForPlayerController(APlayerController* Controller);
+    /** 本LocalPlayer世界血条显示开关；UI命令或原生V键通知调用，无网络副作用。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|World")
+    void ToggleWorldHealthBars();
 
 protected:
     /** 战斗主HUD只应在拥有本地有效战斗Pawn时出现；登录、选角及切换世界时自动隐藏。 */
@@ -40,8 +45,17 @@ protected:
     /** 只绑定项目层WBP中的组合入口，继续沿用平台RootLayout的HUDLayer/ScreenLayer。 */
     UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly, Category="DivineBeasts|UI|Combat")
     TObjectPtr<UDivineBeastsCombatPanelBase> CombatHUD = nullptr;
+    /** 公共UI包真实名称板类；仅客户端组合根引用，专服不加载UI资产。 */
+    UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|UI|World")
+    TSubclassOf<UGamePlatformWorldWidgetBase> WorldHealthBarClass;
 
 private:
+    UPROPERTY(Transient) TObjectPtr<UDivineBeastsWorldHealthBarPresenter> WorldHealthBars;
+    TWeakObjectPtr<APlayerController> WorldHealthController;
+    bool bWorldHealthBarsVisible = true;
+    void BindWorldHealthBars(APawn* DisplayPawn);
+    void HandleFinalCameraViewChanged();
+    void RefreshWorldHealthBarToggleText();
     /** 公共世界四种HUD的实际选择与单一模型；根布局拥有页面代次，子HUD仅订阅显示。 */
     TWeakObjectPtr<UDivineBeastsUIClientSubsystem> WorldUIOwner;
     TWeakObjectPtr<UDivineBeastsWorldHUDBase> ActiveWorldContextHUD;

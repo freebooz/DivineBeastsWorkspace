@@ -43,7 +43,8 @@ void ADivineBeastsWorldPlayerController::UpdateCameraManager(float DeltaSeconds)
 
 void ADivineBeastsWorldPlayerController::RequestWorldHealthBarsToggle()
 {
-    if (IsWorldGameplayActive()) OnWorldHealthBarsToggleRequested.Broadcast();
+    if (IsLocalController() && IsWorldGameplayActive() && !bWorldGameplayInputSuspended)
+        OnWorldHealthBarsToggleRequested.Broadcast();
 }
 
 ADivineBeastsWorldPlayerController::ADivineBeastsWorldPlayerController()
@@ -424,6 +425,7 @@ void ADivineBeastsWorldPlayerController::EndPlay(const EEndPlayReason::Type Reas
     OnWorldEscapeRequested.Clear();
     OnWorldInventoryRequested.Clear();
     OnWorldJournalRequested.Clear();
+    OnFinalCameraViewChanged.Clear(); OnWorldHealthBarsToggleRequested.Clear();
     UpdateWorldInputLocks(false);
     OnPreparationChanged.RemoveAll(this); GetWorld()->GameStateSetEvent.RemoveAll(this);
     if(ObservedPlayer.IsValid()) ObservedPlayer->OnLifecycleChanged.RemoveAll(this);
