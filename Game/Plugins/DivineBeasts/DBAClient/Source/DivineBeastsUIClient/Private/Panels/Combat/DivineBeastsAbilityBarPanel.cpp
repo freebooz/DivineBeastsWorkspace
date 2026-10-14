@@ -18,10 +18,12 @@ void UDivineBeastsAbilityBarPanel::NativeConstruct()
     RefreshAbilitySourceFromOwningPawn();
     // 初始没有技能授权时，也应清空并禁用真实可见的五个子槽位。
     RefreshVisualSlots();
+    BindAbilitySlotCommands(true);
 }
 
 void UDivineBeastsAbilityBarPanel::NativeDestruct()
 {
+    BindAbilitySlotCommands(false);
     VisualProjectionToken=FGuid::NewGuid();
     if (APlayerController* Controller = BoundPawnController.Get())
     {
@@ -36,6 +38,27 @@ void UDivineBeastsAbilityBarPanel::NativeDestruct()
     }
     ViewModelSlotsHandle.Reset();
     Super::NativeDestruct();
+}
+
+void UDivineBeastsAbilityBarPanel::BindAbilitySlotCommands(bool bBind)
+{
+    UGamePlatformSlotWidget* ActiveSlots[] = {PrimaryAbilitySlot.Get(), ActiveAbilitySlot1.Get(),
+        ActiveAbilitySlot2.Get(), UltimateAbilitySlot.Get()};
+    for (UGamePlatformSlotWidget* AbilitySlot : ActiveSlots)
+    {
+        if (!IsValid(AbilitySlot)) continue;
+        AbilitySlot->OnSlotInvoked().RemoveAll(this);
+        if (bBind) AbilitySlot->OnSlotInvoked().AddUObject(this, &ThisClass::HandleAbilitySlotInvoked);
+    }
+}
+
+void UDivineBeastsAbilityBarPanel::HandleAbilitySlotInvoked(FName SlotId)
+{
+    if (!AbilityBarViewModel) return;
+    const FGamePlatformResult Result = AbilityBarViewModel->RequestActivateSlot(SlotId);
+    if (!Result.IsSuccess())
+        UE_LOG(LogTemp, Warning, TEXT("技能输入请求被拒绝：Slot=%s Code=%s Reason=%s"),
+            *SlotId.ToString(), *Result.Code.ToString(), *Result.Message);
 }
 
 void UDivineBeastsAbilityBarPanel::HandlePossessedPawnChanged(

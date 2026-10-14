@@ -26,6 +26,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineBaseTypes.h"
 #include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -320,6 +321,12 @@ private:
         const float SpawnMomentum = ASC->GetNumericAttribute(
             UDivineBeastsMomentumAttributeSet::GetMomentumAttribute());
         if (!Test->TestEqual(TEXT("真实英雄数据初始化50气势，不靠测试补满"), SpawnMomentum, 50.f)) { return; }
+        // 其他服务器场景故意使用远端控制器；本用例验证本地输入，必须通过引擎SetPlayer绑定
+        // 真实ULocalPlayer。不能修改ActorInfo私有标记或放宽平台“仅本地拥有者输入”门禁。
+        // ULocalPlayer声明Within=Engine，必须以真实GEngine为Outer；GI不是合法容器。
+        LocalInputPlayer.Reset(NewObject<ULocalPlayer>(GEngine));
+        Controller->SetPlayer(LocalInputPlayer.Get());
+        if (!Test->TestTrue(TEXT("输入夹具拥有真实本地玩家控制器"), Pawn->IsLocallyControlled())) { return; }
         auto* Eligibility = Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();
         if (!Test->TestNotNull(TEXT("服务器准入资格组件存在"), Eligibility)) { return; }
         Eligibility->SetServerPlayerActive(true);
@@ -334,15 +341,22 @@ private:
             FGameplayAbilitySpec Spec(AbilityClasses[Index], 1);
             Spec.GetDynamicSpecSourceTags().AddTag(InputTag);
             const FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
-            if (!Test->TestTrue(TEXT("真实GAS授予魔法"), Handle.IsValid()) ||
-                !Test->TestTrue(TEXT("出生资源允许接纳平台输入"),
-                    ASC->AbilityInputPressed(InputTag, ASC->GetInputToken()).IsSuccess())) { return; }
+            if (!Test->TestTrue(TEXT("真实GAS授予魔法"), Handle.IsValid())) { return; }
+            const FGamePlatformResult InputResult = ASC->AbilityInputPressed(InputTag, ASC->GetInputToken());
+            if (!Test->TestTrue(TEXT("出生资源允许接纳平台输入：") + InputResult.Code.ToString(),
+                InputResult.IsSuccess())) { return; }
             ASC->ProcessAbilityInput();
             ASC->AbilityInputReleased(InputTag, ASC->GetInputToken());
             Test->TestEqual(FString::Printf(TEXT("%s通过真实输入仅扣一次成本"), ExpectedMagic[Index].Name),
                 ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()),
                 ExpectedMomentum[Index]);
         }
+        FString Error;
+        auto* Identity = Pawn->FindComponentByClass<UDivineBeastsCharacterComponent>();
+        Test->TestTrue(TEXT("同一可信定义再次交接是幂等的"),
+            Identity->TryUsePreloadedDefinition(WarmupLease, *WarmupOwner.Get(), Error));
+        Test->TestEqual(TEXT("重复定义通知不把已消耗的20气势重置为50"),
+            ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()), 20.f);
     }
 
     /** 初始化其他隔离场景的测试资源；真实出生回归不得调用本方法掩盖初始数据缺陷。 */
@@ -577,6 +591,7 @@ private:
     EScenario Scenario;              // 本次用例唯一行为，不能在失败后退回另一种场景。
     double StartedSeconds;           // 墙钟秒，用于真实资源/初始化超时。
     TStrongObjectPtr<UGameInstance> Instance;
+    TStrongObjectPtr<ULocalPlayer> LocalInputPlayer; // 仅输入回归拥有；与Controller同一夹具销毁，不触发身份认证。
     TWeakObjectPtr<ADivineBeastsCharacter> Pawn;
     TWeakObjectPtr<APlayerController> Controller;
     TWeakObjectPtr<AActor> WarmupOwner, OtherAvatar;

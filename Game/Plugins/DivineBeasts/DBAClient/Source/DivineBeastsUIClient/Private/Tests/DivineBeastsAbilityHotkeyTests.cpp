@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerInput.h"
 #include "InputCoreTypes.h"
 #include "Engine/GameInstance.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Misc/ScopeExit.h"
 #include "Widgets/SWidget.h"
@@ -50,9 +52,13 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilitySlotPointerTest,
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsAbilitySlotPointerTest::RunTest(const FString&)
 {
-    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>());
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
     Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
-    ON_SCOPE_EXIT { Instance->Shutdown(); };
+    UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT {
+        Instance->Shutdown();
+        if (World) { GEngine->DestroyWorldContext(World); World->DestroyWorld(false); }
+    };
     UClass* SlotClass = LoadClass<UGamePlatformSlotWidget>(nullptr,
         TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot.WBP_DBA_UI_AbilitySlot_C"));
     if (!TestNotNull(TEXT("真实公共技能槽资产存在"), SlotClass)) { return false; }
@@ -64,15 +70,31 @@ bool FDivineBeastsAbilitySlotPointerTest::RunTest(const FString&)
     State.ContentId = TEXT("dba.ability.rat_dev_fireball@1");
     State.bEnabled = true;
     Slot->ApplySlotState(State);
+    int32 Invocations = 0;
+    FName InvokedSlot;
+    Slot->OnSlotInvoked().AddLambda([&Invocations, &InvokedSlot](FName SlotId)
+        { ++Invocations; InvokedSlot = SlotId; });
     const TSet<FKey> Pressed{EKeys::LeftMouseButton};
     const FPointerEvent Pointer(0, FVector2D(32.f, 32.f), FVector2D(32.f, 32.f),
         Pressed, EKeys::LeftMouseButton, 0.f, FModifierKeysState());
     const FGeometry Geometry = FGeometry::MakeRoot(FVector2D(64.f, 64.f), FSlateLayoutTransform());
     const TSharedRef<SWidget> SlateSlot = Slot->TakeWidget();
     TestTrue(TEXT("已授权技能槽左键进入交互命令入口"), SlateSlot->OnMouseButtonDown(Geometry, Pointer).IsEventHandled());
+    TestEqual(TEXT("左键恰好形成一次调用"), Invocations, 1);
+    TestEqual(TEXT("命令沿用当前稳定槽位身份"), InvokedSlot, State.SlotId);
     State.bPending = true;
     Slot->ApplySlotState(State);
     TestFalse(TEXT("待确认授权不能受理鼠标施法"), SlateSlot->OnMouseButtonDown(Geometry, Pointer).IsEventHandled());
+    State.bPending = false;
+    State.bEnabled = false;
+    Slot->ApplySlotState(State);
+    TestFalse(TEXT("禁用槽位不能受理鼠标施法"), SlateSlot->OnMouseButtonDown(Geometry, Pointer).IsEventHandled());
+    State.bEnabled = true;
+    State.ContentId = NAME_None;
+    Slot->ApplySlotState(State);
+    TestFalse(TEXT("空槽没有技能交互命令"), Slot->RequestSlotInvocation());
+    TestEqual(TEXT("所有拒绝状态不重复发布命令"), Invocations, 1);
+    Slot->OnSlotInvoked().Clear();
     return true;
 }
 #endif

@@ -1,5 +1,7 @@
 # DBAGameplay：十二生肖技能数据驱动与权威授权
 
+> 2026-10-14增量：用户指定十二生肖出生初始气势50。真实HeroDefinition的Momentum.InitialMomentum及新定义默认值同步为50，服务器既有初始化组件仍只在新Avatar可信定义就绪后设置一次；成本继续由GAS扣除，重复定义通知不得恢复已消耗资源。执行状态和重新发布证据见`Docs/Implementation/SpellCastingRepair_20261014.md`，本节新增说明不代表已完成联机人工验收。
+
 > 适用工程：DivineBeastsWorkspace（神兽联盟工作空间）。
 > 当前实施状态：已写入 C++ 源码及部分装配，**未通过锁定 UE5.8 引擎编译与真实资产/联机验收**。
 > 依据：根 AGENTS.md（工程规则）、Game/Plugins/插件开发规范.md（插件规范）。

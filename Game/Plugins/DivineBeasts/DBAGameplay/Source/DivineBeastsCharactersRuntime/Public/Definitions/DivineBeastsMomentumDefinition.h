@@ -12,8 +12,9 @@ struct DIVINEBEASTSCHARACTERSRUNTIME_API FDivineBeastsMomentumDefinition
 {
     GENERATED_BODY()
 
+    /** 新Avatar出生时的气势点数，默认50；须在0～MaxMomentum之间，仅由服务器按英雄定义初始化一次。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Momentum", meta=(ClampMin="0.0"))
-    float InitialMomentum = 0.0f;
+    float InitialMomentum = 50.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Momentum", meta=(ClampMin="0.0"))
     float MaxMomentum = 100.0f;

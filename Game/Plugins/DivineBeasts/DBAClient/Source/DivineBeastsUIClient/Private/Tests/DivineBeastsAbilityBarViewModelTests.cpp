@@ -9,6 +9,75 @@
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UnrealType.h"
+#include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/GamePlatformGameplayEligibilityComponent.h"
+#include "Framework/GamePlatformPlayerStateBase.h"
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Misc/ScopeExit.h"
+
+/**
+ * 使用真实GI/World/Pawn/ASC及两个真实通知源，验证事件确实刷新当前技能视图并在解绑后失效。
+ * 只植入一份“此前禁用”的显示缓存作为观察标记；真实Loadout为空，刷新必须清空标记。
+ * 不伪造角色Ready、授权或施法结果，不运行后端；Active→可释放的完整网络顺序仍须联机验收。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilityActivationEventsTest,
+    "DivineBeasts.UI.Combat.AbilityActivationEvents.RefreshAndUnbind",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsAbilityActivationEventsTest::RunTest(const FString&)
+{
+    if (!TestNotNull(TEXT("真实Engine"), GEngine)) return false;
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
+    UWorld* World = Instance->GetWorld();
+    TStrongObjectPtr<UDivineBeastsAbilityBarViewModel> View(NewObject<UDivineBeastsAbilityBarViewModel>());
+    ON_SCOPE_EXIT
+    {
+        View->UnbindFromLoadout();
+        Instance->Shutdown();
+        if (World) { GEngine->DestroyWorldContext(World); World->DestroyWorld(false); }
+    };
+    if (!TestNotNull(TEXT("隔离真实世界"), World)) return false;
+    APawn* Pawn = World->SpawnActor<APawn>();
+    APlayerController* Controller = World->SpawnActor<APlayerController>();
+    AGamePlatformPlayerStateBase* State = World->SpawnActor<AGamePlatformPlayerStateBase>();
+    if (!TestTrue(TEXT("真实Pawn、控制器与平台PlayerState"), Pawn && Controller && State)) return false;
+    Controller->PlayerState = State;
+    Controller->Possess(Pawn);
+    auto* ASC = NewObject<UGamePlatformAbilitySystemComponent>(Pawn);
+    Pawn->AddInstanceComponent(ASC); ASC->RegisterComponent();
+    auto* Loadout = NewObject<UDivineBeastsAbilityLoadoutComponent>(Pawn);
+    Pawn->AddInstanceComponent(Loadout); Loadout->RegisterComponent();
+    auto* Eligibility = NewObject<UGamePlatformGameplayEligibilityComponent>(Pawn);
+    Pawn->AddInstanceComponent(Eligibility); Eligibility->RegisterComponent();
+    TestTrue(TEXT("绑定真实组件"), View->BindToLoadout(Loadout));
+    int32 Changed = 0;
+    View->OnSlotsChanged().AddLambda([&Changed](const TArray<FGamePlatformUISlotState>&) { ++Changed; });
+    const auto SeedPreviousDisabledView = [&]()
+    {
+        FGamePlatformUISlotState Disabled;
+        Disabled.SlotId = TEXT("Test.PreviousDisabledView"); Disabled.bEnabled = false;
+        View->Slots = {Disabled}; // 仅显示缓存夹具，不进入Loadout/GAS/复制事实。
+    };
+    SeedPreviousDisabledView();
+    Eligibility->SetServerPlayerActive(true);
+    TestEqual(TEXT("真实资格改变必须重算技能显示缓存"), View->GetSlotsRef().Num(), 0);
+    TestEqual(TEXT("一次资格改变仅发布一次视图变化"), Changed, 1);
+    SeedPreviousDisabledView();
+    State->OnLifecycleChanged.Broadcast(); // 模拟真实复制通知到达，不改写生命周期权威快照。
+    TestEqual(TEXT("生命周期通知必须重算技能显示缓存"), View->GetSlotsRef().Num(), 0);
+    TestEqual(TEXT("两种来源都已进入真实刷新"), Changed, 2);
+    View->UnbindFromLoadout();
+    SeedPreviousDisabledView();
+    const int32 BeforeLateEvents = Changed;
+    Eligibility->SetServerPlayerActive(false); State->OnLifecycleChanged.Broadcast();
+    TestEqual(TEXT("解绑后迟到事件不改已撤销视图"), View->GetSlotsRef().Num(), 1);
+    TestEqual(TEXT("解绑后迟到事件不发布变化"), Changed, BeforeLateEvents);
+    return true;
+}
 
 /** 测试项目 UI 定义与授权视图的身份、空资源和合法类边界，不伪造真实线上技能。 */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -42,6 +111,9 @@ bool FDivineBeastsAbilityUIProfileValidationTest::RunTest(const FString&)
     {
         return false;
     }
+    TestFalse(TEXT("未绑定角色时空槽命令必须失败"), ViewModel->RequestActivateSlot(NAME_None).IsSuccess());
+    TestFalse(TEXT("未绑定角色时已知槽位也不能虚构施法"),
+        ViewModel->RequestActivateSlot(TEXT("Platform.Ability.Input.DivineBeasts.Slot1")).IsSuccess());
     TestFalse(TEXT("没有技能装配组件时不能绑定授权来源"),
         ViewModel->BindToLoadout(nullptr));
     TestEqual(TEXT("无授权时通用技能槽为空"), ViewModel->GetSlots().Num(), 0);
