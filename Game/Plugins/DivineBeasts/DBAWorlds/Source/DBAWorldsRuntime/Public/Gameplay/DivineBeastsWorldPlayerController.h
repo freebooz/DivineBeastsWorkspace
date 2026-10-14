@@ -26,6 +26,11 @@ public:
     FDivineBeastsWorldJournalRequested OnWorldJournalRequested;
     /** 当前本地选中目标变化；只读展示意图，技能与交互必须另经服务器资格校验。 */
     FSimpleMulticastDelegate OnWorldTargetChanged;
+    /** 最终本地镜头位置、旋转或FOV真实变化后通知；共享世界模块不依赖UI。 */
+    FSimpleMulticastDelegate OnFinalCameraViewChanged;
+    /** 本地血条显示切换意图；偏好与UI显示归LocalPlayer客户端，不修改战斗数据。 */
+    FSimpleMulticastDelegate OnWorldHealthBarsToggleRequested;
+    virtual void UpdateCameraManager(float DeltaSeconds) override;
     /** 当前世界内的弱选中引用；目标结束、换Pawn和旅行立即清空，不跨网络复制。 */
     AActor* GetSelectedWorldTarget() const { return SelectedWorldTarget.Get(); }
     /** 游戏线程设置本地界面暂停；true清除拖动/按键/技能并恢复光标，false仅在服务器Active时恢复世界输入。 */
@@ -56,6 +61,11 @@ protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
+    /** 最终镜头缓存只用于抑制相同视图事件，不作为权威角色姿态或网络同步源。 */
+    FVector LastNotifiedCameraLocation = FVector::ZeroVector;
+    FRotator LastNotifiedCameraRotation = FRotator::ZeroRotator;
+    float LastNotifiedCameraFOV = -1.f;
+    void RequestWorldHealthBarsToggle();
     void BindGameState(AGameStateBase* State);
     TWeakObjectPtr<AGamePlatformPlayerStateBase> ObservedPlayer;
     TWeakObjectPtr<UGamePlatformExperienceComponent> ObservedExperience;

@@ -15,6 +15,7 @@
 #include "HAL/PlatformTime.h"
 #include "Engine/GameViewportClient.h"
 #include "GameFramework/Character.h"
+#include "Camera/PlayerCameraManager.h"
 #include "GameFramework/SpringArmComponent.h"
 #if !UE_SERVER
 #include "Engine/LocalPlayer.h"
@@ -25,6 +26,26 @@
 
 DECLARE_DELEGATE_OneParam(FDivineBeastsJournalInputDelegate, FName);
 
+void ADivineBeastsWorldPlayerController::UpdateCameraManager(float DeltaSeconds)
+{
+    Super::UpdateCameraManager(DeltaSeconds);
+    if (!IsLocalController() || !PlayerCameraManager || GetNetMode() == NM_DedicatedServer) return;
+    const FMinimalViewInfo& View = PlayerCameraManager->GetCameraCacheView();
+    if (!View.Location.Equals(LastNotifiedCameraLocation, 0.01) ||
+        !View.Rotation.Equals(LastNotifiedCameraRotation, 0.001) ||
+        !FMath::IsNearlyEqual(View.FOV, LastNotifiedCameraFOV, 0.001f))
+    {
+        // 先记缓存再广播，允许同步旅行/换视图，不在回调后操作旧世界状态。
+        LastNotifiedCameraLocation = View.Location; LastNotifiedCameraRotation = View.Rotation; LastNotifiedCameraFOV = View.FOV;
+        OnFinalCameraViewChanged.Broadcast();
+    }
+}
+
+void ADivineBeastsWorldPlayerController::RequestWorldHealthBarsToggle()
+{
+    if (IsWorldGameplayActive()) OnWorldHealthBarsToggleRequested.Broadcast();
+}
+
 ADivineBeastsWorldPlayerController::ADivineBeastsWorldPlayerController()
 {
     auto* Interactor = CreateDefaultSubobject<UGamePlatformInteractorComponent>(TEXT("WorldInteractor"));
@@ -34,6 +55,7 @@ ADivineBeastsWorldPlayerController::ADivineBeastsWorldPlayerController()
 void ADivineBeastsWorldPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
+    InputComponent->BindAction(TEXT("DBA.ToggleWorldHealthBars"), IE_Pressed, this, &ThisClass::RequestWorldHealthBarsToggle).bConsumeInput = true;
     // Controller先于Pawn消费同名原生轴，避免旧Pawn镜头/移动同时执行。UI已消费的按键不会进入GameAndUI后备。
     // 这些轴也被通用Pawn注册，显式消费可保证世界控制器拥有当前语义，同时保留竞技控制器的Pawn默认输入。
     InputComponent->BindAxis(TEXT("DBA.MoveForward"), this, &ThisClass::SetForwardAxis).bConsumeInput = true;

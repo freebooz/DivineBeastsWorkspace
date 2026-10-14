@@ -18,7 +18,7 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformWorldWidgetBase
 
 public:
     /** 应用注册/更新后的只读世界UI请求。 */
-    void ApplyWorldUIRequest(const FGamePlatformWorldUIRequest& InRequest);
+    virtual void ApplyWorldUIRequest(const FGamePlatformWorldUIRequest& InRequest);
 
     /** 服务统一投影后写入屏幕位置和可见性。 */
     void SetProjectedState(

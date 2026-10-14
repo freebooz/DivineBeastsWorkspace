@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Containers/Ticker.h"
 #include "Requests/GamePlatformWorldUIRequest.h"
 #include "UObject/Object.h"
 #include "GamePlatformWorldUIService.generated.h"
@@ -9,12 +8,13 @@
 class UGamePlatformUILayerStack;
 class UGamePlatformWorldWidgetBase;
 class ULocalPlayer;
+class FViewport;
 
 /**
  * UGamePlatformWorldUIService（游戏平台世界投影UI服务）。
  *
  * 统一维护名称板、世界血条和世界标记的世界坐标→屏幕坐标投影。
- * 使用单一低频 Ticker（默认30Hz）集中更新，避免每个世界UI Widget各自Tick。
+ * 位置、最终镜头与视口事件驱动集中投影；无Ticker或Widget业务轮询。
  */
 UCLASS(BlueprintType)
 class GAMEPLATFORMUICLIENT_API UGamePlatformWorldUIService : public UObject
@@ -41,16 +41,19 @@ public:
 
     void Clear();
 
+    /** 调用方最终相机事件重投影全部实例；位置事件可指定单个身份，不查询领域生命值。 */
+    void RefreshProjection(FGuid OnlyRequestId = FGuid());
+
 private:
     UGamePlatformWorldWidgetBase* AcquireWidget(
         TSubclassOf<UGamePlatformWorldWidgetBase> WidgetClass);
     void RecycleWidget(UGamePlatformWorldWidgetBase* Widget);
-    /** 仅在存在活动世界UI时启动30Hz集中投影Ticker，空闲时完全停止。 */
-    void EnsureProjectionTicker();
+    /** 仅活动期间订阅视口尺寸事件；相机与实体位置事件由调用方注入。 */
+    void BindProjectionEvents();
 
-    /** 主动停止集中投影Ticker；Deinitialize/清空最后一个实例时调用。 */
-    void StopProjectionTicker();
-    bool TickProjection(float DeltaSeconds);
+    /** 清空最后一个实例及失活时解绑，防止旧世界回调。 */
+    void UnbindProjectionEvents();
+    void HandleViewportResized(FViewport* Viewport, uint32 Unused);
     UWorld* GetServiceWorld() const;
 
     UPROPERTY(Transient)
@@ -64,5 +67,5 @@ private:
     /** 池内Widget由服务强引用保活；活动Widget仍由WorldProjectionLayer持有。 */
     UPROPERTY(Transient)
     TArray<TObjectPtr<UGamePlatformWorldWidgetBase>> PooledWidgets;
-    FTSTicker::FDelegateHandle ProjectionTickerHandle;
+    FDelegateHandle ViewportResizedHandle;
 };
