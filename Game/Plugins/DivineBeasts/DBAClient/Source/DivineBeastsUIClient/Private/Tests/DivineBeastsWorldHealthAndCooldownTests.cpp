@@ -11,6 +11,7 @@
 #include "Components/ProgressBar.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldHealthResourceTest,
     "DivineBeasts.UI.World.HealthBar.ResourceEventProjection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -34,6 +35,17 @@ bool FDivineBeastsWorldHealthResourceTest::RunTest(const FString&)
     TestEqual(TEXT("伤害事件立即更新30%血条，不等待Tick"), Fill->GetPercent(), .3f);
     Request.Resource.MaximumValue = 0.; Widget->ApplyWorldUIRequest(Request);
     TestEqual(TEXT("无合法上限不能伪装满血"), Fill->GetPercent(), 0.f);
+    // 无Ticker时首次事件必须完成排版，不能等镜头移动才修正零尺寸偏移。
+    Widget->TakeWidget();
+    Widget->SetProjectedState(FVector2D(500, 300), true, 100.f);
+    TestTrue(TEXT("静止镜头首投影获得真实160x44尺寸"), Widget->GetDesiredSize().Equals(FVector2D(160, 44), .01));
+    const float Scale = UWidgetLayoutLibrary::GetViewportScale(Widget.Get());
+    TestTrue(TEXT("首投影按DPI居中并置于目标上方"), Widget->GetRenderTransform().Translation.Equals(
+        FVector2D(500, 300) / FMath::Max(Scale, .001f) - FVector2D(80, 44), .01));
+    Widget->SetProjectedState(FVector2D::ZeroVector, false, 100.f);
+    Widget->SetProjectedState(FVector2D(700, 400), true, 100.f);
+    TestTrue(TEXT("隐藏后重显立即重新排版定位"), Widget->GetRenderTransform().Translation.Equals(
+        FVector2D(700, 400) / FMath::Max(Scale, .001f) - FVector2D(80, 44), .01));
     Widget->ResetWorldUIState(); TestFalse(TEXT("回收释放旧显示注册身份"), Widget->GetWorldUIRequest().RequestId.IsValid());
     return true;
 }
