@@ -130,7 +130,8 @@ void ADivineBeastsWorldPlayerController::ApplyVisibleCursorMode()
     if (!bWorldGameplayInputSuspended) SetInputMode(Mode);
     if (auto* ViewportClient = GetWorld() ? GetWorld()->GetGameViewport() : nullptr)
     {
-        ViewportClient->SetMouseCaptureMode(EMouseCaptureMode::NoCapture);
+        // 临时捕获才能让FSceneViewport首次按下进入游戏输入；NoCapture会使左右键拖动永远无法启动。
+        ViewportClient->SetMouseCaptureMode(EMouseCaptureMode::CaptureDuringMouseDown);
         ViewportClient->SetMouseLockMode(EMouseLockMode::DoNotLock);
     }
     if (bHasSavedCursorPosition)
