@@ -1,5 +1,7 @@
 // 项目客户端每LocalPlayer竞技UI适配：借用平台页面/Data与MOBA事实，拥有World/Actor委托；退出清空投影，无Widget轮询。
 #include "Client/DivineBeastsArenaUIClientSubsystem.h"
+#include "Client/DivineBeastsArenaClientSubsystem.h"
+#include "Social/DivineBeastsPartyUIClientSubsystem.h"
 
 // GetRootLayout（获取界面根布局）与GetParent（获取面板父控件）需要完整UObject派生类型，
 // 仅有前置声明时IsValid无法安全地执行指针转换；此处显式引用对应公共头文件。
@@ -32,6 +34,12 @@ void UDivineBeastsArenaUIClientSubsystem::Initialize(
     LastArenaSurfaceDemand = NAME_None;
 
     Collection.InitializeDependency<UGamePlatformUIManagerSubsystem>();
+    Collection.InitializeDependency<UDivineBeastsPartyUIClientSubsystem>();
+    if (auto* PartyUI=GetLocalPlayer()->GetSubsystem<UDivineBeastsPartyUIClientSubsystem>())
+    {
+        const TWeakObjectPtr<UDivineBeastsArenaUIClientSubsystem> Weak(this);
+        PartyActivityHandle=PartyUI->RegisterActivity(this,[Weak](const FString& PartyId){return Weak.IsValid()&&Weak->OpenMatchmakingMenu(PartyId);});
+    }
 
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
     {
@@ -40,6 +48,7 @@ void UDivineBeastsArenaUIClientSubsystem::Initialize(
     }
 
     ArenaViewModel = NewObject<UGamePlatformArenaViewModel>(this);
+    ConnectMatchmakingAuthentication();
     RegisteredDefinitions.Reserve(5);
     BoundPlayerStates.Reserve(10);
 
@@ -62,6 +71,10 @@ void UDivineBeastsArenaUIClientSubsystem::Deinitialize()
 {
     if (bDeinitializing) return;
     bDeinitializing = true;
+    DisconnectMatchmakingAuthentication();
+    ResetMatchmakingBridge();
+    if(auto* PartyUI=GetLocalPlayer()->GetSubsystem<UDivineBeastsPartyUIClientSubsystem>())PartyUI->UnregisterActivity(PartyActivityHandle);
+    PartyActivityHandle.Invalidate();
     ++SurfaceOperationGeneration;
     FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupHandle);
     BindWorldReadinessEvents(nullptr);
@@ -90,6 +103,7 @@ void UDivineBeastsArenaUIClientSubsystem::PlayerControllerChanged(
 {
     Super::PlayerControllerChanged(NewPlayerController);
     if (bDeinitializing) return;
+    ResetMatchmakingBridge();
     const uint64 Expected = ++SurfaceOperationGeneration;
 
     // ClientTravel / SeamlessTravel 后不再信任旧页面与世界HUD；后续只依据新世界事实装配。
@@ -168,10 +182,23 @@ void UDivineBeastsArenaUIClientSubsystem::BindWorldReadinessEvents(UWorld* World
 void UDivineBeastsArenaUIClientSubsystem::HandleWorldCleanup(UWorld* World, bool, bool)
 {
     if (BoundWorld.Get() != World) { return; }
+    ResetMatchmakingBridge();
     RetiredWorld = World;
     const uint64 BeforeBinding = SurfaceOperationGeneration;
     BindWorldReadinessEvents(nullptr);
     if (bDeinitializing || BoundWorld.IsValid() || SurfaceOperationGeneration != BeforeBinding + 1) return;
+}
+
+bool UDivineBeastsArenaUIClientSubsystem::OpenMatchmakingMenu(const FString& PartyId)
+{
+    auto* Instance=GetLocalPlayer()?GetLocalPlayer()->GetGameInstance():nullptr;
+    auto* Client=Instance?Instance->GetSubsystem<UDivineBeastsArenaClientSubsystem>():nullptr;
+    if(bDeinitializing||!PlatformUI||!ArenaViewModel||!Client||!Client->IsApplicationFlowInWorld()||
+        !ArenaViewModel->MatchId.IsEmpty())return false;
+    MatchmakingPartyId=PartyId;
+    ArenaViewModel->SetObservedClientFlowState(EGamePlatformArenaClientFlowState::Matchmaking);
+    SyncArenaSurface();
+    return ActiveArenaScreen.IsValid()||OpeningArenaRequestId.IsValid();
 }
 
 FName UDivineBeastsArenaUIClientSubsystem::ResolvePrimaryArenaSurfaceId() const
@@ -187,8 +214,11 @@ FName UDivineBeastsArenaUIClientSubsystem::ResolvePrimaryArenaSurfaceId() const
         return TEXT("UI.Screen.Matchmaking");
 
     case EGamePlatformArenaClientFlowState::MatchFound:
-    case EGamePlatformArenaClientFlowState::ReadyCheck:
         return TEXT("UI.Screen.MatchFoundReady");
+
+    case EGamePlatformArenaClientFlowState::ReadyCheck:
+        // 场内复制准备阶段不是后端候选接受；继续显示竞技HUD，禁止出现错误的“接受比赛”弹窗。
+        return TEXT("UI.HUD.Arena");
 
     case EGamePlatformArenaClientFlowState::HeroSelection:
         return TEXT("UI.Screen.ArenaHeroSelection");

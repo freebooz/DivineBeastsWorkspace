@@ -9,6 +9,8 @@
 - 真实蓝图本轮新增**0个**。正式UE5.8工程的GamePlatformInteraction Editor DLL缺失，DBAWorldsRuntime及UIClient等已有DLL依赖加载失败，编辑器退出、Monolith不可用。按用户“不构建”要求，未启动构建、未伪造.uasset、未写生成成功清单。原生命令桥接也仍未完整接通。用户同日要求重新启动后的再次尝试仍失败，日志与11:18退出记录见实施台账。
 - 完整3幅设计图、公共／竞技资产归属、9页控件／焦点、事件与命令、恢复后Monolith编译保存重载及颜色核验顺序见`Docs/Implementation/VillagePartyArena/PartyUIDesignAndBlueprintDelivery_20261014.md`（工作空间相对路径）。设计规范不替代真实资产、运行交互或人工核验。
 
+同日后续状态：用户已单独允许正式Editor必要构建；`DivineBeastsArenaEditor`／Win64／Development退出0后重启成功，Monolith0.23.0及本规范3个公共原生父类已实际回读。RunId为`28059359-95a3-4606-b54c-ffd4d256b115`；旧失败记录保留为历史。公共5个目标资产仍不存在，制作JSON创建／编译／保存／重载均为false，未修改生成成功清单；Editor恢复不等于原生命令桥或页面已经交付。
+
 ## 2026-10-13 SSLM开发演示UI待制作范围
 
 方案A的新演示RootLayout、HubScreen、菜单条目、类型化参数条目和ResourceBar样板规划归`/DBAUIPack_Core/Development/PluginDemos`；目录及页面定义也归开发范围，正式默认/Server排除不变。`Tools/Unreal/PluginDemos/PluginDemoUIMonolithRecipes.json`是父类/命名控件/平台层栈的待执行合同，不是生成证据；作者脚本不制作Widget。
@@ -61,6 +63,8 @@
 已执行Editor/Client编译与真实PIE选择页预览；条目身份生命周期回归通过。UI全集为8通过、1失败，失败项是既有Combat.PlayerStatusSnapshot缺少属性集。运行仍使用Manny/Quinn开发原型；资产级保存和界面验证不代表登录到新手村准入已通过。最新证据见生成清单，不用本说明替代Cook、双客户端联机或人工签审。
 
 ## 前端客户端打包必需资源
+
+2026-10-14公共小队界面增量：`UI/Social`真实新增小队面板、邀请、申请、玩家菜单和准备页五个Widget Blueprint，以及公共列表条目；`UI/Materials/Social`新增无噪声玉石UI材质。所有资产经Monolith创建/布局/样式/导航/编译/保存，不把SourceArt概念图当作运行蓝图。公共C++与ViewModel仍归DBAClient且不依赖竞技；最新状态见[五页制作规范](Docs/PartyUIBlueprintAuthoringSpec_20261014.json)和生成清单。真实后端能力缺口、集中自动化和人工视觉待验状态必须分别阅读，不因资产存在宣称全部业务上线。
 
 2026-10-08最新地图限定包虽然Cook/Stage退出0，但漏掉通过原生软路径加载的RootLayout、登录页、角色页和卡片；两个运行客户端因根布局缺失显示黑屏。后续该流程使用`Build/Game/CookFrontEndClient.ps1 -EngineRoot <锁定UE5.8目录> -Cook`，它加载`FrontEndClient`专用配置并检查最终IoStore，而不以源码资产存在或编辑器可运行代替包内容交付。正式UI资产仍由Monolith拥有，修复不改Widget树或角色业务权威。
 

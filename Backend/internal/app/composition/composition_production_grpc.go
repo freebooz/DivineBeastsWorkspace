@@ -31,6 +31,8 @@ import (
 	"divinebeasts/backend/internal/platform/database/postgres"
 	"divinebeasts/backend/internal/platform/messaging/natsjs"
 	"divinebeasts/backend/internal/platform/outbox"
+	// 可信库存事件在gRPC部署下仍使用受保护的内部HTTP控制入口。
+	"divinebeasts/backend/internal/transport/httpadapter"
 	"divinebeasts/backend/internal/transport/grpcadapter"
 	"divinebeasts/backend/internal/transport/grpcclient"
 )

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Types/GamePlatformParty.h"
+
 #include "CoreMinimal.h"
 #include "Interfaces/IGamePlatformOnlineService.h"
 #include "Settings/GamePlatformOnlineConfiguration.h"
@@ -245,6 +247,16 @@ public:
 
     virtual bool Cancel(
         const FGamePlatformOnlineRequestHandle& Request) override;
+
+    /** 游戏线程读取本人普通队伍；复用本实例认证／预算／取消，所有终态后续GT回调一次。 */
+    FGamePlatformOnlineRequestHandle GetCurrentParty(const FGamePlatformOnlineRequestOptions& Options,
+        TFunction<void(const FGamePlatformPartyResult&)> Completion);
+    /** 读取本人邀请，不接受其他玩家ID；无订阅端点时只在激活／显式刷新／命令完成触发。 */
+    FGamePlatformOnlineRequestHandle GetPartyInvitations(const FGamePlatformOnlineRequestOptions& Options,
+        TFunction<void(const FGamePlatformPartyResult&)> Completion);
+    /** 普通队伍写命令；非法输入异步失败，主体只来自既有认证，结果未知不自动换键重试。 */
+    FGamePlatformOnlineRequestHandle CommandParty(const FGamePlatformPartyCommand& Command,
+        const FGamePlatformOnlineRequestOptions& Options, TFunction<void(const FGamePlatformPartyResult&)> Completion);
 
     /**
      * 供其他平台基础插件（如Telemetry）在不读取Token字符串的情况下给HTTP请求附加认证。

@@ -57,7 +57,7 @@ const TArray<FDivineBeastsArenaUISurfaceDescriptor>& BuildCatalog()
             TEXT("MatchFoundReady"),
             EGamePlatformUILayer::Modal,
             EGamePlatformUIInputMode::UIOnly,
-            TEXT("ReadyButton")),
+            TEXT("CloseButton")),
         MakeScreen(
             TEXT("UI.Screen.ArenaHeroSelection"),
             TEXT("HeroSelection"),
@@ -75,7 +75,7 @@ const TArray<FDivineBeastsArenaUISurfaceDescriptor>& BuildCatalog()
             TEXT("PostMatch"),
             EGamePlatformUILayer::Screen,
             EGamePlatformUIInputMode::UIOnly,
-            TEXT("ReturnWorldButton")),
+            TEXT("CloseButton")),
         MakeHUD()
     };
     return Catalog;

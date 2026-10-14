@@ -10,6 +10,8 @@
 
 本轮真实蓝图新增**0个**：正式UE5.8编辑器因模块导入失败退出，Monolith不可用，按用户“不构建”要求未修复DLL／触发编译。概念图、拟制作身份与false状态不是生成证据。完整说明及准备／结果第三幅图见`Docs/Implementation/VillagePartyArena/PartyUIDesignAndBlueprintDelivery_20261014.md`，后续必须补Monolith编译、保存、重载、RHI颜色、联机、Cook和人工核验。
 
+同日后续用户单独授权正式Editor必要构建；`DivineBeastsArenaEditor`／Win64／Development退出0并重启成功，Monolith0.23.0与本规范4个竞技原生父类均实际加载成功（RunId：`28059359-95a3-4606-b54c-ffd4d256b115`）。上段失败为历史状态；当前4个目标资产仍不存在，尚未执行Widget编译保存重载或命令接线，不能将Editor构建记为竞技UI验收。
+
 | 模块 | 目标 | 职责 |
 | --- | --- | --- |
 | DivineBeastsArenaRuntime | 双端／编辑器 | 项目竞技模式、资格与规则配置 |
@@ -50,6 +52,8 @@
 2026-10-10进一步实证：竞技反馈客户端组合根`DivineBeastsArenaCombatFeedbackClientSubsystem.cpp`、项目UI映射`DivineBeastsCombatUIFeedbackLibrary.cpp`及授权、Catalog、UI测试源码均经正式UE5.8 UBT调用MSVC单文件编译，退出码0；不代表最新客户端DLL完成链接或编辑器已经加载新反射类型。真实Catalog、Profile和伤害浮字WBP尚无完整保存/回读。构建和内容门禁见`Docs/Implementation/CombatFeedbackBuildRecovery_20261010.md`及`Tests/Architecture/InspectCombatFeedbackDeliveryReadiness.py`。
 
 ## 验证
+
+2026-10-14组队/竞技界面增量：已通过Monolith创建匹配、候选确认、竞技HUD及赛后结果四页，公共组队五页位于DBAUIPack_Core。原生接线、每LocalPlayer所有权、候选与场内准备区分，以及真实后端缺失的观察/取消/确认和NotConfigured模式门禁见[原生命令桥说明](Docs/NativePartyMatchmakingBridge.md)。制作状态见[四页制作规范](Docs/PartyArenaUIBlueprintAuthoringSpec_20261014.json)；集中构建、冷读及自动化结果以实施台账和生成清单为准，不能因蓝图存在宣称联机闭环完成。
 
 - `Tests/Architecture/DBAPluginConsolidation.Tests.ps1`：模块唯一归属与声明。
 - `Tests/Architecture/PluginCompositionAudit.Tests.ps1`：禁用竞技后的公共闭包、竞技Server不引入客户端、循环与隐藏依赖负例。
