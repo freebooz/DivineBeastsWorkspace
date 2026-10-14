@@ -4,6 +4,7 @@
 
 ## 现行规则与规划
 
+- [新手村组队与竞技场闭环设计规格](superpowers/specs/2026-10-14-village-party-arena-design.md)：正式服普通竞技场／练习赛交互参考，覆盖邀请、申请、普通小队、五模式匹配、逐人确认、权威歼灭和安全返回；当前待书面规格审阅，非代码或资产交付。
 - [跨项目UI主题与统一样式执行计划](superpowers/plans/2026-10-10-ui-theme-and-shared-styles.md)：T0—T6，按平台机制、项目选择和第三层内容资产归集实施。
 - [UI主题实施记录与验收边界](Implementation/UIThemeImplementation_20261010.md)：已落盘代码、真实编译、Monolith/资产/运行/Cook未完成项及恢复入口，不以源码存在冒充视觉交付。
 - [UI主题Monolith制作规范](../Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/UIThemeMonolithAuthoringSpec_20261010.json)：五套原生CommonUI样式、默认Theme数据资产、标准面板和开发对照资源的正式挂载点与验收约束（待实际资产创建）。
