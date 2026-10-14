@@ -33,6 +33,13 @@ void UDivineBeastsWorldHealthBarPresenter::Initialize(ULocalPlayer* InPlayer, UW
     LocalPlayer = InPlayer; ObservedWorld = InWorld; WidgetClass = InWidgetClass; Service = Manager->GetWorldUIService();
     if (auto* Controller = InPlayer->GetPlayerController(InWorld)) ExcludedLocalPawn = Controller->GetPawn();
     const uint64 Generation = ObservationGeneration;
+    RootReadyHandle = Service->OnRootLayoutChanged().AddWeakLambda(this, [this, Generation]()
+    {
+        if (Generation != ObservationGeneration || !ObservedWorld.IsValid() || ObservedWorld->bIsTearingDown || !Service.IsValid()) return;
+        // 只重试事件缓存，不扫描世界或重新读取生命；初始Construct早于服务就绪也可正确显示。
+        TArray<TWeakObjectPtr<AActor>> Actors; Bindings.GetKeys(Actors);
+        for (const auto& Actor : Actors) if (Actor.IsValid() && Generation == ObservationGeneration) Publish(Actor.Get());
+    });
     SpawnHandle = InWorld->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateWeakLambda(this,
         [this, Generation](AActor* Actor) { if (Generation == ObservationGeneration) ObserveActor(Actor); }));
     CleanupHandle = FWorldDelegates::OnWorldCleanup.AddWeakLambda(this,
@@ -148,6 +155,8 @@ void UDivineBeastsWorldHealthBarPresenter::RemoveActor(AActor* Actor)
 void UDivineBeastsWorldHealthBarPresenter::Clear()
 {
     ++ObservationGeneration;
+    if (auto* UI = Service.Get()) UI->OnRootLayoutChanged().Remove(RootReadyHandle);
+    RootReadyHandle.Reset();
     if (auto* World = ObservedWorld.Get()) World->RemoveOnActorSpawnedHandler(SpawnHandle);
     FWorldDelegates::OnWorldCleanup.Remove(CleanupHandle); SpawnHandle.Reset(); CleanupHandle.Reset();
     TArray<TWeakObjectPtr<AActor>> Actors; Bindings.GetKeys(Actors);

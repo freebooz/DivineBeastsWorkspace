@@ -2074,16 +2074,23 @@
         "AssetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD",
         "Parent": "DivineBeastsCombatPanelBase",
         "Action": "添加本地血条显示/隐藏按钮及V键说明"
+      },
+      {
+        "AssetPath": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+        "Parent": "DivineBeastsRootLayout",
+        "Action": "装配真实WorldHealthBarClass，按LocalPlayer观察并接收最终镜头通知"
       }
     ],
     "CompiledAndSaved": true,
     "CompileErrors": 0,
     "CompileWarnings": 0,
-    "ColdReloadVerified": false,
-    "NativeTestsPassed": false,
-    "CookPassed": false,
+    "ColdReloadVerified": true,
+    "NativeTestsPassed": true,
+    "NativeTestCount": 30,
+    "NativeTestReport": "Saved/Validation/Rebuild20261014/d2d4518f-080b-47ca-8c39-c2d608646485/UINative-GREEN-902d4501/Report/index.json",
+    "CookAndRuntimeEvidence": "Saved/Validation/Rebuild20261014/d2d4518f-080b-47ca-8c39-c2d608646485/FinalValidation.json",
     "ManualVisualAccepted": false,
-    "Evidence": "Saved/Validation/Rebuild20261014/d2d4518f-080b-47ca-8c39-c2d608646485/CooldownEditor.log",
-    "Note": "运行装配与冷重载待后续证据，不以资产保存替代联机验收"
+    "Evidence": "Saved/Validation/Rebuild20261014/d2d4518f-080b-47ca-8c39-c2d608646485/WorldUIAssets.ColdReload.json",
+    "Note": "真实回归30项Success、0错误；1项旧Possession夹具有2条警告。HUD按钮可访问性0问题。Cook与运行状态只以外部最终证据为准；人工联机／视觉未验收，历史UI轮询登记在WorldHealthAndCooldown_20261014.md。"
   }
 }

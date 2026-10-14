@@ -25,6 +25,8 @@ public:
     void Initialize(ULocalPlayer* InLocalPlayer);
     void Deinitialize();
     void SetRootLayout(UGamePlatformUILayerStack* InRootLayout);
+    /** 根布局完成挂接后通知缓存提供者重试首次注册；调用方必须在失活时撤销订阅。 */
+    FSimpleMulticastDelegate& OnRootLayoutChanged() { return RootLayoutChanged; }
 
     UFUNCTION(BlueprintCallable, Category="UI|WorldUI")
     FGuid RegisterWorldUI(
@@ -68,4 +70,7 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UGamePlatformWorldWidgetBase>> PooledWidgets;
     FDelegateHandle ViewportResizedHandle;
+    FSimpleMulticastDelegate RootLayoutChanged;
+    /** 同步回调换Root或清理时阻断旧迁移栈，身份只在本服务内部使用。 */
+    uint64 RootLayoutGeneration = 0;
 };

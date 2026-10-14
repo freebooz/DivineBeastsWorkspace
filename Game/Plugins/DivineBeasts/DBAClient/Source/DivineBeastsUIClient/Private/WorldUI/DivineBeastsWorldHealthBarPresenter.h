@@ -37,6 +37,8 @@ public:
     int32 GetObservedCount() const { return Bindings.Num(); }
     virtual void BeginDestroy() override;
 private:
+    // 隔离自动化只注入观察作用域，验证真实Actor通知和换Pawn；不伪装屏幕注册或后端准入。
+    friend class FDivineBeastsWorldHealthBarLifecycleTest;
     void ObserveActor(AActor* Actor);
     void ApplyHealth(AActor* Actor, float Health, float Maximum);
     void ReadPlayerHealth(AActor* Actor);
@@ -52,7 +54,7 @@ private:
     TWeakObjectPtr<UGamePlatformWorldUIService> Service;
     UPROPERTY(Transient) TSubclassOf<UGamePlatformWorldWidgetBase> WidgetClass;
     TMap<TWeakObjectPtr<AActor>, FDivineBeastsWorldHealthBarBinding> Bindings;
-    FDelegateHandle SpawnHandle, CleanupHandle;
+    FDelegateHandle SpawnHandle, CleanupHandle, RootReadyHandle;
     /** 旧世界回调不能重新注册新世界名称板；每次Clear递增，不跨网络复制。 */
     uint64 ObservationGeneration = 0;
     bool bVisible = true;

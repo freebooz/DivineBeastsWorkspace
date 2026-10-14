@@ -12,6 +12,13 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "WorldUI/DivineBeastsWorldHealthBarPresenter.h"
+#include "Characters/DivineBeastsCharacter.h"
+#include "GameFramework/PlayerController.h"
+#include "Engine/LocalPlayer.h"
+#include "Services/GamePlatformWorldUIService.h"
+#include "Layers/GamePlatformUILayerStack.h"
+#include "Components/Overlay.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldHealthResourceTest,
     "DivineBeasts.UI.World.HealthBar.ResourceEventProjection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -36,7 +43,9 @@ bool FDivineBeastsWorldHealthResourceTest::RunTest(const FString&)
     Request.Resource.MaximumValue = 0.; Widget->ApplyWorldUIRequest(Request);
     TestEqual(TEXT("无合法上限不能伪装满血"), Fill->GetPercent(), 0.f);
     // 无Ticker时首次事件必须完成排版，不能等镜头移动才修正零尺寸偏移。
-    Widget->TakeWidget();
+    // 离屏夹具必须像真实Overlay一样持有Slate表面；UMG只缓存弱引用，
+    // 丢弃TakeWidget返回值会销毁Slate实例，预排版自然无法得到有效尺寸。
+    const TSharedRef<SWidget> NameplateSlate = Widget->TakeWidget();
     Widget->SetProjectedState(FVector2D(500, 300), true, 100.f);
     TestTrue(TEXT("静止镜头首投影获得真实160x44尺寸"), Widget->GetDesiredSize().Equals(FVector2D(160, 44), .01));
     const float Scale = UWidgetLayoutLibrary::GetViewportScale(Widget.Get());
@@ -73,6 +82,78 @@ bool FDivineBeastsCooldownSweepEventTest::RunTest(const FString&)
     Slot->ApplyOverlayTiming(0.f, 0.f);
     TestEqual(TEXT("终态事件立即清除遮罩"), Sweep->GetVisibility(), ESlateVisibility::Collapsed);
     TestEqual(TEXT("清理不会放宽冷却技能输入资格"), Slot->GetSlotState().bEnabled, false);
+    return true;
+}
+// 仅验证观察生命周期：夹具注入本地作用域且不装配屏幕服务，不声称联机准入或渲染成功。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldHealthBarLifecycleTest,
+    "DivineBeasts.UI.World.HealthBar.PossessionEndPlayAndClear", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsWorldHealthBarLifecycleTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString())); UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    // Controller在PostInitializeComponents才进入World控制器列表；真实本地玩家查找依赖该列表。
+    World->InitializeActorsForPlay(FURL());
+    auto* Controller = World->SpawnActor<APlayerController>();
+    TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine)); Controller->SetPlayer(Player.Get());
+    if (!TestEqual(TEXT("夹具本地玩家可从真实World控制器列表解析"), Player->GetPlayerController(World), Controller)) return false;
+    auto* OldPawn = World->SpawnActor<ADivineBeastsCharacter>();
+    auto* NewPawn = World->SpawnActor<ADivineBeastsCharacter>(); Controller->Possess(OldPawn);
+    if (!TestTrue(TEXT("夹具真实控制旧角色"), Controller->GetPawn() == OldPawn)) return false;
+    TStrongObjectPtr<UDivineBeastsWorldHealthBarPresenter> Presenter(NewObject<UDivineBeastsWorldHealthBarPresenter>());
+    ON_SCOPE_EXIT { Presenter->Clear(); };
+    Presenter->ObservedWorld = World; Presenter->LocalPlayer = Player.Get(); Presenter->ExcludedLocalPawn = OldPawn;
+    auto* Class = LoadClass<UGamePlatformWorldWidgetBase>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/World/WBP_DBA_WorldHealthBar.WBP_DBA_WorldHealthBar_C"));
+    Presenter->WidgetClass = Class;
+    Presenter->ObserveActor(OldPawn); TestEqual(TEXT("自身不会加入世界血条"), Presenter->GetObservedCount(), 0);
+    Presenter->ObserveActor(NewPawn); TestEqual(TEXT("先Spawn的其他角色被事件观察"), Presenter->GetObservedCount(), 1);
+    Controller->Possess(NewPawn);
+    if (!TestTrue(TEXT("夹具真实切换到新角色"), Controller->GetPawn() == NewPawn)) return false;
+    Presenter->Initialize(Player.Get(), World, Class);
+    TestFalse(TEXT("同世界Possess后移除新自身"), Presenter->Bindings.Contains(NewPawn));
+    TestTrue(TEXT("不再次扫描世界仍重新观察旧角色"), Presenter->Bindings.Contains(OldPawn));
+    // 明确模拟引擎流送EndPlay通知，不调用Destroy，以捕捉只绑定OnDestroyed的旧错误。
+    OldPawn->OnEndPlay.Broadcast(OldPawn, EEndPlayReason::RemovedFromWorld);
+    TestEqual(TEXT("仅EndPlay也解除全部实体观察"), Presenter->GetObservedCount(), 0);
+    Presenter->ObserveActor(OldPawn); Presenter->Clear();
+    OldPawn->SetActorLocation(FVector(50, 0, 0)); OldPawn->OnDestroyed.Broadcast(OldPawn);
+    TestEqual(TEXT("清理后迟到位置与销毁通知不恢复旧显示"), Presenter->GetObservedCount(), 0);
+    return true;
+}
+// 真实服务与真实两份Root验证就绪通知和替换挂接；只读UI请求不是Gameplay生命事实。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldHealthBarRootReadyTest,
+    "DivineBeasts.UI.World.HealthBar.RootReadyAndReplacement", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsWorldHealthBarRootReadyTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString())); UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    auto* Controller = World->SpawnActor<APlayerController>();
+    TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine)); Controller->SetPlayer(Player.Get());
+    auto* RootClass = LoadClass<UGamePlatformUILayerStack>(nullptr, TEXT("/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C"));
+    auto* BarClass = LoadClass<UGamePlatformWorldWidgetBase>(nullptr, TEXT("/DBAUIPack_Core/UI/World/WBP_DBA_WorldHealthBar.WBP_DBA_WorldHealthBar_C"));
+    if (!TestNotNull(TEXT("真实Root类"), RootClass) || !TestNotNull(TEXT("真实血条类"), BarClass)) return false;
+    TStrongObjectPtr<UGamePlatformUILayerStack> First(CreateWidget<UGamePlatformUILayerStack>(Controller, RootClass));
+    TStrongObjectPtr<UGamePlatformUILayerStack> Second(CreateWidget<UGamePlatformUILayerStack>(Controller, RootClass));
+    const TSharedRef<SWidget> FirstSlate = First->TakeWidget(), SecondSlate = Second->TakeWidget();
+    auto* FirstLayer = Cast<UOverlay>(First->GetWidgetFromName(TEXT("WorldProjectionLayer")));
+    auto* SecondLayer = Cast<UOverlay>(Second->GetWidgetFromName(TEXT("WorldProjectionLayer")));
+    if (!TestNotNull(TEXT("第一投影层"), FirstLayer) || !TestNotNull(TEXT("第二投影层"), SecondLayer)) return false;
+    TStrongObjectPtr<UGamePlatformWorldUIService> UI(NewObject<UGamePlatformWorldUIService>()); UI->Initialize(Player.Get());
+    ON_SCOPE_EXIT { UI->Deinitialize(); };
+    FGamePlatformWorldUIRequest Request; Request.RequestId = FGuid::NewGuid(); Request.SurfaceKey = TEXT("RootReadyTest");
+    TestFalse(TEXT("Root尚未安装时明确拒绝注册"), UI->RegisterWorldUI(Request, BarClass).IsValid());
+    int32 Notifications = 0;
+    const auto Handle = UI->OnRootLayoutChanged().AddLambda([&]()
+    { ++Notifications; if (!UI->UpdateWorldUI(Request.RequestId, Request)) UI->RegisterWorldUI(Request, BarClass); });
+    ON_SCOPE_EXIT { UI->OnRootLayoutChanged().Remove(Handle); };
+    UI->SetRootLayout(First.Get()); TestEqual(TEXT("就绪事件重试后真实挂接一项"), FirstLayer->GetChildrenCount(), 1);
+    UI->SetRootLayout(Second.Get());
+    TestEqual(TEXT("Root替换移除旧投影层"), FirstLayer->GetChildrenCount(), 0);
+    TestEqual(TEXT("原请求仅存在于新投影层，无重复实例"), SecondLayer->GetChildrenCount(), 1);
+    TestEqual(TEXT("两次真实Root变化各通知一次"), Notifications, 2);
+    TestTrue(TEXT("原请求身份仍可明确注销"), UI->UnregisterWorldUI(Request.RequestId));
     return true;
 }
 #endif

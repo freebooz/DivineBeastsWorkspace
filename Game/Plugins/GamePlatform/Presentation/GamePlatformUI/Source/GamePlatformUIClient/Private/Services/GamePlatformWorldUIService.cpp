@@ -4,6 +4,7 @@
 #include "Engine/GameViewportClient.h"
 #include "UnrealClient.h"
 #include "Components/OverlaySlot.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/PlayerController.h"
@@ -31,12 +32,41 @@ void UGamePlatformWorldUIService::Deinitialize()
     Clear();
     RootLayout = nullptr;
     LocalPlayer = nullptr;
+    RootLayoutChanged.Clear(); ++RootLayoutGeneration;
 }
 
 void UGamePlatformWorldUIService::SetRootLayout(
     UGamePlatformUILayerStack* InRootLayout)
 {
+    if (RootLayout == InRootLayout) return;
+    const uint64 Generation = ++RootLayoutGeneration;
+    TStrongObjectPtr<UGamePlatformUILayerStack> NewRoot(InRootLayout);
     RootLayout = InRootLayout;
+    // Construct可能在服务获知新Root前将实例挂到旧层。只迁移入口时已有身份；
+    // 强引用保留Widget，外部解绑/换Root后的旧栈不能复活已取消的实例。
+    TArray<FGuid> Ids; ActiveWidgets.GetKeys(Ids);
+    for (const FGuid& Id : Ids)
+    {
+        if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
+        const auto* Weak = ActiveWidgets.Find(Id);
+        TStrongObjectPtr<UGamePlatformWorldWidgetBase> Widget(Weak ? Weak->Get() : nullptr);
+        if (!Widget.IsValid()) { ActiveWidgets.Remove(Id); continue; }
+        Widget->RemoveFromParent();
+        if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
+        Weak = ActiveWidgets.Find(Id);
+        if (!Weak || Weak->Get() != Widget.Get()) continue;
+        const bool bAttached = NewRoot.IsValid() && NewRoot->AddWorldProjectionWidget(Widget.Get());
+        // AddChild也可能同步触发用户回调；先核对代次和身份，再操作当前槽或回收失败实例。
+        if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
+        Weak = ActiveWidgets.Find(Id);
+        if (!Weak || Weak->Get() != Widget.Get()) continue;
+        if (!bAttached) { ActiveWidgets.Remove(Id); RecycleWidget(Widget.Get()); continue; }
+        if (auto* Slot = Cast<UOverlaySlot>(Widget->Slot))
+        { Slot->SetHorizontalAlignment(HAlign_Left); Slot->SetVerticalAlignment(VAlign_Top); }
+    }
+    if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
+    RefreshProjection();
+    if (Generation == RootLayoutGeneration && RootLayout == NewRoot.Get()) RootLayoutChanged.Broadcast();
 }
 
 FGuid UGamePlatformWorldUIService::RegisterWorldUI(
@@ -275,6 +305,7 @@ void UGamePlatformWorldUIService::RefreshProjection(FGuid OnlyRequestId)
 
 void UGamePlatformWorldUIService::Clear()
 {
+    ++RootLayoutGeneration;
     TArray<FGuid> RequestIds;
     ActiveWidgets.GetKeys(RequestIds);
     for (const FGuid& RequestId : RequestIds)
