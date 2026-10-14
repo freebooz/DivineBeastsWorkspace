@@ -68,6 +68,8 @@ private:
     TArray<FGamePlatformWeatherScheduleEntry> Schedule;
     FRandomStream Random;
     FTimerHandle ScheduleTimer;
+    // 每次停止/重配使旧PublishTransition同步通知栈失效；不以bScheduleRunning判断同一代计划。
+    uint64 ScheduleGeneration = 0;
     bool bScheduleRunning = false;
     bool bClosing = false;
 };

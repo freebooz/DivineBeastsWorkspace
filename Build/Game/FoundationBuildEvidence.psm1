@@ -250,13 +250,20 @@ function Assert-FoundationEditorBuildResult {
         if ($current.SHA256 -cne $after.SHA256 -or $proof.InputSHA256 -cne $after.SHA256 -or $proof.InputFileCount -ne $after.FileCount) { throw '当前源码输入与完整Editor构建不一致；需重新完成完整Editor目标。' }
         $products=Get-FBEEditorProducts $workspacePath $Engine
         if ((Get-FBEHash $proof.Products.Files 'FoundationEditorProducts-v1') -cne $proof.Products.SHA256 -or $products.SHA256 -cne $proof.Products.SHA256 -or $products.BuildId -cne $proof.Products.BuildId) { throw '当前receipt、DLL或.modules与完整Editor构建不一致。' }
-        foreach($name in $RequiredModules) { if (-not $products.Modules.ContainsKey($name)) { throw "本次完整Editor receipt缺少测试所属模块：$name" } }
+        $verifiedModuleFiles=@{}
+        foreach($name in $RequiredModules) {
+            if (-not $products.Modules.ContainsKey($name)) { throw "本次完整Editor receipt缺少测试所属模块：$name" }
+            # 对运行端实际加载观察提供可核对的文件证据；仍来自完整receipt，不能只返回同名模块资格。
+            $records=@($products.Files | Where-Object { $_.Path -ceq $products.Modules[$name] })
+            if ($records.Count -ne 1) { throw "必需模块文件没有唯一receipt证据：$name" }
+            $verifiedModuleFiles[$name]=$records[0]
+        }
         $identity=Get-FBEEngineIdentity $Engine
         if ((Get-FBEHash $proof.EngineIdentity.Files 'FoundationEngineIdentity-v1') -cne $proof.EngineIdentity.SHA256 -or $identity.SHA256 -cne $proof.EngineIdentity.SHA256) { throw '当前引擎工具或Editor身份与构建不一致。' }
         # 结果文件在门禁期间变化也拒绝；单个文件指纹读取拒绝写入，调用者在测试结束再复核。
         $finalRecord=Get-FBEFile $workspacePath $resultPath -Nonempty
         if ($finalRecord.SHA256 -cne $resultRecord.SHA256) { throw '验证期间Build结果变化。' }
-        [pscustomobject]@{BuildRunId=$id.ToString('D');BuildResultPath=$resultPath;BuildResultSHA256=$resultRecord.SHA256;InputSHA256=$current.SHA256;InputFileCount=$current.FileCount;ArtifactSHA256=$products.SHA256;ProjectDllCount=@($products.Files | Where-Object { $_.Path.EndsWith('.dll',[StringComparison]::OrdinalIgnoreCase) }).Count;VerifiedModules=@($RequiredModules);Scope=$script:InputScope}
+        [pscustomobject]@{BuildRunId=$id.ToString('D');BuildResultPath=$resultPath;BuildResultSHA256=$resultRecord.SHA256;InputSHA256=$current.SHA256;InputFileCount=$current.FileCount;ArtifactSHA256=$products.SHA256;ProjectDllCount=@($products.Files | Where-Object { $_.Path.EndsWith('.dll',[StringComparison]::OrdinalIgnoreCase) }).Count;VerifiedModules=@($RequiredModules);VerifiedModuleFiles=$verifiedModuleFiles;Scope=$script:InputScope}
     } catch { throw [InvalidOperationException]::new("完整Editor构建证据拒绝：$($_.Exception.Message)",$_.Exception) }
 }
 Export-ModuleMember -Function Get-FoundationCompileInputInventory,Save-FoundationCompileInputInventory,New-FoundationEditorBuildEvidence,Assert-FoundationEditorBuildResult

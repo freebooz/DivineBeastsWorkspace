@@ -309,6 +309,16 @@ bool UGamePlatformReviewSubsystem::BindRunEvidence(UGamePlatformReviewReport* Re
         ProofHash = GamePlatform::Review::HashEvidenceFile(VerificationPath);
         if (ProofHash.IsEmpty()) { Error = TEXT("独立证明摘要不可读。"); return false; }
         Hashes.Add(TEXT("raw_index:") + RawIndex, RawHash);
+        // 机器输入/完整内容清单也是证明的所有权部分；不能只保留摘要文字而忽略实际文件或导入后的修改。
+        for (const auto& Fields : TArray<TPair<FString, FString>>{{TEXT("machine_inputs_path"), TEXT("machine_inputs_sha256")}, {TEXT("content_snapshot_path"), TEXT("content_snapshot_sha256")}})
+        {
+            FString Reference, ExpectedHash, ActualPath;
+            if (!Proof->TryGetStringField(Fields.Key, Reference) || !Proof->TryGetStringField(Fields.Value, ExpectedHash) ||
+                !GamePlatform::Review::IsHash(ExpectedHash) || !GamePlatform::Review::ResolveEvidencePath(RunId, Reference, ActualPath, Error) ||
+                GamePlatform::Review::HashEvidenceFile(ActualPath) != ExpectedHash)
+            { Error = TEXT("独立证明缺机器输入/内容清单文件绑定，或实际文件已变化。"); return false; }
+            Hashes.Add(Fields.Key + TEXT(":") + Reference, ExpectedHash);
+        }
     }
     Report->SourceFingerprint = Source; Report->ContentFingerprint = Content; Report->BuildVersion = Build;
     Report->FeatureId = Report->BoundCase->FeatureId; Report->ScenarioId = FName(*Scenario); Report->bRuntimeCompleted = bStateCompleted; Report->bBinaryVerified = bVerified;

@@ -9,6 +9,9 @@
 #include "DivineBeastsTrustedInventoryEventSubsystem.generated.h"
 
 class APlayerController;
+class UGamePlatformServerAdmissionSubsystem;
+struct FGamePlatformServerVerifiedAdmission;
+class IHttpRequest;
 struct FDivineBeastsInventoryPendingRequest;
 
 /** EDivineBeastsInventoryEventOutcome（库存事件结果）：FirstCommitted首次成功、AlreadyCommitted幂等重放、Unknown结果未知。
@@ -62,6 +65,21 @@ private:
         const TCHAR* EventKind, const TCHAR* ReasonCode,
         FName DefinitionId, const FString& InstanceId, int32 Quantity, int64 ExpectedInventoryRevision,
         TFunction<void(EDivineBeastsInventoryEventOutcome)> Completion);
+
+    /** 订阅平台原生准入通知，仅保存当前真实Controller弱引用；退出时精确解绑。 */
+    void HandleVerifiedAdmissionChanged(const APlayerController* Controller,
+        const FGamePlatformServerVerifiedAdmission& Admission, bool bAccepted);
+    /** 每10秒遍历活跃准入，不使用每帧Tick；过期/已撤销连接清除。 */
+    bool TickPlayerLeaseRenewals(float DeltaSeconds);
+    /** 对已验证平台准入发起受限异步30秒续租；失败不伪造后端身份。 */
+    void RequestPlayerLeaseRenewal(const APlayerController& Controller,
+        const FGamePlatformServerVerifiedAdmission& Admission);
+    TWeakObjectPtr<UGamePlatformServerAdmissionSubsystem> BoundAdmissions;
+    FDelegateHandle AdmissionChangedHandle;
+    FDelegateHandle LeaseTickerHandle;
+    /** 用当前AdmissionId（真实准入身份）关联Controller，防止旧断线回调撤销新连接。 */
+    TMap<TWeakObjectPtr<APlayerController>,FGuid> ActiveLeaseControllers;
+    TMap<TWeakObjectPtr<APlayerController>,TSharedPtr<IHttpRequest,ESPMode::ThreadSafe>> PendingLeaseRequests;
 
     // 退出游戏实例先撤销资格及请求，再清理令牌，不清理其他GameInstance的状态。
     TMap<FGuid,TSharedPtr<FDivineBeastsInventoryPendingRequest,ESPMode::ThreadSafe>> Pending;

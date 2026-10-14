@@ -32,8 +32,10 @@ var _ inventory.GrantEvidenceSource = (*InventoryAuthorityRepository)(nil)
 var _ inventory.ConsumeEvidenceSource = (*InventoryAuthorityRepository)(nil)
 
 // sessionInventoryLeaseSQL（可信会话校验）同时要求当前连接、已准入预留、
-// 实例Ready及健康租约、未撤销的认证授权都有效。FOR SHARE确保事务提交前不可换绑。
-// 不能仅验证GameServerID存在：同服务器重启、同玩家重登必须各自隔离。
+// 实例Ready/健康租约、未吊销的准入决策以及在线登录的Refresh会话都有效。
+// 注意短期session_authorizations.expires_at属于入服签票窗口；已提交会话的持续权限
+// 必须依赖30秒实时绑定租约+在线身份会话（未登出/未封禁），不能永久按签票TTL限制游戏。
+// FOR SHARE阻止并发迁服修改绑定，绝不只依据请求自报的GameServerID授权。
 const sessionInventoryLeaseSQL = `SELECT b.player_id
 	FROM session_bindings b
 	JOIN session_instances i
@@ -44,12 +46,16 @@ const sessionInventoryLeaseSQL = `SELECT b.player_id
 	  AND r.connection_id=b.connection_id
 	JOIN session_authorizations a ON a.authorization_id=r.authorization_id
 	  AND a.player_id=b.player_id AND a.game_id=b.game_id
+	JOIN online_identity_sessions os ON os.session_id=a.auth_session_id
+	  AND os.game_id=b.game_id AND os.player_id=b.player_id AND NOT os.revoked
+	JOIN online_identity_accounts account ON account.game_id=b.game_id
+	  AND account.player_id=b.player_id AND NOT account.disabled
 	WHERE b.game_id=$1 AND b.player_id=$2 AND b.instance_id=$3 AND b.boot_id=$4
 	  AND b.session_epoch=$5 AND b.connection_id=$6
 	  AND b.authority_until>clock_timestamp()
 	  AND i.ready AND i.healthy_until>clock_timestamp()
-	  AND NOT a.revoked AND a.expires_at>clock_timestamp()
-	FOR SHARE OF b,i,r,a`
+	  AND NOT a.revoked AND os.refresh_expires_at>clock_timestamp()
+	FOR SHARE OF b,i,r,a,os,account`
 
 func inventoryTrustDenied() error {
 	return apperror.New("INVENTORY_TRUST_DENIED","服务器、玩家会话或事件授权无效",false)

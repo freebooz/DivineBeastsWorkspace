@@ -6,7 +6,7 @@
 
 用户要求全部执行完成后再集中人工核验。当前仍未完成全计划，不安排逐批人工核验，也不生成审核人或Passed。Native在正式工作空间main原地增量实施，不创建工作树，不构建、不Live Coding、不Cook/Stage、不提交/推送；没有启动或关闭UE/其他任务进程。
 
-开始HEAD为`eb1fe0e932967ce97078df12c8080cf5121c99b4`，共享main随后由外部推进至`6bed78c42b80ccce07cda1cbdae515c318051f26`和`ec6a8c67afcb2f36a603905bd165e9e7a87ecaf6`。这些不是本代理的提交；编目git_head仍表示发现时点，不能冒充DLL版本。材质、背包、Backend、Agones等并行修改不在本任务责任内。
+开始HEAD为`eb1fe0e932967ce97078df12c8080cf5121c99b4`，共享main随后由外部推进至`6bed78c42b80ccce07cda1cbdae515c318051f26`、`ec6a8c67afcb2f36a603905bd165e9e7a87ecaf6`及本次续行起点`88d8f1093720a2e01ed32e71ab0637c5778b892a`。这些不是本代理的提交；编目git_head仍表示发现时点，不能冒充DLL版本。材质、背包、Backend、Agones等并行修改不在本任务责任内。
 
 ## 三层边界与唯一所有权
 
@@ -26,25 +26,26 @@
 | T05 | 事件驱动HubViewModel、平台HubScreen、虚拟化菜单、类型化参数及命名控件合同 | 实际Widget/焦点/导航、同步清空/替换VM场景原生复现；报告历史统计未接入，当前不虚报 |
 | T06 | BirdFlock公开能力适配、局部RestoreBirdEdits及失败保留原值 | 真实Scene组件/GPU环境正常演示、失败恢复与其他Batch互不影响实跑 |
 | T07 | 真实ResourceBar Widget操作/恢复、真实Data EngineCube共享租约/取消、Samples测试源码 | 资源条Monolith WBP、多实例共享/取消原生运行 |
-| T08 | 脱敏原始状态/日志/索引、用例完整冻结、平台证据导入与显式人工门禁、Editor待审桥 | 当前raw索引仍binary_verified=false；独立构建/内容证明提升、截图附加、报告历史统计及完整签收UI未闭合 |
+| T08 | 脱敏原始状态/日志/索引、用例完整冻结、平台证据门禁、Editor待审桥；新增受控来源观察及显式不可变机器证明提升工具 | 当前raw仍binary_verified=false；真实提升未运行，完整当前版本导入/截图附加/报告历史统计与签收UI未闭合 |
 | T09 | Catalog作者脚本、Monolith UI制作规范、只读导出合同门禁 | 新资产创建/编译/保存/独立重载、真实颜色/设备适配；规格拆分详情/控制/报告独立资产未交付，不能用合并Hub当全规格完成 |
 | T10 | 平台UIManager根布局/页面定义接线、完整资源租约/回调身份、旧路径兼容 | 真实新旧资产引用迁移、关卡重载、去程/返程验证 |
-| T11 | 默认不执行、VerifyOnly/Execute显式分支、真实完整Editor证据前置门禁、原生必需测试集合核验、前后指纹重检 | 原生全部测试未执行；raw索引提升工具及完整进程级故障回归未完成 |
-| T12 | 启动入口要求新资产/完整Editor证据、开发Cook地图白名单、默认/Server排除及受管配置同步 | Client产物证明门禁未实现，Client启动分支明确拒绝；开发Stage配置/运行参数及真实Cook产物验证未闭合 |
+| T11 | 默认不执行、VerifyOnly/Execute分支、完整Editor门禁、必需测试/前后指纹；原生报告实际文件读取及字段类型回归 | 原生全部测试未执行；完整提升成功/进程级故障端到端仍未验证 |
+| T12 | 新资产/完整Editor启动门禁、受控Launch记录/内容端点、开发地图白名单、默认/Server排除；Stage配置/参数检查源码 | Client独立产物证明未实现，启动明确拒绝；旧AlwaysCook目录仍需收口，真实Cook/Stage产物未验证 |
 | T13 | 三种样板已形成独立功能、案例、用例工作单 | 三类样板真实运行及证据完整交付，集中人工核验尚未开始 |
-| R01—R06/T14 | 保留逐插件分期与稳定身份，没有批量空壳或假成功适配 | 其余插件逐功能审查/接线、18内容包实际画廊、三端集成/网络/发行证据及最终收口 |
+| R01—R06/T14 | 保留逐插件分期与稳定身份；R04新增CoreIdentity真实值API回环及拒绝案例 | Core仍partial，其余功能/插件逐项接线、18内容包画廊、三端/网络/发行证据及最终收口 |
 
 上述“已写入”仅说明源码存在，不是任务完成、性能通过或部署可用。
 
-## 当前三类编目样板
+## 当前编目样板与首项Core接入
 
 | 功能身份 | 独立案例 | 真实能力与限制 |
 | --- | --- | --- |
 | DBAClient.BirdFlock.Count | Count、Reset | 既有World/Scene组件数量操作；0..512及默认32是开发夹具输入，不是项目批准的CPU/GPU预算 |
 | GamePlatformUI.ResourceBar | Normal、InvalidMaximum | 指定真实平台ResourceBar控件；50/100与非法最大值是UI夹具，不是玩家权威生命值 |
 | GamePlatformData.Resources | SharedLease、Cancel | 唯一中央Data服务实际EngineCube资源；共享释放及取消不创建第二资产管理器 |
+| GamePlatformCore.Identity | Normal、InvalidName、InvalidVersion | 实际TryCreate/ToString/TryParse/相等/哈希回环；非法名称和版本零保留拒绝，不生成生产资源/账号身份 |
 
-每个案例都有自己的参数、前置条件、步骤、预期结果与必需证据。三插件的功能范围为partial；65插件均未完成全范围审计。`wired`只描述源代码接线，不能读成`launchable`、RuntimeVerified或HumanReviewed。VFX/Presentation只是可能依赖，不自动获得这些案例的签收。
+当前4项功能、9案例、9用例；每个案例有独立参数、前置条件、步骤、预期及必需证据。四插件范围均partial，65插件完整分母仍未知。`wired`仅表示源代码接线，不能读成`launchable`、RuntimeVerified或HumanReviewed。VFX/Presentation不自动获得签收。Core的其余能力没有借此宣称已审完，详见[Core工作单](CoreIdentityWorkOrder_20261013.md)。
 
 ## 核心调用与生命周期
 
@@ -64,6 +65,8 @@
 
 本地摘要/JSON并非签名服务，不能用于证明恶意外部材料可信。真正人工作出结论时仍由唯一平台显式确认入口写追加决策；本批没有调用该入口。人工集中核验前必须先完成自动运行、证据版本绑定及剩余实施。
 
+新增机器来源、版本提升、完整内容范围、单体目标拒绝及输出合同见[证据绑定说明](PluginDemoEvidenceBinding.md)。实际Writer不自签；工具只追加新机器待审索引。项目桥的当前内容仍unverified，完整签收路径不能据此标记完成。
+
 ## 真实编辑器阻塞
 
 锁定引擎实际位于`F:/UnrealEngine-5.8.0-release`。本批Monolith状态两次返回“Unreal Editor not running”，只读进程检查没有UnrealEditor。对既有完整Editor结果执行：
@@ -80,7 +83,7 @@ pwsh -NoProfile -File Build/Game/TestPluginDemo.ps1 -VerifyOnly -EngineRoot F:/U
 
 最新真实离线命令、数量及退出码集中记录在ExecutionProgress.md。Python/PowerShell合同回归、头引用/继承/命名检查不替代UHT、链接、UE自动化或Cook。Samples测试要求真实Monolith ResourceBar资产，缺资产会失败，不以Skip/零测试算通过。
 
-中文说明内容复核范围包括本批Demo公开合同、Private核心流程、三类适配、UI桥、Editor证据桥、平台审核增强、测试/作者脚本/启动和配置说明。注释写明端侧、作用域、失败/取消、租约及权威边界；历史全项目尚无全量内容审计，不宣称整体合规。
+中文说明内容复核范围包括本批Demo公开合同、Private核心流程、三类样板及CoreIdentity、UI/Editor桥、平台审核增强、来源观察/提升工具、测试/作者/启动和配置说明。注释写明端侧、作用域、失败/取消、租约及权威边界；历史全项目尚无全量内容审计，不宣称整体合规。
 
 独立源码审查发现并已写修正：不存在的转换头、数值前缀误解析、FName长文本、关联用例归属、旧合同未冻结、raw完成状态未验证、Bird复位所有权、超时回调竞争、同步换VM/清空VM。空VM崩溃的原生蓝图复现仍待完整Editor及真实Widget测试，不能把静态重读当运行回归通过。
 

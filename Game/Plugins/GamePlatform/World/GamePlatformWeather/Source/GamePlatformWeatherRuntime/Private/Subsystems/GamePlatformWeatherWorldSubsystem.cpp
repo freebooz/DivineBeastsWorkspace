@@ -18,6 +18,7 @@ void UGamePlatformWeatherWorldSubsystem::Initialize(FSubsystemCollectionBase& Co
     Super::Initialize(Collection);
     bClosing = false;
     bScheduleRunning = false;
+    ScheduleGeneration = 0;
     CurrentSnapshot = FGamePlatformWeatherSnapshot();
 }
 
@@ -127,6 +128,8 @@ bool UGamePlatformWeatherWorldSubsystem::StartSchedule()
 
 void UGamePlatformWeatherWorldSubsystem::StopSchedule()
 {
+    // 发布天气时SnapshotChanged可能同步调用停止/重配/重启；旧调度栈必须以代次失效。
+    ++ScheduleGeneration;
     bScheduleRunning = false;
     if (UWorld* World = GetWorld())
         World->GetTimerManager().ClearTimer(ScheduleTimer);
@@ -149,13 +152,19 @@ void UGamePlatformWeatherWorldSubsystem::RunNextSchedule()
         Choice -= Entry.Weight;
         if (Choice <= 0) { Selected = &Entry; break; }
     }
-    if (!Selected || !PublishTransition(Selected->State, Selected->TransitionSeconds))
+    if (!Selected) { StopSchedule(); return; }
+    // 广播会同步调用外部观察者：发布前复制所选值并取随机延迟，禁止持有Schedule元素指针跨过回调。
+    const FGamePlatformWeatherScheduleEntry SelectedEntry = *Selected;
+    const float HoldSeconds = Random.FRandRange(SelectedEntry.MinHoldSeconds, SelectedEntry.MaxHoldSeconds);
+    const float DelaySeconds = FMath::Max(HoldSeconds, SelectedEntry.TransitionSeconds + 0.1f);
+    const uint64 ExpectedGeneration = ScheduleGeneration;
+    if (!PublishTransition(SelectedEntry.State, SelectedEntry.TransitionSeconds))
     {
-        StopSchedule();
+        if (bScheduleRunning && ScheduleGeneration == ExpectedGeneration) StopSchedule();
         return;
     }
-    const float HoldSeconds = Random.FRandRange(Selected->MinHoldSeconds, Selected->MaxHoldSeconds);
-    const float DelaySeconds = FMath::Max(HoldSeconds, Selected->TransitionSeconds + 0.1f);
+    // 回调可能已配置并启动另一轮计划；不能把旧计划的定时器覆盖新定时器。
+    if (!bScheduleRunning || ScheduleGeneration != ExpectedGeneration || !IsAuthoritativeWeatherWorld()) return;
     GetWorld()->GetTimerManager().SetTimer(ScheduleTimer, this,
         &UGamePlatformWeatherWorldSubsystem::RunNextSchedule, DelaySeconds, false);
 }

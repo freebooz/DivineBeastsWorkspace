@@ -113,9 +113,13 @@ function Test-PluginComposition {
             }
         }
         if ($descriptor.PSObject.Properties['Plugins']) {
+            # 插件身份在描述文件中只能出现一次；目标过滤前核对以阻止跨Target拆分重复声明。
+            $seenPluginDependencies = @{}
             foreach ($dependency in @($descriptor.Plugins)) {
-                if (($dependency.PSObject.Properties['Enabled'] -and -not $dependency.Enabled) -or -not (& $supportsTarget $dependency $false)) { continue }
                 $dependencyName = [string]$dependency.Name
+                if ($seenPluginDependencies.ContainsKey($dependencyName)) { $errors.Add("重复插件依赖：$Name -> $dependencyName"); continue }
+                $seenPluginDependencies[$dependencyName] = $true
+                if (($dependency.PSObject.Properties['Enabled'] -and -not $dependency.Enabled) -or -not (& $supportsTarget $dependency $false)) { continue }
                 if ($plugins.ContainsKey($dependencyName)) {
                     if ($plugins[$dependencyName].Layer -gt $entry.Layer) { $errors.Add("跨层反向依赖：$Name -> $dependencyName") }
                     & $visit $dependencyName $path
@@ -145,9 +149,13 @@ function Test-PluginComposition {
                 (-not $_.PSObject.Properties['Enabled'] -or $_.Enabled) -and (& $supportsTarget $_ $false)
             } | ForEach-Object { $_.Name })
         }
+        # 预处理后对同一目标的全部Public/Private/Dynamic声明去重，避免重复链接且不漏引擎模块。
+        $seenModuleDependencies = @{}
         foreach ($block in [regex]::Matches($source,$pattern,[Text.RegularExpressions.RegexOptions]::Singleline)) {
             foreach ($match in [regex]::Matches($block.Groups['body'].Value,'"([A-Za-z0-9_]+)"')) {
                 $dependency = $match.Groups[1].Value
+                if ($seenModuleDependencies.ContainsKey($dependency)) { $errors.Add("重复模块依赖：$moduleName -> $dependency"); continue }
+                $seenModuleDependencies[$dependency] = $true
                 if (-not $moduleOwners.ContainsKey($dependency)) {
                     if ($dependency -match '^(GamePlatform|DivineBeasts|DBA|MobaPresentation)') { $errors.Add("缺少本地模块：$moduleName -> $dependency") }
                     continue

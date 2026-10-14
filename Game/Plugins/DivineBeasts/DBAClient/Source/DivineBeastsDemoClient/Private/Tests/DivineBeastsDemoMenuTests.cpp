@@ -3,6 +3,7 @@
 #include "UI/DivineBeastsDemoHubViewModel.h"
 #include "UI/DivineBeastsDemoParameterRow.h"
 #include "Catalog/DivineBeastsDemoCatalogValidation.h"
+#include "Scenarios/DivineBeastsDemoCoreIdentityScenario.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/StrongObjectPtr.h"
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDemoMenuTest, "DivineBeasts.PluginDemos.Menu",
@@ -38,6 +39,23 @@ bool FDivineBeastsDemoMenuTest::RunTest(const FString&)
     TestTrue(TEXT("直接命令和控件共用稳定身份规则"), DivineBeasts::Demo::IsStableIdentityText(TEXT("Sample.Choice-A_1")));
     for (const TCHAR* Text : {TEXT(""), TEXT("None"), TEXT("中文"), TEXT("/Game/Choice"), TEXT("1Choice"), TEXT("Choice Value")})
         TestFalse(TEXT("无UI直接身份入口同样拒绝非法文本"), DivineBeasts::Demo::IsStableIdentityText(Text));
+    // 演示值调用实际Core公开API；这些输入不是账号、资产路径或网络权威身份。
+    TArray<FDivineBeastsDemoParameterValue> IdentityValues; IdentityValues.SetNum(3);
+    IdentityValues[0].Type = EDivineBeastsDemoParameterType::Identifier; IdentityValues[0].IdentifierValue = TEXT("Sample.Catalog");
+    IdentityValues[1].Type = EDivineBeastsDemoParameterType::Identifier; IdentityValues[1].IdentifierValue = TEXT("Item");
+    IdentityValues[2].Type = EDivineBeastsDemoParameterType::Integer; IdentityValues[2].IntegerValue = 1;
+    FString Canonical;
+    TestTrue(TEXT("真实Core身份回环"), DivineBeasts::Demo::EvaluateCoreIdentity(IdentityValues, Canonical).IsSuccess());
+    TestEqual(TEXT("规范文本为平台小写格式"), Canonical, FString(TEXT("sample.catalog.item@1")));
+    IdentityValues[1].IdentifierValue = TEXT("Invalid.Name");
+    TestFalse(TEXT("单段名称不允许点"), DivineBeasts::Demo::EvaluateCoreIdentity(IdentityValues, Canonical).IsSuccess());
+    TestTrue(TEXT("失败清空旧回环文本"), Canonical.IsEmpty());
+    IdentityValues[1].IdentifierValue = TEXT("Item"); IdentityValues[2].IntegerValue = 0;
+    TestFalse(TEXT("非法版本不夹紧"), DivineBeasts::Demo::EvaluateCoreIdentity(IdentityValues, Canonical).IsSuccess());
+    IdentityValues[2].IntegerValue = 1; IdentityValues[2].Type = EDivineBeastsDemoParameterType::Number;
+    TestFalse(TEXT("版本类型错不解释其他载荷"), DivineBeasts::Demo::EvaluateCoreIdentity(IdentityValues, Canonical).IsSuccess());
+    IdentityValues.Pop();
+    TestFalse(TEXT("缺参数拒绝"), DivineBeasts::Demo::EvaluateCoreIdentity(IdentityValues, Canonical).IsSuccess());
     return true;
 }
 #endif

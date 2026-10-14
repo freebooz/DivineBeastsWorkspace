@@ -21,6 +21,7 @@ $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'FoundationBuildEvidence.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'PluginDemoEvidence.psm1') -Force
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $project=Join-Path $workspace 'Game/DivineBeastsArena.uproject'
 $map='/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub'
@@ -41,7 +42,9 @@ foreach ($relative in @('UI/WBP_DBA_PluginDemoRoot.uasset','UI/WBP_DBA_PluginDem
 if (-not (Test-Path -LiteralPath $project -PathType Leaf)) { throw '找不到正式主工程。' }
 if ($Target -eq 'EditorGame') {
     $engine=Get-FoundationEngine $EngineRoot
-    $buildProof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules @('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformUIClient','GamePlatformData')
+    # -game不加载Editor审核模块，运行只观察四个机制模块；独立Review测试仍要求完整工具模块证明。
+    $requiredModules=@(Get-PluginDemoRuntimeModuleNames)
+    $buildProof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $requiredModules
     $exe=Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe'
     $args=@($project,$map,'-game')
 } else {
@@ -53,11 +56,19 @@ if ($Target -eq 'EditorGame') {
     $args=@($map,'-CustomConfig=PluginDemoClient')
 }
 if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "可执行文件不存在：$exe" }
+# 来源端点在实际进程前冻结；内容较大时成本需实测，不以默认摘要或旧文件替代。
+$manifest=Get-PluginDemoEvidenceFile -Root $workspace -Path 'Docs/Implementation/PluginDemos/PluginDemoManifest.json'
+$content=Get-PluginDemoContentSnapshot -Workspace $workspace -EngineRoot $engine.Root
+$afterContentBuild=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $requiredModules
+foreach($field in @('BuildResultSHA256','InputSHA256','ArtifactSHA256')) { if ($buildProof.$field -cne $afterContentBuild.$field) { throw '启动快照期间源码/产物变化；未启动进程。' } }
+$originRoot=Join-Path $workspace "Game/Saved/GamePlatformValidation/Launches/$($RunId.ToString('D'))"
+if (Test-Path -LiteralPath $originRoot) { throw '拒绝复用开发启动来源身份。' }
+$contentFile=Save-PluginDemoEvidenceJson -Root $originRoot -Relative 'Content.before.json' -Value $content
 $dir=Join-Path $workspace "Saved/Validation/PluginDemos/Launch/$RunId"
 if (Test-Path -LiteralPath $dir) { throw "拒绝覆盖已有运行证据：$dir" }
 $null=New-Item -ItemType Directory -Path $dir -Force
 $log=Join-Path $dir 'PluginDemo.log'
-$args+=@('-DBAPluginDemo',"-DBAPluginDemoMap=$map",'-windowed',"-ResX=$WindowWidth", "-ResY=$WindowHeight",'-nosplash','-NoLiveCoding','-NoHotReload','-NoCompile','-NoCompileEditor',"-abslog=$log")
+$args+=@('-DBAPluginDemo',"-DBAPluginDemoMap=$map","-DBAPluginDemoLaunchId=$($RunId.ToString('D'))","-DBAPluginDemoContentFingerprint=$($content.SHA256)",'-windowed',"-ResX=$WindowWidth", "-ResY=$WindowHeight",'-nosplash','-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-abslog=$log")
 $info=[Diagnostics.ProcessStartInfo]::new()
 $info.FileName=$exe
 $info.WorkingDirectory=Split-Path $exe
@@ -68,6 +79,14 @@ foreach($arg in $args) { $info.ArgumentList.Add([string]$arg) }
 foreach($key in @('DBA_DEV_LOGIN_SECRET','DIVINEBEASTS_GATEWAY_BASE_URL')) { $null=$info.Environment.Remove($key) }
 $process=[Diagnostics.Process]::Start($info)
 if (-not $process) { throw '启动插件演示子进程失败。' }
-$record=[ordered]@{RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=[DateTime]::UtcNow.ToString('o');BuildEvidence=$buildProof;HumanReview='Deferred'}
-$record|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $dir 'Launch.json') -Encoding utf8
-$record|ConvertTo-Json -Depth 5
+$started=$process.StartTime.ToUniversalTime()
+$record=[ordered]@{SchemaVersion=1;Kind='PluginDemoControlledLaunch';RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=$started.ToString('o');Arguments=$args;BuildEvidence=$buildProof;ManifestSHA256=$manifest.SHA256;ContentSHA256=$content.SHA256;ContentSnapshot=$contentFile;HumanReview='Deferred'}
+try {
+    $null=Save-PluginDemoEvidenceJson -Root $originRoot -Relative 'Launch.json' -Value $record
+    $null=Save-PluginDemoEvidenceJson -Root $dir -Relative 'Launch.json' -Value $record
+} catch {
+    # 只收回本次PID/启动时间仍相同的进程，不能让缺来源记录的窗口假装可核验。
+    $null=Stop-FoundationOwnedProcess -Process $process -StartTimeTicks $started.Ticks
+    throw
+}
+$record|ConvertTo-Json -Depth 12

@@ -1,6 +1,7 @@
 // SSLM脱敏证据追加实现：固定Game/Saved/GamePlatformValidation/<RunId>/Review，拒绝链接路径和覆盖。
 // 只保存实际状态/码和版本合同；没有新二进制证明时binary_verified=false，不能签收通过。
 #include "Evidence/DivineBeastsDemoEvidenceWriter.h"
+#include "Evidence/DivineBeastsDemoRuntimeOrigin.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -93,6 +94,8 @@ bool WriteRunEvidence(const FDivineBeastsDemoRunEvidence& Input, FString& OutInd
     Index->SetStringField(TEXT("build_version"), TEXT("unverified")); Index->SetBoolField(TEXT("binary_verified"), false);
     Index->SetStringField(TEXT("engine_version"), FEngineVersion::Current().ToString()); Index->SetStringField(TEXT("platform"), FPlatformProperties::PlatformName());
     Index->SetNumberField(TEXT("process_id"), FPlatformProcess::GetCurrentProcessId()); Index->SetStringField(TEXT("recorded_utc"), FDateTime::UtcNow().ToIso8601());
+    // 保持binary_verified=false；加载文件观察只给独立工具核对，不从当前进程自授构建资格。
+    Index->SetObjectField(TEXT("runtime_origin"), CaptureRuntimeOrigin());
     const bool bTerminal = Input.Run.State == EDivineBeastsDemoRunState::Completed || Input.Run.State == EDivineBeastsDemoRunState::Failed || Input.Run.State == EDivineBeastsDemoRunState::Cancelled;
     Index->SetBoolField(TEXT("runtime_completed"), bTerminal && Input.Run.CompletedOperations > 0 && Input.Run.CleanupResult.IsSuccess());
     Index->SetObjectField(TEXT("raw_state"), State);

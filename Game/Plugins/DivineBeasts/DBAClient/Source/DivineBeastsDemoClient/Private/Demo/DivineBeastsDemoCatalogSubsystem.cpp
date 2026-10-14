@@ -4,6 +4,7 @@
 #include "Catalog/DivineBeastsDemoCatalogSnapshot.h"
 #include "Scenarios/DivineBeastsDemoAdapterRegistry.h"
 #include "Scenarios/DivineBeastsDemoSampleAdapters.h"
+#include "Scenarios/DivineBeastsDemoCoreIdentityScenario.h"
 #include "Demo/DivineBeastsDemoWorldSubsystem.h"
 #include "Definitions/DivineBeastsDemoCatalogDefinition.h"
 #include "Development/DivineBeastsPluginDemoMode.h"
@@ -71,6 +72,7 @@ void UDivineBeastsDemoCatalogSubsystem::Initialize(FSubsystemCollectionBase& Col
     RegisterScenarioAdapter(TEXT("ResourceBar"), [](UWorld&) { return DivineBeasts::Demo::CreateResourceBarScenario(); });
     RegisterScenarioAdapter(TEXT("BirdFlock"), [](UWorld&) { return DivineBeasts::Demo::CreateBirdFlockScenario(); });
     RegisterScenarioAdapter(TEXT("DataLease"), [](UWorld&) { return DivineBeasts::Demo::CreateDataLeaseScenario(); });
+    RegisterScenarioAdapter(TEXT("CoreIdentity"), [](UWorld&) { return DivineBeasts::Demo::CreateCoreIdentityScenario(); });
     RefreshCatalog();
 }
 void UDivineBeastsDemoCatalogSubsystem::Deinitialize()

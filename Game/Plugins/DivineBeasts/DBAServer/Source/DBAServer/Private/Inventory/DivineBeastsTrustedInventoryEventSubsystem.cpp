@@ -19,6 +19,7 @@
 #include "Misc/Guid.h"
 #include "Misc/ScopeLock.h"
 #include "Containers/StringConv.h"
+#include "Containers/Ticker.h"
 
 // 可信库存响应最大256KiB；HTTP的接收线程只写入此限界缓存，不访问任何UObject。
 struct FDivineBeastsInventoryResponseBuffer
@@ -73,12 +74,47 @@ void UDivineBeastsTrustedInventoryEventSubsystem::Initialize(
     {
         PlayerDataBaseUrl.Reset();
     }
+    if (!PlayerDataBaseUrl.IsEmpty())
+    {
+        if (UGameInstance* Instance = GetGameInstance())
+        {
+            if (auto* Admissions = Instance->GetSubsystem<UGamePlatformServerAdmissionSubsystem>())
+            {
+                BoundAdmissions = Admissions;
+                AdmissionChangedHandle = Admissions->OnAdmissionChanged().AddUObject(
+                    this, &ThisClass::HandleVerifiedAdmissionChanged);
+                LeaseTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+                    FTickerDelegate::CreateUObject(this, &ThisClass::TickPlayerLeaseRenewals), 10.0f);
+            }
+        }
+    }
 }
 
 void UDivineBeastsTrustedInventoryEventSubsystem::Deinitialize()
 {
     bShuttingDown = true;
     ++Generation;
+    if (LeaseTickerHandle.IsValid())
+    {
+        FTSTicker::GetCoreTicker().RemoveTicker(LeaseTickerHandle);
+        LeaseTickerHandle.Reset();
+    }
+    if (BoundAdmissions.IsValid() && AdmissionChangedHandle.IsValid())
+    {
+        BoundAdmissions->OnAdmissionChanged().Remove(AdmissionChangedHandle);
+        AdmissionChangedHandle.Reset();
+    }
+    BoundAdmissions.Reset();
+    ActiveLeaseControllers.Reset();
+    for (auto& Pair : PendingLeaseRequests)
+    {
+        if (Pair.Value.IsValid())
+        {
+            Pair.Value->OnProcessRequestComplete().Unbind();
+            Pair.Value->CancelRequest();
+        }
+    }
+    PendingLeaseRequests.Reset();
     for (auto& Pair : Pending)
     {
         if (Pair.Value.IsValid() && Pair.Value->Http.IsValid())
@@ -100,6 +136,214 @@ void UDivineBeastsTrustedInventoryEventSubsystem::Deinitialize()
     GameServerID.Reset();
     ServerBootID.Reset();
     Super::Deinitialize();
+}
+
+void UDivineBeastsTrustedInventoryEventSubsystem::HandleVerifiedAdmissionChanged(
+    const APlayerController* Controller,
+    const FGamePlatformServerVerifiedAdmission& Admission, bool bAccepted)
+{
+    check(IsInGameThread());
+    if (bShuttingDown || !IsValid(Controller)) { return; }
+    const TWeakObjectPtr<APlayerController> Key(const_cast<APlayerController*>(Controller));
+    if (bAccepted && Admission.IsStructurallyValid() &&
+        !PlayerDataBaseUrl.IsEmpty() && Admission.ServerInstanceId == GameServerID &&
+        Admission.ServerBootId == ServerBootID &&
+        Admission.AuthorityUntil > FDateTime::UtcNow())
+    {
+        // 同一Controller换成新Admission时，立即撤销旧连接的在途续租。
+        if (const FGuid* Existing = ActiveLeaseControllers.Find(Key);
+            Existing && *Existing == Admission.AdmissionId) { return; }
+        if (auto* Old = PendingLeaseRequests.Find(Key); Old && Old->IsValid())
+        {
+            (*Old)->OnProcessRequestComplete().Unbind();
+            (*Old)->CancelRequest();
+            PendingLeaseRequests.Remove(Key);
+        }
+        ActiveLeaseControllers.Add(Key, Admission.AdmissionId);
+        RequestPlayerLeaseRenewal(*Controller, Admission);
+        return;
+    }
+    // 已失效的旧准入撤销不能清除后来同Controller的新世代。
+    if (const FGuid* Existing = ActiveLeaseControllers.Find(Key);
+        Existing && *Existing == Admission.AdmissionId)
+    {
+        ActiveLeaseControllers.Remove(Key);
+        if (auto* Old = PendingLeaseRequests.Find(Key); Old && Old->IsValid())
+        {
+            (*Old)->OnProcessRequestComplete().Unbind();
+            (*Old)->CancelRequest();
+            PendingLeaseRequests.Remove(Key);
+        }
+    }
+}
+
+bool UDivineBeastsTrustedInventoryEventSubsystem::TickPlayerLeaseRenewals(float DeltaSeconds)
+{
+    check(IsInGameThread());
+    (void)DeltaSeconds;
+    if (bShuttingDown) { return false; }
+    const UGamePlatformServerAdmissionSubsystem* AdmissionSubsystem = BoundAdmissions.Get();
+    if (!IsValid(AdmissionSubsystem) || PlayerDataBaseUrl.IsEmpty()) { return true; }
+
+    TArray<TWeakObjectPtr<APlayerController>> Stale;
+    for (const auto& Pair : ActiveLeaseControllers)
+    {
+        const TWeakObjectPtr<APlayerController> ControllerKey = Pair.Key;
+        const APlayerController* Controller = ControllerKey.Get();
+        FGamePlatformServerVerifiedAdmission Current;
+        if (!IsValid(Controller) ||
+            !AdmissionSubsystem->GetVerifiedAdmission(*Controller, Current) ||
+            !Current.IsStructurallyValid() ||
+            Current.AdmissionId != Pair.Value ||
+            Current.ServerInstanceId != GameServerID ||
+            Current.ServerBootId != ServerBootID ||
+            Current.AuthorityUntil <= FDateTime::UtcNow())
+        {
+            Stale.Add(ControllerKey);
+            continue;
+        }
+        if (!PendingLeaseRequests.Contains(ControllerKey))
+        {
+            RequestPlayerLeaseRenewal(*Controller, Current);
+        }
+    }
+    for (const TWeakObjectPtr<APlayerController>& ControllerKey : Stale)
+    {
+        ActiveLeaseControllers.Remove(ControllerKey);
+        if (auto* PendingRequest = PendingLeaseRequests.Find(ControllerKey);
+            PendingRequest && PendingRequest->IsValid())
+        {
+            (*PendingRequest)->OnProcessRequestComplete().Unbind();
+            (*PendingRequest)->CancelRequest();
+            PendingLeaseRequests.Remove(ControllerKey);
+        }
+    }
+    return true;
+}
+
+void UDivineBeastsTrustedInventoryEventSubsystem::RequestPlayerLeaseRenewal(
+    const APlayerController& Controller,
+    const FGamePlatformServerVerifiedAdmission& Admission)
+{
+    check(IsInGameThread());
+    constexpr uint64 MaxExactJsonInteger = 9007199254740991ULL;
+    if (bShuttingDown || PlayerDataBaseUrl.IsEmpty() || InternalBearer.Len() < 32 ||
+        !IsValid(&Controller) || !Controller.HasAuthority() ||
+        Admission.ServerInstanceId != GameServerID ||
+        Admission.ServerBootId != ServerBootID ||
+        Admission.SessionEpoch == 0 || Admission.SessionEpoch > MaxExactJsonInteger ||
+        !Admission.ConnectionId.IsValid() || Admission.PlayerId.IsEmpty() ||
+        Admission.AuthorityUntil <= FDateTime::UtcNow())
+    {
+        return;
+    }
+    const TWeakObjectPtr<APlayerController> Key(const_cast<APlayerController*>(&Controller));
+    if (PendingLeaseRequests.Contains(Key)) { return; }
+
+    TSharedRef<FJsonObject> Body = MakeShared<FJsonObject>();
+    Body->SetStringField(TEXT("gameId"), GameID);
+    Body->SetStringField(TEXT("playerId"), Admission.PlayerId);
+    Body->SetStringField(TEXT("gameServerId"), GameServerID);
+    Body->SetStringField(TEXT("serverBootId"), ServerBootID);
+    Body->SetNumberField(TEXT("sessionEpoch"), static_cast<double>(Admission.SessionEpoch));
+    Body->SetStringField(TEXT("connectionId"),
+        Admission.ConnectionId.ToString(EGuidFormats::DigitsWithHyphensLower));
+    Body->SetNumberField(TEXT("leaseSeconds"), 30);
+    FString Json;
+    if (!FJsonSerializer::Serialize(Body,TJsonWriterFactory<>::Create(&Json))) { return; }
+
+    TSharedRef<IHttpRequest,ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+#if defined(UE_HTTP_HAS_REQUEST_REDIRECT_POLICY) && UE_HTTP_HAS_REQUEST_REDIRECT_POLICY
+    if (!Request->SetRedirectPolicy(EHttpRequestRedirectPolicy::Reject)) { return; }
+#else
+    return;
+#endif
+    Request->SetURL(PlayerDataBaseUrl + TEXT("/internal/v1/playerdata/inventory/session-renew"));
+    Request->SetVerb(TEXT("POST"));
+    Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+    Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + InternalBearer);
+    Request->SetHeader(TEXT("X-Game-Server-Id"), GameServerID);
+    Request->SetHeader(TEXT("X-Game-Server-Boot-Id"), ServerBootID);
+    Request->SetContentAsString(Json);
+    Request->SetTimeout(6.0f);
+    Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
+
+    // 续租返回只需要小于4KiB的JSON状态；真实网络接收先设硬限制再执行请求。
+    constexpr int32 MaxRenewResponseBytes = 4096;
+    const auto Buffer = MakeShared<FDivineBeastsInventoryResponseBuffer,ESPMode::ThreadSafe>();
+    FHttpRequestStreamDelegateV2 Receive = FHttpRequestStreamDelegateV2::CreateLambda(
+        [Buffer,MaxRenewResponseBytes](void* Data,int64& InOutLength)
+        {
+            if (!Data || InOutLength<=0) { return; }
+            FScopeLock Lock(&Buffer->Mutex);
+            if (Buffer->bOverflow || InOutLength > MaxRenewResponseBytes - Buffer->Bytes.Num())
+            {
+                Buffer->bOverflow = true;
+                InOutLength = 0;
+                return;
+            }
+            Buffer->Bytes.Append(static_cast<const uint8*>(Data),static_cast<int32>(InOutLength));
+        });
+    if (!Request->SetResponseBodyReceiveStreamDelegateV2(MoveTemp(Receive))) { return; }
+
+    const FGuid ExpectedAdmissionId = Admission.AdmissionId;
+    const FString ExpectedPlayerId = Admission.PlayerId;
+    const uint64 ExpectedSessionEpoch = Admission.SessionEpoch;
+    const uint64 ExpectedGeneration = Generation;
+    const TWeakObjectPtr<UDivineBeastsTrustedInventoryEventSubsystem> WeakSelf(this);
+    Request->OnProcessRequestComplete().BindLambda(
+        [WeakSelf,Key,ExpectedAdmissionId,ExpectedGeneration,ExpectedPlayerId,ExpectedSessionEpoch,Buffer](
+            FHttpRequestPtr Finished,FHttpResponsePtr Response,bool bTransportOK)
+        {
+            UDivineBeastsTrustedInventoryEventSubsystem* Self = WeakSelf.Get();
+            if (!IsValid(Self) || Self->bShuttingDown ||
+                Self->Generation != ExpectedGeneration) { return; }
+            const auto* Pending = Self->PendingLeaseRequests.Find(Key);
+            if (!Pending || *Pending != Finished) { return; }
+            Self->PendingLeaseRequests.Remove(Key);
+            const FGuid* CurrentId = Self->ActiveLeaseControllers.Find(Key);
+            if (!CurrentId || *CurrentId != ExpectedAdmissionId ||
+                !Key.IsValid() || !bTransportOK || !Response ||
+                Response->GetResponseCode()!=200)
+            {
+                // 失败或失联时不提升本地AuthorityUntil。
+                // 下一个10秒周期使用相同当前Admission身份安全重试。
+                return;
+            }
+            // 防止代理返回错误玩家/错误SessionEpoch的200回执。
+            TArray<uint8> Bytes;
+            {
+                FScopeLock Lock(&Buffer->Mutex);
+                if (Buffer->bOverflow || Buffer->Bytes.IsEmpty() || Buffer->Bytes.Num()>4096)
+                {
+                    return;
+                }
+                Bytes = MoveTemp(Buffer->Bytes);
+            }
+            const FUTF8ToTCHAR Converted(reinterpret_cast<const ANSICHAR*>(Bytes.GetData()),Bytes.Num());
+            const FString JsonText(Converted.Length(),Converted.Get());
+            TSharedPtr<FJsonObject> Body;
+            FString ReturnedPlayerId,AuthorityUntilUtc;
+            double ReturnedEpoch=0;
+            if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(JsonText),Body) ||
+                !Body.IsValid() ||
+                !Body->TryGetStringField(TEXT("playerId"),ReturnedPlayerId) ||
+                ReturnedPlayerId!=ExpectedPlayerId ||
+                !Body->TryGetNumberField(TEXT("sessionEpoch"),ReturnedEpoch) ||
+                ReturnedEpoch!=static_cast<double>(ExpectedSessionEpoch) ||
+                !Body->TryGetStringField(TEXT("authorityUntilUtc"),AuthorityUntilUtc) ||
+                AuthorityUntilUtc.IsEmpty())
+            {
+                return;
+            }
+            // 续租回执不会直接提升本地身份；每次Grant/Consume仍在PG同事务校验活跃租约。
+        });
+    PendingLeaseRequests.Add(Key,Request);
+    if (!Request->ProcessRequest())
+    {
+        Request->OnProcessRequestComplete().Unbind();
+        PendingLeaseRequests.Remove(Key);
+    }
 }
 
 FGuid UDivineBeastsTrustedInventoryEventSubsystem::SubmitWorldPickup(

@@ -1,6 +1,44 @@
 # 插件演示中心实际实施进度
 
-## 2026-10-13 方案A Native增量执行（当前）
+## 2026-10-13 未完成项续行：证据链与Core接入（最新）
+
+本段覆盖下方早批时点的当前数量；历史结果保留追溯。续行起点HEAD为`88d8f1093720a2e01ed32e71ab0637c5778b892a`，仍在用户明确授权的main原目录Native实施。没有构建、Live Coding、启动UE、Cook/Stage、提交/推送或人工签收；并行Backend/Inventory/Materials改动保留。
+
+- T08/T11新增机器证据模块和显式提升入口，核对受控启动、实际模块、源/内容端点、实际原生结果/process/index、原始终态和清理，再追加新待审修订。Writer始终保留未验证raw，不能由客户端自签。平台增加机器输入/完整内容清单实际文件绑定；真实Publish、完整导入/历史/当前版本刷新、截图和签收UI仍未闭合。
+- T12新增启动来源/内容记录以及开发Stage配置/参数检查源码；Client独立产物门禁未完成，仍拒绝启动。读取UE5.8源码发现动态模块文件名接口仅存在于非单体目标，新增明确隔离及单体拒绝诊断；辅助静态回归实际红→绿，不冒充Client编译通过。旧AlwaysCook宽目录与真实发行产物还需收口。
+- R04新增Core逻辑身份真实公开API适配及正常/非法名称/版本零。作者源为**4项功能、9案例、9用例**，全部只记wired；四插件partial，65插件完整功能分母未知、人工通过0。其余插件/内容画廊仍须逐项实施，不把地图卡片算功能完成。
+- 原生Evidence/Menu回归源码已补，包括Core实际回环、拒绝和来源参数；用户不构建，因此原生RED/GREEN均未运行。原生测试不是离线工具夹具通过数量的一部分。
+- 机器绑定合同回归复现数字/字符串隐式冒充布尔/PID/枚举的漏洞，新增字段类型门禁后实际红→绿。原生报告合同同样复现并修正字段类型；组外用例也不能污染本组证明。所有夹具明确仅限独占临时目录，没有伪造生产运行证据。
+- 独立复核发现把Editor审核模块作为-game运行必需项导致合法提升永久拒绝；结合实际UE5.8模块宿主规则定位后，新增回归真实红→绿，运行四模块与完整Editor/Review五模块证明分离。没有强载Editor到运行，也没有删掉Review证明；四个运行模块缺任一个仍拒绝。
+- 独立复核共4项Important，均进入本次单次修复：除模块职责外，增加锁定引擎真正消费的`-LiveCoding=false`与实际会话/模块替换观察、唯一原生ReportExportPath绑定、所有请求输出后再发布canonical结果。离线拒绝及实际临时文件收口回归真实红→绿；原生状态观察仍未编译/运行。无独立Minor；既存未完成项没有包装成已修复。
+- 当前源码/输出/依赖/限制见[证据绑定](PluginDemoEvidenceBinding.md)、[Core工作单](CoreIdentityWorkOrder_20261013.md)及[实施边界](SourceImplementationStatus_20261013.md)。同步修正总体目录将三类样板声明登记为真实共同`SampleAdapters.h`，不再描述不存在的独立头文件。
+- Monolith再次真实返回Editor未运行；进程只读检查亦无UE/UBT/Live Coding。本批没有新UI/地图资产变更，没有用旧DLL制作新反射资产，也没有触发构建恢复。
+
+### 本次已结束的实际检查
+
+| 检查 | 退出码与结果 | 边界 |
+| --- | --- | --- |
+| `TestPluginDemoManifest.py` | 0；28项通过 | 静态作者合同 |
+| `ValidatePluginDemoManifest.py --check-docs` | 0；65插件、4功能/4接线、人工0、比例null | 作者/中文派生表一致，不是全功能覆盖 |
+| `TestPluginDemoEvidence.ps1` | 0；55项、失败0 | 纯值/实际临时文件合同，不启动UE |
+| `TestPluginDemoNativeReport.ps1` | 0；20项、失败0 | 明确合成JSON夹具的实际文件关联，不是原生实跑 |
+| `TestPluginDemoTestOutput.ps1` | 0；6项、失败0 | 摘要成功/冲突/写失败与canonical最终状态；仅临时普通文件 |
+| `TestPluginDemoRunner.ps1` | 0；12项、失败0 | 离线运行器合同 |
+| `TestPluginDemoPackaging.ps1` | 0；19项、失败0 | 发行/单体/LiveCoding辅助静态及6份PS语法，不是Cook/编译 |
+| Pester3.4.0 `PluginCompositionAudit.Tests.ps1` | 0；15通过、0失败/跳过 | 三端声明闭包 |
+| `ValidateProjectHeaders.ps1` | 0；1116处引用、0缺失 | 可定位，不证明API/UHT/链接 |
+| `ValidateInheritanceBoundaries.ps1` | 0；545公开头/1185类型/204边 | 三层C++源码边界，非真实资产父类 |
+| `TestEnglishProjectNames.ps1` | 0；100515项/65插件/0违规 | 修复后当前扫描命名，非中文注释全审 |
+| `ServerPresentationPolicy.py check` | 0；4份受管配置无漂移 | 静态排除，不是服务器产物剥离 |
+| 本任务路径`git diff --check` | 0；LF/CRLF提示 | 未批量转换换行，未跟踪文件另核读 |
+| 全库`git diff --check` | 1；`Backend/migrations/README.md:27`新增末尾空行 | 并行后端，未覆盖；下方早批Agones诊断不是当前结果 |
+| `ValidateDesignBaseline.ps1` | 1；装配/继承通过，剩正式工程数2 | 保留既存BirdFlockAuthorHost，不降门禁 |
+| `TestFoundationBuildEvidence.ps1` | 0；39隔离合同通过 | 修复后完整复跑，无真实构建/UE；结果根`Saved/Validation/FoundationM0/5b686a47-fc78-4053-a112-d86963dfc030/BuildEvidenceContractTests` |
+| Publish不带Publish；显式Publish但缺BuildResult | 均2；明确不执行 | 没有读取运行/写提升索引/启动UE，不能记发布成功 |
+
+独立只读审查已返回：无确定Critical、4项Important、无独立Minor；上述源/离线修复不等于引擎/全交付通过。修复后FBE39、工具合同与编目全部结束并通过；最终设计基线仍保留正式工程数2失败。本批不提交/合并，不将静态修复扩大为运行或部署成功。
+
+## 2026-10-13 方案A Native早批执行（历史时点）
 
 - 用户已通过规格、要求继续，并明确允许当前main原地修改、不创建工作树。开始HEAD为`eb1fe0e932967ce97078df12c8080cf5121c99b4`，开始时无未提交改动；后续其他任务的材质/背包改动独立保留。
 - 执行期间共享main先出现外部提交`6bed78c42b80ccce07cda1cbdae515c318051f26`，后推进至`ec6a8c67afcb2f36a603905bd165e9e7a87ecaf6`，已包含本批部分源码；本代理未执行提交或推送，也未回退这些提交。复核修复与文档更新仍以实际工作区为准；v2中的git_head继续表示原始发现时点，不伪改为二进制版本。

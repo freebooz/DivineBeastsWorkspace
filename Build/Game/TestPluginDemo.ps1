@@ -35,7 +35,7 @@ try {
         $null=New-Item -ItemType Directory -Path $directory
         $automation=Join-Path $directory 'Automation'
         $arguments=@($context.Project,'-unattended','-nop4','-nullrhi','-nosplash','-stdout','-FullStdOutLogOutput',
-            '-NoLiveCoding','-NoHotReload','-NoCompile','-NoCompileEditor',"-FoundationRunId=$($context.RunId)",
+            '-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-FoundationRunId=$($context.RunId)",
             "-abslog=$(Join-Path $directory 'Unreal.log')",("-ExecCmds=Automation RunTests "+$policy.Prefix.TrimEnd('.')),
             '-TestExit=Automation Test Queue Empty',"-ReportExportPath=$automation")
         $result=Invoke-FoundationProcess -FilePath $editor -Arguments $arguments -WorkingDirectory (Split-Path $editor) -OutputDirectory $directory -TimeoutSeconds $TimeoutSeconds
@@ -45,20 +45,12 @@ try {
         $parsed=Get-Content -LiteralPath $index -Raw | ConvertFrom-Json
         $after=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $policy.Modules
         $count=Assert-PluginDemoRunResult -ProcessResult $result -Cases @($parsed.tests) -Before $before -After $after -Suite $Suite
-        $details.ValidatedTests=$count; $details.AutomationReportSHA256=(Get-FileHash -LiteralPath $index -Algorithm SHA256).Hash
+        $details.ValidatedTests=$count; $details.BuildEvidenceAfter=$after
+        $details.AutomationReportSHA256=(Get-FileHash -LiteralPath $index -Algorithm SHA256).Hash
         $code=0; $message='本组原生测试及前后二进制门禁通过；NullRHI不证明视觉，未做人工核验。'
     }
 } catch [IO.FileNotFoundException] { $code=2; $message=$_.Exception.Message }
 catch { $code=1; $message=$_.Exception.Message }
-if ($context) { Write-FoundationResult $context $code $message $details }
-else { Write-Output $message }
-# 可选摘要追加写入，拒绝覆盖；VerifyOnly摘要明确未实跑，不产生binary_verified/Passed人工字段。
-if ($ReportPath) {
-    try {
-        $full=[IO.Path]::GetFullPath($ReportPath)
-        $stream=[IO.File]::Open($full,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
-        try { $bytes=[Text.UTF8Encoding]::new($false).GetBytes((@{RunId=$RunId.ToString('D');ExitCode=$code;Message=$message;Details=$details} | ConvertTo-Json -Depth 12)); $stream.Write($bytes,0,$bytes.Length) }
-        finally { $stream.Dispose() }
-    } catch { Write-Output "摘要未写入：$($_.Exception.Message)"; $code=1 }
-}
-exit $code
+# 全部请求输出完成后才发布canonical；摘要失败不得留下一份可被提升消费者接受的Passed残留。
+$final=Write-PluginDemoTestOutput -Context $context -ExitCode $code -Message $message -Details $details -RunId $RunId -ReportPath $ReportPath
+exit $final.ExitCode

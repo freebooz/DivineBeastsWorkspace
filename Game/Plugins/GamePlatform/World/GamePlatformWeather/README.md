@@ -33,3 +33,9 @@
 ## 真实资源与验证限制
 
 当前Weather C++并不自带真实Niagara/SFX或Material Function；`GamePlatformSurface`的MPC与母材质也需由UE编辑器生成/编译。天气状态更新成功不等于雨雪可见。交付门禁见`Docs/TestingAndEvidence.md`和`Docs/Implementation/WeatherSystemImplementationPlan_V1.md`。源码构建、UE Automation、Cook、联机和GPU/CPU实测分别记证；未经执行不得宣称通过。
+
+## 2026-10-14 天气通知重入与表现身份整改（待 UE5.8 复验）
+
+`RunNextSchedule`（运行下一轮天气计划）在触发 `SnapshotChanged`（快照变更通知）前复制本次计划条目，提前计算随机延迟并记住 `ScheduleGeneration`（计划代次）。`StopSchedule`（停止计划）递增代次，因此订阅者在同步通知中停止、重配或重新启动自动天气时，旧调用栈不能读取失效条目，也不能用旧延迟覆盖新定时器。新增 `GamePlatform.Weather.Runtime.ReentrantScheduleReplacement`（天气计划重入替换）真实世界／定时器自动化测试源码，对比旧计划15秒和回调内新计划1秒的效果；该测试尚未编译执行。
+
+客户端 `OnSnapshotReceived`（天气快照接收）采用 `SnapshotApplyGeneration`（快照应用代次）校验表现请求同步回调、插值和定时器设置是否已过期；`CancelPreviousPresentation`（取消旧表现）先取出原 VFX（视觉特效）及 SFX（音效）的请求身份并清空所属槽位，再以旧 ID 定向取消，避免回调产生的新请求被旧栈清空。新的逻辑、设备天气画面、多人客户端以及专用服务器 Cook（资源烘焙）均未通过本轮真实验证，不标记全部完成。

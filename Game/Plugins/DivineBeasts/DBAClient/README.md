@@ -4,7 +4,7 @@
 
 既有`DivineBeastsDemoClient`新增Schema2只读目录定义、稳定功能/案例身份、封闭参数类型及完整结构校验。代码与测试归本插件开发模块；索引留在Private，不向平台反向引用项目。插件清单、覆盖表、迁移与验证边界见[演示编目接入说明](../../../../Docs/Implementation/PluginDemos/PluginDemoManifestContract.md)。
 
-当前已增量写入中央Data目录租约/原子快照、案例Token状态机、事件驱动HubViewModel/HubScreen、平台UIManager接线、Bird/ResourceBar/DataLease三类适配及原始证据。**UE测试未构建或运行，新内容包DataAsset/Widget尚未制作，不能宣称新菜单可运行。**编目为3项功能/6案例，65插件功能分母仍未知；全插件接入及版本证明闭环未完成，人工按用户要求集中到全部实施后。详细接口/剩余项见[本批源码边界](../../../../Docs/Implementation/PluginDemos/SourceImplementationStatus_20261013.md)。
+当前已增量写入中央Data目录租约/原子快照、案例Token状态机、事件驱动HubViewModel/HubScreen、平台UIManager、Bird/ResourceBar/DataLease三类样板及CoreIdentity公开API接入、原始证据与受控来源观察。**UE测试未构建或运行，新内容包DataAsset/Widget尚未制作，不能宣称新菜单可运行。**编目4项功能/9案例，65插件完整分母仍未知；全插件接入及完整版本证明/签收闭环未完成，人工按用户要求集中到全部实施后。[证据提升工具](../../../../Docs/Implementation/PluginDemos/PluginDemoEvidenceBinding.md)仅追加机器待审修订，不代签；详细剩余项见[本批源码边界](../../../../Docs/Implementation/PluginDemos/SourceImplementationStatus_20261013.md)。
 
 开发模块仅Editor构建私有链接GamePlatformDeveloperTools/UnrealEd，用于把实际运行证据交给唯一平台待审入口；Client/Server公开头不暴露Editor类型。没有审核人默认值，不自动Passed。运行器默认不执行，旧完整Editor证据与当前源不匹配时拒绝启动，不自动构建。
 

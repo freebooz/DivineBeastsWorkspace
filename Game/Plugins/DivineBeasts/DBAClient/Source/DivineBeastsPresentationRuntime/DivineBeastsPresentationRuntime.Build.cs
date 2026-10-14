@@ -21,7 +21,6 @@ public class DivineBeastsPresentationRuntime : ModuleRules
             "GamePlatformData", // 项目反馈目录通过统一主资产租约加载
             "GamePlatformPresentationCore"
         });
-        // 目录/预载逻辑ID校验直接消费平台身份合同。
-        PrivateDependencyModuleNames.Add("GamePlatformCore");
+        // 平台Core接口已通过PublicDependencyModuleNames公开，不重复引入同一模块的Private依赖。
     }
 }

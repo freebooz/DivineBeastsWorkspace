@@ -91,6 +91,20 @@
 - 共享引擎恢复准备b34b20fc-6554-464e-b585-dbffec8e9123已ReadyForReview：正式三处.patch、默认PlanOnly的.ps1和审查提案齐备；Saved镜像真实五步结果为1/1/0/0/0（前两项预期拒绝，随后计划、执行、回退），应用后旧applier CheckOnly为AlreadyApplied，回退恢复原始两文件精确字节。真实共享引擎和注册材料未修改，恢复代码SHA81766F8919F4370B63981748321C4E674AF9455E5A48DEC00759F110A185418B。
 - 主代理另对真实original/共享引擎运行恢复入口默认PlanOnly，返回TargetsWritten=false及预期四个SHA；工具未暴露独立数字原生码，不据此虚写0。独立记录FinalDeliveryChecks/77fd4f80-066c-48a0-b28c-4998663bf74b/SharedEnginePlanOnly/tool-observation.json。提案最后两段仅补正共享影响/AGENTS授权理由和这条只读观察，未称用户禁止引擎修改，恢复代码未变；准备阶段delivery快照保留，最终文档身份另由交付复核记录。
 - 最终汇总为FinalImplementationReport_20261012.md；交付静态复核使用77fd4f80-066c-48a0-b28c-4998663bf74b，实际命令、退出码、交付文件摘要及剩余场景状态写入独立FinalDeliveryChecks/result.json。该复核不新运行UE/UBT/Cook。
+
+## 2026-10-13 全插件逐项审查（当前CWeb工作区）
+- 本轮新增`FullPluginAudit_20261013.md`：实际读取47份代码插件描述、86份Build.cs及18份内容包描述，共65个插件；区分静态结构通过、已修改、待编译及场景性能验证，不沿用历史RunId冒充当前验收。
+- 已删除GamePlatformVFX插件重复依赖、DivineBeastsPresentationRuntime公开/私有重复依赖，修正GamePlatformWorld子系统重复流送采样/无事件时拷贝/世界关闭后继续分发；增强两个静态架构审计器和Pester负例。
+- 工作区存在其他会话未提交改动及10个执行任务（其中4个运行、6个排队），尚未启动本轮统一UE Editor/Client/Server构建或Cook。必须在全部变更与静态检查结束后验证，保留原并行任务及独立编译证据。
+- 尝试本次65插件Python清单/JSON检查，Job `wc_job_JK1uy3G_SrYxQ_71`未获执行槽位、始终排队；本会话取消后最终`stopped`、`not_started`、exit -1。不计测试执行、不冒充通过；未停止其他会话任务。
+
+## 2026-10-14 第二批直接整改
+- `GamePlatformPCGWorldSubsystem`（PCG世界运行）按需启动/停止50ms轮询，状态脏时才快照订阅表；`GamePlatformWorld/WorldRegions.cpp`（世界区域）减少周期观察者数组复制。
+- `GamePlatformQuestServerSubsystem.cpp`（任务服务器子系统）去重UWorld头文件；`GamePlatformWeatherReplicator.cpp`（天气复制Actor）去重复制开关。
+- 天气权威调度新增`ScheduleGeneration`（计划代次），防止同步快照回调中修改计划数组造成元素引用失效或旧Timer覆盖新计划；客户端新增`SnapshotApplyGeneration`（快照代次）和旧请求精确取消，防止重入误清理新雨雪特效。
+- 新增UE测试`GamePlatform.Weather.Runtime.ReentrantScheduleReplacement`（天气计划同步重配置测试）源码，**未运行**。只读代码括号配对是辅助检查，不等于UHT/C++编译。
+- 已保存全部审查源码和对应插件中文README，同时保留其他会话未提交修改；清理总体目录规划文档中嵌套Git合并标记，并保留两侧章节。Runner仍4运行、6排队，本任务未停止其他运行任务、未启动本轮原生编译/自动化/Cook。
+
 - 首次最终复核77fd4f80-066c-48a0-b28c-4998663bf74b实际Failed/exit1，唯一失败为DBAClient模块登记与.uplugin不一致；原工作区与v的git diff --check均实际exit0。08:20 UTC只读确认并行新增DivineBeastsDemoClient真实11文件，original为64插件/86插件模块，固定v为64插件/85插件模块；本轮只补中央清单SourcePresent，未将新增模块纳入Editor16证明范围，未改v。
 - 登记补正后的独立交付复核使用843ca051-bf48-4d80-a0b4-302f21bbe0b2，实际清单/两份差异检查退出码、模块范围、最终文件摘要及原生资产身份写入对应FinalDeliveryChecks/result.json；旧失败目录及真实引擎PlanOnly观察保持原样，未新执行UE/UBT/Cook。
 - 上一轮只读基线检查、只编译部分模块、资产清单、开发内容批准均不计作本轮完整构建、真实Cook、视觉或正式业务内容验收。

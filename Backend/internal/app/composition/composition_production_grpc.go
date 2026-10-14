@@ -92,6 +92,10 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 		mux := http.NewServeMux()
 		mux.Handle("POST /internal/v1/playerdata/inventory/trusted-events",
 			httpadapter.NewTrustedInventoryEventHandler(processor, secret))
+		if renewer,ok:=processor.Verifier.(inventory.ServerLeaseRenewer);ok {
+			mux.Handle("POST /internal/v1/playerdata/inventory/session-renew",
+				httpadapter.NewTrustedInventorySessionRenewHandler(renewer,secret))
+		}
 		trustedHTTP = mux
 	}
 	return runGRPCHost(ctx, cfg,
