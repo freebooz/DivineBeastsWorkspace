@@ -2,6 +2,14 @@
 
 正式位置：`Game/Plugins/DivineBeasts/DBAArena/`。本插件承接原本分散在DBAGameplay、DBAClient和DBAServer中的项目竞技适配，保留既有模块、反射类型、导出宏和五种竞技模式身份；不复制通用竞技机制。
 
+## 2026-10-14 SSLM匹配与竞技界面设计
+
+`SourceArt/UI/Design/SSLM_ArenaMatchmaking_Concept_v1.png`是五模式选择、排队、入场确认及竞技HUD原创概念图，未导入为引擎资产。[竞技组队蓝图制作规范](Docs/PartyArenaUIBlueprintAuthoringSpec_20261014.json)沿用既有UIScreenCatalog中的4个页面路径及焦点，父类均属于DivineBeastsArenaClient；公共组队5页另归DBAUIPack_Core，不创建第二套社交或匹配执行器。
+
+找到比赛的30秒逐人确认不等于场内SetArenaReady，小队20秒准备也不是相同会话；制作规范明确命令桥接待实现，不能把相似按钮名当作已接线。歼灭HUD不显示自动复活倒计时，模式不可用时显示真实缺失原因。
+
+本轮真实蓝图新增**0个**：正式UE5.8编辑器因模块导入失败退出，Monolith不可用，按用户“不构建”要求未修复DLL／触发编译。概念图、拟制作身份与false状态不是生成证据。完整说明及准备／结果第三幅图见`Docs/Implementation/VillagePartyArena/PartyUIDesignAndBlueprintDelivery_20261014.md`，后续必须补Monolith编译、保存、重载、RHI颜色、联机、Cook和人工核验。
+
 | 模块 | 目标 | 职责 |
 | --- | --- | --- |
 | DivineBeastsArenaRuntime | 双端／编辑器 | 项目竞技模式、资格与规则配置 |

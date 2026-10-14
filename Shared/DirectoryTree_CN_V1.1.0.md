@@ -91,3 +91,11 @@ Shared/                                                             # UE与Go跨
 3. Shared 只承载跨语言契约、文档和生成物，不得把 UE Gameplay 或 Go 业务实现写入本目录；职责边界变化时必须同步更新本文。
 4. `Generated/` 下的生成产物不得手工修改；生成规则、工具或输出映射变化时，必须同步维护本文及相关契约文档。
 5. 本文版本发生结构性变化时，更新文件名版本或在变更记录中记录版本变更原因。
+
+## 普通队伍交互契约增量（2026-10-14）
+
+- `Contracts/GamePlatform/OpenAPI/party-interaction.openapi.yaml`（新增普通队伍公网交互真源）：本人状态、本人邀请收件箱和普通命令；主体只取Bearer会话，预期修订及结果修订采用十进制字符串，快照按成员／请求参与权限过滤。
+- `Contracts/GamePlatform/OpenAPI/party.openapi.yaml`（已有内部规格增量）：追加可信服务使用的状态、收件箱与命令3端点，引用上述授权DTO；内部端口不公开、不冒充具有新服务间认证。
+- `Contracts/GamePlatform/OpenAPI/gateway.openapi.yaml`（已有聚合说明更新）：创建队伍的幂等读取行为及新增组队规格入口，保留旧创建响应兼容字段。
+
+本次未改Shared的Proto字段身份；后端内部gRPC补充仍归Backend内部真源。OpenAPI／契约注册表统一生成器需要运行Go入口，按用户“不构建”约束本轮未运行、未手改生成物，因此`Generated/Cpp/GamePlatform/ContractRegistry.generated.hpp`及对应Backend注册表尚未包含新增路由。后续统一生成、版本兼容、Go／UE编译与HTTP／gRPC互通必须补证；YAML解析或源码存在不表示这些检查通过。

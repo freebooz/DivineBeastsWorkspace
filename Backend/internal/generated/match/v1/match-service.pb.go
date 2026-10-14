@@ -333,6 +333,158 @@ func (x *CreateMatchmakingTicketResponse) GetErrorCode() string {
 	return ""
 }
 
+// PartyReadRequest由可信Gateway生成；客户端不得直接连接内部服务或自行提交player_id。
+type PartyReadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PartyReadRequest) Reset() {
+	*x = PartyReadRequest{}
+	mi := &file_match_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PartyReadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PartyReadRequest) ProtoMessage() {}
+
+func (x *PartyReadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_match_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PartyReadRequest.ProtoReflect.Descriptor instead.
+func (*PartyReadRequest) Descriptor() ([]byte, []int) {
+	return file_match_service_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PartyReadRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+// PartyCommandRequest内command_json必须通过与公网相同的严格64KiB对象解码；不含认证材料。
+type PartyCommandRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	CommandJson   string                 `protobuf:"bytes,2,opt,name=command_json,json=commandJson,proto3" json:"command_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PartyCommandRequest) Reset() {
+	*x = PartyCommandRequest{}
+	mi := &file_match_service_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PartyCommandRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PartyCommandRequest) ProtoMessage() {}
+
+func (x *PartyCommandRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_match_service_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PartyCommandRequest.ProtoReflect.Descriptor instead.
+func (*PartyCommandRequest) Descriptor() ([]byte, []int) {
+	return file_match_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PartyCommandRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *PartyCommandRequest) GetCommandJson() string {
+	if x != nil {
+		return x.CommandJson
+	}
+	return ""
+}
+
+// PartyDataResponse的JSON对象由Shared/Contracts/GamePlatform/OpenAPI/party-interaction.openapi.yaml拥有。
+// error_code仅传白名单稳定码；成功与失败不得同时承载JSON和错误，空JSON不代表成功。
+type PartyDataResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PayloadJson   string                 `protobuf:"bytes,1,opt,name=payload_json,json=payloadJson,proto3" json:"payload_json,omitempty"`
+	ErrorCode     string                 `protobuf:"bytes,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PartyDataResponse) Reset() {
+	*x = PartyDataResponse{}
+	mi := &file_match_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PartyDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PartyDataResponse) ProtoMessage() {}
+
+func (x *PartyDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_match_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PartyDataResponse.ProtoReflect.Descriptor instead.
+func (*PartyDataResponse) Descriptor() ([]byte, []int) {
+	return file_match_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *PartyDataResponse) GetPayloadJson() string {
+	if x != nil {
+		return x.PayloadJson
+	}
+	return ""
+}
+
+func (x *PartyDataResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
 var File_match_service_proto protoreflect.FileDescriptor
 
 const file_match_service_proto_rawDesc = "" +
@@ -365,10 +517,22 @@ const file_match_service_proto_rawDesc = "" +
 	"\tteam_size\x18\x06 \x01(\rR\bteamSize\x12\x14\n" +
 	"\x05state\x18\a \x01(\tR\x05state\x12\x1d\n" +
 	"\n" +
-	"error_code\x18\b \x01(\tR\terrorCode2\x9f\x02\n" +
+	"error_code\x18\b \x01(\tR\terrorCode\"/\n" +
+	"\x10PartyReadRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"U\n" +
+	"\x13PartyCommandRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12!\n" +
+	"\fcommand_json\x18\x02 \x01(\tR\vcommandJson\"U\n" +
+	"\x11PartyDataResponse\x12!\n" +
+	"\fpayload_json\x18\x01 \x01(\tR\vpayloadJson\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x02 \x01(\tR\terrorCode2\x84\x05\n" +
 	"\fMatchService\x12t\n" +
 	"\vCreateParty\x121.divinebeasts.backend.match.v1.CreatePartyRequest\x1a2.divinebeasts.backend.match.v1.CreatePartyResponse\x12\x98\x01\n" +
-	"\x17CreateMatchmakingTicket\x12=.divinebeasts.backend.match.v1.CreateMatchmakingTicketRequest\x1a>.divinebeasts.backend.match.v1.CreateMatchmakingTicketResponseB:Z8divinebeasts/backend/internal/generated/match/v1;matchv1b\x06proto3"
+	"\x17CreateMatchmakingTicket\x12=.divinebeasts.backend.match.v1.CreateMatchmakingTicketRequest\x1a>.divinebeasts.backend.match.v1.CreateMatchmakingTicketResponse\x12s\n" +
+	"\x0eReadPartyState\x12/.divinebeasts.backend.match.v1.PartyReadRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12t\n" +
+	"\fCommandParty\x122.divinebeasts.backend.match.v1.PartyCommandRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12x\n" +
+	"\x13GetPartyInvitations\x12/.divinebeasts.backend.match.v1.PartyReadRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponseB:Z8divinebeasts/backend/internal/generated/match/v1;matchv1b\x06proto3"
 
 var (
 	file_match_service_proto_rawDescOnce sync.Once
@@ -382,20 +546,29 @@ func file_match_service_proto_rawDescGZIP() []byte {
 	return file_match_service_proto_rawDescData
 }
 
-var file_match_service_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_match_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_match_service_proto_goTypes = []any{
 	(*CreatePartyRequest)(nil),              // 0: divinebeasts.backend.match.v1.CreatePartyRequest
 	(*CreatePartyResponse)(nil),             // 1: divinebeasts.backend.match.v1.CreatePartyResponse
 	(*CreateMatchmakingTicketRequest)(nil),  // 2: divinebeasts.backend.match.v1.CreateMatchmakingTicketRequest
 	(*CreateMatchmakingTicketResponse)(nil), // 3: divinebeasts.backend.match.v1.CreateMatchmakingTicketResponse
+	(*PartyReadRequest)(nil),                // 4: divinebeasts.backend.match.v1.PartyReadRequest
+	(*PartyCommandRequest)(nil),             // 5: divinebeasts.backend.match.v1.PartyCommandRequest
+	(*PartyDataResponse)(nil),               // 6: divinebeasts.backend.match.v1.PartyDataResponse
 }
 var file_match_service_proto_depIdxs = []int32{
 	0, // 0: divinebeasts.backend.match.v1.MatchService.CreateParty:input_type -> divinebeasts.backend.match.v1.CreatePartyRequest
 	2, // 1: divinebeasts.backend.match.v1.MatchService.CreateMatchmakingTicket:input_type -> divinebeasts.backend.match.v1.CreateMatchmakingTicketRequest
-	1, // 2: divinebeasts.backend.match.v1.MatchService.CreateParty:output_type -> divinebeasts.backend.match.v1.CreatePartyResponse
-	3, // 3: divinebeasts.backend.match.v1.MatchService.CreateMatchmakingTicket:output_type -> divinebeasts.backend.match.v1.CreateMatchmakingTicketResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	4, // 2: divinebeasts.backend.match.v1.MatchService.ReadPartyState:input_type -> divinebeasts.backend.match.v1.PartyReadRequest
+	5, // 3: divinebeasts.backend.match.v1.MatchService.CommandParty:input_type -> divinebeasts.backend.match.v1.PartyCommandRequest
+	4, // 4: divinebeasts.backend.match.v1.MatchService.GetPartyInvitations:input_type -> divinebeasts.backend.match.v1.PartyReadRequest
+	1, // 5: divinebeasts.backend.match.v1.MatchService.CreateParty:output_type -> divinebeasts.backend.match.v1.CreatePartyResponse
+	3, // 6: divinebeasts.backend.match.v1.MatchService.CreateMatchmakingTicket:output_type -> divinebeasts.backend.match.v1.CreateMatchmakingTicketResponse
+	6, // 7: divinebeasts.backend.match.v1.MatchService.ReadPartyState:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	6, // 8: divinebeasts.backend.match.v1.MatchService.CommandParty:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	6, // 9: divinebeasts.backend.match.v1.MatchService.GetPartyInvitations:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -412,7 +585,7 @@ func file_match_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_match_service_proto_rawDesc), len(file_match_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

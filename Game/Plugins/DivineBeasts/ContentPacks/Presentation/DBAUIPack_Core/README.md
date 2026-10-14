@@ -2,6 +2,13 @@
 
 `DBAUIPack_Core`是 DivineBeasts（神兽联盟项目层）内部的纯内容插件，负责公共用户界面二进制资产的唯一所有权。它不是第四架构层，也不重新实现 `GamePlatformUI` 或 `DBAClient` 的运行机制。
 
+## 2026-10-14 SSLM公共组队界面设计
+
+- `SourceArt/UI/Social/Design/SSLM_PartyInteractions_Concept_v1.png`是原创组队面板、邀请、申请和目标菜单概念图，未导入UE，不是交互纹理或Widget资产。头像、姓名和示例数据不作为生产默认值。
+- [公共组队蓝图制作规范](Docs/PartyUIBlueprintAuthoringSpec_20261014.json)定义本内容包内5个拟制作页面，复用DivineBeastsUIClient的既有社交／模态／菜单父类；不让普通世界组队依赖竞技，不增加C++模块。
+- 真实蓝图本轮新增**0个**。正式UE5.8工程因缺少GamePlatformInteraction／DBAWorldsRuntime等DLL和客户端模块导入失败而退出，Monolith不可用。按用户“不构建”要求，未启动构建、未伪造.uasset、未写生成成功清单。原生命令桥接也仍未完整接通。
+- 完整3幅设计图、公共／竞技资产归属、9页控件／焦点、事件与命令、恢复后Monolith编译保存重载及颜色核验顺序见`Docs/Implementation/VillagePartyArena/PartyUIDesignAndBlueprintDelivery_20261014.md`（工作空间相对路径）。设计规范不替代真实资产、运行交互或人工核验。
+
 ## 2026-10-13 SSLM开发演示UI待制作范围
 
 方案A的新演示RootLayout、HubScreen、菜单条目、类型化参数条目和ResourceBar样板规划归`/DBAUIPack_Core/Development/PluginDemos`；目录及页面定义也归开发范围，正式默认/Server排除不变。`Tools/Unreal/PluginDemos/PluginDemoUIMonolithRecipes.json`是父类/命名控件/平台层栈的待执行合同，不是生成证据；作者脚本不制作Widget。

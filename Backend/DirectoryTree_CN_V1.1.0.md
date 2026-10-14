@@ -243,3 +243,23 @@ Backend/                                                            # Go业务�
 2. 重命名或移动 Backend 文件、目录时，必须在本文中同步调整路径层级和职责说明。
 3. 对 `[预留]` 或生成目录的状态变化，必须同步更新本文中的边界标识；生成目录仍不得手工修改生成产物。
 4. 本文版本发生结构性变化时，更新文件名版本或在变更记录中记录版本变更原因。
+
+## 普通队伍交互增量目录（2026-10-14）
+
+以下为现有MatchService／Gateway入口内的增量，不新增第六服务入口；未构建、未执行测试或真实Redis迁移，不能作为完整组队匹配闭环。
+
+| 相对Backend路径 | 中文职责与边界 |
+| --- | --- |
+| `internal/modules/party/membership_requests.go` | 普通邀请／申请、权限、到期和终态领域规则；时间及认证主体由服务提供。 |
+| `internal/modules/party/interaction_contracts.go` | 对外授权快照与命令DTO，公开线格式以Shared的party-interaction规格为真源。 |
+| `internal/modules/party/membership_requests_test.go` | 真实领域对象的权限、过期、锁定、序号边界和修订回归源码；未执行。 |
+| `internal/app/matchapi/party_commands.go` | 主体／内容幂等、条件事务端口、成员索引查询、授权投影及明确本地测试仓储。 |
+| `internal/app/matchapi/party_commands_test.go` | 幂等主体隔离、异参冲突、跨队唯一和失败回滚的回归源码；未执行。 |
+| `internal/app/gateway/party.go` | 认证后的本人状态、邀请收件箱、命令公网路由；客户端不得传actor，错误仅透传稳定白名单。 |
+| `internal/platform/cache/redisstore/party_transactions_production.go` | 单Redis的WATCH／MULTI队伍、成员索引、邀请收件箱和回执事务；拒绝Cluster，不证明匹配票据原子性。 |
+| `internal/platform/cache/redisstore/party_index_migration_production.go` | 停写维护窗口内的显式成员索引迁移；冲突失败关闭，未设置标记时生产启动拒绝。 |
+| `internal/transport/httpadapter/party_interactions.go` | Match内部3端点及Gateway HTTP客户端；只在可信服务网络使用。 |
+| `internal/transport/grpcadapter/party_interactions_grpcdeps.go` | 与HTTP共享普通DTO和严格命令解码的内部gRPC服务。 |
+| `internal/transport/grpcclient/party_interactions_grpcdeps.go` | 有超时和响应限制的gRPC客户端适配，公开错误不含原始存储细节。 |
+
+既有`internal/contracts/proto/match-service.proto`追加3个RPC及新消息，`internal/generated/match/v1/match-service{,_grpc}.pb.go`由锁定protoc30.2／Go插件1.36.8／gRPC插件1.5.1重新生成，未手改生成源码。`PARTY_MEMBERSHIP_INDEX_MODE=offline-migrate`是**停写维护**开关，不应长期留在常规服务环境。成员索引与旧匹配幂等键／票据的升级是两项不同工作，后者仍需排空或兼容迁移。详细上线阻断、代码与资产未完成项见`Docs/Implementation/VillagePartyArena/ExecutionProgress.md`。

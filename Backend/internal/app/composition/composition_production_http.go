@@ -78,7 +78,9 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 	service.AttachInventory(inventory.NewService(postgres.NewInventoryRepository(pool)))
 	// 未配置独立强令牌时不注册可信事件路由，普通玩家背包查询/整理保持可用。
 	processor, secret, err := configureTrustedInventory(service, pool)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	handler := httpadapter.NewPlayerDataHandler(service)
 	if processor != nil {
 		handler = httpadapter.NewPlayerDataHandlerWithTrustedEvents(service, processor, secret)
@@ -91,7 +93,12 @@ func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {
 	defer redisClient.Close()
 	partyTTL, _ := config.GetenvDuration("PARTY_TTL", 24*time.Hour)
 	ticketTTL, _ := config.GetenvDuration("MATCHMAKING_TICKET_TTL", 15*time.Minute)
-	service := matchapi.NewService(redisstore.NewPartyRepository(redisClient, partyTTL), redisstore.NewTicketRepository(redisClient, ticketTTL), productionID)
+	parties := redisstore.NewPartyRepository(redisClient, partyTTL)
+	// 旧Match写进程必须先停止；不配置维护模式时仅检查，禁止在正常流量下偷偷扫描并重建唯一索引。
+	if err := parties.ConfigureMembershipIndex(ctx, os.Getenv("PARTY_MEMBERSHIP_INDEX_MODE")); err != nil {
+		return err
+	}
+	service := matchapi.NewService(parties, redisstore.NewTicketRepository(redisClient, ticketTTL), productionID)
 	return servicehost.Run(ctx, cfg, httpadapter.NewMatchHandler(service))
 }
 

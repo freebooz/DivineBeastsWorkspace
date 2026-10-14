@@ -13,6 +13,7 @@ func NewMatchHandler(service *matchapi.Service) http.Handler {
 		panic("Match API Service不能为空")
 	}
 	mux := http.NewServeMux()
+	registerPartyInteractions(mux, service)
 	mux.HandleFunc("POST /internal/v1/match/party", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			PlayerID    string `json:"playerId"`

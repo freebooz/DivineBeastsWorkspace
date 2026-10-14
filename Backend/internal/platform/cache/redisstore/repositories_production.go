@@ -125,7 +125,7 @@ func NewPartyRepository(client *Client, ttl time.Duration) *PartyRepository {
 func (r *PartyRepository) Get(ctx context.Context, partyID string) (*party.Party, error) {
 	payload, err := r.client.inner.Get(ctx, partyKeyPrefix+partyID).Bytes()
 	if errors.Is(err, redis.Nil) {
-		return nil, errors.New("PARTY_NOT_FOUND: Party不存在")
+		return nil, matchapi.ErrPartyNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -138,14 +138,7 @@ func (r *PartyRepository) Get(ctx context.Context, partyID string) (*party.Party
 }
 
 func (r *PartyRepository) Save(ctx context.Context, value *party.Party) error {
-	if value == nil || value.ID == "" {
-		return errors.New("Party不能为空")
-	}
-	payload, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-	return r.client.inner.Set(ctx, partyKeyPrefix+value.ID, payload, r.ttl).Err()
+	return r.saveNewParty(ctx, value)
 }
 
 // TicketRepository（Redis匹配幂等仓储）实现matchapi.TicketRepository。

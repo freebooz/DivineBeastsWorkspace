@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: 游戏平台组队服务内部接口（Party API）
   version: 1.0.0
-  description: MatchService（组队与匹配服务）当前已注册的组队内部 HTTP 接口。本规格目前只包含创建队伍；邀请、加入、准备、转让队长、锁定名单和查询等操作尚未注册，不能视为可调用能力。
+  description: MatchService（组队与匹配服务）内部HTTP契约。创建沿用旧快照；本人状态、邀请收件箱和普通命令沿用party-interaction.openapi.yaml中的授权DTO。内部端口仅允许可信服务网络访问，未新增服务间认证机制，不得直接暴露公网；源码注册不等于部署、并发或UE闭环验证通过。
 servers:
   - url: http://127.0.0.1:8083
     description: 本地 Docker 开发部署的 MatchService
@@ -67,8 +67,94 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/match/party/state:
+    post:
+      tags: [内部组队]
+      operationId: readInternalPartyState
+      summary: 读取可信调用方提供主体的授权普通队伍快照
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PartyReadRequest' }
+      responses:
+        '200':
+          description: 本人真实队伍状态；只有明确无队伍可返回hasParty为false。
+          content:
+            application/json:
+              schema: { $ref: 'party-interaction.openapi.yaml#/components/schemas/PartySnapshot' }
+        '400': { $ref: '#/components/responses/PartyInteractionError' }
+        '503': { $ref: '#/components/responses/PartyInteractionError' }
+  /internal/v1/match/party/invitations:
+    post:
+      tags: [内部组队]
+      operationId: readInternalPartyInvitations
+      summary: 读取可信主体的未到期邀请收件箱
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PartyReadRequest' }
+      responses:
+        '200':
+          description: 最多20项本人授权邀请；不返回其他请求者或完整队伍。
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 20
+                items: { $ref: 'party-interaction.openapi.yaml#/components/schemas/Invitation' }
+        '400': { $ref: '#/components/responses/PartyInteractionError' }
+        '503': { $ref: '#/components/responses/PartyInteractionError' }
+  /internal/v1/match/party/commands:
+    post:
+      tags: [内部组队]
+      operationId: commandInternalParty
+      summary: 在队伍事务中执行可信调用主体的普通命令
+      description: playerId只由可信内部调用方传入，公网客户端不得提供。命令字段平铺于同一JSON对象；不包含小队准备会话或竞技入场确认命令。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [playerId, partyId, action, clientRequestId, expectedRevision]
+              properties:
+                playerId: { $ref: 'party-interaction.openapi.yaml#/components/schemas/Identifier' }
+                partyId: { $ref: 'party-interaction.openapi.yaml#/components/schemas/Identifier' }
+                action: { $ref: 'party-interaction.openapi.yaml#/components/schemas/PartyCommand/properties/action' }
+                targetPlayerId: { $ref: 'party-interaction.openapi.yaml#/components/schemas/PartyCommand/properties/targetPlayerId' }
+                membershipRequestId: { $ref: 'party-interaction.openapi.yaml#/components/schemas/PartyCommand/properties/membershipRequestId' }
+                clientRequestId: { $ref: 'party-interaction.openapi.yaml#/components/schemas/Identifier' }
+                expectedRevision: { $ref: 'party-interaction.openapi.yaml#/components/schemas/Revision' }
+                ready: { $ref: 'party-interaction.openapi.yaml#/components/schemas/PartyCommand/properties/ready' }
+      responses:
+        '200':
+          description: 原子提交或同主体同内容幂等重放后的授权结果。
+          content:
+            application/json:
+              schema: { $ref: 'party-interaction.openapi.yaml#/components/schemas/CommandResult' }
+        '400': { $ref: '#/components/responses/PartyInteractionError' }
+        '403': { $ref: '#/components/responses/PartyInteractionError' }
+        '404': { $ref: '#/components/responses/PartyInteractionError' }
+        '409': { $ref: '#/components/responses/PartyInteractionError' }
+        '429': { $ref: '#/components/responses/PartyInteractionError' }
+        '503': { $ref: '#/components/responses/PartyInteractionError' }
 components:
+  responses:
+    PartyInteractionError:
+      description: 组队安全错误码；不透传存储地址、原始记录或认证敏感信息。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/InternalApiError' }
   schemas:
+    PartyReadRequest:
+      type: object
+      additionalProperties: false
+      required: [playerId]
+      properties:
+        playerId: { $ref: 'party-interaction.openapi.yaml#/components/schemas/Identifier' }
     LivenessResponse:
       type: object
       additionalProperties: false

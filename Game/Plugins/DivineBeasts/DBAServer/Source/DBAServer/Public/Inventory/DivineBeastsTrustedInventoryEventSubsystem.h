@@ -5,6 +5,7 @@
 // 不承载客户端UI、不存储权威库存、不在引擎模块启动时接入生产接口。
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h" // FTSTicker 专用句柄与核心心跳时钟，避免误用普通 FDelegateHandle。
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "DivineBeastsTrustedInventoryEventSubsystem.generated.h"
 
@@ -76,7 +77,8 @@ private:
         const FGamePlatformServerVerifiedAdmission& Admission);
     TWeakObjectPtr<UGamePlatformServerAdmissionSubsystem> BoundAdmissions;
     FDelegateHandle AdmissionChangedHandle;
-    FDelegateHandle LeaseTickerHandle;
+    /** 10秒续租节拍器拥有的强类型句柄，必须用 FTSTicker::RemoveTicker 成对释放。 */
+    FTSTicker::FDelegateHandle LeaseTickerHandle;
     /** 用当前AdmissionId（真实准入身份）关联Controller，防止旧断线回调撤销新连接。 */
     TMap<TWeakObjectPtr<APlayerController>,FGuid> ActiveLeaseControllers;
     TMap<TWeakObjectPtr<APlayerController>,TSharedPtr<IHttpRequest,ESPMode::ThreadSafe>> PendingLeaseRequests;

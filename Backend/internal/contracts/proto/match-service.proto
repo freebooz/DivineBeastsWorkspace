@@ -8,6 +8,10 @@ option go_package = "divinebeasts/backend/internal/generated/match/v1;matchv1";
 service MatchService {
   rpc CreateParty(CreatePartyRequest) returns (CreatePartyResponse);
   rpc CreateMatchmakingTicket(CreateMatchmakingTicketRequest) returns (CreateMatchmakingTicketResponse);
+  // 普通组队交互复用Shared定义的JSON对象，内部Envelope不再维护第二套字段编号映射。
+  rpc ReadPartyState(PartyReadRequest) returns (PartyDataResponse);
+  rpc CommandParty(PartyCommandRequest) returns (PartyDataResponse);
+  rpc GetPartyInvitations(PartyReadRequest) returns (PartyDataResponse);
 }
 
 message CreatePartyRequest {
@@ -41,4 +45,20 @@ message CreateMatchmakingTicketResponse {
   uint32 team_size = 6;
   string state = 7;
   string error_code = 8;
+}
+
+// PartyReadRequest由可信Gateway生成；客户端不得直接连接内部服务或自行提交player_id。
+message PartyReadRequest { string player_id = 1; }
+
+// PartyCommandRequest内command_json必须通过与公网相同的严格64KiB对象解码；不含认证材料。
+message PartyCommandRequest {
+  string player_id = 1;
+  string command_json = 2;
+}
+
+// PartyDataResponse的JSON对象由Shared/Contracts/GamePlatform/OpenAPI/party-interaction.openapi.yaml拥有。
+// error_code仅传白名单稳定码；成功与失败不得同时承载JSON和错误，空JSON不代表成功。
+message PartyDataResponse {
+  string payload_json = 1;
+  string error_code = 2;
 }

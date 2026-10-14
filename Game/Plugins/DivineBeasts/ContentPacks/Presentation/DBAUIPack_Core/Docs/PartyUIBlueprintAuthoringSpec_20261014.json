@@ -1,0 +1,500 @@
+{
+  "SchemaVersion": 1,
+  "Project": "Game/DivineBeastsArena.uproject",
+  "ProjectDisplayName": "SSLM",
+  "EngineVersion": "5.8",
+  "CreationToolRequired": "Monolith MCP ui",
+  "Status": "DesignPrepared_BlueprintCreationBlocked",
+  "StatusZh": "只有设计输入，真实编辑器模块加载失败；没有新建、编译、保存或重载蓝图。",
+  "MonolithActionSchemaVerified": false,
+  "BlueprintAssetsCreated": 0,
+  "SourceImagesAreWidgetAssets": false,
+  "DependencyPolicyZh": "公共UI只依赖GamePlatform与DBAClient；竞技UI归DBAArena，经MobaCommon向下复用，不反向引用项目，不建立新插件。",
+  "VisualPolicy": "Docs/Implementation/UITextureVisualPolicy.md",
+  "AuthoringRequirementsZh": [
+    "核对正式工程绝对路径、Monolith实时版本及动作schema",
+    "先验证父类可加载和既有资产是否存在，已有资产只增量修改且保存前备份",
+    "每个蓝图创建／改动后编译、保存、关闭／重开、回读父类与WidgetTree",
+    "校验命名控件、层栈、焦点、导航、中文字体与可访问性",
+    "业务状态和输入由事件更新，取消本地等待不等于撤销后端事务",
+    "导入资源必须执行当前源指纹审计及SourceToSlate RHI验证，不使用widget截图Gamma路径",
+    "只有真实成功才更新MonolithGenerationManifest，编译／保存／重载未知不得写true"
+  ],
+  "Blueprints": [
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyPanel",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsSocialScreenBase",
+      "Layer": "Screen",
+      "InputMode": "GameAndUI",
+      "DefaultFocus": "InviteButton",
+      "DesignSizeLogicalPixels": [
+        680,
+        620
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "PanelTitle",
+                "Class": "TextBlock",
+                "TextZh": "我的小队",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "MemberCountText",
+                "Class": "TextBlock",
+                "TextZh": "成员",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "PartyMemberList",
+                "Class": "ListView",
+                "PurposeZh": "服务端真实成员，最多5名；队长、准备、在线状态分别显示",
+                "Virtualized": true,
+                "EntryWidgetStatus": "RequiresMonolithAuthoring",
+                "ExampleDataShippingAllowed": false
+              },
+              {
+                "Name": "ActivityText",
+                "Class": "TextBlock",
+                "TextZh": "当前活动",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "CommandErrorText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "PartyActions",
+                "Class": "HorizontalBox",
+                "Children": [
+                  {
+                    "Name": "InviteButton",
+                    "Class": "Button",
+                    "TextZh": "邀请玩家",
+                    "Intent": "Party.Invite",
+                    "StyleSemantic": "UI.Style.Button.Primary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  },
+                  {
+                    "Name": "ReadyCheckButton",
+                    "Class": "Button",
+                    "TextZh": "准备确认",
+                    "Intent": "Party.StartReadyCheck",
+                    "StyleSemantic": "UI.Style.Button.Secondary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  },
+                  {
+                    "Name": "LeavePartyButton",
+                    "Class": "Button",
+                    "TextZh": "离开小队",
+                    "Intent": "Party.Leave",
+                    "StyleSemantic": "UI.Style.Button.Secondary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  }
+                ]
+              },
+              {
+                "Name": "CloseButton",
+                "Class": "Button",
+                "TextZh": "关闭",
+                "Intent": "UI.Close",
+                "StyleSemantic": "UI.Style.Button.Secondary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SourceImage": "SourceArt/UI/Social/Design/SSLM_PartyInteractions_Concept_v1.png",
+      "ReadModel": "UDivineBeastsSocialViewModel.GetSocialSnapshot",
+      "NativeCommandBindingReady": false,
+      "RoutePolicyZh": "不得替换既有UI.Screen.Social或FriendsButton焦点；新入口经公开UI路由在资产核验后注册。"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyInviteModal",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsModalScreen",
+      "Layer": "Modal",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "AcceptButton",
+      "DesignSizeLogicalPixels": [
+        560,
+        360
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "PanelTitle",
+                "Class": "TextBlock",
+                "TextZh": "组队邀请",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "InviterPortrait",
+                "Class": "Image"
+              },
+              {
+                "Name": "InviterNameText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "MemberCountText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "RemainingSecondsText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "RemainingProgress",
+                "Class": "ProgressBar"
+              },
+              {
+                "Name": "Actions",
+                "Class": "HorizontalBox",
+                "Children": [
+                  {
+                    "Name": "AcceptButton",
+                    "Class": "Button",
+                    "TextZh": "接受邀请",
+                    "Intent": "Party.AcceptInvitation",
+                    "StyleSemantic": "UI.Style.Button.Primary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  },
+                  {
+                    "Name": "DeclineButton",
+                    "Class": "Button",
+                    "TextZh": "拒绝",
+                    "Intent": "Party.DeclineInvitation",
+                    "StyleSemantic": "UI.Style.Button.Secondary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  }
+                ]
+              },
+              {
+                "Name": "CommandErrorText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "DismissPolicyZh": "ESC仅关闭展示，不等同拒绝；命令处理中禁用两个动作，到期只显示到期并等待服务器终态。",
+      "AuthorityTimeoutSeconds": 60
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyApplications",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsSocialScreenBase",
+      "Layer": "Screen",
+      "InputMode": "GameAndUI",
+      "DefaultFocus": "ApplicationsList",
+      "DesignSizeLogicalPixels": [
+        680,
+        520
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "PanelTitle",
+                "Class": "TextBlock",
+                "TextZh": "入队申请",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ApplicationsList",
+                "Class": "ListView",
+                "PurposeZh": "仅队长可见，行含头像、昵称、同意及拒绝；申请不预占成员名额",
+                "Virtualized": true,
+                "EntryWidgetStatus": "RequiresMonolithAuthoring",
+                "ExampleDataShippingAllowed": false
+              },
+              {
+                "Name": "EmptyStateText",
+                "Class": "TextBlock",
+                "TextZh": "暂无待处理申请",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "PermissionText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "CommandErrorText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "CloseButton",
+                "Class": "Button",
+                "TextZh": "关闭",
+                "Intent": "UI.Close",
+                "StyleSemantic": "UI.Style.Button.Secondary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "RowIntents": [
+        "Party.ApproveApplication",
+        "Party.RejectApplication"
+      ],
+      "AuthorityTimeoutSeconds": 120
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PlayerContextMenu",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsMenuScreen",
+      "Layer": "System",
+      "InputMode": "GameAndUI",
+      "DefaultFocus": "InviteTargetButton",
+      "DesignSizeLogicalPixels": [
+        300,
+        320
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "TargetPortrait",
+                "Class": "Image"
+              },
+              {
+                "Name": "TargetNameText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "InviteTargetButton",
+                "Class": "Button",
+                "TextZh": "邀请组队",
+                "Intent": "Party.InviteSelectedTarget",
+                "StyleSemantic": "UI.Style.Button.Secondary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              },
+              {
+                "Name": "RequestJoinButton",
+                "Class": "Button",
+                "TextZh": "申请加入",
+                "Intent": "Party.RequestJoinSelectedTarget",
+                "StyleSemantic": "UI.Style.Button.Secondary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              },
+              {
+                "Name": "InspectCharacterButton",
+                "Class": "Button",
+                "TextZh": "查看角色",
+                "Intent": "Character.InspectAllowedTarget",
+                "StyleSemantic": "UI.Style.Button.Secondary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              },
+              {
+                "Name": "DisabledReasonText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "CloseButton",
+                "Class": "Button",
+                "TextZh": "关闭",
+                "Intent": "UI.Close",
+                "StyleSemantic": "UI.Style.Button.Secondary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "PositionPolicyZh": "只响应合法可见玩家；按目标位置定位并限制在当前视口安全区，不抢占其他LocalPlayer。"
+    },
+    {
+      "AssetPath": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyReadyCheckModal",
+      "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsModalScreen",
+      "Layer": "Modal",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "ConfirmReadyButton",
+      "DesignSizeLogicalPixels": [
+        580,
+        460
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "PanelTitle",
+                "Class": "TextBlock",
+                "TextZh": "小队准备确认",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ActivityText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ReadyMembersList",
+                "Class": "ListView",
+                "PurposeZh": "同一名单／模式／区域版本的真实准备状态",
+                "Virtualized": true,
+                "EntryWidgetStatus": "RequiresMonolithAuthoring",
+                "ExampleDataShippingAllowed": false
+              },
+              {
+                "Name": "RemainingSecondsText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "Actions",
+                "Class": "HorizontalBox",
+                "Children": [
+                  {
+                    "Name": "ConfirmReadyButton",
+                    "Class": "Button",
+                    "TextZh": "我已准备",
+                    "Intent": "Party.ConfirmReady",
+                    "StyleSemantic": "UI.Style.Button.Primary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  },
+                  {
+                    "Name": "DeclineReadyButton",
+                    "Class": "Button",
+                    "TextZh": "暂不参加",
+                    "Intent": "Party.DeclineReady",
+                    "StyleSemantic": "UI.Style.Button.Secondary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  }
+                ]
+              },
+              {
+                "Name": "CommandErrorText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "AuthorityTimeoutSeconds": 20,
+      "SourceImage": "Docs/Implementation/VillagePartyArena/Design/SSLM_ReadyAndResult_Concept_v1.png"
+    }
+  ],
+  "OwnerPlugin": "DBAUIPack_Core"
+}

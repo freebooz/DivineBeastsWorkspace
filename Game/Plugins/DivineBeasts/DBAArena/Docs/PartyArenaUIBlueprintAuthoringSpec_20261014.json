@@ -1,0 +1,430 @@
+{
+  "SchemaVersion": 1,
+  "Project": "Game/DivineBeastsArena.uproject",
+  "ProjectDisplayName": "SSLM",
+  "EngineVersion": "5.8",
+  "CreationToolRequired": "Monolith MCP ui",
+  "Status": "DesignPrepared_BlueprintCreationBlocked",
+  "StatusZh": "只有设计输入，真实编辑器模块加载失败；没有新建、编译、保存或重载蓝图。",
+  "MonolithActionSchemaVerified": false,
+  "BlueprintAssetsCreated": 0,
+  "SourceImagesAreWidgetAssets": false,
+  "DependencyPolicyZh": "公共UI只依赖GamePlatform与DBAClient；竞技UI归DBAArena，经MobaCommon向下复用，不反向引用项目，不建立新插件。",
+  "VisualPolicy": "Docs/Implementation/UITextureVisualPolicy.md",
+  "AuthoringRequirementsZh": [
+    "核对正式工程绝对路径、Monolith实时版本及动作schema",
+    "先验证父类可加载和既有资产是否存在，已有资产只增量修改且保存前备份",
+    "每个蓝图创建／改动后编译、保存、关闭／重开、回读父类与WidgetTree",
+    "校验命名控件、层栈、焦点、导航、中文字体与可访问性",
+    "业务状态和输入由事件更新，取消本地等待不等于撤销后端事务",
+    "导入资源必须执行当前源指纹审计及SourceToSlate RHI验证，不使用widget截图Gamma路径",
+    "只有真实成功才更新MonolithGenerationManifest，编译／保存／重载未知不得写true"
+  ],
+  "Blueprints": [
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Matchmaking",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsMatchmakingScreen",
+      "Layer": "Screen",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "ModeList",
+      "DesignSizeLogicalPixels": [
+        760,
+        520
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "PanelTitle",
+                "Class": "TextBlock",
+                "TextZh": "竞技场",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ModeList",
+                "Class": "ListView",
+                "ItemsFrom": "Arena.AvailableArenaModeIds",
+                "ExpectedModes": [
+                  "1v1",
+                  "2v2",
+                  "3v3",
+                  "4v4",
+                  "5v5"
+                ],
+                "EntryWidgetStatus": "RequiresMonolithAuthoring"
+              },
+              {
+                "Name": "RulesText",
+                "Class": "TextBlock",
+                "TextZh": "单局歼灭 · 小队不可拆分 · 允许单人报名",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "PartySummaryText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "SelectedModeText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "StartMatchmakingButton",
+                "Class": "Button",
+                "TextZh": "开始匹配",
+                "Intent": "Arena.StartMatchmaking",
+                "StyleSemantic": "UI.Style.Button.Primary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              },
+              {
+                "Name": "SearchState",
+                "Class": "VerticalBox",
+                "Children": [
+                  {
+                    "Name": "ElapsedTimeText",
+                    "Class": "TextBlock",
+                    "TextZh": "",
+                    "StyleSemantic": "UI.Style.Text.Body"
+                  },
+                  {
+                    "Name": "SearchStatusText",
+                    "Class": "TextBlock",
+                    "TextZh": "正在为小队寻找对手",
+                    "StyleSemantic": "UI.Style.Text.Body"
+                  },
+                  {
+                    "Name": "CancelMatchmakingButton",
+                    "Class": "Button",
+                    "TextZh": "取消匹配",
+                    "Intent": "Arena.CancelMatchmaking",
+                    "StyleSemantic": "UI.Style.Button.Secondary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  }
+                ]
+              },
+              {
+                "Name": "CommandErrorText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SurfaceId": "UI.Screen.Matchmaking",
+      "SourceImage": "SourceArt/UI/Design/SSLM_ArenaMatchmaking_Concept_v1.png",
+      "CompatibilityZh": "复用既有目录的ModeList焦点和软类路径；排队是同页状态，非第二套匹配执行器。"
+    },
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_MatchFoundReady",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsMatchFoundReadyScreen",
+      "Layer": "Modal",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "ReadyButton",
+      "DesignSizeLogicalPixels": [
+        620,
+        420
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "PanelTitle",
+                "Class": "TextBlock",
+                "TextZh": "找到比赛",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ConfirmationSlots",
+                "Class": "HorizontalBox",
+                "PurposeZh": "按当前模式显示2N个合法确认槽位，不暴露隐藏分或未授权敌方配装。"
+              },
+              {
+                "Name": "RemainingSecondsText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "RemainingProgress",
+                "Class": "ProgressBar"
+              },
+              {
+                "Name": "Actions",
+                "Class": "HorizontalBox",
+                "Children": [
+                  {
+                    "Name": "ReadyButton",
+                    "Class": "Button",
+                    "TextZh": "接受",
+                    "Intent": "Arena.AcceptMatchOffer",
+                    "StyleSemantic": "UI.Style.Button.Primary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  },
+                  {
+                    "Name": "DeclineButton",
+                    "Class": "Button",
+                    "TextZh": "拒绝",
+                    "Intent": "Arena.DeclineMatchOffer",
+                    "StyleSemantic": "UI.Style.Button.Secondary",
+                    "RequiredAuthority": "ViewModel.AllowedCommands",
+                    "BindingStatus": "PendingNativeCommandAdapter"
+                  }
+                ]
+              },
+              {
+                "Name": "EntryStatusText",
+                "Class": "TextBlock",
+                "TextZh": "全员确认后进入竞技场",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "CommandErrorText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SurfaceId": "UI.Screen.MatchFoundReady",
+      "AuthorityTimeoutSeconds": 30,
+      "NativeBindingWarningZh": "ReadyButton为既有目录焦点名；接受匹配候选不得绑定到局内SetArenaReady，二者阶段与权威端口不同。"
+    },
+    {
+      "AssetPath": "/DBAArena/UI/HUD/WBP_DBA_UI_ArenaHUD",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsArenaHUD",
+      "Layer": "HUD",
+      "InputMode": "GameOnly",
+      "DefaultFocus": null,
+      "DesignSizeLogicalPixels": [
+        1920,
+        1080
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "AlliedFrames",
+                "Class": "VerticalBox",
+                "PurposeZh": "1至5名友方，只读复制事实；头像、生命、资源、施法和Buff部件复用平台机制。"
+              },
+              {
+                "Name": "EnemyFrames",
+                "Class": "VerticalBox",
+                "PurposeZh": "1至5名敌方，仅合法可见信息；不从其他玩家客户端读取隐藏状态。"
+              },
+              {
+                "Name": "ModeText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "MatchTimeText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "PlayerBuffs",
+                "Class": "WrapBox"
+              },
+              {
+                "Name": "TargetDebuffs",
+                "Class": "WrapBox"
+              },
+              {
+                "Name": "CastProgress",
+                "Class": "ProgressBar"
+              },
+              {
+                "Name": "CastNameText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "EliminationStateText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "AbilityBarSlot",
+                "Class": "NamedSlot"
+              },
+              {
+                "Name": "QueueStatusSlot",
+                "Class": "NamedSlot"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SurfaceId": "UI.HUD.Arena",
+      "LayoutPolicyZh": "友敌两侧各预留5行，显示当前N行；中心保留战斗视野，HUD不抢焦点。",
+      "RespawnCountdownAllowed": false
+    },
+    {
+      "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_PostMatch",
+      "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsPostMatchResultScreen",
+      "Layer": "Screen",
+      "InputMode": "UIOnly",
+      "DefaultFocus": "ReturnWorldButton",
+      "DesignSizeLogicalPixels": [
+        760,
+        620
+      ],
+      "WidgetTree": {
+        "Name": "Root",
+        "Class": "Overlay",
+        "Children": [
+          {
+            "Name": "PanelBackground",
+            "Class": "Image",
+            "StyleSemantic": "UI.Style.Border.Panel",
+            "HitTest": "SelfHitTestInvisible"
+          },
+          {
+            "Name": "ContentRoot",
+            "Class": "VerticalBox",
+            "Children": [
+              {
+                "Name": "PanelTitle",
+                "Class": "TextBlock",
+                "TextZh": "本场结束",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "OutcomeText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ModeText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ScoreboardList",
+                "Class": "ListView",
+                "PurposeZh": "真实受信结果；单局死亡最多1次，不填固定胜利或示例数值",
+                "Virtualized": true,
+                "EntryWidgetStatus": "RequiresMonolithAuthoring",
+                "ExampleDataShippingAllowed": false
+              },
+              {
+                "Name": "ResultCommitStateText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ReturnStatusText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              },
+              {
+                "Name": "ReturnWorldButton",
+                "Class": "Button",
+                "TextZh": "返回世界",
+                "Intent": "Arena.ReturnToWorld",
+                "StyleSemantic": "UI.Style.Button.Primary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              },
+              {
+                "Name": "RetryReturnButton",
+                "Class": "Button",
+                "TextZh": "重试",
+                "Intent": "Arena.RetryReturn",
+                "StyleSemantic": "UI.Style.Button.Secondary",
+                "RequiredAuthority": "ViewModel.AllowedCommands",
+                "BindingStatus": "PendingNativeCommandAdapter"
+              },
+              {
+                "Name": "CommandErrorText",
+                "Class": "TextBlock",
+                "TextZh": "",
+                "StyleSemantic": "UI.Style.Text.Body"
+              }
+            ]
+          }
+        ]
+      },
+      "Status": "BlockedEditorModulesUnavailable",
+      "BlueprintCreated": false,
+      "Compiled": false,
+      "Saved": false,
+      "Reloaded": false,
+      "EventPolicyZh": "只消费ViewModel只读状态并提交命令；没有真实适配器时显示不可用并禁用业务按钮，禁止业务Tick、直接HTTP和假成功。",
+      "SurfaceId": "UI.Screen.PostMatchResult",
+      "SourceImage": "Docs/Implementation/VillagePartyArena/Design/SSLM_ReadyAndResult_Concept_v1.png",
+      "ReturnPolicyZh": "后端新分配与新票据；不得直接OpenLevel或重用旧地址。"
+    }
+  ],
+  "OwnerPlugin": "DBAArena"
+}
