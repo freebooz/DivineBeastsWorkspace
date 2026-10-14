@@ -52,14 +52,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilitySlotPointerTest,
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsAbilitySlotPointerTest::RunTest(const FString&)
 {
-<<<<<<< HEAD
-    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
-    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
-    UWorld* World = Instance->GetWorld();
-    ON_SCOPE_EXIT {
-        Instance->Shutdown();
-        if (World) { GEngine->DestroyWorldContext(World); World->DestroyWorld(false); }
-=======
     // InitializeStandalone要求外层为实际Engine；默认Transient Package会触发CastChecked致命错误。
     // 仍使用独立实例与唯一世界身份，不初始化/替换正在运行玩家的GameInstance。
     TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
@@ -75,7 +67,6 @@ bool FDivineBeastsAbilitySlotPointerTest::RunTest(const FString&)
             GEngine->DestroyWorldContext(FixtureWorld);
             FixtureWorld->DestroyWorld(false);
         }
->>>>>>> daeee33875694d0dec3c6bebb78c52477d9a600d
     };
     UClass* SlotClass = LoadClass<UGamePlatformSlotWidget>(nullptr,
         TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot.WBP_DBA_UI_AbilitySlot_C"));
