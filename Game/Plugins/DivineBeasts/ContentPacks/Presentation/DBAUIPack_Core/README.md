@@ -64,6 +64,8 @@
 
 ## 前端客户端打包必需资源
 
+2026-10-14剩余页续行：Boot、Quest、Social、LiveOps、四种世界HUD、Toast及竞技HeroSelection/Scoreboard共11页已通过Monolith补齐；另新增材质审核页和演示Detail/Controls/Report三页。公共资源仍归本包，竞技两页仍归DBAArena，原生ViewModel/命令归相应代码模块。15页348控件的制作期结构编译为0错误/0警告，可访问性保留45项建议；7个缺失平台UI函数与12份审核材质已生成、连线回读并编译。统一Editor构建、新原生测试、冷重载、设备及人工验收以[本轮计划台账](../../../../../../Docs/Implementation/PluginDemos/RemainingPagesImplementationPlan_20261014.md)为准，不沿用下方早批未完成项或旧通过记录。未提供的好友/运营/英雄许可/训练权威合同继续明确不可用，不填假数据。
+
 2026-10-14全插件蓝图续审：Monolith补齐开发演示Root／Hub／MenuRow／ParameterRow与页面定义，并补齐正式`UI/Screens/WBP_DBA_UI_WorldJournal`（角色信息、地图任务、法术书共用手册）。四个旧页面的九个按钮增加透明悬停／按下描边，未修改原稿RGB。10份本批控件已保存、编译、回读，193节点、0编译错误／警告；独立冷重载、真实业务／设备／人工核验仍未完成，静态可访问性保留的建议见生成清单。全范围缺项及并行Water插件导致的目录阻断见[全插件蓝图审查记录](../../../../../../Docs/Implementation/PluginDemos/BlueprintCoverageAudit_20261014.md)，生成清单不能解读为全部插件蓝图已实现。
 
 2026-10-14公共小队界面增量：`UI/Social`真实新增小队面板、邀请、申请、玩家菜单和准备页五个Widget Blueprint，以及公共列表条目；`UI/Materials/Social`新增无噪声玉石UI材质。所有资产经Monolith创建/布局/样式/导航/编译/保存，不把SourceArt概念图当作运行蓝图。公共C++与ViewModel仍归DBAClient且不依赖竞技；最新状态见[五页制作规范](Docs/PartyUIBlueprintAuthoringSpec_20261014.json)和生成清单。真实后端能力缺口、集中自动化和人工视觉待验状态必须分别阅读，不因资产存在宣称全部业务上线。

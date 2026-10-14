@@ -48,9 +48,13 @@ private:
     UPROPERTY(Transient) TObjectPtr<UDivineBeastsUIViewModel> WorldHUDModel;
     FDelegateHandle WorldUIStateHandle;
     bool bSynchronizingWorldHUD = false;
+    /** 取消旧命令可同步产生后继快照；合并为下一轮重算，不能丢弃注销/换世界事件。 */
+    bool bWorldHUDRefreshQueued = false;
+    bool bWorldHUDHostConstructed = false;
     void ObserveWorldUIOwner();
     void HandleWorldUIState(const FDivineBeastsUIViewState& State);
     void RefreshWorldContextHUD();
+    void RefreshWorldContextHUDOnce();
     void ReleaseWorldContextHUD();
     friend class FDivineBeastsHUDTravelOwnershipTest;
     /** 根布局跨地图存活，委托必须从实际绑定的旧控制器移除，不能用已更新的GetOwningPlayer查旧来源。 */

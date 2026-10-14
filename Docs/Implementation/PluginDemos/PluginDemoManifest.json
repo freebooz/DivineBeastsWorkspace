@@ -1,13 +1,20 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-10-13",
-  "git_head": "eb1fe0e932967ce97078df12c8080cf5121c99b4",
+  "snapshot_date": "2026-10-14",
+  "git_head": "57edb579103ebabd344988b2e532e22a83b93163",
   "history": {
     "path": "Docs/Implementation/PluginDemos/History/PluginDemoManifest.v1.json",
     "git_revision": "eb1fe0e932967ce97078df12c8080cf5121c99b4",
     "sha256": "b312fcf0e94fb2ac3d41e36c8b6c7ee12671053fecca2728e3a50df4c4f7749c"
   },
   "plugins": [
+    {
+      "plugin_id": "GamePlatformWater",
+      "descriptor_path": "Game/Plugins/GamePlatform/World/GamePlatformWater/GamePlatformWater.uplugin",
+      "architecture_layer": "Platform",
+      "plugin_kind": "code",
+      "feature_audit_status": "unreviewed"
+    },
     {
       "plugin_id": "MobaPresentation",
       "descriptor_path": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin",

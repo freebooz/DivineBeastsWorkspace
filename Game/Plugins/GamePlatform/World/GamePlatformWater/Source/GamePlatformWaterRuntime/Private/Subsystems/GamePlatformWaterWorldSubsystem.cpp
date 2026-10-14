@@ -26,6 +26,12 @@ bool UGamePlatformWaterWorldSubsystem::RegisterRegion(AGamePlatformWaterRegion* 
         UE_LOG(LogGamePlatformWater, Warning, TEXT("水域注册拒绝：Actor世界或规则无效"));
         return false;
     }
+    // 跨地图卸载时EndPlay通常会反注册；若世界销毁顺序导致弱引用先失效，
+    // 注册新区域前也要整理失效项，避免128容量门禁被已经消失的Actor占满。
+    Regions.RemoveAll([](const TWeakObjectPtr<AGamePlatformWaterRegion>& Weak)
+    {
+        return !IsValid(Weak.Get());
+    });
     for (const TWeakObjectPtr<AGamePlatformWaterRegion>& ExistingWeak : Regions)
     {
         const AGamePlatformWaterRegion* Existing = ExistingWeak.Get();
@@ -62,6 +68,7 @@ bool UGamePlatformWaterWorldSubsystem::QueryWaterAtLocation(
     bool bFound = false;
     int32 SelectedPriority = -1;
     float SelectedDepth = TNumericLimits<float>::Max();
+    FName SelectedRegionId = NAME_None;
     for (const TWeakObjectPtr<AGamePlatformWaterRegion>& Weak : Regions)
     {
         const AGamePlatformWaterRegion* Region = Weak.Get();
@@ -70,12 +77,17 @@ bool UGamePlatformWaterWorldSubsystem::QueryWaterAtLocation(
         FGamePlatformWaterSample Candidate;
         if (!Region->SampleRegion(WorldLocation, Candidate))
             continue;
+        // 与Actor遍历/加载顺序无关：优先级→水面深度→稳定RegionId字典序。
+        // 相同客户端和服务器地图Cook必须选到同一重叠区域，不依赖指针地址。
         if (!bFound || Region->Region.Priority > SelectedPriority ||
-            (Region->Region.Priority == SelectedPriority && Candidate.DepthCm < SelectedDepth))
+            (Region->Region.Priority == SelectedPriority &&
+              (Candidate.DepthCm < SelectedDepth ||
+                (Candidate.DepthCm == SelectedDepth && Candidate.RegionId.LexicalLess(SelectedRegionId)))))
         {
             bFound = true;
             SelectedPriority = Region->Region.Priority;
             SelectedDepth = Candidate.DepthCm;
+            SelectedRegionId = Candidate.RegionId;
             OutSample = Candidate;
         }
     }

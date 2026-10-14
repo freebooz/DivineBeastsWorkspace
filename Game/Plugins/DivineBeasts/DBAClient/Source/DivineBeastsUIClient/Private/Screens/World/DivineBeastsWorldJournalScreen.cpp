@@ -8,6 +8,7 @@
 #include "Engine/LocalPlayer.h"
 #include "InputCoreTypes.h"
 #include "GameFramework/Pawn.h"
+#include "UObject/StrongObjectPtr.h"
 
 UDivineBeastsWorldJournalViewModel* UDivineBeastsWorldJournalScreen::ResolveJournal() const
 { return Cast<UDivineBeastsWorldJournalViewModel>(GetViewModel()); }
@@ -24,8 +25,6 @@ void UDivineBeastsWorldJournalScreen::NativeOnActivated()
     UntrackButton->OnClicked.AddUniqueDynamic(this, &ThisClass::UntrackSelected);
     CloseButton->OnClicked.AddUniqueDynamic(this, &ThisClass::CloseJournal);
     EntryList->OnSelectionChanged.AddUniqueDynamic(this, &ThisClass::HandleEntrySelected);
-    BoundJournal = ResolveJournal();
-    if (BoundJournal) BoundJournal->BindLocalPlayer(GetOwningLocalPlayer());
     RefreshView();
 }
 
@@ -52,8 +51,41 @@ void UDivineBeastsWorldJournalScreen::OnViewModelStateChanged(int32 Revision, in
     if (IsActivated()) RefreshView();
 }
 
+void UDivineBeastsWorldJournalScreen::RefreshInitialState()
+{ Super::RefreshInitialState(); if(IsActivated())RefreshView(); }
+bool UDivineBeastsWorldJournalScreen::ReconcileJournalBinding()
+{
+    if(!IsActivated())return false;
+    const TStrongObjectPtr<UDivineBeastsWorldJournalViewModel> Selected(ResolveJournal());
+    if(BoundJournal==Selected.Get())return Selected.IsValid();
+    const TStrongObjectPtr<UDivineBeastsWorldJournalViewModel> Previous(BoundJournal);
+    BoundJournal=Selected.Get();SelectedKey=NAME_None;VisibleKeys.Reset();
+    if(Previous.IsValid())Previous->UnbindLocalPlayer();
+    if(!IsActivated()||BoundJournal!=Selected.Get()||GetViewModel()!=Selected.Get())return false;
+    if(Selected.IsValid())Selected->BindLocalPlayer(GetOwningLocalPlayer());
+    return IsActivated()&&Selected.IsValid()&&BoundJournal==Selected.Get()&&GetViewModel()==Selected.Get();
+}
+
 void UDivineBeastsWorldJournalScreen::RefreshView()
 {
+    if(!ReconcileJournalBinding())
+    {
+        // 解绑旧模型可能同步激活后继模型；只有当前仍无有效模型时才撤下旧视图，不能抹掉重入的新页面。
+        if (!IsActivated() || ResolveJournal()) return;
+        TGuardValue<bool> Guard(bRefreshingOptions, true);
+        SelectedKey = NAME_None; VisibleKeys.Reset(); DisplayedMapPawn.Reset();
+        if (EntryList) { EntryList->ClearOptions(); EntryList->SetIsEnabled(false); }
+        if (!IsActivated() || ResolveJournal()) return;
+        if (SummaryText) SummaryText->SetText(NSLOCTEXT("SSLMUI", "JournalModelUnavailable", "当前手册数据不可用，请重新打开；旧角色和任务信息已撤下。"));
+        if (DetailText) DetailText->SetText(FText::GetEmpty());
+        for (UButton* Button : {CharacterTab.Get(), MapQuestTab.Get(), SpellbookTab.Get(), TrackButton.Get(), UntrackButton.Get()})
+            if (Button) Button->SetIsEnabled(false);
+        // BindToPawn(nullptr)同时撤销移动委托、纹理加载和地图快照；只隐藏地图不能解除旧来源。
+        if (WorldMap) WorldMap->BindToPawn(nullptr);
+        if (!IsActivated() || ResolveJournal()) return;
+        if (WorldMap) WorldMap->SetVisibility(ESlateVisibility::Collapsed);
+        return;
+    }
     auto* VM = ResolveJournal();
     if (!VM || !EntryList || !SummaryText) return;
     SummaryText->SetText(GetPageLoadError().IsEmpty() ? VM->GetSummary() : GetPageLoadError());
@@ -104,7 +136,14 @@ void UDivineBeastsWorldJournalScreen::HandleEntrySelected(FString /*Item*/, ESel
 void UDivineBeastsWorldJournalScreen::ShowCharacter() { if (auto* VM = ResolveJournal()) VM->SelectSection(EDivineBeastsWorldJournalSection::Character); }
 void UDivineBeastsWorldJournalScreen::ShowMapQuest() { if (auto* VM = ResolveJournal()) VM->SelectSection(EDivineBeastsWorldJournalSection::MapQuest); }
 void UDivineBeastsWorldJournalScreen::ShowSpellbook() { if (auto* VM = ResolveJournal()) VM->SelectSection(EDivineBeastsWorldJournalSection::Spellbook); }
-void UDivineBeastsWorldJournalScreen::ShowParty() { if (auto* VM = ResolveJournal()) VM->SelectSection(EDivineBeastsWorldJournalSection::Party); }
+void UDivineBeastsWorldJournalScreen::ShowParty()
+{
+    if(!IsActivated())return;
+    auto* Owner=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsUIClientSubsystem>():nullptr;
+    // 公共小队由已有服务拥有；受理后撤下高层手册，避免新小队页被System层遮挡。
+    if(Owner&&Owner->OpenWorldJournal(TEXT("Party"))){CloseJournal();return;}
+    SummaryText->SetText(NSLOCTEXT("SSLMUI","JournalPartyUnavailable","当前不能打开小队界面；没有创建或修改任何队伍。"));
+}
 void UDivineBeastsWorldJournalScreen::TrackSelected() { if (auto* VM = ResolveJournal()) VM->SetQuestTracked(SelectedKey, true); }
 void UDivineBeastsWorldJournalScreen::UntrackSelected() { if (auto* VM = ResolveJournal()) VM->SetQuestTracked(SelectedKey, false); }
 void UDivineBeastsWorldJournalScreen::CloseJournal()

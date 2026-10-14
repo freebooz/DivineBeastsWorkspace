@@ -21,6 +21,7 @@ protected:
     virtual bool NativeOnHandleBackAction() override;
     virtual FReply NativeOnPreviewKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
     virtual void OnViewModelStateChanged(int32 Revision, int32 PageGeneration) override;
+    virtual void RefreshInitialState() override;
     /** Monolith资产命名合同；缺少必需控件应在Widget编译时报错，不运行时生成替代界面。 */
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> CharacterTab;
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> MapQuestTab;
@@ -36,6 +37,8 @@ protected:
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UDivineBeastsVillageMinimapWidget> WorldMap;
 private:
     UDivineBeastsWorldJournalViewModel* ResolveJournal() const;
+    /** 活动中换模型时精确解绑旧本地玩家来源，再绑定新模型；外部回调后重验当前选择。 */
+    bool ReconcileJournalBinding();
     void RefreshView();
     void RefreshSelection();
     UFUNCTION() void ShowCharacter();

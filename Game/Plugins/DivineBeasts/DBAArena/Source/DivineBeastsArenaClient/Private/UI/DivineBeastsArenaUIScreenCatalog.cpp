@@ -1,3 +1,5 @@
+// SSLM项目竞技客户端页面目录：只登记竞技层栈、输入模式和内容软身份，调用方为竞技UI装配。
+// 真实视觉资产归DBAArena；目录不授予选人/匹配权威，不加载公共世界或修改资源生命周期。
 #include "UI/DivineBeastsArenaUIScreenCatalog.h"
 
 namespace
@@ -63,13 +65,15 @@ const TArray<FDivineBeastsArenaUISurfaceDescriptor>& BuildCatalog()
             TEXT("HeroSelection"),
             EGamePlatformUILayer::Screen,
             EGamePlatformUIInputMode::UIOnly,
-            TEXT("HeroList")),
+            // 授权候选合同尚缺，不把不存在/禁用的HeroList作为焦点；返回始终可达。
+            TEXT("CloseButton")),
         MakeScreen(
             TEXT("UI.Screen.Scoreboard"),
             TEXT("Scoreboard"),
             EGamePlatformUILayer::System,
             EGamePlatformUIInputMode::GameAndUI,
-            TEXT("ScoreboardList")),
+            // 实际比分控件为ResultsList且可以为空；用始终可用的关闭按钮作初始焦点。
+            TEXT("CloseButton")),
         MakeScreen(
             TEXT("UI.Screen.PostMatchResult"),
             TEXT("PostMatch"),

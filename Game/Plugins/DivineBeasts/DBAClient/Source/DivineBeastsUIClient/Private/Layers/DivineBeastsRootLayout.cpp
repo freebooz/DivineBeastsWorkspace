@@ -27,6 +27,7 @@
 #include "ViewModels/DivineBeastsUIViewModel.h"
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "Components/WidgetSwitcher.h"
+#include "UObject/StrongObjectPtr.h"
 
 
 namespace
@@ -99,7 +100,7 @@ void UpdateOverflow(UGamePlatformStatusEffectTrayWidget* Panel, FName Name, int3
 void UDivineBeastsRootLayout::NativeConstruct()
 {
     Super::NativeConstruct();
-
+    bWorldHUDHostConstructed=true;
     RefreshForPlayerController(GetOwningPlayer());
 }
 
@@ -126,6 +127,7 @@ void UDivineBeastsRootLayout::RefreshForPlayerController(APlayerController* Cont
 
 void UDivineBeastsRootLayout::NativeDestruct()
 {
+    bWorldHUDHostConstructed=false;bWorldHUDRefreshQueued=false;
     if (auto* Owner=WorldUIOwner.Get()) Owner->OnStateChanged().Remove(WorldUIStateHandle);
     WorldUIStateHandle.Reset(); WorldUIOwner.Reset(); ReleaseWorldContextHUD();
     if (APlayerController* Controller = BoundHUDController.Get())
@@ -174,18 +176,23 @@ void UDivineBeastsRootLayout::ReleaseWorldContextHUD()
 {
     // 先撤销根拥有的引用，再调用可同步取消命令的模型清理，后继选择不会被旧引用误清除。
     auto* Previous=ActiveWorldContextHUD.Get();ActiveWorldContextHUD.Reset();
-    auto* Model=WorldHUDModel.Get();WorldHUDModel=nullptr;
-    if(Previous){Previous->InitializeWidgetViewModel(nullptr);Previous->SetVisibility(ESlateVisibility::Collapsed);}
-    if(Model){Model->OnScreenDeactivated();Model->EndPage();}
+    const TStrongObjectPtr<UDivineBeastsUIViewModel> Model(WorldHUDModel);WorldHUDModel=nullptr;
+    if(Previous){Previous->ClearWorldCommandContext();Previous->InitializeWidgetViewModel(nullptr);Previous->SetVisibility(ESlateVisibility::Collapsed);}
+    if(Model.IsValid()){Model->OnScreenDeactivated();Model->EndPage();}
 }
 void UDivineBeastsRootLayout::RefreshWorldContextHUD()
 {
-    if(bSynchronizingWorldHUD)return;
+    if(bSynchronizingWorldHUD){bWorldHUDRefreshQueued=true;return;}
     TGuardValue<bool> Guard(bSynchronizingWorldHUD,true);
+    do{bWorldHUDRefreshQueued=false;RefreshWorldContextHUDOnce();}while(bWorldHUDRefreshQueued&&bWorldHUDHostConstructed);
+}
+void UDivineBeastsRootLayout::RefreshWorldContextHUDOnce()
+{
+    if(!bWorldHUDHostConstructed)return;
     auto* Switcher=Cast<UWidgetSwitcher>(GetWidgetFromName(TEXT("WorldContextSwitcher")));
     // Travel清理HUDLayer后只恢复本根布局拥有的既有Switcher实例，不构造新视觉树或复活旧世界动态HUD。
     if(Switcher&&!Switcher->GetParent()&&HUDLayer)
-        if(auto* Slot=HUDLayer->AddChildToOverlay(Switcher)){Slot->SetHorizontalAlignment(HAlign_Left);Slot->SetVerticalAlignment(VAlign_Center);}
+        if(auto* ContextSlot=HUDLayer->AddChildToOverlay(Switcher)){ContextSlot->SetHorizontalAlignment(HAlign_Left);ContextSlot->SetVerticalAlignment(VAlign_Center);}
     auto* Owner=WorldUIOwner.Get();
     const auto State=Owner?Owner->GetViewState():FDivineBeastsUIViewState();
     FName Role;
@@ -202,6 +209,7 @@ void UDivineBeastsRootLayout::RefreshWorldContextHUD()
     if(Selected!=ActiveWorldContextHUD.Get())
     {
         ReleaseWorldContextHUD();ActiveWorldContextHUD=Selected;
+        if(!bWorldHUDHostConstructed||WorldUIOwner.Get()!=Owner){ActiveWorldContextHUD.Reset();return;}
         Selected->SetPlayerContext(FLocalPlayerContext(GetOwningPlayer()));
         WorldHUDModel=Owner->CreateViewModel(Selected->GetHUDSurfaceId());
         if(WorldHUDModel){WorldHUDModel->BeginPage();Selected->InitializeWidgetViewModel(WorldHUDModel);}

@@ -48,7 +48,7 @@
       ]
     },
     {
-      "Name": "Niagara",
+      "Name": "GamePlatformPresentation",
       "Enabled": true,
       "TargetAllowList": [
         "Client",

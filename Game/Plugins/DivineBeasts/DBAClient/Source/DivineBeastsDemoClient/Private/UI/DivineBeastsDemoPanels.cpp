@@ -42,9 +42,9 @@ void UDivineBeastsDemoHubWidget::BindPresentationModel(UDivineBeastsDemoHubViewM
     if(PresentationModel.Get()==InModel&&PresentationPageGeneration==Generation) { RefreshPanelPresentation(); return; }
     if(auto* Previous=PresentationModel.Get())Previous->OnViewStateChanged.RemoveDynamic(this,&ThisClass::PanelModelChanged);
     PresentationModel=InModel; PresentationPageGeneration=Generation;
-    PanelParameterScenario=NAME_None; PanelParameterItems.Reset(); PanelPendingReports.Reset();
+    PanelParameterScenario=NAME_None; PanelParameterFingerprint.Reset(); PanelParameterItems.Reset(); PanelPendingReports.Reset();
     PanelEvidencePath.Reset(); PanelEvidenceRunId.Invalidate(); PanelCommandFeedback=FText();
-    if(auto* Slot=Cast<UNamedSlot>(GetWidgetFromName(TEXT("PanelSampleSlot"))))Slot->SetContent(nullptr);
+    if(auto* SampleSlot=Cast<UNamedSlot>(GetWidgetFromName(TEXT("PanelSampleSlot"))))SampleSlot->SetContent(nullptr);
     if(InModel)InModel->OnViewStateChanged.AddUniqueDynamic(this,&ThisClass::PanelModelChanged);
     RefreshPanelPresentation();
 }
@@ -59,9 +59,10 @@ void UDivineBeastsDemoHubWidget::RefreshPanelPresentation()
     Text(TEXT("PanelDetailsText"),bCurrent?Snapshot.Details:FText::FromString(TEXT("演示页面未激活，等待Hub绑定当前只读模型。")));
     const auto* Selected=Snapshot.Scenarios.FindByPredicate([&](const auto& Entry){return Entry.Scenario.ScenarioId==Snapshot.SelectedScenarioId;});
     auto* Parameters=Cast<UListView>(GetWidgetFromName(TEXT("PanelParameterList")));
-    if(Parameters&&PanelParameterScenario!=Snapshot.SelectedScenarioId)
+    if(Parameters&&(PanelParameterScenario!=Snapshot.SelectedScenarioId||PanelParameterFingerprint!=Snapshot.SourceFingerprint))
     {
-        PanelParameterScenario=Snapshot.SelectedScenarioId; PanelParameterItems.Reset(); TArray<UObject*> Values;
+        PanelParameterScenario=Snapshot.SelectedScenarioId; PanelParameterFingerprint=Snapshot.SourceFingerprint;
+        PanelCommandFeedback=FText(); PanelParameterItems.Reset(); TArray<UObject*> Values;
         if(Selected)for(const auto& Definition:Selected->Scenario.Parameters)
         {auto* Item=NewObject<UDivineBeastsDemoParameterItem>(this);Item->Definition=Definition;Item->Value=Definition.DefaultValue;PanelParameterItems.Add(Item);Values.Add(Item);}
         Parameters->SetListItems(Values);
@@ -80,8 +81,8 @@ void UDivineBeastsDemoHubWidget::RefreshPanelPresentation()
     Enable(TEXT("PanelStopButton"),bCurrent&&!bPanelCommandDispatching&&(Snapshot.Run.State==EDivineBeastsDemoRunState::Preparing||Snapshot.Run.State==EDivineBeastsDemoRunState::Running));
     Enable(TEXT("PanelEvidenceButton"),bCurrent&&Snapshot.Run.Token.IsValid()&&!bPanelCommandDispatching&&!Snapshot.Run.bOperationPending&&
         (Snapshot.Run.State==EDivineBeastsDemoRunState::Completed||Snapshot.Run.State==EDivineBeastsDemoRunState::Failed||Snapshot.Run.State==EDivineBeastsDemoRunState::Cancelled));
-    if(auto* Slot=Cast<UNamedSlot>(GetWidgetFromName(TEXT("PanelSampleSlot"))))
-    {auto* Sample=bCurrent?PresentationModel->GetSampleWidget():nullptr;if(Slot->GetContent()!=Sample)Slot->SetContent(Sample);}
+    if(auto* SampleSlot=Cast<UNamedSlot>(GetWidgetFromName(TEXT("PanelSampleSlot"))))
+    {auto* Sample=bCurrent?PresentationModel->GetSampleWidget():nullptr;if(SampleSlot->GetContent()!=Sample)SampleSlot->SetContent(Sample);}
     Text(TEXT("PanelStatusText"),!PanelCommandFeedback.IsEmpty()?PanelCommandFeedback:FText::FromString(Selected?
         Selected->Preflight.bCanStart?TEXT("预检已通过；尚不代表执行或人工验收成功。") : Selected->Preflight.Result.Message:
         bCurrent?Snapshot.CatalogResult.Message:TEXT("当前没有活动演示模型。")));

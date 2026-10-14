@@ -63,6 +63,11 @@ public:
         FString& OutError,
         FDivineBeastsPresentationContentPackHandle* OutPendingHandle = nullptr);
 
+    /** 水体涟漪与飞溅的项目VFX目录：只有两个真实逻辑定义经GamePlatformData预载成功才发布。
+     * 返回有效句柄只表示已接纳Loading，调用方须订阅内容包状态；此接口不会直接播放Niagara。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Water")
+    FDivineBeastsPresentationContentPackHandle ActivateWaterVisuals(FString& OutError);
+
     /** 雨雪两套VFXDefinition完成真实资产预载后才注册项目天气目录，返回值只表示Loading已受理。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Weather")
     FDivineBeastsPresentationContentPackHandle ActivateWeatherVisuals(FString& OutError);
@@ -321,6 +326,9 @@ private:
     FName FrontEndFoliageStyle = NAME_None;
     FVector FrontEndFoliageOrigin = FVector::ZeroVector;
     float FrontEndFoliageGroundHeightCm = 0.f;
+
+    /** 水体VFX目录只属于本World和本地玩家，切图/退出撤销，不进入专用服务器。 */
+    FDivineBeastsPresentationContentPackHandle WaterVisualHandle;
 
     /** 本地天气表现独立于游戏模式，和用户身份/World代次共同决定目录预载期限。 */
     TWeakObjectPtr<UWorld> WeatherBoundWorld;

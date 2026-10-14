@@ -54,6 +54,8 @@ private:
     TArray<FName> QuestIds;
     FName SelectedQuestId;
     bool bRefreshingQuestList = false;
+    /** 本地追踪命令失败必须可见，不把无变化的缓存冒充已追踪成功。 */
+    FText QuestCommandFeedback;
     void HandleQuestChanged();
     UGamePlatformQuestClientSubsystem* ResolveQuestSubsystem() const;
 

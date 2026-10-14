@@ -208,4 +208,34 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
     }
     return true;
 }
+
+// 新增九份公共页复用上方既有线性浮点RHI/单次PNG编码链路，不调用Monolith已知错误的widget截图。
+// 只构造未激活的真实资产测试实例，无账号/后端/权威状态；图像供集中人工核验，不自动判定布局或艺术品质。
+// 本公共模块不加载竞技或开发中心资产，防止为截图使公共UI反向依赖可选模块。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsRemainingPagesRHIReportTest,
+    "DivineBeasts.UI.RemainingSurfaces.RHISavedPages",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsRemainingPagesRHIReportTest::RunTest(const FString&)
+{
+    if (GUsingNullRHI)
+    {
+        AddError(TEXT("剩余页画面证据必须使用真实RHI，不能将NullRHI或未执行视为通过。"));
+        return false;
+    }
+    const TCHAR* Pages[] = {
+        TEXT("Screens/WBP_DBA_UI_Boot"), TEXT("Screens/WBP_DBA_UI_Quest"),
+        TEXT("Screens/WBP_DBA_UI_Social"), TEXT("Screens/WBP_DBA_UI_LiveOps"),
+        TEXT("HUD/WBP_DBA_UI_OpenWorldHUD"), TEXT("HUD/WBP_DBA_UI_VillageMainHUD"),
+        TEXT("HUD/WBP_DBA_UI_TutorialGuidance"), TEXT("HUD/WBP_DBA_UI_TrainingControls"),
+        TEXT("Notifications/WBP_DBA_UI_Toast")};
+    for (const TCHAR* Page : Pages)
+    {
+        const FString Name = FPaths::GetCleanFilename(Page);
+        const FString ClassPath = FString(TEXT("/DBAUIPack_Core/UI/")) + Page + TEXT(".") + Name + TEXT("_C");
+        const FString FileName = FString(TEXT("RemainingPages/")) + Name + TEXT("_1920x1080_RenderEvidence.png");
+        TestTrue(*FString::Printf(TEXT("%s真实RHI页面导出"), *Name),
+            DivineBeastsUIColorTests::SavePagePreview(*ClassPath, *FileName, FIntPoint(1920, 1080), *this, false));
+    }
+    return true;
+}
 #endif

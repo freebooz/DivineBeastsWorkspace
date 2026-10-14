@@ -9,7 +9,8 @@
 class UDivineBeastsDemoHubViewModel;
 class UDivineBeastsDemoParameterItem;
 
-/** WBP_DBA_PluginDemoHub等真实UI蓝图的父类；不在C++构建另一套可视控件树。 */
+/** 既有兼容开发界面与Detail/Controls/Report子页的父类；主Hub已派生HubScreen。
+ * 子页借用主Hub模型，不能拥有其页面代次；此类型不在C++构建另一套可视控件树。 */
 UCLASS(BlueprintType, Blueprintable)
 class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoHubWidget : public UUserWidget
 {
@@ -58,6 +59,8 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<UDivineBeastsDemoParameterItem>> PanelParameterItems;
     UPROPERTY(Transient) TArray<TObjectPtr<UObject>> PanelPendingReports;
     FName PanelParameterScenario;
+    /** 同案例目录更新后也需重建参数合同，不能只用ID沿用旧范围或默认值。 */
+    FString PanelParameterFingerprint;
     FString PanelEvidencePath;
     FGuid PanelEvidenceRunId;
     FText PanelCommandFeedback;

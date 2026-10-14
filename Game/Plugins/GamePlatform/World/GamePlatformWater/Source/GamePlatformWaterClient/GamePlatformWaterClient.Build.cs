@@ -1,12 +1,12 @@
 using UnrealBuildTool;
 
-// 平台客户端水表现适配：仅客户端/Editor加载Niagara与UE5.8 Water；服务器不链接此模块。
+// 水客户端只提交平台中立表现语义请求，Niagara由GamePlatformVFX唯一执行；Water仅用于水面审查。
 public class GamePlatformWaterClient : ModuleRules
 {
     public GamePlatformWaterClient(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "GamePlatformWaterRuntime" });
-        PrivateDependencyModuleNames.AddRange(new[] { "Niagara", "Water", "GamePlatformData" });
+        PrivateDependencyModuleNames.AddRange(new[] { "Water", "GamePlatformPresentationCore", "GamePlatformPresentationClient", "GameplayTags" });
     }
 }

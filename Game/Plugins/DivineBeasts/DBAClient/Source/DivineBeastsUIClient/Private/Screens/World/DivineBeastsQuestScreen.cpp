@@ -77,7 +77,7 @@ void UDivineBeastsQuestScreen::UnbindUIEvents()
     if (auto* List = Cast<UComboBoxString>(GetWidgetFromName(TEXT("QuestList")))) List->OnSelectionChanged.RemoveAll(this);
     for (const TCHAR* Name : {TEXT("TrackButton"), TEXT("UntrackButton"), TEXT("CloseButton")})
         if (auto* Button = Cast<UButton>(GetWidgetFromName(Name))) Button->OnClicked.RemoveAll(this);
-    QuestIds.Reset(); SelectedQuestId = NAME_None;
+    QuestIds.Reset(); SelectedQuestId = NAME_None; QuestCommandFeedback=FText();
     if (IsValid(QuestSubsystem) &&
         QuestChangedHandle.IsValid())
     {
@@ -122,8 +122,12 @@ void UDivineBeastsQuestScreen::RefreshQuestPresentation()
     if (List) { List->SetIsEnabled(!QuestIds.IsEmpty()); if (Index != INDEX_NONE) List->SetSelectedIndex(Index); }
     const bool bSelected = Index != INDEX_NONE;
     if (auto* Text = Cast<UTextBlock>(GetWidgetFromName(TEXT("QuestDetailText"))))
-        Text->SetText(FText::FromString(!Source ? TEXT("任务服务不可用；未加载任何任务。") : !bSelected ? TEXT("当前没有可展示的任务。") :
-            SelectedQuestId.ToString() + (IsQuestTracked(SelectedQuestId) ? TEXT("\n已加入本地追踪；完成和奖励仍由服务器确认。") : TEXT("\n未追踪；可加入本地任务追踪。"))));
+    {
+        FString Detail=!Source ? TEXT("任务服务不可用；未加载任何任务。") : !bSelected ? TEXT("当前没有可展示的任务。") :
+            SelectedQuestId.ToString() + (IsQuestTracked(SelectedQuestId) ? TEXT("\n已加入本地追踪；完成和奖励仍由服务器确认。") : TEXT("\n未追踪；可加入本地任务追踪。"));
+        if(!QuestCommandFeedback.IsEmpty())Detail+=TEXT("\n")+QuestCommandFeedback.ToString();
+        Text->SetText(FText::FromString(Detail));
+    }
     if (auto* Button = Cast<UButton>(GetWidgetFromName(TEXT("TrackButton")))) Button->SetIsEnabled(bSelected && !IsQuestTracked(SelectedQuestId));
     if (auto* Button = Cast<UButton>(GetWidgetFromName(TEXT("UntrackButton")))) Button->SetIsEnabled(bSelected && IsQuestTracked(SelectedQuestId));
 }
@@ -133,12 +137,13 @@ void UDivineBeastsQuestScreen::QuestSelected(FString, ESelectInfo::Type)
     const auto* List = Cast<UComboBoxString>(GetWidgetFromName(TEXT("QuestList")));
     const int32 Index = List ? List->GetSelectedIndex() : INDEX_NONE;
     SelectedQuestId = QuestIds.IsValidIndex(Index) ? QuestIds[Index] : NAME_None;
+    QuestCommandFeedback=FText();
     RefreshQuestPresentation();
 }
 void UDivineBeastsQuestScreen::TrackSelectedQuest()
-{ if (IsActivated() && !SelectedQuestId.IsNone()) { TrackQuest(SelectedQuestId); RefreshQuestPresentation(); } }
+{ if (IsActivated() && !SelectedQuestId.IsNone()) { const bool bAccepted=TrackQuest(SelectedQuestId);QuestCommandFeedback=FText::FromString(bAccepted?TEXT("本地追踪已更新。"):TEXT("无法追踪：任务已失效或超过追踪上限。"));RefreshQuestPresentation(); } }
 void UDivineBeastsQuestScreen::UntrackSelectedQuest()
-{ if (IsActivated() && !SelectedQuestId.IsNone()) { UntrackQuest(SelectedQuestId); RefreshQuestPresentation(); } }
+{ if (IsActivated() && !SelectedQuestId.IsNone()) { const bool bAccepted=UntrackQuest(SelectedQuestId);QuestCommandFeedback=FText::FromString(bAccepted?TEXT("本地追踪已取消。"):TEXT("取消未受理：该任务已不在当前追踪集合。"));RefreshQuestPresentation(); } }
 void UDivineBeastsQuestScreen::CloseQuestPage() { if (IsActivated()) CloseScreen(); }
 
 UGamePlatformQuestClientSubsystem*

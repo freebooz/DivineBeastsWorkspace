@@ -131,6 +131,38 @@ FGamePlatformPresentationCatalogFragment MakeWeatherFragment(
 }
 }
 
+// 项目水体VFX只登记逻辑身份，不包含Niagara系统路径，避免绕过平台内容预检。
+FGamePlatformPresentationCatalogFragment
+FDivineBeastsPresentationProjectCatalog::BuildWaterVFXFragment()
+{
+    FGamePlatformPresentationCatalogFragment Fragment;
+    Fragment.FragmentId = TEXT("DBA.Presentation.Water.VFX");
+    Fragment.Revision = CatalogRevision;
+    Fragment.Scope = EGamePlatformPresentationCatalogScope::Project;
+    Fragment.OwnerScopeId = FDivineBeastsProjectCatalog::GetProjectId();
+    Fragment.LifecycleScope = EGamePlatformPresentationContextScope::World;
+    auto Add = [&Fragment](const TCHAR* Suffix, const TCHAR* LogicalId)
+    {
+        const FString TagName = FString(TEXT("Presentation.Water.")) + Suffix + TEXT(".VFX");
+        const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(*TagName), false);
+        if (!Tag.IsValid())
+            return; // GameplayTag注册缺失时安全关闭，不发布无效语义。
+        FGamePlatformPresentationCatalogEntry Entry;
+        Entry.EntryId = FName(*(FString(TEXT("DBA.Water.")) + Suffix + TEXT(".VFX")));
+        Entry.SemanticTag = Tag;
+        Entry.ProviderChannel = TEXT("VFX");
+        Entry.DefinitionId = FName(LogicalId);
+        Entry.ContextQuery.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
+        Entry.Scope = EGamePlatformPresentationCatalogScope::Project;
+        Entry.Specificity = 1;
+        Entry.ContentRevision = TEXT("1");
+        Fragment.Entries.Add(MoveTemp(Entry));
+    };
+    Add(TEXT("Ripple"), TEXT("platform.water.ripple@1"));
+    Add(TEXT("Splash"), TEXT("platform.water.splash@1"));
+    return Fragment;
+}
+
 FGamePlatformPresentationCatalogFragment
 FDivineBeastsPresentationProjectCatalog::BuildWeatherVFXFragment()
 {

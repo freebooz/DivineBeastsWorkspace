@@ -51,7 +51,12 @@ void UDivineBeastsDemoHubScreen::RefreshInitialState()
     Super::RefreshInitialState();
     if (!IsActivated()) return;
     DemoModel = Cast<UDivineBeastsDemoHubViewModel>(GetViewModel());
-    if (!DemoModel) { if (OperationStatusText) OperationStatusText->SetText(FText::FromString(TEXT("页面缺少演示ViewModel。"))); return; }
+    if (!DemoModel)
+    {
+        // EndPage不广播状态；空/错误类型必须主动撤销嵌入页、参数和样板，不能仅禁止后续命令。
+        DetachViewModel();
+        return;
+    }
     // BindCatalog会同步广播并进入蓝图；观察者可以清空/替换VM、关闭页面或重开同一VM。
     // 保活本次模型并冻结页代次，返回后只更新原绑定；两个空指针相等不能代表绑定仍有效。
     const TStrongObjectPtr<UDivineBeastsDemoHubViewModel> SelectedModel(DemoModel);
@@ -64,14 +69,43 @@ void UDivineBeastsDemoHubScreen::RefreshInitialState()
 }
 void UDivineBeastsDemoHubScreen::DetachViewModel()
 {
-    for (const TCHAR* Name:{TEXT("DemoDetailPage"),TEXT("DemoControlsPage"),TEXT("DemoReportPage")})
-        if (auto* Panel=Cast<UDivineBeastsDemoHubWidget>(GetWidgetFromName(Name))) Panel->BindPresentationModel(nullptr);
+    const TStrongObjectPtr<UGamePlatformViewModelBase> Selected(GetViewModel());
+    const int32 Generation = Selected.IsValid() ? Selected->GetPageGeneration() : 0;
+    const bool bWasActivated = IsActivated();
+    const auto StillOwnsCleanup = [this, &Selected, Generation, bWasActivated]()
+    {
+        return GetViewModel() == Selected.Get() && IsActivated() == bWasActivated &&
+            (!Selected.IsValid() || Selected->GetPageGeneration() == Generation);
+    };
+    // 先撤销本宿主的命令资格与值缓存；移除样板/列表会同步进入Slate或蓝图，不能清掉重入的新模型。
     DemoModel = nullptr;
+    MenuItems.Reset(); ParameterItems.Reset(); PendingEditorReports.Reset(); ParametersForScenario = NAME_None;
+    for (const TCHAR* Name:{TEXT("DemoDetailPage"),TEXT("DemoControlsPage"),TEXT("DemoReportPage")})
+    {
+        if (!StillOwnsCleanup()) return;
+        if (auto* Panel=Cast<UDivineBeastsDemoHubWidget>(GetWidgetFromName(Name))) Panel->BindPresentationModel(nullptr);
+    }
+    TGuardValue<bool> Guard(bSynchronizing, true);
+    for (UListView* List : {PluginList.Get(), FeatureList.Get(), ScenarioList.Get(), ParameterList.Get()})
+    {
+        if (!StillOwnsCleanup()) return;
+        if (List) List->ClearListItems();
+    }
+    if (!StillOwnsCleanup()) return;
+    for (UButton* Button : {RefreshButton.Get(), LaunchScenarioButton.Get(), ExecuteScenarioButton.Get(),
+        PauseScenarioButton.Get(), ResumeScenarioButton.Get(), StopScenarioButton.Get(), ResetDemoButton.Get(), EvidenceButton.Get()})
+        if (Button) Button->SetIsEnabled(false);
+    if (PluginSearchInput) PluginSearchInput->SetIsEnabled(false);
+    if (LayerFilterCombo) LayerFilterCombo->SetIsEnabled(false);
+    if (FeatureDetailsText) FeatureDetailsText->SetText(FText::GetEmpty());
+    if (CoverageText) CoverageText->SetText(FText::FromString(TEXT("当前没有活动演示模型；旧覆盖计数已撤下。")));
+    if (OperationStatusText) OperationStatusText->SetText(FText::FromString(TEXT("页面缺少活动演示ViewModel，请重新打开演示中心。")));
     if (SampleWidgetSlot) SampleWidgetSlot->SetContent(nullptr);
 }
 void UDivineBeastsDemoHubScreen::UnbindUIEvents() { DetachViewModel(); Super::UnbindUIEvents(); }
 void UDivineBeastsDemoHubScreen::NativeDestruct() { DetachViewModel(); Super::NativeDestruct(); }
-bool UDivineBeastsDemoHubScreen::NativeOnHandleBackAction() { return DemoModel && DemoModel->RequestReturn(); }
+bool UDivineBeastsDemoHubScreen::NativeOnHandleBackAction()
+{ return DemoModel ? DemoModel->RequestReturn() : Super::NativeOnHandleBackAction(); }
 void UDivineBeastsDemoHubScreen::OnViewModelStateChanged(int32, int32 PageGeneration)
 {
     // 平台先核验可见代次；此处还核验实际模型，不能向已经EndPage的旧模型发送命令。
@@ -112,11 +146,25 @@ void UDivineBeastsDemoHubScreen::OnScenarioSelectionChanged(UObject* Object)
 void UDivineBeastsDemoHubScreen::ApplySnapshot()
 {
     if (!DemoModel || !IsActivated() || DemoModel != GetViewModel() || !DemoModel->IsPageActive()) return;
-    for (const TCHAR* Name:{TEXT("DemoDetailPage"),TEXT("DemoControlsPage"),TEXT("DemoReportPage")})
-        if (auto* Panel=Cast<UDivineBeastsDemoHubWidget>(GetWidgetFromName(Name))) Panel->BindPresentationModel(DemoModel);
+    const TStrongObjectPtr<UDivineBeastsDemoHubViewModel> SelectedModel(DemoModel);
+    const int32 Generation = SelectedModel->GetPageGeneration();
+    const auto IsCurrent = [this, &SelectedModel, Generation]()
+    {
+        return IsActivated() && DemoModel == SelectedModel.Get() && GetViewModel() == SelectedModel.Get() &&
+            SelectedModel->IsPageActive() && SelectedModel->GetPageGeneration() == Generation;
+    };
     TGuardValue<bool> Guard(bSynchronizing, true);
-    const auto Snapshot = DemoModel->GetMenuSnapshot(); MenuItems.Reset();
-    const auto Populate = [this](UListView* List, const auto& Values, auto Read, FName Selected)
+    if (PluginSearchInput) PluginSearchInput->SetIsEnabled(true);
+    if (LayerFilterCombo) LayerFilterCombo->SetIsEnabled(true);
+    if (RefreshButton) RefreshButton->SetIsEnabled(true);
+    for (const TCHAR* Name:{TEXT("DemoDetailPage"),TEXT("DemoControlsPage"),TEXT("DemoReportPage")})
+    {
+        if (auto* Panel=Cast<UDivineBeastsDemoHubWidget>(GetWidgetFromName(Name))) Panel->BindPresentationModel(DemoModel);
+        // 子页移除样板可能同步关闭/替换宿主；不能继续使用被撤销的DemoModel或发送旧快照事件。
+        if (!IsCurrent()) return;
+    }
+    const auto Snapshot = SelectedModel->GetMenuSnapshot(); MenuItems.Reset();
+    const auto Populate = [this, &IsCurrent](UListView* List, const auto& Values, auto Read, FName Selected)
     {
         if (!List) return;
         TArray<UObject*> Items; UObject* Selection = nullptr;
@@ -125,14 +173,17 @@ void UDivineBeastsDemoHubScreen::ApplySnapshot()
             auto* Item = NewObject<UDivineBeastsDemoMenuItem>(this); Read(Value, *Item);
             MenuItems.Add(Item); Items.Add(Item); if (Item->Identity == Selected) Selection = Item;
         }
-        List->SetListItems(Items); if (Selection) List->SetSelectedItem(Selection);
+        List->SetListItems(Items); if (IsCurrent() && Selection) List->SetSelectedItem(Selection);
     };
     Populate(PluginList, Snapshot.Plugins, [](const auto& P, auto& Item)
     { Item.Identity = P.PluginId; Item.Label = P.DisplayName; Item.Status = FText::FromString(P.bEnabled ? TEXT("已启用；功能范围见详情") : TEXT("已禁用；保留功能信息")); }, Snapshot.SelectedPluginId);
+    if (!IsCurrent()) return;
     Populate(FeatureList, Snapshot.Features, [](const auto& F, auto& Item)
     { Item.Identity = F.Feature.FeatureId; Item.Label = F.Feature.Title; Item.Status = FText::FromString(TEXT("实现：") + F.Feature.ImplementationStatus.ToString() + TEXT("；接入：") + F.Feature.IntegrationStatus.ToString() + TEXT("；人工未核验")); }, Snapshot.SelectedFeatureId);
+    if (!IsCurrent()) return;
     Populate(ScenarioList, Snapshot.Scenarios, [](const auto& S, auto& Item)
     { Item.Identity = S.Scenario.ScenarioId; Item.Label = S.Scenario.Title; Item.Status = FText::FromString(S.Preflight.bCanStart ? TEXT("预检通过，待运行") : S.Preflight.Result.Message); }, Snapshot.SelectedScenarioId);
+    if (!IsCurrent()) return;
     const auto* Selected = Snapshot.Scenarios.FindByPredicate([&Snapshot](const auto& S) { return S.Scenario.ScenarioId == Snapshot.SelectedScenarioId; });
     if (ParametersForScenario != Snapshot.SelectedScenarioId)
     {
@@ -140,6 +191,7 @@ void UDivineBeastsDemoHubScreen::ApplySnapshot()
         if (Selected) for (const auto& Parameter : Selected->Scenario.Parameters)
         { auto* Item = NewObject<UDivineBeastsDemoParameterItem>(this); Item->Definition = Parameter; Item->Value = Parameter.DefaultValue; ParameterItems.Add(Item); Values.Add(Item); }
         if (ParameterList) ParameterList->SetListItems(Values);
+        if (!IsCurrent()) return;
     }
     if (FeatureDetailsText) FeatureDetailsText->SetText(Snapshot.Details);
     if (CoverageText) CoverageText->SetText(FText::FromString(FString::Printf(TEXT("插件%d；待审计%d；已登记功能%d；已接线%d；当前人工通过%d%s"),
@@ -154,8 +206,8 @@ void UDivineBeastsDemoHubScreen::ApplySnapshot()
     if (ResumeScenarioButton) ResumeScenarioButton->SetIsEnabled(bCanOperate && Selected->Scenario.Operations.Contains(TEXT("Resume")));
     if (ResetDemoButton) ResetDemoButton->SetIsEnabled(bCanOperate && Selected->Scenario.Operations.Contains(TEXT("Reset")));
     if (StopScenarioButton) StopScenarioButton->SetIsEnabled(Snapshot.Run.State == EDivineBeastsDemoRunState::Preparing || Snapshot.Run.State == EDivineBeastsDemoRunState::Running);
-    if (SampleWidgetSlot && SampleWidgetSlot->GetContent() != DemoModel->GetSampleWidget()) SampleWidgetSlot->SetContent(DemoModel->GetSampleWidget());
-    BP_OnMenuSnapshotChanged(Snapshot);
+    if (SampleWidgetSlot && SampleWidgetSlot->GetContent() != SelectedModel->GetSampleWidget()) SampleWidgetSlot->SetContent(SelectedModel->GetSampleWidget());
+    if (IsCurrent()) BP_OnMenuSnapshotChanged(Snapshot);
 }
 void UDivineBeastsDemoHubScreen::SubmitOperation(FName Operation)
 {
@@ -172,7 +224,8 @@ void UDivineBeastsDemoHubScreen::OnPauseClicked() { SubmitOperation(TEXT("Pause"
 void UDivineBeastsDemoHubScreen::OnResumeClicked() { SubmitOperation(TEXT("Resume")); }
 void UDivineBeastsDemoHubScreen::OnStopClicked() { if (DemoModel) DemoModel->RequestOperation(TEXT("Stop"), {}); }
 void UDivineBeastsDemoHubScreen::OnResetClicked() { SubmitOperation(TEXT("Reset")); }
-void UDivineBeastsDemoHubScreen::OnReturnClicked() { if (DemoModel) DemoModel->RequestReturn(); }
+void UDivineBeastsDemoHubScreen::OnReturnClicked()
+{ if (DemoModel) DemoModel->RequestReturn(); else CloseScreen(); }
 void UDivineBeastsDemoHubScreen::OnEvidenceClicked()
 {
     if (!DemoModel) return;

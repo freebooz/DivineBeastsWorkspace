@@ -13,6 +13,9 @@ public:
 
     /** 天气VFX的项目片段；只有真实Definition/系统完成GamePlatformData预载后才可发布。 */
     static FGamePlatformPresentationCatalogFragment BuildWeatherVFXFragment();
+    /** Water VFX（水体视觉表现）项目目录：只映射水纹/飞溅语义到逻辑定义身份，
+     * 实际Niagara资产由统一Data与GamePlatformVFX加载；没有真实定义时不得发布。 */
+    static FGamePlatformPresentationCatalogFragment BuildWaterVFXFragment();
     /** 天气SFX的项目片段；独立于Niagara，缺声音资源不阻断雨雪画面。 */
     static FGamePlatformPresentationCatalogFragment BuildWeatherSFXFragment();
     /** 前端角色预览四类可替换自然飘落外观；只生成中立目录映射，无Niagara播放器。 */

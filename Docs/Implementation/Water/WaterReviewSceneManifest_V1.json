@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "project": "SSLM",
+  "status": "待执行Monolith引擎作者工具；本文件不是.umap",
+  "levelPath": "/Game/Development/Water/Maps/L_GP_WaterReview",
+  "worldScaleUnits": "厘米",
+  "editorSafety": {
+    "createOnlyIfMissing": true,
+    "openDirtyPolicy": "refuse",
+    "doNotEdit": "/DBAWorldPack_Village/Maps/L_Village_Start",
+    "requireProjectName": "DivineBeastsArena"
+  },
+  "actors": [
+    {
+      "label": "Review_WaterZone",
+      "class": "/Script/Water.WaterZone",
+      "positionCm": [
+        0,
+        0,
+        0
+      ],
+      "purposeChinese": "官方水体可见网格区域，只用于客户端渲染；不要重复创建"
+    },
+    {
+      "label": "Review_Lake",
+      "class": "/Script/Water.WaterBodyLake",
+      "positionCm": [
+        0,
+        0,
+        0
+      ],
+      "material": "/GamePlatformSurface/Materials/Water/MI_GP_Lake_Native",
+      "landscapeCarving": false,
+      "purposeChinese": "湖泊、水深色与岸线反射试验，仅用模拟地形不改正式Gaea高度"
+    },
+    {
+      "label": "Review_LakeAuthority",
+      "class": "/Script/GamePlatformWaterRuntime.GamePlatformWaterRegion",
+      "positionCm": [
+        0,
+        0,
+        0
+      ],
+      "properties": {
+        "Region.RegionId": "Review.Lake",
+        "Region.Kind": "Lake",
+        "Region.ShallowDepthCm": 90,
+        "Region.Priority": 20,
+        "WaterBounds.BoxExtent": [
+          1600,
+          1600,
+          300
+        ],
+        "WaterBounds.RelativeLocation": [
+          0,
+          0,
+          -300
+        ]
+      },
+      "purposeChinese": "双端湖区碰撞规则，不能从GPU波浪读取服务器深度"
+    },
+    {
+      "label": "Review_River",
+      "class": "/Script/Water.WaterBodyRiver",
+      "positionCm": [
+        -2600,
+        -800,
+        0
+      ],
+      "material": "/GamePlatformSurface/Materials/Water/MI_GP_River_Native",
+      "landscapeCarving": false,
+      "purposeChinese": "溪河样条、流向与边缘白沫审查，需编辑器人工调整Spline"
+    },
+    {
+      "label": "Review_RiverAuthority",
+      "class": "/Script/GamePlatformWaterRuntime.GamePlatformWaterRegion",
+      "positionCm": [
+        -2600,
+        -800,
+        0
+      ],
+      "properties": {
+        "Region.RegionId": "Review.River",
+        "Region.Kind": "River",
+        "Region.ShallowDepthCm": 65,
+        "Region.Priority": 30,
+        "WaterBounds.BoxExtent": [
+          900,
+          450,
+          160
+        ],
+        "WaterBounds.RelativeLocation": [
+          0,
+          0,
+          -160
+        ]
+      },
+      "purposeChinese": "溪河独立权威区域，流速来自平台静态规则"
+    },
+    {
+      "label": "Review_Waterfall",
+      "class": "/GamePlatformVFX/Water/Blueprints/BP_GP_WaterfallVisual.BP_GP_WaterfallVisual_C",
+      "positionCm": [
+        2200,
+        350,
+        600
+      ],
+      "material": "/GamePlatformSurface/Materials/Water/MI_GP_Waterfall_Light",
+      "purposeChinese": "通用水幕网格加水雾、飞溅和泡沫；演示地图可见性"
+    },
+    {
+      "label": "Review_BasinAuthority",
+      "class": "/Script/GamePlatformWaterRuntime.GamePlatformWaterRegion",
+      "positionCm": [
+        2200,
+        350,
+        0
+      ],
+      "properties": {
+        "Region.RegionId": "Review.WaterfallPool",
+        "Region.Kind": "Pool",
+        "Region.Priority": 40,
+        "Region.ShallowDepthCm": 95,
+        "WaterBounds.BoxExtent": [
+          520,
+          470,
+          220
+        ],
+        "WaterBounds.RelativeLocation": [
+          0,
+          0,
+          -220
+        ]
+      },
+      "purposeChinese": "瀑布落水潭平台权威范围，不需要服务端Niagara"
+    }
+  ],
+  "expectedAssetAndBuildGates": {
+    "mapCreated": false,
+    "blueprintCompiled": false,
+    "shaderCompiled": false,
+    "gpuMeasured": false,
+    "serverAndClientTested": false
+  },
+  "firstAcceptance": [
+    "编辑器打开正式工程后仅创建独立审核地图并保存，不触碰Village正式地图",
+    "Water Body湖与河道可见且不自动改变正式Landscape",
+    "所有水域RegionId唯一、可靠采样，地图加载/退出内存无跨世界残留",
+    "瀑布网格必须实际显示材质、水雾/飞溅真实Niagara系统属性回读",
+    "无水基线对比水面、瀑布、涟漪的CPU/GPU时间记录完整",
+    "Fluid Flux不装入正式世界或服务器构建"
+  ]
+}

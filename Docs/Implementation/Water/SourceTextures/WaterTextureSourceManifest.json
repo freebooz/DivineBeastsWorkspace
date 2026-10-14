@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "file": "T_GP_Water_TilingNormal_Source.png",
+      "kind": "NormalMap（切线法线）",
+      "width": 1024,
+      "height": 1024,
+      "format": "RGBA8",
+      "sha256": "170c8322e04b6c79f3a7d0a75d8a2027a9faf3a91f3f89b58aaa9623a3f69bd1",
+      "sRGB": false,
+      "说明": "真实PNG像素源图，非UE原生Texture2D；需由Monolith正式导入并重新审核压缩与像素通道"
+    },
+    {
+      "file": "T_GP_Water_ShoreFoam_Source.png",
+      "kind": "FoamMask（岸线泡沫，Alpha有效）",
+      "width": 1024,
+      "height": 1024,
+      "format": "RGBA8",
+      "sha256": "21b6bb096f6869d5227ecc6f07480573cc6c062e3dc194eedc59f921f5d5360e",
+      "sRGB": false,
+      "说明": "真实PNG像素源图，非UE原生Texture2D；需由Monolith正式导入并重新审核压缩与像素通道"
+    },
+    {
+      "file": "T_GP_Water_WaterfallFlow_Source.png",
+      "kind": "FlowMap（瀑布流向，RG以0.5为零速度）",
+      "width": 1024,
+      "height": 1024,
+      "format": "RGBA8",
+      "sha256": "acb3f55d7fb9f8c237dc54db8718b808749fea14fa3feeb370c824a208181e66",
+      "sRGB": false,
+      "说明": "真实PNG像素源图，非UE原生Texture2D；需由Monolith正式导入并重新审核压缩与像素通道"
+    },
+    {
+      "file": "T_GP_Water_Caustics_Source.png",
+      "kind": "Caustics（焦散灰度，RGB同值）",
+      "width": 1024,
+      "height": 1024,
+      "format": "RGBA8",
+      "sha256": "28f70ee63a9b9e5642560d20e7079b7d065dc7152919e4c5409bce94fb0f32c5",
+      "sRGB": false,
+      "说明": "真实PNG像素源图，非UE原生Texture2D；需由Monolith正式导入并重新审核压缩与像素通道"
+    }
+  ]
+}

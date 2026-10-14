@@ -7,12 +7,10 @@
 #include "Types/GamePlatformWaterTypes.h"
 #include "GamePlatformWaterClientWorldSubsystem.generated.h"
 
-class UNiagaraSystem;
 class AActor;
 class UGamePlatformWaterInteractorComponent;
 struct FGamePlatformWaterPresence;
 class UGamePlatformWaterPresentationPreset;
-struct FStreamableHandle;
 
 /** EGamePlatformWaterQualityTier（客户端水体特效档位），仅限制近景涟漪的预算。 */
 UENUM(BlueprintType)
@@ -55,7 +53,7 @@ public:
     UFUNCTION(BlueprintPure, Category="GamePlatform|Water")
     int32 GetNativeWaterBodyCount() const;
 
-    /** 清理已发资源句柄和帧内请求预算；退出世界和更换预设时幂等。 */
+    /** 清理表现配置与当前请求预算；资源播放及其租约归统一Presentation/VFX管理。 */
     UFUNCTION(BlueprintCallable, Category="GamePlatform|Water")
     void ClearPresentation();
 
@@ -68,7 +66,6 @@ private:
     TMap<TWeakObjectPtr<UGamePlatformWaterInteractorComponent>, FDelegateHandle> WaterPresenceBindings;
     EGamePlatformWaterQualityTier QualityTier = EGamePlatformWaterQualityTier::High;
     TWeakObjectPtr<UGamePlatformWaterPresentationPreset> PresetLease;
-    TSharedPtr<FStreamableHandle> PendingLoad;
     TArray<double> RecentRippleTimes;
     FVector LastRippleLocation = FVector::ZeroVector;
     double LastRippleTime = -100.0;

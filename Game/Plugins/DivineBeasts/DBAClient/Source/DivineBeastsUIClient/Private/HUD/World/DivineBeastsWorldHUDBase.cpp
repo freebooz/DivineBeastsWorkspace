@@ -6,6 +6,7 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
+#include "Manager/GamePlatformUIManagerSubsystem.h"
 
 FDivineBeastsUIWorldProjection UDivineBeastsWorldHUDBase::GetWorldProjection() const
 {
@@ -21,6 +22,10 @@ bool UDivineBeastsWorldHUDBase::HasWorldView() const
 void UDivineBeastsWorldHUDBase::BindUIEvents()
 {
     Super::BindUIEvents();
+    bWorldControlsBound=true;++WorldControlGeneration;
+    UtilityUIManager=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UGamePlatformUIManagerSubsystem>():nullptr;
+    if(auto* Manager=UtilityUIManager.Get())
+    {Manager->OnScreenOpened.AddUniqueDynamic(this,&ThisClass::UtilityOpened);Manager->OnScreenOpenFailed.AddUniqueDynamic(this,&ThisClass::UtilityFailed);}
     if (auto* Button=Cast<UButton>(GetWidgetFromName(TEXT("JournalButton")))) Button->OnClicked.AddUniqueDynamic(this,&ThisClass::OpenJournal);
     if (auto* Button=Cast<UButton>(GetWidgetFromName(TEXT("PartyButton")))) Button->OnClicked.AddUniqueDynamic(this,&ThisClass::OpenParty);
     if (auto* Button=Cast<UButton>(GetWidgetFromName(TEXT("TrainingResetButton")))) Button->OnClicked.AddUniqueDynamic(this,&ThisClass::ResetTraining);
@@ -30,12 +35,13 @@ void UDivineBeastsWorldHUDBase::BindUIEvents()
 }
 void UDivineBeastsWorldHUDBase::UnbindUIEvents()
 {
+    bWorldControlsBound=false;++WorldControlGeneration;
+    if(auto* Manager=UtilityUIManager.Get())
+    {Manager->OnScreenOpened.RemoveDynamic(this,&ThisClass::UtilityOpened);Manager->OnScreenOpenFailed.RemoveDynamic(this,&ThisClass::UtilityFailed);}
+    UtilityUIManager.Reset();DispatchingUtilityScreen=NAME_None;SynchronousUtilityCompletion.Invalidate();
     for (const TCHAR* Name:{TEXT("JournalButton"),TEXT("PartyButton"),TEXT("TrainingResetButton"),TEXT("QuestLogButton"),TEXT("SocialButton"),TEXT("NoticesButton")})
         if (auto* Button=Cast<UButton>(GetWidgetFromName(Name))) Button->OnClicked.RemoveAll(this);
-    const auto Requests=MoveTemp(OwnedUtilityRequests);OwnedUtilityRequests.Reset();
-    if(auto* Owner=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsUIClientSubsystem>():nullptr)
-        for(const auto& Request:Requests)Owner->CancelScreenOpen(Request);
-    WorldCommandFeedback=FText(); Super::UnbindUIEvents();
+    ClearWorldCommandContext(); Super::UnbindUIEvents();
 }
 void UDivineBeastsWorldHUDBase::RefreshInitialState() { Super::RefreshInitialState(); RefreshWorldPresentation(); }
 void UDivineBeastsWorldHUDBase::OnViewModelStateChanged(int32 Revision,int32 Generation)
@@ -69,17 +75,20 @@ void UDivineBeastsWorldHUDBase::RefreshWorldPresentation()
 }
 void UDivineBeastsWorldHUDBase::OpenJournal()
 {
+    if(!CanSubmitWorldCommand())return;
     auto* Owner=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsUIClientSubsystem>():nullptr;
     if (!Owner||!Owner->OpenWorldJournal(TEXT("Character"))) WorldCommandFeedback=NSLOCTEXT("SSLMUI","JournalNotAccepted","当前不能打开角色手册，请检查世界与菜单状态。");
     else WorldCommandFeedback=FText(); RefreshWorldPresentation();
 }
 void UDivineBeastsWorldHUDBase::OpenParty()
 {
+    if(!CanSubmitWorldCommand())return;
     auto* Owner=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsPartyUIClientSubsystem>():nullptr;
     WorldCommandFeedback=Owner&&Owner->OpenPartyPage()?FText():NSLOCTEXT("SSLMUI","HUDPartyNotAccepted","小队页面未受理，未改变任何队伍。"); RefreshWorldPresentation();
 }
 void UDivineBeastsWorldHUDBase::ResetTraining()
 {
+    if(!CanSubmitWorldCommand())return;
     auto* Model=Cast<UDivineBeastsUIViewModel>(GetViewModel());
     const bool bAllowed=Model&&Model->IsPageActive()&&GetHUDKind()==EDivineBeastsHUDKind::Training&&
         !Model->GetStateRef().bBusy&&Model->GetStateRef().AllowedCommands.Contains(TEXT("TrainingReset"));
@@ -88,11 +97,47 @@ void UDivineBeastsWorldHUDBase::ResetTraining()
 }
 void UDivineBeastsWorldHUDBase::OpenUtility(FName ScreenId)
 {
+    if(!CanSubmitWorldCommand()||!DispatchingUtilityScreen.IsNone())return;
+    const uint64 Generation=WorldControlGeneration;
     auto* Owner=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsUIClientSubsystem>():nullptr;
+    // 每个已知页面最多一个在途身份；终结后移除，反复点击不会无界累积请求或重复保留加载。
+    if(const auto* Previous=OwnedUtilityRequests.Find(ScreenId)){const FGuid Id=*Previous;OwnedUtilityRequests.Remove(ScreenId);if(Owner)Owner->CancelScreenOpen(Id);}
+    DispatchingUtilityScreen=ScreenId;SynchronousUtilityCompletion.Invalidate();
     const auto Request=Owner?Owner->OpenWorldUtilityScreen(ScreenId):FGamePlatformUIAsyncRequest();
-    if(Request.IsValid())OwnedUtilityRequests.Add(Request.RequestId);
+    DispatchingUtilityScreen=NAME_None;
+    if(Generation!=WorldControlGeneration||!CanSubmitWorldCommand()){if(Owner&&Request.IsValid())Owner->CancelScreenOpen(Request.RequestId);return;}
+    if(Request.IsValid()&&SynchronousUtilityCompletion==Request.RequestId){RefreshWorldPresentation();return;}
+    if(Request.IsValid())OwnedUtilityRequests.Add(ScreenId,Request.RequestId);
     WorldCommandFeedback=FText::FromString(Request.IsValid()?TEXT("页面打开请求已提交；显示结果由平台异步事件确认。") : TEXT("当前世界或页面服务不允许打开此界面。"));RefreshWorldPresentation();
+}
+void UDivineBeastsWorldHUDBase::UtilityOpened(FGuid RequestId,FName ScreenId,UGamePlatformUIScreen*)
+{
+    const auto* Pending=OwnedUtilityRequests.Find(ScreenId);
+    if(!bWorldControlsBound||(!Pending&&DispatchingUtilityScreen!=ScreenId)||(Pending&&*Pending!=RequestId))return;
+    if(DispatchingUtilityScreen==ScreenId)SynchronousUtilityCompletion=RequestId;
+    OwnedUtilityRequests.Remove(ScreenId);WorldCommandFeedback=FText();RefreshWorldPresentation();
+}
+void UDivineBeastsWorldHUDBase::UtilityFailed(FGuid RequestId,FName ScreenId,FText Reason)
+{
+    const auto* Pending=OwnedUtilityRequests.Find(ScreenId);
+    if(!bWorldControlsBound||(!Pending&&DispatchingUtilityScreen!=ScreenId)||(Pending&&*Pending!=RequestId))return;
+    if(DispatchingUtilityScreen==ScreenId)SynchronousUtilityCompletion=RequestId;
+    OwnedUtilityRequests.Remove(ScreenId);
+    WorldCommandFeedback=Reason.IsEmpty()?NSLOCTEXT("SSLMUI","UtilityOpenFailed","页面加载失败，请稍后重试。"):Reason;RefreshWorldPresentation();
 }
 void UDivineBeastsWorldHUDBase::OpenQuestLog(){OpenUtility(TEXT("UI.Screen.Quest"));}
 void UDivineBeastsWorldHUDBase::OpenSocial(){OpenUtility(TEXT("UI.Screen.Social"));}
 void UDivineBeastsWorldHUDBase::OpenNotices(){OpenUtility(TEXT("UI.Screen.LiveOps"));}
+
+bool UDivineBeastsWorldHUDBase::CanSubmitWorldCommand() const
+{
+    const auto* Model=Cast<UDivineBeastsUIViewModel>(GetViewModel());
+    return bWorldControlsBound&&IsVisible()&&Model&&Model->IsPageActive();
+}
+void UDivineBeastsWorldHUDBase::ClearWorldCommandContext()
+{
+    ++WorldControlGeneration;DispatchingUtilityScreen=NAME_None;SynchronousUtilityCompletion.Invalidate();
+    const auto Requests=MoveTemp(OwnedUtilityRequests);OwnedUtilityRequests.Reset();WorldCommandFeedback=FText();
+    if(auto* Owner=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsUIClientSubsystem>():nullptr)
+        for(const auto& Request:Requests)Owner->CancelScreenOpen(Request.Value);
+}

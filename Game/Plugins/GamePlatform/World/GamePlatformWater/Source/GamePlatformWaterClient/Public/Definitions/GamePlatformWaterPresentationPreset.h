@@ -1,12 +1,11 @@
-// 平台客户端水体表现预设：只读异步软资产目录与质量预算；可按游戏项目创建DataAsset实例。
-// 所有GPU粒子是可选增强，无资源时不阻止服务器的水域判定、游泳或任务。
+// 平台客户端水体表现预设只保存中立语义标签和预算，不直接引用或加载任何Niagara资源。
+// 统一的VFX/SFX资源预载、内容解析、执行和取消由GamePlatformPresentation/GamePlatformVFX负责。
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/PrimaryDataAsset.h"
+// UE5.8的UPrimaryDataAsset声明位于DataAsset.h；只修复真实引擎包含路径，不改变并行水体预设合同。
+#include "Engine/DataAsset.h"
 #include "GamePlatformWaterPresentationPreset.generated.h"
-
-class UNiagaraSystem;
 
 /** UGamePlatformWaterPresentationPreset（客户端水体表现配置）。 */
 UCLASS(BlueprintType)
@@ -14,13 +13,13 @@ class GAMEPLATFORMWATERCLIENT_API UGamePlatformWaterPresentationPreset : public 
 {
     GENERATED_BODY()
 public:
-    /** RippleSystem（局部涟漪Niagara），弱资源引用：仅客户端按需异步加载。 */
+    /** RippleSemanticTag（平台表现涟漪语义）；Niagara实际Definition由现有表现目录解析。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Water|Presentation")
-    TSoftObjectPtr<UNiagaraSystem> RippleSystem;
+    FName RippleSemanticTag = TEXT("Presentation.Water.Ripple.VFX");
 
-    /** SplashSystem（脚步飞溅Niagara），失败可只显示涟漪。 */
+    /** SplashSemanticTag（脚步/落水飞溅语义）；没有内容目录时允许降级只播涟漪。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Water|Presentation")
-    TSoftObjectPtr<UNiagaraSystem> SplashSystem;
+    FName SplashSemanticTag = TEXT("Presentation.Water.Splash.VFX");
 
     /** MaxRippleSpawnsPerSecond（单客户端单世界每秒最大特效请求），范围0~96。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Water|Scalability", meta=(ClampMin="0", ClampMax="96"))
