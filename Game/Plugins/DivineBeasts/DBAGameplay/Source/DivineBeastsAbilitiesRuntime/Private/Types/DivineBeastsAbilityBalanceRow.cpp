@@ -1,3 +1,4 @@
+// 项目服务器安全数值门禁；供预热与授权调用，不拥有GAS属性或执行任何资源扣减。
 #include "Types/DivineBeastsAbilityBalanceRow.h"
 #include "Types/GamePlatformId.h"
 
@@ -40,6 +41,14 @@ bool FDivineBeastsAbilityBalanceRow::Validate(FString& OutError) const
         TypeIndex > static_cast<int32>(EGamePlatformDamageType::TrueDamage))
     {
         OutError = TEXT("技能数值行使用了不受支持的伤害类型。");
+        return false;
+    }
+
+    // 2026-10-14用户明确法术不消耗气势。错误或旧表必须在授权前拒绝，
+    // 不能只隐藏UI费用，让服务器继续执行过期成本。
+    if (DamageType == EGamePlatformDamageType::Magic && MomentumCost != 0.0f)
+    {
+        OutError = TEXT("法术数值行的气势费用必须为零。");
         return false;
     }
 

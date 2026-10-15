@@ -219,6 +219,19 @@ func (r *PartyRepository) updateParty(ctx context.Context, id string, revision i
 				}
 			}
 			_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+				// 与名单、收件箱同一EXEC提交通知；新旧参与者都能观察离队、拒绝和取消，避免只通知当前成员。
+				observers := map[string]bool{}
+				for player := range members { observers[player] = true }
+				for _, aggregate := range []*party.Party{current,next} {
+					for _, request := range aggregate.MembershipRequests { observers[request.PlayerID]=true;observers[request.RequestedByPlayerID]=true }
+				}
+				for player := range observers {
+					if player=="" { continue }
+					stream:=partyChangesPrefix+player
+					pipe.XAdd(ctx,&redis.XAddArgs{Stream:stream,MaxLen:256,Approx:true,Values:map[string]any{"partyId":id,"revision":next.Revision}})
+					pipe.Publish(ctx,stream,next.Revision)
+					pipe.Expire(ctx,stream,r.ttl)
+				}
 				pipe.Set(ctx, partyKeyPrefix+id, payload, r.ttl)
 				for player := range members {
 					if _, retained := next.Members[player]; retained {

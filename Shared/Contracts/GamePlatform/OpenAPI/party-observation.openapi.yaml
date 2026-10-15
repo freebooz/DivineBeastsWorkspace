@@ -1,0 +1,48 @@
+openapi: 3.1.0
+info:
+  title: 平台普通队伍事件观察
+  version: 1.0.0
+  description: 已认证主体的完整初始快照和可恢复事件游标；后续请求等待真实变化，不作为定时查询接口。
+security: [{ bearerAuth: [] }]
+paths:
+  /v1/party/observe:
+    post:
+      operationId: observeCurrentParty
+      summary: 等待本人队伍或收件箱变化；本地取消不改变队伍
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ObservationRequest' }
+      responses:
+        '200':
+          description: 首次或重同步返回完整授权快照；changed=false只表示等待期间没有变化
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Observation' }
+        '400': { description: 游标或等待期限无效 }
+        '401': { description: 会话失效 }
+        '503': { description: 存储或观察能力不可用，不返回空成功 }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, description: 已有访问令牌，仅请求头瞬时使用 }
+  schemas:
+    ObservationRequest:
+      type: object
+      additionalProperties: false
+      required: [cursor, waitMilliseconds]
+      properties:
+        cursor: { type: string, maxLength: 43, pattern: '^([0-9]+-[0-9]+)?$', description: 首次为空，此后原样回传本人作用域游标；不是权限令牌 }
+        waitMilliseconds: { type: integer, minimum: 0, maximum: 20000, description: 服务器最长阻塞等待毫秒数，默认客户端使用20000；0只用于首次或显式重同步 }
+    Observation:
+      type: object
+      additionalProperties: false
+      required: [scopeId, cursor, changed, resyncRequired, serverTimeUtc, snapshot, invitations]
+      properties:
+        scopeId: { type: string, description: 本人队伍作用域，客户端仍须核对认证代次 }
+        cursor: { type: string, description: 已包含在快照中的最后事件游标 }
+        changed: { type: boolean, description: 真实变化或业务截止时间已到达 }
+        resyncRequired: { type: boolean, description: 旧游标已失效，必须用完整快照替换 }
+        serverTimeUtc: { type: string, format: date-time, description: UTC显示校时基准 }
+        snapshot: { $ref: 'party-interaction.openapi.yaml#/components/schemas/PartySnapshot' }
+        invitations: { type: array, maxItems: 20, items: { $ref: 'party-interaction.openapi.yaml#/components/schemas/Invitation' } }

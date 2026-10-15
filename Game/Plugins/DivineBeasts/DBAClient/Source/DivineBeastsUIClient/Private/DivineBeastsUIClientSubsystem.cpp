@@ -1379,7 +1379,7 @@ void UDivineBeastsUIClientSubsystem::HandleWorldInputTreeChanged() { SyncWorldIn
 void UDivineBeastsUIClientSubsystem::HandleWorldInputConfigChanged(FUIInputConfig Config)
 {
     // CommonUI可在Slate延迟释放后继续持有旧Menu/默认Game配置；仅配置交接事件校正，不轮询。
-    if (Config.GetInputMode() != ECommonInputMode::All || Config.GetMouseCaptureMode() != EMouseCaptureMode::NoCapture)
+    if (Config.GetInputMode() != ECommonInputMode::All || Config.GetMouseCaptureMode() != EMouseCaptureMode::CaptureDuringMouseDown)
         SyncWorldInputBaseline();
 }
 
@@ -1409,7 +1409,7 @@ void UDivineBeastsUIClientSubsystem::SyncWorldInputBaseline()
     const auto WorldConfig = UGamePlatformUIInputPolicy::BuildInputConfig(EGamePlatformUIInputMode::GameAndUI);
     // 经Router公共API更新真实ActiveInputConfig及原生视口，不仅调用PC.SetInputMode。
     // 引擎按新旧配置差量撤销Router自己的Ignore计数；本模块绝不Reset其他系统的锁。
-    const bool bWasStaleConfig = Router->GetActiveInputMode() != ECommonInputMode::All || Router->GetActiveMouseCaptureMode() != EMouseCaptureMode::NoCapture;
+    const bool bWasStaleConfig = Router->GetActiveInputMode() != ECommonInputMode::All || Router->GetActiveMouseCaptureMode() != EMouseCaptureMode::CaptureDuringMouseDown;
     Router->SetActiveUIInputConfig(WorldConfig, this);
-    if (bWasStaleConfig) UE_LOG(LogTemp, Log, TEXT("[DBA UI] World input handoff published GameAndUI/NoCapture through CommonUI Router."));
+    if (bWasStaleConfig) UE_LOG(LogTemp, Log, TEXT("[DBA UI] World input handoff published GameAndUI/CaptureDuringMouseDown through CommonUI Router."));
 }

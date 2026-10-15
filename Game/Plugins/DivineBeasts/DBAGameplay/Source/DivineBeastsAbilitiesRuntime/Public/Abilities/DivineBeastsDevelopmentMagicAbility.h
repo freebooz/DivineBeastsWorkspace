@@ -12,6 +12,8 @@ class DIVINEBEASTSABILITIESRUNTIME_API UDivineBeastsDevelopmentMagicAbility : pu
 {
     GENERATED_BODY()
 public:
+    /** 法术不消耗气势；GAS仍执行原有资格、冷却及Commit回调，不应用旧资产中的成本GE。 */
+    virtual UGameplayEffect* GetCostGameplayEffect() const override;
     /** 读取已预热真实Definition，合法后只Commit一次；失败不制造弹体或成功日志。 */
     virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
         FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

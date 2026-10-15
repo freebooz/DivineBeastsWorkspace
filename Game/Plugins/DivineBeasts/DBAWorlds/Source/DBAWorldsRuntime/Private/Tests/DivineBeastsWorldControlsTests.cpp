@@ -75,3 +75,47 @@ int main()
 }
 #undef DBA_CHECK
 #endif
+
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR && !DBA_WORLD_CONTROLS_STANDALONE
+#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
+#include "Misc/ScopeExit.h"
+#include "UObject/StrongObjectPtr.h"
+
+// 真实控制器和UGameViewportClient状态回归，不创建桌面窗口或授予服务器准入。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldMenuCaptureTest,
+    "DivineBeasts.World.Controls.MenuFocusPreservesCapture", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsWorldMenuCaptureTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
+    UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    World->InitializeActorsForPlay(FURL());
+    TStrongObjectPtr<UGameViewportClient> Viewport(NewObject<UGameViewportClient>(GEngine));
+    FWorldContext& Context = GEngine->GetWorldContextFromWorldChecked(World);
+    const auto PreviousViewport = Context.GameViewport;
+    Context.GameViewport = Viewport.Get();
+    ON_SCOPE_EXIT { Context.GameViewport = PreviousViewport; };
+    TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine));
+    Player->ViewportClient = Viewport.Get();
+    ON_SCOPE_EXIT { Player->ViewportClient = nullptr; };
+    auto* Controller = World->SpawnActor<ADivineBeastsWorldPlayerController>();
+    Controller->SetPlayer(Player.Get());
+    if (!TestEqual(TEXT("夹具使用当前World的真实视口"), World->GetGameViewport(), Viewport.Get())) return false;
+    // 菜单/加载UI拥有捕获与锁配置；暂停和真实Flush入口都不能将其改为世界临时捕获。
+    Viewport->SetMouseCaptureMode(EMouseCaptureMode::NoCapture);
+    Viewport->SetMouseLockMode(EMouseLockMode::LockAlways);
+    Controller->SetWorldGameplayInputSuspended(true);
+    TestEqual(TEXT("暂停事件保留UIOnly不捕获"), Viewport->GetMouseCaptureMode(), EMouseCaptureMode::NoCapture);
+    TestEqual(TEXT("暂停事件保留UI持有的锁模式"), Viewport->GetMouseLockMode(), EMouseLockMode::LockAlways);
+    Controller->FlushPressedKeys();
+    TestEqual(TEXT("失焦Flush后仍由UIOnly拥有捕获"), Viewport->GetMouseCaptureMode(), EMouseCaptureMode::NoCapture);
+    TestEqual(TEXT("失焦Flush不覆盖UI持有的锁模式"), Viewport->GetMouseLockMode(), EMouseLockMode::LockAlways);
+    return true;
+}
+#endif

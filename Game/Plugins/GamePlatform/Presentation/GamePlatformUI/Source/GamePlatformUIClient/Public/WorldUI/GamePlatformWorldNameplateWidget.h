@@ -9,4 +9,7 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformWorldNameplateWidget
     : public UGamePlatformWorldWidgetBase
 {
     GENERATED_BODY()
+public:
+    /** 事件快照投影为已有ResourceFill/NameText/ValueText；不拥有领域状态或读取Actor。 */
+    virtual void ApplyWorldUIRequest(const FGamePlatformWorldUIRequest& InRequest) override;
 };

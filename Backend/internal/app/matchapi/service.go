@@ -36,9 +36,11 @@ type CreateMatchmakingTicketInput struct {
 
 // Service（Match业务API服务）组合Party和Matchmaking仓储并落实名单锁定与请求幂等规则。
 type Service struct {
-	parties PartyRepository
-	tickets TicketRepository
-	nextID  func(prefix string) string
+	parties    PartyRepository
+	tickets    TicketRepository
+	nextID     func(prefix string) string
+	observerMu sync.Mutex // 仅管理本实例在途观察；业务数据与跨进程通知仍归仓储。
+	observers  map[string]*partyObserver
 }
 
 // NewService（创建Match业务API服务）注入Party仓储、Ticket仓储和ID生成器。
@@ -156,6 +158,7 @@ type MemoryPartyRepository struct {
 	items    map[string]*party.Party
 	players  map[string]string
 	receipts map[string]PartyOperationReceipt
+	changes  map[string]*partyMemoryChanges // 测试/本地事件日志，不替代生产Redis Stream。
 }
 
 // NewMemoryPartyRepository（创建内存Party仓储）创建线程安全Party存储。
@@ -193,6 +196,7 @@ func (r *MemoryPartyRepository) Save(_ context.Context, value *party.Party) erro
 	for id := range value.Members {
 		r.players[id] = value.ID
 	}
+	r.publishPartyChangesLocked(nil, value)
 	return nil
 }
 

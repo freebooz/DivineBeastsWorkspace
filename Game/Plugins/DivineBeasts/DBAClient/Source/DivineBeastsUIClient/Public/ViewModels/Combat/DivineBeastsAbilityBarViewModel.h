@@ -4,12 +4,16 @@
 #include "Components/GamePlatformSlotWidget.h"
 #include "ViewModels/DivineBeastsViewModelBase.h"
 #include "Types/GamePlatformDataLease.h"
+#include "Types/GamePlatformResult.h"
 #include "DivineBeastsAbilityBarViewModel.generated.h"
 
 class UDivineBeastsAbilityLoadoutComponent;
 class UDivineBeastsAbilityUIProfile;
 class UDivineBeastsCharacterComponent;
 class UGamePlatformAbilitySystemComponent;
+class AGamePlatformPlayerStateBase;
+class UGamePlatformGameplayEligibilityComponent;
+struct FGamePlatformGameplayEligibilitySnapshot;
 class UAbilitySystemComponent;
 struct FGameplayTag;
 struct FActiveGameplayEffectHandle;
@@ -48,6 +52,9 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsAbilitySlotDetails
     float CooldownRemainingSeconds = 0.0f;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
     float CooldownTotalSeconds = 0.0f;
+    /** 在GAS事件快照时计算的本进程Slate实时时钟截止秒；仅用于材质动画，不是网络权威。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
+    float CooldownEndsAtAppSeconds = 0.0f;
     /** 当前 UI 不能交互的原因；服务端 GAS 仍决定最终是否激活。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
     FText DisabledReason;
@@ -74,6 +81,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Ability")
     void UnbindFromLoadout();
 
+    /** 向当前本地受控Pawn提交一次已授权槽位的按下/释放输入，复用平台ASC与原生GAS远程激活。
+     * SlotId必须属于当前Ready快照及已确认Spec；被动、旧Avatar、禁用和待确认返回中文失败结果。
+     * 成功仅表示输入请求受理；成本、冷却、投射物与伤害仍等待服务器GAS确认，无客户端授予或扣费。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Ability")
+    FGamePlatformResult RequestActivateSlot(FName SlotId);
+
     UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Ability")
     TArray<FGamePlatformUISlotState> GetSlots() const { return Slots; }
 
@@ -87,6 +100,8 @@ public:
     virtual void BeginDestroy() override;
 
 private:
+    // 仅自动化夹具可植入旧的只读显示快照，以验证真实资格事件刷新；不开放运行授权写接口。
+    friend class FDivineBeastsAbilityActivationEventsTest;
     void HandleLoadoutChanged(const FDivineBeastsAbilityLoadoutState& Snapshot);
     /** Data只在游戏线程延后完成；代次、英雄、原Loadout与完整租约必须仍属当前请求。 */
     void HandleProfileLoaded(uint64 ExpectedLoadGeneration, FName ExpectedHero,
@@ -116,6 +131,10 @@ private:
     void HandleCombatTagChanged(const FGameplayTag Tag, int32 NewCount);
     void HandleCharacterReadinessChanged(bool bReady);
     void RefreshCurrentLoadout();
+    /** 游戏线程按当前Pawn重绑定两种玩法资格通知，来源变化先撤旧订阅；只读取复制事实，不设置Active。 */
+    void RefreshGameplayEligibilityBindings();
+    /** 通知仅作为显示失效信号；重新核验当前授权，不把事件参数当服务器授权结果。 */
+    void HandleGameplayEligibilityChanged(const FGamePlatformGameplayEligibilitySnapshot& Snapshot);
 
     /** 只读检查：当前标签只映射到一个已复制原生 AbilitySpec，具体能否激活由 GAS 判断。 */
     static bool TryResolveGrantedSpec(UGamePlatformAbilitySystemComponent& ASC,
@@ -136,6 +155,11 @@ private:
     FDelegateHandle StunTagHandle;
     FDelegateHandle SilenceTagHandle;
     FDelegateHandle DeadTagHandle;
+    /** 当前角色作用域的资格事件源及句柄；换Pawn、解绑、销毁均配对撤销，禁止跨角色残留。 */
+    TWeakObjectPtr<AGamePlatformPlayerStateBase> LifecycleState;
+    TWeakObjectPtr<UGamePlatformGameplayEligibilityComponent> GameplayEligibility;
+    FDelegateHandle LifecycleHandle;
+    FDelegateHandle GameplayEligibilityHandle;
 
     /** 强引用只在本次 UI 作用域有效，回调检查代次避免跨角色污染。 */
     UPROPERTY(Transient)

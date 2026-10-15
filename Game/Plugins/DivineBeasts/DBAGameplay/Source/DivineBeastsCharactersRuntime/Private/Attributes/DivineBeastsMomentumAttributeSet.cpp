@@ -6,6 +6,7 @@
 
 UDivineBeastsMomentumAttributeSet::UDivineBeastsMomentumAttributeSet()
 {
+    // 未绑定可信英雄定义的ASC保持空资源；真实出生初始50由服务器InitializeFromDefinition设置，不能给未就绪实体授予资源。
     InitMomentum(0.0f);
     InitMaxMomentum(100.0f);
 }

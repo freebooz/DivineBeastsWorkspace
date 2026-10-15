@@ -1,6 +1,10 @@
+// 平台LocalPlayer世界UI：事件驱动投影和池生命周期；不查询玩法生命值，不使用Ticker。
 #include "Services/GamePlatformWorldUIService.h"
 
-#include "Containers/Ticker.h"
+#include "Engine/GameViewportClient.h"
+#include "UnrealClient.h"
+#include "Components/OverlaySlot.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/PlayerController.h"
@@ -11,7 +15,6 @@ namespace
 {
 constexpr int32 MaxActiveWorldWidgets = 128;
 constexpr int32 MaxPooledWorldWidgets = 128;
-constexpr float ProjectionIntervalSeconds = 1.0f / 30.0f;
 }
 
 void UGamePlatformWorldUIService::Initialize(ULocalPlayer* InLocalPlayer)
@@ -20,21 +23,50 @@ void UGamePlatformWorldUIService::Initialize(ULocalPlayer* InLocalPlayer)
     ActiveWidgets.Reserve(32);
     PooledWidgets.Reserve(32);
 
-    // 空闲时不注册Ticker；第一个世界UI实例注册成功后再按需启动。
+    // 空闲不订阅视口；注册、位置变化及调用方最终镜头事件显式触发投影。
 }
 
 void UGamePlatformWorldUIService::Deinitialize()
 {
-    StopProjectionTicker();
+    UnbindProjectionEvents();
     Clear();
     RootLayout = nullptr;
     LocalPlayer = nullptr;
+    RootLayoutChanged.Clear(); ++RootLayoutGeneration;
 }
 
 void UGamePlatformWorldUIService::SetRootLayout(
     UGamePlatformUILayerStack* InRootLayout)
 {
+    if (RootLayout == InRootLayout) return;
+    const uint64 Generation = ++RootLayoutGeneration;
+    TStrongObjectPtr<UGamePlatformUILayerStack> NewRoot(InRootLayout);
     RootLayout = InRootLayout;
+    // Construct可能在服务获知新Root前将实例挂到旧层。只迁移入口时已有身份；
+    // 强引用保留Widget，外部解绑/换Root后的旧栈不能复活已取消的实例。
+    TArray<FGuid> Ids; ActiveWidgets.GetKeys(Ids);
+    for (const FGuid& Id : Ids)
+    {
+        if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
+        const auto* Weak = ActiveWidgets.Find(Id);
+        TStrongObjectPtr<UGamePlatformWorldWidgetBase> Widget(Weak ? Weak->Get() : nullptr);
+        if (!Widget.IsValid()) { ActiveWidgets.Remove(Id); continue; }
+        Widget->RemoveFromParent();
+        if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
+        Weak = ActiveWidgets.Find(Id);
+        if (!Weak || Weak->Get() != Widget.Get()) continue;
+        const bool bAttached = NewRoot.IsValid() && NewRoot->AddWorldProjectionWidget(Widget.Get());
+        // AddChild也可能同步触发用户回调；先核对代次和身份，再操作当前槽或回收失败实例。
+        if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
+        Weak = ActiveWidgets.Find(Id);
+        if (!Weak || Weak->Get() != Widget.Get()) continue;
+        if (!bAttached) { ActiveWidgets.Remove(Id); RecycleWidget(Widget.Get()); continue; }
+        if (auto* Slot = Cast<UOverlaySlot>(Widget->Slot))
+        { Slot->SetHorizontalAlignment(HAlign_Left); Slot->SetVerticalAlignment(VAlign_Top); }
+    }
+    if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
+    RefreshProjection();
+    if (Generation == RootLayoutGeneration && RootLayout == NewRoot.Get()) RootLayoutChanged.Broadcast();
 }
 
 FGuid UGamePlatformWorldUIService::RegisterWorldUI(
@@ -75,7 +107,10 @@ FGuid UGamePlatformWorldUIService::RegisterWorldUI(
     }
 
     ActiveWidgets.Add(Request.RequestId, Widget);
-    EnsureProjectionTicker();
+    if (auto* Slot = Cast<UOverlaySlot>(Widget->Slot))
+    { Slot->SetHorizontalAlignment(HAlign_Left); Slot->SetVerticalAlignment(VAlign_Top); }
+    BindProjectionEvents();
+    RefreshProjection(Request.RequestId);
     return Request.RequestId;
 }
 
@@ -94,6 +129,7 @@ bool UGamePlatformWorldUIService::UpdateWorldUI(
 
     Request.RequestId = RequestId;
     Widget->ApplyWorldUIRequest(Request);
+    RefreshProjection(RequestId);
     return true;
 }
 
@@ -111,7 +147,7 @@ bool UGamePlatformWorldUIService::UnregisterWorldUI(FGuid RequestId)
     RecycleWidget(Widget);
     if (ActiveWidgets.IsEmpty())
     {
-        StopProjectionTicker();
+        UnbindProjectionEvents();
     }
     return true;
 }
@@ -164,34 +200,25 @@ void UGamePlatformWorldUIService::RecycleWidget(
     }
 }
 
-void UGamePlatformWorldUIService::EnsureProjectionTicker()
+void UGamePlatformWorldUIService::BindProjectionEvents()
 {
-    if (ProjectionTickerHandle.IsValid() ||
-        ActiveWidgets.IsEmpty())
-    {
-        return;
-    }
-
-    ProjectionTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
-        FTickerDelegate::CreateUObject(
-            this,
-            &UGamePlatformWorldUIService::TickProjection),
-        ProjectionIntervalSeconds);
+    if (ViewportResizedHandle.IsValid() || ActiveWidgets.IsEmpty()) return;
+    ViewportResizedHandle = FViewport::ViewportResizedEvent.AddUObject(this, &ThisClass::HandleViewportResized);
 }
 
-void UGamePlatformWorldUIService::StopProjectionTicker()
+void UGamePlatformWorldUIService::UnbindProjectionEvents()
 {
-    if (!ProjectionTickerHandle.IsValid())
-    {
-        return;
-    }
-
-    FTSTicker::GetCoreTicker().RemoveTicker(
-        ProjectionTickerHandle);
-    ProjectionTickerHandle.Reset();
+    FViewport::ViewportResizedEvent.Remove(ViewportResizedHandle);
+    ViewportResizedHandle.Reset();
 }
 
-bool UGamePlatformWorldUIService::TickProjection(float DeltaSeconds)
+void UGamePlatformWorldUIService::HandleViewportResized(FViewport* Viewport, uint32)
+{
+    if (LocalPlayer && LocalPlayer->ViewportClient && LocalPlayer->ViewportClient->Viewport == Viewport)
+        RefreshProjection();
+}
+
+void UGamePlatformWorldUIService::RefreshProjection(FGuid OnlyRequestId)
 {
     APlayerController* PlayerController =
         IsValid(LocalPlayer)
@@ -199,7 +226,7 @@ bool UGamePlatformWorldUIService::TickProjection(float DeltaSeconds)
             : nullptr;
     if (!IsValid(PlayerController))
     {
-        return true;
+        return;
     }
 
     const FVector CameraLocation =
@@ -214,13 +241,16 @@ bool UGamePlatformWorldUIService::TickProjection(float DeltaSeconds)
         ViewportHeight);
 
     TArray<FGuid> StaleIds;
-    for (TPair<FGuid, TWeakObjectPtr<UGamePlatformWorldWidgetBase>>& Pair :
-         ActiveWidgets)
+    // 投影通知可能同步注销；遍历身份快照并每次重新查弱引用，避免迭代器失效。
+    TArray<FGuid> Ids; ActiveWidgets.GetKeys(Ids);
+    for (const FGuid& Id : Ids)
     {
-        UGamePlatformWorldWidgetBase* Widget = Pair.Value.Get();
+        if (OnlyRequestId.IsValid() && Id != OnlyRequestId) continue;
+        const auto* WeakWidget = ActiveWidgets.Find(Id);
+        UGamePlatformWorldWidgetBase* Widget = WeakWidget ? WeakWidget->Get() : nullptr;
         if (!IsValid(Widget))
         {
-            StaleIds.Add(Pair.Key);
+            StaleIds.Add(Id);
             continue;
         }
 
@@ -231,9 +261,8 @@ bool UGamePlatformWorldUIService::TickProjection(float DeltaSeconds)
                 CameraLocation,
                 Request.WorldLocation);
 
-        bool bVisible =
-            Request.MaxVisibleDistance <= 0.0f ||
-            Distance <= Request.MaxVisibleDistance;
+        bool bVisible = Request.bDisplayRequested &&
+            (Request.MaxVisibleDistance <= 0.0f || Distance <= Request.MaxVisibleDistance);
 
         FVector2D ScreenPosition = FVector2D::ZeroVector;
         if (bVisible)
@@ -271,18 +300,12 @@ bool UGamePlatformWorldUIService::TickProjection(float DeltaSeconds)
         ActiveWidgets.Remove(StaleId);
     }
 
-    // 仅剩失效弱引用时在当前回调结束后自动停止Ticker。
-    if (ActiveWidgets.IsEmpty())
-    {
-        ProjectionTickerHandle.Reset();
-        return false;
-    }
-
-    return true;
+    if (ActiveWidgets.IsEmpty()) UnbindProjectionEvents();
 }
 
 void UGamePlatformWorldUIService::Clear()
 {
+    ++RootLayoutGeneration;
     TArray<FGuid> RequestIds;
     ActiveWidgets.GetKeys(RequestIds);
     for (const FGuid& RequestId : RequestIds)
@@ -290,7 +313,7 @@ void UGamePlatformWorldUIService::Clear()
         UnregisterWorldUI(RequestId);
     }
     ActiveWidgets.Reset();
-    StopProjectionTicker();
+    UnbindProjectionEvents();
 
     for (UGamePlatformWorldWidgetBase* Widget : PooledWidgets)
     {

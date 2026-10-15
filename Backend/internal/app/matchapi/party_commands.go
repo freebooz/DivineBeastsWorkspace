@@ -181,6 +181,7 @@ func (r *MemoryPartyRepository) Update(ctx context.Context, partyID string, expe
 		r.players[id] = partyID
 	}
 	r.items[partyID] = next.Clone()
+	r.publishPartyChangesLocked(current, next)
 	if key != "" {
 		r.receipts[key] = PartyOperationReceipt{Fingerprint: fingerprint, Result: next.Clone()}
 	}

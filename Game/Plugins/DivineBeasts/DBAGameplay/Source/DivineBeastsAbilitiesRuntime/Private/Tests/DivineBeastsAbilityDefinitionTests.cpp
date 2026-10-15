@@ -30,6 +30,13 @@ bool FDivineBeastsAbilityDataValidationTest::RunTest(const FString&)
     Row.MomentumCost = 10.0f;
     TestTrue(TEXT("恢复合法成本"), Row.Validate(Error));
 
+    // 用户规定法术不消耗气势；魔法伤害表不能重新引入旧的10/8/12成本。
+    // 普通技能的费用仍可配置，避免将局部规则误改为所有技能免费。
+    Row.DamageType = EGamePlatformDamageType::Magic;
+    TestFalse(TEXT("法术数值表声明气势费用必须拒绝"), Row.Validate(Error));
+    Row.MomentumCost = 0.0f;
+    TestTrue(TEXT("零气势费用的法术数值合法"), Row.Validate(Error));
+
     UDivineBeastsAbilityDefinition* Definition = NewObject<UDivineBeastsAbilityDefinition>();
     TestFalse(TEXT("空定义拒绝"), Definition->ValidateDefinition().IsSuccess());
     TestFalse(TEXT("未加载表不得同步读取数值"), Definition->TryGetLoadedBalance(1, Row, Error));

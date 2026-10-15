@@ -68,6 +68,11 @@ private:
 
     void HandleViewModelSlotsChanged(const TArray<FGamePlatformUISlotState>& NewSlots);
 
+    /** 绑定/解绑四个主动槽的中立点击事件；被动槽没有施法命令，不修改真实Widget树。 */
+    void BindAbilitySlotCommands(bool bBind);
+    /** Widget只提交命令；失败记录中文诊断，真实可用状态继续由ViewModel事件刷新。 */
+    void HandleAbilitySlotInvoked(FName SlotId);
+
     /** 将服务器授权的技能槽投影到五个可选的真实子Widget；未授权槽展示为空且禁用。
      * Passive（被动）按稳定ID前缀识别，其余槽位按现有项目GAS输入标签识别，
      * 不为十二生肖逐个硬编码控件，也不创建客户端技能授权。 */

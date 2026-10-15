@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/GamePlatformResourceBarWidget.h"
 #include "GamePlatformWorldUIRequest.generated.h"
 
 /**
@@ -33,6 +34,14 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformWorldUIRequest
     /** 辅助文本，例如等级、距离或副标题。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
     FText SecondaryText;
+
+    /** 调用方通过事件提供的中立资源快照；平台不查询GAS或区分玩家、怪物。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
+    FGamePlatformUIResourceBarState Resource;
+
+    /** 本地显示偏好及来源合法性；隐藏不影响业务生命值或网络相关性。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
+    bool bDisplayRequested = true;
 
     /** 当前世界坐标；移动实体由领域 Adapter 按事实变化更新该位置。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")

@@ -19,6 +19,7 @@ type PartyInteractionPort interface {
 
 // registerPartyRoutes（注册公开交互）仅注册现有主Gateway，不增加独立登录或社交服务入口。
 func (a *api) registerPartyRoutes() {
+	a.mux.HandleFunc("POST /v1/party/observe",a.requireAuth(a.observeParty))
 	a.mux.HandleFunc("GET /v1/party/current", a.requireAuth(a.getCurrentParty))
 	a.mux.HandleFunc("GET /v1/party/invitations", a.requireAuth(a.getPartyInvitations))
 	a.mux.HandleFunc("POST /v1/party/commands", a.requireAuth(a.commandParty))

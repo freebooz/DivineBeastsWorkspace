@@ -14,6 +14,7 @@ func NewMatchHandler(service *matchapi.Service) http.Handler {
 	}
 	mux := http.NewServeMux()
 	registerPartyInteractions(mux, service)
+	registerPartyObservation(mux,service)
 	mux.HandleFunc("POST /internal/v1/match/party", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			PlayerID    string `json:"playerId"`

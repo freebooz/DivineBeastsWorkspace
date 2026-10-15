@@ -18,10 +18,12 @@ void UDivineBeastsAbilityBarPanel::NativeConstruct()
     RefreshAbilitySourceFromOwningPawn();
     // 初始没有技能授权时，也应清空并禁用真实可见的五个子槽位。
     RefreshVisualSlots();
+    BindAbilitySlotCommands(true);
 }
 
 void UDivineBeastsAbilityBarPanel::NativeDestruct()
 {
+    BindAbilitySlotCommands(false);
     VisualProjectionToken=FGuid::NewGuid();
     if (APlayerController* Controller = BoundPawnController.Get())
     {
@@ -36,6 +38,27 @@ void UDivineBeastsAbilityBarPanel::NativeDestruct()
     }
     ViewModelSlotsHandle.Reset();
     Super::NativeDestruct();
+}
+
+void UDivineBeastsAbilityBarPanel::BindAbilitySlotCommands(bool bBind)
+{
+    UGamePlatformSlotWidget* ActiveSlots[] = {PrimaryAbilitySlot.Get(), ActiveAbilitySlot1.Get(),
+        ActiveAbilitySlot2.Get(), UltimateAbilitySlot.Get()};
+    for (UGamePlatformSlotWidget* AbilitySlot : ActiveSlots)
+    {
+        if (!IsValid(AbilitySlot)) continue;
+        AbilitySlot->OnSlotInvoked().RemoveAll(this);
+        if (bBind) AbilitySlot->OnSlotInvoked().AddUObject(this, &ThisClass::HandleAbilitySlotInvoked);
+    }
+}
+
+void UDivineBeastsAbilityBarPanel::HandleAbilitySlotInvoked(FName SlotId)
+{
+    if (!AbilityBarViewModel) return;
+    const FGamePlatformResult Result = AbilityBarViewModel->RequestActivateSlot(SlotId);
+    if (!Result.IsSuccess())
+        UE_LOG(LogTemp, Warning, TEXT("技能输入请求被拒绝：Slot=%s Code=%s Reason=%s"),
+            *SlotId.ToString(), *Result.Code.ToString(), *Result.Message);
 }
 
 void UDivineBeastsAbilityBarPanel::HandlePossessedPawnChanged(
@@ -219,10 +242,24 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
             UTexture2D* Texture = VisualState.Icon.Get();
             Icon->SetBrushFromTexture(Texture);
             Icon->SetVisibility(IsValid(Texture) ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
-            Icon->SetIsEnabled(VisualState.bEnabled && !VisualState.bPending);
+            // 可用资格由槽位命令门禁负责；冷却期间图标保持可见原色，不以禁用Shader隐藏内容。
+            Icon->SetIsEnabled(true);
+            Icon->SetRenderOpacity(1.f);
         }
         if (auto* Cooldown = Cast<UProgressBar>(Binding.Widget->GetWidgetFromName(TEXT("CooldownFill"))))
             Cooldown->SetPercent(VisualState.OverlayProgress);
+        float EndsAtAppSeconds = 0.f, DurationSeconds = 0.f;
+        for (const FDivineBeastsAbilitySlotDetails& Detail : GetAbilitySlotDetails())
+        {
+            if (Detail.AbilityId == VisualState.ContentId && !Detail.AbilityId.IsNone())
+            {
+                EndsAtAppSeconds = Detail.CooldownEndsAtAppSeconds;
+                DurationSeconds = Detail.CooldownTotalSeconds;
+                break;
+            }
+        }
+        // 快照截止时间不会因其他刷新而重启动画；只更新材质参数，结束事件清除覆盖。
+        Binding.Widget->ApplyOverlayTiming(EndsAtAppSeconds, DurationSeconds);
         // 在槽位蓝图状态事件之后刷新，不能让初始占位文字替代玩家当前生效按键。
         RefreshSlotHotkey(Binding.Widget, Binding.ActionName, Binding.bPassive);
     }

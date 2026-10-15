@@ -24,6 +24,11 @@ def main():
     if project.name != "DivineBeastsArena.uproject":
         raise RuntimeError("编辑器工程错误")
     errors, inspected = [], []
+    # 用户2026-10-14明确法术不消耗气势；独立读取真实数值表，拒绝旧费用资产。
+    table = unreal.load_asset(ROOT + '/DT_DBA_DevMagicBalance')
+    rows = json.loads(unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table)) if table else []
+    if len(rows) != 36 or any(float(row['MomentumCost']) != 0 for row in rows):
+        errors.append('36条真实法术数值必须全部为零气势费用')
     for hero in HEROES:
         base='/Game/Development/DivineBeasts/Abilities'
         ability_set=unreal.load_asset(base+'/DA_DBA_'+hero+'_DevAbilitySet')
@@ -72,7 +77,14 @@ def main():
                 cdo=unreal.get_default_object(cls)
                 if str(cdo.get_editor_property('AbilityDefinitionId').get_editor_property('PrimaryAssetName'))!=wanted:
                     errors.append('GAS DefinitionId不符: '+path)
-                for field,suffix in [('CostGameplayEffectClass','Cost'),('CooldownGameplayEffectClass','Cooldown')]:
+                if cdo.get_editor_property('CostGameplayEffectClass') is not None:
+                    errors.append('法术仍引用气势成本GE: '+path)
+                legacy_class = unreal.EditorAssetLibrary.load_blueprint_class(ROOT+'/GE_DBA_'+hero+'_Dev'+spell+'Cost')
+                if not legacy_class or unreal.get_default_object(legacy_class).get_editor_property('Modifiers'):
+                    errors.append('保留身份的旧成本GE仍有资源修改: '+path)
+                if '不消耗气势' not in str(ui[index].get_editor_property('Description')):
+                    errors.append('法术界面说明仍含过期费用: '+path)
+                for field,suffix in [('CooldownGameplayEffectClass','Cooldown')]:
                     effect=cdo.get_editor_property(field)
                     if not effect or effect.get_path_name()!=ROOT+'/GE_DBA_'+hero+'_Dev'+spell+suffix+'.GE_DBA_'+hero+'_Dev'+spell+suffix+'_C':
                         errors.append('真实成本/冷却类引用错误: '+path+' '+field)

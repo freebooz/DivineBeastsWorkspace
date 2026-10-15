@@ -38,7 +38,7 @@ bool FDivineBeastsWorldInputHandoffTest::RunTest(const FString&)
     UI->ActivePrimaryScreenId = TEXT("UI.Screen.LoadingTravel");
     UI->HandlePrimaryScreenClosed(TEXT("UI.Screen.LoadingTravel"));
     TestEqual(TEXT("世界页关闭交接同步Router为GameAndUI"), Router->GetActiveInputMode(), ECommonInputMode::All);
-    TestEqual(TEXT("世界基线不持久捕获鼠标"), Router->GetActiveMouseCaptureMode(), EMouseCaptureMode::NoCapture);
+    TestEqual(TEXT("世界基线仅按下时临时捕获，允许首次鼠标按下进入游戏"), Router->GetActiveMouseCaptureMode(), EMouseCaptureMode::CaptureDuringMouseDown);
 
     // 在途菜单尚无Widget也必须拥有输入优先权，不能在Router先发布UIOnly的窗口被世界反抢。
     UI->OpeningSystemScreenId = TEXT("UI.Screen.SystemMenu");

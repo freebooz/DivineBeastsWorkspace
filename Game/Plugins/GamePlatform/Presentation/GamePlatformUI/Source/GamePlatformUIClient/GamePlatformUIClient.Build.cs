@@ -35,5 +35,11 @@ public class GamePlatformUIClient : ModuleRules
             // 通用返回/确认资产回归实际使用FKey与EKeys，需要直接链接InputCore而不是依赖传递链接。
             "InputCore"
         });
+        // Editor输入回归持有真实FSceneViewport，继承FRenderResource虚函数需显式RenderCore链接；
+        // 夹具由WITH_EDITOR隔离，发行客户端与Dedicated Server不因此新增此测试依赖。
+        if (Target.Type == TargetType.Editor)
+        {
+            PrivateDependencyModuleNames.Add("RenderCore");
+        }
     }
 }

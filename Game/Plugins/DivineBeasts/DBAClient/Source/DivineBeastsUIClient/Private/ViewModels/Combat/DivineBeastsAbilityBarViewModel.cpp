@@ -5,6 +5,9 @@
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
+#include "Components/GamePlatformGameplayEligibilityComponent.h"
+#include "Framework/GamePlatformPlayerStateBase.h"
+#include "GameFramework/PlayerController.h"
 
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
 #include "Tags/GamePlatformCombatTags.h"
@@ -14,6 +17,8 @@
 #include "GameplayAbilitySpec.h"
 #include "GameplayEffect.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/Controller.h"
 #include "Definitions/DivineBeastsAbilityUIProfile.h"
 #include "Engine/AssetManager.h"
 #include "Engine/GameInstance.h"
@@ -67,6 +72,49 @@ void UDivineBeastsAbilityBarViewModel::UnbindFromLoadout()
         MarkStateChanged();
         SlotsChanged.Broadcast(Slots);
     }
+}
+
+FGamePlatformResult UDivineBeastsAbilityBarViewModel::RequestActivateSlot(FName SlotId)
+{
+    check(IsInGameThread());
+    UDivineBeastsAbilityLoadoutComponent* CurrentLoadout = Loadout.Get();
+    UGamePlatformAbilitySystemComponent* ASC = AbilitySystem.Get();
+    APawn* Pawn = CurrentLoadout ? Cast<APawn>(CurrentLoadout->GetOwner()) : nullptr;
+    UDivineBeastsCharacterComponent* Character = CharacterIdentity.Get();
+    if (!IsValid(Pawn) || !Pawn->IsLocallyControlled() || !Pawn->GetController() ||
+        Pawn->GetController()->IsMoveInputIgnored() || !IsValid(ASC) || !IsValid(Character))
+        return FGamePlatformResult::Failure(TEXT("AbilityInputOwnerUnavailable"), TEXT("当前没有可操作的本地角色，无法提交技能输入。"));
+    const FDivineBeastsAbilityLoadoutState Snapshot = CurrentLoadout->GetLoadoutState();
+    if (!Snapshot.bReady || !Character->IsCharacterReady() ||
+        Snapshot.HeroDefinitionId != Character->GetHeroDefinitionId() ||
+        Snapshot.AvatarGeneration != Character->GetAvatarGeneration())
+        return FGamePlatformResult::Failure(TEXT("AbilityLoadoutStale"), TEXT("当前技能授权或角色代次尚未确认。"));
+    const FGamePlatformUISlotState* Display = Slots.FindByPredicate(
+        [SlotId](const FGamePlatformUISlotState& Slot) { return Slot.SlotId == SlotId; });
+    if (!Display || !Display->bEnabled || Display->bPending)
+        return FGamePlatformResult::Failure(TEXT("AbilitySlotUnavailable"), TEXT("该技能尚未就绪、资源不足或正在冷却。"));
+    const FDivineBeastsGrantedAbilitySlot* Grant = nullptr;
+    for (const FDivineBeastsGrantedAbilitySlot& Candidate : Snapshot.Slots)
+    {
+        if (Candidate.SlotId != SlotId) continue;
+        if (Grant) return FGamePlatformResult::Failure(TEXT("AbilitySlotAmbiguous"), TEXT("技能槽授权重复，拒绝任选一个技能。"));
+        Grant = &Candidate;
+    }
+    const FGameplayAbilitySpec* Spec = nullptr;
+    if (!Grant || !Grant->InputTag.IsValid() || Display->ContentId != Grant->AbilityId ||
+        !TryResolveGrantedSpec(*ASC, Grant->InputTag, Spec) || !Spec || Spec->Level != Grant->AbilityLevel)
+        return FGamePlatformResult::Failure(TEXT("AbilitySlotSpecUnconfirmed"), TEXT("该槽位没有当前已确认的主动技能实例。"));
+    const auto* Configured = Cast<UDivineBeastsConfiguredGameplayAbility>(Spec->Ability);
+    if (!Configured || Configured->AbilityDefinitionId.PrimaryAssetName != Grant->AbilityId)
+        return FGamePlatformResult::Failure(TEXT("AbilitySlotIdentityMismatch"), TEXT("技能实例身份与服务器授权不一致。"));
+    const FGamePlatformAbilityInputToken Token = ASC->GetInputToken();
+    const FGameplayTag InputTag = Grant->InputTag;
+    const FGamePlatformResult Result = ASC->AbilityInputPressed(InputTag, Token);
+    if (!Result.IsSuccess()) return Result;
+    ASC->ProcessAbilityInput();
+    // 点击是一次输入脉冲；同步激活可能换Pawn，释放仍使用原令牌，禁止把旧点击留成按住状态。
+    if (IsValid(ASC)) ASC->AbilityInputReleased(InputTag, Token);
+    return Result;
 }
 
 void UDivineBeastsAbilityBarViewModel::BeginDestroy()
@@ -134,6 +182,7 @@ void UDivineBeastsAbilityBarViewModel::BindToNativeAbilityEvents()
         this, &UDivineBeastsAbilityBarViewModel::HandleAbilitySpecListChanged);
     AbilityAvatarHandle = ASC->OnAvatarBindingChanged().AddUObject(
         this, &UDivineBeastsAbilityBarViewModel::HandleAbilityAvatarBindingChanged);
+    RefreshGameplayEligibilityBindings();
 
     // 冷却和消耗由 GAS 生效/移除事件及项目属性复制推动，不启动游戏业务 Tick。
     GameplayEffectAddedHandle = ASC->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(
@@ -157,6 +206,12 @@ void UDivineBeastsAbilityBarViewModel::BindToNativeAbilityEvents()
 
 void UDivineBeastsAbilityBarViewModel::UnbindFromNativeAbilityEvents()
 {
+    if (AGamePlatformPlayerStateBase* State = LifecycleState.Get())
+        State->OnLifecycleChanged.Remove(LifecycleHandle);
+    if (UGamePlatformGameplayEligibilityComponent* Eligibility = GameplayEligibility.Get())
+        Eligibility->OnEligibilityChanged().Remove(GameplayEligibilityHandle);
+    LifecycleState.Reset(); GameplayEligibility.Reset();
+    LifecycleHandle.Reset(); GameplayEligibilityHandle.Reset();
     UGamePlatformAbilitySystemComponent* ASC = AbilitySystem.Get();
     if (ASC)
     {
@@ -193,10 +248,42 @@ void UDivineBeastsAbilityBarViewModel::UnbindFromNativeAbilityEvents()
 
 void UDivineBeastsAbilityBarViewModel::RefreshCurrentLoadout()
 {
+    RefreshGameplayEligibilityBindings();
     if (UDivineBeastsAbilityLoadoutComponent* Current = Loadout.Get())
     {
         RefreshSlots(Current->GetLoadoutStateRef());
     }
+}
+
+void UDivineBeastsAbilityBarViewModel::RefreshGameplayEligibilityBindings()
+{
+    check(IsInGameThread());
+    const auto* Current = Loadout.Get();
+    APawn* Pawn = Current ? Cast<APawn>(Current->GetOwner()) : nullptr;
+    auto* Controller = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+    auto* NewState = Controller ? Controller->GetPlayerState<AGamePlatformPlayerStateBase>() : nullptr;
+    auto* NewEligibility = Pawn ? Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>() : nullptr;
+    // 两个来源的复制顺序不固定：平台宿主查PlayerState，非平台宿主查中立资格组件。
+    // 均需事件刷新；已有来源不重复绑定，换角色先撤旧来源再发布当前视图。
+    if (LifecycleState.Get() != NewState)
+    {
+        if (auto* Previous = LifecycleState.Get()) Previous->OnLifecycleChanged.Remove(LifecycleHandle);
+        LifecycleHandle.Reset(); LifecycleState = NewState;
+        if (NewState) LifecycleHandle = NewState->OnLifecycleChanged.AddUObject(this, &ThisClass::RefreshCurrentLoadout);
+    }
+    if (GameplayEligibility.Get() != NewEligibility)
+    {
+        if (auto* Previous = GameplayEligibility.Get()) Previous->OnEligibilityChanged().Remove(GameplayEligibilityHandle);
+        GameplayEligibilityHandle.Reset(); GameplayEligibility = NewEligibility;
+        if (NewEligibility) GameplayEligibilityHandle = NewEligibility->OnEligibilityChanged().AddUObject(
+            this, &ThisClass::HandleGameplayEligibilityChanged);
+    }
+}
+
+void UDivineBeastsAbilityBarViewModel::HandleGameplayEligibilityChanged(
+    const FGamePlatformGameplayEligibilitySnapshot& Snapshot)
+{
+    RefreshCurrentLoadout();
 }
 
 void UDivineBeastsAbilityBarViewModel::HandleAbilitySpecListChanged()
@@ -271,6 +358,7 @@ void UDivineBeastsAbilityBarViewModel::HandleLoadoutChanged(
     const FDivineBeastsAbilityLoadoutState& Snapshot)
 {
     check(IsInGameThread());
+    RefreshGameplayEligibilityBindings();
     UDivineBeastsAbilityLoadoutComponent* Source = Loadout.Get();
     if (!Source) return;
     if (Snapshot.HeroDefinitionId != LoadedHeroId)
@@ -513,6 +601,9 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                             {
                                 Detail.CooldownRemainingSeconds = Pair.Key;
                                 Detail.CooldownTotalSeconds = Pair.Value;
+                                // 匹配SlateRHIRenderer的RealTime=PlatformTime-GStartTime；
+                                // 只在权威效果事件更新，渲染材质自行插值，不增加UI Tick。
+                                Detail.CooldownEndsAtAppSeconds = static_cast<float>(FPlatformTime::Seconds() - GStartTime) + Pair.Key;
                             }
                         }
                     }

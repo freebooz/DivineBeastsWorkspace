@@ -32,7 +32,7 @@ END_PAK = "; END GENERATED SERVER PRESENTATION PAK RULES"
 PACKAGING_SECTION = "[/Script/UnrealEd.ProjectPackagingSettings]"
 PAK_SECTION = "[ExcludeProjectClientPresentationFromDedicatedServer]"
 ASSET_EXTENSIONS = (".uasset", ".umap")
-# 权威所有者绝不能被误作为纯表现根剔除；UI开发子目录是显式窄范围例外。
+# 权威所有者绝不能被误作为纯表现根剔除；开发UI和下方已核验水材质叶子是窄范围例外。
 AUTHORITY_ROOTS = ("/DBAGameplay", "/DBAWorldPack_Village", "/GamePlatformWeather",
                    "/DBAServer", "/DBAArena", "/Game/Development/Foundation")
 ERROR_LOG = re.compile(r"(?:Log[A-Za-z0-9_]+:\s*)?(?:Error|Fatal):", re.I)
@@ -375,9 +375,15 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
             if package.casefold() in seen:
                 raise PolicyError(f"重复排除目录: {package}")
             seen.add(package.casefold())
-            if package in ("/Game", "/Engine", "/Game/Development") or any(
+            # 世界包同时拥有地图/权威水域与纯视觉预设。仅准许本次实际Cook核验的
+            # 水材质和三项视觉蓝图所在叶子；Water父目录、地图与权威定义仍禁止剥离。
+            is_reviewed_world_visual_leaf = package.casefold() in (
+                "/dbaworldpack_village/water/materials",
+                "/dbaworldpack_village/water/blueprints",
+            )
+            if package in ("/Game", "/Engine", "/Game/Development") or (not is_reviewed_world_visual_leaf and any(
                     _under(package.casefold(), root.casefold()) or _under(root.casefold(), package.casefold())
-                    for root in AUTHORITY_ROOTS):
+                    for root in AUTHORITY_ROOTS)):
                 raise PolicyError(f"不允许排除权威或泛化根目录: {package}")
             # Windows包路径按大小写无关的目录段保护祖先/后代，仅UI子树可作为表现排除。
             development_abilities = "/game/development/divinebeasts/abilities"

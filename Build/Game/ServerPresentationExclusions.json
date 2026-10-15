@@ -15,6 +15,27 @@
   },
   "CookDirectories": [
     {
+      "PackagePath": "/DBAWorldPack_Village/Water/Blueprints",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Water/Blueprints",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "本目录三项湖泊、河流、瀑布视觉预设硬引用纯Surface/VFX资源，不提供GamePlatformWaterRuntime的权威水域定义；当前地图未通过这些预设提供权威几何。权威Region与地图不得迁入本纯表现目录。"
+    },
+    {
+      "PackagePath": "/GamePlatformVFX/Water",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Water",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "涟漪、瀑布水雾及纯表现蓝图只由客户端VFX播放；不承担权威水域采样、碰撞或导航。Stage整包剥离不能替代Cook阶段排除。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Water/Materials",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Water/Materials",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "湖泊、河流、瀑布与泡沫的项目材质实例仅引用客户端Surface材质；只排除材质叶子，不排除Village地图、权威水域蓝图或GamePlatformWaterRuntime。"
+    },
+    {
       "PackagePath": "/Game/Development/PluginDemos",
       "SourceDirectory": "Game/Content/Development/PluginDemos",
       "Profiles": "AllServers",

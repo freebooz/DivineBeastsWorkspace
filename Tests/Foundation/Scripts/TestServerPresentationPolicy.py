@@ -84,12 +84,42 @@ class PolicyBehaviorTests(unittest.TestCase):
             self.policy.resolve_profile("FutureArenaServer")
         self.rejected_policy(lambda raw: raw["CookConfigProfiles"].update(FutureArenaServer="DedicatedServer"))
 
+    def test_water_visual_dependencies_are_rejected_for_all_servers(self):
+        """水体新增表现不能绕过服务器过滤；真实Village地图与权威技能仍必须许可。
+
+        删除水体排除会使两条实际Cook失败来源再次进入服务器包，本用例据真实包路径复现该漏项。
+        不依赖被测规则计算期望值，也不把此静态过滤回归冒充实际Cook成功。
+        """
+        visual_packages = (
+            "/GamePlatformVFX/Water/Blueprints/BP_GP_WaterfallVisual.uasset",
+            "/GamePlatformVFX/Water/Niagara/NS_GP_WaterRipple.uasset",
+            "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Lake.uasset",
+            "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Waterfall.uasset",
+            "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageLake.uasset",
+            "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageRiver.uasset",
+            "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageWaterfall.uasset",
+        )
+        for profile in PROFILES:
+            # Stage已排除VFX整包仍不能代替Cook排除；检查真实Cook输入策略，两阶段缺一不可。
+            self.assertIn("/GamePlatformVFX/Water", self.policy.cook_paths(profile))
+            self.assertIn("/DBAWorldPack_Village/Water/Materials", self.policy.cook_paths(profile))
+            self.assertIn("/DBAWorldPack_Village/Water/Blueprints", self.policy.cook_paths(profile))
+            for package in visual_packages:
+                with self.subTest(profile=profile, package=package):
+                    self.assertTrue(self.policy.is_forbidden(package, profile))
+            self.assertFalse(self.policy.is_forbidden(
+                "/DBAWorldPack_Village/Maps/L_Village_Start.umap", profile))
+            self.assertFalse(self.policy.is_forbidden(
+                "/Game/Development/DivineBeasts/Abilities/DA_Dev.uasset", profile))
+
     def test_unknown_schema_and_unknown_fields_are_rejected(self):
         self.rejected_policy(lambda raw: raw.update(SchemaVersion=99))
         self.rejected_policy(lambda raw: raw.update(UnreviewedWildcard=True))
 
     def test_dangerous_generic_or_authority_paths_are_rejected(self):
         for path in ("/Game", "/Game/Development", "/DBAGameplay", "/DBAWorldPack_Village",
+                     "/DBAWorldPack_Village/Water", "/DBAWorldPack_Village/Water/Definitions",
+                     "/DBAWorldPack_Village/Water/Authority",
                      "/GamePlatformWeather", "/Game/Development/../Foundation", "/DBAHeroPack_*/UI"):
             with self.subTest(path=path):
                 self.rejected_policy(lambda raw: raw["CookDirectories"][0].update(PackagePath=path))

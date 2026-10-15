@@ -26,6 +26,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineBaseTypes.h"
 #include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -52,11 +53,11 @@ struct FExpectedMagic
 static const FExpectedMagic ExpectedMagic[] =
 {
     {TEXT("Fireball"), TEXT("dba.ability.rat_dev_fireball@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Active01"),
-        EDivineBeastsDevelopmentMagicKind::Fireball, 40.f, 10.f, 2.f, 1200.f, 1, 0.f, 0.f, 0.f},
+        EDivineBeastsDevelopmentMagicKind::Fireball, 40.f, 0.f, 2.f, 1200.f, 1, 0.f, 0.f, 0.f},
     {TEXT("Frostbolt"), TEXT("dba.ability.rat_dev_frostbolt@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Active02"),
-        EDivineBeastsDevelopmentMagicKind::Frostbolt, 30.f, 8.f, 1.5f, 1600.f, 1, 0.f, 0.f, 0.f},
+        EDivineBeastsDevelopmentMagicKind::Frostbolt, 30.f, 0.f, 1.5f, 1600.f, 1, 0.f, 0.f, 0.f},
     {TEXT("ArcaneMissiles"), TEXT("dba.ability.rat_dev_arcanemissiles@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Ultimate"),
-        EDivineBeastsDevelopmentMagicKind::ArcaneMissiles, 12.f, 12.f, 3.f, 1400.f, 3, 0.2f, 18.f, 3.f}
+        EDivineBeastsDevelopmentMagicKind::ArcaneMissiles, 12.f, 0.f, 3.f, 1400.f, 3, 0.2f, 18.f, 3.f}
 };
 
 /** 定位已保存对象或蓝图生成类，仅构造软路径；不加载、注册、创建或写入资产。 */
@@ -72,7 +73,7 @@ static FSoftObjectPath MagicPath(const TCHAR* Prefix, const FExpectedMagic& Expe
 enum class EScenario : uint8
 {
     AssetContracts, GameplayEffects, Burst, Cancel, StaleSource, CommitAvatarSwap,
-    SpawnSuccessor, SpawnStaleSource, InsufficientMomentum, FreshSpawnInput
+    SpawnSuccessor, SpawnStaleSource, ZeroMomentum, FreshSpawnInput
 };
 
 /** 来自真实 Actor 事件的只读证据；弱引用不延长弹体寿命，终态快照允许销毁后继续审计。 */
@@ -156,7 +157,6 @@ public:
             if (Scenario == EScenario::FreshSpawnInput) { CheckFreshSpawnInput(); return true; }
             if (!BeginRealActivation()) { return true; }
             bCastStarted = true;
-            if (Scenario == EScenario::InsufficientMomentum) { return true; }
             return false;
         }
         World->Tick(LEVELTICK_All, 0.05f);
@@ -268,7 +268,9 @@ private:
             bValid &= Test->TestEqual(Label + TEXT("数值表射程厘米"), Balance.CastRangeCm, 2000.f);
             bValid &= Test->TestFalse(Label + TEXT("拒绝零级"), Definition->TryGetLoadedBalance(0, Balance, Error));
             bValid &= Test->TestFalse(Label + TEXT("拒绝未制作的第二级"), Definition->TryGetLoadedBalance(2, Balance, Error));
-            const UGameplayEffect* Cost = Ability->GetCostGameplayEffect();
+            bValid &= Test->TestNull(Label + TEXT("法术通过原生GAS无成本路径"), Ability->GetCostGameplayEffect());
+            const UClass* LegacyCostClass = Cast<UClass>(MagicPath(TEXT("GE"), Expected, TEXT("Cost"), true).ResolveObject());
+            const UGameplayEffect* Cost = LegacyCostClass ? LegacyCostClass->GetDefaultObject<UGameplayEffect>() : nullptr;
             const UGameplayEffect* Cooldown = Ability->GetCooldownGameplayEffect();
             if (!Test->TestNotNull(Label + TEXT("真实成本GE"), Cost) || !Test->TestNotNull(Label + TEXT("真实冷却GE"), Cooldown))
             { return false; }
@@ -278,6 +280,7 @@ private:
                 Cooldown->GetClass() == MagicPath(TEXT("GE"), Expected, TEXT("Cooldown"), true).ResolveObject());
             bValid &= Test->TestTrue(Label + TEXT("成本瞬时、冷却有时限"),
                 Cost->DurationPolicy == EGameplayEffectDurationType::Instant && Cooldown->DurationPolicy == EGameplayEffectDurationType::HasDuration);
+            bValid &= Test->TestEqual(Label + TEXT("保留稳定身份的旧成本GE没有资源修改"), Cost->Modifiers.Num(), 0);
             const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(Expected.CooldownTag), false);
             bValid &= Test->TestTrue(Label + TEXT("冷却字典已登记且GA仅声明本槽标签"), Tag.IsValid() &&
                 Ability->GetCooldownTags() && Ability->GetCooldownTags()->Num() == 1 && Ability->GetCooldownTags()->HasTagExact(Tag));
@@ -313,13 +316,19 @@ private:
     /**
      * 真实Hero出生后直接通过平台输入释放三种魔法，不调用FillMomentum。
      * 漏改英雄资产的初始气势、输入未进入GAS或成本重复扣除都会使本用例失败。
-     * 50→40→32→20来自用户批准的初始值和既有10/8/12成本，不由待测代码反算。
+     * 用户明确法术不消耗气势，三次施法均保持初始50；期望不由待测代码反算。
      */
     void CheckFreshSpawnInput()
     {
         const float SpawnMomentum = ASC->GetNumericAttribute(
             UDivineBeastsMomentumAttributeSet::GetMomentumAttribute());
         if (!Test->TestEqual(TEXT("真实英雄数据初始化50气势，不靠测试补满"), SpawnMomentum, 50.f)) { return; }
+        // 其他服务器场景故意使用远端控制器；本用例验证本地输入，必须通过引擎SetPlayer绑定
+        // 真实ULocalPlayer。不能修改ActorInfo私有标记或放宽平台“仅本地拥有者输入”门禁。
+        // ULocalPlayer声明Within=Engine，必须以真实GEngine为Outer；GI不是合法容器。
+        LocalInputPlayer.Reset(NewObject<ULocalPlayer>(GEngine));
+        Controller->SetPlayer(LocalInputPlayer.Get());
+        if (!Test->TestTrue(TEXT("输入夹具拥有真实本地玩家控制器"), Pawn->IsLocallyControlled())) { return; }
         auto* Eligibility = Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();
         if (!Test->TestNotNull(TEXT("服务器准入资格组件存在"), Eligibility)) { return; }
         Eligibility->SetServerPlayerActive(true);
@@ -327,22 +336,42 @@ private:
             TEXT("Platform.Ability.Input.DivineBeasts.Slot1"),
             TEXT("Platform.Ability.Input.DivineBeasts.Slot2"),
             TEXT("Platform.Ability.Input.DivineBeasts.Slot4") };
-        const float ExpectedMomentum[] = {40.f, 32.f, 20.f};
+        const float ExpectedMomentum[] = {50.f, 50.f, 50.f};
         for (int32 Index = 0; Index < UE_ARRAY_COUNT(ExpectedMagic); ++Index)
         {
             const FGameplayTag InputTag = FGameplayTag::RequestGameplayTag(FName(InputNames[Index]));
             FGameplayAbilitySpec Spec(AbilityClasses[Index], 1);
             Spec.GetDynamicSpecSourceTags().AddTag(InputTag);
             const FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
-            if (!Test->TestTrue(TEXT("真实GAS授予魔法"), Handle.IsValid()) ||
-                !Test->TestTrue(TEXT("出生资源允许接纳平台输入"),
-                    ASC->AbilityInputPressed(InputTag, ASC->GetInputToken()).IsSuccess())) { return; }
+            if (!Test->TestTrue(TEXT("真实GAS授予魔法"), Handle.IsValid())) { return; }
+            const FGamePlatformResult InputResult = ASC->AbilityInputPressed(InputTag, ASC->GetInputToken());
+            if (!Test->TestTrue(TEXT("出生资源允许接纳平台输入：") + InputResult.Code.ToString(),
+                InputResult.IsSuccess())) { return; }
+            // 零费用后属性不变不能证明输入真的施法；独立观察该Spec的原生Commit，
+            // 并在同步输入处理后立即解绑，失败或潜伏连发均不会引用栈上计数。
+            int32 InputCommitCount = 0;
+            const FDelegateHandle InputCommitHandle = ASC->AbilityCommittedCallbacks.AddLambda(
+                [Handle, &InputCommitCount](UGameplayAbility* Ability)
+                { if (Ability->GetCurrentAbilitySpecHandle() == Handle) ++InputCommitCount; });
             ASC->ProcessAbilityInput();
+            ASC->AbilityCommittedCallbacks.Remove(InputCommitHandle);
             ASC->AbilityInputReleased(InputTag, ASC->GetInputToken());
-            Test->TestEqual(FString::Printf(TEXT("%s通过真实输入仅扣一次成本"), ExpectedMagic[Index].Name),
+            Test->TestEqual(TEXT("每个真实输入确实提交一次对应法术"), InputCommitCount, 1);
+            const auto* AbilityCDO = CastChecked<UDivineBeastsDevelopmentMagicAbility>(AbilityClasses[Index]->GetDefaultObject());
+            Test->TestEqual(TEXT("每个已提交法术产生一份真实冷却"),
+                ASC->GetGameplayEffectCount(AbilityCDO->GetCooldownGameplayEffect()->GetClass(), ASC.Get()), 1);
+            Test->TestEqual(FString::Printf(TEXT("%s通过真实输入不消耗气势"), ExpectedMagic[Index].Name),
                 ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()),
                 ExpectedMomentum[Index]);
         }
+        FString Error;
+        // 独立模拟其他玩法改变资源，重复Hero通知不能重置为初始值。
+        ASC->SetNumericAttributeBase(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), 7.f);
+        auto* Identity = Pawn->FindComponentByClass<UDivineBeastsCharacterComponent>();
+        Test->TestTrue(TEXT("同一可信定义再次交接是幂等的"),
+            Identity->TryUsePreloadedDefinition(WarmupLease, *WarmupOwner.Get(), Error));
+        Test->TestEqual(TEXT("重复定义通知不把其他玩法的7气势重置为50"),
+            ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()), 7.f);
     }
 
     /** 初始化其他隔离场景的测试资源；真实出生回归不得调用本方法掩盖初始数据缺陷。 */
@@ -350,7 +379,7 @@ private:
     {
         const auto* Momentum = ASC->GetSet<UDivineBeastsMomentumAttributeSet>();
         if (!Test->TestNotNull(TEXT("真实Hero初始化的Momentum属性集"), Momentum) ||
-            !Test->TestTrue(TEXT("真实Hero气势上限足够两次奥术提交"), Momentum->GetMaxMomentum() >= 24.f)) { return false; }
+            !Test->TestTrue(TEXT("真实Hero气势上限合法且保留其他玩法资源"), Momentum->GetMaxMomentum() > 0.f)) { return false; }
         ASC->SetNumericAttributeBase(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), Momentum->GetMaxMomentum());
         InitialMomentum = ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute());
         return true;
@@ -365,12 +394,13 @@ private:
             const auto& Expected = ExpectedMagic[Index];
             const auto* Ability = CastChecked<UDivineBeastsDevelopmentMagicAbility>(AbilityClasses[Index]->GetDefaultObject());
             const FString Label = FString::Printf(TEXT("%s真实GAS："), Expected.Name);
-            const auto CostSpec = ASC->MakeOutgoingSpec(Ability->GetCostGameplayEffect()->GetClass(), 1.f, ASC->MakeEffectContext());
+            auto* LegacyCostClass = CastChecked<UClass>(MagicPath(TEXT("GE"), Expected, TEXT("Cost"), true).ResolveObject());
+            const auto CostSpec = ASC->MakeOutgoingSpec(LegacyCostClass, 1.f, ASC->MakeEffectContext());
             const auto CooldownSpec = ASC->MakeOutgoingSpec(Ability->GetCooldownGameplayEffect()->GetClass(), 1.f, ASC->MakeEffectContext());
             if (!Test->TestTrue(Label + TEXT("两份真实GE Spec有效"), CostSpec.IsValid() && CooldownSpec.IsValid())) { return; }
             // 瞬时GE的返回句柄可以无效；必须以实际属性副作用证明执行，不能仅断言句柄。
             ASC->ApplyGameplayEffectSpecToSelf(*CostSpec.Data.Get());
-            Test->TestEqual(Label + TEXT("实际扣除一次对应气势"),
+            Test->TestEqual(Label + TEXT("保留旧GE身份但不修改气势"),
                 ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()), InitialMomentum - Expected.Cost);
             const auto ActiveHandle = ASC->ApplyGameplayEffectSpecToSelf(*CooldownSpec.Data.Get());
             const auto* Active = ASC->GetActiveGameplayEffect(ActiveHandle);
@@ -441,7 +471,7 @@ private:
         if (!Test->TestTrue(TEXT("真实进程满足开发技能配置和命令行资格"),
             UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess())) { return false; }
         const auto* AbilityCDO = CastChecked<UDivineBeastsDevelopmentMagicAbility>(AbilityClasses[2]->GetDefaultObject());
-        CostClass = AbilityCDO->GetCostGameplayEffect()->GetClass();
+        CostClass = CastChecked<UClass>(MagicPath(TEXT("GE"), ExpectedMagic[2], TEXT("Cost"), true).ResolveObject());
         CooldownClass = AbilityCDO->GetCooldownGameplayEffect()->GetClass();
         OtherAvatar = Instance->GetWorld()->SpawnActor<AActor>();
         if (!Test->TestTrue(TEXT("换Avatar回归的真实后继Actor"), OtherAvatar.IsValid())) { return false; }
@@ -465,17 +495,10 @@ private:
             });
         SpawnHandle = Instance->GetWorld()->AddOnActorSpawnedHandler(
             FOnActorSpawned::FDelegate::CreateRaw(this, &FRealMagicCommand::ObserveProjectile));
-        if (Scenario == EScenario::InsufficientMomentum)
+        if (Scenario == EScenario::ZeroMomentum)
         {
-            ASC->SetNumericAttributeBase(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), 11.f);
-            Test->TestFalse(TEXT("11气势不足支付真实奥术12成本，GAS拒绝激活"), ASC->TryActivateAbility(AbilityHandle, false));
-            Test->TestEqual(TEXT("拒绝激活没有Commit"), CommitCount, 0);
-            Test->TestEqual(TEXT("拒绝激活没有成本GE"), CostApplications, 0);
-            Test->TestEqual(TEXT("拒绝激活没有冷却GE"), CooldownApplications, 0);
-            Test->TestEqual(TEXT("拒绝激活没有活跃冷却残留"), ASC->GetGameplayEffectCount(CooldownClass, ASC.Get()), 0);
-            Test->TestEqual(TEXT("拒绝激活没有Spawn副作用"), Projectiles.Num(), 0);
-            Test->TestEqual(TEXT("拒绝激活不扣气势"), ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()), 11.f);
-            return true;
+            InitialMomentum = 0.f;
+            ASC->SetNumericAttributeBase(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), 0.f);
         }
         if (!Test->TestTrue(TEXT("真实服务器GAS接纳奥术激活"), ASC->TryActivateAbility(AbilityHandle, false))) { return false; }
         auto* Spec = ASC->FindAbilitySpecFromHandle(AbilityHandle);
@@ -509,10 +532,10 @@ private:
         const bool bSuccessor = Scenario == EScenario::SpawnSuccessor;
         const int32 ExpectedCommits = bSuccessor ? 2 : 1;
         Test->TestEqual(TEXT("每次GAS激活只Commit一次"), CommitCount, ExpectedCommits);
-        Test->TestEqual(TEXT("每次Commit只应用一份真实成本GE"), CostApplications, ExpectedCommits);
+        Test->TestEqual(TEXT("法术Commit不应用气势成本GE"), CostApplications, 0);
         Test->TestEqual(TEXT("每次Commit只应用一份真实冷却GE"), CooldownApplications, ExpectedCommits);
-        Test->TestEqual(TEXT("连发不重复扣费，取消/换Avatar不伪造退款"),
-            ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()), InitialMomentum - 12.f * ExpectedCommits);
+        Test->TestEqual(TEXT("连发、取消、换Avatar及后继施法均不改变气势"),
+            ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()), InitialMomentum);
         Test->TestEqual(TEXT("当前激活只有一份真实冷却"), ASC->GetGameplayEffectCount(CooldownClass, ASC.Get()), 1);
         const auto* Spec = ASC->FindAbilitySpecFromHandle(AbilityHandle);
         const auto* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
@@ -555,7 +578,7 @@ private:
                     !Projectiles[0].Actor.IsValid() || Projectiles[0].Actor->IsActorBeingDestroyed());
             }
         }
-        if (Scenario == EScenario::Burst || bSuccessor)
+        if (Scenario == EScenario::Burst || Scenario == EScenario::ZeroMomentum || bSuccessor)
         {
             TArray<double> StartTimes;
             for (const auto& Observed : Projectiles) { if (Observed.StartedWorldSeconds>=0) StartTimes.Add(Observed.StartedWorldSeconds); }
@@ -577,6 +600,7 @@ private:
     EScenario Scenario;              // 本次用例唯一行为，不能在失败后退回另一种场景。
     double StartedSeconds;           // 墙钟秒，用于真实资源/初始化超时。
     TStrongObjectPtr<UGameInstance> Instance;
+    TStrongObjectPtr<ULocalPlayer> LocalInputPlayer; // 仅输入回归拥有；与Controller同一夹具销毁，不触发身份认证。
     TWeakObjectPtr<ADivineBeastsCharacter> Pawn;
     TWeakObjectPtr<APlayerController> Controller;
     TWeakObjectPtr<AActor> WarmupOwner, OtherAvatar;
@@ -588,7 +612,7 @@ private:
     FGameplayAbilitySpecHandle AbilityHandle;
     FDelegateHandle SpawnHandle, CommitHandle, EffectHandle;
     TArray<FObservedProjectile> Projectiles;
-    float InitialMomentum = 0;         // 真实ASC起始属性值；费用期望来自计划字面量12。
+    float InitialMomentum = 0;         // 真实ASC起始属性值；所有法术的费用期望均为零。
     int32 CommitCount = 0, CostApplications = 0, CooldownApplications = 0, FlightFrames = 0;
     bool bAssetsChecked = false, bCastStarted = false, bReentered = false, bSuccessorAccepted = false;
 };
@@ -604,7 +628,7 @@ bool FDivineBeastsDevelopmentMagicAssetContractsTest::RunTest(const FString&)
         DivineBeastsDevelopmentMagicTests::EScenario::AssetContracts)); return true;
 }
 
-// 实际GE未扣对应气势、未授予冷却标签、持续时间错误或移除后残留时失败；不要求激活开发技能。
+// 旧成本GE改为无修改以兼容稳定资产身份；实际冷却必须授予标签、持续正确且可清理。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMagicGameplayEffectsTest,
     "DivineBeasts.Abilities.DevelopmentMagic.RealAssets.GASCostCooldown",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -664,14 +688,14 @@ bool FDivineBeastsDevelopmentMagicSpawnSuccessorTest::RunTest(const FString&)
         DivineBeastsDevelopmentMagicTests::EScenario::SpawnSuccessor)); return true;
 }
 
-// 有效服务器身份但气势仅11；成本门禁失效或拒绝路径仍产生Commit/GE/Spawn副作用时失败。
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMagicInsufficientMomentumTest,
-    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.InsufficientMomentumHasNoSideEffects",
+// 真实服务器零气势仍须发出完整三弹；冷却保留，任何气势扣减或成本GE应用均失败。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMagicZeroMomentumTest,
+    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.ZeroMomentumCanCastAndKeepsCooldown",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FDivineBeastsDevelopmentMagicInsufficientMomentumTest::RunTest(const FString&)
+bool FDivineBeastsDevelopmentMagicZeroMomentumTest::RunTest(const FString&)
 {
     ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
-        DivineBeastsDevelopmentMagicTests::EScenario::InsufficientMomentum)); return true;
+        DivineBeastsDevelopmentMagicTests::EScenario::ZeroMomentum)); return true;
 }
 
 // Spawn同步回调改变来源代次，但未显式Cancel；技能必须自行结束，不得残留Active或迟到Timer。
@@ -684,7 +708,7 @@ bool FDivineBeastsDevelopmentMagicSpawnStaleSourceTest::RunTest(const FString&)
         DivineBeastsDevelopmentMagicTests::EScenario::SpawnStaleSource)); return true;
 }
 
-// 真实出生初始资源为零、平台输入无效或施法成本未执行时失败，不在测试中注入初始气势。
+// 真实出生初始50、平台输入成功且三个法术均不改变气势，不在测试中补充初始资源。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMagicFreshSpawnInputTest,
     "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.FreshSpawnCanCastAllThreeWithoutTestRefill",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
