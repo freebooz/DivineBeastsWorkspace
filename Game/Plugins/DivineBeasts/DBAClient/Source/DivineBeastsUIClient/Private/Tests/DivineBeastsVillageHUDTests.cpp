@@ -13,6 +13,16 @@
 #include "Layers/DivineBeastsRootLayout.h"
 #include "Panels/Combat/DivineBeastsCombatPanelBase.h"
 #include "Components/Overlay.h"
+#include "Components/ProgressBar.h"
+#include "Components/GamePlatformCastProgressWidget.h"
+#include "Components/GamePlatformAbilityCastComponent.h"
+#include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
+#include "Animation/WidgetAnimation.h"
+#include "MovieScene.h"
+#include "Tracks/MovieSceneFloatTrack.h"
+#include "Sections/MovieSceneFloatSection.h"
+#include "UObject/UObjectHash.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Engine/Texture2D.h"
@@ -22,6 +32,206 @@
 #include <limits>
 
 #if WITH_DEV_AUTOMATION_TESTS
+// 捕获真实HUD未接施法事件、取消后旧代复活以及动画误改技能时序的回归。
+// 独立游戏世界只有本地夹具Pawn/真实复制组件；不连接后端、不激活GAS技能、不修改保存资产。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCastBarEventBindingTest,
+    "DivineBeasts.UI.Combat.CastBarEventBinding", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCastBarEventBindingTest::RunTest(const FString&)
+{
+    UClass* RootClass = LoadClass<UDivineBeastsRootLayout>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C"));
+    if (!TestNotNull(TEXT("真实根布局类"), RootClass) || !TestNotNull(TEXT("Engine"), GEngine)) return false;
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("独立施法显示世界"), World)) return false;
+    TStrongObjectPtr<UDivineBeastsRootLayout> Root(NewObject<UDivineBeastsRootLayout>(GetTransientPackage(), RootClass));
+    auto* Controller = World->SpawnActor<APlayerController>();
+    if (!TestNotNull(TEXT("真实本地控制器"), Controller)) { World->DestroyWorld(false); return false; }
+    World->AddController(Controller);
+    ON_SCOPE_EXIT { Root->NativeDestruct(); World->RemoveController(Controller); World->DestroyWorld(false); };
+    auto* LocalPlayer = NewObject<ULocalPlayer>(GEngine);
+    Controller->SetPlayer(LocalPlayer);
+    APawn* Pawn = World->SpawnActor<APawn>();
+    if (!TestNotNull(TEXT("施法者Pawn"), Pawn)) return false;
+    auto* ASC = NewObject<UGamePlatformAbilitySystemComponent>(Pawn);
+    auto* Combat = NewObject<UGamePlatformCombatComponent>(Pawn);
+    auto* CastComponent = NewObject<UGamePlatformAbilityCastComponent>(Pawn);
+    Pawn->AddInstanceComponent(ASC); Pawn->AddInstanceComponent(Combat); Pawn->AddInstanceComponent(CastComponent);
+    ASC->RegisterComponent(); Combat->RegisterComponent(); CastComponent->RegisterComponent();
+    Controller->Possess(Pawn);
+    const FGuid FirstId = FGuid::NewGuid();
+    TestTrue(TEXT("先于HUD绑定的权威冰箭窗口"), CastComponent->PublishConfirmedCast(
+        FirstId, TEXT("ability.test.frostbolt@1"), TEXT("DBA.Development.Frostbolt"), 1, 0.7f));
+    Root->Initialize(); Root->SetPlayerContext(FLocalPlayerContext(Controller)); Root->NativeConstruct();
+    auto* Bar = Root->CombatHUD ? Cast<UGamePlatformCastProgressWidget>(Root->CombatHUD->GetWidgetFromName(TEXT("CastBar"))) : nullptr;
+    if (!TestNotNull(TEXT("真实CombatHUD已嵌套施法条"), Bar)) return false;
+    TestTrue(TEXT("首次绑定读取已存在的活跃快照"), Bar->GetCastSnapshot().bActive);
+    TestEqual(TEXT("冰箭名称说明确认动作，不声称蓄力"), Bar->GetCastSnapshot().DisplayName.ToString(), FString(TEXT("寒冰箭 · 施法动作")));
+    TestTrue(TEXT("保持既有0.7秒窗口"), FMath::IsNearlyEqual(Bar->GetCastSnapshot().TotalSeconds, 0.7, 0.0001));
+    TestEqual(TEXT("真实条展开"), Bar->GetVisibility(), ESlateVisibility::SelfHitTestInvisible);
+    const FGamePlatformAbilityCastFacts OldFacts = CastComponent->GetCastFacts();
+    TestTrue(TEXT("取消由真实组件发布"), CastComponent->CancelConfirmedCast(FirstId));
+    TestFalse(TEXT("取消事件立即清空活跃状态"), Bar->GetCastSnapshot().bActive);
+    TestEqual(TEXT("取消后隐藏"), Bar->GetVisibility(), ESlateVisibility::Collapsed);
+    const FGuid SecondId = FGuid::NewGuid();
+    TestTrue(TEXT("后继火球窗口"), CastComponent->PublishConfirmedCast(
+        SecondId, TEXT("ability.test.fireball@1"), TEXT("DBA.Development.Fireball"), 1, 0.7f));
+    const auto SecondSnapshot = Bar->GetCastSnapshot();
+    TestTrue(TEXT("后继窗口显示"), SecondSnapshot.bActive);
+    CastComponent->OnCastFactsChanged().Broadcast(CastComponent, OldFacts);
+    TestEqual(TEXT("迟到旧通知不能覆盖后继实例"), Bar->GetCastSnapshot().CastInstanceId, SecondSnapshot.CastInstanceId);
+    Root->RefreshForPlayerController(Controller);
+    TestEqual(TEXT("重复绑定不重复消费当前快照"), Bar->GetCastSnapshot().Revision, SecondSnapshot.Revision);
+    // 组件自然到期已由GamePlatform.AbilitySystem.Cast.AuthorityIdentityAndExpiry潜伏用例覆盖；
+    // 本用例仅验证同一事实终态通道，不在同一引擎帧强推TimerManager伪造到期。
+    TestTrue(TEXT("后继终态由真实组件发布"), CastComponent->CancelConfirmedCast(SecondId));
+    TestFalse(TEXT("终态通知收敛"), Bar->GetCastSnapshot().bActive);
+    TestTrue(TEXT("可再次发布"), CastComponent->PublishConfirmedCast(
+        FGuid::NewGuid(), TEXT("ability.test.fireball@1"), TEXT("DBA.Development.Fireball"), 1, 0.7f));
+    const FGuid PreviousScope = Bar->GetCastSnapshot().SourceScopeId;
+    APawn* NextPawn = World->SpawnActor<APawn>();
+    if (!TestNotNull(TEXT("后继角色Pawn"), NextPawn)) return false;
+    auto* NextASC = NewObject<UGamePlatformAbilitySystemComponent>(NextPawn);
+    auto* NextCombat = NewObject<UGamePlatformCombatComponent>(NextPawn);
+    auto* NextCast = NewObject<UGamePlatformAbilityCastComponent>(NextPawn);
+    NextPawn->AddInstanceComponent(NextASC); NextPawn->AddInstanceComponent(NextCombat); NextPawn->AddInstanceComponent(NextCast);
+    NextASC->RegisterComponent(); NextCombat->RegisterComponent(); NextCast->RegisterComponent();
+    Controller->Possess(NextPawn);
+    TestFalse(TEXT("换角色先清旧动作"), Bar->GetCastSnapshot().bActive);
+    TestFalse(TEXT("换角色解绑旧组件"), CastComponent->OnCastFactsChanged().IsBoundToObject(Root.Get()));
+    TestTrue(TEXT("后继角色发布真实窗口"), NextCast->PublishConfirmedCast(
+        FGuid::NewGuid(), TEXT("ability.test.frostbolt@1"), TEXT("DBA.Development.Frostbolt"), 1, 0.7f));
+    TestTrue(TEXT("新角色获得独立UI作用域"), Bar->GetCastSnapshot().SourceScopeId != PreviousScope);
+    const auto NextSnapshot = Bar->GetCastSnapshot();
+    CastComponent->OnCastFactsChanged().Broadcast(CastComponent, OldFacts);
+    TestEqual(TEXT("旧角色通知不能覆盖新角色"), Bar->GetCastSnapshot().CastInstanceId, NextSnapshot.CastInstanceId);
+    Root->RefreshForPlayerController(nullptr);
+    TestFalse(TEXT("本地来源失活清空显示"), Bar->GetCastSnapshot().bActive);
+    TestFalse(TEXT("失活成对解绑施法委托"), CastComponent->OnCastFactsChanged().IsBoundToObject(Root.Get()));
+    TestFalse(TEXT("失活解绑后继组件"), NextCast->OnCastFactsChanged().IsBoundToObject(Root.Get()));
+    CastComponent->OnCastFactsChanged().Broadcast(CastComponent, OldFacts);
+    TestEqual(TEXT("旧来源不能恢复失活条"), Bar->GetVisibility(), ESlateVisibility::Collapsed);
+    return true;
+}
+
+// 捕获“只有首次快照百分比而无连续动画”以及取消后残留动画的回归。
+// 只读检验事件建立的UMG原生Percent曲线；动画完成不得清除服务器bActive或更改技能资格。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCastBarNativeAnimationTest,
+    "DivineBeasts.UI.Combat.CastBarNativeAnimation", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCastBarNativeAnimationTest::RunTest(const FString&)
+{
+    UClass* BarClass = LoadClass<UGamePlatformCastProgressWidget>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_CastBar.WBP_DBA_UI_CastBar_C"));
+    if (!TestNotNull(TEXT("真实已保存施法条类"), BarClass)) return false;
+    TStrongObjectPtr<UGamePlatformCastProgressWidget> Bar(NewObject<UGamePlatformCastProgressWidget>(GetTransientPackage(), BarClass));
+    Bar->Initialize();
+    FGamePlatformUICastProgressState State;
+    State.SourceScopeId = FGuid::NewGuid(); State.CastInstanceId = TEXT("Cast.Animation.1");
+    State.DisplayName = FText::FromString(TEXT("寒冰箭 · 施法动作"));
+    State.TotalSeconds = 0.7; State.RemainingSeconds = 0.35; State.bActive = true; State.Revision = 1;
+    TestTrue(TEXT("绑定有效作用域"), Bar->BindCastSource(State.SourceScopeId));
+    TestTrue(TEXT("应用晚到一半的窗口"), Bar->ApplyCastSnapshot(State));
+    UWidgetAnimation* Animation = nullptr;
+    TArray<UObject*> Children; GetObjectsWithOuter(Bar.Get(), Children, EGetObjectsFlags::None);
+    for (UObject* Child : Children) if (auto* Candidate = Cast<UWidgetAnimation>(Child)) Animation = Candidate;
+    if (!TestNotNull(TEXT("变化事件建立瞬态引擎动画"), Animation)) return false;
+    TestTrue(TEXT("动画不产生保存资源"), Animation->HasAnyFlags(RF_Transient));
+    UMovieScene* Scene = Animation->GetMovieScene();
+    if (!TestNotNull(TEXT("真实MovieScene"), Scene) || !TestEqual(TEXT("动画只绑定自有条"), Animation->GetBindings().Num(), 1)) return false;
+    const auto* Track = Scene->FindTrack<UMovieSceneFloatTrack>(Animation->GetBindings()[0].AnimationGuid, TEXT("Percent"));
+    if (!TestNotNull(TEXT("原生Percent浮点轨道"), Track) || !TestEqual(TEXT("单次有限曲线"), Track->GetAllSections().Num(), 1)) return false;
+    const auto* Section = Cast<UMovieSceneFloatSection>(Track->GetAllSections()[0]);
+    float Value = 0;
+    TestTrue(TEXT("曲线可评估"), Section && Section->GetChannel().Evaluate(FFrameTime(0), Value));
+    TestTrue(TEXT("晚到不重置为0"), FMath::IsNearlyEqual(Value, 0.5f));
+    const FFrameNumber End = Scene->GetPlaybackRange().GetUpperBoundValue();
+    Section->GetChannel().Evaluate(FFrameTime(End), Value);
+    TestTrue(TEXT("视觉曲线到达1"), FMath::IsNearlyEqual(Value, 1.0f));
+    TestTrue(TEXT("曲线结束不自行冒充服务器完成"), Bar->GetCastSnapshot().bActive);
+    State.bActive = false; State.RemainingSeconds = 0; ++State.Revision;
+    TestTrue(TEXT("真实终态事件被接受"), Bar->ApplyCastSnapshot(State));
+    TestEqual(TEXT("终态隐藏"), Bar->GetVisibility(), ESlateVisibility::Collapsed);
+    const auto Terminal = Bar->GetCastSnapshot();
+    --State.Revision; State.bActive = true;
+    TestFalse(TEXT("过期修订拒绝"), Bar->ApplyCastSnapshot(State));
+    TestEqual(TEXT("旧快照不能复活"), Bar->GetCastSnapshot().Revision, Terminal.Revision);
+    Bar->ClearCastSource();
+    TestFalse(TEXT("解绑后无活跃快照"), Bar->GetCastSnapshot().bActive);
+    return true;
+}
+
+// 捕获SetVisibility同步通知重入后，外层重复建动画或Bind/Clear覆盖后继文字/进度的回归。
+// 直接订阅真实UUserWidget可见性事件，不伪造播放器；每个分支只重入一次，避免测试自身无限递归。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCastBarVisibilityReentryTest,
+    "DivineBeasts.UI.Combat.CastBarVisibilityReentry", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCastBarVisibilityReentryTest::RunTest(const FString&)
+{
+    UClass* BarClass = LoadClass<UGamePlatformCastProgressWidget>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_CastBar.WBP_DBA_UI_CastBar_C"));
+    if (!TestNotNull(TEXT("真实已保存施法条类"), BarClass)) return false;
+    // Apply分支：首次展开同步发布Revision=2，外层Revision=1不得再创建第二条动画。
+    {
+        TStrongObjectPtr<UGamePlatformCastProgressWidget> Bar(NewObject<UGamePlatformCastProgressWidget>(GetTransientPackage(), BarClass));
+        Bar->Initialize();
+        FGamePlatformUICastProgressState First;
+        First.SourceScopeId = FGuid::NewGuid(); First.CastInstanceId = TEXT("Cast.Reentry.1");
+        First.DisplayName = FText::FromString(TEXT("旧动作")); First.TotalSeconds = 0.7;
+        First.RemainingSeconds = 0.7; First.bActive = true; First.Revision = 1;
+        Bar->BindCastSource(First.SourceScopeId);
+        auto Next = First; Next.CastInstanceId = TEXT("Cast.Reentry.2");
+        Next.DisplayName = FText::FromString(TEXT("后继动作")); Next.RemainingSeconds = 0.35; Next.Revision = 2;
+        bool bReentered = false;
+        const FDelegateHandle Handle = Bar->OnNativeVisibilityChanged.AddLambda([&](ESlateVisibility Visibility)
+        {
+            if (!bReentered && Visibility == ESlateVisibility::SelfHitTestInvisible)
+            { bReentered = true; TestTrue(TEXT("可见性监听者同步发布后继"), Bar->ApplyCastSnapshot(Next)); }
+        });
+        ON_SCOPE_EXIT { Bar->OnNativeVisibilityChanged.Remove(Handle); Bar->ClearCastSource(); };
+        TestTrue(TEXT("外层首次事件已受理"), Bar->ApplyCastSnapshot(First));
+        TestTrue(TEXT("真实同步可见性回调已发生"), bReentered);
+        TestEqual(TEXT("保留后继修订"), Bar->GetCastSnapshot().Revision, int64(2));
+        TArray<UObject*> Children; GetObjectsWithOuter(Bar.Get(), Children, EGetObjectsFlags::None);
+        TArray<UWidgetAnimation*> Animations;
+        for (UObject* Child : Children) if (auto* Animation = Cast<UWidgetAnimation>(Child)) Animations.Add(Animation);
+        TestEqual(TEXT("外层不得为后继重复创建动画"), Animations.Num(), 1);
+        Next.bActive = false; Next.RemainingSeconds = 0; ++Next.Revision;
+        TestTrue(TEXT("取消后继"), Bar->ApplyCastSnapshot(Next));
+        for (auto* Animation : Animations)
+            TestFalse(TEXT("取消后没有失去所有权的动画继续播放"), Bar->IsAnimationPlaying(Animation));
+    }
+    // Bind/Clear分支：隐藏通知同步绑定新来源并发布真实快照，旧栈不得清空新来源的文字与比例。
+    for (bool bClearSource : {false, true})
+    {
+        TStrongObjectPtr<UGamePlatformCastProgressWidget> Bar(NewObject<UGamePlatformCastProgressWidget>(GetTransientPackage(), BarClass));
+        Bar->Initialize();
+        FGamePlatformUICastProgressState First;
+        First.SourceScopeId = FGuid::NewGuid(); First.CastInstanceId = TEXT("Cast.Cleanup.1");
+        First.TotalSeconds = 0.7; First.RemainingSeconds = 0.7; First.bActive = true; First.Revision = 1;
+        Bar->BindCastSource(First.SourceScopeId); Bar->ApplyCastSnapshot(First);
+        auto Next = First; Next.SourceScopeId = FGuid::NewGuid(); Next.CastInstanceId = TEXT("Cast.Cleanup.2");
+        Next.DisplayName = FText::FromString(TEXT("新来源动作")); Next.RemainingSeconds = 0.35;
+        bool bReentered = false;
+        const FDelegateHandle Handle = Bar->OnNativeVisibilityChanged.AddLambda([&](ESlateVisibility Visibility)
+        {
+            if (!bReentered && Visibility == ESlateVisibility::Collapsed)
+            {
+                bReentered = true; Bar->BindCastSource(Next.SourceScopeId);
+                TestTrue(TEXT("隐藏监听者同步发布新来源"), Bar->ApplyCastSnapshot(Next));
+            }
+        });
+        ON_SCOPE_EXIT { Bar->OnNativeVisibilityChanged.Remove(Handle); Bar->ClearCastSource(); };
+        if (bClearSource) Bar->ClearCastSource(); else Bar->BindCastSource(FGuid::NewGuid());
+        TestTrue(TEXT("隐藏可见性回调已发生"), bReentered);
+        TestEqual(TEXT("新来源作用域保留"), Bar->GetCastSnapshot().SourceScopeId, Next.SourceScopeId);
+        auto* Name = Cast<UTextBlock>(Bar->GetWidgetFromName(TEXT("CastNameText")));
+        auto* Progress = Cast<UProgressBar>(Bar->GetWidgetFromName(TEXT("CastProgressBar")));
+        if (!TestNotNull(TEXT("真实名称控件"), Name) || !TestNotNull(TEXT("真实进度控件"), Progress)) return false;
+        TestEqual(TEXT("旧清理栈不清新名称"), Name->GetText().ToString(), FString(TEXT("新来源动作")));
+        TestTrue(TEXT("旧清理栈不重置新进度"), FMath::IsNearlyEqual(Progress->GetPercent(), 0.5f));
+        TestEqual(TEXT("新来源保持可见"), Bar->GetVisibility(), ESlateVisibility::SelfHitTestInvisible);
+    }
+    return true;
+}
+
 // 实际保存的小地图必须把已加载底图绑定给MapImage，而不仅发布快照/裁剪UV；夹具世界不连接后端。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsMinimapImageBindingTest,
     "DivineBeasts.UI.Village.MinimapImageBinding", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)

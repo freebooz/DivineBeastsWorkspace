@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""只读开发客户端IoStore门禁：真实导出数据必须交付施法动作与起手系统。
+"""只读开发客户端IoStore门禁：真实导出数据必须交付施法动作、起手与新版寒冰箭完整表现闭包。
 输入为锁定UnrealPak实际生成的CSV，不使用磁盘库存替代发布。报告失败非零退出。
 此门禁不证明网络、动画播放或视觉质量；Niagara源模块是EditorOnly，不能要求其独立入包。
 """
@@ -21,6 +21,22 @@ def required_assets():
         result.extend([f'{vfx}/Niagara/NS_DBA_Dev{spell}Cast.uasset',
                        f'{vfx}/Definitions/DA_DBA_VFX_Dev{spell}Cast.uasset'])
 
+    # 新冰箭通过稳定Frostbolt定义软引用进入；逐项核对最终容器，旧Cook有原NS也不能放行。
+    ice = 'DBAPresentationPack_Core/Content/VFX/IceArrow'
+    for stage in ('Cast', 'GroundRune', 'Launch', 'Flight', 'Impact', 'FrostResidue'):
+        result.append(f'{ice}/Niagara/NS_DBA_IceArrow_{stage}.uasset')
+    for name in ('CrackMask', 'CrystalShard', 'FrostMist', 'FrozenGround', 'IceFlake',
+                 'IceNormal', 'IceORM', 'ImpactFlash', 'RuneInner', 'RuneOuter', 'TrailStrip'):
+        result.append(f'{ice}/Textures/T_DBA_IceArrow_{name}.uasset')
+    for name in ('CrystalLance', 'CrystalShard', 'IceCrown', 'TrailRibbon'):
+        result.append(f'{ice}/Meshes/SM_DBA_IceArrow_{name}.uasset')
+    for name in ('Crystal', 'Luminous', 'Mist', 'Trail'):
+        result.append(f'{ice}/Materials/M_DBA_IceArrow_{name}.uasset')
+    for name in ('Crystal', 'CrystalSprite', 'FrozenGround', 'GroundInner', 'GroundOuter',
+                 'ImpactCrystal', 'ImpactFlash', 'Mist', 'Snow', 'Trail'):
+        result.append(f'{ice}/Materials/MI_DBA_IceArrow_{name}.uasset')
+    result.append(f'{ice}/Definitions/DA_DBA_VFX_DevFrostboltResidue.uasset')
+    # NM_DBA_IceArrowMotion是已编译系统的EditorOnly制作脚本，不要求其源脚本独立进入发布包。
     return result
 
 

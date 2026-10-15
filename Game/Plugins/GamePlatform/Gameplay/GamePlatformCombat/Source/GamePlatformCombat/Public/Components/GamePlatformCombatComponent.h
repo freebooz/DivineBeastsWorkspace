@@ -62,6 +62,16 @@ public:
         return AvatarGeneration;
     }
 
+    /** 本地受控Pawn提交选中目标意图；true仅表示提交，服务器独立校验，不接受伤害/命中自报。
+     * 与本Pawn的GAS请求共用Actor可靠通道；非战斗目标按清空处理，无Tick或自动寻敌。 */
+    bool RequestProjectileTarget(AActor* Target);
+    /** GT服务器选择目标；拒绝旧来源代次而不覆盖后继选择。空目标清除；其他非法目标清除旧选择。
+     * 最大选择距离10000厘米仅限制意图，真正施法还须按技能射程和目标化身重新校验。 */
+    bool AuthoritySelectProjectileTarget(AActor* Target,int32 ExpectedSourceGeneration,int32 ExpectedTargetGeneration);
+    /** 服务器在施法命令中冻结一次有效选中目标；无效/超射程返回空并将输出代次归零。
+     * 不复制选择列表、不查询UI、不跨世界引用；调用方不得把此查询当作伤害授权。 */
+    AActor* GetSelectedProjectileTarget(float MaximumRangeCm,int32& OutTargetGeneration) const;
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
     FGamePlatformCombatResult ApplyDamage(
         const FGamePlatformCombatSpec& InSpec);
@@ -122,6 +132,12 @@ private:
     uint64 AvatarResetOperationGeneration = 0;
     /** EndPlay先置位且幂等；只有下一次引擎BeginPlay可建立新的开放作用域。 */
     bool bCombatClosing = false;
+    /** 仅服务器持有的选择意图，换来源或目标化身即失效；具体弹体各自冻结，不跟随以后切换。 */
+    TWeakObjectPtr<AActor> SelectedProjectileTarget;
+    int32 SelectedProjectileSourceGeneration = 0;
+    int32 SelectedProjectileTargetGeneration = 0;
+    UFUNCTION(Server,Reliable)
+    void ServerSelectProjectileTarget(AActor* Target,int32 ExpectedSourceGeneration,int32 ExpectedTargetGeneration);
 
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystemComponent = nullptr;

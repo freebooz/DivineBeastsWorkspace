@@ -14,6 +14,15 @@ UDivineBeastsPlaceholderGameplayAbility::UDivineBeastsPlaceholderGameplayAbility
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
+UGameplayEffect* UDivineBeastsPlaceholderGameplayAbility::GetCostGameplayEffect() const
+{
+    // 不退款、不补资源、不绕过Commit；只排除用户已明确取消的法术气势成本，原有冷却仍走GAS。
+    if (PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Fireball ||
+        PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Frostbolt ||
+        PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::ArcaneMissiles) return nullptr;
+    return Super::GetCostGameplayEffect();
+}
+
 bool UDivineBeastsPlaceholderGameplayAbility::CheckCost(
     const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
     FGameplayTagContainer* OptionalRelevantTags) const
@@ -106,6 +115,10 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
     CastSpec.DamageType = Balance.DamageType;
     CastSpec.SourceAbilityId = Balance.AbilityId;
     CastSpec.SourceAvatarGeneration = AvatarGeneration;
+    // 兼容已批准的原生开发样板，同样只追踪服务器冻结的选中目标。
+    FrozenProjectileTarget=Combat->GetSelectedProjectileTarget(Balance.CastRangeCm,CastSpec.TargetAvatarGeneration);
+    bHadFrozenTarget=FrozenProjectileTarget.IsValid();
+    CastSpec.Target=nullptr; // Timer之间不持有目标裸/强引用；每枚在释放时从弱身份重新验证。
     RemainingShots = ProjectileCount;
     ReleasedShots = 0;
     // 沿用既有平台表现语义；客户端缺少可选Niagara时服务器结果不变。
@@ -144,7 +157,14 @@ void UDivineBeastsPlaceholderGameplayAbility::ReleaseNextProjectile()
         return;
     }
 
-    const FVector Direction = Source->GetActorForwardVector().GetSafeNormal();
+    AActor* Target=FrozenProjectileTarget.Get();
+    const auto* TargetCombat=IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+    if (bHadFrozenTarget && (!IsValid(Target) || Target->IsActorBeingDestroyed() || Target->GetWorld()!=World ||
+        !TargetCombat || TargetCombat->IsCombatDead() || TargetCombat->GetCombatAvatarGeneration()!=CastSpec.TargetAvatarGeneration))
+    { EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true); return; }
+    const FVector AimOrigin=Source->GetActorLocation()+FVector(0,0,50);
+    const FVector Direction = bHadFrozenTarget ?
+        (Target->GetActorLocation()-AimOrigin).GetSafeNormal() : Source->GetActorForwardVector().GetSafeNormal();
     if (Direction.IsNearlyZero())
     {
         EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
@@ -169,6 +189,15 @@ void UDivineBeastsPlaceholderGameplayAbility::ReleaseNextProjectile()
         if (Projectile) Projectile->Destroy();
         if (Token == ActivationToken && IsActive())
             EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+        return;
+    }
+    // Spawn通知可能销毁目标；冻结身份失效时取消，不能把被GC置空的目标当作最初未选择。
+    Shot.Target=FrozenProjectileTarget.Get();
+    if (bHadFrozenTarget && !IsValid(Shot.Target.Get()))
+    {
+        if (Projectile) Projectile->Destroy();
+        if (Token==ActivationToken && IsActive())
+            EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true);
         return;
     }
     if (!Projectile || !Projectile->AuthorityInitialize(Shot, ShotMotion, Direction, CastStyle))
@@ -201,7 +230,7 @@ void UDivineBeastsPlaceholderGameplayAbility::EndAbility(
     ActivationToken.Invalidate();
     if (AActor* Source = CastSpec.Source.Get(); IsValid(Source) && Source->GetWorld())
         Source->GetWorld()->GetTimerManager().ClearTimer(BurstTimer);
-    BurstTimer.Invalidate();
+    BurstTimer.Invalidate(); FrozenProjectileTarget.Reset(); bHadFrozenTarget=false;
     RemainingShots = 0;
     CastSpec = {};
     CastStyle = NAME_None;

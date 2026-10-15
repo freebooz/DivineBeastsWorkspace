@@ -1,4 +1,4 @@
-﻿#requires -Version 7.0
+#requires -Version 7.0
 <#
 .SYNOPSIS
 启动可见前端客户端，首屏保留空白用户登录表单，不自动认证或进入角色页。
@@ -19,24 +19,18 @@ param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2
     # 仅显式开发验证加载已批准候选技能；三个参数共同选择文本INI、开发配置及运行开关。
     # 首屏仍为人工登录，不向进程传账号或密码；默认false保持正式前端流程。
     [switch]$DevelopmentSkills,
-<<<<<<< HEAD
     # 怪物仅在已启用开发技能的人工验证配置内创建，仍须独立运行开关，默认禁止正式流程生成。
     [switch]$DevelopmentMonsters,
     # 真实组队竞技开发入口；必须使用同一开发技能/内容Cook，首屏仍为人工登录。
     [switch]$DevelopmentArena,
-=======
-
->>>>>>> 8be33fda837e0e9ceb40fbe932c13c94120fe59f
+    # 非Shipping联调可显式读取当前源码默认输入；使用UE原生DEFInputINI合同，避免旧Cook包遮盖已修正映射。
+    [switch]$UseWorkspaceInputConfig,
     # 历史28081与28181拥有独立身份和玩家资料；当前本地保留28181，调用方仍须明确选择目标网关。
     [string]$GatewayUrl,
     [guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference='Stop'
-<<<<<<< HEAD
 if ($DevelopmentArena -and !$DevelopmentSkills) { throw '开发竞技必须使用包含必要英雄定义和技能的DevelopmentSkills配置。' }
 if ($DevelopmentMonsters -and !$DevelopmentSkills) { throw '开发怪物验证必须同时显式启用DevelopmentSkills。' }
-=======
-
->>>>>>> 8be33fda837e0e9ceb40fbe932c13c94120fe59f
 $gatewayModulePath=Join-Path $PSScriptRoot 'FrontEndClientGateway.psm1'
 Import-Module $gatewayModulePath -Force
 # 在创建任何证据目录或启动客户端前拒绝缺失/非法网关，防止把用户引导到错误的角色档案环境。
@@ -65,16 +59,11 @@ foreach($i in 1..$Count) {
             $info.ArgumentList.Add($argument)
         }
     }
-<<<<<<< HEAD
     if ($DevelopmentMonsters) { $info.ArgumentList.Add('-DBADevelopmentMonsters') }
     if ($DevelopmentArena) { $info.ArgumentList.Add('-DBADevelopmentArena') }
+    if ($UseWorkspaceInputConfig) { $info.ArgumentList.Add('-DEFInputINI='+(Join-Path $workspace 'Game/Config/DefaultInput.ini')) }
     $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters;DevelopmentArena=[bool]$DevelopmentArena}
-=======
-
-    $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills}
->>>>>>> 8be33fda837e0e9ceb40fbe932c13c94120fe59f
+    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters;DevelopmentArena=[bool]$DevelopmentArena;UseWorkspaceInputConfig=[bool]$UseWorkspaceInputConfig}
 }
 $records|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $directory 'Clients.json') -Encoding utf8
 $records|Select-Object PID,InitialScreen,AutoLogin|ConvertTo-Json

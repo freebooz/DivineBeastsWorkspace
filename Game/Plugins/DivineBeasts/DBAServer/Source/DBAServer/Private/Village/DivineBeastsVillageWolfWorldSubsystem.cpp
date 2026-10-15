@@ -4,6 +4,7 @@
 #include "Village/DivineBeastsVillageWolfAIController.h"
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Components/GamePlatformAIStateComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformExperienceComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/GamePlatformAIDefinition.h"
@@ -95,7 +96,8 @@ bool UDivineBeastsVillageWolfWorldSubsystem::CaptureApprovedScope(FApprovedScope
     auto* Bootstrap = Instance ? Instance->GetSubsystem<UDivineBeastsServerBootstrapSubsystem>() : nullptr;
     const auto* Lifecycle = ObservedLifecycle.Get();
     const auto* Experience = ObservedExperience.Get();
-    const auto* Service = IGamePlatformWorldService::Get(*const_cast<UWorld*>(World));
+    // 平台GetReadiness接口非const；保留服务原始接口类型，不改变本桥的只读资格检查职责。
+    auto* Service = IGamePlatformWorldService::Get(*const_cast<UWorld*>(World));
     if (!Bootstrap || !Lifecycle || !Experience || !Service ||
         Experience->GetWorld() != World || Lifecycle->GetGameInstance() != Instance) return false;
     const auto State = Bootstrap->GetBootstrapState();
@@ -209,10 +211,13 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
         for (const APlayerStart* AnyStart : Starts)
             if (FVector::DistSquared2D(AnyStart->GetActorLocation(), NavPoint.Location) <
                 FMath::Square(PlayerStartSafetyRadiusCm)) { bSafe = false; break; }
-        for (const auto* Other : OwnedWolves)
+        for (const auto& OtherReference : OwnedWolves)
+        {
+            const auto* Other = OtherReference.Get();
             if (IsValid(Other) && !Other->IsActorBeingDestroyed() &&
                 FVector::DistSquared2D(Other->GetActorLocation(), NavPoint.Location) <
                 FMath::Square(MinimumWolfSeparationCm)) { bSafe = false; break; }
+        }
         if (!bSafe) continue;
 
         FHitResult Ground;
@@ -345,8 +350,9 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     ObservedLifecycle.Reset();
     TArray<TObjectPtr<ADivineBeastsVillageWolf>> ToDestroy=MoveTemp(OwnedWolves);
     OwnedWolves.Reset();
-    for (auto* Wolf:ToDestroy)
+    for (const auto& WolfReference:ToDestroy)
     {
+        auto* Wolf=WolfReference.Get();
         if (!IsValid(Wolf)) continue;
         Wolf->OnAuthoritativeDeath().RemoveAll(this);
         Wolf->OnDestroyed.RemoveDynamic(this,&ThisClass::HandleWolfDestroyed);

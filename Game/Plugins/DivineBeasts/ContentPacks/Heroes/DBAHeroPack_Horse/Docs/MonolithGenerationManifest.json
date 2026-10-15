@@ -396,5 +396,14 @@
     "NativeSourceInspection": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureNativeSourceInspection.json",
     "BinaryFiles": "Saved/Validation/ZodiacSkillIcons-2026-10-09/TextureBinaryFileVerification.json",
     "ServerDeclaration": "Saved/Validation/ZodiacSkillIcons-2026-10-09/ServerIconCookDeclarationUpdate.json"
+  },
+  "SpellMomentum20261015": {
+    "ScopeZh": "通过Monolith增量更新本英雄三条技能描述：法术不消耗气势；保留原UI条目、图标、技能ID与既定冷却。",
+    "Author": "Tools/Unreal/Abilities/AuthorZodiacPlaceholderAbilities.py::repair_spell_momentum_costs",
+    "Evidence": "Game/Saved/Validation/SpellMomentumMigration/20261015T114623113609Z_Saved.json",
+    "AssetSaved": true,
+    "IndependentReadbackStatus": "PendingFinalColdStart",
+    "NativeGASStatus": "PendingFinalRebuild",
+    "ManualVisualAccepted": false
   }
 }

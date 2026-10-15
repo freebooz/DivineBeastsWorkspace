@@ -43,6 +43,10 @@ void UDivineBeastsDevelopmentMagicAbility::ActivateAbility(FGameplayAbilitySpecH
     CastSpec = {}; CastSpec.Source = Avatar; CastSpec.Magnitude = Balance.BaseDamage;
     CastSpec.DamageType = Balance.DamageType; CastSpec.SourceAbilityId = Balance.AbilityId;
     CastSpec.SourceAvatarGeneration = SourceGeneration;
+    // 只冻结服务器已验证的当前选择；未选/失效/超射程保持直线，不扫描周围敌人。
+    FrozenProjectileTarget=Combat->GetSelectedProjectileTarget(Balance.CastRangeCm,CastSpec.TargetAvatarGeneration);
+    bHadFrozenTarget=FrozenProjectileTarget.IsValid();
+    CastSpec.Target=nullptr; // Timer之间不持有目标裸/强引用；每枚在释放时从弱身份重新验证。
     Motion = Definition->ProjectileMotion; StyleId = Definition->GetPresentationStyleId();
     RemainingProjectiles = Definition->ProjectileCount; ReleasedProjectiles = 0;
     IntervalSeconds = Definition->ProjectileIntervalSeconds;
@@ -64,7 +68,14 @@ void UDivineBeastsDevelopmentMagicAbility::ReleaseNextProjectile()
     if (!IsActive() || !IsValid(Source) || !Source->HasAuthority() || !World || World->bIsTearingDown ||
         !Combat || Combat->IsCombatDead() || Combat->GetCombatAvatarGeneration() != CastSpec.SourceAvatarGeneration || RemainingProjectiles <= 0)
     { EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true); return; }
-    const FVector Direction = Source->GetActorForwardVector().GetSafeNormal();
+    AActor* Target=FrozenProjectileTarget.Get();
+    const auto* TargetCombat=IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+    if (bHadFrozenTarget && (!IsValid(Target) || Target->IsActorBeingDestroyed() || Target->GetWorld()!=World ||
+        !TargetCombat || TargetCombat->IsCombatDead() || TargetCombat->GetCombatAvatarGeneration()!=CastSpec.TargetAvatarGeneration))
+    { EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true); return; }
+    const FVector AimOrigin=Source->GetActorLocation()+FVector(0,0,50);
+    const FVector Direction = bHadFrozenTarget ?
+        (Target->GetActorLocation()-AimOrigin).GetSafeNormal() : Source->GetActorForwardVector().GetSafeNormal();
     const FVector Start = Source->GetActorLocation() + FVector(0, 0, 50) + Direction * 50;
     FActorSpawnParameters Spawn; Spawn.Owner = Source; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     FGamePlatformCombatSpec Shot = CastSpec; Shot.EventId = FGuid::NewGuid();
@@ -78,6 +89,15 @@ void UDivineBeastsDevelopmentMagicAbility::ReleaseNextProjectile()
         if (Projectile) Projectile->Destroy();
         // Destroy同样能同步激活后继。只结束仍属于当前令牌的失效施法，不能取消后继实例。
         if (ActivationToken==CastActivationToken && IsActive())
+            EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true);
+        return;
+    }
+    // Spawn通知可能销毁目标；冻结身份失效时取消，不能把被GC置空的目标当作最初未选择。
+    Shot.Target=FrozenProjectileTarget.Get();
+    if (bHadFrozenTarget && !IsValid(Shot.Target.Get()))
+    {
+        if (Projectile) Projectile->Destroy();
+        if (CastActivationToken==ActivationToken && IsActive())
             EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true);
         return;
     }
@@ -104,7 +124,7 @@ void UDivineBeastsDevelopmentMagicAbility::EndAbility(FGameplayAbilitySpecHandle
     CastActivationToken.Invalidate();
     if (AActor* Source = CastSpec.Source.Get(); IsValid(Source) && Source->GetWorld())
         Source->GetWorld()->GetTimerManager().ClearTimer(BurstTimer);
-    BurstTimer.Invalidate(); RemainingProjectiles = 0; CastSpec = {}; StyleId = NAME_None;
+    BurstTimer.Invalidate(); FrozenProjectileTarget.Reset(); bHadFrozenTarget=false; RemainingProjectiles = 0; CastSpec = {}; StyleId = NAME_None;
     // 正常结束保留短回收动作到窗口自然过期；取消仅停止该次动作，不取消后继事实。
     if (bWasCancelled && ActorInfo && ActorInfo->AvatarActor.IsValid())
         if (auto* CastFacts=ActorInfo->AvatarActor->FindComponentByClass<UGamePlatformAbilityCastComponent>())

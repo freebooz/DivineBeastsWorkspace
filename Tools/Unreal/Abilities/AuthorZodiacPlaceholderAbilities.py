@@ -26,9 +26,9 @@ HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
 SLOTS = (
     ("Primary", "普通攻击（占位）", "PRIMARY", "PRIMARY", 40, 0, 0, 250, 0, 0, 1, 0),
     ("Passive", "被动技能（占位）", "PASSIVE", "", 0, 0, 0, 0, 0, 0, 1, 0),
-    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 10, 2, 2000, 1200, 0, 1, 0),
-    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 8, 1.5, 2000, 1600, 0, 1, 0),
-    ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 12, 3, 2000, 1400, 18, 3, .2),
+    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 2000, 1200, 0, 1, 0),
+    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 2000, 1600, 0, 1, 0),
+    ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 2000, 1400, 18, 3, .2),
 )
 COOLDOWNS = ("Fireball", "Frostbolt", "ArcaneMissiles")
 MAGIC_ICONS = {
@@ -209,7 +209,8 @@ def author():
             cost_cls = None
             cooldown_cls = None
             cooldown_tags = []
-            if cost > 0:
+            if mode in COOLDOWNS:
+                # 保留已发布成本GE身份为无修改兼容资产；法术GA不再引用它，冷却仍独立制作。
                 cost_bp, _temp, cost_cdo = blueprint(ROOT + "/GE" + base_name + "Cost", unreal.GameplayEffect)
                 cost_cdo.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.INSTANT)
                 attr = ('(Attribute="/Script/DivineBeastsCharactersRuntime.DivineBeastsMomentumAttributeSet:Momentum",'
@@ -219,11 +220,12 @@ def author():
                 check(mod.import_text("(Attribute=" + attr +
                     ",ModifierOp=AddBase,ModifierMagnitude=" + magnitude(-cost).export_text() + ")"),
                     "真实气势GAS成本设置失败：" + identity)
-                cost_cdo.set_editor_property("Modifiers", [mod])
+                cost_cdo.set_editor_property("Modifiers", [mod] if cost > 0 else [])
                 unreal.BlueprintEditorLibrary.compile_blueprint(cost_bp)
                 save(cost_bp)
-                cost_cls = unreal.EditorAssetLibrary.load_blueprint_class(ROOT + "/GE" + base_name + "Cost")
-                check(cost_cls is not None, "成本效果无真实生成类：" + identity)
+                compatibility_cost_cls = unreal.EditorAssetLibrary.load_blueprint_class(ROOT + "/GE" + base_name + "Cost")
+                check(compatibility_cost_cls is not None, "成本效果无真实生成类：" + identity)
+                cost_cls = compatibility_cost_cls if cost > 0 else None
             if cooldown > 0:
                 cool_bp, _temp, cool_cdo = blueprint(ROOT + "/GE" + base_name + "Cooldown", unreal.GameplayEffect)
                 cool_cdo.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.HAS_DURATION)
@@ -300,7 +302,7 @@ def author():
             else:
                 description = (
                     "临时" + label + "：每枚基础伤害" + str(damage) +
-                    "，气势消耗" + str(cost) + "，冷却" + str(cooldown) +
+                    "，法术不消耗气势，冷却" + str(cooldown) +
                     "秒。服务器权威弹体" + ("三连发。" if count == 3 else "单发。") +
                     "未实现减速/燃烧等最终生肖效果，后续直接替换对应技能定义及执行类。")
             item.set_editor_property("Description", unreal.Text(description))
@@ -361,6 +363,74 @@ def author():
     unreal.log("SSLM_PLACEHOLDER_ASSETS_WRITTEN=" +
                json.dumps({"Heroes": len(heroes), "SavedCount": len(SAVED),
                            "Report": str(report_path)}, ensure_ascii=False))
+    return report
+
+
+def repair_spell_momentum_costs():
+    """显式Monolith迁移既有36法术的零费合同；不重建英雄、技能、冷却或修改伤害。
+
+    仅用户已授权的正式Editor游戏线程调用。先验证全部对象并记录原表、GE、GA及UI文字，
+    然后保存原身份；异常保留已完成证据，不伪造事务回滚。调用前由主流程备份真实uasset。
+    """
+    check(Path(unreal.Paths.get_project_file_path()).resolve() == (GAME / "DivineBeastsArena.uproject").resolve(),
+          "非正式SSLM工程，拒绝迁移")
+    table = unreal.load_asset(ROOT + "/DT_DBA_PlaceholderBalance")
+    check(isinstance(table, unreal.DataTable), "真实占位数值表缺失")
+    rows = json.loads(unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table))
+    check(len(rows) == 60, "占位表不是已批准的60行，拒绝覆盖")
+    expected = {hero + "_Placeholder_" + mode + "_L1" for hero in HEROES for mode in COOLDOWNS}
+    magic_rows = [row for row in rows if row["Name"] in expected]
+    check(len(magic_rows) == 36 and all(row["DamageType"] == "Magic" for row in magic_rows), "法术行身份异常")
+    effects, abilities, profiles = [], [], []
+    for hero in HEROES:
+        for mode in COOLDOWNS:
+            suffix = "_DBA_" + hero + "_Placeholder" + mode
+            ge = unreal.load_asset(ROOT + "/GE" + suffix + "Cost")
+            ga = unreal.load_asset(ROOT + "/GA" + suffix)
+            check(isinstance(ge, unreal.Blueprint) and isinstance(ga, unreal.Blueprint), "旧GA或兼容GE缺失：" + suffix)
+            ge_cdo = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(ROOT + "/GE" + suffix + "Cost"))
+            mods = list(ge_cdo.get_editor_property("Modifiers"))
+            check(len(mods) <= 1 and all('Momentum' in mod.get_editor_property('Attribute').export_text() for mod in mods),
+                  "成本GE含非既定修改，拒绝清除：" + suffix)
+            effects.append((ge, ge_cdo, [mod.export_text() for mod in mods]))
+            abilities.append(ga)
+        profile = unreal.load_asset("/DBAHeroPack_" + hero + "/UI/Abilities/DA_DBA_" + hero + "_PlaceholderUIProfile")
+        check(isinstance(profile, unreal.DivineBeastsAbilityUIProfile), "真实英雄UI配置缺失：" + hero)
+        profiles.append(profile)
+    folder = GAME / "Saved/Validation/SpellMomentumMigration"
+    folder.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    before = {"Rows": rows, "Effects": [{"Path": ge.get_path_name(), "Modifiers": old} for ge, _cdo, old in effects],
+              "Descriptions": {profile.get_path_name(): [str(entry.get_editor_property('Description'))
+                              for entry in profile.get_editor_property('Entries')] for profile in profiles}}
+    (folder / (stamp + "_Before.json")).write_text(json.dumps(before, ensure_ascii=False, indent=2), encoding="utf-8")
+    for row in magic_rows:
+        row["MomentumCost"] = 0
+    check(unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(table, json.dumps(rows)), "原表零费填充失败")
+    save(table)
+    for ge, cdo, _old in effects:
+        cdo.set_editor_property("Modifiers", [])
+        unreal.BlueprintEditorLibrary.compile_blueprint(ge)
+        save(ge)
+    for ga in abilities:
+        cls = unreal.EditorAssetLibrary.load_blueprint_class(ga.get_path_name().split('.')[0])
+        unreal.get_default_object(cls).set_editor_property("CostGameplayEffectClass", None)
+        unreal.BlueprintEditorLibrary.compile_blueprint(ga)
+        save(ga)
+    for profile in profiles:
+        entries = list(profile.get_editor_property("Entries"))
+        for entry in entries:
+            text = str(entry.get_editor_property("Description"))
+            import re
+            text = re.sub(r"气势消耗(?:10|8|12)(?:\.0)?", "法术不消耗气势", text)
+            entry.set_editor_property("Description", unreal.Text(text))
+        profile.set_editor_property("Entries", entries)
+        save(profile)
+    report = {"Status": "SavedPendingNativeReloadAndGASRegression", "MagicRows":36, "NeutralCostEffects":36,
+              "ClearedAbilityCostReferences":36, "UIProfiles":12, "SavedPaths":SAVED, "NativeGASVerified":False}
+    path = folder / (stamp + "_Saved.json")
+    path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    print("SSLM_SPELL_ZERO_COST_SAVED", str(path))
     return report
 
 

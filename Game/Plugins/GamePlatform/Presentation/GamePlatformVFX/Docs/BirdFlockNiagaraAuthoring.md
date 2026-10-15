@@ -4,6 +4,8 @@
 
 独立P4资产重载、三物种Niagara编译零错误/零警告、15组直接GPU数量以及15组正式PIE链路GPU数量均已通过。完整构建/资源烘焙/长稳与人工验收状态见`Docs/Implementation/BirdFlockP4P7Execution_20261011.md`；不能以这些自动检查代替人工审美确认。
 
+2026-10-15间距修复状态：下述稳定编队算法、增量资产作者入口和纯位置回归已更新源码；本轮真实Monolith更新、编译保存、独立重载、GPU读回、Cook和人工观察须由主流程重新执行。前段2026-10-11证据不能作为本轮间距修复已生效的证明。
+
 ## 一、方案边界
 
 - 平台通用层 `GamePlatformVFX` 保持无具体物种引用：运行时参数合同、飞行数学模块、Niagara通用 GPU emitter 子图、Niagara性能和编译校验资产。不能在平台层硬引用任何 `DBAPresentationPack_Core` 资源。
@@ -40,7 +42,7 @@ Render
 
 通过现有 `FGamePlatformVFXParameterSchema` 的 `Rules` 为每种项目定义配置以下稳定属性：
 
-当前白名单恰好7项：`User.BirdCount`整数0–512；`User.FlockRadius`浮点半径200–10000cm；`User.FlockHeight`浮点相对高度200–10000cm；`User.FlightSpeed`浮点速度10–5000cm/s；`User.WindInfluence`浮点扰动幅度0–2000cm；`User.FlockSeed`整数0–1000000；`User.FlightMode`整数0盘旋/1拉长闭合掠过/2八字。
+2026-10-11真实资产白名单为7项：`User.BirdCount`整数0–512；`User.FlockRadius`浮点半径200–10000cm；`User.FlockHeight`浮点相对高度200–10000cm；`User.FlightSpeed`浮点速度10–5000cm/s；`User.WindInfluence`浮点扰动幅度0–2000cm；`User.FlockSeed`整数0–1000000；`User.FlightMode`整数0盘旋/1拉长闭合掠过/2八字。2026-10-15增量修复将加入第8项可选浮点字段`User.FlockMinimumSpacing`（最小中心距厘米，1–1000）；其定义、默认值与Niagara参数必须在同一轮真实更新，不能只修改HLSL后沿用旧资产。
 
 世界锚点使用平台表现请求的SourceLocation及既有LWC放置流程，粒子在本地空间运动；不是额外User.FlockCenter参数。振翅频率/幅度来自物种材质实例，没有开放User.WingBeatHz或WindDirection协议，不在文档声称不存在的字段已可配置。
 
@@ -73,3 +75,23 @@ Render
 5. `RunBirdFlockIntegrationReview.py`在真实PIE验证蓝图自动生成三群、正式表现链路15组数量、错误输入不污染既有请求、停止和World清理。不能用脚本内构造的结果代替GPU读回。
 6. `RunBirdFlockSoakReview.py`按10分钟稳定性窗口验证三群512只，无界性能数据和硬件无关FPS不属于该检查的结论。
 7. 最后核查客户端Cook/Stage包含新Flight网格/蓝图/定义/Niagara而专用服务器不包含，人工验收关卡与最终场景后才关闭P7。
+
+## 六、2026-10-15个体间距修复
+
+原运动模块将`Particles.MaterialRandom`作为相位、半径与角速度的共同随机源，没有任何最小距离约束；独立角速度还会让初始分开的个体在后续追近。八字路线存在两个分支交汇，增大分离权重或只检查出生点均不能修复当前已发布0/1/2路径。高级Spline/Boids发布资格仍保持原门禁。
+
+修复直接从现有ParameterMap读`Particles.UniqueID`与`User.BirdCount`，保留原8个模块输入和`Individual`的随机尺寸用途。单次Burst内连续编号模实际数量形成稳定槽位；共享角速度使槽位相位差在整个请求生命周期内不漂移，风扰动和上下起伏也由全群共享。仍使用原盘旋圆、拉长椭圆及八字公式，半径统一为0.9R（原随机半径均值约0.885R），保持原飞行区域、数量和路线形状，不创建逐鸟Actor、CPU更新或邻域扫描。
+
+同层槽位先按真实中心距计算容量。圆/椭圆采用最小轴的弦长下界；八字每层只占半圈，并用`distance >= 0.65R * abs(sin(delta))`的保守下界计算容量。不同层的Z差固定至少一个中心距，交汇时也成立。单层直径不足时容量为1；不能将asin输入夹至1后误认容量为2。底层需要抬高时上移整个编队，不逐鸟钳Z而压掉层间距。
+
+项目候选最小中心距为海鸥220cm、燕子140cm、雄鹰340cm，依据已有翼展155/97/255cm、最大1.11模型Scale、振翅幅度11/7/20cm及可见余量。真实更新入口还会读取已保存网格包围球与材质实例幅度，按`2*SphereRadius*1.11 + 2*WingAmplitude + 15cm`复核，再向上20cm取整，避免只信源规格而漏掉实际模型边界。默认Village海鸥32只仍为一层，燕子24只为两个相距140cm的半圈层；OpenWorld雄鹰5只仍为一层。高数量只增加保证间距所需的固定层数，必须复核其生态安全高度与实际GPU剔除。
+
+待主流程确认正确主工程、锁定Monolith/UE身份并协调编辑器后，使用现有入口：
+
+```text
+<已核实的Python解释器> Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockNiagaraMonolith.py --repair-spacing
+```
+
+入口预检三物种真实资源，留存旧模块/系统规格后，为现有基础系统及三变体新增参数，调用Monolith `set_custom_hlsl_text`更新原模块，在原@1定义增加可选规则、默认值与内容修订，再逐个编译保存。组件`BirdCount`、正式服务与Definition白名单均真实允许0..512；正式鸟群入口只覆盖Count，模式/半径/高度来自系统默认值，因此固定Bounds按各系统当前真实模式和512只计算，而不为默认盘旋鹰群无条件预留未请求的八字高度。候选参数的四系统均可保持原XY Bounds与Z -1000..12000cm；默认全相位中心高度为海鸥808..892cm、Village燕子458..682cm、雄鹰1358..1442cm。报告同时记录真实默认数量与512只包络、实际模式和最终Bounds，真实网格预检若提高间距则重新计算。模式、半径、高度或间距改动后必须重跑作者与安全体积审计；平台中立请求自行覆盖这些字段时须提供覆盖后Bounds，不能沿用这次默认模式的合同。三种轨迹、数量、逻辑身份、网格与材质引用均不重建。失败即停止并保留逐步证据，不自动重放写动作。
+
+纯回归入口`Tests/Assets/TestBirdFlockReleasePolicy.py`逐句执行真实HLSL位置公式，验证默认群600秒完整相位及1小时/24小时、三模式的2/3/72/128/512只、2000cm风扰动与最小200cm半径/超直径间距。测试是CPU双精度数学证据，不能代替GPU浮点、UniqueID、真实User参数、固定Bounds、画面和Cook验证。真实资产门禁`ValidateBirdFlockNiagaraMonolith.py`要求保存后的模块HLSL与源码一致、三个系统包含新间距字段并且GPU编译状态最新；最终仍需对实际GPU位置和两窗口场景观察留证。

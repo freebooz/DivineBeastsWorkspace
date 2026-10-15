@@ -1,7 +1,7 @@
 /**
  * 神兽联盟开发魔法的原生资源与服务器 GAS 回归，属于 DBAGameplay 项目层。
  * 调用方为 Editor 自动化；仅在游戏线程创建隔离 GI/World，使用正式 Data 租约、
- * 真实子鼠 Hero/魔法 Definition、数值表、GA 和 GE，不创建测试 UCLASS 或修改资产/CDO。
+ * 真实子鼠 Hero/开发与占位魔法 Definition、数值表、GA 和 GE，不创建测试 UCLASS 或修改资产/CDO。
  * 夹具通过现有可信身份初始化与中立 GameplayEligibility 接入服务器技能资格；
  * 这里不验证后端准入、联网复制、目标伤害结算、客户端 VFX 或 Cook。
  * 连发测试要求启动时已有 bAllowDevelopmentAbilitySets=true 和 -DBADevelopmentSkills；
@@ -12,6 +12,7 @@
 
 #include "Misc/AutomationTest.h"
 #include "Abilities/DivineBeastsDevelopmentMagicAbility.h"
+#include "Abilities/DivineBeastsPlaceholderGameplayAbility.h"
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Characters/DivineBeastsCharacter.h"
@@ -19,7 +20,9 @@
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
+#include "Components/SphereComponent.h"
 #include "Definitions/DivineBeastsDevelopmentMagicDefinition.h"
+#include "Definitions/DivineBeastsAbilityDefinition.h"
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Engine/AssetManager.h"
@@ -35,6 +38,7 @@
 #include "GameplayEffect.h"
 #include "HAL/PlatformTime.h"
 #include "UObject/StrongObjectPtr.h"
+#include "UObject/GarbageCollection.h"
 
 namespace DivineBeastsDevelopmentMagicTests
 {
@@ -73,7 +77,8 @@ static FSoftObjectPath MagicPath(const TCHAR* Prefix, const FExpectedMagic& Expe
 enum class EScenario : uint8
 {
     AssetContracts, GameplayEffects, Burst, Cancel, StaleSource, CommitAvatarSwap,
-    SpawnSuccessor, SpawnStaleSource, ZeroMomentum, FreshSpawnInput
+    SpawnSuccessor, SpawnStaleSource, ZeroMomentum, FreshSpawnInput,
+    TargetSelectionSwitch, TargetDestroyedGC, TargetAvatarChanged
 };
 
 /** 来自真实 Actor 事件的只读证据；弱引用不延长弹体寿命，终态快照允许销毁后继续审计。 */
@@ -94,8 +99,8 @@ struct FObservedProjectile
 class FRealMagicCommand final : public IAutomationLatentCommand
 {
 public:
-    FRealMagicCommand(FAutomationTestBase* InTest, EScenario InScenario)
-        : Test(InTest), Scenario(InScenario), StartedSeconds(FPlatformTime::Seconds()) {}
+    FRealMagicCommand(FAutomationTestBase* InTest, EScenario InScenario, bool bInUsePlaceholder = false)
+        : Test(InTest), Scenario(InScenario), bUsePlaceholder(bInUsePlaceholder), StartedSeconds(FPlatformTime::Seconds()) {}
 
     ~FRealMagicCommand() override
     {
@@ -116,6 +121,8 @@ public:
         if (Pawn.IsValid()) { Pawn->Destroy(); }
         if (Controller.IsValid()) { Controller->Destroy(); }
         if (OtherAvatar.IsValid()) { OtherAvatar->Destroy(); }
+        if (FrozenTarget.IsValid()) { FrozenTarget->Destroy(); }
+        if (AlternateTarget.IsValid()) { AlternateTarget->Destroy(); }
         if (auto* Data = IGamePlatformDataService::Get(*Instance); Data && WarmupLease.IsValid())
         { Data->ReleaseResources(WarmupLease); }
         if (WarmupOwner.IsValid()) { WarmupOwner->Destroy(); }
@@ -214,6 +221,16 @@ private:
             Paths.Add(MagicPath(TEXT("GE"), Expected, TEXT("Cost"), true));
             Paths.Add(MagicPath(TEXT("GE"), Expected, TEXT("Cooldown"), true));
         }
+        if (bUsePlaceholder)
+        {
+            // 真实占位执行器沿用已保存的独立GA/Definition/表及GE；不修改CDO来伪装成开发魔法。
+            const FString Root(TEXT("/DBAGameplay/Abilities/Placeholders/"));
+            Paths.Add(FSoftObjectPath(Root + TEXT("DT_DBA_PlaceholderBalance.DT_DBA_PlaceholderBalance")));
+            Paths.Add(FSoftObjectPath(Root + TEXT("DA_DBA_Rat_PlaceholderArcaneMissiles.DA_DBA_Rat_PlaceholderArcaneMissiles")));
+            Paths.Add(FSoftObjectPath(Root + TEXT("GA_DBA_Rat_PlaceholderArcaneMissiles.GA_DBA_Rat_PlaceholderArcaneMissiles_C")));
+            Paths.Add(FSoftObjectPath(Root + TEXT("GE_DBA_Rat_PlaceholderArcaneMissilesCost.GE_DBA_Rat_PlaceholderArcaneMissilesCost_C")));
+            Paths.Add(FSoftObjectPath(Root + TEXT("GE_DBA_Rat_PlaceholderArcaneMissilesCooldown.GE_DBA_Rat_PlaceholderArcaneMissilesCooldown_C")));
+        }
         FGamePlatformResult Accepted;
         WarmupLease = Data->AcquireResources(Paths, EGamePlatformDataLifetime::World, WarmupOwner.Get(),
             [WeakOwner = WarmupOwner, TestOwner = Test](const FGamePlatformDataLease&, const FGamePlatformResult& Result)
@@ -284,6 +301,31 @@ private:
             const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(Expected.CooldownTag), false);
             bValid &= Test->TestTrue(Label + TEXT("冷却字典已登记且GA仅声明本槽标签"), Tag.IsValid() &&
                 Ability->GetCooldownTags() && Ability->GetCooldownTags()->Num() == 1 && Ability->GetCooldownTags()->HasTagExact(Tag));
+        }
+        if (bUsePlaceholder)
+        {
+            PlaceholderArcaneClass = Cast<UClass>(FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/GA_DBA_Rat_PlaceholderArcaneMissiles.GA_DBA_Rat_PlaceholderArcaneMissiles_C")).ResolveObject());
+            const auto* Ability = PlaceholderArcaneClass ? Cast<UDivineBeastsPlaceholderGameplayAbility>(PlaceholderArcaneClass->GetDefaultObject()) : nullptr;
+            if (!Test->TestNotNull(TEXT("真实占位奥术GA及原生执行器"), Ability)) return false;
+            bValid &= Test->TestNotNull(TEXT("占位GA保留真实冷却GE"), Ability->GetCooldownGameplayEffect());
+            // 法术零费用由原生GAS成本合同保证，不能只把表改零而继续消费旧蓝图成本GE。
+            bValid &= Test->TestNull(TEXT("占位法术通过原生GAS无成本路径"), Ability->GetCostGameplayEffect());
+            bValid &= Test->TestEqual(TEXT("占位GA确实为三发奥术"), Ability->PlaceholderMode, EDivineBeastsPlaceholderAbilityMode::ArcaneMissiles);
+            bValid &= Test->TestEqual(TEXT("占位真实三发数"), Ability->ProjectileCount, 3);
+            bValid &= Test->TestEqual(TEXT("占位真实间隔0.2秒"), Ability->ProjectileIntervalSeconds, 0.2f);
+            const auto* Definition = Cast<UDivineBeastsAbilityDefinition>(UAssetManager::Get().GetPrimaryAssetObject(Ability->AbilityDefinitionId));
+            // 普通资源租约成功不等于数值行合法；分别定位主资产发现、软表加载和领域校验，不能吞掉OutError。
+            if (!Test->TestNotNull(TEXT("占位正式Definition按GA主资产身份已预热：") + Ability->AbilityDefinitionId.ToString(), Definition))
+            {
+                Test->AddError(TEXT("该ID的实际主资产扫描路径：") + UAssetManager::Get().GetPrimaryAssetPath(Ability->AbilityDefinitionId).ToString());
+                return false;
+            }
+            bValid &= Test->TestEqual(TEXT("占位Definition实际身份与GA引用一致"), Definition->GetPrimaryAssetId(), Ability->AbilityDefinitionId);
+            if (!Test->TestTrue(TEXT("占位Definition真实软表已通过资源租约预热：") + Definition->BalanceTable.ToSoftObjectPath().ToString(),
+                Definition->BalanceTable.Get() != nullptr)) return false;
+            FDivineBeastsAbilityBalanceRow Balance; FString Error;
+            const bool bLoadedBalance = Definition->TryGetLoadedBalance(1, Balance, Error);
+            bValid &= Test->TestTrue(TEXT("占位正式Definition与数值表已预热且一级数值合法：") + Error, bLoadedBalance);
         }
         return bValid;
     }
@@ -446,6 +488,102 @@ private:
         }
     }
 
+    /** 本组目标回归共享真实三发入口；只改变选择或目标生命周期，不调整技能状态/令牌/计时器。 */
+    bool IsTargetBurstScenario() const
+    {
+        return Scenario == EScenario::TargetSelectionSwitch || Scenario == EScenario::TargetDestroyedGC ||
+            Scenario == EScenario::TargetAvatarChanged;
+    }
+
+    /** 带真实ASC/Combat和球体的同世界目标；普通Actor不伪造项目Hero或玩家Ready，战斗资格由平台组件核验。 */
+    bool InitializeBurstTargets()
+    {
+        UWorld* World = Instance->GetWorld();
+        const auto SpawnTarget = [World](const FVector& Location) -> AActor*
+        {
+            AActor* Target = World->SpawnActor<AActor>();
+            if (!Target) return nullptr;
+            auto* Sphere = NewObject<USphereComponent>(Target);
+            Sphere->InitSphereRadius(30.f); Target->SetRootComponent(Sphere); Target->AddInstanceComponent(Sphere);
+            Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly); Sphere->SetCollisionResponseToAllChannels(ECR_Block);
+            Sphere->RegisterComponent(); Target->SetActorLocation(Location);
+            auto* TargetASC = NewObject<UGamePlatformAbilitySystemComponent>(Target);
+            auto* Combat = NewObject<UGamePlatformCombatComponent>(Target);
+            Target->AddInstanceComponent(TargetASC); Target->AddInstanceComponent(Combat);
+            TargetASC->RegisterComponent(); Combat->RegisterComponent(); TargetASC->InitAbilityActorInfo(Target, Target);
+            return Target;
+        };
+        // 两目标分居前方左右；0.6秒观测期间距首目标仍足够远，避免自然命中掩盖连发选择错误。
+        FrozenTarget = SpawnTarget(FVector(1000, 500, 1000));
+        AlternateTarget = SpawnTarget(FVector(1000, -500, 1000));
+        if (!Test->TestTrue(TEXT("两名真实同世界战斗目标"), FrozenTarget.IsValid() && AlternateTarget.IsValid())) return false;
+        auto* Combat = Pawn->GetGamePlatformCombatComponent();
+        auto* TargetCombat = FrozenTarget->FindComponentByClass<UGamePlatformCombatComponent>();
+        return Test->TestTrue(TEXT("激活前显式冻结第一目标选择"), TargetCombat && Combat->AuthoritySelectProjectileTarget(
+            FrozenTarget.Get(), Combat->GetCombatAvatarGeneration(), TargetCombat->GetCombatAvatarGeneration()));
+    }
+
+    /** 第一枚已通过真实AuthorityInitialize后才变更外部事实；Destroy后同步完整GC会揭示跨Timer悬空引用。 */
+    bool MutateTargetAfterFirstShot()
+    {
+        if (!Test->TestEqual(TEXT("改变目标前只释放了真实首枚"), Projectiles.Num(), 1) ||
+            !Test->TestTrue(TEXT("首枚已真实开始飞行"), Projectiles[0].Facts.bStarted)) return false;
+        if (Scenario == EScenario::TargetSelectionSwitch)
+        {
+            auto* Combat = Pawn->GetGamePlatformCombatComponent();
+            auto* NextCombat = AlternateTarget->FindComponentByClass<UGamePlatformCombatComponent>();
+            if (!Test->TestTrue(TEXT("第一枚后明确改选另一目标"), Combat->AuthoritySelectProjectileTarget(
+                AlternateTarget.Get(), Combat->GetCombatAvatarGeneration(), NextCombat->GetCombatAvatarGeneration()))) return false;
+            int32 Generation = 0;
+            return Test->TestTrue(TEXT("服务器当前选择确已变为另一目标"),
+                Combat->GetSelectedProjectileTarget(2000.f, Generation) == AlternateTarget.Get() && Generation == 1);
+        }
+        if (Scenario == EScenario::TargetDestroyedGC)
+        {
+            const TWeakObjectPtr<AActor> DestroyedTarget = FrozenTarget;
+            if (!Test->TestTrue(TEXT("第一枚后真实Destroy冻结目标"), FrozenTarget->Destroy())) return false;
+            // 不保留目标强引用；GC必须回收它，而不仅是IsValid因PendingKill返回false。
+            CollectGarbage(RF_NoFlags, true);
+            return Test->TestFalse(TEXT("已销毁目标完成真实GC而非只打销毁标记"), DestroyedTarget.IsValid(true, true));
+        }
+        auto* TargetCombat = FrozenTarget->FindComponentByClass<UGamePlatformCombatComponent>();
+        return Test->TestTrue(TEXT("同Actor真实推进目标化身代次"), TargetCombat && TargetCombat->ResetForNewAvatar(2)) &&
+            Test->TestEqual(TEXT("目标Actor保留且当前代次为2"), TargetCombat->GetCombatAvatarGeneration(), 2);
+    }
+
+    /** 计数、真实飞行方向和终态交叉验证；不能仅看到三次Spawn便把改选后的错误追踪记为通过。 */
+    void CheckTargetBurstTerminal()
+    {
+        const bool bSwitchedSelection = Scenario == EScenario::TargetSelectionSwitch;
+        const int32 ExpectedShots = bSwitchedSelection ? 3 : 1;
+        Test->TestEqual(TEXT("目标变化不额外Commit"), CommitCount, 1);
+        Test->TestEqual(TEXT("本次施法只应用原有一份冷却"), CooldownApplications, 1);
+        // 两类真实GA均将三种目标路径的终态气势与本次激活前的真实初值比较，不使用固定资源值。
+        Test->TestEqual(TEXT("真实连发及目标失效终态均保持原始气势"),
+            ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()), InitialMomentum);
+        const auto* Spec = ASC->FindAbilitySpecFromHandle(AbilityHandle);
+        const auto* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
+        if (!Test->TestNotNull(TEXT("目标生命周期回归保留真实能力实例"), Ability)) return;
+        Test->TestFalse(TEXT("完成或目标失效后没有迟到连发激活"), Ability->IsActive());
+        Test->TestEqual(TEXT("目标失效在下一次Spawn前终止，改选则仍完整三发"), Projectiles.Num(), ExpectedShots);
+        for (const auto& Observed : Projectiles)
+        {
+            Test->TestTrue(TEXT("已观察的弹体均通过真实初始化"), Observed.Facts.bStarted);
+            if (bSwitchedSelection)
+            {
+                Test->TestTrue(TEXT("每枚出生方向仍朝向原先左侧目标"), Observed.Origin.Y > 15.f);
+                if (!Test->TestTrue(TEXT("观测窗口内原目标弹体仍存活"), Observed.Actor.IsValid())) continue;
+                Test->TestTrue(TEXT("后续真实飞行仍向原目标，不追踪后来右侧选择"),
+                    Observed.Actor->GetActorLocation().Y > Observed.Origin.Y + 5.f);
+            }
+            else
+            {
+                Test->TestTrue(TEXT("目标销毁或换代也结束已发射弹体"), Observed.Facts.bFinished);
+                Test->TestFalse(TEXT("目标失效不冒充命中"), Observed.Facts.bImpacted);
+            }
+        }
+    }
+
     /** 仅撤销夹具ASC内当前奥术GE，给同步后继激活创造合法前提，不改变其他技能或外部世界。 */
     void RemoveArcaneCooldown()
     {
@@ -468,14 +606,17 @@ private:
         const auto Gate = ASC->EvaluateActivationEligibility();
         if (!Test->TestTrue(TEXT("真实项目激活Gate通过"), Gate.IsSuccess()))
         { Test->AddError(FString::Printf(TEXT("项目Gate拒绝：%s"), *Gate.Code.ToString())); return false; }
-        if (!Test->TestTrue(TEXT("真实进程满足开发技能配置和命令行资格"),
+        if (!bUsePlaceholder && !Test->TestTrue(TEXT("真实进程满足开发技能配置和命令行资格"),
             UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess())) { return false; }
-        const auto* AbilityCDO = CastChecked<UDivineBeastsDevelopmentMagicAbility>(AbilityClasses[2]->GetDefaultObject());
-        CostClass = CastChecked<UClass>(MagicPath(TEXT("GE"), ExpectedMagic[2], TEXT("Cost"), true).ResolveObject());
+        UClass* ArcaneClass = bUsePlaceholder ? PlaceholderArcaneClass : AbilityClasses[2];
+        const auto* AbilityCDO = ArcaneClass->GetDefaultObject<UGameplayAbility>();
+        CostClass = bUsePlaceholder ? (AbilityCDO->GetCostGameplayEffect() ? AbilityCDO->GetCostGameplayEffect()->GetClass() : nullptr) :
+            CastChecked<UClass>(MagicPath(TEXT("GE"), ExpectedMagic[2], TEXT("Cost"), true).ResolveObject());
         CooldownClass = AbilityCDO->GetCooldownGameplayEffect()->GetClass();
         OtherAvatar = Instance->GetWorld()->SpawnActor<AActor>();
         if (!Test->TestTrue(TEXT("换Avatar回归的真实后继Actor"), OtherAvatar.IsValid())) { return false; }
-        AbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(AbilityClasses[2], 1, INDEX_NONE, Pawn.Get()));
+        if (IsTargetBurstScenario() && !InitializeBurstTargets()) return false;
+        AbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(ArcaneClass, 1, INDEX_NONE, Pawn.Get()));
         if (!Test->TestTrue(TEXT("真实奥术GA Spec授予成功"), AbilityHandle.IsValid())) { return false; }
         CommitHandle = ASC->AbilityCommittedCallbacks.AddLambda([this](UGameplayAbility* Ability)
         {
@@ -522,6 +663,7 @@ private:
                 Test->TestTrue(TEXT("连发中真实来源Combat进入后继代次"), Combat->ResetForNewAvatar(2));
                 Test->TestEqual(TEXT("来源Combat代次确实为2"), Combat->GetCombatAvatarGeneration(), 2);
             }
+            if (IsTargetBurstScenario() && !MutateTargetAfterFirstShot()) return false;
         }
         return true;
     }
@@ -529,6 +671,7 @@ private:
     /** 对真实委托计数、属性、ActiveEffects、弹体终态和GAS激活状态做交叉断言，捕捉多Commit/迟到连发。 */
     void CheckTerminalBehavior()
     {
+        if (IsTargetBurstScenario()) { CheckTargetBurstTerminal(); return; }
         const bool bSuccessor = Scenario == EScenario::SpawnSuccessor;
         const int32 ExpectedCommits = bSuccessor ? 2 : 1;
         Test->TestEqual(TEXT("每次GAS激活只Commit一次"), CommitCount, ExpectedCommits);
@@ -598,15 +741,18 @@ private:
 
     FAutomationTestBase* Test;       // Automation拥有，潜伏命令期间有效，不持久化或跨线程访问。
     EScenario Scenario;              // 本次用例唯一行为，不能在失败后退回另一种场景。
+    bool bUsePlaceholder = false;     // 只选择已保存的真实另一执行器，不修改生成类或运行时CDO。
     double StartedSeconds;           // 墙钟秒，用于真实资源/初始化超时。
     TStrongObjectPtr<UGameInstance> Instance;
     TStrongObjectPtr<ULocalPlayer> LocalInputPlayer; // 仅输入回归拥有；与Controller同一夹具销毁，不触发身份认证。
     TWeakObjectPtr<ADivineBeastsCharacter> Pawn;
     TWeakObjectPtr<APlayerController> Controller;
     TWeakObjectPtr<AActor> WarmupOwner, OtherAvatar;
+    TWeakObjectPtr<AActor> FrozenTarget, AlternateTarget; // 测试不延长被Destroy目标的GC寿命。
     TWeakObjectPtr<UGamePlatformAbilitySystemComponent> ASC;
     FGamePlatformDataLease WarmupLease; // 测试只释放本GI、本Owner签发的资源需求。
     UClass* AbilityClasses[3] = {};     // 只借用成功租约中的真实生成类，销毁角色前租约不得释放。
+    UClass* PlaceholderArcaneClass = nullptr; // 独立占位租约中的真实蓝图类，仅本用例借用。
     UClass* CostClass = nullptr;
     UClass* CooldownClass = nullptr;
     FGameplayAbilitySpecHandle AbilityHandle;
@@ -716,6 +862,62 @@ bool FDivineBeastsDevelopmentMagicFreshSpawnInputTest::RunTest(const FString&)
 {
     ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
         DivineBeastsDevelopmentMagicTests::EScenario::FreshSpawnInput)); return true;
+}
+
+// 以下六项使用同一真实资源/GAS夹具；每项独立世界，不共享目标、冷却、租约或施法实例。
+// 第一发后改选必须仍向旧目标完整连发；目标销毁并GC或同Actor换化身则在下一次Spawn前终止。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMagicFrozenBurstSelectionTest,
+    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.TargetBurst.SelectionFrozen",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsDevelopmentMagicFrozenBurstSelectionTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::TargetSelectionSwitch)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMagicDestroyedTargetBurstTest,
+    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.TargetBurst.DestroyAndGCStopsBurst",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsDevelopmentMagicDestroyedTargetBurstTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::TargetDestroyedGC)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMagicTargetAvatarBurstTest,
+    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.TargetBurst.TargetAvatarChangeStopsBurst",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsDevelopmentMagicTargetAvatarBurstTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::TargetAvatarChanged)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlaceholderFrozenBurstSelectionTest,
+    "DivineBeasts.Abilities.Placeholder.ServerGAS.TargetBurst.SelectionFrozen",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlaceholderFrozenBurstSelectionTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::TargetSelectionSwitch, true)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlaceholderDestroyedTargetBurstTest,
+    "DivineBeasts.Abilities.Placeholder.ServerGAS.TargetBurst.DestroyAndGCStopsBurst",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlaceholderDestroyedTargetBurstTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::TargetDestroyedGC, true)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlaceholderTargetAvatarBurstTest,
+    "DivineBeasts.Abilities.Placeholder.ServerGAS.TargetBurst.TargetAvatarChangeStopsBurst",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlaceholderTargetAvatarBurstTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::TargetAvatarChanged, true)); return true;
 }
 
 #endif // WITH_DEV_AUTOMATION_TESTS

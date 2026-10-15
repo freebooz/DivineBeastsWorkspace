@@ -14,6 +14,11 @@ BASE='/DBAPresentationPack_Core/VFX/Environment/BirdFlock'
 
 def main():
     checked=[]
+    # 独立回读保存后的真实模块；源码修复或旧GPU报告不能证明Cook中的图已经更新。
+    module='/GamePlatformVFX/Environment/BirdFlock/Niagara/NM_GP_BirdFlockMotion'
+    shader=niagara('get_custom_hlsl_text',script_path=module)
+    expected=(ROOT/'Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/SourceArt/BirdFlock/BirdFlockMotion.hlsl').read_text(encoding='utf-8')
+    assert shader.get('hlsl')==expected, '真实Niagara运动模块未更新为当前最小间距源码'
     for species in ('Seagull','Swallow','Eagle'):
         path=BASE+'/Niagara/NS_DBA_BirdFlock_'+species
         exported=niagara('export_system_spec',asset_path=path,include_values=True)
@@ -25,7 +30,7 @@ def main():
         renderers=emitter['renderers']
         assert len(renderers)==1 and 'Mesh' in renderers[0]['class'],'没有唯一真实网格渲染器'
         names={p['name'].removeprefix('User.') for p in spec['user_parameters']}
-        assert {'BirdCount','FlockRadius','FlightSpeed','FlockSeed','FlightMode'} <= names,'鸟数/飞行用户参数不完整'
+        assert {'BirdCount','FlockRadius','FlightSpeed','FlockSeed','FlightMode','FlockMinimumSpacing'} <= names,'鸟数/飞行/最小中心距用户参数不完整'
         paths=[m['script'] for m in emitter['modules']]
         assert any('NM_GP_BirdFlockMotion' in p for p in paths),'群飞HLSL没有接入实际图'
         assert any('SpawnBurst' in p for p in paths),'缺少有界一次生成，不能用持续发射率替代数量'

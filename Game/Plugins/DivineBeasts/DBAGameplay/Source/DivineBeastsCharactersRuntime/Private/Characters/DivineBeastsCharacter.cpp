@@ -109,11 +109,8 @@ void ADivineBeastsCharacter::HandleCombatEvent(const FGamePlatformCombatEvent& E
 }
 void ADivineBeastsCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
-<<<<<<< HEAD
     DisconnectedCombatTargetGeneration=0;
-=======
     if (HasAuthority()) AITarget->SetAITargetEnabled(false);
->>>>>>> 8be33fda837e0e9ceb40fbe932c13c94120fe59f
     AuthoritativeDeath.Clear();
     GameplayEligibility->SetServerPlayerActive(false);
     CharacterIdentity->OnReadinessChanged().RemoveAll(this);

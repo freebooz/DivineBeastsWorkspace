@@ -67,6 +67,8 @@ public class DivineBeastsUIClient : ModuleRules
         {
             // 仅编辑器颜色回归读取真实原图像素和浮点GPU结果；不进入专用服务器或客户端发行闭包。
             PrivateDependencyModuleNames.AddRange(new string[] { "ImageCore", "RenderCore", "RHI" });
+            // 编辑器回归检验平台瞬态施法动画的真实Percent曲线；项目运行代码不直接驱动MovieScene。
+            PrivateDependencyModuleNames.AddRange(new string[] { "MovieScene", "MovieSceneTracks" });
         }
     }
 }

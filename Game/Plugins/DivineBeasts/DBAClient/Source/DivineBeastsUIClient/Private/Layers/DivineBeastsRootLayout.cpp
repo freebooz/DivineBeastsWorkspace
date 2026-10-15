@@ -4,6 +4,9 @@
 
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Components/GamePlatformAbilityCastComponent.h"
+#include "Components/GamePlatformCastProgressWidget.h"
+#include "Components/DivineBeastsCharacterComponent.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Components/GamePlatformStatusEffectTrayWidget.h"
 #include "Components/TextBlock.h"
@@ -16,6 +19,7 @@
 #include "Tags/GamePlatformCombatTags.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/GameStateBase.h"
 #include "Engine/LocalPlayer.h"
 #include "Panels/Combat/DivineBeastsAbilityBarPanel.h"
 #include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
@@ -143,6 +147,7 @@ void UDivineBeastsRootLayout::NativeDestruct()
     BoundHUDController.Reset();
 
     UnbindCombatEffects();
+    UnbindCastDisplay();
     if (IsValid(CombatHUD))
     {
         // 销毁根布局时明确撤销子组件的数据来源，避免旅行后旧Pawn委托仍访问上一界面。
@@ -257,6 +262,7 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
     BindCombatEffects(bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr);
     // 组合根只为真实本地Pawn注入展示来源；项目肖像/小地图各自持有事件与纹理句柄，无MOBA依赖。
     APawn* DisplayPawn = bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr;
+    BindCastDisplay(DisplayPawn);
     BindWorldHealthBars(DisplayPawn);
     for (FName PortraitName : {FName(TEXT("PlayerPortrait")), FName(TEXT("ActionBarPortrait"))})
     {
@@ -280,6 +286,102 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
         if (auto* Status = Cast<UDivineBeastsPlayerStatusPanel>(CombatHUD->GetWidgetFromName(StatusName)))
         { Status->RefreshStatusSourceFromOwningPawn(); }
     }
+}
+
+void UDivineBeastsRootLayout::UnbindCastDisplay()
+{
+    // 先撤销账本再进入Widget/蓝图回调，清理旧来源时同步产生的新绑定可以完整存活。
+    auto* PreviousComponent = BoundCastComponent.Get();
+    auto* PreviousIdentity = BoundCastIdentity.Get();
+    auto* PreviousPawn = BoundCastPawn.Get();
+    auto* PreviousWidget = BoundCastWidget.Get();
+    BoundCastComponent.Reset(); BoundCastIdentity.Reset(); BoundCastPawn.Reset(); BoundCastWidget.Reset();
+    CastDisplayScopeId.Invalidate(); CastDisplayRevision = 0;
+    const FDelegateHandle PreviousFactsHandle = CastFactsHandle;
+    const FDelegateHandle PreviousIdentityHandle = CastIdentityHandle;
+    CastFactsHandle.Reset(); CastIdentityHandle.Reset();
+    if (PreviousComponent) PreviousComponent->OnCastFactsChanged().Remove(PreviousFactsHandle);
+    if (PreviousIdentity) PreviousIdentity->OnIdentityChanged().Remove(PreviousIdentityHandle);
+    if (PreviousPawn) PreviousPawn->OnEndPlay.RemoveDynamic(this, &ThisClass::HandleCastPawnEndPlay);
+    if (PreviousWidget) PreviousWidget->ClearCastSource();
+}
+
+void UDivineBeastsRootLayout::BindCastDisplay(APawn* Pawn)
+{
+    auto* Component = IsValid(Pawn) ? Pawn->FindComponentByClass<UGamePlatformAbilityCastComponent>() : nullptr;
+    auto* Widget = IsValid(CombatHUD) ? Cast<UGamePlatformCastProgressWidget>(CombatHUD->GetWidgetFromName(TEXT("CastBar"))) : nullptr;
+    if (BoundCastPawn.Get() == Pawn && BoundCastComponent.Get() == Component &&
+        BoundCastWidget.Get() == Widget && CastDisplayScopeId.IsValid() &&
+        Widget && Widget->GetCastSnapshot().SourceScopeId == CastDisplayScopeId) return;
+    UnbindCastDisplay();
+    // 解绑可能同步建立后继来源；不能继续使用旧调用栈传入的Pawn。
+    if (!bWorldHUDHostConstructed || CastDisplayScopeId.IsValid() || !IsValid(Pawn) || Pawn != GetOwningPlayerPawn() ||
+        !Pawn->IsLocallyControlled() || Pawn->IsActorBeingDestroyed() || !IsValid(Component) || !IsValid(Widget)) return;
+    const FGuid Scope = FGuid::NewGuid();
+    CastDisplayScopeId = Scope; BoundCastPawn = Pawn; BoundCastComponent = Component; BoundCastWidget = Widget;
+    auto* Identity = Pawn->FindComponentByClass<UDivineBeastsCharacterComponent>();
+    BoundCastIdentity = Identity;
+    CastFactsHandle = Component->OnCastFactsChanged().AddUObject(this, &ThisClass::HandleCastFactsChanged);
+    if (Identity) CastIdentityHandle = Identity->OnIdentityChanged().AddUObject(this, &ThisClass::RefreshCastDisplayFromIdentity);
+    Pawn->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleCastPawnEndPlay);
+    Widget->BindCastSource(Scope);
+    if (CastDisplayScopeId != Scope || BoundCastComponent.Get() != Component) return;
+    // 先订阅再读取快照，覆盖页面重显/绑定前已开始的动作；之后只依赖真实变化通知。
+    HandleCastFactsChanged(Component, Component->GetCastFacts());
+}
+
+void UDivineBeastsRootLayout::RefreshCastDisplayFromIdentity()
+{
+    if (auto* Component = BoundCastComponent.Get()) HandleCastFactsChanged(Component, Component->GetCastFacts());
+}
+
+void UDivineBeastsRootLayout::HandleCastPawnEndPlay(AActor* Actor, EEndPlayReason::Type)
+{
+    if (Actor == BoundCastPawn.Get()) UnbindCastDisplay();
+}
+
+void UDivineBeastsRootLayout::HandleCastFactsChanged(UGamePlatformAbilityCastComponent* Component,
+    const FGamePlatformAbilityCastFacts& Incoming)
+{
+    auto* Pawn = BoundCastPawn.Get();
+    auto* Widget = BoundCastWidget.Get();
+    if (!bWorldHUDHostConstructed || !CastDisplayScopeId.IsValid() || !IsValid(Component) || Component != BoundCastComponent.Get() ||
+        !IsValid(Pawn) || Pawn != GetOwningPlayerPawn() || !Pawn->IsLocallyControlled() ||
+        Pawn->IsActorBeingDestroyed() || Component->GetOwner() != Pawn || !IsValid(Widget)) return;
+    const auto Facts = Component->GetCastFacts();
+    if (Incoming.ActivationId != Facts.ActivationId || Incoming.AbilityId != Facts.AbilityId ||
+        Incoming.PresentationStyleId != Facts.PresentationStyleId || Incoming.AvatarGeneration != Facts.AvatarGeneration ||
+        Incoming.StartedServerSeconds != Facts.StartedServerSeconds || Incoming.DurationSeconds != Facts.DurationSeconds ||
+        Incoming.bActive != Facts.bActive) return;
+    // 从未发布时没有合法施法身份，保留已绑定的空条，不能制造假技能。
+    if (!Facts.ActivationId.IsValid()) return;
+    FText Name;
+    if (Facts.PresentationStyleId == TEXT("DBA.Development.Fireball")) Name = FText::FromString(TEXT("火焰弹 · 施法动作"));
+    else if (Facts.PresentationStyleId == TEXT("DBA.Development.Frostbolt")) Name = FText::FromString(TEXT("寒冰箭 · 施法动作"));
+    else if (Facts.PresentationStyleId == TEXT("DBA.Development.ArcaneMissiles")) Name = FText::FromString(TEXT("奥术飞弹 · 施法动作"));
+    auto* Combat = Pawn->FindComponentByClass<UGamePlatformCombatComponent>();
+    auto* Identity = BoundCastIdentity.Get();
+    const int32 AvatarGeneration = Identity ? Identity->GetAvatarGeneration() : Combat ? Combat->GetCombatAvatarGeneration() : 0;
+    const auto* World = Pawn->GetWorld();
+    if (!World || World->bIsTearingDown) { UnbindCastDisplay(); return; }
+    const auto* GameState = World->GetGameState();
+    const double ServerSeconds = GameState ? GameState->GetServerWorldTimeSeconds() : World->GetTimeSeconds();
+    const bool bValidWindow = FMath::IsFinite(ServerSeconds) && FMath::IsFinite(Facts.StartedServerSeconds) &&
+        FMath::IsFinite(Facts.DurationSeconds) && Facts.DurationSeconds > 0 && Facts.DurationSeconds <= 10;
+    FGamePlatformUICastProgressState Snapshot;
+    Snapshot.SourceScopeId = CastDisplayScopeId;
+    Snapshot.CastInstanceId = FName(*Facts.ActivationId.ToString(EGuidFormats::Digits));
+    Snapshot.CasterDisplayId = Pawn->GetFName(); Snapshot.DisplayName = Name;
+    Snapshot.TotalSeconds = bValidWindow ? Facts.DurationSeconds : 0;
+    Snapshot.RemainingSeconds = bValidWindow
+        ? FMath::Clamp(Snapshot.TotalSeconds - FMath::Max(0.0, ServerSeconds - Facts.StartedServerSeconds), 0.0, Snapshot.TotalSeconds) : 0;
+    Snapshot.bActive = Facts.bActive && !Name.IsEmpty() && bValidWindow && Snapshot.RemainingSeconds > 0 &&
+        Facts.AvatarGeneration == AvatarGeneration && Combat &&
+        !(Combat->GetCombatAvatarGeneration() == AvatarGeneration && Combat->IsCombatDead());
+    // 当前0.7/1秒是已确认动作窗口，弹体已由服务器释放；既不是额外蓄力，也不是UI可打断的资格。
+    Snapshot.bChanneling = false; Snapshot.bInterruptible = false;
+    Snapshot.Revision = ++CastDisplayRevision;
+    Widget->ApplyCastSnapshot(Snapshot);
 }
 
 void UDivineBeastsRootLayout::BindCombatEffects(APawn* Pawn)

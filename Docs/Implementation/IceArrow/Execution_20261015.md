@@ -22,3 +22,26 @@
 - 客户端整合：DivineBeastsDevelopmentMagicPresentation.cpp已增加只属于Frostbolt的Residue目录注册（包Revision=2）与按命中位置向下查询静态地面的瞬时残霜请求；资格限制为批准的生肖占位能力，额外残霜无命中/伤害/冻结权威。DivineBeastsDevelopmentCastingWorldSubsystem.cpp已增量为Village占位起手开启客户端服务，Frostbolt地面法阵改随角色胶囊底部，另外两种开发法术保留右手锚点。添加了纯C++资格策略、UE自动化单测和GameplayTag。
 - 待验证：上述C++变更的Editor编译/UHT/链接、自动化测试及UE冷重启回读、PIE运行/地面查验/重复施法/跨地图资源释放、GPU开销与人眼画面质量，Client及Dedicated Server完整构建和两侧Cook均尚未通过。原有Niagara预览链路黑屏的具体原因未解决。
 - 范围：仍然是服务器权威单体寒冰箭；强烈冰爆与地面冻结仅为客户端视觉。禁止把效果图的敌人击飞理解成已实现范围伤害或控制。
+
+## 2026-10-15 本地版本与旧客户端只读复核
+
+当前`VFX/IceArrow`有37份真实uasset（11纹理、4网格、4母材质、10实例、6系统、1模块、1残霜Definition），`SourceArt/VFX/IceArrow`有11份PNG和4份OBJ。当前文件时间约为2026-10-15 10:37:11 UTC；文件时间可能反映工作区同步，不单独作为制作完成证据。六系统为Cast、GroundRune、Launch、Flight、Impact、FrostResidue；今日新增资源有独立晶体箭身、法阵、碎冰与残霜，属于旧DevelopmentMagic冰箭之后的版本。三份既有稳定Definition的磁盘内容明确引用新的IceArrow Cast/Flight/Impact，并保留原有`presentation.dba.development.magic.frostbolt.{cast|flight|impact}@1`；残霜为独立`.residue@1`。
+
+本次只读计算的SHA256：
+
+| 文件 | SHA256 |
+| --- | --- |
+| `VFX/IceArrow/Niagara/NS_DBA_IceArrow_Cast.uasset` | `136637584DE13298561EA5ED51AF695B459655A0A56D6380F7F6901A1A821591` |
+| `VFX/IceArrow/Niagara/NS_DBA_IceArrow_Flight.uasset` | `B29E218A609A2450B9F853F3BCDD8D1DD7AF5D0985D7266FD46DC15544A4678A` |
+| `VFX/IceArrow/Definitions/DA_DBA_VFX_DevFrostboltResidue.uasset` | `C299F3CB54CBE7A510EA3EB1132FB76FC8D299E9642AD242357F2C5D6391C93A` |
+| 旧Cook `2a8ddcc8-02bd-4c4f-9c22-9a908122e2a5/Cook-FrontEndClient/ContainerInspection/ClientContainer.csv` | `F3AC1EF79EFA8E055D9FCA828DC55AAF02393D88478331A8293380181CBDDA50` |
+
+上述前三项相对根为`Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content`；旧Cook证据根为`Saved/Validation/FoundationM0`。旧Cook结果于2026-10-15 03:10:12 UTC标记Passed，但其CSV内`/VFX/IceArrow/`记录为0，旧`NS_DBA_DevFrostbolt{Cast|Flight|Impact}`有3条ExportBundleData。因此该客户端不包含新冰箭，不能把旧Cook通过继承给本轮资源。
+
+当前工作区未找到`Saved/Validation/IceArrow`、`Game/Saved/Validation/IceArrow`或新冰箭ColdReadback结果，公共表现包现有`MonolithGenerationManifest.json`也没有IceArrow章节。前述六系统编译结论仅保留为制作会话记录，本次未重复调用UE诊断；独立冷读、当前六系统编译、更新清单、新Cook容器闭包与运行视觉仍待主任务统一核验。现有只读UE检查入口为`Tests/Assets/ValidateIceArrowUE.py`；它本身的存在不代表已经运行通过。
+
+## 2026-10-15 独立Editor复核
+
+锁定D:/UnrealEngine-5.8.0-release正式工程新进程经Monolith核对完整项目路径与5.8.0后，运行只读原生检查：`Game/Saved/Validation/IceArrow/ColdReadback_20261015T114058954458Z.json`为PASS，11纹理、4网格、4母材质、10实例、6系统、1模块、4稳定定义均通过。随后六系统逐一真实compile_first均0错误0警告、22发射器UpToDate，完整诊断`Saved/Validation/WorldEntryFix20261015/IceArrowDiagnostics.json`。公共表现包Monolith清单已增补本版本；上述编译与读入不替代游戏画面、GPU预算或联网验收。
+
+最终开发客户端容器门禁增补新版冰箭36项发布依赖（EditorOnly运动源模块不独立要求入包），旧容器实际失败并缺少全部36项，证据`Saved/Validation/WorldEntryFix20261015/IceArrowOldContainerRed.json`。新Cook及客户端运行将在本轮剩余步骤完成，不继承旧包结论。

@@ -1,4 +1,4 @@
-﻿# 世界PC操控静态门禁：检查真实键位冲突、双端隔离和生命周期接线；可运行已编译纯策略测试。
+# 世界PC操控静态门禁：检查真实键位冲突、双端隔离和生命周期接线；可运行已编译纯策略测试。
 # 输入PolicyExecutable是当前源码编译产物，空值仅执行静态检查；不启动编辑器/客户端，不修改资源或用户配置。
 # 失败抛异常或传播测试进程退出码；通过不代表Slate、Cook、网络朝向或人工视觉验收。
 param([string]$PolicyExecutable)
@@ -18,8 +18,9 @@ foreach ($Line in ($Input -split "`r?`n")) {
 foreach ($Binding in @(
     'AxisName="DBA.KeyboardTurn",Scale=1.000000,Key=D',
     'AxisName="DBA.KeyboardTurn",Scale=-1.000000,Key=A',
+    # 第二轮实机反馈：俯仰已正确，横向恢复正向；A/D和控制器左右键分流保持原语义。
     'AxisName="DBA.Turn",Scale=1.000000,Key=MouseX',
-    'AxisName="DBA.Look",Scale=-1.000000,Key=MouseY',
+    'AxisName="DBA.Look",Scale=1.000000,Key=MouseY',
     'AxisName="DBA.MoveRight",Scale=1.000000,Key=E',
     'AxisName="DBA.MoveRight",Scale=-1.000000,Key=Q',
     'AxisName="DBA.CameraZoom",Scale=1.000000,Key=MouseWheelAxis',
@@ -64,6 +65,15 @@ if ($Controller.Contains('ResetIgnoreMoveInput(') -or $Controller.Contains('Rese
 }
 if (-not $Build.Contains('Target.Type != TargetType.Server') -or -not $Build.Contains('"Slate", "SlateCore"')) {
     throw 'Slate pointer hit testing must remain excluded from the dedicated server target.'
+}
+# 同Actor重生后仍可显式重选：权威意图先提交，只有UI变化通知按指针去重。
+$SelectionStart = $Controller.IndexOf('void ADivineBeastsWorldPlayerController::SetSelectedWorldTarget(')
+$SelectionEnd = $Controller.IndexOf('void ADivineBeastsWorldPlayerController::HandleSelectedTargetEndPlay(', $SelectionStart)
+$Selection = $Controller.Substring($SelectionStart, $SelectionEnd - $SelectionStart)
+$RequestIndex = $Selection.IndexOf('Combat->RequestProjectileTarget(Target)')
+$DeduplicateIndex = $Selection.IndexOf('if (SelectedWorldTarget.Get() == Target) return;')
+if ($RequestIndex -lt 0 -or $DeduplicateIndex -lt 0 -or $RequestIndex -gt $DeduplicateIndex) {
+    throw '同Actor显式重选必须重新提交服务器目标意图，不能被UI指针去重拦截。'
 }
 if ($PolicyExecutable) {
     if (-not (Test-Path -LiteralPath $PolicyExecutable -PathType Leaf)) { throw 'Policy executable does not exist.' }

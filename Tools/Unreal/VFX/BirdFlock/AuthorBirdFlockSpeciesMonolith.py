@@ -27,6 +27,9 @@ def systems():
         niagara('set_renderer_property',asset_path=path,emitter=EMITTER,renderer_index=0,property='MeshBoundsScale',value='(X=1.0,Y=1.0,Z=3.0)')
         for parameter,value in zip(('BirdCount','FlockRadius','FlockHeight','FlightSpeed','FlightMode'),settings):
             niagara('set_parameter_default',asset_path=path,parameter='User.'+parameter,value=str(value))
+        # 新建变体继承中立参数；按项目物种缩放/振翅规格覆盖中心距，已有变体走增量预检修复入口。
+        niagara('set_parameter_default',asset_path=path,parameter='User.FlockMinimumSpacing',
+                value=str({'Seagull':220.0,'Swallow':140.0,'Eagle':340.0}[species]))
         # 项目变体可能在平台修复前已复制，不会自动继承新Loop配置；逐一显式校准。
         # Self使Once真正生效，防止继承System默认循环而每5秒再次生成BirdCount只。
         niagara('set_static_switch_value',asset_path=path,emitter=EMITTER,

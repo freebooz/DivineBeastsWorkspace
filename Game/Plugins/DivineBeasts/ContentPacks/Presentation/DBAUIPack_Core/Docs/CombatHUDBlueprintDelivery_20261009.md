@@ -45,3 +45,11 @@
 5. 源码归属：UI类放`DBAClient/DivineBeastsUIClient`（第三层客户端界面模块），资源放`DBAUIPack_Core`（第三层公共UI内容包），不在服务端Cook纯界面资产，不重建GamePlatform/MobaCommon插件结构。
 
 审计主记录：`Docs/MonolithGenerationManifest.json`（Monolith生成清单）下的`LatestCombatHUDWidgetDelivery`字段；程序化静态门禁另见`Tests/Architecture/ValidateCombatHUDBlueprints.py`（战斗HUD蓝图结构与事件绑定防退化测试）。
+
+## 2026-10-15 确认施法动作事件接线
+
+现有真实`WBP_DBA_UI_CombatHUD`已经包含名为`CastBar`的`WBP_DBA_UI_CastBar`实例，施法条包含`CastProgressBar`与`CastNameText`，本轮复用其布局与样式，未修改任何二进制UI资产。此前根布局没有调用`BindCastSource`、`ApplyCastSnapshot`或`ClearCastSource`，初始Collapsed一直未由真实施法事件展开。
+
+项目根布局现按本地Pawn生命周期订阅`UGamePlatformAbilityCastComponent::OnCastFactsChanged`，先订阅再读取一次快照；后续只消费变化通知。控制器断开、换Pawn、EndPlay与根布局销毁成对解绑并清空；项目原子角色身份变化重新校验同代快照。通知必须仍等于当前组件的真实复制值，迟到或同步重入后的旧广播不能覆盖新动作。冰箭、火焰弹和奥术飞弹的文字明确为“施法动作”，比例仅表示既有0.7秒或1秒确认动作窗口；当前投射物已经由服务器立即释放，不把显示条解释为新增蓄力。
+
+平台通用条按事件建立瞬态UMG原生Percent曲线，连续视觉插值不查询业务状态；真实终态事件负责隐藏。没有新增业务Tick、Timer、Ticker，没有改变技能平衡、释放时机或零气势费用合同。新增编辑器回归为`DivineBeasts.UI.Combat.CastBarEventBinding`和`DivineBeasts.UI.Combat.CastBarNativeAnimation`；自然到期组件通道沿用`GamePlatform.AbilitySystem.Cast.AuthorityIdentityAndExpiry`。本轮只完成测试与实现源码准备、尚未实际执行UE测试或取得RED/GREEN结果，不能沿用2026-10-09的旧编译/运行结论；真实客户端视觉仍待人工验收。

@@ -1,13 +1,14 @@
 #requires -Version 7.0
 <#
 职责：Windows本地开发MainArena进程池，复用正式Server Target、Profile和真实控制面。
-输入：开发Cook后的ServerExe、区域、控制地址；内部凭据仅从父进程环境读取，不写命令行/文件/日志。
+输入：开发Cook后的ServerExe、区域、控制地址及必填PlayerData根地址；内部凭据仅从父进程环境读取，不写命令行/文件/日志。
 输出：RunId独占目录中的非秘密进程身份、日志和池状态。每局结束由后端确认released后才替换本槽位进程。
 生命周期：启动失败五次即停止；Stop.json或父进程退出时只清理PID/启动时间/路径均匹配的自有进程。
 此运维进程定期核对控制面回收事实，不参与UI更新、不决定胜负；生产环境使用Agones/Fleet，不能用本脚本冒充集群验收。
 #>
 param([Parameter(Mandatory)][string]$ServerExe,
     [Parameter(Mandatory)][string]$ControlBaseUrl,
+    [Parameter(Mandatory)][string]$PlayerDataBaseUrl,
     [string]$RegionId='us-west',[ValidateRange(1,8)][int]$Count=1,
     [ValidateRange(1024,65520)][int]$FirstPort=17881,[guid]$RunId=[guid]::NewGuid())
 Set-StrictMode -Version Latest
@@ -20,6 +21,10 @@ $taskUri=[uri]$ControlBaseUrl
 if($taskUri.Scheme-ne'http'-or -not $taskUri.IsLoopback-or $taskUri.UserInfo-or $taskUri.Query-or $taskUri.Fragment){throw '本地控制面必须是无凭据回环HTTP地址。'}
 $taskToken=[Environment]::GetEnvironmentVariable('GAMESERVERCONTROL_INTERNAL_TOKEN','Process')
 if([string]::IsNullOrWhiteSpace($taskToken)){throw '缺少父进程内部控制凭据。'}
+# 不能以控制面注册成功代替角色资料可读；缺失地址时必须在创建池及专服之前拒绝启动。
+Import-Module (Join-Path $PSScriptRoot 'LocalPlayerDataEnvironment.psm1') -Force
+$taskProbe=[Diagnostics.ProcessStartInfo]::new()
+Set-LocalPlayerDataEnvironment -StartInfo $taskProbe -PlayerDataBaseUrl $PlayerDataBaseUrl -CheckReady
 $taskDirectory=Join-Path $taskRoot "Saved/Validation/MainArenaPool/$RunId"
 if(Test-Path -LiteralPath $taskDirectory){throw '拒绝覆盖既有池证据。'}
 $null=New-Item -ItemType Directory -Path $taskDirectory
@@ -39,6 +44,7 @@ function Start-OwnedArena([int]$Index,[int]$Generation,[int]$Failures){
     $taskPort=$FirstPort+$Index
     $taskLog=Join-Path $taskDirectory "Arena-$Index-$Generation.log"
     $taskInfo=[Diagnostics.ProcessStartInfo]::new()
+    Set-LocalPlayerDataEnvironment -StartInfo $taskInfo -PlayerDataBaseUrl $PlayerDataBaseUrl
     $taskInfo.FileName=$taskExe;$taskInfo.WorkingDirectory=Split-Path $taskExe
     $taskInfo.UseShellExecute=$false;$taskInfo.CreateNoWindow=$true;$taskInfo.WindowStyle=[Diagnostics.ProcessWindowStyle]::Hidden
     $taskEnvironment=@{

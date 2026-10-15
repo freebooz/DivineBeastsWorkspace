@@ -8,6 +8,8 @@
 #include "Interfaces/GamePlatformCombatant.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/Controller.h"
 #include "Subsystems/GamePlatformCombatFeedbackWorldSubsystem.h"
 #include "Settings/GamePlatformCombatSettings.h"
 #include "Tags/GamePlatformAbilitySystemTags.h"
@@ -67,6 +69,7 @@ void UGamePlatformCombatComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
     // GAS效果移除会同步通知；先永久关闭并失效在途Reset，再进入受控旧句柄清理。
     if (bCombatClosing) return;
     bCombatClosing = true;
+    SelectedProjectileTarget.Reset(); SelectedProjectileSourceGeneration=SelectedProjectileTargetGeneration=0;
     ++ComponentLifecycleGeneration;
     ++AvatarResetOperationGeneration;
     // 玩家换Avatar或世界退出时主动释放本组件持有的独立限时护盾GE，
@@ -102,6 +105,68 @@ UGamePlatformCombatAttributeSet* UGamePlatformCombatComponent::GetCombatAttribut
 
     return const_cast<UGamePlatformCombatAttributeSet*>(
         AbilitySystemComponent->GetSet<UGamePlatformCombatAttributeSet>());
+}
+
+bool UGamePlatformCombatComponent::RequestProjectileTarget(AActor* Target)
+{
+    auto* Pawn=Cast<APawn>(GetOwner());
+    if (bCombatClosing || !IsValid(Pawn) || Pawn->IsActorBeingDestroyed()) return false;
+    auto* TargetCombat=IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+    if (!TargetCombat) Target=nullptr;
+    const int32 TargetGeneration=TargetCombat ? TargetCombat->GetCombatAvatarGeneration() : 0;
+    if (Pawn->HasAuthority()) return AuthoritySelectProjectileTarget(Target,AvatarGeneration,TargetGeneration);
+    if (!Pawn->IsLocallyControlled()) return false;
+    ServerSelectProjectileTarget(Target,AvatarGeneration,TargetGeneration);
+    return true;
+}
+
+void UGamePlatformCombatComponent::ServerSelectProjectileTarget_Implementation(
+    AActor* Target,int32 ExpectedSourceGeneration,int32 ExpectedTargetGeneration)
+{
+    auto* Pawn=Cast<APawn>(GetOwner());
+    // 引擎验证RPC网络所有权，本处再拒绝已失去控制的旧Pawn；不能从旧连接给后继Avatar写选择。
+    if (!IsValid(Pawn) || !Pawn->GetController() || Pawn->GetController()->GetPawn()!=Pawn) return;
+    AuthoritySelectProjectileTarget(Target,ExpectedSourceGeneration,ExpectedTargetGeneration);
+}
+
+bool UGamePlatformCombatComponent::AuthoritySelectProjectileTarget(
+    AActor* Target,int32 ExpectedSourceGeneration,int32 ExpectedTargetGeneration)
+{
+    AActor* Source=GetOwner();
+    if (!IsInGameThread() || bCombatClosing || !IsValid(Source) || !Source->HasAuthority() ||
+        Source->IsActorBeingDestroyed() || !GetWorld() || GetWorld()->bIsTearingDown || ExpectedSourceGeneration!=AvatarGeneration) return false;
+    SelectedProjectileTarget.Reset(); SelectedProjectileSourceGeneration=SelectedProjectileTargetGeneration=0;
+    if (!Target) return true;
+    auto* TargetCombat=IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+    const auto* SourcePolicy=Cast<IGamePlatformCombatant>(Source);
+    const auto* TargetPolicy=Cast<IGamePlatformCombatant>(Target);
+    if (bDead || !IsValid(Target) || Target==Source || Target->IsActorBeingDestroyed() ||
+        Target->GetWorld()!=GetWorld() || !Target->HasAuthority() || !TargetCombat ||
+        TargetCombat->IsCombatDead() || ExpectedTargetGeneration<=0 ||
+        TargetCombat->GetCombatAvatarGeneration()!=ExpectedTargetGeneration ||
+        Source->GetActorLocation().ContainsNaN() || Target->GetActorLocation().ContainsNaN() ||
+        FVector::DistSquared(Source->GetActorLocation(),Target->GetActorLocation())>FMath::Square(10000.f) ||
+        (SourcePolicy && !SourcePolicy->CanSourceCombat()) || (TargetPolicy && !TargetPolicy->CanReceiveCombat())) return false;
+    SelectedProjectileTarget=Target; SelectedProjectileSourceGeneration=AvatarGeneration;
+    SelectedProjectileTargetGeneration=ExpectedTargetGeneration;
+    return true;
+}
+
+AActor* UGamePlatformCombatComponent::GetSelectedProjectileTarget(float MaximumRangeCm,int32& OutTargetGeneration) const
+{
+    OutTargetGeneration=0;
+    const AActor* Source=GetOwner(); AActor* Target=SelectedProjectileTarget.Get();
+    const auto* TargetCombat=IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+    const auto* SourcePolicy=IsValid(Source) ? Cast<IGamePlatformCombatant>(Source) : nullptr;
+    const auto* TargetPolicy=IsValid(Target) ? Cast<IGamePlatformCombatant>(Target) : nullptr;
+    if (bCombatClosing || bDead || !IsValid(Source) || !Source->HasAuthority() || Source->IsActorBeingDestroyed() ||
+        !GetWorld() || GetWorld()->bIsTearingDown || SelectedProjectileSourceGeneration!=AvatarGeneration || !FMath::IsFinite(MaximumRangeCm) || MaximumRangeCm<=0 ||
+        !IsValid(Target) || Target->IsActorBeingDestroyed() || Target->GetWorld()!=GetWorld() || !TargetCombat ||
+        TargetCombat->IsCombatDead() || TargetCombat->GetCombatAvatarGeneration()!=SelectedProjectileTargetGeneration ||
+        Source->GetActorLocation().ContainsNaN() || Target->GetActorLocation().ContainsNaN() ||
+        FVector::DistSquared(Source->GetActorLocation(),Target->GetActorLocation())>FMath::Square(MaximumRangeCm) ||
+        (SourcePolicy && !SourcePolicy->CanSourceCombat()) || (TargetPolicy && !TargetPolicy->CanReceiveCombat())) return nullptr;
+    OutTargetGeneration=SelectedProjectileTargetGeneration; return Target;
 }
 
 float UGamePlatformCombatComponent::GetCombatHealth() const

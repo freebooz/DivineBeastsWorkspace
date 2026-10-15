@@ -11,11 +11,11 @@
 |---|---|---:|---:|---:|---:|---|
 | 普通攻击 | 前向单目标权威攻击 | 40 | 0 | 0秒 | 250cm | 普攻键 |
 | 被动 | 不触发主动效果的暂占槽 | 0 | 0 | 0秒 | 0cm | 无 |
-| 技能一 | 火焰弹，单枚直线投射 | 40 | 10 | 2秒 | 2000cm | 键1 |
-| 技能二 | 寒冰箭，单枚直线投射 | 30 | 8 | 1.5秒 | 2000cm | 键2 |
-| 终极技能 | 奥术飞弹，3枚螺旋弹体，每枚基础12伤害 | 12×3 | 12 | 3秒 | 2000cm | 键4 |
+| 技能一 | 火焰弹，选中目标追踪／未选直线 | 40 | 0 | 2秒 | 2000cm | 键1 |
+| 技能二 | 寒冰箭，选中目标追踪／未选直线 | 30 | 0 | 1.5秒 | 2000cm | 键2 |
+| 终极技能 | 奥术飞弹，3枚螺旋弹体，每枚基础12伤害 | 12×3 | 0 | 3秒 | 2000cm | 键4 |
 
-说明：以上数字只用于当前占位调试，不是十二生肖最终数值批准；没有燃烧、冻结、减速、位移或额外被动效果。正式战斗伤害继续由平台 Combat 统一结算，技能先经过 GAS 服务端 Commit（提交）后才生成投射物；客户端不授予技能。
+说明：2026-10-15按用户明确指令将全部法术气势费用归零，并增加选中目标冻结追踪；原伤害／冷却／射程不变，飞行中及连发不随新选择切敌，冻结目标失效终止。以上数字只用于当前占位调试，不是十二生肖最终数值批准；没有燃烧、冻结、减速、位移或额外被动效果。正式战斗伤害继续由平台 Combat 统一结算，技能先经过 GAS 服务端 Commit（提交）后才生成投射物；客户端不授予技能。
 
 - 12个英雄分别配置 `dba.abilityset.<hero>_placeholder@1`；各自拥有5个独立 `dba.ability.<hero>_placeholder_<mode>@1`，互不复用另一生肖的技能身份。
 - 能力原生类：`DivineBeastsPlaceholderGameplayAbility`（占位技能执行器），在第三层 `DivineBeastsAbilitiesRuntime` 模块。
@@ -55,3 +55,7 @@
 - 独立冷读结果：`Game/Saved/Validation/VillageSkillPlaceholder20261013/ColdReadback.json`
 - 原生模块源码：`Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/{Public,Private}/Abilities/DivineBeastsPlaceholderGameplayAbility.*`
 - 正式12生肖与占位关系台账：`Docs/Implementation/ZodiacAbilityAssetInventory.json`
+
+## 2026-10-15 零费用合同续修
+
+实际GAS目标连发回归暴露原36法术行仍保留费用，当前平台Magic零费校验因此拒绝施法。通过正式UE5.8 Monolith在原资产身份下修正36行、36中性兼容成本GE、36GA空成本引用及12UIProfile说明；成本原始快照和保存记录在`Game/Saved/Validation/SpellMomentumMigration`，真实uasset备份在`Saved/Validation/WorldEntryFix20261015/SpellAssetsBefore`。两个作者入口共同复用零费SLOTS，保留原GAS冷却，不靠补资源实现免费。独立只读检查现逐行验证36条Magic、36份中性GE及保留冷却，采用唯一时间戳报告；最终冷读与原生运行记录由本轮执行报告补充，不沿用2026-10-13旧费用合同结论。

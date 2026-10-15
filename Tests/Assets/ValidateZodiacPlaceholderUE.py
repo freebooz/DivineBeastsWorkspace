@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """SSLM十二生肖占位技能资产UE5.8独立只读冷启动检查；不代表联机、Cook或人工视觉通过。"""
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import unreal
 
@@ -11,18 +12,29 @@ ROOT = "/DBAGameplay/Abilities/Placeholders"
 
 
 def inspect():
+    # 只读验证正式工程和锁定引擎；禁止把其他项目的同名资产或旧费用合同记为成功。
+    assert unreal.Paths.get_project_file_path().replace('\\', '/').endswith('/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject')
+    assert unreal.SystemLibrary.get_engine_version().startswith('5.8.')
     errors = []
     def check(ok, message):
         if not ok:
             errors.append(message)
     totals = {"heroes": 0, "definitions": 0, "sets": 0, "blueprints": 0,
               "ui_profiles": 0, "grant_ids_verified": 0, "ui_entries_verified": 0,
-              "ga_definition_ids_verified": 0, "effects_verified": 0}
+              "ga_definition_ids_verified": 0, "effects_verified": 0, "zero_cost_magic_rows": 0, "neutral_legacy_cost_effects": 0}
     table = unreal.load_asset(ROOT + "/DT_DBA_PlaceholderBalance")
     check(isinstance(table, unreal.DataTable), "占位数值表不存在")
     if isinstance(table, unreal.DataTable):
         rows = unreal.DataTableFunctionLibrary.get_data_table_row_names(table)
         check(len(rows) == 60, "占位数值表不含实际60行")
+        # 真正导出每行数据；只检查行数会漏掉导致TryGetLoadedBalance拒绝施法的旧气势费用。
+        balance_rows = json.loads(unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table))
+        magic_rows = [row for row in balance_rows if row['DamageType'] == 'Magic']
+        check(len(magic_rows) == 36, '占位数值表必须保留36条法术行')
+        for row in magic_rows:
+            check(row['MomentumCost'] == 0, row['Name'] + ':法术不能消耗气势')
+        totals['zero_cost_magic_rows'] = sum(row['MomentumCost'] == 0 for row in magic_rows)
+
     def logical(obj):
         return (str(obj.get_editor_property("Namespace")) + "." +
                 str(obj.get_editor_property("Name")) + "@" +
@@ -103,12 +115,18 @@ def inspect():
                 cost = cdo.get_editor_property("CostGameplayEffectClass")
                 cooldown = cdo.get_editor_property("CooldownGameplayEffectClass")
                 requires_effects = mode not in ("Primary", "Passive")
-                check(bool(cost) == requires_effects and bool(cooldown) == requires_effects,
-                      ability_id + ":成本或冷却GE与占位类别不一致")
-                totals["effects_verified"] += int(bool(cost) and bool(cooldown))
+                check(not cost and bool(cooldown) == requires_effects,
+                      ability_id + ":法术成本必须为空，原有冷却GE必须保留")
+                totals["effects_verified"] += int(requires_effects and not cost and bool(cooldown))
+                if requires_effects:
+                    legacy_path = ROOT + "/GE" + path.rsplit("/", 1)[-1] + "Cost"
+                    legacy_cls = unreal.EditorAssetLibrary.load_blueprint_class(legacy_path)
+                    neutral = legacy_cls is not None and not unreal.get_default_object(legacy_cls).get_editor_property('Modifiers')
+                    check(neutral, ability_id + ':旧成本GE稳定身份必须保留为无修改兼容资产')
+                    totals['neutral_legacy_cost_effects'] += int(neutral)
     result = {"Status": "PASS" if not errors else "FAIL", "Counts": totals,
               "Errors": errors, "NetworkVerified": False, "CookVerified": False}
-    report = Path(unreal.Paths.project_saved_dir()) / "Validation" / "VillageSkillPlaceholder20261013" / "ColdReadback.json"
+    report = Path(unreal.Paths.project_saved_dir()) / "Validation" / "VillageSkillPlaceholder20261013" / ("ColdReadback_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + ".json")
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     unreal.log("SSLM_PLACEHOLDER_READBACK=" +

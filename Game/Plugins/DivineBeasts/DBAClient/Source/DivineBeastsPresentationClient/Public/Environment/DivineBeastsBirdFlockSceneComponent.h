@@ -24,7 +24,7 @@ public:
     /** 0撤销本组件注册；1..512为请求数量，实际可见数量仍受平台预算约束。 */
     UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="BirdFlock",meta=(ClampMin="0",ClampMax="512",DisplayName="鸟类数量"))
     int32 BirdCount = 32;
-    /** 默认关闭高级路径，保留原有Definition@1七参数及已审核群飞行为。 */
+    /** 默认关闭高级路径；原0/1/2路径及参数语义保留，最小间距修复不依赖高级发布资格。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="BirdFlock|Advanced", meta=(DisplayName="启用高级群飞"))
     bool bEnableAdvancedFlight = false;
 
