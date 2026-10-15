@@ -228,14 +228,7 @@ bool AGamePlatformAIController::TryAttackCurrentTarget()
         return false;
     }
 
-    const FGameplayTag AbilityTag =
-        ActiveDefinition->PrimaryAbilityTag;
-    if (!AbilityTag.IsValid())
-    {
-        LastError = EGamePlatformAIError::AbilityUnavailable;
-        return false;
-    }
-
+    const FGameplayTag AbilityTag = ActiveDefinition->PrimaryAbilityTag;
     AActor* Target = CurrentTarget.Get();
     const FGamePlatformAITargetCandidate* Candidate =
         Candidates.Find(CurrentTarget);
@@ -258,16 +251,21 @@ bool AGamePlatformAIController::TryAttackCurrentTarget()
         return false;
     }
 
-    FGameplayTagContainer AbilityTags;
-    AbilityTags.AddTag(AbilityTag);
-
-    // AI的实际攻击入口也先读取中立Gate，外部原生能力不能绕过本Controller权威资格。
-    if (!AbilitySystemComponent->EvaluateActivationEligibility().IsSuccess())
-    { LastError = EGamePlatformAIError::AbilityUnavailable; return false; }
-    const bool bActivationAttempted =
-        AbilitySystemComponent->TryActivateAbilitiesByTag(
-            AbilityTags,
-            false);
+    bool bActivationAttempted = false;
+    if (AbilityTag.IsValid())
+    {
+        FGameplayTagContainer AbilityTags;
+        AbilityTags.AddTag(AbilityTag);
+        // 原有GAS攻击路径必须保持AI Gate门禁，不能因新增轻量策略绕过。
+        if (!AbilitySystemComponent->EvaluateActivationEligibility().IsSuccess())
+        { LastError = EGamePlatformAIError::AbilityUnavailable; return false; }
+        bActivationAttempted = AbilitySystemComponent->TryActivateAbilitiesByTag(AbilityTags, false);
+    }
+    else if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
+    {
+        // Native Brain仅分派已验证候选目标；真正的碰撞与伤害仍由派生的服务器策略承担。
+        bActivationAttempted = TryExecuteNativeAttack(*Target);
+    }
 
     NextAttackTime =
         Now +
@@ -412,9 +410,9 @@ void AGamePlatformAIController::HandleCombatEvent(
         {
             BrainComponent->RestartLogic();
         }
-        bBrainReady =
-            ActiveDefinition != nullptr &&
-            BrainComponent != nullptr;
+        // 纯原生轻量决策没有BrainComponent；真实重生代次不能把已加载None模式永久关停。
+        bBrainReady = ActiveDefinition != nullptr &&
+            (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None || BrainComponent != nullptr);
 
         if (UBlackboardComponent* LocalBlackboard = GetBlackboardComponent())
         {
@@ -548,6 +546,16 @@ void AGamePlatformAIController::HandleDefinitionLoaded(
         return;
     }
 
+    if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
+    {
+        // 只有定义的世界租约真正加载成功才允许原生脑启动；无需申请空的BT租约。
+        bBrainReady = true;
+        RefreshAIActivationGate();
+        LastError = EGamePlatformAIError::None;
+        StartDecisionTimer();
+        EvaluateDecision();
+        return;
+    }
     BeginBrainAssetLoad(ExpectedGeneration);
 }
 
@@ -566,7 +574,9 @@ bool AGamePlatformAIController::InitializeDefinition(
         return false;
     }
 
-    if (Definition.BrainType != EGamePlatformAIBrainType::BehaviorTree)
+    // None 表示纯原生定时器决策，沿用感知、候选、回家和AI State而无需行为树资产。
+    if (Definition.BrainType != EGamePlatformAIBrainType::BehaviorTree &&
+        Definition.BrainType != EGamePlatformAIBrainType::None)
     {
         LastError = EGamePlatformAIError::UnsupportedBrain;
         return false;
@@ -1085,14 +1095,10 @@ void AGamePlatformAIController::UpdateNoTargetBehavior()
     }
 
     UBlackboardComponent* LocalBlackboard = GetBlackboardComponent();
-    if (!LocalBlackboard)
-    {
-        return;
-    }
-
-    LocalBlackboard->SetValueAsBool(
-        GamePlatformAIBlackboardKeys::CanAttack,
-        false);
+    // 原生轻量脑没有Blackboard；不能因此跳过回家、巡逻以及状态更新。
+    if (!LocalBlackboard && ActiveDefinition->BrainType != EGamePlatformAIBrainType::None) return;
+    if (LocalBlackboard)
+        LocalBlackboard->SetValueAsBool(GamePlatformAIBlackboardKeys::CanAttack, false);
 
     const float DistanceHomeSq =
         FVector::DistSquared(
@@ -1186,6 +1192,8 @@ void AGamePlatformAIController::UpdateTargetBehavior(AActor& Target)
             EGamePlatformAIPublicState::Attacking,
             FGameplayTag(),
             GamePlatformAITags::Combat_Attack);
+        if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
+            TryAttackCurrentTarget();
     }
     else
     {
@@ -1240,6 +1248,8 @@ bool AGamePlatformAIController::RequestPatrolGoal()
             PatrolLocation);
     }
 
+    if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
+        MoveToLocation(PatrolLocation, ActiveDefinition->HomePolicy.PatrolAcceptanceRadius);
     SetPublicState(
         EGamePlatformAIPublicState::Moving,
         GamePlatformAITags::Movement_Patrol);
@@ -1264,6 +1274,8 @@ void AGamePlatformAIController::RequestReturnHome()
             HomeLocation);
     }
 
+    if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
+        MoveToLocation(HomeLocation, ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius);
     SetPublicState(
         EGamePlatformAIPublicState::Moving,
         GamePlatformAITags::Movement_ReturnHome);
@@ -1293,6 +1305,8 @@ void AGamePlatformAIController::RequestChase(AActor& Target)
 
     if (bMovedEnough || bRefreshTime)
     {
+        if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
+            MoveToActor(&Target, ActiveDefinition->PreferredRange);
         LastMoveGoal = TargetLocation;
         LastMoveRequestTime = Now;
 

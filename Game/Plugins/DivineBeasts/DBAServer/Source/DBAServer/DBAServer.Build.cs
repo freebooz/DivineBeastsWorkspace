@@ -25,6 +25,8 @@ public class DBAServer : ModuleRules
             "HTTP", "DivineBeastsCharactersRuntime", "GamePlatformCharacter",
             // 开发怪物装配直接读取权威Combat及内部回归的ASC合同；不依赖客户端表现或项目技能实现。
             "GamePlatformCombat", "GamePlatformAbilitySystem",
+            // 新手村狼专服AI复用平台感知、轻量原生决策和战斗能力。
+            "GamePlatformAI", "GamePlatformAIServer", "AIModule", "NavigationSystem",
             // 世界准入桥直接构造/解析Core身份与结果，DLL链接必须声明真实库，不能借Data的头可见性。
             "GamePlatformCore",
             // 第三层可信组合根把真实Server准入投影桥接到共享玩法门禁，不复制认证和出生状态机。

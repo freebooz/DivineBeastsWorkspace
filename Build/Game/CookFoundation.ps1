@@ -88,8 +88,7 @@ try {
         }
         # 发布后启动还须指定这组参数；textconfig令实际进程重新读取已Stage的自定义INI层。
         $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
-        # 仅本轮训练敌人验收显式追加；Cook不运行怪物，正式专服默认不开启。
-        $details.OptionalDevelopmentMonsterRuntimeArgument = '-DBADevelopmentMonsters'
+
     }
     if ($CustomConfig -eq 'PluginDemoClient') {
         # Stage需保留显式开发INI层；只白名单本任务实际存在的文件，不启用发行默认或把全部Config搬入包。

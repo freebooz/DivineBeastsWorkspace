@@ -275,6 +275,15 @@ void UDivineBeastsLoginScreen::RefreshPluginDevelopmentEntry()
     {
         Button->SetVisibility(bAvailable ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
         Button->SetIsEnabled(IsActivated() && bAvailable && !bBusy && !Launcher->IsBusy());
+        // 仅入口实际可交互时插入Tab环，生产/忙碌状态保持原登录焦点顺序。
+        const bool bCanNavigateToDevelopment = Button->GetIsEnabled();
+        if (LoginButton && AccountInput)
+        {
+            LoginButton->SetNavigationRuleExplicit(EUINavigation::Next,
+                bCanNavigateToDevelopment ? static_cast<UWidget*>(Button) : static_cast<UWidget*>(AccountInput));
+            AccountInput->SetNavigationRuleExplicit(EUINavigation::Previous,
+                bCanNavigateToDevelopment ? static_cast<UWidget*>(Button) : static_cast<UWidget*>(LoginButton));
+        }
     }
     if (UTextBlock* Status = Cast<UTextBlock>(GetWidgetFromName(TEXT("PluginDevelopmentStatus"))))
     {

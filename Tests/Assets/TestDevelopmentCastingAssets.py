@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""施法/怪物真实磁盘资产的最早阻断门禁；路径缺失和文本占位必须失败。
+"""施法真实磁盘资产的最早阻断门禁；路径缺失和文本占位必须失败。
 只证明文件存在且非小文本，不证明UE类型、骨架、蓝图编译、Cook或人工视觉。
 完整内容合同另由Monolith重载及原生资产测试核实，不能把本扫描冒充引擎验收。
 """
@@ -23,10 +23,7 @@ class DevelopmentCastingAssetPresence(unittest.TestCase):
                     self.assertTrue(path.is_file(),'必须由Monolith制作真实UE资产')
                     self.assertGreater(path.stat().st_size,1024,'小文本/空文件不是资源')
 
-    def test_real_monster_visual_exists(self):
-        path=COMMON/'Development/Monsters/BP_DBA_AncientStoneSpiritVisual.uasset'
-        self.assertTrue(path.is_file(),'训练石灵必须有真实可编辑视觉资源')
-        self.assertGreater(path.stat().st_size,1024)
+
 
 
 if __name__=='__main__': unittest.main()

@@ -10,6 +10,7 @@ class UGamePlatformAbilitySystemComponent;
 class UGamePlatformAbilityCastComponent;
 class UGamePlatformCombatComponent;
 class UGamePlatformGameplayEligibilityComponent;
+class UGamePlatformAITargetComponent;
 struct FGamePlatformCombatEvent;
 /** 游戏线程服务器原生死亡事实；消费者借用事件值，只对目标Pawn本代次发布一次，不包含竞技规则。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(FDivineBeastsAuthoritativeDeath, const FGamePlatformCombatEvent&);
@@ -54,6 +55,8 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGamePlatformCombatComponent> Combat;
     /** 独立竞技生命周期的最小权威资格；默认Inactive，不能由Widget/客户端写入。 */
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGamePlatformGameplayEligibilityComponent> GameplayEligibility;
+    /** 所有正式玩家统一提供平台AI可追踪目标身份；仅服务器就绪、玩家拥有且活着时授权。 */
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UGamePlatformAITargetComponent> AITarget;
     /** 项目可信身份/Definition自有租约和只读Ready，随Pawn结束。 */
     UPROPERTY(VisibleAnywhere) TObjectPtr<UDivineBeastsCharacterComponent> CharacterIdentity;
 };

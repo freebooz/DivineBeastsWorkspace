@@ -67,6 +67,10 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category="AI")
     TSoftObjectPtr<UGamePlatformAIDefinition> DefaultDefinition;
 
+    /** 无行为树的轻量服务器决策路径：只对平台已校验的目标回调；默认拒绝。
+     * 子类必须独立完成攻击碰撞、距离、安全区、伤害上下文与身份代次的二次校验。 */
+    virtual bool TryExecuteNativeAttack(AActor& ValidatedTarget) { return false; }
+
 private:
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<UAIPerceptionComponent> PlatformPerceptionComponent;

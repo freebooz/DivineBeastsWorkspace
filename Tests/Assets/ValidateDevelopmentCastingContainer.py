@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""只读开发客户端IoStore门禁：真实导出数据必须交付施法动作、起手系统和石灵依赖。
+"""只读开发客户端IoStore门禁：真实导出数据必须交付施法动作与起手系统。
 输入为锁定UnrealPak实际生成的CSV，不使用磁盘库存替代发布。报告失败非零退出。
 此门禁不证明网络、动画播放或视觉质量；Niagara源模块是EditorOnly，不能要求其独立入包。
 """
@@ -20,11 +20,7 @@ def required_assets():
             result.append(f'{common}/Mannequins/DBA/Animations/DevelopmentCasting/{kind}_DBA_Dev{spell}Cast.uasset')
         result.extend([f'{vfx}/Niagara/NS_DBA_Dev{spell}Cast.uasset',
                        f'{vfx}/Definitions/DA_DBA_VFX_Dev{spell}Cast.uasset'])
-    result.append(f'{common}/Development/Monsters/BP_DBA_AncientStoneSpiritVisual.uasset')
-    result.append('DBAUIPack_Core/Content/UI/Fonts/Development/F_DBA_DevelopmentMonsterLabel.uasset')
-    for material in ('Stone', 'EdgeStone', 'JadeGlow'):
-        result.append(f'{common}/Development/Monsters/Materials/M_DBA_StoneSpirit{material}.uasset')
-    result.extend(['Engine/Content/BasicShapes/Sphere.uasset', 'Engine/Content/BasicShapes/Cube.uasset'])
+
     return result
 
 

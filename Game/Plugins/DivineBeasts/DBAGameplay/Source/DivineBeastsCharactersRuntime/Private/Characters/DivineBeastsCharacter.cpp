@@ -5,6 +5,8 @@
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
+#include "Components/GamePlatformAITargetComponent.h"
+#include "GameFramework/Controller.h"
 #include "Types/GamePlatformCombatEvent.h"
 
 ADivineBeastsCharacter::ADivineBeastsCharacter()
@@ -13,6 +15,7 @@ ADivineBeastsCharacter::ADivineBeastsCharacter()
     AbilityCast = CreateDefaultSubobject<UGamePlatformAbilityCastComponent>(TEXT("AbilityCast"));
     Combat = CreateDefaultSubobject<UGamePlatformCombatComponent>(TEXT("Combat"));
     GameplayEligibility = CreateDefaultSubobject<UGamePlatformGameplayEligibilityComponent>(TEXT("GameplayEligibility"));
+    AITarget = CreateDefaultSubobject<UGamePlatformAITargetComponent>(TEXT("AITarget"));
     CharacterIdentity = CreateDefaultSubobject<UDivineBeastsCharacterComponent>(TEXT("CharacterIdentity"));
 }
 UAbilitySystemComponent* ADivineBeastsCharacter::GetAbilitySystemComponent() const { return AbilitySystem; }
@@ -26,17 +29,32 @@ void ADivineBeastsCharacter::BeginPlay()
 {
     Super::BeginPlay();
     Combat->OnCombatEvent.AddDynamic(this, &ADivineBeastsCharacter::HandleCombatEvent);
+    // AI资格由角色真实Ready/玩家控制权/死亡事实驱动；不因狼创建而主动扫描所有Pawn。
+    if (HasAuthority()) AITarget->SetAITargetEnabled(false);
     CharacterIdentity->OnReadinessChanged().AddWeakLambda(this, [this](bool bReady)
-    { if (!bReady) { GameplayEligibility->SetServerPlayerActive(false);
-        AbilityCast->CancelConfirmedCast(AbilityCast->GetCastFacts().ActivationId); } });
+    {
+        if (HasAuthority())
+            AITarget->SetAITargetEnabled(bReady && GetController() && GetController()->IsPlayerController() && !Combat->IsCombatDead());
+        if (!bReady) { GameplayEligibility->SetServerPlayerActive(false);
+            AbilityCast->CancelConfirmedCast(AbilityCast->GetCastFacts().ActivationId); }
+    });
     RefreshAbilityActorInfo();
+    if (HasAuthority())
+        AITarget->SetAITargetEnabled(CharacterIdentity->IsCharacterReady() && GetController() &&
+            GetController()->IsPlayerController() && !Combat->IsCombatDead());
 }
 void ADivineBeastsCharacter::PossessedBy(AController* NewController)
-{ Super::PossessedBy(NewController); RefreshAbilityActorInfo(); }
+{
+    Super::PossessedBy(NewController);
+    RefreshAbilityActorInfo();
+    if (HasAuthority()) AITarget->SetAITargetEnabled(NewController && NewController->IsPlayerController() &&
+        CharacterIdentity->IsCharacterReady() && !Combat->IsCombatDead());
+}
 void ADivineBeastsCharacter::OnRep_Controller()
 { Super::OnRep_Controller(); RefreshAbilityActorInfo(); }
 void ADivineBeastsCharacter::UnPossessed()
 {
+    if (HasAuthority()) AITarget->SetAITargetEnabled(false);
     GameplayEligibility->SetServerPlayerActive(false);
     AbilityCast->CancelConfirmedCast(AbilityCast->GetCastFacts().ActivationId);
     AbilitySystem->ClearAbilityAvatar();
@@ -50,9 +68,18 @@ void ADivineBeastsCharacter::RefreshAbilityActorInfo()
 }
 void ADivineBeastsCharacter::HandleCombatEvent(const FGamePlatformCombatEvent& Event)
 {
+    // 真实GAS重生通知后恢复玩家目标资格；狼等非PlayerController实体永远不会进入可被追踪玩家集合。
+    if (HasAuthority() && Event.TargetActor == this && Event.EventType == EGamePlatformCombatEventType::RespawnReset &&
+        Event.TargetAvatarGeneration > 0 && Event.TargetAvatarGeneration == Combat->GetCombatAvatarGeneration())
+    {
+        AITarget->SetAITargetEnabled(CharacterIdentity->IsCharacterReady() && GetController() &&
+            GetController()->IsPlayerController() && !Combat->IsCombatDead());
+        return;
+    }
     if (!HasAuthority() || Event.EventType != EGamePlatformCombatEventType::Death || Event.TargetActor != this ||
         !Event.EventId.IsValid() || Event.TargetAvatarGeneration <= 0 ||
         Event.TargetAvatarGeneration != Combat->GetCombatAvatarGeneration() || !Combat->IsCombatDead()) { return; }
+    AITarget->SetAITargetEnabled(false);
     GameplayEligibility->SetServerPlayerActive(false);
     if (PublishedDeathGeneration == Event.TargetAvatarGeneration) { return; }
     AbilityCast->CancelConfirmedCast(AbilityCast->GetCastFacts().ActivationId);
@@ -63,6 +90,7 @@ void ADivineBeastsCharacter::HandleCombatEvent(const FGamePlatformCombatEvent& E
 }
 void ADivineBeastsCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
+    if (HasAuthority()) AITarget->SetAITargetEnabled(false);
     AuthoritativeDeath.Clear();
     GameplayEligibility->SetServerPlayerActive(false);
     CharacterIdentity->OnReadinessChanged().RemoveAll(this);

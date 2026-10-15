@@ -1,5 +1,5 @@
 // 第三层前端水体方案选择：完全独立于Dedicated Server、正式Village Water和Gameplay。
-// 原生已有Sanctuary水材质/水幕为唯一默认选择，FluidFlux为未安装时自动安全回退的可选特写。
+// 原生Sanctuary水材质/水幕为默认选择；Fluid Flux 只有取得正式兼容验收许可才能入选。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -33,7 +33,10 @@ public:
     static EDivineBeastsCharacterStudioWaterMode ResolveWaterMode(
         const AActor* PreviewStage, bool bPreferFluidFlux, bool bHighQuality);
 
-    /** 纯能力检查，用于UI禁用未安装插件的开关；不触发插件加载和HTTP请求。 */
+    /** 纯资格检查：需桌面客户端、显式UE5.8验收许可和已启用插件；
+     * Game.ini缺少[DivineBeasts.CharacterStudio.Water]的bFluidFlux3PreviewVerified=true时默认禁用。
+     * 不触发实际Fluid Flux加载，不表示第三方模型已经编译/显示；专服不依赖本客户端模块。
+     */
     UFUNCTION(BlueprintPure, Category="DivineBeasts|CharacterPreview|Water")
     static bool IsFluidFluxPluginEligible();
 };

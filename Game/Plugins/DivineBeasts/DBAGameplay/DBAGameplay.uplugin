@@ -30,6 +30,10 @@
       "Enabled": true
     },
     {
+      "Name": "GamePlatformAI",
+      "Enabled": true
+    },
+    {
       "Name": "GamePlatformGameplay",
       "Enabled": true
     },

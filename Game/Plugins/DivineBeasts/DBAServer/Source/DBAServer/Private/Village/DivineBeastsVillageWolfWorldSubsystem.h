@@ -1,0 +1,79 @@
+// SSLM项目层Village狼散布与生命周期：复用World/Gameplay权限事实、导航和现有平台AI/Combat。
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Subsystems/WorldSubsystem.h"
+#include "Interfaces/IGamePlatformGameplayService.h"
+#include "TimerManager.h"
+#include "DivineBeastsVillageWolfWorldSubsystem.generated.h"
+
+class ADivineBeastsVillageWolf;
+class UGamePlatformExperienceComponent;
+class UGamePlatformServerLifecycleSubsystem;
+struct FGamePlatformCombatEvent;
+struct FGamePlatformServerLifecycleSnapshot;
+
+/** 狼群只在真实Village.Tutorial Dedicated Server生效；安全区禁止刷新、追击/咬击。
+ * 玩法权威及怪物生命周期归本世界，而非PCG装饰或客户端表现。 */
+UCLASS()
+class UDivineBeastsVillageWolfWorldSubsystem final : public UWorldSubsystem
+{
+    GENERATED_BODY()
+
+public:
+    virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+    virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+    virtual void OnWorldEndPlay(UWorld& InWorld) override;
+    virtual void Deinitialize() override;
+
+protected:
+    virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
+
+private:
+    /** 由真实平台世界/体验双方签发的作用域；换地图/重启/排空前必须失效。 */
+    struct FApprovedScope
+    {
+        FGuid WorldGeneration;
+        int64 ExperienceEpoch = 0;
+        bool operator==(const FApprovedScope& B) const
+        { return WorldGeneration == B.WorldGeneration && ExperienceEpoch == B.ExperienceEpoch; }
+    };
+
+    /** 项目Config默认关闭，且必须显式确认客户端Fab外观已完成导入；拒绝不可见的攻击怪。 */
+    bool HasVerifiedAnimalAssets() const;
+    /** 从实际服务器角色、体验、地图和World服务获得本代次允许生成的许可。 */
+    bool CaptureApprovedScope(FApprovedScope& OutScope) const;
+    /** 订阅既有体验事实；避免每帧扫描世界/玩家。 */
+    void ObserveExperience();
+    /** 服务端Ready/Experience Active推动首次有限散布。 */
+    void TryFillWolves();
+    /** 实际NavMesh+地形+胶囊碰撞+安全区+群体最小距离核验，失败不强制生成。 */
+    bool FindSpawnTransform(int32 SpawnOrdinal, FTransform& OutTransform) const;
+    /** 世界拥有Actor/Controller及订阅；初始化失败销毁两者，不保留半活体。 */
+    bool SpawnOneWolf(const FTransform& SpawnAt);
+    /** 只处理自己持有的已结算死亡，尸体延迟销毁并触发有界补充。 */
+    void HandleWolfDeath(const FGamePlatformCombatEvent& Event);
+    UFUNCTION() void HandleWolfDestroyed(AActor* DestroyedActor);
+    /** 原世界/旧定时器不能补充后继世界的怪物。 */
+    void ReplenishWolves(FGuid Ticket);
+    void HandleLifecycleChanged(const FGamePlatformServerLifecycleSnapshot& Snapshot);
+    void HandleExperienceChanged(const FGamePlatformExperienceSnapshot& Snapshot);
+    /** 撤销单世界所有权：Timer → 订阅 → Actor/Controller；不触碰玩家和地图。 */
+    void CloseScope();
+
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<ADivineBeastsVillageWolf>> OwnedWolves;
+    TWeakObjectPtr<UGamePlatformExperienceComponent> ObservedExperience;
+    TWeakObjectPtr<UGamePlatformServerLifecycleSubsystem> ObservedLifecycle;
+    FGamePlatformGameplayRegistration ExperienceSubscription;
+    FDelegateHandle LifecycleSubscription;
+    FTimerHandle ReplenishTimer;
+    FGuid RespawnTicket;
+    FGuid WorldOperation;
+    FApprovedScope OwnedScope;
+    /** 通用资产路径只有逻辑字符串，服务器从不加载狼Mesh/动画/贴图。 */
+    FSoftObjectPath WolfAIAssetPath;
+    bool bCreating = false;
+    bool bClosing = false;
+};
