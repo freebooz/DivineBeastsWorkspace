@@ -51,6 +51,10 @@ protected:
     virtual void NativeOnDeactivated() override;
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    // 仅自动化核对激活/失活订阅和无秘密名称快照，不向蓝图暴露测试写入口。
+    friend class FDivineBeastsDevelopmentAccountBindingsTest;
+#endif
     /** 绑定命名控件和当前登录ViewModel；重复调用不会重复订阅。 */
     void BindLoginEvents();
 
@@ -59,6 +63,29 @@ private:
 
     /** 根据最新事件快照更新按钮、忙碌、维护和错误显示。 */
     void RefreshLoginPresentation();
+
+    /** 激活时只读取可显示账号名；密码始终留在显式开发进程环境，Shipping/Test不启用。 */
+    void InitializeDevelopmentAccounts();
+    /** 配对绑定十个真实按钮；失活全部移除，重复激活不累积登录命令。 */
+    void BindDevelopmentAccountEvents(bool bBind);
+    /** 通过登录状态变化通知投影按钮可用性，不轮询账号或认证。 */
+    void RefreshDevelopmentAccounts();
+    /** 点击索引重新核对名称后瞬时取口令，并复用唯一真实登录提交路径。 */
+    void SubmitDevelopmentAccount(int32 Index);
+    /** 手动及快捷登录共用的请求身份、同步重入和提交后清理逻辑。 */
+    void SubmitCredentials(const FString& LoginName, const FString& Password);
+
+    // UButton动态事件没有索引参数；十个薄回调只负责传递固定槽位，不保存凭据。
+    UFUNCTION() void HandleDevelopmentAccount01Clicked();
+    UFUNCTION() void HandleDevelopmentAccount02Clicked();
+    UFUNCTION() void HandleDevelopmentAccount03Clicked();
+    UFUNCTION() void HandleDevelopmentAccount04Clicked();
+    UFUNCTION() void HandleDevelopmentAccount05Clicked();
+    UFUNCTION() void HandleDevelopmentAccount06Clicked();
+    UFUNCTION() void HandleDevelopmentAccount07Clicked();
+    UFUNCTION() void HandleDevelopmentAccount08Clicked();
+    UFUNCTION() void HandleDevelopmentAccount09Clicked();
+    UFUNCTION() void HandleDevelopmentAccount10Clicked();
 
     /** 清空只允许瞬时存在的密码输入；账号名可以保留在当前页面控件中。 */
     void ClearSensitiveInput();
@@ -134,6 +161,12 @@ private:
     bool bLoginCompletedDuringSubmit = false;
     /** 仅开发回归的一次性提交意图；Shipping不会读取启动参数或环境密码。 */
     bool bDevelopmentAutoLoginRequested = false;
+    /** 本激活周期唯一可保留的开发账号快照；没有口令、令牌或认证成功状态。 */
+    TArray<FString> DevelopmentAccountNames;
+    /** 仅显示固定配置错误提示；真实认证错误仍由ViewModel完成事件提供。 */
+    FText DevelopmentAccountError;
+    /** 每次激活/失活推进；同步登录回调切页后旧调用栈不得清空新输入或覆盖新请求。 */
+    uint64 LoginActivationGeneration = 0;
     /** 对GameInstance开发启动器的精确订阅；页面失活撤销，不停止演示进程。 */
     FDelegateHandle PluginDevelopmentStatusHandle;
 };

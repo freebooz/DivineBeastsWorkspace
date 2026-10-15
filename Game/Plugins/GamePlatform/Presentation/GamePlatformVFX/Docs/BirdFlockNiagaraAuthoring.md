@@ -95,3 +95,9 @@ Render
 入口预检三物种真实资源，留存旧模块/系统规格后，为现有基础系统及三变体新增参数，调用Monolith `set_custom_hlsl_text`更新原模块，在原@1定义增加可选规则、默认值与内容修订，再逐个编译保存。组件`BirdCount`、正式服务与Definition白名单均真实允许0..512；正式鸟群入口只覆盖Count，模式/半径/高度来自系统默认值，因此固定Bounds按各系统当前真实模式和512只计算，而不为默认盘旋鹰群无条件预留未请求的八字高度。候选参数的四系统均可保持原XY Bounds与Z -1000..12000cm；默认全相位中心高度为海鸥808..892cm、Village燕子458..682cm、雄鹰1358..1442cm。报告同时记录真实默认数量与512只包络、实际模式和最终Bounds，真实网格预检若提高间距则重新计算。模式、半径、高度或间距改动后必须重跑作者与安全体积审计；平台中立请求自行覆盖这些字段时须提供覆盖后Bounds，不能沿用这次默认模式的合同。三种轨迹、数量、逻辑身份、网格与材质引用均不重建。失败即停止并保留逐步证据，不自动重放写动作。
 
 纯回归入口`Tests/Assets/TestBirdFlockReleasePolicy.py`逐句执行真实HLSL位置公式，验证默认群600秒完整相位及1小时/24小时、三模式的2/3/72/128/512只、2000cm风扰动与最小200cm半径/超直径间距。测试是CPU双精度数学证据，不能代替GPU浮点、UniqueID、真实User参数、固定Bounds、画面和Cook验证。真实资产门禁`ValidateBirdFlockNiagaraMonolith.py`要求保存后的模块HLSL与源码一致、三个系统包含新间距字段并且GPU编译状态最新；最终仍需对实际GPU位置和两窗口场景观察留证。
+
+### 2026-10-15 实际保存与冷重载合同
+
+真实包围球／WPO预检将项目候选修正为海鸥240cm、燕子180cm、鹰380cm，三原稳定Definition及四原Niagara系统已保存，未改资源身份或默认鸟数。保存前编译缓存曾掩盖原模块InputMap未暴露的错误：冷重载后形成orphan pin，旧参数源还存在回接。当前模块InputMap明确exposed/required/notHidden，原调用节点使用原生FunctionScript刷新后重绑八输入；真实门禁同时核对非orphan、DAG无回环和HLSL相等。保存后原生重载八包再编译四系统已0错误0警告、全UpToDate，证据`Saved/Validation/BirdFlockP4/NiagaraValidationReloaded.json`。33项纯测试与实际240/180/380的数学样本另记；真实GPU采样及最终客户端仍须独立执行，不能由上述门禁推定。
+
+本轮独占编辑器真实GPU审核已执行：9配置／18不同模拟时刻，实际0.05cm浮点容差下全部满足声明最小距，含各物种128／512边界。报告及原始坐标见`Saved/Validation/BirdFlockP4P7/GPUReview/SpacingReview`；真实审核视口已检查鸟群可见，白色中性背景不能替代正式Village光照与人工视觉验收。

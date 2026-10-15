@@ -29,6 +29,10 @@ void UGamePlatformCombatComponent::BeginPlay()
     ++ComponentLifecycleGeneration;
     ++AvatarResetOperationGeneration;
     Super::BeginPlay();
+    // 选择属于当前控制者的意图，不能依赖新客户端首次清空RPC；竞技重连会保留同Pawn和Avatar。
+    // 在ASC缺失早退之前订阅，组件生命周期仍必须收敛；这里只接引擎事件，不轮询Controller。
+    if (APawn* ControlledPawn=Cast<APawn>(GetOwner()))
+        ControlledPawn->ReceiveControllerChangedDelegate.AddUniqueDynamic(this,&UGamePlatformCombatComponent::HandleProjectileControllerChanged);
 
     AbilitySystemComponent =
         GetOwner()->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
@@ -69,6 +73,8 @@ void UGamePlatformCombatComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
     // GAS效果移除会同步通知；先永久关闭并失效在途Reset，再进入受控旧句柄清理。
     if (bCombatClosing) return;
     bCombatClosing = true;
+    if (APawn* ControlledPawn=Cast<APawn>(GetOwner()))
+        ControlledPawn->ReceiveControllerChangedDelegate.RemoveDynamic(this,&UGamePlatformCombatComponent::HandleProjectileControllerChanged);
     SelectedProjectileTarget.Reset(); SelectedProjectileSourceGeneration=SelectedProjectileTargetGeneration=0;
     ++ComponentLifecycleGeneration;
     ++AvatarResetOperationGeneration;
@@ -105,6 +111,14 @@ UGamePlatformCombatAttributeSet* UGamePlatformCombatComponent::GetCombatAttribut
 
     return const_cast<UGamePlatformCombatAttributeSet*>(
         AbilitySystemComponent->GetSet<UGamePlatformCombatAttributeSet>());
+}
+
+void UGamePlatformCombatComponent::HandleProjectileControllerChanged(
+    APawn* ControlledPawn,AController* OldController,AController* NewController)
+{
+    if (bCombatClosing || ControlledPawn!=GetOwner() || !ControlledPawn->HasAuthority() || OldController==NewController) return;
+    // 不推进AvatarGeneration：竞技同实体重连必须保留战斗身份，已提交施法的冻结目标独立拥有。
+    SelectedProjectileTarget.Reset(); SelectedProjectileSourceGeneration=SelectedProjectileTargetGeneration=0;
 }
 
 bool UGamePlatformCombatComponent::RequestProjectileTarget(AActor* Target)

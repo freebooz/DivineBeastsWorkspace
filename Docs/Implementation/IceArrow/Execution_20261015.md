@@ -45,3 +45,13 @@
 锁定D:/UnrealEngine-5.8.0-release正式工程新进程经Monolith核对完整项目路径与5.8.0后，运行只读原生检查：`Game/Saved/Validation/IceArrow/ColdReadback_20261015T114058954458Z.json`为PASS，11纹理、4网格、4母材质、10实例、6系统、1模块、4稳定定义均通过。随后六系统逐一真实compile_first均0错误0警告、22发射器UpToDate，完整诊断`Saved/Validation/WorldEntryFix20261015/IceArrowDiagnostics.json`。公共表现包Monolith清单已增补本版本；上述编译与读入不替代游戏画面、GPU预算或联网验收。
 
 最终开发客户端容器门禁增补新版冰箭36项发布依赖（EditorOnly运动源模块不独立要求入包），旧容器实际失败并缺少全部36项，证据`Saved/Validation/WorldEntryFix20261015/IceArrowOldContainerRed.json`。新Cook及客户端运行将在本轮剩余步骤完成，不继承旧包结论。
+
+## 2026-10-15 实际Cook无特效根因与原位修复
+
+用户在实际双客户端确认施放有动作或冷却，但没有寒冰箭特效。Cook `0142957a-9507-4043-b403-a54389c8d1eb` 虽返回0且48项施法/冰箭依赖均入包，其真实Cook日志仍包含GPU HLSL失败。`Index%128`被锁定UE5.8 `NiagaraNodeCustomHlsl`当作整体token，无法替换成函数输入`In_Index`，六系统21个具名发射器报未声明Index；新门禁拒绝该Cook并记录102条相关编译诊断，见`Saved/Validation/WorldEntryFix20261015/IceArrowCookShaderRed.json`。编辑器compile_first的历史0诊断不能证明该Cook正常。
+
+随后经当前正式编辑器27104和Monolith原位修复七包，未改资产ID、材质、网格、玩法或插值生成模式。模块输入改为公开、必需、非隐藏，刷新同一44个调用并恢复原输入，消除真实T3D中`bOrphanedPin=True`。修正后译后GPU又暴露跨Spawn/Update共用副作用函数的问题：正文被缓存为MapSpawn写入，Spawn的Age=0使起手颜色Alpha恒为0；真实GPU SimCache在0.1/0.2秒均读到35个起手粒子且全部Alpha为0。该RED探针首次结束时误用了不存在的`unreal.is_valid`，清理错误如实保留；之后已改为`SystemLibrary.is_valid`并清理自有Actor，不影响此前两个实际GPU样本。
+
+最小修复保留原22个Spawn调用节点但禁用，只让原Update调用写入颜色/位置/尺寸。七包保存、原生reload后，六系统22发射器全部重新force compile，0错误0警告；22份实际GPU HLSL均为`In_Index % 128`且仅向当前MapUpdate写入。证据为`IceArrowNativeGraphRepair/ReloadAndGPUHlsl.json`。新GPU探针在0.1/0.2秒对六系统读取颜色和局部位置，结果`passed`、无探针错误，各系统均有Alpha>0.01粒子；起手Orbit首粒子位置由(75.80,2.89,87.05)厘米变到(71.33,10.69,90.15)厘米，证明更新实际生效。完整数据`IceArrowNativeGraphRepair/GPUAlphaAfterUpdateOnly.json`，临时Actor与Slate回调已全部清理。
+
+作者工具已同步输入空格、ParameterMap暴露和唯一Update调用；`RepairIceArrowMotionMonolith.py`提供原位修复/重载门禁，`ProbeIceArrowGPU.py`只读真实GPU采样。9项离线Cook/HLSL回归经历7项RED后全部GREEN；原容器验证入口现同时审查同次Cook日志，不再仅按进程退出0或资源清单放行。本节证据根为`Saved/Validation/WorldEntryFix20261015`。尚未执行修复后的新Cook、网络施放或人工画面签收，不把GPU Alpha/位置通过声明为完整视觉验收。

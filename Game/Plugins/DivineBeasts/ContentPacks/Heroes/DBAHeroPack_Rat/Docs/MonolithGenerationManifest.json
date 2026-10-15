@@ -402,8 +402,9 @@
     "Author": "Tools/Unreal/Abilities/AuthorZodiacPlaceholderAbilities.py::repair_spell_momentum_costs",
     "Evidence": "Game/Saved/Validation/SpellMomentumMigration/20261015T114623113609Z_Saved.json",
     "AssetSaved": true,
-    "IndependentReadbackStatus": "PendingFinalColdStart",
-    "NativeGASStatus": "PendingFinalRebuild",
-    "ManualVisualAccepted": false
+    "IndependentReadbackStatus": "NativePackagesReloadedAndReadbackPassed",
+    "NativeGASStatus": "See Docs/Implementation/SSLMVillagePlaceholderSkills_20261013.md final execution evidence",
+    "ManualVisualAccepted": false,
+    "IndependentReadbackEvidence": "Game/Saved/Validation/VillageSkillPlaceholder20261013/ColdReadback_20261015T121234783736Z.json"
   }
 }

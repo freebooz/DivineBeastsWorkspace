@@ -11,6 +11,8 @@
 #include "Types/GamePlatformCombatSpec.h"
 #include "GamePlatformCombatComponent.generated.h"
 
+class APawn;
+class AController;
 class UGamePlatformAbilitySystemComponent;
 class UGamePlatformCombatAttributeSet;
 class UGameplayEffect;
@@ -138,6 +140,9 @@ private:
     int32 SelectedProjectileTargetGeneration = 0;
     UFUNCTION(Server,Reliable)
     void ServerSelectProjectileTarget(AActor* Target,int32 ExpectedSourceGeneration,int32 ExpectedTargetGeneration);
+    /** Pawn控制者生命周期通知；只清待施法选择，保留化身代次和已经冻结的弹体/连发。 */
+    UFUNCTION()
+    void HandleProjectileControllerChanged(APawn* ControlledPawn,AController* OldController,AController* NewController);
 
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystemComponent = nullptr;

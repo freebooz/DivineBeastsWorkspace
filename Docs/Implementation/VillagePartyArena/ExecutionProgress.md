@@ -303,3 +303,11 @@ NativeFinalVerified实际32项全部Success（含GamePlatform.Arena九项、项�
 限制：Dedicated Server已有配置仍尝试解析被剥离的CommonUI viewport及InventoryClient定义类，各服务器各出现两条Warning，未出现Fatal／Critical／Assertion；两客户端无缺包／类警告。此处明确登记存量配置问题，不将其称为全项目零警告。真实客户端人工登录、互邀、旅行、对战、安全返回及物理断网尚未人工验收，HTTP／原生／Cook证据不能替代这些检查；5v5需要十个真实会话，当前两个窗口不能宣称五模式完整联机验收。开发白盒竞技、开发英雄技能和本地进程池均不是ProductionReady或实际Agones集群证明。
 
 最终端口复核补充：人工修正网络后，Match主机18183端口保留了Docker旧NAT；此时Gateway内部组队已通过，但不能沿用旧健康响应记为五端口通过。确认两个客户端仍在登录页、没有人工组队／对战后，只重新创建Match容器刷新端口发布，其他四服务和服务器进程保持不变。随后五个真实主机端口均200，真实Gateway六步骤回归再次通过，证据`Backend/LiveGatewayParty.AfterPortRepair.json`。最终汇总为`Saved/Validation/PartyArena20261015/FinalVerification.json`，没有将超时或旧响应当作成功。
+
+### 2026-10-15 本轮最终编译与原生回归
+
+平台Combat现按APawn控制者变化事件清除待施法选择，EndPlay配对解绑；竞技控制器不继承World控制器，因此不能只修World的UnPossess。该清理不推进AvatarGeneration，不取消已冻结弹体或既有连发。真实双PC交接回归验证同Pawn同Avatar保留、后继未选目标为空、原弹体仍追踪并Sweep造成一次12伤害。
+
+完整Client／Server构建`8d7d8c61-27ef-451d-9bbe-c8b787ff3dfb`两目标退出0；完整Editor构建`927f1acf-5e89-46f6-a033-adb7ea3d5df9`退出0并生成当前源码／receipt产物绑定证据。其后正式新进程执行33项，全部Success、failed=0、进程退出0，聚合`Saved/Validation/WorldEntryFix20261015/FinalNativeVerified.json`。两条非致命警告为既有GameplayCue扫描回退与独立表现夹具销毁无WorldContext，原始报告保留，不宣称原生零警告。8项平台弹体、两类技能的目标连发、零气势、3项施法条、控制策略和新版冰箭语义均真实运行。
+
+本轮SourceToSlate真实D3D RHI及5张重新生成截图通过，当前输入指纹与测试前一致，正式颜色发布门禁`TestUIColorRHI.ps1 -VerifyOnly`再次通过。鸟群真实GPU 9配置18采样亦全passed；这些原生／离线图形证据不等于双账号联网或人工玩法验收。正在执行全新Client／Server Cook和Stage，后续再记录实际包及两个窗口。

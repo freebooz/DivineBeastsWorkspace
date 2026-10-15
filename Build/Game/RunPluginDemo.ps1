@@ -76,7 +76,8 @@ $info.UseShellExecute=$false
 $info.CreateNoWindow=$false
 foreach($arg in $args) { $info.ArgumentList.Add([string]$arg) }
 # 演示模式不传递本地开发密码、令牌及生产网关地址。
-foreach($key in @('DBA_DEV_LOGIN_SECRET','DIVINEBEASTS_GATEWAY_BASE_URL')) { $null=$info.Environment.Remove($key) }
+foreach($key in @('DBA_DEV_LOGIN_SECRET','DBA_DEV_TEST_LOGIN_ACCOUNTS_JSON','DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON',
+    'DIVINEBEASTS_DEV_LOGIN_USER','DIVINEBEASTS_DEV_LOGIN_PASSWORD','DIVINEBEASTS_GATEWAY_BASE_URL')) { $null=$info.Environment.Remove($key) }
 $process=[Diagnostics.Process]::Start($info)
 if (-not $process) { throw '启动插件演示子进程失败。' }
 $started=$process.StartTime.ToUniversalTime()

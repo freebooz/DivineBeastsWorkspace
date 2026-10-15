@@ -128,7 +128,7 @@ class BirdGPUReview:
                 relative=component.get_editor_property('relative_scale3d')
                 if any(abs(value-1.0)>0.00001 for value in (scale.x,scale.y,scale.z,relative.x,relative.y,relative.z)):
                     raise RuntimeError('间距审核要求1:1场景单位，不能用缩放实例改变厘米合同。')
-                component.deactivate_immediate()
+                component.deactivate()  # UE5.8公开Python接口；后续SetAsset(None)原生销毁旧模拟实例。
                 component.set_asset(None)
                 component.set_asset(system)
                 self.saved_defaults[species]=read_flock_parameters(component)

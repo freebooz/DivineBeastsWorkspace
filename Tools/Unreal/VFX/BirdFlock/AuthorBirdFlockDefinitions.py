@@ -8,7 +8,7 @@ import unreal
 ROOT='/DBAPresentationPack_Core/VFX/Environment/BirdFlock'
 DEST=ROOT+'/Definitions'
 EFFECT='/GamePlatformVFX/Environment/BirdFlock/EffectTypes/NET_GP_BirdFlock_Ambient'
-SPECIES={'Seagull':(32,1700,850,250,0),'Swallow':(72,1150,570,340,2),'Eagle':(5,2400,1400,350,0)}
+SPECIES={'Seagull':(32,1700,850,250,1),'Swallow':(72,1150,570,340,2),'Eagle':(5,2400,1400,350,0)}
 a=unreal.EditorAssetLibrary
 t=unreal.AssetToolsHelpers.get_asset_tools()
 assert 'DivineBeastsArena.uproject' in unreal.Paths.get_project_file_path()
@@ -44,7 +44,7 @@ for species,(count,radius,height,speed,mode) in SPECIES.items():
     d.set_editor_property('parameter_schema',schema)
     params=unreal.GamePlatformVFXParameters()
     params.set_editor_property('integer_parameters',{'User.BirdCount':count,'User.FlockSeed':137,'User.FlightMode':mode})
-    params.set_editor_property('float_parameters',{'User.FlockRadius':float(radius),'User.FlockHeight':float(height),'User.FlightSpeed':float(speed),'User.WindInfluence':80.0,'User.FlockMinimumSpacing':{'Seagull':220.0,'Swallow':140.0,'Eagle':340.0}[species]})
+    params.set_editor_property('float_parameters',{'User.FlockRadius':float(radius),'User.FlockHeight':float(height),'User.FlightSpeed':float(speed),'User.WindInfluence':80.0,'User.FlockMinimumSpacing':{'Seagull':240.0,'Swallow':180.0,'Eagle':380.0}[species]})
     d.set_editor_property('default_parameters',params)
     assert a.save_loaded_asset(d,only_if_is_dirty=False)
     print('BIRD_DEFINITION_SAVED',d.get_path_name())

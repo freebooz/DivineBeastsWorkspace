@@ -16,9 +16,9 @@ foreach ($Line in ($Input -split "`r?`n")) {
     }
 }
 foreach ($Binding in @(
-    'AxisName="DBA.KeyboardTurn",Scale=1.000000,Key=D',
-    'AxisName="DBA.KeyboardTurn",Scale=-1.000000,Key=A',
-    # 第二轮实机反馈：俯仰已正确，横向恢复正向；A/D和控制器左右键分流保持原语义。
+    'AxisName="DBA.MoveRight",Scale=1.000000,Key=D',
+    'AxisName="DBA.MoveRight",Scale=-1.000000,Key=A',
+    # 用户最终键位：A/D始终侧移，鼠标水平与俯仰保持已修正符号。
     'AxisName="DBA.Turn",Scale=1.000000,Key=MouseX',
     'AxisName="DBA.Look",Scale=1.000000,Key=MouseY',
     'AxisName="DBA.MoveRight",Scale=1.000000,Key=E',
@@ -28,6 +28,10 @@ foreach ($Binding in @(
     'ActionName="DBA.Inventory"', 'Key=I',
     'DefaultViewportMouseCaptureMode=NoCapture', 'bShouldFlushPressedKeysOnViewportFocusLost=True')) {
     if (-not $Input.Contains($Binding)) { throw "World input configuration is missing: $Binding" }
+}
+# 同一物理键不能残留转身轴，否则按A/D会一边横移一边旋转。
+if ($Input -match '(?m)^\+AxisMappings=.*AxisName="DBA\.KeyboardTurn".*Key=(A|D)\)') {
+    throw 'A/D must only strafe; keyboard turning mappings must be removed.'
 }
 # 同名轴虽由通用Pawn保留作竞技回退，世界控制器必须明确消费自己的绑定，避免一帧内重复转镜头或移动。
 foreach ($Binding in @(

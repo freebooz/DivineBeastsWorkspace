@@ -12,7 +12,8 @@ DEST='/DBAPresentationPack_Core/VFX/IceArrow'
 MODULE=DEST+'/Niagara/NM_DBA_IceArrowMotion'
 HLSL=r'''#if GPU_SIMULATION
 // 全部位置均为局部厘米，复用真实Actor/根组件的运动；不会替代权威弹道。
-float a=max(0.0,Age); int i=Index%128; float q=i*2.399963+a*1.7;
+// UE5.8的CustomHlsl分词不把%视为分隔符；输入Index两侧必须独立，才能被替换为In_Index。
+float a=max(0.0,Age); int i=Index % 128; float q=i*2.399963+a*1.7;
 float fade=saturate(a/0.065)*saturate((Life-a)/0.18);
 float3 position=float3(0,0,0); float3 scale=float3(1,1,1);
 float4 rotation=float4(0,0,0,1); float2 size=float2(38,38);
@@ -70,7 +71,12 @@ def ensure_module(p):
     if not exists:
         p.niagara('create_module_from_hlsl',name='IceArrowMotion',save_path=MODULE,hlsl=HLSL,
           inputs=[{'name':'Age','type':'float'},{'name':'Index','type':'int'},{'name':'Mode','type':'int'},{'name':'Life','type':'float'}],outputs=[],description='SSLM冰箭纯视觉：脚底法阵/晶体箭身/流带/碎冰/命中；位置厘米，时间秒，不参与伤害')
-    p.editor_python("import unreal\na=unreal.load_asset('"+MODULE+"')\nassert a is not None\nassert unreal.EditorAssetLibrary.save_loaded_asset(a,False)")
+    # 模块ParameterMap必须公开且必需；隐藏输入会在保存重编后使调用节点InputMap成为孤立引脚。
+    p.editor_python("import unreal\na=unreal.load_asset('"+MODULE+"')\nassert a is not None\n"
+        "nodes=[n for n in unreal.ObjectIterator(unreal.NiagaraNodeInput) if n.get_path_name().startswith('"+MODULE+".')]\n"
+        "assert len(nodes)==1\nn=nodes[0]\no=n.get_editor_property('exposure_options')\n"
+        "o.set_editor_property('exposed',True)\no.set_editor_property('required',True)\no.set_editor_property('hidden',False)\n"
+        "n.set_editor_property('exposure_options',o)\nassert unreal.EditorAssetLibrary.save_loaded_asset(a,False)")
 
 def author_one(p,stage):
     """先真实创建发射器，再绑定材质/网格和寿命，GPU包围盒有限，编译后保存。"""
@@ -79,8 +85,9 @@ def author_one(p,stage):
     emitters=[]
     for name,mode,count,life,mat,mesh in SYSTEMS[stage]:
         props={'SimTarget':'GPUComputeSim','bLocalSpace':'True'}
+        # 同一副作用CustomHlsl不得跨Spawn/Update复用：UE会缓存首个MapSpawn正文，使后续Update写入失效。
+        # 原生GPU会对新生粒子执行Update，唯一Update调用完整设置位置/颜色/尺寸，不需要重复Spawn调用。
         modules=[{'stage':'emitter_update','script':'/Niagara/Modules/Emitter/SpawnBurst_Instantaneous.SpawnBurst_Instantaneous','inputs':{'Spawn Count':str(count)}},
-            {'stage':'particle_spawn','script':MODULE,'bindings':{'Index':'Particles.UniqueID'},'inputs':{'Mode':str(mode),'Age':'0','Life':str(life)}},
             {'stage':'particle_update','script':MODULE,'bindings':{'Age':'Particles.Age','Index':'Particles.UniqueID'},'inputs':{'Mode':str(mode),'Life':str(life)}}]
         e={'name':name,'asset':'/Niagara/DefaultAssets/Templates/Emitters/Minimal.Minimal','properties':props,'modules':modules}
         if mesh:e['renderers']=[{'class':'Mesh','material':DEST+'/Materials/MI_DBA_IceArrow_'+mat}]

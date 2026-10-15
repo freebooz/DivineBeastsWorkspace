@@ -7,6 +7,8 @@
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "UObject/StrongObjectPtr.h"
 
 namespace
@@ -19,16 +21,17 @@ struct FProjectileTestWorld
     AActor* Target = nullptr;
     UGamePlatformCombatComponent* SourceCombat = nullptr;
     UGamePlatformCombatComponent* TargetCombat = nullptr;
-    bool Initialize()
+    /** 默认Actor来源保持原七项运动测试；控制权回归才使用真实Pawn，以走引擎Possess通知。 */
+    bool Initialize(bool bUsePawnSource = false)
     {
         const auto Values = UWorld::InitializationValues().AllowAudioPlayback(false)
             .CreatePhysicsScene(true).CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
         World.Reset(UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Values));
         if (!World.IsValid()) return false;
         World->InitializeActorsForPlay(FURL());
-        const auto SpawnCombatant = [this](FVector Position, UGamePlatformCombatComponent*& OutCombat)
+        const auto SpawnCombatant = [this](FVector Position, UGamePlatformCombatComponent*& OutCombat, bool bSpawnPawn)
         {
-            AActor* Actor = World->SpawnActor<AActor>();
+            AActor* Actor = bSpawnPawn ? World->SpawnActor<APawn>() : World->SpawnActor<AActor>();
             auto* Sphere = NewObject<USphereComponent>(Actor);
             Sphere->InitSphereRadius(30.0f);
             Actor->SetRootComponent(Sphere);
@@ -45,8 +48,8 @@ struct FProjectileTestWorld
             Actor->DispatchBeginPlay();
             return Actor;
         };
-        Source = SpawnCombatant(FVector(-100, 0, 0), SourceCombat);
-        Target = SpawnCombatant(FVector(200, 0, 0), TargetCombat);
+        Source = SpawnCombatant(FVector(-100, 0, 0), SourceCombat, bUsePawnSource);
+        Target = SpawnCombatant(FVector(200, 0, 0), TargetCombat, false);
         return SourceCombat && TargetCombat;
     }
     FGamePlatformCombatSpec CastSpec() const
@@ -184,6 +187,65 @@ bool FGamePlatformProjectileSelectionTest::RunTest(const FString&)
     TestTrue(TEXT("显式取消选择幂等"),Fixture.SourceCombat->AuthoritySelectProjectileTarget(nullptr,2,0));
     const UFunction* RPC=UGamePlatformCombatComponent::StaticClass()->FindFunctionByName(TEXT("ServerSelectProjectileTarget"));
     TestTrue(TEXT("网络意图使用拥有者服务器可靠RPC"),RPC && RPC->HasAllFunctionFlags(FUNC_Net|FUNC_NetServer|FUNC_NetReliable));
+    return true;
+}
+
+// 保留Pawn重连不换Avatar：选择属于本次控制者，已发出的弹体则保留自己的冻结目标。
+// 删除生产ControllerChanged清理会使两处空选择断言失败；把清理扩大为重置Avatar/取消弹体也必须失败。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectilePossessionSelectionTest,
+    "GamePlatform.Combat.Projectile.SelectionClearsOnControllerChange",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectilePossessionSelectionTest::RunTest(const FString&)
+{
+    FProjectileTestWorld Fixture;
+    if (!TestTrue(TEXT("真实Pawn及战斗组件已进入BeginPlay"), Fixture.Initialize(true))) return false;
+    auto* Pawn = Cast<APawn>(Fixture.Source);
+    auto* FirstController = Fixture.World->SpawnActor<APlayerController>();
+    auto* SecondController = Fixture.World->SpawnActor<APlayerController>();
+    if (!TestNotNull(TEXT("实际来源Pawn"), Pawn) ||
+        !TestNotNull(TEXT("第一位真实控制者"), FirstController) ||
+        !TestNotNull(TEXT("后继真实控制者"), SecondController)) return false;
+
+    FirstController->Possess(Pawn);
+    TestEqual(TEXT("第一位控制者实际拥有来源"), Pawn->GetController(), static_cast<AController*>(FirstController));
+    const int32 SourceGeneration = Fixture.SourceCombat->GetCombatAvatarGeneration();
+    Fixture.Target->SetActorLocation(FVector(600, 0, 0));
+    if (!TestTrue(TEXT("本次拥有者通过正式选择入口选中目标"), Fixture.SourceCombat->RequestProjectileTarget(Fixture.Target))) return false;
+    int32 TargetGeneration = 0;
+    auto Spec = Fixture.CastSpec();
+    Spec.Target = Fixture.SourceCombat->GetSelectedProjectileTarget(1500, TargetGeneration);
+    Spec.TargetAvatarGeneration = TargetGeneration;
+    if (!TestEqual(TEXT("弹体初始化前读取本次实际选择"), Spec.Target.Get(), Fixture.Target)) return false;
+    FGamePlatformCombatProjectileMotion Motion;
+    Motion.RangeCm = 1500;
+    auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+    if (!TestTrue(TEXT("交接前弹体冻结原目标"), Projectile->AuthorityInitialize(Spec, Motion, FVector::ForwardVector))) return false;
+
+    FirstController->UnPossess();
+    TestNull(TEXT("原控制者已真正释放保留Pawn"), Pawn->GetController());
+    TestNull(TEXT("释放控制权时服务器立即清除旧选择"), Fixture.SourceCombat->GetSelectedProjectileTarget(1500, TargetGeneration));
+    TestEqual(TEXT("释放后的空选择没有目标代次"), TargetGeneration, 0);
+    TestEqual(TEXT("控制权交接不冒充角色重生"), Fixture.SourceCombat->GetCombatAvatarGeneration(), SourceGeneration);
+    SecondController->Possess(Pawn);
+    TestEqual(TEXT("新控制者实际拥有同一个Pawn"), Pawn->GetController(), static_cast<AController*>(SecondController));
+    TestNull(TEXT("新控制者未发送选择或清空RPC时仍无目标"), Fixture.SourceCombat->GetSelectedProjectileTarget(1500, TargetGeneration));
+    TestEqual(TEXT("重新拥有仍保留原Avatar代次"), Fixture.SourceCombat->GetCombatAvatarGeneration(), SourceGeneration);
+
+    // 通过移动目标、真实子步和Sweep证明弹体仍追踪冻结身份，不能只检查未结束标志。
+    Fixture.Target->SetActorLocation(FVector(600, 200, 0));
+    Projectile->Tick(0.1f);
+    TestFalse(TEXT("清选择没有取消已初始化弹体"), Projectile->IsFlightFinished());
+    TestTrue(TEXT("交接后弹体继续转向原目标的新位置"), Projectile->GetActorLocation().Y > 20);
+    for (int32 Step = 0; Step < 4 && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(0.25f);
+    TestTrue(TEXT("原冻结目标正常被真实Sweep命中"), Projectile->IsFlightFinished() && Projectile->GetFlightFacts().bImpacted);
+    TestEqual(TEXT("交接前弹体仍仅结算一次原有12伤害"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
+
+    // 同一Pawn再次交接仍须成对清理；后继拥有者的显式选择不因首次清理失去资格。
+    TestTrue(TEXT("新控制者可以重新显式选择"), Fixture.SourceCombat->RequestProjectileTarget(Fixture.Target));
+    TestEqual(TEXT("后继选择真实生效"), Fixture.SourceCombat->GetSelectedProjectileTarget(1500, TargetGeneration), Fixture.Target);
+    SecondController->UnPossess();
+    TestNull(TEXT("重复交接也清除本轮选择"), Fixture.SourceCombat->GetSelectedProjectileTarget(1500, TargetGeneration));
+    TestEqual(TEXT("重复交接不增加Avatar代次"), Fixture.SourceCombat->GetCombatAvatarGeneration(), SourceGeneration);
     return true;
 }
 

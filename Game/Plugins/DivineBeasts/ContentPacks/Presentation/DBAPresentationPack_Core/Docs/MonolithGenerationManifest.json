@@ -108,8 +108,45 @@
       "Errors": 0,
       "Warnings": 0
     },
-    "CompilerEvidence": "Saved/Validation/WorldEntryFix20261015/IceArrowDiagnostics.json",
+    "PreviousCompilerEvidence": "Saved/Validation/WorldEntryFix20261015/IceArrowDiagnostics.json",
+    "CompilerEvidence": "Saved/Validation/WorldEntryFix20261015/IceArrowNativeGraphRepair/ReloadAndGPUHlsl.json",
+    "GPURepair20261015": {
+      "ScopeZh": "修正Index词法、原ParameterMap暴露与孤立调用；保留原节点，禁用重复Spawn视觉调用，唯一Update写入真实可见颜色和位置。",
+      "SavedPackagesReloaded": 7,
+      "GPUEmitterHlslVerified": 22,
+      "OriginalSpawnCallsDisabled": 22,
+      "UpdateCallsPreserved": 22,
+      "GPUAlphaPositionEvidence": "Saved/Validation/WorldEntryFix20261015/IceArrowNativeGraphRepair/GPUAlphaAfterUpdateOnly.json",
+      "GPUAlphaPositionSamples": 2,
+      "AllSixSystemsHaveVisibleAlpha": true,
+      "RejectedCookEvidence": "Saved/Validation/WorldEntryFix20261015/IceArrowCookShaderRed.json",
+      "ClientCookVerified": false,
+      "NetworkVerified": false,
+      "ManualVisualAccepted": false
+    },
     "CookScopeZh": "此条只登记资产读入与编译；最终Client和Server Cook、实际双客户端结果见Docs/Implementation/IceArrow/Execution_20261015.md。",
     "ManualVisualAccepted": false
+  },
+  "BirdSpacing20261015": {
+    "ScopeZh": "保留海鸥32、燕子24、鹰5的正式默认数量和原路线；按真实网格/WPO分别设置240/180/380厘米最小中心距。",
+    "Author": "Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockNiagaraMonolith.py",
+    "NativeReloadedSavedPackages": 8,
+    "Compiler": {
+      "Systems": 4,
+      "Errors": 0,
+      "Warnings": 0
+    },
+    "NativeEvidence": "Saved/Validation/BirdFlockP4/NiagaraValidationReloaded.json",
+    "GPUPositionSampling": {
+      "Passed": true,
+      "Configurations": 9,
+      "Samples": 18,
+      "MaxBirdCount": 512,
+      "ToleranceCm": 0.05,
+      "Evidence": "Saved/Validation/BirdFlockP4P7/GPUReview/SpacingReview/GPUReview.json",
+      "ScopeZh": "真实GPU SimCache坐标成对距离及不同模拟时刻；不代表全生命周期穷尽或正式场景性能预算。"
+    },
+    "ManualVisualAccepted": false,
+    "CookEvidenceScopeZh": "最终独立Cook结果见Docs/Implementation/BirdFlockManualAcceptance.md本轮执行记录。"
   }
 }

@@ -85,9 +85,9 @@ def compile_motion_position():
     return compile('\n'.join(lines), str(path), 'exec')
 
 
-def motion_positions(program, species, count, clock, mode, wind=80.0, seed=137,
-                     radius_cm=None, spacing_cm=None):
-    """按作者工具的真实Individual绑定送入编号或稳定随机数，不把新编号假传给旧随机绑定。"""
+def motion_states(program, species, count, clock, mode, wind=80.0, seed=137,
+                  radius_cm=None, spacing_cm=None, height_cm=None, speed_cm_s=None):
+    """执行真实位置和Velocity赋值；返回位置、声明速度和局部标量，供导数/作者包络对照。"""
     author = ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockNiagaraMonolith.py'
     tree = ast.parse(author.read_text(encoding='utf-8'))
     function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'repair_bindings')
@@ -96,15 +96,21 @@ def motion_positions(program, species, count, clock, mode, wind=80.0, seed=137,
     binding = ast.literal_eval(assignment.value)['Individual']
     random_source = random.Random(seed)
     radius, height, speed, spacing = {
-        'Seagull': (1700.0, 850.0, 250.0, 220.0),
-        'Swallow': (1150.0, 570.0, 340.0, 140.0),
-        'Eagle': (2400.0, 1400.0, 350.0, 340.0),
+        'Seagull': (1700.0, 850.0, 250.0, 240.0),
+        'Swallow': (1150.0, 570.0, 340.0, 180.0),
+        'Eagle': (2400.0, 1400.0, 350.0, 380.0),
     }[species]
     if radius_cm is not None:
         radius = radius_cm
     if spacing_cm is not None:
         spacing = spacing_cm
-    positions = []
+    if height_cm is not None:
+        height = height_cm
+    if speed_cm_s is not None:
+        speed = speed_cm_s
+    source=(ROOT/'Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/SourceArt/BirdFlock/BirdFlockMotion.hlsl').read_text(encoding='utf-8')
+    velocity_expression=source.split('Particles.Velocity =',1)[1].split(';',1)[0].strip()
+    states = []
     for index in range(count):
         values = dict(Clock=clock, Individual=index if binding == 'Particles.UniqueID' else random_source.random(),
                       Radius=radius, Height=height, Speed=speed, Seed=seed, Mode=mode, Wind=wind,
@@ -116,8 +122,16 @@ def motion_positions(program, species, count, clock, mode, wind=80.0, seed=137,
                       sin=math.sin, cos=math.cos, asin=math.asin, floor=math.floor,
                       ceil=math.ceil, fmod=math.fmod, min=min, max=max)
         exec(program, {'__builtins__': {}}, values)
-        positions.append(values['pos'].values)
-    return positions
+        velocity=eval(velocity_expression,{'__builtins__':{}},values)
+        states.append((values['pos'].values,velocity.values,values))
+    return states
+
+
+def motion_positions(program, species, count, clock, mode, wind=80.0, seed=137,
+                     radius_cm=None, spacing_cm=None, height_cm=None, speed_cm_s=None):
+    """按作者实际Individual绑定执行源码，不把新编号假传给旧随机绑定。"""
+    return [state[0] for state in motion_states(program,species,count,clock,mode,wind,seed,
+        radius_cm,spacing_cm,height_cm,speed_cm_s)]
 
 
 class BirdFlockMotionSpacingTests(unittest.TestCase):
@@ -139,16 +153,16 @@ class BirdFlockMotionSpacingTests(unittest.TestCase):
                         f'distance={distance:.3f}cm required={spacing}cm')
 
     def test_village_and_openworld_spacing_through_complete_route_phases(self):
-        # 最小间距包含最大1.11模型缩放、两侧振翅WPO和可见余量；数值来自三物种源规格。
+        # 最小间距包含最大1.11模型缩放、两侧振翅WPO和可见余量；数值来自实际mesh包围球/WPO预检后保存的240/180/380厘米。
         for species, count, mode, spacing in (
-                ('Seagull', 32, 0, 220.0), ('Swallow', 24, 2, 140.0), ('Eagle', 5, 0, 340.0)):
+                ('Seagull', 32, 1, 240.0), ('Swallow', 24, 2, 180.0), ('Eagle', 5, 0, 380.0)):
             with self.subTest(species=species):
                 self.assert_minimum_spacing(species, count, mode,
                     [step*0.5 for step in range(1201)] + [3600.0, 86400.0], spacing)
 
     def test_density_changes_and_maximum_wind_preserve_spacing(self):
         # 八字交汇、数量增加、极限风扰动不能消除稳定高度层或重新引入独立相位漂移。
-        for species, spacing in (('Seagull', 220.0), ('Swallow', 140.0), ('Eagle', 340.0)):
+        for species, spacing in (('Seagull', 240.0), ('Swallow', 180.0), ('Eagle', 380.0)):
             for count in (2, 3, 72, 128, 512):
                 for mode in (0, 1, 2):
                     with self.subTest(species=species, count=count, mode=mode):
@@ -157,7 +171,7 @@ class BirdFlockMotionSpacingTests(unittest.TestCase):
 
     def test_minimum_radius_does_not_force_two_birds_into_an_insufficient_lane(self):
         # 当中心距大于单层直径，asin夹到1不能误算容量为2；应给每只鸟独立固定高度层。
-        for species, spacing in (('Seagull',220.0),('Swallow',140.0),('Eagle',340.0)):
+        for species, spacing in (('Seagull',240.0),('Swallow',180.0),('Eagle',380.0)):
             for count in (2,3):
                 for mode in (0,1,2):
                     for requested in (spacing,1000.0):
@@ -165,6 +179,123 @@ class BirdFlockMotionSpacingTests(unittest.TestCase):
                             self.assert_minimum_spacing(species,count,mode,
                                 [step*0.5 for step in range(91)],requested,
                                 radius_cm=200.0,spacing_cm=requested)
+
+
+class BirdFlockNaturalRouteTests(unittest.TestCase):
+    """自然路线回归检查真实公式，避免把换为另一椭圆误当已解决绕圆问题。"""
+    @classmethod
+    def setUpClass(cls):
+        cls.program=compile_motion_position()
+
+    def test_every_mode_has_both_left_and_right_bends_instead_of_a_circle_or_ellipse(self):
+        for mode in (0,1,2):
+            points=[motion_positions(self.program,'Seagull',1,t*0.5,mode,wind=0)[0] for t in range(401)]
+            turns=[]
+            for before,current,after in zip(points,points[1:],points[2:]):
+                first=(current[0]-before[0],current[1]-before[1])
+                second=(after[0]-current[0],after[1]-current[1])
+                turns.append(first[0]*second[1]-first[1]*second[0])
+            with self.subTest(mode=mode):
+                self.assertLess(min(turns),-1.0,'缺少向右弯曲，仍在单方向绕圈')
+                self.assertGreater(max(turns),1.0,'缺少向左弯曲，仍在单方向绕圈')
+
+    def test_declared_velocity_matches_position_derivative_with_wind_and_vertical_motion(self):
+        # 中心差分独立验证解析速度；旧normalize(tangent)*Speed会漏掉椭圆倍率、风与高度导数。
+        epsilon=0.0001
+        for mode in (0,1,2):
+            for seconds in (0.5,13.75,48.0,183.75,600.0):
+                before=motion_states(self.program,'Seagull',3,seconds-epsilon,mode)
+                current=motion_states(self.program,'Seagull',3,seconds,mode)
+                after=motion_states(self.program,'Seagull',3,seconds+epsilon,mode)
+                for first,state,last in zip(before,current,after):
+                    derivative=tuple((b-a)/(2*epsilon) for a,b in zip(first[0],last[0]))
+                    self.assertLess(math.dist(derivative,state[1]),0.002,
+                        f'Mode={mode}, t={seconds}秒的Velocity不是位置导数')
+
+    def test_route_position_and_velocity_remain_continuous_across_many_turns(self):
+        for mode in (0,1,2):
+            for seconds in (0.001,8.0,16.0,32.0,64.0,3600.0,86400.0):
+                before=motion_states(self.program,'Eagle',5,seconds-0.0001,mode)
+                after=motion_states(self.program,'Eagle',5,seconds+0.0001,mode)
+                for first,last in zip(before,after):
+                    self.assertLess(math.dist(first[0],last[0]),0.25,'位置发生跳变')
+                    self.assertLess(math.dist(first[1],last[1]),0.25,'速度发生跳变')
+
+    def envelope_functions(self):
+        """只加载作者的纯包络函数，不触发Monolith；真实网格尺寸由作者每次另行原生读取。"""
+        path=ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockNiagaraMonolith.py'
+        tree=ast.parse(path.read_text(encoding='utf-8'))
+        functions=[n for n in tree.body if isinstance(n,ast.FunctionDef) and
+                   n.name in ('route_profile','route_envelope')]
+        self.assertEqual(len(functions),2,'自然路线缺少XYZ作者审计')
+        scope={'math':math}
+        exec(compile(ast.Module(body=functions,type_ignores=[]),str(path),'exec'),scope)
+        return scope['route_profile'],scope['route_envelope']
+
+    def test_author_profiles_match_hlsl_and_have_proven_distance_lower_bounds(self):
+        profile,_=self.envelope_functions()
+        for mode in (0,1,2):
+            expected=profile(mode)
+            values=motion_states(self.program,'Eagle',1,0.0,mode)[0][2]
+            self.assertEqual(expected,tuple(values[name] for name in
+                ('routeWidth','routeDepth','routeDistanceBound','bobAmplitude')))
+            width,depth,distance,_=expected
+            proved=math.sqrt(width*width/2.0-width**4/(64.0*depth*depth))
+            self.assertLessEqual(distance,proved,'作者容量采用了无法证明的曲线距离下界')
+
+    def test_defaults_and_maximum_radius_height_count_fit_full_xyz_mesh_wpo_bounds(self):
+        _,envelope=self.envelope_functions()
+        # 真实已保存网格预检的固定回归夹具：球半径覆盖任意朝向，1.11缩放、振翅和7.5cm单边余量。
+        species=[('Seagull',32,1700.0,850.0,240.0,86.72951945735184,11.0),
+                 ('Swallow',24,1150.0,570.0,180.0,59.505651419104,7.0),
+                 ('Eagle',5,2400.0,1400.0,380.0,140.61910809565487,20.0)]
+        for name,formal,radius,height,spacing,sphere,wing in species:
+            margin=sphere*1.11+wing+7.5
+            for mode in (0,1,2):
+                for count in sorted({formal,72,128,512}):
+                    for requested_radius,requested_height in ((radius,height),(10000.0,10000.0)):
+                        bounds=envelope(requested_radius,requested_height,count,spacing,mode,2000.0,margin)
+                        self.assertTrue(bounds['withinFixedBounds'],f'{name} Mode{mode} Count{count}: {bounds}')
+                        for seconds in (0.0,183.75,86400.0):
+                            positions=motion_positions(self.program,name,count,seconds,mode,wind=2000.0,
+                                radius_cm=requested_radius,height_cm=requested_height)
+                            for position in positions:
+                                for axis in range(3):
+                                    self.assertGreaterEqual(position[axis]-margin+0.001,bounds['meshMinCm'][axis])
+                                    self.assertLessEqual(position[axis]+margin-0.001,bounds['meshMaxCm'][axis])
+
+    def test_small_radius_high_density_is_rejected_instead_of_enlarging_bounds(self):
+        _,envelope=self.envelope_functions()
+        for mode in (0,1,2):
+            bounds=envelope(200.0,1400.0,512,380.0,mode,2000.0,183.5872099861769)
+            self.assertFalse(bounds['withinFixedBounds'],'小半径512只不应假称能装进原Z边界')
+            self.assertGreater(bounds['meshMaxCm'][2],12000.0)
+
+    def test_small_radius_two_or_three_birds_remain_supported(self):
+        _,envelope=self.envelope_functions()
+        for mode in (0,1,2):
+            for count in (2,3):
+                self.assertTrue(envelope(200.0,200.0,count,380.0,mode,2000.0,183.58721)['withinFixedBounds'])
+
+    def test_field_maxima_are_not_mistaken_for_all_combinations_being_supported(self):
+        _,envelope=self.envelope_functions()
+        self.assertFalse(envelope(10000.0,10000.0,512,1000.0,2,2000.0,183.58721)['withinFixedBounds'])
+
+    def test_integer_schema_rejects_same_name_float_shadow_parameters(self):
+        path=ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockNiagaraMonolith.py'
+        tree=ast.parse(path.read_text(encoding='utf-8'))
+        nodes=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='validate_user_parameter_types']
+        self.assertEqual(len(nodes),1)
+        scope={}
+        exec(compile(ast.Module(body=nodes,type_ignores=[]),str(path),'exec'),scope)
+        parameters=[{'name':name,'type':kind} for name,kind in {
+            'BirdCount':'NiagaraInt32','FlightMode':'NiagaraInt32','FlockSeed':'NiagaraInt32',
+            'FlockRadius':'NiagaraFloat','FlockHeight':'NiagaraFloat','FlightSpeed':'NiagaraFloat',
+            'WindInfluence':'NiagaraFloat','FlockMinimumSpacing':'NiagaraFloat'}.items()]
+        self.assertEqual(len(scope['validate_user_parameter_types'](parameters)),8)
+        for name in ('FlightMode','FlockSeed'):
+            with self.assertRaises(AssertionError):
+                scope['validate_user_parameter_types'](parameters+[{'name':name,'type':'NiagaraFloat'}])
 
 
 class BirdFlockGPUReadbackPolicyTests(unittest.TestCase):
@@ -228,6 +359,76 @@ class BirdFlockGPUReadbackPolicyTests(unittest.TestCase):
         self.assertEqual(len(legacy),15)
         self.assertIn(('Swallow',0),legacy)
         self.assertIn(('Eagle',1),legacy)
+
+
+class BirdFlockMotionGraphContractTests(unittest.TestCase):
+    """纯图夹具只测试接线门禁，真实InputMap标志、保存和冷重载必须另外在引擎取证。"""
+    def validator(self):
+        path=ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockNiagaraMonolith.py'
+        tree=ast.parse(path.read_text(encoding='utf-8'))
+        functions=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='validate_motion_graph']
+        self.assertEqual(len(functions),1,'作者缺少可独立审核的运动模块接线门禁')
+        scope={}
+        exec(compile(ast.Module(body=functions,type_ignores=[]),str(path),'exec'),scope)
+        return scope['validate_motion_graph']
+
+    def graph(self):
+        bindings={'Clock':'System.Age','Individual':'Particles.MaterialRandom','Radius':'User.FlockRadius',
+                  'Height':'User.FlockHeight','Speed':'User.FlightSpeed','Seed':'User.FlockSeed',
+                  'Mode':'User.FlightMode','Wind':'User.WindInfluence'}
+        nodes=[{'node_guid':'root','class':'NiagaraNodeInput'},
+               {'node_guid':'set','class':'NiagaraNodeParameterMapSet'},
+               {'node_guid':'fn','function_name':'NM_GP_BirdFlockMotion','pins':[
+                   {'name':'InputMap','direction':'Input','linked_count':1},
+                   {'name':'Output','direction':'Output','linked_count':1}]},
+               {'node_guid':'out','class':'NiagaraNodeOutput'}]
+        edges=[{'from_node_guid':'root','from_pin_name':'Input','to_node_guid':'set','to_pin_name':'Source'},
+               {'from_node_guid':'set','from_pin_name':'Dest','to_node_guid':'fn','to_pin_name':'InputMap'},
+               {'from_node_guid':'fn','from_pin_name':'Output','to_node_guid':'out','to_pin_name':'Out'}]
+        for name,binding in bindings.items():
+            nodes.append({'node_guid':name,'class':'NiagaraNodeParameterMapGet'})
+            edges.append({'from_node_guid':'root','from_pin_name':'Input','to_node_guid':name,'to_pin_name':'Source'})
+            if name in ('Mode','Seed'):
+                converter=name+'Conversion'
+                nodes.extend([{'node_guid':converter,'class':'NiagaraNodeFunctionCall',
+                    'function_name':converter,'function_script':'/Niagara/DynamicInputs/TypeConversions/MakeFloatFromInt.MakeFloatFromInt'},
+                    {'node_guid':converter+'Set','class':'NiagaraNodeParameterMapSet'}])
+                edges.extend([
+                    {'from_node_guid':'root','from_pin_name':'Input','to_node_guid':converter+'Set','to_pin_name':'Source'},
+                    {'from_node_guid':name,'from_pin_name':binding,'to_node_guid':converter+'Set','to_pin_name':converter+'.Integer'},
+                    {'from_node_guid':converter+'Set','from_pin_name':'Dest','to_node_guid':converter,'to_pin_name':'InputMap'},
+                    {'from_node_guid':converter,'from_pin_name':'Output','to_node_guid':'set','to_pin_name':'NM_GP_BirdFlockMotion.'+name}])
+            else:
+                edges.append({'from_node_guid':name,'from_pin_name':binding,'to_node_guid':'set',
+                    'to_pin_name':'NM_GP_BirdFlockMotion.'+name})
+        return {'nodes':nodes,'edges':edges}
+
+    def test_complete_upstream_bindings_pass(self):
+        self.assertEqual(self.validator()(self.graph(),'bOrphanedPin=False')['bindingCount'],8)
+
+    def test_serialized_orphan_is_rejected_even_with_a_link(self):
+        with self.assertRaises(AssertionError):
+            self.validator()(self.graph(),'bOrphanedPin=True')
+
+    def test_output_feedback_is_rejected(self):
+        graph=self.graph()
+        graph['edges'][0]['from_node_guid']='fn'
+        with self.assertRaises(AssertionError):
+            self.validator()(graph,'bOrphanedPin=False')
+
+    def test_binding_reader_cannot_read_from_its_own_call_output(self):
+        graph=self.graph()
+        graph['edges'][3]['from_node_guid']='fn'
+        with self.assertRaises(AssertionError):
+            self.validator()(graph,'bOrphanedPin=False')
+
+    def test_mode_cannot_silently_read_a_same_name_float_instead_of_the_integer_schema(self):
+        graph=self.graph()
+        link=next(e for e in graph['edges'] if e['to_pin_name']=='NM_GP_BirdFlockMotion.Mode')
+        link['from_node_guid']='Mode'
+        link['from_pin_name']='User.FlightMode'
+        with self.assertRaises(AssertionError):
+            self.validator()(graph,'bOrphanedPin=False')
 
 
 def required_files():

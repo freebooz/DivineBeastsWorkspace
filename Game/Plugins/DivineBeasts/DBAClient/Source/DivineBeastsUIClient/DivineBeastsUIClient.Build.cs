@@ -43,6 +43,8 @@ public class DivineBeastsUIClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsApplicationFlowClient",
+            // 开发快捷登录仅私有解析进程环境JSON，公开UI合同不暴露口令或JSON对象。
+            "Json",
             // 私有命令桥复用唯一认证、同源传输、预算与取消，不另建HTTP执行器。
             "GamePlatformOnlineClient",
             // 私有ESC接线只消费项目世界控制器公开事件，不让双端世界依赖客户端UI。

@@ -1,4 +1,27 @@
 {
+  "LoginTestAccounts20261015": {
+    "Status": "Saved_NativeReloadVerified_CurrentNativeBuildPending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "EditorPidAtAuthoring": 27104,
+    "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+    "ParentClass": "DivineBeastsLoginScreen",
+    "WidgetCountBefore": 23,
+    "WidgetCountAfter": 45,
+    "AddedTestAccountButtons": 10,
+    "ButtonSize": [108, 44],
+    "ButtonFontSize": 18,
+    "DefaultTestPanelVisibility": "Collapsed",
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "AccessibilityErrors": 0,
+    "NewAccessibilityWarnings": 0,
+    "ExistingAccessibilityWarnings": 9,
+    "Actions": ["get_widget_tree", "add_widget", "set_widget_property", "set_slot_property", "set_brush", "set_font", "set_widget_navigation_bulk", "audit_accessibility", "audit_focus_chain", "compile_widget", "save_packages", "native_reload_packages"],
+    "Evidence": "Saved/Validation/WorldEntryFix20261015/LoginTestAccountsMonolith.json",
+    "FinalRuntimeEvidence": "Saved/Validation/WorldEntryFix20261015/Runtime.json",
+    "NotesCN": "通过Monolith原位修改并原生重载45控件；十账号名称来自显式开发进程环境，密码不进入资产默认值。新原生绑定、打包、点击及视觉验收以本轮后续证据为准。未新导入纹理，保留既有输入字号与尺寸。"
+  },
   "LoginDevelopmentEntry20261014": {
     "Status": "Saved_ColdReloadVerified_NativeBuildBlocked",
     "Project": "Game/DivineBeastsArena.uproject",
