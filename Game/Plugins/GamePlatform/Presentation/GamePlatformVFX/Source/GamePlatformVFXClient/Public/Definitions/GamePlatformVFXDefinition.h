@@ -10,6 +10,7 @@
 
 class UNiagaraSystem;
 class UNiagaraEffectType;
+class UNiagaraDataChannelAsset;
 
 /** 所有平台 VFX Definition 的公共根类。只保存表现执行所需的中立数据。 */
 UCLASS(Abstract, BlueprintType)
