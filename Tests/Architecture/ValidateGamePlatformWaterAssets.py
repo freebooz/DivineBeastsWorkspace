@@ -19,12 +19,13 @@ def verify(root: Path, require_review_map: bool) -> tuple[list[str], list[str]]:
     good: list[str] = []
     bad: list[str] = []
 
-    def asset_exists(uri: str) -> bool:
+    def asset_exists(uri: str, *, is_level: bool = False) -> bool:
+        """按资产类别选择.umap或.uasset，不能依赖路径是否包含Maps目录。"""
         parts = uri.strip("/").split("/", 1)
         if len(parts) != 2 or parts[0] not in mounts:
             bad.append(f"不可识别的内容包挂载点：{uri}")
             return False
-        suffix = ".umap" if "/Maps/" in uri else ".uasset"
+        suffix = ".umap" if is_level else ".uasset"
         target = mounts[parts[0]] / (parts[1] + suffix)
         return target.is_file() and target.stat().st_size > 1024
 
@@ -67,8 +68,8 @@ def verify(root: Path, require_review_map: bool) -> tuple[list[str], list[str]]:
                 good.append(f"源PNG（待导入）: {filename}")
     if require_review_map:
         for uri in manifest["pendingAssets"]["水体独立审核地图"]:
-            if not asset_exists(uri):
-                bad.append(f"正式P4地图验收仍未完成：{uri}")
+            if not asset_exists(uri, is_level=True):
+                bad.append(f"P4审核地图文件缺失或过小：{uri}；地图存在性不等于视觉与性能验收通过")
 
     project_file = root / "Game/DivineBeastsArena.uproject"
     project = json.loads(project_file.read_text(encoding="utf-8-sig"))

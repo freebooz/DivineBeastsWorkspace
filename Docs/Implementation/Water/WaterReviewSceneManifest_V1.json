@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "project": "SSLM",
-  "status": "待执行Monolith引擎作者工具；本文件不是.umap",
-  "levelPath": "/Game/Development/Water/Maps/L_GP_WaterReview",
+  "status": "UE5.8已保存并回读P4原生审核地图；本清单为初版布置参考，位置及Actor命名仍以实际引擎回读为准，P4视觉/性能尚未验收",
+  "levelPath": "/Game/Development/Water/L_GP_WaterReview",
   "worldScaleUnits": "厘米",
   "editorSafety": {
     "createOnlyIfMissing": true,
@@ -136,9 +136,9 @@
     }
   ],
   "expectedAssetAndBuildGates": {
-    "mapCreated": false,
+    "mapCreated": true,
     "blueprintCompiled": false,
-    "shaderCompiled": false,
+    "shaderCompiled": true,
     "gpuMeasured": false,
     "serverAndClientTested": false
   },

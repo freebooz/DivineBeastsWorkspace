@@ -71,8 +71,11 @@ struct GAMEPLATFORMGAMEPLAY_API FGamePlatformSpawnCandidate
     bool IsStructurallyValid(const UWorld& ExpectedWorld) const;
 };
 
-/** 服务器出生资格；Allowed只表示可以尝试候选，不表示已经生成或控制。 */
-UENUM(BlueprintType)
+/** 服务器出生资格；Allowed只表示可以尝试候选，不表示已经生成或控制。
+ *  ScriptName（Python脚本暴露名）添加State后缀：避免UE自动剥离E/F前缀后，
+ *  与FGamePlatformSpawnEligibility（出生资格结果结构体）的Python名称冲突。
+ *  保留C++名称和反射身份，现有蓝图、序列化与服务器玩法调用均无需迁移。 */
+UENUM(BlueprintType, meta=(ScriptName="GamePlatformSpawnEligibilityState"))
 enum class EGamePlatformSpawnEligibility : uint8
 {
     Denied,
