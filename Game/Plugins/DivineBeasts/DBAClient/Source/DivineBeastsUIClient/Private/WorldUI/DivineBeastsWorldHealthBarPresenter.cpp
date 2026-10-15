@@ -1,7 +1,7 @@
-// 项目头顶血条：玩家消费ASC生命事件，开发怪物消费唯一复制LifeState；不发送请求或改生命。
+// SSLM头顶血条：玩家与正式新手村狼怪共享唯一GAS生命属性事件；纯客户端显示，不发送伤害请求。
 #include "WorldUI/DivineBeastsWorldHealthBarPresenter.h"
 #include "Characters/DivineBeastsCharacter.h"
-#include "Characters/DivineBeastsDevelopmentMonster.h"
+#include "Characters/DivineBeastsVillageWolf.h" // 狼怪是现有ADivineBeastsCharacter子类，复用相同ASC生命通知。
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Components/SceneComponent.h"
@@ -59,7 +59,7 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor)
     Binding.Request.RequestId = FGuid::NewGuid();
     Binding.Request.SurfaceKey = TEXT("DBA.World.HealthBar"); Binding.Request.StyleId = TEXT("DBA.World.HealthBar");
     Binding.Request.MaxVisibleDistance = 6000.f; Binding.Request.Resource.ResourceId = TEXT("Health");
-    Binding.Request.PrimaryText = FText::FromString(Actor->IsA<ADivineBeastsDevelopmentMonster>() ? TEXT("训练怪物") : TEXT("玩家"));
+    Binding.Request.PrimaryText = FText::FromString(Actor->IsA<ADivineBeastsVillageWolf>() ? TEXT("野狼") : TEXT("玩家"));
     Actor->OnDestroyed.AddUniqueDynamic(this, &ThisClass::HandleActorDestroyed);
     Actor->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleActorEndPlay);
     const uint64 Generation = ObservationGeneration;
@@ -71,14 +71,8 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor)
             [this, Generation, WeakActor](USceneComponent*, EUpdateTransformFlags, ETeleportType)
             { if (Generation == ObservationGeneration && WeakActor.IsValid()) Publish(WeakActor.Get()); });
     }
-    if (auto* Monster = Cast<ADivineBeastsDevelopmentMonster>(Actor))
-    {
-        Binding.MonsterLifeHandle = Monster->OnLifeStateChanged().AddWeakLambda(this,
-            [this, Generation, WeakActor](const FDivineBeastsDevelopmentMonsterLifeState& State)
-            { if (Generation == ObservationGeneration && WeakActor.IsValid()) ApplyHealth(WeakActor.Get(), State.Health, State.MaxHealth); });
-        const auto State = Monster->GetLifeState(); ApplyHealth(Actor, State.Health, State.MaxHealth);
-    }
-    else if (auto* ASC = Actor->FindComponentByClass<UGamePlatformAbilitySystemComponent>())
+    // 已移除远古石灵独立LifeState；狼怪与玩家都从平台GAS属性读客户端复制真值。
+    if (auto* ASC = Actor->FindComponentByClass<UGamePlatformAbilitySystemComponent>())
     {
         Binding.ASC = ASC;
         auto Changed = [this, Generation, WeakActor](const FOnAttributeChangeData&)
@@ -140,7 +134,6 @@ void UDivineBeastsWorldHealthBarPresenter::RemoveActor(AActor* Actor)
 {
     FDivineBeastsWorldHealthBarBinding Binding;
     if (!Bindings.RemoveAndCopyValue(Actor, Binding)) return;
-    if (auto* Monster = Cast<ADivineBeastsDevelopmentMonster>(Actor)) Monster->OnLifeStateChanged().Remove(Binding.MonsterLifeHandle);
     if (auto* ASC = Binding.ASC.Get())
     {
         ASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetHealthAttribute()).Remove(Binding.HealthHandle);

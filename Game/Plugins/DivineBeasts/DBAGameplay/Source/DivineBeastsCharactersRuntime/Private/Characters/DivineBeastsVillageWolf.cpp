@@ -38,28 +38,28 @@ void ADivineBeastsVillageWolf::BeginPlay()
 bool ADivineBeastsVillageWolf::AuthorityInitializeWolf(float MaxHealth)
 {
     auto* ASC = GetGamePlatformAbilitySystemComponent();
-    auto* Combat = GetGamePlatformCombatComponent();
+    auto* CombatComponent = GetGamePlatformCombatComponent();
     UWorld* World = GetWorld();
     if (!IsInGameThread() || !HasAuthority() || bClosing || bWolfInitialized ||
         IsActorBeingDestroyed() || !HasActorBegunPlay() || !IsValid(World) || World->bIsTearingDown ||
         !GetController() || !FMath::IsFinite(MaxHealth) || MaxHealth <= 0.0f || MaxHealth > 100000.0f ||
-        !IsValid(ASC) || !IsValid(Combat) || !Combat->HasBegunPlay() ||
-        !Combat->GetCombatAttributeSet()) return false;
+        !IsValid(ASC) || !IsValid(CombatComponent) || !CombatComponent->HasBegunPlay() ||
+        !CombatComponent->GetCombatAttributeSet()) return false;
 
     // PossessedBy已建立唯一ASC ActorInfo；允许首次没有绑定时按NPC身份修复，不使用玩家Ready。
     if ((ASC->GetOwnerActor() != this || ASC->GetAvatarActor() != this) &&
         !ASC->BindAbilityActorInfo(this, this)) return false;
     if (ASC->GetOwnerActor() != this || ASC->GetAvatarActor() != this) return false;
 
-    const int32 Before = Combat->GetCombatAvatarGeneration();
+    const int32 Before = CombatComponent->GetCombatAvatarGeneration();
     if (Before <= 0 || Before == MAX_int32) return false;
     ASC->SetNumericAttributeBase(UGamePlatformCombatAttributeSet::GetMaxHealthAttribute(), MaxHealth);
-    if (!IsValid(this) || bClosing || IsActorBeingDestroyed() || !IsValid(Combat) ||
-        Combat->GetCombatAvatarGeneration() != Before) return false;
-    const bool bReset = Combat->ResetForNewAvatar(Before + 1, 1.0f);
+    if (!IsValid(this) || bClosing || IsActorBeingDestroyed() || !IsValid(CombatComponent) ||
+        CombatComponent->GetCombatAvatarGeneration() != Before) return false;
+    const bool bReset = CombatComponent->ResetForNewAvatar(Before + 1, 1.0f);
     if (!IsValid(this) || bClosing || IsActorBeingDestroyed() || !bReset ||
-        Combat->GetCombatAvatarGeneration() != Before + 1 || Combat->IsCombatDead() ||
-        !FMath::IsNearlyEqual(Combat->GetCombatHealth(), MaxHealth)) return false;
+        CombatComponent->GetCombatAvatarGeneration() != Before + 1 || CombatComponent->IsCombatDead() ||
+        !FMath::IsNearlyEqual(CombatComponent->GetCombatHealth(), MaxHealth)) return false;
     bWolfDead = false;
     bWolfInitialized = true;
     ForceNetUpdate();
@@ -68,11 +68,11 @@ bool ADivineBeastsVillageWolf::AuthorityInitializeWolf(float MaxHealth)
 
 bool ADivineBeastsVillageWolf::CanSourceCombat() const
 {
-    const auto* Combat = GetGamePlatformCombatComponent();
+    const auto* CombatComponent = GetGamePlatformCombatComponent();
     const auto* ASC = GetGamePlatformAbilitySystemComponent();
     const UWorld* World = GetWorld();
     return IsWolfAlive() && !bClosing && !IsActorBeingDestroyed() && World && !World->bIsTearingDown &&
-        IsValid(Combat) && Combat->GetCombatHealth() > 0.0f && !Combat->IsCombatDead() &&
+        IsValid(CombatComponent) && CombatComponent->GetCombatHealth() > 0.0f && !CombatComponent->IsCombatDead() &&
         IsValid(ASC) && ASC->GetOwnerActor() == this && ASC->GetAvatarActor() == this;
 }
 
@@ -80,17 +80,17 @@ bool ADivineBeastsVillageWolf::CanReceiveCombat() const { return CanSourceCombat
 
 int32 ADivineBeastsVillageWolf::GetCombatAvatarGeneration() const
 {
-    const auto* Combat = GetGamePlatformCombatComponent();
-    return IsValid(Combat) ? Combat->GetCombatAvatarGeneration() : 0;
+    const auto* CombatComponent = GetGamePlatformCombatComponent();
+    return IsValid(CombatComponent) ? CombatComponent->GetCombatAvatarGeneration() : 0;
 }
 
 void ADivineBeastsVillageWolf::HandleAuthorityDeath(const FGamePlatformCombatEvent& Event)
 {
-    auto* Combat = GetGamePlatformCombatComponent();
+    auto* CombatComponent = GetGamePlatformCombatComponent();
     if (bClosing || !HasAuthority() || !bWolfInitialized || bWolfDead ||
         Event.TargetActor != this || Event.EventType != EGamePlatformCombatEventType::Death ||
-        !IsValid(Combat) || !Combat->IsCombatDead() ||
-        Combat->GetCombatAvatarGeneration() != Event.TargetAvatarGeneration) return;
+        !IsValid(CombatComponent) || !CombatComponent->IsCombatDead() ||
+        CombatComponent->GetCombatAvatarGeneration() != Event.TargetAvatarGeneration) return;
     bWolfDead = true;
     OnRep_WolfDead();
     ForceNetUpdate();
