@@ -71,3 +71,17 @@
 - 本次官方Automation报告实际25项全成功、失败0：包括Magic数值拒绝旧成本、真实出生50→50→50→50、零气势完整三弹、真实冷却拒绝二次施法、取消、来源代次与同步后继、UI输入和Profile。测试没有把出生资源补满；重复Hero通知另用7点资源验证幂等不重置。证据Rebuild20261014/d2d4518f-080b-47ca-8c39-c2d608646485/SpellNative-827f8a4d。
 
 中文说明检查覆盖数值表合同、原生法术成本入口、迁移工具、资产审核和施法回归；保留源资源身份、开发启用边界及旧历史证据。本段构建／隔离GAS测试不替代真实账号联网施法与人工视觉验收，运行包与进程证据将在Cook完成后补记。
+
+## 本轮最终重新发布（含鼠标输入修正）
+
+此前历史费用、进程和未验证记录保留；当前法术费用为0，初始气势仍50／100。完整Editor构建99e216ac-ad01-4a65-88e8-3443af5d11ef与Client/Server源码构建221e576e-c6d1-49c9-ae3c-a17846ca70e7均退出0。MouseInput.FinalGREEN-e0fe51c4实际35项全部Success、0错误，1项旧Possession有2条警告；覆盖零费用及冷却、资源事件、Root就绪/替换、真实SceneViewport鼠标按下分发、CommonUI交接与菜单Suspend/Flush保护。
+
+用户实测鼠标拖动不转后，已定位并修正世界三处NoCapture造成首次按下不分发的配置。世界采用CaptureDuringMouseDown，UIOnly保持原捕获/锁所有权；没有放宽UI命中、输入锁或Gameplay资格。源码及红/绿回归细节见WorldHealthAndCooldown_20261014.md，旧纯MouseAndMovement不能证明实际画面可用。
+
+真实RHI颜色报告afcce7aa-44e4-4d64-8528-5fd2ad1b7a68通过，最终包沿用同一未变化资产指纹并通过发布复核。Client Cook/Stage 4ea54e30-1f5a-4549-b31e-e6bb7dab7f94、Server Cook/Stage d8e2a8b2-4d96-4a94-b143-0ae7af5b3ee1实际退出0；客户端524项必需依赖无缺失，血条、冷却材质、技能槽及Root均有真实IoStore ExportBundleData。专服表现剥离门禁通过，不把目录检查扩张为完整载荷块审计。
+
+排空并精确停止上一包后，最终专服PID51524，Village注册/怪物就绪/控制面分配及17781 UDP身份通过；最终客户端PID36540、6208，真实路径和启动时刻均匹配新包，两个SSLM开发窗口响应，实际加载Login并聚焦AccountInput，无Fatal。五个开发后端的ready均200；保持人工登录，没有新建测试账号、自动认证或完成真实双端施法/画面验收。
+
+累计清理110.90 GiB生成产物与89份过期临时脚本，正式Build/Tests/Tools、当前鼠标修复包、源资产和报告保留。本轮两份临时部署/启动脚本在消费后删除并记录SHA256；Cook改写的四份顺序日志按已验证备份恢复至完整Editor输入快照，不覆盖其他代码。自有Zen保活助手在两端Cook完成后停止，共享缓存数据未删除。
+
+集中证据：Saved/Validation/Rebuild20261014/d2d4518f-080b-47ca-8c39-c2d608646485/FinalValidation.json、RuntimeObserved.json及Cleanup系列报告。全局UI事件策略已持久化，新增/修改链路事件驱动；存量倒计时/预览轮询登记后续迁移，未宣称全项目旧UI已完成事件化。

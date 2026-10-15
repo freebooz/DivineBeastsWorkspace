@@ -128,11 +128,15 @@ void ADivineBeastsWorldPlayerController::ApplyVisibleCursorMode()
     Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
     // 菜单暂停时UI客户端拥有焦点和UIOnly模式；失焦清理不能抢回焦点或覆盖该模式。
     if (!bWorldGameplayInputSuspended) SetInputMode(Mode);
-    if (auto* ViewportClient = GetWorld() ? GetWorld()->GetGameViewport() : nullptr)
+    // 菜单暂停时捕获/锁也归CommonUI；真实失焦Flush不能把UIOnly改回世界临时捕获。
+    if (!bWorldGameplayInputSuspended)
     {
-        // 临时捕获才能让FSceneViewport首次按下进入游戏输入；NoCapture会使左右键拖动永远无法启动。
-        ViewportClient->SetMouseCaptureMode(EMouseCaptureMode::CaptureDuringMouseDown);
-        ViewportClient->SetMouseLockMode(EMouseLockMode::DoNotLock);
+        if (auto* ViewportClient = GetWorld() ? GetWorld()->GetGameViewport() : nullptr)
+        {
+            // 临时捕获才能让FSceneViewport首次按下进入游戏输入；NoCapture会使左右键拖动永远无法启动。
+            ViewportClient->SetMouseCaptureMode(EMouseCaptureMode::CaptureDuringMouseDown);
+            ViewportClient->SetMouseLockMode(EMouseLockMode::DoNotLock);
+        }
     }
     if (bHasSavedCursorPosition)
     {
