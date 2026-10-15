@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	GameServerControlInternalService_ArenaLifecycle_FullMethodName      = "/divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService/ArenaLifecycle"
 	GameServerControlInternalService_AllocateWorld_FullMethodName       = "/divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService/AllocateWorld"
 	GameServerControlInternalService_AllocateMainArena_FullMethodName   = "/divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService/AllocateMainArena"
 	GameServerControlInternalService_IssuePlayerTransfer_FullMethodName = "/divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService/IssuePlayerTransfer"
@@ -30,6 +31,8 @@ const (
 //
 // GameServerControlInternalService（游戏服务器控制内部服务）供MatchService分配MainArena并签发玩家迁移票据。
 type GameServerControlInternalServiceClient interface {
+	// 可信比赛生命周期JSON桥：DTO归后端内部契约，Bearer元数据必需；不公开给客户端。
+	ArenaLifecycle(ctx context.Context, in *ArenaLifecycleRequest, opts ...grpc.CallOption) (*ArenaLifecycleResponse, error)
 	AllocateWorld(ctx context.Context, in *AllocateWorldRequest, opts ...grpc.CallOption) (*AllocateWorldResponse, error)
 	AllocateMainArena(ctx context.Context, in *AllocateMainArenaRequest, opts ...grpc.CallOption) (*AllocateMainArenaResponse, error)
 	IssuePlayerTransfer(ctx context.Context, in *IssuePlayerTransferRequest, opts ...grpc.CallOption) (*IssuePlayerTransferResponse, error)
@@ -41,6 +44,16 @@ type gameServerControlInternalServiceClient struct {
 
 func NewGameServerControlInternalServiceClient(cc grpc.ClientConnInterface) GameServerControlInternalServiceClient {
 	return &gameServerControlInternalServiceClient{cc}
+}
+
+func (c *gameServerControlInternalServiceClient) ArenaLifecycle(ctx context.Context, in *ArenaLifecycleRequest, opts ...grpc.CallOption) (*ArenaLifecycleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ArenaLifecycleResponse)
+	err := c.cc.Invoke(ctx, GameServerControlInternalService_ArenaLifecycle_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *gameServerControlInternalServiceClient) AllocateWorld(ctx context.Context, in *AllocateWorldRequest, opts ...grpc.CallOption) (*AllocateWorldResponse, error) {
@@ -79,6 +92,8 @@ func (c *gameServerControlInternalServiceClient) IssuePlayerTransfer(ctx context
 //
 // GameServerControlInternalService（游戏服务器控制内部服务）供MatchService分配MainArena并签发玩家迁移票据。
 type GameServerControlInternalServiceServer interface {
+	// 可信比赛生命周期JSON桥：DTO归后端内部契约，Bearer元数据必需；不公开给客户端。
+	ArenaLifecycle(context.Context, *ArenaLifecycleRequest) (*ArenaLifecycleResponse, error)
 	AllocateWorld(context.Context, *AllocateWorldRequest) (*AllocateWorldResponse, error)
 	AllocateMainArena(context.Context, *AllocateMainArenaRequest) (*AllocateMainArenaResponse, error)
 	IssuePlayerTransfer(context.Context, *IssuePlayerTransferRequest) (*IssuePlayerTransferResponse, error)
@@ -92,6 +107,9 @@ type GameServerControlInternalServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedGameServerControlInternalServiceServer struct{}
 
+func (UnimplementedGameServerControlInternalServiceServer) ArenaLifecycle(context.Context, *ArenaLifecycleRequest) (*ArenaLifecycleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ArenaLifecycle not implemented")
+}
 func (UnimplementedGameServerControlInternalServiceServer) AllocateWorld(context.Context, *AllocateWorldRequest) (*AllocateWorldResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AllocateWorld not implemented")
 }
@@ -121,6 +139,24 @@ func RegisterGameServerControlInternalServiceServer(s grpc.ServiceRegistrar, srv
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&GameServerControlInternalService_ServiceDesc, srv)
+}
+
+func _GameServerControlInternalService_ArenaLifecycle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArenaLifecycleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameServerControlInternalServiceServer).ArenaLifecycle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GameServerControlInternalService_ArenaLifecycle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameServerControlInternalServiceServer).ArenaLifecycle(ctx, req.(*ArenaLifecycleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _GameServerControlInternalService_AllocateWorld_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -184,6 +220,10 @@ var GameServerControlInternalService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService",
 	HandlerType: (*GameServerControlInternalServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ArenaLifecycle",
+			Handler:    _GameServerControlInternalService_ArenaLifecycle_Handler,
+		},
 		{
 			MethodName: "AllocateWorld",
 			Handler:    _GameServerControlInternalService_AllocateWorld_Handler,

@@ -55,6 +55,9 @@ func (s *Service) ObserveParty(ctx context.Context, actor, cursor string, wait t
 	if strings.TrimSpace(actor) == "" || len(actor) > 128 || !ValidObservationCursor(cursor) || wait < 0 || wait > 20*time.Second {
 		return party.Observation{}, errors.New("PARTY_COMMAND_INVALID: 观察主体、游标或等待期限无效")
 	}
+	if err := s.renewPartyObservation(ctx, actor, time.Now().UTC()); err != nil {
+		return party.Observation{}, err
+	}
 	events, ok := s.parties.(PartyChangeRepository)
 	if !ok {
 		return party.Observation{}, errors.New("PARTY_OBSERVATION_UNAVAILABLE: 仓储未装配事件日志")
@@ -137,16 +140,55 @@ func (s *Service) ObserveParty(ctx context.Context, actor, cursor string, wait t
 			}
 		}
 	}
+	// 限时准备也属于服务器截止事件；不是UI定时查询。真正资格取消仍由同一队列事务处理。
+	readyExpires := false
+	if initial.Snapshot.ReadyDeadlineUTC != nil {
+		remaining := time.Until(*initial.Snapshot.ReadyDeadlineUTC)
+		if remaining <= wait {
+			wait = remaining
+			if wait < 0 {
+				wait = 0
+			}
+			readyExpires = true
+		}
+	}
+	presenceExpires := false
+	if repo, ok := s.parties.(AtomicPartyRepository); ok {
+		p, err := repo.GetByPlayerID(owned, actor)
+		if err != nil && !errors.Is(err, ErrPartyNotFound) {
+			return party.Observation{}, err
+		}
+		if p != nil {
+			deadline := p.NextPresenceDeadline(time.Now().UTC())
+			if !deadline.IsZero() {
+				remaining := time.Until(deadline)
+				if remaining > 0 && remaining <= wait {
+					wait = remaining
+					presenceExpires = true
+				}
+			}
+		}
+	}
 	next, resync, err := events.WaitPartyChange(owned, actor, cursor, wait)
 	if err != nil {
 		return party.Observation{}, err
+	}
+	if readyExpires && s.matchmakingSettings != nil && s.matchmakingSettings.Enabled {
+		if err := s.AdvanceMatchmaking(owned); err != nil {
+			return party.Observation{}, err
+		}
+	}
+	if presenceExpires {
+		if err := s.renewPartyObservation(owned, actor, time.Now().UTC()); err != nil {
+			return party.Observation{}, err
+		}
 	}
 	result, err := read()
 	if err != nil {
 		return party.Observation{}, err
 	}
 	result.ResyncRequired = resync
-	result.Changed = expires || next != cursor
+	result.Changed = expires || readyExpires || presenceExpires || next != cursor
 	return result, nil
 }
 
@@ -161,7 +203,11 @@ type partyMemoryChanges struct {
 
 // publishPartyChangesLocked必须在提交持有r.mu时调用；同时唤醒旧/新成员和请求双方，离队者也能收到清空快照。
 func (r *MemoryPartyRepository) publishPartyChangesLocked(previous, next *party.Party) {
+	if previous != nil && next != nil && previous.Revision == next.Revision {
+		return
+	}
 	actors := map[string]bool{}
+	actors[MatchmakingWorkObserver] = true // 普通准备/名单变更也必须唤醒队列恢复器，不能只等下一次报名。
 	for _, value := range []*party.Party{previous, next} {
 		if value == nil {
 			continue

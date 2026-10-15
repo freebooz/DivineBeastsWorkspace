@@ -50,40 +50,6 @@ void FGamePlatformArenaServerCoordinator::LoadAndApplyAssignment(
         });
 }
 
-void FGamePlatformArenaServerCoordinator::ValidateTicketAndAdmit(
-    AGamePlatformArenaGameMode* GameMode,
-    AGamePlatformArenaPlayerState* PlayerState,
-    const FString& PlayerId,
-    const FString& TransferTicket,
-    TFunction<void(bool, const FString&)> Completion)
-{
-    if (GameMode == nullptr || PlayerState == nullptr) { Completion(false, TEXT("Arena admission target missing.")); return; }
-    const FString MatchId = GameMode->GetAssignment().MatchId;
-    const TWeakObjectPtr<AGamePlatformArenaGameMode> WeakMode(GameMode);
-    const TWeakObjectPtr<AGamePlatformArenaPlayerState> WeakPlayer(PlayerState);
-    BackendClient->ValidateAndConsumeTransferTicket(
-        TransferTicket,
-        PlayerId,
-        MatchId,
-        [WeakMode, WeakPlayer, Completion = MoveTemp(Completion)](bool bSuccess, const FGamePlatformArenaTransferTicketClaims& Claims, const FString& Error) mutable
-        {
-            AGamePlatformArenaGameMode* Mode = WeakMode.Get();
-            AGamePlatformArenaPlayerState* State = WeakPlayer.Get();
-            if (!bSuccess || Mode == nullptr || State == nullptr)
-            {
-                Completion(false, Error.IsEmpty() ? TEXT("Arena admission target destroyed.") : Error);
-                return;
-            }
-            FString AdmitError;
-            if (Mode->IsPlayerAwaitingReconnect(Claims.PlayerId))
-            {
-                Completion(Mode->TryReconnectPlayer(State, Claims.PlayerId, AdmitError), AdmitError);
-                return;
-            }
-            Completion(Mode->AdmitPlayer(State, Claims, AdmitError), AdmitError);
-        });
-}
-
 void FGamePlatformArenaServerCoordinator::SubmitPendingResult(
     AGamePlatformArenaGameMode* GameMode,
     TFunction<void(bool, const FString&)> Completion,

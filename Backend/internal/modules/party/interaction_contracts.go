@@ -38,14 +38,17 @@ type RequestSnapshot struct {
 
 // Snapshot（本人普通队伍快照）HasParty=false是真实无队伍状态，不是服务故障或伪造队伍。
 type Snapshot struct {
-	HasParty       bool              `json:"hasParty"`        // 当前认证玩家是否在队伍中。
-	PartyID        string            `json:"partyId"`         // 无队伍时空。
-	LeaderPlayerID string            `json:"leaderPlayerId"`  // 当前队长。
-	Revision       int64             `json:"revision,string"` // 队伍修订，无队伍为0。
-	RosterLocked   bool              `json:"rosterLocked"`    // 后端名单锁。
-	Members        []MemberSnapshot  `json:"members"`         // 最多5人；无队伍为空数组。
-	Requests       []RequestSnapshot `json:"requests"`        // 经权限过滤的有界请求。
-	ServerTimeUTC  time.Time         `json:"serverTimeUtc"`   // 客户端倒计时校时基准，不作为权威到期判定。
+	ActivityID       string            `json:"activityId"`       // 当前已选中立活动身份，竞技模式只是项目活动之一。
+	ReadyCheckID     string            `json:"readyCheckId"`     // 有效限时准备身份，无准备会话为空。
+	ReadyDeadlineUTC *time.Time        `json:"readyDeadlineUtc"` // 服务器准备截止，非准备时null。
+	HasParty         bool              `json:"hasParty"`         // 当前认证玩家是否在队伍中。
+	PartyID          string            `json:"partyId"`          // 无队伍时空。
+	LeaderPlayerID   string            `json:"leaderPlayerId"`   // 当前队长。
+	Revision         int64             `json:"revision,string"`  // 队伍修订，无队伍为0。
+	RosterLocked     bool              `json:"rosterLocked"`     // 后端名单锁。
+	Members          []MemberSnapshot  `json:"members"`          // 最多5人；无队伍为空数组。
+	Requests         []RequestSnapshot `json:"requests"`         // 经权限过滤的有界请求。
+	ServerTimeUTC    time.Time         `json:"serverTimeUtc"`    // 客户端倒计时校时基准，不作为权威到期判定。
 }
 
 // CommandResult（提交回执）受影响队伍版本与本人当前队伍分别表达，离队／申请不会泄露目标队伍完整名单。
@@ -82,6 +85,12 @@ func (p *Party) SnapshotFor(actorPlayerID string, now time.Time) (Snapshot, erro
 	view.LeaderPlayerID = p.LeaderPlayerID
 	view.Revision = p.Revision
 	view.RosterLocked = p.RosterLocked
+	view.ActivityID = p.SelectedArenaModeID
+	view.ReadyCheckID = p.ReadyCheckID
+	if p.ReadyCheckID != "" {
+		deadline := p.ReadyDeadlineUTC
+		view.ReadyDeadlineUTC = &deadline
+	}
 	for _, member := range p.Members {
 		view.Members = append(view.Members, MemberSnapshot{PlayerID: member.PlayerID, DisplayName: member.DisplayName, Ready: member.Ready, Online: member.Online})
 	}

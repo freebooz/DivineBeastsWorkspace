@@ -643,12 +643,15 @@ func (x *GetGameServerAssignmentRequest) GetGameServerId() string {
 }
 
 type AssignedPlayer struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	TeamId        string                 `protobuf:"bytes,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	CharacterId   string                 `protobuf:"bytes,3,opt,name=character_id,json=characterId,proto3" json:"character_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId         string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	TeamId           string                 `protobuf:"bytes,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	CharacterId      string                 `protobuf:"bytes,3,opt,name=character_id,json=characterId,proto3" json:"character_id,omitempty"`
+	PartyId          string                 `protobuf:"bytes,4,opt,name=party_id,json=partyId,proto3" json:"party_id,omitempty"`                              // 原子队伍，单排为空。
+	SlotIndex        uint32                 `protobuf:"varint,5,opt,name=slot_index,json=slotIndex,proto3" json:"slot_index,omitempty"`                       // 整场唯一出生槽位0至9。
+	HeroDefinitionId string                 `protobuf:"bytes,6,opt,name=hero_definition_id,json=heroDefinitionId,proto3" json:"hero_definition_id,omitempty"` // 后端锁定英雄。
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *AssignedPlayer) Reset() {
@@ -702,24 +705,48 @@ func (x *AssignedPlayer) GetCharacterId() string {
 	return ""
 }
 
+func (x *AssignedPlayer) GetPartyId() string {
+	if x != nil {
+		return x.PartyId
+	}
+	return ""
+}
+
+func (x *AssignedPlayer) GetSlotIndex() uint32 {
+	if x != nil {
+		return x.SlotIndex
+	}
+	return 0
+}
+
+func (x *AssignedPlayer) GetHeroDefinitionId() string {
+	if x != nil {
+		return x.HeroDefinitionId
+	}
+	return ""
+}
+
 type GetGameServerAssignmentResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Found          bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
-	MatchId        string                 `protobuf:"bytes,2,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
-	ArenaModeId    string                 `protobuf:"bytes,3,opt,name=arena_mode_id,json=arenaModeId,proto3" json:"arena_mode_id,omitempty"`
-	MapId          string                 `protobuf:"bytes,4,opt,name=map_id,json=mapId,proto3" json:"map_id,omitempty"`
-	TeamSize       uint32                 `protobuf:"varint,5,opt,name=team_size,json=teamSize,proto3" json:"team_size,omitempty"`
-	TotalPlayers   uint32                 `protobuf:"varint,6,opt,name=total_players,json=totalPlayers,proto3" json:"total_players,omitempty"`
-	Roster         []*AssignedPlayer      `protobuf:"bytes,7,rep,name=roster,proto3" json:"roster,omitempty"`
-	ErrorCode      string                 `protobuf:"bytes,8,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	AssignmentId   string                 `protobuf:"bytes,9,opt,name=assignment_id,json=assignmentId,proto3" json:"assignment_id,omitempty"`
-	ServerRoleId   string                 `protobuf:"bytes,10,opt,name=server_role_id,json=serverRoleId,proto3" json:"server_role_id,omitempty"`
-	ExperienceId   string                 `protobuf:"bytes,11,opt,name=experience_id,json=experienceId,proto3" json:"experience_id,omitempty"`
-	WorldId        string                 `protobuf:"bytes,12,opt,name=world_id,json=worldId,proto3" json:"world_id,omitempty"`
-	RegionId       string                 `protobuf:"bytes,13,opt,name=region_id,json=regionId,proto3" json:"region_id,omitempty"`
-	AssignmentType string                 `protobuf:"bytes,14,opt,name=assignment_type,json=assignmentType,proto3" json:"assignment_type,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Found               bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
+	MatchId             string                 `protobuf:"bytes,2,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	ArenaModeId         string                 `protobuf:"bytes,3,opt,name=arena_mode_id,json=arenaModeId,proto3" json:"arena_mode_id,omitempty"`
+	MapId               string                 `protobuf:"bytes,4,opt,name=map_id,json=mapId,proto3" json:"map_id,omitempty"`
+	TeamSize            uint32                 `protobuf:"varint,5,opt,name=team_size,json=teamSize,proto3" json:"team_size,omitempty"`
+	TotalPlayers        uint32                 `protobuf:"varint,6,opt,name=total_players,json=totalPlayers,proto3" json:"total_players,omitempty"`
+	Roster              []*AssignedPlayer      `protobuf:"bytes,7,rep,name=roster,proto3" json:"roster,omitempty"`
+	ErrorCode           string                 `protobuf:"bytes,8,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	AssignmentId        string                 `protobuf:"bytes,9,opt,name=assignment_id,json=assignmentId,proto3" json:"assignment_id,omitempty"`
+	ServerRoleId        string                 `protobuf:"bytes,10,opt,name=server_role_id,json=serverRoleId,proto3" json:"server_role_id,omitempty"`
+	ExperienceId        string                 `protobuf:"bytes,11,opt,name=experience_id,json=experienceId,proto3" json:"experience_id,omitempty"`
+	WorldId             string                 `protobuf:"bytes,12,opt,name=world_id,json=worldId,proto3" json:"world_id,omitempty"`
+	RegionId            string                 `protobuf:"bytes,13,opt,name=region_id,json=regionId,proto3" json:"region_id,omitempty"`
+	AssignmentType      string                 `protobuf:"bytes,14,opt,name=assignment_type,json=assignmentType,proto3" json:"assignment_type,omitempty"`
+	ProjectRuleRevision int32                  `protobuf:"varint,15,opt,name=project_rule_revision,json=projectRuleRevision,proto3" json:"project_rule_revision,omitempty"` // 批准的竞技规则。
+	ContentRevision     string                 `protobuf:"bytes,16,opt,name=content_revision,json=contentRevision,proto3" json:"content_revision,omitempty"`                // 实际部署内容。
+	HeroCatalogRevision int32                  `protobuf:"varint,17,opt,name=hero_catalog_revision,json=heroCatalogRevision,proto3" json:"hero_catalog_revision,omitempty"` // 锁定英雄目录。
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *GetGameServerAssignmentResponse) Reset() {
@@ -850,6 +877,27 @@ func (x *GetGameServerAssignmentResponse) GetAssignmentType() string {
 	return ""
 }
 
+func (x *GetGameServerAssignmentResponse) GetProjectRuleRevision() int32 {
+	if x != nil {
+		return x.ProjectRuleRevision
+	}
+	return 0
+}
+
+func (x *GetGameServerAssignmentResponse) GetContentRevision() string {
+	if x != nil {
+		return x.ContentRevision
+	}
+	return ""
+}
+
+func (x *GetGameServerAssignmentResponse) GetHeroCatalogRevision() int32 {
+	if x != nil {
+		return x.HeroCatalogRevision
+	}
+	return 0
+}
+
 var File_game_server_control_proto protoreflect.FileDescriptor
 
 const file_game_server_control_proto_rawDesc = "" +
@@ -906,11 +954,15 @@ const file_game_server_control_proto_rawDesc = "" +
 	"\n" +
 	"error_code\x18\x02 \x01(\tR\terrorCode\"F\n" +
 	"\x1eGetGameServerAssignmentRequest\x12$\n" +
-	"\x0egame_server_id\x18\x01 \x01(\tR\fgameServerId\"i\n" +
+	"\x0egame_server_id\x18\x01 \x01(\tR\fgameServerId\"\xd1\x01\n" +
 	"\x0eAssignedPlayer\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x17\n" +
 	"\ateam_id\x18\x02 \x01(\tR\x06teamId\x12!\n" +
-	"\fcharacter_id\x18\x03 \x01(\tR\vcharacterId\"\x83\x04\n" +
+	"\fcharacter_id\x18\x03 \x01(\tR\vcharacterId\x12\x19\n" +
+	"\bparty_id\x18\x04 \x01(\tR\apartyId\x12\x1d\n" +
+	"\n" +
+	"slot_index\x18\x05 \x01(\rR\tslotIndex\x12,\n" +
+	"\x12hero_definition_id\x18\x06 \x01(\tR\x10heroDefinitionId\"\x96\x05\n" +
 	"\x1fGetGameServerAssignmentResponse\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12\x19\n" +
 	"\bmatch_id\x18\x02 \x01(\tR\amatchId\x12\"\n" +
@@ -927,7 +979,10 @@ const file_game_server_control_proto_rawDesc = "" +
 	"\rexperience_id\x18\v \x01(\tR\fexperienceId\x12\x19\n" +
 	"\bworld_id\x18\f \x01(\tR\aworldId\x12\x1b\n" +
 	"\tregion_id\x18\r \x01(\tR\bregionId\x12'\n" +
-	"\x0fassignment_type\x18\x0e \x01(\tR\x0eassignmentType2\xcf\x05\n" +
+	"\x0fassignment_type\x18\x0e \x01(\tR\x0eassignmentType\x122\n" +
+	"\x15project_rule_revision\x18\x0f \x01(\x05R\x13projectRuleRevision\x12)\n" +
+	"\x10content_revision\x18\x10 \x01(\tR\x0fcontentRevision\x122\n" +
+	"\x15hero_catalog_revision\x18\x11 \x01(\x05R\x13heroCatalogRevision2\xcf\x05\n" +
 	"\x18GameServerControlService\x12\x83\x01\n" +
 	"\x12RegisterGameServer\x125.gameplatform.gameserver.v1.RegisterGameServerRequest\x1a6.gameplatform.gameserver.v1.RegisterGameServerResponse\x12\x82\x01\n" +
 	"\x0fUpdateHeartbeat\x126.gameplatform.gameserver.v1.GameServerHeartbeatRequest\x1a7.gameplatform.gameserver.v1.GameServerHeartbeatResponse\x12\x83\x01\n" +

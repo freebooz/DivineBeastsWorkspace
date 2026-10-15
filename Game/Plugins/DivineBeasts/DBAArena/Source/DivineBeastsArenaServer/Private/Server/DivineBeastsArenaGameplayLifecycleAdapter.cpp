@@ -11,6 +11,7 @@
 #include "Framework/GamePlatformArenaPlayerState.h"
 #include "Initialization/GamePlatformCharacterInitializationExecutor.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/Character.h"
 #include "Characters/DivineBeastsCharacter.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
@@ -110,8 +111,16 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::CapturePlayerGameplayOwnership(
     check(IsInGameThread()); OutOwnership = {};
     AGamePlatformArenaPlayerController* Controller = nullptr; AGamePlatformArenaPlayerState* State = nullptr; FString Error;
     auto* Mode = GameMode.Get(); auto* World = Mode ? Mode->GetWorld() : nullptr;
-    if (!Mode || !World || World->bIsTearingDown || !Mode->IsGameplayLifecycleAdapter(this, Mode->GetGameplayLifecycleBindingId()) ||
-        !ResolvePlayer(PlayerId, Controller, State, Error)) { return false; }
+    if (!Mode || !World || World->bIsTearingDown || !Mode->IsGameplayLifecycleAdapter(this, Mode->GetGameplayLifecycleBindingId())) { return false; }
+    if(!ResolvePlayer(PlayerId,Controller,State,Error))
+    {
+        auto* Retained=Cast<ADivineBeastsCharacter>(SpawnedPawns.FindRef(PlayerId).Get());
+        const int32 Generation=SpawnGenerations.FindRef(PlayerId);
+        if(!Mode->IsSingleRoundElimination()||!Mode->IsPlayerAwaitingReconnect(PlayerId)||!Retained||
+            Retained->GetWorld()!=World||!Retained->IsDisconnectedCombatTargetRetained()||
+            Retained->GetCombatAvatarGeneration()!=Generation)return false;
+        OutOwnership.Pawn=Retained;OutOwnership.AvatarGeneration=Generation;return true;
+    }
     const int32 Generation = SpawnGenerations.FindRef(PlayerId);
     if (Generation <= 0) { return false; }
     APawn* Pawn = Controller->GetPawn();
@@ -164,6 +173,7 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
         return false;
     }
     auto* Mode = GameMode.Get();
+    if(Mode&&Mode->IsSingleRoundElimination()&&Mode->IsPlayerEliminated(PlayerId)){OutReason=TEXT("本局已经淘汰，禁止重新出生。");return false;}
     const FString ExpectedMatchId = Mode ? Mode->GetAssignment().MatchId : FString();
     const FString ExpectedServerId = Mode ? Mode->GetAssignment().GameServerId : FString();
     const FGuid ExpectedBindingId = Mode ? Mode->GetGameplayLifecycleBindingId() : FGuid();
@@ -202,17 +212,22 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
         return false;
     }
 
-    // 优先使用TeamId标记的PlayerStart；未配置时退回UE标准ChoosePlayerStart路径。
-    AActor* StartSpot = Mode->FindPlayerStart(Controller, TeamId.ToString());
-    if (!IsCurrent()) { OutReason = TEXT("出生点解析期间原比赛已撤销。"); return false; }
-    if (!StartSpot)
+    AActor* StartSpot=nullptr;
+    if(SpawnPolicyId==TEXT("Arena.Spawn.RosterSlot"))
     {
-        StartSpot = Mode->FindPlayerStart(Controller, SpawnPolicyId.ToString());
+        int32 TeamSlot=0;bool bFound=false;
+        for(const auto& Slot:Mode->GetAssignment().Roster){if(Slot.TeamId!=TeamId)continue;if(Slot.PlayerId==PlayerId){bFound=true;break;}++TeamSlot;}
+        if(!bFound){OutReason=TEXT("出生玩家不在本队固定名单。");return false;}
+        const FName Tag(*FString::Printf(TEXT("%s:%d"),*TeamId.ToString(),TeamSlot));int32 Matches=0;
+        for(TActorIterator<APlayerStart> It(Mode->GetWorld());It;++It)if(It->PlayerStartTag==Tag){StartSpot=*It;++Matches;}
+        if(Matches!=1){OutReason=TEXT("固定出生槽位缺失或重复，拒绝重叠出生。");return false;}
     }
-    if (!IsCurrent()) { OutReason = TEXT("出生点解析期间原比赛已撤销。"); return false; }
-    if (!StartSpot)
+    else
     {
-        StartSpot = Mode->FindPlayerStart(Controller, FString());
+        // 旧模式保留既有PlayerStart解析；新整队竞技绝不回退到可能重叠的任意出生点。
+        StartSpot=Mode->FindPlayerStart(Controller,TeamId.ToString());
+        if(!StartSpot)StartSpot=Mode->FindPlayerStart(Controller,SpawnPolicyId.ToString());
+        if(!StartSpot)StartSpot=Mode->FindPlayerStart(Controller,FString());
     }
     if (!IsCurrent() || !IsValid(StartSpot) || StartSpot->GetWorld() != Mode->GetWorld())
     {
@@ -345,6 +360,19 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
     return true;
 }
 
+bool FDivineBeastsArenaGameplayLifecycleAdapter::SuspendPlayerConnection(const FString& PlayerId,FString& OutReason)
+{
+    check(IsInGameThread());auto* Mode=GameMode.Get();FGamePlatformArenaGameplayOwnership Ownership;
+    if(!Mode||!Mode->IsSingleRoundElimination()||Mode->GetMatchPhase()!=EGamePlatformArenaMatchPhase::InProgress||
+        !CapturePlayerGameplayOwnership(PlayerId,Ownership)) {OutReason=TEXT("断线缺少原比赛实体。");return false;}
+    auto* Pawn=Cast<ADivineBeastsCharacter>(Ownership.Pawn.Get());
+    auto* Eligibility=Pawn?Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>():nullptr;
+    if(!Pawn||!Eligibility||!Pawn->SetDisconnectedCombatTargetRetained(Ownership.AvatarGeneration,true))
+    {OutReason=TEXT("原实体尚未Ready或代次已变化，不能保留断线受伤目标。");return false;}
+    // 死亡订阅继续由本Adapter持有；UnPossess取消施法，目标ActorInfo保持原绑定。
+    Eligibility->SetServerPlayerActive(false);OutReason.Reset();return true;
+}
+
 bool FDivineBeastsArenaGameplayLifecycleAdapter::SetPlayerGameplayActive(const FString& PlayerId, bool bActive, FString& OutReason)
 {
     check(IsInGameThread());
@@ -367,6 +395,16 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SetPlayerGameplayActive(const F
     const int32 Generation = SpawnGenerations.FindRef(PlayerId);
     if (!World || !Mode->HasAuthority() || !Mode->IsGameplayLifecycleAdapter(this, BindingId) || !OwnedPawn.IsValid() || Generation <= 0)
     { OutReason = TEXT("本装配已撤销或缺少自有Pawn/代次，不能修改其他装配玩法资格。"); return false; }
+    if(!bActive&&!OwnedPawn->GetController())
+    {
+        auto* Pawn=Cast<ADivineBeastsCharacter>(OwnedPawn.Get());
+        auto* Eligibility=Pawn?Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>():nullptr;
+        if(!Pawn||Pawn->GetWorld()!=World||Pawn->GetCombatAvatarGeneration()!=Generation||!Eligibility)
+        {OutReason=TEXT("失活目标世界或代次无效。");return false;}
+        Pawn->SetDisconnectedCombatTargetRetained(Generation,false);Eligibility->SetServerPlayerActive(false);
+        OutReason.Reset();return true;
+    }
+    if(!bActive)if(auto* Pawn=Cast<ADivineBeastsCharacter>(OwnedPawn.Get()))Pawn->SetDisconnectedCombatTargetRetained(Generation,false);
     for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
     {
         auto* Controller = Cast<AGamePlatformArenaPlayerController>(It->Get());
@@ -523,8 +561,8 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::HandlePawnDeath(const FString& 
     auto* Mode = GameMode.Get(); auto* World = Mode ? Mode->GetWorld() : nullptr;
     auto* Target = Pawn.Get(); auto* PlayerState = State.Get();
     auto* ArenaState = Mode ? Mode->GetGameState<AGamePlatformArenaGameState>() : nullptr;
-    if (!Mode || !World || World->bIsTearingDown || !Mode->HasAuthority() || !Target || !PlayerState ||
-        Target->GetWorld() != World || PlayerState->GetWorld() != World || MatchId.IsEmpty() ||
+    if (!Mode || !World || World->bIsTearingDown || !Mode->HasAuthority() || !Target ||
+        Target->GetWorld() != World || (PlayerState&&PlayerState->GetWorld() != World) || MatchId.IsEmpty() ||
         Mode->GetAssignment().MatchId != MatchId || !ArenaState || ArenaState->GetWorld() != World || ArenaState->MatchIdPublic != MatchId ||
         ArenaState->MatchPhase != EGamePlatformArenaMatchPhase::InProgress ||
         !DeathBindings.Contains(PlayerId) || DeathBindings.FindChecked(PlayerId).Pawn.Get() != Target ||
@@ -533,10 +571,12 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::HandlePawnDeath(const FString& 
         Event.TargetAvatarGeneration != AvatarGeneration || !Target->GetGamePlatformCombatComponent()->IsCombatDead() ||
         Target->GetGamePlatformCombatComponent()->GetCombatAvatarGeneration() != AvatarGeneration) { return false; }
     AGamePlatformArenaPlayerController* Controller = nullptr; AGamePlatformArenaPlayerState* CurrentState = nullptr; FString Error;
-    if (!ResolvePlayer(PlayerId, Controller, CurrentState, Error) || CurrentState != PlayerState || Controller->GetPawn() != Target) { return false; }
+    const bool bConnected=ResolvePlayer(PlayerId,Controller,CurrentState,Error)&&CurrentState==PlayerState&&Controller->GetPawn()==Target;
+    const bool bRetained=Mode->IsSingleRoundElimination()&&Mode->IsPlayerAwaitingReconnect(PlayerId)&&Target->IsDisconnectedCombatTargetRetained();
+    if(!bConnected&&!bRetained)return false;
     const auto& Assignment = Mode->GetAssignment(); int32 MatchingSlots = 0;
     for (const auto& Slot : Assignment.Roster)
-    { if (Slot.PlayerId == PlayerId && Slot.CharacterId == PlayerState->CharacterId && Slot.TeamId == PlayerState->TeamId && Slot.IsValid()) { ++MatchingSlots; } }
+    { if (Slot.PlayerId == PlayerId && Slot.IsValid() && (bRetained || (PlayerState&&Slot.CharacterId == PlayerState->CharacterId && Slot.TeamId == PlayerState->TeamId))) { ++MatchingSlots; } }
     if (MatchingSlots != 1) { return false; }
     FGamePlatformArenaTrustedEvent Trusted; Trusted.EventId = Event.EventId.ToString(EGuidFormats::DigitsWithHyphens);
     Trusted.EventType = EGamePlatformArenaTrustedEventType::Death; Trusted.PlayerId = PlayerId;
@@ -544,4 +584,22 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::HandlePawnDeath(const FString& 
     if (!Mode->HandleTrustedEvent(Trusted, Error))
     { UE_LOG(LogTemp, Error, TEXT("Arena authoritative death rejected: %s"), *Error); return false; }
     return true;
+}
+
+bool FDivineBeastsArenaGameplayLifecycleAdapter::RestorePlayerConnection(const FString& PlayerId,FString& OutReason)
+{
+    check(IsInGameThread());auto* Mode=GameMode.Get();
+    AGamePlatformArenaPlayerController* Controller=nullptr;AGamePlatformArenaPlayerState* State=nullptr;
+    if(!Mode||!Mode->IsSingleRoundElimination()||Mode->IsPlayerEliminated(PlayerId)||Mode->GetMatchPhase()!=EGamePlatformArenaMatchPhase::InProgress||!ResolvePlayer(PlayerId,Controller,State,OutReason))return false;
+    const TWeakObjectPtr<APawn> Original=SpawnedPawns.FindRef(PlayerId);const int32 Generation=SpawnGenerations.FindRef(PlayerId);const FGuid Binding=Mode->GetGameplayLifecycleBindingId();
+    auto* Pawn=Original.Get();auto* Identity=Pawn?Pawn->FindComponentByClass<UDivineBeastsCharacterComponent>():nullptr;auto* Combat=Pawn?Pawn->FindComponentByClass<UGamePlatformCombatComponent>():nullptr;
+    if(!Pawn||Pawn->GetWorld()!=Mode->GetWorld()||Generation<=0||!Identity||!Identity->IsCharacterReady()||!Combat||Combat->IsCombatDead()||Combat->GetCombatAvatarGeneration()!=Generation||Controller->GetPawn()||Pawn->GetController())
+    {OutReason=TEXT("原受控实体或生命状态已失效，不能用新出生代替重连。");return false;}
+    const TWeakObjectPtr<AGamePlatformArenaPlayerController> ExpectedController(Controller);const TWeakObjectPtr<AGamePlatformArenaPlayerState> ExpectedState(State);
+    Controller->Possess(Pawn);
+    if(!GameMode.IsValid()||GameMode.Get()!=Mode||!Mode->IsGameplayLifecycleAdapter(this,Binding)||!ExpectedController.IsValid()||!ExpectedState.IsValid()||!Original.IsValid()||ExpectedController->GetPawn()!=Original.Get()||Original->GetController()!=ExpectedController.Get()||SpawnGenerations.FindRef(PlayerId)!=Generation)
+    {OutReason=TEXT("重新拥有通知期间原比赛或连接已撤销。");return false;}
+    if(auto* Character=Cast<ADivineBeastsCharacter>(Original.Get()))
+    {Character->SetDisconnectedCombatTargetRetained(Generation,false);BindPawnDeath(PlayerId,*Character,*ExpectedState.Get(),Generation);}
+    return SetPlayerGameplayActive(PlayerId,true,OutReason);
 }

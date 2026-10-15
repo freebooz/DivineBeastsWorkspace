@@ -8,6 +8,10 @@ class UGamePlatformUIScreenDefinition;
 class UGamePlatformUIManagerSubsystem;
 class UDivineBeastsPartyViewModel;
 class UDivineBeastsPartyScreenBinding;
+class UGamePlatformPartyClientSubsystem;
+class UDivineBeastsApplicationFlowSubsystem;
+struct FGamePlatformPartyResult;
+struct FDivineBeastsFlowViewState;
 
 /** 可选活动入口；竞技插件仅以公开中立回调注册，不使公共UI反向依赖MOBA。 */
 // PartyId为空表示授权快照确认的单人；有队伍时必须传原子名单身份，不能悄悄降级单人报名。
@@ -48,6 +52,19 @@ private:
     TSet<FGuid> OpenedDuringDispatch;
     TSet<FGuid> FailedDuringDispatch;
     void CloseOwnedPages();
+    /** 共享队伍/流程通知驱动自动邀请和准备弹窗，页面关闭不取消业务。 */
+    void PartyObservationChanged(const FGamePlatformPartyResult& Result);
+    void FlowStateChanged(const FDivineBeastsFlowViewState& State);
+    void ProjectPartyNotifications();
+    TWeakObjectPtr<UGamePlatformPartyClientSubsystem> PartySource;
+    TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> ApplicationFlow;
+    FDelegateHandle PartyObservationHandle;
+    FDelegateHandle FlowStateHandle;
+    FGuid NotificationAuthGeneration;
+    TSet<FString> SeenInvitationIds;
+    FString SeenReadyCheckId;
+    bool bProjectingNotifications=false;
+
     TWeakObjectPtr<UObject> ActivityOwner;
     FDivineBeastsPartyActivityAction ActivityAction;
     FGuid ActivityHandle;

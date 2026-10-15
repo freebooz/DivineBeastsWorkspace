@@ -58,3 +58,11 @@ void AGamePlatformArenaPlayerController::ClientArenaRequestRejected_Implementati
 {
     UE_LOG(LogTemp, Warning, TEXT("Arena request rejected: %s"), *Reason);
 }
+
+void AGamePlatformArenaPlayerController::PawnLeavingGame()
+{
+    auto* Mode=GetArenaMode(this);auto* State=GetPlayerState<AGamePlatformArenaPlayerState>();
+    if(HasAuthority()&&Mode&&State&&Mode->IsSingleRoundElimination()&&Mode->GetMatchPhase()==EGamePlatformArenaMatchPhase::InProgress)
+    {Mode->MarkPlayerDisconnected(State->PlayerIdPublic);UnPossess();return;}
+    Super::PawnLeavingGame();
+}

@@ -55,6 +55,10 @@ struct GAMEPLATFORMONLINE_API FGamePlatformPartySnapshot
     UPROPERTY(BlueprintReadOnly) FString PartyId;
     /** 已认证队长的公开身份；无队伍时为空。 */
     UPROPERTY(BlueprintReadOnly) FString LeaderPlayerId;
+    /** 已选中立活动与服务器限时准备；空会话不授予准备弹窗资格。 */
+    UPROPERTY(BlueprintReadOnly) FString ActivityId;
+    UPROPERTY(BlueprintReadOnly) FString ReadyCheckId;
+    UPROPERTY(BlueprintReadOnly) FDateTime ReadyDeadlineUtc;
     /** 当前聚合修订；仅在相同队伍身份内比较大小。 */
     UPROPERTY(BlueprintReadOnly) int64 Revision = 0;
     /** 锁定时禁止本地绕过匹配取消去修改名单。 */
@@ -91,6 +95,12 @@ struct GAMEPLATFORMONLINE_API FGamePlatformPartyCommand
 /** 类型化在线完成值；只在回调期间借用，取消本地等待不表示后端回滚。 */
 struct GAMEPLATFORMONLINE_API FGamePlatformPartyResult
 {
+    /** 本人观察作用域与持久游标，仅观察响应提供；不作为认证或业务写权限。 */
+    FString ObservationScopeId;
+    FString ObservationCursor;
+    /** 服务器要求完整替换快照；Changed=false表示空等待，不能清空已有显示。 */
+    bool bResyncRequired = false;
+    bool bChanged = false;
     /** 仅真实2xx及完整合法合同解析后为true。 */
     bool bSuccess = false;
     /** 写操作可能到达服务端但没有可信回执；界面须读回并保留原幂等键。 */

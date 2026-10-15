@@ -1,4 +1,4 @@
-#if WITH_DEV_AUTOMATION_TESTS
+﻿#if WITH_DEV_AUTOMATION_TESTS
 
 #include "Definitions/DivineBeastsWorldDefinition.h"
 #include "Definitions/GamePlatformExperienceDefinition.h"
@@ -143,6 +143,28 @@ bool FDivineBeastsVillageDeliveredDefinitionTest::RunTest(const FString&)
     TestEqual(TEXT("Village实际出生类应为正式技能玩法角色"),
         SpawnClass ? SpawnClass->GetPathName() : FString(),
         FString(TEXT("/Script/DivineBeastsAbilitiesRuntime.DivineBeastsGameplayCharacter")));
+    return true;
+}
+
+// 真实MainArena内容闭包回归：加载保存的World/Experience/Pawn定义，检查身份、角色及禁用自动复活；不以白盒替代正式美术验收。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsMainArenaDeliveredDefinitionTest,
+    "DivineBeasts.Worlds.Delivery.MainArenaGameplayDefinitions",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsMainArenaDeliveredDefinitionTest::RunTest(const FString&)
+{
+    const FString Root=TEXT("/DBAWorldPack_MainArena/Definitions/");
+    auto* World=LoadObject<UDivineBeastsWorldDefinition>(nullptr,*(Root+TEXT("DA_DBA_World_MainArena.DA_DBA_World_MainArena")));
+    auto* Experience=LoadObject<UGamePlatformExperienceDefinition>(nullptr,*(Root+TEXT("DA_DBA_Experience_MainArena.DA_DBA_Experience_MainArena")));
+    auto* Pawn=LoadObject<UGamePlatformPawnDefinition>(nullptr,*(Root+TEXT("DA_DBA_Pawn_ArenaCharacter.DA_DBA_Pawn_ArenaCharacter")));
+    if(!TestNotNull(TEXT("真实竞技世界定义存在"),World)||!TestNotNull(TEXT("真实竞技体验定义存在"),Experience)||!TestNotNull(TEXT("真实竞技Pawn定义存在"),Pawn))return false;
+    TestTrue(TEXT("世界定义通过运行校验"),World->ValidateDefinition().IsSuccess());
+    TestTrue(TEXT("体验定义通过运行校验"),Experience->ValidateDefinition().IsSuccess());
+    TestTrue(TEXT("Pawn定义通过运行校验"),Pawn->ValidateDefinition().IsSuccess());
+    TestEqual(TEXT("世界身份唯一"),World->GetPrimaryAssetId().PrimaryAssetName,FName(TEXT("divinebeasts.world.main_arena@1")));
+    TestEqual(TEXT("竞技角色来自正式目录"),World->ServerRoleId,FName(TEXT("GameServer.Role.MainArena")));
+    TestEqual(TEXT("体验绑定本竞技Pawn身份"),Experience->DefaultPawnDefinitionId,Pawn->GetPrimaryAssetId());
+    TestTrue(TEXT("单局禁用自动复活"),Experience->RespawnPolicy==EGamePlatformRespawnPolicy::Disabled);
+    const auto* PawnClass=Pawn->PawnClass.LoadSynchronous();
+    TestEqual(TEXT("真实Gameplay角色而非空白Pawn"),PawnClass?PawnClass->GetPathName():FString(),FString(TEXT("/Script/DivineBeastsAbilitiesRuntime.DivineBeastsGameplayCharacter")));
     return true;
 }
 

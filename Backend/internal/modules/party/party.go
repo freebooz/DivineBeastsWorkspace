@@ -5,17 +5,20 @@ package party
 import (
 	"errors"
 	"math"
+	"time"
 )
 
 const MaxMembers = 5 // MaxMembers（最大Party人数）对应当前最大5v5模式。
 
 // Member（Party成员）表示一个组队成员的业务状态。
 type Member struct {
-	PlayerID     string // PlayerID（玩家ID）。
-	DisplayName  string // DisplayName（显示名称）。
-	Ready        bool   // Ready（是否准备）。
-	Online       bool   // Online（是否在线）。
-	JoinSequence int64  // JoinSequence（本队内唯一加入序号）；旧记录0表示缺少历史顺序，不能据此自动选队长。
+	PresenceExpiresUTC time.Time // 受信连接观察租约截止；零值旧记录为未知，不永久视为在线，不向UI投影。
+	OfflineSinceUTC    time.Time // 实际租约失效时刻，队长宽限由此计算；在线时为空。
+	PlayerID           string    // PlayerID（玩家ID）。
+	DisplayName        string    // DisplayName（显示名称）。
+	Ready              bool      // Ready（是否准备）。
+	Online             bool      // Online（是否在线）。
+	JoinSequence       int64     // JoinSequence（本队内唯一加入序号）；旧记录0表示缺少历史顺序，不能据此自动选队长。
 }
 
 // Party（组队）是Matchmaking（匹配）的不可拆分原子单元。
@@ -28,11 +31,14 @@ type Party struct {
 	Revision            int64                        // Revision（Party修订版本）。
 	NextJoinSequence    int64                        // NextJoinSequence（下次加入使用的单调序号），只由服务端在同一事务内分配。
 	MembershipRequests  map[string]MembershipRequest // MembershipRequests（有界邀请／申请）；不证明玩家跨队唯一归属。
+	ReadyCheckID        string                       // 服务器当前限时准备会话，空表示普通准备标记不能直接授予匹配资格。
+	ReadyDeadlineUTC    time.Time                    // 同一模式/名单的准备截止；只由后端判断到期。
 }
 
 // New（创建Party）以创建者作为队长和首个成员。
 func New(id string, leader Member) *Party {
 	leader.Online = true
+	leader.PresenceExpiresUTC = time.Now().UTC().Add(PresenceLeaseLifetime)
 	leader.JoinSequence = 1
 	return &Party{ID: id, LeaderPlayerID: leader.PlayerID, Members: map[string]Member{leader.PlayerID: leader}, Revision: 1, NextJoinSequence: 2}
 }
@@ -72,6 +78,7 @@ func (p *Party) AddMember(member Member) error {
 		return errors.New("PARTY_JOIN_ORDER_CONFLICT: 无法分配新的加入序号")
 	}
 	member.Online = true
+	member.PresenceExpiresUTC = time.Now().UTC().Add(PresenceLeaseLifetime)
 	member.Ready = false
 	member.JoinSequence = nextJoinSequence
 	p.NextJoinSequence = nextJoinSequence + 1
@@ -110,11 +117,18 @@ func (p *Party) SetReady(playerID string, ready bool) error {
 	if ready && !member.Online {
 		return errors.New("PARTY_MEMBER_UNAVAILABLE: 离线成员不能准备")
 	}
-	if member.Ready == ready {
+	if p.ReadyCheckID != "" && !time.Now().UTC().Before(p.ReadyDeadlineUTC) {
+		return errors.New("PARTY_READY_EXPIRED: 本轮准备已经到期")
+	}
+	if member.Ready == ready && !(!ready && p.ReadyCheckID != "") {
 		return nil
 	}
 	member.Ready = ready
 	p.Members[playerID] = member
+	if !ready && p.ReadyCheckID != "" {
+		p.ReadyCheckID = ""
+		p.ReadyDeadlineUTC = time.Time{}
+	}
 	p.Revision++
 	return nil
 }
@@ -158,9 +172,44 @@ func (p *Party) UnlockRoster() {
 
 // invalidateReadiness（失效旧准备）只在名单／活动／队长结构变化时调用，防止旧确认被新队伍复用。
 func (p *Party) invalidateReadiness() {
+	p.ReadyCheckID = ""
+	p.ReadyDeadlineUTC = time.Time{}
 	for id, member := range p.Members {
 		member.Ready = false
 		p.Members[id] = member
+	}
+}
+
+// BeginReadyCheck只能由队长对当前名单及模式发起；队长的开始命令表达本人同意，其他成员仍须分别准备。
+// 调用方必须在匹配事务中同时为全员建立唯一预留；失败不能留下只有准备而没有队列记录的状态。
+func (p *Party) BeginReadyCheck(actor, mode, id string, now time.Time) error {
+	if id == "" {
+		return errors.New("PARTY_COMMAND_INVALID: 准备会话身份不能为空")
+	}
+	if actor == "" || actor != p.LeaderPlayerID {
+		return errors.New("PARTY_NOT_LEADER: 只有队长可发起准备")
+	}
+	member := p.Members[actor]
+	if !member.Online {
+		return errors.New("PARTY_MEMBER_UNAVAILABLE: 队长不在线")
+	}
+	if err := p.SelectArenaMode(actor, mode); err != nil {
+		return err
+	}
+	p.invalidateReadiness()
+	p.ReadyCheckID = id
+	p.ReadyDeadlineUTC = now.Add(20 * time.Second)
+	member.Ready = true
+	p.Members[actor] = member
+	p.Revision++
+	return nil
+}
+
+// CancelReadyCheck在真实取消/超时事务中失效显示与普通准备；不解除仍有效的比赛名单锁。
+func (p *Party) CancelReadyCheck() {
+	if p.ReadyCheckID != "" {
+		p.invalidateReadiness()
+		p.Revision++
 	}
 }
 

@@ -9,6 +9,8 @@ class FGamePlatformArenaServerCoordinator;
 class APlayerController;
 class UGamePlatformServerAdmissionSubsystem;
 struct FGamePlatformServerVerifiedAdmission;
+class UGamePlatformServerLifecycleSubsystem;
+struct FGamePlatformServerLifecycleSnapshot;
 
 /** UGamePlatformArenaServerSubsystem（竞技服务器世界子系统）。
  *  Dedicated Server进入MainArena世界后自动读取安全环境配置并拉取Assignment。
@@ -43,4 +45,17 @@ private:
     FDelegateHandle AdmissionChangedHandle;
     TSharedPtr<FGamePlatformArenaServerBackendClient> BackendClient;
     TSharedPtr<FGamePlatformArenaServerCoordinator> Coordinator;
+    /** 当前世界分配订阅先等待真实注册；失败只做有界传输恢复，不以UI或Tick读业务。 */
+    void TryLoadAssignment();
+    void HandleLifecycleChanged(const FGamePlatformServerLifecycleSnapshot& Snapshot);
+    TWeakObjectPtr<UGamePlatformServerLifecycleSubsystem> LifecycleSubsystem;
+    FDelegateHandle LifecycleChangedHandle;
+    FTimerHandle AssignmentRetryTimer;
+    uint64 AssignmentGeneration=0;
+    int32 AssignmentFailures=0;
+    bool bWorldStarted=false;
+    bool bAssignmentRequestPending=false;
+    bool bAssignmentLoaded=false;
+    bool bAssignmentFailed=false;
+
 };

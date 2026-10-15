@@ -30,6 +30,10 @@ public:
     virtual bool CanSourceCombat() const override;
     virtual bool CanReceiveCombat() const override;
     virtual int32 GetCombatAvatarGeneration() const override;
+    /** GT服务器仅为已初始化原实体保留断线受伤资格；正代次必须匹配，false撤销，不改变生命或出生。 */
+    bool SetDisconnectedCombatTargetRetained(int32 ExpectedGeneration, bool bRetained);
+    /** 只读同代次目标保留事实，不授予输入/施法；死亡消费者仍须核对所属世界/比赛/名单。 */
+    bool IsDisconnectedCombatTargetRetained()const;
     /** 装配根订阅已结算的权威死亡；必须自行核世界/受信身份并在结束前解绑。客户端不会发布。 */
     FDivineBeastsAuthoritativeDeath& OnAuthoritativeDeath() { return AuthoritativeDeath; }
 protected:
@@ -42,6 +46,8 @@ private:
     FDivineBeastsAuthoritativeDeath AuthoritativeDeath;
     /** 本Pawn已经发布的死亡代次，0表示尚无；同代次重复Combat广播不重复终态。 */
     int32 PublishedDeathGeneration = 0;
+    /** 当前可信断线原实体代次；0未保留，不能由客户端设置，销毁/收敛/重连撤销。 */
+    int32 DisconnectedCombatTargetGeneration = 0;
     /** 双端游戏线程按当前拥有关系重新绑定；服务器失去拥有者时立即撤销Active。 */
     void RefreshAbilityActorInfo();
     /** 死亡权威事件立即失活；不靠客户端页面或每帧轮询执行玩法禁用。 */

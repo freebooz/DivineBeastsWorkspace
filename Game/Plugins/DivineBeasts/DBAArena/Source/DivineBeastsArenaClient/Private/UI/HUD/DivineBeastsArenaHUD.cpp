@@ -6,7 +6,7 @@
 #include "Components/TextBlock.h"
 #include "Engine/World.h"
 #include "HAL/PlatformTime.h"
-#include "TimerManager.h"
+#include "CommonNumericTextBlock.h"
 
 void UDivineBeastsArenaHUD::RefreshInitialState()
 {
@@ -27,21 +27,16 @@ void UDivineBeastsArenaHUD::RefreshInitialState()
     for(int32 Index=Allied+1;Index<=5;++Index)Text(FString::Printf(TEXT("AllyRow%d"),Index),FText(),false);
     for(int32 Index=Enemy+1;Index<=5;++Index)Text(FString::Printf(TEXT("EnemyRow%d"),Index),FText(),false);
     Text(TEXT("EliminationStateText"),FText::FromString(TEXT("生命/状态由公共战斗HUD展示；淘汰事实尚未接入，死亡次数不等于淘汰")));
-    PhaseDeadlineMonotonicSeconds=FPlatformTime::Seconds()+FMath::Max(0.0,VM->RemainingPhaseSeconds);
-    if(auto* World=GetWorld())
+    if(auto* Counter=Cast<UCommonNumericTextBlock>(GetWidgetFromName(TEXT("MatchTimeText"))))
     {
-        World->GetTimerManager().ClearTimer(PhaseClock);
-        if(VM->RemainingPhaseSeconds>0)World->GetTimerManager().SetTimer(PhaseClock,this,&UDivineBeastsArenaHUD::UpdatePhaseClock,0.2f,true);
+        // 复制阶段通知设置一次线性视觉端点；动画不查询VM，也不据显示0开始/结束比赛。
+        const float Remaining=static_cast<float>(FMath::Max(0.0,VM->RemainingPhaseSeconds));
+        Counter->EaseOutInterpolationExponent=1.0f;Counter->SetNumericType(ECommonNumericType::Seconds);Counter->SetCurrentValue(Remaining);
+        if(Remaining>0)Counter->InterpolateToValue(0,Remaining,0);
     }
-    UpdatePhaseClock();
-}
-void UDivineBeastsArenaHUD::UpdatePhaseClock()
-{
-    const double Remaining=FMath::Max(0.0,PhaseDeadlineMonotonicSeconds-FPlatformTime::Seconds());
-    if(auto* T=Cast<UTextBlock>(GetWidgetFromName(TEXT("MatchTimeText"))))T->SetText(FText::AsTimespan(FTimespan::FromSeconds(FMath::CeilToDouble(Remaining))));
-    if(Remaining<=0)if(auto* World=GetWorld())World->GetTimerManager().ClearTimer(PhaseClock);
+    else Text(TEXT("MatchTimeText"),FText::AsTimespan(FTimespan::FromSeconds(FMath::Max(0.0,VM->RemainingPhaseSeconds))));
 }
 void UDivineBeastsArenaHUD::OnViewModelStateChanged(int32 Revision,int32 Generation)
 {Super::OnViewModelStateChanged(Revision,Generation);RefreshInitialState();}
 void UDivineBeastsArenaHUD::NativeDestruct()
-{if(auto* World=GetWorld())World->GetTimerManager().ClearTimer(PhaseClock);PhaseDeadlineMonotonicSeconds=0;Super::NativeDestruct();}
+{if(auto* Counter=Cast<UCommonNumericTextBlock>(GetWidgetFromName(TEXT("MatchTimeText"))))Counter->SetCurrentValue(0);Super::NativeDestruct();}

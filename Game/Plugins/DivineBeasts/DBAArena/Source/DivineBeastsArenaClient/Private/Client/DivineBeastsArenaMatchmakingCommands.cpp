@@ -1,5 +1,5 @@
-// 项目竞技本地玩家命令桥：把页面意图交给MOBA公开适配端口，绝不HTTP、直接切图或计算队列。
-// 提供者须由竞技组合根按真实后端能力注入；当前Gateway缺失观察/取消/候选确认，不注册伪生产实现。
+﻿// 项目竞技本地玩家命令桥：把页面意图交给MOBA公开适配端口，绝不HTTP、直接切图或计算队列。
+// 提供者来自GameInstance唯一真实匹配观察，能力由后端配置快照确认；页面失活不会取消队列。
 #include "Client/DivineBeastsArenaUIClientSubsystem.h"
 #include "Client/DivineBeastsArenaClientSubsystem.h"
 #include "Client/GamePlatformArenaMatchmakingAdapter.h"
@@ -22,11 +22,17 @@ void UDivineBeastsArenaUIClientSubsystem::ConnectMatchmakingAuthentication()
         if (MatchmakingRegistration.IsValid() && (Authentication.AuthGeneration != MatchmakingAuthGeneration ||
             (Authentication.State != EGamePlatformAuthState::Authenticated && Authentication.State != EGamePlatformAuthState::Refreshing)))
             ResetMatchmakingBridge();
+        RefreshMatchmakingSource();
     });
+    if(auto* Client=Instance->GetSubsystem<UDivineBeastsArenaClientSubsystem>())
+    {MatchmakingSource=Client;MatchmakingSourceHandle=Client->OnMatchmakingStateChanged.AddUObject(this,&ThisClass::RefreshMatchmakingSource);}
+    RefreshMatchmakingSource();
 }
 
 void UDivineBeastsArenaUIClientSubsystem::DisconnectMatchmakingAuthentication()
 {
+    if(auto* Source=MatchmakingSource.Get())Source->OnMatchmakingStateChanged.Remove(MatchmakingSourceHandle);
+    MatchmakingSourceHandle.Reset();MatchmakingSource.Reset();
     if (auto* Online = MatchmakingAuthenticationSource.Get())
         Online->OnAuthStateChanged().Remove(MatchmakingAuthenticationHandle);
     MatchmakingAuthenticationSource.Reset();
@@ -94,9 +100,9 @@ bool UDivineBeastsArenaUIClientSubsystem::CanRequestMatchmaking() const
 
 bool UDivineBeastsArenaUIClientSubsystem::CanCancelMatchmaking() const
 {
-    return !bDeinitializing && !bMatchmakingCommandPending && MatchmakingAdapter && MatchmakingAdapter->SupportsTicketLifecycle() &&
-        MatchmakingAdapter->GetObservedState() == EGamePlatformArenaClientFlowState::Matchmaking &&
-        !MatchmakingLogicalRequestId.IsEmpty() && IsMatchmakingAuthenticationCurrent();
+    if(bDeinitializing||bMatchmakingCommandPending||!MatchmakingAdapter||!MatchmakingAdapter->SupportsTicketLifecycle()||!IsMatchmakingAuthenticationCurrent())return false;
+    if(auto* Source=MatchmakingSource.Get())if(Source->GetMatchmakingAdapter()==MatchmakingAdapter)return Source->CanCancelObservedQueue();
+    return MatchmakingAdapter->GetObservedState()==EGamePlatformArenaClientFlowState::Matchmaking&&!MatchmakingLogicalRequestId.IsEmpty();
 }
 
 bool UDivineBeastsArenaUIClientSubsystem::CanRespondToMatchOffer() const
@@ -113,7 +119,7 @@ bool UDivineBeastsArenaUIClientSubsystem::RequestMatchmaking(FName ModeId)
 {
     if (!CanRequestMatchmaking())
     {
-        MatchmakingCommandFeedback = FText::FromString(TEXT("真实匹配后端的观察、取消和逐人确认合同尚未完整接入，未创建队列票据"));
+        MatchmakingCommandFeedback = FText::FromString(TEXT("匹配状态尚未就绪，请等待同步后再试"));
         OnMatchmakingCommandChanged.Broadcast();
         return false;
     }
@@ -124,7 +130,7 @@ bool UDivineBeastsArenaUIClientSubsystem::RequestMatchmaking(FName ModeId)
     const FString LogicalId = FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens);
     if (!Client || !Client->IsApplicationFlowInWorld() || !Client->BuildMatchmakingRequest(ModeId, MatchmakingPartyId, FString(), LogicalId, Request, Error))
     {
-        MatchmakingCommandFeedback = FText::FromString(TEXT("当前流程或所选模式缺少正式地图、规则与准入配置，未报名"));
+        MatchmakingCommandFeedback = FText::FromString(TEXT("当前模式、名单或竞技场配置不可用，未报名"));
         OnMatchmakingCommandChanged.Broadcast();
         return false;
     }
@@ -136,7 +142,7 @@ bool UDivineBeastsArenaUIClientSubsystem::RequestMatchmaking(FName ModeId)
     const TWeakObjectPtr<UWorld> World(GetWorld());
     OnMatchmakingCommandChanged.Broadcast();
     if (MatchmakingCommandGeneration != Generation || !bMatchmakingCommandPending) return false;
-    Adapter->RequestMatchmaking(Request, [Weak, World, Generation](bool bAccepted, const FString&)
+    Adapter->RequestMatchmaking(Request, [Weak, World, Generation](bool bAccepted, const FString& Error)
     {
         auto* Self = Weak.Get();
         if (!IsInGameThread() || !Self || Self->bDeinitializing || !World.IsValid() || Self->GetWorld() != World.Get() ||
@@ -146,6 +152,7 @@ bool UDivineBeastsArenaUIClientSubsystem::RequestMatchmaking(FName ModeId)
         ++Self->MatchmakingCommandGeneration; // 防止错误适配器重复终态回调。
         Self->MatchmakingCommandFeedback = FText::FromString(bAccepted ? TEXT("服务器已受理报名") : TEXT("报名未获服务器确认，请查询远端状态后再操作"));
         if (bAccepted) Self->SetObservedArenaClientFlowState(Self->MatchmakingAdapter->GetObservedState());
+        else if(Error==TEXT("Matchmaking.RequestRejected"))Self->MatchmakingLogicalRequestId.Empty();
         Self->OnMatchmakingCommandChanged.Broadcast();
     });
     return true;
@@ -220,4 +227,21 @@ void UDivineBeastsArenaUIClientSubsystem::CompleteConfirmedTicketState(const FSt
 {
     if(!ExpectedLogicalRequestId.IsEmpty()&&ExpectedLogicalRequestId==MatchmakingLogicalRequestId&&ConfirmedState==EGamePlatformArenaClientFlowState::Idle)
         MatchmakingLogicalRequestId.Empty();
+}
+
+void UDivineBeastsArenaUIClientSubsystem::RefreshMatchmakingSource()
+{
+    if(bDeinitializing)return;auto* Source=MatchmakingSource.Get();if(!Source)return;
+    if(GetAuthenticatedMatchmakingPlayerId().IsEmpty()){if(MatchmakingAdapter)ResetMatchmakingBridge();return;}
+    const auto Adapter=Source->GetMatchmakingAdapter();if(!Adapter)return;
+    if(!MatchmakingAdapter)RegisterMatchmakingAdapter(Adapter);
+    if(MatchmakingAdapter!=Adapter)return; // 独立测试/显式工具提供者拥有其注册，真实来源不越权替换。
+    MatchmakingCommandFeedback=Source->GetObservedMatchmakingStatus();
+    if(Adapter->SupportsTicketLifecycle())
+    {
+        const auto State=Adapter->GetObservedState();
+        if(State==EGamePlatformArenaClientFlowState::Idle)MatchmakingLogicalRequestId.Empty();
+        SetObservedArenaClientFlowState(State);
+    }
+    OnMatchmakingCommandChanged.Broadcast();
 }

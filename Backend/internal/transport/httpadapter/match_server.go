@@ -1,3 +1,4 @@
+// Match内部路由统一校验服务凭据；可信Actor仅由已认证Gateway提供，空配置失败关闭。
 package httpadapter
 
 import (
@@ -8,13 +9,14 @@ import (
 )
 
 // NewMatchHandler（创建MatchService HTTP处理器）暴露Party和Matchmaking内部接口。
-func NewMatchHandler(service *matchapi.Service) http.Handler {
+func NewMatchHandler(service *matchapi.Service, bearer ...string) http.Handler {
 	if service == nil {
 		panic("Match API Service不能为空")
 	}
 	mux := http.NewServeMux()
 	registerPartyInteractions(mux, service)
-	registerPartyObservation(mux,service)
+	registerMatchmakingLifecycle(mux, service)
+	registerPartyObservation(mux, service)
 	mux.HandleFunc("POST /internal/v1/match/party", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			PlayerID    string `json:"playerId"`
@@ -55,5 +57,9 @@ func NewMatchHandler(service *matchapi.Service) http.Handler {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"ticketId": ticket.TicketID, "arenaModeId": ticket.ArenaModeID, "partyId": ticket.PartyID, "partyMemberIds": ticket.PartyMemberIDs, "partySize": ticket.PartySize, "teamSize": ticket.TeamSize, "state": ticket.State})
 	})
-	return mux
+	token := ""
+	if len(bearer) == 1 {
+		token = bearer[0]
+	}
+	return requireGameServerControlBearer(token, mux.ServeHTTP)
 }

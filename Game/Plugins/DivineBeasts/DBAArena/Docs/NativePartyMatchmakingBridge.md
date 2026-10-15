@@ -1,34 +1,43 @@
-# SSLM组队与竞技页面原生命令桥
+# SSLM组队与竞技事件链路
 
-## 职责与依赖
+公共队伍合同与GameInstance单订阅归GamePlatformOnline，公共ViewModel、页面绑定和通知路由归DBAClient/DivineBeastsUIClient，真实公共资产归DBAUIPack_Core。竞技模式、匹配适配和局内页面归DBAArena，向下借用MobaCommon与GamePlatform；公共流程通过中立扩展接收竞技就绪事实，不反向引用竞技模块。未新增第二个网络或旅行执行器。
 
-公共小队DTO及类型化请求归GamePlatformOnline；项目公共ViewModel、页面路由、列表条目和命令接线归DBAClient/DivineBeastsUIClient。公共代码不包含MobaCommon或DBAArena头文件。五页公共资产归DBAUIPack_Core，竞技四页归DBAArena；没有新增插件、模块或第二套网络执行器。
+## 队伍与报名
 
-竞技客户端通过`IGamePlatformArenaMatchmakingAdapter`消费MOBA公开端口。`UDivineBeastsArenaUIClientSubsystem`是每LocalPlayer的项目组合点，拥有提供者注册句柄、在途命令代次及只读反馈事件，不拥有后端队列、名单锁、确认权威或准入签名。真实生产适配器必须由竞技组合根提供，不能只因有创建接口就宣称完整生命周期可用。
+无队伍玩家可直接单排，也可发送首次邀请。后端同一事务创建队伍、邀请、唯一成员索引、收件箱、幂等回执与事件。邀请60秒、申请120秒。队长可管理成员、移交、解散，成员可离队；报名锁定期间不能变更名单。本人邀请到达与本轮准备开始由真实观察通知弹出页面，失活或认证换代解除旧订阅。
 
-## 公开命令与失败边界
+队长选择1v1至5v5模式，整队进行20秒准备；单人无需先建队。队伍人数不能超过该模式单队容量，1v1拒绝多人队伍。全部准备后，名单锁、票据、玩家唯一预留和回执同一事务提交。队列按模式/区域分区，以不可拆分票据填满双方精确人数；候选形成后每位玩家须在30秒内亲自确认，队长不能代确认。确认时Gateway复核本人已选角色及真正来源世界。
 
-- `RegisterMatchmakingAdapter`仅游戏线程，首次注册返回唯一FGuid，重复提供者不覆盖；`UnregisterMatchmakingAdapter`只接受匹配的非空句柄。撤销令旧回调失效，不提交远端取消。
-- `RequestMatchmaking`接收真实目录ModeId，当前页面打开时携带授权小队PartyId；无队伍才允许空PartyId。模式正式配置、认证代次和完整后端生命周期任一缺失均返回false且不产生远端副作用。返回true只表示交给提供者，最终成功等待事件。
-- `CancelMatchmaking`沿用报名逻辑身份；只有远端确认才清本地报名身份和显示取消。关页、销毁World或取消本地等待均不等于释放远端队伍锁。
-- `RespondToMatchOffer`接受布尔意图，提交适配器授权CandidateId、非负Revision及独立ClientRequestId。不存在身份、版本、权威截止时间或回复资格时拒绝。该路径不调用局内SetArenaReady，不直接ClientTravel。
-- 回调只允许游戏线程，并检查弱对象、命令代次、当前认证主体与AuthGeneration；世界退出、控制器变化、账号退出/重登和提供者撤销均使旧代次失效。重复回调不会再次发布终态。
-- 远端任意错误正文不进入Widget或遥测。请求未获确认时不显示“成功”；报名逻辑身份保留，阻止生成新身份盲目重放。
+## 观察与客户端所有权
 
-## 界面合同
+公共队伍和竞技各只有一条GameInstance认证作用域观察。初始完整快照后续接服务器通知长等待，游标丢失完整重同步。Widget只投影状态、提交意图；无业务Tick或常驻计时查询。倒计时使用CommonNumericTextBlock的引擎端点动画；结束、拒绝和重同步仍以服务端事实为准。
 
-公共页面只读UDivineBeastsPartyViewModel，按钮提交类型化普通小队命令，列表使用UDivineBeastsPartyListEntry。名单、邀请和申请的稳定选择键来自当前授权快照，不默认选择首项。解散需要复选确认；旧名单在读取失败后不能授予写权限。
+真实竞技适配复用Online认证、同源传输、预算及取消。命令解析Gateway的clientRequestId/snapshot信封并核对原请求身份；本地取消等待不等于远端取消。确定拒绝清除本地意图，响应未知则重新建立授权快照，不盲目重复报名。取消重试使用原版本/请求键，确定冲突后才允许新逻辑重试。页面关闭不停止共享订阅或释放远端名单。
 
-竞技模式列表展示实际目录的1v1、2v2、3v3、4v4、5v5 TeamSize，不从协议枚举推算。候选确认与场内准备分离；竞技HUD显示复制记分板，生命/气势、Buff、施法和技能栏仍由公共RootLayout已有CombatHUD负责，避免第二套状态或播放器。死亡次数不冒充权威淘汰事实。
+LocalPlayer组合拥有页面注册、命令代次和反馈委托。账号/角色/World切换、EndPlay、提供者撤销与销毁清理对应所有权；迟到或重入回调复核弱引用、认证代次、请求代次及World。新页面只接受同一作用域的初始缓存和后续事件。
 
-## 当前后端与发布限制
+## 分配、准入与真实旅行
 
-当前实际Gateway只有创建匹配票据路由；没有完整观察、取消、逐人候选确认合同和生产客户端适配器。`SupportsTicketLifecycle`默认false，本次没有伪造路由、返回值或生产注册，因此正式开始/取消/接受/拒绝维持不可用。五模式实际目录仍为NotConfigured，未把开发地图改成ProductionReady。
+Match消费者真实启动于HTTP/gRPC组合根。生产步骤存PostgreSQL，按数据库时钟、Version/Fence/Owner租约推进；阶段Outbox同事务，通知不含迁移秘密。Redis原子队列只负责状态投影，不签票。分配先持久固定名单/角色/内容，再真实申请MainArena，逐人签票并保存稳定回执；全员提交前不发布任何准入。
 
-普通小队限时准备会话、未建队原子邀请、世界右键目标到上下文菜单的调用方，以及竞技权威淘汰事实仍需后续真实集成。原生命令入口和蓝图完成不意味着这些能力完成，不作为可上线闭环交付。
+本人迁移接口独立返回短期秘密，适配器只在回调栈移动给RequestTrustedWorldMigration，复用现有RequestWorld/Loading/Session执行链。UI快照不持有端点或TransferTicket。流程独立核对当前认证、Session、WorldDefinition；竞技扩展通过真实Controller/Pawn、角色定义Ready和服务器复制Gameplay资格事件提供就绪事实，不能用按键或本地倒计时提前放行。
 
-## 验证边界
+单局规则使用后端锁定英雄，全员准入后10秒开赛，20分钟上限。双方各5个唯一出生槽按固定Roster取用。死亡不自动复活，帧末汇合死亡事件后判定剩余队伍，同帧双方全灭或时间到判平。原进程60秒重连复用原Pawn、位置和资源；淘汰者只能恢复连接与观战，不能重新出生。恢复票据使用独立稳定意图，仍单次消费，不把新票等同于重生资格。
 
-独立审查后的同批修复包括：公共页面按平台具体实例/原栈账本退休绑定、同Widget换模型防护；成员/邀请/模式改接SelectionChanged并在重建期间防重入，提交前再核真实选中对象；只有服务端确定回复且状态Idle的匹配逻辑身份才释放。新增SelectionAndRecycledBinding、KeyboardModeSelection和ConfirmedOfferTerminal原生回归，不把测试替身/内存Widget夹具冒充生产资产或多人联机。
+## 失败补偿与返回
 
-Editor集中构建、原生自动化及Monolith编译/保存/冷读证据按本轮执行台账登记。新增测试替身仅在Private/Tests且WITH_DEV_AUTOMATION_TESTS中存在，不接入生产。没有运行Go、Client/Server构建、Cook/Stage、多人网络或人工视觉验收；禁止从静态可访问性零警告推断设备适配和颜色已验收。
+分配/签票失败撤销所有已持久TicketID，包括响应未知的请求；未分配也保存取消墓碑，迟到成功不能复活该比赛。故障进入Returning后不再次退回补偿阶段。可信结果或故障后，个人返回按原逻辑体验重新寻找安全实例，永不复用旧地址。回收须原Boot真实零人数心跳晚于终局记录，或原实例明确失效；不Drain同名后继Boot。
+
+本地Windows开发使用Deploy/Local/RunMainArenaPool.ps1管理独占Server进程；收到后端released才替换本槽位，仅按PID/启动时间/路径终止自有进程。控制面短暂失联保留实例。生产使用Agones/Fleet；代码与本地进程不构成真实集群验收。
+
+## 当前内容与验证边界
+
+DBAWorldPack_MainArena拥有已保存白盒地图及World/Experience/Pawn定义；五模式为DevelopmentOnly，CustomConfig与-DBADevelopmentArena双开关，Shipping/Test拒绝。DBAArena公共竞技UI通过显式客户端Cook闭包纳入，专服仍剥离UI/表现。生产英雄维护资格提供者仍需正式部署装配，不能把开发白盒声明为ProductionReady。
+
+本轮已执行Go应用/race/vet、真实隔离Redis/PG、HTTP往返及gRPC认证边界回归；十种正常/故障五模式编排包含新会话票据恢复、真实准入和新安全返回。原生、Cook/Stage、容器资源闭包、真实网络及人工视觉的逐阶段结果记录在Docs/Implementation/VillagePartyArena/ExecutionProgress.md。记录之外不宣称通过，也不把双客户端进程启动当作全部多人玩法验收。
+
+## 2026-10-15 审查修正
+
+个人弃权只淘汰本人并在帧末汇合判胜；不能替队友投降。单局断线由独立 SuspendPlayerConnection 关闭输入与施法资格，同一 Pawn / ASC Avatar / 出生代次仍作为受伤目标，死亡订阅继续有效。原 PlayerState 消失后统计进入恢复快照；重连只重新拥有原存活实体，不能重新初始化生命和资源。淘汰、结束与装配销毁撤销目标保留及订阅。
+
+NativeReviewRedActual 的两项实际引擎测试均失败，NativeReviewGreen 的两项均成功；SpawnReentrantSuccessorOwnership 新增使用真实英雄预热和真实角色 Combat 结算的断线死亡分支。此证据不代替物理断网与真实网络客户端重连验收。

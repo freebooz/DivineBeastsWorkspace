@@ -63,6 +63,13 @@ namespace
             !Object->TryGetArrayField(TEXT("members"),Members) || Members->Num()>5 ||
             !Object->TryGetArrayField(TEXT("requests"),Requests) || Requests->Num()>64 ||
             !Time(Object,TEXT("serverTimeUtc"),Next.ServerTimeUtc)) return false;
+        // 新准备合同必须成组出现；旧响应兼容为空，任何部分字段/类型错误均不覆盖缓存。
+        if(Object->HasField(TEXT("activityId"))||Object->HasField(TEXT("readyCheckId"))||Object->HasField(TEXT("readyDeadlineUtc")))
+        {
+            if(!String(Object,TEXT("activityId"),Next.ActivityId)||!String(Object,TEXT("readyCheckId"),Next.ReadyCheckId)||!Object->HasField(TEXT("readyDeadlineUtc")))return false;
+            if(!Next.ReadyCheckId.IsEmpty()){if(!Identifier(Next.ReadyCheckId)||!Identifier(Next.ActivityId)||!Time(Object,TEXT("readyDeadlineUtc"),Next.ReadyDeadlineUtc))return false;}
+            else if(!Object->TryGetField(TEXT("readyDeadlineUtc"))->IsNull())return false;
+        }
         if (!Next.bHasParty)
             return Next.PartyId.IsEmpty() && Next.LeaderPlayerId.IsEmpty() && Next.Revision==0 &&
                 !Next.bRosterLocked && Members->IsEmpty() && Requests->IsEmpty();
@@ -98,6 +105,42 @@ bool GamePlatformPartyCodec::DecodeSnapshot(const FString& Body,FGamePlatformPar
     if (!Parse(Body,Object) || !Snapshot(Object,Next)) return false;
     Out=MoveTemp(Next); return true;
 }
+
+bool GamePlatformPartyCodec::DecodeObservation(const FString& Body,FGamePlatformPartyResult& Out)
+{
+    TSharedPtr<FJsonObject> Object;
+    const TSharedPtr<FJsonObject>* View=nullptr;
+    const TArray<TSharedPtr<FJsonValue>>* Inbox=nullptr;
+    FGamePlatformPartyResult Next;
+    FDateTime ServerTime;
+    if (!Parse(Body,Object) || !String(Object,TEXT("scopeId"),Next.ObservationScopeId) ||
+        !Next.ObservationScopeId.StartsWith(TEXT("party/")) || Next.ObservationScopeId.Len()>134 ||
+        !String(Object,TEXT("cursor"),Next.ObservationCursor) || Next.ObservationCursor.IsEmpty() || Next.ObservationCursor.Len()>43 ||
+        !Boolean(Object,TEXT("resyncRequired"),Next.bResyncRequired) || !Boolean(Object,TEXT("changed"),Next.bChanged) ||
+        !Time(Object,TEXT("serverTimeUtc"),ServerTime) || !Object->TryGetObjectField(TEXT("snapshot"),View) ||
+        !Snapshot(*View,Next.Snapshot) || !Object->TryGetArrayField(TEXT("invitations"),Inbox)) return false;
+    TArray<FString> Parts;
+    Next.ObservationCursor.ParseIntoArray(Parts,TEXT("-"),false);
+    if (Parts.Num()!=2) return false;
+    for (const FString& Part:Parts)
+    {
+        if (Part.IsEmpty() || Part.Len()>20 || (Part.Len()>1 && Part[0]=='0')) return false;
+        uint64 Parsed=0;
+        for (const TCHAR C:Part)
+        {
+            if (C<'0' || C>'9' || Parsed>(MAX_uint64-(C-'0'))/10) return false;
+            Parsed=Parsed*10+(C-'0');
+        }
+    }
+    FString InboxBody;
+    if (!FJsonSerializer::Serialize(*Inbox,TJsonWriterFactory<>::Create(&InboxBody)) ||
+        !DecodeInvitations(InboxBody,Next.Invitations)) return false;
+    // 总体与嵌套时间允许编码时的微小间隔；统一采用最新服务器基准展示，不用客户端系统时钟。
+    Next.Snapshot.ServerTimeUtc=ServerTime;
+    Next.bSuccess=true;
+    Out=MoveTemp(Next);
+    return true;
+}
 bool GamePlatformPartyCodec::DecodeInvitations(const FString& Body,TArray<FGamePlatformPartyRequest>& Out)
 {
     TArray<TSharedPtr<FJsonValue>> Values;
@@ -124,9 +167,9 @@ bool GamePlatformPartyCodec::EncodeCommand(const FGamePlatformPartyCommand& Comm
 {
     Out.Empty();
     static const TSet<FString> Actions={TEXT("invite"),TEXT("requestJoin"),TEXT("acceptRequest"),TEXT("declineRequest"),TEXT("cancelRequest"),TEXT("ready"),TEXT("transferLeader"),TEXT("leave"),TEXT("kick"),TEXT("disband")};
-    if (!Identifier(Command.PartyId) || !Identifier(Command.ClientRequestId) || Command.ExpectedRevision<0 || !Actions.Contains(Command.Action)) return false;
+    if (!(Identifier(Command.PartyId)||(Command.PartyId.IsEmpty()&&Command.Action==TEXT("invite")&&Command.ExpectedRevision==0)) || !Identifier(Command.ClientRequestId) || Command.ExpectedRevision<0 || !Actions.Contains(Command.Action)) return false;
     const bool bTarget=Command.Action==TEXT("invite") || Command.Action==TEXT("kick") || Command.Action==TEXT("transferLeader");
-    const bool bRequest=Command.Action==TEXT("acceptRequest") || Command.Action==TEXT("declineRequest") || Command.Action==TEXT("cancelRequest");
+    const bool bRequest=Command.Action==TEXT("invite") || Command.Action==TEXT("requestJoin") || Command.Action==TEXT("acceptRequest") || Command.Action==TEXT("declineRequest") || Command.Action==TEXT("cancelRequest");
     if ((bTarget && !Identifier(Command.TargetPlayerId)) || (bRequest && !Identifier(Command.MembershipRequestId))) return false;
     TSharedRef<FJsonObject> Object=MakeShared<FJsonObject>();
     Object->SetStringField(TEXT("partyId"),Command.PartyId); Object->SetStringField(TEXT("action"),Command.Action);
@@ -142,8 +185,9 @@ bool GamePlatformPartyCodec::DecodeCommandResult(const FString& Body,const FGame
     TSharedPtr<FJsonObject> Object; FString RequestId,PartyId; int64 AffectedRevision=0;
     const TSharedPtr<FJsonObject>* View=nullptr; FGamePlatformPartySnapshot Next;
     if (!Parse(Body,Object) || !String(Object,TEXT("clientRequestId"),RequestId) || RequestId!=Command.ClientRequestId ||
-        !String(Object,TEXT("affectedPartyId"),PartyId) || PartyId!=Command.PartyId ||
+        !String(Object,TEXT("affectedPartyId"),PartyId) || !(PartyId==Command.PartyId || (Command.PartyId.IsEmpty()&&Command.Action==TEXT("invite")&&Identifier(PartyId))) ||
         !Revision(Object,TEXT("affectedRevision"),AffectedRevision) || AffectedRevision<Command.ExpectedRevision ||
         !Object->TryGetObjectField(TEXT("snapshot"),View) || !Snapshot(*View,Next)) return false;
+    if(Command.PartyId.IsEmpty()&&(!Next.bHasParty||Next.PartyId!=PartyId))return false;
     Out=MoveTemp(Next); return true;
 }

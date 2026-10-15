@@ -31,12 +31,16 @@ bool FDivineBeastsArenaProjectModeSpec::ValidateStructure(FString& OutError) con
 }
 
 bool FDivineBeastsArenaProjectModeSpec::ValidateProduction(FString& OutError) const
+{return ValidateRuntime(false,OutError);}
+
+bool FDivineBeastsArenaProjectModeSpec::ValidateRuntime(bool bAllowDevelopment,FString& OutError) const
 {
     if (!ValidateStructure(OutError))
     {
         return false;
     }
-    if (ConfigState != EDivineBeastsArenaConfigState::ProductionReady)
+    if (ConfigState != EDivineBeastsArenaConfigState::ProductionReady &&
+        !(bAllowDevelopment && ConfigState==EDivineBeastsArenaConfigState::DevelopmentOnly))
     {
         OutError = TEXT("项目竞技模式尚未标记ProductionReady。");
         return false;
@@ -74,9 +78,9 @@ bool FDivineBeastsArenaProjectModeSpec::ValidateProduction(FString& OutError) co
 
 bool FDivineBeastsArenaProjectModeSpec::TryBuildPlatformSpec(
     FGamePlatformArenaModeSpec& OutSpec,
-    FString& OutError) const
+    FString& OutError,bool bAllowDevelopment) const
 {
-    if (!ValidateProduction(OutError))
+    if (!ValidateRuntime(bAllowDevelopment,OutError))
     {
         return false;
     }

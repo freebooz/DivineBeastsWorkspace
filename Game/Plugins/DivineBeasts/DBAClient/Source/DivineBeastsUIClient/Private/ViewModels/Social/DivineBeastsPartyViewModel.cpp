@@ -1,6 +1,7 @@
-// 项目公共小队桥：只消费平台DTO与认证变化；失败/取消/换账号以代次隔离，未接入的实时观察与限时准备明确不可用。
+// 项目公共小队桥：只消费平台DTO、共享观察与认证通知；命令和显示按页面/账号代次隔离，不轮询业务。
 #include "ViewModels/Social/DivineBeastsPartyViewModel.h"
 #include "GamePlatformOnlineClientSubsystem.h"
+#include "Party/GamePlatformPartyClientSubsystem.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -11,6 +12,7 @@ void UDivineBeastsPartyViewModel::ConnectPlayer(ULocalPlayer* Player)
     DisconnectPlayer();
     if (!Player || !Player->GetGameInstance()) return;
     Online=Player->GetGameInstance()->GetSubsystem<UGamePlatformOnlineClientSubsystem>();
+    PartyClient=Player->GetGameInstance()->GetSubsystem<UGamePlatformPartyClientSubsystem>();
     RequestWorld=Player->GetWorld();
     if (auto* Service=Online.Get())
     {
@@ -21,15 +23,15 @@ void UDivineBeastsPartyViewModel::ConnectPlayer(ULocalPlayer* Player)
 void UDivineBeastsPartyViewModel::CancelOwnedRequests()
 {
     // 先撤身份再取消，取消通知允许重入；旧回调只能完成自己的等待，不能写新账号。
-    ++OperationGeneration; PendingReads=0; bBusy=false;
+    ++OperationGeneration; bBusy=false;
     auto Requests=MoveTemp(OwnedRequests); OwnedRequests.Reset();
     if (auto* Service=Online.Get()) for (const auto& Request:Requests) Service->Cancel(Request);
 }
 void UDivineBeastsPartyViewModel::DisconnectPlayer()
 {
-    CancelOwnedRequests();
+    UnbindObservation(); CancelOwnedRequests();
     if (auto* Service=Online.Get()) Service->OnAuthStateChanged().Remove(AuthHandle);
-    AuthHandle.Reset(); Online.Reset(); RequestWorld.Reset(); AuthScope.Invalidate(); CurrentPlayerId.Empty();
+    AuthHandle.Reset(); Online.Reset(); PartyClient.Reset(); RequestWorld.Reset(); AuthScope.Invalidate(); CurrentPlayerId.Empty();
     Party={}; Invitations.Reset(); bStateKnown=false; bOutcomeUnknown=false; UnknownCommand={};
     TargetPlayer.Empty(); TargetParty.Empty(); TargetRevision=-1; ClearSourceScope();
 }
@@ -47,7 +49,7 @@ void UDivineBeastsPartyViewModel::AuthenticationChanged(const FGamePlatformAuthS
     if (bAuthenticated && AuthScope.IsValid() && !CurrentPlayerId.IsEmpty()) BeginSourceScope(AuthScope);
     StatusText=FText::FromString(bAuthenticated ? TEXT("读取小队状态") : TEXT("请先登录"));
     MarkStateChanged();
-    if (IsPageActive() && HasActiveSourceScope()) RefreshParty();
+    if (IsPageActive() && HasActiveSourceScope()) BindObservation();
 }
 void UDivineBeastsPartyViewModel::OnPageBegan()
 {
@@ -57,47 +59,46 @@ void UDivineBeastsPartyViewModel::OnPageBegan()
         if(!AuthHandle.IsValid()) AuthHandle=Service->OnAuthStateChanged().AddUObject(this,&UDivineBeastsPartyViewModel::AuthenticationChanged);
         AuthenticationChanged(Service->GetSnapshot());
     }
-    RefreshParty();
+    BindObservation();
 }
 void UDivineBeastsPartyViewModel::OnPageEnded()
 {
-    CancelOwnedRequests(); bStateKnown=false;
+    UnbindObservation(); CancelOwnedRequests(); bStateKnown=false;
     if(auto* Service=Online.Get())Service->OnAuthStateChanged().Remove(AuthHandle);
     AuthHandle.Reset();Super::OnPageEnded();
 }
+void UDivineBeastsPartyViewModel::BindObservation()
+{
+    auto* Service=PartyClient.Get();
+    if(!Service||!IsPageActive()||!HasActiveSourceScope())return;
+    if(!ObservationHandle.IsValid())ObservationHandle=Service->OnChanged().AddUObject(this,&UDivineBeastsPartyViewModel::ObservationChanged);
+    // 先登记通知，再读取一次缓存；同步重入也不能错过初始状态与后继变更。
+    ObservationChanged(Service->GetSnapshot());
+}
+void UDivineBeastsPartyViewModel::UnbindObservation()
+{
+    if(auto* Service=PartyClient.Get())Service->OnChanged().Remove(ObservationHandle);
+    ObservationHandle.Reset();
+}
+void UDivineBeastsPartyViewModel::ObservationChanged(const FGamePlatformPartyResult& Result)
+{
+    const auto* Service=PartyClient.Get();
+    if(!IsPageActive()||!HasActiveSourceScope()||!Service||Service->GetAuthenticationGeneration()!=AuthScope)return;
+    if(Result.bSuccess)
+    {
+        // 命令回执可能先于较旧的在途快照到达；同聚合修订倒退只忽略该投影，不宣布服务失效。
+        if(Party.bHasParty&&Result.Snapshot.bHasParty&&Party.PartyId==Result.Snapshot.PartyId&&Result.Snapshot.Revision<Party.Revision)return;
+        if(!ApplyParty(Result.Snapshot)){bStateKnown=false;StatusText=FText::FromString(TEXT("小队观察状态无效，请重新同步"));}
+        else{Invitations=Result.Invitations;bStateKnown=true;if(!bBusy&&!bOutcomeUnknown)StatusText=FText::FromString(TEXT("小队状态已同步"));}
+    }
+    else{bStateKnown=false;StatusText=FText::FromString(TEXT("小队连接正在恢复；状态确认后可继续操作"));}
+    PublishPartyProjection();
+}
 void UDivineBeastsPartyViewModel::RefreshParty()
 {
-    auto* Service=Online.Get();
-    if (!Service || !RequestWorld.IsValid() || !IsPageActive() || !HasActiveSourceScope() || bBusy) return;
-    const uint64 Generation=++OperationGeneration; const FGuid Scope=AuthScope;
-    const TWeakObjectPtr<UDivineBeastsPartyViewModel> Weak(this);
-    bBusy=true; bStateKnown=false; PendingReads=2; bReadFailed=false; OwnedRequests.Reset();
-    StatusText=FText::FromString(TEXT("正在读取；其他玩家的变更请使用刷新按钮确认")); MarkStateChanged();
-    if (!IsPageActive() || OperationGeneration!=Generation || AuthScope!=Scope) return;
-    FGamePlatformOnlineRequestOptions Options; Options.Owner=this; Options.Lifetime=EGamePlatformOnlineRequestLifetime::World; Options.World=RequestWorld;
-    auto Complete=[Weak,Generation,Scope](const FGamePlatformPartyResult& Result,bool bInbox)
-    {
-        auto* Self=Weak.Get(); if (!Self || !Self->IsPageActive() || Self->OperationGeneration!=Generation || Self->AuthScope!=Scope) return;
-        if (Result.bSuccess)
-        {
-            if (bInbox) Self->Invitations=Result.Invitations;
-            else { Self->bStateKnown=Self->ApplyParty(Result.Snapshot); Self->bReadFailed|=!Self->bStateKnown; }
-        }
-        else { Self->bReadFailed=true; Self->ReportFailure(Result); }
-        if (--Self->PendingReads==0)
-        {
-            Self->bBusy=false; Self->OwnedRequests.Reset();
-            Self->bStateKnown&=!Self->bReadFailed;
-            if (Self->bStateKnown && !Self->bOutcomeUnknown) Self->StatusText=FText::FromString(TEXT("小队状态已更新；实时观察接口尚未提供，可手动刷新"));
-        }
-        Self->PublishPartyProjection();
-    };
-    const auto Read=Service->GetCurrentParty(Options,[Complete](const FGamePlatformPartyResult& R){Complete(R,false);});
-    if (!IsPageActive() || OperationGeneration!=Generation || AuthScope!=Scope) { Service->Cancel(Read); return; }
-    OwnedRequests.Add(Read);
-    const auto Inbox=Service->GetPartyInvitations(Options,[Complete](const FGamePlatformPartyResult& R){Complete(R,true);});
-    if (!IsPageActive() || OperationGeneration!=Generation || AuthScope!=Scope) { Service->Cancel(Inbox); return; }
-    OwnedRequests.Add(Inbox);
+    auto* Service=PartyClient.Get();
+    if(!Service||!RequestWorld.IsValid()||!IsPageActive()||!HasActiveSourceScope()||bBusy)return;
+    StatusText=FText::FromString(TEXT("正在重新同步小队"));MarkStateChanged();Service->Synchronize();
 }
 bool UDivineBeastsPartyViewModel::ApplyParty(const FGamePlatformPartySnapshot& Next)
 {
@@ -136,6 +137,7 @@ bool UDivineBeastsPartyViewModel::CanSubmitPartyAction(const FString& Action) co
     if (!Online.IsValid() || !IsPageActive() || !HasActiveSourceScope() || bBusy || !bStateKnown || bOutcomeUnknown) return false;
     if (Action==TEXT("acceptRequest") || Action==TEXT("declineRequest")) return !Invitations.IsEmpty() || (Party.bHasParty && !Party.bRosterLocked && Party.LeaderPlayerId==CurrentPlayerId);
     if (Action==TEXT("requestJoin")) return !Party.bHasParty && !TargetParty.IsEmpty() && TargetRevision>=0;
+    if(Action==TEXT("invite")&&!Party.bHasParty)return true;
     if (!Party.bHasParty || Party.bRosterLocked) return false;
     if (Action==TEXT("leave") || Action==TEXT("ready")) return true;
     return Party.LeaderPlayerId==CurrentPlayerId && (Action==TEXT("invite") || Action==TEXT("kick") || Action==TEXT("transferLeader") || Action==TEXT("disband") || Action==TEXT("cancelRequest"));
@@ -148,6 +150,7 @@ bool UDivineBeastsPartyViewModel::SubmitPartyAction(const FString& Action,const 
     FGamePlatformPartyCommand Command; Command.Action=Action; Command.PartyId=Party.PartyId; Command.ExpectedRevision=Party.Revision;
     Command.TargetPlayerId=TargetPlayerId.IsEmpty()?TargetPlayer:TargetPlayerId;
     Command.ClientRequestId=FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens);
+    if(Action==TEXT("invite")||Action==TEXT("requestJoin"))Command.MembershipRequestId=Command.ClientRequestId;
     if (Action==TEXT("requestJoin")) { Command.PartyId=TargetParty; Command.ExpectedRevision=TargetRevision; }
     if (Action==TEXT("ready"))
     {
@@ -176,11 +179,12 @@ bool UDivineBeastsPartyViewModel::Dispatch(const FGamePlatformPartyCommand& Comm
     {
         auto* Self=Weak.Get(); if (!Self || !Self->IsPageActive() || Self->OperationGeneration!=Generation || Self->AuthScope!=Scope) return;
         Self->bBusy=false; Self->OwnedRequests.Reset();
-        if (Result.bSuccess && Self->ApplyParty(Result.Snapshot))
+        const bool bNewerObserved=Self->Party.bHasParty && Result.Snapshot.bHasParty && Self->Party.PartyId==Result.Snapshot.PartyId && Self->Party.Revision>Result.Snapshot.Revision;
+        if (Result.bSuccess && (bNewerObserved || Self->ApplyParty(Result.Snapshot)))
         { Self->bStateKnown=true; Self->bOutcomeUnknown=false; Self->UnknownCommand={}; Self->StatusText=FText::FromString(TEXT("服务器已确认操作")); }
         else { if (Result.bOutcomeUnknown) Self->UnknownCommand=Command; Self->ReportFailure(Result); Self->bStateKnown=false; }
         Self->PublishPartyProjection();
-        if (Result.bSuccess) Self->RefreshParty();
+        // 共享观察已与仓储事件提交衔接，不因每个命令完成额外轮询快照。
     });
     if(!IsPageActive() || OperationGeneration!=Generation || AuthScope!=Scope){Service->Cancel(Request);return false;}
     OwnedRequests.Add(Request);
@@ -190,4 +194,12 @@ bool UDivineBeastsPartyViewModel::RetryUnknownCommand()
 {
     if (!bOutcomeUnknown || !bStateKnown || bBusy || !HasActiveSourceScope()) return false;
     return Dispatch(UnknownCommand);
+}
+
+bool UDivineBeastsPartyViewModel::SubmitReadyResponse(bool bAccept)
+{
+    if(!CanSubmitPartyAction(TEXT("ready"))||Party.ReadyCheckId.IsEmpty())return false;
+    FGamePlatformPartyCommand Command;Command.Action=TEXT("ready");Command.PartyId=Party.PartyId;Command.ExpectedRevision=Party.Revision;
+    Command.bReady=bAccept;Command.ClientRequestId=FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens);
+    return Dispatch(Command);
 }

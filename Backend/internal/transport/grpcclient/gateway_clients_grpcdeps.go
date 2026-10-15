@@ -170,7 +170,9 @@ func gatewayCharacterSummary(character *playerdatav1.CharacterSummary) (gateway.
 type MatchClient struct{ client matchv1.MatchServiceClient }
 
 // NewMatchClient（创建比赛业务gRPC客户端）复用与MatchService的HTTP/2连接。
-func NewMatchClient(conn grpc.ClientConnInterface) *MatchClient {
+func NewMatchClient(conn grpc.ClientConnInterface,bearer ...string) *MatchClient {
+ token:="";if len(bearer)==1 {token=bearer[0]}
+ conn=&authenticatedMatchConn{ClientConnInterface:conn,token:token}
 	return &MatchClient{client: matchv1.NewMatchServiceClient(conn)}
 }
 

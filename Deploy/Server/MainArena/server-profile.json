@@ -5,9 +5,9 @@
   "allowedExperienceIds": [
     "Experience.MainArena.Main"
   ],
-  "worldPackage": "/Game/DivineBeasts/Worlds/L_MainArena",
+  "worldPackage": "/DBAWorldPack_MainArena/Maps/L_DBA_MainArena",
   "requiredAssets": [
-    "/Game/DivineBeasts/Worlds/L_MainArena.L_MainArena"
+    "/DBAWorldPack_MainArena/Maps/L_DBA_MainArena.L_DBA_MainArena"
   ],
   "arenaModeIds": [
     "Arena.Mode.Duel1v1",

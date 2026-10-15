@@ -62,6 +62,10 @@ public:
         FString& OutReason) = 0;
     /** 游戏线程权威设置当前Pawn资格；Active需完整Ready/ActorInfo/拥有关系，Inactive同时取消本玩家复活计时器。 */
     virtual bool SetPlayerGameplayActive(const FString& PlayerId, bool bActive, FString& OutReason) = 0;
+    /** 恢复原实体、原位置和GAS数值；默认明确不支持，不能用重新出生冒充保留生命的重连。 */
+    /** GT断线停止玩家动作并保留原实体死亡观察；默认兼容旧模式，单局适配器须保留受伤目标。 */
+    virtual bool SuspendPlayerConnection(const FString& PlayerId,FString& OutReason) {return SetPlayerGameplayActive(PlayerId,false,OutReason);}
+    virtual bool RestorePlayerConnection(const FString& PlayerId,FString& OutReason) {OutReason=TEXT("当前适配器不支持原实体重连。");return false;}
     virtual bool RequestRespawn(
         const FString& PlayerId,
         FName TeamId,

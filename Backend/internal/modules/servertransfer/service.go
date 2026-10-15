@@ -98,10 +98,11 @@ type SessionEpochStore interface {
 
 // Service（迁移票据服务）使用HMAC-SHA256签名，并通过ReplayStore原子消费TicketID。
 type Service struct {
-	secret []byte
-	now    func() time.Time
-	replay ReplayStore
-	epochs SessionEpochStore
+	secret   []byte
+	now      func() time.Time
+	replay   ReplayStore
+	epochs   SessionEpochStore
+	issuance IssuanceStore // 生产共享幂等签票回执，不得把内存实现当成跨进程恢复。
 }
 
 // NewService（创建迁移服务）使用内存ReplayStore，兼容本地开发和既有调用。
@@ -127,17 +128,23 @@ func NewServiceWithStores(
 	replay ReplayStore,
 	epochs SessionEpochStore,
 ) *Service {
+	return NewServiceWithAllStores(secret, now, replay, epochs, NewMemoryIssuanceStore())
+}
+
+// NewServiceWithAllStores是生产完整构造器，显式注入共享防重放、Epoch和签票幂等仓储；调用前必须全部可用。
+func NewServiceWithAllStores(secret []byte, now func() time.Time, replay ReplayStore, epochs SessionEpochStore, issuance IssuanceStore) *Service {
 	if len(secret) < 32 {
 		panic("ServerTransfer签名密钥至少32字节")
 	}
-	if now == nil || replay == nil || epochs == nil {
+	if now == nil || replay == nil || epochs == nil || issuance == nil {
 		panic("ServerTransfer时钟、ReplayStore和SessionEpochStore不能为空")
 	}
 	return &Service{
-		secret: append([]byte(nil), secret...),
-		now:    now,
-		replay: replay,
-		epochs: epochs,
+		secret:   append([]byte(nil), secret...),
+		now:      now,
+		replay:   replay,
+		epochs:   epochs,
+		issuance: issuance,
 	}
 }
 
@@ -149,6 +156,18 @@ func (s *Service) Issue(req IssueRequest) (Ticket, error) {
 // IssueContext（签发迁移票据）在签票时就分配权威GameSessionID和单调SessionEpoch。
 // 未使用或过期票据允许“烧掉”一个Epoch；Epoch只要求单调，不要求连续。
 func (s *Service) IssueContext(ctx context.Context, req IssueRequest) (Ticket, error) {
+	if req.TicketID == "" || len(req.TicketID) > 128 {
+		return Ticket{}, errors.New("TRANSFER_TICKET_INVALID: 签票身份无效")
+	}
+	fingerprint, err := issuanceFingerprint(req)
+	if err != nil {
+		return Ticket{}, err
+	}
+	return s.issuance.GetOrIssue(ctx, req.TicketID, fingerprint, s.now().UTC(), func() (Ticket, error) { return s.issueNewContext(ctx, req) })
+}
+
+// issueNewContext仅在幂等仓储未命中时执行；随机秘密与Epoch在首次完整提交前不能发布给其他调用者。
+func (s *Service) issueNewContext(ctx context.Context, req IssueRequest) (Ticket, error) {
 	if req.TicketID == "" || req.PlayerID == "" || req.SessionID == "" ||
 		req.DestinationGameServerID == "" || req.DestinationEndpoint == "" ||
 		req.DestinationWorldID == "" || req.DestinationServerBootID == "" ||

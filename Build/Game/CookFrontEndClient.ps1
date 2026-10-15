@@ -1,4 +1,4 @@
-#requires -Version 7.0
+﻿#requires -Version 7.0
 <#
 .SYNOPSIS
 显式发布登录、角色预览和Village客户端，并检查实际IoStore中的必需软引用资产。
@@ -40,6 +40,8 @@ try {
     $details.CookDirectory=$cookDirectory; $details.StageDirectory=$stageDirectory
     # 三张真实地图与小范围软引用目录共同组成前端回归包；不使用CookAll扩大到全部开发内容。
     $maps=@('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','/DBAFrontEndPack/Maps/L_DBA_CharacterStudio','/DBAWorldPack_Village/Maps/L_Village_Start')
+    if($CustomConfig -eq 'VillageDevelopmentClient'){$maps+='/DBAWorldPack_MainArena/Maps/L_DBA_MainArena'}
+    $details.Maps=$maps
     $arguments=@($tool.Dll,'BuildCookRun',"-project=$($context.Project)",'-target=DivineBeastsArenaClient',
         '-nop4','-unattended','-utf8output','-cook','-stage','-pak','-skipbuild','-skipbuildeditor','-platform=Win64',
         '-clientconfig=Development','-client','-ddc=NoZenLocalFallback',
@@ -83,7 +85,7 @@ try {
         if ($code -eq 0) {
             $check=Join-Path $context.Workspace 'Tests/Assets/TestFrontEndClientContainer.ps1'
             $gateArguments = @('-NoProfile','-File',$check,'-ContainerCsv',$csv,'-ReportPath',(Join-Path $context.Directory 'ClientContainer.json'))
-            if ($CustomConfig -eq 'VillageDevelopmentClient') { $gateArguments += '-DevelopmentSkills' }
+            if ($CustomConfig -eq 'VillageDevelopmentClient') { $gateArguments += @('-DevelopmentSkills','-DevelopmentArena') }
             & (Join-Path $PSHOME 'pwsh.exe') @gateArguments
             $code=$LASTEXITCODE
         }

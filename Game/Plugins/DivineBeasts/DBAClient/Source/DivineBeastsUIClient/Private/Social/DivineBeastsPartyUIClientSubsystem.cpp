@@ -6,6 +6,11 @@
 #include "Definitions/GamePlatformUIScreenDefinition.h"
 #include "Screens/GamePlatformUIScreen.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/GameInstance.h"
+#include "GameFramework/PlayerController.h"
+#include "Party/GamePlatformPartyClientSubsystem.h"
+#include "DivineBeastsApplicationFlowSubsystem.h"
+#include "Flow/DivineBeastsFlowNodes.h"
 #include "Layers/GamePlatformUILayerStack.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 #include "UObject/StrongObjectPtr.h"
@@ -36,10 +41,23 @@ void UDivineBeastsPartyUIClientSubsystem::Initialize(FSubsystemCollectionBase& C
         Definition->PausePolicy=EGamePlatformUIPausePolicy::Never;
         if(UI->RegisterScreenDefinition(Definition))Definitions.Add(Definition);
     }
+    if(auto* Instance=GetLocalPlayer()->GetGameInstance())
+    {
+        PartySource=Instance->GetSubsystem<UGamePlatformPartyClientSubsystem>();
+        ApplicationFlow=Instance->GetSubsystem<UDivineBeastsApplicationFlowSubsystem>();
+        if(auto* Source=PartySource.Get())PartyObservationHandle=Source->OnChanged().AddUObject(this,&UDivineBeastsPartyUIClientSubsystem::PartyObservationChanged);
+        if(auto* Flow=ApplicationFlow.Get())FlowStateHandle=Flow->OnViewStateChanged().AddUObject(this,&UDivineBeastsPartyUIClientSubsystem::FlowStateChanged);
+    }
+    ProjectPartyNotifications();
+
 }
 void UDivineBeastsPartyUIClientSubsystem::Deinitialize()
 {
-    bClosing=true; ActivityOwner.Reset(); ActivityAction={}; ActivityHandle.Invalidate();
+    bClosing=true;
+    if(auto* Source=PartySource.Get())Source->OnChanged().Remove(PartyObservationHandle);
+    if(auto* Flow=ApplicationFlow.Get())Flow->OnViewStateChanged().Remove(FlowStateHandle);
+    PartyObservationHandle.Reset();FlowStateHandle.Reset();PartySource.Reset();ApplicationFlow.Reset();SeenInvitationIds.Reset();SeenReadyCheckId.Empty();NotificationAuthGeneration.Invalidate();
+    ActivityOwner.Reset(); ActivityAction={}; ActivityHandle.Invalidate();
     CloseOwnedPages();
     auto Pending=MoveTemp(PendingModels); PendingModels.Reset();
     if(UI)
@@ -66,6 +84,7 @@ void UDivineBeastsPartyUIClientSubsystem::PlayerControllerChanged(APlayerControl
 {
     Super::PlayerControllerChanged(Controller);CloseOwnedPages();
     ContextPlayer.Empty();ContextParty.Empty();ContextRevision=-1;
+    ProjectPartyNotifications();
 }
 bool UDivineBeastsPartyUIClientSubsystem::OpenPartyPage(FName PageId)
 {
@@ -141,4 +160,39 @@ bool UDivineBeastsPartyUIClientSubsystem::OpenActivity(const FString& PartyId)
     if(!HasActivity())return false;
     // 回调可能同步注销自己；复制执行闭包，避免销毁正在执行的TFunction存储。
     auto Action=ActivityAction;return Action(PartyId);
+}
+
+void UDivineBeastsPartyUIClientSubsystem::PartyObservationChanged(const FGamePlatformPartyResult&){ProjectPartyNotifications();}
+void UDivineBeastsPartyUIClientSubsystem::FlowStateChanged(const FDivineBeastsFlowViewState& State)
+{
+    if(State.CurrentStep!=FDivineBeastsFlowNodes::InWorld()){CloseOwnedPages();return;}
+    ProjectPartyNotifications();
+}
+void UDivineBeastsPartyUIClientSubsystem::ProjectPartyNotifications()
+{
+    if(bClosing||bProjectingNotifications)return;
+    TGuardValue<bool> Guard(bProjectingNotifications,true);
+    auto* Source=PartySource.Get();auto* Flow=ApplicationFlow.Get();if(!Source||!Flow)return;
+    const FGuid Auth=Source->GetAuthenticationGeneration();
+    if(NotificationAuthGeneration!=Auth){NotificationAuthGeneration=Auth;SeenInvitationIds.Reset();SeenReadyCheckId.Empty();CloseOwnedPages();}
+    const auto& Snapshot=Source->GetSnapshot();
+    if(!Snapshot.bSuccess||!Auth.IsValid()||Flow->GetViewState().CurrentStep!=FDivineBeastsFlowNodes::InWorld())return;
+    if(Snapshot.Snapshot.ReadyCheckId.IsEmpty())
+    {
+        auto Copy=Bindings;
+        for(const auto& Binding:Copy)if(Binding&&Binding->IsBound()&&Binding->GetBoundScreen()->GetScreenId()==TEXT("UI.Party.Ready"))Binding->CloseOwnedPage();
+    }
+    else if(SeenReadyCheckId!=Snapshot.Snapshot.ReadyCheckId)
+    {
+        const FString Ready=Snapshot.Snapshot.ReadyCheckId;
+        if(OpenPartyPage(TEXT("UI.Party.Ready")))SeenReadyCheckId=Ready;
+        return;
+    }
+    TArray<FString> NewIds;
+    for(const auto& Invite:Snapshot.Invitations)if(!SeenInvitationIds.Contains(Invite.PartyId+TEXT("/")+Invite.RequestId))NewIds.Add(Invite.PartyId+TEXT("/")+Invite.RequestId);
+    if(!NewIds.IsEmpty()&&!Snapshot.Snapshot.bRosterLocked)
+    {
+        bool bAlreadyOpen=false;for(const auto& Binding:Bindings)if(Binding&&Binding->IsBound()&&Binding->GetBoundScreen()->GetScreenId()==TEXT("UI.Party.Invitation")){bAlreadyOpen=true;break;}
+        if(bAlreadyOpen||OpenPartyPage(TEXT("UI.Party.Invitation")))for(const auto& Id:NewIds)SeenInvitationIds.Add(Id);
+    }
 }

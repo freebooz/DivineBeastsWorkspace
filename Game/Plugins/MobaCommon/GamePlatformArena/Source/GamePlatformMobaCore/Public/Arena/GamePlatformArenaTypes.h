@@ -89,6 +89,8 @@ struct GAMEPLATFORMMOBACORE_API FGamePlatformArenaRosterSlot
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FString PlayerId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FString CharacterId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName TeamId;
+    /** 后端已确认的英雄；LockedRoster策略必须非空，其他旧模式保留手工选人兼容。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) FString HeroDefinitionId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FString PartyId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 SlotIndex = INDEX_NONE;
 

@@ -24,6 +24,11 @@ const (
 	MatchService_ReadPartyState_FullMethodName          = "/divinebeasts.backend.match.v1.MatchService/ReadPartyState"
 	MatchService_CommandParty_FullMethodName            = "/divinebeasts.backend.match.v1.MatchService/CommandParty"
 	MatchService_GetPartyInvitations_FullMethodName     = "/divinebeasts.backend.match.v1.MatchService/GetPartyInvitations"
+	MatchService_ObserveParty_FullMethodName            = "/divinebeasts.backend.match.v1.MatchService/ObserveParty"
+	MatchService_ReadMatchmakingState_FullMethodName    = "/divinebeasts.backend.match.v1.MatchService/ReadMatchmakingState"
+	MatchService_ObserveMatchmaking_FullMethodName      = "/divinebeasts.backend.match.v1.MatchService/ObserveMatchmaking"
+	MatchService_CommandMatchmaking_FullMethodName      = "/divinebeasts.backend.match.v1.MatchService/CommandMatchmaking"
+	MatchService_GetMatchmakingMigration_FullMethodName = "/divinebeasts.backend.match.v1.MatchService/GetMatchmakingMigration"
 )
 
 // MatchServiceClient is the client API for MatchService service.
@@ -38,6 +43,13 @@ type MatchServiceClient interface {
 	ReadPartyState(ctx context.Context, in *PartyReadRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
 	CommandParty(ctx context.Context, in *PartyCommandRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
 	GetPartyInvitations(ctx context.Context, in *PartyReadRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
+	// 本人可恢复事件观察；至多20秒阻塞等待，取消不回滚业务。
+	ObserveParty(ctx context.Context, in *PartyObservationRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
+	// 匹配生命周期复用Shared JSON合同；认证主体/会话/已选角色由可信Gateway注入。
+	ReadMatchmakingState(ctx context.Context, in *PartyReadRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
+	ObserveMatchmaking(ctx context.Context, in *PartyObservationRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
+	CommandMatchmaking(ctx context.Context, in *MatchmakingCommandRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
+	GetMatchmakingMigration(ctx context.Context, in *MatchmakingCommandRequest, opts ...grpc.CallOption) (*PartyDataResponse, error)
 }
 
 type matchServiceClient struct {
@@ -98,6 +110,56 @@ func (c *matchServiceClient) GetPartyInvitations(ctx context.Context, in *PartyR
 	return out, nil
 }
 
+func (c *matchServiceClient) ObserveParty(ctx context.Context, in *PartyObservationRequest, opts ...grpc.CallOption) (*PartyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartyDataResponse)
+	err := c.cc.Invoke(ctx, MatchService_ObserveParty_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *matchServiceClient) ReadMatchmakingState(ctx context.Context, in *PartyReadRequest, opts ...grpc.CallOption) (*PartyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartyDataResponse)
+	err := c.cc.Invoke(ctx, MatchService_ReadMatchmakingState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *matchServiceClient) ObserveMatchmaking(ctx context.Context, in *PartyObservationRequest, opts ...grpc.CallOption) (*PartyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartyDataResponse)
+	err := c.cc.Invoke(ctx, MatchService_ObserveMatchmaking_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *matchServiceClient) CommandMatchmaking(ctx context.Context, in *MatchmakingCommandRequest, opts ...grpc.CallOption) (*PartyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartyDataResponse)
+	err := c.cc.Invoke(ctx, MatchService_CommandMatchmaking_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *matchServiceClient) GetMatchmakingMigration(ctx context.Context, in *MatchmakingCommandRequest, opts ...grpc.CallOption) (*PartyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartyDataResponse)
+	err := c.cc.Invoke(ctx, MatchService_GetMatchmakingMigration_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MatchServiceServer is the server API for MatchService service.
 // All implementations must embed UnimplementedMatchServiceServer
 // for forward compatibility.
@@ -110,6 +172,13 @@ type MatchServiceServer interface {
 	ReadPartyState(context.Context, *PartyReadRequest) (*PartyDataResponse, error)
 	CommandParty(context.Context, *PartyCommandRequest) (*PartyDataResponse, error)
 	GetPartyInvitations(context.Context, *PartyReadRequest) (*PartyDataResponse, error)
+	// 本人可恢复事件观察；至多20秒阻塞等待，取消不回滚业务。
+	ObserveParty(context.Context, *PartyObservationRequest) (*PartyDataResponse, error)
+	// 匹配生命周期复用Shared JSON合同；认证主体/会话/已选角色由可信Gateway注入。
+	ReadMatchmakingState(context.Context, *PartyReadRequest) (*PartyDataResponse, error)
+	ObserveMatchmaking(context.Context, *PartyObservationRequest) (*PartyDataResponse, error)
+	CommandMatchmaking(context.Context, *MatchmakingCommandRequest) (*PartyDataResponse, error)
+	GetMatchmakingMigration(context.Context, *MatchmakingCommandRequest) (*PartyDataResponse, error)
 	mustEmbedUnimplementedMatchServiceServer()
 }
 
@@ -134,6 +203,21 @@ func (UnimplementedMatchServiceServer) CommandParty(context.Context, *PartyComma
 }
 func (UnimplementedMatchServiceServer) GetPartyInvitations(context.Context, *PartyReadRequest) (*PartyDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPartyInvitations not implemented")
+}
+func (UnimplementedMatchServiceServer) ObserveParty(context.Context, *PartyObservationRequest) (*PartyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ObserveParty not implemented")
+}
+func (UnimplementedMatchServiceServer) ReadMatchmakingState(context.Context, *PartyReadRequest) (*PartyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadMatchmakingState not implemented")
+}
+func (UnimplementedMatchServiceServer) ObserveMatchmaking(context.Context, *PartyObservationRequest) (*PartyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ObserveMatchmaking not implemented")
+}
+func (UnimplementedMatchServiceServer) CommandMatchmaking(context.Context, *MatchmakingCommandRequest) (*PartyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CommandMatchmaking not implemented")
+}
+func (UnimplementedMatchServiceServer) GetMatchmakingMigration(context.Context, *MatchmakingCommandRequest) (*PartyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMatchmakingMigration not implemented")
 }
 func (UnimplementedMatchServiceServer) mustEmbedUnimplementedMatchServiceServer() {}
 func (UnimplementedMatchServiceServer) testEmbeddedByValue()                      {}
@@ -246,6 +330,96 @@ func _MatchService_GetPartyInvitations_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MatchService_ObserveParty_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PartyObservationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchServiceServer).ObserveParty(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchService_ObserveParty_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchServiceServer).ObserveParty(ctx, req.(*PartyObservationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MatchService_ReadMatchmakingState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PartyReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchServiceServer).ReadMatchmakingState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchService_ReadMatchmakingState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchServiceServer).ReadMatchmakingState(ctx, req.(*PartyReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MatchService_ObserveMatchmaking_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PartyObservationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchServiceServer).ObserveMatchmaking(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchService_ObserveMatchmaking_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchServiceServer).ObserveMatchmaking(ctx, req.(*PartyObservationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MatchService_CommandMatchmaking_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MatchmakingCommandRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchServiceServer).CommandMatchmaking(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchService_CommandMatchmaking_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchServiceServer).CommandMatchmaking(ctx, req.(*MatchmakingCommandRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MatchService_GetMatchmakingMigration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MatchmakingCommandRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchServiceServer).GetMatchmakingMigration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchService_GetMatchmakingMigration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchServiceServer).GetMatchmakingMigration(ctx, req.(*MatchmakingCommandRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MatchService_ServiceDesc is the grpc.ServiceDesc for MatchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -272,6 +446,26 @@ var MatchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPartyInvitations",
 			Handler:    _MatchService_GetPartyInvitations_Handler,
+		},
+		{
+			MethodName: "ObserveParty",
+			Handler:    _MatchService_ObserveParty_Handler,
+		},
+		{
+			MethodName: "ReadMatchmakingState",
+			Handler:    _MatchService_ReadMatchmakingState_Handler,
+		},
+		{
+			MethodName: "ObserveMatchmaking",
+			Handler:    _MatchService_ObserveMatchmaking_Handler,
+		},
+		{
+			MethodName: "CommandMatchmaking",
+			Handler:    _MatchService_CommandMatchmaking_Handler,
+		},
+		{
+			MethodName: "GetMatchmakingMigration",
+			Handler:    _MatchService_GetMatchmakingMigration_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

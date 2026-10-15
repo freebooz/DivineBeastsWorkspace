@@ -37,13 +37,23 @@ type PartyInvitationView = party.InvitationSnapshot
 
 // ApplyPartyCommand（执行组队命令）所有命令先绑定主体和内容摘要，再在原子事务内校验权限与版本。
 func (s *Service) ApplyPartyCommand(ctx context.Context, actorPlayerID string, command PartyCommand) (*party.Party, error) {
-	if actorPlayerID == "" || command.PartyID == "" || command.ClientRequestID == "" || command.ExpectedRevision < 0 ||
+	if actorPlayerID == "" || command.ClientRequestID == "" || command.ExpectedRevision < 0 ||
 		len(actorPlayerID) > 128 || len(command.PartyID) > 128 || len(command.ClientRequestID) > 128 || len(command.TargetPlayerID) > 128 || len(command.MembershipRequestID) > 128 || len(command.Action) > 32 {
 		return nil, errors.New("PARTY_COMMAND_INVALID: 命令身份、长度或版本无效")
+	}
+	if (command.Action == "invite" || command.Action == "requestJoin") && command.MembershipRequestID == "" {
+		command.MembershipRequestID = command.ClientRequestID
+	}
+	if command.PartyID == "" {
+		return s.initialInvitation(ctx, actorPlayerID, command)
 	}
 	atomic, ok := s.parties.(AtomicPartyRepository)
 	if !ok {
 		return nil, errors.New("PARTY_ATOMIC_STORE_REQUIRED: 未装配事务仓储")
+	}
+	// 邀请/申请的子意图沿用主体命令键，兼容旧客户端省略字段，同时保持未知响应的稳定重试身份。
+	if (command.Action == "invite" || command.Action == "requestJoin") && command.MembershipRequestID == "" {
+		command.MembershipRequestID = command.ClientRequestID
 	}
 	now := time.Now().UTC()
 	return atomic.Update(ctx, command.PartyID, command.ExpectedRevision,
@@ -122,6 +132,17 @@ func (s *Service) CommandParty(ctx context.Context, actorPlayerID string, comman
 	if err != nil {
 		return party.CommandResult{}, err
 	}
+	// 普通准备和名单变化也属于真实队列事件；同一应用迁移使最后一人准备后立即锁队，结构变化则失效原准备。
+	if s.matchmakingSettings != nil && s.matchmakingSettings.Enabled {
+		if err := s.AdvanceMatchmaking(ctx); err != nil {
+			return party.CommandResult{}, err
+		}
+		if latest, err := s.parties.Get(ctx, value.ID); err != nil {
+			return party.CommandResult{}, err
+		} else {
+			value = latest
+		}
+	}
 	view := party.EmptySnapshot(time.Now())
 	if _, member := value.Members[actorPlayerID]; member {
 		view, err = value.SnapshotFor(actorPlayerID, time.Now())
@@ -168,6 +189,9 @@ func (r *MemoryPartyRepository) Update(ctx context.Context, partyID string, expe
 		return nil, err
 	}
 	for id := range next.Members {
+		if _, retained := current.Members[id]; !retained && r.queue != nil && r.queue.Reservations[id] != "" {
+			return nil, errors.New("MATCH_PLAYER_RESERVED: 目标玩家已有活动匹配")
+		}
 		if owner := r.players[id]; owner != "" && owner != partyID {
 			return nil, errors.New("PARTY_ALREADY_MEMBER: 玩家已在其他队伍")
 		}

@@ -11,6 +11,9 @@ public:
     static const FDivineBeastsArenaProjectModeSpec* Find(FName ArenaModeId);
 
     static bool ValidateStructuralCatalog(FString& OutError);
+    /** 双开关开发准入：CustomConfig与命令行同时显式启用，Shipping/Test始终拒绝。 */
+    static bool IsDevelopmentEnabledForCurrentProcess();
+    static bool ValidateAssignmentForRuntime(const struct FGamePlatformArenaAssignment& Assignment,FGamePlatformArenaModeSpec& OutModeSpec,FString& OutError,bool bAllowDevelopment);
     static bool ValidateProductionCatalog(FString& OutError);
 
     static bool ValidateAssignmentAgainstProduction(

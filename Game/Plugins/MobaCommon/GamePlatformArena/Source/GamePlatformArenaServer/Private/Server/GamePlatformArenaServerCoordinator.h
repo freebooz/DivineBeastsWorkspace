@@ -26,13 +26,6 @@ public:
         AGamePlatformArenaGameMode* GameMode,
         TFunction<void(bool bSuccess, const FString& Error)> Completion);
 
-    void ValidateTicketAndAdmit(
-        AGamePlatformArenaGameMode* GameMode,
-        AGamePlatformArenaPlayerState* PlayerState,
-        const FString& PlayerId,
-        const FString& TransferTicket,
-        TFunction<void(bool bSuccess, const FString& Error)> Completion);
-
     void SubmitPendingResult(
         AGamePlatformArenaGameMode* GameMode,
         TFunction<void(bool bCommitted, const FString& Error)> Completion,

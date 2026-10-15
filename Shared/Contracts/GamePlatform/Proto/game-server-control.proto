@@ -82,6 +82,9 @@ message AssignedPlayer {
   string player_id = 1;
   string team_id = 2;
   string character_id = 3;
+  string party_id = 4; // 原子队伍，单排为空。
+  uint32 slot_index = 5; // 整场唯一出生槽位0至9。
+  string hero_definition_id = 6; // 后端锁定英雄。
 }
 
 message GetGameServerAssignmentResponse {
@@ -99,4 +102,7 @@ message GetGameServerAssignmentResponse {
   string world_id = 12;
   string region_id = 13;
   string assignment_type = 14;
+  int32 project_rule_revision = 15; // 批准的竞技规则。
+  string content_revision = 16; // 实际部署内容。
+  int32 hero_catalog_revision = 17; // 锁定英雄目录。
 }

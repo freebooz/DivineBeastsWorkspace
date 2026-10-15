@@ -90,9 +90,12 @@ type RegisterRequest struct {
 
 // RosterPlayer（比赛名单玩家）描述被分配到MainArena的可信玩家与队伍关系。
 type RosterPlayer struct {
-	PlayerID    string // PlayerID（玩家ID）。
-	TeamID      string // TeamID（竞技队伍ID）。
-	CharacterID string // CharacterID（已锁定角色ID；尚未选定时可为空）。
+	PlayerID         string // PlayerID（玩家ID）。
+	TeamID           string // TeamID（竞技队伍ID）。
+	CharacterID      string // CharacterID（完整竞技链路必须锁定持久角色；旧调用兼容空值）。
+	PartyID          string // 不可拆分原队伍；单排为空。
+	SlotIndex        int    // 整场唯一出生槽位，0至TotalPlayers-1；各队按Roster次序映射地图出生位。
+	HeroDefinitionID string // 后端已选角色对应英雄。
 }
 
 // WorldAssignment（世界分配）描述OpenWorld/Village服务器运行和玩家跨服所需的权威目标。
@@ -123,13 +126,16 @@ func (a WorldAssignment) Validate() error {
 
 // Assignment（主竞技场比赛分配）是MainArena Server启动比赛所需的权威运行上下文。
 type Assignment struct {
-	MatchID      string         // MatchID（比赛唯一ID）。
-	ArenaModeID  string         // ArenaModeID（1v1至5v5竞技模式ID）。
-	MapID        string         // MapID（主竞技场地图ID）。
-	TeamSize     int            // TeamSize（每队玩家数）。
-	TotalPlayers int            // TotalPlayers（比赛总玩家数）。
-	GameServerID string         // GameServerID（承载该比赛的MainArena实例ID）。
-	Roster       []RosterPlayer // Roster（完整权威玩家名单）。
+	ProjectRuleRevision int32          // 批准规则修订；旧调用零值只用于兼容。
+	ContentRevision     string         // 实际部署内容修订。
+	HeroCatalogRevision int32          // 已锁定英雄目录修订。
+	MatchID             string         // MatchID（比赛唯一ID）。
+	ArenaModeID         string         // ArenaModeID（1v1至5v5竞技模式ID）。
+	MapID               string         // MapID（主竞技场地图ID）。
+	TeamSize            int            // TeamSize（每队玩家数）。
+	TotalPlayers        int            // TotalPlayers（比赛总玩家数）。
+	GameServerID        string         // GameServerID（承载该比赛的MainArena实例ID）。
+	Roster              []RosterPlayer // Roster（完整权威玩家名单）。
 }
 
 // Validate（校验比赛分配）验证模式、人数、服务器绑定、玩家唯一性与每队人数。

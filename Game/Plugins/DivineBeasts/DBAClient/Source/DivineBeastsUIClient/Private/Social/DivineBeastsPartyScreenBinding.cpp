@@ -11,7 +11,7 @@
 #include "Components/TextBlock.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Engine/World.h"
-#include "TimerManager.h"
+#include "CommonNumericTextBlock.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 bool UDivineBeastsPartyScreenBinding::IsBound() const
@@ -22,7 +22,6 @@ void UDivineBeastsPartyScreenBinding::Bind(UGamePlatformUIScreen* InScreen,UDivi
 {
     Unbind(); Screen=InScreen; Model=InModel; Owner=InOwner;
     OriginalStack=InStack;
-    TimerWorld=InScreen?InScreen->GetWorld():nullptr;
     if (!InScreen || !InModel) return;
     InModel->OnViewStateChanged.AddDynamic(this,&UDivineBeastsPartyScreenBinding::Refresh);
     InScreen->OnActivated().AddUObject(this,&UDivineBeastsPartyScreenBinding::Activated);
@@ -37,6 +36,7 @@ void UDivineBeastsPartyScreenBinding::Bind(UGamePlatformUIScreen* InScreen,UDivi
     PARTY_BUTTON("ApplicationsButton",OpenApplications); PARTY_BUTTON("InvitationsButton",OpenInvitations);
     PARTY_BUTTON("ReadyCheckButton",OpenReady); PARTY_BUTTON("RequestJoinButton",RequestJoin);
     PARTY_BUTTON("ArenaButton",Activity); PARTY_BUTTON("RetryCommandButton",Retry);
+    PARTY_BUTTON("ConfirmReadyButton",ConfirmReady);PARTY_BUTTON("DeclineReadyButton",DeclineReady);
 #undef PARTY_BUTTON
     for(const TCHAR* Name:{TEXT("PartyMemberList"),TEXT("InvitationsList"),TEXT("ApplicationsList"),TEXT("ReadyRosterList")})
         if(auto* List=Cast<UListView>(InScreen->GetWidgetFromName(Name))) List->OnItemSelectionChanged().AddUObject(this,&UDivineBeastsPartyScreenBinding::SelectItem);
@@ -45,14 +45,14 @@ void UDivineBeastsPartyScreenBinding::Bind(UGamePlatformUIScreen* InScreen,UDivi
 void UDivineBeastsPartyScreenBinding::Unbind()
 {
     const bool bOwnsCurrentModel=IsBound();
-    if(auto* World=TimerWorld.Get())World->GetTimerManager().ClearTimer(DeadlineTimer);
-    TimerWorld.Reset();SelectionOwnerPlayerId.Empty();
+    StopDeadlineAnimation();
+    SelectionOwnerPlayerId.Empty();
     if(auto* VM=Model.Get()) {VM->OnViewStateChanged.RemoveDynamic(this,&UDivineBeastsPartyScreenBinding::Refresh);VM->DisconnectPlayer();}
     if(auto* Page=Screen.Get())
     {
         Page->OnDeactivated().RemoveAll(this);
         Page->OnActivated().RemoveAll(this);
-        for(const TCHAR* Name:{TEXT("InviteButton"),TEXT("InviteTargetButton"),TEXT("AcceptButton"),TEXT("ApproveButton"),TEXT("DeclineButton"),TEXT("RejectButton"),TEXT("LeavePartyButton"),TEXT("TransferLeaderButton"),TEXT("KickMemberButton"),TEXT("DisbandButton"),TEXT("ToggleReadyButton"),TEXT("RefreshButton"),TEXT("CloseButton"),TEXT("ApplicationsButton"),TEXT("InvitationsButton"),TEXT("ReadyCheckButton"),TEXT("RequestJoinButton"),TEXT("ArenaButton"),TEXT("RetryCommandButton")})
+        for(const TCHAR* Name:{TEXT("InviteButton"),TEXT("InviteTargetButton"),TEXT("AcceptButton"),TEXT("ApproveButton"),TEXT("DeclineButton"),TEXT("RejectButton"),TEXT("LeavePartyButton"),TEXT("TransferLeaderButton"),TEXT("KickMemberButton"),TEXT("DisbandButton"),TEXT("ToggleReadyButton"),TEXT("RefreshButton"),TEXT("CloseButton"),TEXT("ApplicationsButton"),TEXT("InvitationsButton"),TEXT("ReadyCheckButton"),TEXT("RequestJoinButton"),TEXT("ArenaButton"),TEXT("RetryCommandButton"),TEXT("ConfirmReadyButton"),TEXT("DeclineReadyButton")})
             if(auto* Button=Cast<UButton>(Page->GetWidgetFromName(Name))) Button->OnClicked.RemoveAll(this);
         for(const TCHAR* Name:{TEXT("PartyMemberList"),TEXT("InvitationsList"),TEXT("ApplicationsList"),TEXT("ReadyRosterList")})
             if(auto* List=Cast<UListView>(Page->GetWidgetFromName(Name))) { List->OnItemSelectionChanged().RemoveAll(this); if(bOwnsCurrentModel)List->ClearListItems(); }
@@ -76,7 +76,7 @@ void UDivineBeastsPartyScreenBinding::Deactivated()
     // 层栈覆盖后仍可能重新激活同一实例：只暂停观察并清本地选择，不销毁下层页面的可重入绑定。
     if(auto* VM=Model.Get())VM->OnViewStateChanged.RemoveDynamic(this,&UDivineBeastsPartyScreenBinding::Refresh);
     SelectedRequest.Empty();SelectedMember.Empty();
-    if(auto* World=TimerWorld.Get())World->GetTimerManager().ClearTimer(DeadlineTimer);
+    StopDeadlineAnimation();
 }
 void UDivineBeastsPartyScreenBinding::Refresh(int32,int32)
 {
@@ -89,8 +89,8 @@ void UDivineBeastsPartyScreenBinding::Refresh(int32,int32)
     Text(TEXT("CommandErrorText"),VM->StatusText); Text(TEXT("PermissionText"),FText::FromString(VM->Party.bRosterLocked?TEXT("名单已锁定，必须等待后端取消匹配确认"):TEXT("操作权限由服务器复核")));
     Text(TEXT("TargetNameText"),FText::FromString(VM->GetTargetPlayerIdForDisplay()));
     Text(TEXT("MemberCountText"),FText::FromString(FString::Printf(TEXT("成员 %d / 5"),VM->Party.Members.Num())));
-    Text(TEXT("ActivityText"),FText::FromString(TEXT("普通小队 · 实时变更请刷新确认")));
-    Text(TEXT("ReadyStatusText"),FText::FromString(TEXT("限时小队准备会话尚未由后端提供；不以普通ready标记冒充")));
+    Text(TEXT("ActivityText"),FText::FromString(VM->Party.ActivityId.IsEmpty()?TEXT("普通小队 · 状态实时同步"):TEXT("队伍活动 · 准备中")));
+    Text(TEXT("ReadyStatusText"),FText::FromString(VM->Party.ReadyCheckId.IsEmpty()?TEXT("当前没有准备请求"):TEXT("请确认本次活动与名单；全部成员准备后进入匹配")));
     Text(TEXT("RemainingSecondsText"),FText::FromString(TEXT("以服务器截止时间为准；刷新后校正")));
     auto Enabled=[Page](const TCHAR* Name,bool Value){if(auto* Widget=Page->GetWidgetFromName(Name))Widget->SetIsEnabled(Value);};
     Enabled(TEXT("InviteButton"),VM->CanSubmitPartyAction(TEXT("invite"))); Enabled(TEXT("InviteTargetButton"),VM->CanSubmitPartyAction(TEXT("invite")));
@@ -104,7 +104,8 @@ void UDivineBeastsPartyScreenBinding::Refresh(int32,int32)
     Enabled(TEXT("RequestJoinButton"),VM->CanSubmitPartyAction(TEXT("requestJoin")));
     Enabled(TEXT("RefreshButton"),!VM->bBusy&&VM->HasActiveSourceScope());
     Enabled(TEXT("RetryCommandButton"),VM->bOutcomeUnknown&&VM->bStateKnown&&!VM->bBusy);
-    Enabled(TEXT("ConfirmReadyButton"),false); Enabled(TEXT("DeclineReadyButton"),false);
+    const bool bCanReplyReady=!VM->Party.ReadyCheckId.IsEmpty()&&VM->CanSubmitPartyAction(TEXT("ready"));
+    Enabled(TEXT("ConfirmReadyButton"),bCanReplyReady); Enabled(TEXT("DeclineReadyButton"),bCanReplyReady);
     Enabled(TEXT("InspectCharacterButton"),false);
     Text(TEXT("DisabledReasonText"),FText::FromString(TEXT("申请需要目标队伍公开版本；查看他人角色合同尚未提供")));
     Enabled(TEXT("ArenaButton"),Owner.IsValid()&&Owner->HasActivity()&&VM->bStateKnown&&!VM->bBusy&&!VM->bOutcomeUnknown&&
@@ -153,20 +154,32 @@ void UDivineBeastsPartyScreenBinding::SelectItem(UObject* Object)
     else if(Item->Key.StartsWith(TEXT("invitation:")))SelectedRequest=Item->Key.Mid(11);
     else if(Item->Key.StartsWith(TEXT("request:")))SelectedRequest=Item->Key.Mid(8);
     Refresh();
-    if(!SelectedRequest.IsEmpty())if(auto* World=TimerWorld.Get())World->GetTimerManager().SetTimer(DeadlineTimer,this,&UDivineBeastsPartyScreenBinding::UpdateDeadlineDisplay,0.25f,true);
 }
 void UDivineBeastsPartyScreenBinding::UpdateDeadlineDisplay()
 {
     auto* Page=Screen.Get();auto* VM=Model.Get();if(!Page||!VM||!VM->IsPageActive())return;
     const auto* Request=VM->Invitations.FindByPredicate([&](const auto& R){return R.PartyId+TEXT("\n")+R.RequestId==SelectedRequest;});
     if(!Request)Request=VM->Party.Requests.FindByPredicate([&](const auto& R){return R.RequestId==SelectedRequest;});
-    const double Remaining=Request&&VM->bStateKnown?FMath::Max(0.0,(Request->ExpiresAtUtc-VM->GetEstimatedServerTimeForDisplay()).GetTotalSeconds()):0.0;
-    if(auto* T=Cast<UTextBlock>(Page->GetWidgetFromName(TEXT("RemainingSecondsText"))))T->SetText(FText::FromString(Request?FString::Printf(TEXT("剩余约 %.0f 秒 · 最终以服务器校验为准"),FMath::CeilToDouble(Remaining)):TEXT("请选择一项邀请")));
+    const bool bReadyPage=Page->GetScreenId()==TEXT("UI.Party.Ready");
+    const FDateTime Deadline=bReadyPage?VM->Party.ReadyDeadlineUtc:(Request?Request->ExpiresAtUtc:FDateTime());
+    const double Remaining=VM->bStateKnown&&Deadline.GetTicks()>0?FMath::Max(0.0,(Deadline-VM->GetEstimatedServerTimeForDisplay()).GetTotalSeconds()):0.0;
+    if(auto* Counter=Cast<UCommonNumericTextBlock>(Page->GetWidgetFromName(TEXT("RemainingSecondsText"))))
+    {
+        // 状态/选择事件只设置动画端点；CommonUI插值仅播放显示，不回查VM、不修改邀请或按钮资格。
+        Counter->EaseOutInterpolationExponent=1.0f;Counter->SetNumericType(ECommonNumericType::Seconds);
+        Counter->SetCurrentValue(static_cast<float>(Remaining));
+        if(Remaining>0)Counter->InterpolateToValue(0,static_cast<float>(Remaining),0);
+    }
+    else if(auto* Text=Cast<UTextBlock>(Page->GetWidgetFromName(TEXT("RemainingSecondsText"))))
+        Text->SetText(FText::FromString(Request?FString::Printf(TEXT("截止 %s UTC"),*Request->ExpiresAtUtc.ToString(TEXT("%H:%M:%S"))):TEXT("请选择一项邀请")));
     if(Remaining<=0)
     {
-        if(auto* World=TimerWorld.Get())World->GetTimerManager().ClearTimer(DeadlineTimer);
         for(const TCHAR* Name:{TEXT("AcceptButton"),TEXT("ApproveButton")})if(auto* B=Cast<UButton>(Page->GetWidgetFromName(Name)))B->SetIsEnabled(false);
     }
+}
+void UDivineBeastsPartyScreenBinding::StopDeadlineAnimation()
+{
+    if(auto* Page=Screen.Get())if(auto* Counter=Cast<UCommonNumericTextBlock>(Page->GetWidgetFromName(TEXT("RemainingSecondsText"))))Counter->SetCurrentValue(0);
 }
 void UDivineBeastsPartyScreenBinding::Send(const FString& Action)
 {
@@ -219,3 +232,6 @@ void UDivineBeastsPartyScreenBinding::Activity()
     if(!Service->OpenActivity(VM->Party.PartyId))
     {VM->StatusText=FText::FromString(TEXT("竞技活动入口当前不可用"));VM->MarkStateChanged();}
 }
+
+void UDivineBeastsPartyScreenBinding::ConfirmReady(){if(IsBound())if(auto* VM=Model.Get())VM->SubmitReadyResponse(true);}
+void UDivineBeastsPartyScreenBinding::DeclineReady(){if(IsBound())if(auto* VM=Model.Get())VM->SubmitReadyResponse(false);}

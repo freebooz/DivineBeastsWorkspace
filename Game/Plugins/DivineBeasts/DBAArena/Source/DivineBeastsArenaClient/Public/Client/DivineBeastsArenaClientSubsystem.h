@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
@@ -6,6 +6,8 @@
 #include "DivineBeastsArenaClientSubsystem.generated.h"
 
 class IDivineBeastsApplicationFlowExtension;
+class IGamePlatformArenaMatchmakingAdapter;
+class FDivineBeastsArenaOnlineMatchmakingAdapter;
 class UDivineBeastsApplicationFlowSubsystem;
 
 /**
@@ -25,6 +27,8 @@ public:
     UFUNCTION(BlueprintPure, Category="DivineBeasts|Arena")
     TArray<FName> GetProjectArenaModeIds() const;
 
+    /** 事件快照中的队长/人数与模式门禁；只读预检，真正资格仍由后端裁定。 */
+    bool CanQueueMode(FName ArenaModeId,FString& OutReason)const;
     bool BuildMatchmakingRequest(
         FName ArenaModeId,
         const FString& PartyId,
@@ -38,10 +42,19 @@ public:
 
     bool IsApplicationFlowInWorld() const { return bApplicationFlowInWorld; }
 
-    void SetApplicationFlowInWorld(bool bInWorld)
-    {
-        bApplicationFlowInWorld = bInWorld;
-    }
+    void SetApplicationFlowInWorld(bool bInWorld);
+    /** 页面借用同一个真实后端适配端口，关闭页面不停止订阅。 */
+    TSharedPtr<IGamePlatformArenaMatchmakingAdapter> GetMatchmakingAdapter()const;
+    bool CanCancelObservedQueue()const;
+    bool CanReturnObservedMatch()const;
+    /** 明确人工重试只重取本人状态/准入，不重复报名、选人或改变服务器资格。 */
+    bool RetryObservedMigration();
+    bool CanRetryObservedMigration()const;
+    FText GetObservedMatchmakingStatus()const;
+    FSimpleMulticastDelegate OnMatchmakingStateChanged;
+    /** 真实世界/Controller/Pawn复制事件触发；页面不拥有这些订阅，也不查询业务Tick。 */
+    void RefreshArenaReadiness();
+    bool TryObserveArenaReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const;
 
 private:
     UPROPERTY(Transient)
@@ -49,4 +62,27 @@ private:
 
     TSharedPtr<IDivineBeastsApplicationFlowExtension> FlowExtension;
     bool bApplicationFlowInWorld = false;
+    TSharedPtr<FDivineBeastsArenaOnlineMatchmakingAdapter> OnlineMatchmaking;
+    FDelegateHandle MatchmakingChangedHandle,PartyChangedHandle;
+    TWeakObjectPtr<class UGamePlatformPartyClientSubsystem> PartySource;
+    /** 只保存逻辑意图身份；票据只在回调栈移动给Flow。 */
+    FString MigrationCandidateId,MigrationDirection,MigrationRequestId;
+    FGuid MigrationAuthGeneration;
+    uint64 MigrationGeneration=0;
+    bool bMigrationPending=false;
+    bool bDeinitializing=false;
+    FText MigrationError;
+    void HandleMatchmakingChanged();
+    bool RequestObservedMigration(const FString& Direction);
+
+    /** 以下弱引用及委托只属于当前World；旅行/销毁先解绑，再接受新世界事实。 */
+    TWeakObjectPtr<UWorld> ReadinessWorld;
+    TWeakObjectPtr<APlayerController> ReadinessController;
+    TWeakObjectPtr<class AGamePlatformArenaGameState> ReadinessGameState;
+    TWeakObjectPtr<class UDivineBeastsCharacterComponent> ReadinessCharacter;
+    TWeakObjectPtr<class UGamePlatformGameplayEligibilityComponent> ReadinessEligibility;
+    FDelegateHandle ReadinessMapHandle,ReadinessCleanupHandle,ReadinessGameStateHandle;
+    void ClearArenaReadiness();
+    UFUNCTION() void HandleReadinessPawnChanged(APawn* OldPawn,APawn* NewPawn);
+
 };

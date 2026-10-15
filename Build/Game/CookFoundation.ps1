@@ -1,4 +1,4 @@
-#requires -Version 7.0
+﻿#requires -Version 7.0
 <#
 .SYNOPSIS
 显式-Cook执行Development开发地图Cook及Stage；不触发C++构建或启动服务器。
@@ -53,7 +53,12 @@ try {
         $allowed=@(($output -join "`n") | ConvertFrom-Json)
         if (-not $PSBoundParameters.ContainsKey('Maps')) { $Maps=$allowed; $details.Maps=$Maps }
         if (-not $Maps.Count -or @($Maps | Where-Object { $_ -cnotin $allowed }).Count) { throw '演示Cook只允许作者源的精确地图集合。' }
-    } elseif ($Target -eq 'Server' -and $CustomConfig -in @('VillageServer','VillageDevelopmentServer') -and
+    } elseif ($Target -eq 'Server' -and $CustomConfig -eq 'VillageDevelopmentServer' -and $Maps.Count -ge 1 -and
+        @($Maps | Where-Object {$_ -cnotin @('/DBAWorldPack_Village/Maps/L_Village_Start','/DBAWorldPack_MainArena/Maps/L_DBA_MainArena')}).Count -eq 0) {
+        # 显式开发联调仅增加已保存的MainArena白盒；其它Profile/任意插件路径仍被既有地图门禁拒绝。
+        Assert-FoundationFile (Join-Path $context.Workspace 'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_MainArena/Content/Maps/L_DBA_MainArena.umap')
+        Assert-FoundationFile (Join-Path $context.Workspace 'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Maps/L_Village_Start.umap')
+    } elseif ($Target -eq 'Server' -and $CustomConfig -eq 'VillageServer' -and
         $Maps.Count -eq 1 -and $Maps[0] -ceq '/DBAWorldPack_Village/Maps/L_Village_Start') {
         Assert-FoundationFile (Join-Path $context.Workspace 'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Maps/L_Village_Start.umap')
     } else {

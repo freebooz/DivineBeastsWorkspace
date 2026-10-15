@@ -31,12 +31,14 @@ func partyRPCResponse(value any, err error) *matchv1.PartyDataResponse {
 
 // ReadPartyState（本人快照RPC）与内部HTTP调用同一授权投影，不直接返回仓储Party。
 func (s *MatchAPIServer) ReadPartyState(ctx context.Context, request *matchv1.PartyReadRequest) (*matchv1.PartyDataResponse, error) {
+	if err:=s.authorizeInternalMatch(ctx);err!=nil{return nil,err}
 	value, err := s.service.ReadPartyState(ctx, request.GetPlayerId())
 	return partyRPCResponse(value, err), nil
 }
 
 // CommandParty（命令RPC）复用64KiB、字段白名单、重复键和尾随JSON保护，不信任Envelope中的任意actor字段。
 func (s *MatchAPIServer) CommandParty(ctx context.Context, request *matchv1.PartyCommandRequest) (*matchv1.PartyDataResponse, error) {
+	if err:=s.authorizeInternalMatch(ctx);err!=nil{return nil,err}
 	// 这里只构造解析输入，不启动HTTP请求或网络监听；命令真正执行仍由应用服务完成。
 	input := &http.Request{Header: make(http.Header), Body: io.NopCloser(strings.NewReader(request.GetCommandJson()))}
 	var command party.Command
@@ -49,13 +51,17 @@ func (s *MatchAPIServer) CommandParty(ctx context.Context, request *matchv1.Part
 
 // GetPartyInvitations（收件箱RPC）仅查询本人待处理邀请，时间由Match服务提供。
 func (s *MatchAPIServer) GetPartyInvitations(ctx context.Context, request *matchv1.PartyReadRequest) (*matchv1.PartyDataResponse, error) {
+	if err:=s.authorizeInternalMatch(ctx);err!=nil{return nil,err}
 	value, err := s.service.GetPartyInvitations(ctx, request.GetPlayerId())
 	return partyRPCResponse(value, err), nil
 }
 
 // ObserveParty使用同一应用和Shared JSON合同；先验证毫秒范围再转换Duration，禁止溢出绕过20秒预算。
-func(s *MatchAPIServer)ObserveParty(ctx context.Context,request *matchv1.PartyObservationRequest)(*matchv1.PartyDataResponse,error){
-	if request.GetWaitMilliseconds()<0||request.GetWaitMilliseconds()>20000{return &matchv1.PartyDataResponse{ErrorCode:"INVALID_REQUEST"},nil}
-	value,err:=s.service.ObserveParty(ctx,request.GetPlayerId(),request.GetCursor(),time.Duration(request.GetWaitMilliseconds())*time.Millisecond)
-	return partyRPCResponse(value,err),nil
+func (s *MatchAPIServer) ObserveParty(ctx context.Context, request *matchv1.PartyObservationRequest) (*matchv1.PartyDataResponse, error) {
+	if err:=s.authorizeInternalMatch(ctx);err!=nil{return nil,err}
+	if request.GetWaitMilliseconds() < 0 || request.GetWaitMilliseconds() > 20000 {
+		return &matchv1.PartyDataResponse{ErrorCode: "INVALID_REQUEST"}, nil
+	}
+	value, err := s.service.ObserveParty(ctx, request.GetPlayerId(), request.GetCursor(), time.Duration(request.GetWaitMilliseconds())*time.Millisecond)
+	return partyRPCResponse(value, err), nil
 }

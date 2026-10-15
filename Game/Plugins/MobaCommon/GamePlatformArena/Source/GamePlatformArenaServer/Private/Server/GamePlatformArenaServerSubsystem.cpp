@@ -10,6 +10,8 @@
 #include "Engine/GameInstance.h"
 #include "Framework/GamePlatformArenaPlayerState.h"
 #include "Server/GamePlatformServerAdmissionSubsystem.h"
+#include "Server/GamePlatformServerLifecycleSubsystem.h"
+#include "Async/Async.h"
 #include "Server/ArenaVerifiedAdmissionPolicy.h"
 #include "TimerManager.h"
 #include "HAL/PlatformMisc.h"
@@ -30,35 +32,20 @@ void UGamePlatformArenaServerSubsystem::Initialize(FSubsystemCollectionBase& Col
         { AdmissionChangedHandle = AdmissionSubsystem->OnAdmissionChanged().AddUObject(this, &UGamePlatformArenaServerSubsystem::HandleAdmissionChanged); }
     }
 
-    FGamePlatformArenaServerBackendConfig Config;
-    Config.BaseUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("GAMESERVERCONTROL_BASE_URL"));
-    Config.InternalToken = FPlatformMisc::GetEnvironmentVariable(TEXT("GAMESERVERCONTROL_INTERNAL_TOKEN"));
-    Config.GameServerId = FPlatformMisc::GetEnvironmentVariable(TEXT("GAME_SERVER_ID"));
-    if (!Config.IsValid())
+    if(auto* Instance=GetWorld()?GetWorld()->GetGameInstance():nullptr)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Arena server backend config incomplete; assignment auto-load disabled."));
-        return;
+        LifecycleSubsystem=Instance->GetSubsystem<UGamePlatformServerLifecycleSubsystem>();
+        if(auto* Lifecycle=LifecycleSubsystem.Get())LifecycleChangedHandle=Lifecycle->OnLifecycleChanged().AddUObject(this,&ThisClass::HandleLifecycleChanged);
     }
 
-    BackendClient = MakeShared<FGamePlatformArenaServerBackendClient>(MoveTemp(Config));
-    Coordinator = MakeShared<FGamePlatformArenaServerCoordinator>(BackendClient.ToSharedRef());
-
-    const TArray<IGamePlatformArenaServerProjectExtension*> Extensions =
-        IModularFeatures::Get()
-            .GetModularFeatureImplementations<IGamePlatformArenaServerProjectExtension>(
-                IGamePlatformArenaServerProjectExtension::GetModularFeatureName());
-    if (Extensions.Num() > 1)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Arena server project extension conflict: %d providers registered."), Extensions.Num());
-        Coordinator.Reset();
-        BackendClient.Reset();
-        return;
-    }
-    Coordinator->SetProjectExtension(Extensions.Num() == 1 ? Extensions[0] : nullptr);
 }
 
 void UGamePlatformArenaServerSubsystem::Deinitialize()
 {
+    ++AssignmentGeneration;bWorldStarted=false;
+    if(auto* Lifecycle=LifecycleSubsystem.Get())Lifecycle->OnLifecycleChanged().Remove(LifecycleChangedHandle);LifecycleChangedHandle.Reset();LifecycleSubsystem.Reset();
+    if(GetWorld())GetWorld()->GetTimerManager().ClearTimer(AssignmentRetryTimer);
+    if(BackendClient)BackendClient->CancelAll();
     if (AdmissionSubsystem.IsValid()) { AdmissionSubsystem->OnAdmissionChanged().Remove(AdmissionChangedHandle); }
     if (auto* World = GetWorld())
     {
@@ -79,8 +66,7 @@ void UGamePlatformArenaServerSubsystem::Deinitialize()
 void UGamePlatformArenaServerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
-    if (!Coordinator.IsValid()) { return; }
-
+    bWorldStarted=true;
     AGamePlatformArenaGameMode* ArenaGameMode = InWorld.GetAuthGameMode<AGamePlatformArenaGameMode>();
     if (ArenaGameMode == nullptr) { return; }
 
@@ -98,7 +84,7 @@ void UGamePlatformArenaServerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
                 {
                     if (bCommitted)
                     {
-                        UE_LOG(LogTemp, Log, TEXT("MainArena MatchResult committed; GamePlatformServer Drain/Release integration remains the next server-lifecycle handoff."));
+                        UE_LOG(LogTemp, Log, TEXT("MainArena MatchResult committed; backend owns per-player safe return and final instance release."));
                     }
                     else
                     {
@@ -107,20 +93,7 @@ void UGamePlatformArenaServerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
                 });
         });
 
-    Coordinator->LoadAndApplyAssignment(
-        ArenaGameMode,
-        [WeakThis = TWeakObjectPtr<UGamePlatformArenaServerSubsystem>(this)](bool bSuccess, const FString& Error)
-        {
-            if (bSuccess)
-            {
-                if (WeakThis.IsValid()) { WeakThis->RefreshVerifiedConnections(); }
-                UE_LOG(LogTemp, Log, TEXT("MainArena assignment loaded and validated."));
-            }
-            else
-            {
-                UE_LOG(LogTemp, Error, TEXT("MainArena assignment load failed: %s"), *Error);
-            }
-        });
+    TryLoadAssignment();
 }
 
 void UGamePlatformArenaServerSubsystem::RefreshVerifiedConnections()
@@ -194,4 +167,58 @@ void UGamePlatformArenaServerSubsystem::ExpireVerifiedConnection(TWeakObjectPtr<
         World->GetTimerManager().ClearTimer(OwnedDeadlineTimer);
         if (auto* Mode = World->GetAuthGameMode<AGamePlatformArenaGameMode>()) { Mode->MarkPlayerDisconnected(Binding.PlayerId); }
     }
+}
+
+void UGamePlatformArenaServerSubsystem::HandleLifecycleChanged(const FGamePlatformServerLifecycleSnapshot&){TryLoadAssignment();}
+void UGamePlatformArenaServerSubsystem::TryLoadAssignment()
+{
+    auto* World=GetWorld();auto* Mode=World?World->GetAuthGameMode<AGamePlatformArenaGameMode>():nullptr;auto* Lifecycle=LifecycleSubsystem.Get();
+    if(!bWorldStarted||!World||World->bIsTearingDown||!Mode||!Lifecycle||bAssignmentFailed||bAssignmentLoaded||bAssignmentRequestPending)return;
+    const auto Phase=Lifecycle->GetSnapshot().State;
+    if(Phase!=EGamePlatformServerLifecycleState::Registered&&Phase!=EGamePlatformServerLifecycleState::PublishingReady&&Phase!=EGamePlatformServerLifecycleState::Ready)return;
+    if(!Coordinator)
+    {
+    FGamePlatformArenaServerBackendConfig Config;
+    Config.BaseUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("GAMESERVERCONTROL_BASE_URL"));
+    Config.InternalToken = FPlatformMisc::GetEnvironmentVariable(TEXT("GAMESERVERCONTROL_INTERNAL_TOKEN"));
+    Config.GameServerId=Lifecycle->GetSnapshot().GameServerId;
+    Config.ServerBootId=Lifecycle->GetRegisteredServerBootId();
+    if (!Config.IsValid())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Arena server backend config incomplete; assignment auto-load disabled."));
+        return;
+    }
+
+    BackendClient = MakeShared<FGamePlatformArenaServerBackendClient>(MoveTemp(Config));
+    Coordinator = MakeShared<FGamePlatformArenaServerCoordinator>(BackendClient.ToSharedRef());
+
+    const TArray<IGamePlatformArenaServerProjectExtension*> Extensions =
+        IModularFeatures::Get()
+            .GetModularFeatureImplementations<IGamePlatformArenaServerProjectExtension>(
+                IGamePlatformArenaServerProjectExtension::GetModularFeatureName());
+    if (Extensions.Num() > 1)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Arena server project extension conflict: %d providers registered."), Extensions.Num());
+        Coordinator.Reset();
+        BackendClient.Reset();
+        bAssignmentFailed=true;return;
+    }
+    Coordinator->SetProjectExtension(Extensions.Num() == 1 ? Extensions[0] : nullptr);
+    }
+    if(!Coordinator)return;
+    bAssignmentRequestPending=true;const uint64 Generation=++AssignmentGeneration;
+    Coordinator->LoadAndApplyAssignment(Mode,[Weak=TWeakObjectPtr<UGamePlatformArenaServerSubsystem>(this),Generation](bool bSuccess,const FString& Error)
+    {
+        auto* Self=Weak.Get();if(!Self||!Self->bWorldStarted||Self->AssignmentGeneration!=Generation||!Self->bAssignmentRequestPending)return;
+        Self->bAssignmentRequestPending=false;
+        if(bSuccess){Self->bAssignmentLoaded=true;Self->RefreshVerifiedConnections();UE_LOG(LogTemp,Log,TEXT("MainArena assignment loaded and validated."));return;}
+        if(Error==TEXT("AssignmentPending"))
+        {
+            Self->AssignmentFailures=0;
+            // 空等待由控制面20秒挂起或真实分配事件唤醒；立即续接订阅，不按本地刷新周期扫描业务。
+            AsyncTask(ENamedThreads::GameThread,[Weak,Generation](){if(auto* Current=Weak.Get())if(Current->AssignmentGeneration==Generation)Current->TryLoadAssignment();});return;
+        }
+        if(++Self->AssignmentFailures>4){Self->bAssignmentFailed=true;UE_LOG(LogTemp,Error,TEXT("MainArena assignment subscription failed after bounded recovery."));return;}
+        if(auto* CurrentWorld=Self->GetWorld())CurrentWorld->GetTimerManager().SetTimer(Self->AssignmentRetryTimer,Self,&ThisClass::TryLoadAssignment,static_cast<float>(1<<(Self->AssignmentFailures-1)),false);
+    });
 }

@@ -1,0 +1,136 @@
+openapi: 3.1.0
+info:
+  title: 平台组队匹配生命周期
+  version: 1.0.0
+  description: 1v1至5v5单人/不可拆分队伍的准备、报名、逐人确认、本人事件观察及受控迁移。会话和角色由Gateway验证，不信任正文主体。
+security: [{ bearerAuth: [] }]
+paths:
+  /v1/matchmaking/commands:
+    post:
+      operationId: commandCurrentMatchmaking
+      summary: 提交本人开始、整队取消、准备或逐人回复意图
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Command' }
+      responses:
+        '200':
+          description: 命令已提交，返回本人当前真实阶段；报名或接受不代表服务器已分配
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandResult' }
+        '400': { description: 未注册命令、非法模式、区域、人数或正文 }
+        '401': { description: 认证无效 }
+        '403': { description: 只有本人可回复，只有报名发起者可整队取消 }
+        '409': { description: 版本、阶段、准备、预留或角色冲突，应读取当前状态 }
+        '503': { description: 内容或持久仓储未装配，不得返回假成功 }
+  /v1/matchmaking/observe:
+    post:
+      operationId: observeCurrentMatchmaking
+      summary: 本人匹配初始快照及可恢复事件长等待
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: 'party-observation.openapi.yaml#/components/schemas/ObservationRequest' }
+      responses:
+        '200':
+          description: 完整授权快照，空等待changed=false；游标失效要求完整重同步
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Observation' }
+        '401': { description: 会话失效 }
+        '503': { description: 观察或持久仓储不可用 }
+  /v1/matchmaking/migration:
+    post:
+      operationId: getCurrentMatchmakingMigration
+      summary: 全员签票提交后取本人准入、原比赛重连，或可信结果/故障确认后安全返回
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MigrationRequest' }
+      responses:
+        '200':
+          description: 仅本人的新准入；直接交给既有Flow/Loading/Session，不进入公共UI视图、日志或URL
+          content:
+            application/json:
+              schema: { $ref: 'gateway.openapi.yaml#/components/schemas/DivineBeastsWorldEntryResponse' }
+        '401': { description: 当前会话与已验证参赛者不符 }
+        '409': { description: 全员签票、可信结果或返回分配尚未完成，不能复用旧地址/旧票据 }
+        '503': { description: 分配或恢复服务不可用 }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, description: 访问令牌只在请求头使用 }
+  schemas:
+    Revision: { type: string, pattern: '^(0|[1-9][0-9]*)$', description: 非负int64十进制字符串，禁止JSON浮点截断 }
+    Command:
+      type: object
+      additionalProperties: false
+      required: [action, clientRequestId, expectedRevision]
+      properties:
+        action: { type: string, enum: [start, cancel, ready, reply], description: 阶段明确的本人意图，不含伪造比赛结果 }
+        clientRequestId: { type: string, minLength: 1, maxLength: 128, description: 主体/操作域的稳定逻辑命令身份，同键异参冲突 }
+        expectedRevision: { $ref: '#/components/schemas/Revision' }
+        ticketId: { type: string, maxLength: 128, description: 取消/准备票据，不能替代权限 }
+        candidateId: { type: string, maxLength: 128, description: 逐人确认候选 }
+        arenaModeId: { type: string, maxLength: 128, description: 已登记1v1至5v5模式 }
+        partyId: { type: string, maxLength: 128, description: 小队必须整队报名，单人无需建队 }
+        regionId: { type: string, maxLength: 128, description: 已配置区域分区 }
+        accept: { type: boolean, description: 本人同意/拒绝，队长不能代替其他人确认 }
+    CommandResult:
+      type: object
+      required: [clientRequestId, snapshot]
+      properties:
+        clientRequestId: { type: string, description: 回显原逻辑命令身份 }
+        snapshot: { $ref: '#/components/schemas/PlayerSnapshot' }
+    PlayerSnapshot:
+      type: object
+      additionalProperties: false
+      required: [serviceReady, development, regionId, state, ticketId, partyId, arenaModeId, candidateId, revision, candidateRevision, deadlineUtc, serverTimeUtc, canCancel, canReply, canReady, reasonCode, participants]
+      properties:
+        serviceReady: { type: boolean, description: 真实内容和持久编排已装配，开始命令仍需独立验证。 }
+        development: { type: boolean, description: 当前内容仅为开发联调。 }
+        regionId: { type: string, maxLength: 128, description: 默认或当前队列区域。 }
+        state: { type: string, enum: [idle, readyCheck, searching, confirmation, allocating, transferReady, inMatch, returning, completed, cancelled, failed], description: 服务器生命周期，UI不可提前推进 }
+        ticketId: { type: string, description: 当前或最近报名 }
+        partyId: { type: string, description: 原子普通队伍；solo为空 }
+        arenaModeId: { type: string, description: 服务器认可模式 }
+        candidateId: { type: string, description: 尚未组成候选为空 }
+        revision: { $ref: '#/components/schemas/Revision' }
+        candidateRevision: { $ref: '#/components/schemas/Revision' }
+        deadlineUtc: { type: [string, 'null'], format: date-time, description: 当前权威截止，无期限为null；UI动画只展示 }
+        serverTimeUtc: { type: string, format: date-time, description: UTC显示校时 }
+        canCancel: { type: boolean, description: 本人可整队取消；服务端写入仍复核 }
+        canReply: { type: boolean, description: 本人可回复候选 }
+        canReady: { type: boolean, description: 本人可回复限时准备 }
+        reasonCode: { type: string, description: 白名单安全原因，不输出内部异常 }
+        participants:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            required: [playerId, teamId, ready, accepted]
+            properties:
+              playerId: { type: string, description: 授权名单公开身份 }
+              teamId: { type: string, description: 候选形成后由后端分配，否则为空 }
+              ready: { type: boolean, description: 本轮模式/名单准备事实 }
+              accepted: { type: boolean, description: 本人明确接受候选事实 }
+    Observation:
+      type: object
+      required: [scopeId, cursor, resyncRequired, changed, snapshot]
+      properties:
+        scopeId: { type: string, description: matchmaking/本人身份，客户端另核对认证代次 }
+        cursor: { type: string, description: 持久事件游标 }
+        resyncRequired: { type: boolean, description: 窗口已失效，完整替换 }
+        changed: { type: boolean, description: 真实事件或权威期限到达 }
+        snapshot: { $ref: '#/components/schemas/PlayerSnapshot' }
+    MigrationRequest:
+      type: object
+      additionalProperties: false
+      required: [candidateId, direction, clientRequestId]
+      properties:
+        candidateId: { type: string, minLength: 1, maxLength: 128, description: 本人已确认比赛身份 }
+        direction: { type: string, enum: [arena, return], description: 进入/恢复同一竞技场，或请求后端重新分配安全返回；新票不授予重生，60秒重连与淘汰由原服务器裁定，不接受目标地址 }
+        clientRequestId: { type: string, minLength: 1, maxLength: 128, description: 稳定迁移请求身份，重试沿用 }

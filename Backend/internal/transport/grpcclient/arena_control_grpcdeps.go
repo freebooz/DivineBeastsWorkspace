@@ -18,6 +18,7 @@ import (
 // ArenaControlClient（竞技场控制gRPC客户端）实现MatchService的ArenaControl端口。
 type ArenaControlClient struct {
 	client        gameservercontrolv1.GameServerControlInternalServiceClient
+	runtimeBearer string // 生命周期RPC专用内部凭据，只进入metadata。
 	defaultRegion string
 }
 
@@ -27,8 +28,12 @@ func NewArenaControlClient(conn grpc.ClientConnInterface) *ArenaControlClient {
 }
 
 // NewWorldEntryClient（创建世界进入gRPC客户端）为Gateway设置服务端默认区域，客户端未声明首选区域时使用。
-func NewWorldEntryClient(conn grpc.ClientConnInterface, defaultRegion string) *ArenaControlClient {
-	return &ArenaControlClient{
+func NewWorldEntryClient(conn grpc.ClientConnInterface, defaultRegion string, runtimeBearer ...string) *ArenaControlClient {
+	token := ""
+	if len(runtimeBearer) > 0 {
+		token = runtimeBearer[0]
+	}
+	return &ArenaControlClient{runtimeBearer: token,
 		client:        gameservercontrolv1.NewGameServerControlInternalServiceClient(conn),
 		defaultRegion: defaultRegion,
 	}

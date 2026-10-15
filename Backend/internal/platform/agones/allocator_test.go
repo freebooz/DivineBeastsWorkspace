@@ -20,6 +20,9 @@ func TestBuildRequestForMainArena(t *testing.T) {
 	if request.APIVersion != "allocation.agones.dev/v1" || request.Kind != "GameServerAllocation" {
 		t.Fatalf("Agones API信息错误: %+v", request)
 	}
+	if len(request.Spec.Selectors) != 2 || request.Spec.Selectors[0].GameServerState != "Allocated" || request.Spec.Selectors[1].GameServerState != "Ready" || request.Spec.Selectors[0].MatchLabels["divinebeasts.io/match-key"] != request.Spec.Metadata.Labels["divinebeasts.io/match-key"] {
+		t.Fatal("未知响应重试应先恢复同比赛Allocated实例，再选择Ready")
+	}
 	labels := request.Spec.Selectors[0].MatchLabels
 	if labels["server-role"] != "main-arena" || labels["region"] != "us-west" || labels["build-version"] != "0.2.0" {
 		t.Fatalf("分配选择器错误: %+v", labels)
@@ -195,4 +198,3 @@ func TestClientAllocationRejectsInsecureURLAndRedirect(t *testing.T) {
 		t.Fatal("有 Bearer 凭据时必须拒绝非 TLS 的 Kubernetes API")
 	}
 }
-

@@ -34,6 +34,10 @@ public:
 
     virtual bool CapturePlayerGameplayOwnership(const FString& PlayerId, FGamePlatformArenaGameplayOwnership& OutOwnership) const override;
 
+    /** 重连只重新拥有原Pawn，不执行初始化、不改生命/资源/位置或出生代次。 */
+    /** 单局断线停止动作但保留原实体作为伤害目标，死亡订阅到淘汰或结束才释放。 */
+    virtual bool SuspendPlayerConnection(const FString& PlayerId,FString& OutReason) override;
+    virtual bool RestorePlayerConnection(const FString& PlayerId,FString& OutReason) override;
     virtual bool SpawnPlayer(
         const FString& PlayerId,
         FName TeamId,
@@ -52,7 +56,7 @@ public:
 
 private:
     friend class FDivineBeastsArenaDeathBridgeTest;
-    /** 每个当前Pawn的中立死亡订阅由本世界Adapter拥有，替换/断线/结束先解绑，不影响其他装配。 */
+    /** 每个当前Pawn的中立死亡订阅由本世界Adapter拥有，替换/淘汰/结束先解绑，活体断线保留受伤与死亡观察，不影响其他装配。 */
     struct FDeathBinding { TWeakObjectPtr<ADivineBeastsCharacter> Pawn; FDelegateHandle Handle; };
     void BindPawnDeath(const FString& PlayerId, ADivineBeastsCharacter& Pawn, AGamePlatformArenaPlayerState& State, int32 AvatarGeneration);
     void UnbindPawnDeath(const FString& PlayerId);

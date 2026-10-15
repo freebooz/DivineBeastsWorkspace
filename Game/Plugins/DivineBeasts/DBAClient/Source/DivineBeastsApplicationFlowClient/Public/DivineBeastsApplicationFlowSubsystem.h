@@ -84,6 +84,9 @@ public:
         FName DesiredExperienceId,
         const FString& PreferredRegion = FString());
 
+    /** 仅C++受信后端适配器可提交当前认证代次的一次性迁移；复用RequestWorld/Loading/Session全流程，绝不Widget直接Travel。 */
+    bool RequestTrustedWorldMigration(FDivineBeastsWorldAssignmentPayload Payload,FGuid AuthenticationGeneration);
+
     /**
      * 提交当前地图观察事实。必须携带本次世界进入的ObservationId和后端分配的世界/体验身份。
      * 只有当前GameInstance中已经BeginPlay且与WorldDefinition一致的真实世界才被接受。
@@ -127,6 +130,9 @@ public:
         FName ExtensionId,
         TSharedRef<IDivineBeastsApplicationFlowExtension> Extension);
     bool UnregisterExtension(FName ExtensionId);
+
+    /** 可选世界的Pawn/资源/复制事实事件入口；只有当前受信Session的同一世界才会采纳快照。 */
+    void NotifyGameplayWorldFactsChanged() { ObserveCurrentGameplayWorld(); }
 
     FDivineBeastsFlowViewStateChangedNative& OnViewStateChanged()
     {
@@ -234,6 +240,9 @@ private:
     TArray<FGamePlatformLoadingRegistration> LoadingTaskFactories;
     TSharedPtr<class FDivineBeastsProjectLoadingContext> LoadingContext;
 
+    /** 只有RequestWorld节点可消费的瞬时秘密，认证/取消/世界退出立即清理，不进入只读ViewState。 */
+    TOptional<FDivineBeastsWorldAssignmentPayload> PendingTrustedMigration;
+    FGuid PendingMigrationAuthGeneration;
     FDivineBeastsFlowViewState ViewState;
     FGuid ActiveTransferOperationId;
     uint64 StartRequestGeneration = 0;

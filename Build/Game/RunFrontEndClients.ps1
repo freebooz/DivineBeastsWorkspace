@@ -1,4 +1,4 @@
-#requires -Version 7.0
+﻿#requires -Version 7.0
 <#
 .SYNOPSIS
 启动可见前端客户端，首屏保留空白用户登录表单，不自动认证或进入角色页。
@@ -21,10 +21,13 @@ param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2
     [switch]$DevelopmentSkills,
     # 怪物仅在已启用开发技能的人工验证配置内创建，仍须独立运行开关，默认禁止正式流程生成。
     [switch]$DevelopmentMonsters,
+    # 真实组队竞技开发入口；必须使用同一开发技能/内容Cook，首屏仍为人工登录。
+    [switch]$DevelopmentArena,
     # 历史28081与28181拥有独立身份和玩家资料；当前本地保留28181，调用方仍须明确选择目标网关。
     [string]$GatewayUrl,
     [guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference='Stop'
+if ($DevelopmentArena -and !$DevelopmentSkills) { throw '开发竞技必须使用包含必要英雄定义和技能的DevelopmentSkills配置。' }
 if ($DevelopmentMonsters -and !$DevelopmentSkills) { throw '开发怪物验证必须同时显式启用DevelopmentSkills。' }
 $gatewayModulePath=Join-Path $PSScriptRoot 'FrontEndClientGateway.psm1'
 Import-Module $gatewayModulePath -Force
@@ -55,8 +58,9 @@ foreach($i in 1..$Count) {
         }
     }
     if ($DevelopmentMonsters) { $info.ArgumentList.Add('-DBADevelopmentMonsters') }
+    if ($DevelopmentArena) { $info.ArgumentList.Add('-DBADevelopmentArena') }
     $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters}
+    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters;DevelopmentArena=[bool]$DevelopmentArena}
 }
 $records|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $directory 'Clients.json') -Encoding utf8
 $records|Select-Object PID,InitialScreen,AutoLogin|ConvertTo-Json

@@ -6,6 +6,7 @@
 #include "Framework/GamePlatformArenaPlayerController.h"
 #include "Framework/GamePlatformArenaPlayerState.h"
 #include "Engine/World.h"
+#include "Misc/CoreDelegates.h"
 #include "TimerManager.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/Controller.h"
@@ -57,6 +58,7 @@ void AGamePlatformArenaGameMode::EndPlay(const EEndPlayReason::Type Reason)
     // ClearTimer要求可变句柄，使用本模式自有Timer副本；随后统一清空原记录。
     for (const auto& Pair : ReconnectTimers) { FTimerHandle OwnedTimer = Pair.Value; GetWorldTimerManager().ClearTimer(OwnedTimer); }
     ReconnectTimers.Reset(); RespawnDeadlinesById.Reset(); SetGameplayLifecycleAdapter(nullptr); HeroEligibilityProvider = nullptr;
+    FCoreDelegates::OnEndFrame.Remove(EliminationResolutionHandle);EliminationResolutionHandle.Reset();EliminatedPlayers.Reset();
     Super::EndPlay(Reason);
 }
 void AGamePlatformArenaGameMode::SetGameplayLifecycleAdapter(IGamePlatformArenaGameplayLifecycleAdapter* InAdapter)
@@ -189,6 +191,7 @@ bool AGamePlatformArenaGameMode::ApplyAssignmentWithModeSpec(
 
     CurrentAssignment = Assignment;
     ActiveModeSpec = ModeSpec;
+    if(IsSingleRoundElimination()){CountdownSeconds=10.f;ReconnectGracePeriodSeconds=60.f;}
     bAssignmentApplied = true;
     if (AGamePlatformArenaGameState* ArenaState = GetGameState<AGamePlatformArenaGameState>())
     {
@@ -250,6 +253,11 @@ bool AGamePlatformArenaGameMode::RequestHeroSelection(
 {
     if (!HasAuthority() || PlayerState == nullptr) { OutError = TEXT("选人请求缺少服务器PlayerState。"); return false; }
     if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::HeroSelection) { OutError = TEXT("当前阶段不允许选人。"); return false; }
+    if(ActiveModeSpec.SelectionPolicyId==TEXT("Arena.Selection.LockedRoster"))
+    {
+        const auto* Slot=CurrentAssignment.Roster.FindByPredicate([PlayerState](const auto& Value){return Value.PlayerId==PlayerState->PlayerIdPublic;});
+        if(!Slot||Slot->HeroDefinitionId!=HeroDefinitionId){OutError=TEXT("只能使用后端已确认名单中的锁定英雄。");return false;}
+    }
     if (HeroDefinitionId.IsEmpty()) { OutError = TEXT("HeroDefinitionId不能为空。"); return false; }
     if (!IsCurrentConnectedPlayer(PlayerState)) { OutError = TEXT("只能为当前Roster中的自己选人。"); return false; }
 
@@ -325,6 +333,20 @@ void AGamePlatformArenaGameMode::BeginHeroSelectionIfReady()
             &AGamePlatformArenaGameMode::HandlePreMatchTimeout,
             HeroSelectionTimeoutSeconds,
             false);
+        if(ActiveModeSpec.SelectionPolicyId==TEXT("Arena.Selection.LockedRoster"))
+        {
+            for(const auto& Slot:CurrentAssignment.Roster)
+            {
+                auto* State=PlayerStatesById.FindRef(Slot.PlayerId).Get();
+                if(!State||!RequestHeroSelection(State,Slot.HeroDefinitionId,HeroEligibilityProvider,Error))
+                {Transition(EGamePlatformArenaMatchPhase::Failed,Error);return;}
+            }
+            for(const auto& Slot:CurrentAssignment.Roster)
+            {
+                auto* State=PlayerStatesById.FindRef(Slot.PlayerId).Get();
+                if(!State||!RequestReady(State,Error)){Transition(EGamePlatformArenaMatchPhase::Failed,Error);return;}
+            }
+        }
     }
 }
 
@@ -437,7 +459,7 @@ void AGamePlatformArenaGameMode::HandleMatchTimeLimit()
     FName WinningTeam = NAME_None;
     if (const AGamePlatformArenaGameState* ArenaState = GetGameState<AGamePlatformArenaGameState>())
     {
-        if (ArenaState->TeamStates.Num() == 2 && ArenaState->TeamStates[0].Score != ArenaState->TeamStates[1].Score)
+        if (!IsSingleRoundElimination() && ArenaState->TeamStates.Num() == 2 && ArenaState->TeamStates[0].Score != ArenaState->TeamStates[1].Score)
         {
             WinningTeam = ArenaState->TeamStates[0].Score > ArenaState->TeamStates[1].Score
                 ? ArenaState->TeamStates[0].TeamId
@@ -460,6 +482,8 @@ bool AGamePlatformArenaGameMode::HandleTrustedEvent(const FGamePlatformArenaTrus
         OutError = TEXT("可信事件幂等集合达到安全上限，拒绝继续接收新事件。");
         return false;
     }
+    if(IsSingleRoundElimination()&&Event.EventType==EGamePlatformArenaTrustedEventType::Death)
+        return HandleEliminationDeath(Event,OutError);
     ProcessedEventIds.Add(Event.EventId);
 
     AGamePlatformArenaGameState* ArenaState = GetGameState<AGamePlatformArenaGameState>();
@@ -575,6 +599,14 @@ bool AGamePlatformArenaGameMode::RequestForfeit(AGamePlatformArenaPlayerState* P
     if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("只有进行中的比赛可以弃权。"); return false; }
     if (!IsCurrentConnectedPlayer(PlayerState)) { OutError = TEXT("非Roster玩家不能弃权。"); return false; }
     PlayerState->AuthoritySetForfeitState(EGamePlatformArenaForfeitState::Accepted);
+    if(IsSingleRoundElimination())
+    {
+        // 个人只能退出自己的存活资格；同帧全部退出与死亡一起汇合，不能代表队友投降。
+        EliminatedPlayers.Add(PlayerState->PlayerIdPublic);PlayerState->AuthorityMarkEliminated(false);
+        if(!EliminationResolutionHandle.IsValid())EliminationResolutionHandle=FCoreDelegates::OnEndFrame.AddUObject(this,&ThisClass::ResolveEliminationAtEndFrame);
+        if(GameplayLifecycleAdapter&&!GameplayLifecycleAdapter->SetPlayerGameplayActive(PlayerState->PlayerIdPublic,false,OutError))return false;
+        OutError.Reset();return true;
+    }
     return EndMatch(GetOpponentTeam(PlayerState->TeamId), EGamePlatformArenaMatchEndReason::PlayerForfeit, OutError);
 }
 
@@ -595,7 +627,13 @@ void AGamePlatformArenaGameMode::MarkPlayerDisconnected(const FString& PlayerId)
     Recovery.Score = State->ArenaScore;
     Recovery.ObjectiveScore = State->ObjectiveScore;
     Recovery.ForfeitState = State->ForfeitState;
-    if (GameplayLifecycleAdapter) { FString Ignored; GameplayLifecycleAdapter->SetPlayerGameplayActive(PlayerId, false, Ignored); }
+    if (GameplayLifecycleAdapter)
+    {
+        FString Reason;
+        const bool bSuspended=IsSingleRoundElimination()&&GetMatchPhase()==EGamePlatformArenaMatchPhase::InProgress&&!EliminatedPlayers.Contains(PlayerId)
+            ?GameplayLifecycleAdapter->SuspendPlayerConnection(PlayerId,Reason):GameplayLifecycleAdapter->SetPlayerGameplayActive(PlayerId,false,Reason);
+        if(!bSuspended)UE_LOG(LogTemp,Error,TEXT("Arena disconnect qualification failed: %s"),*Reason);
+    }
     State->AuthoritySetConnectionState(EGamePlatformArenaConnectionState::Disconnected);
     FTimerHandle& Handle = ReconnectTimers.FindOrAdd(PlayerId);
     GetWorldTimerManager().SetTimer(
@@ -639,7 +677,13 @@ bool AGamePlatformArenaGameMode::TryReconnectPlayer(
             Recovery->ForfeitState);
     }
     PlayerStatesById.Add(PlayerId, NewPlayerState);
-    if (PhaseMachine.GetPhase() == EGamePlatformArenaMatchPhase::InProgress)
+    if(IsSingleRoundElimination()&&EliminatedPlayers.Contains(PlayerId))NewPlayerState->AuthorityMarkEliminated(false);
+    if(IsSingleRoundElimination()&&PhaseMachine.GetPhase()==EGamePlatformArenaMatchPhase::InProgress&&!EliminatedPlayers.Contains(PlayerId))
+    {
+        if(!GameplayLifecycleAdapter||!GameplayLifecycleAdapter->RestorePlayerConnection(PlayerId,OutError))
+        {PlayerStatesById.Add(PlayerId,PreviousState);NewPlayerState->AuthoritySetConnectionState(EGamePlatformArenaConnectionState::Disconnected);return false;}
+    }
+    else if (!IsSingleRoundElimination()&&PhaseMachine.GetPhase() == EGamePlatformArenaMatchPhase::InProgress)
     {
         // 死亡中断线不能绕过既定复活等待；活玩家可信重新出生，死玩家按剩余世界时间恢复同一等待。
         const double RemainingRespawnSeconds = FMath::Max(0.0, RespawnDeadlinesById.FindRef(PlayerId) - GetWorld()->GetTimeSeconds());
@@ -686,8 +730,15 @@ void AGamePlatformArenaGameMode::HandleReconnectTimeout(const FString PlayerId)
     ReconnectTimers.Remove(PlayerId);
     if (!TimedOutTeam.IsNone() && PhaseMachine.GetPhase() == EGamePlatformArenaMatchPhase::InProgress)
     {
-        FString Error;
-        EndMatch(GetOpponentTeam(TimedOutTeam), EGamePlatformArenaMatchEndReason::ReconnectTimeout, Error);
+        if(IsSingleRoundElimination())
+        {
+            EliminatedPlayers.Add(PlayerId);
+            // 宽限结束必须撤销原实体受伤目标与死亡订阅，不能把已退出参赛者留成整局可攻击的活体。
+            if(GameplayLifecycleAdapter){FString Reason;if(!GameplayLifecycleAdapter->SetPlayerGameplayActive(PlayerId,false,Reason))UE_LOG(LogTemp,Error,TEXT("Arena reconnect timeout cleanup failed: %s"),*Reason);}
+            if(auto* State=PlayerStatesById.FindRef(PlayerId).Get())State->AuthorityMarkEliminated(false);
+            if(!EliminationResolutionHandle.IsValid())EliminationResolutionHandle=FCoreDelegates::OnEndFrame.AddUObject(this,&ThisClass::ResolveEliminationAtEndFrame);
+        }
+        else {FString Error;EndMatch(GetOpponentTeam(TimedOutTeam),EGamePlatformArenaMatchEndReason::ReconnectTimeout,Error);}
     }
 }
 
@@ -758,6 +809,7 @@ bool AGamePlatformArenaGameMode::EndMatch(FName WinningTeamId, EGamePlatformAren
     }
     if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("只有InProgress比赛可正常结束。"); return false; }
     bEndStarted = true;
+    FCoreDelegates::OnEndFrame.Remove(EliminationResolutionHandle);EliminationResolutionHandle.Reset();
     if (!Transition(EGamePlatformArenaMatchPhase::Ending, OutError)) { bEndStarted = false; return false; }
     GetWorldTimerManager().ClearTimer(MatchDeadlineTimer);
     BuildPendingResult(WinningTeamId, Reason);
@@ -782,4 +834,38 @@ bool AGamePlatformArenaGameMode::MarkResultCommitted(FString& OutError)
     if (!HasAuthority()) { OutError = TEXT("结果提交确认只能由服务器处理。"); return false; }
     if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::ResultPending) { OutError = TEXT("当前没有待提交结果。"); return false; }
     return Transition(EGamePlatformArenaMatchPhase::Completed, OutError);
+}
+
+bool AGamePlatformArenaGameMode::HandleEliminationDeath(const FGamePlatformArenaTrustedEvent& Event,FString& OutError)
+{
+    auto* Victim=PlayerStatesById.FindRef(Event.PlayerId).Get();
+    if(EliminatedPlayers.Contains(Event.PlayerId)){ProcessedEventIds.Add(Event.EventId);OutError.Reset();return true;}
+    FGamePlatformArenaGameplayOwnership Ownership;
+    auto* Adapter=GameplayLifecycleAdapter;const FGuid Binding=GameplayLifecycleBindingId;
+    const auto* Slot=CurrentAssignment.Roster.FindByPredicate([&Event](const auto& Value){return Value.PlayerId==Event.PlayerId;});
+    const bool bRecovering=IsPlayerAwaitingReconnect(Event.PlayerId)&&RecoveryStatesById.Contains(Event.PlayerId);
+    if(!Slot||(!IsCurrentConnectedPlayer(Victim)&&!bRecovering)||!Adapter||!Adapter->CapturePlayerGameplayOwnership(Event.PlayerId,Ownership)||!Ownership.Pawn.IsValid()||Ownership.AvatarGeneration<=0)
+    {OutError=TEXT("淘汰缺少当前名单、受控实体或正代次。");return false;}
+    const FName VictimTeam=Slot->TeamId;
+    ProcessedEventIds.Add(Event.EventId);EliminatedPlayers.Add(Event.PlayerId);
+    if(!EliminationResolutionHandle.IsValid())EliminationResolutionHandle=FCoreDelegates::OnEndFrame.AddUObject(this,&ThisClass::ResolveEliminationAtEndFrame);
+    if(Victim)Victim->AuthorityMarkEliminated(true);
+    // 原PlayerState可能已随断线销毁；恢复快照仍记录真实死亡，不让重连丢统计或复活。
+    if(auto* Recovery=RecoveryStatesById.Find(Event.PlayerId))++Recovery->Deaths;
+    if(!IsValid(this)||!GetWorld()||GetWorld()->bIsTearingDown||bEndStarted||!IsGameplayLifecycleAdapter(Adapter,Binding))return true;
+    if(!Adapter->SetPlayerGameplayActive(Event.PlayerId,false,OutError))return false;
+    if(!IsValid(this)||!GetWorld()||GetWorld()->bIsTearingDown||bEndStarted||GetMatchPhase()!=EGamePlatformArenaMatchPhase::InProgress||!IsGameplayLifecycleAdapter(Adapter,Binding))return true;
+    // 死亡只失活，不调用RequestRespawn；击杀统计不改变淘汰胜负，环境死亡同样生效。
+    if(auto* Killer=PlayerStatesById.FindRef(Event.RelatedPlayerId).Get())
+        if(Killer!=Victim&&Killer->TeamId!=VictimTeam){Killer->AuthorityRecordKill();Killer->AuthorityAddScore(StandardKillScore);}
+    OutError.Reset();return true;
+}
+void AGamePlatformArenaGameMode::ResolveEliminationAtEndFrame()
+{
+    FCoreDelegates::OnEndFrame.Remove(EliminationResolutionHandle);EliminationResolutionHandle.Reset();
+    if(!HasAuthority()||!GetWorld()||GetWorld()->bIsTearingDown||!IsSingleRoundElimination()||PhaseMachine.GetPhase()!=EGamePlatformArenaMatchPhase::InProgress)return;
+    TMap<FName,int32> Alive;for(const auto& Slot:CurrentAssignment.Roster){Alive.FindOrAdd(Slot.TeamId);if(!EliminatedPlayers.Contains(Slot.PlayerId))++Alive[Slot.TeamId];}
+    FName Survivor=NAME_None;int32 LivingTeams=0;for(const auto& Pair:Alive)if(Pair.Value>0){Survivor=Pair.Key;++LivingTeams;}
+    if(LivingTeams>1)return;
+    FString Error;EndMatch(LivingTeams==1?Survivor:NAME_None,EGamePlatformArenaMatchEndReason::Elimination,Error);
 }

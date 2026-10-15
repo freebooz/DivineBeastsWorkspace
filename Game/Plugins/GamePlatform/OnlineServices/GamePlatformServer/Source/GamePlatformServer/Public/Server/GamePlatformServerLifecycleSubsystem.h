@@ -211,6 +211,8 @@ public:
     /** 本地玩家／比赛资源已清理后结束本地生命周期；控制面Drain由BeginDrain完成。 */
     bool CompleteDrain();
 
+    /** 仅游戏线程供同实例服务器适配器关联后端身份，不授予客户端准入，不包含认证凭据。 */
+    FString GetRegisteredServerBootId() const {return ActiveInstance.ServerBootId;}
     FGamePlatformServerLifecycleSnapshot GetSnapshot() const { return Snapshot; }
     FGamePlatformServerLifecycleChangedNative& OnLifecycleChanged()
     {

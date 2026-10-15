@@ -249,6 +249,9 @@ public:
         const FGamePlatformOnlineRequestHandle& Request) override;
 
     /** 游戏线程读取本人普通队伍；复用本实例认证／预算／取消，所有终态后续GT回调一次。 */
+    /** 本人事件观察：空游标读取一次快照，其后至多8秒长等待，留足既有10秒网络尝试预算。 */
+    FGamePlatformOnlineRequestHandle ObserveParty(const FString& Cursor,
+        const FGamePlatformOnlineRequestOptions& Options, TFunction<void(const FGamePlatformPartyResult&)> Completion);
     FGamePlatformOnlineRequestHandle GetCurrentParty(const FGamePlatformOnlineRequestOptions& Options,
         TFunction<void(const FGamePlatformPartyResult&)> Completion);
     /** 读取本人邀请，不接受其他玩家ID；无订阅端点时只在激活／显式刷新／命令完成触发。 */

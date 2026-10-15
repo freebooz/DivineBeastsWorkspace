@@ -14,6 +14,11 @@ service MatchService {
   rpc GetPartyInvitations(PartyReadRequest) returns (PartyDataResponse);
   // 本人可恢复事件观察；至多20秒阻塞等待，取消不回滚业务。
   rpc ObserveParty(PartyObservationRequest) returns (PartyDataResponse);
+  // 匹配生命周期复用Shared JSON合同；认证主体/会话/已选角色由可信Gateway注入。
+  rpc ReadMatchmakingState(PartyReadRequest) returns (PartyDataResponse);
+  rpc ObserveMatchmaking(PartyObservationRequest) returns (PartyDataResponse);
+  rpc CommandMatchmaking(MatchmakingCommandRequest) returns (PartyDataResponse);
+  rpc GetMatchmakingMigration(MatchmakingCommandRequest) returns (PartyDataResponse);
 }
 
 message CreatePartyRequest {
@@ -57,6 +62,12 @@ message PartyObservationRequest {
   string player_id = 1;
   string cursor = 2;
   int64 wait_milliseconds = 3;
+}
+
+// actor_json仅供内部服务，禁止客户端覆盖其中会话/角色；command_json由Shared公开合同拥有。
+message MatchmakingCommandRequest {
+  string actor_json = 1;
+  string command_json = 2;
 }
 
 // PartyCommandRequest内command_json必须通过与公网相同的严格64KiB对象解码；不含认证材料。

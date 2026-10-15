@@ -15,12 +15,17 @@ import (
 // GameServerControlInternalServer（游戏服务器控制内部gRPC服务端）供MatchService分配MainArena并签发迁移票据。
 type GameServerControlInternalServer struct {
 	gameservercontrolv1.UnimplementedGameServerControlInternalServiceServer
-	service *gameservercontrol.Service
+	service       *gameservercontrol.Service
+	runtimeBearer string // 新生命周期RPC的内部Bearer，空值拒绝。
 }
 
 // RegisterGameServerControlInternalServer（注册内部控制gRPC服务）挂载Backend内部RPC接口。
-func RegisterGameServerControlInternalServer(registrar grpc.ServiceRegistrar, service *gameservercontrol.Service) {
-	gameservercontrolv1.RegisterGameServerControlInternalServiceServer(registrar, &GameServerControlInternalServer{service: service})
+func RegisterGameServerControlInternalServer(registrar grpc.ServiceRegistrar, service *gameservercontrol.Service, runtimeBearer ...string) {
+	token := ""
+	if len(runtimeBearer) > 0 {
+		token = runtimeBearer[0]
+	}
+	gameservercontrolv1.RegisterGameServerControlInternalServiceServer(registrar, &GameServerControlInternalServer{service: service, runtimeBearer: token})
 }
 
 // AllocateWorld（分配常驻世界）支持Lobby.Main、OpenWorld.Main和Village体验，并兼容旧OpenWorld.Hub标识。
