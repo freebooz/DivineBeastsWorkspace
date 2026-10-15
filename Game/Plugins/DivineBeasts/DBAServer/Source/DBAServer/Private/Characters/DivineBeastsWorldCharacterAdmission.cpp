@@ -3,9 +3,12 @@
 #include "Characters/DivineBeastsWorldCharacterAdmission.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Components/DivineBeastsCharacterComponent.h"
+#include "Characters/DivineBeastsCharacter.h"
+#include "Server/DivineBeastsServerBootstrapSubsystem.h"
 #include "Gameplay/DivineBeastsWorldGameMode.h"
 #include "Framework/GamePlatformPlayerStateBase.h"
 #include "Engine/World.h"
+#include "Engine/GameInstance.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "HttpModule.h"
@@ -15,6 +18,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "HAL/PlatformMisc.h"
 #include "TimerManager.h"
+#include "UObject/Package.h"
 
 namespace DivineBeasts::WorldCharacterAdmission
 {
@@ -224,6 +228,38 @@ void FDivineBeastsWorldCharacterAdmission::BindSpawnedPawn(APlayerController& Co
     Connection->BoundPawn = Pawn; Connection->CharacterIdentity = Identity; Connection->bWasCharacterReady = false;
     Connection->bFailureScheduled = false;
     const TWeakPtr<FDivineBeastsWorldCharacterAdmission> WeakThis = AsShared(); const TWeakObjectPtr<APlayerController> C = &Controller;
+    if (auto* ProjectPawn = Cast<ADivineBeastsCharacter>(Pawn))
+    {
+        const TWeakPtr<FConnection> WeakConnection = Connection;
+        // 用户明确Village玩家互为治疗友方；这里只读本桥已验证的当前准入，不使用客户端Party或玩家昵称。
+        ProjectPawn->AuthorityFriendlyTargetQuery().BindLambda(
+            [WeakThis, WeakConnection, C, PawnOperationId](const ADivineBeastsCharacter* Source, const AActor* Target)
+            {
+                const auto Self = WeakThis.Pin(); const auto SourceConnection = WeakConnection.Pin();
+                const auto* TargetPawn = Cast<ADivineBeastsCharacter>(Target);
+                auto* TargetController = TargetPawn ? Cast<APlayerController>(TargetPawn->GetController()) : nullptr;
+                if (!Self || !SourceConnection || !Self->IsCurrent(C.Get(), SourceConnection) ||
+                    SourceConnection->PawnOperationId != PawnOperationId || SourceConnection->BoundPawn.Get() != Source ||
+                    !SourceConnection->PlayerState.IsValid() || SourceConnection->Verified.PlayerId.IsEmpty() ||
+                    !TargetController || TargetController->GetPawn() != TargetPawn || !Self->Mode.IsValid()) return false;
+                UWorld* World = Self->Mode->GetWorld();
+                auto* Bootstrap = World && World->GetGameInstance() ? World->GetGameInstance()->GetSubsystem<UDivineBeastsServerBootstrapSubsystem>() : nullptr;
+                const auto* Profile = Bootstrap ? Bootstrap->GetActiveProfile() : nullptr;
+                if (!World || World->bIsTearingDown || !Self->Mode->HasAuthority() || Source->GetWorld() != World ||
+                    TargetPawn->GetWorld() != World || !Profile || Profile->ServerRoleId != TEXT("GameServer.Role.Village") ||
+                    Profile->WorldPackage != World->GetOutermost()->GetName()) return false;
+                const auto TargetConnection = Self->Connections.FindRef(TargetController);
+                if (!TargetConnection || !Self->IsCurrent(TargetController, TargetConnection) ||
+                    TargetConnection->Verified.PlayerId.IsEmpty() || !TargetConnection->PlayerState.IsValid() ||
+                    TargetConnection->BoundPawn.Get() != TargetPawn ||
+                    SourceConnection->PlayerState.Get() != C->GetPlayerState<AGamePlatformPlayerStateBase>() ||
+                    TargetConnection->PlayerState.Get() != TargetController->GetPlayerState<AGamePlatformPlayerStateBase>()) return false;
+                // 关系保持与存活检查分离，已选死亡玩家仍是友方，治疗会在Commit前拒绝而不是误自疗。
+                // 怪物没有本桥签发的PlayerState/PlayerId/准入连接，不能获得友方资格。
+                return SourceConnection->PlayerState->GetLifecycleSnapshot().ControlledPawn == Source &&
+                    TargetConnection->PlayerState->GetLifecycleSnapshot().ControlledPawn == TargetPawn;
+            });
+    }
     Connection->ReadinessHandle = Identity->OnReadinessChanged().AddWeakLambda(Identity, [WeakThis, C, Connection, PawnOperationId](bool)
     { if (auto Self = WeakThis.Pin(); Self && Self->IsCurrent(C.Get(), Connection) && Connection->PawnOperationId == PawnOperationId) Self->ObserveCharacterInitialization(*C, Connection); });
     Mode->GetWorld()->GetTimerManager().SetTimer(Connection->InitializationTimeout, FTimerDelegate::CreateLambda([WeakThis, C, Connection, PawnOperationId]()

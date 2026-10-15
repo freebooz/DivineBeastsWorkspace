@@ -34,6 +34,12 @@ def inspect():
         for row in magic_rows:
             check(row['MomentumCost'] == 0, row['Name'] + ':法术不能消耗气势')
         totals['zero_cost_magic_rows'] = sum(row['MomentumCost'] == 0 for row in magic_rows)
+        # Primary保持稳定逻辑ID，但其用户批准行为已替换为20米内20%最大生命治疗；不把旧普攻记为通过。
+        primary_rows = [row for row in balance_rows if '_Placeholder_Primary_' in row['Name']]
+        check(len(primary_rows) == 12, '治疗必须覆盖十二生肖Primary')
+        for row in primary_rows:
+            check((row['BaseDamage'], row['DamageType'], row['MomentumCost'], row['CooldownSeconds'], row['CastRangeCm']) ==
+                  (0, 'Untyped', 0, 10, 2000), row['Name'] + ':治疗数值合同不符')
 
     def logical(obj):
         return (str(obj.get_editor_property("Namespace")) + "." +
@@ -114,11 +120,14 @@ def inspect():
                 totals["ga_definition_ids_verified"] += 1
                 cost = cdo.get_editor_property("CostGameplayEffectClass")
                 cooldown = cdo.get_editor_property("CooldownGameplayEffectClass")
-                requires_effects = mode not in ("Primary", "Passive")
+                requires_effects = mode != "Passive"
                 check(not cost and bool(cooldown) == requires_effects,
                       ability_id + ":法术成本必须为空，原有冷却GE必须保留")
                 totals["effects_verified"] += int(requires_effects and not cost and bool(cooldown))
-                if requires_effects:
+                if mode == "Primary":
+                    check(cdo.get_editor_property('PlaceholderMode') == unreal.DivineBeastsPlaceholderAbilityMode.HEALING,
+                          ability_id + ':Primary仍未迁移治疗执行模式')
+                if mode not in ("Primary", "Passive"):
                     legacy_path = ROOT + "/GE" + path.rsplit("/", 1)[-1] + "Cost"
                     legacy_cls = unreal.EditorAssetLibrary.load_blueprint_class(legacy_path)
                     neutral = legacy_cls is not None and not unreal.get_default_object(legacy_cls).get_editor_property('Modifiers')

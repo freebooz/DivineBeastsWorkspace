@@ -127,6 +127,20 @@
     "CookScopeZh": "此条只登记资产读入与编译；最终Client和Server Cook、实际双客户端结果见Docs/Implementation/IceArrow/Execution_20261015.md。",
     "ManualVisualAccepted": false
   },
+  "BirdRoutes20261015": {
+    "Status": "Saved_NativeReloadVerified_GPU18Passed_CookPending",
+    "MonolithVersion": "0.23.0",
+    "EditorPidAtAuthoring": 27104,
+    "SavedAndNativeReloadedPackages": 8,
+    "CompiledSystems": 4,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "SourceSha256": "e3f2912f48f5920a41e271a415b5e75f23af16878b2eb37bacd1ae507a089fbe",
+    "ColdEvidence": "Saved/Validation/BirdFlockP4/BirdFlockRoutesValidationReloaded.json",
+    "MeshBoundsEvidence": "Saved/Validation/BirdFlockRoutes/ActualMeshXYZAudit.json",
+    "NewGPUEvidence": "Saved/Validation/BirdFlockP4P7/GPUReview/SpacingReview/GPUReview.json",
+    "NotesCN": "三模式改为自然S/伸长八字，保留稳定身份、数量、间距与固定Bounds。实际Mode/Seed消费整数转换，旧未使用Float影子明确登记。原18样本保存在RoutesBefore，不作为新轨迹证明；新GPU结果以证据文件实际终态为准。"
+  },
   "BirdSpacing20261015": {
     "ScopeZh": "保留海鸥32、燕子24、鹰5的正式默认数量和原路线；按真实网格/WPO分别设置240/180/380厘米最小中心距。",
     "Author": "Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockNiagaraMonolith.py",

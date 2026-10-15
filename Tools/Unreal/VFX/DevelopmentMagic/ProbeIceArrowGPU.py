@@ -26,7 +26,8 @@ class IceArrowGPUProbe:
         self.components, self.actors, self.caches, self.tasks = {}, [], {}, []
         self.started = time.monotonic()
         self.mark, self.last = self.started, self.started
-        self.phase, self.steps, self.sample = 'simulate', 0, 0
+        self.phase, self.steps, self.sample = 'await_activation', 0, 0
+        self.ready_stages = set()
         # 只在调用方显式要求时使用真实编辑器世界截图，避免FPreviewScene的GPU黑图被误作验收。
         self.capture_viewport = capture_viewport
         self.pending_frame = None
@@ -41,9 +42,11 @@ class IceArrowGPUProbe:
             component.set_auto_activate(False)
             component.set_asset(unreal.load_asset('/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_' + stage))
             component.set_editor_property('allow_scalability', False)
+            # 冷载入必须等待真实GPU编译；仅VM编译UpToDate不能保证组件已具有SystemSimulation。
+            component.set_editor_property('wait_for_compilation_on_activate', True)
             component.set_force_solo(True)
             component.activate(True)
-            component.set_component_tick_enabled(False)
+            # 延迟激活依靠原生TickComponent重试World/PSO就绪；此时不能提前关闭它。
             self.components[stage] = component
         self.handle = unreal.register_slate_post_tick_callback(self.tick)
         self.persist()
@@ -59,7 +62,24 @@ class IceArrowGPUProbe:
             now = time.monotonic()
             if now - self.started > 40:
                 raise RuntimeError('冰箭GPU回读超时')
-            if self.phase == 'simulate' and now - self.last >= 1 / 30:
+            if self.phase == 'await_activation':
+                for stage, component in self.components.items():
+                    if stage in self.ready_stages:
+                        continue
+                    cache = unreal.NiagaraSimCacheFunctionLibrary.create_niagara_sim_cache(component)
+                    captured = unreal.NiagaraSimCacheFunctionLibrary.capture_niagara_sim_cache_immediate(
+                        cache, unreal.NiagaraSimCacheCreateParameters(), component, False, 1 / 30)
+                    if captured and cache.get_num_frames() > 0:
+                        self.ready_stages.add(stage)
+                        component.set_component_tick_enabled(False)
+                if len(self.ready_stages) == len(self.components):
+                    # 所有真实模拟存在后才统一重置计时，不能把AdvanceSimulation空操作当成已推进。
+                    for component in self.components.values():
+                        component.activate(True)
+                        component.set_component_tick_enabled(False)
+                    self.report['activationVerifiedBySimCache'] = sorted(self.ready_stages)
+                    self.phase, self.last = 'simulate', now
+            elif self.phase == 'simulate' and now - self.last >= 1 / 30:
                 for component in self.components.values():
                     component.advance_simulation(1, 1 / 30)
                 self.steps += 1
@@ -126,6 +146,11 @@ class IceArrowGPUProbe:
         camera.set_actor_rotation(unreal.MathLibrary.find_look_at_rotation(
             camera.get_actor_location(), origin + unreal.Vector(-50, 0, 0)), False)
         camera.get_component_by_class(unreal.CameraComponent).set_field_of_view(48)
+        # Automation截图读取活动编辑器视口；仅传camera参数不足以切换当前审核相机。
+        levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+        levels.pilot_level_actor(camera)
+        levels.editor_set_viewport_realtime(True)
+        levels.editor_invalidate_viewports()
         self.pending_frame = self.path.with_suffix('.png')
         assert not self.pending_frame.exists(), '拒绝读取旧冰箭截图'
         task = unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, str(self.pending_frame),

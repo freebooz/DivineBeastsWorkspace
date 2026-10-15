@@ -339,7 +339,41 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
     if (!IsOriginalContextCurrent()) { OutReason = TEXT("资格通知后读取Ready时原出生已撤销。"); return false; }
     if (!bAvatarBound || Combat->GetCombatAvatarGeneration() != SpawnGeneration || !bStillReady)
     { DestroyOnlyOriginalPawn(); OutReason = TEXT("真实角色玩法代次或Ready尚未完整初始化。"); return false; }
-    if (auto* ProjectPawn = Cast<ADivineBeastsCharacter>(Character)) { BindPawnDeath(PlayerId, *ProjectPawn, *State, SpawnGeneration); }
+    if (auto* ProjectPawn = Cast<ADivineBeastsCharacter>(Character))
+    {
+        BindPawnDeath(PlayerId, *ProjectPawn, *State, SpawnGeneration);
+        // 友方关系只读可信比赛Roster；项目角色不链接竞技模块，也不采信客户端Party/昵称。
+        // 回调弱持有Adapter并捕获装配身份；结束/替换后立即失败，不延长世界生命周期。
+        const TWeakPtr<FDivineBeastsArenaGameplayLifecycleAdapter> WeakAdapter = AsShared();
+        ProjectPawn->AuthorityFriendlyTargetQuery().BindLambda(
+            [WeakAdapter, ExpectedBindingId, ExpectedMatchId, ExpectedServerId](const ADivineBeastsCharacter* Source, const AActor* Target)
+            {
+                const auto Adapter = WeakAdapter.Pin();
+                const auto* Mode = Adapter.IsValid() ? Adapter->GameMode.Get() : nullptr;
+                const auto* TargetPawn = Cast<ADivineBeastsCharacter>(Target);
+                const auto* SourceState = Source ? Source->GetPlayerState<AGamePlatformArenaPlayerState>() : nullptr;
+                const auto* TargetState = TargetPawn ? TargetPawn->GetPlayerState<AGamePlatformArenaPlayerState>() : nullptr;
+                if (!Mode || !Mode->HasAuthority() || !Mode->GetWorld() || Mode->GetWorld()->bIsTearingDown ||
+                    !Mode->IsGameplayLifecycleAdapter(Adapter.Get(), ExpectedBindingId) ||
+                    Mode->GetMatchPhase() != EGamePlatformArenaMatchPhase::InProgress ||
+                    Mode->GetAssignment().MatchId != ExpectedMatchId || Mode->GetAssignment().GameServerId != ExpectedServerId ||
+                    !SourceState || !TargetState || Source->GetWorld() != Mode->GetWorld() || TargetPawn->GetWorld() != Mode->GetWorld() ||
+                    SourceState->GetWorld() != Mode->GetWorld() || TargetState->GetWorld() != Mode->GetWorld() ||
+                    SourceState->PlayerIdPublic.IsEmpty() || TargetState->PlayerIdPublic.IsEmpty() || SourceState->TeamId.IsNone() ||
+                    SourceState->TeamId != TargetState->TeamId ||
+                    Adapter->SpawnedPawns.FindRef(SourceState->PlayerIdPublic).Get() != Source ||
+                    Adapter->SpawnedPawns.FindRef(TargetState->PlayerIdPublic).Get() != TargetPawn) return false;
+                int32 SourceSlots = 0, TargetSlots = 0;
+                for (const auto& Slot : Mode->GetAssignment().Roster)
+                {
+                    if (!Slot.IsValid()) continue;
+                    if (Slot.PlayerId == SourceState->PlayerIdPublic && Slot.CharacterId == SourceState->CharacterId && Slot.TeamId == SourceState->TeamId) ++SourceSlots;
+                    if (Slot.PlayerId == TargetState->PlayerIdPublic && Slot.CharacterId == TargetState->CharacterId && Slot.TeamId == TargetState->TeamId) ++TargetSlots;
+                }
+                // 关系不掺入生命/距离/化身筛选；死友方和旧化身由治疗明确拒绝，不能被误认为无友方而自疗。
+                return SourceSlots == 1 && TargetSlots == 1;
+            });
+    }
     // 初次出生属于倒计时事务；全部Pawn成功后由GameMode统一激活。局内复活则必须仍处于InProgress。
     // 保存本次新增委托身份；失效时只撤销该监听，不能按PlayerId清掉同步后继重新注册的监听。
     const FDeathBinding* OriginalDeath = DeathBindings.Find(PlayerId);

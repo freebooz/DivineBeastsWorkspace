@@ -107,8 +107,16 @@ void ADivineBeastsCharacter::HandleCombatEvent(const FGamePlatformCombatEvent& E
     const FGamePlatformCombatEvent Death = Event;
     AuthoritativeDeath.Broadcast(Death);
 }
+bool ADivineBeastsCharacter::AuthorityIsFriendlyCombatTarget(const AActor* Target) const
+{
+    if (!IsInGameThread() || !HasAuthority() || !IsValid(Target) || !Target->HasAuthority() ||
+        IsActorBeingDestroyed() || Target->IsActorBeingDestroyed() || Target->GetWorld() != GetWorld()) return false;
+    return Target == this || (FriendlyCombatTargetQuery.IsBound() && FriendlyCombatTargetQuery.Execute(this, Target));
+}
+
 void ADivineBeastsCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
+    FriendlyCombatTargetQuery.Unbind();
     DisconnectedCombatTargetGeneration=0;
     if (HasAuthority()) AITarget->SetAITargetEnabled(false);
     AuthoritativeDeath.Clear();

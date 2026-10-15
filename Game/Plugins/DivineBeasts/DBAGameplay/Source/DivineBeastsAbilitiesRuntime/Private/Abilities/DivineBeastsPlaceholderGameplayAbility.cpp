@@ -4,9 +4,11 @@
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
+#include "Characters/DivineBeastsCharacter.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/GamePlatformCombatant.h"
 
 UDivineBeastsPlaceholderGameplayAbility::UDivineBeastsPlaceholderGameplayAbility()
 {
@@ -19,7 +21,8 @@ UGameplayEffect* UDivineBeastsPlaceholderGameplayAbility::GetCostGameplayEffect(
     // 不退款、不补资源、不绕过Commit；只排除用户已明确取消的法术气势成本，原有冷却仍走GAS。
     if (PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Fireball ||
         PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Frostbolt ||
-        PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::ArcaneMissiles) return nullptr;
+        PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::ArcaneMissiles ||
+        PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Healing) return nullptr;
     return Super::GetCostGameplayEffect();
 }
 
@@ -53,18 +56,21 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
     const int32 AvatarGeneration = Combat ? Combat->GetCombatAvatarGeneration() : 0;
     FDivineBeastsAbilityBalanceRow Balance;
     FString Error;
+    const bool bHealing = PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Healing;
 
     if (!Avatar || !Avatar->HasAuthority() || !Combat || Combat->IsCombatDead() ||
         !World || World->bIsTearingDown || AvatarGeneration <= 0 ||
         PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Passive ||
         !TryReadConfiguredBalance(Balance, Error) ||
-        Balance.BaseDamage <= 0.0f || Balance.CastRangeCm <= 0.0f)
+        (!bHealing && Balance.BaseDamage <= 0.0f) || Balance.CastRangeCm <= 0.0f ||
+        (bHealing && (!FMath::IsNearlyEqual(Balance.CooldownSeconds, 10.f) ||
+            Balance.MomentumCost != 0.f || !GetCooldownGameplayEffect() || PlaceholderCooldownTags.IsEmpty())))
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
         return;
     }
 
-    const bool bProjectile =
+    const bool bProjectile = !bHealing &&
         PlaceholderMode != EDivineBeastsPlaceholderAbilityMode::Primary;
     if (bProjectile &&
         (!ProjectileMotion.IsValid() ||
@@ -78,6 +84,37 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
         return;
     }
 
+    // 先冻结治疗目标并检查资格，再提交冷却。失效的已选友方不能被过滤为nullptr后误自疗。
+    auto* HealingSource = bHealing ? Cast<ADivineBeastsCharacter>(Avatar) : nullptr;
+    TWeakObjectPtr<AActor> HealingTarget = Avatar;
+    int32 HealingTargetGeneration = AvatarGeneration;
+    if (bHealing)
+    {
+        TWeakObjectPtr<AActor> IntentTarget;
+        int32 IntentSourceGeneration = 0, IntentTargetGeneration = 0;
+        const bool bHasIntent = Combat->GetSelectedProjectileTargetIntent(IntentTarget, IntentSourceGeneration, IntentTargetGeneration);
+        if (!HealingSource || (bHasIntent && (!IntentTarget.IsValid() || IntentSourceGeneration != AvatarGeneration)))
+        { EndAbility(Handle, ActorInfo, ActivationInfo, true, true); return; }
+        if (bHasIntent && HealingSource->AuthorityIsFriendlyCombatTarget(IntentTarget.Get()))
+        { HealingTarget = IntentTarget; HealingTargetGeneration = IntentTargetGeneration; }
+    }
+    const auto IsHealingTargetCurrent = [&]()
+    {
+        AActor* Target = HealingTarget.Get();
+        const auto* TargetCombat = IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+        const auto* TargetPolicy = IsValid(Target) ? Cast<IGamePlatformCombatant>(Target) : nullptr;
+        return IsValid(HealingSource) && IsValid(Target) && !Target->IsActorBeingDestroyed() &&
+            Target->GetWorld() == World && TargetCombat && !TargetCombat->IsCombatDead() &&
+            (!TargetPolicy || TargetPolicy->CanReceiveCombat()) &&
+            TargetCombat->GetCombatAvatarGeneration() == HealingTargetGeneration &&
+            HealingSource->AuthorityIsFriendlyCombatTarget(Target) &&
+            !Target->GetActorLocation().ContainsNaN() && !Avatar->GetActorLocation().ContainsNaN() &&
+            FVector::DistSquared(Avatar->GetActorLocation(), Target->GetActorLocation()) <= FMath::Square(Balance.CastRangeCm) &&
+            FMath::IsFinite(TargetCombat->GetCombatMaxHealth()) && TargetCombat->GetCombatMaxHealth() > 0.f;
+    };
+    if (bHealing && !IsHealingTargetCurrent())
+    { EndAbility(Handle, ActorInfo, ActivationInfo, true, true); return; }
+
     const bool bCommitted = CommitAbility(Handle, ActorInfo, ActivationInfo);
     // 成本/冷却回调可能同步结束或替换激活；只允许本次已Commit的化身执行权威伤害。
     if (ActivationToken != Token || !IsActive()) return;
@@ -86,6 +123,31 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
         Combat->IsCombatDead() || Combat->GetCombatAvatarGeneration() != AvatarGeneration)
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+        return;
+    }
+
+    if (bHealing)
+    {
+        // Commit通知可能同步改变友方关系、目标化身或世界；不能把旧资格用于新目标，也不伪造退款。
+        if (!IsHealingTargetCurrent())
+        { EndAbility(Handle, ActorInfo, ActivationInfo, true, true); return; }
+        AActor* Target = HealingTarget.Get();
+        const auto* TargetCombat = Target->FindComponentByClass<UGamePlatformCombatComponent>();
+        FGamePlatformCombatSpec HealingSpec;
+        HealingSpec.EventId = Token; HealingSpec.Source = Avatar; HealingSpec.Target = Target;
+        HealingSpec.SourceAbilityId = Balance.AbilityId;
+        HealingSpec.SourceAvatarGeneration = AvatarGeneration;
+        HealingSpec.TargetAvatarGeneration = HealingTargetGeneration;
+        HealingSpec.Magnitude = TargetCombat->GetCombatMaxHealth() * .2f;
+        // 唯一平台GAS结算负责上限、死亡拒绝、复制和生命事件；治疗不触发普攻命中奖励。
+        const FGamePlatformCombatResult Result = Combat->ApplyHealing(HealingSpec);
+        if (ActivationToken != Token || !IsActive()) return;
+        if (Result.IsSuccess() && IsValid(Avatar) && GetAvatarActorFromActorInfo() == Avatar &&
+            IsValid(Combat) && Combat->GetCombatAvatarGeneration() == AvatarGeneration)
+            if (auto* Facts = Avatar->FindComponentByClass<UGamePlatformAbilityCastComponent>())
+                Facts->PublishConfirmedCast(Token, Balance.AbilityId, TEXT("DBA.Development.Healing"), AvatarGeneration, .7f);
+        if (ActivationToken == Token && IsActive())
+            EndAbility(Handle, ActorInfo, ActivationInfo, true, !Result.IsSuccess());
         return;
     }
 
@@ -139,6 +201,13 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
             RemainingShots > 1 ? 1.0f : 0.7f);
     }
     if (ActivationToken != Token || !IsActive()) return;
+    if (PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Frostbolt)
+    {
+        // 冰箭先完成0.7秒权威起手，再释放；Timer归本激活，取消/死亡/目标换代仍在统一释放入口拒绝。
+        World->GetTimerManager().SetTimer(BurstTimer, FTimerDelegate::CreateWeakLambda(this, [this, Token]()
+            { if (ActivationToken == Token) ReleaseNextProjectile(); }), .7f, false);
+        return;
+    }
     ReleaseNextProjectile();
 }
 

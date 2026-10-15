@@ -166,6 +166,20 @@ bool UGamePlatformCombatComponent::AuthoritySelectProjectileTarget(
     return true;
 }
 
+bool UGamePlatformCombatComponent::GetSelectedProjectileTargetIntent(TWeakObjectPtr<AActor>& OutTarget,
+    int32& OutSourceGeneration, int32& OutTargetGeneration) const
+{
+    OutTarget.Reset(); OutSourceGeneration = OutTargetGeneration = 0;
+    const AActor* Source = GetOwner();
+    if (!IsInGameThread() || bCombatClosing || !IsValid(Source) || !Source->HasAuthority() ||
+        Source->IsActorBeingDestroyed() || !GetWorld() || GetWorld()->bIsTearingDown || SelectedProjectileSourceGeneration <= 0)
+        return false;
+    OutTarget = SelectedProjectileTarget;
+    OutSourceGeneration = SelectedProjectileSourceGeneration;
+    OutTargetGeneration = SelectedProjectileTargetGeneration;
+    return true;
+}
+
 AActor* UGamePlatformCombatComponent::GetSelectedProjectileTarget(float MaximumRangeCm,int32& OutTargetGeneration) const
 {
     OutTargetGeneration=0;

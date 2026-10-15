@@ -32,11 +32,11 @@ def required_assets():
     for stage in ('Cast', 'GroundRune', 'Launch', 'Flight', 'Impact', 'FrostResidue'):
         result.append(f'{ice}/Niagara/NS_DBA_IceArrow_{stage}.uasset')
     for name in ('CrackMask', 'CrystalShard', 'FrostMist', 'FrozenGround', 'IceFlake',
-                 'IceNormal', 'IceORM', 'ImpactFlash', 'RuneInner', 'RuneOuter', 'TrailStrip'):
+                 'IceNormal', 'IceORM', 'ImpactFlash', 'RuneInner', 'RuneOuter', 'TrailStrip', 'GroundRuneReference'):
         result.append(f'{ice}/Textures/T_DBA_IceArrow_{name}.uasset')
     for name in ('CrystalLance', 'CrystalShard', 'IceCrown', 'TrailRibbon'):
         result.append(f'{ice}/Meshes/SM_DBA_IceArrow_{name}.uasset')
-    for name in ('Crystal', 'Luminous', 'Mist', 'Trail'):
+    for name in ('Crystal', 'Luminous', 'Mist', 'Trail', 'RuneColor'):
         result.append(f'{ice}/Materials/M_DBA_IceArrow_{name}.uasset')
     for name in ('Crystal', 'CrystalSprite', 'FrozenGround', 'GroundInner', 'GroundOuter',
                  'ImpactCrystal', 'ImpactFlash', 'Mist', 'Snow', 'Trail'):

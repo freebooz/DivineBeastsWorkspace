@@ -54,9 +54,15 @@ print('BIRD_NATIVE_SAVED_PACKAGES_RELOADED',len(paths))
         renderers=emitter['renderers']
         assert len(renderers)==1 and 'Mesh' in renderers[0]['class'],'没有唯一真实网格渲染器'
         names={p['name'].removeprefix('User.') for p in spec['user_parameters']}
-        validate_user_parameter_types(spec['user_parameters'])
+        types=validate_user_parameter_types(spec['user_parameters'],allow_legacy_float_shadows=True)
         assert {'BirdCount','FlockRadius','FlightSpeed','FlockSeed','FlightMode','FlockMinimumSpacing'} <= names,'鸟数/飞行/最小中心距用户参数不完整'
-        values={p['name'].removeprefix('User.'):float(p['default']) for p in spec['user_parameters']}
+        # 按实际类型读整数；旧Float影子可能排在前/后，不能靠导出数组顺序覆盖得到模式或种子。
+        values={}
+        for parameter in spec['user_parameters']:
+            name=parameter['name'].removeprefix('User.')
+            if name in ('FlightMode','FlockSeed') and parameter['type']!='NiagaraInt32':
+                continue
+            values[name]=float(parameter['default'])
         assert int(values['FlightMode'])=={'Base':0,'Seagull':1,'Swallow':2,'Eagle':0}[species],'物种自然路线模式未保存'
         row=route_assets[path]
         for mode in (0,1,2):
@@ -77,7 +83,7 @@ print('BIRD_NATIVE_SAVED_PACKAGES_RELOADED',len(paths))
         assert 'NET_GP_BirdFlock_Ambient' in spec['system_properties']['effect_type'], '鸟群预算类型不匹配'
         disk=(ROOT/'Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/BirdFlock/Niagara/NS_GP_BirdFlock_Base.uasset') if species=='Base' else ROOT/'Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Niagara'/('NS_DBA_BirdFlock_'+species+'.uasset')
         assert disk.is_file() and disk.stat().st_size>1024, '系统仅在编辑器内存，未落盘'
-        checked.append({'species':species,'system':path,'spec':spec,'diagnostics':diagnostic})
+        checked.append({'species':species,'system':path,'spec':spec,'userParameterTypes':types,'diagnostics':diagnostic})
         print('BIRD_NIAGARA_STRUCTURE',species,json.dumps(diagnostic,ensure_ascii=False))
     report={'nativeReloadedSavedPackages':reload_saved,'sourceSha256':hashlib.sha256(expected.encode()).hexdigest(),
             'graphContract':contract,'routeAssets':route_assets,'systems':checked}

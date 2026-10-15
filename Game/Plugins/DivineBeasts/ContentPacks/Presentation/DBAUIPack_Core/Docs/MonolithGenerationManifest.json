@@ -1,6 +1,6 @@
 {
   "LoginTestAccounts20261015": {
-    "Status": "Saved_NativeReloadVerified_CurrentNativeBuildPending",
+    "Status": "Saved_NativeReloadVerified_ClientServerBuilt_EditorCookPending",
     "Project": "Game/DivineBeastsArena.uproject",
     "MonolithVersion": "0.23.0",
     "EditorPidAtAuthoring": 27104,

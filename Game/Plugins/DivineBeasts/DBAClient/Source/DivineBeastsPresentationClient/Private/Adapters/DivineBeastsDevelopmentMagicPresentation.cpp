@@ -9,6 +9,11 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Components/GamePlatformCombatComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
+#include "Subsystems/GamePlatformCombatFeedbackWorldSubsystem.h"
+#include "Types/GamePlatformCombatEvent.h"
 
 namespace
 {
@@ -40,18 +45,22 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
         !GetLocalPlayer() || GetLocalPlayer()->GetWorld() != World ||
         (!bDevelopment && !bPlaceholderVillage)) return;
     DevelopmentMagicWorld = World;
+    if (auto* Feedback=World->GetSubsystem<UGamePlatformCombatFeedbackWorldSubsystem>())
+        DevelopmentHealingFeedbackHandle=Feedback->OnConfirmedFeedback().AddUObject(this,&ThisClass::HandleDevelopmentHealingFeedback);
     const FGuid BindingToken = FGuid::NewGuid(); DevelopmentMagicBindingToken = BindingToken;
     DevelopmentMagicSpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &ThisClass::HandleDevelopmentMagicSpawn));
     DevelopmentMagicPackHandle = ContentPackChanged.AddUObject(this, &ThisClass::HandleDevelopmentMagicPack);
     FDivineBeastsPresentationContentPackFragment Pack;
-    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 2; // 新增冻结残霜语义，刷新包快照。
+    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 3; // 新增服务器确认治疗的目标树叶表现。
     Pack.LifecycleScope = EGamePlatformPresentationContextScope::World; Pack.bRequiredPreload = true;
     auto& Catalog = Pack.CatalogFragment;
     Catalog.FragmentId = Pack.ContentPackId; Catalog.OwnerScopeId = Pack.ContentPackId;
-    Catalog.Revision = 2; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
-    for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles")})
+    Catalog.Revision = 3; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
+    for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles"),TEXT("Healing")})
         for (const TCHAR* Stage : {TEXT("Flight"),TEXT("Impact"),TEXT("Cast"),TEXT("Residue")})
         {
+            // 治疗只由已确认受疗事件播放一次，不为它创建弹体或借源施法事实播放目标效果。
+            if (FCString::Strcmp(Name,TEXT("Healing"))==0 && FCString::Strcmp(Stage,TEXT("Impact"))!=0) continue;
             // 残霜是寒冰箭独占的地面余波，其它开发法术不注册没有资产的定义。
             if (FCString::Strcmp(Stage, TEXT("Residue")) == 0 && FCString::Strcmp(Name, TEXT("Frostbolt")) != 0) continue;
             FGamePlatformPresentationCatalogEntry Entry;
@@ -235,7 +244,13 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
 
 void UDivineBeastsPresentationClientSubsystem::UnbindDevelopmentMagicWorld()
 {
-    if (UWorld* World = DevelopmentMagicWorld.Get()) World->RemoveOnActorSpawnedHandler(DevelopmentMagicSpawnHandle);
+    if (UWorld* World = DevelopmentMagicWorld.Get())
+    {
+        World->RemoveOnActorSpawnedHandler(DevelopmentMagicSpawnHandle);
+        if (auto* Feedback=World->GetSubsystem<UGamePlatformCombatFeedbackWorldSubsystem>())
+            Feedback->OnConfirmedFeedback().Remove(DevelopmentHealingFeedbackHandle);
+    }
+    DevelopmentHealingFeedbackHandle.Reset();
     DevelopmentMagicSpawnHandle.Reset();
     ContentPackChanged.Remove(DevelopmentMagicPackHandle); DevelopmentMagicPackHandle.Reset();
     // 先整体撤销所有权，再跨同步取消/包终态通知。迭代的是本栈旧快照，不会被重入扩容/Reset破坏。
@@ -254,4 +269,36 @@ void UDivineBeastsPresentationClientSubsystem::UnbindDevelopmentMagicWorld()
         }
     }
     if (OldPack.IsValid()) DeactivateContentPack(OldPack);
+}
+
+void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentHealingFeedback(const FGamePlatformCombatEvent& Event)
+{
+    UWorld* World=DevelopmentMagicWorld.Get();
+    auto* Target=Cast<ACharacter>(Event.TargetActor);
+    auto* Combat=IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+    if(bClosing || !World || World->bIsTearingDown || !IsValid(PlatformPresentation) ||
+        Event.EventType!=EGamePlatformCombatEventType::Healing || !Event.EventId.IsValid() ||
+        !IsValid(Target) || Target->GetWorld()!=World || Target->IsActorBeingDestroyed() ||
+        !Combat || Combat->IsCombatDead() || Event.TargetAvatarGeneration<=0 ||
+        Combat->GetCombatAvatarGeneration()!=Event.TargetAvatarGeneration) return;
+    // 严格按已批准的十二个Primary身份映射，拒绝任意网络字符串拼资源或其它治疗误播。
+    bool bApproved=false;
+    for(const TCHAR* Hero:{TEXT("rat"),TEXT("ox"),TEXT("tiger"),TEXT("rabbit"),TEXT("dragon"),TEXT("snake"),
+        TEXT("horse"),TEXT("goat"),TEXT("monkey"),TEXT("rooster"),TEXT("dog"),TEXT("boar")})
+        if(Event.SourceAbilityId==FName(*(FString(TEXT("dba.ability."))+Hero+TEXT("_placeholder_primary@1"))))
+        { bApproved=true; break; }
+    if(!bApproved) return;
+    FVector Feet=Target->GetActorLocation();
+    if(const auto* Capsule=Target->GetCapsuleComponent()) Feet.Z-=Capsule->GetScaledCapsuleHalfHeight();
+    FGamePlatformPresentationRequest Request;
+    Request.RequestId=Event.EventId;
+    Request.SemanticTag=FGameplayTag::RequestGameplayTag(TEXT("Presentation.DivineBeasts.Development.Magic.Healing.Impact"),false);
+    if(!Request.SemanticTag.IsValid()) return;
+    Request.SourceId=Event.SourceAbilityId;Request.ContextId=TEXT("DBA.Development.Healing");
+    Request.SourceLocation=Feet;Request.AttachComponent=Target->GetRootComponent();
+    Request.Context.ProjectId=FDivineBeastsProjectCatalog::GetProjectId();
+    Request.Context.AvatarGeneration=Event.TargetAvatarGeneration;Request.RequestGeneration=Event.TargetAvatarGeneration;
+    Request.Lifetime=EGamePlatformPresentationLifetime::Timed;
+    // 平台确认反馈已按EventId/类型去重；重入或重复请求仍由唯一请求ID/作用域服务收敛。
+    SubmitProjectRequest(Request);
 }

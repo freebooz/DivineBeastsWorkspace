@@ -42,7 +42,7 @@ Render
 
 通过现有 `FGamePlatformVFXParameterSchema` 的 `Rules` 为每种项目定义配置以下稳定属性：
 
-2026-10-11真实资产白名单为7项：`User.BirdCount`整数0–512；`User.FlockRadius`浮点半径200–10000cm；`User.FlockHeight`浮点相对高度200–10000cm；`User.FlightSpeed`浮点速度10–5000cm/s；`User.WindInfluence`浮点扰动幅度0–2000cm；`User.FlockSeed`整数0–1000000；`User.FlightMode`整数0盘旋/1拉长闭合掠过/2八字。2026-10-15增量修复将加入第8项可选浮点字段`User.FlockMinimumSpacing`（最小中心距厘米，1–1000）；其定义、默认值与Niagara参数必须在同一轮真实更新，不能只修改HLSL后沿用旧资产。
+当前真实资产白名单为8项：`User.BirdCount`整数0–512；`User.FlockRadius`浮点半径200–10000cm；`User.FlockHeight`浮点相对高度200–10000cm；`User.FlightSpeed`浮点速度10–5000cm/s；`User.WindInfluence`浮点扰动幅度0–2000cm；`User.FlockSeed`整数0–1000000；`User.FlightMode`整数0宽缓滑翔/1拉长S型掠行/2紧凑八字；可选浮点`User.FlockMinimumSpacing`（最小中心距厘米，1–1000）。定义、默认值与Niagara参数必须同轮真实更新，不能只改HLSL沿用旧资产。
 
 世界锚点使用平台表现请求的SourceLocation及既有LWC放置流程，粒子在本地空间运动；不是额外User.FlockCenter参数。振翅频率/幅度来自物种材质实例，没有开放User.WingBeatHz或WindDirection协议，不在文档声称不存在的字段已可配置。
 
@@ -78,6 +78,8 @@ Render
 
 ## 六、2026-10-15个体间距修复
 
+本节保留首次间距修复的历史算法与证据；随后圆／椭圆路线已由第七节替代，原18项GPU采样不证明新路线通过。
+
 原运动模块将`Particles.MaterialRandom`作为相位、半径与角速度的共同随机源，没有任何最小距离约束；独立角速度还会让初始分开的个体在后续追近。八字路线存在两个分支交汇，增大分离权重或只检查出生点均不能修复当前已发布0/1/2路径。高级Spline/Boids发布资格仍保持原门禁。
 
 修复直接从现有ParameterMap读`Particles.UniqueID`与`User.BirdCount`，保留原8个模块输入和`Individual`的随机尺寸用途。单次Burst内连续编号模实际数量形成稳定槽位；共享角速度使槽位相位差在整个请求生命周期内不漂移，风扰动和上下起伏也由全群共享。仍使用原盘旋圆、拉长椭圆及八字公式，半径统一为0.9R（原随机半径均值约0.885R），保持原飞行区域、数量和路线形状，不创建逐鸟Actor、CPU更新或邻域扫描。
@@ -101,3 +103,11 @@ Render
 真实包围球／WPO预检将项目候选修正为海鸥240cm、燕子180cm、鹰380cm，三原稳定Definition及四原Niagara系统已保存，未改资源身份或默认鸟数。保存前编译缓存曾掩盖原模块InputMap未暴露的错误：冷重载后形成orphan pin，旧参数源还存在回接。当前模块InputMap明确exposed/required/notHidden，原调用节点使用原生FunctionScript刷新后重绑八输入；真实门禁同时核对非orphan、DAG无回环和HLSL相等。保存后原生重载八包再编译四系统已0错误0警告、全UpToDate，证据`Saved/Validation/BirdFlockP4/NiagaraValidationReloaded.json`。33项纯测试与实际240/180/380的数学样本另记；真实GPU采样及最终客户端仍须独立执行，不能由上述门禁推定。
 
 本轮独占编辑器真实GPU审核已执行：9配置／18不同模拟时刻，实际0.05cm浮点容差下全部满足声明最小距，含各物种128／512边界。报告及原始坐标见`Saved/Validation/BirdFlockP4P7/GPUReview/SpacingReview`；真实审核视口已检查鸟群可见，白色中性背景不能替代正式Village光照与人工视觉验收。
+
+## 七、2026-10-15自然掠行路线替代圆周
+
+三种中立模式均使用连续左右转弯的S／伸长八字轨迹，共享慢漂移和起伏，不再绕固定圆或椭圆单向旋转。宽/深倍率分别为1.7/0.8、1.8/0.55、1.6/0.65；解析距离下界系数分别为1.10、1.02、1.015。继续使用0.9R、稳定UniqueID槽位、半相位高度分层与240/180/380cm物种间距，实际Velocity同步更新为位置的解析导数。模式是中立路线形状，平台层不识别鸟种；项目海鸥/燕子/鹰默认模式为1/2/0。
+
+原八个模块输入身份及类型保持；原生MakeFloatFromInt将User整数Mode/Seed接入原Float接口，冷读确认两条转换和八输入无回环、非孤立。旧编辑元数据会恢复未使用的同名Float影子，因此保留并明确记录，不访问protected字段强删；真实消费与运行Schema仍为整数，影子不参与模式或种子选择。
+
+真实八包保存/原生重载、四系统重编均0错误0警告且UpToDate，HLSL与磁盘源码一致。`Saved/Validation/BirdFlockP4/BirdFlockRoutesValidationReloaded.json`记录完整图合同；`Saved/Validation/BirdFlockRoutes/ActualMeshXYZAudit.json`核验4系统78组合的完整XYZ，包含实际球心偏移、Renderer Scale/Pivot、1.11缩放及振翅WPO余量，不扩大原固定Bounds。字段各自范围不代表任意极小半径和512只组合均安全，改变参数组合须重新执行包络审核。新路线GPU18采样、Cook与正式场景观感独立留证；原报告全文和Hash已保存至`BirdFlockRoutesBefore.json`。

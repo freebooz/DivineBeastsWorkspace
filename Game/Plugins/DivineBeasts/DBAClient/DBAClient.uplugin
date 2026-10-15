@@ -79,6 +79,11 @@
       "Enabled": true
     },
     {
+      "Name": "GamePlatformCamera",
+      "Enabled": true,
+      "TargetAllowList": [ "Game", "Client", "Editor" ]
+    },
+    {
       "Name": "GamePlatformVFX",
       "Enabled": true
     },

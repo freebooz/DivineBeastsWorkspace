@@ -9,6 +9,7 @@
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/StrongObjectPtr.h"
+#include "UObject/Package.h"
 
 namespace
 {

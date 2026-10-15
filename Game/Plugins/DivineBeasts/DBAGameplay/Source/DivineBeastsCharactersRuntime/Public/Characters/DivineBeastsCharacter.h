@@ -12,6 +12,9 @@ class UGamePlatformCombatComponent;
 class UGamePlatformGameplayEligibilityComponent;
 class UGamePlatformAITargetComponent;
 struct FGamePlatformCombatEvent;
+class ADivineBeastsCharacter;
+/** GT服务器只读关系查询；可选世界/竞技组合根拥有可信事实，未知关系必须返回false，不接受客户端声明。 */
+DECLARE_DELEGATE_RetVal_TwoParams(bool, FDivineBeastsFriendlyCombatTargetQuery, const ADivineBeastsCharacter*, const AActor*);
 /** 游戏线程服务器原生死亡事实；消费者借用事件值，只对目标Pawn本代次发布一次，不包含竞技规则。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(FDivineBeastsAuthoritativeDeath, const FGamePlatformCombatEvent&);
 
@@ -37,6 +40,10 @@ public:
     bool IsDisconnectedCombatTargetRetained()const;
     /** 装配根订阅已结算的权威死亡；必须自行核世界/受信身份并在结束前解绑。客户端不会发布。 */
     FDivineBeastsAuthoritativeDeath& OnAuthoritativeDeath() { return AuthoritativeDeath; }
+    /** 仅服务器组合根绑定；回调须弱持有世界/装配并核验其代次，本Pawn结束时解绑。 */
+    FDivineBeastsFriendlyCombatTargetQuery& AuthorityFriendlyTargetQuery() { return FriendlyCombatTargetQuery; }
+    /** 只判断可信关系，不把目标存活/距离混入关系；死亡友方仍须由具体治疗规则明确拒绝。 */
+    bool AuthorityIsFriendlyCombatTarget(const AActor* Target) const;
 protected:
     virtual void BeginPlay() override;
     virtual void PossessedBy(AController* NewController) override;
@@ -45,6 +52,8 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
     FDivineBeastsAuthoritativeDeath AuthoritativeDeath;
+    /** 项目扩展入口，不依赖竞技或客户端Party；未装配时只有自己属于友方。 */
+    FDivineBeastsFriendlyCombatTargetQuery FriendlyCombatTargetQuery;
     /** 本Pawn已经发布的死亡代次，0表示尚无；同代次重复Combat广播不重复终态。 */
     int32 PublishedDeathGeneration = 0;
     /** 当前可信断线原实体代次；0未保留，不能由客户端设置，销毁/收敛/重连撤销。 */

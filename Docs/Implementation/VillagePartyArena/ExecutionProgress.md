@@ -310,4 +310,8 @@ NativeFinalVerified实际32项全部Success（含GamePlatform.Arena九项、项�
 
 完整Client／Server构建`8d7d8c61-27ef-451d-9bbe-c8b787ff3dfb`两目标退出0；完整Editor构建`927f1acf-5e89-46f6-a033-adb7ea3d5df9`退出0并生成当前源码／receipt产物绑定证据。其后正式新进程执行33项，全部Success、failed=0、进程退出0，聚合`Saved/Validation/WorldEntryFix20261015/FinalNativeVerified.json`。两条非致命警告为既有GameplayCue扫描回退与独立表现夹具销毁无WorldContext，原始报告保留，不宣称原生零警告。8项平台弹体、两类技能的目标连发、零气势、3项施法条、控制策略和新版冰箭语义均真实运行。
 
-本轮SourceToSlate真实D3D RHI及5张重新生成截图通过，当前输入指纹与测试前一致，正式颜色发布门禁`TestUIColorRHI.ps1 -VerifyOnly`再次通过。鸟群真实GPU 9配置18采样亦全passed；这些原生／离线图形证据不等于双账号联网或人工玩法验收。正在执行全新Client／Server Cook和Stage，后续再记录实际包及两个窗口。
+本轮SourceToSlate真实D3D RHI及5张重新生成截图通过，当前输入指纹与测试前一致，正式颜色发布门禁`TestUIColorRHI.ps1 -VerifyOnly`再次通过。鸟群真实GPU 9配置18采样亦全passed；这些原生／离线图形证据不等于双账号联网或人工玩法验收。
+
+### 2026-10-15 输入与开发入口后续最终换包
+
+A/D已改为左右侧移。登录新增十账号快捷入口与现有插件门户跳转；冰箭真实GPU修复、鸟群自然路线也纳入新包。完整三端构建及最新39项原生聚合均通过；新Client Cook为`ea610e38-13b5-451b-af74-92cbe65c500f`，Server Cook为`cd4f8a4b-da18-4ef5-9c01-9722caa61937`，实际资源/着色器/服务器剥离门禁均通过。两个SSLM窗口PID53732/42860已重启并观察到登录页，Village/MainArena已更新，五后端ready均200。旧包四个Stage/Cooked目录额外释放1.754GiB；保留身份/资料数据与共享缓存。完整证据、中文说明检查范围、存量服务器诊断及人工验收边界统一见`Docs/Implementation/WorldAndDevelopmentFollowup_20261015.md`，不沿用旧包的人工进入世界确认作为新包验收。

@@ -76,8 +76,10 @@
 
 字段单独范围合法不代表任意组合都受支持：例如Radius=200、Count=512、Eagle spacing=380会导致高度层超出原Bounds；spacing=1000与最大数量/高度也可能超界。这些组合必须重新作者审计或明确拒绝，不扩大所有系统Bounds掩盖问题。正式运行入口当前只覆盖Count/已支持Mode；通用VFX自定义Radius/Height/Spacing的调用方不能把字段Schema范围当成已批准的任意组合。现有运行时Schema未新增跨字段几何判定，本轮新增的是制作/保存前的明确拒绝门禁。
 
-另有实际作者合同问题：旧系统同时保存Float与Int类型的同名FlightMode/FlockSeed，按名设置首项会让Definition整数覆盖与HLSL读取不一致。作者保持现有整数Schema与模块float接口，使用引擎`MakeFloatFromInt`动态输入桥接；删除前必须先核对命中的是多余Float，禁止误删整数或修改稳定Schema。保存和冷重载门禁检查唯一整数类型、两个真实转换节点、八个语义输入、InputMap暴露/非孤立和图无回环，不能只相信编译缓存。
+另有实际作者合同问题：旧系统同时保存Float与Int类型的同名FlightMode/FlockSeed，按名设置首项会让Definition整数覆盖与HLSL读取不一致。作者保持现有整数Schema与模块float接口，使用引擎`MakeFloatFromInt`动态输入桥接；门禁按类型读取唯一正式Int，不能依赖导出顺序。旧Float影子会被受保护编辑元数据同步补回，本轮明确保留并登记`legacyFloatShadows`，不宣称已经清理全部历史字段。仅在实际Int默认需要变更时，在同一批次暂移首项Float并立即写原Int，再按类型回读，禁止误删整数或硬写protected元数据。保存和冷重载门禁检查两个真实转换节点、八个语义输入、InputMap暴露/非孤立和图无回环，不能只相信编译缓存。
 
 由主流程独占Monolith串行执行：先`AuthorBirdFlockNiagaraMonolith.py --inspect-routes`只读预检，再`--repair-routes`；半完成状态只有人工确认后才用`--resume-routes`。新`BirdFlockRoutesBefore.json`保留原模块、系统/定义参数及上一轮18样本GPU报告全文和哈希，不覆盖`BirdFlockSpacingBefore.json`。随后`ValidateBirdFlockNiagaraMonolith.py --reload-saved --report-stem BirdFlockRoutesValidation`原生重载8个已保存包，再检查四系统0错误0警告与HLSL一致。
 
-本小节写入时仅源码和纯回归就绪，真实路线资产、冷重载、18个GPU新样本、Cook和人工视觉由主流程独立推进。旧18样本只证明此前圆/椭圆路线的间距，不能用于此次新路线。新采样仍使用现有`-BirdSpacingReview`九配置两时刻入口；它检查实际GPU位置间距，不证明长时间路线审美，必须另行观察连续掠行、转向、高度变化、与地形/建筑的安全关系及目标设备性能。
+本轮已完成真实路线资产保存、原生重载8包和四系统重新编译0错误0警告，全部脚本UpToDate；HLSL源码哈希`e3f2912f48f5920a41e271a415b5e75f23af16878b2eb37bacd1ae507a089fbe`，实际Int Mode为Base0/Seagull1/Swallow2/Eagle0，Int Seed均137。结果见`Saved/Validation/BirdFlockP4/BirdFlockRoutesValidationReloaded.json`及`BirdFlockRoutesRepair.json`；冷编译后已再次保存且鸟群目标无dirty。旧18样本只证明此前圆/椭圆路线的间距，不能用于此次新路线。
+
+新路线九配置、两时刻的18个真实GPU样本已全部通过，runId为1792070434617783000，原始结果见`Saved/Validation/BirdFlockP4P7/GPUReview/SpacingReview/GPUReview.json`及`WorldEntryFix20261015/RoutesGPUVerified.json`。新Client Cook `ea610e38-13b5-451b-af74-92cbe65c500f`鸟群容器门禁亦通过，两个客户端已换包运行。这些证据检查实际GPU位置间距，不证明长时间路线审美；连续掠行、转向、高度变化、与地形/建筑的安全关系及目标设备性能仍需人工观察。最终运行见`Docs/Implementation/WorldAndDevelopmentFollowup_20261015.md`。

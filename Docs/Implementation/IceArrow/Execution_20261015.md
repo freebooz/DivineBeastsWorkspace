@@ -54,4 +54,6 @@
 
 最小修复保留原22个Spawn调用节点但禁用，只让原Update调用写入颜色/位置/尺寸。七包保存、原生reload后，六系统22发射器全部重新force compile，0错误0警告；22份实际GPU HLSL均为`In_Index % 128`且仅向当前MapUpdate写入。证据为`IceArrowNativeGraphRepair/ReloadAndGPUHlsl.json`。新GPU探针在0.1/0.2秒对六系统读取颜色和局部位置，结果`passed`、无探针错误，各系统均有Alpha>0.01粒子；起手Orbit首粒子位置由(75.80,2.89,87.05)厘米变到(71.33,10.69,90.15)厘米，证明更新实际生效。完整数据`IceArrowNativeGraphRepair/GPUAlphaAfterUpdateOnly.json`，临时Actor与Slate回调已全部清理。
 
-作者工具已同步输入空格、ParameterMap暴露和唯一Update调用；`RepairIceArrowMotionMonolith.py`提供原位修复/重载门禁，`ProbeIceArrowGPU.py`只读真实GPU采样。9项离线Cook/HLSL回归经历7项RED后全部GREEN；原容器验证入口现同时审查同次Cook日志，不再仅按进程退出0或资源清单放行。本节证据根为`Saved/Validation/WorldEntryFix20261015`。尚未执行修复后的新Cook、网络施放或人工画面签收，不把GPU Alpha/位置通过声明为完整视觉验收。
+作者工具已同步输入空格、ParameterMap暴露和唯一Update调用；`RepairIceArrowMotionMonolith.py`提供原位修复/重载门禁，`ProbeIceArrowGPU.py`只读真实GPU采样。9项离线Cook/HLSL回归经历7项RED后全部GREEN；原容器验证入口现同时审查同次Cook日志，不再仅按进程退出0或资源清单放行。本节证据根为`Saved/Validation/WorldEntryFix20261015`。
+
+最终修复后新Cook `ea610e38-13b5-451b-af74-92cbe65c500f` 已通过：48项依赖无缺失，六阶段实际Cook完成，ShaderDiagnostics/Errors均为空。编译后的原生视口 `IceArrowNativeGraphRepair/GPUViewportPiloted.png` 已看到蓝色箭身与碎冰，不能沿用此前黑色预览作为视觉证据。新双客户端已启动；网络施放与人工画面签收仍未确认。最终边界、构建和运行证据见 `Docs/Implementation/WorldAndDevelopmentFollowup_20261015.md`。

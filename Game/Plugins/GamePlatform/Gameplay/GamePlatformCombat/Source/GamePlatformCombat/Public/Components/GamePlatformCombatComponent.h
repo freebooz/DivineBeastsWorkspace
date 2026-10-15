@@ -74,6 +74,14 @@ public:
      * 不复制选择列表、不查询UI、不跨世界引用；调用方不得把此查询当作伤害授权。 */
     AActor* GetSelectedProjectileTarget(float MaximumRangeCm,int32& OutTargetGeneration) const;
 
+    /**
+     * GT服务器只读选中意图，不做存活/距离/化身过滤；true表示当前控制者曾明确选择目标。
+     * 弱目标可因销毁/GC而为空，但双方冻结代次仍保留，治疗等策略可拒绝失效选择而不是误自疗。
+     * 没有选择、换控制者或关闭作用域返回false并清空输出；调用者必须自行验证资格后才结算。
+     */
+    bool GetSelectedProjectileTargetIntent(TWeakObjectPtr<AActor>& OutTarget,
+        int32& OutSourceGeneration, int32& OutTargetGeneration) const;
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
     FGamePlatformCombatResult ApplyDamage(
         const FGamePlatformCombatSpec& InSpec);

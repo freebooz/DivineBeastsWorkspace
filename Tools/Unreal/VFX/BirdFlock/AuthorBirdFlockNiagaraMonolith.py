@@ -135,15 +135,45 @@ def validate_motion_graph(graph, call_text):
     return {'bindingCount':len(bindings),'integerConversions':2,'acyclic':True,'inputMapOrphaned':False}
 
 
-def validate_user_parameter_types(parameters):
-    """整数Mode/Seed必须唯一且与现行Schema一致，拒绝同名Float遮蔽；不更改已发布类型。"""
+def validate_user_parameter_types(parameters,allow_legacy_float_shadows=False):
+    """正式整数必须唯一；明确许可时登记未使用Float影子，消费类型仍由转换图门禁证明。"""
     expected={'BirdCount':'NiagaraInt32','FlightMode':'NiagaraInt32','FlockSeed':'NiagaraInt32',
               'FlockRadius':'NiagaraFloat','FlockHeight':'NiagaraFloat','FlightSpeed':'NiagaraFloat',
               'WindInfluence':'NiagaraFloat','FlockMinimumSpacing':'NiagaraFloat'}
     for name,kind in expected.items():
         entries=[p for p in parameters if p['name'].removeprefix('User.')==name]
+        if allow_legacy_float_shadows and name in ('FlightMode','FlockSeed'):
+            assert all(p['type'] in ('NiagaraInt32','NiagaraFloat') for p in entries)
+            assert sum(p['type']=='NiagaraFloat' for p in entries)<=1,'出现多份旧Float影子'
+            entries=[p for p in entries if p['type']=='NiagaraInt32']
         assert len(entries)==1 and entries[0]['type']==kind,'User字段同名多类型或Schema类型不符：'+name
-    return {name:kind for name,kind in expected.items()}
+    return {'schemaTypes':expected,'legacyFloatShadows':[
+        p for p in parameters if p['name'].removeprefix('User.') in ('FlightMode','FlockSeed') and p['type']=='NiagaraFloat']}
+
+
+def write_integer_defaults(path,defaults):
+    """只修需要变化的整数默认；旧Float会被编辑元数据自动补回，不声称清理了受保护存量。
+
+    Monolith按名只命中首项；确认为Float时，在一个原子批次暂移store影子并设置原Int。
+    批次结束立即按类型回读整数；编译/冷重载后再验，不靠按名Getter混淆类型。
+    """
+    for name,desired in defaults.items():
+        parameters=niagara('export_system_spec',asset_path=path,include_values=True)['spec']['user_parameters']
+        integer=[p for p in parameters if p['name'].removeprefix('User.')==name and p['type']=='NiagaraInt32']
+        assert len(integer)==1,'整数原字段丢失，停止而不猜补：'+name
+        if int(integer[0]['default'])==desired:
+            continue
+        first=niagara('get_parameter_value',asset_path=path,parameter='User.'+name)
+        operations=[]
+        if first['type']=='NiagaraFloat':
+            operations.append({'op':'remove_user_parameter','name':'User.'+name})
+        else:
+            assert first['type']=='NiagaraInt32','未支持参数类型：'+name
+        operations.append({'op':'set_parameter_default','parameter':'User.'+name,'value':desired})
+        niagara('batch_execute',asset_path=path,operations=operations)
+        after=niagara('export_system_spec',asset_path=path,include_values=True)['spec']['user_parameters']
+        actual=[p for p in after if p['name'].removeprefix('User.')==name and p['type']=='NiagaraInt32']
+        assert len(actual)==1 and int(actual[0]['default'])==desired,'整数默认未生效，保留断点：'+name
 
 
 def inspect_motion_contract(paths):
@@ -231,19 +261,8 @@ for path in '''+repr(list(paths))+''':
             assert len(inputs)==1,'引擎整数转换输入与已核对版本不符，停止作者'
             niagara('set_module_input_binding',asset_path=path,emitter=EMITTER,
                 module_node=added['dynamic_input_node_guid'],input=inputs[0]['name'],binding=binding)
-        for name in ('FlightMode','FlockSeed'):
-            # Monolith删除动作只按名字命中第一项。先确认它确为多余Float，再删；绝不猜测删除整数。
-            current=niagara('export_system_spec',asset_path=path,include_values=True)['spec']['user_parameters']
-            floats=[p for p in current if p['name'].removeprefix('User.')==name and p['type']=='NiagaraFloat']
-            if floats:
-                first=niagara('get_parameter_value',asset_path=path,parameter='User.'+name)
-                assert len(floats)==1 and first['type']=='NiagaraFloat','无法精确删除旧Float，停止且保留当前状态：'+name
-                niagara('remove_user_parameter',asset_path=path,name='User.'+name)
-            remaining=niagara('export_system_spec',asset_path=path,include_values=True)['spec']['user_parameters']
-            entries=[p for p in remaining if p['name'].removeprefix('User.')==name]
-            assert len(entries)==1 and entries[0]['type']=='NiagaraInt32','整数原字段未完整保留：'+name
-            niagara('set_parameter_default',asset_path=path,parameter='User.'+name,value=defaults[name])
-        validate_user_parameter_types(niagara('export_system_spec',asset_path=path,include_values=True)['spec']['user_parameters'])
+        write_integer_defaults(path,defaults)
+        validate_user_parameter_types(niagara('export_system_spec',asset_path=path,include_values=True)['spec']['user_parameters'],allow_legacy_float_shadows=True)
     return inspect_motion_contract(paths)
 
 
@@ -482,7 +501,7 @@ print('BIRD_ROUTE_SEAGULL_DEFINITION_MODE_1')
         diagnostic=niagara('get_system_diagnostics',asset_path=path,compile_first=True)
         assert diagnostic.get('error_count',1)==0 and diagnostic.get('warning_count',1)==0,(path,diagnostic)
         assert all(s['compile_status']=='UpToDate' for e in diagnostic['emitter_stats'] for s in e['scripts'])
-        validate_user_parameter_types(niagara('export_system_spec',asset_path=path,include_values=True)['spec']['user_parameters'])
+        validate_user_parameter_types(niagara('export_system_spec',asset_path=path,include_values=True)['spec']['user_parameters'],allow_legacy_float_shadows=True)
         niagara('save_system',asset_path=path,only_if_dirty=False)
         diagnostics[path]=diagnostic
     niagara('save_system',asset_path=MODULE,only_if_dirty=False)

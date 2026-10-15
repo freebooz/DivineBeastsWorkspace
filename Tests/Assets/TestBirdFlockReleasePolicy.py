@@ -292,10 +292,14 @@ class BirdFlockNaturalRouteTests(unittest.TestCase):
             'BirdCount':'NiagaraInt32','FlightMode':'NiagaraInt32','FlockSeed':'NiagaraInt32',
             'FlockRadius':'NiagaraFloat','FlockHeight':'NiagaraFloat','FlightSpeed':'NiagaraFloat',
             'WindInfluence':'NiagaraFloat','FlockMinimumSpacing':'NiagaraFloat'}.items()]
-        self.assertEqual(len(scope['validate_user_parameter_types'](parameters)),8)
+        self.assertEqual(len(scope['validate_user_parameter_types'](parameters)['schemaTypes']),8)
         for name in ('FlightMode','FlockSeed'):
+            shadowed=parameters+[{'name':name,'type':'NiagaraFloat'}]
             with self.assertRaises(AssertionError):
-                scope['validate_user_parameter_types'](parameters+[{'name':name,'type':'NiagaraFloat'}])
+                scope['validate_user_parameter_types'](shadowed)
+            audit=scope['validate_user_parameter_types'](shadowed,allow_legacy_float_shadows=True)
+            self.assertEqual(audit['schemaTypes'][name],'NiagaraInt32')
+            self.assertEqual(audit['legacyFloatShadows'],[{'name':name,'type':'NiagaraFloat'}])
 
 
 class BirdFlockGPUReadbackPolicyTests(unittest.TestCase):

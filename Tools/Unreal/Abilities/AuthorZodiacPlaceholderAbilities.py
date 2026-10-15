@@ -2,8 +2,8 @@
 """
 SSLM十二生肖占位技能原生资产作者：通过UE5.8 Editor Python生成真实资产，不制作文本伪uasset。
 产出：12英雄 × (5份技能定义 + 5份独立GAS蓝图 + 1份授权集 + 1份客户端UIProfile)
-     +36成本GE+36冷却GE + 1份60行数值表。
-默认技能仅使用普通攻击、无效果被动、火焰弹、寒冰箭、奥术飞弹。
+     +36兼容成本GE+48冷却GE + 1份60行数值表。
+默认技能使用数字1治疗、无效果被动、火焰弹、寒冰箭、奥术飞弹；Primary身份保留兼容。
 资产先完整生成/校验，最后才配置Hero.DefaultAbilitySetId；不存在开发技能后门。
 仅在 -SSLMPlaceholderAuthoring 显式许可时执行。不得由普通游戏启动自动执行。
 所有代码、引擎类和资源只属于SSLM项目层；平台机制保持原状。
@@ -24,16 +24,17 @@ HERO_ROOT = "/DBAGameplay/Definitions"
 HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
           "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar")
 SLOTS = (
-    ("Primary", "普通攻击（占位）", "PRIMARY", "PRIMARY", 40, 0, 0, 250, 0, 0, 1, 0),
+    ("Primary", "花瓣绽放", "PRIMARY", "PRIMARY", 0, 0, 10, 2000, 0, 0, 1, 0),
     ("Passive", "被动技能（占位）", "PASSIVE", "", 0, 0, 0, 0, 0, 0, 1, 0),
     ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 2000, 1200, 0, 1, 0),
     ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 2000, 1600, 0, 1, 0),
     ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 2000, 1400, 18, 3, .2),
 )
-COOLDOWNS = ("Fireball", "Frostbolt", "ArcaneMissiles")
+MAGIC_SLOTS = ("Fireball", "Frostbolt", "ArcaneMissiles")
+COOLDOWNS = ("Primary",) + MAGIC_SLOTS
 MAGIC_ICONS = {
     name: "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev" + name
-    for name in COOLDOWNS
+    for name in MAGIC_SLOTS
 }
 DRAFT = WORKSPACE / "Docs/Implementation/ZodiacAbilityDevelopmentDraft_20261009.json"
 SAVED = []
@@ -181,7 +182,7 @@ def author():
             rows.append({
                 "Name": hero + "_Placeholder_" + mode + "_L1",
                 "AbilityId": identity, "Level": 1,
-                "BaseDamage": damage, "DamageType": "Physical" if mode == "Primary" else
+                "BaseDamage": damage, "DamageType": "Untyped" if mode == "Primary" else
                     ("Untyped" if mode == "Passive" else "Magic"),
                 "CooldownSeconds": cooldown, "MomentumCost": cost,
                 "CastRangeCm": distance, "AreaRadiusCm": 0
@@ -209,7 +210,7 @@ def author():
             cost_cls = None
             cooldown_cls = None
             cooldown_tags = []
-            if mode in COOLDOWNS:
+            if mode in MAGIC_SLOTS:
                 # 保留已发布成本GE身份为无修改兼容资产；法术GA不再引用它，冷却仍独立制作。
                 cost_bp, _temp, cost_cdo = blueprint(ROOT + "/GE" + base_name + "Cost", unreal.GameplayEffect)
                 cost_cdo.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.INSTANT)
@@ -254,7 +255,7 @@ def author():
             ga_bp, _temp, cdo = blueprint(ga_path, unreal.DivineBeastsPlaceholderGameplayAbility)
             cdo.set_editor_property("AbilityDefinitionId", primary(identity))
             cdo.set_editor_property("PlaceholderMode",
-                getattr(unreal.DivineBeastsPlaceholderAbilityMode, mode.upper() if mode != "ArcaneMissiles"
+                getattr(unreal.DivineBeastsPlaceholderAbilityMode, "HEALING" if mode == "Primary" else mode.upper() if mode != "ArcaneMissiles"
                     else "ARCANE_MISSILES"))
             motion = unreal.GamePlatformCombatProjectileMotion()
             if speed > 0:
@@ -298,7 +299,7 @@ def author():
             if mode == "Passive":
                 description = "此为被动技能占位，暂不生效；后续由独立生肖被动机制替换。"
             elif mode == "Primary":
-                description = "临时普通攻击：服务器前向单体基础伤害40，未实现该生肖真实战斗动作。"
+                description = "恢复自己或当前选中有效友方20%最大生命，射程20米，冷却10秒，不消耗气势。友方死亡、超距或化身失效时拒绝施法，不复活。"
             else:
                 description = (
                     "临时" + label + "：每枚基础伤害" + str(damage) +
@@ -351,7 +352,7 @@ def author():
         "Project": "SSLM", "HeroCount": len(heroes), "AbilityDefinitionCount": 60,
         "GameplayAbilityBlueprintCount": 60, "PlaceholderAbilitySetCount": 12,
         "ClientUIProfileCount": 12, "CostEffectCount": 36,
-        "CooldownEffectCount": 36, "BalanceRowCount": 60,
+        "CooldownEffectCount": 48, "BalanceRowCount": 60,
         "FormalNamesAndMechanicsApproved": False,
         "DedicatedServerGrantVerified": False,
         "ClientCookVerified": False, "ServerCookVerified": False,
@@ -378,12 +379,12 @@ def repair_spell_momentum_costs():
     check(isinstance(table, unreal.DataTable), "真实占位数值表缺失")
     rows = json.loads(unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table))
     check(len(rows) == 60, "占位表不是已批准的60行，拒绝覆盖")
-    expected = {hero + "_Placeholder_" + mode + "_L1" for hero in HEROES for mode in COOLDOWNS}
+    expected = {hero + "_Placeholder_" + mode + "_L1" for hero in HEROES for mode in MAGIC_SLOTS}
     magic_rows = [row for row in rows if row["Name"] in expected]
     check(len(magic_rows) == 36 and all(row["DamageType"] == "Magic" for row in magic_rows), "法术行身份异常")
     effects, abilities, profiles = [], [], []
     for hero in HEROES:
-        for mode in COOLDOWNS:
+        for mode in MAGIC_SLOTS:
             suffix = "_DBA_" + hero + "_Placeholder" + mode
             ge = unreal.load_asset(ROOT + "/GE" + suffix + "Cost")
             ga = unreal.load_asset(ROOT + "/GA" + suffix)
@@ -431,6 +432,94 @@ def repair_spell_momentum_costs():
     path = folder / (stamp + "_Saved.json")
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print("SSLM_SPELL_ZERO_COST_SAVED", str(path))
+    return report
+
+
+def migrate_primary_to_healing():
+    """由已授权Monolith游戏线程显式调用的幂等迁移；普通模块导入绝不执行。
+
+    先读取全部真实对象并验证稳定身份，保留12个Primary AbilityId、输入授权及UI条目身份。
+    仅修改12行数值/GA/UI文字并创建原生GAS冷却；花瓣VFX由项目表现目录单独接入，保留图标和其它槽位。
+    调用前主任务须备份真实资产；保存失败保留错误和审计，不声称多资产事务已回滚。
+    """
+    check(Path(unreal.Paths.get_project_file_path()).resolve() == (GAME / "DivineBeastsArena.uproject").resolve(),
+          "非正式SSLM工程，拒绝迁移")
+    check(hasattr(unreal.DivineBeastsPlaceholderAbilityMode, "HEALING"), "治疗原生枚举尚未构建/加载")
+    cooldown_tag = "DivineBeasts.Placeholder.Cooldown.Primary"
+    tag(cooldown_tag)
+    table = unreal.load_asset(ROOT + "/DT_DBA_PlaceholderBalance")
+    check(isinstance(table, unreal.DataTable), "真实占位数值表缺失")
+    rows = json.loads(unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table))
+    check(len(rows) == 60, "占位表不是60行，拒绝覆盖")
+    entries = []
+    for hero in HEROES:
+        suffix = "_DBA_" + hero + "_PlaceholderPrimary"
+        identity = "dba.ability." + hero.lower() + "_placeholder_primary@1"
+        matching = [row for row in rows if row["Name"] == hero + "_Placeholder_Primary_L1"]
+        check(len(matching) == 1 and matching[0]["AbilityId"] == identity, "Primary表行身份异常：" + hero)
+        row = matching[0]
+        check((row["BaseDamage"], row["MomentumCost"], row["CooldownSeconds"], row["CastRangeCm"]) in
+              ((40, 0, 0, 250), (0, 0, 10, 2000)), "Primary已被另行设计，拒绝覆盖：" + hero)
+        definition = unreal.load_asset(ROOT + "/DA" + suffix)
+        bp = unreal.load_asset(ROOT + "/GA" + suffix)
+        cls = unreal.EditorAssetLibrary.load_blueprint_class(ROOT + "/GA" + suffix)
+        cdo = unreal.get_default_object(cls) if cls else None
+        check(isinstance(definition, unreal.DivineBeastsAbilityDefinition) and isinstance(bp, unreal.Blueprint) and
+              isinstance(cdo, unreal.DivineBeastsPlaceholderGameplayAbility), "Primary真实资产/父类缺失：" + hero)
+        check(str(cdo.get_editor_property("AbilityDefinitionId")) == str(primary(identity)), "GA主资产身份异常：" + hero)
+        check(cdo.get_editor_property("PlaceholderMode") in (unreal.DivineBeastsPlaceholderAbilityMode.PRIMARY,
+              unreal.DivineBeastsPlaceholderAbilityMode.HEALING), "GA已改为其他机制，拒绝覆盖：" + hero)
+        profile = unreal.load_asset("/DBAHeroPack_" + hero + "/UI/Abilities/DA_DBA_" + hero + "_PlaceholderUIProfile")
+        check(isinstance(profile, unreal.DivineBeastsAbilityUIProfile), "真实UIProfile缺失：" + hero)
+        ui_entries = list(profile.get_editor_property("Entries"))
+        ui = [entry for entry in ui_entries if str(entry.get_editor_property("AbilityId")) == identity]
+        check(len(ui) == 1, "UI Primary身份不唯一：" + hero)
+        entries.append((hero, suffix, row, bp, cdo, profile, ui_entries, ui[0]))
+    folder = GAME / "Saved/Validation/PrimaryHealingMigration"
+    folder.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    (folder / (stamp + "_Before.json")).write_text(json.dumps({"Rows": rows, "Abilities": [
+        {"Path": bp.get_path_name(), "Mode": str(cdo.get_editor_property("PlaceholderMode")),
+         "Name": str(ui.get_editor_property("DisplayName")), "Description": str(ui.get_editor_property("Description"))}
+        for _hero, _suffix, _row, bp, cdo, _profile, _ui_entries, ui in entries]}, ensure_ascii=False, indent=2), encoding="utf-8")
+    saved_before = len(SAVED)
+    for hero, suffix, row, bp, cdo, profile, ui_entries, ui in entries:
+        cool_bp, _cls, cool_cdo = blueprint(ROOT + "/GE" + suffix + "Cooldown", unreal.GameplayEffect)
+        cool_cdo.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.HAS_DURATION)
+        cool_cdo.set_editor_property("DurationMagnitude", magnitude(10))
+        tag_class = unreal.load_class(None, "/Script/GameplayAbilities.TargetTagsGameplayEffectComponent")
+        check(tag_class is not None, "UE5.8冷却标签组件不可用")
+        components = list(cool_cdo.get_editor_property("GEComponents"))
+        component = next((obj for obj in components if obj.get_class() == tag_class), None)
+        if component is None:
+            component = unreal.new_object(tag_class, outer=cool_cdo)
+            components.append(component)
+        inherited = component.get_editor_property("InheritableGrantedTagsContainer")
+        check(inherited.import_text("(Added=" + tags([cooldown_tag]).export_text() + ")"), "治疗冷却标签导入失败")
+        component.set_editor_property("InheritableGrantedTagsContainer", inherited)
+        cool_cdo.set_editor_property("GEComponents", components)
+        unreal.BlueprintEditorLibrary.compile_blueprint(cool_bp)
+        save(cool_bp)
+        cooldown_class = unreal.EditorAssetLibrary.load_blueprint_class(ROOT + "/GE" + suffix + "Cooldown")
+        check(cooldown_class is not None, "治疗冷却生成类缺失：" + hero)
+        cdo.set_editor_property("PlaceholderMode", unreal.DivineBeastsPlaceholderAbilityMode.HEALING)
+        cdo.set_editor_property("CostGameplayEffectClass", None)
+        cdo.set_editor_property("CooldownGameplayEffectClass", cooldown_class)
+        cdo.set_editor_property("PlaceholderCooldownTags", tags([cooldown_tag]))
+        unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+        save(bp)
+        row.update(BaseDamage=0, DamageType="Untyped", MomentumCost=0, CooldownSeconds=10, CastRangeCm=2000)
+        ui.set_editor_property("DisplayName", unreal.Text("花瓣绽放"))
+        ui.set_editor_property("Description", unreal.Text("恢复自己或当前选中有效友方20%最大生命，射程20米，冷却10秒，不消耗气势。友方死亡、超距或化身失效时拒绝施法，不复活。"))
+        profile.set_editor_property("Entries", ui_entries)
+        save(profile)
+    check(unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(table, json.dumps(rows, ensure_ascii=False)), "治疗表行写入失败")
+    save(table)
+    report = {"Status": "SavedPendingColdReloadServerGASAndClientVisualVerification", "PrimaryCount": 12,
+              "MaxHealthFraction": .2, "CooldownSeconds": 10, "MomentumCost": 0, "CastRangeCm": 2000,
+              "SavedPaths": SAVED[saved_before:], "LeafVFXChanged": False, "RuntimeVerified": False}
+    (folder / (stamp + "_Saved.json")).write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    print("SSLM_PRIMARY_HEALING_SAVED", json.dumps(report, ensure_ascii=False))
     return report
 
 

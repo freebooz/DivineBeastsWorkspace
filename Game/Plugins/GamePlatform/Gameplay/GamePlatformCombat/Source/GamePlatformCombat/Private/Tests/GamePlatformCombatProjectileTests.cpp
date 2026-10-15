@@ -170,13 +170,18 @@ bool FGamePlatformProjectileSelectionTest::RunTest(const FString&)
     int32 Generation=-1;
     TestNull(TEXT("初始无选中目标"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation));
     TestEqual(TEXT("空快照代次归零"),Generation,0);
+    TWeakObjectPtr<AActor> IntentTarget; int32 IntentSource = -1, IntentGeneration = -1;
+    TestFalse(TEXT("未选择时不存在服务器意图快照"), Fixture.SourceCombat->GetSelectedProjectileTargetIntent(IntentTarget, IntentSource, IntentGeneration));
     TestTrue(TEXT("可信服务器选择同世界目标"),Fixture.SourceCombat->AuthoritySelectProjectileTarget(Fixture.Target,1,1));
     TestEqual(TEXT("射程内读取同一目标"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation),Fixture.Target);
     TestNull(TEXT("超出具体技能射程不锁定"),Fixture.SourceCombat->GetSelectedProjectileTarget(100,Generation));
+    TestTrue(TEXT("超射程仍保留选择意图，策略不得误认为无选择"), Fixture.SourceCombat->GetSelectedProjectileTargetIntent(IntentTarget, IntentSource, IntentGeneration));
+    TestTrue(TEXT("意图弱身份及冻结代次正确"), IntentTarget.Get() == Fixture.Target && IntentSource == 1 && IntentGeneration == 1);
     TestFalse(TEXT("旧来源取消不能覆盖后继选择"),Fixture.SourceCombat->AuthoritySelectProjectileTarget(nullptr,0,0));
     TestEqual(TEXT("旧取消后当前选择仍在"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation),Fixture.Target);
     Fixture.TargetCombat->ResetForNewAvatar(2);
     TestNull(TEXT("同Actor新化身不继承旧选择"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation));
+    TestTrue(TEXT("目标换代后仍可识别旧意图"), Fixture.SourceCombat->GetSelectedProjectileTargetIntent(IntentTarget, IntentSource, IntentGeneration) && IntentGeneration == 1);
     TestTrue(TEXT("显式选择新化身"),Fixture.SourceCombat->AuthoritySelectProjectileTarget(Fixture.Target,1,2));
     Fixture.SourceCombat->ResetForNewAvatar(2);
     TestNull(TEXT("来源换化身清除旧资格"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation));
