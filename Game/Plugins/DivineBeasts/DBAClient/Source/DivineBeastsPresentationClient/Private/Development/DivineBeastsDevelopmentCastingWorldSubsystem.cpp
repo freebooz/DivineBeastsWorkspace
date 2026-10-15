@@ -1,5 +1,6 @@
 // 项目纯视觉：复制施法事实→只读目录/动画；统一Data租约，不使用Tick、HTTP或Niagara执行器。
 #include "Development/DivineBeastsDevelopmentCastingWorldSubsystem.h"
+#include "Development/DivineBeastsPlaceholderMagicVisualPolicy.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
@@ -9,6 +10,7 @@
 #include "Identity/DivineBeastsProjectCatalog.h"
 #include "GamePlatformPresentationClientSubsystem.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Engine/GameInstance.h"
@@ -48,8 +50,10 @@ bool SameCastFacts(const FGamePlatformAbilityCastFacts& A,const FGamePlatformAbi
 bool UDivineBeastsDevelopmentCastingWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
     const UWorld* World=Cast<UWorld>(Outer);
+    // 正式Village仅允许已授予的占位技能播放起手表现；实际资格再由GetCastWindow按事实严格校验。
     return !IsRunningCommandlet() && World && World->IsGameWorld() && World->GetNetMode()!=NM_DedicatedServer &&
-        UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess();
+        (UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess() ||
+         DivineBeastsPlaceholderMagicVisualPolicy::IsVillageWorld(World));
 }
 void UDivineBeastsDevelopmentCastingWorldSubsystem::OnWorldBeginPlay(UWorld& World)
 {
@@ -118,6 +122,11 @@ bool UDivineBeastsDevelopmentCastingWorldSubsystem::GetCastWindow(UGamePlatformA
         !Facts.ActivationId.IsValid() || Facts.AbilityId.IsNone() || CastName(Facts.PresentationStyleId).IsNone() ||
         Facts.AvatarGeneration<=0 || !FMath::IsFinite(Facts.StartedServerSeconds) ||
         !FMath::IsFinite(Facts.DurationSeconds) || Facts.DurationSeconds<=0 || Facts.DurationSeconds>10) return false;
+    // 扩展到Village不意味着放开开发魔法权限：仅接受十二生肖自己的合法占位技能。
+    if (!UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess() &&
+        (!DivineBeastsPlaceholderMagicVisualPolicy::IsVillageWorld(World) ||
+         !DivineBeastsPlaceholderMagicVisualPolicy::IsApprovedPlaceholderSpell(
+             Facts.AbilityId, CastName(Facts.PresentationStyleId)))) return false;
     const auto* Character=Cast<ACharacter>(Component->GetOwner());
     const auto* Combat=Character ? Character->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
     const auto* Identity=Character ? Character->FindComponentByClass<UDivineBeastsCharacterComponent>() : nullptr;
@@ -231,7 +240,16 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
     {
         Character=WeakCharacter.Get(); Mesh=Character->GetMesh();
         auto* Anchor=NewObject<USceneComponent>(Character);
-        Anchor->SetMobility(EComponentMobility::Movable); Anchor->SetupAttachment(Mesh,TEXT("hand_r"));
+        Anchor->SetMobility(EComponentMobility::Movable);
+        if (Name == TEXT("Frostbolt"))
+        {
+            // 冰箭地面符文与冰晶升腾采用脚底为局部原点；右手挂点会让法阵悬空。
+            auto* Capsule = Character->GetCapsuleComponent();
+            if (!Capsule) return;
+            Anchor->SetupAttachment(Capsule);
+            Anchor->SetRelativeLocation(FVector(0,0,-Capsule->GetScaledCapsuleHalfHeight()));
+        }
+        else Anchor->SetupAttachment(Mesh,TEXT("hand_r"));
         Character->AddInstanceComponent(Anchor);
         Binding->CastAnchor=Anchor; WeakAnchor=Anchor; // Register之前先交付所有权，重入结束能清自己的锚点。
         Anchor->RegisterComponent();

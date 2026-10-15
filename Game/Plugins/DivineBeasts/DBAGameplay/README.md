@@ -10,7 +10,12 @@
 
 依赖方向为项目层到 `GamePlatformCore`（平台核心）、`GamePlatformCharacter`（平台角色）、`GamePlatformAbilitySystem`（平台技能）、`GamePlatformData`（平台数据）和 `GamePlatformCombat`（平台战斗），不依赖 `GamePlatformArena`（竞技模块）。Shared生成目录可以包含中立模式ID与角色映射，但不因此链接竞技实现。应用流程、UI、在线服务、VFX执行器及MOBA表现语义不归本插件。Momentum（气势）是项目 Gameplay 真值：服务器在角色初始化时确保项目气势 AttributeSet 存在并按 Hero Definition 初始化，客户端只接收 GAS 复制。
 
-核心属性分层保持：生命/护盾、攻击、防御、控制/韧性归 `GamePlatformCombat（游戏平台战斗插件）`；项目层只增加 `UDivineBeastsMomentumAttributeSet（神兽联盟气势属性集）` 与 `FDivineBeastsMomentumDefinition（气势定义）`。当前工程规则禁止恢复历史 Element（旧五行玩法）、克制、破元、共鸣，本插件不得以新文件名或新插件形式绕过该约束。
+2026-10-14新能量显示要求调整为2个具体属性集、10个字段（原8字段属于此前历史基线）：`GamePlatformCombat`（平台战斗）拥有生命、统一增减伤与结算元属性；项目层仅增加`UDivineBeastsMomentumAttributeSet`（气势/上限）和`FDivineBeastsMomentumDefinition`（项目配置）。旧盾值、攻击、防御、韧性独立GAS属性集均已取消。工程规则禁止恢复历史Element（旧五行玩法）、克制、破元、共鸣。
+
+### 2026-10-14 气势P0最小可玩闭环
+12生肖仍以0点气势出生，默认上限100；新增`BasicAttackHitGain`（普通攻击成功命中获得量）为HeroDefinition数据字段，暂定默认10点、需要正式策划批准。服务器在平台Combat实际扣血/耗盾后，由角色身份组件检查权威、代次、身份和EventId，借助`UDivineBeastsMomentumGainGameplayEffect`（原生即时气势GE）授予最多100点气势；最近128个命中事件内幂等，换身份/退出清理。现有GAS技能成本保持不变。
+
+本轮完整代码和待验项目见[`MomentumP0Implementation_20261014.md`（气势实施及验证记录）](../../../../Docs/Implementation/MomentumP0Implementation_20261014.md)。源码存在不等于新手村联机验收完成。
 
 所有既有模块名、反射类型和导出宏均保持原值。项目身份与模式映射由 `Shared/Contracts` 生成；模块不会维护第二份 ID 表。当前真实 C++ 源码已通过 UE5.8 `DivineBeastsArenaEditor` 定向模块编译；本轮新增 Momentum AttributeSet/Definition、角色初始化接线和 UI 状态投影也已随 `GamePlatformCombat + DivineBeastsCharactersRuntime + DivineBeastsUIClient` 的 40 个构建动作成功编译。Dedicated Server 角色链继续通过 `GamePlatformCharacterInitializationExecutor` 与项目 `FDivineBeastsCharacterSpawnInitializer` 接通。Automation 用例本轮在进入测试队列前被本机 VisionOS SDK 缺失 `MainVersion` 的平台校验阻断，不把该环境阻断误报为新增用例失败。
 

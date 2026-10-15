@@ -5,6 +5,7 @@
 #include "Types/GamePlatformVFXRequest.h"
 #include "Engine/World.h"
 #include "HAL/PlatformProperties.h"
+#include "HAL/IConsoleManager.h"
 
 // 构造弱引用的UWorld->UObject转换放在有完整世界定义的实现文件，私有头只保留声明。
 FGamePlatformVFXPresentationProvider::FGamePlatformVFXPresentationProvider(UWorld* InWorld)
@@ -39,6 +40,13 @@ bool FGamePlatformVFXPresentationProvider::Handle(
     VFXRequest.ContextTags = Request.ContextTags;
     VFXRequest.DefinitionId = Request.DefinitionId;
     VFXRequest.PlatformId = FName(FPlatformProperties::IniPlatformName());
+    // 读取客户端当前sg.EffectsQuality（特效画质0—3/更高档），不再将所有表现请求固定为High。
+    // 获取不到CVar时沿用原始High默认值；质量变体仅改变美术，不改变服务器时序和范围。
+    if (const IConsoleVariable* EffectsQuality = IConsoleManager::Get().FindConsoleVariable(TEXT("sg.EffectsQuality")))
+    {
+        VFXRequest.QualityTier = static_cast<EGamePlatformVFXQualityTier>(
+            FMath::Clamp(EffectsQuality->GetInt(), 0, 3));
+    }
     VFXRequest.SpawnContext.Location = Request.SourceLocation;
     VFXRequest.SpawnContext.AttachComponent = Request.AttachComponent;
     VFXRequest.SpawnContext.TargetLocation = Request.TargetLocation;

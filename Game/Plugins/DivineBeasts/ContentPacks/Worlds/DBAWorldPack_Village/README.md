@@ -33,3 +33,16 @@
 - 正式共享地图和母材质经过UE AssetRegistry依赖校验，未硬引用`GamePlatformSurface`、`GamePlatformVFX`、`DBAPresentationPack_Core`纯客户端内容。客户端使用VillageDevelopmentClient发布配置显式Cook高清资源，DedicatedServer Cook只持有WorldPack的中性母材质和三张共享基础贴图。
 - 当前代码已修复运行时材质完整路径识别错误，并对真实Landscape MID的雪量/湿润和三张纹理执行回读门禁：`VILLAGE_SNOW_MID_VERIFY_SUCCESS`代表对应世界的材质实际绑定成功；贴图已验证后天气过渡只更新标量，避免重复绑定纹理。
 - 这些是**视觉装配与运行时资源绑定**，不得据此宣称玩家看到大雪、近地雪粉无穿透、双客户端网络同步及GPU预算均通过；人工作业仍需实际大雪场景检查。详见 `Docs/Implementation/VillageSnowBridgeRuntimeClosure_20261011.md`。
+
+## 2026-10-14 外围山峰热带原始森林PCG源点图
+
+- 范围：新手村北、东、西外围山峰，保留湖心岛、桃林、村庄、农田、道路、水体与玩家出生点。
+- 项目生态合同：`SourceArt/PCG/TropicalMountainForest_v1.json`，复用 `GamePlatformPCG`（通用PCG机制），不在平台层保存项目雨林资产。
+- UE5.8编辑器已实际创建与保存三份原生PCG Graph：`PCG_DBA_Village_OuterTropicalCanopy_Source`（冠层）、`PCG_DBA_Village_OuterTropicalUnderstory_Source`（中层）、`PCG_DBA_Village_OuterTropicalFloor_Source`（林下）。内容归 `Content/PCG/Graphs/`，目前都是有界Landscape候选点图。
+- 官方Electric Dreams Environment原始森林资源尚未在本机下载，未迁移正式热带乔木/材质；三图不包含StaticMeshSpawner且未加入正式 `L_Village_Start`，不能宣称新手村森林已经生成或烘焙。
+- 源头、许可、空间排除、性能与Cook门禁详见 `Docs/Implementation/GamePlatformPCG/VillageTropicalMountainForest_20261014.md`（外围雨林实施与验收记录）。
+## 2026-10-14 Electric Dreams 授权源资产隔离（待正式下载）
+
+- GitHub工程为公开仓库；`Environment/ThirdParty/ElectricDreams/`（受许可第三方原始树木、材质、贴图）只在本地由UE编辑器迁移，按根级`.gitignore`排除公开源代码提交。不复制到GamePlatform（平台层）、MobaCommon（竞技层）或开发审核关卡，也不将第三方源模型发布为单独资产包。
+- `Tools/Unreal/PCG/InspectElectricDreamsSample.py`（Electric Dreams官方源工程预检）核对来源项目、森林示例关卡、文件头及公开Git隔离；即使通过也不等同Fab账号授权、UE5.8加载、地图烘焙或Client/Server双端Cook验收。
+- 用户需经Fab官方资源库及Epic Games Launcher创建完整示例工程；本地三层PCG候选点资产不依赖不存在的第三方素材。真实迁移后先执行AssetRegistry/依赖闭包审查及命名空间修正，才允许设置正式StaticMeshSpawner（静态网格生成器）。

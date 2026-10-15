@@ -1,6 +1,7 @@
 // 项目纯客户端适配：订阅真实复制弹体事实，经目录/Data/平台中立请求播放；不导入Niagara执行器。
 // 同一LocalPlayer独占注册/请求/订阅；世界退出先取消活跃请求再撤销目录及自己的租约，无业务Tick。
 #include "DivineBeastsPresentationClientSubsystem.h"
+#include "Development/DivineBeastsPlaceholderMagicVisualPolicy.h"
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Definitions/DivineBeastsDevelopmentMagicDefinition.h"
 #include "GamePlatformPresentationClientSubsystem.h"
@@ -20,24 +21,6 @@ FName MagicName(FName Style)
     return NAME_None;
 }
 
-/** 正式占位技能在Village可复用纯表现资源，但不能把开发技能授权门禁一并放开。 */
-bool IsApprovedPlaceholderSpell(FName AbilityId, FName Magic)
-{
-    if (Magic.IsNone() || AbilityId.IsNone()) return false;
-    const FString Id = AbilityId.ToString();
-    // 不根据任意网络样式推导资源路径；服务器只允许12名生肖自身的临时AbilityId。
-    const TCHAR* Heroes[] = {
-        TEXT("rat"), TEXT("ox"), TEXT("tiger"), TEXT("rabbit"),
-        TEXT("dragon"), TEXT("snake"), TEXT("horse"), TEXT("goat"),
-        TEXT("monkey"), TEXT("rooster"), TEXT("dog"), TEXT("boar")
-    };
-    const FString Suffix = FString(TEXT("_placeholder_")) + Magic.ToString().ToLower() + TEXT("@1");
-    for (const TCHAR* Hero : Heroes)
-    {
-        if (Id == FString(TEXT("dba.ability.")) + Hero + Suffix) return true;
-    }
-    return false;
-}
 FGameplayTag MagicSemantic(FName Name, bool bImpact)
 {
     return FGameplayTag::RequestGameplayTag(FName(*(TEXT("Presentation.DivineBeasts.Development.Magic.") +
@@ -52,8 +35,7 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
     // 开发魔法仍受原有双重显式开关限制。仅Village正式地图可以对批准的临时技能启用视觉回放；
     // 非Village正式世界不会因用户拥有占位Definition而无条件预加载Niagara。
     const bool bDevelopment = UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess();
-    const bool bPlaceholderVillage =
-        World && World->GetOutermost()->GetName() == TEXT("/DBAWorldPack_Village/Maps/L_Village_Start");
+    const bool bPlaceholderVillage = DivineBeastsPlaceholderMagicVisualPolicy::IsVillageWorld(World);
     if (bClosing || !World || World->bIsTearingDown || !World->IsGameWorld() || World->GetNetMode() == NM_DedicatedServer ||
         !GetLocalPlayer() || GetLocalPlayer()->GetWorld() != World ||
         (!bDevelopment && !bPlaceholderVillage)) return;
@@ -62,14 +44,16 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
     DevelopmentMagicSpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &ThisClass::HandleDevelopmentMagicSpawn));
     DevelopmentMagicPackHandle = ContentPackChanged.AddUObject(this, &ThisClass::HandleDevelopmentMagicPack);
     FDivineBeastsPresentationContentPackFragment Pack;
-    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 1;
+    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 2; // 新增冻结残霜语义，刷新包快照。
     Pack.LifecycleScope = EGamePlatformPresentationContextScope::World; Pack.bRequiredPreload = true;
     auto& Catalog = Pack.CatalogFragment;
     Catalog.FragmentId = Pack.ContentPackId; Catalog.OwnerScopeId = Pack.ContentPackId;
-    Catalog.Revision = 1; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
+    Catalog.Revision = 2; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
     for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles")})
-        for (const TCHAR* Stage : {TEXT("Flight"),TEXT("Impact"),TEXT("Cast")})
+        for (const TCHAR* Stage : {TEXT("Flight"),TEXT("Impact"),TEXT("Cast"),TEXT("Residue")})
         {
+            // 残霜是寒冰箭独占的地面余波，其它开发法术不注册没有资产的定义。
+            if (FCString::Strcmp(Stage, TEXT("Residue")) == 0 && FCString::Strcmp(Name, TEXT("Frostbolt")) != 0) continue;
             FGamePlatformPresentationCatalogEntry Entry;
             Entry.EntryId = FName(*(FString(TEXT("DBA.Development.Magic.")) + Name + TEXT(".") + Stage));
             Entry.ProviderChannel = TEXT("VFX");
@@ -150,7 +134,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
     // 正式Village只接受十二生肖自身明确批准的_placeholder法术；否则仍须走原有开发许可。
     // 仅放行客户端Niagara视觉，不影响GAS授予、技能成本/冷却、服务器命中或开发资产授权。
     if (!UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess() &&
-        !IsApprovedPlaceholderSpell(Snapshot.AbilityId, Name)) return;
+        !DivineBeastsPlaceholderMagicVisualPolicy::IsApprovedPlaceholderSpell(Snapshot.AbilityId, Name)) return;
     Flight->StyleId = Snapshot.PresentationStyleId;
     if (Snapshot.bFinished)
     {
@@ -199,7 +183,54 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
         }
     };
     if (!Snapshot.bFinished) Submit(false);
-    else if (Snapshot.bImpacted) Submit(true);
+    else if (Snapshot.bImpacted)
+    {
+        Submit(true);
+        // 仅寒冰箭命中被受理后追加地表冻结表现。独立向下查询，不把打在敌人胸部的冲击点当成地面。
+        if (Name != TEXT("Frostbolt") || Token != DevelopmentMagicBindingToken ||
+            !IsValid(Actor) || Snapshot.ImpactLocation.ContainsNaN()) return;
+        auto* Current = DevelopmentMagicFlights.Find(Actor);
+        if (!Current || !Current->bImpactSubmitted || Current->bResidueSubmitted) return;
+        UWorld* World = Actor->GetWorld();
+        if (!World || World->bIsTearingDown || World != DevelopmentMagicWorld.Get()) return;
+        const FVector TraceStart = Snapshot.ImpactLocation + FVector(0, 0, 90);
+        const FVector TraceEnd = Snapshot.ImpactLocation - FVector(0, 0, 280);
+        FHitResult GroundHit;
+        FCollisionQueryParams GroundQuery(SCENE_QUERY_STAT(SSLMFrostResidueGround), false);
+        GroundQuery.AddIgnoredActor(Actor);
+        if (!World->LineTraceSingleByChannel(GroundHit, TraceStart, TraceEnd, ECC_WorldStatic, GroundQuery) ||
+            GroundHit.ImpactNormal.Z < 0.55f) return;
+
+        FGamePlatformPresentationRequest Residue;
+        Residue.RequestId = FGuid::NewGuid();
+        Residue.SemanticTag = FGameplayTag::RequestGameplayTag(
+            TEXT("Presentation.DivineBeasts.Development.Magic.Frostbolt.Residue"), false);
+        if (!Residue.SemanticTag.IsValid()) return; // 缺字典时不改变已完成的权威命中。
+        Residue.SourceId = Snapshot.AbilityId;
+        Residue.ContextId = Snapshot.PresentationStyleId;
+        Residue.SourceLocation = GroundHit.ImpactPoint + GroundHit.ImpactNormal * 2.0f;
+        Residue.ImpactLocation = Residue.SourceLocation;
+        Residue.ImpactNormal = GroundHit.ImpactNormal;
+        Residue.Context.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
+        Residue.Context.AvatarGeneration = Snapshot.SourceAvatarGeneration;
+        Residue.RequestGeneration = Snapshot.SourceAvatarGeneration;
+        Residue.WorldGeneration = PlatformPresentation ? PlatformPresentation->GetWorldGeneration() : 0;
+        Residue.Lifetime = EGamePlatformPresentationLifetime::Timed;
+        Current->bResidueSubmitted = true; // 在同步外调之前锁定一次性事件，防止重复触发。
+        const auto ResidueResult = SubmitProjectRequest(Residue);
+        Current = DevelopmentMagicFlights.Find(Actor);
+        if (Token != DevelopmentMagicBindingToken || !Current)
+        {
+            if (ResidueResult == EGamePlatformPresentationSubmitResult::Submitted)
+            {
+                Residue.PredictionState = EGamePlatformPresentationPredictionState::Cancelled;
+                SubmitProjectRequest(Residue);
+            }
+            return;
+        }
+        if (ResidueResult != EGamePlatformPresentationSubmitResult::Submitted)
+            Current->bResidueSubmitted = false;
+    }
 }
 
 void UDivineBeastsPresentationClientSubsystem::UnbindDevelopmentMagicWorld()

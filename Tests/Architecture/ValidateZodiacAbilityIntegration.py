@@ -318,11 +318,49 @@ def check_assets_and_policy() -> None:
           "此观察不属于静态代码测试通过的证明。")
 
 
+def check_momentum_p0() -> None:
+    """气势P0静态合同核查；不冒充UE运行、Cook或双客户端。"""
+    source = GAMEPLAY / "Source/DivineBeastsCharactersRuntime"
+    definition = read(source / "Public/Definitions/DivineBeastsMomentumDefinition.h")
+    policy = read(source / "Private/Definitions/DivineBeastsMomentumDefinition.cpp")
+    owner = read(source / "Private/Components/DivineBeastsCharacterComponent.cpp")
+    owner_h = read(source / "Public/Components/DivineBeastsCharacterComponent.h")
+    effect = read(source / "Private/Effects/DivineBeastsMomentumGainGameplayEffect.cpp")
+    placeholder = read(ABILITIES / "Private/Abilities/DivineBeastsPlaceholderGameplayAbility.cpp")
+    ui = read(CLIENT_UI / "Private/ViewModels/Combat/DivineBeastsAbilityBarViewModel.cpp")
+    verify("气势0～100和每英雄普攻收益配置",
+           "float BasicAttackHitGain = 10.0f" in definition and
+           "float MaxMomentum = 100.0f" in definition and
+           "MaxMomentum > 100.0f" in policy and "CalculateBasicAttackHitGain" in policy)
+    verify("仅GAS正式提交的占位普攻真实命中产生增势",
+           "if (!bProjectile)" in placeholder and
+           "const bool bHit = AuthorityTraceForwardAndApplyDamage" in placeholder and
+           "if (bHit && ActivationToken == Token" in placeholder and
+           "Identity->AuthorityAwardMomentumForConfirmedBasicHit(Result, AvatarGeneration)" in placeholder)
+    verify("增势鉴权、角色代次、实际伤害和事件去重",
+           all(x in owner for x in (
+               "Owner->HasAuthority()", "IsCharacterReady()", "ConfirmedHit.EventId.IsValid()",
+               "ConfirmedHit.AppliedToHealth <= 0.0f", "ConfirmedHit.AppliedToShield <= 0.0f",
+               "GetCombatAvatarGeneration() != ExpectedAvatarGeneration",
+               "AwardedMomentumHitIds.Contains", "AwardedMomentumHitOrder.Num() > 128")) and
+           "TSet<FGuid> AwardedMomentumHitIds" in owner_h)
+    verify("奖励通过项目GAS即时GameplayEffect单一写入",
+           all(x in effect for x in ("EGameplayEffectDurationType::Instant", "FSetByCallerFloat",
+               "SSLM.Momentum.BasicHitGain",
+               "UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()")) and
+           "ASC->ApplyGameplayEffectSpecToSelf" in owner)
+    verify("气势不足提示只读GAS成本，不直接写属性",
+           'TEXT("气势不足")' in ui and
+           "Spec->Ability->CheckCost(" in ui and
+           not any(x in ui for x in ("InitMomentum(", "SetMomentum(", "ApplyGameplayEffectSpecToSelf(")))
+
+
 def main() -> int:
     check_module()
     check_ownership()
     check_wiring()
     check_runtime_safety()
+    check_momentum_p0()
     check_assets_and_policy()
     print(f"RESULT | StaticAssertions={PASS + FAIL} Passed={PASS} Failed={FAIL}")
     print("LIMITS | 本脚本不验证UE5.8 UHT/编译、技能数值真实资产、"

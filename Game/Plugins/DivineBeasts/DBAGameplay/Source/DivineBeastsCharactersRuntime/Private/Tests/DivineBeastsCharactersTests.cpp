@@ -4,6 +4,9 @@
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Definitions/DivineBeastsMomentumDefinition.h"
+#include "Effects/DivineBeastsMomentumGainGameplayEffect.h"
+#include "GameplayEffect.h"
+#include <limits>
 #include "Attributes/GamePlatformAttributeSet.h"
 #include "Creation/DivineBeastsCharacterCreationProvider.h"
 #include "Definitions/DivineBeastsHeroDefinition.h"
@@ -164,15 +167,31 @@ bool FDivineBeastsMomentumContractTest::RunTest(const FString&)
     TestEqual(TEXT("Momentum不得超过MaxMomentum"), OverflowMomentum, 100.0f);
 
     Definition.InitialMomentum = 60.0f;
-    Definition.MaxMomentum = 120.0f;
+    Definition.MaxMomentum = 100.0f;
+    Definition.BasicAttackHitGain = 10.0f; // 仅开发占位值，正式英雄可独立调整。
     Definition.GainMultiplier = 1.25f;
     Definition.DecayRate = 2.0f;
     Error.Reset();
     TestTrue(TEXT("自定义Momentum Definition有效"), Definition.IsValid(Error));
     Attributes->InitializeFromDefinition(Definition);
     TestEqual(TEXT("Definition初始化Momentum"), Attributes->GetMomentum(), 60.0f);
-    TestEqual(TEXT("Definition初始化MaxMomentum"), Attributes->GetMaxMomentum(), 120.0f);
+    TestEqual(TEXT("Definition初始化MaxMomentum"), Attributes->GetMaxMomentum(), 100.0f);
+    TestEqual(TEXT("普攻命中按定义获得10点"), Definition.CalculateBasicAttackHitGain(60.0f, 100.0f), 10.0f);
+    TestEqual(TEXT("气势上限附近只增加剩余容量"), Definition.CalculateBasicAttackHitGain(97.0f, 100.0f), 3.0f);
+    TestEqual(TEXT("满气势不再发奖"), Definition.CalculateBasicAttackHitGain(100.0f, 100.0f), 0.0f);
+    TestEqual(TEXT("非有限运行值不发奖"), Definition.CalculateBasicAttackHitGain(std::numeric_limits<float>::infinity(), 100.0f), 0.0f);
+    float OverflowMax = 150.0f;
+    Attributes->PreAttributeChange(UDivineBeastsMomentumAttributeSet::GetMaxMomentumAttribute(), OverflowMax);
+    TestEqual(TEXT("GAS气势最大值硬限制100"), OverflowMax, 100.0f);
 
+    Definition.MaxMomentum = 120.0f;
+    Error.Reset();
+    TestFalse(TEXT("MaxMomentum超过100拒绝"), Definition.IsValid(Error));
+    Definition.MaxMomentum = 100.0f;
+    Definition.BasicAttackHitGain = 101.0f;
+    Error.Reset();
+    TestFalse(TEXT("单次气势增益超过100拒绝"), Definition.IsValid(Error));
+    Definition.BasicAttackHitGain = 10.0f;
     Definition.InitialMomentum = 130.0f;
     Error.Reset();
     TestFalse(TEXT("InitialMomentum超过上限必须拒绝"), Definition.IsValid(Error));

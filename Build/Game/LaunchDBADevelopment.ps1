@@ -13,6 +13,8 @@ param(
     [ValidateSet('EditorGame','Client')][string]$Target='EditorGame',
     [string]$EngineRoot,
     [string]$ClientExe,
+    # 完整Editor构建结果文件；插件入口仍由既有门禁校验源码与产物一致性。
+    [string]$BuildResultPath,
     [ValidateRange(960,3840)][int]$WindowWidth=1920,
     [ValidateRange(540,2160)][int]$WindowHeight=1080,
     [guid]$RunId=[guid]::NewGuid()
@@ -42,6 +44,7 @@ if($Mode -eq 'PluginDev'){
     }
     if($EngineRoot){$delegate['EngineRoot']=$EngineRoot}
     if($ClientExe){$delegate['ClientExe']=$ClientExe}
+    if($BuildResultPath){$delegate['BuildResultPath']=$BuildResultPath}
     & (Join-Path $PSScriptRoot 'RunPluginDemo.ps1') @delegate
     return
 }
@@ -64,6 +67,7 @@ $dir=Join-Path $workspace ("Saved/Validation/PluginDemos/Launch/"+$RunId.ToStrin
 if(Test-Path -LiteralPath $dir){throw ('RunId已存在，禁止覆盖证据：'+$dir)}
 $null=New-Item -ItemType Directory -Path $dir -Force
 $log=Join-Path $dir 'DebugLogin.log'
+if($BuildResultPath){$arguments+=('-DBADevelopmentBuildResult='+[IO.Path]::GetFullPath($BuildResultPath))}
 $arguments+=@("-DBADevelopmentPowerShell=$(Join-Path $PSHOME 'pwsh.exe')",'-windowed',("-ResX="+$WindowWidth),("-ResY="+$WindowHeight),
     '-NoLiveCoding','-NoHotReload','-nosplash',("-abslog="+$log))
 $start=[Diagnostics.ProcessStartInfo]::new()

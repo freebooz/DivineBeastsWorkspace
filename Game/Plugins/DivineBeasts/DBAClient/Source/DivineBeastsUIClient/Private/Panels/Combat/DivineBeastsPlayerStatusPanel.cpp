@@ -48,6 +48,9 @@ void UDivineBeastsPlayerStatusPanel::ClearStatusViewModel()
 void UDivineBeastsPlayerStatusPanel::NativeConstruct()
 {
     Super::NativeConstruct();
+    // 能量固定为清晰蓝色，气势采用独立琥珀金色；用户能一眼区分两种资源。
+    if (IsValid(EnergyBar)) EnergyBar->SetResourceFillColor(FLinearColor(0.14f, 0.43f, 0.96f, 1.0f));
+    if (IsValid(MomentumBar)) MomentumBar->SetResourceFillColor(FLinearColor(0.97f, 0.69f, 0.22f, 1.0f));
 
     if (IsValid(ShieldBar))
     {
@@ -100,14 +103,14 @@ void UDivineBeastsPlayerStatusPanel::RefreshStatusSourceFromOwningPawn()
 
     if (!IsValid(ASC))
     {
-        // Pawn切换/失效必须清空旧玩家的生命与气势，不能显示残留快照。
+        // Pawn切换/失效必须清空旧玩家的生命、能量与气势，不能显示残留快照。
         OwnedStatusViewModel->UnbindFromAbilitySystem();
         ClearStatusViewModel();
         ApplyStatus(FDivineBeastsPlayerStatusViewData());
         return;
     }
 
-    // UI ViewModel只订阅现有ASC的复制属性：Health/MaxHealth/Momentum/MaxMomentum。
+    // UI ViewModel只订阅现有ASC的复制属性：Health/MaxHealth/Energy/MaxEnergy/Momentum/MaxMomentum。
     // 自己不进行GameplayEffect写入、技能授权或每帧轮询。
     if (OwnedStatusViewModel->BindToAbilitySystem(ASC))
     {
@@ -132,6 +135,8 @@ void UDivineBeastsPlayerStatusPanel::ApplyStatus(
     const bool bEquivalent =
         FMath::IsNearlyEqual(Status.Health, InStatus.Health, 0.0001) &&
         FMath::IsNearlyEqual(Status.MaxHealth, InStatus.MaxHealth, 0.0001) &&
+        FMath::IsNearlyEqual(Status.Energy, InStatus.Energy, 0.0001) &&
+        FMath::IsNearlyEqual(Status.MaxEnergy, InStatus.MaxEnergy, 0.0001) &&
         FMath::IsNearlyEqual(Status.Momentum, InStatus.Momentum, 0.0001) &&
         FMath::IsNearlyEqual(Status.MaxMomentum, InStatus.MaxMomentum, 0.0001) &&
         Status.bDead == InStatus.bDead;
@@ -154,6 +159,10 @@ void UDivineBeastsPlayerStatusPanel::ApplyStatus(
     if (IsValid(ShieldBar))
     {
         ShieldBar->SetVisibility(ESlateVisibility::Collapsed);
+    }
+    if (IsValid(EnergyBar))
+    {
+        EnergyBar->ApplyResourceState(MakeBarState(TEXT("Energy"), Status.Energy, Status.MaxEnergy));
     }
     if (IsValid(MomentumBar))
     {

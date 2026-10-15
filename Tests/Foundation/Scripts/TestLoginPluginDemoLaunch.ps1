@@ -4,7 +4,7 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
 $passed=0
 $runner=Get-Content -LiteralPath (Join-Path $root 'Build/Game/LaunchPluginDemoFromLogin.ps1') -Raw
-foreach($required in @('RunPluginDemo.ps1','-Start','-EngineRoot','WaitForExit','status.txt','Failed')) {
+foreach($required in @('RunPluginDemo.ps1','-Start','-EngineRoot','-BuildResultPath $BuildResultPath','WaitForExit','status.txt','Failed')) {
     if(!$runner.Contains($required)){throw "启动器缺少合同：$required"}; $passed++
 }
 if($runner -match 'BuildFoundation|UnrealBuildTool|FCommandLine::Append'){throw '按钮不得自动构建或修改父进程模式'}

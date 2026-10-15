@@ -11,7 +11,7 @@ class APawn;
 /**
  * UDivineBeastsPlayerStatusPanel（神兽联盟玩家状态面板）。
  *
- * 组合平台ResourceBar（资源条）视觉原子，只显示生命与气势；护盾由状态效果图标显示。
+ * 组合平台ResourceBar（资源条）视觉原子，分别显示生命（红）、能量（蓝）、气势（金）；护盾仍由状态效果图标显示。
  * 页面/HUD的领域ViewModel在事实变化时调用 ApplyStatus；Panel自身不轮询Gameplay对象。
  */
 UCLASS(Abstract, Blueprintable)
@@ -21,7 +21,7 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsPlayerStatusPanel
     GENERATED_BODY()
 
 public:
-    /** 根布局在控制器/Pawn换代事件中重绑当前ASC；空来源清空旧生命/气势，不执行玩法写入。 */
+    /** 根布局在控制器/Pawn换代事件中重绑当前ASC；空来源清空生命/能量/气势，不执行玩法写入。 */
     void RefreshStatusSourceFromOwningPawn();
     /** 绑定事件驱动状态 ViewModel；Panel 不直接读取 ASC。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Combat")
@@ -45,6 +45,10 @@ protected:
     UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly, Category="DivineBeasts|UI|Combat")
     TObjectPtr<UGamePlatformResourceBarWidget> ShieldBar = nullptr;
 
+    /** 生命下方蓝条，只读取通用Energy/MaxEnergy，绝不复用项目气势。 */
+    UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly, Category="DivineBeasts|UI|Combat")
+    TObjectPtr<UGamePlatformResourceBarWidget> EnergyBar = nullptr;
+
     UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly, Category="DivineBeasts|UI|Combat")
     TObjectPtr<UGamePlatformResourceBarWidget> MomentumBar = nullptr;
 
@@ -63,7 +67,7 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsPlayerStatusViewModel> StatusViewModel = nullptr;
 
-    /** 此面板在本地按Pawn实例持有唯一UI ViewModel，不创建Gameplay侧第二份生命或气势。 */
+    /** 此面板按Pawn持有一个只读UI ViewModel，不创建Gameplay侧第二份生命、能量或气势。 */
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsPlayerStatusViewModel> OwnedStatusViewModel = nullptr;
 

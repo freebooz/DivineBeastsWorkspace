@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "Settings/GamePlatformVFXWorldBudgetRule.h"
 #include "GamePlatformVFXSettings.generated.h"
 
 class UGamePlatformVFXCatalog;
@@ -53,6 +54,14 @@ public:
 
     UPROPERTY(Config, EditAnywhere, Category="Catalog", meta=(ClampMin="1", ClampMax="128"))
     int32 MaxStartupCatalogs = 32;
+
+    /** 按WorldId前缀/效果画质启用可选场景级请求软预算；默认关闭，不影响其他世界。 */
+    UPROPERTY(Config, EditAnywhere, Category="Scalability")
+    bool bUseWorldBudgetRules = false;
+
+    /** 场景级预算仅限制请求跟踪数量，Niagara System上限由Effect Type单独管理。 */
+    UPROPERTY(Config, EditAnywhere, Category="Scalability")
+    TArray<FGamePlatformVFXWorldBudgetRule> WorldBudgetRules;
 
     UPROPERTY(Config, EditAnywhere, Category="Runtime")
     bool bEnablePooling = true;

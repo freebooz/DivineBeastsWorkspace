@@ -71,6 +71,13 @@
       "Reason": "UI专用材质函数属于客户端UserInterface材质域，不应被Server Cook并入。"
     },
     {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/IceArrow",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/IceArrow",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "SSLM寒冰箭项目专属纹理、冰晶网格、材质、Niagara系统及视觉定义仅由客户端播放；服务器保留原有GAS和权威弹体，不得Cook纯表现资产。"
+    },
+    {
       "PackagePath": "/DBAPresentationPack_Core/VFX/DevelopmentMagic",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/DevelopmentMagic",
       "Profiles": "AllServers",

@@ -63,8 +63,7 @@ try {
         }
         # 此记录是发布后启动要求，不代表脚本已经运行游戏；textconfig绕过错误层级的BinaryConfig缓存。
         $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
-        # 仅人工训练敌人验证显式追加，正式运行和仅技能验证不自动生成怪物。
-        $details.OptionalDevelopmentMonsterRuntimeArgument = '-DBADevelopmentMonsters'
+
     }
     $tool.Environment.uebp_LogFolder=Join-Path $context.Directory 'UATLogs'
     $tool.Environment.uebp_EngineSavedFolder=Join-Path $context.Directory 'EngineSaved'

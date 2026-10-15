@@ -24,3 +24,9 @@
 # 编辑器Python运行生成的字节码缓存；维护真源.py，不把本机解释器缓存作为项目交付资源。
 __pycache__/
 *.pyc
+
+# Epic/Fab Electric Dreams（虚幻引擎专用授权资产）：公开仓库禁止再分发原始模型、材质与贴图。
+# 项目自有PCG图/配置继续受版本管理；只有以下明确隔离的第三方源资产目录被排除。
+/Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Environment/ThirdParty/ElectricDreams/
+# 独立迁移审核区：只供UE编辑器迁移前检测，不允许打入正式Git提交。
+/Game/Content/ExternalImports/ElectricDreams/

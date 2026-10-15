@@ -2,6 +2,8 @@
 
 版本：0.2.0｜2026-09-30
 
+SSLM竞技场十二生肖技能VFX视觉质量与高并发性能强制规范：`Docs/Architecture/SSLM十二生肖技能VFX性能与视觉质量规范.md`（工作空间根目录下的正式设计文档；属于项目层使用规则，不改变本平台插件中立职责）。
+
 2026-10-13通用特效材质索引：`../../../../../Docs/Implementation/Materials/MaterialFunctionLibraryIndex.md`（14类201项中文索引，含VFX20项及视觉技能14项），`MaterialCapabilityRegistry_V1.json`（机器分类清单）按VFX通用材质和项目专用Niagara外观分别归属。现有Niagara运行机制保持唯一，分类索引不代表已完成Shader或人工视觉验收。
 
 

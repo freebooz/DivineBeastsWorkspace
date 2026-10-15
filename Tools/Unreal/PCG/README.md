@@ -97,3 +97,57 @@ python Tools/Unreal/PCG/GenerateVillagePrototypeMeshes.py --verify
 ```
 
 每项都有独立退出码和日志，综合报告写入`Saved/Validation/GamePlatformPCG/NoGaeaDevelopment/<新运行ID>/result.json`。安全门禁、资源导入、空间探针或实际生成任一失败均停止后续步骤。**即使全部技术步骤通过仍退出2**，明确G01～G16完整矩阵、正式Client/Server Cook、性能/导航和Gaea/3A美术尚需独立验收，不可用技术开发完成代替生产完成。
+
+### 2026-10-14 新手村外围山体热带森林输入图
+
+`AuthorVillageTropicalMountainForest.py`（UE原生三层雨林候选点图创建器）读取 `DBAWorldPack_Village/SourceArt/PCG/TropicalMountainForest_v1.json`（项目层生态合同），创建冠层／中层／林下3张实际PCGGraph，图包含地貌权重及坡面过滤，不生成缺失的第三方树木或修改正式Village地图。当前经UE5.8创建与回读通过。
+
+```powershell
+# 只读查看拟创建的资源：普通Python可运行
+python Tools/Unreal/PCG/AuthorVillageTropicalMountainForest.py --mode inspect
+# 以下只能在正式UE5.8编辑器Python环境执行，严禁直接改.uasset二进制：
+# AuthorVillageTropicalMountainForest.py --mode apply
+# AuthorVillageTropicalMountainForest.py --mode verify
+python Tests/Architecture/ValidateVillageTropicalMountainForest.py
+```
+
+Electric Dreams Environment（电光之梦环境）样例尚未在本机找到；必须通过Fab官方授权取得实际网格/材质后，才可接通StaticMeshSpawner、外围山峰空间排除及编辑器Bake。详见 `Docs/Implementation/GamePlatformPCG/VillageTropicalMountainForest_20261014.md`（项目层资源迁移与验收边界）。
+### Electric Dreams 热带雨林官方资源准入（只读）
+
+`InspectElectricDreamsSample.py`（示例工程只读预检）从独立Fab样例工程寻找 `ElectricDreams_PCGForest`（官方森林示例关卡），检查真实UE包头/资产概况和公开Git许可隔离，不复制二进制素材、不获取Epic账号令牌、不保存正式地图。
+
+```powershell
+# Epic Launcher中完成Fab加入资源库/创建独立工程后，执行来源准入检查：
+python Tools/Unreal/PCG/InspectElectricDreamsSample.py --sample-root D:\UnrealSamples --require-source
+# 带证据输出时只允许Saved本地目录，拒绝覆盖旧报告：
+python Tools/Unreal/PCG/InspectElectricDreamsSample.py --sample-root D:\UnrealSamples --report Saved/Validation/ElectricDreamsAcquisition/SourcePreflight_20261014.json
+# 代码合同与Git许可证隔离回归：
+python Tests/Architecture/TestElectricDreamsMigrationPreflight.py
+```
+
+`source_missing`（未下载）与 `source_incomplete`（工程不完整）必须阻断迁移；`source_on_disk`（存在磁盘结构）仍需Fab授权核实和UE5.8 AssetRegistry原生检查。当前公开Git隔离根为 `DBAWorldPack_Village/Content/Environment/ThirdParty/ElectricDreams/`，只纳入项目层真实插件，不在GamePlatformPCG（平台通用PCG机制）内保存具体雨林素材。详细步骤与未完成关口见 `Docs/Implementation/GamePlatformPCG/VillageTropicalMountainForest_20261014.md`。
+### 源工程独立UE森林AssetRegistry依赖闭包审计（2026-10-15）
+
+`AuditElectricDreamsForestSourceUE58.py`（原生依赖审计，不迁移）只能在 Fab/Epic 官方下载后的**独立Electric Dreams工程**内以UE5.8编辑器Python调用 `--mode audit`：先确认Forest示例地图真实存在，再对官方森林PCG图的软、硬包引用进行闭包追踪，产出源工程Saved目录内的不可覆盖JSON清单。该工具不修改样例内容、不读取Fab账号令牌、不复制资产，也不会创建SSLM新手村地图或植被。
+
+`--mode inspect` 支持普通Python只读查看，`Tests/Architecture/TestElectricDreamsRegistryAudit.py` 对源工程/SSLM分离、Forest图选择、UE包范围与状态口径进行离线测试。审计报告只证明原生资产关系，需再人工核实账户授权和UE5.8兼容性；整个示例直接复制到正式SSLM主工程仍被禁止。
+### 2026-10-15 官方MigratePackages（原生迁移）隔离执行入口
+
+`StageElectricDreamsForestUE58.py`（Electric Dreams森林源工程迁移编排器）采用UE5.8真实 `AssetTools.migrate_packages`（资产包与依赖迁移），**只允许源工程 → 独立空临时工程**，禁止把样例直接拷贝或迁移至 `DivineBeastsWorkspace/Game/Content`。固定输入为 `ElectricDreams_PCGForest`（森林示例关卡）和 `PCGDemo_Forest`（森林生成主图），引擎自动解析并保留两者依赖。迁移策略 `AssetMigrationConflict.SKIP`（冲突时跳过），若临时工程已经存在UE资产则拒绝执行，避免不完整覆盖。
+
+一旦官方示例通过Epic Games Launcher（Epic启动器）真正下载，先用UE空工程模板创建 `D:/UnrealSamples/SSLM_ElectricDreams_Staging/SSLM_ElectricDreams_Staging.uproject`（迁移隔离工程，路径只是约定，不代表已创建），再在已获授权且已备份的 **Electric Dreams 源工程编辑器**中执行以下参数：
+
+```powershell
+# 离线只读规划，无需UE运行：
+python Tools/Unreal/PCG/StageElectricDreamsForestUE58.py --mode inspect
+# 真正UE5.8源工程内执行的脚本参数示例，需通过编辑器ExecutePythonScript调用：
+# StageElectricDreamsForestUE58.py --mode apply --stage-project D:/UnrealSamples/SSLM_ElectricDreams_Staging/SSLM_ElectricDreams_Staging.uproject --acknowledge-ue-only-license
+# 在源工程中执行的只读阶段核实：
+# StageElectricDreamsForestUE58.py --mode verify --stage-project D:/UnrealSamples/SSLM_ElectricDreams_Staging/SSLM_ElectricDreams_Staging.uproject
+# 普通Python安全合同测试：
+python Tests/Architecture/TestElectricDreamsForestStaging.py
+```
+
+迁移脚本检查源、目标均为独立UE工程，源工程包含官方森林地图及Graph的实际AssetRegistry记录，迁移后检查两份UE包头；引擎 `migrate_packages` 没有可靠成功返回值，禁止仅凭函数返回或CLI退出码标记真实资源导入。真正成功迁移后仍需打开临时工程独立验证，审核授权、重定向资源、风动材质与所有依赖，在引擎中重定位到 `DBAWorldPack_Village`（新手村项目世界内容包），并按原合同执行双Cook、PCG烘焙与人工验收。
+
+**当前事实：** 源样例未下载，以上引擎 `apply` 和 `verify` 尚未在真实样例执行；新脚本的6项离线边界测试通过，并不能替代实际迁移。

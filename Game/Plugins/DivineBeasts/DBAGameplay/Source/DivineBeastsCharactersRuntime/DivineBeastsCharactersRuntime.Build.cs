@@ -29,6 +29,7 @@ public class DivineBeastsCharactersRuntime : ModuleRules
         // UnrealNetwork仅用于本模块复制实现，不能通过Public依赖向上层传播。
         // GameplayAbilities/GamePlatformAbilitySystem 为 Public：Momentum AttributeSet 的公开头继承平台 AttributeSet 并暴露 GAS 属性类型。
         // Gameplay只用于项目层资格组合，平台AbilitySystem不反向认识Gameplay或生肖。
-        PrivateDependencyModuleNames.AddRange(new[] { "NetCore", "GamePlatformGameplay" });
+        // 狼实体只复用共享AI状态定义，不链接ServerOnly AI控制器。
+        PrivateDependencyModuleNames.AddRange(new[] { "NetCore", "GamePlatformGameplay", "GamePlatformAI" });
     }
 }

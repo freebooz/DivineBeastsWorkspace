@@ -3,8 +3,9 @@
 """UE5.8 原生P9 Data/Flow/Loading集成测试的两份真实开发Definition夹具作者。
 
 真实资产仅创建在/Game/Development/Foundation/Definitions/P9Native（原工程禁止正式Cook）。
-- GamePlatformDefinition:foundation.probe@1：通用Data/Loading租约，不包含项目玩法；
-- GamePlatformDefinition:foundation.flow@1：真实单节点Flow Definition，执行器由集成测试运行时注入。
+- GamePlatformDefinition:foundation.p9probe@1：仅供P9原生Data/Loading租约测试；
+- GamePlatformDefinition:foundation.p9flow@1：仅供P9原生单节点Flow测试，执行器由集成测试运行时注入。
+专用p9前缀避免与已存在的foundation.probe@1及foundation.flow@1共用PrimaryAssetID。
 不写入生产AssetManager配置、不覆盖已经存在的别人的资产，不启用模拟Data服务。
 """
 from __future__ import annotations
@@ -20,8 +21,8 @@ FOLDER="/Game/Development/Foundation/Definitions/P9Native"
 OUT=ROOT/"Saved/Validation/PluginP7P9_20261012/P9DataFixtures"
 MODE=os.environ.get("P9_NATIVE_FIXTURE_MODE","inspect").lower()
 SPECS=(
-    ("DA_GP_P9_FoundationProbe","probe","GamePlatformDefinitionBase"),
-    ("DA_GP_P9_FoundationFlow","flow","GamePlatformFlowDefinition"),
+    ("DA_GP_P9_FoundationProbe","p9probe","GamePlatformDefinitionBase"),
+    ("DA_GP_P9_FoundationFlow","p9flow","GamePlatformFlowDefinition"),
 )
 
 
@@ -64,7 +65,7 @@ def verify(asset,name,path):
     if (version.get_editor_property("schema_version")!=1 or
         version.get_editor_property("content_revision")!=1):
         raise RuntimeError("夹具结构/内容版本不合法："+path)
-    if name=="flow":
+    if name=="p9flow":
         if not isinstance(asset,unreal.GamePlatformFlowDefinition):
             raise TypeError("流程定义必须是真实的UGamePlatformFlowDefinition")
         if str(asset.get_editor_property("entry_node_id"))!="ReviewStart":
@@ -97,7 +98,7 @@ def make_asset(name,kind,classname):
         asset.set_editor_property("logical_id",new_logical_id(kind))
         asset.set_editor_property("data_version",unreal.GamePlatformDataVersion())
         asset.set_editor_property("required_definitions",[])
-        if kind=="flow":
+        if kind=="p9flow":
             # UE5.8 中此结构字段为 EditDefaultsOnly，实例 set_editor_property 不允许写；
             # 使用反射构造器提供真实节点字段，不绕过Definition生产校验。
             node=unreal.GamePlatformFlowNodeDefinition(

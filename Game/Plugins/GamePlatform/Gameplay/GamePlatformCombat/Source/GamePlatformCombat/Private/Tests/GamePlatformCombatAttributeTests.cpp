@@ -83,6 +83,14 @@ bool FGamePlatformCombatAttributeDefaultsTest::RunTest(const FString& Parameters
 
     TestEqual(TEXT("默认MaxHealth"), Attributes->GetMaxHealth(), 100.0f);
     TestEqual(TEXT("默认Health"), Attributes->GetHealth(), 100.0f);
+    TestEqual(TEXT("默认能量上限"), Attributes->GetMaxEnergy(), 100.0f);
+    TestEqual(TEXT("默认能量已满"), Attributes->GetEnergy(), 100.0f);
+    float OverflowEnergy = 150.0f;
+    Attributes->PreAttributeChange(UGamePlatformCombatAttributeSet::GetEnergyAttribute(), OverflowEnergy);
+    TestEqual(TEXT("能量不得超过上限"), OverflowEnergy, 100.0f);
+    float NegativeEnergy = -5.0f;
+    Attributes->PreAttributeChange(UGamePlatformCombatAttributeSet::GetEnergyAttribute(), NegativeEnergy);
+    TestEqual(TEXT("能量不得为负"), NegativeEnergy, 0.0f);
 
     float NegativeMaxHealth = -10.0f;
     Attributes->PreAttributeChange(
@@ -121,6 +129,8 @@ bool FGamePlatformCombatAttributeFamiliesTest::RunTest(const FString& Parameters
     UGamePlatformCombatAttributeSet* Combat = NewObject<UGamePlatformCombatAttributeSet>();
     TestEqual(TEXT("初始伤害增强为0"), Combat->GetDamageBonus(), 0.0f);
     TestEqual(TEXT("初始伤害减免为0"), Combat->GetDamageReduction(), 0.0f);
+    TestNotNull(TEXT("能量属于独立正式GAS属性"),
+        FindFProperty<FProperty>(UGamePlatformCombatAttributeSet::StaticClass(), FName(TEXT("Energy"))));
 
     // 删除盾永久属性：临时盾只由GameplayEffect与组件效果实例负责。
     TestNull(TEXT("盾属性不再存在"),

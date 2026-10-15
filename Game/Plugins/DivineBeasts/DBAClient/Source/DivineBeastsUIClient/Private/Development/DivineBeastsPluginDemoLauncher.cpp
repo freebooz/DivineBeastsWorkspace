@@ -64,11 +64,19 @@ void UDivineBeastsPluginDemoLauncher::RequestLaunch()
         SetStatus(FText::FromString(TEXT("需要PowerShell 7。请使用LaunchDBADevelopment.ps1启动调试登录，再点击此入口。")));
         return;
     }
+    FString BuildResultPath;
+    FParse::Value(FCommandLine::Get(), TEXT("DBADevelopmentBuildResult="), BuildResultPath);
+    // 显式指定证据，不猜测旧记录；实际输入和产物一致性仍由唯一启动门禁检查。
+    if (BuildResultPath.IsEmpty() || !IsSafeArgument(BuildResultPath) || !IFileManager::Get().FileExists(*BuildResultPath))
+    {
+        SetStatus(FText::FromString(TEXT("缺少完整Editor构建证据。请使用LaunchDBADevelopment.ps1的BuildResultPath参数启动调试登录。")));
+        return;
+    }
     LaunchId = FGuid::NewGuid(); LastStatus.Reset();
     StatusFile = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("../Saved/Validation/PluginDemos/LoginLaunch") /
         LaunchId.ToString(EGuidFormats::DigitsWithHyphens) / TEXT("status.txt"));
-    const FString Arguments = FString::Printf(TEXT("-NoLogo -NoProfile -NonInteractive -File \"%s\" -EngineRoot \"%s\" -RunId %s"),
-        *Script, *EngineRoot, *LaunchId.ToString(EGuidFormats::DigitsWithHyphens));
+    const FString Arguments = FString::Printf(TEXT("-NoLogo -NoProfile -NonInteractive -File \"%s\" -EngineRoot \"%s\" -RunId %s -BuildResultPath \"%s\""),
+        *Script, *EngineRoot, *LaunchId.ToString(EGuidFormats::DigitsWithHyphens), *BuildResultPath);
     // 隐藏工具窗口；实际演示由受控脚本打开可见游戏窗口，不传递父进程参数或登录凭据。
     Process = FPlatformProcess::CreateProc(*PowerShell, *Arguments, true, true, true, nullptr, 0, *FPaths::ProjectDir(), nullptr);
     if (!Process.IsValid())

@@ -1,14 +1,13 @@
 #requires -Version 7.0
-<# 中文审核入口：运行真实UE原生施法/怪物测试，使用已完成的本工程Editor构建。
+<# 中文审核入口：运行真实UE原生施法测试，使用已完成的本工程Editor构建。
 不登录、不改资产/配置、不停止人工客户端；每次独占RunId。缺报告、零测试、数量错或任何失败均非零退出。
 开发开关仅该测试进程可用；Editor/单机断言不是联机复制、Cook或人工视觉验收。
 回退仅保留本轮Saved证据，不删除源码/资源。 #>
 param(
     [string]$EngineRoot,
     [Parameter(Mandatory)][string]$BuildResultPath,
-    [string[]]$Prefixes=@('GamePlatform.AbilitySystem.Cast','DivineBeasts.Character.DevelopmentMonster','DivineBeasts.Server.DevelopmentMonster',
-        'DivineBeasts.Presentation.DevelopmentCasting','DivineBeasts.Presentation.DevelopmentMonster'),
-    [ValidateRange(1,500)][int]$ExpectedCount=28,
+    [string[]]$Prefixes=@('GamePlatform.AbilitySystem.Cast','DivineBeasts.Presentation.DevelopmentCasting'),
+    [ValidateRange(1,500)][int]$ExpectedCount=12,
     [guid]$RunId=[guid]::NewGuid()
 )
 $ErrorActionPreference='Stop'
@@ -20,10 +19,7 @@ foreach($prefix in $Prefixes){if($prefix -notmatch '^[A-Za-z0-9.]+$'){throw '测
 # 验证完整Editor证据，而非凭旧DLL时间或编辑器能启动就宣称本轮源码已编译。
 $requiredModules=@('GamePlatformAbilitySystem','DivineBeastsCharactersRuntime')
 if(@($Prefixes|Where-Object {$_.StartsWith('DivineBeasts.Presentation.')}).Count -gt 0){$requiredModules+='DivineBeastsPresentationClient'}
-# 正式Editor默认不装配DBAServer；内部服务器测试必须由完整Editor+AdditionalPlugins=DBAServer明确构建。
-# 缺失模块在启动前失败，不能只运行6项后把未加载的3项算通过。
-$serverTests=@($Prefixes | Where-Object {$_.StartsWith('DivineBeasts.Server.')}).Count -gt 0
-if($serverTests){$requiredModules+='DBAServer'}
+# 远古石灵开发怪物已退役；施法回归只装配实际需要的平台与项目客户端模块。
 $proof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $requiredModules
 $directory=Join-Path $workspace "Saved/Validation/CastingMonster20261013/Native-$RunId"
 $null=New-Item -ItemType Directory -Path $directory
@@ -32,10 +28,10 @@ $report=Join-Path $directory 'Report'
 $selector=($Prefixes | ForEach-Object {'StartsWith:'+$_}) -join '+'
 $arguments=@((Join-Path $workspace 'Game/DivineBeastsArena.uproject'),'/DBAFrontEndPack/Maps/L_DBA_FrontEnd',
     '-unattended','-RenderOffscreen','-nosound','-nosplash','-NoLiveCoding','-stdout','-FullStdOutLogOutput','-DisablePlugins=Monolith',
-    '-CustomConfig=VillageDevelopmentClient','-DBADevelopmentSkills','-DBADevelopmentMonsters','-textconfig',
+    '-CustomConfig=VillageDevelopmentClient','-DBADevelopmentSkills','-textconfig',
     '-ini:EditorSettings:/Script/UnrealEd.EditorPerformanceSettings:bThrottleCPUWhenNotForeground=False',
     "-abslog=$(Join-Path $directory 'Unreal.log')","-ExecCmds=Automation RunTests $selector",'-TestExit=Automation Test Queue Empty',"-ReportExportPath=$report")
-if($serverTests){$arguments+='-EnablePlugins=DBAServer'}
+
 $process=Invoke-FoundationProcess -FilePath (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe') -Arguments $arguments -WorkingDirectory $workspace -OutputDirectory $directory -TimeoutSeconds 900
 if($process.ExitCode -ne 0){throw "真实原生进程失败：$($process.ExitCode)；证据=$directory"}
 $index=Get-Content -LiteralPath (Join-Path $report 'index.json') -Raw | ConvertFrom-Json

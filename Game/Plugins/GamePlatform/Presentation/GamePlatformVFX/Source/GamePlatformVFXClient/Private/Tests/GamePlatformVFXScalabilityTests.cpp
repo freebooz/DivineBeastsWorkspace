@@ -82,4 +82,53 @@ bool FGamePlatformVFXCriticalPoolingTest::RunTest(const FString& Parameters)
     return true;
 }
 
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformVFXWorldBudgetRuleTest,
+    "GamePlatform.VFX.Scalability.WorldBudgetRule",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformVFXWorldBudgetRuleTest::RunTest(const FString& Parameters)
+{
+    // 测试中立命名空间、品质档和硬限制，项目运行时不会硬编码测试世界名称。
+    UGamePlatformVFXSettings* Settings = NewObject<UGamePlatformVFXSettings>();
+    Settings->MaxActiveInstances = 50;
+    Settings->MaxStatusInstances = 30;
+    Settings->MaxAmbientInstances = 10;
+    Settings->HardMaxTrackedInstances = 60;
+    Settings->bUseWorldBudgetRules = true;
+    FGamePlatformVFXWorldBudgetRule Rule;
+    Rule.WorldIdPrefix = TEXT("World.TestBattle");
+    Rule.QualityTier = EGamePlatformVFXQualityTier::High;
+    Rule.MaxCombatRequests = 8;
+    Rule.MaxStatusRequests = 5;
+    Rule.MaxAmbientRequests = 2;
+    Settings->WorldBudgetRules.Add(Rule);
+
+    FGamePlatformVFXRequest Request;
+    Request.WorldId = TEXT("World.TestBattle.01");
+    Request.QualityTier = EGamePlatformVFXQualityTier::High;
+    Request.Importance = EGamePlatformVFXImportance::Ambient;
+    TestTrue(TEXT("环境低于专有配额可播"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 1, *Settings));
+    TestFalse(TEXT("环境达到专有配额拒绝"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 2, *Settings));
+    Request.Importance = EGamePlatformVFXImportance::Status;
+    TestFalse(TEXT("状态达到专有配额拒绝"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 5, *Settings));
+    Request.Importance = EGamePlatformVFXImportance::Combat;
+    TestTrue(TEXT("战斗低于专有配额可播"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
+    TestFalse(TEXT("战斗达到专有配额拒绝"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 8, *Settings));
+    Request.Importance = EGamePlatformVFXImportance::Critical;
+    TestTrue(TEXT("关键效果仍只受硬限"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 59, *Settings));
+    TestFalse(TEXT("关键效果不得突破硬限"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 60, *Settings));
+
+    Request.Importance = EGamePlatformVFXImportance::Combat;
+    Request.WorldId = TEXT("World.TestBattleOther");
+    TestTrue(TEXT("拒绝不合法字头匹配"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 8, *Settings));
+    Request.WorldId = TEXT("World.TestBattle.01");
+    Request.QualityTier = EGamePlatformVFXQualityTier::Low;
+    TestTrue(TEXT("画质不同不套用高画质规则"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 8, *Settings));
+    Request.QualityTier = EGamePlatformVFXQualityTier::High;
+    Settings->bUseWorldBudgetRules = false;
+    TestTrue(TEXT("关闭专用规则保持旧行为"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 8, *Settings));
+    return true;
+}
 #endif

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""开发施法交付的配置回归：目录语义、唯一Data扫描、显式怪物运行开关。
+"""开发施法交付的配置回归：目录语义、唯一Data扫描及过时训练怪物禁用门禁。
 只验证人工维护接线，不代替UE资源重载、运行时表现、联机伤害或Cook验收。
 """
 from pathlib import Path
@@ -24,13 +24,13 @@ class DevelopmentCastingConfiguration(unittest.TestCase):
         self.assertTrue(any('PrimaryAssetType="GamePlatformDefinition"' in line and
                             '/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Definitions' in line for line in scans))
 
-    def test_visible_launcher_explicitly_enables_development_monsters(self):
-        """客户端必须显式选择开发怪物；此检查不启动窗口或认证，也不修改用户环境。"""
+    def test_retired_training_monster_is_not_enabled(self):
+        """远古石灵已退役：入口不允许旧启动参数，开发配置不得重新启用。"""
         script = (ROOT / 'Build/Game/RunFrontEndClients.ps1').read_text(encoding='utf-8-sig')
-        self.assertIn('[switch]$DevelopmentMonsters', script)
-        self.assertIn("$info.ArgumentList.Add('-DBADevelopmentMonsters')", script)
-        self.assertIn('DevelopmentMonsters=[bool]$DevelopmentMonsters', script)
-        self.assertIn('$DevelopmentMonsters -and !$DevelopmentSkills', script)
+        self.assertNotIn('DBADevelopmentMonsters', script)
+        for profile in ('VillageDevelopmentClient', 'VillageDevelopmentServer'):
+            config = (ROOT / f'Game/Config/Custom/{profile}/DefaultGame.ini').read_text(encoding='utf-8-sig')
+            self.assertNotIn('bAllowDevelopmentMonsters=true', config)
 
 
 if __name__ == '__main__':

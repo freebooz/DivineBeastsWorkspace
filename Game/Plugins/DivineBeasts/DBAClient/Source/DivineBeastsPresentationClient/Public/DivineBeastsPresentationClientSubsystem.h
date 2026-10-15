@@ -349,6 +349,7 @@ private:
         FGuid FlightRequestId;
         FName StyleId = NAME_None;
         bool bImpactSubmitted = false;
+        bool bResidueSubmitted = false; // 仅寒冰箭地面残霜成功播放一次，不参与权威碰撞。
         bool bFlightEnded = false;
     };
     TWeakObjectPtr<UWorld> DevelopmentMagicWorld;

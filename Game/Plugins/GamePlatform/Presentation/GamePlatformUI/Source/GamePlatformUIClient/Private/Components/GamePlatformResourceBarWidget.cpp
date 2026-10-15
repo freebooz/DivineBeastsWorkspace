@@ -53,3 +53,10 @@ void UGamePlatformResourceBarWidget::ApplyResourceState(
 
     BP_OnResourceStateChanged(ResourceState);
 }
+
+void UGamePlatformResourceBarWidget::SetResourceFillColor(const FLinearColor& InColor)
+{
+    if (!FMath::IsFinite(InColor.R) || !FMath::IsFinite(InColor.G) ||
+        !FMath::IsFinite(InColor.B) || !FMath::IsFinite(InColor.A)) return;
+    if (IsValid(ProgressBar)) ProgressBar->SetFillColorAndOpacity(InColor.GetClamped());
+}

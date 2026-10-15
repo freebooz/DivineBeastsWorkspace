@@ -2,8 +2,8 @@
 """《神兽联盟》GAS 精简属性集静态门禁（不依赖编辑器运行）。
 
 范围：只读审查三层归属、GAS AttributeSet字段个数、复制条件及元属性不复制。
-现行基线：2个具体属性集、6个可复制状态字段＋2个非复制伤害/治疗元属性；
-生命/上限2项公开，增伤/减伤与气势4项OwnerOnly（仅拥有者）。
+2026-10-14新增独立蓝条Energy/MaxEnergy：2个具体属性集、8个可复制状态字段＋2个非复制元属性；
+生命/上限2项公开，能量/上限、增伤/减伤和气势/上限6项OwnerOnly（仅拥有者）。
 攻击/防御归集为DamageBonus和DamageReduction，护盾用有限时GAS效果实例消耗容量。
 用途：防止新代码把没有真实运行消费者的属性重新加入GAS并无差别广播。
 限制：源码审查不等于UHT、引擎运行、真实Owner识别、迷雾视野或带宽验收。
@@ -21,11 +21,11 @@ DBA = PLUGINS / "DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime"
 MODEL = {
     "GamePlatformCombatAttributeSet": {
         "module": COMBAT,
-        "fields": {"Health", "MaxHealth", "DamageBonus", "DamageReduction", "IncomingDamage", "IncomingHealing"},
+        "fields": {"Health", "MaxHealth", "Energy", "MaxEnergy", "DamageBonus", "DamageReduction", "IncomingDamage", "IncomingHealing"},
         "meta": {"IncomingDamage", "IncomingHealing"},
         "public": {"Health", "MaxHealth"},
-        "owner": {"DamageBonus", "DamageReduction"},
-        "role_zh": "第一层：生命、统一加减伤与两项不复制的瞬时结算",
+        "owner": {"Energy", "MaxEnergy", "DamageBonus", "DamageReduction"},
+        "role_zh": "第一层：生命、独立能量、统一加减伤与两项不复制的瞬时结算",
     },
     "DivineBeastsMomentumAttributeSet": {
         "module": DBA,
@@ -93,11 +93,17 @@ base = (PLUGINS / "GamePlatform/Gameplay/GamePlatformAbilitySystem/"
         "Source/GamePlatformAbilitySystem/Public/Attributes/GamePlatformAttributeSet.h")
 if not base.is_file() or re.search(r"\bFGameplayAttributeData\s+\w+\s*;", base.read_text(encoding="utf-8-sig")):
     issues.append("平台GAS中立基类不得重复定义具体数值")
+base_pawn = (PLUGINS / "DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/"
+             "Private/Characters/DivineBeastsCharacter.cpp")
 hero = (PLUGINS / "DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/"
         "Private/Characters/DivineBeastsGameplayCharacter.cpp")
+base_pawn_text = base_pawn.read_text(encoding="utf-8-sig")
 hero_text = hero.read_text(encoding="utf-8-sig")
-if hero_text.count("CreateDefaultSubobject<UGamePlatformAbilitySystemComponent>") != 1:
-    issues.append("当前项目英雄必须只有一个ASC权威入口")
+# ASC所有权在角色基类，技能派生角色只添加Loadout；不能只检查派生文件而误报失败。
+if (base_pawn_text.count("CreateDefaultSubobject<UGamePlatformAbilitySystemComponent>") != 1 or
+        "CreateDefaultSubobject<UGamePlatformAbilitySystemComponent>" in hero_text or
+        "GetGamePlatformAbilitySystemComponent()" not in hero_text):
+    issues.append("角色基类必须创建唯一ASC，项目技能派生类只能借用该实例")
 if REMOVED & found:
     issues.append("已取消的GAS数值仍被反射：" + str(REMOVED & found))
 # 已退役的攻击/防御类和盾数值类不应留空壳；真正效果在既有Combat和GAS内。
@@ -175,8 +181,14 @@ moba_client = (moba / "MobaPresentationClient/Private/MobaPresentationClientSubs
 for text_part in (moba_adapter, moba_registry, moba_types, moba_policy, moba_client):
     if any(x in text_part for x in ("bCritical", "FromCriticalFact", "Combat_Critical", "CriticalExtraFrames")):
         issues.append("MOBA表现还存在真实暴击事实生成/消费")
-if len(found) != 8 or public_count != 2 or owner_count != 4 or meta_count != 2:
-    issues.append("预期8字段/2公开/4拥有者/2元属性，与实际不符")
+if len(found) != 10 or public_count != 2 or owner_count != 6 or meta_count != 2:
+    issues.append("新能量与气势严格分离：预期10字段/2公开/6拥有者/2元属性，与实际不符")
+
+ui_state = (PLUGINS / "DivineBeasts/DBAClient/Source/DivineBeastsUIClient/"
+            "Private/ViewModels/Combat/DivineBeastsPlayerStatusViewModel.cpp").read_text(encoding="utf-8-sig")
+if "NewStatus.Energy = Combat->GetEnergy();" not in ui_state or \
+   "NewStatus.Momentum = Momentum->GetMomentum();" not in ui_state:
+    issues.append("HUD必须分别从平台Energy与项目Momentum读取，不得共用气势冒充蓝条")
 
 # 没有把敌方不可见数据装入第二层MOBA，也没有将项目气势回写到平台层。
 if list((PLUGINS / "MobaCommon").rglob("*AttributeSet.h")):

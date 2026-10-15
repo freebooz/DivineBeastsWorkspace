@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "project": "SSLM",
   "recordedOn": "2026-10-14",
-  "descriptionChinese": "水体原生资产审核台账。仅已实测磁盘存在的资产列为已生成；地图和Fluid Flux尚未完成，不得虚构。",
+  "descriptionChinese": "水体原生资产审核台账：P4独立审核地图已通过UE5.8保存回读，但视觉与性能门禁尚未通过；Fluid Flux保持可选且未验收。",
   "mounts": {
     "GamePlatformSurface": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content",
     "GamePlatformVFX": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content",
@@ -61,7 +61,7 @@
       "/GamePlatformVFX/Water/Definitions/D_GP_WaterSplash"
     ],
     "水体独立审核地图": [
-      "/Game/Development/Water/Maps/L_GP_WaterReview"
+      "/Game/Development/Water/L_GP_WaterReview"
     ],
     "项目层水体预设": [
       "/DBAPresentationPack_Core/Water/Definitions/DA_DBA_Village_WaterPresentation"
@@ -77,8 +77,8 @@
   },
   "validation": {
     "assetExistence": "2026-10-14远程工作区目录实查10+5+10+4+1=30个原生资产均存在",
-    "nativeMaterialCompiles": "未完成全量Shader编译、性能测试与Cook",
-    "editorBootstrap": "wc_job_Kq4Nngusr6eMLoCB，最小水体编译超时，尚无P4审核地图",
+    "nativeMaterialCompiles": "2026-10-14 Monolith实际检查5份水体母材质可编译，其中M_GP_Water_Master补齐SingleLayerWater输出后编译成功；四套Niagara系统编译诊断0错误，场景全画质验收仍待完成",
+    "editorBootstrap": "2026-10-14已用UE5.8/Monolith真实打开、保存和重新加载/Game/Development/Water/L_GP_WaterReview，回读4个Region与1个WaterZone，单次8秒PIE烟测通过；该结果不代表P4全部通过",
     "visualReview": "未进行客户端实机视觉审核"
   }
 }

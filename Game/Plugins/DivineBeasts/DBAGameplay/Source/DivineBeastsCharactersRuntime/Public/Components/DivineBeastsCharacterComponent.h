@@ -11,6 +11,7 @@
 #include "DivineBeastsCharacterComponent.generated.h"
 
 class UDivineBeastsHeroDefinition;
+struct FGamePlatformCombatResult;
 class UGamePlatformAbilitySystemComponent;
 struct FGamePlatformAbilityAvatarBindingSnapshot;
 
@@ -78,6 +79,10 @@ public:
     bool AuthorityBindTrustedContext(
         const FGamePlatformCharacterInitializationContext& Context,
         FString& OutError);
+
+    /** 服务器确认普通攻击已实际扣血/耗盾后才调用；依据事件ID和化身代次幂等授予GAS气势，客户端无RPC入口。 */
+    bool AuthorityAwardMomentumForConfirmedBasicHit(
+        const FGamePlatformCombatResult& ConfirmedHit, int32 ExpectedAvatarGeneration);
 
     /** 游戏线程可信出生适配器借用同世界已Succeeded预热租约；自身租约须已受理。借用者不释放它，所有者须保持到自身完成。 */
     bool TryUsePreloadedDefinition(const FGamePlatformDataLease& WarmupLease, UObject& WarmupOwner, FString& OutError);
@@ -199,6 +204,10 @@ private:
     void HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot);
     /** 组件结束时撤销本组件Gate并移除原生委托；ASC可继续存活，不留下旧项目Owner。 */
     void DetachActivationGate();
+
+    /** 当前可信身份最近128次已发气势命中奖励；重绑/退出清空。 */
+    TSet<FGuid> AwardedMomentumHitIds;
+    TArray<FGuid> AwardedMomentumHitOrder;
 
     /** Owner-only持久身份，避免向所有观察者复制PlayerData档案ID。 */
     UPROPERTY(Replicated, Transient)

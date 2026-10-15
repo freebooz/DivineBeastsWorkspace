@@ -18,6 +18,13 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsPlayerStatusViewData
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
     double MaxHealth = 0.0;
 
+    /** 独立的通用能量，只驱动血条下方蓝条；气势有自己的MomentumBar。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
+    double Energy = 0.0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
+    double MaxEnergy = 0.0;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DivineBeasts|UI|Combat")
     double Momentum = 0.0;
 

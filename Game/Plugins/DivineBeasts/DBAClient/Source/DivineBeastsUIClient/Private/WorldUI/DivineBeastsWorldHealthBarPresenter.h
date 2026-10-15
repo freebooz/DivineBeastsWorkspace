@@ -16,7 +16,7 @@ struct FDivineBeastsWorldHealthBarBinding
 {
     TWeakObjectPtr<UAbilitySystemComponent> ASC;
     TWeakObjectPtr<USceneComponent> TransformSource;
-    FDelegateHandle HealthHandle, MaxHealthHandle, MonsterLifeHandle, TransformHandle;
+    FDelegateHandle HealthHandle, MaxHealthHandle, TransformHandle; // GAS双属性通知与世界坐标回调成对解绑。
     FGamePlatformWorldUIRequest Request;
 };
 

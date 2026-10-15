@@ -10,6 +10,10 @@
   "EnabledByDefault": false,
   "Plugins": [
     {
+      "Name": "GamePlatformAI",
+      "Enabled": true
+    },
+    {
       "Name": "GamePlatformCombat",
       "Enabled": true
     },

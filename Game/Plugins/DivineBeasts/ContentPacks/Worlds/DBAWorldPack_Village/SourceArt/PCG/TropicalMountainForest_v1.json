@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "projectCode": "SSLM",
+  "biomeId": "Village.OuterMountains.TropicalRainforest",
+  "contentOwner": "DBAWorldPack_Village",
+  "source": {
+    "title": "Epic Games Electric Dreams Environment",
+    "fab": "https://www.fab.com/listings/d79688f5-29be-4fb2-a650-2d4a813f5306",
+    "ueOnly": true,
+    "installedProjectPath": null
+  },
+  "importBoundary": {
+    "licensing": "Epic Games Electric Dreams UE-Only；不得独立公开再分发，也不得用于未获许可的模型训练",
+    "requiresFabEntitlement": true,
+    "publicGitRedistributionForbidden": true,
+    "noDirectBinaryCopyOrOverwrite": true,
+    "useUnrealEditorMigrateAndReferenceAudit": true,
+    "sourceProjectMustBeSeparate": true,
+    "targetMountPath": "/DBAWorldPack_Village/Environment/ThirdParty/ElectricDreams",
+    "localImportedRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Environment/ThirdParty/ElectricDreams",
+    "quarantineRelativePath": "Game/Content/ExternalImports/ElectricDreams",
+    "preserveVillageMapUntilValidation": true,
+    "requireEditorBakeAndClientServerCookAudit": true
+  },
+  "status": {
+    "electricDreamsAssetsMigrated": false,
+    "villageLevelForestBaked": false,
+    "releaseReady": false
+  },
+  "worldScope": {
+    "allowed": [
+      "OuterMountain.North",
+      "OuterMountain.East",
+      "OuterMountain.West"
+    ],
+    "boundedVolumeRequired": true,
+    "exclude": [
+      "Lake",
+      "Village",
+      "PeachGrove",
+      "Farm",
+      "Road",
+      "Bridge",
+      "PlayerStart",
+      "Waterfall"
+    ]
+  },
+  "terrain": {
+    "layerName": "LS_ForestSoil",
+    "productionLayerNeedsVerification": true,
+    "maxSlopeDegrees": 35
+  },
+  "layers": [
+    {
+      "id": "Canopy",
+      "chinese": "原始热带高大乔木",
+      "pcgAsset": "PCG_DBA_Village_OuterTropicalCanopy_Source",
+      "samplingDensityPerSquareMeter": 0.004,
+      "minForestSoilWeight": 0.48,
+      "minNormalZ": 0.84,
+      "minSpacingMeters": 13,
+      "meshPaths": []
+    },
+    {
+      "id": "Understory",
+      "chinese": "中层阔叶乔木灌木",
+      "pcgAsset": "PCG_DBA_Village_OuterTropicalUnderstory_Source",
+      "samplingDensityPerSquareMeter": 0.004,
+      "minForestSoilWeight": 0.35,
+      "minNormalZ": 0.8,
+      "minSpacingMeters": 5,
+      "meshPaths": []
+    },
+    {
+      "id": "Floor",
+      "chinese": "林下蕨类藤本地被",
+      "pcgAsset": "PCG_DBA_Village_OuterTropicalFloor_Source",
+      "samplingDensityPerSquareMeter": 0.005,
+      "minForestSoilWeight": 0.28,
+      "minNormalZ": 0.78,
+      "minSpacingMeters": 1.2,
+      "meshPaths": []
+    }
+  ],
+  "minimumExclusionDistancesMeters": {
+    "Shore": 15,
+    "Road": 5,
+    "BuildingOrPlayerStart": 20,
+    "Farm": 8,
+    "WaterfallOrDangerousCliff": 10
+  }
+}

@@ -42,8 +42,9 @@ $Started = [DateTimeOffset]::Now
 $ExecCommands = 'Automation RunTests ' + $Group
 $Extra = @()
 if ($WithRealDefinitionFixtures) {
-    $Extra += '-GamePlatformDataTestDefinition=GamePlatformDefinition:foundation.probe@1'
-    $Extra += '-GamePlatformFlowTestDefinition=GamePlatformDefinition:foundation.flow@1'
+    # P9专属定义与Foundation正常联调定义使用不同逻辑身份，避免AssetManager主资产ID冲突。
+    $Extra += '-GamePlatformDataTestDefinition=GamePlatformDefinition:foundation.p9probe@1'
+    $Extra += '-GamePlatformFlowTestDefinition=GamePlatformDefinition:foundation.p9flow@1'
 }
 & $Editor $Project '/Engine/Maps/Entry' '-unattended' '-nop4' '-nullrhi' '-NoSound' '-NoCompile' '-NoCompileEditor' '-nosplash' '-stdout' '-DivineBeastsCharacterTestHero=Hero.Zodiac.Rat' @Extra ("-ExecCmds=" + $ExecCommands) '-TestExit=Automation Test Queue Empty' ("-ReportExportPath=" + $Output) ("-abslog=" + $Log) | Out-Null
 $ExitCode = $LASTEXITCODE

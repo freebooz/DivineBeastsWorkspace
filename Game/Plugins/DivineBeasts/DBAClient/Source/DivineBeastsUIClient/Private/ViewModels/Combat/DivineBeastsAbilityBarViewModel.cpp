@@ -617,6 +617,13 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                         Detail.DisabledReason = FText::FromString(TEXT("技能冷却中"));
                     }
                 }
+                // 这里仅读取当前本地拥有者GAS的已复制成本事实；按钮提示不是服务器授权或第二套扣费。
+                if (!Slot.bEnabled && Detail.DisabledReason.IsEmpty() &&
+                    Configured->GetCostGameplayEffect() &&
+                    !Spec->Ability->CheckCost(Spec->Handle, ASC->AbilityActorInfo.Get()))
+                {
+                    Detail.DisabledReason = FText::FromString(TEXT("气势不足"));
+                }
             }
         }
         if (LoadedProfile)

@@ -44,6 +44,8 @@ bool FDivineBeastsPlayerStatusViewModelSnapshotTest::RunTest(const FString&)
 
     Combat->SetMaxHealth(100.0f);
     Combat->SetHealth(75.0f);
+    Combat->SetMaxEnergy(100.0f);
+    Combat->SetEnergy(65.0f);
     Momentum->SetMaxMomentum(100.0f);
     Momentum->SetMomentum(40.0f);
 
@@ -52,8 +54,24 @@ bool FDivineBeastsPlayerStatusViewModelSnapshotTest::RunTest(const FString&)
     const FDivineBeastsPlayerStatusViewData Status = ViewModel->GetStatus();
     TestEqual(TEXT("Health投影"), Status.Health, 75.0);
     TestEqual(TEXT("最大生命投影"), Status.MaxHealth, 100.0);
+    TestEqual(TEXT("蓝条读取独立能量GAS属性"), Status.Energy, 65.0);
+    TestEqual(TEXT("能量上限投影"), Status.MaxEnergy, 100.0);
     TestEqual(TEXT("Momentum投影"), Status.Momentum, 40.0);
+    TestTrue(TEXT("能量不可与气势共用同一数值"), Status.Energy != Status.Momentum);
     TestFalse(TEXT("Health大于0时非死亡"), Status.bDead);
+
+    // 通过真实ASC属性变更委托证明两条资源独立刷新，不依赖Widget Tick或彼此重写。
+    ASC->SetNumericAttributeBase(
+        UGamePlatformCombatAttributeSet::GetEnergyAttribute(), 30.0f);
+    const FDivineBeastsPlayerStatusViewData AfterEnergy = ViewModel->GetStatus();
+    TestEqual(TEXT("能量变动只改变蓝条数据"), AfterEnergy.Energy, 30.0);
+    TestEqual(TEXT("能量变动不得篡改气势"), AfterEnergy.Momentum, 40.0);
+
+    ASC->SetNumericAttributeBase(
+        UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), 48.0f);
+    const FDivineBeastsPlayerStatusViewData AfterMomentum = ViewModel->GetStatus();
+    TestEqual(TEXT("气势变动更新独立金条数据"), AfterMomentum.Momentum, 48.0);
+    TestEqual(TEXT("气势变动不改变蓝条能量"), AfterMomentum.Energy, 30.0);
 
     ViewModel->UnbindFromAbilitySystem();
     World->DestroyWorld(false);
