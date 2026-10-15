@@ -12,6 +12,8 @@ service MatchService {
   rpc ReadPartyState(PartyReadRequest) returns (PartyDataResponse);
   rpc CommandParty(PartyCommandRequest) returns (PartyDataResponse);
   rpc GetPartyInvitations(PartyReadRequest) returns (PartyDataResponse);
+  // 本人可恢复事件观察；至多20秒阻塞等待，取消不回滚业务。
+  rpc ObserveParty(PartyObservationRequest) returns (PartyDataResponse);
 }
 
 message CreatePartyRequest {
@@ -49,6 +51,13 @@ message CreateMatchmakingTicketResponse {
 
 // PartyReadRequest由可信Gateway生成；客户端不得直接连接内部服务或自行提交player_id。
 message PartyReadRequest { string player_id = 1; }
+
+// 仅可信Gateway填写主体，游标和等待期限来自Shared观察合同。
+message PartyObservationRequest {
+  string player_id = 1;
+  string cursor = 2;
+  int64 wait_milliseconds = 3;
+}
 
 // PartyCommandRequest内command_json必须通过与公网相同的严格64KiB对象解码；不含认证材料。
 message PartyCommandRequest {

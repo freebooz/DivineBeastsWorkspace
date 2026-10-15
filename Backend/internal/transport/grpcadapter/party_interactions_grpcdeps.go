@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"divinebeasts/backend/internal/app/gateway"
 	matchv1 "divinebeasts/backend/internal/generated/match/v1"
@@ -50,4 +51,11 @@ func (s *MatchAPIServer) CommandParty(ctx context.Context, request *matchv1.Part
 func (s *MatchAPIServer) GetPartyInvitations(ctx context.Context, request *matchv1.PartyReadRequest) (*matchv1.PartyDataResponse, error) {
 	value, err := s.service.GetPartyInvitations(ctx, request.GetPlayerId())
 	return partyRPCResponse(value, err), nil
+}
+
+// ObserveParty使用同一应用和Shared JSON合同；先验证毫秒范围再转换Duration，禁止溢出绕过20秒预算。
+func(s *MatchAPIServer)ObserveParty(ctx context.Context,request *matchv1.PartyObservationRequest)(*matchv1.PartyDataResponse,error){
+	if request.GetWaitMilliseconds()<0||request.GetWaitMilliseconds()>20000{return &matchv1.PartyDataResponse{ErrorCode:"INVALID_REQUEST"},nil}
+	value,err:=s.service.ObserveParty(ctx,request.GetPlayerId(),request.GetCursor(),time.Duration(request.GetWaitMilliseconds())*time.Millisecond)
+	return partyRPCResponse(value,err),nil
 }
