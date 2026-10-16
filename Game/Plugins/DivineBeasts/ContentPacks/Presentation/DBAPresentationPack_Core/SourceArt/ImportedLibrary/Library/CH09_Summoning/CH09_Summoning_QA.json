@@ -1,0 +1,98 @@
+{
+  "success": true,
+  "textures": {
+    "T_VFX_Summon_Gather_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.50066,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Summon_SilhouetteNoise_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 140.726,
+      "wrap_mean_delta": 1.991,
+      "wrap_max_delta": 11
+    },
+    "T_VFX_Summon_DissolveNoise_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 134.164,
+      "wrap_mean_delta": 3.096,
+      "wrap_max_delta": 10
+    },
+    "T_VFX_Summon_DissolveEdge_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 19.239
+    },
+    "T_VFX_Summon_VerticalMask_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 122.442
+    },
+    "T_VFX_Summon_LightColumn_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.56627,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Summon_GroundResidual_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 63.448
+    },
+    "T_VFX_Summon_Cloud_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.42564,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    }
+  },
+  "contact_sheet": "H:\\GameVFX\\MythicVFXLab\\Plugins\\MythicVFX\\Content\\SourceArt\\CH09_Summoning\\Preview\\CH09_Summoning_ContactSheet.png"
+}

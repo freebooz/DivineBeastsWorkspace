@@ -2,7 +2,9 @@
 
 正式位置：`Game/Plugins/DivineBeasts/DBAServer/`。本插件承载项目服务器组合模块`DBAServer`；`DivineBeastsArenaServer`（MainArena项目扩展）已归可选DBAArena，本插件不强制依赖竞技。
 
-2026-10-10角色准入修复：Village桥接必须显式部署`PLAYERDATA_BASE_URL`，指向受保护内网中的既有PlayerData HTTP服务（本地验证为`http://127.0.0.1:18082`）。专用服务器先用当前真实准入的PlayerId读取`/internal/v1/playerdata/profile`及`characters`，校验已选角色属于该玩家、状态Active和核心Hero Catalog，再提交平台出生门禁。每个当前连接冻结一次资料选择快照，不接受客户端Hero自报；Pawn生成事实事件绑定可信CharacterId/Hero及出生、Avatar代次，公开Hero复制给全部观察者，持久CharacterId继续仅Owner复制。
+2026-10-10角色准入修复：Village桥接必须显式部署`PLAYERDATA_BASE_URL`，指向受保护内网中的既有PlayerData HTTP服务。当前保留的本地环境为`http://127.0.0.1:18182`；历史18082仅属于旧环境，不可作为默认值。专用服务器先用当前真实准入的PlayerId读取`/internal/v1/playerdata/profile`及`characters`，校验已选角色属于该玩家、状态Active和核心Hero Catalog，再提交平台出生门禁。每个当前连接冻结一次资料选择快照，不接受客户端Hero自报；Pawn生成事实事件绑定可信CharacterId/Hero及出生、Avatar代次，公开Hero复制给全部观察者，持久CharacterId继续仅Owner复制。
+
+2026-10-15实际进入世界故障：客户端已完成网络连接和村庄载图，但专服启动未注入资料地址，产生`WorldCharacterPlayerDataUnconfigured`，客户端进入失败页。开发启动统一使用`Deploy/Local/StartVillageDevelopment.ps1`和`RunMainArenaPool.ps1`，二者都必须显式传`-PlayerDataBaseUrl`；共用`LocalPlayerDataEnvironment.psm1`在创建进程前校验并检查资料服务就绪，然后只向子进程写入环境。控制面202注册、端口监听及地图加载均不能替代玩家角色Ready证据。真实角色准入仍使用原有事件通知与失败关闭逻辑，不绕过后端资料校验。
 
 内部PlayerData当前HTTP端口沿用后端既有可信网络边界，本修复不把其暴露到公网，也不新增或扩大访问权限。地址缺失、HTTP失败、错玩家/错角色、重复身份、已撤销连接和旧世界回调均失败关闭，不回退为固定英雄。请求超时5秒、响应最多2MiB，服务器世界关闭时取消自有请求和订阅；资料响应、账号身份及环境凭据不进入客户端或日志。服务器须实际Cook`/DBAGameplay/Definitions`的逻辑定义，并独立审计客户端Mesh/动画剥离。
 

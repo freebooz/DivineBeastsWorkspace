@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GamePlatformCombatProjectileMotion.generated.h"
 
-/** 固定前进轴直线或螺旋；厘米/秒及转/秒。螺旋不是寻敌，不承诺自动追踪目标。 */
+/** 直线/螺旋参数；厘米/秒及转/秒。螺旋本身不寻敌，只有服务器规格显式目标才启用追踪。 */
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatProjectileMotion
 {

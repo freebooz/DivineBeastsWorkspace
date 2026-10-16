@@ -1,4 +1,4 @@
-// 项目客户端每LocalPlayer竞技UI适配：借用平台页面/Data与MOBA事实，拥有World/Actor委托；退出清空投影，无Widget轮询。
+﻿// 项目客户端每LocalPlayer竞技UI适配：借用平台页面/Data与MOBA事实，拥有World/Actor委托；退出清空投影，无Widget轮询。
 #include "Client/DivineBeastsArenaUIClientSubsystem.h"
 #include "Client/DivineBeastsArenaClientSubsystem.h"
 #include "Social/DivineBeastsPartyUIClientSubsystem.h"
@@ -113,11 +113,13 @@ void UDivineBeastsArenaUIClientSubsystem::PlayerControllerChanged(
     if (bDeinitializing || SurfaceOperationGeneration != Expected) return;
     FailedArenaSurfaceId = NAME_None;
     RefreshArenaViewFromWorld();
+    RefreshMatchmakingSource();
 }
 
 bool UDivineBeastsArenaUIClientSubsystem::RefreshArenaViewFromWorld()
 {
     if (bDeinitializing) { return false; }
+    if(auto* Arena=GetLocalPlayer()->GetGameInstance()->GetSubsystem<UDivineBeastsArenaClientSubsystem>())Arena->RefreshArenaReadiness();
     UWorld* World = GetWorld();
     if (World && (World->bIsTearingDown || RetiredWorld.Get() == World)) { World = nullptr; }
     const uint64 BeforeBinding = SurfaceOperationGeneration;

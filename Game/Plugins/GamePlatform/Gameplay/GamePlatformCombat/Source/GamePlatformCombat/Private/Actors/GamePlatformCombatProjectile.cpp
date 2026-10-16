@@ -22,7 +22,7 @@ AGamePlatformCombatProjectile::AGamePlatformCombatProjectile()
     PrimaryActorTick.bStartWithTickEnabled = false;
     bReplicates = true;
     SetReplicateMovement(true);
-    NetUpdateFrequency = 60.0f;
+    SetNetUpdateFrequency(60.0f);
     CollisionRoot = CreateDefaultSubobject<USphereComponent>(TEXT("ProjectileRoot"));
     SetRootComponent(CollisionRoot);
     CollisionRoot->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -47,6 +47,16 @@ bool AGamePlatformCombatProjectile::AuthorityInitialize(const FGamePlatformComba
     if (!HasCurrentSource()) { CastSpec = {}; return false; }
     FlightMotion = Motion;
     Origin = GetActorLocation(); Axis = Direction.GetSafeNormal();
+    bHasHomingTarget = Spec.Target != nullptr;
+    HomingTarget = Spec.Target.Get(); HomingTargetAvatarGeneration = Spec.TargetAvatarGeneration;
+    HomingCenter = Origin;
+    if (!HasCurrentHomingTarget() || (bHasHomingTarget &&
+        FVector::DistSquared(Origin,HomingTarget->GetActorLocation()) > FMath::Square(Motion.RangeCm)))
+    {
+        CastSpec={}; HomingTarget.Reset(); bHasHomingTarget=false; return false;
+    }
+    // 弹体不持有目标强引用；仅冻结其身份，真正命中仍取本次服务器Sweep结果。
+    CastSpec.Target=nullptr;
     // 将世界Up投影为稳定截面；竖直射击改用Right，避免退化基底导致螺旋塌为直线。
     RadialY = FVector::CrossProduct(FVector::UpVector, Axis).GetSafeNormal();
     if (RadialY.IsNearlyZero()) RadialY = FVector::RightVector;
@@ -58,6 +68,37 @@ bool AGamePlatformCombatProjectile::AuthorityInitialize(const FGamePlatformComba
     SetOwner(Spec.Source.Get()); SetActorTickEnabled(true);
     ForceNetUpdate(); OnRep_Facts();
     return true;
+}
+
+bool AGamePlatformCombatProjectile::HasCurrentHomingTarget() const
+{
+    if (!bHasHomingTarget) return true;
+    const AActor* Target=HomingTarget.Get();
+    const auto* Combat=IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+    return IsValid(Target) && !Target->IsActorBeingDestroyed() && Target!=CastSpec.Source.Get() &&
+        Target->HasAuthority() && Target->GetWorld()==GetWorld() && !Target->GetActorLocation().ContainsNaN() &&
+        Combat && !Combat->IsCombatDead() && HomingTargetAvatarGeneration>0 &&
+        Combat->GetCombatAvatarGeneration()==HomingTargetAvatarGeneration;
+}
+
+FVector AGamePlatformCombatProjectile::AdvanceHomingPosition(float StepSeconds)
+{
+    const FVector Desired=(HomingTarget->GetActorLocation()-HomingCenter).GetSafeNormal();
+    if (!Desired.IsNearlyZero()) Axis=Desired;
+    // 传递正交截面；换轴后先补偿当前相位偏移，保证本段从真实当前位置连续起步。
+    RadialY=(RadialY-Axis*FVector::DotProduct(RadialY,Axis)).GetSafeNormal();
+    if (RadialY.IsNearlyZero()) RadialY=FVector::CrossProduct(FVector::UpVector,Axis).GetSafeNormal(UE_SMALL_NUMBER,FVector::RightVector);
+    RadialZ=FVector::CrossProduct(Axis,RadialY).GetSafeNormal();
+    const double Initial=FlightMotion.InitialPhaseTurns*UE_DOUBLE_TWO_PI;
+    const double PreviousPhase=Initial+FlightSeconds*FlightMotion.HelixTurnsPerSecond*UE_DOUBLE_TWO_PI;
+    // 不能用新截面重新旋转全部历史位移；只推进相邻相位差，避免急转时出现跨障碍的扫掠跳段。
+    HomingCenter=GetActorLocation()-FlightMotion.HelixRadiusCm*(
+        RadialY*(FMath::Cos(PreviousPhase)-FMath::Cos(Initial))+
+        RadialZ*(FMath::Sin(PreviousPhase)-FMath::Sin(Initial)));
+    HomingCenter+=Axis*(StepSeconds*FlightMotion.SpeedCmPerSecond);
+    const double Phase=Initial+(FlightSeconds+StepSeconds)*FlightMotion.HelixTurnsPerSecond*UE_DOUBLE_TWO_PI;
+    return HomingCenter+FlightMotion.HelixRadiusCm*(RadialY*(FMath::Cos(Phase)-FMath::Cos(Initial))+
+        RadialZ*(FMath::Sin(Phase)-FMath::Sin(Initial)));
 }
 
 FVector AGamePlatformCombatProjectile::PositionAt(float Seconds) const
@@ -85,10 +126,11 @@ void AGamePlatformCombatProjectile::Tick(float DeltaSeconds)
     Query.AddIgnoredActor(CastSpec.Source.Get());
     for (int32 Segment = 0; Segment < 256 && Remaining > UE_SMALL_NUMBER && !Facts.bFinished; ++Segment)
     {
+        if (!HasCurrentHomingTarget()) { FinishFlight(nullptr); break; }
         const float Step = FMath::Min(Remaining, FMath::Min(StepLimit, EndSeconds - FlightSeconds));
         if (Step <= UE_SMALL_NUMBER) { FinishFlight(nullptr); break; }
         const FVector Start = GetActorLocation();
-        const FVector End = PositionAt(FlightSeconds + Step);
+        const FVector End = bHasHomingTarget ? AdvanceHomingPosition(Step) : PositionAt(FlightSeconds + Step);
         FHitResult Hit;
         if (GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Visibility,
             FCollisionShape::MakeSphere(FlightMotion.CollisionRadiusCm), Query))
@@ -96,7 +138,8 @@ void AGamePlatformCombatProjectile::Tick(float DeltaSeconds)
             SetActorLocation(Hit.Location, false); FinishFlight(&Hit); break;
         }
         FlightSeconds += Step; Remaining -= Step;
-        SetActorLocation(End, false);
+        if (bHasHomingTarget) SetActorLocationAndRotation(End,(End-Start).Rotation(),false);
+        else SetActorLocation(End, false);
         if (FlightSeconds >= EndSeconds - UE_SMALL_NUMBER) FinishFlight(nullptr);
     }
 }
@@ -112,7 +155,7 @@ void AGamePlatformCombatProjectile::FinishFlight(const FHitResult* Hit)
         AActor* Target = Hit->GetActor();
         auto* SourceCombat = IsValid(CastSpec.Source.Get()) ? CastSpec.Source->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
         auto* TargetCombat = IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
-        if (HasCurrentSource() && SourceCombat && TargetCombat && Target != CastSpec.Source.Get())
+        if (HasCurrentSource() && HasCurrentHomingTarget() && SourceCombat && TargetCombat && Target != CastSpec.Source.Get())
         {
             FGamePlatformCombatSpec Damage = CastSpec;
             Damage.Target = Target; Damage.TargetAvatarGeneration = TargetCombat->GetCombatAvatarGeneration();
@@ -123,6 +166,7 @@ void AGamePlatformCombatProjectile::FinishFlight(const FHitResult* Hit)
         }
     }
     CastSpec = {};
+    HomingTarget.Reset(); bHasHomingTarget=false; HomingTargetAvatarGeneration=0;
     if (!IsActorBeingDestroyed()) { ForceNetUpdate(); OnRep_Facts(); SetLifeSpan(0.25f); }
 }
 void AGamePlatformCombatProjectile::AuthorityCancel() { if (HasAuthority()) FinishFlight(nullptr); }
@@ -130,7 +174,7 @@ void AGamePlatformCombatProjectile::OnRep_Facts() { FactsChanged.Broadcast(this,
 void AGamePlatformCombatProjectile::BeginPlay() { Super::BeginPlay(); OnRep_Facts(); }
 void AGamePlatformCombatProjectile::EndPlay(const EEndPlayReason::Type Reason)
 {
-    Facts.bFinished = true; SetActorTickEnabled(false); CastSpec = {};
+    Facts.bFinished = true; SetActorTickEnabled(false); CastSpec = {}; HomingTarget.Reset(); bHasHomingTarget=false;
     FactsChanged.Broadcast(this, Facts); FactsChanged.Clear(); Super::EndPlay(Reason);
 }
 void AGamePlatformCombatProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -6,6 +6,8 @@ option go_package = "divinebeasts/backend/internal/generated/gameservercontrol/v
 
 // GameServerControlInternalService（游戏服务器控制内部服务）供MatchService分配MainArena并签发玩家迁移票据。
 service GameServerControlInternalService {
+  // 可信比赛生命周期JSON桥：DTO归后端内部契约，Bearer元数据必需；不公开给客户端。
+  rpc ArenaLifecycle(ArenaLifecycleRequest) returns (ArenaLifecycleResponse);
   rpc AllocateWorld(AllocateWorldRequest) returns (AllocateWorldResponse);
   rpc AllocateMainArena(AllocateMainArenaRequest) returns (AllocateMainArenaResponse);
   rpc IssuePlayerTransfer(IssuePlayerTransferRequest) returns (IssuePlayerTransferResponse);
@@ -93,3 +95,8 @@ message IssuePlayerTransferResponse {
   uint32 destination_protocol_version = 18;
   uint64 session_epoch = 19;
 }
+
+// action固定为allocate/issue/worldTransfer/status/cancel/finalize/revoke/presence；正文最大64KiB。
+message ArenaLifecycleRequest { string action = 1; string input_json = 2; }
+// 成功正文只在受信任后端传递；error_code是安全稳定码，不能包含票据/端点/底层错误正文。
+message ArenaLifecycleResponse { bool success = 1; string result_json = 2; string error_code = 3; }

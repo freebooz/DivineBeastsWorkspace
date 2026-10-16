@@ -67,7 +67,8 @@ def author_foundation():
             definition.set_editor_property("LevelRowNames", [hero + "_Placeholder_" + mode + "_L1"])
             a.save(definition)
             totals["Definitions"] += 1
-            if cost > 0:
+            if mode in a.COOLDOWNS:
+                # 已发布成本GE继续保留为零修改兼容身份，不能因阶段一制作恢复法术扣费。
                 bp, cls, cdo = a.blueprint(a.ROOT + "/GE" + name + "Cost", unreal.GameplayEffect)
                 cdo.set_editor_property("DurationPolicy", unreal.GameplayEffectDurationType.INSTANT)
                 modifier = unreal.GameplayModifierInfo()
@@ -76,7 +77,7 @@ def author_foundation():
                         'AttributeName="Momentum")')
                 a.check(modifier.import_text("(Attribute=" + attr + ",ModifierOp=AddBase,ModifierMagnitude=" +
                         a.magnitude(-cost).export_text() + ")"), aid + ":GE气势幅值写入失败")
-                cdo.set_editor_property("Modifiers", [modifier])
+                cdo.set_editor_property("Modifiers", [modifier] if cost > 0 else [])
                 unreal.BlueprintEditorLibrary.compile_blueprint(bp)
                 a.save(bp)
                 totals["CostGE"] += 1
@@ -105,7 +106,7 @@ def author_foundation():
             ui.set_editor_property("AbilityId", unreal.Name(aid))
             ui.set_editor_property("DisplayName", unreal.Text(label))
             desc = ("临时未实现被动，不参与自动战斗。" if mode == "Passive" else
-                    "SSLM占位技能，服务器校验气势和冷却；后续由正式生肖技能替换。")
+                    "SSLM占位技能，服务器校验资格和冷却，法术不消耗气势；后续由正式生肖技能替换。")
             ui.set_editor_property("Description", unreal.Text(desc))
             icon = (icon_map[(hero, "BasicAttack" if mode == "Primary" else "Passive")]
                     if mode in ("Primary", "Passive") else a.MAGIC_ICONS[mode])

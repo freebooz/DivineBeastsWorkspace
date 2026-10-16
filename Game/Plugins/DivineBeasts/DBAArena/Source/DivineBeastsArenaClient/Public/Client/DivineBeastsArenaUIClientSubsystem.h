@@ -110,6 +110,10 @@ private:
     /** 生命周期内订阅平台认证事件，退出/重登先撤销旧提供者和候选，不等待页面刷新。 */
     void ConnectMatchmakingAuthentication();
     void DisconnectMatchmakingAuthentication();
+    /** GI共享匹配事件驱动本地玩家桥，不能靠页面刷新注册提供者。 */
+    void RefreshMatchmakingSource();
+    TWeakObjectPtr<class UDivineBeastsArenaClientSubsystem> MatchmakingSource;
+    FDelegateHandle MatchmakingSourceHandle;
     FText MatchmakingCommandFeedback;
     /** 重新读取平台认证，不缓存会话令牌；完成时还须核对公开主体和世界。 */
     FString GetAuthenticatedMatchmakingPlayerId() const;

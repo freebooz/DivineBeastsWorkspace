@@ -45,7 +45,7 @@ struct FDivineBeastsWorldControlState
     }
     /** 两键前进优先于W/S，输出保持[-1,1]；无自动奔跑的隐式锁定状态。 */
     float ResolveForward(float KeyboardAxis) const { return MouseButtons == 3 ? 1.f : KeyboardAxis; }
-    /** RMB将A/D从转身改为横移；Q/E始终横移，相加后钳制到归一化轴范围。 */
+    /** 保留通用可重映射转向轴的RMB修饰；项目默认A/D与Q/E均直接绑定StrafeAxis。 */
     float ResolveTurn(float KeyboardAxis) const { return IsFacingCamera() ? 0.f : KeyboardAxis; }
     float ResolveStrafe(float StrafeAxis, float TurnAxis) const
     {

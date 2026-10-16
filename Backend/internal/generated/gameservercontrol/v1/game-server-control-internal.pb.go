@@ -769,6 +769,120 @@ func (x *IssuePlayerTransferResponse) GetSessionEpoch() uint64 {
 	return 0
 }
 
+// action固定为allocate/issue/worldTransfer/status/cancel/finalize/revoke/presence；正文最大64KiB。
+type ArenaLifecycleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Action        string                 `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
+	InputJson     string                 `protobuf:"bytes,2,opt,name=input_json,json=inputJson,proto3" json:"input_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ArenaLifecycleRequest) Reset() {
+	*x = ArenaLifecycleRequest{}
+	mi := &file_game_server_control_internal_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArenaLifecycleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArenaLifecycleRequest) ProtoMessage() {}
+
+func (x *ArenaLifecycleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_game_server_control_internal_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArenaLifecycleRequest.ProtoReflect.Descriptor instead.
+func (*ArenaLifecycleRequest) Descriptor() ([]byte, []int) {
+	return file_game_server_control_internal_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ArenaLifecycleRequest) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *ArenaLifecycleRequest) GetInputJson() string {
+	if x != nil {
+		return x.InputJson
+	}
+	return ""
+}
+
+// 成功正文只在受信任后端传递；error_code是安全稳定码，不能包含票据/端点/底层错误正文。
+type ArenaLifecycleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	ResultJson    string                 `protobuf:"bytes,2,opt,name=result_json,json=resultJson,proto3" json:"result_json,omitempty"`
+	ErrorCode     string                 `protobuf:"bytes,3,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ArenaLifecycleResponse) Reset() {
+	*x = ArenaLifecycleResponse{}
+	mi := &file_game_server_control_internal_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArenaLifecycleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArenaLifecycleResponse) ProtoMessage() {}
+
+func (x *ArenaLifecycleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_game_server_control_internal_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArenaLifecycleResponse.ProtoReflect.Descriptor instead.
+func (*ArenaLifecycleResponse) Descriptor() ([]byte, []int) {
+	return file_game_server_control_internal_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ArenaLifecycleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ArenaLifecycleResponse) GetResultJson() string {
+	if x != nil {
+		return x.ResultJson
+	}
+	return ""
+}
+
+func (x *ArenaLifecycleResponse) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
 var File_game_server_control_internal_proto protoreflect.FileDescriptor
 
 const file_game_server_control_internal_proto_rawDesc = "" +
@@ -849,8 +963,19 @@ const file_game_server_control_internal_proto_rawDesc = "" +
 	"\x0fgame_session_id\x18\x10 \x01(\tR\rgameSessionId\x12;\n" +
 	"\x1adestination_server_boot_id\x18\x11 \x01(\tR\x17destinationServerBootId\x12@\n" +
 	"\x1cdestination_protocol_version\x18\x12 \x01(\rR\x1adestinationProtocolVersion\x12#\n" +
-	"\rsession_epoch\x18\x13 \x01(\x04R\fsessionEpoch2\xff\x03\n" +
-	" GameServerControlInternalService\x12\x92\x01\n" +
+	"\rsession_epoch\x18\x13 \x01(\x04R\fsessionEpoch\"N\n" +
+	"\x15ArenaLifecycleRequest\x12\x16\n" +
+	"\x06action\x18\x01 \x01(\tR\x06action\x12\x1d\n" +
+	"\n" +
+	"input_json\x18\x02 \x01(\tR\tinputJson\"r\n" +
+	"\x16ArenaLifecycleResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
+	"\vresult_json\x18\x02 \x01(\tR\n" +
+	"resultJson\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x03 \x01(\tR\terrorCode2\x97\x05\n" +
+	" GameServerControlInternalService\x12\x95\x01\n" +
+	"\x0eArenaLifecycle\x12@.divinebeasts.backend.gameservercontrol.v1.ArenaLifecycleRequest\x1aA.divinebeasts.backend.gameservercontrol.v1.ArenaLifecycleResponse\x12\x92\x01\n" +
 	"\rAllocateWorld\x12?.divinebeasts.backend.gameservercontrol.v1.AllocateWorldRequest\x1a@.divinebeasts.backend.gameservercontrol.v1.AllocateWorldResponse\x12\x9e\x01\n" +
 	"\x11AllocateMainArena\x12C.divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaRequest\x1aD.divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaResponse\x12\xa4\x01\n" +
 	"\x13IssuePlayerTransfer\x12E.divinebeasts.backend.gameservercontrol.v1.IssuePlayerTransferRequest\x1aF.divinebeasts.backend.gameservercontrol.v1.IssuePlayerTransferResponseBRZPdivinebeasts/backend/internal/generated/gameservercontrol/v1;gameservercontrolv1b\x06proto3"
@@ -867,7 +992,7 @@ func file_game_server_control_internal_proto_rawDescGZIP() []byte {
 	return file_game_server_control_internal_proto_rawDescData
 }
 
-var file_game_server_control_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_game_server_control_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_game_server_control_internal_proto_goTypes = []any{
 	(*AllocateWorldRequest)(nil),        // 0: divinebeasts.backend.gameservercontrol.v1.AllocateWorldRequest
 	(*AllocateWorldResponse)(nil),       // 1: divinebeasts.backend.gameservercontrol.v1.AllocateWorldResponse
@@ -876,18 +1001,22 @@ var file_game_server_control_internal_proto_goTypes = []any{
 	(*AllocateMainArenaResponse)(nil),   // 4: divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaResponse
 	(*IssuePlayerTransferRequest)(nil),  // 5: divinebeasts.backend.gameservercontrol.v1.IssuePlayerTransferRequest
 	(*IssuePlayerTransferResponse)(nil), // 6: divinebeasts.backend.gameservercontrol.v1.IssuePlayerTransferResponse
+	(*ArenaLifecycleRequest)(nil),       // 7: divinebeasts.backend.gameservercontrol.v1.ArenaLifecycleRequest
+	(*ArenaLifecycleResponse)(nil),      // 8: divinebeasts.backend.gameservercontrol.v1.ArenaLifecycleResponse
 }
 var file_game_server_control_internal_proto_depIdxs = []int32{
 	2, // 0: divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaRequest.roster:type_name -> divinebeasts.backend.gameservercontrol.v1.RosterPlayer
 	2, // 1: divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaResponse.roster:type_name -> divinebeasts.backend.gameservercontrol.v1.RosterPlayer
-	0, // 2: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.AllocateWorld:input_type -> divinebeasts.backend.gameservercontrol.v1.AllocateWorldRequest
-	3, // 3: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.AllocateMainArena:input_type -> divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaRequest
-	5, // 4: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.IssuePlayerTransfer:input_type -> divinebeasts.backend.gameservercontrol.v1.IssuePlayerTransferRequest
-	1, // 5: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.AllocateWorld:output_type -> divinebeasts.backend.gameservercontrol.v1.AllocateWorldResponse
-	4, // 6: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.AllocateMainArena:output_type -> divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaResponse
-	6, // 7: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.IssuePlayerTransfer:output_type -> divinebeasts.backend.gameservercontrol.v1.IssuePlayerTransferResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
+	7, // 2: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.ArenaLifecycle:input_type -> divinebeasts.backend.gameservercontrol.v1.ArenaLifecycleRequest
+	0, // 3: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.AllocateWorld:input_type -> divinebeasts.backend.gameservercontrol.v1.AllocateWorldRequest
+	3, // 4: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.AllocateMainArena:input_type -> divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaRequest
+	5, // 5: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.IssuePlayerTransfer:input_type -> divinebeasts.backend.gameservercontrol.v1.IssuePlayerTransferRequest
+	8, // 6: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.ArenaLifecycle:output_type -> divinebeasts.backend.gameservercontrol.v1.ArenaLifecycleResponse
+	1, // 7: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.AllocateWorld:output_type -> divinebeasts.backend.gameservercontrol.v1.AllocateWorldResponse
+	4, // 8: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.AllocateMainArena:output_type -> divinebeasts.backend.gameservercontrol.v1.AllocateMainArenaResponse
+	6, // 9: divinebeasts.backend.gameservercontrol.v1.GameServerControlInternalService.IssuePlayerTransfer:output_type -> divinebeasts.backend.gameservercontrol.v1.IssuePlayerTransferResponse
+	6, // [6:10] is the sub-list for method output_type
+	2, // [2:6] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -904,7 +1033,7 @@ func file_game_server_control_internal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_game_server_control_internal_proto_rawDesc), len(file_game_server_control_internal_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

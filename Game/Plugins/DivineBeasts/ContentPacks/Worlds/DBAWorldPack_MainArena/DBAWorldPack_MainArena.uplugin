@@ -1,0 +1,21 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "DBAWorldPack_MainArena",
+  "Description": "第三层竞技场内容包，拥有MainArena真实地图与双端世界定义；本轮白盒内容仅开发验收，不包含UI或玩法代码。",
+  "Category": "DivineBeasts.Content.Worlds",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    {
+      "Name": "DBAWorlds",
+      "Enabled": true
+    },
+    {
+      "Name": "DBAArena",
+      "Enabled": true
+    }
+  ]
+}

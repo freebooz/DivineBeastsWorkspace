@@ -22,6 +22,15 @@ func TestCreatePartyAndMatchmakingTicketLocksRoster(t *testing.T) {
 	if err := created.AddMember(party.Member{PlayerID: "member-2", DisplayName: "队友", Online: true}); err != nil {
 		t.Fatal(err)
 	}
+	// 新报名门禁要求同一模式全员明确准备，不能沿用此前“直接锁名单”的旧测试前置。
+	if err := created.SelectArenaMode("leader-1", gameservercontract.ArenaMode3v3); err != nil {
+		t.Fatal(err)
+	}
+	for player := range created.Members {
+		if err := created.SetReady(player, true); err != nil {
+			t.Fatal(err)
+		}
+	}
 	if _, err := parties.Update(context.Background(), created.ID, 1, "", "", func(value *party.Party) error { *value = *created.Clone(); return nil }); err != nil {
 		t.Fatal(err)
 	}

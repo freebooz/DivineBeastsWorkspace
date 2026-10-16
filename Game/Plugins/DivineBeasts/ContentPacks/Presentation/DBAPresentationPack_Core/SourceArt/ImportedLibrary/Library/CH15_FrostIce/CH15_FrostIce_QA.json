@@ -1,0 +1,279 @@
+{
+  "chapter": "CH15_FrostIce",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Ice_Normal_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Ice_Normal_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Ice_SurfaceNoise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Ice_FrostMask_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Ice_FrostMask_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Ice_Crack_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Ice_Crack_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Ice_Crack_03.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_Mist_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.224289,
+      "alpha_min": 0,
+      "alpha_max": 179,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_Mist_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.214752,
+      "alpha_min": 0,
+      "alpha_max": 183,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_Dust_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.154434,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_Snow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.20726,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_Snow_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.205997,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_Snow_03.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.191761,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_GroundDecal_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_GroundCrack_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Frost_Ring_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    }
+  ],
+  "count": 17,
+  "expected_count": 17
+}

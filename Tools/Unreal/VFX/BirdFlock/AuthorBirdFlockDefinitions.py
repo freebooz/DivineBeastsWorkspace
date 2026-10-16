@@ -8,7 +8,7 @@ import unreal
 ROOT='/DBAPresentationPack_Core/VFX/Environment/BirdFlock'
 DEST=ROOT+'/Definitions'
 EFFECT='/GamePlatformVFX/Environment/BirdFlock/EffectTypes/NET_GP_BirdFlock_Ambient'
-SPECIES={'Seagull':(32,1700,850,250,0),'Swallow':(72,1150,570,340,2),'Eagle':(5,2400,1400,350,0)}
+SPECIES={'Seagull':(32,1700,850,250,1),'Swallow':(72,1150,570,340,2),'Eagle':(5,2400,1400,350,0)}
 a=unreal.EditorAssetLibrary
 t=unreal.AssetToolsHelpers.get_asset_tools()
 assert 'DivineBeastsArena.uproject' in unreal.Paths.get_project_file_path()
@@ -37,13 +37,14 @@ for species,(count,radius,height,speed,mode) in SPECIES.items():
         d.set_editor_property(key,value)
     schema=unreal.GamePlatformVFXParameterSchema()
     # 所有参数都有真实默认值；调用方只覆盖希望调整的参数。0数由场景控制器取消请求。
-    rules=[('BirdCount','Integer',0,512),('FlockRadius','Float',200,10000),('FlockHeight','Float',200,10000),('FlightSpeed','Float',10,5000),('FlockSeed','Integer',0,1000000),('FlightMode','Integer',0,2),('WindInfluence','Float',0,2000)]
-    text='(MaxOverrideCount=7,Rules=('+','.join('(Name="User.%s",Type=%s,bRequired=False,MinValue=%s,MaxValue=%s)'%r for r in rules)+'))'
+    # 最小中心距含现有最大模型缩放与振翅余量；现有资产须走--repair-spacing预检真实网格后增量更新。
+    rules=[('BirdCount','Integer',0,512),('FlockRadius','Float',200,10000),('FlockHeight','Float',200,10000),('FlightSpeed','Float',10,5000),('FlockSeed','Integer',0,1000000),('FlightMode','Integer',0,2),('WindInfluence','Float',0,2000),('FlockMinimumSpacing','Float',1,1000)]
+    text='(MaxOverrideCount=8,Rules=('+','.join('(Name="User.%s",Type=%s,bRequired=False,MinValue=%s,MaxValue=%s)'%r for r in rules)+'))'
     assert schema.import_text(text)
     d.set_editor_property('parameter_schema',schema)
     params=unreal.GamePlatformVFXParameters()
     params.set_editor_property('integer_parameters',{'User.BirdCount':count,'User.FlockSeed':137,'User.FlightMode':mode})
-    params.set_editor_property('float_parameters',{'User.FlockRadius':float(radius),'User.FlockHeight':float(height),'User.FlightSpeed':float(speed),'User.WindInfluence':80.0})
+    params.set_editor_property('float_parameters',{'User.FlockRadius':float(radius),'User.FlockHeight':float(height),'User.FlightSpeed':float(speed),'User.WindInfluence':80.0,'User.FlockMinimumSpacing':{'Seagull':240.0,'Swallow':180.0,'Eagle':380.0}[species]})
     d.set_editor_property('default_parameters',params)
     assert a.save_loaded_asset(d,only_if_is_dirty=False)
     print('BIRD_DEFINITION_SAVED',d.get_path_name())

@@ -26,6 +26,9 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Arena") FName TeamId;
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Arena") FString HeroDefinitionId;
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Arena") bool bReady = false;
+    /** 单局淘汰事实随StatsRevision通知更新；重连不得清除此值。 */
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Arena") bool bEliminated=false;
+    void AuthorityMarkEliminated(bool bRecordDeath);
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Arena") int32 Kills = 0;
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Arena") int32 Deaths = 0;
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Arena") int32 Assists = 0;

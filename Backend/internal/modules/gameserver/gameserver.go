@@ -40,23 +40,24 @@ const (
 
 // Instance（游戏服务器实例）是Backend控制平面的权威快速状态快照。
 type Instance struct {
-	ID              string    // ID（GameServer实例ID）。
-	ServerBootID    string    // ServerBootID（本进程启动代次，同一GameServerID重启后必须变化）。
-	RoleID          string    // RoleID（服务器角色ID：OpenWorld/Village/MainArena）。
-	ExperienceID    string    // ExperienceID（当前实例承载体验）。
-	RegionID        string    // RegionID（部署区域ID）。
-	ClusterID       string    // ClusterID（Kubernetes/Agones集群ID）。
-	NodeID          string    // NodeID（承载节点ID）。
-	WorldID         string    // WorldID（当前世界、区域或地图逻辑ID）。
-	PublicEndpoint  string    // PublicEndpoint（客户端连接地址）。
-	BuildVersion    string    // BuildVersion（GameServer构建版本）。
-	ProtocolVersion uint32    // ProtocolVersion（UE实时网络协议版本）。
-	Capacity        int       // Capacity（最大玩家容量）。
-	CurrentPlayers  int       // CurrentPlayers（当前已连接玩家数）。
-	ReservedPlayers int       // ReservedPlayers（已签发迁移但尚未在Heartbeat确认的容量预留）。
-	Status          Status    // Status（服务器生命周期状态）。
-	CurrentMatchID  string    // CurrentMatchID（MainArena绑定比赛ID）。
-	LastHeartbeat   time.Time // LastHeartbeat（最近一次心跳时间）。
+	ID                    string    // ID（GameServer实例ID）。
+	ServerBootID          string    // ServerBootID（本进程启动代次，同一GameServerID重启后必须变化）。
+	RoleID                string    // RoleID（服务器角色ID：OpenWorld/Village/MainArena）。
+	ExperienceID          string    // ExperienceID（当前实例承载体验）。
+	RegionID              string    // RegionID（部署区域ID）。
+	ClusterID             string    // ClusterID（Kubernetes/Agones集群ID）。
+	NodeID                string    // NodeID（承载节点ID）。
+	WorldID               string    // WorldID（当前世界、区域或地图逻辑ID）。
+	PublicEndpoint        string    // PublicEndpoint（客户端连接地址）。
+	BuildVersion          string    // BuildVersion（GameServer构建版本）。
+	ProtocolVersion       uint32    // ProtocolVersion（UE实时网络协议版本）。
+	Capacity              int       // Capacity（最大玩家容量）。
+	CurrentPlayers        int       // CurrentPlayers（当前已连接玩家数）。
+	ReservedPlayers       int       // ReservedPlayers（已签发迁移但尚未在Heartbeat确认的容量预留）。
+	Status                Status    // Status（服务器生命周期状态）。
+	CurrentMatchID        string    // CurrentMatchID（MainArena绑定比赛ID）。
+	AllocatedMatchPlayers int       // 本次MainArena分配人数，重试必须一致；普通世界为0。
+	LastHeartbeat         time.Time // LastHeartbeat（最近一次心跳时间）。
 }
 
 // AllocationRequest（服务器分配请求）按角色、体验、区域、世界与容量选择实例。
@@ -72,12 +73,15 @@ type AllocationRequest struct {
 // Registry（游戏服务器注册表）保存可快速访问的GameServer状态。
 // 生产环境可同步Redis，但领域本身不依赖具体缓存实现。
 type Registry struct {
-	mu        sync.RWMutex
-	instances map[string]Instance
+	mu             sync.RWMutex
+	instances      map[string]Instance
+	worldTransfers map[string]worldTransferReservation // 同TicketID只计一次世界容量，消费/撤销后保留墓碑。
 }
 
 // NewRegistry（创建服务器注册表）创建线程安全注册表。
-func NewRegistry() *Registry { return &Registry{instances: map[string]Instance{}} }
+func NewRegistry() *Registry {
+	return &Registry{instances: map[string]Instance{}, worldTransfers: map[string]worldTransferReservation{}}
+}
 
 // Register（注册服务器）新增或刷新GameServer实例信息。
 func (r *Registry) Register(instance Instance) {
@@ -90,6 +94,11 @@ func (r *Registry) Register(instance Instance) {
 		previous.ServerBootID == instance.ServerBootID {
 		// 同一Boot内注册刷新保留尚未完成的容量预留和比赛绑定。
 		instance.ReservedPlayers = previous.ReservedPlayers
+		instance.AllocatedMatchPlayers = previous.AllocatedMatchPlayers
+		// 同Boot注册重试不能撤销已成立比赛或排空；新Boot仍走下方完全独立的新实例分支。
+		if previous.CurrentMatchID != "" || previous.Status == StatusDraining || previous.Status == StatusStopping {
+			instance.Status = previous.Status
+		}
 		if instance.CurrentMatchID == "" {
 			instance.CurrentMatchID = previous.CurrentMatchID
 		}
@@ -118,7 +127,14 @@ func (r *Registry) Heartbeat(id string, players int, status Status, at time.Time
 		return errors.New("GAME_SERVER_PLAYER_COUNT_INVALID: CurrentPlayers超出容量范围")
 	}
 	instance.CurrentPlayers = players
-	instance.Status = status
+	// Dedicated Server迟到的Ready心跳不能撤销控制面Drain，也不能把活动比赛重新当作可分配Ready。
+	if instance.Status != StatusDraining && instance.Status != StatusStopping {
+		if instance.CurrentMatchID != "" {
+			instance.Status = StatusActive
+		} else {
+			instance.Status = status
+		}
+	}
 	instance.LastHeartbeat = at
 	// Heartbeat是Dedicated Server的权威在线人数；已经成功进入服务器的玩家不再占用Backend预留。
 	if instance.ReservedPlayers > 0 {
@@ -139,7 +155,13 @@ func (r *Registry) SetReady(id string) error {
 	if !ok {
 		return errors.New("GAME_SERVER_NOT_FOUND: GameServer实例不存在")
 	}
-	instance.Status = StatusReady
+	if instance.Status != StatusDraining && instance.Status != StatusStopping {
+		if instance.CurrentMatchID != "" {
+			instance.Status = StatusActive
+		} else {
+			instance.Status = StatusReady
+		}
+	}
 	r.instances[id] = instance
 	return nil
 }
@@ -164,6 +186,16 @@ func (r *Registry) Allocate(req AllocationRequest) (Instance, error) {
 	defer r.mu.Unlock()
 	if req.RequiredCapacity <= 0 {
 		return Instance{}, errors.New("RequiredCapacity必须大于0")
+	}
+	if req.RoleID == RoleMainArena {
+		if req.MatchID == "" {
+			return Instance{}, errors.New("GAME_SERVER_MATCH_REQUIRED: MainArena必须绑定比赛")
+		}
+		if current, found, err := r.findMatchAllocationLocked(req); err != nil {
+			return Instance{}, err
+		} else if found {
+			return current, nil
+		}
 	}
 	candidates := make([]Instance, 0)
 	for _, instance := range r.instances {
@@ -204,6 +236,7 @@ func (r *Registry) Allocate(req AllocationRequest) (Instance, error) {
 	selected.Status = StatusActive
 	if req.RoleID == RoleMainArena {
 		selected.CurrentMatchID = req.MatchID
+		selected.AllocatedMatchPlayers = req.RequiredCapacity
 	} else {
 		selected.ReservedPlayers += req.RequiredCapacity
 	}
@@ -218,6 +251,15 @@ func (r *Registry) AllocateSpecific(id string, req AllocationRequest) (Instance,
 	instance, ok := r.instances[id]
 	if !ok {
 		return Instance{}, errors.New("GAME_SERVER_NOT_FOUND: Agones返回的GameServer尚未注册到Backend")
+	}
+	if req.RoleID == RoleMainArena && req.MatchID != "" && instance.CurrentMatchID == req.MatchID {
+		current, found, err := r.findMatchAllocationLocked(req)
+		if err != nil {
+			return Instance{}, err
+		}
+		if found && current.ID == id {
+			return current, nil
+		}
 	}
 	if instance.RoleID != req.RoleID || instance.RegionID != req.RegionID {
 		return Instance{}, errors.New("GAME_SERVER_ALLOCATION_MISMATCH: Agones实例角色或区域不匹配")
@@ -234,6 +276,7 @@ func (r *Registry) AllocateSpecific(id string, req AllocationRequest) (Instance,
 			return Instance{}, errors.New("GAME_SERVER_ALREADY_BOUND: MainArena已绑定其他Match")
 		}
 		instance.CurrentMatchID = req.MatchID
+		instance.AllocatedMatchPlayers = req.RequiredCapacity
 	} else {
 		instance.ReservedPlayers += req.RequiredCapacity
 	}
@@ -275,6 +318,7 @@ func (r *Registry) Release(id string) error {
 		return errors.New("GAME_SERVER_NOT_FOUND: GameServer实例不存在")
 	}
 	instance.CurrentMatchID = ""
+	instance.AllocatedMatchPlayers = 0
 	instance.CurrentPlayers = 0
 	instance.ReservedPlayers = 0
 	if instance.Status != StatusDraining && instance.Status != StatusStopping {

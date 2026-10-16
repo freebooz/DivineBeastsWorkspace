@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """SSLM寒冰箭UE5.8独立冷启动原生资产验收。
 
-目标：核对平台唯一VFX执行器消费的11纹理、4网格、4母材质、10实例、6个Niagara系统、
+目标：核对平台唯一VFX执行器消费的12纹理、4网格、5母材质、10实例、6个Niagara系统、
 1运动脚本、3个稳定定义及1个新残霜定义。只读加载，不创建/保存或修改资产。
 这是资源存在、身份与软引用门禁；Shader/GPU画面、Client/Server Cook和联网另行取证。
 """
@@ -47,7 +47,12 @@ def verify() -> None:
         check_asset(ROOT + "/Meshes/SM_DBA_IceArrow_" + name,
                     unreal.StaticMesh, "meshes")
 
-    for name in ("Crystal", "Luminous", "Mist", "Trail"):
+    # 用户彩色原稿与技术遮罩使用不同色彩合同，不能按旧遮罩规则关闭原稿sRGB。
+    reference = check_asset(ROOT + "/Textures/T_DBA_IceArrow_GroundRuneReference", unreal.Texture2D, "textures")
+    if reference and not reference.get_editor_property("srgb"):
+        errors.append("法阵彩色原图必须按sRGB解码")
+
+    for name in ("Crystal", "Luminous", "Mist", "Trail", "RuneColor"):
         check_asset(ROOT + "/Materials/M_DBA_IceArrow_" + name,
                     unreal.Material, "master_materials")
 
@@ -101,7 +106,7 @@ def verify() -> None:
     except (OSError, UnicodeError) as exc:
         errors.append("无法读取AssetManager配置：" + str(exc))
 
-    expected_counts = {"textures": 11, "meshes": 4, "master_materials": 4,
+    expected_counts = {"textures": 12, "meshes": 4, "master_materials": 5,
                        "material_instances": 10, "niagara_systems": 6,
                        "niagara_motion_modules": 1, "definition_ids": 4}
     for key, expected in expected_counts.items():

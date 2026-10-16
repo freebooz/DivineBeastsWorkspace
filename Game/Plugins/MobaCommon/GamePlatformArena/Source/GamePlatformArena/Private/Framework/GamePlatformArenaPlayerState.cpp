@@ -113,6 +113,7 @@ void AGamePlatformArenaPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeP
     DOREPLIFETIME(AGamePlatformArenaPlayerState, TeamId);
     DOREPLIFETIME(AGamePlatformArenaPlayerState, HeroDefinitionId);
     DOREPLIFETIME(AGamePlatformArenaPlayerState, bReady);
+    DOREPLIFETIME(AGamePlatformArenaPlayerState, bEliminated);
     DOREPLIFETIME(AGamePlatformArenaPlayerState, Kills);
     DOREPLIFETIME(AGamePlatformArenaPlayerState, Deaths);
     DOREPLIFETIME(AGamePlatformArenaPlayerState, Assists);
@@ -121,4 +122,10 @@ void AGamePlatformArenaPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeP
     DOREPLIFETIME(AGamePlatformArenaPlayerState, ConnectionState);
     DOREPLIFETIME(AGamePlatformArenaPlayerState, ForfeitState);
     DOREPLIFETIME(AGamePlatformArenaPlayerState, StatsRevision);
+}
+
+void AGamePlatformArenaPlayerState::AuthorityMarkEliminated(bool bRecordDeath)
+{
+    if(!HasAuthority()||bEliminated)return;
+    bEliminated=true;if(bRecordDeath)++Deaths;++StatsRevision;ForceNetUpdate();OnArenaStatsChanged.Broadcast(this);
 }

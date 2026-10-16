@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""只读开发客户端IoStore门禁：真实导出数据必须交付施法动作与起手系统。
-输入为锁定UnrealPak实际生成的CSV，不使用磁盘库存替代发布。报告失败非零退出。
-此门禁不证明网络、动画播放或视觉质量；Niagara源模块是EditorOnly，不能要求其独立入包。
+"""只读开发客户端IoStore与GPU编译门禁：施法动作、起手和新版寒冰箭必须完整交付。
+输入为锁定UnrealPak实际生成的CSV及同次UAT Cook日志，不使用磁盘库存替代发布。
+GPU HLSL错误可能被UE记作Warning并仍返回0，故逐条阻断Niagara/ShaderCompiler诊断。
+报告失败非零退出；不证明网络、动画播放或视觉质量；EditorOnly源模块不要求独立入包。
 """
 import argparse
 import csv
+import hashlib
 import json
 from pathlib import Path
+import re
+
+
+ICE_ARROW_STAGES = ('Cast', 'GroundRune', 'Launch', 'Flight', 'Impact', 'FrostResidue')
 
 
 def required_assets():
@@ -21,11 +27,86 @@ def required_assets():
         result.extend([f'{vfx}/Niagara/NS_DBA_Dev{spell}Cast.uasset',
                        f'{vfx}/Definitions/DA_DBA_VFX_Dev{spell}Cast.uasset'])
 
+    # 新冰箭通过稳定Frostbolt定义软引用进入；逐项核对最终容器，旧Cook有原NS也不能放行。
+    ice = 'DBAPresentationPack_Core/Content/VFX/IceArrow'
+    for stage in ('Cast', 'GroundRune', 'Launch', 'Flight', 'Impact', 'FrostResidue'):
+        result.append(f'{ice}/Niagara/NS_DBA_IceArrow_{stage}.uasset')
+    for name in ('CrackMask', 'CrystalShard', 'FrostMist', 'FrozenGround', 'IceFlake',
+                 'IceNormal', 'IceORM', 'ImpactFlash', 'RuneInner', 'RuneOuter', 'TrailStrip', 'GroundRuneReference'):
+        result.append(f'{ice}/Textures/T_DBA_IceArrow_{name}.uasset')
+    for name in ('CrystalLance', 'CrystalShard', 'IceCrown', 'TrailRibbon'):
+        result.append(f'{ice}/Meshes/SM_DBA_IceArrow_{name}.uasset')
+    for name in ('Crystal', 'Luminous', 'Mist', 'Trail', 'RuneColor'):
+        result.append(f'{ice}/Materials/M_DBA_IceArrow_{name}.uasset')
+    for name in ('Crystal', 'CrystalSprite', 'FrozenGround', 'GroundInner', 'GroundOuter',
+                 'ImpactCrystal', 'ImpactFlash', 'Mist', 'Snow', 'Trail'):
+        result.append(f'{ice}/Materials/MI_DBA_IceArrow_{name}.uasset')
+    result.append(f'{ice}/Definitions/DA_DBA_VFX_DevFrostboltResidue.uasset')
+    # 1号治疗必须发布真实迁移的花瓣绽放及稳定治疗定义，拒绝退回树叶原型。
+    library = 'DBAPresentationPack_Core/Content/VFX/Library'
+    result.extend([f'{library}/07_Status/NS_Nature_PetalBloom_Aura.uasset',
+                   'DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom.uasset'])
+    # NM_DBA_IceArrowMotion是已编译系统的EditorOnly制作脚本，不要求其源脚本独立进入发布包。
     return result
 
 
-def validate(csv_path):
-    """大小为正且平台/块类型匹配才算交付；格式错误、空清单和重复输入不隐藏错误。"""
+def validate_cook_shaders(csv_path, cook_log_path=None):
+    """只接受CSV所属同次Cook目录的日志，缺失/歧义/未完成/阶段缺证/编译诊断均失败。
+
+    自动查找保持既有CookFrontEndClient调用兼容；显式日志仍必须位于同次UATLogs，
+    防止用旧Cook或编辑器compile_first的成功记录覆盖当前发布失败。读取不修改引擎输出。
+    """
+    log_directory = csv_path.resolve().parent.parent / 'UATLogs'
+    candidates = ([cook_log_path.resolve()] if cook_log_path is not None
+                  else sorted(log_directory.glob('Cook-*.txt')))
+    errors = []
+    if len(candidates) != 1:
+        errors.append('同次Cook日志必须唯一，实际数量：' + str(len(candidates)))
+    log_path = candidates[0] if len(candidates) == 1 else None
+    if log_path is not None and (log_path.parent != log_directory or not log_path.is_file()):
+        errors.append('Cook日志不属于当前容器的UATLogs或文件不存在')
+    result = {'Passed': False, 'CookLog': str(log_path) if log_path else None,
+              'Errors': errors, 'ShaderDiagnostics': [], 'CompiledStages': [],
+              'MissingStages': list(ICE_ARROW_STAGES), 'CookCompleted': False}
+    if errors:
+        return result
+    raw = log_path.read_bytes()
+    result['CookLogSha256'] = hashlib.sha256(raw).hexdigest()
+    lines = raw.decode('utf-8-sig', errors='replace').splitlines()
+    # 编译条目需来自Niagara实际系统编译输出，路径库存或diagnostics JSON均不能冒充。
+    compiled = set()
+    compiled_pattern = re.compile(
+        r'LogNiagara:\s+Compiling System NiagaraSystem '
+        r'/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_'
+        r'([A-Za-z]+)\.NS_DBA_IceArrow_\1 took ')
+    shader_diagnostics = re.compile(
+        r'LogNiagara:\s+(?:Warning:|Error:|Display: There were issues for compilation)|'
+        r'LogShaderCompilers?:\s+(?:Warning:|Error:)|'
+        r'(?:error [A-Z]\d{4}:|error: use of undeclared identifier|Failed to compile.*shader)',
+        re.IGNORECASE)
+    for number, line in enumerate(lines, 1):
+        match = compiled_pattern.search(line)
+        if match:
+            compiled.add(match.group(1))
+        if shader_diagnostics.search(line):
+            result['ShaderDiagnostics'].append({'Line': number, 'Message': line})
+    result['CompiledStages'] = [stage for stage in ICE_ARROW_STAGES if stage in compiled]
+    result['MissingStages'] = [stage for stage in ICE_ARROW_STAGES if stage not in compiled]
+    # 总结的0 error不够；必须同时看到所有包完成，避免截断/中止日志被放行。
+    result['CookCompleted'] = any('Packages Remain 0 Total ' in line for line in lines) and any(
+        re.search(r'LogInit:\s+Display: Success - 0 error\(s\)', line) for line in lines)
+    if result['MissingStages']:
+        errors.append('缺少实际冰箭系统编译证据：' + ','.join(result['MissingStages']))
+    if not result['CookCompleted']:
+        errors.append('Cook日志没有完整包完成及成功终态证据')
+    if result['ShaderDiagnostics']:
+        errors.append('Cook存在Niagara/GPU着色器编译诊断，禁止发布')
+    result['Passed'] = not errors
+    return result
+
+
+def validate(csv_path, cook_log_path=None):
+    """非空客户端导出与同次实际GPU Cook都通过才交付；任一证据缺失时失败关闭。"""
     with csv_path.open(encoding='utf-8-sig', newline='') as stream:
         rows = [{key.strip(): str(value).strip() for key, value in row.items()} for row in csv.DictReader(stream)]
     if not rows or not {'Filename', 'ChunkType', 'Platform', 'Size'}.issubset(rows[0]):
@@ -34,17 +115,20 @@ def validate(csv_path):
                if row['ChunkType'] == 'ExportBundleData' and row['Platform'] == 'WindowsClient' and int(row['Size']) > 0}
     required = required_assets()
     missing = [path for path in required if not any(name.endswith('/' + path.lower()) for name in exports)]
-    return {'Passed': not missing, 'RequiredCount': len(required), 'Missing': missing,
-            'ContainerCsv': str(csv_path.resolve()), 'NetworkAccepted': False, 'ManualVisualAccepted': False}
+    shaders = validate_cook_shaders(csv_path, cook_log_path)
+    return {'Passed': not missing and shaders['Passed'], 'RequiredCount': len(required), 'Missing': missing,
+            'ContainerCsv': str(csv_path.resolve()), 'CookShaders': shaders,
+            'NetworkAccepted': False, 'ManualVisualAccepted': False}
 
 
 def main():
     """报告仅写调用者指定证据；不删除/修改资源、容器、地图或配置。"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv', type=Path, required=True)
+    parser.add_argument('--cook-log', type=Path, help='同次UATLogs下唯一Cook日志；省略时从CSV所属Cook目录查找')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
-    result = validate(args.csv)
+    result = validate(args.csv, args.cook_log)
     payload = json.dumps(result, ensure_ascii=False, indent=2)
     if args.report:
         args.report.write_text(payload, encoding='utf-8')

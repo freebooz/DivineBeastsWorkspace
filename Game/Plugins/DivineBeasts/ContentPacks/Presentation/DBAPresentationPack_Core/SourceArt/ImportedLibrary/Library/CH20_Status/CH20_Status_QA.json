@@ -1,0 +1,307 @@
+{
+  "chapter": "CH20_Status",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Status_SymbolAtlas_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Poison_Bubble_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.301899,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Poison_Drop_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.1745,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Poison_Gas_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.169144,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Poison_Noise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Poison_Vein_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.216572,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Blood_Drop_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.210541,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Blood_Splash_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.198124,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Blood_Slash_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.110477,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Blood_Mark_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_ElectricArc_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.27449,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_StunStar_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.294727,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_StunRing_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_FearSymbol_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_FearWisp_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.248051,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_SilenceRune_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_LockRune_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_CurseRune_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Status_CurseNoise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    }
+  ],
+  "count": 19,
+  "expected_count": 19
+}

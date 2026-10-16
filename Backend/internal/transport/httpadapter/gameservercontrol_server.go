@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 		panic("GAMESERVERCONTROL_INTERNAL_TOKEN不能为空")
 	}
 	mux := http.NewServeMux()
+	registerArenaLifecycle(mux, service, internalBearerToken)
 
 	mux.Handle("POST /internal/v1/gameservers/register", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		var req gameservercontrol.RegisterInput
@@ -34,7 +36,7 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 		if !requireGameServerIdentity(w, r, req.GameServerID, req.ServerBootID) {
 			return
 		}
-		if err := service.Register(req); err != nil {
+		if err := service.RegisterContext(r.Context(), req); err != nil {
 			writeError(w, http.StatusBadRequest, "GAME_SERVER_REGISTER_FAILED", err)
 			return
 		}
@@ -177,9 +179,26 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
 			return
 		}
-		assignment, found := service.GetServerAssignment(gameServerID)
+		wait := time.Duration(0)
+		if raw := r.URL.Query().Get("waitMilliseconds"); raw != "" {
+			milliseconds, err := strconv.Atoi(raw)
+			if err != nil || milliseconds < 0 || milliseconds > 20000 {
+				writeError(w, http.StatusBadRequest, "INVALID_REQUEST", nil)
+				return
+			}
+			wait = time.Duration(milliseconds) * time.Millisecond
+		}
+		assignment, found, err := service.WaitServerAssignment(r.Context(), gameServerID, serverBootID, wait)
+		if err != nil {
+			writeArenaLifecycleError(w, err)
+			return
+		}
 		if !found {
-			writeError(w, http.StatusNotFound, "GAME_SERVER_ASSIGNMENT_NOT_FOUND", nil)
+			if wait > 0 {
+				writeJSON(w, http.StatusAccepted, map[string]bool{"pending": true})
+			} else {
+				writeError(w, http.StatusNotFound, "GAME_SERVER_ASSIGNMENT_NOT_FOUND", nil)
+			}
 			return
 		}
 		writeJSON(w, http.StatusOK, assignment)
@@ -194,7 +213,7 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 		if req.TTL <= 0 {
 			req.TTL = 30 * time.Second
 		}
-		ticket, err := service.IssueTransfer(req)
+		ticket, err := service.IssueTransferContext(r.Context(), req)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "TRANSFER_TICKET_ISSUE_FAILED", err)
 			return
@@ -244,7 +263,11 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 		}
 		stored, err := service.SubmitMatchResult(r.Context(), req)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "MATCH_RESULT_SUBMIT_FAILED", err)
+			if strings.HasPrefix(err.Error(), "MATCH_RESULT_CONFLICT:") {
+				writeError(w, http.StatusConflict, "MATCH_RESULT_CONFLICT", nil)
+				return
+			}
+			writeError(w, http.StatusBadRequest, "MATCH_RESULT_SUBMIT_FAILED", nil)
 			return
 		}
 		writeJSON(w, http.StatusOK, stored)

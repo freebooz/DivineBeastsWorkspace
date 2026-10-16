@@ -1,4 +1,27 @@
 {
+  "LoginTestAccounts20261015": {
+    "Status": "Saved_NativeReloadVerified_ClientServerBuilt_EditorCookPending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "EditorPidAtAuthoring": 27104,
+    "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+    "ParentClass": "DivineBeastsLoginScreen",
+    "WidgetCountBefore": 23,
+    "WidgetCountAfter": 45,
+    "AddedTestAccountButtons": 10,
+    "ButtonSize": [108, 44],
+    "ButtonFontSize": 18,
+    "DefaultTestPanelVisibility": "Collapsed",
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "AccessibilityErrors": 0,
+    "NewAccessibilityWarnings": 0,
+    "ExistingAccessibilityWarnings": 9,
+    "Actions": ["get_widget_tree", "add_widget", "set_widget_property", "set_slot_property", "set_brush", "set_font", "set_widget_navigation_bulk", "audit_accessibility", "audit_focus_chain", "compile_widget", "save_packages", "native_reload_packages"],
+    "Evidence": "Saved/Validation/WorldEntryFix20261015/LoginTestAccountsMonolith.json",
+    "FinalRuntimeEvidence": "Saved/Validation/WorldEntryFix20261015/Runtime.json",
+    "NotesCN": "通过Monolith原位修改并原生重载45控件；十账号名称来自显式开发进程环境，密码不进入资产默认值。新原生绑定、打包、点击及视觉验收以本轮后续证据为准。未新导入纹理，保留既有输入字号与尺寸。"
+  },
   "LoginDevelopmentEntry20261014": {
     "Status": "Saved_ColdReloadVerified_NativeBuildBlocked",
     "Project": "Game/DivineBeastsArena.uproject",
@@ -2101,5 +2124,47 @@
     "ManualVisualAccepted": false,
     "Evidence": "Saved/Validation/Rebuild20261014/d2d4518f-080b-47ca-8c39-c2d608646485/WorldUIAssets.ColdReload.json",
     "Note": "真实回归30项Success、0错误；1项旧Possession夹具有2条警告。HUD按钮可访问性0问题。Cook与运行状态只以外部最终证据为准；人工联机／视觉未验收，历史UI轮询登记在WorldHealthAndCooldown_20261014.md。"
+  },
+  "PartyArenaLifecycle20261015": {
+    "Project": "Game/DivineBeastsArena.uproject",
+    "EditorProcessId": 49584,
+    "EngineVersion": "5.8.0",
+    "MonolithVersion": "0.23.0",
+    "Assets": [
+      {
+        "Asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyInviteModal",
+        "CounterWidget": "RemainingSecondsText",
+        "CounterClass": "CommonNumericTextBlock",
+        "CompiledSaved": true,
+        "CompileErrors": 0,
+        "CompileWarnings": 0,
+        "AccessibilityIssues": 0
+      },
+      {
+        "Asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyReadyCheckModal",
+        "CounterWidget": "RemainingSecondsText",
+        "CounterClass": "CommonNumericTextBlock",
+        "CompiledSaved": true,
+        "CompileErrors": 0,
+        "CompileWarnings": 0,
+        "AccessibilityIssues": 0
+      }
+    ],
+    "UpdateMechanismZh": "状态通知设置CommonUI线性数值动画端点；不逐帧查询业务，不据显示归零授予资格。",
+    "NativeCodecAndPartyBindingTestsPassed": 3,
+    "NativeAnimationBehaviorVerified": false,
+    "ColdReload": true,
+    "ClientNetworkVerified": false,
+    "ManualVisualAcceptance": false,
+    "Evidence": "Saved/Validation/PartyArena20261015/UI/CountdownMonolithActions.json",
+    "Backup": "Saved/Validation/PartyArena20261015/UI/Before-3207a34e-818e-4a32-9e38-fc687d334a0e/Manifest.json",
+    "ColdReloadEditorProcessId": 6084,
+    "ColdReloadEvidence": "Saved/Validation/PartyArena20261015/UI/CountdownColdRead20261015.json",
+    "RelatedNativeSuite": {
+      "Count": 32,
+      "Failed": 0,
+      "Evidence": "Saved/Validation/PartyArena20261015/NativeFinalVerified/Verified.json",
+      "ScopeZh": "竞技、队伍合同及事件UI、真实地图定义与角色生命周期原生回归；不代替真实联机或人工视觉验收。"
+    }
   }
 }

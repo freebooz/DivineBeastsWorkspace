@@ -15,6 +15,8 @@
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
@@ -52,7 +54,7 @@ bool FDivineBeastsArenaWorldOwnershipTest::RunTest(const FString& Parameters)
 
 namespace
 {
-enum class ESpawnReentryScenario { ReplaceAdapter, HigherContext, SameContext, EndDuringActive, UnregisterDuringActive };
+enum class ESpawnReentryScenario { ReplaceAdapter, HigherContext, SameContext, EndDuringActive, UnregisterDuringActive, DisconnectedCombat };
 // 仅用于本回归的可信选英雄端口；批准调用方指定且已真实预热的Hero，不能为不存在的Hero伪造定义成功。
 class FSpawnOwnershipHeroEligibility final : public IGamePlatformArenaHeroEligibilityProvider
 {
@@ -134,7 +136,7 @@ public:
             Slot.SlotIndex = Index; Assignment.Roster.Add(Slot);
         }
         FString Error;
-        if (!Test->TestTrue(TEXT("真实Assignment受理"), Mode->ApplyAssignment(Assignment, Error))) { Test->AddError(Error); return true; }
+        if (!Test->TestTrue(TEXT("真实Assignment受理"), Mode->ApplyAssignmentWithModeSpec(Assignment, EffectiveSpec(*Spec), Error))) { Test->AddError(Error); return true; }
         TArray<AGamePlatformArenaPlayerState*> States;
         for (const auto& Slot : Assignment.Roster)
         {
@@ -175,10 +177,36 @@ public:
     }
 private:
     bool IsTerminalScenario() const
-    { return Scenario == ESpawnReentryScenario::EndDuringActive || Scenario == ESpawnReentryScenario::UnregisterDuringActive; }
+    { return Scenario == ESpawnReentryScenario::EndDuringActive || Scenario == ESpawnReentryScenario::UnregisterDuringActive || Scenario == ESpawnReentryScenario::DisconnectedCombat; }
+    // 断线回归走同一真实出生链，仅替换为批准的单局淘汰规则；不伪造Ready、资源或伤害结果。
+    FGamePlatformArenaModeSpec EffectiveSpec(const FGamePlatformArenaModeSpec& Spec)const
+    {
+        auto Result=Spec;
+        if(Scenario==ESpawnReentryScenario::DisconnectedCombat)
+        {Result.WinConditionPolicyId=TEXT("Arena.WinCondition.SingleRoundElimination");Result.RespawnPolicyId=TEXT("Arena.Respawn.Disabled");}
+        return Result;
+    }
     bool ExerciseSpawn(UWorld& World, const FGamePlatformArenaModeSpec& Spec, const FGamePlatformArenaAssignment& Assignment)
     {
         FString Error;
+        if(Scenario==ESpawnReentryScenario::DisconnectedCombat)
+        {
+            auto* Pawn=Cast<ADivineBeastsGameplayCharacter>(Controller->GetPawn());
+            if(!Test->TestNotNull(TEXT("断线前真实已初始化Pawn"),Pawn))return true;
+            const FString Player=Controller->GetPlayerState<AGamePlatformArenaPlayerState>()->PlayerIdPublic;
+            auto* Combat=Pawn->GetGamePlatformCombatComponent();const int32 Generation=Combat->GetCombatAvatarGeneration();
+            Test->TestTrue(TEXT("断线前真实目标可受伤"),Pawn->CanReceiveCombat());
+            Mode->MarkPlayerDisconnected(Player);Controller->UnPossess();
+            Test->TestFalse(TEXT("断线不能继续发起攻击"),Pawn->CanSourceCombat());
+            Test->TestTrue(TEXT("断线原目标仍可受伤"),Pawn->CanReceiveCombat());
+            Test->TestTrue(TEXT("断线不撤销同代ASC目标"),Pawn->GetGamePlatformAbilitySystemComponent()->GetAvatarActor()==Pawn);
+            // 真实Combat属性结算与死亡广播，不能直接注入Mode死亡事件冒充桥接通过。
+            FGameplayEffectSpec Effect;Combat->ResolveIncomingDamage(*Combat->GetCombatAttributeSet(),Effect,Combat->GetCombatHealth()+1.f);
+            Test->TestTrue(TEXT("断线原实体真实死亡"),Combat->IsCombatDead());
+            Test->TestTrue(TEXT("断线死亡立即淘汰"),Mode->IsPlayerEliminated(Player));
+            Test->TestEqual(TEXT("断线死亡不重新出生"),Combat->GetCombatAvatarGeneration(),Generation);
+            return true;
+        }
         const FGuid OriginalBinding = Mode->GetGameplayLifecycleBindingId();
         bool bPossessCallback = false;
         NewPawnHandle = Controller->GetOnNewPawnNotifier().AddLambda([&](APawn* NewPawn)
@@ -310,6 +338,7 @@ bool FDivineBeastsArenaSpawnReentrantOwnershipTest::RunTest(const FString& Param
     ADD_LATENT_AUTOMATION_COMMAND(FSpawnReentrantOwnershipCommand(this, FName(*Hero), ESpawnReentryScenario::HigherContext));
     ADD_LATENT_AUTOMATION_COMMAND(FSpawnReentrantOwnershipCommand(this, FName(*Hero), ESpawnReentryScenario::SameContext));
     ADD_LATENT_AUTOMATION_COMMAND(FSpawnReentrantOwnershipCommand(this, FName(*Hero), ESpawnReentryScenario::EndDuringActive));
-    ADD_LATENT_AUTOMATION_COMMAND(FSpawnReentrantOwnershipCommand(this, FName(*Hero), ESpawnReentryScenario::UnregisterDuringActive)); return true;
+    ADD_LATENT_AUTOMATION_COMMAND(FSpawnReentrantOwnershipCommand(this, FName(*Hero), ESpawnReentryScenario::UnregisterDuringActive));
+    ADD_LATENT_AUTOMATION_COMMAND(FSpawnReentrantOwnershipCommand(this, FName(*Hero), ESpawnReentryScenario::DisconnectedCombat)); return true;
 }
 #endif

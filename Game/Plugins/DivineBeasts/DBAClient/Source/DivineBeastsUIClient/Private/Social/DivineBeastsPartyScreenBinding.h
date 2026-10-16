@@ -1,7 +1,6 @@
 // 每个公共小队页面唯一原生绑定；引用页面/VM均为弱引用，失活解除按钮/列表/状态委托，不拥有业务真源。
 #pragma once
 #include "UObject/Object.h"
-#include "TimerManager.h"
 #include "DivineBeastsPartyScreenBinding.generated.h"
 class UGamePlatformUIScreen;
 class UDivineBeastsPartyViewModel;
@@ -28,10 +27,10 @@ private:
     void SelectItem(UObject* Item);
     void Activated();
     void Deactivated();
-    /** 只推进当前已选请求的本地时间文字；不联网、不改变请求终态，到期清理自身计时器。 */
+    /** 状态/选择事件设置引擎数值动画端点，不建立业务查询定时器。 */
     void UpdateDeadlineDisplay();
-    TWeakObjectPtr<UWorld> TimerWorld;
-    FTimerHandle DeadlineTimer;
+    /** 失活/销毁停止本页面引擎动画，不改变远端业务状态。 */
+    void StopDeadlineAnimation();
     FString SelectionOwnerPlayerId;
     UFUNCTION() void Invite(); UFUNCTION() void Accept(); UFUNCTION() void Decline();
     UFUNCTION() void Leave(); UFUNCTION() void Transfer(); UFUNCTION() void Kick();
@@ -39,6 +38,8 @@ private:
     UFUNCTION() void Close(); UFUNCTION() void OpenApplications(); UFUNCTION() void OpenInvitations();
     UFUNCTION() void OpenReady(); UFUNCTION() void RequestJoin(); UFUNCTION() void Activity();
     UFUNCTION() void Retry();
+    UFUNCTION() void ConfirmReady();
+    UFUNCTION() void DeclineReady();
     TWeakObjectPtr<UGamePlatformUIScreen> Screen;
     TWeakObjectPtr<UDivineBeastsPartyViewModel> Model;
     TWeakObjectPtr<UDivineBeastsPartyUIClientSubsystem> Owner;

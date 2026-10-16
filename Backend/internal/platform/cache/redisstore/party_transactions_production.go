@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"divinebeasts/backend/internal/app/matchapi"
+	"divinebeasts/backend/internal/modules/matchmaking"
 	"divinebeasts/backend/internal/modules/party"
 	"github.com/redis/go-redis/v9"
 )
@@ -80,7 +81,7 @@ func (r *PartyRepository) saveNewParty(ctx context.Context, value *party.Party) 
 // updateParty（原子提交核心）读取和WATCH包含所有被改成员与收件箱；不得把回执或部分索引提前写出。
 func (r *PartyRepository) updateParty(ctx context.Context, id string, revision int64, key, fingerprint string, creating bool, mutation func(*party.Party) error) (*party.Party, error) {
 	var result *party.Party
-	watchKeys := []string{partyKeyPrefix + id}
+	watchKeys := []string{partyKeyPrefix + id, matchmakingStateKey}
 	if key != "" {
 		watchKeys = append(watchKeys, partyOperationPrefix+key)
 	}
@@ -122,6 +123,9 @@ func (r *PartyRepository) updateParty(ctx context.Context, id string, revision i
 			}
 			next := current.Clone()
 			if err := mutation(next); err != nil {
+				return err
+			}
+			if err := ctx.Err(); err != nil {
 				return err
 			}
 			if next.ID != id || next.Revision < current.Revision || len(next.Members) > party.MaxMembers {
@@ -167,6 +171,21 @@ func (r *PartyRepository) updateParty(ctx context.Context, id string, revision i
 				}
 			}
 			for player := range next.Members {
+				if _, retained := current.Members[player]; !retained {
+					queueRaw, queueErr := tx.Get(ctx, matchmakingStateKey).Bytes()
+					if queueErr != nil && !errors.Is(queueErr, redis.Nil) {
+						return queueErr
+					}
+					if queueErr == nil {
+						queue := matchmaking.NewQueueState()
+						if err := json.Unmarshal(queueRaw, queue); err != nil {
+							return err
+						}
+						if queue.Reservations[player] != "" {
+							return errors.New("MATCH_PLAYER_RESERVED: 目标玩家已有活动匹配")
+						}
+					}
+				}
 				owner, err := tx.Get(ctx, partyMemberPrefix+player).Result()
 				if err != nil && !errors.Is(err, redis.Nil) {
 					return err
@@ -221,16 +240,26 @@ func (r *PartyRepository) updateParty(ctx context.Context, id string, revision i
 			_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 				// 与名单、收件箱同一EXEC提交通知；新旧参与者都能观察离队、拒绝和取消，避免只通知当前成员。
 				observers := map[string]bool{}
-				for player := range members { observers[player] = true }
-				for _, aggregate := range []*party.Party{current,next} {
-					for _, request := range aggregate.MembershipRequests { observers[request.PlayerID]=true;observers[request.RequestedByPlayerID]=true }
+				observers[matchapi.MatchmakingWorkObserver] = true
+				for player := range members {
+					observers[player] = true
 				}
-				for player := range observers {
-					if player=="" { continue }
-					stream:=partyChangesPrefix+player
-					pipe.XAdd(ctx,&redis.XAddArgs{Stream:stream,MaxLen:256,Approx:true,Values:map[string]any{"partyId":id,"revision":next.Revision}})
-					pipe.Publish(ctx,stream,next.Revision)
-					pipe.Expire(ctx,stream,r.ttl)
+				for _, aggregate := range []*party.Party{current, next} {
+					for _, request := range aggregate.MembershipRequests {
+						observers[request.PlayerID] = true
+						observers[request.RequestedByPlayerID] = true
+					}
+				}
+				if current.Revision != next.Revision {
+					for player := range observers {
+						if player == "" {
+							continue
+						}
+						stream := partyChangesPrefix + player
+						pipe.XAdd(ctx, &redis.XAddArgs{Stream: stream, MaxLen: 256, Approx: true, Values: map[string]any{"partyId": id, "revision": next.Revision}})
+						pipe.Publish(ctx, stream, next.Revision)
+						pipe.Expire(ctx, stream, r.ttl)
+					}
 				}
 				pipe.Set(ctx, partyKeyPrefix+id, payload, r.ttl)
 				for player := range members {

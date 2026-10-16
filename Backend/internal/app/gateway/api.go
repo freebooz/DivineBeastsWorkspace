@@ -240,6 +240,7 @@ func NewAPI(config Config, identity IdentityPort, playerData PlayerDataPort, par
 	handler.mux.HandleFunc("POST /v1/divinebeasts/world-entry", handler.requireAuth(handler.enterDivineBeastsWorld))
 	handler.registerInventoryRoutes()
 	handler.registerPartyRoutes()
+	handler.registerMatchmakingRoutes()
 	handler.registerSwaggerDocumentation(os.Getenv(swaggerContractsRootEnvironment))
 	return handler.tracing(handler.mux)
 }
@@ -424,6 +425,12 @@ func (a *api) createParty(w http.ResponseWriter, r *http.Request, session Authen
 }
 
 func (a *api) createMatchmakingTicket(w http.ResponseWriter, r *http.Request, session AuthenticatedSession) {
+	// 已装配完整生命周期时旧裸票据入口不能绕过角色/世界/准备门禁；保留旧端口仅兼容隔离测试和明确旧装配。
+	if _, configured := a.matchmaking.(MatchmakingLifecyclePort); configured {
+		writeOnlineError(w, ServiceError("MATCH_COMMAND_REQUIRED"))
+		return
+	}
+
 	if a.matchmaking == nil {
 		writeOnlineError(w, ServiceError("SERVICE_UNAVAILABLE"))
 		return

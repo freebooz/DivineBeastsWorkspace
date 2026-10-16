@@ -1,5 +1,36 @@
 # SSLM新手村组队与竞技场实施记录
 
+### 2026-10-15 用户进入世界失败续修
+
+用户截图为“暂时无法进入世界／操作未完成”。原两客户端18:38已连接17781并载入Village，专服同时间两次报`WorldCharacterPlayerDataUnconfigured`；问题是上轮运行装配遗漏`PLAYERDATA_BASE_URL`，不是网关无法分配或地图缺包。先写启动入口必填参数回归，实际RED为MainArena入口未声明PlayerData；补共享校验/子进程环境及正式Village入口后GREEN，覆盖两入口、父进程隔离和十二种非法输入。保留原身份和玩家资料容器，只按PID/启动时间/路径核对后替换自有Village及竞技池；当前资料根地址18182，证据`Saved/Validation/WorldEntryFix20261015/Runtime.json`。两个可见客户端仍为人工登录，未将启动或控制面202记录为实际角色Ready。
+
+检查当前main同时发现已提交合并冲突，清理客户端启动、开发INI、角色EndPlay和目录说明，保留双方组队/怪物/寒冰箭扫描及销毁逻辑。重新构建暴露既有VFX安全法线API参数错误及Village狼群const/TObjectPtr推导错误，分别依据锁定UE5.8接口增量修正；原始失败报告`1cd73a80-70e2-4b40-8885-a3c4fce8fbe4`与`0f0cadee-327c-4211-b40e-8d72dedb4fc8`保留，不伪称首次成功。双目标构建`cbcfabcd-8305-44b9-8dbb-35f37501e333`真实通过；两客户端各出现角色Ready，用户确认“已成功进入，可以看到角色”。这些证据早于后续追踪／施法条修改，不替代新源码的构建、Cook与玩法验收。
+
+### 2026-10-15 视角、追踪、施法条与鸟群续修（验证中）
+
+用户实机确认俯仰正确、水平相反后，最终MouseX与MouseY均设为+1，A/D保持原键盘语义；开发启动参数显式载入工作区DefaultInput，旧窗口必须重新启动才应用。选择意图由拥有者可靠RPC交给平台Combat校验世界、化身与距离，技能在服务器Commit后冻结一次目标；没有选择仍沿原方向释放，已冻结目标失效终止连发／弹体，不自动改追其他目标。真正运动、Sweep、伤害和阻挡均由平台唯一权威投射物执行，Niagara仍只负责表现。
+
+实际旧DLL回归报告`Saved/Validation/WorldEntryFix20261015/ProjectileRed/index.json`记录四项执行、两项失败：移动目标未转弯／未命中，以及目标换代后旧弹体仍伤害新化身。新增选择、阻挡、非零螺旋急转连续与连发目标失效回归。完整Editor构建`736e5701-3f93-421f-8dec-b1e51eb5a2cd`通过，首轮原生报告29项中26项成功、3项占位法术因真实旧数值费用不合法失败；七项平台投射物和三项开发法术目标连发成功。另显式执行CastBar三个叶子用例全成功（初筛选器会自动补点，未错误宣称原29项包含这三项）。螺旋换截面补偿当前相位，防止把整个历史偏移旋转成权威扫掠跳段；同Actor显式再次点击允许重交新化身意图。
+
+既有真实CastBar蓝图由RootLayout绑定首次快照和CastFacts通知，状态事件启动平台Transient引擎UMG动画，结束／取消／来源切换成对清理。当前显示原有0.7秒“施法动作”窗口，不新增前摇、不改变释放时点或气势成本；Widget无业务Tick或定时轮询。鸟群新源码以稳定粒子槽位和统一相位保证中心间距，保留原数量、路线和风场，实际Niagara编译保存重载尚待执行。
+
+新增真实回归查出全部十二生肖占位法术的36条数值行仍保留10/8/12气势成本，违反现有Magic零成本校验，因此不是租约预热失败。通过Monolith在原身份下将36行费用归零、36旧成本GE清为空修改、36法术GA成本引用清空，并更正12个英雄UIProfile费用说明；保留所有伤害、原有冷却和技能ID。迁移前uasset备份位于`Saved/Validation/WorldEntryFix20261015/SpellAssetsBefore`，原表/GE/文案和保存记录位于`Game/Saved/Validation/SpellMomentumMigration`。原生执行器再按三法术模式返回GAS无成本合同，旧蓝图不能恢复扣费；普攻不变。最终新编译、独立冷读和真实零费连发仍继续验证。
+
+已发现新`/DBAPresentationPack_Core/VFX/IceArrow`资源；旧已运行Cook容器IceArrow条目为0，不能宣称窗口已显示最新资源。源图审计已通过；后续必须独立UE读入、六个系统编译诊断、新Cook闭包和实际客户端验证。完整进度以本段及后续真实证据为准。
+
+## 当前执行状态（2026-10-15，持续更新）
+
+本次用户已明确授权完整实现、重新编译并运行两个客户端；下文早期“不构建”和旧进度表仅为历史记录，不再约束当前执行。起点为main / 8c1ffa6b，按现有工作区原位增量修改，未提交、推送或重置用户修改。
+
+- 已实现：真实组队命令与事件观察、45秒可信观察租约／队长60秒离线转移、原子整队准备／报名／逐人确认、1v1至5v5不可拆分队列、持久分配与签票补偿、安全返回、断线原实体与淘汰规则、项目Flow／Session和事件UI接线。
+- 真实资产：Monolith制作／编译／保存／冷重载组队倒计时和竞技HUD；独立MainArena内容包、十个带队伍槽位的出生点、碰撞／导航及World／Experience／Pawn定义。
+- 已验证：后端productiondeps,grpcdeps全包竞态与go vet，隔离Redis DB15／PG真实恢复；32项原生全部成功；RHI SourceToSlate及5张当前截图成功；Shared生成物一致性、继承边界及接口文档门禁通过。
+- 已构建与运行：最终Editor、Client、Server通过；独立Client／Server Cook及Stage通过，客户端540项闭包完整；五后端镜像编译完成，三个变化服务已部署到原网络，身份和玩家数据容器保留；两个真实SSLM客户端窗口及村庄／竞技场服务器已启动。
+- 仍需人工／更多会话验收：两个真实账号的UI互邀及Village→MainArena→安全返回、物理断网重连；5v5必须十个真实会话。白盒竞技和开发技能均为DevelopmentOnly，不宣称ProductionReady；没有实际Agones集群验收。
+
+后续详细证据按时间追加；旧记录中与当前状态不同的“未实现／未执行”仅指对应历史阶段。
+
+
 计划：`Docs/superpowers/plans/2026-10-14-village-party-arena.md`。规格：`Docs/superpowers/specs/2026-10-14-village-party-arena-design.md`。执行起点main／88f994dd，用户要求直接Native执行、不问询、不构建、不创建工作树。
 
 ## 裁定与执行边界
@@ -200,3 +231,87 @@ Ruling: 新授权恢复Go、Editor、Client、Server构建和必要Cook/Stage；
 
 当前正在读取合同、仓储和组合根；尚无本轮新增功能或通过声明。
 
+
+### 本轮中间证据与剩余工作（2026-10-15）
+
+已增量实装：本人队伍持久游标观察（初始完整快照、重同步、服务器截止事件、取消）、Redis Stream与PubSub同事务通知、GameInstance共享单条客户端订阅及页面事件投影；组队/竞技计时改为CommonUI线性数值动画端点，移除受影响页面定时查询。旧Widget尚需Monolith将对应TextBlock替换成真实CommonNumericTextBlock，当前C++保留UTC静态文本兼容显示。
+
+已实装后端：有界双背包五模式原子分队、每人唯一预留、限时整队准备、逐人候选确认、整队取消、准备名单变化/超时清理、票据/名单锁/幂等回执同一Redis事务；新增公网匹配命令/观察/本人迁移合同及HTTP/gRPC适配。迁移运行端口仍需真实持久编排装配，缺失时明确失败；未把端口存在记为准入完成。
+
+实际运行：Go应用/领域/HTTP包测试及productiondeps,grpcdeps适配编译检查通过；隔离Redis容器sslm-party-redis-20261015、DB15验证了跨客户端通知、真实订阅取消、并发只提交一个预留及事务回滚。`TestRedisMatchmakingAtomicReservation`曾真实失败：回调内取消Context仍进入EXEC；补显式提交前ctx.Err检查后同一回归及相邻race套件通过。这是本轮已观察的行为RED→GREEN；新增接口初次因缺失类型编译失败不能冒充业务RED。
+
+Editor完整目标RunId344ef2fb-c3ea-4496-93ec-fb926afd20e7退出0、Passed，48项真实动作，UBT79秒。证据位于Saved/Validation/FoundationM0/344ef2fb-c3ea-4496-93ec-fb926afd20e7/Build。之后又扩展Shared合同，因此此结果只证明该时点代码编译，不作当前最终输入收口。正式Editor49584正启动于/Engine/Maps/Entry，日志Saved/Validation/PartyArena20261015/MonolithEditor.log；首次Monolith代理仍未就绪，尚未实施资产变更。
+
+仍在实现：真实持久分配/签票/撤销步骤、生产组合根消费者启动、本人准入与安全返回、权威单局歼灭/重连、真实MainArena内容与开发配置、组队无队伍邀请/自动提示/准备界面、真实客户端匹配适配和旅行。新HTTP/gRPC合同需要继续补授权/正常失败测试；当前不声明完整功能完成，不声明五模式真实网络验收，不声明两个客户端已重启。
+
+### 后端恢复与UI资产续行证据
+
+新增已观察行为回归：同TicketID重复签票原先改变Nonce/Epoch，`TestRepeatedIssueUsesStableCredential`真实失败后改为幂等签票回执，同一测试及servertransfer/control/orchestrator race套件通过；生产HTTP/gRPC组合根改用Redis签票回执。`TestMainArenaAllocationRetryKeepsOneInstance`真实暴露重复占用第二实例，补原分配人数/同意图校验后通过，既有Agones/控制面套件通过。
+
+新增控制事实：已写入可恢复ArenaAssignmentRecord、PlayerPresence及Redis WATCH/EXEC仓储，真实结果提交后保留比赛/实例，显式安全迁出后回收。新增`TestArenaResultWaitsForSafeReturn`通过；`TestArenaControlSameBootRecovery`曾在后继Boot回收边界真实失败，修正只结束旧记录、不Drain/Release后继进程后通过。Ready/迟到心跳不能撤销活动比赛或Drain。以上仍需完整真实Redis控制事实集成和持久编排器/生产启动联调，不等于端到端已实现。
+
+Monolith正式Editor49584已实际核实工程、UE5.8.0、0.23.0/1355动作。真实修改并编译保存：PartyInviteModal、PartyReadyCheckModal、ArenaHUD三个Widget；原TextBlock保留为说明文字，同一位置增加CommonNumericTextBlock，恢复原子项顺序。三个编译均零错误/警告，可访问性分别34/32/30节点、零问题；保存3/3、未保存包0。逐动作证据`Saved/Validation/PartyArena20261015/UI/CountdownMonolithActions.json`；修改前副本`UI/Before-3207a34e-818e-4a32-9e38-fc687d334a0e/Manifest.json`。尚未冷重载或实际视觉验收，不标这些阶段通过。
+
+当前DLL真实原生回归：GamePlatform.Online.Party 1/1（含新观察解析边界）、DivineBeasts.UI.Party 2/2，零错误/警告；误用DivineBeasts.UI.Arena前缀返回0项/false，未计入通过，原始回执保留`UI/NativePartialValidation.json`。最终原生/联机/三目标与Cook仍待功能装配完成后统一验证。
+
+当前工作树持续由外部进程提交部分增量；本代理未提交、回滚或覆盖并行工作。完整功能仍在执行，下一主项为PG持久MatchOperation及租约栅栏、控制面对应HTTP/gRPC合同、真正MainArena内容/权威规则和客户端匹配旅行适配。
+
+
+### 持久编排与真实地图继续实现
+
+已新增000013_match_operations.sql及PG步骤仓储，按数据库时钟、行锁、Version/Fence/Owner租约推进，阶段事件和步骤同事务提交且事件不含票据。隔离schema party_arena_test_20261015真实执行TestMatchOperationPGRecovery通过，覆盖跨仓储接管、调用方未来时间不能绕过租约、事件失败完整回滚和秘密不进入Outbox。测试容器无宿主端口，未操作现有服务数据库。
+
+五入口已接通显式匹配配置、真实消费者生命周期及生产PG/Redis/NATS装配；消费者失败停止入口，默认配置仍关闭，不能用代码存在宣称已经部署。Runtime先持久全员固定名单和签票意图，恢复未知响应，在全员回执提交后才发布个人迁移；可信结果后按原逻辑体验重新选安全实例。TestRuntimeFiveModesAndSafeReturn五种模式均通过，使用真实队列/控制领域服务及明确故障注入；首轮测试把分队前玩家顺序误当签票顺序，修正故障注入为真实Roster第二项后通过，该夹具修正不登记为产品行为RED→GREEN。
+
+初次邀请改为创建/邀请/成员唯一索引/收件箱/事件/回执同事务；普通ready拒绝会失效本轮准备，全部准备后关闭准备会话、保留成员已准备事实并锁队。应用回归和真实Redis/PG相邻race套件通过。公共UI新增共享队伍/流程事件驱动的邀请/准备弹窗和明确接受/拒绝按钮接线，尚待新DLL编译与真实UI行为回归。
+
+Monolith实际创建并保存DBAWorldPack_MainArena地图、World/Experience/Pawn三份定义，正式内容包登记及主工程装配已增量修改。开发白盒场地60m×40m，9个碰撞网格、双方各5个唯一出生标签、1个导航Bounds；真实导航105Tiles、无脏区，双方出生区路径4600cm且非Partial。未宣称正式美术完成、冷读、Cook或真实网络验收。先前误用导航pairs参数未执行路径检查，随后按require_path_pairs实际执行通过。
+
+原生新增单局淘汰/同帧死亡汇合、不自动复活、后端锁定英雄/十秒开赛、原Pawn重连的路径和回归源码；新增真实后端匹配适配、事件观察与一次性Flow迁移入口。Native未编译/未运行测试，仍在继续完善分配/签票失败补偿、重连票据恢复、客户端就绪事实与内容/角色配置。完整目标没有完成，不声明已重启两个客户端。
+
+
+### 2026-10-15编排补偿、真实传输与原生收口续行
+
+新增实际行为RED→GREEN：未分配比赛CancelArena原先返回NOT_FOUND，补持久未分配取消墓碑后同用例通过；五模式新认证会话无法恢复已消费票据，补持久ReconnectIntent及新单次票后正常/幂等/防重放回归通过；局内故障Returning阶段再次退回rollingBack导致五种模式均失败，修正终态返回方向后十种正常/故障场景全部通过。控制面回收新增终局记录之后的真实零人数心跳要求，避免沿用开赛前旧0人数。真实Redis双客户端已验证同Boot恢复、稳定签票、已消费拒绝及取消墓碑，未清生产库。
+
+新增真实HTTP Handler/Client回归验证元数据/路径/TTL和旧Boot拒绝、撤销后拒绝；gRPC验证Bearer元数据和未知/重复JSON字段。全Go race tags productiondeps,grpcdeps及vet曾实际通过，最新窄套件/隔离Redis和PG亦通过。五服务开发镜像已编译，证据Backend/BuildFiveImages.json；生成合同说明更新后还会重新编译当前最终镜像，不把旧镜像当当前部署。
+
+Native新增真实Gateway命令信封解析、命令身份验证和明确恢复；此前误按裸snapshot解析，旧DLL的CommandEnvelope回归已实际通过。完整Editor d2aa0bf4-3675-4873-8028-293b2a040a36通过；之后新增真实MainArena定义用例及开发UI Cook根，需再构建。正确引擎自动化首批GamePlatform.Arena9/9；DivineBeasts.Arena16项中2项失败分别为旧地图未配置预期及缺少真实Hero参数：旧期望现已改为DevelopmentOnly，下一批添加Hero参数，尚未记录后续通过。Monolith同步测试入口不支持latent队列，触发LatentCommands断言并退出；改用引擎Automation队列，不把失联视作通过。
+
+三个计时UI已在新Editor6084冷读34/32/30节点并保留CommonNumericTextBlock。读取地图对象后持有Python引用再切图触发UE World Memory Leaks检查，本代理改用直接从正式地图启动独立Editor25236；实际MainArena、正确GameMode、10个唯一出生标签和4600cm非Partial导航冷读通过，零dirty正常退出。主地图ColdReadback.json及清单已同步，Cook/网络/人工视觉仍未宣称通过。
+
+本地进程池为持续开发联调保留一局一进程语义，后端released且0人才换代；只清自己精确身份的进程，不扫描/杀其它会话。正在最终构建/正确原生测试、Cook/Stage及后端部署/双客户端实际运行；完整目标仍未完成。
+
+### 2026-10-15 独立审查修正续行
+
+最新完整Editor构建3dfb83b5成功；审查发现个人弃权误判整队、断线免伤/死亡桥失效、新Session入场汇合、返回分配幂等、队伍在线租约与内部Match调用认证六项。原生两项新增回归先实际失败（NativeReviewRedActual），修正后NativeReviewGreen两项成功。五模式正常/故障编排10场景已覆盖committed阶段新Session票消费后再汇合。HTTP内部认证及双Village未知响应重复返回回归先失败后通过。新增在线租约和队长离线收敛仍在补真实仓储回归。最终构建、RHI、Cook、部署和双客户端启动尚未完成。
+
+### 2026-10-15 最终构建前验证
+
+NativeFinalVerified实际32项全部Success（含GamePlatform.Arena九项、项目竞技、队伍合同、事件UI、真实竞技定义与角色生命周期）。完整回归曾发现零代次UnPossess清理和旧邀请测试参数，两处已修正；断线超时也明确通过Adapter撤销原受伤目标。后端全包productiondeps,grpcdeps竞态测试与go vet成功，真实Redis DB15/隔离PG模式均执行；复审追加的旧Boot预留重放已修正并通过受影响竞态回归。UI真实RHI色彩5张捕获与SourceToSlate通过，证据Game/Saved/Validation/UIColorRHI/Latest.json。下一步为最终Editor/Client/Server构建与独立Cook/Stage，然后更新三个业务容器及开发服务器，启动两个人工登录客户端。
+
+### 2026-10-15 最终运行与交付证据
+
+- 完整Editor：`Saved/Validation/FoundationM0/86b76305-dbee-4020-a7f4-0abf26ffad99/Build/result.json`，Passed／Eligible；Client与Server：`eba54912-6363-431a-886d-5ce9b856d66c/Build/result.json`，两个目标退出0。
+- Client Cook：`2a8ddcc8-02bd-4c4f-9c22-9a908122e2a5/Cook-FrontEndClient/result.json`，Passed；实际IoStore必需540项Missing=[]，包括组队、竞技UI和真实竞技地图；独立追加核对目标菜单的真实导出。Server Cook：`87e6e0eb-421f-46b8-ac75-83f901f48c9b/Cook-Server/result.json`，Passed；两地图及表现剥离门禁通过，另核四份竞技地图／定义的非空ExportBundleData。
+- 运行：`Saved/Validation/PartyArena20261015/Runtime-7164c5125842410ebe8f5d76a92373a1/Runtime.json`；Village PID39292、MainArena PID39528，可信Boot注册均为控制面202已核实；进程池宿主PID46300。客户端PID40916、46812均有SSLM可见窗口，人工登录，无自动凭据。
+- 后端：五镜像构建`Backend/BuildFiveImages.Release.json`；三个容器部署`Backend/Deploy.json`；网络实际核对`Backend/NetworksVerified.json`。初次更新发现Compose固定网络与原环境不一致，保留身份／资料容器后改为显式可配置网络；残留Match容器的错误网络连接也已纠正。最终五服务均在原`sslm-validation-8238653a-backend`，28181／18181—18184健康检查200。
+- 真实公开HTTP回归：`Backend/LiveGatewayParty.json`，6步骤通过：两开发账号认证、首次邀请原子创建队伍、本人事件观察收到邀请、接受后双方同队、按Revision转队长、解散并清空成员。对应可复现入口`Tests/Integration/Online/TestPartyGateway.ps1 -Run`，只操作本轮测试队伍，不自动登录游戏窗口；凭据不落盘。
+- 已移除本轮隔离Redis／PG容器并停止自有Zen助手，保留共享缓存；新包替换且确认旧包无进程引用后，删除旧Client／Server四个Stage／Cooked目录，另释放1.749GiB。构建顺序日志按原始字节恢复，实际新Cook顺序日志保留独立证据。
+- 中文说明检查范围：本轮平台队伍、匹配应用／事务／持久编排、HTTP／gRPC认证、控制面目标／票据恢复、原生淘汰／重连、事件ViewModel／Flow适配，以及构建、进程池和真实网关测试脚本；未全量审计历史源码。三层头文件门禁561公开头／1223类型／206边通过，生成物只读一致性检查、API文档门禁及diff空白检查通过。
+
+限制：Dedicated Server已有配置仍尝试解析被剥离的CommonUI viewport及InventoryClient定义类，各服务器各出现两条Warning，未出现Fatal／Critical／Assertion；两客户端无缺包／类警告。此处明确登记存量配置问题，不将其称为全项目零警告。真实客户端人工登录、互邀、旅行、对战、安全返回及物理断网尚未人工验收，HTTP／原生／Cook证据不能替代这些检查；5v5需要十个真实会话，当前两个窗口不能宣称五模式完整联机验收。开发白盒竞技、开发英雄技能和本地进程池均不是ProductionReady或实际Agones集群证明。
+
+最终端口复核补充：人工修正网络后，Match主机18183端口保留了Docker旧NAT；此时Gateway内部组队已通过，但不能沿用旧健康响应记为五端口通过。确认两个客户端仍在登录页、没有人工组队／对战后，只重新创建Match容器刷新端口发布，其他四服务和服务器进程保持不变。随后五个真实主机端口均200，真实Gateway六步骤回归再次通过，证据`Backend/LiveGatewayParty.AfterPortRepair.json`。最终汇总为`Saved/Validation/PartyArena20261015/FinalVerification.json`，没有将超时或旧响应当作成功。
+
+### 2026-10-15 本轮最终编译与原生回归
+
+平台Combat现按APawn控制者变化事件清除待施法选择，EndPlay配对解绑；竞技控制器不继承World控制器，因此不能只修World的UnPossess。该清理不推进AvatarGeneration，不取消已冻结弹体或既有连发。真实双PC交接回归验证同Pawn同Avatar保留、后继未选目标为空、原弹体仍追踪并Sweep造成一次12伤害。
+
+完整Client／Server构建`8d7d8c61-27ef-451d-9bbe-c8b787ff3dfb`两目标退出0；完整Editor构建`927f1acf-5e89-46f6-a033-adb7ea3d5df9`退出0并生成当前源码／receipt产物绑定证据。其后正式新进程执行33项，全部Success、failed=0、进程退出0，聚合`Saved/Validation/WorldEntryFix20261015/FinalNativeVerified.json`。两条非致命警告为既有GameplayCue扫描回退与独立表现夹具销毁无WorldContext，原始报告保留，不宣称原生零警告。8项平台弹体、两类技能的目标连发、零气势、3项施法条、控制策略和新版冰箭语义均真实运行。
+
+本轮SourceToSlate真实D3D RHI及5张重新生成截图通过，当前输入指纹与测试前一致，正式颜色发布门禁`TestUIColorRHI.ps1 -VerifyOnly`再次通过。鸟群真实GPU 9配置18采样亦全passed；这些原生／离线图形证据不等于双账号联网或人工玩法验收。
+
+### 2026-10-15 输入与开发入口后续最终换包
+
+A/D已改为左右侧移。登录新增十账号快捷入口与现有插件门户跳转；冰箭真实GPU修复、鸟群自然路线也纳入新包。完整三端构建及最新39项原生聚合均通过；新Client Cook为`ea610e38-13b5-451b-af74-92cbe65c500f`，Server Cook为`cd4f8a4b-da18-4ef5-9c01-9722caa61937`，实际资源/着色器/服务器剥离门禁均通过。两个SSLM窗口PID53732/42860已重启并观察到登录页，Village/MainArena已更新，五后端ready均200。旧包四个Stage/Cooked目录额外释放1.754GiB；保留身份/资料数据与共享缓存。完整证据、中文说明检查范围、存量服务器诊断及人工验收边界统一见`Docs/Implementation/WorldAndDevelopmentFollowup_20261015.md`，不沿用旧包的人工进入世界确认作为新包验收。

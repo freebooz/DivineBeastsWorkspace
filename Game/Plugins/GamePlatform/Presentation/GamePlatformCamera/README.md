@@ -29,3 +29,12 @@
 完整的职责、依赖、公开契约、状态机、生命周期、错误语义、性能边界、测试矩阵和交付门禁见 [ImplementationSpecification.md](Docs/ImplementationSpecification.md)。
 
 该规格已经固化方案 A，但运行代码尚未实施。下一阶段必须先由人工复核书面规格，再形成逐文件、测试驱动的实施计划；在真实 UE 编译、Automation、Review、Client Cook 和 Server 产物审计完成前，不得把规划项标记为已交付。
+
+
+## 2026-10-15电影镜头源码增量（待实际编译）
+
+本轮新增 `UGamePlatformCinematicCameraProfile`（电影镜头数据资产）和 `UGamePlatformCinematicCameraSubsystem`（本地玩家电影机位），以及数据校验Automation源码。这是对现有ClientOnly模块的增量，不是另建摄像机插件，也不意味着原规格中的模式账本、异步Data租约、输入迁移、完整CameraModifier已经实现。
+
+进入临时展示机位：在当前LocalPlayer上获取 `UGamePlatformCinematicCameraSubsystem`，调用 `BeginCinematicView(CameraActor, Profile)`；只允许当前本地世界已存在的Actor，返回false不修改视角。结束时调用 `EndCinematicView()`；只有当前ViewTarget仍归本次机位，且旧目标有效时才恢复。过渡使用引擎`SetViewTargetWithBlend`。电影Actor的传感器宽度、焦距及非竞技光圈/手动对焦由Profile设置；配置仅供客户端表现，不改变权威行为。
+
+**未完成**：在角色展示工作室及正式场景内创建/接入原生CineCamera、数据实例、序列和Demo；与已有输入/预览相机及MOBA视角进行完整整合；模式优先级和可抢占恢复；真实资产创建、Editor/Client/Server编译、Automation运行、Cook剥离及性能测量。该增量代码尚未在UE5.8中编译，应在工作环境恢复后优先验证CinematicCamera头文件/API与模块依赖，然后继续集成。

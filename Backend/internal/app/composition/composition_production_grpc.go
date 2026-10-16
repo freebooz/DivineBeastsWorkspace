@@ -32,9 +32,9 @@ import (
 	"divinebeasts/backend/internal/platform/messaging/natsjs"
 	"divinebeasts/backend/internal/platform/outbox"
 	// 可信库存事件在gRPC部署下仍使用受保护的内部HTTP控制入口。
-	"divinebeasts/backend/internal/transport/httpadapter"
 	"divinebeasts/backend/internal/transport/grpcadapter"
 	"divinebeasts/backend/internal/transport/grpcclient"
+	"divinebeasts/backend/internal/transport/httpadapter"
 )
 
 // RunGateway（生产gRPC模式）公网仍使用Shared OpenAPI HTTP，内部服务间调用使用gRPC。
@@ -51,12 +51,12 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	if config.Getenv("ONLINE_ONLY", "false") != "true" {
 		matchConn := mustGRPCConn(requiredEnvGRPC("MATCH_GRPC_TARGET"))
 		defer matchConn.Close()
-		client := grpcclient.NewMatchClient(matchConn)
+		client := grpcclient.NewMatchClient(matchConn, requiredEnvGRPC("GAMESERVERCONTROL_INTERNAL_TOKEN"))
 		party = client
 		matchmaking = client
 		gameServerControlConn := mustGRPCConn(requiredEnvGRPC("GAMESERVERCONTROL_GRPC_TARGET"))
 		defer gameServerControlConn.Close()
-		worldEntry = grpcclient.NewWorldEntryClient(gameServerControlConn, requiredEnvGRPC("GAME_DEFAULT_REGION"))
+		worldEntry = grpcclient.NewWorldEntryClient(gameServerControlConn, requiredEnvGRPC("GAME_DEFAULT_REGION"), requiredEnvGRPC("GAMESERVERCONTROL_INTERNAL_TOKEN"))
 	}
 	handler := gateway.NewAPI(gateway.Config{ContractVersion: generatedgp.ContractVersion}, identityClient, playerClient, party, matchmaking, worldEntry)
 	return servicehost.Run(ctx, cfg, handler)
@@ -117,7 +117,32 @@ func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {
 		return err
 	}
 	service := matchapi.NewService(parties, redisstore.NewTicketRepository(redisClient, ticketTTL), productionIDGRPC)
-	return runGRPCHost(ctx, cfg, func(server *grpc.Server) { grpcadapter.RegisterMatchAPIServer(server, service) })
+	settings, err := configuredMatchmakingSettings()
+	if err != nil {
+		return err
+	}
+	if settings.Enabled {
+		pool := mustPostgresGRPC(ctx)
+		defer pool.Close()
+		conn := mustGRPCConn(requiredEnvGRPC("GAMESERVERCONTROL_GRPC_TARGET"))
+		defer conn.Close()
+		control := grpcclient.NewRuntimeControlClient(conn, requiredEnvGRPC("GAMESERVERCONTROL_INTERNAL_TOKEN"))
+		if err = attachMatchRuntime(service, settings, postgres.NewMatchOperationStore(pool), control, productionIDGRPC); err != nil {
+			return err
+		}
+		closeOutbox, err := startMatchOperationOutbox(ctx, pool, cfg.Name)
+		if err != nil {
+			return err
+		}
+		defer closeOutbox()
+	} else if err = service.ConfigureMatchmaking(settings); err != nil {
+		return err
+	}
+	return runMatchWorkerAndHost(ctx, service, settings.Enabled, func(owned context.Context) error {
+		return runGRPCHost(owned, cfg, func(server *grpc.Server) {
+			grpcadapter.RegisterMatchAPIServer(server, service, requiredEnvGRPC("GAMESERVERCONTROL_INTERNAL_TOKEN"))
+		})
+	})
 }
 
 func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
@@ -135,13 +160,17 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	worldAllocator := gameserver.NewRegistryAllocator(registry)
 	agonesClient := agones.NewClient(agones.ClientConfig{BaseURL: requiredEnvGRPC("AGONES_API_URL"), BearerToken: readBearerTokenGRPC()})
 	arenaAllocator := agones.NewRegistryBackedAllocator(agonesClient, registry, requiredEnvGRPC("AGONES_NAMESPACE"), requiredEnvGRPC("GAME_SERVER_BUILD_VERSION"))
-	transfer := servertransfer.NewServiceWithStores(
+	transfer := servertransfer.NewServiceWithAllStores(
 		[]byte(requiredEnvGRPC("TRANSFER_TICKET_SECRET")),
 		func() time.Time { return time.Now().UTC() },
 		redisstore.NewTransferReplayStore(redisClient),
-		redisstore.NewTransferEpochStore(redisClient))
+		redisstore.NewTransferEpochStore(redisClient),
+		redisstore.NewTransferIssuanceStore(redisClient))
 	matchOutboxStore := postgres.NewMatchOutboxStore(pool)
 	service := gameservercontrol.NewServiceWithAllocators(registry, worldAllocator, arenaAllocator, transfer, match.NewResultService(matchOutboxStore), func() time.Time { return time.Now().UTC() })
+	if err := service.ConfigureArenaLifecycle(redisstore.NewArenaLifecycleStore(redisClient)); err != nil {
+		return err
+	}
 
 	dispatcher := outbox.NewDispatcherWithOptions(matchOutboxStore, natsjs.NewOutboxPublisher(publisher), func() time.Time { return time.Now().UTC() }, cfg.Name+":"+config.Getenv("POD_NAME", "unknown"), 30*time.Second, 100)
 	go func() {
@@ -150,7 +179,7 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 
 	return runGRPCHost(ctx, cfg, func(server *grpc.Server) {
 		grpcadapter.RegisterGameServerSharedServer(server, service)
-		grpcadapter.RegisterGameServerControlInternalServer(server, service)
+		grpcadapter.RegisterGameServerControlInternalServer(server, service, requiredEnvGRPC("GAMESERVERCONTROL_INTERNAL_TOKEN"))
 		grpcadapter.RegisterServerTransferServer(server, service, productionIDGRPC, 30*time.Second)
 		grpcadapter.RegisterMatchResultServer(server, service)
 	})

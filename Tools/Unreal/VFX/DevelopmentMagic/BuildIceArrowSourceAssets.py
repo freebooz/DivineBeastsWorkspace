@@ -159,9 +159,12 @@ class Mesh:
 
 def make_meshes():
     """主箭+卫星冰刃、单碎晶、落点冰冠和流带网格，各自独立便于Niagara组合。"""
-    lance=Mesh();lance.shard((-48,0,0),(1,0,0),120,13)
-    for i in range(5):
-        a=i*math.tau/5;lance.shard((-42,math.cos(a)*12,math.sin(a)*12),(1,math.cos(a)*.12,math.sin(a)*.12),68,5)
+    # 参考图为清晰单根长箭与后掠晶棱；旧版五根等长平行冰块会看成扇状光片。
+    lance=Mesh();lance.shard((-95,0,0),(1,0,0),220,10)
+    for i in range(4):
+        a=i*math.tau/4
+        lance.shard((-65,math.cos(a)*9,math.sin(a)*9),
+                    (.85,math.cos(a)*.32,math.sin(a)*.32),85,6)
     lance.save('SM_DBA_IceArrow_CrystalLance')
     shard=Mesh();shard.shard((0,0,0),(0,0,1),75,12);shard.save('SM_DBA_IceArrow_CrystalShard')
     crown=Mesh();crown.shard((0,0,0),(0,0,1),105,14)

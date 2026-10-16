@@ -1,0 +1,372 @@
+{
+  "chapter": "CH18_NatureDruid",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Nature_Leaf_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.160259,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Leaf_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.185966,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Leaf_03.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.147629,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Petal_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.149078,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Petal_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.160023,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Petal_03.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.147274,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Grass_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.241528,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Flower_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Flower_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Vine_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.18676,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "horizontal_seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Vine_Normal_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Root_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.248665,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_RootGrowth_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.231251,
+      "alpha_min": 0,
+      "alpha_max": 248,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_Ground_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_GroundRune_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_HealingMote_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.120281,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Nature_LifeGlow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.464554,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Moon_Glow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.572609,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Moon_Rune_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Star_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.121429,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Star_Glint_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.133011,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Sun_RadialRay_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Sun_Disc_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.230499,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    }
+  ],
+  "count": 23,
+  "expected_count": 23
+}

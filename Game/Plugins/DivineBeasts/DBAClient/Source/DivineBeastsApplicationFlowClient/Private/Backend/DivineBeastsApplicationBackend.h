@@ -6,13 +6,6 @@
 
 class UGamePlatformOnlineClientSubsystem;
 
-struct FDivineBeastsWorldAssignmentPayload
-{
-    FDivineBeastsWorldAssignmentSummary Summary;
-    FString Endpoint;
-    FString TransferTicket;
-};
-
 using FDivineBeastsProfileCompletion =
     TFunction<void(bool, FDivineBeastsPlayerProfile, EDivineBeastsFlowError)>;
 using FDivineBeastsRosterCompletion =

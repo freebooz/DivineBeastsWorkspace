@@ -30,6 +30,8 @@ type TeamResult struct {
 
 // Result（比赛结果）不接受Game Client直接提交。
 type Result struct {
+	EndReason     string         // 服务器结束原因；完整单局竞技使用Elimination/TimeLimit/PlayerForfeit等稳定枚举名。
+	EndRevision   int32          // 同一比赛只提交首个终局修订1；旧接口零值保留兼容。
 	MatchID       string         // MatchID（比赛ID），同时作为结果提交幂等键。
 	ArenaModeID   string         // ArenaModeID（1v1~5v5竞技模式ID）。
 	GameServerID  string         // GameServerID（权威MainArena服务器实例ID）。

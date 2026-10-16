@@ -10,6 +10,7 @@
 #include "Gameplay/DivineBeastsWorldControlState.h"
 #include "Components/InputComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformInteractableComponent.h"
 #include "Components/GamePlatformInteractorComponent.h"
 #include "HAL/PlatformTime.h"
@@ -455,6 +456,10 @@ AActor* ADivineBeastsWorldPlayerController::FindPointerTarget() const
 void ADivineBeastsWorldPlayerController::SetSelectedWorldTarget(AActor* Target)
 {
     if (Target && (!IsValid(Target) || Target->GetWorld() != GetWorld())) Target = nullptr;
+    // 显式点击即重交当前化身意图；同Actor重生或首次复制未就绪后，允许再次点击恢复有效选择。
+    // 界面选择不等于攻击授权；受控Pawn可靠提交目标意图，平台按世界/化身/距离二次检查。
+    if (APawn* ControlledPawn=GetPawn())
+        if (auto* Combat=ControlledPawn->FindComponentByClass<UGamePlatformCombatComponent>()) Combat->RequestProjectileTarget(Target);
     if (SelectedWorldTarget.Get() == Target) return;
     if (AActor* Previous = SelectedWorldTarget.Get()) Previous->OnEndPlay.RemoveDynamic(this, &ThisClass::HandleSelectedTargetEndPlay);
     SelectedWorldTarget = Target;

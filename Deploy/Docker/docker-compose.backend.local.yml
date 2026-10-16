@@ -55,6 +55,16 @@ services:
       GRPC_PORT: "9083"
       SERVICE_VERSION: local
       SHUTDOWN_TIMEOUT: 15s
+      # 完整开发竞技显式启用；默认关闭，不将白盒内容声明为正式可发布。
+      MATCHMAKING_ENABLED: ${MATCHMAKING_ENABLED:-false}
+      MATCHMAKING_DEVELOPMENT: ${MATCHMAKING_DEVELOPMENT:-true}
+      MATCHMAKING_MAP_ID: divinebeasts.world.main_arena@1
+      MATCHMAKING_CONTENT_REVISION: MainArena.Development.20261015.1
+      MATCHMAKING_RULE_REVISION: "1"
+      MATCHMAKING_HERO_CATALOG_REVISION: "1"
+      MATCHMAKING_ALLOWED_REGIONS: ${GAME_DEFAULT_REGION:-us-west}
+      GAMESERVERCONTROL_SERVICE_URL: http://gameservercontrolservice:8084
+      GAMESERVERCONTROL_INTERNAL_TOKEN: ${GAMESERVERCONTROL_INTERNAL_TOKEN:?required}
     ports:
       - "127.0.0.1:${MATCH_HOST_PORT:-8083}:8083"
     networks:
@@ -112,4 +122,5 @@ services:
 
 networks:
   backend:
-    name: divinebeasts-backend-local
+    # 已运行环境可显式保留原网络，避免更新三个业务容器时误迁移身份/玩家数据服务。
+    name: ${BACKEND_NETWORK_NAME:-divinebeasts-backend-local}

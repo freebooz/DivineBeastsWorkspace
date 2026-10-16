@@ -1,4 +1,4 @@
-#if WITH_DEV_AUTOMATION_TESTS
+﻿#if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
 #include "Arena/GamePlatformArenaTypes.h"
@@ -53,7 +53,10 @@ bool FDivineBeastsArenaFiveModesTest::RunTest(const FString&)
         Error.Reset();
         TestFalse(TEXT("Production remains blocked until approved"), Spec->ValidateProduction(Error));
         TestTrue(TEXT("Production failure reason present"), !Error.IsEmpty());
-        TestTrue(TEXT("No guessed production map"), Spec->MapId.IsNone());
+        // 已保存的开发地图不是生产批准：显式开发参数可用，默认生产门禁仍必须拒绝。
+        TestEqual(TEXT("仅指向已交付MainArena开发地图"),Spec->MapId,FName(TEXT("divinebeasts.world.main_arena@1")));
+        TestTrue(TEXT("显式开发运行可解析该模式"),Spec->ValidateRuntime(true,Error));
+        TestFalse(TEXT("未启用开发时仍拒绝"),Spec->ValidateRuntime(false,Error));
     }
 
     FString CatalogError;

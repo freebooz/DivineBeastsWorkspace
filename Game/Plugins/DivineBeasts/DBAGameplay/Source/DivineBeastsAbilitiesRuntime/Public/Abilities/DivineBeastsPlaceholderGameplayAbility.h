@@ -12,9 +12,10 @@ enum class EDivineBeastsPlaceholderAbilityMode : uint8
 {
     Primary,       // 普通攻击：权威前向单体伤害
     Passive,       // 被动：暂不实现，禁止主动释放
-    Fireball,      // 火焰弹：单枚直线弹体
-    Frostbolt,     // 寒冰箭：单枚直线弹体
-    ArcaneMissiles // 奥术飞弹：三枚螺旋连射弹体
+    Fireball,      // 火焰弹：单枚可选目标追踪弹体
+    Frostbolt,     // 寒冰箭：单枚可选目标追踪弹体
+    ArcaneMissiles, // 奥术飞弹：三枚螺旋连射弹体
+    Healing        // 数字1治疗：追加枚举值5，保留Primary及历史资产枚举值不迁号。
 };
 
 /**
@@ -32,7 +33,7 @@ class DIVINEBEASTSABILITIESRUNTIME_API UDivineBeastsPlaceholderGameplayAbility
 public:
     UDivineBeastsPlaceholderGameplayAbility();
 
-    /** 普攻/被动/三类法术的临时行为；正式技能只需要在AbilitySet替换授权类。 */
+    /** 普攻/被动/三类法术/治疗的行为；Primary资产保持稳定身份并显式迁移到Healing。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
     EDivineBeastsPlaceholderAbilityMode PlaceholderMode =
         EDivineBeastsPlaceholderAbilityMode::Passive;
@@ -65,6 +66,9 @@ public:
         const FGameplayAbilityActivationInfo ActivationInfo,
         bool bReplicateEndAbility, bool bWasCancelled) override;
 
+    /** 三类占位法术及治疗使用原生GAS无成本合同，抵御旧蓝图成本引用；普通攻击继续遵循原配置。 */
+    virtual UGameplayEffect* GetCostGameplayEffect() const override;
+
     virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle,
         const FGameplayAbilityActorInfo* ActorInfo,
         FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
@@ -74,7 +78,11 @@ public:
 private:
     /** 本次激活的所有权代次，取消、死亡和重新激活时拒绝迟到弹体。 */
     FGuid ActivationToken;
-    FGamePlatformCombatSpec CastSpec;
+    /** 激活拥有来源强引用；由GC跟踪，终态统一释放。 */
+    UPROPERTY(Transient) FGamePlatformCombatSpec CastSpec;
+    /** 跨连发仅保存弱身份；最初无目标与原锁定目标销毁必须区分，失效不能降级直线。 */
+    TWeakObjectPtr<AActor> FrozenProjectileTarget;
+    bool bHadFrozenTarget = false;
     FName CastStyle = NAME_None;
     int32 RemainingShots = 0;
     int32 ReleasedShots = 0;

@@ -15,13 +15,15 @@ import (
 
 // ClientConfig（Backend内部HTTP客户端配置）描述下游服务BaseURL和请求超时。
 type ClientConfig struct {
-	BaseURL string        // BaseURL（服务地址，例如http://identityservice:8081）。
-	Timeout time.Duration // Timeout（单次请求超时）。
+	BearerToken string        // 可选服务内部凭据，仅进入Authorization；Match部署必须配置，不进入业务JSON。
+	BaseURL     string        // BaseURL（服务地址，例如http://identityservice:8081）。
+	Timeout     time.Duration // Timeout（单次请求超时）。
 }
 
 type internalClient struct {
-	baseURL string
-	client  *http.Client
+	bearerToken string // 内部服务凭据，禁止日志或URL传播。
+	baseURL     string
+	client      *http.Client
 }
 
 func newInternalClient(cfg ClientConfig) internalClient {
@@ -32,7 +34,7 @@ func newInternalClient(cfg ClientConfig) internalClient {
 	if timeout <= 0 {
 		timeout = 5 * time.Second
 	}
-	return internalClient{baseURL: strings.TrimRight(cfg.BaseURL, "/"), client: &http.Client{Timeout: timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}
+	return internalClient{bearerToken: cfg.BearerToken, baseURL: strings.TrimRight(cfg.BaseURL, "/"), client: &http.Client{Timeout: timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}
 }
 
 func (c internalClient) post(ctx context.Context, path string, request, response any) error {
@@ -57,6 +59,9 @@ func (c internalClient) get(ctx context.Context, path string, response any) erro
 }
 
 func (c internalClient) do(req *http.Request, response any) error {
+	if c.bearerToken != "" {
+		req.Header.Set("Authorization", "Bearer "+c.bearerToken)
+	}
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err

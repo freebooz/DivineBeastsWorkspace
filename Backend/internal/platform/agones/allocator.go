@@ -5,14 +5,16 @@ package agones
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
-	"strconv"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -105,22 +107,25 @@ func BuildAllocationRequest(input AllocationInput) (GameServerAllocation, error)
 	if input.ArenaModeID != "" {
 		annotations["divinebeasts.io/arena-mode-id"] = input.ArenaModeID
 	}
+	selectors := []GameServerSelector{{MatchLabels: map[string]string{"server-role": roleLabel, "experience": input.ExperienceID, "region": input.RegionID, "build-version": input.BuildVersion}, GameServerState: "Ready"}}
+	labels := map[string]string{"server-role": roleLabel, "experience": input.ExperienceID}
+	if input.MatchID != "" {
+		// Agones有序选择先找同意图Allocated实例，再申请Ready；响应丢失不会主动重复消耗新池容量。
+		// MatchID可超过Kubernetes标签限制，固定摘要稳定兼容；原始身份仍保留在annotation。
+		digest := sha256.Sum256([]byte(input.MatchID))
+		label := hex.EncodeToString(digest[:20])
+		labels["divinebeasts.io/match-key"] = label
+		first := GameServerSelector{GameServerState: "Allocated", MatchLabels: map[string]string{"server-role": roleLabel, "experience": input.ExperienceID, "region": input.RegionID, "build-version": input.BuildVersion, "divinebeasts.io/match-key": label}}
+		selectors = append([]GameServerSelector{first}, selectors...)
+	}
 	return GameServerAllocation{
 		APIVersion: "allocation.agones.dev/v1",
 		Kind:       "GameServerAllocation",
 		Spec: AllocationSpec{
-			Selectors: []GameServerSelector{{
-				MatchLabels: map[string]string{
-					"server-role":   roleLabel,
-					"experience":    input.ExperienceID,
-					"region":        input.RegionID,
-					"build-version": input.BuildVersion,
-				},
-				GameServerState: "Ready",
-			}},
+			Selectors:  selectors,
 			Scheduling: "Packed",
 			Metadata: ObjectMeta{
-				Labels:      map[string]string{"server-role": roleLabel, "experience": input.ExperienceID},
+				Labels:      labels,
 				Annotations: annotations,
 			},
 		},
@@ -298,6 +303,11 @@ func NewRegistryBackedAllocator(client *Client, registry *gameserver.Registry, n
 func (a *RegistryBackedAllocator) Allocate(ctx context.Context, req gameserver.AllocationRequest) (gameserver.Instance, error) {
 	if req.RoleID != gameserver.RoleMainArena {
 		return gameserver.Instance{}, errors.New("AGONES_ROLE_UNSUPPORTED: RegistryBackedAllocator仅用于MainArena")
+	}
+	if current, found, err := a.registry.FindMatchAllocation(req); err != nil {
+		return gameserver.Instance{}, err
+	} else if found {
+		return current, nil
 	}
 	result, err := a.client.Allocate(ctx, AllocationInput{Namespace: a.namespace, RoleID: req.RoleID, ExperienceID: req.ExperienceID, RegionID: req.RegionID, BuildVersion: a.buildVersion, MatchID: req.MatchID})
 	if err != nil {

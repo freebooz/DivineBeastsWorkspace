@@ -5,19 +5,131 @@
   "description": "Dedicated Server查询的统一运行任务；世界任务和竞技任务共用基础字段。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["assignmentId", "gameServerId", "serverRoleId", "experienceId", "worldId", "regionId", "assignmentType"],
+  "required": [
+    "assignmentId",
+    "gameServerId",
+    "serverRoleId",
+    "experienceId",
+    "worldId",
+    "regionId",
+    "assignmentType"
+  ],
   "properties": {
-    "assignmentId": {"type": "string", "minLength": 1},
-    "gameServerId": {"type": "string", "minLength": 1},
-    "serverRoleId": {"type": "string", "minLength": 1},
-    "experienceId": {"type": "string", "minLength": 1},
-    "worldId": {"type": "string", "minLength": 1},
-    "regionId": {"type": "string", "minLength": 1},
-    "assignmentType": {"type": "string", "enum": ["world", "arena"]},
-    "matchId": {"type": ["string", "null"]},
-    "arenaModeId": {"type": ["string", "null"]},
-    "mapId": {"type": ["string", "null"]},
-    "teamSize": {"type": "integer", "minimum": 0},
-    "totalPlayers": {"type": "integer", "minimum": 0}
+    "assignmentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gameServerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "serverRoleId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "experienceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worldId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "regionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assignmentType": {
+      "type": "string",
+      "enum": [
+        "world",
+        "arena"
+      ]
+    },
+    "matchId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "arenaModeId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mapId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "teamSize": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "totalPlayers": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "projectRuleRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "竞技批准规则修订；世界任务可省略，旧竞技消费者兼容缺失，新完整链路必须提供。"
+    },
+    "contentRevision": {
+      "type": "string",
+      "minLength": 1,
+      "description": "实际部署内容修订。"
+    },
+    "heroCatalogRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "锁定英雄目录修订。"
+    },
+    "roster": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "playerId",
+          "teamId",
+          "characterId",
+          "partyId",
+          "slotIndex",
+          "heroDefinitionId"
+        ],
+        "properties": {
+          "playerId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teamId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "characterId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "partyId": {
+            "type": "string",
+            "description": "原子队伍身份，单排为空。"
+          },
+          "slotIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9,
+            "description": "整场唯一出生槽位0至TotalPlayers-1。"
+          },
+          "heroDefinitionId": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
   }
 }

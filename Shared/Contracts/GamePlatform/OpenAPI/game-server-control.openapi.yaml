@@ -643,6 +643,8 @@ components:
         StartedAt: { type: string, format: date-time, description: 开始 UTC 时间。 }
         EndedAt: { type: string, format: date-time, description: 结束 UTC 时间。 }
         WinningTeamID: { type: string, description: 获胜队伍标识；平局时为空字符串。 }
+        EndReason: { type: string, description: 完整单局竞技必须提供服务器结束原因；旧调用兼容空值。 }
+        EndRevision: { type: integer, minimum: 0, maximum: 1, description: 完整单局竞技终局修订必须为1；旧调用零值兼容。 }
         Teams:
           type: array
           items: { $ref: '#/components/schemas/TeamResultResponse' }

@@ -1,4 +1,4 @@
-#requires -Version 7.0
+﻿#requires -Version 7.0
 <#
 .SYNOPSIS
 只读检查锁定引擎导出的客户端IoStore清单中是否包含前端运行必需的软引用资产。
@@ -8,7 +8,7 @@
 退出0表示包内容门禁通过，1表示缺失或清单无效；不代表登录、材质效果或新手村联机通过。
 #>
 [CmdletBinding()]
-param([Parameter(Mandatory)][string]$ContainerCsv, [string]$ReportPath, [switch]$DevelopmentSkills)
+param([Parameter(Mandatory)][string]$ContainerCsv, [string]$ReportPath, [switch]$DevelopmentSkills,[switch]$DevelopmentArena)
 $ErrorActionPreference = 'Stop'
 try {
     # 引擎CSV头和值带空格；按实际列名裁剪后读取，避免把有效清单误判为空。
@@ -167,6 +167,15 @@ try {
                 $required += "DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_Dev${spell}$stage.uasset"
             }
         }
+    }
+    if($DevelopmentArena){
+        # 同一实际容器必须含竞技地图、三份定义、全部组队/竞技页面及公用行/玉石材质，缺一即拒绝发布。
+        $required+='DBAWorldPack_MainArena/Content/Maps/L_DBA_MainArena.umap'
+        foreach($name in @('World_MainArena','Experience_MainArena','Pawn_ArenaCharacter')){$required+="DBAWorldPack_MainArena/Content/Definitions/DA_DBA_$name.uasset"}
+        foreach($name in @('PartyPanel','PartyInviteModal','PartyReadyCheckModal','PartyApplications','PartyListEntry')){$required+="DBAUIPack_Core/Content/UI/Social/WBP_DBA_$name.uasset"}
+        foreach($name in @('Matchmaking','MatchFoundReady','HeroSelection','Scoreboard','PostMatch')){$required+="DBAArena/Content/UI/Screens/WBP_DBA_UI_Arena_$name.uasset"}
+        $required+='DBAArena/Content/UI/HUD/WBP_DBA_UI_ArenaHUD.uasset'
+        $required+='DBAUIPack_Core/Content/UI/Materials/Social/M_DBA_PartyJade_V1.uasset'
     }
     # 软路径在C++目录中构造，地图引用扫描不能发现；要求实际导出数据而非配置或仅包名。
     $missing = @($required | Where-Object {

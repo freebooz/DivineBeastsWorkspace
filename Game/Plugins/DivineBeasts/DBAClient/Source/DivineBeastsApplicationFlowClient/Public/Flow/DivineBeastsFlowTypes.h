@@ -170,6 +170,14 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsWorldAssignmentSummary
     UPROPERTY(BlueprintReadOnly) int64 SessionEpoch = 0;
 };
 
+/** 已认证后端返回的一次性旅行材料；仅C++流程/传输边界按值移动，禁止进入蓝图、Widget、日志或URL。 */
+struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsWorldAssignmentPayload
+{
+    FDivineBeastsWorldAssignmentSummary Summary;
+    FString Endpoint;
+    FString TransferTicket;
+};
+
 /** FDivineBeastsFlowViewState（UI只读流程投影）。 */
 USTRUCT(BlueprintType)
 struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsFlowViewState

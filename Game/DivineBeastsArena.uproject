@@ -191,6 +191,10 @@
     {
       "Name": "DBAWorldPack_Village",
       "Enabled": true
+    },
+    {
+      "Name": "DBAWorldPack_MainArena",
+      "Enabled": true
     }
   ]
 }

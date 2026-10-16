@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"sort"
 	"sync"
 
 	"divinebeasts/backend/internal/modules/matchmaking"
@@ -36,11 +35,13 @@ type CreateMatchmakingTicketInput struct {
 
 // Service（Match业务API服务）组合Party和Matchmaking仓储并落实名单锁定与请求幂等规则。
 type Service struct {
-	parties    PartyRepository
-	tickets    TicketRepository
-	nextID     func(prefix string) string
-	observerMu sync.Mutex // 仅管理本实例在途观察；业务数据与跨进程通知仍归仓储。
-	observers  map[string]*partyObserver
+	parties             PartyRepository
+	tickets             TicketRepository
+	nextID              func(prefix string) string
+	observerMu          sync.Mutex // 仅管理本实例在途观察；业务数据与跨进程通知仍归仓储。
+	observers           map[string]*partyObserver
+	matchmakingSettings *MatchmakingSettings // 组合根启动前设置；nil仅保留旧测试装配，不启用新生命周期命令。
+	matchmakingRuntime  MatchmakingRuntime   // 真实持久步骤/本人迁移提供者；缺失时绝不发布假准入。
 }
 
 // NewService（创建Match业务API服务）注入Party仓储、Ticket仓储和ID生成器。
@@ -70,86 +71,13 @@ func (s *Service) CreateParty(ctx context.Context, playerID, displayName string)
 	return cloneParty(value), nil
 }
 
-// CreateMatchmakingTicket（创建匹配票据）按ClientRequestID保证幂等，并在Party进入Queue前锁定Roster。
+// CreateMatchmakingTicket在同一仓储事务提交名单锁、票据、唯一玩家预留与主体幂等回执。
+// 单人无需建立队伍；已经属于小队的玩家不能用空PartyID绕开原子名单。
 func (s *Service) CreateMatchmakingTicket(ctx context.Context, actorPlayerID string, input CreateMatchmakingTicketInput) (matchmaking.Ticket, error) {
-	if actorPlayerID == "" || input.ClientRequestID == "" || input.RegionID == "" {
-		return matchmaking.Ticket{}, errors.New("PlayerID、ClientRequestID和RegionID不能为空")
+	if actorPlayerID == "" || input.ClientRequestID == "" || input.RegionID == "" || len(actorPlayerID) > 128 || len(input.ClientRequestID) > 128 || len(input.RegionID) > 128 || len(input.PartyID) > 128 {
+		return matchmaking.Ticket{}, errors.New("MATCH_COMMAND_INVALID: 报名主体、请求或区域无效")
 	}
-	// 请求ID只在主体域内唯一；摘要分开存储，异参重试明确冲突，而不是创建另一票据或返回他人资料。
-	requestKey := scopedOperationKey(actorPlayerID, "matchmaking", input.ClientRequestID)
-	fingerprint := fingerprintOf(input)
-	if current, found, err := s.tickets.GetByClientRequestID(ctx, requestKey); err != nil {
-		return matchmaking.Ticket{}, err
-	} else if found {
-		if current.RequestFingerprint != fingerprint {
-			return matchmaking.Ticket{}, errors.New("MATCH_IDEMPOTENCY_CONFLICT: 同一请求标识对应不同参数")
-		}
-		return current, nil
-	}
-
-	partyID := input.PartyID
-	memberIDs := []string{actorPlayerID}
-	var currentParty *party.Party
-	var originalPartyRevision int64
-	if partyID != "" {
-		value, err := s.parties.Get(ctx, partyID)
-		if err != nil {
-			return matchmaking.Ticket{}, err
-		}
-		if value.LeaderPlayerID != actorPlayerID {
-			return matchmaking.Ticket{}, errors.New("PARTY_NOT_LEADER: 只有队长可以开始匹配")
-		}
-		if value.RosterLocked {
-			return matchmaking.Ticket{}, errors.New("PARTY_ROSTER_LOCKED: Party已经进入匹配")
-		}
-		originalPartyRevision = value.Revision
-		if err := value.SelectArenaMode(actorPlayerID, input.ArenaModeID); err != nil {
-			return matchmaking.Ticket{}, err
-		}
-		value.LockRoster()
-		currentParty = value
-		memberIDs = make([]string, 0, len(value.Members))
-		for playerID := range value.Members {
-			memberIDs = append(memberIDs, playerID)
-		}
-		sort.Strings(memberIDs)
-	}
-
-	ticket, err := matchmaking.NewTicket(matchmaking.CreateTicketRequest{
-		TicketID:       s.nextID("matchmaking"),
-		GameID:         "divine-beasts",
-		ArenaModeID:    input.ArenaModeID,
-		PartyID:        partyID,
-		PartyMemberIDs: memberIDs,
-		Region:         input.RegionID,
-	})
-	if err != nil {
-		if currentParty != nil {
-			currentParty.UnlockRoster()
-		}
-		return matchmaking.Ticket{}, err
-	}
-	if currentParty != nil {
-		atomic, ok := s.parties.(AtomicPartyRepository)
-		if !ok {
-			return matchmaking.Ticket{}, errors.New("PARTY_ATOMIC_STORE_REQUIRED: 匹配必须使用条件事务仓储")
-		}
-		if _, err := atomic.Update(ctx, currentParty.ID, originalPartyRevision, "", "", func(value *party.Party) error { *value = *currentParty.Clone(); return nil }); err != nil {
-			return matchmaking.Ticket{}, err
-		}
-	}
-	ticket.RequestFingerprint = fingerprint
-	if err := s.tickets.Save(ctx, requestKey, ticket); err != nil {
-		if currentParty != nil {
-			if atomic, ok := s.parties.(AtomicPartyRepository); ok {
-				if _, rollbackErr := atomic.Update(ctx, currentParty.ID, currentParty.Revision, "", "", func(value *party.Party) error { value.UnlockRoster(); return nil }); rollbackErr != nil {
-					return matchmaking.Ticket{}, errors.Join(err, fmtPartyRollback(rollbackErr))
-				}
-			}
-		}
-		return matchmaking.Ticket{}, err
-	}
-	return ticket, nil
+	return s.enqueueAtomically(ctx, actorPlayerID, input)
 }
 
 // MemoryPartyRepository（内存Party仓储）用于单元测试与本地联调。
@@ -159,6 +87,7 @@ type MemoryPartyRepository struct {
 	players  map[string]string
 	receipts map[string]PartyOperationReceipt
 	changes  map[string]*partyMemoryChanges // 测试/本地事件日志，不替代生产Redis Stream。
+	queue    *matchmaking.QueueState        // 与Party、成员索引使用同一事务锁；只用于明确本地/测试仓储。
 }
 
 // NewMemoryPartyRepository（创建内存Party仓储）创建线程安全Party存储。
@@ -188,6 +117,9 @@ func (r *MemoryPartyRepository) Save(_ context.Context, value *party.Party) erro
 		return errors.New("PARTY_CONDITIONAL_UPDATE_REQUIRED: 已有队伍必须条件更新")
 	}
 	for id := range value.Members {
+		if r.queue != nil && r.queue.Reservations[id] != "" {
+			return errors.New("MATCH_PLAYER_RESERVED: 排队或比赛期间不能创建其他队伍")
+		}
 		if owner := r.players[id]; owner != "" && owner != value.ID {
 			return errors.New("PARTY_ALREADY_MEMBER: 玩家已在其他队伍")
 		}

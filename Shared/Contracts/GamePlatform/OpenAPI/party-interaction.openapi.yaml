@@ -75,11 +75,11 @@ components:
       additionalProperties: false
       required: [partyId, action, clientRequestId, expectedRevision]
       properties:
-        partyId: { $ref: '#/components/schemas/Identifier' }
+        partyId: { type: string, maxLength: 128, description: 目标队伍；仅初次invite且expectedRevision为0允许空，创建和邀请在同一事务提交。 }
         action:
           type: string
           enum: [invite, requestJoin, acceptRequest, declineRequest, cancelRequest, ready, transferLeader, leave, kick, disband]
-          description: 操作白名单；不包含竞技准备或匹配接受，避免不同阶段共用含混命令。
+          description: 操作白名单；ready只回复当前普通队伍活动准备；找到比赛后的逐人确认使用独立matchmaking reply。
         targetPlayerId: { type: string, maxLength: 128, description: 邀请、移除或转让目标；操作需要时必须非空。 }
         membershipRequestId: { type: string, maxLength: 128, description: 邀请或申请ID，相关操作必须非空。 }
         clientRequestId: { $ref: '#/components/schemas/Identifier' }
@@ -88,13 +88,16 @@ components:
     PartySnapshot:
       type: object
       additionalProperties: false
-      required: [hasParty, partyId, leaderPlayerId, revision, rosterLocked, members, requests, serverTimeUtc]
+      required: [hasParty, partyId, leaderPlayerId, revision, rosterLocked, activityId, readyCheckId, readyDeadlineUtc, members, requests, serverTimeUtc]
       properties:
         hasParty: { type: boolean, description: 本人是否真实属于普通队伍。 }
         partyId: { type: string, description: 无队伍时为空字符串。 }
         leaderPlayerId: { type: string, description: 无队伍时为空，不用于客户端授予管理权。 }
         revision: { $ref: '#/components/schemas/Revision' }
         rosterLocked: { type: boolean, description: 真实后端名单锁，客户端不得直接解锁。 }
+        activityId: { type: string, description: 当前服务器所选中立活动身份，可为空。 }
+        readyCheckId: { type: string, description: 当前限时准备会话，无会话为空。 }
+        readyDeadlineUtc: { type: [string, "null"], format: date-time, description: 当前准备UTC截止，无会话为null；客户端动画不改变资格。 }
         members:
           type: array
           maxItems: 5

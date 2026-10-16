@@ -19,10 +19,10 @@ bool FDivineBeastsArenaServerProjectExtension::ResolveModeSpec(
     FGamePlatformArenaModeSpec& OutModeSpec,
     FString& OutError) const
 {
-    return FDivineBeastsArenaModeCatalog::ValidateAssignmentAgainstProduction(
+    return FDivineBeastsArenaModeCatalog::ValidateAssignmentForRuntime(
         Assignment,
         OutModeSpec,
-        OutError);
+        OutError,FDivineBeastsArenaModeCatalog::IsDevelopmentEnabledForCurrentProcess());
 }
 
 bool FDivineBeastsArenaServerProjectExtension::ValidateAndConfigureGameMode(
@@ -137,6 +137,17 @@ bool FDivineBeastsArenaServerProjectExtension::IsHeroEligible(
         return false;
     }
 
+    // 仅显式开发进程允许后端固定名单中的候选英雄；真实Definition必须已经通过统一Data预热，不能从客户端选人绕过。
+    if(FDivineBeastsArenaModeCatalog::IsDevelopmentEnabledForCurrentProcess())
+    {
+        for(const auto& Pair:WorldAssemblies)if(auto* Mode=Pair.Key.Get())
+        {
+            if(Mode->GetAssignment().ArenaModeId!=ArenaModeId)continue;
+            for(const auto& Slot:Mode->GetAssignment().Roster)
+                if(Slot.PlayerId==PlayerId&&Slot.HeroDefinitionId==HeroDefinitionId){OutReason.Reset();return true;}
+        }
+        OutReason=TEXT("开发英雄不属于本局后端锁定名单。");return false;
+    }
     const TArray<IDivineBeastsArenaTrustedHeroEligibilityProvider*> Providers =
         IModularFeatures::Get()
             .GetModularFeatureImplementations<IDivineBeastsArenaTrustedHeroEligibilityProvider>(

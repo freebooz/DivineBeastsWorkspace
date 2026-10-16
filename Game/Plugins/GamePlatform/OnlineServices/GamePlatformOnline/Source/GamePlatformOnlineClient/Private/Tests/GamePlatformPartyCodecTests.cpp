@@ -23,7 +23,7 @@ bool FGamePlatformPartyCodecTest::RunTest(const FString&)
     TestFalse(TEXT("玩家身份不能由数值自动转成字符串"),GamePlatformPartyCodec::DecodeSnapshot(Valid.Replace(TEXT("\"partyId\":\"party-1\""),TEXT("\"partyId\":123")),Value));
     FGamePlatformPartyCommand Command;
     Command.PartyId=TEXT("party-1"); Command.Action=TEXT("invite"); Command.ClientRequestId=TEXT("request-1");
-    Command.ExpectedRevision=MAX_int64; Command.TargetPlayerId=TEXT("p2");
+    Command.ExpectedRevision=MAX_int64; Command.TargetPlayerId=TEXT("p2"); Command.MembershipRequestId=TEXT("invite-1");
     FString Body;
     TestTrue(TEXT("合法邀请可编码"), GamePlatformPartyCodec::EncodeCommand(Command, Body));
     TestTrue(TEXT("修订以字符串编码"), Body.Contains(TEXT("\"9223372036854775807\"")));
@@ -51,6 +51,16 @@ bool FGamePlatformPartyCodecTest::RunTest(const FString&)
     TestFalse(TEXT("别的逻辑请求回执不能完成当前命令"),GamePlatformPartyCodec::DecodeCommandResult(Receipt.Replace(TEXT("request-1"),TEXT("request-2")),Command,Value));
     TestEqual(TEXT("错误回执不污染已有快照"),Value.PartyId,FString(TEXT("sentinel")));
     TestFalse(TEXT("错误受影响队伍拒绝"),GamePlatformPartyCodec::DecodeCommandResult(Receipt.Replace(TEXT("\"affectedPartyId\":\"party-1\""),TEXT("\"affectedPartyId\":\"party-2\"")),Command,Value));
+    // 观察快照必须绑定本人作用域和严格游标；其中任一嵌套字段失败都不能发布半成功。
+    const FString Observation=TEXT("{\"scopeId\":\"party/p1\",\"cursor\":\"123-0\",\"changed\":true,\"resyncRequired\":false,\"serverTimeUtc\":\"2026-10-14T00:00:00Z\",\"snapshot\":")+Valid+TEXT(",\"invitations\":")+Inbox+TEXT("}");
+    FGamePlatformPartyResult Observed;
+    TestTrue(TEXT("完整事件观察可以解析"),GamePlatformPartyCodec::DecodeObservation(Observation,Observed));
+    TestEqual(TEXT("持久游标保留"),Observed.ObservationCursor,FString(TEXT("123-0")));
+    TestEqual(TEXT("嵌套邀请保留"),Observed.Invitations.Num(),1);
+    TestFalse(TEXT("拒绝数字观察游标"),GamePlatformPartyCodec::DecodeObservation(Observation.Replace(TEXT("\"123-0\""),TEXT("123")),Observed));
+    TestFalse(TEXT("拒绝游标整数溢出"),GamePlatformPartyCodec::DecodeObservation(Observation.Replace(TEXT("123-0"),TEXT("18446744073709551616-0")),Observed));
+    TestFalse(TEXT("拒绝隐式变化布尔"),GamePlatformPartyCodec::DecodeObservation(Observation.Replace(TEXT("\"changed\":true"),TEXT("\"changed\":\"true\"")),Observed));
+    TestEqual(TEXT("失败保留此前授权观察"),Observed.ObservationCursor,FString(TEXT("123-0")));
     return true;
 }
 #endif

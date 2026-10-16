@@ -19,10 +19,12 @@ struct FGamePlatformArenaServerBackendConfig
     FString BaseUrl;
     FString InternalToken;
     FString GameServerId;
+    /** 与唯一平台生命周期实际注册代次相同；不能另造Boot。 */
+    FString ServerBootId;
 
     bool IsValid() const
     {
-        return !BaseUrl.IsEmpty() && !InternalToken.IsEmpty() && !GameServerId.IsEmpty();
+        return !BaseUrl.IsEmpty() && !InternalToken.IsEmpty() && !GameServerId.IsEmpty()&&!ServerBootId.IsEmpty();
     }
 };
 
@@ -40,11 +42,8 @@ public:
     void GetAssignment(
         TFunction<void(bool bSuccess, const FGamePlatformArenaAssignment& Assignment, const FString& Error)> Completion);
 
-    void ValidateAndConsumeTransferTicket(
-        const FString& TransferTicket,
-        const FString& PlayerId,
-        const FString& MatchId,
-        TFunction<void(bool bSuccess, const FGamePlatformArenaTransferTicketClaims& Claims, const FString& Error)> Completion);
+    /** 世界退出解绑并取消本适配器全部请求；不撤销已经提交的后端结果。 */
+    void CancelAll();
 
     void SubmitMatchResult(
         const FGamePlatformArenaMatchResult& Result,
@@ -54,5 +53,7 @@ private:
     FString MakeUrl(const FString& RelativePath) const;
     void ApplyCommonHeaders(const TSharedRef<class IHttpRequest, ESPMode::ThreadSafe>& Request) const;
 
+    void TrackRequest(const TSharedRef<class IHttpRequest,ESPMode::ThreadSafe>& Request);
     FGamePlatformArenaServerBackendConfig Config;
+    TArray<TSharedPtr<class IHttpRequest,ESPMode::ThreadSafe>> Requests;
 };

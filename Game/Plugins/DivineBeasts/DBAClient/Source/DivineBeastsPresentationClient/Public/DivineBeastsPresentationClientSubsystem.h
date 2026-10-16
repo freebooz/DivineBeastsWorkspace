@@ -18,6 +18,7 @@
 class UGamePlatformPresentationClientSubsystem;
 class UWorld;struct FGamePlatformWeatherSnapshot;
 class AGamePlatformCombatProjectile;
+struct FGamePlatformCombatEvent;
 struct FGamePlatformCombatProjectileFacts;
 
 DECLARE_MULTICAST_DELEGATE_FourParams(
@@ -169,6 +170,7 @@ public:
 private:
     friend class FDivineBeastsPresentationActivationRegressionTest;
     friend class FDivineBeastsDevelopmentMagicLifecycleTest;
+    friend class FDivineBeastsHealingPresentationTest;
     // 默认村庄鸟群回归只核验本地意图与世界清理；不绕过真实内容资格或假定GPU播放。
     friend class FDivineBeastsVillageDefaultBirdsTest;
     struct FActivePack
@@ -356,6 +358,8 @@ private:
     /** 跨同步Submit/预载通知后核对本世界绑定所有权；解绑先换代，旧调用不能尾写新账本。 */
     FGuid DevelopmentMagicBindingToken;
     FDelegateHandle DevelopmentMagicSpawnHandle, DevelopmentMagicPackHandle;
+    /** 仅订阅本世界确认治疗反馈；目标实例由平台去重事实决定，旅行时成对解绑。 */
+    FDelegateHandle DevelopmentHealingFeedbackHandle;
     FDivineBeastsPresentationContentPackHandle DevelopmentMagicPack;
     TMap<TWeakObjectPtr<AGamePlatformCombatProjectile>, FDevelopmentMagicFlight> DevelopmentMagicFlights;
     void BindDevelopmentMagicWorld(UWorld* World);
@@ -364,6 +368,8 @@ private:
     /** EndPlay与内容包状态无关，缺资源/未初始化弹体也必须立即撤销订阅与账本。 */
     UFUNCTION() void HandleDevelopmentMagicEndPlay(AActor* Actor, EEndPlayReason::Type Reason);
     void HandleDevelopmentMagicFacts(AGamePlatformCombatProjectile* Actor, const FGamePlatformCombatProjectileFacts& Facts);
+    /** 只将实际受疗者的同代确认事件投影为树叶视觉，不读UI选择、不补血、不回放旧世界事件。 */
+    void HandleDevelopmentHealingFeedback(const FGamePlatformCombatEvent& Event);
     void HandleDevelopmentMagicPack(const FDivineBeastsPresentationContentPackHandle& Handle,
         EDivineBeastsPresentationContentPackState State, const FString& Error);
 };

@@ -2,6 +2,9 @@
 #include "GamePlatformOnlineClientSubsystem.h"
 #include "Party/GamePlatformPartyCodec.h"
 #include "Async/Async.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 
 namespace
 {
@@ -25,6 +28,24 @@ namespace
         }
         return Result;
     }
+}
+
+FGamePlatformOnlineRequestHandle UGamePlatformOnlineClientSubsystem::ObserveParty(const FString& Cursor,
+    const FGamePlatformOnlineRequestOptions& Options,TFunction<void(const FGamePlatformPartyResult&)> Completion)
+{
+    // POST观察无业务写副作用；每次传输身份只用于现有安全重放门禁，不创建队伍或匹配票据。
+    FGamePlatformAuthenticatedRequest Request;Request.Verb=TEXT("POST");Request.RelativePath=TEXT("/v1/party/observe");
+    Request.bIdempotent=true;Request.IdempotencyKey=FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens);
+    TSharedRef<FJsonObject> Body=MakeShared<FJsonObject>();Body->SetStringField(TEXT("cursor"),Cursor);
+    Body->SetNumberField(TEXT("waitMilliseconds"),Cursor.IsEmpty()?0:8000);
+    FJsonSerializer::Serialize(Body,TJsonWriterFactory<>::Create(&Request.Body));
+    return SendAuthenticatedRequest(MoveTemp(Request),Options,[Done=MoveTemp(Completion)](FGamePlatformAuthenticatedResponse Response)
+    {
+        FGamePlatformPartyResult Result;
+        if (!Response.IsSuccess()) Result=Failure(Response,false);
+        else if (!GamePlatformPartyCodec::DecodeObservation(Response.Body,Result)) Result.ErrorCode=TEXT("Party.InvalidResponse");
+        Result.HttpStatusCode=Response.HttpStatusCode;if(Done)Done(Result);
+    });
 }
 
 FGamePlatformOnlineRequestHandle UGamePlatformOnlineClientSubsystem::GetCurrentParty(

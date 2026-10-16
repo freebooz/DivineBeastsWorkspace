@@ -80,11 +80,16 @@ func (c *MatchClient) GetPartyInvitations(ctx context.Context, playerID string) 
 var _ gateway.PartyInteractionPort = (*MatchClient)(nil)
 
 // ObserveParty单次最长25秒；Context退出会取消服务端等待，普通命令的5秒预算不变。
-func(c *MatchClient)ObserveParty(ctx context.Context,actor,cursor string,wait time.Duration)(party.Observation,error){
-	ctx,cancel:=context.WithTimeout(ctx,25*time.Second);defer cancel()
+func (c *MatchClient) ObserveParty(ctx context.Context, actor, cursor string, wait time.Duration) (party.Observation, error) {
+	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
+	defer cancel()
 	var result party.Observation
-	response,err:=c.client.ObserveParty(ctx,&matchv1.PartyObservationRequest{PlayerId:actor,Cursor:cursor,WaitMilliseconds:wait.Milliseconds()})
-	if err!=nil{return result,err};err=decodePartyRPC(response,&result);return result,err
+	response, err := c.client.ObserveParty(ctx, &matchv1.PartyObservationRequest{PlayerId: actor, Cursor: cursor, WaitMilliseconds: wait.Milliseconds()})
+	if err != nil {
+		return result, err
+	}
+	err = decodePartyRPC(response, &result)
+	return result, err
 }
 
-var _ gateway.PartyObservationPort=(*MatchClient)(nil)
+var _ gateway.PartyObservationPort = (*MatchClient)(nil)

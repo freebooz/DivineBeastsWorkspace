@@ -1,0 +1,315 @@
+{
+  "chapter": "CH24_CombatReadability",
+  "count": 22,
+  "success": true,
+  "textures": [
+    {
+      "name": "T_VFX_Telegraph_Circle_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.465611,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Donut_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.342323,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Sector_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.136597,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Line_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.161008,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Cross_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.200214,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Cone_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.096807,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Countdown_Radial_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.329929,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Countdown_Linear_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.139538,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Countdown_Sector_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.139614,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Arrow_Inward_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.107132,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Arrow_Outward_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.109739,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Arrow_Forward_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.153678,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Arrow_Rotate_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.155329,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Boundary_Sharp_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.057018,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Boundary_Soft_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.404125,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Boundary_Double_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.107658,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_Boundary_Broken_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.054382,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_FriendlyRing_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.403645,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Telegraph_HealingArea_01",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.426853,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Marker_Target_01",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.154205,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Marker_BossTarget_01",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.142822,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    },
+    {
+      "name": "T_VFX_Marker_Critical_01",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "minimum": 0,
+      "maximum": 255,
+      "nonzero_coverage": 0.170372,
+      "black_corners": true,
+      "safe_border_max": 0,
+      "success": true
+    }
+  ]
+}

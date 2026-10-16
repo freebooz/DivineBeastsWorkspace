@@ -26,9 +26,4 @@ protected:
     virtual void RefreshInitialState() override;
     virtual void OnViewModelStateChanged(int32 Revision,int32 PageGeneration) override;
     virtual void NativeDestruct() override;
-private:
-    /** 仅显示服务器阶段截止，不轮询网络，不在归零时决定权威阶段。 */
-    void UpdatePhaseClock();
-    FTimerHandle PhaseClock;
-    double PhaseDeadlineMonotonicSeconds=0.0;
 };

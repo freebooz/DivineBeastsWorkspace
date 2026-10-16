@@ -1,4 +1,5 @@
-FROM golang:1.23 AS builder
+# 五个后端薄入口统一使用锁定Go工具链；本地镜像只供开发联调，生产依赖由独立构建配置显式装配。
+FROM golang:1.23.12 AS builder
 
 WORKDIR /workspace/Backend
 

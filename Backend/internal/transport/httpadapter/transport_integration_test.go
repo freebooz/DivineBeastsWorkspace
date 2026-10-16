@@ -51,9 +51,9 @@ func TestInternalHTTPTransportRoundTrip(t *testing.T) {
 	}
 
 	matchService := matchapi.NewService(matchapi.NewMemoryPartyRepository(), matchapi.NewMemoryTicketRepository(), func(prefix string) string { return prefix + "-fixed" })
-	matchServer := httptest.NewServer(NewMatchHandler(matchService))
+	matchServer := httptest.NewServer(NewMatchHandler(matchService, "test-only-match-internal"))
 	defer matchServer.Close()
-	matchClient := NewMatchClient(ClientConfig{BaseURL: matchServer.URL})
+	matchClient := NewMatchClient(ClientConfig{BaseURL: matchServer.URL, BearerToken: "test-only-match-internal"})
 	party, err := matchClient.CreateParty(ctx, login.PlayerID)
 	if err != nil {
 		t.Fatalf("Match HTTP创建Party失败: %v", err)

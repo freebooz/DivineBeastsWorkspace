@@ -4,6 +4,8 @@
 
 namespace GamePlatformPartyCodec
 {
+    /** 完整校验嵌套快照/收件箱后一次赋值；游标不允许隐式类型转换。 */
+    bool DecodeObservation(const FString& Body, FGamePlatformPartyResult& Out);
     /** 完整解析后原子赋值；失败保留调用者旧快照，不接受精度受损、超限或身份矛盾的响应。 */
     bool DecodeSnapshot(const FString& Body, FGamePlatformPartySnapshot& Out);
     /** 解析本人邀请数组；失败保留旧输出，最多20项，重复身份失败关闭。 */

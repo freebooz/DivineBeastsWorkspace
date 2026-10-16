@@ -19,7 +19,7 @@ type PartyInteractionPort interface {
 
 // registerPartyRoutes（注册公开交互）仅注册现有主Gateway，不增加独立登录或社交服务入口。
 func (a *api) registerPartyRoutes() {
-	a.mux.HandleFunc("POST /v1/party/observe",a.requireAuth(a.observeParty))
+	a.mux.HandleFunc("POST /v1/party/observe", a.requireAuth(a.observeParty))
 	a.mux.HandleFunc("GET /v1/party/current", a.requireAuth(a.getCurrentParty))
 	a.mux.HandleFunc("GET /v1/party/invitations", a.requireAuth(a.getPartyInvitations))
 	a.mux.HandleFunc("POST /v1/party/commands", a.requireAuth(a.commandParty))
@@ -103,7 +103,7 @@ func PartyErrorCode(err error) string {
 	case "PARTY_NOT_LEADER", "PARTY_NOT_MEMBER", "PARTY_REQUEST_FORBIDDEN", "PARTY_NOT_FOUND", "PARTY_REQUEST_NOT_FOUND",
 		"PARTY_COMMAND_INVALID", "PARTY_REQUEST_INVALID", "PARTY_REVISION_CONFLICT", "PARTY_IDEMPOTENCY_CONFLICT",
 		"PARTY_ROSTER_LOCKED", "PARTY_FULL", "PARTY_ALREADY_MEMBER", "PARTY_MEMBER_UNAVAILABLE", "PARTY_REQUEST_EXPIRED",
-		"PARTY_REQUEST_TERMINAL", "PARTY_REQUEST_CONFLICT", "PARTY_REQUEST_PENDING", "PARTY_REQUEST_LIMIT":
+		"PARTY_REQUEST_TERMINAL", "PARTY_REQUEST_CONFLICT", "PARTY_REQUEST_PENDING", "PARTY_REQUEST_LIMIT", "PARTY_READY_EXPIRED", "MATCH_PLAYER_RESERVED":
 		return code
 	default:
 		return "SERVICE_UNAVAILABLE"

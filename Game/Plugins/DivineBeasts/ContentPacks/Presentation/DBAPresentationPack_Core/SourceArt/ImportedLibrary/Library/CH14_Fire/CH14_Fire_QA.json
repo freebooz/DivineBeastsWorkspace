@@ -1,0 +1,396 @@
+{
+  "chapter": "CH14_Fire",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Fire_Flame_Flipbook_4x4_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.275522,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "frame_gutter_max": 0,
+      "atlas_grid": "4x4",
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Flame_Flipbook_8x8_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.294919,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "frame_gutter_max": 0,
+      "atlas_grid": "8x8",
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Flame_Flipbook_8x8_02.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.283416,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "frame_gutter_max": 0,
+      "atlas_grid": "8x8",
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Burst_Flipbook_8x8_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.238628,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "frame_gutter_max": 0,
+      "atlas_grid": "8x8",
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Explosion_Flipbook_8x8_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.403943,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "frame_gutter_max": 0,
+      "atlas_grid": "8x8",
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Smoke_Flipbook_8x8_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.213111,
+      "alpha_min": 0,
+      "alpha_max": 199,
+      "frame_gutter_max": 0,
+      "atlas_grid": "8x8",
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Smoke_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.165386,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Smoke_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.203804,
+      "alpha_min": 0,
+      "alpha_max": 254,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Ember_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.214531,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Spark_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.122623,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Noise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Noise_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_FlowMap_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_FlowMap_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_HeatDistortion_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_HeatDistortion_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_BurnDecal_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_Scorch_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.632507,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_LavaCrack_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fire_LavaFlow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lava_Normal_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lava_FlowMap_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lava_CrustMask_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    }
+  ],
+  "count": 23,
+  "expected_count": 23
+}

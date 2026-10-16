@@ -378,6 +378,120 @@ func (x *PartyReadRequest) GetPlayerId() string {
 	return ""
 }
 
+// 仅可信Gateway填写主体，游标和等待期限来自Shared观察合同。
+type PartyObservationRequest struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId         string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	Cursor           string                 `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	WaitMilliseconds int64                  `protobuf:"varint,3,opt,name=wait_milliseconds,json=waitMilliseconds,proto3" json:"wait_milliseconds,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *PartyObservationRequest) Reset() {
+	*x = PartyObservationRequest{}
+	mi := &file_match_service_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PartyObservationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PartyObservationRequest) ProtoMessage() {}
+
+func (x *PartyObservationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_match_service_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PartyObservationRequest.ProtoReflect.Descriptor instead.
+func (*PartyObservationRequest) Descriptor() ([]byte, []int) {
+	return file_match_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PartyObservationRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *PartyObservationRequest) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
+func (x *PartyObservationRequest) GetWaitMilliseconds() int64 {
+	if x != nil {
+		return x.WaitMilliseconds
+	}
+	return 0
+}
+
+// actor_json仅供内部服务，禁止客户端覆盖其中会话/角色；command_json由Shared公开合同拥有。
+type MatchmakingCommandRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActorJson     string                 `protobuf:"bytes,1,opt,name=actor_json,json=actorJson,proto3" json:"actor_json,omitempty"`
+	CommandJson   string                 `protobuf:"bytes,2,opt,name=command_json,json=commandJson,proto3" json:"command_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MatchmakingCommandRequest) Reset() {
+	*x = MatchmakingCommandRequest{}
+	mi := &file_match_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MatchmakingCommandRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchmakingCommandRequest) ProtoMessage() {}
+
+func (x *MatchmakingCommandRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_match_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchmakingCommandRequest.ProtoReflect.Descriptor instead.
+func (*MatchmakingCommandRequest) Descriptor() ([]byte, []int) {
+	return file_match_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *MatchmakingCommandRequest) GetActorJson() string {
+	if x != nil {
+		return x.ActorJson
+	}
+	return ""
+}
+
+func (x *MatchmakingCommandRequest) GetCommandJson() string {
+	if x != nil {
+		return x.CommandJson
+	}
+	return ""
+}
+
 // PartyCommandRequest内command_json必须通过与公网相同的严格64KiB对象解码；不含认证材料。
 type PartyCommandRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -389,7 +503,7 @@ type PartyCommandRequest struct {
 
 func (x *PartyCommandRequest) Reset() {
 	*x = PartyCommandRequest{}
-	mi := &file_match_service_proto_msgTypes[5]
+	mi := &file_match_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -401,7 +515,7 @@ func (x *PartyCommandRequest) String() string {
 func (*PartyCommandRequest) ProtoMessage() {}
 
 func (x *PartyCommandRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_match_service_proto_msgTypes[5]
+	mi := &file_match_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -414,7 +528,7 @@ func (x *PartyCommandRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PartyCommandRequest.ProtoReflect.Descriptor instead.
 func (*PartyCommandRequest) Descriptor() ([]byte, []int) {
-	return file_match_service_proto_rawDescGZIP(), []int{5}
+	return file_match_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PartyCommandRequest) GetPlayerId() string {
@@ -443,7 +557,7 @@ type PartyDataResponse struct {
 
 func (x *PartyDataResponse) Reset() {
 	*x = PartyDataResponse{}
-	mi := &file_match_service_proto_msgTypes[6]
+	mi := &file_match_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -455,7 +569,7 @@ func (x *PartyDataResponse) String() string {
 func (*PartyDataResponse) ProtoMessage() {}
 
 func (x *PartyDataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_match_service_proto_msgTypes[6]
+	mi := &file_match_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -468,7 +582,7 @@ func (x *PartyDataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PartyDataResponse.ProtoReflect.Descriptor instead.
 func (*PartyDataResponse) Descriptor() ([]byte, []int) {
-	return file_match_service_proto_rawDescGZIP(), []int{6}
+	return file_match_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PartyDataResponse) GetPayloadJson() string {
@@ -519,20 +633,34 @@ const file_match_service_proto_rawDesc = "" +
 	"\n" +
 	"error_code\x18\b \x01(\tR\terrorCode\"/\n" +
 	"\x10PartyReadRequest\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"U\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"{\n" +
+	"\x17PartyObservationRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x16\n" +
+	"\x06cursor\x18\x02 \x01(\tR\x06cursor\x12+\n" +
+	"\x11wait_milliseconds\x18\x03 \x01(\x03R\x10waitMilliseconds\"]\n" +
+	"\x19MatchmakingCommandRequest\x12\x1d\n" +
+	"\n" +
+	"actor_json\x18\x01 \x01(\tR\tactorJson\x12!\n" +
+	"\fcommand_json\x18\x02 \x01(\tR\vcommandJson\"U\n" +
 	"\x13PartyCommandRequest\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12!\n" +
 	"\fcommand_json\x18\x02 \x01(\tR\vcommandJson\"U\n" +
 	"\x11PartyDataResponse\x12!\n" +
 	"\fpayload_json\x18\x01 \x01(\tR\vpayloadJson\x12\x1d\n" +
 	"\n" +
-	"error_code\x18\x02 \x01(\tR\terrorCode2\x84\x05\n" +
+	"error_code\x18\x02 \x01(\tR\terrorCode2\x84\n" +
+	"\n" +
 	"\fMatchService\x12t\n" +
 	"\vCreateParty\x121.divinebeasts.backend.match.v1.CreatePartyRequest\x1a2.divinebeasts.backend.match.v1.CreatePartyResponse\x12\x98\x01\n" +
 	"\x17CreateMatchmakingTicket\x12=.divinebeasts.backend.match.v1.CreateMatchmakingTicketRequest\x1a>.divinebeasts.backend.match.v1.CreateMatchmakingTicketResponse\x12s\n" +
 	"\x0eReadPartyState\x12/.divinebeasts.backend.match.v1.PartyReadRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12t\n" +
 	"\fCommandParty\x122.divinebeasts.backend.match.v1.PartyCommandRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12x\n" +
-	"\x13GetPartyInvitations\x12/.divinebeasts.backend.match.v1.PartyReadRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponseB:Z8divinebeasts/backend/internal/generated/match/v1;matchv1b\x06proto3"
+	"\x13GetPartyInvitations\x12/.divinebeasts.backend.match.v1.PartyReadRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12x\n" +
+	"\fObserveParty\x126.divinebeasts.backend.match.v1.PartyObservationRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12y\n" +
+	"\x14ReadMatchmakingState\x12/.divinebeasts.backend.match.v1.PartyReadRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12~\n" +
+	"\x12ObserveMatchmaking\x126.divinebeasts.backend.match.v1.PartyObservationRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12\x80\x01\n" +
+	"\x12CommandMatchmaking\x128.divinebeasts.backend.match.v1.MatchmakingCommandRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponse\x12\x85\x01\n" +
+	"\x17GetMatchmakingMigration\x128.divinebeasts.backend.match.v1.MatchmakingCommandRequest\x1a0.divinebeasts.backend.match.v1.PartyDataResponseB:Z8divinebeasts/backend/internal/generated/match/v1;matchv1b\x06proto3"
 
 var (
 	file_match_service_proto_rawDescOnce sync.Once
@@ -546,32 +674,44 @@ func file_match_service_proto_rawDescGZIP() []byte {
 	return file_match_service_proto_rawDescData
 }
 
-var file_match_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_match_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_match_service_proto_goTypes = []any{
 	(*CreatePartyRequest)(nil),              // 0: divinebeasts.backend.match.v1.CreatePartyRequest
 	(*CreatePartyResponse)(nil),             // 1: divinebeasts.backend.match.v1.CreatePartyResponse
 	(*CreateMatchmakingTicketRequest)(nil),  // 2: divinebeasts.backend.match.v1.CreateMatchmakingTicketRequest
 	(*CreateMatchmakingTicketResponse)(nil), // 3: divinebeasts.backend.match.v1.CreateMatchmakingTicketResponse
 	(*PartyReadRequest)(nil),                // 4: divinebeasts.backend.match.v1.PartyReadRequest
-	(*PartyCommandRequest)(nil),             // 5: divinebeasts.backend.match.v1.PartyCommandRequest
-	(*PartyDataResponse)(nil),               // 6: divinebeasts.backend.match.v1.PartyDataResponse
+	(*PartyObservationRequest)(nil),         // 5: divinebeasts.backend.match.v1.PartyObservationRequest
+	(*MatchmakingCommandRequest)(nil),       // 6: divinebeasts.backend.match.v1.MatchmakingCommandRequest
+	(*PartyCommandRequest)(nil),             // 7: divinebeasts.backend.match.v1.PartyCommandRequest
+	(*PartyDataResponse)(nil),               // 8: divinebeasts.backend.match.v1.PartyDataResponse
 }
 var file_match_service_proto_depIdxs = []int32{
-	0, // 0: divinebeasts.backend.match.v1.MatchService.CreateParty:input_type -> divinebeasts.backend.match.v1.CreatePartyRequest
-	2, // 1: divinebeasts.backend.match.v1.MatchService.CreateMatchmakingTicket:input_type -> divinebeasts.backend.match.v1.CreateMatchmakingTicketRequest
-	4, // 2: divinebeasts.backend.match.v1.MatchService.ReadPartyState:input_type -> divinebeasts.backend.match.v1.PartyReadRequest
-	5, // 3: divinebeasts.backend.match.v1.MatchService.CommandParty:input_type -> divinebeasts.backend.match.v1.PartyCommandRequest
-	4, // 4: divinebeasts.backend.match.v1.MatchService.GetPartyInvitations:input_type -> divinebeasts.backend.match.v1.PartyReadRequest
-	1, // 5: divinebeasts.backend.match.v1.MatchService.CreateParty:output_type -> divinebeasts.backend.match.v1.CreatePartyResponse
-	3, // 6: divinebeasts.backend.match.v1.MatchService.CreateMatchmakingTicket:output_type -> divinebeasts.backend.match.v1.CreateMatchmakingTicketResponse
-	6, // 7: divinebeasts.backend.match.v1.MatchService.ReadPartyState:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
-	6, // 8: divinebeasts.backend.match.v1.MatchService.CommandParty:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
-	6, // 9: divinebeasts.backend.match.v1.MatchService.GetPartyInvitations:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: divinebeasts.backend.match.v1.MatchService.CreateParty:input_type -> divinebeasts.backend.match.v1.CreatePartyRequest
+	2,  // 1: divinebeasts.backend.match.v1.MatchService.CreateMatchmakingTicket:input_type -> divinebeasts.backend.match.v1.CreateMatchmakingTicketRequest
+	4,  // 2: divinebeasts.backend.match.v1.MatchService.ReadPartyState:input_type -> divinebeasts.backend.match.v1.PartyReadRequest
+	7,  // 3: divinebeasts.backend.match.v1.MatchService.CommandParty:input_type -> divinebeasts.backend.match.v1.PartyCommandRequest
+	4,  // 4: divinebeasts.backend.match.v1.MatchService.GetPartyInvitations:input_type -> divinebeasts.backend.match.v1.PartyReadRequest
+	5,  // 5: divinebeasts.backend.match.v1.MatchService.ObserveParty:input_type -> divinebeasts.backend.match.v1.PartyObservationRequest
+	4,  // 6: divinebeasts.backend.match.v1.MatchService.ReadMatchmakingState:input_type -> divinebeasts.backend.match.v1.PartyReadRequest
+	5,  // 7: divinebeasts.backend.match.v1.MatchService.ObserveMatchmaking:input_type -> divinebeasts.backend.match.v1.PartyObservationRequest
+	6,  // 8: divinebeasts.backend.match.v1.MatchService.CommandMatchmaking:input_type -> divinebeasts.backend.match.v1.MatchmakingCommandRequest
+	6,  // 9: divinebeasts.backend.match.v1.MatchService.GetMatchmakingMigration:input_type -> divinebeasts.backend.match.v1.MatchmakingCommandRequest
+	1,  // 10: divinebeasts.backend.match.v1.MatchService.CreateParty:output_type -> divinebeasts.backend.match.v1.CreatePartyResponse
+	3,  // 11: divinebeasts.backend.match.v1.MatchService.CreateMatchmakingTicket:output_type -> divinebeasts.backend.match.v1.CreateMatchmakingTicketResponse
+	8,  // 12: divinebeasts.backend.match.v1.MatchService.ReadPartyState:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	8,  // 13: divinebeasts.backend.match.v1.MatchService.CommandParty:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	8,  // 14: divinebeasts.backend.match.v1.MatchService.GetPartyInvitations:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	8,  // 15: divinebeasts.backend.match.v1.MatchService.ObserveParty:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	8,  // 16: divinebeasts.backend.match.v1.MatchService.ReadMatchmakingState:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	8,  // 17: divinebeasts.backend.match.v1.MatchService.ObserveMatchmaking:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	8,  // 18: divinebeasts.backend.match.v1.MatchService.CommandMatchmaking:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	8,  // 19: divinebeasts.backend.match.v1.MatchService.GetMatchmakingMigration:output_type -> divinebeasts.backend.match.v1.PartyDataResponse
+	10, // [10:20] is the sub-list for method output_type
+	0,  // [0:10] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_match_service_proto_init() }
@@ -585,7 +725,7 @@ func file_match_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_match_service_proto_rawDesc), len(file_match_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

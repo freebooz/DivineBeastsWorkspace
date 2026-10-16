@@ -23,7 +23,25 @@ UGamePlatformAbilitySystemComponent* ADivineBeastsCharacter::GetGamePlatformAbil
 UGamePlatformCombatComponent* ADivineBeastsCharacter::GetGamePlatformCombatComponent() const { return Combat; }
 bool ADivineBeastsCharacter::CanSourceCombat() const
 { return CharacterIdentity->IsCharacterReady() && !Combat->IsCombatDead() && AbilitySystem->EvaluateActivationEligibility().IsSuccess(); }
-bool ADivineBeastsCharacter::CanReceiveCombat() const { return CanSourceCombat(); }
+bool ADivineBeastsCharacter::CanReceiveCombat() const
+{ return CanSourceCombat() || (IsDisconnectedCombatTargetRetained() && !Combat->IsCombatDead()); }
+bool ADivineBeastsCharacter::IsDisconnectedCombatTargetRetained()const
+{
+    return HasAuthority() && !GetController() && DisconnectedCombatTargetGeneration>0 &&
+        DisconnectedCombatTargetGeneration==GetCombatAvatarGeneration() && CharacterIdentity->IsCharacterReady() &&
+        AbilitySystem->GetOwnerActor()==this && AbilitySystem->GetAvatarActor()==this &&
+        Combat->GetCombatAvatarGeneration()==DisconnectedCombatTargetGeneration;
+}
+bool ADivineBeastsCharacter::SetDisconnectedCombatTargetRetained(int32 ExpectedGeneration,bool bRetained)
+{
+    if(!HasAuthority()||ExpectedGeneration<=0||ExpectedGeneration!=GetCombatAvatarGeneration()||
+        Combat->GetCombatAvatarGeneration()!=ExpectedGeneration)return false;
+    if(bRetained&&(!CharacterIdentity->IsCharacterReady()||Combat->IsCombatDead()||
+        AbilitySystem->GetOwnerActor()!=this||AbilitySystem->GetAvatarActor()!=this))return false;
+    DisconnectedCombatTargetGeneration=bRetained?ExpectedGeneration:0;
+    if(!bRetained&&!GetController())AbilitySystem->ClearAbilityAvatar();
+    return true;
+}
 int32 ADivineBeastsCharacter::GetCombatAvatarGeneration() const { return CharacterIdentity->GetAvatarGeneration(); }
 void ADivineBeastsCharacter::BeginPlay()
 {
@@ -57,14 +75,15 @@ void ADivineBeastsCharacter::UnPossessed()
     if (HasAuthority()) AITarget->SetAITargetEnabled(false);
     GameplayEligibility->SetServerPlayerActive(false);
     AbilityCast->CancelConfirmedCast(AbilityCast->GetCastFacts().ActivationId);
-    AbilitySystem->ClearAbilityAvatar();
+    // 只有服务器装配显式保留的同代次原角色可继续作为伤害目标；不重新初始化ASC或补充属性。
+    if(DisconnectedCombatTargetGeneration<=0||DisconnectedCombatTargetGeneration!=GetCombatAvatarGeneration())AbilitySystem->ClearAbilityAvatar();
     Super::UnPossessed();
 }
 void ADivineBeastsCharacter::RefreshAbilityActorInfo()
 {
     // 远端客户端Controller不复制给观察者，但仍需ActorInfo观察GAS属性；激活Gate继续拒绝非本地拥有者。
     if (GetController() || !HasAuthority()) { AbilitySystem->BindAbilityActorInfo(this, this); }
-    else { GameplayEligibility->SetServerPlayerActive(false); AbilitySystem->ClearAbilityAvatar(); }
+    else { GameplayEligibility->SetServerPlayerActive(false); if(!IsDisconnectedCombatTargetRetained())AbilitySystem->ClearAbilityAvatar(); }
 }
 void ADivineBeastsCharacter::HandleCombatEvent(const FGamePlatformCombatEvent& Event)
 {
@@ -88,8 +107,17 @@ void ADivineBeastsCharacter::HandleCombatEvent(const FGamePlatformCombatEvent& E
     const FGamePlatformCombatEvent Death = Event;
     AuthoritativeDeath.Broadcast(Death);
 }
+bool ADivineBeastsCharacter::AuthorityIsFriendlyCombatTarget(const AActor* Target) const
+{
+    if (!IsInGameThread() || !HasAuthority() || !IsValid(Target) || !Target->HasAuthority() ||
+        IsActorBeingDestroyed() || Target->IsActorBeingDestroyed() || Target->GetWorld() != GetWorld()) return false;
+    return Target == this || (FriendlyCombatTargetQuery.IsBound() && FriendlyCombatTargetQuery.Execute(this, Target));
+}
+
 void ADivineBeastsCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
+    FriendlyCombatTargetQuery.Unbind();
+    DisconnectedCombatTargetGeneration=0;
     if (HasAuthority()) AITarget->SetAITargetEnabled(false);
     AuthoritativeDeath.Clear();
     GameplayEligibility->SetServerPlayerActive(false);

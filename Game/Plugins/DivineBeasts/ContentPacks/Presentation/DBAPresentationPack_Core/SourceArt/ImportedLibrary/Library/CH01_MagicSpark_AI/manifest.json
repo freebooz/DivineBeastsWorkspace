@@ -1,0 +1,19 @@
+{
+  "pack": "CH01_MagicSpark_AI_Mobile",
+  "version": 1,
+  "generated_date": "2026-08-13",
+  "color_space": "linear masks (import with sRGB=false)",
+  "alpha_mode": "straight",
+  "files": [
+    {"name":"T_VFX_Common_Spark_01.png","size":"1024x1024","channels":"RGBA","address":"Clamp"},
+    {"name":"T_VFX_Common_SparkSharp_01.png","size":"1024x1024","channels":"RGBA","address":"Clamp"},
+    {"name":"T_VFX_Common_Streak_01.png","size":"1024x512","channels":"RGBA","address":"Clamp"},
+    {"name":"T_VFX_Common_Glint_01.png","size":"512x512","channels":"RGBA","address":"Clamp"},
+    {"name":"T_VFX_Common_Glint_02.png","size":"512x512","channels":"RGBA","address":"Clamp"},
+    {"name":"T_VFX_Common_Radial_01.png","size":"512x512","channels":"RGBA","address":"Clamp"},
+    {"name":"T_VFX_Common_RadialSoft_01.png","size":"512x512","channels":"RGBA","address":"Clamp"},
+    {"name":"T_VFX_Common_Noise_Soft_01.png","size":"512x512","channels":"Gray","address":"Wrap"},
+    {"name":"T_VFX_Common_Noise_Perlin_01.png","size":"512x512","channels":"Gray","address":"Wrap"},
+    {"name":"T_VFX_Common_Distortion_01.png","size":"512x512","channels":"Gray","address":"Wrap"}
+  ]
+}

@@ -23,6 +23,9 @@ public:
 private:
     /** 仅当前GAS激活拥有，下一次激活先清；绝不从客户端RPC填充。 */
     UPROPERTY(Transient) FGamePlatformCombatSpec CastSpec;
+    /** 跨连发仅保存弱身份；最初无目标与原锁定目标销毁必须区分，失效不能降级直线。 */
+    TWeakObjectPtr<AActor> FrozenProjectileTarget;
+    bool bHadFrozenTarget = false;
     FGamePlatformCombatProjectileMotion Motion;
     FName StyleId = NAME_None;
     int32 RemainingProjectiles = 0, ReleasedProjectiles = 0;

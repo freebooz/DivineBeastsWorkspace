@@ -13,6 +13,8 @@ class GAMEPLATFORMARENA_API AGamePlatformArenaPlayerController : public APlayerC
     GENERATED_BODY()
 
 public:
+    /** 单局淘汰断线保留世界拥有的原Pawn；原比赛适配器在结束/清理时负责销毁。 */
+    virtual void PawnLeavingGame() override;
     UFUNCTION(Server, Reliable)
     void ServerRequestHeroSelection(const FString& HeroDefinitionId);
 

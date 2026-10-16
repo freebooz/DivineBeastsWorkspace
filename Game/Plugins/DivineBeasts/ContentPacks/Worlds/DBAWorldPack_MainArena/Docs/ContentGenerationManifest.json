@@ -1,0 +1,31 @@
+{
+  "SchemaVersion": 1,
+  "Project": "SSLM",
+  "AuthoringTool": "Monolith MCP 0.23.0 / UE5.8",
+  "DevelopmentOnly": true,
+  "Map": "/DBAWorldPack_MainArena/Maps/L_DBA_MainArena",
+  "WorldDefinition": "GamePlatformDefinition:divinebeasts.world.main_arena@1",
+  "ExperienceDefinition": "GamePlatformDefinition:experience.mainarena.main@1",
+  "PawnDefinition": "GamePlatformDefinition:divinebeasts.pawn.arena_character@1",
+  "FloorSizeCentimeters": [
+    6000,
+    4000
+  ],
+  "GeometryActors": 9,
+  "PlayerStartsPerTeam": 5,
+  "Navigation": {
+    "Tiles": 105,
+    "DirtyAreas": 0,
+    "BoundsVolumes": 1,
+    "CrossTeamPathCentimeters": 4600,
+    "Partial": false
+  },
+  "Saved": true,
+  "ColdReloadVerified": true,
+  "CookVerified": false,
+  "NetworkVerified": false,
+  "ManualVisualAccepted": false,
+  "AuthoringScript": "Saved/Validation/PartyArena20261015/Content/CreateMainArena.py",
+  "ColdReloadEditorProcessId": 25236,
+  "ColdReadbackEvidence": "Saved/Validation/PartyArena20261015/Content/ColdReadback.json"
+}

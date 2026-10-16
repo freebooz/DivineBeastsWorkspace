@@ -69,6 +69,9 @@ public:
     bool IsGameplayLifecycleAdapter(const IGamePlatformArenaGameplayLifecycleAdapter* ExpectedAdapter, FGuid ExpectedBindingId) const;
     /** 权威阶段只读值；复制视图不能代替此值来批准出生或复活。 */
     EGamePlatformArenaMatchPhase GetMatchPhase() const { return PhaseMachine.GetPhase(); }
+    /** 当前模式是否使用单局淘汰；纯权威规则查询，不从UI推断。 */
+    bool IsSingleRoundElimination() const {return ActiveModeSpec.WinConditionPolicyId==FName(TEXT("Arena.WinCondition.SingleRoundElimination"));}
+    bool IsPlayerEliminated(const FString& PlayerId) const {return EliminatedPlayers.Contains(PlayerId);}
     bool HasGameplayLifecycleAdapter() const { return GameplayLifecycleAdapter != nullptr; }
 
     const FGamePlatformArenaAssignment& GetAssignment() const { return CurrentAssignment; }
@@ -77,6 +80,9 @@ public:
     FGamePlatformArenaResultPendingDelegate& OnResultPending() { return ResultPendingDelegate; }
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FGamePlatformArenaEliminationTest;
+#endif
     struct FPlayerRecoveryState
     {
         FString HeroDefinitionId;
@@ -101,6 +107,11 @@ private:
     void StartMatchFromCountdown();
     void HandlePreMatchTimeout();
     void HandleMatchTimeLimit();
+    /** 汇合本帧全部死亡后一次判定，避免双方同帧全灭被首个事件抢先判胜。 */
+    void ResolveEliminationAtEndFrame();
+    bool HandleEliminationDeath(const FGamePlatformArenaTrustedEvent& Event,FString& OutError);
+    TSet<FString> EliminatedPlayers;
+    FDelegateHandle EliminationResolutionHandle;
     void HandleReconnectTimeout(const FString PlayerId);
     FName GetOpponentTeam(FName TeamId) const;
     void BuildPendingResult(FName WinningTeamId, EGamePlatformArenaMatchEndReason Reason);

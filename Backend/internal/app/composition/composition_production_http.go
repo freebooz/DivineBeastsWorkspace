@@ -40,7 +40,7 @@ func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	var matchmaking gateway.MatchmakingPort
 	var worldEntry gateway.WorldEntryPort
 	if config.Getenv("ONLINE_ONLY", "false") != "true" {
-		client := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: requiredEnv("MATCH_SERVICE_URL")})
+		client := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: requiredEnv("MATCH_SERVICE_URL"), BearerToken: requiredEnv("GAMESERVERCONTROL_INTERNAL_TOKEN")})
 		party = client
 		matchmaking = client
 		worldEntry = httpadapter.NewGameServerControlClient(httpadapter.GameServerControlClientConfig{
@@ -99,7 +99,28 @@ func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {
 		return err
 	}
 	service := matchapi.NewService(parties, redisstore.NewTicketRepository(redisClient, ticketTTL), productionID)
-	return servicehost.Run(ctx, cfg, httpadapter.NewMatchHandler(service))
+	settings, err := configuredMatchmakingSettings()
+	if err != nil {
+		return err
+	}
+	if settings.Enabled {
+		pool := mustPostgres(ctx)
+		defer pool.Close()
+		control := httpadapter.NewGameServerControlClient(httpadapter.GameServerControlClientConfig{ClientConfig: httpadapter.ClientConfig{BaseURL: requiredEnv("GAMESERVERCONTROL_SERVICE_URL")}, BearerToken: strings.TrimSpace(requiredEnv("GAMESERVERCONTROL_INTERNAL_TOKEN")), DefaultRegion: settings.AllowedRegions[0]})
+		if err = attachMatchRuntime(service, settings, postgres.NewMatchOperationStore(pool), control, productionID); err != nil {
+			return err
+		}
+		closeOutbox, err := startMatchOperationOutbox(ctx, pool, cfg.Name)
+		if err != nil {
+			return err
+		}
+		defer closeOutbox()
+	} else if err = service.ConfigureMatchmaking(settings); err != nil {
+		return err
+	}
+	return runMatchWorkerAndHost(ctx, service, settings.Enabled, func(owned context.Context) error {
+		return servicehost.Run(owned, cfg, httpadapter.NewMatchHandler(service, config.Getenv("GAMESERVERCONTROL_INTERNAL_TOKEN", "")))
+	})
 }
 
 func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
@@ -123,14 +144,18 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	arenaAllocator := agones.NewRegistryBackedAllocator(agonesClient, registry, requiredEnv("AGONES_NAMESPACE"), requiredEnv("GAME_SERVER_BUILD_VERSION"))
 
 	secret := []byte(requiredEnv("TRANSFER_TICKET_SECRET"))
-	transfer := servertransfer.NewServiceWithStores(
+	transfer := servertransfer.NewServiceWithAllStores(
 		secret,
 		func() time.Time { return time.Now().UTC() },
 		redisstore.NewTransferReplayStore(redisClient),
-		redisstore.NewTransferEpochStore(redisClient))
+		redisstore.NewTransferEpochStore(redisClient),
+		redisstore.NewTransferIssuanceStore(redisClient))
 	matchOutboxStore := postgres.NewMatchOutboxStore(pool)
 	resultService := match.NewResultService(matchOutboxStore)
 	service := gameservercontrol.NewServiceWithAllocators(registry, worldAllocator, arenaAllocator, transfer, resultService, func() time.Time { return time.Now().UTC() })
+	if err := service.ConfigureArenaLifecycle(redisstore.NewArenaLifecycleStore(redisClient)); err != nil {
+		return err
+	}
 
 	dispatcher := outbox.NewDispatcherWithOptions(matchOutboxStore, natsjs.NewOutboxPublisher(publisher), func() time.Time { return time.Now().UTC() }, cfg.Name+":"+config.Getenv("POD_NAME", "local"), 30*time.Second, 100)
 	go func() {

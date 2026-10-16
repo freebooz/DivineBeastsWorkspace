@@ -69,7 +69,9 @@ struct DIVINEBEASTSARENARUNTIME_API FDivineBeastsArenaProjectModeSpec
 
     bool ValidateStructure(FString& OutError) const;
     bool ValidateProduction(FString& OutError) const;
-    bool TryBuildPlatformSpec(FGamePlatformArenaModeSpec& OutSpec, FString& OutError) const;
+    /** 显式开发进程可接受DevelopmentOnly；仍逐字段验证真实地图、规则和版本，Shipping/Test不得放行。 */
+    bool ValidateRuntime(bool bAllowDevelopment,FString& OutError) const;
+    bool TryBuildPlatformSpec(FGamePlatformArenaModeSpec& OutSpec, FString& OutError,bool bAllowDevelopment=false) const;
 };
 
 /**

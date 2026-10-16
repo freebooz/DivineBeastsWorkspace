@@ -18,6 +18,7 @@
     { "Name": "DBAFrontEndPack", "RelativePath": "Presentation/DBAFrontEndPack" },
     { "Name": "DBAPresentationPack_Core", "RelativePath": "Presentation/DBAPresentationPack_Core" },
     { "Name": "DBASFXPack_Core", "RelativePath": "Presentation/DBASFXPack_Core" },
-    { "Name": "DBAWorldPack_Village", "RelativePath": "Worlds/DBAWorldPack_Village" }
+    { "Name": "DBAWorldPack_Village", "RelativePath": "Worlds/DBAWorldPack_Village" },
+    { "Name": "DBAWorldPack_MainArena", "RelativePath": "Worlds/DBAWorldPack_MainArena" }
   ]
 }

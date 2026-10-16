@@ -5,7 +5,11 @@
 #include "Village/DivineBeastsVillageWolfSpawnPolicy.h"
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Components/GamePlatformAIStateComponent.h"
+<<<<<<< HEAD
 #include "Components/GamePlatformCombatComponent.h" // 服务器死亡判定必须包含完整组件定义。
+=======
+#include "Components/GamePlatformCombatComponent.h"
+>>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
 #include "Components/GamePlatformExperienceComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/GamePlatformAIDefinition.h"
@@ -100,6 +104,10 @@ bool UDivineBeastsVillageWolfWorldSubsystem::CaptureApprovedScope(FApprovedScope
     auto* Bootstrap = Instance ? Instance->GetSubsystem<UDivineBeastsServerBootstrapSubsystem>() : nullptr;
     const auto* Lifecycle = ObservedLifecycle.Get();
     const auto* Experience = ObservedExperience.Get();
+<<<<<<< HEAD
+=======
+    // 平台GetReadiness接口非const；保留服务原始接口类型，不改变本桥的只读资格检查职责。
+>>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
     auto* Service = IGamePlatformWorldService::Get(*const_cast<UWorld*>(World));
     if (!Bootstrap || !Lifecycle || !Experience || !Service ||
         Experience->GetWorld() != World || Lifecycle->GetGameInstance() != Instance) return false;
@@ -215,6 +223,7 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
             if (!Nav->ProjectPointToNavigation(Candidate, NavPoint, FVector(130.0f, 130.0f, 550.0f)))
                 continue;
 
+<<<<<<< HEAD
             bool bSafe = true;
             for (const APlayerStart* AnyStart : Starts)
                 if (!FPolicy::IsOutsidePlayerStart(NavPoint.Location, AnyStart->GetActorLocation()))
@@ -228,6 +237,20 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
                 { bSafe = false; break; }
             }
             if (!bSafe) continue;
+=======
+        bool bSafe = true;
+        for (const APlayerStart* AnyStart : Starts)
+            if (FVector::DistSquared2D(AnyStart->GetActorLocation(), NavPoint.Location) <
+                FMath::Square(PlayerStartSafetyRadiusCm)) { bSafe = false; break; }
+        for (const auto& OtherReference : OwnedWolves)
+        {
+            const auto* Other = OtherReference.Get();
+            if (IsValid(Other) && !Other->IsActorBeingDestroyed() &&
+                FVector::DistSquared2D(Other->GetActorLocation(), NavPoint.Location) <
+                FMath::Square(MinimumWolfSeparationCm)) { bSafe = false; break; }
+        }
+        if (!bSafe) continue;
+>>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
 
             FHitResult Ground;
             if (!World->LineTraceSingleByChannel(Ground, NavPoint.Location + FVector(0,0,260),
@@ -446,11 +469,17 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     ObservedLifecycle.Reset();
     TArray<TObjectPtr<ADivineBeastsVillageWolf>> ToDestroy = MoveTemp(OwnedWolves);
     OwnedWolves.Reset();
+<<<<<<< HEAD
     // 先释放本世界的锚点账本，再销毁自有Actor，EndPlay期间不会错误重占位置。
     WolfSpawnAnchors.Reset();
     for (const auto& WolfPointer : ToDestroy)
     {
         ADivineBeastsVillageWolf* Wolf = WolfPointer.Get();
+=======
+    for (const auto& WolfReference:ToDestroy)
+    {
+        auto* Wolf=WolfReference.Get();
+>>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
         if (!IsValid(Wolf)) continue;
         Wolf->OnAuthoritativeDeath().RemoveAll(this);
         Wolf->OnDestroyed.RemoveDynamic(this, &ThisClass::HandleWolfDestroyed);

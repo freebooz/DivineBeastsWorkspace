@@ -2,6 +2,7 @@
 
 #include "Dom/JsonObject.h"
 #include "HttpModule.h"
+#include "GenericPlatform/GenericPlatformHttp.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Serialization/JsonReader.h"
@@ -16,92 +17,45 @@ namespace
         return FJsonSerializer::Deserialize(Reader, Object) ? Object : nullptr;
     }
 
-    bool ParseAssignment(const FString& Body, FGamePlatformArenaAssignment& OutAssignment)
+    // 消费Shared控制面已经发布的PascalCase响应；先完整验证临时值，不读取不存在的snake_case旁路。
+    bool ParseAssignment(const FString& Body,FGamePlatformArenaAssignment& Out)
     {
-        const TSharedPtr<FJsonObject> Json = ParseJsonObject(Body);
-        if (!Json.IsValid()) { return false; }
-        OutAssignment.MatchId = Json->GetStringField(TEXT("match_id"));
-        OutAssignment.ArenaModeId = FName(*Json->GetStringField(TEXT("arena_mode_id")));
-        OutAssignment.MapId = FName(*Json->GetStringField(TEXT("map_id")));
-        OutAssignment.ServerRole = FName(*Json->GetStringField(TEXT("server_role")));
-        OutAssignment.ExperienceId = FName(*Json->GetStringField(TEXT("experience_id")));
-        OutAssignment.ProjectRuleRevision = static_cast<int32>(Json->GetNumberField(TEXT("project_rule_revision")));
-        Json->TryGetStringField(TEXT("content_revision"), OutAssignment.ContentRevision);
-        OutAssignment.HeroCatalogRevision = static_cast<int32>(Json->GetNumberField(TEXT("hero_catalog_revision")));
-        OutAssignment.GameServerId = Json->GetStringField(TEXT("game_server_id"));
-        OutAssignment.TeamSize = static_cast<int32>(Json->GetNumberField(TEXT("team_size")));
-        OutAssignment.TotalPlayers = static_cast<int32>(Json->GetNumberField(TEXT("total_players")));
-        OutAssignment.Roster.Reset();
-        for (const TSharedPtr<FJsonValue>& Value : Json->GetArrayField(TEXT("roster")))
+        const auto Root=ParseJsonObject(Body);const TSharedPtr<FJsonObject>* Arena=nullptr;
+        auto String=[](const TSharedPtr<FJsonObject>& Object,const TCHAR* Key,FString& Value){return Object&&Object->HasTypedField<EJson::String>(Key)&&Object->TryGetStringField(Key,Value);};
+        auto Integer=[](const TSharedPtr<FJsonObject>& Object,const TCHAR* Key,int32& Value){double Number=0;if(!Object||!Object->HasTypedField<EJson::Number>(Key)||!Object->TryGetNumberField(Key,Number)||!FMath::IsFinite(Number)||Number<0||Number>MAX_int32||FMath::FloorToDouble(Number)!=Number)return false;Value=static_cast<int32>(Number);return true;};
+        if(!Root||!Root->TryGetObjectField(TEXT("Arena"),Arena)||!Arena||!Arena->IsValid())return false;
+        FGamePlatformArenaAssignment Next;FString Mode,Map,Role,Experience;const TArray<TSharedPtr<FJsonValue>>* Roster=nullptr;
+        if(!String(*Arena,TEXT("MatchID"),Next.MatchId)||!String(*Arena,TEXT("ArenaModeID"),Mode)||!String(*Arena,TEXT("MapID"),Map)||!String(Root,TEXT("ServerRoleID"),Role)||!String(Root,TEXT("ExperienceID"),Experience)||
+            !String(*Arena,TEXT("GameServerID"),Next.GameServerId)||!String(*Arena,TEXT("ContentRevision"),Next.ContentRevision)||!Integer(*Arena,TEXT("ProjectRuleRevision"),Next.ProjectRuleRevision)||!Integer(*Arena,TEXT("HeroCatalogRevision"),Next.HeroCatalogRevision)||!Integer(*Arena,TEXT("TeamSize"),Next.TeamSize)||!Integer(*Arena,TEXT("TotalPlayers"),Next.TotalPlayers)||!(*Arena)->TryGetArrayField(TEXT("Roster"),Roster)||Roster->Num()>10)return false;
+        Next.ArenaModeId=FName(*Mode);Next.MapId=FName(*Map);Next.ServerRole=FName(*Role);Next.ExperienceId=FName(*Experience);
+        for(const auto& Value:*Roster)
         {
-            const TSharedPtr<FJsonObject> Row = Value.IsValid() ? Value->AsObject() : nullptr;
-            if (!Row.IsValid()) { return false; }
-            FGamePlatformArenaRosterSlot Slot;
-            Slot.PlayerId = Row->GetStringField(TEXT("player_id"));
-            Slot.CharacterId = Row->GetStringField(TEXT("character_id"));
-            Slot.TeamId = FName(*Row->GetStringField(TEXT("team_id")));
-            Row->TryGetStringField(TEXT("party_id"), Slot.PartyId);
-            Slot.SlotIndex = static_cast<int32>(Row->GetNumberField(TEXT("slot_index")));
-            OutAssignment.Roster.Add(MoveTemp(Slot));
+            const TSharedPtr<FJsonObject>* Row=nullptr;FGamePlatformArenaRosterSlot Slot;FString Team;
+            if(!Value||!Value->TryGetObject(Row)||!String(*Row,TEXT("PlayerID"),Slot.PlayerId)||!String(*Row,TEXT("CharacterID"),Slot.CharacterId)||!String(*Row,TEXT("TeamID"),Team)||!String(*Row,TEXT("PartyID"),Slot.PartyId)||!String(*Row,TEXT("HeroDefinitionID"),Slot.HeroDefinitionId)||!Integer(*Row,TEXT("SlotIndex"),Slot.SlotIndex))return false;
+            Slot.TeamId=FName(*Team);if(!Slot.IsValid()||Slot.HeroDefinitionId.IsEmpty())return false;Next.Roster.Add(MoveTemp(Slot));
         }
-        return !OutAssignment.MatchId.IsEmpty() && !OutAssignment.GameServerId.IsEmpty();
-    }
-
-    bool ParseTicketClaims(const FString& Body, FGamePlatformArenaTransferTicketClaims& OutClaims)
-    {
-        const TSharedPtr<FJsonObject> Json = ParseJsonObject(Body);
-        if (!Json.IsValid()) { return false; }
-        OutClaims.TicketId = Json->GetStringField(TEXT("ticket_id"));
-        OutClaims.PlayerId = Json->GetStringField(TEXT("player_id"));
-        Json->TryGetStringField(TEXT("session_id"), OutClaims.SessionId);
-        OutClaims.CharacterId = Json->GetStringField(TEXT("character_id"));
-        OutClaims.MatchId = Json->GetStringField(TEXT("match_id"));
-        OutClaims.DestinationServerId = Json->GetStringField(TEXT("destination_server_id"));
-        FString ExpiresAt;
-        if (!Json->TryGetStringField(TEXT("expires_at_utc"), ExpiresAt) || !FDateTime::ParseIso8601(*ExpiresAt, OutClaims.ExpiresAtUtc))
-        {
-            return false;
-        }
-        OutClaims.bConsumed = Json->GetBoolField(TEXT("consumed"));
-        return OutClaims.bConsumed;
+        if(Next.MatchId.IsEmpty()||Next.GameServerId.IsEmpty()||Next.ProjectRuleRevision<1||Next.ContentRevision.IsEmpty()||Next.HeroCatalogRevision<1||Next.TeamSize<1||Next.TeamSize>5||Next.TotalPlayers!=Next.TeamSize*2||Next.Roster.Num()!=Next.TotalPlayers)return false;
+        Out=MoveTemp(Next);return true;
     }
 
     TSharedRef<FJsonObject> ResultToJson(const FGamePlatformArenaMatchResult& Result)
     {
-        TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
-        Root->SetStringField(TEXT("match_id"), Result.MatchId);
-        Root->SetStringField(TEXT("arena_mode_id"), Result.ArenaModeId.ToString());
-        Root->SetStringField(TEXT("game_server_id"), Result.GameServerId);
-        Root->SetStringField(TEXT("started_at_utc"), Result.StartedAtUtc.ToIso8601());
-        Root->SetStringField(TEXT("ended_at_utc"), Result.EndedAtUtc.ToIso8601());
-        Root->SetStringField(TEXT("winning_team_id"), Result.WinningTeamId.ToString());
-        Root->SetStringField(TEXT("end_reason"), StaticEnum<EGamePlatformArenaMatchEndReason>()->GetNameStringByValue(static_cast<int64>(Result.EndReason)));
-        Root->SetNumberField(TEXT("end_revision"), Result.EndRevision);
-
-        TArray<TSharedPtr<FJsonValue>> Teams;
-        for (const FGamePlatformArenaTeamResult& Team : Result.Teams)
+        auto Root=MakeShared<FJsonObject>();
+        Root->SetStringField(TEXT("MatchID"),Result.MatchId);Root->SetStringField(TEXT("ArenaModeID"),Result.ArenaModeId.ToString());Root->SetStringField(TEXT("GameServerID"),Result.GameServerId);
+        Root->SetStringField(TEXT("StartedAt"),Result.StartedAtUtc.ToIso8601());Root->SetStringField(TEXT("EndedAt"),Result.EndedAtUtc.ToIso8601());
+        Root->SetStringField(TEXT("WinningTeamID"),Result.WinningTeamId.IsNone()?FString():Result.WinningTeamId.ToString());
+        Root->SetStringField(TEXT("EndReason"),StaticEnum<EGamePlatformArenaMatchEndReason>()->GetNameStringByValue(static_cast<int64>(Result.EndReason)));Root->SetNumberField(TEXT("EndRevision"),Result.EndRevision);
+        TArray<TSharedPtr<FJsonValue>> Teams,Players;
+        for(const auto& Team:Result.Teams)
         {
-            TSharedRef<FJsonObject> TeamJson = MakeShared<FJsonObject>();
-            TeamJson->SetStringField(TEXT("team_id"), Team.TeamId.ToString());
-            TeamJson->SetNumberField(TEXT("score"), Team.Score);
-            TArray<TSharedPtr<FJsonValue>> Players;
-            for (const FGamePlatformArenaPlayerResult& Player : Team.Players)
+            auto Row=MakeShared<FJsonObject>();Row->SetStringField(TEXT("TeamID"),Team.TeamId.ToString());Row->SetBoolField(TEXT("Won"),!Result.WinningTeamId.IsNone()&&Team.TeamId==Result.WinningTeamId);Row->SetNumberField(TEXT("Score"),Team.Score);Teams.Add(MakeShared<FJsonValueObject>(Row));
+            for(const auto& Player:Team.Players)
             {
-                TSharedRef<FJsonObject> PlayerJson = MakeShared<FJsonObject>();
-                PlayerJson->SetStringField(TEXT("player_id"), Player.PlayerId);
-                PlayerJson->SetStringField(TEXT("team_id"), Player.TeamId.ToString());
-                PlayerJson->SetStringField(TEXT("character_id"), Player.CharacterId);
-                PlayerJson->SetNumberField(TEXT("kills"), Player.Kills);
-                PlayerJson->SetNumberField(TEXT("deaths"), Player.Deaths);
-                PlayerJson->SetNumberField(TEXT("assists"), Player.Assists);
-                PlayerJson->SetNumberField(TEXT("score"), Player.Score);
-                Players.Add(MakeShared<FJsonValueObject>(PlayerJson));
+                auto Item=MakeShared<FJsonObject>();Item->SetStringField(TEXT("PlayerID"),Player.PlayerId);Item->SetStringField(TEXT("TeamID"),Player.TeamId.ToString());Item->SetStringField(TEXT("CharacterID"),Player.CharacterId);
+                Item->SetNumberField(TEXT("Kills"),Player.Kills);Item->SetNumberField(TEXT("Deaths"),Player.Deaths);Item->SetNumberField(TEXT("Assists"),Player.Assists);Item->SetNumberField(TEXT("Score"),Player.Score);Players.Add(MakeShared<FJsonValueObject>(Item));
             }
-            TeamJson->SetArrayField(TEXT("players"), Players);
-            Teams.Add(MakeShared<FJsonValueObject>(TeamJson));
         }
-        Root->SetArrayField(TEXT("teams"), Teams);
-        return Root;
+        Root->SetArrayField(TEXT("Teams"),Teams);Root->SetArrayField(TEXT("Players"),Players);return Root;
     }
 
     FString SerializeJson(const TSharedRef<FJsonObject>& Object)
@@ -130,23 +84,29 @@ void FGamePlatformArenaServerBackendClient::ApplyCommonHeaders(
 {
     Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Config.InternalToken);
     Request->SetHeader(TEXT("X-Game-Server-Id"), Config.GameServerId);
+    Request->SetHeader(TEXT("X-Game-Server-Boot-Id"),Config.ServerBootId);
+    Request->SetTimeout(25.f);
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 }
 
 void FGamePlatformArenaServerBackendClient::GetAssignment(
-    TFunction<void(bool, const FGamePlatformArenaAssignment&, const FString&)> Completion)
+    TFunction<void(bool, const FGamePlatformArenaAssignment&, const FString&)> InCompletion)
 {
+    const auto Completed=MakeShared<bool>(false);
+    auto Completion=[Completed,Done=MoveTemp(InCompletion)](bool bSuccess,const FGamePlatformArenaAssignment& Assignment,const FString& Error)mutable
+    {if(*Completed)return;*Completed=true;Done(bSuccess,Assignment,Error);};
     FGamePlatformArenaAssignment Empty;
     if (!Config.IsValid()) { Completion(false, Empty, TEXT("Arena backend config invalid.")); return; }
     const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
     Request->SetVerb(TEXT("GET"));
-    Request->SetURL(MakeUrl(TEXT("/internal/v1/arena/assignment")));
+    Request->SetURL(MakeUrl(TEXT("/internal/v1/gameservers/assignment?waitMilliseconds=20000&gameServerId=")+FGenericPlatformHttp::UrlEncode(Config.GameServerId)));
     ApplyCommonHeaders(Request);
     Request->OnProcessRequestComplete().BindLambda(
         [Completion](FHttpRequestPtr, FHttpResponsePtr Response, bool bSucceeded) mutable
         {
             FGamePlatformArenaAssignment Assignment;
             if (!bSucceeded || !Response.IsValid()) { Completion(false, Assignment, TEXT("Assignment request transport failure.")); return; }
+            if(Response->GetResponseCode()==202){Completion(false,Assignment,TEXT("AssignmentPending"));return;}
             if (Response->GetResponseCode() != 200 || !ParseAssignment(Response->GetContentAsString(), Assignment))
             {
                 Completion(false, Assignment, FString::Printf(TEXT("Assignment request rejected: HTTP %d"), Response->GetResponseCode()));
@@ -154,50 +114,17 @@ void FGamePlatformArenaServerBackendClient::GetAssignment(
             }
             Completion(true, Assignment, FString());
         });
-    if (!Request->ProcessRequest()) { Completion(false, Empty, TEXT("Assignment request did not start.")); }
-}
-
-void FGamePlatformArenaServerBackendClient::ValidateAndConsumeTransferTicket(
-    const FString& TransferTicket,
-    const FString& PlayerId,
-    const FString& MatchId,
-    TFunction<void(bool, const FGamePlatformArenaTransferTicketClaims&, const FString&)> Completion)
-{
-    FGamePlatformArenaTransferTicketClaims Empty;
-    if (!Config.IsValid() || TransferTicket.IsEmpty() || PlayerId.IsEmpty() || MatchId.IsEmpty())
-    {
-        Completion(false, Empty, TEXT("Ticket admission arguments invalid."));
-        return;
-    }
-    TSharedRef<FJsonObject> Json = MakeShared<FJsonObject>();
-    Json->SetStringField(TEXT("transfer_ticket"), TransferTicket);
-    Json->SetStringField(TEXT("player_id"), PlayerId);
-    Json->SetStringField(TEXT("match_id"), MatchId);
-
-    const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
-    Request->SetVerb(TEXT("POST"));
-    Request->SetURL(MakeUrl(TEXT("/internal/v1/arena/tickets/validate-consume")));
-    ApplyCommonHeaders(Request);
-    Request->SetContentAsString(SerializeJson(Json));
-    Request->OnProcessRequestComplete().BindLambda(
-        [Completion](FHttpRequestPtr, FHttpResponsePtr Response, bool bSucceeded) mutable
-        {
-            FGamePlatformArenaTransferTicketClaims Claims;
-            if (!bSucceeded || !Response.IsValid()) { Completion(false, Claims, TEXT("Ticket validation transport failure.")); return; }
-            if (Response->GetResponseCode() != 200 || !ParseTicketClaims(Response->GetContentAsString(), Claims))
-            {
-                Completion(false, Claims, FString::Printf(TEXT("Ticket validation rejected: HTTP %d"), Response->GetResponseCode()));
-                return;
-            }
-            Completion(true, Claims, FString());
-        });
-    if (!Request->ProcessRequest()) { Completion(false, Empty, TEXT("Ticket validation request did not start.")); }
+    TrackRequest(Request);
+    if (!Request->ProcessRequest()) { Requests.Remove(Request);Completion(false, Empty, TEXT("Assignment request did not start.")); }
 }
 
 void FGamePlatformArenaServerBackendClient::SubmitMatchResult(
     const FGamePlatformArenaMatchResult& Result,
-    TFunction<void(EGamePlatformArenaSubmitStatus, const FString&)> Completion)
+    TFunction<void(EGamePlatformArenaSubmitStatus, const FString&)> InCompletion)
 {
+    const auto Completed=MakeShared<bool>(false);
+    auto Completion=[Completed,Done=MoveTemp(InCompletion)](EGamePlatformArenaSubmitStatus Status,const FString& Error)mutable
+    {if(*Completed)return;*Completed=true;Done(Status,Error);};
     if (!Config.IsValid() || Result.MatchId.IsEmpty())
     {
         Completion(EGamePlatformArenaSubmitStatus::TerminalFailure, TEXT("MatchResult or backend config invalid."));
@@ -205,7 +132,7 @@ void FGamePlatformArenaServerBackendClient::SubmitMatchResult(
     }
     const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
     Request->SetVerb(TEXT("POST"));
-    Request->SetURL(MakeUrl(TEXT("/internal/v1/arena/results")));
+    Request->SetURL(MakeUrl(TEXT("/internal/v1/gameservers/match-result")));
     ApplyCommonHeaders(Request);
     Request->SetContentAsString(SerializeJson(ResultToJson(Result)));
     Request->OnProcessRequestComplete().BindLambda(
@@ -222,15 +149,26 @@ void FGamePlatformArenaServerBackendClient::SubmitMatchResult(
             if (Code != 200) { Completion(EGamePlatformArenaSubmitStatus::TerminalFailure, FString::Printf(TEXT("Backend HTTP %d"), Code)); return; }
 
             const TSharedPtr<FJsonObject> Json = ParseJsonObject(Response->GetContentAsString());
-            FString Status;
-            if (!Json.IsValid() || !Json->TryGetStringField(TEXT("status"), Status))
-            {
-                Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MatchResult response malformed; outcome unknown."));
-                return;
-            }
-            if (Status == TEXT("committed")) { Completion(EGamePlatformArenaSubmitStatus::Committed, FString()); return; }
-            if (Status == TEXT("already_committed")) { Completion(EGamePlatformArenaSubmitStatus::AlreadyCommitted, FString()); return; }
-            Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("Unknown result commit status."));
+            FString ResultId;
+            if(!Json||!Json->HasTypedField<EJson::String>(TEXT("ResultID"))||!Json->TryGetStringField(TEXT("ResultID"),ResultId)||ResultId.IsEmpty())
+            {Completion(EGamePlatformArenaSubmitStatus::RetryableFailure,TEXT("MatchResult response malformed; outcome unknown."));return;}
+            Completion(EGamePlatformArenaSubmitStatus::Committed,FString());
         });
-    if (!Request->ProcessRequest()) { Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MatchResult request did not start.")); }
+    TrackRequest(Request);
+    if (!Request->ProcessRequest()) { Requests.Remove(Request);Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MatchResult request did not start.")); }
+}
+
+void FGamePlatformArenaServerBackendClient::CancelAll()
+{
+    auto Owned=MoveTemp(Requests);Requests.Reset();
+    for(const auto& Request:Owned)if(Request){Request->OnProcessRequestComplete().Unbind();Request->CancelRequest();}
+}
+
+void FGamePlatformArenaServerBackendClient::TrackRequest(const TSharedRef<IHttpRequest,ESPMode::ThreadSafe>& Request)
+{
+    const auto Original=Request->OnProcessRequestComplete();
+    const TWeakPtr<FGamePlatformArenaServerBackendClient> Weak=AsShared();
+    Request->OnProcessRequestComplete().BindLambda([Weak,Original](FHttpRequestPtr Completed,FHttpResponsePtr Response,bool bSuccess)
+    {if(auto Self=Weak.Pin())Self->Requests.Remove(Completed);Original.ExecuteIfBound(Completed,Response,bSuccess);});
+    Requests.Add(Request);
 }

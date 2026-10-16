@@ -11,6 +11,8 @@
 #include "Types/GamePlatformCombatSpec.h"
 #include "GamePlatformCombatComponent.generated.h"
 
+class APawn;
+class AController;
 class UGamePlatformAbilitySystemComponent;
 class UGamePlatformCombatAttributeSet;
 class UGameplayEffect;
@@ -61,6 +63,24 @@ public:
     {
         return AvatarGeneration;
     }
+
+    /** 本地受控Pawn提交选中目标意图；true仅表示提交，服务器独立校验，不接受伤害/命中自报。
+     * 与本Pawn的GAS请求共用Actor可靠通道；非战斗目标按清空处理，无Tick或自动寻敌。 */
+    bool RequestProjectileTarget(AActor* Target);
+    /** GT服务器选择目标；拒绝旧来源代次而不覆盖后继选择。空目标清除；其他非法目标清除旧选择。
+     * 最大选择距离10000厘米仅限制意图，真正施法还须按技能射程和目标化身重新校验。 */
+    bool AuthoritySelectProjectileTarget(AActor* Target,int32 ExpectedSourceGeneration,int32 ExpectedTargetGeneration);
+    /** 服务器在施法命令中冻结一次有效选中目标；无效/超射程返回空并将输出代次归零。
+     * 不复制选择列表、不查询UI、不跨世界引用；调用方不得把此查询当作伤害授权。 */
+    AActor* GetSelectedProjectileTarget(float MaximumRangeCm,int32& OutTargetGeneration) const;
+
+    /**
+     * GT服务器只读选中意图，不做存活/距离/化身过滤；true表示当前控制者曾明确选择目标。
+     * 弱目标可因销毁/GC而为空，但双方冻结代次仍保留，治疗等策略可拒绝失效选择而不是误自疗。
+     * 没有选择、换控制者或关闭作用域返回false并清空输出；调用者必须自行验证资格后才结算。
+     */
+    bool GetSelectedProjectileTargetIntent(TWeakObjectPtr<AActor>& OutTarget,
+        int32& OutSourceGeneration, int32& OutTargetGeneration) const;
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
     FGamePlatformCombatResult ApplyDamage(
@@ -122,6 +142,15 @@ private:
     uint64 AvatarResetOperationGeneration = 0;
     /** EndPlay先置位且幂等；只有下一次引擎BeginPlay可建立新的开放作用域。 */
     bool bCombatClosing = false;
+    /** 仅服务器持有的选择意图，换来源或目标化身即失效；具体弹体各自冻结，不跟随以后切换。 */
+    TWeakObjectPtr<AActor> SelectedProjectileTarget;
+    int32 SelectedProjectileSourceGeneration = 0;
+    int32 SelectedProjectileTargetGeneration = 0;
+    UFUNCTION(Server,Reliable)
+    void ServerSelectProjectileTarget(AActor* Target,int32 ExpectedSourceGeneration,int32 ExpectedTargetGeneration);
+    /** Pawn控制者生命周期通知；只清待施法选择，保留化身代次和已经冻结的弹体/连发。 */
+    UFUNCTION()
+    void HandleProjectileControllerChanged(APawn* ControlledPawn,AController* OldController,AController* NewController);
 
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformAbilitySystemComponent> AbilitySystemComponent = nullptr;

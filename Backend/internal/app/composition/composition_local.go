@@ -17,6 +17,7 @@ import (
 	"divinebeasts/backend/internal/app/gameservercontrol"
 	"divinebeasts/backend/internal/app/gateway"
 	"divinebeasts/backend/internal/app/matchapi"
+	"divinebeasts/backend/internal/app/matchservice"
 	"divinebeasts/backend/internal/app/servicehost"
 	"divinebeasts/backend/internal/modules/gameserver"
 	"divinebeasts/backend/internal/modules/identity"
@@ -33,7 +34,7 @@ import (
 func RunGateway(ctx context.Context, cfg config.ServiceConfig) error {
 	identityClient := httpadapter.NewIdentityClient(httpadapter.ClientConfig{BaseURL: config.Getenv("IDENTITY_SERVICE_URL", "http://127.0.0.1:8081")})
 	playerDataClient := httpadapter.NewPlayerDataClient(httpadapter.ClientConfig{BaseURL: config.Getenv("PLAYER_DATA_SERVICE_URL", "http://127.0.0.1:8082")})
-	matchClient := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: config.Getenv("MATCH_SERVICE_URL", "http://127.0.0.1:8083")})
+	matchClient := httpadapter.NewMatchClient(httpadapter.ClientConfig{BaseURL: config.Getenv("MATCH_SERVICE_URL", "http://127.0.0.1:8083"), BearerToken: config.Getenv("GAMESERVERCONTROL_INTERNAL_TOKEN", "")})
 	internalToken := strings.TrimSpace(config.Getenv("GAMESERVERCONTROL_INTERNAL_TOKEN", ""))
 	if internalToken == "" {
 		return errors.New("GAMESERVERCONTROL_INTERNAL_TOKEN不能为空")
@@ -89,7 +90,25 @@ func RunPlayerData(ctx context.Context, cfg config.ServiceConfig) error {
 // RunMatch（运行比赛组织服务）使用内存Party/Ticket仓储并暴露真实内部HTTP接口。
 func RunMatch(ctx context.Context, cfg config.ServiceConfig) error {
 	service := matchapi.NewService(matchapi.NewMemoryPartyRepository(), matchapi.NewMemoryTicketRepository(), newID)
-	return servicehost.Run(ctx, cfg, httpadapter.NewMatchHandler(service))
+	settings, err := configuredMatchmakingSettings()
+	if err != nil {
+		return err
+	}
+	if settings.Enabled {
+		token := strings.TrimSpace(config.Getenv("GAMESERVERCONTROL_INTERNAL_TOKEN", ""))
+		if token == "" {
+			return errors.New("本地匹配必须配置内部控制凭据")
+		}
+		control := httpadapter.NewGameServerControlClient(httpadapter.GameServerControlClientConfig{ClientConfig: httpadapter.ClientConfig{BaseURL: config.Getenv("GAMESERVERCONTROL_SERVICE_URL", "http://127.0.0.1:8084")}, BearerToken: token, DefaultRegion: settings.AllowedRegions[0]})
+		if err = attachMatchRuntime(service, settings, matchservice.NewMemoryOperationStore(), control, newID); err != nil {
+			return err
+		}
+	} else if err = service.ConfigureMatchmaking(settings); err != nil {
+		return err
+	}
+	return runMatchWorkerAndHost(ctx, service, settings.Enabled, func(owned context.Context) error {
+		return servicehost.Run(owned, cfg, httpadapter.NewMatchHandler(service, config.Getenv("GAMESERVERCONTROL_INTERNAL_TOKEN", "")))
+	})
 }
 
 // RunGameServerControl（运行游戏服务器控制服务）启用世界/竞技分配、迁移和本地Outbox Worker。
@@ -104,6 +123,9 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	resultStore := match.NewMemoryResultStore()
 	resultService := match.NewResultService(resultStore)
 	service := gameservercontrol.NewService(registry, transfer, resultService, func() time.Time { return time.Now().UTC() })
+	if err := service.ConfigureArenaLifecycle(gameservercontrol.NewMemoryArenaLifecycleStore()); err != nil {
+		return err
+	}
 
 	// 本地Outbox Worker使用内存仓储和日志发布器，生产环境由PostgreSQL+NATS替换。
 	outboxStore := outbox.NewMemoryStore()

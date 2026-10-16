@@ -31,8 +31,8 @@ func Run(ctx context.Context, cfg config.ServiceConfig, businessHandler http.Han
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		// 组队/匹配观察允许20秒有界阻塞；额外预算用于认证和响应编码，读取正文预算保持独立。
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	errCh := make(chan error, 1)

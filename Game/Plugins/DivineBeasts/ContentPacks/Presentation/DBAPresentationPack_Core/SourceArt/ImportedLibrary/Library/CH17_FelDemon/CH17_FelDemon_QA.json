@@ -1,0 +1,286 @@
+{
+  "chapter": "CH17_FelDemon",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Fel_Flame_Flipbook_8x8_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.458393,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "cell_border_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Flame_Flipbook_8x8_02.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.456587,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "cell_border_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Burst_Flipbook_8x8_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.214249,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "cell_border_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Noise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Noise_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Noise_03.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Smoke_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.204762,
+      "alpha_min": 0,
+      "alpha_max": 198,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Smoke_Flipbook_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.331148,
+      "alpha_min": 0,
+      "alpha_max": 194,
+      "cell_border_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Arc_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.091335,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Spark_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.232193,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_RuneAtlas_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "cell_border_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_RuneAtlas_02.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "cell_border_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Corruption_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.292633,
+      "alpha_min": 0,
+      "alpha_max": 239,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Corruption_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.349751,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Crack_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_Veins_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.107166,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Fel_PortalEdge_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.362258,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    }
+  ],
+  "count": 17,
+  "expected_count": 17
+}

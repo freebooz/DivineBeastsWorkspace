@@ -1,4 +1,4 @@
-// 第三层世界操控纯策略回归：验证左右键、A/D修饰及暂停清理；不证明视口、网络或真实资源运行。
+// 第三层世界操控纯策略回归：验证左右键、可重映射转向轴修饰及暂停清理；默认A/D键位另由真实INI门禁检查。
 // 独立原生编译显式定义此宏；UE目标没有该宏时按0处理，不降低C4668未定义宏门禁。
 #ifndef DBA_WORLD_CONTROLS_STANDALONE
 #define DBA_WORLD_CONTROLS_STANDALONE 0

@@ -1,3 +1,4 @@
+// 平台客户端施法展示：只消费获准的事件快照，瞬态UMG动画负责有限视觉插值；不调度技能或资源。
 #pragma once
 
 #include "Components/GamePlatformComponentWidget.h"
@@ -5,6 +6,7 @@
 
 class UProgressBar;
 class UTextBlock;
+class UWidgetAnimation;
 
 /**
  * FGamePlatformUICastProgressState（游戏通用施法/引导进度显示快照）。
@@ -37,7 +39,7 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformUICastProgressState
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|Cast")
     double TotalSeconds = 0.0;
 
-    /** 上游确认的剩余时长（秒），不在Widget中推断权威完成时间。 */
+    /** 本事件发生时上游确认的剩余时长（秒）；仅启动有限视觉曲线，不推断权威完成。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|Cast")
     double RemainingSeconds = 0.0;
 
@@ -109,6 +111,8 @@ public:
     }
 
 protected:
+    /** 从父视图移除时撤销本控件自有动画与来源；重新显示须由作用域适配器首次快照重绑。 */
+    virtual void NativeDestruct() override;
     /** 可选绑定命名进度条；缺少控件时蓝图可自定义样式。 */
     UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly, Category="UI|Cast")
     TObjectPtr<UProgressBar> CastProgressBar = nullptr;
@@ -123,6 +127,15 @@ protected:
     void BP_OnCastStateChanged(FGamePlatformUICastProgressState UpdatedState);
 
 private:
+    /** 每次受理绑定/快照/清理都换代；防同步可见性/字段通知清空重绑到同一Scope和Revision的ABA重入。 */
+    FGuid DisplayUpdateId;
+    /** 当前事件自有的瞬态引擎动画；从不保存成资产，不查询世界/GAS，也不在完成时改bActive。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UWidgetAnimation> CastVisualAnimation;
+    /** 按本次已接受快照建立Percent线性曲线；未知/零剩余时长不伪造动画。仅游戏线程。 */
+    void PlayCastVisualAnimation();
+    /** 先撤销本控件所有权再停止引擎动画，避免停止回调误清同步创建的后继动画。 */
+    void StopCastVisualAnimation();
     /** 当前上下文的随机作用域，只接受相同SourceScopeId。 */
     UPROPERTY(Transient)
     FGuid BoundScopeId;

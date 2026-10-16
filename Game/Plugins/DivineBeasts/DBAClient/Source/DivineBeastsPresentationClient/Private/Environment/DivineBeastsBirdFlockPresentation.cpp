@@ -119,7 +119,7 @@ void UDivineBeastsPresentationClientSubsystem::StartDefaultWorldBirdFlock(UWorld
     if (bVillage)
     {
         // Niagara物种自身再加850/570厘米飞行高度，因此意图Z只加350/250厘米，不能叠加旧1800。
-        // 两组位于出生区前方不同位置，既有radius1700/1150厘米，沿用模式0/2而非未获资格的样条。
+        // 两组位于出生区前方不同位置，radius1700/1150厘米，读取海鸥模式1/燕子模式2的自然掠行定义。
         const FVector SpawnRight = FVector::CrossProduct(FVector::UpVector, SpawnForward);
         FString Error;
         if (!StartAmbientBirdFlock(TEXT("DBA.Environment.WorldBirds"), TEXT("Seagull"), 32,

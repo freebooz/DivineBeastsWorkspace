@@ -33,7 +33,10 @@ public class GamePlatformUIClient : ModuleRules
         {
             "Projects",
             // 通用返回/确认资产回归实际使用FKey与EKeys，需要直接链接InputCore而不是依赖传递链接。
-            "InputCore"
+            "InputCore",
+            // 通用施法条按事件创建瞬态UMG Percent曲线；只负责视觉，不添加业务Ticker/Timer。
+            "MovieScene",
+            "MovieSceneTracks"
         });
         // Editor输入回归持有真实FSceneViewport，继承FRenderResource虚函数需显式RenderCore链接；
         // 夹具由WITH_EDITOR隔离，发行客户端与Dedicated Server不因此新增此测试依赖。

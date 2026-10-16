@@ -2,6 +2,9 @@
 
 #include "Arena/GamePlatformArenaTypes.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
+#include "Misc/ConfigCacheIni.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 
 namespace
 {
@@ -18,12 +21,19 @@ namespace
         Spec.ExperienceId = TEXT("Experience.MainArena.Main");
         Spec.HeroCatalogRevision = FDivineBeastsHeroCatalog::CatalogRevision;
 
-        // 产品未批准的值必须保持未配置，不能继承FoundationTest默认规则。
-        Spec.ConfigState = EDivineBeastsArenaConfigState::NotConfigured;
-        Spec.PickBanState = EDivineBeastsArenaFeatureState::NotConfigured;
-        Spec.DuplicateHeroPolicy = EDivineBeastsArenaDuplicateHeroPolicy::Unspecified;
-        Spec.OvertimeState = EDivineBeastsArenaFeatureState::NotConfigured;
-        Spec.SuddenDeathState = EDivineBeastsArenaFeatureState::NotConfigured;
+        // 用户批准单局歼灭规则；当前白盒地图/候选技能明确为开发内容，不能自动标记正式发行。
+        Spec.MapId=TEXT("divinebeasts.world.main_arena@1");
+        Spec.SelectionPolicyId=TEXT("Arena.Selection.LockedRoster");
+        Spec.SpawnPolicyId=TEXT("Arena.Spawn.RosterSlot");
+        Spec.RespawnPolicyId=TEXT("Arena.Respawn.Disabled");
+        Spec.ScorePolicyId=TEXT("Arena.Score.Eliminations");
+        Spec.WinConditionPolicyId=TEXT("Arena.WinCondition.SingleRoundElimination");
+        Spec.TimeLimitSeconds=1200;Spec.ProjectRuleRevision=1;Spec.ContentRevision=TEXT("MainArena.Development.20261015.1");
+        Spec.ConfigState=EDivineBeastsArenaConfigState::DevelopmentOnly;
+        Spec.PickBanState=EDivineBeastsArenaFeatureState::Unsupported;
+        Spec.DuplicateHeroPolicy=EDivineBeastsArenaDuplicateHeroPolicy::Allowed;
+        Spec.OvertimeState=EDivineBeastsArenaFeatureState::Unsupported;
+        Spec.SuddenDeathState=EDivineBeastsArenaFeatureState::Unsupported;
         return Spec;
     }
 }
@@ -95,14 +105,27 @@ bool FDivineBeastsArenaModeCatalog::ValidateProductionCatalog(FString& OutError)
     return true;
 }
 
-bool FDivineBeastsArenaModeCatalog::ValidateAssignmentAgainstProduction(
+bool FDivineBeastsArenaModeCatalog::IsDevelopmentEnabledForCurrentProcess()
+{
+#if UE_BUILD_SHIPPING || UE_BUILD_TEST
+    return false;
+#else
+    bool bConfigured=false;if(GConfig)GConfig->GetBool(TEXT("DivineBeasts.Arena"),TEXT("bAllowDevelopmentArena"),bConfigured,GGameIni);
+    return bConfigured&&FParse::Param(FCommandLine::Get(),TEXT("DBADevelopmentArena"));
+#endif
+}
+
+bool FDivineBeastsArenaModeCatalog::ValidateAssignmentAgainstProduction(const FGamePlatformArenaAssignment& Assignment,FGamePlatformArenaModeSpec& OutModeSpec,FString& OutError)
+{return ValidateAssignmentForRuntime(Assignment,OutModeSpec,OutError,false);}
+
+bool FDivineBeastsArenaModeCatalog::ValidateAssignmentForRuntime(
     const FGamePlatformArenaAssignment& Assignment,
     FGamePlatformArenaModeSpec& OutModeSpec,
-    FString& OutError)
+    FString& OutError,bool bAllowDevelopment)
 {
     const FDivineBeastsArenaProjectModeSpec* ProjectSpec =
         Find(Assignment.ArenaModeId);
-    if (!ProjectSpec || !ProjectSpec->TryBuildPlatformSpec(OutModeSpec, OutError))
+    if (!ProjectSpec || !ProjectSpec->TryBuildPlatformSpec(OutModeSpec, OutError,bAllowDevelopment))
     {
         return false;
     }
