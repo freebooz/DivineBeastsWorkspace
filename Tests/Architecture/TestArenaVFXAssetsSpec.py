@@ -70,6 +70,23 @@ class ArenaVFXAssetsSpecTests(unittest.TestCase):
         self.assertNotIn("<<<<<<< HEAD", bridge)
         self.assertNotIn(">>>>>>>", bridge)
 
+    def test_project_config_uses_distinct_category_and_real_experience_budget(self):
+        """项目配置需使用专属类别、规范数组和真实Experience命名空间，静态通过仍非UE加载。"""
+        report = MODULE.audit(ASSET_SPEC, ROOT)
+        self.assertTrue(report["project_config_static_contract"], report["errors"])
+        self.assertFalse(report["project_config_runtime_verified"])
+        request_header = (ROOT / "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/"
+                          "Source/GamePlatformVFXClient/Public/Types/GamePlatformVFXRequest.h")
+        provider = (ROOT / "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/"
+                    "Source/GamePlatformVFXClient/Private/Integration/Presentation/"
+                    "GamePlatformVFXPresentationProvider.cpp")
+        policy = (ROOT / "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/"
+                  "Source/GamePlatformVFXClient/Private/Scalability/"
+                  "GamePlatformVFXScalabilityPolicy.cpp")
+        self.assertIn("FName ExperienceId = NAME_None", request_header.read_text(encoding="utf-8"))
+        self.assertIn("VFXRequest.ExperienceId = Request.Context.ExperienceId", provider.read_text(encoding="utf-8"))
+        self.assertIn("bMatchExperience ? ExperienceId : WorldId", policy.read_text(encoding="utf-8"))
+
     def test_native_files_are_not_implicitly_verified(self):
         """仅检测文件名不能声称原生资产、Shader或GPU性能通过。"""
         report = MODULE.audit(ASSET_SPEC, ROOT)

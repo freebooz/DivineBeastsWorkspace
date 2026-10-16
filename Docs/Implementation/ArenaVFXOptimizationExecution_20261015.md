@@ -69,5 +69,17 @@
 
 **UE5.8增量模块构建证据：** 已按项目构建规范执行`Build/Game/BuildFoundation.ps1 -Editor -UsePrecompiled -AdditionalPlugins DBAServer -OnlyModules GamePlatformVFXClient -NoSharedPCH -NoUBA -MaxParallelActions 8`，退出码0，结果为`Build: Passed`。证据目录：`Saved/Validation/FoundationM0/056db7f0-be94-40a2-a2e5-047e60a6c23a/Build`。该结果只表示Editor宿主下GamePlatformVFXClient模块构建成功，不能当作完整Editor/Client/Server或Niagara GPU Shader验收通过。
 
-**待完成的硬门禁：** 真实UE5.8 Editor / Monolith原生资产创建保存与重载、Niagara读者GPU图、7类NET与各定义绑定、MainArena真实WorldId预算启用、NDC分帧队列及可验证的Islands分区、完整Editor/Client/Server目标编译、Shader、Cook与5v5 P95/P99、人工视觉。上述阶段未完成不得填写“整体优化完成”或“FPS已保证”。
+## V2.0续建记录：配置归属与真实体验匹配（2026-10-16）
+
+本次在原`main`工作树原地增量操作，保护同时存在的IceArrow等其他任务修改，不停止其他7个长期Runner Job。
+
+1. **修复配置不生效风险：** `UGamePlatformVFXSettings`原声明`Config=Game`，而配置放置在`DefaultGamePlatformVFX.ini`；现改用独立`Config=GamePlatformVFX`。平台插件自己的`DefaultGamePlatformVFX.ini`默认关闭项目规则；新增`Game/Config/DefaultGamePlatformVFX.ini`作为SSLM主工程覆盖，以`!WorldBudgetRules=ClearArray`加四条`+WorldBudgetRules`保存Low/Medium/High/Epic。Engine/Client实际加载仍待UE验证。
+2. **修复预算身份错配：** `FGamePlatformVFXRequest`增加`ExperienceId`，由`GamePlatformVFXPresentationProvider`从上游`Request.Context.ExperienceId`真实透传；`ScalabilityPolicy`按`Experience.`前缀匹配ExperienceId，其余前缀匹配WorldId，保证不误把MainArena体验限制施加到Village/OpenWorld，并保留带`@1`版本后缀的合法匹配。已扩充原C++自动化测试，不等于当前编译已验证。
+3. **项目层自动化验证：** 新建`DivineBeastsPresentationClient/Private/Tests/DivineBeastsMainArenaVFXConfigTests.cpp`，在SSLM主工程实测`GetDefault<UGamePlatformVFXSettings>()`读到四档真实配置；其他通用DevHost不承担项目配置验收。扩展既有VFX插件PowerShell静态检查和竞技场Python离线规格审计，防止配置数组、分层归属和实际ExperienceId回退。
+4. **证据状态：** 通过项目文件只读返回及精确匹配，已确认独立配置类别、平台默认关闭、项目四档`+`数组、真实ExperienceId透传及7NET/3NDC规格JSON结构保持完整；这不是运行时配置回归、Niagara原生资产、Shader、GPU或5v5验收。离线验证Job `wc_job_9RKG8UmtAqiyEdce`已提交但观察时仍为`agent_queued`，未执行，不得标为Passed。
+5. **编辑器条件：** Monolith注册可见，实际执行报告“Unreal Editor not running”，因此本轮没有创建新的`.uasset`，未启用`bUseSharedBurstChannel`。现有NDC批量API尚未接入有所有权/去重/空间上下文的帧批处理队列，不能冒充共享模拟已投产。
+
+**后续阻断门禁：** 先取得当前变更的增量模块编译及项目层原生自动化结果，再完成7类NET、3类NDC、共享Reader与真实GPU渲染、Client/Server Cook和MainArena 5v5 P95/P99性能压测；以前一轮模块构建退出码0不能代替本次变更后的构建证据。
+
+**待完成的硬门禁：** 真实UE5.8 Editor / Monolith原生资产创建保存与重载、Niagara读者GPU图、7类NET与各定义绑定、MainArena真实ExperienceId预算及项目配置引擎加载验证、NDC分帧队列及可验证的Islands分区、完整Editor/Client/Server目标编译、Shader、Cook与5v5 P95/P99、人工视觉。上述阶段未完成不得填写“整体优化完成”或“FPS已保证”。
 

@@ -91,6 +91,36 @@ def audit(spec: dict, workspace: Path, require_native: bool = False) -> dict:
         problems.append("NDC批量写入策略没有禁止未经验证的跨空间Islands合并")
 
     plugin = workspace / spec.get("platform_plugin_path", ".")
+    # V2.0检查配置是否被放置在正确的UE独立类别中；此项仍只是文本校验，不证明运行时已加载。
+    settings_header_path = (plugin / "Source/GamePlatformVFXClient/Public/Settings/GamePlatformVFXSettings.h")
+    platform_ini_path = plugin / "Config/DefaultGamePlatformVFX.ini"
+    project_ini_path = workspace / "Game/Config/DefaultGamePlatformVFX.ini"
+    config_errors_start = len(problems)
+    if not settings_header_path.is_file() or not platform_ini_path.is_file() or not project_ini_path.is_file():
+        problems.append("VFX独立配置类别或平台/项目配置文件缺失")
+    else:
+        settings_text = settings_header_path.read_text(encoding="utf-8")
+        platform_ini = platform_ini_path.read_text(encoding="utf-8")
+        project_ini = project_ini_path.read_text(encoding="utf-8")
+        if "UCLASS(Config=GamePlatformVFX, DefaultConfig" not in settings_text:
+            problems.append("VFX设置类必须读取GamePlatformVFX自有类别")
+        if "bUseWorldBudgetRules=False" not in platform_ini or "Experience.MainArena.Main" in platform_ini:
+            problems.append("跨游戏平台默认配置必须关闭场景预算且不得包含SSLM身份")
+        if ("bUseWorldBudgetRules=True" not in project_ini or
+                "!WorldBudgetRules=ClearArray" not in project_ini):
+            problems.append("SSLM主工程必须明确启用并清空继承的竞技场预算数组")
+        entries = [line.strip() for line in project_ini.splitlines()
+                   if line.strip().startswith("+WorldBudgetRules=")]
+        if len(entries) != len(TIERS):
+            problems.append("SSLM项目预算应严格追加Low/Medium/High/Epic四档")
+        for quality in TIERS:
+            matching = [line for line in entries
+                        if f'QualityTier={quality},' in line and
+                        'WorldIdPrefix="Experience.MainArena.Main"' in line]
+            if len(matching) != 1 or f'MaxCombatRequests={target.get(quality)}' not in matching[0]:
+                problems.append(f"{quality}真实体验软请求预算缺失或与规格不一致")
+    static_config_consistent = len(problems) == config_errors_start
+
     found = []
     missing = []
     for category, asset_root, entries in (
@@ -113,6 +143,8 @@ def audit(spec: dict, workspace: Path, require_native: bool = False) -> dict:
         "native_files_found": found,
         "native_files_missing": missing,
         "unreal_native_assets_verified": False,
+        "project_config_static_contract": static_config_consistent,
+        "project_config_runtime_verified": False,
         "gpu_performance_verified": False,
         "errors": problems,
     }

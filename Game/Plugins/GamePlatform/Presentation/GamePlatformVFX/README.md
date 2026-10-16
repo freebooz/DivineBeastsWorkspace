@@ -50,6 +50,14 @@ Gameplay / Application Fact
 - 非 Composite Behavior 统一以 Generic Niagara（通用 Niagara）执行，不建立十套播放器。Beam/Area/Attached 仅有少量通用参数/附着适配；
 - 已启动 `F:\\VFX Lib` 第一批平台化迁移：通用 Shader 位于 `Shaders/Private/GamePlatformVFXCommonMotion.ush`，源美术只进入 `SourceArt`，不会冒充运行时 `.uasset`。
 
+## Niagara VFX V2.0配置加载及三维预算（2026-10-16）
+
+- `UGamePlatformVFXSettings`（特效运行配置）使用`Config=GamePlatformVFX`独立插件类别；平台默认来自`GamePlatformVFX/Config/DefaultGamePlatformVFX.ini`，`bUseWorldBudgetRules=False`。平台插件不得知道SSLM某个竞技体验ID。
+- SSLM主工程以`Game/Config/DefaultGamePlatformVFX.ini`启用`Experience.MainArena.Main`四档`+WorldBudgetRules`，配置前先`!WorldBudgetRules=ClearArray`。旧配置键`WorldIdPrefix`名称保留兼容；`Experience.*`在策略层匹配真实`ExperienceId`，其他规则匹配`WorldId`；`WorldId`不是`ExperienceId`。
+- 三维预算独立：请求追踪保护、真实活跃Niagara System（含NDC Reader及绕过平台的入口）、CPU/GPU毫秒及材质过绘。Low/Medium/High/Epic的40/58/80/120是候选System目标，不等于上述项目配置中同数值的请求限制，也不是帧率承诺。
+- 原有Niagara原生Effect Type、Definition匹配和Pooling继续作为执行真源，不新建独立播放器。正式SSLM客户端/Editor在运行时必须通过`DivineBeasts.VFX.MainArena.LoadedBudgetSettings`自动化回归确认配置确实加载，之后再用`stat Niagara`和GPU Profiler核实实例/时间；不能仅凭INI文本通过宣告配置实际生效。
+- NDC事件共享仍需原生Effect Type/NDC/Reader创建及真实GPU验证，目前默认关闭，不能把`WriteInstantBursts`API本身当作150次每秒实测优化。
+
 ## 自然飘落物（2026-10-11）
 
 `Content/Environment/FallingFoliage` 保存统一双层GPU Niagara系统 `NS_GP_FallingFoliage_Base`、`NM_GP_FoliageAirMotion`（空中风阻和摇摆）、`NM_GP_FoliageGroundMotion`（落地、贴地风滑及阵风再次扬起）、`NET_GP_FallingFoliage_Ambient`（环境性能预算）和 `M_GP_FallingFoliage_Master`（双面叶片母材质）。

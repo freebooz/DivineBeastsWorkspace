@@ -138,6 +138,8 @@ bool FGamePlatformVFXWorldBudgetRuleTest::RunTest(const FString& Parameters)
     Request.WorldId = TEXT("World.MainArena.001");
     Request.ExperienceId = TEXT("Experience.MainArena.Main");
     TestFalse(TEXT("真实体验匹配专用限制"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
+    Request.ExperienceId = TEXT("Experience.MainArena.Main@1");
+    TestFalse(TEXT("带版本后缀的相同体验也应用竞技预算"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
     Request.ExperienceId = TEXT("Experience.MainArena.MainOther");
     TestTrue(TEXT("不能匹配相邻体验名称"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
     Request.ExperienceId = NAME_None;

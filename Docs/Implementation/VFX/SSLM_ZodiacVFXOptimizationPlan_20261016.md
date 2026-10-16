@@ -40,6 +40,6 @@
 逐技能检查蓄力、释放、飞行、命中、持续、结束；检查近景电影感、中景可读性、远景轮廓、敌我区分和高并发视觉稳定性。无真实UE运行证据不得标记Production Ready（生产就绪）。
 
 ## 三、当前实施边界
-WorldBudgetRule代码已实现但默认关闭；NDC写入桥代码已存在，但CombatImpact/GroundBurst原生通道和GPU Reader仍标记未验证；Effect Type和质量变体验证骨架、对象池、生命周期、Definition Lease和去重机制已存在。因此不重复建设这些机制，以“配置落地→真实UE资产→十二生肖接入→统一编译→压力测试→人工验收”为主线。
+WorldBudgetRule机制已实现：平台可复用默认配置关闭，SSLM主工程通过Game/Config/DefaultGamePlatformVFX.ini显式开启四档体验专用请求预算，但Engine运行加载尚未验收；NDC写入桥代码已存在，但CombatImpact/GroundBurst原生通道和GPU Reader仍标记未验证；Effect Type和质量变体验证骨架、对象池、生命周期、Definition Lease和去重机制已存在。因此不重复建设这些机制，以“配置落地→真实UE资产→十二生肖接入→统一编译→压力测试→人工验收”为主线。
 
 由于当前工作区仍有7个活跃任务占用执行资源，本次不能强行覆盖其正在修改的文件，也不能伪造UE原生.uasset或GPU性能数据。可安全实施的配置和计划文档先落地，其余按P0—P8继续执行。
