@@ -38,3 +38,7 @@
 进入临时展示机位：在当前LocalPlayer上获取 `UGamePlatformCinematicCameraSubsystem`，调用 `BeginCinematicView(CameraActor, Profile)`；只允许当前本地世界已存在的Actor，返回false不修改视角。结束时调用 `EndCinematicView()`；只有当前ViewTarget仍归本次机位，且旧目标有效时才恢复。过渡使用引擎`SetViewTargetWithBlend`。电影Actor的传感器宽度、焦距及非竞技光圈/手动对焦由Profile设置；配置仅供客户端表现，不改变权威行为。
 
 **未完成**：在角色展示工作室及正式场景内创建/接入原生CineCamera、数据实例、序列和Demo；与已有输入/预览相机及MOBA视角进行完整整合；模式优先级和可抢占恢复；真实资产创建、Editor/Client/Server编译、Automation运行、Cook剥离及性能测量。该增量代码尚未在UE5.8中编译，应在工作环境恢复后优先验证CinematicCamera头文件/API与模块依赖，然后继续集成。
+
+## 2026-10-16 真实资产与验收补充
+
+以前旧段落中的“未创建任何资源/未编译”只是2026-09-29至10-15早期计划基线，不再代表本次电影镜头增量状态。当前确有Cinema Profile C++反射类、本地玩家临时机位子系统、项目层四份镜头DataAsset、蓝图演员BP_DBA_CinematicCameraRig和真实开发ReviewMap。独立UE5.8编辑器回读已经验证镜头24/35/50/85mm、角色追焦方向和展示蓝图唯一激活；实际游戏关卡进入运行阶段并已截图。原有完整Camera Mode账本和Data租约仍未实施，角色创建、竞技、观战等正式业务未全部接线。详细证据与未完成门禁见 Docs/Implementation/SSLMCinematicCameraExecution_20261015.md。

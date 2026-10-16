@@ -51,3 +51,41 @@ P8：人工视觉验收和性能留证后，按既定仓库流程复核并合并
 ## 结论
 
 P0已完成**可访问远程版本的代码级抽样审查**，未包含本地资产/未提交状态全量审查；P1架构决定明确；P2—P3仅初步增量源码；P4—P7未完成；P8仅文档与Git分支增量，无集成验收和正式主分支合并。不得宣称P0—P8全部完成。
+
+## 2026-10-16 本地 UE5.8 实际续作与证据（覆盖先前“仅源码”状态）
+
+执行空间仍为唯一 DivineBeastsWorkspace；本轮本机编辑器确认为 D:\UnrealEngine-5.8.0-release，工作目录为 E:\work\2026\DivineBeastsWorkspace。主分支已包含第一批摄像机C++、蓝图和4份DataAsset，本节不重建工程或插件。期间有多个其他开发任务共用工作空间，本任务只维护独立镜头场景和相应脚本。
+
+真实内容及归属：
+- 基础插件 GamePlatformCamera：UGamePlatformCinematicCameraProfile 与 UGamePlatformCinematicCameraSubsystem，归属客户端，仅为可选电影机位，不接管游戏权威。
+- 项目内容包 DBAPresentationPack_Core/Cameras/Profiles：4份真实镜头数据资产（28mm探索、65mm角色、45mm技能演出、35mm竞技），均经独立UE编辑器实例成功加载并完成IsValidProfile值校验。
+- 开发专用演示地图 /Game/Development/PluginDemos/Maps/L_DBA_CinematicCameraReview，属于正式Cook排除目录。当前保留4个原生CineCameraActor及1个真实BP_DBA_CinematicCameraRig蓝图Actor实例；后者是Player0默认35mm展示机位，四组24/35/50/85mm原生演员供编辑器分镜对比。
+- 真正的 Manny 项目网格、日光、天空、背景及两组立体构图参照物均保留在此地图，未覆盖正式Village/角色创建地图。
+- 编辑器作者脚本 Tools/Unreal/Cameras/AuthorSSLMCinematicCameraReview.py 已修复 Unreal Python Rotator 的(roll,pitch,yaw)顺序误用，真实调整摄像机朝向、焦距、光圈、传感器36x20.25mm、到角色目标的追焦距离、开发场景光照，并把默认开发Pawn出生点移出构图以避免白色球体遮挡。全部为演示级配置，不改变比赛公平视野。
+
+已取得的真实证据：
+1. 独立编辑器资产回读：Game/Saved/Logs/CinematicCameraBlueprintVerify20261016.log 中 SSLM_CINEMATIC_RELOAD_OK；Saved/Validation/CinematicCamera/IndependentReload.json 确认13个Actor、四组焦距、蓝图继承和蓝图实例本地激活唯一性、相机光轴和焦点距离。
+2. 电影镜头DataAsset回读：Saved/Validation/CinematicCamera/ProfilesReload.json 记录全部4份真实配置的有效性；不冒充客户端游戏内加载。
+3. 游戏启动：Game/Saved/Logs/CinematicCameraBlueprintGame20261016.log 显示实际 LoadMap、Bringing up level for play，程序正常0退出；Game/Saved/Screenshots/WindowsEditor/HighresScreenshot00031.png 为1280x720真实画面，可见Manny、柱体、阴影和天空，非之前纯黑图。只是独立开发环境基线，色彩和景深未达到最终3A视觉验收标准。
+4. 自动化：Game/Saved/Logs/CinematicCameraAutomation20261016.log 记录正式命令行测试 GamePlatform.Camera.Cinematic.Profile.Validation，Found 1、Test Completed Result=Success、Queue Empty 1 tests performed。
+5. 客户端摄像机模块：Build.bat DivineBeastsArenaClient Win64 Development -Module=GamePlatformCameraClient 返回 Result: Succeeded；仅证明这一模块构建，不等于整客户端全量功能及完整Cook通过。
+
+未完成与不得宣称项目：
+- 尚未完成现有角色预览/新手村/开放世界/竞技赛局的正式电影机位接入、死亡复活/观战状态恢复和控制器无跳变测试；当前电影演示独立于正式主流程，不应覆盖原有相机。
+- 尚未在既有DemoCatalog注册所有十类镜头参数交互用例；电影蓝图实例已运行，不代表10项互动面板已实现。
+- 尚未进行完整Editor/Client/Server全工程编译、Cook剥离、正式新手村多人场景验证或相同硬件60FPS性能对比；缺证据的一律保持待验收。
+- 当前图像仍是简洁的开发白模舞台，真实电影美术品质未通过人工验收；截图为测试证据而非效果宣传图。
+
+演示定位和复测：
+- 地图：Game/Content/Development/PluginDemos/Maps/L_DBA_CinematicCameraReview.umap（开发专用，不进入发行包）。
+- 蓝图：Game/Content/Development/PluginDemos/Blueprints/BP_DBA_CinematicCameraRig.uasset（默认电影机位）。
+- 打开该地图，在编辑器中切换标签为DBA_Cine_24mm、DBA_Cine_35mm、DBA_Cine_50mm、DBA_Cine_85mm四个机位进行焦距比较；35mm默认演示由BP_DBA_CinematicCameraRig蓝图演员接管。
+- 参数资产位于 Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Cameras/Profiles/。
+- 一切修改优先通过唯一真实UE5.8编辑器脚本操作，不得手工伪造 .uasset/.umap。
+
+后续重点：完成项目正式摄像机可选接线、界面实际交互、独立场景与多人平台测试，并在得到真实验证之后才可将P0—P8整体宣告完成。
+## 2026-10-16 Server完整构建异常与限定回归
+
+为核实ClientOnly模块隔离，先后尝试完整`DivineBeastsArenaServer Win64 Development`构建。引擎自带`ConsoleVariablesEditorRuntime`模块出现MSVC C1001内部编译器错误；再使用`-NoUBA -MaxParallelActions=8`重试，UE自带`Chaos`模块编译时发生访问冲突（错误码-1073741819）。两次均未取得完整Server构建成功证据，中止后避免继续消耗系统资源；没有修改UE引擎源码或伪造编译结果。限定模块`-Module=ConsoleVariablesEditorRuntime -NoUBA -MaxParallelActions=1`成功，`-Module=DivineBeastsArena` Server最小模块检查成功，但都不能替代全目标构建。客户端`DivineBeastsArenaClient -Module=GamePlatformCameraClient`构建真实通过。
+
+编辑器实际运行`GamePlatform.Camera.Cinematic.Profile.Validation`发现1项测试并记录Result=Success；独立编辑器回读地图13个Actor、四组镜头光轴和对焦、蓝图镜头实体及本地玩家唯一激活均通过。正式角色创建、复杂MOBA和完整Cook/性能回归仍属未完成。
