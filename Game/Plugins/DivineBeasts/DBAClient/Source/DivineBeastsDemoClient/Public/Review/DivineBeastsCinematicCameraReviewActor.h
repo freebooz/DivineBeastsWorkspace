@@ -9,6 +9,7 @@ class ACineCameraActor;
 class APlayerController;
 class UGamePlatformCinematicCameraProfile;
 class UGamePlatformCinematicCameraSubsystem;
+class UDivineBeastsCameraReviewWidget;
 
 /**
  * 开发客户端电影镜头演示入口。四个镜头与四份Profile由正式编辑器资产引用，
@@ -85,6 +86,10 @@ private:
     UGamePlatformCinematicCameraSubsystem* ResolveService() const;
     void PrintCameraStatus(const FString& Message) const;
 
+    /** 只在开发世界存在的本地UMG控件，随本Actor清理。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UDivineBeastsCameraReviewWidget> ControlsWidget;
+    bool bPreviousMouseCursor = false;
     TWeakObjectPtr<APlayerController> BoundController;
     FTimerHandle InitTimer;
     FTimerHandle AutoCycleTimer;

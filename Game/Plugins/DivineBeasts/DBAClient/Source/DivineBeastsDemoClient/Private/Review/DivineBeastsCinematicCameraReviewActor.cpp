@@ -1,6 +1,7 @@
 // 本地演示只处理视觉和输入；世界退出取消定时器、解绑当前Controller的演示输入。
 // 镜头所有权和安全恢复归GamePlatformCameraClient，Dedicated Server无此模块和资产。
 #include "Review/DivineBeastsCinematicCameraReviewActor.h"
+#include "Review/DivineBeastsCameraReviewWidget.h"
 #include "Cinematic/GamePlatformCinematicCameraSubsystem.h"
 #include "Cinematic/GamePlatformCinematicCameraProfile.h"
 
@@ -110,6 +111,28 @@ void ADivineBeastsCinematicCameraReviewActor::SetupLocalInput()
     InputComponent->BindKey(EKeys::V, IE_Pressed, this, &ADivineBeastsCinematicCameraReviewActor::FocusFar);
     InputComponent->BindKey(EKeys::R, IE_Pressed, this, &ADivineBeastsCinematicCameraReviewActor::ResetLens);
     bInputBound = true;
+
+    // 显示真实UMG按钮，而不是纯说明文字；控件调用本Actor同一套操作入口。
+    ControlsWidget = CreateWidget<UDivineBeastsCameraReviewWidget>(
+        Controller, UDivineBeastsCameraReviewWidget::StaticClass());
+    if (ControlsWidget)
+    {
+        ControlsWidget->BindReviewActor(this);
+        ControlsWidget->AddToViewport(20);
+        ControlsWidget->SetPositionInViewport(FVector2D(22.f, 22.f), false);
+        ControlsWidget->SetDesiredSizeInViewport(FVector2D(540.f, 210.f));
+        bPreviousMouseCursor = Controller->bShowMouseCursor;
+        Controller->bShowMouseCursor = true;
+        FInputModeGameAndUI Mode;
+        Mode.SetHideCursorDuringCapture(false);
+        Controller->SetInputMode(Mode);
+        UE_LOG(LogSSLM_CinematicReview, Display, TEXT("SSLM_CINE_DEMO_UMG_CREATED"));
+    }
+    else
+    {
+        UE_LOG(LogSSLM_CinematicReview, Warning,
+            TEXT("SSLM_CINE_DEMO_UMG_UNAVAILABLE: 键盘操作仍然有效"));
+    }
 
     if (!SelectLens(1))
     {
@@ -233,6 +256,10 @@ void ADivineBeastsCinematicCameraReviewActor::RunAutoCycleStep()
 
 void ADivineBeastsCinematicCameraReviewActor::PrintCameraStatus(const FString& Message) const
 {
+    if (ControlsWidget)
+    {
+        ControlsWidget->SetCameraStatus(Message);
+    }
     if (GEngine)
     {
         GEngine->AddOnScreenDebugMessage(-1, 8.f, FColor::Cyan,
@@ -266,8 +293,15 @@ void ADivineBeastsCinematicCameraReviewActor::EndPlay(const EEndPlayReason::Type
             }
         }
     }
+    if (ControlsWidget)
+    {
+        ControlsWidget->RemoveFromParent();
+        ControlsWidget = nullptr;
+    }
     if (APlayerController* Controller = BoundController.Get())
     {
+        Controller->bShowMouseCursor = bPreviousMouseCursor;
+        Controller->SetInputMode(FInputModeGameOnly());
         DisableInput(Controller);
     }
     BoundController.Reset();

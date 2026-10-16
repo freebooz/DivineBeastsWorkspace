@@ -42,3 +42,7 @@
 ## 2026-10-16 真实资产与验收补充
 
 以前旧段落中的“未创建任何资源/未编译”只是2026-09-29至10-15早期计划基线，不再代表本次电影镜头增量状态。当前确有Cinema Profile C++反射类、本地玩家临时机位子系统、项目层四份镜头DataAsset、蓝图演员BP_DBA_CinematicCameraRig和真实开发ReviewMap。独立UE5.8编辑器回读已经验证镜头24/35/50/85mm、角色追焦方向和展示蓝图唯一激活；实际游戏关卡进入运行阶段并已截图。原有完整Camera Mode账本和Data租约仍未实施，角色创建、竞技、观战等正式业务未全部接线。详细证据与未完成门禁见 Docs/Implementation/SSLMCinematicCameraExecution_20261015.md。
+
+## 2026-10-16 可选镜头重定向
+
+同一本地玩家拥有有效电影机位时，BeginCinematicView再次申请同一Actor保持幂等；更换为另一已预置Actor时，由UE原生SetViewTargetWithBlend连续混合，并保留最初退出恢复目标。其它系统、世界或Controller抢占后应拒绝修改。此能力完全属于ClientOnly，不能代替完整相机模式栈或正式比赛策略；开发对比镜头已复用，生产场景仍待验收。

@@ -31,9 +31,9 @@ UHorizontalBox* UDivineBeastsCameraReviewWidget::AddButtonRow(UVerticalBox& Pare
 {
     UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(
         UHorizontalBox::StaticClass());
-    if (UVerticalBoxSlot* Slot = Parent.AddChildToVerticalBox(Row))
+    if (UVerticalBoxSlot* RowSlot = Parent.AddChildToVerticalBox(Row))
     {
-        Slot->SetPadding(FMargin(0.f, 3.f, 0.f, 3.f));
+        RowSlot->SetPadding(FMargin(0.f, 3.f, 0.f, 3.f));
     }
     return Row;
 }
@@ -49,9 +49,9 @@ UButton* UDivineBeastsCameraReviewWidget::AddButton(
     Caption->SetText(FText::FromString(Label));
     Caption->SetColorAndOpacity(FSlateColor(FLinearColor::White));
     Button->SetContent(Caption);
-    if (UHorizontalBoxSlot* Slot = Row.AddChildToHorizontalBox(Button))
+    if (UHorizontalBoxSlot* ButtonSlot = Row.AddChildToHorizontalBox(Button))
     {
-        Slot->SetPadding(FMargin(3.f));
+        ButtonSlot->SetPadding(FMargin(3.f));
     }
     return Button;
 }
