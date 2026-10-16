@@ -1,10 +1,10 @@
 # SSLM工作空间工程规则
 
 > 正式位置：`DivineBeastsWorkspace/AGENTS.md`。
-> 版本：1.4.5｜更新日期：2026-10-15。
+> 版本：1.4.6｜更新日期：2026-10-16。
 > 此文件必须保留 `AGENTS.md` 固定名称，供人工与 AI 工具按目录规则发现机制读取。
 
-版本：1.4.5；更新日期：2026-10-15。适用于 DivineBeastsWorkspace（SSLM工作空间） 内人工开发与AI辅助开发。
+版本：1.4.6；更新日期：2026-10-16。适用于 DivineBeastsWorkspace（SSLM工作空间） 内人工开发与AI辅助开发。
 本文件规定必须遵守的工程边界，不代表源码、自动门禁或任何构建已经实现。执行任务前必须读取实际受影响源码和规则，不得仅凭文档生成所谓完整工程。
 
 ### 构建与验证效率策略（2026-10-15 用户明确要求）
@@ -90,16 +90,20 @@ Go保留五薄入口：统一接入、身份认证、玩家数据、比赛、服
 经济消费通过订单、支付验证、不可变经济账本、钱包、背包／权益闭环。金额使用明确币种的最小单位整数，不用浮点；重复支付通知／发奖不重复入账，退款与纠错通过可审计事务，不删除历史流水或直接改余额。可靠跨服务消息采用事务发件箱及消费幂等，不把内存模拟当生产实现。
 英文标识保持编译和行业命名约定；对外类型、接口、字段、参数、返回值、错误、生命周期、线程与权威含义需完整中文说明。目录图每个英文节点有中文注释。第三方自动生成代码不手加注释，以伴随文档说明。
 
-### SSLM 十二生肖技能 VFX 性能与视觉全局策略（2026-10-15）
+### SSLM MainArena Niagara VFX性能与视觉全局策略 V2.0（2026-10-16）
 
-本节对十二生肖全部技能与占位火球、冰箭、奥术、燃烧等VFX，以及MainArena（统一竞技场）1v1—5v5生效；**详细要求、预算解释与验收见 [SSLM十二生肖技能VFX性能与视觉质量规范](Docs/Architecture/SSLM十二生肖技能VFX性能与视觉质量规范.md)**。以下均为开发强制策略，不代表尚未开发的NDC或Niagara原生资源已经存在。
+适用SSLM全部十二生肖/公共占位技能，以及MainArena 1v1—5v5的所有Niagara入口；详见[SSLM十二生肖技能VFX性能与视觉质量规范](Docs/Architecture/SSLM十二生肖技能VFX性能与视觉质量规范.md)。本节是长期强制开发门禁，预算数字仅为待真实测量批准的候选值，**不得把计划、规格文件、源码原型、文件存在或静态测试冒充UE原生资产/GPU验收完成**。
 
-1. **画质与可读性必须同时保证。** 蓄力、释放、飞行、命中、持续、消散等真实阶段要保留技能剪影、关键瞬间和电影级打击反馈；核心层（技能/敌方威胁/权威AOE范围）与可裁剪层（烟雾、火星、余烬、碎片、热浪）明确分离。最低画质和高负载不得隐藏重要敌方提示、改变伤害范围或误导玩家。
-2. **坚持唯一三层执行链。** Gameplay Fact（权威玩法事实）→MobaPresentation/GamePlatformPresentation（中立表现）→DivineBeasts项目Catalog/Definition→GamePlatformVFX（唯一Niagara执行器）。GamePlatform只提供通用Effect Type（特效类型）、Scalability（伸缩）、NDC（数据通道）、Pooling（组件池）和诊断；十二生肖HeroVFXProfile、皮肤、技能素材及视觉DNA必须保留项目内容包。Dedicated Server不Cook纯VFX内容。
-3. **降低独立System数量，不盲目减少粒子。** 高频短时命中/爆炸碎屑优先采用NDC共享模拟；独立弹道、可取消蓄力、持续状态与AOE主体沿用原有Niagara执行器和原生组件池。每次DoT（持续伤害）结算不得重复Spawn，禁止新建第二套播放器、实例注册表或数据租约真源。
-4. **每个技能必须有性能设计合同。** 真实技能ID与表现阶段、Definition、Effect Type、System/Emitter数量、CPU/GPU模拟、GPU Fixed Bounds（固定边界）、材质Overdraw（透明过绘）、Flipbook（序列帧）及Mesh混合、四档QualityVariants、预加载、取消/回收和最低画质回退必须登记、校验和留证。可选层降级不得削弱必要核心轮廓。
-5. **竞技预算必须以实测批准。** Epic/High/Medium/Low建议先以单客户端World合计120/80/58/40个活跃Niagara System为候选；High 60 FPS以VFX GPU≤1.5ms、CPU≤0.6ms作为初始目标，**并非已实现的限制、固定引擎上限或跨机型帧率保证**。当前MaxActiveInstances=256与HardMaxTrackedInstances=512仅是请求追踪预算；不得全局下调并伤害Village/OpenWorld。
-6. **按最坏5v5与全过程验收。** 入竞技场依据真实英雄Loadout预载、生成前预剔除、共享NDC先去重并校验世界代次、离屏/池化按真实生命周期处理。保证关键危险提示不因装饰排队积压而丢失；正式验收覆盖十名英雄集中施法、四画质、Unreal Insights/GPU过绘、预测回滚/断线/World退出、客户端和Dedicated Server Cook隔离、人工视觉签收，不以静态规范或资产存在冒充通过。
+1. **战斗信息优先于装饰。** 每个技能严格区分不可丢失的核心视觉（可辨识的三维主体、方向、危险预警、真实AOE几何范围、命中关键反馈）和可降级装饰（烟雾、余烬、冰屑、火星、热浪、动态光）。Low与高负载下也须保留敌方威胁、准确位置与持续时间，禁止只因距离远或阵营不同裁掉危险信息；保底优先使用低成本Mesh/材质/Decal/HUD。
+2. **唯一执行链与服务器隔离。** Gameplay/GAS服务器权威事实→GamePlatformPresentation/MobaPresentation中立语义与去重→DivineBeasts项目Catalog、Definition、HeroVFXProfile→GamePlatformVFXClient唯一WorldSubsystem/Executor→Niagara或NDC。平台层不得硬编码MOBA/生肖；不得新增平行VFX播放器、Pool、预算真源、Data租约服务；Dedicated Server不生成权威以外的Niagara效果、不Cook纯客户端VFX资源。
+3. **三维预算不可混淆。** 分别统计和治理①请求/Pending/Tracked预算（平台保护限，现有MaxActiveInstances=256、HardMaxTrackedInstances=512并非真实System数），②单World真实活跃Niagara System总数（包含共享NDC Reader、环境、动画通知和任何绕过平台的入口，依据原生Effect Type/每System限制及实测治理），③游戏线程/渲染线程/GPU毫秒、Emitter/粒子及透明Overdraw开销。没有逐帧GPU测量不宣称节省毫秒或达到FPS。
+4. **七类Effect Type与质量档。** 统一ArenaCritical、CombatCast、CombatProjectile、CombatImpact、CombatArea、CombatStatus、ArenaAmbient；原生Max Effect Type Instances（同类累计）与Max System Instances（单资产实例）分别设置。Epic/High/Medium/Low单World活跃System总量以120/80/58/40为初始候选，不是固定硬上限或对所有设备的性能承诺；只能对MainArena配套资产/世界生效，不能误伤Village/OpenWorld。
+5. **分层剔除与动态恢复。** 先由业务威胁/屏幕可见性/玩家重要性决定能否降级，再由Niagara原生Distance Significance、Cull Distance、视锥、Visibility、Fixed Bounds、Spawn Count Scale和Effect Type Budget Scaling执行；距离25/50/80米及Epic/High/Medium/Low装饰粒子100%/75%/50%/25%仅是候选测试起点。动态质量应有超载判定及恢复滞后，不能周期性切换全局画质导致闪烁；Max Global Budget Usage不是GPU占用百分比。
+6. **共享高频事件但保留独立生命周期。** 高频短时命中、地面爆发、环境点缀优先使用NDC_GP_CombatImpact、NDC_GP_GroundBurst、NDC_GP_AmbientBurst与少量局部GPU Reader；优先验证按帧批量Writer、Islands/空间上下文、有界Bounds、写后读相位、吞吐与空闲释放。请求需先去重并核对PredictionKey、World代次/取消，不能预测确认双爆；NDC仅做视觉，不能判定Gameplay。没有真实Channel+Reader+Shader+打包GPU验证及可靠回退时维持默认关闭。
+7. **减少System与Emitter，而非盲减粒子。** 普通技能优先一个受控核心System加共享短爆发；常见技能1—3个Emitter、复杂技能3—4个为审查起点，大招例外必须提供实测。GPU模拟用于大量装饰粒子，CPU用于少量必须CPU交互的效果；三维主体优先Mesh/材质，禁止依赖Niagara GPU碰撞决定权威伤害。持续状态和DoT每跳不得反复Spawn，独立弹道/蓄力/状态优先沿用Niagara AutoRelease原生池及明确持有生命周期。
+8. **控制过绘与瞬时创建。** 限制大面积透明片、长时折射/SceneColor、多层光晕、粒子灯光；使用Shader Complexity和Quad Overdraw审核。进竞技场按真实10人Loadout通过GamePlatformData预加载、分帧适量预热，杜绝首发同步加载；Spawn前拒绝过期装饰，超载丢弃或合并次要事件，不允许把关键预警延后；退出/重连/换World及时回收实例、Reader、租约与计时器。
+9. **四档质量与技能合同。** 每技能记录真实英雄/技能ID、阶段、Definition、Effect Type、主体/装饰、System及Emitter数量、模拟方式、FixedBounds/剔除、材质Overdraw、质量变体、预载及取消/回退；冰箭、火球、奥术、燃烧先做代表性闭环再扩展十二生肖。禁止生成文本假.uasset/.umap；原生Effect Type/NDC/Niagara须由UE5.8编辑器/合适MCP制作、编译、保存及独立重载核实。
+10. **发布验收门禁。** High/60FPS候选P95≤16.67ms、P99≤20ms、VFX GPU≤1.5ms、CPU≤0.6ms；Epic/120FPS需独立8.33ms预算验证，非跨机型保证。实际打包Client在四画质、1v1—5v5、十人同施放、每秒≥150短命中、AOE叠加、10分钟稳定与断线/取消/重连/出入World验证；同时确认Client/Server构建、Shader、Cook剥离、视觉人工签收。报告必须区分计划、静态代码、原生资产、编译、GPU实测的完成状态，不符合不得标记Production Ready（可投产）。
 
 ### SSLM用户界面与 Monolith MCP 全局策略
 

@@ -57,3 +57,17 @@
 5. Runner排队的静态单测尚未返回结果，不得宣告测试通过。UE编译、Client/Server目标、Cook、Shader和GPU压力验收全部待做。
 
 **当前结论：计划及核心通用机制源码已分阶段推进，但项目尚未达到完整优化交付或“保持60/120FPS”的实测条件。**
+
+## V2.0执行补充（2026-10-16；与10月15日历史记录分开）
+
+本轮已通过Cwebcodex在`DivineBeastsWorkspace`当前`main`工作树增量实施，启动前检查为clean、相对origin/main有3个本地提交；没有停止其他七个运行中的Detached Job。实际变更必须以本轮Git diff为准：
+
+- 根目录`AGENTS.md`升级V1.4.6，新增10项V2.0强制策略，覆盖核心视觉、唯一链路、三维预算、7类Effect Type、NDC、质量与退场门禁。
+- `GamePlatformVFXDataChannelBridge.cpp/.h`移除已有合并冲突标记，保留UE5.8安全法线；新增真实命中位置上下文，单条和上限128的Global批量写入。Islands/MapBase多条跨区合并被明确拒绝，不能处理的位置上下文拒绝并回退。
+- `GamePlatformVFXDiagnostics.cpp`增加按需命令`gp.VFX.SnapshotComponents`，手动观察当前World注册与活跃Niagara组件；不是精确System/GPU计量，禁止按帧扫描。
+- `ArenaVFXAssetsSpec_V1.json`、`AuditArenaVFXAssets.py`及`TestArenaVFXAssetsSpec.py`补强预算三维分离与NDC批处理门禁。首次离线执行6项单元测试成功，规格审计通过；原生文件审计显示7个NET及3个NDC原生资产均未发现，真实资产验收仍为false。
+
+**UE5.8增量模块构建证据：** 已按项目构建规范执行`Build/Game/BuildFoundation.ps1 -Editor -UsePrecompiled -AdditionalPlugins DBAServer -OnlyModules GamePlatformVFXClient -NoSharedPCH -NoUBA -MaxParallelActions 8`，退出码0，结果为`Build: Passed`。证据目录：`Saved/Validation/FoundationM0/056db7f0-be94-40a2-a2e5-047e60a6c23a/Build`。该结果只表示Editor宿主下GamePlatformVFXClient模块构建成功，不能当作完整Editor/Client/Server或Niagara GPU Shader验收通过。
+
+**待完成的硬门禁：** 真实UE5.8 Editor / Monolith原生资产创建保存与重载、Niagara读者GPU图、7类NET与各定义绑定、MainArena真实WorldId预算启用、NDC分帧队列及可验证的Islands分区、完整Editor/Client/Server目标编译、Shader、Cook与5v5 P95/P99、人工视觉。上述阶段未完成不得填写“整体优化完成”或“FPS已保证”。
+

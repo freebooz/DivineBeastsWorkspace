@@ -8,6 +8,8 @@
 命中只写视觉停止参数并停止轨迹发射，保留历史轨迹自然消散；不访问服务器判定。
 """
 from pathlib import Path
+from datetime import datetime, timezone
+from uuid import uuid4
 import importlib.util
 import json
 import time
@@ -16,7 +18,15 @@ import unreal
 
 ROOT = Path(__file__).resolve().parents[4]
 BASE = '/DBAPresentationPack_Core/VFX/IceArrow/Niagara/Review/'
-OUT = ROOT / 'Saved/Validation/IceArrow/Production_20261016/SequenceA'
+RUNS_ROOT = ROOT / 'Saved/Validation/IceArrow/Production_20261016/SequenceRuns'
+
+
+def reserve_sequence_directory(root=RUNS_ROOT):
+    """每次审查独占一个新目录，严禁覆盖旧审核帧、失败报告和人工签收证据。"""
+    run_id = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ') + '_' + uuid4().hex[:8]
+    output = root / run_id
+    output.mkdir(parents=True, exist_ok=False)
+    return run_id, output
 
 
 class SequenceReview:
@@ -24,12 +34,13 @@ class SequenceReview:
 
     def __init__(self):
         assert '-IceArrowOwnedAuthoring' in unreal.SystemLibrary.get_command_line()
-        if OUT.exists() and list(OUT.glob('Frame_*.png')):
-            raise RuntimeError('已有动画帧，禁止不经审查覆盖')
-        OUT.mkdir(parents=True, exist_ok=True)
+        old_review = getattr(unreal, '_ice_sequence_review', None)
+        if old_review is not None and old_review.handle:
+            raise RuntimeError('已有连续审核正在运行，本次不得并行开启')
+        self.run_id, self.output_dir = reserve_sequence_directory()
         spec = importlib.util.spec_from_file_location('ice_sequence_view', Path(__file__).with_name('ReviewIceArrowViewport.py'))
         module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
-        self.fixture = module.IceArrowViewportReview('Cast', 'SequenceA_Setup', .0, BASE+'NS_DBA_IceArrow_Cast_A', False, True)
+        self.fixture = module.IceArrowViewportReview('Cast', 'SequenceA_Setup_' + self.run_id, .0, BASE+'NS_DBA_IceArrow_Cast_A', False, True)
         self.fixture.finish('交由连续渲染夹具接管')
         self.cast = self.fixture.component
         self.cast.deactivate()
@@ -67,10 +78,11 @@ class SequenceReview:
 
     def write(self, status, error=None):
         """保存真实帧数、事件时钟与验收边界；不把视频生成当成视觉通过。"""
-        report={'状态':status,'帧率':24,'时长秒':2.8,'实际帧数':len(list(OUT.glob('Frame_*.png'))),
+        report={'状态':status,'运行标识':self.run_id,'输出目录':str(self.output_dir),
+                '帧率':24,'时长秒':2.8,'实际帧数':len(list(self.output_dir.glob('Frame_*.png'))),
                 '事件':self.events,'来源':'UE5.8原生视口截图；编辑器视觉夹具','游戏运行验证':False,'人工视觉验收':False}
         if error: report['错误']=error
-        (OUT/'SequenceReport.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+        (self.output_dir/'SequenceReport.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
 
     def stop(self, status, error=None):
         """结束回调，保留审核世界；不循环播放、不残留后台录制。"""
@@ -93,11 +105,14 @@ class SequenceReview:
             if elapsed>180: raise RuntimeError('连续渲染超时')
             if elapsed<3: return
             if self.pending:
-                if not self.pending.exists() or time.monotonic()-self.requested<.15: return
+                capture_elapsed = time.monotonic() - self.requested
+                if capture_elapsed > 30:
+                    raise RuntimeError('截图未在30秒内保存：' + str(self.pending))
+                if not self.pending.exists() or self.pending.stat().st_size == 0 or capture_elapsed < .15: return
                 self.pending=None
             if not self.primed:
                 self.primed=True
-                self.screenshot(OUT/'Warmup.png')
+                self.screenshot(self.output_dir/'Warmup.png')
                 return
             self.frame+=1
             t=self.frame/24.0
@@ -131,7 +146,7 @@ class SequenceReview:
                     self.flight_actor.set_actor_location(unreal.Vector(x,0,104),False,False)
                 self.flight.advance_simulation(1,1/24.0)
             if self.hit: self.impact.advance_simulation(1,1/24.0)
-            self.screenshot(OUT/f'Frame_{self.frame:04d}.png')
+            self.screenshot(self.output_dir/f'Frame_{self.frame:04d}.png')
         except Exception:
             self.stop('失败',traceback.format_exc())
 

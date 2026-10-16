@@ -127,6 +127,28 @@ bool FGamePlatformVFXWorldBudgetRuleTest::RunTest(const FString& Parameters)
     Request.QualityTier = EGamePlatformVFXQualityTier::Low;
     TestTrue(TEXT("画质不同不套用高画质规则"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 8, *Settings));
     Request.QualityTier = EGamePlatformVFXQualityTier::High;
+    // 体验与世界属于不同命名空间，MainArena项目配置不能因WorldId是World.MainArena而失效。
+    FGamePlatformVFXWorldBudgetRule ArenaRule;
+    ArenaRule.WorldIdPrefix = TEXT("Experience.MainArena.Main");
+    ArenaRule.QualityTier = EGamePlatformVFXQualityTier::High;
+    ArenaRule.MaxCombatRequests = 7;
+    ArenaRule.MaxStatusRequests = 4;
+    ArenaRule.MaxAmbientRequests = 2;
+    Settings->WorldBudgetRules.Add(ArenaRule);
+    Request.WorldId = TEXT("World.MainArena.001");
+    Request.ExperienceId = TEXT("Experience.MainArena.Main");
+    TestFalse(TEXT("真实体验匹配专用限制"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
+    Request.ExperienceId = TEXT("Experience.MainArena.MainOther");
+    TestTrue(TEXT("不能匹配相邻体验名称"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
+    Request.ExperienceId = NAME_None;
+    Request.WorldId = TEXT("Experience.MainArena.Main");
+    TestTrue(TEXT("Experience域不能错误使用WorldId匹配"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
+    Request.WorldId = TEXT("World.TestBattle.01");
+    Request.ExperienceId = TEXT("Experience.MainArena.Main");
+    TestFalse(TEXT("体验预算应优先按最长前缀命中"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
+    Request.ExperienceId = NAME_None;
+    TestTrue(TEXT("不携带ExperienceId保持旧World配置效果"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 7, *Settings));
+
     Settings->bUseWorldBudgetRules = false;
     TestTrue(TEXT("关闭专用规则保持旧行为"), FGamePlatformVFXScalabilityPolicy::ShouldSpawn(Request, 8, *Settings));
     return true;

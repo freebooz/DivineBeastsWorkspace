@@ -1,4 +1,8 @@
 #include "Diagnostics/GamePlatformVFXDiagnostics.h"
+#include "Engine/World.h"
+#include "HAL/IConsoleManager.h"
+#include "NiagaraComponent.h"
+#include "UObject/UObjectIterator.h"
 #include "GameplayTagContainer.h"
 #include "Settings/GamePlatformVFXSettings.h"
 
@@ -78,6 +82,34 @@ void FGamePlatformVFXDiagnostics::SharedBurstFallback()
 namespace
 {
 FGamePlatformVFXRuntimeCountRegistry RuntimeCounts;
+
+/**
+ * 按需采样当前World真实注册的NiagaraComponent，包含平台外来源和NDC Reader。
+ * 此数是组件近似值，不等于Niagara内部全部活跃System/GPU粒子；仅手动命令调用，禁止逐帧扫描对象表。
+ */
+void LogWorldNiagaraComponentSnapshot(UWorld* World)
+{
+    check(IsInGameThread());
+    if (!IsValid(World) || World->bIsTearingDown) return;
+
+    int32 RegisteredComponents = 0;
+    int32 ActiveComponents = 0;
+    for (TObjectIterator<UNiagaraComponent> It; It; ++It)
+    {
+        UNiagaraComponent* Component = *It;
+        if (!IsValid(Component) || Component->GetWorld() != World || !Component->IsRegistered()) continue;
+        ++RegisteredComponents;
+        if (Component->IsActive()) ++ActiveComponents;
+    }
+    UE_LOG(LogGamePlatformVFX, Display,
+        TEXT("VFX World NiagaraComponent Snapshot: World=%s Registered=%d Active=%d (component proxy only; compare stat Niagara)"),
+        *World->GetName(), RegisteredComponents, ActiveComponents);
+}
+
+FAutoConsoleCommandWithWorld GGamePlatformVFXWorldNiagaraSnapshot(
+    TEXT("gp.VFX.SnapshotComponents"),
+    TEXT("按需统计当前World注册/活跃NiagaraComponent；不是GPU耗时或精确Niagara内部System数。"),
+    FConsoleCommandWithWorldDelegate::CreateStatic(&LogWorldNiagaraComponentSnapshot));
 
 void PublishRuntimeCounts()
 {

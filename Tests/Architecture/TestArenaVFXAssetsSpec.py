@@ -41,6 +41,35 @@ class ArenaVFXAssetsSpecTests(unittest.TestCase):
         copy_spec["targets"]["High"] = 999
         self.assertFalse(MODULE.audit(copy_spec, ROOT)["success"])
 
+    def test_distinguish_three_budget_dimensions(self):
+        """请求跟踪、真实System与CPU/GPU时间必须独立；误填已测或遗漏外部实例应拒绝。"""
+        dimensions = ASSET_SPEC["budget_dimensions"]
+        self.assertTrue(dimensions["request_tracking"]["not_niagara_system_count"])
+        self.assertFalse(dimensions["real_system_instances"]["measured"])
+        self.assertFalse(dimensions["frame_cost_targets"]["measured"])
+        self.assertEqual(dimensions["ndc_batch_writer"]["maximum_events_per_batch"], 128)
+
+        wrong = copy.deepcopy(ASSET_SPEC)
+        wrong["budget_dimensions"]["real_system_instances"]["include_external_niagara_and_ndc_readers"] = False
+        self.assertFalse(MODULE.audit(wrong, ROOT)["success"])
+        wrong = copy.deepcopy(ASSET_SPEC)
+        wrong["budget_dimensions"]["frame_cost_targets"]["measured"] = True
+        self.assertFalse(MODULE.audit(wrong, ROOT)["success"])
+        wrong = copy.deepcopy(ASSET_SPEC)
+        wrong["budget_dimensions"]["ndc_batch_writer"]["multi_event_batch_only_for_global"] = False
+        self.assertFalse(MODULE.audit(wrong, ROOT)["success"])
+
+    def test_ndc_bridge_guards_location_batch_and_conflicts(self):
+        """静态合同检查只防回归，真实岛屿路由与GPU Reader仍需要UE测试。"""
+        bridge = (ROOT / "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/"
+                  "GamePlatformVFXClient/Private/DataChannels/GamePlatformVFXDataChannelBridge.cpp").read_text(
+                      encoding="utf-8")
+        self.assertIn("ContextParameters->Location = Requests[0].SpawnContext.ImpactLocation;", bridge)
+        self.assertIn("Requests.Num() > 1 && !Channel->IsA<UNiagaraDataChannel_Global>()", bridge)
+        self.assertIn("MaxSharedBurstBatchSize = 128", bridge)
+        self.assertNotIn("<<<<<<< HEAD", bridge)
+        self.assertNotIn(">>>>>>>", bridge)
+
     def test_native_files_are_not_implicitly_verified(self):
         """仅检测文件名不能声称原生资产、Shader或GPU性能通过。"""
         report = MODULE.audit(ASSET_SPEC, ROOT)

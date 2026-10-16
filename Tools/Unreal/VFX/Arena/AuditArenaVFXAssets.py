@@ -60,6 +60,36 @@ def audit(spec: dict, workspace: Path, require_native: bool = False) -> dict:
         if actual != REQUIRED_CHANNEL_VARS:
             problems.append(f"{channel.get('asset_name')} 缺少必需名称/类型或存在额外字段")
 
+
+    # V2.0明确三种预算：请求追踪、真实Niagara System、独立CPU/GPU时间，不能混用。
+    dimensions = spec.get("budget_dimensions", {})
+    tracking = dimensions.get("request_tracking", {})
+    systems = dimensions.get("real_system_instances", {})
+    frames = dimensions.get("frame_cost_targets", {})
+    ndc_writer = dimensions.get("ndc_batch_writer", {})
+    if (tracking.get("not_niagara_system_count") is not True or
+            not isinstance(tracking.get("max_active_requests"), int) or
+            not isinstance(tracking.get("hard_max_tracked_requests"), int) or
+            tracking["hard_max_tracked_requests"] < tracking["max_active_requests"]):
+        problems.append("请求预算未与Niagara真实System实例预算分离")
+    if (systems.get("quality_caps_ref") != "targets" or
+            systems.get("include_external_niagara_and_ndc_readers") is not True or
+            systems.get("per_asset_max_system_instances_requires_editor_review") is not True or
+            systems.get("measured") is not False):
+        problems.append("System实例预算必须涵盖所有Niagara入口且不能冒充实测")
+    if frames.get("measured") is not False:
+        problems.append("本规格为待验收基线，不得宣告GPU/CPU已实测")
+    for quality in TIERS:
+        frame = frames.get(quality, {})
+        if not all(isinstance(frame.get(key), (int, float)) and frame[key] > 0
+                   for key in ("fps", "vfx_gpu_ms", "vfx_cpu_ms")):
+            problems.append(f"{quality}缺少独立的帧率及CPU/GPU候选目标")
+    if (ndc_writer.get("maximum_events_per_batch") != 128 or
+            ndc_writer.get("multi_event_batch_only_for_global") is not True or
+            ndc_writer.get("spatial_routing_requires_verified_context") is not True or
+            ndc_writer.get("production_enabled") is not False):
+        problems.append("NDC批量写入策略没有禁止未经验证的跨空间Islands合并")
+
     plugin = workspace / spec.get("platform_plugin_path", ".")
     found = []
     missing = []

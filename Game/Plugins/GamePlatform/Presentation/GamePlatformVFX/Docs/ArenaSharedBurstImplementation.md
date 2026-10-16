@@ -47,3 +47,12 @@ MainArena首次性能验证目标按单客户端World：Low 40、Medium 58、Hig
 3. 1v1—5v5压力，High ≥150次/秒短时命中模拟与多个大招/持续AOE一起出现，比较单事件Spawn与共享写入的GPU/CPU实测和P95/P99帧时间。
 4. 新增stat GamePlatformVFX的Shared Burst Writes（共享命中写入）与Shared Burst Fallbacks（通道回退）只是内部事件计数；不能替代Niagara活跃系统统计。
 5. Editor/Client/Server完整编译、Niagara GPU/Shader、客户端Cook/专服零纯表现资源、人工视觉验收全部完成才能打开正式默认开关。
+
+## 5. V2.0桥接与诊断增量（2026-10-16）
+
+- `WriteInstantBurst`（单次写入）仍为既有同步执行链，增加命中位置上下文；`WriteInstantBursts`（最多128次）是供未来已去重、同通道、同空间策略的批处理API。多事件仅支持Global，不能误把远距离不同Islands写入同一Writer。
+- 逐事件调用对Niagara空间上下文提供位置；当前本地UE5.8中部分数据通道仍继承Legacy上下文，缺少可验证的位置输入时直接返回false并沿旧路径回退，不会假称Islands已投入使用。
+- `gp.VFX.SnapshotComponents`提供手动World近似组件统计；结合真实Niagara与GPU Profiler检查，不能与平台请求计数混用。
+- 专项离线规格增加请求/真实System/CPU-GPU三个维度与未验收标志；测试运行不等于任何Niagara原生资产已生成，也不等于Writer写入一定被Reader绘制。
+- 当前生产限制不变：尚无原生7类NET、3类NDC和GPU Reader绑定，不启用`bUseSharedBurstChannel`。将来开启前需验证UE5.8具体版本的通道类型、读写Tick顺序、同/上一帧读取、Islands路由、Reader空闲清理、预测纠正和统一Cook。
+
