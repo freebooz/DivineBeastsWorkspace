@@ -3,6 +3,10 @@
 #include "Definitions/GamePlatformVFXDefinition.h"
 #include "NiagaraEffectType.h"
 #include "NiagaraSystem.h"
+#include "NiagaraDataChannel.h"
+#include "NiagaraDataChannelAsset.h"
+#include "NiagaraDataChannelVariable.h"
+#include "NiagaraTypes.h"
 
 void FGamePlatformVFXDefinitionValidator::Validate(
     const UGamePlatformVFXDefinition& Definition,
@@ -42,6 +46,43 @@ void FGamePlatformVFXDefinitionValidator::Validate(
             Issue.RuleId = TEXT("GPVFX.Definition.EffectTypeLoadFailed");
             Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
             Issue.Message = NSLOCTEXT("GamePlatformVFX", "EffectTypeLoadFailed", "VFX Definition配置的Niagara Effect Type无法加载。");
+        }
+    }
+
+    // 仅在显式启用共享瞬时事件时加载/核验NDC；此检查不代替Niagara读者System的GPU实测。
+    if (Definition.UsesSharedBurstChannel())
+    {
+        UNiagaraDataChannelAsset* ChannelAsset = Definition.GetSharedBurstDataChannel().LoadSynchronous();
+        UNiagaraDataChannel* Channel = IsValid(ChannelAsset) ? ChannelAsset->Get() : nullptr;
+        // 名称和Niagara类型必须同时匹配；仅校验变量数量会产生无画面的假成功写入。
+        // UE5.8的DataChannelVariable继承FNiagaraVariableBase，可以直接读取GetName/GetType。
+        const auto HasTypedField = [Channel](FName Name, const FNiagaraTypeDefinition& Expected)
+        {
+            if (!IsValid(Channel)) return false;
+            const FNiagaraTypeDefinition NativeType = FNiagaraDataChannelVariable::ToDataChannelType(Expected);
+            for (const FNiagaraDataChannelVariable& Variable : Channel->GetVariables())
+            {
+                if (Variable.GetName() == Name && Variable.GetType() == NativeType)
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+        const bool bValidSchema = IsValid(Channel) && Channel->IsValid() &&
+            HasTypedField(TEXT("Position"), FNiagaraTypeDefinition::GetPositionDef()) &&
+            HasTypedField(TEXT("Normal"), FNiagaraTypeDefinition::GetVec3Def()) &&
+            HasTypedField(TEXT("Color"), FNiagaraTypeDefinition::GetColorDef()) &&
+            HasTypedField(TEXT("Scale"), FNiagaraTypeDefinition::GetFloatDef()) &&
+            HasTypedField(TEXT("StyleId"), FNiagaraTypeDefinition::GetIntDef()) &&
+            HasTypedField(TEXT("Seed"), FNiagaraTypeDefinition::GetIntDef());
+        if (!bValidSchema)
+        {
+            FGamePlatformVFXValidationIssue& Issue = OutIssues.AddDefaulted_GetRef();
+            Issue.RuleId = TEXT("GPVFX.NDC.InvalidChannelOrSchema");
+            Issue.Severity = EGamePlatformVFXValidationSeverity::Error;
+            Issue.Message = NSLOCTEXT("GamePlatformVFX", "InvalidNDCChannel",
+                "共享命中NDC必须含Position/Normal/Color/Scale/StyleId/Seed六个名称与类型精确匹配的字段。");
         }
     }
 

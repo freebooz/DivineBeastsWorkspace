@@ -1,6 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+<<<<<<< HEAD
 """SSLM寒冰箭源纹理与网格静态门禁（Python标准库，无第三方安装要求）。
+=======
+"""SSLM冰箭源资产门禁：验证真实PNG的透明边界/遮罩、法线与网格源文件。
+本文件属于跨系统测试，不加载引擎、不创建源图、不改变玩法；成功仅证明源资产合同，
+不能替代UE原生资产编译、视觉验收、联机与Cook。失败返回1并逐项打印缺口。
+"""
+from pathlib import Path
+import importlib.util
+import sys
+import tempfile
+import types
+from unittest.mock import patch
+import numpy as np
+from PIL import Image
+ROOT = Path(__file__).resolve().parents[2]
+SOURCE = ROOT / 'Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/SourceArt/VFX/IceArrow'
+SPRITES = ('RuneOuter', 'RuneInner', 'CrystalShard', 'FrostMist', 'TrailStrip', 'IceFlake', 'ImpactFlash', 'FrozenGround')
+>>>>>>> 7512914e14c30e871712284220880c538413d7ae
 
 只读取本项目受控SourceArt，不加载UE、不修改纹理或二进制资产。
 PNG校验覆盖IHDR、CRC、真实IDAT解码、边界Alpha和法线向量，所有失败明确返回1。
@@ -188,9 +206,46 @@ def inspect_sources() -> list[str]:
     return failures
 
 
+<<<<<<< HEAD
 if __name__ == "__main__":
     problems = inspect_sources()
     for problem in problems:
         print("FAIL", problem)
     print("ICE_ARROW_SOURCE_GATE", "FAIL" if problems else "PASS", "issues=", len(problems))
+=======
+def inspect_sequence_isolation():
+    """用纯Python检查每轮截图独占目录；不启动UE、不执行Niagara，也不触及正式资产。"""
+    problems = []
+    script = ROOT / 'Tools/Unreal/VFX/DevelopmentMagic/ReviewIceArrowSequenceA.py'
+    if not script.is_file():
+        return ['缺少寒冰箭逐帧审核脚本']
+    # Unreal模块只在定义真实审核类时被引用；隔离目录函数可在普通Python中独立验证。
+    with patch.dict(sys.modules, {'unreal': types.ModuleType('unreal')}):
+        spec = importlib.util.spec_from_file_location('ice_arrow_sequence_isolation_test', script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    with tempfile.TemporaryDirectory(prefix='sslm_ice_arrow_review_') as temp:
+        folder = Path(temp)
+        previous = folder / 'SequenceA'
+        previous.mkdir()
+        original = previous / 'Frame_0030.png'
+        original.write_bytes(b'previous-review-evidence')
+        first_id, first = module.reserve_sequence_directory(folder / 'SequenceRuns')
+        first_report = first / 'SequenceReport.json'
+        first_report.write_text('{"round":1}', encoding='utf-8')
+        second_id, second = module.reserve_sequence_directory(folder / 'SequenceRuns')
+        if first_id == second_id or first == second or not first.is_dir() or not second.is_dir():
+            problems.append('连续两次审查没有获得独立目录')
+        if not first_report.is_file() or first_report.read_text(encoding='utf-8') != '{"round":1}':
+            problems.append('第二轮审查覆盖第一轮报告')
+        if original.read_bytes() != b'previous-review-evidence':
+            problems.append('新版审查修改了历史SequenceA帧')
+    return problems
+
+
+if __name__ == '__main__':
+    problems = inspect_sources() + inspect_sequence_isolation()
+    for problem in problems: print('FAIL', problem)
+    print('ICE_ARROW_SOURCE_GATE', 'FAIL' if problems else 'PASS', 'issues=', len(problems))
+>>>>>>> 7512914e14c30e871712284220880c538413d7ae
     sys.exit(1 if problems else 0)

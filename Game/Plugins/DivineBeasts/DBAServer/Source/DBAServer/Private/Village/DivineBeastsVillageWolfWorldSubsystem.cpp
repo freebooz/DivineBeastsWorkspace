@@ -2,9 +2,14 @@
 #include "Village/DivineBeastsVillageWolfWorldSubsystem.h"
 
 #include "Village/DivineBeastsVillageWolfAIController.h"
+#include "Village/DivineBeastsVillageWolfSpawnPolicy.h"
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Components/GamePlatformAIStateComponent.h"
+<<<<<<< HEAD
+#include "Components/GamePlatformCombatComponent.h" // 服务器死亡判定必须包含完整组件定义。
+=======
 #include "Components/GamePlatformCombatComponent.h"
+>>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
 #include "Components/GamePlatformExperienceComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/GamePlatformAIDefinition.h"
@@ -18,6 +23,7 @@
 #include "Interfaces/IGamePlatformWorldService.h"
 #include "Misc/ConfigCacheIni.h"
 #include "Misc/PackageName.h"
+#include "UObject/SoftObjectPath.h" // 服务器使用蓝图软类，不引用客户端第三方狼网格。
 #include "NavigationSystem.h"
 #include "NavigationData.h"
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
@@ -26,10 +32,7 @@
 
 namespace
 {
-    /** 小规模新手村专服限额，未来经项目怪物生成Definition覆盖；单位：厘米/秒。 */
-    constexpr int32 MaxVillageWolves = 4;
-    constexpr float PlayerStartSafetyRadiusCm = 2200.0f;
-    constexpr float MinimumWolfSeparationCm = 500.0f;
+    /** 原有死亡退场与刷新延迟不变，狼群上限和位置间距统一由项目散布策略管理。 */
     constexpr float WolfCorpseLifetimeSeconds = 4.0f;
     constexpr float WolfRespawnDelaySeconds = 14.0f;
 }
@@ -79,12 +82,22 @@ bool UDivineBeastsVillageWolfWorldSubsystem::HasVerifiedAnimalAssets() const
     GConfig->GetBool(Section, TEXT("bEnableVillageWolves"), bEnabled, GGameIni);
     GConfig->GetBool(Section, TEXT("bClientVisualsVerified"), bClientAssetsVerified, GGameIni);
     FString DefinitionPath;
+    FString WolfClassName;
     GConfig->GetString(Section, TEXT("WolfAIDefinition"), DefinitionPath, GGameIni);
+    GConfig->GetString(Section, TEXT("WolfBlueprintClass"), WolfClassName, GGameIni);
     const FSoftObjectPath Definition(DefinitionPath);
+<<<<<<< HEAD
     // 编辑器之外只检查权威AI定义所在的小型服务器Cook包；不访问客户端模型与动画。
     return bEnabled && bClientAssetsVerified && Definition.IsValid() &&
+=======
+    const FSoftClassPath WolfBlueprint(WolfClassName);
+    // 两份服务器安全原生资源均必须存在；Fab美术仅客户端加载，绝不允许隐藏攻击怪。
+    return bEnabled && bClientAssetsVerified && Definition.IsValid() && WolfBlueprint.IsValid() &&
+>>>>>>> 7512914e14c30e871712284220880c538413d7ae
         FPackageName::IsValidLongPackageName(Definition.GetLongPackageName()) &&
-        FPackageName::DoesPackageExist(Definition.GetLongPackageName());
+        FPackageName::DoesPackageExist(Definition.GetLongPackageName()) &&
+        FPackageName::IsValidLongPackageName(WolfBlueprint.GetLongPackageName()) &&
+        FPackageName::DoesPackageExist(WolfBlueprint.GetLongPackageName());
 }
 
 bool UDivineBeastsVillageWolfWorldSubsystem::CaptureApprovedScope(FApprovedScope& OutScope) const
@@ -98,7 +111,10 @@ bool UDivineBeastsVillageWolfWorldSubsystem::CaptureApprovedScope(FApprovedScope
     auto* Bootstrap = Instance ? Instance->GetSubsystem<UDivineBeastsServerBootstrapSubsystem>() : nullptr;
     const auto* Lifecycle = ObservedLifecycle.Get();
     const auto* Experience = ObservedExperience.Get();
+<<<<<<< HEAD
+=======
     // 平台GetReadiness接口非const；保留服务原始接口类型，不改变本桥的只读资格检查职责。
+>>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
     auto* Service = IGamePlatformWorldService::Get(*const_cast<UWorld*>(World));
     if (!Bootstrap || !Lifecycle || !Experience || !Service ||
         Experience->GetWorld() != World || Lifecycle->GetGameInstance() != Instance) return false;
@@ -193,10 +209,13 @@ void UDivineBeastsVillageWolfWorldSubsystem::HandleExperienceChanged(const FGame
 
 bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdinal, FTransform& OutTransform) const
 {
+    using FPolicy = FDivineBeastsVillageWolfSpawnPolicy;
     UWorld* World = GetWorld();
     auto* Nav = IsValid(World) ? UNavigationSystemV1::GetCurrent(World) : nullptr;
-    const auto* Capsule = GetDefault<ADivineBeastsVillageWolf>()->GetCapsuleComponent();
-    if (!World || World->bIsTearingDown || !Nav || !Capsule) return false;
+    const auto* WolfDefaults = GetDefault<ADivineBeastsVillageWolf>();
+    const auto* Capsule = WolfDefaults->GetCapsuleComponent();
+    if (!World || World->bIsTearingDown || !Nav || !Capsule ||
+        SpawnOrdinal < 0 || SpawnOrdinal >= FPolicy::MaxAliveWolves) return false;
 
     TArray<APlayerStart*> Starts;
     for (TActorIterator<APlayerStart> It(World); It; ++It)
@@ -213,19 +232,36 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
     Occupancy.AddObjectTypesToQuery(ECC_Pawn);
     Occupancy.AddObjectTypesToQuery(ECC_PhysicsBody);
 
-    // 只在PlayerStart外圈区域投影到真实NavMesh，不生成在湖水、屋内、阻挡物或不可达悬崖。
-    for (const auto* Start : Starts)
-    for (int32 Ring = 0; Ring < 3; ++Ring)
-    for (int32 Angle = 0; Angle < 12; ++Angle)
+    // 不再集中在出生点26/34/42米的狭窄三圈；在45至290米范围内有限采样。
+    // 优先轮换不同PlayerStart，避免多玩家出生点附近的怪群都集中于第一个出生点。
+    // 真实服务器根据导航、坡度、占位和历史生成锚点裁剪；无安全点则宁可少于20只。
+    for (int32 StartOffset = 0; StartOffset < Starts.Num(); ++StartOffset)
     {
-        const float Theta = 2.0f * PI * ((Angle + SpawnOrdinal * 3) % 12) / 12.0f;
-        const float Distance = 2600.0f + 800.0f * Ring;
-        const FVector Candidate = Start->GetActorLocation() +
-            FVector(FMath::Cos(Theta), FMath::Sin(Theta), 0) * Distance;
-        FNavLocation NavPoint;
-        if (!Nav->ProjectPointToNavigation(Candidate, NavPoint, FVector(130.0f, 130.0f, 550.0f)))
-            continue;
+        const APlayerStart* Start = Starts[(StartOffset + SpawnOrdinal) % Starts.Num()];
+        for (int32 Ring = 0; Ring < FPolicy::RingCount; ++Ring)
+        for (int32 Direction = 0; Direction < FPolicy::DirectionsPerRing; ++Direction)
+        {
+            const FVector Candidate = FPolicy::MakeCandidate(
+                Start->GetActorLocation(), Ring, Direction, SpawnOrdinal);
+            FNavLocation NavPoint;
+            if (!Nav->ProjectPointToNavigation(Candidate, NavPoint, FVector(130.0f, 130.0f, 550.0f)))
+                continue;
 
+<<<<<<< HEAD
+            bool bSafe = true;
+            for (const APlayerStart* AnyStart : Starts)
+                if (!FPolicy::IsOutsidePlayerStart(NavPoint.Location, AnyStart->GetActorLocation()))
+                { bSafe = false; break; }
+            // 使用服务器登记的原始生成锚点，避免巡逻/追击后因Actor移走而在旧位置密集补刷。
+            for (const auto& Entry : WolfSpawnAnchors)
+            {
+                const ADivineBeastsVillageWolf* Other = Entry.Key.Get();
+                if (IsValid(Other) && !Other->IsActorBeingDestroyed() &&
+                    !FPolicy::HasSpawnSeparation(NavPoint.Location, Entry.Value))
+                { bSafe = false; break; }
+            }
+            if (!bSafe) continue;
+=======
         bool bSafe = true;
         for (const APlayerStart* AnyStart : Starts)
             if (FVector::DistSquared2D(AnyStart->GetActorLocation(), NavPoint.Location) <
@@ -238,17 +274,34 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
                 FMath::Square(MinimumWolfSeparationCm)) { bSafe = false; break; }
         }
         if (!bSafe) continue;
+>>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
 
-        FHitResult Ground;
-        if (!World->LineTraceSingleByChannel(Ground, NavPoint.Location + FVector(0,0,260),
-            NavPoint.Location - FVector(0,0,650), ECC_Visibility, Query) ||
-            !Ground.bBlockingHit || Ground.ImpactNormal.Z < GetDefault<ADivineBeastsVillageWolf>()->GetCharacterMovement()->GetWalkableFloorZ())
-            continue;
-        const FVector Center = Ground.ImpactPoint + FVector(0,0,HalfHeight + 4);
-        if (World->OverlapAnyTestByObjectType(Center,FQuat::Identity,Occupancy,
-            FCollisionShape::MakeCapsule(Radius,HalfHeight),Query)) continue;
-        OutTransform = FTransform(FRotator(0, FMath::RadiansToDegrees(Theta) + 180.0f,0),Center);
-        return true;
+            FHitResult Ground;
+            if (!World->LineTraceSingleByChannel(Ground, NavPoint.Location + FVector(0,0,260),
+                NavPoint.Location - FVector(0,0,650), ECC_Visibility, Query) ||
+                !Ground.bBlockingHit || Ground.ImpactNormal.Z < WolfDefaults->GetCharacterMovement()->GetWalkableFloorZ())
+                continue;
+            const FVector Center = Ground.ImpactPoint + FVector(0,0,HalfHeight + 4);
+
+            // 最终落点重新按真实地表XY严格核验：水平距离必须>3000厘米，刚好30米也拒绝。
+            for (const APlayerStart* AnyStart : Starts)
+                if (!FPolicy::IsOutsidePlayerStart(Center, AnyStart->GetActorLocation()))
+                { bSafe = false; break; }
+            for (const auto& Entry : WolfSpawnAnchors)
+            {
+                const ADivineBeastsVillageWolf* Other = Entry.Key.Get();
+                if (IsValid(Other) && !Other->IsActorBeingDestroyed() &&
+                    !FPolicy::HasSpawnSeparation(Center, Entry.Value))
+                { bSafe = false; break; }
+            }
+            if (!bSafe || World->OverlapAnyTestByObjectType(Center, FQuat::Identity, Occupancy,
+                FCollisionShape::MakeCapsule(Radius, HalfHeight), Query))
+                continue;
+
+            const FVector FacingStart = Start->GetActorLocation() - Center;
+            OutTransform = FTransform(FRotator(0, FacingStart.Rotation().Yaw, 0), Center);
+            return true;
+        }
     }
     return false;
 }
@@ -263,11 +316,21 @@ bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& Spaw
         TEXT("WolfAIDefinition"),DefinitionPath,GGameIni)) return false;
     const FSoftObjectPath SoftDefinition(DefinitionPath);
     if (!SoftDefinition.IsValid()) return false;
+    // 服务端首次加载的是不含任何狼美术的项目蓝图子类；缓存只活于本世界。
+    if (!IsValid(WolfActorClass))
+    {
+        FString WolfClassName;
+        if (!GConfig->GetString(TEXT("DivineBeasts.VillageWolves"),
+            TEXT("WolfBlueprintClass"), WolfClassName, GGameIni)) return false;
+        WolfActorClass = FSoftClassPath(WolfClassName).TryLoadClass<ADivineBeastsVillageWolf>();
+    }
+    if (!IsValid(WolfActorClass) || !WolfActorClass->IsChildOf(ADivineBeastsVillageWolf::StaticClass()))
+        return false;
 
     FActorSpawnParameters Spawn;
     Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
     ADivineBeastsVillageWolf* Wolf =
-        World->SpawnActor<ADivineBeastsVillageWolf>(SpawnAt.GetLocation(),SpawnAt.Rotator(),Spawn);
+        World->SpawnActor<ADivineBeastsVillageWolf>(WolfActorClass, SpawnAt.GetLocation(), SpawnAt.Rotator(), Spawn);
     if (!IsValid(Wolf)) return false;
     Wolf->GetWolfAIState()->SetDefinitionAsset(
         TSoftObjectPtr<UGamePlatformAIDefinition>(SoftDefinition));
@@ -288,6 +351,8 @@ bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& Spaw
         return false;
     }
     OwnedWolves.Add(Wolf);
+    // 记录真实出生锚点，而非追击后的当前位置；未成功初始化的半成品从不占用散布间距。
+    WolfSpawnAnchors.Add(TWeakObjectPtr<ADivineBeastsVillageWolf>(Wolf), Wolf->GetActorLocation());
     Wolf->OnAuthoritativeDeath().AddUObject(this,&ThisClass::HandleWolfDeath);
     Wolf->OnDestroyed.AddDynamic(this,&ThisClass::HandleWolfDestroyed);
     OwnedScope=Original;
@@ -298,25 +363,79 @@ bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& Spaw
 
 void UDivineBeastsVillageWolfWorldSubsystem::TryFillWolves()
 {
+    using FPolicy = FDivineBeastsVillageWolfSpawnPolicy;
     if (bClosing || bCreating) return;
+    UWorld* World = GetWorld();
+    // 死亡刷新仍遵守14秒冷却，不允许尚未完成的初始批次提前补充死狼。
+    if (!World || World->bIsTearingDown || World->GetTimerManager().IsTimerActive(ReplenishTimer))
+        return;
     FApprovedScope Scope;
     if (!CaptureApprovedScope(Scope)) return;
     if (OwnedScope.WorldGeneration.IsValid() && !(OwnedScope == Scope))
     { CloseScope(); return; }
-    bCreating=true;
-    // 死亡尸体不算活跃怪；只移除已销毁的弱引用，未完成死亡退场的仍占上限。
-    OwnedWolves.RemoveAll([](const auto& Wolf) { return !IsValid(Wolf); });
-    for (int32 i=OwnedWolves.Num();i<MaxVillageWolves && !bClosing;++i)
+    bCreating = true;
+
+    // 实际存活实体与尚未销毁的尸体分开计数；尸体原始出生锚点一直保留到销毁时。
+    OwnedWolves.RemoveAll([](const auto& Wolf) {
+        return !IsValid(Wolf) || Wolf->IsActorBeingDestroyed();
+    });
+    for (auto It = WolfSpawnAnchors.CreateIterator(); It; ++It)
+    {
+        ADivineBeastsVillageWolf* Owner = It.Key().Get();
+        if (!IsValid(Owner) || Owner->IsActorBeingDestroyed() || !OwnedWolves.Contains(Owner))
+            It.RemoveCurrent();
+    }
+    int32 Alive = 0;
+    for (const auto& Wolf : OwnedWolves)
+        if (IsValid(Wolf) && !Wolf->IsActorBeingDestroyed() && Wolf->IsWolfAlive())
+            ++Alive;
+
+    // 四只一批、0.2秒间隔，分散NavMesh投射/占位查询的同帧开销；严格20只上限。
+    int32 SpawnedThisBatch = 0;
+    bool bBlocked = false;
+    for (int32 Ordinal = Alive; Ordinal < FPolicy::MaxAliveWolves &&
+        SpawnedThisBatch < FPolicy::MaxWolvesPerBatch && !bClosing; ++Ordinal)
     {
         FTransform SpawnAt;
+<<<<<<< HEAD
         if (!FindSpawnTransform(i,SpawnAt))
         {
             UE_LOG(LogTemp,Log,TEXT("VillageWolfSpawnPending: 尚无安全导航落点，等待本世界导航完成通知。"));
             break;
         }
         if (!SpawnOneWolf(SpawnAt)) break;
+=======
+        if (!FindSpawnTransform(Ordinal, SpawnAt))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("VillageWolfScatterLimited: 活体%d/上限%d；没有满足>30米出生锚点间距、NavMesh、地形或22米安全区的有效位置。"),
+                Alive, FPolicy::MaxAliveWolves);
+            bBlocked = true;
+            break;
+        }
+        if (!SpawnOneWolf(SpawnAt))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("VillageWolfScatterBlocked: 生成或初始化失败，已有活体%d只，禁止生成不可见敌人。"), Alive);
+            bBlocked = true;
+            break;
+        }
+        ++Alive;
+        ++SpawnedThisBatch;
     }
-    bCreating=false;
+    bCreating = false;
+
+    if (!bBlocked && SpawnedThisBatch > 0 && Alive < FPolicy::MaxAliveWolves &&
+        !bClosing && !World->bIsTearingDown)
+    {
+        // 只保留本世界单个补充Timer；世界重建后的迟到委托无法操作下一代世界。
+        const FGuid ExpectedOperation = WorldOperation;
+        World->GetTimerManager().SetTimer(SpawnBatchTimer,
+            FTimerDelegate::CreateWeakLambda(this, [this, ExpectedOperation]
+            {
+                if (!bClosing && ExpectedOperation == WorldOperation)
+                    TryFillWolves();
+            }), FPolicy::SpawnBatchIntervalSeconds, false);
+>>>>>>> 7512914e14c30e871712284220880c538413d7ae
+    }
 }
 
 void UDivineBeastsVillageWolfWorldSubsystem::HandleWolfDeath(const FGamePlatformCombatEvent& Event)
@@ -325,6 +444,8 @@ void UDivineBeastsVillageWolfWorldSubsystem::HandleWolfDeath(const FGamePlatform
     if (bClosing || !IsValid(Wolf) || !OwnedWolves.Contains(Wolf) ||
         Event.EventType!=EGamePlatformCombatEventType::Death || !Wolf->GetGamePlatformCombatComponent()->IsCombatDead()) return;
     Wolf->SetLifeSpan(WolfCorpseLifetimeSeconds);
+    // 停止尚未执行的初始批次，避免14秒重生冷却期间提前补满。
+    GetWorld()->GetTimerManager().ClearTimer(SpawnBatchTimer);
     FApprovedScope Scope;
     if (!CaptureApprovedScope(Scope) || !(Scope==OwnedScope)) {CloseScope();return;}
     const FGuid Ticket=FGuid::NewGuid();
@@ -342,6 +463,8 @@ void UDivineBeastsVillageWolfWorldSubsystem::HandleWolfDestroyed(AActor* Destroy
     Wolf->OnAuthoritativeDeath().RemoveAll(this);
     Wolf->OnDestroyed.RemoveDynamic(this,&ThisClass::HandleWolfDestroyed);
     OwnedWolves.Remove(Wolf);
+    WolfSpawnAnchors.Remove(TWeakObjectPtr<ADivineBeastsVillageWolf>(Wolf));
+    GetWorld()->GetTimerManager().ClearTimer(SpawnBatchTimer);
     // 意外销毁也按固定延迟恢复，避免攻击目标离线或缺导航造成紧密刷怪风暴。
     FApprovedScope Scope;
     if (!CaptureApprovedScope(Scope) || !(Scope==OwnedScope)) {CloseScope();return;}
@@ -369,25 +492,42 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     bClosing=true;
     WorldOperation.Invalidate();
     RespawnTicket.Invalidate();
+<<<<<<< HEAD
     if (auto* World=GetWorld()) World->GetTimerManager().ClearTimer(ReplenishTimer);
     if(auto* Navigation=ObservedNavigation.Get())
         Navigation->OnNavigationGenerationFinishedDelegate.RemoveDynamic(this,&ThisClass::HandleNavigationFinished);
     ObservedNavigation.Reset();
+=======
+    if (auto* World=GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(ReplenishTimer);
+        World->GetTimerManager().ClearTimer(SpawnBatchTimer);
+    }
+    WolfActorClass = nullptr;
+>>>>>>> 7512914e14c30e871712284220880c538413d7ae
     if (auto* Exp=ObservedExperience.Get()) Exp->Unsubscribe(ExperienceSubscription);
     ExperienceSubscription={};
     ObservedExperience.Reset();
     if (auto* Life=ObservedLifecycle.Get()) Life->OnLifecycleChanged().Remove(LifecycleSubscription);
     LifecycleSubscription.Reset();
     ObservedLifecycle.Reset();
-    TArray<TObjectPtr<ADivineBeastsVillageWolf>> ToDestroy=MoveTemp(OwnedWolves);
+    TArray<TObjectPtr<ADivineBeastsVillageWolf>> ToDestroy = MoveTemp(OwnedWolves);
     OwnedWolves.Reset();
+<<<<<<< HEAD
+    // 先释放本世界的锚点账本，再销毁自有Actor，EndPlay期间不会错误重占位置。
+    WolfSpawnAnchors.Reset();
+    for (const auto& WolfPointer : ToDestroy)
+    {
+        ADivineBeastsVillageWolf* Wolf = WolfPointer.Get();
+=======
     for (const auto& WolfReference:ToDestroy)
     {
         auto* Wolf=WolfReference.Get();
+>>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
         if (!IsValid(Wolf)) continue;
         Wolf->OnAuthoritativeDeath().RemoveAll(this);
-        Wolf->OnDestroyed.RemoveDynamic(this,&ThisClass::HandleWolfDestroyed);
-        AController* Controller=Wolf->GetController();
+        Wolf->OnDestroyed.RemoveDynamic(this, &ThisClass::HandleWolfDestroyed);
+        AController* Controller = Wolf->GetController();
         if (!Wolf->IsActorBeingDestroyed() && Wolf->HasAuthority()) Wolf->Destroy();
         if (IsValid(Controller) && !Controller->IsActorBeingDestroyed()) Controller->Destroy();
     }

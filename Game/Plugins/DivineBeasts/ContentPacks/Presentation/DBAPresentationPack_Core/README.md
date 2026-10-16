@@ -37,3 +37,10 @@
 本轮用户生成6张展示图集已拆分为33类/132张独立PBR参考贴图，带SHA-256与半自动质量门禁。**只有15类单体边缘完整的花瓣/叶片进入分批UE导入候选，截断花瓣和混合FX图不自动替换。** 由于Windows Runner尚未收到原图ZIP，当前项目材质实例仍使用此前纹理，不能声称参考图已经完整导入或在角色界面显示成功。
 
 待用户把 `DivineBeasts_NiagaraPBR_AtlasAssets_20261011.zip（六图集独立贴图包）` 复制到 `SourceArt/AmbientNature/Incoming（待导入素材目录）`，使用 `Tools/Unreal/VFX/FallingFoliage/RunPBRAtlasImport.ps1（分批预检与UE导入入口）` 验证全部哈希、备份旧资产，并更新原材质实例路径；正式流程与运行验收见 `Docs/Implementation/AmbientPBRAtlasImport_20261011.md（PBR图集工程导入说明）`。
+
+
+## SSLM 寒冰箭 A「玄霜棱矢」审核候选（2026-10-16）
+
+本内容包新增三个 `VFX/IceArrow/Niagara/Review/NS_DBA_IceArrow_{Cast,Flight,Impact}_A` 候选和相应 Review 材质、网格、纹理、审核地图。正式 Frostbolt Definition 与 Catalog 未替换。
+
+已输出真实三阶段渲染与 68 帧连续编辑器预览；**与选定 A 图高度一致的视觉验收仍未通过**，角色实战、多人性能、四档画质与 Cook 隔离尚未完成。详细记录见工作空间 `Docs/Implementation/IceArrow/ReviewProgress_20261016.md`，实际原生资源清单见本插件 `Docs/IceArrowReviewManifest_20261016.json`。这些审核工具不构成新的正式 VFX 播放框架。

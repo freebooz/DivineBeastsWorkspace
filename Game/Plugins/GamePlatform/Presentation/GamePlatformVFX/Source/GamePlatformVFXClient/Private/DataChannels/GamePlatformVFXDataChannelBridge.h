@@ -17,4 +17,10 @@ public:
         UWorld& World,
         const UNiagaraDataChannelAsset& ChannelAsset,
         const FGamePlatformVFXRequest& Request);
+
+    /** 至多128条：仅支持已完成去重的同一Global通道批量事件；空间Islands请逐命中路由。 */
+    static bool WriteInstantBursts(
+        UWorld& World,
+        const UNiagaraDataChannelAsset& ChannelAsset,
+        TConstArrayView<FGamePlatformVFXRequest> Requests);
 };

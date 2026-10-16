@@ -53,6 +53,14 @@ bool UGamePlatformVFXDefinition::ValidateVFXDefinition(FText& OutReason) const
         return false;
     }
 
+    // 只允许瞬时Niagara事件使用共享NDC；通道资源须真实配置。
+    if (bUseSharedBurstChannel &&
+        (Behavior != EGamePlatformVFXBehavior::Instant || SharedBurstDataChannel.IsNull()))
+    {
+        OutReason = LOCTEXT("InvalidNDCBurst", "NDC共享爆发仅支持Instant且必须配置通道。");
+        return false;
+    }
+
     if (!FMath::IsFinite(MaxLifetimeSeconds) || MaxLifetimeSeconds < 0.0f)
     {
         OutReason = LOCTEXT("InvalidLifetime", "VFX最大生命周期配置无效。");

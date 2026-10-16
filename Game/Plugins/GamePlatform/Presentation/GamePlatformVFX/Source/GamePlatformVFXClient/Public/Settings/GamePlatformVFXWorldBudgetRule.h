@@ -4,12 +4,12 @@
 #include "Types/GamePlatformVFXTypes.h"
 #include "GamePlatformVFXWorldBudgetRule.generated.h"
 
-/** 可选的WorldId前缀/画质请求软上限，非Niagara System或GPU粒子数量。 */
+/** 可选World/Experience命名空间前缀和画质请求软预算，非Niagara System/GPU粒子数量。 */
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXWorldBudgetRule
 {
     GENERATED_BODY()
-    /** 完整WorldId或带分隔符的命名空间前缀；空值禁止匹配。 */
+    /** 兼容既有序列化名称：前缀为Experience.时匹配ExperienceId，否则匹配WorldId；空值拒绝。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX|Scalability") FString WorldIdPrefix;
     /** 客户端效果画质。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX|Scalability") EGamePlatformVFXQualityTier QualityTier = EGamePlatformVFXQualityTier::High;

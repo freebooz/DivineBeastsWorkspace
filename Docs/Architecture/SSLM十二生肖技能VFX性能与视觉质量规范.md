@@ -1,6 +1,6 @@
 # SSLM 十二生肖技能 VFX 性能与视觉质量核心规范
 
-> V1.0｜2026-10-15｜UE5.8｜适用`DivineBeastsWorkspace`（SSLM工作空间）及MainArena 1v1—5v5。
+> V2.0｜2026-10-16｜UE5.8｜适用`DivineBeastsWorkspace`（SSLM工作空间）及MainArena 1v1—5v5。
 >
 > **规则性质：** 后续代码、Niagara资产、性能优化及人工验收必须遵守的设计门禁。下述新通道、Effect Type资产和候选数字不是已经实现、已压测或已批准的发行标准。本规范由根目录`AGENTS.md`引用；非竞技世界可复用机制，但不直接使用竞技专用预算。
 
@@ -160,3 +160,28 @@ UE5.8官方技术参考：
 - [Scalability and Best Practices（Niagara优化）](https://dev.epicgames.com/documentation/unreal-engine/scalability-and-best-practices-for-niagara)
 - [Niagara Data Channels Overview（NDC共享模拟）](https://dev.epicgames.com/documentation/unreal-engine/niagara-data-channels-overview)
 - [FNiagaraSystemScalabilitySettings（系统伸缩配置）](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/Niagara/FNiagaraSystemScalabilitySetting-)
+
+## 9. V2.0补充：三维预算、空间路由与实施门禁（2026-10-16）
+
+### 9.1 预算真源严格分离
+
+- **请求追踪预算**由`UGamePlatformVFXSettings`和原`WorldBudgetRule`维护，仅覆盖Pending/Tracked请求，默认256/512等现有保护值；不等于活跃Niagara System总量，也不能替代GPU/CPU预算。GamePlatformVFX默认使用独立Config=GamePlatformVFX类别并关闭场景预算；SSLM在Game/Config/DefaultGamePlatformVFX.ini使用四档+WorldBudgetRules配置，须由真实ExperienceId和QualityTier匹配并通过项目层UE自动化测试核实生效，不得默认覆盖Village/OpenWorld。
+- **真实实例预算**由UE5.8原生`UNiagaraEffectType`分类/每资产`MaxSystemInstances`控制，单客户端World的120/80/58/40仅是Epic/High/Medium/Low候选总目标。实例统计必须覆盖NDC Reader、其他环境与绕过平台的Niagara调用；7类原生Effect Type须由编辑器制作并在所有平台/画质变体中绑定，只有规格JSON不能生效。
+- **帧耗时预算**按独立的Niagara CPU、GPU、透明Overdraw和整帧P95/P99管理。候选高画质High 60FPS：GPU≤1.5ms、CPU≤0.6ms、P95≤16.67ms、P99≤20ms；Epic 120FPS需按8.33ms单独验证。GPU/CPU不能简单相加，不能用组件采样或请求计数替代Niagara Insights与打包GPU实测。
+
+### 9.2 Effect Type / 质量 / 视觉
+
+保留`NET_GP_ArenaCritical`、`NET_GP_CombatCast`、`NET_GP_CombatProjectile`、`NET_GP_CombatImpact`、`NET_GP_CombatArea`、`NET_GP_CombatStatus`、`NET_GP_ArenaAmbient`七类；Max Effect Type Instances为同类总量，Max System Instances为同一Niagara System资产上限，后者须按技能并发及实例存活时间单独设置，不能机械等于分类配额。危险提示独立非Niagara保底，不依赖可剔除装饰。
+
+装饰粒子Epic/High/Medium/Low可从100%/75%/50%/25%开始调优；距离0—25/25—50/50—80米用于初始实验，不得裁掉技能射程内实际危险。Niagara Fixed Bounds、Visibility Culling、Distance Significance、Budget Scaling按具体System调试，不以统一大Bounds或硬切画质替代。预算超载采用滞后恢复，必要时只裁可选层。普通技能1—3个Emitter、复杂技能3—4个是制作审查起点，非技术硬上限；大招需GPU剖析证明。Mesh提供3D主体，GPU碎屑按需处理，禁用过量SceneColor/折射/大屏透明叠层/粒子灯。
+
+### 9.3 NDC V2代码能力与空间限制
+
+当前`FGamePlatformVFXDataChannelBridge`已提供单条与最多128条`WriteInstantBursts`批量写入接口，六字段协议不变。跨多条批处理**仅允许Global通道**；Islands/MapBase现在按每事件独立位置进入上下文，当前本地UE5.8引擎若提供不兼容的Legacy空间上下文会拒绝并走现有独立System回退，绝不静默把事件写往原点。GamePlatformVFX必须保留现有请求幂等、预测/确认、世界代次、取消与资源租约。
+
+**实现与生产门禁不同：** 当前WorldSubsystem仍按事件同步调用单条接口，新批量接口尚未纳入实际帧末事件队列；没有原生NDC资产和有效GPU Reader、Island上下文与读写时序证据，不得宣称150次/秒事件已批量优化，更不得将`bUseSharedBurstChannel`默认开启。未来批处理需先设计可取消的短帧待提交队列、空间分组与失败逐条回退，防止提交前假完成或吞掉关键反馈。已有原生AutoRelease池继续负责独立弹道/附着状态，DoT跳数不能重复创建。
+
+### 9.4 诊断和验证
+
+`gp.VFX.SnapshotComponents`是明确用户触发的World级组件近似计数，包含其他来源组件但不等于引擎内部完整System数；不得放到Tick逐帧扫描。结合`stat Niagara`、`stat GamePlatformVFX`、Unreal Insights、`profilegpu`、Shader Complexity、Quad Overdraw采集打包客户端数据。按P0—P7逐项通过资产、源码、编译、Shader、Client/Server Cook、5v5持续压测、Low/Epic视觉和网络取消/重连验证。新代码静态检查不替代以上门禁；新增UE资产必须由引擎创建、编译保存和独立重载。
+

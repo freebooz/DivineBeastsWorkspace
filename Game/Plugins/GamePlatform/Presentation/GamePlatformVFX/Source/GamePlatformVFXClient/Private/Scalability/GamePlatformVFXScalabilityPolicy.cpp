@@ -7,20 +7,25 @@ namespace
 const FGamePlatformVFXWorldBudgetRule* SelectWorldBudgetRule(
     const FGamePlatformVFXRequest& Request, const UGamePlatformVFXSettings& Settings)
 {
-    if (!Settings.bUseWorldBudgetRules || Request.WorldId.IsNone()) return nullptr;
+    if (!Settings.bUseWorldBudgetRules) return nullptr;
 
-    // 仅匹配显式配置的命名空间及画质；最长前缀优先，拒绝意外同名字头匹配。
-    const FString WorldId = Request.WorldId.ToString();
+    // 体验域使用ExperienceId，世界域使用WorldId；保持旧配置键名兼容资产/INI。
+    // 严禁用ExperienceId去匹配World.*，或者将Experience.*配置错误地匹配到同名WorldId。
+    // 前缀必须在命名空间分隔符处截止，避免MainArena.MainX越权进入竞技预算。
+    const FString WorldId = Request.WorldId.IsNone() ? FString() : Request.WorldId.ToString();
+    const FString ExperienceId = Request.ExperienceId.IsNone() ? FString() : Request.ExperienceId.ToString();
     const FGamePlatformVFXWorldBudgetRule* Best = nullptr;
     int32 BestLength = 0;
     for (const FGamePlatformVFXWorldBudgetRule& Rule : Settings.WorldBudgetRules)
     {
         if (Rule.QualityTier != Request.QualityTier || Rule.WorldIdPrefix.IsEmpty()) continue;
         const FString& Prefix = Rule.WorldIdPrefix;
-        if (!WorldId.StartsWith(Prefix, ESearchCase::IgnoreCase)) continue;
+        const bool bMatchExperience = Prefix.StartsWith(TEXT("Experience."), ESearchCase::IgnoreCase);
+        const FString& ActualId = bMatchExperience ? ExperienceId : WorldId;
+        if (ActualId.IsEmpty() || !ActualId.StartsWith(Prefix, ESearchCase::IgnoreCase)) continue;
         const int32 Length = Prefix.Len();
-        if (WorldId.Len() > Length && WorldId[Length] != TEXT('.') &&
-            WorldId[Length] != TEXT('/') && WorldId[Length] != TEXT('@')) continue;
+        if (ActualId.Len() > Length && ActualId[Length] != TEXT('.') &&
+            ActualId[Length] != TEXT('/') && ActualId[Length] != TEXT('@')) continue;
         if (Length > BestLength)
         {
             Best = &Rule;

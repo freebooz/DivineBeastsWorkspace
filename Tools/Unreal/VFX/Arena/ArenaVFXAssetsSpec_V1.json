@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-16",
+  "project": "DivineBeastsWorkspace",
+  "purpose_zh": "SSLM竞技场Niagara原生Effect Type和NDC资产制作规格，不是原生资产或验收数据。",
+  "platform_plugin_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX",
+  "effect_type_asset_root": "/GamePlatformVFX/Arena/EffectTypes",
+  "data_channel_asset_root": "/GamePlatformVFX/Arena/DataChannels",
+  "effect_types": [
+    {
+      "asset_name": "NET_GP_ArenaCritical",
+      "purpose_zh": "竞技关键提示",
+      "unreal_asset_class": "NiagaraEffectType",
+      "candidate_max_effect_type_instances": {
+        "Epic": 20,
+        "High": 16,
+        "Medium": 12,
+        "Low": 10
+      },
+      "native_asset_status": "not_verified"
+    },
+    {
+      "asset_name": "NET_GP_CombatCast",
+      "purpose_zh": "施法蓄力",
+      "unreal_asset_class": "NiagaraEffectType",
+      "candidate_max_effect_type_instances": {
+        "Epic": 18,
+        "High": 12,
+        "Medium": 10,
+        "Low": 6
+      },
+      "native_asset_status": "not_verified"
+    },
+    {
+      "asset_name": "NET_GP_CombatProjectile",
+      "purpose_zh": "弹道飞行",
+      "unreal_asset_class": "NiagaraEffectType",
+      "candidate_max_effect_type_instances": {
+        "Epic": 24,
+        "High": 16,
+        "Medium": 10,
+        "Low": 8
+      },
+      "native_asset_status": "not_verified"
+    },
+    {
+      "asset_name": "NET_GP_CombatImpact",
+      "purpose_zh": "命中爆发",
+      "unreal_asset_class": "NiagaraEffectType",
+      "candidate_max_effect_type_instances": {
+        "Epic": 20,
+        "High": 12,
+        "Medium": 8,
+        "Low": 4
+      },
+      "native_asset_status": "not_verified"
+    },
+    {
+      "asset_name": "NET_GP_CombatArea",
+      "purpose_zh": "持续区域",
+      "unreal_asset_class": "NiagaraEffectType",
+      "candidate_max_effect_type_instances": {
+        "Epic": 16,
+        "High": 10,
+        "Medium": 8,
+        "Low": 4
+      },
+      "native_asset_status": "not_verified"
+    },
+    {
+      "asset_name": "NET_GP_CombatStatus",
+      "purpose_zh": "状态附着",
+      "unreal_asset_class": "NiagaraEffectType",
+      "candidate_max_effect_type_instances": {
+        "Epic": 12,
+        "High": 8,
+        "Medium": 6,
+        "Low": 4
+      },
+      "native_asset_status": "not_verified"
+    },
+    {
+      "asset_name": "NET_GP_ArenaAmbient",
+      "purpose_zh": "竞技场环境装饰",
+      "unreal_asset_class": "NiagaraEffectType",
+      "candidate_max_effect_type_instances": {
+        "Epic": 10,
+        "High": 6,
+        "Medium": 4,
+        "Low": 4
+      },
+      "native_asset_status": "not_verified"
+    }
+  ],
+  "data_channels": [
+    {
+      "asset_name": "NDC_GP_CombatImpact",
+      "purpose_zh": "通用短时命中/爆裂火花",
+      "unreal_asset_class": "NiagaraDataChannelAsset",
+      "variables": [
+        {
+          "name": "Position",
+          "type": "Position",
+          "description_zh": "事件世界坐标，厘米"
+        },
+        {
+          "name": "Normal",
+          "type": "Vector3",
+          "description_zh": "命中表面法线"
+        },
+        {
+          "name": "Color",
+          "type": "LinearColor",
+          "description_zh": "线性颜色"
+        },
+        {
+          "name": "Scale",
+          "type": "Float",
+          "description_zh": "视觉缩放比例"
+        },
+        {
+          "name": "StyleId",
+          "type": "Int",
+          "description_zh": "跨项目中立视觉样式"
+        },
+        {
+          "name": "Seed",
+          "type": "Int",
+          "description_zh": "确定性随机种子"
+        }
+      ],
+      "native_asset_status": "not_verified",
+      "reader_system_status": "not_created",
+      "gpu_test_status": "not_tested"
+    },
+    {
+      "asset_name": "NDC_GP_GroundBurst",
+      "purpose_zh": "地面碎片/尘土瞬时爆发",
+      "unreal_asset_class": "NiagaraDataChannelAsset",
+      "variables": [
+        {
+          "name": "Position",
+          "type": "Position",
+          "description_zh": "事件世界坐标，厘米"
+        },
+        {
+          "name": "Normal",
+          "type": "Vector3",
+          "description_zh": "命中表面法线"
+        },
+        {
+          "name": "Color",
+          "type": "LinearColor",
+          "description_zh": "线性颜色"
+        },
+        {
+          "name": "Scale",
+          "type": "Float",
+          "description_zh": "视觉缩放比例"
+        },
+        {
+          "name": "StyleId",
+          "type": "Int",
+          "description_zh": "跨项目中立视觉样式"
+        },
+        {
+          "name": "Seed",
+          "type": "Int",
+          "description_zh": "确定性随机种子"
+        }
+      ],
+      "native_asset_status": "not_verified",
+      "reader_system_status": "not_created",
+      "gpu_test_status": "not_tested"
+    },
+    {
+      "asset_name": "NDC_GP_AmbientBurst",
+      "purpose_zh": "环境非关键短时装饰",
+      "unreal_asset_class": "NiagaraDataChannelAsset",
+      "variables": [
+        {
+          "name": "Position",
+          "type": "Position",
+          "description_zh": "事件世界坐标，厘米"
+        },
+        {
+          "name": "Normal",
+          "type": "Vector3",
+          "description_zh": "命中表面法线"
+        },
+        {
+          "name": "Color",
+          "type": "LinearColor",
+          "description_zh": "线性颜色"
+        },
+        {
+          "name": "Scale",
+          "type": "Float",
+          "description_zh": "视觉缩放比例"
+        },
+        {
+          "name": "StyleId",
+          "type": "Int",
+          "description_zh": "跨项目中立视觉样式"
+        },
+        {
+          "name": "Seed",
+          "type": "Int",
+          "description_zh": "确定性随机种子"
+        }
+      ],
+      "native_asset_status": "not_verified",
+      "reader_system_status": "not_created",
+      "gpu_test_status": "not_tested"
+    }
+  ],
+  "targets": {
+    "Epic": 120,
+    "High": 80,
+    "Medium": 58,
+    "Low": 40
+  },
+  "budget_dimensions": {
+    "request_tracking": {
+      "max_active_requests": 256,
+      "hard_max_tracked_requests": 512,
+      "not_niagara_system_count": true,
+      "description_zh": "平台仅限Pending/Tracked请求，不能替代Niagara实际实例或GPU预算"
+    },
+    "real_system_instances": {
+      "quality_caps_ref": "targets",
+      "include_external_niagara_and_ndc_readers": true,
+      "per_asset_max_system_instances_requires_editor_review": true,
+      "measured": false,
+      "description_zh": "各EffectType候选值之和是目标，不是全World自动执行的硬上限"
+    },
+    "frame_cost_targets": {
+      "Epic": {"fps": 120, "vfx_gpu_ms": 2.0, "vfx_cpu_ms": 0.8},
+      "High": {"fps": 60, "vfx_gpu_ms": 1.5, "vfx_cpu_ms": 0.6},
+      "Medium": {"fps": 60, "vfx_gpu_ms": 1.0, "vfx_cpu_ms": 0.5},
+      "Low": {"fps": 60, "vfx_gpu_ms": 0.8, "vfx_cpu_ms": 0.4},
+      "measured": false,
+      "description_zh": "性能指标必须在特定设备分辨率与打包客户端上单独实测，CPU/GPU不能简单相加"
+    },
+    "ndc_batch_writer": {
+      "maximum_events_per_batch": 128,
+      "multi_event_batch_only_for_global": true,
+      "spatial_routing_requires_verified_context": true,
+      "production_enabled": false,
+      "description_zh": "跨Islands合并未通过UE5.8空间上下文与Reader验收前禁止默认开启"
+    }
+  },
+  "verified_system_instance_budget": false,
+  "notes_zh": "只有UE5.8实际编辑器/Monolith保存并重载后才可将native_asset_status改为verified。不可用文本伪造.uasset。核心游戏信息须有低成本非Niagara保底。"
+}

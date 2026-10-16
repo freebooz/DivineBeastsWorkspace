@@ -38,6 +38,8 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX") FName AbilityId = NAME_None;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX") FName SkinId = NAME_None;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX") FName WorldId = NAME_None;
+    /** 当前体验身份（例如Experience.MainArena.Main）；与WorldId分别来源于上游正式上下文，不能互相伪造。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX") FName ExperienceId = NAME_None;
 
     /** Resolver使用的中立上下文标签；不承载Gameplay权威判断。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX")

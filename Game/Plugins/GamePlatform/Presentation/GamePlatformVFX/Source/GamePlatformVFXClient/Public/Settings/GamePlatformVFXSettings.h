@@ -10,7 +10,8 @@
 class UGamePlatformVFXCatalog;
 
 /** GamePlatformVFX 可配置运行策略。 */
-UCLASS(Config=Game, DefaultConfig, meta=(DisplayName="Game Platform VFX"))
+/** 独立可复用插件配置使用GamePlatformVFX类别；SSLM竞技场覆盖保留在项目Config目录。 */
+UCLASS(Config=GamePlatformVFX, DefaultConfig, meta=(DisplayName="Game Platform VFX"))
 class GAMEPLATFORMVFXCLIENT_API UGamePlatformVFXSettings final : public UDeveloperSettings
 {
     GENERATED_BODY()

@@ -8,6 +8,8 @@
 #include "Definitions/GamePlatformVFXCompositeDefinition.h"
 #include "Definitions/GamePlatformVFXDefinition.h"
 #include "Definitions/GamePlatformVFXWorldDefinition.h"
+#include "DataChannels/GamePlatformVFXDataChannelBridge.h"
+#include "NiagaraDataChannelAsset.h"
 #include "Environment/Fauna/GamePlatformFaunaRuntime.h"
 #include "Diagnostics/GamePlatformVFXDiagnostics.h"
 #include "Engine/GameInstance.h"
@@ -460,6 +462,8 @@ EGamePlatformVFXDefinitionQueueResult UGamePlatformVFXWorldSubsystem::QueueSelec
         Paths.Add(System.ToSoftObjectPath());
     }
     if (!Definition.GetEffectType().IsNull()) Paths.AddUnique(Definition.GetEffectType().ToSoftObjectPath());
+    // 在现有Data服务Lease内预加载可选NDC，不使用新资产管理器。
+    if (Definition.UsesSharedBurstChannel()) Paths.AddUnique(Definition.GetSharedBurstDataChannel().ToSoftObjectPath());
     for (const auto& Asset : Definition.GetPreloadAssets()) if (!Asset.IsNull()) Paths.AddUnique(Asset.ToSoftObjectPath());
     if (Paths.IsEmpty()) return ExecuteLoadedDefinition(Definition, Request, Handle) ? EGamePlatformVFXDefinitionQueueResult::Executed : EGamePlatformVFXDefinitionQueueResult::Failed;
     if (PendingInstanceCount >= GetDefault<UGamePlatformVFXSettings>()->MaxPendingInstancePreloads) return EGamePlatformVFXDefinitionQueueResult::Failed;
@@ -1191,6 +1195,7 @@ void UGamePlatformVFXWorldSubsystem::HandlePreloadDefinitionLoaded(const FGamePl
         Paths.AddUnique(System.ToSoftObjectPath());
     }
     if (!Definition->GetEffectType().IsNull()) Paths.AddUnique(Definition->GetEffectType().ToSoftObjectPath());
+    if (Definition->UsesSharedBurstChannel()) Paths.AddUnique(Definition->GetSharedBurstDataChannel().ToSoftObjectPath());
     for (const auto& Asset : Definition->GetPreloadAssets()) if (!Asset.IsNull()) Paths.AddUnique(Asset.ToSoftObjectPath());
     if (!Paths.IsEmpty())
     {
@@ -1396,6 +1401,23 @@ bool UGamePlatformVFXWorldSubsystem::ExecuteLoadedDefinition(
         if (auto* Snapshot = PlaybackSnapshots.Find(ReservedHandle.Id))
         { Snapshot->State = EGamePlatformVFXPlaybackState::Playing; Snapshot->Code = EGamePlatformVFXResultCode::Played; Snapshot->DefinitionId = Definition.GetDefinitionId(); }
         return true;
+    }
+
+    // 短时同质爆发可写入现有Niagara Data Channels共享模拟，不创建单事件System。
+    // 本分支默认关闭；只有定义明确启用且通道已加载成功时执行，其他情况仍走原生Pool回退。
+    if (Definition.UsesSharedBurstChannel())
+    {
+        const UNiagaraDataChannelAsset* Channel = Definition.GetSharedBurstDataChannel().Get();
+        if (IsValid(Channel) && FGamePlatformVFXDataChannelBridge::WriteInstantBurst(*World, *Channel, Request))
+        {
+            FGamePlatformVFXDiagnostics::SharedBurstWritten();
+            // NDC事件本身没有独立NiagaraComponent；立即完成自己的句柄与租约。
+            CleanupInstance(ReservedHandle, false, EGamePlatformVFXPlaybackState::Completed,
+                EGamePlatformVFXResultCode::Played, TEXT("共享NDC瞬时事件已写入。"));
+            return true;
+        }
+        // 通道写入未被接受时，保持既有Niagara System视觉回退，不影响权威技能事实。
+        FGamePlatformVFXDiagnostics::SharedBurstFallback();
     }
 
     const UGamePlatformVFXSettings* Settings =

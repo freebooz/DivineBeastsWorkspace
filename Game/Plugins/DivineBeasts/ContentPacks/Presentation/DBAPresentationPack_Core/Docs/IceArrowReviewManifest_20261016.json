@@ -1,0 +1,108 @@
+{
+  "项目": "SSLM",
+  "引擎": "5.8.0-0+UE5",
+  "正式技能映射已替换": false,
+  "人工视觉验收": false,
+  "资源": [
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review/L_DBA_IceArrow_A_Review.L_DBA_IceArrow_A_Review",
+      "类型": "World",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/M_DBA_IceArrow_Crystal_A.M_DBA_IceArrow_Crystal_A",
+      "类型": "Material",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/M_DBA_IceArrow_Energy_A.M_DBA_IceArrow_Energy_A",
+      "类型": "Material",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/M_DBA_IceArrow_FractureBake_A.M_DBA_IceArrow_FractureBake_A",
+      "类型": "Material",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/M_DBA_IceArrow_Shockwave_A.M_DBA_IceArrow_Shockwave_A",
+      "类型": "Material",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/MI_DBA_IceArrow_Core_A.MI_DBA_IceArrow_Core_A",
+      "类型": "MaterialInstanceConstant",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/MI_DBA_IceArrow_Crystal_A.MI_DBA_IceArrow_Crystal_A",
+      "类型": "MaterialInstanceConstant",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/MI_DBA_IceArrow_Facet_A.MI_DBA_IceArrow_Facet_A",
+      "类型": "MaterialInstanceConstant",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/MI_DBA_IceArrow_Flow_A.MI_DBA_IceArrow_Flow_A",
+      "类型": "MaterialInstanceConstant",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/MI_DBA_IceArrow_Mist_A.MI_DBA_IceArrow_Mist_A",
+      "类型": "MaterialInstanceConstant",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/Review/MI_DBA_IceArrow_Shockwave_A.MI_DBA_IceArrow_Shockwave_A",
+      "类型": "MaterialInstanceConstant",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Meshes/Review/SM_DBA_IceArrow_CrystalA.SM_DBA_IceArrow_CrystalA",
+      "类型": "StaticMesh",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Meshes/Review/SM_DBA_IceArrow_CrystalA2.SM_DBA_IceArrow_CrystalA2",
+      "类型": "StaticMesh",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/Review/NM_DBA_IceArrowMotion_A.NM_DBA_IceArrowMotion_A",
+      "类型": "NiagaraScript",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/Review/NM_DBA_IceArrowStopMeshes_A.NM_DBA_IceArrowStopMeshes_A",
+      "类型": "NiagaraScript",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/Review/NS_DBA_IceArrow_Cast_A.NS_DBA_IceArrow_Cast_A",
+      "类型": "NiagaraSystem",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/Review/NS_DBA_IceArrow_Flight_A.NS_DBA_IceArrow_Flight_A",
+      "类型": "NiagaraSystem",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/Review/NS_DBA_IceArrow_Impact_A.NS_DBA_IceArrow_Impact_A",
+      "类型": "NiagaraSystem",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/Review/T_DBA_IceArrow_Fracture_A.T_DBA_IceArrow_Fracture_A",
+      "类型": "Texture2D",
+      "状态": "审核候选，视觉尚未签收"
+    },
+    {
+      "资源": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/Review/T_DBA_IceArrow_InternalFracture_A.T_DBA_IceArrow_InternalFracture_A",
+      "类型": "Texture2D",
+      "状态": "审核候选，视觉尚未签收"
+    }
+  ]
+}

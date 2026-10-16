@@ -37,6 +37,8 @@ bool FGamePlatformVFXPresentationProvider::Handle(
     VFXRequest.AbilityId = Request.Context.AbilityId;
     VFXRequest.SkinId = Request.Context.SkinId;
     VFXRequest.WorldId = Request.Context.WorldId;
+    // 平台中立传递体验身份，允许竞技预算按真实ExperienceId精准匹配，不把ExperienceId误当WorldId。
+    VFXRequest.ExperienceId = Request.Context.ExperienceId;
     VFXRequest.ContextTags = Request.ContextTags;
     VFXRequest.DefinitionId = Request.DefinitionId;
     VFXRequest.PlatformId = FName(FPlatformProperties::IniPlatformName());
