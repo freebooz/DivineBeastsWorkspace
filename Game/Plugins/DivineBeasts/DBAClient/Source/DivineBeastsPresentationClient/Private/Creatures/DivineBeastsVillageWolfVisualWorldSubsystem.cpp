@@ -1,4 +1,4 @@
-// SSLM狼群外观由客户端从已授权内容包装配；权威AI/Combat与Fab第三方版权资产互不反向依赖。
+// SSLM狼群外观由客户端从已授权内容包装配；权威AI/Combat不依赖第三方模型的作者或资源格式。
 #include "Creatures/DivineBeastsVillageWolfVisualWorldSubsystem.h"
 
 #include "Characters/DivineBeastsVillageWolf.h"
@@ -45,12 +45,20 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ObserveActor(AActor* Spawned)
 
 void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
 {
-    // 未正式导入Fab或未审核时不替换客户端Mesh，不根据网络存在生成假狼外观。
+    // 未正式导入并核验真实模型时不替换客户端Mesh，不根据网络存在生成假狼外观。
     if (bClosing || bLoading || !GConfig) return;
     bool bVerified=false;
     const TCHAR* Section=TEXT("DivineBeasts.VillageWolves");
     GConfig->GetBool(Section,TEXT("bClientVisualsVerified"),bVerified,GGameIni);
     if (!bVerified) return;
+    GConfig->GetFloat(Section,TEXT("WolfMeshScale"),WolfMeshScale,GGameIni);
+    GConfig->GetFloat(Section,TEXT("WolfMeshYawDegrees"),WolfMeshYawDegrees,GGameIni);
+    if(!FMath::IsFinite(WolfMeshScale)||WolfMeshScale<0.01f||WolfMeshScale>10.0f||
+        !FMath::IsFinite(WolfMeshYawDegrees)||FMath::Abs(WolfMeshYawDegrees)>360.0f)
+    {
+        UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualProfileRejected: 模型比例或朝向无效。"));
+        return;
+    }
     FString MeshName, AnimName;
     GConfig->GetString(Section,TEXT("WolfSkeletalMesh"),MeshName,GGameIni);
     GConfig->GetString(Section,TEXT("WolfAnimationBlueprint"),AnimName,GGameIni);
@@ -82,7 +90,7 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
                 Animation->IsChildOf(UAnimInstance::StaticClass());
             if (!Self->bReady)
             {
-                UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualRejected: 狼的Fab骨骼或动画蓝图资源尚未完成真实导入/校验。"));
+                UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualRejected: 狼的骨骼或动画蓝图资源未通过真实导入/校验。"));
                 return;
             }
             const auto Wolves=Self->ObservedWolves.Array();
@@ -115,7 +123,15 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ApplyVisual(ADivineBeastsVill
     if (bClosing || Wolf.IsActorBeingDestroyed()) return;
     Mesh->SetAnimInstanceClass(Animation);
     if (bClosing || Wolf.IsActorBeingDestroyed()) return;
-    Mesh->SetRelativeLocation(FVector(0.0f,0.0f,-Wolf.GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
+    Mesh->SetRelativeScale3D(FVector(WolfMeshScale));
+    const FRotator MeshRotation(0.0f, WolfMeshYawDegrees, 0.0f);
+    const FVector GroundedMeshOffset(0.0f, 0.0f, -Wolf.GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+    Mesh->SetRelativeRotation(MeshRotation);
+    Mesh->SetRelativeLocation(GroundedMeshOffset);
+    // Character网络平滑会用缓存的初始Mesh偏移重置模拟代理的位置；
+    // 只设置RelativeLocation会使远端狼在下一次网络更新后回到胶囊中心并悬空。
+    Wolf.CacheInitialMeshOffset(GroundedMeshOffset, MeshRotation);
+    UE_LOG(LogTemp,Log,TEXT("VillageWolfVisualApplied: 已按世界租约装配真实狼模型与动画，Scale=%.3f"),WolfMeshScale);
 }
 
 void UDivineBeastsVillageWolfVisualWorldSubsystem::HandleWolfEndPlay(AActor* Ended,EEndPlayReason::Type)

@@ -165,11 +165,11 @@ struct FDivineBeastsDevelopmentCastingTestFixture
         Avatar->SetPropertyValue_InContainer(Runtime->ContainerPtrToValuePtr<void>(Identity), Generation);
         return true;
     }
-    /** 真实公开发布API，窗口严格0.7秒；该测试不启动或延长技能权威释放。 */
-    bool Publish(FGuid Id, bool bFrost = false, int32 Generation = 1)
+    /** 真实公开发布API，默认保留0.7秒生命周期夹具；2秒冰箭回归显式传入，不改变权威技能。 */
+    bool Publish(FGuid Id, bool bFrost = false, int32 Generation = 1, float DurationSeconds = 0.7f)
     {
         return Cast->PublishConfirmedCast(Id, TEXT("test.development.cast@1"),
-            bFrost ? FName(TEXT("DBA.Development.Frostbolt")) : FName(TEXT("DBA.Development.Fireball")), Generation, 0.7f);
+            bFrost ? FName(TEXT("DBA.Development.Frostbolt")) : FName(TEXT("DBA.Development.Fireball")), Generation, DurationSeconds);
     }
     /** 给生产内容就绪入口投递确定状态；本用例只测重试，不宣称Data包激活/资源加载成功。 */
     void NotifyContentActive()
@@ -218,6 +218,22 @@ struct FDivineBeastsDevelopmentCastingTestFixture
     IMPLEMENT_SIMPLE_AUTOMATION_TEST(ClassName, "DivineBeasts.Presentation.DevelopmentCasting.Regression." Suffix, \
         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter) \
     bool ClassName::RunTest(const FString&)
+
+/** 用户2秒冰箭：动作速率由复制时长推导，取消仍释放同一窗口，不让短动作先于施法条结束。 */
+DBA_CASTING_TEST(FDivineBeastsCastingFrostTwoSecondsTest, "FrostTwoSecondMontage")
+{
+    FDivineBeastsDevelopmentCastingTestFixture F(*this); if (!F.Initialize()) return false;
+    const FGuid Id=FGuid::NewGuid();
+    TestTrue(TEXT("2秒冰箭事实受理"),F.Publish(Id,true,1,2.0f));
+    auto* Anim=F.Character->GetMesh()->GetAnimInstance();
+    const auto* Instance=Anim->GetActiveInstanceForMontage(F.FrostMontage.Get());
+    if (TestNotNull(TEXT("真实冰箭动作实例"),Instance))
+        TestEqual(TEXT("完整动作铺满复制的2秒窗口"),Instance->GetPlayRate(),F.FrostMontage->GetPlayLength()/2.0f);
+    TestEqual(TEXT("服务器事实保持2秒"),F.Cast->GetCastFacts().DurationSeconds,2.0f);
+    TestTrue(TEXT("取消2秒起手"),F.Cast->CancelConfirmedCast(Id));
+    TestEqual(TEXT("取消撤销自己的表现请求"),F.LiveRequests.Num(),0);
+    return true;
+}
 
 /** 缺陷1：真实OnMontageStarted同步取消后，旧栈不得再创建锚点、Timer或补交VFX。 */
 DBA_CASTING_TEST(FDivineBeastsCastingStartedCancellationTest, "StartedCancellationLeavesNoLateOwnership")

@@ -27,6 +27,9 @@ private:
     FGamePlatformDataLease VisualLease;
     FSoftObjectPath WolfMeshPath;
     FSoftObjectPath WolfAnimPath;
+    /** 经实际模型边界校准的纯客户端导入比例/朝向，不修改权威胶囊或导航代理。 */
+    float WolfMeshScale = 1.0f;
+    float WolfMeshYawDegrees = 0.0f;
     FGuid Operation;
     bool bReady = false;
     bool bLoading = false;

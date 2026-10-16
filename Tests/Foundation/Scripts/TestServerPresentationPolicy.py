@@ -112,6 +112,16 @@ class PolicyBehaviorTests(unittest.TestCase):
             self.assertFalse(self.policy.is_forbidden(
                 "/Game/Development/DivineBeasts/Abilities/DA_Dev.uasset", profile))
 
+    def test_wolf_visual_leaf_is_stripped_but_ai_and_map_remain(self):
+        """狼的外观不得把客户端动画模块带入专服；AI和真实导航地图必须保留。"""
+        for profile in PROFILES:
+            with self.subTest(profile=profile):
+                self.assertTrue(self.policy.is_forbidden(
+                    "/DBAWorldPack_Village/Creatures/Wolf/ABP_DBA_VillageWolf.uasset", profile))
+                for package in ("/DBAWorldPack_Village/AI/DA_DBA_VillageWolfAI.uasset",
+                                "/DBAWorldPack_Village/Maps/L_Village_Start.umap"):
+                    self.assertFalse(self.policy.is_forbidden(package, profile))
+
     def test_unknown_schema_and_unknown_fields_are_rejected(self):
         self.rejected_policy(lambda raw: raw.update(SchemaVersion=99))
         self.rejected_policy(lambda raw: raw.update(UnreviewedWildcard=True))

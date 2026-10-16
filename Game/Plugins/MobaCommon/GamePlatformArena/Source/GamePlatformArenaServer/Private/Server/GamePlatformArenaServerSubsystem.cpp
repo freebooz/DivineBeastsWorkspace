@@ -44,8 +44,23 @@ void UGamePlatformArenaServerSubsystem::Deinitialize()
 {
     ++AssignmentGeneration;bWorldStarted=false;
     if(auto* Lifecycle=LifecycleSubsystem.Get())Lifecycle->OnLifecycleChanged().Remove(LifecycleChangedHandle);LifecycleChangedHandle.Reset();LifecycleSubsystem.Reset();
-    if(GetWorld())GetWorld()->GetTimerManager().ClearTimer(AssignmentRetryTimer);
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(AssignmentRetryTimer);
+        World->GetTimerManager().ClearTimer(SafeDrainTimer);
+    }
+    if (auto* Mode = ObservedArenaMode.Get())
+    {
+        // 先解除结果通知，再取消HTTP：后端迟到的结果不得唤醒旧World的排空流程。
+        Mode->OnResultPending().Remove(ResultPendingHandle);
+    }
+    ResultPendingHandle.Reset();
+    ObservedArenaMode.Reset();
+    bResultCommitted = false;
+    bZeroHeartbeatRequested = false;
+    bSafeDrainRequested = false;
     if(BackendClient)BackendClient->CancelAll();
+    ResultHeartbeatBaselineGeneration = 0;
     if (AdmissionSubsystem.IsValid()) { AdmissionSubsystem->OnAdmissionChanged().Remove(AdmissionChangedHandle); }
     if (auto* World = GetWorld())
     {
@@ -70,26 +85,58 @@ void UGamePlatformArenaServerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     AGamePlatformArenaGameMode* ArenaGameMode = InWorld.GetAuthGameMode<AGamePlatformArenaGameMode>();
     if (ArenaGameMode == nullptr) { return; }
 
+    ObservedArenaMode = ArenaGameMode;
     const TWeakObjectPtr<AGamePlatformArenaGameMode> WeakArenaMode(ArenaGameMode);
-    ArenaGameMode->OnResultPending().AddWeakLambda(
+    const TWeakObjectPtr<UGamePlatformArenaServerSubsystem> WeakSelf(this);
+    ResultPendingHandle = ArenaGameMode->OnResultPending().AddWeakLambda(
         this,
-        [this, WeakArenaMode](const FGamePlatformArenaMatchResult&)
+        [WeakSelf, WeakArenaMode](const FGamePlatformArenaMatchResult&)
         {
-            if (!Coordinator.IsValid()) { return; }
-            AGamePlatformArenaGameMode* Mode = WeakArenaMode.Get();
-            if (Mode == nullptr) { return; }
-            Coordinator->SubmitPendingResult(
+            auto* Self = WeakSelf.Get();
+            auto* Mode = WeakArenaMode.Get();
+            if (!Self || !Mode || !Self->bWorldStarted || !Self->Coordinator.IsValid() ||
+                Self->GetWorld() != Mode->GetWorld()) { return; }
+            Self->Coordinator->SubmitPendingResult(
                 Mode,
-                [](bool bCommitted, const FString& Error)
+                [WeakSelf, WeakArenaMode](bool bCommitted, const FString& Error)
                 {
-                    if (bCommitted)
+                    auto* Current = WeakSelf.Get();
+                    auto* CurrentMode = WeakArenaMode.Get();
+                    if (!Current || !CurrentMode || !Current->bWorldStarted ||
+                        !Current->GetWorld() || Current->GetWorld()->bIsTearingDown ||
+                        Current->GetWorld()->GetAuthGameMode<AGamePlatformArenaGameMode>() != CurrentMode)
                     {
-                        UE_LOG(LogTemp, Log, TEXT("MainArena MatchResult committed; backend owns per-player safe return and final instance release."));
+                        return;
+                    }
+                    if (!bCommitted)
+                    {
+                        UE_LOG(LogTemp, Error, TEXT("MainArena MatchResult remains pending: %s"), *Error);
+                        return;
+                    }
+                    if (CurrentMode->GetMatchPhase() != EGamePlatformArenaMatchPhase::Completed)
+                    {
+                        // 后端提交成功还不等于当前世界状态可回收；已切换的阶段绝不关闭服务器。
+                        UE_LOG(LogTemp, Warning, TEXT("MainArena result committed but match phase is not Completed."));
+                        return;
+                    }
+                    // 先冻结历史成功心跳的代次；不能让开赛前的0人回执授权当前比赛退出。
+                    if (auto* Lifecycle = Current->LifecycleSubsystem.Get())
+                    {
+                        Current->ResultHeartbeatBaselineGeneration = Lifecycle->GetIssuedOperationGeneration();
                     }
                     else
                     {
-                        UE_LOG(LogTemp, Error, TEXT("MainArena MatchResult remains pending: %s"), *Error);
+                        UE_LOG(LogTemp, Error, TEXT("MainArena result committed without server lifecycle; defer shutdown."));
+                        return;
                     }
+                    Current->bResultCommitted = true;
+                    // 只在后端结果终态后短期检查玩家是否真实离开；不使用逐帧Tick，不强制踢人。
+                    Current->GetWorld()->GetTimerManager().SetTimer(
+                        Current->SafeDrainTimer, Current,
+                        &UGamePlatformArenaServerSubsystem::TryFinishArenaDrain,
+                        5.0f, true);
+                    Current->TryFinishArenaDrain();
+                    UE_LOG(LogTemp, Log, TEXT("MainArena result committed; waiting for zero live players before Agones drain."));
                 });
         });
 
@@ -170,6 +217,107 @@ void UGamePlatformArenaServerSubsystem::ExpireVerifiedConnection(TWeakObjectPtr<
 }
 
 void UGamePlatformArenaServerSubsystem::HandleLifecycleChanged(const FGamePlatformServerLifecycleSnapshot&){TryLoadAssignment();}
+
+// 服务器空人回收纯安全门禁：结果、阶段和实例身份必须均为真实权威，
+// UI关闭、玩家状态副本或单次心跳零人不能独立授权Agones终止。
+bool UGamePlatformArenaServerSubsystem::CanRequestSafeDrain(
+    bool bResultConfirmed, bool bMatchCompleted,
+    bool bSameGameServer, bool bHasLivePlayerControllers)
+{
+    return bResultConfirmed && bMatchCompleted && bSameGameServer && !bHasLivePlayerControllers;
+}
+
+void UGamePlatformArenaServerSubsystem::TryFinishArenaDrain()
+{
+    check(IsInGameThread());
+    UWorld* World = GetWorld();
+    if (!bWorldStarted || !bResultCommitted || !World || World->bIsTearingDown ||
+        World->GetNetMode() != NM_DedicatedServer)
+    {
+        return;
+    }
+
+    AGamePlatformArenaGameMode* Mode = World->GetAuthGameMode<AGamePlatformArenaGameMode>();
+    UGamePlatformServerLifecycleSubsystem* Lifecycle = LifecycleSubsystem.Get();
+    if (!Mode || Mode != ObservedArenaMode.Get() || !Lifecycle)
+    {
+        return;
+    }
+
+    const FGamePlatformServerLifecycleSnapshot Snapshot = Lifecycle->GetSnapshot();
+    const FString& MatchGameServerId = Mode->GetAssignment().GameServerId;
+    bool bHasLiveControllers = false;
+    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+    {
+        if (IsValid(It->Get()))
+        {
+            // 以真实控制器是否仍属于本世界作为最保守的迁出条件；不使用UI计数或过期Roster。
+            bHasLiveControllers = true;
+            break;
+        }
+    }
+    if (!CanRequestSafeDrain(bResultCommitted,
+        Mode->GetMatchPhase() == EGamePlatformArenaMatchPhase::Completed,
+        !MatchGameServerId.IsEmpty() && MatchGameServerId == Snapshot.GameServerId,
+        bHasLiveControllers))
+    {
+        return;
+    }
+
+    // 结果已提交且真实世界零人后，先关闭本地新准入，避免零心跳与SDK Shutdown之间重新出现玩家。
+    if (auto* Admission = AdmissionSubsystem.Get())
+    {
+        Admission->StopAcceptingAdmissions();
+    }
+
+    if (Snapshot.State == EGamePlatformServerLifecycleState::Stopped)
+    {
+        World->GetTimerManager().ClearTimer(SafeDrainTimer);
+        return;
+    }
+    if (bSafeDrainRequested)
+    {
+        if (Snapshot.State == EGamePlatformServerLifecycleState::Draining &&
+            Lifecycle->CompleteDrain())
+        {
+            // CompleteDrain是平台确认后的本地终态；Agones适配器只在该终态发送SDK Shutdown。
+            World->GetTimerManager().ClearTimer(SafeDrainTimer);
+            UE_LOG(LogTemp, Log, TEXT("MainArena empty and committed: controlled drain completed; Agones may shut down."));
+        }
+        return;
+    }
+    if (Snapshot.State != EGamePlatformServerLifecycleState::Registered &&
+        Snapshot.State != EGamePlatformServerLifecycleState::Ready)
+    {
+        return;
+    }
+
+    if (!bZeroHeartbeatRequested)
+    {
+        // 后端FinalizeArena只接受晚于结果持久提交的真实零人数心跳；网络请求在途时下一次安全重试。
+        // 平台BeginDrain会串行等待该心跳完成，不能用客户端人数或虚拟快照提前宣布成功。
+        bZeroHeartbeatRequested = Lifecycle->SendHeartbeat(0);
+        return;
+    }
+    // 必须先获得结果提交后的零人心跳真正成功回执；发送成功仅表示HTTP已开始。
+    const bool bConfirmedZeroAfterResult =
+        Lifecycle->GetLastAcknowledgedHeartbeatPlayers() == 0 &&
+        Lifecycle->GetLastAcknowledgedHeartbeatGeneration() > ResultHeartbeatBaselineGeneration;
+    if (!bConfirmedZeroAfterResult)
+    {
+        // 5秒下一轮重试暂时失败的零心跳；不把请求发送、旧ACK或网络未知结果作为授权。
+        if (Snapshot.ConsecutiveHeartbeatFailures > 0)
+        {
+            bZeroHeartbeatRequested = false;
+        }
+        return;
+    }
+    if (Lifecycle->BeginDrain())
+    {
+        bSafeDrainRequested = true;
+    }
+}
+
 void UGamePlatformArenaServerSubsystem::TryLoadAssignment()
 {
     auto* World=GetWorld();auto* Mode=World?World->GetAuthGameMode<AGamePlatformArenaGameMode>():nullptr;auto* Lifecycle=LifecycleSubsystem.Get();

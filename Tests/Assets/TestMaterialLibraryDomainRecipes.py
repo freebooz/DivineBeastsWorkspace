@@ -90,7 +90,7 @@ class MaterialLibraryDomainRecipes(unittest.TestCase):
         self.assertFalse(previously & now,"新配方会与历史正式资产冲突")
 
     def test_material_layer_and_ui_delegation_contracts(self):
-        """12ML与7项待做UI必须归既有插件，不得为凑数创建第48个新插件。"""
+        """12项材质层与7项界面函数必须归既有插件，不得再创建没有独立职责的空壳插件。"""
         layers=read_json(LAYERS)
         ui=read_json(UI)
         self.assertEqual(len(layers["items"]),12)

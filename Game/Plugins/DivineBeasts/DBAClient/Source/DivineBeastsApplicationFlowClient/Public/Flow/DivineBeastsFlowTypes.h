@@ -200,6 +200,8 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsFlowViewState
     UPROPERTY(BlueprintReadOnly) FDivineBeastsCharacterSummary SelectedCharacter;
     UPROPERTY(BlueprintReadOnly) bool bHasSelectedCharacter = false;
     UPROPERTY(BlueprintReadOnly) FString LoadingSummary;
+    /** 真实Loading任务的加权完成比例，范围0..1；未建立加载操作时为-1，UI显示不定进度。 */
+    UPROPERTY(BlueprintReadOnly) float LoadingProgress01 = -1.0f;
     /** 本次世界切换的回调身份；异步完成通知必须原样携带，旧操作不能推进新屏障。 */
     UPROPERTY(BlueprintReadOnly) FGuid LoadingObservationId;
     UPROPERTY(BlueprintReadOnly) FString ConnectionSummary;

@@ -6,6 +6,10 @@
 
 class UGamePlatformAIStateComponent;
 struct FGamePlatformCombatEvent;
+class ADivineBeastsVillageWolf;
+
+/** 游戏线程的本实体生命复制通知；消费者在绑定后读取一次快照，结束时成对解绑。 */
+DECLARE_MULTICAST_DELEGATE_OneParam(FDivineBeastsVillageWolfLifeChanged, ADivineBeastsVillageWolf*);
 
 /**
  * 四足狼怪物的稳定玩法实体。服务器创建并初始化生命，由平台Combat结算伤害；
@@ -27,6 +31,13 @@ public:
     UFUNCTION(BlueprintPure, Category="SSLM|VillageWolf")
     bool IsWolfAlive() const { return bWolfInitialized && !bWolfDead; }
 
+    /** 只读服务器死亡事实；初始化尚未复制不等于死亡，客户端动画不得从Health自行推断。 */
+    UFUNCTION(BlueprintPure, Category="SSLM|VillageWolf")
+    bool IsWolfDead() const { return bWolfDead; }
+
+    /** 双端生命快照变化通知；仅传播复制事实，不授予客户端伤害或复活权限。 */
+    FDivineBeastsVillageWolfLifeChanged& OnWolfLifeChanged() { return WolfLifeChanged; }
+
     /** 中立平台AI状态组件，定义资源由服务器装配根配置，客户端只消费复制快照。 */
     UGamePlatformAIStateComponent* GetWolfAIState() const { return AIState; }
 
@@ -46,7 +57,7 @@ private:
     TObjectPtr<UGamePlatformAIStateComponent> AIState;
 
     /** 只有真实GAS/Combat重置成功才发布，避免异步登录、UI或旧死亡重复设置。 */
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing=OnRep_WolfLife)
     bool bWolfInitialized = false;
 
     /** 当前生命死亡权威事实，不在客户端自行修改Combat Health。 */
@@ -54,9 +65,11 @@ private:
     bool bWolfDead = false;
 
     FDelegateHandle DeathDelegate;
+    FDivineBeastsVillageWolfLifeChanged WolfLifeChanged;
     bool bClosing = false;
 
     /** 真实Combat通知已确认死亡后调用；撤除胶囊碰撞避免尸体挡住路径。 */
     void HandleAuthorityDeath(const FGamePlatformCombatEvent& Event);
     UFUNCTION() void OnRep_WolfDead();
+    UFUNCTION() void OnRep_WolfLife();
 };

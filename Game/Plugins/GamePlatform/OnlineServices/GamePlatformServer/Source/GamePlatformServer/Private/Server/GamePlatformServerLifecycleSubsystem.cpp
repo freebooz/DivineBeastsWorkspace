@@ -47,6 +47,9 @@ void UGamePlatformServerLifecycleSubsystem::Deinitialize()
     bHeartbeatInFlight = false;
     bControlOperationInFlight = false;
     LifecycleChanged.Clear();
+    HeartbeatPlayersInFlight = -1;
+    LastAcknowledgedHeartbeatPlayers = -1;
+    LastAcknowledgedHeartbeatGeneration = 0;
     PlayerCountSampled.Clear();
     ActiveInstance = FGamePlatformServerInstanceInfo();
     Snapshot = FGamePlatformServerLifecycleSnapshot();
@@ -62,6 +65,10 @@ bool UGamePlatformServerLifecycleSubsystem::RegisterInstance(
     {
         return false;
     }
+    // 重新注册新Boot时绝不能继承旧实例的已确认人数或回执代次。
+    HeartbeatPlayersInFlight = -1;
+    LastAcknowledgedHeartbeatPlayers = -1;
+    LastAcknowledgedHeartbeatGeneration = 0;
     ActiveInstance = Instance;
     Snapshot.GameServerId = Instance.GameServerId;
     Snapshot.ServerRoleId = Instance.ServerRoleId;
@@ -88,8 +95,15 @@ bool UGamePlatformServerLifecycleSubsystem::SendHeartbeat(int32 CurrentPlayers)
     {
         return false;
     }
+    // 在网络调用之前记录本请求真实人数；同步完成回调也只能归属这一代操作。
+    HeartbeatPlayersInFlight = CurrentPlayers;
     bHeartbeatInFlight = true;
-    return StartProviderOperation(EControlOperation::Heartbeat, CurrentPlayers);
+    if (!StartProviderOperation(EControlOperation::Heartbeat, CurrentPlayers))
+    {
+        HeartbeatPlayersInFlight = -1;
+        return false;
+    }
+    return true;
 }
 
 bool UGamePlatformServerLifecycleSubsystem::StartHeartbeatPump(
@@ -469,6 +483,8 @@ void UGamePlatformServerLifecycleSubsystem::CompleteOperation(
     }
     if (Operation == EControlOperation::Heartbeat)
     {
+        const int32 SubmittedPlayers = HeartbeatPlayersInFlight;
+        HeartbeatPlayersInFlight = -1;
         bHeartbeatInFlight = false;
         if (!bSucceeded)
         {
@@ -487,6 +503,12 @@ void UGamePlatformServerLifecycleSubsystem::CompleteOperation(
             return;
         }
 
+        // 只有Provider明确成功才发布本次人数回执；未知网络结果或暂时失败不得冒充零人ACK。
+        if (SubmittedPlayers >= 0)
+        {
+            LastAcknowledgedHeartbeatPlayers = SubmittedPlayers;
+            LastAcknowledgedHeartbeatGeneration = OperationGeneration;
+        }
         if (Snapshot.ConsecutiveHeartbeatFailures > 0 || !Snapshot.ErrorCode.IsNone())
         {
             Snapshot.ConsecutiveHeartbeatFailures = 0;

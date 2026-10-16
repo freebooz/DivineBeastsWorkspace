@@ -1,0 +1,54 @@
+{
+  "VillageWolf20261016": {
+    "Status": "CompiledSavedNativeReloadVerified",
+    "MonolithVersion": "0.23.0",
+    "Author": "Quaternius",
+    "License": "CC0-1.0",
+    "SourceManifest": "SourceArt/Creatures/Wolf/SourceManifest.json",
+    "Assets": [
+      "/DBAWorldPack_Village/Creatures/Wolf/SK_DBA_VillageWolf",
+      "/DBAWorldPack_Village/Creatures/Wolf/BS_DBA_VillageWolf",
+      "/DBAWorldPack_Village/Creatures/Wolf/ABP_DBA_VillageWolf",
+      "/DBAWorldPack_Village/AI/DA_DBA_VillageWolfAI"
+    ],
+    "Map": "/DBAWorldPack_Village/Maps/L_Village_Start",
+    "Actions": [
+      "native_fbx_import",
+      "create_blend_space_1d",
+      "add_blendspace_sample",
+      "create_anim_blueprint",
+      "connect_anim_graph_pins",
+      "native_create_ai_definition",
+      "add_nav_bounds_volume",
+      "set_navmesh_config",
+      "build_navigation",
+      "native_save_reload"
+    ],
+    "AnimationClips": [
+      "Idle",
+      "Walking"
+    ],
+    "MeshScale": 0.25,
+    "NavigationHalfExtentsCm": [
+      7000,
+      7000,
+      2000
+    ],
+    "AgentRadiusCm": 55,
+    "AgentHeightCm": 170,
+    "UnchangedPlayerStartsCm": [
+      [
+        0,
+        0,
+        120
+      ],
+      [
+        240,
+        0,
+        120
+      ]
+    ],
+    "Evidence": "Saved/Validation/VillageWolvesAndPartyUI20261016/AssetVerification.json",
+    "NotesCN": "本次使用真实CC0低多边形狼。未提供攻击/受击/死亡动画，服务器伤害与死亡仍归既有Combat。只在开发配置启用。"
+  }
+}

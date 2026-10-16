@@ -9,7 +9,10 @@
     "WidgetCountBefore": 23,
     "WidgetCountAfter": 45,
     "AddedTestAccountButtons": 10,
-    "ButtonSize": [108, 44],
+    "ButtonSize": [
+      108,
+      44
+    ],
     "ButtonFontSize": 18,
     "DefaultTestPanelVisibility": "Collapsed",
     "CompileErrors": 0,
@@ -17,7 +20,20 @@
     "AccessibilityErrors": 0,
     "NewAccessibilityWarnings": 0,
     "ExistingAccessibilityWarnings": 9,
-    "Actions": ["get_widget_tree", "add_widget", "set_widget_property", "set_slot_property", "set_brush", "set_font", "set_widget_navigation_bulk", "audit_accessibility", "audit_focus_chain", "compile_widget", "save_packages", "native_reload_packages"],
+    "Actions": [
+      "get_widget_tree",
+      "add_widget",
+      "set_widget_property",
+      "set_slot_property",
+      "set_brush",
+      "set_font",
+      "set_widget_navigation_bulk",
+      "audit_accessibility",
+      "audit_focus_chain",
+      "compile_widget",
+      "save_packages",
+      "native_reload_packages"
+    ],
     "Evidence": "Saved/Validation/WorldEntryFix20261015/LoginTestAccountsMonolith.json",
     "FinalRuntimeEvidence": "Saved/Validation/WorldEntryFix20261015/Runtime.json",
     "NotesCN": "通过Monolith原位修改并原生重载45控件；十账号名称来自显式开发进程环境，密码不进入资产默认值。新原生绑定、打包、点击及视觉验收以本轮后续证据为准。未新导入纹理，保留既有输入字号与尺寸。"
@@ -36,10 +52,25 @@
     "FocusReachabilityComputed": false,
     "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
     "ParentClass": "DivineBeastsLoginScreen",
-    "AddedWidgets": ["PluginDevelopmentButton", "PluginDevelopmentLabel", "PluginDevelopmentStatus"],
+    "AddedWidgets": [
+      "PluginDevelopmentButton",
+      "PluginDevelopmentLabel",
+      "PluginDevelopmentStatus"
+    ],
     "WidgetCount": 23,
     "DefaultButtonAndStatusVisibility": "Collapsed",
-    "Actions": ["add_widget", "set_widget_property", "set_slot_property", "set_font", "set_brush", "set_widget_navigation_bulk", "compile_widget", "audit_accessibility", "audit_focus_chain", "save_packages"],
+    "Actions": [
+      "add_widget",
+      "set_widget_property",
+      "set_slot_property",
+      "set_font",
+      "set_brush",
+      "set_widget_navigation_bulk",
+      "compile_widget",
+      "audit_accessibility",
+      "audit_focus_chain",
+      "save_packages"
+    ],
     "CompileErrors": 0,
     "CompileWarnings": 0,
     "SavedPackages": 1,
@@ -2166,5 +2197,74 @@
       "Evidence": "Saved/Validation/PartyArena20261015/NativeFinalVerified/Verified.json",
       "ScopeZh": "竞技、队伍合同及事件UI、真实地图定义与角色生命周期原生回归；不代替真实联机或人工视觉验收。"
     }
+  },
+  "PartyPlayerIdentity20261016": {
+    "Status": "CompiledSavedNativeReloadVerified",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyPanel",
+    "ParentClass": "DivineBeastsSocialScreenBase",
+    "AddedWidgets": [
+      "SelfPlayerIdText",
+      "CopyPlayerIdButton",
+      "CopyPlayerIdButton_Label",
+      "PartyOperations"
+    ],
+    "Actions": [
+      "add_widget",
+      "move_widget",
+      "set_widget_navigation",
+      "native_style_copy",
+      "compile_widget",
+      "save_loaded_asset",
+      "reload_packages",
+      "audit_accessibility"
+    ],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "AccessibilityErrors": 0,
+    "AccessibilityWarnings": 0,
+    "Evidence": "Saved/Validation/VillageWolvesAndPartyUI20261016/AssetVerification.json",
+    "NotesCN": "复用原有按钮样式与字号；运行态从认证和ViewModel变化事件更新，失活解绑。RHI/联机另见实施记录，不以资产审查冒充通过。"
+  },
+  "VillageEntryLoadingLoginFont20261016": {
+    "Status": "CompiledSavedNativeReloadVerified",
+    "MonolithVersion": "0.23.0",
+    "EditorPID": 49388,
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Login": {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+      "FontSize": 16,
+      "TextBlocks": 22,
+      "Inputs": 2,
+      "BasisCN": "用户名输入框WidgetStyle.TextStyle.Font实际字号"
+    },
+    "Loading": {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LoadingTravel",
+      "ParentClass": "DivineBeastsLoadingTravelScreen",
+      "Bindings": [
+        "StageText",
+        "LoadProgress",
+        "ProgressPercentText"
+      ],
+      "ProgressCN": "消费真实任务完成比例；未知时原生流动条，无UI业务轮询"
+    },
+    "Actions": [
+      "set_widget_is_variable",
+      "native_font_copy",
+      "add_widget",
+      "set_anchor_preset",
+      "compile_widget",
+      "save_loaded_asset",
+      "reload_packages",
+      "audit_accessibility"
+    ],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "AccessibilityErrors": 0,
+    "AccessibilityFontSizeWarnings": 24,
+    "AccessibilityCN": "最小18建议与用户指定16冲突，按明确用户要求保留16并记录。",
+    "Evidence": "Saved/Validation/VillageEntryLoading20261016/UIAssetVerified.json",
+    "RuntimeAndVisualAcceptance": "另见本次实施记录；资产核验不代表联机通过"
   }
 }

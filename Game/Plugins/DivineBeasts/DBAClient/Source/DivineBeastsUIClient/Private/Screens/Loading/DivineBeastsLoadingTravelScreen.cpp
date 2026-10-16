@@ -1,9 +1,10 @@
 // 项目层事件驱动加载页：只展示当前Loading VM快照；委托/激活/换VM所有权统一归平台基类。
-// 不持有加载事务权威、不伪造进度；StageText仍由原BindWidget资产字段提供，本文件不生成或改资产。
+// 不持有加载事务权威、不伪造进度；阶段文本、进度条与百分比绑定真实资产，本文件不生成或改资产。
 #include "Screens/Loading/DivineBeastsLoadingTravelScreen.h"
 
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
 
 UDivineBeastsLoadingViewModel*
 UDivineBeastsLoadingTravelScreen::GetLoadingViewModel() const
@@ -36,4 +37,12 @@ void UDivineBeastsLoadingTravelScreen::RefreshLoadingPresentation(int32, int32 P
     const auto Snapshot = LocalViewModel->GetLoadingSnapshot();
     StageText->SetText(Snapshot.Stage.IsEmpty()
         ? NSLOCTEXT("DivineBeastsUI", "PreparingWorld", "正在准备世界，请稍候") : Snapshot.Stage);
+    const bool bKnown=FMath::IsFinite(Snapshot.Progress)&&Snapshot.Progress>=0.0f;
+    if(LoadProgress){LoadProgress->SetIsMarquee(!bKnown);LoadProgress->SetPercent(bKnown?FMath::Clamp(Snapshot.Progress,0.0f,1.0f):0.0f);}
+    if(ProgressPercentText)
+    {
+        FNumberFormattingOptions Format;Format.MinimumFractionalDigits=0;Format.MaximumFractionalDigits=0;
+        ProgressPercentText->SetText(bKnown?FText::AsPercent(FMath::Clamp(Snapshot.Progress,0.0f,1.0f),&Format):
+            NSLOCTEXT("DivineBeastsUI","WorldProgressUnknown","正在连接，请稍候"));
+    }
 }

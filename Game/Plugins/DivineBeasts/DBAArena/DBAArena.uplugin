@@ -85,6 +85,7 @@
       "Name": "GamePlatformGameplay",
       "Enabled": true,
       "TargetAllowList": [
+        "Client",
         "Server",
         "Editor"
       ]

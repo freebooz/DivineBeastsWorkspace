@@ -42,6 +42,10 @@
       "Enabled": true
     },
     {
+      "Name": "GamePlatformCombat",
+      "Enabled": true
+    },
+    {
       "Name": "GamePlatformInteraction",
       "Enabled": true
     }

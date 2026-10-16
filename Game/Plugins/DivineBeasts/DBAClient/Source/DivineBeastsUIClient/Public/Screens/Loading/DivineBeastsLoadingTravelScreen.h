@@ -5,6 +5,7 @@
 
 class UDivineBeastsLoadingViewModel;
 class UTextBlock;
+class UProgressBar;
 
 /**
  * UDivineBeastsLoadingTravelScreen（神兽联盟加载/切服页面 C++ 基类）。
@@ -46,4 +47,10 @@ private:
     void RefreshLoadingPresentation(int32 Revision, int32 PageGeneration);
     UPROPERTY(meta=(BindWidget))
     TObjectPtr<UTextBlock> StageText = nullptr;
+    /** 平台真实进度的显示投影；未知值仅使用Slate自身流动动画，不建立业务Ticker。 */
+    UPROPERTY(meta=(BindWidget))
+    TObjectPtr<UProgressBar> LoadProgress = nullptr;
+    /** 百分比仅在可量化时显示；未知进度显示等待文字。 */
+    UPROPERTY(meta=(BindWidget))
+    TObjectPtr<UTextBlock> ProgressPercentText = nullptr;
 };

@@ -183,12 +183,36 @@
     "ClientCookVerified": true,
     "ServerStripVerified": true,
     "ManualVisualAccepted": false,
-    "PendingZh": "42系统已冷重载编译；19条历史SpriteSize/RibbonWidth初始化提示待逐效果视觉审查。治疗原系统已PIE取证；其它效果未逐一人工验收，非自动玩法映射。",
+    "PendingZh": "19项初始化已在本轮逐层审查，原始工具提示仍保留；全42系统人工美术验收尚未完成。",
     "NativeCompileErrors": 0,
     "NativeCompileWarnings": 19,
     "NativeCompileEvidence": "Saved/Validation/PetalBloomIntegration20261015/CompileReloaded.json",
     "HealingPIEEvidence": "Saved/Validation/PetalBloomIntegration20261015/PetalFrame/Result.json",
     "ClientCookEvidence": "Saved/Validation/FoundationM0/6a95a6eb-bd60-485a-b87a-8444d3570146/Cook-FrontEndClient/result.json",
     "ServerStripEvidence": "Saved/Validation/FoundationM0/20b718c5-252e-487b-afcd-8609d8286d94/Cook-Server/ServerPresentationAudit/ServerPresentationAudit.json"
+  },
+  "RendererInitialization20261016": {
+    "Evidence": "Saved/Validation/VFXInitialization20261016/Verification.json",
+    "RawMonolithWarnings": 19,
+    "VerifiedItems": 19,
+    "VisibleEmitterItems": 18,
+    "AuthoredZeroSpawnItems": 1,
+    "UnresolvedInitializationItems": 0,
+    "NativePIESystems": 9,
+    "ManualGameplayAccepted": false,
+    "NotesZh": "恢复火花GPU输出和原尺寸曲线，修正传送门RibbonWidth绑定；名称启发式原始提示不冒充已清零。"
+  },
+  "IceArrowGroundCast20261016": {
+    "Evidence": "Saved/Validation/VFXInitialization20261016/IceCastAfter.json",
+    "CastDurationSeconds": 2.0,
+    "Emitters": [
+      "GroundOuter",
+      "GroundInner"
+    ],
+    "RemovedFlightEmitter": "RuneRing",
+    "SavedReloadedSystems": 3,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "NotesZh": "只保留水平脚底法阵；生命周期由服务器复制事件结束。"
   }
 }

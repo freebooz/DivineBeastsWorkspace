@@ -1,0 +1,23 @@
+# 新手村准入、真实加载进度和登录字号修复
+
+2026-10-16。本次只调整世界分配心跳资格、项目客户端加载投影及两个现有UI资产，不改变服务器准入身份校验和狼玩法。
+
+## 已定位问题
+
+两个旧客户端日志均已加载4个狼外观，随后立即返回前端。后端分配返回已退出的006a实例身份，而17781端口实际响应4db54实例；客户端正确拒绝身份不一致的准入。旧Registry只比较Ready状态和容量，没有淘汰过期心跳。
+
+世界分配预览与容量预留现在共同检查控制面时钟下30秒的心跳租约；无心跳或超时实例不能接纳新玩家。已连接玩家不因本筛选直接断开。服务端身份、Boot及角色校验继续保留。红灯回归复现旧实例胜出及预留过期问题，绿灯结果留在本次Saved证据。
+
+## 客户端与真实资产
+
+RequestWorld阶段即打开LoadingTravel；登录页通过既有Data/UI Manager租约预载加载页面类，避免等到ClientTravel后才请求页面。Flow消费现有Loading任务快照的加权完成比例，适配器向只读UI状态投影；未知进度显示原生流动条，已知进度显示0—100%和中文阶段。没有新增Widget、VM或协调器业务轮询。失活、换VM及旧代次处理沿用平台统一事件生命周期。
+
+Monolith0.23.0在真实DivineBeastsArena编辑器中修改并编译、保存、原生重载两个资产。LoadingTravel新增LoadProgress和ProgressPercentText绑定字段。Login以AccountInput真实WidgetStyle.TextStyle.Font的16为基准，统一22个TextBlock和2个输入框；保留字形、颜色和布局，LOGO图像不属于字体。
+
+## 验证与运行边界
+
+证据目录：Saved/Validation/VillageEntryLoading20261016。新增心跳过期回归及gameservercontrol定向Go测试；加载页真实Service事件回归涵盖未知进度、65%、失活后不更新及重显90%；真实保存页面通过线性浮点RHI回读，登录页执行SourceToSlate颜色门禁。
+
+按锁定UE5.8、Win64/Development、NoSharedPCH、NoUBA、MaxParallelActions=8增量构建Editor和Client；Editor额外UsePrecompiled及DBAServer。UE Server未受本次客户端源码影响，复用已有通过的Server Cook。仅更新gameservercontrol容器，保留身份和玩家数据服务。客户端Cook完成后启动新Village及两个客户端。实际联机和人工可见性需以本轮日志、窗口及用户确认分别记录，不以RHI或进程启动替代。
+
+中文说明检查范围仅限本次改动路径；未扩大到历史文件全量整改。Monolith可访问性建议最小字号18，本次16遵循用户明确指定的用户名输入框字号，相关建议保留记录。

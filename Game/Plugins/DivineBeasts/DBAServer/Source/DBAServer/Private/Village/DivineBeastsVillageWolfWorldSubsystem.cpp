@@ -19,6 +19,7 @@
 #include "Misc/ConfigCacheIni.h"
 #include "Misc/PackageName.h"
 #include "NavigationSystem.h"
+#include "NavigationData.h"
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
 #include "Types/GamePlatformCombatEvent.h"
@@ -65,6 +66,7 @@ void UDivineBeastsVillageWolfWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
     if (&InWorld != GetWorld() || bClosing || !WorldOperation.IsValid()) return;
+    ObserveNavigation();
     ObserveExperience();
     TryFillWolves();
 }
@@ -79,7 +81,7 @@ bool UDivineBeastsVillageWolfWorldSubsystem::HasVerifiedAnimalAssets() const
     FString DefinitionPath;
     GConfig->GetString(Section, TEXT("WolfAIDefinition"), DefinitionPath, GGameIni);
     const FSoftObjectPath Definition(DefinitionPath);
-    // 编辑器之外只检查权威AI定义所在的小型服务器Cook包；不访问客户端Fab资产包。
+    // 编辑器之外只检查权威AI定义所在的小型服务器Cook包；不访问客户端模型与动画。
     return bEnabled && bClientAssetsVerified && Definition.IsValid() &&
         FPackageName::IsValidLongPackageName(Definition.GetLongPackageName()) &&
         FPackageName::DoesPackageExist(Definition.GetLongPackageName());
@@ -155,7 +157,24 @@ void UDivineBeastsVillageWolfWorldSubsystem::HandleLifecycleChanged(const FGameP
         Snapshot.State == EGamePlatformServerLifecycleState::Stopped ||
         Snapshot.State == EGamePlatformServerLifecycleState::Failed)
     { CloseScope(); return; }
+    ObserveNavigation();
     ObserveExperience();
+    TryFillWolves();
+}
+
+void UDivineBeastsVillageWolfWorldSubsystem::ObserveNavigation()
+{
+    if(bClosing||!WorldOperation.IsValid()||ObservedNavigation.IsValid())return;
+    auto* Navigation=GetWorld()?UNavigationSystemV1::GetCurrent(GetWorld()):nullptr;
+    if(!Navigation)return;
+    ObservedNavigation=Navigation;
+    Navigation->OnNavigationGenerationFinishedDelegate.AddUniqueDynamic(this,&ThisClass::HandleNavigationFinished);
+}
+
+void UDivineBeastsVillageWolfWorldSubsystem::HandleNavigationFinished(ANavigationData* NavigationData)
+{
+    if(bClosing||!IsValid(NavigationData)||NavigationData->GetWorld()!=GetWorld())return;
+    // 每次有限补齐仍重新验证角色、体验、代次、NavMesh与安全区；重复通知不会超过四只。
     TryFillWolves();
 }
 
@@ -256,9 +275,13 @@ bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& Spaw
         SpawnAt.GetLocation(),SpawnAt.Rotator());
     if (IsValid(Controller)) Controller->Possess(Wolf);
     FApprovedScope Current;
-    if (!IsValid(Controller) || !IsValid(Wolf) || Wolf->GetController()!=Controller ||
-        !Wolf->AuthorityInitializeWolf(75.0f) || !CaptureApprovedScope(Current) || !(Current == Original))
+    const bool bControllerBound=IsValid(Controller)&&IsValid(Wolf)&&Wolf->GetController()==Controller;
+    const bool bCombatReady=bControllerBound&&Wolf->AuthorityInitializeWolf(75.0f);
+    const bool bScopeCurrent=bCombatReady&&CaptureApprovedScope(Current)&&(Current==Original);
+    if (!bControllerBound || !bCombatReady || !bScopeCurrent)
     {
+        UE_LOG(LogTemp,Warning,TEXT("VillageWolfSpawnRejected: ControllerBound=%d CombatReady=%d ScopeCurrent=%d"),
+            bControllerBound,bCombatReady,bScopeCurrent);
         // 没有完整人工验收资产、导航、控制器、生命或World资格就拒绝产出半可交互敌人。
         if (IsValid(Controller)) Controller->Destroy();
         if (IsValid(Wolf)) Wolf->Destroy();
@@ -286,7 +309,12 @@ void UDivineBeastsVillageWolfWorldSubsystem::TryFillWolves()
     for (int32 i=OwnedWolves.Num();i<MaxVillageWolves && !bClosing;++i)
     {
         FTransform SpawnAt;
-        if (!FindSpawnTransform(i,SpawnAt) || !SpawnOneWolf(SpawnAt)) break;
+        if (!FindSpawnTransform(i,SpawnAt))
+        {
+            UE_LOG(LogTemp,Log,TEXT("VillageWolfSpawnPending: 尚无安全导航落点，等待本世界导航完成通知。"));
+            break;
+        }
+        if (!SpawnOneWolf(SpawnAt)) break;
     }
     bCreating=false;
 }
@@ -342,6 +370,9 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     WorldOperation.Invalidate();
     RespawnTicket.Invalidate();
     if (auto* World=GetWorld()) World->GetTimerManager().ClearTimer(ReplenishTimer);
+    if(auto* Navigation=ObservedNavigation.Get())
+        Navigation->OnNavigationGenerationFinishedDelegate.RemoveDynamic(this,&ThisClass::HandleNavigationFinished);
+    ObservedNavigation.Reset();
     if (auto* Exp=ObservedExperience.Get()) Exp->Unsubscribe(ExperienceSubscription);
     ExperienceSubscription={};
     ObservedExperience.Reset();

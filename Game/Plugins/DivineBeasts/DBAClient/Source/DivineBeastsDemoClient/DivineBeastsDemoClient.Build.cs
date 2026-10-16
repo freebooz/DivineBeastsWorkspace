@@ -23,6 +23,8 @@ public class DivineBeastsDemoClient : ModuleRules
             "Projects", "AssetRegistry", "DivineBeastsApplicationFlowClient",
             // 演示控制器必须调用已有VFX/天气/世界公开服务，绝不重建执行器。
             "GamePlatformVFXClient", "DBAWorldsRuntime", "Json", "JsonUtilities",
+            // 仅本开发演示使用既有平台电影摄像机，允许客户端私有光学控制与键盘交互。
+            "GamePlatformCameraClient", "CinematicCamera", "InputCore",
             // 私有ListView桥实例化STableViewBase模板，头可见不能替代实际Slate链接依赖。
             "Slate"
         });

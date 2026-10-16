@@ -1,5 +1,12 @@
 # SSLM水体系统 P0—P10 工程执行记录（2026-10-14）
 
+## 2026-10-16 当前仓库资源与结构复核
+
+本段更新实际文件状态，不覆盖下方10月14日原始阻塞记录。正式UE5.8工程下的`Game/Content/Development/Water/Maps/L_GP_WaterReview.umap`现已在磁盘存在；同时执行`Tests/Architecture/ValidateGamePlatformWaterAssets.py --require-review-map`退出0，34项源图/原生资源和该地图文件的基础大小及端侧配置合同均通过。地图存在和静态校验不能证明地图内湖泊/河流/瀑布布局完整、Niagara/水材质渲染、性能或人工视觉验收。
+
+本轮还将已有`GamePlatformWater`（水体平台插件）正式纳入48代码＋19内容的三层身份基线；原水域查询、编辑器和客户端三个实职模块及二进制路径均保持不变。已修正`DBAWorlds`的`GamePlatformCombat`依赖声明，公共/竞技Client、Server、Editor六组结构装配检查均通过。后续仍需在真实UE编辑器内独立加载、回读、材质/Blueprint保存验证和双端场景运行。
+
+
 本报告只按当前远程工作区已核实的文件、执行日志和实际状态列项。它不是最终视觉验收证明，不自动触发编译/关卡保存。
 
 ## 一、已完成的源码与资源制作

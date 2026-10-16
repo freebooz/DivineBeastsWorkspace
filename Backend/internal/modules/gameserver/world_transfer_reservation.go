@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+// worldHeartbeatLease限制世界分配使用的控制面心跳有效期。超过30秒或从未心跳的实例
+// 即使旧状态仍为Ready/Active也不可新签票；已有会话不会因此被此选择逻辑主动断开。
+const worldHeartbeatLease = 30 * time.Second
+
+// hasFreshWorldHeartbeat使用本次请求的控制面时钟，保持预览和预留的时间边界一致。
+func hasFreshWorldHeartbeat(s Instance, now time.Time) bool {
+	return !s.LastHeartbeat.IsZero() && now.Sub(s.LastHeartbeat) <= worldHeartbeatLease
+}
+
 type worldTransferReservation struct {
 	ServerID, BootID       string
 	Slots                  int
@@ -42,7 +51,7 @@ func (r *Registry) PreviewWorldAllocation(req AllocationRequest, now time.Time) 
 	}
 	candidates := []Instance{}
 	for _, s := range r.instances {
-		if s.RoleID == req.RoleID && s.RegionID == req.RegionID && s.ExperienceID == req.ExperienceID && s.WorldID == req.WorldID && (s.Status == StatusReady || s.Status == StatusActive) && s.Capacity-s.CurrentPlayers-s.ReservedPlayers >= req.RequiredCapacity {
+		if s.RoleID == req.RoleID && s.RegionID == req.RegionID && s.ExperienceID == req.ExperienceID && s.WorldID == req.WorldID && (s.Status == StatusReady || s.Status == StatusActive) && hasFreshWorldHeartbeat(s, now) && s.Capacity-s.CurrentPlayers-s.ReservedPlayers >= req.RequiredCapacity {
 			candidates = append(candidates, s)
 		}
 	}
@@ -68,6 +77,10 @@ func (r *Registry) ReserveWorldTransfer(id, server, boot string, slots int, now,
 	s, ok := r.instances[server]
 	if !ok || s.ServerBootID != boot || s.RoleID == RoleMainArena || slots <= 0 || (s.Status != StatusReady && s.Status != StatusActive) {
 		return errors.New("WORLD_ASSIGNMENT_CONFLICT: 原目标不可准入")
+	}
+	// 预览不锁住后续心跳；持久意图可能延后恢复，因此确认容量前必须重新验证原目标存活。
+	if !hasFreshWorldHeartbeat(s, now) {
+		return errors.New("GAME_SERVER_HEARTBEAT_EXPIRED: 原目标心跳已过期")
 	}
 	if v, ok := r.worldTransfers[id]; ok {
 		if v.ServerID != server || v.BootID != boot || v.Slots != slots {

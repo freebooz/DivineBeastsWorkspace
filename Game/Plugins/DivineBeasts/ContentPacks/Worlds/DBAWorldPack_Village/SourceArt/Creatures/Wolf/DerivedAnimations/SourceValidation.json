@@ -1,0 +1,24 @@
+{
+  "Bite": {
+    "bone_count": 34,
+    "max_rest_matrix_error": 0.0,
+    "duration_seconds": 0.8
+  },
+  "Death": {
+    "bone_count": 34,
+    "max_rest_matrix_error": 0.0,
+    "duration_seconds": 1.6
+  },
+  "saved_blend": {
+    "actions": [
+      "Bite",
+      "Death",
+      "Idle",
+      "Walking"
+    ],
+    "death_floor_min": -0.01995871402323246,
+    "death_floor_max": -0.0199570395052433,
+    "original_preserved": true,
+    "ue_import_and_client_validation": "pending"
+  }
+}

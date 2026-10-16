@@ -49,22 +49,25 @@ bool UGamePlatformCinematicCameraSubsystem::BeginCinematicView(
     UWorld* World = LocalPlayer ? LocalPlayer->GetWorld() : nullptr;
     APlayerController* Controller = LocalPlayer && World
         ? LocalPlayer->GetPlayerController(World) : nullptr;
+    // PlayerCameraManager的GetViewTarget在混合时返回PendingViewTarget。
+    // 本地玩家拥有镜头时可以直接更换现有电影机位，保留首次借用的恢复目标。
+    const bool bAlreadyOwned = IsCinematicViewActive();
     if (!IsInGameThread() || !IsValid(Controller) || !IsValid(CameraActor) ||
         !IsValid(Profile) || !Profile->IsValidProfile() ||
         !World || World->bIsTearingDown || World->GetNetMode() == NM_DedicatedServer ||
         CameraActor->GetWorld() != World || !Controller->IsLocalController() ||
-        (OwnedViewTarget.IsValid() && !IsCinematicViewActive()))
+        (OwnedViewTarget.IsValid() && !bAlreadyOwned))
     {
         return false;
     }
 
-    // 防止嵌套替换原始目标；调用方必须显式先退出再切其他展示机位。
-    if (IsCinematicViewActive())
+    // 重复同一镜头不重放过渡；切换镜头时只更新目标，不覆盖最初的退出回退。
+    if (bAlreadyOwned && OwnedViewTarget.Get() == CameraActor)
     {
-        return OwnedViewTarget.Get() == CameraActor;
+        return true;
     }
 
-    // CineCamera只允许使用现有Actor，非电影Actor也可借用UE原生ViewTarget混合。
+    // 只操作已存在的原生电影相机，不逐技能生成Actor或复制任何玩家状态。
     if (ACineCameraActor* CineActor = Cast<ACineCameraActor>(CameraActor))
     {
         UCineCameraComponent* CineComponent = CineActor->GetCineCameraComponent();
@@ -72,7 +75,7 @@ bool UGamePlatformCinematicCameraSubsystem::BeginCinematicView(
         {
             CineComponent->Filmback.SensorWidth = Profile->SensorWidthMm;
             CineComponent->SetCurrentFocalLength(Profile->FocalLengthMm);
-            // 竞技默认不更改光圈或追焦，避免影响战斗判读。
+            // 竞技状态优先保持清晰和可操作性，不动态重设景深与追焦。
             if (Profile->Mode != EGamePlatformCameraPresentationMode::Arena)
             {
                 CineComponent->SetCurrentAperture(Profile->Aperture);
@@ -85,7 +88,10 @@ bool UGamePlatformCinematicCameraSubsystem::BeginCinematicView(
         }
     }
 
-    PreviousViewTarget = Controller->GetViewTarget();
+    if (!bAlreadyOwned)
+    {
+        PreviousViewTarget = Controller->GetViewTarget();
+    }
     OwnedViewTarget = CameraActor;
     OwnedController = Controller;
     OwnedWorld = World;
@@ -93,7 +99,6 @@ bool UGamePlatformCinematicCameraSubsystem::BeginCinematicView(
     Controller->SetViewTargetWithBlend(CameraActor, RestoreBlendTime);
     return true;
 }
-
 bool UGamePlatformCinematicCameraSubsystem::EndCinematicView()
 {
     if (!IsInGameThread())

@@ -1,0 +1,17 @@
+{
+  "author": "Quaternius",
+  "sourcePage": "https://opengameart.org/content/animated-animales-low-poly",
+  "sourceArchive": "https://opengameart.org/sites/default/files/Animal%20Pack%20Vol.2%20by%20%40Quaternius.zip",
+  "license": "CC0-1.0",
+  "acquiredAt": "2026-10-16",
+  "files": [
+    {
+      "file": "Wolf.fbx",
+      "sha256": "84a55b60ff741c1e7c0e725f9c7b659ef27ad4b658784642c09d191ba9636f0f"
+    },
+    {
+      "file": "Wolf.blend",
+      "sha256": "df8216633505c4b9c88a72393f8ff8e0344861355a30b6a35cca4d03e7800044"
+    }
+  ]
+}

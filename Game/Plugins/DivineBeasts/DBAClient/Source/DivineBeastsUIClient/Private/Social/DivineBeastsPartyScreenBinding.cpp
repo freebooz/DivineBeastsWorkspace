@@ -12,6 +12,7 @@
 #include "UObject/StrongObjectPtr.h"
 #include "Engine/World.h"
 #include "CommonNumericTextBlock.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 bool UDivineBeastsPartyScreenBinding::IsBound() const
@@ -36,6 +37,7 @@ void UDivineBeastsPartyScreenBinding::Bind(UGamePlatformUIScreen* InScreen,UDivi
     PARTY_BUTTON("ApplicationsButton",OpenApplications); PARTY_BUTTON("InvitationsButton",OpenInvitations);
     PARTY_BUTTON("ReadyCheckButton",OpenReady); PARTY_BUTTON("RequestJoinButton",RequestJoin);
     PARTY_BUTTON("ArenaButton",Activity); PARTY_BUTTON("RetryCommandButton",Retry);
+    PARTY_BUTTON("CopyPlayerIdButton",CopyPlayerId);
     PARTY_BUTTON("ConfirmReadyButton",ConfirmReady);PARTY_BUTTON("DeclineReadyButton",DeclineReady);
 #undef PARTY_BUTTON
     for(const TCHAR* Name:{TEXT("PartyMemberList"),TEXT("InvitationsList"),TEXT("ApplicationsList"),TEXT("ReadyRosterList")})
@@ -52,7 +54,7 @@ void UDivineBeastsPartyScreenBinding::Unbind()
     {
         Page->OnDeactivated().RemoveAll(this);
         Page->OnActivated().RemoveAll(this);
-        for(const TCHAR* Name:{TEXT("InviteButton"),TEXT("InviteTargetButton"),TEXT("AcceptButton"),TEXT("ApproveButton"),TEXT("DeclineButton"),TEXT("RejectButton"),TEXT("LeavePartyButton"),TEXT("TransferLeaderButton"),TEXT("KickMemberButton"),TEXT("DisbandButton"),TEXT("ToggleReadyButton"),TEXT("RefreshButton"),TEXT("CloseButton"),TEXT("ApplicationsButton"),TEXT("InvitationsButton"),TEXT("ReadyCheckButton"),TEXT("RequestJoinButton"),TEXT("ArenaButton"),TEXT("RetryCommandButton"),TEXT("ConfirmReadyButton"),TEXT("DeclineReadyButton")})
+        for(const TCHAR* Name:{TEXT("InviteButton"),TEXT("InviteTargetButton"),TEXT("AcceptButton"),TEXT("ApproveButton"),TEXT("DeclineButton"),TEXT("RejectButton"),TEXT("LeavePartyButton"),TEXT("TransferLeaderButton"),TEXT("KickMemberButton"),TEXT("DisbandButton"),TEXT("ToggleReadyButton"),TEXT("RefreshButton"),TEXT("CloseButton"),TEXT("ApplicationsButton"),TEXT("InvitationsButton"),TEXT("ReadyCheckButton"),TEXT("RequestJoinButton"),TEXT("ArenaButton"),TEXT("RetryCommandButton"),TEXT("ConfirmReadyButton"),TEXT("DeclineReadyButton"),TEXT("CopyPlayerIdButton")})
             if(auto* Button=Cast<UButton>(Page->GetWidgetFromName(Name))) Button->OnClicked.RemoveAll(this);
         for(const TCHAR* Name:{TEXT("PartyMemberList"),TEXT("InvitationsList"),TEXT("ApplicationsList"),TEXT("ReadyRosterList")})
             if(auto* List=Cast<UListView>(Page->GetWidgetFromName(Name))) { List->OnItemSelectionChanged().RemoveAll(this); if(bOwnsCurrentModel)List->ClearListItems(); }
@@ -89,10 +91,14 @@ void UDivineBeastsPartyScreenBinding::Refresh(int32,int32)
     Text(TEXT("CommandErrorText"),VM->StatusText); Text(TEXT("PermissionText"),FText::FromString(VM->Party.bRosterLocked?TEXT("名单已锁定，必须等待后端取消匹配确认"):TEXT("操作权限由服务器复核")));
     Text(TEXT("TargetNameText"),FText::FromString(VM->GetTargetPlayerIdForDisplay()));
     Text(TEXT("MemberCountText"),FText::FromString(FString::Printf(TEXT("成员 %d / 5"),VM->Party.Members.Num())));
+    // 当前认证快照变化已经推动Refresh；公开ID不等于登录账号名，也不包含会话或口令。
+    const bool bHasSelfId=VM->IsPageActive()&&VM->HasActiveSourceScope()&&!VM->CurrentPlayerId.IsEmpty();
+    Text(TEXT("SelfPlayerIdText"),FText::FromString(bHasSelfId?TEXT("我的玩家ID：")+VM->CurrentPlayerId:TEXT("我的玩家ID：等待登录身份")));
     Text(TEXT("ActivityText"),FText::FromString(VM->Party.ActivityId.IsEmpty()?TEXT("普通小队 · 状态实时同步"):TEXT("队伍活动 · 准备中")));
     Text(TEXT("ReadyStatusText"),FText::FromString(VM->Party.ReadyCheckId.IsEmpty()?TEXT("当前没有准备请求"):TEXT("请确认本次活动与名单；全部成员准备后进入匹配")));
     Text(TEXT("RemainingSecondsText"),FText::FromString(TEXT("以服务器截止时间为准；刷新后校正")));
     auto Enabled=[Page](const TCHAR* Name,bool Value){if(auto* Widget=Page->GetWidgetFromName(Name))Widget->SetIsEnabled(Value);};
+    Enabled(TEXT("CopyPlayerIdButton"),bHasSelfId);
     Enabled(TEXT("InviteButton"),VM->CanSubmitPartyAction(TEXT("invite"))); Enabled(TEXT("InviteTargetButton"),VM->CanSubmitPartyAction(TEXT("invite")));
     for(const TCHAR* Name:{TEXT("AcceptButton"),TEXT("ApproveButton")})Enabled(Name,!SelectedRequest.IsEmpty()&&VM->CanSubmitPartyAction(TEXT("acceptRequest")));
     for(const TCHAR* Name:{TEXT("DeclineButton"),TEXT("RejectButton")})Enabled(Name,!SelectedRequest.IsEmpty()&&VM->CanSubmitPartyAction(TEXT("declineRequest")));
@@ -219,6 +225,15 @@ void UDivineBeastsPartyScreenBinding::Disband()
 void UDivineBeastsPartyScreenBinding::ToggleReady(){Send(TEXT("ready"));}
 void UDivineBeastsPartyScreenBinding::Reload(){if(auto* VM=Model.Get())VM->RefreshParty();}
 void UDivineBeastsPartyScreenBinding::Retry(){if(auto* VM=Model.Get())VM->RetryUnknownCommand();}
+void UDivineBeastsPartyScreenBinding::CopyPlayerId()
+{
+    if(!IsBound())return;
+    auto* VM=Model.Get();
+    if(!VM||!VM->IsPageActive()||!VM->HasActiveSourceScope()||VM->CurrentPlayerId.IsEmpty())return;
+    FPlatformApplicationMisc::ClipboardCopy(*VM->CurrentPlayerId);
+    VM->StatusText=FText::FromString(TEXT("已复制我的玩家ID；在另一客户端的邀请框粘贴此ID"));
+    VM->MarkStateChanged();
+}
 void UDivineBeastsPartyScreenBinding::Close(){if(auto* Page=Screen.Get())Page->CloseScreen();}
 void UDivineBeastsPartyScreenBinding::OpenApplications(){if(auto* Service=Owner.Get())Service->OpenPartyPage(TEXT("UI.Party.Applications"));}
 void UDivineBeastsPartyScreenBinding::OpenInvitations(){if(auto* Service=Owner.Get())Service->OpenPartyPage(TEXT("UI.Party.Invitation"));}

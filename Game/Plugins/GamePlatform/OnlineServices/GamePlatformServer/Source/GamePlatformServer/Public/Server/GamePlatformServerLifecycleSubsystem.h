@@ -214,6 +214,12 @@ public:
     /** 仅游戏线程供同实例服务器适配器关联后端身份，不授予客户端准入，不包含认证凭据。 */
     FString GetRegisteredServerBootId() const {return ActiveInstance.ServerBootId;}
     FGamePlatformServerLifecycleSnapshot GetSnapshot() const { return Snapshot; }
+    /** 最近一次控制面明确确认的心跳人数；-1代表尚无成功回执，不能凭发起HTTP或本地人数判定已持久化。 */
+    int32 GetLastAcknowledgedHeartbeatPlayers() const { return LastAcknowledgedHeartbeatPlayers; }
+    /** 最近一次已确认心跳对应的本实例操作代次；用来区分比赛结果提交前的旧零人心跳。 */
+    uint64 GetLastAcknowledgedHeartbeatGeneration() const { return LastAcknowledgedHeartbeatGeneration; }
+    /** 当前已发起的最后一个控制/心跳操作代次；用于冻结结果提交时的所有旧在途请求，非网络回执。 */
+    uint64 GetIssuedOperationGeneration() const { return Generation; }
     FGamePlatformServerLifecycleChangedNative& OnLifecycleChanged()
     {
         return LifecycleChanged;
@@ -226,6 +232,7 @@ public:
 
 private:
     friend class FGamePlatformServerControlReentrancyTest;
+    friend class FGamePlatformServerHeartbeatAckFenceTest;
     enum class EControlOperation : uint8
     {
         Register,
@@ -262,6 +269,10 @@ private:
     TOptional<EControlOperation> PendingControlRetryOperation;
     TOptional<EControlOperation> DeferredControlOperation;
     uint64 Generation = 0;
+    /** 发送中的真实人数与已确认回执必须区分；失败/取消不会更新最近已确认值。 */
+    int32 HeartbeatPlayersInFlight = -1;
+    int32 LastAcknowledgedHeartbeatPlayers = -1;
+    uint64 LastAcknowledgedHeartbeatGeneration = 0;
     bool bHeartbeatInFlight = false;
     bool bControlOperationInFlight = false;
     /** 关闭后永久拒绝新网络/定时器；同步Lifecycle通知中的Deinitialize必须立即生效。 */

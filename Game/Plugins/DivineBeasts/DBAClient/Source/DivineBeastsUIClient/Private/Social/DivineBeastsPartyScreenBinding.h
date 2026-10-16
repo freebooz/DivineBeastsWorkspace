@@ -38,6 +38,8 @@ private:
     UFUNCTION() void Close(); UFUNCTION() void OpenApplications(); UFUNCTION() void OpenInvitations();
     UFUNCTION() void OpenReady(); UFUNCTION() void RequestJoin(); UFUNCTION() void Activity();
     UFUNCTION() void Retry();
+    /** 只复制当前激活页面已认证的公开玩家ID；失活或池化换模型时不触碰剪贴板。 */
+    UFUNCTION() void CopyPlayerId();
     UFUNCTION() void ConfirmReady();
     UFUNCTION() void DeclineReady();
     TWeakObjectPtr<UGamePlatformUIScreen> Screen;

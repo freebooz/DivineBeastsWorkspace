@@ -9,11 +9,11 @@ import (
 func TestWorldReservationReplayRejectsSuccessorBoot(t *testing.T) {
 	now := time.Now().UTC()
 	r := NewRegistry()
-	r.Register(Instance{ID: "village", ServerBootID: "old-boot", RoleID: RoleVillage, Capacity: 2, Status: StatusReady})
+	r.Register(Instance{ID: "village", ServerBootID: "old-boot", RoleID: RoleVillage, Capacity: 2, Status: StatusReady, LastHeartbeat: now})
 	if err := r.ReserveWorldTransfer("ticket", "village", "old-boot", 1, now, now.Add(time.Minute)); err != nil {
 		t.Fatal(err)
 	}
-	r.Register(Instance{ID: "village", ServerBootID: "new-boot", RoleID: RoleVillage, Capacity: 2, Status: StatusReady})
+	r.Register(Instance{ID: "village", ServerBootID: "new-boot", RoleID: RoleVillage, Capacity: 2, Status: StatusReady, LastHeartbeat: now})
 	if err := r.ReserveWorldTransfer("ticket", "village", "old-boot", 1, now, now.Add(time.Minute)); err == nil {
 		t.Fatal("旧返回意图不能继承新Boot")
 	}

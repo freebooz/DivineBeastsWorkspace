@@ -10,6 +10,8 @@ param(
     # UE5.8的StartsWith会补末尾点，单个完整用例名必须走普通名字筛选；报告仍逐项核对。
     [switch]$ExactTests,
     [ValidateRange(1,500)][int]$ExpectedCount=12,
+    # 单次真实UE进程上限，包含冷启动；默认维持原900秒，慢盘冷加载可显式延长而不重编或跳测试。
+    [ValidateRange(60,3600)][int]$TimeoutSeconds=900,
     [guid]$RunId=[guid]::NewGuid()
 )
 $ErrorActionPreference='Stop'
@@ -20,6 +22,9 @@ $engine=Get-FoundationEngine $EngineRoot
 foreach($prefix in $Prefixes){if($prefix -notmatch '^[A-Za-z0-9.]+$'){throw '测试前缀只允许稳定英文标识，不能执行额外控制台命令。'}}
 # 验证完整Editor证据，而非凭旧DLL时间或编辑器能启动就宣称本轮源码已编译。
 $requiredModules=@('GamePlatformAbilitySystem','DivineBeastsCharactersRuntime')
+$includeWolfServer=@($Prefixes|Where-Object {$_.StartsWith('DivineBeasts.Server.VillageWolf.')}).Count -gt 0
+# 仅显式选择专服狼回归时装配真实服务端模块；普通施法/UI用例仍保持原客户端装配。
+if($includeWolfServer){$requiredModules+=@('DBAServer','GamePlatformAIServer')}
 if(@($Prefixes|Where-Object {$_.StartsWith('DivineBeasts.Presentation.')}).Count -gt 0){$requiredModules+='DivineBeastsPresentationClient'}
 # 远古石灵开发怪物已退役；施法回归只装配实际需要的平台与项目客户端模块。
 $proof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $requiredModules
@@ -33,8 +38,11 @@ $arguments=@((Join-Path $workspace 'Game/DivineBeastsArena.uproject'),'/DBAFront
     '-CustomConfig=VillageDevelopmentClient','-DBADevelopmentSkills','-textconfig',
     '-ini:EditorSettings:/Script/UnrealEd.EditorPerformanceSettings:bThrottleCPUWhenNotForeground=False',
     "-abslog=$(Join-Path $directory 'Unreal.log')","-ExecCmds=Automation RunTests $selector",'-TestExit=Automation Test Queue Empty',"-ReportExportPath=$report")
+if($includeWolfServer){$arguments+='-EnablePlugins=DBAServer'}
 
-$process=Invoke-FoundationProcess -FilePath (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe') -Arguments $arguments -WorkingDirectory $workspace -OutputDirectory $directory -TimeoutSeconds 900
+$process=Invoke-FoundationProcess -FilePath (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe') -Arguments $arguments -WorkingDirectory $workspace -OutputDirectory $directory -TimeoutSeconds $TimeoutSeconds
+# 超时、进程失败与断言失败分开留证，不能把未进入测试队列写成测试通过。
+$process|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $directory 'NativeProcess.json') -Encoding utf8
 if($process.ExitCode -ne 0){throw "真实原生进程失败：$($process.ExitCode)；证据=$directory"}
 $index=Get-Content -LiteralPath (Join-Path $report 'index.json') -Raw | ConvertFrom-Json
 $cases=@($index.tests | Where-Object {$testPath=$_.fullTestPath; @($Prefixes | Where-Object {$testPath -eq $_ -or $testPath.StartsWith($_+'.')}).Count -gt 0})

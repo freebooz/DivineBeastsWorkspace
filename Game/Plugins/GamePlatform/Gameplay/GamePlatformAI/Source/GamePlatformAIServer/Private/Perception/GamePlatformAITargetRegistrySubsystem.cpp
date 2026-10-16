@@ -1,3 +1,5 @@
+// 平台服务端AI目标登记：只在权威游戏世界登记感知并补齐明确允许自动占有的Pawn。
+// 手动装配的NPC由调用方持有控制器生命周期；本服务不得抢占，退出时解除世界生成通知。
 #include "Perception/GamePlatformAITargetRegistrySubsystem.h"
 
 #include "Components/GamePlatformAITargetComponent.h"
@@ -89,7 +91,7 @@ void UGamePlatformAITargetRegistrySubsystem::EnsureServerAIController(
 {
     APawn* Pawn = Cast<APawn>(Actor);
     if (!IsAuthorityRuntimeWorld() || !IsValid(Pawn) || !Pawn->HasAuthority() || Pawn->GetWorld() != GetWorld() ||
-        Pawn->GetController() ||
+        Pawn->GetController() || Pawn->AutoPossessAI == EAutoPossessAI::Disabled ||
         !Pawn->FindComponentByClass<UGamePlatformAIStateComponent>() ||
         !GetWorld() ||
         GetWorld()->GetNetMode() == NM_Client)
@@ -98,7 +100,8 @@ void UGamePlatformAITargetRegistrySubsystem::EnsureServerAIController(
     }
 
     FActorSpawnParameters Params;
-    Params.Owner = Pawn;
+    // Possess会把Pawn的Owner设为Controller；反向把Controller.Owner设为Pawn会形成Owner环。
+    // 自动控制器由World持有，不能通过双向Actor所有权表达生命周期。
     Params.SpawnCollisionHandlingOverride =
         ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 

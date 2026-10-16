@@ -8,6 +8,8 @@
 #include "Social/DivineBeastsPartyScreenBinding.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/ListView.h"
+#include "Components/Button.h"
+#include "Components/VerticalBox.h"
 #include "Widgets/Social/DivineBeastsPartyListEntry.h"
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPartyCommandGateTest,
     "DivineBeasts.UI.Party.UnauthenticatedCommands",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
@@ -40,12 +42,17 @@ bool FDivineBeastsPartyBindingRegressionTest::RunTest(const FString&)
     const TStrongObjectPtr<UDivineBeastsPartyScreenBinding> Binding(NewObject<UDivineBeastsPartyScreenBinding>());
     Page->WidgetTree=NewObject<UWidgetTree>(Page.Get());
     auto* List=Page->WidgetTree->ConstructWidget<UListView>(UListView::StaticClass(),TEXT("PartyMemberList"));
-    Page->WidgetTree->RootWidget=List;
+    auto* Root=Page->WidgetTree->ConstructWidget<UVerticalBox>();
+    auto* Copy=Page->WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("CopyPlayerIdButton"));
+    Root->AddChild(List);Root->AddChild(Copy);Page->WidgetTree->RootWidget=Root;
     FGamePlatformPartyMember MemberA;MemberA.PlayerId=TEXT("A");
     FGamePlatformPartyMember MemberB;MemberB.PlayerId=TEXT("B");
     First->Party.Members={MemberA,MemberB};
     Page->InitializeScreen(TEXT("UI.Party.Panel"),First.Get(),NAME_None,EGamePlatformUIInputMode::GameAndUI,EGamePlatformUIPausePolicy::Never);
     Binding->Bind(Page.Get(),First.Get(),nullptr);
+    // 未认证即使外部遗留了ID也不能复制；测试不读取或覆盖用户的系统剪贴板。
+    First->CurrentPlayerId=TEXT("stale-public-id");First->MarkStateChanged();
+    TestFalse(TEXT("没有认证来源时禁用复制玩家ID"),Copy->GetIsEnabled());
     auto* A=NewObject<UDivineBeastsPartyListItem>(Page.Get());A->Key=TEXT("member:A");
     auto* B=NewObject<UDivineBeastsPartyListItem>(Page.Get());B->Key=TEXT("member:B");
     // 键盘/手柄走SelectionChanged而非ItemClicked；广播真实原生事件以覆盖接线合同。
@@ -61,6 +68,7 @@ bool FDivineBeastsPartyBindingRegressionTest::RunTest(const FString&)
     Binding->Activated();
     TestFalse(TEXT("池化同Widget换模型必须退休旧绑定"),Binding->IsBound());
     TestFalse(TEXT("退休解除列表选择委托"),List->OnItemSelectionChanged().IsBoundToObject(Binding.Get()));
+    TestFalse(TEXT("退休解除复制按钮委托"),Copy->OnClicked.IsBound());
     Binding->Unbind();
     return true;
 }

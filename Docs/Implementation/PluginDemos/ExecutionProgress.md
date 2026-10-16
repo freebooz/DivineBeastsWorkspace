@@ -1,5 +1,13 @@
 # 插件演示中心实际实施进度
 
+## 2026-10-16 实时编目缺项与派生覆盖表修复
+
+- 当前真实工作区存在67个插件描述（48个代码／机制插件、19个内容包），原演示编目已列66个，`ValidatePluginDemoManifest.py`通过真实身份校验指出唯一漏登的`DBAWorldPack_MainArena`（主竞技场世界内容包）。现已将其作为`Project/content_pack/unreviewed`（项目层纯内容包，未完成审查）补入正式Schema2编目，不虚构案例或人工签收。
+- `FeatureCoverage.md`（功能覆盖派生表）由同一作者`ValidatePluginDemoManifest.py --print-document coverage`原样重新导出，并执行`--check-docs`，静态校验结果`issues=[]`。登记插件67、尚未完成全功能审查67、已登记功能4、已接线4、人工签收0、完整覆盖率仍未知。现有`AssetReuseMap.md`未修改且与作者数据一致。
+- 同一套编目离线回归`TestPluginDemoManifest.py`28/28通过、`TestPluginDemoMergeIntegrity.py`4/4通过、`TestDBAPluginDemoMapRouting.py`6/6通过；此证据仅属逻辑编目、文件路径与模块路由，不代表新的UE蓝图编译、实际开发演示播放或人工视觉验收。
+- 工程水体`GamePlatformWater.uplugin`显示名已标准化为ASCII英文。正式架构基线2026-10-16更新为48代码＋19内容，`PluginDeliveryManifest.json`亦同步，不把2026-10-14下方66条快照视为现行数量。
+
+
 ## 2026-10-14 剩余15页续行（本轮最新，统一验证尚未完成）
 
 已按[执行计划](RemainingPagesImplementationPlan_20261014.md)经正式UE5.8/Monolith0.23创建并保存11份目录页面、材质审核页及演示详情/控制/报告三页。15页共348个控件，本轮制作后结构编译0错误/0警告；可访问性0错误/45项导航/提示建议，不能冒充实际手柄或设备验收。材质审核保留原83项命名合同并增加12个响应式卡片边界，共95控件；7个缺失平台UI函数和12份MD_UI审核材质均由Monolith生成并回读函数输入及最终颜色/透明输出。
