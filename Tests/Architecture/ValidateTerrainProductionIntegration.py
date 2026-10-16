@@ -116,6 +116,13 @@ def run():
   ensure(term in scene,"PCG独立审核关卡未复用平台放置器/真实生成边界："+term)
  for term in ("SAMPLERTYPE_LINEAR_GRAYSCALE","SAMPLERTYPE_NORMAL","SAMPLERTYPE_MASKS"):
   ensure(term in script,"UE5.8 PBR Shader采样器物理类型不完整："+term)
+ importer=(BUILD/"ReimportTerrainProductionPBR.py").read_text(encoding="utf-8")
+ ensure('get_tag_value("Dimensions")' in importer and 'get_first_filename()' in importer,
+        "纹理验收必须使用UE原生Dimensions与实际导入源")
+ quality=(BUILD/"AuthorTerrainProductionQualityProfiles.py").read_text(encoding="utf-8")
+ for token in ('"High"','"Medium"','"Low"','TerrainEnableHeightBlend'):
+  ensure(token in quality,"三档质量配置项缺失："+token)
+
  print("TERRAIN_PRODUCTION_PBR_PROVENANCE_AND_3TIER_STATIC_PASS","scan_layers=10","maps=40",
        "calibration_geo=20","rollback_members=61","client_mpc_contract=3")
  actual=[x for x in p["files"] if

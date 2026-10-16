@@ -75,6 +75,12 @@ def execute():
   return e
  def wire(src,dst,pin,out=""):
   ok=matlib.connect_material_expressions(src,out,dst,pin)
+  # UE5.8中TextureSampleParameter2D的编辑器暴露名有时是UVs，而原生GetInputName为Coordinates。
+  # 延续当前已成功编译的十层校准作者工具兼容方式，限定仅坐标/通用一号输入回退。
+  if not ok and pin=="Coordinates":
+   ok=matlib.connect_material_expressions(src,out,dst,"UVs")
+  if not ok and pin in ("Coordinates","Input","VectorInput"):
+   ok=matlib.connect_material_expressions(src,out,dst,"")
   if not ok:raise RuntimeError("材质图节点未连线："+src.get_name()+"→"+pin)
  def value(v,x,y):
   e=node(unreal.MaterialExpressionConstant,x,y)
@@ -170,8 +176,9 @@ def execute():
   toggle=node(unreal.MaterialExpressionStaticSwitchParameter,-350,y+475)
   toggle.set_editor_property("parameter_name",unreal.Name("TerrainEnableHeightBlend"))
   toggle.set_editor_property("default_value",False)
-  wire(elevated,toggle,"A")
-  wire(weight,toggle,"B")
+  # UE5.8 GetInputName原生返回True/False，不能使用内部成员名A/B连线。
+  wire(elevated,toggle,"True")
+  wire(weight,toggle,"False")
   weights.append(toggle)
   masks_by_layer[layer]=toggle
   colors.append(mul(color,toggle,-350,y-165,"RGB"))

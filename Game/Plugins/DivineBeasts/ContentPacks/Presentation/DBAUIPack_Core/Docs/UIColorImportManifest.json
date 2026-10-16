@@ -85,6 +85,30 @@
       "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginBackdrop",
       "Role": "Color",
       "SHA256": "87e6ac3803f3a0530eb8e05f4039f37b0171d42985f9dc52a16cad663d6bd227"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/LoadingBar/T_DBA_UI_LoadingBar_BG_1200x20.png",
+      "Destination": "/DBAUIPack_Core/UI/Loading/Textures/T_DBA_UI_LoadingBar_BG_1200x20",
+      "Role": "Color",
+      "SHA256": "6c3b79587f2ecb2756ed6a694d885688296d1314b10b9973ea37eb16215138c3"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/LoadingBar/T_DBA_UI_LoadingBar_FG_1200x20.png",
+      "Destination": "/DBAUIPack_Core/UI/Loading/Textures/T_DBA_UI_LoadingBar_FG_1200x20",
+      "Role": "Color",
+      "SHA256": "74f8c07cf55bf50161e62c244f73d6958b8170e4abc6add5b8d7318ec7732c70"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/LoadingBar/T_DBA_UI_LoadingBar_Mask_1200x20.png",
+      "Destination": "/DBAUIPack_Core/UI/Loading/Textures/T_DBA_UI_LoadingBar_Mask_1200x20",
+      "Role": "AlphaMask",
+      "SHA256": "452a0ed2459980be98adb926bb5f264a4fa5538d764de511a19c913320fe277d"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/LoadingBar/T_DBA_UI_LoadingBar_Frame_1200x20.png",
+      "Destination": "/DBAUIPack_Core/UI/Loading/Textures/T_DBA_UI_LoadingBar_Frame_1200x20",
+      "Role": "Color",
+      "SHA256": "931f568ed334bdfccb56e80b3e84bf2de8d4f95b847419f863f4008b6fea58e1"
     }
   ]
 }
