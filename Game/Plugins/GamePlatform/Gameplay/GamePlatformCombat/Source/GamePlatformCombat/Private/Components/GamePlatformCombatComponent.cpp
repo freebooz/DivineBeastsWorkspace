@@ -694,6 +694,9 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
         ResetSpec,
         Result);
 
+    if (!IsCurrent()) return false;
+    // ListenServer观察者与客户端OnRep共用同一只读通知；同步回调换代仍由原有操作身份拒绝旧栈。
+    CombatObservationChanged.Broadcast();
     // 终态通知内也可能换化身/结束；旧调用只返回被接管，不再写任何成员或清后继需求。
     return IsCurrent();
 }
@@ -810,6 +813,12 @@ void UGamePlatformCombatComponent::ResolveIncomingHealing(
 
 void UGamePlatformCombatComponent::OnRep_Dead()
 {
+    if (!bCombatClosing) CombatObservationChanged.Broadcast();
+}
+
+void UGamePlatformCombatComponent::OnRep_AvatarGeneration()
+{
+    if (!bCombatClosing) CombatObservationChanged.Broadcast();
 }
 
 void UGamePlatformCombatComponent::HandleControlTagChanged(

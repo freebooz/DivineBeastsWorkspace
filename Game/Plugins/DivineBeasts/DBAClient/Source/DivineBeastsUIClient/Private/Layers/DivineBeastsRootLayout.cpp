@@ -651,7 +651,7 @@ void UDivineBeastsRootLayout::BindWorldHealthBars(APawn* DisplayPawn)
     if (DisplayPawn && WorldHealthBarClass)
     {
         if (!WorldHealthBars) WorldHealthBars = NewObject<UDivineBeastsWorldHealthBarPresenter>(this);
-        WorldHealthBars->Initialize(GetOwningLocalPlayer(), DisplayPawn->GetWorld(), WorldHealthBarClass);
+        WorldHealthBars->Initialize(GetOwningLocalPlayer(), DisplayPawn->GetWorld(), WorldHealthBarClass, SelectionRingMaterial);
         WorldHealthBars->SetVisible(bWorldHealthBarsVisible);
     }
     else if (WorldHealthBars) WorldHealthBars->Clear();

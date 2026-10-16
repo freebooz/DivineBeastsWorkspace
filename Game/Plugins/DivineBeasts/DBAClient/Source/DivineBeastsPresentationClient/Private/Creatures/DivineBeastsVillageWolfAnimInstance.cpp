@@ -56,7 +56,7 @@ void UDivineBeastsVillageWolfAnimInstance::NativeUpdateAnimation(float DeltaSeco
     const auto* Wolf = ObservedWolf.Get();
     // 引擎动画更新只采样已复制移动的连续速度供BlendSpace插值；业务状态完全由通知更新。
     WolfSpeed = !bClosing && !bWolfDead && IsValid(Wolf) && !Wolf->IsActorBeingDestroyed()
-        ? Wolf->GetVelocity().Size2D() : 0.0f;
+        ? GroundSpeedCmPerSecond : 0.0f;
 }
 
 void UDivineBeastsVillageWolfAnimInstance::HandleLifeChanged(ADivineBeastsVillageWolf* Wolf)

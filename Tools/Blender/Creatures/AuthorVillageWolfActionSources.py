@@ -155,6 +155,7 @@ def main():
     rig.animation_data.action = death
     scene.frame_set(49)
     # 留存的Blend保留Idle/Walking和新增动作、原网格与原IK约束，可人工继续编辑。
+    bpy.context.preferences.filepaths.save_version = 0
     bpy.ops.wm.save_as_mainfile(filepath=str(OUTPUT / "Wolf_CombatActions.blend"))
 
     scene.render.engine = "CYCLES"

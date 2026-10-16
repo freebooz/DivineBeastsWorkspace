@@ -60,6 +60,10 @@ public:
     UFUNCTION(BlueprintPure, Category="GamePlatform|Presentation|CharacterPreview")
     UCameraComponent* GetPreviewCamera() const { return PreviewCamera; }
 
+    /** 镜头切入/退出时间，单位秒；预览舞台实例在编辑器中可设置，改动无需重新编译。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Preview|Camera|Transition",
+        meta=(ClampMin="0.0", ClampMax="2.0"))
+    float CameraBlendSeconds = 0.45f;
 private:
     UPROPERTY(VisibleAnywhere, Category="Preview")
     TObjectPtr<USceneComponent> SceneRoot;

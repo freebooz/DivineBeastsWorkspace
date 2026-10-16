@@ -88,8 +88,24 @@ def run():
  graph_cmd=(ROOT/"Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCGEditor/Private/Commands/GamePlatformPCGTerrainBiomeGraphsCommandlet.cpp").read_text(encoding="utf-8")
  ensure("/*bShouldStopOnSeparator=*/false" in graph_cmd and "BiomeMap=" in graph_cmd,
         "PCG四类Biome逗号串可能被FParse截断，禁止只生成第一张Graph")
- ensure("Forest:LS_Grass,Rock:LS_Rock,Shore:LS_ShoreMud,Road:LS_RoadDirt" in workflow,
+ ensure("Forest:LS_ForestSoil,Rock:LS_Rock,Shore:LS_ShoreMud,Road:LS_RoadDirt" in workflow,
         "项目四类PCG Graph到地形层的映射不完整")
+ # 正式扫描独立审核使用V2地形：道路与通用排除不能借用历史V1的同义图层。
+ ensure("CalibrationDerivedV2\\Raw" in workflow and "projectionVersion -ne 2" in workflow,
+        "高精十层审查场景未启用显式V2原始权重")
+ v2raw=WORLD/"SourceArt/Terrain/CalibrationDerivedV2/Raw"
+ v2doc=json.loads((v2raw/"TerrainUEImportRaw_v1.json").read_text(encoding="utf-8"))
+ ensure(v2doc.get("projectionVersion")==2 and
+        v2doc.get("sourceKind")=="calibration_only_not_gaea" and
+        len(v2doc.get("files",[]))==11,
+        "V2原生权重导入合同缺失或混入未批准Gaea")
+ for entry in v2doc["files"]:
+  f=(ROOT/entry["relativePath"]).resolve()
+  ensure(f.is_relative_to(ROOT) and f.is_file() and f.stat().st_size==entry["bytes"]
+         and hash_file(f)==entry["sha256"], "V2原始文件损坏："+entry["relativePath"])
+ road=v2raw/"Weights/LS_RoadDirt.r8"
+ ensure(not any(road.read_bytes()), "V2未提供道路叠加源，RoadDirt必须全零")
+
  landscape_cmd=(ROOT/"Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Source/GamePlatformSurfaceEditor/Private/Commands/GamePlatformSurfaceTerrainReviewMapCommandlet.cpp").read_text(encoding="utf-8")
  ensure('TEXT("LayerIds="),LayerIds,' in landscape_cmd and
         "/*bShouldStopOnSeparator=*/false" in landscape_cmd,

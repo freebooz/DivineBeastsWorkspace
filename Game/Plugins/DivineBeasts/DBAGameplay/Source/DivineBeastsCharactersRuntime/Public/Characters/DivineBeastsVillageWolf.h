@@ -13,7 +13,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FDivineBeastsVillageWolfLifeChanged, ADivine
 
 /**
  * 四足狼怪物的稳定玩法实体。服务器创建并初始化生命，由平台Combat结算伤害；
- * 只复制有限身份和死亡状态，绝不硬引用Fab骨骼、贴图、动画或客户端表现。
+ * 只复制有限身份和死亡状态，绝不硬引用骨骼、贴图、动画或客户端表现。
  * 怪物没有玩家身份和英雄技能，不参与竞技；AI只在Server端持有Controller。
  */
 UCLASS(Blueprintable)

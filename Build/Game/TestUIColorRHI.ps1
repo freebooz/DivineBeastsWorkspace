@@ -56,6 +56,8 @@ $beforeHash=Get-UIColorInputsHash
 $nativeReport=Join-Path $context.Directory 'Report'
 $arguments=@($context.Project,'/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-unattended','-RenderOffscreen',
     '-nosound','-nosplash','-NoLiveCoding','-stdout','-FullStdOutLogOutput',
+    # 颜色测试只依赖已保存UI和原生RHI；不启动Monolith编辑器工具，避免无关插件加载耗尽验证超时。
+    '-DisablePlugins=Monolith',
     # 独占离屏编辑器仍须正常推进渲染，不采用后台3FPS节流；不降低颜色断言或使用NullRHI。
     '-ini:EditorSettings:/Script/UnrealEd.EditorPerformanceSettings:bThrottleCPUWhenNotForeground=False',
     "-abslog=$(Join-Path $context.Directory 'Unreal.log')",'-ExecCmds=Automation RunTests DivineBeasts.UI.Color.SourceToSlate',

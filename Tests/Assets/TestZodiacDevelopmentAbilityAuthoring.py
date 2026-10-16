@@ -21,18 +21,30 @@ class DevelopmentAuthoringTests(unittest.TestCase):
         self.assertEqual(sum(AUTHOR.is_damage_sample(entry) for entry in entries), 41)
         self.assertFalse(any(AUTHOR.is_damage_sample(entry) for entry in entries if entry["Slot"] == "Passive"))
 
-    def test_runtime_config_mapping_matches_authoring_and_default_is_closed(self):
-        """开发映射必须同一英雄、同一稳定ID；正式默认仍排除整个开发目录。"""
+    def test_village_uses_current_hero_default_and_default_is_closed(self):
+        """Village联调沿用已批准占位技能，不能被旧候选集覆盖；正式默认仍排除开发目录。"""
         base = (ROOT / "Game/Config/DefaultGame.ini").read_text(encoding="utf-8-sig")
         self.assertIn("bAllowDevelopmentAbilitySets=false", base)
         self.assertIn('+DirectoriesToNeverCook=(Path="/Game/Development/DivineBeasts/Abilities")', base)
         for target in ("VillageDevelopmentClient", "VillageDevelopmentServer"):
             text = (ROOT / ("Game/Config/Custom/" + target + "/DefaultGame.ini")).read_text(encoding="utf-8-sig")
+            # 保留双重许可供开发视觉和显式测试使用，但不再暗中把数字1治疗替换成旧普攻。
+            self.assertIn("bAllowDevelopmentAbilitySets=true", text)
             for hero in AUTHOR.load_plan():
-                self.assertIn("Hero.Zodiac." + hero + "=dba.abilityset." + hero.lower() + "_dev@1", text)
+                self.assertNotIn("Hero.Zodiac." + hero + "=dba.abilityset." + hero.lower() + "_dev@1", text)
         server = (ROOT / "Game/Config/Custom/VillageDevelopmentServer/DefaultGame.ini").read_text(encoding="utf-8-sig")
         self.assertIn('+DirectoriesToNeverCook=(Path="/Game/Development/DivineBeasts/Abilities/UI")', server)
         self.assertNotIn("AssetBaseClass=/Script/DivineBeastsUIClient", server)
+
+    def test_village_ui_scans_profiles_for_the_granted_placeholder_abilities(self):
+        """技能栏按Hero主资产ID查Profile；只扫描当前占位Profile，防止同Hero旧候选身份抢占。"""
+        client = (ROOT / "Game/Config/Custom/VillageDevelopmentClient/DefaultGame.ini").read_text(encoding="utf-8-sig")
+        scans = [line for line in client.splitlines() if line.startswith("+PrimaryAssetTypesToScan=") and
+                 'PrimaryAssetType="DivineBeastsAbilityUIProfile"' in line]
+        self.assertEqual(len(scans), 1)
+        self.assertNotIn("/Game/Development/DivineBeasts/Abilities/UI/Profiles", scans[0])
+        for hero in AUTHOR.load_plan():
+            self.assertIn('/DBAHeroPack_' + hero + '/UI/Abilities', scans[0])
 
     def test_client_and_server_cooldown_dictionaries_match_candidate_duration(self):
         """同技能冷却字典必须双端一致；全部正数冷却候选必须具有独立标签。"""

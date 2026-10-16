@@ -49,6 +49,35 @@
       ]
     ],
     "Evidence": "Saved/Validation/VillageWolvesAndPartyUI20261016/AssetVerification.json",
-    "NotesCN": "本次使用真实CC0低多边形狼。未提供攻击/受击/死亡动画，服务器伤害与死亡仍归既有Combat。只在开发配置启用。"
+    "NotesCN": "初版使用真实CC0低多边形狼，仅含Idle/Walking；后续派生动画与材质见VillageWolfVisualCombat20261016。服务器伤害与死亡仍归既有Combat。"
+  },
+  "VillageWolfVisualCombat20261016": {
+    "Status": "MonolithCompiledSavedReadbackVerified_RuntimePending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "OriginalSource": "SourceArt/Creatures/Wolf/Wolf.blend",
+    "DerivedMeshSource": "SourceArt/Creatures/Wolf/Wolf_Textured.blend",
+    "DerivedAnimationSource": "SourceArt/Creatures/Wolf/DerivedAnimations/Wolf_CombatActions.blend",
+    "FurSource": "SourceArt/Creatures/Wolf/DerivedAnimations/T_DBA_VillageWolf_Fur_BaseColor.png",
+    "Assets": [
+      "/DBAWorldPack_Village/Creatures/Wolf/SK_DBA_VillageWolf",
+      "/DBAWorldPack_Village/Creatures/Wolf/Wolf",
+      "/DBAWorldPack_Village/Creatures/Wolf/T_DBA_VillageWolf_Fur_BaseColor",
+      "/DBAWorldPack_Village/Creatures/Wolf/AS_DBA_VillageWolf_Bite",
+      "/DBAWorldPack_Village/Creatures/Wolf/AS_DBA_VillageWolf_Death",
+      "/DBAWorldPack_Village/Creatures/Wolf/AM_DBA_VillageWolf_Bite",
+      "/DBAWorldPack_Village/Creatures/Wolf/ABP_DBA_VillageWolf"
+    ],
+    "Actions": ["fbx_reimport_existing_mesh", "import_texture", "edit_material", "import_animation", "create_montage", "reparent_blueprint", "add_anim_graph_node", "add_slot_node", "connect_anim_graph_pins", "compile_blueprint", "save_asset", "readback"],
+    "SkeletonChanged": false,
+    "MeshUVChannels": 1,
+    "MeshTriangles": 622,
+    "BiteDurationSeconds": 0.8,
+    "DeathDurationSeconds": 1.6,
+    "DeathLoops": false,
+    "AnimBlueprintCompileErrors": 0,
+    "AnimBlueprintCompileWarnings": 0,
+    "Evidence": "Saved/Validation/VillageEntryLoading20261016/WolfFurLitSidePreview.png",
+    "NotesCN": "保留Quaternius CC0原稿不覆盖；派生网格只补UV与毛皮材质，派生咬击和死亡动画使用原骨架。攻击Montage由服务器确认事件驱动，死亡只由复制生命事实驱动；最终落地和联机显示待真实客户端验证。"
   }
 }

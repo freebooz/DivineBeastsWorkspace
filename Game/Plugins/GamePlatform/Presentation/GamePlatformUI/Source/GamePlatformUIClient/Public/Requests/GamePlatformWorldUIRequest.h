@@ -39,6 +39,18 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformWorldUIRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
     FGamePlatformUIResourceBarState Resource;
 
+    /** 调用方选择事件给出的本地选中事实；只影响显示，不授予命中、交互或治疗资格。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
+    bool bSelected = false;
+
+    /** 调用方已经解析的关系视觉色；平台不自行查询阵营、队伍、Actor或项目资源。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
+    FLinearColor SelectionTint = FLinearColor::White;
+
+    /** 本地化非颜色选中提示；内容作者提供标记容器，不能只依靠色觉区分状态。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
+    FText SelectionText;
+
     /** 本地显示偏好及来源合法性；隐藏不影响业务生命值或网络相关性。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
     bool bDisplayRequested = true;

@@ -47,3 +47,5 @@ CommonGameViewportClient已经配置。当前没有创建任何GamePlatformUI二
 RootLayout按LocalPlayer/GameInstance持有，Viewport Slot关闭随旧World销毁自动移除，子页面仍按自身bSurvivesTravel与Data租约清理。PrepareForTravel取消在途页面时同步发布失败通知，调用方可清理请求身份；委托重入取消其他请求时跳过已撤销条目；已撤请求用捕获身份发布失败终态，后续清理逐次复核原Root、World与代次，关闭或后继Travel不会被旧栈覆盖。退出或替换Root仍显式释放资源并从Viewport移除，平台不引用任何项目页面。
 
 Main 86cb0df 的原交付记录为GamePlatform.UI组12项UE Automation通过；LocalPlayer夹具使用真实Engine Outer，项目客户端完成独立Cook和资源检查。该历史记录不代表本次三方合并版本已经验证；本次合并的编译与自动化执行由独立报告记录。双客户端切图输入仍待人工继续核验，移动设备与多本地玩家不属于此记录结论。
+
+2026-10-16：世界UI请求增加中立选中事实`bSelected`、已解析视觉色`SelectionTint`和本地化提示`SelectionText`。名称板只按事件投影可选`SelectionOutline`（Image）与`SelectionMarker`（TextBlock），撤选恢复作者原始文字/生命条颜色；无资源的选中交互目标隐藏资源条。平台不查询Actor、GAS、阵营或项目资产，也不新增Tick；项目关系解析与脚下标记归项目客户端。此项源码变更尚未在本任务构建/运行或验收真实蓝图。

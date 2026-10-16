@@ -23,10 +23,22 @@ def import_signature(path: Path) -> dict:
     rigs = [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]
     assert len(rigs) == 1, "动画源必须仅有一套原始狼骨架"
     rig = rigs[0]
+    poses = {}
+    if rig.animation_data and rig.animation_data.action:
+        for label, frame in [("first", rig.animation_data.action.frame_range[0]), ("last", rig.animation_data.action.frame_range[1])]:
+            bpy.context.scene.frame_set(round(frame))
+            poses[label] = mesh_bounds(bpy.data.objects["Wolf"])
     return {"rig": rig.name, "bones": {b.name: {"parent": b.parent.name if b.parent else None,
         "matrix": [v for row in b.matrix_local for v in row]} for b in rig.data.bones},
         "actions": [{"name": a.name, "duration_seconds": (a.frame_range[1] - a.frame_range[0]) / 30}
-                    for a in bpy.data.actions]}
+                    for a in bpy.data.actions], "poses": poses}
+
+
+def mesh_bounds(mesh) -> list[float]:
+    """求值后的真实网格包围盒；FBX重导入与保存Blend独立比较，验证动画实际已烘焙。"""
+    evaluated = mesh.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    points = [evaluated.matrix_world @ vertex.co for vertex in evaluated.data.vertices]
+    return [min(p[i] for p in points) for i in range(3)] + [max(p[i] for p in points) for i in range(3)]
 
 
 def height(mesh) -> float:
@@ -50,12 +62,20 @@ def main():
         assert error < 0.0001, f"原骨架静止矩阵发生变化: {error}"
         assert len(imported["actions"]) == 1
         assert abs(imported["actions"][0]["duration_seconds"] - seconds) < 0.0001
-        output[action] = {"bone_count": len(imported["bones"]), "max_rest_matrix_error": error,
+        output[action] = {"bone_count": len(imported["bones"]), "max_rest_matrix_error": error, "imported_bounds": imported["poses"],
                           "duration_seconds": imported["actions"][0]["duration_seconds"]}
     bpy.ops.wm.open_mainfile(filepath=str(DERIVED / "Wolf_CombatActions.blend"))
     rig, mesh = bpy.data.objects["WolfArmature"], bpy.data.objects["Wolf"]
     assert {"Idle", "Walking", "Bite", "Death"}.issubset({a.name for a in bpy.data.actions})
     scene = bpy.context.scene
+    for name, last in [("Bite", 25), ("Death", 49)]:
+        rig.animation_data.action = bpy.data.actions[name]
+        maximum_error = 0.0
+        for label, frame in [("first", 1), ("last", last)]:
+            scene.frame_set(frame)
+            maximum_error = max(maximum_error, max(abs(a - b) for a, b in zip(mesh_bounds(mesh), output[name]["imported_bounds"][label])))
+        assert maximum_error < 0.0001, f"保存Blend与重导入FBX的实际姿势不一致: {name} {maximum_error}"
+        output[name]["max_fbx_pose_bounds_error"] = maximum_error
     rig.animation_data.action = bpy.data.actions["Death"]
     heights = []
     for frame in range(1, 50):

@@ -24,7 +24,7 @@ ADivineBeastsVillageWolf::ADivineBeastsVillageWolf()
     GetCharacterMovement()->MaxWalkSpeed = 375.0f;
     GetCharacterMovement()->bOrientRotationToMovement = true;
     bUseControllerRotationYaw = false;
-    // 服务器不烘焙/加载Fab纯美术；初始Mesh为空由项目客户端资源服务补齐。
+    // 服务器不烘焙/加载客户端纯美术；初始Mesh为空由项目客户端资源服务补齐。
     GetGamePlatformAbilitySystemComponent()->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 }
 

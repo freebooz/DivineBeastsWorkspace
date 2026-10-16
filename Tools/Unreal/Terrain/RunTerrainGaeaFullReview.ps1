@@ -12,14 +12,20 @@ param(
     [Parameter(ParameterSetName='Apply')][switch]$Apply,
     [Parameter(ParameterSetName='Verify')][switch]$ValidateOnly,
     [switch]$ProductionPBR, # 仅独立开发审核地图启用正式高精客户端材质，不覆盖共享Village。
-    [string]$EngineRoot='F:\UnrealEngine-5.8.0-release'
+    [string]$EngineRoot # 显式引擎根路径优先；否则读取UE_ROOT，不隐式搜索其他版本。
 )
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
+if(-not $EngineRoot){$EngineRoot=$env:UE_ROOT}
+if(-not $EngineRoot){throw '缺少锁定UE5.8引擎路径：必须提供-EngineRoot或UE_ROOT'}
+$versionPath=Join-Path $EngineRoot 'Engine\Build\Build.version'
+if(!(Test-Path -LiteralPath $versionPath -PathType Leaf)){throw "UE引擎Build.version不存在：$versionPath"}
+$version=Get-Content -LiteralPath $versionPath -Raw -Encoding UTF8 | ConvertFrom-Json
+if($version.MajorVersion -ne 5 -or $version.MinorVersion -ne 8){throw '地形原生生产只允许锁定UE5.8，不静默切换引擎'}
 $uproject=Join-Path $root 'Game\DivineBeastsArena.uproject'
 $editor=Join-Path $EngineRoot 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
 $build=Join-Path $EngineRoot 'Engine\Build\BatchFiles\Build.bat'
-$logs=Join-Path $root 'Saved\Validation\TerrainGaea\Authoring'
+$logs=Join-Path $root 'Game\Saved\Validation\TerrainGaea\Authoring'
 $rawRoot=Join-Path $root 'Game\Plugins\DivineBeasts\ContentPacks\Worlds\DBAWorldPack_Village\SourceArt\Terrain\CalibrationDerived\Raw'
 $layers='Grass,ForestSoil,Dirt,Rock,Scree,Sand,Gravel,RoadDirt,FarmSoil,ShoreMud'
 $layerRoot='/DBAWorldPack_Village/Terrain/LayerInfos'
@@ -27,6 +33,7 @@ $graphRoot='/DBAWorldPack_Village/Terrain/PCG/Graphs'
 $map='/Game/Development/Terrain/Maps/L_DBA_TerrainMaskReview'
 $material='/DBAWorldPack_Village/Terrain/Materials/M_DBA_Terrain_MultiLayer10'
 if($ProductionPBR){
+    $rawRoot=Join-Path $root 'Game\Plugins\DivineBeasts\ContentPacks\Worlds\DBAWorldPack_Village\SourceArt\Terrain\CalibrationDerivedV2\Raw'
     $material='/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_Review'
     $scannedManifest=Join-Path $PSScriptRoot 'TerrainProductionPBRManifest_v1.json'
     if(!(Test-Path -LiteralPath $scannedManifest -PathType Leaf)){
@@ -41,7 +48,8 @@ foreach($path in @($uproject,$editor,$build,$manifest)){
 }
 $contract=(Get-Content -LiteralPath $manifest -Raw -Encoding UTF8 |ConvertFrom-Json)
 if($contract.schemaVersion -ne 1 -or $contract.sourceKind -ne 'calibration_only_not_gaea' -or
-   $contract.layers.Count -ne 10 -or $contract.mapPath -ne $map){
+   $contract.layers.Count -ne 10 -or $contract.mapPath -ne $map -or
+   ($ProductionPBR -and $contract.projectionVersion -ne 2)){
     throw 'Terrain导入清单版本/层数/来源/地图身份不一致'
 }
 Write-Host 'TERRAIN_GAEA_REVIEW_PLAN'
@@ -129,7 +137,7 @@ Run-UeCommandlet 'GamePlatformSurfaceTerrainLayers' @(
 ) 'TERRAIN_LAYER_INFO_CONTRACT_PASS'
 Run-UeCommandlet 'GamePlatformPCGTerrainBiomeGraphs' @(
     ('-GraphRoot='+$graphRoot),'-GraphPrefix=PCG_DBA_Terrain_',
-    '-BiomeMap=Forest:LS_Grass,Rock:LS_Rock,Shore:LS_ShoreMud,Road:LS_RoadDirt',
+    '-BiomeMap=Forest:LS_ForestSoil,Rock:LS_Rock,Shore:LS_ShoreMud,Road:LS_RoadDirt',
     '-WeightThreshold=0.18'
 ) 'TERRAIN_BIOME_FILTER_GRAPHS_PASS'
 $mapMarker=if($ValidateOnly){'TERRAIN_LANDSCAPE_REVIEW_UE_VERIFY_PASS'}else{'TERRAIN_LANDSCAPE_REVIEW_UE_SAVED'}

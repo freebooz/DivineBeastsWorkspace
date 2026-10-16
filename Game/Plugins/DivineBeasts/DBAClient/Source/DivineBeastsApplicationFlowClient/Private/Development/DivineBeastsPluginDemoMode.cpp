@@ -10,13 +10,19 @@ const TCHAR* FDivineBeastsPluginDemoMode::GetHubMapPackage()
     return TEXT("/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub");
 }
 
+const TCHAR* FDivineBeastsPluginDemoMode::GetCameraReviewMapPackage()
+{
+    return TEXT("/Game/Development/PluginDemos/Maps/L_DBA_CinematicCameraReview");
+}
 bool FDivineBeastsPluginDemoMode::IsAllowedArguments(bool bDevelopment, bool bInteractiveClient,
     bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& RequestedEntryMap)
 {
     // 不采用子串/模糊地图匹配，避免在正式登录地图误开放演示旁路。
     return bDevelopment && bInteractiveClient && bExplicitOptIn
         && !bConflictingDevelopmentMode
-        && RequestedEntryMap.Equals(GetHubMapPackage(), ESearchCase::CaseSensitive);
+        // 允许实际插件总览或独立电影镜头评审地图；拒绝其它正式业务地图。
+        && (RequestedEntryMap.Equals(GetHubMapPackage(), ESearchCase::CaseSensitive)
+            || RequestedEntryMap.Equals(GetCameraReviewMapPackage(), ESearchCase::CaseSensitive));
 }
 
 bool FDivineBeastsPluginDemoMode::IsEnabled()

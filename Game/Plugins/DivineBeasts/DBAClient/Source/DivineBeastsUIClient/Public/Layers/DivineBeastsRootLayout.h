@@ -11,6 +11,7 @@ class UDivineBeastsUIViewModel;
 class UDivineBeastsWorldHUDBase;
 class UDivineBeastsWorldHealthBarPresenter;
 class UGamePlatformWorldWidgetBase;
+class UMaterialInterface;
 struct FDivineBeastsUIViewState;
 class UGamePlatformStatusEffectTrayWidget;
 class UGamePlatformAbilityCastComponent;
@@ -53,6 +54,9 @@ protected:
     /** 公共UI包真实名称板类；仅客户端组合根引用，专服不加载UI资产。 */
     UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|UI|World")
     TSubclassOf<UGamePlatformWorldWidgetBase> WorldHealthBarClass;
+    /** 公共UI包作者制作的脚下选中贴花；SelectionColor参数由事件提供，不参与服务器或Gameplay。 */
+    UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|UI|World")
+    TObjectPtr<UMaterialInterface> SelectionRingMaterial;
 
 private:
     UPROPERTY(Transient) TObjectPtr<UDivineBeastsWorldHealthBarPresenter> WorldHealthBars;

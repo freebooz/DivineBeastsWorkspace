@@ -31,9 +31,9 @@ UHorizontalBox* UDivineBeastsCameraReviewWidget::AddButtonRow(UVerticalBox& Pare
 {
     UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(
         UHorizontalBox::StaticClass());
-    if (UVerticalBoxSlot* Slot = Parent.AddChildToVerticalBox(Row))
+    if (UVerticalBoxSlot* RowSlot = Parent.AddChildToVerticalBox(Row))
     {
-        Slot->SetPadding(FMargin(0.f, 3.f, 0.f, 3.f));
+        RowSlot->SetPadding(FMargin(0.f, 3.f, 0.f, 3.f));
     }
     return Row;
 }
@@ -47,11 +47,15 @@ UButton* UDivineBeastsCameraReviewWidget::AddButton(
     UTextBlock* Caption = WidgetTree->ConstructWidget<UTextBlock>(
         UTextBlock::StaticClass());
     Caption->SetText(FText::FromString(Label));
+    // 多平台演示控件统一使用小字号；防止默认UMG字体放大后横排按钮溢出面板。
+    FSlateFontInfo ButtonFont = Caption->GetFont();
+    ButtonFont.Size = 14;
+    Caption->SetFont(ButtonFont);
     Caption->SetColorAndOpacity(FSlateColor(FLinearColor::White));
     Button->SetContent(Caption);
-    if (UHorizontalBoxSlot* Slot = Row.AddChildToHorizontalBox(Button))
+    if (UHorizontalBoxSlot* ButtonSlot = Row.AddChildToHorizontalBox(Button))
     {
-        Slot->SetPadding(FMargin(3.f));
+        ButtonSlot->SetPadding(FMargin(3.f));
     }
     return Button;
 }
@@ -80,6 +84,9 @@ TSharedRef<SWidget> UDivineBeastsCameraReviewWidget::RebuildWidget()
     UTextBlock* Title = WidgetTree->ConstructWidget<UTextBlock>(
         UTextBlock::StaticClass());
     Title->SetText(FText::FromString(TEXT("SSLM 电影镜头演示")));
+    FSlateFontInfo TitleFont = Title->GetFont();
+    TitleFont.Size = 18;
+    Title->SetFont(TitleFont);
     Title->SetColorAndOpacity(FSlateColor(FLinearColor(0.60f, 0.85f, 1.0f, 1.f)));
     Layout->AddChildToVerticalBox(Title);
 
@@ -110,6 +117,10 @@ TSharedRef<SWidget> UDivineBeastsCameraReviewWidget::RebuildWidget()
     StatusText = WidgetTree->ConstructWidget<UTextBlock>(
         UTextBlock::StaticClass(), TEXT("CinematicReviewStatus"));
     StatusText->SetText(FText::FromString(TEXT("选择镜头，调整光圈与焦点")));
+    FSlateFontInfo StatusFont = StatusText->GetFont();
+    StatusFont.Size = 13;
+    StatusText->SetFont(StatusFont);
+    StatusText->SetAutoWrapText(true);
     StatusText->SetColorAndOpacity(FSlateColor(FLinearColor(0.85f, 0.90f, 0.95f, 1.f)));
     Layout->AddChildToVerticalBox(StatusText);
     }

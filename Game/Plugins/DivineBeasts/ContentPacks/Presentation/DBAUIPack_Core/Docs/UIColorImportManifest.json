@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "DescriptionZh": "第三层原稿颜色政策；8份彩色原稿与5份Alpha遮罩分别拥有sRGB/线性合同，登记源哈希和稳定资源身份。",
+  "DescriptionZh": "第三层原稿颜色政策；9份彩色原稿与5份Alpha遮罩分别拥有sRGB/线性合同，登记源哈希和稳定资源身份。无字登录衍生图保留原参考图并单独登记。",
   "Files": [
     {
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureMenuReference.png",
@@ -31,6 +31,12 @@
       "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginPanelReference",
       "Role": "Color",
       "SHA256": "59433dd92346be6e7f7dc6bfde7e912e7c63857b3324d25b7cd74d6fcbf82ff8"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureLoginPanelNoText.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginPanelNoText",
+      "Role": "Color",
+      "SHA256": "accd26efb310df8f3322c037f3f97ce36c1b715dc22bec276a500261452a1635"
     },
     {
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePanelReference.png",

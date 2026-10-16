@@ -54,6 +54,15 @@ def main():
     native=actors["DBA_Cine_35mm"]
     if native.get_editor_property("auto_activate_for_player") != unreal.AutoReceiveInput.DISABLED:
         raise RuntimeError("两个35mm机位同时接管本地玩家镜头")
+    # 纯开发镜头演示中只使用Movable灯光，避免需要旧静态烘焙遮挡镜头UI检查。
+    for light_label,light_type in (
+        ("DBA_CameraReview_Sun",unreal.DirectionalLightComponent),
+        ("DBA_CameraReview_SkyLight",unreal.SkyLightComponent)):
+        light_actor=actors.get(light_label)
+        if light_actor is None: raise RuntimeError("开发镜头场景灯光Actor缺失:"+light_label)
+        component=light_actor.get_component_by_class(light_type)
+        if component is None or component.get_editor_property("mobility") != unreal.ComponentMobility.MOVABLE:
+            raise RuntimeError("镜头开发灯光不是Movable:"+light_label)
     if "DBA_CameraReview_Manny" not in actors: raise RuntimeError("角色网格缺失")
     record={"engine":str(unreal.SystemLibrary.get_engine_version()),"map":MAP,
             "blueprint":BP,"blueprint_instance":"DBA_Cine_BlueprintRig","actors":len(actors),"focals_mm":VIEWS,

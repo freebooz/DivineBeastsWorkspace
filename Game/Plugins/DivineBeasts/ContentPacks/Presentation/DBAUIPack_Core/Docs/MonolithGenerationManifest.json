@@ -2266,5 +2266,24 @@
     "AccessibilityCN": "最小18建议与用户指定16冲突，按明确用户要求保留16并记录。",
     "Evidence": "Saved/Validation/VillageEntryLoading20261016/UIAssetVerified.json",
     "RuntimeAndVisualAcceptance": "另见本次实施记录；资产核验不代表联机通过"
+  },
+  "LoginNoTextAndTargetSelection20261016": {
+    "Status": "MonolithCompiledSavedReloadVerified_RuntimePending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "SourceTexture": "SourceArt/UI/Nature/NatureLoginPanelNoText.png",
+    "SourceSHA256": "accd26efb310df8f3322c037f3f97ce36c1b715dc22bec276a500261452a1635",
+    "Texture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NatureLoginPanelNoText",
+    "Material": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NatureLoginPanelNoText",
+    "LoginWidget": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+    "WorldHealthBar": "/DBAUIPack_Core/UI/World/WBP_DBA_WorldHealthBar",
+    "RootLayout": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+    "SelectionOutline": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionOutline",
+    "SelectionRing": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionRing",
+    "Actions": ["import_texture", "duplicate_material", "set_widget_brush", "add_widget", "set_cdo_property", "compile_blueprint", "save_asset", "reload_and_readback"],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "RHIAndCook": "待本轮运行证据；Monolith资产编译不代替真实客户端验收",
+    "NotesCN": "保留有字原参考图；无字衍生图仅移除嵌入式用户名、密码和登录字样，统一显示动态控件字号16。选中目标仅由事件通知显示血条外框与地面法环，RootLayout已绑定法环材质。"
   }
 }

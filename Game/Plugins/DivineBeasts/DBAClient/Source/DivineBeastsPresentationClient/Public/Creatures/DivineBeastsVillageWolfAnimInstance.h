@@ -2,7 +2,7 @@
 // 仅DivineBeastsPresentationClient编译；服务器不链接此类或动画资产，不由动画调度Combat。
 #pragma once
 
-#include "Animation/AnimInstance.h"
+#include "Locomotion/GamePlatformLocomotionAnimInstance.h"
 #include "DivineBeastsVillageWolfAnimInstance.generated.h"
 
 class ADivineBeastsVillageWolf;
@@ -12,7 +12,7 @@ struct FGamePlatformAbilityCastFacts;
 
 /** 由Village狼AnimBP派生；实例随Mesh初始化/卸载绑定和解绑，资源租约仍归外观世界装配。 */
 UCLASS(Transient, Blueprintable)
-class DIVINEBEASTSPRESENTATIONCLIENT_API UDivineBeastsVillageWolfAnimInstance : public UAnimInstance
+class DIVINEBEASTSPRESENTATIONCLIENT_API UDivineBeastsVillageWolfAnimInstance : public UGamePlatformLocomotionAnimInstance
 {
     GENERATED_BODY()
 public:

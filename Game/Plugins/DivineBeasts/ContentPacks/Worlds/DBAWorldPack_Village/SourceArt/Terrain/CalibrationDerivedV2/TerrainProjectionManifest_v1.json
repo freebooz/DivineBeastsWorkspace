@@ -28,7 +28,7 @@
     "ShoreMud"
   ],
   "pcgSchemaVersion": "1.0",
-  "sourceSHA256": "1f8b31f4fc085316de7a9e98cdfcde64455706fd3701d5e0ff967d0a3f2843d5",
+  "sourceSHA256": "08d5fd7f7d0685fa97db35c6d5599827e30127be41c44959c4b1424b65be4486",
   "generatedFiles": [
     {
       "relativePath": "Weights/LS_Grass_Import.png",
@@ -72,7 +72,7 @@
     },
     {
       "relativePath": "PCG/PCG_SchemaV1_TerrainCandidates.json",
-      "sha256": "faaa2b8328330707bf6ca239e91f8d6b2e50922e336b007c5f8090cacfc1311e"
+      "sha256": "c84083f84767877ace2c4af2e622242ca092550f9592c94b6e30ea8d8d2632f9"
     }
   ],
   "warningZh": "PNG/候选点不是已执行的UE Landscape/PCGGraph导入，不具备专服世界生成权威"

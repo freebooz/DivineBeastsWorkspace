@@ -166,11 +166,22 @@ def main():
                 rotation_repaired=True
     if rotation_repaired and not levels.save_current_level():
         raise RuntimeError("镜头朝向修复未能保存")
+    # 纯开发样板全部使用运行时动态光，避免强制重烘焙静态照明干扰镜头UI审查。
+    sky_actor=allactors.get("DBA_CameraReview_SkyLight")
+    if sky_actor:
+        sky_component=sky_actor.get_component_by_class(unreal.SkyLightComponent)
+        if sky_component and sky_component.get_editor_property("mobility") != unreal.ComponentMobility.MOVABLE:
+            sky_component.set_mobility(unreal.ComponentMobility.MOVABLE)
+            if not levels.save_current_level():
+                raise RuntimeError("开发天空光动态移动性设置未保存")
     # 电影镜头采用物理曝光；开发场景必须提供室外日光照度，否则游戏实拍全黑。
     sun=allactors.get("DBA_CameraReview_Sun")
     if sun:
         sun_component=sun.get_component_by_class(unreal.DirectionalLightComponent)
         needs_light_save=False
+        if sun_component and sun_component.get_editor_property("mobility") != unreal.ComponentMobility.MOVABLE:
+            sun_component.set_mobility(unreal.ComponentMobility.MOVABLE)
+            needs_light_save=True
         # 把旧的-roll/-pitch误传旋转改为真正的俯仰-42度，保留暖色白昼照明。
         sun_rot=sun.get_actor_rotation()
         if abs(float(sun_rot.pitch)+42.0)>0.1 or abs(float(sun_rot.yaw)-15.0)>0.1 or abs(float(sun_rot.roll))>0.1:

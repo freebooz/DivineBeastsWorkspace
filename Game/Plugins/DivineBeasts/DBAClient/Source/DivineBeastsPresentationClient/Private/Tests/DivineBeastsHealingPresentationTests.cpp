@@ -14,6 +14,7 @@
 #include "GamePlatformPresentationClientSubsystem.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
@@ -155,12 +156,31 @@ bool FDivineBeastsHealingPresentationTest::RunTest(const FString&)
     Event.EventId = FGuid::NewGuid(); Event.TargetAvatarGeneration = 3;
     Feedback->DispatchConfirmedFeedback(Event);
     TestEqual(TEXT("解绑前新化身治疗仍可播放"), Requests, 13);
+
+    // Standalone/ListenServer没有客户端Multicast回调；必须从真实权威事件桥接到同一去重总线。
+    // 源与受疗者都会收到同一Combat事件，重复观察Actor不能造成两次花瓣请求。
+    Service->HandleDevelopmentMagicSpawn(Source); Service->HandleDevelopmentMagicSpawn(Target);
+    Service->HandleDevelopmentMagicSpawn(Source);
+    auto* TargetASC = Target->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
+    TargetASC->SetNumericAttributeBase(UGamePlatformCombatAttributeSet::GetHealthAttribute(), TargetCombat->GetCombatMaxHealth() * .5f);
+    FGamePlatformCombatSpec Healing;
+    Healing.EventId = FGuid::NewGuid(); Healing.Source = Source; Healing.Target = Target;
+    Healing.SourceAbilityId = TEXT("dba.ability.rat_placeholder_primary@1");
+    Healing.SourceAvatarGeneration = SourceCombat->GetCombatAvatarGeneration();
+    Healing.TargetAvatarGeneration = TargetCombat->GetCombatAvatarGeneration(); Healing.Magnitude = 20.f;
+    TestTrue(TEXT("本地主机通过真实平台治疗结算"), SourceCombat->ApplyHealing(Healing).IsSuccess());
+    TestEqual(TEXT("来源和目标同一权威治疗只投影一次"), Requests, 14);
+    TestEqual(TEXT("本地主机治疗请求保留权威事件ID"), LastRequest.RequestId, Healing.EventId);
     Service->UnbindDevelopmentMagicWorld();
     TestFalse(TEXT("解绑清除自有确认反馈句柄"), Service->DevelopmentHealingFeedbackHandle.IsValid());
+    TestFalse(TEXT("解绑撤销来源的本地权威事件订阅"),
+        SourceCombat->OnCombatEvent.IsAlreadyBound(Service.Get(), &UDivineBeastsPresentationClientSubsystem::HandleDevelopmentAuthorityHealingFeedback));
+    TestFalse(TEXT("解绑撤销目标的本地权威事件订阅"),
+        TargetCombat->OnCombatEvent.IsAlreadyBound(Service.Get(), &UDivineBeastsPresentationClientSubsystem::HandleDevelopmentAuthorityHealingFeedback));
     Event.EventId = FGuid::NewGuid(); Feedback->DispatchConfirmedFeedback(Event);
-    TestEqual(TEXT("解绑后的真实总线通知不播放"), Requests, 13);
+    TestEqual(TEXT("解绑后的真实总线通知不播放"), Requests, 14);
     Event.EventId = FGuid::NewGuid(); Service->HandleDevelopmentHealingFeedback(Event);
-    TestEqual(TEXT("解绑后的迟到直接回调不播放"), Requests, 13);
+    TestEqual(TEXT("解绑后的迟到直接回调不播放"), Requests, 14);
     return true;
 }
 #endif // WITH_DEV_AUTOMATION_TESTS

@@ -75,6 +75,14 @@ P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基�
 
 本次完整Native构建证据：Client退出0见Saved/Validation/FoundationM0/0d516f9c-7d9c-4a49-b509-167c307aec0e/Build/Client；Server退出0见Saved/Validation/FoundationM0/8e56f639-5f43-4097-9d05-8ad14d337cbc/Build/Server。它们不代表Cook、真实WorldReady或功能体验验收通过。
 
+## 2026-10-16 世界目标选中反馈
+
+`DivineBeastsWorldHealthBarPresenter`直接订阅既有`ADivineBeastsWorldPlayerController::OnWorldTargetChanged`并读取首次快照，不再建立选择真源。名称板投影平台中立`bSelected / SelectionTint / SelectionText`；真实蓝图需提供`SelectionOutline`（Image）和`SelectionMarker`（TextBlock）。切换、生命归零、Combat死亡/Avatar复制、公开准入失效、EndPlay、换Pawn和World清理均撤销旧显示；显式重选同Actor再次发事件。UI死亡清理不更改服务器保留的失效治疗意图。选中名称板在血条总开关隐藏时仍保留，以维持明确的操作反馈；无生命数据的交互目标只显示名称和选中标记，不伪造资源值。
+
+关系色只读已确认事实：正式狼怪红色，真实Village体验中双方公开准入快照仍绑定当前Pawn的玩家绿色，未知关系金色。普通PlayerState的ParticipantId是匿名准入身份，不能当作小队PlayerId；竞技Team关系尚未通过可选中立适配接入，本公共客户端不依赖MOBA。脚下圈为单个持续UI Decal，使用RootLayout的`SelectionRingMaterial`，事件写入`SelectionColor`材质参数并依据实体Bounds设置90～360厘米直径、48厘米投射深度、脚底上方4厘米位置；无Niagara、计时器、轮询或额外资源加载器。多LocalPlayer时停用没有视口隔离能力的Decal，名称板仍按各LocalPlayer独立显示。
+
+本次涉及Presenter、根布局、世界控制器以及平台名称板/Combat观察通知的中文职责、所有权、旧代次和解绑路径说明。新增/扩展回归为`DivineBeasts.UI.World.TargetSelection.EventsDeathAndClear`、`DivineBeasts.UI.World.HealthBar.ResourceEventProjection`与`GamePlatform.Combat.Projectile.SelectionAuthorityAndGeneration`。本任务按统一验证调度不构建、不运行UE Automation、不Cook；真实资产编译/保存/重载、Client运行、颜色/贴花和人工视觉均须另留证，源码存在不算通过。
+
 
 
 ## 2026-10-09 公共流程Retry合同

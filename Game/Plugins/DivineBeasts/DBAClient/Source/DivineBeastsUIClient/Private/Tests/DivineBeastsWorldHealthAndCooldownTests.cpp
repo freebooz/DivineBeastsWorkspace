@@ -14,11 +14,14 @@
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "WorldUI/DivineBeastsWorldHealthBarPresenter.h"
 #include "Characters/DivineBeastsCharacter.h"
+#include "Characters/DivineBeastsVillageWolf.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
 #include "Services/GamePlatformWorldUIService.h"
 #include "Layers/GamePlatformUILayerStack.h"
 #include "Components/Overlay.h"
+#include "Components/TextBlock.h"
+#include "Gameplay/DivineBeastsWorldPlayerController.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldHealthResourceTest,
     "DivineBeasts.UI.World.HealthBar.ResourceEventProjection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -38,6 +41,19 @@ bool FDivineBeastsWorldHealthResourceTest::RunTest(const FString&)
     FGamePlatformWorldUIRequest Request; Request.RequestId = FGuid::NewGuid(); Request.SurfaceKey = TEXT("HealthTest");
     Request.Resource.MaximumValue = 300.; Request.Resource.CurrentValue = 300.;
     Widget->ApplyWorldUIRequest(Request); TestEqual(TEXT("初始化事件显示真实满血"), Fill->GetPercent(), 1.f);
+    auto* SelectionOutline = Cast<UImage>(Widget->GetWidgetFromName(TEXT("SelectionOutline")));
+    auto* SelectionMarker = Cast<UTextBlock>(Widget->GetWidgetFromName(TEXT("SelectionMarker")));
+    if (!TestNotNull(TEXT("选中状态有实际边框"), SelectionOutline) || !TestNotNull(TEXT("选中状态有非纯色标记"), SelectionMarker)) return false;
+    const FLinearColor OriginalFill = Fill->GetFillColorAndOpacity();
+    Request.bSelected = true; Request.SelectionTint = FLinearColor(1.f, .12f, .08f);
+    Widget->ApplyWorldUIRequest(Request);
+    TestEqual(TEXT("选中事件着色真实生命条"), Fill->GetFillColorAndOpacity(), Request.SelectionTint);
+    TestEqual(TEXT("选中事件显示实际边框"), SelectionOutline->GetVisibility(), ESlateVisibility::HitTestInvisible);
+    TestFalse(TEXT("选中事件保留非颜色识别文字"), SelectionMarker->GetText().IsEmpty());
+    Request.bSelected = false; Widget->ApplyWorldUIRequest(Request);
+    TestEqual(TEXT("切换目标后恢复原生命条颜色"), Fill->GetFillColorAndOpacity(), OriginalFill);
+    TestEqual(TEXT("旧目标立即清除边框"), SelectionOutline->GetVisibility(), ESlateVisibility::Collapsed);
+    TestEqual(TEXT("旧目标立即清除标记"), SelectionMarker->GetVisibility(), ESlateVisibility::Collapsed);
     Request.Resource.CurrentValue = 90.; Widget->ApplyWorldUIRequest(Request);
     TestEqual(TEXT("伤害事件立即更新30%血条，不等待Tick"), Fill->GetPercent(), .3f);
     Request.Resource.MaximumValue = 0.; Widget->ApplyWorldUIRequest(Request);
@@ -119,6 +135,50 @@ bool FDivineBeastsWorldHealthBarLifecycleTest::RunTest(const FString&)
     Presenter->ObserveActor(OldPawn); Presenter->Clear();
     OldPawn->SetActorLocation(FVector(50, 0, 0)); OldPawn->OnDestroyed.Broadcast(OldPawn);
     TestEqual(TEXT("清理后迟到位置与销毁通知不恢复旧显示"), Presenter->GetObservedCount(), 0);
+    return true;
+}
+// 破坏目标事件订阅、死亡撤销或旧来源防护都会使本用例失败；真实控制器与Presenter，不创建第二份选中真源。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldTargetSelectionTest,
+    "DivineBeasts.UI.World.TargetSelection.EventsDeathAndClear", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsWorldTargetSelectionTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString())); UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    World->InitializeActorsForPlay(FURL());
+    auto* Controller = World->SpawnActor<ADivineBeastsWorldPlayerController>();
+    TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine)); Controller->SetPlayer(Player.Get());
+    auto* Pawn = World->SpawnActor<ADivineBeastsCharacter>(); Controller->Possess(Pawn);
+    auto* First = World->SpawnActor<ADivineBeastsCharacter>();
+    auto* Second = World->SpawnActor<ADivineBeastsCharacter>();
+    TStrongObjectPtr<UDivineBeastsWorldHealthBarPresenter> Presenter(NewObject<UDivineBeastsWorldHealthBarPresenter>());
+    ON_SCOPE_EXIT { Presenter->Clear(); };
+    Presenter->ObservedWorld = World; Presenter->LocalPlayer = Player.Get();
+    Presenter->ObserveActor(First); Presenter->ObserveActor(Second);
+    Presenter->ApplyHealth(First, 100.f, 100.f); Presenter->ApplyHealth(Second, 100.f, 100.f);
+    Controller->SetSelectedWorldTarget(First); // 先选择，再绑定必须读取首次快照。
+    Presenter->BindSelectionController(Controller);
+    TestTrue(TEXT("静止镜头首次绑定立即突出已有目标"), Presenter->Bindings.FindChecked(First).Request.bSelected);
+    TestEqual(TEXT("没有可信关系的目标使用中立金色"), Presenter->Bindings.FindChecked(First).Request.SelectionTint, FLinearColor(1.f, .73f, .18f));
+    auto* Wolf = World->SpawnActor<ADivineBeastsVillageWolf>();
+    TestEqual(TEXT("正式狼怪目标使用敌对红色"), Presenter->ResolveSelectionTint(Wolf), FLinearColor(1.f, .12f, .08f));
+    Presenter->BindSelectionController(Controller); // 重绑不应重复观察或重置选择。
+    Controller->SetSelectedWorldTarget(Second);
+    TestFalse(TEXT("切换事件立即取消旧目标"), Presenter->Bindings.FindChecked(First).Request.bSelected);
+    TestTrue(TEXT("切换事件立即突出新目标"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
+    Presenter->ApplyHealth(Second, 0.f, 100.f);
+    TestFalse(TEXT("死亡通知立即清选中显示"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
+    TestTrue(TEXT("UI不清除Gameplay失效选择意图"), Controller->GetSelectedWorldTarget() == Second);
+    Presenter->ApplyHealth(Second, 100.f, 100.f);
+    TestFalse(TEXT("复活属性通知不会复活旧选择"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
+    Controller->SetSelectedWorldTarget(Second);
+    TestTrue(TEXT("同Actor显式重选恢复新展示"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
+    Second->OnEndPlay.Broadcast(Second, EEndPlayReason::RemovedFromWorld);
+    TestFalse(TEXT("目标流送退出撤销选中引用"), Presenter->SelectedTarget.IsValid());
+    Presenter->Clear();
+    TestFalse(TEXT("退出解除目标真源订阅"), Controller->OnWorldTargetChanged.IsBoundToObject(Presenter.Get()));
+    Controller->SetSelectedWorldTarget(First);
+    TestEqual(TEXT("退出后迟到选择不能恢复实体或旧显示"), Presenter->GetObservedCount(), 0);
     return true;
 }
 // 真实服务与真实两份Root验证就绪通知和替换挂接；只读UI请求不是Gameplay生命事实。

@@ -2,16 +2,46 @@
 #include "WorldUI/GamePlatformWorldNameplateWidget.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
 
 void UGamePlatformWorldNameplateWidget::ApplyWorldUIRequest(const FGamePlatformWorldUIRequest& InRequest)
 {
+    const uint64 Generation = ++VisualApplyGeneration;
+    if (!bDefaultColorsCaptured)
+    {
+        if (auto* Fill = Cast<UProgressBar>(GetWidgetFromName(TEXT("ResourceFill")))) DefaultResourceColor = Fill->GetFillColorAndOpacity();
+        if (auto* Name = Cast<UTextBlock>(GetWidgetFromName(TEXT("NameText")))) DefaultNameColor = Name->GetColorAndOpacity();
+        bDefaultColorsCaptured = true;
+    }
     Super::ApplyWorldUIRequest(InRequest);
     // 蓝图事件可能同步回收本控件；只投影仍属于本次注册的快照。
-    if (GetWorldUIRequest().RequestId != InRequest.RequestId) return;
-    if (auto* Fill = Cast<UProgressBar>(GetWidgetFromName(TEXT("ResourceFill"))))
+    if (Generation != VisualApplyGeneration || GetWorldUIRequest().RequestId != InRequest.RequestId) return;
+    auto* Fill = Cast<UProgressBar>(GetWidgetFromName(TEXT("ResourceFill")));
+    auto* Name = Cast<UTextBlock>(GetWidgetFromName(TEXT("NameText")));
+    if (Fill)
+    {
         Fill->SetPercent(static_cast<float>(InRequest.Resource.GetNormalizedValue()));
-    if (auto* Name = Cast<UTextBlock>(GetWidgetFromName(TEXT("NameText"))))
+        // 无资源的交互目标仍可显示选中名称/标记；不能用0/0虚构生命条。
+        Fill->SetVisibility(InRequest.Resource.MaximumValue > 0. ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        Fill->SetFillColorAndOpacity(InRequest.bSelected ? InRequest.SelectionTint : DefaultResourceColor);
+    }
+    if (Name)
+    {
         Name->SetText(InRequest.PrimaryText);
+        Name->SetColorAndOpacity(InRequest.bSelected ? FSlateColor(InRequest.SelectionTint) : DefaultNameColor);
+    }
     if (auto* Value = Cast<UTextBlock>(GetWidgetFromName(TEXT("ValueText"))))
         Value->SetText(InRequest.SecondaryText);
+    if (auto* Outline = Cast<UImage>(GetWidgetFromName(TEXT("SelectionOutline"))))
+    {
+        Outline->SetColorAndOpacity(InRequest.SelectionTint);
+        Outline->SetVisibility(InRequest.bSelected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+    }
+    if (auto* Marker = Cast<UTextBlock>(GetWidgetFromName(TEXT("SelectionMarker"))))
+    {
+        // 装饰文案可由项目本地化；未提供时仍有箭头形状，保证状态不只依赖红/绿识别。
+        Marker->SetText(InRequest.SelectionText.IsEmpty() ? FText::FromString(TEXT("▶  ◀")) : InRequest.SelectionText);
+        Marker->SetColorAndOpacity(InRequest.SelectionTint);
+        Marker->SetVisibility(InRequest.bSelected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+    }
 }

@@ -24,7 +24,7 @@ public:
     /** I键只发出本地背包开关意图；世界双端控制器不依赖UI实现，不授予或消耗道具。 */
     FSimpleMulticastDelegate OnWorldInventoryRequested;
     FDivineBeastsWorldJournalRequested OnWorldJournalRequested;
-    /** 当前本地选中目标变化；只读展示意图，技能与交互必须另经服务器资格校验。 */
+    /** 当前本地目标选择/显式重选通知；只读展示意图，技能与交互必须另经服务器资格校验。 */
     FSimpleMulticastDelegate OnWorldTargetChanged;
     /** 最终本地镜头位置、旋转或FOV真实变化后通知；共享世界模块不依赖UI。 */
     FSimpleMulticastDelegate OnFinalCameraViewChanged;
@@ -61,6 +61,7 @@ protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
+    friend class FDivineBeastsWorldTargetSelectionTest; // 隔离回归使用真实选择入口，不新增测试运行接口。
     /** 最终镜头缓存只用于抑制相同视图事件，不作为权威角色姿态或网络同步源。 */
     FVector LastNotifiedCameraLocation = FVector::ZeroVector;
     FRotator LastNotifiedCameraRotation = FRotator::ZeroRotator;
