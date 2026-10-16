@@ -126,6 +126,21 @@ Assert-Rule ($definitionValidatorText -match 'GetEffectType\(\)\s*!=\s*ExpectedE
 $legacyPreloader = Join-Path $PluginRoot 'Source/GamePlatformVFXClient/Private/Preloading/GamePlatformVFXPreloadCoordinator.cpp'
 Assert-Rule (-not (Test-Path $legacyPreloader)) 'Retired VFX private Definition preloader must stay removed'
 
+$arenaConfigPath = Join-Path $PluginRoot 'Config/DefaultGamePlatformVFX.ini'
+Assert-Rule (Test-Path $arenaConfigPath -PathType Leaf) 'Missing GamePlatformVFX default config'
+if (Test-Path $arenaConfigPath) {
+    $arenaConfigText = [IO.File]::ReadAllText($arenaConfigPath)
+    Assert-Rule ($arenaConfigText.Contains('bUseWorldBudgetRules=True')) 'MainArena world budget rules must be enabled in platform VFX config'
+    foreach ($rule in @(
+        'WorldIdPrefix="Experience.MainArena.Main",QualityTier=Low,MaxCombatRequests=40,MaxStatusRequests=24,MaxAmbientRequests=8',
+        'WorldIdPrefix="Experience.MainArena.Main",QualityTier=Medium,MaxCombatRequests=58,MaxStatusRequests=34,MaxAmbientRequests=8',
+        'WorldIdPrefix="Experience.MainArena.Main",QualityTier=High,MaxCombatRequests=80,MaxStatusRequests=50,MaxAmbientRequests=10',
+        'WorldIdPrefix="Experience.MainArena.Main",QualityTier=Epic,MaxCombatRequests=120,MaxStatusRequests=72,MaxAmbientRequests=12'
+    )) {
+        Assert-Rule ($arenaConfigText.Contains($rule)) ('Missing MainArena VFX budget rule: ' + $rule)
+    }
+    Assert-Rule (($arenaConfigText -split '\n' | Where-Object { $_ -match '^WorldBudgetRules=' }).Count -eq 4) 'MainArena must define exactly four quality-tier world budget rules'
+}
 $dbaClientDescriptor = [IO.Path]::GetFullPath((Join-Path $PluginRoot '../../../DivineBeasts/DBAClient/DBAClient.uplugin'))
 Assert-Rule (Test-Path $dbaClientDescriptor -PathType Leaf) 'Missing DBAClient composition descriptor'
 if (Test-Path $dbaClientDescriptor) {
