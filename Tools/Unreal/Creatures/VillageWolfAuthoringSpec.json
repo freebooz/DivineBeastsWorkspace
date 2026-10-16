@@ -1,0 +1,95 @@
+{
+  "SchemaVersion": 1,
+  "Project": "SSLM",
+  "PurposeZh": "新手村四足狼的AI与蓝图原生资产作者合同；资源尚未创建时只能作为可执行制作规范，不是蓝图交付凭据。",
+  "TargetGame": "Game/DivineBeastsArena.uproject",
+  "VillageMap": "/DBAWorldPack_Village/Maps/L_Village_Start",
+  "Core": {
+    "Blueprint": "/DBAWorldPack_Village/AI/Blueprints/BP_DBA_VillageWolf",
+    "BlueprintClass": "/DBAWorldPack_Village/AI/Blueprints/BP_DBA_VillageWolf.BP_DBA_VillageWolf_C",
+    "BlueprintParent": "/Script/DivineBeastsCharactersRuntime.DivineBeastsVillageWolf",
+    "AIDefinition": "/DBAWorldPack_Village/AI/Definitions/DA_DBA_VillageWolfAI",
+    "AIDefinitionClass": "/Script/GamePlatformAI.GamePlatformAIDefinition",
+    "AIDefinitionId": "sslm.ai.village.wolf",
+    "BrainType": "None",
+    "AI": {
+      "Perception": {
+        "SightRadius": 1400,
+        "LoseSightRadius": 1800,
+        "PeripheralVisionHalfAngleDegrees": 80,
+        "MaxAge": 5,
+        "bEnableHearing": false,
+        "bEnableDamageSense": true
+      },
+      "Target": {
+        "MaxCandidates": 8,
+        "MemorySeconds": 5,
+        "bPreferVisibleTargets": true
+      },
+      "Home": {
+        "PatrolRadius": 500,
+        "LeashRadius": 2200,
+        "ReturnHomeAcceptanceRadius": 80,
+        "PatrolAcceptanceRadius": 80
+      },
+      "Update": {
+        "DecisionInterval": 0.35,
+        "MoveRefreshInterval": 0.5,
+        "MoveRefreshDistance": 100,
+        "AttackRetryBackoff": 1.5
+      },
+      "AttackRangeCm": 185,
+      "PreferredRangeCm": 140,
+      "PrimaryAbilityTag": "",
+      "Health": 75,
+      "BiteDamage": 12
+    }
+  },
+  "Scatter": {
+    "MaxAlive": 20,
+    "StrictMinSpawnSpacingCm": 3000,
+    "FirstRingCm": 4500,
+    "RingCount": 8,
+    "RingStepCm": 3500,
+    "AnglesPerRing": 24,
+    "SpawnBatchCount": 4,
+    "SpawnBatchIntervalSeconds": 0.2,
+    "PlayerStartProtectionCm": 2200,
+    "RespawnDelaySeconds": 14,
+    "CorpseLifetimeSeconds": 4
+  },
+  "Visual": {
+    "SourceFabListing": "https://www.fab.com/listings/2dd7964c-a601-4264-a53d-465dcae1644c",
+    "SourcePublisher": "PROTOFACTOR INC.",
+    "ContentPackName": "DBAContentPack_AnimalsProtofactor",
+    "ResourceSourceStatus": "AwaitingAuthorizedFabAssets",
+    "SkeletonAssetPath": "",
+    "SkeletalMeshAssetPath": "",
+    "SourceAnimationBlueprintPath": "",
+    "AnimationBlueprintTargetPath": "/DBAContentPack_AnimalsProtofactor/Wolf/Animation/ABP_DBA_Wolf",
+    "AnimationsRequiredZh": {
+      "Idle": "站立待机",
+      "Walk": "行走",
+      "Run": "奔跑",
+      "Attack": "扑咬",
+      "Hit": "受击",
+      "Death": "死亡"
+    },
+    "BlueprintStatus": "BlockedUntilRealWolfSkeletonAndGraph",
+    "ArtServerPackaging": "ClientEditorOnly"
+  },
+  "Policy": {
+    "InitialEnabled": false,
+    "InitialClientVisualVerified": false,
+    "CreateOnly": true,
+    "DoNotModifyVillageMap": true,
+    "NoFakeUasset": true,
+    "NoCompileOrCookInThisTurn": true
+  },
+  "AssetStatus": {
+    "AIDefinition": "CreatedInUE58_20261015_NotBuilt",
+    "ServerBlueprint": "CreatedInUE58_20261015_NotBuilt",
+    "AnimationBlueprint": "WaitingForRealSource",
+    "MeshMaterials": "WaitingForFab"
+  }
+}

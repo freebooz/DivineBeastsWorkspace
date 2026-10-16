@@ -1,0 +1,43 @@
+{
+  "SchemaVersion": 1,
+  "Project": "SSLM",
+  "SourceFabListingUrl": "https://www.fab.com/listings/2dd7964c-a601-4264-a53d-465dcae1644c",
+  "Publisher": "PROTOFACTOR INC.",
+  "Status": "AwaitingFabAccountAuthorizedImport",
+  "Permission": {
+    "LicenseRecordLocalPath": "",
+    "LicenseType": "",
+    "AcquisitionDate": "",
+    "NotesZh": "仅记录已经通过Fab合法领取/下载的凭证，本仓库不存放凭证原文或令牌。"
+  },
+  "Source": {
+    "FabImportedContentDirectory": "",
+    "WolfSkeletalMesh": "",
+    "WolfSkeleton": "",
+    "WolfAnimationBlueprint": "",
+    "WolfPhysicsAsset": "",
+    "WolfAnimationSequences": {
+      "Idle": "",
+      "Walk": "",
+      "Run": "",
+      "Attack": "",
+      "Hit": "",
+      "Death": ""
+    }
+  },
+  "Destination": {
+    "PluginName": "DBAContentPack_AnimalsProtofactor",
+    "PluginRelativeRoot": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_AnimalsProtofactor",
+    "ImportedAssetFolder": "/DBAContentPack_AnimalsProtofactor/Animals",
+    "ClientOnly": true
+  },
+  "Execution": {
+    "DefaultMode": "inspect",
+    "PrepareOnlyAfterRealAssets": true,
+    "RegisterOnlyAfterNonEmptyMigration": true,
+    "UnrealEditorRequired": true,
+    "DoNotCompileOrCook": true,
+    "DoNotModifyVillageMap": true,
+    "DoNotEnableInvisibleWolfSpawns": true
+  }
+}

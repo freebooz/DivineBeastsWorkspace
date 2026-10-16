@@ -29,6 +29,9 @@ public:
     EGamePlatformVFXContentCategory GetContentCategory() const { return ContentCategory; }
     const TSoftObjectPtr<UNiagaraSystem>& GetNiagaraSystem() const { return NiagaraSystem; }
     const TSoftObjectPtr<UNiagaraEffectType>& GetEffectType() const { return EffectType; }
+    /** 仅Instant可使用共享命中NDC通道；默认维持独立Niagara执行。 */
+    bool UsesSharedBurstChannel() const { return bUseSharedBurstChannel; }
+    const TSoftObjectPtr<UNiagaraDataChannelAsset>& GetSharedBurstDataChannel() const { return SharedBurstDataChannel; }
     /** 编辑器验证使用：读取全部平台变体，运行时不得修改返回容器。 */
     const TMap<FName, TSoftObjectPtr<UNiagaraSystem>>& GetPlatformVariants() const { return PlatformVariants; }
     /** 编辑器验证使用：读取全部质量变体，运行时不得修改返回容器。 */
@@ -69,6 +72,14 @@ protected:
     /** 用于Niagara原生Scalability/Validation；不在VFX框架中复制EffectType能力。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX|Scalability", meta=(AssetBundles="VFXRuntime"))
     TSoftObjectPtr<UNiagaraEffectType> EffectType;
+
+    /** GPU短时命中共享通道；必须通过现有VFXRuntime软资源租约加载。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX|DataChannel", meta=(AssetBundles="VFXRuntime"))
+    TSoftObjectPtr<UNiagaraDataChannelAsset> SharedBurstDataChannel;
+
+    /** 默认关闭；只有经过通道Schema、读者System和视觉回退验证的定义才可启用。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX|DataChannel")
+    bool bUseSharedBurstChannel = false;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="VFX|Parameters")
     FGamePlatformVFXParameterSchema ParameterSchema;

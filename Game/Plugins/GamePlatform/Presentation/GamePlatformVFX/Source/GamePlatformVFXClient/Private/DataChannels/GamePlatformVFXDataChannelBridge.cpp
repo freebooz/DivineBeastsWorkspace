@@ -31,7 +31,7 @@ bool FGamePlatformVFXDataChannelBridge::WriteInstantBurst(
 
     // 字段名称为平台中立合同；NDC原生资产必须具有Position/Normal/Color/Scale/StyleId/Seed六项。
     const FVector Position = Request.SpawnContext.ImpactLocation;
-    const FVector Normal = Request.SpawnContext.ImpactNormal.GetSafeNormal(FVector::UpVector);
+    const FVector Normal = Request.SpawnContext.ImpactNormal.GetSafeNormal(SMALL_NUMBER, FVector::UpVector);
     const FVector VisualScale = Request.SpawnContext.Scale;
     const double Scale = FMath::Clamp(FMath::Max3(VisualScale.X, VisualScale.Y, VisualScale.Z), 0.05, 8.0);
     const FLinearColor* RequestedColor = Request.Parameters.ColorParameters.Find(TEXT("User.PrimaryColor"));

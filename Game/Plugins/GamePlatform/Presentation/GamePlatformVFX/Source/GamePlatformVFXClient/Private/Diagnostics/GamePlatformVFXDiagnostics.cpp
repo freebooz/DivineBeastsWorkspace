@@ -9,6 +9,8 @@ DEFINE_STAT(STAT_GPVFX_DedupeHits);
 DEFINE_STAT(STAT_GPVFX_DefinitionCacheHits);
 DEFINE_STAT(STAT_GPVFX_DefinitionCacheMisses);
 DEFINE_STAT(STAT_GPVFX_CompositeChildren);
+DEFINE_STAT(STAT_GPVFX_SharedBurstWrites);
+DEFINE_STAT(STAT_GPVFX_SharedBurstFallbacks);
 DEFINE_STAT(STAT_GPVFX_TrackedInstances);
 DEFINE_STAT(STAT_GPVFX_PendingInstances);
 DEFINE_STAT(STAT_GPVFX_PeakTrackedInstances);
@@ -61,6 +63,16 @@ void FGamePlatformVFXDiagnostics::DefinitionCacheMiss()
 void FGamePlatformVFXDiagnostics::CompositeChild()
 {
     INC_DWORD_STAT(STAT_GPVFX_CompositeChildren);
+}
+
+void FGamePlatformVFXDiagnostics::SharedBurstWritten()
+{
+    INC_DWORD_STAT(STAT_GPVFX_SharedBurstWrites);
+}
+
+void FGamePlatformVFXDiagnostics::SharedBurstFallback()
+{
+    INC_DWORD_STAT(STAT_GPVFX_SharedBurstFallbacks);
 }
 
 namespace
